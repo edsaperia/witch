@@ -12,6 +12,19 @@
 
 A roguelite that crosses a **creature collector** with **tower defence / real-time strategy**. The player moves around a map, finds creatures, collects them and levels them up, and **leashes** them to locations, where they defend the player's home against incoming enemies.
 
+## The witch
+
+- The player is a **witch flying on a broomstick** (Ed, 2026-10-03).
+- She **does not fight and is never attacked**. Only her creatures and her home are; the home is designed later.
+- The setting is a **forest**.
+
+### Two modes of movement
+
+- **Ground mode**: under the trees, slower, with full sight of what is on the ground.
+- **Treetop mode**: above the canopy, faster, but the canopy hides the ground. From above she sees only **tall landmarks**, **large creatures**, and the ground where **the trees are sparser**.
+
+The trade is speed against information: treetop mode covers distance, ground mode reveals what is there. Tree density is therefore gameplay as well as scenery, since it decides where the ground can be seen from above.
+
 ## Look
 
 A 3D world with **2D pixel-art sprites** for characters and objects. References: *Cult of the Lamb* and *Octopath Traveler*. Witch develops its own art style as it goes.
@@ -32,6 +45,11 @@ A 3D world with **2D pixel-art sprites** for characters and objects. References:
 
 ## Open questions
 
+- Switching between modes: instant or a short rise and descent; anywhere, or only where the trees are sparse.
+- Whether trees block her in ground mode, so the forest has paths.
+- What she can do from above (find, catch, leash creatures) and what needs the ground.
+- What she does while her creatures defend.
+
 - Run structure: what one run is, what persists between runs.
 - How the leash works.
 - Whether exploring and defending happen at the same time or in phases (for example, day and night).
@@ -41,4 +59,6 @@ A 3D world with **2D pixel-art sprites** for characters and objects. References:
 
 ## Glossary
 
+- **Ground mode**: the witch flying under the trees: slower, full sight.
 - **Leash**: tying a creature to a location, where it defends.
+- **Treetop mode**: the witch flying above the canopy: faster, sight only of what shows through or above it.
