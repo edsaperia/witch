@@ -145,7 +145,11 @@ function treehouseModel() {
 // base: the trunk's foot on the ground (place the treehouse by it); seat: where her sit pose's anchor goes (the deck under the chair); door: the van's sliding door at the deck; lights: its light sources.
 // top is the crown and everything above the van's roof (drawn in treetop mode, cut out round the witch); bot the rest.
 export function treehouseSprite(st = {}, { facing = "towards", ppm = 16 } = {}) {
-  const T = treehouseModel(), { sp, project } = render(T.m, { scale: witchPixelsPerUnit(st), facing });
+  const T = treehouseModel(), r = render(T.m, { scale: witchPixelsPerUnit(st), facing }), full = r.sp;
+  // cropped to what is drawn (a part's bounding sphere leaves empty rows above it); anchors move with it
+  let x0 = full.w, x1 = -1, y0 = full.h; for (let y = 0; y < full.h; y++) for (let x = 0; x < full.w; x++) if (full.m[y * full.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
+  const sp = new Sprite(x1 - x0 + 1, full.h - y0); for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const i = (y + y0) * full.w + x + x0; if (full.m[i]) sp.put(x, y, full.m[i], full.n[i * 3], full.n[i * 3 + 1], full.n[i * 3 + 2]); }
+  const project = p => { const [x, y] = r.project(p); return [+(x - x0).toFixed(1), +(y - y0).toFixed(1)]; };
   const crownY = Math.round(project([0, T.splitY, 0])[1]);
   const top = new Sprite(sp.w, sp.h), bot = new Sprite(sp.w, sp.h);
   for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) {
