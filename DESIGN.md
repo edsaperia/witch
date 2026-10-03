@@ -98,6 +98,7 @@ The trade is speed against information: treetop mode covers distance, ground mod
 
 - A 3D world with **2D pixel-art sprites** for characters and objects. References: *Cult of the Lamb* and *Octopath Traveler*. Witch develops its own art style as it goes.
 - Art is made with **a generator**, so that the style stays consistent across all assets.
+- **For now the art is drawn by code** (Ed, 2026-10-03: "easily good enough"): sprites built from a few parameters per kind and coloured by a style file. Ed explores styles in the **Witch Art Lab** (https://claude.ai/artifact/WLBnF1NrbTezd41A8m5Cfj). An image generator may replace it later through the same asset list.
 - A **lo-fi aesthetic**: few animation frames (walking perhaps two or three).
 - Creatures face **left and right only** (mirrored).
 - Sizes to start, to be experimented with: a baby creature roughly 16 to 24 pixels tall, a legendary 64 or more.
