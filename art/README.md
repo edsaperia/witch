@@ -46,6 +46,7 @@ Every asset is a **baked sprite**: `{ A, N, NF, w, h }`.
 | `rng(seed)` | the seeded random generator everything uses |
 | `AREAS`, `AREA_BY_ID` | the 30 area types in Ed's columns: `floor`, `wall`, `small`, `big`, `set`, `creature` (`text` keeps the words from DESIGN.md) |
 | `areaAssets(areaId, style, { K, makeCanvas })` | everything one area type needs, baked: `{ def, floor, walls, small, big, setPiece }`; `floor` is a 64 × 48 tile to repeat over the ground, the rest are props `{ sp: { A, N, NF, w, h }, kind, text }` anchored at `(w / 2, h)` |
+| `WALLS_BLOCK`, `SET_PIECE_CHANCE` | placement rules (Ed): wall objects don't block movement for now; a set piece appears in only some of an area type's areas (chance 0.25 to start) |
 
 The night lighting pass the lab uses is `shade(target, out, style, lights, rect)` in `art/lighting.js`.
 

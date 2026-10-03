@@ -52,12 +52,12 @@ const assets = await b.page.evaluate(async ({ style, seed }) => {
     a.walls.forEach((x, i) => add(x, "wall", i)); a.small.forEach((x, i) => add(x, "small", i)); a.big.forEach((x, i) => add(x, "big", i));
     if (a.setPiece) add(a.setPiece, "set", 0);
   }
-  return { list, style: st, areas: G.AREAS.map(({ id, name, creature, by, text }) => ({ id, name, creature, by, text })) };
+  return { list, style: st, placement: { wallsBlock: G.WALLS_BLOCK, setPieceChance: G.SET_PIECE_CHANCE }, areas: G.AREAS.map(({ id, name, creature, by, text }) => ({ id, name, creature, by, text })) };
 }, { style, seed });
 if (b.errors.length) console.error(b.errors.join("\n"));
 await b.close();
 
-const manifest = { generator: "art/generator.js", style: assets.style, areas: assets.areas, conventions: {
+const manifest = { generator: "art/generator.js", style: assets.style, placement: assets.placement, areas: assets.areas, conventions: {
   albedo: "RGBA; alpha 254 = glowing pixel, draw unlit", normal: "RGB = xyz from [-1,1] to [0,255]; x right, y down, z to viewer; flip x when mirrored",
   facing: "right", anchor: "pixels from top-left; the point on the ground (feet, trunk base); flyers (bat, moth) hover above it",
   floor: "area-floor tiles repeat over the ground; their normals face up" }, assets: [] };

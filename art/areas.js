@@ -78,6 +78,11 @@ export const AREAS = [
     wall: [P("bramble")], small: [P("shrub", { flower: [250, 230, 170] })], big: [tree("broad", { trunks: 5, scale: .7, thin: true })] },
 ];
 export const AREA_BY_ID = Object.fromEntries(AREAS.map(a => [a.id, a]));
+// Placement rules (Ed, 2026-10-03, via the coordinator): wall objects are drawn only, they do
+// not block movement for now; a set piece is rare scenery, shown in only some of an area
+// type's areas, for variety. The chance is a starting value for playtesting.
+export const WALLS_BLOCK = false;
+export const SET_PIECE_CHANCE = .25;
 
 // ---------------- the floor: a tile of the area's ground ----------------
 // Materials: BODY ground, BODY2 dark, BELLY light, ACCENT stones, FLOWER flowers, LEAF/LEAF2 green bits.
