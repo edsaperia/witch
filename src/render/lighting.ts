@@ -79,6 +79,7 @@ vec3 haze(vec3 c, vec3 P) {
 }
 
 float lightStep(float f) {
+  if (uSmooth > 0.5) return max(0.0, f); // smooth light: no bands, no dither
   float q = f * uBands;
   float fr = fract(q);
   if (uDither > 0.0 && abs(fr - 0.5) < uDither * 0.5) q += mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) > 0.5 ? 0.5 : -0.5;
@@ -92,8 +93,11 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
   if (uShafts > 0.0 && moonK > 0.99) {
     // Moonbeams: diagonal bands across the world, as the lab draws them across the screen.
     float s = mod(P.x / uShaftScale + P.z * 0.9 / uShaftScale, 150.0);
-    float chk = mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0);
-    if (s < 34.0 && (chk > 0.5 || (s > 4.0 && s < 30.0))) l += uMoonBeam;
+    if (uSmooth > 0.5) l += uMoonBeam * smoothstep(0.0, 6.0, s) * (1.0 - smoothstep(28.0, 34.0, s)); // soft-edged beams
+    else {
+      float chk = mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0);
+      if (s < 34.0 && (chk > 0.5 || (s > 4.0 && s < 30.0))) l += uMoonBeam;
+    }
   }
   vec3 v = uGlowPos - P;
   float d = length(v);

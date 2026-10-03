@@ -83,7 +83,7 @@ export class View {
     this.assets.onFloor = (type, tile) => this.ground.setFloor(type, tile);
     const cs = t.canopyShadow;
     this.ground.setCanopyShadow(cs.on ? cs.strength : 0, cs.height, cs.cover, cs.wind);
-    this.shadows = new ShadowBatch(t.shadows.strength);
+    this.shadows = new ShadowBatch(t.shadows.strength, t.fx === "smooth");
     this.shadows.mesh.visible = t.shadows.on;
     this.scene.add(this.shadows.mesh);
     const smooth = t.fx === "smooth";
@@ -119,12 +119,19 @@ export class View {
     this.dancefloor = new Dancefloor(game.map, t, SPRITE_UNIFORMS, this.mpp);
     this.scene.add(this.dancefloor.ball, this.dancefloor.beam, this.dancefloor.motes);
 
-    // A dithered shadow under the witch, so her height reads.
-    const sm = new THREE.ShaderMaterial({
-      transparent: false, depthWrite: false,
-      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
-      fragmentShader: "varying vec2 vUv; void main(){ vec2 p = vUv * 2.0 - 1.0; if (dot(p, p) > 1.0 || mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) > 0.5) discard; gl_FragColor = vec4(0.02, 0.02, 0.05, 1.0); }",
-    });
+    // A shadow under the witch, so her height reads: soft (multiplied over the ground), or
+    // dithered with ?fx=pixel.
+    const sm = t.fx === "smooth"
+      ? new THREE.ShaderMaterial({
+        transparent: true, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.ZeroFactor, blendDst: THREE.SrcColorFactor,
+        vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+        fragmentShader: "varying vec2 vUv; void main(){ vec2 p = vUv * 2.0 - 1.0; float r = dot(p, p); if (r > 1.0) discard; gl_FragColor = vec4(vec3(1.0 - 0.75 * (1.0 - r) * (1.0 - r)), 1.0); }",
+      })
+      : new THREE.ShaderMaterial({
+        transparent: false, depthWrite: false,
+        vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+        fragmentShader: "varying vec2 vUv; void main(){ vec2 p = vUv * 2.0 - 1.0; if (dot(p, p) > 1.0 || mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) > 0.5) discard; gl_FragColor = vec4(0.02, 0.02, 0.05, 1.0); }",
+      });
     this.shadow = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.7).rotateX(-Math.PI / 2), sm);
     this.shadow.renderOrder = 1;
     this.scene.add(this.shadow);

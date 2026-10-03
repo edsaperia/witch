@@ -1,5 +1,7 @@
 // Shadows on the ground: one flat quad per tree, bush or creature, drawn as one instanced batch.
-// A tree's shadow is a dithered ellipse the size of its crown, laid on the ground where the
+// With ?fx=smooth (the default) each is a soft ellipse that darkens what's under it (multiply, so
+// a lit pool stays lit, only dimmer, and fading into the haze); with ?fx=pixel a dithered one.
+// A tree's shadow (off by default) is the size of its crown, laid on the ground where the
 // moonlight would throw it. The crown is a camera-facing sprite high up while its shadow lies
 // flat, so the two slide past each other as the camera moves: parallax for nothing.
 // Small things get a small blob right under them.
@@ -31,6 +33,11 @@ void main() {
   float r = dot(vLocal, vLocal);
   if (r > 1.0) discard;
   float a = uStrength * (1.0 - r * r);
+  if (uSmooth > 0.5) {
+    float h = smoothstep(uHazeRange.x, uHazeRange.y, length(vWorld.xz - uHazeCentre));
+    gl_FragColor = vec4(mix(vec3(1.0 - a * (1.0 - r)), vec3(1.0), h * h), 1.0); // multiplied over the ground
+    return;
+  }
   if (bayer(gl_FragCoord.xy) >= a) discard;
   gl_FragColor = vec4(haze(uHazeColour * 0.25, vWorld), 1.0);
 }`;
@@ -43,12 +50,13 @@ export class ShadowBatch {
   private attr: THREE.InstancedBufferAttribute;
   private capacity = 0;
 
-  constructor(strength: number) {
+  constructor(strength: number, smooth = true) {
     const quad = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
     this.geo.index = quad.index;
     this.geo.setAttribute("position", quad.getAttribute("position"));
     this.attr = this.grow(1024);
-    const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...LIGHT_UNIFORMS, uStrength: { value: strength } }, depthWrite: false });
+    const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...LIGHT_UNIFORMS, uStrength: { value: strength } }, depthWrite: false,
+      ...(smooth ? { transparent: true, blending: THREE.CustomBlending, blendSrc: THREE.ZeroFactor, blendDst: THREE.SrcColorFactor } : {}) });
     this.mesh = new THREE.Mesh(this.geo, mat);
     this.mesh.frustumCulled = false;
     this.mesh.renderOrder = 1;
