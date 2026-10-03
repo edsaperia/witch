@@ -1519,7 +1519,11 @@ function treehouseModel() {
 // base: the trunk's foot on the ground (place the treehouse by it); seat: where her sit pose's anchor goes (the deck under the chair); door: the van's sliding door at the deck; lights: its light sources.
 // top is the crown and everything above the van's roof (drawn in treetop mode, cut out round the witch); bot the rest.
 function treehouseSprite(st = {}, { facing = "towards", ppm = 16 } = {}) {
-  const T = treehouseModel(), { sp, project } = render(T.m, { scale: witchPixelsPerUnit(st), facing });
+  const T = treehouseModel(), r = render(T.m, { scale: witchPixelsPerUnit(st), facing }), full = r.sp;
+  // cropped to what is drawn (a part's bounding sphere leaves empty rows above it); anchors move with it
+  let x0 = full.w, x1 = -1, y0 = full.h; for (let y = 0; y < full.h; y++) for (let x = 0; x < full.w; x++) if (full.m[y * full.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
+  const sp = new Sprite(x1 - x0 + 1, full.h - y0); for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const i = (y + y0) * full.w + x + x0; if (full.m[i]) sp.put(x, y, full.m[i], full.n[i * 3], full.n[i * 3 + 1], full.n[i * 3 + 2]); }
+  const project = p => { const [x, y] = r.project(p); return [+(x - x0).toFixed(1), +(y - y0).toFixed(1)]; };
   const crownY = Math.round(project([0, T.splitY, 0])[1]);
   const top = new Sprite(sp.w, sp.h), bot = new Sprite(sp.w, sp.h);
   for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) {
@@ -1768,6 +1772,12 @@ const NEW_SET_PIECES = {
   "honeysuckle-tangle": ["bower", "a honeysuckle bower with a bench", 1.2],
 };
 const SET_PIECE_KINDS = Object.keys(spSETS);
+// A sprite cropped to its drawn pixels (it already stands on its bottom row).
+function spCrop(sp) {
+  let x0 = sp.w, x1 = -1, y0 = sp.h; for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
+  const out = new Sprite(x1 - x0 + 1, sp.h - y0); for (let y = 0; y < out.h; y++) for (let x = 0; x < out.w; x++) { const i = (y + y0) * sp.w + x + x0; if (sp.m[i]) out.put(x, y, sp.m[i], sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); }
+  return out;
+}
 
 function setPieceColours(def, st) {
   const leaf = def.leaf, trunk = st.trunkHue ?? .07;
@@ -1787,7 +1797,7 @@ function setPiece3d(kind, def, st, ppm = 16) {
   const m = new Model({ blend: .05 }); spSETS[kind](m);
   m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // so every piece stands on the same ground line
   const size = (Object.values(NEW_SET_PIECES).find(([k]) => k === kind) || [, , 1])[2];
-  const { sp } = render(m, { scale: witchPixelsPerUnit(st) * size });
+  const sp = spCrop(render(m, { scale: witchPixelsPerUnit(st) * size }).sp); // cropped to what is drawn (a part's bounding sphere leaves empty rows above it)
   return { sp, colours: setPieceColours(def, st), metres: { width: +(sp.w / ppm).toFixed(1), height: +(sp.h / ppm).toFixed(1) } };
 }
 
