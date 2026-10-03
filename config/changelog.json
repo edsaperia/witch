@@ -2,14 +2,16 @@
   "_": "What's new, shown on the start screen (newest first; the last 3 entries). Every push that changes something Ed can see adds its bullets to the top entry, in plain player-facing words. The top entry's version is null until its build has a number: it then shows as the build you're playing. When you push again, write that number in (from the playable-link comment) and start a new null entry above it.",
   "entries": [
     { "version": null, "items": [
+      "Speech bubbles are pixel outlines, and the emoji in them are bigger pixel art",
+      "Above the treetops she has momentum: hold a direction to build up to a boost (the camera draws back a little), swoop round in arcs, skid on a sharp turn, and glide when you let go. The ground stays snappy"
+    ] },
+    { "version": 123, "items": [
       "Paths wind between the areas, their look changing with each area (dirt tracks, flagstones, root paths, boardwalks...), and some peter out",
       "Old roads sweep across the forest, and two to four railway lines curve across it, broken in places with trees growing between the sleepers",
       "Bushes crowd along the edges of paths and tracks",
       "Streams wind through the forest, and join the wet areas",
       "Ruins, rocks and strange trees turn up here and there to discover",
-      "You start sitting on the terrace of the witch's treehouse, by the dancefloor; move or rise to take off",
-      "Speech bubbles are pixel outlines, and the emoji in them are bigger pixel art",
-      "Above the treetops she has momentum: hold a direction to build up to a boost (the camera draws back a little), swoop round in arcs, skid on a sharp turn, and glide when you let go. The ground stays snappy"
+      "You start sitting on the terrace of the witch's treehouse, by the dancefloor; move or rise to take off"
     ] },
     { "version": 117, "items": [
       "Removed the diagonal stripes across the forest (moonbeams are off; ?moonbeams=on brings them back)",
