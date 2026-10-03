@@ -91,7 +91,7 @@ const assets = await b.page.evaluate(async ({ style, seed }) => {
   }
   // area types: a floor tile and each prop, already baked by areaAssets
   for (const A of G.AREAS) {
-    const a = G.areaAssets(A.id, st), add = (x, role, i) => list.push({ id: `area-${A.id}-${role}${i === undefined ? "" : "-" + i}`, kind: role === "floor" ? "area-floor" : "area-prop", area: A.id, role, prop: x.kind, text: x.text || "", ...(x.metres ? { metres: x.metres } : {}), frame: 0, w: x.sp.w, h: x.sp.h, anchor: { x: x.sp.w / 2, y: x.sp.h }, albedo: png(x.sp.A), normal: png(x.sp.N) });
+    const a = G.areaAssets(A.id, st), add = (x, role, i) => list.push({ id: `area-${A.id}-${role}${i === undefined ? "" : "-" + i}`, kind: role === "floor" ? "area-floor" : "area-prop", area: A.id, role, prop: x.kind, text: x.text || "", ...(x.metres ? { metres: x.metres } : {}), ...(x.origin ? { origin: x.origin } : {}), frame: 0, w: x.sp.w, h: x.sp.h, anchor: { x: x.sp.w / 2, y: x.sp.h }, albedo: png(x.sp.A), normal: png(x.sp.N) });
     add(a.floor, "floor");
     a.walls.forEach((x, i) => add(x, "wall", i)); a.small.forEach((x, i) => add(x, "small", i)); a.big.forEach((x, i) => add(x, "big", i));
     if (a.setPiece) add(a.setPiece, "set", 0);
