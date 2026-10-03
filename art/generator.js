@@ -10,7 +10,7 @@ import { defaultCanvas, rng, uni, pick, gauss, hash2, vnoise, hsv2rgb, M, EMISSI
 import { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree } from "./trees.js";
 import { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT } from "./witch.js";
 import { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone } from "./areas.js";
-import { SPECIES, SPECIES_BY_ID, FEATURE_NAMES, LEVELS, speciesColours, critter, levelHeight } from "./creatures.js";
+import { SPECIES, SPECIES_BY_ID, FEATURE_NAMES, LEVELS, speciesColours, critter, levelHeight, partyGear, HAT_COLOURWAYS, SHOE_STYLES, GLASSES_STYLES } from "./creatures.js";
 export { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT };
 export { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone };
 import { SIGILS, SIGIL_IDS, SIGIL_STROKE, SIGIL_DOT, SIGIL_DRAW_TIME, GROUND_PITCH, NEON, SIGIL_NEON, SIGIL_LEVELS, sigilColour, sigilFrame, sigilStrokes, sigilMark, sigilSVG, drawSigil, sigilHit, sigilGlyph, sigilField, groundSigil, floatSigil, floatSize, paintSigilField, SigilStack, STACK_TUNING, SIGIL_TRANSITION_TIME, liftOff, setDown } from "./sigils.js";
@@ -18,7 +18,7 @@ export { SIGILS, SIGIL_IDS, SIGIL_STROKE, SIGIL_DOT, SIGIL_DRAW_TIME, GROUND_PIT
 import { SOUNDSYSTEMS, soundsystemColours, soundsystemSprite, soundsystemHeight, soundsystems } from "./soundsystem.js";
 export { SOUNDSYSTEMS, soundsystemColours, soundsystemSprite, soundsystemHeight };
 export { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree };
-export { defaultCanvas, rng, uni, pick, gauss, hash2, vnoise, hsv2rgb, M, EMISSIVE, Sprite, spline, band, tufts, polyMask, edgeVectors, rot, lerp2, bake, SPECIES, SPECIES_BY_ID, FEATURE_NAMES, LEVELS, speciesColours, critter, levelHeight };
+export { defaultCanvas, rng, uni, pick, gauss, hash2, vnoise, hsv2rgb, M, EMISSIVE, Sprite, spline, band, tufts, polyMask, edgeVectors, rot, lerp2, bake, SPECIES, SPECIES_BY_ID, FEATURE_NAMES, LEVELS, speciesColours, critter, levelHeight, partyGear, HAT_COLOURWAYS, SHOE_STYLES, GLASSES_STYLES };
 
 // ================= the style genome =================
 export const KNOBS = [

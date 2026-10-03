@@ -40,7 +40,9 @@ Every asset is a **baked sprite**: `{ A, N, NF, w, h }`.
 | Call | Gives |
 |---|---|
 | `critter(speciesId, level, frame, style, facing)` | a sprite for one creature (`SPECIES` lists the ids; `level` 0 to 3 as above); `facing` is `"towards"` (default) or `"away"`. Each sprite's `bodyH` is its body's height without antlers or wings |
-| `speciesColours(speciesId, style)` | its palette (material → RGB) |
+| `speciesColours(speciesId, style, gear)` | its palette (material → RGB), with the gear's colours when given the same `gear` |
+| `critter(id, level, frame, style, facing, gear)` | the same, wearing **party gear** or **woken** (`gear`, optional): `{ collar, hat, glasses, shoes, woken }`. `collar`: a colour (the creature's sigil neon, `sigilColour(id)`) or `true`: a glowing ring round the neck (or the body's front) with a tag at its front, always worn by party animals. `hat`: a colourway 0 to 2 (`HAT_COLOURWAYS`), a striped cone with a pompom. `glasses`: `"bar"`, `"star"` or `"heart"`. `shoes`: `"sneakers"`, `"glitter"` or `"platform"` (`SHOE_STYLES`), on each foot; the snake wears one on its tail tip, and the bat, moth, spider, woodlouse, glow-worm, snail and stag beetle go without. `woken`: angry glowing red eyes and a darker tint. Gear never changes the body's size. Shapes are cached per gear combination |
+| `partyGear(seed, collarColour)` | a seeded mix for an invited creature: the collar always; a hat, sunglasses or shoes often; occasionally all three |
 | `TREE_TYPES` | `[[mixKnob, drawFn], …]`; `drawFn(rng, style, scale)` returns `{ sp, crownY }` |
 | `treeColours(rng, style, drawFn)`, `splitTree({ sp, crownY })` | a tree's palette; its `{ top, bot }` halves |
 | `bush(rng, style)` | `{ sp, colours }` |

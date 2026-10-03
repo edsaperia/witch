@@ -121,7 +121,9 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
-        <div class="row" style="justify-content:space-between"><h2>Bestiary</h2><label class="check"><input type="checkbox" id="away"> Show turned away</label></div>
+        <div class="row" style="justify-content:space-between"><h2>Bestiary</h2><div class="row"><label class="check"><input type="checkbox" id="away"> Show turned away</label>
+          <label class="note" for="gearMode">Show</label><select id="gearMode"><option value="wild">Wild</option><option value="party">Party animals</option><option value="woken">Woken</option></select>
+          <span id="gearItems" class="row" hidden><label class="check"><input type="checkbox" id="gHat" checked> Hat</label><label class="check"><input type="checkbox" id="gGlasses" checked> Sunglasses</label><label class="check"><input type="checkbox" id="gShoes" checked> Shoes</label><label class="check"><input type="checkbox" id="gMix"> Mixed</label></span></div></div>
         <p class="note">Thirty forest animals, each as legend, adult, young and baby, in the current style under even light, turned towards you (or away, for creatures walking up the screen). Legends grow the magical features listed.</p>
         <div class="bestiary" id="bestiary"></div>
       </section>
@@ -241,6 +243,11 @@ const M = {
   RUNE: 39,    // a carved rune's glow
   GLOW: 40,    // glowing crystal: a soundsystem's cones and the depths of its horns
   WOOD: 41,    // varnished wooden trim
+  COLLAR: 42,  // a party animal's glowing collar, in its sigil's neon
+  HAT1: 43, HAT2: 44, POM: 45, // a party hat's stripes and pompom
+  SHADES: 46, FRAME: 47,       // sunglasses: dark lenses, fancy frames
+  SHOE: 48, SOLE: 49,          // fancy shoes
+  WOKEN: 50,   // a woken creature's angry glowing eyes
 };
 // These glow: drawn at full colour by the lighting pass, whatever the light.
 // The rune glyphs: one carved-rune language for the magic stones and the soundsystem. Simple,
@@ -259,7 +266,7 @@ function runeGlyph(u, v, k, w = .12) {
     default: return line(.3, .08, .3, .92) || line(.3, .12, .75, .35) || line(.75, .35, .3, .55) || line(.3, .55, .78, .92); // a hooked stave
   }
 }
-const EMISSIVE = new Set([M.GLINT, M.FLOWER, M.MAGIC, M.MAGIC2, M.RUNE, M.GLOW]);
+const EMISSIVE = new Set([M.GLINT, M.FLOWER, M.MAGIC, M.MAGIC2, M.RUNE, M.GLOW, M.COLLAR, M.WOKEN]);
 
 // ================= geometry: smooth outlines =================
 // Points are [x, y] in sprite pixels. A closed outline is a list of control points; the
@@ -860,7 +867,7 @@ const sdf0 = (q, p) => q.type === "ell" ? sdEllipsoid(sub(p, q.cw), q) : q.type 
 const sdf = (q, p) => q.rough ? sdf0(q, p) + rough(p, q.rough) : sdf0(q, p);
 
 class Model {
-  constructor({ blend = .07 } = {}) { this.parts = []; this.flats = []; this.blend = blend; }
+  constructor({ blend = .07 } = {}) { this.parts = []; this.flats = []; this.blend = blend; this.anchors = { feet: [] }; }
   // Every volume also takes o.rough (a hewn, bumpy surface, as a distance) and o.cut: a cut
   // part carves a hollow out of its group instead of adding to it (a horn mouth, a socket);
   // the hollow's walls are drawn in the cut part's material.
@@ -885,6 +892,20 @@ class Model {
   // A shaped flat plane centred at c, spanning ±su along u and ±sv along v; mask(s, t) with
   // s, t in [-1, 1] returns a material (or nothing for a hole). o: { group, extra, bend }
   flat(c, u, v, su, sv, mask, o = {}) { this.flats.push({ c, u: norm(u), v: norm(v), su, sv, mask, group: o.group ?? 30, extra: !!o.extra, bend: o.bend ?? .35 }); return this; }
+  // The signed distance to the model's surface at a model-space point (its solid parts, not those
+  // marked extra or cut): for fitting things to the body, such as a collar.
+  field(p) {
+    let d = Infinity;
+    for (const q of this.parts) {
+      if (q.extra || q.cut) continue;
+      let e;
+      if (q.type === "ell") e = sdEllipsoid(sub(p, q.c), q);
+      else if (q.type === "box") e = sdRoundBox(sub(p, q.c), q);
+      else { const ba = sub(q.b, q.a), l2 = Math.max(1e-9, dot(ba, ba)), rr = q.r1 - q.r2; e = sdRoundCone(sub(p, q.a), { ba, l2, rr, a2: l2 - rr * rr, il2: 1 / l2, r1: q.r1, r2: q.r2 }); }
+      if (e < d) d = e; // (a degenerate part's NaN is skipped)
+    }
+    return d;
+  }
   // The point on an ellipsoid's surface (centre c, radii r along the model axes) in direction dir.
   static surface(c, r, dir) { const k = 1 / Math.hypot(dir[0] / r[0], dir[1] / r[1], dir[2] / r[2]); return [c[0] + dir[0] * k, c[1] + dir[1] * k, c[2] + dir[2] * k]; }
 }
@@ -984,7 +1005,7 @@ function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ??
       if (sp.m[j] && grp[j] !== grp[i] && depth[j] - depth[i] > lineGap) { lines.push(i); break; }
     }
   }
-  for (const i of lines) if (![M.EYE, M.GLINT, M.MAGIC, M.MAGIC2, M.NOSE].includes(sp.m[i])) sp.m[i] = M.LINE;
+  for (const i of lines) if (![M.EYE, M.GLINT, M.MAGIC, M.MAGIC2, M.NOSE, M.COLLAR, M.WOKEN, M.RUNE, M.GLOW].includes(sp.m[i])) sp.m[i] = M.LINE; // glowing things are never outlined
   // a glint in each eye 2 x 2 or bigger: its top-left pixel
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const i = y * W + x; if (sp.m[i] !== M.EYE) continue;
@@ -1184,6 +1205,58 @@ const drawHeight = (level, st, k = 1) => level === 0 ? Math.round(Math.max(12, M
   : level === 2 ? Math.round(Math.max(height3d(1, st) * k * 1.08, Math.min(height3d(2, st, k), height3d(1, st) * 1.4))) // an adult: 1.3 times its young, but no more than 1.4 times the witch (Ed: "a bit larger than you")
   : height3d(level, st) * k;
 
+// ================= party gear =================
+// Party animals (creatures the witch has invited) wear a glowing collar, and some a party hat,
+// sunglasses or fancy shoes (Ed). Each builder records anchors on its model (head, eyes, neck,
+// feet); gearUp adds the parts before it is drawn. The gear in force is set by critter.
+let GEAR = null;
+function withGear(gear, f) { const was = GEAR; GEAR = gear; try { return f(); } finally { GEAR = was; } }
+const star = (s, t) => { const a = Math.atan2(t, s), r = Math.hypot(s, t); return r < .55 + .4 * Math.pow(Math.abs(Math.cos(a * 2.5 + Math.PI / 2)), 3); };
+const heart = (s, t) => { const x = s * 1.2, y = -t * 1.2 + .25; return Math.pow(x * x + y * y - .6, 3) - x * x * y * y * y < 0; };
+function gearUp(m) {
+  const g = GEAR, A = m.anchors; if (!g) return;
+  const head = A.head, hr = head ? Math.max(...head.r) : .2;
+  // the collar: a glowing ring round the neck (or the body's front)
+  if (g.collar && (A.neck || head)) {
+    const n = A.neck || { c: v3.add(head.c, [-head.r[0] * .8, -head.r[1] * .4, 0]), r: head.r[1] * .75, dir: v3.norm([1, .4, 0]) };
+    // fitted to the body: round the ring, march out from the neck's centre to the surface
+    const d = v3.norm(n.dir), u = v3.norm(v3.cross(d, Math.abs(d[2]) < .9 ? [0, 0, 1] : [1, 0, 0])), w = v3.cross(d, u), pts = [], tube = Math.max(.03, n.r * .2);
+    for (let i = 0; i <= 16; i++) {
+      const a = i / 16 * Math.PI * 2, dir = v3.add(v3.mul(u, Math.cos(a)), v3.mul(w, Math.sin(a)));
+      let t = 0; while (t < .8 && m.field(v3.add(n.c, v3.mul(dir, t))) < 0) t += .01;
+      if (t >= .8) t = n.r; // deep inside the body: fall back to the neck's own radius
+      pts.push([...v3.add(n.c, v3.mul(dir, t + tube * .7)), tube]);
+    }
+    m.chain(pts, M.COLLAR, { group: 60, extra: true });
+    // a glowing tag hanging at its front, under the chin: it shows even where a big head hides the ring
+    const front = pts.reduce((b, p) => (p[0] - p[1] * .6 + p[2] * .5 > b[0] - b[1] * .6 + b[2] * .5 ? p : b)), tr = tube * 1.3 * (n.tag || 1);
+    const td = v3.norm(v3.add(v3.norm(v3.sub(front.slice(0, 3), n.c)), [.3, -.5, .3])); let tp = front.slice(0, 3); // out and down from the collar's front, clear of the body
+    for (let k = 0; k < 60 && m.field(tp) < tr * .4; k++) tp = v3.add(tp, v3.mul(td, .01));
+    m.ell(tp, [tr, tr, tr * .6], M.COLLAR, { group: 60, extra: true });
+  }
+  // a party hat: a striped cone with a pompom, tilted at a jaunty angle
+  if (g.hat != null && head) {
+    const hs = Math.max(hr, .13), base = head.top || v3.add(Model.surface(head.c, head.r, v3.norm([-.15, 1, .1])), [0, hr * .1, 0]), dir = v3.norm([.3, 1, .35]), h = hs * 1.5, tip = v3.add(base, v3.mul(dir, h)); // never too small to read
+    m.seg(v3.add(base, v3.mul(dir, -hs * .1)), tip, hs * .48, hs * .04, M.HAT1, { group: 61, extra: true, paint: p => Math.floor(v3.dot(v3.sub(p, base), dir) / (h / 5) + 10) % 2 ? M.HAT2 : undefined });
+    m.ell(tip, [hs * .17, hs * .17, hs * .17], M.POM, { group: 61, extra: true });
+  }
+  // sunglasses: a dark bar across the eyes, or star or heart frames
+  if (g.glasses && A.eyes && head) {
+    const [e1, e2] = A.eyes.pts, out = e => v3.add(e, v3.mul(v3.norm(v3.sub(e, head.c)), A.eyes.size * .45)), s = Math.max(A.eyes.size * 1.05, hr * .1);
+    if (g.glasses === "bar") { m.seg(out(e1), out(e2), s, s, M.SHADES, { group: 62, extra: true }); m.ell(v3.add(out(e2), [s * .3, s * .5, s * .2]), [s * .25, s * .25, s * .25], M.GLINT, { group: 62, extra: true }); }
+    else for (const e of [e1, e2]) {
+      const n = v3.norm(v3.sub(e, head.c)), u = v3.norm(v3.cross([0, 1, 0], n)), v = v3.cross(n, u), shape = g.glasses === "heart" ? heart : star, k = s * 1.5;
+      m.flat(out(e), u, v, k, k, (a, b) => shape(a, b) ? (shape(a * 1.3, b * 1.3) ? M.SHADES : M.FRAME) : null, { group: 62, bend: .1, extra: true });
+      m.seg(out(e1), out(e2), s * .18, s * .18, M.FRAME, { group: 62, extra: true });
+    }
+  }
+  // fancy shoes on each foot (or, for the snake, one tiny shoe on its tail tip)
+  if (g.shoes) for (const f of A.feet) {
+    const plat = g.shoes === "platform", r = f.r, c = v3.add(f.c, [r * .25, r * (plat ? .35 : .15), 0]);
+    m.ell(c, [r * 1.45, r * (plat ? 1.2 : .85), r * 1.15], M.SHOE, { group: f.group, extra: true, paint: p => p[1] < c[1] - r * (plat ? .45 : .4) ? M.SOLE : g.shoes === "glitter" && spotty(p, 60, .28) ? M.GLINT : undefined });
+  }
+}
+
 // ================= four-legged animals =================
 function quad3d(S, level, frame, st, facing = "towards") {
   const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q }, legend = level === 3, young = level === 1, baby = level === 0, has = f => legend && S.legend.includes(f);
@@ -1219,6 +1292,7 @@ function quad3d(S, level, frame, st, facing = "towards") {
     m.chain(pts, mat, { group: side > 0 ? 6 + (fore ? 1 : 0) : 2, paint: q.socks ? p => p[1] < q.socks ? M.BODY3 : undefined : undefined });
     const fl = (q.paw === "hoof" ? .07 : .09) * (q.legW ** .5) * (!fore ? (q.hindFoot || 1) : 1);
     m.ell(v3.add(foot, [fl * .5, -.01, 0]), [fl, lw * .9, lw * 1.1], q.paw === "hoof" ? M.NOSE : mat, { group: side > 0 ? 6 + (fore ? 1 : 0) : 2 });
+    m.anchors.feet.push({ c: v3.add(foot, [fl * .5, -.01, 0]), r: Math.max(fl, lw * 1.1), group: side > 0 ? 6 + (fore ? 1 : 0) : 2 });
   };
   for (const side of [-1, 1]) { leg(true, side); leg(false, side); }
   // ---- neck and head, turned towards us ----
@@ -1237,6 +1311,9 @@ function quad3d(S, level, frame, st, facing = "towards") {
   m.ell(tip, [hr * (q.disc ? .1 : .12), hr * (q.disc ? .2 : .12), hr * (q.disc ? .2 : .15)], M.NOSE, { group: 1 });
   // eyes: both show; legends' glow
   for (const side of [-1, 1]) { const e = Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62])); m.ell(e, [hr * .13, hr * .16, hr * .13].map(v => v * (q.eyeK || 1) * (baby ? 1.5 : young ? 1.2 : 1)), legend && !q.tusks ? M.MAGIC2 : M.EYE, { group: 1 }); }
+  m.anchors.head = { c: H, r: [hr * 1.05, hr * .92, hr * .88], top: [H[0] - hr * .1, H[1] + hr * .82, 0] };
+  m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62]))), size: hr * .16 * (q.eyeK || 1) * (baby ? 1.5 : young ? 1.2 : 1) };
+  m.anchors.neck = { c: v3.lerp(nb, H, baby ? .05 : young ? .25 : .42), r: q.neckW * .5 * (baby ? 1.3 : young ? 1.12 : 1), dir: v3.norm(v3.sub(H, nb)), tag: baby ? 1.8 : young ? 1.3 : 1 }; // lower on the neck when the head is big
   // ears
   for (const side of [-1, 1]) {
     const E = q.ear, base = [H[0] - hr * .15, H[1] + hr * .7, side * hr * .5], k = q.earS * (baby ? 1.2 : 1) * (q.ear === "long" ? .62 : 1);
@@ -1267,6 +1344,7 @@ function quad3d(S, level, frame, st, facing = "towards") {
     for (const t of [.12, .4, .65, .9]) { const b = backAt(t); m.ell(v3.add(b, [0, .12, bw * .3]), [.07, .035, .07], M.MAGIC, { group: 89, extra: true }); }
   }
   if (has("ribbons")) for (let i = 0; i < 3; i++) { const pts = []; for (let k = 0; k < 9; k++) { const t = k / 8; pts.push([len * (.5 - t * 2.2), top + .05 + i * .1 + t * (.25 + i * .12) + Math.sin(t * 6 + frame + i) * .07, (i - 1) * .18, .04 * (1 - t * .6)]); } m.chain(pts, i % 2 ? M.MAGIC2 : M.MAGIC, { group: 90 + i, extra: true }); }
+  gearUp(m);
   const { sp } = render(m, { height: drawHeight(level, st, q.hgt), facing });
   if (legend) glowMotes(sp, S.id.length * 7919);
   return sp;
@@ -1308,7 +1386,7 @@ function owl3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, young = level === 1, baby = level === 0, has = f => legend && S.legend.includes(f), m = new Model();
   const bob = frame ? .03 : 0, hr = baby ? .48 : young ? .42 : .36, hy = (baby ? .95 : 1.08) + bob;
   // feet and a short tail
-  for (const side of [-1, 1]) { const f = frame && side > 0 ? .04 : 0; m.seg([.05, .2, side * .14], [.08, .05 + f, side * .15], .07, .06, M.BODY2, { group: 2 }); for (const dz of [-.04, 0, .04]) m.ell([.16, .03 + f, side * .15 + dz], [.06, .025, .02], M.ACCENT, { group: 2 }); }
+  for (const side of [-1, 1]) { const f = frame && side > 0 ? .04 : 0; m.seg([.05, .2, side * .14], [.08, .05 + f, side * .15], .07, .06, M.BODY2, { group: 2 }); for (const dz of [-.04, 0, .04]) m.ell([.16, .03 + f, side * .15 + dz], [.06, .025, .02], M.ACCENT, { group: 2 }); m.anchors.feet.push({ c: [.13, .04 + f, side * .15], r: .08, group: side > 0 ? 6 : 2 }); }
   m.ell([-.32, .32, 0], [.22, .06, .14], M.BODY2, { dir: [-1, -.6, 0], group: 3 });
   // body: an upright egg, pale breast streaked
   m.ell([0, .55 + bob, 0], [.36, .52, .36], M.BODY, { paint: p => p[0] > .12 && p[1] < hy - hr * .5 ? ((Math.floor(p[1] * 18) % 3 === 0 && spotty(p, 16, .5)) ? M.BODY2 : M.BELLY) : undefined });
@@ -1324,21 +1402,29 @@ function owl3d(S, level, frame, st, facing = "towards") {
     const ec = v3.add(c, v3.mul(fd, hr * .14));
     m.ell(ec, [hr * .1, hr * .26, hr * .24].map(v => v * (baby ? 1.15 : 1)), legend ? M.MAGIC : M.IRIS, { group: 1, dir: fd });
     m.ell(v3.add(ec, v3.mul(fd, hr * .07)), [hr * .08, hr * .14, hr * .13].map(v => v * (baby ? 1.15 : 1)), legend ? M.MAGIC2 : M.EYE, { group: 1, dir: fd });
+    (m.anchors.eyes ||= { pts: [], size: hr * .22 }).pts.push(v3.add(ec, v3.mul(fd, hr * .07)));
     // ear tufts
     if (!baby) m.ell([hr * .05, hy + hr * .8, side * hr * .6], [hr * .32, hr * .12, hr * .08], M.BODY2, { dir: [-.1, 1, side * .7], up: [1, 0, 0], group: 1 });
   }
   m.ell(Model.surface([0, hy, 0], [hr, hr * .9, hr], v3.norm([.75, -.35, .35])), [hr * .2, hr * .12, hr * .1], M.ACCENT, { dir: [.6, -1, .3], group: 1 }); // beak
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [-.05, .8 + bob, side * .3], side, 1.3, frame ? .12 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("eyesRing")) for (let i = 0; i < 7; i++) { const a = Math.PI * (.15 + i / 6 * .7); m.ell([Math.cos(a) * .2 - .1, hy + .1 + Math.sin(a) * .6, (i - 3) * .15], [.07, .07, .07], M.MAGIC2, { group: 95 + i, extra: true }); m.ell([Math.cos(a) * .2 - .05, hy + .1 + Math.sin(a) * .6, (i - 3) * .15], [.035, .035, .035], M.EYE, { group: 95 + i, extra: true }); }
+  m.anchors.head = { c: [0, hy, 0], r: [hr, hr * .9, hr] };
+  m.anchors.neck = { c: [0, hy - hr * .75, 0], r: hr * .85, dir: [0, 1, 0] };
+  gearUp(m);
   const { sp } = render(m, { height: drawHeight(level, st, .95), facing });
   if (legend) glowMotes(sp, 31);
   return sp;
 }
 
 // ================= the other body plans, in 3D =================
-const eyesOn = (m, c, r, dirs, size, mat) => { for (const d of dirs) m.ell(Model.surface(c, r, v3.norm(d)), [size, size * 1.2, size], mat, { group: 1 }); };
+const eyesOn = (m, c, r, dirs, size, mat, group = 1) => {
+  for (const d of dirs) m.ell(Model.surface(c, r, v3.norm(d)), [size, size * 1.2, size], mat, { group });
+  m.anchors.head ||= { c, r }; m.anchors.eyes ||= { pts: dirs.map(d => Model.surface(c, r, v3.norm(d))), size };
+};
 const shadow = (m, x, w) => m.ell([x, .005, 0], [w, .005, w * .6], M.NOSE, { group: 0 }); // a flyer's shadow on the ground
 function finish(m, S, level, st, k, facing) {
+  gearUp(m);
   const { sp } = render(m, { height: drawHeight(level, st, k), facing });
   if (level === 3) glowMotes(sp, S.id.length * 131);
   return sp;
@@ -1348,7 +1434,7 @@ const crystals3d = (m, pts) => pts.forEach(([b, h], i) => m.ell(v3.add(b, [0, h 
 
 function hedgehog3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, m = new Model(), f = frame ? .03 : 0;
-  for (const [x, z] of [[.28, .2], [.28, -.2], [-.28, .2], [-.28, -.2]]) m.seg([x, .15, z], [x + (z > 0 ? f : -f), .03, z], .06, .05, M.BODY3, { group: z > 0 ? 6 : 2 });
+  for (const [x, z] of [[.28, .2], [.28, -.2], [-.28, .2], [-.28, -.2]]) { m.seg([x, .15, z], [x + (z > 0 ? f : -f), .03, z], .06, .05, M.BODY3, { group: z > 0 ? 6 : 2 }); m.anchors.feet.push({ c: [x + .03 + (z > 0 ? f : -f), .03, z], r: .065, group: z > 0 ? 6 : 2 }); }
   const c = [0, .32, 0], r = [.5, .32, .38];
   m.ell(c, r, M.BODY2, { paint: p => spotty(p, 22, .3) ? M.BODY3 : spotty(p, 19, .12) ? M.BELLY : undefined });
   for (let i = 0; i < 46; i++) { const a = (i * 2.399) % (Math.PI * 2), t = (i / 46) * .9 + .05, d = v3.norm([Math.cos(a) * Math.sin(t * Math.PI * .5) - .25, Math.cos(t * Math.PI * .5) * .9 + .1, Math.sin(a) * Math.sin(t * Math.PI * .5)]); if (d[0] > .55) continue; m.ell(v3.add(Model.surface(c, r, d), v3.mul(d, .02)), [.1, .025, .025], i % 4 ? M.BODY2 : M.BODY3, { dir: v3.add(d, [-.4, 0, 0]), group: 1 }); }
@@ -1366,17 +1452,21 @@ function toad3d(S, level, frame, st, facing = "towards") {
     m.ell([-.22, .16, side * .36], [.24, .13, .12], side > 0 ? M.BODY : M.BODY2, { dir: [1, .3, 0], group: side > 0 ? 6 : 2, paint: p => spotty(p, 14, .15) ? M.BODY3 : undefined });
     m.ell([.05, .04, side * .4], [.16, .04, .08], side > 0 ? M.BODY : M.BODY2, { group: side > 0 ? 6 : 2 });
     m.seg([.35, .2 + hop, side * .24], [.42, .03, side * .3], .05, .04, side > 0 ? M.BODY : M.BODY2, { group: side > 0 ? 7 : 2 });
+    m.anchors.feet.push({ c: [.45, .03, side * .3], r: .06, group: side > 0 ? 7 : 2 }, { c: [.12, .04, side * .4], r: .08, group: side > 0 ? 6 : 2 });
   }
   const c = [0, .3 + hop, 0], r = [.5, .28, .4];
   m.ell(c, r, M.BODY, { paint: p => p[1] < c[1] - .12 ? M.BELLY : p[0] > .38 && Math.abs(p[1] - (c[1] - .02)) < .018 ? M.LINE : spotty(p, 14, .22) ? M.BODY3 : undefined });
   for (const side of [-1, 1]) { const e = [.3, .55 + hop, side * .17]; m.ell(e, [.1, .09, .1], M.BODY, { group: 1 }); m.ell(Model.surface(e, [.1, .09, .1], v3.norm([.6, .5, side * .5])), [.05, .05, .05], legend ? M.MAGIC2 : M.IRIS, { group: 1 }); m.ell(Model.surface(e, [.11, .1, .11], v3.norm([.65, .45, side * .5])), [.03, .015, .03], M.EYE, { group: 1 }); }
+  m.anchors.head = { c: [.22, .45 + hop, 0], r: [.3, .2, .3], top: [.18, .62 + hop, 0] };
+  m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface([.3, .55 + hop, side * .17], [.1, .09, .1], v3.norm([.6, .5, side * .5]))), size: .05 };
+  m.anchors.neck = { c: [.32, .3 + hop, 0], r: .25, dir: [1, .3, 0] };
   if (legend) crown3d(m, [.15, .66 + hop, 0], .16);
   return finish(m, S, level, st, .55, facing);
 }
 
 function raven3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, young = level === 1, has = f => legend && S.legend.includes(f), m = new Model(), bob = frame ? .02 : 0;
-  for (const side of [-1, 1]) { const f = frame && side > 0 ? .04 : 0; m.seg([0, .3, side * .08], [.03, .03 + f, side * .08], .03, .025, M.NOSE, { group: side > 0 ? 7 : 2 }); m.ell([.08, .02 + f, side * .08], [.08, .015, .04], M.NOSE, { group: 2 }); }
+  for (const side of [-1, 1]) { const f = frame && side > 0 ? .04 : 0; m.seg([0, .3, side * .08], [.03, .03 + f, side * .08], .03, .025, M.NOSE, { group: side > 0 ? 7 : 2 }); m.ell([.08, .02 + f, side * .08], [.08, .015, .04], M.NOSE, { group: 2 }); m.anchors.feet.push({ c: [.07, .03 + f, side * .08], r: .06, group: side > 0 ? 7 : 2 }); }
   m.ell([-.55, .42, 0], [.32, .035, .12], M.BODY2, { dir: [-1, -.25, 0], group: 3 });
   m.ell([0, .52 + bob, 0], [.42, .26, .24], M.BODY, { dir: [1, .45, 0] });
   if (!has("wings")) for (const side of [-1, 1]) m.ell([-.1, .55 + bob, side * .2], [.45, .17, .05], M.BODY2, { dir: [-1, -.25, 0], group: side > 0 ? 4 : 2 });
@@ -1413,7 +1503,7 @@ function bat3d(S, level, frame, st, facing = "towards") {
 function mole3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, m = new Model(), f = frame ? .03 : 0;
   m.seg([-.5, .18, 0], [-.62, .12, 0], .04, .02, M.SKIN, { group: 3 });
-  for (const side of [-1, 1]) m.ell([-.3, .05, side * .2], [.07, .04, .05], M.SKIN, { group: side > 0 ? 6 : 2 });
+  for (const side of [-1, 1]) { m.ell([-.3, .05, side * .2], [.07, .04, .05], M.SKIN, { group: side > 0 ? 6 : 2 }); m.anchors.feet.push({ c: [-.3, .05, side * .2], r: .07, group: side > 0 ? 6 : 2 }); }
   m.ell([0, .3, 0], [.52, .29, .33], M.BODY, { paint: p => p[1] > .45 ? M.BODY2 : undefined });
   m.ell([.55, .24, 0], [.2, .07, .07], M.SKIN, { dir: [1, -.15, 0], group: 1 });
   m.ell([.74, .21, 0], [.04, .05, .06], M.NOSE, { group: 1 });
@@ -1423,6 +1513,9 @@ function mole3d(S, level, frame, st, facing = "towards") {
     for (let k = 0; k < 4; k++) m.ell(v3.add(h, [.14, -.01, side * (k - 1.5) * .05]), [.05, .015, .015], M.ACCENT, { group: side > 0 ? 7 : 2 });
   }
   for (const side of [-1, 1]) m.ell(Model.surface([0, .3, 0], [.52, .29, .33], v3.norm([.85, .3, side * .35])), [.015, .015, .015], legend ? M.MAGIC2 : M.EYE, { group: 1 });
+  m.anchors.head = { c: [.32, .34, 0], r: [.25, .22, .25], top: [.3, .58, 0] };
+  m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface([0, .3, 0], [.52, .29, .33], v3.norm([.85, .3, side * .35]))), size: .03 };
+  m.anchors.neck = { c: [.36, .3, 0], r: .27, dir: [1, .1, 0] };
   if (legend) crown3d(m, [.15, .62, 0], .15);
   return finish(m, S, level, st, .55, facing);
 }
@@ -1440,7 +1533,7 @@ function beetle3d(S, level, frame, st, facing = "towards") {
   const jl = [.3, .5, .7, .75][level] * (has("horn") ? 1.3 : 1), jm = has("horn") ? M.MAGIC : M.BODY3;
   for (const side of [-1, 1]) { const b = v3.add(hc, [.08, .02, side * .1]), e = v3.add(b, [jl * .7, jl * .45, side * jl * .15]), t = v3.add(e, [jl * .25, -jl * .12, -side * jl * .12]); m.chain([[...b, .045], [...e, .035], [...t, .015]], jm, { group: 8 + (side > 0 ? 1 : 0) }); m.seg(v3.lerp(b, e, .55), v3.add(v3.lerp(b, e, .55), [.0, jl * .22, 0]), .02, .008, jm, { group: 8 }); }
   for (const side of [-1, 1]) m.chain([[...v3.add(hc, [.05, .06, side * .1]), .012], [hc[0] + .1, .5, side * .22, .012], [hc[0] + .2, .5, side * .26, .012]], M.BODY3, { group: 9, extra: true });
-  eyesOn(m, hc, [.1, .1, .17], [[.4, .3, .85], [.4, .3, -.85]], .02, legend ? M.MAGIC2 : M.GLINT);
+  eyesOn(m, hc, [.1, .1, .17], [[.4, .3, .85], [.4, .3, -.85]], .032, legend ? M.MAGIC2 : M.EYE, 9); // its own group: too small to survive melting into the head
   if (has("crystals")) crystals3d(m, [[[-.35, .5, .1], .3], [[-.1, .55, -.08], .45], [[.1, .5, .1], .35]]);
   return finish(m, S, level, st, .5, facing);
 }
@@ -1450,6 +1543,9 @@ function snail3d(S, level, frame, st, facing = "towards") {
   m.ell([0, .07, 0], [.6 + g, .07, .17], M.SKIN, { group: 1 });
   m.chain([[.45 + g, .08, 0, .1], [.6 + g, .25, 0, .09], [.68 + g, .28, 0, .08]], M.SKIN, { group: 1 });
   for (const side of [-1, 1]) { m.seg([.7 + g, .32, side * .04], [.78 + g, .55, side * .1], .018, .014, M.SKIN, { group: 5 }); m.ell([.78 + g, .57, side * .1], [.03, .03, .03], legend ? M.MAGIC2 : M.EYE, { group: 5 }); }
+  m.anchors.head = { c: [.68 + g, .3, 0], r: [.09, .08, .09], top: [.66 + g, .38, 0] };
+  m.anchors.eyes = { pts: [-1, 1].map(side => [.78 + g, .57, side * .1]), size: .03 };
+  m.anchors.neck = { c: [.55 + g, .17, 0], r: .1, dir: [1, 1.2, 0] };
   const c = [-.12, .4, 0], shell = legend ? M.MAGIC : M.BODY;
   m.ell(c, [.32, .32, .22], shell, { group: 3, paint: p => { const a = Math.atan2(p[1] - c[1], p[0] - c[0]), rr = Math.hypot(p[0] - c[0], p[1] - c[1]) / .32, k = ((rr - a / (Math.PI * 2) * .3) % .3 + .3) % .3; return k < .06 ? (legend ? M.MAGIC2 : M.BODY3) : undefined; } });
   return finish(m, S, level, st, .45, facing);
@@ -1474,6 +1570,8 @@ function snake3d(S, level, frame, st, facing = "towards") {
   m.ell(hc, [hr * 1.5, hr * .75, hr], M.BODY, { dir: [1, -.15, 0], group: 1 });
   eyesOn(m, hc, [hr * 1.5, hr * .75, hr], [[.5, .5, .7], [.5, .5, -.7]], hr * .22, legend ? M.MAGIC2 : M.EYE);
   if (!frame) m.seg(v3.add(hc, [hr * 1.4, -hr * .2, 0]), v3.add(hc, [hr * 2.3, -hr * .3, 0]), .01, .008, M.SKIN, { group: 1 });
+  m.anchors.feet.push({ c: v3.add(pts[0].slice(0, 3), [-.02, -.01, 0]), r: .06, group: 3, tail: true }); // no feet: a tiny shoe on the tail tip
+  m.anchors.neck = { c: [.42, .36, pts[12][2] * .9], r: .075, dir: [.2, 1, 0] };
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [0, .2, side * .05], side, .9, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   return finish(m, S, level, st, .45, facing);
 }
@@ -1514,6 +1612,9 @@ function spider3d(S, level, frame, st, facing = "towards") {
   }
   m.ell([-.28, .38, 0], [.34, .28, .3], M.BODY, { paint: p => (Math.abs(p[2]) < .03 || Math.abs(p[0] + .28) < .03) && p[1] > .45 ? M.BELLY : undefined });
   m.ell(ce, [.18, .13, .17], M.BODY2, { group: 1 });
+  m.anchors.head = { c: ce, r: [.18, .13, .17] };
+  m.anchors.eyes = { pts: [[.05, .05], [.05, -.05]].map(([dy, dz]) => Model.surface(ce, [.18, .13, .17], v3.norm([.9, dy * 6, dz * 4]))), size: .03 };
+  m.anchors.neck = { c: [-.02, .32, 0], r: .15, dir: [1, 0, 0] };
   const ring = has("eyesRing");
   for (const [dy, dz] of [[.05, .05], [.05, -.05], [.02, .1], [.02, -.1]]) m.ell(Model.surface(ce, [.18, .13, .17], v3.norm([.9, dy * 6, dz * 4])), [.025, .025, .025], ring ? M.MAGIC2 : M.EYE, { group: 1 });
   if (ring) for (let i = 0; i < 5; i++) { const a = Math.PI * (.2 + i / 4 * .6); m.ell([-.3 + Math.cos(a) * .2, .75 + Math.sin(a) * .35, (i - 2) * .12], [.06, .06, .06], M.MAGIC2, { group: 95 + i, extra: true }); }
@@ -1569,7 +1670,32 @@ const SPECIES = [
 const SPECIES_BY_ID = Object.fromEntries(SPECIES.map(s => [s.id, s]));
 const FEATURE_NAMES = { wings: "spirit wings", mane: "a glowing mane", tails: "many tails", crystals: "crystals", tusksBig: "great tusks", antlersGlow: "glowing antlers", jackalope: "antlers", eyesRing: "a ring of eyes", moss: "a little forest on its back", starTail: "a starry tail", crown: "a crown", ribbons: "light ribbons", wingsBig: "huge glowing wings", horn: "a glowing horn", glowShell: "a glowing shell", hornsGlow: "glowing golden horns", flames: "a crest of flame", lantern: "a great lantern" };
 
-function speciesColours(sp, st) {
+// Party gear's colourways (gear in critter).
+const HAT_COLOURWAYS = [[[255, 70, 170], [255, 245, 250], [255, 230, 70]], [[40, 220, 255], [255, 236, 60], [255, 80, 180]], [[150, 80, 255], [175, 255, 60], [255, 255, 255]]];
+const SHOE_STYLES = { sneakers: [[255, 70, 90], [250, 250, 245]], glitter: [[215, 215, 235], [190, 190, 210]], platform: [[160, 60, 230], [40, 30, 52]] };
+const GLASSES_STYLES = ["bar", "star", "heart"];
+// A seeded mix of party gear for an invited creature (the prototype gives each its own seed):
+// always the collar in its sigil colour; often a hat, sunglasses or shoes; sometimes all three.
+function partyGear(seed, collarColour = true) {
+  const r = rng((seed | 0) * 7919 + 17), all = r() < .12;
+  return {
+    collar: collarColour,
+    hat: all || r() < .45 ? Math.floor(r() * HAT_COLOURWAYS.length) : null,
+    glasses: all || r() < .4 ? GLASSES_STYLES[r() < .6 ? 0 : r() < .5 ? 1 : 2] : null,
+    shoes: all || r() < .4 ? Object.keys(SHOE_STYLES)[Math.floor(r() * 3)] : null,
+  };
+}
+function speciesColours(sp, st, gear = null) {
+  const c = baseColours(sp, st);
+  if (!gear) return c;
+  if (gear.collar) c[M.COLLAR] = Array.isArray(gear.collar) ? gear.collar : c[M.MAGIC];
+  if (gear.hat != null) { const [a, b, pom] = HAT_COLOURWAYS[gear.hat % HAT_COLOURWAYS.length]; c[M.HAT1] = a; c[M.HAT2] = b; c[M.POM] = pom; }
+  if (gear.glasses) { c[M.SHADES] = [22, 18, 32]; c[M.FRAME] = gear.glasses === "heart" ? [255, 60, 110] : [255, 90, 210]; }
+  if (gear.shoes) { const [shoe, sole] = SHOE_STYLES[gear.shoes] || SHOE_STYLES.sneakers; c[M.SHOE] = shoe; c[M.SOLE] = sole; }
+  if (gear.woken) { c[M.WOKEN] = [255, 40, 36]; for (const k of [M.BODY, M.BODY2, M.BODY3, M.BELLY, M.ACCENT, M.EAR]) if (c[k]) c[k] = c[k].map((v, j) => Math.round(v * .72 + [30, 8, 12][j] * .1)); } // darker, a little redder
+  return c;
+}
+function baseColours(sp, st) {
   const s = SPECIES_BY_ID[sp], v = st.cVal / .85, sat = st.cSat / .6;
   const body = hsv2rgb(s.hue, s.sat * sat * st.sat, s.val * v);
   const belly = s.belly === "yellow" ? [240, 196, 40] : s.belly === "white" || s.q?.face === "badger" ? [236, 232, 222] : hsv2rgb(s.hue + .03, s.sat * .5 * sat, Math.min(1, s.val * v * 1.3 + .08));
@@ -1594,11 +1720,17 @@ const levelHeight = (level, st) => height3d(level, st);
 // Shapes don't depend on colours, so a creature is drawn once per shape-changing knob setting
 // (a lab session changes lighting and colour knobs far more often than these).
 const SHAPE_KNOBS = ["size", "growth", "pixel", "head", "eye", "legs", "long", "fur"], cache = new Map();
-function critter(spId, level, frame, st, facing = "towards") {
-  const S = SPECIES_BY_ID[spId] || SPECIES[0], key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k])].join("|");
+// gear (optional): party gear and the woken look, { collar, hat, glasses, shoes, woken }:
+//   collar: a colour [r, g, b] (the creature's sigil neon) or true; hat: a colourway 0..2;
+//   glasses: "bar" | "star" | "heart"; shoes: "sneakers" | "glitter" | "platform"; woken: true.
+// Give the same gear to speciesColours for its colours. Shapes are cached per gear combination.
+function critter(spId, level, frame, st, facing = "towards", gear = null) {
+  const S = SPECIES_BY_ID[spId] || SPECIES[0], g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken) ? gear : null;
+  const key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken].join(",") : ""].join("|");
   let sp = cache.get(key);
   if (!sp) {
-    sp = S.q ? quad3d(S, level, frame, st, facing) : MODELLED.get(S.plan)(S, level, frame, st, facing);
+    sp = withGear(g, () => S.q ? quad3d(S, level, frame, st, facing) : MODELLED.get(S.plan)(S, level, frame, st, facing));
+    if (g?.woken) for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.EYE || sp.m[i] === M.IRIS || sp.m[i] === M.PUPIL) sp.m[i] = M.WOKEN; // angry glowing eyes
     if (cache.size > 600) cache.delete(cache.keys().next().value);
     cache.set(key, sp);
   }
@@ -2873,10 +3005,15 @@ function renderBestiary() {
   bestiaryTimer = setTimeout(() => {
     const host = document.getElementById("bestiary"); if (!host) return; host.textContent = "";
     const studio = { ...current, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 };
-    for (const S of SPECIES) {
+    const mode = document.getElementById("gearMode").value, on = id => document.getElementById(id).checked;
+    document.getElementById("gearItems").hidden = mode !== "party";
+    SPECIES.forEach((S, n) => {
       const facing = document.getElementById("away").checked ? "away" : "towards";
-      const lv = [0, 1, 2, 3].map(l => bake(critter(S.id, l, 0, current, facing), speciesColours(S.id, current), current, current.cOutline));
-      const b1 = bake(critter(S.id, 0, 1, current, facing), speciesColours(S.id, current), current, current.cOutline);
+      // party animals: the collar always, and the chosen items (or each creature's own seeded mix); woken: angry eyes
+      const gear = mode === "woken" ? { woken: true } : mode !== "party" ? null : on("gMix") ? partyGear(n + 1, sigilColour(S.id)) : { collar: sigilColour(S.id), hat: on("gHat") ? n % 3 : null, glasses: on("gGlasses") ? GLASSES_STYLES[n % 3] : null, shoes: on("gShoes") ? Object.keys(SHOE_STYLES)[n % 3] : null };
+      const levelGear = l => gear && l === 3 && mode === "party" ? null : gear; // legends can't be invited yet
+      const lv = [0, 1, 2, 3].map(l => bake(critter(S.id, l, 0, current, facing, levelGear(l)), speciesColours(S.id, current, levelGear(l)), current, current.cOutline));
+      const b1 = bake(critter(S.id, 0, 1, current, facing, gear), speciesColours(S.id, current, gear), current, current.cOutline);
       const w = lv[3].w + lv[2].w + lv[1].w + lv[0].w + b1.w + 22, h = Math.max(lv[3].h, 20) + 6, tgt = makeTarget(w, h);
       tgt.a.fillStyle = `rgb(${hsv2rgb(current.groundHue, .4, current.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
       let x = 4; for (const b of [lv[3], lv[2], lv[1], lv[0], b1]) { tgt.a.drawImage(b.A, x, h - 3 - b.h); tgt.n.drawImage(b.N, x, h - 3 - b.h); x += b.w + 4; }
@@ -2884,7 +3021,7 @@ function renderBestiary() {
       const c = document.createElement("canvas"); c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
       const cap = document.createElement("figcaption"); cap.innerHTML = `<b></b><span></span>`; cap.querySelector("b").textContent = S.name; cap.insertAdjacentHTML("afterbegin", `<span class="sig" aria-hidden="true">${sigilSVG(S.id, { size: 44 })}</span>`); cap.querySelector("span:not(.sig)").textContent = "Legend grows " + S.legend.map(f => FEATURE_NAMES[f] || f).join(" and ") + ". Shown: legend, adult, young, baby (two walk frames).";
       card.append(c, cap); host.append(card);
-    }
+    });
   }, 250);
 }
 
@@ -3114,6 +3251,7 @@ document.getElementById("save").addEventListener("click", async () => {
 });
 (async () => { try { db = window.claude ? await window.claude.use("db") : null; if (db) db.collection("styles").orderBy("savedAt", "desc").onSnapshot(s => renderSaved(s.docs), () => {}); } catch { db = null; } })();
 document.getElementById("copy").addEventListener("click", async () => { const ta = document.getElementById("json"); try { await navigator.clipboard.writeText(ta.value); toast("Style file copied."); } catch { ta.select(); toast("Selected; copy it with your keyboard."); } });
+for (const id of ["gearMode", "gHat", "gGlasses", "gShoes", "gMix"]) document.getElementById(id).addEventListener("change", () => renderBestiary());
 document.getElementById("away").addEventListener("change", renderBestiary);
 document.getElementById("reroll").addEventListener("click", () => { varySeed++; makeVariants(); });
 document.getElementById("strength").addEventListener("change", () => { varySeed++; makeVariants(); });

@@ -4,6 +4,7 @@
 //   node art/preview.mjs trees all art/previews/trees.png [scale]
 //   node art/preview.mjs areas all art/previews/areas.png [scale]
 //   node art/preview.mjs lights all art/previews/light-sources.png [scale]
+//   node art/preview.mjs party wolf,fox,owl art/previews/party.png [scale]
 //   node art/preview.mjs sigils all art/previews/sigils.png [scale]
 //   node art/preview.mjs soundsystems all art/previews/soundsystems.png [scale]
 // Optional env LEVELS=1,0 draws only those levels; FACINGS=towards,away one row per view; TREES=wBroad,wFir only those kinds.
@@ -53,7 +54,16 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, W * scale, H * scale);
     return big.toDataURL("image/png");
   }
-  if (what === "animals") {
+  if (what === "party") { // each listed species in party gear (a different mix per row, all items on the first) at baby, young and adult, towards then away; then woken
+    const S = await import(gen.replace("generator.js", "sigils.js")), ids = list.split(",");
+    ids.forEach((id, n) => {
+      const gear = n === 0 ? { collar: S.sigilColour(id), hat: 0, glasses: "bar", shoes: "sneakers" } : { ...G.partyGear(n * 3 + 1, S.sigilColour(id)), ...(n % 3 === 1 ? { hat: n % 3, shoes: "platform" } : n % 3 === 2 ? { glasses: ["star", "heart"][n % 2], shoes: "glitter" } : { hat: 2, glasses: "bar" }) };
+      const row = [];
+      for (const facing of ["towards", "away"]) for (const l of [2, 1, 0]) row.push(G.bake(G.critter(id, l, 0, st, facing, gear), G.speciesColours(id, st, gear), st, st.cOutline));
+      const woken = { woken: true }; row.push(G.bake(G.critter(id, 1, 0, st, "towards", woken), G.speciesColours(id, st, woken), st, st.cOutline));
+      rows.push(row);
+    });
+  } else if (what === "animals") {
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(",");
     for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push((window.LEVELS || [3, 2, 1, 0]).flatMap(l => [0, 1].map(f => G.bake(G.critter(id, l, f, st, facing), G.speciesColours(id, st), st, st.cOutline))));
   } else if (what === "lights") { // the campfire's frames, the magic stones, the pond

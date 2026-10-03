@@ -121,7 +121,9 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
-        <div class="row" style="justify-content:space-between"><h2>Bestiary</h2><label class="check"><input type="checkbox" id="away"> Show turned away</label></div>
+        <div class="row" style="justify-content:space-between"><h2>Bestiary</h2><div class="row"><label class="check"><input type="checkbox" id="away"> Show turned away</label>
+          <label class="note" for="gearMode">Show</label><select id="gearMode"><option value="wild">Wild</option><option value="party">Party animals</option><option value="woken">Woken</option></select>
+          <span id="gearItems" class="row" hidden><label class="check"><input type="checkbox" id="gHat" checked> Hat</label><label class="check"><input type="checkbox" id="gGlasses" checked> Sunglasses</label><label class="check"><input type="checkbox" id="gShoes" checked> Shoes</label><label class="check"><input type="checkbox" id="gMix"> Mixed</label></span></div></div>
         <p class="note">Thirty forest animals, each as legend, adult, young and baby, in the current style under even light, turned towards you (or away, for creatures walking up the screen). Legends grow the magical features listed.</p>
         <div class="bestiary" id="bestiary"></div>
       </section>
@@ -178,7 +180,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
+import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -386,10 +388,15 @@ function renderBestiary() {
   bestiaryTimer = setTimeout(() => {
     const host = document.getElementById("bestiary"); if (!host) return; host.textContent = "";
     const studio = { ...current, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 };
-    for (const S of SPECIES) {
+    const mode = document.getElementById("gearMode").value, on = id => document.getElementById(id).checked;
+    document.getElementById("gearItems").hidden = mode !== "party";
+    SPECIES.forEach((S, n) => {
       const facing = document.getElementById("away").checked ? "away" : "towards";
-      const lv = [0, 1, 2, 3].map(l => bake(critter(S.id, l, 0, current, facing), speciesColours(S.id, current), current, current.cOutline));
-      const b1 = bake(critter(S.id, 0, 1, current, facing), speciesColours(S.id, current), current, current.cOutline);
+      // party animals: the collar always, and the chosen items (or each creature's own seeded mix); woken: angry eyes
+      const gear = mode === "woken" ? { woken: true } : mode !== "party" ? null : on("gMix") ? partyGear(n + 1, sigilColour(S.id)) : { collar: sigilColour(S.id), hat: on("gHat") ? n % 3 : null, glasses: on("gGlasses") ? GLASSES_STYLES[n % 3] : null, shoes: on("gShoes") ? Object.keys(SHOE_STYLES)[n % 3] : null };
+      const levelGear = l => gear && l === 3 && mode === "party" ? null : gear; // legends can't be invited yet
+      const lv = [0, 1, 2, 3].map(l => bake(critter(S.id, l, 0, current, facing, levelGear(l)), speciesColours(S.id, current, levelGear(l)), current, current.cOutline));
+      const b1 = bake(critter(S.id, 0, 1, current, facing, gear), speciesColours(S.id, current, gear), current, current.cOutline);
       const w = lv[3].w + lv[2].w + lv[1].w + lv[0].w + b1.w + 22, h = Math.max(lv[3].h, 20) + 6, tgt = makeTarget(w, h);
       tgt.a.fillStyle = `rgb(${hsv2rgb(current.groundHue, .4, current.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
       let x = 4; for (const b of [lv[3], lv[2], lv[1], lv[0], b1]) { tgt.a.drawImage(b.A, x, h - 3 - b.h); tgt.n.drawImage(b.N, x, h - 3 - b.h); x += b.w + 4; }
@@ -397,7 +404,7 @@ function renderBestiary() {
       const c = document.createElement("canvas"); c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
       const cap = document.createElement("figcaption"); cap.innerHTML = `<b></b><span></span>`; cap.querySelector("b").textContent = S.name; cap.insertAdjacentHTML("afterbegin", `<span class="sig" aria-hidden="true">${sigilSVG(S.id, { size: 44 })}</span>`); cap.querySelector("span:not(.sig)").textContent = "Legend grows " + S.legend.map(f => FEATURE_NAMES[f] || f).join(" and ") + ". Shown: legend, adult, young, baby (two walk frames).";
       card.append(c, cap); host.append(card);
-    }
+    });
   }, 250);
 }
 
@@ -627,6 +634,7 @@ document.getElementById("save").addEventListener("click", async () => {
 });
 (async () => { try { db = window.claude ? await window.claude.use("db") : null; if (db) db.collection("styles").orderBy("savedAt", "desc").onSnapshot(s => renderSaved(s.docs), () => {}); } catch { db = null; } })();
 document.getElementById("copy").addEventListener("click", async () => { const ta = document.getElementById("json"); try { await navigator.clipboard.writeText(ta.value); toast("Style file copied."); } catch { ta.select(); toast("Selected; copy it with your keyboard."); } });
+for (const id of ["gearMode", "gHat", "gGlasses", "gShoes", "gMix"]) document.getElementById(id).addEventListener("change", () => renderBestiary());
 document.getElementById("away").addEventListener("change", renderBestiary);
 document.getElementById("reroll").addEventListener("click", () => { varySeed++; makeVariants(); });
 document.getElementById("strength").addEventListener("change", () => { varySeed++; makeVariants(); });

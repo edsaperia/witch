@@ -51,6 +51,11 @@ export const M = {
   RUNE: 39,    // a carved rune's glow
   GLOW: 40,    // glowing crystal: a soundsystem's cones and the depths of its horns
   WOOD: 41,    // varnished wooden trim
+  COLLAR: 42,  // a party animal's glowing collar, in its sigil's neon
+  HAT1: 43, HAT2: 44, POM: 45, // a party hat's stripes and pompom
+  SHADES: 46, FRAME: 47,       // sunglasses: dark lenses, fancy frames
+  SHOE: 48, SOLE: 49,          // fancy shoes
+  WOKEN: 50,   // a woken creature's angry glowing eyes
 };
 // These glow: drawn at full colour by the lighting pass, whatever the light.
 // The rune glyphs: one carved-rune language for the magic stones and the soundsystem. Simple,
@@ -69,7 +74,7 @@ export function runeGlyph(u, v, k, w = .12) {
     default: return line(.3, .08, .3, .92) || line(.3, .12, .75, .35) || line(.75, .35, .3, .55) || line(.3, .55, .78, .92); // a hooked stave
   }
 }
-export const EMISSIVE = new Set([M.GLINT, M.FLOWER, M.MAGIC, M.MAGIC2, M.RUNE, M.GLOW]);
+export const EMISSIVE = new Set([M.GLINT, M.FLOWER, M.MAGIC, M.MAGIC2, M.RUNE, M.GLOW, M.COLLAR, M.WOKEN]);
 
 // ================= geometry: smooth outlines =================
 // Points are [x, y] in sprite pixels. A closed outline is a list of control points; the
