@@ -32,6 +32,13 @@ So the party's growth is both the goal and the source of the danger.
 - Because the party zone is a circle growing in 2D, **eventually the witch cannot get round it fast enough to invite all the creatures**.
 - **Destroyed soundsystems stay destroyed.**
 - **The run ends when every soundsystem is destroyed.** Soundsystems get harder to defend as the area grows.
+- **Score is how long you survived**; the reward is **how much of the music you get to hear**.
+- The **map starts much larger** than any party reasonably gets; the edge is never reached.
+- **The clock is fixed**: everything is balanced around the wave timer and the length of an average game, **about 20 minutes**. There may be game modes or difficulty levels.
+- **Arcade, not economy**: balance for an **inevitable, catastrophic defeat** rather than an economy slowly overwhelmed. Playtesting and changing numbers will find what is fun.
+- **The arc of a run**: at the start the music is gentle and the forest large and dark, and it feels like exploring a huge magical forest full of mysterious creatures; by the end it is a chaotic, frantic bullet-hell battleground.
+- Ideas, not settled: the party may spread **through neighbouring areas** rather than in a strict circle, giving an irregular shape that differs every run, with **soundsystems at the areas' Voronoi points**; soundsystems may be **repairable, slowly**.
+- Woken creatures **go for the nearest soundsystem**. They fight the witch's creatures if in range or attacked.
 
 ## The witch
 
@@ -53,14 +60,19 @@ The trade is speed against information: treetop mode covers distance, ground mod
 
 - **One kind of creature per area type**, so as many kinds as area types: about **30 to test with**, **100 or more by release**.
 - Each kind has **a few levels**, from **cute babies** up to **giant legendary magical creatures**.
-- **Levelling up**: the witch leads creatures around to **eat berries** that grow in the forest.
+- **Levelling up**: the witch leads creatures around to **eat berries** that grow in the forest; it is the only way to level up. Berries may not regrow, or regrow slowly, so taking creatures into the forest to level them up is an adventure.
+- **Neutral behaviour varies by kind, and perhaps by level**: some attack, some run away, some ignore her, some are friendly, some flock or surround her.
+- How deeply music wakes a creature **varies by kind**.
+- **Defeated creatures run away and disappear.**
+- Creatures **pass through each other**, with a **repulsion force** as they get close.
 - **The main work of the game is unique behaviour for each creature.**
-- Creatures **spawn in their own area**. Areas may change how creatures move: some slower or faster, some impassable (for example a watery area that some creatures cannot cross, or cross slowly). Undecided whether a creature is better in its own area.
+- Creatures **spawn in their own area**. Areas may change how creatures move: some slower or faster, some impassable (for example a watery area that some creatures cannot cross, or cross slowly). Whether a creature is better in its own area is left open on purpose: with so many creatures to design, each may have its own relationship with areas.
 
 ## The leash
 
 - A leashed creature **roams within the length of its leash** around a **leash point**.
 - The witch can **pick up a leash point and put it down again** elsewhere.
+- The witch carries leashes as a **stack**: one button **picks up or places**, last in, first out. She can **carry many leashes at once**, and can "fight" by **leading a swarm around**.
 - Leashes are **somewhat elastic**: the witch moves much faster than most creatures, so she can fly off with a leash point, put it down somewhere, and the creature makes its way towards it.
 
 ## The forest: areas and the map
@@ -116,15 +128,11 @@ The trade is speed against information: treetop mode covers distance, ground mod
 
 ## Open questions
 
-- What makes a run good: how many waves, how big the party got, or reaching the map's edge.
-- What persists between runs.
+- What persists between runs (perhaps new creatures).
 - What a destroyed soundsystem does to the party zone around it.
-- Invitations: how many; which creatures count as young; whether a defeated creature can later be invited.
-- Which creatures sleep, and how the music wakes them.
-- How many leashes the witch can hold.
+- Music: Ed hopes to make it with the coordinator.
+- Which creatures count as young enough to invite.
 - Music: how it intensifies, and whether anything moves to the beat.
-- Whether creatures are blocked by trees and by each other.
-- Whether a creature is better in its own area.
 - The art generator: which one; how frames are made.
 - Engine: Godot 4 exported to the web is the provisional choice, to be confirmed by the first build.
 
@@ -132,7 +140,7 @@ The trade is speed against information: treetop mode covers distance, ground mod
 
 - **Dancefloor**: the ritual circle in the middle of the map; the home the party is held at.
 - **Wave**: a step in the party's growth, every few minutes: the music gets louder and new soundsystems appear further out.
-- **Invitation**: what the witch gives a young creature, before the music wakes it, to bring it to her side.
+- **Invitation**: what the witch gives a young creature, before the music wakes it, to bring it to her side: she goes close and holds a button for a couple of seconds.
 - **Party zone**: the area around the dancefloor where the party has spread: lit trees, party paraphernalia, music.
 - **Soundsystem**: a speaker stack that spreads the music; what woken creatures try to destroy.
 - **Area**: a region of the forest, about a screen in size, with its own vegetation and its own kind of creature.
