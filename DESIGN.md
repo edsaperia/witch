@@ -29,6 +29,7 @@ So the party's growth is both the goal and the source of the danger.
 ### Waves and the end of a run (Ed, 2026-10-03)
 
 - The party grows in **waves**: every few minutes the **music gets louder** and **new soundsystems magically appear** further from the dancefloor, in a **roughly circular pattern**.
+  - **First prototype rule** (Ed, 2026-10-03): a wave every **30 seconds** (a countdown bar down the side of the screen, for prototyping). On each wave, **every area adjacent to a partified area** (home, or an area with a soundsystem) **gets a soundsystem and becomes partified**, with a short **magical transition**: a wave of light sweeps in from the neighbour, the string lights pop on, and the soundsystem rises in the clearing.
 - Because the party zone is a circle growing in 2D, **eventually the witch cannot get round it fast enough to invite all the creatures**.
 - **Destroyed soundsystems stay destroyed.**
 - **The run ends when every soundsystem is destroyed.** Soundsystems get harder to defend as the area grows.
