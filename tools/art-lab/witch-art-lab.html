@@ -149,7 +149,8 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 
       <section style="display:grid;gap:10px">
         <div class="row" style="justify-content:space-between"><h2>Trees</h2><div class="row"><label class="note" for="treeArea">Area</label><select id="treeArea"></select></div></div>
-        <p class="note">An area's trees across their whole range of heights, from saplings to the occasional giant that pokes above the canopy, with the witch for scale.</p>
+        <p class="note">An area's trees across their whole range of heights, from saplings to the occasional giant that pokes above the canopy, with the witch for scale, and how the area lays out its vegetation (its layout, which the prototype's generator reads).</p>
+        <p class="note" id="treeLayout"></p>
         <div class="sheet-wrap"><canvas id="treeSheet" width="420" height="160"></canvas></div>
       </section>
 
@@ -192,7 +193,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours, areaTreeVariants, AREAS, WITCH_FOOT_POSES, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
+import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours, areaTreeVariants, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -426,7 +427,10 @@ function renderTrees() {
   clearTimeout(treeTimer);
   treeTimer = setTimeout(() => {
     const c = document.getElementById("treeSheet"), sel = document.getElementById("treeArea"); if (!c || !sel) return;
-    if (!sel.options.length) { for (const A of AREAS) if ((A.big || []).some(([k]) => k === "tree")) sel.add(new Option(A.name, A.id)); sel.addEventListener("change", renderTrees); }
+    if (!sel.options.length) { for (const A of AREAS) sel.add(new Option(A.name, A.id)); sel.addEventListener("change", renderTrees); }
+    const y = AREA_BY_ID[sel.value].layout, pct = v => Math.round(v * 100) + "%", info = document.getElementById("treeLayout");
+    if (info && y) info.textContent = `${y.feel} Pattern ${y.pattern}${y.along ? " along " + y.along : ""}, density ${pct(y.density)}, clump ${pct(y.clump)}, ${y.glades.count} glade${y.glades.count === 1 ? "" : "s"}${y.glades.count ? ` (${y.glades.size[0]}-${y.glades.size[1]} m)` : ""}, undergrowth ${pct(y.undergrowth)}${y.lean.amount ? `, leaning ${pct(y.lean.amount)} toward ${y.lean.dir}°` : ""}; terrain: ${y.terrain.join(", ")}; ` +
+      (y.heightMix ? "height mix " + Object.entries(y.heightMix).map(([k, v]) => k + " " + pct(v)).join(", ") : "its big objects aren't trees") + "; decorations " + pct(y.decor.rate) + ": " + Object.entries(y.decor).filter(([k, v]) => k !== "rate" && v).map(([k, v]) => k + " " + pct(v)).join(", ") + ".";
     const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 6;
     const row = [...areaTreeVariants(sel.value, st).map(v => v.whole), bake(witchSprite(st), witchColours(st), st, st.cOutline)];
     const w = row.reduce((a, x) => a + x.w + gap, gap), h = Math.max(...row.map(x => x.h)) + gap * 2, tgt = makeTarget(w, h);
