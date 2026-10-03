@@ -1,0 +1,49 @@
+{
+  "_readme": "Witch tuning. Edit the numbers, push, and the playable link rebuilds. Distances are metres, times seconds, angles degrees. Keys starting with _ are notes.",
+
+  "_map": "The forest: 20 x 20 areas cut by the fractal partition; borderLayers sets how wiggly borders are.",
+  "mapAreas": 20,
+  "areaSize": 28,
+  "borderLayers": 4,
+
+  "_trees": "treeDensity scales how many trees; clearingSize (0-1) how large the open middle of each area is; trees sit on a staggered grid treeSpacingX by treeSpacingZ metres, so no two crowns pile up.",
+  "treeDensity": 1,
+  "clearingSize": 0.55,
+  "bushDensity": 1,
+  "treeSpacingX": 5.5,
+  "treeSpacingZ": 3.4,
+  "bushSpacing": 3.4,
+
+  "_witch": "Speeds per mode, and how long rising and descending take.",
+  "groundSpeed": 6,
+  "treetopSpeed": 14,
+  "acceleration": 10,
+  "riseTime": 0.7,
+  "descendTime": 0.55,
+  "groundHeight": 1.4,
+  "treetopHeight": 11,
+
+  "_camera": "Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out. Zoom moves between them in zoomSteps steps.",
+  "camera": {
+    "fov": 32,
+    "ground": { "angleIn": 34, "angleOut": 48, "distanceIn": 26, "distanceOut": 52 },
+    "treetop": { "angleIn": 50, "angleOut": 62, "distanceIn": 40, "distanceOut": 80 },
+    "zoomSteps": 4,
+    "startZoom": 1,
+    "follow": 6
+  },
+
+  "_look": "pixelSize: screen pixels per art pixel. glowReach: metres the witch's light reaches. spriteTilt: 1 = sprites face the camera fully, 0 = stand upright.",
+  "pixelSize": 2,
+  "glowReach": 8,
+  "glowHeight": 1,
+  "spriteTilt": 1,
+  "artPixelsPerMetre": 16,
+  "drawRadius": 70,
+
+  "_creatures": "Per clearing: how many babies and young; legendChance: the share of areas with a legend in their clearing.",
+  "creaturesPerClearing": 3,
+  "legendChance": 0.08,
+  "creatureSpeed": 0.6,
+  "legendSpeed": 0.35
+}

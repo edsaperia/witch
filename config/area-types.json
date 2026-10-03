@@ -1,0 +1,245 @@
+{
+  "_readme": "Area types (placeholders): each has a leaf colour (leafHue: offset round the colour wheel from the style's leaf hue, 0 to 1 is a full turn), its favourite tree shapes (wBroad gnarled broadleaf, wFir fir, wWillow willow, wBirch birch, wPalm tree fern, wFlat flat-crowned) and the kind of creature that lives there. groundHue nudges the ground colour.",
+  "types": [
+    {
+      "id": "type-01",
+      "name": "Green broadleaf wood",
+      "leafHue": 0,
+      "trees": ["wBroad"],
+      "creature": "wolf",
+      "groundHue": 0
+    },
+    {
+      "id": "type-02",
+      "name": "Blue fir forest",
+      "leafHue": 0.26,
+      "trees": ["wFir"],
+      "creature": "fox",
+      "groundHue": 0.031
+    },
+    {
+      "id": "type-03",
+      "name": "Autumn oak wood",
+      "leafHue": -0.22,
+      "trees": ["wBroad", "wFlat"],
+      "creature": "badger",
+      "groundHue": -0.026
+    },
+    {
+      "id": "type-04",
+      "name": "Silver birch grove",
+      "leafHue": 0.08,
+      "trees": ["wBirch"],
+      "creature": "boar",
+      "groundHue": 0.01
+    },
+    {
+      "id": "type-05",
+      "name": "Weeping willow marsh",
+      "leafHue": 0.04,
+      "trees": ["wWillow"],
+      "creature": "stag",
+      "groundHue": 0.005
+    },
+    {
+      "id": "type-06",
+      "name": "Fern gully",
+      "leafHue": -0.04,
+      "trees": ["wPalm"],
+      "creature": "hare",
+      "groundHue": -0.005
+    },
+    {
+      "id": "type-07",
+      "name": "Flat-crowned heath",
+      "leafHue": -0.12,
+      "trees": ["wFlat"],
+      "creature": "owl",
+      "groundHue": -0.014
+    },
+    {
+      "id": "type-08",
+      "name": "Deep pine forest",
+      "leafHue": 0.18,
+      "trees": ["wFir", "wBroad"],
+      "creature": "bear",
+      "groundHue": 0.022
+    },
+    {
+      "id": "type-09",
+      "name": "Golden birch wood",
+      "leafHue": -0.16,
+      "trees": ["wBirch"],
+      "creature": "hedgehog",
+      "groundHue": -0.019
+    },
+    {
+      "id": "type-10",
+      "name": "Teal willow fen",
+      "leafHue": 0.2,
+      "trees": ["wWillow", "wPalm"],
+      "creature": "squirrel",
+      "groundHue": 0.024
+    },
+    {
+      "id": "type-11",
+      "name": "Red maple wood",
+      "leafHue": -0.3,
+      "trees": ["wBroad"],
+      "creature": "toad",
+      "groundHue": -0.036
+    },
+    {
+      "id": "type-12",
+      "name": "Violet fir hollow",
+      "leafHue": 0.42,
+      "trees": ["wFir"],
+      "creature": "otter",
+      "groundHue": 0.05
+    },
+    {
+      "id": "type-13",
+      "name": "Lime fern dell",
+      "leafHue": -0.08,
+      "trees": ["wPalm", "wBirch"],
+      "creature": "lynx",
+      "groundHue": -0.01
+    },
+    {
+      "id": "type-14",
+      "name": "Copper heath",
+      "leafHue": -0.26,
+      "trees": ["wFlat", "wBirch"],
+      "creature": "elk",
+      "groundHue": -0.031
+    },
+    {
+      "id": "type-15",
+      "name": "Sea-green willows",
+      "leafHue": 0.14,
+      "trees": ["wWillow"],
+      "creature": "raven",
+      "groundHue": 0.017
+    },
+    {
+      "id": "type-16",
+      "name": "Indigo pinewood",
+      "leafHue": 0.34,
+      "trees": ["wFir", "wFlat"],
+      "creature": "bat",
+      "groundHue": 0.041
+    },
+    {
+      "id": "type-17",
+      "name": "Olive broadleaf thicket",
+      "leafHue": -0.06,
+      "trees": ["wBroad", "wWillow"],
+      "creature": "mole",
+      "groundHue": -0.007
+    },
+    {
+      "id": "type-18",
+      "name": "Rose-leaf grove",
+      "leafHue": 0.62,
+      "trees": ["wBroad", "wBirch"],
+      "creature": "beaver",
+      "groundHue": 0.074
+    },
+    {
+      "id": "type-19",
+      "name": "Cyan fern hollow",
+      "leafHue": 0.24,
+      "trees": ["wPalm"],
+      "creature": "stoat",
+      "groundHue": 0.029
+    },
+    {
+      "id": "type-20",
+      "name": "Amber flat-crowns",
+      "leafHue": -0.19,
+      "trees": ["wFlat"],
+      "creature": "beetle",
+      "groundHue": -0.023
+    },
+    {
+      "id": "type-21",
+      "name": "Mossy oakwood",
+      "leafHue": 0.02,
+      "trees": ["wBroad", "wFlat"],
+      "creature": "wolf",
+      "groundHue": 0.002
+    },
+    {
+      "id": "type-22",
+      "name": "Frost fir ridge",
+      "leafHue": 0.3,
+      "trees": ["wFir", "wBirch"],
+      "creature": "fox",
+      "groundHue": 0.036
+    },
+    {
+      "id": "type-23",
+      "name": "Rust willow bog",
+      "leafHue": -0.24,
+      "trees": ["wWillow"],
+      "creature": "boar",
+      "groundHue": -0.029
+    },
+    {
+      "id": "type-24",
+      "name": "Jade birch wood",
+      "leafHue": 0.1,
+      "trees": ["wBirch", "wPalm"],
+      "creature": "stag",
+      "groundHue": 0.012
+    },
+    {
+      "id": "type-25",
+      "name": "Plum fern wood",
+      "leafHue": 0.52,
+      "trees": ["wPalm", "wBroad"],
+      "creature": "owl",
+      "groundHue": 0.062
+    },
+    {
+      "id": "type-26",
+      "name": "Yellow broadleaf",
+      "leafHue": -0.13,
+      "trees": ["wBroad"],
+      "creature": "bear",
+      "groundHue": -0.016
+    },
+    {
+      "id": "type-27",
+      "name": "Blue-green flat-crowns",
+      "leafHue": 0.16,
+      "trees": ["wFlat", "wFir"],
+      "creature": "hare",
+      "groundHue": 0.019
+    },
+    {
+      "id": "type-28",
+      "name": "Magenta willow glade",
+      "leafHue": 0.7,
+      "trees": ["wWillow", "wBirch"],
+      "creature": "squirrel",
+      "groundHue": 0.084
+    },
+    {
+      "id": "type-29",
+      "name": "Dark fir wood",
+      "leafHue": 0.22,
+      "trees": ["wFir"],
+      "creature": "elk",
+      "groundHue": 0.026
+    },
+    {
+      "id": "type-30",
+      "name": "Ochre fern heath",
+      "leafHue": -0.1,
+      "trees": ["wPalm", "wFlat"],
+      "creature": "raven",
+      "groundHue": -0.012
+    }
+  ]
+}
