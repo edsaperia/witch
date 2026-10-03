@@ -83,7 +83,8 @@ async function main() {
     check(s.mode === "ground", "still in ground mode");
     await shot(page, "02-ground-flying.png");
     await page.keyboard.press("Space");
-    await sleep(1500);
+    // The rise takes riseTime of game time: wait for it to finish, however slow the frames here.
+    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000, polling: 50 }).catch(() => {});
     s = await state(page);
     check(s.mode === "treetop", `space rises to treetop mode (${s.mode})`);
     await shot(page, "03-treetop.png");
@@ -166,7 +167,7 @@ async function main() {
     await touch("pointerup", 150, 600);
     check(s1.x > s0.x + 2 && s1.z < s0.z - 2, `the touch joystick flies her north-east (${(s1.x - s0.x).toFixed(1)}, ${(s1.z - s0.z).toFixed(1)} m)`);
     await page.touchscreen.tap(345, 770); // the rise / descend button
-    await sleep(1500);
+    await page.waitForFunction(() => window.witch.game.witch.mode !== "ground" && window.witch.game.witch.mode === "treetop", null, { timeout: 60000, polling: 50 }).catch(() => {});
     check((await state(page)).mode === "treetop", "the round button rises to treetop mode");
     await shot(page, "11-phone-treetop.png");
   });
@@ -331,8 +332,8 @@ async function main() {
       await page.keyboard.press(ZOOM_OUT); await page.keyboard.press(ZOOM_OUT);
       await hold(page, "KeyA", 4, 600000);
       await shot(page, `vanish-${w}x${h}-treetop-out.png`);
-      const r = await page.evaluate(() => ({ dropped: window.maxDropped, pops: window.witch.view.pops.slice(0, 12), n: window.witch.view.pops.length, trees: window.witch.view.stats.trees }));
-      check(r.dropped === 0, `${w}x${h} at DPR ${dpr}: every tree, bush and creature set is drawn (most dropped in a frame: ${r.dropped}; ${r.trees} trees now)`);
+      const r = await page.evaluate(() => ({ dropped: window.maxDropped, pops: window.witch.view.pops.slice(0, 12), n: window.witch.view.pops.length, trees: window.witch.view.stats.trees, radius: window.witch.view.stats.sceneryRadius, fps: window.witch.view.stats.fps }));
+      check(r.dropped === 0, `${w}x${h} at DPR ${dpr}: every tree, bush and creature set is drawn (most dropped in a frame: ${r.dropped}; ${r.trees} trees now; scenery radius ${(r.radius ?? 0).toFixed(0)} m at ${(r.fps ?? 0).toFixed(1)} fps)`);
       check(r.n === 0, `${w}x${h} at DPR ${dpr}: nothing appears or vanishes on screen in full-speed flight (${r.n})${r.n ? ": " + r.pops.join("; ") : ""}`);
     }, "&debug=cull");
   }
