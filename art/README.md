@@ -23,7 +23,8 @@ It returns:
 | `bushes[i]` | 12 bushes |
 | `creatures[k][level][frame]` | for each kind in `world.kinds`: levels 0 baby, 1 young, 2 legend; frames 0 and 1 of the walk. Built in 3D and seen in three-quarter view from above (turned 35°, looking down 30°), facing right. Young are about 45 art pixels tall at the default style, legends about 4.5 times that; sizes on screen stay the same as the pixel size changes |
 | `creatures[k][level][frame].away` | the same frame turned away from the viewer (we see the rump and the back of the head); use it for creatures moving up the screen |
-| `witch` | the witch on her broom |
+| `witch` | the witch on her broom, frame 0 turned towards; `witch.frames` her three hover frames, `witch.away` the same turned away, `witch.lean` the fast-flight pose `{ towards, away }` |
+| `lights` | light sources: `campfire` (three frames), `stones` (`cyan`, `violet`, `green` magic stones), `pond` (with `mask`: white where its pixels are water) |
 
 Every asset is a **baked sprite**: `{ A, N, NF, w, h }`.
 - `A`: albedo canvas, RGBA. Alpha **254** marks a pixel that glows: draw it unlit. 255 is an ordinary pixel.
@@ -42,7 +43,8 @@ Every asset is a **baked sprite**: `{ A, N, NF, w, h }`.
 | `TREE_TYPES` | `[[mixKnob, drawFn], …]`; `drawFn(rng, style, scale)` returns `{ sp, crownY }` |
 | `treeColours(rng, style, drawFn)`, `splitTree({ sp, crownY })` | a tree's palette; its `{ top, bot }` halves |
 | `bush(rng, style)` | `{ sp, colours }` |
-| `witchSprite()`, `witchColours(style)` | the witch |
+| `witchSprite(style, { frame, facing, lean })`, `witchColours(style, outfit)` | the witch, built in 3D from named parts (`WITCH_PARTS`); an outfit is a colour per part (`DEFAULT_OUTFIT`) |
+| `lightProps(style)` | the light sources, as in `buildAssets(...).lights` |
 | `bake(sp, colours, style, outline, makeCanvas)` | any sprite → `{ A, N, NF, w, h }` |
 | `rng(seed)` | the seeded random generator everything uses |
 | `AREAS`, `AREA_BY_ID` | the 30 area types in Ed's columns: `floor`, `wall`, `small`, `big`, `set`, `creature` (`text` keeps the words from DESIGN.md) |
@@ -59,6 +61,7 @@ The night lighting pass the lab uses is `shade(target, out, style, lights, rect)
 - `creatures3d.js`: each creature built from 3D parts; `model3d.js`: the 3D parts (ellipsoids) and the renderer (one ray per pixel, true normals)
 - `trees.js`: trees and bushes
 - `areas.js`: the 30 area types and their props
+- `witch.js`: the witch in 3D
 - `lighting.js`: the night lighting pass
 - `export.mjs`: every asset to PNGs and `manifest.json` (`node art/export.mjs [style.json] [out dir]`)
 - `preview.mjs`: lit preview sheets; `check.mjs`: the checks (see `CLAUDE.md`)

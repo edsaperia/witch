@@ -288,14 +288,12 @@ function drawScene(tgt, out, st, assets, lay, t, opts) {
     const right = (pos < span) === (c.dir > 0), x = 40 + (pos < span ? pos : 2 * span - pos), b = assets.creatures[c.kind][c.level][frame];
     items.push({ y: opts.treetop ? c.y + 1000 : c.y, d: () => put(b, x - b.w / 2, c.y - b.h, !right) });
   }
-  items.sort((p, q) => p.y - q.y).forEach(i => i.d());
+  // the witch: in among everything else, lit by her own glow; three frames of a hover bob
   const wx = W / 2 + Math.sin(t * .6) * 120 * K, wy = H * .52 + Math.sin(t * 1.3) * 5 * K - (opts.treetop ? 40 * K : 0);
-  shade(tgt, out, st, lightsFor(st, t, wx, wy, opts.party, lay), opts.rect || [0, 0, W, H]);
-  // the witch glows, so she is drawn after lighting, at full colour
-  const wb = assets.witch, o = out.getContext("2d"), r = opts.rect || [0, 0];
-  o.imageSmoothingEnabled = false;
-  const flip = Math.cos(t * .6) < 0, px = Math.round(wx - 10 - r[0]), py = Math.round(wy - r[1]);
-  if (flip) { o.save(); o.translate(px + wb.w, py); o.scale(-1, 1); o.drawImage(wb.A, 0, 0); o.restore(); } else o.drawImage(wb.A, px, py);
+  const wb = (assets.witch.frames || [assets.witch])[Math.floor(t * 3) % 3], wflip = Math.cos(t * .6) < 0;
+  items.push({ y: opts.treetop ? wy + 2000 : wy + 4 * K, d: () => put(wb, wx - wb.w / 2, wy + 4 * K - wb.h, wflip) });
+  items.sort((p, q) => p.y - q.y).forEach(i => i.d());
+  shade(tgt, out, st, lightsFor(st, t, wx, wy - wb.h * .5, opts.party, lay), opts.rect || [0, 0, W, H]);
 }
 
 // ================= sprite sheet (studio-lit, so colours read) =================
@@ -316,6 +314,8 @@ function drawSheet(canvas, st, assets) {
   let x = 10; const base2 = h - 10;
   assets.trees.forEach(t => { if (x + t.whole.w > w) return; tgt.a.drawImage(t.whole.A, x, base2 - t.whole.h); tgt.n.drawImage(t.whole.N, x, base2 - t.whole.h); x += t.whole.w + 6; });
   assets.bushes.forEach(b => { if (x + b.w > w) return; tgt.a.drawImage(b.A, x, base2 - b.h); tgt.n.drawImage(b.N, x, base2 - b.h); x += b.w + 4; });
+  // light sources: a campfire, the three magic stones, a pond
+  const L = assets.lights; if (L) [L.campfire[0], ...Object.values(L.stones), L.pond].forEach(b => { if (x + b.w > w) return; tgt.a.drawImage(b.A, x, base2 - b.h); tgt.n.drawImage(b.N, x, base2 - b.h); x += b.w + 6; });
   canvas.width = w; canvas.height = h;
   const studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15 };
   const savedW = W, savedH = H;
@@ -385,6 +385,7 @@ let current = { ...defaultStyle(), ...(store.get("witch-art-style-3") || {}) };
 if (!current.v4) { current.pixel = 2; current.v4 = true; }
 if (!current.v5) { current.pixel = 3; current.v5 = true; } // Ed, 2026-10-03: bigger pixels
 if (!current.v6) { current.bands = 3; current.v6 = true; } // three light steps: light top, mid side, dark underside
+current = { ...defaultStyle(), ...current }; // knobs added since a style was saved take their defaults
 let history = store.get("witch-art-history-3") || [];
 let varySeed = 1, variants = [], assetsCurrent, layoutCurrent;
 const varyGroups = new Set(GROUPS);

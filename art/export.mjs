@@ -44,7 +44,19 @@ const assets = await b.page.evaluate(async ({ style, seed }) => {
     push({ ...meta, id: `tree-${name}-${v}-bottom`, part: "bottom" }, parts.bot, col);
   }
   for (let v = 0; v < 8; v++) { const bu = G.bush(G.rng(seed * 7 + v * 3), { ...st, bushSize: st.bushSize * K }); push({ id: `bush-${v}`, kind: "bush", variant: v, frame: 0 }, bu.sp, bu.colours); }
-  push({ id: "witch", kind: "witch", frame: 0 }, G.witchSprite(), G.witchColours(st));
+  // the witch: three hover frames and a lean, each turned towards and away ("witch" alone is frame 0, towards)
+  const wc = G.witchColours(st);
+  push({ id: "witch", kind: "witch", frame: 0, facing: "towards" }, G.witchSprite(st), wc, st.cOutline);
+  for (const facing of ["towards", "away"]) {
+    for (const frame of [0, 1, 2]) push({ id: `witch-hover${frame}${facing === "away" ? "-away" : ""}`, kind: "witch", frame, facing }, G.witchSprite(st, { frame, facing }), wc, st.cOutline);
+    push({ id: `witch-lean${facing === "away" ? "-away" : ""}`, kind: "witch", pose: "lean", frame: 0, facing }, G.witchSprite(st, { lean: true, facing }), wc, st.cOutline);
+  }
+  // light sources: campfire frames, magic stones, and a pond with a mask of its water
+  const L = G.lightProps(st);
+  const addBaked = (meta, bk) => list.push({ ...meta, w: bk.w, h: bk.h, anchor: { x: bk.w / 2, y: bk.h }, albedo: png(bk.A), normal: png(bk.N), ...(bk.mask ? { mask: png(bk.mask) } : {}) });
+  L.campfire.forEach((bk, frame) => addBaked({ id: `light-campfire-${frame}`, kind: "light", light: "campfire", frame }, bk));
+  for (const [v, bk] of Object.entries(L.stones)) addBaked({ id: `light-magic-stone-${v}`, kind: "light", light: "magic-stone", variant: v, frame: 0 }, bk);
+  addBaked({ id: "light-pond", kind: "light", light: "pond", frame: 0 }, L.pond);
   // area types: a floor tile and each prop, already baked by areaAssets
   for (const A of G.AREAS) {
     const a = G.areaAssets(A.id, st), add = (x, role, i) => list.push({ id: `area-${A.id}-${role}${i === undefined ? "" : "-" + i}`, kind: role === "floor" ? "area-floor" : "area-prop", area: A.id, role, prop: x.kind, text: x.text || "", frame: 0, w: x.sp.w, h: x.sp.h, anchor: { x: x.sp.w / 2, y: x.sp.h }, albedo: png(x.sp.A), normal: png(x.sp.N) });
@@ -60,12 +72,13 @@ await b.close();
 const manifest = { generator: "art/generator.js", style: assets.style, placement: assets.placement, areas: assets.areas, conventions: {
   albedo: "RGBA; alpha 254 = glowing pixel, draw unlit", normal: "RGB = xyz from [-1,1] to [0,255]; x right, y down, z to viewer; flip x when mirrored",
   facing: "right; creatures come turned towards the viewer (facing towards) and turned away (facing away, ids ending -away): moving down the screen use towards, moving up use away", anchor: "pixels from top-left; the point on the ground (feet, trunk base); flyers (bat, moth) stand on their shadow",
-  floor: "area-floor tiles repeat over the ground; their normals face up" }, assets: [] };
+  floor: "area-floor tiles repeat over the ground; their normals face up", mask: "light-pond has a mask: white where its pixels are water, for drawing the moon's glint and reflection" }, assets: [] };
 for (const a of assets.list) {
-  const { albedo, normal, anchorX, ...meta } = a;
+  const { albedo, normal, mask, anchorX, ...meta } = a;
   writeFileSync(join(out, `${a.id}.png`), Buffer.from(albedo, "base64"));
   writeFileSync(join(out, `${a.id}.normal.png`), Buffer.from(normal, "base64"));
-  manifest.assets.push({ ...meta, size: { w: a.w, h: a.h }, files: { albedo: `${a.id}.png`, normal: `${a.id}.normal.png` } });
+  if (mask) writeFileSync(join(out, `${a.id}.mask.png`), Buffer.from(mask, "base64"));
+  manifest.assets.push({ ...meta, size: { w: a.w, h: a.h }, files: { albedo: `${a.id}.png`, normal: `${a.id}.normal.png`, ...(mask ? { mask: `${a.id}.mask.png` } : {}) } });
   delete manifest.assets.at(-1).w; delete manifest.assets.at(-1).h;
 }
 writeFileSync(join(out, "manifest.json"), JSON.stringify(manifest, null, 1));

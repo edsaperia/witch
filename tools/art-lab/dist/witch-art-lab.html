@@ -207,6 +207,8 @@ const M = {
   BODY3: 25,   // the darkest fur: saddles, stripes, tips
   LEAF3: 26,   // the darkest leaves, inside a crown
   BARKL: 27,   // lit bark ridges
+  HAT: 28, PHONES: 29, TOP: 30, JACKET: 31, JEANS: 32, SHOES: 33, // the witch's outfit parts
+  WATER: 34,   // still water: the prototype draws reflections on it
 };
 // These glow: drawn at full colour by the lighting pass, whatever the light.
 const EMISSIVE = new Set([M.GLINT, M.FLOWER, M.MAGIC, M.MAGIC2]);
@@ -750,6 +752,289 @@ function bush(r, st) {
 }
 
 
+// ---- inlined from art/witch.js ----
+// The witch (Ed, DESIGN.md): a modern young-adult witch on a broomstick, with headphones,
+// sneakers, jeans and a witch's hat as the one classic touch. Built in 3D like the creatures
+// (model3d.js): turned towards or away from the viewer, seen from above, three frames of a
+// gentle hover bob, and a lean-forward pose for fast flight.
+// Outfits: she is made of named parts, each with its own material and colour slot, so an
+// unlockable outfit is a palette (and, later, a part swap), not a redraw.
+
+// ---- inlined from art/model3d.js ----
+// Witch 3D sprites: a creature (or the witch, or a prop) is a handful of 3D parts, turned
+// about 35° and seen from about 30° above (Ed's reference: farm animals in three-quarter
+// view), then drawn one ray per pixel.
+//   - Volumes (ellipsoids, tapered rounded cones) are a signed distance field. Parts in the
+//     same `group` melt into one mass (a smooth union), so a body reads as one creature, not
+//     beads; different groups meet with a crease, and where a near group stands in front of
+//     another an interior line is drawn.
+//   - Flat features (wings, ears, flames) are shaped planes: a 2D mask placed in 3D.
+//   - Normals come from the field's gradient, so the normal map is true.
+// Model space: x forward (towards the head), y up (ground at 0), z towards the near side.
+// Facing: "towards" turns the head towards the viewer; "away" turns it away (we see the rump
+// and the back of the head). Both face right; the game mirrors for left.
+
+const norm = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const v3 = { add: (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], sub, mul: (a, k) => [a[0] * k, a[1] * k, a[2] * k], lerp: (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t], norm, cross, dot };
+
+// A frame (three unit axes) whose first axis points along `dir`, second towards `up`.
+function frameAlong(dir, upHint = [0, 1, 0]) {
+  const a = norm(dir); let b = cross(upHint, a);
+  if (Math.hypot(...b) < 1e-4) b = cross([0, 0, 1], a);
+  b = norm(b); const c = cross(a, b);
+  return [a, c, b]; // along, roughly up, sideways
+}
+
+// ---- signed distances ----
+function sdEllipsoid(p, q) {
+  const x = dot(p, q.axes[0]), y = dot(p, q.axes[1]), z = dot(p, q.axes[2]), [a, b, c] = q.r;
+  const k0 = Math.hypot(x / a, y / b, z / c), k1 = Math.hypot(x / (a * a), y / (b * b), z / (c * c));
+  return k1 > 1e-9 ? k0 * (k0 - 1) / k1 : -Math.min(a, b, c);
+}
+function sdRoundCone(p, q) { // from a (radius r1) to b (radius r2); after Inigo Quilez
+  const { ba, l2, rr, a2, il2, r1, r2 } = q, y = dot(p, ba), z = y - l2;
+  const xv = [p[0] * l2 - ba[0] * y, p[1] * l2 - ba[1] * y, p[2] * l2 - ba[2] * y], x2 = dot(xv, xv), y2 = y * y * l2, z2 = z * z * l2;
+  const k = Math.sign(rr) * rr * rr * x2;
+  if (Math.sign(z) * a2 * z2 > k) return Math.sqrt(x2 + z2) * il2 - r2;
+  if (Math.sign(y) * a2 * y2 < k) return Math.sqrt(x2 + y2) * il2 - r1;
+  return (Math.sqrt(x2 * a2 * il2) + y * rr) * il2 - r1;
+}
+const sdf = (q, p) => q.type === "ell" ? sdEllipsoid(sub(p, q.cw), q) : sdRoundCone(sub(p, q.aw), q);
+
+class Model {
+  constructor({ blend = .07 } = {}) { this.parts = []; this.flats = []; this.blend = blend; }
+  // An ellipsoid at c with radii r. With `dir`, r[0] runs along dir, r[1] roughly up (or
+  // along `up`), r[2] across. o: { group, extra (not counted in the height), paint(p) -> material }
+  ell(c, r, mat, o = {}) {
+    const axes = o.axes || (o.dir ? frameAlong(o.dir, o.up) : [[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
+    this.parts.push({ type: "ell", c, r, axes, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint });
+    return this;
+  }
+  // A tapered limb from a (radius ra) to b (radius rb): a rounded cone, smooth along its length.
+  seg(a, b, ra, rb, mat, o = {}) { this.parts.push({ type: "cone", a, b, r1: ra, r2: rb, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint }); return this; }
+  // A limb through several points, each [x, y, z, radius].
+  chain(pts, mat, o = {}) { for (let i = 0; i + 1 < pts.length; i++) this.seg(pts[i].slice(0, 3), pts[i + 1].slice(0, 3), pts[i][3], pts[i + 1][3], mat, o); return this; }
+  // A shaped flat plane centred at c, spanning ±su along u and ±sv along v; mask(s, t) with
+  // s, t in [-1, 1] returns a material (or nothing for a hole). o: { group, extra, bend }
+  flat(c, u, v, su, sv, mask, o = {}) { this.flats.push({ c, u: norm(u), v: norm(v), su, sv, mask, group: o.group ?? 30, extra: !!o.extra, bend: o.bend ?? .35 }); return this; }
+  // The point on an ellipsoid's surface (centre c, radii r along the model axes) in direction dir.
+  static surface(c, r, dir) { const k = 1 / Math.hypot(dir[0] / r[0], dir[1] / r[1], dir[2] / r[2]); return [c[0] + dir[0] * k, c[1] + dir[1] * k, c[2] + dir[2] * k]; }
+}
+
+const YAW = { towards: .6, away: -.6 }; // radians; the head turned 35° towards or away from us
+const PITCH = .52;                       // the camera looks down about 30°
+
+// Renders a model to a Sprite `height` art pixels tall (measured over the parts not marked extra).
+function render(model, { height, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12 } = {}) {
+  const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), spp = Math.sin(pitch);
+  const toWorld = p => [p[0] * cy - p[2] * sy, p[1], p[0] * sy + p[2] * cy];
+  const toModel = p => [p[0] * cy + p[2] * sy, p[1], -p[0] * sy + p[2] * cy];
+  const D = [0, -spp, -cp], U = [0, cp, -spp], R = [1, 0, 0], B = [0, spp, cp];
+  const k = model.blend;
+  // parts in world space, each with a bounding sphere
+  const parts = model.parts.map(q => {
+    if (q.type === "ell") { const cw = toWorld(q.c), axes = q.axes.map(toWorld), rad = Math.max(...q.r); return { ...q, cw, axes, bc: cw, br: rad }; }
+    const aw = toWorld(q.a), bw = toWorld(q.b), ba = sub(bw, aw), l2 = Math.max(1e-9, dot(ba, ba)), rr = q.r1 - q.r2;
+    return { ...q, aw, ba, l2, rr, a2: l2 - rr * rr, il2: 1 / l2, bc: v3.lerp(aw, bw, .5), br: Math.sqrt(l2) / 2 + Math.max(q.r1, q.r2) };
+  });
+  const flats = model.flats.map(f => { const c = toWorld(f.c), u = toWorld(f.u), v = toWorld(f.v); return { ...f, cw: c, uw: u, vw: v, nw: norm(cross(u, v)), bc: c, br: Math.hypot(f.su, f.sv) }; });
+  const all = [...parts, ...flats];
+  const bounds = q => { const sx = dot(q.bc, R), su = dot(q.bc, U), e = q.br + (q.uw ? 0 : k); return [sx - e, sx + e, su - e, su + e]; };
+  for (const q of all) [q.x0, q.x1, q.u0, q.u1] = bounds(q);
+  const body = all.filter(q => !q.extra);
+  const u0b = Math.min(...body.map(q => q.u0 + (q.uw ? 0 : k))), u1b = Math.max(...body.map(q => q.u1 - (q.uw ? 0 : k)));
+  const s = height / Math.max(1e-6, u1b - u0b);
+  const X0 = Math.min(...all.map(q => q.x0)), X1 = Math.max(...all.map(q => q.x1)), U0 = Math.min(...all.map(q => q.u0)), U1 = Math.max(...all.map(q => q.u1));
+  const W = Math.ceil((X1 - X0) * s) + 4, H = Math.ceil((U1 - U0) * s) + 2, sp = new Sprite(W, H);
+  const depth = new Float32Array(W * H).fill(Infinity), grp = new Int16Array(W * H).fill(-1);
+  // which parts can touch each 8 x 8 tile of pixels
+  const T = 8, TW = Math.ceil(W / T), TH = Math.ceil(H / T), tiles = Array.from({ length: TW * TH }, () => []);
+  all.forEach((q, qi) => {
+    const tx0 = Math.max(0, Math.floor(((q.x0 - X0) * s) / T)), tx1 = Math.min(TW - 1, Math.floor(((q.x1 - X0) * s + 2) / T));
+    const ty0 = Math.max(0, Math.floor(((U1 - q.u1) * s) / T)), ty1 = Math.min(TH - 1, Math.floor(((U1 - q.u0) * s + 1) / T));
+    for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) tiles[ty * TW + tx].push(qi);
+  });
+  const eps = .25 / s;
+  const smin = (a, b) => { const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * .25; };
+  for (let iy = 0; iy < H; iy++) for (let ix = 0; ix < W; ix++) {
+    const cand = tiles[Math.floor(iy / T) * TW + Math.floor(ix / T)];
+    if (!cand.length) continue;
+    const sx = X0 + (ix + .5 - 1) / s, su = U1 - (iy + .5) / s;
+    const O = v3.add(v3.add(v3.mul(R, sx), v3.mul(U, su)), v3.mul(B, 50));
+    // the ray's interval through the candidates' bounding spheres
+    let tmin = Infinity, tmax = -Infinity; const vol = [], fl = [];
+    for (const qi of cand) {
+      const q = all[qi], oc = sub(O, q.bc), b = dot(oc, D), rb = q.br + (q.uw ? 0 : k), c = dot(oc, oc) - rb * rb, h = b * b - c;
+      if (h < 0) continue;
+      if (q.uw) { fl.push(q); continue; }
+      const r = Math.sqrt(h); tmin = Math.min(tmin, -b - r); tmax = Math.max(tmax, -b + r); vol.push(q);
+    }
+    let hitT = Infinity, hitG = -1, hitMat = 0, hitN = null;
+    if (vol.length) {
+      // group the candidates; the field is a smooth union within a group, a hard union across
+      const groups = new Map(); for (const q of vol) { let g = groups.get(q.group); if (!g) groups.set(q.group, g = []); g.push(q); }
+      const gfield = (qs, p) => { let d = Infinity; for (const q of qs) d = d === Infinity ? sdf(q, p) : smin(d, sdf(q, p)); return d; };
+      let t = Math.max(0, tmin);
+      for (let step = 0; step < 96 && t < tmax; step++) {
+        const p = v3.add(O, v3.mul(D, t));
+        let d = Infinity, g = null; for (const [gk, qs] of groups) { const gd = gfield(qs, p); if (gd < d) { d = gd; g = gk; } }
+        if (d < eps) {
+          const qs = groups.get(g), e = .5 / s;
+          hitN = norm([gfield(qs, [p[0] + e, p[1], p[2]]) - gfield(qs, [p[0] - e, p[1], p[2]]), gfield(qs, [p[0], p[1] + e, p[2]]) - gfield(qs, [p[0], p[1] - e, p[2]]), gfield(qs, [p[0], p[1], p[2] + e]) - gfield(qs, [p[0], p[1], p[2] - e])]);
+          // the material: the part whose own surface is nearest
+          let mq = qs[0], md = Infinity; for (const q of qs) { const dd = sdf(q, p); if (dd < md) { md = dd; mq = q; } }
+          hitT = t; hitG = g; hitMat = mq.paint ? (mq.paint(toModel(p), mq) ?? mq.mat) : mq.mat;
+          break;
+        }
+        t += Math.max(d * .9, eps * .5);
+      }
+    }
+    for (const f of fl) { // shaped planes
+      const dn = dot(D, f.nw); if (Math.abs(dn) < 1e-4) continue;
+      const t = dot(sub(f.cw, O), f.nw) / dn; if (t >= hitT) continue;
+      const p = v3.add(O, v3.mul(D, t)), rel = sub(p, f.cw), sS = dot(rel, f.uw) / f.su, tT = dot(rel, f.vw) / f.sv;
+      if (Math.abs(sS) > 1 || Math.abs(tT) > 1) continue;
+      const m = f.mask(sS, tT); if (!m) continue;
+      let n = dn > 0 ? v3.mul(f.nw, -1) : f.nw; n = norm(v3.add(n, v3.add(v3.mul(f.uw, sS * f.bend), v3.mul(f.vw, tT * f.bend * .5))));
+      hitT = t; hitG = f.group; hitMat = m; hitN = n;
+    }
+    if (!hitN || !hitMat) continue;
+    const i = iy * W + ix; depth[i] = hitT; grp[i] = hitG;
+    sp.px(ix, iy, hitMat, dot(hitN, R), -dot(hitN, U), dot(hitN, B));
+  }
+  // interior lines: where a nearer group stands in front of a clearly further one
+  const lines = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = y * W + x; if (!sp.m[i]) continue;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= W || Y >= H) continue;
+      const j = Y * W + X;
+      if (sp.m[j] && grp[j] !== grp[i] && depth[j] - depth[i] > lineGap) { lines.push(i); break; }
+    }
+  }
+  for (const i of lines) if (![M.EYE, M.GLINT, M.MAGIC, M.MAGIC2, M.NOSE].includes(sp.m[i])) sp.m[i] = M.LINE;
+  // a glint in each eye 2 x 2 or bigger: its top-left pixel
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = y * W + x; if (sp.m[i] !== M.EYE) continue;
+    const up = y > 0 && sp.m[i - W] === M.EYE, left = x > 0 && sp.m[i - 1] === M.EYE, more = x + 1 < W && sp.m[i + 1] === M.EYE && y + 1 < H && sp.m[i + W] === M.EYE;
+    if (!up && !left && more) sp.m[i] = M.GLINT;
+  }
+  // stand on the bottom row: drop the empty rows under the lowest pixels
+  let low = -1; for (let y = H - 1; y >= 0 && low < 0; y--) for (let x = 0; x < W; x++) if (sp.m[y * W + x]) { low = y; break; }
+  if (low >= 0 && low < H - 1) {
+    const d = H - 1 - low;
+    for (let y = H - 1; y >= 0; y--) for (let x = 0; x < W; x++) { const i = y * W + x, j = (y - d) * W + x, ok = y - d >= 0; sp.m[i] = ok ? sp.m[j] : 0; sp.g[i] = ok ? sp.g[j] : 0; for (let c = 0; c < 3; c++) sp.n[i * 3 + c] = ok ? sp.n[j * 3 + c] : 0; }
+  }
+  return { sp, s };
+}
+
+// Paint helpers: a pattern from model coordinates.
+const spotty = (p, k = 9, density = .3) => hash2(Math.floor(p[0] * k), Math.floor(p[1] * k) + Math.floor(p[2] * k) * 97, 7) < density;
+
+// Masks for shaped planes (s along the span or length, t across; both in [-1, 1]).
+const masks = {
+  // a feathered wing: s from the shoulder (-1) to the tip (1), t from the leading edge (1)
+  // to the trailing edge (-1); long primaries with notched tips, coverts along the front
+  wing: (mat, mat2) => (s, t) => {
+    const u = (s + 1) / 2, lead = 1 - .35 * u * u, trail = -1 + .55 * u + .18 * Math.abs(Math.sin(u * Math.PI * 6));
+    if (t > lead || t < trail) return null;
+    if (t > lead - .35 * (1 - u * .5)) return mat2;
+    return Math.floor(u * 9) % 2 ? mat : mat2;
+  },
+  // a leaf-shaped ear: t from the base (-1) to the tip (1); inner ear and a dark tip
+  ear: (mat, inner = M.EAR, tip = M.BODY3) => (s, t) => {
+    const u = (t + 1) / 2, half = .95 * Math.sin(Math.PI * Math.min(1, .15 + u * .85)) * (1 - u * .35);
+    if (Math.abs(s) > half) return null;
+    if (u > .82) return tip;
+    return Math.abs(s) < half * .5 && u < .7 && u > .12 ? inner : mat;
+  },
+  // a flame: t from the base (-1) to the tip (1); a bright core
+  flame: (mat, core) => (s, t) => { const u = (t + 1) / 2, half = Math.sin(Math.PI * Math.min(1, u * 1.1)) * (1 - u) * 1.4; if (Math.abs(s) > half) return null; return Math.abs(s) < half * .45 && u < .6 ? core : mat; },
+  // a membrane between fingers (bat): scalloped trailing edge
+  membrane: mat => (s, t) => { const u = (s + 1) / 2, trail = -1 + .35 * Math.abs(Math.sin(u * Math.PI * 3)); return t < trail || t > 1 - .2 * u ? null : mat; },
+  // an oval with an eyespot (moth wings)
+  spotted: (mat, spot, ring) => (s, t) => { const r = Math.hypot(s, t * 1.2); if (r > 1) return null; const e = Math.hypot(s - .35, t - .1); return e < .18 ? ring : e < .3 ? spot : mat; },
+};
+
+
+// Her parts and the material each is drawn in.
+const WITCH_PARTS = { hair: M.HAIR, hat: M.HAT, headphones: M.PHONES, top: M.TOP, jacket: M.JACKET, jeans: M.JEANS, sneakers: M.SHOES, broom: M.BROOM, bristles: M.STRAW, skin: M.SKIN };
+// The default outfit: a hue, saturation and value per part. Style knobs override the hues.
+const DEFAULT_OUTFIT = {
+  hair: [.01, .7, .85], hat: [.74, .45, .45], headphones: [.92, .55, .9], top: [.13, .15, .95], jacket: [.72, .45, .7],
+  jeans: [.6, .5, .7], sneakers: [.0, .0, .95], broom: [.08, .55, .55], bristles: [.12, .55, .9], skin: [.07, .3, .94],
+};
+function witchColours(st, outfit = DEFAULT_OUTFIT) {
+  const o = { ...DEFAULT_OUTFIT, ...outfit }, hue = { hair: st.hairHue, jacket: st.cloakHue, hat: st.hatHue, top: st.topHue, jeans: st.jeansHue, sneakers: st.shoeHue, headphones: st.phonesHue };
+  const c = {}; for (const [part, mat] of Object.entries(WITCH_PARTS)) { const [h, s, v] = o[part]; c[mat] = hsv2rgb(hue[part] ?? h, s, v); }
+  c[M.EYE] = [24, 18, 30]; c[M.GLINT] = [255, 255, 245]; c[M.NOSE] = [20, 16, 24]; c[M.MAGIC] = hsv2rgb(st.glowHue ?? .13, .5, 1); c[M.MAGIC2] = hsv2rgb(st.glowHue ?? .13, .15, 1);
+  c[M.BELLY] = [245, 245, 240]; // sneaker soles, headphone band highlights
+  return c;
+}
+
+// frame 0..2 bob; lean: the fast-flight pose; facing "towards" | "away".
+function witchModel({ frame = 0, lean = false } = {}) {
+  const m = new Model({ blend: .03 }), bob = [0, .025, .045][frame % 3], tilt = [0, .015, -.01][frame % 3] + (lean ? .08 : 0);
+  const y = .42 + bob, L = lean ? .1 : 0; // the broom's height; how far she leans forward
+  const sway = [0, .03, .05][frame % 3];
+  // her shadow on the ground: she flies
+  m.ell([.02, .005, 0], [.2, .005, .12], M.NOSE, { group: 0 });
+  // the broom: a long handle, bristles bound at the back, glowing at their tips
+  m.seg([-.5, y - tilt * 2, 0], [.62, y + tilt * 3, 0], .022, .018, M.BROOM, { group: 2 });
+  m.ell([-.62, y - tilt * 2 - .01, 0], [.17, .07, .08], M.STRAW, { dir: [1, tilt, 0], group: 3, paint: p => p[0] < -.72 ? M.MAGIC2 : p[0] > -.5 ? M.BROOM : undefined });
+  // legs astride: jeans to the knee, then down to sneakers
+  for (const side of [-1, 1]) {
+    const hip = [-.04, y + .06, side * .07], knee = [.12 + L * .5, y - .02, side * .14], foot = [.08 + L, y - .2, side * .13];
+    m.seg(hip, knee, .055, .045, M.JEANS, { group: side > 0 ? 6 : 4 });
+    m.seg(knee, foot, .045, .04, M.JEANS, { group: side > 0 ? 6 : 4 });
+    m.ell(v3.add(foot, [.05, -.02, 0]), [.08, .04, .045], M.SHOES, { group: side > 0 ? 6 : 4, paint: p => p[1] < foot[1] - .04 ? M.BELLY : undefined });
+  }
+  // body: a top under an open jacket; hips in jeans
+  m.ell([-.04, y + .08, 0], [.11, .07, .1], M.JEANS, { group: 1 });
+  const chest = [.0 + L * .8, y + .26 - L * .3, 0];
+  m.ell(chest, [.1, .16, .11], M.JACKET, { dir: [L * 2.5, 1, 0], up: [-1, 0, 0], group: 1, paint: p => p[0] > chest[0] + .04 && Math.abs(p[2]) < .055 ? M.TOP : undefined });
+  // arms: shoulders to hands on the broom handle
+  for (const side of [-1, 1]) {
+    const sh = v3.add(chest, [.01, .11, side * .11]), hand = [.26 + L, y + .03, side * .05];
+    m.seg(sh, v3.lerp(sh, hand, .5), .04, .035, M.JACKET, { group: side > 0 ? 7 : 5 });
+    m.seg(v3.lerp(sh, hand, .5), hand, .035, .03, M.JACKET, { group: side > 0 ? 7 : 5 });
+    m.ell(hand, [.035, .03, .035], M.SKIN, { group: side > 0 ? 7 : 5 });
+  }
+  // head, face and hair
+  const H = v3.add(chest, [.03 + L * .5, .26, 0]);
+  m.ell(H, [.11, .115, .1], M.SKIN, { group: 8, paint: p => (p[0] < H[0] - .01 || p[1] > H[1] + .075) ? M.HAIR : undefined });
+  for (const side of [-1, 1]) m.ell(Model.surface(H, [.11, .115, .1], v3.norm([.85, .05, side * .45])), [.016, .026, .016], M.EYE, { group: 8 });
+  // hair trailing out behind, swaying with the bob
+  m.chain([[...v3.add(H, [-.06, .02, 0]), .06], [...v3.add(H, [-.18 - L, -.05 + sway, .02]), .045], [...v3.add(H, [-.3 - L * 1.5, -.08 + sway * 1.6, .03]), .02]], M.HAIR, { group: 9 });
+  // headphones: cups over the ears and a band across the top of the head
+  for (const side of [-1, 1]) m.ell(v3.add(H, [-.015, 0, side * .105]), [.05, .055, .03], M.PHONES, { group: 10 });
+  m.chain([[...v3.add(H, [-.005, .03, -.095]), .015], [...v3.add(H, [-.005, .11, -.05]), .015], [...v3.add(H, [-.005, .125, 0]), .015], [...v3.add(H, [-.005, .11, .05]), .015], [...v3.add(H, [-.005, .03, .095]), .015]], M.PHONES, { group: 10 });
+  // the hat: a wide brim and a tall crown, its tip bent back
+  const brim = v3.add(H, [-.03, .1, 0]);
+  m.ell(brim, [.16, .014, .15], M.HAT, { dir: [1, .25, 0], group: 11 });
+  m.chain([[...v3.add(brim, [0, .01, 0]), .085], [...v3.add(brim, [-.05 - L, .17, 0]), .045], [...v3.add(brim, [-.16 - L * 1.5, .27 + sway * .5, 0]), .012]], M.HAT, { group: 11, paint: p => p[1] < brim[1] + .045 ? M.MAGIC : undefined }); // a glowing hatband
+  return m;
+}
+
+// The witch about as tall as a young creature, so she reads clearly over the ground.
+function witchSprite(st = {}, { frame = 0, lean = false, facing = "towards" } = {}) {
+  const pixel = st.pixel || 3, h = Math.round((st.size || 8) * Math.sqrt(st.growth || 20) * (2 / pixel) * 1.9);
+  const { sp } = render(witchModel({ frame, lean }), { height: h, facing });
+  // she glows: a few motes of light round her
+  let n = 0;
+  for (let i = 0; i < 400 && n < 6; i++) {
+    const x = (i * 37) % sp.w, y = (i * 53) % Math.floor(sp.h * .8);
+    if (sp.get(x, y) || sp.get(x + 1, y) || sp.get(x - 1, y) || sp.get(x, y + 1) || sp.get(x, y - 1)) continue;
+    if ((x * 7 + y * 13 + frame * 5) % 11) continue;
+    sp.px(x, y, M.MAGIC2); n++;
+  }
+  return sp;
+}
+
+
 // ---- inlined from art/areas.js ----
 // Witch area types: the first 30 (Ed, 2026-10-03; DESIGN.md "The first 30 area types"),
 // one per creature, in Ed's columns: floor texture, wall objects (edges and barriers),
@@ -760,6 +1045,7 @@ function bush(r, st) {
 // areaAssets(id, style, { K, makeCanvas }) bakes everything one area type needs:
 //   { def, floor, walls, small, big, setPiece }  — each prop { sp: baked, kind, text },
 //   floor a seamless-ish tile (64 x 48 art pixels) to repeat over the ground.
+
 
 
 // [kind, params] shorthands for the prop library below
@@ -1034,6 +1320,53 @@ function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanva
   return out;
 }
 
+// ================= light sources (campfires, magic stones, ponds) =================
+// Drawn in 3D at the creatures' three-quarter angle. Glowing pixels are emissive (alpha 254).
+const fireCol = { [M.ACCENT]: [150, 145, 140], [M.BODY2]: [95, 92, 100], [M.TRUNK]: [110, 70, 40], [M.BARKD]: [60, 38, 24], [M.MAGIC]: [255, 130, 40], [M.MAGIC2]: [255, 228, 120], [M.NOSE]: [30, 24, 26] };
+function campfire(frame) {
+  const m = new Model({ blend: .02 });
+  for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2; m.ell([Math.cos(a) * .32, .05, Math.sin(a) * .32], [.09, .06, .08], i % 3 ? M.ACCENT : M.BODY2, { dir: [-Math.sin(a), 0, Math.cos(a)], group: 1 + i }); }
+  m.seg([-.22, .06, -.12], [.22, .1, .12], .05, .045, M.TRUNK, { group: 20, paint: p => p[0] > .12 ? M.BARKD : undefined });
+  m.seg([-.2, .1, .14], [.2, .06, -.14], .05, .045, M.TRUNK, { group: 21, paint: p => p[0] < -.12 ? M.BARKD : undefined });
+  const h = [[.42, .3, .34], [.36, .4, .28], [.46, .32, .38]][frame % 3];
+  [[-.05, 0, h[0]], [.08, .06, h[1]], [-.02, -.08, h[2]]].forEach(([x, z, hh], i) => m.flat([x, .1 + hh * .5, z], [1, 0, .3], [((frame + i) % 3 - 1) * .1, 1, 0], hh * .38, hh * .5, masks.flame(M.MAGIC, M.MAGIC2), { group: 30 + i, bend: .1 }));
+  const sp = render(m, { height: 34 }).sp;
+  for (let i = 0; i < 4; i++) { const x = Math.floor(sp.w / 2 + Math.sin(i * 2.3 + frame) * sp.w * .25), y = Math.floor(sp.h * (.12 + i * .08)); if (!sp.get(x, y)) sp.px(x, y, M.MAGIC2); } // embers
+  return sp;
+}
+const STONE_GLOW = { cyan: [[70, 230, 255], [200, 250, 255]], violet: [[190, 100, 255], [235, 210, 255]], green: [[90, 255, 140], [215, 255, 220]] };
+function magicStone(variant) {
+  const m = new Model({ blend: .05 });
+  // a standing stone, leaning a little, with carved runes on its face; small stones at its foot
+  m.ell([0, .42, 0], [.42, .17, .13], M.ACCENT, { dir: [.12, 1, 0], up: [1, 0, 0], group: 1, paint: p => {
+    const face = p[0] > .03 || p[2] > .07, band = Math.floor((p[1] - .1) * 9);
+    if (face && p[1] > .15 && p[1] < .75 && (band % 2 === 0) && Math.abs(Math.sin(p[1] * 31 + p[2] * 17 + p[0] * 13)) > .55) return M.MAGIC;
+    return p[1] > .7 ? M.LEAF : undefined; } });
+  for (const [x, z, r] of [[-.2, .12, .08], [.18, .1, .06], [.05, -.18, .07]]) m.ell([x, r * .6, z], [r, r * .7, r], M.BODY2, { group: 2 });
+  const col = { [M.ACCENT]: [140, 140, 150], [M.BODY2]: [100, 98, 110], [M.LEAF]: [80, 120, 60], [M.MAGIC]: STONE_GLOW[variant][0], [M.MAGIC2]: STONE_GLOW[variant][1] };
+  const sp = render(m, { height: 36 }).sp;
+  return { sp, colours: col };
+}
+function pond() {
+  const m = new Model({ blend: .03 });
+  m.ell([0, .0, 0], [.62, .025, .38], M.WATER, { group: 1, paint: p => Math.hypot(p[0] / .62, p[2] / .38) > .88 ? M.BODY2 : undefined }); // the muddy rim
+  for (let i = 0; i < 16; i++) { const a = Math.PI * (.85 + i / 15 * .9), x = Math.cos(a) * .6, z = Math.sin(a) * .36, h = .18 + (i * 37 % 10) / 40; m.seg([x, 0, z], [x + (i % 3 - 1) * .02, h, z], .012, .006, i % 4 ? M.LEAF : M.LEAF2, { group: 10 + i }); }
+  for (const [x, z, r] of [[.5, .2, .07], [.45, -.25, .05], [-.2, .35, .06]]) m.ell([x, .02, z], [r, r * .5, r], M.ACCENT, { group: 30 });
+  const sp = render(m, { height: 22 }).sp;
+  return { sp, colours: { [M.WATER]: [40, 70, 95], [M.BODY2]: [70, 60, 45], [M.LEAF]: [80, 125, 60], [M.LEAF2]: [130, 160, 80], [M.ACCENT]: [130, 128, 125] } };
+}
+// Bakes the light sources: { campfire: [3 frames], stones: { cyan, violet, green }, pond: { sp, mask } }.
+// The pond's mask is a canvas, white where its pixels are water.
+function lightProps(st, { makeCanvas = defaultCanvas } = {}) {
+  const bk = (sp, col) => bake(sp, col, st, "none", makeCanvas);
+  const out = { campfire: [0, 1, 2].map(f => bk(campfire(f), fireCol)), stones: {}, pond: null };
+  for (const v of Object.keys(STONE_GLOW)) { const s = magicStone(v); out.stones[v] = bk(s.sp, s.colours); }
+  const p = pond(), baked = bk(p.sp, p.colours), mask = makeCanvas(p.sp.w, p.sp.h), g = mask.getContext("2d"), img = g.createImageData(p.sp.w, p.sp.h);
+  for (let i = 0; i < p.sp.m.length; i++) if (p.sp.m[i] === M.WATER) img.data.set([255, 255, 255, 255], i * 4);
+  g.putImageData(img, 0, 0); baked.mask = mask; out.pond = baked;
+  return out;
+}
+
 
 // ---- inlined from art/creatures.js ----
 // Witch creatures: the bestiary (30 species, one per area type), their colours, and the
@@ -1043,205 +1376,6 @@ function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanva
 // ---- inlined from art/creatures3d.js ----
 // Witch creatures built in 3D (see model3d.js), so they stand in true three-quarter view.
 // Units: the shoulder is about 1 high; x forward, y up, z towards the near side.
-
-// ---- inlined from art/model3d.js ----
-// Witch 3D sprites: a creature (or the witch, or a prop) is a handful of 3D parts, turned
-// about 35° and seen from about 30° above (Ed's reference: farm animals in three-quarter
-// view), then drawn one ray per pixel.
-//   - Volumes (ellipsoids, tapered rounded cones) are a signed distance field. Parts in the
-//     same `group` melt into one mass (a smooth union), so a body reads as one creature, not
-//     beads; different groups meet with a crease, and where a near group stands in front of
-//     another an interior line is drawn.
-//   - Flat features (wings, ears, flames) are shaped planes: a 2D mask placed in 3D.
-//   - Normals come from the field's gradient, so the normal map is true.
-// Model space: x forward (towards the head), y up (ground at 0), z towards the near side.
-// Facing: "towards" turns the head towards the viewer; "away" turns it away (we see the rump
-// and the back of the head). Both face right; the game mirrors for left.
-
-const norm = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
-const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
-const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
-const v3 = { add: (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], sub, mul: (a, k) => [a[0] * k, a[1] * k, a[2] * k], lerp: (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t], norm, cross, dot };
-
-// A frame (three unit axes) whose first axis points along `dir`, second towards `up`.
-function frameAlong(dir, upHint = [0, 1, 0]) {
-  const a = norm(dir); let b = cross(upHint, a);
-  if (Math.hypot(...b) < 1e-4) b = cross([0, 0, 1], a);
-  b = norm(b); const c = cross(a, b);
-  return [a, c, b]; // along, roughly up, sideways
-}
-
-// ---- signed distances ----
-function sdEllipsoid(p, q) {
-  const x = dot(p, q.axes[0]), y = dot(p, q.axes[1]), z = dot(p, q.axes[2]), [a, b, c] = q.r;
-  const k0 = Math.hypot(x / a, y / b, z / c), k1 = Math.hypot(x / (a * a), y / (b * b), z / (c * c));
-  return k1 > 1e-9 ? k0 * (k0 - 1) / k1 : -Math.min(a, b, c);
-}
-function sdRoundCone(p, q) { // from a (radius r1) to b (radius r2); after Inigo Quilez
-  const { ba, l2, rr, a2, il2, r1, r2 } = q, y = dot(p, ba), z = y - l2;
-  const xv = [p[0] * l2 - ba[0] * y, p[1] * l2 - ba[1] * y, p[2] * l2 - ba[2] * y], x2 = dot(xv, xv), y2 = y * y * l2, z2 = z * z * l2;
-  const k = Math.sign(rr) * rr * rr * x2;
-  if (Math.sign(z) * a2 * z2 > k) return Math.sqrt(x2 + z2) * il2 - r2;
-  if (Math.sign(y) * a2 * y2 < k) return Math.sqrt(x2 + y2) * il2 - r1;
-  return (Math.sqrt(x2 * a2 * il2) + y * rr) * il2 - r1;
-}
-const sdf = (q, p) => q.type === "ell" ? sdEllipsoid(sub(p, q.cw), q) : sdRoundCone(sub(p, q.aw), q);
-
-class Model {
-  constructor({ blend = .07 } = {}) { this.parts = []; this.flats = []; this.blend = blend; }
-  // An ellipsoid at c with radii r. With `dir`, r[0] runs along dir, r[1] roughly up (or
-  // along `up`), r[2] across. o: { group, extra (not counted in the height), paint(p) -> material }
-  ell(c, r, mat, o = {}) {
-    const axes = o.axes || (o.dir ? frameAlong(o.dir, o.up) : [[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
-    this.parts.push({ type: "ell", c, r, axes, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint });
-    return this;
-  }
-  // A tapered limb from a (radius ra) to b (radius rb): a rounded cone, smooth along its length.
-  seg(a, b, ra, rb, mat, o = {}) { this.parts.push({ type: "cone", a, b, r1: ra, r2: rb, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint }); return this; }
-  // A limb through several points, each [x, y, z, radius].
-  chain(pts, mat, o = {}) { for (let i = 0; i + 1 < pts.length; i++) this.seg(pts[i].slice(0, 3), pts[i + 1].slice(0, 3), pts[i][3], pts[i + 1][3], mat, o); return this; }
-  // A shaped flat plane centred at c, spanning ±su along u and ±sv along v; mask(s, t) with
-  // s, t in [-1, 1] returns a material (or nothing for a hole). o: { group, extra, bend }
-  flat(c, u, v, su, sv, mask, o = {}) { this.flats.push({ c, u: norm(u), v: norm(v), su, sv, mask, group: o.group ?? 30, extra: !!o.extra, bend: o.bend ?? .35 }); return this; }
-  // The point on an ellipsoid's surface (centre c, radii r along the model axes) in direction dir.
-  static surface(c, r, dir) { const k = 1 / Math.hypot(dir[0] / r[0], dir[1] / r[1], dir[2] / r[2]); return [c[0] + dir[0] * k, c[1] + dir[1] * k, c[2] + dir[2] * k]; }
-}
-
-const YAW = { towards: .6, away: -.6 }; // radians; the head turned 35° towards or away from us
-const PITCH = .52;                       // the camera looks down about 30°
-
-// Renders a model to a Sprite `height` art pixels tall (measured over the parts not marked extra).
-function render(model, { height, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12 } = {}) {
-  const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), spp = Math.sin(pitch);
-  const toWorld = p => [p[0] * cy - p[2] * sy, p[1], p[0] * sy + p[2] * cy];
-  const toModel = p => [p[0] * cy + p[2] * sy, p[1], -p[0] * sy + p[2] * cy];
-  const D = [0, -spp, -cp], U = [0, cp, -spp], R = [1, 0, 0], B = [0, spp, cp];
-  const k = model.blend;
-  // parts in world space, each with a bounding sphere
-  const parts = model.parts.map(q => {
-    if (q.type === "ell") { const cw = toWorld(q.c), axes = q.axes.map(toWorld), rad = Math.max(...q.r); return { ...q, cw, axes, bc: cw, br: rad }; }
-    const aw = toWorld(q.a), bw = toWorld(q.b), ba = sub(bw, aw), l2 = Math.max(1e-9, dot(ba, ba)), rr = q.r1 - q.r2;
-    return { ...q, aw, ba, l2, rr, a2: l2 - rr * rr, il2: 1 / l2, bc: v3.lerp(aw, bw, .5), br: Math.sqrt(l2) / 2 + Math.max(q.r1, q.r2) };
-  });
-  const flats = model.flats.map(f => { const c = toWorld(f.c), u = toWorld(f.u), v = toWorld(f.v); return { ...f, cw: c, uw: u, vw: v, nw: norm(cross(u, v)), bc: c, br: Math.hypot(f.su, f.sv) }; });
-  const all = [...parts, ...flats];
-  const bounds = q => { const sx = dot(q.bc, R), su = dot(q.bc, U), e = q.br + (q.uw ? 0 : k); return [sx - e, sx + e, su - e, su + e]; };
-  for (const q of all) [q.x0, q.x1, q.u0, q.u1] = bounds(q);
-  const body = all.filter(q => !q.extra);
-  const u0b = Math.min(...body.map(q => q.u0 + (q.uw ? 0 : k))), u1b = Math.max(...body.map(q => q.u1 - (q.uw ? 0 : k)));
-  const s = height / Math.max(1e-6, u1b - u0b);
-  const X0 = Math.min(...all.map(q => q.x0)), X1 = Math.max(...all.map(q => q.x1)), U0 = Math.min(...all.map(q => q.u0)), U1 = Math.max(...all.map(q => q.u1));
-  const W = Math.ceil((X1 - X0) * s) + 4, H = Math.ceil((U1 - U0) * s) + 2, sp = new Sprite(W, H);
-  const depth = new Float32Array(W * H).fill(Infinity), grp = new Int16Array(W * H).fill(-1);
-  // which parts can touch each 8 x 8 tile of pixels
-  const T = 8, TW = Math.ceil(W / T), TH = Math.ceil(H / T), tiles = Array.from({ length: TW * TH }, () => []);
-  all.forEach((q, qi) => {
-    const tx0 = Math.max(0, Math.floor(((q.x0 - X0) * s) / T)), tx1 = Math.min(TW - 1, Math.floor(((q.x1 - X0) * s + 2) / T));
-    const ty0 = Math.max(0, Math.floor(((U1 - q.u1) * s) / T)), ty1 = Math.min(TH - 1, Math.floor(((U1 - q.u0) * s + 1) / T));
-    for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) tiles[ty * TW + tx].push(qi);
-  });
-  const eps = .25 / s;
-  const smin = (a, b) => { const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * .25; };
-  for (let iy = 0; iy < H; iy++) for (let ix = 0; ix < W; ix++) {
-    const cand = tiles[Math.floor(iy / T) * TW + Math.floor(ix / T)];
-    if (!cand.length) continue;
-    const sx = X0 + (ix + .5 - 1) / s, su = U1 - (iy + .5) / s;
-    const O = v3.add(v3.add(v3.mul(R, sx), v3.mul(U, su)), v3.mul(B, 50));
-    // the ray's interval through the candidates' bounding spheres
-    let tmin = Infinity, tmax = -Infinity; const vol = [], fl = [];
-    for (const qi of cand) {
-      const q = all[qi], oc = sub(O, q.bc), b = dot(oc, D), rb = q.br + (q.uw ? 0 : k), c = dot(oc, oc) - rb * rb, h = b * b - c;
-      if (h < 0) continue;
-      if (q.uw) { fl.push(q); continue; }
-      const r = Math.sqrt(h); tmin = Math.min(tmin, -b - r); tmax = Math.max(tmax, -b + r); vol.push(q);
-    }
-    let hitT = Infinity, hitG = -1, hitMat = 0, hitN = null;
-    if (vol.length) {
-      // group the candidates; the field is a smooth union within a group, a hard union across
-      const groups = new Map(); for (const q of vol) { let g = groups.get(q.group); if (!g) groups.set(q.group, g = []); g.push(q); }
-      const gfield = (qs, p) => { let d = Infinity; for (const q of qs) d = d === Infinity ? sdf(q, p) : smin(d, sdf(q, p)); return d; };
-      let t = Math.max(0, tmin);
-      for (let step = 0; step < 96 && t < tmax; step++) {
-        const p = v3.add(O, v3.mul(D, t));
-        let d = Infinity, g = null; for (const [gk, qs] of groups) { const gd = gfield(qs, p); if (gd < d) { d = gd; g = gk; } }
-        if (d < eps) {
-          const qs = groups.get(g), e = .5 / s;
-          hitN = norm([gfield(qs, [p[0] + e, p[1], p[2]]) - gfield(qs, [p[0] - e, p[1], p[2]]), gfield(qs, [p[0], p[1] + e, p[2]]) - gfield(qs, [p[0], p[1] - e, p[2]]), gfield(qs, [p[0], p[1], p[2] + e]) - gfield(qs, [p[0], p[1], p[2] - e])]);
-          // the material: the part whose own surface is nearest
-          let mq = qs[0], md = Infinity; for (const q of qs) { const dd = sdf(q, p); if (dd < md) { md = dd; mq = q; } }
-          hitT = t; hitG = g; hitMat = mq.paint ? (mq.paint(toModel(p), mq) ?? mq.mat) : mq.mat;
-          break;
-        }
-        t += Math.max(d * .9, eps * .5);
-      }
-    }
-    for (const f of fl) { // shaped planes
-      const dn = dot(D, f.nw); if (Math.abs(dn) < 1e-4) continue;
-      const t = dot(sub(f.cw, O), f.nw) / dn; if (t >= hitT) continue;
-      const p = v3.add(O, v3.mul(D, t)), rel = sub(p, f.cw), sS = dot(rel, f.uw) / f.su, tT = dot(rel, f.vw) / f.sv;
-      if (Math.abs(sS) > 1 || Math.abs(tT) > 1) continue;
-      const m = f.mask(sS, tT); if (!m) continue;
-      let n = dn > 0 ? v3.mul(f.nw, -1) : f.nw; n = norm(v3.add(n, v3.add(v3.mul(f.uw, sS * f.bend), v3.mul(f.vw, tT * f.bend * .5))));
-      hitT = t; hitG = f.group; hitMat = m; hitN = n;
-    }
-    if (!hitN || !hitMat) continue;
-    const i = iy * W + ix; depth[i] = hitT; grp[i] = hitG;
-    sp.px(ix, iy, hitMat, dot(hitN, R), -dot(hitN, U), dot(hitN, B));
-  }
-  // interior lines: where a nearer group stands in front of a clearly further one
-  const lines = [];
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const i = y * W + x; if (!sp.m[i]) continue;
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= W || Y >= H) continue;
-      const j = Y * W + X;
-      if (sp.m[j] && grp[j] !== grp[i] && depth[j] - depth[i] > lineGap) { lines.push(i); break; }
-    }
-  }
-  for (const i of lines) if (![M.EYE, M.GLINT, M.MAGIC, M.MAGIC2, M.NOSE].includes(sp.m[i])) sp.m[i] = M.LINE;
-  // a glint in each eye 2 x 2 or bigger: its top-left pixel
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const i = y * W + x; if (sp.m[i] !== M.EYE) continue;
-    const up = y > 0 && sp.m[i - W] === M.EYE, left = x > 0 && sp.m[i - 1] === M.EYE, more = x + 1 < W && sp.m[i + 1] === M.EYE && y + 1 < H && sp.m[i + W] === M.EYE;
-    if (!up && !left && more) sp.m[i] = M.GLINT;
-  }
-  // stand on the bottom row: drop the empty rows under the lowest pixels
-  let low = -1; for (let y = H - 1; y >= 0 && low < 0; y--) for (let x = 0; x < W; x++) if (sp.m[y * W + x]) { low = y; break; }
-  if (low >= 0 && low < H - 1) {
-    const d = H - 1 - low;
-    for (let y = H - 1; y >= 0; y--) for (let x = 0; x < W; x++) { const i = y * W + x, j = (y - d) * W + x, ok = y - d >= 0; sp.m[i] = ok ? sp.m[j] : 0; sp.g[i] = ok ? sp.g[j] : 0; for (let c = 0; c < 3; c++) sp.n[i * 3 + c] = ok ? sp.n[j * 3 + c] : 0; }
-  }
-  return { sp, s };
-}
-
-// Paint helpers: a pattern from model coordinates.
-const spotty = (p, k = 9, density = .3) => hash2(Math.floor(p[0] * k), Math.floor(p[1] * k) + Math.floor(p[2] * k) * 97, 7) < density;
-
-// Masks for shaped planes (s along the span or length, t across; both in [-1, 1]).
-const masks = {
-  // a feathered wing: s from the shoulder (-1) to the tip (1), t from the leading edge (1)
-  // to the trailing edge (-1); long primaries with notched tips, coverts along the front
-  wing: (mat, mat2) => (s, t) => {
-    const u = (s + 1) / 2, lead = 1 - .35 * u * u, trail = -1 + .55 * u + .18 * Math.abs(Math.sin(u * Math.PI * 6));
-    if (t > lead || t < trail) return null;
-    if (t > lead - .35 * (1 - u * .5)) return mat2;
-    return Math.floor(u * 9) % 2 ? mat : mat2;
-  },
-  // a leaf-shaped ear: t from the base (-1) to the tip (1); inner ear and a dark tip
-  ear: (mat, inner = M.EAR, tip = M.BODY3) => (s, t) => {
-    const u = (t + 1) / 2, half = .95 * Math.sin(Math.PI * Math.min(1, .15 + u * .85)) * (1 - u * .35);
-    if (Math.abs(s) > half) return null;
-    if (u > .82) return tip;
-    return Math.abs(s) < half * .5 && u < .7 && u > .12 ? inner : mat;
-  },
-  // a flame: t from the base (-1) to the tip (1); a bright core
-  flame: (mat, core) => (s, t) => { const u = (t + 1) / 2, half = Math.sin(Math.PI * Math.min(1, u * 1.1)) * (1 - u) * 1.4; if (Math.abs(s) > half) return null; return Math.abs(s) < half * .45 && u < .6 ? core : mat; },
-  // a membrane between fingers (bat): scalloped trailing edge
-  membrane: mat => (s, t) => { const u = (s + 1) / 2, trail = -1 + .35 * Math.abs(Math.sin(u * Math.PI * 3)); return t < trail || t > 1 - .2 * u ? null : mat; },
-  // an oval with an eyespot (moth wings)
-  spotted: (mat, spot, ring) => (s, t) => { const r = Math.hypot(s, t * 1.2); if (r > 1) return null; const e = Math.hypot(s - .35, t - .1); return e < .18 ? ring : e < .3 ? spot : mat; },
-};
 
 
 // Height on screen in art pixels: young about 45 at the default style (the coordinator's
@@ -1691,6 +1825,7 @@ function critter(spId, level, frame, st, facing = "towards") {
 
 
 
+
 // ================= the style genome =================
 const KNOBS = [
   { k: "ambientHue", g: "Night light", label: "Twilight hue", min: 0, max: 1, step: 0.01, v: 0.68, hue: true },
@@ -1746,8 +1881,13 @@ const KNOBS = [
   { k: "growth", g: "Creatures", label: "Legend vs baby height", min: 5, max: 25, step: 1, v: 20 },
   { k: "magicHue", g: "Creatures", label: "Magic glow hue", min: 0, max: 1, step: 0.01, v: 0.5, hue: true },
   { k: "fur", g: "Creatures", label: "Stripes and spots", min: 0, max: 1, step: 0.05, v: 0.5 },
-  { k: "cloakHue", g: "Witch", label: "Cloak hue", min: 0, max: 1, step: 0.01, v: 0.72, hue: true },
+  { k: "cloakHue", g: "Witch", label: "Jacket hue", min: 0, max: 1, step: 0.01, v: 0.72, hue: true },
   { k: "hairHue", g: "Witch", label: "Hair hue", min: 0, max: 1, step: 0.01, v: 0.01, hue: true },
+  { k: "hatHue", g: "Witch", label: "Hat hue", min: 0, max: 1, step: 0.01, v: 0.74, hue: true },
+  { k: "topHue", g: "Witch", label: "Top hue", min: 0, max: 1, step: 0.01, v: 0.13, hue: true },
+  { k: "jeansHue", g: "Witch", label: "Jeans hue", min: 0, max: 1, step: 0.01, v: 0.6, hue: true },
+  { k: "shoeHue", g: "Witch", label: "Sneakers hue", min: 0, max: 1, step: 0.01, v: 0.0, hue: true },
+  { k: "phonesHue", g: "Witch", label: "Headphones hue", min: 0, max: 1, step: 0.01, v: 0.92, hue: true },
 ];
 const GROUPS = ["Night light", "Shading", "Colour", "Trees", "Tree mix", "Undergrowth", "Map", "Creatures", "Witch"];
 function defaultStyle() { const s = {}; KNOBS.forEach(k => s[k.k] = k.v); return s; }
@@ -1766,19 +1906,8 @@ function mutate(style, strength, groups, seed) {
   return s;
 }
 
-// ================= the witch (hand-drawn) =================
-const WITCH_ROWS = [
-  ".........HH.........", "........HHHH........", ".......HHHHHH.......", "......HHHHHHHH......", "....HHHHHHHHHHHH....",
-  "........SSS.........", ".......SSESS........", ".......hSSSS........", "......hCCCC.........", ".....hhCCCCC........",
-  ".....h.CCCCCC.......", ".......CCCCCCC......", ".......CCCCCCCC.....", "TTTT.BBBBBBBBBBBBBBB", "TTTTTBBBBBBBBBBBBBBB", "TTTT......CC.CC.....",
-];
-function witchSprite() {
-  const sp = new Sprite(WITCH_ROWS[0].length, WITCH_ROWS.length), key = { H: M.CLOTH, S: M.SKIN, E: M.EYE, h: M.HAIR, C: M.CLOTH, B: M.BROOM, T: M.STRAW };
-  WITCH_ROWS.forEach((row, y) => [...row].forEach((ch, x) => key[ch] && sp.put(x, y, key[ch])));
-  return sp;
-}
-const witchColours = st => ({ [M.CLOTH]: hsv2rgb(st.cloakHue, .55, .6), [M.SKIN]: [240, 205, 170], [M.EYE]: [20, 14, 26], [M.HAIR]: hsv2rgb(st.hairHue, .7, .85), [M.BROOM]: hsv2rgb(st.trunkHue + .02, .55, .6), [M.STRAW]: [230, 190, 100] });
-
+// ================= the witch =================
+// Built in 3D (witch.js): named outfit parts, towards and away, three hover frames, a lean.
 // ================= per-style assets =================
 // Each area has its own leaf colour and its own kind of tree; "Difference between areas" sets how far apart.
 function areaStyle(st, world, area) {
@@ -1806,7 +1935,15 @@ function buildAssets(st, world, { K = 2 / (st.pixel || 2), makeCanvas = defaultC
     Object.defineProperty(towards, "away", { enumerable: true, get: () => away || (away = bk(critter(kind, level, frame, st, "away"), col, st.cOutline)) });
     return towards;
   })));
-  return { trees, bushes, creatures, witch: bk(witchSprite(), witchColours(st)) };
+  // the witch: frame 0 turned towards; .frames the three hover frames, .away the same turned
+  // away, .lean the fast-flight pose ({ towards, away })
+  const wc = witchColours(st), wb = o => bk(witchSprite(st, o), wc, st.cOutline);
+  const witch = wb({ frame: 0 });
+  witch.frames = [witch, wb({ frame: 1 }), wb({ frame: 2 })];
+  let away = null, lean = null;
+  Object.defineProperty(witch, "away", { enumerable: true, get: () => away || (away = [0, 1, 2].map(frame => wb({ frame, facing: "away" }))) });
+  Object.defineProperty(witch, "lean", { enumerable: true, get: () => lean || (lean = { towards: wb({ lean: true }), away: wb({ lean: true, facing: "away" }) }) });
+  return { trees, bushes, creatures, witch, lights: lightProps(st, { makeCanvas }) };
 }
 
 
@@ -1980,14 +2117,12 @@ function drawScene(tgt, out, st, assets, lay, t, opts) {
     const right = (pos < span) === (c.dir > 0), x = 40 + (pos < span ? pos : 2 * span - pos), b = assets.creatures[c.kind][c.level][frame];
     items.push({ y: opts.treetop ? c.y + 1000 : c.y, d: () => put(b, x - b.w / 2, c.y - b.h, !right) });
   }
-  items.sort((p, q) => p.y - q.y).forEach(i => i.d());
+  // the witch: in among everything else, lit by her own glow; three frames of a hover bob
   const wx = W / 2 + Math.sin(t * .6) * 120 * K, wy = H * .52 + Math.sin(t * 1.3) * 5 * K - (opts.treetop ? 40 * K : 0);
-  shade(tgt, out, st, lightsFor(st, t, wx, wy, opts.party, lay), opts.rect || [0, 0, W, H]);
-  // the witch glows, so she is drawn after lighting, at full colour
-  const wb = assets.witch, o = out.getContext("2d"), r = opts.rect || [0, 0];
-  o.imageSmoothingEnabled = false;
-  const flip = Math.cos(t * .6) < 0, px = Math.round(wx - 10 - r[0]), py = Math.round(wy - r[1]);
-  if (flip) { o.save(); o.translate(px + wb.w, py); o.scale(-1, 1); o.drawImage(wb.A, 0, 0); o.restore(); } else o.drawImage(wb.A, px, py);
+  const wb = (assets.witch.frames || [assets.witch])[Math.floor(t * 3) % 3], wflip = Math.cos(t * .6) < 0;
+  items.push({ y: opts.treetop ? wy + 2000 : wy + 4 * K, d: () => put(wb, wx - wb.w / 2, wy + 4 * K - wb.h, wflip) });
+  items.sort((p, q) => p.y - q.y).forEach(i => i.d());
+  shade(tgt, out, st, lightsFor(st, t, wx, wy - wb.h * .5, opts.party, lay), opts.rect || [0, 0, W, H]);
 }
 
 // ================= sprite sheet (studio-lit, so colours read) =================
@@ -2008,6 +2143,8 @@ function drawSheet(canvas, st, assets) {
   let x = 10; const base2 = h - 10;
   assets.trees.forEach(t => { if (x + t.whole.w > w) return; tgt.a.drawImage(t.whole.A, x, base2 - t.whole.h); tgt.n.drawImage(t.whole.N, x, base2 - t.whole.h); x += t.whole.w + 6; });
   assets.bushes.forEach(b => { if (x + b.w > w) return; tgt.a.drawImage(b.A, x, base2 - b.h); tgt.n.drawImage(b.N, x, base2 - b.h); x += b.w + 4; });
+  // light sources: a campfire, the three magic stones, a pond
+  const L = assets.lights; if (L) [L.campfire[0], ...Object.values(L.stones), L.pond].forEach(b => { if (x + b.w > w) return; tgt.a.drawImage(b.A, x, base2 - b.h); tgt.n.drawImage(b.N, x, base2 - b.h); x += b.w + 6; });
   canvas.width = w; canvas.height = h;
   const studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15 };
   const savedW = W, savedH = H;
@@ -2077,6 +2214,7 @@ let current = { ...defaultStyle(), ...(store.get("witch-art-style-3") || {}) };
 if (!current.v4) { current.pixel = 2; current.v4 = true; }
 if (!current.v5) { current.pixel = 3; current.v5 = true; } // Ed, 2026-10-03: bigger pixels
 if (!current.v6) { current.bands = 3; current.v6 = true; } // three light steps: light top, mid side, dark underside
+current = { ...defaultStyle(), ...current }; // knobs added since a style was saved take their defaults
 let history = store.get("witch-art-history-3") || [];
 let varySeed = 1, variants = [], assetsCurrent, layoutCurrent;
 const varyGroups = new Set(GROUPS);

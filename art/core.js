@@ -44,6 +44,8 @@ export const M = {
   BODY3: 25,   // the darkest fur: saddles, stripes, tips
   LEAF3: 26,   // the darkest leaves, inside a crown
   BARKL: 27,   // lit bark ridges
+  HAT: 28, PHONES: 29, TOP: 30, JACKET: 31, JEANS: 32, SHOES: 33, // the witch's outfit parts
+  WATER: 34,   // still water: the prototype draws reflections on it
 };
 // These glow: drawn at full colour by the lighting pass, whatever the light.
 export const EMISSIVE = new Set([M.GLINT, M.FLOWER, M.MAGIC, M.MAGIC2]);

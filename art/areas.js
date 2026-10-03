@@ -8,6 +8,7 @@
 //   { def, floor, walls, small, big, setPiece }  — each prop { sp: baked, kind, text },
 //   floor a seamless-ish tile (64 x 48 art pixels) to repeat over the ground.
 import { M, Sprite, rng, uni, pick, hash2, vnoise, hsv2rgb, tufts, lerp2, add, bake, defaultCanvas } from "./core.js";
+import { Model, render, masks } from "./model3d.js";
 import { broadTree, firTree, willowTree, birchTree, flatTree, treeColours, bush } from "./trees.js";
 
 // [kind, params] shorthands for the prop library below
@@ -279,5 +280,52 @@ export function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defau
   const out = { def, floor: { sp: bake(ft.sp, ft.colours, st, "none", makeCanvas), kind: def.floor[0], text: def.text.floor }, walls: col(def.wall), small: col(def.small), big: col(def.big), setPiece: null };
   out.walls.forEach(a => a.text = def.text.wall); out.small.forEach(a => a.text = def.text.small); out.big.forEach(a => a.text = def.text.big);
   if (def.set) out.setPiece = bk(setPiece(def.set[0], def.set[1], def, st, r, K), def.set[0], def.text.set);
+  return out;
+}
+
+// ================= light sources (campfires, magic stones, ponds) =================
+// Drawn in 3D at the creatures' three-quarter angle. Glowing pixels are emissive (alpha 254).
+const fireCol = { [M.ACCENT]: [150, 145, 140], [M.BODY2]: [95, 92, 100], [M.TRUNK]: [110, 70, 40], [M.BARKD]: [60, 38, 24], [M.MAGIC]: [255, 130, 40], [M.MAGIC2]: [255, 228, 120], [M.NOSE]: [30, 24, 26] };
+function campfire(frame) {
+  const m = new Model({ blend: .02 });
+  for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2; m.ell([Math.cos(a) * .32, .05, Math.sin(a) * .32], [.09, .06, .08], i % 3 ? M.ACCENT : M.BODY2, { dir: [-Math.sin(a), 0, Math.cos(a)], group: 1 + i }); }
+  m.seg([-.22, .06, -.12], [.22, .1, .12], .05, .045, M.TRUNK, { group: 20, paint: p => p[0] > .12 ? M.BARKD : undefined });
+  m.seg([-.2, .1, .14], [.2, .06, -.14], .05, .045, M.TRUNK, { group: 21, paint: p => p[0] < -.12 ? M.BARKD : undefined });
+  const h = [[.42, .3, .34], [.36, .4, .28], [.46, .32, .38]][frame % 3];
+  [[-.05, 0, h[0]], [.08, .06, h[1]], [-.02, -.08, h[2]]].forEach(([x, z, hh], i) => m.flat([x, .1 + hh * .5, z], [1, 0, .3], [((frame + i) % 3 - 1) * .1, 1, 0], hh * .38, hh * .5, masks.flame(M.MAGIC, M.MAGIC2), { group: 30 + i, bend: .1 }));
+  const sp = render(m, { height: 34 }).sp;
+  for (let i = 0; i < 4; i++) { const x = Math.floor(sp.w / 2 + Math.sin(i * 2.3 + frame) * sp.w * .25), y = Math.floor(sp.h * (.12 + i * .08)); if (!sp.get(x, y)) sp.px(x, y, M.MAGIC2); } // embers
+  return sp;
+}
+const STONE_GLOW = { cyan: [[70, 230, 255], [200, 250, 255]], violet: [[190, 100, 255], [235, 210, 255]], green: [[90, 255, 140], [215, 255, 220]] };
+function magicStone(variant) {
+  const m = new Model({ blend: .05 });
+  // a standing stone, leaning a little, with carved runes on its face; small stones at its foot
+  m.ell([0, .42, 0], [.42, .17, .13], M.ACCENT, { dir: [.12, 1, 0], up: [1, 0, 0], group: 1, paint: p => {
+    const face = p[0] > .03 || p[2] > .07, band = Math.floor((p[1] - .1) * 9);
+    if (face && p[1] > .15 && p[1] < .75 && (band % 2 === 0) && Math.abs(Math.sin(p[1] * 31 + p[2] * 17 + p[0] * 13)) > .55) return M.MAGIC;
+    return p[1] > .7 ? M.LEAF : undefined; } });
+  for (const [x, z, r] of [[-.2, .12, .08], [.18, .1, .06], [.05, -.18, .07]]) m.ell([x, r * .6, z], [r, r * .7, r], M.BODY2, { group: 2 });
+  const col = { [M.ACCENT]: [140, 140, 150], [M.BODY2]: [100, 98, 110], [M.LEAF]: [80, 120, 60], [M.MAGIC]: STONE_GLOW[variant][0], [M.MAGIC2]: STONE_GLOW[variant][1] };
+  const sp = render(m, { height: 36 }).sp;
+  return { sp, colours: col };
+}
+function pond() {
+  const m = new Model({ blend: .03 });
+  m.ell([0, .0, 0], [.62, .025, .38], M.WATER, { group: 1, paint: p => Math.hypot(p[0] / .62, p[2] / .38) > .88 ? M.BODY2 : undefined }); // the muddy rim
+  for (let i = 0; i < 16; i++) { const a = Math.PI * (.85 + i / 15 * .9), x = Math.cos(a) * .6, z = Math.sin(a) * .36, h = .18 + (i * 37 % 10) / 40; m.seg([x, 0, z], [x + (i % 3 - 1) * .02, h, z], .012, .006, i % 4 ? M.LEAF : M.LEAF2, { group: 10 + i }); }
+  for (const [x, z, r] of [[.5, .2, .07], [.45, -.25, .05], [-.2, .35, .06]]) m.ell([x, .02, z], [r, r * .5, r], M.ACCENT, { group: 30 });
+  const sp = render(m, { height: 22 }).sp;
+  return { sp, colours: { [M.WATER]: [40, 70, 95], [M.BODY2]: [70, 60, 45], [M.LEAF]: [80, 125, 60], [M.LEAF2]: [130, 160, 80], [M.ACCENT]: [130, 128, 125] } };
+}
+// Bakes the light sources: { campfire: [3 frames], stones: { cyan, violet, green }, pond: { sp, mask } }.
+// The pond's mask is a canvas, white where its pixels are water.
+export function lightProps(st, { makeCanvas = defaultCanvas } = {}) {
+  const bk = (sp, col) => bake(sp, col, st, "none", makeCanvas);
+  const out = { campfire: [0, 1, 2].map(f => bk(campfire(f), fireCol)), stones: {}, pond: null };
+  for (const v of Object.keys(STONE_GLOW)) { const s = magicStone(v); out.stones[v] = bk(s.sp, s.colours); }
+  const p = pond(), baked = bk(p.sp, p.colours), mask = makeCanvas(p.sp.w, p.sp.h), g = mask.getContext("2d"), img = g.createImageData(p.sp.w, p.sp.h);
+  for (let i = 0; i < p.sp.m.length; i++) if (p.sp.m[i] === M.WATER) img.data.set([255, 255, 255, 255], i * 4);
+  g.putImageData(img, 0, 0); baked.mask = mask; out.pond = baked;
   return out;
 }
