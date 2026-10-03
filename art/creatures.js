@@ -235,7 +235,7 @@ function quad(S, level, frame, st) {
       const step = Math.max(3, Math.round(s * .09)), mat = q.spots === "young" ? M.BELLY : M.BODY3, [, yb] = T([0, back + .1]), [, yc] = T([0, chest + .05]);
       for (let y = yb; y < yc; y += step) for (let x = 0; x < sp.w; x += step) {
         const ox = x + (((y / step) | 0) % 2 ? step >> 1 : 0) + (hash2(x, y, 3) * 2 | 0), i = y * sp.w + ox;
-        if (sp.m[i] === M.BODY && sp.g[i] === 1 && sp.m[i + 1] === M.BODY && hash2(x, y, 5) < .75) { sp.m[i] = mat; if (s > 40) sp.m[i + 1] = mat; }
+        if (sp.m[i] === M.BODY && sp.g[i] === 1 && sp.m[i + 1] === M.BODY && hash2(x, y, 5) < .25 + st.fur) { sp.m[i] = mat; if (s > 40) sp.m[i + 1] = mat; }
       }
     }
   });

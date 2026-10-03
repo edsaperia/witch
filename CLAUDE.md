@@ -10,7 +10,11 @@ Nothing deploys yet: a push or merge to `main` ships nothing. Before any deploy 
 
 ## Testing
 
-No code and no tests yet. The first builder that adds code also adds the project's checks, and names here the exact commands CI runs.
+There is no CI yet. The art generator (`art/`, entry `art/generator.js`) and the Witch Art Lab (`tools/art-lab/`) have one check, run from the repository root before every push:
+
+- `node art/check.mjs` — builds the lab, opens the source page and the built page in headless Chromium (no script errors, 20 bestiary cards, the scene drawn), and draws every creature, tree and bush (each non-empty and standing on its bottom row; legends taller than young, young taller than babies).
+
+Related commands: `node tools/art-lab/build.mjs` writes the self-contained lab page to `tools/art-lab/dist/witch-art-lab.html` (the one to publish); `node art/export.mjs [style.json] [out dir]` exports every asset as albedo and normal-map PNGs with `manifest.json` (default `art/out/`, not committed); `node art/preview.mjs animals|trees <list> <png> [scale]` renders lit preview sheets. They need Playwright's Chromium (in cloud sessions, under `/opt/pw-browsers`).
 
 ## Glossary
 
