@@ -29,6 +29,7 @@ So the party's growth is both the goal and the source of the danger.
 ### Waves and the end of a run (Ed, 2026-10-03)
 
 - The party grows in **waves**: every few minutes the **music gets louder** and **new soundsystems magically appear** further from the dancefloor, in a **roughly circular pattern**.
+  - **First prototype rule** (Ed, 2026-10-03): a wave every **30 seconds** (a countdown bar down the side of the screen, for prototyping). On each wave, **every area adjacent to a partified area** (home, or an area with a soundsystem) **gets a soundsystem and becomes partified**, with a short **magical transition**: a wave of light sweeps in from the neighbour, the string lights pop on, and the soundsystem rises in the clearing.
 - Because the party zone is a circle growing in 2D, **eventually the witch cannot get round it fast enough to invite all the creatures**.
 - **Destroyed soundsystems stay destroyed.**
 - **The run ends when every soundsystem is destroyed.** Soundsystems get harder to defend as the area grows.
@@ -60,14 +61,14 @@ The trade is speed against information: treetop mode covers distance, ground mod
 ## Creatures
 
 - **One kind of creature per area type**, so as many kinds as area types: about **30 to test with**, **100 or more by release**.
-- Each kind has **a few levels**, from **cute babies** up to **giant legendary magical creatures**.
+- Each kind has **four levels: baby, young, adult and legendary** (Ed, 2026-10-03), from **cute babies** up to **giant legendary magical creatures**. **Adults are a bit larger than the witch.**
 - **Levelling up**: the witch leads creatures around to **eat berries** that grow in the forest; it is the only way to level up. Berries may not regrow, or regrow slowly, so taking creatures into the forest to level them up is an adventure.
 - **Neutral behaviour varies by kind, and perhaps by level**: some attack, some run away, some ignore her, some are friendly, some flock or surround her.
 - How deeply music wakes a creature **varies by kind**.
 - **Defeated creatures run away and disappear.**
 - Creatures **pass through each other**, with a **repulsion force** as they get close.
 - **The main work of the game is unique behaviour for each creature.**
-- **Creatures grow more numerous and higher level with distance from home** (Ed, 2026-10-03): the **home area** (the dancefloor's own) holds **no creatures** (Ed, 2026-10-03); the areas next to it hold a couple of babies; areas towards the edge of the map hold about 20 creatures, including a couple of legendary ones.
+- **Creatures grow more numerous and higher level with distance from home** (Ed, 2026-10-03): the **home area** (the dancefloor's own) holds **no creatures** (Ed, 2026-10-03); the areas next to it hold a couple of babies; areas towards the edge of the map hold about 20 creatures. **Legendary creatures are rare: at most one in any area**, and most areas have none (Ed, 2026-10-03). **Idle creatures roam throughout their own area**, never leaving it (Ed, 2026-10-03). **Each creature species has a magical sigil**: an abstract stave-like symbol that evokes the animal. It is the **leashing rune**: when the witch leashes a creature, its sigil is drawn on the ground at the camera's angle, glowing **neon** (Ed, 2026-10-03). **A sigil grows more impressive with the creature's level** (bigger, thicker, brighter, with rings and ornament), so a glance at the runes on the ground shows which creatures of which level are around (Ed, 2026-10-03).
 - Creatures **spawn in their own area**. Areas may change how creatures move: some slower or faster, some impassable (for example a watery area that some creatures cannot cross, or cross slowly). Whether a creature is better in its own area is left open on purpose: with so many creatures to design, each may have its own relationship with areas.
 
 ## The leash
@@ -75,6 +76,10 @@ The trade is speed against information: treetop mode covers distance, ground mod
 - A leashed creature **roams within the length of its leash** around a **leash point**.
 - The witch can **pick up a leash point and put it down again** elsewhere.
 - The witch carries leashes as a **stack**: one button **picks up or places**, last in, first out. She can **carry many leashes at once**, and can "fight" by **leading a swarm around**.
+- **Inviting** (Ed, 2026-10-03): on the ground, **hold the Talk button** near a creature (a different button from placing and picking up sigils). In talking range, the witch and the creature take turns showing **speech bubbles with emoji** (🎉🎈💃🎊🥳😛🍉🍒🍷🍸🍹🥂🍺😁😆🫢😮🤭…) for a couple of seconds, like a conversation; then the creature is **invited, and so leashed**. Letting go early or moving away cancels it. **Babies, young and adults can be invited; legends can't.** The higher the level, the **longer the conversation** (babies 3 s, young 6 s, adults 12 s) and the **less enthusiastic** the creature's emoji: adults start bored and busy (😴🫩🥱💼) and warm up as the conversation goes on (Ed, 2026-10-03).
+- **Party animals look different from wild ones** (Ed, 2026-10-03): once invited, a creature wears **party gear**: a **glowing collar** in its sigil's colour (always), and a mix of **party hats, sunglasses and fancy shoes**. Party animals **bob and dance** rather than stand still. Woken, hostile creatures will have **angry red glowing eyes**.
+- **The leash stack is shown as sigils above the witch's head** (Ed, 2026-10-03): each leashed creature's sigil floats and sways above her, **newest at the bottom** (nearest her head), oldest at the top. The stack **sways with her movement**: gently when she is still, and it **teeters and trails behind her when she moves fast** (Ed, 2026-10-03). Inviting a creature leashes it to her and adds its sigil at the bottom, pushing the others up. **Placing** puts the newest (bottom) sigil down as a glowing neon rune on the ground, leashing that creature there. **Picking it up** returns the sigil to the stack, and the creature follows her again. **A sigil can't be put down on top of another sigil**; a ghost shows where it would land, and a blocked spot fizzles (Ed, 2026-10-03).
+- **The bond between a creature and its sigil** (Ed, 2026-10-03; it must stay calm with many creatures on screen): (1) the creature carries a faint neon rim or glow at its feet in its sigil's colour; (2) every few seconds a single spark travels from the sigil to the creature, staggered so they never fire together; (3) a thin dotted neon thread appears only when the leash is under tension, brightening with the strain, and is invisible when relaxed.
 - Leashes are **somewhat elastic**: the witch moves much faster than most creatures, so she can fly off with a leash point, put it down somewhere, and the creature makes its way towards it.
 
 ## The forest: areas and the map
