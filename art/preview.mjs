@@ -55,7 +55,7 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   }
   if (what === "animals") {
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(",");
-    for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push((window.LEVELS || [2, 1, 0]).flatMap(l => [0, 1].map(f => G.bake(G.critter(id, l, f, st, facing), G.speciesColours(id, st), st, st.cOutline))));
+    for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push((window.LEVELS || [3, 2, 1, 0]).flatMap(l => [0, 1].map(f => G.bake(G.critter(id, l, f, st, facing), G.speciesColours(id, st), st, st.cOutline))));
   } else if (what === "lights") { // the campfire's frames, the magic stones, the pond
     const L = G.lightProps(st); rows.push([...L.campfire, ...Object.values(L.stones), L.pond]);
     if (list !== "all") rows.push(list.split(",").map((id, i) => G.runeStone(st, { glow: ["cyan", "violet", "green"][i % 3], sigil: id }))); // stones carved with these creatures' sigils

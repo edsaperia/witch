@@ -21,7 +21,7 @@ It returns:
 |---|---|
 | `trees[i]` | 12 trees (4 per area for 3 areas): `{ whole, top, bot }`. `bot` is the trunk below the crown (shown in ground mode), `top` everything else (the canopy, shown from the treetops), `whole` both |
 | `bushes[i]` | 12 bushes |
-| `creatures[k][level][frame]` | for each kind in `world.kinds`: levels 0 baby, 1 young, 2 legend; frames 0 and 1 of the walk. Built in 3D and seen in three-quarter view from above (turned 35°, looking down 30°), facing right. Young are about 45 art pixels tall at the default style, legends about 4.5 times that; sizes on screen stay the same as the pixel size changes |
+| `creatures[k][level][frame]` | for each kind in `world.kinds`: levels **0 baby, 1 young, 2 adult, 3 legend** (`LEVELS`); frames 0 and 1 of the walk. Built in 3D and seen in three-quarter view from above (turned 35°, looking down 30°), facing right. Young are about 45 art pixels tall at the default style (about the witch's height for the bigger species). Adults have adult proportions and mature features but no legendary ones, at 1.3 times their young, capped at 1.4 times the witch (the elk, already taller as a young, is about 1.5). Legends are about 4.5 times their young. Sizes on screen stay the same as the pixel size changes |
 | `creatures[k][level][frame].away` | the same frame turned away from the viewer (we see the rump and the back of the head); use it for creatures moving up the screen |
 | `witch` | the witch on her broom, frame 0 turned towards; `witch.frames` her three hover frames, `witch.away` the same turned away, `witch.lean` the fast-flight pose `{ towards, away }` |
 | `soundsystems` | what the party defends: three stacks (`id` stack, wall, tower; `crystal` cyan, violet, amber), each `{ playing: [3 frames of the cones pumping], damaged: [2 frames of flicker], destroyed }`; about three times the witch's height. Drawn the first time it is asked for |
@@ -39,7 +39,7 @@ Every asset is a **baked sprite**: `{ A, N, NF, w, h }`.
 
 | Call | Gives |
 |---|---|
-| `critter(speciesId, level, frame, style, facing)` | a sprite for one creature (`SPECIES` lists the ids); `facing` is `"towards"` (default) or `"away"` |
+| `critter(speciesId, level, frame, style, facing)` | a sprite for one creature (`SPECIES` lists the ids; `level` 0 to 3 as above); `facing` is `"towards"` (default) or `"away"`. Each sprite's `bodyH` is its body's height without antlers or wings |
 | `speciesColours(speciesId, style)` | its palette (material → RGB) |
 | `TREE_TYPES` | `[[mixKnob, drawFn], …]`; `drawFn(rng, style, scale)` returns `{ sp, crownY }` |
 | `treeColours(rng, style, drawFn)`, `splitTree({ sp, crownY })` | a tree's palette; its `{ top, bot }` halves |

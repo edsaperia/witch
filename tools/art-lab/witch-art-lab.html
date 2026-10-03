@@ -122,7 +122,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 
       <section style="display:grid;gap:10px">
         <div class="row" style="justify-content:space-between"><h2>Bestiary</h2><label class="check"><input type="checkbox" id="away"> Show turned away</label></div>
-        <p class="note">Thirty forest animals, each as legend, young and baby, in the current style under even light, turned towards you (or away, for creatures walking up the screen). Legends grow the magical features listed.</p>
+        <p class="note">Thirty forest animals, each as legend, adult, young and baby, in the current style under even light, turned towards you (or away, for creatures walking up the screen). Legends grow the magical features listed.</p>
         <div class="bestiary" id="bestiary"></div>
       </section>
 
@@ -254,7 +254,7 @@ function layout(world, st) {
     bushes.push({ x, y, b: areaAt(x, y).area * 4 + Math.floor(r() * 4) });
   }
   const [dcx, dcy] = areas[0], crit = [];
-  [[0, 0], [1, 0], [2, 0], [3, 0], [4, 1], [5, 1], [0, 2]].forEach(([kind, level]) => crit.push({ kind: kind % world.kinds.length, level, x: uni(r, 40 * K, W - 40 * K), y: level === 2 ? H * .4 : uni(r, H * .5, H - 4), dir: r() < .5 ? -1 : 1, speed: (level === 2 ? 4 : uni(r, 4, 10)) * K }));
+  [[0, 0], [1, 1], [2, 0], [3, 2], [4, 1], [5, 2], [0, 3]].forEach(([kind, level]) => crit.push({ kind: kind % world.kinds.length, level, x: uni(r, 40 * K, W - 40 * K), y: level === 3 ? H * .4 : uni(r, H * .5, H - 4), dir: r() < .5 ? -1 : 1, speed: (level === 2 ? 4 : uni(r, 4, 10)) * K }));
   return { trees, bushes, crit, dcx, dcy, areaAt };
 }
 
@@ -310,7 +310,7 @@ function drawScene(tgt, out, st, assets, lay, t, opts) {
   if (!opts.treetop) for (const b of lay.bushes) { const s = assets.bushes[b.b]; items.push({ y: b.y, d: () => put(s, b.x - s.w / 2, b.y - s.h) }); }
   for (const tr of lay.trees) { const s = assets.trees[tr.t], img = opts.treetop ? s.top : s.whole; items.push({ y: tr.y, d: () => put(img, tr.x - img.w / 2, tr.y - img.h) }); }
   for (const c of lay.crit) {
-    if (opts.treetop && c.level < 2) continue; // only giants show above the canopy
+    if (opts.treetop && c.level < 3) continue; // only giants (legends) show above the canopy
     const span = W - 80, travel = (c.x - 40 + t * c.speed * c.dir) % (2 * span), pos = travel < 0 ? travel + 2 * span : travel;
     const right = (pos < span) === (c.dir > 0), x = 40 + (pos < span ? pos : 2 * span - pos), b = assets.creatures[c.kind][c.level][frame];
     items.push({ y: opts.treetop ? c.y + 1000 : c.y, d: () => put(b, x - b.w / 2, c.y - b.h, !right) });
@@ -325,18 +325,15 @@ function drawScene(tgt, out, st, assets, lay, t, opts) {
 
 // ================= sprite sheet (studio-lit, so colours read) =================
 function drawSheet(canvas, st, assets) {
-  const kinds = assets.creatures.length, colW = Math.max(...assets.creatures.map(k => k[2][0].w)) + 70, top = 10;
-  const legendH = Math.max(...assets.creatures.map(k => k[2][0].h)), treeH = Math.max(...assets.trees.map(t => t.whole.h));
+  const kinds = assets.creatures.length, colW = Math.max(...assets.creatures.map(k => k[3][0].w + k[2][0].w)) + 76, top = 10;
+  const legendH = Math.max(...assets.creatures.map(k => k[3][0].h)), treeH = Math.max(...assets.trees.map(t => t.whole.h));
   const w = kinds * colW + 20, h = top + legendH + 20 + treeH + 40;
   const tgt = makeTarget(w, h);
   tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
   assets.creatures.forEach((k, i) => {
     const x0 = 10 + i * colW, base = top + legendH;
-    const L = k[2][0], Md = k[1][0], B0 = k[0][0], B1 = k[0][1];
-    tgt.a.drawImage(L.A, x0, base - L.h); tgt.n.drawImage(L.N, x0, base - L.h);
-    tgt.a.drawImage(Md.A, x0 + L.w + 4, base - Md.h); tgt.n.drawImage(Md.N, x0 + L.w + 4, base - Md.h);
-    tgt.a.drawImage(B0.A, x0 + L.w + Md.w + 8, base - B0.h); tgt.n.drawImage(B0.N, x0 + L.w + Md.w + 8, base - B0.h);
-    tgt.a.drawImage(B1.A, x0 + L.w + Md.w + B0.w + 10, base - B1.h); tgt.n.drawImage(B1.N, x0 + L.w + Md.w + B0.w + 10, base - B1.h);
+    let x = x0; // legend, adult, young, baby (two frames)
+    for (const b of [k[3][0], k[2][0], k[1][0], k[0][0], k[0][1]]) { tgt.a.drawImage(b.A, x, base - b.h); tgt.n.drawImage(b.N, x, base - b.h); x += b.w + 4; }
   });
   let x = 10; const base2 = h - 10;
   assets.trees.forEach(t => { if (x + t.whole.w > w) return; tgt.a.drawImage(t.whole.A, x, base2 - t.whole.h); tgt.n.drawImage(t.whole.N, x, base2 - t.whole.h); x += t.whole.w + 6; });
@@ -391,14 +388,14 @@ function renderBestiary() {
     const studio = { ...current, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 };
     for (const S of SPECIES) {
       const facing = document.getElementById("away").checked ? "away" : "towards";
-      const lv = [0, 1, 2].map(l => bake(critter(S.id, l, 0, current, facing), speciesColours(S.id, current), current, current.cOutline));
+      const lv = [0, 1, 2, 3].map(l => bake(critter(S.id, l, 0, current, facing), speciesColours(S.id, current), current, current.cOutline));
       const b1 = bake(critter(S.id, 0, 1, current, facing), speciesColours(S.id, current), current, current.cOutline);
-      const w = lv[2].w + lv[1].w + lv[0].w + b1.w + 18, h = Math.max(lv[2].h, 20) + 6, tgt = makeTarget(w, h);
+      const w = lv[3].w + lv[2].w + lv[1].w + lv[0].w + b1.w + 22, h = Math.max(lv[3].h, 20) + 6, tgt = makeTarget(w, h);
       tgt.a.fillStyle = `rgb(${hsv2rgb(current.groundHue, .4, current.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
-      let x = 4; for (const b of [lv[2], lv[1], lv[0], b1]) { tgt.a.drawImage(b.A, x, h - 3 - b.h); tgt.n.drawImage(b.N, x, h - 3 - b.h); x += b.w + 4; }
+      let x = 4; for (const b of [lv[3], lv[2], lv[1], lv[0], b1]) { tgt.a.drawImage(b.A, x, h - 3 - b.h); tgt.n.drawImage(b.N, x, h - 3 - b.h); x += b.w + 4; }
       const card = document.createElement("figure"); card.className = "beast";
       const c = document.createElement("canvas"); c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
-      const cap = document.createElement("figcaption"); cap.innerHTML = `<b></b><span></span>`; cap.querySelector("b").textContent = S.name; cap.insertAdjacentHTML("afterbegin", `<span class="sig" aria-hidden="true">${sigilSVG(S.id, { size: 44 })}</span>`); cap.querySelector("span:not(.sig)").textContent = "Legend grows " + S.legend.map(f => FEATURE_NAMES[f] || f).join(" and ") + ". Shown: legend, young, baby (two walk frames).";
+      const cap = document.createElement("figcaption"); cap.innerHTML = `<b></b><span></span>`; cap.querySelector("b").textContent = S.name; cap.insertAdjacentHTML("afterbegin", `<span class="sig" aria-hidden="true">${sigilSVG(S.id, { size: 44 })}</span>`); cap.querySelector("span:not(.sig)").textContent = "Legend grows " + S.legend.map(f => FEATURE_NAMES[f] || f).join(" and ") + ". Shown: legend, adult, young, baby (two walk frames).";
       card.append(c, cap); host.append(card);
     }
   }, 250);

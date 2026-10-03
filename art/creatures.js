@@ -66,8 +66,10 @@ export function speciesColours(sp, st) {
   };
 }
 
-// A creature's height in art pixels at each level (young about 45 at the default style;
-// legends about 4.5 times that; they keep their size on screen as pixels grow).
+// A creature's height in art pixels at each level: 0 baby, 1 young (about 45 at the default
+// style), 2 adult (1.3 times young), 3 legend (about 4.5 times young). They keep their size on
+// screen as pixels grow.
+export const LEVELS = ["baby", "young", "adult", "legend"];
 export const levelHeight = (level, st) => height3d(level, st);
 
 // facing: "towards" (head turned to the viewer) or "away" (we see the rump and back of the head).

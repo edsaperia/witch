@@ -187,6 +187,7 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
     const d = H - 1 - low;
     for (let y = H - 1; y >= 0; y--) for (let x = 0; x < W; x++) { const i = y * W + x, j = (y - d) * W + x, ok = y - d >= 0; sp.m[i] = ok ? sp.m[j] : 0; sp.g[i] = ok ? sp.g[j] : 0; for (let c = 0; c < 3; c++) sp.n[i * 3 + c] = ok ? sp.n[j * 3 + c] : 0; }
   }
+  sp.bodyH = Math.round((u1b - u0b) * s); // the body's height, without parts marked extra (antlers, wings)
   return { sp, s };
 }
 

@@ -122,7 +122,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 
       <section style="display:grid;gap:10px">
         <div class="row" style="justify-content:space-between"><h2>Bestiary</h2><label class="check"><input type="checkbox" id="away"> Show turned away</label></div>
-        <p class="note">Thirty forest animals, each as legend, young and baby, in the current style under even light, turned towards you (or away, for creatures walking up the screen). Legends grow the magical features listed.</p>
+        <p class="note">Thirty forest animals, each as legend, adult, young and baby, in the current style under even light, turned towards you (or away, for creatures walking up the screen). Legends grow the magical features listed.</p>
         <div class="bestiary" id="bestiary"></div>
       </section>
 
@@ -997,6 +997,7 @@ function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ??
     const d = H - 1 - low;
     for (let y = H - 1; y >= 0; y--) for (let x = 0; x < W; x++) { const i = y * W + x, j = (y - d) * W + x, ok = y - d >= 0; sp.m[i] = ok ? sp.m[j] : 0; sp.g[i] = ok ? sp.g[j] : 0; for (let c = 0; c < 3; c++) sp.n[i * 3 + c] = ok ? sp.n[j * 3 + c] : 0; }
   }
+  sp.bodyH = Math.round((u1b - u0b) * s); // the body's height, without parts marked extra (antlers, wings)
   return { sp, s };
 }
 
@@ -1152,9 +1153,14 @@ function witchSprite(st = {}, { frame = 0, lean = false, facing = "towards" } = 
 // Units: the shoulder is about 1 high; x forward, y up, z towards the near side.
 
 
+// Levels (Ed): 0 baby, 1 young, 2 adult, 3 legend.
 // Height on screen in art pixels: young about 45 at the default style (the coordinator's
-// "40 to 55"), legends about 4.5 times that; they keep their size on screen as pixels grow.
-const height3d = (level, st, hgt = 1) => Math.round(st.size * Math.pow(Math.sqrt(st.growth), level) * (2 / (st.pixel || 2)) * 1.9 * hgt);
+// "40 to 55"), about the witch's height for the bigger species; adults 1.3 times their young
+// (Ed: "a bit larger than you"); legends about 4.5 times their young. They keep their size on
+// screen as pixels grow.
+const ADULT_SCALE = 1.3;
+const LEVEL_SCALE = st => [1, Math.sqrt(st.growth), Math.sqrt(st.growth) * ADULT_SCALE, st.growth];
+const height3d = (level, st, hgt = 1) => Math.round(st.size * LEVEL_SCALE(st)[Math.max(0, Math.min(3, level))] * (2 / (st.pixel || 2)) * 1.9 * hgt);
 
 const glowMotes = (sp, seed) => { // a few glowing motes around a legend
   const r = rng(seed);
@@ -1174,16 +1180,18 @@ function wing3d(m, root, side, span, up, mat, mat2, group) {
 }
 
 // The size a creature is drawn at: babies are chunky, about 28 to 32 pixels (the coordinator).
-const drawHeight = (level, st, k = 1) => level === 0 ? Math.round(Math.max(12, Math.min(30 * Math.max(.75, Math.min(1.1, k)), height3d(1, st) * k * .72))) : height3d(level, st) * k; // a baby: about 30, never taller than 3/4 of its young
+const drawHeight = (level, st, k = 1) => level === 0 ? Math.round(Math.max(12, Math.min(30 * Math.max(.75, Math.min(1.1, k)), height3d(1, st) * k * .72))) // a baby: about 30, never taller than 3/4 of its young
+  : level === 2 ? Math.round(Math.max(height3d(1, st) * k * 1.08, Math.min(height3d(2, st, k), height3d(1, st) * 1.4))) // an adult: 1.3 times its young, but no more than 1.4 times the witch (Ed: "a bit larger than you")
+  : height3d(level, st) * k;
 
 // ================= four-legged animals =================
 function quad3d(S, level, frame, st, facing = "towards") {
-  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q }, legend = level === 2, young = level === 1, baby = level === 0, has = f => legend && S.legend.includes(f);
+  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q }, legend = level === 3, young = level === 1, baby = level === 0, has = f => legend && S.legend.includes(f);
   const m = new Model();
   const hr = q.hr * (baby ? 1.75 : young ? 1.25 : 1) * (st.head / .44) ** .5, len = q.len * (baby ? .8 : young ? .9 : 1.02) * st.long;
   const legK = baby ? .55 : young ? .9 : 1.04;
   const bob = frame ? -.04 : 0, top = 1 + bob, chest = q.chest * (legend ? 1.06 : 1) / legK + bob, tuck = q.tuck / legK + bob;
-  const bw = q.bw * (baby ? 1.15 : 1) * (q.legW > 1.2 ? 1.15 : 1), lw = .06 * q.legW * (legend ? 1.1 : baby ? 1.7 : 1);
+  const bw = q.bw * (baby ? 1.15 : level >= 2 ? 1.06 : 1) * (q.legW > 1.2 ? 1.15 : 1), lw = .06 * q.legW * (legend ? 1.1 : baby ? 1.7 : 1);
   const hump = q.back === "hump" ? .1 : 0, arch = q.back === "arch" ? .1 : 0;
   // ---- markings, painted by where a point is on the body ----
   const bellyY = chest + .12;
@@ -1278,7 +1286,7 @@ function tail3d(m, kind, tb, len, top, tw) {
 }
 
 function antlers3d(m, q, b, side, level, has) {
-  const jack = !q.antlers, A = jack ? .45 : [0, .5, .95][level] * (has("antlersGlow") ? 1.15 : 1), mat = has("antlersGlow") ? (side > 0 ? M.MAGIC2 : M.MAGIC) : M.ACCENT, o = { group: 11 + (side > 0 ? 1 : 0), extra: true };
+  const jack = !q.antlers, A = jack ? .45 : [0, .5, .95, .95][level] * (has("antlersGlow") ? 1.15 : 1), mat = has("antlersGlow") ? (side > 0 ? M.MAGIC2 : M.MAGIC) : M.ACCENT, o = { group: 11 + (side > 0 ? 1 : 0), extra: true };
   if (!A) return;
   const w = .045 * Math.max(.8, A), out = side * .35 * A;
   if (q.antlers === "palm") { // a short beam, then broad fingers fanning back and out from one root
@@ -1297,7 +1305,7 @@ function antlers3d(m, q, b, side, level, has) {
 
 // ================= owl =================
 function owl3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 2, young = level === 1, baby = level === 0, has = f => legend && S.legend.includes(f), m = new Model();
+  const legend = level === 3, young = level === 1, baby = level === 0, has = f => legend && S.legend.includes(f), m = new Model();
   const bob = frame ? .03 : 0, hr = baby ? .48 : young ? .42 : .36, hy = (baby ? .95 : 1.08) + bob;
   // feet and a short tail
   for (const side of [-1, 1]) { const f = frame && side > 0 ? .04 : 0; m.seg([.05, .2, side * .14], [.08, .05 + f, side * .15], .07, .06, M.BODY2, { group: 2 }); for (const dz of [-.04, 0, .04]) m.ell([.16, .03 + f, side * .15 + dz], [.06, .025, .02], M.ACCENT, { group: 2 }); }
@@ -1332,14 +1340,14 @@ const eyesOn = (m, c, r, dirs, size, mat) => { for (const d of dirs) m.ell(Model
 const shadow = (m, x, w) => m.ell([x, .005, 0], [w, .005, w * .6], M.NOSE, { group: 0 }); // a flyer's shadow on the ground
 function finish(m, S, level, st, k, facing) {
   const { sp } = render(m, { height: drawHeight(level, st, k), facing });
-  if (level === 2) glowMotes(sp, S.id.length * 131);
+  if (level === 3) glowMotes(sp, S.id.length * 131);
   return sp;
 }
 const crown3d = (m, c, w) => { m.ell(c, [w, w * .35, w], M.MAGIC, { group: 95, extra: true, paint: p => p[1] > c[1] ? M.MAGIC2 : undefined }); for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; m.ell(v3.add(c, [Math.cos(a) * w * .8, w * .55, Math.sin(a) * w * .8]), [w * .38, w * .12, w * .12], M.MAGIC, { dir: [0, 1, 0], up: [1, 0, 0], group: 96, extra: true }); } };
 const crystals3d = (m, pts) => pts.forEach(([b, h], i) => m.ell(v3.add(b, [0, h * .45, 0]), [h * .55, .07, .07], M.MAGIC, { dir: [(i % 3 - 1) * .25, 1, (i % 2 - .5) * .3], group: 80 + i % 2, extra: true, paint: p => p[2] > b[2] ? M.MAGIC2 : undefined }));
 
 function hedgehog3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 2, m = new Model(), f = frame ? .03 : 0;
+  const legend = level === 3, m = new Model(), f = frame ? .03 : 0;
   for (const [x, z] of [[.28, .2], [.28, -.2], [-.28, .2], [-.28, -.2]]) m.seg([x, .15, z], [x + (z > 0 ? f : -f), .03, z], .06, .05, M.BODY3, { group: z > 0 ? 6 : 2 });
   const c = [0, .32, 0], r = [.5, .32, .38];
   m.ell(c, r, M.BODY2, { paint: p => spotty(p, 22, .3) ? M.BODY3 : spotty(p, 19, .12) ? M.BELLY : undefined });
@@ -1353,7 +1361,7 @@ function hedgehog3d(S, level, frame, st, facing = "towards") {
 }
 
 function toad3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 2, m = new Model(), hop = frame ? .05 : 0;
+  const legend = level === 3, m = new Model(), hop = frame ? .05 : 0;
   for (const side of [-1, 1]) { // folded hind legs, thin front legs
     m.ell([-.22, .16, side * .36], [.24, .13, .12], side > 0 ? M.BODY : M.BODY2, { dir: [1, .3, 0], group: side > 0 ? 6 : 2, paint: p => spotty(p, 14, .15) ? M.BODY3 : undefined });
     m.ell([.05, .04, side * .4], [.16, .04, .08], side > 0 ? M.BODY : M.BODY2, { group: side > 0 ? 6 : 2 });
@@ -1367,7 +1375,7 @@ function toad3d(S, level, frame, st, facing = "towards") {
 }
 
 function raven3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 2, young = level === 1, has = f => legend && S.legend.includes(f), m = new Model(), bob = frame ? .02 : 0;
+  const legend = level === 3, young = level === 1, has = f => legend && S.legend.includes(f), m = new Model(), bob = frame ? .02 : 0;
   for (const side of [-1, 1]) { const f = frame && side > 0 ? .04 : 0; m.seg([0, .3, side * .08], [.03, .03 + f, side * .08], .03, .025, M.NOSE, { group: side > 0 ? 7 : 2 }); m.ell([.08, .02 + f, side * .08], [.08, .015, .04], M.NOSE, { group: 2 }); }
   m.ell([-.55, .42, 0], [.32, .035, .12], M.BODY2, { dir: [-1, -.25, 0], group: 3 });
   m.ell([0, .52 + bob, 0], [.42, .26, .24], M.BODY, { dir: [1, .45, 0] });
@@ -1382,7 +1390,7 @@ function raven3d(S, level, frame, st, facing = "towards") {
 }
 
 function bat3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 2, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, span = has("wingsBig") ? 1.5 : 1;
+  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, span = has("wingsBig") ? 1.5 : 1;
   shadow(m, 0, .3 * span);
   for (const side of [-1, 1]) { // membranes between finger bones, flapping
     const sh = [0, y + .05, side * .1], wr = [.05, y + (up ? .35 : -.05), side * .45 * span];
@@ -1403,7 +1411,7 @@ function bat3d(S, level, frame, st, facing = "towards") {
 }
 
 function mole3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 2, m = new Model(), f = frame ? .03 : 0;
+  const legend = level === 3, m = new Model(), f = frame ? .03 : 0;
   m.seg([-.5, .18, 0], [-.62, .12, 0], .04, .02, M.SKIN, { group: 3 });
   for (const side of [-1, 1]) m.ell([-.3, .05, side * .2], [.07, .04, .05], M.SKIN, { group: side > 0 ? 6 : 2 });
   m.ell([0, .3, 0], [.52, .29, .33], M.BODY, { paint: p => p[1] > .45 ? M.BODY2 : undefined });
@@ -1420,7 +1428,7 @@ function mole3d(S, level, frame, st, facing = "towards") {
 }
 
 function beetle3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 2, has = f => legend && S.legend.includes(f), m = new Model();
+  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model();
   for (const side of [-1, 1]) for (let i = 0; i < 3; i++) { // six jointed legs, alternating
     const x = .25 - i * .25, ph = (i + (side > 0 ? 1 : 0) + frame) % 2 ? .06 : -.06, base = [x, .22, side * .2];
     m.chain([[...base, .03], [x + ph + (1 - i) * .06, .32, side * .42, .025], [x + ph * 1.5 + (1 - i) * .15, .02, side * .55, .015]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2 });
@@ -1429,7 +1437,7 @@ function beetle3d(S, level, frame, st, facing = "towards") {
   m.ell([.38, .33, 0], [.16, .16, .26], M.BODY, { group: 1 });
   const hc = [.56, .3, 0];
   m.ell(hc, [.1, .1, .17], M.BODY2, { group: 1 });
-  const jl = [.3, .5, .75][level] * (has("horn") ? 1.3 : 1), jm = has("horn") ? M.MAGIC : M.BODY3;
+  const jl = [.3, .5, .7, .75][level] * (has("horn") ? 1.3 : 1), jm = has("horn") ? M.MAGIC : M.BODY3;
   for (const side of [-1, 1]) { const b = v3.add(hc, [.08, .02, side * .1]), e = v3.add(b, [jl * .7, jl * .45, side * jl * .15]), t = v3.add(e, [jl * .25, -jl * .12, -side * jl * .12]); m.chain([[...b, .045], [...e, .035], [...t, .015]], jm, { group: 8 + (side > 0 ? 1 : 0) }); m.seg(v3.lerp(b, e, .55), v3.add(v3.lerp(b, e, .55), [.0, jl * .22, 0]), .02, .008, jm, { group: 8 }); }
   for (const side of [-1, 1]) m.chain([[...v3.add(hc, [.05, .06, side * .1]), .012], [hc[0] + .1, .5, side * .22, .012], [hc[0] + .2, .5, side * .26, .012]], M.BODY3, { group: 9, extra: true });
   eyesOn(m, hc, [.1, .1, .17], [[.4, .3, .85], [.4, .3, -.85]], .02, legend ? M.MAGIC2 : M.GLINT);
@@ -1438,7 +1446,7 @@ function beetle3d(S, level, frame, st, facing = "towards") {
 }
 
 function snail3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 2, m = new Model(), g = frame ? .04 : 0;
+  const legend = level === 3, m = new Model(), g = frame ? .04 : 0;
   m.ell([0, .07, 0], [.6 + g, .07, .17], M.SKIN, { group: 1 });
   m.chain([[.45 + g, .08, 0, .1], [.6 + g, .25, 0, .09], [.68 + g, .28, 0, .08]], M.SKIN, { group: 1 });
   for (const side of [-1, 1]) { m.seg([.7 + g, .32, side * .04], [.78 + g, .55, side * .1], .018, .014, M.SKIN, { group: 5 }); m.ell([.78 + g, .57, side * .1], [.03, .03, .03], legend ? M.MAGIC2 : M.EYE, { group: 5 }); }
@@ -1448,7 +1456,7 @@ function snail3d(S, level, frame, st, facing = "towards") {
 }
 
 function woodlouse3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 2, m = new Model();
+  const legend = level === 3, m = new Model();
   for (const side of [-1, 1]) for (let i = 0; i < 7; i++) { const x = -.45 + i * .15, ph = (i + frame) % 2 ? .03 : -.03; m.seg([x, .1, side * .22], [x + ph, .01, side * .33], .025, .015, M.BODY3, { group: side > 0 ? 7 : 2 }); }
   for (const side of [-1, 1]) m.chain([[.5, .15, side * .08, .02], [.7, .3, side * .2, .015], [.82, .22, side * .26, .012]], M.BODY3, { group: 9, extra: true });
   m.ell([0, .18, 0], [.58, .2, .3], M.BODY, { paint: p => ((Math.floor((p[0] + .6) * 9) % 2) && p[1] > .2 ? M.BODY2 : undefined) || (Math.abs(((p[0] + .6) * 9) % 1) < .12 ? M.LINE : undefined) });
@@ -1458,7 +1466,7 @@ function woodlouse3d(S, level, frame, st, facing = "towards") {
 }
 
 function snake3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 2, young = level === 1, has = f => legend && S.legend.includes(f), m = new Model(), ph = frame ? .7 : 0, pts = [];
+  const legend = level === 3, young = level === 1, has = f => legend && S.legend.includes(f), m = new Model(), ph = frame ? .7 : 0, pts = [];
   for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push([-.9 + t * 1.2, .07, Math.sin(t * Math.PI * 2 + ph) * .25 * (1 - t * .5), .03 + .045 * Math.sin(Math.min(1, t * 1.4) * Math.PI / 2)]); }
   pts.push([.38, .25, pts[12][2], .07], [.42, .45, pts[12][2] * .8, .065]);
   m.chain(pts, M.BODY, { paint: p => p[1] < .05 && p[0] < .35 ? M.BELLY : spotty([p[0] * 1.5, p[1], p[2]], 14, .3) ? M.BODY3 : undefined });
@@ -1471,7 +1479,7 @@ function snake3d(S, level, frame, st, facing = "towards") {
 }
 
 function moth3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 2, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, span = has("wingsBig") ? 1.45 : 1;
+  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, span = has("wingsBig") ? 1.45 : 1;
   const wm = has("wingsBig") ? M.MAGIC : M.BODY;
   shadow(m, 0, .3 * span);
   for (const side of [-1, 1]) {
@@ -1487,7 +1495,7 @@ function moth3d(S, level, frame, st, facing = "towards") {
 }
 
 function glowworm3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 2, has = f => legend && S.legend.includes(f), m = new Model(), ph = frame ? .05 : 0;
+  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), ph = frame ? .05 : 0;
   for (let i = 0; i < 9; i++) { const t = i / 8, x = -.6 + t * 1.15; m.ell([x, .12 + Math.sin(t * Math.PI) * (.06 + ph), 0], [.08, .1 - t * .02, .12 - t * .03], i < 2 ? M.MAGIC2 : i % 2 ? M.BODY2 : M.BODY, { group: 1 }); }
   if (has("lantern")) m.ell([-.75, .3, 0], [.22, .22, .22], M.MAGIC2, { group: 3, paint: p => p[1] < .2 ? M.MAGIC : undefined });
   for (let i = 0; i < 6; i++) m.seg([-.2 + i * .12, .05, .08], [-.2 + i * .12 + (i % 2 ? .02 : -.02) * (frame ? -1 : 1), 0, .12], .015, .01, M.BODY3, { group: 7 });
@@ -1497,7 +1505,7 @@ function glowworm3d(S, level, frame, st, facing = "towards") {
 }
 
 function spider3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 2, has = f => legend && S.legend.includes(f), m = new Model();
+  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model();
   const ce = [.15, .28, 0];
   for (const side of [-1, 1]) for (let i = 0; i < 4; i++) { // eight legs, knees high
     const a = (-.6 + i * .4), ph = (i + (side > 0 ? 0 : 1) + frame) % 2 ? .05 : -.05, base = v3.add(ce, [.05 - i * .04, 0, side * .1]);
@@ -1576,8 +1584,10 @@ function speciesColours(sp, st) {
   };
 }
 
-// A creature's height in art pixels at each level (young about 45 at the default style;
-// legends about 4.5 times that; they keep their size on screen as pixels grow).
+// A creature's height in art pixels at each level: 0 baby, 1 young (about 45 at the default
+// style), 2 adult (1.3 times young), 3 legend (about 4.5 times young). They keep their size on
+// screen as pixels grow.
+const LEVELS = ["baby", "young", "adult", "legend"];
 const levelHeight = (level, st) => height3d(level, st);
 
 // facing: "towards" (head turned to the viewer) or "away" (we see the rump and back of the head).
@@ -2600,7 +2610,7 @@ function buildAssets(st, world, { K = 2 / (st.pixel || 2), makeCanvas = defaultC
   const bushes = [];
   for (let i = 0; i < 12; i++) { const b = bush(rng(world.forestSeed * 7 + i * 3), { ...areaStyle(st, world, Math.floor(i / 4)), bushSize: st.bushSize * K }); bushes.push(bk(b.sp, b.colours)); }
   // each creature sprite is the "towards" view; its .away is the same frame turned away
-  const creatures = world.kinds.map(kind => [0, 1, 2].map(level => [0, 1].map(frame => {
+  const creatures = world.kinds.map(kind => [0, 1, 2, 3].map(level => [0, 1].map(frame => {
     const col = speciesColours(kind, st), towards = bk(critter(kind, level, frame, st, "towards"), col, st.cOutline);
     let away = null; // drawn the first time it is asked for
     Object.defineProperty(towards, "away", { enumerable: true, get: () => away || (away = bk(critter(kind, level, frame, st, "away"), col, st.cOutline)) });
@@ -2731,7 +2741,7 @@ function layout(world, st) {
     bushes.push({ x, y, b: areaAt(x, y).area * 4 + Math.floor(r() * 4) });
   }
   const [dcx, dcy] = areas[0], crit = [];
-  [[0, 0], [1, 0], [2, 0], [3, 0], [4, 1], [5, 1], [0, 2]].forEach(([kind, level]) => crit.push({ kind: kind % world.kinds.length, level, x: uni(r, 40 * K, W - 40 * K), y: level === 2 ? H * .4 : uni(r, H * .5, H - 4), dir: r() < .5 ? -1 : 1, speed: (level === 2 ? 4 : uni(r, 4, 10)) * K }));
+  [[0, 0], [1, 1], [2, 0], [3, 2], [4, 1], [5, 2], [0, 3]].forEach(([kind, level]) => crit.push({ kind: kind % world.kinds.length, level, x: uni(r, 40 * K, W - 40 * K), y: level === 3 ? H * .4 : uni(r, H * .5, H - 4), dir: r() < .5 ? -1 : 1, speed: (level === 2 ? 4 : uni(r, 4, 10)) * K }));
   return { trees, bushes, crit, dcx, dcy, areaAt };
 }
 
@@ -2787,7 +2797,7 @@ function drawScene(tgt, out, st, assets, lay, t, opts) {
   if (!opts.treetop) for (const b of lay.bushes) { const s = assets.bushes[b.b]; items.push({ y: b.y, d: () => put(s, b.x - s.w / 2, b.y - s.h) }); }
   for (const tr of lay.trees) { const s = assets.trees[tr.t], img = opts.treetop ? s.top : s.whole; items.push({ y: tr.y, d: () => put(img, tr.x - img.w / 2, tr.y - img.h) }); }
   for (const c of lay.crit) {
-    if (opts.treetop && c.level < 2) continue; // only giants show above the canopy
+    if (opts.treetop && c.level < 3) continue; // only giants (legends) show above the canopy
     const span = W - 80, travel = (c.x - 40 + t * c.speed * c.dir) % (2 * span), pos = travel < 0 ? travel + 2 * span : travel;
     const right = (pos < span) === (c.dir > 0), x = 40 + (pos < span ? pos : 2 * span - pos), b = assets.creatures[c.kind][c.level][frame];
     items.push({ y: opts.treetop ? c.y + 1000 : c.y, d: () => put(b, x - b.w / 2, c.y - b.h, !right) });
@@ -2802,18 +2812,15 @@ function drawScene(tgt, out, st, assets, lay, t, opts) {
 
 // ================= sprite sheet (studio-lit, so colours read) =================
 function drawSheet(canvas, st, assets) {
-  const kinds = assets.creatures.length, colW = Math.max(...assets.creatures.map(k => k[2][0].w)) + 70, top = 10;
-  const legendH = Math.max(...assets.creatures.map(k => k[2][0].h)), treeH = Math.max(...assets.trees.map(t => t.whole.h));
+  const kinds = assets.creatures.length, colW = Math.max(...assets.creatures.map(k => k[3][0].w + k[2][0].w)) + 76, top = 10;
+  const legendH = Math.max(...assets.creatures.map(k => k[3][0].h)), treeH = Math.max(...assets.trees.map(t => t.whole.h));
   const w = kinds * colW + 20, h = top + legendH + 20 + treeH + 40;
   const tgt = makeTarget(w, h);
   tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
   assets.creatures.forEach((k, i) => {
     const x0 = 10 + i * colW, base = top + legendH;
-    const L = k[2][0], Md = k[1][0], B0 = k[0][0], B1 = k[0][1];
-    tgt.a.drawImage(L.A, x0, base - L.h); tgt.n.drawImage(L.N, x0, base - L.h);
-    tgt.a.drawImage(Md.A, x0 + L.w + 4, base - Md.h); tgt.n.drawImage(Md.N, x0 + L.w + 4, base - Md.h);
-    tgt.a.drawImage(B0.A, x0 + L.w + Md.w + 8, base - B0.h); tgt.n.drawImage(B0.N, x0 + L.w + Md.w + 8, base - B0.h);
-    tgt.a.drawImage(B1.A, x0 + L.w + Md.w + B0.w + 10, base - B1.h); tgt.n.drawImage(B1.N, x0 + L.w + Md.w + B0.w + 10, base - B1.h);
+    let x = x0; // legend, adult, young, baby (two frames)
+    for (const b of [k[3][0], k[2][0], k[1][0], k[0][0], k[0][1]]) { tgt.a.drawImage(b.A, x, base - b.h); tgt.n.drawImage(b.N, x, base - b.h); x += b.w + 4; }
   });
   let x = 10; const base2 = h - 10;
   assets.trees.forEach(t => { if (x + t.whole.w > w) return; tgt.a.drawImage(t.whole.A, x, base2 - t.whole.h); tgt.n.drawImage(t.whole.N, x, base2 - t.whole.h); x += t.whole.w + 6; });
@@ -2868,14 +2875,14 @@ function renderBestiary() {
     const studio = { ...current, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 };
     for (const S of SPECIES) {
       const facing = document.getElementById("away").checked ? "away" : "towards";
-      const lv = [0, 1, 2].map(l => bake(critter(S.id, l, 0, current, facing), speciesColours(S.id, current), current, current.cOutline));
+      const lv = [0, 1, 2, 3].map(l => bake(critter(S.id, l, 0, current, facing), speciesColours(S.id, current), current, current.cOutline));
       const b1 = bake(critter(S.id, 0, 1, current, facing), speciesColours(S.id, current), current, current.cOutline);
-      const w = lv[2].w + lv[1].w + lv[0].w + b1.w + 18, h = Math.max(lv[2].h, 20) + 6, tgt = makeTarget(w, h);
+      const w = lv[3].w + lv[2].w + lv[1].w + lv[0].w + b1.w + 22, h = Math.max(lv[3].h, 20) + 6, tgt = makeTarget(w, h);
       tgt.a.fillStyle = `rgb(${hsv2rgb(current.groundHue, .4, current.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
-      let x = 4; for (const b of [lv[2], lv[1], lv[0], b1]) { tgt.a.drawImage(b.A, x, h - 3 - b.h); tgt.n.drawImage(b.N, x, h - 3 - b.h); x += b.w + 4; }
+      let x = 4; for (const b of [lv[3], lv[2], lv[1], lv[0], b1]) { tgt.a.drawImage(b.A, x, h - 3 - b.h); tgt.n.drawImage(b.N, x, h - 3 - b.h); x += b.w + 4; }
       const card = document.createElement("figure"); card.className = "beast";
       const c = document.createElement("canvas"); c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
-      const cap = document.createElement("figcaption"); cap.innerHTML = `<b></b><span></span>`; cap.querySelector("b").textContent = S.name; cap.insertAdjacentHTML("afterbegin", `<span class="sig" aria-hidden="true">${sigilSVG(S.id, { size: 44 })}</span>`); cap.querySelector("span:not(.sig)").textContent = "Legend grows " + S.legend.map(f => FEATURE_NAMES[f] || f).join(" and ") + ". Shown: legend, young, baby (two walk frames).";
+      const cap = document.createElement("figcaption"); cap.innerHTML = `<b></b><span></span>`; cap.querySelector("b").textContent = S.name; cap.insertAdjacentHTML("afterbegin", `<span class="sig" aria-hidden="true">${sigilSVG(S.id, { size: 44 })}</span>`); cap.querySelector("span:not(.sig)").textContent = "Legend grows " + S.legend.map(f => FEATURE_NAMES[f] || f).join(" and ") + ". Shown: legend, adult, young, baby (two walk frames).";
       card.append(c, cap); host.append(card);
     }
   }, 250);
