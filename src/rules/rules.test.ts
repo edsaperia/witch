@@ -564,7 +564,7 @@ describe("inviting and leashing", () => {
   const fresh = () => creatures.map(c => ({ ...c, rand: (() => { let k = c.id * 7 + 1; return () => (k = (k * 16807) % 2147483647) / 2147483647; })() }));
   const none: LeashControls = { talk: false, sigil: false };
   // Stand the witch next to a creature of the given level and talk until it is invited.
-  const inviteOne = (all: ReturnType<typeof fresh>, s: ReturnType<typeof newLeash>, level: 0 | 1, time = 0) => {
+  const inviteOne = (all: ReturnType<typeof fresh>, s: ReturnType<typeof newLeash>, level: 0 | 1 | 2, time = 0) => {
     const c = all.find(k => k.level === level && !k.leashed)!;
     const w = { x: c.x + 1, z: c.z };
     let t = time;
@@ -572,10 +572,10 @@ describe("inviting and leashing", () => {
     return { c, w, t };
   };
 
-  it("invites after talking for the creature's talk time (babies 3 s, young 6 s), not before", () => {
-    for (const level of [0, 1] as const) {
+  it("invites after talking for the creature's talk time (babies 3 s, young 6 s, adults 12 s), not before", () => {
+    for (const level of [0, 1, 2] as const) {
       const all = fresh(), s = newLeash(), c = all.find(k => k.level === level)!, w = { x: c.x + 1, z: c.z };
-      const need = TUNING.invite.talkTimes[level];
+      const need = TUNING.invite.talkTime[level];
       let t = 0;
       for (; t < need - 0.25; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, w, true, t, 0.1, TUNING);
       expect(c.leashed).toBe(false);
@@ -606,6 +606,7 @@ describe("inviting and leashing", () => {
     const w = { x: legend.x + 1, z: legend.z };
     for (let t = 0; t < 30; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, w, true, t, 0.1, TUNING);
     expect(legend.leashed).toBe(false);
+    expect(s.talk?.refused).toBe(true); // one unimpressed look, and nothing more
     stepLeash(s, all, { talk: false, sigil: false, inviteNearest: true }, w, true, 30, 0.1, TUNING);
     expect(legend.leashed).toBe(false);
   });

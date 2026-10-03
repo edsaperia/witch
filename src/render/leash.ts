@@ -9,17 +9,17 @@
 //   only while the leash is under strain;
 // - the talk: emoji speech bubbles taking turns over the witch and the creature (HTML, over the
 //   canvas), with a bar for how far the conversation has got.
-// The sigils are placeholders (a stave and a few strokes from the species' id) until the art
-// builder's art/sigils.js lands.
+// The sigils are the art builder's (art/sigils.js), drawn per species and level into an atlas.
 import * as THREE from "three";
+import { drawSigil, sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
-import { blocked, leashPoint } from "../rules/leash";
+import { blocked, leashPoint, talkTurn } from "../rules/leash";
 import { hash2 } from "../rules/random";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 
-const SLOT = 32, SLOTS = 8; // the glyph atlas: 8 x 8 slots of 32 px; slot 0 is a soft dot
+const SLOT = 32, SLOTS = 16; // the glyph atlas: 16 x 16 slots of 32 px; slot 0 is a soft dot
 
 const VERT = /* glsl */ `
 uniform vec3 uRight, uUp;
@@ -94,8 +94,10 @@ class Instances {
   }
 }
 
-const PARTY = ["🎉", "🎈", "💃", "🎊", "🥳", "🍉", "🍒", "🍷", "🍸", "🍹", "🥂"];
-const BORED = ["😴", "🫩", "🥱", "💼"], CURIOUS = ["😮", "🤭", "🫢", "😛"], HAPPY = ["😁", "😆", "🎉", "🥳", "💃", "🍹", "🍺"];
+const PARTY = ["🎉", "🎈", "💃", "🎊", "🥳", "😛", "🍉", "🍒", "🍷", "🍸", "🍹", "🥂", "🍺", "😁", "😆"];
+// A creature's moods, bored to delighted: adults start at the first, young at the middle, babies
+// at the last, and the conversation warms them up toward delighted.
+const MOODS = [["😴", "🫩", "🥱", "💼"], ["😐", "😐", "🥱"], ["😮", "🤭", "🫢", "😛"], ["🙂", "🍷", "🍺", "😁"], ["🥳", "🎉", "🎈", "😆", "🥂", "💃"]];
 
 export class LeashView {
   private canvas = document.createElement("canvas");
@@ -105,6 +107,7 @@ export class LeashView {
   private standing: Instances;
   private flat: Instances;
   private fizzles: { x: number; z: number; at: number }[] = [];
+  private bursts: { x: number; z: number; at: number; seed: number }[] = [];
   private bubbleWitch = document.getElementById("bubble-witch");
   private bubbleCreature = document.getElementById("bubble-creature");
   private v = new THREE.Vector3();
@@ -127,34 +130,23 @@ export class LeashView {
     scene.add(this.standing.mesh, this.flat.mesh);
   }
 
-  /** A placeholder sigil: a stave with a few strokes off it, chosen from the species' id. */
-  private slotOf(species: string): number {
-    let s = this.slots.get(species);
+  /** A species' sigil at a level (it grows more ornate with level), white in the atlas, tinted
+   *  by its neon colour when drawn. */
+  private slotOf(species: string, level = 0): number {
+    const key = `${species}:${level}`;
+    let s = this.slots.get(key);
     if (s !== undefined) return s;
     s = this.slots.size + 1;
-    this.slots.set(species, s);
-    let h = 7;
-    for (const ch of species) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-    const r = (k: number) => hash2(h % 9973, k, 911);
+    this.slots.set(key, s);
     const g = this.canvas.getContext("2d")!, ox = (s % SLOTS) * SLOT, oy = Math.floor(s / SLOTS) * SLOT;
-    g.save();
-    g.translate(ox, oy);
-    g.strokeStyle = "#fff"; g.lineWidth = 3; g.lineCap = "square";
-    g.beginPath(); g.moveTo(16, 4); g.lineTo(16, 28);
-    const n = 2 + Math.floor(r(1) * 3);
-    for (let i = 0; i < n; i++) {
-      const y = 6 + r(10 + i) * 18, side = r(20 + i) < 0.5 ? -1 : 1, len = 5 + r(30 + i) * 6, up = r(40 + i) < 0.5 ? -1 : 1;
-      g.moveTo(16, y); g.lineTo(16 + side * len, y + up * len * 0.8);
-      if (r(50 + i) < 0.35) { g.moveTo(16 - side * len * 0.8, y + 4); g.lineTo(16, y); }
-    }
-    if (r(60) < 0.4) { g.moveTo(16 + 5, 26); g.arc(16, 26, 5, 0, Math.PI * 2); }
-    g.stroke();
+    g.clearRect(ox, oy, SLOT, SLOT);
+    drawSigil(g, species, { x: ox + 1, y: oy + 1, size: SLOT - 2, level: level as unknown as null, colour: [255, 255, 255], glow: false });
     // Crisp: no soft edges, so it reads as pixel art.
-    const img = g.getImageData(0, 0, SLOT, SLOT);
+    const img = g.getImageData(ox, oy, SLOT, SLOT);
     for (let i = 3; i < img.data.length; i += 4) img.data[i] = img.data[i] > 90 ? 255 : 0;
-    g.putImageData(img, 0, 0);
-    g.restore();
-    this.colours.set(species, new THREE.Color().setHSL(r(70), 1, 0.6));
+    g.putImageData(img, ox, oy);
+    const c = sigilColour(species);
+    this.colours.set(species, new THREE.Color(c[0] / 255, c[1] / 255, c[2] / 255));
     this.tex.needsUpdate = true;
     return s;
   }
@@ -168,8 +160,29 @@ export class LeashView {
   update(time: number, camera: THREE.Camera, width: number, height: number): void {
     const g = this.game, s = g.leash, t = g.tuning, w = g.witch, B = t.bond, L = t.leash, dot = this.uv(0);
     this.standing.begin(); this.flat.begin();
-    for (const e of s.events) if (e.kind === "fizzled") this.fizzles.push({ x: e.x, z: e.z, at: time });
+    for (const e of s.events) {
+      if (e.kind === "fizzled") this.fizzles.push({ x: e.x, z: e.z, at: time });
+      if (e.kind === "invited") this.bursts.push({ x: e.x, z: e.z, at: time, seed: e.id });
+    }
     this.fizzles = this.fizzles.filter(f => time - f.at < 0.7);
+    this.bursts = this.bursts.filter(b => time - b.at < 0.9);
+    // An invite: a little burst of sparkles and confetti as the party gear appears.
+    for (const b of this.bursts) {
+      const k = (time - b.at) / 0.9;
+      for (let i = 0; i < 28; i++) {
+        const a = hash2(b.seed, i, 3) * Math.PI * 2, sp = 2 + hash2(b.seed, i, 5) * 3, up = 2 + hash2(b.seed, i, 7) * 3;
+        const c = [[1, 0.4, 0.8], [0.3, 0.95, 1], [1, 0.9, 0.3], [0.6, 1, 0.4], [1, 1, 1]][i % 5];
+        this.standing.add(b.x + Math.cos(a) * sp * k, 0.6 + up * k - 4 * k * k, b.z + Math.sin(a) * sp * k, 0.3, dot, c[0], c[1], c[2], 1 - k);
+      }
+    }
+    // Talking: a faint ring round the creature she's talking to, filling as the chat goes on.
+    if (s.talk) {
+      const c = g.creatures[s.talk.id], p = s.talk.refused ? 0 : Math.min(1, s.talk.t / s.talk.total), n = 28;
+      for (let i = 0; i < n; i++) {
+        const a = Math.PI / 2 - (i / n) * Math.PI * 2, lit = i / n < p;
+        this.flat.add(c.x + Math.cos(a) * 1.5, 0, c.z + Math.sin(a) * 1.1, 0.35, dot, 1, lit ? 0.6 : 0.9, lit ? 0.9 : 1, lit ? 0.9 : 0.18);
+      }
+    }
 
     // The stack above her head: bottom (newest) nearest; sways, and trails behind when she's fast.
     const head = witchHeight(w, t) + 1.4, slotPos = new Map<number, THREE.Vector3>();
@@ -179,13 +192,13 @@ export class LeashView {
       const trail = 0.02 * Math.pow(j + 1, 1.3);
       const x = w.x + sway - w.vx * trail, z = w.z - w.vz * trail, y = head + 1.3 + j * 2.4;
       slotPos.set(id, new THREE.Vector3(x, y, z));
-      const col = this.colours.get(c.species) ?? (this.slotOf(c.species), this.colours.get(c.species)!);
-      this.standing.add(x, y, z, 2 + c.level * 0.4, this.uv(this.slotOf(c.species)), col.r, col.g, col.b, 1);
+      const col = (this.slotOf(c.species, c.level), this.colours.get(c.species)!);
+      this.standing.add(x, y, z, 2 + c.level * 0.4, this.uv(this.slotOf(c.species, c.level)), col.r, col.g, col.b, 1);
     }
 
     // Placed sigils, written on the ground.
     for (const p of s.placed) {
-      const c = g.creatures[p.id], slot = this.slotOf(c.species), col = this.colours.get(c.species)!;
+      const c = g.creatures[p.id], slot = this.slotOf(c.species, c.level), col = this.colours.get(c.species)!;
       const pulse = 0.8 + 0.2 * Math.sin(time * 2 + p.id);
       this.flat.add(p.x, 0, p.z, 3 + c.level * 0.8, this.uv(slot), col.r * pulse, col.g * pulse, col.b * pulse, 1, Math.min(1, (time - p.at) / 0.8));
       this.flat.add(p.x, 0, p.z, 5, dot, col.r, col.g, col.b, 0.25);
@@ -195,7 +208,7 @@ export class LeashView {
     if (w.mode === "ground" && s.stack.length && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius)) {
       const c = g.creatures[s.stack[s.stack.length - 1]], col = this.colours.get(c.species)!;
       const no = blocked(s, w.x, w.z, t);
-      this.flat.add(w.x, 0, w.z, 3 + c.level * 0.8, this.uv(this.slotOf(c.species)), no ? 1 : col.r, no ? 0.1 : col.g, no ? 0.1 : col.b, 0.22);
+      this.flat.add(w.x, 0, w.z, 3 + c.level * 0.8, this.uv(this.slotOf(c.species, c.level)), no ? 1 : col.r, no ? 0.1 : col.g, no ? 0.1 : col.b, 0.22);
     }
     for (const f of this.fizzles) {
       const k = 1 - (time - f.at) / 0.7;
@@ -235,26 +248,35 @@ export class LeashView {
     const g = this.game, talk = g.leash.talk, bw = this.bubbleWitch, bc = this.bubbleCreature;
     if (!bw || !bc) return;
     if (!talk) { bw.classList.remove("on"); bc.classList.remove("on"); return; }
-    const c = g.creatures[talk.id], w = g.witch, turn = Math.floor(talk.t / 0.9), progress = talk.t / talk.total;
-    const place = (el: HTMLElement, x: number, y: number, z: number) => {
+    const c = g.creatures[talk.id], w = g.witch, place = (el: HTMLElement, x: number, y: number, z: number) => {
       this.v.set(x, y, z).project(camera);
       el.style.left = `${((this.v.x + 1) / 2) * width}px`;
       el.style.top = `${((1 - this.v.y) / 2) * height}px`;
     };
+    place(bw, w.x - 1.2, witchHeight(w, g.tuning) + 2.2, w.z);
+    place(bc, c.x, 1.2 + c.level * 0.8, c.z);
+    const line = bc.querySelector("span")!, bar = bc.querySelector(".bar") as HTMLElement;
+    if (talk.refused) {
+      // A legend: one unimpressed look, and nothing more.
+      bw.classList.remove("on");
+      line.textContent = hash2(talk.id, 1, 9) < 0.5 ? "😒" : "🙄";
+      bar.style.display = "none";
+      bc.classList.toggle("on", talk.t < 1.6);
+      bc.style.opacity = "1";
+      return;
+    }
+    bar.style.display = "";
+    const turn = Math.floor(talk.t / talkTurn(c, g.tuning)), progress = Math.min(1, talk.t / talk.total);
     const pick = (list: string[], k: number) => list[Math.floor(hash2(talk.id, k, 5) * list.length) % list.length];
-    // The witch speaks on even turns; the creature answers on odd ones, warming up as it goes:
-    // older creatures start bored and busy.
-    const witchLine = pick(PARTY, turn - (turn % 2));
-    const mood = progress - 0.3 * c.level, moodList = mood < 0.05 ? BORED : mood < 0.45 ? CURIOUS : HAPPY;
-    const creatureLine = turn >= 1 ? pick(moodList, turn - ((turn + 1) % 2)) : "…";
-    bw.textContent = witchLine;
+    // Hers on even turns, always party; theirs on odd turns, from a mood that warms up from where
+    // its level starts (babies delighted, young curious, adults bored and busy) to delighted.
+    const start = [4, 2, 0][Math.min(2, c.level)], mood = Math.round(start + (4 - start) * progress);
+    bw.textContent = pick(PARTY, turn - (turn % 2));
     bw.classList.toggle("on", turn % 2 === 0);
-    bc.querySelector("span")!.textContent = creatureLine;
-    (bc.querySelector(".bar i") as HTMLElement).style.width = `${Math.min(100, progress * 100)}%`;
+    line.textContent = turn >= 1 ? pick(MOODS[mood], turn - ((turn + 1) % 2)) : "…";
+    (bar.querySelector("i") as HTMLElement).style.width = `${progress * 100}%`;
     bc.classList.add("on");
     bc.style.opacity = turn % 2 === 1 ? "1" : "0.6";
-    place(bw, w.x - 1.2, witchHeight(w, g.tuning) + 2.2, w.z);
-    place(bc, c.x, 2.2, c.z);
     void time;
   }
 }

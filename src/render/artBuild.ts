@@ -67,10 +67,10 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
 }
 
 /** A kind of creature at each level (baby, young, adult, legend), two walking frames each. */
-export function creatureSprites(st: Style, species: string, mk: MakeCanvas): Baked[] {
+export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear: unknown = null): Baked[] {
   const out: Baked[] = [];
   for (const facing of ["towards", "away"]) for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++)
-    out.push(Art.bake(Art.critter(species, level, f, st, facing), Art.speciesColours(species, st), st, st.cOutline, mk) as Baked);
+    out.push(Art.bake(Art.critter(species, level, f, st, facing, gear as null), Art.speciesColours(species, st, gear as null), st, st.cOutline, mk) as Baked);
   return out;
 }
 /** Towards: frames 0-7 (level x 2 + walk frame); away: the same, from 8. */
@@ -104,7 +104,9 @@ export function packPixels(sprites: Baked[], width = 2048): AtlasPixels {
   return { albedo, normal, width: W, height: H, frames };
 }
 
-export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: number } | { kind: "creature"; id: string; style: Style };
+export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: number } | { kind: "creature"; id: string; style: Style }
+  /** A party animal: an invited creature in its party gear (seeded by its id: collar in its sigil colour, maybe a hat, sunglasses, shoes). */
+  | { kind: "party"; id: string; species: string; seed: number; colour: number[]; style: Style };
 
 /** A floor tile's pixels: albedo and normal map, w x h. */
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
@@ -112,6 +114,7 @@ export interface ArtResult { px: AtlasPixels; layout?: TypeLayout; floor?: TileP
 
 export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };
+  if (job.kind === "party") return { px: packPixels(creatureSprites(job.style, job.species, mk, { ...Art.partyGear(job.seed), collar: job.colour }), 2048) };
   const { sprites, layout, floor } = typeSprites(job.style, job.seed, job.id, job.K, mk);
   return { px: packPixels(sprites), layout, floor: { albedo: new Uint8Array(pixels(floor.A, floor.w, floor.h)), normal: new Uint8Array(pixels(floor.N, floor.w, floor.h)), w: floor.w, h: floor.h } };
 }

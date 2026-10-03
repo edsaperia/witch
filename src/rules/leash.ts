@@ -14,6 +14,8 @@ export interface PlacedSigil { id: number; x: number; z: number; /** game time i
 export interface Talk {
   /** The creature she's talking to. */
   id: number;
+  /** A legend: it won't be invited (for now), just gives her one unimpressed look. */
+  refused: boolean;
   /** Seconds talked so far, and how long this creature needs. */
   t: number;
   total: number;
@@ -43,8 +45,10 @@ export interface LeashControls {
 
 export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, events: [] });
 
-/** Seconds of talk a creature needs: babies 3, young 6 (adults 12); legends can't be invited. */
-export const talkTime = (c: Creature, t: Tuning): number => t.invite.talkTimes[Math.min(c.level, t.invite.talkTimes.length - 1)];
+/** Seconds of talk a creature needs: babies 3, young 6, adults 12; legends can't be invited. */
+export const talkTime = (c: Creature, t: Tuning): number => t.invite.talkTime[Math.min(c.level, t.invite.talkTime.length - 1)];
+/** Seconds per turn of the conversation (hers, then theirs): slower for older creatures. */
+export const talkTurn = (c: Creature, t: Tuning): number => t.invite.turn[Math.min(c.level, t.invite.turn.length - 1)];
 export const invitable = (c: Creature) => !c.leashed && c.level !== LEGEND;
 
 /** Where a leashed creature's leash is fixed: the witch, or its placed sigil. */
@@ -54,10 +58,10 @@ export function leashPoint(s: LeashState, id: number, wx: number, wz: number): {
   return p ? { x: p.x, z: p.z } : null;
 }
 
-function nearest(creatures: Creature[], x: number, z: number, within: number): Creature | null {
+function nearest(creatures: Creature[], x: number, z: number, within: number, legends = false): Creature | null {
   let best: Creature | null = null, bd = within;
   for (const c of creatures) {
-    if (!invitable(c)) continue;
+    if (c.leashed || (!legends && !invitable(c))) continue;
     const d = Math.hypot(c.x - x, c.z - z);
     if (d <= bd) { bd = d; best = c; }
   }
@@ -80,14 +84,18 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   // Talking: hold Talk near a creature; letting go, leaving the ground or moving away cancels it.
   if (c.talk && onGround) {
     const cur = s.talk ? byId(s.talk.id) : null;
-    if (cur && invitable(cur) && Math.hypot(cur.x - witch.x, cur.z - witch.z) <= T.cancelDistance) {
+    if (cur && !cur.leashed && Math.hypot(cur.x - witch.x, cur.z - witch.z) <= T.cancelDistance) {
       s.talk!.t += dt;
-      cur.rest = Math.max(cur.rest, 0.2); // it stops to chat
-      if (s.talk!.t >= s.talk!.total) { invite(s, cur, cur.x, cur.z, time); s.talk = null; }
+      // It stops to chat, and faces her.
+      cur.rest = Math.max(cur.rest, 0.2); cur.moving = false;
+      cur.facing = witch.x >= cur.x ? 1 : -1;
+      cur.away = witch.z < cur.z - 1;
+      if (!s.talk!.refused && s.talk!.t >= s.talk!.total) { invite(s, cur, cur.x, cur.z, time); s.talk = null; }
     } else {
       if (s.talk) s.events.push({ kind: "cancelled", id: s.talk.id, x: witch.x, z: witch.z, at: time });
-      const n = nearest(creatures, witch.x, witch.z, T.radius);
-      s.talk = n ? { id: n.id, t: 0, total: talkTime(n, t) } : null;
+      // The nearest invitable creature in range; failing that, a legend (who won't come).
+      const n = nearest(creatures, witch.x, witch.z, T.talkRange) ?? nearest(creatures, witch.x, witch.z, T.talkRange, true);
+      s.talk = n ? { id: n.id, refused: !invitable(n), t: 0, total: invitable(n) ? talkTime(n, t) : Infinity } : null;
     }
   } else if (s.talk) {
     s.events.push({ kind: "cancelled", id: s.talk.id, x: witch.x, z: witch.z, at: time });

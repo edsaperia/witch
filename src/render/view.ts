@@ -2,12 +2,13 @@
 // (window size / pixel size) and stretched with nearest-neighbour by the browser, so every art
 // pixel stays a crisp square.
 import * as THREE from "three";
+import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { poseOf } from "../rules/game";
 import { cameraPose } from "../rules/camera";
 import { AREA_TYPES } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
-import { AssetLibrary, type TypeArt } from "./assets";
+import { AssetLibrary, type CreatureArt, type TypeArt } from "./assets";
 import type { Piece } from "./artBuild";
 import type { LightSource, Plant } from "../rules/forest";
 import { hash2 } from "../rules/random";
@@ -335,26 +336,32 @@ export class View {
 
   private drawCreatures(time = 0): void {
     const g = this.game, R = g.tuning.haze.far + 20;
-    const per = new Map<string, SpriteInstance[]>(), creatureShadows: ShadowInstance[] = [];
+    const per = new Map<string, SpriteInstance[]>(), arts = new Map<string, CreatureArt>(), creatureShadows: ShadowInstance[] = [];
+    const beat = 60 / g.tuning.beat.bpm;
     let n = 0;
     for (const c of g.creatures) {
       if (Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
-      const art = this.assets.creatureArt(c.species);
+      // Invited creatures are party animals: their party gear once it's drawn (the wild look till then).
+      const party = c.leashed ? this.assets.partyArt(c.species, c.id, sigilColour(c.species)) : undefined;
+      const art = party ?? this.assets.creatureArt(c.species), key = party ? `party-${c.id}` : c.species;
       if (!art) continue;
+      arts.set(key, art);
       const frame = art.atlas.frames[art.frame(c.level, c.moving ? Math.floor(c.walk) % 2 : 0, c.away)];
       if (!this.inView(c.x, c.z, frame.w * this.mpp, frame.h * this.mpp, 4)) continue;
       const fresh = this.mark("creature", c.x, c.z, frame.h * this.mpp, c.id);
-      let l = per.get(c.species);
-      if (!l) per.set(c.species, (l = []));
-      // Party animals (invited ones) bob and dance.
-      const dance = c.leashed ? Math.abs(Math.sin(time * 5 + c.id)) * 0.35 : 0;
-      l.push({ x: c.x, y: dance, z: c.z, frame, flip: c.facing < 0, fresh });
+      let l = per.get(key);
+      if (!l) per.set(key, (l = []));
+      // Party animals never stand still: a bounce and a sway on the beat when idle, a little
+      // bounce as they go. (Wild ones roam, graze and pause.)
+      const ph = (time / beat + (c.id % 4) * 0.25) * Math.PI;
+      const dance = c.leashed ? Math.abs(Math.sin(ph)) * (c.moving ? 0.15 : 0.4) : 0, sway = c.leashed && !c.moving ? Math.sin(ph * 0.5) * 0.12 : 0;
+      l.push({ x: c.x + sway, y: dance, z: c.z, frame, flip: c.facing < 0, fresh });
       creatureShadows.push({ x: c.x, z: c.z, w: frame.w * this.mpp * 0.7, d: frame.w * this.mpp * 0.25 });
       n++;
     }
     for (const [s, b] of this.creatureBatches) if (!per.has(s)) b.set([]);
     for (const [s, list] of per) {
-      const b = this.batchFor(this.creatureBatches, s, () => { const a = this.assets.creatureArt(s); return a && new SpriteBatch(a.atlas, this.mpp); });
+      const b = this.batchFor(this.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, this.mpp); });
       b?.set(list);
     }
     this.stats.creatures = n;

@@ -114,6 +114,12 @@ export class AssetLibrary {
     if (!a) this.ask({ kind: "creature", id: species, style: this.style });
     return a;
   }
+  /** An invited creature's party look (its gear seeded by its id), or undefined (and asked for). */
+  partyArt(species: string, id: number, colour: number[]): CreatureArt | undefined {
+    const k = `party-${id}`, a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "party", id: k, species, seed: id, colour, style: this.style });
+    return a;
+  }
   /** Ask for a set ahead of need, without using it. */
   prefetchType(t: number): void { if (!this.types.has(t)) this.typeArt(t); }
 

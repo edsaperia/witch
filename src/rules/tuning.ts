@@ -66,7 +66,7 @@ export interface Tuning {
   beat: { bpm: number };
   lasers: { on: boolean; maxCount: number; length: number; spread: number; sweep: number; sweepBeats: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };
   borders: { on: boolean; width: number; brightness: number; sparkle: number; step: number };
-  invite: { radius: number; cancelDistance: number; talkTimes: number[] };
+  invite: { talkRange: number; cancelDistance: number; talkTime: number[]; turn: number[] };
   leash: { length: number; runSpeed: number; pickRadius: number; spacing: number };
   bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number };
   tone: { black: number; gamma: number; ambient: number };
