@@ -179,11 +179,13 @@ export function decorSprite(id, st = {}, { variant = 0, ppm = 16 } = {}) {
   m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // a common ground line
   const s = witchPixelsPerUnit(st) * d.size, { sp, project } = render(m, { scale: s });
   let reach = 0; for (const q of m.parts) { if (q.extra) continue; const ends = q.type === "cone" ? [[q.a, q.r1], [q.b, q.r2]] : [[q.c, q.r ? Math.max(...q.r) : Math.max(q.h[0], q.h[2])]]; for (const [c, r] of ends) if (c[1] - r < .3) reach = Math.max(reach, Math.hypot(c[0], c[2]) + r); } // the furthest reach of what touches the ground
-  const crownY = d.split == null ? 0 : Math.max(0, Math.round(project([0, d.split, 0])[1]));
-  const top = new Sprite(sp.w, sp.h), bot = new Sprite(sp.w, sp.h);
-  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const i = y * sp.w + x, mm = sp.m[i]; if (mm) (y < crownY ? top : bot).put(x, y, mm, sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); }
+  // crop to what is drawn (a box's bounding sphere leaves empty rows above it)
+  let x0 = sp.w, x1 = -1, y0 = sp.h; for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
+  const W = x1 - x0 + 1, H = sp.h - y0, crop = new Sprite(W, H), top = new Sprite(W, H), bot = new Sprite(W, H);
+  const crownY = d.split == null ? 0 : Math.max(0, Math.round(project([0, d.split, 0])[1]) - y0);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y + y0) * sp.w + x + x0, mm = sp.m[i]; if (!mm) continue; const n = [sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]]; crop.put(x, y, mm, ...n); (y < crownY ? top : bot).put(x, y, mm, ...n); }
   const unit = s / ppm; // metres per model unit
-  return { whole: sp, top, bot, crownY, metres: { width: +(sp.w / ppm).toFixed(1), height: +(sp.h / ppm).toFixed(1), footprint: +(reach * unit).toFixed(1) } };
+  return { whole: crop, top, bot, crownY, metres: { width: +(W / ppm).toFixed(1), height: +(H / ppm).toFixed(1), footprint: +(reach * unit).toFixed(1) } };
 }
 
 // ---------------- lakes ----------------

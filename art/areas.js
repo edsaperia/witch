@@ -7,6 +7,7 @@
 // areaAssets(id, style, { K, makeCanvas }) bakes everything one area type needs:
 //   { def, floor, walls, small, big, setPiece }  — each prop { sp: baked, kind, text },
 //   floor a seamless-ish tile (64 x 48 art pixels) to repeat over the ground.
+import { NEW_SET_PIECES, setPiece3d } from "./setpieces.js";
 import { M, Sprite, rng, uni, pick, hash2, vnoise, hsv2rgb, tufts, lerp2, add, bake, defaultCanvas, runeGlyph } from "./core.js";
 import { Model, render, masks, v3 } from "./model3d.js";
 import { sigilHit } from "./sigils.js";
@@ -79,7 +80,120 @@ export const AREAS = [
   { id: "honeysuckle-tangle", name: "Honeysuckle tangle", creature: "dormouse", by: "draft", leaf: .25, floor: ["clover", .27, .45, .45], text: { floor: "grass and clover", wall: "bramble", small: "honeysuckle", big: "hazel coppice" },
     wall: [P("bramble")], small: [P("shrub", { flower: [250, 230, 170] })], big: [tree("broad", { trunks: 5, scale: .7, thin: true })] },
 ];
+// Set pieces for the areas that had none (Ed: "Make set pieces for the other areas too"), built in 3D: setpieces.js
+for (const [id, [kind, text]] of Object.entries(NEW_SET_PIECES)) { const A = AREAS.find(x => x.id === id); if (A && !A.set) { A.set = P(kind, { three: true }); A.text = { ...A.text, set: text }; } }
 export const AREA_BY_ID = Object.fromEntries(AREAS.map(a => [a.id, a]));
+
+// ---------------- layout: how each area's vegetation is arranged (data only) ----------------
+// Ed (2026-10-03, via the coordinator): every forest should feel different; much of that comes
+// from terrain and how trees are laid out. The prototype's layout engine reads these; each area
+// gets a `layout`. Fields:
+//   pattern     how the big objects are arranged: scatter (random, even) | groves (clumps with gaps)
+//               | rows (lines or an avenue, along `along`) | rings (circles round a centre) | thicket
+//               (packed close) | lone (single trees far apart) | stands (tight clumps of one kind
+//               on open ground) | edgeOnly (open middle, dense rim)
+//   along       for rows: what the rows follow (paths, stream)
+//   density     0-1, how full of big objects the area is (1 = as close as they can stand)
+//   clump       0-1, even (0) to clustered (1)
+//   glades      clearings: count, and their size in metres [min, max]
+//   heightMix   share of tree variants per height class (sums to 1); null where the big objects aren't trees
+//   undergrowth 0-1, how thick the small objects are
+//   lean        the trees' shared lean: dir in degrees (0 east, 90 up the screen), amount 0-1
+//   terrain     ground features: stream, pools, rocky, mounds, paths, hollows, ridges
+//   decor       world decorations: rate 0-1 (how often an area has one; about rate × 3 per area),
+//               and weights over the families ruins, rocks, freak (freak trees), lake, modern (relics), summing to 1
+//   feel        one sentence for the prototype builder
+const LAYOUT_PATTERNS = ["scatter", "groves", "rows", "rings", "thicket", "lone", "stands", "edgeOnly"];
+const LAYOUT_TERRAIN = ["stream", "pools", "rocky", "mounds", "paths", "hollows", "ridges"];
+const LAYOUT_DECOR = ["ruins", "rocks", "freak", "lake", "modern"];
+const LAY = (pattern, density, clump, glades, heightMix, undergrowth, lean, terrain, decor, feel, extra = {}) => ({
+  pattern, ...extra, density, clump, glades: { count: glades[0], size: glades[1] || [0, 0] },
+  heightMix: heightMix && { sapling: heightMix[0], mature: heightMix[1], tall: heightMix[2], giant: heightMix[3] },
+  undergrowth, lean: { dir: lean[0], amount: lean[1] }, terrain,
+  decor: { rate: decor[0], ...Object.fromEntries(LAYOUT_DECOR.map((k, i) => [k, decor[1][i]])) }, feel });
+const NO_LEAN = [0, 0];
+// decor weights in the order ruins, rocks, freak, lake, modern
+export const AREA_LAYOUTS = {
+  "moor": LAY("scatter", .2, .6, [2, [14, 24]], null, .7, [30, .2], ["pools", "mounds", "hollows"], [.5, [.3, .4, 0, .3, 0]],
+    "Open rolling moss, low mounds and dark pools, long grass combed one way by the wind; you can see a long way."),
+  "fern-forest": LAY("groves", .65, .6, [2, [8, 12]], [.2, .5, .25, .05], .9, NO_LEAN, ["hollows", "paths"], [.25, [.4, .3, .3, 0, 0]],
+    "Pine groves standing waist-deep in ferns, with green sunken hollows between them."),
+  "muddy-forest": LAY("scatter", .7, .3, [1, [6, 9]], [.25, .55, .17, .03], .4, NO_LEAN, ["pools", "paths"], [.3, [.3, .1, .2, .1, .3]],
+    "Squelching mud between many-trunked trees, puddled ruts winding through, broken stumps everywhere."),
+  "stone-shrine": LAY("rings", .35, .8, [1, [10, 14]], null, .3, NO_LEAN, ["rocky", "mounds"], [.5, [.6, .4, 0, 0, 0]],
+    "Big stones stand in rings round the shrine on stony grass; it feels deliberate and old."),
+  "tangly-forest": LAY("thicket", .9, .2, [1, [5, 8]], [.35, .55, .1, 0], .9, NO_LEAN, ["hollows"], [.2, [.2, 0, .6, 0, .2]],
+    "Short tangled trees packed close over nettles, low and claustrophobic, with one small clearing."),
+  "wispy-forest": LAY("stands", .55, .7, [2, [6, 10]], [.15, .45, .3, .1], .5, NO_LEAN, ["ridges"], [.3, [.4, .2, .3, 0, .1]],
+    "Stands of thick many-trunked trees, thin wispy saplings drifting between them over dry leaves."),
+  "hazel-forest": LAY("rings", .6, .6, [2, [6, 9]], [.3, .55, .12, .03], .5, NO_LEAN, ["mounds", "paths"], [.3, [.4, .3, .3, 0, 0]],
+    "Crooked hazels grown in loose fairy rings on short grass, lumpy little mounds in the middle of each."),
+  "garden": LAY("rows", .45, 0, [3, [6, 10]], [.1, .7, .2, 0], .6, NO_LEAN, ["paths", "pools"], [.4, [.7, 0, 0, .2, .1]],
+    "A lost formal garden: willows in avenues along straight paths, lawns and flower beds, a pavilion at the heart.", { along: "paths" }),
+  "twiggy-forest": LAY("scatter", .75, .3, [1, [6, 10]], [.25, .5, .2, .05], .6, [60, .5], ["paths"], [.25, [.3, .2, .3, 0, .2]],
+    "Straight many-trunked trees all slanting the same way, like a wood frozen in a gale."),
+  "ancient": LAY("lone", .4, .2, [1, [12, 18]], [.05, .35, .4, .2], .4, [150, .25], ["rocky", "mounds", "hollows"], [.45, [.5, .2, .3, 0, 0]],
+    "Giant gnarled trees far apart, roots heaving over mossy rocks; every tree is a landmark."),
+  "norway": LAY("stands", .8, .5, [1, [8, 12]], [.15, .45, .35, .05], .2, NO_LEAN, ["rocky", "ridges"], [.3, [.2, .6, 0, .2, 0]],
+    "Dense stands of straight pines on slate ridges, bare rock between; dark, vertical and cold."),
+  "alder-forest": LAY("scatter", .55, .4, [2, [6, 10]], [.2, .4, .35, .05], .6, [120, .35], ["stream", "hollows"], [.3, [.3, .1, .2, .3, .1]],
+    "Tall slanted alders at every height over long grass and stumps, a little stream wandering through."),
+  "meadow": LAY("lone", .12, .1, [0], [.2, .5, .25, .05], .3, NO_LEAN, ["mounds", "paths"], [.35, [.3, .3, 0, .2, .2]],
+    "Wide-open wildflower grass with a lone oak here and there and scattered hawthorn; the sky does the work."),
+  "old-oaks": LAY("groves", .5, .5, [2, [10, 16]], [.1, .35, .4, .15], .5, NO_LEAN, ["mounds", "hollows"], [.4, [.5, .1, .4, 0, 0]],
+    "Groves of huge hollow oaks with broad clearings of leaf litter between; slow and grand."),
+  "berry-thicket": LAY("thicket", .85, .5, [2, [4, 7]], [.2, .4, .35, .05], 1, NO_LEAN, ["paths"], [.15, [.3, 0, .4, 0, .3]],
+    "Tall pines over solid berry bushes and brambles, only narrow animal paths and a couple of pockets of space."),
+  "wetland": LAY("edgeOnly", .5, .5, [1, [16, 24]], [.25, .55, .15, .05], .8, NO_LEAN, ["pools", "stream"], [.35, [.2, 0, 0, .6, .2]],
+    "Open reedy water and mud in the middle, willows crowding the rim; wet and echoing."),
+  "stream": LAY("rows", .5, .2, [1, [6, 10]], [.3, .45, .2, .05], .5, NO_LEAN, ["stream", "pools"], [.3, [.3, .3, 0, .3, .1]],
+    "Alders lining both banks of a pebbly stream, saplings at the water's edge, open grass away from it.", { along: "stream" }),
+  "rocky-slope": LAY("scatter", .35, .6, [1, [8, 12]], [.3, .5, .18, .02], .2, [90, .15], ["rocky", "ridges"], [.5, [.3, .7, 0, 0, 0]],
+    "Scree and boulders with pines clinging in clumps, everything leaning slightly uphill."),
+  "bog": LAY("stands", .25, .85, [3, [10, 20]], [.4, .5, .1, 0], .6, NO_LEAN, ["pools", "mounds"], [.35, [.2, 0, 0, .5, .3]],
+    "Sphagnum and bog pools, stunted spruce in tight dark stands, cotton grass pale between them."),
+  "deadwood": LAY("scatter", .25, .2, [2, [8, 14]], [.05, .3, .45, .2], .15, NO_LEAN, ["ridges", "hollows"], [.45, [.3, .1, .3, 0, .3]],
+    "Sparse tall blasted snags on bare ridges; bleak, quiet, with long sightlines."),
+  "cave-mouth": LAY("edgeOnly", .4, .5, [1, [10, 14]], [.2, .5, .3, 0], .2, NO_LEAN, ["rocky", "ridges"], [.4, [.3, .6, 0, 0, .1]],
+    "Rock walls and dead trees ring an open stone floor that leads to the cave's dark mouth."),
+  "grassland": LAY("lone", .1, .5, [0], [.3, .5, .2, 0], .2, NO_LEAN, ["mounds"], [.35, [.3, .2, 0, .1, .4]],
+    "Short turf to the horizon, molehills, birches alone or in twos and threes."),
+  "beaver-pond": LAY("edgeOnly", .55, .4, [1, [14, 20]], [.4, .45, .15, 0], .4, NO_LEAN, ["pools", "stream"], [.4, [.1, 0, 0, .7, .2]],
+    "A pond in the middle, young birch and aspen round it, gnawed stumps where the big ones were felled."),
+  "log-pile": LAY("groves", .5, .7, [2, [6, 10]], null, .7, NO_LEAN, ["hollows", "mounds"], [.3, [.3, 0, .4, 0, .3]],
+    "Rotting logs heaped in piles, fungi everywhere, damp hollows between the heaps."),
+  "heath": LAY("scatter", .2, .3, [1, [12, 18]], [.5, .45, .05, 0], .8, [30, .6], ["ridges", "paths"], [.4, [.4, .4, 0, 0, .2]],
+    "Purple heather and gorse, small birches bent hard by the wind, all the same way."),
+  "old-pinewood": LAY("scatter", .5, .3, [2, [8, 14]], [.1, .35, .4, .15], .15, NO_LEAN, ["mounds", "paths"], [.35, [.4, .3, .3, 0, 0]],
+    "Cathedral-tall old pines on a clear floor of needles; you can see between the trunks a long way."),
+  "ravine": LAY("edgeOnly", .55, .6, [1, [6, 9]], null, .8, NO_LEAN, ["stream", "ridges", "rocky"], [.4, [.3, .5, 0, .2, 0]],
+    "A deep wet cleft: rock walls and mossy boulders either side, ferns, a stream down the middle."),
+  "bluebell-glade": LAY("groves", .45, .5, [3, [8, 14]], [.1, .5, .35, .05], .3, NO_LEAN, ["hollows"], [.35, [.4, 0, .3, .3, 0]],
+    "Beech groves round open glades carpeted in bluebells; soft, bright and airy."),
+  "holly-thicket": LAY("thicket", .9, .3, [1, [6, 9]], [.3, .6, .1, 0], .7, NO_LEAN, ["hollows"], [.25, [.3, 0, .5, 0, .2]],
+    "Dark hollies packed close, cobwebs strung between, one clearing round the web-hung tree."),
+  "honeysuckle-tangle": LAY("stands", .6, .7, [2, [5, 8]], [.45, .5, .05, 0], .8, NO_LEAN, ["paths", "mounds"], [.3, [.3, 0, .3, 0, .4]],
+    "Hazel coppice stools in clumps, honeysuckle and bramble between, clover paths winding through."),
+};
+for (const a of AREAS) a.layout = AREA_LAYOUTS[a.id];
+// Checks a layout's shape; returns a list of problems (empty when it's sound).
+export function layoutProblems(a) {
+  const y = a.layout, bad = [], in01 = v => typeof v === "number" && v >= 0 && v <= 1, sum1 = o => Math.abs(Object.values(o).reduce((s, v) => s + v, 0) - 1) < 1e-6;
+  if (!y) return ["no layout"];
+  if (!LAYOUT_PATTERNS.includes(y.pattern)) bad.push("pattern " + y.pattern);
+  if (y.pattern === "rows" && !y.along) bad.push("rows without along");
+  for (const k of ["density", "clump", "undergrowth"]) if (!in01(y[k])) bad.push(k);
+  if (!(y.glades.count >= 0 && y.glades.size[0] <= y.glades.size[1])) bad.push("glades");
+  const wooded = (a.big || []).some(([k]) => k === "tree");
+  if (wooded !== !!y.heightMix) bad.push(wooded ? "no heightMix" : "heightMix without trees");
+  if (y.heightMix && (!sum1(y.heightMix) || !Object.values(y.heightMix).every(in01))) bad.push("heightMix doesn't sum to 1");
+  if (!in01(y.lean.amount) || !(y.lean.dir >= 0 && y.lean.dir < 360)) bad.push("lean");
+  if (!y.terrain.length || !y.terrain.every(t => LAYOUT_TERRAIN.includes(t))) bad.push("terrain");
+  const { rate, ...w } = y.decor; if (!in01(rate) || !sum1(w)) bad.push("decor");
+  if (!y.feel || y.feel.length < 20) bad.push("feel");
+  return bad;
+}
+export { LAYOUT_PATTERNS, LAYOUT_TERRAIN, LAYOUT_DECOR };
 // Placement rules (Ed, 2026-10-03, via the coordinator): wall objects are drawn only, they do
 // not block movement for now; a set piece is rare scenery, shown in only some of an area
 // type's areas, for variety. The chance is a starting value for playtesting.
@@ -232,6 +346,7 @@ function prop(kind, o, def, st, r, s) {
 
 // Set pieces: one per area that has one, bigger than the props.
 function setPiece(kind, o, def, st, r, s) {
+  if (o.three) return setPiece3d(kind, def, st);
   if (kind === "tree" || kind === "log") return prop(kind, o, def, st, r, s);
   const W = Math.round(90 * s), H = Math.round(70 * s), sp = new Sprite(W, H), cx = W / 2, gy = H;
   let colours = { ...stoneCol(), [M.LEAF]: hsv2rgb(def.leaf, .55, .5), [M.LEAF2]: hsv2rgb(def.leaf - .04, .5, .7), [M.TRUNK]: hsv2rgb(st.trunkHue, .45, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5, .17), [M.MAGIC]: hsv2rgb(st.magicHue, .6, 1), [M.MAGIC2]: hsv2rgb(st.magicHue, .2, 1) };
@@ -280,7 +395,7 @@ export function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defau
   const col = list => (list || []).map(([kind, o]) => bk(prop(kind, o, def, st, r, K), kind, ""));
   const out = { def, floor: { sp: bake(ft.sp, ft.colours, st, "none", makeCanvas), kind: def.floor[0], text: def.text.floor }, walls: col(def.wall), small: col(def.small), big: col(def.big), setPiece: null };
   out.walls.forEach(a => a.text = def.text.wall); out.small.forEach(a => a.text = def.text.small); out.big.forEach(a => a.text = def.text.big);
-  if (def.set) out.setPiece = bk(setPiece(def.set[0], def.set[1], def, st, r, K), def.set[0], def.text.set);
+  if (def.set) { const sp0 = setPiece(def.set[0], def.set[1], def, st, r, K); out.setPiece = { ...bk(sp0, def.set[0], def.text.set), metres: sp0.metres }; } // metres: the new 3D ones' size
   return out;
 }
 

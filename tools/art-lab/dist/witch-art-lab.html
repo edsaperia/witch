@@ -148,6 +148,12 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
+        <h2>Set pieces</h2>
+        <p class="note">Every area's set piece, its landmark, five to a row with the witch for scale. The twenty new ones are built in 3D at landmark size; the first ten are drawn smaller (the prototype scales those up).</p>
+        <div class="sheet-wrap"><canvas id="setSheet" width="420" height="160"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
         <h2>Decorations</h2>
         <p class="note">World decorations any area can have, placed sparsely as discoveries: twelve ruins (weathered, then overgrown), rocks, freak trees, and the lake kit (water, shore band, reeds, lily pads), with the witch for scale.</p>
         <div class="sheet-wrap"><canvas id="decorSheet" width="420" height="160"></canvas></div>
@@ -155,14 +161,21 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 
       <section style="display:grid;gap:10px">
         <div class="row" style="justify-content:space-between"><h2>Trees</h2><div class="row"><label class="note" for="treeArea">Area</label><select id="treeArea"></select></div></div>
-        <p class="note">An area's trees across their whole range of heights, from saplings to the occasional giant that pokes above the canopy, with the witch for scale.</p>
+        <p class="note">An area's trees across their whole range of heights, from saplings to the occasional giant that pokes above the canopy, with the witch for scale, and how the area lays out its vegetation (its layout, which the prototype's generator reads).</p>
+        <p class="note" id="treeLayout"></p>
         <div class="sheet-wrap"><canvas id="treeSheet" width="420" height="160"></canvas></div>
       </section>
 
       <section style="display:grid;gap:10px">
         <h2>Witch</h2>
-        <p class="note">The witch in every pose, turned towards you (top) and away (bottom): three frames of her hover, the fast-flight lean, flying flat out over the treetops (three frames), braking hard (two frames), then rising to the treetops and descending to the ground, two frames each.</p>
+        <p class="note">The witch in every pose, turned towards you (top) and away (bottom): three frames of her hover, the fast-flight lean, flying flat out over the treetops (three frames), braking hard (two frames), then rising to the treetops and descending to the ground, two frames each. Below, on foot (towards, then away), after her hover for scale: standing (three idle frames), landing and taking off (three each), talking (four gestures), placing and lifting a sigil (three each), and sitting on her terrace (two).</p>
         <div class="sheet-wrap"><canvas id="witchSheet" width="420" height="160"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
+        <h2>Home</h2>
+        <p class="note">The witch's treehouse, a camper van crossed with a castle and stuck in a giant tree, with her sitting on its terrace as the game starts: turned towards you, its base alone (as seen from the ground, under the canopy), and turned away.</p>
+        <div class="sheet-wrap"><canvas id="homeSheet" width="420" height="160"></canvas></div>
       </section>
 
       <section style="display:grid;gap:10px">
@@ -1150,8 +1163,125 @@ function fastModel(frame) {
   return m;
 }
 
+// On foot (Ed: "the witch land and hold her broomstick with one hand and gesture with the other
+// for talking", and "lift sigil" and "place sigil" gestures). She stands on the ground with her
+// broom in her far hand, upright like a staff, bristles down; the near hand is free.
+//   stand        three frames of idle: breathing, hair and jacket stirring
+//   land         from hovering to standing: astride the dipped broom, feet down; a leg swung over; the broom swung upright
+//   takeoff      back again: the broom swung down; a leg over; astride it, pushing off
+//   talk         four gestures: an open palm, pointing up (an idea), a wave, a hand on her chest; her head tilts between them
+//   placeSigil   reaching up to the stack over her head; drawing a sigil down; crouched, palm to the ground
+//   liftSigil    crouched, palm to the ground; rising with it; tossing it up into the stack
+// The sigil itself is not drawn; each frame records her free hand (where a held sigil goes) and
+// her hat tip as anchors. frames and a suggested fps per pose:
+const WITCH_FOOT_POSES = { stand: { frames: 3, fps: 3 }, land: { frames: 3, fps: 10 }, takeoff: { frames: 3, fps: 10 }, talk: { frames: 4, fps: 2.5 }, placeSigil: { frames: 3, fps: 6 }, liftSigil: { frames: 3, fps: 6 }, sit: { frames: 2, fps: 1.5 } };
+// sit (with the treehouse): on the terrace chair, her broom leaning beside her, swinging her legs and looking out.
+// Her seat is WITCH_SEAT_HEIGHT model units above the ground she stands on (the chair's seat; the treehouse builds its chair to match).
+const WITCH_SEAT_HEIGHT = .34;
+// Each frame: crouch (0 standing, 1 squatting), bend (the spine's forward lean, radians), hop (feet off the ground),
+// breathe, sway (hair and jacket), tilt (the head to one side), look (up), the free hand and its shape, the broom
+// (held upright, astride, or at an angle: its binding point and direction), a leg swung up, a talking mouth.
+const UPRIGHT = { binding: [-.02, .31, -.2], dir: [.02, 1, -.04] };
+const FOOT_FRAMES = {
+  stand: [0, 1, 2].map(f => ({ breathe: [0, .006, .012][f], sway: [0, .02, .035][f], free: [.04, .5 + [0, .006, .012][f], .18], hand: "rest", broom: UPRIGHT })),
+  land: [
+    { crouch: .2, hop: .01, broom: { astride: true }, sway: .05 },                                                 // astride the dipped broom, feet touching down
+    { crouch: .1, bend: .1, broom: { binding: [-.28, .26, -.08], dir: [.6, .5, -.06] }, legUp: [.18, .24, .12], sway: .03, free: [.2, .58, .2], hand: "rest" }, // swinging a leg over
+    { breathe: .004, broom: { binding: [.06, .31, -.2], dir: [.18, 1, -.03] }, sway: .015, free: [.06, .52, .19], hand: "rest" }, // the broom swung upright
+  ],
+  takeoff: [
+    { crouch: .1, broom: { binding: [-.1, .3, -.17], dir: [.35, .7, -.04] }, free: [.16, .58, .2], hand: "rest", sway: .02 }, // the broom swung down
+    { crouch: .15, bend: .1, broom: { binding: [-.3, .28, -.06], dir: [.7, .4, -.04] }, legUp: [.1, .26, .13], sway: .04, free: [.24, .55, .17], hand: "rest" }, // a leg over
+    { hop: .1, broom: { astride: true }, toes: true, sway: .06 },                                                   // astride it, pushing off
+  ],
+  talk: [
+    { free: [.47, .84, .13], hand: "palm", tilt: .35, mouth: true, sway: .01 },                     // an open palm
+    { free: [.32, 1.18, .12], hand: "point", tilt: -.25, look: .12, sway: .02 },                    // pointing up: an idea
+    { free: [.24, 1.16, .3], elbow: [.26, .88, .26], hand: "wave", tilt: .45, mouth: true, sway: .03 }, // a little wave
+    { free: [.15, .76, .1], hand: "chest", tilt: -.35, breathe: .01, sway: .015 },                // a hand on her chest
+  ],
+  placeSigil: [
+    { free: [.16, 1.62, .1], hand: "palm", look: .22, breathe: .01, sway: .02 },                 // reaching up to the stack
+    { free: [.42, 1.0, .12], hand: "palm", look: .08, sway: .03 },                                 // drawing a sigil down
+    { crouch: .7, bend: .55, free: [.38, .1, .13], hand: "down", look: -.08, sway: .04 },          // crouched, palm to the ground
+  ],
+  liftSigil: [
+    { crouch: .7, bend: .55, free: [.36, .08, .13], hand: "down", look: -.08, sway: .02 },         // crouched, palm to the ground
+    { crouch: .25, bend: .18, free: [.44, .82, .12], hand: "palm", look: .05, sway: .04 },         // rising with it
+    { breathe: .012, free: [.2, 1.64, .1], hand: "palm", look: .25, sway: .05, toes: true },     // tossing it up into the stack
+  ],
+  sit: [0, 1].map(f => ({ sit: true, swing: [.06, -.06][f], bend: -.08, look: [.02, .1][f], tilt: [.15, -.2][f], sway: [.01, .03][f], breathe: [0, .008][f],
+    broom: { binding: [-.24, .31, -.3], dir: [.32, 1, -.06] }, free: [.2, WITCH_SEAT_HEIGHT + .14, .15], far: [.18, WITCH_SEAT_HEIGHT + .14, -.13], hand: "rest" })), // leaning back, hands on her knees
+};
+// the knee between a hip and a foot, bent forward
+function kneeOf(hip, foot, l) {
+  const d = Math.hypot(foot[0] - hip[0], foot[1] - hip[1]), mid = v3.lerp(hip, foot, .5);
+  if (d >= 2 * l) return mid;
+  const off = Math.sqrt(l * l - d * d / 4), vx = (foot[0] - hip[0]) / d, vy = (foot[1] - hip[1]) / d;
+  return [mid[0] - vy * off, mid[1] + vx * off, mid[2]];
+}
+function footModel(pose, frame) {
+  const fr = FOOT_FRAMES[pose], K = { crouch: 0, bend: 0, hop: 0, breathe: 0, sway: 0, tilt: 0, look: 0, broom: UPRIGHT, ...fr[frame % fr.length] };
+  const m = new Model({ blend: .03 }), hop = K.hop, sway = K.sway;
+  const hipY = K.sit ? WITCH_SEAT_HEIGHT + .06 : .45 - K.crouch * .21 + hop, hipX = -K.crouch * .12;
+  // the broom: astride it (the handle level between her legs) or a binding point and a direction
+  const astride = !!K.broom.astride, yb = hipY - .04;
+  const bdir = astride ? [1, 0, 0] : v3.norm(K.broom.dir), bind = astride ? [-.36, yb, 0] : K.broom.binding;
+  const along = t => v3.add(bind, v3.mul(bdir, t));
+  m.seg(along(0), along(astride ? .98 : 1.1), .022, .018, M.BROOM, { group: 2 });
+  m.ell(along(-.13), [.17, .07, .08], M.STRAW, { dir: bdir, group: 3, paint: p => { const t = v3.dot(v3.sub(p, bind), bdir); return t < -.22 ? M.MAGIC2 : t > -.01 ? M.BROOM : undefined; } });
+  // legs: jeans to the knee, then down to sneakers; one swung up over the broom; on her toes pushing off
+  for (const side of [-1, 1]) {
+    const g = side > 0 ? 6 : 4, hip = [hipX, hipY, side * .07];
+    const swing = K.sit ? K.swing * side : 0; // sitting: her legs over the seat's edge, swinging one forward, one back
+    const foot = K.sit ? [.24 + swing, .09 + Math.max(0, swing) * .6, side * .1] : side > 0 && K.legUp ? K.legUp : [(side > 0 ? .05 : -.01) + (K.toes ? -.03 : 0), .07 + (K.toes ? hop * .4 : hop), side * .1];
+    const knee = K.sit ? [.21, hipY + .01, side * .09] : kneeOf(hip, foot, .21);
+    m.seg(hip, knee, .055, .045, M.JEANS, { group: g }); m.seg(knee, foot, .045, .04, M.JEANS, { group: g });
+    const toe = K.toes ? [.03, -.045, 0] : [.05, -.03, 0];
+    m.ell(v3.add(foot, toe), [.08, .04, .045], M.SHOES, { dir: K.toes ? [1, -.6, 0] : [1, 0, 0], group: g, paint: p => p[1] < foot[1] + toe[1] - .015 ? M.BELLY : undefined });
+  }
+  // body: hips in jeans, a top under an open jacket, leaning with the spine
+  const spine = [Math.sin(K.bend), Math.cos(K.bend), 0], fwd = [Math.cos(K.bend), -Math.sin(K.bend), 0];
+  const hips = [hipX, hipY + .03, 0]; m.ell(hips, [.1, .08, .105], M.JEANS, { group: 1 });
+  const chest = v3.add(hips, v3.add(v3.mul(spine, .19), [0, K.breathe, 0]));
+  m.ell(chest, [.1, .15 + K.breathe * .5, .115], M.JACKET, { dir: fwd, group: 1, paint: p => v3.dot(v3.sub(p, chest), fwd) > .045 && Math.abs(p[2]) < .05 ? M.TOP : undefined });
+  // the jacket's hem hanging behind, stirring
+  m.chain([[...v3.add(chest, v3.add(v3.mul(fwd, -.07), v3.mul(spine, -.08))), .07], [...v3.add(chest, v3.add(v3.mul(fwd, -.11 - sway), v3.mul(spine, -.2))), .05], [...v3.add(chest, v3.add(v3.mul(fwd, -.13 - sway * 1.6), v3.mul(spine, -.29))), .025]], M.JACKET, { group: 12 });
+  // head: tilted to one side, looking up or down
+  const H = v3.add(chest, v3.add(v3.mul(spine, .27), [K.look * .03, 0, K.tilt * .04]));
+  // arms: the far hand grips the broom; the near hand is free (or on the handle, astride)
+  const shoulder = side => v3.add(chest, v3.add(v3.mul(spine, .1), [0, 0, side * .12]));
+  const grip = astride ? [.28, yb + .03, -.05] : along(Math.max(.12, (Math.min(.62, hipY + .2) - bind[1]) / Math.max(.3, bdir[1])));
+  const free = astride ? [.28, yb + .03, .05] : K.free;
+  for (const side of [-1, 1]) {
+    const g = side > 0 ? 7 : 5, sh = shoulder(side), hand = side > 0 ? free : K.far || grip;
+    const elbow = side > 0 && K.elbow ? K.elbow : v3.add(v3.lerp(sh, hand, .5), [-.03, -.02, side * .05]);
+    m.seg(sh, elbow, .04, .035, M.JACKET, { group: g }); m.seg(elbow, hand, .035, .03, M.JACKET, { group: g });
+    const shape = side > 0 && !astride ? K.hand : "grip";
+    if (shape === "palm") m.ell(hand, [.045, .02, .04], M.SKIN, { group: g });                                   // open, palm up
+    else if (shape === "down") m.ell(hand, [.045, .02, .04], M.SKIN, { dir: [1, .15, 0], group: g });             // flat, palm to the ground
+    else if (shape === "wave") { m.ell(hand, [.03, .045, .04], M.SKIN, { group: g }); for (const k of [-1, 0, 1]) m.seg(v3.add(hand, [0, .03, k * .02]), v3.add(hand, [k * .01, .065, k * .03]), .01, .008, M.SKIN, { group: g }); } // fingers spread
+    else if (shape === "point") { m.ell(hand, [.035, .03, .035], M.SKIN, { group: g }); m.seg(v3.add(hand, [0, .02, 0]), v3.add(hand, [.01, .08, 0]), .012, .01, M.SKIN, { group: g }); } // a finger up
+    else m.ell(hand, [.035, .03, .035], M.SKIN, { group: g });
+  }
+  // face, hair, headphones and hat (as in flight, but the hair hangs down her back)
+  m.ell(H, [.11, .115, .1], M.SKIN, { group: 8, paint: p => (p[0] < H[0] - .01 || p[1] > H[1] + .075) ? M.HAIR : undefined });
+  for (const side of [-1, 1]) m.ell(Model.surface(H, [.11, .115, .1], v3.norm([.85, .05 + K.look, side * .45 + K.tilt * .1])), [.016, .026, .016], M.EYE, { group: 8 });
+  if (K.mouth) m.ell(Model.surface(H, [.11, .115, .1], v3.norm([1, -.5 + K.look, K.tilt * .1])), [.012, .016, .025], M.NOSE, { group: 8 }); // talking
+  m.chain([[...v3.add(H, [-.06, .02, 0]), .06], [...v3.add(H, [-.12 - sway, -.12, .02 + K.tilt * .03]), .05], [...v3.add(H, [-.13 - sway * 1.5, -.25, .03 + K.tilt * .04]), .03]], M.HAIR, { group: 9 });
+  for (const side of [-1, 1]) m.ell(v3.add(H, [-.015, 0, side * .105]), [.05, .055, .03], M.PHONES, { group: 10 });
+  m.chain([[...v3.add(H, [-.005, .03, -.095]), .015], [...v3.add(H, [-.005, .11, -.05]), .015], [...v3.add(H, [-.005, .125, 0]), .015], [...v3.add(H, [-.005, .11, .05]), .015], [...v3.add(H, [-.005, .03, .095]), .015]], M.PHONES, { group: 10 });
+  const brim = v3.add(H, [-.03, .1, K.tilt * .02]), tz = K.tilt * .05, tip = v3.add(brim, [-.16 - sway * .5, .27, tz * 2]);
+  m.ell(brim, [.16, .014, .15], M.HAT, { dir: [1, .25 - K.look * .8, K.tilt * .3], group: 11 });
+  m.chain([[...v3.add(brim, [0, .01, 0]), .085], [...v3.add(brim, [-.05, .17, tz]), .045], [...tip, .012]], M.HAT, { group: 11, paint: p => p[1] < brim[1] + .045 ? M.MAGIC : undefined });
+  m.ell([.02, .005, 0], [.2, .005, .12], M.NOSE, { group: 0 }); // her shadow at her feet
+  m.anchors.hand = free; m.anchors.hatTip = tip;
+  return m;
+}
+
 function witchModel({ frame = 0, lean = false, pose } = {}) {
   if (pose === "fast") return fastModel(frame);
+  if (WITCH_FOOT_POSES[pose]) return footModel(pose, frame);
   const rise = pose === "rise", desc = pose === "descend", brake = pose === "brake", posed = rise || desc || brake;
   const m = new Model({ blend: .03 }), bob = posed ? 0 : [0, .025, .045][frame % 3], tilt = posed ? 0 : [0, .015, -.01][frame % 3] + (lean ? .08 : 0);
   // the broom's height; how far she leans forward on it (back, braking). Posed, she leans well into it, so that
@@ -1233,7 +1363,9 @@ const witchScale = h => { if (!scaleCache.has(h)) scaleCache.set(h, render(witch
 const witchPixelsPerUnit = (st = {}) => witchScale(witchHeight(st));
 function witchSprite(st = {}, { frame = 0, lean = false, facing = "towards", pose } = {}) {
   const h = witchHeight(st);
-  const { sp } = pose ? render(witchModel({ frame, pose }), { scale: witchScale(h), facing }) : render(witchModel({ frame, lean }), { height: h, facing });
+  const model = witchModel({ frame, lean, pose }), { sp, project } = pose ? render(model, { scale: witchScale(h), facing }) : render(model, { height: h, facing });
+  // on foot: where her free hand (a held sigil) and her hat tip are, in pixels from the top-left
+  if (model.anchors.hand) sp.anchors = { hand: project(model.anchors.hand), hatTip: project(model.anchors.hatTip) };
   // she glows: a few motes of light round her
   let n = 0;
   for (let i = 0; i < 400 && n < 6; i++) {
@@ -1243,6 +1375,426 @@ function witchSprite(st = {}, { frame = 0, lean = false, facing = "towards", pos
     sp.px(x, y, M.MAGIC2); n++;
   }
   return sp;
+}
+
+
+// ---- inlined from art/treehouse.js ----
+// The witch's treehouse (Ed: "like a camper van had a baby with a castle and it got stuck in a
+// tree. This is near the dancefloor; you start the game sitting on its terrace"). The home landmark:
+//   - the tree: a giant broad trunk, roots spilling out over the ground, thick branches cradling
+//     the van, a crown of leaves behind and above;
+//   - the camper: a rounded two-tone van body wedged nose-up in the branches, a pop-top roof with
+//     striped canvas, side windows and a round porthole glowing warm, a sliding door, a wing mirror,
+//     hubcaps, a ladder up the back to the roof;
+//   - the castle: a stone turret growing up out of the van's back with an arrow slit, crenellations,
+//     a pointy tiled roof and a pennant; a stone chunk wedged under the van;
+//   - patched together with planks and rope, bunting along the branches and fairy lights in the
+//     party's colours;
+//   - the terrace: a plank deck off the van's nose, with a railing, plant pots, a striped awning,
+//     a lantern and a camping chair (where she sits at the start);
+//   - a rope ladder down the trunk (decorative: she flies).
+// Built in 3D (model3d.js) to the witch's own size, so her sit pose fits its chair; turned towards
+// or away. Split into a base (trunk, van, terrace: seen from the ground) and a top (the crown, the
+// turret's roof and pennant: drawn in treetop mode, cut out round the witch). Anchors: the seat,
+// the door and the light sources, in pixels.
+
+
+
+// Its parts' materials. The windows glow warm (GLOW, brightest MAGIC2); the fairy lights are three
+// party neons (COLLAR pink, RUNE cyan, WOKEN gold) and MAGIC (violet).
+const LEAVES = new Set([M.LEAF, M.LEAF2, M.LEAF3]);
+function treehouseColours(st = {}) {
+  const leaf = st.leafHue ?? .3, van = st.vanHue ?? .03;
+  return {
+    [M.TRUNK]: [92, 66, 48], [M.BARK2]: [70, 50, 38], [M.BARKD]: [44, 32, 28], [M.BARKL]: [124, 94, 68],
+    [M.LEAF]: hsv2rgb(leaf, .55, .42), [M.LEAF2]: hsv2rgb(leaf + .02, .5, .55), [M.LEAF3]: hsv2rgb(leaf + .04, .6, .26),
+    [M.BODY]: hsv2rgb(van, .62, .72), [M.BELLY]: [236, 226, 204], [M.BODY2]: hsv2rgb(van + .5, .45, .6), // the van's paint, its cream top, the awning's second stripe
+    [M.BODY3]: [40, 36, 46], [M.FRAME]: [196, 200, 210], [M.SHADES]: [28, 26, 32], // tyres and the slate roof's dark rows, chrome, rubber
+    [M.HAT1]: [74, 70, 96], [M.HAT2]: [96, 88, 122], // the turret roof's tiles, in two rows
+    [M.STONE]: [118, 116, 124], [M.STONED]: [64, 62, 72], [M.MOSS]: [80, 112, 60],
+    [M.WOOD]: [148, 104, 62], [M.STRAW]: [196, 168, 112], [M.CLOTH]: [232, 220, 196], [M.ACCENT]: hsv2rgb(.95, .6, .85), [M.EAR]: [176, 96, 64], // planks, rope, canvas, the pennant, terracotta
+    [M.GLOW]: [255, 190, 96], [M.MAGIC2]: [255, 236, 190], // warm window light
+    [M.COLLAR]: [255, 80, 200], [M.RUNE]: [80, 230, 255], [M.WOKEN]: [255, 214, 80], [M.MAGIC]: [180, 110, 255], // fairy lights
+    [M.LINE]: [24, 22, 30], [M.NOSE]: [14, 12, 18],
+  };
+}
+
+// The terrace's deck height and the chair (model units, the witch's own; she is about 1.3 tall).
+const DECK = 2.5, CHAIR = [2.2, DECK, .3];
+const FAIRY = [M.COLLAR, M.RUNE, M.WOKEN, M.MAGIC];
+function treehouseModel() {
+  const m = new Model({ blend: .05 }), lights = [];
+  const hash = (a, b) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
+  // ---- the tree: trunk, roots, branches ----
+  const bark = p => { const k = Math.sin(Math.atan2(p[2], p[0]) * 9 + p[1] * 2.3); return k > .75 ? M.BARKD : k < -.6 ? M.BARKL : k > .35 ? M.BARK2 : undefined; };
+  m.chain([[0, -.05, -.2, .62], [.05, 1.4, -.22, .5], [.1, 2.4, -.3, .44], [-.05, 3.6, -.45, .34], [-.15, 4.7, -.55, .24]], M.TRUNK, { group: 1, rough: .025, paint: bark });
+  for (let i = 0; i < 7; i++) { // roots spilling out over the ground
+    const a = i / 7 * Math.PI * 2 + .3, r0 = .45, r1 = 1.05 + hash(i, 1) * .45;
+    m.chain([[Math.cos(a) * r0, .45, -.2 + Math.sin(a) * r0, .2], [Math.cos(a) * (r0 + r1) * .55, .16, -.2 + Math.sin(a) * (r0 + r1) * .55, .13], [Math.cos(a) * r1, .02, -.2 + Math.sin(a) * r1, .05]], M.TRUNK, { group: 1, rough: .015, paint: bark });
+  }
+  const branch = (pts, g = 1) => m.chain(pts, M.TRUNK, { group: g, rough: .015, paint: bark });
+  branch([[.1, 2.0, -.25, .26], [.9, 2.12, .0, .18], [1.6, 2.2, .1, .13], [2.9, 2.35, .2, .07]]);   // under the van's nose and the terrace
+  branch([[0, 2.1, -.3, .25], [-.9, 2.25, -.05, .17], [-1.7, 2.45, .05, .1], [-2.2, 2.75, .05, .05]]); // under its back
+  branch([[-.05, 3.6, -.45, .2], [.9, 4.3, -.55, .14], [1.8, 4.9, -.6, .07]], 2);                    // up into the crown
+  branch([[-.1, 4.0, -.5, .18], [-1.1, 4.6, -.7, .12], [-1.9, 5.0, -.8, .06]], 2);
+  branch([[-.15, 4.6, -.55, .14], [.2, 5.4, -.85, .08]], 2);
+  // ---- the crown: leafy clumps behind and above the house ----
+  const leafy = c => p => { const n = hash(Math.floor(p[0] * 9), Math.floor(p[1] * 9) + Math.floor(p[2] * 9) * 7); return p[1] < c[1] - .25 || n < .18 ? M.LEAF3 : n > .82 ? M.LEAF2 : undefined; };
+  for (const [c, r] of [[[-1.7, 5.15, -.9], [.95, .6, .75]], [[1.6, 5.2, -.8], [.95, .62, .75]], [[.1, 5.85, -1.0], [1.15, .7, .85]], [[-.7, 4.65, -1.25], [.85, .55, .6]], [[.95, 4.6, -1.3], [.8, .5, .6]], [[-2.4, 4.6, -.7], [.55, .45, .5]], [[2.5, 4.75, -.6], [.6, .45, .5]]])
+    m.ell(c, r, M.LEAF, { group: 40, rough: .05, paint: leafy(c) });
+  // ---- the camper van, wedged nose-up in the branches ----
+  const vc = [-.15, 2.92, .15], vd = v3.norm([1, .07, 0]), vh = [1.25, .52, .58];
+  const vx = p => v3.dot(v3.sub(p, vc), vd), vy = p => v3.dot(v3.sub(p, vc), [-vd[1], vd[0], 0]); // along and up the van
+  m.box(vc, vh, M.BODY, { dir: vd, round: .22, group: 3, paint: p => {
+    const x = vx(p), y = vy(p), side = p[2] > vc[2] + vh[2] - .04;
+    if (side && Math.hypot(x + .85, y - .02) < .15) return Math.hypot(x + .85, y - .02) < .11 ? M.GLOW : M.FRAME; // the porthole
+    if (side && x > .35 && x < .8 && y > -.42 && y < .38) return y > .02 && y < .3 && x > .42 && x < .73 ? M.GLOW : Math.abs(x - .575) < .2 && y < -.38 ? M.FRAME : M.BODY2; // the sliding door, its window lit
+    if (side && y > .06 && y < .32 && x > -.6 && x < .25) return (Math.abs(x + .17) < .02) ? M.BELLY : M.GLOW; // side windows, lit
+    if (x > vh[0] - .05 && y > .05 && y < .35 && Math.abs(p[2] - vc[2]) < .45) return M.MAGIC2; // the windscreen, lamplight inside
+    if (x > vh[0] - .06 && Math.abs(y + .2) < .07 && Math.abs(Math.abs(p[2] - vc[2]) - .38) < .08) return M.FRAME; // headlights
+    return y > .02 ? M.BELLY : y < -.42 ? M.SHADES : undefined; // cream above, paint below, a rubber skirt
+  } });
+  lights.push({ at: v3.add(vc, [-.15, .2, vh[2] + .1]), rgb: [255, 190, 96], kind: "window" }, { at: v3.add(vc, [-.9, .05, vh[2] + .1]), rgb: [255, 190, 96], kind: "porthole" }, { at: v3.add(vc, [1.3, .25, 0]), rgb: [255, 236, 190], kind: "windscreen" });
+  for (const x of [-.75, .75]) { const c = v3.add(v3.add(vc, v3.mul(vd, x)), [0, -.5, vh[2] - .02]); m.ell(c, [.21, .21, .08], M.SHADES, { group: 4, paint: p => Math.hypot(p[0] - c[0], p[1] - c[1]) < .1 ? M.FRAME : undefined }); } // wheels and hubcaps
+  m.seg(v3.add(vc, [1.05, .3, vh[2] - .02]), v3.add(vc, [1.2, .32, vh[2] + .14]), .015, .015, M.FRAME, { group: 5 }); m.box(v3.add(vc, [1.22, .34, vh[2] + .16]), [.04, .06, .02], M.FRAME, { group: 5, round: .015 }); // the wing mirror
+  // the pop-top: a cream lid on striped canvas sides
+  const top = v3.add(vc, [-.25, vh[1] + .14, 0]);
+  m.box(top, [.95, .1, .5], M.CLOTH, { dir: vd, round: .05, group: 6, paint: p => Math.floor((vx(p) + 2) * 6) % 2 ? M.BODY2 : undefined });
+  m.box(v3.add(top, [0, .14, 0]), [1.0, .05, .54], M.BELLY, { dir: v3.norm([1, .14, 0]), round: .04, group: 6 });
+  // the ladder up the back to the roof
+  for (const z of [-.18, .18]) m.seg(v3.add(vc, [-1.33, -.45, z]), v3.add(vc, [-1.3, .62, z]), .02, .02, M.FRAME, { group: 7 });
+  for (let i = 0; i < 5; i++) m.seg(v3.add(vc, [-1.33, -.32 + i * .22, -.18]), v3.add(vc, [-1.33, -.32 + i * .22, .18]), .014, .014, M.FRAME, { group: 7 });
+  // ---- the castle turret growing up out of the van's back ----
+  const T = [-.75, 3.25, -.05], TR = .44, TH = 1.45;
+  m.seg(T, v3.add(T, [0, TH, 0]), TR, TR - .04, M.STONE, { group: 8, rough: .012, paint: p => {
+    const y = p[1] - T[1], a = Math.atan2(p[2] - T[2], p[0] - T[0]), row = Math.floor(y * 6), col = Math.floor((a + Math.PI) * 4 + (row % 2) * .5);
+    if (Math.abs(a - Math.PI / 2 + .35) < .07 && y > .75 && y < 1.15) return M.GLOW; // the arrow slit, lit
+    if ((y * 6) % 1 < .12 || ((a + Math.PI) * 4 + (row % 2) * .5) % 1 < .1) return M.STONED; // mortar
+    return hash(row, col) < .15 && y < .5 ? M.MOSS : undefined;
+  } });
+  lights.push({ at: v3.add(T, [.2, .95, TR + .1]), rgb: [255, 190, 96], kind: "arrow slit" });
+  for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; m.box(v3.add(T, [Math.cos(a) * (TR - .05), TH + .1, Math.sin(a) * (TR - .05)]), [.1, .1, .08], M.STONE, { dir: [-Math.sin(a), 0, Math.cos(a)], round: .02, group: 9, rough: .008 }); } // crenellations
+  const roofBase = v3.add(T, [0, TH + .1, 0]), roofTip = v3.add(roofBase, [.08, 1.05, -.04]); // inside the crenellations
+  m.seg(roofBase, roofTip, TR - .1, .02, M.HAT1, { group: 10, paint: p => Math.floor((p[1] - roofBase[1]) * 7) % 2 ? M.HAT2 : undefined }); // the pointy tiled roof
+  m.seg(roofTip, v3.add(roofTip, [0, .45, 0]), .015, .012, M.FRAME, { group: 11 });
+  m.box(v3.add(roofTip, [.17, .37, 0]), [.16, .06, .01], M.ACCENT, { dir: [1, -.15, .1], round: .005, group: 11 }); // the pennant
+  m.box([-1.35, 2.45, .3], [.28, .2, .22], M.STONE, { dir: [1, .3, .2], round: .05, rough: .01, group: 12, paint: p => p[1] > 2.58 ? M.MOSS : undefined }); // a stone chunk wedged under the van
+  // ---- patches: planks nailed over the van, rope lashing it to the branches ----
+  m.box(v3.add(vc, [-.35, -.33, vh[2] + .01]), [.3, .05, .02], M.WOOD, { dir: [1, .12, 0], round: .01, group: 13 });
+  m.box(v3.add(vc, [-.3, -.22, vh[2] + .01]), [.26, .045, .02], M.WOOD, { dir: [1, -.08, 0], round: .01, group: 13 });
+  for (const x of [-.9, .95]) { const c = v3.add(vc, [x, -.55, 0]); for (const k of [-1, 1]) m.seg(v3.add(c, [k * .04, -.08, vh[2] + .03]), v3.add(c, [k * .04, .1, vh[2] + .03]), .025, .025, M.STRAW, { group: 14 }); }
+  // ---- the terrace: a plank deck off the van's nose ----
+  const deck = [2.05, DECK - .05, .3], dh = [.85, .05, .62];
+  m.box(deck, dh, M.WOOD, { round: .02, group: 15, paint: p => ((p[2] - deck[2] + 2) * 9) % 1 < .12 ? M.BARKD : undefined }); // planks
+  for (const [x, z] of [[1.3, -.25], [2.8, -.25], [2.8, .85], [1.3, .85]]) m.seg([x, DECK - .1, z], [x, DECK - .7, z * .3], .04, .04, M.WOOD, { group: 16 }); // struts down to the branch
+  const rail = [[1.25, .9], [2.88, .9], [2.88, -.3]]; // the railing round the open sides
+  for (let i = 0; i + 1 < rail.length; i++) {
+    const [a, b] = [rail[i], rail[i + 1]], n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / .32);
+    m.seg([a[0], DECK + .42, a[1]], [b[0], DECK + .42, b[1]], .025, .025, M.WOOD, { group: 17 });
+    for (let k = 0; k <= n; k++) { const t = k / n, x = a[0] + (b[0] - a[0]) * t, z = a[1] + (b[1] - a[1]) * t; m.seg([x, DECK, z], [x, DECK + .42, z], .02, .02, M.WOOD, { group: 17 }); }
+  }
+  // the camping chair (its seat at the witch's seat height) and plant pots
+  const C = CHAIR;
+  m.box([C[0], C[1] + WITCH_SEAT_HEIGHT - .02, C[2]], [.2, .025, .2], M.CLOTH, { round: .02, group: 18, paint: p => Math.floor((p[2] + 2) * 10) % 2 ? M.BODY2 : undefined });
+  m.box([C[0] - .2, C[1] + WITCH_SEAT_HEIGHT + .22, C[2]], [.025, .24, .2], M.CLOTH, { dir: [1, -.15, 0], round: .02, group: 18, paint: p => Math.floor((p[2] + 2) * 10) % 2 ? M.BODY2 : undefined });
+  for (const [dx, dz] of [[-.18, -.18], [.18, -.18], [-.18, .18], [.18, .18]]) m.seg([C[0] + dx, C[1], C[2] + dz], [C[0] - dx * .6, C[1] + WITCH_SEAT_HEIGHT - .03, C[2] - dz * .2], .015, .015, M.FRAME, { group: 19 });
+  for (const [x, z, s] of [[2.65, -.15, 1], [1.45, .7, .8], [2.7, .7, .7]]) {
+    m.seg([x, DECK, z], [x, DECK + .2 * s, z], .1 * s, .13 * s, M.EAR, { group: 20 });
+    m.ell([x, DECK + .3 * s, z], [.16 * s, .14 * s, .16 * s], M.LEAF2, { group: 21, rough: .02, paint: p => hash(Math.floor(p[0] * 30), Math.floor(p[1] * 30)) < .25 ? M.LEAF : undefined });
+  }
+  // the striped awning over the door and the deck's near half, and a lantern under it
+  m.box([1.62, 3.55, .5], [.42, .02, .5], M.CLOTH, { dir: [1, -.35, 0], round: .01, group: 22, paint: p => Math.floor((p[2] + 2) * 5) % 2 ? M.BODY2 : undefined });
+  for (const z of [.05, .95]) m.seg([1.98, 3.4, z], [1.98, DECK, z], .02, .02, M.WOOD, { group: 23 });
+  m.seg([1.95, 3.42, .5], [1.95, 3.28, .5], .006, .006, M.FRAME, { group: 24 }); m.ell([1.95, 3.2, .5], [.05, .07, .05], M.MAGIC2, { group: 24 });
+  lights.push({ at: [1.95, 3.2, .5], rgb: [255, 220, 150], kind: "lantern" });
+  // ---- the rope ladder down the trunk ----
+  for (const z of [.18, .48]) m.seg([1.2, DECK - .05, z], [1.0, .06, z + .12], .018, .018, M.STRAW, { group: 25 });
+  for (let i = 1; i < 8; i++) { const t = i / 8, y = DECK - .05 - (DECK - .11) * t, x = 1.2 - .2 * t; m.seg([x, y, .18 + .12 * t], [x, y, .48 + .12 * t], .02, .02, M.WOOD, { group: 25 }); }
+  // ---- bunting along the branches, fairy lights from the turret to the awning ----
+  const string = (a, b, sag, n, each) => { for (let i = 0; i <= n; i++) { const t = i / n, p = v3.lerp(a, b, t); p[1] -= Math.sin(t * Math.PI) * sag; each(p, i); } };
+  string([-.55, 3.95, .45], [1.95, 3.42, 1.0], .35, 9, (p, i) => { m.ell(p, [.035, .035, .035], FAIRY[i % 4], { group: 26 + (i % 2), extra: true }); });
+  string([-.75, 4.7, .42], [1.6, 3.65, 1.0], .2, 7, (p, i) => { m.ell(p, [.03, .03, .03], FAIRY[(i + 2) % 4], { group: 28 + (i % 2), extra: true }); });
+  string([2.88, DECK + .45, .9], [2.88, DECK + .45, -.3], .08, 5, (p, i) => { m.ell(p, [.03, .03, .03], FAIRY[(i + 1) % 4], { group: 30 + (i % 2), extra: true }); });
+  string([-2.0, 2.8, .1], [-.9, 3.6, .5], .15, 5, (p, i) => { m.box(p, [.05, .06, .01], [M.ACCENT, M.BODY2, M.CLOTH][i % 3], { dir: [1, 0, .2], round: .005, group: 32 + (i % 2) }); }); // bunting
+  lights.push({ at: [.7, 3.4, .75], rgb: [255, 120, 220], kind: "fairy lights" }, { at: [2.88, DECK + .4, .3], rgb: [120, 230, 255], kind: "fairy lights" });
+  m.ell([.2, .005, -.15], [1.5, .005, 1.0], M.NOSE, { group: 0 }); // its shadow on the ground
+  return { m, lights, seat: [C[0], C[1], C[2]], door: v3.add(vc, [.57, -.45, vh[2]]), splitY: vc[1] + vh[1] + .5 };
+}
+
+// The treehouse at the witch's scale: { whole, top, bot, crownY, anchors: { seat, door, lights: [{ x, y, rgb, kind }] }, metres }.
+// base: the trunk's foot on the ground (place the treehouse by it); seat: where her sit pose's anchor goes (the deck under the chair); door: the van's sliding door at the deck; lights: its light sources.
+// top is the crown and everything above the van's roof (drawn in treetop mode, cut out round the witch); bot the rest.
+function treehouseSprite(st = {}, { facing = "towards", ppm = 16 } = {}) {
+  const T = treehouseModel(), { sp, project } = render(T.m, { scale: witchPixelsPerUnit(st), facing });
+  const crownY = Math.round(project([0, T.splitY, 0])[1]);
+  const top = new Sprite(sp.w, sp.h), bot = new Sprite(sp.w, sp.h);
+  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) {
+    const i = y * sp.w + x, mm = sp.m[i]; if (!mm) continue;
+    (LEAVES.has(mm) || y < crownY ? top : bot).put(x, y, mm, sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]);
+  }
+  const at = p => { const [x, y] = project(p); return { x, y }; };
+  return { whole: sp, top, bot, crownY, anchors: { base: at([0, 0, -.2]), seat: at(T.seat), door: at(T.door), lights: T.lights.map(L => ({ ...at(L.at), rgb: L.rgb, kind: L.kind })) }, metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1) } };
+}
+
+
+// ---- inlined from art/setpieces.js ----
+// Set pieces for the areas that had none (Ed: "I really want each forest to feel quite different
+// and unique ... Make set pieces for the other areas too"). Each is its area's landmark, built in
+// 3D (model3d.js) at the witch's own scale and about 6 to 12 m across or tall, turned towards the
+// viewer. Most are unlit; a few have one magical touch (fairy-stone runes, will-o'-wisps, glowworms,
+// a charcoal mound's embers). The flowering areas (meadow, heath, berry thicket) have none.
+
+
+
+const spHash = (a, b = 0) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
+const spBark = p => { const n = spHash(Math.floor(p[0] * 14) + Math.floor(p[2] * 14) * 13, Math.floor(p[1] * 6)); return n < .14 ? M.BARKD : n > .88 ? M.BARKL : undefined; };
+const spLeafy = c => p => { const n = spHash(Math.floor(p[0] * 10), Math.floor(p[1] * 10) + Math.floor(p[2] * 10) * 7); return p[1] < c[1] - .2 || n < .2 ? M.LEAF3 : n > .8 ? M.LEAF2 : undefined; };
+// the kit
+const spRockAt = (m, c, r, g, moss = true) => m.ell(c, r, M.STONE, { group: g, rough: .025, paint: p => p[1] > c[1] + r[1] * .45 && moss ? M.MOSS : Math.abs(Math.sin(p[0] * 13 + p[2] * 7)) < .06 ? M.STONED : undefined });
+const spCrown = (m, c, r, g) => m.ell(c, r, M.LEAF, { group: g, rough: .04, paint: spLeafy(c) });
+const spLimb = (m, pts, g) => m.chain(pts, M.TRUNK, { group: g, rough: .012, paint: spBark });
+const spTufts = (m, n, R, g, seed, h = .3, mat = M.LEAF2) => { for (let i = 0; i < n; i++) { const a = spHash(seed, i) * 6.283, d = R * Math.sqrt(spHash(i, seed)), x = Math.cos(a) * d, z = Math.sin(a) * d * .7; m.ell([x, h * .3, z], [.07, h * (.35 + spHash(i, 4) * .3), .07], mat, { group: g + (i % 3), paint: p => p[1] > h * .45 ? M.LEAF : undefined }); } }; // grass spTufts
+const spWater = (m, c, r, g) => m.ell(c, [r[0], .015, r[1]], M.WATER, { group: g });
+
+// Each builder fills a model; the ground is y = 0, x right, z towards the viewer.
+const spSETS = {
+  // moor: the sleeping giant, a long mound of moss shaped like a figure lying on its back
+  "sleeping-giant"(m) {
+    const moss = c => p => { const n = spHash(Math.floor(p[0] * 8), Math.floor(p[2] * 8) + Math.floor(p[1] * 8) * 5); return n < .15 ? M.LEAF3 : n > .86 ? M.LEAF2 : undefined; };
+    for (const [c, r] of [[[.85, .42, 0], [.7, .5, .66]], [[0, .3, 0], [.62, .36, .6]], [[-.8, .3, 0], [.56, .36, .62]], [[1.85, .5, .02], [.5, .5, .48]], // chest, belly, hips, head
+      [[-1.55, .72, .3], [.38, .5, .3]], [[-1.55, .72, -.3], [.38, .5, .3]], [[-2.2, .3, .32], [.42, .3, .26]], [[-2.2, .3, -.32], [.42, .3, .26]], // knees drawn up, shins and feet
+      [[.6, .2, .78], [.75, .2, .2]], [[.6, .2, -.78], [.75, .2, .2]]]) // arms at its sides
+      m.ell(c, r, M.MOSS, { group: 1, rough: .03, paint: moss(c) });
+    spRockAt(m, [2.25, .75, .12], [.13, .15, .11], 2, false); // the nose
+    for (const z of [-.12, .22]) m.ell([2.12, .88, z], [.08, .04, .07], M.STONED, { group: 3 }); // shut eyes
+    spRockAt(m, [-.2, .16, .95], [.2, .15, .18], 4); spRockAt(m, [-.2, .16, -.95], [.18, .14, .16], 5); // hands
+    m.ell([2.0, .95, .02], [.42, .14, .4], M.LEAF3, { group: 6, rough: .03 }); // shaggy hair
+    spTufts(m, 26, 2.8, 10, 3, .3);
+  },
+  // fern forest: a ring of giant tree ferns round a stone basin of still water
+  "fern-grotto"(m) {
+    m.ell([0, .16, 0], [.78, .2, .72], M.STONE, { group: 1, rough: .015, paint: p => p[1] > .3 ? M.MOSS : undefined }); spWater(m, [0, .345, 0], [.55, .5], 2);
+    for (let i = 0; i < 6; i++) {
+      const a = i / 6 * Math.PI * 2 + .4, R = 1.5 + spHash(i) * .3, b = [Math.cos(a) * R, 0, Math.sin(a) * R * .8], h = 1.1 + spHash(i, 2) * .7, t = v3.add(b, [0, h, 0]);
+      m.seg(b, t, .12, .09, M.TRUNK, { group: 3 + i, rough: .02, paint: spBark });
+      for (let k = 0; k < 7; k++) { const fa = k / 7 * Math.PI * 2 + i, d = [Math.cos(fa), 0, Math.sin(fa)]; m.chain([[...t, .05], [...v3.add(t, v3.add(v3.mul(d, .45), [0, .18, 0])), .04], [...v3.add(t, v3.add(v3.mul(d, .9), [0, -.15, 0])), .015]], k % 2 ? M.LEAF : M.LEAF2, { group: 10 + i }); }
+    }
+    for (let i = 0; i < 5; i++) { const a = i * 1.3; spRockAt(m, [Math.cos(a) * .95, .08, Math.sin(a) * .95], [.16, .12, .14], 20 + i); }
+  },
+  // muddy forest: an old rowing boat sunk in the mud, a puddle round it, an oar
+  "sunken-boat"(m) {
+    spWater(m, [.3, .01, .15], [1.9, 1.15], 1);
+    const c = [0, .12, 0], d = v3.norm([1, .28, .12]);
+    m.ell(c, [1.3, .45, .55], M.WOOD, { dir: d, group: 2, paint: p => (v3.dot(v3.sub(p, c), [0, 1, 0]) * 9 + 9) % 1 < .14 ? M.BARKD : p[1] > .35 && spHash(Math.floor(p[0] * 9)) < .4 ? M.MOSS : undefined });
+    m.ell(v3.add(c, [0, .14, 0]), [1.2, .4, .47], M.BARKD, { dir: d, group: 2, cut: true });
+    for (let i = -2; i <= 2; i++) m.seg(v3.add(c, v3.add(v3.mul(d, i * .4), [0, .1, -.42])), v3.add(c, v3.add(v3.mul(d, i * .4), [0, .1, .42])), .04, .04, M.WOOD, { group: 3 }); // its seats and ribs
+    m.seg([-.9, .05, .7], [.3, 1.0, .55], .03, .03, M.WOOD, { group: 4 }); m.box([-.98, .06, .72], [.2, .02, .07], M.WOOD, { dir: [1.2, -.8, -.15], group: 4 }); // an oar leaning on it
+    spTufts(m, 18, 2.2, 10, 5, .45);
+  },
+  // tangly forest: an old wagon, a wheel off, wrapped in brambles
+  "bramble-wagon"(m) {
+    const tilt = v3.norm([1, -.12, 0]);
+    m.box([0, .62, 0], [1.1, .22, .52], M.WOOD, { dir: tilt, round: .04, group: 1, paint: p => ((p[0] + 3) * 4) % 1 < .08 ? M.BARKD : undefined });
+    m.box([0, .72, 0], [1.0, .2, .43], M.BARKD, { dir: tilt, group: 1, cut: true });
+    for (const [x, z, y, r] of [[-.72, .55, .4, .4], [-.72, -.55, .4, .4], [.72, -.55, .32, .37]]) m.ell([x, y, z], [r, r, .06], M.WOOD, { group: 2 + (x > 0 ? 1 : 0) + (z > 0 ? 2 : 0), paint: p => { const dx = p[0] - x, dy = p[1] - y, rr = Math.hypot(dx, dy), a = Math.atan2(dy, dx); return rr > r * .82 ? M.BARKD : rr < r * .18 ? M.BARKD : Math.abs(Math.sin(a * 4)) < .2 ? M.WOOD : M.NOSE; } }); // spoked wheels
+    m.ell([.95, .1, .75], [.37, .06, .37], M.WOOD, { group: 7, paint: p => Math.hypot(p[0] - .95, p[2] - .75) > .3 ? M.BARKD : undefined }); // the fallen wheel
+    for (const z of [-.3, .3]) m.seg([1.05, .55, z], [1.9, .05, z * 1.4], .04, .035, M.WOOD, { group: 8 }); // the shafts
+    for (let i = 0; i < 14; i++) { // brambles wrapping it
+      const a = spHash(i, 1) * 6.283, x0 = Math.cos(a) * 1.5, z0 = Math.sin(a) * .9, pts = [[x0, 0, z0, .03]];
+      for (let k = 1; k < 4; k++) pts.push([x0 * (1 - k * .28) + (spHash(i, k) - .5) * .5, .25 + k * .25 + spHash(k, i) * .2, z0 * (1 - k * .3) + (spHash(k, i * 3) - .5) * .4, .025 - k * .004]);
+      m.chain(pts, M.BARKD, { group: 10 + (i % 3) });
+      if (i % 2 === 0) { const t = pts[3]; m.ell([t[0], t[1], t[2]], [.18, .13, .16], M.LEAF, { group: 14, rough: .03, paint: p => spHash(Math.floor(p[0] * 30), Math.floor(p[1] * 30)) < .1 ? M.ACCENT : undefined }); }
+    }
+  },
+  // wispy forest: a many-trunked tree with a great wild honeycomb, bees glowing round it
+  "beehive-tree"(m) {
+    for (const [x, z, lean] of [[-.2, 0, -.25], [.15, -.1, .2], [0, .15, .05]]) spLimb(m, [[x, 0, z, .22], [x + lean * .8, 1.4, z, .16], [x + lean * 2, 2.8, z - .1, .08]], 1);
+    for (const [c, r] of [[[-.6, 2.9, -.2], [.9, .6, .7]], [[.6, 3.0, -.2], [.85, .6, .7]], [[0, 3.4, -.3], [.9, .55, .7]]]) spCrown(m, c, r, 3);
+    spLimb(m, [[.2, 1.9, -.05, .08], [.75, 2.05, .15, .05]], 2);
+    const hc = [.72, 1.6, .2]; m.ell(hc, [.24, .42, .22], M.STRAW, { group: 4, paint: p => { const u = Math.floor((p[1] - hc[1]) * 14), v = Math.floor(Math.atan2(p[2] - hc[2], p[0] - hc[0]) * 3 + (u % 2) * .5); return spHash(u, v) < .3 ? M.BARK2 : undefined; } });
+    m.seg([.75, 2.02, .15], [.72, 1.9, .2], .05, .1, M.STRAW, { group: 4 });
+    for (let i = 0; i < 6; i++) { const a = i * 1.9; m.ell([hc[0] + Math.cos(a) * .45, hc[1] + Math.sin(i * 2.3) * .35, hc[2] + Math.sin(a) * .35], [.03, .025, .03], M.MAGIC, { group: 20 + i, extra: true }); } // bees, glowing
+  },
+  // hazel forest: a ring of fairy stones and toadstools, one stone carved with a glowing rune
+  "fairy-ring"(m) {
+    m.ell([0, .005, 0], [1.9, .005, 1.5], M.LEAF3, { group: 0 });
+    for (let i = 0; i < 9; i++) {
+      const a = i / 9 * Math.PI * 2, c = [Math.cos(a) * 1.6, 0, Math.sin(a) * 1.25], h = .35 + spHash(i) * .35;
+      m.box(v3.add(c, [0, h / 2, 0]), [.13, h / 2, .1], M.STONE, { dir: [-Math.sin(a), 0, Math.cos(a)], round: .05, rough: .015, group: 1 + i, paint: p => i === 2 && Math.abs(p[1] - h * .55) < h * .22 && Math.abs(p[0] - c[0] - .0) < .05 ? M.RUNE : p[1] > h * .85 ? M.MOSS : undefined });
+      const t = v3.add(c, [Math.cos(a + .35) * .25, 0, Math.sin(a + .35) * .2]); m.seg(t, v3.add(t, [0, .16, 0]), .035, .03, M.CLOTH, { group: 12 }); m.ell(v3.add(t, [0, .18, 0]), [.1, .06, .1], M.ACCENT, { group: 13, paint: p => spHash(Math.floor(p[0] * 60), Math.floor(p[2] * 60)) < .15 ? M.BELLY : undefined }); // toadstools
+    }
+  },
+  // twiggy forest: a charcoal burner's hut of sticks, its mound smouldering beside it
+  "charcoal-hut"(m) {
+    const top = [0, 2.0, 0];
+    for (let i = 0; i < 20; i++) { const a = i / 20 * Math.PI * 2; if (Math.abs(a - 1.2) < .35) continue; m.seg([Math.cos(a) * .95, 0, Math.sin(a) * .8], v3.add(top, [Math.cos(a) * .08, .1 + spHash(i) * .25, Math.sin(a) * .08]), .05, .03, i % 3 ? M.TRUNK : M.BARKD, { group: 1 + (i % 2) }); }
+    m.ell([0, .6, 0], [.85, .6, .7], M.BARKD, { group: 3 }); // the dark inside
+    const mc = [1.7, 0, .3]; m.ell(mc, [.85, .42, .7], M.BARKD, { group: 4, rough: .03, paint: p => spHash(Math.floor(p[0] * 14), Math.floor(p[2] * 14) + Math.floor(p[1] * 14)) < .07 ? M.GLOW : p[1] > .3 ? M.SHADES : undefined }); // the charcoal mound, embers glowing through
+    for (let i = 0; i < 4; i++) m.seg([-1.4, .1 + i * .14, -.5 + (i % 2) * .05], [-1.4, .1 + i * .14, .5], .07, .07, M.TRUNK, { group: 5 + (i % 2), paint: p => Math.abs(p[2]) > .46 ? M.BARKL : undefined }); // a woodpile
+  },
+  // ancient: a great arch of roots over mossy stones
+  "root-arch"(m) {
+    spLimb(m, [[-1.8, 0, .1, .4], [-1.4, 1.2, 0, .34], [-.4, 2.3, -.1, .3], [.6, 2.4, 0, .28], [1.5, 1.4, .1, .32], [1.9, 0, .15, .38]], 1);
+    spLimb(m, [[-1.4, 0, -.6, .28], [-.6, 1.6, -.5, .22], [.5, 1.9, -.45, .2], [1.3, .9, -.4, .22], [1.5, 0, -.35, .26]], 2);
+    spLimb(m, [[-1.8, .2, .1, .3], [-2.4, .05, .5, .12]], 1); spLimb(m, [[1.9, .2, .15, .3], [2.5, .05, .55, .12]], 1);
+    for (const [c, r] of [[[-.2, 2.6, -.2], [.7, .35, .5]], [[.8, 2.5, -.25], [.55, .3, .45]]]) spCrown(m, c, r, 4);
+    for (let i = 0; i < 4; i++) spRockAt(m, [-.7 + i * .45, .12, (spHash(i) - .5) * .5], [.22, .18, .2], 6 + i);
+    m.box([0, .35, -.2], [.16, .35, .08], M.STONE, { round: .05, rough: .01, group: 11, paint: p => Math.abs(p[1] - .4) < .14 && Math.abs(p[0]) < .05 ? M.MAGIC : p[1] > .62 ? M.MOSS : undefined }); // a rune stone under the arch
+  },
+  // Norway: a little log cabin with a turf roof, abandoned
+  "turf-hut"(m) {
+    m.box([0, .55, 0], [1.0, .55, .7], M.WOOD, { round: .04, group: 1, paint: p => (p[1] * 7) % 1 < .18 ? M.BARKD : p[2] > .66 && Math.abs(p[0] + .2) < .2 && p[1] < .85 ? M.NOSE : p[2] > .66 && Math.abs(p[0] - .5) < .14 && Math.abs(p[1] - .7) < .12 ? M.SHADES : undefined }); // log walls, a door, a dark window
+    for (const s of [-1, 1]) m.box([0, 1.3, s * .4], [1.15, .05, .5], M.MOSS, { dir: [1, 0, 0], up: [0, 1, -s * .75], round: .03, group: 2, paint: p => spHash(Math.floor(p[0] * 12), Math.floor(p[2] * 12)) < .25 ? M.LEAF2 : undefined }); // the turf roof
+    m.seg([.65, 1.2, -.3], [.65, 1.9, -.3], .15, .13, M.STONE, { group: 3, rough: .015 }); // a stone chimney
+    for (let i = 0; i < 5; i++) spRockAt(m, [-1.4 + i * .7, .12, .9 + spHash(i) * .3], [.2, .15, .18], 4 + i);
+    spTufts(m, 16, 1.8, 10, 9, .25);
+  },
+  // alder forest: a tall slanted alder holding herons' stick nests, a heron on one
+  "heron-rookery"(m) {
+    spLimb(m, [[0, 0, 0, .25], [.4, 1.4, 0, .18], [.9, 2.8, -.1, .12], [1.3, 3.8, -.2, .06]], 1);
+    const nests = [[[.6, 2.0, -.05], [-.3, 2.0, -.1]], [[1.0, 3.0, -.1], [1.8, 2.9, .0]], [[1.25, 3.6, -.2], [.6, 3.7, -.3]]];
+    nests.forEach(([from, at], i) => { spLimb(m, [[...from, .07], [...at, .04]], 2); m.ell(v3.add(at, [0, .08, 0]), [.34, .13, .3], M.BARK2, { group: 3 + i, rough: .025, paint: p => Math.abs(Math.sin(p[0] * 30 + p[2] * 20)) < .25 ? M.STRAW : p[1] < at[1] + .02 ? M.BARKD : undefined }); });
+    for (const [c, r] of [[[1.2, 4.0, -.4], [.6, .4, .45]], [[.3, 3.1, -.5], [.45, .3, .35]], [[1.9, 3.3, -.4], [.4, .3, .35]]]) spCrown(m, c, r, 7);
+    const h = v3.add(nests[1][1], [0, .42, .05]), k = 1.6; // a heron standing on its nest
+    m.ell(h, [.18 * k, .1 * k, .09 * k], M.BELLY, { dir: [1, .3, 0], group: 10, paint: p => p[1] > h[1] + .06 ? M.STONE : undefined }); m.chain([[...v3.add(h, [.12 * k, .06 * k, 0]), .035 * k], [...v3.add(h, [.2 * k, .22 * k, 0]), .03 * k], [...v3.add(h, [.16 * k, .32 * k, 0]), .04 * k]], M.BELLY, { group: 10 });
+    m.seg(v3.add(h, [.18 * k, .33 * k, 0]), v3.add(h, [.36 * k, .3 * k, 0]), .015 * k, .005 * k, M.BODY2, { group: 11 });
+    for (const z of [-.04, .04]) m.seg(v3.add(h, [0, -.06 * k, z]), v3.add(h, [.02, -.42, z]), .012, .012, M.BARKD, { group: 12 });
+  },
+  // meadow: a moonlit sundial on a stone dais in a ring of flowers (unlit: a flowering area)
+  "sundial"(m) {
+    m.ell([0, .07, 0], [1.05, .09, 1.0], M.STONE, { group: 1, rough: .01 }); m.ell([0, .2, 0], [.72, .09, .68], M.STONE, { group: 2, rough: .01, paint: p => p[1] > .26 && spHash(Math.floor(p[0] * 8), Math.floor(p[2] * 8)) < .3 ? M.MOSS : undefined });
+    m.seg([0, .28, 0], [0, .95, 0], .16, .13, M.STONE, { group: 3, paint: p => Math.abs(Math.sin(p[1] * 30)) < .15 ? M.STONED : undefined });
+    m.ell([0, 1.0, 0], [.38, .04, .38], M.FRAME, { group: 4, paint: p => { const a = Math.atan2(p[2], p[0]); return Math.abs(Math.sin(a * 6)) < .12 && Math.hypot(p[0], p[2]) > .26 ? M.BARKD : undefined; } }); // the dial, its hour marks
+    m.box([0, 1.12, 0], [.2, .1, .01], M.FRAME, { dir: [1, -.5, 0], round: .005, group: 5 }); // the gnomon
+    for (let i = 0; i < 22; i++) { const a = i / 22 * Math.PI * 2, R = 1.25 + spHash(i) * .2, c = [Math.cos(a) * R, 0, Math.sin(a) * R * .85]; m.seg(c, v3.add(c, [0, .18, 0]), .015, .012, M.LEAF2, { group: 6 }); m.ell(v3.add(c, [0, .2, 0]), [.05, .04, .05], [M.FLOWER, M.BELLY, M.ACCENT][i % 3], { group: 7 }); }
+  },
+  // berry thicket: a bear's den, a great bramble mound with a dark way in, berries, a clawed stump
+  "bear-den"(m) {
+    const c = [0, .3, -.2]; m.ell(c, [1.7, 1.15, 1.25], M.LEAF, { group: 1, rough: .05, paint: p => { const n = spHash(Math.floor(p[0] * 16), Math.floor(p[1] * 16) + Math.floor(p[2] * 16) * 3); return n < .06 ? M.ACCENT : n < .2 ? M.BARKD : p[1] < .4 ? M.LEAF3 : n > .85 ? M.LEAF2 : undefined; } });
+    m.ell([.35, .35, .95], [.5, .55, .4], M.NOSE, { group: 1, cut: true }); // the way in
+    m.seg([2.0, 0, .5], [2.0, .65, .5], .3, .27, M.TRUNK, { group: 3, paint: p => p[1] > .6 ? M.BARKL : Math.abs(Math.sin(Math.atan2(p[2] - .5, p[0] - 2) * 3)) < .12 && p[1] > .2 ? M.BARKD : undefined }); // a stump, raked by claws
+  },
+  // wetland: a fisher's hut on stilts over a pool, reed-thatched, a ladder down to the water
+  "stilt-hut"(m) {
+    spWater(m, [0, .01, .1], [2.1, 1.3], 1);
+    for (const [x, z] of [[-.75, -.55], [.75, -.55], [-.75, .55], [.75, .55]]) m.seg([x, 0, z], [x, 1.05, z], .07, .06, M.WOOD, { group: 2, paint: p => p[1] < .15 ? M.MOSS : undefined });
+    m.box([0, 1.1, 0], [1.05, .05, .8], M.WOOD, { round: .02, group: 3, paint: p => ((p[0] + 3) * 6) % 1 < .12 ? M.BARKD : undefined });
+    m.box([-.1, 1.6, -.1], [.7, .45, .55], M.WOOD, { round: .03, group: 4, paint: p => p[2] > .4 && Math.abs(p[0] - .1) < .18 && p[1] < 1.85 ? M.NOSE : undefined });
+    for (const [y, r] of [[2.1, .92], [2.35, .72], [2.58, .48], [2.76, .24]]) m.ell([-.1, y, -.1], [r, .16, r * .85], M.STRAW, { group: 5, paint: p => Math.abs(Math.sin(Math.atan2(p[2] + .1, p[0] + .1) * 18)) < .25 ? M.BARK2 : undefined }); // the reed thatch
+    for (const z of [.72, .95]) m.seg([.9, 1.1, z], [1.15, 0, z], .02, .02, M.WOOD, { group: 6 });
+    for (let i = 0; i < 4; i++) m.seg([.92 + i * .06, 1.0 - i * .26, .72], [.92 + i * .06, 1.0 - i * .26, .95], .02, .02, M.WOOD, { group: 6 });
+    for (let i = 0; i < 26; i++) { const a = spHash(i, 7) * 6.283, d = 1.5 + spHash(i, 8) * .7, c = [Math.cos(a) * d, 0, Math.sin(a) * d * .7], h = .5 + spHash(i, 9) * .5; m.seg(c, v3.add(c, [0, h, 0]), .028, .02, M.LEAF2, { group: 10 + (i % 3) }); if (i % 3 === 0) m.ell(v3.add(c, [0, h - .05, 0]), [.025, .07, .025], M.BARKD, { group: 13 }); } // reeds and bulrushes
+  },
+  // bog: a carved post shrine to the bog, offerings at its foot, will-o'-wisps over the pool
+  "bog-shrine"(m) {
+    spWater(m, [.6, .01, .4], [1.4, .9], 1);
+    m.seg([0, 0, 0], [0, 1.9, 0], .2, .17, M.TRUNK, { group: 2, rough: .01, paint: p => { const y = p[1]; return p[2] > .12 && ((Math.abs(y - 1.6) < .05 && Math.abs(Math.abs(p[0]) - .08) < .05) || (Math.abs(y - 1.38) < .04 && Math.abs(p[0]) < .1)) ? M.BARKD : (y * 5) % 1 < .07 ? M.BARKD : p[1] > 1.85 ? M.MOSS : undefined; } }); // the carved face
+    m.ell([0, 1.95, 0], [.24, .1, .24], M.MOSS, { group: 3 });
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; m.seg([Math.cos(a) * 1.0, 0, Math.sin(a) * .8], [Math.cos(a) * 1.0, .35 + spHash(i) * .25, Math.sin(a) * .8], .05, .04, M.TRUNK, { group: 4 }); } // a ring of little posts
+    m.ell([-.25, .06, .3], [.14, .07, .13], M.EAR, { group: 5 }); spRockAt(m, [.3, .07, .3], [.09, .07, .08], 6, false); spRockAt(m, [.15, .05, .42], [.06, .05, .06], 7, false); // offerings: a bowl, pebbles
+    for (const [x, y, z] of [[.9, .9, .5], [1.4, 1.2, .1], [.4, 1.4, .8]]) m.ell([x, y, z], [.06, .07, .06], M.MAGIC, { group: 20 + x * 10, extra: true, paint: p => Math.hypot(p[0] - x, p[1] - y) < .03 ? M.MAGIC2 : undefined }); // will-o'-wisps
+    spTufts(m, 20, 2.0, 10, 11, .3, M.WEB);
+  },
+  // deadwood: a dead tree where the ravens gather, an old iron cage hanging from it
+  "raven-tree"(m) {
+    spLimb(m, [[0, 0, 0, .3], [.1, 1.3, 0, .22], [-.1, 2.5, -.1, .16], [.1, 3.6, -.15, .07]], 1);
+    const branches = [[[.1, 1.6, 0], [1.3, 2.3, .1], [1.8, 2.2, .1]], [[-.05, 2.1, -.05], [-1.2, 2.8, -.1], [-1.6, 3.2, -.1]], [[0, 2.9, -.1], [.8, 3.5, -.2]]];
+    branches.forEach((b, i) => spLimb(m, b.map((p, k) => [...p, .12 - k * .04]), 2 + i));
+    spLimb(m, [[-.1, .5, 0, .22], [-1.1, .1, .5, .08]], 5); spLimb(m, [[.1, .4, 0, .2], [.9, .05, -.4, .08]], 5);
+    const raven = (p, g) => { m.ell(p, [.12, .07, .06], M.SHADES, { dir: [1, .2, 0], group: g }); m.ell(v3.add(p, [.11, .07, 0]), [.05, .05, .045], M.SHADES, { group: g }); m.seg(v3.add(p, [.15, .07, 0]), v3.add(p, [.22, .05, 0]), .015, .004, M.BODY2, { group: g }); m.seg(v3.add(p, [-.1, 0, 0]), v3.add(p, [-.22, -.04, 0]), .04, .015, M.SHADES, { group: g }); };
+    raven([1.3, 2.42, .1], 10); raven([-1.2, 2.92, -.1], 11); raven([.8, 3.62, -.2], 12); raven([-.05, 3.72, -.15], 13);
+    const cg = [1.55, 1.45, .1]; m.seg([1.55, 2.25, .1], v3.add(cg, [0, .3, 0]), .01, .01, M.FRAME, { group: 14 });
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; m.seg(v3.add(cg, [Math.cos(a) * .2, -.25, Math.sin(a) * .2]), v3.add(cg, [Math.cos(a) * .12, .3, Math.sin(a) * .12]), .012, .012, M.FRAME, { group: 14 }); }
+    m.seg(v3.add(cg, [0, -.27, 0]), v3.add(cg, [0, -.25, 0]), .22, .22, M.FRAME, { group: 14 });
+  },
+  // grassland: a barrow, a long grassy burial mound with a stone doorway
+  "barrow"(m) {
+    m.ell([0, 0, -.2], [2.3, .95, 1.3], M.LEAF2, { group: 1, rough: .03, paint: p => spHash(Math.floor(p[0] * 10), Math.floor(p[2] * 10) + Math.floor(p[1] * 10)) < .25 ? M.LEAF : undefined });
+    for (const x of [-.35, .35]) m.box([x, .45, .95], [.12, .45, .12], M.STONE, { round: .03, rough: .01, group: 2 });
+    m.box([0, .95, .95], [.55, .1, .14], M.STONE, { round: .03, rough: .01, group: 3, paint: p => p[1] > 1.02 ? M.MOSS : undefined });
+    m.box([0, .4, .9], [.23, .4, .3], M.NOSE, { group: 1, cut: true }); // the dark doorway
+    for (const [x, z, h] of [[-1.6, 1.0, .7], [1.7, .9, .55]]) m.box([x, h / 2, z], [.12, h / 2, .09], M.STONE, { round: .04, rough: .01, group: 4 }); // standing stones flanking it
+  },
+  // heath: a tall cairn on the ridge, an old iron beacon basket on top, cold (a flowering area: unlit)
+  "cairn"(m) {
+    let y = 0; for (let ring = 0; ring < 6; ring++) { const R = .9 - ring * .14, n = Math.max(3, 9 - ring); for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + ring; spRockAt(m, [Math.cos(a) * R * .8, y + .14, Math.sin(a) * R * .7], [.24 - ring * .02, .15, .2 - ring * .02], 1 + ((ring + i) % 4), ring < 2); } y += .26; }
+    const b = [0, y + .1, 0]; for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; m.seg(v3.add(b, [Math.cos(a) * .12, 0, Math.sin(a) * .12]), v3.add(b, [Math.cos(a) * .3, .35, Math.sin(a) * .3]), .02, .02, M.FRAME, { group: 6 }); }
+    m.seg(v3.add(b, [0, -.3, 0]), b, .05, .05, M.FRAME, { group: 6 }); m.ell(v3.add(b, [0, .14, 0]), [.2, .07, .2], M.SHADES, { group: 7 }); // cold ashes
+  },
+  // old pinewood: a woodcutter's stump throne, an axe left in a log, stacked logs
+  "stump-throne"(m) {
+    m.ell([0, .28, 0], [.92, .34, .86], M.TRUNK, { group: 1, rough: .015, paint: spBark }); m.ell([0, .58, 0], [.84, .06, .78], M.BARKL, { group: 1, paint: p => Math.abs(Math.sin(Math.hypot(p[0], p[2]) * 30)) < .3 ? M.BARK2 : undefined }); // the cut top, its rings
+    m.box([-.55, 1.15, 0], [.18, .62, .62], M.TRUNK, { round: .1, rough: .01, group: 2, paint: spBark }); // the throne's back, cut from the trunk
+    for (const z of [-.6, .6]) m.box([-.1, .72, z], [.45, .14, .12], M.TRUNK, { round: .06, group: 3, paint: spBark }); // arms
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + .3; spLimb(m, [[Math.cos(a) * .8, .25, Math.sin(a) * .8, .18], [Math.cos(a) * 1.4, .02, Math.sin(a) * 1.3, .06]], 4); }
+    m.seg([1.5, .18, .8], [1.5, .18, .2], .18, .18, M.TRUNK, { group: 5, paint: p => p[2] > .78 || p[2] < .22 ? M.BARKL : spBark(p) }); m.seg([1.5, .3, .5], [1.6, .75, .5], .025, .025, M.WOOD, { group: 6 }); m.box([1.5, .36, .5], [.1, .06, .015], M.FRAME, { group: 6 }); // an axe in a log
+    for (let i = 0; i < 6; i++) { const row = i < 3 ? 0 : 1, k = i % 3; m.seg([-1.7 + k * .3 + row * .15, .15 + row * .26, -.7], [-1.7 + k * .3 + row * .15, .15 + row * .26, .2], .14, .14, M.TRUNK, { group: 7 + (i % 2), paint: p => p[2] > .16 || p[2] < -.66 ? M.BARKL : undefined }); }
+  },
+  // bluebell glade: a great beech with a rope swing, glowworms in the dark under it
+  "swing-beech"(m) {
+    spLimb(m, [[0, 0, -.3, .45], [0, 1.6, -.3, .36], [-.1, 2.8, -.4, .26]], 1);
+    spLimb(m, [[0, 2.2, -.3, .2], [1.0, 2.6, -.2, .14], [1.9, 2.75, -.1, .08]], 2); spLimb(m, [[-.05, 2.5, -.35, .18], [-1.2, 3.0, -.4, .1]], 3);
+    for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; spLimb(m, [[Math.cos(a) * .35, .3, -.3 + Math.sin(a) * .3, .2], [Math.cos(a) * .9, .02, -.3 + Math.sin(a) * .8, .07]], 4); }
+    for (const [c, r] of [[[0, 3.4, -.6], [1.4, .8, 1.0]], [[1.4, 3.1, -.4], [.9, .55, .7]], [[-1.3, 3.2, -.6], [.9, .6, .7]]]) spCrown(m, c, r, 5);
+    for (const z of [-.12, .12]) m.seg([1.3, 2.65, z], [1.3, .55, z], .012, .012, M.STRAW, { group: 6 });
+    m.box([1.3, .53, 0], [.08, .025, .18], M.WOOD, { round: .01, group: 6 }); // the swing's seat
+    for (let i = 0; i < 9; i++) m.ell([(spHash(i, 1) - .5) * 3, .05 + spHash(i, 2) * .5, (spHash(i, 3) - .3) * 1.6], [.022, .022, .022], M.MAGIC, { group: 20 + i, extra: true }); // glowworms
+  },
+  // honeysuckle tangle: a bower, an arched trellis tunnel smothered in honeysuckle, a bench inside
+  "bower"(m) {
+    for (const x of [-.9, 0, .9]) for (const z of [-.6, .6]) m.seg([x, 0, z], [x, 1.2, z], .04, .04, M.WOOD, { group: 1 });
+    for (const x of [-.9, 0, .9]) m.chain([[x, 1.2, -.6, .04], [x, 1.62, -.3, .04], [x, 1.72, 0, .04], [x, 1.62, .3, .04], [x, 1.2, .6, .04]], M.WOOD, { group: 2 });
+    for (const z of [-.6, .6]) for (const y of [.5, 1.0]) m.seg([-.9, y, z], [.9, y, z], .025, .025, M.WOOD, { group: 3 });
+    const bloom = p => { const n = spHash(Math.floor(p[0] * 26), Math.floor(p[1] * 26) + Math.floor(p[2] * 26) * 3); return n < .12 ? M.BELLY : n < .2 ? M.STRAW : n > .85 ? M.LEAF2 : undefined; };
+    for (const [c, r] of [[[-.6, 1.6, 0], [.6, .3, .75]], [[.5, 1.65, 0], [.65, .3, .75]], [[-.95, .9, -.55], [.25, .65, .25]], [[.95, .8, -.6], [.25, .55, .25]], [[-.9, .7, .62], [.22, .5, .2]], [[.2, 1.3, -.65], [.5, .4, .2]]]) m.ell(c, r, M.LEAF, { group: 4, rough: .04, paint: bloom });
+    m.box([0, .4, -.35], [.6, .04, .15], M.WOOD, { round: .02, group: 5 }); for (const x of [-.5, .5]) m.seg([x, 0, -.35], [x, .38, -.35], .03, .03, M.WOOD, { group: 5 }); // a bench
+  },
+};
+// The area each new set piece belongs to, its name, and how big it is drawn (a factor on the witch's scale).
+const NEW_SET_PIECES = {
+  "moor": ["sleeping-giant", "the sleeping giant, a moss mound like a figure lying on its back", 1],
+  "fern-forest": ["fern-grotto", "a ring of giant tree ferns round a stone basin", 1],
+  "muddy-forest": ["sunken-boat", "an old rowing boat sunk in the mud", 1.15],
+  "tangly-forest": ["bramble-wagon", "an old wagon wrapped in brambles", 1.1],
+  "wispy-forest": ["beehive-tree", "a many-trunked tree with a great wild honeycomb", 1],
+  "hazel-forest": ["fairy-ring", "a ring of fairy stones and toadstools", 1.1],
+  "twiggy-forest": ["charcoal-hut", "a charcoal burner's hut of sticks, its mound smouldering", 1],
+  "ancient": ["root-arch", "a great arch of roots over mossy stones", 1.1],
+  "norway": ["turf-hut", "a log cabin with a turf roof", 1.15],
+  "alder-forest": ["heron-rookery", "an alder holding herons' stick nests", 1],
+  "meadow": ["sundial", "a moonlit sundial on a stone dais in a ring of flowers", 1.2],
+  "berry-thicket": ["bear-den", "a bear's den in a bramble mound", 1.1],
+  "wetland": ["stilt-hut", "a fisher's hut on stilts over a pool", 1.1],
+  "bog": ["bog-shrine", "a carved post shrine to the bog, will-o'-wisps over the pool", 1.1],
+  "deadwood": ["raven-tree", "a dead tree where the ravens gather", 1],
+  "grassland": ["barrow", "a barrow with a stone doorway", 1],
+  "heath": ["cairn", "a tall cairn with an old beacon basket", 1.4],
+  "old-pinewood": ["stump-throne", "a woodcutter's stump throne", 1.1],
+  "bluebell-glade": ["swing-beech", "a great beech with a rope swing, glowworms beneath", 1],
+  "honeysuckle-tangle": ["bower", "a honeysuckle bower with a bench", 1.2],
+};
+const SET_PIECE_KINDS = Object.keys(spSETS);
+
+function setPieceColours(def, st) {
+  const leaf = def.leaf, trunk = st.trunkHue ?? .07;
+  return {
+    [M.TRUNK]: hsv2rgb(trunk, .45, .36), [M.BARKD]: hsv2rgb(trunk + .03, .5, .17), [M.BARKL]: hsv2rgb(trunk, .35, .55), [M.BARK2]: hsv2rgb(trunk + .02, .45, .26),
+    [M.LEAF]: hsv2rgb(leaf, .55, .45), [M.LEAF2]: hsv2rgb(leaf - .03, .5, .62), [M.LEAF3]: hsv2rgb(leaf + .03, .6, .26),
+    [M.STONE]: [122, 120, 128], [M.STONED]: [62, 60, 70], [M.MOSS]: hsv2rgb(.26, .45, .45),
+    [M.WOOD]: [128, 92, 58], [M.STRAW]: [190, 162, 104], [M.CLOTH]: [228, 220, 200], [M.EAR]: [168, 96, 66], [M.FRAME]: [150, 128, 84], [M.SHADES]: [30, 28, 36],
+    [M.ACCENT]: [196, 40, 52], [M.BELLY]: [232, 228, 214], [M.BODY2]: [210, 170, 60], [M.FLOWER]: [180, 140, 230], [M.WEB]: [228, 228, 234],
+    [M.WATER]: [52, 78, 104], [M.NOSE]: [16, 14, 20],
+    [M.GLOW]: [255, 120, 40], [M.MAGIC]: hsv2rgb(st.magicHue ?? .45, .6, 1), [M.MAGIC2]: hsv2rgb(st.magicHue ?? .45, .2, 1), [M.RUNE]: [120, 230, 255],
+    [M.LINE]: [24, 22, 30],
+  };
+}
+// One area's new set piece: { sp, colours, metres: { width, height } }, drawn at the witch's scale.
+function setPiece3d(kind, def, st, ppm = 16) {
+  const m = new Model({ blend: .05 }); spSETS[kind](m);
+  m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // so every piece stands on the same ground line
+  const size = (Object.values(NEW_SET_PIECES).find(([k]) => k === kind) || [, , 1])[2];
+  const { sp } = render(m, { scale: witchPixelsPerUnit(st) * size });
+  return { sp, colours: setPieceColours(def, st), metres: { width: +(sp.w / ppm).toFixed(1), height: +(sp.h / ppm).toFixed(1) } };
 }
 
 
@@ -1427,11 +1979,13 @@ function decorSprite(id, st = {}, { variant = 0, ppm = 16 } = {}) {
   m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // a common ground line
   const s = witchPixelsPerUnit(st) * d.size, { sp, project } = render(m, { scale: s });
   let reach = 0; for (const q of m.parts) { if (q.extra) continue; const ends = q.type === "cone" ? [[q.a, q.r1], [q.b, q.r2]] : [[q.c, q.r ? Math.max(...q.r) : Math.max(q.h[0], q.h[2])]]; for (const [c, r] of ends) if (c[1] - r < .3) reach = Math.max(reach, Math.hypot(c[0], c[2]) + r); } // the furthest reach of what touches the ground
-  const crownY = d.split == null ? 0 : Math.max(0, Math.round(project([0, d.split, 0])[1]));
-  const top = new Sprite(sp.w, sp.h), bot = new Sprite(sp.w, sp.h);
-  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const i = y * sp.w + x, mm = sp.m[i]; if (mm) (y < crownY ? top : bot).put(x, y, mm, sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); }
+  // crop to what is drawn (a box's bounding sphere leaves empty rows above it)
+  let x0 = sp.w, x1 = -1, y0 = sp.h; for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
+  const W = x1 - x0 + 1, H = sp.h - y0, crop = new Sprite(W, H), top = new Sprite(W, H), bot = new Sprite(W, H);
+  const crownY = d.split == null ? 0 : Math.max(0, Math.round(project([0, d.split, 0])[1]) - y0);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y + y0) * sp.w + x + x0, mm = sp.m[i]; if (!mm) continue; const n = [sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]]; crop.put(x, y, mm, ...n); (y < crownY ? top : bot).put(x, y, mm, ...n); }
   const unit = s / ppm; // metres per model unit
-  return { whole: sp, top, bot, crownY, metres: { width: +(sp.w / ppm).toFixed(1), height: +(sp.h / ppm).toFixed(1), footprint: +(reach * unit).toFixed(1) } };
+  return { whole: crop, top, bot, crownY, metres: { width: +(W / ppm).toFixed(1), height: +(H / ppm).toFixed(1), footprint: +(reach * unit).toFixed(1) } };
 }
 
 // ---------------- lakes ----------------
@@ -1465,6 +2019,7 @@ function lakeKit(st = {}) {
 // areaAssets(id, style, { K, makeCanvas }) bakes everything one area type needs:
 //   { def, floor, walls, small, big, setPiece }  — each prop { sp: baked, kind, text },
 //   floor a seamless-ish tile (64 x 48 art pixels) to repeat over the ground.
+
 
 
 // ---- inlined from art/sigils.js ----
@@ -2514,7 +3069,120 @@ const AREAS = [
   { id: "honeysuckle-tangle", name: "Honeysuckle tangle", creature: "dormouse", by: "draft", leaf: .25, floor: ["clover", .27, .45, .45], text: { floor: "grass and clover", wall: "bramble", small: "honeysuckle", big: "hazel coppice" },
     wall: [P("bramble")], small: [P("shrub", { flower: [250, 230, 170] })], big: [tree("broad", { trunks: 5, scale: .7, thin: true })] },
 ];
+// Set pieces for the areas that had none (Ed: "Make set pieces for the other areas too"), built in 3D: setpieces.js
+for (const [id, [kind, text]] of Object.entries(NEW_SET_PIECES)) { const A = AREAS.find(x => x.id === id); if (A && !A.set) { A.set = P(kind, { three: true }); A.text = { ...A.text, set: text }; } }
 const AREA_BY_ID = Object.fromEntries(AREAS.map(a => [a.id, a]));
+
+// ---------------- layout: how each area's vegetation is arranged (data only) ----------------
+// Ed (2026-10-03, via the coordinator): every forest should feel different; much of that comes
+// from terrain and how trees are laid out. The prototype's layout engine reads these; each area
+// gets a `layout`. Fields:
+//   pattern     how the big objects are arranged: scatter (random, even) | groves (clumps with gaps)
+//               | rows (lines or an avenue, along `along`) | rings (circles round a centre) | thicket
+//               (packed close) | lone (single trees far apart) | stands (tight clumps of one kind
+//               on open ground) | edgeOnly (open middle, dense rim)
+//   along       for rows: what the rows follow (paths, stream)
+//   density     0-1, how full of big objects the area is (1 = as close as they can stand)
+//   clump       0-1, even (0) to clustered (1)
+//   glades      clearings: count, and their size in metres [min, max]
+//   heightMix   share of tree variants per height class (sums to 1); null where the big objects aren't trees
+//   undergrowth 0-1, how thick the small objects are
+//   lean        the trees' shared lean: dir in degrees (0 east, 90 up the screen), amount 0-1
+//   terrain     ground features: stream, pools, rocky, mounds, paths, hollows, ridges
+//   decor       world decorations: rate 0-1 (how often an area has one; about rate × 3 per area),
+//               and weights over the families ruins, rocks, freak (freak trees), lake, modern (relics), summing to 1
+//   feel        one sentence for the prototype builder
+const LAYOUT_PATTERNS = ["scatter", "groves", "rows", "rings", "thicket", "lone", "stands", "edgeOnly"];
+const LAYOUT_TERRAIN = ["stream", "pools", "rocky", "mounds", "paths", "hollows", "ridges"];
+const LAYOUT_DECOR = ["ruins", "rocks", "freak", "lake", "modern"];
+const LAY = (pattern, density, clump, glades, heightMix, undergrowth, lean, terrain, decor, feel, extra = {}) => ({
+  pattern, ...extra, density, clump, glades: { count: glades[0], size: glades[1] || [0, 0] },
+  heightMix: heightMix && { sapling: heightMix[0], mature: heightMix[1], tall: heightMix[2], giant: heightMix[3] },
+  undergrowth, lean: { dir: lean[0], amount: lean[1] }, terrain,
+  decor: { rate: decor[0], ...Object.fromEntries(LAYOUT_DECOR.map((k, i) => [k, decor[1][i]])) }, feel });
+const NO_LEAN = [0, 0];
+// decor weights in the order ruins, rocks, freak, lake, modern
+const AREA_LAYOUTS = {
+  "moor": LAY("scatter", .2, .6, [2, [14, 24]], null, .7, [30, .2], ["pools", "mounds", "hollows"], [.5, [.3, .4, 0, .3, 0]],
+    "Open rolling moss, low mounds and dark pools, long grass combed one way by the wind; you can see a long way."),
+  "fern-forest": LAY("groves", .65, .6, [2, [8, 12]], [.2, .5, .25, .05], .9, NO_LEAN, ["hollows", "paths"], [.25, [.4, .3, .3, 0, 0]],
+    "Pine groves standing waist-deep in ferns, with green sunken hollows between them."),
+  "muddy-forest": LAY("scatter", .7, .3, [1, [6, 9]], [.25, .55, .17, .03], .4, NO_LEAN, ["pools", "paths"], [.3, [.3, .1, .2, .1, .3]],
+    "Squelching mud between many-trunked trees, puddled ruts winding through, broken stumps everywhere."),
+  "stone-shrine": LAY("rings", .35, .8, [1, [10, 14]], null, .3, NO_LEAN, ["rocky", "mounds"], [.5, [.6, .4, 0, 0, 0]],
+    "Big stones stand in rings round the shrine on stony grass; it feels deliberate and old."),
+  "tangly-forest": LAY("thicket", .9, .2, [1, [5, 8]], [.35, .55, .1, 0], .9, NO_LEAN, ["hollows"], [.2, [.2, 0, .6, 0, .2]],
+    "Short tangled trees packed close over nettles, low and claustrophobic, with one small clearing."),
+  "wispy-forest": LAY("stands", .55, .7, [2, [6, 10]], [.15, .45, .3, .1], .5, NO_LEAN, ["ridges"], [.3, [.4, .2, .3, 0, .1]],
+    "Stands of thick many-trunked trees, thin wispy saplings drifting between them over dry leaves."),
+  "hazel-forest": LAY("rings", .6, .6, [2, [6, 9]], [.3, .55, .12, .03], .5, NO_LEAN, ["mounds", "paths"], [.3, [.4, .3, .3, 0, 0]],
+    "Crooked hazels grown in loose fairy rings on short grass, lumpy little mounds in the middle of each."),
+  "garden": LAY("rows", .45, 0, [3, [6, 10]], [.1, .7, .2, 0], .6, NO_LEAN, ["paths", "pools"], [.4, [.7, 0, 0, .2, .1]],
+    "A lost formal garden: willows in avenues along straight paths, lawns and flower beds, a pavilion at the heart.", { along: "paths" }),
+  "twiggy-forest": LAY("scatter", .75, .3, [1, [6, 10]], [.25, .5, .2, .05], .6, [60, .5], ["paths"], [.25, [.3, .2, .3, 0, .2]],
+    "Straight many-trunked trees all slanting the same way, like a wood frozen in a gale."),
+  "ancient": LAY("lone", .4, .2, [1, [12, 18]], [.05, .35, .4, .2], .4, [150, .25], ["rocky", "mounds", "hollows"], [.45, [.5, .2, .3, 0, 0]],
+    "Giant gnarled trees far apart, roots heaving over mossy rocks; every tree is a landmark."),
+  "norway": LAY("stands", .8, .5, [1, [8, 12]], [.15, .45, .35, .05], .2, NO_LEAN, ["rocky", "ridges"], [.3, [.2, .6, 0, .2, 0]],
+    "Dense stands of straight pines on slate ridges, bare rock between; dark, vertical and cold."),
+  "alder-forest": LAY("scatter", .55, .4, [2, [6, 10]], [.2, .4, .35, .05], .6, [120, .35], ["stream", "hollows"], [.3, [.3, .1, .2, .3, .1]],
+    "Tall slanted alders at every height over long grass and stumps, a little stream wandering through."),
+  "meadow": LAY("lone", .12, .1, [0], [.2, .5, .25, .05], .3, NO_LEAN, ["mounds", "paths"], [.35, [.3, .3, 0, .2, .2]],
+    "Wide-open wildflower grass with a lone oak here and there and scattered hawthorn; the sky does the work."),
+  "old-oaks": LAY("groves", .5, .5, [2, [10, 16]], [.1, .35, .4, .15], .5, NO_LEAN, ["mounds", "hollows"], [.4, [.5, .1, .4, 0, 0]],
+    "Groves of huge hollow oaks with broad clearings of leaf litter between; slow and grand."),
+  "berry-thicket": LAY("thicket", .85, .5, [2, [4, 7]], [.2, .4, .35, .05], 1, NO_LEAN, ["paths"], [.15, [.3, 0, .4, 0, .3]],
+    "Tall pines over solid berry bushes and brambles, only narrow animal paths and a couple of pockets of space."),
+  "wetland": LAY("edgeOnly", .5, .5, [1, [16, 24]], [.25, .55, .15, .05], .8, NO_LEAN, ["pools", "stream"], [.35, [.2, 0, 0, .6, .2]],
+    "Open reedy water and mud in the middle, willows crowding the rim; wet and echoing."),
+  "stream": LAY("rows", .5, .2, [1, [6, 10]], [.3, .45, .2, .05], .5, NO_LEAN, ["stream", "pools"], [.3, [.3, .3, 0, .3, .1]],
+    "Alders lining both banks of a pebbly stream, saplings at the water's edge, open grass away from it.", { along: "stream" }),
+  "rocky-slope": LAY("scatter", .35, .6, [1, [8, 12]], [.3, .5, .18, .02], .2, [90, .15], ["rocky", "ridges"], [.5, [.3, .7, 0, 0, 0]],
+    "Scree and boulders with pines clinging in clumps, everything leaning slightly uphill."),
+  "bog": LAY("stands", .25, .85, [3, [10, 20]], [.4, .5, .1, 0], .6, NO_LEAN, ["pools", "mounds"], [.35, [.2, 0, 0, .5, .3]],
+    "Sphagnum and bog pools, stunted spruce in tight dark stands, cotton grass pale between them."),
+  "deadwood": LAY("scatter", .25, .2, [2, [8, 14]], [.05, .3, .45, .2], .15, NO_LEAN, ["ridges", "hollows"], [.45, [.3, .1, .3, 0, .3]],
+    "Sparse tall blasted snags on bare ridges; bleak, quiet, with long sightlines."),
+  "cave-mouth": LAY("edgeOnly", .4, .5, [1, [10, 14]], [.2, .5, .3, 0], .2, NO_LEAN, ["rocky", "ridges"], [.4, [.3, .6, 0, 0, .1]],
+    "Rock walls and dead trees ring an open stone floor that leads to the cave's dark mouth."),
+  "grassland": LAY("lone", .1, .5, [0], [.3, .5, .2, 0], .2, NO_LEAN, ["mounds"], [.35, [.3, .2, 0, .1, .4]],
+    "Short turf to the horizon, molehills, birches alone or in twos and threes."),
+  "beaver-pond": LAY("edgeOnly", .55, .4, [1, [14, 20]], [.4, .45, .15, 0], .4, NO_LEAN, ["pools", "stream"], [.4, [.1, 0, 0, .7, .2]],
+    "A pond in the middle, young birch and aspen round it, gnawed stumps where the big ones were felled."),
+  "log-pile": LAY("groves", .5, .7, [2, [6, 10]], null, .7, NO_LEAN, ["hollows", "mounds"], [.3, [.3, 0, .4, 0, .3]],
+    "Rotting logs heaped in piles, fungi everywhere, damp hollows between the heaps."),
+  "heath": LAY("scatter", .2, .3, [1, [12, 18]], [.5, .45, .05, 0], .8, [30, .6], ["ridges", "paths"], [.4, [.4, .4, 0, 0, .2]],
+    "Purple heather and gorse, small birches bent hard by the wind, all the same way."),
+  "old-pinewood": LAY("scatter", .5, .3, [2, [8, 14]], [.1, .35, .4, .15], .15, NO_LEAN, ["mounds", "paths"], [.35, [.4, .3, .3, 0, 0]],
+    "Cathedral-tall old pines on a clear floor of needles; you can see between the trunks a long way."),
+  "ravine": LAY("edgeOnly", .55, .6, [1, [6, 9]], null, .8, NO_LEAN, ["stream", "ridges", "rocky"], [.4, [.3, .5, 0, .2, 0]],
+    "A deep wet cleft: rock walls and mossy boulders either side, ferns, a stream down the middle."),
+  "bluebell-glade": LAY("groves", .45, .5, [3, [8, 14]], [.1, .5, .35, .05], .3, NO_LEAN, ["hollows"], [.35, [.4, 0, .3, .3, 0]],
+    "Beech groves round open glades carpeted in bluebells; soft, bright and airy."),
+  "holly-thicket": LAY("thicket", .9, .3, [1, [6, 9]], [.3, .6, .1, 0], .7, NO_LEAN, ["hollows"], [.25, [.3, 0, .5, 0, .2]],
+    "Dark hollies packed close, cobwebs strung between, one clearing round the web-hung tree."),
+  "honeysuckle-tangle": LAY("stands", .6, .7, [2, [5, 8]], [.45, .5, .05, 0], .8, NO_LEAN, ["paths", "mounds"], [.3, [.3, 0, .3, 0, .4]],
+    "Hazel coppice stools in clumps, honeysuckle and bramble between, clover paths winding through."),
+};
+for (const a of AREAS) a.layout = AREA_LAYOUTS[a.id];
+// Checks a layout's shape; returns a list of problems (empty when it's sound).
+function layoutProblems(a) {
+  const y = a.layout, bad = [], in01 = v => typeof v === "number" && v >= 0 && v <= 1, sum1 = o => Math.abs(Object.values(o).reduce((s, v) => s + v, 0) - 1) < 1e-6;
+  if (!y) return ["no layout"];
+  if (!LAYOUT_PATTERNS.includes(y.pattern)) bad.push("pattern " + y.pattern);
+  if (y.pattern === "rows" && !y.along) bad.push("rows without along");
+  for (const k of ["density", "clump", "undergrowth"]) if (!in01(y[k])) bad.push(k);
+  if (!(y.glades.count >= 0 && y.glades.size[0] <= y.glades.size[1])) bad.push("glades");
+  const wooded = (a.big || []).some(([k]) => k === "tree");
+  if (wooded !== !!y.heightMix) bad.push(wooded ? "no heightMix" : "heightMix without trees");
+  if (y.heightMix && (!sum1(y.heightMix) || !Object.values(y.heightMix).every(in01))) bad.push("heightMix doesn't sum to 1");
+  if (!in01(y.lean.amount) || !(y.lean.dir >= 0 && y.lean.dir < 360)) bad.push("lean");
+  if (!y.terrain.length || !y.terrain.every(t => LAYOUT_TERRAIN.includes(t))) bad.push("terrain");
+  const { rate, ...w } = y.decor; if (!in01(rate) || !sum1(w)) bad.push("decor");
+  if (!y.feel || y.feel.length < 20) bad.push("feel");
+  return bad;
+}
+
 // Placement rules (Ed, 2026-10-03, via the coordinator): wall objects are drawn only, they do
 // not block movement for now; a set piece is rare scenery, shown in only some of an area
 // type's areas, for variety. The chance is a starting value for playtesting.
@@ -2667,6 +3335,7 @@ function prop(kind, o, def, st, r, s) {
 
 // Set pieces: one per area that has one, bigger than the props.
 function setPiece(kind, o, def, st, r, s) {
+  if (o.three) return setPiece3d(kind, def, st);
   if (kind === "tree" || kind === "log") return prop(kind, o, def, st, r, s);
   const W = Math.round(90 * s), H = Math.round(70 * s), sp = new Sprite(W, H), cx = W / 2, gy = H;
   let colours = { ...stoneCol(), [M.LEAF]: hsv2rgb(def.leaf, .55, .5), [M.LEAF2]: hsv2rgb(def.leaf - .04, .5, .7), [M.TRUNK]: hsv2rgb(st.trunkHue, .45, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5, .17), [M.MAGIC]: hsv2rgb(st.magicHue, .6, 1), [M.MAGIC2]: hsv2rgb(st.magicHue, .2, 1) };
@@ -2715,7 +3384,7 @@ function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanva
   const col = list => (list || []).map(([kind, o]) => bk(prop(kind, o, def, st, r, K), kind, ""));
   const out = { def, floor: { sp: bake(ft.sp, ft.colours, st, "none", makeCanvas), kind: def.floor[0], text: def.text.floor }, walls: col(def.wall), small: col(def.small), big: col(def.big), setPiece: null };
   out.walls.forEach(a => a.text = def.text.wall); out.small.forEach(a => a.text = def.text.small); out.big.forEach(a => a.text = def.text.big);
-  if (def.set) out.setPiece = bk(setPiece(def.set[0], def.set[1], def, st, r, K), def.set[0], def.text.set);
+  if (def.set) { const sp0 = setPiece(def.set[0], def.set[1], def, st, r, K); out.setPiece = { ...bk(sp0, def.set[0], def.text.set), metres: sp0.metres }; } // metres: the new 3D ones' size
   return out;
 }
 
@@ -2843,6 +3512,7 @@ function lightProps(st, { makeCanvas = defaultCanvas } = {}) {
   g.putImageData(img, 0, 0); baked.mask = mask; out.pond = baked;
   return out;
 }
+
 
 
 
@@ -3100,7 +3770,8 @@ function mutate(style, strength, groups, seed) {
 }
 
 // ================= the witch =================
-// Built in 3D (witch.js): named outfit parts, towards and away, three hover frames, a lean, rise and descend.
+// Built in 3D (witch.js): named outfit parts, towards and away, three hover frames, a lean, rise and descend,
+// fast and brake, and on foot (WITCH_FOOT_POSES: stand, land, takeoff, talk, placeSigil, liftSigil; each sprite's .anchors has her hand and hat tip).
 // ================= per-style assets =================
 // Each area has its own leaf colour and its own kind of tree; "Difference between areas" sets how far apart.
 function areaStyle(st, world, area) {
@@ -3139,7 +3810,7 @@ function buildAssets(st, world, { K = 2 / (st.pixel || 2), makeCanvas = defaultC
   let away = null, lean = null;
   Object.defineProperty(witch, "away", { enumerable: true, get: () => away || (away = [0, 1, 2].map(frame => wb({ frame, facing: "away" }))) });
   Object.defineProperty(witch, "lean", { enumerable: true, get: () => lean || (lean = { towards: wb({ lean: true }), away: wb({ lean: true, facing: "away" }) }) });
-  for (const [pose, n] of [["rise", 2], ["descend", 2], ["fast", 3], ["brake", 2]]) { let v = null; const fr = [...Array(n).keys()]; Object.defineProperty(witch, pose, { enumerable: true, get: () => v || (v = { towards: fr.map(frame => wb({ pose, frame })), away: fr.map(frame => wb({ pose, frame, facing: "away" })) }) }); }
+  for (const [pose, n] of [["rise", 2], ["descend", 2], ["fast", 3], ["brake", 2], ...Object.entries(WITCH_FOOT_POSES).map(([k, v]) => [k, v.frames])]) { let v = null; const fr = [...Array(n).keys()]; Object.defineProperty(witch, pose, { enumerable: true, get: () => v || (v = { towards: fr.map(frame => wb({ pose, frame })), away: fr.map(frame => wb({ pose, frame, facing: "away" })) }) }); }
   // soundsystems: drawn the first time they are asked for (they are big)
   let ss = null;
   const out = { trees, bushes, creatures, witch, lights: lightProps(st, { makeCanvas }) };
@@ -3415,7 +4086,10 @@ function renderTrees() {
   clearTimeout(treeTimer);
   treeTimer = setTimeout(() => {
     const c = document.getElementById("treeSheet"), sel = document.getElementById("treeArea"); if (!c || !sel) return;
-    if (!sel.options.length) { for (const A of AREAS) if ((A.big || []).some(([k]) => k === "tree")) sel.add(new Option(A.name, A.id)); sel.addEventListener("change", renderTrees); }
+    if (!sel.options.length) { for (const A of AREAS) sel.add(new Option(A.name, A.id)); sel.addEventListener("change", renderTrees); }
+    const y = AREA_BY_ID[sel.value].layout, pct = v => Math.round(v * 100) + "%", info = document.getElementById("treeLayout");
+    if (info && y) info.textContent = `${y.feel} Pattern ${y.pattern}${y.along ? " along " + y.along : ""}, density ${pct(y.density)}, clump ${pct(y.clump)}, ${y.glades.count} glade${y.glades.count === 1 ? "" : "s"}${y.glades.count ? ` (${y.glades.size[0]}-${y.glades.size[1]} m)` : ""}, undergrowth ${pct(y.undergrowth)}${y.lean.amount ? `, leaning ${pct(y.lean.amount)} toward ${y.lean.dir}°` : ""}; terrain: ${y.terrain.join(", ")}; ` +
+      (y.heightMix ? "height mix " + Object.entries(y.heightMix).map(([k, v]) => k + " " + pct(v)).join(", ") : "its big objects aren't trees") + "; decorations " + pct(y.decor.rate) + ": " + Object.entries(y.decor).filter(([k, v]) => k !== "rate" && v).map(([k, v]) => k + " " + pct(v)).join(", ") + ".";
     const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 6;
     const row = [...areaTreeVariants(sel.value, st).map(v => v.whole), bake(witchSprite(st), witchColours(st), st, st.cOutline)];
     const w = row.reduce((a, x) => a + x.w + gap, gap), h = Math.max(...row.map(x => x.h)) + gap * 2, tgt = makeTarget(w, h);
@@ -3424,6 +4098,44 @@ function renderTrees() {
     c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
     c.style.width = w + "px"; c.style.maxWidth = "none";
   }, 550);
+}
+
+// ================= set pieces: every area's landmark, with the witch for scale =================
+let setTimer;
+function renderSets() {
+  clearTimeout(setTimer);
+  setTimer = setTimeout(() => {
+    const c = document.getElementById("setSheet"); if (!c) return;
+    const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 8, wit = bake(witchSprite(st), witchColours(st), st, st.cOutline);
+    const ids = AREAS.filter(a => a.set).map(a => a.id), rows = [];
+    for (let i = 0; i < ids.length; i += 5) rows.push([...ids.slice(i, i + 5).map(id => areaAssets(id, st).setPiece.sp), wit]);
+    const w = Math.max(...rows.map(r => r.reduce((a, x) => a + x.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(x => x.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
+    tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+    let y = gap;
+    rows.forEach((r, i) => { let x = gap; y += rh[i] - gap; for (const s2 of r) { tgt.a.drawImage(s2.A, x, y - s2.h); tgt.n.drawImage(s2.N, x, y - s2.h); x += s2.w + gap; } y += gap; });
+    c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
+    c.style.width = w + "px"; c.style.maxWidth = "none";
+  }, 800);
+}
+
+// ================= home: the treehouse, the witch sitting on its terrace =================
+let homeTimer;
+function renderHome() {
+  clearTimeout(homeTimer);
+  homeTimer = setTimeout(() => {
+    const c = document.getElementById("homeSheet"); if (!c) return;
+    const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 8, wc = witchColours(st), hc = treehouseColours(st);
+    const panels = [["towards", "whole"], ["towards", "bot"], ["away", "whole"]].map(([facing, part]) => {
+      const T = treehouseSprite(st, { facing }), house = bake(T[part], hc, st, "none"), wsp = witchSprite(st, { pose: "sit", facing }), wit = bake(wsp, wc, st, st.cOutline);
+      let x0 = wsp.w, x1 = -1; for (let x = 0; x < wsp.w; x++) if (wsp.get(x, wsp.h - 1)) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); }
+      return { house, wit, wx: Math.round(T.anchors.seat.x - (x0 + x1 + 1) / 2), wy: Math.round(T.anchors.seat.y - wsp.h) + 1 };
+    });
+    const w = panels.reduce((a, p) => a + p.house.w + gap, gap), h = Math.max(...panels.map(p => p.house.h)) + gap * 2, tgt = makeTarget(w, h);
+    tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+    let x = gap; for (const P of panels) { const y = h - gap - P.house.h; tgt.a.drawImage(P.house.A, x, y); tgt.n.drawImage(P.house.N, x, y); tgt.a.drawImage(P.wit.A, x + P.wx, y + P.wy); tgt.n.drawImage(P.wit.N, x + P.wx, y + P.wy); x += P.house.w + gap; }
+    c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
+    c.style.width = w + "px"; c.style.maxWidth = "none";
+  }, 650);
 }
 
 // ================= decorations: ruins, rocks, freak trees, the lake kit =================
@@ -3455,6 +4167,8 @@ function renderWitch() {
     const c = document.getElementById("witchSheet"); if (!c) return;
     const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 6, wc = witchColours(st), b = o => bake(witchSprite(st, o), wc, st, st.cOutline);
     const rows = ["towards", "away"].map(facing => [...[0, 1, 2].map(frame => b({ frame, facing })), b({ lean: true, facing }), ...[0, 1, 2].map(frame => b({ pose: "fast", frame, facing })), ...[0, 1].map(frame => b({ pose: "brake", frame, facing })), ...["rise", "descend"].flatMap(pose => [0, 1].map(frame => b({ pose, frame, facing })))]);
+    // on foot: stand, land, takeoff, talk, placeSigil, liftSigil, each turned towards and away, after her hover frame for scale
+    for (const facing of ["towards", "away"]) rows.push([b({ facing }), ...Object.entries(WITCH_FOOT_POSES).flatMap(([pose, { frames }]) => [...Array(frames).keys()].map(frame => b({ pose, frame, facing })))]);
     const w = Math.max(...rows.map(r => r.reduce((a, x) => a + x.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(x => x.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
     tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
     let y = gap;
@@ -3607,7 +4321,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderDecor(); renderWitch(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400);
+  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderDecor(); renderSets(); renderWitch(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
