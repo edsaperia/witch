@@ -6,7 +6,7 @@ import { AREA_TYPES, generateMap, parseSeed } from "./map";
 import { Forest, crownReach } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
-import { spawnCreatures, stepCreature, wanderRange } from "./creatures";
+import { population, spawnCreatures, stepCreature, wanderRange } from "./creatures";
 import { newGame, stepGame } from "./game";
 import { newClock, tick, MAX_STEP } from "./clock";
 import { TUNING, withTuning } from "./tuning";
@@ -277,37 +277,91 @@ describe("the camera", () => {
 
 describe("creatures", () => {
   const all = spawnCreatures(map);
+  const inCell = (x: number, y: number) => all.filter(c => c.cell[0] === x && c.cell[1] === y);
+  const [mx, my] = map.centreCell;
 
-  it("live in every clearing, of their area's kind", () => {
-    const cells = new Set(all.map(c => c.cell.join()));
-    expect(cells.size).toBeGreaterThan(350);
-    for (const c of all.slice(0, 200)) {
-      expect(c.species).toBe(AREA_TYPES[map.typeOf(c.cell[0], c.cell[1])].creature);
-      expect(map.areaAt(c.homeX, c.homeZ).openness).toBeLessThan(0.05);
+  it("are each area's own kind, drawn with its animal", () => {
+    for (const c of all.slice(0, 300)) {
+      const type = AREA_TYPES[map.typeOf(c.cell[0], c.cell[1])];
+      expect(c.kind).toBe(type.creature);
+      expect(c.species).toBe(type.drawAs);
     }
   });
 
-  it("are babies and young, with a few legends, one of them next door to the dancefloor", () => {
-    const legends = all.filter(c => c.level === 2);
-    expect(all.filter(c => c.level === 0).length).toBeGreaterThan(300);
-    expect(all.filter(c => c.level === 1).length).toBeGreaterThan(150);
-    expect(legends.length).toBeGreaterThanOrEqual(1);
-    expect(legends.length).toBeLessThan(80);
-    expect(legends.some(c => c.cell[0] === map.centreCell[0] + 1 && c.cell[1] === map.centreCell[1])).toBe(true);
+  it("are a couple of babies in the areas round home", () => {
+    for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const here = inCell(mx + dx, my + dy);
+      expect(here.length).toBeGreaterThanOrEqual(1);
+      expect(here.length).toBeLessThanOrEqual(3);
+      expect(here.every(c => c.level === 0)).toBe(true);
+    }
   });
 
-  it("wander, slowly, and never leave their clearing", () => {
+  it("grow to about 20 towards the edge, with young ones and a couple of legends", () => {
+    const edge = [[0, 0], [19, 0], [0, 19], [19, 19], [0, 10], [19, 10], [10, 0], [10, 19]].map(([x, y]) => inCell(x, y));
+    const mean = edge.reduce((a, l) => a + l.length, 0) / edge.length;
+    expect(mean).toBeGreaterThan(15);
+    expect(mean).toBeLessThan(23);
+    const corners = edge.slice(0, 4);
+    for (const l of corners) {
+      expect(l.filter(c => c.level === 2).length).toBeGreaterThanOrEqual(1);
+      expect(l.filter(c => c.level === 2).length).toBeLessThanOrEqual(3);
+      expect(l.filter(c => c.level === 1).length).toBeGreaterThan(3);
+    }
+  });
+
+  it("rise with distance from home, as the tuning file says", () => {
+    let last = -1;
+    for (let r = 0; r <= 1.0001; r += 0.1) {
+      const p = population(map, r);
+      const total = p.babies + p.young + p.legends;
+      expect(total).toBeGreaterThanOrEqual(last);
+      last = total;
+    }
+    const near = population(map, 0), far = population(map, 1);
+    expect(near).toEqual({ babies: TUNING.creaturesNear, young: 0, legends: 0 });
+    expect(far.babies + far.young + far.legends).toBe(TUNING.creaturesFar);
+    expect(far.legends).toBe(TUNING.legendsFar);
+  });
+
+  it("wander slowly, and never stray past their range", () => {
     const c = all[5], start = [c.x, c.z];
     let moved = 0;
     for (let i = 0; i < 60 * 60; i++) {
       const px = c.x, pz = c.z;
       stepCreature(c, 1 / 60);
       moved += Math.hypot(c.x - px, c.z - pz);
-      expect(Math.hypot(c.x - c.homeX, c.z - c.homeZ)).toBeLessThanOrEqual(wanderRange(map, c.level) + 1e-6);
+      expect(Math.hypot(c.x - c.homeX, c.z - c.homeZ)).toBeLessThanOrEqual(c.range + 1e-6);
       expect(Math.hypot(c.x - px, c.z - pz)).toBeLessThanOrEqual(c.speed / 60 + 1e-9);
     }
     expect(moved).toBeGreaterThan(1);
     expect([c.x, c.z]).not.toEqual(start);
+    expect(c.range).toBeGreaterThanOrEqual(wanderRange(map, c.level));
+  });
+
+  it("only move near the witch", () => {
+    const g = newGame(123, TUNING);
+    g.clock.paused = false;
+    const far = g.creatures.filter(c => Math.abs(c.homeX - g.witch.x) > TUNING.creatureSimRadius + 10);
+    const before = far.map(c => [c.x, c.z, c.rest]);
+    for (let i = 0; i < 300; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 30);
+    expect(far.map(c => [c.x, c.z, c.rest])).toEqual(before);
+    const near = g.creatures.filter(c => Math.hypot(c.homeX - g.witch.x, c.homeZ - g.witch.z) < 30);
+    expect(near.some(c => c.moving || c.rest !== 0)).toBe(true);
+  });
+});
+
+describe("set pieces", () => {
+  it("show in a few of the areas whose type has one, never in the others", () => {
+    let shown = 0, could = 0;
+    for (let y = 0; y < 20; y++) for (let x = 0; x < 20; x++) {
+      const t = AREA_TYPES[map.typeOf(x, y)], piece = map.setPieceOf(x, y);
+      if (!t.setPiece) { expect(piece).toBeNull(); continue; }
+      could++;
+      if (piece) { shown++; expect(piece).toBe(t.setPiece); }
+    }
+    expect(shown).toBeGreaterThan(0);
+    expect(shown / could).toBeLessThan(TUNING.setPieceChance * 2.5);
   });
 });
 

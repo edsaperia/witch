@@ -37,12 +37,12 @@ async function main() {
   const results = [];
   const check = (ok, what) => { results.push(`${ok ? "ok  " : "FAIL"} ${what}`); if (!ok) errors.push(what); };
 
-  async function run(name, viewport, steps) {
+  async function run(name, viewport, steps, query) {
     const { hasTouch, ...size } = viewport;
     const page = await browser.newPage({ viewport: size, deviceScaleFactor: 1, hasTouch: !!hasTouch, isMobile: !!hasTouch });
     page.on("pageerror", e => errors.push(`${name}: page error: ${e.message}`));
     page.on("console", m => { if (m.type() === "error") errors.push(`${name}: console error: ${m.text()}`); });
-    await page.goto(`http://127.0.0.1:${port}/?seed=${seed}&debug`);
+    await page.goto(`http://127.0.0.1:${port}/?seed=${seed}${query || "&debug"}`);
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 120000 });
     await steps(page);
     await page.close();
@@ -121,6 +121,18 @@ async function main() {
     check((await state(page)).mode === "treetop", "the round button rises to treetop mode");
     await shot(page, "11-phone-treetop.png");
   });
+
+  // The tilt-shift both ways, and off, from the same spot, for Ed to compare.
+  for (const tilt of ["before", "after", "off"]) {
+    await run(`tilt-${tilt}`, { width: 1280, height: 720 }, async page => {
+      await page.keyboard.press("Enter");
+      await hold(page, "KeyW", 1);
+      await page.keyboard.press("Space");
+      await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
+      await sleep(600);
+      await shot(page, `2${["before", "after", "off"].indexOf(tilt)}-tilt-${tilt}.png`);
+    }, `&tilt=${tilt}`);
+  }
 
   await browser.close();
   server.close();

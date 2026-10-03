@@ -6,7 +6,23 @@ import { makePartition, type Cell, type Partition } from "./partition";
 import { hash2, rng } from "./random";
 import type { Tuning } from "./tuning";
 
-export interface AreaType { id: string; name: string; leafHue: number; trees: string[]; creature: string; groundHue: number }
+export interface AreaType {
+  id: string;
+  name: string;
+  /** Ed's columns. */
+  floor: string;
+  wall: string;
+  small: string;
+  big: string;
+  setPiece: string;
+  creature: string;
+  /** The existing animal sprite that stands in for the creature until its art exists. */
+  drawAs: string;
+  leafHue: number;
+  trees: string[];
+  treeDensity: number;
+  groundHue: number;
+}
 export const AREA_TYPES: readonly AreaType[] = (rawTypes as { types: AreaType[] }).types;
 
 export interface AreaSample {
@@ -38,6 +54,10 @@ export interface ForestMap {
   typeOf(cx: number, cy: number): number;
   /** Which area a point is in, its type, and how open it is (0 at an area's centre). */
   areaAt(x: number, z: number): AreaSample;
+  /** The area's set piece, if this one has one (rare: setPieceChance of the types that have one). */
+  setPieceOf(cx: number, cy: number): string | null;
+  /** How far an area is from home: 0 at the middle area, 1 at the map's edge. */
+  remoteness(cx: number, cy: number): number;
   /** An area's centre (its layer-0 site), in metres. */
   siteOf(cx: number, cy: number): { x: number; z: number };
   /** The chance a tree grows at a point: 0 in a clearing, rising across its edge to treeDensity. */
@@ -127,6 +147,11 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     return Math.min(1, Math.pow(Math.max(0, (t - c) / Math.max(0.01, tuning.clearingEdge)), 1.6)) * tuning.treeDensity;
   };
 
+  const setPieceOf = (cx: number, cy: number) => {
+    const t = AREA_TYPES[typeOf(cx, cy)];
+    return t.setPiece && hash2(cx, cy, seed + 61) < tuning.setPieceChance ? t.setPiece : null;
+  };
+  const remoteness = (cx: number, cy: number) => Math.min(1, Math.hypot(cx - centreCell[0], cy - centreCell[1]) / (n / 2));
   const pad = A * 0.5;
   return {
     seed, tuning, n, margin, areaSize: A, partition, centreCell,
@@ -134,6 +159,6 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     start: { x: centre.x, z: centre.z + 2 },
     bounds: { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad },
     extent: { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A },
-    typeOf, areaAt, siteOf, treeWeight, neighbours,
+    typeOf, areaAt, siteOf, treeWeight, neighbours, setPieceOf, remoteness,
   };
 }

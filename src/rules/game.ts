@@ -1,7 +1,7 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState } from "./camera";
 import { newClock, tick, type Clock } from "./clock";
-import { spawnCreatures, stepCreature, type Creature } from "./creatures";
+import { spawnCreatures, stepCreaturesNear, type Creature } from "./creatures";
 import { Forest } from "./forest";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import type { Tuning } from "./tuning";
@@ -38,13 +38,13 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   if (dt === 0) return;
   g.witch = stepWitch(g.witch, c, dt, g.tuning, g.map.bounds);
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, dt, g.tuning);
-  for (const cr of g.creatures) stepCreature(cr, dt);
+  stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, g.tuning.creatureSimRadius, dt);
 }
 
 export const poseOf = (g: Game): CameraPose => cameraPose(g.camera, g.witch.lift, g.tuning);
 
-/** The area type under the witch, by name, for the debug overlay. */
+/** The area type under the witch, by name (and its set piece, if it shows one), for the debug overlay. */
 export function areaUnderWitch(g: Game): string {
-  const a = g.map.areaAt(g.witch.x, g.witch.z);
-  return AREA_TYPES[a.type].name;
+  const a = g.map.areaAt(g.witch.x, g.witch.z), piece = g.map.setPieceOf(a.cell[0], a.cell[1]);
+  return AREA_TYPES[a.type].name + (piece ? ` (set piece: ${piece})` : "");
 }

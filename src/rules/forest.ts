@@ -3,7 +3,7 @@
 // round each area's centre. Every cell is decided from the seed alone, so any patch of forest
 // can be produced on its own, near the camera, in any order, and always comes out the same.
 import { hash2 } from "./random";
-import type { ForestMap } from "./map";
+import { AREA_TYPES, type ForestMap } from "./map";
 
 export interface Plant {
   x: number;
@@ -36,9 +36,9 @@ function treesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
       const x = (i + shift + (hash2(i, j, s + 101) - 0.5) * 0.7) * sx;
       const z = (j + (hash2(i, j, s + 102) - 0.5) * 0.7) * sz;
       // A crown must not cover a clearing either, so the weight is checked where it reaches.
-      if (hash2(i, j, s + 103) >= map.treeWeight(x, z)) continue;
-      if (map.treeWeight(x, z - lift) === 0 || map.treeWeight(x - half, z - lift) === 0 || map.treeWeight(x + half, z - lift) === 0) continue;
       const a = map.areaAt(x, z);
+      if (hash2(i, j, s + 103) >= map.treeWeight(x, z) * AREA_TYPES[a.type].treeDensity) continue;
+      if (map.treeWeight(x, z - lift) === 0 || map.treeWeight(x - half, z - lift) === 0 || map.treeWeight(x + half, z - lift) === 0) continue;
       out.push({ x, z, type: a.type, variant: Math.floor(hash2(i, j, s + 104) * TREE_VARIANTS), flip: hash2(i, j, s + 105) < 0.5 });
     }
   }

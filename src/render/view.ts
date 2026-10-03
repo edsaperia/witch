@@ -8,6 +8,7 @@ import { canopyShown, witchHeight } from "../rules/witch";
 import { AssetLibrary } from "./assets";
 import { Ground } from "./ground";
 import { applyStyleLight, LIGHT_UNIFORMS } from "./lighting";
+import { Post } from "./post";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
 import type { Style } from "./style";
 
@@ -27,6 +28,7 @@ export class View {
   private mpp: number; // metres per art pixel
   private lastBuild = { x: Infinity, z: Infinity, version: -1 };
   private prefetch = false;
+  readonly post: Post;
   private width = 1;
   private height = 1;
   stats: ViewStats = { trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0 };
@@ -35,9 +37,11 @@ export class View {
     const t = game.tuning;
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance", preserveDrawingBuffer: true });
     this.renderer.setPixelRatio(1);
+    this.renderer.info.autoReset = false; // count every pass of a frame, reset in render()
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // colours are the art's own sRGB values, untouched
     this.mpp = 1 / (t.artPixelsPerMetre * (2 / t.pixelSize));
-    this.camera = new THREE.PerspectiveCamera(t.camera.fov, 1, 0.5, 600);
+    this.camera = new THREE.PerspectiveCamera(t.camera.fov, 1, 1, 900);
+    this.post = new Post(this.renderer, t);
     this.scene.background = new THREE.Color(0x0b0a16);
     applyStyleLight(style, t.glowReach, this.mpp);
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize);
@@ -66,12 +70,16 @@ export class View {
     this.scene.add(this.shadow);
   }
 
-  /** Fit the canvas to the window: low resolution, scaled up by the pixel size. */
+  /** Fit the canvas to the window: the scene at low resolution, shown scaled up by the pixel size. */
   resize(cssW: number, cssH: number): void {
     const p = this.game.tuning.pixelSize;
     this.width = Math.max(1, Math.ceil(cssW / p));
     this.height = Math.max(1, Math.ceil(cssH / p));
-    this.renderer.setSize(this.width, this.height, false);
+    // With the tilt-shift after the upscale, the canvas holds the full-size image; otherwise the
+    // low-resolution one, which the browser scales up with nearest-neighbour.
+    const k = this.post.fullResolution ? p : 1;
+    this.renderer.setSize(this.width * k, this.height * k, false);
+    this.post.resize(this.width, this.height, this.width * k, this.height * k);
     this.canvas.style.width = this.width * p + "px";
     this.canvas.style.height = this.height * p + "px";
     this.camera.aspect = this.width / this.height;
@@ -185,7 +193,8 @@ export class View {
     this.assets.work(6);
     this.stats.pendingGround = this.ground.fill(this.renderer, pose.tx, pose.tz - 10, t.drawRadius + 20, 3);
     this.stats.pendingArt = this.assets.pending;
-    this.renderer.render(this.scene, this.camera);
+    this.renderer.info.reset();
+    this.post.render(this.scene, this.camera);
     this.stats.drawCalls = this.renderer.info.render.calls;
     this.stats.batches = this.typeBatches.size + this.creatureBatches.size;
   }

@@ -1,16 +1,21 @@
-// Creatures in the clearings: babies and young of each area's kind, wandering slowly round
-// their area's centre, and here and there a legend, taller than the trees.
-import { rng, hash2 } from "./random";
+// Creatures: each area's own kind, more of them and older the further the area is from home
+// (Ed, 2026-10-03). The areas round the dancefloor hold a couple of babies; areas near the map's
+// edge hold about 20, young ones and a couple of legends among them. They wander round their
+// area's centre; only those near the witch are simulated.
+import { clamp, hash2, lerp, rng, smoothstep } from "./random";
 import { AREA_TYPES, type ForestMap } from "./map";
 
 export interface Creature {
   id: number;
+  /** The creature's kind, in Ed's words (Badger, Snail...). */
+  kind: string;
+  /** The animal sprite it is drawn with (its own, or a stand-in until its art exists). */
   species: string;
   /** The area it belongs to. */
   cell: [number, number];
   /** 0 baby, 1 young, 2 legend. */
   level: 0 | 1 | 2;
-  /** The clearing it wanders round. */
+  /** The centre it wanders round. */
   homeX: number;
   homeZ: number;
   range: number;
@@ -28,33 +33,44 @@ export interface Creature {
   rand: () => number;
 }
 
-/** How far a creature strays from its area's centre: most of the clearing. */
-export const wanderRange = (map: ForestMap, level: number) => map.tuning.clearingSize * 0.75 * map.areaSize * 0.5 * (level === 2 ? 0.55 : 0.8);
+export interface AreaPopulation { babies: number; young: number; legends: number }
+
+/** How many of each level live in an area `remoteness` (0 home, 1 edge) from the dancefloor. */
+export function population(map: ForestMap, remoteness: number, roll = 0.5): AreaPopulation {
+  const t = map.tuning, r = clamp(remoteness, 0, 1);
+  const total = Math.round(lerp(t.creaturesNear, t.creaturesFar, Math.pow(r, t.creatureCurve)) + (roll - 0.5) * 2);
+  const legends = Math.min(Math.max(0, total), Math.round(t.legendsFar * smoothstep((r - t.legendsFrom) / Math.max(0.01, 1 - t.legendsFrom)) + (roll - 0.5) * 0.8));
+  const young = Math.round(Math.max(0, total - legends) * t.youngShareFar * r);
+  return { babies: Math.max(0, total - legends - young), young, legends };
+}
+
+/** How far a creature strays from its area's centre: the clearing, wider in crowded far areas. */
+export const wanderRange = (map: ForestMap, level: number, remoteness = 0) =>
+  map.tuning.clearingSize * 0.75 * map.areaSize * 0.5 * (level === 2 ? 0.55 : 0.8) * (1 + remoteness);
 
 export function spawnCreatures(map: ForestMap): Creature[] {
   const out: Creature[] = [], t = map.tuning;
   let id = 0;
-  // One legend always lives next door to the dancefloor, so there is one to find at once.
-  const [mx, my] = map.centreCell, legendNextDoor = `${mx + 1},${my}`;
   for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
     const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), type = AREA_TYPES[map.typeOf(cx, cy)], home = map.siteOf(cx, cy);
+    const far = map.remoteness(cx, cy), pop = population(map, far, hash2(cx, cy, map.seed + 43));
     const make = (level: 0 | 1 | 2): Creature => {
-      const range = wanderRange(map, level), a = r() * Math.PI * 2, d = Math.sqrt(r()) * range;
+      const range = wanderRange(map, level, far), a = r() * Math.PI * 2, d = Math.sqrt(r()) * range;
       const x = home.x + Math.cos(a) * d, z = home.z + Math.sin(a) * d;
       return {
-        id: id++, species: type.creature, cell: [cx, cy], level, homeX: home.x, homeZ: home.z, range, x, z, tx: x, tz: z,
+        id: id++, kind: type.creature, species: type.drawAs, cell: [cx, cy], level, homeX: home.x, homeZ: home.z, range, x, z, tx: x, tz: z,
         rest: r() * 3, speed: (level === 2 ? t.legendSpeed : t.creatureSpeed) * (0.7 + r() * 0.6),
         facing: r() < 0.5 ? 1 : -1, moving: false, walk: r(), rand: rng(map.seed * 31 + id * 7 + 11),
       };
     };
-    const count = Math.max(0, t.creaturesPerClearing + Math.floor(r() * 3) - 1);
-    for (let i = 0; i < count; i++) out.push(make(r() < 0.6 ? 0 : 1));
-    if (`${cx},${cy}` === legendNextDoor || hash2(cx, cy, map.seed + 41) < t.legendChance) out.push(make(2));
+    for (let i = 0; i < pop.babies; i++) out.push(make(0));
+    for (let i = 0; i < pop.young; i++) out.push(make(1));
+    for (let i = 0; i < pop.legends; i++) out.push(make(2));
   }
   return out;
 }
 
-/** Wander: walk to a random spot in the clearing, rest a while, pick another. */
+/** Wander: walk to a random spot round home, rest a while, pick another. */
 export function stepCreature(c: Creature, dt: number): void {
   if (c.rest > 0) { c.rest -= dt; c.moving = false; return; }
   const dx = c.tx - c.x, dz = c.tz - c.z, d = Math.hypot(dx, dz);
@@ -69,4 +85,9 @@ export function stepCreature(c: Creature, dt: number): void {
   if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
   c.moving = true;
   c.walk += dt * (c.level === 2 ? 1.5 : 4);
+}
+
+/** Step only the creatures within `radius` metres of (x, z): the rest wait, unseen. */
+export function stepCreaturesNear(all: Creature[], x: number, z: number, radius: number, dt: number): void {
+  for (const c of all) if (Math.abs(c.homeX - x) < radius && Math.abs(c.homeZ - z) < radius) stepCreature(c, dt);
 }

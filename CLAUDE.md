@@ -35,8 +35,10 @@ Related commands: `node tools/art-lab/build.mjs` writes the self-contained lab p
 
 Literal, stable names for the parts of the game, as Ed and the builders agree them. The game's own terms are in `DESIGN.md`'s glossary; these are the prototype's.
 
-- **Area type**: one of the kinds of area (`config/area-types.json`): its leaf colour, favourite tree shapes and creature. 30 placeholders for now.
-- **Tuning file**: `config/tuning.json`, the numbers Ed edits (speeds, camera, density, glow, pixel size).
+- **Area type**: one of the kinds of area: Ed's 30 in `config/area-types.json` (from DESIGN.md), each with his columns (floor, wall, small, big, set piece, creature) plus the stand-ins the prototype draws with until `art/areas.js` exists (leaf colour, tree shapes, the animal sprite).
+- **Remoteness**: how far an area is from home, 0 at the dancefloor's area to 1 at the map's edge; creatures grow more numerous and older with it.
+- **Tilt-shift**: the post-process blur toward the top and bottom of the screen that makes the forest look like a miniature.
+- **Tuning file**: `config/tuning.json`, the numbers Ed edits (speeds, camera, density, glow, pixel size, creatures, bloom, tilt-shift).
 - **Style file**: `config/style.json`, a style saved in the Witch Art Lab; every sprite is drawn from it.
 - **Top half / bottom half**: a tree's crown and its trunk, drawn as two sprites; tops show in treetop mode only.
 - **Debug overlay**: the panel toggled by `~` or a three-finger tap: frame rate, seed, area type, mode.

@@ -15,10 +15,17 @@ if (seed === null) {
   history.replaceState(null, "", "?" + params.toString() + location.hash);
 }
 
-const game = newGame(seed, TUNING);
+// Variants as switches in the link: ?tilt=before|after|off, ?bloom=off.
+const tuning = { ...TUNING, bloom: { ...TUNING.bloom }, tiltShift: { ...TUNING.tiltShift } };
+const tilt = params.get("tilt");
+if (tilt === "off") tuning.tiltShift.on = false;
+else if (tilt === "before" || tilt === "after") { tuning.tiltShift.on = true; tuning.tiltShift.where = tilt; }
+if (params.get("bloom") === "off") tuning.bloom.on = false;
+
+const game = newGame(seed, tuning);
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
-const view = new View(canvas, game, { ...loadStyle(), pixel: TUNING.pixelSize });
+const view = new View(canvas, game, { ...loadStyle(), pixel: tuning.pixelSize });
 const input = new Input();
 setupTouch(document.body, input.touch);
 

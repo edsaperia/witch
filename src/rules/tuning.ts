@@ -30,9 +30,17 @@ export interface Tuning {
   spriteTilt: number;
   artPixelsPerMetre: number;
   drawRadius: number;
-  creaturesPerClearing: number;
-  legendChance: number;
+  bloom: { on: boolean; strength: number; threshold: number };
+  tiltShift: { on: boolean; where: "before" | "after"; strength: number; band: number; centre: number };
+  creaturesNear: number;
+  creaturesFar: number;
+  creatureCurve: number;
+  youngShareFar: number;
+  legendsFar: number;
+  legendsFrom: number;
+  creatureSimRadius: number;
   creatureSpeed: number;
+  setPieceChance: number;
   legendSpeed: number;
 }
 
