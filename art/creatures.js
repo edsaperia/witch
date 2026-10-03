@@ -58,7 +58,9 @@ export function speciesColours(sp, st) {
 
 // A creature's height in pixels at each level: babies are drawn grids; young and legend
 // grow from the style's baby size (Ed: a legend is about 20 times a baby's height).
-export const levelHeight = (level, st) => Math.round(st.size * Math.pow(Math.sqrt(st.growth), level));
+// Young and legends are drawn in fewer, bigger pixels when the style's pixel size grows, so
+// they keep their size on screen (Ed: "bigger pixels"); babies are fixed grids.
+export const levelHeight = (level, st) => Math.round(st.size * Math.pow(Math.sqrt(st.growth), level) * (level ? 2 / (st.pixel || 2) : 1));
 
 export function critter(spId, level, frame, st) {
   const S = SPECIES_BY_ID[spId] || SPECIES[0];
@@ -90,7 +92,9 @@ class Plan {
   fn(f) { this.ops.push({ k: "fn", f }); return this; }
   // Scales the plan so that the points tagged `measure` span `height` pixels, makes the
   // sprite, and draws every part in order.
-  draw(height, round, extraPad = 1) {
+  // `warp([x, y]) -> [x, y, widthScale]`: an optional perspective applied to every point.
+  draw(height, round, extraPad = 1, warp = null) {
+    if (warp) for (const op of this.ops) if (op.pts) op.pts = op.pts.map(p => { const [x, y, k = 1] = warp(p); return p.length > 2 ? [x, y, p[2] * k] : [x, y]; });
     const all = [], body = [];
     for (const op of this.ops) if (op.pts) for (const p of op.pts) { const r = op.k === "limb" ? (p[2] || 0) / 2 : 0; all.push([p[0] - r, p[1] - r], [p[0] + r, p[1] + r]); if (!op.o.extra) body.push([p[0], p[1] - r]); }
     const top = Math.min(...body.map(p => p[1])), s = height / -top;
@@ -137,11 +141,13 @@ function quad(S, level, frame, st) {
   const q = { legW: 1, earS: 1, snoutTaper: .75, haunch: 1, hindFoot: 1, hgt: 1, ...S.q }, legend = level === 2, has = f => legend && S.legend.includes(f);
   const young = level === 1;
   // proportions shift with level: youngsters have big heads and short legs, legends are heroic
-  const hr = q.hr * (young ? 1.22 : 1) * (st.head / .44) ** .5, len = q.len * (young ? .9 : 1.04) * st.long;
+  // Three-quarter view (Ed): the body is turned partly towards the viewer, so it is foreshortened,
+  // the far legs stand higher and a little ahead, and the head shows both eyes.
+  const hr = q.hr * (young ? 1.22 : 1) * (st.head / .44) ** .5, len = q.len * (young ? .9 : 1.04) * st.long * .84;
   const legK = (young ? .92 : 1.04) * st.legs ** .5;
-  const back = -1, chest = -q.chest * (legend ? 1.1 : 1) / legK, tuck = -q.tuck / legK;
+  const bob = frame ? -.05 : 0, back = -1 + bob, chest = -q.chest * (legend ? 1.1 : 1) / legK + bob, tuck = -q.tuck / legK + bob;
   const P = new Plan(), lw = q.legW * (legend ? 1.15 : 1), legMat = q.legMat || M.BODY;
-  const swing = [.24, -.24][frame] * (q.stride || 1);
+  const swing = [.36, -.36][frame] * (q.stride || 1), far = [len * .14, -.13];
   const arch = q.back === "arch" ? .14 : 0, hump = q.back === "hump" ? .12 : 0;
 
   // ---- legs: hip/shoulder, knee, hock/wrist, foot; jointed like the real thing ----
@@ -160,7 +166,7 @@ function quad(S, level, frame, st) {
     const t = j[j.length - 1], fl = (q.paw === "hoof" ? .1 : .13) * long, fh = q.paw === "hoof" ? .09 : .075;
     P.shape([[t[0] - fl * .55, -fh], [t[0] + fl * .2, -fh * 1.1], [t[0] + fl * .6, -fh * .3], [t[0] + fl * .55, 0], [t[0] - fl * .6, 0]], q.paw === "hoof" ? M.NOSE : mat, o);
   };
-  const leg = (j, mat, w0, o, long) => { const sp = legSpine(j, w0); P.limb(sp, mat, { cap: 1, capEnd: .4, ...o }); foot(sp.map(p => [p[0], p[1]]), mat, o, long); };
+  const leg = (j, mat, w0, o, long, off = [0, 0]) => { const sp = legSpine(j, w0).map(p => [p[0] + off[0], p[1] + off[1], p[2]]); P.limb(sp, mat, { cap: 1, capEnd: .4, ...o }); foot(sp.map(p => [p[0], p[1]]), mat, o, long); };
 
   // ---- behind everything: wings, many tails ----
   if (has("wings")) wings(P, [len * .25, back - .05], legend, frame, -1);
@@ -173,8 +179,8 @@ function quad(S, level, frame, st) {
 
   // far legs: a shade darker (they are in shadow, and it tells near from far)
   const farMat = legMat === M.BODY ? M.BODY2 : M.BODY3;
-  leg(foreLeg(-1), farMat, .19 * lw, { group: 2 });
-  leg(hindLeg(-1), farMat, .3 * lw * q.haunch, { group: 2 }, q.hindFoot);
+  leg(foreLeg(-1), farMat, .19 * lw, { group: 2 }, 1, far);
+  leg(hindLeg(-1), farMat, .3 * lw * q.haunch, { group: 2 }, q.hindFoot, far);
 
   // ---- tail ----
   const tb = [-len * 1.0, back + .18 - arch * .3];
@@ -187,13 +193,13 @@ function quad(S, level, frame, st) {
   ];
   if (q.ridge) torso = tufts(torso, 0, 4, legend ? 10 : 7, legend ? .1 : .07, 1);
   if (q.shaggy) torso = tufts(torso, 6, 9, legend ? 6 : 4, .04, 1);
-  P.shape(torso, M.BODY, { group: 1, line: true });
+  P.shape(torso, M.BODY, { group: 1, tilt: [0, -.3] }); // one mass, its top turned up to the light
 
   // ---- neck and head ----
-  const neckBase = [len * .78, back + .2], ang = q.neckAng, H0 = add(neckBase, [Math.cos(ang) * q.neck, -Math.sin(ang) * q.neck]);
+  const neckBase = [len * .78, back + .2], ang = q.neckAng, H0 = add(neckBase, [Math.cos(ang) * q.neck * .85, -Math.sin(ang) * q.neck * .85]);
   const headC = add(H0, [hr * .2, 0]);
   P.limb([[...neckBase, q.neckW * 1.3], [...lerp2(neckBase, H0, .55), q.neckW * 1.05], [...H0, q.neckW * .9]], M.BODY, { group: 1, cap: 0, capEnd: 1 });
-  const L = hr * q.snout * (young ? .75 : 1), D = hr * q.snoutD, tp = q.snoutTaper;
+  const L = hr * q.snout * (young ? .75 : 1) * .72, D = hr * q.snoutD * 1.1, tp = q.snoutTaper; // the snout comes towards us, foreshortened
   let head = [
     [-hr * .85, -hr * .1], [-hr * .4, -hr * .78], [hr * .35, -hr * .72], [hr * .85, -hr * .38], [hr * .8 + L * .6, -D * .65 * (1 + tp) / 2 + hr * .02], [hr * .85 + L, -D * .5 * tp],
     [hr * .9 + L, D * .25 * tp], [hr * .75 + L, D * .42 * tp + hr * .1], [hr * .35, hr * .55], [-hr * .3, hr * .7], [-hr * .85, hr * .3],
@@ -205,9 +211,9 @@ function quad(S, level, frame, st) {
   const antler = (dx, mat, o) => antlers(P, q, add(headC, [dx * hr, -hr * .6]), hr, level, has, mat, o);
   if (q.antlers || has("jackalope")) antler(.42, has("antlersGlow") ? M.MAGIC : M.ACCENT, { group: 11, line: true, extra: true });
   if (!q.antlers && has("jackalope")) antler(.1, M.ACCENT, { group: 12, line: true, extra: true }); // small antlers stand behind the long ears
-  ear(.18, .95, M.BODY2, { group: 4 });
+  ear(.42, .85, M.BODY2, { group: 4 }); // the far ear, across the top of the head
   P.shape(head, M.BODY, { group: 1, line: false });
-  ear(-.12, 1, M.BODY, { group: 5, line: true });
+  ear(-.3, 1, M.BODY, { group: 5, line: true });
   if (q.antlers) antler(-.05, has("antlersGlow") ? M.MAGIC2 : M.ACCENT, { group: 12, line: true, extra: true });
 
   // near legs, in front, outlined where they overlap the body
@@ -241,11 +247,13 @@ function quad(S, level, frame, st) {
   });
 
   // ---- face: the pixels that matter ----
-  const ex = headC[0] + hr * .45, ey = headC[1] - hr * .32, nose = add(headC, [hr * .88 + L, -D * .45 * tp]);
+  const ex = headC[0] + hr * .32, ey = headC[1] - hr * .24, nose = add(headC, [hr * .88 + L, -D * .45 * tp]);
   P.fn(({ sp, T, s }) => {
     const ep = Math.max(2, Math.round(hr * s * (young ? .42 : .3) * st.eye));
     const [x, y] = T([ex, ey]);
     eye(sp, x, y, ep, { glow: legend && !q.tusks });
+    const [fx, fy] = T([headC[0] + hr * .78, headC[1] - hr * .46]); // the far eye, smaller, beside the bridge of the nose
+    eye(sp, fx, fy, Math.max(1, ep - 1), { glow: legend && !q.tusks });
     // nose leather: a dark cap on the snout's tip
     const [nx, ny] = T(nose), nr = Math.max(1, Math.round(hr * s * (q.disc ? .22 : .14)));
     for (let dy = 0; dy <= nr; dy++) for (let dx = -nr; dx <= Math.round(nr * .3); dx++) if (sp.get(nx + dx, ny + dy) && (dx * dx) / (nr * nr) + (dy * dy) / ((nr + 1) * (nr + 1)) <= 1) sp.recolour(nx + dx, ny + dy, M.NOSE);
@@ -275,7 +283,9 @@ function quad(S, level, frame, st) {
   }
   if (has("wings")) wings(P, [len * .15, back + .02], legend, frame, 1);
 
-  const sp = P.draw(levelHeight(level, st) * q.hgt, st.round);
+  // perspective: the front of the animal is nearer (larger), the rear further (smaller, higher)
+  const warp = ([x, y]) => { const t = Math.max(-1.2, Math.min(.75, x / len)), k = 1 + .1 * t; return [x, y * k - .08 * Math.max(0, -t), k]; };
+  const sp = P.draw(levelHeight(level, st) * q.hgt, st.round, 1, warp);
   if (legend) sparkle(sp, S.id);
   return sp;
 }
@@ -681,16 +691,17 @@ function owl(S, level, frame, st) {
   // ear tufts
   for (const sd of [-1, 1]) P.shape(tufts([[sd * hr * .5, hy - hr * .78], [sd * hr * 1.05, hy - hr * 1.25], [sd * hr * 1.12, hy - hr * 1.32], [sd * hr * 1.0, hy - hr * .6]], 0, 1, 2, .05, -sd), M.BODY2, { group: 5, line: true });
   // facial disc: two pale rings meeting over the beak
-  for (const sd of [-1, 1]) P.mark([[sd * hr * .05, hy - hr * .55], [sd * hr * .7, hy - hr * .62], [sd * hr * .98, hy - hr * .05], [sd * hr * .68, hy + hr * .5], [sd * hr * .05, hy + hr * .4]], M.BELLY, [M.BODY]);
+  // three-quarter view: the face is turned to our right, so the far (left) side of it narrows
+  const fo = hr * .22, fk = sd => sd < 0 ? .68 : 1.08;
+  for (const sd of [-1, 1]) P.mark([[fo + sd * hr * .05, hy - hr * .55], [fo + sd * hr * .7 * fk(sd), hy - hr * .62], [fo + sd * hr * .98 * fk(sd), hy - hr * .05], [fo + sd * hr * .68 * fk(sd), hy + hr * .5], [fo + sd * hr * .05, hy + hr * .4]], M.BELLY, [M.BODY]);
   P.fn(({ sp, T, s }) => {
     const ep = Math.max(2, Math.round(hr * s * (young ? .55 : .45) * st.eye));
     for (const sd of [-1, 1]) {
-      const [x, y] = T([sd * hr * .45, hy - hr * .18]);
-      if (legend) { owlEye(sp, x, y, ep, true); continue; }
-      owlEye(sp, x, y, ep, false);
+      const [x, y] = T([fo + sd * hr * .45 * fk(sd), hy - hr * .18]), d = Math.max(2, Math.round(ep * (sd < 0 ? .8 : 1)));
+      owlEye(sp, x, y, d, legend);
     }
     // beak: hooked, between the eyes
-    const [bx, by] = T([0, hy + hr * .05]), bl = Math.max(2, Math.round(hr * s * .32)), bwid = Math.max(1, Math.round(bl * .4));
+    const [bx, by] = T([fo + hr * .05, hy + hr * .05]), bl = Math.max(2, Math.round(hr * s * .32)), bwid = Math.max(1, Math.round(bl * .4));
     for (let dy = 0; dy < bl; dy++) for (let dx = -bwid; dx <= bwid; dx++) if (Math.abs(dx) <= bwid * (1 - dy / bl) + .3) sp.px(bx + dx, by + dy, dy === bl - 1 || dx === bwid ? M.BODY3 : M.ACCENT, dx / (bwid + 1) * .5, -.2, .85);
   });
   if (has("eyesRing")) P.fn(({ sp, T, s }) => { // a halo of watching eyes

@@ -22,7 +22,7 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(",");
     for (const id of ids) rows.push((window.LEVELS || [2, 1, 0]).flatMap(l => [0, 1].map(f => G.bake(G.critter(id, l, f, st), G.speciesColours(id, st), st, st.cOutline))));
   } else {
-    const K = 1, r = G.rng(7), types = G.TREE_TYPES;
+    const K = 2 / (st.pixel || 2), r = G.rng(7), types = G.TREE_TYPES;
     const n = list === "all" ? 2 : +list;
     for (let k = 0; k < n; k++) rows.push(types.filter(([key]) => !window.TREES || window.TREES.includes(key)).map(([key, f], i) => { const tr = G.rng(100 * k + i + 1), ast = { ...st }, t = G.finishTree(f(tr, ast, st.treeSize * K * G.uni(tr, .9, 1.1)), ast, tr); return G.bake(t.sp, G.treeColours(tr, ast, f), st); }));
   }
