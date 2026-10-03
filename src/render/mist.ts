@@ -1,6 +1,7 @@
 // A low mist: a plane a few metres above the ground following the camera, a faint drifting noise
 // drawn in dithered steps. It is a second layer between the camera and the ground, so it slides
-// against the ground as she flies, and it thickens into the twilight haze far off.
+// against the ground as she flies, and it thickens into the twilight haze far off. Drawn as
+// ordered dither, so it stays pixel art.
 import * as THREE from "three";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 
@@ -27,13 +28,13 @@ void main() {
   vec2 drift = vec2(1.0, 0.35) * uWind * uTime;
   float n = vnoise((p + drift) / 14.0) * 0.65 + vnoise((p - drift * 0.6) / 5.0) * 0.35;
   float far = smoothstep(uHazeRange.x * 0.5, uHazeRange.y, length(vWorld.xz - uHazeCentre));
-  float a = uStrength * (smoothstep(0.45, 0.75, n) + far * 0.6);
-  // Two steps of density, as ordered dither: pixel art, no smooth alpha.
-  float level = a > 0.5 ? 0.5 : a > 0.2 ? 0.25 : 0.0;
-  vec2 g = mod(floor(gl_FragCoord.xy), 2.0);
-  bool on = level >= 0.5 ? (g.x == g.y) : level > 0.0 ? (g.x == 0.0 && g.y == 0.0) : false;
-  if (!on) discard;
-  gl_FragColor = vec4(mix(uHazeColour * 2.2, uMoon * 0.9 + uAmb, 0.4), 1.0);
+  float a = uStrength * (smoothstep(0.5, 0.85, n) + far * 0.2);
+  // Ordered dither on the art's pixel grid: pixel art, no smooth alpha.
+  vec2 g = mod(floor(gl_FragCoord.xy), 4.0);
+  int i = int(g.x) + int(g.y) * 4;
+  int m[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
+  if ((float(m[i]) + 0.5) / 16.0 >= a) discard;
+  gl_FragColor = vec4(mix(uHazeColour * 1.8, uMoon * 0.7 + uAmb * 0.8, 0.5), 1.0);
 }`;
 
 export class Mist {

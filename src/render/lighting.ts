@@ -65,10 +65,11 @@ float lightStep(float f) {
   return max(0.0, floor(q)) / uBands;
 }
 
-// N: world normal; P: world position. Returns the light falling on that pixel.
-vec3 nightLight(vec3 N, vec3 P) {
-  vec3 l = uAmb + uMoon * lightStep(max(0.0, dot(N, uMoonDir)));
-  if (uShafts > 0.0) {
+// N: world normal; P: world position; moonK: how much moonlight gets through (a shadow lowers
+// it; the witch's own glow is never shadowed). Returns the light falling on that pixel.
+vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
+  vec3 l = uAmb * mix(1.0, moonK, 0.5) + uMoon * moonK * lightStep(max(0.0, dot(N, uMoonDir)));
+  if (uShafts > 0.0 && moonK > 0.99) {
     // Moonbeams: diagonal bands across the world, as the lab draws them across the screen.
     float s = mod(P.x / uShaftScale + P.z * 0.9 / uShaftScale, 150.0);
     float chk = mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0);
@@ -83,4 +84,5 @@ vec3 nightLight(vec3 N, vec3 P) {
   }
   return l;
 }
+vec3 nightLight(vec3 N, vec3 P) { return nightLightShaded(N, P, 1.0); }
 `;

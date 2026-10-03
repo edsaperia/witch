@@ -10,8 +10,8 @@
 
   "_trees": "treeDensity (0-1): the chance of a tree on each spot outside the clearings; clearingSize (0-1): how far out from an area's centre the ground stays fully open; clearingFalloff (0-1): over how much of the way to the border trees thicken, smoothly, to full density; trees sit on a staggered grid treeSpacingX by treeSpacingZ metres, so no two crowns pile up. A tree is left out where its crown (crownHalfWidth either side, crownHeight up) would hang over a clearing seen from the treetops.",
   "treeDensity": 0.9,
-  "clearingSize": 0.15,
-  "clearingFalloff": 0.65,
+  "clearingSize": 0.1,
+  "clearingFalloff": 0.5,
   "bushDensity": 1,
   "treeSpacingX": 5,
   "treeSpacingZ": 3,
@@ -56,7 +56,7 @@
   "_shadows": "shadows: a flat shadow under every tree (cast away from the moon), bush and creature. canopyShadow: a dappled shadow from the canopy overhead (height in metres), thinner in clearings, drifting with the wind. mist: a low drifting mist (height in metres above the ground). Each has on and strength.",
   "shadows": { "on": true, "strength": 0.7 },
   "canopyShadow": { "on": true, "strength": 0.45, "height": 8, "cover": 0.55, "wind": 0.6 },
-  "mist": { "on": true, "strength": 0.35, "height": 3, "wind": 0.8 },
+  "mist": { "on": true, "strength": 0.25, "height": 3, "wind": 0.8 },
   "bloom": { "on": true, "strength": 0.7, "threshold": 0.55 },
   "tiltShift": { "on": true, "where": "before", "strength": 3, "band": 0.4, "centre": 0.55 },
 

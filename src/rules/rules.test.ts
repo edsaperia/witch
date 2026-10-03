@@ -175,23 +175,23 @@ describe("the map", () => {
 describe("trees", () => {
   const forest = new Forest(map);
 
-  it("are denser away from each area's centre, leaving a clearing", () => {
-    let inner = 0, outer = 0, innerArea = 0, outerArea = 0;
+  it("are denser away from each area's centre, from an open clearing outward", () => {
+    // Trees per square metre in bands of openness (0 at a centre, 1 midway between centres).
+    const bands = [[0, TUNING.clearingSize], [0.25, 0.4], [0.7, 1.01]], trees = [0, 0, 0], ground = [0, 0, 0];
+    const band = (o: number) => bands.findIndex(([lo, hi]) => o >= lo && o < hi);
     for (let cy = 3; cy < 17; cy += 3) for (let cx = 3; cx < 17; cx += 3) {
       const s = map.siteOf(cx, cy);
-      for (const t of forest.treesNear(s.x, s.z, map.areaSize)) {
-        const a = map.areaAt(t.x, t.z);
-        if (a.cell[0] !== cx || a.cell[1] !== cy) continue;
-        if (a.openness < 0.4) inner++; else if (a.openness > 0.7) outer++;
-      }
-      for (let k = 0; k < 2000; k++) {
-        const x = s.x + ((k % 45) / 45 - 0.5) * map.areaSize * 2, z = s.z + (Math.floor(k / 45) / 45 - 0.5) * map.areaSize * 2, a = map.areaAt(x, z);
-        if (a.cell[0] !== cx || a.cell[1] !== cy) continue;
-        if (a.openness < 0.4) innerArea++; else if (a.openness > 0.7) outerArea++;
+      for (const t of forest.treesNear(s.x, s.z, map.areaSize * 0.6)) { const b = band(map.areaAt(t.x, t.z).openness); if (b >= 0) trees[b]++; }
+      for (let k = 0; k < 2025; k++) {
+        const x = s.x + ((k % 45) / 45 - 0.5) * map.areaSize * 1.2, z = s.z + (Math.floor(k / 45) / 45 - 0.5) * map.areaSize * 1.2;
+        const b = band(map.areaAt(x, z).openness); if (b >= 0) ground[b]++;
       }
     }
-    expect(inner / innerArea).toBeLessThan((outer / outerArea) * 0.2);
-    expect(outer).toBeGreaterThan(100);
+    const per = trees.map((n, i) => n / Math.max(1, ground[i]));
+    expect(per[0]).toBeLessThan(per[2] * 0.05);
+    expect(per[1]).toBeGreaterThan(per[0]);
+    expect(per[1]).toBeLessThan(per[2]);
+    expect(trees[2]).toBeGreaterThan(100);
   });
 
   it("leave the dancefloor clear, crowns included", () => {

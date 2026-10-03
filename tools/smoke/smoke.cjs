@@ -44,6 +44,9 @@ async function main() {
     page.on("console", m => { if (m.type() === "error") errors.push(`${name}: console error: ${m.text()}`); });
     await page.goto(`http://127.0.0.1:${port}/?seed=${seed}${query || "&debug"}`);
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 120000 });
+    // All the art is drawn in the background after start; the software renderer here starves the
+    // workers of CPU, so wait for it before flying, so the shots show the forest as players do.
+    await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 300000, polling: 500 });
     await steps(page);
     await page.close();
   }
@@ -65,7 +68,7 @@ async function main() {
     await sleep(300);
     let s = await state(page);
     check(!s.paused, "a key press starts the game");
-    check(s.stats.trees > 20, `trees drawn round the start (${s.stats.trees})`);
+    check(s.stats.trees > 20 && s.stats.batches > 3 && s.stats.drawCalls > 15, `trees drawn round the start (${s.stats.trees} trees, ${s.stats.batches} batches, ${s.stats.drawCalls} draw calls)`);
     check(s.stats.creatures > 0, `creatures in the start clearing (${s.stats.creatures})`);
     await shot(page, "01-ground-dancefloor.png");
     // Speeds are measured in game time: a slow headless renderer runs fewer, capped frames.

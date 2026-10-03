@@ -35,6 +35,7 @@ uniform vec2 uTile, uFloorsSize;  // one tile's size and the atlas's, in art pix
 uniform float uSat;
 uniform vec3 uFloor; // dancefloor x, z, radius
 uniform vec4 uCanopy; // canopy shadow: strength (0 off), height, cover, wind speed
+uniform vec2 uClearing; // clearingSize, clearingFalloff: where trees, and so canopy, begin
 varying vec3 vWorld;
 ${LIGHT_GLSL}
 float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
@@ -71,16 +72,17 @@ void main() {
   float r = length(p - uFloor.xy);
   if (r < uFloor.z) c = mix(c, vec3(0.42, 0.42, 0.38), 0.25);
   if (abs(r - uFloor.z) < uPixel * 1.5 && hash(px * 0.71) < 0.8) c = vec3(150.0, 150.0, 135.0) / 255.0;
-  vec3 light = nightLight(vec3(0.0, 1.0, 0.0), vWorld);
+  float moonK = 1.0;
   if (uCanopy.x > 0.0) {
     // The canopy's shadow: a dappled layer at canopy height, cast along the moonlight onto the
     // ground, drifting with the wind; thinner where the canopy thins, in the clearings.
     vec2 q = p + uMoonDir.xz / max(0.2, uMoonDir.y) * uCanopy.y + vec2(0.7, 0.3) * uCanopy.w * uTime;
     float leaves = vnoise(q / 2.6) * 0.6 + vnoise(q / 1.1 + 31.0) * 0.4;
-    float cover = uCanopy.z * smoothstep(0.25, 0.85, open);
+    float cover = uCanopy.z * smoothstep(0.0, 1.0, (open - uClearing.x) / max(0.01, uClearing.y));
     float edge = mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) > 0.5 ? 0.03 : -0.03;
-    if (leaves + edge < cover) light *= 1.0 - uCanopy.x;
+    if (leaves + edge < cover) moonK = 1.0 - uCanopy.x;
   }
+  vec3 light = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, moonK);
   gl_FragColor = vec4(haze(min(vec3(1.0), c * light * 1.25), vWorld), 1.0);
 }
 `;
@@ -122,6 +124,7 @@ export class Ground {
         uSat: { value: st.sat },
         uFloor: { value: new THREE.Vector3(map.dancefloor.x, map.dancefloor.z, map.dancefloor.radius) },
         uCanopy: { value: new THREE.Vector4() },
+        uClearing: { value: new THREE.Vector2(map.tuning.clearingSize, map.tuning.clearingFalloff) },
       },
     });
     const geo = new THREE.PlaneGeometry(w + 400, d + 400);

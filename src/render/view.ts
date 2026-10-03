@@ -4,8 +4,10 @@
 import * as THREE from "three";
 import type { Game } from "../rules/game";
 import { poseOf } from "../rules/game";
+import { AREA_TYPES } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
 import { AssetLibrary, type TypeArt } from "./assets";
+import type { Piece } from "./artBuild";
 import { Ground } from "./ground";
 import { applyStyleLight, LIGHT_UNIFORMS } from "./lighting";
 import { Post } from "./post";
@@ -108,6 +110,10 @@ export class View {
     await this.assets.whenIdle();
     this.prefetch = true;
     this.refresh(true);
+    // There are only 30 area types and 30 creatures: draw them all in the background now, so
+    // the forest ahead is ready however fast she flies.
+    for (let t = 0; t < AREA_TYPES.length; t++) this.assets.prefetchType(t);
+    for (const t of AREA_TYPES) this.assets.creatureArt(t.creature);
   }
 
   private batchFor<K>(map: Map<K, SpriteBatch>, key: K, atlas: () => SpriteBatch | undefined): SpriteBatch | undefined {
@@ -150,20 +156,21 @@ export class View {
       }
       nt++;
     }
-    const scatter = (list: typeof bushes, pick: (l: TypeArt["layout"]) => number[]) => {
+    const scatter = (list: typeof bushes, pick: (l: TypeArt["layout"]) => Piece[]) => {
       for (const p of list) {
         const art = this.assets.typeArt(p.type);
         if (!art) continue;
-        const frames = pick(art.layout);
-        if (!frames.length) continue;
-        const frame = art.atlas.frames[frames[p.variant % frames.length]];
+        const pieces = pick(art.layout);
+        if (!pieces.length) continue;
+        const piece = pieces[p.variant % pieces.length], f = art.atlas.frames, frame = f[piece.bot];
         add(p.type, { x: p.x, y: 0, z: p.z, frame, flip: p.flip });
+        if (piece.top !== null) add(p.type, { x: p.x, y: 0, z: p.z, frame: f[piece.top], flip: p.flip, top: true });
         shadows.push({ x: p.x, z: p.z, w: frame.w * this.mpp * 0.8, d: frame.w * this.mpp * 0.3 });
         nb++;
       }
     };
     scatter(bushes, l => l.small);
-    scatter(walls, l => l.walls);
+    scatter(walls, l => l.walls.map(bot => ({ bot, top: null })));
     scatter(pieces, l => (l.set === null ? [] : [l.set]));
     for (const [type, b] of this.typeBatches) if (!per.has(type)) b.set([]);
     for (const [type, list] of per) {

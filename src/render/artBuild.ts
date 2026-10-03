@@ -17,14 +17,15 @@ export type MakeCanvas = (w: number, h: number) => AnyCanvas;
 
 /** Where each of an area type's sprites sits in its atlas. A big object with a top half (a
  *  tree's crown) has `top`; one without (a mound, a boulder, a log) is drawn whole, always. */
+export interface Piece { bot: number; top: number | null }
 export interface TypeLayout {
-  big: { bot: number; top: number | null }[];
-  small: number[];
+  big: Piece[];
+  small: Piece[];
   walls: number[];
-  set: number | null;
+  set: Piece | null;
 }
 
-interface ArtDef { id: string; leaf: number; big: [string, Record<string, unknown>][] }
+interface ArtDef { id: string; leaf: number; big: [string, Record<string, unknown>][]; small: [string, Record<string, unknown>][]; set?: [string, Record<string, unknown>] }
 type TreeOpts = { type: string; dark?: boolean; gnarl?: number; bare?: boolean; trunks?: number; lean?: number; thick?: boolean; thin?: boolean; hollow?: boolean; webs?: boolean; scale?: number };
 const TREE_FN: Record<string, unknown> = { broad: Art.broadTree, fir: Art.firTree, willow: Art.willowTree, birch: Art.birchTree, flat: Art.flatTree };
 
@@ -48,17 +49,20 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   const sprites: Baked[] = [], add = (b: Baked) => sprites.push(b) - 1;
   const layout: TypeLayout = { big: [], small: [], walls: [], set: null };
   const bk = (sp: unknown, col: unknown) => Art.bake(sp, col, st, "none", mk) as Baked;
+  // Anything drawn as a tree (big objects, small trees, a tree set piece) is split into crown and
+  // trunk, so its crown hides in ground mode; everything else is drawn whole.
+  const tree = (o: TreeOpts, k: number): Piece => {
+    const { parts, colours } = areaTree(def, o, st, rng(seed * 13 + t * 101 + k * 7 + 1), K);
+    return { bot: add(bk(parts.bot, colours)), top: add(bk(parts.top, colours)) };
+  };
   def.big.forEach(([kind, o], i) => {
     if (kind !== "tree") { layout.big.push({ bot: add(assets.big[i].sp), top: null }); return; }
     const n = Math.max(1, Math.round(TREE_VARIANTS / def.big.length));
-    for (let v = 0; v < n; v++) {
-      const { parts, colours } = areaTree(def, o as TreeOpts, st, rng(seed * 13 + t * 101 + i * 17 + v * 7 + 1), K);
-      layout.big.push({ bot: add(bk(parts.bot, colours)), top: add(bk(parts.top, colours)) });
-    }
+    for (let v = 0; v < n; v++) layout.big.push(tree(o as TreeOpts, i * 17 + v));
   });
-  for (const a of assets.small) layout.small.push(add(a.sp));
+  def.small.forEach(([kind, o], i) => layout.small.push(kind === "tree" ? tree(o as TreeOpts, 500 + i) : { bot: add(assets.small[i].sp), top: null }));
   for (const a of assets.walls) layout.walls.push(add(a.sp));
-  if (assets.setPiece) layout.set = add(assets.setPiece.sp);
+  if (assets.setPiece) layout.set = def.set?.[0] === "tree" ? tree(def.set[1] as TreeOpts, 900) : { bot: add(assets.setPiece.sp), top: null };
   return { sprites, layout, floor: assets.floor.sp };
 }
 
