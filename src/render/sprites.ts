@@ -117,6 +117,10 @@ export class SpriteBatch {
 
   private grow(n: number): void {
     const cap = Math.max(n, this.capacity * 2);
+    // Three.js caps an instanced draw at the instance count it saw the first time the geometry
+    // was drawn; disposing it (which also frees the old buffers) makes it count again, or every
+    // instance past the old capacity is silently not drawn.
+    this.geo.dispose();
     const make = (k: number, old?: THREE.InstancedBufferAttribute) => {
       const a = new THREE.InstancedBufferAttribute(new Float32Array(cap * k), k);
       a.setUsage(THREE.DynamicDrawUsage);
@@ -143,6 +147,13 @@ export class SpriteBatch {
     this.count = items.length;
     this.geo.instanceCount = items.length;
     this.mesh.visible = items.length > 0;
+  }
+
+  /** Instances set but not drawn: three.js draws at most the count it last saw the buffers hold.
+   *  Always 0 unless something is wrong; the view logs and counts it (stats.dropped). */
+  get dropped(): number {
+    const max = (this.geo as unknown as { _maxInstanceCount?: number })._maxInstanceCount;
+    return max === undefined || !this.mesh.visible ? 0 : Math.max(0, this.count - max);
   }
 
   dispose(): void {
