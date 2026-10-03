@@ -395,7 +395,7 @@ export function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defau
   const col = list => (list || []).map(([kind, o]) => bk(prop(kind, o, def, st, r, K), kind, ""));
   const out = { def, floor: { sp: bake(ft.sp, ft.colours, st, "none", makeCanvas), kind: def.floor[0], text: def.text.floor }, walls: col(def.wall), small: col(def.small), big: col(def.big), setPiece: null };
   out.walls.forEach(a => a.text = def.text.wall); out.small.forEach(a => a.text = def.text.small); out.big.forEach(a => a.text = def.text.big);
-  if (def.set) { const sp0 = setPiece(def.set[0], def.set[1], def, st, r, K); out.setPiece = { ...bk(sp0, def.set[0], def.text.set), metres: sp0.metres }; } // metres: the new 3D ones' size
+  if (def.set) { const sp0 = setPiece(def.set[0], def.set[1], def, st, r, K); out.setPiece = { ...bk(sp0, def.set[0], def.text.set), metres: sp0.metres, origin: sp0.origin }; } // the new 3D ones: their size, and where their middle on the ground lands
   return out;
 }
 
