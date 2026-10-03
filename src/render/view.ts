@@ -19,6 +19,7 @@ import { PartyView } from "./party";
 import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
 import { Lasers } from "./lasers";
+import { BorderView } from "./borders";
 import { Mist } from "./mist";
 import { ShadowBatch, type ShadowInstance } from "./shadows";
 import { lerp } from "../rules/random";
@@ -50,6 +51,7 @@ export class View {
   private strings: StringLightsView;
   private leashView: LeashView;
   private lasers: Lasers;
+  private borders: BorderView;
   private soundBatch: SpriteBatch;
   private sources: LightSource[] = [];
   /** Lights in the forest besides the witch's glow, from the light sources (set by the view). */
@@ -110,6 +112,7 @@ export class View {
     this.strings = new StringLightsView(this.scene, game);
     this.leashView = new LeashView(this.scene, game);
     this.lasers = new Lasers(this.scene, game);
+    this.borders = new BorderView(this.scene, game);
     this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp);
     this.scene.add(this.soundBatch.mesh);
     this.dancefloor = new Dancefloor(game.map, t, SPRITE_UNIFORMS, this.mpp);
@@ -140,6 +143,7 @@ export class View {
     this.canvas.style.height = this.height * p + "px";
     this.camera.aspect = this.width / this.height;
     this.camera.updateProjectionMatrix();
+    SPRITE_UNIFORMS.uRes.value.set(this.width, this.height);
   }
 
   /** Make the art and ground round the start before the first frame. */
@@ -441,6 +445,7 @@ export class View {
     this.ground.setSweeps(party.sweeps);
     this.lasers.update(time, party.playing, w.x, w.z);
     this.strings.update();
+    this.borders.update();
     this.setLights([this.dancefloor.update(time, this.ground), ...party.lights, ...this.forestLights], w.x, w.z);
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);

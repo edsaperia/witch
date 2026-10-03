@@ -24,6 +24,9 @@ function serve() {
   return new Promise(r => server.listen(0, "127.0.0.1", () => r(server)));
 }
 
+// Zoom keys (rise and descend are Space; E is the sigil button).
+const ZOOM_IN = "KeyZ", ZOOM_OUT = "KeyX";
+
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function main() {
@@ -93,23 +96,45 @@ async function main() {
     await page.evaluate(() => { window.witch.view.pops = []; });
     const steps = await page.evaluate(() => window.witch.game.tuning.camera.zoomSteps);
     const keys = ["KeyA", "KeyS", "KeyD", "KeyW"];
-    for (const mode of ["treetop", "ground"]) {
-      for (let i = 0; i < steps; i++) await page.keyboard.press("KeyE"); // all the way in
-      for (let z = 0; z < steps; z++) {
-        await hold(page, keys[z % 4], 0.8);
-        await page.keyboard.press("KeyQ"); // a step out, while flying on
-        await hold(page, keys[(z + 1) % 4], 0.6);
+    const path = async () => {
+      for (const mode of ["treetop", "ground"]) {
+        for (let i = 0; i < steps; i++) await page.keyboard.press(ZOOM_IN); // all the way in
+        for (let z = 0; z < steps; z++) {
+          await hold(page, keys[z % 4], 0.8);
+          await page.keyboard.press(ZOOM_OUT); // a step out, while flying on
+          await hold(page, keys[(z + 1) % 4], 0.6);
+        }
+        for (let i = 0; i < steps; i++) { await page.keyboard.press(ZOOM_IN); await hold(page, keys[i % 4], 0.3); }
+        await page.keyboard.press("Space"); // change mode mid-path
+        await hold(page, "KeyW", 1.2);
       }
-      for (let i = 0; i < steps; i++) { await page.keyboard.press("KeyE"); await hold(page, keys[i % 4], 0.3); }
-      await page.keyboard.press("Space"); // change mode mid-path
-      await hold(page, "KeyW", 1.2);
+    };
+    await path();
+    // Again in a Heath (gorse: small bright details), where Ed saw bushes blink.
+    const heath = await page.evaluate(() => {
+      const g = window.witch.game, m = g.map;
+      for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+        if (window.witch.areaTypeId(m.typeOf(x, y)) !== "heath") continue;
+        const s = m.siteOf(x, y), px = s.x + 20, pz = s.z + 20;
+        g.witch = { ...g.witch, x: px, z: pz, vx: 0, vz: 0 }; g.camera = { ...g.camera, tx: px, tz: pz };
+        return `${x},${y}`;
+      }
+      return null;
+    });
+    if (heath) {
+      await sleep(1500);
+      await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 300000, polling: 500 });
+      await page.evaluate(() => { window.witch.view.pops = []; });
+      await path();
+      await shot(page, "08-heath.png");
     }
+    check(!!heath, `the pop check also flies a Heath (${heath})`);
     const pops = await page.evaluate(() => window.witch.view.pops.slice(0, 12));
     const popCount = await page.evaluate(() => window.witch.view.pops.length);
     check(popCount === 0, `nothing pops in or out in clear view, flying through every zoom level in both modes (${popCount})${popCount ? ": " + pops.join("; ") : ""}`);
     await page.waitForFunction(() => !["rising", "descending"].includes(window.witch.game.witch.mode), null, { timeout: 60000 });
     if (await page.evaluate(() => window.witch.game.witch.mode) !== "treetop") { await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 }); }
-    await page.keyboard.press("KeyQ"); await page.keyboard.press("KeyQ");
+    await page.keyboard.press(ZOOM_OUT); await page.keyboard.press(ZOOM_OUT);
     await sleep(800);
     await shot(page, "05-treetop-zoomed-out.png");
     await page.keyboard.press("Space");
@@ -117,7 +142,7 @@ async function main() {
     s = await state(page);
     check(s.mode === "ground", `space descends to ground mode (${s.mode})`);
     await shot(page, "06-ground-zoomed-out.png");
-    await page.keyboard.press("KeyE"); await page.keyboard.press("KeyE"); await page.keyboard.press("KeyE");
+    await page.keyboard.press(ZOOM_IN); await page.keyboard.press(ZOOM_IN); await page.keyboard.press(ZOOM_IN);
     await sleep(800);
     await shot(page, "07-ground-zoomed-in.png");
     results.push(`area under the witch: ${s.area}`);
@@ -219,7 +244,7 @@ async function main() {
       await page.waitForFunction(n => window.witch.game.party.wave >= n, w, { timeout: 60000 });
     }
     await page.evaluate(() => { const g = window.witch.game, d = g.map.dancefloor; g.witch = { ...g.witch, x: d.x, z: d.z }; g.camera = { ...g.camera, tx: d.x, tz: d.z }; });
-    for (let i = 0; i < 4; i++) { await page.keyboard.press("KeyQ"); await sleep(150); }
+    for (let i = 0; i < 4; i++) { await page.keyboard.press(ZOOM_OUT); await sleep(150); }
     const t4 = await page.evaluate(() => window.witch.game.clock.time);
     await page.waitForFunction(t => window.witch.game.clock.time >= t, t4 + 3, { timeout: 60000, polling: 50 });
     const n = await page.evaluate(() => window.witch.game.party.areas.size);
@@ -240,11 +265,11 @@ async function main() {
       return best.id;
     });
     const t0 = await page.evaluate(() => window.witch.game.clock.time);
-    await page.keyboard.down("KeyF");
+    await page.keyboard.down("KeyT");
     await page.waitForFunction(t => window.witch.game.clock.time >= t, t0 + 1.6, { timeout: 60000, polling: 50 });
     await shot(page, "70-leash-talk.png");
     await page.waitForFunction(i => window.witch.game.creatures[i].leashed, id, { timeout: 120000, polling: 100 });
-    await page.keyboard.up("KeyF");
+    await page.keyboard.up("KeyT");
     check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "holding Talk by a creature invites it onto her sigil stack");
     for (let i = 0; i < 3; i++) await page.keyboard.press("KeyI");
     await sleep(300);
@@ -254,7 +279,7 @@ async function main() {
     await shot(page, "71-leash-stack-flying.png");
     const t1 = await page.evaluate(() => window.witch.game.clock.time);
     await page.waitForFunction(t => window.witch.game.clock.time >= t, t1 + 6, { timeout: 120000, polling: 100 });
-    await page.keyboard.press("KeyR");
+    await page.keyboard.press("KeyE");
     await page.waitForFunction(() => window.witch.game.leash.placed.length === 1, null, { timeout: 30000 });
     await hold(page, "KeyW", 0.6);
     const t2 = await page.evaluate(() => window.witch.game.clock.time);
@@ -263,7 +288,7 @@ async function main() {
     check(await page.evaluate(() => window.witch.game.leash.placed.length === 1 && window.witch.game.leash.stack.length >= 2), "the sigil button puts the bottom sigil down");
     await page.evaluate(() => { const g = window.witch.game, p = g.leash.placed[0]; g.witch = { ...g.witch, x: p.x, z: p.z, vx: 0, vz: 0 }; });
     await sleep(200);
-    await page.keyboard.press("KeyR");
+    await page.keyboard.press("KeyE");
     await page.waitForFunction(() => window.witch.game.leash.placed.length === 0, null, { timeout: 30000 });
     check(await page.evaluate(n => window.witch.game.leash.stack.length === n, n), "over a placed sigil, the button picks it up again");
   }, "&tilt=before");
@@ -275,7 +300,7 @@ async function main() {
     let k = 0;
     for (const mode of ["ground", "treetop"]) {
       if (mode === "treetop") { await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 }); }
-      for (const z of ["KeyQ", "KeyQ", "KeyE", "KeyE", "KeyE"]) {
+      for (const z of [ZOOM_OUT, ZOOM_OUT, ZOOM_IN, ZOOM_IN, ZOOM_IN]) {
         await page.keyboard.press(z);
         await page.keyboard.down("KeyD");
         await sleep(250);

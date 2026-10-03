@@ -12,6 +12,7 @@ import { newGame, stepGame } from "./game";
 import { newParty, spreadWave, stepParty } from "./party";
 import { stringsFor } from "./strings";
 import { laserShow } from "./lasers";
+import { borderOf } from "./borders";
 import { newLeash, stepLeash, type LeashControls } from "./leash";
 import { newClock, tick, MAX_STEP } from "./clock";
 import { TUNING, withTuning } from "./tuning";
@@ -683,5 +684,27 @@ describe("laser shows", () => {
     let same = 0;
     for (let t = 0; t < 300; t += 0.5) if ((laserShow(t, 3, 1, TUNING).on > 0.5) === (laserShow(t, 4, 1, TUNING).on > 0.5)) same++;
     expect(same / 600).toBeLessThan(0.9);
+  });
+});
+
+describe("area borders", () => {
+  it("run along the edge of an area's own ground, each point knowing the area across, cheaply", () => {
+    const cell: [number, number] = [map.centreCell[0] + 1, map.centreCell[1]];
+    const t0 = performance.now(), pts = borderOf(map, cell, 2);
+    const ms = performance.now() - t0;
+    expect(pts.length).toBeGreaterThan(100);
+    let ok = 0;
+    for (const p of pts) {
+      // Within a couple of metres there is our ground and the other area's.
+      let mine = false, theirs = false;
+      for (let a = 0; a < 8; a++) {
+        const c = map.areaAt(p.x + Math.cos(a) * 2, p.z + Math.sin(a) * 2).cell, k = `${c[0]},${c[1]}`;
+        if (k === cell.join()) mine = true; if (k === p.other) theirs = true;
+      }
+      if (mine && (theirs || p.other === "edge")) ok++;
+    }
+    expect(ok / pts.length).toBeGreaterThan(0.95);
+    expect(new Set(pts.map(p => p.other)).size).toBeGreaterThanOrEqual(3);
+    console.log(`border: ${pts.length} points in ${ms.toFixed(0)} ms`);
   });
 });

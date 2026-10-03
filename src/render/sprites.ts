@@ -16,10 +16,13 @@ export const SPRITE_UNIFORMS = {
   uCutout: { value: new THREE.Vector4(0, 0, 0, 1) },
   // ?debug=cull: anything that has just appeared is tinted bright red.
   uDebugCull: { value: 0 },
+  // The low-resolution picture's size in pixels: each sprite's base is snapped to its pixel grid.
+  uRes: { value: new THREE.Vector2(1, 1) },
 };
 
 const VERT = /* glsl */ `
 uniform vec3 uRight, uUp;
+uniform vec2 uRes;
 attribute vec3 iPos;
 attribute vec2 iSize;
 attribute vec4 iUv;
@@ -34,6 +37,11 @@ void main() {
   vFlags = iFlags;
   vWorld = w;
   gl_Position = projectionMatrix * viewMatrix * vec4(w, 1.0);
+  // Snap the whole sprite by its base to the pixel grid, so it moves a whole pixel at a time and
+  // its small bright details (flowers, eyes) don't shimmer in and out as the camera glides.
+  vec4 b = projectionMatrix * viewMatrix * vec4(iPos, 1.0);
+  vec2 ndc = b.xy / b.w, snapped = (floor((ndc * 0.5 + 0.5) * uRes) + 0.5) / uRes * 2.0 - 1.0;
+  gl_Position.xy += (snapped - ndc) * gl_Position.w;
 }
 `;
 

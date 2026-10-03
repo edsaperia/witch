@@ -1,5 +1,6 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { areaUnderWitch, newGame, stepGame } from "./rules/game";
+import { AREA_TYPES } from "./rules/map";
 import { waveCountdown } from "./rules/party";
 import { parseSeed } from "./rules/map";
 import { TUNING } from "./rules/tuning";
@@ -117,4 +118,4 @@ function frame(now: number): void {
 requestAnimationFrame(frame);
 
 // For the smoke test and for poking at in the console.
-(window as unknown as { witch: unknown }).witch = { game, view, areaUnderWitch: () => areaUnderWitch(game), get ready() { return ready; } };
+(window as unknown as { witch: unknown }).witch = { game, view, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, get ready() { return ready; } };
