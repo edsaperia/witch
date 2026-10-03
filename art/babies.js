@@ -367,4 +367,151 @@ export const BABIES = {
       "d.d.d.d.d.....",
     ],
   },
+  snail: {
+    rows: [
+      "...bbb....d.d",
+      "..bBBBb...S.S",
+      ".bBbbBBb..S.S",
+      ".bBbBbBb.SSS.",
+      ".bBBbbBbSSSS.",
+      "..bBBBBSSSS..",
+      "SSSSSSSSSS...",
+    ],
+    walk: [
+      ".SSSSSSSSSS..",
+    ],
+  },
+  ram: { // a woolly lamb with little horn buds
+    rows: [
+      "..........AA.....",
+      ".........AbbbA...",
+      "...W.W...bbGbb...",
+      ".WWWWWWW.bbEbbbN.",
+      "WWWWWWWWWWbbbbb..",
+      "WWWWWWWWWWWbb....",
+      "WWWWWWWWWWW......",
+      ".WWWWWWWWWW......",
+      "..b.b....b.b.....",
+      "..b.b....b.b.....",
+      "..N.N....N.N.....",
+    ],
+    walk: [
+      "...b.b..b.b......",
+      "...N.N..N.N......",
+    ],
+  },
+  woodlouse: {
+    rows: [
+      "...........d.",
+      "...bbbbbbb.d.",
+      ".bBdBdBdBBb..",
+      "bBBdBdBdBBGb.",
+      "bdddddddddd..",
+      ".d.d.d.d.d...",
+    ],
+    walk: [
+      "d.d.d.d.d....",
+    ],
+  },
+  snake: { // a snakelet with its head raised
+    rows: [
+      "...........BBB...",
+      "..........BBGBN..",
+      "..........BBBB.SS",
+      "..........BB.....",
+      "..BBdBBdBBBB.....",
+      ".BWWWWWWWWWB.....",
+      "BB...............",
+    ],
+    walk: [
+      ".BWWWWWWWWWB.....",
+      "..B..............",
+    ],
+  },
+  moth: { // a fuzzy moth, facing us, wings up then down
+    rows: [
+      "....b...b....",
+      ".....b.b.....",
+      "BBB..WWW..BBB",
+      "BWBB.WEW.BBWB",
+      "BBBBBWWWBBBBB",
+      ".bbbbWWWbbbb.",
+      "..bbb.W.bbb..",
+    ],
+    walk: [
+      ".BBBBWEWBBBB.",
+      "BWBBBWWWBBBWB",
+      "BBBbbWWWbbBBB",
+      ".bb...W...bb.",
+    ],
+  },
+  marten: { // a kit: long body, cream bib, bushy tail
+    rows: [
+      "...........d.d...",
+      "..........BBBBB..",
+      "..........BBGBB..",
+      "bb.......BBBEBBN.",
+      "bBBBBBBBBBBWWW...",
+      ".BBBBBBBBBBWW....",
+      "..BBBBBBBBBB.....",
+      "..dd.d...dd.d....",
+    ],
+    walk: [
+      "...dd.d.d.dd.....",
+    ],
+  },
+  salamander: { // black, yellow-spotted, low
+    rows: [
+      "...........BBB..",
+      "....BWBBWBBBGBB.",
+      "BBBBBBBBBBWBBEBB",
+      ".......BBBBBBBB.",
+      ".....B.B...B.B..",
+    ],
+    walk: [
+      "......BB..BB....",
+    ],
+  },
+  glowworm: { // a larva, its tail already glowing
+    rows: [
+      "....bbbbbbbb...",
+      "..IIBbBbBbBbBG.",
+      ".IIIbBbBbBbBbBB",
+      "..IIdbdbdbdbdb.",
+      "....d.d.d.d.d..",
+    ],
+    walk: [
+      "...d.d.d.d.d...",
+    ],
+  },
+  spider: {
+    rows: [
+      "...bbb.........",
+      ".bBBBBb..d..d..",
+      "bBBWBBBbBBBd...",
+      "bBWWWBBbBGGBd..",
+      "bBBWBBBdBBBB.d.",
+      ".bBBBBd.d..d..d",
+      "..d.d..d..d..d.",
+    ],
+    walk: [
+      ".d.d..d..d..d..",
+    ],
+  },
+  dormouse: { // round, golden, huge-eyed, with a fluffy tail
+    rows: [
+      ".BB............",
+      "BBBB.....e.e...",
+      "BBBB....BBBBB..",
+      ".BBB...BBEGBB..",
+      "..BBB.BBBEEBBN.",
+      "...BBBBBBBWW...",
+      "....BBBBBWW....",
+      "....BBWWBB.....",
+      "....dd..dd.....",
+    ],
+    walk: [
+      ".....dd.d.d....",
+    ],
+  },
 };

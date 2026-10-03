@@ -21,7 +21,7 @@ It returns:
 |---|---|
 | `trees[i]` | 12 trees (4 per area for 3 areas): `{ whole, top, bot }`. `bot` is the trunk below the crown (shown in ground mode), `top` everything else (the canopy, shown from the treetops), `whole` both |
 | `bushes[i]` | 12 bushes |
-| `creatures[k][level][frame]` | for each kind in `world.kinds`: levels 0 baby, 1 young, 2 legend; frames 0 and 1 of the walk |
+| `creatures[k][level][frame]` | for each kind in `world.kinds`: levels 0 baby, 1 young, 2 legend; frames 0 and 1 of the walk. Drawn in three-quarter view, facing right. Young and legends are drawn with fewer pixels as the style's pixel size grows (same size on screen); babies are fixed grids |
 | `witch` | the witch on her broom |
 
 Every asset is a **baked sprite**: `{ A, N, NF, w, h }`.
@@ -29,7 +29,7 @@ Every asset is a **baked sprite**: `{ A, N, NF, w, h }`.
 - `N`: normal map canvas, RGB = (x, y, z) mapped from [-1, 1] to [0, 255]; x to the right, y down the image, z towards the viewer.
 - `NF`: the normal map for the sprite drawn mirrored (facing left).
 - `w`, `h`: size in art pixels.
-- **Anchor**: everything stands on its bottom row. Creatures and trees are centred on their feet or trunk, so the anchor is `(w / 2, h)`; `art/export.mjs` measures the exact feet.
+- **Anchor**: everything stands on its bottom row, except the flyers (bat, moth), which hover above it. Creatures and trees are centred on their feet or trunk, so the anchor is `(w / 2, h)`; `art/export.mjs` measures the exact feet.
 - Everything faces **right**; mirror for left.
 
 ## Single assets
@@ -44,6 +44,9 @@ Every asset is a **baked sprite**: `{ A, N, NF, w, h }`.
 | `witchSprite()`, `witchColours(style)` | the witch |
 | `bake(sp, colours, style, outline, makeCanvas)` | any sprite → `{ A, N, NF, w, h }` |
 | `rng(seed)` | the seeded random generator everything uses |
+| `AREAS`, `AREA_BY_ID` | the 30 area types in Ed's columns: `floor`, `wall`, `small`, `big`, `set`, `creature` (`text` keeps the words from DESIGN.md) |
+| `areaAssets(areaId, style, { K, makeCanvas })` | everything one area type needs, baked: `{ def, floor, walls, small, big, setPiece }`; `floor` is a 64 × 48 tile to repeat over the ground, the rest are props `{ sp: { A, N, NF, w, h }, kind, text }` anchored at `(w / 2, h)` |
+| `WALLS_BLOCK`, `SET_PIECE_CHANCE` | placement rules (Ed): wall objects don't block movement for now; a set piece appears in only some of an area type's areas (chance 0.25 to start) |
 
 The night lighting pass the lab uses is `shade(target, out, style, lights, rect)` in `art/lighting.js`.
 
@@ -53,6 +56,7 @@ The night lighting pass the lab uses is `shade(target, out, style, lights, rect)
 - `core.js`: random numbers, colour, the `Sprite` (a material and a normal per pixel), the shape toolkit (smooth outlines, limbs, fills with normals from the distance to the edge), `bake`
 - `creatures.js`, `babies.js`: the bestiary; babies are hand-drawn grids
 - `trees.js`: trees and bushes
+- `areas.js`: the 30 area types and their props
 - `lighting.js`: the night lighting pass
 - `export.mjs`: every asset to PNGs and `manifest.json` (`node art/export.mjs [style.json] [out dir]`)
 - `preview.mjs`: lit preview sheets; `check.mjs`: the checks (see `CLAUDE.md`)

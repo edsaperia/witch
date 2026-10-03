@@ -2,6 +2,7 @@
 // light, enlarged with crisp pixels, for review on the PR.
 //   node art/preview.mjs animals wolf,boar,owl art/previews/animals.png [scale]
 //   node art/preview.mjs trees all art/previews/trees.png [scale]
+//   node art/preview.mjs areas all art/previews/areas.png [scale]
 // Optional env LEVELS=1,0 draws only those levels; TREES=wBroad,wFir only those kinds.
 // Optional env GEN=<path from repo root> renders with another copy of the generator (for "before" images).
 import { writeFileSync } from "node:fs";
@@ -21,6 +22,9 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   if (what === "animals") {
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(",");
     for (const id of ids) rows.push((window.LEVELS || [2, 1, 0]).flatMap(l => [0, 1].map(f => G.bake(G.critter(id, l, f, st), G.speciesColours(id, st), st, st.cOutline))));
+  } else if (what === "areas") { // per area type: floor tile, walls, small, big, set piece, its creature (young)
+    const ids = list === "all" ? G.AREAS.map(a => a.id) : list.split(",");
+    for (const id of ids) { const a = G.areaAssets(id, st); rows.push([a.floor, ...a.walls, ...a.small, ...a.big, ...(a.setPiece ? [a.setPiece] : [])].map(x => x.sp).concat([G.bake(G.critter(a.def.creature, 1, 0, st), G.speciesColours(a.def.creature, st), st, st.cOutline)])); }
   } else {
     const K = 2 / (st.pixel || 2), r = G.rng(7), types = G.TREE_TYPES;
     const n = list === "all" ? 2 : +list;
