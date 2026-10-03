@@ -149,7 +149,7 @@ One area type per creature, each a small definition in Ed's columns: **floor** t
 - **For now the art is drawn by code** (Ed, 2026-10-03: "easily good enough"): sprites built from a few parameters per kind and coloured by a style file. Ed explores styles in the **Witch Art Lab** (https://claude.ai/artifact/WLBnF1NrbTezd41A8m5Cfj). An image generator may replace it later through the same asset list.
 - Art direction from Ed's references (2026-10-03):
   - **Trees**: larger, wider, taller and sparser, with differently shaped crowns (gnarled broadleaf, willow, birch, tree fern, fir, flat-crowned); plus **bushes and shrubs**.
-  - **Night**: a twilight palette, with light revealing that the trees and ground are green; the witch glows and lights what is near her.
+  - **Night**: a twilight palette, with light revealing that the trees and ground are green; the witch glows and lights what is near her. **High contrast**: dark areas are very dark (near-black, cool), lit things bright, like a moonlit romantic landscape painting. **Scattered light sources** show the lighting off: campfires, glowing magic stones and ponds that reflect the moon (Ed, 2026-10-03).
   - **Legendary creatures are about 20 times a baby's height**, taller than the treetops.
   - **Areas read as colour fields**: each area has its own dominant colour (for example a blue fir area beside an orange autumn one), with pale clearings and shafts of light.
   - **Pixels are larger** (chunkier) and **tree crowns about three times wider** than the first lab's (Ed, 2026-10-03).
