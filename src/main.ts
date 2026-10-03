@@ -8,6 +8,7 @@ import { Input } from "./platform/input";
 import { View } from "./render/view";
 import { loadStyle } from "./render/style";
 import { setupTouch } from "./ui/touch";
+import changelog from "../config/changelog.json";
 
 const params = new URLSearchParams(location.search);
 let seed = parseSeed(params.get("seed"));
@@ -31,6 +32,7 @@ const tilt = params.get("tilt");
 if (tilt === "off") tuning.tiltShift.on = false;
 else if (tilt === "before" || tilt === "after") { tuning.tiltShift.on = true; tuning.tiltShift.where = tilt; }
 if (params.get("bloom") === "off") tuning.bloom.on = false;
+if (params.get("moonbeams") === "on") tuning.moonbeams = 1;
 const fx = params.get("fx");
 if (fx === "pixel" || fx === "smooth") tuning.fx = fx;
 
@@ -83,6 +85,13 @@ window.addEventListener("keydown", e => {
 
 declare const __BUILD__: string;
 document.getElementById("version")!.textContent = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
+// What's new, on the start screen: the last three versions, newest first (config/changelog.json).
+const newsEl = document.getElementById("news")!;
+const buildName = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev";
+const esc = (s: string) => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!);
+newsEl.innerHTML = "<b>What's new</b>" + changelog.entries.slice(0, 3).map(e =>
+  `<div>${e.version === null ? `${buildName} (this version)` : "v" + e.version}</div><ul>${e.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>`).join("");
+newsEl.addEventListener("pointerdown", e => e.stopPropagation()); // scrolling it doesn't start the game
 const seedEl = document.getElementById("seed")!;
 seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;
 const debugEl = document.getElementById("debug")!, startEl = document.getElementById("start")!;

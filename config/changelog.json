@@ -1,0 +1,39 @@
+{
+  "_": "What's new, shown on the start screen (newest first; the last 3 entries). Every push that changes something Ed can see adds its bullets to the top entry, in plain player-facing words. The top entry's version is null until its build has a number: it then shows as the build you're playing. When you push again, write that number in (from the playable-link comment) and start a new null entry above it.",
+  "entries": [
+    { "version": null, "items": [
+      "Removed the diagonal stripes across the forest (moonbeams are off; ?moonbeams=on brings them back)",
+      "When a tree stands in front of the witch, you now see her through a soft round window that fades in gently, not a square"
+    ] },
+    { "version": 116, "items": [
+      "Land first to talk or to put down and pick up sigils, with new poses",
+      "Talking to a creature keeps its progress for a while if you break off",
+      "Placed sigils show above the canopy from the treetops",
+      "Waves every 5 minutes by default; pick how often on this screen",
+      "A small arrow points the way to the music",
+      "Slower lasers, party motes drifting over whole areas, and party light on the treetops",
+      "Woods have groves, thickets, glades and lone trees, and areas blend into each other",
+      "G shows metre rulers and a ground grid"
+    ] },
+    { "version": 111, "items": [
+      "The witch's glow lights up a much wider pool of forest round her",
+      "Fewer bushes"
+    ] },
+    { "version": 108, "items": [
+      "Trees no longer pop in and out as you fly",
+      "The witch is never lost: tall things in front of her fade, and her silhouette shows through"
+    ] },
+    { "version": 105, "items": [
+      "No more speech icons over every creature in range"
+    ] },
+    { "version": 99, "items": [
+      "String lights hang in long garlands from tree to tree",
+      "Soundsystems face different ways",
+      "Set pieces are bigger, and areas have ragged edges"
+    ] },
+    { "version": 93, "items": [
+      "The witch has rise and descend poses",
+      "Sigils show rings, and creatures show when they're ready to talk"
+    ] }
+  ]
+}

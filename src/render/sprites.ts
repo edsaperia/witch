@@ -47,7 +47,8 @@ varying vec3 vFlags;
 varying float vFront;
 void main() {
   // Tall and nearer the camera than the witch: it may stand in front of her.
-  vFront = (-(viewMatrix * vec4(iPos, 1.0)).z < uWitchDepth - 0.5 && iSize.y > uOcc.z) ? 1.0 : 0.0;
+  // Eased over a few metres of depth and of height, so nothing snaps into the fade as she moves.
+  vFront = smoothstep(0.0, 3.0, uWitchDepth - 0.5 + (viewMatrix * vec4(iPos, 1.0)).z) * smoothstep(uOcc.z * 0.7, uOcc.z * 1.3, iSize.y);
   vec3 w = iPos + uRight * (position.x * iSize.x) + uUp * (position.y * iSize.y);
   float u = iFlags.x > 0.5 ? 1.0 - uv.x : uv.x;
   vUv = vec2(mix(iUv.x, iUv.z, u), mix(iUv.w, iUv.y, uv.y));
@@ -93,9 +94,10 @@ void shade() {
   if (uSilhouette.a > 0.0) { gl_FragColor = vec4(uSilhouette.rgb, uSilhouette.a); return; }
   // Things standing in front of the witch fade (smoothly) where they cover her: left out of the
   // opaque pass there and drawn in a second, see-through pass after her.
-  // A soft oval round her (no hard window): fully faded inside, easing out over uOcc.y of its size.
-  float e = length((gl_FragCoord.xy - uWitch.xy) / max(uWitch.zw * 1.2, vec2(1.0)));
-  float occl = uOcc.w * vFront * (1.0 - smoothstep(1.0, 1.0 + uOcc.y, e));
+  // A soft circle round her body, a little bigger than her sprite: fully see-through at the
+  // centre, easing smoothly to opaque at the edge (uOcc.y: how far the edge reaches, a share of it).
+  float e = length(gl_FragCoord.xy - uWitch.xy) / max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
+  float occl = uOcc.w * vFront * (1.0 - smoothstep(0.3, 1.0 + uOcc.y, e));
   if (uFadePass > 0.5 ? occl <= 0.001 : occl > 0.001) discard;
   float alpha = uFadePass > 0.5 ? mix(1.0, uOcc.x, occl) : 1.0;
   if (vFlags.y > 0.5) {

@@ -14,6 +14,10 @@ The playable game is a static site on GitHub Pages, served from the `gh-pages` b
 
 Pages must be switched on once in the repository's settings (Source: *Deploy from a branch*, `gh-pages`, `/ (root)`); until then the links return 404. A deploy is verified by opening the link and checking the seed and the game load.
 
+## What's new
+
+The start screen shows a **What's new** panel: the last three entries of `config/changelog.json`, newest first. Every push that changes something Ed can see adds its bullets to the top entry, in plain player-facing words ("Trees no longer pop in and out"), not commit-speak. The top entry's `version` is `null` until its build has a number (it shows as the build being played); on the next push, write in that number from the playable-link comment and start a new `null` entry above it.
+
 ## Testing
 
 CI (`.github/workflows/ci.yml`) runs on every push and pull request, in this order:
