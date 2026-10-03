@@ -3,7 +3,7 @@
 // round each area's centre. Every cell is decided from the seed alone, so any patch of forest
 // can be produced on its own, near the camera, in any order, and always comes out the same.
 import { hash2, smoothstep, vnoise } from "./random";
-import { AREA_TYPES, type ForestMap } from "./map";
+import { AREA_TYPES, type AreaLayout, type ForestMap } from "./map";
 
 export interface Plant {
   x: number;
@@ -37,6 +37,42 @@ export function plantType(map: ForestMap, x: number, z: number, i: number, j: nu
   return map.areaAt(x + nx, z + nz).type;
 }
 
+/** The chance of a tree at (x, z) whose look is area type `type` (Ed, 2026-10-03: "density can be
+ *  more varied"): the type's own density (blended across borders, as the types are), times a
+ *  low-frequency patch field (dense patches, sparse patches, open glades), times the type's
+ *  pattern (groves, stands, rings, rows, thicket, edges only...), times the clearings; with a few
+ *  lone trees almost everywhere, so open ground is never empty. */
+export function treeChance(map: ForestMap, x: number, z: number, type: number): number {
+  const t = map.tuning, D = t.density, L = AREA_TYPES[type].layout, s = map.seed;
+  if (map.hardClear(x, z)) return 0;
+  const n = vnoise(x / D.patchScale, z / D.patchScale, s + 91);
+  const patch = D.patchMin + (D.patchMax - D.patchMin) * smoothstep((n - 0.25) / 0.5);
+  const w = map.treeWeight(x, z) * L.density * patch * patternMask(map, x, z, L) * t.treeDensity;
+  return Math.max(w, D.lone);
+}
+
+/** How a type's pattern shapes its trees, around 1 on average. */
+function patternMask(map: ForestMap, x: number, z: number, L: AreaLayout): number {
+  const s = map.seed, c = L.clump;
+  switch (L.pattern) {
+    case "groves": case "stands": {
+      const k = L.pattern === "groves" ? 18 : 10, v = vnoise(x / k, z / k, s + 93);
+      return 1 + c * (2.2 * smoothstep((v - 0.45) / 0.2) - 1);
+    }
+    case "thicket": return 1.25;
+    case "rows": {
+      // Rows run along a direction, or along a feature (a path, a stream) once those exist; until
+      // then, along the area's lean.
+      const dir = typeof L.along === "number" ? L.along : (L.lean?.dir ?? 0) + 20;
+      const a = ((dir + 90) * Math.PI) / 180, u = x * Math.cos(a) + z * Math.sin(a);
+      return 0.25 + 1.5 * smoothstep((Math.cos((u / 5) * Math.PI * 2) - 0.2) / 0.6);
+    }
+    case "rings": { const o = map.areaAt(x, z).openness; return 0.3 + 1.4 * smoothstep((Math.cos(o * Math.PI * 7) - 0.1) / 0.6); }
+    case "edgeOnly": return 1.6 * smoothstep((map.areaAt(x, z).openness - 0.45) / 0.35);
+    default: return 1; // scatter, lone: the density does it
+  }
+}
+
 function treesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
   const { treeSpacingX: sx, treeSpacingZ: sz } = map.tuning, s = map.seed;
   const out: Plant[] = [], lift = crownReach(map), half = map.tuning.crownHalfWidth;
@@ -48,9 +84,10 @@ function treesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
       const x = (i + shift + (hash2(i, j, s + 101) - 0.5) * 0.7) * sx;
       const z = (j + (hash2(i, j, s + 102) - 0.5) * 0.7) * sz;
       // A crown must not cover a clearing either, so the weight is checked where it reaches.
-      const type = plantType(map, x, z, i, j, s + 106);
-      if (hash2(i, j, s + 103) >= map.treeWeight(x, z) * AREA_TYPES[type].treeDensity) continue;
-      if (map.treeWeight(x, z - lift) === 0 || map.treeWeight(x - half, z - lift) === 0 || map.treeWeight(x + half, z - lift) === 0) continue;
+      const type = plantType(map, x, z, i, j, s + 106), chance = treeChance(map, x, z, type);
+      if (hash2(i, j, s + 103) >= chance) continue;
+      // Crowns don't hang over the dancefloor's or a set piece's clearing.
+      if (map.hardClear(x, z - lift) || map.hardClear(x - half, z - lift) || map.hardClear(x + half, z - lift)) continue;
       out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 104) * TREE_VARIANTS), flip: hash2(i, j, s + 105) < 0.5 });
     }
   }
@@ -65,9 +102,12 @@ function bushesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
     // A full cell of jitter and a seeded clump mask, so they gather in clumps and gaps rather than rows.
     const x = (i + hash2(i, j, s + 201) - 0.5) * sp, z = (j + hash2(i, j, s + 202) - 0.5) * sp;
     const clump = 1 + map.tuning.bushClump * (2 * smoothstep((vnoise(x / 13, z / 13, s + 207) - 0.35) / 0.3) - 1);
-    if (hash2(i, j, s + 203) > (0.12 + Math.min(1, map.treeWeight(x, z)) * 0.3) * map.tuning.bushDensity * clump) continue;
+    // Fewer under dense canopy, more where the trees are sparse (clearing rims, glades, open
+    // ground), as the type's undergrowth says (Ed, 2026-10-03).
+    const type = plantType(map, x, z, i, j, s + 206), sparse = 1 - Math.min(1, treeChance(map, x, z, type) / 0.8);
+    if (hash2(i, j, s + 203) > (0.15 + 0.85 * sparse) * AREA_TYPES[type].layout.undergrowth * map.tuning.bushDensity * clump) continue;
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + 2) continue; // the dancefloor stays clear
-    out.push({ x, z, type: plantType(map, x, z, i, j, s + 206), variant: Math.floor(hash2(i, j, s + 204) * BUSH_VARIANTS), flip: hash2(i, j, s + 205) < 0.5 });
+    out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 204) * BUSH_VARIANTS), flip: hash2(i, j, s + 205) < 0.5 });
   }
   return out;
 }

@@ -13,7 +13,7 @@
 import * as THREE from "three";
 import { drawSigil, sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
-import { blocked, leashPoint, talkTurn } from "../rules/leash";
+import { blocked, leashPoint, talkTime, talkTurn } from "../rules/leash";
 import { hash2 } from "../rules/random";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
@@ -179,14 +179,18 @@ export class LeashView {
         this.standing.add(b.x + Math.cos(a) * sp * k, 0.6 + up * k - 4 * k * k, b.z + Math.sin(a) * sp * k, 0.3, dot, c[0], c[1], c[2], 1 - k);
       }
     }
-    // Talking: a faint ring round the creature she's talking to, filling as the chat goes on.
-    if (s.talk) {
-      const c = g.creatures[s.talk.id], p = s.talk.refused ? 0 : Math.min(1, s.talk.t / s.talk.total), n = 28;
+    // Talking: a faint ring round the creature she's talking to, filling as the chat goes on; a
+    // chat she has left drains, its ring dimmer and see-through, until it's gone.
+    const ring = (id: number, p: number, live: boolean) => {
+      const c = g.creatures[id], n = 28, k = live ? 1 : 0.45;
       for (let i = 0; i < n; i++) {
         const a = Math.PI / 2 - (i / n) * Math.PI * 2, lit = i / n < p;
-        this.flat.add(c.x + Math.cos(a) * 1.5, 0, c.z + Math.sin(a) * 1.1, 0.35, dot, 1, lit ? 0.6 : 0.9, lit ? 0.9 : 1, lit ? 0.9 : 0.18);
+        if (!live && !lit) continue;
+        this.flat.add(c.x + Math.cos(a) * 1.5, 0, c.z + Math.sin(a) * 1.1, 0.35, dot, 1, lit ? 0.6 : 0.9, lit ? 0.9 : 1, (lit ? 0.9 : 0.18) * k);
       }
-    }
+    };
+    if (s.talk) ring(s.talk.id, s.talk.refused ? 0 : Math.min(1, s.talk.t / s.talk.total), true);
+    for (const [id, p] of s.progress) if (s.talk?.id !== id) ring(id, Math.min(1, p / talkTime(g.creatures[id], t)), false);
 
     // The stack above her hat: newest at the bottom. A chain of springs: each sigil follows the
     // one below with lag, so the stack trails behind her flight in proportion to speed, overshoots
@@ -217,6 +221,17 @@ export class LeashView {
       const pulse = 0.8 + 0.2 * Math.sin(time * 2 + p.id);
       this.flat.add(p.x, 0, p.z, 3 + c.level * 0.8, this.uv(slot), col.r * pulse, col.g * pulse, col.b * pulse, 1, Math.min(1, (time - p.at) / 0.8));
       this.flat.add(p.x, 0, p.z, 5, dot, col.r, col.g, col.b, 0.25);
+    }
+
+    // From the treetops, each placed sigil is projected up above the canopy over its spot, flat
+    // and glowing, joined to its rune by a faint pulsing column of light (Ed, 2026-10-03). It
+    // fades in as she rises; on the ground the real rune is enough.
+    const P = t.sigilProjection, up = w.lift * w.lift * (3 - 2 * w.lift);
+    if (up > 0.01) for (const p of s.placed) {
+      const c = g.creatures[p.id], col = this.colours.get(c.species)!, top = t.treetopHeight - 4 + P.height;
+      const pulse = 0.85 + 0.15 * Math.sin(time * 1.3 + p.id);
+      this.flat.add(p.x, top, p.z, (3 + c.level * 0.8) * P.size, this.uv(this.slotOf(c.species, c.level)), col.r, col.g, col.b, P.opacity * up * pulse);
+      for (let y = 1; y < top; y += 1.5) this.standing.add(p.x, y, p.z, 0.3, dot, col.r, col.g, col.b, P.beam * up * pulse * (0.6 + 0.4 * Math.sin(y * 0.8 - time * 3)));
     }
 
     // The ghost: where the bottom sigil would land, red where it can't.
