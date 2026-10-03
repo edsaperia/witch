@@ -49,6 +49,7 @@ So the party's growth is both the goal and the source of the danger.
 ### Two modes of movement
 
 - **Ground mode**: under the trees, slower, with full sight of what is on the ground.
+- **Speeds** (Ed, 2026-10-03, after the first playtest): ground mode about **14 m/s** (the first cut's treetop speed); treetop mode faster again, starting at about **24 m/s**. Both are tuning numbers.
 - **Treetop mode**: above the canopy, faster, but the canopy hides the ground. From above she sees only **tall landmarks**, **large creatures**, and the ground in **clearings** where the trees are sparser.
 - **Switching** is fast but not instant: the witch and the camera move vertically. Each piece of foliage is made of **two halves, top and bottom**; the tops are hidden at ground level and appear at treetop level.
 - **Foliage, rocks and the like are only visual**: she weaves freely through them in either mode.
@@ -80,7 +81,7 @@ The trade is speed against information: treetop mode covers distance, ground mod
 
 - The forest is made of **areas**. Each area has **its own vegetation** and is **home to its own kind of creature**.
 - **Replayability** comes from a **large number of area types** (and so of creatures) and a **procedurally generated map** that arranges them differently each run.
-- **Size**: an area is about **one screen**; small ones about half a screen, large ones about two. A map is about **20 × 20 areas**. Playtesting will settle these.
+- **Size**: after the first playtest, Ed asked for areas **about twice as large** as the prototype's first cut, and **varying more in size**, from small to large (Ed, 2026-10-03). A map is about **20 × 20 areas**. The numbers live in the prototype's tuning file; playtesting will settle them.
 - **Arrangement** is mostly random, with some rules; mainly, the **same area type is kept from sitting near itself**.
 - The **home, the dancefloor, is in the middle of the map**.
 - Area shapes: Ed is inspired by Boris the Brave's *fractal jittered Voronoi partitions* (https://www.boristhebrave.com/2026/08/29/fractal-jittered-voronoi-partitions/).
@@ -152,7 +153,7 @@ One area type per creature, each a small definition in Ed's columns: **floor** t
   - **Legendary creatures are about 20 times a baby's height**, taller than the treetops.
   - **Areas read as colour fields**: each area has its own dominant colour (for example a blue fir area beside an orange autumn one), with pale clearings and shafts of light.
   - **Pixels are larger** (chunkier) and **tree crowns about three times wider** than the first lab's (Ed, 2026-10-03).
-  - **Tree density rises away from each area's centre**, so every area has a **clearing in the middle**.
+  - **Tree density rises away from each area's centre**, so every area has a **clearing in the middle**. The change from clearing to edge density is **gradual**, not a sharp edge (Ed, 2026-10-03).
   - **A first bestiary of 20 animals** (proposed by the coordinator, 2026-10-03, not yet ruled): wolf, fox, badger, boar, stag, hare, owl, bear, hedgehog, squirrel, toad, otter, lynx, elk, raven, bat, mole, beaver, stoat, stag beetle, each with a legendary feature (spirit wings, many tails, crystals, great tusks, glowing antlers, a forest on its back...).
   - **The witch is a "modern young adult witch"** (Ed, 2026-10-03): **headphones, sneakers, jeans, and a broom**. Outfits and colours are **unlocked as you go**, or accessories are **picked at the start** of a run; so her sprite is built in **layers** (body, hat, top, jeans, sneakers, headphones, broom) that can be swapped and recoloured. She appears on a **splash screen**, and perhaps as a **JRPG-style character portrait** overlaid when she talks; those are large illustrations, not sprites.
   - **The witch** (Ed's witch references, 2026-10-03; more to come): a young woman in casual, modern clothes (a sweater, a skirt or trousers, a satchel or shoulder bag, often barefoot or in simple shoes) under a **big, floppy, wide-brimmed pointed hat**, often olive or dark green with a coloured band; muted olive, ochre and dark blue, with warm orange accents. She rides **side-saddle**, relaxed. The references also show night-blue scenes lit by candles and strings of fairy lights, a chalk ritual circle with a candle, cats in witch hats dancing to music, and **spirit cats drawn as glowing white outlines**. A second set of references (2026-10-03) adds: the **hat as the dominant silhouette**, huge, with a bent or crooked tip and a ribbon band (one crowned with marigolds); **a lantern** whose warm light glows against blue night; expressive, mischievous faces (a wink, a grin); **headphones** on one witch, a natural fit for a rave; pointed ears and black wings on others; sneakers; warm orange accents against cool blues throughout. The references themselves are other artists' work and are not stored in this public repository.
