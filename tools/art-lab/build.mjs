@@ -18,12 +18,27 @@ function inline(path) {
   // a module's own imports come first: inline what it depends on, then drop the import line
   code = code.replace(/^import\s*\{[^}]*\}\s*from\s*"(\.[^"]+)";\s*$/gm, (_, rel) => inline(resolve(dirname(path), rel)));
   if (/^\s*import\s/m.test(code)) throw new Error(`${path}: an import the build cannot inline`);
+  code = code.replace(/^export\s*\{[^}]*\};?\s*$/gm, ""); // re-exports: the names are already in scope
   return `// ---- inlined from ${path.slice(resolve(here, "../..").length + 1)} ----\n` + code.replace(/^export\s+(?=(async\s+)?(function|const|let|class)\b)/gm, "") + "\n";
+}
+
+// Every inlined module shares one scope, so two top-level declarations of one name would
+// break the page: fail the build instead.
+function checkNames(page) {
+  const seen = new Map();
+  for (const chunk of page.split(/^\/\/ ---- inlined from /m)) {
+    const from = chunk.split("\n")[0].replace(/ ----$/, "") || "page";
+    for (const m of chunk.matchAll(/^(?:async\s+)?(?:function\*?|const|let|class)\s+([A-Za-z_$][\w$]*)/gm)) {
+      if (seen.has(m[1])) throw new Error(`"${m[1]}" is declared in both ${seen.get(m[1])} and ${from}`);
+      seen.set(m[1], from);
+    }
+  }
 }
 
 let page = readFileSync(src, "utf8");
 page = page.replace(/^import\s*\{[^}]*\}\s*from\s*"(\.[^"]+)";\s*$/gm, (_, rel) => inline(resolve(dirname(src), rel)));
 if (/^import\s/m.test(page)) throw new Error("the page still has an import the build cannot inline");
+checkNames(page);
 mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, page);
 console.log(`wrote ${out.slice(resolve(here, "../..").length + 1)} (${(page.length / 1024).toFixed(1)} KB; inlined ${[...inlined].length} modules)`);

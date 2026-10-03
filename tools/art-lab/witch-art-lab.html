@@ -151,7 +151,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets } from "../../art/generator.js";
+import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -357,7 +357,6 @@ function renderMap() {
 
 // ================= bestiary: every species at every level, studio-lit =================
 let bestiaryTimer;
-const FEATURE_NAMES = { wings: "spirit wings", mane: "a glowing mane", tails: "many tails", crystals: "crystals", tusksBig: "great tusks", antlersGlow: "glowing antlers", jackalope: "antlers", eyesRing: "a ring of eyes", moss: "a little forest on its back", starTail: "a starry tail", crown: "a crown", ribbons: "light ribbons", wingsBig: "huge glowing wings", horn: "a glowing horn" };
 function renderBestiary() {
   clearTimeout(bestiaryTimer);
   bestiaryTimer = setTimeout(() => {
@@ -383,6 +382,7 @@ let world = store.get("witch-art-world-3") || { kinds: ["wolf", "fox", "boar", "
 if (!world.kinds.every(k => SPECIES_BY_ID[k])) world.kinds = ["wolf", "fox", "boar", "badger", "stag", "owl"];
 let current = { ...defaultStyle(), ...(store.get("witch-art-style-3") || {}) };
 if (!current.v4) { current.pixel = 2; current.v4 = true; }
+if (!current.v5) { current.pixel = 3; current.v5 = true; } // Ed, 2026-10-03: bigger pixels
 let history = store.get("witch-art-history-3") || [];
 let varySeed = 1, variants = [], assetsCurrent, layoutCurrent;
 const varyGroups = new Set(GROUPS);
