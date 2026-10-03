@@ -55,21 +55,34 @@ Every asset is a **baked sprite**: `{ A, N, NF, w, h }`.
 
 ## Sigils
 
-Each creature has a **sigil** (`art/sigils.js`), its name written in the forest's magic: a stave written bottom to top, one or two marks that evoke the animal, and the crescent foot every sigil shares. Kin to the rune glyphs (`runeGlyph` in `core.js`). Its main use is the **leashing rune**, written on the ground under a creature, so the sigils are made to survive being squashed to about half their height.
+Each creature has a **sigil** (`art/sigils.js`), its name written in the forest's magic: a stave written bottom to top, one or two marks that evoke the animal, and the crescent foot every sigil shares. Kin to the rune glyphs (`runeGlyph` in `core.js`). It has three uses (Ed):
+- the **leashing rune**, written on the ground under a creature. The sigils survive being squashed to about half their height.
+- the **leash stack**: leashed creatures' sigils float above the witch's head, newest at the bottom.
+- carving and the interface: the bestiary card, rune stones, soundsystems.
+
+They glow **neon**: a near-white core in a coloured halo, each species in its own palette slot. Each creature **level** has a frame that grows, so a field of runes shows at a glance what is about:
+- **baby:** the bare sigil, about 2 m across;
+- **young:** about 3 m, thicker and brighter, with one ring;
+- **legend:** about 5 m, the thickest and brightest, with a double ring, a band of rune ticks, four rays and a slow shimmer.
 
 | Call | Gives |
 |---|---|
 | `SIGILS[id]` | the strokes, in writing order, in a unit box (x right, y down): `{ l: [[x, y], …] }` a polyline, `{ a: [cx, cy, r, from, to] }` an arc (degrees, 0 right, 90 down), `{ d: [x, y] }` an end dot; each drawn from its first point. `SIGIL_STROKE` and `SIGIL_DOT` are the stroke width and dot radius |
-| `sigilStrokes(id)` | the same as polylines, each with its length and its share of the draw-on (`start`, `end`, 0 to 1) |
-| `sigilColour(id)` | its glow colour: the creature's hue, bright |
-| `sigilSVG(id, { size, colour, glow, progress })` | an SVG string; `progress` below 1 draws it partly written |
-| `drawSigil(ctx, id, { x, y, size, colour, progress, glow })` | the same on a canvas; transform the context first to lay it on a plane |
-| `sigilGlyph(id, size, { progress })` | a pixel glyph, `{ w, h, m }`: 2 a stroke's bright core, 1 its edge (for 12 to 24 px) |
-| `sigilHit(id, u, v, w)` | true where the sigil has ink, for carving, like `runeGlyph` |
-| `groundSigil(id, { diameter, pitch, ring })`, `paintGroundSigil(g, t, { colour, canvas })` | the leashing rune on the ground: precomputed once per size, foreshortened by the camera's pitch (`GROUND_PITCH`, 35°), with a faint magic circle; painting it at `t` seconds draws it on over `SIGIL_DRAW_TIME` (0.6 s), then it glows and pulses (alpha 254: draw it unlit). For a 3D engine, `drawSigil` onto a flat texture laid on the ground does the same |
+| `NEON`, `SIGIL_NEON[id]`, `sigilColour(id)` | the neon palette, each species' slot in it, and its colour. Every renderer also takes `colour`, so the game can recolour (per outfit, say) |
+| `sigilFrame(level)` | a level's frame, for any level number: `{ metres, core, halo, rings, band, rays, shimmer }`. Size steps first, then rings, then ornament, so levels between or beyond these extend it |
+| `sigilStrokes(id)`, `sigilMark(id, level)` | the sigil's strokes as polylines, or everything drawn for a level (the frame first, then the sigil scaled into it) in its "mark" box. Each carries its share of the draw-on (`start`, `end`, 0 to 1) and its width |
+| `sigilSVG(id, { size, level, colour, glow, progress })`, `drawSigil(ctx, id, { x, y, size, level, colour, progress, glow })` | the neon sigil as an SVG string or on a canvas, bare (`level` null, the default) or framed for a level; `progress` below 1 draws it partly written. Transform the canvas first to lay it on a plane |
+| `sigilGlyph(id, size)`, `sigilHit(id, u, v, w)` | the bare sigil as a pixel glyph (`{ w, h, m }`, 12 to 24 px), or a hit test for carving it like `runeGlyph` |
+| `groundSigil(id, { level, pxPerMetre, pitch })` | the leashing rune: a neon pixel field the level's size, foreshortened by the camera's pitch (`GROUND_PITCH`, 35°) |
+| `floatSigil(id, { level, px })`, `floatSize(level)` | the floating form for the stack, upright: `px` across for a baby, larger for higher levels; its height in metres |
+| `paintSigilField(field, t, { colour, canvas, progress })` | paints a field `t` seconds after it began. Its strokes trace in order over `SIGIL_DRAW_TIME` (0.6 s) with a bright, flickering pen tip, then it glows and pulses (legends shimmer). Every pixel glows: draw it unlit and additively. A field is precomputed once, so each frame is cheap |
+| `new SigilStack(tuning)` | the leash stack, a chain of springs. `push(id, level, from)` adds a sigil at the bottom (lifting off from a ground point `from`, if given). `place()` takes the bottom one and returns `{ id, level, pos }`. `update(dt, { head } or { velocity })` follows her. `layout()` gives each sigil's `offset` from her head, its `tilt`, `size` and `enter` (0 to 1 through its lift-off). Tuning (`STACK_TUNING`): `size`, `gap`, `stiffness`, `damping`, `trail`, `growth`, `idleSway`, `idleRate`, `maxLean` |
+| `liftOff(t)`, `setDown(t)` | the two transitions (`SIGIL_TRANSITION_TIME`, 0.4 s), for `t` 0 to 1: `{ rise, upright, scale, draw }`. Lift-off peels the ground rune up and shrinks it into the floating form; set-down drops it, flattens it and writes it onto the ground |
 | `runeStone(style, { glow, sigil })`, `soundsystemSprite(style, { …, sigil })` | a rune stone or soundsystem carved with a creature's sigil instead of a generic rune (an area's own creature) |
 
-The export writes each as `sigil-<species>.svg` and a 64 px `sigil-<species>.png`, and lists them with their strokes under `sigils` in `manifest.json`.
+In a 3D engine, `drawSigil` onto a canvas texture laid flat on the ground (or upright, facing the camera, for the stack) does the same as the pixel fields, with the engine doing the foreshortening.
+
+The export writes each sigil as `sigil-<species>.svg` (bare), a 64 px `sigil-<species>.png`, and `sigil-<species>-baby|young|legend.svg` (framed). It lists them, with their strokes, neon slots, the level frames and the stack's tuning, under `sigils` in `manifest.json`.
 
 The night lighting pass the lab uses is `shade(target, out, style, lights, rect)` in `art/lighting.js`.
 

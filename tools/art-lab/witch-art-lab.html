@@ -66,10 +66,10 @@ label.check input { accent-color: var(--accent); }
 .beast figcaption { grid-template-columns: 1fr auto; }
 .beast figcaption > b, .beast figcaption > span:not(.sig) { grid-column: 1; }
 .beast figcaption .sig { grid-column: 2; grid-row: 1 / span 2; width: 44px; height: 44px; margin-left: 8px; }
-.sigils { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-.sigil { margin: 0; border: 1px solid var(--line); border-radius: 6px; background: #0b0910; display: grid; grid-template-columns: 1fr 1fr; align-items: center; justify-items: center; padding: 8px 6px 4px; }
-.sigil canvas { width: 88px; height: auto; image-rendering: pixelated; }
-.sigil figcaption { grid-column: 1 / -1; font-size: 13px; color: var(--muted); padding-top: 4px; }
+.sigils { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 10px; }
+.sigil { margin: 0; border: 1px solid var(--line); border-radius: 6px; background: #0b0910; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-around; gap: 4px; padding: 8px 6px 4px; }
+.sigil canvas { image-rendering: pixelated; }
+.sigil figcaption { flex-basis: 100%; font-size: 13px; color: var(--muted); padding-top: 4px; }
 .history { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
 .history button { padding: 0; border: 1px solid var(--line); border-radius: 4px; background: #000; cursor: pointer; flex: none; }
 .history button.current { border-color: var(--accent); }
@@ -128,7 +128,15 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 
       <section style="display:grid;gap:10px">
         <h2>Sigils</h2>
-        <p class="note">Each creature's sigil: its name written in the forest's magic. Left, flat, as it appears on its card and in the interface. Right, written on the ground at the game's angle, as the leashing rune when the witch leashes it: it draws on, then glows and pulses.</p>
+        <p class="note">Each creature's sigil: its name written in the forest's magic, in its own neon. Leashed creatures' sigils float above the witch, newest at the bottom; placing one writes it on the ground as the leashing rune, and picking it up lifts it back. The stack sways gently while she is still and trails behind her when she flies.</p>
+        <div class="row">
+          <button class="btn" id="sgLeash" type="button">Leash a creature</button>
+          <button class="btn" id="sgPlace" type="button">Place</button>
+          <button class="btn" id="sgPick" type="button">Pick up</button>
+          <label class="check"><input type="checkbox" id="sgFly"> Fly</label>
+        </div>
+        <div class="stage"><canvas id="sgStack" width="480" height="270" style="width:100%;height:auto;image-rendering:pixelated"></canvas></div>
+        <p class="note">Below, each sigil at the three creature levels (baby, young, legend), flat and then on the ground at the game's angle, drawing on.</p>
         <div class="sigils" id="sigils"></div>
       </section>
 
@@ -170,7 +178,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours, SIGIL_IDS, sigilSVG, drawSigil, sigilColour, groundSigil, paintGroundSigil } from "../../art/generator.js";
+import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -414,31 +422,92 @@ function renderSoundsystems() {
   }, 600);
 }
 
-// ================= sigils: flat and on the ground, the draw-on playing =================
+// ================= sigils: every level flat and on the ground; the leash stack over the witch =================
 const sigilCards = [];
+let stackDemo = null;
 function buildSigils() {
   const host = document.getElementById("sigils"); if (!host || sigilCards.length) return;
+  const ppm = 14; // ground pixels per metre in the cards
   SIGIL_IDS.forEach((id, i) => {
-    const fig = document.createElement("figure"); fig.className = "sigil";
-    const flat = document.createElement("canvas"); flat.width = flat.height = 88; flat.setAttribute("aria-label", `${SPECIES_BY_ID[id].name} sigil`);
-    const g = groundSigil(id, { diameter: 84 }), ground = document.createElement("canvas"); ground.width = g.w; ground.height = g.h; ground.setAttribute("aria-label", `${SPECIES_BY_ID[id].name} sigil on the ground`);
-    const cap = document.createElement("figcaption"); cap.textContent = SPECIES_BY_ID[id].name;
-    fig.append(flat, ground, cap); host.append(fig);
-    sigilCards.push({ id, flat, ground, g, offset: (i % 6) * .25 });
+    const fig = document.createElement("figure"), name = SPECIES_BY_ID[id].name; fig.className = "sigil";
+    const flats = [0, 1, 2].map(level => { const c = document.createElement("canvas"); c.width = c.height = 48; c.style.width = "48px"; c.setAttribute("aria-label", `${name} sigil, ${["baby", "young", "legend"][level]}`); return c; });
+    const grounds = [0, 1, 2].map(level => { const g = groundSigil(id, { level, pxPerMetre: ppm }), c = document.createElement("canvas"); c.width = g.w; c.height = g.h; c.setAttribute("aria-label", `${name} sigil on the ground, ${["baby", "young", "legend"][level]}`); return { g, c }; });
+    const cap = document.createElement("figcaption"); cap.textContent = name;
+    fig.append(...flats, ...grounds.map(x => x.c), cap); host.append(fig);
+    sigilCards.push({ id, flats, grounds, offset: (i % 6) * .25 });
   });
+  stackDemo = makeStackDemo();
   let visible = true;
-  if ("IntersectionObserver" in window) new IntersectionObserver(e => { visible = e[0].isIntersecting; }).observe(host);
-  const cycle = 3.2;
+  if ("IntersectionObserver" in window) new IntersectionObserver(e => { visible = e.some(x => x.isIntersecting); }).observe(host.parentElement);
+  const cycle = 3.2; let last = performance.now();
   const frame = now => {
-    if (visible) for (const c of sigilCards) {
-      const t = ((now / 1000 + c.offset) % cycle), x = c.flat.getContext("2d");
-      x.clearRect(0, 0, 88, 88); drawSigil(x, c.id, { x: 4, y: 4, size: 80, progress: Math.min(1, t / .6) });
-      paintGroundSigil(c.g, t, { canvas: c.ground });
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if (visible) {
+      for (const c of sigilCards) {
+        const t = ((now / 1000 + c.offset) % cycle);
+        c.flats.forEach((cv, level) => { const x = cv.getContext("2d"); x.clearRect(0, 0, 48, 48); drawSigil(x, c.id, { size: 48, level, progress: Math.min(1, t / .6) }); });
+        c.grounds.forEach(({ g, c: cv }) => paintSigilField(g, t, { canvas: cv }));
+      }
+      stackDemo?.frame(now / 1000, dt);
     }
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
 }
+// The leash stack demo: the witch hovering (or flying to and fro), her leashed creatures' sigils
+// floating above her, placed runes on the ground.
+function makeStackDemo() {
+  const cv = document.getElementById("sgStack"); if (!cv) return null;
+  const g = cv.getContext("2d"), W = cv.width, H = cv.height, ppm = 22, cp = Math.cos(GROUND_PITCH), sp = Math.sin(GROUND_PITCH), gy = H - 40;
+  const toScreen = ([x, y, z]) => [W / 2 + x * ppm, gy + z * ppm * sp - y * ppm * cp];
+  const wit = bake(witchSprite(current), witchColours(current), current, current.cOutline), witchH = wit.h / (ppm * cp) * 1.0;
+  const stack = new SigilStack(), placed = [], leaving = [], floats = new Map(), grounds = new Map();
+  const floatOf = (id, level) => { const k = id + level; if (!floats.has(k)) { const f = floatSigil(id, { level, px: stack.tuning.size * ppm }); floats.set(k, { f, c: paintSigilField(f, 99) }); } return floats.get(k); };
+  const groundOf = (id, level) => { const k = id + level; if (!grounds.has(k)) grounds.set(k, groundSigil(id, { level, pxPerMetre: ppm })); return grounds.get(k); };
+  let wx = 0, alt = 1.1, flyT = 0, n = 0;
+  const pickNext = () => { const id = SIGIL_IDS[(n * 7 + 3) % SIGIL_IDS.length], level = [0, 1, 0, 2, 1][n % 5]; n++; return [id, level]; };
+  for (let i = 0; i < 4; i++) stack.push(...pickNext());
+  const head = () => [wx, alt + witchH, 0];
+  document.getElementById("sgLeash").onclick = () => stack.push(...pickNext());
+  document.getElementById("sgPlace").onclick = () => { const it = stack.place(); if (it) leaving.push({ ...it, ground: [wx, 0, .6], t: 0 }); };
+  document.getElementById("sgPick").onclick = () => { const r = placed.pop(); if (r) stack.push(r.id, r.level, r.ground); };
+  stack.update(0, { head: head() });
+  // a floating sigil drawn at a world point: upright 0 lies flat (squashed), scale 0 its ground size
+  const drawFloat = (id, level, pos, { tilt = 0, upright = 1, scale = 1 } = {}) => {
+    const { f, c } = floatOf(id, level), gr = groundOf(id, level), w = f.w + (gr.w - f.w) * (1 - scale), hgt = w * (sp + (1 - sp) * upright), [x, y] = toScreen(pos);
+    g.save(); g.translate(x, y); g.rotate(tilt); g.drawImage(c, -w / 2, -hgt / 2, w, hgt); g.restore();
+  };
+  return { frame(t, dt) {
+    // she hovers, or flies to and fro (fast through the middle)
+    const fly = document.getElementById("sgFly").checked;
+    if (fly) flyT += dt;
+    const tx = fly ? 6.5 * Math.sin(flyT * .9) : wx; wx += (tx - wx) * Math.min(1, dt * (fly ? 60 : 3));
+    alt = 1.1 + .06 * Math.sin(t * 2.1);
+    stack.update(dt, { head: head() });
+    g.globalCompositeOperation = "source-over"; g.fillStyle = "#101a14"; g.fillRect(0, 0, W, H);
+    g.fillStyle = "#0c120f"; for (let i = 0; i < 9; i++) g.fillRect(0, gy - 70 + i * 14, W, 1);
+    g.imageSmoothingEnabled = false; g.globalCompositeOperation = "lighter";
+    // the runes on the ground (and any being set down)
+    for (const r of placed) { const gr = groundOf(r.id, r.level), [x, y] = toScreen(r.ground); r.age += dt; g.drawImage(paintSigilField(gr, r.age), Math.round(x - gr.w / 2), Math.round(y - gr.h / 2)); }
+    for (let i = leaving.length - 1; i >= 0; i--) {
+      const L = leaving[i]; L.t += dt; const k = setDown(L.t / SIGIL_TRANSITION_TIME);
+      if (k.draw > 0) { const gr = groundOf(L.id, L.level), [x, y] = toScreen(L.ground); g.drawImage(paintSigilField(gr, 0, { progress: k.draw }), Math.round(x - gr.w / 2), Math.round(y - gr.h / 2)); }
+      else drawFloat(L.id, L.level, L.ground.map((v, j) => v + (L.pos[j] - v) * k.rise), { upright: k.upright, scale: k.scale });
+      if (L.t >= SIGIL_TRANSITION_TIME) { leaving.splice(i, 1); placed.push({ id: L.id, level: L.level, ground: L.ground, age: SIGIL_DRAW_TIME_DONE }); }
+    }
+    // the witch, then her stack (bottom, newest, first)
+    g.globalCompositeOperation = "source-over";
+    const [sx, sy] = toScreen([wx, alt, 0]); g.drawImage(wit.A, Math.round(sx - wit.w / 2), Math.round(sy - wit.h));
+    g.globalCompositeOperation = "lighter";
+    stack.layout().forEach(l => {
+      const pos = head().map((v, j) => v + l.offset[j]);
+      if (l.enter < 1) { const k = liftOff(l.enter); drawFloat(l.id, l.level, pos, { tilt: l.tilt, upright: k.upright, scale: k.scale }); }
+      else drawFloat(l.id, l.level, pos, { tilt: l.tilt });
+    });
+    g.globalCompositeOperation = "source-over";
+  } };
+}
+const SIGIL_DRAW_TIME_DONE = 1; // a placed rune has finished drawing on
 
 // ================= app =================
 const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };

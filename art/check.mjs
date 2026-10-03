@@ -47,15 +47,29 @@ const report = await b.page.evaluate(async () => {
       res.push({ what: `soundsystem ${G.SOUNDSYSTEMS[v].id}: 3 playing, 2 damaged, destroyed; standing; about 3 times the witch; rubble lower than the stack`, good: [...play, ...dmg, dead].every(s => s.n > 200 && s.bottom > 0) && play[0].h > ws.h * 2.4 && dead.h < play[0].h * .7, info: `${play[0].w}x${play[0].h} rubble ${dead.w}x${dead.h} witch ${ws.h}` });
     } }
   // sigils: one per species; non-empty as vector (SVG, and drawn on a canvas) and as a 12 px pixel glyph; strokes inside the box;
-  // on the ground, the draw-on only adds ink and the finished rune has some
+  // on the ground at every level, the draw-on only adds ink, and each level's rune is bigger and has more rings than the one below
+  const pixels = f => { let n = 0; for (let i = 0; i < f.atCore.length; i++) if (f.atCore[i] <= 1) n++; return n; };
   for (const S of G.SPECIES) {
     const id = S.id, strokes = G.sigilStrokes(id), half = G.SIGIL_STROKE / 2;
     const inside = strokes.length > 0 && strokes.every(k => k.pts.every(([x, y]) => { const m = k.dot ? G.SIGIL_DOT : half; return x >= m - 1e-9 && x <= 1 - m + 1e-9 && y >= m - 1e-9 && y <= 1 - m + 1e-9; }));
-    const svg = G.sigilSVG(id), c = document.createElement("canvas"); c.width = c.height = 48; G.drawSigil(c.getContext("2d"), id, { size: 48, glow: 0 });
+    const svg = G.sigilSVG(id), c = document.createElement("canvas"); c.width = c.height = 48; G.drawSigil(c.getContext("2d"), id, { size: 48, glow: false });
     let ink = 0; const px = c.getContext("2d").getImageData(0, 0, 48, 48).data; for (let i = 3; i < px.length; i += 4) if (px[i] > 128) ink++;
     const glyph = G.sigilGlyph(id, 12), gn = glyph.m.reduce((a, v) => a + (v ? 1 : 0), 0);
-    const gr = G.groundSigil(id, { diameter: 64 }), at = [...gr.at], early = at.filter(a => a <= .3).length, done = at.filter(a => a <= 1).length;
-    res.push({ what: `sigil ${id}: vector, 12 px glyph, inside the box, ground draw-on`, good: inside && /<(polyline|circle)/.test(svg) && ink > 40 && gn > 8 && done > 60 && early < done, info: `${strokes.length} strokes, ${ink} px at 48, ${gn} px at 12, ground ${gr.w}x${gr.h}` });
+    const gr = [0, 1, 2].map(level => G.groundSigil(id, { level })), early = [...gr[1].atCore].filter(a => a <= .3).length, done = pixels(gr[1]);
+    const grows = gr[0].w < gr[1].w && gr[1].w < gr[2].w && pixels(gr[0]) < done && done < pixels(gr[2]) && G.sigilMark(id, 0).frame.rings < G.sigilMark(id, 1).frame.rings && G.sigilMark(id, 1).frame.rings < G.sigilMark(id, 2).frame.rings;
+    const fl = G.floatSigil(id, { level: 2 });
+    res.push({ what: `sigil ${id}: vector, 12 px glyph, inside the box, ground draw-on, levels grow, floating form`, good: inside && /<(polyline|circle)/.test(svg) && ink > 40 && gn > 8 && done > 60 && early < done && grows && pixels(fl) > 20, info: `${strokes.length} strokes, ${ink} px at 48, ${gn} px at 12, ground ${gr.map(g => g.w + "x" + g.h).join(" < ")}` });
+  }
+  { // the leash stack: still, it stands over her head, newest at the bottom; flying right, it trails left, higher sigils further; stopped, it settles back
+    const s = new G.SigilStack(); ["wolf", "owl", "stag"].forEach(id => s.push(id, 1));
+    for (let i = 0; i < 240; i++) s.update(1 / 60);
+    const still = s.layout(), order = still.map(l => l.id).join(",");
+    for (let i = 0; i < 120; i++) s.update(1 / 60, { velocity: [6, 0, 0] });
+    const fly = s.layout();
+    for (let i = 0; i < 300; i++) s.update(1 / 60, { velocity: [0, 0, 0] });
+    const back = s.layout(), placed = s.place();
+    const ok = order === "stag,owl,wolf" && still.every((l, i) => Math.abs(l.offset[0]) < .2 && (i === 0 || l.offset[1] - still[i - 1].offset[1] > (l.size + still[i - 1].size) / 2)) && fly[2].offset[0] < fly[1].offset[0] && fly[1].offset[0] < fly[0].offset[0] && fly[0].offset[0] < 0 && back.every(l => Math.abs(l.offset[0]) < .25) && placed?.id === "stag" && s.length === 2;
+    res.push({ what: "leash stack: newest at the bottom, trails behind her flight, settles, places the bottom one", good: ok, info: `flying: ${fly.map(l => l.offset[0].toFixed(2)).join(" ")}` });
   }
   { const L = G.lightProps(st), all = [...L.campfire, ...Object.values(L.stones), L.pond]; res.push({ what: "light sources: 3 campfire frames, 3 magic stones, a pond with a water mask", good: all.length === 7 && all.every(b => b.w > 4 && b.h > 4) && !!L.pond.mask, info: all.map(b => b.w + "x" + b.h).join(" ") }); }
   for (const A of G.AREAS) {
