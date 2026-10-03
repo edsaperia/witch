@@ -18,6 +18,7 @@ function inline(path) {
   // a module's own imports come first: inline what it depends on, then drop the import line
   code = code.replace(/^import\s*\{[^}]*\}\s*from\s*"(\.[^"]+)";\s*$/gm, (_, rel) => inline(resolve(dirname(path), rel)));
   if (/^\s*import\s/m.test(code)) throw new Error(`${path}: an import the build cannot inline`);
+  code = code.replace(/^export\s*\{[^}]*\};?\s*$/gm, ""); // re-exports: the names are already in scope
   return `// ---- inlined from ${path.slice(resolve(here, "../..").length + 1)} ----\n` + code.replace(/^export\s+(?=(async\s+)?(function|const|let|class)\b)/gm, "") + "\n";
 }
 
