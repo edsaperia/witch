@@ -8,6 +8,7 @@
 //   node art/preview.mjs soundsystems all art/previews/soundsystems.png [scale]
 // Optional env LEVELS=1,0 draws only those levels; FACINGS=towards,away one row per view; TREES=wBroad,wFir only those kinds.
 // Optional env SIGIL=stag adds soundsystems carved with that creature's sigil; for lights, a list of species carves stones with their sigils.
+// Optional env DRAWON=1 with sigils and a list draws each one on the ground through its draw-on.
 // Optional env GEN=<path from repo root> renders with another copy of the generator (for "before" images).
 import { writeFileSync } from "node:fs";
 import { openBrowser } from "./headless.mjs";
@@ -18,6 +19,7 @@ const b = await openBrowser();
 if (process.env.TREES) await b.page.addInitScript(l => { window.TREES = l; }, process.env.TREES.split(","));
 if (process.env.FACINGS) await b.page.addInitScript(l => { window.FACINGS = l; }, process.env.FACINGS.split(","));
 if (process.env.SIGIL) await b.page.addInitScript(l => { window.SIGIL = l; }, process.env.SIGIL);
+if (process.env.DRAWON) await b.page.addInitScript(() => { window.DRAWON = true; });
 if (process.env.LEVELS) await b.page.addInitScript(l => { window.LEVELS = l; }, process.env.LEVELS.split(",").map(Number));
 await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
 const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) => {
@@ -26,13 +28,21 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   const studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 };
   const rows = [];
   if (what === "sigils") { // every sigil, flat and on the ground (drawn), glowing on a dark ground, with its name
-    const S = await import(gen.replace("generator.js", "sigils.js")), ids = list === "all" ? S.SIGIL_IDS : list.split(","), cell = 96, cols = 6, rowsN = Math.ceil(ids.length / cols), gh = Math.ceil(cell * Math.sin(S.GROUND_PITCH)) + 2;
+    const S = await import(gen.replace("generator.js", "sigils.js"));
+    if (window.DRAWON) { // the draw-on: each listed sigil on the ground at moments through its writing, then glowing
+      const ids = list.split(","), ts = [.08, .16, .26, .36, .46, .6, 1.4], D = 112, gw = D + 2, gh = Math.ceil(D * Math.sin(S.GROUND_PITCH)) + 2, W = ts.length * (gw + 8) + 8, H = ids.length * (gh + 8) + 8;
+      const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"); g.fillStyle = "#14121c"; g.fillRect(0, 0, W, H);
+      ids.forEach((id, r) => { const gs = S.groundSigil(id, { diameter: D }); ts.forEach((t, k) => g.drawImage(S.paintGroundSigil(gs, t), 8 + k * (gw + 8), 8 + r * (gh + 8))); });
+      const big = document.createElement("canvas"); big.width = W * scale; big.height = H * scale; const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, W * scale, H * scale);
+      return big.toDataURL("image/png");
+    }
+    const ids = list === "all" ? S.SIGIL_IDS : list.split(","), cell = 96, cols = 6, rowsN = Math.ceil(ids.length / cols), gh = Math.ceil(cell * Math.sin(S.GROUND_PITCH)) + 2;
     const W = cols * cell * 2, H = rowsN * (cell + 22), c = document.createElement("canvas"); c.width = W; c.height = H;
     const g = c.getContext("2d"); g.fillStyle = "#14121c"; g.fillRect(0, 0, W, H); g.imageSmoothingEnabled = false;
     ids.forEach((id, i) => {
       const x = (i % cols) * cell * 2, y = Math.floor(i / cols) * (cell + 22);
       S.drawSigil(g, id, { x: x + cell * .08, y: y + cell * .04, size: cell * .92 });
-      const gs = S.groundSigil(id, { diameter: cell - 8 }), pc = S.paintGroundSigil(gs, 3);
+      const gs = S.groundSigil(id, { diameter: cell - 8 }), pc = S.paintGroundSigil(gs, S.SIGIL_DRAW_TIME + .8); // written, at the pulse's peak
       g.drawImage(pc, Math.round(x + cell * 1.5 - gs.w / 2), Math.round(y + cell * .6 - gs.h / 2));
       const pg = S.sigilGlyph(id, 16), col = S.sigilColour(id);
       for (let py = 0; py < 16; py++) for (let px = 0; px < 16; px++) { const m = pg.m[py * 16 + px]; if (!m) continue; g.fillStyle = m === 2 ? "#fff8e8" : `rgb(${col})`; g.fillRect(x + cell * 1.5 - 8 + px, y + 4 + py, 1, 1); }
