@@ -37,12 +37,11 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   const dt = tick(g.clock, realDt);
   if (dt === 0) return;
   g.witch = stepWitch(g.witch, c, dt, g.tuning, g.map.bounds);
-  const ahead = g.tuning.camera.lookAhead;
-  g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x + g.witch.vx * ahead, y: witchHeight(g.witch, g.tuning), z: g.witch.z + g.witch.vz * ahead }, dt, g.tuning);
+  g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, dt, g.tuning);
   stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, g.tuning.creatureSimRadius, dt);
 }
 
-export const poseOf = (g: Game): CameraPose => cameraPose(g.camera, g.witch.lift, g.tuning);
+export const poseOf = (g: Game): CameraPose => cameraPose(g.camera, g.camera.lift, g.tuning);
 
 /** The area type under the witch, by name (and its set piece, if it shows one), for the debug overlay. */
 export function areaUnderWitch(g: Game): string {

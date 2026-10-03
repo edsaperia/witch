@@ -88,6 +88,17 @@ async function main() {
     const topSpeed = (s0.z - s.z) / (s.t - s0.t);
     check(topSpeed > groundSpeed * 1.5 && topSpeed <= tuning.treetopSpeed * 1.01, `flies north faster in treetop mode (${topSpeed.toFixed(1)} m/s)`);
     await shot(page, "04-treetop-flying.png");
+    // Fly a fixed path in both modes; no tree may appear or vanish in clear view on the way.
+    await page.evaluate(() => { window.witch.view.pops = []; });
+    await hold(page, "KeyA", 1.5);
+    await hold(page, "KeyS", 1.5);
+    await page.keyboard.press("Space");
+    await sleep(800);
+    await hold(page, "KeyD", 1.5);
+    await page.keyboard.press("Space");
+    await sleep(800);
+    const pops = await page.evaluate(() => window.witch.view.pops.slice(0, 10));
+    check(pops.length === 0, `no tree pops in or out in clear view on a fixed flight path${pops.length ? ": " + pops.join("; ") : ""}`);
     await page.keyboard.press("KeyQ"); await page.keyboard.press("KeyQ");
     await sleep(800);
     await shot(page, "05-treetop-zoomed-out.png");

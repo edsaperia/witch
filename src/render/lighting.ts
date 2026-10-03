@@ -53,6 +53,7 @@ uniform vec3 uHazeColour;
 // Fade toward the twilight haze with distance, in a few dithered steps so it stays pixel art.
 vec3 haze(vec3 c, vec3 P) {
   float h = smoothstep(uHazeRange.x, uHazeRange.y, length(P.xz - uHazeCentre));
+  h *= h; // light through the middle distance, full only at the far edge
   float q = h * 4.0, fr = fract(q);
   q = floor(q) + (fr > (mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) > 0.5 ? 0.66 : 0.33) ? 1.0 : 0.0);
   return mix(c, uHazeColour, q / 4.0);

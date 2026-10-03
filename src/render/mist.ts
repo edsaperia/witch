@@ -28,7 +28,7 @@ void main() {
   vec2 drift = vec2(1.0, 0.35) * uWind * uTime;
   float n = vnoise((p + drift) / 14.0) * 0.65 + vnoise((p - drift * 0.6) / 5.0) * 0.35;
   float far = smoothstep(uHazeRange.x * 0.5, uHazeRange.y, length(vWorld.xz - uHazeCentre));
-  float a = uStrength * (smoothstep(0.5, 0.85, n) + far * 0.2);
+  float a = uStrength * (smoothstep(0.45, 0.85, n) + far * 0.3);
   // Ordered dither on the art's pixel grid: pixel art, no smooth alpha.
   vec2 g = mod(floor(gl_FragCoord.xy), 4.0);
   int i = int(g.x) + int(g.y) * 4;

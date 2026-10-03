@@ -290,11 +290,27 @@ describe("the camera", () => {
     expect(cameraPose(c, 0, TUNING).angle).toBeCloseTo(g.angleIn);
     expect(cameraPose(c, 1, TUNING).angle).toBeCloseTo(t.angleIn);
     expect(cameraPose(c, 1, TUNING).distance).toBeCloseTo(t.distanceIn);
-    for (let i = 0; i < 10; i++) c = stepCamera(c, 1, { x: 0, y: 0, z: 0 }, 1 / 60, TUNING);
-    for (let i = 0; i < 200; i++) c = stepCamera(c, 0, { x: 0, y: 0, z: 0 }, 1 / 60, TUNING);
+    const still = { x: 0, z: 0 };
+    for (let i = 0; i < 10; i++) c = stepCamera(c, 1, { x: 0, y: 0, z: 0 }, still, 0, 1 / 60, TUNING);
+    for (let i = 0; i < 300; i++) c = stepCamera(c, 0, { x: 0, y: 0, z: 0 }, still, 0, 1 / 60, TUNING);
     expect(c.zoomStep).toBe(TUNING.camera.zoomSteps - 1);
     expect(cameraPose(c, 0, TUNING).distance).toBeCloseTo(g.distanceOut, 1);
     expect(cameraPose(c, 0, TUNING).angle).toBeCloseTo(g.angleOut, 1);
+  });
+
+  it("follows smoothly: never overshoots, never jolts, and looks only a little ahead", () => {
+    let c = newCamera(TUNING, 0, 0, 0), prevV = 0, maxJerk = 0;
+    const speed = TUNING.treetopSpeed, dt = 1 / 60;
+    for (let i = 0; i < 600; i++) {
+      const x = i < 300 ? speed * i * dt : speed * 300 * dt; // fly east, then stop dead
+      c = stepCamera(c, 0, { x, y: 0, z: 0 }, { x: i < 300 ? speed : 0, z: 0 }, 1, dt, TUNING);
+      maxJerk = Math.max(maxJerk, Math.abs(c.vx - prevV) / dt);
+      prevV = c.vx;
+      expect(c.tx).toBeLessThanOrEqual(speed * 300 * dt + TUNING.camera.lookAheadMax + 1e-6);
+    }
+    expect(Math.abs(c.tx - speed * 300 * dt)).toBeLessThan(0.5);
+    expect(maxJerk).toBeLessThan(speed * TUNING.camera.follow * 1.2);
+    expect(Math.abs(c.ax)).toBeLessThanOrEqual(TUNING.camera.lookAheadMax);
   });
 
   it("sits south of and above what it looks at", () => {

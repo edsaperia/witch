@@ -27,15 +27,13 @@ export interface Tuning {
   descendTime: number;
   groundHeight: number;
   treetopHeight: number;
-  camera: { fov: number; ground: CameraModeTuning; treetop: CameraModeTuning; zoomSteps: number; startZoom: number; follow: number; lookAhead: number };
+  camera: { fov: number; ground: CameraModeTuning; treetop: CameraModeTuning; zoomSteps: number; startZoom: number; follow: number; lookAhead: number; lookAheadMax: number; lookAheadEase: number; zoomEase: number; liftEase: number };
   pixelSize: number;
   glowReach: number;
   glowHeight: number;
   spriteTilt: number;
   artPixelsPerMetre: number;
-  drawRadius: number;
-  drawRadiusTreetop: number;
-  detailRadius: number;
+  viewMargin: number;
   haze: { near: number; far: number };
   shadows: { on: boolean; strength: number };
   canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };
