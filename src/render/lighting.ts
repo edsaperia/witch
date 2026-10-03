@@ -99,12 +99,14 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
       if (s < 34.0 && (chk > 0.5 || (s > 4.0 && s < 30.0))) l += uMoonBeam;
     }
   }
+  // The witch's glow: a broad, soft pool, fairly flat for the first part of its reach, easing to
+  // nothing at the edge (no ring), from a source well above her so there's no hot spot under her.
   vec3 v = uGlowPos - P;
   float d = length(v);
   if (d < uGlowR) {
-    float ndl = max(0.0, dot(N, v / max(d, 1e-4)));
-    float fall = 1.0 - d / uGlowR;
-    l += uGlowRgb * min(1.0, ndl * fall * fall * uGlowPower); // smooth to nothing at its reach: no ring
+    float ndl = max(0.0, dot(N, v / max(d, 1e-4))) * 0.35 + 0.65;
+    float fall = 1.0 - smoothstep(0.0, uGlowR, d);
+    l += uGlowRgb * min(1.0, ndl * fall * uGlowPower);
   }
   for (int i = 0; i < ${MAX_LIGHTS}; i++) {
     if (i >= uLightCount) break;
