@@ -71,6 +71,8 @@ const assets = await b.page.evaluate(async ({ style, seed }) => {
     add(a.floor, "floor");
     a.walls.forEach((x, i) => add(x, "wall", i)); a.small.forEach((x, i) => add(x, "small", i)); a.big.forEach((x, i) => add(x, "big", i));
     if (a.setPiece) add(a.setPiece, "set", 0);
+    // its trees across a range of heights: each whole, and split into the crown (top, cut out from the treetops) and the trunk (bottom)
+    G.areaTreeVariants(A.id, st).forEach((v, i) => { for (const [part, b] of [["whole", v.whole], ["top", v.top], ["bottom", v.bot]]) list.push({ id: `area-${A.id}-tree-${i}${part === "whole" ? "" : "-" + part}`, kind: "area-tree", area: A.id, variant: i, part, heightClass: v.heightClass, weight: v.weight, scale: v.scale, metres: v.metres, crownY: v.crownY, frame: 0, w: b.w, h: b.h, anchor: { x: b.w / 2, y: b.h }, albedo: png(b.A), normal: png(b.N) }); });
   }
   // sigils: an SVG and a 64 px PNG each, with their strokes (in writing order) for the manifest
   const sigils = G.SIGIL_IDS.map(id => {
@@ -85,7 +87,7 @@ await b.close();
 const manifest = { generator: "art/generator.js", style: assets.style, placement: assets.placement, areas: assets.areas, conventions: {
   albedo: "RGBA; alpha 254 = glowing pixel, draw unlit", normal: "RGB = xyz from [-1,1] to [0,255]; x right, y down, z to viewer; flip x when mirrored",
   facing: "right; creatures come turned towards the viewer (facing towards) and turned away (facing away, ids ending -away): moving down the screen use towards, moving up use away", anchor: "pixels from top-left; the point on the ground (feet, trunk base); flyers (bat, moth) stand on their shadow",
-  floor: "area-floor tiles repeat over the ground; their normals face up", soundsystem: "the party's soundsystem: playing frames pump the cones (loop 0,1,2), damaged frames flicker (loop 0,1), destroyed is one frame; about three times the witch's height", mask: "light-pond has a mask: white where its pixels are water, for drawing the moon's glint and reflection" }, assets: [] };
+  floor: "area-floor tiles repeat over the ground; their normals face up", areaTree: "area-tree: each area's trees across a range of heights (heightClass sapling, mature, tall or giant; weight: the share of the area's trees to place of it); whole, top (the crown, cut out from the treetops) and bottom (the trunk below crownY); metres at 16 art px per metre: height, crownBase (above the ground), crownHeight, crownRadius", soundsystem: "the party's soundsystem: playing frames pump the cones (loop 0,1,2), damaged frames flicker (loop 0,1), destroyed is one frame; about three times the witch's height", mask: "light-pond has a mask: white where its pixels are water, for drawing the moon's glint and reflection" }, assets: [] };
 for (const a of assets.list) {
   const { albedo, normal, mask, anchorX, ...meta } = a;
   writeFileSync(join(out, `${a.id}.png`), Buffer.from(albedo, "base64"));
