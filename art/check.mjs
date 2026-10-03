@@ -115,6 +115,17 @@ const report = await b.page.evaluate(async () => {
     }
     res.push({ what: "tree variety: every wooded area has 8+ variants over 3+ height classes, taller by class (willows wider instead), sane bounds", good: !bad.length, info: bad.slice(0, 6).join("; ") || "ok" });
   }
+  { // set pieces: every area has one; the new ones (built in 3D) stand on the ground and are landmark-sized, 6 to 12 m across or tall
+    const bad = [], sizes = [];
+    for (const A of G.AREAS) {
+      const a = G.areaAssets(A.id, st), x = a.setPiece; if (!x) { bad.push(A.id + " has none"); continue; }
+      if (!G.NEW_SET_PIECES[A.id]) continue;
+      const big = Math.max(x.metres.width, x.metres.height); sizes.push(big);
+      let bottom = 0; const d = x.sp.A.getContext("2d").getImageData(0, x.sp.h - 1, x.sp.w, 1).data; for (let k = 3; k < d.length; k += 4) if (d[k]) bottom++;
+      if (!(big >= 6 && big <= 12 && bottom > 0)) bad.push(`${A.id} ${x.metres.width}x${x.metres.height} m${bottom ? "" : ", floating"}`);
+    }
+    res.push({ what: "set pieces: all 30 areas have one; the 20 new ones stand on the ground, 6 to 12 m across or tall", good: !bad.length && sizes.length === 20, info: bad.join(", ") || `${sizes.length} new, ${Math.min(...sizes)} to ${Math.max(...sizes)} m` });
+  }
   { const L = G.lightProps(st), all = [...L.campfire, ...Object.values(L.stones), L.pond]; res.push({ what: "light sources: 3 campfire frames, 3 magic stones, a pond with a water mask", good: all.length === 7 && all.every(b => b.w > 4 && b.h > 4) && !!L.pond.mask, info: all.map(b => b.w + "x" + b.h).join(" ") }); }
   for (const A of G.AREAS) {
     const a = G.areaAssets(A.id, st), props = [...a.walls, ...a.small, ...a.big, ...(a.setPiece ? [a.setPiece] : [])];
