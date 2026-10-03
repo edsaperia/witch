@@ -769,7 +769,7 @@ describe("the density field", () => {
     const chances: number[] = [];
     for (let i = 0; i < 3000; i++) {
       const x = map.bounds.minX + hash2(i, 5, 9) * (map.bounds.maxX - map.bounds.minX), z = map.bounds.minZ + hash2(i, 6, 9) * (map.bounds.maxZ - map.bounds.minZ);
-      if (map.hardClear(x, z)) continue;
+      if (map.hardClear(x, z) || map.paths.at(x, z)) continue; // corridors are kept clear (tested with the paths)
       chances.push(treeChance(map, x, z, map.areaAt(x, z).type));
     }
     const share = (lo: number, hi: number) => chances.filter(c => c >= lo && c < hi).length / chances.length;
@@ -781,5 +781,60 @@ describe("the density field", () => {
   it("keeps the dancefloor clear of every tree", () => {
     const d = map.dancefloor;
     expect(treeChance(map, d.x + 3, d.z - 2, map.areaAt(d.x, d.z).type)).toBe(0);
+  });
+});
+
+describe("paths, roads and railways", () => {
+  const P = map.paths, T = TUNING.paths;
+  it("are seeded: the same map makes the same network", () => {
+    expect(generateMap(123, TUNING).paths.lines).toEqual(P.lines);
+    expect(generateMap(124, TUNING).paths.lines).not.toEqual(P.lines);
+  });
+  it("have two to four railway lines crossing many areas, a road or two, and paths between areas", () => {
+    const of = (k: string) => P.lines.filter(l => l.kind === k);
+    const trunk = of("rail").filter(l => l.pts.length > 100);
+    expect(trunk.length).toBeGreaterThanOrEqual(T.rails[0]);
+    expect(of("rail").length).toBeLessThanOrEqual(T.rails[1] + 1); // plus a branch line
+    for (const l of trunk) expect(new Set(l.pts.map(p => map.areaAt(p[0], p[1]).cell.join(","))).size).toBeGreaterThan(5);
+    expect(of("road").length).toBeGreaterThanOrEqual(T.roads[0]);
+    expect(of("path").length).toBeGreaterThan(20);
+  });
+  it("meander: no path is a ruler-straight line", () => {
+    for (const l of P.lines.filter(l => l.kind === "path")) {
+      const a = l.pts[0], b = l.pts[l.pts.length - 1], len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (len < 40) continue;
+      const off = Math.max(...l.pts.map(p => Math.abs(((p[0] - a[0]) * (b[1] - a[1]) - (p[1] - a[1]) * (b[0] - a[0])) / len)));
+      expect(off).toBeGreaterThan(0.5);
+    }
+  });
+  it("keep their corridors clear of trees (but for a few on broken railway) and bushes, with bushes thick along the edges", () => {
+    const forest = new Forest(map), s = map.start;
+    let inside = 0, broken = 0;
+    for (const t of forest.treesNear(s.x, s.z, 600)) {
+      const h = P.at(t.x, t.z);
+      if (!h) continue;
+      if (h.kind === "rail" && P.railBroken(t.x, t.z)) broken++; else inside++;
+    }
+    expect(inside).toBe(0);
+    expect(broken).toBeGreaterThan(0);
+    let edge = 0, open = 0, edgeN = 0, openN = 0;
+    for (const b of forest.bushesNear(s.x, s.z, 600)) {
+      const h = P.at(b.x, b.z, T.edgeBushes);
+      if (h && h.d <= P.lines[h.line].half) expect(h.kind === "rail" && P.railBroken(b.x, b.z)).toBe(true);
+      else if (h) edge++; else open++;
+    }
+    // Bushes per square metre along the edges against elsewhere, from a grid of samples.
+    for (let i = 0; i < 40000; i++) {
+      const x = s.x - 600 + hash2(i, 1, 3) * 1200, z = s.z - 600 + hash2(i, 2, 3) * 1200, h = P.at(x, z, T.edgeBushes);
+      if (h && h.d > P.lines[h.line].half) edgeN++; else if (!h) openN++;
+    }
+    expect(edge / edgeN).toBeGreaterThan((open / openN) * 1.5);
+  });
+  it("stop at the edge of clearings, so they never run under the dancefloor or a set piece", () => {
+    const d = map.dancefloor, clear = d.radius + TUNING.dancefloor.clearing;
+    for (const l of P.lines) for (const p of l.pts) {
+      if (l.kind !== "path") continue;
+      expect(Math.hypot(p[0] - d.x, p[1] - d.z)).toBeGreaterThan(clear - l.half);
+    }
   });
 });

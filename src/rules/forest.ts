@@ -45,10 +45,12 @@ export function plantType(map: ForestMap, x: number, z: number, i: number, j: nu
 export function treeChance(map: ForestMap, x: number, z: number, type: number): number {
   const t = map.tuning, D = t.density, L = AREA_TYPES[type].layout, s = map.seed;
   if (map.hardClear(x, z)) return 0;
+  const along = map.paths.clearance(x, z).trees;
+  if (along === 0) return 0;
   const n = vnoise(x / D.patchScale, z / D.patchScale, s + 91);
   const patch = D.patchMin + (D.patchMax - D.patchMin) * smoothstep((n - 0.25) / 0.5);
   const w = map.treeWeight(x, z) * L.density * patch * patternMask(map, x, z, L) * t.treeDensity;
-  return Math.max(w, D.lone);
+  return Math.max(w, D.lone) * along;
 }
 
 /** How a type's pattern shapes its trees, around 1 on average. */
@@ -104,8 +106,11 @@ function bushesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
     const clump = 1 + map.tuning.bushClump * (2 * smoothstep((vnoise(x / 13, z / 13, s + 207) - 0.35) / 0.3) - 1);
     // Fewer under dense canopy, more where the trees are sparse (clearing rims, glades, open
     // ground), as the type's undergrowth says (Ed, 2026-10-03).
+    // Paths keep their corridors clear, with bushes thick along their edges.
+    const along = map.paths.clearance(x, z).bushes;
+    if (along === 0) continue;
     const type = plantType(map, x, z, i, j, s + 206), sparse = 1 - Math.min(1, treeChance(map, x, z, type) / 0.8);
-    if (hash2(i, j, s + 203) > (0.15 + 0.85 * sparse) * AREA_TYPES[type].layout.undergrowth * map.tuning.bushDensity * clump) continue;
+    if (hash2(i, j, s + 203) > (0.15 + 0.85 * sparse) * AREA_TYPES[type].layout.undergrowth * map.tuning.bushDensity * clump * along) continue;
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + 2) continue; // the dancefloor stays clear
     out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 204) * BUSH_VARIANTS), flip: hash2(i, j, s + 205) < 0.5 });
   }

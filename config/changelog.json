@@ -3,7 +3,10 @@
   "entries": [
     { "version": null, "items": [
       "Removed the diagonal stripes across the forest (moonbeams are off; ?moonbeams=on brings them back)",
-      "When a tree stands in front of the witch, you now see her through a soft round window that fades in gently, not a square"
+      "When a tree stands in front of the witch, you now see her through a soft round window that fades in gently, not a square",
+      "Paths wind between the areas, their look changing with each area (dirt tracks, flagstones, root paths, boardwalks...), and some peter out",
+      "Old roads sweep across the forest, and two to four railway lines curve across it, broken in places with trees growing between the sleepers",
+      "Bushes crowd along the edges of paths and tracks"
     ] },
     { "version": 116, "items": [
       "Land first to talk or to put down and pick up sigils, with new poses",

@@ -6,6 +6,7 @@ import { AREAS } from "../../art/areas.js";
 import { makePartition, type Cell, type Partition } from "./partition";
 import { hash2, rng, smoothstep, vnoise } from "./random";
 import type { Tuning } from "./tuning";
+import { PathNetwork } from "./paths";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
  *  the game's own numbers. Only plain data is read here. */
@@ -78,6 +79,8 @@ export interface ForestMap {
   hardClear(x: number, z: number): boolean;
   /** Pairs of areas that touch, as "cx,cy|cx,cy" keys, for tests and the debug view. */
   readonly neighbours: ReadonlyMap<string, ReadonlySet<string>>;
+  /** Paths, roads and railways, with the corridors they keep clear. */
+  readonly paths: PathNetwork;
 }
 
 const cellKey = (cx: number, cy: number) => cx + "," + cy;
@@ -190,12 +193,15 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
 
   const remoteness = (cx: number, cy: number) => Math.min(1, Math.hypot(cx - centreCell[0], cy - centreCell[1]) / (n / 2));
   const pad = A * 0.5;
-  return {
+  const map = {
     seed, tuning, n, margin, areaSize: A, partition, centreCell,
     dancefloor: { x: centre.x, z: centre.z, radius: floorR },
     start: { x: centre.x, z: centre.z + 2 },
     bounds: { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad },
     extent: { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A },
     typeOf, areaAt, siteOf, treeWeight, hardClear, neighbours, setPieceOf, remoteness,
+    paths: null as unknown as PathNetwork,
   };
+  map.paths = new PathNetwork(map);
+  return map;
 }

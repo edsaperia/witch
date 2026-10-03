@@ -13,6 +13,7 @@ import type { Piece } from "./artBuild";
 import type { LightSource, Plant } from "../rules/forest";
 import { hash2 } from "../rules/random";
 import { Ground } from "./ground";
+import { PathView } from "./paths";
 import { applyStyleLight, LIGHT_UNIFORMS, MAX_LIGHTS } from "./lighting";
 import { Post } from "./post";
 import { Dancefloor } from "./dancefloor";
@@ -113,6 +114,7 @@ export class View {
     }
     LIGHT_UNIFORMS.uHazeRange.value.set(t.haze.near, t.haze.far);
     this.scene.add(this.ground.mesh);
+    this.scene.add(new PathView(game.map, style, this.mpp).group);
 
     // The witch is depth-tested like everything else, drawn after it; where something still hides
     // her, a silhouette in her glow colour shows through, and tall things in front of her fade.
