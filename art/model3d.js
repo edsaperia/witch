@@ -197,12 +197,15 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
   }
   // stand on the bottom row: drop the empty rows under the lowest pixels
   let low = -1; for (let y = H - 1; y >= 0 && low < 0; y--) for (let x = 0; x < W; x++) if (sp.m[y * W + x]) { low = y; break; }
+  const drop = low >= 0 && low < H - 1 ? H - 1 - low : 0;
   if (low >= 0 && low < H - 1) {
     const d = H - 1 - low;
     for (let y = H - 1; y >= 0; y--) for (let x = 0; x < W; x++) { const i = y * W + x, j = (y - d) * W + x, ok = y - d >= 0; sp.m[i] = ok ? sp.m[j] : 0; sp.g[i] = ok ? sp.g[j] : 0; for (let c = 0; c < 3; c++) sp.n[i * 3 + c] = ok ? sp.n[j * 3 + c] : 0; }
   }
   sp.bodyH = Math.round((u1b - u0b) * s); // the body's height, without parts marked extra (antlers, wings)
-  return { sp, s };
+  // where a point of the model lands on the sprite, in pixels from its top-left (for anchors: a hand, a hat tip)
+  const project = p => { const w = toWorld(p); return [+(((w[0] - X0) * s + 1).toFixed(1)), +(((U1 - dot(w, U)) * s + drop).toFixed(1))]; };
+  return { sp, s, project };
 }
 
 // Paint helpers: a pattern from model coordinates.

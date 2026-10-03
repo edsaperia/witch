@@ -3,7 +3,7 @@
 //   node art/preview.mjs animals wolf,boar,owl art/previews/animals.png [scale]
 //   node art/preview.mjs trees all art/previews/trees.png [scale]
 //   node art/preview.mjs areas all art/previews/areas.png [scale]
-//   node art/preview.mjs witch all art/previews/witch-flight.png [scale]   ("fast" instead of all: hover, lean and the fast pose)
+//   node art/preview.mjs witch all art/previews/witch-flight.png [scale]   ("fast" instead of all: hover, lean and the fast pose; "foot": hover and every on-foot pose, POSES=stand,talk,... to pick, ANCHORS=1 to mark her hand and hat tip)
 //   node art/preview.mjs treeheights fern-forest,garden art/previews/tree-heights.png [scale]
 //   node art/preview.mjs lights all art/previews/light-sources.png [scale]
 //   node art/preview.mjs party wolf,fox,owl art/previews/party.png [scale]
@@ -30,6 +30,8 @@ if (process.env.DRAWON) await b.page.addInitScript(() => { window.DRAWON = true;
 if (process.env.STYLE) await b.page.addInitScript(o => { window.STYLE = o; }, JSON.parse(process.env.STYLE));
 if (process.env.NIGHT) await b.page.addInitScript(() => { window.NIGHT = true; });
 if (process.env.LEVELS) await b.page.addInitScript(l => { window.LEVELS = l; }, process.env.LEVELS.split(",").map(Number));
+if (process.env.POSES) await b.page.addInitScript(l => { window.POSES = l; }, process.env.POSES.split(","));
+if (process.env.ANCHORS) await b.page.addInitScript(() => { window.ANCHORS = true; });
 await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
 const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) => {
   const G = await import(gen), { shade } = await import(lighting);
@@ -83,7 +85,11 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push((window.LEVELS || [3, 2, 1, 0]).flatMap(l => [0, 1].map(f => G.bake(G.critter(id, l, f, st, facing), G.speciesColours(id, st), st, st.cOutline))));
   } else if (what === "witch") { // per facing: the ordinary hover frame, then rise (two frames) and descend (two frames)
     const wc = G.witchColours(st), b = o => G.bake(G.witchSprite(st, o), wc, st, st.cOutline);
-    for (const facing of ["towards", "away"]) rows.push(list === "fast" ? [b({ facing }), b({ facing, lean: true }), ...[0, 1, 2].map(frame => b({ facing, pose: "fast", frame })), ...[0, 1].map(frame => b({ facing, pose: "brake", frame }))] // hover, lean, fast's three frames, brake's two
+    // "foot": hover, then every on-foot pose's frames (stand, land, takeoff, talk, placeSigil, liftSigil); with ANCHORS=1 her hand and hat tip marked
+    const mark = (sp, bk) => { if (window.ANCHORS && sp.anchors) { const g = bk.A.getContext("2d"); for (const [[x, y], c] of [[sp.anchors.hand, "#0ff"], [sp.anchors.hatTip, "#f0f"]]) { g.fillStyle = c; g.fillRect(Math.round(x) - 1, Math.round(y) - 1, 3, 3); } } return bk; };
+    const fb = o => { const sp = G.witchSprite(st, o); return mark(sp, G.bake(sp, wc, st, st.cOutline)); };
+    if (list === "foot") for (const facing of window.FACINGS || ["towards", "away"]) rows.push([b({ facing }), ...Object.entries(G.WITCH_FOOT_POSES).filter(([pose]) => !window.POSES || window.POSES.includes(pose)).flatMap(([pose, { frames }]) => [...Array(frames).keys()].map(frame => fb({ facing, pose, frame })))]);
+    else for (const facing of ["towards", "away"]) rows.push(list === "fast" ? [b({ facing }), b({ facing, lean: true }), ...[0, 1, 2].map(frame => b({ facing, pose: "fast", frame })), ...[0, 1].map(frame => b({ facing, pose: "brake", frame }))] // hover, lean, fast's three frames, brake's two
       : [b({ facing }), b({ facing, pose: "rise", frame: 0 }), b({ facing, pose: "rise", frame: 1 }), b({ facing, pose: "descend", frame: 0 }), b({ facing, pose: "descend", frame: 1 })]);
   } else if (what === "treeheights") { // per area: its tree variants, saplings to the giant, then the witch for scale
     const wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);

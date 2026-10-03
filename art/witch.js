@@ -82,8 +82,119 @@ function fastModel(frame) {
   return m;
 }
 
+// On foot (Ed: "the witch land and hold her broomstick with one hand and gesture with the other
+// for talking", and "lift sigil" and "place sigil" gestures). She stands on the ground with her
+// broom in her far hand, upright like a staff, bristles down; the near hand is free.
+//   stand        three frames of idle: breathing, hair and jacket stirring
+//   land         from hovering to standing: astride the dipped broom, feet down; a leg swung over; the broom swung upright
+//   takeoff      back again: the broom swung down; a leg over; astride it, pushing off
+//   talk         four gestures: an open palm, pointing up (an idea), a wave, a hand on her chest; her head tilts between them
+//   placeSigil   reaching up to the stack over her head; drawing a sigil down; crouched, palm to the ground
+//   liftSigil    crouched, palm to the ground; rising with it; tossing it up into the stack
+// The sigil itself is not drawn; each frame records her free hand (where a held sigil goes) and
+// her hat tip as anchors. frames and a suggested fps per pose:
+export const WITCH_FOOT_POSES = { stand: { frames: 3, fps: 3 }, land: { frames: 3, fps: 10 }, takeoff: { frames: 3, fps: 10 }, talk: { frames: 4, fps: 2.5 }, placeSigil: { frames: 3, fps: 6 }, liftSigil: { frames: 3, fps: 6 } };
+// Each frame: crouch (0 standing, 1 squatting), bend (the spine's forward lean, radians), hop (feet off the ground),
+// breathe, sway (hair and jacket), tilt (the head to one side), look (up), the free hand and its shape, the broom
+// (held upright, astride, or at an angle: its binding point and direction), a leg swung up, a talking mouth.
+const UPRIGHT = { binding: [-.02, .31, -.2], dir: [.02, 1, -.04] };
+const FOOT_FRAMES = {
+  stand: [0, 1, 2].map(f => ({ breathe: [0, .006, .012][f], sway: [0, .02, .035][f], free: [.04, .5 + [0, .006, .012][f], .18], hand: "rest", broom: UPRIGHT })),
+  land: [
+    { crouch: .2, hop: .01, broom: { astride: true }, sway: .05 },                                                 // astride the dipped broom, feet touching down
+    { crouch: .1, bend: .1, broom: { binding: [-.28, .26, -.08], dir: [.6, .5, -.06] }, legUp: [.18, .24, .12], sway: .03, free: [.2, .58, .2], hand: "rest" }, // swinging a leg over
+    { breathe: .004, broom: { binding: [.06, .31, -.2], dir: [.18, 1, -.03] }, sway: .015, free: [.06, .52, .19], hand: "rest" }, // the broom swung upright
+  ],
+  takeoff: [
+    { crouch: .1, broom: { binding: [-.1, .3, -.17], dir: [.35, .7, -.04] }, free: [.16, .58, .2], hand: "rest", sway: .02 }, // the broom swung down
+    { crouch: .15, bend: .1, broom: { binding: [-.3, .28, -.06], dir: [.7, .4, -.04] }, legUp: [.1, .26, .13], sway: .04, free: [.24, .55, .17], hand: "rest" }, // a leg over
+    { hop: .1, broom: { astride: true }, toes: true, sway: .06 },                                                   // astride it, pushing off
+  ],
+  talk: [
+    { free: [.47, .84, .13], hand: "palm", tilt: .35, mouth: true, sway: .01 },                     // an open palm
+    { free: [.32, 1.18, .12], hand: "point", tilt: -.25, look: .12, sway: .02 },                    // pointing up: an idea
+    { free: [.24, 1.16, .3], elbow: [.26, .88, .26], hand: "wave", tilt: .45, mouth: true, sway: .03 }, // a little wave
+    { free: [.15, .76, .1], hand: "chest", tilt: -.35, breathe: .01, sway: .015 },                // a hand on her chest
+  ],
+  placeSigil: [
+    { free: [.16, 1.62, .1], hand: "palm", look: .22, breathe: .01, sway: .02 },                 // reaching up to the stack
+    { free: [.42, 1.0, .12], hand: "palm", look: .08, sway: .03 },                                 // drawing a sigil down
+    { crouch: .7, bend: .55, free: [.38, .1, .13], hand: "down", look: -.08, sway: .04 },          // crouched, palm to the ground
+  ],
+  liftSigil: [
+    { crouch: .7, bend: .55, free: [.36, .08, .13], hand: "down", look: -.08, sway: .02 },         // crouched, palm to the ground
+    { crouch: .25, bend: .18, free: [.44, .82, .12], hand: "palm", look: .05, sway: .04 },         // rising with it
+    { breathe: .012, free: [.2, 1.64, .1], hand: "palm", look: .25, sway: .05, toes: true },     // tossing it up into the stack
+  ],
+};
+// the knee between a hip and a foot, bent forward
+function kneeOf(hip, foot, l) {
+  const d = Math.hypot(foot[0] - hip[0], foot[1] - hip[1]), mid = v3.lerp(hip, foot, .5);
+  if (d >= 2 * l) return mid;
+  const off = Math.sqrt(l * l - d * d / 4), vx = (foot[0] - hip[0]) / d, vy = (foot[1] - hip[1]) / d;
+  return [mid[0] - vy * off, mid[1] + vx * off, mid[2]];
+}
+function footModel(pose, frame) {
+  const fr = FOOT_FRAMES[pose], K = { crouch: 0, bend: 0, hop: 0, breathe: 0, sway: 0, tilt: 0, look: 0, broom: UPRIGHT, ...fr[frame % fr.length] };
+  const m = new Model({ blend: .03 }), hop = K.hop, sway = K.sway;
+  const hipY = .45 - K.crouch * .21 + hop, hipX = -K.crouch * .12;
+  // the broom: astride it (the handle level between her legs) or a binding point and a direction
+  const astride = !!K.broom.astride, yb = hipY - .04;
+  const bdir = astride ? [1, 0, 0] : v3.norm(K.broom.dir), bind = astride ? [-.36, yb, 0] : K.broom.binding;
+  const along = t => v3.add(bind, v3.mul(bdir, t));
+  m.seg(along(0), along(astride ? .98 : 1.1), .022, .018, M.BROOM, { group: 2 });
+  m.ell(along(-.13), [.17, .07, .08], M.STRAW, { dir: bdir, group: 3, paint: p => { const t = v3.dot(v3.sub(p, bind), bdir); return t < -.22 ? M.MAGIC2 : t > -.01 ? M.BROOM : undefined; } });
+  // legs: jeans to the knee, then down to sneakers; one swung up over the broom; on her toes pushing off
+  for (const side of [-1, 1]) {
+    const g = side > 0 ? 6 : 4, hip = [hipX, hipY, side * .07];
+    const foot = side > 0 && K.legUp ? K.legUp : [(side > 0 ? .05 : -.01) + (K.toes ? -.03 : 0), .07 + (K.toes ? hop * .4 : hop), side * .1];
+    const knee = kneeOf(hip, foot, .21);
+    m.seg(hip, knee, .055, .045, M.JEANS, { group: g }); m.seg(knee, foot, .045, .04, M.JEANS, { group: g });
+    const toe = K.toes ? [.03, -.045, 0] : [.05, -.03, 0];
+    m.ell(v3.add(foot, toe), [.08, .04, .045], M.SHOES, { dir: K.toes ? [1, -.6, 0] : [1, 0, 0], group: g, paint: p => p[1] < foot[1] + toe[1] - .015 ? M.BELLY : undefined });
+  }
+  // body: hips in jeans, a top under an open jacket, leaning with the spine
+  const spine = [Math.sin(K.bend), Math.cos(K.bend), 0], fwd = [Math.cos(K.bend), -Math.sin(K.bend), 0];
+  const hips = [hipX, hipY + .03, 0]; m.ell(hips, [.1, .08, .105], M.JEANS, { group: 1 });
+  const chest = v3.add(hips, v3.add(v3.mul(spine, .19), [0, K.breathe, 0]));
+  m.ell(chest, [.1, .15 + K.breathe * .5, .115], M.JACKET, { dir: fwd, group: 1, paint: p => v3.dot(v3.sub(p, chest), fwd) > .045 && Math.abs(p[2]) < .05 ? M.TOP : undefined });
+  // the jacket's hem hanging behind, stirring
+  m.chain([[...v3.add(chest, v3.add(v3.mul(fwd, -.07), v3.mul(spine, -.08))), .07], [...v3.add(chest, v3.add(v3.mul(fwd, -.11 - sway), v3.mul(spine, -.2))), .05], [...v3.add(chest, v3.add(v3.mul(fwd, -.13 - sway * 1.6), v3.mul(spine, -.29))), .025]], M.JACKET, { group: 12 });
+  // head: tilted to one side, looking up or down
+  const H = v3.add(chest, v3.add(v3.mul(spine, .27), [K.look * .03, 0, K.tilt * .04]));
+  // arms: the far hand grips the broom; the near hand is free (or on the handle, astride)
+  const shoulder = side => v3.add(chest, v3.add(v3.mul(spine, .1), [0, 0, side * .12]));
+  const grip = astride ? [.28, yb + .03, -.05] : along(Math.max(.12, (Math.min(.62, hipY + .2) - bind[1]) / Math.max(.3, bdir[1])));
+  const free = astride ? [.28, yb + .03, .05] : K.free;
+  for (const side of [-1, 1]) {
+    const g = side > 0 ? 7 : 5, sh = shoulder(side), hand = side > 0 ? free : grip;
+    const elbow = side > 0 && K.elbow ? K.elbow : v3.add(v3.lerp(sh, hand, .5), [-.03, -.02, side * .05]);
+    m.seg(sh, elbow, .04, .035, M.JACKET, { group: g }); m.seg(elbow, hand, .035, .03, M.JACKET, { group: g });
+    const shape = side > 0 && !astride ? K.hand : "grip";
+    if (shape === "palm") m.ell(hand, [.045, .02, .04], M.SKIN, { group: g });                                   // open, palm up
+    else if (shape === "down") m.ell(hand, [.045, .02, .04], M.SKIN, { dir: [1, .15, 0], group: g });             // flat, palm to the ground
+    else if (shape === "wave") { m.ell(hand, [.03, .045, .04], M.SKIN, { group: g }); for (const k of [-1, 0, 1]) m.seg(v3.add(hand, [0, .03, k * .02]), v3.add(hand, [k * .01, .065, k * .03]), .01, .008, M.SKIN, { group: g }); } // fingers spread
+    else if (shape === "point") { m.ell(hand, [.035, .03, .035], M.SKIN, { group: g }); m.seg(v3.add(hand, [0, .02, 0]), v3.add(hand, [.01, .08, 0]), .012, .01, M.SKIN, { group: g }); } // a finger up
+    else m.ell(hand, [.035, .03, .035], M.SKIN, { group: g });
+  }
+  // face, hair, headphones and hat (as in flight, but the hair hangs down her back)
+  m.ell(H, [.11, .115, .1], M.SKIN, { group: 8, paint: p => (p[0] < H[0] - .01 || p[1] > H[1] + .075) ? M.HAIR : undefined });
+  for (const side of [-1, 1]) m.ell(Model.surface(H, [.11, .115, .1], v3.norm([.85, .05 + K.look, side * .45 + K.tilt * .1])), [.016, .026, .016], M.EYE, { group: 8 });
+  if (K.mouth) m.ell(Model.surface(H, [.11, .115, .1], v3.norm([1, -.5 + K.look, K.tilt * .1])), [.012, .016, .025], M.NOSE, { group: 8 }); // talking
+  m.chain([[...v3.add(H, [-.06, .02, 0]), .06], [...v3.add(H, [-.12 - sway, -.12, .02 + K.tilt * .03]), .05], [...v3.add(H, [-.13 - sway * 1.5, -.25, .03 + K.tilt * .04]), .03]], M.HAIR, { group: 9 });
+  for (const side of [-1, 1]) m.ell(v3.add(H, [-.015, 0, side * .105]), [.05, .055, .03], M.PHONES, { group: 10 });
+  m.chain([[...v3.add(H, [-.005, .03, -.095]), .015], [...v3.add(H, [-.005, .11, -.05]), .015], [...v3.add(H, [-.005, .125, 0]), .015], [...v3.add(H, [-.005, .11, .05]), .015], [...v3.add(H, [-.005, .03, .095]), .015]], M.PHONES, { group: 10 });
+  const brim = v3.add(H, [-.03, .1, K.tilt * .02]), tz = K.tilt * .05, tip = v3.add(brim, [-.16 - sway * .5, .27, tz * 2]);
+  m.ell(brim, [.16, .014, .15], M.HAT, { dir: [1, .25 - K.look * .8, K.tilt * .3], group: 11 });
+  m.chain([[...v3.add(brim, [0, .01, 0]), .085], [...v3.add(brim, [-.05, .17, tz]), .045], [...tip, .012]], M.HAT, { group: 11, paint: p => p[1] < brim[1] + .045 ? M.MAGIC : undefined });
+  m.ell([.02, .005, 0], [.2, .005, .12], M.NOSE, { group: 0 }); // her shadow at her feet
+  m.anchors.hand = free; m.anchors.hatTip = tip;
+  return m;
+}
+
 export function witchModel({ frame = 0, lean = false, pose } = {}) {
   if (pose === "fast") return fastModel(frame);
+  if (WITCH_FOOT_POSES[pose]) return footModel(pose, frame);
   const rise = pose === "rise", desc = pose === "descend", brake = pose === "brake", posed = rise || desc || brake;
   const m = new Model({ blend: .03 }), bob = posed ? 0 : [0, .025, .045][frame % 3], tilt = posed ? 0 : [0, .015, -.01][frame % 3] + (lean ? .08 : 0);
   // the broom's height; how far she leans forward on it (back, braking). Posed, she leans well into it, so that
@@ -163,7 +274,9 @@ const scaleCache = new Map();
 const witchScale = h => { if (!scaleCache.has(h)) scaleCache.set(h, render(witchModel({ frame: 0 }), { height: h }).s); return scaleCache.get(h); };
 export function witchSprite(st = {}, { frame = 0, lean = false, facing = "towards", pose } = {}) {
   const h = witchHeight(st);
-  const { sp } = pose ? render(witchModel({ frame, pose }), { scale: witchScale(h), facing }) : render(witchModel({ frame, lean }), { height: h, facing });
+  const model = witchModel({ frame, lean, pose }), { sp, project } = pose ? render(model, { scale: witchScale(h), facing }) : render(model, { height: h, facing });
+  // on foot: where her free hand (a held sigil) and her hat tip are, in pixels from the top-left
+  if (model.anchors.hand) sp.anchors = { hand: project(model.anchors.hand), hatTip: project(model.anchors.hatTip) };
   // she glows: a few motes of light round her
   let n = 0;
   for (let i = 0; i < 400 && n < 6; i++) {
