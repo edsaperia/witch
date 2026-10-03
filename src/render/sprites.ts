@@ -50,7 +50,7 @@ uniform sampler2D uAlbedo, uNormal;
 uniform vec3 uRight, uUp, uFacing;
 uniform float uTopFade, uUnlit;
 uniform vec4 uCutout;
-uniform float uDebugCull;
+uniform float uDebugCull, uIsScenery;
 varying vec2 vUv;
 varying vec3 vWorld;
 varying vec3 vFlags;
@@ -62,7 +62,7 @@ float bayer(vec2 p) {
   int m[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
   return (float(m[i]) + 0.5) / 16.0;
 }
-void main() {
+void shade() {
   vec4 a = texture2D(uAlbedo, vUv);
   if (a.a < 0.5) discard;
   if (vFlags.y > 0.5) {
@@ -81,6 +81,15 @@ void main() {
   vec3 N = normalize(uRight * nx - uUp * ny + uFacing * nz);
   gl_FragColor = vec4(haze(min(vec3(1.0), a.rgb * nightLight(N, vWorld) * 1.25), vWorld), 1.0);
 }
+void main() {
+  shade();
+  // Scenery past the budget's radius fades out smoothly (alpha), from the far edge inward.
+  if (uIsScenery > 0.5) {
+    float k = sceneryFade(vWorld);
+    if (k < 0.004) discard;
+    gl_FragColor.a = k;
+  }
+}
 `;
 
 export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean }
@@ -96,7 +105,7 @@ export class SpriteBatch {
   count = 0;
 
   /** metresPerPixel: world size of one art pixel. */
-  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean } = {}) {
+  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean } = {}) {
     const quad = new THREE.PlaneGeometry(1, 1);
     quad.translate(0, 0.5, 0); // stand on the base
     this.geo = new THREE.InstancedBufferGeometry();
@@ -107,12 +116,16 @@ export class SpriteBatch {
     this.grow(64);
     const mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
-      uniforms: { ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 } },
+      uniforms: { ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 } },
+      // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
+      // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
+      ...(opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {}),
       depthTest: !opts.onTop, depthWrite: !opts.onTop,
     });
     this.mesh = new THREE.Mesh(this.geo, mat);
     this.mesh.frustumCulled = false;
     if (opts.onTop) this.mesh.renderOrder = 10;
+    if (opts.scenery) this.mesh.renderOrder = 0.5; // after the ground it fades over, before the shadows and mist
   }
 
   private grow(n: number): void {

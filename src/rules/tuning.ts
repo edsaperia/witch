@@ -49,6 +49,8 @@ export interface Tuning {
   lightBudget: number;
   lightSources: { spacing: number; campfire: number; magicStone: number; pond: number; wetPond: number };
   haze: { near: number; far: number };
+  /** The scenery budget: scenery is drawn out to an adaptive radius round the witch (view.ts). */
+  scenery: { adaptive: boolean; fps: number; hysteresis: number; sustain: number; minRadius: number; shrink: number; grow: number; fade: number };
   stringLights: { on: boolean; perArea: number; spanMin: number; spanMax: number; chainMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; twinkle: number; chaseSpeed: number };
   party: { interval: number; startDelay: number; maxPerWave: number; transition: number; lightReach: number; lightStrength: number };
   dancefloor: {

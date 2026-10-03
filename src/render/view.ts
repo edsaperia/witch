@@ -24,13 +24,14 @@ import { BorderView } from "./borders";
 import { Mist } from "./mist";
 import { ShadowBatch, type ShadowInstance } from "./shadows";
 import { lerp } from "../rules/random";
+import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
 import type { Style } from "./style";
 
 /** A point light: where, how far it reaches, its colour and strength. */
 export interface ForestLight { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number }
 
-export interface ViewStats { dropped: number; trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number; lights: number }
+export interface ViewStats { sceneryRadius: number; fps: number; gameplay: number; scenery: number; dropped: number; trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number; lights: number }
 
 export class View {
   readonly renderer: THREE.WebGLRenderer;
@@ -44,7 +45,12 @@ export class View {
   private stoneBatch: SpriteBatch;
   private shadow: THREE.Mesh;
   private mpp: number; // metres per art pixel
-  private lastBuild = { x: Infinity, y: Infinity, z: Infinity, version: -1 };
+  private lastBuild = { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1 };
+  /** The scenery budget: how far round the witch scenery is drawn (rules/budget.ts). */
+  private budget: SceneryBudget;
+  /** ?scenery=<metres>: a fixed scenery radius instead of the adaptive one. */
+  sceneryFixed: number | null = null;
+  private lastReal = 0;
   readonly post: Post;
   private dancefloor: Dancefloor;
   private propBatch: SpriteBatch;
@@ -68,10 +74,11 @@ export class View {
   private ghosts: { x: number; z: number; h: number; until: number }[] = [];
   private ghostLines: THREE.LineSegments | null = null;
   private now = 0;
-  stats: ViewStats = { dropped: 0, trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0, lights: 0 };
+  stats: ViewStats = { sceneryRadius: 0, fps: 0, gameplay: 0, scenery: 0, dropped: 0, trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0, lights: 0 };
 
   constructor(readonly canvas: HTMLCanvasElement, readonly game: Game, readonly style: Style) {
     const t = game.tuning;
+    this.budget = newBudget(t);
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance", preserveDrawingBuffer: true });
     this.renderer.setPixelRatio(1);
     this.renderer.info.autoReset = false; // count every pass of a frame, reset in render()
@@ -239,8 +246,8 @@ export class View {
 
   /** Whether a sprite standing at (x, z), w wide and h tall, may be on screen now or soon. Nothing
    *  is drawn beyond the haze's far edge, where the haze has already hidden it completely. */
-  private inView(x: number, z: number, w: number, h: number, margin: number): boolean {
-    const wx = this.game.witch.x, wz = this.game.witch.z, far = this.game.tuning.haze.far + margin;
+  private inView(x: number, z: number, w: number, h: number, margin: number, reach = this.game.tuning.haze.far): boolean {
+    const wx = this.game.witch.x, wz = this.game.witch.z, far = reach + margin;
     if ((x - wx) ** 2 + (z - wz) ** 2 > far * far) return false;
     this.box.min.set(x - w / 2 - margin, -margin, z - h - margin);
     this.box.max.set(x + w / 2 + margin, h + margin, z + margin);
@@ -279,7 +286,9 @@ export class View {
     if (live) {
       const at = (k: string, what: string) => {
         const p = this.at.get(k), [kind, ...rest] = k.split("|"), [x, z, h] = p ?? rest.map(Number);
-        if (this.inInnerView(+x, +z, +h)) this.pops.push(`${what} ${kind} ${(+x).toFixed(0)},${(+z).toFixed(0)}`);
+        // Scenery in or past the budget's fade has faded out: its coming and going isn't seen.
+        const w = this.game.witch, faded = which === "placed" && Math.hypot(+x - w.x, +z - w.z) > this.budget.radius - this.game.tuning.scenery.fade;
+        if (!faded && this.inInnerView(+x, +z, +h)) this.pops.push(`${what} ${kind} ${(+x).toFixed(0)},${(+z).toFixed(0)}`);
       };
       for (const k of tr.now) if (!tr.before.has(k)) at(k, "appeared");
       for (const k of tr.before) if (!tr.now.has(k)) at(k, "vanished");
@@ -296,11 +305,15 @@ export class View {
     const key = { x: cam.position.x, y: cam.position.y, z: cam.position.z };
     const lp = this.lastPose, lift = g.witch.mode === "rising" || g.witch.mode === "treetop" ? 1 : 0;
     const moved = Math.hypot(key.x - this.lastBuild.x, key.y - this.lastBuild.y, key.z - this.lastBuild.z) >= margin / 3;
+    // Scenery is listed a little past the budget's radius (drawn there fully faded), so it is in
+    // the list before the radius grows over it.
+    const radius = this.budget.radius, reach = Math.min(t.haze.far, radius + margin / 2);
+    const regrown = Math.abs(radius - this.lastBuild.radius) >= margin / 3;
     const turned = Math.abs(pose.distance - lp.distance) > 2 || Math.abs(pose.angle - lp.angle) > 0.5 || g.camera.zoomStep !== lp.zoomStep || lift !== lp.lift;
-    if (!force && !moved && !turned && this.assets.version === this.lastBuild.version) return;
-    this.lastBuild = { ...key, version: this.assets.version };
+    if (!force && !moved && !turned && !regrown && this.assets.version === this.lastBuild.version) return;
+    this.lastBuild = { ...key, version: this.assets.version, radius };
     this.lastPose = { distance: pose.distance, angle: pose.angle, zoomStep: g.camera.zoomStep, lift };
-    const r = this.viewRect(t.haze.far, margin), cx = (r.minX + r.maxX) / 2, cz = (r.minZ + r.maxZ) / 2, half = Math.max(r.maxX - r.minX, r.maxZ - r.minZ) / 2;
+    const r = this.viewRect(reach, margin), cx = (r.minX + r.maxX) / 2, cz = (r.minZ + r.maxZ) / 2, half = Math.max(r.maxX - r.minX, r.maxZ - r.minZ) / 2;
     const shadows: ShadowInstance[] = [];
     // Shadows fall away from the moon: from the upper left, so toward the lower right.
     const L = LIGHT_UNIFORMS.uMoonDir.value, sx = -L.x / Math.max(0.2, L.y), sz = -L.z / Math.max(0.2, L.y);
@@ -312,12 +325,12 @@ export class View {
       const art = this.assets.typeArt(p.type);
       if (!art || !art.layout.big.length) continue;
       const f = art.atlas.frames, big = art.layout.big[p.variant % art.layout.big.length], whole = f[big.top ?? big.bot];
-      if (!this.inView(p.x, p.z, whole.w * mpp, whole.h * mpp, margin)) continue;
+      if (!this.inView(p.x, p.z, whole.w * mpp, whole.h * mpp, margin, reach)) continue;
       const fresh = this.mark("tree", p.x, p.z, whole.h * mpp);
       add(p.type, { x: p.x, y: 0, z: p.z, frame: f[big.bot], flip: p.flip, fresh });
       if (big.top !== null) add(p.type, { x: p.x, y: 0, z: p.z, frame: f[big.top], flip: p.flip, top: true, fresh });
       const w = whole.w * mpp, h = whole.h * mpp * (big.top === null ? 0.2 : 0.6);
-      if (t.shadows.trees) shadows.push({ x: p.x + sx * h, z: p.z + sz * h, w: w * 0.8, d: w * 0.45 });
+      if (t.shadows.trees) shadows.push({ x: p.x + sx * h, z: p.z + sz * h, w: w * 0.8, d: w * 0.45, scenery: true });
       nt++;
     }
     const scatter = (kind: string, list: Plant[], pick: (l: TypeArt["layout"]) => Piece[]) => {
@@ -327,11 +340,11 @@ export class View {
         const pieces = pick(art.layout);
         if (!pieces.length) continue;
         const piece = pieces[p.variant % pieces.length], f = art.atlas.frames, frame = f[piece.bot], whole = f[piece.top ?? piece.bot];
-        if (!this.inView(p.x, p.z, whole.w * mpp, whole.h * mpp, margin)) continue;
+        if (!this.inView(p.x, p.z, whole.w * mpp, whole.h * mpp, margin, reach)) continue;
         const fresh = this.mark(kind, p.x, p.z, whole.h * mpp);
         add(p.type, { x: p.x, y: 0, z: p.z, frame, flip: p.flip, fresh });
         if (piece.top !== null) add(p.type, { x: p.x, y: 0, z: p.z, frame: f[piece.top], flip: p.flip, top: true, fresh });
-        shadows.push({ x: p.x, z: p.z, w: frame.w * mpp * 0.8, d: frame.w * mpp * 0.3 });
+        shadows.push({ x: p.x, z: p.z, w: frame.w * mpp * 0.8, d: frame.w * mpp * 0.3, scenery: true });
         nb++;
       }
     };
@@ -340,7 +353,7 @@ export class View {
     scatter("setpiece", g.forest.setPiecesNear(cx, cz, half), l => (l.set === null ? [] : [l.set]));
     for (const [type, b] of this.typeBatches) if (!per.has(type)) b.set([]);
     for (const [type, list] of per) {
-      const b = this.batchFor(this.typeBatches, type, () => { const a = this.assets.typeArt(type); return a && new SpriteBatch(a.atlas, mpp); });
+      const b = this.batchFor(this.typeBatches, type, () => { const a = this.assets.typeArt(type); return a && new SpriteBatch(a.atlas, mpp, { scenery: true }); });
       b?.set(list);
     }
     this.checkPops("placed", !force);
@@ -453,6 +466,14 @@ export class View {
   /** Draw a frame; with draw false, only bring the camera, batches and art requests up to date. */
   render(time: number, draw = true): void {
     const g = this.game, t = g.tuning, pose = poseOf(g);
+    // The scenery budget follows the real frame rate (only frames that are drawn count).
+    if (draw) {
+      const now = performance.now();
+      if (this.lastReal) this.budget = stepBudget(this.budget, (now - this.lastReal) / 1000, t);
+      this.lastReal = now;
+    }
+    if (this.sceneryFixed !== null) this.budget.radius = Math.min(t.haze.far, Math.max(1, this.sceneryFixed));
+    LIGHT_UNIFORMS.uScenery.value.set(this.budget.radius, Math.max(1, t.scenery.fade));
     const a = (pose.angle * Math.PI) / 180;
     // Camera, snapped to the pixel grid along the screen's axes so the art does not shimmer.
     const wpp = (2 * pose.distance * Math.tan((t.camera.fov * Math.PI) / 360)) / this.height;
@@ -521,5 +542,8 @@ export class View {
     this.stats.dropped = dropped;
     this.stats.drawCalls = this.renderer.info.render.calls;
     this.stats.batches = this.typeBatches.size + this.creatureBatches.size;
+    this.stats.sceneryRadius = this.budget.radius; this.stats.fps = this.budget.fps;
+    this.stats.scenery = this.stats.trees + this.stats.bushes;
+    this.stats.gameplay = this.stats.creatures + this.propBatch.count + this.soundBatch.count;
   }
 }
