@@ -139,6 +139,7 @@ The trade is speed against information: treetop mode covers distance, ground mod
 - **Tuning values live in data files** Ed can edit, not in code.
 - **Area types and creatures are data**: adding one is a definition file and its art, not new engine code; a creature's unique behaviour is built from shared parts, with its own script only where it needs one.
 - **Every change gets a playable link** for playtests.
+- **The party loop is first tested in the real game** (the Three.js prototype), not in a separate throwaway top-down prototype (Ed, 2026-10-03).
 - **Variants are switches**: where the design is an experiment (phases, camera angles), playtest builds carry a switch for each variant rather than one baked-in answer.
 - **Maps come from a seed**, so a tester can share the exact map they played.
 - **Scope small, then grow**: a toy, then a slice, then content.
