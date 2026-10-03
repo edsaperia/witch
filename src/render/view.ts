@@ -26,6 +26,7 @@ export class View {
   private shadow: THREE.Mesh;
   private mpp: number; // metres per art pixel
   private lastBuild = { x: Infinity, z: Infinity, version: -1 };
+  private prefetch = false;
   private width = 1;
   private height = 1;
   stats: ViewStats = { trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0 };
@@ -77,11 +78,13 @@ export class View {
     this.camera.updateProjectionMatrix();
   }
 
-  /** Ask for the art the start area needs and make it now, before the first frame. */
-  prepare(): void {
+  /** Make the art and ground round the start before the first frame. */
+  async prepare(): Promise<void> {
     this.refresh(true);
-    this.assets.work(Infinity);
+    this.drawCreatures();
     this.ground.fill(this.renderer, this.game.witch.x, this.game.witch.z, 50, Infinity);
+    await this.assets.whenIdle();
+    this.prefetch = true;
     this.refresh(true);
   }
 
@@ -99,6 +102,10 @@ export class View {
     this.lastBuild = { x: cx, z: cz, version: this.assets.version };
     const per = new Map<number, SpriteInstance[]>();
     const add = (type: number, inst: SpriteInstance) => { let l = per.get(type); if (!l) per.set(type, (l = [])); l.push(inst); };
+    // Ask ahead for the art of every area a little beyond what is drawn.
+    const A = g.map.areaSize, ahead = R + A * 1.5;
+    if (this.prefetch) for (let cy = Math.floor((cz - ahead) / A); cy <= Math.floor((cz + ahead) / A); cy++)
+      for (let cx2 = Math.floor((cx - ahead) / A); cx2 <= Math.floor((cx + ahead) / A); cx2++) this.assets.prefetchType(g.map.typeOf(cx2, cy));
     const trees = g.forest.treesNear(cx, cz, R), bushes = g.forest.bushesNear(cx, cz, R * 0.8);
     let nt = 0, nb = 0;
     for (const p of trees) {

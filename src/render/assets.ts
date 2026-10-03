@@ -1,42 +1,25 @@
-// The game's sprites, drawn by the art module (art/generator.js) from the style, and packed into
-// one atlas per area type (its trees, as top and bottom halves, and its bushes) and one per kind
-// of creature. Drawing a tree takes milliseconds, so sets are made on demand, a few per frame,
-// as the witch nears them.
+// The game's sprites, drawn by the art module (art/generator.js) from the style: one atlas per
+// area type (its trees, as top and bottom halves, and its bushes) and one per kind of creature.
+// Sets are asked for as the witch nears them and drawn by a few Web Workers in the background;
+// where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
-import { AREA_TYPES } from "../rules/map";
-import { BUSH_VARIANTS, TREE_VARIANTS } from "../rules/forest";
 import { rng } from "../rules/random";
-import { packAtlas, type Atlas, type Baked } from "./atlas";
+import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
+import { bushFrame, creatureFrame, runJob, treeFrame, type ArtJob, type AtlasPixels } from "./artBuild";
 import type { Style } from "./style";
 
-export interface TypeArt {
-  atlas: Atlas;
-  /** frames[variant * 2] is a tree's bottom half (trunk), frames[variant * 2 + 1] its top. */
-  treeFrame: (variant: number, top: boolean) => number;
-  bushFrame: (variant: number) => number;
-}
+export interface TypeArt { atlas: Atlas; treeFrame: (variant: number, top: boolean) => number; bushFrame: (variant: number) => number }
+export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number) => number }
 
-export interface CreatureArt {
-  atlas: Atlas;
-  /** level 0-2, frame 0-1. */
-  frame: (level: number, frame: number) => number;
-}
-
-const TREE_KEYS = ["wBroad", "wFir", "wWillow", "wBirch", "wPalm", "wFlat"];
-
-/** The style for one area type: its leaf colour, and its favourite tree shapes weighted up. */
-export function typeStyle(st: Style, typeIndex: number): Style {
-  const type = AREA_TYPES[typeIndex], d = st.areaContrast;
-  const s: Style = { ...st, leafHue: st.leafHue + type.leafHue * (d / 0.6), leafVariety: st.leafVariety * 0.5 };
-  for (const k of TREE_KEYS) s[k] = type.trees.includes(k) ? st[k] + d * 2 : st[k] * (1 - d * 0.8);
-  return s;
-}
+type Reply = { job: ArtJob; px?: AtlasPixels; error?: string };
 
 export class AssetLibrary {
   private types = new Map<number, TypeArt>();
   private creatures = new Map<string, CreatureArt>();
-  private wantTypes = new Set<number>();
-  private wantCreatures = new Set<string>();
+  private queue: ArtJob[] = [];
+  private inFlight = new Set<string>();
+  private workers: { w: Worker; busy: boolean; job?: ArtJob }[] = [];
+  private useWorkers: boolean;
   readonly witch: Atlas;
   readonly stones: Atlas;
   /** Style scale: the lab's K, 2 / pixel size. */
@@ -44,57 +27,100 @@ export class AssetLibrary {
   /** Bumped whenever a new set is ready, so the view knows to refresh its batches. */
   version = 0;
 
-  constructor(readonly style: Style, readonly seed: number, pixelSize: number, private onReady: () => void = () => {}) {
+  constructor(readonly style: Style, readonly seed: number, pixelSize: number) {
     this.K = 2 / pixelSize;
-    this.witch = packAtlas([Art.bake(Art.witchSprite(), Art.witchColours(style), style, "dark")]);
+    this.witch = packAtlas([Art.bake(Art.witchSprite(), Art.witchColours(style), style, "dark") as Baked]);
     this.stones = packAtlas([0, 1, 2, 3].map(i => this.stone(i)));
+    this.useWorkers = typeof Worker !== "undefined" && typeof OffscreenCanvas !== "undefined";
+    if (this.useWorkers) {
+      const n = Math.max(1, Math.min(3, (navigator.hardwareConcurrency || 2) - 1));
+      try {
+        for (let i = 0; i < n; i++) {
+          const w = new Worker(new URL("./artWorker.ts", import.meta.url), { type: "module" });
+          const slot: { w: Worker; busy: boolean; job?: ArtJob } = { w, busy: false };
+          w.onmessage = (e: MessageEvent<Reply>) => { slot.busy = false; slot.job = undefined; this.receive(e.data); this.dispatch(); };
+          w.onerror = () => { // the worker itself failed (no module workers, say): draw on the page
+            this.useWorkers = false;
+            if (slot.job) this.queue.unshift(slot.job);
+            slot.busy = false; slot.job = undefined;
+          };
+          this.workers.push(slot);
+        }
+      } catch { this.useWorkers = false; }
+    }
   }
 
   private stone(i: number): Baked {
     const r = rng(this.seed * 3 + i), w = 5 + Math.floor(r() * 3), h = 7 + Math.floor(r() * 5), sp = new Art.Sprite(w + 2, h + 1);
     sp.ellipse((w + 2) / 2, h / 2 + 1, w / 2, h / 2 + 0.5, Art.M.BODY, { round: this.style.round });
     sp.ellipse((w + 2) / 2 - 1, h / 2, w / 3, h / 3, Art.M.BODY2, { round: this.style.round, onlyOn: new Set([Art.M.BODY]), density: 0.5, seed: i });
-    return Art.bake(sp, { [Art.M.BODY]: [178, 174, 162], [Art.M.BODY2]: [140, 138, 130] }, this.style, "dark");
+    return Art.bake(sp, { [Art.M.BODY]: [178, 174, 162], [Art.M.BODY2]: [140, 138, 130] }, this.style, "dark") as Baked;
   }
 
-  typeArt(t: number): TypeArt | undefined { const a = this.types.get(t); if (!a) this.wantTypes.add(t); return a; }
-  creatureArt(species: string): CreatureArt | undefined { const a = this.creatures.get(species); if (!a) this.wantCreatures.add(species); return a; }
-  get pending(): number { return this.wantTypes.size + this.wantCreatures.size; }
+  private key = (j: ArtJob) => j.kind + ":" + j.id;
+  private ask(job: ArtJob): void {
+    const k = this.key(job);
+    if (this.inFlight.has(k)) return;
+    this.inFlight.add(k);
+    this.queue.push(job);
+    this.dispatch();
+  }
+  private dispatch(): void {
+    if (!this.useWorkers) return;
+    for (const slot of this.workers) {
+      if (slot.busy || !this.queue.length) continue;
+      slot.busy = true;
+      slot.job = this.queue.shift();
+      slot.w.postMessage(slot.job);
+    }
+  }
+  private receive(r: Reply): void {
+    if (!r.px) { // a worker could not draw it: draw it here instead
+      console.warn("art worker failed, drawing on the page:", r.error);
+      this.useWorkers = false;
+      this.queue.unshift(r.job);
+      return;
+    }
+    const atlas = atlasFromPixels(r.px);
+    if (r.job.kind === "type") this.types.set(r.job.id, { atlas, treeFrame, bushFrame });
+    else this.creatures.set(r.job.id, { atlas, frame: creatureFrame });
+    this.inFlight.delete(this.key(r.job));
+    this.version++;
+  }
 
-  /** Make waiting sets until `budgetMs` has passed (at least one). */
+  /** An area type's art, or undefined (and asked for) if it is not drawn yet. */
+  typeArt(t: number): TypeArt | undefined {
+    const a = this.types.get(t);
+    if (!a) this.ask({ kind: "type", id: t, style: this.style, seed: this.seed, K: this.K });
+    return a;
+  }
+  creatureArt(species: string): CreatureArt | undefined {
+    const a = this.creatures.get(species);
+    if (!a) this.ask({ kind: "creature", id: species, style: this.style });
+    return a;
+  }
+  /** Ask for a set ahead of need, without using it. */
+  prefetchType(t: number): void { if (!this.types.has(t)) this.typeArt(t); }
+
+  get pending(): number { return this.inFlight.size; }
+
+  /** Without workers: draw waiting sets on the page until `budgetMs` has passed (at least one). */
   work(budgetMs: number): void {
+    if (this.useWorkers) return;
     const t0 = performance.now();
     let made = 0;
-    while (this.pending && (made === 0 || performance.now() - t0 < budgetMs)) {
-      const t = this.wantTypes.values().next();
-      if (!t.done) { this.wantTypes.delete(t.value); this.types.set(t.value, this.buildType(t.value)); }
-      else { const c = this.wantCreatures.values().next().value as string; this.wantCreatures.delete(c); this.creatures.set(c, this.buildCreature(c)); }
+    while (this.queue.length && (made === 0 || performance.now() - t0 < budgetMs)) {
+      const job = this.queue.shift()!;
+      this.receive({ job, px: runJob(job, (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; }) });
       made++;
     }
-    if (made) { this.version++; this.onReady(); }
   }
 
-  private buildType(t: number): TypeArt {
-    const st = this.style, ast = typeStyle(st, t), K = this.K, bk = (sp: unknown, col: unknown) => Art.bake(sp, col, st, st.outline) as Baked;
-    const sprites: Baked[] = [];
-    for (let v = 0; v < TREE_VARIANTS; v++) {
-      const tr = rng(this.seed * 13 + t * 101 + v * 7 + 1);
-      const f = Art.chooseType(tr, ast) as (r: () => number, st: Style, s: number) => { sp: unknown; crownY: number };
-      const tree = Art.finishTree(f(tr, ast, st.treeSize * K * Art.uni(tr, 0.85, 1.15)), ast, tr);
-      const col = Art.treeColours(tr, ast, f), parts = Art.splitTree(tree);
-      sprites.push(bk(parts.bot, col), bk(parts.top, col));
-    }
-    for (let v = 0; v < BUSH_VARIANTS; v++) {
-      const b = Art.bush(rng(this.seed * 7 + t * 31 + v * 3), { ...ast, bushSize: st.bushSize * K });
-      sprites.push(bk(b.sp, b.colours));
-    }
-    return { atlas: packAtlas(sprites), treeFrame: (v, top) => v * 2 + (top ? 1 : 0), bushFrame: v => TREE_VARIANTS * 2 + v };
-  }
-
-  private buildCreature(species: string): CreatureArt {
-    const st = this.style, sprites: Baked[] = [];
-    for (let level = 0; level < 3; level++) for (let f = 0; f < 2; f++)
-      sprites.push(Art.bake(Art.critter(species, level, f, st), Art.speciesColours(species, st), st, st.cOutline) as Baked);
-    return { atlas: packAtlas(sprites, 1024), frame: (level, f) => level * 2 + f };
+  /** Resolves once nothing is waiting to be drawn. */
+  whenIdle(): Promise<void> {
+    return new Promise(resolve => {
+      const check = () => { this.work(50); if (!this.pending) resolve(); else setTimeout(check, 30); };
+      check();
+    });
   }
 }

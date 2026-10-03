@@ -33,8 +33,8 @@ fit();
 
 // Make the art and ground round the start before the first frame, behind the start screen.
 let ready = false;
-requestAnimationFrame(() => setTimeout(() => {
-  view.prepare();
+requestAnimationFrame(() => setTimeout(async () => {
+  await view.prepare();
   ready = true;
   startEl.classList.remove("loading");
 }, 0));
