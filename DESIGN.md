@@ -49,7 +49,7 @@ So the party's growth is both the goal and the source of the danger.
 ### Two modes of movement
 
 - **Ground mode**: under the trees, slower, with full sight of what is on the ground.
-- **Speeds** (Ed, 2026-10-03, after the first playtest): ground mode about **14 m/s** (the first cut's treetop speed); treetop mode faster again, starting at about **24 m/s**. Both are tuning numbers.
+- **Speeds** (Ed, 2026-10-03, after the first playtest): ground mode about **14 m/s** (the first cut's treetop speed); treetop mode much faster, starting at about **32 m/s**. Both are tuning numbers. The **treetop camera is low**, looking towards the horizon so you see far ahead, for a sense of speed (Ed, 2026-10-03).
 - **Treetop mode**: above the canopy, faster, but the canopy hides the ground. From above she sees only **tall landmarks**, **large creatures**, and the ground in **clearings** where the trees are sparser.
 - **Switching** is fast but not instant: the witch and the camera move vertically. Each piece of foliage is made of **two halves, top and bottom**; the tops are hidden at ground level and appear at treetop level.
 - **Foliage, rocks and the like are only visual**: she weaves freely through them in either mode.
@@ -67,7 +67,7 @@ The trade is speed against information: treetop mode covers distance, ground mod
 - **Defeated creatures run away and disappear.**
 - Creatures **pass through each other**, with a **repulsion force** as they get close.
 - **The main work of the game is unique behaviour for each creature.**
-- **Creatures grow more numerous and higher level with distance from home** (Ed, 2026-10-03): the areas directly around the dancefloor hold a couple of babies; areas towards the edge of the map hold about 20 creatures, including a couple of legendary ones.
+- **Creatures grow more numerous and higher level with distance from home** (Ed, 2026-10-03): the **home area** (the dancefloor's own) holds **no creatures** (Ed, 2026-10-03); the areas next to it hold a couple of babies; areas towards the edge of the map hold about 20 creatures, including a couple of legendary ones.
 - Creatures **spawn in their own area**. Areas may change how creatures move: some slower or faster, some impassable (for example a watery area that some creatures cannot cross, or cross slowly). Whether a creature is better in its own area is left open on purpose: with so many creatures to design, each may have its own relationship with areas.
 
 ## The leash
