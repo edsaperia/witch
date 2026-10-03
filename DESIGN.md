@@ -160,7 +160,7 @@ One area type per creature, each a small definition in Ed's columns: **floor** t
   - **Creatures are recognisable animals** (wolf, badger, boar) that grow magical features as they level: spirit wings and mane, tusks, bolder stripes; drawn with dark outlines.
 - A **lo-fi aesthetic**: few animation frames (walking perhaps two or three).
 - Creatures face **left and right only** (mirrored).
-- Creatures are drawn in **three-quarter view**, matching the camera looking down at the forest, not in pure side profile (Ed, 2026-10-03). Ed prefers the **chunkier, more pixellated** look of the young and baby sprites. **Bigger pixels for everything, one consistent pixel size; babies can be small** (Ed, 2026-10-03), rather than mixing pixel sizes for big creatures.
+- Creatures are drawn in **three-quarter view**, matching the camera looking down at the forest, not in pure side profile (Ed, 2026-10-03). Ed's meaning, from a reference sheet of farm animals: the body is **turned about 30–40° towards the viewer**, head nearer at front-left and rump further at back-right. The camera **looks down**, so the top of the back shows as a lit plane. **All four legs show, staggered in depth**, and the head shows both eyes and ears. A side-on profile with a perspective warp is not enough. Ed prefers the **chunkier, more pixellated** look of the young and baby sprites. **Bigger pixels for everything, one consistent pixel size; babies can be small** (Ed, 2026-10-03), rather than mixing pixel sizes for big creatures.
 - Sizes to start, to be experimented with: a baby creature roughly 16 to 24 pixels tall, a legendary 64 or more.
 - Ed provides the **style references** that the first style prompts are written from.
 - **Coloured light sources** that light the pixel sprites.
