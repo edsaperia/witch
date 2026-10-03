@@ -1,0 +1,75 @@
+// Gathers the player's input from keyboard, gamepad and touch into one set of controls per frame.
+// Keyboard: WASD or arrows to fly, space to rise or descend, Q/E or -/+ to zoom, ~ for debug.
+// Gamepad: left stick (or d-pad) to fly, A to rise or descend, shoulders or triggers to zoom,
+// Back/Select for debug. Touch: the joystick and buttons in ui/touch.ts write into `touch`.
+import type { Controls } from "../rules/game";
+
+export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean }
+
+export class Input {
+  private keys = new Set<string>();
+  private pressed = new Set<string>();
+  private padPrev: boolean[] = [];
+  readonly touch: TouchInput = { x: 0, y: 0, toggle: false, zoom: 0, debug: false };
+  /** Any key, click, touch or button: used by the start screen. */
+  onAny: (() => void) | null = null;
+
+  constructor(target: Window = window) {
+    target.addEventListener("keydown", e => {
+      if (e.repeat) { if (this.isGameKey(e.code)) e.preventDefault(); return; }
+      this.keys.add(e.code);
+      this.pressed.add(e.code);
+      if (this.isGameKey(e.code)) e.preventDefault();
+      this.onAny?.();
+    });
+    target.addEventListener("keyup", e => this.keys.delete(e.code));
+    target.addEventListener("blur", () => this.keys.clear());
+  }
+
+  private isGameKey(code: string): boolean {
+    return /^(Arrow|Space$|Key[WASDQE]$|Minus$|Equal$|NumpadAdd$|NumpadSubtract$|Backquote$)/.test(code);
+  }
+
+  /** This frame's controls; button presses are reported once. */
+  read(): Controls & { debug: boolean } {
+    const k = (c: string) => (this.keys.has(c) ? 1 : 0), p = (c: string) => this.pressed.has(c);
+    let moveX = k("KeyD") + k("ArrowRight") - k("KeyA") - k("ArrowLeft");
+    let moveZ = k("KeyS") + k("ArrowDown") - k("KeyW") - k("ArrowUp");
+    let toggleMode = p("Space");
+    let zoom = (p("KeyQ") || p("Minus") || p("NumpadSubtract") ? 1 : 0) - (p("KeyE") || p("Equal") || p("NumpadAdd") ? 1 : 0);
+    let debug = p("Backquote");
+    this.pressed.clear();
+
+    // Gamepads: the first one connected with any input.
+    const pads = typeof navigator !== "undefined" && navigator.getGamepads ? navigator.getGamepads() : [];
+    for (const pad of pads) {
+      if (!pad) continue;
+      const btn = (i: number) => !!pad.buttons[i]?.pressed;
+      const edge = (i: number) => btn(i) && !this.padPrev[i];
+      let sx = pad.axes[0] ?? 0, sy = pad.axes[1] ?? 0;
+      const mag = Math.hypot(sx, sy), dead = 0.18;
+      if (mag < dead) { sx = 0; sy = 0; } else { const s = (Math.min(1, mag) - dead) / (1 - dead) / mag; sx *= s; sy *= s; }
+      sx += (btn(15) ? 1 : 0) - (btn(14) ? 1 : 0);
+      sy += (btn(13) ? 1 : 0) - (btn(12) ? 1 : 0);
+      moveX += sx; moveZ += sy;
+      if (edge(0)) toggleMode = true;
+      if (edge(4) || edge(6)) zoom += 1;
+      if (edge(5) || edge(7)) zoom -= 1;
+      if (edge(8)) debug = true;
+      if (pad.buttons.some((b, i) => b.pressed && !this.padPrev[i])) this.onAny?.();
+      this.padPrev = pad.buttons.map(b => b.pressed);
+      break;
+    }
+
+    const t = this.touch;
+    moveX += t.x; moveZ += t.y;
+    if (t.toggle) toggleMode = true;
+    zoom += t.zoom;
+    if (t.debug) debug = true;
+    t.toggle = false; t.zoom = 0; t.debug = false;
+
+    const len = Math.hypot(moveX, moveZ);
+    if (len > 1) { moveX /= len; moveZ /= len; }
+    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug };
+  }
+}

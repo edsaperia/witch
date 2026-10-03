@@ -22,12 +22,12 @@ const CHUNK = 32; // metres
 /** How far north a crown reaches over the ground, seen from the treetop camera. */
 export function crownReach(map: ForestMap): number {
   const pitch = (map.tuning.camera.treetop.angleIn * Math.PI) / 180;
-  return 4.5 / Math.sin(pitch);
+  return map.tuning.crownHeight / Math.sin(pitch);
 }
 
 function treesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
   const { treeSpacingX: sx, treeSpacingZ: sz } = map.tuning, s = map.seed;
-  const out: Plant[] = [], lift = crownReach(map), half = sx * 0.38;
+  const out: Plant[] = [], lift = crownReach(map), half = map.tuning.crownHalfWidth;
   const j0 = Math.ceil((cj * CHUNK) / sz), j1 = Math.ceil(((cj + 1) * CHUNK) / sz);
   for (let j = j0; j < j1; j++) {
     const shift = j & 1 ? 0.5 : 0;
@@ -36,7 +36,7 @@ function treesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
       const x = (i + shift + (hash2(i, j, s + 101) - 0.5) * 0.7) * sx;
       const z = (j + (hash2(i, j, s + 102) - 0.5) * 0.7) * sz;
       // A crown must not cover a clearing either, so the weight is checked where it reaches.
-      const w = Math.min(map.treeWeight(x, z), map.treeWeight(x, z - lift), map.treeWeight(x - half, z - lift), map.treeWeight(x + half, z - lift));
+      const w = Math.min(map.treeWeight(x, z), map.treeWeight(x, z - lift), map.treeWeight(x - half, z - lift), map.treeWeight(x + half, z - lift), map.treeWeight(x, z - lift * 1.6));
       if (hash2(i, j, s + 103) > w * 1.3) continue;
       const a = map.areaAt(x, z);
       out.push({ x, z, type: a.type, variant: Math.floor(hash2(i, j, s + 104) * TREE_VARIANTS), flip: hash2(i, j, s + 105) < 0.5 });

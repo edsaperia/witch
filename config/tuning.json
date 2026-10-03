@@ -6,12 +6,14 @@
   "areaSize": 28,
   "borderLayers": 4,
 
-  "_trees": "treeDensity scales how many trees; clearingSize (0-1) how large the open middle of each area is; trees sit on a staggered grid treeSpacingX by treeSpacingZ metres, so no two crowns pile up.",
-  "treeDensity": 1,
+  "_trees": "treeDensity scales how many trees; clearingSize (0-1) how large the open middle of each area is; trees sit on a staggered grid treeSpacingX by treeSpacingZ metres, so no two crowns pile up. A tree is left out where its crown (crownHalfWidth either side, crownHeight up) would hang over a clearing seen from the treetops.",
+  "treeDensity": 2.2,
   "clearingSize": 0.55,
   "bushDensity": 1,
-  "treeSpacingX": 5.5,
-  "treeSpacingZ": 3.4,
+  "treeSpacingX": 5,
+  "treeSpacingZ": 3,
+  "crownHalfWidth": 4.5,
+  "crownHeight": 5,
   "bushSpacing": 3.4,
 
   "_witch": "Speeds per mode, and how long rising and descending take.",

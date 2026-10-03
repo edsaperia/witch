@@ -119,7 +119,10 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     const u = x / A, v = z / A, cell = partition.partition(u, v);
     return { cell, type: typeOf(cell[0], cell[1]), openness: partition.openness(u, v) };
   };
+  // The dancefloor keeps a clearing of its own, however close a neighbouring area's centre.
+  const floorR = 4.5, floorClear = floorR * 2.2;
   const treeWeight = (x: number, z: number) => {
+    if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return 0;
     const t = partition.openness(x / A, z / A);
     return Math.pow(Math.max(0, (t - c) / (1 - c)), 1.6) * tuning.treeDensity * 0.7;
   };
@@ -127,7 +130,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const pad = A * 0.5;
   return {
     seed, tuning, n, margin, areaSize: A, partition, centreCell,
-    dancefloor: { x: centre.x, z: centre.z, radius: 4.5 },
+    dancefloor: { x: centre.x, z: centre.z, radius: floorR },
     start: { x: centre.x, z: centre.z + 2 },
     bounds: { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad },
     extent: { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A },
