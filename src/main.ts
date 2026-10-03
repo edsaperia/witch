@@ -6,6 +6,7 @@ import { parseSeed } from "./rules/map";
 import { TUNING } from "./rules/tuning";
 import { Input } from "./platform/input";
 import { View } from "./render/view";
+import { SPRITE_UNIFORMS } from "./render/sprites";
 import { loadStyle } from "./render/style";
 import { setupTouch } from "./ui/touch";
 
@@ -131,4 +132,4 @@ function frame(now: number): void {
 requestAnimationFrame(frame);
 
 // For the smoke test and for poking at in the console.
-(window as unknown as { witch: unknown }).witch = { game, view, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, get ready() { return ready; } };
+(window as unknown as { witch: unknown }).witch = { game, view, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, spriteUp: () => SPRITE_UNIFORMS.uUp.value, get ready() { return ready; } };

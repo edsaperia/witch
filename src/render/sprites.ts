@@ -182,7 +182,11 @@ export class SpriteBatch {
   }
 
   /** Replace every instance. */
+  /** What was last set (for checks: the smoke test's floating-sprite check reads it). */
+  items: SpriteInstance[] = [];
+
   set(items: SpriteInstance[]): void {
+    this.items = items;
     if (items.length > this.capacity) this.grow(items.length);
     const P = this.pos.array as Float32Array, S = this.size.array as Float32Array, U = this.uvs.array as Float32Array, F = this.flags.array as Float32Array;
     items.forEach((it, i) => {

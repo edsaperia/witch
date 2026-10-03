@@ -10,7 +10,9 @@ import type { Style } from "./style";
 type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
 export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number }
 /** Where a sprite sits in its atlas: u0, vTop, u1, vBottom, and its size in art pixels. */
-export interface Frame { uv: [number, number, number, number]; w: number; h: number }
+/** pad: empty rows (nothing drawn) at the bottom of the sprite, so it can stand on its lowest
+ *  drawn pixel rather than on its box. */
+export interface Frame { uv: [number, number, number, number]; w: number; h: number; pad?: number }
 export interface AtlasPixels { albedo: Uint8Array; normal: Uint8Array; width: number; height: number; frames: Frame[] }
 
 export type MakeCanvas = (w: number, h: number) => AnyCanvas;
@@ -104,7 +106,10 @@ export function packPixels(sprites: Baked[], width = 2048): AtlasPixels {
       albedo.set(pa.subarray(src, src + s.w * 4), dst);
       normal.set(pn.subarray(src, src + s.w * 4), dst);
     }
-    return { uv: [p.x / W, p.y / H, (p.x + s.w) / W, (p.y + s.h) / H], w: s.w, h: s.h };
+    // Its lowest drawn row (the sprite shader drops alpha under a half).
+    let pad = 0;
+    bottom: for (let row = s.h - 1; row >= 0; row--, pad++) for (let x = 0; x < s.w; x++) if (pa[(row * s.w + x) * 4 + 3] >= 128) break bottom;
+    return { uv: [p.x / W, p.y / H, (p.x + s.w) / W, (p.y + s.h) / H], w: s.w, h: s.h, pad: Math.min(pad, s.h) };
   });
   return { albedo, normal, width: W, height: H, frames };
 }

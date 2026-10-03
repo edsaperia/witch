@@ -325,6 +325,55 @@ async function main() {
     }
   }, "&debug=cull&tilt=before");
 
+  // Nothing floats (Ed, v108: rocks in the cave mouth hovered over their shadows): every placed
+  // sprite's lowest drawn pixel, read from the atlas itself, sits on the ground. Close-up in a
+  // cave mouth, in ground mode, zoomed in.
+  await run("ground", { width: 1280, height: 800 }, async page => {
+    await page.keyboard.press("Enter");
+    const cave = await page.evaluate(() => {
+      const g = window.witch.game, m = g.map, d = m.dancefloor;
+      let best = null;
+      for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+        if (window.witch.areaTypeId(m.typeOf(x, y)) !== "cave-mouth") continue;
+        const s = m.siteOf(x, y), k = Math.hypot(s.x - d.x, s.z - d.z);
+        if (!best || k < best.k) best = { x, y, k, s };
+      }
+      if (!best) return null;
+      // Into the woods a little way from its centre, where its plants grow.
+      const px = best.s.x + 18, pz = best.s.z + 22;
+      g.witch = { ...g.witch, x: px, z: pz, vx: 0, vz: 0 }; g.camera = { ...g.camera, tx: px, tz: pz };
+      document.getElementById("debug").classList.remove("on");
+      return `${best.x},${best.y}`;
+    });
+    check(!!cave, `there is a cave mouth to look at (${cave})`);
+    await page.keyboard.press(ZOOM_IN); await page.keyboard.press("KeyH");
+    await sleep(2000);
+    await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 300000, polling: 500 });
+    await sleep(1500);
+    await shot(page, "ground-cave-mouth.png");
+    const r = await page.evaluate(() => {
+      const v = window.witch.view, out = { n: 0, worst: 0, bad: [] };
+      for (const [type, b] of v.typeBatches) {
+        const img = b.atlas.albedo.image, W = img.width, H = img.height, D = img.data;
+        for (const it of b.items) {
+          if (it.top) continue;
+          const f = it.frame, x0 = Math.round(f.uv[0] * W), y0 = Math.round(f.uv[1] * H);
+          let low = -1;
+          for (let row = f.h - 1; row >= 0 && low < 0; row--) for (let x = 0; x < f.w; x++) if (D[((y0 + row) * W + x0 + x) * 4 + 3] >= 128) { low = row; break; }
+          if (low < 0) continue;
+          // The lowest drawn pixel's height: the base's, plus its height up the sprite.
+          const m = b.metresPerPixel * (it.scale ?? 1), upY = window.witch.spriteUp().y;
+          const lift = (it.y + upY * (f.h - 1 - low) * m) / m; // in art pixels
+          out.n++;
+          if (Math.abs(lift) > Math.abs(out.worst)) out.worst = lift;
+          if (Math.abs(lift) > 2 && out.bad.length < 6) out.bad.push(`${window.witch.areaTypeId(type)} ${lift.toFixed(1)} px`);
+        }
+      }
+      return out;
+    });
+    check(r.n > 50 && r.bad.length === 0, `nothing floats: every placed sprite's lowest drawn pixel is on the ground (${r.n} checked, worst ${r.worst.toFixed(1)} art px)${r.bad.length ? ": " + r.bad.join("; ") : ""}`);
+  });
+
   // Ed's windows (v53-v57: trees vanished flying the treetops): big, both pixel ratios, long
   // straight flights at full speed in both modes. Nothing set may go undrawn (view.stats.dropped:
   // a batch three.js capped), and nothing may appear or vanish anywhere on screen.

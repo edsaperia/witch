@@ -9,7 +9,7 @@ import { cameraPose } from "../rules/camera";
 import { AREA_TYPES } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
 import { AssetLibrary, type CreatureArt, type TypeArt } from "./assets";
-import type { Piece } from "./artBuild";
+import type { Frame, Piece } from "./artBuild";
 import type { LightSource, Plant } from "../rules/forest";
 import { hash2 } from "../rules/random";
 import { Ground } from "./ground";
@@ -327,6 +327,11 @@ export class View {
     const mpp = this.mpp;
     // How far up the screen a step up a sprite goes, for each step of ground toward the camera.
     const pitch = (pose.angle * Math.PI) / 180, upOnScreen = SPRITE_UNIFORMS.uUp.value.dot(this.v3.set(0, Math.cos(pitch), -Math.sin(pitch)));
+    // Every sprite stands on its lowest drawn pixel, not on the bottom of its box: it is slid back
+    // along its own up (so that pixel lands exactly on the ground point, nothing sinks into the
+    // ground) by the empty rows under its drawing. A tree's crown moves with its trunk.
+    const U = SPRITE_UNIFORMS.uUp.value;
+    const stand = (x: number, z: number, frame: Frame, m: number) => { const d = (frame.pad ?? 0) * m; return { x: x - U.x * d, y: -U.y * d, z: z - U.z * d }; };
     let nt = 0, nb = 0;
     for (const p of g.forest.treesNear(cx, cz, half)) {
       const art = this.assets.typeArt(p.type);
@@ -334,8 +339,9 @@ export class View {
       const f = art.atlas.frames, big = art.layout.big[p.variant % art.layout.big.length], whole = f[big.top ?? big.bot];
       if (!this.inView(p.x, p.z, whole.w * mpp, whole.h * mpp, margin, reach)) continue;
       const fresh = this.mark("tree", p.x, p.z, whole.h * mpp);
-      add(p.type, { x: p.x, y: 0, z: p.z, frame: f[big.bot], flip: p.flip, fresh });
-      if (big.top !== null) add(p.type, { x: p.x, y: 0, z: p.z, frame: f[big.top], flip: p.flip, top: true, fresh });
+      const at = stand(p.x, p.z, f[big.bot], mpp);
+      add(p.type, { ...at, frame: f[big.bot], flip: p.flip, fresh });
+      if (big.top !== null) add(p.type, { ...at, frame: f[big.top], flip: p.flip, top: true, fresh });
       const w = whole.w * mpp, h = whole.h * mpp * (big.top === null ? 0.2 : 0.6);
       if (t.shadows.trees) shadows.push({ x: p.x + sx * h, z: p.z + sz * h, w: w * 0.8, d: w * 0.45, scenery: true });
       nt++;
@@ -355,14 +361,18 @@ export class View {
         if (piece.origin) {
           const ox = p.flip ? frame.w - piece.origin.x : piece.origin.x;
           x += (frame.w / 2 - ox) * m;
-          z += ((frame.h - piece.origin.y) * m * upOnScreen) / Math.max(0.2, Math.sin(pitch));
+          z += ((frame.h - (frame.pad ?? 0) - piece.origin.y) * m * upOnScreen) / Math.max(0.2, Math.sin(pitch));
         }
         if (!this.inView(x, z, whole.w * m, whole.h * m, margin, reach)) continue;
         const fresh = this.mark(kind, p.x, p.z, whole.h * m);
-        add(p.type, { x, y: 0, z, frame, flip: p.flip, fresh, scale });
-        if (piece.top !== null) add(p.type, { x, y: 0, z, frame: f[piece.top], flip: p.flip, top: true, fresh, scale });
+        const at = stand(x, z, frame, m);
+        add(p.type, { ...at, frame, flip: p.flip, fresh, scale });
+        if (piece.top !== null) add(p.type, { ...at, frame: f[piece.top], flip: p.flip, top: true, fresh, scale });
         // Set pieces model their own ground: no blob under them (it read as a hard dark oval).
-        if (kind !== "setpiece") shadows.push({ x: p.x, z: p.z, w: frame.w * m * 0.8, d: frame.w * m * 0.3, scenery: true });
+        // Its shadow lies under it, its front edge at its base (not centred on its bottom edge,
+        // which leaves half of it in front, reading as a shadow below something hovering).
+        const sd = frame.w * m * 0.3;
+        if (kind !== "setpiece") shadows.push({ x: p.x, z: p.z - sd * 0.4, w: frame.w * m * 0.8, d: sd, scenery: true });
         nb++;
       }
     };
