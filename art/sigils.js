@@ -125,14 +125,15 @@ const rgb = c => `rgb(${c.join(",")})`;
 
 // ---- level frames ----
 // A creature level's frame, for any level number (0 baby, 1 young, 2 adult, 3 legend, and
-// beyond): size steps first, then rings, then ornament.
+// beyond): size steps first, then rings, then ornament. Ed: the young's ring is dotted, the
+// adult's a full circle; the legend's double ring is banded with ticks and rayed.
 //   metres: across on the ground (about 2, 3, 4, 5.5); core: the core line's thickness (x a
 //   baby's); halo: its brightness (0..1); rings: how many; band: rune ticks between the outer two
 //   rings; rays: short points outside the outer ring; shimmer: a slow sparkle.
 export const SIGIL_LEVELS = ["baby", "young", "adult", "legend"];
 export function sigilFrame(level = 0) {
   const L = Math.max(0, level);
-  return { level: L, metres: 2 + L + Math.max(0, L - 2) * .5, core: 1 + .2 * L, halo: Math.min(1, .45 + .19 * L), rings: Math.min(L >= 4 ? 3 : 2, Math.floor(L)), band: L >= 3, rays: L >= 4 ? 8 : L >= 3 ? 4 : 0, shimmer: L >= 3 };
+  return { level: L, metres: 2 + L + Math.max(0, L - 2) * .5, core: 1 + .2 * L, halo: Math.min(1, .45 + .19 * L), rings: L >= 4 ? 3 : L >= 3 ? 2 : L >= 2 ? 1 : 0, dots: L >= 1 && L < 2 ? 12 : 0, band: L >= 3, rays: L >= 4 ? 8 : L >= 3 ? 4 : 0, shimmer: L >= 3 };
 }
 
 // ---- geometry: strokes as polylines, with their lengths ----
@@ -159,11 +160,13 @@ export function sigilStrokes(id) {
 const markCache = new Map();
 export function sigilMark(id, level = 0) {
   const key = id + ":" + level; if (markCache.has(key)) return markCache.get(key);
-  const F = level === null ? null : sigilFrame(level), k = !F ? 1 : F.rings >= 2 ? .6 : F.rings ? .66 : .8, o = (1 - k) / 2;
-  const thick = F ? F.core : 1, ring = SIGIL_STROKE * .55 * Math.min(1.6, .8 + .25 * (F?.level ?? 0)), frame = [];
+  const F = level === null ? null : sigilFrame(level), k = !F ? 1 : F.rings >= 2 ? .6 : F.rings || F.dots ? .66 : .8, o = (1 - k) / 2;
+  const thick = F ? F.core : 1, ring = SIGIL_STROKE * .55 * ((F?.level ?? 0) < 3 ? 1 : Math.min(1.6, .8 + .25 * F.level)), frame = []; // an adult's ring at the normal line weight; the legend's heavier
   if (F) {
     const R = .44, circle = r => polyline({ a: [.5, .5, r, 90, 450] }); // from the front, round
     for (let i = 0; i < F.rings; i++) frame.push({ ...circle(R - i * .06), w: ring, part: "ring" });
+    // a young creature's dotted circle: round dots spaced well apart, so they stay distinct on the ground and small in the stack
+    for (let i = 0; i < F.dots; i++) { const a = (90 + i * 360 / F.dots) * Math.PI / 180; frame.push({ dot: true, pts: [[.5 + R * Math.cos(a), .5 + R * Math.sin(a)]], len: .05, r: .042, w: ring, part: "ring" }); }
     if (F.band && F.rings >= 2) for (let i = 0; i < 16; i++) { const a = (90 + i * 22.5) * Math.PI / 180, r0 = R - .06 + .014, r1 = R - .014; frame.push({ ...polyline({ l: [[.5 + r0 * Math.cos(a), .5 + r0 * Math.sin(a)], [.5 + r1 * Math.cos(a), .5 + r1 * Math.sin(a)]] }), w: ring * .8, part: "band" }); }
     for (let i = 0; i < F.rays; i++) { const a = (90 + i * 360 / F.rays) * Math.PI / 180, r0 = R + .02, r1 = .5 - ring / 2; frame.push({ ...polyline({ l: [[.5 + r0 * Math.cos(a), .5 + r0 * Math.sin(a)], [.5 + r1 * Math.cos(a), .5 + r1 * Math.sin(a)]] }), w: ring * 1.3, part: "ray" }); }
   }
