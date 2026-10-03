@@ -24,6 +24,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+        env:
+          WITCH_VERSION: ${{ github.run_number }}
+          WITCH_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       - name: Publish to gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
@@ -40,7 +43,7 @@ jobs:
             const marker = "<!-- witch-playable-link -->";
             const { owner, repo } = context.repo, number = context.issue.number;
             const url = `https://${owner}.github.io/${repo}/pr-${number}/`;
-            const body = `${marker}\nPlayable link for this PR: ${url}\n\nBuilt from ${context.payload.pull_request.head.sha.slice(0, 7)}. Add \`?seed=123\` to play a given map. It goes live a minute or two after this comment, once GitHub Pages has published it.`;
+            const body = `${marker}\nPlayable link for this PR: ${url}\n\nBuilt from ${context.payload.pull_request.head.sha.slice(0, 7)} (v${context.runNumber}); the version shows bottom right in the game. Add \`?seed=123\` to play a given map. It goes live a minute or two after this comment, once GitHub Pages has published it.`;
             const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number: number });
             const mine = comments.find(c => c.body && c.body.includes(marker));
             if (mine) await github.rest.issues.updateComment({ owner, repo, comment_id: mine.id, body });

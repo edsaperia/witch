@@ -36,6 +36,8 @@ const view = new View(canvas, game, { ...loadStyle(), pixel: tuning.pixelSize })
 const input = new Input();
 setupTouch(document.body, input.touch);
 
+declare const __BUILD__: string;
+document.getElementById("version")!.textContent = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
 const seedEl = document.getElementById("seed")!;
 seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;
 const debugEl = document.getElementById("debug")!, startEl = document.getElementById("start")!;
