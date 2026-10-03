@@ -1,7 +1,7 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState } from "./camera";
 import { newClock, tick, type Clock } from "./clock";
-import { spawnCreatures, stepCreaturesNear, type Creature } from "./creatures";
+import { spawnCreatures, stepCreaturesNear, wanderRange, type Creature } from "./creatures";
 import { Forest } from "./forest";
 import { newParty, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
@@ -46,8 +46,13 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   if (c.pauseWaves) g.party.paused = !g.party.paused;
   if (c.nextWave) { spreadWave(g.party, g.map, g.clock.time); g.party.nextAt = g.clock.time + g.tuning.party.interval; }
   stepParty(g.party, g.map, g.clock.time, dt);
-  stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, g.tuning.creatureSimRadius, dt, g.clock.time, g.map);
+  stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map);
 }
+
+/** How far from the witch creatures are simulated (by their home): at least far enough that one
+ *  resuming anywhere in its area does so beyond the draw distance (the haze), so none ever jumps
+ *  in view. */
+export const simRadius = (g: Game) => Math.max(g.tuning.creatureSimRadius, g.tuning.haze.far + 20 + wanderRange(g.map) * 2.5);
 
 export const poseOf = (g: Game): CameraPose => cameraPose(g.camera, g.camera.lift, g.tuning);
 

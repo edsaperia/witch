@@ -26,6 +26,8 @@ export const LIGHT_UNIFORMS = {
   uHazeRange: { value: new THREE.Vector2(70, 200) },
   uHazeColour: { value: new THREE.Vector3() },
   uTime: { value: 0 },
+  // ?fx=smooth (1): haze and canopy dapple as smooth gradients; ?fx=pixel (0): dithered steps.
+  uSmooth: { value: 1 },
   // Point lights in the forest (the dancefloor's circle, campfires, magic stones...): the
   // nearest few, as position + reach, and colour + strength. Count in uLightCount.
   uLightPos: { value: Array.from({ length: MAX_LIGHTS }, () => new THREE.Vector4()) },
@@ -58,7 +60,7 @@ export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel:
 
 export const LIGHT_GLSL = /* glsl */ `
 uniform vec3 uAmb, uMoon, uMoonDir, uMoonBeam, uGlowPos, uGlowRgb;
-uniform float uBands, uDither, uShafts, uShaftScale, uGlowR, uGlowPower, uTime;
+uniform float uBands, uDither, uShafts, uShaftScale, uGlowR, uGlowPower, uTime, uSmooth;
 uniform vec2 uHazeCentre, uHazeRange;
 uniform vec3 uHazeColour;
 uniform vec4 uLightPos[${MAX_LIGHTS}], uLightCol[${MAX_LIGHTS}];
@@ -70,6 +72,7 @@ uniform vec3 uDiscoColour;
 vec3 haze(vec3 c, vec3 P) {
   float h = smoothstep(uHazeRange.x, uHazeRange.y, length(P.xz - uHazeCentre));
   h *= h; // light through the middle distance, full only at the far edge
+  if (uSmooth > 0.5) return mix(c, uHazeColour, h);
   float q = h * 4.0, fr = fract(q);
   q = floor(q) + (fr > (mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) > 0.5 ? 0.66 : 0.33) ? 1.0 : 0.0);
   return mix(c, uHazeColour, q / 4.0);

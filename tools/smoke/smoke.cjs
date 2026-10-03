@@ -170,7 +170,7 @@ async function main() {
 
   // The ground effects (tree shadows, canopy shadow, mist) off and on, from the same spot, and a
   // short recording in motion with them on.
-  for (const [name, q] of [["effects-off", "&shadows=off&canopy=off&mist=off"], ["effects-on", ""]]) {
+  for (const [name, q] of [["effects-off", "&shadows=off&canopy=off&mist=off"], ["effects-on", ""], ["fx-pixel", "&fx=pixel"]]) {
     await run(name, { width: 1280, height: 720 }, async page => {
       await page.keyboard.press("Enter");
       await hold(page, "KeyD", 1.5);
@@ -182,6 +182,67 @@ async function main() {
       await shot(page, `31-treetop-${name}.png`);
     }, q + "&tilt=before");
   }
+  // The party spreading: one area partifying (shots through its transition, from the treetops),
+  // its string lights from the ground, then the party after four waves from high up.
+  await run("party", { width: 1280, height: 720 }, async page => {
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("KeyP"); // hold the timer: the waves come when asked
+    await page.keyboard.press("Space");
+    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
+    await page.keyboard.press("KeyN");
+    await page.waitForFunction(() => window.witch.game.party.wave >= 1, null, { timeout: 60000 });
+    const at = await page.evaluate(() => {
+      const g = window.witch.game, list = [...g.party.areas.values()].filter(a => a.wave === 1);
+      const a = list[0], s = a.soundsystem, f = g.map.siteOf(a.from[0], a.from[1]);
+      // Stand between the border it came over and its soundsystem, so the front crosses the screen.
+      const x = (s.x * 2 + f.x) / 3, z = (s.z * 2 + f.z) / 3;
+      g.witch = { ...g.witch, x, z, vx: 0, vz: 0 };
+      g.camera = { ...g.camera, tx: x, tz: z };
+      return { t: a.at, n: list.length };
+    });
+    check(at.n > 0, `the first wave partifies home's neighbours (${at.n} areas)`);
+    for (const [i, dt] of [0.3, 1.0, 1.7, 2.6, 4].entries()) {
+      await page.waitForFunction(t => window.witch.game.clock.time >= t, at.t + dt, { timeout: 60000, polling: 50 });
+      await shot(page, `5${i}-party-transition-${i}.png`);
+    }
+    await page.keyboard.press("Space");
+    await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 60000 });
+    await sleep(800);
+    await shot(page, "55-string-lights-ground.png");
+    await page.keyboard.press("Space");
+    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
+    await sleep(800);
+    await shot(page, "56-string-lights-treetop.png");
+    for (let w = 2; w <= 4; w++) {
+      await page.keyboard.press("KeyN");
+      await page.waitForFunction(n => window.witch.game.party.wave >= n, w, { timeout: 60000 });
+    }
+    await page.evaluate(() => { const g = window.witch.game, d = g.map.dancefloor; g.witch = { ...g.witch, x: d.x, z: d.z }; g.camera = { ...g.camera, tx: d.x, tz: d.z }; });
+    for (let i = 0; i < 4; i++) { await page.keyboard.press("KeyQ"); await sleep(150); }
+    const t4 = await page.evaluate(() => window.witch.game.clock.time);
+    await page.waitForFunction(t => window.witch.game.clock.time >= t, t4 + 3, { timeout: 60000, polling: 50 });
+    const n = await page.evaluate(() => window.witch.game.party.areas.size);
+    check(n > 1, `after four waves ${n} areas are partified`);
+    await shot(page, "57-party-four-waves.png");
+  }, "&debug&tilt=before");
+
+  // ?debug=cull: anything that changed visibility this frame is tinted red. A strip of frames
+  // flying and zooming through every step in both modes.
+  await run("cull", { width: 640, height: 360 }, async page => {
+    await page.keyboard.press("Enter");
+    let k = 0;
+    for (const mode of ["ground", "treetop"]) {
+      if (mode === "treetop") { await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 }); }
+      for (const z of ["KeyQ", "KeyQ", "KeyE", "KeyE", "KeyE"]) {
+        await page.keyboard.press(z);
+        await page.keyboard.down("KeyD");
+        await sleep(250);
+        await shot(page, `cull-${String(k++).padStart(2, "0")}.png`);
+        await page.keyboard.up("KeyD");
+      }
+    }
+  }, "&debug=cull&tilt=before");
+
   if (process.env.RECORD) {
     const ctx = await browser.newContext({ viewport: { width: 960, height: 540 }, recordVideo: { dir: out, size: { width: 960, height: 540 } } });
     const page = await ctx.newPage();

@@ -26,18 +26,19 @@ void main() {
 const BLUR = /* glsl */ `
 uniform sampler2D uSrc; uniform vec2 uStep; varying vec2 vUv;
 void main() {
-  vec3 c = texture2D(uSrc, vUv).rgb * 0.227;
-  c += (texture2D(uSrc, vUv + uStep * 1.38).rgb + texture2D(uSrc, vUv - uStep * 1.38).rgb) * 0.316;
-  c += (texture2D(uSrc, vUv + uStep * 3.23).rgb + texture2D(uSrc, vUv - uStep * 3.23).rgb) * 0.070;
-  gl_FragColor = vec4(c, 1.0);
+  vec4 c = texture2D(uSrc, vUv) * 0.227;
+  c += (texture2D(uSrc, vUv + uStep * 1.38) + texture2D(uSrc, vUv - uStep * 1.38)) * 0.316;
+  c += (texture2D(uSrc, vUv + uStep * 3.23) + texture2D(uSrc, vUv - uStep * 3.23)) * 0.070;
+  gl_FragColor = c;
 }`;
 
-// Scene (sampled as whole low-res pixels) plus bloom.
+// Scene (sampled as whole low-res pixels), the smooth effects layer (sampled smoothly) and bloom.
 const COMPOSITE = /* glsl */ `
-uniform sampler2D uScene, uBloom; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma; varying vec2 vUv;
+uniform sampler2D uScene, uBloom, uFx; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma, uFxOn; varying vec2 vUv;
 void main() {
   vec2 p = (floor(vUv * uLow) + 0.5) / uLow;
   vec3 c = texture2D(uScene, p).rgb;
+  if (uFxOn > 0.5) { vec4 f = texture2D(uFx, vUv); c = c * (1.0 - f.a) + f.rgb; }
   // Levels: a black point and a gamma, so the shade goes near-black and the lit stays bright.
   c = pow(clamp((c - uBlack) / (1.0 - uBlack), 0.0, 1.0), vec3(uGamma));
   c += texture2D(uBloom, vUv).rgb * uBloomStrength;
@@ -72,6 +73,11 @@ export class Post {
   private bloomB = target(1, 1, THREE.LinearFilter);
   private a = target(1, 1, THREE.LinearFilter);
   private b = target(1, 1, THREE.LinearFilter);
+  // The smooth effects layer (?fx=smooth): mist as soft alpha, blurred, scaled up linearly.
+  private fx = target(1, 1, THREE.LinearFilter);
+  private fxB = target(1, 1, THREE.LinearFilter);
+  /** What goes into the smooth effects layer; null for none. */
+  fxScene: THREE.Scene | null = null;
   private quad: THREE.Mesh;
   private cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   private mats: Record<string, THREE.ShaderMaterial>;
@@ -80,11 +86,14 @@ export class Post {
 
   constructor(private renderer: THREE.WebGLRenderer, readonly tuning: PostTuning) {
     this.scene = target(1, 1, THREE.LinearFilter, true);
+    // The scene's depth, so the effects layer hides behind what stands in front of it.
+    this.scene.depthTexture = new THREE.DepthTexture(1, 1);
+    this.fx.texture.format = THREE.RGBAFormat;
     const m = (frag: string, uniforms: Record<string, THREE.IUniform>) => new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: frag, uniforms, depthTest: false, depthWrite: false });
     this.mats = {
       bright: m(BRIGHT, { uScene: { value: null }, uThreshold: { value: 0.6 } }),
       blur: m(BLUR, { uSrc: { value: null }, uStep: { value: new THREE.Vector2() } }),
-      composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 } }),
+      composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 }, uFx: { value: null }, uFxOn: { value: 0 } }),
       tilt: m(TILT, { uSrc: { value: null }, uTexel: { value: new THREE.Vector2() }, uDir: { value: new THREE.Vector2() }, uStrength: { value: 0 }, uBand: { value: 0.4 }, uCentre: { value: 0.5 } }),
     };
     this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mats.composite);
@@ -95,8 +104,12 @@ export class Post {
   get fullResolution(): boolean { return this.tuning.tiltShift.on && this.tuning.tiltShift.where === "after"; }
 
   /** lowW x lowH: the scene; outW x outH: the canvas. */
+  /** The low resolution, shared with shaders that read the scene's depth. */
+  get lowSize(): THREE.Vector2 { return this.low; }
+
   resize(lowW: number, lowH: number, outW: number, outH: number): void {
     this.low.set(lowW, lowH);
+    this.fx.setSize(lowW, lowH); this.fxB.setSize(lowW, lowH);
     this.out.set(outW, outH);
     this.scene.setSize(lowW, lowH);
     const bw = Math.max(1, Math.round(lowW / 2)), bh = Math.max(1, Math.round(lowH / 2));
@@ -128,10 +141,24 @@ export class Post {
         this.pass("blur", this.bright, u => { u.uSrc.value = this.bloomB.texture; u.uStep.value.set(0, 1 / bh); });
       }
     }
+    // The smooth effects layer, over a clear background, then a small blur each way.
+    const fxOn = !!this.fxScene;
+    if (this.fxScene) {
+      const col = r.getClearColor(new THREE.Color()), alpha = r.getClearAlpha();
+      r.setRenderTarget(this.fx);
+      r.setClearColor(0x000000, 0);
+      r.clear();
+      r.render(this.fxScene, camera);
+      r.setClearColor(col, alpha);
+      const fw = this.fx.width, fh = this.fx.height;
+      this.pass("blur", this.fxB, u => { u.uSrc.value = this.fx.texture; u.uStep.value.set(0.6 / fw, 0); });
+      this.pass("blur", this.fx, u => { u.uSrc.value = this.fxB.texture; u.uStep.value.set(0, 0.6 / fh); });
+    }
     const tilt = t.tiltShift.on && t.tiltShift.strength > 0;
     this.pass("composite", tilt ? this.a : null, u => {
       u.uScene.value = this.scene.texture; u.uBloom.value = this.bright.texture; u.uLow.value.copy(this.low); u.uBloomStrength.value = bloomOn ? t.bloom.strength : 0;
       u.uBlack.value = t.tone.black; u.uGamma.value = t.tone.gamma;
+      u.uFx.value = this.fx.texture; u.uFxOn.value = fxOn ? 1 : 0;
     });
     if (!tilt) return;
     // The blur radius is given in low-res pixels; after the upscale it covers the same ground.

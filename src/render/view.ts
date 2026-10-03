@@ -78,7 +78,13 @@ export class View {
     this.shadows = new ShadowBatch(t.shadows.strength);
     this.shadows.mesh.visible = t.shadows.on;
     this.scene.add(this.shadows.mesh);
-    if (t.mist.on && t.mist.strength > 0) { this.mist = new Mist(t.mist.strength, t.mist.height, t.mist.wind, this.mpp); this.scene.add(this.mist.mesh); }
+    const smooth = t.fx === "smooth";
+    LIGHT_UNIFORMS.uSmooth.value = smooth ? 1 : 0;
+    if (t.mist.on && t.mist.strength > 0) {
+      this.mist = new Mist(t.mist.strength, t.mist.height, t.mist.wind, this.mpp, smooth, this.post.scene.depthTexture, this.post.lowSize);
+      if (smooth) { this.post.fxScene = new THREE.Scene(); this.post.fxScene.add(this.mist.mesh); }
+      else this.scene.add(this.mist.mesh);
+    }
     LIGHT_UNIFORMS.uHazeRange.value.set(t.haze.near, t.haze.far);
     this.scene.add(this.ground.mesh);
 
@@ -161,6 +167,7 @@ export class View {
   /** What was drawn last time, for the fresh tint and the pop check: one record for what the
    *  rebuild places (trees, undergrowth, walls, set pieces), one for what moves every frame
    *  (creatures, light props). */
+  private at = new Map<string, [number, number, number]>();
   private tracks = { placed: { now: new Set<string>(), before: new Set<string>() }, moving: { now: new Set<string>(), before: new Set<string>() } };
   pops: string[] = [];
 
@@ -230,8 +237,11 @@ export class View {
 
   /** Note that an object is drawn this frame; returns whether it has just appeared. */
   private mark(kind: string, x: number, z: number, h: number, id: string | number = ""): boolean {
+    // Placed things are known by where they stand; moving ones (creatures) by their id, with
+    // where they are this frame kept for the in-view test.
     const tr = kind === "creature" || kind === "prop" ? this.tracks.moving : this.tracks.placed;
-    const k = `${kind}|${x.toFixed(1)}|${z.toFixed(1)}|${h.toFixed(1)}|${id}`;
+    const k = kind === "creature" ? `${kind}|${id}` : `${kind}|${x.toFixed(1)}|${z.toFixed(1)}|${h.toFixed(1)}|${id}`;
+    if (kind === "creature") this.at.set(k, [x, z, h]);
     tr.now.add(k);
     return !tr.before.has(k);
   }
@@ -241,7 +251,7 @@ export class View {
     const tr = this.tracks[which], live = record && this.assets.pending === 0 && tr.before.size > 0;
     if (live) {
       const at = (k: string, what: string) => {
-        const [kind, x, z, h] = k.split("|");
+        const p = this.at.get(k), [kind, ...rest] = k.split("|"), [x, z, h] = p ?? rest.map(Number);
         if (this.inInnerView(+x, +z, +h)) this.pops.push(`${what} ${kind} ${(+x).toFixed(0)},${(+z).toFixed(0)}`);
       };
       for (const k of tr.now) if (!tr.before.has(k)) at(k, "appeared");
@@ -322,7 +332,7 @@ export class View {
       if (!art) continue;
       const frame = art.atlas.frames[art.frame(c.level, c.moving ? Math.floor(c.walk) % 2 : 0, c.away)];
       if (!this.inView(c.x, c.z, frame.w * this.mpp, frame.h * this.mpp, 4)) continue;
-      const fresh = this.mark("creature", c.homeX, c.homeZ, 0, c.id);
+      const fresh = this.mark("creature", c.x, c.z, frame.h * this.mpp, c.id);
       let l = per.get(c.species);
       if (!l) per.set(c.species, (l = []));
       l.push({ x: c.x, y: 0, z: c.z, frame, flip: c.facing < 0, fresh });

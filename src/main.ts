@@ -29,6 +29,8 @@ const tilt = params.get("tilt");
 if (tilt === "off") tuning.tiltShift.on = false;
 else if (tilt === "before" || tilt === "after") { tuning.tiltShift.on = true; tuning.tiltShift.where = tilt; }
 if (params.get("bloom") === "off") tuning.bloom.on = false;
+const fx = params.get("fx");
+if (fx === "pixel" || fx === "smooth") tuning.fx = fx;
 
 const game = newGame(seed, tuning);
 const canvas = document.getElementById("game") as HTMLCanvasElement;

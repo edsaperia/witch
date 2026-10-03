@@ -146,7 +146,8 @@ void main() {
     float leaves = vnoise(q / 2.6) * 0.6 + vnoise(q / 1.1 + 31.0) * 0.4;
     float cover = uCanopy.z * smoothstep(0.0, 1.0, (open - uClearing.x) / max(0.01, uClearing.y));
     float edge = mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) > 0.5 ? 0.03 : -0.03;
-    if (leaves + edge < cover) moonK = 1.0 - uCanopy.x;
+    if (uSmooth > 0.5) moonK = 1.0 - uCanopy.x * smoothstep(-0.07, 0.07, cover - leaves);
+    else if (leaves + edge < cover) moonK = 1.0 - uCanopy.x;
   }
   vec3 light = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, moonK);
   gl_FragColor = vec4(haze(min(vec3(1.0), c * light * 1.25), vWorld), 1.0);

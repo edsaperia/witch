@@ -53,6 +53,8 @@ export interface Tuning {
   shadows: { on: boolean; strength: number };
   canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };
   mist: { on: boolean; strength: number; height: number; wind: number };
+  /** How mist, far haze and canopy dapple are drawn: smooth gradients, or dithered pixel steps. */
+  fx: "smooth" | "pixel";
   tone: { black: number; gamma: number; ambient: number };
   bloom: { on: boolean; strength: number; threshold: number };
   tiltShift: { on: boolean; where: "before" | "after"; strength: number; band: number; centre: number };
