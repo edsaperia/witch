@@ -68,7 +68,7 @@ The trade is speed against information: treetop mode covers distance, ground mod
 - **Defeated creatures run away and disappear.**
 - Creatures **pass through each other**, with a **repulsion force** as they get close.
 - **The main work of the game is unique behaviour for each creature.**
-- **Creatures grow more numerous and higher level with distance from home** (Ed, 2026-10-03): the **home area** (the dancefloor's own) holds **no creatures** (Ed, 2026-10-03); the areas next to it hold a couple of babies; areas towards the edge of the map hold about 20 creatures. **Legendary creatures are rare: at most one in any area**, and most areas have none (Ed, 2026-10-03). **Idle creatures roam throughout their own area**, never leaving it (Ed, 2026-10-03).
+- **Creatures grow more numerous and higher level with distance from home** (Ed, 2026-10-03): the **home area** (the dancefloor's own) holds **no creatures** (Ed, 2026-10-03); the areas next to it hold a couple of babies; areas towards the edge of the map hold about 20 creatures. **Legendary creatures are rare: at most one in any area**, and most areas have none (Ed, 2026-10-03). **Idle creatures roam throughout their own area**, never leaving it (Ed, 2026-10-03). **Each creature species has a magical sigil**: an abstract stave-like symbol that evokes the animal (Ed, 2026-10-03).
 - Creatures **spawn in their own area**. Areas may change how creatures move: some slower or faster, some impassable (for example a watery area that some creatures cannot cross, or cross slowly). Whether a creature is better in its own area is left open on purpose: with so many creatures to design, each may have its own relationship with areas.
 
 ## The leash
