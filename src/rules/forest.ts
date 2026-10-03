@@ -36,8 +36,8 @@ function treesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
       const x = (i + shift + (hash2(i, j, s + 101) - 0.5) * 0.7) * sx;
       const z = (j + (hash2(i, j, s + 102) - 0.5) * 0.7) * sz;
       // A crown must not cover a clearing either, so the weight is checked where it reaches.
-      const w = Math.min(map.treeWeight(x, z), map.treeWeight(x, z - lift), map.treeWeight(x - half, z - lift), map.treeWeight(x + half, z - lift), map.treeWeight(x, z - lift * 1.6));
-      if (hash2(i, j, s + 103) > w * 1.3) continue;
+      if (hash2(i, j, s + 103) >= map.treeWeight(x, z)) continue;
+      if (map.treeWeight(x, z - lift) === 0 || map.treeWeight(x - half, z - lift) === 0 || map.treeWeight(x + half, z - lift) === 0) continue;
       const a = map.areaAt(x, z);
       out.push({ x, z, type: a.type, variant: Math.floor(hash2(i, j, s + 104) * TREE_VARIANTS), flip: hash2(i, j, s + 105) < 0.5 });
     }
@@ -51,7 +51,7 @@ function bushesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
   const i0 = Math.ceil((ci * CHUNK) / sp), i1 = Math.ceil(((ci + 1) * CHUNK) / sp);
   for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
     const x = (i + (hash2(i, j, s + 201) - 0.5) * 0.9) * sp, z = (j + (hash2(i, j, s + 202) - 0.5) * 0.9) * sp;
-    if (hash2(i, j, s + 203) > (0.12 + map.treeWeight(x, z) * 0.6) * map.tuning.bushDensity) continue;
+    if (hash2(i, j, s + 203) > (0.12 + Math.min(1, map.treeWeight(x, z)) * 0.3) * map.tuning.bushDensity) continue;
     out.push({ x, z, type: map.areaAt(x, z).type, variant: Math.floor(hash2(i, j, s + 204) * BUSH_VARIANTS), flip: hash2(i, j, s + 205) < 0.5 });
   }
   return out;

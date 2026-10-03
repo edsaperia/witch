@@ -9,6 +9,7 @@ export interface Tuning {
   borderLayers: number;
   treeDensity: number;
   clearingSize: number;
+  clearingEdge: number;
   bushDensity: number;
   treeSpacingX: number;
   treeSpacingZ: number;

@@ -6,9 +6,10 @@
   "areaSize": 28,
   "borderLayers": 4,
 
-  "_trees": "treeDensity scales how many trees; clearingSize (0-1) how large the open middle of each area is; trees sit on a staggered grid treeSpacingX by treeSpacingZ metres, so no two crowns pile up. A tree is left out where its crown (crownHalfWidth either side, crownHeight up) would hang over a clearing seen from the treetops.",
-  "treeDensity": 2.2,
+  "_trees": "treeDensity (0-1): the chance of a tree on each spot outside the clearings; clearingSize (0-1): how large the open middle of each area is; clearingEdge: how gradually trees thin toward it (small is a sharp edge); trees sit on a staggered grid treeSpacingX by treeSpacingZ metres, so no two crowns pile up. A tree is left out where its crown (crownHalfWidth either side, crownHeight up) would hang over a clearing seen from the treetops.",
+  "treeDensity": 0.9,
   "clearingSize": 0.55,
+  "clearingEdge": 0.3,
   "bushDensity": 1,
   "treeSpacingX": 5,
   "treeSpacingZ": 3,

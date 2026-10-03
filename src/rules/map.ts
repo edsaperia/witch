@@ -40,7 +40,7 @@ export interface ForestMap {
   areaAt(x: number, z: number): AreaSample;
   /** An area's centre (its layer-0 site), in metres. */
   siteOf(cx: number, cy: number): { x: number; z: number };
-  /** How strongly trees want to grow at a point: 0 in a clearing, rising toward the borders. */
+  /** The chance a tree grows at a point: 0 in a clearing, rising across its edge to treeDensity. */
   treeWeight(x: number, z: number): number;
   /** Pairs of areas that touch, as "cx,cy|cx,cy" keys, for tests and the debug view. */
   readonly neighbours: ReadonlyMap<string, ReadonlySet<string>>;
@@ -124,7 +124,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const treeWeight = (x: number, z: number) => {
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return 0;
     const t = partition.openness(x / A, z / A);
-    return Math.pow(Math.max(0, (t - c) / (1 - c)), 1.6) * tuning.treeDensity * 0.7;
+    return Math.min(1, Math.pow(Math.max(0, (t - c) / Math.max(0.01, tuning.clearingEdge)), 1.6)) * tuning.treeDensity;
   };
 
   const pad = A * 0.5;

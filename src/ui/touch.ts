@@ -14,7 +14,7 @@ export function setupTouch(root: HTMLElement, touch: TouchInput): void {
     show();
     stickId = e.pointerId; ox = e.clientX; oy = e.clientY;
     pad.style.left = ox + "px"; pad.style.top = oy + "px"; pad.classList.add("on");
-    zone.setPointerCapture(e.pointerId);
+    try { zone.setPointerCapture(e.pointerId); } catch { /* the stick still follows moves over the zone */ }
     e.preventDefault();
   });
   zone.addEventListener("pointermove", e => {

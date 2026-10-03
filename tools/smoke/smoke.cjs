@@ -38,7 +38,8 @@ async function main() {
   const check = (ok, what) => { results.push(`${ok ? "ok  " : "FAIL"} ${what}`); if (!ok) errors.push(what); };
 
   async function run(name, viewport, steps) {
-    const page = await browser.newPage({ viewport, deviceScaleFactor: 1 });
+    const { hasTouch, ...size } = viewport;
+    const page = await browser.newPage({ viewport: size, deviceScaleFactor: 1, hasTouch: !!hasTouch, isMobile: !!hasTouch });
     page.on("pageerror", e => errors.push(`${name}: page error: ${e.message}`));
     page.on("console", m => { if (m.type() === "error") errors.push(`${name}: console error: ${m.text()}`); });
     await page.goto(`http://127.0.0.1:${port}/?seed=${seed}&debug`);
@@ -98,12 +99,26 @@ async function main() {
     results.push(`area under the witch: ${s.area}`);
   });
 
-  await run("phone", { width: 390, height: 844 }, async page => {
-    await page.mouse.click(200, 400);
+  await run("phone", { width: 390, height: 844, hasTouch: true }, async page => {
+    await page.touchscreen.tap(200, 400);
     await sleep(300);
+    check(!(await state(page)).paused, "a tap starts the game");
     await shot(page, "10-phone-ground.png");
-    await page.keyboard.press("Space");
+    // Drag the joystick up and to the right with touch pointer events, as a thumb would.
+    const touch = (type, x, y) => page.evaluate(([type, x, y]) => {
+      const el = document.getElementById("stick-zone");
+      el.dispatchEvent(new PointerEvent(type, { pointerId: 7, pointerType: "touch", clientX: x, clientY: y, bubbles: true, cancelable: true, isPrimary: true }));
+    }, [type, x, y]);
+    const s0 = await state(page);
+    await touch("pointerdown", 100, 650);
+    await touch("pointermove", 150, 600);
+    await page.waitForFunction(t => window.witch.game.clock.time - t >= 1.5, s0.t, { timeout: 60000, polling: 50 });
+    const s1 = await state(page);
+    await touch("pointerup", 150, 600);
+    check(s1.x > s0.x + 2 && s1.z < s0.z - 2, `the touch joystick flies her north-east (${(s1.x - s0.x).toFixed(1)}, ${(s1.z - s0.z).toFixed(1)} m)`);
+    await page.touchscreen.tap(345, 770); // the rise / descend button
     await sleep(1500);
+    check((await state(page)).mode === "treetop", "the round button rises to treetop mode");
     await shot(page, "11-phone-treetop.png");
   });
 

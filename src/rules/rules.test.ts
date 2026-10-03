@@ -180,7 +180,7 @@ describe("trees", () => {
   });
 
   it("follow the tree density setting", () => {
-    const sparse = new Forest(generateMap(123, withTuning({ treeDensity: 0.4 })));
+    const sparse = new Forest(generateMap(123, withTuning({ treeDensity: 0.3 })));
     expect(sparse.treesNear(150, 150, 60).length).toBeLessThan(forest.treesNear(150, 150, 60).length * 0.75);
   });
 
