@@ -8,10 +8,12 @@ import * as THREE from "three";
 import type { ForestMap } from "../rules/map";
 import { AREA_TYPES } from "../rules/map";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
+import type { TilePixels } from "./artBuild";
 import type { Style } from "./style";
 
 const TEXELS_PER_METRE = 2;
 const TILE = 32; // texels
+const FLOOR_COLS = 8;
 
 const VERT = /* glsl */ `
 varying vec3 vWorld;
@@ -26,8 +28,11 @@ const FRAG = /* glsl */ `
 uniform sampler2D uAreas;
 uniform vec4 uExtent; // minX, minZ, width, depth (metres)
 uniform float uPixel; // metres per art pixel
-uniform float uTypeHue[32];
-uniform float uGroundHue, uGroundVal, uSat, uContrast;
+uniform vec3 uTypeFloor[32];      // each type's floor colour (hsv), until its tile is drawn
+uniform float uFloorReady[32];
+uniform sampler2D uFloors;        // every type's floor tile, FLOOR_COLS to a row
+uniform vec2 uTile, uFloorsSize;  // one tile's size and the atlas's, in art pixels
+uniform float uSat;
 uniform vec3 uFloor; // dancefloor x, z, radius
 varying vec3 vWorld;
 ${LIGHT_GLSL}
@@ -49,12 +54,17 @@ void main() {
   vec4 area = texture2D(uAreas, (p + j - uExtent.xy) / uExtent.zw);
   float open = area.a > 0.5 ? area.g : 1.0;
   int t = int(area.r * 255.0 + 0.5);
-  float gh = uGroundHue + (area.a > 0.5 ? uTypeHue[t] * uContrast / 0.6 : 0.0);
-  float v = vnoise(px / vec2(9.0, 6.0)) * 0.7 + vnoise(px / vec2(2.5, 2.0)) * 0.3;
-  vec3 c = hsv(gh, 0.5 * uSat, uGroundVal);
-  if (v < 0.38) c = hsv(gh + 0.04, 0.55 * uSat, uGroundVal * 0.8);
-  else if (v > 0.66) c = hsv(gh - 0.03, 0.45 * uSat, uGroundVal * 1.15);
-  else if (hash(px * 0.37) < 0.04) c = hsv(gh + 0.1, 0.3 * uSat, uGroundVal * 0.9);
+  vec3 c;
+  if (area.a > 0.5 && uFloorReady[t] > 0.5) {
+    // The area's floor tile, repeated on the art's pixel grid.
+    vec2 cell = vec2(mod(float(t), ${FLOOR_COLS}.0), floor(float(t) / ${FLOOR_COLS}.0));
+    vec2 tp = mod(px, uTile);
+    c = texture2D(uFloors, (cell * uTile + tp + 0.5) / uFloorsSize).rgb;
+  } else {
+    vec3 f = area.a > 0.5 ? uTypeFloor[t] : vec3(0.25, 0.45, 0.4);
+    float v = vnoise(px / vec2(9.0, 6.0)) * 0.7 + vnoise(px / vec2(2.5, 2.0)) * 0.3;
+    c = hsv(f.x, f.y * uSat, f.z * (v < 0.38 ? 0.8 : v > 0.66 ? 1.15 : 1.0));
+  }
   c *= 1.0 + max(0.0, 0.55 - open) * 0.9;        // clearings are paler
   // The dancefloor: a worn ring of pale stones.
   float r = length(p - uFloor.xy);
@@ -72,6 +82,9 @@ export class Ground {
   private tilesX: number;
   private tilesZ: number;
   private initialised = false;
+  private floorReady = new Array(32).fill(0);
+  private floors: THREE.DataTexture;
+  private pendingFloors: [number, TilePixels][] = [];
 
   constructor(private map: ForestMap, st: Style, metresPerPixel: number) {
     const e = map.extent, w = e.maxX - e.minX, d = e.maxZ - e.minZ;
@@ -81,8 +94,8 @@ export class Ground {
     const nearest = (t: THREE.DataTexture) => { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true; return t; };
     this.texture = nearest(new THREE.DataTexture(new Uint8Array(W * H * 4), W, H));
     nearest(this.tile);
-    const hues = new Array(32).fill(0);
-    AREA_TYPES.forEach((t, i) => (hues[i] = t.groundHue));
+    this.floors = nearest(new THREE.DataTexture(new Uint8Array(64 * FLOOR_COLS * 48 * 4 * 4), 64 * FLOOR_COLS, 48 * 4));
+    const floors = Array.from({ length: 32 }, (_, i) => new THREE.Vector3(...(AREA_TYPES[i]?.floor ?? [0.25, 0.45, 0.4])));
     const mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
       uniforms: {
@@ -90,8 +103,12 @@ export class Ground {
         uAreas: { value: this.texture },
         uExtent: { value: new THREE.Vector4(e.minX, e.minZ, W / TEXELS_PER_METRE, H / TEXELS_PER_METRE) },
         uPixel: { value: metresPerPixel },
-        uTypeHue: { value: hues },
-        uGroundHue: { value: st.groundHue }, uGroundVal: { value: st.groundVal }, uSat: { value: st.sat }, uContrast: { value: st.areaContrast },
+        uTypeFloor: { value: floors },
+        uFloorReady: { value: this.floorReady },
+        uFloors: { value: this.floors },
+        uTile: { value: new THREE.Vector2(64, 48) },
+        uFloorsSize: { value: new THREE.Vector2(64 * FLOOR_COLS, 48 * 4) },
+        uSat: { value: st.sat },
         uFloor: { value: new THREE.Vector3(map.dancefloor.x, map.dancefloor.z, map.dancefloor.radius) },
       },
     });
@@ -101,9 +118,26 @@ export class Ground {
     this.mesh.position.set((e.minX + e.maxX) / 2, 0, (e.minZ + e.maxZ) / 2);
   }
 
+  /** An area type's floor tile has been drawn: put it in the atlas (on the next fill). */
+  setFloor(type: number, tile: TilePixels): void { this.pendingFloors.push([type, tile]); }
+
+  private placeFloors(renderer: THREE.WebGLRenderer): void {
+    for (const [type, tile] of this.pendingFloors) {
+      const u = this.mesh.material as THREE.ShaderMaterial, size = u.uniforms.uTile.value as THREE.Vector2;
+      if (tile.w !== size.x || tile.h !== size.y) continue; // a tile of another size: keep the flat colour
+      const t = new THREE.DataTexture(tile.albedo, tile.w, tile.h);
+      t.needsUpdate = true;
+      renderer.copyTextureToTexture(t, this.floors, null, new THREE.Vector2((type % FLOOR_COLS) * tile.w, Math.floor(type / FLOOR_COLS) * tile.h));
+      t.dispose();
+      this.floorReady[type] = 1;
+    }
+    this.pendingFloors = [];
+  }
+
   /** Fill area tiles nearest (x, z) first, within `radius` metres, for up to `budgetMs`. Returns how many are still missing there. */
   fill(renderer: THREE.WebGLRenderer, x: number, z: number, radius: number, budgetMs: number): number {
-    if (!this.initialised) { renderer.initTexture(this.texture); this.initialised = true; }
+    if (!this.initialised) { renderer.initTexture(this.texture); renderer.initTexture(this.floors); this.initialised = true; }
+    if (this.pendingFloors.length) this.placeFloors(renderer);
     const e = this.map.extent, tm = TILE / TEXELS_PER_METRE;
     const cx = (x - e.minX) / tm, cz = (z - e.minZ) / tm, r = Math.ceil(radius / tm);
     const todo: [number, number, number][] = [];

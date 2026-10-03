@@ -16,6 +16,8 @@
   "crownHalfWidth": 4.5,
   "crownHeight": 5,
   "bushSpacing": 3.4,
+  "wallSpacing": 4,
+  "wallDensity": 0.6,
 
   "_witch": "Speeds per mode, and how long rising and descending take.",
   "groundSpeed": 6,
@@ -57,7 +59,7 @@
   "legendsFrom": 0.55,
   "creatureSimRadius": 110,
   "creatureSpeed": 0.6,
-  "_setPieces": "setPieceChance: the share of areas, among the types that have a set piece, that show theirs.",
-  "setPieceChance": 0.15,
+  "_setPieces": "setPieceChance: the share of areas, among the types that have a set piece, that show theirs. Wall objects (an area type's edges: puddles, henges, hedges) stand where areas meet, one per wallSpacing metres with chance wallDensity; they do not block movement.",
+  "setPieceChance": 0.25,
   "legendSpeed": 0.35
 }

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { hash2 as labHash2 } from "../../art/generator.js";
+import { hash2 as labHash2, SPECIES_BY_ID } from "../../art/generator.js";
 import { makePartition } from "./partition";
 import { AREA_TYPES, generateMap, parseSeed } from "./map";
 import { Forest, crownReach } from "./forest";
@@ -280,12 +280,10 @@ describe("creatures", () => {
   const inCell = (x: number, y: number) => all.filter(c => c.cell[0] === x && c.cell[1] === y);
   const [mx, my] = map.centreCell;
 
-  it("are each area's own kind, drawn with its animal", () => {
-    for (const c of all.slice(0, 300)) {
-      const type = AREA_TYPES[map.typeOf(c.cell[0], c.cell[1])];
-      expect(c.kind).toBe(type.creature);
-      expect(c.species).toBe(type.drawAs);
-    }
+  it("are each area's own kind, all 30 drawn by the art module", () => {
+    for (const c of all.slice(0, 300)) expect(c.species).toBe(AREA_TYPES[map.typeOf(c.cell[0], c.cell[1])].creature);
+    for (const t of AREA_TYPES) expect(SPECIES_BY_ID[t.creature], t.creature).toBeDefined();
+    expect(new Set(AREA_TYPES.map(t => t.creature)).size).toBe(30);
   });
 
   it("are a couple of babies in the areas round home", () => {

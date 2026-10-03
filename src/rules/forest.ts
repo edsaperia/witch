@@ -57,10 +57,26 @@ function bushesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
   return out;
 }
 
+// Wall objects (edges and barriers: puddles, henges, hedges...) stand where areas meet, only in
+// the types that have them. They are scenery: nothing blocks movement (Ed, 2026-10-03).
+function wallsInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
+  const sp = map.tuning.wallSpacing, s = map.seed, out: Plant[] = [];
+  const j0 = Math.ceil((cj * CHUNK) / sp), j1 = Math.ceil(((cj + 1) * CHUNK) / sp);
+  const i0 = Math.ceil((ci * CHUNK) / sp), i1 = Math.ceil(((ci + 1) * CHUNK) / sp);
+  for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
+    if (hash2(i, j, s + 303) > map.tuning.wallDensity) continue;
+    const x = (i + (hash2(i, j, s + 301) - 0.5) * 0.6) * sp, z = (j + (hash2(i, j, s + 302) - 0.5) * 0.6) * sp, a = map.areaAt(x, z);
+    if (a.openness < 0.82 || !AREA_TYPES[a.type].hasWalls) continue;
+    out.push({ x, z, type: a.type, variant: Math.floor(hash2(i, j, s + 304) * 4), flip: hash2(i, j, s + 305) < 0.5 });
+  }
+  return out;
+}
+
 /** Trees and bushes near a point, chunk by chunk, remembered once made. */
 export class Forest {
   private trees = new Map<string, Plant[]>();
   private bushes = new Map<string, Plant[]>();
+  private walls = new Map<string, Plant[]>();
   constructor(readonly map: ForestMap) {}
 
   private chunks(x: number, z: number, radius: number): [number, number][] {
@@ -86,5 +102,20 @@ export class Forest {
   }
   bushesNear(x: number, z: number, radius: number): Plant[] {
     return this.gather(this.bushes, (i, j) => bushesInChunk(this.map, i, j), x, z, radius);
+  }
+  wallsNear(x: number, z: number, radius: number): Plant[] {
+    return this.gather(this.walls, (i, j) => wallsInChunk(this.map, i, j), x, z, radius);
+  }
+  /** Set pieces near a point: each stands in its area's clearing, a little north of the centre. */
+  setPiecesNear(x: number, z: number, radius: number): Plant[] {
+    const m = this.map, A = m.areaSize, out: Plant[] = [];
+    for (let cy = Math.floor((z - radius) / A) - 1; cy <= Math.floor((z + radius) / A) + 1; cy++)
+      for (let cx = Math.floor((x - radius) / A) - 1; cx <= Math.floor((x + radius) / A) + 1; cx++) {
+        if ((cx === m.centreCell[0] && cy === m.centreCell[1]) || !m.setPieceOf(cx, cy)) continue;
+        const s = m.siteOf(cx, cy);
+        if (Math.abs(s.x - x) <= radius && Math.abs(s.z - 4 - z) <= radius)
+          out.push({ x: s.x, z: s.z - 4, type: m.typeOf(cx, cy), variant: 0, flip: hash2(cx, cy, m.seed + 71) < 0.5 });
+      }
+    return out;
   }
 }

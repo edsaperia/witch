@@ -5,13 +5,13 @@
 import * as Art from "../../art/generator.js";
 import { rng } from "../rules/random";
 import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
-import { bushFrame, creatureFrame, runJob, treeFrame, type ArtJob, type AtlasPixels } from "./artBuild";
+import { creatureFrame, runJob, type ArtJob, type ArtResult, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 
-export interface TypeArt { atlas: Atlas; treeFrame: (variant: number, top: boolean) => number; bushFrame: (variant: number) => number }
+export interface TypeArt { atlas: Atlas; layout: TypeLayout }
 export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number) => number }
 
-type Reply = { job: ArtJob; px?: AtlasPixels; error?: string };
+type Reply = { job: ArtJob; result?: ArtResult; error?: string };
 
 export class AssetLibrary {
   private types = new Map<number, TypeArt>();
@@ -26,6 +26,8 @@ export class AssetLibrary {
   readonly K: number;
   /** Bumped whenever a new set is ready, so the view knows to refresh its batches. */
   version = 0;
+  /** Called with an area type's floor tile when its set is ready. */
+  onFloor: (type: number, tile: TilePixels) => void = () => {};
 
   constructor(readonly style: Style, readonly seed: number, pixelSize: number) {
     this.K = 2 / pixelSize;
@@ -75,15 +77,17 @@ export class AssetLibrary {
     }
   }
   private receive(r: Reply): void {
-    if (!r.px) { // a worker could not draw it: draw it here instead
+    if (!r.result) { // a worker could not draw it: draw it here instead
       console.warn("art worker failed, drawing on the page:", r.error);
       this.useWorkers = false;
       this.queue.unshift(r.job);
       return;
     }
-    const atlas = atlasFromPixels(r.px);
-    if (r.job.kind === "type") this.types.set(r.job.id, { atlas, treeFrame, bushFrame });
-    else this.creatures.set(r.job.id, { atlas, frame: creatureFrame });
+    const atlas = atlasFromPixels(r.result.px);
+    if (r.job.kind === "type") {
+      this.types.set(r.job.id, { atlas, layout: r.result.layout! });
+      if (r.result.floor) this.onFloor(r.job.id, r.result.floor);
+    } else this.creatures.set(r.job.id, { atlas, frame: creatureFrame });
     this.inFlight.delete(this.key(r.job));
     this.version++;
   }
@@ -111,7 +115,7 @@ export class AssetLibrary {
     let made = 0;
     while (this.queue.length && (made === 0 || performance.now() - t0 < budgetMs)) {
       const job = this.queue.shift()!;
-      this.receive({ job, px: runJob(job, (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; }) });
+      this.receive({ job, result: runJob(job, (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; }) });
       made++;
     }
   }

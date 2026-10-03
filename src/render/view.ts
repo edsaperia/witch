@@ -5,7 +5,7 @@ import * as THREE from "three";
 import type { Game } from "../rules/game";
 import { poseOf } from "../rules/game";
 import { canopyShown, witchHeight } from "../rules/witch";
-import { AssetLibrary } from "./assets";
+import { AssetLibrary, type TypeArt } from "./assets";
 import { Ground } from "./ground";
 import { applyStyleLight, LIGHT_UNIFORMS } from "./lighting";
 import { Post } from "./post";
@@ -46,6 +46,7 @@ export class View {
     applyStyleLight(style, t.glowReach, this.mpp);
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize);
     this.ground = new Ground(game.map, style, this.mpp);
+    this.assets.onFloor = (type, tile) => this.ground.setFloor(type, tile);
     this.scene.add(this.ground.mesh);
 
     this.witchBatch = new SpriteBatch(this.assets.witch, this.mpp, { unlit: true, onTop: true });
@@ -115,21 +116,29 @@ export class View {
     if (this.prefetch) for (let cy = Math.floor((cz - ahead) / A); cy <= Math.floor((cz + ahead) / A); cy++)
       for (let cx2 = Math.floor((cx - ahead) / A); cx2 <= Math.floor((cx + ahead) / A); cx2++) this.assets.prefetchType(g.map.typeOf(cx2, cy));
     const trees = g.forest.treesNear(cx, cz, R), bushes = g.forest.bushesNear(cx, cz, R * 0.8);
+    const walls = g.forest.wallsNear(cx, cz, R * 0.8), pieces = g.forest.setPiecesNear(cx, cz, R);
     let nt = 0, nb = 0;
     for (const p of trees) {
       const art = this.assets.typeArt(p.type);
-      if (!art) continue;
-      const f = art.atlas.frames;
-      add(p.type, { x: p.x, y: 0, z: p.z, frame: f[art.treeFrame(p.variant, false)], flip: p.flip });
-      add(p.type, { x: p.x, y: 0, z: p.z, frame: f[art.treeFrame(p.variant, true)], flip: p.flip, top: true });
+      if (!art || !art.layout.big.length) continue;
+      const f = art.atlas.frames, big = art.layout.big[p.variant % art.layout.big.length];
+      add(p.type, { x: p.x, y: 0, z: p.z, frame: f[big.bot], flip: p.flip });
+      if (big.top !== null) add(p.type, { x: p.x, y: 0, z: p.z, frame: f[big.top], flip: p.flip, top: true });
       nt++;
     }
-    for (const p of bushes) {
-      const art = this.assets.typeArt(p.type);
-      if (!art) continue;
-      add(p.type, { x: p.x, y: 0, z: p.z, frame: art.atlas.frames[art.bushFrame(p.variant)], flip: p.flip });
-      nb++;
-    }
+    const scatter = (list: typeof bushes, pick: (l: TypeArt["layout"]) => number[]) => {
+      for (const p of list) {
+        const art = this.assets.typeArt(p.type);
+        if (!art) continue;
+        const frames = pick(art.layout);
+        if (!frames.length) continue;
+        add(p.type, { x: p.x, y: 0, z: p.z, frame: art.atlas.frames[frames[p.variant % frames.length]], flip: p.flip });
+        nb++;
+      }
+    };
+    scatter(bushes, l => l.small);
+    scatter(walls, l => l.walls);
+    scatter(pieces, l => (l.set === null ? [] : [l.set]));
     for (const [type, b] of this.typeBatches) if (!per.has(type)) b.set([]);
     for (const [type, list] of per) {
       const b = this.batchFor(this.typeBatches, type, () => { const a = this.assets.typeArt(type); return a && new SpriteBatch(a.atlas, this.mpp); });

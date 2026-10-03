@@ -35,7 +35,8 @@ Related commands: `node tools/art-lab/build.mjs` writes the self-contained lab p
 
 Literal, stable names for the parts of the game, as Ed and the builders agree them. The game's own terms are in `DESIGN.md`'s glossary; these are the prototype's.
 
-- **Area type**: one of the kinds of area: Ed's 30 in `config/area-types.json` (from DESIGN.md), each with his columns (floor, wall, small, big, set piece, creature) plus the stand-ins the prototype draws with until `art/areas.js` exists (leaf colour, tree shapes, the animal sprite).
+- **Area type**: one of the kinds of area: Ed's 30, defined with their art in `art/areas.js` (his columns: floor, wall objects, small objects, big objects, set piece, creature). `config/area-types.json` adds the game's own numbers per type (how thick its big objects stand).
+- **Wall objects, small objects, big objects, set piece**: Ed's columns. Big objects stand like trees (trees split into top and bottom halves; mounds, boulders and logs whole); small objects scatter like undergrowth; wall objects stand where areas meet and block nothing; a set piece shows in a quarter of its type's areas, in the clearing.
 - **Remoteness**: how far an area is from home, 0 at the dancefloor's area to 1 at the map's edge; creatures grow more numerous and older with it.
 - **Tilt-shift**: the post-process blur toward the top and bottom of the screen that makes the forest look like a miniature.
 - **Tuning file**: `config/tuning.json`, the numbers Ed edits (speeds, camera, density, glow, pixel size, creatures, bloom, tilt-shift).

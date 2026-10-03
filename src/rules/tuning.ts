@@ -16,6 +16,8 @@ export interface Tuning {
   crownHalfWidth: number;
   crownHeight: number;
   bushSpacing: number;
+  wallSpacing: number;
+  wallDensity: number;
   groundSpeed: number;
   treetopSpeed: number;
   acceleration: number;

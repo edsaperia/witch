@@ -7,9 +7,7 @@ import { AREA_TYPES, type ForestMap } from "./map";
 
 export interface Creature {
   id: number;
-  /** The creature's kind, in Ed's words (Badger, Snail...). */
-  kind: string;
-  /** The animal sprite it is drawn with (its own, or a stand-in until its art exists). */
+  /** Its species id in the art module's bestiary: the area type's creature. */
   species: string;
   /** The area it belongs to. */
   cell: [number, number];
@@ -58,7 +56,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
       const range = wanderRange(map, level, far), a = r() * Math.PI * 2, d = Math.sqrt(r()) * range;
       const x = home.x + Math.cos(a) * d, z = home.z + Math.sin(a) * d;
       return {
-        id: id++, kind: type.creature, species: type.drawAs, cell: [cx, cy], level, homeX: home.x, homeZ: home.z, range, x, z, tx: x, tz: z,
+        id: id++, species: type.creature, cell: [cx, cy], level, homeX: home.x, homeZ: home.z, range, x, z, tx: x, tz: z,
         rest: r() * 3, speed: (level === 2 ? t.legendSpeed : t.creatureSpeed) * (0.7 + r() * 0.6),
         facing: r() < 0.5 ? 1 : -1, moving: false, walk: r(), rand: rng(map.seed * 31 + id * 7 + 11),
       };

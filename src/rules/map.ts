@@ -2,28 +2,35 @@
 // type that no neighbour shares, plus a margin of areas round the edge so the forest never
 // visibly ends. World units are metres: x runs east, z runs south, one area cell is areaSize.
 import rawTypes from "../../config/area-types.json";
+import { AREAS } from "../../art/areas.js";
 import { makePartition, type Cell, type Partition } from "./partition";
 import { hash2, rng } from "./random";
 import type { Tuning } from "./tuning";
 
+/** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
+ *  the game's own numbers. Only plain data is read here. */
 export interface AreaType {
   id: string;
   name: string;
-  /** Ed's columns. */
-  floor: string;
-  wall: string;
-  small: string;
-  big: string;
-  setPiece: string;
+  /** The creature's species id (in the art module's bestiary). */
   creature: string;
-  /** The existing animal sprite that stands in for the creature until its art exists. */
-  drawAs: string;
-  leafHue: number;
-  trees: string[];
+  /** Ed's columns, in words. */
+  text: { floor?: string; wall?: string; small?: string; big?: string; set?: string };
+  /** The set piece in words, or "" if the type has none. */
+  setPiece: string;
+  hasWalls: boolean;
+  /** The floor's colour, [hue, saturation, value], for the ground before its tile is drawn. */
+  floor: [number, number, number];
   treeDensity: number;
-  groundHue: number;
 }
-export const AREA_TYPES: readonly AreaType[] = (rawTypes as { types: AreaType[] }).types;
+
+interface ArtArea { id: string; name: string; creature: string; text: AreaType["text"]; floor: [string, number, number, number]; wall?: unknown[]; set?: unknown }
+const settings = (rawTypes as { types: Record<string, { treeDensity: number }> }).types;
+export const AREA_TYPES: readonly AreaType[] = (AREAS as unknown as ArtArea[]).map(a => ({
+  id: a.id, name: a.name, creature: a.creature, text: a.text,
+  setPiece: a.set ? a.text.set ?? "a set piece" : "", hasWalls: !!a.wall?.length,
+  floor: [a.floor[1], a.floor[2], a.floor[3]], treeDensity: settings[a.id]?.treeDensity ?? 1,
+}));
 
 export interface AreaSample {
   cell: Cell;
