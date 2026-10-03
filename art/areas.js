@@ -9,6 +9,7 @@
 //   floor a seamless-ish tile (64 x 48 art pixels) to repeat over the ground.
 import { M, Sprite, rng, uni, pick, hash2, vnoise, hsv2rgb, tufts, lerp2, add, bake, defaultCanvas, runeGlyph } from "./core.js";
 import { Model, render, masks, v3 } from "./model3d.js";
+import { sigilHit } from "./sigils.js";
 import { broadTree, firTree, willowTree, birchTree, flatTree, treeColours, bush } from "./trees.js";
 
 // [kind, params] shorthands for the prop library below
@@ -301,7 +302,8 @@ const STONE_GLOW = { cyan: [[70, 230, 255], [200, 250, 255]], violet: [[190, 100
 // A rune stone: a grey standing slab, taller than wide, its flatter face turned to the viewer,
 // cracked and weathered, with moss and grass at its foot and one bold glowing rune carved into
 // its face (the same glyphs as the soundsystem's runes), and a few motes drifting round it.
-function magicStone(variant) {
+// sigil: a creature's id, to carve its sigil (sigils.js) instead of a generic rune.
+function magicStone(variant, sigil) {
   const m = new Model({ blend: .04 }), k = Object.keys(STONE_GLOW).indexOf(variant), fz = .08, A = .4; // A: turned so its face is nearly square to the viewer
   // its own axes: across, up (leaning back a little, so the face catches the moon), out of the face
   const ax = [Math.cos(A), 0, -Math.sin(A)], az = v3.norm([Math.sin(A), .22, Math.cos(A)]), ay = v3.norm(v3.cross(az, ax)), C = [0, .46, 0];
@@ -314,7 +316,8 @@ function magicStone(variant) {
     const d = v3.sub(q, C), p = [v3.dot(d, ax), v3.dot(d, ay) + .46, v3.dot(d, az)]; // in the slab's own axes
     if (p[2] > fz - .02) { // the rune, carved into the face
       const u = (p[0] + .17) / .34, v = (.8 - p[1]) / .5;
-      if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && runeGlyph(u, v, k + 1, .1)) return M.RUNE;
+      if (sigil) { const su = (p[0] + .27) / .54, sv = (.8 - p[1]) / .58; if (su >= 0 && su <= 1 && sv >= 0 && sv <= 1 && sigilHit(sigil, su, sv, .055)) return M.RUNE; }
+      else if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && runeGlyph(u, v, k + 1, .1)) return M.RUNE;
     }
     if (crack(p[0], p[1])) return M.STONED; // cracks
     if (p[1] > .86 && hash2(Math.floor(p[0] * 30), Math.floor(p[2] * 30), 3) < .3) return M.MOSS;   // lichen on the weathered top
@@ -348,6 +351,9 @@ function pond() {
 }
 // Bakes the light sources: { campfire: [3 frames], stones: { cyan, violet, green }, pond: { sp, mask } }.
 // The pond's mask is a canvas, white where its pixels are water.
+// A rune stone in one glow ("cyan", "violet" or "green"), carved with a creature's sigil (an
+// area's stones can carry the area creature's sigil) or, without one, a generic rune. Baked.
+export function runeStone(st, { glow = "cyan", sigil, makeCanvas = defaultCanvas } = {}) { const s = magicStone(glow, sigil); return bake(s.sp, s.colours, st, "none", makeCanvas); }
 export function lightProps(st, { makeCanvas = defaultCanvas } = {}) {
   const bk = (sp, col) => bake(sp, col, st, "none", makeCanvas);
   const out = { campfire: [0, 1, 2].map(f => bk(campfire(f), fireCol)), stones: {}, pond: null };

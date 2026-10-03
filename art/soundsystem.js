@@ -12,6 +12,7 @@
 // States: "playing" (3 frames), "damaged" (cracked, a stone fallen, the glow flickering: 2
 // frames) and "destroyed" (a rubble pile with a dying glow: 1 frame).
 import { M, hash2, runeGlyph } from "./core.js";
+import { sigilHit } from "./sigils.js";
 import { Model, render } from "./model3d.js";
 import { witchHeight } from "./witch.js";
 
@@ -31,7 +32,7 @@ export function soundsystemColours(variant = 0) {
 
 // The stack as a model. frame 0..2 pumps the cones; state "playing" | "damaged"; for damaged,
 // frame 0 or 1 is the flicker. Returns the model and how tall the intact stack is (model units).
-function stackModel(variant, frame, state) {
+function stackModel(variant, frame, state, sigil) {
   const V = SOUNDSYSTEMS[variant % SOUNDSYSTEMS.length], m = new Model({ blend: .02 }), dmg = state === "damaged";
   const pump = dmg ? 0 : [0, .5, 1][frame % 3], dark = (i) => dmg && (hash2(i, frame, 31) < .5); // a flickering cone
   let y = 0, g = 1, front = .3, cone = 0, runeK = variant * 7;
@@ -54,7 +55,7 @@ function stackModel(variant, frame, state) {
   const runePaint = (bx, by, bh, bw, bd, fz, k, base) => p => {
     if (p[0] > bx + bw - .022) {
       const S = Math.min(bh, bd) * 1.5, u = (fz - bd - p[2]) / S + .5, v = (by - p[1]) / S + .5;
-      if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && runeGlyph(u, v, k, .12)) return dmg && hash2(k, frame, 5) < .5 ? M.STONED : M.RUNE;
+      if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && (sigil ? sigilHit(sigil, u, v, .065) : runeGlyph(u, v, k, .12))) return dmg && hash2(k, frame, 5) < .5 ? M.STONED : M.RUNE;
     }
     return base(p);
   };
@@ -144,12 +145,13 @@ export const soundsystemHeight = st => witchHeight(st) * 3;
 const scales = new Map();
 // One soundsystem sprite. variant 0..2; state "playing" (frame 0..2), "damaged" (frame 0..1),
 // "destroyed". All states of a variant share one scale, so the rubble is smaller than the stack.
-export function soundsystemSprite(st = {}, { variant = 0, frame = 0, state = "playing" } = {}) {
+// sigil: a creature's id, to carve its sigil (sigils.js) instead of the generic runes.
+export function soundsystemSprite(st = {}, { variant = 0, frame = 0, state = "playing", sigil } = {}) {
   const H = soundsystemHeight(st), key = variant + ":" + H;
   if (!scales.has(key)) scales.set(key, render(stackModel(variant, 0, "playing").m, { height: H }).s);
   const scale = scales.get(key);
   if (state === "destroyed") return motes(render(rubbleModel(variant), { scale }).sp, 3, variant * 5 + 1);
-  const { sp } = render(stackModel(variant, frame, state).m, { scale });
+  const { sp } = render(stackModel(variant, frame, state, sigil).m, { scale });
   return motes(sp, state === "damaged" ? 4 : 10 + frame * 2, variant * 5 + frame);
 }
 

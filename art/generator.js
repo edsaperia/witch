@@ -9,10 +9,12 @@
 import { defaultCanvas, rng, uni, pick, gauss, hash2, vnoise, hsv2rgb, M, EMISSIVE, Sprite, spline, band, tufts, polyMask, edgeVectors, rot, lerp2, bake } from "./core.js";
 import { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree } from "./trees.js";
 import { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT } from "./witch.js";
-import { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps } from "./areas.js";
+import { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone } from "./areas.js";
 import { SPECIES, SPECIES_BY_ID, FEATURE_NAMES, speciesColours, critter, levelHeight } from "./creatures.js";
 export { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT };
-export { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps };
+export { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone };
+import { SIGILS, SIGIL_IDS, SIGIL_STROKE, SIGIL_DOT, SIGIL_DRAW_TIME, GROUND_PITCH, sigilColour, sigilStrokes, sigilSVG, drawSigil, sigilHit, sigilGlyph, groundSigil, paintGroundSigil } from "./sigils.js";
+export { SIGILS, SIGIL_IDS, SIGIL_STROKE, SIGIL_DOT, SIGIL_DRAW_TIME, GROUND_PITCH, sigilColour, sigilStrokes, sigilSVG, drawSigil, sigilHit, sigilGlyph, groundSigil, paintGroundSigil };
 import { SOUNDSYSTEMS, soundsystemColours, soundsystemSprite, soundsystemHeight, soundsystems } from "./soundsystem.js";
 export { SOUNDSYSTEMS, soundsystemColours, soundsystemSprite, soundsystemHeight };
 export { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree };
