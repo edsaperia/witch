@@ -17,6 +17,7 @@ import { Post } from "./post";
 import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
 import { StringLightsView } from "./strings";
+import { LeashView } from "./leash";
 import { Mist } from "./mist";
 import { ShadowBatch, type ShadowInstance } from "./shadows";
 import { lerp } from "../rules/random";
@@ -46,6 +47,7 @@ export class View {
   private propBatch: SpriteBatch;
   private partyView: PartyView;
   private strings: StringLightsView;
+  private leashView: LeashView;
   private soundBatch: SpriteBatch;
   private sources: LightSource[] = [];
   /** Lights in the forest besides the witch's glow, from the light sources (set by the view). */
@@ -103,6 +105,7 @@ export class View {
     this.scene.add(this.propBatch.mesh);
     this.partyView = new PartyView(this.assets.soundsystems, this.mpp);
     this.strings = new StringLightsView(this.scene, game);
+    this.leashView = new LeashView(this.scene, game);
     this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp);
     this.scene.add(this.soundBatch.mesh);
     this.dancefloor = new Dancefloor(game.map, t, SPRITE_UNIFORMS, this.mpp);
@@ -322,7 +325,7 @@ export class View {
     this.shadowList = shadows;
   }
 
-  private drawCreatures(): void {
+  private drawCreatures(time = 0): void {
     const g = this.game, R = g.tuning.haze.far + 20;
     const per = new Map<string, SpriteInstance[]>(), creatureShadows: ShadowInstance[] = [];
     let n = 0;
@@ -335,7 +338,9 @@ export class View {
       const fresh = this.mark("creature", c.x, c.z, frame.h * this.mpp, c.id);
       let l = per.get(c.species);
       if (!l) per.set(c.species, (l = []));
-      l.push({ x: c.x, y: 0, z: c.z, frame, flip: c.facing < 0, fresh });
+      // Party animals (invited ones) bob and dance.
+      const dance = c.leashed ? Math.abs(Math.sin(time * 5 + c.id)) * 0.35 : 0;
+      l.push({ x: c.x, y: dance, z: c.z, frame, flip: c.facing < 0, fresh });
       creatureShadows.push({ x: c.x, z: c.z, w: frame.w * this.mpp * 0.7, d: frame.w * this.mpp * 0.25 });
       n++;
     }
@@ -441,8 +446,9 @@ export class View {
     this.shadow.scale.setScalar(1 - 0.5 * canopyShown(w));
 
     this.refresh();
-    this.drawCreatures();
+    this.drawCreatures(time);
     this.checkPops("moving");
+    this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
     this.assets.work(6);
     // The ground's area tiles: everything the cameras can see, plus a band ahead.
     this.stats.pendingGround = this.ground.fill(this.renderer, this.viewRect(t.haze.far, 40), w.x, w.z, 4);

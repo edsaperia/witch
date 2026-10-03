@@ -1,10 +1,11 @@
 // Gathers the player's input from keyboard, gamepad and touch into one set of controls per frame.
-// Keyboard: WASD or arrows to fly, space to rise or descend, Q/E or -/+ to zoom, ~ for debug.
+// Keyboard: WASD or arrows to fly, space to rise or descend, Q/E or -/+ to zoom, ~ for debug,
+// hold F to talk (invite), R to put down or pick up a sigil, I (debug) to invite the nearest.
 // Gamepad: left stick (or d-pad) to fly, A to rise or descend, shoulders or triggers to zoom,
-// Back/Select for debug. Touch: the joystick and buttons in ui/touch.ts write into `touch`.
+// Back/Select for debug, hold X to talk, Y for the sigil. Touch: the joystick and buttons in ui/touch.ts write into `touch`.
 import type { Controls } from "../rules/game";
 
-export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean; nextWave?: boolean; pauseWaves?: boolean }
+export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean; nextWave?: boolean; pauseWaves?: boolean; talk?: boolean; sigil?: boolean }
 
 export class Input {
   private keys = new Set<string>();
@@ -27,7 +28,7 @@ export class Input {
   }
 
   private isGameKey(code: string): boolean {
-    return /^(Arrow|Space$|Key[WASDQENP]$|Minus$|Equal$|NumpadAdd$|NumpadSubtract$|Backquote$)/.test(code);
+    return /^(Arrow|Space$|Key[WASDQENPFRI]$|Minus$|Equal$|NumpadAdd$|NumpadSubtract$|Backquote$)/.test(code);
   }
 
   /** Forget presses not yet read (the press that started the game is not also a move). */
@@ -47,6 +48,8 @@ export class Input {
     let toggleMode = p("Space");
     let zoom = (p("KeyQ") || p("Minus") || p("NumpadSubtract") ? 1 : 0) - (p("KeyE") || p("Equal") || p("NumpadAdd") ? 1 : 0);
     let debug = p("Backquote");
+    let talk = k("KeyF") > 0, sigil = p("KeyR");
+    const inviteNearest = p("KeyI");
     this.pressed.clear();
 
     // Gamepads: the first one connected with any input.
@@ -67,6 +70,8 @@ export class Input {
       if (edge(4) || edge(6)) zoom += 1;
       if (edge(5) || edge(7)) zoom -= 1;
       if (edge(8)) debug = true;
+      if (btn(2)) talk = true;
+      if (edge(3)) sigil = true;
       this.padPrev = pad.buttons.map(b => b.pressed);
       break;
     }
@@ -76,10 +81,12 @@ export class Input {
     if (t.toggle) toggleMode = true;
     zoom += t.zoom;
     if (t.debug) debug = true;
-    t.toggle = false; t.zoom = 0; t.debug = false;
+    if (t.talk) talk = true;
+    if (t.sigil) sigil = true;
+    t.toggle = false; t.zoom = 0; t.debug = false; t.sigil = false;
 
     const len = Math.hypot(moveX, moveZ);
     if (len > 1) { moveX /= len; moveZ /= len; }
-    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug, nextWave, pauseWaves };
+    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug, nextWave, pauseWaves, talk, sigil, inviteNearest };
   }
 }

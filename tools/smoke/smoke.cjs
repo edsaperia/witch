@@ -227,6 +227,47 @@ async function main() {
     await shot(page, "57-party-four-waves.png");
   }, "&debug&tilt=before");
 
+  // Inviting and leashing: talk to a creature until it joins her, gather a few more, fly with the
+  // stack, put a sigil down and pick it up again.
+  await run("leash", { width: 1280, height: 720 }, async page => {
+    await page.keyboard.press("Enter");
+    const id = await page.evaluate(() => {
+      const g = window.witch.game, w = g.witch;
+      let best = null, bd = Infinity;
+      for (const c of g.creatures) { if (c.level === 2) continue; const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c; } }
+      g.witch = { ...w, x: best.x + 2, z: best.z + 1 };
+      g.camera = { ...g.camera, tx: best.x + 2, tz: best.z + 1 };
+      return best.id;
+    });
+    const t0 = await page.evaluate(() => window.witch.game.clock.time);
+    await page.keyboard.down("KeyF");
+    await page.waitForFunction(t => window.witch.game.clock.time >= t, t0 + 1.6, { timeout: 60000, polling: 50 });
+    await shot(page, "70-leash-talk.png");
+    await page.waitForFunction(i => window.witch.game.creatures[i].leashed, id, { timeout: 120000, polling: 100 });
+    await page.keyboard.up("KeyF");
+    check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "holding Talk by a creature invites it onto her sigil stack");
+    for (let i = 0; i < 3; i++) await page.keyboard.press("KeyI");
+    await sleep(300);
+    const n = await page.evaluate(() => window.witch.game.leash.stack.length);
+    check(n >= 3, `the debug key invites more (${n} on the stack)`);
+    await hold(page, "KeyD", 2);
+    await shot(page, "71-leash-stack-flying.png");
+    const t1 = await page.evaluate(() => window.witch.game.clock.time);
+    await page.waitForFunction(t => window.witch.game.clock.time >= t, t1 + 6, { timeout: 120000, polling: 100 });
+    await page.keyboard.press("KeyR");
+    await page.waitForFunction(() => window.witch.game.leash.placed.length === 1, null, { timeout: 30000 });
+    await hold(page, "KeyW", 0.6);
+    const t2 = await page.evaluate(() => window.witch.game.clock.time);
+    await page.waitForFunction(t => window.witch.game.clock.time >= t, t2 + 2, { timeout: 60000, polling: 100 });
+    await shot(page, "72-leash-placed.png");
+    check(await page.evaluate(() => window.witch.game.leash.placed.length === 1 && window.witch.game.leash.stack.length >= 2), "the sigil button puts the bottom sigil down");
+    await page.evaluate(() => { const g = window.witch.game, p = g.leash.placed[0]; g.witch = { ...g.witch, x: p.x, z: p.z, vx: 0, vz: 0 }; });
+    await sleep(200);
+    await page.keyboard.press("KeyR");
+    await page.waitForFunction(() => window.witch.game.leash.placed.length === 0, null, { timeout: 30000 });
+    check(await page.evaluate(n => window.witch.game.leash.stack.length === n, n), "over a placed sigil, the button picks it up again");
+  }, "&tilt=before");
+
   // ?debug=cull: anything that changed visibility this frame is tinted red. A strip of frames
   // flying and zooming through every step in both modes.
   await run("cull", { width: 640, height: 360 }, async page => {
