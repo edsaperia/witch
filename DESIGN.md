@@ -88,6 +88,33 @@ The trade is speed against information: treetop mode covers distance, ground mod
   - **Why it suits Witch**: each point is computed on its own from a seed (no diagram to build, any map size), so a map is repeatable from its seed; layer-0 sites are natural **area centres**, where the **clearings** (and perhaps the soundsystems) go; the number of layers sets how wiggly borders are.
   - Working in the Witch Art Lab's scene and map view since 2026-10-03.
 
+### The first 20 area types (Ed approved, 2026-10-03)
+
+One area type per animal; each a small definition (trees, undergrowth, ground, one signature feature):
+
+| Animal | Area |
+|---|---|
+| Wolf | dark fir forest, snow-dusted ground |
+| Fox | autumn maples, orange leaf litter |
+| Badger | old oak and beech, sett mounds |
+| Boar | oak wood, mud wallows, acorns |
+| Stag | open birch glade, tall grass |
+| Hare | meadow with scattered hawthorn |
+| Owl | ancient gnarled oaks, hollow trunks |
+| Bear | berry thickets, tall pines |
+| Hedgehog | hedgerows and brambles |
+| Squirrel | tall pines and hazel |
+| Toad | wetland: reeds, willows, puddles |
+| Otter | a stream or pond with alders |
+| Lynx | rocky pine slopes |
+| Elk | boggy spruce, moss |
+| Raven | blasted dead trees, bare ground |
+| Bat | dead trees, a cave mouth |
+| Mole | open grassland with molehills |
+| Beaver | birch and aspen, a dam and stumps |
+| Stoat | frosty heath, low shrubs |
+| Stag beetle | rotting logs and fungi |
+
 ## Run structure
 
 - A run is a sequence of **waves** (above) and ends when every soundsystem is destroyed.
