@@ -30,7 +30,7 @@ import type { Style } from "./style";
 /** A point light: where, how far it reaches, its colour and strength. */
 export interface ForestLight { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number }
 
-export interface ViewStats { trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number; lights: number }
+export interface ViewStats { dropped: number; trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number; lights: number }
 
 export class View {
   readonly renderer: THREE.WebGLRenderer;
@@ -62,9 +62,13 @@ export class View {
   private mist: Mist | null = null;
   private width = 1;
   private height = 1;
-  /** ?debug=cull: tint anything that has just appeared bright red. */
+  /** ?debug=cull: tint anything that has just appeared bright red, and mark where anything has
+   *  just vanished with a red frame for a second. */
   debugCull = false;
-  stats: ViewStats = { trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0, lights: 0 };
+  private ghosts: { x: number; z: number; h: number; until: number }[] = [];
+  private ghostLines: THREE.LineSegments | null = null;
+  private now = 0;
+  stats: ViewStats = { dropped: 0, trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0, lights: 0 };
 
   constructor(readonly canvas: HTMLCanvasElement, readonly game: Game, readonly style: Style) {
     const t = game.tuning;
@@ -243,13 +247,13 @@ export class View {
     return this.frustum.intersectsBox(this.box) || this.frustumTo.intersectsBox(this.box);
   }
 
-  /** Whether a point is well inside the screen and clear of the haze, so a change there would be seen. */
+  /** Whether a point is on screen and clear of the haze, so a change there would be seen. */
   private inInnerView(x: number, z: number, h: number): boolean {
     const w = this.game.witch, hz = this.game.tuning.haze;
     if (Math.hypot(x - w.x, z - w.z) > hz.near + (hz.far - hz.near) * 0.6) return false;
     for (const y of [0, h * 0.5, h]) {
       const p = this.v3.set(x, y, z).project(this.camera);
-      if (Math.abs(p.x) < 0.9 && Math.abs(p.y) < 0.9 && p.z < 1) return true;
+      if (Math.abs(p.x) < 1 && Math.abs(p.y) < 1 && p.z < 1) return true;
     }
     return false;
   }
@@ -268,6 +272,10 @@ export class View {
   /** Compare what was drawn with last time: anything appearing or vanishing in clear view is a pop. */
   private checkPops(which: "placed" | "moving", record = true): void {
     const tr = this.tracks[which], live = record && this.assets.pending === 0 && tr.before.size > 0;
+    if (this.debugCull) for (const k of tr.before) if (!tr.now.has(k)) {
+      const p = this.at.get(k), [, ...rest] = k.split("|"), [x, z, h] = p ?? rest.map(Number);
+      this.ghosts.push({ x: +x, z: +z, h: Math.max(1, +h), until: this.now + 1 });
+    }
     if (live) {
       const at = (k: string, what: string) => {
         const p = this.at.get(k), [kind, ...rest] = k.split("|"), [x, z, h] = p ?? rest.map(Number);
@@ -419,6 +427,29 @@ export class View {
     this.stats.lights = n;
   }
 
+  /** ?debug=cull: a red frame, for a second, where something drawn before is no longer drawn. */
+  private drawGhosts(time: number): void {
+    this.now = time;
+    this.ghosts = this.ghosts.filter(g => g.until > time);
+    if (!this.ghostLines) {
+      this.ghostLines = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xff2020, depthTest: false }));
+      this.ghostLines.frustumCulled = false;
+      this.ghostLines.renderOrder = 20;
+      this.scene.add(this.ghostLines);
+    }
+    const R = SPRITE_UNIFORMS.uRight.value, U = SPRITE_UNIFORMS.uUp.value, pts: number[] = [];
+    for (const g of this.ghosts) {
+      const w = g.h * 0.4, c = (sx: number, sy: number) => [g.x + R.x * sx * w + U.x * sy * g.h, R.y * sx * w + U.y * sy * g.h, g.z + R.z * sx * w + U.z * sy * g.h];
+      const a = c(-1, 0), b = c(1, 0), d = c(1, 1), e = c(-1, 1);
+      pts.push(...a, ...b, ...b, ...d, ...d, ...e, ...e, ...a, ...a, ...d);
+    }
+    const geo = this.ghostLines.geometry;
+    geo.dispose(); // its buffer is replaced every frame
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(pts, 3));
+    geo.setDrawRange(0, pts.length / 3);
+    this.ghostLines.visible = pts.length > 0;
+  }
+
   /** Draw a frame; with draw false, only bring the camera, batches and art requests up to date. */
   render(time: number, draw = true): void {
     const g = this.game, t = g.tuning, pose = poseOf(g);
@@ -479,9 +510,15 @@ export class View {
     // The ground's area tiles: everything the cameras can see, plus a band ahead.
     this.stats.pendingGround = this.ground.fill(this.renderer, this.viewRect(t.haze.far, 40), w.x, w.z, 4);
     this.stats.pendingArt = this.assets.pending;
+    if (this.debugCull) this.drawGhosts(time);
     if (!draw) return;
     this.renderer.info.reset();
     this.post.render(this.scene, this.camera);
+    // Anything set but not drawn (three.js capping a batch's instances) is a bug: count and log it.
+    let dropped = 0;
+    for (const b of [...this.typeBatches.values(), ...this.creatureBatches.values(), this.propBatch, this.soundBatch]) dropped += b.dropped;
+    if (dropped && !this.stats.dropped) console.warn(`view: ${dropped} sprite instances set but not drawn`);
+    this.stats.dropped = dropped;
     this.stats.drawCalls = this.renderer.info.render.calls;
     this.stats.batches = this.typeBatches.size + this.creatureBatches.size;
   }
