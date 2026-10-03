@@ -88,32 +88,42 @@ The trade is speed against information: treetop mode covers distance, ground mod
   - **Why it suits Witch**: each point is computed on its own from a seed (no diagram to build, any map size), so a map is repeatable from its seed; layer-0 sites are natural **area centres**, where the **clearings** (and perhaps the soundsystems) go; the number of layers sets how wiggly borders are.
   - Working in the Witch Art Lab's scene and map view since 2026-10-03.
 
-### The first 20 area types (Ed approved, 2026-10-03)
+### The first 30 area types (Ed, 2026-10-03)
 
-One area type per animal; each a small definition (trees, undergrowth, ground, one signature feature):
+One area type per creature, each a small definition in Ed's columns: **floor** texture, **wall** objects (edges and barriers), **small** objects, **big** objects, a **set piece**, and the **creature**. Rows marked *Ed* are Ed's own; the rest are the coordinator's draft, which Ed approved as a list and may revise.
 
-| Animal | Area |
-|---|---|
-| Wolf | dark fir forest, snow-dusted ground |
-| Fox | autumn maples, orange leaf litter |
-| Badger | old oak and beech, sett mounds |
-| Boar | oak wood, mud wallows, acorns |
-| Stag | open birch glade, tall grass |
-| Hare | meadow with scattered hawthorn |
-| Owl | ancient gnarled oaks, hollow trunks |
-| Bear | berry thickets, tall pines |
-| Hedgehog | hedgerows and brambles |
-| Squirrel | tall pines and hazel |
-| Toad | wetland: reeds, willows, puddles |
-| Otter | a stream or pond with alders |
-| Lynx | rocky pine slopes |
-| Elk | boggy spruce, moss |
-| Raven | blasted dead trees, bare ground |
-| Bat | dead trees, a cave mouth |
-| Mole | open grassland with molehills |
-| Beaver | birch and aspen, a dam and stumps |
-| Stoat | frosty heath, low shrubs |
-| Stag beetle | rotting logs and fungi |
+| Area | Floor | Wall | Small | Big | Set piece | Creature | |
+|---|---|---|---|---|---|---|---|
+| Moor | moss | puddles, a lake | long grass | moss mounds | | Badger | Ed |
+| Fern forest | pine needles | | ferns | pine trees | | Boar | Ed |
+| Muddy forest | mud and leaves | | short trunks with broken branches | trees with many trunks and branches | | Snail | Ed |
+| Stone shrine | grassy, stony | mossy henges | little stones | big stones | a shrine | Fox | Ed |
+| Tangly forest | nettles and earth | | tangled branches | fairly short tangly trees | | Ram | Ed |
+| Wispy forest | dry leaves | | tall thin wispy trees | thick trees with several trunks | | Woodlouse | Ed |
+| Hazel forest | short grass | | brown lumps | crooked trees with many branches | | Hedgehog | Ed |
+| Garden | uniform grass | ornate stone wall | manicured flower beds | willows | a stone pavilion | Squirrel | Ed |
+| Twiggy forest | small leafy plants | | small trees with many thin trunks | straight but slanted trees with many trunks | | Wolf | Ed |
+| Ancient | mossy roots over rocks | | sorrel | giant gnarly slanted trees | | Stag | Ed |
+| Norway | pine needles and slate | | rocks | straight pines | | Stoat | Ed |
+| Alder forest | tall and short grass | | tree stumps with tall grass around | tall slanted trees with thin leaves at different heights | | Snake | Ed |
+| Meadow | grass and wildflowers | | scattered hawthorn | lone oaks | | Hare | draft |
+| Old oaks | leaf litter | | acorns, fallen branches | ancient gnarled oaks with hollow trunks | a great hollow oak | Owl | draft |
+| Berry thicket | pine needles | bramble thickets | berry bushes | tall pines | | Bear | draft |
+| Wetland | wet mud | puddles, reeds | reeds and rushes | willows | | Toad | draft |
+| Stream | pebbles and grass | a stream or pond | alder saplings | alders | a fallen-log bridge | Otter | draft |
+| Rocky slope | scree and moss | boulders | rocks | pines | a rocky outcrop | Lynx | draft |
+| Bog | sphagnum moss | bog pools | cotton grass | spruce | | Elk | draft |
+| Deadwood | bare earth | | broken branches | blasted dead trees | | Raven | draft |
+| Cave mouth | stone and roots | rock walls | stalagmite stubs | dead trees | a cave mouth | Bat | draft |
+| Grassland | short turf | | molehills | lone birches | | Mole | draft |
+| Beaver pond | birch leaves | a pond | stumps | birch and aspen | a beaver dam | Beaver | draft |
+| Log pile | rotting leaves | | fungi | rotting logs | a fallen giant | Stag beetle | draft |
+| Heath | heather | | gorse | wind-bent birches | | Moth | draft |
+| Old pinewood | pine needles | | pine cones | tall old pines with knotholes | | Pine marten | draft |
+| Ravine | wet moss and rock | rock walls | ferns | mossy boulders | a waterfall | Salamander | draft |
+| Bluebell glade | bluebells | | ferns | beeches | | Glow-worm | draft |
+| Holly thicket | dead leaves | holly hedges | cobwebs | hollies | a web-hung dead tree | Spider | draft |
+| Honeysuckle tangle | grass and clover | bramble | honeysuckle | hazel coppice | | Dormouse | draft |
 
 ## Run structure
 
