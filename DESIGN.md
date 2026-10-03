@@ -49,7 +49,6 @@ A 3D world with **2D pixel-art sprites** for characters and objects. References:
 - Whether trees block her in ground mode, so the forest has paths.
 - What she can do from above (find, catch, leash creatures) and what needs the ground.
 - What she does while her creatures defend.
-
 - Run structure: what one run is, what persists between runs.
 - How the leash works.
 - Whether exploring and defending happen at the same time or in phases (for example, day and night).
