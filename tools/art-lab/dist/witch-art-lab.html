@@ -173,7 +173,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
-        <div class="row" style="justify-content:space-between"><h2>Trees</h2><div class="row"><label class="note" for="treeArea">Area</label><select id="treeArea"></select></div></div>
+        <div class="row" style="justify-content:space-between"><h2>Trees</h2><div class="row"><label class="note" for="treeArea">Area</label><select id="treeArea"></select><label class="note" for="treeKind">Species</label><select id="treeKind"></select></div></div>
         <p class="note">An area's trees across their whole range of heights, from saplings to the occasional giant that pokes above the canopy, with the witch for scale, and how the area lays out its vegetation (its layout, which the prototype's generator reads).</p>
         <p class="note" id="treeLayout"></p>
         <div class="sheet-wrap"><canvas id="treeSheet" width="420" height="160"></canvas></div>
@@ -574,7 +574,7 @@ function bake(sp, colours, st, outlineMode = st.outline, makeCanvas = defaultCan
 // Each tree returns {sp, crownY}: trunk pixels below crownY are its bottom half (seen in
 // ground mode), everything else its top half (the canopy seen from the treetops).
 
-const WOOD = new Set([M.TRUNK, M.BARK2, M.BARKD, M.BARKL]);
+const WOOD = new Set([M.TRUNK, M.BARK2, M.BARKD, M.BARKL, M.BELLY]); // BELLY: a pine's orange or a yew's red trunk
 
 // A clump of leaves: a ragged blob, lit on top, dark beneath, speckled with single leaves.
 function clump(sp, c, rx, ry, st, r, { mat = M.LEAF, group = 30, ragged = 1 } = {}) {
@@ -807,6 +807,202 @@ function flatTree(r, st, s) {
   return trim(sp, bx, trunk.end[1] + 4 * s);
 }
 
+
+// ================= UK species =================
+// Ed: "the forest feels like it only has a few kinds of tree ... mostly stick to UK kinds of trees
+// — they don't have to be completely different, just different enough that the texture clearly
+// varies from area to area". What tells them apart from the treetops is the canopy's texture:
+// the size of its leaf clumps, how dense it is and how gappy, its colour and its outline; from the
+// ground, the trunk and silhouette.
+
+// Leaf texture over a clump already drawn: bunches of `grain` px, dark gaps (`holes`), light flecks,
+// and coloured dots (berries, flowers, cones) in M.FLOWER or `dot`.
+function leafTexture(sp, c, rx, ry, r, { grain = 2, holes = 0, flecks = .16, dots = 0, dot = M.FLOWER, dotTall = false, mats = [M.LEAF, M.LEAF2, M.LEAF3] } = {}) {
+  const x0 = Math.floor(c[0] - rx * 1.3), x1 = Math.ceil(c[0] + rx * 1.3), y0 = Math.floor(c[1] - ry * 1.3), y1 = Math.ceil(c[1] + ry * 1.3), seed = (r() * 1e4) | 0;
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const m = sp.get(x, y); if (!mats.includes(m)) continue;
+    const v = vnoise(x / grain, y / grain, seed), h = hash2(x, y, seed);
+    if (holes && v < holes) sp.recolour(x, y, M.LEAF3);
+    else if (v > 1 - flecks) sp.recolour(x, y, M.LEAF2);
+    if (dots && h < dots && m !== M.LEAF3) { sp.recolour(x, y, dot); if (dotTall) sp.recolour(x, y - 1, dot); }
+  }
+}
+// A broadleaf of given proportions: a trunk to `trunk` of the height, `limbs` first limbs spread by
+// `spreadA`, forking `depth` times; clumps of `clumpR` [rx range] and `flat` (ry / rx) at the tips,
+// then a leaf texture. trunks: several stems; lean; dome: an extra crown of clumps over the top.
+function broadleaf(r, st, s, P) {
+  const k = spread(st) * (P.wide || 1), W = Math.round(240 * s * k + 70 * s), H = Math.round((P.tall || 140) * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
+  const n = st.treeTrunks || P.trunks || 1, tw = (P.tw || 12) * s * (st.treeThick || 1) * (st.treeThin ? .55 : 1) / Math.sqrt(n), lean0 = (r() - .5) * .4 * st.gnarl + (st.treeLean || 0) + (P.lean || 0);
+  const tips = []; let crownY = H;
+  const grow = (p, ang, len, w, d) => {
+    const b = bough(sp, p, ang, len, w, w * .65, st, r, { group: 12, mat: P.limbMat || M.TRUNK, bend: P.bend ?? 1 });
+    if (d === 0) { tips.push(b.end); return; }
+    const kids = r() < (P.fork ?? .35) ? 3 : 2;
+    for (let i = 0; i < kids; i++) grow(b.end, b.ang + (i - (kids - 1) / 2) * uni(r, .45, .8) * (P.splay || 1) + (r() - .5) * .25, len * uni(r, .6, .78), w * .62, d - 1);
+    if (d <= 2) tips.push(lerp2(p, b.end, .7));
+  };
+  for (let t = 0; t < n; t++) {
+    const lean = lean0 + (n > 1 ? (t / (n - 1) - .5) * (P.fan || .8) : 0), base = [bx + (t - (n - 1) / 2) * tw * .6, gy];
+    const trunk = bough(sp, base, -Math.PI / 2 + lean, H * (P.trunk || .36) * (n > 1 ? uni(r, .8, 1.1) : 1), tw, tw * .72, st, r, { bend: P.trunkBend ?? 1.2, mat: P.trunkMat || M.TRUNK });
+    crownY = Math.min(crownY, trunk.end[1]);
+    for (let i = 0; i < (P.limbs || 2); i++) { const side = i % 2 ? 1 : -1; grow(trunk.end, -Math.PI / 2 + lean * .5 + side * uni(r, .5, 1) * (P.spreadA || .8) * (n > 1 ? .7 : 1), H * (P.limb || .22) * (n > 1 ? .75 : 1), tw * .7, P.depth ?? 3); }
+    if (P.leader) grow(trunk.end, -Math.PI / 2 + (r() - .5) * .2, H * (P.limb || .22) * P.leader, tw * .55, 2);
+    if (t === 0 && st.treeHollow) { const h = lerp2(base, trunk.end, .38); sp.ellipse(h[0], h[1], tw * .28, tw * .5, M.NOSE, { round: .3 }); }
+  }
+  if (!P.noRoots) roots(sp, bx, gy, tw * Math.sqrt(n), st, r, s * (P.rootK || 1));
+  if (!P.smooth) bark(sp, st); // smooth-barked kinds (beech, rowan, hazel) keep their trunks plain
+  if (st.treeBare) return trim(sp, bx, crownY + 4 * s);
+  tips.sort((a, b) => a[1] - b[1]);
+  const [ra, rb] = P.clumpR || [12, 18], flat = P.flat || .7, drawn = [];
+  const put = (c, rx, ry, mat) => { clump(sp, c, rx, ry, st, r, { mat, ragged: P.ragged || 1 }); drawn.push([c, rx, ry]); };
+  for (const t of tips) put(add(t, [0, -3 * s]), uni(r, ra, rb) * s, uni(r, ra, rb) * s * flat, r() < (P.darkBack ?? .35) ? M.LEAF3 : M.LEAF);
+  for (const t of tips) if (r() < (P.extra ?? .7)) put(add(t, [uni(r, -9, 9) * s, uni(r, -12, -3) * s]), uni(r, ra, rb) * s * .7, uni(r, ra, rb) * s * flat * .7, M.LEAF);
+  if (P.dome) { const top = Math.min(...tips.map(t => t[1])), xs = tips.map(t => t[0]), mid = (Math.min(...xs) + Math.max(...xs)) / 2, w = (Math.max(...xs) - Math.min(...xs)) / 2; for (let i = 0; i < P.dome; i++) { const f = i / Math.max(1, P.dome - 1) - .5; put([mid + f * w * 1.1, top - (1 - 4 * f * f) * 14 * s - uni(r, 2, 6) * s], uni(r, ra, rb) * s * 1.1, uni(r, ra, rb) * s * flat, M.LEAF); } } // an arched dome over the top
+  if (P.layers) for (const [c, rx, ry] of drawn) for (let yy = -ry; yy < ry; yy += Math.max(3, P.layers * s)) for (let xx = -rx; xx < rx; xx++) if (sp.get(c[0] + xx, c[1] + yy) === M.LEAF) sp.recolour(c[0] + xx, c[1] + yy, M.LEAF3); // dark lines between layers
+  for (const [c, rx, ry] of drawn) leafTexture(sp, c, rx, ry, r, P.tex || {});
+  return trim(sp, bx, crownY + 4 * s);
+}
+// Oak: wide and lumpy, a short stout trunk forking low into heavy crooked limbs; many mid-sized clumps.
+function oakTree(r, st, s) { return broadleaf(r, { ...st, gnarl: Math.max(st.gnarl, .8) }, s, { trunk: .26, tw: 15, limbs: 3, spreadA: 1.05, limb: .26, depth: 3, wide: 1.15, clumpR: [10, 15], flat: .75, extra: .9, dome: 5, bend: 1.4, tex: { grain: 1.6, holes: .12, flecks: .18 } }); }
+// Beech: a smooth grey trunk, a dense dome of flat layered sprays.
+function beechTree(r, st, s) { return broadleaf(r, { ...st, gnarl: st.gnarl * .4 }, s, { trunk: .4, tw: 11, limbs: 2, leader: 1.3, spreadA: .6, limb: .22, depth: 3, clumpR: [15, 21], flat: .5, extra: 1, dome: 7, smooth: 1, layers: 3.5, trunkMat: M.BARK2, limbMat: M.BARK2, tall: 155, tex: { grain: 3.5, holes: 0, flecks: .1 } }); }
+// Ash: tall, open and airy, limbs swept upwards, small feathery clumps with sky between.
+function ashTree(r, st, s) { return broadleaf(r, { ...st, gnarl: st.gnarl * .6 }, s, { trunk: .4, tw: 9, limbs: 3, spreadA: .45, limb: .26, depth: 3, splay: .6, clumpR: [7, 10], flat: .8, extra: .35, ragged: 1.8, tall: 160, wide: .8, darkBack: .1, tex: { grain: 1.2, holes: .3, flecks: .26 } }); }
+// Lime: tall, a high close dome of small neat clumps, bright.
+function limeTree(r, st, s) { return broadleaf(r, { ...st, gnarl: st.gnarl * .4 }, s, { trunk: .38, tw: 11, limbs: 2, spreadA: .55, limb: .24, depth: 3, leader: 1.1, clumpR: [9, 12], flat: .85, extra: 1, dome: 5, tall: 170, wide: .75, darkBack: .15, tex: { grain: 1.4, holes: .05, flecks: .22 } }); }
+// Sycamore: a broad dome of big heavy lobed clumps, dark beneath.
+function sycamoreTree(r, st, s) { return broadleaf(r, st, s, { trunk: .34, tw: 12, limbs: 2, spreadA: .8, limb: .24, depth: 2, clumpR: [20, 27], flat: .7, extra: .8, dome: 2, darkBack: .5, tex: { grain: 4, holes: .16, flecks: .12 } }); }
+// Horse chestnut: a big round dome of very large clumps, white candles of flowers standing on it.
+function chestnutTree(r, st, s) { return broadleaf(r, st, s, { trunk: .32, tw: 14, limbs: 2, spreadA: .85, limb: .25, depth: 2, clumpR: [22, 30], flat: .78, extra: .9, dome: 3, darkBack: .25, tall: 150, tex: { grain: 6, holes: .04, flecks: .16, dots: .025, dotTall: true } }); }
+// Rowan: slim, a grey trunk, a light open crown of feathery leaves hung with red berries.
+function rowanTree(r, st, s) { return broadleaf(r, { ...st, gnarl: st.gnarl * .7 }, s, { trunk: .45, tw: 7, limbs: 3, spreadA: .55, limb: .2, depth: 2, clumpR: [8, 11], flat: .7, extra: .5, ragged: 1.7, wide: .6, tall: 120, smooth: 1, trunkMat: M.BARK2, limbMat: M.BARK2, darkBack: .1, tex: { grain: 1.1, holes: .26, flecks: .22, dots: .05 } }); }
+// Alder: narrow and dark, a straight stem with short side branches, small dark clumps up it, little cones.
+function alderTree(r, st, s) {
+  const k = .7 + .3 * spread(st), W = Math.round(110 * s * k), H = Math.round(165 * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
+  const n = st.treeTrunks || 1, lean = (r() - .5) * .2 + (st.treeLean || 0), clumps = [];
+  for (let t = 0; t < n; t++) {
+    const trunk = bough(sp, [bx + (t - (n - 1) / 2) * 5 * s, gy], -Math.PI / 2 + lean + (n > 1 ? (t / (n - 1) - .5) * .3 : 0), H * .92, 6 * s / Math.sqrt(n), 1.5, st, r, { bend: .5 });
+    for (let i = 0; i < 16; i++) { const f = uni(r, .3, .97), p = lerp2(trunk.pts[0], trunk.end, f), side = i % 2 ? 1 : -1, len = (1 - f * .6) * H * .12 * k; const b = bough(sp, p, -Math.PI / 2 + side * uni(r, .7, 1.2), len, 2 * s, 1, st, r, { group: 12, mat: M.BARKD }); clumps.push([b.end, (8 + (1 - f) * 6) * s * k], [lerp2(p, b.end, .4), (7 + (1 - f) * 4) * s * k]); }
+    clumps.push([trunk.end, 7 * s]);
+  }
+  roots(sp, bx, gy, 6 * s, st, r, s * .6); bark(sp, st);
+  for (const [c, rr] of clumps) clump(sp, c, rr, rr * .8, st, r, { mat: r() < .5 ? M.LEAF3 : M.LEAF });
+  for (const [c, rr] of clumps) leafTexture(sp, c, rr, rr * .8, r, { grain: 1.3, holes: .2, flecks: .1, dots: .03, dot: M.BARKD });
+  const topY = Math.min(...clumps.map(([c]) => c[1]));
+  return trim(sp, bx, topY + (gy - topY) * .45); // the crown line follows the leaves, wherever the stem leans
+}
+// Scots pine: a tall bare trunk, orange higher up, and flat-topped blue-green clumps on crooked limbs at the top.
+function pineTree(r, st, s) {
+  const k = .8 + .2 * spread(st), W = Math.round(150 * s * k), H = Math.round(175 * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
+  const trunk = bough(sp, [bx, gy], -Math.PI / 2 + (r() - .5) * .25 + (st.treeLean || 0), H * .78, 8 * s, 3 * s, st, r, { bend: .7 });
+  bark(sp, st); for (let y = 0; y < sp.h * .55; y++) for (let x = 0; x < W; x++) if (sp.get(x, y) === M.TRUNK || sp.get(x, y) === M.BARKD) sp.recolour(x, y, hash2(x, y, 3) < .15 ? M.BARKD : M.BELLY); // the upper trunk glows orange
+  roots(sp, bx, gy, 8 * s, st, r, s * .7);
+  const pads = [];
+  for (let i = 0; i < 6; i++) { const f = uni(r, .55, 1), p = lerp2(trunk.pts[0], trunk.end, f), side = i % 2 ? 1 : -1; const b = bough(sp, p, -Math.PI / 2 + side * uni(r, .6, 1.3), H * uni(r, .12, .22) * k, 3 * s, 1.5, st, r, { group: 12, bend: 1.6, mat: M.BELLY }); pads.push(b.end); }
+  pads.push(trunk.end);
+  for (const p of pads) clump(sp, add(p, [0, -2 * s]), uni(r, 13, 19) * s * k, uni(r, 4, 6) * s, st, r, { mat: M.LEAF, ragged: 1.3 }); // flat-topped plates of needles
+  for (const p of pads) leafTexture(sp, add(p, [0, -2 * s]), 19 * s * k, 6 * s, r, { grain: 1, holes: .25, flecks: .14 });
+  return trim(sp, bx, Math.min(...pads.map(p => p[1])) + 8 * s);
+}
+// Yew: squat, dark and dense, a short fluted reddish trunk under a broad dark dome of tiny needles.
+function yewTree(r, st, s) {
+  const k = spread(st), W = Math.round(200 * s * k + 50 * s), H = Math.round(120 * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
+  const n = st.treeTrunks || 3, tw = 9 * s * (st.treeThick || 1.2);
+  for (let t = 0; t < n; t++) bough(sp, [bx + (t - (n - 1) / 2) * tw * .5, gy], -Math.PI / 2 + (t - (n - 1) / 2) * .35 + (st.treeLean || 0), H * .3, tw, tw * .6, st, r, { mat: M.BELLY, bend: 1.6 });
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (sp.get(x, y) === M.BELLY && (x + Math.round(y / 6)) % 4 === 0) sp.recolour(x, y, M.BARKD); // fluted
+  roots(sp, bx, gy, tw * 1.4, st, r, s);
+  const top = gy - H * .3, cs = [];
+  for (let i = 0; i < 9; i++) { const a = Math.PI + (i / 8) * Math.PI, rr = (40 + 20 * k) * s; cs.push([[bx + Math.cos(a) * rr, top + Math.sin(a) * rr * .55 + 10 * s], uni(r, 16, 22) * s]); }
+  for (let i = 0; i < 7; i++) cs.push([[bx + (i / 6 - .5) * (60 + 30 * k) * s, top - uni(r, 4, 22) * s], uni(r, 20, 26) * s]); // the dome filled in
+  cs.push([[bx, top - 24 * s], 26 * s]);
+  for (const [c, rr] of cs) clump(sp, c, rr, rr * .7, st, r, { mat: M.LEAF3, ragged: .6 });
+  for (const [c, rr] of cs) leafTexture(sp, c, rr, rr * .7, r, { grain: .7, holes: 0, flecks: .08, mats: [M.LEAF, M.LEAF2, M.LEAF3] });
+  return trim(sp, bx, top + 4 * s);
+}
+// Hawthorn: small, twisted and wind-bent, a tangle of branches, dense little clumps, red haws.
+function hawthornTree(r, st, s) { return broadleaf(r, { ...st, gnarl: 1 }, s, { trunk: .3, tw: 8, limbs: 3, spreadA: .9, limb: .3, depth: 3, fork: .6, bend: 2, lean: .45, clumpR: [7, 10], flat: .65, extra: .8, wide: .7, tall: 90, ragged: 1.4, darkBack: .3, tex: { grain: 1, holes: .1, flecks: .14, dots: .035 } }); }
+// Holly: a dark, glossy cone of small tight clumps, bright glints on the leaves, red berries.
+function hollyTree(r, st, s) {
+  const k = .8 + .2 * spread(st), W = Math.round(110 * s * k), H = Math.round(130 * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
+  sp.limb([[bx, gy, 5 * s], [bx, gy - H * .5, 3 * s], [bx, 10 * s, 1.5]], M.BARK2, { group: 10, round: st.round });
+  const cs = [];
+  for (let i = 0; i < 10; i++) { const f = i / 9, y = 10 * s + f * H * .72, half = (5 + f * 28) * s * k, m = 1 + Math.round(f * 3); for (let j = 0; j < m; j++) cs.push([[bx + (m > 1 ? (j / (m - 1) - .5) * half * 1.3 : 0) + uni(r, -2, 2) * s, y + uni(r, -2, 2) * s], (6 + f * 5) * s]); } // tiers widening into a cone
+  for (const [c, rr] of cs) clump(sp, c, rr * 1.2, rr, st, r, { mat: M.LEAF3, ragged: .7 });
+  for (const [c, rr] of cs) leafTexture(sp, c, rr * 1.2, rr, r, { grain: 1.1, holes: 0, flecks: .2, dots: .035, mats: [M.LEAF, M.LEAF2, M.LEAF3] });
+  return trim(sp, bx, H * .85);
+}
+// Hazel: a coppice, many thin stems fanning from one stool, a low rounded crown of soft clumps.
+function hazelTree(r, st, s) { return broadleaf(r, { ...st, gnarl: st.gnarl * .5, treeTrunks: st.treeTrunks || 6 }, s, { trunk: .5, tw: 9, limbs: 1, spreadA: .5, limb: .18, depth: 1, fan: 1.3, trunkBend: .8, clumpR: [11, 15], flat: .8, extra: 1, wide: .8, tall: 110, noRoots: false, rootK: .4, smooth: 1, trunkMat: M.BARK2, limbMat: M.BARK2, darkBack: .2, tex: { grain: 3.6, holes: .14, flecks: .2 } }); }
+// Weeping birch: a white trunk, its fine twigs hanging in long pale-green curtains.
+function weepingBirchTree(r, st, s) {
+  const t = birchTree(r, { ...st, treeLean: st.treeLean || 0 }, s), sp = t.sp;
+  for (let x = 0; x < sp.w; x++) {
+    let top = -1; for (let y = 0; y < sp.h; y++) if ([M.LEAF, M.LEAF2, M.LEAF3].includes(sp.get(x, y))) { top = y; break; }
+    if (top < 0 || hash2(x, 1, 7) < .35) continue;
+    const len = (sp.h - top) * uni(r, .25, .5);
+    for (let y = top + 1; y < Math.min(sp.h - 3, top + len); y++) if (!sp.get(x, y) || sp.get(x, y) === M.LEAF3) sp.px(x + Math.round(Math.sin(y * .2 + x) * .6), y, hash2(x, y, 2) < .3 ? M.LEAF : M.LEAF2, 0, .2, .95);
+  }
+  return t;
+}
+// Larch: a soft cone of tufted, yellow-green tiers, lighter and gappier than a spruce.
+function larchTree(r, st, s) {
+  const k = .8 + .2 * spread(st), W = Math.round(100 * s * k), H = Math.round(170 * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
+  sp.limb([[bx, gy, 6 * s], [bx, gy - H * .5, 3.5 * s], [bx, 6 * s, 1.2]], M.TRUNK, { group: 10, round: st.round });
+  roots(sp, bx, gy, 6 * s, st, r, s * .5); bark(sp, st);
+  const tiers = 14;
+  for (let i = 0; i < tiers; i++) {
+    const f = i / (tiers - 1), y = 8 * s + f * H * .68, half = (4 + f * 30) * s * k;
+    for (let j = 0; j < 4; j++) { const c = [bx + (j / 3 - .5) * half * 1.6, y + Math.abs(j / 3 - .5) * 6 * s]; clump(sp, c, half * .35 + 2 * s, 4 * s, st, r, { mat: M.LEAF2, ragged: 1.6 }); leafTexture(sp, c, half * .35 + 2 * s, 4 * s, r, { grain: 1, holes: .32, flecks: .1, mats: [M.LEAF, M.LEAF2] }); }
+  }
+  return trim(sp, bx, H * .8);
+}
+
+// Every tree kind an area can name, with its look: hue (added to the area's leaf hue), saturation and
+// value of the leaves, the trunk's colour, how it grows across the height classes (wide, narrow, small,
+// willow, normal), and what it is. The first six are the original kinds.
+const TREE_SPECIES = {
+  broad: { fn: broadTree, name: "gnarled broadleaf", grow: "normal" },
+  fir: { fn: firTree, name: "spruce", grow: "narrow", hue: .06 },
+  willow: { fn: willowTree, name: "willow", grow: "willow", hue: -.02, val: 1.05 },
+  birch: { fn: birchTree, name: "silver birch", grow: "narrow", hue: -.02, val: 1.08 },
+  flat: { fn: flatTree, name: "field maple", grow: "normal", hue: .01 },
+  oak: { fn: oakTree, name: "oak", grow: "wide", hue: .01, val: .92 },
+  beech: { fn: beechTree, name: "beech", grow: "normal", hue: -.03, sat: 1.05, val: 1.02, trunk: [.62, .08, .62] },
+  ash: { fn: ashTree, name: "ash", grow: "narrow", hue: -.04, sat: .85, val: 1.12 },
+  lime: { fn: limeTree, name: "lime", grow: "narrow", hue: -.05, sat: 1.1, val: 1.12 },
+  sycamore: { fn: sycamoreTree, name: "sycamore", grow: "wide", hue: .03, sat: 1.1, val: .72 },
+  chestnut: { fn: chestnutTree, name: "horse chestnut", grow: "wide", hue: -.01, val: 1.0, dot: [244, 238, 226] },
+  rowan: { fn: rowanTree, name: "rowan", grow: "small", hue: -.01, val: 1.05, trunk: [.08, .12, .52], dot: [210, 40, 34] },
+  alder: { fn: alderTree, name: "alder", grow: "narrow", hue: .04, sat: .9, val: .72 },
+  pine: { fn: pineTree, name: "Scots pine", grow: "narrow", hue: .1, sat: .7, val: .78, upper: [.06, .6, .72] },
+  yew: { fn: yewTree, name: "yew", grow: "wide", hue: .07, sat: .8, val: .55, upper: [.02, .55, .45] },
+  hawthorn: { fn: hawthornTree, name: "hawthorn", grow: "small", hue: .025, val: .8, dot: [176, 30, 40] },
+  holly: { fn: hollyTree, name: "holly", grow: "narrow", hue: .06, sat: .85, val: .6, trunk: [.1, .08, .55], dot: [214, 28, 36] },
+  hazel: { fn: hazelTree, name: "hazel coppice", grow: "small", hue: .0, val: .94, trunk: [.07, .3, .45] },
+  weepingBirch: { fn: weepingBirchTree, name: "weeping birch", grow: "narrow", hue: -.04, val: 1.12 },
+  larch: { fn: larchTree, name: "larch", grow: "narrow", hue: -.07, sat: .8, val: 1.15 },
+};
+const SPECIES_BY_FN = new Map(Object.entries(TREE_SPECIES).map(([id, S]) => [S.fn, { id, ...S }]));
+const treeSpecies = type => TREE_SPECIES[type] || TREE_SPECIES.broad;
+// What a species' canopy looks like from the treetops, as numbers: its crown (the top half of a mature
+// tree, averaged over a few seeds): fill (how much of the crown's box is leaves), dark and light (the shares
+// of shadow and lit leaves), grain (the mean run of one leaf shade along a row, in px: the clump texture),
+// shape (the crown's width over its height), and its leaf colour's hue and value. For telling species apart.
+function crownStats(id, st, { seeds = 3 } = {}) {
+  const S = treeSpecies(id), K = 2 / (st.pixel || 2), acc = { fill: 0, dark: 0, light: 0, grain: 0, shape: 0, hue: 0, value: 0 }, LEAVES = [M.LEAF, M.LEAF2, M.LEAF3];
+  for (let k = 0; k < seeds; k++) {
+    const r = rngLocal(11 + k * 97), t = S.fn(r, { ...st }, st.treeSize * K), { top } = splitTree(t), sp = top;
+    let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1, n = 0, dark = 0, light = 0, runs = 0, runPx = 0, prev = 0;
+    for (let y = 0; y < sp.h; y++) { prev = 0; for (let x = 0; x < sp.w; x++) { const m = sp.m[y * sp.w + x]; if (!LEAVES.includes(m)) { prev = 0; continue; } n++; if (m === M.LEAF3) dark++; if (m === M.LEAF2) light++; if (m !== prev) runs++; runPx++; prev = m; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); } }
+    const w = x1 - x0 + 1, h = y1 - y0 + 1, c = treeColours(rngLocal(3), { ...st, leafVariety: 0 }, S.fn), [hh, , vv] = rgb2hsv(c[M.LEAF]);
+    acc.fill += n / Math.max(1, w * h); acc.dark += dark / Math.max(1, n); acc.light += light / Math.max(1, n); acc.grain += runPx / Math.max(1, runs); acc.shape += w / Math.max(1, h); acc.hue += hh; acc.value += vv;
+  }
+  for (const k in acc) acc[k] = +(acc[k] / seeds).toFixed(3);
+  return acc;
+}
+function rngLocal(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function rgb2hsv([r, g, b]) { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0; if (d) h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return [(h / 6 + 1) % 1, mx ? d / mx : 0, mx]; }
+
 const TREE_TYPES = [["wBroad", broadTree], ["wFir", firTree], ["wWillow", willowTree], ["wBirch", birchTree], ["wPalm", palmTree], ["wFlat", flatTree]];
 function chooseType(r, st) {
   const tot = TREE_TYPES.reduce((a, [k]) => a + st[k], 0) || 1; let x = r() * tot;
@@ -814,11 +1010,17 @@ function chooseType(r, st) {
   return broadTree;
 }
 function treeColours(r, st, type) {
-  const h = st.leafHue + (r() - .5) * st.leafVariety * .7 + (type === firTree ? .06 : 0);
-  return {
+  const S = SPECIES_BY_FN.get(type), sa = S?.sat || 1, va = S?.val || 1;
+  // a species shifts the area's leaf hue a little; towards yellow it shifts less where the area's leaves are already yellow, so no species turns an area autumnal
+  const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = st.leafHue + (r() - .5) * st.leafVariety * .7 + sh;
+  const c = {
     [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212],
-    [M.LEAF]: hsv2rgb(h, .62 * st.sat, .58), [M.LEAF2]: hsv2rgb(h - .05, .55 * st.sat, .8), [M.LEAF3]: hsv2rgb(h + .03, .66 * st.sat, .38), [M.WEB]: [225, 225, 232],
+    [M.LEAF]: hsv2rgb(h, Math.min(1, .62 * st.sat * sa), Math.min(1, .58 * va)), [M.LEAF2]: hsv2rgb(h - .05, Math.min(1, .55 * st.sat * sa), Math.min(1, .8 * va)), [M.LEAF3]: hsv2rgb(h + .03, Math.min(1, .66 * st.sat * sa), .38 * va), [M.WEB]: [225, 225, 232],
   };
+  if (S?.trunk) c[M.BARK2] = hsv2rgb(...S.trunk); // smooth grey or brown bark (beech, rowan, holly, hazel)
+  if (S?.upper) c[M.BELLY] = hsv2rgb(...S.upper); // a pine's orange upper trunk, a yew's red
+  if (S?.dot) c[M.FLOWER] = S.dot; // berries, candles
+  return c;
 }
 // The trunk was drawn with its roots and bark; this stays for callers of the old API.
 function finishTree(t) { return t; }
@@ -3461,63 +3663,63 @@ const AREAS = [
   { id: "moor", name: "Moor", creature: "badger", by: "Ed", leaf: .24, floor: ["moss", .26, .45, .42], text: { floor: "moss", wall: "puddles, a lake", small: "long grass", big: "moss mounds" },
     wall: [P("water", { w: 1.6 })], small: [P("grass", { h: 1.4 })], big: [P("mound", { moss: true })] },
   { id: "fern-forest", name: "Fern forest", creature: "boar", by: "Ed", leaf: .3, floor: ["needles", .08, .45, .32], text: { floor: "pine needles", small: "ferns", big: "pine trees" },
-    small: [P("fern")], big: [tree("fir")] },
+    small: [P("fern")], big: [tree("larch", { scale: 1.1 }), tree("fir", { minor: true })] },
   { id: "muddy-forest", name: "Muddy forest", creature: "snail", by: "Ed", leaf: .22, floor: ["mud", .07, .5, .28], text: { floor: "mud and leaves", small: "short trunks with broken branches", big: "trees with many trunks and branches" },
-    small: [P("stump", { snag: true })], big: [tree("broad", { trunks: 3, gnarl: .9 })] },
+    small: [P("stump", { snag: true })], big: [tree("sycamore", { trunks: 3, gnarl: .9 }), tree("alder", { minor: true })] },
   { id: "stone-shrine", name: "Stone shrine", creature: "fox", by: "Ed", leaf: .28, floor: ["stony", .25, .3, .45], text: { floor: "grassy, stony", wall: "mossy henges", small: "little stones", big: "big stones", set: "a shrine" },
     wall: [P("henge")], small: [P("stones")], big: [P("boulder")], set: P("shrine") },
   { id: "tangly-forest", name: "Tangly forest", creature: "ram", by: "Ed", leaf: .27, floor: ["nettles", .28, .5, .3], text: { floor: "nettles and earth", small: "tangled branches", big: "fairly short tangly trees" },
-    small: [P("bramble", { bare: true })], big: [tree("broad", { scale: .7, gnarl: 1 })] },
+    small: [P("bramble", { bare: true })], big: [tree("hawthorn", { scale: .9, gnarl: 1 })] },
   { id: "wispy-forest", name: "Wispy forest", creature: "woodlouse", by: "Ed", leaf: .2, floor: ["leaves", .09, .55, .45], text: { floor: "dry leaves", small: "tall thin wispy trees", big: "thick trees with several trunks" },
-    small: [tree("birch", { scale: .75 })], big: [tree("broad", { trunks: 3, thick: 1.4 })] },
+    small: [tree("birch", { scale: .75 })], big: [tree("lime", { trunks: 3, thick: 1.4 }), tree("birch", { minor: true })] },
   { id: "hazel-forest", name: "Hazel forest", creature: "hedgehog", by: "Ed", leaf: .26, floor: ["grass", .24, .45, .45], text: { floor: "short grass", small: "brown lumps", big: "crooked trees with many branches" },
-    small: [P("mound", { brown: true })], big: [tree("broad", { gnarl: 1, scale: .85 })] },
+    small: [P("mound", { brown: true })], big: [tree("hazel", { gnarl: 1, scale: .95 }), tree("oak", { minor: true, scale: .9 })] },
   { id: "garden", name: "Garden", creature: "squirrel", by: "Ed", leaf: .3, floor: ["lawn", .27, .5, .5], text: { floor: "uniform grass", wall: "ornate stone wall", small: "manicured flower beds", big: "willows", set: "a stone pavilion" },
     wall: [P("wall")], small: [P("flowerbed")], big: [tree("willow")], set: P("pavilion") },
   { id: "twiggy-forest", name: "Twiggy forest", creature: "wolf", by: "Ed", leaf: .29, floor: ["plants", .3, .5, .38], text: { floor: "small leafy plants", small: "small trees with many thin trunks", big: "straight but slanted trees with many trunks" },
-    small: [tree("broad", { trunks: 4, scale: .5, thin: true })], big: [tree("broad", { trunks: 3, lean: .3, gnarl: .1 })] },
+    small: [tree("broad", { trunks: 4, scale: .5, thin: true })], big: [tree("ash", { trunks: 3, lean: .3, gnarl: .1 })] },
   { id: "ancient", name: "Ancient", creature: "stag", by: "Ed", leaf: .31, floor: ["roots", .1, .25, .35], text: { floor: "mossy roots over rocks", small: "sorrel", big: "giant gnarly slanted trees" },
-    small: [P("flowers", { hue: .98, leafy: true })], big: [tree("broad", { scale: 1.4, gnarl: 1, lean: .35 })] },
+    small: [P("flowers", { hue: .98, leafy: true })], big: [tree("yew", { scale: 1.4, gnarl: 1, lean: .35 }), tree("oak", { minor: true, scale: 1.3, gnarl: 1 })] },
   { id: "norway", name: "Norway", creature: "stoat", by: "Ed", leaf: .36, floor: ["slate", .6, .15, .35], text: { floor: "pine needles and slate", small: "rocks", big: "straight pines" },
-    small: [P("stones", { big: true })], big: [tree("fir", { scale: 1.2 })] },
+    small: [P("stones", { big: true })], big: [tree("fir", { scale: 1.2 }), tree("birch", { minor: true })] },
   { id: "alder-forest", name: "Alder forest", creature: "snake", by: "Ed", leaf: .23, floor: ["tallgrass", .22, .45, .42], text: { floor: "tall and short grass", small: "tree stumps with tall grass around", big: "tall slanted trees with thin leaves at different heights" },
-    small: [P("stump", { grass: true })], big: [tree("birch", { lean: .3, scale: 1.2, dark: true })] },
+    small: [P("stump", { grass: true })], big: [tree("alder", { lean: .3, scale: 1.2, dark: true })] },
   { id: "meadow", name: "Meadow", creature: "hare", by: "draft", leaf: .25, floor: ["flowers", .25, .5, .5], text: { floor: "grass and wildflowers", small: "scattered hawthorn", big: "lone oaks" },
-    small: [P("shrub", { flower: [250, 245, 235] })], big: [tree("broad", { scale: 1.1 })] },
+    small: [P("shrub", { flower: [250, 245, 235] })], big: [tree("chestnut", { scale: 1.1 }), tree("hawthorn", { minor: true, scale: .8 })] },
   { id: "old-oaks", name: "Old oaks", creature: "owl", by: "draft", leaf: .22, floor: ["leaves", .07, .5, .35], text: { floor: "leaf litter", small: "acorns, fallen branches", big: "ancient gnarled oaks with hollow trunks", set: "a great hollow oak" },
-    small: [P("cones", { acorn: true }), P("log", { branch: true })], big: [tree("broad", { gnarl: .9, hollow: true })], set: tree("broad", { scale: 1.6, gnarl: 1, hollow: true }) },
+    small: [P("cones", { acorn: true }), P("log", { branch: true })], big: [tree("oak", { gnarl: .9, hollow: true }), tree("holly", { minor: true, scale: .8 })], set: tree("broad", { scale: 1.6, gnarl: 1, hollow: true }) },
   { id: "berry-thicket", name: "Berry thicket", creature: "bear", by: "draft", leaf: .32, floor: ["needles", .08, .45, .3], text: { floor: "pine needles", wall: "bramble thickets", small: "berry bushes", big: "tall pines" },
-    wall: [P("bramble")], small: [P("shrub", { flower: [200, 30, 60] })], big: [tree("fir", { scale: 1.3 })] },
+    wall: [P("bramble")], small: [P("shrub", { flower: [200, 30, 60] })], big: [tree("pine", { scale: 1.2 }), tree("rowan", { minor: true })] },
   { id: "wetland", name: "Wetland", creature: "toad", by: "draft", leaf: .2, floor: ["mud", .15, .45, .3], text: { floor: "wet mud", wall: "puddles, reeds", small: "reeds and rushes", big: "willows" },
-    wall: [P("water"), P("reeds", { tall: true })], small: [P("reeds")], big: [tree("willow")] },
+    wall: [P("water"), P("reeds", { tall: true })], small: [P("reeds")], big: [tree("willow"), tree("alder", { minor: true, scale: .9 })] },
   { id: "stream", name: "Stream", creature: "otter", by: "draft", leaf: .27, floor: ["pebbles", .25, .3, .45], text: { floor: "pebbles and grass", wall: "a stream or pond", small: "alder saplings", big: "alders", set: "a fallen-log bridge" },
-    wall: [P("water", { w: 2 })], small: [tree("broad", { scale: .45 })], big: [tree("broad", { scale: .95, gnarl: .3 })], set: P("bridge") },
+    wall: [P("water", { w: 2 })], small: [tree("broad", { scale: .45 })], big: [tree("alder", { scale: .95, gnarl: .3 }), tree("willow", { minor: true, scale: .8 })], set: P("bridge") },
   { id: "rocky-slope", name: "Rocky slope", creature: "lynx", by: "draft", leaf: .34, floor: ["scree", .2, .2, .42], text: { floor: "scree and moss", wall: "boulders", small: "rocks", big: "pines", set: "a rocky outcrop" },
-    wall: [P("boulder", { big: true })], small: [P("stones", { big: true })], big: [tree("fir")], set: P("outcrop") },
+    wall: [P("boulder", { big: true })], small: [P("stones", { big: true })], big: [tree("rowan", { scale: 1.1 }), tree("pine", { minor: true })], set: P("outcrop") },
   { id: "bog", name: "Bog", creature: "elk", by: "draft", leaf: .38, floor: ["moss", .18, .55, .4], text: { floor: "sphagnum moss", wall: "bog pools", small: "cotton grass", big: "spruce" },
-    wall: [P("water", { bog: true })], small: [P("reeds", { cotton: true })], big: [tree("fir", { dark: true })] },
+    wall: [P("water", { bog: true })], small: [P("reeds", { cotton: true })], big: [tree("birch", { scale: .8, dark: true }), tree("pine", { minor: true, scale: .7 })] },
   { id: "deadwood", name: "Deadwood", creature: "raven", by: "draft", leaf: .15, floor: ["earth", .07, .35, .3], text: { floor: "bare earth", small: "broken branches", big: "blasted dead trees" },
     small: [P("log", { branch: true })], big: [tree("broad", { bare: true, gnarl: 1 })] },
   { id: "cave-mouth", name: "Cave mouth", creature: "bat", by: "draft", leaf: .2, floor: ["stone", .08, .15, .35], text: { floor: "stone and roots", wall: "rock walls", small: "stalagmite stubs", big: "dead trees", set: "a cave mouth" },
-    wall: [P("rockwall")], small: [P("stalagmite")], big: [tree("broad", { bare: true })], set: P("cave") },
+    wall: [P("rockwall")], small: [P("stalagmite")], big: [tree("broad", { bare: true }), tree("yew", { minor: true, scale: .8 })], set: P("cave") },
   { id: "grassland", name: "Grassland", creature: "mole", by: "draft", leaf: .25, floor: ["grass", .26, .5, .48], text: { floor: "short turf", small: "molehills", big: "lone birches" },
-    small: [P("mound", { brown: true, small: true })], big: [tree("birch")] },
+    small: [P("mound", { brown: true, small: true })], big: [tree("flat", { scale: 1.1 }), tree("weepingBirch", { minor: true })] },
   { id: "beaver-pond", name: "Beaver pond", creature: "beaver", by: "draft", leaf: .17, floor: ["leaves", .13, .6, .5], text: { floor: "birch leaves", wall: "a pond", small: "stumps", big: "birch and aspen", set: "a beaver dam" },
-    wall: [P("water", { w: 2 })], small: [P("stump", { gnawed: true })], big: [tree("birch")], set: P("dam") },
+    wall: [P("water", { w: 2 })], small: [P("stump", { gnawed: true })], big: [tree("weepingBirch"), tree("alder", { minor: true, scale: .8 })], set: P("dam") },
   { id: "log-pile", name: "Log pile", creature: "beetle", by: "draft", leaf: .22, floor: ["leaves", .06, .5, .3], text: { floor: "rotting leaves", small: "fungi", big: "rotting logs", set: "a fallen giant" },
     small: [P("fungi")], big: [P("log", { rot: true })], set: P("log", { rot: true, giant: true }) },
   { id: "heath", name: "Heath", creature: "moth", by: "draft", leaf: .27, floor: ["heather", .85, .35, .4], text: { floor: "heather", small: "gorse", big: "wind-bent birches" },
-    small: [P("shrub", { flower: [250, 205, 40], spiky: true })], big: [tree("birch", { lean: .45, scale: .75 })] },
+    small: [P("shrub", { flower: [250, 205, 40], spiky: true })], big: [tree("birch", { lean: .45, scale: .75 }), tree("hawthorn", { minor: true, scale: .7, lean: .45 })] },
   { id: "old-pinewood", name: "Old pinewood", creature: "marten", by: "draft", leaf: .35, floor: ["needles", .07, .4, .3], text: { floor: "pine needles", small: "pine cones", big: "tall old pines with knotholes" },
-    small: [P("cones")], big: [tree("fir", { scale: 1.35 })] },
+    small: [P("cones")], big: [tree("pine", { scale: 1.35 }), tree("rowan", { minor: true, scale: .8 })] },
   { id: "ravine", name: "Ravine", creature: "salamander", by: "draft", leaf: .3, floor: ["stone", .3, .3, .32], text: { floor: "wet moss and rock", wall: "rock walls", small: "ferns", big: "mossy boulders", set: "a waterfall" },
     wall: [P("rockwall", { moss: true })], small: [P("fern")], big: [P("boulder", { moss: true, big: true })], set: P("waterfall") },
   { id: "bluebell-glade", name: "Bluebell glade", creature: "glowworm", by: "draft", leaf: .26, floor: ["bluebells", .27, .45, .4], text: { floor: "bluebells", small: "ferns", big: "beeches" },
-    small: [P("fern")], big: [tree("broad", { gnarl: .2, scale: 1.1 })] },
+    small: [P("fern")], big: [tree("beech", { gnarl: .2, scale: 1.1 }), tree("holly", { minor: true, scale: .7 })] },
   { id: "holly-thicket", name: "Holly thicket", creature: "spider", by: "draft", leaf: .36, floor: ["leaves", .08, .35, .28], text: { floor: "dead leaves", wall: "holly hedges", small: "cobwebs", big: "hollies", set: "a web-hung dead tree" },
-    wall: [P("hedge", { berries: true })], small: [P("web")], big: [tree("broad", { scale: .7, dark: true })], set: tree("broad", { bare: true, webs: true }) },
+    wall: [P("hedge", { berries: true })], small: [P("web")], big: [tree("holly", { scale: .9 }), tree("yew", { minor: true, scale: .7 })], set: tree("broad", { bare: true, webs: true }) },
   { id: "honeysuckle-tangle", name: "Honeysuckle tangle", creature: "dormouse", by: "draft", leaf: .25, floor: ["clover", .27, .45, .45], text: { floor: "grass and clover", wall: "bramble", small: "honeysuckle", big: "hazel coppice" },
-    wall: [P("bramble")], small: [P("shrub", { flower: [250, 230, 170] })], big: [tree("broad", { trunks: 5, scale: .7, thin: true })] },
+    wall: [P("bramble")], small: [P("shrub", { flower: [250, 230, 170] })], big: [tree("hazel", { trunks: 5, scale: .7, thin: true }), tree("rowan", { minor: true, scale: .7 })] },
 ];
 // Set pieces for the areas that had none (Ed: "Make set pieces for the other areas too"), built in 3D: setpieces.js
 for (const [id, [kind, text]] of Object.entries(NEW_SET_PIECES)) { const A = AREAS.find(x => x.id === id); if (A && !A.set) { A.set = P(kind, { three: true }); A.text = { ...A.text, set: text }; } }
@@ -3686,7 +3888,7 @@ function prop(kind, o, def, st, r, s) {
   const wood = { [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BELLY]: hsv2rgb(st.trunkHue + .02, .3, .7) };
   const water = { [M.MAGIC]: [60, 110, 150], [M.MAGIC2]: [150, 200, 220], [M.BODY2]: [35, 70, 100] };
   if (kind === "tree") {
-    const f = { broad: broadTree, fir: firTree, willow: willowTree, birch: birchTree, flat: flatTree }[o.type];
+    const f = treeSpecies(o.type).fn;
     const ts = { ...st, leafHue: def.leaf + (o.dark ? .05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs };
     const t = f(r, ts, st.treeSize * s * (o.scale || 1) * uni(r, .9, 1.1));
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
@@ -3852,32 +4054,33 @@ const TREE_HEIGHT_CLASSES = [
   { id: "giant", range: [1.8, 2.2], weight: .05, count: 1 },
 ];
 const ART_PIXELS_PER_METRE = 16; // the prototype's (config/tuning.json, artPixelsPerMetre)
-const TREE_FN = { broad: broadTree, fir: firTree, willow: willowTree, birch: birchTree, flat: flatTree };
 // An area's tree variants, baked: [{ heightClass, scale, weight (a share of the area's trees),
 // whole, top, bot (the crown and the trunk below it, for the cut-out), crownY (px from the top),
 // metres: { height, crownBase, crownHeight, crownRadius } }]. Empty when its big objects are not
 // trees (mounds, boulders). ppm: art pixels per metre, for the metres.
 function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanvas, ppm = ART_PIXELS_PER_METRE } = {}) {
   const def = AREA_BY_ID[id]; if (!def) throw new Error(`no area type "${id}"`);
-  const recipes = (def.big || []).filter(([kind]) => kind === "tree").map(([, o]) => o);
+  const recipes = (def.big || []).filter(([kind]) => kind === "tree").map(([, o]) => o), mains = recipes.filter(o => !o.minor), minors = recipes.filter(o => o.minor);
   if (!recipes.length) return [];
   const seed = id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0, out = [];
   let n = 0;
   for (const cls of TREE_HEIGHT_CLASSES) for (let i = 0; i < cls.count; i++, n++) {
-    const o = recipes[n % recipes.length], f = TREE_FN[o.type], r = rng(seed * 7 + n * 131 + 3);
+    const o = minors.length && (n === 2 || n === 6) ? minors[(n === 6 ? 1 : 0) % minors.length] : mains[n % mains.length], /* a minor species: one sapling and one mature tree of the ten */ S = treeSpecies(o.type), f = S.fn, r = rng(seed * 7 + n * 131 + 3);
     const h = cls.count > 1 ? cls.range[0] + (cls.range[1] - cls.range[0]) * i / (cls.count - 1) : (cls.range[0] + cls.range[1]) / 2;
     const sapling = cls.id === "sapling", big = cls.id === "tall" || cls.id === "giant";
-    // its character: willows widen rather than grow; firs and birches stay narrow as they grow; saplings are slim
-    const willow = o.type === "willow", narrow = o.type === "fir" || o.type === "birch" || o.bare; // dead trees grow into tall snags
-    const scale = willow ? 1 + (h - 1) * .45 : h;
-    const width = (sapling ? .78 : 1) * (willow ? 1 + Math.max(0, h - 1) * .55 : narrow && big ? (o.bare ? .6 : .85) : big ? 1.06 : 1);
+    // its character (the species' grow): willows widen rather than grow; narrow kinds (firs, pines, birches, alders,
+    // larches) stay narrow as they grow; wide kinds (oak, yew, sycamore, chestnut) spread more than they rise; small
+    // kinds (hawthorn, rowan, hazel) stay small; dead trees grow into tall snags; saplings are slim
+    const g = S.grow, willow = g === "willow", narrow = g === "narrow" || o.bare, wide = g === "wide", small = g === "small";
+    const scale = willow ? 1 + (h - 1) * .45 : small ? 1 + (h - 1) * .5 : wide ? 1 + (h - 1) * .75 : h;
+    const width = (sapling ? .78 : 1) * (willow ? 1 + Math.max(0, h - 1) * .55 : wide ? 1 + Math.max(0, h - 1) * .45 : narrow && big ? (o.bare ? .6 : .85) : big ? 1.06 : 1);
     const ts = { ...st, crownWidth: (st.crownWidth || 3) * width, leafHue: def.leaf + (o.dark ? .05 : 0), gnarl: Math.min(1, (o.gnarl ?? st.gnarl) + (cls.id === "giant" ? .2 : 0)),
       treeBare: o.bare, treeTrunks: sapling ? 1 : o.trunks, treeLean: o.lean, treeThick: sapling ? undefined : big && o.thick ? o.thick * 1.1 : o.thick, treeThin: sapling || o.thin, treeHollow: big && o.hollow, treeWebs: o.webs };
     const t = f(r, ts, st.treeSize * K * (o.scale || 1) * scale * uni(r, .95, 1.05));
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
     c[M.NOSE] = [20, 16, 24]; c[M.WEB] = [225, 225, 232];
     const parts = splitTree(t), bk = sp => bake(sp, c, st, "none", makeCanvas), m = px => +(px / ppm).toFixed(2);
-    out.push({ heightClass: cls.id, scale: +scale.toFixed(2), weight: +(cls.weight / cls.count).toFixed(4), whole: bk(t.sp), top: bk(parts.top), bot: bk(parts.bot), crownY: t.crownY,
+    out.push({ heightClass: cls.id, species: o.type, scale: +scale.toFixed(2), weight: +(cls.weight / cls.count).toFixed(4), whole: bk(t.sp), top: bk(parts.top), bot: bk(parts.bot), crownY: t.crownY,
       metres: { height: m(t.sp.h), crownBase: m(t.sp.h - t.crownY), crownHeight: m(t.crownY), crownRadius: m(t.sp.w / 2) } });
   }
   return out;
@@ -4539,14 +4742,21 @@ function renderTrees() {
   treeTimer = setTimeout(() => {
     const c = document.getElementById("treeSheet"), sel = document.getElementById("treeArea"); if (!c || !sel) return;
     if (!sel.options.length) { for (const A of AREAS) sel.add(new Option(A.name, A.id)); sel.addEventListener("change", renderTrees); }
+    const kind = document.getElementById("treeKind");
+    if (kind && !kind.options.length) { kind.add(new Option("the area's own", "")); for (const [id, S] of Object.entries(TREE_SPECIES)) kind.add(new Option(S.name, id)); kind.addEventListener("change", renderTrees); }
     const y = AREA_BY_ID[sel.value].layout, pct = v => Math.round(v * 100) + "%", info = document.getElementById("treeLayout");
     if (info && y) info.textContent = `${y.feel} Pattern ${y.pattern}${y.along ? " along " + y.along : ""}, density ${pct(y.density)}, clump ${pct(y.clump)}, ${y.glades.count} glade${y.glades.count === 1 ? "" : "s"}${y.glades.count ? ` (${y.glades.size[0]}-${y.glades.size[1]} m)` : ""}, undergrowth ${pct(y.undergrowth)}${y.lean.amount ? `, leaning ${pct(y.lean.amount)} toward ${y.lean.dir}°` : ""}; terrain: ${y.terrain.join(", ")}; ` +
       (y.heightMix ? "height mix " + Object.entries(y.heightMix).map(([k, v]) => k + " " + pct(v)).join(", ") : "its big objects aren't trees") + "; decorations " + pct(y.decor.rate) + ": " + Object.entries(y.decor).filter(([k, v]) => k !== "rate" && v).map(([k, v]) => k + " " + pct(v)).join(", ") + ".";
     const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 6;
-    const row = [...areaTreeVariants(sel.value, st).map(v => v.whole), bake(witchSprite(st), witchColours(st), st, st.cOutline)];
-    const w = row.reduce((a, x) => a + x.w + gap, gap), h = Math.max(...row.map(x => x.h)) + gap * 2, tgt = makeTarget(w, h);
+    // the area's trees (or, picked, one species at five sizes), whole from the side, then their crowns alone as treetop mode shows them
+    const wit = bake(witchSprite(st), witchColours(st), st, st.cOutline), K = 2 / (st.pixel || 2);
+    let whole, tops;
+    if (kind && kind.value) { const S = TREE_SPECIES[kind.value], ts = { ...st, leafHue: AREA_BY_ID[sel.value].leaf }; const trees = [.55, .8, 1, 1.4, 1.9].map((k2, i) => { const r = rng(17 + i * 31), t = S.fn(r, ts, st.treeSize * K * k2), c = treeColours(rng(3 + i), ts, S.fn); return { whole: bake(t.sp, c, st, "none"), top: bake(splitTree(t).top, c, st, "none") }; }); whole = trees.map(t => t.whole); tops = trees.map(t => t.top); }
+    else { const vs = areaTreeVariants(sel.value, st); whole = vs.map(v => v.whole); tops = vs.map(v => v.top); }
+    const rows = [[...whole, wit], tops].filter(r => r.length), rh = rows.map(r => Math.max(...r.map(x => x.h)) + gap), w = Math.max(...rows.map(r => r.reduce((a, x) => a + x.w + gap, gap))), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
     tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
-    let x = gap; for (const s2 of row) { tgt.a.drawImage(s2.A, x, h - gap - s2.h); tgt.n.drawImage(s2.N, x, h - gap - s2.h); x += s2.w + gap; }
+    let yy = gap; rows.forEach((r, i) => { let x = gap; yy += rh[i] - gap; for (const s2 of r) { tgt.a.drawImage(s2.A, x, yy - s2.h); tgt.n.drawImage(s2.N, x, yy - s2.h); x += s2.w + gap; } yy += gap; });
+    if (info && !(kind && kind.value)) { const sp2 = (AREA_BY_ID[sel.value].big || []).filter(([k2]) => k2 === "tree").map(([, o]) => TREE_SPECIES[o.type]?.name + (o.minor ? " (a few)" : "")); if (sp2.length) info.textContent += " Trees: " + sp2.join(", ") + "."; }
     c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
     c.style.width = w + "px"; c.style.maxWidth = "none";
   }, 550);
