@@ -108,6 +108,12 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
+        <h2>Map</h2>
+        <p class="note">A whole run's forest: 20 × 20 areas cut by Boris the Brave's fractal jittered Voronoi. Each colour is an area type, never beside itself; white dots are area centres, where the clearings are; the ringed area in the middle holds the dancefloor. "New forest layout" draws a new map; "Border detail" sets how many fractal layers shape the borders.</p>
+        <div class="stage" style="max-width:560px"><canvas id="map" width="280" height="280" style="width:100%;height:auto"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
         <h2>Bestiary</h2>
         <p class="note">Twenty forest animals, each as legend, young and baby, in the current style under even light. Legends grow the magical features listed.</p>
         <div class="bestiary" id="bestiary"></div>
@@ -188,6 +194,9 @@ const KNOBS = [
   { k: "treeSize", g: "Trees", label: "Tree height", min: 0.5, max: 1.5, step: 0.05, v: 0.85 },
   { k: "crownWidth", g: "Trees", label: "Crown width", min: 1, max: 4, step: 0.1, v: 3 },
   { k: "clearing", g: "Trees", label: "Clearing size", min: 0, max: 1, step: 0.05, v: 0.55 },
+  { k: "depth", g: "Map", label: "Border detail (fractal layers)", min: 0, max: 6, step: 1, v: 4 },
+  { k: "areaScale", g: "Map", label: "Area size (screens)", min: 0.6, max: 2, step: 0.05, v: 1 },
+  { k: "areaTypes", g: "Map", label: "Area types", min: 4, max: 30, step: 1, v: 30 },
   { k: "density", g: "Trees", label: "Foliage density", min: 0.2, max: 1, step: 0.05, v: 0.55 },
   { k: "clump", g: "Trees", label: "Clumpiness", min: 0, max: 1, step: 0.05, v: 0.6 },
   { k: "gnarl", g: "Trees", label: "Gnarliness", min: 0, max: 1, step: 0.05, v: 0.5 },
@@ -214,7 +223,7 @@ const KNOBS = [
   { k: "cloakHue", g: "Witch", label: "Cloak hue", min: 0, max: 1, step: 0.01, v: 0.72, hue: true },
   { k: "hairHue", g: "Witch", label: "Hair hue", min: 0, max: 1, step: 0.01, v: 0.01, hue: true },
 ];
-const GROUPS = ["Night light", "Shading", "Colour", "Trees", "Tree mix", "Undergrowth", "Creatures", "Witch"];
+const GROUPS = ["Night light", "Shading", "Colour", "Trees", "Tree mix", "Undergrowth", "Map", "Creatures", "Witch"];
 function defaultStyle() { const s = {}; KNOBS.forEach(k => s[k.k] = k.v); return s; }
 function mutate(style, strength, groups, seed) {
   const r = rng(seed), s = { ...style };
@@ -661,18 +670,65 @@ function buildAssets(st, world) {
   return { trees, bushes, creatures, witch: bake(witchSprite(), witchColours(st), st) };
 }
 
+// ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
+// Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
+// grid; every site's parent is its nearest site one layer up. A point belongs to the root
+// of the nearest site at the deepest layer, which gives areas fractal, coastline-like borders.
+function makePartition(seed, depth) {
+  const siteCache = new Map(), rootCache = new Map();
+  const site = (layer, cx, cy) => {
+    const k = layer + "," + cx + "," + cy; let s = siteCache.get(k);
+    if (!s) { const c = Math.pow(2, -layer); s = [c * (cx + hash2(cx * 7 + layer, cy, seed)), c * (cy + hash2(cx, cy * 13 + layer, seed + 1))]; siteCache.set(k, s); }
+    return s;
+  };
+  const nearest = (layer, px, py) => {
+    const c = Math.pow(2, -layer), gx = Math.floor(px / c), gy = Math.floor(py / c);
+    let best = null, bd = Infinity;
+    for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) {
+      const s = site(layer, gx + dx, gy + dy), d = (s[0] - px) ** 2 + (s[1] - py) ** 2;
+      if (d < bd) { bd = d; best = [gx + dx, gy + dy]; }
+    }
+    return best;
+  };
+  const root = (layer, cx, cy) => {
+    const k = layer + "," + cx + "," + cy; let r = rootCache.get(k);
+    if (r) return r;
+    if (layer === 0) r = [cx, cy];
+    else { const s = site(layer, cx, cy), p = nearest(layer - 1, s[0], s[1]); r = root(layer - 1, p[0], p[1]); }
+    rootCache.set(k, r);
+    return r;
+  };
+  return {
+    site: (cx, cy) => site(0, cx, cy),
+    partition(px, py) { const c = nearest(depth, px, py); return root(depth, c[0], c[1]); },
+    // 0 at the area's site, about 1 at its border (measured against the nearest other site)
+    centreness(px, py, rc) {
+      const s = site(0, rc[0], rc[1]), d1 = Math.hypot(px - s[0], py - s[1]);
+      let d2 = Infinity; const gx = Math.floor(px), gy = Math.floor(py);
+      for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) { const cx = gx + dx, cy = gy + dy; if (cx === rc[0] && cy === rc[1]) continue; const o = site(0, cx, cy); d2 = Math.min(d2, Math.hypot(px - o[0], py - o[1])); }
+      return Math.min(1, 2 * d1 / (d1 + d2));
+    },
+  };
+}
+
 // ================= scene layout =================
 let W = 299, H = 168, K = 2 / 3; // logical resolution; K scales world sizes to the pixel size
 function setRes(p) { W = Math.round(896 / p); H = Math.round(504 / p); K = 2 / p; }
 setRes(3);
 function layout(world, st) {
   const r = rng(world.forestSeed * 7 + 3);
-  const areas = [[W * .5, H * .62], [W * 1.3, H * .2], [-W * .35, H * 1.05]];
-  // t: 0 at an area's centre, 1 on its border with the next area
+  // Areas come from the fractal partition; the view is centred on the area (0, 0), about one screen across.
+  const part = makePartition(world.forestSeed, st.depth), A = W * st.areaScale, s0 = part.site(0, 0);
+  const ox = W * .5 - s0[0] * A, oy = H * .62 - s0[1] * A / 1.7;
+  const toArea = (x, y) => [(x - ox) / A, (y - oy) * 1.7 / A];
+  const areaCache = new Map();
   const areaAt = (x, y) => {
-    const d = areas.map(([ax, ay]) => Math.hypot(x - ax, (y - ay) * 1.7)).map((v, i) => [v, i]).sort((p, q) => p[0] - q[0]);
-    return { area: d[0][1], t: Math.min(1, 2 * d[0][0] / (d[0][0] + d[1][0])) };
+    const k = (x | 0) + "," + (y | 0); let v = areaCache.get(k); if (v) return v;
+    const [u, w] = toArea(x, y), rc = part.partition(u, w);
+    v = { area: rc[0] === 0 && rc[1] === 0 ? 0 : 1 + (Math.abs(rc[0] * 3 + rc[1] * 5) % 2), t: part.centreness(u, w, rc) };
+    areaCache.set(k, v); return v;
   };
+  const areas = [[W * .5, H * .62]];
   const wantTree = (x, y) => { const { t } = areaAt(x, y), c = st.clearing * .75; return Math.pow(Math.max(0, (t - c) / (1 - c)), 1.6) * st.trees * .7; };
   const trees = [], bushes = [], crownW = 40 * K * st.crownWidth * st.treeSize;
   for (let i = 0; i < 1500 && trees.length < 70; i++) {
@@ -701,7 +757,7 @@ function makeTarget(w, h) {
   return { A, N, a: A.getContext("2d", { willReadFrequently: true }), n: N.getContext("2d", { willReadFrequently: true }), w, h };
 }
 function groundAlbedo(st, lay) {
-  const key = JSON.stringify([st.groundHue, st.groundVal, st.sat, st.areaContrast, st.clearing, W, lay.dcx, lay.trees.length]);
+  const key = JSON.stringify([st.groundHue, st.groundVal, st.sat, st.areaContrast, st.clearing, st.depth, st.areaScale, W, lay.dcx, lay.trees.length]);
   if (groundAlbedo.cache.has(key)) return groundAlbedo.cache.get(key);
   const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
   const img = g.createImageData(W, H), base = [hsv2rgb(st.groundHue, .5 * st.sat, st.groundVal), hsv2rgb(st.groundHue + .04, .55 * st.sat, st.groundVal * .8), hsv2rgb(st.groundHue - .03, .45 * st.sat, st.groundVal * 1.15), hsv2rgb(st.groundHue + .1, .3 * st.sat, st.groundVal * .9)];
@@ -812,6 +868,37 @@ function drawSheet(canvas, st, assets) {
 }
 function shadeAny(tgt, out, st, w, h) { shade(tgt, out, st, [], [0, 0, w, h]); }
 
+// ================= map: the whole forest, 20 x 20 areas =================
+let mapTimer;
+function renderMap() {
+  clearTimeout(mapTimer);
+  mapTimer = setTimeout(() => {
+    const c = document.getElementById("map"); if (!c) return;
+    const st = current, N = 20, P = 14, size = N * P, part = makePartition(world.forestSeed, st.depth);
+    c.width = size; c.height = size;
+    // area types: random, but never the same type as a neighbouring area
+    const types = new Map(), r = rng(world.forestSeed * 5 + 1), key = (x, y) => x + "," + y;
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      const near = new Set(); for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const t = types.get(key(x + dx, y + dy)); if (t !== undefined) near.add(t); }
+      let t, tries = 0; do { t = Math.floor(r() * st.areaTypes); } while (near.has(t) && ++tries < 40);
+      types.set(key(x, y), t);
+    }
+    const g = c.getContext("2d"), img = g.createImageData(size, size), mid = N / 2;
+    for (let py = 0; py < size; py++) for (let px = 0; px < size; px++) {
+      const u = px / P, v = py / P, rc = part.partition(u, v), t = types.get(key(rc[0], rc[1])) ?? 0;
+      const cl = part.centreness(u, v, rc), hue = (t * .618034) % 1;
+      let [cr, cg, cb] = hsv2rgb(hue, .45, .38 + (1 - cl) * .25);
+      if (rc[0] === Math.floor(mid) && rc[1] === Math.floor(mid)) [cr, cg, cb] = [cr * .6 + 102, cg * .6 + 40, cb * .6 + 90];
+      img.data.set([cr, cg, cb, 255], (py * size + px) * 4);
+    }
+    g.putImageData(img, 0, 0);
+    // area sites: where each area's clearing is (and, perhaps, its soundsystem)
+    g.fillStyle = "#fff";
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const s = part.site(x, y); g.fillRect(Math.round(s[0] * P) - 1, Math.round(s[1] * P) - 1, 2, 2); }
+    const s = part.site(Math.floor(mid), Math.floor(mid)); g.strokeStyle = "#ff5fc8"; g.lineWidth = 2; g.beginPath(); g.arc(s[0] * P, s[1] * P, 6, 0, Math.PI * 2); g.stroke();
+  }, 200);
+}
+
 // ================= bestiary: every species at every level, studio-lit =================
 let bestiaryTimer;
 const FEATURE_NAMES = { wings: "spirit wings", mane: "a glowing mane", tails: "many tails", crystals: "crystals", tusksBig: "great tusks", antlersGlow: "glowing antlers", jackalope: "antlers", eyesRing: "a ring of eyes", moss: "a little forest on its back", starTail: "a starry tail", crown: "a crown", ribbons: "light ribbons", wingsBig: "huge glowing wings", horn: "a glowing horn" };
@@ -864,7 +951,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary();
+  syncKnobs(); renderHistory(); renderBestiary(); renderMap();
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
