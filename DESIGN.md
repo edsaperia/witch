@@ -17,7 +17,7 @@ A roguelite that crosses a **creature collector** with **tower defence / real-ti
 The heart of the game (Ed, 2026-10-03): **the witch is throwing a rave in the forest.**
 
 - In the middle of the map is a **ritual circle**, which is the **dancefloor** and the home. It is a wide ring of standing stones around a **glowing magic circle** on the ground, with a **magic disco ball floating above it**, throwing specks of light across the clearing (Ed, 2026-10-03).
-- **As time goes on the party grows**: the music gets more intense and the **party zone** around the dancefloor spreads. In the party zone, trees have lights on them and party paraphernalia is scattered around.
+- **As time goes on the party grows**: the music gets more intense and the **party zone** around the dancefloor spreads. In the party zone, trees have lights on them and party paraphernalia is scattered around. The lights are **colourful string lights hung between the trees**, twinkling (Ed, 2026-10-03).
 - **Idle creatures dance**, and **other witches** appear and fly around.
 - **Soundsystems** scattered around spread the music. A soundsystem looks like a real custom sound-system stack (a stepped wall of bass bins, mid-horns and tweeter boxes) crossed with a **magic fantasy rock**: hewn stone cabinets with glowing runes, glowing crystal cones, a floating top tier and crystal shards (Ed, 2026-10-03).
 - **The threat**: the growing party zone wakes and annoys creatures that are sleeping. They come to shut the party down by **destroying the soundsystems**.
