@@ -25,6 +25,12 @@ A roguelite that crosses a **creature collector** with **tower defence / real-ti
 
 The trade is speed against information: treetop mode covers distance, ground mode reveals what is there. Tree density is therefore gameplay as well as scenery, since it decides where the ground can be seen from above.
 
+## The forest: areas and the map
+
+- The forest is made of **areas** (Ed, 2026-10-03). Each area has **its own vegetation** and is **home to its own kind of creature**.
+- **Replayability** comes from two things together: a **large number of area types** (and so of creatures), and a **procedurally generated map** that arranges areas in space differently each run.
+- Area shapes: Ed is inspired by Boris the Brave's *fractal jittered Voronoi partitions* (https://www.boristhebrave.com/2026/08/29/fractal-jittered-voronoi-partitions/) as a way to make interestingly shaped area cells.
+
 ## Look
 
 A 3D world with **2D pixel-art sprites** for characters and objects. References: *Cult of the Lamb* and *Octopath Traveler*. Witch develops its own art style as it goes.
@@ -49,6 +55,7 @@ A 3D world with **2D pixel-art sprites** for characters and objects. References:
 - Whether trees block her in ground mode, so the forest has paths.
 - What she can do from above (find, catch, leash creatures) and what needs the ground.
 - What she does while her creatures defend.
+- How areas are arranged: which area types can sit next to each other, where the home is, how a run's map is chosen.
 - Run structure: what one run is, what persists between runs.
 - How the leash works.
 - Whether exploring and defending happen at the same time or in phases (for example, day and night).
@@ -58,6 +65,7 @@ A 3D world with **2D pixel-art sprites** for characters and objects. References:
 
 ## Glossary
 
+- **Area**: a region of the forest with its own vegetation and its own kind of creature; the map is a procedurally generated arrangement of areas.
 - **Ground mode**: the witch flying under the trees: slower, full sight.
 - **Leash**: tying a creature to a location, where it defends.
 - **Treetop mode**: the witch flying above the canopy: faster, sight only of what shows through or above it.
