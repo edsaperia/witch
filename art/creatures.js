@@ -15,28 +15,28 @@ import { legacyCritter } from "./legacy-creatures.js";
 // species still drawn the old way.
 export const SPECIES = [
   { id: "wolf", name: "Wolf", plan: "quad", hue: .6, sat: .14, val: .74, legend: ["wings", "mane"],
-    q: { len: .64, chest: .42, tuck: .6, neck: .32, neckAng: .7, neckW: .42, hr: .26, snout: .82, snoutD: .7, ear: "point", earS: .82, tail: "brush", paw: "paw", legW: 1.25, saddle: true, belly: "pale", ruff: false },
+    q: { len: .64, chest: .42, tuck: .6, neck: .32, neckAng: .7, neckW: .42, hr: .26, snout: .82, snoutD: .7, ear: "point", earS: .82, tail: "brush", paw: "paw", legW: 1.25, saddle: true, belly: true },
     bw: .34, bh: .2, leg: .27, legW: .065, head: .16, snout: .6, headUp: .9, ears: "point", tail: "up" },
-  { id: "fox", name: "Fox", plan: "quad", hue: .06, sat: .8, val: .9, bw: .3, bh: .17, leg: .2, legW: .055, head: .15, snout: .65, headUp: .8, ears: "big", tail: "bushy", belly: "white", legend: ["tails"] },
-  { id: "badger", name: "Badger", plan: "quad", hue: .65, sat: .08, val: .45, bw: .42, bh: .18, leg: .1, legW: .08, head: .14, snout: .7, headUp: .1, ears: "round", tail: "short", face: "badger", legend: ["crystals"] },
+  { id: "fox", name: "Fox", plan: "quad", q: { hgt: .8, len: .62, chest: .4, tuck: .5, neck: .3, neckAng: .7, neckW: .32, hr: .24, snout: 1.05, snoutD: .5, snoutTaper: .6, ear: "point", earS: 1.35, tail: "bushy", paw: "paw", legW: .9, belly: true, socks: .3 }, hue: .06, sat: .8, val: .9, bw: .3, bh: .17, leg: .2, legW: .055, head: .15, snout: .65, headUp: .8, ears: "big", tail: "bushy", belly: "white", legend: ["tails"] },
+  { id: "badger", name: "Badger", plan: "quad", q: { hgt: .62, len: .78, chest: .2, tuck: .22, neck: .18, neckAng: .1, neckW: .5, hr: .26, snout: 1.0, snoutD: .55, snoutTaper: .55, ear: "round", earS: .7, tail: "stub", paw: "paw", legW: 1.35, legMat: M.BODY3, face: "badger", shaggy: true }, hue: .65, sat: .08, val: .45, bw: .42, bh: .18, leg: .1, legW: .08, head: .14, snout: .7, headUp: .1, ears: "round", tail: "short", face: "badger", legend: ["crystals"] },
   { id: "boar", name: "Boar", plan: "quad", hue: .07, sat: .62, val: .5, legend: ["tusksBig"],
-    q: { len: .72, chest: .34, tuck: .42, neck: .2, neckAng: -.15, neckW: .55, hr: .27, snout: 1.25, snoutD: .62, snoutTaper: .55, ear: "small", earS: .8, tail: "thin", paw: "hoof", legW: 1.15, ridge: true, tusks: true, back: "hump", belly: "same", disc: true },
+    q: { len: .72, chest: .34, tuck: .42, neck: .2, neckAng: -.15, neckW: .55, hr: .27, snout: 1.25, snoutD: .62, snoutTaper: .55, ear: "small", earS: .8, tail: "thin", paw: "hoof", legW: 1.15, ridge: true, tusks: true, back: "hump", disc: true },
     bw: .4, bh: .27, leg: .16, legW: .09, head: .2, snout: .6, headUp: .2, ears: "small", tail: "thin", stripes: true, tusks: true, ridge: true },
-  { id: "stag", name: "Stag", plan: "quad", hue: .08, sat: .5, val: .7, bw: .32, bh: .19, leg: .36, legW: .05, head: .13, snout: .5, headUp: 1.6, ears: "point", tail: "short", spots: true, antlers: "branch", legend: ["antlersGlow"] },
-  { id: "hare", name: "Hare", plan: "quad", hue: .08, sat: .4, val: .72, bw: .26, bh: .2, leg: .18, legW: .06, head: .15, snout: .35, headUp: .9, ears: "long", tail: "puff", legend: ["jackalope"] },
+  { id: "stag", name: "Stag", plan: "quad", q: { hgt: 1.3, len: .6, chest: .6, tuck: .7, neck: .55, neckAng: .95, neckW: .32, hr: .2, snout: 1.15, snoutD: .6, snoutTaper: .65, ear: "point", earS: 1.1, tail: "deer", paw: "hoof", legW: .75, antlers: "branch", rump: true, spots: "young", belly: true }, hue: .08, sat: .5, val: .7, bw: .32, bh: .19, leg: .36, legW: .05, head: .13, snout: .5, headUp: 1.6, ears: "point", tail: "short", spots: true, antlers: "branch", legend: ["antlersGlow"] },
+  { id: "hare", name: "Hare", plan: "quad", q: { hgt: .72, len: .5, chest: .4, tuck: .45, neck: .2, neckAng: .9, neckW: .35, hr: .27, snout: .65, snoutD: .7, ear: "long", earS: 2.4, tail: "puff", paw: "paw", legW: .85, haunch: 1.35, hindFoot: 1.6, back: "arch", belly: true, whiskers: true }, hue: .08, sat: .4, val: .72, bw: .26, bh: .2, leg: .18, legW: .06, head: .15, snout: .35, headUp: .9, ears: "long", tail: "puff", legend: ["jackalope"] },
   { id: "owl", name: "Owl", plan: "owl", hue: .08, sat: .5, val: .55, legend: ["eyesRing", "wings"] },
-  { id: "bear", name: "Bear", plan: "quad", hue: .07, sat: .55, val: .42, bw: .42, bh: .3, leg: .17, legW: .11, head: .18, snout: .45, headUp: .5, ears: "round", tail: "short", legend: ["moss"] },
+  { id: "bear", name: "Bear", plan: "quad", q: { hgt: 1.15, len: .72, chest: .38, tuck: .4, neck: .25, neckAng: .3, neckW: .55, hr: .28, snout: .7, snoutD: .62, snoutTaper: .7, ear: "round", earS: .8, tail: "stub", paw: "paw", legW: 1.55, back: "hump", muzzle: true, shaggy: true }, hue: .07, sat: .55, val: .42, bw: .42, bh: .3, leg: .17, legW: .11, head: .18, snout: .45, headUp: .5, ears: "round", tail: "short", legend: ["moss"] },
   { id: "hedgehog", name: "Hedgehog", plan: "hedgehog", hue: .08, sat: .4, val: .5, legend: ["crystals"] },
-  { id: "squirrel", name: "Squirrel", plan: "quad", hue: .03, sat: .75, val: .75, bw: .22, bh: .17, leg: .12, legW: .05, head: .15, snout: .35, headUp: .8, ears: "tuft", tail: "squirrel", belly: "white", legend: ["starTail"] },
+  { id: "squirrel", name: "Squirrel", plan: "quad", q: { hgt: .55, len: .45, chest: .35, tuck: .4, neck: .2, neckAng: .9, neckW: .35, hr: .3, snout: .55, snoutD: .65, ear: "tuft", earS: 1.1, tail: "squirrel", paw: "paw", legW: .8, haunch: 1.3, back: "arch", belly: true, whiskers: true }, hue: .03, sat: .75, val: .75, bw: .22, bh: .17, leg: .12, legW: .05, head: .15, snout: .35, headUp: .8, ears: "tuft", tail: "squirrel", belly: "white", legend: ["starTail"] },
   { id: "toad", name: "Toad", plan: "toad", hue: .2, sat: .5, val: .55, legend: ["crown"] },
-  { id: "otter", name: "Otter", plan: "quad", hue: .07, sat: .55, val: .45, bw: .44, bh: .15, leg: .09, legW: .07, head: .13, snout: .4, headUp: .5, ears: "round", tail: "long", belly: "white", legend: ["ribbons"] },
-  { id: "lynx", name: "Lynx", plan: "quad", hue: .09, sat: .45, val: .75, bw: .3, bh: .19, leg: .26, legW: .07, head: .16, snout: .3, headUp: .8, ears: "tuft", tail: "short", spots: true, legend: ["mane"] },
-  { id: "elk", name: "Elk", plan: "quad", hue: .07, sat: .55, val: .38, bw: .38, bh: .23, leg: .38, legW: .06, head: .16, snout: .8, headUp: 1.2, ears: "point", tail: "short", antlers: "palm", legend: ["antlersGlow", "moss"] },
+  { id: "otter", name: "Otter", plan: "quad", q: { hgt: .55, len: 1.0, chest: .25, tuck: .25, neck: .3, neckAng: .35, neckW: .5, hr: .27, snout: .6, snoutD: .7, ear: "round", earS: .5, tail: "otter", paw: "paw", legW: 1.1, muzzle: true, belly: true, whiskers: true }, hue: .07, sat: .55, val: .45, bw: .44, bh: .15, leg: .09, legW: .07, head: .13, snout: .4, headUp: .5, ears: "round", tail: "long", belly: "white", legend: ["ribbons"] },
+  { id: "lynx", name: "Lynx", plan: "quad", q: { hgt: .9, len: .55, chest: .5, tuck: .55, neck: .25, neckAng: .8, neckW: .4, hr: .27, snout: .5, snoutD: .75, snoutTaper: .8, ear: "tuft", earS: 1.0, tail: "bob", paw: "paw", legW: 1.2, cheeks: true, spots: true, belly: true, whiskers: true }, hue: .09, sat: .45, val: .75, bw: .3, bh: .19, leg: .26, legW: .07, head: .16, snout: .3, headUp: .8, ears: "tuft", tail: "short", spots: true, legend: ["mane"] },
+  { id: "elk", name: "Elk", plan: "quad", q: { hgt: 1.4, len: .68, chest: .6, tuck: .66, neck: .45, neckAng: .75, neckW: .42, hr: .24, snout: 1.6, snoutD: .9, snoutTaper: .85, ear: "point", earS: .9, tail: "stub", paw: "hoof", legW: .9, back: "hump", antlers: "palm", shaggy: true }, hue: .07, sat: .55, val: .38, bw: .38, bh: .23, leg: .38, legW: .06, head: .16, snout: .8, headUp: 1.2, ears: "point", tail: "short", antlers: "palm", legend: ["antlersGlow", "moss"] },
   { id: "raven", name: "Raven", plan: "raven", hue: .68, sat: .35, val: .3, legend: ["wings", "eyesRing"] },
   { id: "bat", name: "Bat", plan: "bat", hue: .78, sat: .25, val: .45, legend: ["wingsBig"] },
   { id: "mole", name: "Mole", plan: "mole", hue: .7, sat: .15, val: .32, legend: ["crown"] },
-  { id: "beaver", name: "Beaver", plan: "quad", hue: .06, sat: .6, val: .45, bw: .36, bh: .22, leg: .1, legW: .07, head: .16, snout: .35, headUp: .4, ears: "small", tail: "flat", teeth: true, legend: ["moss"] },
-  { id: "stoat", name: "Stoat", plan: "quad", hue: .1, sat: .25, val: .92, bw: .42, bh: .11, leg: .11, legW: .05, head: .12, snout: .45, headUp: .7, ears: "round", tail: "long", legend: ["ribbons", "mane"] },
+  { id: "beaver", name: "Beaver", plan: "quad", q: { hgt: .6, len: .65, chest: .2, tuck: .22, neck: .2, neckAng: .4, neckW: .55, hr: .28, snout: .6, snoutD: .75, ear: "round", earS: .45, tail: "flat", paw: "paw", legW: 1.2, back: "arch", teeth: true, whiskers: true }, hue: .06, sat: .6, val: .45, bw: .36, bh: .22, leg: .1, legW: .07, head: .16, snout: .35, headUp: .4, ears: "small", tail: "flat", teeth: true, legend: ["moss"] },
+  { id: "stoat", name: "Stoat", plan: "quad", q: { hgt: .5, len: 1.0, chest: .3, tuck: .33, neck: .35, neckAng: .6, neckW: .32, hr: .25, snout: .6, snoutD: .6, ear: "round", earS: .6, tail: "stoat", paw: "paw", legW: .8, belly: true, back: "arch", whiskers: true }, hue: .1, sat: .25, val: .92, bw: .42, bh: .11, leg: .11, legW: .05, head: .12, snout: .45, headUp: .7, ears: "round", tail: "long", legend: ["ribbons", "mane"] },
   { id: "beetle", name: "Stag beetle", plan: "beetle", hue: .78, sat: .5, val: .35, legend: ["horn", "crystals"] },
 ];
 export const SPECIES_BY_ID = Object.fromEntries(SPECIES.map(s => [s.id, s]));
@@ -129,96 +129,118 @@ function eye(sp, x, y, px, { iris = false, glow = false } = {}) {
 }
 
 // ================= quadrupeds =================
+// Units: the shoulder (withers) is at y = -1, the ground at 0; x runs from tail (-) to head (+).
+// q (per species): len half body length · chest, tuck: chest and waist heights above ground ·
+// legW leg thickness · haunch hind-thigh size · hindFoot long hind feet (hare) ·
+// neck, neckAng, neckW · hr skull radius · snout, snoutD, snoutTaper (in skull radii) ·
+// ear point|big|tuft|small|round|long · tail (see tail()) · paw paw|hoof ·
+// back flat|hump|arch · belly pale|white · and markings and features named below.
 function quad(S, level, frame, st) {
-  const q = { legW: 1, earS: 1, snoutTaper: .75, ...S.q }, legend = level === 2, has = f => legend && S.legend.includes(f);
+  const q = { legW: 1, earS: 1, snoutTaper: .75, haunch: 1, hindFoot: 1, hgt: 1, ...S.q }, legend = level === 2, has = f => legend && S.legend.includes(f);
   const young = level === 1;
   // proportions shift with level: youngsters have big heads and short legs, legends are heroic
   const hr = q.hr * (young ? 1.22 : 1) * (st.head / .44) ** .5, len = q.len * (young ? .9 : 1.04) * st.long;
   const legK = (young ? .92 : 1.04) * st.legs ** .5;
-  const back = -1, chest = -q.chest * (legend ? 1.12 : 1) / legK, tuck = -q.tuck / legK;
-  const P = new Plan(), lw = q.legW * (legend ? 1.15 : 1);
-  const swing = [.24, -.24][frame];
+  const back = -1, chest = -q.chest * (legend ? 1.1 : 1) / legK, tuck = -q.tuck / legK;
+  const P = new Plan(), lw = q.legW * (legend ? 1.15 : 1), legMat = q.legMat || M.BODY;
+  const swing = [.24, -.24][frame] * (q.stride || 1);
+  const arch = q.back === "arch" ? .14 : 0, hump = q.back === "hump" ? .12 : 0;
 
   // ---- legs: hip/shoulder, knee, hock/wrist, foot; jointed like the real thing ----
-  const hindTop = [-len * .62, back + .28], foreTop = [len * .6, back + .42];
-  const hindLeg = (side) => {
-    const a = side * swing, j = [hindTop, [-len * .42, tuck + .2], [-len * .74, -.24], [-len * .7, -.05], [-len * .6, 0]];
-    return j.map(p => rot(p, hindTop, a));
+  const hindTop = [-len * .62, back + .28 - arch * .5], foreTop = [len * .6, back + .42];
+  const hindLeg = side => {
+    const f = q.hindFoot, j = [hindTop, [-len * .42, tuck + .2], [-len * .74 - (f - 1) * .1, -.24 / f], [-len * .7 - (f - 1) * .05, -.05], [-len * .6 + (f - 1) * .22, 0]];
+    return j.map(p => rot(p, hindTop, side * swing));
   };
-  const foreLeg = (side) => {
-    const a = side * swing * .9, j = [foreTop, [len * .64, chest + .06], [len * .6, -.2], [len * .63, -.05], [len * .72, 0]];
-    return j.map(p => rot(p, foreTop, -a));
-  };
+  const foreLeg = side => [foreTop, [len * .64, chest + .06], [len * .6, -.2], [len * .63, -.05], [len * .72, 0]].map(p => rot(p, foreTop, -side * swing * .9));
   const legSpine = (j, w0) => { // stretch so the foot is on the ground
     const lo = Math.max(...j.map(p => p[1])), k = (0 - j[0][1]) / (lo - j[0][1]);
     const jj = j.map(p => [p[0], j[0][1] + (p[1] - j[0][1]) * k]);
     return [[...jj[0], w0], [...jj[1], .15 * lw], [...jj[2], .095 * lw], [...jj[3], .085 * lw], [...jj[4], .07 * lw]];
   };
-  const foot = (j, mat, o) => {
-    const t = j[j.length - 1], fl = q.paw === "hoof" ? .1 : .13, fh = q.paw === "hoof" ? .09 : .075;
+  const foot = (j, mat, o, long = 1) => {
+    const t = j[j.length - 1], fl = (q.paw === "hoof" ? .1 : .13) * long, fh = q.paw === "hoof" ? .09 : .075;
     P.shape([[t[0] - fl * .55, -fh], [t[0] + fl * .2, -fh * 1.1], [t[0] + fl * .6, -fh * .3], [t[0] + fl * .55, 0], [t[0] - fl * .6, 0]], q.paw === "hoof" ? M.NOSE : mat, o);
   };
-  const leg = (j, mat, w0, o) => { const sp = legSpine(j, w0); P.limb(sp, mat, { cap: 1, capEnd: .4, ...o }); foot(sp.map(p => [p[0], p[1]]), mat, o); };
+  const leg = (j, mat, w0, o, long) => { const sp = legSpine(j, w0); P.limb(sp, mat, { cap: 1, capEnd: .4, ...o }); foot(sp.map(p => [p[0], p[1]]), mat, o, long); };
 
-  // ---- legendary wings behind everything ----
+  // ---- behind everything: wings, many tails ----
   if (has("wings")) wings(P, [len * .25, back - .05], legend, frame, -1);
+  if (has("tails")) for (let i = 0; i < 7; i++) { // a fan of fox tails, tipped with foxfire
+    const a = Math.PI * (.62 + i * .085) + (frame ? .03 : 0), b = [-len * .95, back + .15], L = .95 + (i % 2) * .12;
+    const e = add(b, [Math.cos(a) * L, -Math.sin(a) * L]), m = add(lerp2(b, e, .55), [Math.sin(a) * .08, Math.cos(a) * .08]);
+    P.limb([[...b, .12], [...m, .34], [...lerp2(m, e, .6), .28], [...e, .12]], i % 2 ? M.BODY2 : M.BODY, { group: 70 + i % 2, line: true, extra: true });
+    P.shape([add(e, [Math.cos(a) * .07, -Math.sin(a) * .07]), add(lerp2(m, e, .7), [Math.sin(a) * .13, Math.cos(a) * .13]), add(lerp2(m, e, .7), [-Math.sin(a) * .13, -Math.cos(a) * .13])], M.MAGIC2, { group: 72, extra: true });
+  }
 
-  // far legs, darker (they are in shadow, and it tells near from far)
-  leg(foreLeg(-1), M.BODY2, .19 * lw, { group: 2 });
-  leg(hindLeg(-1), M.BODY2, .3 * lw, { group: 2 });
+  // far legs: a shade darker (they are in shadow, and it tells near from far)
+  const farMat = legMat === M.BODY ? M.BODY2 : M.BODY3;
+  leg(foreLeg(-1), farMat, .19 * lw, { group: 2 });
+  leg(hindLeg(-1), farMat, .3 * lw * q.haunch, { group: 2 }, q.hindFoot);
 
   // ---- tail ----
-  const tailBase = [-len * 1.0, back + .18], tw = [0, .03, -.03][frame + 1] || 0;
-  if (q.tail === "brush") { // a full brush, hanging, dark at the tip
-    P.shape(tufts([add(tailBase, [0, -.04]), [-len * 1.3, back + .26 + tw], [-len * 1.46, back + .6], [-len * 1.36, -.36 + tw], [-len * 1.2, -.36], [-len * 1.16, back + .66], [-len * 1.0, back + .4]], 1, 4, 5, .05, 1), M.BODY, { group: 3, line: true });
-    P.mark([[-len * 1.5, -.5 + tw], [-len * 1.1, -.5], [-len * 1.2, -.3], [-len * 1.4, -.3]], M.BODY3, [M.BODY]);
-  }
-  if (q.tail === "thin") { P.limb([[...tailBase, .07], [-len * 1.1, back + .3, .05], [-len * 1.12 + tw, back + .55, .035]], M.BODY, { group: 3 }); P.shape(tufts([[-len * 1.15 + tw, back + .5], [-len * 1.08 + tw, back + .55], [-len * 1.12 + tw, back + .72], [-len * 1.17 + tw, back + .7]], 1, 3, 2, .04, 1), M.BODY3, { group: 3 }); }
+  const tb = [-len * 1.0, back + .18 - arch * .3];
+  if (!has("tails")) tail(P, has("starTail") ? "star" : q.tail, tb, len, back, frame, has, young);
 
   // ---- torso: rump, a back line, withers, a deep chest, a tucked waist ----
-  const hump = q.back === "hump" ? .12 : 0;
   let torso = [
-    [-len * 1.04, back + .14], [-len * .5, back + .02], [len * .1, back + .06 - hump * .5], [len * .55, back - .03 - hump], [len * .95, back + .22 - hump * .5],
-    [len * 1.06, chest - .2], [len * .8, chest], [len * .3, chest + (tuck - chest) * .2], [-len * .25, tuck], [-len * .72, tuck + .02], [-len * 1.1, back + .42],
+    [-len * 1.04, back + .14 - arch], [-len * .5, back + .02 - arch * 1.3], [len * .1, back + .06 - hump * .5 - arch * .6], [len * .55, back - .03 - hump], [len * .95, back + .22 - hump * .5],
+    [len * 1.06, chest - .2], [len * .8, chest], [len * .3, chest + (tuck - chest) * .2], [-len * .25, tuck], [-len * .72, tuck + .02], [-len * 1.1, back + .42 - arch * .5],
   ];
   if (q.ridge) torso = tufts(torso, 0, 4, legend ? 10 : 7, legend ? .1 : .07, 1);
+  if (q.shaggy) torso = tufts(torso, 6, 9, legend ? 6 : 4, .04, 1);
   P.shape(torso, M.BODY, { group: 1, line: true });
 
   // ---- neck and head ----
   const neckBase = [len * .78, back + .2], ang = q.neckAng, H0 = add(neckBase, [Math.cos(ang) * q.neck, -Math.sin(ang) * q.neck]);
   const headC = add(H0, [hr * .2, 0]);
   P.limb([[...neckBase, q.neckW * 1.3], [...lerp2(neckBase, H0, .55), q.neckW * 1.05], [...H0, q.neckW * .9]], M.BODY, { group: 1, cap: 0, capEnd: 1 });
-  if (q.ruff) P.shape(tufts([[neckBase[0] - .05, neckBase[1] - .05], [H0[0] + hr * .1, H0[1] - hr * .3], [H0[0] + hr * .55, H0[1] + hr * .6], [neckBase[0] + .25, chest + .3], [neckBase[0] + .05, chest + .25]], 1, 4, legend ? 7 : 4, .045, 1), M.BELLY, { group: 1 });
   const L = hr * q.snout * (young ? .75 : 1), D = hr * q.snoutD, tp = q.snoutTaper;
-  const head = [
+  let head = [
     [-hr * .85, -hr * .1], [-hr * .4, -hr * .78], [hr * .35, -hr * .72], [hr * .85, -hr * .38], [hr * .8 + L * .6, -D * .65 * (1 + tp) / 2 + hr * .02], [hr * .85 + L, -D * .5 * tp],
     [hr * .9 + L, D * .25 * tp], [hr * .75 + L, D * .42 * tp + hr * .1], [hr * .35, hr * .55], [-hr * .3, hr * .7], [-hr * .85, hr * .3],
   ].map(p => add(headC, p));
+  if (q.cheeks) head = tufts(head, 8, 10, 3, hr * .22, 1); // a ruff of cheek fur (lynx)
+
   // ears: the far one behind the head, the near one in front of it
-  const ear = (dx, k, mat, o) => {
-    const b = add(headC, [dx * hr, -hr * .55]), e = hr * q.earS * k;
-    const pts = q.ear === "small"
-      ? [add(b, [-hr * .25, .02]), add(b, [-hr * .55, -e * .55]), add(b, [-hr * .62, -e * .62]), add(b, [hr * .2, -hr * .08])]
-      : [add(b, [-hr * .3, .02]), add(b, [-hr * .25, -e * .6]), add(b, [-hr * .12, -e * 1.02]), add(b, [-hr * .05, -e * 1.04]), add(b, [hr * .22, -e * .45]), add(b, [hr * .3, -hr * .02])];
-    P.shape(pts, mat, o);
-    if (q.ear !== "small") P.mark([add(b, [-hr * .15, -e * .15]), add(b, [-hr * .1, -e * .7]), add(b, [hr * .1, -e * .35]), add(b, [hr * .12, -e * .1])], M.EAR, [mat]);
-    P.mark([add(b, [-hr * .3, -e * .72]), add(b, [-hr * .1, -e * 1.1]), add(b, [hr * .1, -e * .9]), add(b, [hr * .3, -e * .62])], M.BODY3, [mat, M.EAR]);
-  };
+  const ear = (dx, k, mat, o) => earShape(P, q, add(headC, [dx * hr, -hr * .55]), hr, hr * q.earS * k, mat, o, frame);
+  const antler = (dx, mat, o) => antlers(P, q, add(headC, [dx * hr, -hr * .6]), hr, level, has, mat, o);
+  if (q.antlers || has("jackalope")) antler(.42, has("antlersGlow") ? M.MAGIC : M.ACCENT, { group: 11, line: true, extra: true });
+  if (!q.antlers && has("jackalope")) antler(.1, M.ACCENT, { group: 12, line: true, extra: true }); // small antlers stand behind the long ears
   ear(.18, .95, M.BODY2, { group: 4 });
   P.shape(head, M.BODY, { group: 1, line: false });
   ear(-.12, 1, M.BODY, { group: 5, line: true });
+  if (q.antlers) antler(-.05, has("antlersGlow") ? M.MAGIC2 : M.ACCENT, { group: 12, line: true, extra: true });
 
   // near legs, in front, outlined where they overlap the body
-  leg(hindLeg(1), M.BODY, .36 * lw, { group: 6, line: true });
-  leg(foreLeg(1), M.BODY, .2 * lw, { group: 7, line: true });
+  leg(hindLeg(1), legMat, .36 * lw * q.haunch, { group: 6, line: true }, q.hindFoot);
+  leg(foreLeg(1), legMat, .2 * lw, { group: 7, line: true });
 
   // ---- markings ----
-  if (q.saddle) P.mark([[-len * 1.15, back - .05], [len * .5, back - .1], [len * .85, back + .1], [len * .3, back + .2], [-len * .5, back + .24], [-len * 1.2, back + .3]], M.BODY2, [M.BODY]);
-  if (q.belly === "pale") {
-    P.mark([[len * .55, chest - .3], [len * 1.15, chest - .32], [len * 1.0, chest + .1], [len * .2, chest + .05], [-len * .4, tuck + .05], [-len * .3, tuck - .08]], M.BELLY, [M.BODY]);
-    P.mark([headC, add(headC, [hr * .5 + L, hr * .2]), add(headC, [hr * .8 + L, D * .5]), add(headC, [-hr * .2, hr * .9]), add(headC, [-hr * .7, hr * .5])], M.BELLY, [M.BODY]);
+  if (q.saddle) P.mark([[-len * 1.15, back - .05 - arch], [len * .5, back - .1], [len * .85, back + .1], [len * .3, back + .2], [-len * .5, back + .24], [-len * 1.2, back + .3]], M.BODY2, [M.BODY]);
+  if (q.belly) {
+    const m = M.BELLY;
+    P.mark([[len * .55, chest - .3], [len * 1.15, chest - .32], [len * 1.0, chest + .1], [len * .2, chest + .05], [-len * .4, tuck + .05], [-len * .3, tuck - .08]], m, [M.BODY]);
+    P.mark([headC, add(headC, [hr * .5 + L, hr * .2]), add(headC, [hr * .8 + L, D * .5]), add(headC, [-hr * .2, hr * .9]), add(headC, [-hr * .7, hr * .5])], m, [M.BODY]);
   }
-  if (q.paw === "paw") for (const side of [1]) { const t = legSpine(foreLeg(side), 0)[4]; P.mark([[t[0] - .08, -.18], [t[0] + .09, -.18], [t[0] + .12, 0], [t[0] - .08, 0]], M.BELLY, [M.BODY]); }
+  if (q.muzzle) P.mark([add(headC, [hr * .55, -hr * .2]), add(headC, [hr * 1.2 + L, -D]), add(headC, [hr * 1.2 + L, D * .8]), add(headC, [hr * .4, hr * .6])], M.BELLY, [M.BODY]);
+  if (q.face === "badger") { // white face, two black stripes from nose over the eyes to the ears
+    P.mark([add(headC, [-hr * 1.1, -hr]), add(headC, [hr * 1.3 + L, -D]), add(headC, [hr * 1.3 + L, D]), add(headC, [-hr * 1.1, hr])], M.BELLY, [M.BODY]);
+    for (const off of [-.05, .42]) P.mark([add(headC, [-hr * .9, -hr * (.85 - off)]), add(headC, [-hr * .4, -hr * (.95 - off)]), add(headC, [hr * .9 + L * .9, -D * .35 + hr * off * .25]), add(headC, [hr * .9 + L * .9, -D * .15 + hr * off * .3]), add(headC, [-hr * .3, -hr * (.4 - off)]), add(headC, [-hr * .9, -hr * (.35 - off)])], M.BODY3, [M.BELLY]);
+  }
+  if (q.rump) P.mark([[-len * 1.2, back + .12], [-len * .95, back + .14], [-len * .92, back + .45], [-len * 1.2, back + .45]], M.BELLY, [M.BODY]);
+  if (q.paw === "paw" && !q.socks) { const t = legSpine(foreLeg(1), 0)[4]; P.mark([[t[0] - .08, -.18], [t[0] + .09, -.18], [t[0] + .12, 0], [t[0] - .08, 0]], M.BELLY, [M.BODY]); }
+  P.fn(({ sp, T, s }) => { // socks, spots
+    if (q.socks) { const y0 = T([0, -q.socks])[1]; for (let y = Math.floor(y0); y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const i = y * sp.w + x; if ([2, 6, 7].includes(sp.g[i]) && [M.BODY, M.BODY2].includes(sp.m[i])) sp.m[i] = M.BODY3; } }
+    const spots = q.spots === "young" ? young : q.spots;
+    if (spots && s > 18) {
+      const step = Math.max(3, Math.round(s * .09)), mat = q.spots === "young" ? M.BELLY : M.BODY3, [, yb] = T([0, back + .1]), [, yc] = T([0, chest + .05]);
+      for (let y = yb; y < yc; y += step) for (let x = 0; x < sp.w; x += step) {
+        const ox = x + (((y / step) | 0) % 2 ? step >> 1 : 0) + (hash2(x, y, 3) * 2 | 0), i = y * sp.w + ox;
+        if (sp.m[i] === M.BODY && sp.g[i] === 1 && sp.m[i + 1] === M.BODY && hash2(x, y, 5) < .75) { sp.m[i] = mat; if (s > 40) sp.m[i + 1] = mat; }
+      }
+    }
+  });
 
   // ---- face: the pixels that matter ----
   const ex = headC[0] + hr * .45, ey = headC[1] - hr * .32, nose = add(headC, [hr * .88 + L, -D * .45 * tp]);
@@ -226,7 +248,6 @@ function quad(S, level, frame, st) {
     const ep = Math.max(2, Math.round(hr * s * (young ? .42 : .3) * st.eye));
     const [x, y] = T([ex, ey]);
     eye(sp, x, y, ep, { glow: legend && !q.tusks });
-    if (legend && q.tusks) eye(sp, x, y, ep, {});
     // nose leather: a dark cap on the snout's tip
     const [nx, ny] = T(nose), nr = Math.max(1, Math.round(hr * s * (q.disc ? .22 : .14)));
     for (let dy = 0; dy <= nr; dy++) for (let dx = -nr; dx <= Math.round(nr * .3); dx++) if (sp.get(nx + dx, ny + dy) && (dx * dx) / (nr * nr) + (dy * dy) / ((nr + 1) * (nr + 1)) <= 1) sp.recolour(nx + dx, ny + dy, M.NOSE);
@@ -235,24 +256,154 @@ function quad(S, level, frame, st) {
     const m0 = T(add(headC, [hr * .85 + L, D * .2 * tp + hr * .06])), m1 = T(add(headC, [hr * .55 + L * .45, D * .32 * tp + hr * .12]));
     const steps = Math.ceil(Math.hypot(m1[0] - m0[0], m1[1] - m0[1]));
     if (s * hr > 6) for (let i = 0; i <= steps; i++) sp.recolour(m0[0] + (m1[0] - m0[0]) * i / steps, m0[1] + (m1[1] - m0[1]) * i / steps, M.LINE);
+    if (q.teeth) { const [tx, ty] = T(add(headC, [hr * .8 + L, D * .35 * tp + hr * .1])), tw2 = Math.max(1, Math.round(hr * s * .14)); for (let dy = 0; dy < tw2 * 2; dy++) for (let dx = 0; dx < tw2; dx++) sp.px(tx - dx, ty + dy, M.ACCENT, 0, 0, 1); }
+    if (q.whiskers && s * hr > 8) for (const k of [-1, 1]) { const [wx, wy] = T(add(headC, [hr * .75 + L, D * .1])); for (let i = 1; i <= Math.round(hr * s * .4); i++) if (!sp.get(wx + i, wy + k * (i >> 1))) sp.px(wx + i, wy + k * (i >> 1), M.LINE); }
   });
 
-  // ---- tusks and ridge ----
+  // ---- tusks, ridge, and what legends grow on their backs ----
   if (q.tusks) {
     const k = young ? .35 : has("tusksBig") ? 1.25 : .7;
     const b = add(headC, [hr * .45 + L * .6, D * .3]);
     P.limb([[...b, .075 * k ** .5], [...add(b, [hr * .3 * k, -hr * .2 * k]), .07 * k ** .5], [...add(b, [hr * .38 * k, -hr * .6 * k]), .045 * k ** .5], [...add(b, [hr * .15 * k, -hr * .95 * k]), .012]], M.ACCENT, { group: 8, line: true, cap: .6, extra: true });
   }
   if (q.ridge) P.mark(tufts([[-len * 1.05, back + .12], [-len * .5, back + .01], [len * .1, back + .05 - hump * .5], [len * .55, back - .04 - hump], [len * .9, back + .2], [len * .5, back + .12], [-len * .5, back + .16]], 0, 4, legend ? 10 : 7, .07, 1), M.BODY3, [M.BODY, M.LINE]);
-  if (has("mane")) for (let i = 0; i < 7; i++) { // flames streaming back from the crest of the neck
-    const t = i / 6, b = lerp2(add(H0, [-hr * .3, -hr * .6]), [len * .2, back + .02], t), h = .32 - t * .12, w0 = .13 - t * .03, sw = frame ? .03 : 0;
-    P.limb([[...b, w0], [...add(b, [-.06, -h * .5]), w0 * .9], [...add(b, [-.2 - sw, -h * .85]), w0 * .55], [...add(b, [-.38 - sw, -h]), .015]], i % 2 ? M.MAGIC : M.MAGIC2, { group: 60 + i % 2, line: true, extra: true, cap: 1, capEnd: .5 });
+  const backAt = t => [-len * .9 + t * len * 1.6, back + .02 - arch * (1 - Math.abs(t - .45) * 1.6) - hump * Math.max(0, 1 - Math.abs(t - .85) * 3)];
+  if (has("crystals")) crystals(P, backAt, frame);
+  if (has("moss")) mossyBack(P, backAt, len, frame);
+  if (has("ribbons")) ribbons(P, len, back, frame);
+  if (has("mane")) for (let i = 0; i < 6; i++) { // flames streaming back from the crest of the neck, licking up
+    const t = i / 5, b = lerp2(add(H0, [-hr * .3, -hr * .6]), [len * .25, back + .02], t), h = [.42, .3, .5, .26, .36, .22][i], w0 = .16 - t * .04, sw = frame ? .04 : 0;
+    P.limb([[...b, w0], [...add(b, [-.03, -h * .45]), w0 * 1.05], [...add(b, [-.14 - sw, -h * .8]), w0 * .6], [...add(b, [-.1 - sw * 2, -h * 1.05]), w0 * .3], [...add(b, [.02 - sw, -h * 1.2]), .01]], i % 2 ? M.MAGIC : M.MAGIC2, { group: 60 + i % 2, line: true, extra: true, cap: 1, capEnd: .5 });
   }
   if (has("wings")) wings(P, [len * .15, back + .02], legend, frame, 1);
 
-  const sp = P.draw(levelHeight(level, st), st.round);
+  const sp = P.draw(levelHeight(level, st) * q.hgt, st.round);
   if (legend) sparkle(sp, S.id);
   return sp;
+}
+
+// Tails, from the base of the spine backwards.
+function tail(P, kind, tb, len, back, frame, has, young) {
+  const tw = frame ? .03 : -.01, o = { group: 3, line: true };
+  const X = k => -len * k;
+  if (kind === "brush") { // a full brush, hanging, dark at the tip (wolf)
+    P.shape(tufts([add(tb, [0, -.04]), [X(1.3), back + .26 + tw], [X(1.46), back + .6], [X(1.36), -.36 + tw], [X(1.2), -.36], [X(1.16), back + .66], [X(1.0), back + .4]], 1, 4, 5, .05, 1), M.BODY, o);
+    P.mark([[X(1.5), -.5 + tw], [X(1.1), -.5], [X(1.2), -.3], [X(1.4), -.3]], M.BODY3, [M.BODY]);
+  } else if (kind === "bushy") { // a fox's: long, thick, held out, white-tipped
+    const tip = [X(1.05) - .95, back + .5 + tw];
+    P.shape(tufts([add(tb, [0, -.05]), [X(1.05) - .3, back + .05 + tw], [X(1.05) - .7, back + .2 + tw], [tip[0] - .05, tip[1] - .08], [tip[0] - .02, tip[1] + .1], [X(1.05) - .6, back + .6 + tw], [X(1.05) - .25, back + .52], [X(1.0), back + .4]], 2, 6, 5, .045, 1), M.BODY, o);
+    P.mark([[tip[0] - .2, tip[1] - .3], [tip[0] + .22, tip[1] - .3], [tip[0] + .22, tip[1] + .3], [tip[0] - .2, tip[1] + .3]], M.BELLY, [M.BODY]);
+  } else if (kind === "stub") {
+    P.shape([add(tb, [.04, -.04]), add(tb, [-.12, -.1 + tw]), add(tb, [-.16, .02 + tw]), add(tb, [-.04, .12])], M.BODY, o);
+  } else if (kind === "deer") { // a short tail, white beneath
+    P.shape([add(tb, [.03, -.04]), add(tb, [-.07, -.06 + tw]), add(tb, [-.09, .06 + tw]), add(tb, [-.01, .11])], M.BELLY, o);
+    P.mark([add(tb, [.04, -.08]), add(tb, [-.12, -.08]), add(tb, [-.1, -.02]), add(tb, [.04, -.02])], M.BODY, [M.BELLY]);
+  } else if (kind === "bob") { // lynx: a short bob with a black tip
+    P.shape([add(tb, [.04, -.06]), add(tb, [-.16, -.12 + tw]), add(tb, [-.24, -.02 + tw]), add(tb, [-.04, .12])], M.BODY, o);
+    P.mark([add(tb, [-.14, -.2]), add(tb, [-.3, -.1]), add(tb, [-.3, .05]), add(tb, [-.14, .05])], M.BODY3, [M.BODY]);
+  } else if (kind === "puff") { // a hare's: a white puff
+    P.shape(tufts([add(tb, [.04, -.1]), add(tb, [-.14, -.16]), add(tb, [-.2, .02]), add(tb, [-.04, .1])], 0, 3, 2, .03, 1), M.BELLY, o);
+  } else if (kind === "squirrel" || kind === "star") { // a big plume curling up over the back
+    const mat = kind === "star" ? M.MAGIC : M.BODY, s = [[...tb, .16], [X(1.3), back - .05 + tw, .36], [X(1.32), back - .65 + tw, .46], [X(1.0), back - 1.05 + tw, .44], [X(.62), back - 1.02 + tw, .3], [X(.45), back - .82 + tw, .12]];
+    P.shape(tufts(band(s), 0, 6, 9, .05, 1), mat, { ...o, extra: true });
+    P.mark(band([[X(1.18), back - .1, .12], [X(1.18), back - .62, .2], [X(.98), back - .9, .2], [X(.7), back - .92, .1]]), kind === "star" ? M.MAGIC2 : M.BODY2, [mat]);
+    if (kind === "star") P.fn(({ sp, T, s: sc }) => { const r = rng(7); for (let i = 0; i < 9; i++) { const [x, y] = T([X(uni(r, .7, 1.4)), back - uni(r, .1, 1.0)]); if (sp.get(x, y) === M.MAGIC || sp.get(x, y) === M.MAGIC2) { sp.px(x, y, M.GLINT); if (sc > 40) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if ([M.MAGIC, M.MAGIC2].includes(sp.get(x + dx, y + dy))) sp.px(x + dx, y + dy, M.GLINT); } } });
+  } else if (kind === "otter") { // thick at the root, tapering to the ground
+    P.limb([[...tb, .26], [X(1.3), back + .5 + tw, .18], [X(1.6), -.12, .1], [X(1.85), -.06 + tw, .04]], M.BODY, o);
+  } else if (kind === "stoat") { // thin, held out, black-tipped
+    P.limb([[...tb, .12], [X(1.25), back + .12 + tw, .1], [X(1.5), back + .02 + tw, .09], [X(1.65), back - .05 + tw, .07]], M.BODY, o);
+    P.mark([[X(1.48), back - .25], [X(1.8), back - .25], [X(1.8), back + .25], [X(1.48), back + .25]], M.BODY3, [M.BODY]);
+  } else if (kind === "flat") { // a beaver's paddle, scaled
+    P.limb([[...tb, .14], [X(1.15), back + .6, .1]], M.BODY2, o);
+    const c = [X(1.35), -.12 + tw * .5];
+    P.shape([add(c, [.22, -.06]), add(c, [0, -.11]), add(c, [-.3, -.07]), add(c, [-.36, .02]), add(c, [-.2, .07]), add(c, [.2, .05])], M.BODY3, o);
+    P.fn(({ sp, T, s }) => { if (s < 30) return; const [x0, y0] = T(add(c, [-.32, -.1])), [x1, y1] = T(add(c, [.2, .06])); for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if ((x + y) % 4 === 0 && sp.get(x, y) === M.BODY3) sp.recolour(x, y, M.LINE); });
+  } else if (kind === "thin") { // a pig's: thin, with a tassel
+    P.limb([[...tb, .07], [X(1.1), back + .3, .05], [X(1.12) + tw, back + .55, .035]], M.BODY, { group: 3 });
+    P.shape(tufts([[X(1.15) + tw, back + .5], [X(1.08) + tw, back + .55], [X(1.12) + tw, back + .72], [X(1.17) + tw, back + .7]], 1, 3, 2, .04, 1), M.BODY3, { group: 3 });
+  }
+}
+
+// Ears, standing on base point b, `e` long.
+function earShape(P, q, b, hr, e, mat, o, frame) {
+  const k = q.ear;
+  if (k === "round") { // bear, badger, otter: a small half-disc
+    P.shape([add(b, [-hr * .32, .02]), add(b, [-hr * .3, -e * .32]), add(b, [-hr * .05, -e * .45]), add(b, [hr * .15, -e * .25]), add(b, [hr * .18, .02])], mat, o);
+    P.mark([add(b, [-hr * .2, -.01]), add(b, [-hr * .18, -e * .2]), add(b, [hr * .02, -e * .28]), add(b, [hr * .08, -.01])], M.EAR, [mat]);
+    return;
+  }
+  if (k === "long") { // a hare's: long, laid back, black-tipped
+    const tip = add(b, [-e * .32, -e * 1.05 + (frame ? .02 : 0)]);
+    P.shape([add(b, [-hr * .25, .02]), add(lerp2(b, tip, .5), [-hr * .2, 0]), add(tip, [-hr * .05, -hr * .05]), add(tip, [hr * .12, hr * .1]), add(lerp2(b, tip, .5), [hr * .24, hr * .05]), add(b, [hr * .25, 0])], mat, o);
+    P.mark([add(lerp2(b, tip, .15), [-hr * .05, 0]), add(lerp2(b, tip, .8), [0, 0]), add(lerp2(b, tip, .5), [hr * .14, hr * .03])], M.EAR, [mat]);
+    P.mark([add(tip, [-hr * .3, -hr * .3]), add(tip, [hr * .3, -hr * .2]), add(lerp2(b, tip, .85), [hr * .3, hr * .1]), add(lerp2(b, tip, .85), [-hr * .3, 0])], M.BODY3, [mat, M.EAR]);
+    return;
+  }
+  const pts = k === "small"
+    ? [add(b, [-hr * .25, .02]), add(b, [-hr * .55, -e * .55]), add(b, [-hr * .62, -e * .62]), add(b, [hr * .2, -hr * .08])]
+    : [add(b, [-hr * .3, .02]), add(b, [-hr * .25, -e * .6]), add(b, [-hr * .12, -e * 1.02]), add(b, [-hr * .05, -e * 1.04]), add(b, [hr * .22, -e * .45]), add(b, [hr * .3, -hr * .02])];
+  P.shape(pts, mat, o);
+  if (k !== "small") P.mark([add(b, [-hr * .15, -e * .15]), add(b, [-hr * .1, -e * .7]), add(b, [hr * .1, -e * .35]), add(b, [hr * .12, -e * .1])], M.EAR, [mat]);
+  P.mark([add(b, [-hr * .3, -e * .72]), add(b, [-hr * .1, -e * 1.1]), add(b, [hr * .1, -e * .9]), add(b, [hr * .3, -e * .62])], M.BODY3, [mat, M.EAR]);
+  if (k === "tuft") P.limb([[...add(b, [-hr * .08, -e * .98]), .045], [...add(b, [-hr * .02, -e * 1.35]), .02]], M.BODY3, { ...o, extra: true });
+}
+
+// Antlers: a beam that sweeps back and then up, with tines pointing forward; or a palmate
+// blade spreading back (elk). They grow with level; a jackalope's are small.
+function antlers(P, q, b, hr, level, has, mat, o) {
+  const jack = !q.antlers, A = jack ? .45 : [0, .5, .9][level] * (has("antlersGlow") ? 1.15 : 1);
+  if (!A) return;
+  const tine = (p, a, l, w) => P.limb([[...p, w], [...add(p, [Math.cos(a) * l * .6, -Math.sin(a) * l * .6]), w * .7], [...add(p, [Math.cos(a) * l, -Math.sin(a) * l * 1.05]), w * .3]], mat, { ...o, capEnd: .6 });
+  const w = .07 * Math.max(.7, A);
+  if (q.antlers === "palm") {
+    const knee = add(b, [-.2 * A, -.12 * A]), c = add(knee, [-.32 * A, -.18 * A]);
+    P.limb([[...b, w * 1.3], [...knee, w * 1.1], [...lerp2(knee, c, .6), w]], mat, o);
+    const pts = [add(knee, [0, -.02 * A]), add(c, [.18 * A, -.2 * A]), add(c, [-.05 * A, -.3 * A]), add(c, [-.38 * A, -.2 * A]), add(c, [-.42 * A, .02 * A]), add(c, [-.15 * A, .12 * A])];
+    P.shape(tufts(pts, 1, 4, level === 2 ? 4 : 3, .09 * A, 1), mat, o);
+    tine(add(knee, [.02 * A, 0]), .5, .22 * A, w * .7); // brow tine
+    return;
+  }
+  const p1 = add(b, [-.22 * A, -.28 * A]), p2 = add(b, [-.3 * A, -.62 * A]), p3 = add(b, [-.16 * A, -.92 * A]), p4 = add(b, [.02 * A, -1.02 * A]);
+  P.limb([[...b, w * 1.25], [...p1, w], [...p2, w * .85], [...p3, w * .65], [...p4, w * .3]], mat, { ...o, capEnd: .6 });
+  tine(add(b, [-.06 * A, -.08 * A]), .45, .3 * A, w * .8);   // brow tine, forward over the face
+  if (A > .4 || jack) tine(p1, .7, .32 * A, w * .7);
+  if (A > .7) { tine(p2, .85, .3 * A, w * .6); tine(p3, 1.1, .2 * A, w * .5); tine(p3, 2.3, .16 * A, w * .45); }
+}
+
+// Faceted crystals growing from the back: each a prism with one lit facet.
+function crystals(P, backAt, frame) {
+  const sizes = [.32, .5, .38, .62, .42, .3];
+  sizes.forEach((h, i) => {
+    const t = .12 + i * .14, b = add(backAt(t), [0, .08]), lean = (i - 2.5) * .08, w = h * .32;
+    const apex = add(b, [lean * h, -h]);
+    const pts = [add(b, [-w * .5, 0]), add(b, [-w * .55 + lean * h * .7, -h * .72]), apex, add(b, [w * .55 + lean * h * .7, -h * .72]), add(b, [w * .5, 0])];
+    P.shape(pts, M.MAGIC, { group: 80 + i % 2, line: true, extra: true });
+    P.mark([add(b, [0, 0]), add(b, [lean * h * .7, -h * .72]), apex, add(b, [w * .55 + lean * h * .7, -h * .72]), add(b, [w * .5, 0])], M.MAGIC2, [M.MAGIC]);
+  });
+}
+
+// A little forest on its back: a moss blanket, small trees, glowing mushrooms.
+function mossyBack(P, backAt, len, frame) {
+  const top = [], bot = [];
+  for (let i = 0; i <= 8; i++) { const p = backAt(.05 + i * .11); top.push(add(p, [0, -.08])); bot.unshift(add(p, [0, .14])); }
+  P.shape(tufts([...top, ...bot], 0, 8, 2, .05, 1), M.LEAF, { group: 85, line: true, extra: true });
+  for (const [t, h] of [[.22, .55], [.5, .8], [.75, .45]]) {
+    const b = add(backAt(t), [0, -.02]), sway = frame ? .02 : 0;
+    P.limb([[...b, .07], [...add(b, [sway, -h * .6]), .04]], M.TRUNK, { group: 86, line: true, extra: true });
+    const c = add(b, [sway, -h * .75]), r = h * .32;
+    P.shape(tufts([add(c, [0, -r]), add(c, [r * .9, -r * .3]), add(c, [r, r * .4]), add(c, [0, r * .6]), add(c, [-r, r * .4]), add(c, [-r * .9, -r * .3])], 0, 6, 2, r * .2, 1), M.LEAF2, { group: 87, line: true, extra: true });
+    P.mark([add(c, [-r * .2, -r * .1]), add(c, [r * .9, 0]), add(c, [r * .8, r * .5]), add(c, [-r * .5, r * .5])], M.LEAF, [M.LEAF2]);
+  }
+  for (const t of [.1, .38, .62, .9]) { const b = add(backAt(t), [0, -.06]); P.limb([[...b, .04], [...add(b, [0, -.1]), .035]], M.BELLY, { group: 88, extra: true }); P.shape([add(b, [-.08, -.1]), add(b, [0, -.17]), add(b, [.08, -.1])], M.MAGIC, { group: 89, line: true, extra: true }); }
+}
+
+// Ribbons of light streaming back from the body.
+function ribbons(P, len, back, frame) {
+  for (let i = 0; i < 3; i++) {
+    const s = [], ph = frame * .8 + i * 1.7;
+    for (let k = 0; k <= 8; k++) { const t = k / 8; s.push([len * (.55 - t * 2.2), back + .05 - i * .1 - t * (.25 + i * .12) + Math.sin(t * 6 + ph) * .1 * t, .07 * (1 - t * .7)]); }
+    P.limb(s, i % 2 ? M.MAGIC2 : M.MAGIC, { group: 90 + i, line: true, extra: true });
+  }
 }
 
 // One feather: a rounded base, a long vane and a pointed tip, pointing along `dir`.
