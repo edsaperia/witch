@@ -86,7 +86,7 @@ const assets = await b.page.evaluate(async ({ style, seed }) => {
     const c = document.createElement("canvas"); c.width = c.height = 64; G.drawSigil(c.getContext("2d"), id, { size: 64, glow: 4 });
     return { id: `sigil-${id}`, species: id, neon: G.SIGIL_NEON[id], colour: G.sigilColour(id), svg: G.sigilSVG(id, { size: 64 }), levels: [0, 1, 2, 3].map(level => G.sigilSVG(id, { size: 128, level })), levelPngs: [0, 1, 2, 3].map(level => { const k = document.createElement("canvas"); k.width = k.height = 64; G.drawSigil(k.getContext("2d"), id, { size: 64, level, glow: 4 }); return png(k); }), png: png(c), strokes: G.SIGILS[id] };
   });
-  return { list, sigils, sigilFormat: { box: "unit square, x right, y down", stroke: G.SIGIL_STROKE, dot: G.SIGIL_DOT, drawTime: G.SIGIL_DRAW_TIME, groundPitch: G.GROUND_PITCH, neon: G.NEON, levels: [0, 1, 2, 3].map(l => G.sigilFrame(l)), stack: G.STACK_TUNING, transitionTime: G.SIGIL_TRANSITION_TIME }, style: st, placement: { wallsBlock: G.WALLS_BLOCK, setPieceChance: G.SET_PIECE_CHANCE }, areas: G.AREAS.map(({ id, name, creature, by, text }) => ({ id, name, creature, by, text })) };
+  return { list, sigils, sigilFormat: { box: "unit square, x right, y down", stroke: G.SIGIL_STROKE, dot: G.SIGIL_DOT, drawTime: G.SIGIL_DRAW_TIME, groundPitch: G.GROUND_PITCH, neon: G.NEON, levels: [0, 1, 2, 3].map(l => G.sigilFrame(l)), stack: G.STACK_TUNING, transitionTime: G.SIGIL_TRANSITION_TIME }, style: st, placement: { wallsBlock: G.WALLS_BLOCK, setPieceChance: G.SET_PIECE_CHANCE }, areas: G.AREAS.map(({ id, name, creature, by, text, layout }) => ({ id, name, creature, by, text, layout })) };
 }, { style, seed });
 if (b.errors.length) console.error(b.errors.join("\n"));
 await b.close();
