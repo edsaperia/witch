@@ -161,6 +161,8 @@ export const witchHeight = (st = {}) => Math.round((st.size || 8) * Math.sqrt(st
 // The flight poses are drawn at the same pixel scale as her ordinary hover (not fitted to a height).
 const scaleCache = new Map();
 const witchScale = h => { if (!scaleCache.has(h)) scaleCache.set(h, render(witchModel({ frame: 0 }), { height: h }).s); return scaleCache.get(h); };
+// pixels per model unit at her ordinary scale, for things built to her size (the treehouse)
+export const witchPixelsPerUnit = (st = {}) => witchScale(witchHeight(st));
 export function witchSprite(st = {}, { frame = 0, lean = false, facing = "towards", pose } = {}) {
   const h = witchHeight(st);
   const { sp } = pose ? render(witchModel({ frame, pose }), { scale: witchScale(h), facing }) : render(witchModel({ frame, lean }), { height: h, facing });

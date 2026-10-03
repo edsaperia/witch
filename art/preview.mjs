@@ -3,6 +3,8 @@
 //   node art/preview.mjs animals wolf,boar,owl art/previews/animals.png [scale]
 //   node art/preview.mjs trees all art/previews/trees.png [scale]
 //   node art/preview.mjs areas all art/previews/areas.png [scale]
+//   node art/preview.mjs decor ruins|rocks|freak|<ids> art/previews/ruins.png [scale]   (VARIANTS=1: ruins weathered and overgrown)
+//   node art/preview.mjs lake 0 art/previews/lake.png [scale]   (a sample lake composed from the kit; NIGHT=1)
 //   node art/preview.mjs witch all art/previews/witch-flight.png [scale]   ("fast" instead of all: hover, lean and the fast pose)
 //   node art/preview.mjs treeheights fern-forest,garden art/previews/tree-heights.png [scale]
 //   node art/preview.mjs lights all art/previews/light-sources.png [scale]
@@ -29,6 +31,7 @@ if (process.env.SMALL) await b.page.addInitScript(() => { window.SMALL = true; }
 if (process.env.DRAWON) await b.page.addInitScript(() => { window.DRAWON = true; });
 if (process.env.STYLE) await b.page.addInitScript(o => { window.STYLE = o; }, JSON.parse(process.env.STYLE));
 if (process.env.NIGHT) await b.page.addInitScript(() => { window.NIGHT = true; });
+if (process.env.VARIANTS) await b.page.addInitScript(() => { window.VARIANTS = true; });
 if (process.env.LEVELS) await b.page.addInitScript(l => { window.LEVELS = l; }, process.env.LEVELS.split(",").map(Number));
 await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
 const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) => {
@@ -94,6 +97,26 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   } else if (what === "soundsystems") { // per variant: three playing frames, two damaged, destroyed, and the witch for scale
     for (let v = 0; v < G.SOUNDSYSTEMS.length; v++) { if (list !== "all" && !list.split(",").includes(String(v))) continue; const col = G.soundsystemColours(v), b = o => G.bake(G.soundsystemSprite(st, { variant: v, ...o }), col, st, "none"); rows.push([b({ frame: 0 }), b({ frame: 1 }), b({ frame: 2 }), b({ state: "damaged", frame: 0 }), b({ state: "damaged", frame: 1 }), b({ state: "destroyed" }), G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline)]); }
     if (window.SIGIL) rows.push(G.SOUNDSYSTEMS.map((S, v) => G.bake(G.soundsystemSprite(st, { variant: v, sigil: window.SIGIL }), G.soundsystemColours(v), st, "none"))); // carved with a creature's sigil
+  } else if (what === "lake") { // a sample lake composed from the kit, as the prototype would: a blob of overlapping circles, water inside, the shore band across the edge, reeds and lilies along it, rocks half in
+    const K = G.lakeKit(st), col = K.colours, bk = sp => G.bake(sp, col, st, "none"), W = 300, H = 170, cs = [[150, 85, 95], [95, 95, 55], [215, 75, 55], [170, 110, 60]];
+    const sd = (x, y) => Math.min(...cs.map(([cx, cy, r]) => Math.hypot(x - cx, (y - cy) * 1.7) - r)); // ground seen at an angle: squashed in y
+    const ground = new G.Sprite(W, H), band = 14;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const d = sd(x, y), c = cs.reduce((a, b) => Math.hypot(x - a[0], y - a[1]) < Math.hypot(x - b[0], y - b[1]) ? a : b), u = Math.floor((Math.atan2(y - c[1], x - c[0]) + Math.PI) * 40) & 63;
+      if (d < -band / 2) { const i = (y % 48) * 64 + (x % 64); ground.px(x, y, K.water.m[i], K.water.n[i * 3], K.water.n[i * 3 + 1], K.water.n[i * 3 + 2]); }
+      else if (d < band / 2) { const v = Math.min(15, Math.floor((d + band / 2) / band * 16)), i = v * 64 + u; ground.px(x, y, K.shore.m[i], 0, -.42, .9); }
+      else ground.px(x, y, (x * 7 + y * 13) % 11 ? G.M.LEAF : G.M.LEAF2, 0, -.42, .9);
+    }
+    const tgt = document.createElement("canvas"); tgt.width = W; tgt.height = H; const base = bk(ground);
+    const cA = base.A.getContext("2d"), cN = base.N.getContext("2d"), put = (s2, x, y) => { cA.drawImage(s2.A, Math.round(x - s2.w / 2), Math.round(y - s2.h)); cN.drawImage(s2.N, Math.round(x - s2.w / 2), Math.round(y - s2.h)); };
+    const edge = []; for (let a = 0; a < 6.283; a += .09) for (let r = 0; r < 200; r += 1) { const x = 150 + Math.cos(a) * r, y = 85 + Math.sin(a) * r / 1.7; if (sd(x, y) > 0) { edge.push([x, y, a]); break; } }
+    edge.forEach(([x, y], i) => { if (i % 5 === 0) put(bk(K.reeds[i % 3]), x + 6, y + 4); else if (i % 7 === 3) put(bk(K.lilies[i % 3]), x - (x - 150) * .12, y - (y - 85) * .2 + 3); else if (i % 11 === 5) put(G.bake(G.decorSprite("pair", st).whole, G.decorColours(st), st, "none"), x, y + 4); });
+    const wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline); put(wit, 150, 80);
+    rows.push([base]);
+  } else if (what === "decor") { // a family's decorations (ruins, rocks, freak) or listed ids, six to a row, the witch closing each row; ruins in both conditions with VARIANTS=1
+    const ids = ["ruins", "rocks", "freak"].includes(list) ? G.DECOR.filter(d => d.family === list).map(d => d.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), col = G.decorColours(st);
+    const items = ids.flatMap(id => (window.VARIANTS ? [0, 1] : [0]).map(variant => G.bake(G.decorSprite(id, st, { variant }).whole, col, st, "none")));
+    for (let i = 0; i < items.length; i += 6) rows.push([...items.slice(i, i + 6), wit]);
   } else if (what === "areas") { // per area type: floor tile, walls, small, big, set piece, its creature (young)
     const ids = list === "all" ? G.AREAS.map(a => a.id) : list.split(",");
     for (const id of ids) { const a = G.areaAssets(id, st); rows.push([a.floor, ...a.walls, ...a.small, ...a.big, ...(a.setPiece ? [a.setPiece] : [])].map(x => x.sp).concat([G.bake(G.critter(a.def.creature, 1, 0, st), G.speciesColours(a.def.creature, st), st, st.cOutline)])); }
