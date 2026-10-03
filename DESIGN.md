@@ -64,6 +64,13 @@ The trade is speed against information: treetop mode covers distance, ground mod
 
 - A 3D world with **2D pixel-art sprites** for characters and objects. References: *Cult of the Lamb* and *Octopath Traveler*. Witch develops its own art style as it goes.
 - Art is made with **a generator**, so that the style stays consistent across all assets.
+- A **lo-fi aesthetic**: few animation frames (walking perhaps two or three).
+- **Coloured light sources** that light the pixel sprites.
+
+### Art pipeline (Ed, 2026-10-03; method proposed by the coordinator, not yet chosen)
+
+- A **list of every asset** the game needs, kept in the repository: foliage (top and bottom halves), and each creature at each level with a few frames each of **walking, attacking and being hurt**.
+- A **style**, written as a prompt plus fixed rules (palette, pixel size), that the whole list is generated from. Changing the style and regenerating is how art styles are tried out.
 
 ## Order of work
 
@@ -89,7 +96,7 @@ The trade is speed against information: treetop mode covers distance, ground mod
 - How catching works, and how many leashes the witch can hold.
 - Whether creatures are blocked by trees and by each other.
 - Whether a creature is better in its own area.
-- The art generator: which one, and how sprites are animated.
+- The art generator: which one; how frames are made; which directions a creature faces.
 - Engine: Godot 4 exported to the web is the provisional choice, to be confirmed by the first build.
 
 ## Glossary
