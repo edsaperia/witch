@@ -104,6 +104,9 @@ The trade is speed against information: treetop mode covers distance, ground mod
   - **Night**: a twilight palette, with light revealing that the trees and ground are green; the witch glows and lights what is near her.
   - **Legendary creatures are about 20 times a baby's height**, taller than the treetops.
   - **Areas read as colour fields**: each area has its own dominant colour (for example a blue fir area beside an orange autumn one), with pale clearings and shafts of light.
+  - **Pixels are larger** (chunkier) and **tree crowns about three times wider** than the first lab's (Ed, 2026-10-03).
+  - **Tree density rises away from each area's centre**, so every area has a **clearing in the middle**.
+  - **A first bestiary of 20 animals** (proposed by the coordinator, 2026-10-03, not yet ruled): wolf, fox, badger, boar, stag, hare, owl, bear, hedgehog, squirrel, toad, otter, lynx, elk, raven, bat, mole, beaver, stoat, stag beetle, each with a legendary feature (spirit wings, many tails, crystals, great tusks, glowing antlers, a forest on its back...).
   - **Creatures are recognisable animals** (wolf, badger, boar) that grow magical features as they level: spirit wings and mane, tusks, bolder stripes; drawn with dark outlines.
 - A **lo-fi aesthetic**: few animation frames (walking perhaps two or three).
 - Creatures face **left and right only** (mirrored).
