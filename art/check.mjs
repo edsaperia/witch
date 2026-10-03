@@ -157,6 +157,21 @@ const report = await b.page.evaluate(async () => {
     }
     res.push({ what: "set pieces: all 30 areas have one; the 20 new ones stand on the ground, 6 to 12 m across or tall", good: !bad.length && sizes.length === 20, info: bad.join(", ") || `${sizes.length} new, ${Math.min(...sizes)} to ${Math.max(...sizes)} m` });
   }
+  { // paths: every kind's strip tiles along its length, its end, Y and T are drawn, only the magic trail glows; the railway's three variants, points, broken end and crossing; the 3D pieces stand, only flagged ones glow; every area has a path kind
+    const bad = [], EM = new Set([...G.EMISSIVE]), lit = sp => [...sp.m].some(v => EM.has(v)), n = sp => { let k = 0; for (const v of sp.m) if (v) k++; return k; };
+    for (const id of G.PATH_IDS) {
+      const K = G.PATH_KINDS[id];
+      for (let variant = 0; variant < (K.variants || [0]).length; variant++) {
+        const T = G.pathTextures(id, { variant }), S = T.strip; let seam = 0; for (let i = 0; i < 200; i++) { const u = (i % 20) / 10 - .95, v = Math.floor(i / 20) * K.period / 10 + .013, a2 = K.surface(u, v, false, variant), b2 = K.surface(u, v + K.period, false, variant); if (JSON.stringify(a2) !== JSON.stringify(b2)) seam++; } // the surface repeats every period, so the strip tiles
+        const ok = S.w === Math.round(K.width * 16) && seam === 0 && [T.strip, T.end, T.y, T.t].every(sp => n(sp) > 20) && lit(T.strip) === !!K.glow;
+        if (!ok) bad.push(`${id}/${variant}${seam ? " seam " + seam : ""}`);
+      }
+    }
+    for (const sp of [G.railPoints({ variant: 1 }), G.railBrokenEnd(), G.railCrossing()]) if (n(sp) < 200) bad.push("railway piece");
+    for (const d of G.PATH_PIECES) { const P = G.pathPieceSprite(d.id, st); if (!(stats(P.sp).bottom > 0 && n(P.sp) > 8 && lit(P.sp) === !!d.glow)) bad.push(d.id); }
+    const ap = G.areaPathKinds(), none = G.AREAS.filter(A => !(ap[A.id] || []).length).map(A => A.id);
+    res.push({ what: "paths: 10 kinds, each strip tiling with its end, Y and T; only the magic trail glows; railway variants, points, broken end, crossing; the 3D pieces stand, only flagged ones glow; every area suits a path kind", good: !bad.length && !none.length && G.PATH_IDS.length >= 10, info: [...bad, ...none.map(a => a + " has no path kind")].join(", ") || `${G.PATH_IDS.length} kinds, ${G.PATH_PIECES.length} pieces` });
+  }
   { const L = G.lightProps(st), all = [...L.campfire, ...Object.values(L.stones), L.pond]; res.push({ what: "light sources: 3 campfire frames, 3 magic stones, a pond with a water mask", good: all.length === 7 && all.every(b => b.w > 4 && b.h > 4) && !!L.pond.mask, info: all.map(b => b.w + "x" + b.h).join(" ") }); }
   for (const A of G.AREAS) {
     const a = G.areaAssets(A.id, st), props = [...a.walls, ...a.small, ...a.big, ...(a.setPiece ? [a.setPiece] : [])];

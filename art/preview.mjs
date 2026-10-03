@@ -5,6 +5,8 @@
 //   node art/preview.mjs areas all art/previews/areas.png [scale]
 //   node art/preview.mjs sets all art/previews/set-pieces.png [scale]   (every area's set piece, five to a row, the witch for scale)
 //   node art/preview.mjs home 0 art/previews/treehouse.png [scale]   (the treehouse with the witch sitting on its terrace, sit frame 0 or 1; NIGHT=1 lit by its own lights)
+//   node art/preview.mjs paths all|<kinds> art/previews/paths.png [scale]   (each kind swept along a curve with a branch, then its strip, end, Y, T; VARIANT=n for the railway's)
+//   node art/preview.mjs pathpieces all|<ids> art/previews/path-pieces.png [scale]   (the 3D pieces; with all, the railway's points, broken end and crossing)
 //   node art/preview.mjs witch all art/previews/witch-flight.png [scale]   ("fast" instead of all: hover, lean and the fast pose; "foot": hover and every on-foot pose, POSES=stand,talk,... to pick, ANCHORS=1 to mark her hand and hat tip)
 //   node art/preview.mjs treeheights fern-forest,garden art/previews/tree-heights.png [scale]
 //   node art/preview.mjs lights all art/previews/light-sources.png [scale]
@@ -31,6 +33,8 @@ if (process.env.SMALL) await b.page.addInitScript(() => { window.SMALL = true; }
 if (process.env.DRAWON) await b.page.addInitScript(() => { window.DRAWON = true; });
 if (process.env.STYLE) await b.page.addInitScript(o => { window.STYLE = o; }, JSON.parse(process.env.STYLE));
 if (process.env.NIGHT) await b.page.addInitScript(() => { window.NIGHT = true; });
+if (process.env.VARIANT) await b.page.addInitScript(n => { window.VARIANT = n; }, +process.env.VARIANT);
+if (process.env.PER) await b.page.addInitScript(n => { window.PER = n; }, +process.env.PER);
 if (process.env.LEVELS) await b.page.addInitScript(l => { window.LEVELS = l; }, process.env.LEVELS.split(",").map(Number));
 if (process.env.POSES) await b.page.addInitScript(l => { window.POSES = l; }, process.env.POSES.split(","));
 if (process.env.ANCHORS) await b.page.addInitScript(() => { window.ANCHORS = true; });
@@ -123,6 +127,21 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   } else if (what === "sets") { // every area's set piece (or the listed areas'), five to a row, each row ending with the witch for scale
     const ids = list === "all" ? G.AREAS.filter(a => a.set).map(a => a.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
     for (let i = 0; i < ids.length; i += 5) rows.push([...ids.slice(i, i + 5).map(id => G.areaAssets(id, st).setPiece.sp), wit]);
+  } else if (what === "paths") { // per kind (or listed): a path swept along an S-curve with a branch meeting it, laid on the ground at the game's view; then its strip, end, Y and T textures flat; the witch for scale
+    const ids = list === "all" ? G.PATH_IDS : list.split(","), col = G.pathColours(st), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), squash = Math.sin(.52);
+    const view = sp => { const h = Math.ceil(sp.h * squash), o = new G.Sprite(sp.w, h); for (let y = 0; y < h; y++) for (let x = 0; x < sp.w; x++) { const i = Math.floor(y / squash) * sp.w + x; if (sp.m[i]) o.px(x, y, sp.m[i], sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); } return o; }; // ground space to the game's view
+    for (const id of ids) {
+      const K = G.PATH_KINDS[id], w = K.width, R = Math.max(6, w * 2.2), S = []; for (let i = 0; i <= 24; i++) { const t = i / 24; S.push([t * R * 3, Math.sin(t * Math.PI * 2) * R * .5]); }
+      const branch = [[R * 1.5, Math.sin(Math.PI) * R * .5], [R * 1.5 + R * .6, R * 1.1], [R * 1.5 + R * .5, R * 1.9]];
+      const swept = G.sweepPath(id, [S, branch], { variant: window.VARIANT || 0 }), T = G.pathTextures(id, { variant: window.VARIANT || 0 }), b = sp => G.bake(sp, col, st, "none");
+      rows.push([b(view(swept.sp)), b(view(T.strip)), b(view(T.end)), b(view(T.y)), b(view(T.t)), wit]);
+    }
+  } else if (what === "pathpieces") { // the 3D pieces (props, stairs, bridges, railway landmarks) or listed, PER to a row, the witch closing each row; then the railway's points, broken end and crossing
+    const ids = list === "all" ? G.PATH_PIECES.map(d => d.id) : list.split(","), col = G.pathColours(st), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), per = window.PER || 7, squash = Math.sin(.52);
+    const view = sp => { const h = Math.ceil(sp.h * squash), o = new G.Sprite(sp.w, h); for (let y = 0; y < h; y++) for (let x = 0; x < sp.w; x++) { const i = Math.floor(y / squash) * sp.w + x; if (sp.m[i]) o.px(x, y, sp.m[i], sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); } return o; };
+    const items = ids.map(id => G.bake(G.pathPieceSprite(id, st).sp, col, st, "none"));
+    for (let i = 0; i < items.length; i += per) rows.push([...items.slice(i, i + per), wit]);
+    if (list === "all") rows.push([G.bake(view(G.railPoints({ variant: 1 })), col, st, "none"), G.bake(view(G.railBrokenEnd()), col, st, "none"), G.bake(view(G.railCrossing()), col, st, "none"), wit]);
   } else if (what === "areas") { // per area type: floor tile, walls, small, big, set piece, its creature (young)
     const ids = list === "all" ? G.AREAS.map(a => a.id) : list.split(",");
     for (const id of ids) { const a = G.areaAssets(id, st); rows.push([a.floor, ...a.walls, ...a.small, ...a.big, ...(a.setPiece ? [a.setPiece] : [])].map(x => x.sp).concat([G.bake(G.critter(a.def.creature, 1, 0, st), G.speciesColours(a.def.creature, st), st, st.cOutline)])); }

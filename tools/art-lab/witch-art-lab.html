@@ -154,6 +154,13 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
+        <div class="row" style="justify-content:space-between"><h2>Paths</h2><div class="row"><label class="note" for="pathKind">Kind</label><select id="pathKind"></select></div></div>
+        <p class="note">A path kind laid along a curve with a branch meeting it, as the game would sweep it; then its strip, end, Y and T junction textures; then the 3D pieces (edge props, stairs, bridges, railway landmarks), with the witch for scale.</p>
+        <p class="note" id="pathInfo"></p>
+        <div class="sheet-wrap"><canvas id="pathSheet" width="420" height="160"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
         <div class="row" style="justify-content:space-between"><h2>Trees</h2><div class="row"><label class="note" for="treeArea">Area</label><select id="treeArea"></select></div></div>
         <p class="note">An area's trees across their whole range of heights, from saplings to the occasional giant that pokes above the canopy, with the witch for scale, and how the area lays out its vegetation (its layout, which the prototype's generator reads).</p>
         <p class="note" id="treeLayout"></p>
@@ -205,7 +212,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours, areaTreeVariants, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
+import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours, areaTreeVariants, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -491,6 +498,28 @@ function renderHome() {
   }, 650);
 }
 
+// ================= paths: a kind swept along a curve, its textures, and the 3D pieces =================
+let pathTimer;
+function renderPaths() {
+  clearTimeout(pathTimer);
+  pathTimer = setTimeout(() => {
+    const c = document.getElementById("pathSheet"), sel = document.getElementById("pathKind"); if (!c || !sel) return;
+    if (!sel.options.length) { for (const id of PATH_IDS) sel.add(new Option(id, id)); sel.addEventListener("change", renderPaths); }
+    const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 8, col = pathColours(st), wit = bake(witchSprite(st), witchColours(st), st, st.cOutline), b = sp => bake(sp, col, st, "none"), squash = Math.sin(.52), K = PATH_KINDS[sel.value];
+    const view = sp => { const h = Math.ceil(sp.h * squash), o = new Sprite(sp.w, h); for (let y = 0; y < h; y++) for (let x = 0; x < sp.w; x++) { const i = Math.floor(y / squash) * sp.w + x; if (sp.m[i]) o.px(x, y, sp.m[i], sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); } return o; };
+    const info = document.getElementById("pathInfo"); if (info) info.textContent = `${K.desc}. ${K.width} m wide, tiling every ${K.period} m; suits ${K.moods.join(", ")}.`;
+    const R = Math.max(6, K.width * 2.2), S = []; for (let i = 0; i <= 24; i++) { const t = i / 24; S.push([t * R * 3, Math.sin(t * Math.PI * 2) * R * .5]); }
+    const T = pathTextures(sel.value), rows = [[b(view(sweepPath(sel.value, [S, [[R * 1.5, 0], [R * 2.1, R * 1.1], [R * 2, R * 1.9]]]).sp)), b(view(T.strip)), b(view(T.end)), b(view(T.y)), b(view(T.t)), wit]];
+    const items = PATH_PIECES.map(d => b(pathPieceSprite(d.id, st).sp)); for (let i = 0; i < items.length; i += 9) rows.push([...items.slice(i, i + 9), wit]);
+    const w = Math.max(...rows.map(r => r.reduce((a, x) => a + x.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(x => x.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
+    tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+    let y = gap;
+    rows.forEach((r, i) => { let x = gap; y += rh[i] - gap; for (const s2 of r) { tgt.a.drawImage(s2.A, x, y - s2.h); tgt.n.drawImage(s2.N, x, y - s2.h); x += s2.w + gap; } y += gap; });
+    c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
+    c.style.width = w + "px"; c.style.maxWidth = "none";
+  }, 1100);
+}
+
 // ================= the witch: every pose, towards and away, studio-lit =================
 let witchTimer;
 function renderWitch() {
@@ -653,7 +682,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderSets(); renderWitch(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400);
+  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderSets(); renderWitch(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
