@@ -154,6 +154,12 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
+        <h2>Relics</h2>
+        <p class="note">The modern world, reclaimed by the forest: cars, trolleys, cones, broken highway and odds and ends; the overgrown playground's pieces; the sports grounds' pieces (tennis, baseball, football, a basketball hoop). Then each arrangement as suggested, the witch at its middle.</p>
+        <div class="sheet-wrap"><canvas id="relicSheet" width="420" height="160"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
         <h2>Decorations</h2>
         <p class="note">World decorations any area can have, placed sparsely as discoveries: twelve ruins (weathered, then overgrown), rocks, freak trees, and the lake kit (water, shore band, reeds, lily pads), with the witch for scale.</p>
         <div class="sheet-wrap"><canvas id="decorSheet" width="420" height="160"></canvas></div>
@@ -211,7 +217,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours, areaTreeVariants, DECOR, decorSprite, decorColours, lakeKit, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
+import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours, areaTreeVariants, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -497,6 +503,32 @@ function renderHome() {
   }, 650);
 }
 
+// ================= relics: the modern world reclaimed, the playground, the sports grounds =================
+let relicTimer;
+function renderRelics() {
+  clearTimeout(relicTimer);
+  relicTimer = setTimeout(() => {
+    const c = document.getElementById("relicSheet"); if (!c) return;
+    const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 8, col = relicColours(st), wsp = witchSprite(st), wit = bake(wsp, witchColours(st), st, st.cOutline), rows = [];
+    for (const fam of ["modern", "playground", "sports"]) { const items = RELICS.filter(d => d.family === fam && !d.decal).map(d => bake(relicSprite(d.id, st).whole, col, st, "none")); for (let i = 0; i < items.length; i += 9) rows.push([...items.slice(i, i + 9), wit]); }
+    const L = relicLayouts(st), scenes = Object.keys(L).filter(n => n !== "basketball").map(name => { // each arrangement, composed
+      const parts = L[name].map(({ id, x, z }) => { const R = relicSprite(id, st), [dx, dy] = groundOffset(x, z); return { b: bake(R.whole, col, st, "none"), x: dx - R.origin.x, y: dy - R.origin.y, decal: !!RELIC_BY_ID[id].decal, depth: dy }; });
+      parts.push({ b: wit, x: -wit.w / 2, y: -wit.h, depth: 0 });
+      const x0 = Math.min(...parts.map(p => p.x)), y0 = Math.min(...parts.map(p => p.y)), w = Math.max(...parts.map(p => p.x + p.b.w)) - x0, h = Math.max(...parts.map(p => p.y + p.b.h)) - y0;
+      const A = document.createElement("canvas"), N = document.createElement("canvas"); A.width = N.width = w; A.height = N.height = h;
+      parts.sort((p, q) => (q.decal ? 1 : 0) - (p.decal ? 1 : 0) || p.depth - q.depth).forEach(p => { A.getContext("2d").drawImage(p.b.A, Math.round(p.x - x0), Math.round(p.y - y0)); N.getContext("2d").drawImage(p.b.N, Math.round(p.x - x0), Math.round(p.y - y0)); });
+      return { A, N, w, h };
+    });
+    rows.push(scenes.slice(0, 2), scenes.slice(2));
+    const w = Math.max(...rows.map(r => r.reduce((a, x) => a + x.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(x => x.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
+    tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+    let y = gap;
+    rows.forEach((r, i) => { let x = gap; y += rh[i] - gap; for (const s2 of r) { tgt.a.drawImage(s2.A, x, y - s2.h); tgt.n.drawImage(s2.N, x, y - s2.h); x += s2.w + gap; } y += gap; });
+    c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
+    c.style.width = w + "px"; c.style.maxWidth = "none";
+  }, 1000);
+}
+
 // ================= decorations: ruins, rocks, freak trees, the lake kit =================
 let decorTimer;
 function renderDecor() {
@@ -680,7 +712,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderDecor(); renderSets(); renderWitch(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400);
+  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderDecor(); renderRelics(); renderSets(); renderWitch(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
