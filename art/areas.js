@@ -7,6 +7,7 @@
 // areaAssets(id, style, { K, makeCanvas }) bakes everything one area type needs:
 //   { def, floor, walls, small, big, setPiece }  — each prop { sp: baked, kind, text },
 //   floor a seamless-ish tile (64 x 48 art pixels) to repeat over the ground.
+import { NEW_SET_PIECES, setPiece3d } from "./setpieces.js";
 import { M, Sprite, rng, uni, pick, hash2, vnoise, hsv2rgb, tufts, lerp2, add, bake, defaultCanvas, runeGlyph } from "./core.js";
 import { Model, render, masks, v3 } from "./model3d.js";
 import { sigilHit } from "./sigils.js";
@@ -79,6 +80,8 @@ export const AREAS = [
   { id: "honeysuckle-tangle", name: "Honeysuckle tangle", creature: "dormouse", by: "draft", leaf: .25, floor: ["clover", .27, .45, .45], text: { floor: "grass and clover", wall: "bramble", small: "honeysuckle", big: "hazel coppice" },
     wall: [P("bramble")], small: [P("shrub", { flower: [250, 230, 170] })], big: [tree("broad", { trunks: 5, scale: .7, thin: true })] },
 ];
+// Set pieces for the areas that had none (Ed: "Make set pieces for the other areas too"), built in 3D: setpieces.js
+for (const [id, [kind, text]] of Object.entries(NEW_SET_PIECES)) { const A = AREAS.find(x => x.id === id); if (A && !A.set) { A.set = P(kind, { three: true }); A.text = { ...A.text, set: text }; } }
 export const AREA_BY_ID = Object.fromEntries(AREAS.map(a => [a.id, a]));
 
 // ---------------- layout: how each area's vegetation is arranged (data only) ----------------
@@ -343,6 +346,7 @@ function prop(kind, o, def, st, r, s) {
 
 // Set pieces: one per area that has one, bigger than the props.
 function setPiece(kind, o, def, st, r, s) {
+  if (o.three) return setPiece3d(kind, def, st);
   if (kind === "tree" || kind === "log") return prop(kind, o, def, st, r, s);
   const W = Math.round(90 * s), H = Math.round(70 * s), sp = new Sprite(W, H), cx = W / 2, gy = H;
   let colours = { ...stoneCol(), [M.LEAF]: hsv2rgb(def.leaf, .55, .5), [M.LEAF2]: hsv2rgb(def.leaf - .04, .5, .7), [M.TRUNK]: hsv2rgb(st.trunkHue, .45, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5, .17), [M.MAGIC]: hsv2rgb(st.magicHue, .6, 1), [M.MAGIC2]: hsv2rgb(st.magicHue, .2, 1) };
@@ -391,7 +395,7 @@ export function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defau
   const col = list => (list || []).map(([kind, o]) => bk(prop(kind, o, def, st, r, K), kind, ""));
   const out = { def, floor: { sp: bake(ft.sp, ft.colours, st, "none", makeCanvas), kind: def.floor[0], text: def.text.floor }, walls: col(def.wall), small: col(def.small), big: col(def.big), setPiece: null };
   out.walls.forEach(a => a.text = def.text.wall); out.small.forEach(a => a.text = def.text.small); out.big.forEach(a => a.text = def.text.big);
-  if (def.set) out.setPiece = bk(setPiece(def.set[0], def.set[1], def, st, r, K), def.set[0], def.text.set);
+  if (def.set) { const sp0 = setPiece(def.set[0], def.set[1], def, st, r, K); out.setPiece = { ...bk(sp0, def.set[0], def.text.set), metres: sp0.metres }; } // metres: the new 3D ones' size
   return out;
 }
 
