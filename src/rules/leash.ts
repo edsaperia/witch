@@ -8,6 +8,7 @@
 // No drawing here.
 import { LEGEND, type Creature } from "./creatures";
 import type { Tuning } from "./tuning";
+import { facingAway } from "./witch";
 
 export interface PlacedSigil { id: number; x: number; z: number; /** game time it was put down */ at: number }
 
@@ -142,12 +143,12 @@ export function stepLeashed(c: Creature, px: number, pz: number, dt: number, t: 
     const d = Math.hypot(c.x - px, c.z - pz), k = (len * 0.5) / d;
     c.tx = px + (c.x - px) * k; c.tz = pz + (c.z - pz) * k;
     c.rest = 0;
-  } else if (c.rest > 0) { c.rest -= dt; c.moving = false; return; }
+  } else if (c.rest > 0) { c.rest -= dt; c.moving = false; c.away = false; return; }
   else if (Math.hypot(c.tx - px, c.tz - pz) > len * 0.85 || Math.hypot(c.tx - c.x, c.tz - c.z) < 0.05) {
     if (Math.hypot(c.tx - c.x, c.tz - c.z) < 0.05) c.rest = 0.5 + c.rand() * 2;
     const a = c.rand() * Math.PI * 2, r = Math.sqrt(c.rand()) * len * 0.8;
     c.tx = px + Math.cos(a) * r; c.tz = pz + Math.sin(a) * r;
-    if (c.rest > 0) { c.moving = false; return; }
+    if (c.rest > 0) { c.moving = false; c.away = false; return; }
   }
   const dx = c.tx - c.x, dz = c.tz - c.z, d = Math.hypot(dx, dz);
   if (d < 1e-4) { c.moving = false; return; }
@@ -155,7 +156,7 @@ export function stepLeashed(c: Creature, px: number, pz: number, dt: number, t: 
   const step = Math.min(d, speed * dt);
   c.x += (dx / d) * step; c.z += (dz / d) * step;
   if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
-  if (dz < -0.3 * d) c.away = true; else if (dz > 0.3 * d) c.away = false;
+  c.away = facingAway(dx, dz, c.away, 0, t);
   c.moving = true;
   c.walk += dt * (far ? 7 : 4);
 }

@@ -5,6 +5,7 @@
 // Only those near the witch are simulated; the rest pick up where they would plausibly be.
 import { clamp, hash2, lerp, rng, smoothstep } from "./random";
 import { AREA_TYPES, type ForestMap } from "./map";
+import { facingAway } from "./witch";
 
 export type Level = 0 | 1 | 2 | 3;
 export const LEGEND = 3;
@@ -33,7 +34,7 @@ export interface Creature {
   rest: number;
   speed: number;
   facing: 1 | -1;
-  /** Turned away from the viewer (walking up the screen), with a little hysteresis. */
+  /** Turned away from the viewer: only while walking up the screen (see facingAway). */
   away: boolean;
   moving: boolean;
   /** Walk cycle clock, for the two walking frames. */
@@ -121,7 +122,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
 /** Roam: walk to a random spot in its own area, pause a while, pick another. It never crosses
  *  its area's border: a step that would cross it is not taken, and it chooses again. */
 export function stepCreature(c: Creature, dt: number, map: ForestMap): void {
-  if (c.rest > 0) { c.rest -= dt; c.moving = false; return; }
+  if (c.rest > 0) { c.rest -= dt; c.moving = false; c.away = false; return; }
   const dx = c.tx - c.x, dz = c.tz - c.z, d = Math.hypot(dx, dz);
   if (d < 0.05) {
     [c.tx, c.tz] = pointInArea(map, c, c.rand);
@@ -133,7 +134,7 @@ export function stepCreature(c: Creature, dt: number, map: ForestMap): void {
   if (!inCell(map, nx, nz, c.cell)) { c.tx = c.x; c.tz = c.z; c.moving = false; return; }
   c.x = nx; c.z = nz;
   if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
-  if (dz < -0.3 * d) c.away = true; else if (dz > 0.3 * d) c.away = false; // up the screen is away
+  c.away = facingAway(dx, dz, c.away, 0, map.tuning); // away only while heading up the screen
   c.moving = true;
   c.walk += dt * (c.level === LEGEND ? 1.5 : 4);
 }

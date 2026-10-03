@@ -1,7 +1,7 @@
 // Gathers the player's input from keyboard, gamepad and touch into one set of controls per frame.
 // Keyboard: WASD or arrows to fly, space to rise or descend, Z/X or +/- to zoom in/out, ~ for
-// debug, hold T or Shift to talk (invite), E to put down or pick up a sigil, I (debug) to invite
-// the nearest creature.
+// debug, hold T, F or Shift to talk (invite), E or R to put down or pick up a sigil, I (debug) to
+// invite the nearest creature.
 // Gamepad: left stick (or d-pad) to fly, hold A to talk, X for the sigil, Y to rise or descend,
 // shoulders or triggers to zoom, Back/Select for debug. Touch: the joystick and buttons in ui/touch.ts write into `touch`.
 import type { Controls } from "../rules/game";
@@ -29,7 +29,7 @@ export class Input {
   }
 
   private isGameKey(code: string): boolean {
-    return /^(Arrow|Space$|Key[WASDZXENPTI]$|Shift|Minus$|Equal$|NumpadAdd$|NumpadSubtract$|Backquote$)/.test(code);
+    return /^(Arrow|Space$|Key[WASDZXENPTIFR]$|Shift|Minus$|Equal$|NumpadAdd$|NumpadSubtract$|Backquote$)/.test(code);
   }
 
   /** Forget presses not yet read (the press that started the game is not also a move). */
@@ -49,7 +49,7 @@ export class Input {
     let toggleMode = p("Space");
     let zoom = (p("KeyX") || p("Minus") || p("NumpadSubtract") ? 1 : 0) - (p("KeyZ") || p("Equal") || p("NumpadAdd") ? 1 : 0);
     let debug = p("Backquote");
-    let talk = k("KeyT") + k("ShiftLeft") + k("ShiftRight") > 0, sigil = p("KeyE");
+    let talk = k("KeyT") + k("KeyF") + k("ShiftLeft") + k("ShiftRight") > 0, sigil = p("KeyE") || p("KeyR");
     const inviteNearest = p("KeyI");
     this.pressed.clear();
 

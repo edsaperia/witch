@@ -271,8 +271,12 @@ async function main() {
     await page.waitForFunction(i => window.witch.game.creatures[i].leashed, id, { timeout: 120000, polling: 100 });
     await page.keyboard.up("KeyT");
     check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "holding Talk by a creature invites it onto her sigil stack");
-    for (let i = 0; i < 3; i++) await page.keyboard.press("KeyI");
-    await sleep(300);
+    // One press a frame: wait for each invite to land before the next (the headless renderer is slow).
+    for (let i = 0; i < 3; i++) {
+      const before = await page.evaluate(() => window.witch.game.leash.stack.length);
+      await page.keyboard.press("KeyI");
+      await page.waitForFunction(b => window.witch.game.leash.stack.length > b, before, { timeout: 30000 }).catch(() => {});
+    }
     const n = await page.evaluate(() => window.witch.game.leash.stack.length);
     check(n >= 3, `the debug key invites more (${n} on the stack)`);
     await hold(page, "KeyD", 2);

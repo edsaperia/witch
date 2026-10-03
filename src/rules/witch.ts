@@ -16,7 +16,7 @@ export interface WitchState {
   mode: Mode;
   /** 1 facing right (east), -1 facing left. */
   facing: 1 | -1;
-  /** Turned away from the viewer: flying up the screen (north). Changes with a little hysteresis. */
+  /** Turned away from the viewer: only while clearly flying up the screen (see facingAway). */
   away: boolean;
   /** Leaning into fast flight: above leanAt of the mode's top speed. */
   lean: boolean;
@@ -28,6 +28,16 @@ export interface Intent {
   moveZ: number;
   /** Rise or descend was pressed this frame. */
   toggleMode: boolean;
+}
+
+/** Towards the viewer unless clearly heading up the screen (Ed, 2026-10-03): away only while the
+ *  heading is within the away cone round straight up (entering at awayEnter degrees, leaving at
+ *  awayLeave, so diagonals don't flicker) and moving faster than `minSpeed`. Sideways, downward
+ *  or stopped: towards. For the witch and the creatures alike. */
+export function facingAway(vx: number, vz: number, wasAway: boolean, minSpeed: number, t: Tuning): boolean {
+  if (Math.hypot(vx, vz) < minSpeed || vz >= 0) return false;
+  const angle = (Math.atan2(Math.abs(vx), -vz) * 180) / Math.PI; // 0 straight up the screen
+  return angle < (wasAway ? t.facing.awayLeave : t.facing.awayEnter);
 }
 
 export const NO_INTENT: Intent = { moveX: 0, moveZ: 0, toggleMode: false };
@@ -57,8 +67,6 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   if (x < bounds.minX || x > bounds.maxX) { x = clamp(x, bounds.minX, bounds.maxX); vx = 0; }
   if (z < bounds.minZ || z > bounds.maxZ) { z = clamp(z, bounds.minZ, bounds.maxZ); vz = 0; }
   const facing: 1 | -1 = vx > 0.3 ? 1 : vx < -0.3 ? -1 : w.facing;
-  // Away when clearly flying north, towards when clearly flying south; sideways keeps the last.
-  const speed = Math.hypot(vx, vz), turn = Math.max(1, max * 0.15);
-  const away = vz < -turn && -vz > Math.abs(vx) * 0.5 ? true : vz > turn && vz > Math.abs(vx) * 0.5 ? false : w.away;
+  const speed = Math.hypot(vx, vz), away = facingAway(vx, vz, w.away, Math.max(1, max * 0.15), t);
   return { x, z, vx, vz, lift, mode, facing, away, lean: speed > max * t.leanAt };
 }

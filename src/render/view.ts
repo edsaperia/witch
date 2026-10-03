@@ -302,7 +302,7 @@ export class View {
       add(p.type, { x: p.x, y: 0, z: p.z, frame: f[big.bot], flip: p.flip, fresh });
       if (big.top !== null) add(p.type, { x: p.x, y: 0, z: p.z, frame: f[big.top], flip: p.flip, top: true, fresh });
       const w = whole.w * mpp, h = whole.h * mpp * (big.top === null ? 0.2 : 0.6);
-      shadows.push({ x: p.x + sx * h, z: p.z + sz * h, w: w * 0.8, d: w * 0.45 });
+      if (t.shadows.trees) shadows.push({ x: p.x + sx * h, z: p.z + sz * h, w: w * 0.8, d: w * 0.45 });
       nt++;
     }
     const scatter = (kind: string, list: Plant[], pick: (l: TypeArt["layout"]) => Piece[]) => {
@@ -459,14 +459,15 @@ export class View {
     const bob = Math.sin(time * 2.4) * 0.12;
     // Her hover frames, turned away when flying up the screen, leaning when fast.
     const wf = w.lean ? 6 + (w.away ? 1 : 0) : (w.away ? 3 : 0) + (Math.floor(time * 4) % 3);
-    this.witchBatch.set([{ x: w.x, y: h + bob - 0.4, z: w.z, frame: this.assets.witch.frames[wf], flip: w.facing < 0 }]);
+    const wframe = this.assets.witch.frames[wf], hatTop = h + bob - 0.4 + wframe.h * this.mpp;
+    this.witchBatch.set([{ x: w.x, y: h + bob - 0.4, z: w.z, frame: wframe, flip: w.facing < 0 }]);
     this.shadow.position.set(w.x, 0.03, w.z);
     this.shadow.scale.setScalar(1 - 0.5 * canopyShown(w));
 
     this.refresh();
     this.drawCreatures(time);
     this.checkPops("moving");
-    this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
+    this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
     this.assets.work(6);
     // The ground's area tiles: everything the cameras can see, plus a band ahead.
     this.stats.pendingGround = this.ground.fill(this.renderer, this.viewRect(t.haze.far, 40), w.x, w.z, 4);

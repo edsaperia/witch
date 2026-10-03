@@ -108,6 +108,8 @@ export class LeashView {
   private flat: Instances;
   private fizzles: { x: number; z: number; at: number }[] = [];
   private bursts: { x: number; z: number; at: number; seed: number }[] = [];
+  private chain: { x: number; z: number; vx: number; vz: number }[] = [];
+  private lastTime = 0;
   private bubbleWitch = document.getElementById("bubble-witch");
   private bubbleCreature = document.getElementById("bubble-creature");
   private v = new THREE.Vector3();
@@ -157,7 +159,8 @@ export class LeashView {
     return [x / N, 1 - y / N, (x + SLOT) / N, 1 - (y + SLOT) / N];
   }
 
-  update(time: number, camera: THREE.Camera, width: number, height: number): void {
+  /** hatTop: the height of the tip of her hat this frame (the stack floats above it). */
+  update(time: number, camera: THREE.Camera, width: number, height: number, hatTop: number): void {
     const g = this.game, s = g.leash, t = g.tuning, w = g.witch, B = t.bond, L = t.leash, dot = this.uv(0);
     this.standing.begin(); this.flat.begin();
     for (const e of s.events) {
@@ -184,16 +187,27 @@ export class LeashView {
       }
     }
 
-    // The stack above her head: bottom (newest) nearest; sways, and trails behind when she's fast.
-    const head = witchHeight(w, t) + 1.4, slotPos = new Map<number, THREE.Vector3>();
-    for (let k = 0; k < s.stack.length; k++) {
-      const id = s.stack[k], c = g.creatures[id], j = s.stack.length - 1 - k; // j: 0 at the bottom
-      const sway = Math.sin(time * 1.7 + j * 0.9) * 0.12 * (1 + j * 0.5);
-      const trail = 0.02 * Math.pow(j + 1, 1.3);
-      const x = w.x + sway - w.vx * trail, z = w.z - w.vz * trail, y = head + 1.3 + j * 2.4;
-      slotPos.set(id, new THREE.Vector3(x, y, z));
+    // The stack above her hat: newest at the bottom. A chain of springs: each sigil follows the
+    // one below with lag, so the stack trails behind her flight in proportion to speed, overshoots
+    // when she stops or turns, and settles into a gentle idle sway; higher ones swing more.
+    const S = t.stack, dt = Math.min(0.1, Math.max(0, time - this.lastTime)), slotPos = new Map<number, THREE.Vector3>();
+    this.lastTime = time;
+    while (this.chain.length < s.stack.length) this.chain.push({ x: 0, z: 0, vx: 0, vz: 0 });
+    let below = { x: 0, z: 0 }, y = hatTop;
+    for (let k = s.stack.length - 1; k >= 0; k--) {
+      const id = s.stack[k], c = g.creatures[id], j = s.stack.length - 1 - k, link = this.chain[j]; // j: 0 at the bottom
+      const size = (2 + c.level * 0.4) * S.scale;
+      const idle = Math.sin(time * 1.7 + j * 0.9) * S.idleSway * (1 + j * 0.5);
+      const tx = below.x - w.vx * S.trail + idle, tz = below.z - w.vz * S.trail;
+      link.vx += ((tx - link.x) * S.stiffness - link.vx * S.damping) * dt; link.vz += ((tz - link.z) * S.stiffness - link.vz * S.damping) * dt;
+      link.x += link.vx * dt; link.z += link.vz * dt;
+      below = link;
+      y += (j === 0 ? S.offset * size : S.gap * size) + size / 2;
+      const pos = new THREE.Vector3(w.x + link.x, y, w.z + link.z);
+      y += size / 2;
+      slotPos.set(id, pos);
       const col = (this.slotOf(c.species, c.level), this.colours.get(c.species)!);
-      this.standing.add(x, y, z, 2 + c.level * 0.4, this.uv(this.slotOf(c.species, c.level)), col.r, col.g, col.b, 1);
+      this.standing.add(pos.x, pos.y, pos.z, size, this.uv(this.slotOf(c.species, c.level)), col.r, col.g, col.b, 1);
     }
 
     // Placed sigils, written on the ground.

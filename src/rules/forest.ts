@@ -2,7 +2,7 @@
 // dropped by the map's tree weight, so trees thicken toward area borders and leave a clearing
 // round each area's centre. Every cell is decided from the seed alone, so any patch of forest
 // can be produced on its own, near the camera, in any order, and always comes out the same.
-import { hash2 } from "./random";
+import { hash2, smoothstep, vnoise } from "./random";
 import { AREA_TYPES, type ForestMap } from "./map";
 
 export interface Plant {
@@ -50,8 +50,10 @@ function bushesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
   const j0 = Math.ceil((cj * CHUNK) / sp), j1 = Math.ceil(((cj + 1) * CHUNK) / sp);
   const i0 = Math.ceil((ci * CHUNK) / sp), i1 = Math.ceil(((ci + 1) * CHUNK) / sp);
   for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
-    const x = (i + (hash2(i, j, s + 201) - 0.5) * 0.9) * sp, z = (j + (hash2(i, j, s + 202) - 0.5) * 0.9) * sp;
-    if (hash2(i, j, s + 203) > (0.12 + Math.min(1, map.treeWeight(x, z)) * 0.3) * map.tuning.bushDensity) continue;
+    // A full cell of jitter and a seeded clump mask, so they gather in clumps and gaps rather than rows.
+    const x = (i + hash2(i, j, s + 201) - 0.5) * sp, z = (j + hash2(i, j, s + 202) - 0.5) * sp;
+    const clump = 1 + map.tuning.bushClump * (2 * smoothstep((vnoise(x / 13, z / 13, s + 207) - 0.35) / 0.3) - 1);
+    if (hash2(i, j, s + 203) > (0.12 + Math.min(1, map.treeWeight(x, z)) * 0.3) * map.tuning.bushDensity * clump) continue;
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + 2) continue; // the dancefloor stays clear
     out.push({ x, z, type: map.areaAt(x, z).type, variant: Math.floor(hash2(i, j, s + 204) * BUSH_VARIANTS), flip: hash2(i, j, s + 205) < 0.5 });
   }

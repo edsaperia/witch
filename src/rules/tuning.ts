@@ -16,6 +16,8 @@ export interface Tuning {
   gladeAmount: number;
   gladeScale: number;
   bushDensity: number;
+  /** How much bushes gather in clumps with open floor between (0 even, 1 strongly clumped). */
+  bushClump: number;
   treeHeight: number;
   crownWidth: number;
   treeSpacingX: number;
@@ -31,6 +33,8 @@ export interface Tuning {
   /** Acceleration on the ground (snappier than the treetops' acceleration). */
   groundAcceleration: number;
   leanAt: number;
+  /** The away cone round straight up the screen, degrees: enter under awayEnter, leave over awayLeave. */
+  facing: { awayEnter: number; awayLeave: number };
   riseTime: number;
   descendTime: number;
   groundHeight: number;
@@ -56,7 +60,7 @@ export interface Tuning {
     specks: number; speckBrightness: number; speckReach: number;
   };
   canopyCutout: { screenFraction: number; edge: number };
-  shadows: { on: boolean; strength: number };
+  shadows: { on: boolean; strength: number; trees: boolean };
   canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };
   mist: { on: boolean; strength: number; height: number; wind: number };
   /** How mist, far haze and canopy dapple are drawn: smooth gradients, or dithered pixel steps. */
@@ -64,7 +68,8 @@ export interface Tuning {
   lights: { campfire: { reach: number; strength: number }; stone: { reach: number; strength: number } };
   glowPower: number;
   beat: { bpm: number };
-  lasers: { on: boolean; maxCount: number; length: number; spread: number; sweep: number; sweepBeats: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };
+  stack: { offset: number; scale: number; gap: number; stiffness: number; damping: number; trail: number; idleSway: number };
+  lasers: { on: boolean; maxCount: number; length: number; spread: number; sweep: number; sweepBeats: number; openBars: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };
   borders: { on: boolean; width: number; brightness: number; sparkle: number; step: number };
   invite: { talkRange: number; cancelDistance: number; talkTime: number[]; turn: number[] };
   leash: { length: number; runSpeed: number; pickRadius: number; spacing: number };

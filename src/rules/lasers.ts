@@ -37,7 +37,7 @@ export function laserShow(time: number, seed: number, energy: number, t: Tuning)
   const count = choices[Math.floor(hash2(seed, block * 64 + barIdx, 313) * choices.length) % choices.length] ?? 1;
   const ph = (seed % 97) * 0.37;
   const sweep = Math.sin((2 * Math.PI * time) / (beat * L.sweepBeats) + ph) * (L.sweep * Math.PI) / 180;
-  const open = 0.55 + 0.45 * Math.sin((2 * Math.PI * time) / (bar * 2) + ph * 2);
+  const open = 0.55 + 0.45 * Math.sin((2 * Math.PI * time) / (bar * L.openBars) + ph * 2);
   const hue = (((seed % 1000) * 0.0137 + time / (bar * 8)) % 1 + 1) % 1;
   return { on, count, sweep, open, hue };
 }

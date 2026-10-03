@@ -5,7 +5,7 @@ import { makePartition } from "./partition";
 import { hash2 } from "./random";
 import { AREA_TYPES, generateMap, parseSeed } from "./map";
 import { Forest, crownReach } from "./forest";
-import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown } from "./witch";
+import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
 import { legendChance, population, spawnCreatures, stepCreature, stepCreaturesNear } from "./creatures";
 import { newGame, stepGame } from "./game";
@@ -707,5 +707,18 @@ describe("area borders", () => {
     expect(ok / pts.length).toBeGreaterThan(0.95);
     expect(new Set(pts.map(p => p.other)).size).toBeGreaterThanOrEqual(3);
     console.log(`border: ${pts.length} points in ${ms.toFixed(0)} ms`);
+  });
+});
+
+describe("facing", () => {
+  it("faces the viewer unless clearly heading up the screen, with a little hysteresis on the cone", () => {
+    const deg = (a: number) => [Math.sin((a * Math.PI) / 180) * 10, -Math.cos((a * Math.PI) / 180) * 10] as const;
+    expect(facingAway(...deg(0), false, 1, TUNING)).toBe(true);    // straight up
+    expect(facingAway(...deg(90), true, 1, TUNING)).toBe(false);   // purely sideways: towards, even if it was away
+    expect(facingAway(...deg(180), true, 1, TUNING)).toBe(false);  // down
+    expect(facingAway(0, 0, true, 1, TUNING)).toBe(false);          // stopped
+    const between = (TUNING.facing.awayEnter + TUNING.facing.awayLeave) / 2;
+    expect(facingAway(...deg(between), false, 1, TUNING)).toBe(false); // not yet in
+    expect(facingAway(...deg(between), true, 1, TUNING)).toBe(true);   // not yet out
   });
 });
