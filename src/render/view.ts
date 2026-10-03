@@ -325,6 +325,8 @@ export class View {
     const per = new Map<number, SpriteInstance[]>();
     const add = (type: number, inst: SpriteInstance) => { let l = per.get(type); if (!l) per.set(type, (l = [])); l.push(inst); };
     const mpp = this.mpp;
+    // How far up the screen a step up a sprite goes, for each step of ground toward the camera.
+    const pitch = (pose.angle * Math.PI) / 180, upOnScreen = SPRITE_UNIFORMS.uUp.value.dot(this.v3.set(0, Math.cos(pitch), -Math.sin(pitch)));
     let nt = 0, nb = 0;
     for (const p of g.forest.treesNear(cx, cz, half)) {
       const art = this.assets.typeArt(p.type);
@@ -346,11 +348,21 @@ export class View {
         if (!pieces.length) continue;
         const piece = pieces[p.variant % pieces.length], f = art.atlas.frames, frame = f[piece.bot], whole = f[piece.top ?? piece.bot];
         const scale = kind === "setpiece" ? t.setPieceScale : 1, m = mpp * scale; // set pieces: each area's landmark, drawn big
-        if (!this.inView(p.x, p.z, whole.w * m, whole.h * m, margin, reach)) continue;
+        // A piece drawn in perspective is anchored by its origin, its middle on the ground: its
+        // bottom row (the front of it, nearest the camera) stands on the ground that much nearer
+        // the camera, so the origin lands on its spot and nothing of it sinks under the ground.
+        let x = p.x, z = p.z;
+        if (piece.origin) {
+          const ox = p.flip ? frame.w - piece.origin.x : piece.origin.x;
+          x += (frame.w / 2 - ox) * m;
+          z += ((frame.h - piece.origin.y) * m * upOnScreen) / Math.max(0.2, Math.sin(pitch));
+        }
+        if (!this.inView(x, z, whole.w * m, whole.h * m, margin, reach)) continue;
         const fresh = this.mark(kind, p.x, p.z, whole.h * m);
-        add(p.type, { x: p.x, y: 0, z: p.z, frame, flip: p.flip, fresh, scale });
-        if (piece.top !== null) add(p.type, { x: p.x, y: 0, z: p.z, frame: f[piece.top], flip: p.flip, top: true, fresh, scale });
-        shadows.push({ x: p.x, z: p.z, w: frame.w * m * 0.8, d: frame.w * m * 0.3, scenery: true });
+        add(p.type, { x, y: 0, z, frame, flip: p.flip, fresh, scale });
+        if (piece.top !== null) add(p.type, { x, y: 0, z, frame: f[piece.top], flip: p.flip, top: true, fresh, scale });
+        // Set pieces model their own ground: no blob under them (it read as a hard dark oval).
+        if (kind !== "setpiece") shadows.push({ x: p.x, z: p.z, w: frame.w * m * 0.8, d: frame.w * m * 0.3, scenery: true });
         nb++;
       }
     };

@@ -63,6 +63,11 @@ export interface ForestMap {
   areaAt(x: number, z: number): AreaSample;
   /** The area's set piece, if this one has one (rare: setPieceChance of the types that have one). */
   setPieceOf(cx: number, cy: number): string | null;
+  /** Where an area's soundsystem stands when the party reaches it (reserved from the start). */
+  soundsystemSpot(cx: number, cy: number): { x: number; z: number };
+  /** Where an area's set piece stands: in its clearing, its footprint clear of every soundsystem
+   *  and the dancefloor; null if it has none, or there is no room for it. */
+  setPieceSpot(cx: number, cy: number): { x: number; z: number } | null;
   /** How far an area is from home: 0 at the middle area, 1 at the map's edge. */
   remoteness(cx: number, cy: number): number;
   /** An area's centre (its layer-0 site), in metres. */
@@ -165,13 +170,60 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   };
   // The dancefloor keeps a clearing of its own, however close a neighbouring area's centre.
   const floorR = tuning.dancefloor.radius, floorClear = floorR + tuning.dancefloor.clearing;
+
+  // Gameplay is placed first: each area's soundsystem spot is reserved from the start (whether or
+  // not the party has reached it yet), then scenery keeps clear of it and of the dancefloor.
+  const inCell = (x: number, z: number, cx: number, cy: number) => { const c = areaAt(x, z).cell; return c[0] === cx && c[1] === cy; };
+  const soundSpots = new Map<string, { x: number; z: number }>();
+  const soundsystemSpot = (cx: number, cy: number) => {
+    const key = cellKey(cx, cy), had = soundSpots.get(key);
+    if (had) return had;
+    // Beside the area's centre, in its clearing, inside its own ground.
+    const s = siteOf(cx, cy), r = rng(seed * 17 + cx * 53 + cy * 911);
+    let [ax, az] = [s.x, s.z];
+    if (!inCell(s.x, s.z, cx, cy)) search: for (let d = 2; d < A * 0.75 * 1.5; d += 2) for (let k = 0; k < 16; k++) {
+      const a = (k / 16) * Math.PI * 2, x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
+      if (inCell(x, z, cx, cy)) { [ax, az] = [x, z]; break search; }
+    }
+    let spot = { x: ax, z: az };
+    for (let i = 0; i < 24; i++) {
+      const a = r() * Math.PI * 2, d = 3 + r() * 4, x = ax + Math.cos(a) * d, z = az + Math.sin(a) * d + 3;
+      if (inCell(x, z, cx, cy)) { spot = { x, z }; break; }
+    }
+    soundSpots.set(key, spot);
+    return spot;
+  };
+  const pieceSpots = new Map<string, { x: number; z: number } | null>();
+  const setPieceSpot = (cx: number, cy: number) => {
+    const key = cellKey(cx, cy);
+    if (pieceSpots.has(key)) return pieceSpots.get(key)!;
+    let spot: { x: number; z: number } | null = null;
+    if (setPieceOf(cx, cy) && !(cx === centreCell[0] && cy === centreCell[1])) {
+      const R = tuning.setPieceFootprint * tuning.setPieceScale, gap = tuning.reserveMargin;
+      const sounds = [cellKey(cx, cy), ...(neighbours.get(cellKey(cx, cy)) ?? [])].map(k => { const [x, y] = k.split(",").map(Number); return soundsystemSpot(x, y); });
+      const clear = (x: number, z: number) => inCell(x, z, cx, cy)
+        && sounds.every(p => Math.hypot(x - p.x, z - p.z) >= R + tuning.soundsystemFootprint + gap)
+        && Math.hypot(x - centre.x, z - centre.z) >= R + floorClear + gap;
+      // Its old place (a little north of the centre) if that is clear, else the nearest clear
+      // spot round it, out to the edge of the clearing.
+      const s = siteOf(cx, cy);
+      search: for (let d = 0; d <= A * 0.35; d += 3) for (let k = 0; k < (d ? 16 : 1); k++) {
+        const a = (k / 16) * Math.PI * 2, x = s.x + Math.cos(a) * d, z = s.z - 4 + Math.sin(a) * d;
+        if (clear(x, z)) { spot = { x, z }; break search; }
+      }
+    }
+    pieceSpots.set(key, spot);
+    return spot;
+  };
   const treeWeight = (x: number, z: number) => {
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return 0;
     const [u, v] = toPart(x, z), cell = partition.partition(u, v);
-    // A set piece keeps a clearing round it, sized with it.
-    if (setPieceOf(cell[0], cell[1])) {
-      const p = siteOf(cell[0], cell[1]);
-      if (Math.hypot(x - p.x, z - (p.z - 4)) < tuning.setPieceClear * tuning.setPieceScale) return 0;
+    // A set piece keeps a clearing round it, sized with it; a soundsystem a little room.
+    const p = setPieceSpot(cell[0], cell[1]);
+    if (p && Math.hypot(x - p.x, z - p.z) < tuning.setPieceClear * tuning.setPieceScale) return 0;
+    if (!(cell[0] === centreCell[0] && cell[1] === centreCell[1])) {
+      const q = soundsystemSpot(cell[0], cell[1]);
+      if (Math.hypot(x - q.x, z - q.z) < tuning.soundsystemFootprint + tuning.treeMarginFromSoundsystem) return 0;
     }
     // Trees thin gradually toward the centre: a long smooth falloff over clearingFalloff.
     const glade = 1 - smoothstep((vnoise(x / tuning.gladeScale, z / tuning.gladeScale, seed + 61) - (1 - tuning.gladeAmount)) / 0.03);
@@ -186,6 +238,6 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     start: { x: centre.x, z: centre.z + 2 },
     bounds: { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad },
     extent: { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A },
-    typeOf, areaAt, siteOf, treeWeight, neighbours, setPieceOf, remoteness,
+    typeOf, areaAt, siteOf, treeWeight, neighbours, setPieceOf, soundsystemSpot, setPieceSpot, remoteness,
   };
 }

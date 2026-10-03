@@ -17,7 +17,12 @@ export type MakeCanvas = (w: number, h: number) => AnyCanvas;
 
 /** Where each of an area type's sprites sits in its atlas. A big object with a top half (a
  *  tree's crown) has `top`; one without (a mound, a boulder, a log) is drawn whole, always. */
-export interface Piece { bot: number; top: number | null }
+export interface Piece {
+  bot: number; top: number | null;
+  /** The pixel (from the sprite's top left) where its middle on the ground lands, for the 3D set
+   *  pieces drawn in perspective; without one the sprite stands on its bottom row. */
+  origin?: { x: number; y: number };
+}
 export interface TypeLayout {
   big: Piece[];
   small: Piece[];
@@ -45,7 +50,7 @@ function areaTree(def: ArtDef, o: TreeOpts, st: Style, r: () => number, K: numbe
  *  variants, split into halves), small objects, wall objects, set piece, and floor tile. */
 export function typeSprites(st: Style, seed: number, t: number, K: number, mk: MakeCanvas): { sprites: Baked[]; layout: TypeLayout; floor: Baked } {
   const id = AREA_TYPES[t].id, def = (AREAS as unknown as ArtDef[]).find(a => a.id === id)!;
-  const assets = areaAssets(id, st, { K, makeCanvas: mk }) as { floor: { sp: Baked }; walls: { sp: Baked }[]; small: { sp: Baked }[]; big: { sp: Baked }[]; setPiece: { sp: Baked } | null };
+  const assets = areaAssets(id, st, { K, makeCanvas: mk }) as { floor: { sp: Baked }; walls: { sp: Baked }[]; small: { sp: Baked }[]; big: { sp: Baked }[]; setPiece: { sp: Baked; origin?: { x: number; y: number } } | null };
   const sprites: Baked[] = [], add = (b: Baked) => sprites.push(b) - 1;
   const layout: TypeLayout = { big: [], small: [], walls: [], set: null };
   const bk = (sp: unknown, col: unknown) => Art.bake(sp, col, st, "none", mk) as Baked;
@@ -62,7 +67,7 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   });
   def.small.forEach(([kind, o], i) => layout.small.push(kind === "tree" ? tree(o as TreeOpts, 500 + i) : { bot: add(assets.small[i].sp), top: null }));
   for (const a of assets.walls) layout.walls.push(add(a.sp));
-  if (assets.setPiece) layout.set = def.set?.[0] === "tree" ? tree(def.set[1] as TreeOpts, 900) : { bot: add(assets.setPiece.sp), top: null };
+  if (assets.setPiece) layout.set = def.set?.[0] === "tree" ? tree(def.set[1] as TreeOpts, 900) : { bot: add(assets.setPiece.sp), top: null, origin: assets.setPiece.origin };
   return { sprites, layout, floor: assets.floor.sp };
 }
 

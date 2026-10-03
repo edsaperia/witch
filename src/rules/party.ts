@@ -2,10 +2,9 @@
 // Every `interval` seconds a wave comes: every area touching a partified area (sharing a border
 // in the fractal partition) gets a soundsystem and is partified too, so the party grows a ring of
 // areas at a time. Seeded and deterministic; no drawing here.
-import { hash2, rng } from "./random";
+import { hash2 } from "./random";
 import type { ForestMap } from "./map";
 import type { Cell } from "./partition";
-import { anchorOf } from "./creatures";
 
 export interface Soundsystem { x: number; z: number; variant: number }
 
@@ -38,15 +37,9 @@ export function newParty(map: ForestMap): PartyState {
 
 /** Where an area's soundsystem stands: in its clearing, beside its centre, inside its own ground. */
 export function soundsystemFor(map: ForestMap, cell: Cell): Soundsystem {
-  const s = map.siteOf(cell[0], cell[1]), r = rng(map.seed * 17 + cell[0] * 53 + cell[1] * 911);
-  const [ax, az] = anchorOf(map, [cell[0], cell[1]], s.x, s.z, map.areaSize * 0.75);
+  // The spot is the map's (reserved from the start, so scenery keeps clear of it).
   const variant = Math.floor(hash2(cell[0], cell[1], map.seed + 77) * 3) % 3;
-  for (let i = 0; i < 24; i++) {
-    const a = r() * Math.PI * 2, d = 3 + r() * 4, x = ax + Math.cos(a) * d, z = az + Math.sin(a) * d + 3;
-    const c = map.areaAt(x, z).cell;
-    if (c[0] === cell[0] && c[1] === cell[1]) return { x, z, variant };
-  }
-  return { x: ax, z: az, variant };
+  return { ...map.soundsystemSpot(cell[0], cell[1]), variant };
 }
 
 const inMap = (map: ForestMap, c: Cell) => c[0] >= 0 && c[1] >= 0 && c[0] < map.n && c[1] < map.n;

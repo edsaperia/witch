@@ -20,6 +20,13 @@ export interface Tuning {
   /** Set pieces drawn this much bigger than the art, with a clearing of setPieceClear metres (times the scale) round them. */
   setPieceScale: number;
   setPieceClear: number;
+  /** Placement: a set piece's footprint radius (metres, before setPieceScale) and a soundsystem's;
+   *  set pieces keep reserveMargin more from soundsystems and the dancefloor, trees
+   *  treeMarginFromSoundsystem from a soundsystem's footprint. */
+  setPieceFootprint: number;
+  soundsystemFootprint: number;
+  reserveMargin: number;
+  treeMarginFromSoundsystem: number;
   bushDensity: number;
   /** How much bushes gather in clumps with open floor between (0 even, 1 strongly clumped). */
   bushClump: number;

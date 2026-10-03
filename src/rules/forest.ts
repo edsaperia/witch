@@ -153,10 +153,9 @@ export class Forest {
     const m = this.map, A = m.areaSize, out: Plant[] = [];
     for (let cy = Math.floor((z - radius) / A) - 1; cy <= Math.floor((z + radius) / A) + 1; cy++)
       for (let cx = Math.floor((x - radius) / A) - 1; cx <= Math.floor((x + radius) / A) + 1; cx++) {
-        if ((cx === m.centreCell[0] && cy === m.centreCell[1]) || !m.setPieceOf(cx, cy)) continue;
-        const s = m.siteOf(cx, cy);
-        if (Math.abs(s.x - x) <= radius && Math.abs(s.z - 4 - z) <= radius)
-          out.push({ x: s.x, z: s.z - 4, type: m.typeOf(cx, cy), variant: 0, flip: hash2(cx, cy, m.seed + 71) < 0.5 });
+        const s = m.setPieceSpot(cx, cy); // none at home, nor where it can't keep clear of the gameplay
+        if (s && Math.abs(s.x - x) <= radius && Math.abs(s.z - z) <= radius)
+          out.push({ x: s.x, z: s.z, type: m.typeOf(cx, cy), variant: 0, flip: hash2(cx, cy, m.seed + 71) < 0.5 });
       }
     return out;
   }

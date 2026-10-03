@@ -127,5 +127,10 @@
   "setPieceChance": 0.25,
   "setPieceScale": 1.8,
   "setPieceClear": 9,
+  "_placement": "Gameplay is placed first, then scenery keeps clear of it: a set piece's footprint (setPieceFootprint metres round its middle, times setPieceScale) stays reserveMargin metres clear of every soundsystem's spot (soundsystemFootprint metres round it, reserved from the start) and of the dancefloor's clearing; a set piece with no room left is left out. Trees keep treeMarginFromSoundsystem metres from a soundsystem's footprint.",
+  "setPieceFootprint": 7,
+  "soundsystemFootprint": 6,
+  "reserveMargin": 3,
+  "treeMarginFromSoundsystem": 1.5,
   "legendSpeed": 0.35
 }
