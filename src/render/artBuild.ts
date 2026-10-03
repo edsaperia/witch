@@ -31,7 +31,7 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   for (let v = 0; v < TREE_VARIANTS; v++) {
     const tr = rng(seed * 13 + t * 101 + v * 7 + 1);
     const f = Art.chooseType(tr, ast) as (r: () => number, st: Style, s: number) => { sp: unknown; crownY: number };
-    const tree = Art.finishTree(f(tr, ast, st.treeSize * K * Art.uni(tr, 0.85, 1.15)), ast, tr);
+    const tree = Art.finishTree(f(tr, ast, st.treeSize * K * Art.uni(tr, 0.85, 1.15)));
     const col = Art.treeColours(tr, ast, f), parts = Art.splitTree(tree);
     out.push(bk(parts.bot, col), bk(parts.top, col));
   }

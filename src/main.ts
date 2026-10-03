@@ -17,7 +17,8 @@ if (seed === null) {
 
 const game = newGame(seed, TUNING);
 const canvas = document.getElementById("game") as HTMLCanvasElement;
-const view = new View(canvas, game, loadStyle());
+// The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
+const view = new View(canvas, game, { ...loadStyle(), pixel: TUNING.pixelSize });
 const input = new Input();
 setupTouch(document.body, input.touch);
 
