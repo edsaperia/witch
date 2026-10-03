@@ -43,6 +43,9 @@ const view = new View(canvas, game, {
   treeSize: style.treeSize * tuning.treeHeight, crownWidth: style.crownWidth * tuning.crownWidth / tuning.treeHeight,
 });
 view.debugCull = params.get("debug") === "cull";
+// ?scenery=<metres>: a fixed scenery radius instead of the adaptive budget.
+const sceneryAt = Number(params.get("scenery"));
+if (params.has("scenery") && sceneryAt > 0) view.sceneryFixed = sceneryAt;
 const input = new Input();
 document.getElementById("next-wave")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.nextWave = true; });
 document.getElementById("pause-waves")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.pauseWaves = true; });
@@ -120,6 +123,7 @@ function frame(now: number): void {
       `mode   ${w.mode}`,
       `at     ${w.x.toFixed(0)}, ${w.z.toFixed(0)} m   zoom ${game.camera.zoomStep}`,
       `trees  ${s.trees}  bushes ${s.bushes}  creatures ${s.creatures}`,
+      `budget scenery to ${s.sceneryRadius.toFixed(0)} m (${s.scenery})  gameplay ${s.gameplay}  dropped ${s.dropped}`,
       `draws  ${s.drawCalls}  art queued ${s.pendingArt}  ground tiles ${s.pendingGround}`,
     ].join("\n");
   }

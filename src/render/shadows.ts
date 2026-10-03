@@ -9,12 +9,14 @@ import * as THREE from "three";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 
 const VERT = /* glsl */ `
-attribute vec4 iShadow; // x, z, width, depth (metres)
+attribute vec4 iShadow; // x, z, width, depth (metres); a negative width marks scenery's
 varying vec2 vLocal;
 varying vec3 vWorld;
+varying float vScenery;
 void main() {
   vLocal = position.xz * 2.0;
-  vec3 w = vec3(iShadow.x + position.x * iShadow.z, 0.03, iShadow.y + position.z * iShadow.w);
+  vScenery = iShadow.z < 0.0 ? 1.0 : 0.0;
+  vec3 w = vec3(iShadow.x + position.x * abs(iShadow.z), 0.03, iShadow.y + position.z * iShadow.w);
   vWorld = w;
   gl_Position = projectionMatrix * viewMatrix * vec4(w, 1.0);
 }`;
@@ -23,6 +25,7 @@ const FRAG = /* glsl */ `
 uniform float uStrength;
 varying vec2 vLocal;
 varying vec3 vWorld;
+varying float vScenery;
 ${LIGHT_GLSL}
 float bayer(vec2 p) {
   int i = int(mod(p.x, 4.0)) + int(mod(p.y, 4.0)) * 4;
@@ -32,7 +35,7 @@ float bayer(vec2 p) {
 void main() {
   float r = dot(vLocal, vLocal);
   if (r > 1.0) discard;
-  float a = uStrength * (1.0 - r * r);
+  float a = uStrength * (1.0 - r * r) * (vScenery > 0.5 ? sceneryFade(vWorld) : 1.0); // fading with its scenery
   if (uSmooth > 0.5) {
     float h = smoothstep(uHazeRange.x, uHazeRange.y, length(vWorld.xz - uHazeCentre));
     gl_FragColor = vec4(mix(vec3(1.0 - a * (1.0 - r)), vec3(1.0), h * h), 1.0); // multiplied over the ground
@@ -42,7 +45,8 @@ void main() {
   gl_FragColor = vec4(haze(uHazeColour * 0.25, vWorld), 1.0);
 }`;
 
-export interface ShadowInstance { x: number; z: number; w: number; d: number }
+/** scenery: a tree's or bush's, fading out with it at the scenery budget's edge. */
+export interface ShadowInstance { x: number; z: number; w: number; d: number; scenery?: boolean }
 
 export class ShadowBatch {
   readonly mesh: THREE.Mesh;
@@ -74,7 +78,7 @@ export class ShadowBatch {
   set(items: ShadowInstance[]): void {
     if (items.length > this.capacity) this.grow(items.length);
     const a = this.attr.array as Float32Array;
-    items.forEach((s, i) => { a[i * 4] = s.x; a[i * 4 + 1] = s.z; a[i * 4 + 2] = s.w; a[i * 4 + 3] = s.d; });
+    items.forEach((s, i) => { a[i * 4] = s.x; a[i * 4 + 1] = s.z; a[i * 4 + 2] = s.scenery ? -s.w : s.w; a[i * 4 + 3] = s.d; });
     this.attr.needsUpdate = true;
     this.geo.instanceCount = items.length;
     this.mesh.visible = items.length > 0;

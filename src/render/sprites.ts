@@ -61,7 +61,7 @@ uniform sampler2D uAlbedo, uNormal;
 uniform vec3 uRight, uUp, uFacing;
 uniform float uTopFade, uUnlit;
 uniform vec4 uCutout;
-uniform float uDebugCull;
+uniform float uDebugCull, uIsScenery;
 uniform vec4 uWitch, uOcc, uSilhouette;
 uniform float uFadePass;
 varying vec2 vUv;
@@ -76,7 +76,7 @@ float bayer(vec2 p) {
   int m[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
   return (float(m[i]) + 0.5) / 16.0;
 }
-void main() {
+void shade() {
   vec4 a = texture2D(uAlbedo, vUv);
   if (a.a < 0.5) discard;
   // The witch's see-through silhouette: where she is hidden, a flat tint in her glow colour.
@@ -103,6 +103,15 @@ void main() {
   vec3 N = normalize(uRight * nx - uUp * ny + uFacing * nz);
   gl_FragColor = vec4(haze(min(vec3(1.0), a.rgb * nightLight(N, vWorld) * 1.25), vWorld), alpha);
 }
+void main() {
+  shade();
+  // Scenery past the budget's radius fades out smoothly (alpha), from the far edge inward.
+  if (uIsScenery > 0.5) {
+    float k = sceneryFade(vWorld);
+    if (k < 0.004) discard;
+    gl_FragColor.a *= k;
+  }
+}
 `;
 
 export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** Drawn this much bigger (1 if left out). */ scale?: number }
@@ -121,7 +130,7 @@ export class SpriteBatch {
   count = 0;
 
   /** metresPerPixel: world size of one art pixel. */
-  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; fade?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number } } = {}) {
+  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number } } = {}) {
     const quad = new THREE.PlaneGeometry(1, 1);
     quad.translate(0, 0.5, 0); // stand on the base
     this.geo = new THREE.InstancedBufferGeometry();
@@ -130,11 +139,15 @@ export class SpriteBatch {
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.pos = this.size = this.uvs = this.flags = undefined as never;
     this.grow(64);
-    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uFadePass: { value: 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, ...extra });
-    const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uniforms({}), depthTest: !opts.onTop, depthWrite: !opts.onTop });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uFadePass: { value: 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, ...extra });
+    // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
+    // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
+    const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};
+    const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uniforms({}), depthTest: !opts.onTop, depthWrite: !opts.onTop, ...blend });
     this.mesh = new THREE.Mesh(this.geo, mat);
     this.mesh.frustumCulled = false;
     if (opts.onTop) this.mesh.renderOrder = 10;
+    if (opts.scenery) this.mesh.renderOrder = 0.5; // after the ground it fades over, before the shadows and mist
     this.meshes = [this.mesh];
     if (opts.fade) {
       // Drawn after the witch (render order 10): the parts of tall things covering her, see-through.
