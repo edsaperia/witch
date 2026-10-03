@@ -85,7 +85,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
   <div class="layout">
     <div class="main">
       <section class="stage" aria-label="Current style, in a forest scene">
-        <canvas id="scene" width="299" height="168"></canvas>
+        <canvas id="scene" width="448" height="252"></canvas>
       </section>
       <div class="row">
         <label class="check"><input type="checkbox" id="party"> Party lights</label>
@@ -190,7 +190,7 @@ const KNOBS = [
   { k: "trunkHue", g: "Colour", label: "Bark hue", min: 0, max: 1, step: 0.01, v: 0.07, hue: true },
   { k: "groundHue", g: "Colour", label: "Ground hue", min: 0, max: 1, step: 0.01, v: 0.27, hue: true },
   { k: "groundVal", g: "Colour", label: "Ground brightness", min: 0.15, max: 0.7, step: 0.01, v: 0.4 },
-  { k: "pixel", g: "Shading", label: "Pixel size", min: 2, max: 5, step: 1, v: 3 },
+  { k: "pixel", g: "Shading", label: "Pixel size", min: 1, max: 5, step: 1, v: 2 },
   { k: "treeSize", g: "Trees", label: "Tree height", min: 0.5, max: 1.5, step: 0.05, v: 0.85 },
   { k: "crownWidth", g: "Trees", label: "Crown width", min: 1, max: 4, step: 0.1, v: 3 },
   { k: "clearing", g: "Trees", label: "Clearing size", min: 0, max: 1, step: 0.05, v: 0.55 },
@@ -200,6 +200,8 @@ const KNOBS = [
   { k: "density", g: "Trees", label: "Foliage density", min: 0.2, max: 1, step: 0.05, v: 0.55 },
   { k: "clump", g: "Trees", label: "Clumpiness", min: 0, max: 1, step: 0.05, v: 0.6 },
   { k: "gnarl", g: "Trees", label: "Gnarliness", min: 0, max: 1, step: 0.05, v: 0.5 },
+  { k: "roots", g: "Trees", label: "Roots", min: 0, max: 1, step: 0.05, v: 0.6 },
+  { k: "bark", g: "Trees", label: "Bark texture", min: 0, max: 1, step: 0.05, v: 0.6 },
   { k: "trees", g: "Trees", label: "Tree density", min: 0.2, max: 2, step: 0.05, v: 1 },
   { k: "wBroad", g: "Tree mix", label: "Gnarled broadleaf", min: 0, max: 1, step: 0.05, v: 0.8 },
   { k: "wFir", g: "Tree mix", label: "Fir", min: 0, max: 1, step: 0.05, v: 0.6 },
@@ -249,7 +251,7 @@ function hsv2rgb(h, s, v) {
 }
 
 // ================= sprites: material + normal per pixel =================
-const M = { EMPTY: 0, BODY: 1, BELLY: 2, ACCENT: 3, EYE: 4, GLINT: 5, TRUNK: 6, LEAF: 7, LEAF2: 8, CLOTH: 9, SKIN: 10, HAIR: 11, BROOM: 12, STRAW: 13, BODY2: 14, BARK2: 15, FLOWER: 16, PUPIL: 17, MAGIC: 18 };
+const M = { EMPTY: 0, BODY: 1, BELLY: 2, ACCENT: 3, EYE: 4, GLINT: 5, TRUNK: 6, LEAF: 7, LEAF2: 8, CLOTH: 9, SKIN: 10, HAIR: 11, BROOM: 12, STRAW: 13, BODY2: 14, BARK2: 15, FLOWER: 16, PUPIL: 17, MAGIC: 18, BARKD: 19 };
 class Sprite {
   constructor(w, h, sx = 1) { this.sx = sx; this.w = Math.round(w * sx); this.h = h | 0; this.m = new Uint8Array(this.w * this.h); this.n = new Float32Array(this.w * this.h * 3); }
   inb(x, y) { return x >= 0 && y >= 0 && x < this.w && y < this.h; }
@@ -323,7 +325,7 @@ function broadTree(r, st, s) {
   return { sp, crownY };
 }
 function firTree(r, st, s) {
-  const W = Math.round(70 * s), H = Math.round(150 * s), sp = new Sprite(W, H, st.crownWidth || 1), tx = W / 2;
+  const W = Math.round(70 * s), H = Math.round(150 * s), sp = new Sprite(W, H, 1 + ((st.crownWidth || 1) - 1) * .35), tx = W / 2;
   sp.line(tx, H - 1, tx, 8, 5 * s, 1.5, M.TRUNK, st.round);
   const tiers = Math.round(uni(r, 8, 12));
   for (let i = 0; i < tiers; i++) {
@@ -351,7 +353,7 @@ function willowTree(r, st, s) {
   return { sp, crownY };
 }
 function birchTree(r, st, s) {
-  const W = Math.round(80 * s), H = Math.round(140 * s), sp = new Sprite(W, H, st.crownWidth || 1), cx = W / 2, lean = (r() - .5) * 10 * s;
+  const W = Math.round(80 * s), H = Math.round(140 * s), sp = new Sprite(W, H, 1 + ((st.crownWidth || 1) - 1) * .5), cx = W / 2, lean = (r() - .5) * 10 * s;
   sp.line(cx, H - 1, cx + lean, 10, 4 * s, 2, M.BARK2, st.round);
   for (let y = 12; y < H - 2; y += uni(r, 4, 9)) { const f = 1 - y / H, x = cx + lean * f; sp.put(x + (r() < .5 ? 0 : 1), y, M.TRUNK); }
   for (let i = 0; i < 7; i++) {
@@ -401,7 +403,7 @@ function chooseType(r, st) {
 }
 function treeColours(r, st, type) {
   const h = st.leafHue + (r() - .5) * st.leafVariety * .7 + (type === firTree ? .06 : 0);
-  return { [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .32), [M.BARK2]: [222, 220, 212], [M.LEAF]: hsv2rgb(h, .62 * st.sat, .62), [M.LEAF2]: hsv2rgb(h - .05, .55 * st.sat, .82) };
+  return { [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .32), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARK2]: [222, 220, 212], [M.LEAF]: hsv2rgb(h, .62 * st.sat, .62), [M.LEAF2]: hsv2rgb(h - .05, .55 * st.sat, .82) };
 }
 
 // ================= undergrowth =================
@@ -638,11 +640,28 @@ function bake(sp, colours, st, outlineMode = st.outline) {
   A.getContext("2d").putImageData(a, 0, 0); N.getContext("2d").putImageData(n, 0, 0); NF.getContext("2d").putImageData(nf, 0, 0);
   return { A, N, NF, w, h };
 }
+// Spreading roots at the base, and bark: dark crevices running along the trunk.
+function finishTree(t, st, r) {
+  const { sp } = t, s = sp.sx, baseX = (() => { for (let x = 0; x < sp.w; x++) for (let y = sp.h - 1; y > sp.h - 4; y--) if (sp.get(x, y) === M.TRUNK || sp.get(x, y) === M.BARK2) return x; return sp.w / 2; })();
+  let minX = sp.w, maxX = 0; for (let x = 0; x < sp.w; x++) if (sp.get(x, sp.h - 2) === M.TRUNK || sp.get(x, sp.h - 3) === M.TRUNK) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); }
+  if (maxX >= minX && st.roots > 0) {
+    const cx = (minX + maxX) / 2, n = Math.round(2 + st.roots * 4);
+    for (let i = 0; i < n; i++) {
+      const side = i % 2 ? 1 : -1, len = (6 + r() * 18) * st.roots * (sp.h / 110) + 3, th = Math.max(1.5, (maxX - minX) * .35);
+      sp.line(cx / s + side * th * .3 / s, sp.h - 4 - r() * 3, (cx + side * len) / s, sp.h - 1 - r() * 2, th, 1, M.TRUNK, st.round);
+    }
+  }
+  if (st.bark > 0) for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) {
+    if (sp.get(x, y) !== M.TRUNK) continue;
+    if (vnoise(x / 1.4, y / 5, 21) > 1 - st.bark * .45 || hash2(x, y, 4) < st.bark * .08) { const i = (y * sp.w + x) * 3; sp.px(x, y, M.BARKD, sp.n[i], sp.n[i + 1], sp.n[i + 2]); }
+  }
+  return t;
+}
 function splitTree(t) { // bottom = trunk below the crown line; top = everything else
   const { sp, crownY } = t, top = new Sprite(sp.w, sp.h), bot = new Sprite(sp.w, sp.h);
   for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) {
     const i = y * sp.w + x, m = sp.m[i]; if (!m) continue;
-    const dst = (m === M.TRUNK || m === M.BARK2) && y >= crownY ? bot : top;
+    const dst = (m === M.TRUNK || m === M.BARK2 || m === M.BARKD) && y >= crownY ? bot : top;
     dst.put(x, y, m, sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]);
   }
   return { top, bot };
@@ -661,7 +680,7 @@ function buildAssets(st, world) {
   const r = rng(world.forestSeed), trees = [];
   for (let i = 0; i < 12; i++) {
     const area = Math.floor(i / 4), ar = rng(world.forestSeed * 31 + area), ast = areaStyle(st, world, area);
-    const tr = rng(world.forestSeed * 13 + i), f = chooseType(ar, ast), t = f(tr, ast, st.treeSize * K * uni(tr, .85, 1.15)), col = treeColours(tr, ast, f), parts = splitTree(t);
+    const tr = rng(world.forestSeed * 13 + i), f = chooseType(ar, ast), t = finishTree(f(tr, ast, st.treeSize * K * uni(tr, .85, 1.15)), ast, tr), col = treeColours(tr, ast, f), parts = splitTree(t);
     trees.push({ whole: bake(t.sp, col, st), top: bake(parts.top, col, st), bot: bake(parts.bot, col, st) });
   }
   const bushes = [];
@@ -926,6 +945,7 @@ const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } cat
 let world = store.get("witch-art-world-3") || { kinds: ["wolf", "fox", "boar", "badger", "stag", "owl"], forestSeed: 3 };
 if (!world.kinds.every(k => SPECIES_BY_ID[k])) world.kinds = ["wolf", "fox", "boar", "badger", "stag", "owl"];
 let current = { ...defaultStyle(), ...(store.get("witch-art-style-3") || {}) };
+if (!current.v4) { current.pixel = 2; current.v4 = true; }
 let history = store.get("witch-art-history-3") || [];
 let varySeed = 1, variants = [], assetsCurrent, layoutCurrent;
 const varyGroups = new Set(GROUPS);
