@@ -50,7 +50,7 @@ const sdf0 = (q, p) => q.type === "ell" ? sdEllipsoid(sub(p, q.cw), q) : q.type 
 const sdf = (q, p) => q.rough ? sdf0(q, p) + rough(p, q.rough) : sdf0(q, p);
 
 export class Model {
-  constructor({ blend = .07 } = {}) { this.parts = []; this.flats = []; this.blend = blend; }
+  constructor({ blend = .07 } = {}) { this.parts = []; this.flats = []; this.blend = blend; this.anchors = { feet: [] }; }
   // Every volume also takes o.rough (a hewn, bumpy surface, as a distance) and o.cut: a cut
   // part carves a hollow out of its group instead of adding to it (a horn mouth, a socket);
   // the hollow's walls are drawn in the cut part's material.
@@ -75,6 +75,20 @@ export class Model {
   // A shaped flat plane centred at c, spanning ±su along u and ±sv along v; mask(s, t) with
   // s, t in [-1, 1] returns a material (or nothing for a hole). o: { group, extra, bend }
   flat(c, u, v, su, sv, mask, o = {}) { this.flats.push({ c, u: norm(u), v: norm(v), su, sv, mask, group: o.group ?? 30, extra: !!o.extra, bend: o.bend ?? .35 }); return this; }
+  // The signed distance to the model's surface at a model-space point (its solid parts, not those
+  // marked extra or cut): for fitting things to the body, such as a collar.
+  field(p) {
+    let d = Infinity;
+    for (const q of this.parts) {
+      if (q.extra || q.cut) continue;
+      let e;
+      if (q.type === "ell") e = sdEllipsoid(sub(p, q.c), q);
+      else if (q.type === "box") e = sdRoundBox(sub(p, q.c), q);
+      else { const ba = sub(q.b, q.a), l2 = Math.max(1e-9, dot(ba, ba)), rr = q.r1 - q.r2; e = sdRoundCone(sub(p, q.a), { ba, l2, rr, a2: l2 - rr * rr, il2: 1 / l2, r1: q.r1, r2: q.r2 }); }
+      if (e < d) d = e; // (a degenerate part's NaN is skipped)
+    }
+    return d;
+  }
   // The point on an ellipsoid's surface (centre c, radii r along the model axes) in direction dir.
   static surface(c, r, dir) { const k = 1 / Math.hypot(dir[0] / r[0], dir[1] / r[1], dir[2] / r[2]); return [c[0] + dir[0] * k, c[1] + dir[1] * k, c[2] + dir[2] * k]; }
 }
@@ -174,7 +188,7 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
       if (sp.m[j] && grp[j] !== grp[i] && depth[j] - depth[i] > lineGap) { lines.push(i); break; }
     }
   }
-  for (const i of lines) if (![M.EYE, M.GLINT, M.MAGIC, M.MAGIC2, M.NOSE].includes(sp.m[i])) sp.m[i] = M.LINE;
+  for (const i of lines) if (![M.EYE, M.GLINT, M.MAGIC, M.MAGIC2, M.NOSE, M.COLLAR, M.WOKEN, M.RUNE, M.GLOW].includes(sp.m[i])) sp.m[i] = M.LINE; // glowing things are never outlined
   // a glint in each eye 2 x 2 or bigger: its top-left pixel
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const i = y * W + x; if (sp.m[i] !== M.EYE) continue;
@@ -187,6 +201,7 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
     const d = H - 1 - low;
     for (let y = H - 1; y >= 0; y--) for (let x = 0; x < W; x++) { const i = y * W + x, j = (y - d) * W + x, ok = y - d >= 0; sp.m[i] = ok ? sp.m[j] : 0; sp.g[i] = ok ? sp.g[j] : 0; for (let c = 0; c < 3; c++) sp.n[i * 3 + c] = ok ? sp.n[j * 3 + c] : 0; }
   }
+  sp.bodyH = Math.round((u1b - u0b) * s); // the body's height, without parts marked extra (antlers, wings)
   return { sp, s };
 }
 

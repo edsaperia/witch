@@ -1,8 +1,8 @@
 // Witch creatures: the bestiary (30 species, one per area type), their colours, and the
 // call that draws one. Each is built in 3D (creatures3d.js, model3d.js) and seen in
 // three-quarter view from above; it faces right and the game mirrors it.
-import { M, hsv2rgb } from "./core.js";
-import { height3d, quad3d, owl3d, hedgehog3d, toad3d, raven3d, bat3d, mole3d, beetle3d, snail3d, woodlouse3d, snake3d, moth3d, glowworm3d, spider3d } from "./creatures3d.js";
+import { M, hsv2rgb, rng } from "./core.js";
+import { withGear, height3d, quad3d, owl3d, hedgehog3d, toad3d, raven3d, bat3d, mole3d, beetle3d, snail3d, woodlouse3d, snake3d, moth3d, glowworm3d, spider3d } from "./creatures3d.js";
 // Every species is built in 3D (true three-quarter view, Ed 2026-10-03): four-legged ones by
 // quad3d, the others by a builder per body plan.
 const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad: toad3d, raven: raven3d, bat: bat3d, mole: mole3d, beetle: beetle3d, snail: snail3d, woodlouse: woodlouse3d, snake: snake3d, moth: moth3d, glowworm: glowworm3d, spider: spider3d })); // body plan -> 3D builder; four-legged species all use quad3d
@@ -51,7 +51,32 @@ export const SPECIES = [
 export const SPECIES_BY_ID = Object.fromEntries(SPECIES.map(s => [s.id, s]));
 export const FEATURE_NAMES = { wings: "spirit wings", mane: "a glowing mane", tails: "many tails", crystals: "crystals", tusksBig: "great tusks", antlersGlow: "glowing antlers", jackalope: "antlers", eyesRing: "a ring of eyes", moss: "a little forest on its back", starTail: "a starry tail", crown: "a crown", ribbons: "light ribbons", wingsBig: "huge glowing wings", horn: "a glowing horn", glowShell: "a glowing shell", hornsGlow: "glowing golden horns", flames: "a crest of flame", lantern: "a great lantern" };
 
-export function speciesColours(sp, st) {
+// Party gear's colourways (gear in critter).
+export const HAT_COLOURWAYS = [[[255, 70, 170], [255, 245, 250], [255, 230, 70]], [[40, 220, 255], [255, 236, 60], [255, 80, 180]], [[150, 80, 255], [175, 255, 60], [255, 255, 255]]];
+export const SHOE_STYLES = { sneakers: [[255, 70, 90], [250, 250, 245]], glitter: [[215, 215, 235], [190, 190, 210]], platform: [[160, 60, 230], [40, 30, 52]] };
+export const GLASSES_STYLES = ["bar", "star", "heart"];
+// A seeded mix of party gear for an invited creature (the prototype gives each its own seed):
+// always the collar in its sigil colour; often a hat, sunglasses or shoes; sometimes all three.
+export function partyGear(seed, collarColour = true) {
+  const r = rng((seed | 0) * 7919 + 17), all = r() < .12;
+  return {
+    collar: collarColour,
+    hat: all || r() < .45 ? Math.floor(r() * HAT_COLOURWAYS.length) : null,
+    glasses: all || r() < .4 ? GLASSES_STYLES[r() < .6 ? 0 : r() < .5 ? 1 : 2] : null,
+    shoes: all || r() < .4 ? Object.keys(SHOE_STYLES)[Math.floor(r() * 3)] : null,
+  };
+}
+export function speciesColours(sp, st, gear = null) {
+  const c = baseColours(sp, st);
+  if (!gear) return c;
+  if (gear.collar) c[M.COLLAR] = Array.isArray(gear.collar) ? gear.collar : c[M.MAGIC];
+  if (gear.hat != null) { const [a, b, pom] = HAT_COLOURWAYS[gear.hat % HAT_COLOURWAYS.length]; c[M.HAT1] = a; c[M.HAT2] = b; c[M.POM] = pom; }
+  if (gear.glasses) { c[M.SHADES] = [22, 18, 32]; c[M.FRAME] = gear.glasses === "heart" ? [255, 60, 110] : [255, 90, 210]; }
+  if (gear.shoes) { const [shoe, sole] = SHOE_STYLES[gear.shoes] || SHOE_STYLES.sneakers; c[M.SHOE] = shoe; c[M.SOLE] = sole; }
+  if (gear.woken) { c[M.WOKEN] = [255, 40, 36]; for (const k of [M.BODY, M.BODY2, M.BODY3, M.BELLY, M.ACCENT, M.EAR]) if (c[k]) c[k] = c[k].map((v, j) => Math.round(v * .72 + [30, 8, 12][j] * .1)); } // darker, a little redder
+  return c;
+}
+function baseColours(sp, st) {
   const s = SPECIES_BY_ID[sp], v = st.cVal / .85, sat = st.cSat / .6;
   const body = hsv2rgb(s.hue, s.sat * sat * st.sat, s.val * v);
   const belly = s.belly === "yellow" ? [240, 196, 40] : s.belly === "white" || s.q?.face === "badger" ? [236, 232, 222] : hsv2rgb(s.hue + .03, s.sat * .5 * sat, Math.min(1, s.val * v * 1.3 + .08));
@@ -66,19 +91,27 @@ export function speciesColours(sp, st) {
   };
 }
 
-// A creature's height in art pixels at each level (young about 45 at the default style;
-// legends about 4.5 times that; they keep their size on screen as pixels grow).
+// A creature's height in art pixels at each level: 0 baby, 1 young (about 45 at the default
+// style), 2 adult (1.3 times young), 3 legend (about 4.5 times young). They keep their size on
+// screen as pixels grow.
+export const LEVELS = ["baby", "young", "adult", "legend"];
 export const levelHeight = (level, st) => height3d(level, st);
 
 // facing: "towards" (head turned to the viewer) or "away" (we see the rump and back of the head).
 // Shapes don't depend on colours, so a creature is drawn once per shape-changing knob setting
 // (a lab session changes lighting and colour knobs far more often than these).
 const SHAPE_KNOBS = ["size", "growth", "pixel", "head", "eye", "legs", "long", "fur"], cache = new Map();
-export function critter(spId, level, frame, st, facing = "towards") {
-  const S = SPECIES_BY_ID[spId] || SPECIES[0], key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k])].join("|");
+// gear (optional): party gear and the woken look, { collar, hat, glasses, shoes, woken }:
+//   collar: a colour [r, g, b] (the creature's sigil neon) or true; hat: a colourway 0..2;
+//   glasses: "bar" | "star" | "heart"; shoes: "sneakers" | "glitter" | "platform"; woken: true.
+// Give the same gear to speciesColours for its colours. Shapes are cached per gear combination.
+export function critter(spId, level, frame, st, facing = "towards", gear = null) {
+  const S = SPECIES_BY_ID[spId] || SPECIES[0], g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken) ? gear : null;
+  const key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken].join(",") : ""].join("|");
   let sp = cache.get(key);
   if (!sp) {
-    sp = S.q ? quad3d(S, level, frame, st, facing) : MODELLED.get(S.plan)(S, level, frame, st, facing);
+    sp = withGear(g, () => S.q ? quad3d(S, level, frame, st, facing) : MODELLED.get(S.plan)(S, level, frame, st, facing));
+    if (g?.woken) for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.EYE || sp.m[i] === M.IRIS || sp.m[i] === M.PUPIL) sp.m[i] = M.WOKEN; // angry glowing eyes
     if (cache.size > 600) cache.delete(cache.keys().next().value);
     cache.set(key, sp);
   }
