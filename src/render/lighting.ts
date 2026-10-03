@@ -6,7 +6,7 @@ import { hsv2rgb } from "../../art/generator.js";
 import type { Style } from "./style";
 
 /** The most point lights shaded at once (the light budget in the tuning file may be lower). */
-export const MAX_LIGHTS = 16;
+export const MAX_LIGHTS = 24;
 
 export const LIGHT_UNIFORMS = {
   uAmb: { value: new THREE.Vector3() },
@@ -100,7 +100,7 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
   if (d < uGlowR) {
     float ndl = max(0.0, dot(N, v / max(d, 1e-4)));
     float fall = 1.0 - d / uGlowR;
-    l += uGlowRgb * lightStep(min(1.0, ndl * fall * fall * uGlowPower));
+    l += uGlowRgb * min(1.0, ndl * fall * fall * uGlowPower); // smooth to nothing at its reach: no ring
   }
   for (int i = 0; i < ${MAX_LIGHTS}; i++) {
     if (i >= uLightCount) break;
@@ -109,7 +109,7 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
     if (ld >= reach) continue;
     float ndl = max(0.0, dot(N, lv / max(ld, 1e-4))) * 0.7 + 0.3;
     float fall = 1.0 - ld / reach;
-    l += uLightCol[i].rgb * lightStep(min(1.0, ndl * fall * fall * uLightCol[i].w));
+    l += uLightCol[i].rgb * min(1.0, ndl * fall * fall * uLightCol[i].w);
   }
   if (uDisco.w > 0.5) {
     // The disco ball's specks: a grid of spots on a sphere round the ball, turning with it,

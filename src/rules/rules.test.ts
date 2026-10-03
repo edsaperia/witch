@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { hash2 as labHash2, SPECIES_BY_ID } from "../../art/generator.js";
 import { makePartition } from "./partition";
+import { hash2 } from "./random";
 import { AREA_TYPES, generateMap, parseSeed } from "./map";
 import { Forest, crownReach } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown } from "./witch";
@@ -144,11 +145,17 @@ describe("the map", () => {
     expect(varied.areas).toBeLessThan(470);
   });
 
-  it("thins trees smoothly toward each centre, not at a sharp edge", () => {
-    const s = map.siteOf(4, 13), samples: number[] = [];
-    for (let d = 0; d < map.areaSize * 0.5; d += 0.5) samples.push(map.treeWeight(s.x + d, s.z));
-    const between = samples.filter(w => w > 0.05 && w < TUNING.treeDensity * 0.95).length;
-    expect(between).toBeGreaterThan(samples.length * 0.3);
+  it("is a forest with clearings: mostly dense woods, open ground in distinct clearings with crisp-ish edges", () => {
+    let dense = 0, open = 0, between = 0, n = 0;
+    for (let i = 0; i < 4000; i++) {
+      const x = map.bounds.minX + hash2(i, 1, 9) * (map.bounds.maxX - map.bounds.minX), z = map.bounds.minZ + hash2(i, 2, 9) * (map.bounds.maxZ - map.bounds.minZ);
+      const w = map.treeWeight(x, z) / TUNING.treeDensity;
+      n++;
+      if (w > 0.95) dense++; else if (w < 0.05) open++; else between++;
+    }
+    expect(dense / n).toBeGreaterThan(0.6);
+    expect(open / n).toBeGreaterThan(0.05);
+    expect(between / n).toBeLessThan(0.2);
   });
 
   it("uses many area types", () => {
@@ -496,15 +503,20 @@ describe("the party", () => {
 });
 
 describe("string lights", () => {
-  it("hang between pairs of the area's own trees round its clearing, 4 to 12 m apart, the same every time", () => {
+  it("hang in chains between the area's own trees, spread across the area, spanMin to spanMax long, the same every time", () => {
     const forest = new Forest(map), cell: [number, number] = [map.centreCell[0] + 1, map.centreCell[1]];
-    const lines = stringsFor(map, forest, cell);
-    expect(lines.length).toBeGreaterThan(3);
+    const lines = stringsFor(map, forest, cell), L = TUNING.stringLights, s = map.siteOf(cell[0], cell[1]);
+    expect(lines.length).toBeGreaterThan(L.perArea * 0.6);
+    // Chains: some spans start where another ends.
+    expect(lines.some(a => lines.some(b => b !== a && b.ax === a.bx && b.az === a.bz))).toBe(true);
+    // Spread out: the lines reach well away from the centre, not clustered by it.
+    const far = Math.max(...lines.map(l => Math.hypot((l.ax + l.bx) / 2 - s.x, (l.az + l.bz) / 2 - s.z)));
+    expect(far).toBeGreaterThan(map.areaSize * 0.35);
     expect(lines.length).toBeLessThanOrEqual(TUNING.stringLights.perArea);
     const trees = new Set(forest.treesNear(lines[0].ax, lines[0].az, 400).map(t => `${t.x},${t.z}`));
     for (const l of lines) {
       const d = Math.hypot(l.ax - l.bx, l.az - l.bz);
-      expect(d).toBeGreaterThanOrEqual(4); expect(d).toBeLessThanOrEqual(12);
+      expect(d).toBeGreaterThanOrEqual(L.spanMin); expect(d).toBeLessThanOrEqual(L.spanMax);
       expect(trees.has(`${l.ax},${l.az}`) && trees.has(`${l.bx},${l.bz}`)).toBe(true);
       expect(map.areaAt(l.ax, l.az).cell).toEqual(cell);
     }

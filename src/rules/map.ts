@@ -165,7 +165,8 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return 0;
     const [u, v] = toPart(x, z);
     // Trees thin gradually toward the centre: a long smooth falloff over clearingFalloff.
-    return smoothstep((partition.openness(u, v) - tuning.clearingSize) / Math.max(0.01, tuning.clearingFalloff)) * tuning.treeDensity;
+    const glade = 1 - smoothstep((vnoise(x / tuning.gladeScale, z / tuning.gladeScale, seed + 61) - (1 - tuning.gladeAmount)) / 0.03);
+    return smoothstep((partition.openness(u, v) - tuning.clearingSize) / Math.max(0.01, tuning.clearingFalloff)) * tuning.treeDensity * glade;
   };
 
   const setPieceOf = (cx: number, cy: number) => {

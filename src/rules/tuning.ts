@@ -12,6 +12,9 @@ export interface Tuning {
   treeDensity: number;
   clearingSize: number;
   clearingFalloff: number;
+  /** Random glades in the woods: how much ground they take (0-1) and their size in metres. */
+  gladeAmount: number;
+  gladeScale: number;
   bushDensity: number;
   treeHeight: number;
   crownWidth: number;
@@ -25,6 +28,8 @@ export interface Tuning {
   groundSpeed: number;
   treetopSpeed: number;
   acceleration: number;
+  /** Acceleration on the ground (snappier than the treetops' acceleration). */
+  groundAcceleration: number;
   leanAt: number;
   riseTime: number;
   descendTime: number;
@@ -40,7 +45,7 @@ export interface Tuning {
   lightBudget: number;
   lightSources: { spacing: number; campfire: number; magicStone: number; pond: number; wetPond: number };
   haze: { near: number; far: number };
-  stringLights: { on: boolean; perArea: number; height: number; sag: number; bulbSpacing: number; palette: string[]; twinkle: number; chaseSpeed: number; glow: number };
+  stringLights: { on: boolean; perArea: number; spanMin: number; spanMax: number; chainMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; twinkle: number; chaseSpeed: number };
   party: { interval: number; startDelay: number; maxPerWave: number; transition: number; lightReach: number; lightStrength: number };
   dancefloor: {
     radius: number; stones: number; clearing: number;
@@ -55,6 +60,8 @@ export interface Tuning {
   mist: { on: boolean; strength: number; height: number; wind: number };
   /** How mist, far haze and canopy dapple are drawn: smooth gradients, or dithered pixel steps. */
   fx: "smooth" | "pixel";
+  lights: { campfire: { reach: number; strength: number }; stone: { reach: number; strength: number } };
+  glowPower: number;
   invite: { radius: number; cancelDistance: number; talkTimes: number[] };
   leash: { length: number; runSpeed: number; pickRadius: number; spacing: number };
   bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number };

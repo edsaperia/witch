@@ -72,6 +72,7 @@ export class View {
     this.post = new Post(this.renderer, t);
     this.scene.background = new THREE.Color(0x0b0a16);
     applyStyleLight(style, t.glowReach, this.mpp, t.tone.ambient);
+    LIGHT_UNIFORMS.uGlowPower.value = t.glowPower;
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize);
     this.ground = new Ground(game.map, game.forest, style, this.mpp);
     this.assets.onFloor = (type, tile) => this.ground.setFloor(type, tile);
@@ -365,12 +366,12 @@ export class View {
       const k = hash2(Math.round(src.x * 10), Math.round(src.z * 10), 7);
       if (src.kind === "campfire") {
         const flick = 0.8 + 0.12 * Math.sin(time * 11 + k * 40) + 0.08 * Math.sin(time * 23.7 + k * 13);
-        lights.push({ x: src.x + Math.sin(time * 9 + k) * 0.08, y: 1.2, z: src.z, reach: 13 * src.size, rgb: this.fire, strength: 1.6 * flick });
+        lights.push({ x: src.x + Math.sin(time * 9 + k) * 0.08, y: 1.2, z: src.z, reach: this.game.tuning.lights.campfire.reach * src.size, rgb: this.fire, strength: this.game.tuning.lights.campfire.strength * flick });
         const fr = f[Math.floor(time * 8 + k * 10) % 3];
         if (this.inView(src.x, src.z, fr.w * this.mpp, fr.h * this.mpp, 4)) items.push({ x: src.x, y: 0, z: src.z, frame: fr, flip: k < 0.5, fresh: this.mark("prop", src.x, src.z, 2) });
       } else {
         const kind = k < 0.33 ? 1 : k < 0.66 ? 0 : 2, pulse = 0.7 + 0.3 * Math.sin(time * 0.9 + k * 20), fr = f[3 + kind];
-        lights.push({ x: src.x, y: 2, z: src.z, reach: 10 * src.size, rgb: [this.runeCyan, this.runeViolet, this.runeGreen][kind], strength: 1.1 * pulse });
+        lights.push({ x: src.x, y: 2, z: src.z, reach: this.game.tuning.lights.stone.reach * src.size, rgb: [this.runeCyan, this.runeViolet, this.runeGreen][kind], strength: this.game.tuning.lights.stone.strength * pulse });
         if (this.inView(src.x, src.z, fr.w * this.mpp, fr.h * this.mpp, 4)) items.push({ x: src.x, y: 0, z: src.z, frame: fr, flip: k < 0.5, fresh: this.mark("prop", src.x, src.z, 2.6) });
       }
     }
@@ -435,7 +436,8 @@ export class View {
     const party = this.partyView.update(g, time, (x, z, ww, hh) => this.inView(x, z, ww, hh, 4), () => false);
     this.soundBatch.set(party.items);
     this.ground.setSweeps(party.sweeps);
-    this.setLights([this.dancefloor.update(time, this.ground), ...party.lights, ...this.strings.update(time), ...this.forestLights], w.x, w.z);
+    this.strings.update();
+    this.setLights([this.dancefloor.update(time, this.ground), ...party.lights, ...this.forestLights], w.x, w.z);
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);
     const bob = Math.sin(time * 2.4) * 0.12;

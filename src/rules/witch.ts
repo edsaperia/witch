@@ -51,7 +51,7 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   const len = Math.hypot(mx, mz);
   if (len > 1) { mx /= len; mz /= len; }
   const max = lerp(t.groundSpeed, t.treetopSpeed, smoothstep(lift));
-  const k = 1 - Math.exp(-t.acceleration * dt);
+  const k = 1 - Math.exp(-lerp(t.groundAcceleration, t.acceleration, smoothstep(lift)) * dt);
   let vx = w.vx + (mx * max - w.vx) * k, vz = w.vz + (mz * max - w.vz) * k;
   let x = w.x + vx * dt, z = w.z + vz * dt;
   if (x < bounds.minX || x > bounds.maxX) { x = clamp(x, bounds.minX, bounds.maxX); vx = 0; }

@@ -7,7 +7,6 @@ import * as THREE from "three";
 import type { Game } from "../rules/game";
 import { stringsFor, type StringLine } from "../rules/strings";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
-import type { ForestLight } from "./view";
 
 const BULB_VERT = /* glsl */ `
 attribute vec3 aColour;
@@ -143,13 +142,15 @@ export class StringLightsView {
     return g;
   }
 
-  /** Build the lights of newly partified areas; return each line's soft light for the light list. */
-  update(time: number): ForestLight[] {
-    const g = this.game, L = g.tuning.stringLights, lights: ForestLight[] = [];
-    if (!L.on) return lights;
+  /** Build the lights of newly partified areas, a couple per frame so a big wave doesn't stall. */
+  update(): void {
+    const g = this.game, L = g.tuning.stringLights;
+    if (!L.on) return;
+    let builds = 0;
     for (const [k, a] of g.party.areas) {
       let b = this.built.get(k);
       if (!b) {
+        if (builds++ >= 2) break;
         const lines = stringsFor(g.map, g.forest, a.cell);
         const site = g.map.siteOf(a.cell[0], a.cell[1]), from = a.from ? g.map.siteOf(a.from[0], a.from[1]) : null;
         const ox = from ? (from.x + site.x) / 2 : site.x, oz = from ? (from.z + site.z) / 2 : site.z;
@@ -161,12 +162,7 @@ export class StringLightsView {
         this.scene.add(b.group);
         this.built.set(k, b);
       }
-      b.lines.forEach((l, i) => {
-        const c = this.palette[(l.seed + i) % this.palette.length];
-        if (time > b!.on) lights.push({ x: (l.ax + l.bx) / 2, y: L.height - 1, z: (l.az + l.bz) / 2, reach: 10, rgb: new THREE.Vector3(c.r, c.g, c.b), strength: L.glow });
-      });
     }
-    return lights;
   }
 
   /** Forget everything (a new game). */
