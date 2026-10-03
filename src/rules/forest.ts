@@ -144,15 +144,20 @@ function decorInChunk(map: ForestMap, ci: number, cj: number): Decor[] {
   const j0 = Math.ceil((cj * CHUNK) / sp), j1 = Math.ceil(((cj + 1) * CHUNK) / sp);
   const i0 = Math.ceil((ci * CHUNK) / sp), i1 = Math.ceil(((ci + 1) * CHUNK) / sp);
   for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
-    const roll = hash2(i, j, s + 503);
-    if (roll >= D.ruins + D.rocks + D.freak) continue;
+    // The area's layout says how much decor it has (its rate, against a typical 0.3) and of which
+    // families; "rocky" ground has more rocks.
     const x = (i + (hash2(i, j, s + 501) - 0.5) * 0.8) * sp, z = (j + (hash2(i, j, s + 502) - 0.5) * 0.8) * sp, a = map.areaAt(x, z);
+    const L = AREA_TYPES[a.type].layout, ad = L.decor, rate = ad ? ad.rate / 0.3 : 1, rocky = L.terrain?.includes("rocky") ? 2 : 1;
+    const w = ad ? [ad.ruins, ad.rocks * rocky, ad.freak] : [D.ruins, D.rocks * rocky, D.freak], sum = w[0] + w[1] + w[2] || 1;
+    const total = (D.ruins + D.rocks + D.freak) * rate * (ad ? (ad.ruins + ad.rocks + ad.freak) / Math.max(0.01, ad.ruins + ad.rocks + ad.freak + ad.lake + ad.modern) : 1) * (rocky > 1 ? 1.5 : 1);
+    const roll = hash2(i, j, s + 503);
+    if (roll >= total) continue;
     if (a.openness < D.clearing || map.hardClear(x, z) || map.paths.at(x, z, D.pathGap)) continue;
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + map.tuning.dancefloor.clearing + 6) continue;
     // Open ground keeps them all; dense canopy only some.
     const open = 1 - Math.min(1, treeChance(map, x, z, a.type) / 0.8);
     if (hash2(i, j, s + 504) > 0.35 + 0.65 * open) continue;
-    const family: DecorFamily = roll < D.ruins ? "ruins" : roll < D.ruins + D.rocks ? "rocks" : "freak";
+    const f = (roll / total) * sum, family: DecorFamily = f < w[0] ? "ruins" : f < w[0] + w[1] ? "rocks" : "freak";
     out.push({ x, z, family, variant: Math.floor(hash2(i, j, s + 505) * 1e6), flip: hash2(i, j, s + 506) < 0.5 });
   }
   return out;
@@ -172,7 +177,7 @@ function lightsInChunk(map: ForestMap, ci: number, cj: number): LightSource[] {
     const x = (i + (hash2(i, j, s + 401) - 0.5) * 0.7) * sp, z = (j + (hash2(i, j, s + 402) - 0.5) * 0.7) * sp;
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + map.tuning.dancefloor.clearing + 4) continue;
     const a = map.areaAt(x, z), where = a.openness < 0.35 || a.openness > 0.8 ? 1 : 0.25, roll = hash2(i, j, s + 403);
-    const wet = WET.has(AREA_TYPES[a.type].id);
+    const wet = WET.has(AREA_TYPES[a.type].id) || !!AREA_TYPES[a.type].layout.terrain?.includes("pools");
     const pond = (wet ? L.wetPond : L.pond) * where, fire = L.campfire * where, stone = L.magicStone * where;
     const kind: LightKind | null = roll < pond ? "pond" : roll < pond + fire ? "campfire" : roll < pond + fire + stone ? "stone" : null;
     if (kind) out.push({ x, z, kind, size: 0.75 + hash2(i, j, s + 404) * 0.5 });

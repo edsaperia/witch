@@ -58,8 +58,11 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   // Trees: the area's own UK species (a main and a minor one) across four height classes, from
   // saplings to a rare giant over the canopy (art/areas.js areaTreeVariants), each with its share
   // of the area's trees. Anything else big (mounds, boulders, logs) is drawn whole, as before.
-  const variants = Art.areaTreeVariants(id, st, { K, makeCanvas: mk }) as { top: Baked; bot: Baked; weight: number }[];
-  for (const v of variants) { layout.big.push({ bot: add(v.bot), top: add(v.top) }); layout.bigWeight.push(v.weight); }
+  // Each height class gets the area's own share of its trees (its layout's heightMix), split among
+  // that class's variants; without one, the art's default weights.
+  const variants = Art.areaTreeVariants(id, st, { K, makeCanvas: mk }) as { top: Baked; bot: Baked; weight: number; heightClass: "sapling" | "mature" | "tall" | "giant" }[];
+  const mix = AREA_TYPES[t].layout.heightMix, perClass = (c: string) => variants.filter(v => v.heightClass === c).length || 1;
+  for (const v of variants) { layout.big.push({ bot: add(v.bot), top: add(v.top) }); layout.bigWeight.push(mix ? mix[v.heightClass] / perClass(v.heightClass) : v.weight); }
   def.big.forEach(([kind], i) => {
     if (kind === "tree" && variants.length) return;
     layout.big.push({ bot: add(assets.big[i].sp), top: null });

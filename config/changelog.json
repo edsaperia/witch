@@ -3,6 +3,8 @@
   "entries": [
     { "version": null, "items": [
       "Each forest now has its own kind of UK tree (oak, beech, Scots pine, yew…), in a range of heights, with leafy trunks",
+      "Each kind of area has its own mix of tree heights and its own ruins, rocks and odd trees",
+      "The ground has shape: moonlit mounds, dark hollows and ridges where the area has them, and more pools in the boggy ones",
       "Speech bubbles are pixel outlines, and the emoji in them are bigger pixel art",
       "Above the treetops she has momentum: hold a direction to build up to a boost (the camera draws back a little), swoop round in arcs, skid on a sharp turn, and glide when you let go. The ground stays snappy"
     ] },

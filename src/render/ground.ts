@@ -31,6 +31,7 @@ uniform vec4 uExtent; // minX, minZ, width, depth (metres)
 uniform float uPixel; // metres per art pixel
 uniform vec3 uTypeFloor[32];      // each type's floor colour (hsv), until its tile is drawn
 uniform float uFloorReady[32];
+uniform vec3 uTerrain[32];        // each type's ground features: mounds, hollows, ridges (0 or 1)
 uniform sampler2D uFloors;        // every type's floor tile, FLOOR_COLS to a row
 uniform vec2 uTile, uFloorsSize;  // one tile's size and the atlas's, in art pixels
 uniform float uSat;
@@ -96,6 +97,20 @@ void main() {
     c = hsv(f.x, f.y * uSat, f.z * (v < 0.38 ? 0.8 : v > 0.66 ? 1.15 : 1.0));
   }
   c *= 1.0 + max(0.0, 0.55 - open) * 0.9;        // clearings are paler
+  // The ground's features (its type's terrain): low mounds lit on the moon's side and shaded on
+  // the other, sunken hollows darker at the bottom, and ridges in long ripples. Shading only.
+  if (area.a > 0.5) {
+    vec3 T = uTerrain[t];
+    if (T.x + T.y + T.z > 0.0) {
+      vec2 md = normalize(uMoonDir.xz + vec2(1e-4));
+      float k = 11.0, e = 1.5;
+      float n0 = vnoise(p / k), gx = vnoise((p + vec2(e, 0.0)) / k) - n0, gz = vnoise((p + vec2(0.0, e)) / k) - n0;
+      float slope = dot(vec2(gx, gz), md) / e * k;  // + where the ground faces the moon
+      float bump = T.x * smoothstep(0.45, 0.75, n0) - T.y * smoothstep(0.5, 0.8, 1.0 - n0);
+      c *= 1.0 + bump * slope * 0.45 - T.y * smoothstep(0.62, 0.9, 1.0 - n0) * 0.3;
+      if (T.z > 0.0) c *= 1.0 + T.z * 0.14 * sin((p.x * 0.55 + p.y) / 4.0 + vnoise(p / 30.0) * 6.0);
+    }
+  }
   // The dancefloor: worn ground inside the stones, and the glowing magic circle (unlit: it glows).
   float r = length(p - uFloor.xy);
   if (r < uFloor.z) c = mix(c, vec3(0.42, 0.42, 0.38), 0.25);
@@ -185,6 +200,7 @@ export class Ground {
         uPixel: { value: metresPerPixel },
         uTypeFloor: { value: floors },
         uFloorReady: { value: this.floorReady },
+        uTerrain: { value: Array.from({ length: 32 }, (_, i) => { const tr = AREA_TYPES[i]?.layout.terrain ?? []; return new THREE.Vector3(+tr.includes("mounds"), +tr.includes("hollows"), +tr.includes("ridges")); }) },
         uFloors: { value: this.floors },
         uTile: { value: new THREE.Vector2(64, 48) },
         uFloorsSize: { value: new THREE.Vector2(64 * FLOOR_COLS, 48 * 4) },

@@ -27,7 +27,15 @@ export interface AreaType {
   layout: AreaLayout;
 }
 
-export interface AreaLayout { pattern: string; along?: number | string; density: number; clump: number; undergrowth: number; lean?: { dir: number; amount: number } }
+export interface AreaLayout {
+  pattern: string; along?: number | string; density: number; clump: number; undergrowth: number; lean?: { dir: number; amount: number };
+  /** Shares of its trees by height class. */
+  heightMix?: { sapling: number; mature: number; tall: number; giant: number } | null;
+  /** Its ground's features: stream, pools, rocky, mounds, paths, hollows, ridges. */
+  terrain?: string[];
+  /** How many decorations it has (rate, 0-1) and of which families. */
+  decor?: { rate: number; ruins: number; rocks: number; freak: number; lake: number; modern: number };
+}
 
 interface ArtArea { id: string; name: string; creature: string; text: AreaType["text"]; floor: [string, number, number, number]; wall?: unknown[]; set?: unknown; layout?: AreaLayout }
 const settings = (rawTypes as { types: Record<string, { treeDensity: number }> }).types;
