@@ -10,7 +10,7 @@ import { newCamera, stepCamera, cameraPose } from "./camera";
 import { legendChance, population, spawnCreatures, stepCreature, stepCreaturesNear } from "./creatures";
 import { newGame, stepGame } from "./game";
 import { newParty, spreadWave, stepParty } from "./party";
-import { stringsFor } from "./strings";
+import { segmentsCross, stringsFor } from "./strings";
 import { laserShow } from "./lasers";
 import { borderOf } from "./borders";
 import { newLeash, stepLeash, type LeashControls } from "./leash";
@@ -228,8 +228,21 @@ describe("trees", () => {
     expect(sparse.treesNear(150, 150, 60).length).toBeLessThan(forest.treesNear(150, 150, 60).length * 0.75);
   });
 
-  it("carry the type of the area they stand in", () => {
-    for (const t of forest.treesNear(150, 150, 40)) expect(t.type).toBe(map.areaAt(t.x, t.z).type);
+  it("carry their area's type, with a ragged edge: strays only near a border", () => {
+    const exact = new Forest(generateMap(123, withTuning({ areaEdgeBlend: { width: 0, scale: 24, stray: 0.5 } })));
+    for (const t of exact.treesNear(1300, 1300, 120)) expect(t.type).toBe(map.areaAt(t.x, t.z).type);
+    const W = TUNING.areaEdgeBlend.width, trees = forest.treesNear(1300, 1300, 160);
+    let own = 0, strays = 0;
+    for (const t of trees) {
+      if (t.type === map.areaAt(t.x, t.z).type) { own++; continue; }
+      strays++;
+      // A stray's look comes from an area close by.
+      let near = false;
+      for (let a = 0; a < 16 && !near; a++) for (const r of [W * 0.5, W, W * 1.6]) if (map.areaAt(t.x + Math.cos(a) * r, t.z + Math.sin(a) * r).type === t.type) near = true;
+      expect(near).toBe(true);
+    }
+    expect(own / trees.length).toBeGreaterThan(0.8);
+    expect(strays).toBeGreaterThan(0);
   });
 });
 
@@ -505,24 +518,27 @@ describe("the party", () => {
 });
 
 describe("string lights", () => {
-  it("hang in chains between the area's own trees, spread across the area, spanMin to spanMax long, the same every time", () => {
-    const forest = new Forest(map), cell: [number, number] = [map.centreCell[0] + 1, map.centreCell[1]];
-    const lines = stringsFor(map, forest, cell), L = TUNING.stringLights, s = map.siteOf(cell[0], cell[1]);
-    expect(lines.length).toBeGreaterThan(L.perArea * 0.6);
-    // Chains: some spans start where another ends.
-    expect(lines.some(a => lines.some(b => b !== a && b.ax === a.bx && b.az === a.bz))).toBe(true);
-    // Spread out: the lines reach well away from the centre, not clustered by it.
-    const far = Math.max(...lines.map(l => Math.hypot((l.ax + l.bx) / 2 - s.x, (l.az + l.bz) / 2 - s.z)));
-    expect(far).toBeGreaterThan(map.areaSize * 0.35);
-    expect(lines.length).toBeLessThanOrEqual(TUNING.stringLights.perArea);
-    const trees = new Set(forest.treesNear(lines[0].ax, lines[0].az, 400).map(t => `${t.x},${t.z}`));
-    for (const l of lines) {
-      const d = Math.hypot(l.ax - l.bx, l.az - l.bz);
-      expect(d).toBeGreaterThanOrEqual(L.spanMin); expect(d).toBeLessThanOrEqual(L.spanMax);
-      expect(trees.has(`${l.ax},${l.az}`) && trees.has(`${l.bx},${l.bz}`)).toBe(true);
-      expect(map.areaAt(l.ax, l.az).cell).toEqual(cell);
+  it("hang as long runs between the area's own trees: no crossings, at most 3 ends per tree, the same every time", () => {
+    const forest = new Forest(map), L = TUNING.stringLights;
+    let total = 0, junctions = 0;
+    for (const cell of [[map.centreCell[0] + 1, map.centreCell[1]], [map.centreCell[0], map.centreCell[1] + 1], [3, 4]] as [number, number][]) {
+      const lines = stringsFor(map, forest, cell), ends = new Map<string, number>();
+      total += lines.length;
+      for (const l of lines) {
+        const d = Math.hypot(l.ax - l.bx, l.az - l.bz);
+        expect(d).toBeGreaterThanOrEqual(L.spanMin); expect(d).toBeLessThanOrEqual(L.spanMax);
+        expect(map.areaAt(l.ax, l.az).cell).toEqual(cell);
+        for (const k of [`${l.ax},${l.az}`, `${l.bx},${l.bz}`]) ends.set(k, (ends.get(k) ?? 0) + 1);
+      }
+      for (const n of ends.values()) { expect(n).toBeLessThanOrEqual(3); if (n === 3) junctions++; }
+      for (let i = 0; i < lines.length; i++) for (let j = i + 1; j < lines.length; j++) {
+        const a = lines[i], b = lines[j];
+        expect(segmentsCross([a.ax, a.az], [a.bx, a.bz], [b.ax, b.az], [b.bx, b.bz])).toBe(false);
+      }
+      expect(stringsFor(map, new Forest(map), cell)).toEqual(lines);
     }
-    expect(stringsFor(map, new Forest(map), cell)).toEqual(lines);
+    expect(total).toBeGreaterThan(20); // long runs, not a handful of spans
+    expect(junctions).toBeLessThan(total / 4);
   });
 });
 

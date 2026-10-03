@@ -18,11 +18,19 @@ export const SPRITE_UNIFORMS = {
   uDebugCull: { value: 0 },
   // The low-resolution picture's size in pixels: each sprite's base is snapped to its pixel grid.
   uRes: { value: new THREE.Vector2(1, 1) },
+  // The witch on screen (pixels: centre x, y, half width, half height) and her distance from the
+  // camera, so whatever stands in front of her can fade; uOcc: fade opacity, soft edge (px),
+  // the height (m) above which a thing counts as tall, on (1) or off (0).
+  uWitch: { value: new THREE.Vector4(0, 0, 0, 0) },
+  uWitchDepth: { value: 0 },
+  uOcc: { value: new THREE.Vector4(0.38, 6, 2.5, 1) },
 };
 
 const VERT = /* glsl */ `
 uniform vec3 uRight, uUp;
 uniform vec2 uRes;
+uniform float uWitchDepth;
+uniform vec4 uOcc;
 attribute vec3 iPos;
 attribute vec2 iSize;
 attribute vec4 iUv;
@@ -30,7 +38,10 @@ attribute vec3 iFlags;
 varying vec2 vUv;
 varying vec3 vWorld;
 varying vec3 vFlags;
+varying float vFront;
 void main() {
+  // Tall and nearer the camera than the witch: it may stand in front of her.
+  vFront = (-(viewMatrix * vec4(iPos, 1.0)).z < uWitchDepth - 0.5 && iSize.y > uOcc.z) ? 1.0 : 0.0;
   vec3 w = iPos + uRight * (position.x * iSize.x) + uUp * (position.y * iSize.y);
   float u = iFlags.x > 0.5 ? 1.0 - uv.x : uv.x;
   vUv = vec2(mix(iUv.x, iUv.z, u), mix(iUv.w, iUv.y, uv.y));
@@ -51,9 +62,12 @@ uniform vec3 uRight, uUp, uFacing;
 uniform float uTopFade, uUnlit;
 uniform vec4 uCutout;
 uniform float uDebugCull, uIsScenery;
+uniform vec4 uWitch, uOcc, uSilhouette;
+uniform float uFadePass;
 varying vec2 vUv;
 varying vec3 vWorld;
 varying vec3 vFlags;
+varying float vFront;
 ${LIGHT_GLSL}
 // 4x4 ordered dither, for fading the canopy in pixel-art style.
 float bayer(vec2 p) {
@@ -65,6 +79,14 @@ float bayer(vec2 p) {
 void shade() {
   vec4 a = texture2D(uAlbedo, vUv);
   if (a.a < 0.5) discard;
+  // The witch's see-through silhouette: where she is hidden, a flat tint in her glow colour.
+  if (uSilhouette.a > 0.0) { gl_FragColor = vec4(uSilhouette.rgb, uSilhouette.a); return; }
+  // Things standing in front of the witch fade (smoothly) where they cover her: left out of the
+  // opaque pass there and drawn in a second, see-through pass after her.
+  vec2 o = abs(gl_FragCoord.xy - uWitch.xy) - uWitch.zw;
+  float occl = uOcc.w * vFront * (1.0 - smoothstep(0.0, uOcc.y, max(o.x, o.y)));
+  if (uFadePass > 0.5 ? occl <= 0.001 : occl > 0.001) discard;
+  float alpha = uFadePass > 0.5 ? mix(1.0, uOcc.x, occl) : 1.0;
   if (vFlags.y > 0.5) {
     // Crowns: hidden in a dithered hole round the witch, which closes as she rises.
     float d = length(gl_FragCoord.xy - uCutout.xy);
@@ -72,14 +94,14 @@ void shade() {
     if (bayer(gl_FragCoord.xy) >= max(shown, uTopFade)) discard;
   }
   // Eye glints, flowers and magic glow: the generator marks them with alpha 254.
-  if (uDebugCull > 0.5 && vFlags.z > 0.5) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
-  if (uUnlit > 0.5) { gl_FragColor = vec4(a.rgb, 1.0); return; }
-  if (a.a < 0.999) { gl_FragColor = vec4(haze(a.rgb, vWorld), 1.0); return; }
+  if (uDebugCull > 0.5 && vFlags.z > 0.5) { gl_FragColor = vec4(1.0, 0.0, 0.0, alpha); return; }
+  if (uUnlit > 0.5) { gl_FragColor = vec4(a.rgb, alpha); return; }
+  if (a.a < 0.999) { gl_FragColor = vec4(haze(a.rgb, vWorld), alpha); return; }
   vec4 n = texture2D(uNormal, vUv);
   float nx = (n.r * 255.0 - 128.0) / 127.0, ny = (n.g * 255.0 - 128.0) / 127.0, nz = n.b;
   if (vFlags.x > 0.5) nx = -nx;
   vec3 N = normalize(uRight * nx - uUp * ny + uFacing * nz);
-  gl_FragColor = vec4(haze(min(vec3(1.0), a.rgb * nightLight(N, vWorld) * 1.25), vWorld), 1.0);
+  gl_FragColor = vec4(haze(min(vec3(1.0), a.rgb * nightLight(N, vWorld) * 1.25), vWorld), alpha);
 }
 void main() {
   shade();
@@ -87,15 +109,18 @@ void main() {
   if (uIsScenery > 0.5) {
     float k = sceneryFade(vWorld);
     if (k < 0.004) discard;
-    gl_FragColor.a = k;
+    gl_FragColor.a *= k;
   }
 }
 `;
 
-export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean }
+export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** Drawn this much bigger (1 if left out). */ scale?: number }
 
 export class SpriteBatch {
   readonly mesh: THREE.Mesh;
+  /** Every mesh to add to the scene: the batch itself, plus its see-through pass (things in
+   *  front of the witch, faded) or, for the witch, her silhouette where she's hidden. */
+  readonly meshes: THREE.Mesh[];
   private geo: THREE.InstancedBufferGeometry;
   private pos: THREE.InstancedBufferAttribute;
   private size: THREE.InstancedBufferAttribute;
@@ -105,7 +130,7 @@ export class SpriteBatch {
   count = 0;
 
   /** metresPerPixel: world size of one art pixel. */
-  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean } = {}) {
+  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number } } = {}) {
     const quad = new THREE.PlaneGeometry(1, 1);
     quad.translate(0, 0.5, 0); // stand on the base
     this.geo = new THREE.InstancedBufferGeometry();
@@ -114,18 +139,28 @@ export class SpriteBatch {
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.pos = this.size = this.uvs = this.flags = undefined as never;
     this.grow(64);
-    const mat = new THREE.ShaderMaterial({
-      vertexShader: VERT, fragmentShader: FRAG,
-      uniforms: { ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 } },
-      // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
-      // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
-      ...(opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {}),
-      depthTest: !opts.onTop, depthWrite: !opts.onTop,
-    });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uFadePass: { value: 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, ...extra });
+    // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
+    // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
+    const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};
+    const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uniforms({}), depthTest: !opts.onTop, depthWrite: !opts.onTop, ...blend });
     this.mesh = new THREE.Mesh(this.geo, mat);
     this.mesh.frustumCulled = false;
     if (opts.onTop) this.mesh.renderOrder = 10;
     if (opts.scenery) this.mesh.renderOrder = 0.5; // after the ground it fades over, before the shadows and mist
+    this.meshes = [this.mesh];
+    if (opts.fade) {
+      // Drawn after the witch (render order 10): the parts of tall things covering her, see-through.
+      const fade = new THREE.Mesh(this.geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uniforms({ uFadePass: { value: 1 } }), transparent: true, depthWrite: false }));
+      fade.frustumCulled = false; fade.renderOrder = 11;
+      this.meshes.push(fade);
+    }
+    if (opts.silhouette) {
+      // Where she is hidden (behind something already drawn), a flat tint, so she's never lost.
+      const c = opts.silhouette.colour, sil = new THREE.Mesh(this.geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uniforms({ uSilhouette: { value: new THREE.Vector4(c.x, c.y, c.z, opts.silhouette.opacity) } }), transparent: true, depthWrite: false, depthFunc: THREE.GreaterDepth }));
+      sil.frustumCulled = false; sil.renderOrder = 12;
+      this.meshes.push(sil);
+    }
   }
 
   private grow(n: number): void {
@@ -152,14 +187,15 @@ export class SpriteBatch {
     const P = this.pos.array as Float32Array, S = this.size.array as Float32Array, U = this.uvs.array as Float32Array, F = this.flags.array as Float32Array;
     items.forEach((it, i) => {
       P[i * 3] = it.x; P[i * 3 + 1] = it.y; P[i * 3 + 2] = it.z;
-      S[i * 2] = it.frame.w * this.metresPerPixel; S[i * 2 + 1] = it.frame.h * this.metresPerPixel;
+      const k = it.scale ?? 1;
+      S[i * 2] = it.frame.w * this.metresPerPixel * k; S[i * 2 + 1] = it.frame.h * this.metresPerPixel * k;
       U.set(it.frame.uv, i * 4);
       F[i * 3] = it.flip ? 1 : 0; F[i * 3 + 1] = it.top ? 1 : 0; F[i * 3 + 2] = it.fresh ? 1 : 0;
     });
     for (const a of [this.pos, this.size, this.uvs, this.flags]) a.needsUpdate = true;
     this.count = items.length;
     this.geo.instanceCount = items.length;
-    this.mesh.visible = items.length > 0;
+    for (const m of this.meshes) m.visible = items.length > 0;
   }
 
   /** Instances set but not drawn: three.js draws at most the count it last saw the buffers hold.

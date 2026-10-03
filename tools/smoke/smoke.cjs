@@ -190,9 +190,17 @@ async function main() {
     await sleep(1500);
     await shot(page, "40-dancefloor-ground.png");
     await page.keyboard.press("Space");
+    await page.waitForFunction(() => window.witch.game.witch.lift > 0.3, null, { timeout: 60000, polling: 20 });
+    await page.screenshot({ path: path.join(out, "42-rising.png") }); // no settle: catch her mid-climb
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
     await sleep(1500);
     await shot(page, "41-dancefloor-treetop.png");
+    // Behind the home soundsystem (up the screen from it), on the ground: she must still read.
+    await page.keyboard.press("Space");
+    await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 60000 });
+    await page.evaluate(() => { const g = window.witch.game, d = g.map.dancefloor, x = d.x + d.radius + 5, z = d.z + 3 - 2.5; g.witch = { ...g.witch, x, z, vx: 0, vz: 0 }; g.camera = { ...g.camera, tx: x, tz: z }; });
+    await sleep(1500);
+    await shot(page, "43-behind-soundsystem.png");
   }, "&tilt=before");
 
   // The ground effects (tree shadows, canopy shadow, mist) off and on, from the same spot, and a
@@ -255,21 +263,23 @@ async function main() {
 
   // Inviting and leashing: talk to a creature until it joins her, gather a few more, fly with the
   // stack, put a sigil down and pick it up again.
-  await run("leash", { width: 1280, height: 720 }, async page => {
+  await run("leash", { width: 1900, height: 1240 }, async page => {
     await page.keyboard.press("Enter");
     const id = await page.evaluate(() => {
       const g = window.witch.game, w = g.witch;
       let best = null, bd = Infinity;
-      for (const c of g.creatures) { if (c.level === 2) continue; const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c; } }
+      for (const c of g.creatures) { if (c.level !== 0) continue; const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c; } } // a baby
       g.witch = { ...w, x: best.x + 2, z: best.z + 1 };
       g.camera = { ...g.camera, tx: best.x + 2, tz: best.z + 1 };
       return best.id;
     });
+    await sleep(800);
+    await shot(page, "69-leash-cue.png");
     const t0 = await page.evaluate(() => window.witch.game.clock.time);
     await page.keyboard.down("KeyT");
     await page.waitForFunction(t => window.witch.game.clock.time >= t, t0 + 1.6, { timeout: 60000, polling: 50 });
     await shot(page, "70-leash-talk.png");
-    await page.waitForFunction(i => window.witch.game.creatures[i].leashed, id, { timeout: 120000, polling: 100 });
+    await page.waitForFunction(i => window.witch.game.creatures[i].leashed, id, { timeout: 400000, polling: 100 });
     await page.keyboard.up("KeyT");
     check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "holding Talk by a creature invites it onto her sigil stack");
     // One press a frame: wait for each invite to land before the next (the headless renderer is slow).
@@ -283,12 +293,12 @@ async function main() {
     await hold(page, "KeyD", 2);
     await shot(page, "71-leash-stack-flying.png");
     const t1 = await page.evaluate(() => window.witch.game.clock.time);
-    await page.waitForFunction(t => window.witch.game.clock.time >= t, t1 + 6, { timeout: 120000, polling: 100 });
+    await page.waitForFunction(t => window.witch.game.clock.time >= t, t1 + 4, { timeout: 400000, polling: 100 });
     await page.keyboard.press("KeyE");
     await page.waitForFunction(() => window.witch.game.leash.placed.length === 1, null, { timeout: 30000 });
     await hold(page, "KeyW", 0.6);
     const t2 = await page.evaluate(() => window.witch.game.clock.time);
-    await page.waitForFunction(t => window.witch.game.clock.time >= t, t2 + 2, { timeout: 60000, polling: 100 });
+    await page.waitForFunction(t => window.witch.game.clock.time >= t, t2 + 2, { timeout: 300000, polling: 100 });
     await shot(page, "72-leash-placed.png");
     check(await page.evaluate(() => window.witch.game.leash.placed.length === 1 && window.witch.game.leash.stack.length >= 2), "the sigil button puts the bottom sigil down");
     await page.evaluate(() => { const g = window.witch.game, p = g.leash.placed[0]; g.witch = { ...g.witch, x: p.x, z: p.z, vx: 0, vz: 0 }; });

@@ -25,6 +25,18 @@ export function crownReach(map: ForestMap): number {
   return map.tuning.crownHeight / Math.sin(pitch);
 }
 
+/** Which area's plants grow at (x, z): the area a little way off, by a seeded low-frequency
+ *  offset plus a per-plant stray, so each area's trees and bushes reach a little into its
+ *  neighbours with a ragged edge (Ed, 2026-10-03). Only the look blends: everything else (where
+ *  creatures roam, partifying, the party border, which area you're in) uses the exact partition. */
+export function plantType(map: ForestMap, x: number, z: number, i: number, j: number, salt: number): number {
+  const E = map.tuning.areaEdgeBlend, s = map.seed;
+  if (E.width <= 0) return map.areaAt(x, z).type;
+  const nx = (vnoise(x / E.scale, z / E.scale, s + 81) - 0.5) * 2 * E.width + (hash2(i, j, salt + 1) - 0.5) * E.width * E.stray;
+  const nz = (vnoise(x / E.scale, z / E.scale, s + 82) - 0.5) * 2 * E.width + (hash2(i, j, salt + 2) - 0.5) * E.width * E.stray;
+  return map.areaAt(x + nx, z + nz).type;
+}
+
 function treesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
   const { treeSpacingX: sx, treeSpacingZ: sz } = map.tuning, s = map.seed;
   const out: Plant[] = [], lift = crownReach(map), half = map.tuning.crownHalfWidth;
@@ -36,10 +48,10 @@ function treesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
       const x = (i + shift + (hash2(i, j, s + 101) - 0.5) * 0.7) * sx;
       const z = (j + (hash2(i, j, s + 102) - 0.5) * 0.7) * sz;
       // A crown must not cover a clearing either, so the weight is checked where it reaches.
-      const a = map.areaAt(x, z);
-      if (hash2(i, j, s + 103) >= map.treeWeight(x, z) * AREA_TYPES[a.type].treeDensity) continue;
+      const type = plantType(map, x, z, i, j, s + 106);
+      if (hash2(i, j, s + 103) >= map.treeWeight(x, z) * AREA_TYPES[type].treeDensity) continue;
       if (map.treeWeight(x, z - lift) === 0 || map.treeWeight(x - half, z - lift) === 0 || map.treeWeight(x + half, z - lift) === 0) continue;
-      out.push({ x, z, type: a.type, variant: Math.floor(hash2(i, j, s + 104) * TREE_VARIANTS), flip: hash2(i, j, s + 105) < 0.5 });
+      out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 104) * TREE_VARIANTS), flip: hash2(i, j, s + 105) < 0.5 });
     }
   }
   return out;
@@ -55,7 +67,7 @@ function bushesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
     const clump = 1 + map.tuning.bushClump * (2 * smoothstep((vnoise(x / 13, z / 13, s + 207) - 0.35) / 0.3) - 1);
     if (hash2(i, j, s + 203) > (0.12 + Math.min(1, map.treeWeight(x, z)) * 0.3) * map.tuning.bushDensity * clump) continue;
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + 2) continue; // the dancefloor stays clear
-    out.push({ x, z, type: map.areaAt(x, z).type, variant: Math.floor(hash2(i, j, s + 204) * BUSH_VARIANTS), flip: hash2(i, j, s + 205) < 0.5 });
+    out.push({ x, z, type: plantType(map, x, z, i, j, s + 206), variant: Math.floor(hash2(i, j, s + 204) * BUSH_VARIANTS), flip: hash2(i, j, s + 205) < 0.5 });
   }
   return out;
 }

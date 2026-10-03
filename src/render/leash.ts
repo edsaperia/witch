@@ -262,15 +262,24 @@ export class LeashView {
   private bubbles(time: number, camera: THREE.Camera, width: number, height: number): void {
     const g = this.game, talk = g.leash.talk, bw = this.bubbleWitch, bc = this.bubbleCreature;
     if (!bw || !bc) return;
-    if (!talk) { bw.classList.remove("on"); bc.classList.remove("on"); return; }
-    const c = g.creatures[talk.id], w = g.witch, place = (el: HTMLElement, x: number, y: number, z: number) => {
+    const w = g.witch, place = (el: HTMLElement, x: number, y: number, z: number) => {
       this.v.set(x, y, z).project(camera);
       el.style.left = `${((this.v.x + 1) / 2) * width}px`;
       el.style.top = `${((1 - this.v.y) / 2) * height}px`;
     };
+    const line = bc.querySelector("span")!, bar = bc.querySelector(".bar") as HTMLElement;
+    if (!talk) {
+      // Cues: Talk held in the air says to land; held with no one in range, a "…" so the press
+      // shows. (No prompt over creatures in range: Ed, 2026-10-03.)
+      bar.style.display = "none";
+      bc.classList.remove("on");
+      bw.classList.toggle("on", g.leash.held);
+      if (g.leash.held) { bw.textContent = g.leash.heldInAir ? "land to talk" : "…"; place(bw, w.x - 1.2, witchHeight(w, g.tuning) + 2.2, w.z); }
+      return;
+    }
+    const c = g.creatures[talk.id];
     place(bw, w.x - 1.2, witchHeight(w, g.tuning) + 2.2, w.z);
     place(bc, c.x, 1.2 + c.level * 0.8, c.z);
-    const line = bc.querySelector("span")!, bar = bc.querySelector(".bar") as HTMLElement;
     if (talk.refused) {
       // A legend: one unimpressed look, and nothing more.
       bw.classList.remove("on");

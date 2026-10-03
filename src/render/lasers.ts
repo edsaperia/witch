@@ -52,7 +52,8 @@ export class Lasers {
       if (on <= 0.01) continue;
       const spread = (L.spread * Math.PI / 180) * show.open;
       for (let i = 0; i < n; i++) {
-        const k = n === 1 ? 0 : i / (n - 1) - 0.5, a = k * spread + show.sweep;
+        // Up into the sky, never along the ground: within maxTilt of straight up.
+        const k = n === 1 ? 0 : i / (n - 1) - 0.5, lim = (L.maxTilt * Math.PI) / 180, a = Math.max(-lim, Math.min(lim, k * spread + show.sweep));
         const dx = Math.sin(a), dy = Math.cos(a), dz = -0.15 * Math.cos(a * 3 + s.seed);
         const c = ramp(show.hue + i * 0.07), alpha = L.opacity * on * fade;
         verts.push(s.x, s.y, s.z, s.x + dx * L.length, s.y + dy * L.length, s.z + dz * L.length);

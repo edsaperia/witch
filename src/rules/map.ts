@@ -159,20 +159,25 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     const [u, v] = toPart(x, z), cell = partition.partition(u, v);
     return { cell, type: typeOf(cell[0], cell[1]), openness: partition.openness(u, v) };
   };
+  const setPieceOf = (cx: number, cy: number) => {
+    const t = AREA_TYPES[typeOf(cx, cy)];
+    return t.setPiece && hash2(cx, cy, seed + 61) < tuning.setPieceChance ? t.setPiece : null;
+  };
   // The dancefloor keeps a clearing of its own, however close a neighbouring area's centre.
   const floorR = tuning.dancefloor.radius, floorClear = floorR + tuning.dancefloor.clearing;
   const treeWeight = (x: number, z: number) => {
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return 0;
-    const [u, v] = toPart(x, z);
+    const [u, v] = toPart(x, z), cell = partition.partition(u, v);
+    // A set piece keeps a clearing round it, sized with it.
+    if (setPieceOf(cell[0], cell[1])) {
+      const p = siteOf(cell[0], cell[1]);
+      if (Math.hypot(x - p.x, z - (p.z - 4)) < tuning.setPieceClear * tuning.setPieceScale) return 0;
+    }
     // Trees thin gradually toward the centre: a long smooth falloff over clearingFalloff.
     const glade = 1 - smoothstep((vnoise(x / tuning.gladeScale, z / tuning.gladeScale, seed + 61) - (1 - tuning.gladeAmount)) / 0.03);
     return smoothstep((partition.openness(u, v) - tuning.clearingSize) / Math.max(0.01, tuning.clearingFalloff)) * tuning.treeDensity * glade;
   };
 
-  const setPieceOf = (cx: number, cy: number) => {
-    const t = AREA_TYPES[typeOf(cx, cy)];
-    return t.setPiece && hash2(cx, cy, seed + 61) < tuning.setPieceChance ? t.setPiece : null;
-  };
   const remoteness = (cx: number, cy: number) => Math.min(1, Math.hypot(cx - centreCell[0], cy - centreCell[1]) / (n / 2));
   const pad = A * 0.5;
   return {

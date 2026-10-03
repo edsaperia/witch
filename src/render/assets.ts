@@ -35,9 +35,11 @@ export class AssetLibrary {
 
   constructor(readonly style: Style, readonly seed: number, pixelSize: number) {
     this.K = 2 / pixelSize;
-    // The witch: hover frames 0-2 towards, 3-5 away, then leaning towards (6) and away (7).
+    // The witch: hover frames 0-2 towards, 3-5 away, then leaning towards (6) and away (7); then
+    // rising (8-9 towards, 10-11 away) and descending (12-13 towards, 14-15 away), two frames each.
     const wc = Art.witchColours(style), wb = (o: object) => Art.bake(Art.witchSprite(style, o), wc, style, style.cOutline) as Baked;
-    this.witch = packAtlas([0, 1, 2].map(frame => wb({ frame })).concat([0, 1, 2].map(frame => wb({ frame, facing: "away" })), [wb({ lean: true }), wb({ lean: true, facing: "away" })]), 1024);
+    this.witch = packAtlas([0, 1, 2].map(frame => wb({ frame })).concat([0, 1, 2].map(frame => wb({ frame, facing: "away" })), [wb({ lean: true }), wb({ lean: true, facing: "away" })],
+      ...["rise", "descend"].flatMap(pose => ["towards", "away"].flatMap(facing => [0, 1].map(frame => wb({ pose, frame, facing }))))), 1024);
     this.stones = packAtlas([0, 1, 2, 3].map(i => this.stone(i)));
     const lp = Art.lightProps(style) as { campfire: Baked[]; stones: Record<string, Baked> };
     this.props = packAtlas([...lp.campfire, lp.stones.cyan, lp.stones.violet, lp.stones.green], 1024);

@@ -15,6 +15,11 @@ export interface Tuning {
   /** Random glades in the woods: how much ground they take (0-1) and their size in metres. */
   gladeAmount: number;
   gladeScale: number;
+  /** Ragged area edges: plants take their look from up to width metres away (noise scale metres, plus a per-plant stray share). */
+  areaEdgeBlend: { width: number; scale: number; stray: number };
+  /** Set pieces drawn this much bigger than the art, with a clearing of setPieceClear metres (times the scale) round them. */
+  setPieceScale: number;
+  setPieceClear: number;
   bushDensity: number;
   /** How much bushes gather in clumps with open floor between (0 even, 1 strongly clumped). */
   bushClump: number;
@@ -51,7 +56,7 @@ export interface Tuning {
   haze: { near: number; far: number };
   /** The scenery budget: scenery is drawn out to an adaptive radius round the witch (view.ts). */
   scenery: { adaptive: boolean; fps: number; hysteresis: number; sustain: number; minRadius: number; shrink: number; grow: number; fade: number };
-  stringLights: { on: boolean; perArea: number; spanMin: number; spanMax: number; chainMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; twinkle: number; chaseSpeed: number };
+  stringLights: { on: boolean; runsPerArea: number[]; spansPerRun: number[]; coneAngle: number; junctionChance: number; spanMin: number; spanMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; twinkle: number; chaseSpeed: number };
   party: { interval: number; startDelay: number; maxPerWave: number; transition: number; lightReach: number; lightStrength: number };
   dancefloor: {
     motes: { count: number; rise: number; speed: number; column: number };
@@ -70,8 +75,9 @@ export interface Tuning {
   lights: { campfire: { reach: number; strength: number }; stone: { reach: number; strength: number } };
   glowPower: number;
   beat: { bpm: number };
+  occlusion: { on: boolean; fadeOpacity: number; edge: number; minHeight: number; silhouette: number };
   stack: { offset: number; scale: number; gap: number; stiffness: number; damping: number; trail: number; idleSway: number };
-  lasers: { on: boolean; maxCount: number; length: number; spread: number; sweep: number; sweepBeats: number; openBars: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };
+  lasers: { on: boolean; maxCount: number; length: number; spread: number; maxTilt: number; sweep: number; sweepBeats: number; openBars: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };
   borders: { on: boolean; width: number; brightness: number; sparkle: number; step: number };
   invite: { talkRange: number; cancelDistance: number; talkTime: number[]; turn: number[] };
   leash: { length: number; runSpeed: number; pickRadius: number; spacing: number };

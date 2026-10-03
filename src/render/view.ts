@@ -107,10 +107,15 @@ export class View {
     LIGHT_UNIFORMS.uHazeRange.value.set(t.haze.near, t.haze.far);
     this.scene.add(this.ground.mesh);
 
-    this.witchBatch = new SpriteBatch(this.assets.witch, this.mpp, { unlit: true, onTop: true });
-    this.scene.add(this.witchBatch.mesh);
-    this.stoneBatch = new SpriteBatch(this.assets.stones, this.mpp);
-    this.scene.add(this.stoneBatch.mesh);
+    // The witch is depth-tested like everything else, drawn after it; where something still hides
+    // her, a silhouette in her glow colour shows through, and tall things in front of her fade.
+    const O = t.occlusion;
+    this.witchBatch = new SpriteBatch(this.assets.witch, this.mpp, { unlit: true, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: O.silhouette } });
+    this.witchBatch.mesh.renderOrder = 10;
+    this.scene.add(...this.witchBatch.meshes);
+    SPRITE_UNIFORMS.uOcc.value.set(O.fadeOpacity, O.edge, O.minHeight, O.on ? 1 : 0);
+    this.stoneBatch = new SpriteBatch(this.assets.stones, this.mpp, { fade: true });
+    this.scene.add(...this.stoneBatch.meshes);
     const d = game.map.dancefloor, stones: SpriteInstance[] = [];
     const n = game.tuning.dancefloor.stones;
     for (let i = 0; i < n; i++) {
@@ -118,15 +123,15 @@ export class View {
       stones.push({ x: d.x + Math.cos(a) * d.radius, y: 0, z: d.z + Math.sin(a) * d.radius, frame: this.assets.stones.frames[i % 4], flip: i % 2 === 0 });
     }
     this.stoneBatch.set(stones);
-    this.propBatch = new SpriteBatch(this.assets.props, this.mpp);
-    this.scene.add(this.propBatch.mesh);
+    this.propBatch = new SpriteBatch(this.assets.props, this.mpp, { fade: true });
+    this.scene.add(...this.propBatch.meshes);
     this.partyView = new PartyView(this.assets.soundsystems, this.mpp);
     this.strings = new StringLightsView(this.scene, game);
     this.leashView = new LeashView(this.scene, game);
     this.lasers = new Lasers(this.scene, game);
     this.borders = new BorderView(this.scene, game);
-    this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp);
-    this.scene.add(this.soundBatch.mesh);
+    this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp, { fade: true });
+    this.scene.add(...this.soundBatch.meshes);
     this.dancefloor = new Dancefloor(game.map, t, SPRITE_UNIFORMS, this.mpp);
     this.scene.add(this.dancefloor.ball, this.dancefloor.beam, this.dancefloor.motes);
 
@@ -181,7 +186,7 @@ export class View {
 
   private batchFor<K>(map: Map<K, SpriteBatch>, key: K, atlas: () => SpriteBatch | undefined): SpriteBatch | undefined {
     let b = map.get(key);
-    if (!b) { b = atlas(); if (b) { map.set(key, b); this.scene.add(b.mesh); } }
+    if (!b) { b = atlas(); if (b) { map.set(key, b); this.scene.add(...b.meshes); } }
     return b;
   }
 
@@ -340,11 +345,12 @@ export class View {
         const pieces = pick(art.layout);
         if (!pieces.length) continue;
         const piece = pieces[p.variant % pieces.length], f = art.atlas.frames, frame = f[piece.bot], whole = f[piece.top ?? piece.bot];
-        if (!this.inView(p.x, p.z, whole.w * mpp, whole.h * mpp, margin, reach)) continue;
-        const fresh = this.mark(kind, p.x, p.z, whole.h * mpp);
-        add(p.type, { x: p.x, y: 0, z: p.z, frame, flip: p.flip, fresh });
-        if (piece.top !== null) add(p.type, { x: p.x, y: 0, z: p.z, frame: f[piece.top], flip: p.flip, top: true, fresh });
-        shadows.push({ x: p.x, z: p.z, w: frame.w * mpp * 0.8, d: frame.w * mpp * 0.3, scenery: true });
+        const scale = kind === "setpiece" ? t.setPieceScale : 1, m = mpp * scale; // set pieces: each area's landmark, drawn big
+        if (!this.inView(p.x, p.z, whole.w * m, whole.h * m, margin, reach)) continue;
+        const fresh = this.mark(kind, p.x, p.z, whole.h * m);
+        add(p.type, { x: p.x, y: 0, z: p.z, frame, flip: p.flip, fresh, scale });
+        if (piece.top !== null) add(p.type, { x: p.x, y: 0, z: p.z, frame: f[piece.top], flip: p.flip, top: true, fresh, scale });
+        shadows.push({ x: p.x, z: p.z, w: frame.w * m * 0.8, d: frame.w * m * 0.3, scenery: true });
         nb++;
       }
     };
@@ -353,7 +359,7 @@ export class View {
     scatter("setpiece", g.forest.setPiecesNear(cx, cz, half), l => (l.set === null ? [] : [l.set]));
     for (const [type, b] of this.typeBatches) if (!per.has(type)) b.set([]);
     for (const [type, list] of per) {
-      const b = this.batchFor(this.typeBatches, type, () => { const a = this.assets.typeArt(type); return a && new SpriteBatch(a.atlas, mpp, { scenery: true }); });
+      const b = this.batchFor(this.typeBatches, type, () => { const a = this.assets.typeArt(type); return a && new SpriteBatch(a.atlas, mpp, { scenery: true, fade: true }); });
       b?.set(list);
     }
     this.checkPops("placed", !force);
@@ -517,9 +523,20 @@ export class View {
     this.mist?.follow(pose.tx, pose.tz);
     const bob = Math.sin(time * 2.4) * 0.12;
     // Her hover frames, turned away when flying up the screen, leaning when fast.
-    const wf = w.lean ? 6 + (w.away ? 1 : 0) : (w.away ? 3 : 0) + (Math.floor(time * 4) % 3);
+    // Climbing to the treetops or dropping to the ground: the rise or descend pose, fluttering
+    // between its two frames, until the move is about 90% done.
+    const climbing = w.mode === "rising" && w.lift < 0.9, dropping = w.mode === "descending" && w.lift > 0.1;
+    const wf = climbing || dropping ? (climbing ? 8 : 12) + (w.away ? 2 : 0) + (Math.floor(time * 7) % 2)
+      : w.lean ? 6 + (w.away ? 1 : 0) : (w.away ? 3 : 0) + (Math.floor(time * 4) % 3);
     const wframe = this.assets.witch.frames[wf], hatTop = h + bob - 0.4 + wframe.h * this.mpp;
     this.witchBatch.set([{ x: w.x, y: h + bob - 0.4, z: w.z, frame: wframe, flip: w.facing < 0 }]);
+    // Where she is on screen (low-res pixels) and how far from the camera, for the occluder fade.
+    {
+      const px = (x: number, y: number, z: number) => { const p = this.v3.set(x, y, z).project(this.camera); return [(p.x + 1) / 2 * this.width, (p.y + 1) / 2 * this.height]; };
+      const base = px(w.x, h + bob - 0.4, w.z), top = px(w.x, hatTop, w.z), side = px(w.x + wframe.w * this.mpp / 2, h + bob - 0.4, w.z);
+      SPRITE_UNIFORMS.uWitch.value.set((base[0] + top[0]) / 2, (base[1] + top[1]) / 2, Math.abs(side[0] - base[0]) + 1, Math.abs(top[1] - base[1]) / 2 + 1);
+      SPRITE_UNIFORMS.uWitchDepth.value = -this.v3.set(w.x, h, w.z).applyMatrix4(this.camera.matrixWorldInverse).z;
+    }
     this.shadow.position.set(w.x, 0.03, w.z);
     this.shadow.scale.setScalar(1 - 0.5 * canopyShown(w));
 
