@@ -11,6 +11,7 @@ import { legendChance, population, spawnCreatures, stepCreature, stepCreaturesNe
 import { newGame, stepGame } from "./game";
 import { newParty, spreadWave, stepParty } from "./party";
 import { stringsFor } from "./strings";
+import { laserShow } from "./lasers";
 import { newLeash, stepLeash, type LeashControls } from "./leash";
 import { newClock, tick, MAX_STEP } from "./clock";
 import { TUNING, withTuning } from "./tuning";
@@ -658,5 +659,29 @@ describe("inviting and leashing", () => {
     expect(g.leash.stack.length).toBe(1);
     stepGame(g, { ...NO_INTENT, zoom: 0, sigil: true }, 1 / 60);
     expect(g.leash.placed.length).toBe(1);
+  });
+});
+
+describe("laser shows", () => {
+  it("are seeded, on about duty of the time, at most maxCount beams, and fade rather than pop", () => {
+    const L = TUNING.lasers;
+    let on = 0, n = 0, maxJump = 0;
+    for (const seed of [3, 17, 99, 1234]) {
+      let last = laserShow(0, seed, 1, TUNING).on;
+      for (let t = 0; t < 600; t += 1 / 60) {
+        const s = laserShow(t, seed, 1, TUNING);
+        expect(s.count).toBeGreaterThanOrEqual(1); expect(s.count).toBeLessThanOrEqual(L.maxCount);
+        expect(laserShow(t, seed, 1, TUNING)).toEqual(s);
+        maxJump = Math.max(maxJump, Math.abs(s.on - last)); last = s.on;
+        if (s.on > 0.5) on++;
+        n++;
+      }
+    }
+    expect(on / n).toBeGreaterThan(L.duty * 0.5); expect(on / n).toBeLessThan(L.duty * 1.6);
+    expect(maxJump).toBeLessThan(0.35);
+    // Neighbours aren't in lockstep.
+    let same = 0;
+    for (let t = 0; t < 300; t += 0.5) if ((laserShow(t, 3, 1, TUNING).on > 0.5) === (laserShow(t, 4, 1, TUNING).on > 0.5)) same++;
+    expect(same / 600).toBeLessThan(0.9);
   });
 });

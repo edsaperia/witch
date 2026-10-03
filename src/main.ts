@@ -100,7 +100,7 @@ function frame(now: number): void {
   waveFill.style.height = `${(1 - cd.gone) * 100}%`;
   waveLabel.textContent = `wave ${game.party.wave} · ${game.party.areas.size} areas · ${Math.ceil(cd.left)} s`;
   waveEl.classList.toggle("paused", game.party.paused);
-  view.render(now / 1000);
+  view.render(game.clock.time); // game time: party transitions, sigils and waves are stamped in it
   if (debugOn) {
     const w = game.witch, s = view.stats;
     debugEl.textContent = [

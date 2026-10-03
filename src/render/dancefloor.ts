@@ -1,6 +1,7 @@
 // The dancefloor's show: the magic circle's pulse and turning runes (drawn by the ground), its
 // coloured light, and a magic disco ball floating above the centre, turning, glinting, hanging
-// from a thin beam of moonlight, and throwing specks of light round the circle (in the lighting).
+// from a thin beam of moonlight, and throwing specks of light round the circle (in the lighting);
+// and magic particles drifting up off the circle, high into the sky, wobbling as they fade.
 import * as THREE from "three";
 import { hsv2rgb } from "../../art/generator.js";
 import type { ForestMap } from "../rules/map";
@@ -43,9 +44,29 @@ void main() {
   gl_FragColor = vec4(uTint, 1.0);
 }`;
 
+const MOTE_VERT = /* glsl */ `
+attribute vec4 aMote; // phase, speed, wobble, ring
+uniform float uTime, uRise;
+varying float vA;
+void main() {
+  float y = mod(uTime * aMote.y + aMote.x * uRise, uRise), k = y / uRise;
+  vec3 p = position;
+  p.x += sin(uTime * 0.9 + aMote.x * 31.0) * aMote.z * (0.3 + k);
+  p.z += cos(uTime * 0.7 + aMote.x * 17.0) * aMote.z * (0.3 + k);
+  p.y += y;
+  vA = smoothstep(0.0, 0.05, k) * (1.0 - smoothstep(0.4, 1.0, k));
+  gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
+  gl_PointSize = vA > 0.15 ? (k < 0.15 ? 2.0 : 1.0) : 0.0;
+}`;
+const MOTE_FRAG = /* glsl */ `
+uniform vec3 uTint;
+varying float vA;
+void main() { if (vA < 0.15) discard; gl_FragColor = vec4(uTint * (0.5 + vA), 1.0); }`;
+
 export class Dancefloor {
   readonly ball: THREE.Mesh;
   readonly beam: THREE.Mesh;
+  readonly motes: THREE.Points;
   private ballMat: THREE.ShaderMaterial;
   private lightRgb: THREE.Vector3;
   readonly centre: THREE.Vector3;
@@ -63,6 +84,20 @@ export class Dancefloor {
     const beamH = 60;
     this.beam = new THREE.Mesh(new THREE.PlaneGeometry(metresPerPixel, beamH).translate(0, beamH / 2, 0), new THREE.ShaderMaterial({ fragmentShader: BEAM_FRAG, uniforms: { uTint: { value: tint.clone().multiplyScalar(0.5) } } }));
     this.beam.frustumCulled = false;
+    // Magic particles: a tight column over the circle, rising very high.
+    const M = d.motes, mp: number[] = [], md: number[] = [];
+    for (let i = 0; i < M.count; i++) {
+      const h = (k: number) => { const v = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return v - Math.floor(v); };
+      const a = h(1) * Math.PI * 2, r = Math.sqrt(h(2)) * f.radius * M.column;
+      mp.push(f.x + Math.cos(a) * r, 0.3, f.z + Math.sin(a) * r);
+      md.push(h(3), M.speed * (0.6 + h(4) * 0.8), 0.4 + h(5) * 1.2, 0);
+    }
+    const mg = new THREE.BufferGeometry();
+    mg.setAttribute("position", new THREE.Float32BufferAttribute(mp, 3));
+    mg.setAttribute("aMote", new THREE.Float32BufferAttribute(md, 4));
+    const mc = hsv2rgb(d.circleHue, 0.55, 1);
+    this.motes = new THREE.Points(mg, new THREE.ShaderMaterial({ vertexShader: MOTE_VERT, fragmentShader: MOTE_FRAG, uniforms: { uTime: LIGHT_UNIFORMS.uTime, uRise: { value: M.rise }, uTint: { value: new THREE.Vector3(mc[0] / 255, mc[1] / 255, mc[2] / 255) } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    this.motes.frustumCulled = false;
     const c = hsv2rgb(d.circleHue, 0.7, 1);
     this.lightRgb = new THREE.Vector3(c[0] / 255, c[1] / 255, c[2] / 255);
     const s = LIGHT_UNIFORMS;

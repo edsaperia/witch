@@ -18,6 +18,7 @@ import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
 import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
+import { Lasers } from "./lasers";
 import { Mist } from "./mist";
 import { ShadowBatch, type ShadowInstance } from "./shadows";
 import { lerp } from "../rules/random";
@@ -48,6 +49,7 @@ export class View {
   private partyView: PartyView;
   private strings: StringLightsView;
   private leashView: LeashView;
+  private lasers: Lasers;
   private soundBatch: SpriteBatch;
   private sources: LightSource[] = [];
   /** Lights in the forest besides the witch's glow, from the light sources (set by the view). */
@@ -107,10 +109,11 @@ export class View {
     this.partyView = new PartyView(this.assets.soundsystems, this.mpp);
     this.strings = new StringLightsView(this.scene, game);
     this.leashView = new LeashView(this.scene, game);
+    this.lasers = new Lasers(this.scene, game);
     this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp);
     this.scene.add(this.soundBatch.mesh);
     this.dancefloor = new Dancefloor(game.map, t, SPRITE_UNIFORMS, this.mpp);
-    this.scene.add(this.dancefloor.ball, this.dancefloor.beam);
+    this.scene.add(this.dancefloor.ball, this.dancefloor.beam, this.dancefloor.motes);
 
     // A dithered shadow under the witch, so her height reads.
     const sm = new THREE.ShaderMaterial({
@@ -436,6 +439,7 @@ export class View {
     const party = this.partyView.update(g, time, (x, z, ww, hh) => this.inView(x, z, ww, hh, 4), () => false);
     this.soundBatch.set(party.items);
     this.ground.setSweeps(party.sweeps);
+    this.lasers.update(time, party.playing, w.x, w.z);
     this.strings.update();
     this.setLights([this.dancefloor.update(time, this.ground), ...party.lights, ...this.forestLights], w.x, w.z);
     LIGHT_UNIFORMS.uTime.value = time;

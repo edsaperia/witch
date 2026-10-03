@@ -48,6 +48,7 @@ export interface Tuning {
   stringLights: { on: boolean; perArea: number; spanMin: number; spanMax: number; chainMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; twinkle: number; chaseSpeed: number };
   party: { interval: number; startDelay: number; maxPerWave: number; transition: number; lightReach: number; lightStrength: number };
   dancefloor: {
+    motes: { count: number; rise: number; speed: number; column: number };
     radius: number; stones: number; clearing: number;
     circleHue: number; circleHue2: number; pulse: number; runeSpeed: number;
     lightReach: number; lightStrength: number;
@@ -62,6 +63,9 @@ export interface Tuning {
   fx: "smooth" | "pixel";
   lights: { campfire: { reach: number; strength: number }; stone: { reach: number; strength: number } };
   glowPower: number;
+  beat: { bpm: number };
+  lasers: { on: boolean; maxCount: number; length: number; spread: number; sweep: number; sweepBeats: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };
+  borders: { on: boolean; width: number; brightness: number; sparkle: number; step: number };
   invite: { radius: number; cancelDistance: number; talkTimes: number[] };
   leash: { length: number; runSpeed: number; pickRadius: number; spacing: number };
   bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number };

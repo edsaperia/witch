@@ -12,6 +12,8 @@ import type { ForestLight } from "./view";
 const CRYSTAL = [new THREE.Vector3(0.25, 0.85, 1), new THREE.Vector3(0.7, 0.4, 1), new THREE.Vector3(1, 0.65, 0.2)];
 
 export interface Sweep { x: number; z: number; radius: number; strength: number }
+/** A playing soundsystem, for its laser show: where its top is, its seed, when it finished rising. */
+export interface Playing { x: number; y: number; z: number; seed: number; ready: number }
 
 export class PartyView {
   constructor(private atlas: Atlas, private metresPerPixel: number) {}
@@ -24,7 +26,7 @@ export class PartyView {
 
   /** This frame's soundsystem sprites, their lights, and the ground's sweeping fronts. */
   update(g: Game, time: number, visible: (x: number, z: number, w: number, h: number) => boolean, mark: (x: number, z: number, h: number) => boolean) {
-    const t = g.tuning.party, items: SpriteInstance[] = [], lights: ForestLight[] = [], sweeps: Sweep[] = [];
+    const t = g.tuning.party, items: SpriteInstance[] = [], lights: ForestLight[] = [], sweeps: Sweep[] = [], playing: Playing[] = [];
     const list = [this.homeSoundsystem(g)];
     for (const [, a] of g.party.areas) {
       if (!a.soundsystem) continue;
@@ -44,9 +46,10 @@ export class PartyView {
       if (rise > 0 && visible(s.x, s.z, frame.w * this.metresPerPixel, h)) {
         items.push({ x: s.x, y: -(1 - rise) * h, z: s.z, frame, flip: false, fresh: mark(s.x, s.z, h) });
       }
+      if (p >= 1) playing.push({ x: s.x, y: h * 0.85, z: s.z, seed: Math.floor(Math.abs(s.x * 7.3 + s.z * 13.1)) % 100000, ready: s.at + t.transition });
       const beat = 0.85 + 0.15 * Math.sin(time * 8);
       if (rise > 0) lights.push({ x: s.x, y: 3, z: s.z, reach: t.lightReach, rgb: CRYSTAL[s.variant % 3], strength: t.lightStrength * beat * rise * (1 + (1 - p) * 2) });
     }
-    return { items, lights, sweeps };
+    return { items, lights, sweeps, playing };
   }
 }
