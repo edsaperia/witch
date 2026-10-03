@@ -59,7 +59,7 @@ await b.close();
 
 const manifest = { generator: "art/generator.js", style: assets.style, placement: assets.placement, areas: assets.areas, conventions: {
   albedo: "RGBA; alpha 254 = glowing pixel, draw unlit", normal: "RGB = xyz from [-1,1] to [0,255]; x right, y down, z to viewer; flip x when mirrored",
-  facing: "right", anchor: "pixels from top-left; the point on the ground (feet, trunk base); flyers (bat, moth) hover above it",
+  facing: "right", anchor: "pixels from top-left; the point on the ground (feet, trunk base); flyers (bat, moth) stand on their shadow",
   floor: "area-floor tiles repeat over the ground; their normals face up" }, assets: [] };
 for (const a of assets.list) {
   const { albedo, normal, anchorX, ...meta } = a;

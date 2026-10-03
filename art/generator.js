@@ -3,7 +3,7 @@
 // as an albedo canvas plus a normal map, for the deferred lighting pass to light.
 // No page or DOM dependencies beyond making canvases: pass `makeCanvas(w, h)` where there
 // is no `document` (the default uses document, else OffscreenCanvas).
-// Parts: core.js (sprites, shapes, bake), creatures.js + babies.js (the bestiary),
+// Parts: core.js (sprites, shapes, bake), creatures.js + creatures3d.js + model3d.js (the bestiary),
 // trees.js (trees and bushes), this file (the style's knobs, the witch, a whole asset set).
 
 import { defaultCanvas, rng, uni, pick, gauss, hash2, vnoise, hsv2rgb, M, EMISSIVE, Sprite, spline, band, tufts, polyMask, edgeVectors, rot, lerp2, bake } from "./core.js";

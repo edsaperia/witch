@@ -21,7 +21,7 @@ It returns:
 |---|---|
 | `trees[i]` | 12 trees (4 per area for 3 areas): `{ whole, top, bot }`. `bot` is the trunk below the crown (shown in ground mode), `top` everything else (the canopy, shown from the treetops), `whole` both |
 | `bushes[i]` | 12 bushes |
-| `creatures[k][level][frame]` | for each kind in `world.kinds`: levels 0 baby, 1 young, 2 legend; frames 0 and 1 of the walk. Drawn in three-quarter view, facing right. Young and legends are drawn with fewer pixels as the style's pixel size grows (same size on screen); babies are fixed grids |
+| `creatures[k][level][frame]` | for each kind in `world.kinds`: levels 0 baby, 1 young, 2 legend; frames 0 and 1 of the walk. Built in 3D and seen in three-quarter view from above (turned 35°, looking down 30°), facing right. Young are about 45 art pixels tall at the default style, legends about 4.5 times that; sizes on screen stay the same as the pixel size changes |
 | `witch` | the witch on her broom |
 
 Every asset is a **baked sprite**: `{ A, N, NF, w, h }`.
@@ -29,7 +29,7 @@ Every asset is a **baked sprite**: `{ A, N, NF, w, h }`.
 - `N`: normal map canvas, RGB = (x, y, z) mapped from [-1, 1] to [0, 255]; x to the right, y down the image, z towards the viewer.
 - `NF`: the normal map for the sprite drawn mirrored (facing left).
 - `w`, `h`: size in art pixels.
-- **Anchor**: everything stands on its bottom row, except the flyers (bat, moth), which hover above it. Creatures and trees are centred on their feet or trunk, so the anchor is `(w / 2, h)`; `art/export.mjs` measures the exact feet.
+- **Anchor**: everything stands on its bottom row (the flyers, bat and moth, stand on their shadow). Creatures and trees are centred on their feet or trunk, so the anchor is `(w / 2, h)`; `art/export.mjs` measures the exact feet.
 - Everything faces **right**; mirror for left.
 
 ## Single assets
@@ -54,7 +54,8 @@ The night lighting pass the lab uses is `shade(target, out, style, lights, rect)
 
 - `generator.js`: the entry point: the style's knobs, the witch, `buildAssets`; re-exports the rest
 - `core.js`: random numbers, colour, the `Sprite` (a material and a normal per pixel), the shape toolkit (smooth outlines, limbs, fills with normals from the distance to the edge), `bake`
-- `creatures.js`, `babies.js`: the bestiary; babies are hand-drawn grids
+- `creatures.js`: the bestiary (species table, colours, `critter`)
+- `creatures3d.js`: each creature built from 3D parts; `model3d.js`: the 3D parts (ellipsoids) and the renderer (one ray per pixel, true normals)
 - `trees.js`: trees and bushes
 - `areas.js`: the 30 area types and their props
 - `lighting.js`: the night lighting pass
