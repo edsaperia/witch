@@ -54,7 +54,7 @@ export interface Tuning {
   lightBudget: number;
   lightSources: { spacing: number; campfire: number; magicStone: number; pond: number; wetPond: number };
   haze: { near: number; far: number };
-  stringLights: { on: boolean; perArea: number; spanMin: number; spanMax: number; chainMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; twinkle: number; chaseSpeed: number };
+  stringLights: { on: boolean; runsPerArea: number[]; spansPerRun: number[]; coneAngle: number; junctionChance: number; spanMin: number; spanMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; twinkle: number; chaseSpeed: number };
   party: { interval: number; startDelay: number; maxPerWave: number; transition: number; lightReach: number; lightStrength: number };
   dancefloor: {
     motes: { count: number; rise: number; speed: number; column: number };
@@ -74,7 +74,7 @@ export interface Tuning {
   glowPower: number;
   beat: { bpm: number };
   stack: { offset: number; scale: number; gap: number; stiffness: number; damping: number; trail: number; idleSway: number };
-  lasers: { on: boolean; maxCount: number; length: number; spread: number; sweep: number; sweepBeats: number; openBars: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };
+  lasers: { on: boolean; maxCount: number; length: number; spread: number; maxTilt: number; sweep: number; sweepBeats: number; openBars: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };
   borders: { on: boolean; width: number; brightness: number; sparkle: number; step: number };
   invite: { talkRange: number; cancelDistance: number; talkTime: number[]; turn: number[] };
   leash: { length: number; runSpeed: number; pickRadius: number; spacing: number };

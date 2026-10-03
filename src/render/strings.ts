@@ -7,11 +7,13 @@ import * as THREE from "three";
 import type { Game } from "../rules/game";
 import { stringsFor, type StringLine } from "../rules/strings";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
+import { SPRITE_UNIFORMS } from "./sprites";
 
 const BULB_VERT = /* glsl */ `
 attribute vec3 aColour;
 attribute vec4 aBulb; // phase, index along the line, time it switches on, sway (0 at the ends)
 uniform float uWind, uNear, uTime;
+uniform vec2 uRes;
 varying vec3 vColour;
 varying vec3 vWorld;
 varying float vOn;
@@ -23,7 +25,12 @@ void main() {
   vec4 mv = viewMatrix * vec4(p, 1.0);
   gl_Position = projectionMatrix * mv;
   vOn = uTime >= aBulb.z ? 1.0 : 0.0;
-  gl_PointSize = vOn > 0.5 ? (-mv.z < uNear ? 2.0 : 1.0) : 0.0;
+  float size = vOn > 0.5 ? (-mv.z < uNear ? 2.0 : 1.0) : 0.0;
+  gl_PointSize = size;
+  // On the pixel grid, so each bulb is a whole square, never a broken fragment.
+  vec2 px = (gl_Position.xy / gl_Position.w * 0.5 + 0.5) * uRes;
+  px = size > 1.5 ? floor(px + 0.5) : floor(px) + 0.5;
+  gl_Position.xy = (px / uRes * 2.0 - 1.0) * gl_Position.w;
   vColour = aColour; vWorld = p; vB = aBulb.xy;
 }`;
 
@@ -95,7 +102,7 @@ export class StringLightsView {
     const L = game.tuning.stringLights;
     this.palette = L.palette.map(h => new THREE.Color(h));
     const shared = { ...LIGHT_UNIFORMS, uWind: { value: game.tuning.canopyShadow.wind * 1.5 } };
-    this.bulbMat = new THREE.ShaderMaterial({ vertexShader: BULB_VERT, fragmentShader: BULB_FRAG, uniforms: { ...shared, uNear: { value: 240 }, uTwinkle: { value: L.twinkle }, uChase: { value: L.chaseSpeed } } });
+    this.bulbMat = new THREE.ShaderMaterial({ vertexShader: BULB_VERT, fragmentShader: BULB_FRAG, uniforms: { ...shared, uRes: SPRITE_UNIFORMS.uRes, uNear: { value: 240 }, uTwinkle: { value: L.twinkle }, uChase: { value: L.chaseSpeed } } });
     this.wireMat = new THREE.ShaderMaterial({ vertexShader: WIRE_VERT, fragmentShader: WIRE_FRAG, uniforms: shared });
     this.moteMat = new THREE.ShaderMaterial({ vertexShader: MOTE_VERT, fragmentShader: MOTE_FRAG, uniforms: { ...LIGHT_UNIFORMS, uMoteColour: { value: new THREE.Color(1, 0.85, 1) } } });
   }
@@ -146,6 +153,8 @@ export class StringLightsView {
   update(): void {
     const g = this.game, L = g.tuning.stringLights;
     if (!L.on) return;
+    // From the treetops the bulbs hang under the canopy: let them glimmer through it as specks.
+    this.bulbMat.depthTest = g.witch.lift < 0.5;
     let builds = 0;
     for (const [k, a] of g.party.areas) {
       let b = this.built.get(k);
