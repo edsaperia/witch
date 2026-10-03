@@ -40,19 +40,36 @@ function sdRoundCone(p, q) { // from a (radius r1) to b (radius r2); after Inigo
   if (Math.sign(y) * a2 * y2 < k) return Math.sqrt(x2 + y2) * il2 - r1;
   return (Math.sqrt(x2 * a2 * il2) + y * rr) * il2 - r1;
 }
-const sdf = (q, p) => q.type === "ell" ? sdEllipsoid(sub(p, q.cw), q) : sdRoundCone(sub(p, q.aw), q);
+function sdRoundBox(p, q) { // half-sizes q.h along q.axes, edges rounded by q.round
+  const x = Math.abs(dot(p, q.axes[0])) - q.h[0] + q.round, y = Math.abs(dot(p, q.axes[1])) - q.h[1] + q.round, z = Math.abs(dot(p, q.axes[2])) - q.h[2] + q.round;
+  return Math.hypot(Math.max(x, 0), Math.max(y, 0), Math.max(z, 0)) + Math.min(Math.max(x, y, z), 0) - q.round;
+}
+// hewn, uneven surfaces: a small bumpiness from a few crossed waves
+const rough = (p, a) => a * (Math.sin(p[0] * 23 + p[1] * 7) * Math.sin(p[1] * 19 - p[2] * 11) + .5 * Math.sin(p[2] * 41 + p[0] * 29));
+const sdf0 = (q, p) => q.type === "ell" ? sdEllipsoid(sub(p, q.cw), q) : q.type === "box" ? sdRoundBox(sub(p, q.cw), q) : sdRoundCone(sub(p, q.aw), q);
+const sdf = (q, p) => q.rough ? sdf0(q, p) + rough(p, q.rough) : sdf0(q, p);
 
 export class Model {
   constructor({ blend = .07 } = {}) { this.parts = []; this.flats = []; this.blend = blend; }
+  // Every volume also takes o.rough (a hewn, bumpy surface, as a distance) and o.cut: a cut
+  // part carves a hollow out of its group instead of adding to it (a horn mouth, a socket);
+  // the hollow's walls are drawn in the cut part's material.
   // An ellipsoid at c with radii r. With `dir`, r[0] runs along dir, r[1] roughly up (or
   // along `up`), r[2] across. o: { group, extra (not counted in the height), paint(p) -> material }
   ell(c, r, mat, o = {}) {
     const axes = o.axes || (o.dir ? frameAlong(o.dir, o.up) : [[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
-    this.parts.push({ type: "ell", c, r, axes, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint });
+    this.parts.push({ type: "ell", c, r, axes, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint, rough: o.rough, cut: !!o.cut });
+    return this;
+  }
+  // A box centred at c with half-sizes h, its edges rounded by o.round. With `dir`, h[0] runs
+  // along dir, h[1] roughly up (or along `up`), h[2] across.
+  box(c, h, mat, o = {}) {
+    const axes = o.axes || (o.dir ? frameAlong(o.dir, o.up) : [[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
+    this.parts.push({ type: "box", c, h, round: Math.min(o.round ?? .02, ...h), axes, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint, rough: o.rough, cut: !!o.cut });
     return this;
   }
   // A tapered limb from a (radius ra) to b (radius rb): a rounded cone, smooth along its length.
-  seg(a, b, ra, rb, mat, o = {}) { this.parts.push({ type: "cone", a, b, r1: ra, r2: rb, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint }); return this; }
+  seg(a, b, ra, rb, mat, o = {}) { this.parts.push({ type: "cone", a, b, r1: ra, r2: rb, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint, rough: o.rough, cut: !!o.cut }); return this; }
   // A limb through several points, each [x, y, z, radius].
   chain(pts, mat, o = {}) { for (let i = 0; i + 1 < pts.length; i++) this.seg(pts[i].slice(0, 3), pts[i + 1].slice(0, 3), pts[i][3], pts[i + 1][3], mat, o); return this; }
   // A shaped flat plane centred at c, spanning ±su along u and ±sv along v; mask(s, t) with
@@ -66,7 +83,8 @@ export const YAW = { towards: .6, away: -.6 }; // radians; the head turned 35° 
 export const PITCH = .52;                       // the camera looks down about 30°
 
 // Renders a model to a Sprite `height` art pixels tall (measured over the parts not marked extra).
-export function render(model, { height, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12 } = {}) {
+// With `scale` (pixels per model unit) instead, several models share one scale.
+export function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12 } = {}) {
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), spp = Math.sin(pitch);
   const toWorld = p => [p[0] * cy - p[2] * sy, p[1], p[0] * sy + p[2] * cy];
   const toModel = p => [p[0] * cy + p[2] * sy, p[1], -p[0] * sy + p[2] * cy];
@@ -74,7 +92,8 @@ export function render(model, { height, facing = "towards", yaw = YAW[facing] ??
   const k = model.blend;
   // parts in world space, each with a bounding sphere
   const parts = model.parts.map(q => {
-    if (q.type === "ell") { const cw = toWorld(q.c), axes = q.axes.map(toWorld), rad = Math.max(...q.r); return { ...q, cw, axes, bc: cw, br: rad }; }
+    if (q.type === "ell") { const cw = toWorld(q.c), axes = q.axes.map(toWorld), rad = Math.max(...q.r); return { ...q, cw, axes, bc: cw, br: rad + (q.rough || 0) * 1.5 }; }
+    if (q.type === "box") { const cw = toWorld(q.c), axes = q.axes.map(toWorld); return { ...q, cw, axes, bc: cw, br: Math.hypot(...q.h) + (q.rough || 0) * 1.5 }; }
     const aw = toWorld(q.a), bw = toWorld(q.b), ba = sub(bw, aw), l2 = Math.max(1e-9, dot(ba, ba)), rr = q.r1 - q.r2;
     return { ...q, aw, ba, l2, rr, a2: l2 - rr * rr, il2: 1 / l2, bc: v3.lerp(aw, bw, .5), br: Math.sqrt(l2) / 2 + Math.max(q.r1, q.r2) };
   });
@@ -82,9 +101,9 @@ export function render(model, { height, facing = "towards", yaw = YAW[facing] ??
   const all = [...parts, ...flats];
   const bounds = q => { const sx = dot(q.bc, R), su = dot(q.bc, U), e = q.br + (q.uw ? 0 : k); return [sx - e, sx + e, su - e, su + e]; };
   for (const q of all) [q.x0, q.x1, q.u0, q.u1] = bounds(q);
-  const body = all.filter(q => !q.extra);
+  const body = all.filter(q => !q.extra && !q.cut);
   const u0b = Math.min(...body.map(q => q.u0 + (q.uw ? 0 : k))), u1b = Math.max(...body.map(q => q.u1 - (q.uw ? 0 : k)));
-  const s = height / Math.max(1e-6, u1b - u0b);
+  const s = scale ?? height / Math.max(1e-6, u1b - u0b);
   const X0 = Math.min(...all.map(q => q.x0)), X1 = Math.max(...all.map(q => q.x1)), U0 = Math.min(...all.map(q => q.u0)), U1 = Math.max(...all.map(q => q.u1));
   const W = Math.ceil((X1 - X0) * s) + 4, H = Math.ceil((U1 - U0) * s) + 2, sp = new Sprite(W, H);
   const depth = new Float32Array(W * H).fill(Infinity), grp = new Int16Array(W * H).fill(-1);
@@ -108,13 +127,14 @@ export function render(model, { height, facing = "towards", yaw = YAW[facing] ??
       const q = all[qi], oc = sub(O, q.bc), b = dot(oc, D), rb = q.br + (q.uw ? 0 : k), c = dot(oc, oc) - rb * rb, h = b * b - c;
       if (h < 0) continue;
       if (q.uw) { fl.push(q); continue; }
+      if (q.cut) { vol.push(q); continue; } // a hollow adds no surface of its own
       const r = Math.sqrt(h); tmin = Math.min(tmin, -b - r); tmax = Math.max(tmax, -b + r); vol.push(q);
     }
     let hitT = Infinity, hitG = -1, hitMat = 0, hitN = null;
     if (vol.length) {
       // group the candidates; the field is a smooth union within a group, a hard union across
       const groups = new Map(); for (const q of vol) { let g = groups.get(q.group); if (!g) groups.set(q.group, g = []); g.push(q); }
-      const gfield = (qs, p) => { let d = Infinity; for (const q of qs) d = d === Infinity ? sdf(q, p) : smin(d, sdf(q, p)); return d; };
+      const gfield = (qs, p) => { let d = Infinity; for (const q of qs) if (!q.cut) d = d === Infinity ? sdf(q, p) : smin(d, sdf(q, p)); for (const q of qs) if (q.cut) d = Math.max(d, -sdf(q, p)); return d; };
       let t = Math.max(0, tmin);
       for (let step = 0; step < 96 && t < tmax; step++) {
         const p = v3.add(O, v3.mul(D, t));
@@ -123,7 +143,8 @@ export function render(model, { height, facing = "towards", yaw = YAW[facing] ??
           const qs = groups.get(g), e = .5 / s;
           hitN = norm([gfield(qs, [p[0] + e, p[1], p[2]]) - gfield(qs, [p[0] - e, p[1], p[2]]), gfield(qs, [p[0], p[1] + e, p[2]]) - gfield(qs, [p[0], p[1] - e, p[2]]), gfield(qs, [p[0], p[1], p[2] + e]) - gfield(qs, [p[0], p[1], p[2] - e])]);
           // the material: the part whose own surface is nearest
-          let mq = qs[0], md = Infinity; for (const q of qs) { const dd = sdf(q, p); if (dd < md) { md = dd; mq = q; } }
+          let mq = qs[0], md = Infinity; for (const q of qs) { if (q.cut) continue; const dd = sdf(q, p); if (dd < md) { md = dd; mq = q; } }
+          for (const q of qs) if (q.cut && -sdf(q, p) > md - eps * 2) { mq = q; break; } // on a hollow's wall
           hitT = t; hitG = g; hitMat = mq.paint ? (mq.paint(toModel(p), mq) ?? mq.mat) : mq.mat;
           break;
         }

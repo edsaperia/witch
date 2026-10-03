@@ -24,6 +24,7 @@ It returns:
 | `creatures[k][level][frame]` | for each kind in `world.kinds`: levels 0 baby, 1 young, 2 legend; frames 0 and 1 of the walk. Built in 3D and seen in three-quarter view from above (turned 35°, looking down 30°), facing right. Young are about 45 art pixels tall at the default style, legends about 4.5 times that; sizes on screen stay the same as the pixel size changes |
 | `creatures[k][level][frame].away` | the same frame turned away from the viewer (we see the rump and the back of the head); use it for creatures moving up the screen |
 | `witch` | the witch on her broom, frame 0 turned towards; `witch.frames` her three hover frames, `witch.away` the same turned away, `witch.lean` the fast-flight pose `{ towards, away }` |
+| `soundsystems` | what the party defends: three stacks (`id` stack, wall, tower; `crystal` cyan, violet, amber), each `{ playing: [3 frames of the cones pumping], damaged: [2 frames of flicker], destroyed }`; about three times the witch's height. Drawn the first time it is asked for |
 | `lights` | light sources: `campfire` (three frames), `stones` (`cyan`, `violet`, `green` magic stones), `pond` (with `mask`: white where its pixels are water) |
 
 Every asset is a **baked sprite**: `{ A, N, NF, w, h }`.
@@ -44,6 +45,7 @@ Every asset is a **baked sprite**: `{ A, N, NF, w, h }`.
 | `treeColours(rng, style, drawFn)`, `splitTree({ sp, crownY })` | a tree's palette; its `{ top, bot }` halves |
 | `bush(rng, style)` | `{ sp, colours }` |
 | `witchSprite(style, { frame, facing, lean })`, `witchColours(style, outfit)` | the witch, built in 3D from named parts (`WITCH_PARTS`); an outfit is a colour per part (`DEFAULT_OUTFIT`) |
+| `soundsystemSprite(style, { variant, state, frame })`, `soundsystemColours(variant)` | one soundsystem (`SOUNDSYSTEMS` lists the three); `state` is `"playing"` (frames 0 to 2), `"damaged"` (0 to 1) or `"destroyed"` |
 | `lightProps(style)` | the light sources, as in `buildAssets(...).lights` |
 | `bake(sp, colours, style, outline, makeCanvas)` | any sprite → `{ A, N, NF, w, h }` |
 | `rng(seed)` | the seeded random generator everything uses |
@@ -58,10 +60,11 @@ The night lighting pass the lab uses is `shade(target, out, style, lights, rect)
 - `generator.js`: the entry point: the style's knobs, the witch, `buildAssets`; re-exports the rest
 - `core.js`: random numbers, colour, the `Sprite` (a material and a normal per pixel), the shape toolkit (smooth outlines, limbs, fills with normals from the distance to the edge), `bake`
 - `creatures.js`: the bestiary (species table, colours, `critter`)
-- `creatures3d.js`: each creature built from 3D parts; `model3d.js`: the 3D parts (ellipsoids) and the renderer (one ray per pixel, true normals)
+- `creatures3d.js`: each creature built from 3D parts; `model3d.js`: the 3D parts (ellipsoids, tapered cones, rounded boxes, shaped planes, carved hollows) and the renderer (one ray per pixel, true normals)
 - `trees.js`: trees and bushes
 - `areas.js`: the 30 area types and their props
 - `witch.js`: the witch in 3D
+- `soundsystem.js`: the soundsystems, in 3D (stone blocks as rounded boxes, horn mouths carved as hollows)
 - `lighting.js`: the night lighting pass
 - `export.mjs`: every asset to PNGs and `manifest.json` (`node art/export.mjs [style.json] [out dir]`)
 - `preview.mjs`: lit preview sheets; `check.mjs`: the checks (see `CLAUDE.md`)

@@ -67,8 +67,9 @@ export function witchModel({ frame = 0, lean = false } = {}) {
 }
 
 // The witch about as tall as a young creature, so she reads clearly over the ground.
+export const witchHeight = (st = {}) => Math.round((st.size || 8) * Math.sqrt(st.growth || 20) * (2 / (st.pixel || 3)) * 1.9);
 export function witchSprite(st = {}, { frame = 0, lean = false, facing = "towards" } = {}) {
-  const pixel = st.pixel || 3, h = Math.round((st.size || 8) * Math.sqrt(st.growth || 20) * (2 / pixel) * 1.9);
+  const h = witchHeight(st);
   const { sp } = render(witchModel({ frame, lean }), { height: h, facing });
   // she glows: a few motes of light round her
   let n = 0;

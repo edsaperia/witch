@@ -125,6 +125,12 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
+        <h2>Soundsystems</h2>
+        <p class="note">What the party defends: a sound-system stack hewn from magic stone, with glowing crystal cones. Each of the three stacks is shown playing (three frames of the cones pumping), damaged (two frames of flicker) and destroyed, with the witch for scale.</p>
+        <div class="sheet-wrap"><canvas id="soundsystems" width="420" height="200"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
         <h2>Your picks</h2>
         <div class="history" id="history"></div>
       </section>
@@ -151,7 +157,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES } from "../../art/generator.js";
+import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -377,6 +383,24 @@ function renderBestiary() {
   }, 250);
 }
 
+// ================= soundsystems: every stack in every state, studio-lit =================
+let soundTimer;
+function renderSoundsystems() {
+  clearTimeout(soundTimer);
+  soundTimer = setTimeout(() => {
+    const c = document.getElementById("soundsystems"); if (!c) return;
+    const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 6;
+    const wit = bake(witchSprite(st), witchColours(st), st, st.cOutline);
+    const rows = SOUNDSYSTEMS.map((S, v) => { const col = soundsystemColours(v), b = o => bake(soundsystemSprite(st, { variant: v, ...o }), col, st, "none"); return [b({ frame: 0 }), b({ frame: 1 }), b({ frame: 2 }), b({ state: "damaged", frame: 0 }), b({ state: "damaged", frame: 1 }), b({ state: "destroyed" }), wit]; });
+    const w = Math.max(...rows.map(r => r.reduce((a, s) => a + s.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(s => s.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
+    tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+    let y = gap;
+    rows.forEach((r, i) => { let x = gap; y += rh[i] - gap; for (const s of r) { tgt.a.drawImage(s.A, x, y - s.h); tgt.n.drawImage(s.N, x, y - s.h); x += s.w + gap; } y += gap; });
+    c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
+    c.style.width = w + "px"; c.style.maxWidth = "none";
+  }, 600);
+}
+
 // ================= app =================
 const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
 let world = store.get("witch-art-world-3") || { kinds: ["wolf", "fox", "boar", "badger", "stag", "owl"], forestSeed: 3 };
@@ -415,7 +439,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderMap();
+  syncKnobs(); renderHistory(); renderBestiary(); renderSoundsystems(); renderMap();
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }

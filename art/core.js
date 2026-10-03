@@ -46,9 +46,14 @@ export const M = {
   BARKL: 27,   // lit bark ridges
   HAT: 28, PHONES: 29, TOP: 30, JACKET: 31, JEANS: 32, SHOES: 33, // the witch's outfit parts
   WATER: 34,   // still water: the prototype draws reflections on it
+  STONE: 35, STONED: 36, MOSS: 37, // hewn stone, its dark cracks and hollows, moss on it
+  CRYSTAL: 38, // crystal, lit
+  RUNE: 39,    // a carved rune's glow
+  GLOW: 40,    // glowing crystal: a soundsystem's cones and the depths of its horns
+  WOOD: 41,    // varnished wooden trim
 };
 // These glow: drawn at full colour by the lighting pass, whatever the light.
-export const EMISSIVE = new Set([M.GLINT, M.FLOWER, M.MAGIC, M.MAGIC2]);
+export const EMISSIVE = new Set([M.GLINT, M.FLOWER, M.MAGIC, M.MAGIC2, M.RUNE, M.GLOW]);
 
 // ================= geometry: smooth outlines =================
 // Points are [x, y] in sprite pixels. A closed outline is a list of control points; the

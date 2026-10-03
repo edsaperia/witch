@@ -13,6 +13,8 @@ import { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProp
 import { SPECIES, SPECIES_BY_ID, FEATURE_NAMES, speciesColours, critter, levelHeight } from "./creatures.js";
 export { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT };
 export { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps };
+import { SOUNDSYSTEMS, soundsystemColours, soundsystemSprite, soundsystemHeight, soundsystems } from "./soundsystem.js";
+export { SOUNDSYSTEMS, soundsystemColours, soundsystemSprite, soundsystemHeight };
 export { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree };
 export { defaultCanvas, rng, uni, pick, gauss, hash2, vnoise, hsv2rgb, M, EMISSIVE, Sprite, spline, band, tufts, polyMask, edgeVectors, rot, lerp2, bake, SPECIES, SPECIES_BY_ID, FEATURE_NAMES, speciesColours, critter, levelHeight };
 
@@ -133,6 +135,10 @@ export function buildAssets(st, world, { K = 2 / (st.pixel || 2), makeCanvas = d
   let away = null, lean = null;
   Object.defineProperty(witch, "away", { enumerable: true, get: () => away || (away = [0, 1, 2].map(frame => wb({ frame, facing: "away" }))) });
   Object.defineProperty(witch, "lean", { enumerable: true, get: () => lean || (lean = { towards: wb({ lean: true }), away: wb({ lean: true, facing: "away" }) }) });
-  return { trees, bushes, creatures, witch, lights: lightProps(st, { makeCanvas }) };
+  // soundsystems: drawn the first time they are asked for (they are big)
+  let ss = null;
+  const out = { trees, bushes, creatures, witch, lights: lightProps(st, { makeCanvas }) };
+  Object.defineProperty(out, "soundsystems", { enumerable: true, get: () => ss || (ss = soundsystems(st, (sp, col) => bk(sp, col, "none"))) });
+  return out;
 }
 
