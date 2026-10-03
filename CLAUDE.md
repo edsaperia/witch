@@ -27,9 +27,9 @@ Not in CI, run by builders before a FINAL: `npm run build && npm run smoke`, a h
 
 The art generator (`art/`, entry `art/generator.js`) and the Witch Art Lab (`tools/art-lab/`) have one more check, not in CI, run from the repository root before every push that touches them:
 
-- `node art/check.mjs` — builds the lab, opens the source page and the built page in headless Chromium (no script errors, a bestiary card for every species, the scene drawn), and draws every creature, tree, bush, area type and soundsystem (each non-empty, creatures and soundsystems standing on their bottom row; legends taller than young, young taller than babies; a soundsystem about three times the witch).
+- `node art/check.mjs` — builds the lab, opens the source page and the built page in headless Chromium (no script errors, a bestiary card for every species, the scene drawn), and draws every creature, tree, bush, area type, soundsystem and sigil (each non-empty, creatures and soundsystems standing on their bottom row; legends taller than young, young taller than babies; a soundsystem about three times the witch; every species has a sigil that renders as vector, as a 12 px glyph and on the ground, its strokes inside the box).
 
-Related commands: `node tools/art-lab/build.mjs` writes the self-contained lab page to `tools/art-lab/dist/witch-art-lab.html` (the one to publish); `node art/export.mjs [style.json] [out dir]` exports every asset as albedo and normal-map PNGs with `manifest.json` (default `art/out/`, not committed); `node art/preview.mjs animals|trees|areas|lights|soundsystems <list> <png> [scale]` renders lit preview sheets. They need Playwright's Chromium (in cloud sessions, under `/opt/pw-browsers`).
+Related commands: `node tools/art-lab/build.mjs` writes the self-contained lab page to `tools/art-lab/dist/witch-art-lab.html` (the one to publish); `node art/export.mjs [style.json] [out dir]` exports every asset as albedo and normal-map PNGs with `manifest.json` (default `art/out/`, not committed); `node art/preview.mjs animals|trees|areas|lights|soundsystems|sigils <list> <png> [scale]` renders lit preview sheets. They need Playwright's Chromium (in cloud sessions, under `/opt/pw-browsers`).
 
 ## Glossary
 

@@ -53,6 +53,24 @@ Every asset is a **baked sprite**: `{ A, N, NF, w, h }`.
 | `areaAssets(areaId, style, { K, makeCanvas })` | everything one area type needs, baked: `{ def, floor, walls, small, big, setPiece }`; `floor` is a 64 × 48 tile to repeat over the ground, the rest are props `{ sp: { A, N, NF, w, h }, kind, text }` anchored at `(w / 2, h)` |
 | `WALLS_BLOCK`, `SET_PIECE_CHANCE` | placement rules (Ed): wall objects don't block movement for now; a set piece appears in only some of an area type's areas (chance 0.25 to start) |
 
+## Sigils
+
+Each creature has a **sigil** (`art/sigils.js`), its name written in the forest's magic: a stave written bottom to top, one or two marks that evoke the animal, and the crescent foot every sigil shares. Kin to the rune glyphs (`runeGlyph` in `core.js`). Its main use is the **leashing rune**, written on the ground under a creature, so the sigils are made to survive being squashed to about half their height.
+
+| Call | Gives |
+|---|---|
+| `SIGILS[id]` | the strokes, in writing order, in a unit box (x right, y down): `{ l: [[x, y], …] }` a polyline, `{ a: [cx, cy, r, from, to] }` an arc (degrees, 0 right, 90 down), `{ d: [x, y] }` an end dot; each drawn from its first point. `SIGIL_STROKE` and `SIGIL_DOT` are the stroke width and dot radius |
+| `sigilStrokes(id)` | the same as polylines, each with its length and its share of the draw-on (`start`, `end`, 0 to 1) |
+| `sigilColour(id)` | its glow colour: the creature's hue, bright |
+| `sigilSVG(id, { size, colour, glow, progress })` | an SVG string; `progress` below 1 draws it partly written |
+| `drawSigil(ctx, id, { x, y, size, colour, progress, glow })` | the same on a canvas; transform the context first to lay it on a plane |
+| `sigilGlyph(id, size, { progress })` | a pixel glyph, `{ w, h, m }`: 2 a stroke's bright core, 1 its edge (for 12 to 24 px) |
+| `sigilHit(id, u, v, w)` | true where the sigil has ink, for carving, like `runeGlyph` |
+| `groundSigil(id, { diameter, pitch, ring })`, `paintGroundSigil(g, t, { colour, canvas })` | the leashing rune on the ground: precomputed once per size, foreshortened by the camera's pitch (`GROUND_PITCH`, 35°), with a faint magic circle; painting it at `t` seconds draws it on over `SIGIL_DRAW_TIME` (0.6 s), then it glows and pulses (alpha 254: draw it unlit). For a 3D engine, `drawSigil` onto a flat texture laid on the ground does the same |
+| `runeStone(style, { glow, sigil })`, `soundsystemSprite(style, { …, sigil })` | a rune stone or soundsystem carved with a creature's sigil instead of a generic rune (an area's own creature) |
+
+The export writes each as `sigil-<species>.svg` and a 64 px `sigil-<species>.png`, and lists them with their strokes under `sigils` in `manifest.json`.
+
 The night lighting pass the lab uses is `shade(target, out, style, lights, rect)` in `art/lighting.js`.
 
 ## Files
@@ -65,6 +83,7 @@ The night lighting pass the lab uses is `shade(target, out, style, lights, rect)
 - `areas.js`: the 30 area types and their props
 - `witch.js`: the witch in 3D
 - `soundsystem.js`: the soundsystems, in 3D (stone blocks as rounded boxes, horn mouths carved as hollows)
+- `sigils.js`: the creature sigils and their renderers
 - `lighting.js`: the night lighting pass
 - `export.mjs`: every asset to PNGs and `manifest.json` (`node art/export.mjs [style.json] [out dir]`)
 - `preview.mjs`: lit preview sheets; `check.mjs`: the checks (see `CLAUDE.md`)

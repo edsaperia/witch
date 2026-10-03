@@ -63,6 +63,13 @@ label.check input { accent-color: var(--accent); }
 .beast canvas { width: 100%; height: auto; }
 .beast figcaption { padding: 6px 10px 8px; font-size: 13px; color: var(--muted); display: grid; gap: 2px; }
 .beast figcaption b { color: var(--fg); font-family: var(--font-display); font-weight: 400; font-size: 14px; }
+.beast figcaption { grid-template-columns: 1fr auto; }
+.beast figcaption > b, .beast figcaption > span:not(.sig) { grid-column: 1; }
+.beast figcaption .sig { grid-column: 2; grid-row: 1 / span 2; width: 44px; height: 44px; margin-left: 8px; }
+.sigils { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.sigil { margin: 0; border: 1px solid var(--line); border-radius: 6px; background: #0b0910; display: grid; grid-template-columns: 1fr 1fr; align-items: center; justify-items: center; padding: 8px 6px 4px; }
+.sigil canvas { width: 88px; height: auto; image-rendering: pixelated; }
+.sigil figcaption { grid-column: 1 / -1; font-size: 13px; color: var(--muted); padding-top: 4px; }
 .history { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
 .history button { padding: 0; border: 1px solid var(--line); border-radius: 4px; background: #000; cursor: pointer; flex: none; }
 .history button.current { border-color: var(--accent); }
@@ -120,6 +127,12 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
+        <h2>Sigils</h2>
+        <p class="note">Each creature's sigil: its name written in the forest's magic. Left, flat, as it appears on its card and in the interface. Right, written on the ground at the game's angle, as the leashing rune when the witch leashes it: it draws on, then glows and pulses.</p>
+        <div class="sigils" id="sigils"></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
         <h2>Sprite sheet</h2>
         <div class="sheet-wrap"><canvas id="sheet" width="420" height="300"></canvas></div>
       </section>
@@ -157,7 +170,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours } from "../../art/generator.js";
+import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours, SIGIL_IDS, sigilSVG, drawSigil, sigilColour, groundSigil, paintGroundSigil } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -377,7 +390,7 @@ function renderBestiary() {
       let x = 4; for (const b of [lv[2], lv[1], lv[0], b1]) { tgt.a.drawImage(b.A, x, h - 3 - b.h); tgt.n.drawImage(b.N, x, h - 3 - b.h); x += b.w + 4; }
       const card = document.createElement("figure"); card.className = "beast";
       const c = document.createElement("canvas"); c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
-      const cap = document.createElement("figcaption"); cap.innerHTML = `<b></b><span></span>`; cap.querySelector("b").textContent = S.name; cap.querySelector("span").textContent = "Legend grows " + S.legend.map(f => FEATURE_NAMES[f] || f).join(" and ") + ". Shown: legend, young, baby (two walk frames).";
+      const cap = document.createElement("figcaption"); cap.innerHTML = `<b></b><span></span>`; cap.querySelector("b").textContent = S.name; cap.insertAdjacentHTML("afterbegin", `<span class="sig" aria-hidden="true">${sigilSVG(S.id, { size: 44 })}</span>`); cap.querySelector("span:not(.sig)").textContent = "Legend grows " + S.legend.map(f => FEATURE_NAMES[f] || f).join(" and ") + ". Shown: legend, young, baby (two walk frames).";
       card.append(c, cap); host.append(card);
     }
   }, 250);
@@ -399,6 +412,32 @@ function renderSoundsystems() {
     c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
     c.style.width = w + "px"; c.style.maxWidth = "none";
   }, 600);
+}
+
+// ================= sigils: flat and on the ground, the draw-on playing =================
+const sigilCards = [];
+function buildSigils() {
+  const host = document.getElementById("sigils"); if (!host || sigilCards.length) return;
+  SIGIL_IDS.forEach((id, i) => {
+    const fig = document.createElement("figure"); fig.className = "sigil";
+    const flat = document.createElement("canvas"); flat.width = flat.height = 88; flat.setAttribute("aria-label", `${SPECIES_BY_ID[id].name} sigil`);
+    const g = groundSigil(id, { diameter: 84 }), ground = document.createElement("canvas"); ground.width = g.w; ground.height = g.h; ground.setAttribute("aria-label", `${SPECIES_BY_ID[id].name} sigil on the ground`);
+    const cap = document.createElement("figcaption"); cap.textContent = SPECIES_BY_ID[id].name;
+    fig.append(flat, ground, cap); host.append(fig);
+    sigilCards.push({ id, flat, ground, g, offset: (i % 6) * .25 });
+  });
+  let visible = true;
+  if ("IntersectionObserver" in window) new IntersectionObserver(e => { visible = e[0].isIntersecting; }).observe(host);
+  const cycle = 3.2;
+  const frame = now => {
+    if (visible) for (const c of sigilCards) {
+      const t = ((now / 1000 + c.offset) % cycle), x = c.flat.getContext("2d");
+      x.clearRect(0, 0, 88, 88); drawSigil(x, c.id, { x: 4, y: 4, size: 80, progress: Math.min(1, t / .6) });
+      paintGroundSigil(c.g, t, { canvas: c.ground });
+    }
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
 }
 
 // ================= app =================
@@ -439,7 +478,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderSoundsystems(); renderMap();
+  syncKnobs(); renderHistory(); renderBestiary(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }

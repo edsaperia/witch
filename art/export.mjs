@@ -71,7 +71,12 @@ const assets = await b.page.evaluate(async ({ style, seed }) => {
     a.walls.forEach((x, i) => add(x, "wall", i)); a.small.forEach((x, i) => add(x, "small", i)); a.big.forEach((x, i) => add(x, "big", i));
     if (a.setPiece) add(a.setPiece, "set", 0);
   }
-  return { list, style: st, placement: { wallsBlock: G.WALLS_BLOCK, setPieceChance: G.SET_PIECE_CHANCE }, areas: G.AREAS.map(({ id, name, creature, by, text }) => ({ id, name, creature, by, text })) };
+  // sigils: an SVG and a 64 px PNG each, with their strokes (in writing order) for the manifest
+  const sigils = G.SIGIL_IDS.map(id => {
+    const c = document.createElement("canvas"); c.width = c.height = 64; G.drawSigil(c.getContext("2d"), id, { size: 64, glow: 4 });
+    return { id: `sigil-${id}`, species: id, colour: G.sigilColour(id), svg: G.sigilSVG(id, { size: 64 }), png: png(c), strokes: G.SIGILS[id] };
+  });
+  return { list, sigils, sigilFormat: { box: "unit square, x right, y down", stroke: G.SIGIL_STROKE, dot: G.SIGIL_DOT, drawTime: G.SIGIL_DRAW_TIME, groundPitch: G.GROUND_PITCH }, style: st, placement: { wallsBlock: G.WALLS_BLOCK, setPieceChance: G.SET_PIECE_CHANCE }, areas: G.AREAS.map(({ id, name, creature, by, text }) => ({ id, name, creature, by, text })) };
 }, { style, seed });
 if (b.errors.length) console.error(b.errors.join("\n"));
 await b.close();
@@ -88,5 +93,11 @@ for (const a of assets.list) {
   manifest.assets.push({ ...meta, size: { w: a.w, h: a.h }, files: { albedo: `${a.id}.png`, normal: `${a.id}.normal.png`, ...(mask ? { mask: `${a.id}.mask.png` } : {}) } });
   delete manifest.assets.at(-1).w; delete manifest.assets.at(-1).h;
 }
+manifest.sigils = { format: { ...assets.sigilFormat, strokes: "in writing order, each drawn from its first point: { l: [[x, y], ...] } a polyline, { a: [cx, cy, r, from, to] } an arc (degrees, 0 right, 90 down), { d: [x, y] } an end dot" }, list: [] };
+for (const sg of assets.sigils) {
+  writeFileSync(join(out, `${sg.id}.svg`), sg.svg);
+  writeFileSync(join(out, `${sg.id}.png`), Buffer.from(sg.png, "base64"));
+  manifest.sigils.list.push({ id: sg.id, species: sg.species, colour: sg.colour, files: { svg: `${sg.id}.svg`, png: `${sg.id}.png` }, strokes: sg.strokes });
+}
 writeFileSync(join(out, "manifest.json"), JSON.stringify(manifest, null, 1));
-console.log(`exported ${assets.list.length} assets (${assets.list.length * 2} PNGs) to ${out.startsWith(ROOT + "/") ? out.slice(ROOT.length + 1) : out}`);
+console.log(`exported ${assets.list.length} assets (${assets.list.length * 2} PNGs) and ${assets.sigils.length} sigils (SVG and PNG) to ${out.startsWith(ROOT + "/") ? out.slice(ROOT.length + 1) : out}`);

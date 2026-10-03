@@ -72,7 +72,7 @@ export const SIGILS = {
   // a sleek body curving through the water, head up, a ripple below
   otter: [stave(.24), A(.5, .5, .28, -100, 100), D(.5 + .28 * Math.cos(-100 * Math.PI / 180), .5 + .28 * Math.sin(-100 * Math.PI / 180)), bow([.18, .64], [.36, .64], .3), FOOT],
   // pointed ears with long tufts, a short tail tick
-  lynx: [stave(.32), L([.26, .2], [.5, .32], [.74, .2]), ...pair(L([.26, .2], [.26, .04])), L([.5, .68], [.66, .62]), FOOT, ...pair(D(.26, .04))],
+  lynx: [stave(.32), L([.26, .2], [.5, .32], [.74, .2]), ...pair(L([.26, .2], [.26, .06])), L([.5, .68], [.66, .62]), FOOT, ...pair(D(.26, .06))],
   // broad palmate antlers as two cups, and the bell under the chin
   elk: [stave(.3), ...pair(L([.5, .3], [.42, .2]), A(.3, .16, .12, 0, 180), L([.18, .16], [.14, .06])), L([.5, .44], [.6, .52]), FOOT],
   // a beak to the left with an eye, wings as a chevron
@@ -80,7 +80,7 @@ export const SIGILS = {
   // a crescent head and scalloped wings
   bat: [stave(.3), A(.5, .16, .14, 20, 160), ...pair(L([.5, .38], [.12, .26]), bow([.12, .26], [.24, .46], -.25), bow([.24, .46], [.38, .5], -.3), bow([.38, .5], [.5, .52], -.3)), FOOT],
   // a digging hand: a cup with spread claws, and a snout tick
-  mole: [stave(.44), A(.5, .3, .16, 0, 180), ...rays(.5, .3, .19, .3, [-160, -125, -55, -20]), L([.5, .14], [.5, .02]), FOOT],
+  mole: [stave(.44), A(.5, .3, .16, 0, 180), ...rays(.5, .3, .19, .3, [-160, -125, -55, -20]), L([.5, .14], [.5, .04]), FOOT],
   // two front teeth under a bar, and the flat paddle tail as a diamond
   beaver: [stave(.36), L([.32, .2], [.68, .2]), ...pair(L([.44, .2], [.44, .34])), L([.5, .56], [.68, .66], [.5, .76], [.32, .66], [.5, .56]), FOOT],
   // a slender bounding arch, its tail tip dark (a big dot)
@@ -92,9 +92,9 @@ export const SIGILS = {
   // stacked shell plates, feelers
   woodlouse: [stave(.24), A(.5, .52, .22, 205, 335), A(.5, .66, .24, 205, 335), A(.5, .38, .2, 205, 335), ...pair(L([.5, .24], [.32, .06])), FOOT],
   // a stave wound by an S, a forked tongue
-  snake: [stave(.16), wave(.5, .82, .2, .2, 1.25), L([.5, .2], [.5, .1]), ...pair(L([.5, .1], [.42, .03])), FOOT],
+  snake: [stave(.16), wave(.5, .82, .2, .2, 1.25), L([.5, .2], [.5, .11]), ...pair(L([.5, .11], [.42, .045])), FOOT],
   // paired wing triangles, curling feelers
-  moth: [stave(.2), ...pair(L([.5, .3], [.16, .18], [.24, .5], [.5, .4]), L([.5, .5], [.3, .64], [.5, .66]), A(.38, .14, .12, 0, -110)), FOOT],
+  moth: [stave(.2), ...pair(L([.5, .3], [.16, .18], [.24, .5], [.5, .4]), L([.5, .5], [.3, .64], [.5, .66]), A(.38, .16, .12, 0, -110)), FOOT],
   // round ears on a pointed face, and a long tail sweeping left
   marten: [stave(.32), L([.3, .2], [.5, .32], [.7, .2]), ...pair(A(.3, .14, .07, 90, -180)), A(.28, .56, .22, 0, 150), D(.28 + .22 * Math.cos(150 * Math.PI / 180), .56 + .22 * Math.sin(150 * Math.PI / 180)), FOOT],
   // a flame at the head, legs as bent ticks along the spine, spots
@@ -102,7 +102,7 @@ export const SIGILS = {
   // a shining star at the tail end: a ring with rays
   glowworm: [stave(.4), A(.5, .27, .1, 90, 450), ...rays(.5, .27, .15, .25, [0, 60, 120, 180, 240, 300]), FOOT],
   // eight legs round a body, hanging from a thread
-  spider: [L([.5, .03], [.5, .3]), stave(.5), A(.5, .4, .11, -90, 270), ...pair(...[-150, -170, 170, 150].map(a => L([.5 + .12 * Math.cos(a * Math.PI / 180), .4 + .12 * Math.sin(a * Math.PI / 180)], [.5 + .28 * Math.cos(a * Math.PI / 180), .4 + .28 * Math.sin(a * Math.PI / 180)], [.5 + .32 * Math.cos(a * Math.PI / 180), .4 + .28 * Math.sin(a * Math.PI / 180) + .1]))), FOOT, D(.5, .03)],
+  spider: [L([.5, .05], [.5, .3]), stave(.5), A(.5, .4, .11, -90, 270), ...pair(...[-150, -170, 170, 150].map(a => L([.5 + .12 * Math.cos(a * Math.PI / 180), .4 + .12 * Math.sin(a * Math.PI / 180)], [.5 + .28 * Math.cos(a * Math.PI / 180), .4 + .28 * Math.sin(a * Math.PI / 180)], [.5 + .32 * Math.cos(a * Math.PI / 180), .4 + .28 * Math.sin(a * Math.PI / 180) + .1]))), FOOT, D(.5, .05)],
   // a curled sleeper: a big ring round the stave, a closed eye, round ears
   dormouse: [stave(.12), A(.5, .46, .24, -60, 250), ...pair(A(.34, .16, .08, 90, -180)), bow([.56, .38], [.7, .38], -.4), FOOT],
   // great curved mandibles, and the split wing cases
@@ -149,13 +149,13 @@ function partial(s, p) { // the part of a stroke drawn at overall progress p: it
   return pts;
 }
 export function sigilSVG(id, { size = 64, colour = sigilColour(id), glow = true, progress = 1 } = {}) {
-  const c = `rgb(${colour.join(",")})`, w = SIGIL_STROKE * 100, parts = [];
+  const c = `rgb(${colour.join(",")})`, w = +(SIGIL_STROKE * 100).toFixed(2), fid = `sigil-glow-${id}`, parts = [];
   for (const s of sigilStrokes(id)) {
     const pts = partial(s, progress); if (!pts) continue;
     parts.push(s.dot ? `<circle cx="${(pts[0][0] * 100).toFixed(2)}" cy="${(pts[0][1] * 100).toFixed(2)}" r="${(SIGIL_DOT * 100).toFixed(2)}" fill="${c}"/>` : `<polyline points="${pts.map(p => (p[0] * 100).toFixed(2) + "," + (p[1] * 100).toFixed(2)).join(" ")}"/>`);
   }
-  const filter = glow ? `<defs><filter id="g" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>` : "";
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="${size}" height="${size}">${filter}<g fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"${glow ? ' filter="url(#g)"' : ""}>${parts.join("")}</g></svg>`;
+  const filter = glow ? `<defs><filter id="${fid}" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>` : "";
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="${size}" height="${size}">${filter}<g fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"${glow ? ` filter="url(#${fid})"` : ""}>${parts.join("")}</g></svg>`;
 }
 // Draws a sigil on a canvas: the unit box maps to (x, y, size, size). Transform the context first
 // to lay it on the ground (e.g. ctx.scale(1, sin(pitch)) about its centre).
