@@ -15,6 +15,11 @@ export interface Tuning {
   /** Random glades in the woods: how much ground they take (0-1) and their size in metres. */
   gladeAmount: number;
   gladeScale: number;
+  /** Ragged area edges: plants take their look from up to width metres away (noise scale metres, plus a per-plant stray share). */
+  areaEdgeBlend: { width: number; scale: number; stray: number };
+  /** Set pieces drawn this much bigger than the art, with a clearing of setPieceClear metres (times the scale) round them. */
+  setPieceScale: number;
+  setPieceClear: number;
   bushDensity: number;
   /** How much bushes gather in clumps with open floor between (0 even, 1 strongly clumped). */
   bushClump: number;

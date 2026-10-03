@@ -14,6 +14,8 @@
   "clearingFalloff": 0.12,
   "gladeAmount": 0.25,
   "gladeScale": 38,
+  "_areaEdgeBlend": "Ragged area edges: each tree and bush takes its look (its area type) from a point up to width metres away, by a smooth noise scale metres across plus a per-plant stray (stray, share of width), so neighbouring areas' plants mix in a band along the border. Only the look: creatures, partifying and the party border keep the exact borders.",
+  "areaEdgeBlend": { "width": 8, "scale": 24, "stray": 0.5 },
   "bushDensity": 0.45,
   "bushClump": 0.8,
   "treeHeight": 2.25,
@@ -119,5 +121,7 @@
   "creatureSpeed": 0.6,
   "_setPieces": "setPieceChance: the share of areas, among the types that have a set piece, that show theirs. Wall objects (an area type's edges: puddles, henges, hedges) stand where areas meet, one per wallSpacing metres with chance wallDensity; they do not block movement.",
   "setPieceChance": 0.25,
+  "setPieceScale": 1.8,
+  "setPieceClear": 9,
   "legendSpeed": 0.35
 }

@@ -228,8 +228,21 @@ describe("trees", () => {
     expect(sparse.treesNear(150, 150, 60).length).toBeLessThan(forest.treesNear(150, 150, 60).length * 0.75);
   });
 
-  it("carry the type of the area they stand in", () => {
-    for (const t of forest.treesNear(150, 150, 40)) expect(t.type).toBe(map.areaAt(t.x, t.z).type);
+  it("carry their area's type, with a ragged edge: strays only near a border", () => {
+    const exact = new Forest(generateMap(123, withTuning({ areaEdgeBlend: { width: 0, scale: 24, stray: 0.5 } })));
+    for (const t of exact.treesNear(1300, 1300, 120)) expect(t.type).toBe(map.areaAt(t.x, t.z).type);
+    const W = TUNING.areaEdgeBlend.width, trees = forest.treesNear(1300, 1300, 160);
+    let own = 0, strays = 0;
+    for (const t of trees) {
+      if (t.type === map.areaAt(t.x, t.z).type) { own++; continue; }
+      strays++;
+      // A stray's look comes from an area close by.
+      let near = false;
+      for (let a = 0; a < 16 && !near; a++) for (const r of [W * 0.5, W, W * 1.6]) if (map.areaAt(t.x + Math.cos(a) * r, t.z + Math.sin(a) * r).type === t.type) near = true;
+      expect(near).toBe(true);
+    }
+    expect(own / trees.length).toBeGreaterThan(0.8);
+    expect(strays).toBeGreaterThan(0);
   });
 });
 

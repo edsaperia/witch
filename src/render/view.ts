@@ -327,11 +327,12 @@ export class View {
         const pieces = pick(art.layout);
         if (!pieces.length) continue;
         const piece = pieces[p.variant % pieces.length], f = art.atlas.frames, frame = f[piece.bot], whole = f[piece.top ?? piece.bot];
-        if (!this.inView(p.x, p.z, whole.w * mpp, whole.h * mpp, margin)) continue;
-        const fresh = this.mark(kind, p.x, p.z, whole.h * mpp);
-        add(p.type, { x: p.x, y: 0, z: p.z, frame, flip: p.flip, fresh });
-        if (piece.top !== null) add(p.type, { x: p.x, y: 0, z: p.z, frame: f[piece.top], flip: p.flip, top: true, fresh });
-        shadows.push({ x: p.x, z: p.z, w: frame.w * mpp * 0.8, d: frame.w * mpp * 0.3 });
+        const scale = kind === "setpiece" ? t.setPieceScale : 1, m = mpp * scale; // set pieces: each area's landmark, drawn big
+        if (!this.inView(p.x, p.z, whole.w * m, whole.h * m, margin)) continue;
+        const fresh = this.mark(kind, p.x, p.z, whole.h * m);
+        add(p.type, { x: p.x, y: 0, z: p.z, frame, flip: p.flip, fresh, scale });
+        if (piece.top !== null) add(p.type, { x: p.x, y: 0, z: p.z, frame: f[piece.top], flip: p.flip, top: true, fresh, scale });
+        shadows.push({ x: p.x, z: p.z, w: frame.w * m * 0.8, d: frame.w * m * 0.3 });
         nb++;
       }
     };

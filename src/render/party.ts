@@ -4,7 +4,7 @@
 // the ground as the front reaches the clearing. The rules are in rules/party.ts.
 import * as THREE from "three";
 import type { Game } from "../rules/game";
-import { smoothstep } from "../rules/random";
+import { hash2, smoothstep } from "../rules/random";
 import type { Atlas } from "./atlas";
 import type { SpriteInstance } from "./sprites";
 import type { ForestLight } from "./view";
@@ -44,7 +44,10 @@ export class PartyView {
         sweeps.push({ x: ox, z: oz, radius: p * reach, strength: 1 - smoothstep((p - 0.8) / 0.2) });
       }
       if (rise > 0 && visible(s.x, s.z, frame.w * this.metresPerPixel, h)) {
-        items.push({ x: s.x, y: -(1 - rise) * h, z: s.z, frame, flip: false, fresh: mark(s.x, s.z, h) });
+        // Each faces left or right, seeded from where it stands (Ed, 2026-10-03); the shader mirrors
+        // its normal map too, and its light and lasers rise from its centre either way.
+        const flip = hash2(Math.round(s.x * 10), Math.round(s.z * 10), 911) < 0.5;
+        items.push({ x: s.x, y: -(1 - rise) * h, z: s.z, frame, flip, fresh: mark(s.x, s.z, h) });
       }
       if (p >= 1) playing.push({ x: s.x, y: h * 0.85, z: s.z, seed: Math.floor(Math.abs(s.x * 7.3 + s.z * 13.1)) % 100000, ready: s.at + t.transition });
       const beat = 0.85 + 0.15 * Math.sin(time * 8);

@@ -83,7 +83,7 @@ void main() {
 }
 `;
 
-export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean }
+export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** Drawn this much bigger (1 if left out). */ scale?: number }
 
 export class SpriteBatch {
   readonly mesh: THREE.Mesh;
@@ -139,7 +139,8 @@ export class SpriteBatch {
     const P = this.pos.array as Float32Array, S = this.size.array as Float32Array, U = this.uvs.array as Float32Array, F = this.flags.array as Float32Array;
     items.forEach((it, i) => {
       P[i * 3] = it.x; P[i * 3 + 1] = it.y; P[i * 3 + 2] = it.z;
-      S[i * 2] = it.frame.w * this.metresPerPixel; S[i * 2 + 1] = it.frame.h * this.metresPerPixel;
+      const k = it.scale ?? 1;
+      S[i * 2] = it.frame.w * this.metresPerPixel * k; S[i * 2 + 1] = it.frame.h * this.metresPerPixel * k;
       U.set(it.frame.uv, i * 4);
       F[i * 3] = it.flip ? 1 : 0; F[i * 3 + 1] = it.top ? 1 : 0; F[i * 3 + 2] = it.fresh ? 1 : 0;
     });
