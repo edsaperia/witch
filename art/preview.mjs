@@ -5,6 +5,8 @@
 //   node art/preview.mjs areas all art/previews/areas.png [scale]
 //   node art/preview.mjs sets all art/previews/set-pieces.png [scale]   (every area's set piece, five to a row, the witch for scale)
 //   node art/preview.mjs home 0 art/previews/treehouse.png [scale]   (the treehouse with the witch sitting on its terrace, sit frame 0 or 1; NIGHT=1 lit by its own lights)
+//   node art/preview.mjs relics modern|playground|sports|<ids> art/previews/relics-modern.png [scale]   (PER=n to a row)
+//   node art/preview.mjs grounds playground,tennis,baseball,football,basketball|all art/previews/grounds.png [scale]   (each arrangement composed; NIGHT=1)
 //   node art/preview.mjs witch all art/previews/witch-flight.png [scale]   ("fast" instead of all: hover, lean and the fast pose; "foot": hover and every on-foot pose, POSES=stand,talk,... to pick, ANCHORS=1 to mark her hand and hat tip)
 //   node art/preview.mjs treeheights fern-forest,garden art/previews/tree-heights.png [scale]
 //   node art/preview.mjs lights all art/previews/light-sources.png [scale]
@@ -31,6 +33,7 @@ if (process.env.SMALL) await b.page.addInitScript(() => { window.SMALL = true; }
 if (process.env.DRAWON) await b.page.addInitScript(() => { window.DRAWON = true; });
 if (process.env.STYLE) await b.page.addInitScript(o => { window.STYLE = o; }, JSON.parse(process.env.STYLE));
 if (process.env.NIGHT) await b.page.addInitScript(() => { window.NIGHT = true; });
+if (process.env.PER) await b.page.addInitScript(n => { window.PER = n; }, +process.env.PER);
 if (process.env.LEVELS) await b.page.addInitScript(l => { window.LEVELS = l; }, process.env.LEVELS.split(",").map(Number));
 if (process.env.POSES) await b.page.addInitScript(l => { window.POSES = l; }, process.env.POSES.split(","));
 if (process.env.ANCHORS) await b.page.addInitScript(() => { window.ANCHORS = true; });
@@ -123,6 +126,20 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   } else if (what === "sets") { // every area's set piece (or the listed areas'), five to a row, each row ending with the witch for scale
     const ids = list === "all" ? G.AREAS.filter(a => a.set).map(a => a.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
     for (let i = 0; i < ids.length; i += 5) rows.push([...ids.slice(i, i + 5).map(id => G.areaAssets(id, st).setPiece.sp), wit]);
+  } else if (what === "grounds") { // the arrangements (playground, tennis, baseball, football, basketball, or listed), each composed from its pieces as the prototype would, the witch at the middle
+    const L = G.relicLayouts(st), col = G.relicColours(st), names = list === "all" ? Object.keys(L) : list.split(","), wsp = G.witchSprite(st), wit = G.bake(wsp, G.witchColours(st), st, st.cOutline);
+    for (const name of names) {
+      const parts = L[name].map(({ id, x, z }) => { const R = G.relicSprite(id, st), [dx, dy] = G.groundOffset(x, z); return { b: G.bake(R.whole, col, st, "none"), x: dx - R.origin.x, y: dy - R.origin.y, decal: !!G.RELIC_BY_ID[id].decal, depth: dy }; });
+      parts.push({ b: wit, x: -wit.w / 2, y: -wit.h, depth: 0 });
+      const x0 = Math.min(...parts.map(p => p.x)) - 4, y0 = Math.min(...parts.map(p => p.y)) - 4, x1 = Math.max(...parts.map(p => p.x + p.b.w)) + 4, y1 = Math.max(...parts.map(p => p.y + p.b.h)) + 4;
+      const mk = () => { const c = document.createElement("canvas"); c.width = x1 - x0; c.height = y1 - y0; return c; }, A = mk(), N = mk(), a = A.getContext("2d"), n = N.getContext("2d");
+      parts.sort((p, q) => (q.decal ? 1 : 0) - (p.decal ? 1 : 0) || p.depth - q.depth).forEach(p => { a.drawImage(p.b.A, Math.round(p.x - x0), Math.round(p.y - y0)); n.drawImage(p.b.N, Math.round(p.x - x0), Math.round(p.y - y0)); });
+      rows.push([{ A, N, w: A.width, h: A.height }]);
+    }
+  } else if (what === "relics") { // a family's relics (modern, playground, sports) or listed ids, PER to a row (default 6), the witch closing each row
+    const ids = ["modern", "playground", "sports"].includes(list) ? G.RELICS.filter(d => d.family === list).map(d => d.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), col = G.relicColours(st), per = window.PER || 6;
+    const items = ids.map(id => G.bake(G.relicSprite(id, st).whole, col, st, "none"));
+    for (let i = 0; i < items.length; i += per) rows.push([...items.slice(i, i + per), wit]);
   } else if (what === "areas") { // per area type: floor tile, walls, small, big, set piece, its creature (young)
     const ids = list === "all" ? G.AREAS.map(a => a.id) : list.split(",");
     for (const id of ids) { const a = G.areaAssets(id, st); rows.push([a.floor, ...a.walls, ...a.small, ...a.big, ...(a.setPiece ? [a.setPiece] : [])].map(x => x.sp).concat([G.bake(G.critter(a.def.creature, 1, 0, st), G.speciesColours(a.def.creature, st), st, st.cOutline)])); }
