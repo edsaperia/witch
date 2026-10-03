@@ -15,6 +15,14 @@
     .touch #version { bottom: auto; top: 8px; }
     #debug { position: fixed; left: 10px; top: 10px; background: var(--panel); padding: 8px 10px; border-radius: 6px; white-space: pre; font-size: 12px; display: none; pointer-events: none; }
     #debug.on { display: block; }
+    #debug-buttons { position: fixed; left: 10px; top: 150px; display: none; gap: 6px; }
+    #debug-buttons.on { display: flex; }
+    #debug-buttons button { font: inherit; font-size: 12px; color: var(--ink); background: var(--panel); border: 1px solid #3a2f5c; border-radius: 6px; padding: 6px 10px; }
+    #wave { position: fixed; right: 12px; top: 18%; height: 40%; width: 8px; border: 1px solid rgba(232, 226, 244, .35); border-radius: 4px; background: rgba(14, 11, 28, .45); pointer-events: none; }
+    #wave .fill { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(#ff7fd0, #6fe6ff); border-radius: 3px; }
+    #wave .label { position: absolute; right: 14px; bottom: 0; white-space: nowrap; color: var(--dim); font-size: 11px; text-align: right; text-shadow: 0 1px 0 #000; }
+    #wave.paused .fill { opacity: .4; }
+    .touch #wave { top: 12%; height: 30%; }
     #start { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(8, 6, 18, .78); cursor: pointer; z-index: 5; }
     #start .card { max-width: 30em; margin: 16px; padding: 22px 24px; background: var(--panel); border: 1px solid #3a2f5c; border-radius: 10px; text-align: center; }
     #start h1 { margin: 0 0 4px; font-size: 28px; letter-spacing: .08em; color: var(--accent); }
@@ -41,6 +49,8 @@
   <div id="seed"></div>
   <div id="version"></div>
   <div id="debug"></div>
+  <div id="debug-buttons"><button id="next-wave" type="button">next wave (N)</button><button id="pause-waves" type="button">pause waves (P)</button></div>
+  <div id="wave"><div class="fill"></div><div class="label"></div></div>
   <div id="touch">
     <div id="stick-zone"></div>
     <div id="stick"><div class="knob"></div></div>
@@ -54,7 +64,7 @@
       <div>a prototype: fly the witch round the forest at night</div>
       <div class="go">Tap, click or press any key to start</div>
       <div class="keys">
-        <b>Keyboard</b> WASD or arrows fly · space rises or descends · Q/E or −/+ zoom · ~ debug<br>
+        <b>Keyboard</b> WASD or arrows fly · space rises or descends · Q/E or −/+ zoom · ~ debug · N next wave · P pause waves<br>
         <b>Gamepad</b> left stick flies · A rises or descends · shoulders zoom<br>
         <b>Phone</b> drag on the left to fly · the round button rises or descends · three-finger tap for debug
       </div>

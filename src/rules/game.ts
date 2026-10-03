@@ -3,6 +3,7 @@ import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState } 
 import { newClock, tick, type Clock } from "./clock";
 import { spawnCreatures, stepCreaturesNear, type Creature } from "./creatures";
 import { Forest } from "./forest";
+import { newParty, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import type { Tuning } from "./tuning";
 import { newWitch, stepWitch, witchHeight, type Intent, type WitchState } from "./witch";
@@ -16,11 +17,15 @@ export interface Game {
   readonly clock: Clock;
   witch: WitchState;
   camera: CameraState;
+  party: PartyState;
 }
 
 export interface Controls extends Intent {
   /** +1 zoom out a step, -1 zoom in a step, 0 nothing, this frame. */
   zoom: number;
+  /** Playtest keys: bring the next wave now; pause or resume the wave timer. */
+  nextWave?: boolean;
+  pauseWaves?: boolean;
 }
 
 export function newGame(seed: number, tuning: Tuning): Game {
@@ -28,7 +33,7 @@ export function newGame(seed: number, tuning: Tuning): Game {
   const witch = newWitch(map.start.x, map.start.z);
   return {
     seed, tuning, map, forest: new Forest(map), creatures: spawnCreatures(map), clock: newClock(),
-    witch, camera: newCamera(tuning, witch.x, witchHeight(witch, tuning), witch.z),
+    witch, camera: newCamera(tuning, witch.x, witchHeight(witch, tuning), witch.z), party: newParty(map),
   };
 }
 
@@ -38,7 +43,10 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   if (dt === 0) return;
   g.witch = stepWitch(g.witch, c, dt, g.tuning, g.map.bounds);
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, dt, g.tuning);
-  stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, g.tuning.creatureSimRadius, dt);
+  if (c.pauseWaves) g.party.paused = !g.party.paused;
+  if (c.nextWave) { spreadWave(g.party, g.map, g.clock.time); g.party.nextAt = g.clock.time + g.tuning.party.interval; }
+  stepParty(g.party, g.map, g.clock.time, dt);
+  stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, g.tuning.creatureSimRadius, dt, g.clock.time, g.map);
 }
 
 export const poseOf = (g: Game): CameraPose => cameraPose(g.camera, g.camera.lift, g.tuning);

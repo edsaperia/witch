@@ -4,7 +4,7 @@
 // Back/Select for debug. Touch: the joystick and buttons in ui/touch.ts write into `touch`.
 import type { Controls } from "../rules/game";
 
-export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean }
+export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean; nextWave?: boolean; pauseWaves?: boolean }
 
 export class Input {
   private keys = new Set<string>();
@@ -27,7 +27,7 @@ export class Input {
   }
 
   private isGameKey(code: string): boolean {
-    return /^(Arrow|Space$|Key[WASDQE]$|Minus$|Equal$|NumpadAdd$|NumpadSubtract$|Backquote$)/.test(code);
+    return /^(Arrow|Space$|Key[WASDQENP]$|Minus$|Equal$|NumpadAdd$|NumpadSubtract$|Backquote$)/.test(code);
   }
 
   /** Forget presses not yet read (the press that started the game is not also a move). */
@@ -39,6 +39,8 @@ export class Input {
 
   /** This frame's controls; button presses are reported once. */
   read(): Controls & { debug: boolean } {
+    const nextWave = this.pressed.has("KeyN") || this.touch.nextWave, pauseWaves = this.pressed.has("KeyP") || this.touch.pauseWaves;
+    this.touch.nextWave = false; this.touch.pauseWaves = false;
     const k = (c: string) => (this.keys.has(c) ? 1 : 0), p = (c: string) => this.pressed.has(c);
     let moveX = k("KeyD") + k("ArrowRight") - k("KeyA") - k("ArrowLeft");
     let moveZ = k("KeyS") + k("ArrowDown") - k("KeyW") - k("ArrowUp");
@@ -78,6 +80,6 @@ export class Input {
 
     const len = Math.hypot(moveX, moveZ);
     if (len > 1) { moveX /= len; moveZ /= len; }
-    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug };
+    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug, nextWave, pauseWaves };
   }
 }

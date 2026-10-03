@@ -14,6 +14,8 @@ export const SPRITE_UNIFORMS = {
   uTopFade: { value: 0 },
   // The hole in the canopy round the witch: her place on screen (pixels), radius and edge (pixels).
   uCutout: { value: new THREE.Vector4(0, 0, 0, 1) },
+  // ?debug=cull: anything that has just appeared is tinted bright red.
+  uDebugCull: { value: 0 },
 };
 
 const VERT = /* glsl */ `
@@ -21,10 +23,10 @@ uniform vec3 uRight, uUp;
 attribute vec3 iPos;
 attribute vec2 iSize;
 attribute vec4 iUv;
-attribute vec2 iFlags;
+attribute vec3 iFlags;
 varying vec2 vUv;
 varying vec3 vWorld;
-varying vec2 vFlags;
+varying vec3 vFlags;
 void main() {
   vec3 w = iPos + uRight * (position.x * iSize.x) + uUp * (position.y * iSize.y);
   float u = iFlags.x > 0.5 ? 1.0 - uv.x : uv.x;
@@ -40,9 +42,10 @@ uniform sampler2D uAlbedo, uNormal;
 uniform vec3 uRight, uUp, uFacing;
 uniform float uTopFade, uUnlit;
 uniform vec4 uCutout;
+uniform float uDebugCull;
 varying vec2 vUv;
 varying vec3 vWorld;
-varying vec2 vFlags;
+varying vec3 vFlags;
 ${LIGHT_GLSL}
 // 4x4 ordered dither, for fading the canopy in pixel-art style.
 float bayer(vec2 p) {
@@ -61,6 +64,7 @@ void main() {
     if (bayer(gl_FragCoord.xy) >= max(shown, uTopFade)) discard;
   }
   // Eye glints, flowers and magic glow: the generator marks them with alpha 254.
+  if (uDebugCull > 0.5 && vFlags.z > 0.5) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; }
   if (uUnlit > 0.5) { gl_FragColor = vec4(a.rgb, 1.0); return; }
   if (a.a < 0.999) { gl_FragColor = vec4(haze(a.rgb, vWorld), 1.0); return; }
   vec4 n = texture2D(uNormal, vUv);
@@ -71,7 +75,7 @@ void main() {
 }
 `;
 
-export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean }
+export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean }
 
 export class SpriteBatch {
   readonly mesh: THREE.Mesh;
@@ -111,7 +115,7 @@ export class SpriteBatch {
       if (old) (a.array as Float32Array).set(old.array as Float32Array);
       return a;
     };
-    this.pos = make(3, this.pos); this.size = make(2, this.size); this.uvs = make(4, this.uvs); this.flags = make(2, this.flags);
+    this.pos = make(3, this.pos); this.size = make(2, this.size); this.uvs = make(4, this.uvs); this.flags = make(3, this.flags);
     this.geo.setAttribute("iPos", this.pos); this.geo.setAttribute("iSize", this.size);
     this.geo.setAttribute("iUv", this.uvs); this.geo.setAttribute("iFlags", this.flags);
     this.capacity = cap;
@@ -125,7 +129,7 @@ export class SpriteBatch {
       P[i * 3] = it.x; P[i * 3 + 1] = it.y; P[i * 3 + 2] = it.z;
       S[i * 2] = it.frame.w * this.metresPerPixel; S[i * 2 + 1] = it.frame.h * this.metresPerPixel;
       U.set(it.frame.uv, i * 4);
-      F[i * 2] = it.flip ? 1 : 0; F[i * 2 + 1] = it.top ? 1 : 0;
+      F[i * 3] = it.flip ? 1 : 0; F[i * 3 + 1] = it.top ? 1 : 0; F[i * 3 + 2] = it.fresh ? 1 : 0;
     });
     for (const a of [this.pos, this.size, this.uvs, this.flags]) a.needsUpdate = true;
     this.count = items.length;

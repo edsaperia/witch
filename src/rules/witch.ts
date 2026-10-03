@@ -16,6 +16,10 @@ export interface WitchState {
   mode: Mode;
   /** 1 facing right (east), -1 facing left. */
   facing: 1 | -1;
+  /** Turned away from the viewer: flying up the screen (north). Changes with a little hysteresis. */
+  away: boolean;
+  /** Leaning into fast flight: above leanAt of the mode's top speed. */
+  lean: boolean;
 }
 
 /** What the player asks for this frame: a direction (length up to 1) and button presses. */
@@ -29,7 +33,7 @@ export interface Intent {
 export const NO_INTENT: Intent = { moveX: 0, moveZ: 0, toggleMode: false };
 
 export function newWitch(x: number, z: number): WitchState {
-  return { x, z, vx: 0, vz: 0, lift: 0, mode: "ground", facing: 1 };
+  return { x, z, vx: 0, vz: 0, lift: 0, mode: "ground", facing: 1, away: false, lean: false };
 }
 
 export const witchHeight = (w: WitchState, t: Tuning) => lerp(t.groundHeight, t.treetopHeight, smoothstep(w.lift));
@@ -53,5 +57,8 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   if (x < bounds.minX || x > bounds.maxX) { x = clamp(x, bounds.minX, bounds.maxX); vx = 0; }
   if (z < bounds.minZ || z > bounds.maxZ) { z = clamp(z, bounds.minZ, bounds.maxZ); vz = 0; }
   const facing: 1 | -1 = vx > 0.3 ? 1 : vx < -0.3 ? -1 : w.facing;
-  return { x, z, vx, vz, lift, mode, facing };
+  // Away when clearly flying north, towards when clearly flying south; sideways keeps the last.
+  const speed = Math.hypot(vx, vz), turn = Math.max(1, max * 0.15);
+  const away = vz < -turn && -vz > Math.abs(vx) * 0.5 ? true : vz > turn && vz > Math.abs(vx) * 0.5 ? false : w.away;
+  return { x, z, vx, vz, lift, mode, facing, away, lean: speed > max * t.leanAt };
 }

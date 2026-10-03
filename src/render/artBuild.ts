@@ -69,11 +69,12 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
 /** A kind of creature at each level (baby, young, legend), two walking frames each. */
 export function creatureSprites(st: Style, species: string, mk: MakeCanvas): Baked[] {
   const out: Baked[] = [];
-  for (let level = 0; level < 3; level++) for (let f = 0; f < 2; f++)
-    out.push(Art.bake(Art.critter(species, level, f, st), Art.speciesColours(species, st), st, st.cOutline, mk) as Baked);
+  for (const facing of ["towards", "away"]) for (let level = 0; level < 3; level++) for (let f = 0; f < 2; f++)
+    out.push(Art.bake(Art.critter(species, level, f, st, facing), Art.speciesColours(species, st), st, st.cOutline, mk) as Baked);
   return out;
 }
-export const creatureFrame = (level: number, f: number) => level * 2 + f;
+/** Towards: frames 0-5 (level x 2 + walk frame); away: the same, from 6. */
+export const creatureFrame = (level: number, f: number, away = false) => (away ? 6 : 0) + level * 2 + f;
 
 function pixels(c: AnyCanvas, w: number, h: number): Uint8ClampedArray {
   const ctx = c.getContext("2d") as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
@@ -110,7 +111,7 @@ export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number;
 export interface ArtResult { px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels }
 
 export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
-  if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 1024) };
+  if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };
   const { sprites, layout, floor } = typeSprites(job.style, job.seed, job.id, job.K, mk);
   return { px: packPixels(sprites), layout, floor: { albedo: new Uint8Array(pixels(floor.A, floor.w, floor.h)), normal: new Uint8Array(pixels(floor.N, floor.w, floor.h)), w: floor.w, h: floor.h } };
 }

@@ -87,24 +87,32 @@ async function main() {
     const topSpeed = (s0.z - s.z) / (s.t - s0.t);
     check(topSpeed > groundSpeed * 1.5 && topSpeed <= tuning.treetopSpeed * 1.01, `flies north faster in treetop mode (${topSpeed.toFixed(1)} m/s)`);
     await shot(page, "04-treetop-flying.png");
-    // Fly a fixed path in both modes; no tree may appear or vanish in clear view on the way.
+    // Fly a fixed path through every zoom level in both modes; nothing of any kind may appear or
+    // vanish in clear view on the way (trees, undergrowth, walls, set pieces, creatures, props).
     await page.evaluate(() => { window.witch.view.pops = []; });
-    await hold(page, "KeyA", 1.5);
-    await hold(page, "KeyS", 1.5);
-    await page.keyboard.press("Space");
-    await sleep(800);
-    await hold(page, "KeyD", 1.5);
-    await page.keyboard.press("Space");
-    await sleep(800);
-    const seen = await page.evaluate(() => window.witch.view.stats.creatures);
-    check(seen > 0, `creatures in view after flying out of the home area (${seen})`);
-    const pops = await page.evaluate(() => window.witch.view.pops.slice(0, 10));
-    check(pops.length === 0, `no tree pops in or out in clear view on a fixed flight path${pops.length ? ": " + pops.join("; ") : ""}`);
+    const steps = await page.evaluate(() => window.witch.game.tuning.camera.zoomSteps);
+    const keys = ["KeyA", "KeyS", "KeyD", "KeyW"];
+    for (const mode of ["treetop", "ground"]) {
+      for (let i = 0; i < steps; i++) await page.keyboard.press("KeyE"); // all the way in
+      for (let z = 0; z < steps; z++) {
+        await hold(page, keys[z % 4], 0.8);
+        await page.keyboard.press("KeyQ"); // a step out, while flying on
+        await hold(page, keys[(z + 1) % 4], 0.6);
+      }
+      for (let i = 0; i < steps; i++) { await page.keyboard.press("KeyE"); await hold(page, keys[i % 4], 0.3); }
+      await page.keyboard.press("Space"); // change mode mid-path
+      await hold(page, "KeyW", 1.2);
+    }
+    const pops = await page.evaluate(() => window.witch.view.pops.slice(0, 12));
+    const popCount = await page.evaluate(() => window.witch.view.pops.length);
+    check(popCount === 0, `nothing pops in or out in clear view, flying through every zoom level in both modes (${popCount})${popCount ? ": " + pops.join("; ") : ""}`);
+    await page.waitForFunction(() => !["rising", "descending"].includes(window.witch.game.witch.mode), null, { timeout: 60000 });
+    if (await page.evaluate(() => window.witch.game.witch.mode) !== "treetop") { await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 }); }
     await page.keyboard.press("KeyQ"); await page.keyboard.press("KeyQ");
     await sleep(800);
     await shot(page, "05-treetop-zoomed-out.png");
     await page.keyboard.press("Space");
-    await page.waitForFunction(() => window.witch.game.witch.mode !== "descending", null, { timeout: 60000 }).catch(() => {});
+    await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 60000 }).catch(() => {});
     s = await state(page);
     check(s.mode === "ground", `space descends to ground mode (${s.mode})`);
     await shot(page, "06-ground-zoomed-out.png");

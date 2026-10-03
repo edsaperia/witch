@@ -25,6 +25,7 @@ export interface Tuning {
   groundSpeed: number;
   treetopSpeed: number;
   acceleration: number;
+  leanAt: number;
   riseTime: number;
   descendTime: number;
   groundHeight: number;
@@ -39,6 +40,8 @@ export interface Tuning {
   lightBudget: number;
   lightSources: { spacing: number; campfire: number; magicStone: number; pond: number; wetPond: number };
   haze: { near: number; far: number };
+  stringLights: { on: boolean; perArea: number; height: number; sag: number; bulbSpacing: number; palette: string[]; twinkle: number; chaseSpeed: number; glow: number };
+  party: { interval: number; startDelay: number; maxPerWave: number; transition: number; lightReach: number; lightStrength: number };
   dancefloor: {
     radius: number; stones: number; clearing: number;
     circleHue: number; circleHue2: number; pulse: number; runeSpeed: number;
@@ -46,7 +49,7 @@ export interface Tuning {
     discoHeight: number; discoSize: number; spin: number;
     specks: number; speckBrightness: number; speckReach: number;
   };
-  canopyCutout: { radius: number; edge: number };
+  canopyCutout: { screenFraction: number; edge: number };
   shadows: { on: boolean; strength: number };
   canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };
   mist: { on: boolean; strength: number; height: number; wind: number };
@@ -57,7 +60,8 @@ export interface Tuning {
   creaturesFar: number;
   creatureCurve: number;
   youngShareFar: number;
-  legendsFar: number;
+  legendChanceFar: number;
+  legendNextToHome: boolean;
   legendsFrom: number;
   creatureSimRadius: number;
   creatureSpeed: number;

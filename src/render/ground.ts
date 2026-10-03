@@ -6,6 +6,7 @@
 // camera (working the partition out for the whole map at once takes seconds on a phone).
 import * as THREE from "three";
 import type { ForestMap } from "../rules/map";
+import type { Forest } from "../rules/forest";
 import { AREA_TYPES } from "../rules/map";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import type { TilePixels } from "./artBuild";
@@ -34,9 +35,9 @@ uniform sampler2D uFloors;        // every type's floor tile, FLOOR_COLS to a ro
 uniform vec2 uTile, uFloorsSize;  // one tile's size and the atlas's, in art pixels
 uniform float uSat;
 uniform vec3 uFloor; // dancefloor x, z, radius
-uniform vec4 uPonds[8]; // nearest ponds: x, z, radius, (unused)
-uniform int uPondCount;
-uniform vec4 uCircle; // magic circle: hue, second hue, brightness (pulsing), rune band's turn (radians)
+uniform vec4 uCircle;
+uniform vec4 uSweeps[4]; // partifying areas: the front's origin x, z, its radius, strength
+uniform int uSweepCount; // magic circle: hue, second hue, brightness (pulsing), rune band's turn (radians)
 
 // The magic circle on the dancefloor, in art pixels: rings, a band of rune glyphs that turns,
 // and a five-pointed star. Returns 0 (nothing), 1 (lines) or 2 (runes).
@@ -108,11 +109,8 @@ void main() {
   }
   // Ponds: dark water mirroring the moon. The glint is a fake highlight from the view and a
   // moon mirrored into the sky ahead, so it slides as the camera moves, and shimmers.
-  for (int i = 0; i < 8; i++) {
-    if (i >= uPondCount) break;
-    vec2 dp = p - uPonds[i].xy;
-    float edge = uPonds[i].z * (0.85 + 0.15 * vnoise(px / 6.0 + float(i) * 7.0));
-    if (dot(dp, dp) < edge * edge) {
+  {
+    if (area.a > 0.5 && area.b > 0.5) {
       vec3 V = normalize(cameraPosition - vec3(p.x, 0.0, p.y));
       vec3 R = reflect(-V, vec3(0.0, 1.0, 0.0));
       vec3 moon = normalize(vec3(uMoonDir.x, uMoonDir.y, -abs(uMoonDir.z)));
@@ -124,6 +122,21 @@ void main() {
       gl_FragColor = vec4(haze(water, vWorld), 1.0);
       return;
     }
+  }
+  // The party arriving: a front of glowing runes sweeping across the area, a soft glow behind it.
+  for (int i = 0; i < 4; i++) {
+    if (i >= uSweepCount) break;
+    float d = length(p - uSweeps[i].xy), front = uSweeps[i].z, k = uSweeps[i].w;
+    if (k <= 0.0 || d > front + 3.0) continue;
+    if (abs(d - front) < 2.2) {
+      vec2 cell = floor(px / 3.0);
+      if (fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453) > 0.55 && mod(px.x + px.y, 3.0) < 2.0) {
+        vec3 col = mod(cell.x + cell.y, 2.0) > 0.5 ? hsv(uCircle.x, 0.7, 1.0) : hsv(uCircle.y, 0.7, 1.0);
+        gl_FragColor = vec4(haze(col * k, vWorld), 1.0);
+        return;
+      }
+    }
+    if (d < front) c += hsv(uCircle.x, 0.6, 0.18) * k * (1.0 - smoothstep(0.0, 1.0, (front - d) / 30.0));
   }
   float moonK = 1.0;
   if (uCanopy.x > 0.0) {
@@ -152,7 +165,7 @@ export class Ground {
   private floors: THREE.DataTexture;
   private pendingFloors: [number, TilePixels][] = [];
 
-  constructor(private map: ForestMap, st: Style, metresPerPixel: number) {
+  constructor(private map: ForestMap, private forest: Forest, st: Style, metresPerPixel: number) {
     const e = map.extent, w = e.maxX - e.minX, d = e.maxZ - e.minZ;
     const W = Math.ceil((w * TEXELS_PER_METRE) / TILE) * TILE, H = Math.ceil((d * TEXELS_PER_METRE) / TILE) * TILE;
     this.tilesX = W / TILE; this.tilesZ = H / TILE;
@@ -178,8 +191,8 @@ export class Ground {
         uFloor: { value: new THREE.Vector3(map.dancefloor.x, map.dancefloor.z, map.dancefloor.radius) },
         uCanopy: { value: new THREE.Vector4() },
         uCircle: { value: new THREE.Vector4() },
-        uPonds: { value: Array.from({ length: 8 }, () => new THREE.Vector4()) },
-        uPondCount: { value: 0 },
+        uSweeps: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) },
+        uSweepCount: { value: 0 },
         uClearing: { value: new THREE.Vector2(map.tuning.clearingSize, map.tuning.clearingFalloff) },
       },
     });
@@ -189,11 +202,11 @@ export class Ground {
     this.mesh.position.set((e.minX + e.maxX) / 2, 0, (e.minZ + e.maxZ) / 2);
   }
 
-  /** The ponds nearest the view (up to 8): x, z, radius. */
-  setPonds(ponds: { x: number; z: number; r: number }[]): void {
-    const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, list = u.uPonds.value as THREE.Vector4[];
-    ponds.slice(0, 8).forEach((p, i) => list[i].set(p.x, p.z, p.r, 0));
-    u.uPondCount.value = Math.min(8, ponds.length);
+  /** The fronts of light sweeping across areas as the party arrives (up to 4). */
+  setSweeps(sweeps: { x: number; z: number; radius: number; strength: number }[]): void {
+    const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, list = u.uSweeps.value as THREE.Vector4[];
+    sweeps.slice(0, 4).forEach((w, i) => list[i].set(w.x, w.z, w.radius, w.strength));
+    u.uSweepCount.value = Math.min(4, sweeps.length);
   }
 
   /** The magic circle: its two hues, brightness now, and the rune band's turn. */
@@ -222,16 +235,17 @@ export class Ground {
     this.pendingFloors = [];
   }
 
-  /** Fill area tiles nearest (x, z) first, within `radius` metres, for up to `budgetMs`. Returns how many are still missing there. */
-  fill(renderer: THREE.WebGLRenderer, x: number, z: number, radius: number, budgetMs: number): number {
+  /** Fill the area tiles over a rectangle of ground, nearest (x, z) first, for up to `budgetMs`.
+   *  Returns how many there are still missing. */
+  fill(renderer: THREE.WebGLRenderer, rect: { minX: number; maxX: number; minZ: number; maxZ: number }, x: number, z: number, budgetMs: number): number {
     if (!this.initialised) { renderer.initTexture(this.texture); renderer.initTexture(this.floors); this.initialised = true; }
     if (this.pendingFloors.length) this.placeFloors(renderer);
     const e = this.map.extent, tm = TILE / TEXELS_PER_METRE;
-    const cx = (x - e.minX) / tm, cz = (z - e.minZ) / tm, r = Math.ceil(radius / tm);
-    const todo: [number, number, number][] = [];
-    for (let j = Math.max(0, Math.floor(cz) - r); j <= Math.min(this.tilesZ - 1, Math.floor(cz) + r); j++)
-      for (let i = Math.max(0, Math.floor(cx) - r); i <= Math.min(this.tilesX - 1, Math.floor(cx) + r); i++)
-        if (!this.filled[j * this.tilesX + i]) todo.push([i, j, (i + 0.5 - cx) ** 2 + (j + 0.5 - cz) ** 2]);
+    const i0 = Math.max(0, Math.floor((rect.minX - e.minX) / tm)), i1 = Math.min(this.tilesX - 1, Math.floor((rect.maxX - e.minX) / tm));
+    const j0 = Math.max(0, Math.floor((rect.minZ - e.minZ) / tm)), j1 = Math.min(this.tilesZ - 1, Math.floor((rect.maxZ - e.minZ) / tm));
+    const cx = (x - e.minX) / tm, cz = (z - e.minZ) / tm, todo: [number, number, number][] = [];
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++)
+      if (!this.filled[j * this.tilesX + i]) todo.push([i, j, (i + 0.5 - cx) ** 2 + (j + 0.5 - cz) ** 2]);
     todo.sort((a, b) => a[2] - b[2]);
     const t0 = performance.now();
     let done = 0;
@@ -244,11 +258,16 @@ export class Ground {
   }
 
   private fillTile(renderer: THREE.WebGLRenderer, i: number, j: number): void {
-    const e = this.map.extent, data = this.tile.image.data as Uint8Array;
+    const e = this.map.extent, data = this.tile.image.data as Uint8Array, tm = TILE / TEXELS_PER_METRE;
+    const x0 = e.minX + i * tm, z0 = e.minZ + j * tm;
+    // Ponds are part of the ground: every one is marked in the tile, so none can pop.
+    const ponds = this.forest.lightsNear(x0 + tm / 2, z0 + tm / 2, tm / 2 + 6).filter(l => l.kind === "pond");
     for (let y = 0; y < TILE; y++) for (let x = 0; x < TILE; x++) {
-      const wx = e.minX + (i * TILE + x + 0.5) / TEXELS_PER_METRE, wz = e.minZ + (j * TILE + y + 0.5) / TEXELS_PER_METRE;
+      const wx = x0 + (x + 0.5) / TEXELS_PER_METRE, wz = z0 + (y + 0.5) / TEXELS_PER_METRE;
       const a = this.map.areaAt(wx, wz), o = (y * TILE + x) * 4;
-      data[o] = a.type; data[o + 1] = Math.round(a.openness * 255); data[o + 2] = 0; data[o + 3] = 255;
+      let pond = 0;
+      for (const p of ponds) if (Math.hypot(wx - p.x, wz - p.z) < 3 * p.size) pond = 255;
+      data[o] = a.type; data[o + 1] = Math.round(a.openness * 255); data[o + 2] = pond; data[o + 3] = 255;
     }
     this.tile.needsUpdate = true;
     renderer.copyTextureToTexture(this.tile, this.texture, null, new THREE.Vector2(i * TILE, j * TILE));

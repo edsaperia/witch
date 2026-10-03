@@ -1,5 +1,6 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { areaUnderWitch, newGame, stepGame } from "./rules/game";
+import { waveCountdown } from "./rules/party";
 import { parseSeed } from "./rules/map";
 import { TUNING } from "./rules/tuning";
 import { Input } from "./platform/input";
@@ -38,7 +39,10 @@ const view = new View(canvas, game, {
   // Trees taller by treeHeight; crowns wider by crownWidth in all (treeHeight widens them too).
   treeSize: style.treeSize * tuning.treeHeight, crownWidth: style.crownWidth * tuning.crownWidth / tuning.treeHeight,
 });
+view.debugCull = params.get("debug") === "cull";
 const input = new Input();
+document.getElementById("next-wave")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.nextWave = true; });
+document.getElementById("pause-waves")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.pauseWaves = true; });
 setupTouch(document.body, input.touch);
 
 declare const __BUILD__: string;
@@ -46,8 +50,11 @@ document.getElementById("version")!.textContent = typeof __BUILD__ === "string" 
 const seedEl = document.getElementById("seed")!;
 seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;
 const debugEl = document.getElementById("debug")!, startEl = document.getElementById("start")!;
+const debugButtons = document.getElementById("debug-buttons")!;
+const waveEl = document.getElementById("wave")!, waveFill = waveEl.querySelector<HTMLElement>(".fill")!, waveLabel = waveEl.querySelector<HTMLElement>(".label")!;
 let debugOn = params.has("debug");
 debugEl.classList.toggle("on", debugOn);
+debugButtons.classList.toggle("on", debugOn);
 
 const fit = () => view.resize(window.innerWidth, window.innerHeight);
 window.addEventListener("resize", fit);
@@ -83,9 +90,14 @@ function frame(now: number): void {
   frames++; fpsT += dt;
   if (fpsT >= 0.5) { fps = frames / fpsT; frames = 0; fpsT = 0; }
   const c = input.read();
-  if (c.debug) { debugOn = !debugOn; debugEl.classList.toggle("on", debugOn); }
+  if (c.debug) { debugOn = !debugOn; debugEl.classList.toggle("on", debugOn); debugButtons.classList.toggle("on", debugOn); }
   stepGame(game, c, dt);
   if (!ready) return;
+  // The wave countdown bar: empties toward the next wave.
+  const cd = waveCountdown(game.party, game.map, game.clock.time);
+  waveFill.style.height = `${(1 - cd.gone) * 100}%`;
+  waveLabel.textContent = `wave ${game.party.wave} · ${game.party.areas.size} areas · ${Math.ceil(cd.left)} s`;
+  waveEl.classList.toggle("paused", game.party.paused);
   view.render(now / 1000);
   if (debugOn) {
     const w = game.witch, s = view.stats;

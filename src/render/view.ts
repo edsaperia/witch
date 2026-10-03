@@ -4,6 +4,7 @@
 import * as THREE from "three";
 import type { Game } from "../rules/game";
 import { poseOf } from "../rules/game";
+import { cameraPose } from "../rules/camera";
 import { AREA_TYPES } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
 import { AssetLibrary, type TypeArt } from "./assets";
@@ -14,6 +15,8 @@ import { Ground } from "./ground";
 import { applyStyleLight, LIGHT_UNIFORMS, MAX_LIGHTS } from "./lighting";
 import { Post } from "./post";
 import { Dancefloor } from "./dancefloor";
+import { PartyView } from "./party";
+import { StringLightsView } from "./strings";
 import { Mist } from "./mist";
 import { ShadowBatch, type ShadowInstance } from "./shadows";
 import { lerp } from "../rules/random";
@@ -41,6 +44,9 @@ export class View {
   readonly post: Post;
   private dancefloor: Dancefloor;
   private propBatch: SpriteBatch;
+  private partyView: PartyView;
+  private strings: StringLightsView;
+  private soundBatch: SpriteBatch;
   private sources: LightSource[] = [];
   /** Lights in the forest besides the witch's glow, from the light sources (set by the view). */
   private forestLights: ForestLight[] = [];
@@ -49,6 +55,8 @@ export class View {
   private mist: Mist | null = null;
   private width = 1;
   private height = 1;
+  /** ?debug=cull: tint anything that has just appeared bright red. */
+  debugCull = false;
   stats: ViewStats = { trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0, lights: 0 };
 
   constructor(readonly canvas: HTMLCanvasElement, readonly game: Game, readonly style: Style) {
@@ -63,7 +71,7 @@ export class View {
     this.scene.background = new THREE.Color(0x0b0a16);
     applyStyleLight(style, t.glowReach, this.mpp, t.tone.ambient);
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize);
-    this.ground = new Ground(game.map, style, this.mpp);
+    this.ground = new Ground(game.map, game.forest, style, this.mpp);
     this.assets.onFloor = (type, tile) => this.ground.setFloor(type, tile);
     const cs = t.canopyShadow;
     this.ground.setCanopyShadow(cs.on ? cs.strength : 0, cs.height, cs.cover, cs.wind);
@@ -87,6 +95,10 @@ export class View {
     this.stoneBatch.set(stones);
     this.propBatch = new SpriteBatch(this.assets.props, this.mpp);
     this.scene.add(this.propBatch.mesh);
+    this.partyView = new PartyView(this.assets.soundsystems, this.mpp);
+    this.strings = new StringLightsView(this.scene, game);
+    this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp);
+    this.scene.add(this.soundBatch.mesh);
     this.dancefloor = new Dancefloor(game.map, t, SPRITE_UNIFORMS, this.mpp);
     this.scene.add(this.dancefloor.ball, this.dancefloor.beam);
 
@@ -121,9 +133,9 @@ export class View {
   async prepare(): Promise<void> {
     this.render(0, false);
     this.drawCreatures();
-    this.ground.fill(this.renderer, this.game.witch.x, this.game.witch.z, 50, Infinity);
+    this.ground.fill(this.renderer, this.viewRect(this.game.tuning.haze.near, 20), this.game.witch.x, this.game.witch.z, Infinity);
     await this.assets.whenIdle();
-    this.updateFrustum();
+    this.render(0, false);
     this.refresh(true);
     // There are only 30 area types and 30 creatures: draw them all in the background now, so
     // the forest ahead is ready however fast she flies.
@@ -137,69 +149,125 @@ export class View {
     return b;
   }
 
-  // What the camera can see: its frustum, and the patch of ground under it (plus a margin), so
-  // trees are only ever added or dropped off screen and never pop in view.
+  // What the camera can see: its frustum now, and the frustum it is easing toward (a zoom step
+  // or a rise or descent changes the view faster than any margin), plus a margin round both.
+  // Everything drawn goes through this one test, so nothing is added or dropped on screen.
   private frustum = new THREE.Frustum();
+  private frustumTo = new THREE.Frustum();
+  private cullCam = new THREE.PerspectiveCamera();
   private box = new THREE.Box3();
   private m4 = new THREE.Matrix4();
   private v3 = new THREE.Vector3();
-  private drawn = new Set<string>();
+  /** What was drawn last time, for the fresh tint and the pop check: one record for what the
+   *  rebuild places (trees, undergrowth, walls, set pieces), one for what moves every frame
+   *  (creatures, light props). */
+  private tracks = { placed: { now: new Set<string>(), before: new Set<string>() }, moving: { now: new Set<string>(), before: new Set<string>() } };
   pops: string[] = [];
 
-  private updateFrustum(): void {
-    this.camera.updateMatrixWorld();
-    this.m4.multiplyMatrices(this.camera.projectionMatrix, this.camera.matrixWorldInverse);
-    this.frustum.setFromProjectionMatrix(this.m4);
+  private poseCamera(cam: THREE.PerspectiveCamera, pose: { angle: number; distance: number; tx: number; ty: number; tz: number }): void {
+    const a = (pose.angle * Math.PI) / 180;
+    cam.position.set(pose.tx, pose.ty + Math.sin(a) * pose.distance, pose.tz + Math.cos(a) * pose.distance);
+    cam.up.set(0, 1, 0);
+    cam.lookAt(pose.tx, pose.ty, pose.tz);
+    cam.updateMatrixWorld();
   }
 
-  /** The ground rectangle the camera can see, out to `far` metres from the witch, plus `margin`. */
+  private updateFrustum(): void {
+    const g = this.game, t = g.tuning, cam = this.camera;
+    cam.updateMatrixWorld();
+    this.m4.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
+    this.frustum.setFromProjectionMatrix(this.m4);
+    // Where the camera is heading: the chosen zoom step, and the height she is rising or descending to.
+    const steps = Math.max(1, t.camera.zoomSteps), lift = g.witch.mode === "rising" || g.witch.mode === "treetop" ? 1 : 0;
+    const to = cameraPose({ ...g.camera, zoom: steps > 1 ? g.camera.zoomStep / (steps - 1) : 0 }, lift, t);
+    const c = this.cullCam;
+    c.fov = cam.fov; c.aspect = cam.aspect; c.near = cam.near; c.far = cam.far; c.updateProjectionMatrix();
+    this.poseCamera(c, { ...to, ty: lerp(t.groundHeight, t.treetopHeight, lift) });
+    this.m4.multiplyMatrices(c.projectionMatrix, c.matrixWorldInverse);
+    this.frustumTo.setFromProjectionMatrix(this.m4);
+  }
+
+  /** The ground rectangle the cameras can see, out to `far` metres from the witch, plus `margin`. */
   private viewRect(far: number, margin: number) {
-    const cam = this.camera, o = cam.position, w = this.game.witch, pts: [number, number][] = [];
-    for (const nx of [-1, 1]) for (const ny of [-1, 1]) {
-      const d = this.v3.set(nx, ny, 1).unproject(cam).sub(o).normalize();
-      for (const h of [0, 25]) {
-        let t = d.y < -1e-3 ? (h - o.y) / d.y : Infinity;
-        if (!(t > 0)) t = Infinity;
-        t = Math.min(t, far + o.distanceTo(new THREE.Vector3(w.x, o.y, w.z)) + margin);
-        pts.push([o.x + d.x * t, o.z + d.z * t]);
+    const w = this.game.witch, pts: [number, number][] = [];
+    for (const cam of [this.camera, this.cullCam]) {
+      const o = cam.position, reach = far + Math.hypot(o.x - w.x, o.z - w.z) + margin;
+      for (const nx of [-1, 1]) for (const ny of [-1, 1]) {
+        const d = this.v3.set(nx, ny, 1).unproject(cam).sub(o).normalize();
+        for (const h of [0, 25]) {
+          let t = d.y < -1e-3 ? (h - o.y) / d.y : Infinity;
+          if (!(t > 0)) t = Infinity;
+          t = Math.min(t, reach);
+          pts.push([o.x + d.x * t, o.z + d.z * t]);
+        }
       }
+      pts.push([o.x, o.z]);
     }
-    pts.push([o.x, o.z]);
     const xs = pts.map(p => p[0]), zs = pts.map(p => p[1]);
     return { minX: Math.min(...xs) - margin, maxX: Math.max(...xs) + margin, minZ: Math.min(...zs) - margin, maxZ: Math.max(...zs) + margin };
   }
 
-  /** Whether a sprite standing at (x, z), w wide and h tall, may be on screen (with a margin). */
+  /** Whether a sprite standing at (x, z), w wide and h tall, may be on screen now or soon. Nothing
+   *  is drawn beyond the haze's far edge, where the haze has already hidden it completely. */
   private inView(x: number, z: number, w: number, h: number, margin: number): boolean {
     const wx = this.game.witch.x, wz = this.game.witch.z, far = this.game.tuning.haze.far + margin;
     if ((x - wx) ** 2 + (z - wz) ** 2 > far * far) return false;
     this.box.min.set(x - w / 2 - margin, -margin, z - h - margin);
     this.box.max.set(x + w / 2 + margin, h + margin, z + margin);
-    return this.frustum.intersectsBox(this.box);
+    return this.frustum.intersectsBox(this.box) || this.frustumTo.intersectsBox(this.box);
   }
 
-  /** Whether a point is well inside the screen and near enough to be seen clearly. */
+  /** Whether a point is well inside the screen and clear of the haze, so a change there would be seen. */
   private inInnerView(x: number, z: number, h: number): boolean {
-    const w = this.game.witch;
-    if (Math.hypot(x - w.x, z - w.z) > this.game.tuning.haze.near) return false;
-    for (const y of [0, h]) {
+    const w = this.game.witch, hz = this.game.tuning.haze;
+    if (Math.hypot(x - w.x, z - w.z) > hz.near + (hz.far - hz.near) * 0.6) return false;
+    for (const y of [0, h * 0.5, h]) {
       const p = this.v3.set(x, y, z).project(this.camera);
-      if (Math.abs(p.x) < 0.85 && Math.abs(p.y) < 0.85 && p.z < 1) return true;
+      if (Math.abs(p.x) < 0.9 && Math.abs(p.y) < 0.9 && p.z < 1) return true;
     }
     return false;
   }
 
-  /** Rebuild the batches for what the camera sees, once it has moved a few metres. */
+  /** Note that an object is drawn this frame; returns whether it has just appeared. */
+  private mark(kind: string, x: number, z: number, h: number, id: string | number = ""): boolean {
+    const tr = kind === "creature" || kind === "prop" ? this.tracks.moving : this.tracks.placed;
+    const k = `${kind}|${x.toFixed(1)}|${z.toFixed(1)}|${h.toFixed(1)}|${id}`;
+    tr.now.add(k);
+    return !tr.before.has(k);
+  }
+
+  /** Compare what was drawn with last time: anything appearing or vanishing in clear view is a pop. */
+  private checkPops(which: "placed" | "moving", record = true): void {
+    const tr = this.tracks[which], live = record && this.assets.pending === 0 && tr.before.size > 0;
+    if (live) {
+      const at = (k: string, what: string) => {
+        const [kind, x, z, h] = k.split("|");
+        if (this.inInnerView(+x, +z, +h)) this.pops.push(`${what} ${kind} ${(+x).toFixed(0)},${(+z).toFixed(0)}`);
+      };
+      for (const k of tr.now) if (!tr.before.has(k)) at(k, "appeared");
+      for (const k of tr.before) if (!tr.now.has(k)) at(k, "vanished");
+    }
+    tr.before = tr.now;
+    tr.now = new Set();
+  }
+
+  private lastPose = { distance: 0, angle: 0, zoomStep: -1, lift: -1 };
+
+  /** Rebuild the batches for what the camera sees, once it has moved, turned or zoomed. */
   private refresh(force = false): void {
-    const g = this.game, t = g.tuning, cam = this.camera, margin = t.viewMargin;
+    const g = this.game, t = g.tuning, cam = this.camera, margin = t.viewMargin, pose = poseOf(g);
     const key = { x: cam.position.x, y: cam.position.y, z: cam.position.z };
-    if (!force && Math.hypot(key.x - this.lastBuild.x, key.y - this.lastBuild.y, key.z - this.lastBuild.z) < margin / 3 && this.assets.version === this.lastBuild.version) return;
+    const lp = this.lastPose, lift = g.witch.mode === "rising" || g.witch.mode === "treetop" ? 1 : 0;
+    const moved = Math.hypot(key.x - this.lastBuild.x, key.y - this.lastBuild.y, key.z - this.lastBuild.z) >= margin / 3;
+    const turned = Math.abs(pose.distance - lp.distance) > 2 || Math.abs(pose.angle - lp.angle) > 0.5 || g.camera.zoomStep !== lp.zoomStep || lift !== lp.lift;
+    if (!force && !moved && !turned && this.assets.version === this.lastBuild.version) return;
     this.lastBuild = { ...key, version: this.assets.version };
+    this.lastPose = { distance: pose.distance, angle: pose.angle, zoomStep: g.camera.zoomStep, lift };
     const r = this.viewRect(t.haze.far, margin), cx = (r.minX + r.maxX) / 2, cz = (r.minZ + r.maxZ) / 2, half = Math.max(r.maxX - r.minX, r.maxZ - r.minZ) / 2;
     const shadows: ShadowInstance[] = [];
     // Shadows fall away from the moon: from the upper left, so toward the lower right.
     const L = LIGHT_UNIFORMS.uMoonDir.value, sx = -L.x / Math.max(0.2, L.y), sz = -L.z / Math.max(0.2, L.y);
-    const per = new Map<number, SpriteInstance[]>(), drawn = new Set<string>();
+    const per = new Map<number, SpriteInstance[]>();
     const add = (type: number, inst: SpriteInstance) => { let l = per.get(type); if (!l) per.set(type, (l = [])); l.push(inst); };
     const mpp = this.mpp;
     let nt = 0, nb = 0;
@@ -208,14 +276,14 @@ export class View {
       if (!art || !art.layout.big.length) continue;
       const f = art.atlas.frames, big = art.layout.big[p.variant % art.layout.big.length], whole = f[big.top ?? big.bot];
       if (!this.inView(p.x, p.z, whole.w * mpp, whole.h * mpp, margin)) continue;
-      add(p.type, { x: p.x, y: 0, z: p.z, frame: f[big.bot], flip: p.flip });
-      if (big.top !== null) add(p.type, { x: p.x, y: 0, z: p.z, frame: f[big.top], flip: p.flip, top: true });
+      const fresh = this.mark("tree", p.x, p.z, whole.h * mpp);
+      add(p.type, { x: p.x, y: 0, z: p.z, frame: f[big.bot], flip: p.flip, fresh });
+      if (big.top !== null) add(p.type, { x: p.x, y: 0, z: p.z, frame: f[big.top], flip: p.flip, top: true, fresh });
       const w = whole.w * mpp, h = whole.h * mpp * (big.top === null ? 0.2 : 0.6);
       shadows.push({ x: p.x + sx * h, z: p.z + sz * h, w: w * 0.8, d: w * 0.45 });
-      drawn.add(`${p.x.toFixed(2)},${p.z.toFixed(2)},${whole.h * mpp}`);
       nt++;
     }
-    const scatter = (list: Plant[], pick: (l: TypeArt["layout"]) => Piece[]) => {
+    const scatter = (kind: string, list: Plant[], pick: (l: TypeArt["layout"]) => Piece[]) => {
       for (const p of list) {
         const art = this.assets.typeArt(p.type);
         if (!art) continue;
@@ -223,45 +291,41 @@ export class View {
         if (!pieces.length) continue;
         const piece = pieces[p.variant % pieces.length], f = art.atlas.frames, frame = f[piece.bot], whole = f[piece.top ?? piece.bot];
         if (!this.inView(p.x, p.z, whole.w * mpp, whole.h * mpp, margin)) continue;
-        add(p.type, { x: p.x, y: 0, z: p.z, frame, flip: p.flip });
-        if (piece.top !== null) add(p.type, { x: p.x, y: 0, z: p.z, frame: f[piece.top], flip: p.flip, top: true });
+        const fresh = this.mark(kind, p.x, p.z, whole.h * mpp);
+        add(p.type, { x: p.x, y: 0, z: p.z, frame, flip: p.flip, fresh });
+        if (piece.top !== null) add(p.type, { x: p.x, y: 0, z: p.z, frame: f[piece.top], flip: p.flip, top: true, fresh });
         shadows.push({ x: p.x, z: p.z, w: frame.w * mpp * 0.8, d: frame.w * mpp * 0.3 });
         nb++;
       }
     };
-    scatter(g.forest.bushesNear(cx, cz, half), l => l.small);
-    scatter(g.forest.wallsNear(cx, cz, half), l => l.walls.map(bot => ({ bot, top: null })));
-    scatter(g.forest.setPiecesNear(cx, cz, half), l => (l.set === null ? [] : [l.set]));
+    scatter("small", g.forest.bushesNear(cx, cz, half), l => l.small);
+    scatter("wall", g.forest.wallsNear(cx, cz, half), l => l.walls.map(bot => ({ bot, top: null })));
+    scatter("setpiece", g.forest.setPiecesNear(cx, cz, half), l => (l.set === null ? [] : [l.set]));
     for (const [type, b] of this.typeBatches) if (!per.has(type)) b.set([]);
     for (const [type, list] of per) {
       const b = this.batchFor(this.typeBatches, type, () => { const a = this.assets.typeArt(type); return a && new SpriteBatch(a.atlas, mpp); });
       b?.set(list);
     }
-    // Pop check: a tree that appears or disappears where the player can clearly see it is a bug.
-    if (!force && this.assets.pending === 0) {
-      const check = (k: string, what: string) => { const [x, z, h] = k.split(",").map(Number); if (this.inInnerView(x, z, h)) this.pops.push(`${what} ${x.toFixed(0)},${z.toFixed(0)}`); };
-      for (const k of drawn) if (!this.drawn.has(k)) check(k, "appeared");
-      for (const k of this.drawn) if (!drawn.has(k)) check(k, "vanished");
-    }
-    this.drawn = drawn;
+    this.checkPops("placed", !force);
     this.sources = g.forest.lightsNear(g.witch.x, g.witch.z, t.haze.far + margin);
     this.stats.trees = nt; this.stats.bushes = nb;
     this.shadowList = shadows;
   }
 
   private drawCreatures(): void {
-    const g = this.game, cam = g.camera, R = g.tuning.haze.far;
+    const g = this.game, R = g.tuning.haze.far + 20;
     const per = new Map<string, SpriteInstance[]>(), creatureShadows: ShadowInstance[] = [];
     let n = 0;
     for (const c of g.creatures) {
-      if (Math.abs(c.x - cam.tx) > R || Math.abs(c.z - cam.tz) > R) continue;
+      if (Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
       const art = this.assets.creatureArt(c.species);
       if (!art) continue;
-      const frame = art.atlas.frames[art.frame(c.level, c.moving ? Math.floor(c.walk) % 2 : 0)];
+      const frame = art.atlas.frames[art.frame(c.level, c.moving ? Math.floor(c.walk) % 2 : 0, c.away)];
       if (!this.inView(c.x, c.z, frame.w * this.mpp, frame.h * this.mpp, 4)) continue;
+      const fresh = this.mark("creature", c.homeX, c.homeZ, 0, c.id);
       let l = per.get(c.species);
       if (!l) per.set(c.species, (l = []));
-      l.push({ x: c.x, y: 0, z: c.z, frame, flip: c.facing < 0 });
+      l.push({ x: c.x, y: 0, z: c.z, frame, flip: c.facing < 0, fresh });
       creatureShadows.push({ x: c.x, z: c.z, w: frame.w * this.mpp * 0.7, d: frame.w * this.mpp * 0.25 });
       n++;
     }
@@ -274,29 +338,29 @@ export class View {
     if (this.game.tuning.shadows.on) this.shadows.set(this.shadowList.concat(creatureShadows));
   }
 
-  // Campfires flicker, magic stones pulse; their props are drawn, ponds go to the ground.
+  // Campfires flicker, magic stones pulse; their props are drawn (ponds are in the ground).
   private fire = new THREE.Vector3(1, 0.5, 0.16);
   private runeCyan = new THREE.Vector3(0.3, 0.9, 1);
   private runeViolet = new THREE.Vector3(0.75, 0.45, 1);
+  private runeGreen = new THREE.Vector3(0.45, 1, 0.5);
   private updateSources(time: number): void {
-    const f = this.assets.props.frames, items: SpriteInstance[] = [], lights: ForestLight[] = [], ponds: { x: number; z: number; r: number; d: number }[] = [];
-    const w = this.game.witch;
+    const f = this.assets.props.frames, items: SpriteInstance[] = [], lights: ForestLight[] = [];
     for (const src of this.sources) {
+      if (src.kind === "pond") continue;
       const k = hash2(Math.round(src.x * 10), Math.round(src.z * 10), 7);
-      if (src.kind === "pond") { ponds.push({ x: src.x, z: src.z, r: 3 * src.size, d: Math.hypot(src.x - w.x, src.z - w.z) }); continue; }
       if (src.kind === "campfire") {
         const flick = 0.8 + 0.12 * Math.sin(time * 11 + k * 40) + 0.08 * Math.sin(time * 23.7 + k * 13);
         lights.push({ x: src.x + Math.sin(time * 9 + k) * 0.08, y: 1.2, z: src.z, reach: 13 * src.size, rgb: this.fire, strength: 1.6 * flick });
-        if (this.inView(src.x, src.z, 2, 2, 2)) items.push({ x: src.x, y: 0, z: src.z, frame: f[Math.floor(time * 7 + k * 10) % 2], flip: k < 0.5 });
+        const fr = f[Math.floor(time * 8 + k * 10) % 3];
+        if (this.inView(src.x, src.z, fr.w * this.mpp, fr.h * this.mpp, 4)) items.push({ x: src.x, y: 0, z: src.z, frame: fr, flip: k < 0.5, fresh: this.mark("prop", src.x, src.z, 2) });
       } else {
-        const violet = k < 0.4, pulse = 0.7 + 0.3 * Math.sin(time * 0.9 + k * 20);
-        lights.push({ x: src.x, y: 2, z: src.z, reach: 10 * src.size, rgb: violet ? this.runeViolet : this.runeCyan, strength: 1.1 * pulse });
-        if (this.inView(src.x, src.z, 1.2, 2.6, 2)) items.push({ x: src.x, y: 0, z: src.z, frame: f[violet ? 3 : 2], flip: k < 0.5 });
+        const kind = k < 0.33 ? 1 : k < 0.66 ? 0 : 2, pulse = 0.7 + 0.3 * Math.sin(time * 0.9 + k * 20), fr = f[3 + kind];
+        lights.push({ x: src.x, y: 2, z: src.z, reach: 10 * src.size, rgb: [this.runeCyan, this.runeViolet, this.runeGreen][kind], strength: 1.1 * pulse });
+        if (this.inView(src.x, src.z, fr.w * this.mpp, fr.h * this.mpp, 4)) items.push({ x: src.x, y: 0, z: src.z, frame: fr, flip: k < 0.5, fresh: this.mark("prop", src.x, src.z, 2.6) });
       }
     }
     this.propBatch.set(items);
     this.forestLights = lights;
-    this.ground.setPonds(ponds.sort((a, b) => a.d - b.d));
   }
 
   /** Shade with only the nearest lights (the light budget), fading out those at the budget's
@@ -333,6 +397,7 @@ export class View {
     this.camera.position.copy(target).add(back);
     this.camera.up.set(0, 1, 0);
     this.camera.lookAt(target);
+    this.updateFrustum();
 
     // Sprites face the camera, tilted back toward it by spriteTilt.
     const tilt = t.spriteTilt;
@@ -343,27 +408,34 @@ export class View {
     const lifted = canopyShown(g.witch), cut = t.canopyCutout;
     this.camera.updateMatrixWorld();
     const ws = this.v3.set(g.witch.x, witchHeight(g.witch, t) * 0.5, g.witch.z).project(this.camera);
-    SPRITE_UNIFORMS.uCutout.value.set((ws.x * 0.5 + 0.5) * this.width, (ws.y * 0.5 + 0.5) * this.height, cut.radius * this.height * (1 - lifted), Math.max(1, cut.edge * this.height * (1 - lifted)));
+    SPRITE_UNIFORMS.uCutout.value.set((ws.x * 0.5 + 0.5) * this.width, (ws.y * 0.5 + 0.5) * this.height, 0.5 * cut.screenFraction * this.width * (1 - lifted), Math.max(1, cut.edge * this.width * (1 - lifted)));
     SPRITE_UNIFORMS.uTopFade.value = lifted;
+    SPRITE_UNIFORMS.uDebugCull.value = this.debugCull ? 1 : 0;
 
     const w = g.witch, h = witchHeight(w, t);
     LIGHT_UNIFORMS.uGlowPos.value.set(w.x, h + t.glowHeight, w.z);
     LIGHT_UNIFORMS.uHazeCentre.value.set(w.x, w.z);
     this.updateSources(time);
-    this.setLights([this.dancefloor.update(time, this.ground), ...this.forestLights], w.x, w.z);
+    // The party: soundsystems rising in partifying areas, their lights, the sweeping fronts.
+    const party = this.partyView.update(g, time, (x, z, ww, hh) => this.inView(x, z, ww, hh, 4), () => false);
+    this.soundBatch.set(party.items);
+    this.ground.setSweeps(party.sweeps);
+    this.setLights([this.dancefloor.update(time, this.ground), ...party.lights, ...this.strings.update(time), ...this.forestLights], w.x, w.z);
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);
     const bob = Math.sin(time * 2.4) * 0.12;
-    this.witchBatch.set([{ x: w.x, y: h + bob - 0.4, z: w.z, frame: this.assets.witch.frames[0], flip: w.facing < 0 }]);
+    // Her hover frames, turned away when flying up the screen, leaning when fast.
+    const wf = w.lean ? 6 + (w.away ? 1 : 0) : (w.away ? 3 : 0) + (Math.floor(time * 4) % 3);
+    this.witchBatch.set([{ x: w.x, y: h + bob - 0.4, z: w.z, frame: this.assets.witch.frames[wf], flip: w.facing < 0 }]);
     this.shadow.position.set(w.x, 0.03, w.z);
     this.shadow.scale.setScalar(1 - 0.5 * canopyShown(w));
 
-    this.updateFrustum();
     this.refresh();
     this.drawCreatures();
+    this.checkPops("moving");
     this.assets.work(6);
-    const groundR = lerp(t.haze.near, t.haze.far, canopyShown(w)) * 0.8;
-    this.stats.pendingGround = this.ground.fill(this.renderer, pose.tx, pose.tz - groundR * 0.5, groundR, 3);
+    // The ground's area tiles: everything the cameras can see, plus a band ahead.
+    this.stats.pendingGround = this.ground.fill(this.renderer, this.viewRect(t.haze.far, 40), w.x, w.z, 4);
     this.stats.pendingArt = this.assets.pending;
     if (!draw) return;
     this.renderer.info.reset();

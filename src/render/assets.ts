@@ -9,7 +9,7 @@ import { creatureFrame, runJob, type ArtJob, type ArtResult, type TilePixels, ty
 import type { Style } from "./style";
 
 export interface TypeArt { atlas: Atlas; layout: TypeLayout }
-export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number) => number }
+export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number }
 
 type Reply = { job: ArtJob; result?: ArtResult; error?: string };
 
@@ -22,8 +22,10 @@ export class AssetLibrary {
   private useWorkers: boolean;
   readonly witch: Atlas;
   readonly stones: Atlas;
-  /** Light-source props: campfire (two flicker frames), then magic stones (cyan, violet). */
+  /** Light-source props from the art module: campfire (frames 0-2), then magic stones (cyan, violet, green). */
   readonly props: Atlas;
+  /** Soundsystems: variant x 3 + frame (the cones pumping), playing. */
+  readonly soundsystems: Atlas;
   /** Style scale: the lab's K, 2 / pixel size. */
   readonly K: number;
   /** Bumped whenever a new set is ready, so the view knows to refresh its batches. */
@@ -33,9 +35,15 @@ export class AssetLibrary {
 
   constructor(readonly style: Style, readonly seed: number, pixelSize: number) {
     this.K = 2 / pixelSize;
-    this.witch = packAtlas([Art.bake(Art.witchSprite(), Art.witchColours(style), style, "dark") as Baked]);
+    // The witch: hover frames 0-2 towards, 3-5 away, then leaning towards (6) and away (7).
+    const wc = Art.witchColours(style), wb = (o: object) => Art.bake(Art.witchSprite(style, o), wc, style, style.cOutline) as Baked;
+    this.witch = packAtlas([0, 1, 2].map(frame => wb({ frame })).concat([0, 1, 2].map(frame => wb({ frame, facing: "away" })), [wb({ lean: true }), wb({ lean: true, facing: "away" })]), 1024);
     this.stones = packAtlas([0, 1, 2, 3].map(i => this.stone(i)));
-    this.props = packAtlas([this.campfire(0), this.campfire(1), this.magicStone([90, 240, 255]), this.magicStone([200, 120, 255])]);
+    const lp = Art.lightProps(style) as { campfire: Baked[]; stones: Record<string, Baked> };
+    this.props = packAtlas([...lp.campfire, lp.stones.cyan, lp.stones.violet, lp.stones.green], 1024);
+    const ss: Baked[] = [];
+    for (let v = 0; v < 3; v++) for (let f = 0; f < 3; f++) ss.push(Art.bake(Art.soundsystemSprite(style, { variant: v, frame: f, state: "playing" }), Art.soundsystemColours(v), style, style.cOutline) as Baked);
+    this.soundsystems = packAtlas(ss, 2048);
     this.useWorkers = typeof Worker !== "undefined" && typeof OffscreenCanvas !== "undefined";
     if (this.useWorkers) {
       const n = Math.max(1, Math.min(3, (navigator.hardwareConcurrency || 2) - 1));
@@ -60,26 +68,6 @@ export class AssetLibrary {
     sp.ellipse((w + 2) / 2, h / 2 + 1, w / 2, h / 2 + 0.5, Art.M.BODY, { round: this.style.round });
     sp.ellipse((w + 2) / 2 - 1, h / 2, w / 3, h / 3, Art.M.BODY2, { round: this.style.round, onlyOn: new Set([Art.M.BODY]), density: 0.5, seed: i });
     return Art.bake(sp, { [Art.M.BODY]: [178, 174, 162], [Art.M.BODY2]: [140, 138, 130] }, this.style, "dark") as Baked;
-  }
-
-  // Placeholder props for the light sources, until the art pass draws them.
-  private campfire(frame: number): Baked {
-    const r = rng(this.seed * 5 + 17 + frame * 3), sp = new Art.Sprite(22, 16), M = Art.M, rd = this.style.round;
-    for (let i = 0; i < 9; i++) { const a = (i / 9) * Math.PI * 2; sp.ellipse(11 + Math.cos(a) * 8, 13 + Math.sin(a) * 2.2, 1.6, 1.2, M.BODY, { round: rd }); }
-    sp.line(5, 13, 16, 11, 2, 2, M.TRUNK, rd); sp.line(6, 11, 17, 13, 2, 2, M.TRUNK, rd);
-    for (let i = 0; i < 26; i++) { // flames: a flickering tongue of emissive pixels
-      const t = r(), y = 11 - t * (8 + frame * 1.5), w = (1 - t) * 3.5 + 0.5;
-      sp.put(11 + (r() - 0.5) * 2 * w, y, t > 0.55 ? M.GLINT : M.FLOWER);
-    }
-    for (let i = 0; i < 4; i++) sp.put(8 + r() * 6, 1 + r() * 4, M.FLOWER); // embers
-    return Art.bake(sp, { [M.BODY]: [120, 118, 112], [M.TRUNK]: [92, 60, 38], [M.FLOWER]: [255, 140, 40], [M.GLINT]: [255, 225, 140] }, this.style, "dark") as Baked;
-  }
-  private magicStone(rune: number[]): Baked {
-    const sp = new Art.Sprite(12, 24), M = Art.M, rd = this.style.round;
-    sp.ellipse(6, 13, 4.5, 11, M.BODY, { round: rd });
-    sp.ellipse(5, 10, 2.5, 6, M.BODY2, { round: rd, onlyOn: new Set([M.BODY]), density: 0.5, seed: 4 });
-    for (const [x, y] of [[6, 5], [5, 6], [7, 6], [6, 9], [5, 11], [6, 11], [7, 11], [6, 14], [5, 16], [7, 17], [6, 19]]) sp.put(x, y, M.MAGIC);
-    return Art.bake(sp, { [M.BODY]: [104, 108, 118], [M.BODY2]: [78, 84, 96], [M.MAGIC]: rune }, this.style, "dark") as Baked;
   }
 
   private key = (j: ArtJob) => j.kind + ":" + j.id;
