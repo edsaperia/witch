@@ -25,6 +25,8 @@ export class AssetLibrary {
   readonly witch: Atlas;
   /** On foot (from frame 16): each pose's frames, towards and away. */
   readonly witchFoot: Record<string, { towards: number[]; away: number[]; fps: number }> = {};
+  /** In the treetops: the fast and brake poses' frames, towards and away. */
+  readonly witchFly: Record<string, { towards: number[]; away: number[]; fps: number }> = {};
   readonly stones: Atlas;
   /** Light-source props from the art module: campfire (frames 0-2), then magic stones (cyan, violet, green). */
   readonly props: Atlas;
@@ -54,7 +56,13 @@ export class AssetLibrary {
       for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < n; frame++) { entry[facing].push(sprites.length); sprites.push(wb({ pose, frame, facing })); }
       this.witchFoot[pose] = entry;
     }
-    this.witch = packAtlas(sprites, 1024);
+    // Treetop flight: fast (at boost: three frames) and brake (a skid: two frames), towards and away.
+    for (const [pose, n] of [["fast", 3], ["brake", 2]] as const) {
+      const entry = { towards: [] as number[], away: [] as number[], fps: pose === "fast" ? 10 : 8 };
+      for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < n; frame++) { entry[facing].push(sprites.length); sprites.push(wb({ pose, frame, facing })); }
+      this.witchFly[pose] = entry;
+    }
+    this.witch = packAtlas(sprites, 2048);
     this.stones = packAtlas([0, 1, 2, 3].map(i => this.stone(i)));
     const lp = Art.lightProps(style) as { campfire: Baked[]; stones: Record<string, Baked> };
     this.props = packAtlas([...lp.campfire, lp.stones.cyan, lp.stones.violet, lp.stones.green], 1024);

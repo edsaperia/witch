@@ -7,7 +7,9 @@
       "Bushes crowd along the edges of paths and tracks",
       "Streams wind through the forest, and join the wet areas",
       "Ruins, rocks and strange trees turn up here and there to discover",
-      "You start sitting on the terrace of the witch's treehouse, by the dancefloor; move or rise to take off"
+      "You start sitting on the terrace of the witch's treehouse, by the dancefloor; move or rise to take off",
+      "Speech bubbles are pixel outlines, and the emoji in them are bigger pixel art",
+      "Above the treetops she has momentum: hold a direction to build up to a boost (the camera draws back a little), swoop round in arcs, skid on a sharp turn, and glide when you let go. The ground stays snappy"
     ] },
     { "version": 117, "items": [
       "Removed the diagonal stripes across the forest (moonbeams are off; ?moonbeams=on brings them back)",

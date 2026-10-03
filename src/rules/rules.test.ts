@@ -280,7 +280,41 @@ describe("the witch", () => {
     let t = stepWitch(newWitch(200, 200), { ...NO_INTENT, toggleMode: true }, 1 / 60, TUNING, b);
     t = fly(t, 120);
     expect(t.mode).toBe("treetop");
-    expect(Math.hypot(t.vx, t.vz)).toBeCloseTo(TUNING.treetopSpeed, 1);
+    t = fly(t, 60 * (TUNING.treetop.boostTime + 1));
+    expect(Math.hypot(t.vx, t.vz)).toBeCloseTo(TUNING.treetopSpeed * TUNING.treetop.boost, 0); // held straight: full boost
+  });
+
+  describe("treetop momentum", () => {
+    const T = TUNING.treetop, up = (): ReturnType<typeof newWitch> => ({ ...newWitch(200, 200), lift: 1, mode: "treetop" });
+    const speed = (w: { vx: number; vz: number }) => Math.hypot(w.vx, w.vz);
+    it("reaches cruise in well under half a second, then builds to boost over boostTime holding straight", () => {
+      expect(speed(fly(up(), 24))).toBeGreaterThan(TUNING.treetopSpeed * 0.9);
+      const half = fly(up(), 60 * T.boostTime * 0.5), full = fly(up(), 60 * (T.boostTime + 0.5));
+      expect(half.boost!).toBeGreaterThan(0.4); expect(half.boost!).toBeLessThan(0.7);
+      expect(full.boost).toBe(1);
+      expect(speed(full)).toBeGreaterThan(TUNING.treetopSpeed * T.boost * 0.95);
+    });
+    it("turns gradually, in an arc, and a reversal bleeds the boost and brakes", () => {
+      const fast = fly(up(), 60 * (T.boostTime + 0.5));
+      const one = stepWitch(fast, { moveX: 0, moveZ: 1, toggleMode: false }, 1 / 60, TUNING, b);
+      const turned = (Math.atan2(one.vz, one.vx) * 180) / Math.PI;
+      expect(turned).toBeGreaterThan(0); expect(turned).toBeLessThan(T.turnRate / 60 + 0.5); // no snapping round
+      let back = fast;
+      for (let i = 0; i < 30; i++) back = stepWitch(back, { moveX: -1, moveZ: 0, toggleMode: false }, 1 / 60, TUNING, b);
+      expect(back.boost!).toBeLessThan(0.3);
+      expect(stepWitch(fast, { moveX: -1, moveZ: 0, toggleMode: false }, 1 / 60, TUNING, b).braking).toBe(true);
+    });
+    it("glides when let go, rather than stopping dead", () => {
+      const fast = fly(up(), 60);
+      const glide = fly(fast, 15, NO_INTENT), stopped = fly(fast, 60 * T.glideTime * 1.5, NO_INTENT);
+      expect(speed(glide)).toBeGreaterThan(speed(fast) * 0.3);
+      expect(speed(stopped)).toBeLessThan(speed(fast) * 0.05);
+    });
+    it("leaves the ground snappy: full ground speed in a tenth of a second or so, and a quick stop", () => {
+      expect(speed(fly(newWitch(200, 200), 8))).toBeGreaterThan(TUNING.groundSpeed * 0.9);
+      expect(speed(fly(fly(), 8, NO_INTENT))).toBeLessThan(TUNING.groundSpeed * 0.1);
+      expect(fly().boost ?? 0).toBe(0);
+    });
   });
 
   it("rises in riseTime and descends in descendTime: fast, but not instant", () => {

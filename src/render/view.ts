@@ -592,6 +592,12 @@ export class View {
     const climbing = w.mode === "rising" && w.lift < 0.9, dropping = w.mode === "descending" && w.lift > 0.1;
     let wf = climbing || dropping ? (climbing ? 8 : 12) + (w.away ? 2 : 0) + (Math.floor(time * 7) % 2)
       : w.lean ? 6 + (w.away ? 1 : 0) : (w.away ? 3 : 0) + (Math.floor(time * 4) % 3);
+    // Treetop momentum: skidding to brake on a sharp turn, and the fast pose at boost.
+    if (!climbing && !dropping) {
+      const Fl = this.assets.witchFly, sideF = w.away ? "away" : "towards";
+      if (w.braking) wf = Fl.brake[sideF][Math.floor(time * Fl.brake.fps) % Fl.brake[sideF].length];
+      else if ((w.boost ?? 0) > 0.7) wf = Fl.fast[sideF][Math.floor(time * Fl.fast.fps) % Fl.fast[sideF].length];
+    }
     // Talking or handling a sigil, she lands first (Ed, 2026-10-03): down to the ground, then the
     // talk, placeSigil or liftSigil pose, and back up into the air when she's done.
     const L = g.leash, F = this.assets.witchFoot, side = w.away ? "away" : "towards";

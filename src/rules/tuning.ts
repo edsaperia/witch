@@ -77,6 +77,8 @@ export interface Tuning {
   /** How mist, far haze and canopy dapple are drawn: smooth gradients, or dithered pixel steps. */
   fx: "smooth" | "pixel";
   moonbeams: number;
+  treetop: { boost: number; boostTime: number; boostAngle: number; turnRate: number; glideTime: number; sharpTurnBleed: number; cameraPull: number };
+  bubbles: { emojiPixels: number; scale: number };
   treehouse: { distance: number; angle: number; clear: number; lightReach: number; lightStrength: number };
   decor: { spacing: number; ruins: number; rocks: number; freak: number; clearing: number; pathGap: number };
   paths: { rails: number[]; roads: number[]; linkChance: number; deadEndChance: number; pathHalf: number; roadHalf: number; railHalf: number; railBroken: number; streams: number[]; streamHalf: number; treesOnBroken: number; edgeBushes: number; bushBoost: number };
