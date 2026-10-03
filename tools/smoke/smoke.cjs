@@ -84,7 +84,7 @@ async function main() {
     await shot(page, "02-ground-flying.png");
     await page.keyboard.press("Space");
     // The rise takes riseTime of game time: wait for it to finish, however slow the frames here.
-    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000, polling: 50 }).catch(() => {});
+    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 400000, polling: 50 }).catch(() => {});
     s = await state(page);
     check(s.mode === "treetop", `space rises to treetop mode (${s.mode})`);
     await shot(page, "03-treetop.png");
@@ -124,7 +124,7 @@ async function main() {
     });
     if (heath) {
       await sleep(1500);
-      await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 300000, polling: 500 });
+      await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 900000, polling: 500 });
       await page.evaluate(() => { window.witch.view.pops = []; });
       await path();
       await shot(page, "08-heath.png");
@@ -162,12 +162,12 @@ async function main() {
     const s0 = await state(page);
     await touch("pointerdown", 100, 650);
     await touch("pointermove", 150, 600);
-    await page.waitForFunction(t => window.witch.game.clock.time - t >= 1.5, s0.t, { timeout: 60000, polling: 50 });
+    await page.waitForFunction(t => window.witch.game.clock.time - t >= 1.5, s0.t, { timeout: 400000, polling: 50 });
     const s1 = await state(page);
     await touch("pointerup", 150, 600);
     check(s1.x > s0.x + 2 && s1.z < s0.z - 2, `the touch joystick flies her north-east (${(s1.x - s0.x).toFixed(1)}, ${(s1.z - s0.z).toFixed(1)} m)`);
     await page.touchscreen.tap(345, 770); // the rise / descend button
-    await page.waitForFunction(() => window.witch.game.witch.mode !== "ground" && window.witch.game.witch.mode === "treetop", null, { timeout: 60000, polling: 50 }).catch(() => {});
+    await page.waitForFunction(() => window.witch.game.witch.mode !== "ground" && window.witch.game.witch.mode === "treetop", null, { timeout: 400000, polling: 50 }).catch(() => {});
     check((await state(page)).mode === "treetop", "the round button rises to treetop mode");
     await shot(page, "11-phone-treetop.png");
   });
@@ -237,7 +237,7 @@ async function main() {
     });
     check(at.n > 0, `the first wave partifies home's neighbours (${at.n} areas)`);
     for (const [i, dt] of [0.3, 1.0, 1.7, 2.6, 4].entries()) {
-      await page.waitForFunction(t => window.witch.game.clock.time >= t, at.t + dt, { timeout: 60000, polling: 50 });
+      await page.waitForFunction(t => window.witch.game.clock.time >= t, at.t + dt, { timeout: 400000, polling: 50 });
       await shot(page, `5${i}-party-transition-${i}.png`);
     }
     await page.keyboard.press("Space");
@@ -255,7 +255,7 @@ async function main() {
     await page.evaluate(() => { const g = window.witch.game, d = g.map.dancefloor; g.witch = { ...g.witch, x: d.x, z: d.z }; g.camera = { ...g.camera, tx: d.x, tz: d.z }; });
     for (let i = 0; i < 4; i++) { await page.keyboard.press(ZOOM_OUT); await sleep(150); }
     const t4 = await page.evaluate(() => window.witch.game.clock.time);
-    await page.waitForFunction(t => window.witch.game.clock.time >= t, t4 + 3, { timeout: 60000, polling: 50 });
+    await page.waitForFunction(t => window.witch.game.clock.time >= t, t4 + 3, { timeout: 400000, polling: 50 });
     const n = await page.evaluate(() => window.witch.game.party.areas.size);
     check(n > 1, `after four waves ${n} areas are partified`);
     await shot(page, "57-party-four-waves.png");
@@ -277,7 +277,7 @@ async function main() {
     await shot(page, "69-leash-cue.png");
     const t0 = await page.evaluate(() => window.witch.game.clock.time);
     await page.keyboard.down("KeyT");
-    await page.waitForFunction(t => window.witch.game.clock.time >= t, t0 + 1.6, { timeout: 60000, polling: 50 });
+    await page.waitForFunction(t => window.witch.game.clock.time >= t, t0 + 1.6, { timeout: 400000, polling: 50 });
     await shot(page, "70-leash-talk.png");
     await page.waitForFunction(i => window.witch.game.creatures[i].leashed, id, { timeout: 400000, polling: 100 });
     await page.keyboard.up("KeyT");

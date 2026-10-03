@@ -22,14 +22,19 @@ export interface AreaType {
   /** The floor's colour, [hue, saturation, value], for the ground before its tile is drawn. */
   floor: [number, number, number];
   treeDensity: number;
+  /** How its vegetation is arranged (art/areas.js AREA_LAYOUTS): pattern, density, clump, undergrowth... */
+  layout: AreaLayout;
 }
 
-interface ArtArea { id: string; name: string; creature: string; text: AreaType["text"]; floor: [string, number, number, number]; wall?: unknown[]; set?: unknown }
+export interface AreaLayout { pattern: string; along?: number | string; density: number; clump: number; undergrowth: number; lean?: { dir: number; amount: number } }
+
+interface ArtArea { id: string; name: string; creature: string; text: AreaType["text"]; floor: [string, number, number, number]; wall?: unknown[]; set?: unknown; layout?: AreaLayout }
 const settings = (rawTypes as { types: Record<string, { treeDensity: number }> }).types;
 export const AREA_TYPES: readonly AreaType[] = (AREAS as unknown as ArtArea[]).map(a => ({
   id: a.id, name: a.name, creature: a.creature, text: a.text,
   setPiece: a.set ? a.text.set ?? "a set piece" : "", hasWalls: !!a.wall?.length,
   floor: [a.floor[1], a.floor[2], a.floor[3]], treeDensity: settings[a.id]?.treeDensity ?? 1,
+  layout: a.layout ?? { pattern: "scatter", density: 0.6, clump: 0.3, undergrowth: 0.5 },
 }));
 
 export interface AreaSample {
@@ -69,6 +74,8 @@ export interface ForestMap {
   siteOf(cx: number, cy: number): { x: number; z: number };
   /** The chance a tree grows at a point: 0 in a clearing, rising smoothly to treeDensity. */
   treeWeight(x: number, z: number): number;
+  /** Ground that must stay clear of every tree: the dancefloor's clearing and set pieces'. */
+  hardClear(x: number, z: number): boolean;
   /** Pairs of areas that touch, as "cx,cy|cx,cy" keys, for tests and the debug view. */
   readonly neighbours: ReadonlyMap<string, ReadonlySet<string>>;
 }
@@ -165,17 +172,20 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   };
   // The dancefloor keeps a clearing of its own, however close a neighbouring area's centre.
   const floorR = tuning.dancefloor.radius, floorClear = floorR + tuning.dancefloor.clearing;
-  const treeWeight = (x: number, z: number) => {
-    if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return 0;
-    const [u, v] = toPart(x, z), cell = partition.partition(u, v);
+  const hardCell = (x: number, z: number, cell: Cell) => {
+    if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return true;
     // A set piece keeps a clearing round it, sized with it.
-    if (setPieceOf(cell[0], cell[1])) {
-      const p = siteOf(cell[0], cell[1]);
-      if (Math.hypot(x - p.x, z - (p.z - 4)) < tuning.setPieceClear * tuning.setPieceScale) return 0;
-    }
-    // Trees thin gradually toward the centre: a long smooth falloff over clearingFalloff.
-    const glade = 1 - smoothstep((vnoise(x / tuning.gladeScale, z / tuning.gladeScale, seed + 61) - (1 - tuning.gladeAmount)) / 0.03);
-    return smoothstep((partition.openness(u, v) - tuning.clearingSize) / Math.max(0.01, tuning.clearingFalloff)) * tuning.treeDensity * glade;
+    if (!setPieceOf(cell[0], cell[1])) return false;
+    const p = siteOf(cell[0], cell[1]);
+    return Math.hypot(x - p.x, z - (p.z - 4)) < tuning.setPieceClear * tuning.setPieceScale;
+  };
+  const hardClear = (x: number, z: number) => { const [u, v] = toPart(x, z); return hardCell(x, z, partition.partition(u, v)); };
+  const treeWeight = (x: number, z: number) => {
+    const [u, v] = toPart(x, z);
+    if (hardCell(x, z, partition.partition(u, v))) return 0;
+    // Clearings round area centres and random glades, each with a soft edge (Ed: no hard rings).
+    const glade = 1 - smoothstep((vnoise(x / tuning.gladeScale, z / tuning.gladeScale, seed + 61) - (1 - tuning.gladeAmount)) / 0.12);
+    return smoothstep((partition.openness(u, v) - tuning.clearingSize) / Math.max(0.01, tuning.clearingFalloff)) * glade;
   };
 
   const remoteness = (cx: number, cy: number) => Math.min(1, Math.hypot(cx - centreCell[0], cy - centreCell[1]) / (n / 2));
@@ -186,6 +196,6 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     start: { x: centre.x, z: centre.z + 2 },
     bounds: { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad },
     extent: { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A },
-    typeOf, areaAt, siteOf, treeWeight, neighbours, setPieceOf, remoteness,
+    typeOf, areaAt, siteOf, treeWeight, hardClear, neighbours, setPieceOf, remoteness,
   };
 }

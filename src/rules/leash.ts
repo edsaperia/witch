@@ -31,6 +31,10 @@ export interface LeashState {
   /** Sigils on the ground. */
   placed: PlacedSigil[];
   talk: Talk | null;
+  /** Talk progress per creature (seconds): it fills while she talks to that creature and, once
+   *  she stops, drains at invite.decayRate of the fill rate until it's gone (Ed, 2026-10-03), so
+   *  coming back picks up where the chat left off. */
+  progress: Map<number, number>;
   /** What happened in the latest step, for the view (sounds, fizzles, draw-ons). */
   events: LeashEvent[];
   /** Talk is held this step, and whether she's off the ground (so the view can say "land to talk"). */
@@ -47,7 +51,7 @@ export interface LeashControls {
   inviteNearest?: boolean;
 }
 
-export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, events: [], held: false, heldInAir: false });
+export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, progress: new Map(), events: [], held: false, heldInAir: false });
 
 /** Seconds of talk a creature needs: babies 3, young 6, adults 12; legends can't be invited. */
 export const talkTime = (c: Creature, t: Tuning): number => t.invite.talkTime[Math.min(c.level, t.invite.talkTime.length - 1)];
@@ -96,20 +100,28 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     const cur = s.talk ? byId(s.talk.id) : null;
     if (cur && !cur.leashed && Math.hypot(cur.x - witch.x, cur.z - witch.z) <= T.cancelDistance) {
       s.talk!.t += dt;
+      s.progress.set(cur.id, s.talk!.t);
       // It stops to chat, and faces her.
       cur.rest = Math.max(cur.rest, 0.2); cur.moving = false;
       cur.facing = witch.x >= cur.x ? 1 : -1;
       cur.away = witch.z < cur.z - 1;
-      if (!s.talk!.refused && s.talk!.t >= s.talk!.total) { invite(s, cur, cur.x, cur.z, time); s.talk = null; }
+      if (!s.talk!.refused && s.talk!.t >= s.talk!.total) { invite(s, cur, cur.x, cur.z, time); s.progress.delete(cur.id); s.talk = null; }
     } else {
       if (s.talk) s.events.push({ kind: "cancelled", id: s.talk.id, x: witch.x, z: witch.z, at: time });
       // The nearest invitable creature in range; failing that, a legend (who won't come).
       const n = nearest(creatures, witch.x, witch.z, T.talkRange) ?? nearest(creatures, witch.x, witch.z, T.talkRange, true);
-      s.talk = n ? { id: n.id, refused: !invitable(n), t: 0, total: invitable(n) ? talkTime(n, t) : Infinity } : null;
+      s.talk = n ? { id: n.id, refused: !invitable(n), t: s.progress.get(n.id) ?? 0, total: invitable(n) ? talkTime(n, t) : Infinity } : null;
     }
   } else if (s.talk) {
     s.events.push({ kind: "cancelled", id: s.talk.id, x: witch.x, z: witch.z, at: time });
     s.talk = null;
+  }
+
+  // Every chat she isn't in right now drains, at decayRate of the fill rate, until it's gone.
+  for (const [id, p] of s.progress) {
+    if (s.talk?.id === id) continue;
+    const left = p - dt * T.decayRate;
+    if (left <= 0 || creatures[id].leashed) s.progress.delete(id); else s.progress.set(id, left);
   }
 
   if (c.inviteNearest) {

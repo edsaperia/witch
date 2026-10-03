@@ -21,6 +21,8 @@ import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
 import { Lasers } from "./lasers";
 import { BorderView } from "./borders";
+import { MusicIndicator } from "./indicator";
+import { Rulers } from "./rulers";
 import { Mist } from "./mist";
 import { ShadowBatch, type ShadowInstance } from "./shadows";
 import { lerp } from "../rules/random";
@@ -59,6 +61,11 @@ export class View {
   private leashView: LeashView;
   private lasers: Lasers;
   private borders: BorderView;
+  private music = new MusicIndicator(document.body);
+  /** Metre rulers and a ground grid (G). */
+  readonly rulers = new Rulers(document.body);
+  /** Show debug readouts (the debug overlay is on). */
+  debugReadouts = false;
   private soundBatch: SpriteBatch;
   private sources: LightSource[] = [];
   /** Lights in the forest besides the witch's glow, from the light sources (set by the view). */
@@ -302,6 +309,11 @@ export class View {
     tr.now = new Set();
   }
 
+  /** On foot: 0 flying, 1 landed (eased), and the sigil pose she's playing, if any. */
+  private foot = 0;
+  private footTime = 0;
+  private footAct: { pose: string; at: number } | null = null;
+
   private lastPose = { distance: 0, angle: 0, zoomStep: -1, lift: -1 };
 
   /** Rebuild the batches for what the camera sees, once it has moved, turned or zoomed. */
@@ -516,6 +528,19 @@ export class View {
     this.soundBatch.set(party.items);
     this.ground.setSweeps(party.sweeps);
     this.lasers.update(time, party.playing, w.x, w.z);
+    // The canopy uplight over the nearest partified areas, fading in with each one's transition.
+    {
+      const U = SPRITE_UNIFORMS, P = t.party, list = [...g.party.areas.values()].map(a => ({ a, s: g.map.siteOf(a.cell[0], a.cell[1]) }))
+        .sort((p, q) => Math.hypot(p.s.x - w.x, p.s.z - w.z) - Math.hypot(q.s.x - w.x, q.s.z - w.z)).slice(0, 16);
+      list.forEach(({ a, s }, i) => {
+        const fade = a.wave === 0 ? 1 : Math.min(1, Math.max(0, (time - a.at) / Math.max(0.01, P.transition)));
+        U.uParty.value[i].set(s.x, s.z, g.map.areaSize * 0.85, fade);
+        const c = sigilColour(AREA_TYPES[g.map.typeOf(a.cell[0], a.cell[1])].creature);
+        U.uPartyCol.value[i].set(c[0] / 255, c[1] / 255, c[2] / 255);
+      });
+      U.uPartyCount.value = list.length;
+      U.uUplight.value.set(P.uplight.strength, P.uplight.pulse, P.uplight.edge, (time * t.beat.bpm / 60) * Math.PI * 2);
+    }
     this.strings.update();
     this.borders.update();
     this.setLights([this.dancefloor.update(time, this.ground), ...party.lights, ...this.forestLights], w.x, w.z);
@@ -526,14 +551,32 @@ export class View {
     // Climbing to the treetops or dropping to the ground: the rise or descend pose, fluttering
     // between its two frames, until the move is about 90% done.
     const climbing = w.mode === "rising" && w.lift < 0.9, dropping = w.mode === "descending" && w.lift > 0.1;
-    const wf = climbing || dropping ? (climbing ? 8 : 12) + (w.away ? 2 : 0) + (Math.floor(time * 7) % 2)
+    let wf = climbing || dropping ? (climbing ? 8 : 12) + (w.away ? 2 : 0) + (Math.floor(time * 7) % 2)
       : w.lean ? 6 + (w.away ? 1 : 0) : (w.away ? 3 : 0) + (Math.floor(time * 4) % 3);
-    const wframe = this.assets.witch.frames[wf], hatTop = h + bob - 0.4 + wframe.h * this.mpp;
-    this.witchBatch.set([{ x: w.x, y: h + bob - 0.4, z: w.z, frame: wframe, flip: w.facing < 0 }]);
+    // Talking or handling a sigil, she lands first (Ed, 2026-10-03): down to the ground, then the
+    // talk, placeSigil or liftSigil pose, and back up into the air when she's done.
+    const L = g.leash, F = this.assets.witchFoot, side = w.away ? "away" : "towards";
+    for (const e of L.events) if (e.kind === "placed" || e.kind === "fizzled") this.footAct = { pose: "placeSigil", at: time }; else if (e.kind === "picked") this.footAct = { pose: "liftSigil", at: time };
+    const actLen = this.footAct ? F[this.footAct.pose].towards.length / F[this.footAct.pose].fps : 0;
+    const acting = !!this.footAct && time - this.footAct.at < actLen + 0.3;
+    const wantFoot = w.mode === "ground" && (!!L.talk || L.held || acting) ? 1 : 0;
+    const fdt = Math.min(0.1, Math.max(0, time - this.footTime)), prevFoot = this.foot;
+    this.footTime = time;
+    this.foot += (wantFoot - this.foot) * Math.min(1, fdt * 8);
+    if (Math.abs(wantFoot - this.foot) < 0.01) this.foot = wantFoot;
+    const pick = (pose: string, k: number) => { const fr = F[pose][side]; return fr[Math.max(0, Math.min(fr.length - 1, k))]; };
+    if (this.foot > 0.6) {
+      if (acting && this.footAct) wf = pick(this.footAct.pose, Math.floor((time - this.footAct.at) * F[this.footAct.pose].fps));
+      else if (L.talk) wf = pick("talk", Math.floor(time * F.talk.fps) % F.talk[side].length);
+      else wf = pick("stand", Math.floor(time * F.stand.fps) % F.stand[side].length);
+    } else if (this.foot > 0.02) wf = this.foot >= prevFoot ? pick("land", Math.floor(this.foot * 3)) : pick("takeoff", Math.floor((1 - this.foot) * 3));
+    const footEase = this.foot * this.foot * (3 - 2 * this.foot), wy = (h + bob - 0.4) * (1 - footEase);
+    const wframe = this.assets.witch.frames[wf], hatTop = wy + wframe.h * this.mpp;
+    this.witchBatch.set([{ x: w.x, y: wy, z: w.z, frame: wframe, flip: w.facing < 0 }]);
     // Where she is on screen (low-res pixels) and how far from the camera, for the occluder fade.
     {
       const px = (x: number, y: number, z: number) => { const p = this.v3.set(x, y, z).project(this.camera); return [(p.x + 1) / 2 * this.width, (p.y + 1) / 2 * this.height]; };
-      const base = px(w.x, h + bob - 0.4, w.z), top = px(w.x, hatTop, w.z), side = px(w.x + wframe.w * this.mpp / 2, h + bob - 0.4, w.z);
+      const base = px(w.x, wy, w.z), top = px(w.x, hatTop, w.z), side = px(w.x + wframe.w * this.mpp / 2, wy, w.z);
       SPRITE_UNIFORMS.uWitch.value.set((base[0] + top[0]) / 2, (base[1] + top[1]) / 2, Math.abs(side[0] - base[0]) + 1, Math.abs(top[1] - base[1]) / 2 + 1);
       SPRITE_UNIFORMS.uWitchDepth.value = -this.v3.set(w.x, h, w.z).applyMatrix4(this.camera.matrixWorldInverse).z;
     }
@@ -543,6 +586,9 @@ export class View {
     this.refresh();
     this.drawCreatures(time);
     this.checkPops("moving");
+    this.rulers.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, w.x, w.z);
+    const df = g.map.dancefloor;
+    this.music.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, df.x, df.z, w.x, w.z, time, t.beat.bpm, this.debugReadouts);
     this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
     this.assets.work(6);
     // The ground's area tiles: everything the cameras can see, plus a band ahead.

@@ -69,14 +69,14 @@ void main() {
 
 const MOTE_VERT = /* glsl */ `
 attribute vec4 aMote; // phase, rise speed, drift, time it appears
-uniform float uTime;
+uniform float uTime, uRise;
 varying vec3 vWorld;
 varying float vA;
 void main() {
-  float t = uTime + aMote.x * 20.0, y = mod(t * aMote.y, 7.0);
+  float t = uTime + aMote.x * 20.0, y = mod(t * aMote.y + aMote.x * uRise, uRise), k = y / uRise;
   vec3 p = position + vec3(sin(t * 0.7 + aMote.x * 9.0) * aMote.z, y, cos(t * 0.5 + aMote.x * 5.0) * aMote.z);
   vWorld = p;
-  vA = (uTime >= aMote.w ? 1.0 : 0.0) * smoothstep(0.0, 1.0, y) * (1.0 - smoothstep(5.0, 7.0, y));
+  vA = (uTime >= aMote.w ? 1.0 : 0.0) * smoothstep(0.0, 0.15, k) * (1.0 - smoothstep(0.7, 1.0, k));
   vec4 mv = viewMatrix * vec4(p, 1.0);
   gl_Position = projectionMatrix * mv;
   gl_PointSize = vA > 0.3 ? 1.0 : 0.0;
@@ -107,11 +107,11 @@ export class StringLightsView {
     const shared = { ...LIGHT_UNIFORMS, uWind: { value: game.tuning.canopyShadow.wind * 1.5 } };
     this.bulbMat = new THREE.ShaderMaterial({ vertexShader: BULB_VERT, fragmentShader: BULB_FRAG, uniforms: { ...shared, uRes: SPRITE_UNIFORMS.uRes, uNear: { value: 240 }, uTwinkle: { value: L.twinkle }, uChase: { value: L.chaseSpeed } } });
     this.wireMat = new THREE.ShaderMaterial({ vertexShader: WIRE_VERT, fragmentShader: WIRE_FRAG, uniforms: shared });
-    this.moteMat = new THREE.ShaderMaterial({ vertexShader: MOTE_VERT, fragmentShader: MOTE_FRAG, uniforms: { ...LIGHT_UNIFORMS, uMoteColour: { value: new THREE.Color(1, 0.85, 1) } } });
+    this.moteMat = new THREE.ShaderMaterial({ vertexShader: MOTE_VERT, fragmentShader: MOTE_FRAG, uniforms: { ...LIGHT_UNIFORMS, uMoteColour: { value: new THREE.Color(1, 0.85, 1) }, uRise: { value: game.tuning.party.motes.to - game.tuning.party.motes.from } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
   }
 
   /** The lines of one area, and when each bulb switches on (as the party's front passes it). */
-  private build(lines: StringLine[], on: (x: number, z: number) => number, centre: { x: number; z: number }, seed: number): THREE.Group {
+  private build(lines: StringLine[], on: (x: number, z: number) => number, centre: { x: number; z: number }, seed: number, cell: readonly [number, number]): THREE.Group {
     const L = this.game.tuning.stringLights, h = L.height, bulbs: number[] = [], cols: number[] = [], data: number[] = [], wire: number[] = [], sway: number[] = [];
     lines.forEach((l, li) => {
       const len = Math.hypot(l.bx - l.ax, l.bz - l.az), n = Math.max(2, Math.round(len / L.bulbSpacing));
@@ -135,12 +135,17 @@ export class StringLightsView {
     wg.setAttribute("position", new THREE.Float32BufferAttribute(wire, 3));
     wg.setAttribute("aSway", new THREE.Float32BufferAttribute(sway, 1));
     g.add(new THREE.LineSegments(wg, this.wireMat), new THREE.Points(bg, this.bulbMat));
-    // Motes round the area's soundsystem (or the dancefloor at home).
-    const mp: number[] = [], md: number[] = [];
-    for (let i = 0; i < 48; i++) {
+    // Party motes, sparse over the whole area (Ed, 2026-10-03), rising from just under the crowns
+    // to above them: from the treetops a partified area isn't plain dark forest. They come on as
+    // the party's front passes.
+    const M = this.game.tuning.party.motes, map = this.game.map, mp: number[] = [], md: number[] = [];
+    const R = map.areaSize * 1.1, n = Math.round(((Math.PI * R * R) / 400) * M.perPatch);
+    for (let i = 0; i < n; i++) {
       const h = (k: number) => { const v = Math.sin(seed * 12.9898 + i * 78.233 + k * 37.719) * 43758.5453; return v - Math.floor(v); };
-      const a = h(1) * Math.PI * 2, d = 2 + h(2) * 14, x = centre.x + Math.cos(a) * d, z = centre.z + Math.sin(a) * d;
-      mp.push(x, 0.3, z); md.push(h(3), 0.4 + h(4) * 0.6, 0.3 + h(5) * 0.8, on(x, z));
+      const a = h(1) * Math.PI * 2, d = Math.sqrt(h(2)) * R, x = centre.x + Math.cos(a) * d, z = centre.z + Math.sin(a) * d;
+      const c = map.areaAt(x, z).cell;
+      if (c[0] !== cell[0] || c[1] !== cell[1]) continue;
+      mp.push(x, M.from, z); md.push(h(3), M.speed * (0.6 + h(4) * 0.8), 0.3 + h(5) * 0.8, on(x, z));
     }
     const mg = new THREE.BufferGeometry();
     mg.setAttribute("position", new THREE.Float32BufferAttribute(mp, 3));
@@ -169,8 +174,7 @@ export class StringLightsView {
         const reach = from ? Math.hypot(site.x - ox, site.z - oz) * 1.6 : 1;
         const T = g.tuning.party.transition;
         const on = (x: number, z: number) => (a.wave === 0 ? -1 : a.at + Math.min(1, Math.hypot(x - ox, z - oz) / reach) * T);
-        const centre = a.soundsystem ?? (a.wave === 0 ? g.map.dancefloor : site);
-        b = { lines, group: this.build(lines, on, centre, a.cell[0] * 131 + a.cell[1] * 17 + g.seed), on: a.wave === 0 ? -1 : a.at };
+        b = { lines, group: this.build(lines, on, site, a.cell[0] * 131 + a.cell[1] * 17 + g.seed, a.cell), on: a.wave === 0 ? -1 : a.at };
         this.scene.add(b.group);
         this.built.set(k, b);
       }

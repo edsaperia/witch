@@ -21,6 +21,8 @@ export class AssetLibrary {
   private workers: { w: Worker; busy: boolean; job?: ArtJob }[] = [];
   private useWorkers: boolean;
   readonly witch: Atlas;
+  /** On foot (from frame 16): each pose's frames, towards and away. */
+  readonly witchFoot: Record<string, { towards: number[]; away: number[]; fps: number }> = {};
   readonly stones: Atlas;
   /** Light-source props from the art module: campfire (frames 0-2), then magic stones (cyan, violet, green). */
   readonly props: Atlas;
@@ -38,8 +40,16 @@ export class AssetLibrary {
     // The witch: hover frames 0-2 towards, 3-5 away, then leaning towards (6) and away (7); then
     // rising (8-9 towards, 10-11 away) and descending (12-13 towards, 14-15 away), two frames each.
     const wc = Art.witchColours(style), wb = (o: object) => Art.bake(Art.witchSprite(style, o), wc, style, style.cOutline) as Baked;
-    this.witch = packAtlas([0, 1, 2].map(frame => wb({ frame })).concat([0, 1, 2].map(frame => wb({ frame, facing: "away" })), [wb({ lean: true }), wb({ lean: true, facing: "away" })],
-      ...["rise", "descend"].flatMap(pose => ["towards", "away"].flatMap(facing => [0, 1].map(frame => wb({ pose, frame, facing }))))), 1024);
+    const sprites = [0, 1, 2].map(frame => wb({ frame })).concat([0, 1, 2].map(frame => wb({ frame, facing: "away" })), [wb({ lean: true }), wb({ lean: true, facing: "away" })],
+      ...["rise", "descend"].flatMap(pose => ["towards", "away"].flatMap(facing => [0, 1].map(frame => wb({ pose, frame, facing })))));
+    // On foot, from 16: standing, landing, taking off, talking, putting a sigil down, lifting one.
+    const FOOT = Art.WITCH_FOOT_POSES as Record<string, { frames: number; fps: number }>;
+    for (const pose of ["stand", "land", "takeoff", "talk", "placeSigil", "liftSigil"]) {
+      const n = FOOT[pose].frames, entry = { towards: [] as number[], away: [] as number[], fps: FOOT[pose].fps };
+      for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < n; frame++) { entry[facing].push(sprites.length); sprites.push(wb({ pose, frame, facing })); }
+      this.witchFoot[pose] = entry;
+    }
+    this.witch = packAtlas(sprites, 1024);
     this.stones = packAtlas([0, 1, 2, 3].map(i => this.stone(i)));
     const lp = Art.lightProps(style) as { campfire: Baked[]; stones: Record<string, Baked> };
     this.props = packAtlas([...lp.campfire, lp.stones.cyan, lp.stones.violet, lp.stones.green], 1024);

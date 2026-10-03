@@ -19,11 +19,17 @@ export const SPRITE_UNIFORMS = {
   // The low-resolution picture's size in pixels: each sprite's base is snapped to its pixel grid.
   uRes: { value: new THREE.Vector2(1, 1) },
   // The witch on screen (pixels: centre x, y, half width, half height) and her distance from the
-  // camera, so whatever stands in front of her can fade; uOcc: fade opacity, soft edge (px),
+  // camera, so whatever stands in front of her can fade; uOcc: fade opacity, soft edge (share of her size),
   // the height (m) above which a thing counts as tall, on (1) or off (0).
   uWitch: { value: new THREE.Vector4(0, 0, 0, 0) },
   uWitchDepth: { value: 0 },
   uOcc: { value: new THREE.Vector4(0.38, 6, 2.5, 1) },
+  // The party's canopy uplight: the nearest partified areas (centre x, z, reach, fade-in) and their
+  // colours; uUplight: strength, pulse, edge (m), the beat's phase (radians).
+  uParty: { value: Array.from({ length: 16 }, () => new THREE.Vector4()) },
+  uPartyCol: { value: Array.from({ length: 16 }, () => new THREE.Vector3()) },
+  uPartyCount: { value: 0 },
+  uUplight: { value: new THREE.Vector4() },
 };
 
 const VERT = /* glsl */ `
@@ -64,6 +70,10 @@ uniform vec4 uCutout;
 uniform float uDebugCull, uIsScenery;
 uniform vec4 uWitch, uOcc, uSilhouette;
 uniform float uFadePass;
+uniform vec4 uParty[16];
+uniform vec3 uPartyCol[16];
+uniform int uPartyCount;
+uniform vec4 uUplight;
 varying vec2 vUv;
 varying vec3 vWorld;
 varying vec3 vFlags;
@@ -83,8 +93,9 @@ void shade() {
   if (uSilhouette.a > 0.0) { gl_FragColor = vec4(uSilhouette.rgb, uSilhouette.a); return; }
   // Things standing in front of the witch fade (smoothly) where they cover her: left out of the
   // opaque pass there and drawn in a second, see-through pass after her.
-  vec2 o = abs(gl_FragCoord.xy - uWitch.xy) - uWitch.zw;
-  float occl = uOcc.w * vFront * (1.0 - smoothstep(0.0, uOcc.y, max(o.x, o.y)));
+  // A soft oval round her (no hard window): fully faded inside, easing out over uOcc.y of its size.
+  float e = length((gl_FragCoord.xy - uWitch.xy) / max(uWitch.zw * 1.2, vec2(1.0)));
+  float occl = uOcc.w * vFront * (1.0 - smoothstep(1.0, 1.0 + uOcc.y, e));
   if (uFadePass > 0.5 ? occl <= 0.001 : occl > 0.001) discard;
   float alpha = uFadePass > 0.5 ? mix(1.0, uOcc.x, occl) : 1.0;
   if (vFlags.y > 0.5) {
@@ -101,7 +112,21 @@ void shade() {
   float nx = (n.r * 255.0 - 128.0) / 127.0, ny = (n.g * 255.0 - 128.0) / 127.0, nz = n.b;
   if (vFlags.x > 0.5) nx = -nx;
   vec3 N = normalize(uRight * nx - uUp * ny + uFacing * nz);
-  gl_FragColor = vec4(haze(min(vec3(1.0), a.rgb * nightLight(N, vWorld) * 1.25), vWorld), alpha);
+  vec3 col = min(vec3(1.0), a.rgb * nightLight(N, vWorld) * 1.25);
+  if (vFlags.y > 0.5 && uPartyCount > 0) {
+    // Crowns over a party catch a faint glow from below, on their undersides and lower edges.
+    vec3 up = vec3(0.0);
+    for (int i = 0; i < 16; i++) {
+      if (i >= uPartyCount) break;
+      float d = length(vWorld.xz - uParty[i].xy), r = uParty[i].z;
+      if (d > r) continue;
+      float k = (0.35 + 0.65 * (1.0 - smoothstep(0.0, r * 0.5, d))) * (1.0 - smoothstep(r - uUplight.z, r, d)) * uParty[i].w;
+      up = max(up, uPartyCol[i] * k);
+    }
+    float under = clamp(0.45 - N.y * 0.75, 0.0, 1.0);
+    col += up * uUplight.x * (1.0 + uUplight.y * sin(uUplight.w)) * under;
+  }
+  gl_FragColor = vec4(haze(min(vec3(1.0), col), vWorld), alpha);
 }
 void main() {
   shade();

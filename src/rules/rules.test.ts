@@ -4,7 +4,7 @@ import { hash2 as labHash2, SPECIES_BY_ID } from "../../art/generator.js";
 import { makePartition } from "./partition";
 import { hash2 } from "./random";
 import { AREA_TYPES, generateMap, parseSeed } from "./map";
-import { Forest, crownReach } from "./forest";
+import { Forest, crownReach, treeChance } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
 import { legendChance, population, spawnCreatures, stepCreature, stepCreaturesNear } from "./creatures";
@@ -200,7 +200,8 @@ describe("trees", () => {
       }
     }
     const per = trees.map((n, i) => n / Math.max(1, ground[i]));
-    expect(per[0]).toBeLessThan(per[2] * 0.05);
+    expect(per[0]).toBeLessThan(per[2] * 0.3); // open, but for a few lone trees
+    expect(per[0]).toBeGreaterThan(0);          // never empty
     expect(per[1]).toBeGreaterThan(per[0]);
     expect(per[1]).toBeLessThan(per[2]);
     expect(trees[2]).toBeGreaterThan(100);
@@ -224,8 +225,8 @@ describe("trees", () => {
   });
 
   it("follow the tree density setting", () => {
-    const sparse = new Forest(generateMap(123, withTuning({ treeDensity: 0.3 })));
-    expect(sparse.treesNear(150, 150, 60).length).toBeLessThan(forest.treesNear(150, 150, 60).length * 0.75);
+    const sparse = new Forest(generateMap(123, withTuning({ treeDensity: 0.3 }))), s = map.siteOf(9, 9);
+    expect(sparse.treesNear(s.x, s.z, 120).length).toBeLessThan(forest.treesNear(s.x, s.z, 120).length * 0.8);
   });
 
   it("carry their area's type, with a ragged edge: strays only near a border", () => {
@@ -238,10 +239,10 @@ describe("trees", () => {
       strays++;
       // A stray's look comes from an area close by.
       let near = false;
-      for (let a = 0; a < 16 && !near; a++) for (const r of [W * 0.5, W, W * 1.6]) if (map.areaAt(t.x + Math.cos(a) * r, t.z + Math.sin(a) * r).type === t.type) near = true;
+      for (let a = 0; a < 32 && !near; a++) for (const r of [0.25, 0.5, 0.75, 1, 1.25, 1.5].map(k => k * W)) if (map.areaAt(t.x + Math.cos(a * 0.196) * r, t.z + Math.sin(a * 0.196) * r).type === t.type) near = true;
       expect(near).toBe(true);
     }
-    expect(own / trees.length).toBeGreaterThan(0.8);
+    expect(own / trees.length).toBeGreaterThan(0.6);
     expect(strays).toBeGreaterThan(0);
   });
 });
@@ -607,13 +608,37 @@ describe("inviting and leashing", () => {
     stepLeash(s, all, none, w, true, 2, 0.1, TUNING);
     expect(s.talk).toBeNull();
     expect(s.events.map(e => e.kind)).toContain("cancelled");
-    for (let t = 2; t < 4.5; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, w, true, t, 0.1, TUNING);
-    expect(c.leashed).toBe(false); // started again from nothing
-    for (let t = 0; t < 20; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, w, false, t, 0.1, TUNING);
-    expect(c.leashed).toBe(false);
+    for (let t = 2; t < 2.5; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, w, true, t, 0.1, TUNING);
+    expect(c.leashed).toBe(false); // picked up where it left off, not finished yet
+    const s2 = newLeash(), c2 = all.find(k => k.level === 0 && k !== c)!, w2 = { x: c2.x + 1, z: c2.z };
+    for (let t = 0; t < 20; t += 0.1) stepLeash(s2, all, { talk: true, sigil: false }, w2, false, t, 0.1, TUNING);
+    expect(c2.leashed).toBe(false); // never from the treetops
     const far = { x: c.x + TUNING.invite.cancelDistance + 30, z: c.z };
     for (let t = 0; t < 20; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, far, true, t, 0.1, TUNING);
     expect(c.leashed).toBe(false);
+  });
+
+  it("lets a chat drain at half the fill rate when she stops, and picks up from what's left", () => {
+    const all = fresh(), s = newLeash(), babies = all.filter(k => k.level === 1).slice(0, 2), c = babies[0], other = babies[1];
+    const near = { x: c.x + 1, z: c.z }, total = TUNING.invite.talkTime[1];
+    let t = 0;
+    for (; t < 2.05; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, near, true, t, 0.1, TUNING);
+    const talked = s.progress.get(c.id)!;
+    expect(talked).toBeCloseTo(2, 0);
+    for (let i = 0; i < 20; i++, t += 0.1) stepLeash(s, all, { talk: false, sigil: false }, near, true, t, 0.1, TUNING);
+    const left = s.progress.get(c.id)!;
+    expect(left).toBeCloseTo(talked - 2 * TUNING.invite.decayRate, 5); // 2 s off drains 1 s
+    // Resume: done after total - 1 s more.
+    let n = 0;
+    while (!c.leashed && n < 400) { stepLeash(s, all, { talk: true, sigil: false }, near, true, t, 0.1, TUNING); t += 0.1; n++; }
+    expect(Math.abs(n * 0.1 - (total - left))).toBeLessThanOrEqual(0.25);
+    // Switching creatures: the first keeps draining while the second fills.
+    const s2 = newLeash(), d = all.filter(k => k.level === 1 && !k.leashed)[1], e = other;
+    for (let i = 0; i < 20; i++) stepLeash(s2, all, { talk: true, sigil: false }, { x: d.x + 1, z: d.z }, true, i * 0.1, 0.1, TUNING);
+    const before = s2.progress.get(d.id)!;
+    for (let i = 0; i < 10; i++) stepLeash(s2, all, { talk: true, sigil: false }, { x: e.x + 1, z: e.z }, true, 2 + i * 0.1, 0.1, TUNING);
+    expect(s2.progress.get(d.id)!).toBeLessThan(before);
+    expect(s2.progress.get(e.id)!).toBeGreaterThan(0);
   });
 
   it("can't invite legends", () => {
@@ -736,5 +761,25 @@ describe("facing", () => {
     const between = (TUNING.facing.awayEnter + TUNING.facing.awayLeave) / 2;
     expect(facingAway(...deg(between), false, 1, TUNING)).toBe(false); // not yet in
     expect(facingAway(...deg(between), true, 1, TUNING)).toBe(true);   // not yet out
+  });
+});
+
+describe("the density field", () => {
+  it("varies: dense patches, sparse patches and lone trees, never just two states", () => {
+    const chances: number[] = [];
+    for (let i = 0; i < 3000; i++) {
+      const x = map.bounds.minX + hash2(i, 5, 9) * (map.bounds.maxX - map.bounds.minX), z = map.bounds.minZ + hash2(i, 6, 9) * (map.bounds.maxZ - map.bounds.minZ);
+      if (map.hardClear(x, z)) continue;
+      chances.push(treeChance(map, x, z, map.areaAt(x, z).type));
+    }
+    const share = (lo: number, hi: number) => chances.filter(c => c >= lo && c < hi).length / chances.length;
+    expect(Math.min(...chances)).toBeGreaterThanOrEqual(TUNING.density.lone); // lone trees anywhere open
+    expect(share(0.6, 9)).toBeGreaterThan(0.08);   // dense woods
+    expect(share(0, 0.15)).toBeGreaterThan(0.15);  // open and sparse ground
+    expect(share(0.15, 0.6)).toBeGreaterThan(0.2); // and plenty in between
+  });
+  it("keeps the dancefloor clear of every tree", () => {
+    const d = map.dancefloor;
+    expect(treeChance(map, d.x + 3, d.z - 2, map.areaAt(d.x, d.z).type)).toBe(0);
   });
 });

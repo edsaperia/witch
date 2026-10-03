@@ -22,6 +22,7 @@ if (seed === null) {
 const tuning = {
   ...TUNING, bloom: { ...TUNING.bloom }, tiltShift: { ...TUNING.tiltShift },
   shadows: { ...TUNING.shadows }, canopyShadow: { ...TUNING.canopyShadow }, mist: { ...TUNING.mist },
+  party: { ...TUNING.party },
 };
 if (params.get("shadows") === "off") tuning.shadows.on = false;
 if (params.get("canopy") === "off") tuning.canopyShadow.on = false;
@@ -34,6 +35,20 @@ const fx = params.get("fx");
 if (fx === "pixel" || fx === "smooth") tuning.fx = fx;
 
 const game = newGame(seed, tuning);
+
+// How often the party spreads: the tuning file's interval (5 minutes), or ?wave=<seconds> (0 or
+// "off": no waves), or what this viewer last picked on the start screen.
+const WAVE_CHOICES = [30, 60, 120, 300, 600, 0];
+function setWaveInterval(sec: number): void {
+  tuning.party.interval = sec > 0 ? sec : 1e9;
+  game.party.paused = sec === 0;
+  game.party.nextAt = game.clock.time + tuning.party.startDelay + tuning.party.interval;
+  document.querySelectorAll<HTMLButtonElement>("#waves button").forEach(b => b.classList.toggle("on", +b.dataset.s! === sec));
+}
+let waveChoice = tuning.party.interval;
+try { const saved = localStorage.getItem("witch.wave"); if (saved !== null && WAVE_CHOICES.includes(+saved)) waveChoice = +saved; } catch { /* storage blocked */ }
+const waveParam = params.get("wave");
+if (waveParam !== null) waveChoice = waveParam === "off" ? 0 : Math.max(0, +waveParam || 0);
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = loadStyle();
@@ -50,6 +65,12 @@ const input = new Input();
 document.getElementById("next-wave")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.nextWave = true; });
 document.getElementById("pause-waves")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.pauseWaves = true; });
 setupTouch(document.body, input.touch);
+
+// Metre rulers and a ground grid: G, the debug button, or on with ?debug.
+view.rulers.on = params.has("debug");
+const toggleRulers = () => { view.rulers.on = !view.rulers.on; };
+window.addEventListener("keydown", e => { if (e.code === "KeyG" && !e.repeat) toggleRulers(); });
+document.getElementById("rulers")!.addEventListener("pointerdown", e => { e.preventDefault(); toggleRulers(); });
 
 // The controls hint in the corner: H shows or hides it (remembered on this browser).
 const helpEl = document.getElementById("help")!;
@@ -95,6 +116,18 @@ function start(): boolean {
 }
 input.onAny = start;
 startEl.addEventListener("pointerdown", e => { e.preventDefault(); start(); });
+// The wave selector on the start screen: picking one doesn't start the game.
+const wavesEl = document.getElementById("waves")!;
+wavesEl.innerHTML = "waves every " + WAVE_CHOICES.map(s => `<button type="button" data-s="${s}">${s === 0 ? "off" : s < 60 ? s + " s" : s / 60 + " min"}</button>`).join("");
+wavesEl.addEventListener("pointerdown", e => {
+  e.stopPropagation();
+  const b = (e.target as HTMLElement).closest("button");
+  if (!b) return;
+  const sec = +b.dataset.s!;
+  setWaveInterval(sec);
+  try { localStorage.setItem("witch.wave", String(sec)); } catch { /* fine */ }
+});
+setWaveInterval(waveChoice);
 document.addEventListener("visibilitychange", () => { if (document.hidden) last = 0; });
 
 let last = 0, fps = 60, frames = 0, fpsT = 0;
@@ -106,12 +139,14 @@ function frame(now: number): void {
   if (fpsT >= 0.5) { fps = frames / fpsT; frames = 0; fpsT = 0; }
   const c = input.read();
   if (c.debug) { debugOn = !debugOn; debugEl.classList.toggle("on", debugOn); debugButtons.classList.toggle("on", debugOn); }
+  view.debugReadouts = debugOn;
   stepGame(game, c, dt);
   if (!ready) return;
   // The wave countdown bar: empties toward the next wave.
   const cd = waveCountdown(game.party, game.map, game.clock.time);
   waveFill.style.height = `${(1 - cd.gone) * 100}%`;
-  waveLabel.textContent = `wave ${game.party.wave} · ${game.party.areas.size} areas · ${Math.ceil(cd.left)} s`;
+  const left = tuning.party.interval >= 1e9 ? "waves off" : cd.left >= 60 ? `${Math.floor(cd.left / 60)}:${String(Math.ceil(cd.left) % 60).padStart(2, "0")}` : `${Math.ceil(cd.left)} s`;
+  waveLabel.textContent = `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}`;
   waveEl.classList.toggle("paused", game.party.paused);
   view.render(game.clock.time); // game time: party transitions, sigils and waves are stamped in it
   if (debugOn) {
