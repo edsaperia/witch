@@ -56,6 +56,7 @@ export class ShadowBatch {
 
   private grow(n: number): THREE.InstancedBufferAttribute {
     this.capacity = Math.max(n, this.capacity * 2);
+    this.geo.dispose(); // or three.js keeps drawing only the old capacity (see SpriteBatch.grow)
     this.attr = new THREE.InstancedBufferAttribute(new Float32Array(this.capacity * 4), 4);
     this.attr.setUsage(THREE.DynamicDrawUsage);
     this.geo.setAttribute("iShadow", this.attr);
