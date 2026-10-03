@@ -44,13 +44,13 @@ const assets = await b.page.evaluate(async ({ style, seed }) => {
     push({ ...meta, id: `tree-${name}-${v}-bottom`, part: "bottom" }, parts.bot, col);
   }
   for (let v = 0; v < 8; v++) { const bu = G.bush(G.rng(seed * 7 + v * 3), { ...st, bushSize: st.bushSize * K }); push({ id: `bush-${v}`, kind: "bush", variant: v, frame: 0 }, bu.sp, bu.colours); }
-  // the witch: three hover frames, a lean, and rise and descend (two frames each), each turned towards and away ("witch" alone is frame 0, towards)
+  // the witch: three hover frames, a lean, rise and descend (two frames each) and fast (three), each turned towards and away ("witch" alone is frame 0, towards)
   const wc = G.witchColours(st);
   push({ id: "witch", kind: "witch", frame: 0, facing: "towards" }, G.witchSprite(st), wc, st.cOutline);
   for (const facing of ["towards", "away"]) {
     for (const frame of [0, 1, 2]) push({ id: `witch-hover${frame}${facing === "away" ? "-away" : ""}`, kind: "witch", frame, facing }, G.witchSprite(st, { frame, facing }), wc, st.cOutline);
     push({ id: `witch-lean${facing === "away" ? "-away" : ""}`, kind: "witch", pose: "lean", frame: 0, facing }, G.witchSprite(st, { lean: true, facing }), wc, st.cOutline);
-    for (const pose of ["rise", "descend"]) for (const frame of [0, 1]) push({ id: `witch-${pose}${frame}${facing === "away" ? "-away" : ""}`, kind: "witch", pose, frame, facing }, G.witchSprite(st, { pose, frame, facing }), wc, st.cOutline);
+    for (const [pose, n] of [["rise", 2], ["descend", 2], ["fast", 3]]) for (let frame = 0; frame < n; frame++) push({ id: `witch-${pose}${frame}${facing === "away" ? "-away" : ""}`, kind: "witch", pose, frame, facing }, G.witchSprite(st, { pose, frame, facing }), wc, st.cOutline);
   }
   // light sources: campfire frames, magic stones, and a pond with a mask of its water
   const L = G.lightProps(st);

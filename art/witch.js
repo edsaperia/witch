@@ -23,13 +23,64 @@ export function witchColours(st, outfit = DEFAULT_OUTFIT) {
 }
 
 // frame 0..2 bob; lean: the fast-flight pose; facing "towards" | "away".
-// pose "rise" | "descend" (Ed: for flying up to the treetops and down to the ground): the broom
+// pose "fast": see fastModel. pose "rise" | "descend" (Ed: for flying up to the treetops and down to the ground): the broom
 // tilts nose-up (about 40°) or nose-down (about 35°). Rising, she leans forward into the climb,
 // her hat brim pushed back, hair and jacket trailing down, sparks falling from the bristles.
 // Descending, she leans back to brake with one hand on her hat, hair and jacket flowing up and
 // her legs reaching down to land. Two frames each (frame 0, 1) flutter the hair, jacket and sparks.
 export const WITCH_POSES = { rise: .78, descend: -.66 }; // the broom's tilt, radians nose-up (45° up, 38° down)
+// pose "fast" (Ed: treetop top speed, "barely hanging on"): the broom level and a little
+// nose-down, shooting forward, bristles flared; she grips the front of the handle at arm's
+// length with her body streaming out behind, nearly flat, one knee bent and one leg kicking;
+// her hat blown up off her head on its chin strap, hair straight back, jacket tail whipping;
+// eyes wide, teeth gritted; a few small speed streaks. Three frames flap her (frame 0..2).
+function fastModel(frame) {
+  const m = new Model({ blend: .03 }), f = frame % 3, y = .5, dip = .05; // the broom's height; it dips a little at the nose
+  const j = [[0, .02, -.01], [.02, -.01, .02], [-.01, .015, .01]][f]; // the frame's jiggle
+  const bx = x => y - dip * (x / .62); // the handle's height along it
+  // the broom, shooting forward; bristles flared out behind
+  m.seg([-.5, bx(-.5), 0], [.62, bx(.62), 0], .022, .018, M.BROOM, { group: 2 });
+  m.ell([-.64, bx(-.64) + .005, 0], [.2, .1, .11], M.STRAW, { dir: [1, dip * 1.6, 0], group: 3, paint: p => p[0] < -.76 ? M.MAGIC2 : p[0] > -.5 ? M.BROOM : undefined });
+  // her hands on the very front of the handle, arms straight back to her shoulders
+  const hands = [-1, 1].map(side => [.5, bx(.5) + .03, side * .045]), sh = [-1, 1].map(side => [.2, y + .24 + j[1], side * .1]);
+  for (const k of [0, 1]) { const side = k ? 1 : -1, g = side > 0 ? 7 : 5; m.seg(sh[k], hands[k], .04, .03, M.JACKET, { group: g }); m.ell(hands[k], [.035, .03, .035], M.SKIN, { group: g }); }
+  // her body streams out behind, nearly flat: head at the front, then the chest, then the hips
+  const H = [.3 + j[0], y + .27 + j[1], 0], chest = [.07, y + .28 + j[1] * .5, 0], hips = [-.15, y + .35 + j[2], 0]; // clear of the handle: only her hands touch it
+  m.ell(chest, [.17, .1, .11], M.JACKET, { dir: [1, -.25, 0], group: 1, paint: p => p[1] < chest[1] - .04 && Math.abs(p[2]) < .055 ? M.TOP : undefined });
+  m.ell(hips, [.11, .08, .1], M.JEANS, { dir: [1, -.3, 0], group: 1 });
+  // the jacket's tail whipping back hard
+  m.chain([[...v3.add(hips, [-.02, .06, 0]), .07], [...v3.add(hips, [-.18, .08 + j[0] * 2, 0]), .05], [...v3.add(hips, [-.34, .05 + j[1] * 3, .02]), .025]], M.JACKET, { group: 12 });
+  // legs flapping out behind: one knee bent, one leg kicking
+  const legs = [[[-.32, y + .5 + j[1] * 2, -.07], [-.46, y + .38 + j[0] * 2, -.08]], [[-.34, y + .33 + j[2] * 2, .08], [-.55, y + .44 - j[1] * 3, .1]]];
+  legs.forEach(([knee, foot], k) => {
+    const g = k ? 6 : 4, hip = v3.add(hips, [-.04, 0, k ? .06 : -.06]);
+    m.seg(hip, knee, .055, .045, M.JEANS, { group: g }); m.seg(knee, foot, .045, .04, M.JEANS, { group: g });
+    m.ell(v3.add(foot, [-.05, 0, 0]), [.08, .04, .045], M.SHOES, { dir: [-1, .3, 0], group: g, paint: p => p[1] < foot[1] - .03 ? M.BELLY : undefined });
+  });
+  // her head: eyes wide, teeth gritted
+  m.ell(H, [.11, .115, .1], M.SKIN, { group: 8, paint: p => (p[0] < H[0] - .01 || p[1] > H[1] + .075) ? M.HAIR : undefined });
+  for (const side of [-1, 1]) { const e = Model.surface(H, [.11, .115, .1], v3.norm([.85, .1, side * .45])); m.ell(e, [.026, .036, .026], M.BELLY, { group: 8 }); m.ell(v3.add(e, [.012, 0, side * .004]), [.014, .018, .014], M.EYE, { group: 8 }); }
+  m.ell(Model.surface(H, [.11, .115, .1], v3.norm([1, -.45, 0])), [.012, .016, .04], M.BELLY, { group: 8 }); // gritted teeth
+  // hair streaming straight back over her
+  m.chain([[...v3.add(H, [-.06, .03, 0]), .065], [...v3.add(H, [-.22, .05 + j[1] * 2, .01]), .05], [...v3.add(H, [-.4, .06 + j[2] * 3, .02]), .03], [...v3.add(H, [-.55, .07 + j[0] * 3, .02]), .012]], M.HAIR, { group: 9 });
+  // headphones still on
+  for (const side of [-1, 1]) m.ell(v3.add(H, [-.015, 0, side * .105]), [.05, .055, .03], M.PHONES, { group: 10 });
+  m.chain([[...v3.add(H, [-.005, .03, -.095]), .015], [...v3.add(H, [-.02, .12, 0]), .015], [...v3.add(H, [-.005, .03, .095]), .015]], M.PHONES, { group: 10 });
+  // the hat, nearly blown off: lifted up and tipped back, held by its chin strap
+  const brim = v3.add(H, [-.1 + j[0], .2 + j[1] * 2, 0]);
+  m.ell(brim, [.16, .014, .15], M.HAT, { dir: [1, .9, 0], group: 11 });
+  m.chain([[...v3.add(brim, [-.02, .02, 0]), .08], [...v3.add(brim, [-.14, .13, 0]), .04], [...v3.add(brim, [-.3, .14 + j[2] * 2, 0]), .012]], M.HAT, { group: 11, paint: p => Math.hypot(p[0] - brim[0], p[1] - brim[1]) < .06 ? M.MAGIC : undefined });
+  m.seg(v3.add(brim, [.08, -.02, .08]), v3.add(H, [.04, -.09, .08]), .008, .008, M.HAT, { group: 11 }); // the chin strap, pulled taut
+  // speed: a few small streaks trailing from the bristles and from her
+  for (const [x0, yy, z, len] of [[-.86, bx(-.8) + .05, .03, .22], [-.88, bx(-.8) - .04, -.04, .16], [-.7, y + .45, .05, .14], [-.2, y + .5, -.04, .12]]) {
+    const o = (f * .05) % .1; m.seg([x0 - o, yy, z], [x0 - o - len, yy, z], .01, .004, M.MAGIC2, { group: 30, extra: true });
+  }
+  m.ell([.02, .005, 0], [.2, .005, .12], M.NOSE, { group: 0 }); // her shadow on the ground
+  return m;
+}
+
 export function witchModel({ frame = 0, lean = false, pose } = {}) {
+  if (pose === "fast") return fastModel(frame);
   const rise = pose === "rise", desc = pose === "descend", posed = rise || desc;
   const m = new Model({ blend: .03 }), bob = posed ? 0 : [0, .025, .045][frame % 3], tilt = posed ? 0 : [0, .015, -.01][frame % 3] + (lean ? .08 : 0);
   // the broom's height; how far she leans forward on it (back, braking). Posed, she leans well into it, so that
