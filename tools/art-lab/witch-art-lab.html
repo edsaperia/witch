@@ -58,6 +58,11 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 button.primary:hover { border-color: #fff; }
 label.check { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); cursor: pointer; }
 label.check input { accent-color: var(--accent); }
+.bestiary { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.beast { margin: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--panel); display: grid; }
+.beast canvas { width: 100%; height: auto; }
+.beast figcaption { padding: 6px 10px 8px; font-size: 13px; color: var(--muted); display: grid; gap: 2px; }
+.beast figcaption b { color: var(--fg); font-family: var(--font-display); font-weight: 400; font-size: 14px; }
 .history { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
 .history button { padding: 0; border: 1px solid var(--line); border-radius: 4px; background: #000; cursor: pointer; flex: none; }
 .history button.current { border-color: var(--accent); }
@@ -80,7 +85,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
   <div class="layout">
     <div class="main">
       <section class="stage" aria-label="Current style, in a forest scene">
-        <canvas id="scene" width="448" height="252"></canvas>
+        <canvas id="scene" width="299" height="168"></canvas>
       </section>
       <div class="row">
         <label class="check"><input type="checkbox" id="party"> Party lights</label>
@@ -100,6 +105,12 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
         </div>
         <div class="row" id="vary"></div>
         <div class="variants" id="variants"></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
+        <h2>Bestiary</h2>
+        <p class="note">Twenty forest animals, each as legend, young and baby, in the current style under even light. Legends grow the magical features listed.</p>
+        <div class="bestiary" id="bestiary"></div>
       </section>
 
       <section style="display:grid;gap:10px">
@@ -173,11 +184,14 @@ const KNOBS = [
   { k: "trunkHue", g: "Colour", label: "Bark hue", min: 0, max: 1, step: 0.01, v: 0.07, hue: true },
   { k: "groundHue", g: "Colour", label: "Ground hue", min: 0, max: 1, step: 0.01, v: 0.27, hue: true },
   { k: "groundVal", g: "Colour", label: "Ground brightness", min: 0.15, max: 0.7, step: 0.01, v: 0.4 },
-  { k: "treeSize", g: "Trees", label: "Tree size", min: 0.7, max: 1.5, step: 0.05, v: 1.1 },
+  { k: "pixel", g: "Shading", label: "Pixel size", min: 2, max: 5, step: 1, v: 3 },
+  { k: "treeSize", g: "Trees", label: "Tree height", min: 0.5, max: 1.5, step: 0.05, v: 0.85 },
+  { k: "crownWidth", g: "Trees", label: "Crown width", min: 1, max: 4, step: 0.1, v: 3 },
+  { k: "clearing", g: "Trees", label: "Clearing size", min: 0, max: 1, step: 0.05, v: 0.55 },
   { k: "density", g: "Trees", label: "Foliage density", min: 0.2, max: 1, step: 0.05, v: 0.55 },
   { k: "clump", g: "Trees", label: "Clumpiness", min: 0, max: 1, step: 0.05, v: 0.6 },
   { k: "gnarl", g: "Trees", label: "Gnarliness", min: 0, max: 1, step: 0.05, v: 0.5 },
-  { k: "trees", g: "Trees", label: "Number of trees", min: 6, max: 30, step: 1, v: 15 },
+  { k: "trees", g: "Trees", label: "Tree density", min: 0.2, max: 2, step: 0.05, v: 1 },
   { k: "wBroad", g: "Tree mix", label: "Gnarled broadleaf", min: 0, max: 1, step: 0.05, v: 0.8 },
   { k: "wFir", g: "Tree mix", label: "Fir", min: 0, max: 1, step: 0.05, v: 0.6 },
   { k: "wWillow", g: "Tree mix", label: "Willow", min: 0, max: 1, step: 0.05, v: 0.5 },
@@ -193,10 +207,10 @@ const KNOBS = [
   { k: "eye", g: "Creatures", label: "Eye size", min: 0.5, max: 2, step: 0.05, v: 1 },
   { k: "legs", g: "Creatures", label: "Leg length", min: 0.5, max: 1.8, step: 0.05, v: 1 },
   { k: "long", g: "Creatures", label: "Body length", min: 0.7, max: 1.5, step: 0.05, v: 1 },
-  { k: "size", g: "Creatures", label: "Baby size (px)", min: 7, max: 16, step: 1, v: 10 },
+  { k: "size", g: "Creatures", label: "Baby size (px)", min: 5, max: 14, step: 1, v: 8 },
   { k: "growth", g: "Creatures", label: "Legend vs baby height", min: 5, max: 25, step: 1, v: 20 },
-  { k: "horns", g: "Creatures", label: "Horns and crests", min: 0, max: 1, step: 0.05, v: 0.6 },
-  { k: "fur", g: "Creatures", label: "Fur and markings", min: 0, max: 1, step: 0.05, v: 0.5 },
+  { k: "magicHue", g: "Creatures", label: "Magic glow hue", min: 0, max: 1, step: 0.01, v: 0.5, hue: true },
+  { k: "fur", g: "Creatures", label: "Stripes and spots", min: 0, max: 1, step: 0.05, v: 0.5 },
   { k: "cloakHue", g: "Witch", label: "Cloak hue", min: 0, max: 1, step: 0.01, v: 0.72, hue: true },
   { k: "hairHue", g: "Witch", label: "Hair hue", min: 0, max: 1, step: 0.01, v: 0.01, hue: true },
 ];
@@ -205,7 +219,7 @@ function defaultStyle() { const s = {}; KNOBS.forEach(k => s[k.k] = k.v); return
 function mutate(style, strength, groups, seed) {
   const r = rng(seed), s = { ...style };
   for (const k of KNOBS) {
-    if (!groups.has(k.g)) continue;
+    if (!groups.has(k.g) || k.k === "pixel") continue;
     if (k.options) { if (r() < strength * 0.35) s[k.k] = pick(r, k.options); continue; }
     if (r() > 0.35 + strength * 0.6) continue;
     let v = s[k.k] + gauss(r) * (k.max - k.min) * strength * 0.35;
@@ -226,15 +240,17 @@ function hsv2rgb(h, s, v) {
 }
 
 // ================= sprites: material + normal per pixel =================
-const M = { EMPTY: 0, BODY: 1, BELLY: 2, ACCENT: 3, EYE: 4, GLINT: 5, TRUNK: 6, LEAF: 7, LEAF2: 8, CLOTH: 9, SKIN: 10, HAIR: 11, BROOM: 12, STRAW: 13, BODY2: 14, BARK2: 15, FLOWER: 16, PUPIL: 17 };
+const M = { EMPTY: 0, BODY: 1, BELLY: 2, ACCENT: 3, EYE: 4, GLINT: 5, TRUNK: 6, LEAF: 7, LEAF2: 8, CLOTH: 9, SKIN: 10, HAIR: 11, BROOM: 12, STRAW: 13, BODY2: 14, BARK2: 15, FLOWER: 16, PUPIL: 17, MAGIC: 18 };
 class Sprite {
-  constructor(w, h) { this.w = w | 0; this.h = h | 0; this.m = new Uint8Array(this.w * this.h); this.n = new Float32Array(this.w * this.h * 3); }
+  constructor(w, h, sx = 1) { this.sx = sx; this.w = Math.round(w * sx); this.h = h | 0; this.m = new Uint8Array(this.w * this.h); this.n = new Float32Array(this.w * this.h * 3); }
   inb(x, y) { return x >= 0 && y >= 0 && x < this.w && y < this.h; }
   get(x, y) { return this.inb(x, y) ? this.m[y * this.w + x] : 0; }
-  put(x, y, v, nx = 0, ny = 0, nz = 1) { x |= 0; y |= 0; if (!this.inb(x, y)) return; const i = y * this.w + x; this.m[i] = v; this.n[i * 3] = nx; this.n[i * 3 + 1] = ny; this.n[i * 3 + 2] = nz; }
+  put(x, y, v, nx = 0, ny = 0, nz = 1) { this.px(x * this.sx, y, v, nx, ny, nz); }
+  px(x, y, v, nx = 0, ny = 0, nz = 1) { x |= 0; y |= 0; if (!this.inb(x, y)) return; const i = y * this.w + x; this.m[i] = v; this.n[i * 3] = nx; this.n[i * 3 + 1] = ny; this.n[i * 3 + 2] = nz; }
   // A rounded blob: each pixel's normal points out from the blob's centre.
   ellipse(cx, cy, rx, ry, v, opts = {}) {
     const { onlyOn, density = 1, noise = 0, seed = 0, round = 1 } = opts;
+    cx *= this.sx; rx *= this.sx;
     for (let y = Math.max(0, Math.floor(cy - ry - 1)); y < Math.min(this.h, cy + ry + 1); y++)
       for (let x = Math.max(0, Math.floor(cx - rx - 1)); x < Math.min(this.w, cx + rx + 1); x++) {
         const dx = (x + .5 - cx) / rx, dy = (y + .5 - cy) / ry, d2 = dx * dx + dy * dy;
@@ -246,11 +262,12 @@ class Sprite {
           if (hash2(x, y, seed + 77) > density * (0.4 + nz * 1.2) * (1.15 - d2 * .5)) continue;
         }
         const nx = dx * round, ny = dy * round, l = Math.hypot(nx, ny, Math.sqrt(Math.max(0, 1 - d2)) + .15);
-        this.put(x, y, v, nx / l, ny / l, (Math.sqrt(Math.max(0, 1 - d2)) + .15) / l);
+        this.px(x, y, v, nx / l, ny / l, (Math.sqrt(Math.max(0, 1 - d2)) + .15) / l);
       }
   }
   // A limb: stamped discs, so trunks and branches read as cylinders.
   line(x0, y0, x1, y1, t0, t1, v, round = 1) {
+    x0 *= this.sx; x1 *= this.sx;
     const steps = Math.max(1, Math.ceil(Math.hypot(x1 - x0, y1 - y0)));
     for (let s = 0; s <= steps; s++) {
       const f = s / steps, x = x0 + (x1 - x0) * f, y = y0 + (y1 - y0) * f, r = Math.max(.5, (t0 + (t1 - t0) * f) / 2);
@@ -258,16 +275,16 @@ class Sprite {
         const dx = (xx + .5 - x) / r, dy = (yy + .5 - y) / r;
         if (dx * dx + dy * dy > 1) continue;
         const nx = dx * round, l = Math.hypot(nx, dy * .3, 1);
-        this.put(xx, yy, v, nx / l, dy * .3 / l, 1 / l);
+        this.px(xx, yy, v, nx / l, dy * .3 / l, 1 / l);
       }
     }
   }
   tri(p, v) {
-    const [[ax, ay], [bx, by], [cx, cy]] = p, s = (px, py, x1, y1, x2, y2) => (px - x2) * (y1 - y2) - (x1 - x2) * (py - y2);
+    let [[ax, ay], [bx, by], [cx, cy]] = p; ax *= this.sx; bx *= this.sx; cx *= this.sx; const s = (px, py, x1, y1, x2, y2) => (px - x2) * (y1 - y2) - (x1 - x2) * (py - y2);
     const x0 = Math.max(0, Math.floor(Math.min(ax, bx, cx))), x1 = Math.min(this.w, Math.ceil(Math.max(ax, bx, cx))), y0 = Math.max(0, Math.floor(Math.min(ay, by, cy))), y1 = Math.min(this.h, Math.ceil(Math.max(ay, by, cy)));
     for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
       const px = x + .5, py = y + .5, d1 = s(px, py, ax, ay, bx, by), d2 = s(px, py, bx, by, cx, cy), d3 = s(px, py, cx, cy, ax, ay);
-      if (!((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0))) this.put(x, y, v, 0, -.2, .98);
+      if (!((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0))) this.px(x, y, v, 0, -.2, .98);
     }
   }
 }
@@ -279,7 +296,7 @@ function leafCluster(sp, cx, cy, rx, ry, st, seed, mat = M.LEAF) {
   sp.ellipse(cx - rx * .2, cy - ry * .25, rx * .55, ry * .5, M.LEAF2, { density: st.density * .5, noise: st.clump, seed: seed + 9, onlyOn: new Set([mat]), round: st.round });
 }
 function broadTree(r, st, s) {
-  const W = Math.round(110 * s), H = Math.round(130 * s), sp = new Sprite(W, H);
+  const W = Math.round(110 * s), H = Math.round(130 * s), sp = new Sprite(W, H, st.crownWidth || 1);
   const crownY = H * .5;
   function branch(x, y, ang, len, th, d) {
     const wob = (r() - .5) * st.gnarl * .9, a = ang + wob;
@@ -297,7 +314,7 @@ function broadTree(r, st, s) {
   return { sp, crownY };
 }
 function firTree(r, st, s) {
-  const W = Math.round(70 * s), H = Math.round(150 * s), sp = new Sprite(W, H), tx = W / 2;
+  const W = Math.round(70 * s), H = Math.round(150 * s), sp = new Sprite(W, H, st.crownWidth || 1), tx = W / 2;
   sp.line(tx, H - 1, tx, 8, 5 * s, 1.5, M.TRUNK, st.round);
   const tiers = Math.round(uni(r, 8, 12));
   for (let i = 0; i < tiers; i++) {
@@ -311,13 +328,13 @@ function firTree(r, st, s) {
   return { sp, crownY: H * .14 };
 }
 function willowTree(r, st, s) {
-  const W = Math.round(120 * s), H = Math.round(120 * s), sp = new Sprite(W, H), cx = W / 2;
+  const W = Math.round(120 * s), H = Math.round(120 * s), sp = new Sprite(W, H, st.crownWidth || 1), cx = W / 2;
   const crownY = H * .25, limbs = [];
   sp.line(cx, H - 2, cx - 12 * s, H - 1, 6 * s, 2, M.TRUNK, st.round); sp.line(cx, H - 2, cx + 13 * s, H - 1, 6 * s, 2, M.TRUNK, st.round);
   for (const side of [-1, 1]) { const ex = cx + side * uni(r, 14, 26) * s, ey = H * uni(r, .28, .38); sp.line(cx, H - 3, ex, ey, 11 * s, 5 * s, M.TRUNK, st.round); limbs.push([ex, ey]); }
   for (const [lx, ly] of limbs) leafCluster(sp, lx, ly - 4 * s, 26 * s, 13 * s, st, (r() * 1e6) | 0);
   // hanging strands
-  for (let x = 6; x < W - 6; x += 1 + (r() < .4 ? 1 : 0)) {
+  for (let x = 6; x < W - 6; x += (1 + (r() < .4 ? 1 : 0)) / sp.sx) {
     const d = Math.abs(x - cx) / (W / 2);
     const top = H * .12 + d * d * H * .25 + r() * 6, len = H * uni(r, .35, .7) * (1 - d * .4);
     for (let y = top; y < top + len; y++) if (hash2(x, y | 0, 5) < st.density * 1.1) sp.put(x + Math.round(Math.sin(y * .15 + x) * .6), y, hash2(x, y | 0, 6) < .3 ? M.LEAF2 : M.LEAF, (x - cx) / W, .2, .95);
@@ -325,7 +342,7 @@ function willowTree(r, st, s) {
   return { sp, crownY };
 }
 function birchTree(r, st, s) {
-  const W = Math.round(80 * s), H = Math.round(140 * s), sp = new Sprite(W, H), cx = W / 2, lean = (r() - .5) * 10 * s;
+  const W = Math.round(80 * s), H = Math.round(140 * s), sp = new Sprite(W, H, st.crownWidth || 1), cx = W / 2, lean = (r() - .5) * 10 * s;
   sp.line(cx, H - 1, cx + lean, 10, 4 * s, 2, M.BARK2, st.round);
   for (let y = 12; y < H - 2; y += uni(r, 4, 9)) { const f = 1 - y / H, x = cx + lean * f; sp.put(x + (r() < .5 ? 0 : 1), y, M.TRUNK); }
   for (let i = 0; i < 7; i++) {
@@ -336,7 +353,7 @@ function birchTree(r, st, s) {
   return { sp, crownY: H * .6 };
 }
 function palmTree(r, st, s) {
-  const W = Math.round(100 * s), H = Math.round(140 * s), sp = new Sprite(W, H), bend = uni(r, -18, 18) * s;
+  const W = Math.round(100 * s), H = Math.round(140 * s), sp = new Sprite(W, H, st.crownWidth || 1), bend = uni(r, -18, 18) * s;
   let px = W / 2, py = H - 1;
   const topX = W / 2 + bend, topY = H * .28;
   for (let i = 1; i <= 20; i++) { const f = i / 20, x = W / 2 + bend * f * f, y = H - 1 - (H - 1 - topY) * f; sp.line(px, py, x, y, 6 * s, 5 * s, M.TRUNK, st.round); px = x; py = y; }
@@ -355,7 +372,7 @@ function palmTree(r, st, s) {
   return { sp, crownY: topY + 4 };
 }
 function flatTree(r, st, s) {
-  const W = Math.round(130 * s), H = Math.round(110 * s), sp = new Sprite(W, H), cx = W / 2;
+  const W = Math.round(130 * s), H = Math.round(110 * s), sp = new Sprite(W, H, st.crownWidth || 1), cx = W / 2;
   sp.line(cx, H - 2, cx - 8 * s, H - 1, 5 * s, 2, M.TRUNK, st.round); sp.line(cx, H - 2, cx + 9 * s, H - 1, 5 * s, 2, M.TRUNK, st.round);
   const lean = (r() - .5) * 14 * s * (st.gnarl + .3);
   sp.line(cx, H - 2, cx + lean, H * .45, 6 * s, 4 * s, M.TRUNK, st.round);
@@ -398,106 +415,182 @@ function bush(r, st) {
 }
 
 // ================= creatures =================
-function critter(seed, level, frame, st) {
-  const r = rng(seed * 9973 + 17);
-  const arche = pick(r, ["canine", "boar", "badger", "canine", "boar", "deer", "bird", "blob"]);
-  const baby = st.size, growth = Math.pow(st.growth, 1 / 2);
-  const size = Math.round(baby * Math.pow(growth, level)), W = Math.round(size * 1.6 + 10), H = Math.round(size * 1.4 + 10), sp = new Sprite(W, H);
-  const rd = st.round, cx = W / 2 - size * .08, furSeed = seed * 7 + level;
-  const young = [1, .6, .35][level]; // babies: big heads, short legs, round bodies
-  let hx, hy, hr, cy;
-  const winged = level === 2 && r() < st.horns * .9;
-  if (arche === "blob" || arche === "bird") {
-    if (arche === "blob") {
-      const bh = size * .38; cy = H - bh - 1 - (frame ? size * .04 : 0); const sq = frame ? 1.07 : 1;
-      sp.ellipse(cx, cy, size * .45 * sq * st.long, bh / sq, M.BODY, { round: rd }); sp.ellipse(cx, cy + bh * .5, size * .32, bh * .4, M.BELLY, { onlyOn: new Set([M.BODY]), round: rd });
-      hx = cx + size * .15; hy = cy - bh * .25; hr = size * .2;
-    } else {
-      const bw = size * .3 * st.long, bh = size * .26, legLen = size * .26 * st.legs; cy = H - legLen - bh - 1;
-      for (let i = 0; i < 2; i++) { const lx = cx - bw * .2 + i * bw * .4, sw = ((i + frame) % 2 ? 1 : -1) * size * .05; sp.line(lx, cy + bh * .5, lx + sw, H - 1 - ((i + frame) % 2 ? size * .03 : 0), Math.max(1, size / 14), Math.max(1, size / 16), M.ACCENT, rd); }
-      if (winged) sp.ellipse(cx - bw * .3, cy - bh * 1.4, bw * 1.3, bh * 1.2, M.ACCENT, { round: rd });
-      sp.ellipse(cx, cy, bw, bh, M.BODY, { round: rd }); sp.ellipse(cx + bw * .2, cy + bh * .3, bw * .6, bh * .55, M.BELLY, { onlyOn: new Set([M.BODY]), round: rd });
-      sp.tri([[cx - bw * .8, cy - bh * .2], [cx - bw * 1.7, cy - bh * .9], [cx - bw * 1.5, cy + bh * .2]], M.BODY);
-      hr = size * .17 * (1 + young * .5); hx = cx + bw * .9; hy = cy - bh * .9;
-      sp.ellipse(hx, hy, hr, hr * .95, M.BODY, { round: rd });
-      sp.tri([[hx + hr * .7, hy - hr * .2], [hx + hr * 1.8, hy + hr * .1], [hx + hr * .7, hy + hr * .35]], M.ACCENT);
-    }
-  } else {
-    // four-legged animals: canine, boar, badger, deer
-    const P = {
-      canine: { bw: .34, bh: .2, leg: .26, legW: .07, head: .16, snout: .55, neck: .5, headUp: .9, ears: "point", tail: "up" },
-      boar: { bw: .4, bh: .27, leg: .16, legW: .09, head: .2, snout: .6, neck: .1, headUp: .2, ears: "small", tail: "thin" },
-      badger: { bw: .42, bh: .18, leg: .1, legW: .08, head: .14, snout: .7, neck: .1, headUp: .1, ears: "round", tail: "short" },
-      deer: { bw: .32, bh: .19, leg: .36, legW: .05, head: .13, snout: .5, neck: .9, headUp: 1.6, ears: "point", tail: "short" },
-    }[arche];
-    const bw = size * P.bw * st.long * (1 - young * .15), bh = size * P.bh * (1 + young * .25), legLen = size * P.leg * st.legs * (1 - young * .3);
-    cy = H - legLen - bh * .7 - 1;
-    const legW = Math.max(1.2, size * P.legW);
-    if (winged) { // a pale pair of spirit wings behind the back
-      sp.ellipse(cx - bw * .25, cy - bh * 1.7, bw * .9, bh * 1.1, M.ACCENT, { round: rd });
-      sp.ellipse(cx - bw * .7, cy - bh * 1.3, bw * .7, bh * .8, M.ACCENT, { round: rd });
-    }
-    const legX = [cx - bw * .7, cx - bw * .45, cx + bw * .45, cx + bw * .7];
-    legX.forEach((lx, i) => {
-      const phase = (i + frame) % 2, sw = (phase ? 1 : -1) * size * .05, lift = phase ? Math.max(1, size * .025) : 0;
-      sp.line(lx, cy + bh * .2, lx + sw * .5, cy + bh * .2 + legLen * .55, legW * 1.3, legW, M.BODY, rd);
-      sp.line(lx + sw * .5, cy + bh * .2 + legLen * .55, lx + sw, H - 1 - lift, legW, legW * .8, M.BODY2 === undefined ? M.BODY : M.BODY, rd);
-    });
+// ================= the bestiary: 20 forest animals =================
+// plan: body plan. hue/sat/val: base colour. Then shape numbers, and what the legendary form grows.
+const SPECIES = [
+  { id: "wolf", name: "Wolf", plan: "quad", hue: .6, sat: .18, val: .78, bw: .34, bh: .2, leg: .27, legW: .065, head: .16, snout: .6, headUp: .9, ears: "point", tail: "up", legend: ["wings", "mane"] },
+  { id: "fox", name: "Fox", plan: "quad", hue: .06, sat: .8, val: .9, bw: .3, bh: .17, leg: .2, legW: .055, head: .15, snout: .65, headUp: .8, ears: "big", tail: "bushy", belly: "white", legend: ["tails"] },
+  { id: "badger", name: "Badger", plan: "quad", hue: .65, sat: .08, val: .45, bw: .42, bh: .18, leg: .1, legW: .08, head: .14, snout: .7, headUp: .1, ears: "round", tail: "short", face: "badger", legend: ["crystals"] },
+  { id: "boar", name: "Boar", plan: "quad", hue: .07, sat: .75, val: .82, bw: .4, bh: .27, leg: .16, legW: .09, head: .2, snout: .6, headUp: .2, ears: "small", tail: "thin", stripes: true, tusks: true, ridge: true, legend: ["tusksBig"] },
+  { id: "stag", name: "Stag", plan: "quad", hue: .08, sat: .5, val: .7, bw: .32, bh: .19, leg: .36, legW: .05, head: .13, snout: .5, headUp: 1.6, ears: "point", tail: "short", spots: true, antlers: "branch", legend: ["antlersGlow"] },
+  { id: "hare", name: "Hare", plan: "quad", hue: .08, sat: .4, val: .72, bw: .26, bh: .2, leg: .18, legW: .06, head: .15, snout: .35, headUp: .9, ears: "long", tail: "puff", legend: ["jackalope"] },
+  { id: "owl", name: "Owl", plan: "owl", hue: .09, sat: .45, val: .6, legend: ["eyesRing", "wings"] },
+  { id: "bear", name: "Bear", plan: "quad", hue: .07, sat: .55, val: .42, bw: .42, bh: .3, leg: .17, legW: .11, head: .18, snout: .45, headUp: .5, ears: "round", tail: "short", legend: ["moss"] },
+  { id: "hedgehog", name: "Hedgehog", plan: "hedgehog", hue: .08, sat: .4, val: .5, legend: ["crystals"] },
+  { id: "squirrel", name: "Squirrel", plan: "quad", hue: .03, sat: .75, val: .75, bw: .22, bh: .17, leg: .12, legW: .05, head: .15, snout: .35, headUp: .8, ears: "tuft", tail: "squirrel", belly: "white", legend: ["starTail"] },
+  { id: "toad", name: "Toad", plan: "toad", hue: .2, sat: .5, val: .55, legend: ["crown"] },
+  { id: "otter", name: "Otter", plan: "quad", hue: .07, sat: .55, val: .45, bw: .44, bh: .15, leg: .09, legW: .07, head: .13, snout: .4, headUp: .5, ears: "round", tail: "long", belly: "white", legend: ["ribbons"] },
+  { id: "lynx", name: "Lynx", plan: "quad", hue: .09, sat: .45, val: .75, bw: .3, bh: .19, leg: .26, legW: .07, head: .16, snout: .3, headUp: .8, ears: "tuft", tail: "short", spots: true, legend: ["mane"] },
+  { id: "elk", name: "Elk", plan: "quad", hue: .07, sat: .55, val: .38, bw: .38, bh: .23, leg: .38, legW: .06, head: .16, snout: .8, headUp: 1.2, ears: "point", tail: "short", antlers: "palm", legend: ["antlersGlow", "moss"] },
+  { id: "raven", name: "Raven", plan: "raven", hue: .68, sat: .35, val: .3, legend: ["wings", "eyesRing"] },
+  { id: "bat", name: "Bat", plan: "bat", hue: .78, sat: .25, val: .45, legend: ["wingsBig"] },
+  { id: "mole", name: "Mole", plan: "mole", hue: .7, sat: .15, val: .32, legend: ["crown"] },
+  { id: "beaver", name: "Beaver", plan: "quad", hue: .06, sat: .6, val: .45, bw: .36, bh: .22, leg: .1, legW: .07, head: .16, snout: .35, headUp: .4, ears: "small", tail: "flat", teeth: true, legend: ["moss"] },
+  { id: "stoat", name: "Stoat", plan: "quad", hue: .1, sat: .25, val: .92, bw: .42, bh: .11, leg: .11, legW: .05, head: .12, snout: .45, headUp: .7, ears: "round", tail: "long", legend: ["ribbons", "mane"] },
+  { id: "beetle", name: "Stag beetle", plan: "beetle", hue: .78, sat: .5, val: .35, legend: ["horn", "crystals"] },
+];
+const SPECIES_BY_ID = Object.fromEntries(SPECIES.map(s => [s.id, s]));
+
+function speciesColours(sp, st) {
+  const s = SPECIES_BY_ID[sp], v = st.cVal / .85, sat = st.cSat / .6;
+  const body = hsv2rgb(s.hue, s.sat * sat * st.sat, s.val * v);
+  const belly = s.belly === "white" || s.face === "badger" ? [236, 232, 222] : hsv2rgb(s.hue + .03, s.sat * .5 * sat, Math.min(1, s.val * v * 1.25));
+  const magic = hsv2rgb(st.magicHue + s.hue * .3, .55, 1);
+  return { [M.BODY]: body, [M.BODY2]: hsv2rgb(s.hue + .02, Math.min(1, s.sat * sat * 1.2 + .05), s.val * v * .62), [M.BELLY]: belly, [M.ACCENT]: s.id === "boar" || s.id === "stag" || s.id === "elk" ? [236, 226, 200] : hsv2rgb(s.hue + .05, s.sat * .6, Math.min(1, s.val * v * .5 + .25)), [M.MAGIC]: magic, [M.LEAF]: hsv2rgb(.3, .55, .55), [M.LEAF2]: hsv2rgb(.25, .5, .75), [M.EYE]: [24, 18, 30], [M.PUPIL]: [70, 40, 90], [M.GLINT]: [255, 255, 245] };
+}
+
+function critter(spId, level, frame, st) {
+  const S = SPECIES_BY_ID[spId] || SPECIES[0], r = rng(spId.length * 977 + level * 31 + spId.charCodeAt(0));
+  const size = Math.round(st.size * Math.pow(Math.sqrt(st.growth), level));
+  const W = Math.round(size * 1.9 + 14), H = Math.round(size * 1.7 + 12), sp = new Sprite(W, H);
+  const rd = st.round, young = [1, .55, .25][level], legend = level === 2, has = f => legend && S.legend.includes(f);
+  const cx = W / 2 - size * .1;
+  let head = null; // {x, y, r}
+  const lw = v => Math.max(1, v);
+
+  if (S.plan === "quad") {
+    const bw = size * S.bw * st.long * (1 - young * .12), bh = size * S.bh * (1 + young * .3), legLen = size * S.leg * st.legs * (1 - young * .35);
+    const cy = H - legLen - bh * .65 - 1, legW = lw(size * S.legW);
+    if (has("wings")) { for (let i = 0; i < 4; i++) sp.ellipse(cx - bw * (.1 + i * .25), cy - bh * (1.5 + i * .25) , bw * (.8 - i * .1), bh * (.7 - i * .08), M.MAGIC, { round: rd }); }
+    if (has("tails")) for (let i = 0; i < 5; i++) { const a = Math.PI * (1.05 + i * .13); sp.line(cx - bw * .9, cy - bh * .1, cx - bw * .9 + Math.cos(a) * bw * 1.2, cy - bh * .1 + Math.sin(a) * bw * 1.1, size * .1, size * .05, i % 2 ? M.MAGIC : M.BODY, rd); sp.ellipse(cx - bw * .9 + Math.cos(a) * bw * 1.2, cy - bh * .1 + Math.sin(a) * bw * 1.1, size * .06, size * .06, M.BELLY, { round: rd }); }
     // tail
-    if (P.tail === "up") sp.line(cx - bw * .9, cy - bh * .2, cx - bw * 1.35, cy - bh * (1 + frame * .15), Math.max(1, size * .07), Math.max(1, size * .03), M.BODY, rd);
-    else if (P.tail === "thin") sp.line(cx - bw * .95, cy - bh * .3, cx - bw * 1.15, cy + bh * .3, Math.max(1, size * .025), 1, M.BODY, rd);
-    else sp.ellipse(cx - bw * .95, cy - bh * .2, size * .05 + 1, size * .04 + 1, M.BODY, { round: rd });
+    const tx = cx - bw * .95, ty = cy - bh * .1;
+    if (S.tail === "up") sp.line(tx, ty, tx - bw * .45, ty - bh * (1.1 + frame * .1), lw(size * .08), lw(size * .03), M.BODY, rd);
+    else if (S.tail === "bushy" && !has("tails")) { sp.line(tx, ty, tx - bw * .7, ty + bh * .4, lw(size * .12), lw(size * .09), M.BODY, rd); sp.ellipse(tx - bw * .75, ty + bh * .45, size * .06 + 1, size * .05 + 1, M.BELLY, { round: rd }); }
+    else if (S.tail === "squirrel") { for (let i = 0; i < 7; i++) { const f = i / 6; sp.ellipse(tx - bw * (.3 + Math.sin(f * 2.6) * .5), ty - bh * (f * 2.4), size * (.09 + .04 * Math.sin(f * 3)) + 1, size * .08 + 1, has("starTail") && i % 2 ? M.MAGIC : M.BODY, { round: rd }); } }
+    else if (S.tail === "thin") sp.line(tx, ty - bh * .2, tx - bw * .25, ty + bh * .5, 1, 1, M.BODY, rd);
+    else if (S.tail === "long") sp.line(tx, ty, tx - bw * .9, ty + bh * .6, lw(size * .06), 1, M.BODY, rd);
+    else if (S.tail === "flat") sp.ellipse(tx - bw * .35, ty + bh * .55, bw * .4, bh * .2, M.BODY2, { round: rd });
+    else if (S.tail === "puff") sp.ellipse(tx, ty - bh * .2, size * .06 + 1, size * .06 + 1, M.BELLY, { round: rd });
+    else sp.ellipse(tx, ty - bh * .1, size * .04 + 1, size * .035 + 1, M.BODY, { round: rd });
+    // legs, two frames of walk
+    [cx - bw * .65, cx - bw * .4, cx + bw * .45, cx + bw * .7].forEach((lx, i) => {
+      const ph = (i + frame) % 2, swing = (ph ? 1 : -1) * size * .05, lift = ph ? lw(size * .025) : 0;
+      sp.line(lx, cy + bh * .2, lx + swing * .5, cy + bh * .2 + legLen * .55, legW * 1.3, legW, M.BODY, rd);
+      sp.line(lx + swing * .5, cy + bh * .2 + legLen * .55, lx + swing, H - 1 - lift, legW, legW * .85, i < 2 ? M.BODY : M.BODY, rd);
+    });
     sp.ellipse(cx, cy, bw, bh, M.BODY, { round: rd });
-    sp.ellipse(cx + bw * .45, cy - bh * .1, bw * .55, bh * 1.05, M.BODY, { round: rd }); // chest / shoulders
-    sp.ellipse(cx + bw * .1, cy + bh * .5, bw * .7, bh * .4, M.BELLY, { onlyOn: new Set([M.BODY]), round: rd });
-    if (arche === "boar" && level >= 1) for (let i = 0; i < 5 + level * 3; i++) { const f = i / (4 + level * 3); sp.tri([[cx - bw * .7 + f * bw * 1.4, cy - bh * .85], [cx - bw * .62 + f * bw * 1.4, cy - bh * (1.25 + .15 * level)], [cx - bw * .5 + f * bw * 1.4, cy - bh * .85]], M.BODY2); } // bristly ridge
-    hr = size * P.head * (1 + young * .6) * (st.head / .44);
-    hx = cx + bw * 1.05; hy = cy - bh * P.headUp;
+    sp.ellipse(cx + bw * .45, cy - bh * .08, bw * .55, bh * 1.05, M.BODY, { round: rd });
+    sp.ellipse(cx + bw * .1, cy + bh * .5, bw * .7, bh * .38, M.BELLY, { onlyOn: new Set([M.BODY]), round: rd });
+    if (S.ridge && level >= 1) for (let i = 0; i < 5 + level * 3; i++) { const f = i / (4 + level * 3); sp.tri([[cx - bw * .7 + f * bw * 1.4, cy - bh * .85], [cx - bw * .62 + f * bw * 1.4, cy - bh * (1.25 + .15 * level)], [cx - bw * .5 + f * bw * 1.4, cy - bh * .85]], M.BODY2); }
+    if (has("moss")) { for (let i = 0; i < 9; i++) sp.ellipse(cx - bw * .7 + i * bw * .18, cy - bh * (.95 + (i % 3) * .12), bw * .14, bh * .22, i % 3 ? M.LEAF : M.LEAF2, { round: rd, density: .9 }); for (let i = 0; i < 3; i++) { const x = cx - bw * .4 + i * bw * .4; sp.line(x, cy - bh, x, cy - bh * 2.1, 2, 1, M.BODY2, rd); sp.ellipse(x, cy - bh * 2.2, bw * .14, bh * .35, M.LEAF, { round: rd, density: .85 }); } }
+    if (has("crystals")) for (let i = 0; i < 6; i++) { const x = cx - bw * .6 + i * bw * .25; sp.tri([[x - size * .03, cy - bh * .8], [x, cy - bh * (1.4 + (i % 2) * .4)], [x + size * .03, cy - bh * .8]], M.MAGIC); }
+    if (has("ribbons")) for (let i = 0; i < 3; i++) for (let j = 0; j < 30; j++) { const f = j / 29; sp.put(cx - bw + f * bw * 2, cy - bh * (1.3 + i * .35) + Math.sin(f * 7 + i + frame) * bh * .25, M.MAGIC); }
+    // neck and head
+    const hr = size * S.head * (1 + young * .65) * (st.head / .44), hx = cx + bw * 1.05, hy = cy - bh * S.headUp;
+    if (has("mane")) for (let i = 0; i < 7; i++) sp.ellipse(hx - hr * (.9 + i * .35), hy + hr * (.1 + i * .25), hr * .6, hr * .45, M.MAGIC, { round: rd });
     sp.line(cx + bw * .6, cy - bh * .2, hx, hy, hr * 1.3, hr * 1.1, M.BODY, rd);
     sp.ellipse(hx, hy, hr, hr * .9, M.BODY, { round: rd });
-    const sl = hr * P.snout * (1 - young * .45);
-    sp.ellipse(hx + hr * .7 + sl * .4, hy + hr * .25, sl * .9 + 1, hr * .5, arche === "badger" ? M.BELLY : M.BODY, { round: rd });
-    sp.put(hx + hr * .7 + sl * 1.25, hy + hr * .15, M.EYE); // nose
-    if (arche === "badger") sp.line(hx - hr * .6, hy - hr * .7, hx + hr * .9, hy, Math.max(1, hr * .35), Math.max(1, hr * .2), M.BELLY, rd); // face stripe
-    if (arche === "boar" && level >= 1) { // tusks curl up from the snout
-      const t = Math.max(1, size * .025 * (level + .5));
-      sp.line(hx + hr * .9, hy + hr * .5, hx + hr * (1.1 + level * .3), hy - hr * (.2 + level * .5), t, t * .5, M.ACCENT, rd);
-      sp.line(hx + hr * (1.1 + level * .3), hy - hr * (.2 + level * .5), hx + hr * (.8 + level * .2), hy - hr * (.5 + level * .7), t * .5, 1, M.ACCENT, rd);
-    }
+    const sl = hr * S.snout * (1 - young * .45);
+    sp.ellipse(hx + hr * .7 + sl * .4, hy + hr * .25, sl * .9 + 1, hr * .48, S.face === "badger" ? M.BELLY : M.BODY, { round: rd });
+    sp.put(hx + hr * .7 + sl * 1.25, hy + hr * .12, M.EYE);
+    if (S.face === "badger") sp.line(hx - hr * .7, hy - hr * .75, hx + hr * .9, hy, lw(hr * .35), lw(hr * .2), M.BELLY, rd);
+    if (S.teeth) sp.line(hx + hr * .7 + sl * 1.05, hy + hr * .55, hx + hr * .7 + sl * 1.05, hy + hr * .55 + lw(size * .04), lw(size * .025), lw(size * .025), M.BELLY, rd);
+    if (S.tusks && level >= 1) { const t = lw(size * .025 * (level + .5)), up = has("tusksBig") ? 1.6 : .5; sp.line(hx + hr * .9, hy + hr * .5, hx + hr * (1.1 + up * .4), hy - hr * (.1 + up * .6), t, t * .6, M.ACCENT, rd); sp.line(hx + hr * (1.1 + up * .4), hy - hr * (.1 + up * .6), hx + hr * (.7 + up * .3), hy - hr * (.4 + up), t * .6, 1, M.ACCENT, rd); }
     // ears
-    if (P.ears === "point") { sp.tri([[hx - hr * .6, hy - hr * .3], [hx - hr * .55, hy - hr * (1.5 + young * .3)], [hx - hr * .05, hy - hr * .7]], M.BODY); sp.tri([[hx - hr * .2, hy - hr * .5], [hx + hr * .05, hy - hr * (1.6 + young * .3)], [hx + hr * .45, hy - hr * .6]], M.BODY); }
-    else if (P.ears === "round") sp.ellipse(hx - hr * .4, hy - hr * .7, hr * .3, hr * .3, M.BODY, { round: rd });
-    else sp.tri([[hx - hr * .5, hy - hr * .5], [hx - hr * .7, hy - hr * 1.2], [hx - hr * .1, hy - hr * .7]], M.BODY);
-    if (arche === "deer" && level >= 1) { // antlers
-      const t = Math.max(1, size * .02), top = hy - hr * (1.6 + level * .9);
-      sp.line(hx - hr * .2, hy - hr * .7, hx - hr * .5, top, t, t * .7, M.ACCENT, rd);
-      for (let k = 1; k <= level + 1; k++) { const y = hy - hr * .7 + (top - hy + hr * .7) * k / (level + 1.5); sp.line(hx - hr * .35, y, hx - hr * (1 + k * .2), y - hr * .4, t * .8, t * .5, M.ACCENT, rd); sp.line(hx - hr * .35, y, hx + hr * .2, y - hr * .5, t * .8, t * .5, M.ACCENT, rd); }
+    const E = S.ears;
+    if (E === "point" || E === "big" || E === "tuft") { const k = E === "big" ? 1.4 : 1; sp.tri([[hx - hr * .65, hy - hr * .3], [hx - hr * .55, hy - hr * (1.45 + young * .3) * k], [hx - hr * .05, hy - hr * .7]], M.BODY); sp.tri([[hx - hr * .2, hy - hr * .5], [hx + hr * .05, hy - hr * (1.55 + young * .3) * k], [hx + hr * .45, hy - hr * .6]], M.BODY); if (E === "tuft") sp.line(hx + hr * .05, hy - hr * 1.55, hx + hr * .1, hy - hr * 2, 1, 1, M.BODY2, rd); }
+    else if (E === "long") { sp.line(hx - hr * .3, hy - hr * .6, hx - hr * .8, hy - hr * 2.6, lw(hr * .45), lw(hr * .3), M.BODY, rd); sp.line(hx, hy - hr * .6, hx - hr * .2, hy - hr * 2.7, lw(hr * .45), lw(hr * .3), M.BODY, rd); }
+    else if (E === "round") sp.ellipse(hx - hr * .45, hy - hr * .72, hr * .3, hr * .3, M.BODY, { round: rd });
+    else sp.tri([[hx - hr * .5, hy - hr * .5], [hx - hr * .7, hy - hr * 1.15], [hx - hr * .1, hy - hr * .7]], M.BODY);
+    // antlers
+    const ant = S.antlers || (has("jackalope") ? "branch" : null);
+    if (ant && (level >= 1 || has("jackalope"))) {
+      const t = lw(size * .02), top = hy - hr * (1.6 + level * 1.1), mat = has("antlersGlow") ? M.MAGIC : M.ACCENT;
+      if (ant === "palm") { sp.line(hx - hr * .2, hy - hr * .7, hx - hr * .6, top + hr * .6, t, t, mat, rd); sp.ellipse(hx - hr * 1.1, top + hr * .4, hr * (.8 + level * .4), hr * (.35 + level * .1), mat, { round: rd }); for (let k = 0; k < 4 + level * 2; k++) sp.line(hx - hr * (.4 + k * .35), top + hr * .2, hx - hr * (.5 + k * .38), top - hr * .25, 1, 1, mat, rd); }
+      else { sp.line(hx - hr * .2, hy - hr * .7, hx - hr * .5, top, t, t * .7, mat, rd); for (let k = 1; k <= level + 1; k++) { const y = hy - hr * .7 + (top - hy + hr * .7) * k / (level + 1.5); sp.line(hx - hr * .35, y, hx - hr * (1 + k * .25), y - hr * .45, t * .8, t * .5, mat, rd); sp.line(hx - hr * .35, y, hx + hr * .3, y - hr * .55, t * .8, t * .5, mat, rd); } }
     }
-    if (arche === "canine" && level === 2 && st.horns > .3) for (let i = 0; i < 6; i++) sp.ellipse(hx - hr * (1 + i * .3), hy + hr * (.2 + i * .25), hr * .55, hr * .45, M.ACCENT, { round: rd, onlyOn: new Set([M.BODY, 0]) }); // a spirit mane
-  }
-  // markings: stripes or patches, bolder with size
-  if (size > 18 && st.fur > 0) {
-    const stripes = arche === "boar" || r() < .4;
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    head = { x: hx, y: hy, r: hr };
+    // markings
+    if (size > 16 && (S.stripes || S.spots)) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
       if (sp.get(x, y) !== M.BODY) continue;
-      const mark = stripes ? Math.sin((x + y * .45) / (size * .045)) > .85 - st.fur * .5 && y < cy + size * .05 : vnoise(x / (size * .08), y / (size * .08), furSeed) > 1 - st.fur * .4;
-      if (mark || hash2(x, y, furSeed) < st.fur * .08) { const i = (y * W + x) * 3; sp.put(x, y, M.BODY2, sp.n[i], sp.n[i + 1], sp.n[i + 2]); }
+      const mark = S.stripes ? Math.sin((x + y * .45) / (size * .045)) > .85 - st.fur * .5 && y < cy + bh * .3 : hash2(Math.floor(x / Math.max(2, size * .05)), Math.floor(y / Math.max(2, size * .05)), 9) < st.fur * .25 && y < cy + bh * .2;
+      if (mark) { const i = (y * W + x) * 3; sp.put(x, y, M.BODY2, sp.n[i], sp.n[i + 1], sp.n[i + 2]); }
+    }
+  } else if (S.plan === "owl" || S.plan === "raven") {
+    const owl = S.plan === "owl", bw = size * (owl ? .3 : .26), bh = size * (owl ? .42 : .3), cy = H - bh - size * .12 - 1;
+    if (has("wings")) for (const side of [-1, 1]) for (let i = 0; i < 4; i++) sp.ellipse(cx + side * bw * (1.1 + i * .3), cy - bh * (.3 + i * .15), bw * .5, bh * (.7 - i * .1), M.MAGIC, { round: rd });
+    for (const side of [-1, 1]) sp.line(cx + side * bw * .25, cy + bh * .8, cx + side * bw * .3 + frame * side, H - 1, lw(size * .04), lw(size * .03), M.ACCENT, rd);
+    if (!owl) sp.tri([[cx - bw * .6, cy + bh * .2], [cx - bw * 1.8, cy + bh * .7], [cx - bw * .4, cy + bh * .7]], M.BODY);
+    sp.ellipse(cx, cy, bw, bh, M.BODY, { round: rd });
+    sp.ellipse(cx + (owl ? 0 : bw * .2), cy + bh * .25, bw * .65, bh * .55, owl ? M.BELLY : M.BODY2, { onlyOn: new Set([M.BODY]), round: rd });
+    sp.ellipse(cx - bw * .5, cy, bw * .5, bh * .7, M.BODY2, { onlyOn: new Set([M.BODY]), round: rd }); // folded wing
+    const hr = size * (owl ? .24 : .17) * (1 + young * .5), hx = cx + (owl ? 0 : bw * .6), hy = cy - bh * .85;
+    sp.ellipse(hx, hy, hr, hr * .9, M.BODY, { round: rd });
+    if (owl) { sp.tri([[hx - hr * .9, hy - hr * .4], [hx - hr * 1.1, hy - hr * 1.4], [hx - hr * .4, hy - hr * .8]], M.BODY); sp.tri([[hx + hr * .9, hy - hr * .4], [hx + hr * 1.1, hy - hr * 1.4], [hx + hr * .4, hy - hr * .8]], M.BODY); sp.ellipse(hx, hy + hr * .1, hr * .75, hr * .6, M.BELLY, { round: rd, onlyOn: new Set([M.BODY]) }); }
+    sp.tri([[hx + hr * (owl ? -.1 : .7), hy], [hx + hr * (owl ? .1 : 1.7), hy + hr * (owl ? .5 : .2)], [hx + hr * (owl ? .1 : .7), hy + hr * .4]], M.ACCENT);
+    if (has("eyesRing")) for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; sp.put(cx + Math.cos(a) * bw * .5, cy + Math.sin(a) * bh * .4, M.MAGIC); sp.put(cx + Math.cos(a) * bw * .5 + 1, cy + Math.sin(a) * bh * .4, M.MAGIC); }
+    head = { x: owl ? hx - hr * .1 : hx, y: hy, r: hr, two: owl };
+  } else if (S.plan === "bat") {
+    const bw = size * .16, bh = size * .2, cy = H * .45 + (frame ? -size * .05 : size * .05), span = has("wingsBig") ? 1.6 : 1;
+    for (const side of [-1, 1]) for (let k = 0; k < 3; k++) { const ex = cx + side * size * (.25 + k * .17) * span, ey = cy - bh * (frame ? 1.2 : .2) + k * bh * .3; sp.tri([[cx + side * bw * .5, cy - bh * .3], [ex, ey], [cx + side * bw * .4 + side * k * size * .1 * span, cy + bh * .7]], has("wingsBig") && k === 1 ? M.MAGIC : M.BODY2); }
+    sp.ellipse(cx, cy, bw, bh, M.BODY, { round: rd });
+    const hr = size * .13 * (1 + young * .5), hx = cx, hy = cy - bh * .9;
+    sp.ellipse(hx, hy, hr, hr, M.BODY, { round: rd });
+    sp.tri([[hx - hr * .8, hy - hr * .3], [hx - hr * .9, hy - hr * 1.6], [hx - hr * .2, hy - hr * .8]], M.BODY); sp.tri([[hx + hr * .8, hy - hr * .3], [hx + hr * .9, hy - hr * 1.6], [hx + hr * .2, hy - hr * .8]], M.BODY);
+    head = { x: hx, y: hy, r: hr, two: true };
+  } else if (S.plan === "toad") {
+    const bw = size * .4, bh = size * .27, cy = H - bh - 1 - (frame ? size * .05 : 0);
+    for (const side of [-1, 1]) sp.ellipse(cx + side * bw * .7, H - size * .08, bw * .35, size * .08, M.BODY2, { round: rd });
+    sp.ellipse(cx, cy, bw, bh, M.BODY, { round: rd }); sp.ellipse(cx + bw * .2, cy + bh * .45, bw * .7, bh * .4, M.BELLY, { round: rd, onlyOn: new Set([M.BODY]) });
+    for (let i = 0; i < 12; i++) sp.ellipse(cx + uni(r, -bw * .7, bw * .5), cy - bh * uni(r, .1, .7), size * .025 + .6, size * .025 + .6, M.BODY2, { round: rd, onlyOn: new Set([M.BODY]) });
+    const hr = size * .17 * (1 + young * .3), hx = cx + bw * .55, hy = cy - bh * .55;
+    sp.ellipse(hx, hy, hr * 1.2, hr * .8, M.BODY, { round: rd });
+    sp.line(hx, hy + hr * .35, hx + hr * 1.1, hy + hr * .25, 1, 1, M.BODY2, rd);
+    if (has("crown")) for (let i = 0; i < 5; i++) sp.tri([[hx - hr * .9 + i * hr * .4, hy - hr * .6], [hx - hr * .7 + i * hr * .4, hy - hr * 1.6], [hx - hr * .5 + i * hr * .4, hy - hr * .6]], M.MAGIC);
+    head = { x: hx + hr * .2, y: hy - hr * .3, r: hr };
+  } else if (S.plan === "hedgehog") {
+    const bw = size * .36, bh = size * .24, cy = H - bh - size * .06 - 1;
+    for (let i = 0; i < 4; i++) sp.line(cx - bw * .5 + i * bw * .33, cy + bh * .5, cx - bw * .5 + i * bw * .33 + ((i + frame) % 2 ? 1 : -1), H - 1, lw(size * .04), lw(size * .03), M.BELLY, rd);
+    for (let i = 0; i < 26 + level * 20; i++) { const a = Math.PI * (1.02 + r() * .96), d = uni(r, .7, 1.25); const x0 = cx + Math.cos(a) * bw * .6, y0 = cy + Math.sin(a) * bh * .6; sp.line(x0, y0, cx + Math.cos(a) * bw * d * 1.25, cy + Math.sin(a) * bh * d * 1.4, lw(size * .04), 1, has("crystals") && i % 4 === 0 ? M.MAGIC : M.BODY2, rd); }
+    sp.ellipse(cx, cy, bw, bh, M.BODY, { round: rd, onlyOn: new Set([0, M.BELLY]) });
+    const hr = size * .14 * (1 + young * .4), hx = cx + bw * .85, hy = cy + bh * .15;
+    sp.ellipse(hx, hy, hr, hr * .8, M.BELLY, { round: rd }); sp.ellipse(hx + hr * .9, hy + hr * .2, hr * .45, hr * .3, M.BELLY, { round: rd }); sp.put(hx + hr * 1.35, hy + hr * .1, M.EYE);
+    head = { x: hx, y: hy, r: hr };
+  } else if (S.plan === "mole") {
+    const bw = size * .36, bh = size * .24, cy = H - bh - 1;
+    sp.ellipse(cx, cy, bw, bh, M.BODY, { round: rd });
+    const hx = cx + bw * .85, hy = cy + bh * .1, hr = size * .12;
+    sp.ellipse(hx, hy, hr * 1.1, hr * .7, M.BODY, { round: rd }); sp.ellipse(hx + hr * 1.1, hy + hr * .1, hr * .4, hr * .3, M.ACCENT, { round: rd });
+    for (let k = 0; k < 4; k++) sp.line(hx - hr * .2 + k * 1.2, cy + bh * .6, hx + hr * .2 + k * 1.5, H - 1 - (frame && k % 2 ? 1 : 0), 1, 1, M.ACCENT, rd); // digging claws
+    if (has("crown")) for (let i = 0; i < 5; i++) sp.line(cx - bw * .6 + i * bw * .3, cy - bh * .8, cx - bw * .7 + i * bw * .33, cy - bh * (1.6 + (i % 2) * .5), lw(size * .03), 1, M.MAGIC, rd);
+    head = { x: hx, y: hy - hr * .2, r: hr * .6, tiny: true };
+  } else if (S.plan === "beetle") {
+    const bw = size * .38, bh = size * .22, cy = H - bh - size * .1 - 1;
+    for (let i = 0; i < 3; i++) for (const side of [0, 1]) { const lx = cx - bw * .5 + i * bw * .5, ph = (i + side + frame) % 2; sp.line(lx, cy + bh * .4, lx + (side ? 1 : -1) * size * .07 + (ph ? 1 : 0), H - 1, lw(size * .025), 1, M.BODY2, rd); }
+    sp.ellipse(cx, cy, bw, bh, M.BODY, { round: rd }); sp.line(cx - bw, cy - bh * .1, cx + bw * .6, cy - bh * .1, 1, 1, M.BODY2, rd);
+    const hx = cx + bw * .95, hy = cy + bh * .05, hr = size * .1;
+    sp.ellipse(hx, hy, hr, hr * .8, M.BODY2, { round: rd });
+    const mlen = size * (.15 + level * .12) * (has("horn") ? 1.5 : 1);
+    for (const s2 of [-1, 1]) sp.line(hx + hr * .6, hy + s2 * hr * .2, hx + hr * .6 + mlen, hy - mlen * .5 + s2 * hr * .3, lw(size * .035), 1, has("horn") ? M.MAGIC : M.ACCENT, rd);
+    if (has("crystals")) for (let i = 0; i < 5; i++) sp.ellipse(cx - bw * .6 + i * bw * .3, cy - bh * .4, size * .03 + 1, size * .03 + 1, M.MAGIC, { round: rd });
+    head = { x: hx, y: hy - hr * .3, r: hr * .7, tiny: true };
+  }
+  // eyes: big and glinting on babies
+  if (head) {
+    const e = head.tiny ? 1 : level === 0 ? Math.max(1, Math.round(2 * st.eye)) : Math.max(1, Math.round(size * .045 * st.eye));
+    const spots = head.two ? [[head.x - head.r * .4, head.y - head.r * .1], [head.x + head.r * .4, head.y - head.r * .1]] : [[head.x + head.r * .3, head.y - head.r * .25]];
+    for (const [x0, y0] of spots) {
+      const ex = Math.round(x0), ey = Math.round(y0);
+      for (let dx = 0; dx < e; dx++) for (let dy = 0; dy < e; dy++) sp.put(ex - dx, ey + dy, M.EYE);
+      if (e >= 3) for (let dx = 0; dx < Math.ceil(e / 2); dx++) for (let dy = 0; dy < Math.ceil(e / 2); dy++) sp.put(ex - e + 1 + dx, ey + e - 1 - dy, M.PUPIL);
+      if (e >= 2) sp.put(ex, ey, M.GLINT);
     }
   }
-  // eye: big and glinting on babies
-  const e = level === 0 ? Math.max(1, Math.round(2 * st.eye)) : Math.max(1, Math.round(size * .045 * st.eye));
-  const ex = Math.round(hx + hr * .3), ey = Math.round(hy - hr * .25);
-  for (let dx = 0; dx < e; dx++) for (let dy = 0; dy < e; dy++) sp.put(ex - dx, ey + dy, M.EYE);
-  if (e >= 3) for (let dx = 0; dx < Math.ceil(e / 2); dx++) for (let dy = 0; dy < Math.ceil(e / 2); dy++) sp.put(ex - e + 1 + dx, ey + e - 1 - dy, M.PUPIL);
-  if (e >= 2) sp.put(ex, ey, M.GLINT);
   return sp;
 }
 
-function creatureColours(seed, st) {
-  const h = rng(seed * 31 + 7)();
-  return { [M.BODY]: hsv2rgb(h, st.cSat * st.sat, st.cVal), [M.BODY2]: hsv2rgb(h + .03, Math.min(1, st.cSat * st.sat * 1.2), st.cVal * .72), [M.BELLY]: hsv2rgb(h + .08, st.cSat * .55, Math.min(1, st.cVal + .12)), [M.ACCENT]: hsv2rgb(h + .45, Math.min(1, st.cSat + .15), Math.min(1, st.cVal + .08)), [M.EYE]: [24, 18, 30], [M.PUPIL]: [70, 40, 90], [M.GLINT]: [255, 255, 245] };
-}
-const EMISSIVE = new Set([M.GLINT, M.FLOWER]);
+const EMISSIVE = new Set([M.GLINT, M.FLOWER, M.MAGIC]);
 
 // ================= the witch (hand-drawn) =================
 const WITCH_ROWS = [
@@ -550,40 +643,53 @@ function splitTree(t) { // bottom = trunk below the crown line; top = everything
 // Each area has its own leaf colour and its own kind of tree; "Difference between areas" sets how far apart.
 function areaStyle(st, world, area) {
   const r = rng(world.forestSeed * 31 + area * 977 + 5), d = st.areaContrast;
-  const s = { ...st, leafHue: st.leafHue + (area ? 1 : -1) * d * uni(r, .12, .3) };
+  const s = { ...st, leafHue: st.leafHue + [0, 1, -1][area] * d * uni(r, .12, .3) };
   const weights = TREE_TYPES.map(([k]) => k), fav = pick(r, weights);
   for (const k of weights) s[k] = k === fav ? st[k] + d * 2 : st[k] * (1 - d * .8);
   return s;
 }
 function buildAssets(st, world) {
   const r = rng(world.forestSeed), trees = [];
-  for (let i = 0; i < 8; i++) {
-    const area = i < 4 ? 0 : 1, ar = rng(world.forestSeed * 31 + area), ast = areaStyle(st, world, area);
-    const tr = rng(world.forestSeed * 13 + i), f = chooseType(ar, ast), t = f(tr, ast, st.treeSize * uni(tr, .85, 1.15)), col = treeColours(tr, ast, f), parts = splitTree(t);
+  for (let i = 0; i < 12; i++) {
+    const area = Math.floor(i / 4), ar = rng(world.forestSeed * 31 + area), ast = areaStyle(st, world, area);
+    const tr = rng(world.forestSeed * 13 + i), f = chooseType(ar, ast), t = f(tr, ast, st.treeSize * K * uni(tr, .85, 1.15)), col = treeColours(tr, ast, f), parts = splitTree(t);
     trees.push({ whole: bake(t.sp, col, st), top: bake(parts.top, col, st), bot: bake(parts.bot, col, st) });
   }
   const bushes = [];
-  for (let i = 0; i < 8; i++) { const b = bush(rng(world.forestSeed * 7 + i * 3), areaStyle(st, world, i < 4 ? 0 : 1)); bushes.push(bake(b.sp, b.colours, st)); }
-  const creatures = world.kinds.map(kind => [0, 1, 2].map(level => [0, 1].map(frame => bake(critter(kind, level, frame, st), creatureColours(kind, st), st, st.cOutline))));
+  for (let i = 0; i < 12; i++) { const b = bush(rng(world.forestSeed * 7 + i * 3), { ...areaStyle(st, world, Math.floor(i / 4)), bushSize: st.bushSize * K }); bushes.push(bake(b.sp, b.colours, st)); }
+  const creatures = world.kinds.map(kind => [0, 1, 2].map(level => [0, 1].map(frame => bake(critter(kind, level, frame, st), speciesColours(kind, st), st, st.cOutline))));
   return { trees, bushes, creatures, witch: bake(witchSprite(), witchColours(st), st) };
 }
 
 // ================= scene layout =================
-const W = 448, H = 252;
+let W = 299, H = 168, K = 2 / 3; // logical resolution; K scales world sizes to the pixel size
+function setRes(p) { W = Math.round(896 / p); H = Math.round(504 / p); K = 2 / p; }
+setRes(3);
 function layout(world, st) {
-  const r = rng(world.forestSeed * 7 + 3), trees = [], bushes = [];
-  const dcx = W / 2, dcy = H * .66;
-  for (let i = 0; i < 400 && trees.length < st.trees; i++) {
-    const x = uni(r, -20, W + 20), y = uni(r, 40, H + 30);
-    if (Math.hypot((x - dcx) / 1.7, y - dcy) < 58) continue;
-    if (trees.some(t => Math.hypot(t.x - x, (t.y - y) * 1.8) < 46)) continue; // sparse: keep trees apart
-    trees.push({ x, y, t: (x < W / 2 + Math.sin(y / 40) * 40 ? 0 : 4) + Math.floor(r() * 4) });
+  const r = rng(world.forestSeed * 7 + 3);
+  const areas = [[W * .5, H * .62], [W * 1.3, H * .2], [-W * .35, H * 1.05]];
+  // t: 0 at an area's centre, 1 on its border with the next area
+  const areaAt = (x, y) => {
+    const d = areas.map(([ax, ay]) => Math.hypot(x - ax, (y - ay) * 1.7)).map((v, i) => [v, i]).sort((p, q) => p[0] - q[0]);
+    return { area: d[0][1], t: Math.min(1, 2 * d[0][0] / (d[0][0] + d[1][0])) };
+  };
+  const wantTree = (x, y) => { const { t } = areaAt(x, y), c = st.clearing * .75; return Math.pow(Math.max(0, (t - c) / (1 - c)), 1.6) * st.trees * .7; };
+  const trees = [], bushes = [], crownW = 40 * K * st.crownWidth * st.treeSize;
+  for (let i = 0; i < 1500 && trees.length < 70; i++) {
+    const x = uni(r, -crownW, W + crownW), y = uni(r, 20 * K, H + 60 * K);
+    const crownY = y - 70 * K * st.treeSize; // a crown must not cover a clearing either
+    if (r() > Math.min(wantTree(x, y), wantTree(x, crownY), wantTree(x - crownW * .7, crownY), wantTree(x + crownW * .7, crownY)) * 1.3) continue;
+    if (trees.some(t => Math.hypot((t.x - x) / (crownW * 1.1), (t.y - y) / (34 * K)) < 1)) continue;
+    trees.push({ x, y, t: areaAt(x, y).area * 4 + Math.floor(r() * 4) });
   }
-  for (let i = 0; i < st.bushes; i++) { const x = uni(r, -10, W + 10), y = uni(r, 30, H + 8); if (Math.hypot((x - dcx) / 1.7, y - dcy) < 40) continue; bushes.push({ x, y, b: (x < W / 2 + Math.sin(y / 40) * 40 ? 0 : 4) + Math.floor(r() * 4) }); }
-  const crit = [];
-  const plan = [[0, 0], [1, 0], [2, 0], [3, 0], [4, 1], [5, 1], [0, 2]];
-  plan.forEach(([kind, level], i) => crit.push({ kind: kind % world.kinds.length, level, x: uni(r, 40, W - 40), y: level === 2 ? H * .42 : uni(r, H * .45, H - 6), dir: r() < .5 ? -1 : 1, speed: level === 2 ? 4 : uni(r, 4, 10) }));
-  return { trees, bushes, crit, dcx, dcy };
+  for (let i = 0; i < st.bushes * 3 && bushes.length < st.bushes; i++) {
+    const x = uni(r, -10, W + 10), y = uni(r, 10, H + 6);
+    if (r() > .25 + wantTree(x, y)) continue;
+    bushes.push({ x, y, b: areaAt(x, y).area * 4 + Math.floor(r() * 4) });
+  }
+  const [dcx, dcy] = areas[0], crit = [];
+  [[0, 0], [1, 0], [2, 0], [3, 0], [4, 1], [5, 1], [0, 2]].forEach(([kind, level]) => crit.push({ kind: kind % world.kinds.length, level, x: uni(r, 40 * K, W - 40 * K), y: level === 2 ? H * .4 : uni(r, H * .5, H - 4), dir: r() < .5 ? -1 : 1, speed: (level === 2 ? 4 : uni(r, 4, 10)) * K }));
+  return { trees, bushes, crit, dcx, dcy, areaAt };
 }
 
 // ================= deferred rendering =================
@@ -595,17 +701,20 @@ function makeTarget(w, h) {
   return { A, N, a: A.getContext("2d", { willReadFrequently: true }), n: N.getContext("2d", { willReadFrequently: true }), w, h };
 }
 function groundAlbedo(st, lay) {
-  const key = JSON.stringify([st.groundHue, st.groundVal, st.sat, lay.dcx]);
+  const key = JSON.stringify([st.groundHue, st.groundVal, st.sat, st.areaContrast, st.clearing, W, lay.dcx, lay.trees.length]);
   if (groundAlbedo.cache.has(key)) return groundAlbedo.cache.get(key);
   const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
   const img = g.createImageData(W, H), base = [hsv2rgb(st.groundHue, .5 * st.sat, st.groundVal), hsv2rgb(st.groundHue + .04, .55 * st.sat, st.groundVal * .8), hsv2rgb(st.groundHue - .03, .45 * st.sat, st.groundVal * 1.15), hsv2rgb(st.groundHue + .1, .3 * st.sat, st.groundVal * .9)];
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const v = vnoise(x / 9, y / 6, 3) * .7 + vnoise(x / 2.5, y / 2, 4) * .3;
-    img.data.set([...base[v < .38 ? 1 : v > .66 ? 2 : (hash2(x, y, 1) < .04 ? 3 : 0)], 255], (y * W + x) * 4);
+    const v = vnoise(x / (9 * K), y / (6 * K), 3) * .7 + vnoise(x / (2.5 * K), y / (2 * K), 4) * .3;
+    const { area, t } = lay.areaAt(x, y), lift = 1 + Math.max(0, .55 - t) * .9, tint = [0, .04, -.04][area] * st.areaContrast;
+    const c = base[v < .38 ? 1 : v > .66 ? 2 : (hash2(x, y, 1) < .04 ? 3 : 0)];
+    const [cr, cg, cb] = tint ? hsv2rgb(st.groundHue + tint, .5 * st.sat, st.groundVal * (c === base[1] ? .8 : c === base[2] ? 1.15 : 1)) : c;
+    img.data.set([cr * lift, cg * lift, cb * lift, 255], (y * W + x) * 4);
   }
   // the ritual circle / dancefloor: a worn ring of pale stones
-  for (let a = 0; a < 96; a++) { const an = a / 96 * Math.PI * 2, x = Math.round(lay.dcx + Math.cos(an) * 44), y = Math.round(lay.dcy + Math.sin(an) * 17); img.data.set([150, 150, 135, 255], (y * W + x) * 4); }
-  for (let a = 0; a < 7; a++) { const an = a / 7 * Math.PI * 2 + .2, x = Math.round(lay.dcx + Math.cos(an) * 34), y = Math.round(lay.dcy + Math.sin(an) * 12); for (const [dx, dy] of [[0, 0], [1, 0], [0, -1], [1, -1]]) img.data.set([175, 170, 160, 255], ((y + dy) * W + x + dx) * 4); }
+  for (let a = 0; a < 96; a++) { const an = a / 96 * Math.PI * 2, x = Math.round(lay.dcx + Math.cos(an) * 44 * K), y = Math.round(lay.dcy + Math.sin(an) * 17 * K); img.data.set([150, 150, 135, 255], (y * W + x) * 4); }
+  for (let a = 0; a < 7; a++) { const an = a / 7 * Math.PI * 2 + .2, x = Math.round(lay.dcx + Math.cos(an) * 34 * K), y = Math.round(lay.dcy + Math.sin(an) * 12 * K); for (const [dx, dy] of [[0, 0], [1, 0], [0, -1], [1, -1]]) img.data.set([175, 170, 160, 255], ((y + dy) * W + x + dx) * 4); }
   g.putImageData(img, 0, 0);
   groundAlbedo.cache.set(key, c);
   if (groundAlbedo.cache.size > 30) groundAlbedo.cache.clear();
@@ -614,11 +723,11 @@ function groundAlbedo(st, lay) {
 groundAlbedo.cache = new Map();
 
 function lightsFor(st, t, wx, wy, party, lay) {
-  const glow = hsv2rgb(st.glowHue, st.glowSat, 1), L = [{ x: wx, y: wy + 6, z: 16, rgb: glow, power: st.glowPower, R: st.glowRadius }];
+  const glow = hsv2rgb(st.glowHue, st.glowSat, 1), L = [{ x: wx, y: wy + 6, z: 16 * K, rgb: glow, power: st.glowPower, R: st.glowRadius * K }];
   if (party) {
     const beat = Math.floor(t * 2) % 2;
-    L.push({ x: lay.dcx - 52, y: lay.dcy - 8, z: 14, rgb: [255, 70, 200], power: beat ? 1.6 : 1.1, R: 110 });
-    L.push({ x: lay.dcx + 56, y: lay.dcy + 2, z: 14, rgb: [70, 220, 255], power: beat ? 1.1 : 1.6, R: 110 });
+    L.push({ x: lay.dcx - 52 * K, y: lay.dcy - 8 * K, z: 14 * K, rgb: [255, 70, 200], power: beat ? 1.6 : 1.1, R: 110 * K });
+    L.push({ x: lay.dcx + 56 * K, y: lay.dcy + 2 * K, z: 14 * K, rgb: [70, 220, 255], power: beat ? 1.1 : 1.6, R: 110 * K });
   }
   return L;
 }
@@ -641,7 +750,7 @@ function drawScene(tgt, out, st, assets, lay, t, opts) {
     items.push({ y: opts.treetop ? c.y + 1000 : c.y, d: () => put(b, x - b.w / 2, c.y - b.h, !right) });
   }
   items.sort((p, q) => p.y - q.y).forEach(i => i.d());
-  const wx = W / 2 + Math.sin(t * .6) * 120, wy = H * .52 + Math.sin(t * 1.3) * 5 - (opts.treetop ? 40 : 0);
+  const wx = W / 2 + Math.sin(t * .6) * 120 * K, wy = H * .52 + Math.sin(t * 1.3) * 5 * K - (opts.treetop ? 40 * K : 0);
   shade(tgt, out, st, lightsFor(st, t, wx, wy, opts.party, lay), opts.rect);
   // the witch glows, so she is drawn after lighting, at full colour
   const wb = assets.witch, o = out.getContext("2d"), r = opts.rect || [0, 0];
@@ -664,7 +773,7 @@ function shade(tgt, out, st, lights, rect) {
     let lr = amb[0], lg = amb[1], lb = amb[2];
     const md = Math.max(0, (nx * ml[0] + ny * ml[1] + nz * ml[2]) / mll), ms = step(md, x, y);
     lr += moon[0] * ms; lg += moon[1] * ms; lb += moon[2] * ms;
-    if (st.shafts > 0) { const sh = ((x + rx) + (y + ry) * .9) % 150; if (sh < 34 && ((x + y) & 1 || sh > 4 && sh < 30)) { const k = st.shafts * .5; lr += moon[0] / Math.max(.01, st.moon) * k * .5; lg += moon[1] / Math.max(.01, st.moon) * k * .5; lb += moon[2] / Math.max(.01, st.moon) * k * .5; } }
+    if (st.shafts > 0) { const sh = ((x + rx) + (y + ry) * .9) % (150 * K); if (sh < 34 * K && ((x + y) & 1 || sh > 4 * K && sh < 30 * K)) { const k = st.shafts * .5; lr += moon[0] / Math.max(.01, st.moon) * k * .5; lg += moon[1] / Math.max(.01, st.moon) * k * .5; lb += moon[2] / Math.max(.01, st.moon) * k * .5; } }
     const gx = x + rx, gy = y + ry;
     for (const L of lights) {
       const vx = L.x - gx, vy = L.y - gy, d = Math.hypot(vx, vy, L.z);
@@ -703,16 +812,39 @@ function drawSheet(canvas, st, assets) {
 }
 function shadeAny(tgt, out, st, w, h) { shade(tgt, out, st, [], [0, 0, w, h]); }
 
+// ================= bestiary: every species at every level, studio-lit =================
+let bestiaryTimer;
+const FEATURE_NAMES = { wings: "spirit wings", mane: "a glowing mane", tails: "many tails", crystals: "crystals", tusksBig: "great tusks", antlersGlow: "glowing antlers", jackalope: "antlers", eyesRing: "a ring of eyes", moss: "a little forest on its back", starTail: "a starry tail", crown: "a crown", ribbons: "light ribbons", wingsBig: "huge glowing wings", horn: "a glowing horn" };
+function renderBestiary() {
+  clearTimeout(bestiaryTimer);
+  bestiaryTimer = setTimeout(() => {
+    const host = document.getElementById("bestiary"); if (!host) return; host.textContent = "";
+    const studio = { ...current, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 };
+    for (const S of SPECIES) {
+      const lv = [0, 1, 2].map(l => bake(critter(S.id, l, 0, current), speciesColours(S.id, current), current, current.cOutline));
+      const b1 = bake(critter(S.id, 0, 1, current), speciesColours(S.id, current), current, current.cOutline);
+      const w = lv[2].w + lv[1].w + lv[0].w + b1.w + 18, h = Math.max(lv[2].h, 20) + 6, tgt = makeTarget(w, h);
+      tgt.a.fillStyle = `rgb(${hsv2rgb(current.groundHue, .4, current.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+      let x = 4; for (const b of [lv[2], lv[1], lv[0], b1]) { tgt.a.drawImage(b.A, x, h - 3 - b.h); tgt.n.drawImage(b.N, x, h - 3 - b.h); x += b.w + 4; }
+      const card = document.createElement("figure"); card.className = "beast";
+      const c = document.createElement("canvas"); c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
+      const cap = document.createElement("figcaption"); cap.innerHTML = `<b></b><span></span>`; cap.querySelector("b").textContent = S.name; cap.querySelector("span").textContent = "Legend grows " + S.legend.map(f => FEATURE_NAMES[f] || f).join(" and ") + ". Shown: legend, young, baby (two walk frames).";
+      card.append(c, cap); host.append(card);
+    }
+  }, 250);
+}
+
 // ================= app =================
 const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
-let world = store.get("witch-art-world-2") || { kinds: [11, 23, 42, 7, 64, 5], forestSeed: 3 };
-let current = { ...defaultStyle(), ...(store.get("witch-art-style-2") || {}) };
-let history = store.get("witch-art-history-2") || [];
+let world = store.get("witch-art-world-3") || { kinds: ["wolf", "fox", "boar", "badger", "stag", "owl"], forestSeed: 3 };
+if (!world.kinds.every(k => SPECIES_BY_ID[k])) world.kinds = ["wolf", "fox", "boar", "badger", "stag", "owl"];
+let current = { ...defaultStyle(), ...(store.get("witch-art-style-3") || {}) };
+let history = store.get("witch-art-history-3") || [];
 let varySeed = 1, variants = [], assetsCurrent, layoutCurrent;
 const varyGroups = new Set(GROUPS);
-const sceneCanvas = document.getElementById("scene"), sceneTarget = makeTarget(W, H);
-sceneCanvas.width = W; sceneCanvas.height = H;
-const CROP = [W / 4, H / 4 - 8, W / 2, H / 2];
+const sceneCanvas = document.getElementById("scene");
+let sceneTarget, CROP;
+function applyRes(p) { setRes(p); sceneTarget = makeTarget(W, H); sceneCanvas.width = W; sceneCanvas.height = H; CROP = [Math.round(W / 4), Math.round(H / 4 - 6 * K), Math.round(W / 2), Math.round(H / 2)]; }
 
 function makeVariants() {
   variants = [];
@@ -727,11 +859,12 @@ function makeVariants() {
   }
 }
 function setCurrent(st, { record = true } = {}) {
-  current = st; store.set("witch-art-style-2", current);
-  if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-2", history); }
+  current = st; store.set("witch-art-style-3", current);
+  if (!sceneTarget || Math.round(896 / st.pixel) !== W) applyRes(st.pixel);
+  if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory();
+  syncKnobs(); renderHistory(); renderBestiary();
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
@@ -739,10 +872,11 @@ function renderHistory() {
   const el = document.getElementById("history"); el.textContent = "";
   if (!history.length) { el.innerHTML = '<p class="note">Each style you pick is kept here; tap one to go back to it.</p>'; return; }
   const tgt = makeTarget(W, H);
-  history.slice(-10).reverse().forEach(st => {
+  history.slice(-10).filter(h => h.pixel === current.pixel).reverse().forEach(st => {
     const b = document.createElement("button"); b.type = "button"; b.title = "Go back to this style"; if (st === current) b.className = "current";
     const c = document.createElement("canvas"); c.width = W; c.height = H;
     drawScene(tgt, c, st, buildAssets(st, world), layout(world, st), 2, { party: false, treetop: false });
+    c.style.imageRendering = "pixelated";
     b.append(c); b.addEventListener("click", () => { setCurrent(st, { record: false }); makeVariants(); }); el.append(b);
   });
 }
@@ -763,7 +897,7 @@ function buildKnobs() {
       input.id = id;
       let pending;
       input.addEventListener("input", () => { out.textContent = fmt(k, input.value); clearTimeout(pending); pending = setTimeout(() => { setCurrent({ ...current, [k.k]: k.options ? input.value : +input.value }, { record: false }); makeVariants(); }, 150); });
-      input.addEventListener("change", () => { history.push(current); store.set("witch-art-history-2", history); renderHistory(); });
+      input.addEventListener("change", () => { history.push(current); store.set("witch-art-history-3", history); renderHistory(); });
       wrap.append(lab, out, input); fs.append(wrap); knobInputs[k.k] = { input, out, k };
     }
     host.append(fs);
@@ -798,7 +932,7 @@ function renderSaved(docs) {
     const data = d.data(), row = document.createElement("div"); row.className = "saved-item";
     const name = document.createElement("span"); name.textContent = data.name || d.id;
     const btn = document.createElement("button"); btn.className = "btn"; btn.type = "button"; btn.textContent = "Load";
-    btn.addEventListener("click", () => { if (data.kinds) world.kinds = data.kinds; if (data.forestSeed) world.forestSeed = data.forestSeed; setCurrent({ ...defaultStyle(), ...data.style }); makeVariants(); toast(`Loaded “${data.name}”.`); });
+    btn.addEventListener("click", () => { if (data.kinds && data.kinds.every(k => SPECIES_BY_ID[k])) world.kinds = data.kinds; if (data.forestSeed) world.forestSeed = data.forestSeed; setCurrent({ ...defaultStyle(), ...data.style }); makeVariants(); toast(`Loaded “${data.name}”.`); });
     row.append(name, btn); el.append(row);
   }
 }
@@ -813,8 +947,8 @@ document.getElementById("save").addEventListener("click", async () => {
 document.getElementById("copy").addEventListener("click", async () => { const ta = document.getElementById("json"); try { await navigator.clipboard.writeText(ta.value); toast("Style file copied."); } catch { ta.select(); toast("Selected; copy it with your keyboard."); } });
 document.getElementById("reroll").addEventListener("click", () => { varySeed++; makeVariants(); });
 document.getElementById("strength").addEventListener("change", () => { varySeed++; makeVariants(); });
-document.getElementById("reseed").addEventListener("click", () => { const r = rng(Date.now() & 0xffff); world = { ...world, kinds: world.kinds.map(() => Math.floor(r() * 9999)) }; store.set("witch-art-world-2", world); setCurrent(current, { record: false }); makeVariants(); });
-document.getElementById("reforest").addEventListener("click", () => { world = { ...world, forestSeed: Math.floor(Math.random() * 9999) }; store.set("witch-art-world-2", world); setCurrent(current, { record: false }); makeVariants(); });
+document.getElementById("reseed").addEventListener("click", () => { const ids = SPECIES.map(s => s.id).sort(() => Math.random() - .5); world = { ...world, kinds: ids.slice(0, 6) }; store.set("witch-art-world-3", world); setCurrent(current, { record: false }); makeVariants(); });
+document.getElementById("reforest").addEventListener("click", () => { world = { ...world, forestSeed: Math.floor(Math.random() * 9999) }; store.set("witch-art-world-3", world); setCurrent(current, { record: false }); makeVariants(); });
 
 buildKnobs();
 setCurrent(current, { record: history.length === 0 });
