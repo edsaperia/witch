@@ -8,13 +8,14 @@
 
 import { defaultCanvas, rng, uni, pick, gauss, hash2, vnoise, hsv2rgb, M, EMISSIVE, Sprite, spline, band, tufts, polyMask, edgeVectors, rot, lerp2, bake } from "./core.js";
 import { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree } from "./trees.js";
-import { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES } from "./witch.js";
+import { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT } from "./witch.js";
+import { treehouseSprite, treehouseColours } from "./treehouse.js";
 import { NEW_SET_PIECES, SET_PIECE_KINDS } from "./setpieces.js";
-import { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone, areaTreeVariants, TREE_HEIGHT_CLASSES, ART_PIXELS_PER_METRE } from "./areas.js";
+import { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone, areaTreeVariants, TREE_HEIGHT_CLASSES, ART_PIXELS_PER_METRE, AREA_LAYOUTS, layoutProblems, LAYOUT_PATTERNS, LAYOUT_TERRAIN, LAYOUT_DECOR } from "./areas.js";
 import { SPECIES, SPECIES_BY_ID, FEATURE_NAMES, LEVELS, speciesColours, critter, levelHeight, partyGear, HAT_COLOURWAYS, SHOE_STYLES, GLASSES_STYLES } from "./creatures.js";
-export { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES };
+export { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, treehouseSprite, treehouseColours };
 export { NEW_SET_PIECES, SET_PIECE_KINDS };
-export { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone, areaTreeVariants, TREE_HEIGHT_CLASSES, ART_PIXELS_PER_METRE };
+export { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone, areaTreeVariants, TREE_HEIGHT_CLASSES, ART_PIXELS_PER_METRE, AREA_LAYOUTS, layoutProblems, LAYOUT_PATTERNS, LAYOUT_TERRAIN, LAYOUT_DECOR };
 import { SIGILS, SIGIL_IDS, SIGIL_STROKE, SIGIL_DOT, SIGIL_DRAW_TIME, GROUND_PITCH, NEON, SIGIL_NEON, SIGIL_LEVELS, sigilColour, sigilFrame, sigilStrokes, sigilMark, sigilSVG, drawSigil, sigilHit, sigilGlyph, sigilField, groundSigil, floatSigil, floatSize, paintSigilField, SigilStack, STACK_TUNING, SIGIL_TRANSITION_TIME, liftOff, setDown } from "./sigils.js";
 export { SIGILS, SIGIL_IDS, SIGIL_STROKE, SIGIL_DOT, SIGIL_DRAW_TIME, GROUND_PITCH, NEON, SIGIL_NEON, SIGIL_LEVELS, sigilColour, sigilFrame, sigilStrokes, sigilMark, sigilSVG, drawSigil, sigilHit, sigilGlyph, sigilField, groundSigil, floatSigil, floatSize, paintSigilField, SigilStack, STACK_TUNING, SIGIL_TRANSITION_TIME, liftOff, setDown };
 import { SOUNDSYSTEMS, soundsystemColours, soundsystemSprite, soundsystemHeight, soundsystems } from "./soundsystem.js";
@@ -103,7 +104,8 @@ export function mutate(style, strength, groups, seed) {
 }
 
 // ================= the witch =================
-// Built in 3D (witch.js): named outfit parts, towards and away, three hover frames, a lean, rise and descend.
+// Built in 3D (witch.js): named outfit parts, towards and away, three hover frames, a lean, rise and descend,
+// fast and brake, and on foot (WITCH_FOOT_POSES: stand, land, takeoff, talk, placeSigil, liftSigil; each sprite's .anchors has her hand and hat tip).
 // ================= per-style assets =================
 // Each area has its own leaf colour and its own kind of tree; "Difference between areas" sets how far apart.
 export function areaStyle(st, world, area) {
@@ -142,7 +144,7 @@ export function buildAssets(st, world, { K = 2 / (st.pixel || 2), makeCanvas = d
   let away = null, lean = null;
   Object.defineProperty(witch, "away", { enumerable: true, get: () => away || (away = [0, 1, 2].map(frame => wb({ frame, facing: "away" }))) });
   Object.defineProperty(witch, "lean", { enumerable: true, get: () => lean || (lean = { towards: wb({ lean: true }), away: wb({ lean: true, facing: "away" }) }) });
-  for (const [pose, n] of [["rise", 2], ["descend", 2], ["fast", 3], ["brake", 2]]) { let v = null; const fr = [...Array(n).keys()]; Object.defineProperty(witch, pose, { enumerable: true, get: () => v || (v = { towards: fr.map(frame => wb({ pose, frame })), away: fr.map(frame => wb({ pose, frame, facing: "away" })) }) }); }
+  for (const [pose, n] of [["rise", 2], ["descend", 2], ["fast", 3], ["brake", 2], ...Object.entries(WITCH_FOOT_POSES).map(([k, v]) => [k, v.frames])]) { let v = null; const fr = [...Array(n).keys()]; Object.defineProperty(witch, pose, { enumerable: true, get: () => v || (v = { towards: fr.map(frame => wb({ pose, frame })), away: fr.map(frame => wb({ pose, frame, facing: "away" })) }) }); }
   // soundsystems: drawn the first time they are asked for (they are big)
   let ss = null;
   const out = { trees, bushes, creatures, witch, lights: lightProps(st, { makeCanvas }) };

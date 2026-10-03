@@ -4,7 +4,8 @@
 //   node art/preview.mjs trees all art/previews/trees.png [scale]
 //   node art/preview.mjs areas all art/previews/areas.png [scale]
 //   node art/preview.mjs sets all art/previews/set-pieces.png [scale]   (every area's set piece, five to a row, the witch for scale)
-//   node art/preview.mjs witch all art/previews/witch-flight.png [scale]   ("fast" instead of all: hover, lean and the fast pose)
+//   node art/preview.mjs home 0 art/previews/treehouse.png [scale]   (the treehouse with the witch sitting on its terrace, sit frame 0 or 1; NIGHT=1 lit by its own lights)
+//   node art/preview.mjs witch all art/previews/witch-flight.png [scale]   ("fast" instead of all: hover, lean and the fast pose; "foot": hover and every on-foot pose, POSES=stand,talk,... to pick, ANCHORS=1 to mark her hand and hat tip)
 //   node art/preview.mjs treeheights fern-forest,garden art/previews/tree-heights.png [scale]
 //   node art/preview.mjs lights all art/previews/light-sources.png [scale]
 //   node art/preview.mjs party wolf,fox,owl art/previews/party.png [scale]
@@ -31,6 +32,8 @@ if (process.env.DRAWON) await b.page.addInitScript(() => { window.DRAWON = true;
 if (process.env.STYLE) await b.page.addInitScript(o => { window.STYLE = o; }, JSON.parse(process.env.STYLE));
 if (process.env.NIGHT) await b.page.addInitScript(() => { window.NIGHT = true; });
 if (process.env.LEVELS) await b.page.addInitScript(l => { window.LEVELS = l; }, process.env.LEVELS.split(",").map(Number));
+if (process.env.POSES) await b.page.addInitScript(l => { window.POSES = l; }, process.env.POSES.split(","));
+if (process.env.ANCHORS) await b.page.addInitScript(() => { window.ANCHORS = true; });
 await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
 const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) => {
   const G = await import(gen), { shade } = await import(lighting);
@@ -70,6 +73,24 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, W * scale, H * scale);
     return big.toDataURL("image/png");
   }
+  if (what === "home") { // the treehouse at night, the witch sitting on its terrace: towards (whole, as from the treetops), its base only (as from the ground), away
+    const wc = G.witchColours(st), hc = G.treehouseColours(st), panels = [];
+    for (const [facing, part] of [["towards", "whole"], ["towards", "bot"], ["away", "whole"]].filter(([f]) => !window.FACINGS || window.FACINGS.includes(f))) {
+      const T = G.treehouseSprite(st, { facing }), house = G.bake(T[part], hc, st, "none"), wsp = G.witchSprite(st, { pose: "sit", frame: +list || 0, facing }), wit = G.bake(wsp, wc, st, st.cOutline);
+      let x0 = wsp.w, x1 = -1; for (let x = 0; x < wsp.w; x++) if (wsp.m[(wsp.h - 1) * wsp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); }
+      panels.push({ T, house, wit, wx: Math.round(T.anchors.seat.x - (x0 + x1 + 1) / 2), wy: Math.round(T.anchors.seat.y - wsp.h) + 1 });
+    }
+    const gap = 10, w = panels.reduce((a, p) => a + p.house.w + gap, gap), h = Math.max(...panels.map(p => p.house.h)) + gap * 2;
+    const mk = () => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+    const A = mk(), N = mk(), a = A.getContext("2d"), n = N.getContext("2d"), lights = [];
+    if (!window.NIGHT) { a.fillStyle = `rgb(${G.hsv2rgb(st.groundHue, .4, st.groundVal)})`; a.fillRect(0, 0, w, h); } n.fillStyle = "rgb(128,75,240)"; n.fillRect(0, 0, w, h);
+    let x = gap;
+    for (const P of panels) { const y = h - gap - P.house.h; a.drawImage(P.house.A, x, y); n.drawImage(P.house.N, x, y); a.drawImage(P.wit.A, x + P.wx, y + P.wy); n.drawImage(P.wit.N, x + P.wx, y + P.wy); for (const L of P.T.anchors.lights) lights.push({ x: x + L.x, y: y + L.y, z: 10, R: 48, power: 1.1, rgb: L.rgb }); x += P.house.w + gap; }
+    let lit = mk(); shade({ a, n, w, h }, lit, window.NIGHT ? st : studio, window.NIGHT ? lights : [], [0, 0, w, h]);
+    if (window.NIGHT) { const under = mk(), u = under.getContext("2d"); u.fillStyle = "#0c1014"; u.fillRect(0, 0, w, h); u.drawImage(lit, 0, 0); lit = under; }
+    const big = document.createElement("canvas"); big.width = w * scale; big.height = h * scale; const g = big.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(lit, 0, 0, w * scale, h * scale);
+    return big.toDataURL("image/png");
+  }
   if (what === "party") { // each listed species in party gear (a different mix per row, all items on the first) at baby, young and adult, towards then away; then woken
     const S = await import(gen.replace("generator.js", "sigils.js")), ids = list.split(",");
     ids.forEach((id, n) => {
@@ -84,7 +105,11 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push((window.LEVELS || [3, 2, 1, 0]).flatMap(l => [0, 1].map(f => G.bake(G.critter(id, l, f, st, facing), G.speciesColours(id, st), st, st.cOutline))));
   } else if (what === "witch") { // per facing: the ordinary hover frame, then rise (two frames) and descend (two frames)
     const wc = G.witchColours(st), b = o => G.bake(G.witchSprite(st, o), wc, st, st.cOutline);
-    for (const facing of ["towards", "away"]) rows.push(list === "fast" ? [b({ facing }), b({ facing, lean: true }), ...[0, 1, 2].map(frame => b({ facing, pose: "fast", frame })), ...[0, 1].map(frame => b({ facing, pose: "brake", frame }))] // hover, lean, fast's three frames, brake's two
+    // "foot": hover, then every on-foot pose's frames (stand, land, takeoff, talk, placeSigil, liftSigil); with ANCHORS=1 her hand and hat tip marked
+    const mark = (sp, bk) => { if (window.ANCHORS && sp.anchors) { const g = bk.A.getContext("2d"); for (const [[x, y], c] of [[sp.anchors.hand, "#0ff"], [sp.anchors.hatTip, "#f0f"]]) { g.fillStyle = c; g.fillRect(Math.round(x) - 1, Math.round(y) - 1, 3, 3); } } return bk; };
+    const fb = o => { const sp = G.witchSprite(st, o); return mark(sp, G.bake(sp, wc, st, st.cOutline)); };
+    if (list === "foot") for (const facing of window.FACINGS || ["towards", "away"]) rows.push([b({ facing }), ...Object.entries(G.WITCH_FOOT_POSES).filter(([pose]) => !window.POSES || window.POSES.includes(pose)).flatMap(([pose, { frames }]) => [...Array(frames).keys()].map(frame => fb({ facing, pose, frame })))]);
+    else for (const facing of ["towards", "away"]) rows.push(list === "fast" ? [b({ facing }), b({ facing, lean: true }), ...[0, 1, 2].map(frame => b({ facing, pose: "fast", frame })), ...[0, 1].map(frame => b({ facing, pose: "brake", frame }))] // hover, lean, fast's three frames, brake's two
       : [b({ facing }), b({ facing, pose: "rise", frame: 0 }), b({ facing, pose: "rise", frame: 1 }), b({ facing, pose: "descend", frame: 0 }), b({ facing, pose: "descend", frame: 1 })]);
   } else if (what === "treeheights") { // per area: its tree variants, saplings to the giant, then the witch for scale
     const wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
