@@ -148,6 +148,12 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
+        <h2>Witch</h2>
+        <p class="note">The witch in every pose, turned towards you (top) and away (bottom): three frames of her hover, the fast-flight lean, then rising to the treetops and descending to the ground, two frames each.</p>
+        <div class="sheet-wrap"><canvas id="witchSheet" width="420" height="160"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
         <h2>Soundsystems</h2>
         <p class="note">What the party defends: a sound-system stack hewn from magic stone, with glowing crystal cones. Each of the three stacks is shown playing (three frames of the cones pumping), damaged (two frames of flicker) and destroyed, with the witch for scale.</p>
         <div class="sheet-wrap"><canvas id="soundsystems" width="420" height="200"></canvas></div>
@@ -408,6 +414,23 @@ function renderBestiary() {
   }, 250);
 }
 
+// ================= the witch: every pose, towards and away, studio-lit =================
+let witchTimer;
+function renderWitch() {
+  clearTimeout(witchTimer);
+  witchTimer = setTimeout(() => {
+    const c = document.getElementById("witchSheet"); if (!c) return;
+    const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 6, wc = witchColours(st), b = o => bake(witchSprite(st, o), wc, st, st.cOutline);
+    const rows = ["towards", "away"].map(facing => [...[0, 1, 2].map(frame => b({ frame, facing })), b({ lean: true, facing }), ...["rise", "descend"].flatMap(pose => [0, 1].map(frame => b({ pose, frame, facing })))]);
+    const w = Math.max(...rows.map(r => r.reduce((a, x) => a + x.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(x => x.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
+    tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+    let y = gap;
+    rows.forEach((r, i) => { let x = gap; y += rh[i] - gap; for (const s2 of r) { tgt.a.drawImage(s2.A, x, y - s2.h); tgt.n.drawImage(s2.N, x, y - s2.h); x += s2.w + gap; } y += gap; });
+    c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
+    c.style.width = w * 2 + "px"; c.style.maxWidth = "none"; c.style.imageRendering = "pixelated";
+  }, 500);
+}
+
 // ================= soundsystems: every stack in every state, studio-lit =================
 let soundTimer;
 function renderSoundsystems() {
@@ -551,7 +574,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400);
+  syncKnobs(); renderHistory(); renderBestiary(); renderWitch(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }

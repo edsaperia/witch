@@ -23,7 +23,7 @@ It returns:
 | `bushes[i]` | 12 bushes |
 | `creatures[k][level][frame]` | for each kind in `world.kinds`: levels **0 baby, 1 young, 2 adult, 3 legend** (`LEVELS`); frames 0 and 1 of the walk. Built in 3D and seen in three-quarter view from above (turned 35°, looking down 30°), facing right. Young are about 45 art pixels tall at the default style (about the witch's height for the bigger species). Adults have adult proportions and mature features but no legendary ones, at 1.3 times their young, capped at 1.4 times the witch (the elk, already taller as a young, is about 1.5). Legends are about 4.5 times their young. Sizes on screen stay the same as the pixel size changes |
 | `creatures[k][level][frame].away` | the same frame turned away from the viewer (we see the rump and the back of the head); use it for creatures moving up the screen |
-| `witch` | the witch on her broom, frame 0 turned towards; `witch.frames` her three hover frames, `witch.away` the same turned away, `witch.lean` the fast-flight pose `{ towards, away }` |
+| `witch` | the witch on her broom, frame 0 turned towards; `witch.frames` her three hover frames, `witch.away` the same turned away, `witch.lean` the fast-flight pose `{ towards, away }`, `witch.rise` and `witch.descend` her flights up to the treetops and down to the ground, two flutter frames each: `{ towards: [2], away: [2] }` |
 | `soundsystems` | what the party defends: three stacks (`id` stack, wall, tower; `crystal` cyan, violet, amber), each `{ playing: [3 frames of the cones pumping], damaged: [2 frames of flicker], destroyed }`; about three times the witch's height. Drawn the first time it is asked for |
 | `lights` | light sources: `campfire` (three frames), `stones` (`cyan`, `violet`, `green` magic stones), `pond` (with `mask`: white where its pixels are water) |
 
@@ -46,7 +46,7 @@ Every asset is a **baked sprite**: `{ A, N, NF, w, h }`.
 | `TREE_TYPES` | `[[mixKnob, drawFn], …]`; `drawFn(rng, style, scale)` returns `{ sp, crownY }` |
 | `treeColours(rng, style, drawFn)`, `splitTree({ sp, crownY })` | a tree's palette; its `{ top, bot }` halves |
 | `bush(rng, style)` | `{ sp, colours }` |
-| `witchSprite(style, { frame, facing, lean })`, `witchColours(style, outfit)` | the witch, built in 3D from named parts (`WITCH_PARTS`); an outfit is a colour per part (`DEFAULT_OUTFIT`) |
+| `witchSprite(style, { frame, facing, lean, pose })`, `witchColours(style, outfit)` | the witch, built in 3D from named parts (`WITCH_PARTS`); an outfit is a colour per part (`DEFAULT_OUTFIT`). `pose` is `"rise"` (the broom about 45° nose-up, leaning into the climb, hat brim pushed back, hair and jacket trailing down, sparks falling from the bristles) or `"descend"` (about 38° nose-down, leaning back to brake, a hand on her hat, hair and jacket flowing up, legs reaching down to land), with `frame` 0 or 1, drawn at her ordinary scale |
 | `soundsystemSprite(style, { variant, state, frame })`, `soundsystemColours(variant)` | one soundsystem (`SOUNDSYSTEMS` lists the three); `state` is `"playing"` (frames 0 to 2), `"damaged"` (0 to 1) or `"destroyed"` |
 | `lightProps(style)` | the light sources, as in `buildAssets(...).lights` |
 | `bake(sp, colours, style, outline, makeCanvas)` | any sprite → `{ A, N, NF, w, h }` |
@@ -64,15 +64,15 @@ Each creature has a **sigil** (`art/sigils.js`), its name written in the forest'
 
 They glow **neon**: a near-white core in a coloured halo, each species in its own palette slot. Each creature **level** has a frame that grows, so a field of runes shows at a glance what is about:
 - **baby** (level 0): the bare sigil, about 2 m across;
-- **young** (1): about 3 m, thicker and brighter, with one ring;
-- **adult** (2): about 4 m, thicker and brighter again, with two rings;
+- **young** (1): about 3 m, thicker and brighter, in a dotted circle (12 round dots);
+- **adult** (2): about 4 m, thicker and brighter again, in a full circle at the normal line weight;
 - **legend** (3): about 5.5 m, the thickest and brightest, with its double ring banded with rune ticks, four rays and a slow shimmer.
 
 | Call | Gives |
 |---|---|
 | `SIGILS[id]` | the strokes, in writing order, in a unit box (x right, y down): `{ l: [[x, y], …] }` a polyline, `{ a: [cx, cy, r, from, to] }` an arc (degrees, 0 right, 90 down), `{ d: [x, y] }` an end dot; each drawn from its first point. `SIGIL_STROKE` and `SIGIL_DOT` are the stroke width and dot radius |
 | `NEON`, `SIGIL_NEON[id]`, `sigilColour(id)` | the neon palette, each species' slot in it, and its colour. Every renderer also takes `colour`, so the game can recolour (per outfit, say) |
-| `sigilFrame(level)`, `SIGIL_LEVELS` | a level's frame, for any level number (0 baby, 1 young, 2 adult, 3 legend): `{ metres, core, halo, rings, band, rays, shimmer }`. Size steps first, then rings, then ornament, so levels between or beyond these extend it |
+| `sigilFrame(level)`, `SIGIL_LEVELS` | a level's frame, for any level number (0 baby, 1 young, 2 adult, 3 legend): `{ metres, core, halo, rings, dots, band, rays, shimmer }`. Size steps first, then rings, then ornament, so levels between or beyond these extend it |
 | `sigilStrokes(id)`, `sigilMark(id, level)` | the sigil's strokes as polylines, or everything drawn for a level (the frame first, then the sigil scaled into it) in its "mark" box. Each carries its share of the draw-on (`start`, `end`, 0 to 1) and its width |
 | `sigilSVG(id, { size, level, colour, glow, progress })`, `drawSigil(ctx, id, { x, y, size, level, colour, progress, glow })` | the neon sigil as an SVG string or on a canvas, bare (`level` null, the default) or framed for a level; `progress` below 1 draws it partly written. Transform the canvas first to lay it on a plane |
 | `sigilGlyph(id, size)`, `sigilHit(id, u, v, w)` | the bare sigil as a pixel glyph (`{ w, h, m }`, 12 to 24 px), or a hit test for carving it like `runeGlyph` |
@@ -85,7 +85,7 @@ They glow **neon**: a near-white core in a coloured halo, each species in its ow
 
 In a 3D engine, `drawSigil` onto a canvas texture laid flat on the ground (or upright, facing the camera, for the stack) does the same as the pixel fields, with the engine doing the foreshortening.
 
-The export writes each sigil as `sigil-<species>.svg` (bare), a 64 px `sigil-<species>.png`, and `sigil-<species>-baby|young|adult|legend.svg` (framed). It lists them, with their strokes, neon slots, the level frames and the stack's tuning, under `sigils` in `manifest.json`.
+The export writes each sigil as `sigil-<species>.svg` (bare), a 64 px `sigil-<species>.png`, and `sigil-<species>-baby|young|adult|legend.svg` and `.png` (framed, 64 px). It lists them, with their strokes, neon slots, the level frames and the stack's tuning, under `sigils` in `manifest.json`.
 
 The night lighting pass the lab uses is `shade(target, out, style, lights, rect)` in `art/lighting.js`.
 
