@@ -10,7 +10,7 @@
 import { M, Sprite, rng, uni, pick, hash2, vnoise, hsv2rgb, tufts, lerp2, add, bake, defaultCanvas, runeGlyph } from "./core.js";
 import { Model, render, masks, v3 } from "./model3d.js";
 import { sigilHit } from "./sigils.js";
-import { broadTree, firTree, willowTree, birchTree, flatTree, treeColours, bush } from "./trees.js";
+import { broadTree, firTree, willowTree, birchTree, flatTree, treeColours, splitTree, bush } from "./trees.js";
 
 // [kind, params] shorthands for the prop library below
 const tree = (type, o = {}) => ["tree", { type, ...o }];
@@ -281,6 +281,51 @@ export function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defau
   const out = { def, floor: { sp: bake(ft.sp, ft.colours, st, "none", makeCanvas), kind: def.floor[0], text: def.text.floor }, walls: col(def.wall), small: col(def.small), big: col(def.big), setPiece: null };
   out.walls.forEach(a => a.text = def.text.wall); out.small.forEach(a => a.text = def.text.small); out.big.forEach(a => a.text = def.text.big);
   if (def.set) out.setPiece = bk(setPiece(def.set[0], def.set[1], def, st, r, K), def.set[0], def.text.set);
+  return out;
+}
+
+// ================= tree variants across a range of heights =================
+// Ed: "more tree variants that are different heights", so the canopy is not a flat lid. Each area
+// whose big objects are trees gets about ten variants of its own recipe, across four height
+// classes (scale is relative to the area's ordinary tree): saplings (slimmer, sparser), mature
+// trees, tall trees (taller trunks, crowns higher and a bit larger) and a rare emergent giant that
+// pokes above the canopy. Each keeps its area's character: firs grow tall and narrow, willows wider
+// rather than taller, dead trees into tall snags.
+export const TREE_HEIGHT_CLASSES = [
+  { id: "sapling", range: [.45, .7], weight: .25, count: 3 },
+  { id: "mature", range: [.85, 1.15], weight: .5, count: 4 },
+  { id: "tall", range: [1.3, 1.6], weight: .2, count: 2 },
+  { id: "giant", range: [1.8, 2.2], weight: .05, count: 1 },
+];
+export const ART_PIXELS_PER_METRE = 16; // the prototype's (config/tuning.json, artPixelsPerMetre)
+const TREE_FN = { broad: broadTree, fir: firTree, willow: willowTree, birch: birchTree, flat: flatTree };
+// An area's tree variants, baked: [{ heightClass, scale, weight (a share of the area's trees),
+// whole, top, bot (the crown and the trunk below it, for the cut-out), crownY (px from the top),
+// metres: { height, crownBase, crownHeight, crownRadius } }]. Empty when its big objects are not
+// trees (mounds, boulders). ppm: art pixels per metre, for the metres.
+export function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanvas, ppm = ART_PIXELS_PER_METRE } = {}) {
+  const def = AREA_BY_ID[id]; if (!def) throw new Error(`no area type "${id}"`);
+  const recipes = (def.big || []).filter(([kind]) => kind === "tree").map(([, o]) => o);
+  if (!recipes.length) return [];
+  const seed = id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0, out = [];
+  let n = 0;
+  for (const cls of TREE_HEIGHT_CLASSES) for (let i = 0; i < cls.count; i++, n++) {
+    const o = recipes[n % recipes.length], f = TREE_FN[o.type], r = rng(seed * 7 + n * 131 + 3);
+    const h = cls.count > 1 ? cls.range[0] + (cls.range[1] - cls.range[0]) * i / (cls.count - 1) : (cls.range[0] + cls.range[1]) / 2;
+    const sapling = cls.id === "sapling", big = cls.id === "tall" || cls.id === "giant";
+    // its character: willows widen rather than grow; firs and birches stay narrow as they grow; saplings are slim
+    const willow = o.type === "willow", narrow = o.type === "fir" || o.type === "birch" || o.bare; // dead trees grow into tall snags
+    const scale = willow ? 1 + (h - 1) * .45 : h;
+    const width = (sapling ? .78 : 1) * (willow ? 1 + Math.max(0, h - 1) * .55 : narrow && big ? (o.bare ? .6 : .85) : big ? 1.06 : 1);
+    const ts = { ...st, crownWidth: (st.crownWidth || 3) * width, leafHue: def.leaf + (o.dark ? .05 : 0), gnarl: Math.min(1, (o.gnarl ?? st.gnarl) + (cls.id === "giant" ? .2 : 0)),
+      treeBare: o.bare, treeTrunks: sapling ? 1 : o.trunks, treeLean: o.lean, treeThick: sapling ? undefined : big && o.thick ? o.thick * 1.1 : o.thick, treeThin: sapling || o.thin, treeHollow: big && o.hollow, treeWebs: o.webs };
+    const t = f(r, ts, st.treeSize * K * (o.scale || 1) * scale * uni(r, .95, 1.05));
+    const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
+    c[M.NOSE] = [20, 16, 24]; c[M.WEB] = [225, 225, 232];
+    const parts = splitTree(t), bk = sp => bake(sp, c, st, "none", makeCanvas), m = px => +(px / ppm).toFixed(2);
+    out.push({ heightClass: cls.id, scale: +scale.toFixed(2), weight: +(cls.weight / cls.count).toFixed(4), whole: bk(t.sp), top: bk(parts.top), bot: bk(parts.bot), crownY: t.crownY,
+      metres: { height: m(t.sp.h), crownBase: m(t.sp.h - t.crownY), crownHeight: m(t.crownY), crownRadius: m(t.sp.w / 2) } });
+  }
   return out;
 }
 

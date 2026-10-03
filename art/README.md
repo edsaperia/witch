@@ -53,6 +53,7 @@ Every asset is a **baked sprite**: `{ A, N, NF, w, h }`.
 | `rng(seed)` | the seeded random generator everything uses |
 | `AREAS`, `AREA_BY_ID` | the 30 area types in Ed's columns: `floor`, `wall`, `small`, `big`, `set`, `creature` (`text` keeps the words from DESIGN.md) |
 | `areaAssets(areaId, style, { K, makeCanvas })` | everything one area type needs, baked: `{ def, floor, walls, small, big, setPiece }`; `floor` is a 64 × 48 tile to repeat over the ground, the rest are props `{ sp: { A, N, NF, w, h }, kind, text }` anchored at `(w / 2, h)` |
+| `areaTreeVariants(areaId, style, { K, makeCanvas, ppm })`, `TREE_HEIGHT_CLASSES` | an area's trees across a range of heights (empty when its big objects are not trees): about ten variants of its own recipe, 3 saplings (about 0.45 to 0.7 times its ordinary tree, slimmer), 4 mature (0.85 to 1.15), 2 tall (1.3 to 1.6) and 1 emergent giant (1.8 to 2.2). Firs grow tall and narrow, willows wider rather than taller, dead trees into narrow snags. Each `{ heightClass, scale, weight, whole, top, bot, crownY, metres: { height, crownBase, crownHeight, crownRadius } }`: `weight` is its share of the area's trees (the classes 25%, 50%, 20%, 5%); `top` is the crown (cut out from the treetops), `bot` the trunk below `crownY`; metres at `ART_PIXELS_PER_METRE` (16, the prototype's) |
 | `WALLS_BLOCK`, `SET_PIECE_CHANCE` | placement rules (Ed): wall objects don't block movement for now; a set piece appears in only some of an area type's areas (chance 0.25 to start) |
 
 ## Sigils
