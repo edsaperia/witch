@@ -6,6 +6,9 @@
 // pixel grids, recoloured by the style. Every animal faces right; the game mirrors it.
 import { M, Sprite, rng, uni, hash2, hsv2rgb, spline, band, tufts, rot, lerp2, add } from "./core.js";
 import { BABIES } from "./babies.js";
+import { quad3d, owl3d } from "./creatures3d.js";
+// Species drawn from 3D models (true three-quarter view, Ed 2026-10-03); the rest are still 2D.
+const MODELLED = new Set(["wolf", "boar", "owl", "hare"]);
 
 // ================= the bestiary: 20 forest animals =================
 // plan: body plan. hue/sat/val: base colour. legend: what the legendary form grows.
@@ -74,6 +77,7 @@ export const levelHeight = (level, st) => Math.round(st.size * Math.pow(Math.sqr
 
 export function critter(spId, level, frame, st) {
   const S = SPECIES_BY_ID[spId] || SPECIES[0];
+  if (MODELLED.has(S.id)) return S.plan === "owl" ? owl3d(S, level, frame, st) : quad3d(S, level, frame, st);
   if (level === 0 && BABIES[S.id]) return babySprite(S.id, frame, st);
   if (S.q) return quad(S, level, frame, st);
   const draw = { owl, raven, bat, toad, hedgehog, mole, beetle, snail, woodlouse, snake, moth, glowworm, spider }[S.plan];
