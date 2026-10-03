@@ -34,6 +34,9 @@
     #waves { margin: 0 0 14px; color: var(--dim); font-size: 12px; }
     #waves button { font: inherit; margin: 2px 3px; padding: 3px 8px; color: var(--ink); background: transparent; border: 1px solid #3a2f5c; border-radius: 6px; cursor: pointer; }
     #waves button.on { background: #3a2f5c; color: #fff; }
+    #news { margin: 0 0 14px; color: var(--dim); font-size: 12px; text-align: left; max-height: 12em; overflow-y: auto; }
+    #news b { color: var(--ink); font-weight: normal; }
+    #news ul { margin: 2px 0 6px; padding-left: 1.3em; }
     #start .keys b { color: var(--ink); font-weight: normal; }
     #start.loading .go::after { content: " (growing the forest…)"; color: var(--dim); }
     #touch { position: fixed; inset: 0; display: none; pointer-events: none; }
@@ -58,7 +61,7 @@
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: -12px; height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
     .bubble .bar i { display: block; height: 100%; background: #ff7fd0; }
   </style>
-  <script type="module" crossorigin src="./assets/index-Czz2FeLm.js"></script>
+  <script type="module" crossorigin src="./assets/index-BnCdv3Q5.js"></script>
 </head>
 <body>
   <canvas id="game"></canvas>
@@ -84,6 +87,7 @@
       <div>a prototype: fly the witch round the forest at night</div>
       <div class="go">Tap, click or press any key to start</div>
       <div id="waves"></div>
+      <div id="news"></div>
       <div class="keys">
         <b>Keyboard</b> WASD or arrows fly · space rises or descends · Z/X or +/− zoom · hold T, F or Shift to talk (invite) · E or R puts down / picks up a sigil · ~ debug · N next wave · P pause waves · I invite nearest (debug)<br>
         <b>Gamepad</b> left stick flies · hold A to talk · X sigil · Y rises or descends · shoulders zoom<br>
