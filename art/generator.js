@@ -3,14 +3,18 @@
 // as an albedo canvas plus a normal map, for the deferred lighting pass to light.
 // No page or DOM dependencies beyond making canvases: pass `makeCanvas(w, h)` where there
 // is no `document` (the default uses document, else OffscreenCanvas).
-// Parts: core.js (sprites, shapes, bake), creatures.js + babies.js (the bestiary),
+// Parts: core.js (sprites, shapes, bake), creatures.js + creatures3d.js + model3d.js (the bestiary),
 // trees.js (trees and bushes), this file (the style's knobs, the witch, a whole asset set).
 
 import { defaultCanvas, rng, uni, pick, gauss, hash2, vnoise, hsv2rgb, M, EMISSIVE, Sprite, spline, band, tufts, polyMask, edgeVectors, rot, lerp2, bake } from "./core.js";
 import { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree } from "./trees.js";
-import { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE } from "./areas.js";
+import { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT } from "./witch.js";
+import { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps } from "./areas.js";
 import { SPECIES, SPECIES_BY_ID, FEATURE_NAMES, speciesColours, critter, levelHeight } from "./creatures.js";
-export { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE };
+export { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT };
+export { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps };
+import { SOUNDSYSTEMS, soundsystemColours, soundsystemSprite, soundsystemHeight, soundsystems } from "./soundsystem.js";
+export { SOUNDSYSTEMS, soundsystemColours, soundsystemSprite, soundsystemHeight };
 export { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree };
 export { defaultCanvas, rng, uni, pick, gauss, hash2, vnoise, hsv2rgb, M, EMISSIVE, Sprite, spline, band, tufts, polyMask, edgeVectors, rot, lerp2, bake, SPECIES, SPECIES_BY_ID, FEATURE_NAMES, speciesColours, critter, levelHeight };
 
@@ -24,7 +28,7 @@ export const KNOBS = [
   { k: "glowSat", g: "Night light", label: "Witch glow colour", min: 0, max: 1, step: 0.01, v: 0.35 },
   { k: "glowRadius", g: "Night light", label: "Witch glow reach", min: 30, max: 200, step: 5, v: 110 },
   { k: "glowPower", g: "Night light", label: "Witch glow strength", min: 0.3, max: 2.5, step: 0.05, v: 1.4 },
-  { k: "bands", g: "Shading", label: "Light steps", min: 2, max: 7, step: 1, v: 4 },
+  { k: "bands", g: "Shading", label: "Light steps", min: 2, max: 7, step: 1, v: 3 },
   { k: "dither", g: "Shading", label: "Dithering", min: 0, max: 1, step: 0.05, v: 0.35 },
   { k: "round", g: "Shading", label: "Roundness", min: 0.2, max: 1.5, step: 0.05, v: 0.9 },
   { k: "outline", g: "Shading", label: "Plant outline", options: ["none", "dark", "tinted"], v: "none" },
@@ -69,8 +73,13 @@ export const KNOBS = [
   { k: "growth", g: "Creatures", label: "Legend vs baby height", min: 5, max: 25, step: 1, v: 20 },
   { k: "magicHue", g: "Creatures", label: "Magic glow hue", min: 0, max: 1, step: 0.01, v: 0.5, hue: true },
   { k: "fur", g: "Creatures", label: "Stripes and spots", min: 0, max: 1, step: 0.05, v: 0.5 },
-  { k: "cloakHue", g: "Witch", label: "Cloak hue", min: 0, max: 1, step: 0.01, v: 0.72, hue: true },
+  { k: "cloakHue", g: "Witch", label: "Jacket hue", min: 0, max: 1, step: 0.01, v: 0.72, hue: true },
   { k: "hairHue", g: "Witch", label: "Hair hue", min: 0, max: 1, step: 0.01, v: 0.01, hue: true },
+  { k: "hatHue", g: "Witch", label: "Hat hue", min: 0, max: 1, step: 0.01, v: 0.74, hue: true },
+  { k: "topHue", g: "Witch", label: "Top hue", min: 0, max: 1, step: 0.01, v: 0.13, hue: true },
+  { k: "jeansHue", g: "Witch", label: "Jeans hue", min: 0, max: 1, step: 0.01, v: 0.6, hue: true },
+  { k: "shoeHue", g: "Witch", label: "Sneakers hue", min: 0, max: 1, step: 0.01, v: 0.0, hue: true },
+  { k: "phonesHue", g: "Witch", label: "Headphones hue", min: 0, max: 1, step: 0.01, v: 0.92, hue: true },
 ];
 export const GROUPS = ["Night light", "Shading", "Colour", "Trees", "Tree mix", "Undergrowth", "Map", "Creatures", "Witch"];
 export function defaultStyle() { const s = {}; KNOBS.forEach(k => s[k.k] = k.v); return s; }
@@ -89,19 +98,8 @@ export function mutate(style, strength, groups, seed) {
   return s;
 }
 
-// ================= the witch (hand-drawn) =================
-const WITCH_ROWS = [
-  ".........HH.........", "........HHHH........", ".......HHHHHH.......", "......HHHHHHHH......", "....HHHHHHHHHHHH....",
-  "........SSS.........", ".......SSESS........", ".......hSSSS........", "......hCCCC.........", ".....hhCCCCC........",
-  ".....h.CCCCCC.......", ".......CCCCCCC......", ".......CCCCCCCC.....", "TTTT.BBBBBBBBBBBBBBB", "TTTTTBBBBBBBBBBBBBBB", "TTTT......CC.CC.....",
-];
-export function witchSprite() {
-  const sp = new Sprite(WITCH_ROWS[0].length, WITCH_ROWS.length), key = { H: M.CLOTH, S: M.SKIN, E: M.EYE, h: M.HAIR, C: M.CLOTH, B: M.BROOM, T: M.STRAW };
-  WITCH_ROWS.forEach((row, y) => [...row].forEach((ch, x) => key[ch] && sp.put(x, y, key[ch])));
-  return sp;
-}
-export const witchColours = st => ({ [M.CLOTH]: hsv2rgb(st.cloakHue, .55, .6), [M.SKIN]: [240, 205, 170], [M.EYE]: [20, 14, 26], [M.HAIR]: hsv2rgb(st.hairHue, .7, .85), [M.BROOM]: hsv2rgb(st.trunkHue + .02, .55, .6), [M.STRAW]: [230, 190, 100] });
-
+// ================= the witch =================
+// Built in 3D (witch.js): named outfit parts, towards and away, three hover frames, a lean.
 // ================= per-style assets =================
 // Each area has its own leaf colour and its own kind of tree; "Difference between areas" sets how far apart.
 export function areaStyle(st, world, area) {
@@ -122,7 +120,25 @@ export function buildAssets(st, world, { K = 2 / (st.pixel || 2), makeCanvas = d
   }
   const bushes = [];
   for (let i = 0; i < 12; i++) { const b = bush(rng(world.forestSeed * 7 + i * 3), { ...areaStyle(st, world, Math.floor(i / 4)), bushSize: st.bushSize * K }); bushes.push(bk(b.sp, b.colours)); }
-  const creatures = world.kinds.map(kind => [0, 1, 2].map(level => [0, 1].map(frame => bk(critter(kind, level, frame, st), speciesColours(kind, st), st.cOutline))));
-  return { trees, bushes, creatures, witch: bk(witchSprite(), witchColours(st)) };
+  // each creature sprite is the "towards" view; its .away is the same frame turned away
+  const creatures = world.kinds.map(kind => [0, 1, 2].map(level => [0, 1].map(frame => {
+    const col = speciesColours(kind, st), towards = bk(critter(kind, level, frame, st, "towards"), col, st.cOutline);
+    let away = null; // drawn the first time it is asked for
+    Object.defineProperty(towards, "away", { enumerable: true, get: () => away || (away = bk(critter(kind, level, frame, st, "away"), col, st.cOutline)) });
+    return towards;
+  })));
+  // the witch: frame 0 turned towards; .frames the three hover frames, .away the same turned
+  // away, .lean the fast-flight pose ({ towards, away })
+  const wc = witchColours(st), wb = o => bk(witchSprite(st, o), wc, st.cOutline);
+  const witch = wb({ frame: 0 });
+  witch.frames = [witch, wb({ frame: 1 }), wb({ frame: 2 })];
+  let away = null, lean = null;
+  Object.defineProperty(witch, "away", { enumerable: true, get: () => away || (away = [0, 1, 2].map(frame => wb({ frame, facing: "away" }))) });
+  Object.defineProperty(witch, "lean", { enumerable: true, get: () => lean || (lean = { towards: wb({ lean: true }), away: wb({ lean: true, facing: "away" }) }) });
+  // soundsystems: drawn the first time they are asked for (they are big)
+  let ss = null;
+  const out = { trees, bushes, creatures, witch, lights: lightProps(st, { makeCanvas }) };
+  Object.defineProperty(out, "soundsystems", { enumerable: true, get: () => ss || (ss = soundsystems(st, (sp, col) => bk(sp, col, "none"))) });
+  return out;
 }
 

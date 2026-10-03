@@ -44,9 +44,32 @@ export const M = {
   BODY3: 25,   // the darkest fur: saddles, stripes, tips
   LEAF3: 26,   // the darkest leaves, inside a crown
   BARKL: 27,   // lit bark ridges
+  HAT: 28, PHONES: 29, TOP: 30, JACKET: 31, JEANS: 32, SHOES: 33, // the witch's outfit parts
+  WATER: 34,   // still water: the prototype draws reflections on it
+  STONE: 35, STONED: 36, MOSS: 37, // hewn stone, its dark cracks and hollows, moss on it
+  CRYSTAL: 38, // crystal, lit
+  RUNE: 39,    // a carved rune's glow
+  GLOW: 40,    // glowing crystal: a soundsystem's cones and the depths of its horns
+  WOOD: 41,    // varnished wooden trim
 };
 // These glow: drawn at full colour by the lighting pass, whatever the light.
-export const EMISSIVE = new Set([M.GLINT, M.FLOWER, M.MAGIC, M.MAGIC2]);
+// The rune glyphs: one carved-rune language for the magic stones and the soundsystem. Simple,
+// angular, bold strokes. u, v in [0, 1] over the glyph's square (v down); k picks the glyph;
+// w is the stroke's half-width.
+export const RUNE_GLYPHS = 4;
+export function runeGlyph(u, v, k, w = .12) {
+  const line = (x0, y0, x1, y1) => { // distance to a segment
+    const dx = x1 - x0, dy = y1 - y0, t = Math.max(0, Math.min(1, ((u - x0) * dx + (v - y0) * dy) / (dx * dx + dy * dy)));
+    return Math.hypot(u - x0 - dx * t, v - y0 - dy * t) < w;
+  };
+  switch (((k % RUNE_GLYPHS) + RUNE_GLYPHS) % RUNE_GLYPHS) {
+    case 0: return line(.5, .08, .5, .92) || line(.5, .1, .18, .4) || line(.5, .1, .82, .4);  // an arrow up
+    case 1: return line(.5, .08, .5, .92) || line(.5, .5, .18, .18) || line(.5, .5, .82, .18); // a fork
+    case 2: return line(.2, .1, .8, .9) || line(.8, .1, .2, .9) || line(.5, .08, .5, .92);    // a starred cross
+    default: return line(.3, .08, .3, .92) || line(.3, .12, .75, .35) || line(.75, .35, .3, .55) || line(.3, .55, .78, .92); // a hooked stave
+  }
+}
+export const EMISSIVE = new Set([M.GLINT, M.FLOWER, M.MAGIC, M.MAGIC2, M.RUNE, M.GLOW]);
 
 // ================= geometry: smooth outlines =================
 // Points are [x, y] in sprite pixels. A closed outline is a list of control points; the
