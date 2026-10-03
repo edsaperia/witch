@@ -21,6 +21,8 @@
   "bushDensity": 0.16,
   "bushClump": 0.8,
   "treeHeight": 2.25,
+  "_treeCap": "The tallest tree variants (tall, giant) are drawn squeezed so the treetop flight (treetopHeight) stays above the canopy: any height over from metres keeps only keep of the rest (so a 45 m giant shows about 29 m: still over the canopy, not burying her).",
+  "treeCap": { "from": 20, "keep": 0.35 },
   "crownWidth": 1.7,
   "treeSpacingX": 4.6,
   "treeSpacingZ": 2.8,
