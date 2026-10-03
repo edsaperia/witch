@@ -7,6 +7,8 @@
 //   node art/preview.mjs home 0 art/previews/treehouse.png [scale]   (the treehouse with the witch sitting on its terrace, sit frame 0 or 1; NIGHT=1 lit by its own lights)
 //   node art/preview.mjs relics modern|playground|sports|<ids> art/previews/relics-modern.png [scale]   (PER=n to a row)
 //   node art/preview.mjs grounds playground,tennis,baseball,football,basketball|all art/previews/grounds.png [scale]   (each arrangement composed; NIGHT=1)
+//   node art/preview.mjs decor ruins|rocks|freak|<ids> art/previews/ruins.png [scale]   (VARIANTS=1: ruins weathered and overgrown)
+//   node art/preview.mjs lake 0 art/previews/lake.png [scale]   (a sample lake composed from the kit; NIGHT=1)
 //   node art/preview.mjs paths all|<kinds> art/previews/paths.png [scale]   (each kind swept along a curve with a branch, then its strip, end, Y, T; VARIANT=n for the railway's)
 //   node art/preview.mjs pathpieces all|<ids> art/previews/path-pieces.png [scale]   (the 3D pieces; with all, the railway's points, broken end and crossing)
 //   node art/preview.mjs witch all art/previews/witch-flight.png [scale]   ("fast" instead of all: hover, lean and the fast pose; "foot": hover and every on-foot pose, POSES=stand,talk,... to pick, ANCHORS=1 to mark her hand and hat tip)
@@ -36,6 +38,7 @@ if (process.env.DRAWON) await b.page.addInitScript(() => { window.DRAWON = true;
 if (process.env.STYLE) await b.page.addInitScript(o => { window.STYLE = o; }, JSON.parse(process.env.STYLE));
 if (process.env.NIGHT) await b.page.addInitScript(() => { window.NIGHT = true; });
 if (process.env.PER) await b.page.addInitScript(n => { window.PER = n; }, +process.env.PER);
+if (process.env.VARIANTS) await b.page.addInitScript(() => { window.VARIANTS = true; });
 if (process.env.VARIANT) await b.page.addInitScript(n => { window.VARIANT = n; }, +process.env.VARIANT);
 if (process.env.LEVELS) await b.page.addInitScript(l => { window.LEVELS = l; }, process.env.LEVELS.split(",").map(Number));
 if (process.env.POSES) await b.page.addInitScript(l => { window.POSES = l; }, process.env.POSES.split(","));
@@ -143,6 +146,26 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     const ids = ["modern", "playground", "sports"].includes(list) ? G.RELICS.filter(d => d.family === list).map(d => d.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), col = G.relicColours(st), per = window.PER || 6;
     const items = ids.map(id => G.bake(G.relicSprite(id, st).whole, col, st, "none"));
     for (let i = 0; i < items.length; i += per) rows.push([...items.slice(i, i + per), wit]);
+  } else if (what === "lake") { // a sample lake composed from the kit, as the prototype would: a blob of overlapping circles, water inside, the shore band across the edge, reeds and lilies along it, rocks half in
+    const K = G.lakeKit(st), col = K.colours, bk = sp => G.bake(sp, col, st, "none"), W = 300, H = 170, cs = [[150, 85, 95], [95, 95, 55], [215, 75, 55], [170, 110, 60]];
+    const sd = (x, y) => Math.min(...cs.map(([cx, cy, r]) => Math.hypot(x - cx, (y - cy) * 1.7) - r)); // ground seen at an angle: squashed in y
+    const ground = new G.Sprite(W, H), band = 14;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const d = sd(x, y), c = cs.reduce((a, b) => Math.hypot(x - a[0], y - a[1]) < Math.hypot(x - b[0], y - b[1]) ? a : b), u = Math.floor((Math.atan2(y - c[1], x - c[0]) + Math.PI) * 40) & 63;
+      if (d < -band / 2) { const i = (y % 48) * 64 + (x % 64); ground.px(x, y, K.water.m[i], K.water.n[i * 3], K.water.n[i * 3 + 1], K.water.n[i * 3 + 2]); }
+      else if (d < band / 2) { const v = Math.min(15, Math.floor((d + band / 2) / band * 16)), i = v * 64 + u; ground.px(x, y, K.shore.m[i], 0, -.42, .9); }
+      else ground.px(x, y, (x * 7 + y * 13) % 11 ? G.M.LEAF : G.M.LEAF2, 0, -.42, .9);
+    }
+    const tgt = document.createElement("canvas"); tgt.width = W; tgt.height = H; const base = bk(ground);
+    const cA = base.A.getContext("2d"), cN = base.N.getContext("2d"), put = (s2, x, y) => { cA.drawImage(s2.A, Math.round(x - s2.w / 2), Math.round(y - s2.h)); cN.drawImage(s2.N, Math.round(x - s2.w / 2), Math.round(y - s2.h)); };
+    const edge = []; for (let a = 0; a < 6.283; a += .09) for (let r = 0; r < 200; r += 1) { const x = 150 + Math.cos(a) * r, y = 85 + Math.sin(a) * r / 1.7; if (sd(x, y) > 0) { edge.push([x, y, a]); break; } }
+    edge.forEach(([x, y], i) => { if (i % 5 === 0) put(bk(K.reeds[i % 3]), x + 6, y + 4); else if (i % 7 === 3) put(bk(K.lilies[i % 3]), x - (x - 150) * .12, y - (y - 85) * .2 + 3); else if (i % 11 === 5) put(G.bake(G.decorSprite("pair", st).whole, G.decorColours(st), st, "none"), x, y + 4); });
+    const wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline); put(wit, 150, 80);
+    rows.push([base]);
+  } else if (what === "decor") { // a family's decorations (ruins, rocks, freak) or listed ids, six to a row, the witch closing each row; ruins in both conditions with VARIANTS=1
+    const ids = ["ruins", "rocks", "freak"].includes(list) ? G.DECOR.filter(d => d.family === list).map(d => d.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), col = G.decorColours(st);
+    const items = ids.flatMap(id => (window.VARIANTS ? [0, 1] : [0]).map(variant => G.bake(G.decorSprite(id, st, { variant }).whole, col, st, "none")));
+    for (let i = 0; i < items.length; i += 6) rows.push([...items.slice(i, i + 6), wit]);
   } else if (what === "paths") { // per kind (or listed): a path swept along an S-curve with a branch meeting it, laid on the ground at the game's view; then its strip, end, Y and T textures flat; the witch for scale
     const ids = list === "all" ? G.PATH_IDS : list.split(","), col = G.pathColours(st), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), squash = Math.sin(.52);
     const view = sp => { const h = Math.ceil(sp.h * squash), o = new G.Sprite(sp.w, h); for (let y = 0; y < h; y++) for (let x = 0; x < sp.w; x++) { const i = Math.floor(y / squash) * sp.w + x; if (sp.m[i]) o.px(x, y, sp.m[i], sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); } return o; }; // ground space to the game's view
