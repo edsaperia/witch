@@ -83,6 +83,9 @@ The trade is speed against information: treetop mode covers distance, ground mod
 - **Arrangement** is mostly random, with some rules; mainly, the **same area type is kept from sitting near itself**.
 - The **home, the dancefloor, is in the middle of the map**.
 - Area shapes: Ed is inspired by Boris the Brave's *fractal jittered Voronoi partitions* (https://www.boristhebrave.com/2026/08/29/fractal-jittered-voronoi-partitions/).
+  - **The method** (from the article, which Ed pasted, 2026-10-03): start with a grid and pick a random point, a *site*, in each square (layer 0: one site per area). Make a grid of half the size and pick layer-1 sites; each site's *parent* is the nearest site one layer up. Repeat for a few layers. A point belongs to the area of the root you reach by following parents up from its nearest deepest-layer site. Borders come out fractal, like coastlines.
+  - **Why it suits Witch**: each point is computed on its own from a seed (no diagram to build, any map size), so a map is repeatable from its seed; layer-0 sites are natural **area centres**, where the **clearings** (and perhaps the soundsystems) go; the number of layers sets how wiggly borders are.
+  - Working in the Witch Art Lab's scene and map view since 2026-10-03.
 
 ## Run structure
 
