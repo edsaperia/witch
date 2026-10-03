@@ -7,8 +7,8 @@
 // areaAssets(id, style, { K, makeCanvas }) bakes everything one area type needs:
 //   { def, floor, walls, small, big, setPiece }  — each prop { sp: baked, kind, text },
 //   floor a seamless-ish tile (64 x 48 art pixels) to repeat over the ground.
-import { M, Sprite, rng, uni, pick, hash2, vnoise, hsv2rgb, tufts, lerp2, add, bake, defaultCanvas } from "./core.js";
-import { Model, render, masks } from "./model3d.js";
+import { M, Sprite, rng, uni, pick, hash2, vnoise, hsv2rgb, tufts, lerp2, add, bake, defaultCanvas, runeGlyph } from "./core.js";
+import { Model, render, masks, v3 } from "./model3d.js";
 import { broadTree, firTree, willowTree, birchTree, flatTree, treeColours, bush } from "./trees.js";
 
 // [kind, params] shorthands for the prop library below
@@ -298,16 +298,44 @@ function campfire(frame) {
   return sp;
 }
 const STONE_GLOW = { cyan: [[70, 230, 255], [200, 250, 255]], violet: [[190, 100, 255], [235, 210, 255]], green: [[90, 255, 140], [215, 255, 220]] };
+// A rune stone: a grey standing slab, taller than wide, its flatter face turned to the viewer,
+// cracked and weathered, with moss and grass at its foot and one bold glowing rune carved into
+// its face (the same glyphs as the soundsystem's runes), and a few motes drifting round it.
 function magicStone(variant) {
-  const m = new Model({ blend: .05 });
-  // a standing stone, leaning a little, with carved runes on its face; small stones at its foot
-  m.ell([0, .42, 0], [.42, .17, .13], M.ACCENT, { dir: [.12, 1, 0], up: [1, 0, 0], group: 1, paint: p => {
-    const face = p[0] > .03 || p[2] > .07, band = Math.floor((p[1] - .1) * 9);
-    if (face && p[1] > .15 && p[1] < .75 && (band % 2 === 0) && Math.abs(Math.sin(p[1] * 31 + p[2] * 17 + p[0] * 13)) > .55) return M.MAGIC;
-    return p[1] > .7 ? M.LEAF : undefined; } });
-  for (const [x, z, r] of [[-.2, .12, .08], [.18, .1, .06], [.05, -.18, .07]]) m.ell([x, r * .6, z], [r, r * .7, r], M.BODY2, { group: 2 });
-  const col = { [M.ACCENT]: [140, 140, 150], [M.BODY2]: [100, 98, 110], [M.LEAF]: [80, 120, 60], [M.MAGIC]: STONE_GLOW[variant][0], [M.MAGIC2]: STONE_GLOW[variant][1] };
-  const sp = render(m, { height: 36 }).sp;
+  const m = new Model({ blend: .04 }), k = Object.keys(STONE_GLOW).indexOf(variant), fz = .08, A = .4; // A: turned so its face is nearly square to the viewer
+  // its own axes: across, up (leaning back a little, so the face catches the moon), out of the face
+  const ax = [Math.cos(A), 0, -Math.sin(A)], az = v3.norm([Math.sin(A), .22, Math.cos(A)]), ay = v3.norm(v3.cross(az, ax)), C = [0, .46, 0];
+  // two jagged cracks: one down from the worn top, one up from the foot
+  const cracks = [[[.2 - k * .05, .92], [.14, .8], [.19, .7], [.12, .58]], [[-.22 + k * .03, .05], [-.17, .16], [-.21, .25]]];
+  const crack = (x, y) => cracks.some(c => c.some((a, i) => { const b = c[i + 1]; if (!b) return false;
+    const dx = b[0] - a[0], dy = b[1] - a[1], t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / (dx * dx + dy * dy)));
+    return Math.hypot(x - a[0] - dx * t, y - a[1] - dy * t) < .014; }));
+  const face = q => {
+    const d = v3.sub(q, C), p = [v3.dot(d, ax), v3.dot(d, ay) + .46, v3.dot(d, az)]; // in the slab's own axes
+    if (p[2] > fz - .02) { // the rune, carved into the face
+      const u = (p[0] + .17) / .34, v = (.8 - p[1]) / .5;
+      if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && runeGlyph(u, v, k + 1, .1)) return M.RUNE;
+    }
+    if (crack(p[0], p[1])) return M.STONED; // cracks
+    if (p[1] > .86 && hash2(Math.floor(p[0] * 30), Math.floor(p[2] * 30), 3) < .3) return M.MOSS;   // lichen on the weathered top
+    if (p[1] < .12 && hash2(Math.floor(p[0] * 35), Math.floor(p[1] * 35) + Math.floor(p[2] * 35) * 7, 5) < .55) return M.MOSS;
+    return undefined;
+  };
+  m.box(C, [.28, .46, fz], M.STONE, { group: 1, axes: [ax, ay, az], round: .06, paint: face });
+  // the weathered top: worn down to one side
+  m.box(v3.add(v3.add(C, v3.mul(ay, .53)), v3.mul(ax, .2)), [.3, .12, .2], M.STONE, { group: 1, dir: v3.add(ax, v3.mul(ay, .35)), up: ay, cut: true, paint: face });
+  // moss and grass at its foot
+  for (const [x, z, r] of [[-.24, .14, .08], [.2, .02, .07], [.0, .12, .07]]) m.ell([x, .015, z], [r, r * .4, r], M.MOSS, { group: 2 });
+  for (let i = 0; i < 9; i++) { const x = -.3 + i * .07, z = .12 + (i % 3) * .025 - i * .02, h = .07 + (i * 37 % 5) / 60; m.seg([x, 0, z], [x + (i % 3 - 1) * .02, h, z + .01], .012, .004, i % 3 ? M.LEAF : M.LEAF2, { group: 10 + i }); }
+  const col = { [M.STONE]: [132, 134, 142], [M.STONED]: [70, 70, 80], [M.MOSS]: [86, 120, 62], [M.LEAF]: [80, 125, 60], [M.LEAF2]: [130, 160, 80], [M.RUNE]: STONE_GLOW[variant][0], [M.MAGIC2]: STONE_GLOW[variant][1], [M.LINE]: [40, 40, 50] };
+  const sp = render(m, { height: 44 }).sp;
+  // a few motes drifting round it
+  let n = 0;
+  for (let i = 0; i < 600 && n < 5; i++) {
+    const x = Math.floor(hash2(i, k, 9) * sp.w), y = Math.floor(hash2(i, k, 10) * sp.h * .8);
+    if (sp.get(x, y) || sp.get(x + 1, y) || sp.get(x - 1, y) || sp.get(x, y + 1) || sp.get(x, y - 1)) continue;
+    sp.px(x, y, n % 2 ? M.RUNE : M.MAGIC2); n++;
+  }
   return { sp, colours: col };
 }
 function pond() {

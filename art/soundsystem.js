@@ -11,7 +11,7 @@
 // towards the viewer. When it plays the cones pump (frames 0..2: the discs swell and brighten).
 // States: "playing" (3 frames), "damaged" (cracked, a stone fallen, the glow flickering: 2
 // frames) and "destroyed" (a rubble pile with a dying glow: 1 frame).
-import { M, hash2 } from "./core.js";
+import { M, hash2, runeGlyph } from "./core.js";
 import { Model, render } from "./model3d.js";
 import { witchHeight } from "./witch.js";
 
@@ -28,15 +28,6 @@ export function soundsystemColours(variant = 0) {
   const [glow, core, crystal] = CRYSTAL[SOUNDSYSTEMS[variant % SOUNDSYSTEMS.length].crystal];
   return { [M.STONE]: [78, 80, 94], [M.STONED]: [36, 36, 48], [M.MOSS]: [72, 108, 58], [M.CRYSTAL]: crystal, [M.RUNE]: glow, [M.GLOW]: glow, [M.MAGIC2]: core, [M.WOOD]: [150, 96, 52], [M.LINE]: [24, 24, 34] };
 }
-
-// a carved rune, u and v in [0, 1] over its square
-const rune = (u, v, k) => {
-  const stroke = (d, w = .13) => Math.abs(d) < w;
-  if (stroke(u - .5) && v > .08 && v < .92) return true;               // the stem
-  if (k % 3 === 0) return stroke(v - .3 - Math.abs(u - .5) * .9) && v < .75; // arrow
-  if (k % 3 === 1) return (stroke(v - u * .9 - .05) || stroke(v - (1 - u) * .9 - .05)) && v < .8; // cross
-  return stroke(Math.hypot(u - .5, v - .3) - .22, .1);                 // ring
-};
 
 // The stack as a model. frame 0..2 pumps the cones; state "playing" | "damaged"; for damaged,
 // frame 0 or 1 is the flicker. Returns the model and how tall the intact stack is (model units).
@@ -59,11 +50,11 @@ function stackModel(variant, frame, state) {
       return d < .2 + pump * .15 ? M.MAGIC2 : d < .5 ? M.GLOW : d < .78 ? M.CRYSTAL : M.GLOW;
     } });
   };
-  // a carved rune near a block's top corner
-  const runePaint = (bx, by, bh, bw, frontZ, k, base) => p => {
-    if (p[2] > frontZ - .012) {
-      const s = .09, u = (p[0] - (bx - bw + .03)) / s, v = 1 - (p[1] - (by + bh - .03 - s)) / s;
-      if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && rune(u, v, k)) return dmg && hash2(k, frame, 5) < .5 ? M.STONED : M.RUNE;
+  // one big carved rune on the side of a block (the side we see), in the magic stones' glyphs
+  const runePaint = (bx, by, bh, bw, bd, fz, k, base) => p => {
+    if (p[0] > bx + bw - .022) {
+      const S = Math.min(bh, bd) * 1.5, u = (fz - bd - p[2]) / S + .5, v = (by - p[1]) / S + .5;
+      if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && runeGlyph(u, v, k, .12)) return dmg && hash2(k, frame, 5) < .5 ? M.STONED : M.RUNE;
     }
     return base(p);
   };
@@ -82,7 +73,8 @@ function stackModel(variant, frame, state) {
       if (dmg && kind === "horn" && i === n - 1) { fallen.push([bx, bw, bh, bd]); continue; } // knocked off the stack
       const tilt = dmg && kind === "tweet" ? [1, .12 * (i % 2 ? 1 : -1), 0] : undefined, by2 = dmg && kind === "tweet" ? by - .04 : by;
       const base = stone(by2 + bh, fz - bd + bd, g, dmg);
-      m.box([bx, by2, fz - bd], [bw - .005, bh, bd], M.STONE, { group: g, round: .035, rough: .007, dir: tilt, paint: runePaint(bx, by2, bh, bw, fz, runeK++, base) });
+      const carved = i === n - 1 - (dmg && kind === "horn" ? 1 : 0) && kind !== "tweet"; // the end block we see the side of
+      m.box([bx, by2, fz - bd], [bw - .005, bh, bd], M.STONE, { group: g, round: .035, rough: .004, dir: tilt, paint: carved ? runePaint(bx, by2, bh, bw - .005, bd, fz, runeK++, base) : base });
       if (kind === "bass") disc(bx, by + .02, fz, Math.min(bw, bh) * .72, g, cone++);
       if (kind === "mid") { // a wide, shallow horn: a flared hollow with a fin down the middle
         m.ell([bx, by, fz], [bw * .8, bh * .7, bd * .9], M.STONED, { group: g, cut: true, paint: p => p[2] < fz - bd * .45 ? (dark(cone) ? M.STONED : M.GLOW) : undefined });

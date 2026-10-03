@@ -222,6 +222,22 @@ const M = {
   WOOD: 41,    // varnished wooden trim
 };
 // These glow: drawn at full colour by the lighting pass, whatever the light.
+// The rune glyphs: one carved-rune language for the magic stones and the soundsystem. Simple,
+// angular, bold strokes. u, v in [0, 1] over the glyph's square (v down); k picks the glyph;
+// w is the stroke's half-width.
+const RUNE_GLYPHS = 4;
+function runeGlyph(u, v, k, w = .12) {
+  const line = (x0, y0, x1, y1) => { // distance to a segment
+    const dx = x1 - x0, dy = y1 - y0, t = Math.max(0, Math.min(1, ((u - x0) * dx + (v - y0) * dy) / (dx * dx + dy * dy)));
+    return Math.hypot(u - x0 - dx * t, v - y0 - dy * t) < w;
+  };
+  switch (((k % RUNE_GLYPHS) + RUNE_GLYPHS) % RUNE_GLYPHS) {
+    case 0: return line(.5, .08, .5, .92) || line(.5, .1, .18, .4) || line(.5, .1, .82, .4);  // an arrow up
+    case 1: return line(.5, .08, .5, .92) || line(.5, .5, .18, .18) || line(.5, .5, .82, .18); // a fork
+    case 2: return line(.2, .1, .8, .9) || line(.8, .1, .2, .9) || line(.5, .08, .5, .92);    // a starred cross
+    default: return line(.3, .08, .3, .92) || line(.3, .12, .75, .35) || line(.75, .35, .3, .55) || line(.3, .55, .78, .92); // a hooked stave
+  }
+}
 const EMISSIVE = new Set([M.GLINT, M.FLOWER, M.MAGIC, M.MAGIC2, M.RUNE, M.GLOW]);
 
 // ================= geometry: smooth outlines =================
@@ -1368,16 +1384,44 @@ function campfire(frame) {
   return sp;
 }
 const STONE_GLOW = { cyan: [[70, 230, 255], [200, 250, 255]], violet: [[190, 100, 255], [235, 210, 255]], green: [[90, 255, 140], [215, 255, 220]] };
+// A rune stone: a grey standing slab, taller than wide, its flatter face turned to the viewer,
+// cracked and weathered, with moss and grass at its foot and one bold glowing rune carved into
+// its face (the same glyphs as the soundsystem's runes), and a few motes drifting round it.
 function magicStone(variant) {
-  const m = new Model({ blend: .05 });
-  // a standing stone, leaning a little, with carved runes on its face; small stones at its foot
-  m.ell([0, .42, 0], [.42, .17, .13], M.ACCENT, { dir: [.12, 1, 0], up: [1, 0, 0], group: 1, paint: p => {
-    const face = p[0] > .03 || p[2] > .07, band = Math.floor((p[1] - .1) * 9);
-    if (face && p[1] > .15 && p[1] < .75 && (band % 2 === 0) && Math.abs(Math.sin(p[1] * 31 + p[2] * 17 + p[0] * 13)) > .55) return M.MAGIC;
-    return p[1] > .7 ? M.LEAF : undefined; } });
-  for (const [x, z, r] of [[-.2, .12, .08], [.18, .1, .06], [.05, -.18, .07]]) m.ell([x, r * .6, z], [r, r * .7, r], M.BODY2, { group: 2 });
-  const col = { [M.ACCENT]: [140, 140, 150], [M.BODY2]: [100, 98, 110], [M.LEAF]: [80, 120, 60], [M.MAGIC]: STONE_GLOW[variant][0], [M.MAGIC2]: STONE_GLOW[variant][1] };
-  const sp = render(m, { height: 36 }).sp;
+  const m = new Model({ blend: .04 }), k = Object.keys(STONE_GLOW).indexOf(variant), fz = .08, A = .4; // A: turned so its face is nearly square to the viewer
+  // its own axes: across, up (leaning back a little, so the face catches the moon), out of the face
+  const ax = [Math.cos(A), 0, -Math.sin(A)], az = v3.norm([Math.sin(A), .22, Math.cos(A)]), ay = v3.norm(v3.cross(az, ax)), C = [0, .46, 0];
+  // two jagged cracks: one down from the worn top, one up from the foot
+  const cracks = [[[.2 - k * .05, .92], [.14, .8], [.19, .7], [.12, .58]], [[-.22 + k * .03, .05], [-.17, .16], [-.21, .25]]];
+  const crack = (x, y) => cracks.some(c => c.some((a, i) => { const b = c[i + 1]; if (!b) return false;
+    const dx = b[0] - a[0], dy = b[1] - a[1], t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / (dx * dx + dy * dy)));
+    return Math.hypot(x - a[0] - dx * t, y - a[1] - dy * t) < .014; }));
+  const face = q => {
+    const d = v3.sub(q, C), p = [v3.dot(d, ax), v3.dot(d, ay) + .46, v3.dot(d, az)]; // in the slab's own axes
+    if (p[2] > fz - .02) { // the rune, carved into the face
+      const u = (p[0] + .17) / .34, v = (.8 - p[1]) / .5;
+      if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && runeGlyph(u, v, k + 1, .1)) return M.RUNE;
+    }
+    if (crack(p[0], p[1])) return M.STONED; // cracks
+    if (p[1] > .86 && hash2(Math.floor(p[0] * 30), Math.floor(p[2] * 30), 3) < .3) return M.MOSS;   // lichen on the weathered top
+    if (p[1] < .12 && hash2(Math.floor(p[0] * 35), Math.floor(p[1] * 35) + Math.floor(p[2] * 35) * 7, 5) < .55) return M.MOSS;
+    return undefined;
+  };
+  m.box(C, [.28, .46, fz], M.STONE, { group: 1, axes: [ax, ay, az], round: .06, paint: face });
+  // the weathered top: worn down to one side
+  m.box(v3.add(v3.add(C, v3.mul(ay, .53)), v3.mul(ax, .2)), [.3, .12, .2], M.STONE, { group: 1, dir: v3.add(ax, v3.mul(ay, .35)), up: ay, cut: true, paint: face });
+  // moss and grass at its foot
+  for (const [x, z, r] of [[-.24, .14, .08], [.2, .02, .07], [.0, .12, .07]]) m.ell([x, .015, z], [r, r * .4, r], M.MOSS, { group: 2 });
+  for (let i = 0; i < 9; i++) { const x = -.3 + i * .07, z = .12 + (i % 3) * .025 - i * .02, h = .07 + (i * 37 % 5) / 60; m.seg([x, 0, z], [x + (i % 3 - 1) * .02, h, z + .01], .012, .004, i % 3 ? M.LEAF : M.LEAF2, { group: 10 + i }); }
+  const col = { [M.STONE]: [132, 134, 142], [M.STONED]: [70, 70, 80], [M.MOSS]: [86, 120, 62], [M.LEAF]: [80, 125, 60], [M.LEAF2]: [130, 160, 80], [M.RUNE]: STONE_GLOW[variant][0], [M.MAGIC2]: STONE_GLOW[variant][1], [M.LINE]: [40, 40, 50] };
+  const sp = render(m, { height: 44 }).sp;
+  // a few motes drifting round it
+  let n = 0;
+  for (let i = 0; i < 600 && n < 5; i++) {
+    const x = Math.floor(hash2(i, k, 9) * sp.w), y = Math.floor(hash2(i, k, 10) * sp.h * .8);
+    if (sp.get(x, y) || sp.get(x + 1, y) || sp.get(x - 1, y) || sp.get(x, y + 1) || sp.get(x, y - 1)) continue;
+    sp.px(x, y, n % 2 ? M.RUNE : M.MAGIC2); n++;
+  }
   return { sp, colours: col };
 }
 function pond() {
@@ -1888,15 +1932,6 @@ function soundsystemColours(variant = 0) {
   return { [M.STONE]: [78, 80, 94], [M.STONED]: [36, 36, 48], [M.MOSS]: [72, 108, 58], [M.CRYSTAL]: crystal, [M.RUNE]: glow, [M.GLOW]: glow, [M.MAGIC2]: core, [M.WOOD]: [150, 96, 52], [M.LINE]: [24, 24, 34] };
 }
 
-// a carved rune, u and v in [0, 1] over its square
-const rune = (u, v, k) => {
-  const stroke = (d, w = .13) => Math.abs(d) < w;
-  if (stroke(u - .5) && v > .08 && v < .92) return true;               // the stem
-  if (k % 3 === 0) return stroke(v - .3 - Math.abs(u - .5) * .9) && v < .75; // arrow
-  if (k % 3 === 1) return (stroke(v - u * .9 - .05) || stroke(v - (1 - u) * .9 - .05)) && v < .8; // cross
-  return stroke(Math.hypot(u - .5, v - .3) - .22, .1);                 // ring
-};
-
 // The stack as a model. frame 0..2 pumps the cones; state "playing" | "damaged"; for damaged,
 // frame 0 or 1 is the flicker. Returns the model and how tall the intact stack is (model units).
 function stackModel(variant, frame, state) {
@@ -1918,11 +1953,11 @@ function stackModel(variant, frame, state) {
       return d < .2 + pump * .15 ? M.MAGIC2 : d < .5 ? M.GLOW : d < .78 ? M.CRYSTAL : M.GLOW;
     } });
   };
-  // a carved rune near a block's top corner
-  const runePaint = (bx, by, bh, bw, frontZ, k, base) => p => {
-    if (p[2] > frontZ - .012) {
-      const s = .09, u = (p[0] - (bx - bw + .03)) / s, v = 1 - (p[1] - (by + bh - .03 - s)) / s;
-      if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && rune(u, v, k)) return dmg && hash2(k, frame, 5) < .5 ? M.STONED : M.RUNE;
+  // one big carved rune on the side of a block (the side we see), in the magic stones' glyphs
+  const runePaint = (bx, by, bh, bw, bd, fz, k, base) => p => {
+    if (p[0] > bx + bw - .022) {
+      const S = Math.min(bh, bd) * 1.5, u = (fz - bd - p[2]) / S + .5, v = (by - p[1]) / S + .5;
+      if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && runeGlyph(u, v, k, .12)) return dmg && hash2(k, frame, 5) < .5 ? M.STONED : M.RUNE;
     }
     return base(p);
   };
@@ -1941,7 +1976,8 @@ function stackModel(variant, frame, state) {
       if (dmg && kind === "horn" && i === n - 1) { fallen.push([bx, bw, bh, bd]); continue; } // knocked off the stack
       const tilt = dmg && kind === "tweet" ? [1, .12 * (i % 2 ? 1 : -1), 0] : undefined, by2 = dmg && kind === "tweet" ? by - .04 : by;
       const base = stone(by2 + bh, fz - bd + bd, g, dmg);
-      m.box([bx, by2, fz - bd], [bw - .005, bh, bd], M.STONE, { group: g, round: .035, rough: .007, dir: tilt, paint: runePaint(bx, by2, bh, bw, fz, runeK++, base) });
+      const carved = i === n - 1 - (dmg && kind === "horn" ? 1 : 0) && kind !== "tweet"; // the end block we see the side of
+      m.box([bx, by2, fz - bd], [bw - .005, bh, bd], M.STONE, { group: g, round: .035, rough: .004, dir: tilt, paint: carved ? runePaint(bx, by2, bh, bw - .005, bd, fz, runeK++, base) : base });
       if (kind === "bass") disc(bx, by + .02, fz, Math.min(bw, bh) * .72, g, cone++);
       if (kind === "mid") { // a wide, shallow horn: a flared hollow with a fin down the middle
         m.ell([bx, by, fz], [bw * .8, bh * .7, bd * .9], M.STONED, { group: g, cut: true, paint: p => p[2] < fz - bd * .45 ? (dark(cone) ? M.STONED : M.GLOW) : undefined });
