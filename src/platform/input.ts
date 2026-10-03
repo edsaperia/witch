@@ -11,16 +11,16 @@ export class Input {
   private pressed = new Set<string>();
   private padPrev: boolean[] = [];
   readonly touch: TouchInput = { x: 0, y: 0, toggle: false, zoom: 0, debug: false };
-  /** Any key, click, touch or button: used by the start screen. */
-  onAny: (() => void) | null = null;
+  /** Any key, click, touch or button: used by the start screen, which returns true when the
+   *  press started the game, so that press does nothing else. */
+  onAny: (() => boolean) | null = null;
 
   constructor(target: Window = window) {
     target.addEventListener("keydown", e => {
       if (e.repeat) { if (this.isGameKey(e.code)) e.preventDefault(); return; }
       this.keys.add(e.code);
-      this.pressed.add(e.code);
       if (this.isGameKey(e.code)) e.preventDefault();
-      this.onAny?.();
+      if (!this.onAny?.()) this.pressed.add(e.code);
     });
     target.addEventListener("keyup", e => this.keys.delete(e.code));
     target.addEventListener("blur", () => this.keys.clear());
@@ -28,6 +28,13 @@ export class Input {
 
   private isGameKey(code: string): boolean {
     return /^(Arrow|Space$|Key[WASDQE]$|Minus$|Equal$|NumpadAdd$|NumpadSubtract$|Backquote$)/.test(code);
+  }
+
+  /** Forget presses not yet read (the press that started the game is not also a move). */
+  clearPresses(): void {
+    this.pressed.clear();
+    const t = this.touch;
+    t.toggle = false; t.zoom = 0; t.debug = false;
   }
 
   /** This frame's controls; button presses are reported once. */
@@ -45,7 +52,9 @@ export class Input {
     for (const pad of pads) {
       if (!pad) continue;
       const btn = (i: number) => !!pad.buttons[i]?.pressed;
-      const edge = (i: number) => btn(i) && !this.padPrev[i];
+      const fresh = pad.buttons.some((b, i) => b.pressed && !this.padPrev[i]);
+      const consumed = fresh && !!this.onAny?.();
+      const edge = (i: number) => !consumed && btn(i) && !this.padPrev[i];
       let sx = pad.axes[0] ?? 0, sy = pad.axes[1] ?? 0;
       const mag = Math.hypot(sx, sy), dead = 0.18;
       if (mag < dead) { sx = 0; sy = 0; } else { const s = (Math.min(1, mag) - dead) / (1 - dead) / mag; sx *= s; sy *= s; }
@@ -56,7 +65,6 @@ export class Input {
       if (edge(4) || edge(6)) zoom += 1;
       if (edge(5) || edge(7)) zoom -= 1;
       if (edge(8)) debug = true;
-      if (pad.buttons.some((b, i) => b.pressed && !this.padPrev[i])) this.onAny?.();
       this.padPrev = pad.buttons.map(b => b.pressed);
       break;
     }

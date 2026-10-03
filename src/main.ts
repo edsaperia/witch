@@ -41,11 +41,13 @@ requestAnimationFrame(() => setTimeout(async () => {
 
 // Browsers keep sound off until the player presses something: the start screen is that press.
 let audio: AudioContext | null = null;
-function start(): void {
-  if (!ready || !game.clock.paused) return;
+function start(): boolean {
+  if (!ready || !game.clock.paused) return false;
   try { audio ??= new AudioContext(); void audio.resume(); } catch { /* no sound yet anyway */ }
   game.clock.paused = false;
   startEl.style.display = "none";
+  input.clearPresses();
+  return true;
 }
 input.onAny = start;
 startEl.addEventListener("pointerdown", e => { e.preventDefault(); start(); });
