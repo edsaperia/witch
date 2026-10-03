@@ -74,9 +74,9 @@ const assets = await b.page.evaluate(async ({ style, seed }) => {
   // sigils: an SVG and a 64 px PNG each, with their strokes (in writing order) for the manifest
   const sigils = G.SIGIL_IDS.map(id => {
     const c = document.createElement("canvas"); c.width = c.height = 64; G.drawSigil(c.getContext("2d"), id, { size: 64, glow: 4 });
-    return { id: `sigil-${id}`, species: id, neon: G.SIGIL_NEON[id], colour: G.sigilColour(id), svg: G.sigilSVG(id, { size: 64 }), levels: [0, 1, 2].map(level => G.sigilSVG(id, { size: 128, level })), png: png(c), strokes: G.SIGILS[id] };
+    return { id: `sigil-${id}`, species: id, neon: G.SIGIL_NEON[id], colour: G.sigilColour(id), svg: G.sigilSVG(id, { size: 64 }), levels: [0, 1, 2, 3].map(level => G.sigilSVG(id, { size: 128, level })), png: png(c), strokes: G.SIGILS[id] };
   });
-  return { list, sigils, sigilFormat: { box: "unit square, x right, y down", stroke: G.SIGIL_STROKE, dot: G.SIGIL_DOT, drawTime: G.SIGIL_DRAW_TIME, groundPitch: G.GROUND_PITCH, neon: G.NEON, levels: [0, 1, 2].map(l => G.sigilFrame(l)), stack: G.STACK_TUNING, transitionTime: G.SIGIL_TRANSITION_TIME }, style: st, placement: { wallsBlock: G.WALLS_BLOCK, setPieceChance: G.SET_PIECE_CHANCE }, areas: G.AREAS.map(({ id, name, creature, by, text }) => ({ id, name, creature, by, text })) };
+  return { list, sigils, sigilFormat: { box: "unit square, x right, y down", stroke: G.SIGIL_STROKE, dot: G.SIGIL_DOT, drawTime: G.SIGIL_DRAW_TIME, groundPitch: G.GROUND_PITCH, neon: G.NEON, levels: [0, 1, 2, 3].map(l => G.sigilFrame(l)), stack: G.STACK_TUNING, transitionTime: G.SIGIL_TRANSITION_TIME }, style: st, placement: { wallsBlock: G.WALLS_BLOCK, setPieceChance: G.SET_PIECE_CHANCE }, areas: G.AREAS.map(({ id, name, creature, by, text }) => ({ id, name, creature, by, text })) };
 }, { style, seed });
 if (b.errors.length) console.error(b.errors.join("\n"));
 await b.close();
@@ -93,12 +93,12 @@ for (const a of assets.list) {
   manifest.assets.push({ ...meta, size: { w: a.w, h: a.h }, files: { albedo: `${a.id}.png`, normal: `${a.id}.normal.png`, ...(mask ? { mask: `${a.id}.mask.png` } : {}) } });
   delete manifest.assets.at(-1).w; delete manifest.assets.at(-1).h;
 }
-manifest.sigils = { format: { ...assets.sigilFormat, levels: "each level's frame (metres across on the ground, core thickness, halo, rings, band, rays, shimmer); the -baby, -young and -legend SVGs carry it", neon: "the palette; each sigil names its slot (neon), so the game can recolour it", strokes: "in writing order, each drawn from its first point: { l: [[x, y], ...] } a polyline, { a: [cx, cy, r, from, to] } an arc (degrees, 0 right, 90 down), { d: [x, y] } an end dot" }, list: [] };
+manifest.sigils = { format: { ...assets.sigilFormat, levels: "each level's frame (metres across on the ground, core thickness, halo, rings, band, rays, shimmer); levels 0 baby, 1 young, 2 adult, 3 legend; the -baby, -young, -adult and -legend SVGs carry it", neon: "the palette; each sigil names its slot (neon), so the game can recolour it", strokes: "in writing order, each drawn from its first point: { l: [[x, y], ...] } a polyline, { a: [cx, cy, r, from, to] } an arc (degrees, 0 right, 90 down), { d: [x, y] } an end dot" }, list: [] };
 for (const sg of assets.sigils) {
   writeFileSync(join(out, `${sg.id}.svg`), sg.svg);
   writeFileSync(join(out, `${sg.id}.png`), Buffer.from(sg.png, "base64"));
-  const lv = ["baby", "young", "legend"].map((n, l) => (writeFileSync(join(out, `${sg.id}-${n}.svg`), sg.levels[l]), `${sg.id}-${n}.svg`));
-  manifest.sigils.list.push({ id: sg.id, species: sg.species, neon: sg.neon, colour: sg.colour, files: { svg: `${sg.id}.svg`, png: `${sg.id}.png`, baby: lv[0], young: lv[1], legend: lv[2] }, strokes: sg.strokes });
+  const lv = ["baby", "young", "adult", "legend"].map((n, l) => (writeFileSync(join(out, `${sg.id}-${n}.svg`), sg.levels[l]), `${sg.id}-${n}.svg`));
+  manifest.sigils.list.push({ id: sg.id, species: sg.species, neon: sg.neon, colour: sg.colour, files: { svg: `${sg.id}.svg`, png: `${sg.id}.png`, baby: lv[0], young: lv[1], adult: lv[2], legend: lv[3] }, strokes: sg.strokes });
 }
 writeFileSync(join(out, "manifest.json"), JSON.stringify(manifest, null, 1));
 console.log(`exported ${assets.list.length} assets (${assets.list.length * 2} PNGs) and ${assets.sigils.length} sigils (SVG and PNG) to ${out.startsWith(ROOT + "/") ? out.slice(ROOT.length + 1) : out}`);

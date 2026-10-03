@@ -13,8 +13,8 @@ import { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProp
 import { SPECIES, SPECIES_BY_ID, FEATURE_NAMES, speciesColours, critter, levelHeight } from "./creatures.js";
 export { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT };
 export { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone };
-import { SIGILS, SIGIL_IDS, SIGIL_STROKE, SIGIL_DOT, SIGIL_DRAW_TIME, GROUND_PITCH, NEON, SIGIL_NEON, sigilColour, sigilFrame, sigilStrokes, sigilMark, sigilSVG, drawSigil, sigilHit, sigilGlyph, sigilField, groundSigil, floatSigil, floatSize, paintSigilField, SigilStack, STACK_TUNING, SIGIL_TRANSITION_TIME, liftOff, setDown } from "./sigils.js";
-export { SIGILS, SIGIL_IDS, SIGIL_STROKE, SIGIL_DOT, SIGIL_DRAW_TIME, GROUND_PITCH, NEON, SIGIL_NEON, sigilColour, sigilFrame, sigilStrokes, sigilMark, sigilSVG, drawSigil, sigilHit, sigilGlyph, sigilField, groundSigil, floatSigil, floatSize, paintSigilField, SigilStack, STACK_TUNING, SIGIL_TRANSITION_TIME, liftOff, setDown };
+import { SIGILS, SIGIL_IDS, SIGIL_STROKE, SIGIL_DOT, SIGIL_DRAW_TIME, GROUND_PITCH, NEON, SIGIL_NEON, SIGIL_LEVELS, sigilColour, sigilFrame, sigilStrokes, sigilMark, sigilSVG, drawSigil, sigilHit, sigilGlyph, sigilField, groundSigil, floatSigil, floatSize, paintSigilField, SigilStack, STACK_TUNING, SIGIL_TRANSITION_TIME, liftOff, setDown } from "./sigils.js";
+export { SIGILS, SIGIL_IDS, SIGIL_STROKE, SIGIL_DOT, SIGIL_DRAW_TIME, GROUND_PITCH, NEON, SIGIL_NEON, SIGIL_LEVELS, sigilColour, sigilFrame, sigilStrokes, sigilMark, sigilSVG, drawSigil, sigilHit, sigilGlyph, sigilField, groundSigil, floatSigil, floatSize, paintSigilField, SigilStack, STACK_TUNING, SIGIL_TRANSITION_TIME, liftOff, setDown };
 import { SOUNDSYSTEMS, soundsystemColours, soundsystemSprite, soundsystemHeight, soundsystems } from "./soundsystem.js";
 export { SOUNDSYSTEMS, soundsystemColours, soundsystemSprite, soundsystemHeight };
 export { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree };

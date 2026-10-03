@@ -124,14 +124,15 @@ const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(
 const rgb = c => `rgb(${c.join(",")})`;
 
 // ---- level frames ----
-// A creature level's frame, for any level number (0 baby, 1 young, 2 legend, and beyond):
-// size steps first, then rings, then ornament.
-//   metres: across on the ground; core: the core line's thickness (x a baby's); halo: its
-//   brightness (0..1); rings: how many; band: rune ticks between the outer two rings; rays: short
-//   points outside the outer ring; shimmer: a slow sparkle.
+// A creature level's frame, for any level number (0 baby, 1 young, 2 adult, 3 legend, and
+// beyond): size steps first, then rings, then ornament.
+//   metres: across on the ground (about 2, 3, 4, 5.5); core: the core line's thickness (x a
+//   baby's); halo: its brightness (0..1); rings: how many; band: rune ticks between the outer two
+//   rings; rays: short points outside the outer ring; shimmer: a slow sparkle.
+export const SIGIL_LEVELS = ["baby", "young", "adult", "legend"];
 export function sigilFrame(level = 0) {
   const L = Math.max(0, level);
-  return { level: L, metres: 2 + L + L * (L - 1) / 2, core: 1 + .22 * L, halo: Math.min(1, .45 + .27 * L), rings: Math.min(3, Math.floor(L)), band: L >= 2, rays: L >= 3 ? 8 : L >= 2 ? 4 : 0, shimmer: L >= 2 };
+  return { level: L, metres: 2 + L + Math.max(0, L - 2) * .5, core: 1 + .2 * L, halo: Math.min(1, .45 + .19 * L), rings: Math.min(L >= 4 ? 3 : 2, Math.floor(L)), band: L >= 3, rays: L >= 4 ? 8 : L >= 3 ? 4 : 0, shimmer: L >= 3 };
 }
 
 // ---- geometry: strokes as polylines, with their lengths ----

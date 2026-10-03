@@ -36,17 +36,17 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
       const big = document.createElement("canvas"); big.width = W * scale; big.height = H * scale; const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, W * scale, H * scale);
       return big.toDataURL("image/png");
     }
-    // each species: baby, young, legend flat (the vector form), then on the ground (the pixel leashing rune, at its level's size)
-    const ids = list === "all" ? S.SIGIL_IDS : list.split(","), cols = 2, ppm = 14, flat = 60, lh = Math.ceil(S.sigilFrame(2).metres * ppm * Math.sin(S.GROUND_PITCH)) + 6;
-    const bw = 3 * (flat + 4) + [0, 1, 2].reduce((a, l) => a + S.sigilFrame(l).metres * ppm + 10, 0) + 90, rh = Math.max(flat, lh) + 8, rowsN = Math.ceil(ids.length / cols);
+    // each species: baby, young, adult, legend flat (the vector form), then on the ground (the pixel leashing rune, at its level's size)
+    const ids = list === "all" ? S.SIGIL_IDS : list.split(","), cols = 2, ppm = 13, flat = 56, lh = Math.ceil(S.sigilFrame(3).metres * ppm * Math.sin(S.GROUND_PITCH)) + 6;
+    const bw = 4 * (flat + 4) + [0, 1, 2, 3].reduce((a, l) => a + S.sigilFrame(l).metres * ppm + 10, 0) + 90, rh = Math.max(flat, lh) + 8, rowsN = Math.ceil(ids.length / cols);
     const W = cols * bw, H = rowsN * rh + 6, c = document.createElement("canvas"); c.width = W; c.height = H;
     const g = c.getContext("2d"); g.fillStyle = "#0e0c14"; g.fillRect(0, 0, W, H); g.imageSmoothingEnabled = false;
     ids.forEach((id, n) => {
       let x = (n % cols) * bw + 6; const y = Math.floor(n / cols) * rh + 4;
       g.fillStyle = "#cfc6e0"; g.font = "12px sans-serif"; g.textAlign = "left"; g.fillText(G.SPECIES_BY_ID[id].name, x, y + rh / 2 + 4); x += 84;
-      for (const level of [0, 1, 2]) { S.drawSigil(g, id, { x, y: y + (rh - 8 - flat) / 2, size: flat, level }); x += flat + 4; }
+      for (const level of [0, 1, 2, 3]) { S.drawSigil(g, id, { x, y: y + (rh - 8 - flat) / 2, size: flat, level }); x += flat + 4; }
       g.globalCompositeOperation = "lighter";
-      for (const level of [0, 1, 2]) { const f = S.groundSigil(id, { level, pxPerMetre: ppm }); g.drawImage(S.paintSigilField(f, S.SIGIL_DRAW_TIME + .8), Math.round(x), Math.round(y + (rh - 8 - f.h) / 2)); x += f.w + 6; }
+      for (const level of [0, 1, 2, 3]) { const f = S.groundSigil(id, { level, pxPerMetre: ppm }); g.drawImage(S.paintSigilField(f, S.SIGIL_DRAW_TIME + .8), Math.round(x), Math.round(y + (rh - 8 - f.h) / 2)); x += f.w + 6; }
       g.globalCompositeOperation = "source-over";
     });
     const big = document.createElement("canvas"); big.width = W * scale; big.height = H * scale;

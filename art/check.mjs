@@ -55,10 +55,10 @@ const report = await b.page.evaluate(async () => {
     const svg = G.sigilSVG(id), c = document.createElement("canvas"); c.width = c.height = 48; G.drawSigil(c.getContext("2d"), id, { size: 48, glow: false });
     let ink = 0; const px = c.getContext("2d").getImageData(0, 0, 48, 48).data; for (let i = 3; i < px.length; i += 4) if (px[i] > 128) ink++;
     const glyph = G.sigilGlyph(id, 12), gn = glyph.m.reduce((a, v) => a + (v ? 1 : 0), 0);
-    const gr = [0, 1, 2].map(level => G.groundSigil(id, { level })), early = [...gr[1].atCore].filter(a => a <= .3).length, done = pixels(gr[1]);
-    const grows = gr[0].w < gr[1].w && gr[1].w < gr[2].w && pixels(gr[0]) < done && done < pixels(gr[2]) && G.sigilMark(id, 0).frame.rings < G.sigilMark(id, 1).frame.rings && G.sigilMark(id, 1).frame.rings < G.sigilMark(id, 2).frame.rings;
-    const fl = G.floatSigil(id, { level: 2 });
-    res.push({ what: `sigil ${id}: vector, 12 px glyph, inside the box, ground draw-on, levels grow, floating form`, good: inside && /<(polyline|circle)/.test(svg) && ink > 40 && gn > 8 && done > 60 && early < done && grows && pixels(fl) > 20, info: `${strokes.length} strokes, ${ink} px at 48, ${gn} px at 12, ground ${gr.map(g => g.w + "x" + g.h).join(" < ")}` });
+    const gr = [0, 1, 2, 3].map(level => G.groundSigil(id, { level })), early = [...gr[1].atCore].filter(a => a <= .3).length, done = pixels(gr[1]);
+    const fr = [0, 1, 2, 3].map(l => G.sigilMark(id, l).frame), grows = gr.every((g, l) => l === 0 || (g.w > gr[l - 1].w && pixels(g) > pixels(gr[l - 1]))) && fr[0].rings === 0 && fr[1].rings === 1 && fr[2].rings === 2 && fr[3].band && fr[3].rays > 0 && !fr[2].band;
+    const fl = G.floatSigil(id, { level: 3 });
+    res.push({ what: `sigil ${id}: vector, 12 px glyph, inside the box, ground draw-on, four levels grow (rings 0, 1, 2, then band and rays), floating form`, good: inside && /<(polyline|circle)/.test(svg) && ink > 40 && gn > 8 && done > 60 && early < done && grows && pixels(fl) > 20, info: `${strokes.length} strokes, ${ink} px at 48, ${gn} px at 12, ground ${gr.map(g => g.w + "x" + g.h).join(" < ")}` });
   }
   { // the leash stack: still, it stands over her head, newest at the bottom; flying right, it trails left, higher sigils further; stopped, it settles back
     const s = new G.SigilStack(); ["wolf", "owl", "stag"].forEach(id => s.push(id, 1));
