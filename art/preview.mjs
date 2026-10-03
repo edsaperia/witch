@@ -11,7 +11,7 @@
 //   node art/preview.mjs lake 0 art/previews/lake.png [scale]   (a sample lake composed from the kit; NIGHT=1)
 //   node art/preview.mjs paths all|<kinds> art/previews/paths.png [scale]   (each kind swept along a curve with a branch, then its strip, end, Y, T; VARIANT=n for the railway's)
 //   node art/preview.mjs pathpieces all|<ids> art/previews/path-pieces.png [scale]   (the 3D pieces; with all, the railway's points, broken end and crossing)
-//   node art/preview.mjs species all|<ids> art/previews/tree-species.png [scale]   (each species at mature height from the side, then its crown as treetop mode shows it; PER=n species to a row)
+//   node art/preview.mjs species all|<ids> art/previews/tree-species.png [scale]   (each species at mature height from the side, then its crown as treetop mode shows it, then its trunk alone as ground mode shows it; PER=n species to a row)
 //   node art/preview.mjs canopy <areas> art/previews/canopy-patches.png [scale]   (a 3 x 3 patch of each area's crowns from the treetops)
 //   node art/preview.mjs witch all art/previews/witch-flight.png [scale]   ("fast" instead of all: hover, lean and the fast pose; "foot": hover and every on-foot pose, POSES=stand,talk,... to pick, ANCHORS=1 to mark her hand and hat tip)
 //   node art/preview.mjs treeheights fern-forest,garden art/previews/tree-heights.png [scale]
@@ -195,10 +195,10 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
       panels.push({ A, N, w: W, h: H });
     }
     for (let i = 0; i < panels.length; i += 4) rows.push(panels.slice(i, i + 4));
-  } else if (what === "species") { // every tree species (or listed) at mature height: from the side (whole), then its crown alone as treetop mode shows it; the witch for scale
+  } else if (what === "species") { // every tree species (or listed) at mature height: from the side (whole), then its crown alone as treetop mode shows it, then its bottom half alone as ground mode shows it; the witch for scale
     const ids = list === "all" ? Object.keys(G.TREE_SPECIES) : list.split(","), K = 2 / (st.pixel || 2), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), per = window.PER || 5, items = [];
-    for (const id of ids) { const S = G.TREE_SPECIES[id], r = G.rng(7 + id.length * 13), ts = { ...st }, t = S.fn(r, ts, st.treeSize * K), c = G.treeColours(G.rng(3), ts, S.fn), p = G.splitTree(t); items.push(G.bake(t.sp, c, st, "none"), G.bake(p.top, c, st, "none")); }
-    for (let i = 0; i < items.length; i += per * 2) rows.push([...items.slice(i, i + per * 2), wit]);
+    for (const id of ids) { const S = G.TREE_SPECIES[id], r = G.rng(7 + id.length * 13), ts = { ...st }, t = S.fn(r, ts, st.treeSize * K), c = G.treeColours(G.rng(3), ts, S.fn), p = G.splitTree(t); items.push(G.bake(t.sp, c, st, "none"), G.bake(p.top, c, st, "none"), G.bake(p.bot, c, st, "none")); }
+    for (let i = 0; i < items.length; i += per * 3) rows.push([...items.slice(i, i + per * 3), wit]);
   } else if (what === "areas") { // per area type: floor tile, walls, small, big, set piece, its creature (young)
     const ids = list === "all" ? G.AREAS.map(a => a.id) : list.split(",");
     for (const id of ids) { const a = G.areaAssets(id, st); rows.push([a.floor, ...a.walls, ...a.small, ...a.big, ...(a.setPiece ? [a.setPiece] : [])].map(x => x.sp).concat([G.bake(G.critter(a.def.creature, 1, 0, st), G.speciesColours(a.def.creature, st), st, st.cOutline)])); }

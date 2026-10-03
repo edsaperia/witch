@@ -390,6 +390,72 @@ export function larchTree(r, st, s) {
   return trim(sp, bx, H * .8);
 }
 
+// Life on the trunk, below the crown: what the bottom half (ground mode) carries besides bare wood. Ivy
+// climbing the trunk, moss at its foot, epicormic sprigs (little leaf clumps hugging the bark), low side
+// boughs with a leaf clump, and a skirt of drooping lower boughs (yew, holly, the conifers). It is drawn
+// after the tree, only onto empty or wooden pixels at least a margin below the crown line, so the canopy
+// (the top half) is untouched; the pixels it adds are listed in sp.low, and splitTree puts them in the
+// bottom half. Saplings and young trees are leafier, almost to the ground; dead trees keep only ivy and moss.
+const LOW_MARGIN = 6;
+function lowLife(t, r, st, s, P) {
+  const { sp, crownY } = t, W = sp.w, H = sp.h, low = sp.low || (sp.low = new Uint8Array(W * H));
+  const y0 = Math.ceil(crownY + LOW_MARGIN * s); if (y0 >= H - 2) return t;
+  const rel = s / (st.treeSize * 2 / (st.pixel || 2)), youth = Math.max(0, Math.min(1, (1 - rel) / .5)), bare = !!st.treeBare;
+  const runs = y => { const out = []; let a = -1; for (let x = 0; x <= W; x++) { const w = x < W && WOOD.has(sp.m[y * W + x]); if (w && a < 0) a = x; if (!w && a >= 0) { out.push([a, x - 1]); a = -1; } } return out; };
+  const near = (rs, x) => rs.reduce((b, q) => !b || Math.abs((q[0] + q[1]) / 2 - x) < Math.abs((b[0] + b[1]) / 2 - x) ? q : b, null);
+  // draws f, then keeps only what landed on empty or wooden pixels below the margin, and lists it
+  const draw = f => {
+    const m0 = sp.m.slice(), n0 = sp.n.slice(); f();
+    for (let i = 0; i < m0.length; i++) if (sp.m[i] !== m0[i]) {
+      const y = (i / W) | 0;
+      if (y < y0 || (m0[i] && !WOOD.has(m0[i]) && !low[i])) { sp.m[i] = m0[i]; sp.n[i * 3] = n0[i * 3]; sp.n[i * 3 + 1] = n0[i * 3 + 1]; sp.n[i * 3 + 2] = n0[i * 3 + 2]; }
+      else low[i] = 1;
+    }
+  };
+  const spot = () => { for (let k = 0; k < 8; k++) { const y = Math.round(uni(r, y0, H - 3)), rs = runs(y); if (rs.length) { const q = pick(r, rs), side = r() < .5 ? -1 : 1; return { x: side < 0 ? q[0] : q[1], y, side }; } } return null; };
+  const leafy = bare ? 0 : 1, gy = H - 1;
+  let cx0 = W, cx1 = 0; for (let i = 0; i < y0 * W; i++) if (sp.m[i] && !WOOD.has(sp.m[i])) { const x = i % W; cx0 = Math.min(cx0, x); cx1 = Math.max(cx1, x); }
+  const reach = Math.max(6 * s, (cx1 - cx0) * .22); // low boughs and skirts stay well inside the crown's spread: no wall of leaves
+  // moss: the foot of the trunk and the roots go green on their upper, shaded side
+  if (P.moss) draw(() => { for (let y = Math.max(y0, Math.round(H - (H - y0) * .4)); y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x; if (!WOOD.has(sp.m[i])) continue; const up = y > 0 && !sp.m[i - W], v = vnoise(x / 2.5, y / 2.5, 41); if (v > 1 - P.moss * (.35 + .4 * (y - y0) / (H - y0)) || (up && hash2(x, y, 9) < P.moss * .6)) sp.m[i] = hash2(x, y, 5) < .3 ? M.LEAF2 : M.LEAF; } });
+  // ivy: a stem winding up the trunk, dark glossy leaves either side
+  if (P.ivy && r() < .35 + P.ivy * .6) draw(() => {
+    let x = W / 2; const top = gy - (gy - y0) * uni(r, .45, .95) * Math.min(1, P.ivy + .3), ph = r() * 6;
+    for (let y = gy - 1; y > top; y--) {
+      const q = near(runs(y), x); if (!q) break;
+      x = q[0] + (q[1] - q[0]) * (.5 + .48 * Math.sin(y * .22 + ph));
+      sp.px(x, y, M.LEAF3, 0, 0, 1);
+      if (hash2(Math.round(x), y, 13) < .45) { const d = hash2(y, 3, 2) < .5 ? -1 : 1; sp.px(x + d, y, M.LEAF, d * .5, -.3, .8); sp.px(x + d * 2, y, M.LEAF3, d * .6, 0, .8); sp.px(x + d, y - 1, hash2(x, y, 4) < .4 ? M.LEAF2 : M.LEAF3, 0, -.6, .8); }
+    }
+  });
+  // epicormic sprigs: little clumps on the bark
+  const nSprig = Math.round(P.sprigs * leafy * (5 + 8 * youth) * (H - y0) / (40 * s));
+  for (let k = 0; k < nSprig; k++) { const p = spot(); if (!p) break; const rr = uni(r, 3, 5.5) * s; draw(() => clump(sp, [p.x + p.side * rr * .6, p.y], rr, rr * .75, st, r, { mat: r() < .4 ? M.LEAF3 : M.LEAF, ragged: .8 })); }
+  // low boughs: a short side branch reaching out and up, a leaf clump at its end
+  const nBough = Math.round(P.boughs * leafy * (3 + 4 * youth) * (H - y0) / (45 * s) + (r() < P.boughs * leafy ? 1 : 0));
+  for (let k = 0; k < nBough; k++) { const p = spot(); if (!p) break; draw(() => { const b = bough(sp, [p.x, p.y], -Math.PI / 2 + p.side * uni(r, .9, 1.35), Math.min(reach, uni(r, 10, 20) * s), 2 * s, 1, st, r, { group: 12, mat: M.TRUNK }); const rr = uni(r, 6, 9.5) * s; clump(sp, add(b.end, [0, -1 * s]), rr, rr * .65, st, r, { mat: r() < .4 ? M.LEAF3 : M.LEAF }); }); }
+  // a skirt: drooping lower boughs near the ground, with gaps between them
+  if (P.skirt && leafy) {
+    const nS = Math.round(3 + P.skirt * 5 + youth * 3);
+    for (let k = 0; k < nS; k++) draw(() => {
+      const y = Math.round(uni(r, Math.max(y0, H - (H - y0) * .8), H - 4 * s)), q = near(runs(y), W / 2); if (!q) return;
+      const side = k % 2 ? 1 : -1, x = side < 0 ? q[0] : q[1], L = Math.min(reach * 1.3, uni(r, 14, 24) * s * (.6 + P.skirt * .5));
+      const b = bough(sp, [x, y], -Math.PI / 2 + side * uni(r, 1.6, 1.95), L, 1.6 * s, 1, st, r, { group: 12, mat: M.BARKD });
+      clump(sp, lerp2([x, y], b.end, .6), L * .5, 3.5 * s, st, r, { mat: r() < .5 ? M.LEAF3 : M.LEAF, ragged: 1.2 });
+    });
+  }
+  return t;
+}
+// Each species' life below the crown (0 to 1 each): ivy, moss, epicormic sprigs, low boughs, skirt.
+const LOW = {
+  broad: { ivy: .4, moss: .6, sprigs: .5, boughs: .3 }, fir: { moss: .3, skirt: 1 }, willow: { moss: .5, sprigs: .3 }, birch: { sprigs: .3, boughs: .2 }, flat: { ivy: .3, sprigs: .4, boughs: .3 },
+  oak: { ivy: .5, moss: .5, sprigs: .9, boughs: .4 }, beech: { moss: .3, boughs: .3 }, ash: { ivy: .6, sprigs: .3, boughs: .2 }, lime: { moss: .3, sprigs: 1 },
+  sycamore: { ivy: .4, moss: .4, boughs: .4 }, chestnut: { sprigs: .3, boughs: .5 }, rowan: { sprigs: .3, boughs: .3 }, alder: { moss: .6, sprigs: .4 },
+  pine: { ivy: .3, moss: .3, boughs: .15 }, yew: { moss: .4, skirt: 1 }, hawthorn: { moss: .5, sprigs: .6, boughs: .5 }, holly: { skirt: .7 }, hazel: { moss: .4, sprigs: .8 },
+  weepingBirch: { sprigs: .3 }, larch: { skirt: .5, boughs: .2 },
+};
+const withLowLife = (fn, P) => (r, st, s) => lowLife(fn(r, st, s), r, st, s, P);
+
 // Every tree kind an area can name, with its look: hue (added to the area's leaf hue), saturation and
 // value of the leaves, the trunk's colour, how it grows across the height classes (wide, narrow, small,
 // willow, normal), and what it is. The first six are the original kinds.
@@ -415,7 +481,8 @@ export const TREE_SPECIES = {
   weepingBirch: { fn: weepingBirchTree, name: "weeping birch", grow: "narrow", hue: -.04, val: 1.12 },
   larch: { fn: larchTree, name: "larch", grow: "narrow", hue: -.07, sat: .8, val: 1.15 },
 };
-const SPECIES_BY_FN = new Map(Object.entries(TREE_SPECIES).map(([id, S]) => [S.fn, { id, ...S }]));
+for (const [id, S] of Object.entries(TREE_SPECIES)) { S.bare = S.fn; S.fn = withLowLife(S.fn, LOW[id] || {}); } // every species' trees carry their life below the crown; S.bare draws without it
+const SPECIES_BY_FN = new Map(Object.entries(TREE_SPECIES).flatMap(([id, S]) => [[S.fn, { id, ...S }], [S.bare, { id, ...S }]]));
 export const treeSpecies = type => TREE_SPECIES[type] || TREE_SPECIES.broad;
 // What a species' canopy looks like from the treetops, as numbers: its crown (the top half of a mature
 // tree, averaged over a few seeds): fill (how much of the crown's box is leaves), dark and light (the shares
@@ -457,11 +524,11 @@ export function treeColours(r, st, type) {
 }
 // The trunk was drawn with its roots and bark; this stays for callers of the old API.
 export function finishTree(t) { return t; }
-export function splitTree(t) { // bottom = wood below the crown line; top = everything else
+export function splitTree(t) { // bottom = wood below the crown line and the life on it; top = everything else
   const { sp, crownY } = t, top = new Sprite(sp.w, sp.h), bot = new Sprite(sp.w, sp.h);
   for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) {
     const i = y * sp.w + x, m = sp.m[i]; if (!m) continue;
-    const dst = WOOD.has(m) && y >= crownY ? bot : top;
+    const dst = (WOOD.has(m) && y >= crownY) || sp.low?.[i] ? bot : top; // low: the foliage lowLife put below the crown
     dst.put(x, y, m, sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]);
   }
   return { top, bot };
