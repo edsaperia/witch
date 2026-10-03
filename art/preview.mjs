@@ -3,6 +3,7 @@
 //   node art/preview.mjs animals wolf,boar,owl art/previews/animals.png [scale]
 //   node art/preview.mjs trees all art/previews/trees.png [scale]
 //   node art/preview.mjs areas all art/previews/areas.png [scale]
+//   node art/preview.mjs sets all art/previews/set-pieces.png [scale]   (every area's set piece, five to a row, the witch for scale)
 //   node art/preview.mjs home 0 art/previews/treehouse.png [scale]   (the treehouse with the witch sitting on its terrace, sit frame 0 or 1; NIGHT=1 lit by its own lights)
 //   node art/preview.mjs witch all art/previews/witch-flight.png [scale]   ("fast" instead of all: hover, lean and the fast pose; "foot": hover and every on-foot pose, POSES=stand,talk,... to pick, ANCHORS=1 to mark her hand and hat tip)
 //   node art/preview.mjs treeheights fern-forest,garden art/previews/tree-heights.png [scale]
@@ -119,6 +120,9 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   } else if (what === "soundsystems") { // per variant: three playing frames, two damaged, destroyed, and the witch for scale
     for (let v = 0; v < G.SOUNDSYSTEMS.length; v++) { if (list !== "all" && !list.split(",").includes(String(v))) continue; const col = G.soundsystemColours(v), b = o => G.bake(G.soundsystemSprite(st, { variant: v, ...o }), col, st, "none"); rows.push([b({ frame: 0 }), b({ frame: 1 }), b({ frame: 2 }), b({ state: "damaged", frame: 0 }), b({ state: "damaged", frame: 1 }), b({ state: "destroyed" }), G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline)]); }
     if (window.SIGIL) rows.push(G.SOUNDSYSTEMS.map((S, v) => G.bake(G.soundsystemSprite(st, { variant: v, sigil: window.SIGIL }), G.soundsystemColours(v), st, "none"))); // carved with a creature's sigil
+  } else if (what === "sets") { // every area's set piece (or the listed areas'), five to a row, each row ending with the witch for scale
+    const ids = list === "all" ? G.AREAS.filter(a => a.set).map(a => a.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
+    for (let i = 0; i < ids.length; i += 5) rows.push([...ids.slice(i, i + 5).map(id => G.areaAssets(id, st).setPiece.sp), wit]);
   } else if (what === "areas") { // per area type: floor tile, walls, small, big, set piece, its creature (young)
     const ids = list === "all" ? G.AREAS.map(a => a.id) : list.split(",");
     for (const id of ids) { const a = G.areaAssets(id, st); rows.push([a.floor, ...a.walls, ...a.small, ...a.big, ...(a.setPiece ? [a.setPiece] : [])].map(x => x.sp).concat([G.bake(G.critter(a.def.creature, 1, 0, st), G.speciesColours(a.def.creature, st), st, st.cOutline)])); }
