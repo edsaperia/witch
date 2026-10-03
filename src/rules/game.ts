@@ -3,6 +3,7 @@ import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState } 
 import { newClock, tick, type Clock } from "./clock";
 import { spawnCreatures, stepCreaturesNear, wanderRange, type Creature } from "./creatures";
 import { Forest } from "./forest";
+import { newLeash, stepLeash, type LeashControls, type LeashState } from "./leash";
 import { newParty, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import type { Tuning } from "./tuning";
@@ -18,9 +19,10 @@ export interface Game {
   witch: WitchState;
   camera: CameraState;
   party: PartyState;
+  leash: LeashState;
 }
 
-export interface Controls extends Intent {
+export interface Controls extends Intent, Partial<LeashControls> {
   /** +1 zoom out a step, -1 zoom in a step, 0 nothing, this frame. */
   zoom: number;
   /** Playtest keys: bring the next wave now; pause or resume the wave timer. */
@@ -33,7 +35,7 @@ export function newGame(seed: number, tuning: Tuning): Game {
   const witch = newWitch(map.start.x, map.start.z);
   return {
     seed, tuning, map, forest: new Forest(map), creatures: spawnCreatures(map), clock: newClock(),
-    witch, camera: newCamera(tuning, witch.x, witchHeight(witch, tuning), witch.z), party: newParty(map),
+    witch, camera: newCamera(tuning, witch.x, witchHeight(witch, tuning), witch.z), party: newParty(map), leash: newLeash(),
   };
 }
 
@@ -47,6 +49,7 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   if (c.nextWave) { spreadWave(g.party, g.map, g.clock.time); g.party.nextAt = g.clock.time + g.tuning.party.interval; }
   stepParty(g.party, g.map, g.clock.time, dt);
   stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map);
+  stepLeash(g.leash, g.creatures, { talk: !!c.talk, sigil: !!c.sigil, inviteNearest: c.inviteNearest }, g.witch, g.witch.mode === "ground", g.clock.time, dt, g.tuning);
 }
 
 /** How far from the witch creatures are simulated (by their home): at least far enough that one

@@ -37,6 +37,8 @@ export interface Creature {
   walk: number;
   /** Game time it was last simulated. */
   seen: number;
+  /** Invited, so leashed: to the witch or a placed sigil (rules/leash.ts moves it, not its roam). */
+  leashed: boolean;
   rand: () => number;
 }
 
@@ -97,7 +99,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
       return {
         id: id++, species: type.creature, level, ...base, x, z, tx: x, tz: z,
         rest: r() * 3, speed: (level === 2 ? t.legendSpeed : t.creatureSpeed) * (0.7 + r() * 0.6),
-        facing: r() < 0.5 ? 1 : -1, away: false, moving: false, walk: r(), seen: 0,
+        facing: r() < 0.5 ? 1 : -1, away: false, moving: false, walk: r(), seen: 0, leashed: false,
         rand: rng(map.seed * 31 + id * 7 + 11),
       };
     };
@@ -134,6 +136,7 @@ export function stepCreature(c: Creature, dt: number, map: ForestMap): void {
  *  the time), rather than where it was left. */
 export function stepCreaturesNear(all: Creature[], x: number, z: number, radius: number, dt: number, time: number, map: ForestMap): void {
   for (const c of all) {
+    if (c.leashed) continue;
     if (Math.abs(c.homeX - x) > radius || Math.abs(c.homeZ - z) > radius) continue;
     if (time - c.seen > 3) {
       const r = rng(c.id * 7919 + Math.floor(time / 20) * 131 + 5);

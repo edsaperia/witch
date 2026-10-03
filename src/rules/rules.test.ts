@@ -10,6 +10,7 @@ import { legendChance, population, spawnCreatures, stepCreature, stepCreaturesNe
 import { newGame, stepGame } from "./game";
 import { newParty, spreadWave, stepParty } from "./party";
 import { stringsFor } from "./strings";
+import { newLeash, stepLeash, type LeashControls } from "./leash";
 import { newClock, tick, MAX_STEP } from "./clock";
 import { TUNING, withTuning } from "./tuning";
 
@@ -539,5 +540,109 @@ describe("the game clock and a whole step", () => {
     for (let i = 0; i < 120; i++) stepGame(g, { moveX: 1, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 60);
     expect(g.witch.x).toBeGreaterThan(x0 + 5);
     expect(g.camera.tx).toBeGreaterThan(x0 + 3);
+  });
+});
+
+describe("inviting and leashing", () => {
+  const creatures = spawnCreatures(map);
+  const fresh = () => creatures.map(c => ({ ...c, rand: (() => { let k = c.id * 7 + 1; return () => (k = (k * 16807) % 2147483647) / 2147483647; })() }));
+  const none: LeashControls = { talk: false, sigil: false };
+  // Stand the witch next to a creature of the given level and talk until it is invited.
+  const inviteOne = (all: ReturnType<typeof fresh>, s: ReturnType<typeof newLeash>, level: 0 | 1, time = 0) => {
+    const c = all.find(k => k.level === level && !k.leashed)!;
+    const w = { x: c.x + 1, z: c.z };
+    let t = time;
+    for (let i = 0; i < 20 * 10 && !c.leashed; i++, t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, w, true, t, 0.1, TUNING);
+    return { c, w, t };
+  };
+
+  it("invites after talking for the creature's talk time (babies 3 s, young 6 s), not before", () => {
+    for (const level of [0, 1] as const) {
+      const all = fresh(), s = newLeash(), c = all.find(k => k.level === level)!, w = { x: c.x + 1, z: c.z };
+      const need = TUNING.invite.talkTimes[level];
+      let t = 0;
+      for (; t < need - 0.25; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, w, true, t, 0.1, TUNING);
+      expect(c.leashed).toBe(false);
+      for (let i = 0; i < 6; i++, t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, w, true, t, 0.1, TUNING);
+      expect(c.leashed).toBe(true);
+      expect(s.stack).toEqual([c.id]);
+    }
+  });
+
+  it("cancels the talk when Talk is let go or she moves away, and never invites from the treetops", () => {
+    const all = fresh(), s = newLeash(), c = all.find(k => k.level === 0)!, w = { x: c.x + 1, z: c.z };
+    for (let t = 0; t < 2; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, w, true, t, 0.1, TUNING);
+    stepLeash(s, all, none, w, true, 2, 0.1, TUNING);
+    expect(s.talk).toBeNull();
+    expect(s.events.map(e => e.kind)).toContain("cancelled");
+    for (let t = 2; t < 4.5; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, w, true, t, 0.1, TUNING);
+    expect(c.leashed).toBe(false); // started again from nothing
+    for (let t = 0; t < 20; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, w, false, t, 0.1, TUNING);
+    expect(c.leashed).toBe(false);
+    const far = { x: c.x + TUNING.invite.cancelDistance + 30, z: c.z };
+    for (let t = 0; t < 20; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, far, true, t, 0.1, TUNING);
+    expect(c.leashed).toBe(false);
+  });
+
+  it("can't invite legends", () => {
+    const all = fresh(), s = newLeash(), legend = all.find(k => k.level === 2)!;
+    for (const c of all) if (c !== legend) c.leashed = true; // only the legend is left near
+    const w = { x: legend.x + 1, z: legend.z };
+    for (let t = 0; t < 30; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, w, true, t, 0.1, TUNING);
+    expect(legend.leashed).toBe(false);
+    stepLeash(s, all, { talk: false, sigil: false, inviteNearest: true }, w, true, 30, 0.1, TUNING);
+    expect(legend.leashed).toBe(false);
+  });
+
+  it("stacks last in, first out: places the newest, picks up back onto the bottom", () => {
+    const all = fresh(), s = newLeash();
+    const a = inviteOne(all, s, 0), b = inviteOne(all, s, 0, a.t), c = inviteOne(all, s, 1, b.t);
+    expect(s.stack).toEqual([a.c.id, b.c.id, c.c.id]);
+    const here = { x: 500, z: 500 };
+    stepLeash(s, all, { talk: false, sigil: true }, here, true, 100, 0.1, TUNING);
+    expect(s.placed.map(p => p.id)).toEqual([c.c.id]);
+    expect(s.stack).toEqual([a.c.id, b.c.id]);
+    stepLeash(s, all, { talk: false, sigil: true }, { x: 520, z: 500 }, true, 101, 0.1, TUNING);
+    expect(s.placed.map(p => p.id)).toEqual([c.c.id, b.c.id]);
+    // Picking up: over a placed sigil, the button puts it back on the bottom of the stack.
+    stepLeash(s, all, { talk: false, sigil: true }, { x: 500.5, z: 500 }, true, 102, 0.1, TUNING);
+    expect(s.stack).toEqual([a.c.id, c.c.id]);
+    expect(s.placed.map(p => p.id)).toEqual([b.c.id]);
+    // Not on top of another sigil (too near to put down, too far to pick up): it fizzles.
+    const gap = (TUNING.leash.pickRadius + TUNING.leash.spacing) / 2;
+    expect(TUNING.leash.spacing).toBeGreaterThan(TUNING.leash.pickRadius);
+    stepLeash(s, all, { talk: false, sigil: true }, { x: 520 + gap, z: 500 }, true, 103, 0.1, TUNING);
+    expect(s.events.map(e => e.kind)).toEqual(["fizzled"]);
+    expect(s.stack).toEqual([a.c.id, c.c.id]);
+    // No placing from the treetops.
+    stepLeash(s, all, { talk: false, sigil: true }, { x: 700, z: 700 }, false, 104, 0.1, TUNING);
+    expect(s.stack).toEqual([a.c.id, c.c.id]);
+  });
+
+  it("is elastic: a creature walks to its new leash point, never jumps, then stays within the leash", () => {
+    const all = fresh(), s = newLeash(), { c, w } = inviteOne(all, s, 0);
+    const to = { x: w.x + 60, z: w.z + 20 };
+    stepLeash(s, all, { talk: false, sigil: true }, to, true, 50, 0.1, TUNING);
+    const L = TUNING.leash.length;
+    let arrived = -1, px = c.x, pz = c.z, outside = 0;
+    for (let i = 0; i < 1200; i++) {
+      stepLeash(s, all, none, { x: 0, z: 0 }, true, 50 + i * 0.1, 0.1, TUNING);
+      expect(Math.hypot(c.x - px, c.z - pz)).toBeLessThanOrEqual(TUNING.leash.runSpeed * 0.1 + 1e-6);
+      px = c.x; pz = c.z;
+      const d = Math.hypot(c.x - to.x, c.z - to.z);
+      if (arrived < 0 && d <= L) arrived = i;
+      if (arrived >= 0 && d > L + 0.01) outside++;
+    }
+    expect(arrived).toBeGreaterThan(0);
+    expect(outside).toBe(0);
+  });
+
+  it("goes through the game: Talk and the sigil button in its controls", () => {
+    const g = newGame(123, TUNING);
+    g.clock.paused = false;
+    stepGame(g, { ...NO_INTENT, zoom: 0, inviteNearest: true }, 1 / 60);
+    expect(g.leash.stack.length).toBe(1);
+    stepGame(g, { ...NO_INTENT, zoom: 0, sigil: true }, 1 / 60);
+    expect(g.leash.placed.length).toBe(1);
   });
 });
