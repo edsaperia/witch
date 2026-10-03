@@ -1,7 +1,7 @@
 // Witch creatures built in 3D (see model3d.js), so they stand in true three-quarter view.
 // Units: the shoulder is about 1 high; x forward, y up, z towards the near side.
 import { M, rng, uni } from "./core.js";
-import { Model, render, v3, spotty } from "./model3d.js";
+import { Model, render, v3, spotty, masks } from "./model3d.js";
 
 // Height on screen in art pixels: young about 45 at the default style (the coordinator's
 // "40 to 55"), legends about 4.5 times that; they keep their size on screen as pixels grow.
@@ -18,21 +18,21 @@ const glowMotes = (sp, seed) => { // a few glowing motes around a legend
 
 // A feathered wing: a fan of long flat feathers from shoulder to tip, lifted and swept back.
 function wing3d(m, root, side, span, up, mat, mat2, group) {
-  const tip = v3.add(root, [-span * .7, span * (.75 + up), side * span * .35]);
-  for (let i = 0; i < 14; i++) {
-    const t = i / 13, base = v3.lerp(root, tip, t), len = span * (.3 + .3 * t), dir = v3.norm([-.6 - t * .5, -.75 + t * .55, side * .1]);
-    m.ell(v3.add(base, v3.mul(dir, len * .5)), [len * .55, span * .1, span * .015], i % 2 ? mat : mat2, { dir, up: v3.sub(tip, root), group: group + (i % 2), extra: true }); // flat in the wing's plane
-  }
-  for (let i = 0; i < 6; i++) { const t = .1 + i / 6 * .85, b = v3.lerp(root, tip, t); m.ell(v3.add(b, [-.05, -.05, 0]), [span * .16, span * .1, span * .025], mat2, { dir: [-.7, -.4, 0], up: v3.sub(tip, root), group: group + 3, extra: true }); } // coverts
-  m.seg(root, tip, span * .035, span * .02, mat2, { group: group + 2, extra: true });
+  // one shaped plane: a feathered outline, raised and swept back, its leading edge forward
+  const tip = v3.add(root, [-span * .7, span * (.75 + up), side * span * .35]), u = v3.norm(v3.sub(tip, root));
+  const v = v3.norm(v3.sub([1, 0, 0], v3.mul(u, v3.dot([1, 0, 0], u)))), L = Math.hypot(...v3.sub(tip, root));
+  m.flat(v3.add(v3.lerp(root, tip, .5), v3.mul(v, -span * .14)), u, v, L * .55, span * .34, masks.wing(mat, mat2), { group, extra: true });
 }
 
+// The size a creature is drawn at: babies are chunky, about 28 to 32 pixels (the coordinator).
+const drawHeight = (level, st, k = 1) => level === 0 ? Math.round(Math.max(12, Math.min(30 * Math.max(.75, Math.min(1.1, k)), height3d(1, st) * k * .72))) : height3d(level, st) * k; // a baby: about 30, never taller than 3/4 of its young
+
 // ================= four-legged animals =================
-export function quad3d(S, level, frame, st) {
+export function quad3d(S, level, frame, st, facing = "towards") {
   const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q }, legend = level === 2, young = level === 1, baby = level === 0, has = f => legend && S.legend.includes(f);
   const m = new Model();
-  const hr = q.hr * (baby ? 1.6 : young ? 1.25 : 1) * (st.head / .44) ** .5, len = q.len * (baby ? .8 : young ? .9 : 1.02) * st.long;
-  const legK = baby ? .62 : young ? .9 : 1.04;
+  const hr = q.hr * (baby ? 1.75 : young ? 1.25 : 1) * (st.head / .44) ** .5, len = q.len * (baby ? .8 : young ? .9 : 1.02) * st.long;
+  const legK = baby ? .55 : young ? .9 : 1.04;
   const bob = frame ? -.04 : 0, top = 1 + bob, chest = q.chest * (legend ? 1.06 : 1) / legK + bob, tuck = q.tuck / legK + bob;
   const bw = q.bw * (baby ? 1.15 : 1) * (q.legW > 1.2 ? 1.15 : 1), lw = .06 * q.legW * (legend ? 1.1 : baby ? 1.7 : 1);
   const hump = q.back === "hump" ? .1 : 0, arch = q.back === "arch" ? .1 : 0;
@@ -85,9 +85,9 @@ export function quad3d(S, level, frame, st) {
     const E = q.ear, base = [H[0] - hr * .15, H[1] + hr * .7, side * hr * .5], k = q.earS * (baby ? 1.2 : 1) * (q.ear === "long" ? .62 : 1);
     if (E === "none") continue;
     if (E === "round") { m.ell(base, [hr * .22, hr * .25 * k, hr * .1], M.BODY, { group: 1, paint: p => p[0] > base[0] + hr * .02 ? M.EAR : undefined }); continue; }
-    if (E === "long") { m.ell(v3.add(base, [-hr * .25 * k, hr * 1.0 * k, 0]), [hr * 1.05 * k, hr * .2, hr * .07], M.BODY, { group: 1, dir: [-.3, 1, side * .15], up: [1, 0, 0], extra: true, paint: p => p[1] > base[1] + hr * 1.7 * k ? M.BODY3 : p[0] > base[0] - hr * .2 ? M.EAR : undefined }); continue; }
-    const droop = E === "small" ? -.6 : 0, eh = hr * .55 * k * (E === "big" ? 1.35 : 1);
-    m.ell(v3.add(base, [droop * hr * .2, eh * .7, side * hr * .08]), [eh, hr * .24 * (E === "big" ? 1.2 : 1), hr * .07], M.BODY, { group: 1, dir: [droop, 1, side * .35], up: [1, 0, 0], paint: p => p[1] > base[1] + eh * 1.15 ? M.BODY3 : p[0] > base[0] ? M.EAR : undefined });
+    const long = E === "long", droop = E === "small" ? -.6 : 0, eh = hr * .55 * k * (E === "big" ? 1.35 : long ? 2.2 : 1), ew = hr * .3 * (E === "big" ? 1.2 : long ? 1.35 : 1);
+    const dirE = v3.norm([droop * .6 - (long ? .3 : .12), 1, side * .3]), n = v3.norm([.55, .2, side]), across = v3.norm(v3.cross(n, dirE)); // the ear opens forward and out, towards us on the near side
+    m.flat(v3.add(base, v3.mul(dirE, eh)), across, dirE, ew, eh, masks.ear(M.BODY, M.EAR, M.BODY3), { group: 5 + (side > 0 ? 0 : 20), extra: long });
     if (E === "tuft") m.seg(v3.add(base, [0, eh * 1.4, side * .02]), v3.add(base, [0, eh * 1.85, side * .04]), hr * .05, hr * .02, M.BODY3, { group: 1 });
   }
   // ---- tail ----
@@ -101,7 +101,7 @@ export function quad3d(S, level, frame, st) {
   // ---- legendary features ----
   const backAt = t => [-len * .9 + t * len * 1.65, top + hump * Math.max(0, 1 - Math.abs(t - .8) * 3) + arch * (1 - Math.abs(t - .4) * 2), 0];
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [len * .2, top, side * bw * .5], side, 1.15, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
-  if (has("mane") || has("flames")) for (let i = 0; i < 7; i++) { const t = i / 6, b = v3.lerp(v3.add(H, [-hr * .5, hr * .5, 0]), backAt(.55), t), h = [.4, .3, .45, .28, .38, .25, .3][i]; m.chain([[...b, .07], [...v3.add(b, [-.1, h * .6, 0]), .06], [...v3.add(b, [-.25 - (frame ? .05 : 0), h, 0]), .015]], i % 2 ? M.MAGIC : M.MAGIC2, { group: 60 + i % 2, extra: true }); }
+  if (has("mane") || has("flames")) for (let i = 0; i < 7; i++) { const t = i / 6, b = v3.lerp(v3.add(H, [-hr * .5, hr * .3, 0]), backAt(.55), t), h = [.4, .3, .45, .28, .38, .25, .3][i], up = v3.norm([-.35 - (frame ? .1 : 0), 1, 0]); m.flat(v3.add(b, v3.mul(up, h * .5)), [1, 0, 0], up, h * .32, h * .55, masks.flame(i % 2 ? M.MAGIC : M.MAGIC2, M.MAGIC2), { group: 60 + i % 2, extra: true }); }
   if (has("tails")) for (let i = 0; i < 7; i++) { const a = Math.PI * (.55 + i * .08), z = (i - 3) * .1, e = v3.add(tb, [Math.cos(a) * .9, Math.sin(a) * .85, z]); m.chain([[...tb, .1], [...v3.lerp(tb, e, .5), .17], [...e, .08]], i % 2 ? M.BODY2 : M.BODY, { group: 70, extra: true }); m.ell(e, [.09, .09, .09], M.MAGIC2, { group: 71, extra: true }); }
   if (has("crystals")) [.15, .3, .45, .6, .75].forEach((t, i) => { const b = backAt(t), h = [.3, .5, .4, .6, .35][i]; m.ell(v3.add(b, [0, h * .45, (i % 2 - .5) * .1]), [h * .55, .08, .08], M.MAGIC, { dir: [(i - 2) * .12, 1, 0], group: 80 + i % 2, extra: true, paint: p => p[2] > 0 ? M.MAGIC2 : undefined }); });
   if (has("moss")) {
@@ -110,7 +110,7 @@ export function quad3d(S, level, frame, st) {
     for (const t of [.12, .4, .65, .9]) { const b = backAt(t); m.ell(v3.add(b, [0, .12, bw * .3]), [.07, .035, .07], M.MAGIC, { group: 89, extra: true }); }
   }
   if (has("ribbons")) for (let i = 0; i < 3; i++) { const pts = []; for (let k = 0; k < 9; k++) { const t = k / 8; pts.push([len * (.5 - t * 2.2), top + .05 + i * .1 + t * (.25 + i * .12) + Math.sin(t * 6 + frame + i) * .07, (i - 1) * .18, .04 * (1 - t * .6)]); } m.chain(pts, i % 2 ? M.MAGIC2 : M.MAGIC, { group: 90 + i, extra: true }); }
-  const { sp } = render(m, { height: height3d(level, st, q.hgt) * (baby ? 1.8 : 1) });
+  const { sp } = render(m, { height: drawHeight(level, st, q.hgt), facing });
   if (legend) glowMotes(sp, S.id.length * 7919);
   return sp;
 }
@@ -147,7 +147,7 @@ function antlers3d(m, q, b, side, level, has) {
 }
 
 // ================= owl =================
-export function owl3d(S, level, frame, st) {
+export function owl3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, young = level === 1, baby = level === 0, has = f => legend && S.legend.includes(f), m = new Model();
   const bob = frame ? .03 : 0, hr = baby ? .48 : young ? .42 : .36, hy = (baby ? .95 : 1.08) + bob;
   // feet and a short tail
@@ -173,7 +173,7 @@ export function owl3d(S, level, frame, st) {
   m.ell(Model.surface([0, hy, 0], [hr, hr * .9, hr], v3.norm([.75, -.35, .35])), [hr * .2, hr * .12, hr * .1], M.ACCENT, { dir: [.6, -1, .3], group: 1 }); // beak
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [-.05, .8 + bob, side * .3], side, 1.3, frame ? .12 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("eyesRing")) for (let i = 0; i < 7; i++) { const a = Math.PI * (.15 + i / 6 * .7); m.ell([Math.cos(a) * .2 - .1, hy + .1 + Math.sin(a) * .6, (i - 3) * .15], [.07, .07, .07], M.MAGIC2, { group: 95 + i, extra: true }); m.ell([Math.cos(a) * .2 - .05, hy + .1 + Math.sin(a) * .6, (i - 3) * .15], [.035, .035, .035], M.EYE, { group: 95 + i, extra: true }); }
-  const { sp } = render(m, { height: height3d(level, st) * (baby ? 1.8 : 1) * .95 });
+  const { sp } = render(m, { height: drawHeight(level, st, .95), facing });
   if (legend) glowMotes(sp, 31);
   return sp;
 }
@@ -181,15 +181,15 @@ export function owl3d(S, level, frame, st) {
 // ================= the other body plans, in 3D =================
 const eyesOn = (m, c, r, dirs, size, mat) => { for (const d of dirs) m.ell(Model.surface(c, r, v3.norm(d)), [size, size * 1.2, size], mat, { group: 1 }); };
 const shadow = (m, x, w) => m.ell([x, .005, 0], [w, .005, w * .6], M.NOSE, { group: 0 }); // a flyer's shadow on the ground
-function finish(m, S, level, st, k) {
-  const { sp } = render(m, { height: level === 0 ? Math.max(14, height3d(0, st) * k * 1.8) : height3d(level, st) * k }); // a baby is at least 14 pixels
+function finish(m, S, level, st, k, facing) {
+  const { sp } = render(m, { height: drawHeight(level, st, k), facing });
   if (level === 2) glowMotes(sp, S.id.length * 131);
   return sp;
 }
 const crown3d = (m, c, w) => { m.ell(c, [w, w * .35, w], M.MAGIC, { group: 95, extra: true, paint: p => p[1] > c[1] ? M.MAGIC2 : undefined }); for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; m.ell(v3.add(c, [Math.cos(a) * w * .8, w * .55, Math.sin(a) * w * .8]), [w * .38, w * .12, w * .12], M.MAGIC, { dir: [0, 1, 0], up: [1, 0, 0], group: 96, extra: true }); } };
 const crystals3d = (m, pts) => pts.forEach(([b, h], i) => m.ell(v3.add(b, [0, h * .45, 0]), [h * .55, .07, .07], M.MAGIC, { dir: [(i % 3 - 1) * .25, 1, (i % 2 - .5) * .3], group: 80 + i % 2, extra: true, paint: p => p[2] > b[2] ? M.MAGIC2 : undefined }));
 
-export function hedgehog3d(S, level, frame, st) {
+export function hedgehog3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, m = new Model(), f = frame ? .03 : 0;
   for (const [x, z] of [[.28, .2], [.28, -.2], [-.28, .2], [-.28, -.2]]) m.seg([x, .15, z], [x + (z > 0 ? f : -f), .03, z], .06, .05, M.BODY3, { group: z > 0 ? 6 : 2 });
   const c = [0, .32, 0], r = [.5, .32, .38];
@@ -200,10 +200,10 @@ export function hedgehog3d(S, level, frame, st) {
   m.ell([.69, .16, 0], [.04, .04, .04], M.NOSE, { group: 1 });
   eyesOn(m, sn, [.22, .14, .15], [[.3, .6, .55], [.3, .6, -.55]], .035, legend ? M.MAGIC2 : M.EYE);
   if (legend) crystals3d(m, [[[-.3, .55, .1], .35], [[-.05, .62, -.1], .5], [[.2, .55, .12], .4], [[-.15, .58, .2], .3]]);
-  return finish(m, S, level, st, .6);
+  return finish(m, S, level, st, .6, facing);
 }
 
-export function toad3d(S, level, frame, st) {
+export function toad3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, m = new Model(), hop = frame ? .05 : 0;
   for (const side of [-1, 1]) { // folded hind legs, thin front legs
     m.ell([-.22, .16, side * .36], [.24, .13, .12], side > 0 ? M.BODY : M.BODY2, { dir: [1, .3, 0], group: side > 0 ? 6 : 2, paint: p => spotty(p, 14, .15) ? M.BODY3 : undefined });
@@ -214,10 +214,10 @@ export function toad3d(S, level, frame, st) {
   m.ell(c, r, M.BODY, { paint: p => p[1] < c[1] - .12 ? M.BELLY : p[0] > .38 && Math.abs(p[1] - (c[1] - .02)) < .018 ? M.LINE : spotty(p, 14, .22) ? M.BODY3 : undefined });
   for (const side of [-1, 1]) { const e = [.3, .55 + hop, side * .17]; m.ell(e, [.1, .09, .1], M.BODY, { group: 1 }); m.ell(Model.surface(e, [.1, .09, .1], v3.norm([.6, .5, side * .5])), [.05, .05, .05], legend ? M.MAGIC2 : M.IRIS, { group: 1 }); m.ell(Model.surface(e, [.11, .1, .11], v3.norm([.65, .45, side * .5])), [.03, .015, .03], M.EYE, { group: 1 }); }
   if (legend) crown3d(m, [.15, .66 + hop, 0], .16);
-  return finish(m, S, level, st, .55);
+  return finish(m, S, level, st, .55, facing);
 }
 
-export function raven3d(S, level, frame, st) {
+export function raven3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, young = level === 1, has = f => legend && S.legend.includes(f), m = new Model(), bob = frame ? .02 : 0;
   for (const side of [-1, 1]) { const f = frame && side > 0 ? .04 : 0; m.seg([0, .3, side * .08], [.03, .03 + f, side * .08], .03, .025, M.NOSE, { group: side > 0 ? 7 : 2 }); m.ell([.08, .02 + f, side * .08], [.08, .015, .04], M.NOSE, { group: 2 }); }
   m.ell([-.55, .42, 0], [.32, .035, .12], M.BODY2, { dir: [-1, -.25, 0], group: 3 });
@@ -229,10 +229,10 @@ export function raven3d(S, level, frame, st) {
   eyesOn(m, hc, [hr * 1.1, hr, hr * .95], [[.55, .35, .65], [.55, .35, -.65]], hr * .16, legend ? M.MAGIC2 : M.EYE);
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [-.05, .65 + bob, side * .18], side, 1.1, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("eyesRing")) for (let i = 0; i < 6; i++) { const a = Math.PI * (.2 + i / 5 * .6); m.ell([Math.cos(a) * .25 - .1, .95 + Math.sin(a) * .45, (i - 2.5) * .12], [.06, .06, .06], M.MAGIC2, { group: 95 + i, extra: true }); }
-  return finish(m, S, level, st, .75);
+  return finish(m, S, level, st, .75, facing);
 }
 
-export function bat3d(S, level, frame, st) {
+export function bat3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, span = has("wingsBig") ? 1.5 : 1;
   shadow(m, 0, .3 * span);
   for (const side of [-1, 1]) { // membranes between finger bones, flapping
@@ -240,7 +240,9 @@ export function bat3d(S, level, frame, st) {
     const tips = [[-.05, y + (up ? .45 : -.15), side * .85 * span], [-.25, y + (up ? .2 : -.25), side * .75 * span], [-.3, y + (up ? 0 : -.25), side * .4 * span]];
     const mem = has("wingsBig") ? M.MAGIC : M.BODY2, bone = has("wingsBig") ? M.MAGIC2 : M.BODY3;
     m.seg(sh, wr, .03, .025, bone, { group: 11 });
-    for (const t of tips) { m.seg(wr, t, .02, .012, bone, { group: 11 }); const mid = v3.lerp(v3.lerp(sh, wr, .5), t, .5), d = v3.sub(t, sh); m.ell(mid, [Math.hypot(...d) * .45, .22 * span, .012], mem, { dir: d, up: v3.sub(wr, sh), group: 10 }); }
+    for (const t of tips) m.seg(wr, t, .02, .012, bone, { group: 11 });
+    const span3 = v3.sub(tips[0], sh), u = v3.norm(span3), back = v3.norm(v3.sub(tips[2], wr)), v = v3.norm(v3.sub(back, v3.mul(u, v3.dot(back, u))));
+    m.flat(v3.add(v3.lerp(sh, tips[0], .5), v3.mul(v, .12 * span)), u, v, Math.hypot(...span3) * .55, .3 * span, masks.membrane(mem), { group: 10 + (side > 0 ? 1 : 0), bend: .2 });
   }
   m.ell([0, y, 0], [.13, .16, .12], M.BODY, { group: 1 });
   const hc = [.08, y + .2, 0];
@@ -248,10 +250,10 @@ export function bat3d(S, level, frame, st) {
   for (const side of [-1, 1]) m.ell(v3.add(hc, [-.02, .15, side * .07]), [.12, .045, .02], M.BODY, { dir: [.1, 1, side * .3], up: [1, 0, 0], group: 1, paint: p => p[0] > hc[0] - .01 ? M.EAR : undefined });
   eyesOn(m, hc, [.12, .11, .11], [[.7, .2, .5], [.7, .2, -.5]], .025, legend ? M.MAGIC2 : M.EYE);
   m.ell(Model.surface(hc, [.12, .11, .11], [1, -.2, 0]), [.025, .02, .03], M.NOSE, { group: 1 });
-  return finish(m, S, level, st, .55);
+  return finish(m, S, level, st, .55, facing);
 }
 
-export function mole3d(S, level, frame, st) {
+export function mole3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, m = new Model(), f = frame ? .03 : 0;
   m.seg([-.5, .18, 0], [-.62, .12, 0], .04, .02, M.SKIN, { group: 3 });
   for (const side of [-1, 1]) m.ell([-.3, .05, side * .2], [.07, .04, .05], M.SKIN, { group: side > 0 ? 6 : 2 });
@@ -265,10 +267,10 @@ export function mole3d(S, level, frame, st) {
   }
   for (const side of [-1, 1]) m.ell(Model.surface([0, .3, 0], [.52, .29, .33], v3.norm([.85, .3, side * .35])), [.015, .015, .015], legend ? M.MAGIC2 : M.EYE, { group: 1 });
   if (legend) crown3d(m, [.15, .62, 0], .15);
-  return finish(m, S, level, st, .55);
+  return finish(m, S, level, st, .55, facing);
 }
 
-export function beetle3d(S, level, frame, st) {
+export function beetle3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, has = f => legend && S.legend.includes(f), m = new Model();
   for (const side of [-1, 1]) for (let i = 0; i < 3; i++) { // six jointed legs, alternating
     const x = .25 - i * .25, ph = (i + (side > 0 ? 1 : 0) + frame) % 2 ? .06 : -.06, base = [x, .22, side * .2];
@@ -283,30 +285,30 @@ export function beetle3d(S, level, frame, st) {
   for (const side of [-1, 1]) m.chain([[...v3.add(hc, [.05, .06, side * .1]), .012], [hc[0] + .1, .5, side * .22, .012], [hc[0] + .2, .5, side * .26, .012]], M.BODY3, { group: 9, extra: true });
   eyesOn(m, hc, [.1, .1, .17], [[.4, .3, .85], [.4, .3, -.85]], .02, legend ? M.MAGIC2 : M.GLINT);
   if (has("crystals")) crystals3d(m, [[[-.35, .5, .1], .3], [[-.1, .55, -.08], .45], [[.1, .5, .1], .35]]);
-  return finish(m, S, level, st, .5);
+  return finish(m, S, level, st, .5, facing);
 }
 
-export function snail3d(S, level, frame, st) {
+export function snail3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, m = new Model(), g = frame ? .04 : 0;
   m.ell([0, .07, 0], [.6 + g, .07, .17], M.SKIN, { group: 1 });
   m.chain([[.45 + g, .08, 0, .1], [.6 + g, .25, 0, .09], [.68 + g, .28, 0, .08]], M.SKIN, { group: 1 });
   for (const side of [-1, 1]) { m.seg([.7 + g, .32, side * .04], [.78 + g, .55, side * .1], .018, .014, M.SKIN, { group: 5 }); m.ell([.78 + g, .57, side * .1], [.03, .03, .03], legend ? M.MAGIC2 : M.EYE, { group: 5 }); }
   const c = [-.12, .4, 0], shell = legend ? M.MAGIC : M.BODY;
   m.ell(c, [.32, .32, .22], shell, { group: 3, paint: p => { const a = Math.atan2(p[1] - c[1], p[0] - c[0]), rr = Math.hypot(p[0] - c[0], p[1] - c[1]) / .32, k = ((rr - a / (Math.PI * 2) * .3) % .3 + .3) % .3; return k < .06 ? (legend ? M.MAGIC2 : M.BODY3) : undefined; } });
-  return finish(m, S, level, st, .45);
+  return finish(m, S, level, st, .45, facing);
 }
 
-export function woodlouse3d(S, level, frame, st) {
+export function woodlouse3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, m = new Model();
   for (const side of [-1, 1]) for (let i = 0; i < 7; i++) { const x = -.45 + i * .15, ph = (i + frame) % 2 ? .03 : -.03; m.seg([x, .1, side * .22], [x + ph, .01, side * .33], .025, .015, M.BODY3, { group: side > 0 ? 7 : 2 }); }
   for (const side of [-1, 1]) m.chain([[.5, .15, side * .08, .02], [.7, .3, side * .2, .015], [.82, .22, side * .26, .012]], M.BODY3, { group: 9, extra: true });
   m.ell([0, .18, 0], [.58, .2, .3], M.BODY, { paint: p => ((Math.floor((p[0] + .6) * 9) % 2) && p[1] > .2 ? M.BODY2 : undefined) || (Math.abs(((p[0] + .6) * 9) % 1) < .12 ? M.LINE : undefined) });
   eyesOn(m, [0, .18, 0], [.58, .2, .3], [[.92, .3, .25], [.92, .3, -.25]], .02, legend ? M.MAGIC2 : M.EYE);
   if (legend) crystals3d(m, [[[-.3, .32, .05], .3], [[0, .37, -.05], .45], [[.25, .32, .05], .32]]);
-  return finish(m, S, level, st, .4);
+  return finish(m, S, level, st, .4, facing);
 }
 
-export function snake3d(S, level, frame, st) {
+export function snake3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, young = level === 1, has = f => legend && S.legend.includes(f), m = new Model(), ph = frame ? .7 : 0, pts = [];
   for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push([-.9 + t * 1.2, .07, Math.sin(t * Math.PI * 2 + ph) * .25 * (1 - t * .5), .03 + .045 * Math.sin(Math.min(1, t * 1.4) * Math.PI / 2)]); }
   pts.push([.38, .25, pts[12][2], .07], [.42, .45, pts[12][2] * .8, .065]);
@@ -316,36 +318,36 @@ export function snake3d(S, level, frame, st) {
   eyesOn(m, hc, [hr * 1.5, hr * .75, hr], [[.5, .5, .7], [.5, .5, -.7]], hr * .22, legend ? M.MAGIC2 : M.EYE);
   if (!frame) m.seg(v3.add(hc, [hr * 1.4, -hr * .2, 0]), v3.add(hc, [hr * 2.3, -hr * .3, 0]), .01, .008, M.SKIN, { group: 1 });
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [0, .2, side * .05], side, .9, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
-  return finish(m, S, level, st, .45);
+  return finish(m, S, level, st, .45, facing);
 }
 
-export function moth3d(S, level, frame, st) {
+export function moth3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, span = has("wingsBig") ? 1.45 : 1;
   const wm = has("wingsBig") ? M.MAGIC : M.BODY;
   shadow(m, 0, .3 * span);
   for (const side of [-1, 1]) {
     const lift = up ? .5 : -.1, fore = v3.norm([.35, lift, side]), hind = v3.norm([-.3, lift * .6, side]);
-    m.ell(v3.add([0, y, side * .05], v3.mul(fore, .38 * span)), [.4 * span, .2 * span, .012], wm, { dir: fore, up: [1, 0, 0], group: 10, paint: p => Math.hypot(p[0] - .12 * span, Math.abs(p[2]) - .4 * span) < .07 * span ? M.BELLY : undefined });
-    m.ell(v3.add([-.05, y, side * .05], v3.mul(hind, .26 * span)), [.27 * span, .15 * span, .012], has("wingsBig") ? M.MAGIC2 : M.BODY2, { dir: hind, up: [1, 0, 0], group: 9 });
+    m.flat(v3.add([0, y, side * .05], v3.mul(fore, .38 * span)), fore, v3.norm(v3.cross(fore, [0, 1, 0])), .4 * span, .24 * span, masks.spotted(wm, M.BELLY, M.BODY3), { group: 10 + (side > 0 ? 1 : 0) });
+    m.flat(v3.add([-.05, y, side * .05], v3.mul(hind, .26 * span)), hind, v3.norm(v3.cross(hind, [0, 1, 0])), .27 * span, .17 * span, masks.spotted(has("wingsBig") ? M.MAGIC2 : M.BODY2, M.BODY2, M.BODY2), { group: 12 + (side > 0 ? 1 : 0) });
     m.chain([[.12, y + .08, side * .03, .015], [.2, y + .25, side * .1, .025], [.24, y + .32, side * .14, .012]], M.BODY2, { group: 11 });
   }
   m.ell([0, y, 0], [.22, .09, .09], M.BELLY, { group: 1, paint: p => spotty(p, 30, .25) ? M.BODY2 : undefined });
   m.ell([.17, y + .03, 0], [.07, .07, .07], M.BELLY, { group: 1 });
   eyesOn(m, [.17, y + .03, 0], [.07, .07, .07], [[.7, .3, .6], [.7, .3, -.6]], .02, legend ? M.MAGIC2 : M.EYE);
-  return finish(m, S, level, st, .5);
+  return finish(m, S, level, st, .5, facing);
 }
 
-export function glowworm3d(S, level, frame, st) {
+export function glowworm3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, has = f => legend && S.legend.includes(f), m = new Model(), ph = frame ? .05 : 0;
   for (let i = 0; i < 9; i++) { const t = i / 8, x = -.6 + t * 1.15; m.ell([x, .12 + Math.sin(t * Math.PI) * (.06 + ph), 0], [.08, .1 - t * .02, .12 - t * .03], i < 2 ? M.MAGIC2 : i % 2 ? M.BODY2 : M.BODY, { group: 1 }); }
   if (has("lantern")) m.ell([-.75, .3, 0], [.22, .22, .22], M.MAGIC2, { group: 3, paint: p => p[1] < .2 ? M.MAGIC : undefined });
   for (let i = 0; i < 6; i++) m.seg([-.2 + i * .12, .05, .08], [-.2 + i * .12 + (i % 2 ? .02 : -.02) * (frame ? -1 : 1), 0, .12], .015, .01, M.BODY3, { group: 7 });
   m.ell([.6, .14, 0], [.06, .06, .08], M.BODY3, { group: 1 });
   eyesOn(m, [.6, .14, 0], [.06, .06, .08], [[.6, .3, .7], [.6, .3, -.7]], .015, legend ? M.MAGIC2 : M.EYE);
-  return finish(m, S, level, st, .4);
+  return finish(m, S, level, st, .4, facing);
 }
 
-export function spider3d(S, level, frame, st) {
+export function spider3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, has = f => legend && S.legend.includes(f), m = new Model();
   const ce = [.15, .28, 0];
   for (const side of [-1, 1]) for (let i = 0; i < 4; i++) { // eight legs, knees high
@@ -358,5 +360,5 @@ export function spider3d(S, level, frame, st) {
   const ring = has("eyesRing");
   for (const [dy, dz] of [[.05, .05], [.05, -.05], [.02, .1], [.02, -.1]]) m.ell(Model.surface(ce, [.18, .13, .17], v3.norm([.9, dy * 6, dz * 4])), [.025, .025, .025], ring ? M.MAGIC2 : M.EYE, { group: 1 });
   if (ring) for (let i = 0; i < 5; i++) { const a = Math.PI * (.2 + i / 4 * .6); m.ell([-.3 + Math.cos(a) * .2, .75 + Math.sin(a) * .35, (i - 2) * .12], [.06, .06, .06], M.MAGIC2, { group: 95 + i, extra: true }); }
-  return finish(m, S, level, st, .5);
+  return finish(m, S, level, st, .5, facing);
 }

@@ -24,7 +24,7 @@ export const KNOBS = [
   { k: "glowSat", g: "Night light", label: "Witch glow colour", min: 0, max: 1, step: 0.01, v: 0.35 },
   { k: "glowRadius", g: "Night light", label: "Witch glow reach", min: 30, max: 200, step: 5, v: 110 },
   { k: "glowPower", g: "Night light", label: "Witch glow strength", min: 0.3, max: 2.5, step: 0.05, v: 1.4 },
-  { k: "bands", g: "Shading", label: "Light steps", min: 2, max: 7, step: 1, v: 4 },
+  { k: "bands", g: "Shading", label: "Light steps", min: 2, max: 7, step: 1, v: 3 },
   { k: "dither", g: "Shading", label: "Dithering", min: 0, max: 1, step: 0.05, v: 0.35 },
   { k: "round", g: "Shading", label: "Roundness", min: 0.2, max: 1.5, step: 0.05, v: 0.9 },
   { k: "outline", g: "Shading", label: "Plant outline", options: ["none", "dark", "tinted"], v: "none" },
@@ -122,7 +122,13 @@ export function buildAssets(st, world, { K = 2 / (st.pixel || 2), makeCanvas = d
   }
   const bushes = [];
   for (let i = 0; i < 12; i++) { const b = bush(rng(world.forestSeed * 7 + i * 3), { ...areaStyle(st, world, Math.floor(i / 4)), bushSize: st.bushSize * K }); bushes.push(bk(b.sp, b.colours)); }
-  const creatures = world.kinds.map(kind => [0, 1, 2].map(level => [0, 1].map(frame => bk(critter(kind, level, frame, st), speciesColours(kind, st), st.cOutline))));
+  // each creature sprite is the "towards" view; its .away is the same frame turned away
+  const creatures = world.kinds.map(kind => [0, 1, 2].map(level => [0, 1].map(frame => {
+    const col = speciesColours(kind, st), towards = bk(critter(kind, level, frame, st, "towards"), col, st.cOutline);
+    let away = null; // drawn the first time it is asked for
+    Object.defineProperty(towards, "away", { enumerable: true, get: () => away || (away = bk(critter(kind, level, frame, st, "away"), col, st.cOutline)) });
+    return towards;
+  })));
   return { trees, bushes, creatures, witch: bk(witchSprite(), witchColours(st)) };
 }
 

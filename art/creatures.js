@@ -13,7 +13,7 @@ const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad
 // in units of its height at the shoulder (see quad()). The rest of the old fields serve
 // species still drawn the old way.
 export const SPECIES = [
-  { id: "wolf", name: "Wolf", plan: "quad", hue: .6, sat: .14, val: .74, legend: ["wings", "mane"],
+  { id: "wolf", name: "Wolf", plan: "quad", hue: .08, sat: .24, val: .56, legend: ["wings", "mane"],
     q: { len: .64, chest: .42, tuck: .6, neck: .32, neckAng: .7, neckW: .42, hr: .26, snout: .82, snoutD: .7, ear: "point", earS: .82, tail: "brush", paw: "paw", legW: 1.25, saddle: true, belly: true },
     tail: "up" },
   { id: "fox", name: "Fox", plan: "quad", q: { hgt: .8, len: .62, chest: .4, tuck: .5, neck: .3, neckAng: .7, neckW: .32, hr: .24, snout: 1.05, snoutD: .5, snoutTaper: .6, ear: "point", earS: 1.35, tail: "bushy", paw: "paw", legW: .9, belly: true, socks: .3 }, hue: .06, sat: .8, val: .9, belly: "white", legend: ["tails"] },
@@ -42,7 +42,7 @@ export const SPECIES = [
   { id: "snake", name: "Snake", plan: "snake", hue: .25, sat: .45, val: .45, legend: ["wings"] },
   { id: "moth", name: "Moth", plan: "moth", hue: .1, sat: .3, val: .7, legend: ["wingsBig"] },
   { id: "marten", name: "Pine marten", plan: "quad", q: { hgt: .55, len: .78, chest: .35, tuck: .38, neck: .3, neckAng: .55, neckW: .35, hr: .25, snout: .65, snoutD: .6, ear: "round", earS: .9, tail: "bushy", paw: "paw", legW: .85, belly: true, back: "arch" }, hue: .07, sat: .6, val: .45, legend: ["mane"] },
-  { id: "salamander", name: "Salamander", plan: "quad", q: { hgt: .3, len: .9, chest: .14, tuck: .14, neck: .12, neckAng: .05, neckW: .5, hr: .27, snout: .55, snoutD: .55, ear: "none", tail: "otter", paw: "paw", legW: 1.0, spots: true, spotMat: "belly" }, hue: .1, sat: .1, val: .22, belly: "yellow", legend: ["flames"] },
+  { id: "salamander", name: "Salamander", plan: "quad", q: { hgt: .42, len: .9, chest: .14, tuck: .14, neck: .12, neckAng: .05, neckW: .5, hr: .27, snout: .55, snoutD: .55, ear: "none", tail: "otter", paw: "paw", legW: 1.0, spots: true, spotMat: "belly" }, hue: .1, sat: .1, val: .22, belly: "yellow", legend: ["flames"] },
   { id: "glowworm", name: "Glow-worm", plan: "glowworm", hue: .12, sat: .4, val: .35, legend: ["lantern"] },
   { id: "spider", name: "Spider", plan: "spider", hue: .07, sat: .45, val: .4, legend: ["eyesRing"] },
   { id: "dormouse", name: "Dormouse", plan: "quad", q: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, snout: .45, snoutD: .7, ear: "round", earS: .85, tail: "squirrel", paw: "paw", legW: .8, back: "arch", belly: true, whiskers: true, eyeK: 1.6 }, hue: .09, sat: .6, val: .75, belly: "white", legend: ["starTail"] },
@@ -70,8 +70,17 @@ export function speciesColours(sp, st) {
 // legends about 4.5 times that; they keep their size on screen as pixels grow).
 export const levelHeight = (level, st) => height3d(level, st);
 
-export function critter(spId, level, frame, st) {
-  const S = SPECIES_BY_ID[spId] || SPECIES[0];
-  if (S.q) return quad3d(S, level, frame, st);
-  return MODELLED.get(S.plan)(S, level, frame, st);
+// facing: "towards" (head turned to the viewer) or "away" (we see the rump and back of the head).
+// Shapes don't depend on colours, so a creature is drawn once per shape-changing knob setting
+// (a lab session changes lighting and colour knobs far more often than these).
+const SHAPE_KNOBS = ["size", "growth", "pixel", "head", "eye", "legs", "long", "fur"], cache = new Map();
+export function critter(spId, level, frame, st, facing = "towards") {
+  const S = SPECIES_BY_ID[spId] || SPECIES[0], key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k])].join("|");
+  let sp = cache.get(key);
+  if (!sp) {
+    sp = S.q ? quad3d(S, level, frame, st, facing) : MODELLED.get(S.plan)(S, level, frame, st, facing);
+    if (cache.size > 600) cache.delete(cache.keys().next().value);
+    cache.set(key, sp);
+  }
+  return sp;
 }

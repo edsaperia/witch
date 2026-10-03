@@ -114,8 +114,8 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
-        <h2>Bestiary</h2>
-        <p class="note">Twenty forest animals, each as legend, young and baby, in the current style under even light. Legends grow the magical features listed.</p>
+        <div class="row" style="justify-content:space-between"><h2>Bestiary</h2><label class="check"><input type="checkbox" id="away"> Show turned away</label></div>
+        <p class="note">Thirty forest animals, each as legend, young and baby, in the current style under even light, turned towards you (or away, for creatures walking up the screen). Legends grow the magical features listed.</p>
         <div class="bestiary" id="bestiary"></div>
       </section>
 
@@ -363,8 +363,9 @@ function renderBestiary() {
     const host = document.getElementById("bestiary"); if (!host) return; host.textContent = "";
     const studio = { ...current, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 };
     for (const S of SPECIES) {
-      const lv = [0, 1, 2].map(l => bake(critter(S.id, l, 0, current), speciesColours(S.id, current), current, current.cOutline));
-      const b1 = bake(critter(S.id, 0, 1, current), speciesColours(S.id, current), current, current.cOutline);
+      const facing = document.getElementById("away").checked ? "away" : "towards";
+      const lv = [0, 1, 2].map(l => bake(critter(S.id, l, 0, current, facing), speciesColours(S.id, current), current, current.cOutline));
+      const b1 = bake(critter(S.id, 0, 1, current, facing), speciesColours(S.id, current), current, current.cOutline);
       const w = lv[2].w + lv[1].w + lv[0].w + b1.w + 18, h = Math.max(lv[2].h, 20) + 6, tgt = makeTarget(w, h);
       tgt.a.fillStyle = `rgb(${hsv2rgb(current.groundHue, .4, current.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
       let x = 4; for (const b of [lv[2], lv[1], lv[0], b1]) { tgt.a.drawImage(b.A, x, h - 3 - b.h); tgt.n.drawImage(b.N, x, h - 3 - b.h); x += b.w + 4; }
@@ -383,6 +384,7 @@ if (!world.kinds.every(k => SPECIES_BY_ID[k])) world.kinds = ["wolf", "fox", "bo
 let current = { ...defaultStyle(), ...(store.get("witch-art-style-3") || {}) };
 if (!current.v4) { current.pixel = 2; current.v4 = true; }
 if (!current.v5) { current.pixel = 3; current.v5 = true; } // Ed, 2026-10-03: bigger pixels
+if (!current.v6) { current.bands = 3; current.v6 = true; } // three light steps: light top, mid side, dark underside
 let history = store.get("witch-art-history-3") || [];
 let varySeed = 1, variants = [], assetsCurrent, layoutCurrent;
 const varyGroups = new Set(GROUPS);
@@ -391,16 +393,20 @@ let sceneTarget, CROP;
 function applyRes(p) { setRes(p); sceneTarget = makeTarget(W, H); sceneCanvas.width = W; sceneCanvas.height = H; CROP = [Math.round(W / 4), Math.round(H / 4 - 6 * K), Math.round(W / 2), Math.round(H / 2)]; }
 
 function makeVariants() {
-  variants = [];
+  // variants are built one at a time after the page has drawn, so it never stalls on them
+  variants = []; const seed = varySeed;
   const host = document.getElementById("variants"); host.textContent = "";
-  for (let i = 0; i < 6; i++) {
+  const one = i => {
+    if (i >= 6 || seed !== varySeed) return;
     const st = mutate(current, +document.getElementById("strength").value, varyGroups, varySeed * 101 + i);
     const btn = document.createElement("button"); btn.className = "variant"; btn.type = "button";
     const c = document.createElement("canvas"); c.width = CROP[2]; c.height = CROP[3];
     const label = document.createElement("span"); label.innerHTML = `<b>Variant ${i + 1}</b><i>pick</i>`;
     btn.append(c, label); btn.addEventListener("click", () => choose(st)); host.append(btn);
     variants.push({ st, c, tgt: makeTarget(W, H), assets: buildAssets(st, world, { K }), lay: layout(world, st) });
-  }
+    setTimeout(() => one(i + 1), 30);
+  };
+  setTimeout(() => one(0), 60);
 }
 function setCurrent(st, { record = true } = {}) {
   current = st; store.set("witch-art-style-3", current);
@@ -412,7 +418,9 @@ function setCurrent(st, { record = true } = {}) {
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
-function renderHistory() {
+let historyTimer;
+function renderHistory() { clearTimeout(historyTimer); historyTimer = setTimeout(renderHistoryNow, 400); }
+function renderHistoryNow() {
   const el = document.getElementById("history"); el.textContent = "";
   if (!history.length) { el.innerHTML = '<p class="note">Each style you pick is kept here; tap one to go back to it.</p>'; return; }
   const tgt = makeTarget(W, H);
@@ -489,6 +497,7 @@ document.getElementById("save").addEventListener("click", async () => {
 });
 (async () => { try { db = window.claude ? await window.claude.use("db") : null; if (db) db.collection("styles").orderBy("savedAt", "desc").onSnapshot(s => renderSaved(s.docs), () => {}); } catch { db = null; } })();
 document.getElementById("copy").addEventListener("click", async () => { const ta = document.getElementById("json"); try { await navigator.clipboard.writeText(ta.value); toast("Style file copied."); } catch { ta.select(); toast("Selected; copy it with your keyboard."); } });
+document.getElementById("away").addEventListener("change", renderBestiary);
 document.getElementById("reroll").addEventListener("click", () => { varySeed++; makeVariants(); });
 document.getElementById("strength").addEventListener("change", () => { varySeed++; makeVariants(); });
 document.getElementById("reseed").addEventListener("click", () => { const ids = SPECIES.map(s => s.id).sort(() => Math.random() - .5); world = { ...world, kinds: ids.slice(0, 6) }; store.set("witch-art-world-3", world); setCurrent(current, { record: false }); makeVariants(); });

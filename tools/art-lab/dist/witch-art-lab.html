@@ -114,8 +114,8 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
-        <h2>Bestiary</h2>
-        <p class="note">Twenty forest animals, each as legend, young and baby, in the current style under even light. Legends grow the magical features listed.</p>
+        <div class="row" style="justify-content:space-between"><h2>Bestiary</h2><label class="check"><input type="checkbox" id="away"> Show turned away</label></div>
+        <p class="note">Thirty forest animals, each as legend, young and baby, in the current style under even light, turned towards you (or away, for creatures walking up the screen). Legends grow the magical features listed.</p>
         <div class="bestiary" id="bestiary"></div>
       </section>
 
@@ -1045,19 +1045,26 @@ function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanva
 // Units: the shoulder is about 1 high; x forward, y up, z towards the near side.
 
 // ---- inlined from art/model3d.js ----
-// Witch 3D sprites: a creature is a handful of posed ellipsoids, turned about 35° towards
-// the viewer and seen from about 30° above (Ed's reference: farm animals in three-quarter
-// view), then rasterised one ray per pixel. That gives the diagonal pose, the top of the
-// back as a lit surface, legs staggered in depth, and true normals for the normal map.
-// Model space: x forward (towards the head), y up (ground at 0), z towards the creature's
-// near side. Everything faces right; the game mirrors for left.
+// Witch 3D sprites: a creature (or the witch, or a prop) is a handful of 3D parts, turned
+// about 35° and seen from about 30° above (Ed's reference: farm animals in three-quarter
+// view), then drawn one ray per pixel.
+//   - Volumes (ellipsoids, tapered rounded cones) are a signed distance field. Parts in the
+//     same `group` melt into one mass (a smooth union), so a body reads as one creature, not
+//     beads; different groups meet with a crease, and where a near group stands in front of
+//     another an interior line is drawn.
+//   - Flat features (wings, ears, flames) are shaped planes: a 2D mask placed in 3D.
+//   - Normals come from the field's gradient, so the normal map is true.
+// Model space: x forward (towards the head), y up (ground at 0), z towards the near side.
+// Facing: "towards" turns the head towards the viewer; "away" turns it away (we see the rump
+// and the back of the head). Both face right; the game mirrors for left.
 
-const norm = v => { const l = Math.hypot(...v) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+const norm = v => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-const v3 = { add: (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], sub: (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], mul: (a, k) => [a[0] * k, a[1] * k, a[2] * k], lerp: (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t], norm, cross, dot };
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const v3 = { add: (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], sub, mul: (a, k) => [a[0] * k, a[1] * k, a[2] * k], lerp: (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t], norm, cross, dot };
 
-// A frame (three unit axes) whose first axis points along `dir`.
+// A frame (three unit axes) whose first axis points along `dir`, second towards `up`.
 function frameAlong(dir, upHint = [0, 1, 0]) {
   const a = norm(dir); let b = cross(upHint, a);
   if (Math.hypot(...b) < 1e-4) b = cross([0, 0, 1], a);
@@ -1065,111 +1072,176 @@ function frameAlong(dir, upHint = [0, 1, 0]) {
   return [a, c, b]; // along, roughly up, sideways
 }
 
+// ---- signed distances ----
+function sdEllipsoid(p, q) {
+  const x = dot(p, q.axes[0]), y = dot(p, q.axes[1]), z = dot(p, q.axes[2]), [a, b, c] = q.r;
+  const k0 = Math.hypot(x / a, y / b, z / c), k1 = Math.hypot(x / (a * a), y / (b * b), z / (c * c));
+  return k1 > 1e-9 ? k0 * (k0 - 1) / k1 : -Math.min(a, b, c);
+}
+function sdRoundCone(p, q) { // from a (radius r1) to b (radius r2); after Inigo Quilez
+  const { ba, l2, rr, a2, il2, r1, r2 } = q, y = dot(p, ba), z = y - l2;
+  const xv = [p[0] * l2 - ba[0] * y, p[1] * l2 - ba[1] * y, p[2] * l2 - ba[2] * y], x2 = dot(xv, xv), y2 = y * y * l2, z2 = z * z * l2;
+  const k = Math.sign(rr) * rr * rr * x2;
+  if (Math.sign(z) * a2 * z2 > k) return Math.sqrt(x2 + z2) * il2 - r2;
+  if (Math.sign(y) * a2 * y2 < k) return Math.sqrt(x2 + y2) * il2 - r1;
+  return (Math.sqrt(x2 * a2 * il2) + y * rr) * il2 - r1;
+}
+const sdf = (q, p) => q.type === "ell" ? sdEllipsoid(sub(p, q.cw), q) : sdRoundCone(sub(p, q.aw), q);
+
 class Model {
-  constructor() { this.parts = []; }
-  // An ellipsoid at c with radii r along its axes (default: the model's axes; with `dir`, r[0]
-  // runs along dir, r[1] roughly up (or along `up`), r[2] across).
-  // o: { group, axes: [ax, ay, az], dir (first axis along this), extra (not counted in the
-  //      creature's height), paint(p, part) -> material for a hit at model point p }
+  constructor({ blend = .07 } = {}) { this.parts = []; this.flats = []; this.blend = blend; }
+  // An ellipsoid at c with radii r. With `dir`, r[0] runs along dir, r[1] roughly up (or
+  // along `up`), r[2] across. o: { group, extra (not counted in the height), paint(p) -> material }
   ell(c, r, mat, o = {}) {
     const axes = o.axes || (o.dir ? frameAlong(o.dir, o.up) : [[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
-    this.parts.push({ c, r, axes, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint });
+    this.parts.push({ type: "ell", c, r, axes, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint });
     return this;
   }
-  // A tapering limb from a to b: a run of overlapping spheres (radius ra to rb).
-  // A smooth limb from a to b, tapering from ra to rb: one long ellipsoid per stretch (a
-  // run of spheres would shade as ribs), with a sphere at the joint so chains stay round.
-  seg(a, b, ra, rb, mat, o = {}) {
-    const d = v3.sub(b, a), L = Math.hypot(...d);
-    if (L < 1e-6) return this.ell(a, [ra, ra, ra], mat, o);
-    const n = Math.max(1, Math.round(Math.abs(ra - rb) / Math.max(ra, rb) * 3)); // tapering: a few pieces
-    for (let i = 0; i < n; i++) {
-      const t0 = i / n, t1 = (i + 1) / n, r = ra + (rb - ra) * (t0 + t1) / 2;
-      this.ell(v3.lerp(a, b, (t0 + t1) / 2), [L / n / 2 + r * .6, r, r], mat, { ...o, dir: d });
-    }
-    if (!o.noJoint) this.ell(b, [rb, rb, rb], mat, o);
-    return this;
-  }
-  // The point on an ellipsoid's surface (centre c, radii r along the model axes) in direction dir.
-  static surface(c, r, dir) { const k = 1 / Math.hypot(dir[0] / r[0], dir[1] / r[1], dir[2] / r[2]); return [c[0] + dir[0] * k, c[1] + dir[1] * k, c[2] + dir[2] * k]; }
+  // A tapered limb from a (radius ra) to b (radius rb): a rounded cone, smooth along its length.
+  seg(a, b, ra, rb, mat, o = {}) { this.parts.push({ type: "cone", a, b, r1: ra, r2: rb, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint }); return this; }
   // A limb through several points, each [x, y, z, radius].
   chain(pts, mat, o = {}) { for (let i = 0; i + 1 < pts.length; i++) this.seg(pts[i].slice(0, 3), pts[i + 1].slice(0, 3), pts[i][3], pts[i + 1][3], mat, o); return this; }
+  // A shaped flat plane centred at c, spanning ±su along u and ±sv along v; mask(s, t) with
+  // s, t in [-1, 1] returns a material (or nothing for a hole). o: { group, extra, bend }
+  flat(c, u, v, su, sv, mask, o = {}) { this.flats.push({ c, u: norm(u), v: norm(v), su, sv, mask, group: o.group ?? 30, extra: !!o.extra, bend: o.bend ?? .35 }); return this; }
+  // The point on an ellipsoid's surface (centre c, radii r along the model axes) in direction dir.
+  static surface(c, r, dir) { const k = 1 / Math.hypot(dir[0] / r[0], dir[1] / r[1], dir[2] / r[2]); return [c[0] + dir[0] * k, c[1] + dir[1] * k, c[2] + dir[2] * k]; }
 }
 
-// Renders a model to a Sprite `height` art pixels tall (measured over the parts not marked
-// extra). yaw turns the head towards the viewer; pitch is how far the camera looks down.
-function render(model, { height, yaw = .6, pitch = .52, lineGap = .14, outlineGroups = true } = {}) {
+const YAW = { towards: .6, away: -.6 }; // radians; the head turned 35° towards or away from us
+const PITCH = .52;                       // the camera looks down about 30°
+
+// Renders a model to a Sprite `height` art pixels tall (measured over the parts not marked extra).
+function render(model, { height, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12 } = {}) {
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), spp = Math.sin(pitch);
-  const toWorld = p => [p[0] * cy - p[2] * sy, p[1], p[0] * sy + p[2] * cy];          // yaw about y
+  const toWorld = p => [p[0] * cy - p[2] * sy, p[1], p[0] * sy + p[2] * cy];
   const toModel = p => [p[0] * cy + p[2] * sy, p[1], -p[0] * sy + p[2] * cy];
-  const D = [0, -spp, -cp], U = [0, cp, -spp], R = [1, 0, 0], B = [0, spp, cp];        // camera: view dir, up, right, back
+  const D = [0, -spp, -cp], U = [0, cp, -spp], R = [1, 0, 0], B = [0, spp, cp];
+  const k = model.blend;
+  // parts in world space, each with a bounding sphere
   const parts = model.parts.map(q => {
-    const c = toWorld(q.c), axes = q.axes.map(toWorld);
-    // screen-space bounds: the ellipsoid's extent along screen right and up
-    const ext = v => Math.sqrt(axes.reduce((s, a, k) => s + (dot(a, v) * q.r[k]) ** 2, 0));
-    const ex = ext(R), eu = ext(U), sx = dot(c, R), su = dot(c, U);
-    return { ...q, cw: c, axes, x0: sx - ex, x1: sx + ex, u0: su - eu, u1: su + eu };
+    if (q.type === "ell") { const cw = toWorld(q.c), axes = q.axes.map(toWorld), rad = Math.max(...q.r); return { ...q, cw, axes, bc: cw, br: rad }; }
+    const aw = toWorld(q.a), bw = toWorld(q.b), ba = sub(bw, aw), l2 = Math.max(1e-9, dot(ba, ba)), rr = q.r1 - q.r2;
+    return { ...q, aw, ba, l2, rr, a2: l2 - rr * rr, il2: 1 / l2, bc: v3.lerp(aw, bw, .5), br: Math.sqrt(l2) / 2 + Math.max(q.r1, q.r2) };
   });
-  const body = parts.filter(p => !p.extra);
-  const u0 = Math.min(...body.map(p => p.u0)), u1 = Math.max(...body.map(p => p.u1));
-  const s = height / (u1 - u0);
-  const X0 = Math.min(...parts.map(p => p.x0)), X1 = Math.max(...parts.map(p => p.x1)), U0 = Math.min(...parts.map(p => p.u0)), U1 = Math.max(...parts.map(p => p.u1));
+  const flats = model.flats.map(f => { const c = toWorld(f.c), u = toWorld(f.u), v = toWorld(f.v); return { ...f, cw: c, uw: u, vw: v, nw: norm(cross(u, v)), bc: c, br: Math.hypot(f.su, f.sv) }; });
+  const all = [...parts, ...flats];
+  const bounds = q => { const sx = dot(q.bc, R), su = dot(q.bc, U), e = q.br + (q.uw ? 0 : k); return [sx - e, sx + e, su - e, su + e]; };
+  for (const q of all) [q.x0, q.x1, q.u0, q.u1] = bounds(q);
+  const body = all.filter(q => !q.extra);
+  const u0b = Math.min(...body.map(q => q.u0 + (q.uw ? 0 : k))), u1b = Math.max(...body.map(q => q.u1 - (q.uw ? 0 : k)));
+  const s = height / Math.max(1e-6, u1b - u0b);
+  const X0 = Math.min(...all.map(q => q.x0)), X1 = Math.max(...all.map(q => q.x1)), U0 = Math.min(...all.map(q => q.u0)), U1 = Math.max(...all.map(q => q.u1));
   const W = Math.ceil((X1 - X0) * s) + 4, H = Math.ceil((U1 - U0) * s) + 2, sp = new Sprite(W, H);
   const depth = new Float32Array(W * H).fill(Infinity), grp = new Int16Array(W * H).fill(-1);
-  for (const q of parts) {
-    const ix0 = Math.max(0, Math.floor((q.x0 - X0) * s + 1)), ix1 = Math.min(W - 1, Math.ceil((q.x1 - X0) * s + 1));
-    const iy0 = Math.max(0, Math.floor((U1 - q.u1) * s)), iy1 = Math.min(H - 1, Math.ceil((U1 - q.u0) * s));
-    const [a0, a1, a2] = q.axes, [r0, r1, r2] = q.r;
-    // the ray direction in the ellipsoid's unit-sphere space is the same for every pixel
-    const dl = [dot(D, a0) / r0, dot(D, a1) / r1, dot(D, a2) / r2], A = dot(dl, dl);
-    for (let iy = iy0; iy <= iy1; iy++) for (let ix = ix0; ix <= ix1; ix++) {
-      const sx = X0 + (ix + .5 - 1) / s, su = U1 - (iy + .5) / s;
-      const O = v3.add(v3.add(v3.mul(R, sx), v3.mul(U, su)), v3.mul(B, 50)), oc = v3.sub(O, q.cw);
-      const ol = [dot(oc, a0) / r0, dot(oc, a1) / r1, dot(oc, a2) / r2];
-      const Bq = 2 * dot(ol, dl), C = dot(ol, ol) - 1, disc = Bq * Bq - 4 * A * C;
-      if (disc < 0) continue;
-      const t = (-Bq - Math.sqrt(disc)) / (2 * A), i = iy * W + ix;
-      if (t >= depth[i]) continue;
-      const hl = [ol[0] + dl[0] * t, ol[1] + dl[1] * t, ol[2] + dl[2] * t];             // hit, unit-sphere space
-      const g = [hl[0] / r0, hl[1] / r1, hl[2] / r2];                                    // gradient, local
-      const nw = norm([a0[0] * g[0] + a1[0] * g[1] + a2[0] * g[2], a0[1] * g[0] + a1[1] * g[1] + a2[1] * g[2], a0[2] * g[0] + a1[2] * g[1] + a2[2] * g[2]]);
-      const hw = v3.add(O, v3.mul(D, t));
-      const mat = q.paint ? (q.paint(toModel(hw), q) ?? q.mat) : q.mat;
-      if (mat === 0) continue;
-      depth[i] = t; grp[i] = q.group;
-      sp.px(ix, iy, mat, dot(nw, R), -dot(nw, U), dot(nw, B));
+  // which parts can touch each 8 x 8 tile of pixels
+  const T = 8, TW = Math.ceil(W / T), TH = Math.ceil(H / T), tiles = Array.from({ length: TW * TH }, () => []);
+  all.forEach((q, qi) => {
+    const tx0 = Math.max(0, Math.floor(((q.x0 - X0) * s) / T)), tx1 = Math.min(TW - 1, Math.floor(((q.x1 - X0) * s + 2) / T));
+    const ty0 = Math.max(0, Math.floor(((U1 - q.u1) * s) / T)), ty1 = Math.min(TH - 1, Math.floor(((U1 - q.u0) * s + 1) / T));
+    for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) tiles[ty * TW + tx].push(qi);
+  });
+  const eps = .25 / s;
+  const smin = (a, b) => { const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * .25; };
+  for (let iy = 0; iy < H; iy++) for (let ix = 0; ix < W; ix++) {
+    const cand = tiles[Math.floor(iy / T) * TW + Math.floor(ix / T)];
+    if (!cand.length) continue;
+    const sx = X0 + (ix + .5 - 1) / s, su = U1 - (iy + .5) / s;
+    const O = v3.add(v3.add(v3.mul(R, sx), v3.mul(U, su)), v3.mul(B, 50));
+    // the ray's interval through the candidates' bounding spheres
+    let tmin = Infinity, tmax = -Infinity; const vol = [], fl = [];
+    for (const qi of cand) {
+      const q = all[qi], oc = sub(O, q.bc), b = dot(oc, D), rb = q.br + (q.uw ? 0 : k), c = dot(oc, oc) - rb * rb, h = b * b - c;
+      if (h < 0) continue;
+      if (q.uw) { fl.push(q); continue; }
+      const r = Math.sqrt(h); tmin = Math.min(tmin, -b - r); tmax = Math.max(tmax, -b + r); vol.push(q);
     }
-  }
-  // interior lines: where a nearer part stands in front of a clearly further one
-  if (outlineGroups) {
-    const lines = [];
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      const i = y * W + x; if (!sp.m[i]) continue;
-      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-        const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= W || Y >= H) continue;
-        const j = Y * W + X;
-        if (sp.m[j] && grp[j] !== grp[i] && depth[j] - depth[i] > lineGap) { lines.push(i); break; }
+    let hitT = Infinity, hitG = -1, hitMat = 0, hitN = null;
+    if (vol.length) {
+      // group the candidates; the field is a smooth union within a group, a hard union across
+      const groups = new Map(); for (const q of vol) { let g = groups.get(q.group); if (!g) groups.set(q.group, g = []); g.push(q); }
+      const gfield = (qs, p) => { let d = Infinity; for (const q of qs) d = d === Infinity ? sdf(q, p) : smin(d, sdf(q, p)); return d; };
+      let t = Math.max(0, tmin);
+      for (let step = 0; step < 96 && t < tmax; step++) {
+        const p = v3.add(O, v3.mul(D, t));
+        let d = Infinity, g = null; for (const [gk, qs] of groups) { const gd = gfield(qs, p); if (gd < d) { d = gd; g = gk; } }
+        if (d < eps) {
+          const qs = groups.get(g), e = .5 / s;
+          hitN = norm([gfield(qs, [p[0] + e, p[1], p[2]]) - gfield(qs, [p[0] - e, p[1], p[2]]), gfield(qs, [p[0], p[1] + e, p[2]]) - gfield(qs, [p[0], p[1] - e, p[2]]), gfield(qs, [p[0], p[1], p[2] + e]) - gfield(qs, [p[0], p[1], p[2] - e])]);
+          // the material: the part whose own surface is nearest
+          let mq = qs[0], md = Infinity; for (const q of qs) { const dd = sdf(q, p); if (dd < md) { md = dd; mq = q; } }
+          hitT = t; hitG = g; hitMat = mq.paint ? (mq.paint(toModel(p), mq) ?? mq.mat) : mq.mat;
+          break;
+        }
+        t += Math.max(d * .9, eps * .5);
       }
     }
-    for (const i of lines) if (![M.EYE, M.GLINT, M.MAGIC, M.MAGIC2].includes(sp.m[i])) sp.m[i] = M.LINE;
+    for (const f of fl) { // shaped planes
+      const dn = dot(D, f.nw); if (Math.abs(dn) < 1e-4) continue;
+      const t = dot(sub(f.cw, O), f.nw) / dn; if (t >= hitT) continue;
+      const p = v3.add(O, v3.mul(D, t)), rel = sub(p, f.cw), sS = dot(rel, f.uw) / f.su, tT = dot(rel, f.vw) / f.sv;
+      if (Math.abs(sS) > 1 || Math.abs(tT) > 1) continue;
+      const m = f.mask(sS, tT); if (!m) continue;
+      let n = dn > 0 ? v3.mul(f.nw, -1) : f.nw; n = norm(v3.add(n, v3.add(v3.mul(f.uw, sS * f.bend), v3.mul(f.vw, tT * f.bend * .5))));
+      hitT = t; hitG = f.group; hitMat = m; hitN = n;
+    }
+    if (!hitN || !hitMat) continue;
+    const i = iy * W + ix; depth[i] = hitT; grp[i] = hitG;
+    sp.px(ix, iy, hitMat, dot(hitN, R), -dot(hitN, U), dot(hitN, B));
   }
-  // a glint in each eye: its top-left pixel
+  // interior lines: where a nearer group stands in front of a clearly further one
+  const lines = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const i = y * W + x; if (!sp.m[i]) continue;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= W || Y >= H) continue;
+      const j = Y * W + X;
+      if (sp.m[j] && grp[j] !== grp[i] && depth[j] - depth[i] > lineGap) { lines.push(i); break; }
+    }
+  }
+  for (const i of lines) if (![M.EYE, M.GLINT, M.MAGIC, M.MAGIC2, M.NOSE].includes(sp.m[i])) sp.m[i] = M.LINE;
+  // a glint in each eye 2 x 2 or bigger: its top-left pixel
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const i = y * W + x; if (sp.m[i] !== M.EYE) continue;
-    const up = y > 0 && sp.m[i - W] === M.EYE, left = x > 0 && sp.m[i - 1] === M.EYE, more = x + 1 < W && sp.m[i + 1] === M.EYE && y + 1 < H && sp.m[i + W] === M.EYE; // only eyes 2 x 2 or bigger
+    const up = y > 0 && sp.m[i - W] === M.EYE, left = x > 0 && sp.m[i - 1] === M.EYE, more = x + 1 < W && sp.m[i + 1] === M.EYE && y + 1 < H && sp.m[i + W] === M.EYE;
     if (!up && !left && more) sp.m[i] = M.GLINT;
   }
   // stand on the bottom row: drop the empty rows under the lowest pixels
   let low = -1; for (let y = H - 1; y >= 0 && low < 0; y--) for (let x = 0; x < W; x++) if (sp.m[y * W + x]) { low = y; break; }
   if (low >= 0 && low < H - 1) {
     const d = H - 1 - low;
-    for (let y = H - 1; y >= 0; y--) for (let x = 0; x < W; x++) { const i = y * W + x, j = (y - d) * W + x, ok = y - d >= 0; sp.m[i] = ok ? sp.m[j] : 0; sp.g[i] = ok ? sp.g[j] : 0; for (let k = 0; k < 3; k++) sp.n[i * 3 + k] = ok ? sp.n[j * 3 + k] : 0; }
+    for (let y = H - 1; y >= 0; y--) for (let x = 0; x < W; x++) { const i = y * W + x, j = (y - d) * W + x, ok = y - d >= 0; sp.m[i] = ok ? sp.m[j] : 0; sp.g[i] = ok ? sp.g[j] : 0; for (let c = 0; c < 3; c++) sp.n[i * 3 + c] = ok ? sp.n[j * 3 + c] : 0; }
   }
-  return { sp, s, toScreen: p => { const w = toWorld(p); return [(dot(w, R) - X0) * s + 1, (U1 - dot(w, U)) * s]; } };
+  return { sp, s };
 }
 
 // Paint helpers: a pattern from model coordinates.
 const spotty = (p, k = 9, density = .3) => hash2(Math.floor(p[0] * k), Math.floor(p[1] * k) + Math.floor(p[2] * k) * 97, 7) < density;
+
+// Masks for shaped planes (s along the span or length, t across; both in [-1, 1]).
+const masks = {
+  // a feathered wing: s from the shoulder (-1) to the tip (1), t from the leading edge (1)
+  // to the trailing edge (-1); long primaries with notched tips, coverts along the front
+  wing: (mat, mat2) => (s, t) => {
+    const u = (s + 1) / 2, lead = 1 - .35 * u * u, trail = -1 + .55 * u + .18 * Math.abs(Math.sin(u * Math.PI * 6));
+    if (t > lead || t < trail) return null;
+    if (t > lead - .35 * (1 - u * .5)) return mat2;
+    return Math.floor(u * 9) % 2 ? mat : mat2;
+  },
+  // a leaf-shaped ear: t from the base (-1) to the tip (1); inner ear and a dark tip
+  ear: (mat, inner = M.EAR, tip = M.BODY3) => (s, t) => {
+    const u = (t + 1) / 2, half = .95 * Math.sin(Math.PI * Math.min(1, .15 + u * .85)) * (1 - u * .35);
+    if (Math.abs(s) > half) return null;
+    if (u > .82) return tip;
+    return Math.abs(s) < half * .5 && u < .7 && u > .12 ? inner : mat;
+  },
+  // a flame: t from the base (-1) to the tip (1); a bright core
+  flame: (mat, core) => (s, t) => { const u = (t + 1) / 2, half = Math.sin(Math.PI * Math.min(1, u * 1.1)) * (1 - u) * 1.4; if (Math.abs(s) > half) return null; return Math.abs(s) < half * .45 && u < .6 ? core : mat; },
+  // a membrane between fingers (bat): scalloped trailing edge
+  membrane: mat => (s, t) => { const u = (s + 1) / 2, trail = -1 + .35 * Math.abs(Math.sin(u * Math.PI * 3)); return t < trail || t > 1 - .2 * u ? null : mat; },
+  // an oval with an eyespot (moth wings)
+  spotted: (mat, spot, ring) => (s, t) => { const r = Math.hypot(s, t * 1.2); if (r > 1) return null; const e = Math.hypot(s - .35, t - .1); return e < .18 ? ring : e < .3 ? spot : mat; },
+};
 
 
 // Height on screen in art pixels: young about 45 at the default style (the coordinator's
@@ -1187,21 +1259,21 @@ const glowMotes = (sp, seed) => { // a few glowing motes around a legend
 
 // A feathered wing: a fan of long flat feathers from shoulder to tip, lifted and swept back.
 function wing3d(m, root, side, span, up, mat, mat2, group) {
-  const tip = v3.add(root, [-span * .7, span * (.75 + up), side * span * .35]);
-  for (let i = 0; i < 14; i++) {
-    const t = i / 13, base = v3.lerp(root, tip, t), len = span * (.3 + .3 * t), dir = v3.norm([-.6 - t * .5, -.75 + t * .55, side * .1]);
-    m.ell(v3.add(base, v3.mul(dir, len * .5)), [len * .55, span * .1, span * .015], i % 2 ? mat : mat2, { dir, up: v3.sub(tip, root), group: group + (i % 2), extra: true }); // flat in the wing's plane
-  }
-  for (let i = 0; i < 6; i++) { const t = .1 + i / 6 * .85, b = v3.lerp(root, tip, t); m.ell(v3.add(b, [-.05, -.05, 0]), [span * .16, span * .1, span * .025], mat2, { dir: [-.7, -.4, 0], up: v3.sub(tip, root), group: group + 3, extra: true }); } // coverts
-  m.seg(root, tip, span * .035, span * .02, mat2, { group: group + 2, extra: true });
+  // one shaped plane: a feathered outline, raised and swept back, its leading edge forward
+  const tip = v3.add(root, [-span * .7, span * (.75 + up), side * span * .35]), u = v3.norm(v3.sub(tip, root));
+  const v = v3.norm(v3.sub([1, 0, 0], v3.mul(u, v3.dot([1, 0, 0], u)))), L = Math.hypot(...v3.sub(tip, root));
+  m.flat(v3.add(v3.lerp(root, tip, .5), v3.mul(v, -span * .14)), u, v, L * .55, span * .34, masks.wing(mat, mat2), { group, extra: true });
 }
 
+// The size a creature is drawn at: babies are chunky, about 28 to 32 pixels (the coordinator).
+const drawHeight = (level, st, k = 1) => level === 0 ? Math.round(Math.max(12, Math.min(30 * Math.max(.75, Math.min(1.1, k)), height3d(1, st) * k * .72))) : height3d(level, st) * k; // a baby: about 30, never taller than 3/4 of its young
+
 // ================= four-legged animals =================
-function quad3d(S, level, frame, st) {
+function quad3d(S, level, frame, st, facing = "towards") {
   const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q }, legend = level === 2, young = level === 1, baby = level === 0, has = f => legend && S.legend.includes(f);
   const m = new Model();
-  const hr = q.hr * (baby ? 1.6 : young ? 1.25 : 1) * (st.head / .44) ** .5, len = q.len * (baby ? .8 : young ? .9 : 1.02) * st.long;
-  const legK = baby ? .62 : young ? .9 : 1.04;
+  const hr = q.hr * (baby ? 1.75 : young ? 1.25 : 1) * (st.head / .44) ** .5, len = q.len * (baby ? .8 : young ? .9 : 1.02) * st.long;
+  const legK = baby ? .55 : young ? .9 : 1.04;
   const bob = frame ? -.04 : 0, top = 1 + bob, chest = q.chest * (legend ? 1.06 : 1) / legK + bob, tuck = q.tuck / legK + bob;
   const bw = q.bw * (baby ? 1.15 : 1) * (q.legW > 1.2 ? 1.15 : 1), lw = .06 * q.legW * (legend ? 1.1 : baby ? 1.7 : 1);
   const hump = q.back === "hump" ? .1 : 0, arch = q.back === "arch" ? .1 : 0;
@@ -1254,9 +1326,9 @@ function quad3d(S, level, frame, st) {
     const E = q.ear, base = [H[0] - hr * .15, H[1] + hr * .7, side * hr * .5], k = q.earS * (baby ? 1.2 : 1) * (q.ear === "long" ? .62 : 1);
     if (E === "none") continue;
     if (E === "round") { m.ell(base, [hr * .22, hr * .25 * k, hr * .1], M.BODY, { group: 1, paint: p => p[0] > base[0] + hr * .02 ? M.EAR : undefined }); continue; }
-    if (E === "long") { m.ell(v3.add(base, [-hr * .25 * k, hr * 1.0 * k, 0]), [hr * 1.05 * k, hr * .2, hr * .07], M.BODY, { group: 1, dir: [-.3, 1, side * .15], up: [1, 0, 0], extra: true, paint: p => p[1] > base[1] + hr * 1.7 * k ? M.BODY3 : p[0] > base[0] - hr * .2 ? M.EAR : undefined }); continue; }
-    const droop = E === "small" ? -.6 : 0, eh = hr * .55 * k * (E === "big" ? 1.35 : 1);
-    m.ell(v3.add(base, [droop * hr * .2, eh * .7, side * hr * .08]), [eh, hr * .24 * (E === "big" ? 1.2 : 1), hr * .07], M.BODY, { group: 1, dir: [droop, 1, side * .35], up: [1, 0, 0], paint: p => p[1] > base[1] + eh * 1.15 ? M.BODY3 : p[0] > base[0] ? M.EAR : undefined });
+    const long = E === "long", droop = E === "small" ? -.6 : 0, eh = hr * .55 * k * (E === "big" ? 1.35 : long ? 2.2 : 1), ew = hr * .3 * (E === "big" ? 1.2 : long ? 1.35 : 1);
+    const dirE = v3.norm([droop * .6 - (long ? .3 : .12), 1, side * .3]), n = v3.norm([.55, .2, side]), across = v3.norm(v3.cross(n, dirE)); // the ear opens forward and out, towards us on the near side
+    m.flat(v3.add(base, v3.mul(dirE, eh)), across, dirE, ew, eh, masks.ear(M.BODY, M.EAR, M.BODY3), { group: 5 + (side > 0 ? 0 : 20), extra: long });
     if (E === "tuft") m.seg(v3.add(base, [0, eh * 1.4, side * .02]), v3.add(base, [0, eh * 1.85, side * .04]), hr * .05, hr * .02, M.BODY3, { group: 1 });
   }
   // ---- tail ----
@@ -1270,7 +1342,7 @@ function quad3d(S, level, frame, st) {
   // ---- legendary features ----
   const backAt = t => [-len * .9 + t * len * 1.65, top + hump * Math.max(0, 1 - Math.abs(t - .8) * 3) + arch * (1 - Math.abs(t - .4) * 2), 0];
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [len * .2, top, side * bw * .5], side, 1.15, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
-  if (has("mane") || has("flames")) for (let i = 0; i < 7; i++) { const t = i / 6, b = v3.lerp(v3.add(H, [-hr * .5, hr * .5, 0]), backAt(.55), t), h = [.4, .3, .45, .28, .38, .25, .3][i]; m.chain([[...b, .07], [...v3.add(b, [-.1, h * .6, 0]), .06], [...v3.add(b, [-.25 - (frame ? .05 : 0), h, 0]), .015]], i % 2 ? M.MAGIC : M.MAGIC2, { group: 60 + i % 2, extra: true }); }
+  if (has("mane") || has("flames")) for (let i = 0; i < 7; i++) { const t = i / 6, b = v3.lerp(v3.add(H, [-hr * .5, hr * .3, 0]), backAt(.55), t), h = [.4, .3, .45, .28, .38, .25, .3][i], up = v3.norm([-.35 - (frame ? .1 : 0), 1, 0]); m.flat(v3.add(b, v3.mul(up, h * .5)), [1, 0, 0], up, h * .32, h * .55, masks.flame(i % 2 ? M.MAGIC : M.MAGIC2, M.MAGIC2), { group: 60 + i % 2, extra: true }); }
   if (has("tails")) for (let i = 0; i < 7; i++) { const a = Math.PI * (.55 + i * .08), z = (i - 3) * .1, e = v3.add(tb, [Math.cos(a) * .9, Math.sin(a) * .85, z]); m.chain([[...tb, .1], [...v3.lerp(tb, e, .5), .17], [...e, .08]], i % 2 ? M.BODY2 : M.BODY, { group: 70, extra: true }); m.ell(e, [.09, .09, .09], M.MAGIC2, { group: 71, extra: true }); }
   if (has("crystals")) [.15, .3, .45, .6, .75].forEach((t, i) => { const b = backAt(t), h = [.3, .5, .4, .6, .35][i]; m.ell(v3.add(b, [0, h * .45, (i % 2 - .5) * .1]), [h * .55, .08, .08], M.MAGIC, { dir: [(i - 2) * .12, 1, 0], group: 80 + i % 2, extra: true, paint: p => p[2] > 0 ? M.MAGIC2 : undefined }); });
   if (has("moss")) {
@@ -1279,7 +1351,7 @@ function quad3d(S, level, frame, st) {
     for (const t of [.12, .4, .65, .9]) { const b = backAt(t); m.ell(v3.add(b, [0, .12, bw * .3]), [.07, .035, .07], M.MAGIC, { group: 89, extra: true }); }
   }
   if (has("ribbons")) for (let i = 0; i < 3; i++) { const pts = []; for (let k = 0; k < 9; k++) { const t = k / 8; pts.push([len * (.5 - t * 2.2), top + .05 + i * .1 + t * (.25 + i * .12) + Math.sin(t * 6 + frame + i) * .07, (i - 1) * .18, .04 * (1 - t * .6)]); } m.chain(pts, i % 2 ? M.MAGIC2 : M.MAGIC, { group: 90 + i, extra: true }); }
-  const { sp } = render(m, { height: height3d(level, st, q.hgt) * (baby ? 1.8 : 1) });
+  const { sp } = render(m, { height: drawHeight(level, st, q.hgt), facing });
   if (legend) glowMotes(sp, S.id.length * 7919);
   return sp;
 }
@@ -1316,7 +1388,7 @@ function antlers3d(m, q, b, side, level, has) {
 }
 
 // ================= owl =================
-function owl3d(S, level, frame, st) {
+function owl3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, young = level === 1, baby = level === 0, has = f => legend && S.legend.includes(f), m = new Model();
   const bob = frame ? .03 : 0, hr = baby ? .48 : young ? .42 : .36, hy = (baby ? .95 : 1.08) + bob;
   // feet and a short tail
@@ -1342,7 +1414,7 @@ function owl3d(S, level, frame, st) {
   m.ell(Model.surface([0, hy, 0], [hr, hr * .9, hr], v3.norm([.75, -.35, .35])), [hr * .2, hr * .12, hr * .1], M.ACCENT, { dir: [.6, -1, .3], group: 1 }); // beak
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [-.05, .8 + bob, side * .3], side, 1.3, frame ? .12 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("eyesRing")) for (let i = 0; i < 7; i++) { const a = Math.PI * (.15 + i / 6 * .7); m.ell([Math.cos(a) * .2 - .1, hy + .1 + Math.sin(a) * .6, (i - 3) * .15], [.07, .07, .07], M.MAGIC2, { group: 95 + i, extra: true }); m.ell([Math.cos(a) * .2 - .05, hy + .1 + Math.sin(a) * .6, (i - 3) * .15], [.035, .035, .035], M.EYE, { group: 95 + i, extra: true }); }
-  const { sp } = render(m, { height: height3d(level, st) * (baby ? 1.8 : 1) * .95 });
+  const { sp } = render(m, { height: drawHeight(level, st, .95), facing });
   if (legend) glowMotes(sp, 31);
   return sp;
 }
@@ -1350,15 +1422,15 @@ function owl3d(S, level, frame, st) {
 // ================= the other body plans, in 3D =================
 const eyesOn = (m, c, r, dirs, size, mat) => { for (const d of dirs) m.ell(Model.surface(c, r, v3.norm(d)), [size, size * 1.2, size], mat, { group: 1 }); };
 const shadow = (m, x, w) => m.ell([x, .005, 0], [w, .005, w * .6], M.NOSE, { group: 0 }); // a flyer's shadow on the ground
-function finish(m, S, level, st, k) {
-  const { sp } = render(m, { height: level === 0 ? Math.max(14, height3d(0, st) * k * 1.8) : height3d(level, st) * k }); // a baby is at least 14 pixels
+function finish(m, S, level, st, k, facing) {
+  const { sp } = render(m, { height: drawHeight(level, st, k), facing });
   if (level === 2) glowMotes(sp, S.id.length * 131);
   return sp;
 }
 const crown3d = (m, c, w) => { m.ell(c, [w, w * .35, w], M.MAGIC, { group: 95, extra: true, paint: p => p[1] > c[1] ? M.MAGIC2 : undefined }); for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; m.ell(v3.add(c, [Math.cos(a) * w * .8, w * .55, Math.sin(a) * w * .8]), [w * .38, w * .12, w * .12], M.MAGIC, { dir: [0, 1, 0], up: [1, 0, 0], group: 96, extra: true }); } };
 const crystals3d = (m, pts) => pts.forEach(([b, h], i) => m.ell(v3.add(b, [0, h * .45, 0]), [h * .55, .07, .07], M.MAGIC, { dir: [(i % 3 - 1) * .25, 1, (i % 2 - .5) * .3], group: 80 + i % 2, extra: true, paint: p => p[2] > b[2] ? M.MAGIC2 : undefined }));
 
-function hedgehog3d(S, level, frame, st) {
+function hedgehog3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, m = new Model(), f = frame ? .03 : 0;
   for (const [x, z] of [[.28, .2], [.28, -.2], [-.28, .2], [-.28, -.2]]) m.seg([x, .15, z], [x + (z > 0 ? f : -f), .03, z], .06, .05, M.BODY3, { group: z > 0 ? 6 : 2 });
   const c = [0, .32, 0], r = [.5, .32, .38];
@@ -1369,10 +1441,10 @@ function hedgehog3d(S, level, frame, st) {
   m.ell([.69, .16, 0], [.04, .04, .04], M.NOSE, { group: 1 });
   eyesOn(m, sn, [.22, .14, .15], [[.3, .6, .55], [.3, .6, -.55]], .035, legend ? M.MAGIC2 : M.EYE);
   if (legend) crystals3d(m, [[[-.3, .55, .1], .35], [[-.05, .62, -.1], .5], [[.2, .55, .12], .4], [[-.15, .58, .2], .3]]);
-  return finish(m, S, level, st, .6);
+  return finish(m, S, level, st, .6, facing);
 }
 
-function toad3d(S, level, frame, st) {
+function toad3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, m = new Model(), hop = frame ? .05 : 0;
   for (const side of [-1, 1]) { // folded hind legs, thin front legs
     m.ell([-.22, .16, side * .36], [.24, .13, .12], side > 0 ? M.BODY : M.BODY2, { dir: [1, .3, 0], group: side > 0 ? 6 : 2, paint: p => spotty(p, 14, .15) ? M.BODY3 : undefined });
@@ -1383,10 +1455,10 @@ function toad3d(S, level, frame, st) {
   m.ell(c, r, M.BODY, { paint: p => p[1] < c[1] - .12 ? M.BELLY : p[0] > .38 && Math.abs(p[1] - (c[1] - .02)) < .018 ? M.LINE : spotty(p, 14, .22) ? M.BODY3 : undefined });
   for (const side of [-1, 1]) { const e = [.3, .55 + hop, side * .17]; m.ell(e, [.1, .09, .1], M.BODY, { group: 1 }); m.ell(Model.surface(e, [.1, .09, .1], v3.norm([.6, .5, side * .5])), [.05, .05, .05], legend ? M.MAGIC2 : M.IRIS, { group: 1 }); m.ell(Model.surface(e, [.11, .1, .11], v3.norm([.65, .45, side * .5])), [.03, .015, .03], M.EYE, { group: 1 }); }
   if (legend) crown3d(m, [.15, .66 + hop, 0], .16);
-  return finish(m, S, level, st, .55);
+  return finish(m, S, level, st, .55, facing);
 }
 
-function raven3d(S, level, frame, st) {
+function raven3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, young = level === 1, has = f => legend && S.legend.includes(f), m = new Model(), bob = frame ? .02 : 0;
   for (const side of [-1, 1]) { const f = frame && side > 0 ? .04 : 0; m.seg([0, .3, side * .08], [.03, .03 + f, side * .08], .03, .025, M.NOSE, { group: side > 0 ? 7 : 2 }); m.ell([.08, .02 + f, side * .08], [.08, .015, .04], M.NOSE, { group: 2 }); }
   m.ell([-.55, .42, 0], [.32, .035, .12], M.BODY2, { dir: [-1, -.25, 0], group: 3 });
@@ -1398,10 +1470,10 @@ function raven3d(S, level, frame, st) {
   eyesOn(m, hc, [hr * 1.1, hr, hr * .95], [[.55, .35, .65], [.55, .35, -.65]], hr * .16, legend ? M.MAGIC2 : M.EYE);
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [-.05, .65 + bob, side * .18], side, 1.1, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("eyesRing")) for (let i = 0; i < 6; i++) { const a = Math.PI * (.2 + i / 5 * .6); m.ell([Math.cos(a) * .25 - .1, .95 + Math.sin(a) * .45, (i - 2.5) * .12], [.06, .06, .06], M.MAGIC2, { group: 95 + i, extra: true }); }
-  return finish(m, S, level, st, .75);
+  return finish(m, S, level, st, .75, facing);
 }
 
-function bat3d(S, level, frame, st) {
+function bat3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, span = has("wingsBig") ? 1.5 : 1;
   shadow(m, 0, .3 * span);
   for (const side of [-1, 1]) { // membranes between finger bones, flapping
@@ -1409,7 +1481,9 @@ function bat3d(S, level, frame, st) {
     const tips = [[-.05, y + (up ? .45 : -.15), side * .85 * span], [-.25, y + (up ? .2 : -.25), side * .75 * span], [-.3, y + (up ? 0 : -.25), side * .4 * span]];
     const mem = has("wingsBig") ? M.MAGIC : M.BODY2, bone = has("wingsBig") ? M.MAGIC2 : M.BODY3;
     m.seg(sh, wr, .03, .025, bone, { group: 11 });
-    for (const t of tips) { m.seg(wr, t, .02, .012, bone, { group: 11 }); const mid = v3.lerp(v3.lerp(sh, wr, .5), t, .5), d = v3.sub(t, sh); m.ell(mid, [Math.hypot(...d) * .45, .22 * span, .012], mem, { dir: d, up: v3.sub(wr, sh), group: 10 }); }
+    for (const t of tips) m.seg(wr, t, .02, .012, bone, { group: 11 });
+    const span3 = v3.sub(tips[0], sh), u = v3.norm(span3), back = v3.norm(v3.sub(tips[2], wr)), v = v3.norm(v3.sub(back, v3.mul(u, v3.dot(back, u))));
+    m.flat(v3.add(v3.lerp(sh, tips[0], .5), v3.mul(v, .12 * span)), u, v, Math.hypot(...span3) * .55, .3 * span, masks.membrane(mem), { group: 10 + (side > 0 ? 1 : 0), bend: .2 });
   }
   m.ell([0, y, 0], [.13, .16, .12], M.BODY, { group: 1 });
   const hc = [.08, y + .2, 0];
@@ -1417,10 +1491,10 @@ function bat3d(S, level, frame, st) {
   for (const side of [-1, 1]) m.ell(v3.add(hc, [-.02, .15, side * .07]), [.12, .045, .02], M.BODY, { dir: [.1, 1, side * .3], up: [1, 0, 0], group: 1, paint: p => p[0] > hc[0] - .01 ? M.EAR : undefined });
   eyesOn(m, hc, [.12, .11, .11], [[.7, .2, .5], [.7, .2, -.5]], .025, legend ? M.MAGIC2 : M.EYE);
   m.ell(Model.surface(hc, [.12, .11, .11], [1, -.2, 0]), [.025, .02, .03], M.NOSE, { group: 1 });
-  return finish(m, S, level, st, .55);
+  return finish(m, S, level, st, .55, facing);
 }
 
-function mole3d(S, level, frame, st) {
+function mole3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, m = new Model(), f = frame ? .03 : 0;
   m.seg([-.5, .18, 0], [-.62, .12, 0], .04, .02, M.SKIN, { group: 3 });
   for (const side of [-1, 1]) m.ell([-.3, .05, side * .2], [.07, .04, .05], M.SKIN, { group: side > 0 ? 6 : 2 });
@@ -1434,10 +1508,10 @@ function mole3d(S, level, frame, st) {
   }
   for (const side of [-1, 1]) m.ell(Model.surface([0, .3, 0], [.52, .29, .33], v3.norm([.85, .3, side * .35])), [.015, .015, .015], legend ? M.MAGIC2 : M.EYE, { group: 1 });
   if (legend) crown3d(m, [.15, .62, 0], .15);
-  return finish(m, S, level, st, .55);
+  return finish(m, S, level, st, .55, facing);
 }
 
-function beetle3d(S, level, frame, st) {
+function beetle3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, has = f => legend && S.legend.includes(f), m = new Model();
   for (const side of [-1, 1]) for (let i = 0; i < 3; i++) { // six jointed legs, alternating
     const x = .25 - i * .25, ph = (i + (side > 0 ? 1 : 0) + frame) % 2 ? .06 : -.06, base = [x, .22, side * .2];
@@ -1452,30 +1526,30 @@ function beetle3d(S, level, frame, st) {
   for (const side of [-1, 1]) m.chain([[...v3.add(hc, [.05, .06, side * .1]), .012], [hc[0] + .1, .5, side * .22, .012], [hc[0] + .2, .5, side * .26, .012]], M.BODY3, { group: 9, extra: true });
   eyesOn(m, hc, [.1, .1, .17], [[.4, .3, .85], [.4, .3, -.85]], .02, legend ? M.MAGIC2 : M.GLINT);
   if (has("crystals")) crystals3d(m, [[[-.35, .5, .1], .3], [[-.1, .55, -.08], .45], [[.1, .5, .1], .35]]);
-  return finish(m, S, level, st, .5);
+  return finish(m, S, level, st, .5, facing);
 }
 
-function snail3d(S, level, frame, st) {
+function snail3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, m = new Model(), g = frame ? .04 : 0;
   m.ell([0, .07, 0], [.6 + g, .07, .17], M.SKIN, { group: 1 });
   m.chain([[.45 + g, .08, 0, .1], [.6 + g, .25, 0, .09], [.68 + g, .28, 0, .08]], M.SKIN, { group: 1 });
   for (const side of [-1, 1]) { m.seg([.7 + g, .32, side * .04], [.78 + g, .55, side * .1], .018, .014, M.SKIN, { group: 5 }); m.ell([.78 + g, .57, side * .1], [.03, .03, .03], legend ? M.MAGIC2 : M.EYE, { group: 5 }); }
   const c = [-.12, .4, 0], shell = legend ? M.MAGIC : M.BODY;
   m.ell(c, [.32, .32, .22], shell, { group: 3, paint: p => { const a = Math.atan2(p[1] - c[1], p[0] - c[0]), rr = Math.hypot(p[0] - c[0], p[1] - c[1]) / .32, k = ((rr - a / (Math.PI * 2) * .3) % .3 + .3) % .3; return k < .06 ? (legend ? M.MAGIC2 : M.BODY3) : undefined; } });
-  return finish(m, S, level, st, .45);
+  return finish(m, S, level, st, .45, facing);
 }
 
-function woodlouse3d(S, level, frame, st) {
+function woodlouse3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, m = new Model();
   for (const side of [-1, 1]) for (let i = 0; i < 7; i++) { const x = -.45 + i * .15, ph = (i + frame) % 2 ? .03 : -.03; m.seg([x, .1, side * .22], [x + ph, .01, side * .33], .025, .015, M.BODY3, { group: side > 0 ? 7 : 2 }); }
   for (const side of [-1, 1]) m.chain([[.5, .15, side * .08, .02], [.7, .3, side * .2, .015], [.82, .22, side * .26, .012]], M.BODY3, { group: 9, extra: true });
   m.ell([0, .18, 0], [.58, .2, .3], M.BODY, { paint: p => ((Math.floor((p[0] + .6) * 9) % 2) && p[1] > .2 ? M.BODY2 : undefined) || (Math.abs(((p[0] + .6) * 9) % 1) < .12 ? M.LINE : undefined) });
   eyesOn(m, [0, .18, 0], [.58, .2, .3], [[.92, .3, .25], [.92, .3, -.25]], .02, legend ? M.MAGIC2 : M.EYE);
   if (legend) crystals3d(m, [[[-.3, .32, .05], .3], [[0, .37, -.05], .45], [[.25, .32, .05], .32]]);
-  return finish(m, S, level, st, .4);
+  return finish(m, S, level, st, .4, facing);
 }
 
-function snake3d(S, level, frame, st) {
+function snake3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, young = level === 1, has = f => legend && S.legend.includes(f), m = new Model(), ph = frame ? .7 : 0, pts = [];
   for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push([-.9 + t * 1.2, .07, Math.sin(t * Math.PI * 2 + ph) * .25 * (1 - t * .5), .03 + .045 * Math.sin(Math.min(1, t * 1.4) * Math.PI / 2)]); }
   pts.push([.38, .25, pts[12][2], .07], [.42, .45, pts[12][2] * .8, .065]);
@@ -1485,36 +1559,36 @@ function snake3d(S, level, frame, st) {
   eyesOn(m, hc, [hr * 1.5, hr * .75, hr], [[.5, .5, .7], [.5, .5, -.7]], hr * .22, legend ? M.MAGIC2 : M.EYE);
   if (!frame) m.seg(v3.add(hc, [hr * 1.4, -hr * .2, 0]), v3.add(hc, [hr * 2.3, -hr * .3, 0]), .01, .008, M.SKIN, { group: 1 });
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [0, .2, side * .05], side, .9, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
-  return finish(m, S, level, st, .45);
+  return finish(m, S, level, st, .45, facing);
 }
 
-function moth3d(S, level, frame, st) {
+function moth3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, span = has("wingsBig") ? 1.45 : 1;
   const wm = has("wingsBig") ? M.MAGIC : M.BODY;
   shadow(m, 0, .3 * span);
   for (const side of [-1, 1]) {
     const lift = up ? .5 : -.1, fore = v3.norm([.35, lift, side]), hind = v3.norm([-.3, lift * .6, side]);
-    m.ell(v3.add([0, y, side * .05], v3.mul(fore, .38 * span)), [.4 * span, .2 * span, .012], wm, { dir: fore, up: [1, 0, 0], group: 10, paint: p => Math.hypot(p[0] - .12 * span, Math.abs(p[2]) - .4 * span) < .07 * span ? M.BELLY : undefined });
-    m.ell(v3.add([-.05, y, side * .05], v3.mul(hind, .26 * span)), [.27 * span, .15 * span, .012], has("wingsBig") ? M.MAGIC2 : M.BODY2, { dir: hind, up: [1, 0, 0], group: 9 });
+    m.flat(v3.add([0, y, side * .05], v3.mul(fore, .38 * span)), fore, v3.norm(v3.cross(fore, [0, 1, 0])), .4 * span, .24 * span, masks.spotted(wm, M.BELLY, M.BODY3), { group: 10 + (side > 0 ? 1 : 0) });
+    m.flat(v3.add([-.05, y, side * .05], v3.mul(hind, .26 * span)), hind, v3.norm(v3.cross(hind, [0, 1, 0])), .27 * span, .17 * span, masks.spotted(has("wingsBig") ? M.MAGIC2 : M.BODY2, M.BODY2, M.BODY2), { group: 12 + (side > 0 ? 1 : 0) });
     m.chain([[.12, y + .08, side * .03, .015], [.2, y + .25, side * .1, .025], [.24, y + .32, side * .14, .012]], M.BODY2, { group: 11 });
   }
   m.ell([0, y, 0], [.22, .09, .09], M.BELLY, { group: 1, paint: p => spotty(p, 30, .25) ? M.BODY2 : undefined });
   m.ell([.17, y + .03, 0], [.07, .07, .07], M.BELLY, { group: 1 });
   eyesOn(m, [.17, y + .03, 0], [.07, .07, .07], [[.7, .3, .6], [.7, .3, -.6]], .02, legend ? M.MAGIC2 : M.EYE);
-  return finish(m, S, level, st, .5);
+  return finish(m, S, level, st, .5, facing);
 }
 
-function glowworm3d(S, level, frame, st) {
+function glowworm3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, has = f => legend && S.legend.includes(f), m = new Model(), ph = frame ? .05 : 0;
   for (let i = 0; i < 9; i++) { const t = i / 8, x = -.6 + t * 1.15; m.ell([x, .12 + Math.sin(t * Math.PI) * (.06 + ph), 0], [.08, .1 - t * .02, .12 - t * .03], i < 2 ? M.MAGIC2 : i % 2 ? M.BODY2 : M.BODY, { group: 1 }); }
   if (has("lantern")) m.ell([-.75, .3, 0], [.22, .22, .22], M.MAGIC2, { group: 3, paint: p => p[1] < .2 ? M.MAGIC : undefined });
   for (let i = 0; i < 6; i++) m.seg([-.2 + i * .12, .05, .08], [-.2 + i * .12 + (i % 2 ? .02 : -.02) * (frame ? -1 : 1), 0, .12], .015, .01, M.BODY3, { group: 7 });
   m.ell([.6, .14, 0], [.06, .06, .08], M.BODY3, { group: 1 });
   eyesOn(m, [.6, .14, 0], [.06, .06, .08], [[.6, .3, .7], [.6, .3, -.7]], .015, legend ? M.MAGIC2 : M.EYE);
-  return finish(m, S, level, st, .4);
+  return finish(m, S, level, st, .4, facing);
 }
 
-function spider3d(S, level, frame, st) {
+function spider3d(S, level, frame, st, facing = "towards") {
   const legend = level === 2, has = f => legend && S.legend.includes(f), m = new Model();
   const ce = [.15, .28, 0];
   for (const side of [-1, 1]) for (let i = 0; i < 4; i++) { // eight legs, knees high
@@ -1527,7 +1601,7 @@ function spider3d(S, level, frame, st) {
   const ring = has("eyesRing");
   for (const [dy, dz] of [[.05, .05], [.05, -.05], [.02, .1], [.02, -.1]]) m.ell(Model.surface(ce, [.18, .13, .17], v3.norm([.9, dy * 6, dz * 4])), [.025, .025, .025], ring ? M.MAGIC2 : M.EYE, { group: 1 });
   if (ring) for (let i = 0; i < 5; i++) { const a = Math.PI * (.2 + i / 4 * .6); m.ell([-.3 + Math.cos(a) * .2, .75 + Math.sin(a) * .35, (i - 2) * .12], [.06, .06, .06], M.MAGIC2, { group: 95 + i, extra: true }); }
-  return finish(m, S, level, st, .5);
+  return finish(m, S, level, st, .5, facing);
 }
 
 
@@ -1541,7 +1615,7 @@ const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad
 // in units of its height at the shoulder (see quad()). The rest of the old fields serve
 // species still drawn the old way.
 const SPECIES = [
-  { id: "wolf", name: "Wolf", plan: "quad", hue: .6, sat: .14, val: .74, legend: ["wings", "mane"],
+  { id: "wolf", name: "Wolf", plan: "quad", hue: .08, sat: .24, val: .56, legend: ["wings", "mane"],
     q: { len: .64, chest: .42, tuck: .6, neck: .32, neckAng: .7, neckW: .42, hr: .26, snout: .82, snoutD: .7, ear: "point", earS: .82, tail: "brush", paw: "paw", legW: 1.25, saddle: true, belly: true },
     tail: "up" },
   { id: "fox", name: "Fox", plan: "quad", q: { hgt: .8, len: .62, chest: .4, tuck: .5, neck: .3, neckAng: .7, neckW: .32, hr: .24, snout: 1.05, snoutD: .5, snoutTaper: .6, ear: "point", earS: 1.35, tail: "bushy", paw: "paw", legW: .9, belly: true, socks: .3 }, hue: .06, sat: .8, val: .9, belly: "white", legend: ["tails"] },
@@ -1570,7 +1644,7 @@ const SPECIES = [
   { id: "snake", name: "Snake", plan: "snake", hue: .25, sat: .45, val: .45, legend: ["wings"] },
   { id: "moth", name: "Moth", plan: "moth", hue: .1, sat: .3, val: .7, legend: ["wingsBig"] },
   { id: "marten", name: "Pine marten", plan: "quad", q: { hgt: .55, len: .78, chest: .35, tuck: .38, neck: .3, neckAng: .55, neckW: .35, hr: .25, snout: .65, snoutD: .6, ear: "round", earS: .9, tail: "bushy", paw: "paw", legW: .85, belly: true, back: "arch" }, hue: .07, sat: .6, val: .45, legend: ["mane"] },
-  { id: "salamander", name: "Salamander", plan: "quad", q: { hgt: .3, len: .9, chest: .14, tuck: .14, neck: .12, neckAng: .05, neckW: .5, hr: .27, snout: .55, snoutD: .55, ear: "none", tail: "otter", paw: "paw", legW: 1.0, spots: true, spotMat: "belly" }, hue: .1, sat: .1, val: .22, belly: "yellow", legend: ["flames"] },
+  { id: "salamander", name: "Salamander", plan: "quad", q: { hgt: .42, len: .9, chest: .14, tuck: .14, neck: .12, neckAng: .05, neckW: .5, hr: .27, snout: .55, snoutD: .55, ear: "none", tail: "otter", paw: "paw", legW: 1.0, spots: true, spotMat: "belly" }, hue: .1, sat: .1, val: .22, belly: "yellow", legend: ["flames"] },
   { id: "glowworm", name: "Glow-worm", plan: "glowworm", hue: .12, sat: .4, val: .35, legend: ["lantern"] },
   { id: "spider", name: "Spider", plan: "spider", hue: .07, sat: .45, val: .4, legend: ["eyesRing"] },
   { id: "dormouse", name: "Dormouse", plan: "quad", q: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, snout: .45, snoutD: .7, ear: "round", earS: .85, tail: "squirrel", paw: "paw", legW: .8, back: "arch", belly: true, whiskers: true, eyeK: 1.6 }, hue: .09, sat: .6, val: .75, belly: "white", legend: ["starTail"] },
@@ -1598,10 +1672,19 @@ function speciesColours(sp, st) {
 // legends about 4.5 times that; they keep their size on screen as pixels grow).
 const levelHeight = (level, st) => height3d(level, st);
 
-function critter(spId, level, frame, st) {
-  const S = SPECIES_BY_ID[spId] || SPECIES[0];
-  if (S.q) return quad3d(S, level, frame, st);
-  return MODELLED.get(S.plan)(S, level, frame, st);
+// facing: "towards" (head turned to the viewer) or "away" (we see the rump and back of the head).
+// Shapes don't depend on colours, so a creature is drawn once per shape-changing knob setting
+// (a lab session changes lighting and colour knobs far more often than these).
+const SHAPE_KNOBS = ["size", "growth", "pixel", "head", "eye", "legs", "long", "fur"], cache = new Map();
+function critter(spId, level, frame, st, facing = "towards") {
+  const S = SPECIES_BY_ID[spId] || SPECIES[0], key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k])].join("|");
+  let sp = cache.get(key);
+  if (!sp) {
+    sp = S.q ? quad3d(S, level, frame, st, facing) : MODELLED.get(S.plan)(S, level, frame, st, facing);
+    if (cache.size > 600) cache.delete(cache.keys().next().value);
+    cache.set(key, sp);
+  }
+  return sp;
 }
 
 
@@ -1618,7 +1701,7 @@ const KNOBS = [
   { k: "glowSat", g: "Night light", label: "Witch glow colour", min: 0, max: 1, step: 0.01, v: 0.35 },
   { k: "glowRadius", g: "Night light", label: "Witch glow reach", min: 30, max: 200, step: 5, v: 110 },
   { k: "glowPower", g: "Night light", label: "Witch glow strength", min: 0.3, max: 2.5, step: 0.05, v: 1.4 },
-  { k: "bands", g: "Shading", label: "Light steps", min: 2, max: 7, step: 1, v: 4 },
+  { k: "bands", g: "Shading", label: "Light steps", min: 2, max: 7, step: 1, v: 3 },
   { k: "dither", g: "Shading", label: "Dithering", min: 0, max: 1, step: 0.05, v: 0.35 },
   { k: "round", g: "Shading", label: "Roundness", min: 0.2, max: 1.5, step: 0.05, v: 0.9 },
   { k: "outline", g: "Shading", label: "Plant outline", options: ["none", "dark", "tinted"], v: "none" },
@@ -1716,7 +1799,13 @@ function buildAssets(st, world, { K = 2 / (st.pixel || 2), makeCanvas = defaultC
   }
   const bushes = [];
   for (let i = 0; i < 12; i++) { const b = bush(rng(world.forestSeed * 7 + i * 3), { ...areaStyle(st, world, Math.floor(i / 4)), bushSize: st.bushSize * K }); bushes.push(bk(b.sp, b.colours)); }
-  const creatures = world.kinds.map(kind => [0, 1, 2].map(level => [0, 1].map(frame => bk(critter(kind, level, frame, st), speciesColours(kind, st), st.cOutline))));
+  // each creature sprite is the "towards" view; its .away is the same frame turned away
+  const creatures = world.kinds.map(kind => [0, 1, 2].map(level => [0, 1].map(frame => {
+    const col = speciesColours(kind, st), towards = bk(critter(kind, level, frame, st, "towards"), col, st.cOutline);
+    let away = null; // drawn the first time it is asked for
+    Object.defineProperty(towards, "away", { enumerable: true, get: () => away || (away = bk(critter(kind, level, frame, st, "away"), col, st.cOutline)) });
+    return towards;
+  })));
   return { trees, bushes, creatures, witch: bk(witchSprite(), witchColours(st)) };
 }
 
@@ -1966,8 +2055,9 @@ function renderBestiary() {
     const host = document.getElementById("bestiary"); if (!host) return; host.textContent = "";
     const studio = { ...current, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 };
     for (const S of SPECIES) {
-      const lv = [0, 1, 2].map(l => bake(critter(S.id, l, 0, current), speciesColours(S.id, current), current, current.cOutline));
-      const b1 = bake(critter(S.id, 0, 1, current), speciesColours(S.id, current), current, current.cOutline);
+      const facing = document.getElementById("away").checked ? "away" : "towards";
+      const lv = [0, 1, 2].map(l => bake(critter(S.id, l, 0, current, facing), speciesColours(S.id, current), current, current.cOutline));
+      const b1 = bake(critter(S.id, 0, 1, current, facing), speciesColours(S.id, current), current, current.cOutline);
       const w = lv[2].w + lv[1].w + lv[0].w + b1.w + 18, h = Math.max(lv[2].h, 20) + 6, tgt = makeTarget(w, h);
       tgt.a.fillStyle = `rgb(${hsv2rgb(current.groundHue, .4, current.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
       let x = 4; for (const b of [lv[2], lv[1], lv[0], b1]) { tgt.a.drawImage(b.A, x, h - 3 - b.h); tgt.n.drawImage(b.N, x, h - 3 - b.h); x += b.w + 4; }
@@ -1986,6 +2076,7 @@ if (!world.kinds.every(k => SPECIES_BY_ID[k])) world.kinds = ["wolf", "fox", "bo
 let current = { ...defaultStyle(), ...(store.get("witch-art-style-3") || {}) };
 if (!current.v4) { current.pixel = 2; current.v4 = true; }
 if (!current.v5) { current.pixel = 3; current.v5 = true; } // Ed, 2026-10-03: bigger pixels
+if (!current.v6) { current.bands = 3; current.v6 = true; } // three light steps: light top, mid side, dark underside
 let history = store.get("witch-art-history-3") || [];
 let varySeed = 1, variants = [], assetsCurrent, layoutCurrent;
 const varyGroups = new Set(GROUPS);
@@ -1994,16 +2085,20 @@ let sceneTarget, CROP;
 function applyRes(p) { setRes(p); sceneTarget = makeTarget(W, H); sceneCanvas.width = W; sceneCanvas.height = H; CROP = [Math.round(W / 4), Math.round(H / 4 - 6 * K), Math.round(W / 2), Math.round(H / 2)]; }
 
 function makeVariants() {
-  variants = [];
+  // variants are built one at a time after the page has drawn, so it never stalls on them
+  variants = []; const seed = varySeed;
   const host = document.getElementById("variants"); host.textContent = "";
-  for (let i = 0; i < 6; i++) {
+  const one = i => {
+    if (i >= 6 || seed !== varySeed) return;
     const st = mutate(current, +document.getElementById("strength").value, varyGroups, varySeed * 101 + i);
     const btn = document.createElement("button"); btn.className = "variant"; btn.type = "button";
     const c = document.createElement("canvas"); c.width = CROP[2]; c.height = CROP[3];
     const label = document.createElement("span"); label.innerHTML = `<b>Variant ${i + 1}</b><i>pick</i>`;
     btn.append(c, label); btn.addEventListener("click", () => choose(st)); host.append(btn);
     variants.push({ st, c, tgt: makeTarget(W, H), assets: buildAssets(st, world, { K }), lay: layout(world, st) });
-  }
+    setTimeout(() => one(i + 1), 30);
+  };
+  setTimeout(() => one(0), 60);
 }
 function setCurrent(st, { record = true } = {}) {
   current = st; store.set("witch-art-style-3", current);
@@ -2015,7 +2110,9 @@ function setCurrent(st, { record = true } = {}) {
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
-function renderHistory() {
+let historyTimer;
+function renderHistory() { clearTimeout(historyTimer); historyTimer = setTimeout(renderHistoryNow, 400); }
+function renderHistoryNow() {
   const el = document.getElementById("history"); el.textContent = "";
   if (!history.length) { el.innerHTML = '<p class="note">Each style you pick is kept here; tap one to go back to it.</p>'; return; }
   const tgt = makeTarget(W, H);
@@ -2092,6 +2189,7 @@ document.getElementById("save").addEventListener("click", async () => {
 });
 (async () => { try { db = window.claude ? await window.claude.use("db") : null; if (db) db.collection("styles").orderBy("savedAt", "desc").onSnapshot(s => renderSaved(s.docs), () => {}); } catch { db = null; } })();
 document.getElementById("copy").addEventListener("click", async () => { const ta = document.getElementById("json"); try { await navigator.clipboard.writeText(ta.value); toast("Style file copied."); } catch { ta.select(); toast("Selected; copy it with your keyboard."); } });
+document.getElementById("away").addEventListener("change", renderBestiary);
 document.getElementById("reroll").addEventListener("click", () => { varySeed++; makeVariants(); });
 document.getElementById("strength").addEventListener("change", () => { varySeed++; makeVariants(); });
 document.getElementById("reseed").addEventListener("click", () => { const ids = SPECIES.map(s => s.id).sort(() => Math.random() - .5); world = { ...world, kinds: ids.slice(0, 6) }; store.set("witch-art-world-3", world); setCurrent(current, { record: false }); makeVariants(); });

@@ -17,8 +17,9 @@ const b = await openBrowser();
 const ignore = e => /ERR_CERT_AUTHORITY_INVALID|fonts\.g/.test(e); // web fonts, blocked in some sandboxes
 for (const page of ["/tools/art-lab/witch-art-lab.html", "/tools/art-lab/dist/witch-art-lab.html"]) {
   b.errors.length = 0;
-  await b.page.goto(b.base + page);
-  await b.page.waitForTimeout(3500);
+  await b.page.goto(b.base + page, { waitUntil: "domcontentloaded", timeout: 90000 });
+  // the bestiary draws a little after the page; wait for every card (or give up after 90 s)
+  await b.page.waitForFunction(async () => { const n = document.querySelectorAll("#bestiary canvas").length; return n > 0 && n === (await import("/art/generator.js")).SPECIES.length; }, null, { timeout: 90000, polling: 500 }).catch(() => {});
   const cards = await b.page.evaluate(() => document.querySelectorAll("#bestiary canvas").length);
   const species = await b.page.evaluate(async () => (await import("/art/generator.js")).SPECIES.length);
   const lit = await b.page.evaluate(() => { const c = document.getElementById("scene"), d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 30) n++; return n / (d.length / 4); });

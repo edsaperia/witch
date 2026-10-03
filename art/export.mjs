@@ -33,8 +33,8 @@ const assets = await b.page.evaluate(async ({ style, seed }) => {
     const bk = G.bake(sp, colours, st, outline);
     list.push({ ...meta, w: bk.w, h: bk.h, anchor: { x: meta.anchorX ?? feet(sp), y: bk.h }, albedo: png(bk.A), normal: png(bk.N) });
   };
-  for (const S of G.SPECIES) for (const level of [0, 1, 2]) for (const frame of [0, 1])
-    push({ id: `${S.id}-${["baby", "young", "legend"][level]}-walk${frame}`, kind: "creature", species: S.id, level, frame }, G.critter(S.id, level, frame, st), G.speciesColours(S.id, st), st.cOutline);
+  for (const S of G.SPECIES) for (const level of [0, 1, 2]) for (const frame of [0, 1]) for (const facing of ["towards", "away"])
+    push({ id: `${S.id}-${["baby", "young", "legend"][level]}-walk${frame}${facing === "away" ? "-away" : ""}`, kind: "creature", species: S.id, level, frame, facing }, G.critter(S.id, level, frame, st, facing), G.speciesColours(S.id, st), st.cOutline);
   // trees: three of each kind, whole and split into the trunk below the crown and the rest
   for (const [key, f] of G.TREE_TYPES) for (let v = 0; v < 3; v++) {
     const r = G.rng(seed * 13 + v * 101 + key.length), t = G.finishTree(f(r, st, st.treeSize * K * G.uni(r, .9, 1.1)), st, r), col = G.treeColours(r, st, f), parts = G.splitTree(t);
@@ -59,7 +59,7 @@ await b.close();
 
 const manifest = { generator: "art/generator.js", style: assets.style, placement: assets.placement, areas: assets.areas, conventions: {
   albedo: "RGBA; alpha 254 = glowing pixel, draw unlit", normal: "RGB = xyz from [-1,1] to [0,255]; x right, y down, z to viewer; flip x when mirrored",
-  facing: "right", anchor: "pixels from top-left; the point on the ground (feet, trunk base); flyers (bat, moth) stand on their shadow",
+  facing: "right; creatures come turned towards the viewer (facing towards) and turned away (facing away, ids ending -away): moving down the screen use towards, moving up use away", anchor: "pixels from top-left; the point on the ground (feet, trunk base); flyers (bat, moth) stand on their shadow",
   floor: "area-floor tiles repeat over the ground; their normals face up" }, assets: [] };
 for (const a of assets.list) {
   const { albedo, normal, anchorX, ...meta } = a;

@@ -22,6 +22,7 @@ It returns:
 | `trees[i]` | 12 trees (4 per area for 3 areas): `{ whole, top, bot }`. `bot` is the trunk below the crown (shown in ground mode), `top` everything else (the canopy, shown from the treetops), `whole` both |
 | `bushes[i]` | 12 bushes |
 | `creatures[k][level][frame]` | for each kind in `world.kinds`: levels 0 baby, 1 young, 2 legend; frames 0 and 1 of the walk. Built in 3D and seen in three-quarter view from above (turned 35°, looking down 30°), facing right. Young are about 45 art pixels tall at the default style, legends about 4.5 times that; sizes on screen stay the same as the pixel size changes |
+| `creatures[k][level][frame].away` | the same frame turned away from the viewer (we see the rump and the back of the head); use it for creatures moving up the screen |
 | `witch` | the witch on her broom |
 
 Every asset is a **baked sprite**: `{ A, N, NF, w, h }`.
@@ -36,7 +37,7 @@ Every asset is a **baked sprite**: `{ A, N, NF, w, h }`.
 
 | Call | Gives |
 |---|---|
-| `critter(speciesId, level, frame, style)` | a sprite for one creature (`SPECIES` lists the ids) |
+| `critter(speciesId, level, frame, style, facing)` | a sprite for one creature (`SPECIES` lists the ids); `facing` is `"towards"` (default) or `"away"` |
 | `speciesColours(speciesId, style)` | its palette (material → RGB) |
 | `TREE_TYPES` | `[[mixKnob, drawFn], …]`; `drawFn(rng, style, scale)` returns `{ sp, crownY }` |
 | `treeColours(rng, style, drawFn)`, `splitTree({ sp, crownY })` | a tree's palette; its `{ top, bot }` halves |
