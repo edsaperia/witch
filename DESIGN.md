@@ -99,6 +99,12 @@ The trade is speed against information: treetop mode covers distance, ground mod
 - A 3D world with **2D pixel-art sprites** for characters and objects. References: *Cult of the Lamb* and *Octopath Traveler*. Witch develops its own art style as it goes.
 - Art is made with **a generator**, so that the style stays consistent across all assets.
 - **For now the art is drawn by code** (Ed, 2026-10-03: "easily good enough"): sprites built from a few parameters per kind and coloured by a style file. Ed explores styles in the **Witch Art Lab** (https://claude.ai/artifact/WLBnF1NrbTezd41A8m5Cfj). An image generator may replace it later through the same asset list.
+- Art direction from Ed's references (2026-10-03):
+  - **Trees**: larger, wider, taller and sparser, with differently shaped crowns (gnarled broadleaf, willow, birch, tree fern, fir, flat-crowned); plus **bushes and shrubs**.
+  - **Night**: a twilight palette, with light revealing that the trees and ground are green; the witch glows and lights what is near her.
+  - **Legendary creatures are about 20 times a baby's height**, taller than the treetops.
+  - **Areas read as colour fields**: each area has its own dominant colour (for example a blue fir area beside an orange autumn one), with pale clearings and shafts of light.
+  - **Creatures are recognisable animals** (wolf, badger, boar) that grow magical features as they level: spirit wings and mane, tusks, bolder stripes; drawn with dark outlines.
 - A **lo-fi aesthetic**: few animation frames (walking perhaps two or three).
 - Creatures face **left and right only** (mirrored).
 - Sizes to start, to be experimented with: a baby creature roughly 16 to 24 pixels tall, a legendary 64 or more.
