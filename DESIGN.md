@@ -92,6 +92,9 @@ The trade is speed against information: treetop mode covers distance, ground mod
 
 One area type per creature, each a small definition in Ed's columns: **floor** texture, **wall** objects (edges and barriers), **small** objects, **big** objects, a **set piece**, and the **creature**. Rows marked *Ed* are Ed's own; the rest are the coordinator's draft, which Ed approved as a list and may revise.
 
+- **Wall objects don't block movement**, for now (Ed, 2026-10-03).
+- **Set pieces are rare bits of scenery**, seen only occasionally, for variety; not every area has one (Ed, 2026-10-03).
+
 | Area | Floor | Wall | Small | Big | Set piece | Creature | |
 |---|---|---|---|---|---|---|---|
 | Moor | moss | puddles, a lake | long grass | moss mounds | | Badger | Ed |
