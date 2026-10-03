@@ -36,17 +36,27 @@ export const SPECIES = [
   { id: "mole", name: "Mole", plan: "mole", hue: .7, sat: .15, val: .32, legend: ["crown"] },
   { id: "beaver", name: "Beaver", plan: "quad", q: { hgt: .6, len: .65, chest: .2, tuck: .22, neck: .2, neckAng: .4, neckW: .55, hr: .28, snout: .6, snoutD: .75, ear: "round", earS: .45, tail: "flat", paw: "paw", legW: 1.2, back: "arch", teeth: true, whiskers: true }, hue: .06, sat: .6, val: .45, legend: ["moss"] },
   { id: "stoat", name: "Stoat", plan: "quad", q: { hgt: .5, len: 1.0, chest: .3, tuck: .33, neck: .35, neckAng: .6, neckW: .32, hr: .25, snout: .6, snoutD: .6, ear: "round", earS: .6, tail: "stoat", paw: "paw", legW: .8, belly: true, back: "arch", whiskers: true }, hue: .1, sat: .25, val: .92, legend: ["ribbons", "mane"] },
+  { id: "snail", name: "Snail", plan: "snail", hue: .08, sat: .45, val: .55, legend: ["glowShell"] },
+  { id: "ram", name: "Ram", plan: "quad", q: { hgt: .95, len: .6, chest: .48, tuck: .52, neck: .22, neckAng: .45, neckW: .48, hr: .25, snout: .85, snoutD: .75, snoutTaper: .8, ear: "small", earS: .7, tail: "stub", paw: "hoof", legW: .9, wool: true, horns: "curl", face: "dark" }, hue: .1, sat: .12, val: .88, legend: ["hornsGlow"] },
+  { id: "woodlouse", name: "Woodlouse", plan: "woodlouse", hue: .65, sat: .12, val: .45, legend: ["crystals"] },
+  { id: "snake", name: "Snake", plan: "snake", hue: .25, sat: .45, val: .45, legend: ["wings"] },
+  { id: "moth", name: "Moth", plan: "moth", hue: .1, sat: .3, val: .7, legend: ["wingsBig"] },
+  { id: "marten", name: "Pine marten", plan: "quad", q: { hgt: .55, len: .78, chest: .35, tuck: .38, neck: .3, neckAng: .55, neckW: .35, hr: .25, snout: .65, snoutD: .6, ear: "round", earS: .9, tail: "bushy", paw: "paw", legW: .85, belly: true, back: "arch" }, hue: .07, sat: .6, val: .45, legend: ["mane"] },
+  { id: "salamander", name: "Salamander", plan: "quad", q: { hgt: .3, len: .9, chest: .14, tuck: .14, neck: .12, neckAng: .05, neckW: .5, hr: .27, snout: .55, snoutD: .55, ear: "none", tail: "otter", paw: "paw", legW: 1.0, spots: true, spotMat: "belly" }, hue: .1, sat: .1, val: .22, belly: "yellow", legend: ["flames"] },
+  { id: "glowworm", name: "Glow-worm", plan: "glowworm", hue: .12, sat: .4, val: .35, legend: ["lantern"] },
+  { id: "spider", name: "Spider", plan: "spider", hue: .07, sat: .45, val: .4, legend: ["eyesRing"] },
+  { id: "dormouse", name: "Dormouse", plan: "quad", q: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, snout: .45, snoutD: .7, ear: "round", earS: .85, tail: "squirrel", paw: "paw", legW: .8, back: "arch", belly: true, whiskers: true, eyeK: 1.6 }, hue: .09, sat: .6, val: .75, belly: "white", legend: ["starTail"] },
   { id: "beetle", name: "Stag beetle", plan: "beetle", hue: .78, sat: .5, val: .35, legend: ["horn", "crystals"] },
 ];
 export const SPECIES_BY_ID = Object.fromEntries(SPECIES.map(s => [s.id, s]));
-export const FEATURE_NAMES = { wings: "spirit wings", mane: "a glowing mane", tails: "many tails", crystals: "crystals", tusksBig: "great tusks", antlersGlow: "glowing antlers", jackalope: "antlers", eyesRing: "a ring of eyes", moss: "a little forest on its back", starTail: "a starry tail", crown: "a crown", ribbons: "light ribbons", wingsBig: "huge glowing wings", horn: "a glowing horn" };
+export const FEATURE_NAMES = { wings: "spirit wings", mane: "a glowing mane", tails: "many tails", crystals: "crystals", tusksBig: "great tusks", antlersGlow: "glowing antlers", jackalope: "antlers", eyesRing: "a ring of eyes", moss: "a little forest on its back", starTail: "a starry tail", crown: "a crown", ribbons: "light ribbons", wingsBig: "huge glowing wings", horn: "a glowing horn", glowShell: "a glowing shell", hornsGlow: "glowing golden horns", flames: "a crest of flame", lantern: "a great lantern" };
 
 export function speciesColours(sp, st) {
   const s = SPECIES_BY_ID[sp], v = st.cVal / .85, sat = st.cSat / .6;
   const body = hsv2rgb(s.hue, s.sat * sat * st.sat, s.val * v);
-  const belly = s.belly === "white" || s.q?.face === "badger" ? [236, 232, 222] : hsv2rgb(s.hue + .03, s.sat * .5 * sat, Math.min(1, s.val * v * 1.3 + .08));
+  const belly = s.belly === "yellow" ? [240, 196, 40] : s.belly === "white" || s.q?.face === "badger" ? [236, 232, 222] : hsv2rgb(s.hue + .03, s.sat * .5 * sat, Math.min(1, s.val * v * 1.3 + .08));
   const magic = hsv2rgb(st.magicHue + s.hue * .3, .6, 1), magic2 = hsv2rgb(st.magicHue + s.hue * .3, .18, 1);
-  const pale = ["boar", "stag", "elk"].includes(s.id);
+  const pale = ["boar", "stag", "elk", "ram"].includes(s.id);
   return {
     [M.BODY]: body, [M.BODY2]: hsv2rgb(s.hue + .02, Math.min(1, s.sat * sat * 1.2 + .05), s.val * v * .66), [M.BODY3]: hsv2rgb(s.hue + .03, Math.min(1, s.sat * sat * 1.3 + .1), s.val * v * .4),
     [M.BELLY]: belly, [M.ACCENT]: pale ? [236, 226, 200] : hsv2rgb(s.hue + .05, s.sat * .6, Math.min(1, s.val * v * .5 + .25)),
@@ -66,7 +76,7 @@ export function critter(spId, level, frame, st) {
   const S = SPECIES_BY_ID[spId] || SPECIES[0];
   if (level === 0 && BABIES[S.id]) return babySprite(S.id, frame, st);
   if (S.q) return quad(S, level, frame, st);
-  const draw = { owl, raven, bat, toad, hedgehog, mole, beetle }[S.plan];
+  const draw = { owl, raven, bat, toad, hedgehog, mole, beetle, snail, woodlouse, snake, moth, glowworm, spider }[S.plan];
   return draw(S, level, frame, st);
 }
 
@@ -84,6 +94,17 @@ const KEY = { B: M.BODY, b: M.BODY2, d: M.BODY3, W: M.BELLY, A: M.ACCENT, E: M.E
 // A creature is described in units of its shoulder height (ground at y = 0, up is
 // negative), as a list of parts; it is then scaled to the level's pixel height, so the
 // same description draws a young animal and a legend.
+// Moves a sprite down so its lowest pixels stand on the bottom row (thin feet can round
+// away to nothing at small sizes, leaving a creature floating a pixel up).
+function settle(sp) {
+  let low = -1; for (let y = sp.h - 1; y >= 0 && low < 0; y--) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { low = y; break; }
+  const d = sp.h - 1 - low; if (low < 0 || d === 0) return;
+  for (let y = sp.h - 1; y >= 0; y--) for (let x = 0; x < sp.w; x++) {
+    const i = y * sp.w + x, j = (y - d) * sp.w + x, from = y - d >= 0;
+    sp.m[i] = from ? sp.m[j] : 0; sp.g[i] = from ? sp.g[j] : 0;
+    for (let k = 0; k < 3; k++) sp.n[i * 3 + k] = from ? sp.n[j * 3 + k] : 0;
+  }
+}
 class Plan {
   constructor() { this.ops = []; }
   shape(pts, mat, o = {}) { this.ops.push({ k: "shape", pts, mat, o }); return this; }
@@ -93,7 +114,7 @@ class Plan {
   // Scales the plan so that the points tagged `measure` span `height` pixels, makes the
   // sprite, and draws every part in order.
   // `warp([x, y]) -> [x, y, widthScale]`: an optional perspective applied to every point.
-  draw(height, round, extraPad = 1, warp = null) {
+  draw(height, round, extraPad = 1, warp = null, ground = true) {
     if (warp) for (const op of this.ops) if (op.pts) op.pts = op.pts.map(p => { const [x, y, k = 1] = warp(p); return p.length > 2 ? [x, y, p[2] * k] : [x, y]; });
     const all = [], body = [];
     for (const op of this.ops) if (op.pts) for (const p of op.pts) { const r = op.k === "limb" ? (p[2] || 0) / 2 : 0; all.push([p[0] - r, p[1] - r], [p[0] + r, p[1] + r]); if (!op.o.extra) body.push([p[0], p[1] - r]); }
@@ -101,7 +122,7 @@ class Plan {
     const x0 = Math.min(...all.map(p => p[0])), x1 = Math.max(...all.map(p => p[0])), y0 = Math.min(...all.map(p => p[1]));
     const W = Math.ceil((x1 - x0) * s) + 2 * extraPad + 2, H = Math.ceil(-y0 * s) + extraPad + 1;
     const sp = new Sprite(W, H), T = p => [(p[0] - x0) * s + extraPad + 1, H + p[1] * s];
-    const ctx = { sp, s, T, W, H };
+    const ctx = { sp, s, T: warp ? p => T(warp(p)) : T, W, H }; // hand-placed details follow the warp too
     for (const op of this.ops) {
       const o = { round, ...op.o };
       if (s < 40 && !o.extra) o.line = false; // at young sizes interior lines eat thin legs
@@ -110,6 +131,7 @@ class Plan {
       else if (op.k === "mark") sp.mark(op.pts.map(T), op.mat, op.onlyOn, o);
       else op.f(ctx);
     }
+    if (ground) settle(sp);
     return sp;
   }
 }
@@ -193,6 +215,7 @@ function quad(S, level, frame, st) {
   ];
   if (q.ridge) torso = tufts(torso, 0, 4, legend ? 10 : 7, legend ? .1 : .07, 1);
   if (q.shaggy) torso = tufts(torso, 6, 9, legend ? 6 : 4, .04, 1);
+  if (q.wool) torso = tufts(torso, 0, torso.length - 1, legend ? 16 : 10, .05, 1);
   P.shape(torso, M.BODY, { group: 1, tilt: [0, -.3] }); // one mass, its top turned up to the light
 
   // ---- neck and head ----
@@ -213,7 +236,9 @@ function quad(S, level, frame, st) {
   if (!q.antlers && has("jackalope")) antler(.1, M.ACCENT, { group: 12, line: true, extra: true }); // small antlers stand behind the long ears
   ear(.42, .85, M.BODY2, { group: 4 }); // the far ear, across the top of the head
   P.shape(head, M.BODY, { group: 1, line: false });
+  if (q.face === "dark") P.mark(head, M.BODY2, [M.BODY]);
   ear(-.3, 1, M.BODY, { group: 5, line: true });
+  if (q.horns) hornCurl(P, add(headC, [-hr * .1, -hr * .45]), hr, young ? .6 : has("hornsGlow") ? 1.5 : 1, has("hornsGlow") ? M.MAGIC : M.ACCENT, { group: 13, line: true, extra: true });
   if (q.antlers) antler(-.05, has("antlersGlow") ? M.MAGIC2 : M.ACCENT, { group: 12, line: true, extra: true });
 
   // near legs, in front, outlined where they overlap the body
@@ -238,10 +263,10 @@ function quad(S, level, frame, st) {
     if (q.socks) { const y0 = T([0, -q.socks])[1]; for (let y = Math.floor(y0); y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const i = y * sp.w + x; if ([2, 6, 7].includes(sp.g[i]) && [M.BODY, M.BODY2].includes(sp.m[i])) sp.m[i] = M.BODY3; } }
     const spots = q.spots === "young" ? young : q.spots;
     if (spots && s > 18) {
-      const step = Math.max(3, Math.round(s * .09)), mat = q.spots === "young" ? M.BELLY : M.BODY3, [, yb] = T([0, back + .1]), [, yc] = T([0, chest + .05]);
-      for (let y = yb; y < yc; y += step) for (let x = 0; x < sp.w; x += step) {
+      const step = Math.max(3, Math.round(s * .09)), mat = q.spots === "young" || q.spotMat === "belly" ? M.BELLY : M.BODY3, yb = Math.round(T([0, back + .1])[1]), yc = Math.round(T([0, chest + .05])[1]);
+      for (let y = yb; y < yc; y += step) for (let x = 0; x < sp.w; x += step * (q.spotMat ? 2 : 1)) {
         const ox = x + (((y / step) | 0) % 2 ? step >> 1 : 0) + (hash2(x, y, 3) * 2 | 0), i = y * sp.w + ox;
-        if (sp.m[i] === M.BODY && sp.g[i] === 1 && sp.m[i + 1] === M.BODY && hash2(x, y, 5) < .25 + st.fur) { sp.m[i] = mat; if (s > 40) sp.m[i + 1] = mat; }
+        if (sp.m[i] === M.BODY && sp.g[i] === 1 && sp.m[i + 1] === M.BODY && hash2(x, y, 5) < (q.spotMat ? .1 : .25) + st.fur * (q.spotMat ? .4 : 1)) { sp.m[i] = mat; if (s > 40) sp.m[i + 1] = mat; if (q.spotMat && s > 30) { sp.recolour(ox, y + 1, mat); sp.recolour(ox + 1, y + 1, mat); } }
       }
     }
   });
@@ -249,7 +274,7 @@ function quad(S, level, frame, st) {
   // ---- face: the pixels that matter ----
   const ex = headC[0] + hr * .32, ey = headC[1] - hr * .24, nose = add(headC, [hr * .88 + L, -D * .45 * tp]);
   P.fn(({ sp, T, s }) => {
-    const ep = Math.max(2, Math.round(hr * s * (young ? .42 : .3) * st.eye));
+    const ep = Math.max(2, Math.round(hr * s * (young ? .42 : .3) * st.eye * (q.eyeK || 1)));
     const [x, y] = T([ex, ey]);
     eye(sp, x, y, ep, { glow: legend && !q.tusks });
     const [fx, fy] = T([headC[0] + hr * .78, headC[1] - hr * .46]); // the far eye, smaller, beside the bridge of the nose
@@ -277,7 +302,7 @@ function quad(S, level, frame, st) {
   if (has("crystals")) crystals(P, backAt, frame);
   if (has("moss")) mossyBack(P, backAt, len, frame);
   if (has("ribbons")) ribbons(P, len, back, frame);
-  if (has("mane")) for (let i = 0; i < 6; i++) { // flames streaming back from the crest of the neck, licking up
+  if (has("mane") || has("flames")) for (let i = 0; i < 6; i++) { // flames streaming back from the crest of the neck, licking up
     const t = i / 5, b = lerp2(add(H0, [-hr * .3, -hr * .6]), [len * .25, back + .02], t), h = [.42, .3, .5, .26, .36, .22][i], w0 = .16 - t * .04, sw = frame ? .04 : 0;
     P.limb([[...b, w0], [...add(b, [-.03, -h * .45]), w0 * 1.05], [...add(b, [-.14 - sw, -h * .8]), w0 * .6], [...add(b, [-.1 - sw * 2, -h * 1.05]), w0 * .3], [...add(b, [.02 - sw, -h * 1.2]), .01]], i % 2 ? M.MAGIC : M.MAGIC2, { group: 60 + i % 2, line: true, extra: true, cap: 1, capEnd: .5 });
   }
@@ -335,6 +360,7 @@ function tail(P, kind, tb, len, back, frame, has, young) {
 // Ears, standing on base point b, `e` long.
 function earShape(P, q, b, hr, e, mat, o, frame) {
   const k = q.ear;
+  if (k === "none") return;
   if (k === "round") { // bear, badger, otter: a small half-disc
     P.shape([add(b, [-hr * .32, .02]), add(b, [-hr * .3, -e * .32]), add(b, [-hr * .05, -e * .45]), add(b, [hr * .15, -e * .25]), add(b, [hr * .18, .02])], mat, o);
     P.mark([add(b, [-hr * .2, -.01]), add(b, [-hr * .18, -e * .2]), add(b, [hr * .02, -e * .28]), add(b, [hr * .08, -.01])], M.EAR, [mat]);
@@ -493,7 +519,7 @@ function hedgehog(S, level, frame, st) {
     const [x, y] = T([.58, -.5]); eye(sp, x, y, Math.max(2, Math.round(s * (young ? .1 : .07) * st.eye)), { glow: legend });
   });
   if (has("crystals")) crystals(P, t => [-.7 + t * 1.2, -.98 + Math.pow(t - .45, 2) * 1.4], frame);
-  const sp = P.draw(levelHeight(level, st) * .55, st.round);
+  const sp = P.draw(levelHeight(level, st) * .55, st.round, 1, sideWarp);
   if (legend) sparkle(sp, S.id);
   return sp;
 }
@@ -523,7 +549,7 @@ function toad(S, level, frame, st) {
   });
   front();
   if (has("crown")) crown(P, [.38, -1.0 + hop], .5, .32, frame);
-  const sp = P.draw(levelHeight(level, st) * .5, st.round);
+  const sp = P.draw(levelHeight(level, st) * .5, st.round, 1, sideWarp);
   if (legend) sparkle(sp, S.id);
   return sp;
 }
@@ -547,11 +573,12 @@ function raven(S, level, frame, st) {
   if (!has("wings")) P.shape(tufts([[.28, -.72 + bob], [-.1, -.42], [-.75, -.3], [-.75, -.36], [-.2, -.66 + bob]], 1, 3, 4, .04, 1), M.BODY2, { group: 4, line: true });
   P.fn(({ sp, T, s }) => {
     const [x, y] = T(add(hc, [hr * .35, -hr * .2])); eye(sp, x, y, Math.max(2, Math.round(s * (young ? .1 : .07) * st.eye)), { glow: legend });
+    const [fx, fy] = T(add(hc, [hr * .85, -hr * .35])); sp.px(fx, fy, legend ? M.MAGIC2 : M.EYE); // the far eye, by the beak
     if (s > 30) { const [gx, gy] = T(add(hc, [hr * .1, -hr * .7])); sp.recolour(gx, gy, M.BELLY); sp.recolour(gx + 1, gy, M.BELLY); } // a sheen on the crown
   });
   if (has("eyesRing")) P.fn(({ sp, T, s }) => { const ep = Math.max(3, Math.round(s * .09)); for (let i = 0; i < 5; i++) { const a = Math.PI * (1.15 + i * .17), [x, y] = T(add(hc, [Math.cos(a) * .55 - .15, Math.sin(a) * .5 + .05])); owlEye(sp, x, y, ep, true, true); } });
   if (has("wings")) wings(P, [-.02, -.66], legend, frame, 1);
-  const sp = P.draw(levelHeight(level, st) * .6, st.round);
+  const sp = P.draw(levelHeight(level, st) * .6, st.round, 1, sideWarp);
   if (legend) sparkle(sp, S.id);
   return sp;
 }
@@ -586,7 +613,7 @@ function bat(S, level, frame, st) {
     if (s > 30) { sp.recolour(nx - 2, ny + 2, M.GLINT); sp.recolour(nx + 1, ny + 2, M.GLINT); } // two little fangs
   });
   for (const sd of [-1, 1]) P.limb([[sd * .08, -.28 + hov, .05], [sd * .1, -.18 + hov, .04]], M.BODY3, { group: 3 }); // feet
-  const sp = P.draw(levelHeight(level, st) * .45, st.round);
+  const sp = P.draw(levelHeight(level, st) * .45, st.round, 1, null, false); // it flies: no ground
   if (legend) sparkle(sp, S.id);
   return sp;
 }
@@ -614,7 +641,7 @@ function mole(S, level, frame, st) {
     const [nx, ny] = T([.84 + sn, -.45]); sp.recolour(nx, ny, M.NOSE); sp.recolour(nx, ny + 1, M.NOSE);
   });
   if (has("crown")) crown(P, [.25, -.98], .42, .3, frame);
-  const sp = P.draw(levelHeight(level, st) * .45, st.round);
+  const sp = P.draw(levelHeight(level, st) * .45, st.round, 1, sideWarp);
   if (legend) sparkle(sp, S.id);
   return sp;
 }
@@ -648,9 +675,147 @@ function beetle(S, level, frame, st) {
     const [ex, ey] = T([.66, -.52]); sp.px(ex, ey, legend ? M.MAGIC2 : M.GLINT);
   });
   if (has("crystals")) crystals(P, t => [-.7 + t * .9, -.82 + Math.pow(t - .5, 2) * .8], frame);
-  const sp = P.draw(levelHeight(level, st) * .4, st.round);
+  const sp = P.draw(levelHeight(level, st) * .4, st.round, 1, sideWarp);
   if (legend) sparkle(sp, S.id);
   return sp;
+}
+
+// The slight three-quarter turn the small side-on creatures share: the front nearer, the rear
+// further away (smaller, higher).
+const sideWarp = ([x, y]) => { const t = Math.max(-1.2, Math.min(.75, x)), k = 1 + .1 * t; return [x, y * k - .08 * Math.max(0, -t), k]; };
+
+// Snail: a soft foot along the ground, a spiral shell on its back, eyes on stalks.
+function snail(S, level, frame, st) {
+  const legend = level === 2, young = level === 1, has = f => legend && S.legend.includes(f), P = new Plan();
+  const st2 = frame ? .04 : 0; // the foot stretches as it glides
+  P.shape([[-.85, -.02], [-.75, -.16], [.3, -.2], [.62 + st2, -.32], [.82 + st2, -.32], [.9 + st2, -.15], [.8 + st2, 0], [-.85, 0]], M.SKIN, { group: 1, line: true });
+  for (const [dx, m, g] of [[.08, M.BODY2, 2], [0, M.SKIN, 5]]) P.limb([[.72 + st2 + dx, -.3, .06], [.8 + st2 + dx, -.55, .04], [.84 + st2 + dx, -.62, .05]], m, { group: g, line: true });
+  const shell = has("glowShell") ? M.MAGIC : M.BODY, c = [-.15, -.55], R = young ? .45 : .5;
+  P.shape([add(c, [0, -R]), add(c, [R * .95, -R * .2]), add(c, [R * .7, R * .75]), add(c, [-R * .3, R * .9]), add(c, [-R, R * .3]), add(c, [-R * .85, -R * .55])], shell, { group: 3, line: true });
+  P.fn(({ sp, T, s }) => { // the spiral, wound in from the rim
+    const lines = has("glowShell") ? M.MAGIC2 : M.BODY3;
+    for (let t = 0; t < 1; t += .004) { const a = t * Math.PI * 5.2, r = R * .85 * (1 - t), [x, y] = T(add(c, [Math.cos(a) * r, Math.sin(a) * r * .95])); const m = sp.get(x, y); if (m === shell || m === M.BODY2) sp.recolour(x, y, lines); }
+    const [ex, ey] = T([.85 + st2, -.64]); sp.px(ex, ey, legend ? M.MAGIC2 : M.EYE);
+    const [fx, fy] = T([.93 + st2, -.62]); sp.px(fx, fy, legend ? M.MAGIC2 : M.EYE);
+  });
+  const sp = P.draw(levelHeight(level, st) * .4, st.round, 1, sideWarp);
+  if (legend) sparkle(sp, S.id);
+  return sp;
+}
+
+// Woodlouse: a domed back of overlapping plates, a fringe of small legs, two antennae.
+function woodlouse(S, level, frame, st) {
+  const legend = level === 2, has = f => legend && S.legend.includes(f), P = new Plan();
+  for (let i = 0; i < 7; i++) { const x = -.6 + i * .2, ph = (i + frame) % 2 ? .04 : -.04; P.limb([[x, -.12, .05], [x + ph + .04, 0, .03]], M.BODY3, { group: 2 }); }
+  P.limb([[.75, -.3, .03], [.95, -.55, .02], [1.05, -.5, .02]], M.BODY3, { group: 2, extra: true });
+  P.shape([[-.85, -.1], [-.7, -.6], [-.1, -.85], [.5, -.72], [.82, -.4], [.82, -.12], [-.8, -.06]], M.BODY, { group: 1, line: true });
+  P.fn(({ sp, T, s }) => { // the plates
+    for (let i = 1; i < 8; i++) { const x0 = -.85 + i * .21; for (let y = T([0, -.9])[1]; y < T([0, -.08])[1]; y++) { const [x] = T([x0 + (y - T([0, -.5])[1]) * .002, 0]); if (sp.get(x, y) === M.BODY) sp.recolour(x, y, s > 25 ? M.LINE : M.BODY2); } }
+    const [ex, ey] = T([.72, -.38]); sp.px(ex, ey, legend ? M.MAGIC2 : M.EYE);
+  });
+  P.mark([[-.6, -.62], [0, -.86], [.4, -.72], [0, -.65]], M.BELLY, [M.BODY]);
+  if (has("crystals")) crystals(P, t => [-.65 + t * 1.2, -.82 + Math.pow(t - .45, 2) * 1.2], frame);
+  const sp = P.draw(levelHeight(level, st) * .3, st.round, 1, sideWarp);
+  if (legend) sparkle(sp, S.id);
+  return sp;
+}
+
+// Snake: coils along the ground, the front raised, a forked tongue; diamonds down its back.
+function snake(S, level, frame, st) {
+  const legend = level === 2, young = level === 1, has = f => legend && S.legend.includes(f), P = new Plan();
+  if (has("wings")) wings(P, [-.05, -.55], legend, frame, -1);
+  const ph = frame ? .6 : 0, spine = [];
+  for (let i = 0; i <= 14; i++) { const t = i / 14, x = -1.1 + t * 1.6, y = -.08 - Math.sin(t * Math.PI * 2.2 + ph) * .05 * (1 - t); spine.push([x, y, .16 * (.35 + .65 * Math.sin(Math.min(1, t * 1.6) * Math.PI / 2))]); }
+  spine.push([.6, -.25, .15], [.62, -.5, .14], [.7, -.68, .13]); // the raised neck
+  P.limb(spine, M.BODY, { group: 1, line: true, cap: .5 });
+  P.fn(({ sp, T, s }) => { // diamonds down the back
+    for (let i = 1; i < spine.length - 1; i++) { const [x, y] = T(spine[i]); const r = Math.max(1, Math.round(s * .025)); for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) if (Math.abs(dx) + Math.abs(dy) <= r && sp.get(x + dx, y + dy - r) === M.BODY) sp.recolour(x + dx, y + dy - r, M.BODY3); }
+  });
+  P.mark([[-1, -.02], [.6, -.02], [.66, -.45], [.62, -.45], [.5, -.06], [-1, -.06]], M.BELLY, [M.BODY]);
+  const hc = [.82, -.74], hr = young ? .15 : .12;
+  P.shape([add(hc, [-hr * 1.1, -hr * .4]), add(hc, [hr * .3, -hr * .75]), add(hc, [hr * 1.5, -hr * .2]), add(hc, [hr * 1.4, hr * .3]), add(hc, [-hr * .3, hr * .7]), add(hc, [-hr, hr * .5])], M.BODY, { group: 1 });
+  P.fn(({ sp, T, s }) => {
+    const ep = Math.max(2, Math.round(s * hr * .45 * st.eye)), [x, y] = T(add(hc, [hr * .45, -hr * .3])); eye(sp, x, y, ep, { glow: legend });
+    const [fx, fy] = T(add(hc, [hr * 1.05, -hr * .38])); sp.px(fx, fy, legend ? M.MAGIC2 : M.EYE);
+    if (frame === 0) { const [tx, ty] = T(add(hc, [hr * 1.5, hr * .15])); for (let i = 0; i < Math.max(2, Math.round(s * .06)); i++) sp.px(tx + i, ty, M.SKIN); sp.px(tx + Math.max(2, Math.round(s * .06)), ty - 1, M.SKIN); sp.px(tx + Math.max(2, Math.round(s * .06)), ty + 1, M.SKIN); }
+  });
+  if (has("wings")) wings(P, [-.1, -.45], legend, frame, 1);
+  const sp = P.draw(levelHeight(level, st) * .45, st.round, 1, sideWarp);
+  if (legend) sparkle(sp, S.id);
+  return sp;
+}
+
+// Moth: on the wing, facing us: two pairs of patterned wings with eyespots, a furry body,
+// feathered antennae.
+function moth(S, level, frame, st) {
+  const legend = level === 2, young = level === 1, has = f => legend && S.legend.includes(f), P = new Plan();
+  const span = has("wingsBig") ? 1.45 : young ? .85 : 1, up = frame === 0, hov = -.25, wm = has("wingsBig") ? M.MAGIC : M.BODY;
+  for (const sd of [-1, 1]) {
+    const X = (x, y) => [sd * x * span, (up ? y : y * .7 + .12) + hov];
+    const fore = [X(.08, -.62), X(.55, -1.0), X(1.0, -.92), X(.95, -.6), X(.5, -.45), X(.1, -.48)];
+    const hind = [X(.08, -.45), X(.45, -.42), X(.7, -.22), X(.5, -.05), X(.2, -.1), X(.06, -.3)];
+    P.shape(sd < 0 ? hind.slice().reverse() : hind, has("wingsBig") ? M.MAGIC2 : M.BODY2, { group: 10, line: true, extra: true });
+    P.shape(sd < 0 ? fore.slice().reverse() : fore, wm, { group: 11, line: true, extra: true });
+    P.mark([X(.5, -.82), X(.75, -.82), X(.75, -.65), X(.5, -.65)].map((p, i) => p), M.BELLY, [wm]); // eyespot
+    P.fn(({ sp, T }) => { const [x, y] = T(X(.62, -.74)); sp.recolour(x, y, M.BODY3); sp.recolour(x + 1, y, M.BODY3); });
+  }
+  P.shape(tufts([[0, -.78 + hov], [.1, -.6 + hov], [.08, -.2 + hov], [0, -.1 + hov], [-.08, -.2 + hov], [-.1, -.6 + hov]], 0, 6, 2, .025, 1), M.BELLY, { group: 1, line: true });
+  for (const sd of [-1, 1]) P.limb([[sd * .03, -.8 + hov, .04], [sd * .14, -1.0 + hov, .07], [sd * .2, -1.08 + hov, .03]], M.BODY2, { group: 2, line: true });
+  P.fn(({ sp, T, s }) => { for (const sd of [-1, 1]) { const [x, y] = T([sd * .05, -.74 + hov]); sp.px(x, y, legend ? M.MAGIC2 : M.EYE); } });
+  const sp = P.draw(levelHeight(level, st) * .4, st.round, 1, null, false); // it flies: no ground
+  if (legend) sparkle(sp, S.id);
+  return sp;
+}
+
+// Glow-worm: a segmented larva whose tail end glows; a legend carries a great lantern.
+function glowworm(S, level, frame, st) {
+  const legend = level === 2, has = f => legend && S.legend.includes(f), P = new Plan(), ph = frame ? .05 : 0;
+  const spine = []; for (let i = 0; i <= 8; i++) { const t = i / 8; spine.push([-.9 + t * 1.6, -.2 - Math.sin(t * Math.PI) * (.1 + ph), .32 - t * .08]); }
+  P.limb(spine, M.BODY, { group: 1, line: true });
+  for (let i = 0; i < 6; i++) { const x = -.3 + i * .16; P.limb([[x, -.1, .04], [x + (i % 2 ? .03 : -.03) * (frame ? -1 : 1), 0, .03]], M.BODY3, { group: 2 }); }
+  P.fn(({ sp, T, s }) => {
+    for (let i = 1; i < 8; i++) { const [x] = T(spine[i]); for (let y = 0; y < sp.h; y++) if (sp.get(x, y) === M.BODY) sp.recolour(x, y, M.BODY2); }
+    const L = has("lantern") ? 1.7 : 1, [cx, cy] = T([-.8, -.2]), r = Math.round(s * .17 * L);
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const q = Math.hypot(dx, dy) / r; if (q > 1) continue; if (sp.get(cx + dx, cy + dy) || L > 1) sp.px(cx + dx, cy + dy, q < .55 ? M.MAGIC2 : M.MAGIC, dx / (r + 1), dy / (r + 1), .8); }
+    const [ex, ey] = T([.66, -.28]); sp.px(ex, ey, legend ? M.MAGIC2 : M.EYE);
+  });
+  const sp = P.draw(levelHeight(level, st) * .3, st.round, 1, sideWarp);
+  if (legend) sparkle(sp, S.id);
+  return sp;
+}
+
+// Spider: a round abdomen marked with a cross, a smaller front, eight jointed legs, a
+// cluster of eyes.
+function spider(S, level, frame, st) {
+  const legend = level === 2, has = f => legend && S.legend.includes(f), P = new Plan();
+  const leg = (i, near) => {
+    const x = .1 + i * .1, side = i < 2 ? 1 : -1, ph = (i + (near ? 0 : 1) + frame) % 2 ? .07 : -.07, off = near ? [0, 0] : [.06, -.1];
+    const knee = [x + side * .25 + ph, -.75], foot = [x + side * .55 + ph * 1.5, 0];
+    P.limb([[x, -.42, .07], knee, foot].map((p, k) => [p[0] + off[0], p[1] + off[1], k === 0 ? .07 : k === 1 ? .06 : .03]), near ? M.BODY2 : M.BODY3, { group: near ? 7 : 2, line: near });
+  };
+  for (let i = 0; i < 4; i++) leg(i, false);
+  P.shape([[-.95, -.5], [-.7, -.95], [-.15, -1.0], [.12, -.6], [-.1, -.25], [-.6, -.2]], M.BODY, { group: 1, line: true }); // abdomen
+  P.mark([[-.55, -.88], [-.45, -.88], [-.45, -.3], [-.55, -.3]], M.BELLY, [M.BODY]);
+  P.mark([[-.85, -.62], [-.15, -.66], [-.15, -.56], [-.85, -.52]], M.BELLY, [M.BODY]);
+  P.shape([[.05, -.55], [.3, -.7], [.55, -.6], [.6, -.4], [.3, -.3], [.05, -.38]], M.BODY2, { group: 3, line: true }); // front
+  for (let i = 0; i < 4; i++) leg(i, true);
+  P.fn(({ sp, T, s }) => {
+    const ring = has("eyesRing"), pts = [[.48, -.6], [.53, -.55], [.43, -.57], [.5, -.5]];
+    for (const p of pts) { const [x, y] = T(p); sp.px(x, y, ring ? M.MAGIC2 : M.EYE); if (s > 40) sp.px(x + 1, y, ring ? M.MAGIC : M.EYE); }
+    if (!ring) { const [x, y] = T(pts[0]); sp.px(x, y, M.GLINT); }
+  });
+  if (has("eyesRing")) P.fn(({ sp, T, s }) => { const ep = Math.max(3, Math.round(s * .1)); for (let i = 0; i < 5; i++) { const a = Math.PI * (1.15 + i * .17), [x, y] = T([-.4 + Math.cos(a) * .7, -.6 + Math.sin(a) * .6]); owlEye(sp, x, y, ep, true, true); } });
+  const sp = P.draw(levelHeight(level, st) * .4, st.round, 1, sideWarp);
+  if (legend) sparkle(sp, S.id);
+  return sp;
+}
+
+// Curled horns (ram): a thick spiral winding back and down beside the head.
+function hornCurl(P, c, hr, k, mat, o) {
+  const s = [];
+  for (let t = 0; t <= 1.001; t += 1 / 10) { const a = -Math.PI / 2 + .5 - t * Math.PI * 1.75, r = hr * .7 * k * (1 - .5 * t); s.push([c[0] + Math.cos(a) * r - hr * .1, c[1] + Math.sin(a) * r * .95, hr * .4 * k * (1 - .65 * t)]); }
+  P.limb(s, mat, { ...o, capEnd: .5 });
+  P.fn(({ sp, T, s: sc }) => { if (sc * hr < 8) return; for (let i = 1; i < s.length - 1; i++) { const [x, y] = T(s[i]); if (sp.get(x, y) === mat) sp.recolour(x, y, M.LINE); } });
 }
 
 // ================= owl =================

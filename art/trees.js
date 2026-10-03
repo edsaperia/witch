@@ -88,9 +88,11 @@ const spread = st => (st.crownWidth || 3) / 3;
 // with the branches showing between them.
 export function broadTree(r, st, s) {
   const k = spread(st), W = Math.round(220 * s * k + 60 * s), H = Math.round(140 * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
-  const tw = 12 * s, lean = (r() - .5) * .5 * st.gnarl;
-  const trunk = bough(sp, [bx, gy], -Math.PI / 2 + lean, H * .36, tw, tw * .72, st, r, { bend: 1.4 });
+  // options an area type may set: treeTrunks (several from one root), treeLean, treeThick,
+  // treeThin, treeBare (dead, no leaves), treeHollow (a dark hollow), treeWebs (hung with webs)
+  const n = st.treeTrunks || 1, tw = 12 * s * (st.treeThick || 1) * (st.treeThin ? .55 : 1) / Math.sqrt(n), lean0 = (r() - .5) * .5 * st.gnarl + (st.treeLean || 0);
   const tips = [];
+  let crownY = H;
   const grow = (p, ang, len, w, d) => {
     const b = bough(sp, p, ang, len, w, w * .65, st, r, { group: 12 });
     if (d === 0) { tips.push(b.end); return; }
@@ -101,16 +103,24 @@ export function broadTree(r, st, s) {
     }
     if (d <= 2) tips.push(lerp2(p, b.end, .7));
   };
-  // the first limbs spread wide: Ed asked for broad crowns
-  for (const side of [-1, 1]) grow(trunk.end, -Math.PI / 2 + side * uni(r, .55, .95) * (.7 + .3 * k), H * .22 * (.75 + .25 * k), tw * .7, 3);
-  if (r() < .7) grow(trunk.end, -Math.PI / 2 + (r() - .5) * .3, H * .18, tw * .55, 2);
-  roots(sp, bx + Math.cos(-Math.PI / 2 + lean) * 0, gy, tw, st, r, s);
+  for (let t = 0; t < n; t++) {
+    const lean = lean0 + (n > 1 ? (t / (n - 1) - .5) * .8 : 0), base = [bx + (t - (n - 1) / 2) * tw * .6, gy];
+    const trunk = bough(sp, base, -Math.PI / 2 + lean, H * .36 * (n > 1 ? uni(r, .75, 1.15) : 1), tw, tw * .72, st, r, { bend: 1.4 });
+    crownY = Math.min(crownY, trunk.end[1]);
+    // the first limbs spread wide: Ed asked for broad crowns
+    for (const side of [-1, 1]) grow(trunk.end, -Math.PI / 2 + lean * .5 + side * uni(r, .55, .95) * (.7 + .3 * k) * (n > 1 ? .6 : 1), H * .22 * (.75 + .25 * k) * (n > 1 ? .7 : 1), tw * .7, n > 2 ? 2 : 3);
+    if (n === 1 && r() < .7) grow(trunk.end, -Math.PI / 2 + (r() - .5) * .3, H * .18, tw * .55, 2);
+    if (t === 0 && st.treeHollow) { const h = lerp2(base, trunk.end, .38); sp.ellipse(h[0], h[1], tw * .28, tw * .5, M.NOSE, { round: .3 }); }
+  }
+  roots(sp, bx, gy, tw * Math.sqrt(n), st, r, s);
   bark(sp, st);
+  if (st.treeWebs) for (let i = 0; i + 1 < tips.length; i += 2) { const a = tips[i], c = tips[i + 1], L = Math.hypot(c[0] - a[0], c[1] - a[1]); if (L < 40 * s) for (let j = 0; j <= L; j++) { const p = lerp2(a, c, j / L); sp.px(p[0], p[1] + Math.sin(j / L * Math.PI) * L * .15, M.GLINT, 0, 0, 1); } }
+  if (st.treeBare) return trim(sp, bx, crownY + 4 * s);
   // clumps at the tips: back ones darker first, then the front
   tips.sort((a, b) => a[1] - b[1]);
   for (const t of tips) clump(sp, add(t, [0, -3 * s]), uni(r, 14, 21) * s, uni(r, 10, 14) * s, st, r, { mat: r() < .35 ? M.LEAF3 : M.LEAF });
   for (const t of tips) if (r() < .75) clump(sp, add(t, [uni(r, -9, 9) * s, uni(r, -12, -3) * s]), uni(r, 10, 15) * s, uni(r, 7, 10) * s, st, r);
-  return trim(sp, bx, trunk.end[1] + 4 * s);
+  return trim(sp, bx, crownY + 4 * s);
 }
 
 // Tiered fir: a straight trunk and drooping skirts of branches, narrowing to a spire.
@@ -163,7 +173,7 @@ export function willowTree(r, st, s) {
 // Birch: a slender pale trunk banded with black, thin branches, light airy clumps.
 export function birchTree(r, st, s) {
   const k = .7 + .3 * spread(st), W = Math.round(110 * s * k), H = Math.round(155 * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
-  const lean = (r() - .5) * .25;
+  const lean = (r() - .5) * .25 + (st.treeLean || 0);
   const trunk = bough(sp, [bx, gy], -Math.PI / 2 + lean, H * .85, 5 * s, 2 * s, st, r, { mat: M.BARK2, bend: .4 });
   // black marks across the white bark
   for (let i = 0; i < trunk.pts.length - 1; i++) for (let t = 0; t < 1; t += 1 / 8) {

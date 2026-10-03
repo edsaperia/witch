@@ -45,14 +45,22 @@ const assets = await b.page.evaluate(async ({ style, seed }) => {
   }
   for (let v = 0; v < 8; v++) { const bu = G.bush(G.rng(seed * 7 + v * 3), { ...st, bushSize: st.bushSize * K }); push({ id: `bush-${v}`, kind: "bush", variant: v, frame: 0 }, bu.sp, bu.colours); }
   push({ id: "witch", kind: "witch", frame: 0 }, G.witchSprite(), G.witchColours(st));
-  return { list, style: st };
+  // area types: a floor tile and each prop, already baked by areaAssets
+  for (const A of G.AREAS) {
+    const a = G.areaAssets(A.id, st), add = (x, role, i) => list.push({ id: `area-${A.id}-${role}${i === undefined ? "" : "-" + i}`, kind: role === "floor" ? "area-floor" : "area-prop", area: A.id, role, prop: x.kind, text: x.text || "", frame: 0, w: x.sp.w, h: x.sp.h, anchor: { x: x.sp.w / 2, y: x.sp.h }, albedo: png(x.sp.A), normal: png(x.sp.N) });
+    add(a.floor, "floor");
+    a.walls.forEach((x, i) => add(x, "wall", i)); a.small.forEach((x, i) => add(x, "small", i)); a.big.forEach((x, i) => add(x, "big", i));
+    if (a.setPiece) add(a.setPiece, "set", 0);
+  }
+  return { list, style: st, areas: G.AREAS.map(({ id, name, creature, by, text }) => ({ id, name, creature, by, text })) };
 }, { style, seed });
 if (b.errors.length) console.error(b.errors.join("\n"));
 await b.close();
 
-const manifest = { generator: "art/generator.js", style: assets.style, conventions: {
+const manifest = { generator: "art/generator.js", style: assets.style, areas: assets.areas, conventions: {
   albedo: "RGBA; alpha 254 = glowing pixel, draw unlit", normal: "RGB = xyz from [-1,1] to [0,255]; x right, y down, z to viewer; flip x when mirrored",
-  facing: "right", anchor: "pixels from top-left; the point on the ground (feet, trunk base)" }, assets: [] };
+  facing: "right", anchor: "pixels from top-left; the point on the ground (feet, trunk base); flyers (bat, moth) hover above it",
+  floor: "area-floor tiles repeat over the ground; their normals face up" }, assets: [] };
 for (const a of assets.list) {
   const { albedo, normal, anchorX, ...meta } = a;
   writeFileSync(join(out, `${a.id}.png`), Buffer.from(albedo, "base64"));
