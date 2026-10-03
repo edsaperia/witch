@@ -496,7 +496,11 @@ export class View {
     this.mist?.follow(pose.tx, pose.tz);
     const bob = Math.sin(time * 2.4) * 0.12;
     // Her hover frames, turned away when flying up the screen, leaning when fast.
-    const wf = w.lean ? 6 + (w.away ? 1 : 0) : (w.away ? 3 : 0) + (Math.floor(time * 4) % 3);
+    // Climbing to the treetops or dropping to the ground: the rise or descend pose, fluttering
+    // between its two frames, until the move is about 90% done.
+    const climbing = w.mode === "rising" && w.lift < 0.9, dropping = w.mode === "descending" && w.lift > 0.1;
+    const wf = climbing || dropping ? (climbing ? 8 : 12) + (w.away ? 2 : 0) + (Math.floor(time * 7) % 2)
+      : w.lean ? 6 + (w.away ? 1 : 0) : (w.away ? 3 : 0) + (Math.floor(time * 4) % 3);
     const wframe = this.assets.witch.frames[wf], hatTop = h + bob - 0.4 + wframe.h * this.mpp;
     this.witchBatch.set([{ x: w.x, y: h + bob - 0.4, z: w.z, frame: wframe, flip: w.facing < 0 }]);
     this.shadow.position.set(w.x, 0.03, w.z);
