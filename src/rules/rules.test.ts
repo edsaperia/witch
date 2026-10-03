@@ -798,6 +798,7 @@ describe("paths, roads and railways", () => {
     for (const l of trunk) expect(new Set(l.pts.map(p => map.areaAt(p[0], p[1]).cell.join(","))).size).toBeGreaterThan(5);
     expect(of("road").length).toBeGreaterThanOrEqual(T.roads[0]);
     expect(of("path").length).toBeGreaterThan(20);
+    expect(of("stream").filter(l => l.pts.length > 100).length).toBeGreaterThanOrEqual(T.streams[0]);
   });
   it("meander: no path is a ruler-straight line", () => {
     for (const l of P.lines.filter(l => l.kind === "path")) {
@@ -836,5 +837,21 @@ describe("paths, roads and railways", () => {
       if (l.kind !== "path") continue;
       expect(Math.hypot(p[0] - d.x, p[1] - d.z)).toBeGreaterThan(clear - l.half);
     }
+  });
+});
+
+describe("decorations", () => {
+  it("are scattered sparsely, all three families, never on a path, in a central clearing or by the dancefloor", () => {
+    const forest = new Forest(map), s = map.start, list = forest.decorNear(s.x, s.z, 700), D = TUNING.decor;
+    const fam = new Set(list.map(d => d.family));
+    expect(fam.has("ruins") && fam.has("rocks")).toBe(true);
+    expect(list.length).toBeGreaterThan(20);
+    expect(list.length).toBeLessThan((1400 / D.spacing) ** 2 * 0.15);
+    for (const d of list) {
+      expect(map.paths.at(d.x, d.z)).toBeNull();
+      expect(map.areaAt(d.x, d.z).openness).toBeGreaterThanOrEqual(D.clearing);
+      expect(Math.hypot(d.x - map.dancefloor.x, d.z - map.dancefloor.z)).toBeGreaterThan(map.dancefloor.radius + TUNING.dancefloor.clearing);
+    }
+    expect(new Forest(map).decorNear(s.x, s.z, 700)).toEqual(list);
   });
 });

@@ -5,10 +5,11 @@
 import * as Art from "../../art/generator.js";
 import { rng } from "../rules/random";
 import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
-import { creatureFrame, runJob, type ArtJob, type ArtResult, type TilePixels, type TypeLayout } from "./artBuild";
+import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 
 export interface TypeArt { atlas: Atlas; layout: TypeLayout }
+export interface DecorArt { atlas: Atlas; pieces: DecorPiece[]; families: Record<string, DecorPiece[]> }
 export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number }
 
 type Reply = { job: ArtJob; result?: ArtResult; error?: string };
@@ -16,6 +17,7 @@ type Reply = { job: ArtJob; result?: ArtResult; error?: string };
 export class AssetLibrary {
   private types = new Map<number, TypeArt>();
   private creatures = new Map<string, CreatureArt>();
+  private decor: DecorArt | undefined;
   private queue: ArtJob[] = [];
   private inFlight = new Set<string>();
   private workers: { w: Worker; busy: boolean; job?: ArtJob }[] = [];
@@ -107,7 +109,11 @@ export class AssetLibrary {
       return;
     }
     const atlas = atlasFromPixels(r.result.px);
-    if (r.job.kind === "type") {
+    if (r.job.kind === "decor") {
+      const pieces = r.result.decor!, families: Record<string, DecorPiece[]> = {};
+      for (const p of pieces) (families[p.family] ??= []).push(p);
+      this.decor = { atlas, pieces, families };
+    } else if (r.job.kind === "type") {
       this.types.set(r.job.id, { atlas, layout: r.result.layout! });
       if (r.result.floor) this.onFloor(r.job.id, r.result.floor);
     } else this.creatures.set(r.job.id, { atlas, frame: creatureFrame });
@@ -120,6 +126,11 @@ export class AssetLibrary {
     const a = this.types.get(t);
     if (!a) this.ask({ kind: "type", id: t, style: this.style, seed: this.seed, K: this.K });
     return a;
+  }
+  /** The decorations' art (ruins, rocks, freak trees), or undefined (and asked for). */
+  decorArt(): DecorArt | undefined {
+    if (!this.decor) this.ask({ kind: "decor", id: "all", style: this.style });
+    return this.decor;
   }
   creatureArt(species: string): CreatureArt | undefined {
     const a = this.creatures.get(species);

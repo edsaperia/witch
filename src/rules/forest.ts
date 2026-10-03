@@ -133,6 +133,31 @@ function wallsInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
   return out;
 }
 
+// Decorations (Ed: "rocks, ruins, lakes, weird freak trees ... just around"): scattered sparsely as
+// discoveries, more of them on open ground than under dense canopy; never on a path's corridor, in
+// an area's central clearing (its soundsystem and set piece stand there) or by the dancefloor.
+export type DecorFamily = "ruins" | "rocks" | "freak";
+export interface Decor { x: number; z: number; family: DecorFamily; variant: number; flip: boolean }
+
+function decorInChunk(map: ForestMap, ci: number, cj: number): Decor[] {
+  const D = map.tuning.decor, sp = D.spacing, s = map.seed, out: Decor[] = [];
+  const j0 = Math.ceil((cj * CHUNK) / sp), j1 = Math.ceil(((cj + 1) * CHUNK) / sp);
+  const i0 = Math.ceil((ci * CHUNK) / sp), i1 = Math.ceil(((ci + 1) * CHUNK) / sp);
+  for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
+    const roll = hash2(i, j, s + 503);
+    if (roll >= D.ruins + D.rocks + D.freak) continue;
+    const x = (i + (hash2(i, j, s + 501) - 0.5) * 0.8) * sp, z = (j + (hash2(i, j, s + 502) - 0.5) * 0.8) * sp, a = map.areaAt(x, z);
+    if (a.openness < D.clearing || map.hardClear(x, z) || map.paths.at(x, z, D.pathGap)) continue;
+    if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + map.tuning.dancefloor.clearing + 6) continue;
+    // Open ground keeps them all; dense canopy only some.
+    const open = 1 - Math.min(1, treeChance(map, x, z, a.type) / 0.8);
+    if (hash2(i, j, s + 504) > 0.35 + 0.65 * open) continue;
+    const family: DecorFamily = roll < D.ruins ? "ruins" : roll < D.ruins + D.rocks ? "rocks" : "freak";
+    out.push({ x, z, family, variant: Math.floor(hash2(i, j, s + 505) * 1e6), flip: hash2(i, j, s + 506) < 0.5 });
+  }
+  return out;
+}
+
 // Light sources, placed by seed: campfires and magic stones mostly in clearings and at area
 // edges, and ponds that mirror the moon, more of them in the wet area types.
 export type LightKind = "campfire" | "stone" | "pond";
@@ -161,6 +186,7 @@ export class Forest {
   private bushes = new Map<string, Plant[]>();
   private walls = new Map<string, Plant[]>();
   private lights = new Map<string, LightSource[]>();
+  private decor = new Map<string, Decor[]>();
   constructor(readonly map: ForestMap) {}
 
   private chunks(x: number, z: number, radius: number): [number, number][] {
@@ -189,6 +215,9 @@ export class Forest {
   }
   lightsNear(x: number, z: number, radius: number): LightSource[] {
     return this.gather(this.lights, (i, j) => lightsInChunk(this.map, i, j), x, z, radius);
+  }
+  decorNear(x: number, z: number, radius: number): Decor[] {
+    return this.gather(this.decor, (i, j) => decorInChunk(this.map, i, j), x, z, radius);
   }
   wallsNear(x: number, z: number, radius: number): Plant[] {
     return this.gather(this.walls, (i, j) => wallsInChunk(this.map, i, j), x, z, radius);

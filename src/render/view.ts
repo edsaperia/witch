@@ -43,6 +43,7 @@ export class View {
   private ground: Ground;
   readonly assets: AssetLibrary;
   private typeBatches = new Map<number, SpriteBatch>();
+  private decorBatches = new Map<string, SpriteBatch>();
   private creatureBatches = new Map<string, SpriteBatch>();
   private witchBatch: SpriteBatch;
   private stoneBatch: SpriteBatch;
@@ -371,6 +372,20 @@ export class View {
     scatter("small", g.forest.bushesNear(cx, cz, half), l => l.small);
     scatter("wall", g.forest.wallsNear(cx, cz, half), l => l.walls.map(bot => ({ bot, top: null })));
     scatter("setpiece", g.forest.setPiecesNear(cx, cz, half), l => (l.set === null ? [] : [l.set]));
+    // Decorations: ruins, rocks and freak trees, as scenery (each family's pieces picked by its variant).
+    const decor = this.assets.decorArt(), dl: SpriteInstance[] = [];
+    if (decor) for (const d of g.forest.decorNear(cx, cz, half)) {
+      const list = decor.families[d.family];
+      if (!list?.length) continue;
+      const piece = list[d.variant % list.length], f = decor.atlas.frames, frame = f[piece.bot], whole = f[piece.top ?? piece.bot];
+      if (!this.inView(d.x, d.z, whole.w * mpp, whole.h * mpp, margin, reach)) continue;
+      const fresh = this.mark("decor", d.x, d.z, whole.h * mpp);
+      dl.push({ x: d.x, y: 0, z: d.z, frame, flip: d.flip, fresh });
+      if (piece.top !== null) dl.push({ x: d.x, y: 0, z: d.z, frame: f[piece.top], flip: d.flip, top: true, fresh });
+      shadows.push({ x: d.x, z: d.z, w: frame.w * mpp * 0.8, d: frame.w * mpp * 0.3, scenery: true });
+      nb++;
+    }
+    if (decor) this.batchFor(this.decorBatches, "all", () => new SpriteBatch(decor.atlas, mpp, { scenery: true, fade: true }))?.set(dl);
     for (const [type, b] of this.typeBatches) if (!per.has(type)) b.set([]);
     for (const [type, list] of per) {
       const b = this.batchFor(this.typeBatches, type, () => { const a = this.assets.typeArt(type); return a && new SpriteBatch(a.atlas, mpp, { scenery: true, fade: true }); });

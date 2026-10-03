@@ -106,14 +106,34 @@ export function packPixels(sprites: Baked[], width = 2048): AtlasPixels {
 
 export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: number } | { kind: "creature"; id: string; style: Style }
   /** A party animal: an invited creature in its party gear (seeded by its id: collar in its sigil colour, maybe a hat, sunglasses, shoes). */
-  | { kind: "party"; id: string; species: string; seed: number; colour: number[]; style: Style };
+  | { kind: "party"; id: string; species: string; seed: number; colour: number[]; style: Style }
+  /** Every decoration (ruins in both conditions, rocks, freak trees), split as trees are. */
+  | { kind: "decor"; id: string; style: Style };
+
+/** One decoration in the decor atlas: its family, bottom (and top, if tall) frames, and the radius it covers on the ground (m). */
+export interface DecorPiece { id: string; family: string; bot: number; top: number | null; footprint: number }
 
 /** A floor tile's pixels: albedo and normal map, w x h. */
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
-export interface ArtResult { px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels }
+export interface ArtResult { px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[] }
+
+function decorSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; decor: DecorPiece[] } {
+  const sprites: Baked[] = [], decor: DecorPiece[] = [], colours = Art.decorColours(st);
+  const empty = (sp: { m: ArrayLike<number> }) => { for (let i = 0; i < sp.m.length; i++) if (sp.m[i]) return false; return true; };
+  for (const d of Art.DECOR as { id: string; family: string; variants: number }[])
+    for (let v = 0; v < d.variants; v++) {
+      const r = Art.decorSprite(d.id, st, { variant: v }) as { top: { m: ArrayLike<number> }; bot: unknown; whole: unknown; crownY: number; metres: { footprint: number } };
+      const tall = r.crownY > 0 && !empty(r.top);
+      const bot = sprites.push(Art.bake(tall ? r.bot : r.whole, colours, st, "none", mk) as Baked) - 1;
+      const top = tall ? sprites.push(Art.bake(r.top, colours, st, "none", mk) as Baked) - 1 : null;
+      decor.push({ id: d.id, family: d.family, bot, top, footprint: r.metres.footprint });
+    }
+  return { sprites, decor };
+}
 
 export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };
+  if (job.kind === "decor") { const { sprites, decor } = decorSprites(job.style, mk); return { px: packPixels(sprites, 2048), decor }; }
   if (job.kind === "party") return { px: packPixels(creatureSprites(job.style, job.species, mk, { ...Art.partyGear(job.seed), collar: job.colour }), 2048) };
   const { sprites, layout, floor } = typeSprites(job.style, job.seed, job.id, job.K, mk);
   return { px: packPixels(sprites), layout, floor: { albedo: new Uint8Array(pixels(floor.A, floor.w, floor.h)), normal: new Uint8Array(pixels(floor.N, floor.w, floor.h)), w: floor.w, h: floor.h } };

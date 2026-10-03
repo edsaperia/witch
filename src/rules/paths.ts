@@ -4,10 +4,10 @@
 // sections where the track is gone and trees grow between the sleepers. They carve tree-free
 // corridors with bushes along their edges. Seeded, so they never change; no drawing here.
 import { clamp, hash2, rng, vnoise } from "./random";
-import type { ForestMap } from "./map";
+import { AREA_TYPES, type ForestMap } from "./map";
 
-export type PathKind = "path" | "road" | "rail";
-export const PATH_KINDS: PathKind[] = ["path", "road", "rail"];
+export type PathKind = "path" | "road" | "rail" | "stream";
+export const PATH_KINDS: PathKind[] = ["path", "road", "rail", "stream"];
 
 export interface PathLine {
   kind: PathKind;
@@ -37,6 +37,8 @@ export function spline(ctrl: [number, number][], step: number): [number, number]
   out.push(ctrl[ctrl.length - 1]);
   return out;
 }
+
+const WET = new Set(["stream", "wetland", "bog", "beaver-pond"]);
 
 export class PathNetwork {
   readonly lines: PathLine[] = [];
@@ -79,6 +81,24 @@ export class PathNetwork {
     for (let i = 0; i < roads; i++) {
       const s = Math.floor(r() * 4), e = (s + 2) % 4;
       this.lines.push({ kind: "road", pts: crossing(edgePoint(s, 0.1 + r() * 0.8), edgePoint(e, 0.1 + r() * 0.8), 240, 110), half: t.roadHalf });
+    }
+    // Streams: one or two winding the length of the map, more wildly than the railways, and short
+    // ones joining wet areas that touch (a stream, a bog, a wetland, a beaver pond).
+    const streams = t.streams[0] + Math.floor(r() * (t.streams[1] - t.streams[0] + 1));
+    for (let i = 0; i < streams; i++) {
+      const s = Math.floor(r() * 4), e = (s + 2) % 4;
+      this.lines.push({ kind: "stream", pts: crossing(edgePoint(s, 0.1 + r() * 0.8), edgePoint(e, 0.1 + r() * 0.8), 90, 70), half: t.streamHalf });
+    }
+    const wet = (cx: number, cy: number) => WET.has(AREA_TYPES[map.typeOf(cx, cy)].id);
+    for (const [k, nbrs] of map.neighbours) {
+      const [ax, ay] = k.split(",").map(Number);
+      if (!wet(ax, ay)) continue;
+      for (const nk of nbrs) {
+        const [bx, by] = nk.split(",").map(Number);
+        if (k > nk || !wet(bx, by)) continue;
+        const [a, c] = this.trim(map.siteOf(ax, ay), map.siteOf(bx, by), this.clearOf(ax, ay), this.clearOf(bx, by));
+        if (a) this.lines.push({ kind: "stream", pts: this.meander(a, c, r), half: t.streamHalf });
+      }
     }
     // Paths: between neighbouring areas' centres (some pairs), meandering; and a dead end or two
     // in some areas, out to nothing in particular (a ruin, later).
