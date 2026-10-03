@@ -158,7 +158,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 // No page or DOM dependencies beyond making canvases: pass `makeCanvas(w, h)` where there
 // is no `document` (the default uses document, else OffscreenCanvas).
 // Parts: core.js (sprites, shapes, bake), creatures.js + babies.js (the bestiary),
-// this file (the style's knobs, trees, bushes, the witch, a whole asset set).
+// trees.js (trees and bushes), this file (the style's knobs, the witch, a whole asset set).
 
 // ---- inlined from art/core.js ----
 // Witch art core: random numbers, noise, colour, the Sprite (a material and a normal per
@@ -251,6 +251,7 @@ function band(spine, { cap = 1, capEnd = cap } = {}) {
 // Moves control points: `f([x, y], i) -> [x, y]`.
 const mapPts = (pts, f) => pts.map((p, i) => f(p, i));
 const rot = ([x, y], [cx, cy], a) => { const c = Math.cos(a), s = Math.sin(a); return [cx + (x - cx) * c - (y - cy) * s, cy + (x - cx) * s + (y - cy) * c]; };
+const add = (a, b) => [a[0] + b[0], a[1] + b[1]];
 const lerp2 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
 // A fur or feather edge: replaces the stretch between control points i0..i1 with a
 // zigzag of `count` tufts sticking out by `amp` pixels.
@@ -457,6 +458,285 @@ function bake(sp, colours, st, outlineMode = st.outline, makeCanvas = defaultCan
   }
   A.getContext("2d").putImageData(a, 0, 0); N.getContext("2d").putImageData(n, 0, 0); NF.getContext("2d").putImageData(nf, 0, 0);
   return { A, N, NF, w, h };
+}
+
+
+// ---- inlined from art/trees.js ----
+// Witch trees and bushes, drawn with the same toolkit as the animals: trunks and branches
+// are smooth tapering limbs that twist and fork, crowns are clumps of leaves (closed,
+// ragged outlines, shaded light on top and dark beneath), roots spread over the ground,
+// and bark is carved into the trunk. Six kinds, after Ed's references: gnarled broadleaf,
+// willow, birch, tree fern, tiered fir and flat-crowned maple.
+// Each tree returns {sp, crownY}: trunk pixels below crownY are its bottom half (seen in
+// ground mode), everything else its top half (the canopy seen from the treetops).
+
+const WOOD = new Set([M.TRUNK, M.BARK2, M.BARKD, M.BARKL]);
+
+// A clump of leaves: a ragged blob, lit on top, dark beneath, speckled with single leaves.
+function clump(sp, c, rx, ry, st, r, { mat = M.LEAF, group = 30, ragged = 1 } = {}) {
+  const n = 9, pts = [];
+  for (let i = 0; i < n; i++) {
+    const a = i / n * Math.PI * 2, k = 1 + (r() - .5) * .35 * (st.clump + .3);
+    pts.push([c[0] + Math.cos(a) * rx * k, c[1] + Math.sin(a) * ry * k * (Math.sin(a) > 0 ? .8 : 1)]);
+  }
+  const bumps = Math.max(1, Math.round(Math.min(rx, ry) / 3.5));
+  sp.shape(tufts(pts, 0, n, bumps, Math.max(1.2, Math.min(rx, ry) * .14) * ragged, 1), mat, { group, line: false, round: st.round });
+  // shading: a dark underside, a lit crown
+  sp.mark([add(c, [-rx * 1.1, ry * .15]), add(c, [rx * 1.1, ry * .1]), add(c, [rx * 1.1, ry * 1.2]), add(c, [-rx * 1.1, ry * 1.2])], M.LEAF3, [mat]);
+  sp.mark([add(c, [-rx * .75, -ry * .55]), add(c, [rx * .25, -ry * .95]), add(c, [rx * .55, -ry * .35]), add(c, [-rx * .2, -ry * .05])], M.LEAF2, [mat]);
+  // single leaves: a speckle of light and dark, denser with the style's foliage density
+  const x0 = Math.floor(c[0] - rx * 1.2), x1 = Math.ceil(c[0] + rx * 1.2), y0 = Math.floor(c[1] - ry * 1.2), y1 = Math.ceil(c[1] + ry * 1.2), seed = (r() * 1e4) | 0;
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const m = sp.get(x, y); if (m !== mat && m !== M.LEAF2 && m !== M.LEAF3) continue;
+    const h = hash2(x, y, seed);
+    const v = vnoise(x / 2, y / 2, seed) * .5 + h * .5; // leaves come in little bunches, not noise
+    if (v < .16 * st.density) sp.recolour(x, y, m === M.LEAF2 ? mat : M.LEAF2);
+    else if (v > 1 - .16 * st.density) sp.recolour(x, y, m === M.LEAF3 ? mat : M.LEAF3);
+  }
+}
+
+// A wooden limb along a wobbling path from p, heading `ang` (0 = right, -PI/2 = up).
+function bough(sp, p, ang, len, w0, w1, st, r, { mat = M.TRUNK, bend = 1, group = 10, line = false } = {}) {
+  const pts = [p], n = 4;
+  let a = ang, q = p;
+  for (let i = 1; i <= n; i++) {
+    a += (r() - .5) * .7 * st.gnarl * bend;
+    q = add(q, [Math.cos(a) * len / n, Math.sin(a) * len / n]);
+    pts.push(q);
+  }
+  sp.limb(pts.map((t, i) => [...t, w0 + (w1 - w0) * i / n]), mat, { group, line, round: st.round, cap: .6, capEnd: 1 });
+  return { end: q, ang: a, pts };
+}
+
+// The base: a flared trunk foot and roots that snake out over the ground.
+function roots(sp, bx, gy, w, st, r, s) {
+  // the foot of the trunk flares out where it meets the ground
+  sp.shape([[bx - w * 1.05, gy], [bx - w * .62, gy - w * .5], [bx - w * .45, gy - w * 1.4], [bx + w * .45, gy - w * 1.4], [bx + w * .62, gy - w * .5], [bx + w * 1.05, gy]], M.TRUNK, { group: 10, round: st.round });
+  if (st.roots <= 0) return;
+  const n = Math.round(2 + st.roots * 4);
+  for (let i = 0; i < n; i++) {
+    const side = i % 2 ? 1 : -1, L = (8 + r() * 16) * s * (.4 + st.roots), lift = (2 + r() * 3) * s;
+    const a = [bx + side * w * .2, gy - w * .5], b = [bx + side * (w * .55 + L * .4), gy - lift], c = [bx + side * (w * .5 + L), gy - .5];
+    sp.limb([[...a, w * .55], [...b, w * .28], [...c, 1.2]], M.TRUNK, { group: 11, round: st.round, cap: .5, capEnd: .6 });
+  }
+}
+
+// Bark: dark crevices running along the wood, with lit ridges beside them.
+function bark(sp, st, vertical = true) {
+  if (st.bark <= 0) return;
+  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) {
+    const i = y * sp.w + x; if (sp.m[i] !== M.TRUNK) continue;
+    const v = vertical ? vnoise(x / 1.3, y / 6, 21) : vnoise(x / 6, y / 1.3, 21);
+    if (v > 1 - st.bark * .42 || hash2(x, y, 4) < st.bark * .05) sp.m[i] = M.BARKD;
+    else if (v > 1 - st.bark * .62 && sp.n[i * 3] < -.1) sp.m[i] = M.BARKL;
+  }
+}
+
+// Trims empty margins, keeping the ground row at the bottom and the base at the centre.
+function trim(sp, bx, crownY) {
+  let x0 = sp.w, x1 = -1, y0 = sp.h;
+  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
+  if (x1 < 0) return { sp, crownY };
+  const half = Math.max(bx - x0, x1 - bx) + 2, nx0 = Math.max(0, Math.floor(bx - half)), w = Math.min(sp.w - nx0, Math.ceil(half * 2) + 1), ny0 = Math.max(0, y0 - 1), h = sp.h - ny0;
+  const out = new Sprite(w, h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = (y + ny0) * sp.w + x + nx0, j = y * w + x;
+    out.m[j] = sp.m[i]; out.g[j] = sp.g[i]; out.n[j * 3] = sp.n[i * 3]; out.n[j * 3 + 1] = sp.n[i * 3 + 1]; out.n[j * 3 + 2] = sp.n[i * 3 + 2];
+  }
+  return { sp: out, crownY: crownY - ny0 };
+}
+const spread = st => (st.crownWidth || 3) / 3;
+
+// Gnarled broadleaf: a twisting trunk forking low into heavy limbs, a wide crown of clumps
+// with the branches showing between them.
+function broadTree(r, st, s) {
+  const k = spread(st), W = Math.round(220 * s * k + 60 * s), H = Math.round(140 * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
+  const tw = 12 * s, lean = (r() - .5) * .5 * st.gnarl;
+  const trunk = bough(sp, [bx, gy], -Math.PI / 2 + lean, H * .36, tw, tw * .72, st, r, { bend: 1.4 });
+  const tips = [];
+  const grow = (p, ang, len, w, d) => {
+    const b = bough(sp, p, ang, len, w, w * .65, st, r, { group: 12 });
+    if (d === 0) { tips.push(b.end); return; }
+    const kids = r() < .35 ? 3 : 2;
+    for (let i = 0; i < kids; i++) {
+      const da = (i - (kids - 1) / 2) * uni(r, .5, .85) * (d === 3 ? 1.4 : 1);
+      grow(b.end, b.ang + da + (r() - .5) * .25, len * uni(r, .6, .78), w * .62, d - 1);
+    }
+    if (d <= 2) tips.push(lerp2(p, b.end, .7));
+  };
+  // the first limbs spread wide: Ed asked for broad crowns
+  for (const side of [-1, 1]) grow(trunk.end, -Math.PI / 2 + side * uni(r, .55, .95) * (.7 + .3 * k), H * .22 * (.75 + .25 * k), tw * .7, 3);
+  if (r() < .7) grow(trunk.end, -Math.PI / 2 + (r() - .5) * .3, H * .18, tw * .55, 2);
+  roots(sp, bx + Math.cos(-Math.PI / 2 + lean) * 0, gy, tw, st, r, s);
+  bark(sp, st);
+  // clumps at the tips: back ones darker first, then the front
+  tips.sort((a, b) => a[1] - b[1]);
+  for (const t of tips) clump(sp, add(t, [0, -3 * s]), uni(r, 14, 21) * s, uni(r, 10, 14) * s, st, r, { mat: r() < .35 ? M.LEAF3 : M.LEAF });
+  for (const t of tips) if (r() < .75) clump(sp, add(t, [uni(r, -9, 9) * s, uni(r, -12, -3) * s]), uni(r, 10, 15) * s, uni(r, 7, 10) * s, st, r);
+  return trim(sp, bx, trunk.end[1] + 4 * s);
+}
+
+// Tiered fir: a straight trunk and drooping skirts of branches, narrowing to a spire.
+function firTree(r, st, s) {
+  const k = .8 + .2 * spread(st), W = Math.round(90 * s * k), H = Math.round(160 * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
+  sp.limb([[bx, gy, 6 * s], [bx, gy - H * .5, 4 * s], [bx, 6 * s, 1.5]], M.TRUNK, { group: 10, round: st.round });
+  roots(sp, bx, gy, 6 * s, st, r, s * .6);
+  bark(sp, st);
+  const tiers = Math.round(uni(r, 9, 12));
+  for (let i = tiers - 1; i >= 0; i--) {
+    const f = i / (tiers - 1), y = 6 * s + f * H * .7, half = (5 + f * 36) * s * k * uni(r, .9, 1.1), droop = (5 + f * 13) * s;
+    const pts = [[bx, y - 4 * s], [bx + half * .5, y + droop * .3], [bx + half, y + droop], [bx + half * .7, y + droop * 1.15], [bx, y + droop * .7], [bx - half * .7, y + droop * 1.15], [bx - half, y + droop], [bx - half * .5, y + droop * .3]];
+    sp.shape(tufts(pts, 1, 7, Math.max(2, Math.round(half / (3 * s))), 2 * s, 1), M.LEAF, { group: 30 + i, line: false, round: st.round });
+    sp.mark([[bx - half, y + droop * .55], [bx + half, y + droop * .55], [bx + half, y + droop * 1.4], [bx - half, y + droop * 1.4]], M.LEAF3, [M.LEAF]);
+    sp.mark([[bx - half * .55, y - 2 * s], [bx + half * .1, y - 3 * s], [bx + half * .1, y + droop * .45], [bx - half * .7, y + droop * .7]], M.LEAF2, [M.LEAF]);
+  }
+  return trim(sp, bx, H * .82);
+}
+
+// Willow: a short, heavy trunk, limbs arching out, and a curtain of hanging strands.
+function willowTree(r, st, s) {
+  const k = spread(st), W = Math.round(200 * s * k + 50 * s), H = Math.round(130 * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
+  const tw = 13 * s;
+  const trunk = bough(sp, [bx, gy], -Math.PI / 2 + (r() - .5) * .3, H * .3, tw, tw * .8, st, r, { bend: 1.6 });
+  const arcs = [];
+  for (let i = 0; i < 5; i++) {
+    const side = i % 2 ? 1 : -1, a = -Math.PI / 2 + side * uni(r, .55, 1.25) * (.7 + .3 * k);
+    const b = bough(sp, trunk.end, a, H * uni(r, .3, .42) * (.8 + .2 * k), tw * .55, tw * .3, st, r, { group: 12 });
+    arcs.push(b.end);
+  }
+  roots(sp, bx, gy, tw, st, r, s);
+  bark(sp, st);
+  // the crown's top: low domed clumps over the limbs
+  for (const p of arcs) clump(sp, add(p, [0, -2 * s]), uni(r, 20, 28) * s, uni(r, 9, 12) * s, st, r);
+  clump(sp, add(trunk.end, [0, -8 * s]), 24 * s, 11 * s, st, r);
+  // strands: thin hanging lines, in two shades, swaying slightly
+  let x0 = W, x1 = 0; for (const p of arcs) { x0 = Math.min(x0, p[0] - 22 * s); x1 = Math.max(x1, p[0] + 22 * s); }
+  for (let x = x0; x < x1; x += uni(r, 1, 1.7)) {
+    let top = H; for (let y = 0; y < H; y++) if (sp.get(x, y) === M.LEAF || sp.get(x, y) === M.LEAF2 || sp.get(x, y) === M.LEAF3) { top = y; break; }
+    if (top >= H) continue;
+    const d = Math.abs(x - bx) / (W / 2), len = (gy - top) * uni(r, .5, .9) * (1 - d * .3), mat = hash2(x | 0, 1, 9) < .4 ? M.LEAF2 : M.LEAF;
+    for (let y = top + 2; y < Math.min(gy - 2, top + len); y++) {
+      const sway = Math.round(Math.sin(y * .12 + x) * .7);
+      if (hash2(x | 0, y, 5) < .2 + st.density * .8) sp.px(x + sway, y, (y - top) / len > .8 ? M.LEAF3 : mat, sway * .3, .2, .95);
+    }
+  }
+  return trim(sp, bx, trunk.end[1] + 6 * s);
+}
+
+// Birch: a slender pale trunk banded with black, thin branches, light airy clumps.
+function birchTree(r, st, s) {
+  const k = .7 + .3 * spread(st), W = Math.round(110 * s * k), H = Math.round(155 * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
+  const lean = (r() - .5) * .25;
+  const trunk = bough(sp, [bx, gy], -Math.PI / 2 + lean, H * .85, 5 * s, 2 * s, st, r, { mat: M.BARK2, bend: .4 });
+  // black marks across the white bark
+  for (let i = 0; i < trunk.pts.length - 1; i++) for (let t = 0; t < 1; t += 1 / 8) {
+    const p = lerp2(trunk.pts[i], trunk.pts[i + 1], t + r() * .1);
+    if (r() < .55) for (let dx = -3; dx <= 3; dx++) if (sp.get(p[0] + dx, p[1]) === M.BARK2 && r() < .8) sp.recolour(p[0] + dx, p[1], M.BARKD);
+  }
+  const tips = [trunk.end];
+  for (let i = 0; i < 7; i++) {
+    const f = uni(r, .35, .9), p = lerp2(trunk.pts[0], trunk.end, f), side = i % 2 ? 1 : -1;
+    const b = bough(sp, p, -Math.PI / 2 + side * uni(r, .5, 1.0), H * uni(r, .12, .2) * k, 2 * s, 1, st, r, { mat: M.BARKD, group: 12 });
+    tips.push(b.end);
+  }
+  for (const t of tips) clump(sp, t, uni(r, 9, 13) * s * k, uni(r, 7, 10) * s, st, r, { mat: M.LEAF2, ragged: 1.3 });
+  return trim(sp, bx, H * .55);
+}
+
+// Tree fern: a fibrous trunk and a crown of arching fronds, a fiddlehead curled at the top.
+function palmTree(r, st, s) {
+  const k = .8 + .2 * spread(st), W = Math.round(150 * s * k), H = Math.round(140 * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
+  const bend = uni(r, -14, 14) * s, top = [bx + bend, H * .3];
+  const spine = []; for (let i = 0; i <= 6; i++) { const f = i / 6; spine.push([bx + bend * f * f, gy - (gy - top[1]) * f, (7 - f * 2) * s]); }
+  sp.limb(spine, M.TRUNK, { group: 10, round: st.round });
+  for (let y = Math.round(top[1]); y < gy; y += Math.max(2, Math.round(3 * s))) for (let x = 0; x < W; x++) if (sp.get(x, y) === M.TRUNK) sp.recolour(x, y, M.BARKD); // the old frond scars
+  const fronds = Math.round(uni(r, 9, 12));
+  for (let i = 0; i < fronds; i++) {
+    const a = -Math.PI / 2 + (i / (fronds - 1) - .5) * Math.PI * 1.35, len = uni(r, 36, 50) * s * k;
+    let p = top.slice(), ang = a;
+    const back = i % 2 === 0;
+    for (let j = 0; j < len; j++) {
+      const f = j / len; ang = a + Math.sign(Math.cos(a)) * f * 1.3 * Math.abs(Math.cos(a)) + (Math.abs(Math.cos(a)) < .3 ? f * .8 * Math.sign(i - fronds / 2) : 0);
+      p = [p[0] + Math.cos(ang), p[1] + Math.sin(ang) + f * .9];
+      sp.px(p[0], p[1], back ? M.LEAF3 : M.LEAF, Math.cos(ang) * .3, -.3, .9);
+      const leaflet = (1 - f * .8) * 6 * s;
+      if (j % 2) continue;
+      for (let q = 1; q < leaflet; q++) {
+        const nx = -Math.sin(ang), ny = Math.cos(ang);
+        sp.px(p[0] + nx * q, p[1] + ny * q * .8 + q * .35, back ? M.LEAF3 : q > leaflet * .6 ? M.LEAF2 : M.LEAF, nx * .5, .3, .8);
+        sp.px(p[0] - nx * q, p[1] - ny * q * .8 + q * .35, back ? M.LEAF3 : M.LEAF, -nx * .5, -.2, .85);
+      }
+    }
+  }
+  // the fiddlehead
+  for (let t = 0; t < 10; t += .25) { const rr = (10 - t) * .4 * s, p = add(top, [Math.cos(t) * rr, -6 * s + Math.sin(t) * rr]); sp.px(p[0], p[1], M.LEAF2, 0, -.5, .85); }
+  return trim(sp, bx, top[1] + 6 * s);
+}
+
+// Flat-crowned maple: a fork of spreading limbs under broad, flat layers of leaves.
+function flatTree(r, st, s) {
+  const k = spread(st), W = Math.round(220 * s * k + 50 * s), H = Math.round(120 * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
+  const tw = 10 * s;
+  const trunk = bough(sp, [bx, gy], -Math.PI / 2 + (r() - .5) * .4 * (st.gnarl + .3), H * .4, tw, tw * .75, st, r, { bend: 1.2 });
+  const ends = [];
+  for (const side of [-1, 1, -1, 1]) {
+    const b = bough(sp, trunk.end, -Math.PI / 2 + side * uni(r, .7, 1.15) * (.7 + .3 * k), H * uni(r, .3, .42) * (.7 + .3 * k), tw * .55, tw * .25, st, r, { group: 12 });
+    ends.push(b.end, lerp2(trunk.end, b.end, .55));
+  }
+  roots(sp, bx, gy, tw, st, r, s);
+  bark(sp, st);
+  const layers = Math.round(uni(r, 2, 3)), y0 = Math.min(...ends.map(p => p[1]));
+  for (let i = 0; i < layers; i++) {
+    const y = y0 - 6 * s + i * 9 * s, w = (95 - i * 12) * s * (.65 + .35 * k);
+    for (let j = 0; j < 5; j++) clump(sp, [bx + (j - 2) * w * .36 + uni(r, -5, 5) * s, y + uni(r, -3, 3) * s], w * uni(r, .2, .26), 7 * s, st, r, { mat: i === layers - 1 ? M.LEAF : M.LEAF3 });
+  }
+  return trim(sp, bx, trunk.end[1] + 4 * s);
+}
+
+const TREE_TYPES = [["wBroad", broadTree], ["wFir", firTree], ["wWillow", willowTree], ["wBirch", birchTree], ["wPalm", palmTree], ["wFlat", flatTree]];
+function chooseType(r, st) {
+  const tot = TREE_TYPES.reduce((a, [k]) => a + st[k], 0) || 1; let x = r() * tot;
+  for (const [k, f] of TREE_TYPES) { x -= st[k]; if (x <= 0) return f; }
+  return broadTree;
+}
+function treeColours(r, st, type) {
+  const h = st.leafHue + (r() - .5) * st.leafVariety * .7 + (type === firTree ? .06 : 0);
+  return {
+    [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212],
+    [M.LEAF]: hsv2rgb(h, .62 * st.sat, .58), [M.LEAF2]: hsv2rgb(h - .05, .55 * st.sat, .8), [M.LEAF3]: hsv2rgb(h + .03, .66 * st.sat, .38),
+  };
+}
+// The trunk was drawn with its roots and bark; this stays for callers of the old API.
+function finishTree(t) { return t; }
+function splitTree(t) { // bottom = wood below the crown line; top = everything else
+  const { sp, crownY } = t, top = new Sprite(sp.w, sp.h), bot = new Sprite(sp.w, sp.h);
+  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) {
+    const i = y * sp.w + x, m = sp.m[i]; if (!m) continue;
+    const dst = WOOD.has(m) && y >= crownY ? bot : top;
+    dst.put(x, y, m, sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]);
+  }
+  return { top, bot };
+}
+
+// ================= undergrowth =================
+// Bushes: round leafy mounds (some flowering), ferns, grass tufts and shrubs.
+function bush(r, st) {
+  const s = st.bushSize, kind = pick(r, ["round", "round", "fern", "grass", "shrub"]);
+  const W = Math.round(40 * s), H = Math.round(28 * s), sp = new Sprite(W, H);
+  if (kind === "round" || kind === "shrub") {
+    const n = kind === "shrub" ? 5 : 3;
+    for (let i = 0; i < n; i++) clump(sp, [W / 2 + uni(r, -9, 9) * s, H - 8 * s + uni(r, -4, 2) * s], uni(r, 7, 10) * s, uni(r, 5, 8) * s, st, r);
+    if (kind === "shrub" || r() < st.flowers) for (let i = 0; i < 18 * st.flowers + 3; i++) { const x = W / 2 + uni(r, -12, 12) * s, y = H - uni(r, 5, 17) * s; if (sp.get(x, y)) sp.recolour(x, y, M.FLOWER); }
+  } else if (kind === "fern") {
+    for (let k = 0; k < 7; k++) {
+      const a = -Math.PI / 2 + (k / 6 - .5) * 2.4; let x = W / 2, y = H - 1;
+      for (let j = 0; j < 15 * s; j++) { x += Math.cos(a) * .9; y += Math.sin(a) * .9 + j * .06; sp.put(x, y, k % 2 ? M.LEAF3 : M.LEAF, Math.cos(a) * .4, -.2, .9); if (j % 2) { sp.put(x, y - 1, M.LEAF2, 0, -.5, .85); sp.put(x + Math.sign(Math.cos(a)), y + 1, M.LEAF, 0, .3, .9); } }
+    }
+  } else {
+    for (let k = 0; k < 18 * s; k++) { const x0 = W / 2 + uni(r, -13, 13) * s, h = uni(r, 5, 15) * s, lean = uni(r, -3, 3); for (let j = 0; j < h; j++) sp.put(x0 + lean * j / h * (j / h), H - 1 - j, j > h * .65 ? M.LEAF2 : j < h * .3 ? M.LEAF3 : M.LEAF, lean * .1, -.3, .9); }
+  }
+  const c = treeColours(r, st, null); c[M.FLOWER] = hsv2rgb(r(), .55, .95);
+  return { sp, colours: c };
 }
 
 
@@ -943,7 +1223,6 @@ class Plan {
     return sp;
   }
 }
-const add = (a, b) => [a[0] + b[0], a[1] + b[1]];
 const bodyMats = [M.BODY, M.BODY2, M.BODY3, M.BELLY, M.LINE];
 
 // Places an eye: a dark almond with a glint, sized for the creature's pixel height.
@@ -1555,6 +1834,7 @@ function owlWing(P, side, frame) {
 
 
 
+
 // ================= the style genome =================
 const KNOBS = [
   { k: "ambientHue", g: "Night light", label: "Twilight hue", min: 0, max: 1, step: 0.01, v: 0.68, hue: true },
@@ -1630,131 +1910,6 @@ function mutate(style, strength, groups, seed) {
   return s;
 }
 
-// ================= trees =================
-// Each tree returns {sp, crownY}: pixels that are trunk below crownY are the "bottom half".
-function leafCluster(sp, cx, cy, rx, ry, st, seed, mat = M.LEAF) {
-  sp.ellipse(cx, cy, rx, ry, mat, { density: st.density, noise: st.clump, seed, round: st.round });
-  sp.ellipse(cx - rx * .2, cy - ry * .25, rx * .55, ry * .5, M.LEAF2, { density: st.density * .5, noise: st.clump, seed: seed + 9, onlyOn: new Set([mat]), round: st.round });
-}
-function broadTree(r, st, s) {
-  const W = Math.round(110 * s), H = Math.round(130 * s), sp = new Sprite(W, H, st.crownWidth || 1);
-  const crownY = H * .5;
-  function branch(x, y, ang, len, th, d) {
-    const wob = (r() - .5) * st.gnarl * .9, a = ang + wob;
-    const mx = x + Math.cos(a) * len * .5 + (r() - .5) * st.gnarl * len * .4, my = y + Math.sin(a) * len * .5;
-    const ex = x + Math.cos(ang) * len, ey = y + Math.sin(ang) * len;
-    sp.line(x, y, mx, my, th, th * .85, M.TRUNK, st.round); sp.line(mx, my, ex, ey, th * .85, th * .7, M.TRUNK, st.round);
-    if (d === 0 || len < 7) { leafCluster(sp, ex, ey - 2, len * uni(r, .8, 1.1) + 6 * s, len * uni(r, .55, .8) + 4 * s, st, (r() * 1e6) | 0); return; }
-    const kids = r() < .4 ? 3 : 2;
-    for (let i = 0; i < kids; i++) branch(ex, ey, ang + (i - (kids - 1) / 2) * uni(r, .45, .8) + (r() - .5) * .3, len * uni(r, .62, .78), th * .62, d - 1);
-    if (d <= 2 && r() < .6) leafCluster(sp, ex, ey, len * .7, len * .45, st, (r() * 1e6) | 0);
-  }
-  const lean = (r() - .5) * st.gnarl * .9;
-  sp.line(W / 2, H - 2, W / 2 - 9 * s, H - 1, 6 * s, 2, M.TRUNK, st.round); sp.line(W / 2, H - 2, W / 2 + 10 * s, H - 1, 6 * s, 2, M.TRUNK, st.round); // roots
-  branch(W / 2, H - 3, -Math.PI / 2 + lean, H * .32, 9 * s, 3);
-  return { sp, crownY };
-}
-function firTree(r, st, s) {
-  const W = Math.round(70 * s), H = Math.round(150 * s), sp = new Sprite(W, H, 1 + ((st.crownWidth || 1) - 1) * .35), tx = W / 2;
-  sp.line(tx, H - 1, tx, 8, 5 * s, 1.5, M.TRUNK, st.round);
-  const tiers = Math.round(uni(r, 8, 12));
-  for (let i = 0; i < tiers; i++) {
-    const f = i / (tiers - 1), y = 12 + f * (H * .78), len = (6 + f * 26) * s * uni(r, .8, 1.15);
-    for (const side of [-1, 1]) {
-      const ex = tx + side * len, ey = y + len * .25;
-      sp.line(tx, y, ex, ey, 2, 1, M.TRUNK, st.round);
-      for (let k = 0; k < 3; k++) { const t = .35 + k * .3; leafCluster(sp, tx + side * len * t, y + len * .25 * t + 1, len * .32 + 2, 3 + len * .08, st, (r() * 1e6) | 0); }
-    }
-  }
-  return { sp, crownY: H * .14 };
-}
-function willowTree(r, st, s) {
-  const W = Math.round(120 * s), H = Math.round(120 * s), sp = new Sprite(W, H, st.crownWidth || 1), cx = W / 2;
-  const crownY = H * .25, limbs = [];
-  sp.line(cx, H - 2, cx - 12 * s, H - 1, 6 * s, 2, M.TRUNK, st.round); sp.line(cx, H - 2, cx + 13 * s, H - 1, 6 * s, 2, M.TRUNK, st.round);
-  for (const side of [-1, 1]) { const ex = cx + side * uni(r, 14, 26) * s, ey = H * uni(r, .28, .38); sp.line(cx, H - 3, ex, ey, 11 * s, 5 * s, M.TRUNK, st.round); limbs.push([ex, ey]); }
-  for (const [lx, ly] of limbs) leafCluster(sp, lx, ly - 4 * s, 26 * s, 13 * s, st, (r() * 1e6) | 0);
-  // hanging strands
-  for (let x = 6; x < W - 6; x += (1 + (r() < .4 ? 1 : 0)) / sp.sx) {
-    const d = Math.abs(x - cx) / (W / 2);
-    const top = H * .12 + d * d * H * .25 + r() * 6, len = H * uni(r, .35, .7) * (1 - d * .4);
-    for (let y = top; y < top + len; y++) if (hash2(x, y | 0, 5) < st.density * 1.1) sp.put(x + Math.round(Math.sin(y * .15 + x) * .6), y, hash2(x, y | 0, 6) < .3 ? M.LEAF2 : M.LEAF, (x - cx) / W, .2, .95);
-  }
-  return { sp, crownY };
-}
-function birchTree(r, st, s) {
-  const W = Math.round(80 * s), H = Math.round(140 * s), sp = new Sprite(W, H, 1 + ((st.crownWidth || 1) - 1) * .5), cx = W / 2, lean = (r() - .5) * 10 * s;
-  sp.line(cx, H - 1, cx + lean, 10, 4 * s, 2, M.BARK2, st.round);
-  for (let y = 12; y < H - 2; y += uni(r, 4, 9)) { const f = 1 - y / H, x = cx + lean * f; sp.put(x + (r() < .5 ? 0 : 1), y, M.TRUNK); }
-  for (let i = 0; i < 7; i++) {
-    const f = uni(r, .05, .55), y = 10 + f * H, x = cx + lean * (1 - y / H), side = i % 2 ? 1 : -1, len = uni(r, 8, 20) * s;
-    sp.line(x, y, x + side * len, y - len * .4, 2, 1, M.TRUNK, st.round);
-    leafCluster(sp, x + side * len, y - len * .4, uni(r, 9, 15) * s, uni(r, 7, 11) * s, st, (r() * 1e6) | 0);
-  }
-  return { sp, crownY: H * .6 };
-}
-function palmTree(r, st, s) {
-  const W = Math.round(100 * s), H = Math.round(140 * s), sp = new Sprite(W, H, st.crownWidth || 1), bend = uni(r, -18, 18) * s;
-  let px = W / 2, py = H - 1;
-  const topX = W / 2 + bend, topY = H * .28;
-  for (let i = 1; i <= 20; i++) { const f = i / 20, x = W / 2 + bend * f * f, y = H - 1 - (H - 1 - topY) * f; sp.line(px, py, x, y, 6 * s, 5 * s, M.TRUNK, st.round); px = x; py = y; }
-  const fronds = Math.round(uni(r, 8, 11));
-  for (let k = 0; k < fronds; k++) {
-    const a = -Math.PI / 2 + (k / (fronds - 1) - .5) * Math.PI * 1.25, len = uni(r, 30, 44) * s;
-    let x = topX, y = topY;
-    for (let j = 0; j < len; j++) {
-      const f = j / len, ang = a + (Math.cos(a) > 0 ? 1 : -1) * f * 1.1 * Math.abs(Math.cos(a));
-      x += Math.cos(ang); y += Math.sin(ang) + f * .9;
-      sp.put(x, y, M.LEAF, Math.cos(ang) * .3, -.3, .9);
-      const leaflet = (1 - f) * 6 * s;
-      for (let q = 1; q < leaflet; q++) if (hash2(x | 0, (y | 0) + q, k) < st.density + .3) { sp.put(x - Math.sin(ang) * q, y + Math.cos(ang) * q * .8 + q * .3, q > leaflet * .6 ? M.LEAF2 : M.LEAF, -Math.sin(ang) * .5, .3, .8); sp.put(x + Math.sin(ang) * q, y - Math.cos(ang) * q * .8 + q * .3, M.LEAF, Math.sin(ang) * .5, -.2, .85); }
-    }
-  }
-  return { sp, crownY: topY + 4 };
-}
-function flatTree(r, st, s) {
-  const W = Math.round(130 * s), H = Math.round(110 * s), sp = new Sprite(W, H, st.crownWidth || 1), cx = W / 2;
-  sp.line(cx, H - 2, cx - 8 * s, H - 1, 5 * s, 2, M.TRUNK, st.round); sp.line(cx, H - 2, cx + 9 * s, H - 1, 5 * s, 2, M.TRUNK, st.round);
-  const lean = (r() - .5) * 14 * s * (st.gnarl + .3);
-  sp.line(cx, H - 2, cx + lean, H * .45, 6 * s, 4 * s, M.TRUNK, st.round);
-  for (const side of [-1, 1]) sp.line(cx + lean, H * .45, cx + lean + side * 22 * s, H * .3, 4 * s, 2, M.TRUNK, st.round);
-  const layers = Math.round(uni(r, 2, 3));
-  for (let i = 0; i < layers; i++) {
-    const y = H * (.18 + i * .16), w = (55 - i * 8) * s * uni(r, .85, 1.1);
-    for (let j = 0; j < 4; j++) leafCluster(sp, cx + lean + (j - 1.5) * w * .45 + uni(r, -4, 4), y + uni(r, -3, 3), w * .42, 9 * s, st, (r() * 1e6) | 0);
-  }
-  return { sp, crownY: H * .45 };
-}
-const TREE_TYPES = [["wBroad", broadTree], ["wFir", firTree], ["wWillow", willowTree], ["wBirch", birchTree], ["wPalm", palmTree], ["wFlat", flatTree]];
-function chooseType(r, st) {
-  const tot = TREE_TYPES.reduce((a, [k]) => a + st[k], 0) || 1; let x = r() * tot;
-  for (const [k, f] of TREE_TYPES) { x -= st[k]; if (x <= 0) return f; }
-  return broadTree;
-}
-function treeColours(r, st, type) {
-  const h = st.leafHue + (r() - .5) * st.leafVariety * .7 + (type === firTree ? .06 : 0);
-  return { [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .32), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARK2]: [222, 220, 212], [M.LEAF]: hsv2rgb(h, .62 * st.sat, .62), [M.LEAF2]: hsv2rgb(h - .05, .55 * st.sat, .82) };
-}
-
-// ================= undergrowth =================
-function bush(r, st) {
-  const s = st.bushSize, kind = pick(r, ["round", "round", "fern", "grass", "shrub"]);
-  const W = Math.round(34 * s), H = Math.round(26 * s), sp = new Sprite(W, H);
-  if (kind === "round" || kind === "shrub") {
-    for (let i = 0; i < 4; i++) leafCluster(sp, W / 2 + uni(r, -8, 8) * s, H - 7 * s + uni(r, -4, 2) * s, uni(r, 6, 10) * s, uni(r, 5, 8) * s, { ...st, density: Math.min(1, st.density + .25) }, (r() * 1e6) | 0);
-    if (kind === "shrub" || r() < st.flowers) for (let i = 0; i < 18 * st.flowers + 3; i++) { const x = W / 2 + uni(r, -11, 11) * s, y = H - uni(r, 4, 16) * s; if (sp.get(x | 0, y | 0)) sp.put(x, y, M.FLOWER); }
-  } else if (kind === "fern") {
-    for (let k = 0; k < 7; k++) {
-      const a = -Math.PI / 2 + (k / 6 - .5) * 2.4; let x = W / 2, y = H - 1;
-      for (let j = 0; j < 14 * s; j++) { x += Math.cos(a) * .9; y += Math.sin(a) * .9 + j * .06; sp.put(x, y, M.LEAF, Math.cos(a) * .4, -.2, .9); if (j % 2) sp.put(x, y - 1, M.LEAF2, 0, -.5, .85); }
-    }
-  } else {
-    for (let k = 0; k < 16 * s; k++) { const x0 = W / 2 + uni(r, -12, 12) * s, h = uni(r, 5, 14) * s, lean = uni(r, -3, 3); for (let j = 0; j < h; j++) sp.put(x0 + lean * j / h, H - 1 - j, j > h * .6 ? M.LEAF2 : M.LEAF, lean * .1, -.3, .9); }
-  }
-  const c = treeColours(r, st, null); c[M.FLOWER] = hsv2rgb(r(), .55, .95);
-  return { sp, colours: c };
-}
-
 // ================= the witch (hand-drawn) =================
 const WITCH_ROWS = [
   ".........HH.........", "........HHHH........", ".......HHHHHH.......", "......HHHHHHHH......", "....HHHHHHHHHHHH....",
@@ -1767,33 +1922,6 @@ function witchSprite() {
   return sp;
 }
 const witchColours = st => ({ [M.CLOTH]: hsv2rgb(st.cloakHue, .55, .6), [M.SKIN]: [240, 205, 170], [M.EYE]: [20, 14, 26], [M.HAIR]: hsv2rgb(st.hairHue, .7, .85), [M.BROOM]: hsv2rgb(st.trunkHue + .02, .55, .6), [M.STRAW]: [230, 190, 100] });
-
-// Spreading roots at the base, and bark: dark crevices running along the trunk.
-function finishTree(t, st, r) {
-  const { sp } = t, s = sp.sx, baseX = (() => { for (let x = 0; x < sp.w; x++) for (let y = sp.h - 1; y > sp.h - 4; y--) if (sp.get(x, y) === M.TRUNK || sp.get(x, y) === M.BARK2) return x; return sp.w / 2; })();
-  let minX = sp.w, maxX = 0; for (let x = 0; x < sp.w; x++) if (sp.get(x, sp.h - 2) === M.TRUNK || sp.get(x, sp.h - 3) === M.TRUNK) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); }
-  if (maxX >= minX && st.roots > 0) {
-    const cx = (minX + maxX) / 2, n = Math.round(2 + st.roots * 4);
-    for (let i = 0; i < n; i++) {
-      const side = i % 2 ? 1 : -1, len = (6 + r() * 18) * st.roots * (sp.h / 110) + 3, th = Math.max(1.5, (maxX - minX) * .35);
-      sp.line(cx / s + side * th * .3 / s, sp.h - 4 - r() * 3, (cx + side * len) / s, sp.h - 1 - r() * 2, th, 1, M.TRUNK, st.round);
-    }
-  }
-  if (st.bark > 0) for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) {
-    if (sp.get(x, y) !== M.TRUNK) continue;
-    if (vnoise(x / 1.4, y / 5, 21) > 1 - st.bark * .45 || hash2(x, y, 4) < st.bark * .08) { const i = (y * sp.w + x) * 3; sp.px(x, y, M.BARKD, sp.n[i], sp.n[i + 1], sp.n[i + 2]); }
-  }
-  return t;
-}
-function splitTree(t) { // bottom = trunk below the crown line; top = everything else
-  const { sp, crownY } = t, top = new Sprite(sp.w, sp.h), bot = new Sprite(sp.w, sp.h);
-  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) {
-    const i = y * sp.w + x, m = sp.m[i]; if (!m) continue;
-    const dst = (m === M.TRUNK || m === M.BARK2 || m === M.BARKD) && y >= crownY ? bot : top;
-    dst.put(x, y, m, sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]);
-  }
-  return { top, bot };
-}
 
 // ================= per-style assets =================
 // Each area has its own leaf colour and its own kind of tree; "Difference between areas" sets how far apart.

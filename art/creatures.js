@@ -4,7 +4,7 @@
 // distance to their edge so the night lighting still models them; then the few pixels
 // that matter (eye and glint, nose, ear tips) are placed by hand. Babies are hand-drawn
 // pixel grids, recoloured by the style. Every animal faces right; the game mirrors it.
-import { M, Sprite, rng, uni, hash2, hsv2rgb, spline, band, tufts, rot, lerp2 } from "./core.js";
+import { M, Sprite, rng, uni, hash2, hsv2rgb, spline, band, tufts, rot, lerp2, add } from "./core.js";
 import { BABIES } from "./babies.js";
 
 // ================= the bestiary: 20 forest animals =================
@@ -109,7 +109,6 @@ class Plan {
     return sp;
   }
 }
-const add = (a, b) => [a[0] + b[0], a[1] + b[1]];
 const bodyMats = [M.BODY, M.BODY2, M.BODY3, M.BELLY, M.LINE];
 
 // Places an eye: a dark almond with a glint, sized for the creature's pixel height.

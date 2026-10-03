@@ -88,6 +88,7 @@ export function band(spine, { cap = 1, capEnd = cap } = {}) {
 // Moves control points: `f([x, y], i) -> [x, y]`.
 export const mapPts = (pts, f) => pts.map((p, i) => f(p, i));
 export const rot = ([x, y], [cx, cy], a) => { const c = Math.cos(a), s = Math.sin(a); return [cx + (x - cx) * c - (y - cy) * s, cy + (x - cx) * s + (y - cy) * c]; };
+export const add = (a, b) => [a[0] + b[0], a[1] + b[1]];
 export const lerp2 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
 // A fur or feather edge: replaces the stretch between control points i0..i1 with a
 // zigzag of `count` tufts sticking out by `amp` pixels.
