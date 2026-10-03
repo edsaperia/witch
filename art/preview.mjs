@@ -3,6 +3,7 @@
 //   node art/preview.mjs animals wolf,boar,owl art/previews/animals.png [scale]
 //   node art/preview.mjs trees all art/previews/trees.png [scale]
 //   node art/preview.mjs areas all art/previews/areas.png [scale]
+//   node art/preview.mjs home 0 art/previews/treehouse.png [scale]   (the treehouse with the witch sitting on its terrace, sit frame 0 or 1; NIGHT=1 lit by its own lights)
 //   node art/preview.mjs witch all art/previews/witch-flight.png [scale]   ("fast" instead of all: hover, lean and the fast pose; "foot": hover and every on-foot pose, POSES=stand,talk,... to pick, ANCHORS=1 to mark her hand and hat tip)
 //   node art/preview.mjs treeheights fern-forest,garden art/previews/tree-heights.png [scale]
 //   node art/preview.mjs lights all art/previews/light-sources.png [scale]
@@ -69,6 +70,24 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     });
     const big = document.createElement("canvas"); big.width = W * scale; big.height = H * scale;
     const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, W * scale, H * scale);
+    return big.toDataURL("image/png");
+  }
+  if (what === "home") { // the treehouse at night, the witch sitting on its terrace: towards (whole, as from the treetops), its base only (as from the ground), away
+    const wc = G.witchColours(st), hc = G.treehouseColours(st), panels = [];
+    for (const [facing, part] of [["towards", "whole"], ["towards", "bot"], ["away", "whole"]].filter(([f]) => !window.FACINGS || window.FACINGS.includes(f))) {
+      const T = G.treehouseSprite(st, { facing }), house = G.bake(T[part], hc, st, "none"), wsp = G.witchSprite(st, { pose: "sit", frame: +list || 0, facing }), wit = G.bake(wsp, wc, st, st.cOutline);
+      let x0 = wsp.w, x1 = -1; for (let x = 0; x < wsp.w; x++) if (wsp.m[(wsp.h - 1) * wsp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); }
+      panels.push({ T, house, wit, wx: Math.round(T.anchors.seat.x - (x0 + x1 + 1) / 2), wy: Math.round(T.anchors.seat.y - wsp.h) + 1 });
+    }
+    const gap = 10, w = panels.reduce((a, p) => a + p.house.w + gap, gap), h = Math.max(...panels.map(p => p.house.h)) + gap * 2;
+    const mk = () => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+    const A = mk(), N = mk(), a = A.getContext("2d"), n = N.getContext("2d"), lights = [];
+    if (!window.NIGHT) { a.fillStyle = `rgb(${G.hsv2rgb(st.groundHue, .4, st.groundVal)})`; a.fillRect(0, 0, w, h); } n.fillStyle = "rgb(128,75,240)"; n.fillRect(0, 0, w, h);
+    let x = gap;
+    for (const P of panels) { const y = h - gap - P.house.h; a.drawImage(P.house.A, x, y); n.drawImage(P.house.N, x, y); a.drawImage(P.wit.A, x + P.wx, y + P.wy); n.drawImage(P.wit.N, x + P.wx, y + P.wy); for (const L of P.T.anchors.lights) lights.push({ x: x + L.x, y: y + L.y, z: 10, R: 48, power: 1.1, rgb: L.rgb }); x += P.house.w + gap; }
+    let lit = mk(); shade({ a, n, w, h }, lit, window.NIGHT ? st : studio, window.NIGHT ? lights : [], [0, 0, w, h]);
+    if (window.NIGHT) { const under = mk(), u = under.getContext("2d"); u.fillStyle = "#0c1014"; u.fillRect(0, 0, w, h); u.drawImage(lit, 0, 0); lit = under; }
+    const big = document.createElement("canvas"); big.width = w * scale; big.height = h * scale; const g = big.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(lit, 0, 0, w * scale, h * scale);
     return big.toDataURL("image/png");
   }
   if (what === "party") { // each listed species in party gear (a different mix per row, all items on the first) at baby, young and adult, towards then away; then woken
