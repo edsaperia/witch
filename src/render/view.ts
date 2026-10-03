@@ -46,6 +46,10 @@ export class View {
   private decorBatches = new Map<string, SpriteBatch>();
   private creatureBatches = new Map<string, SpriteBatch>();
   private witchBatch: SpriteBatch;
+  private treehouseBatch: SpriteBatch;
+  /** 1 while she sits on the treehouse terrace, easing to 0 as she takes off. */
+  private seatK = 1;
+  private seatTime = 0;
   private stoneBatch: SpriteBatch;
   private shadow: THREE.Mesh;
   private mpp: number; // metres per art pixel
@@ -124,6 +128,14 @@ export class View {
     this.witchBatch.mesh.renderOrder = 10;
     this.scene.add(...this.witchBatch.meshes);
     SPRITE_UNIFORMS.uOcc.value.set(O.fadeOpacity, O.edge, O.minHeight, O.on ? 1 : 0);
+    // The treehouse, home: its base and its crown (the crown only from the treetops), its trunk's
+    // foot on its spot. It fades like other tall things when she's behind it.
+    {
+      const T = this.assets.treehouse, f = T.atlas.frames, th = game.map.treehouse, x = th.x - (T.base.x - f[0].w / 2) * this.mpp;
+      this.treehouseBatch = new SpriteBatch(T.atlas, this.mpp, { fade: true });
+      this.treehouseBatch.set([{ x, y: 0, z: th.z, frame: f[0], flip: false }, { x, y: 0, z: th.z, frame: f[1], flip: false, top: true }]);
+      this.scene.add(...this.treehouseBatch.meshes);
+    }
     this.stoneBatch = new SpriteBatch(this.assets.stones, this.mpp, { fade: true });
     this.scene.add(...this.stoneBatch.meshes);
     const d = game.map.dancefloor, stones: SpriteInstance[] = [];
@@ -391,6 +403,7 @@ export class View {
       const b = this.batchFor(this.typeBatches, type, () => { const a = this.assets.typeArt(type); return a && new SpriteBatch(a.atlas, mpp, { scenery: true, fade: true }); });
       b?.set(list);
     }
+    { const th = g.map.treehouse; shadows.push({ x: th.x, z: th.z, w: 7, d: 3.5, scenery: false }); } // soft, under the treehouse
     this.checkPops("placed", !force);
     this.sources = g.forest.lightsNear(g.witch.x, g.witch.z, t.haze.far + margin);
     this.stats.trees = nt; this.stats.bushes = nb;
@@ -560,7 +573,16 @@ export class View {
     }
     this.strings.update();
     this.borders.update();
-    this.setLights([this.dancefloor.update(time, this.ground), ...party.lights, ...this.forestLights], w.x, w.z);
+    // A point on the treehouse's sprite (its pixels) in the world, standing on its spot.
+    const T = this.assets.treehouse, thf = T.atlas.frames[0], th = g.map.treehouse, U2 = SPRITE_UNIFORMS;
+    const onTreehouse = (px: number, py: number) => {
+      const r = U2.uRight.value, u = U2.uUp.value, dx = (px - T.base.x) * this.mpp, dy = (thf.h - py) * this.mpp;
+      return { x: th.x + r.x * dx + u.x * dy, y: r.y * dx + u.y * dy, z: th.z + r.z * dx + u.z * dy };
+    };
+    const thLights: ForestLight[] = T.lights.filter(l => l.kind === "lantern" || l.kind === "window").slice(0, 2).map(l => ({
+      ...onTreehouse(l.x, l.y), reach: t.treehouse.lightReach, rgb: new THREE.Vector3(l.rgb[0] / 255, l.rgb[1] / 255, l.rgb[2] / 255), strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3 + l.x)),
+    }));
+    this.setLights([this.dancefloor.update(time, this.ground), ...party.lights, ...thLights, ...this.forestLights], w.x, w.z);
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);
     const bob = Math.sin(time * 2.4) * 0.12;
@@ -588,17 +610,29 @@ export class View {
       else wf = pick("stand", Math.floor(time * F.stand.fps) % F.stand[side].length);
     } else if (this.foot > 0.02) wf = this.foot >= prevFoot ? pick("land", Math.floor(this.foot * 3)) : pick("takeoff", Math.floor((1 - this.foot) * 3));
     const footEase = this.foot * this.foot * (3 - 2 * this.foot), wy = (h + bob - 0.4) * (1 - footEase);
-    const wframe = this.assets.witch.frames[wf], hatTop = wy + wframe.h * this.mpp;
-    this.witchBatch.set([{ x: w.x, y: wy, z: w.z, frame: wframe, flip: w.facing < 0 }]);
+    // At the start she sits on the treehouse terrace (the sit pose, swinging her legs), and eases
+    // off it into the air when she first moves.
+    const sdt = Math.min(0.1, Math.max(0, time - this.seatTime));
+    this.seatTime = time;
+    this.seatK = w.seated ? 1 : Math.max(0, this.seatK - sdt / 0.6);
+    let wx = w.x, wz = w.z, wyy = wy;
+    if (this.seatK > 0) {
+      const seat = onTreehouse(T.seat.x, T.seat.y), k = this.seatK * this.seatK * (3 - 2 * this.seatK);
+      const fwd = this.camera.getWorldDirection(this.v3);
+      wx += (seat.x - fwd.x * 0.6 - wx) * k; wyy += (seat.y - fwd.y * 0.6 - wyy) * k; wz += (seat.z - fwd.z * 0.6 - wz) * k;
+      if (w.seated) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
+    }
+    const wframe = this.assets.witch.frames[wf], hatTop = wyy + wframe.h * this.mpp;
+    this.witchBatch.set([{ x: wx, y: wyy, z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
     // Where she is on screen (low-res pixels) and how far from the camera, for the occluder fade.
     {
       const px = (x: number, y: number, z: number) => { const p = this.v3.set(x, y, z).project(this.camera); return [(p.x + 1) / 2 * this.width, (p.y + 1) / 2 * this.height]; };
-      const base = px(w.x, wy, w.z), top = px(w.x, hatTop, w.z), side = px(w.x + wframe.w * this.mpp / 2, wy, w.z);
+      const base = px(wx, wyy, wz), top = px(wx, hatTop, wz), side = px(wx + wframe.w * this.mpp / 2, wyy, wz);
       SPRITE_UNIFORMS.uWitch.value.set((base[0] + top[0]) / 2, (base[1] + top[1]) / 2, Math.abs(side[0] - base[0]) + 1, Math.abs(top[1] - base[1]) / 2 + 1);
-      SPRITE_UNIFORMS.uWitchDepth.value = -this.v3.set(w.x, h, w.z).applyMatrix4(this.camera.matrixWorldInverse).z;
+      SPRITE_UNIFORMS.uWitchDepth.value = -this.v3.set(wx, this.seatK > 0 ? wyy : h, wz).applyMatrix4(this.camera.matrixWorldInverse).z;
     }
-    this.shadow.position.set(w.x, 0.03, w.z);
-    this.shadow.scale.setScalar(1 - 0.5 * canopyShown(w));
+    this.shadow.position.set(wx, 0.03, wz);
+    this.shadow.scale.setScalar((1 - 0.5 * canopyShown(w)) * (1 - this.seatK) + 1e-3); // none while she's up on the terrace
 
     this.refresh();
     this.drawCreatures(time);

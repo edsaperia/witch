@@ -166,13 +166,26 @@ describe("the map", () => {
     expect(used.size).toBeGreaterThanOrEqual(25);
   });
 
-  it("puts the dancefloor in the clearing of the middle area, where the witch starts", () => {
+  it("puts the dancefloor in the clearing of the middle area, the treehouse by it, where the witch starts", () => {
     const d = map.dancefloor, a = map.areaAt(d.x, d.z);
     expect(a.cell).toEqual(map.centreCell);
     expect(Math.abs(map.centreCell[0] - 10) + Math.abs(map.centreCell[1] - 10)).toBeLessThanOrEqual(2);
     expect(a.openness).toBeLessThan(0.05);
     expect(map.treeWeight(d.x, d.z)).toBe(0);
-    expect(Math.hypot(map.start.x - d.x, map.start.z - d.z)).toBeLessThan(d.radius);
+    const th = map.treehouse, far = Math.hypot(th.x - d.x, th.z - d.z);
+    expect(far).toBeGreaterThan(d.radius + TUNING.dancefloor.clearing);
+    expect(far).toBeLessThan(d.radius + TUNING.dancefloor.clearing + 20);
+    expect(map.hardClear(th.x, th.z)).toBe(true);
+    expect(Math.hypot(map.start.x - th.x, map.start.z - th.z)).toBeLessThan(3);
+  });
+  it("starts the witch seated on the terrace; she stays put till the first move or rise", () => {
+    const g = newGame(5, TUNING);
+    expect(g.witch.seated).toBe(true);
+    const still = stepWitch(g.witch, NO_INTENT, 1, TUNING, map.bounds);
+    expect(still.seated).toBe(true);
+    const off = stepWitch(g.witch, { ...NO_INTENT, moveX: 1 }, 0.1, TUNING, map.bounds);
+    expect(off.seated).toBeFalsy();
+    expect(off.x).toBeGreaterThan(g.witch.x);
   });
 
   it("reads seeds from the URL: numbers as they are, words hashed", () => {
@@ -830,6 +843,7 @@ describe("paths, roads and railways", () => {
       if (h && h.d > P.lines[h.line].half) edgeN++; else if (!h) openN++;
     }
     expect(edge / edgeN).toBeGreaterThan((open / openN) * 1.5);
+    for (const w of forest.wallsNear(s.x, s.z, 600)) { const h = P.at(w.x, w.z); if (h) expect(h.kind === "rail" && P.railBroken(w.x, w.z)).toBe(true); }
   });
   it("stop at the edge of clearings, so they never run under the dancefloor or a set piece", () => {
     const d = map.dancefloor, clear = d.radius + TUNING.dancefloor.clearing;

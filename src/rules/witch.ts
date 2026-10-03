@@ -20,6 +20,8 @@ export interface WitchState {
   away: boolean;
   /** Leaning into fast flight: above leanAt of the mode's top speed. */
   lean: boolean;
+  /** Sitting on the treehouse terrace (the start), until the first move or rise. */
+  seated?: boolean;
 }
 
 /** What the player asks for this frame: a direction (length up to 1) and button presses. */
@@ -52,6 +54,10 @@ export const witchMaxSpeed = (w: WitchState, t: Tuning) => lerp(t.groundSpeed, t
 export const canopyShown = (w: WitchState) => smoothstep(w.lift);
 
 export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, bounds: { minX: number; maxX: number; minZ: number; maxZ: number }): WitchState {
+  if (w.seated) {
+    if (!intent.toggleMode && Math.hypot(intent.moveX, intent.moveZ) < 0.1) return w;
+    w = { ...w, seated: false };
+  }
   let { mode, lift } = w;
   if (intent.toggleMode) mode = mode === "ground" || mode === "descending" ? "rising" : "descending";
   if (mode === "rising") { lift += dt / Math.max(1e-3, t.riseTime); if (lift >= 1) { lift = 1; mode = "treetop"; } }

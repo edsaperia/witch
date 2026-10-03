@@ -6,7 +6,8 @@
       "Old roads sweep across the forest, and two to four railway lines curve across it, broken in places with trees growing between the sleepers",
       "Bushes crowd along the edges of paths and tracks",
       "Streams wind through the forest, and join the wet areas",
-      "Ruins, rocks and strange trees turn up here and there to discover"
+      "Ruins, rocks and strange trees turn up here and there to discover",
+      "You start sitting on the terrace of the witch's treehouse, by the dancefloor; move or rise to take off"
     ] },
     { "version": 117, "items": [
       "Removed the diagonal stripes across the forest (moonbeams are off; ?moonbeams=on brings them back)",

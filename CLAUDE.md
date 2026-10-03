@@ -61,3 +61,6 @@ Literal, stable names for the parts of the game, as Ed and the builders agree th
 - **Sigil stack**: the sigils of the creatures leashed to the witch, floating above her head, newest at the bottom. The Sigil button (E; gamepad X; touch "sigil") puts the bottom one down as a rune on the ground (a **leash point**) or picks a placed one back up.
 - **Party animal**: an invited creature, in party gear, dancing on the beat (`beat.bpm`).
 - **Partified border**: the sparkling line round the outside of the partified region, in each area's sigil colour.
+- **Path network**: the paths, roads, railways and streams (`src/rules/paths.ts`, on the map as `map.paths`): seeded spline lines with tree-free corridors and bushes thick along their edges, drawn as ground ribbons with the art's strips (`src/render/paths.ts`). A path's kind follows the area it crosses; broken railway lets trees grow between the sleepers.
+- **Decor**: ruins, rocks and freak trees (`art/decor.js`) scattered sparsely as scenery (`Forest.decorNear`), never on a path, in an area's central clearing or by the dancefloor.
+- **Treehouse**: the witch's home just beyond the dancefloor's clearing (`map.treehouse`); the game starts with her seated on its terrace (`witch.seated`), and the first move or rise takes her off.

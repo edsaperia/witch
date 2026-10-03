@@ -30,6 +30,9 @@ export class AssetLibrary {
   readonly props: Atlas;
   /** Soundsystems: variant x 3 + frame (the cones pumping), playing. */
   readonly soundsystems: Atlas;
+  /** The witch's treehouse: its base (frame 0) and top (frame 1, the crown: treetop mode), and
+   *  anchors in its sprite's pixels: the trunk's foot, her seat on the terrace, its lights. */
+  readonly treehouse: { atlas: Atlas; base: { x: number; y: number }; seat: { x: number; y: number }; lights: { x: number; y: number; rgb: number[]; kind: string }[] };
   /** Style scale: the lab's K, 2 / pixel size. */
   readonly K: number;
   /** Bumped whenever a new set is ready, so the view knows to refresh its batches. */
@@ -46,7 +49,7 @@ export class AssetLibrary {
       ...["rise", "descend"].flatMap(pose => ["towards", "away"].flatMap(facing => [0, 1].map(frame => wb({ pose, frame, facing })))));
     // On foot, from 16: standing, landing, taking off, talking, putting a sigil down, lifting one.
     const FOOT = Art.WITCH_FOOT_POSES as Record<string, { frames: number; fps: number }>;
-    for (const pose of ["stand", "land", "takeoff", "talk", "placeSigil", "liftSigil"]) {
+    for (const pose of ["stand", "land", "takeoff", "talk", "placeSigil", "liftSigil", "sit"]) {
       const n = FOOT[pose].frames, entry = { towards: [] as number[], away: [] as number[], fps: FOOT[pose].fps };
       for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < n; frame++) { entry[facing].push(sprites.length); sprites.push(wb({ pose, frame, facing })); }
       this.witchFoot[pose] = entry;
@@ -58,6 +61,13 @@ export class AssetLibrary {
     const ss: Baked[] = [];
     for (let v = 0; v < 3; v++) for (let f = 0; f < 3; f++) ss.push(Art.bake(Art.soundsystemSprite(style, { variant: v, frame: f, state: "playing" }), Art.soundsystemColours(v), style, style.cOutline) as Baked);
     this.soundsystems = packAtlas(ss, 2048);
+    const th = Art.treehouseSprite(style) as { bot: unknown; top: unknown; anchors: { base: { x: number; y: number }; seat: { x: number; y: number }; lights: { x: number; y: number; rgb: number[]; kind: string }[] } };
+    const thc = Art.treehouseColours(style);
+    // Its model draws a hard dark shadow ellipse on the ground round the trunk's foot: drop it (a
+    // soft contact shadow goes there instead), as Ed asked for set pieces.
+    for (const sp of [th.bot, th.top] as { w: number; h: number; m: Uint8Array }[])
+      for (let y = Math.max(0, Math.floor(th.anchors.base.y - 14)); y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x] === Art.M.NOSE) sp.m[y * sp.w + x] = 0;
+    this.treehouse = { atlas: packAtlas([th.bot, th.top].map(sp => Art.bake(sp, thc, style, "none") as Baked), 2048), ...th.anchors };
     this.useWorkers = typeof Worker !== "undefined" && typeof OffscreenCanvas !== "undefined";
     if (this.useWorkers) {
       const n = Math.max(1, Math.min(3, (navigator.hardwareConcurrency || 2) - 1));

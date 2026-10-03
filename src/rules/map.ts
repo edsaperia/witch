@@ -57,7 +57,9 @@ export interface ForestMap {
   /** The middle area, whose clearing holds the dancefloor. */
   readonly centreCell: Cell;
   readonly dancefloor: { x: number; z: number; radius: number };
-  /** Where the witch starts: the dancefloor. */
+  /** The witch's treehouse: its trunk's foot, just beyond the dancefloor's clearing. */
+  readonly treehouse: { x: number; z: number };
+  /** Where the witch starts: at the treehouse (sitting on its terrace). */
   readonly start: { x: number; z: number };
   /** Where the witch may fly (metres). */
   readonly bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
@@ -175,8 +177,11 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   };
   // The dancefloor keeps a clearing of its own, however close a neighbouring area's centre.
   const floorR = tuning.dancefloor.radius, floorClear = floorR + tuning.dancefloor.clearing;
+  const TH = tuning.treehouse, ta = (TH.angle * Math.PI) / 180;
+  const treehouse = { x: centre.x + Math.cos(ta) * (floorClear + TH.distance), z: centre.z + Math.sin(ta) * (floorClear + TH.distance) };
   const hardCell = (x: number, z: number, cell: Cell) => {
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return true;
+    if (Math.hypot(x - treehouse.x, z - treehouse.z) < TH.clear) return true;
     // A set piece keeps a clearing round it, sized with it.
     if (!setPieceOf(cell[0], cell[1])) return false;
     const p = siteOf(cell[0], cell[1]);
@@ -196,7 +201,8 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const map = {
     seed, tuning, n, margin, areaSize: A, partition, centreCell,
     dancefloor: { x: centre.x, z: centre.z, radius: floorR },
-    start: { x: centre.x, z: centre.z + 2 },
+    treehouse,
+    start: { x: treehouse.x, z: treehouse.z + 1 },
     bounds: { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad },
     extent: { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A },
     typeOf, areaAt, siteOf, treeWeight, hardClear, neighbours, setPieceOf, remoteness,

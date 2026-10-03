@@ -112,6 +112,7 @@ function bushesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
     const type = plantType(map, x, z, i, j, s + 206), sparse = 1 - Math.min(1, treeChance(map, x, z, type) / 0.8);
     if (hash2(i, j, s + 203) > (0.15 + 0.85 * sparse) * AREA_TYPES[type].layout.undergrowth * map.tuning.bushDensity * clump * along) continue;
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + 2) continue; // the dancefloor stays clear
+    if (Math.hypot(x - map.treehouse.x, z - map.treehouse.z) < map.tuning.treehouse.clear) continue; // and the treehouse's foot
     out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 204) * BUSH_VARIANTS), flip: hash2(i, j, s + 205) < 0.5 });
   }
   return out;
@@ -126,7 +127,7 @@ function wallsInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
   for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
     if (hash2(i, j, s + 303) > map.tuning.wallDensity) continue;
     const x = (i + (hash2(i, j, s + 301) - 0.5) * 0.6) * sp, z = (j + (hash2(i, j, s + 302) - 0.5) * 0.6) * sp, a = map.areaAt(x, z);
-    if (a.openness < 0.82 || !AREA_TYPES[a.type].hasWalls) continue;
+    if (a.openness < 0.82 || !AREA_TYPES[a.type].hasWalls || map.paths.clearance(x, z).bushes === 0) continue; // not across a path
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + 4) continue;
     out.push({ x, z, type: a.type, variant: Math.floor(hash2(i, j, s + 304) * 4), flip: hash2(i, j, s + 305) < 0.5 });
   }

@@ -32,7 +32,7 @@ export interface Controls extends Intent, Partial<LeashControls> {
 
 export function newGame(seed: number, tuning: Tuning): Game {
   const map = generateMap(seed, tuning);
-  const witch = newWitch(map.start.x, map.start.z);
+  const witch = { ...newWitch(map.start.x, map.start.z), seated: true };
   return {
     seed, tuning, map, forest: new Forest(map), creatures: spawnCreatures(map), clock: newClock(),
     witch, camera: newCamera(tuning, witch.x, witchHeight(witch, tuning), witch.z), party: newParty(map), leash: newLeash(),
