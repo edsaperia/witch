@@ -1,5 +1,5 @@
 // Creatures: each area's own kind, more of them and older the further the area is from home
-// (Ed, 2026-10-03). The areas round the dancefloor hold a couple of babies; areas near the map's
+// (Ed, 2026-10-03). The home area holds none and the areas round it a couple of babies; areas near the map's
 // edge hold about 20, young ones and a couple of legends among them. They wander round their
 // area's centre; only those near the witch are simulated.
 import { clamp, hash2, lerp, rng, smoothstep } from "./random";
@@ -44,12 +44,15 @@ export function population(map: ForestMap, remoteness: number, roll = 0.5): Area
 
 /** How far a creature strays from its area's centre: the clearing, wider in crowded far areas. */
 export const wanderRange = (map: ForestMap, level: number, remoteness = 0) =>
-  map.tuning.clearingSize * 0.75 * map.areaSize * 0.5 * (level === 2 ? 0.55 : 0.8) * (1 + remoteness);
+  (map.tuning.clearingSize + map.tuning.clearingFalloff * 0.3) * map.areaSize * 0.5 * (level === 2 ? 0.55 : 0.8) * (1 + remoteness);
 
 export function spawnCreatures(map: ForestMap): Creature[] {
   const out: Creature[] = [], t = map.tuning;
   let id = 0;
+  // The home area holds none (Ed, 2026-10-03); one legend lives next door, so there is one to find.
+  const [hx, hy] = map.centreCell;
   for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
+    if (cx === hx && cy === hy) continue;
     const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), type = AREA_TYPES[map.typeOf(cx, cy)], home = map.siteOf(cx, cy);
     const far = map.remoteness(cx, cy), pop = population(map, far, hash2(cx, cy, map.seed + 43));
     const make = (level: 0 | 1 | 2): Creature => {
@@ -63,7 +66,8 @@ export function spawnCreatures(map: ForestMap): Creature[] {
     };
     for (let i = 0; i < pop.babies; i++) out.push(make(0));
     for (let i = 0; i < pop.young; i++) out.push(make(1));
-    for (let i = 0; i < pop.legends; i++) out.push(make(2));
+    const legends = cx === hx + 1 && cy === hy ? Math.max(1, pop.legends) : pop.legends;
+    for (let i = 0; i < legends; i++) out.push(make(2));
   }
   return out;
 }

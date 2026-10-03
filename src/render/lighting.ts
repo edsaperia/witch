@@ -18,6 +18,11 @@ export const LIGHT_UNIFORMS = {
   uGlowRgb: { value: new THREE.Vector3() },
   uGlowR: { value: 8 },
   uGlowPower: { value: 1.4 },
+  // The twilight haze: the forest fades into it from near to far metres from the witch.
+  uHazeCentre: { value: new THREE.Vector2() },
+  uHazeRange: { value: new THREE.Vector2(70, 200) },
+  uHazeColour: { value: new THREE.Vector3() },
+  uTime: { value: 0 },
 };
 
 export type LightUniforms = typeof LIGHT_UNIFORMS;
@@ -36,11 +41,22 @@ export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel:
   LIGHT_UNIFORMS.uGlowRgb.value.copy(v(hsv2rgb(st.glowHue, st.glowSat, 1), 1));
   LIGHT_UNIFORMS.uGlowR.value = glowReach;
   LIGHT_UNIFORMS.uGlowPower.value = st.glowPower;
+  LIGHT_UNIFORMS.uHazeColour.value.copy(v(hsv2rgb(st.ambientHue, 0.45, 1), 0.16));
 }
 
 export const LIGHT_GLSL = /* glsl */ `
 uniform vec3 uAmb, uMoon, uMoonDir, uMoonBeam, uGlowPos, uGlowRgb;
-uniform float uBands, uDither, uShafts, uShaftScale, uGlowR, uGlowPower;
+uniform float uBands, uDither, uShafts, uShaftScale, uGlowR, uGlowPower, uTime;
+uniform vec2 uHazeCentre, uHazeRange;
+uniform vec3 uHazeColour;
+
+// Fade toward the twilight haze with distance, in a few dithered steps so it stays pixel art.
+vec3 haze(vec3 c, vec3 P) {
+  float h = smoothstep(uHazeRange.x, uHazeRange.y, length(P.xz - uHazeCentre));
+  float q = h * 4.0, fr = fract(q);
+  q = floor(q) + (fr > (mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) > 0.5 ? 0.66 : 0.33) ? 1.0 : 0.0);
+  return mix(c, uHazeColour, q / 4.0);
+}
 
 float lightStep(float f) {
   float q = f * uBands;

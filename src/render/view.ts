@@ -9,6 +9,9 @@ import { AssetLibrary, type TypeArt } from "./assets";
 import { Ground } from "./ground";
 import { applyStyleLight, LIGHT_UNIFORMS } from "./lighting";
 import { Post } from "./post";
+import { Mist } from "./mist";
+import { ShadowBatch, type ShadowInstance } from "./shadows";
+import { lerp } from "../rules/random";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
 import type { Style } from "./style";
 
@@ -26,9 +29,12 @@ export class View {
   private stoneBatch: SpriteBatch;
   private shadow: THREE.Mesh;
   private mpp: number; // metres per art pixel
-  private lastBuild = { x: Infinity, z: Infinity, version: -1 };
+  private lastBuild = { x: Infinity, z: Infinity, version: -1, up: 0 };
   private prefetch = false;
   readonly post: Post;
+  private shadows: ShadowBatch;
+  private shadowList: ShadowInstance[] = [];
+  private mist: Mist | null = null;
   private width = 1;
   private height = 1;
   stats: ViewStats = { trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0 };
@@ -47,6 +53,13 @@ export class View {
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize);
     this.ground = new Ground(game.map, style, this.mpp);
     this.assets.onFloor = (type, tile) => this.ground.setFloor(type, tile);
+    const cs = t.canopyShadow;
+    this.ground.setCanopyShadow(cs.on ? cs.strength : 0, cs.height, cs.cover, cs.wind);
+    this.shadows = new ShadowBatch(t.shadows.strength);
+    this.shadows.mesh.visible = t.shadows.on;
+    this.scene.add(this.shadows.mesh);
+    if (t.mist.on && t.mist.strength > 0) { this.mist = new Mist(t.mist.strength, t.mist.height, t.mist.wind, this.mpp); this.scene.add(this.mist.mesh); }
+    LIGHT_UNIFORMS.uHazeRange.value.set(t.haze.near, t.haze.far);
     this.scene.add(this.ground.mesh);
 
     this.witchBatch = new SpriteBatch(this.assets.witch, this.mpp, { unlit: true, onTop: true });
@@ -105,25 +118,36 @@ export class View {
 
   /** Rebuild the tree and bush batches round the camera, when it has moved far enough. */
   private refresh(force = false): void {
-    const g = this.game, cam = g.camera, R = g.tuning.drawRadius;
-    const cx = cam.tx, cz = cam.tz - R * 0.25;
-    if (!force && Math.hypot(cx - this.lastBuild.x, cz - this.lastBuild.z) < 6 && this.assets.version === this.lastBuild.version) return;
-    this.lastBuild = { x: cx, z: cz, version: this.assets.version };
+    const g = this.game, cam = g.camera, t = g.tuning, up = canopyShown(g.witch);
+    // Further from the treetops; the view looks north, so the drawn square sits mostly ahead.
+    const R = lerp(t.drawRadius, t.drawRadiusTreetop, up), D = t.detailRadius;
+    const cx = cam.tx, cz = cam.tz - R * lerp(0.25, 0.55, up);
+    if (!force && Math.hypot(cx - this.lastBuild.x, cz - this.lastBuild.z) < 10 && this.assets.version === this.lastBuild.version && Math.abs(up - this.lastBuild.up) < 0.25) return;
+    this.lastBuild = { x: cx, z: cz, version: this.assets.version, up };
+    const near = (p: { x: number; z: number }) => Math.abs(p.x - cam.tx) < D && Math.abs(p.z - cam.tz) < D;
+    const shadows: ShadowInstance[] = [];
+    // Shadows fall away from the moon: from the upper left, so toward the lower right.
+    const L = LIGHT_UNIFORMS.uMoonDir.value, sx = -L.x / Math.max(0.2, L.y), sz = -L.z / Math.max(0.2, L.y);
     const per = new Map<number, SpriteInstance[]>();
     const add = (type: number, inst: SpriteInstance) => { let l = per.get(type); if (!l) per.set(type, (l = [])); l.push(inst); };
     // Ask ahead for the art of every area a little beyond what is drawn.
     const A = g.map.areaSize, ahead = R + A * 1.5;
     if (this.prefetch) for (let cy = Math.floor((cz - ahead) / A); cy <= Math.floor((cz + ahead) / A); cy++)
       for (let cx2 = Math.floor((cx - ahead) / A); cx2 <= Math.floor((cx + ahead) / A); cx2++) this.assets.prefetchType(g.map.typeOf(cx2, cy));
-    const trees = g.forest.treesNear(cx, cz, R), bushes = g.forest.bushesNear(cx, cz, R * 0.8);
-    const walls = g.forest.wallsNear(cx, cz, R * 0.8), pieces = g.forest.setPiecesNear(cx, cz, R);
+    const trees = g.forest.treesNear(cx, cz, R), bushes = g.forest.bushesNear(cam.tx, cam.tz, D);
+    const walls = g.forest.wallsNear(cam.tx, cam.tz, D), pieces = g.forest.setPiecesNear(cam.tx, cam.tz, D);
     let nt = 0, nb = 0;
     for (const p of trees) {
       const art = this.assets.typeArt(p.type);
       if (!art || !art.layout.big.length) continue;
-      const f = art.atlas.frames, big = art.layout.big[p.variant % art.layout.big.length];
-      add(p.type, { x: p.x, y: 0, z: p.z, frame: f[big.bot], flip: p.flip });
+      const f = art.atlas.frames, big = art.layout.big[p.variant % art.layout.big.length], close = near(p);
+      // Far off only the crowns are drawn (from the treetops nothing else shows there).
+      if (close || big.top === null) add(p.type, { x: p.x, y: 0, z: p.z, frame: f[big.bot], flip: p.flip });
       if (big.top !== null) add(p.type, { x: p.x, y: 0, z: p.z, frame: f[big.top], flip: p.flip, top: true });
+      if (close) {
+        const top = f[big.top ?? big.bot], w = top.w * this.mpp, h = top.h * this.mpp * (big.top === null ? 0.2 : 0.6);
+        shadows.push({ x: p.x + sx * h, z: p.z + sz * h, w: w * 0.8, d: w * 0.45 });
+      }
       nt++;
     }
     const scatter = (list: typeof bushes, pick: (l: TypeArt["layout"]) => number[]) => {
@@ -132,7 +156,9 @@ export class View {
         if (!art) continue;
         const frames = pick(art.layout);
         if (!frames.length) continue;
-        add(p.type, { x: p.x, y: 0, z: p.z, frame: art.atlas.frames[frames[p.variant % frames.length]], flip: p.flip });
+        const frame = art.atlas.frames[frames[p.variant % frames.length]];
+        add(p.type, { x: p.x, y: 0, z: p.z, frame, flip: p.flip });
+        shadows.push({ x: p.x, z: p.z, w: frame.w * this.mpp * 0.8, d: frame.w * this.mpp * 0.3 });
         nb++;
       }
     };
@@ -145,11 +171,12 @@ export class View {
       b?.set(list);
     }
     this.stats.trees = nt; this.stats.bushes = nb;
+    this.shadowList = shadows;
   }
 
   private drawCreatures(): void {
-    const g = this.game, cam = g.camera, R = g.tuning.drawRadius;
-    const per = new Map<string, SpriteInstance[]>();
+    const g = this.game, cam = g.camera, R = g.tuning.detailRadius;
+    const per = new Map<string, SpriteInstance[]>(), creatureShadows: ShadowInstance[] = [];
     let n = 0;
     for (const c of g.creatures) {
       if (Math.abs(c.x - cam.tx) > R || Math.abs(c.z - cam.tz) > R) continue;
@@ -159,6 +186,7 @@ export class View {
       let l = per.get(c.species);
       if (!l) per.set(c.species, (l = []));
       l.push({ x: c.x, y: 0, z: c.z, frame, flip: c.facing < 0 });
+      creatureShadows.push({ x: c.x, z: c.z, w: frame.w * this.mpp * 0.7, d: frame.w * this.mpp * 0.25 });
       n++;
     }
     for (const [s, b] of this.creatureBatches) if (!per.has(s)) b.set([]);
@@ -167,6 +195,7 @@ export class View {
       b?.set(list);
     }
     this.stats.creatures = n;
+    if (this.game.tuning.shadows.on) this.shadows.set(this.shadowList.concat(creatureShadows));
   }
 
   render(time: number): void {
@@ -192,6 +221,9 @@ export class View {
 
     const w = g.witch, h = witchHeight(w, t);
     LIGHT_UNIFORMS.uGlowPos.value.set(w.x, h + t.glowHeight, w.z);
+    LIGHT_UNIFORMS.uHazeCentre.value.set(w.x, w.z);
+    LIGHT_UNIFORMS.uTime.value = time;
+    this.mist?.follow(pose.tx, pose.tz);
     const bob = Math.sin(time * 2.4) * 0.12;
     this.witchBatch.set([{ x: w.x, y: h + bob - 0.4, z: w.z, frame: this.assets.witch.frames[0], flip: w.facing < 0 }]);
     this.shadow.position.set(w.x, 0.03, w.z);
@@ -200,7 +232,8 @@ export class View {
     this.refresh();
     this.drawCreatures();
     this.assets.work(6);
-    this.stats.pendingGround = this.ground.fill(this.renderer, pose.tx, pose.tz - 10, t.drawRadius + 20, 3);
+    const groundR = lerp(t.drawRadius, t.drawRadiusTreetop, canopyShown(w)) * 0.7;
+    this.stats.pendingGround = this.ground.fill(this.renderer, pose.tx, pose.tz - groundR * 0.5, groundR, 3);
     this.stats.pendingArt = this.assets.pending;
     this.renderer.info.reset();
     this.post.render(this.scene, this.camera);

@@ -53,12 +53,13 @@ void main() {
   if (a.a < 0.5) discard;
   if (vFlags.y > 0.5 && bayer(gl_FragCoord.xy) >= uTopFade) discard;
   // Eye glints, flowers and magic glow: the generator marks them with alpha 254.
-  if (uUnlit > 0.5 || a.a < 0.999) { gl_FragColor = vec4(a.rgb, 1.0); return; }
+  if (uUnlit > 0.5) { gl_FragColor = vec4(a.rgb, 1.0); return; }
+  if (a.a < 0.999) { gl_FragColor = vec4(haze(a.rgb, vWorld), 1.0); return; }
   vec4 n = texture2D(uNormal, vUv);
   float nx = (n.r * 255.0 - 128.0) / 127.0, ny = (n.g * 255.0 - 128.0) / 127.0, nz = n.b;
   if (vFlags.x > 0.5) nx = -nx;
   vec3 N = normalize(uRight * nx - uUp * ny + uFacing * nz);
-  gl_FragColor = vec4(min(vec3(1.0), a.rgb * nightLight(N, vWorld) * 1.25), 1.0);
+  gl_FragColor = vec4(haze(min(vec3(1.0), a.rgb * nightLight(N, vWorld) * 1.25), vWorld), 1.0);
 }
 `;
 

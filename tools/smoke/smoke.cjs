@@ -134,6 +134,34 @@ async function main() {
     }, `&tilt=${tilt}`);
   }
 
+  // The ground effects (tree shadows, canopy shadow, mist) off and on, from the same spot, and a
+  // short recording in motion with them on.
+  for (const [name, q] of [["effects-off", "&shadows=off&canopy=off&mist=off"], ["effects-on", ""]]) {
+    await run(name, { width: 1280, height: 720 }, async page => {
+      await page.keyboard.press("Enter");
+      await hold(page, "KeyD", 1.5);
+      await sleep(300);
+      await shot(page, `30-ground-${name}.png`);
+      await page.keyboard.press("Space");
+      await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
+      await sleep(600);
+      await shot(page, `31-treetop-${name}.png`);
+    }, q + "&tilt=before");
+  }
+  if (process.env.RECORD) {
+    const ctx = await browser.newContext({ viewport: { width: 960, height: 540 }, recordVideo: { dir: out, size: { width: 960, height: 540 } } });
+    const page = await ctx.newPage();
+    await page.goto(`http://127.0.0.1:${port}/?seed=${seed}`);
+    await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 120000 });
+    await page.keyboard.press("Enter");
+    await page.keyboard.down("KeyD"); await sleep(2500); await page.keyboard.up("KeyD");
+    await page.keyboard.press("Space"); await sleep(800);
+    await page.keyboard.down("KeyW"); await sleep(3500); await page.keyboard.up("KeyW");
+    const video = page.video();
+    await ctx.close();
+    if (video) { fs.renameSync(await video.path(), path.join(out, "flight.webm")); results.push("video previews/flight.webm"); }
+  }
+
   await browser.close();
   server.close();
   console.log(results.join("\n"));

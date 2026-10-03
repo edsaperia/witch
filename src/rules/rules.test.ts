@@ -117,6 +117,37 @@ describe("the map", () => {
     expect(types(other)).not.toBe(types(map));
   });
 
+  it("puts each area's centre where the partition does, through the size warp", () => {
+    for (let y = 2; y < 18; y += 3) for (let x = 2; x < 18; x += 3) {
+      const s = map.siteOf(x, y);
+      expect(map.areaAt(s.x, s.z).openness).toBeLessThan(0.01);
+    }
+  });
+
+  it("varies area sizes more with areaSizeVariance, keeping 20 x 20 areas", () => {
+    const sizes = (variance: number) => {
+      const m = generateMap(123, withTuning({ areaSizeVariance: variance })), count = new Map<string, number>();
+      for (let j = 0; j < 200; j++) for (let i = 0; i < 200; i++) {
+        const k = m.areaAt((i / 200) * 20 * m.areaSize, (j / 200) * 20 * m.areaSize).cell.join();
+        count.set(k, (count.get(k) ?? 0) + 1);
+      }
+      const inner = [...count.entries()].filter(([k]) => { const [x, y] = k.split(",").map(Number); return x > 1 && y > 1 && x < 18 && y < 18; }).map(([, v]) => v);
+      const mean = inner.reduce((a, b) => a + b, 0) / inner.length;
+      return { spread: Math.sqrt(inner.reduce((a, b) => a + (b - mean) ** 2, 0) / inner.length) / mean, areas: count.size };
+    };
+    const flat = sizes(0), varied = sizes(1);
+    expect(varied.spread).toBeGreaterThan(flat.spread * 1.4);
+    expect(varied.areas).toBeGreaterThan(380);
+    expect(varied.areas).toBeLessThan(470);
+  });
+
+  it("thins trees smoothly toward each centre, not at a sharp edge", () => {
+    const s = map.siteOf(4, 13), samples: number[] = [];
+    for (let d = 0; d < map.areaSize * 0.5; d += 0.5) samples.push(map.treeWeight(s.x + d, s.z));
+    const between = samples.filter(w => w > 0.05 && w < TUNING.treeDensity * 0.95).length;
+    expect(between).toBeGreaterThan(samples.length * 0.3);
+  });
+
   it("uses many area types", () => {
     const used = new Set<number>();
     for (let y = 0; y < 20; y++) for (let x = 0; x < 20; x++) used.add(map.typeOf(x, y));
@@ -286,13 +317,15 @@ describe("creatures", () => {
     expect(new Set(AREA_TYPES.map(t => t.creature)).size).toBe(30);
   });
 
-  it("are a couple of babies in the areas round home", () => {
-    for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) {
+  it("are none in the home area, a couple of babies round it, and one legend next door", () => {
+    expect(inCell(mx, my)).toEqual([]);
+    for (const [dx, dy] of [[-1, 0], [0, 1], [0, -1]]) {
       const here = inCell(mx + dx, my + dy);
       expect(here.length).toBeGreaterThanOrEqual(1);
       expect(here.length).toBeLessThanOrEqual(3);
       expect(here.every(c => c.level === 0)).toBe(true);
     }
+    expect(inCell(mx + 1, my).filter(c => c.level === 2).length).toBe(1);
   });
 
   it("grow to about 20 towards the edge, with young ones and a couple of legends", () => {

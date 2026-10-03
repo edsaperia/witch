@@ -6,10 +6,12 @@ export interface CameraModeTuning { angleIn: number; angleOut: number; distanceI
 export interface Tuning {
   mapAreas: number;
   areaSize: number;
+  areaScale: number;
+  areaSizeVariance: number;
   borderLayers: number;
   treeDensity: number;
   clearingSize: number;
-  clearingEdge: number;
+  clearingFalloff: number;
   bushDensity: number;
   treeSpacingX: number;
   treeSpacingZ: number;
@@ -25,13 +27,19 @@ export interface Tuning {
   descendTime: number;
   groundHeight: number;
   treetopHeight: number;
-  camera: { fov: number; ground: CameraModeTuning; treetop: CameraModeTuning; zoomSteps: number; startZoom: number; follow: number };
+  camera: { fov: number; ground: CameraModeTuning; treetop: CameraModeTuning; zoomSteps: number; startZoom: number; follow: number; lookAhead: number };
   pixelSize: number;
   glowReach: number;
   glowHeight: number;
   spriteTilt: number;
   artPixelsPerMetre: number;
   drawRadius: number;
+  drawRadiusTreetop: number;
+  detailRadius: number;
+  haze: { near: number; far: number };
+  shadows: { on: boolean; strength: number };
+  canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };
+  mist: { on: boolean; strength: number; height: number; wind: number };
   bloom: { on: boolean; strength: number; threshold: number };
   tiltShift: { on: boolean; where: "before" | "after"; strength: number; band: number; centre: number };
   creaturesNear: number;

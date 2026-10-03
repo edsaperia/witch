@@ -15,8 +15,15 @@ if (seed === null) {
   history.replaceState(null, "", "?" + params.toString() + location.hash);
 }
 
-// Variants as switches in the link: ?tilt=before|after|off, ?bloom=off.
-const tuning = { ...TUNING, bloom: { ...TUNING.bloom }, tiltShift: { ...TUNING.tiltShift } };
+// Variants as switches in the link: ?tilt=before|after|off, ?bloom=off, ?shadows=off,
+// ?canopy=off (the canopy shadow layer), ?mist=off.
+const tuning = {
+  ...TUNING, bloom: { ...TUNING.bloom }, tiltShift: { ...TUNING.tiltShift },
+  shadows: { ...TUNING.shadows }, canopyShadow: { ...TUNING.canopyShadow }, mist: { ...TUNING.mist },
+};
+if (params.get("shadows") === "off") tuning.shadows.on = false;
+if (params.get("canopy") === "off") tuning.canopyShadow.on = false;
+if (params.get("mist") === "off") tuning.mist.on = false;
 const tilt = params.get("tilt");
 if (tilt === "off") tuning.tiltShift.on = false;
 else if (tilt === "before" || tilt === "after") { tuning.tiltShift.on = true; tuning.tiltShift.where = tilt; }

@@ -34,6 +34,7 @@ uniform sampler2D uFloors;        // every type's floor tile, FLOOR_COLS to a ro
 uniform vec2 uTile, uFloorsSize;  // one tile's size and the atlas's, in art pixels
 uniform float uSat;
 uniform vec3 uFloor; // dancefloor x, z, radius
+uniform vec4 uCanopy; // canopy shadow: strength (0 off), height, cover, wind speed
 varying vec3 vWorld;
 ${LIGHT_GLSL}
 float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
@@ -70,7 +71,17 @@ void main() {
   float r = length(p - uFloor.xy);
   if (r < uFloor.z) c = mix(c, vec3(0.42, 0.42, 0.38), 0.25);
   if (abs(r - uFloor.z) < uPixel * 1.5 && hash(px * 0.71) < 0.8) c = vec3(150.0, 150.0, 135.0) / 255.0;
-  gl_FragColor = vec4(min(vec3(1.0), c * nightLight(vec3(0.0, 1.0, 0.0), vWorld) * 1.25), 1.0);
+  vec3 light = nightLight(vec3(0.0, 1.0, 0.0), vWorld);
+  if (uCanopy.x > 0.0) {
+    // The canopy's shadow: a dappled layer at canopy height, cast along the moonlight onto the
+    // ground, drifting with the wind; thinner where the canopy thins, in the clearings.
+    vec2 q = p + uMoonDir.xz / max(0.2, uMoonDir.y) * uCanopy.y + vec2(0.7, 0.3) * uCanopy.w * uTime;
+    float leaves = vnoise(q / 2.6) * 0.6 + vnoise(q / 1.1 + 31.0) * 0.4;
+    float cover = uCanopy.z * smoothstep(0.25, 0.85, open);
+    float edge = mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) > 0.5 ? 0.03 : -0.03;
+    if (leaves + edge < cover) light *= 1.0 - uCanopy.x;
+  }
+  gl_FragColor = vec4(haze(min(vec3(1.0), c * light * 1.25), vWorld), 1.0);
 }
 `;
 
@@ -110,12 +121,18 @@ export class Ground {
         uFloorsSize: { value: new THREE.Vector2(64 * FLOOR_COLS, 48 * 4) },
         uSat: { value: st.sat },
         uFloor: { value: new THREE.Vector3(map.dancefloor.x, map.dancefloor.z, map.dancefloor.radius) },
+        uCanopy: { value: new THREE.Vector4() },
       },
     });
     const geo = new THREE.PlaneGeometry(w + 400, d + 400);
     geo.rotateX(-Math.PI / 2);
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.position.set((e.minX + e.maxX) / 2, 0, (e.minZ + e.maxZ) / 2);
+  }
+
+  /** The canopy shadow layer's settings (strength 0 turns it off). */
+  setCanopyShadow(strength: number, height: number, cover: number, wind: number): void {
+    ((this.mesh.material as THREE.ShaderMaterial).uniforms.uCanopy.value as THREE.Vector4).set(strength, height, cover, wind);
   }
 
   /** An area type's floor tile has been drawn: put it in the atlas (on the next fill). */

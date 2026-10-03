@@ -37,7 +37,8 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   const dt = tick(g.clock, realDt);
   if (dt === 0) return;
   g.witch = stepWitch(g.witch, c, dt, g.tuning, g.map.bounds);
-  g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, dt, g.tuning);
+  const ahead = g.tuning.camera.lookAhead;
+  g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x + g.witch.vx * ahead, y: witchHeight(g.witch, g.tuning), z: g.witch.z + g.witch.vz * ahead }, dt, g.tuning);
   stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, g.tuning.creatureSimRadius, dt);
 }
 
