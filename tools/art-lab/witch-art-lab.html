@@ -173,7 +173,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
-        <div class="row" style="justify-content:space-between"><h2>Trees</h2><div class="row"><label class="note" for="treeArea">Area</label><select id="treeArea"></select></div></div>
+        <div class="row" style="justify-content:space-between"><h2>Trees</h2><div class="row"><label class="note" for="treeArea">Area</label><select id="treeArea"></select><label class="note" for="treeKind">Species</label><select id="treeKind"></select></div></div>
         <p class="note">An area's trees across their whole range of heights, from saplings to the occasional giant that pokes above the canopy, with the witch for scale, and how the area lays out its vegetation (its layout, which the prototype's generator reads).</p>
         <p class="note" id="treeLayout"></p>
         <div class="sheet-wrap"><canvas id="treeSheet" width="420" height="160"></canvas></div>
@@ -224,7 +224,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours, areaTreeVariants, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
+import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours, areaTreeVariants, TREE_SPECIES, splitTree, treeColours, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -459,14 +459,21 @@ function renderTrees() {
   treeTimer = setTimeout(() => {
     const c = document.getElementById("treeSheet"), sel = document.getElementById("treeArea"); if (!c || !sel) return;
     if (!sel.options.length) { for (const A of AREAS) sel.add(new Option(A.name, A.id)); sel.addEventListener("change", renderTrees); }
+    const kind = document.getElementById("treeKind");
+    if (kind && !kind.options.length) { kind.add(new Option("the area's own", "")); for (const [id, S] of Object.entries(TREE_SPECIES)) kind.add(new Option(S.name, id)); kind.addEventListener("change", renderTrees); }
     const y = AREA_BY_ID[sel.value].layout, pct = v => Math.round(v * 100) + "%", info = document.getElementById("treeLayout");
     if (info && y) info.textContent = `${y.feel} Pattern ${y.pattern}${y.along ? " along " + y.along : ""}, density ${pct(y.density)}, clump ${pct(y.clump)}, ${y.glades.count} glade${y.glades.count === 1 ? "" : "s"}${y.glades.count ? ` (${y.glades.size[0]}-${y.glades.size[1]} m)` : ""}, undergrowth ${pct(y.undergrowth)}${y.lean.amount ? `, leaning ${pct(y.lean.amount)} toward ${y.lean.dir}°` : ""}; terrain: ${y.terrain.join(", ")}; ` +
       (y.heightMix ? "height mix " + Object.entries(y.heightMix).map(([k, v]) => k + " " + pct(v)).join(", ") : "its big objects aren't trees") + "; decorations " + pct(y.decor.rate) + ": " + Object.entries(y.decor).filter(([k, v]) => k !== "rate" && v).map(([k, v]) => k + " " + pct(v)).join(", ") + ".";
     const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 6;
-    const row = [...areaTreeVariants(sel.value, st).map(v => v.whole), bake(witchSprite(st), witchColours(st), st, st.cOutline)];
-    const w = row.reduce((a, x) => a + x.w + gap, gap), h = Math.max(...row.map(x => x.h)) + gap * 2, tgt = makeTarget(w, h);
+    // the area's trees (or, picked, one species at five sizes), whole from the side, then their crowns alone as treetop mode shows them, then their trunks alone (with the life on them) as ground mode shows them
+    const wit = bake(witchSprite(st), witchColours(st), st, st.cOutline), K = 2 / (st.pixel || 2);
+    let whole, tops, bots;
+    if (kind && kind.value) { const S = TREE_SPECIES[kind.value], ts = { ...st, leafHue: AREA_BY_ID[sel.value].leaf }; const trees = [.55, .8, 1, 1.4, 1.9].map((k2, i) => { const r = rng(17 + i * 31), t = S.fn(r, ts, st.treeSize * K * k2), c = treeColours(rng(3 + i), ts, S.fn); return { whole: bake(t.sp, c, st, "none"), top: bake(splitTree(t).top, c, st, "none"), bot: bake(splitTree(t).bot, c, st, "none") }; }); whole = trees.map(t => t.whole); tops = trees.map(t => t.top); bots = trees.map(t => t.bot); }
+    else { const vs = areaTreeVariants(sel.value, st); whole = vs.map(v => v.whole); tops = vs.map(v => v.top); bots = vs.map(v => v.bot); }
+    const rows = [[...whole, wit], tops, bots].filter(r => r.length), rh = rows.map(r => Math.max(...r.map(x => x.h)) + gap), w = Math.max(...rows.map(r => r.reduce((a, x) => a + x.w + gap, gap))), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
     tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
-    let x = gap; for (const s2 of row) { tgt.a.drawImage(s2.A, x, h - gap - s2.h); tgt.n.drawImage(s2.N, x, h - gap - s2.h); x += s2.w + gap; }
+    let yy = gap; rows.forEach((r, i) => { let x = gap; yy += rh[i] - gap; for (const s2 of r) { tgt.a.drawImage(s2.A, x, yy - s2.h); tgt.n.drawImage(s2.N, x, yy - s2.h); x += s2.w + gap; } yy += gap; });
+    if (info && !(kind && kind.value)) { const sp2 = (AREA_BY_ID[sel.value].big || []).filter(([k2]) => k2 === "tree").map(([, o]) => TREE_SPECIES[o.type]?.name + (o.minor ? " (a few)" : "")); if (sp2.length) info.textContent += " Trees: " + sp2.join(", ") + "."; }
     c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
     c.style.width = w + "px"; c.style.maxWidth = "none";
   }, 550);

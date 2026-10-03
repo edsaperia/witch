@@ -26,13 +26,12 @@ export interface TypeLayout {
 }
 
 interface ArtDef { id: string; leaf: number; big: [string, Record<string, unknown>][]; small: [string, Record<string, unknown>][]; set?: [string, Record<string, unknown>] }
-type TreeOpts = { type: string; dark?: boolean; gnarl?: number; bare?: boolean; trunks?: number; lean?: number; thick?: boolean; thin?: boolean; hollow?: boolean; webs?: boolean; scale?: number };
-const TREE_FN: Record<string, unknown> = { broad: Art.broadTree, fir: Art.firTree, willow: Art.willowTree, birch: Art.birchTree, flat: Art.flatTree };
+type TreeOpts = { type: string; minor?: boolean; dark?: boolean; gnarl?: number; bare?: boolean; trunks?: number; lean?: number; thick?: boolean; thin?: boolean; hollow?: boolean; webs?: boolean; scale?: number };
 
 // One of an area's trees, drawn as art/areas.js draws its "tree" props, but keeping the crown
 // line so it splits into a top half (shown from the treetops) and a bottom half (the trunk).
 function areaTree(def: ArtDef, o: TreeOpts, st: Style, r: () => number, K: number) {
-  const f = TREE_FN[o.type] as (r: () => number, st: Style, s: number) => { sp: unknown; crownY: number };
+  const f = (Art.treeSpecies as (type: string) => { fn: unknown })(o.type).fn as (r: () => number, st: Style, s: number) => { sp: unknown; crownY: number }; // any species art/trees.js knows
   const ts = { ...st, leafHue: def.leaf + (o.dark ? 0.05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs } as unknown as Style;
   const t = f(r, ts, st.treeSize * K * (o.scale || 1) * Art.uni(r, 0.9, 1.1));
   const c = Art.treeColours(r, ts, f) as Record<number, number[]>;
@@ -57,7 +56,8 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   };
   def.big.forEach(([kind, o], i) => {
     if (kind !== "tree") { layout.big.push({ bot: add(assets.big[i].sp), top: null }); return; }
-    const n = Math.max(1, Math.round(TREE_VARIANTS / def.big.length));
+    const minor = (o as TreeOpts).minor, mains = def.big.filter(([, b]) => !(b as TreeOpts).minor).length || 1;
+    const n = minor ? 1 : Math.max(1, Math.round(TREE_VARIANTS / mains)); // a minor species (an area's second kind) gets one variant
     for (let v = 0; v < n; v++) layout.big.push(tree(o as TreeOpts, i * 17 + v));
   });
   def.small.forEach(([kind, o], i) => layout.small.push(kind === "tree" ? tree(o as TreeOpts, 500 + i) : { bot: add(assets.small[i].sp), top: null }));

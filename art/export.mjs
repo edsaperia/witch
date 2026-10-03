@@ -107,7 +107,7 @@ const assets = await b.page.evaluate(async ({ style, seed }) => {
     a.walls.forEach((x, i) => add(x, "wall", i)); a.small.forEach((x, i) => add(x, "small", i)); a.big.forEach((x, i) => add(x, "big", i));
     if (a.setPiece) add(a.setPiece, "set", 0);
     // its trees across a range of heights: each whole, and split into the crown (top, cut out from the treetops) and the trunk (bottom)
-    G.areaTreeVariants(A.id, st).forEach((v, i) => { for (const [part, b] of [["whole", v.whole], ["top", v.top], ["bottom", v.bot]]) list.push({ id: `area-${A.id}-tree-${i}${part === "whole" ? "" : "-" + part}`, kind: "area-tree", area: A.id, variant: i, part, heightClass: v.heightClass, weight: v.weight, scale: v.scale, metres: v.metres, crownY: v.crownY, frame: 0, w: b.w, h: b.h, anchor: { x: b.w / 2, y: b.h }, albedo: png(b.A), normal: png(b.N) }); });
+    G.areaTreeVariants(A.id, st).forEach((v, i) => { for (const [part, b] of [["whole", v.whole], ["top", v.top], ["bottom", v.bot]]) list.push({ id: `area-${A.id}-tree-${i}${part === "whole" ? "" : "-" + part}`, kind: "area-tree", area: A.id, variant: i, part, species: v.species, heightClass: v.heightClass, weight: v.weight, scale: v.scale, metres: v.metres, crownY: v.crownY, frame: 0, w: b.w, h: b.h, anchor: { x: b.w / 2, y: b.h }, albedo: png(b.A), normal: png(b.N) }); });
   }
   // sigils: an SVG and a 64 px PNG each, with their strokes (in writing order) for the manifest
   const sigils = G.SIGIL_IDS.map(id => {
