@@ -4,8 +4,14 @@
 //   node art/preview.mjs trees all art/previews/trees.png [scale]
 //   node art/preview.mjs areas all art/previews/areas.png [scale]
 //   node art/preview.mjs lights all art/previews/light-sources.png [scale]
+//   node art/preview.mjs party wolf,fox,owl art/previews/party.png [scale]
+//   node art/preview.mjs sigils all art/previews/sigils.png [scale]
 //   node art/preview.mjs soundsystems all art/previews/soundsystems.png [scale]
 // Optional env LEVELS=1,0 draws only those levels; FACINGS=towards,away one row per view; TREES=wBroad,wFir only those kinds.
+// Optional env SIGIL=stag adds soundsystems carved with that creature's sigil; for lights, a list of species carves stones with their sigils.
+// Optional env DRAWON=1 with sigils and a list draws each one on the ground through its draw-on.
+// Optional env STYLE='{"ambient": .1}' overrides style knobs.
+// Optional env NIGHT=1 lights the sheet with the style's night (as in the game) instead of even studio light.
 // Optional env GEN=<path from repo root> renders with another copy of the generator (for "before" images).
 import { writeFileSync } from "node:fs";
 import { openBrowser } from "./headless.mjs";
@@ -15,6 +21,10 @@ const gen = process.env.GEN || "/art/generator.js", lighting = process.env.LIGHT
 const b = await openBrowser();
 if (process.env.TREES) await b.page.addInitScript(l => { window.TREES = l; }, process.env.TREES.split(","));
 if (process.env.FACINGS) await b.page.addInitScript(l => { window.FACINGS = l; }, process.env.FACINGS.split(","));
+if (process.env.SIGIL) await b.page.addInitScript(l => { window.SIGIL = l; }, process.env.SIGIL);
+if (process.env.DRAWON) await b.page.addInitScript(() => { window.DRAWON = true; });
+if (process.env.STYLE) await b.page.addInitScript(o => { window.STYLE = o; }, JSON.parse(process.env.STYLE));
+if (process.env.NIGHT) await b.page.addInitScript(() => { window.NIGHT = true; });
 if (process.env.LEVELS) await b.page.addInitScript(l => { window.LEVELS = l; }, process.env.LEVELS.split(",").map(Number));
 await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
 const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) => {
@@ -22,13 +32,50 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   const st = { ...G.defaultStyle(), ...(window.STYLE || {}) };
   const studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 };
   const rows = [];
-  if (what === "animals") {
+  if (what === "sigils") { // every sigil, flat and on the ground (drawn), glowing on a dark ground, with its name
+    const S = await import(gen.replace("generator.js", "sigils.js"));
+    if (window.DRAWON) { // the draw-on: each listed sigil on the ground at moments through its writing, then glowing
+      const ids = list.split(","), ts = [.08, .16, .26, .36, .46, .6, 1.4], ppm = 22, D = S.sigilFrame(1).metres * ppm, gw = D + 6, gh = Math.ceil(D * Math.sin(S.GROUND_PITCH)) + 6, W = ts.length * (gw + 8) + 8, H = ids.length * (gh + 8) + 8;
+      const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"); g.fillStyle = "#14121c"; g.fillRect(0, 0, W, H);
+      ids.forEach((id, r) => { const gs = S.groundSigil(id, { level: 1, pxPerMetre: ppm }); ts.forEach((t, k) => g.drawImage(S.paintSigilField(gs, t), 8 + k * (gw + 8), 8 + r * (gh + 8))); });
+      const big = document.createElement("canvas"); big.width = W * scale; big.height = H * scale; const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, W * scale, H * scale);
+      return big.toDataURL("image/png");
+    }
+    // each species: baby, young, adult, legend flat (the vector form), then on the ground (the pixel leashing rune, at its level's size)
+    const ids = list === "all" ? S.SIGIL_IDS : list.split(","), cols = 2, ppm = 13, flat = 56, lh = Math.ceil(S.sigilFrame(3).metres * ppm * Math.sin(S.GROUND_PITCH)) + 6;
+    const bw = 4 * (flat + 4) + [0, 1, 2, 3].reduce((a, l) => a + S.sigilFrame(l).metres * ppm + 10, 0) + 90, rh = Math.max(flat, lh) + 8, rowsN = Math.ceil(ids.length / cols);
+    const W = cols * bw, H = rowsN * rh + 6, c = document.createElement("canvas"); c.width = W; c.height = H;
+    const g = c.getContext("2d"); g.fillStyle = "#0e0c14"; g.fillRect(0, 0, W, H); g.imageSmoothingEnabled = false;
+    ids.forEach((id, n) => {
+      let x = (n % cols) * bw + 6; const y = Math.floor(n / cols) * rh + 4;
+      g.fillStyle = "#cfc6e0"; g.font = "12px sans-serif"; g.textAlign = "left"; g.fillText(G.SPECIES_BY_ID[id].name, x, y + rh / 2 + 4); x += 84;
+      for (const level of [0, 1, 2, 3]) { S.drawSigil(g, id, { x, y: y + (rh - 8 - flat) / 2, size: flat, level }); x += flat + 4; }
+      g.globalCompositeOperation = "lighter";
+      for (const level of [0, 1, 2, 3]) { const f = S.groundSigil(id, { level, pxPerMetre: ppm }); g.drawImage(S.paintSigilField(f, S.SIGIL_DRAW_TIME + .8), Math.round(x), Math.round(y + (rh - 8 - f.h) / 2)); x += f.w + 6; }
+      g.globalCompositeOperation = "source-over";
+    });
+    const big = document.createElement("canvas"); big.width = W * scale; big.height = H * scale;
+    const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, W * scale, H * scale);
+    return big.toDataURL("image/png");
+  }
+  if (what === "party") { // each listed species in party gear (a different mix per row, all items on the first) at baby, young and adult, towards then away; then woken
+    const S = await import(gen.replace("generator.js", "sigils.js")), ids = list.split(",");
+    ids.forEach((id, n) => {
+      const gear = n === 0 ? { collar: S.sigilColour(id), hat: 0, glasses: "bar", shoes: "sneakers" } : { ...G.partyGear(n * 3 + 1, S.sigilColour(id)), ...(n % 3 === 1 ? { hat: n % 3, shoes: "platform" } : n % 3 === 2 ? { glasses: ["star", "heart"][n % 2], shoes: "glitter" } : { hat: 2, glasses: "bar" }) };
+      const row = [];
+      for (const facing of ["towards", "away"]) for (const l of [2, 1, 0]) row.push(G.bake(G.critter(id, l, 0, st, facing, gear), G.speciesColours(id, st, gear), st, st.cOutline));
+      const woken = { woken: true }; row.push(G.bake(G.critter(id, 1, 0, st, "towards", woken), G.speciesColours(id, st, woken), st, st.cOutline));
+      rows.push(row);
+    });
+  } else if (what === "animals") {
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(",");
-    for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push((window.LEVELS || [2, 1, 0]).flatMap(l => [0, 1].map(f => G.bake(G.critter(id, l, f, st, facing), G.speciesColours(id, st), st, st.cOutline))));
+    for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push((window.LEVELS || [3, 2, 1, 0]).flatMap(l => [0, 1].map(f => G.bake(G.critter(id, l, f, st, facing), G.speciesColours(id, st), st, st.cOutline))));
   } else if (what === "lights") { // the campfire's frames, the magic stones, the pond
     const L = G.lightProps(st); rows.push([...L.campfire, ...Object.values(L.stones), L.pond]);
+    if (list !== "all") rows.push(list.split(",").map((id, i) => G.runeStone(st, { glow: ["cyan", "violet", "green"][i % 3], sigil: id }))); // stones carved with these creatures' sigils
   } else if (what === "soundsystems") { // per variant: three playing frames, two damaged, destroyed, and the witch for scale
     for (let v = 0; v < G.SOUNDSYSTEMS.length; v++) { if (list !== "all" && !list.split(",").includes(String(v))) continue; const col = G.soundsystemColours(v), b = o => G.bake(G.soundsystemSprite(st, { variant: v, ...o }), col, st, "none"); rows.push([b({ frame: 0 }), b({ frame: 1 }), b({ frame: 2 }), b({ state: "damaged", frame: 0 }), b({ state: "damaged", frame: 1 }), b({ state: "destroyed" }), G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline)]); }
+    if (window.SIGIL) rows.push(G.SOUNDSYSTEMS.map((S, v) => G.bake(G.soundsystemSprite(st, { variant: v, sigil: window.SIGIL }), G.soundsystemColours(v), st, "none"))); // carved with a creature's sigil
   } else if (what === "areas") { // per area type: floor tile, walls, small, big, set piece, its creature (young)
     const ids = list === "all" ? G.AREAS.map(a => a.id) : list.split(",");
     for (const id of ids) { const a = G.areaAssets(id, st); rows.push([a.floor, ...a.walls, ...a.small, ...a.big, ...(a.setPiece ? [a.setPiece] : [])].map(x => x.sp).concat([G.bake(G.critter(a.def.creature, 1, 0, st), G.speciesColours(a.def.creature, st), st, st.cOutline)])); }
@@ -40,10 +87,12 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   const gap = 6, w = Math.max(...rows.map(r => r.reduce((a, s) => a + s.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(s => s.h)) + gap), h = rh.reduce((a, v) => a + v, gap);
   const mk = () => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
   const A = mk(), N = mk(), a = A.getContext("2d"), n = N.getContext("2d");
-  a.fillStyle = `rgb(${G.hsv2rgb(st.groundHue, .4, st.groundVal)})`; a.fillRect(0, 0, w, h); n.fillStyle = "rgb(128,75,240)"; n.fillRect(0, 0, w, h);
+  // at NIGHT the sprites go on a clear canvas, so glowing pixels keep their alpha 254 through the lighting, and the dark ground goes under afterwards
+  if (!window.NIGHT) { a.fillStyle = `rgb(${G.hsv2rgb(st.groundHue, .4, st.groundVal)})`; a.fillRect(0, 0, w, h); } n.fillStyle = "rgb(128,75,240)"; n.fillRect(0, 0, w, h);
   let y = gap;
   rows.forEach((r, i) => { let x = gap; y += rh[i] - gap; for (const s of r) { a.drawImage(s.A, x, y - s.h); n.drawImage(s.N, x, y - s.h); x += s.w + gap; } y += gap; });
-  const lit = mk(); shade({ a, n, w, h }, lit, studio, [], [0, 0, w, h]);
+  let lit = mk(); shade({ a, n, w, h }, lit, window.NIGHT ? st : studio, [], [0, 0, w, h]); // NIGHT: the style's own night light, as in the game
+  if (window.NIGHT) { const under = mk(), u = under.getContext("2d"); u.fillStyle = "#0c1014"; u.fillRect(0, 0, w, h); u.drawImage(lit, 0, 0); lit = under; }
   const big = document.createElement("canvas"); big.width = w * scale; big.height = h * scale;
   const g = big.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(lit, 0, 0, w * scale, h * scale);
   return big.toDataURL("image/png");

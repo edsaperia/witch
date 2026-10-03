@@ -63,6 +63,13 @@ label.check input { accent-color: var(--accent); }
 .beast canvas { width: 100%; height: auto; }
 .beast figcaption { padding: 6px 10px 8px; font-size: 13px; color: var(--muted); display: grid; gap: 2px; }
 .beast figcaption b { color: var(--fg); font-family: var(--font-display); font-weight: 400; font-size: 14px; }
+.beast figcaption { grid-template-columns: 1fr auto; }
+.beast figcaption > b, .beast figcaption > span:not(.sig) { grid-column: 1; }
+.beast figcaption .sig { grid-column: 2; grid-row: 1 / span 2; width: 44px; height: 44px; margin-left: 8px; }
+.sigils { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 10px; }
+.sigil { margin: 0; border: 1px solid var(--line); border-radius: 6px; background: #0b0910; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-around; gap: 4px; padding: 8px 6px 4px; }
+.sigil canvas { image-rendering: pixelated; }
+.sigil figcaption { flex-basis: 100%; font-size: 13px; color: var(--muted); padding-top: 4px; }
 .history { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
 .history button { padding: 0; border: 1px solid var(--line); border-radius: 4px; background: #000; cursor: pointer; flex: none; }
 .history button.current { border-color: var(--accent); }
@@ -114,9 +121,25 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
-        <div class="row" style="justify-content:space-between"><h2>Bestiary</h2><label class="check"><input type="checkbox" id="away"> Show turned away</label></div>
-        <p class="note">Thirty forest animals, each as legend, young and baby, in the current style under even light, turned towards you (or away, for creatures walking up the screen). Legends grow the magical features listed.</p>
+        <div class="row" style="justify-content:space-between"><h2>Bestiary</h2><div class="row"><label class="check"><input type="checkbox" id="away"> Show turned away</label>
+          <label class="note" for="gearMode">Show</label><select id="gearMode"><option value="wild">Wild</option><option value="party">Party animals</option><option value="woken">Woken</option></select>
+          <span id="gearItems" class="row" hidden><label class="check"><input type="checkbox" id="gHat" checked> Hat</label><label class="check"><input type="checkbox" id="gGlasses" checked> Sunglasses</label><label class="check"><input type="checkbox" id="gShoes" checked> Shoes</label><label class="check"><input type="checkbox" id="gMix"> Mixed</label></span></div></div>
+        <p class="note">Thirty forest animals, each as legend, adult, young and baby, in the current style under even light, turned towards you (or away, for creatures walking up the screen). Legends grow the magical features listed.</p>
         <div class="bestiary" id="bestiary"></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
+        <h2>Sigils</h2>
+        <p class="note">Each creature's sigil: its name written in the forest's magic, in its own neon. Leashed creatures' sigils float above the witch, newest at the bottom; placing one writes it on the ground as the leashing rune, and picking it up lifts it back. The stack sways gently while she is still and trails behind her when she flies.</p>
+        <div class="row">
+          <button class="btn" id="sgLeash" type="button">Leash a creature</button>
+          <button class="btn" id="sgPlace" type="button">Place</button>
+          <button class="btn" id="sgPick" type="button">Pick up</button>
+          <label class="check"><input type="checkbox" id="sgFly"> Fly</label>
+        </div>
+        <div class="stage"><canvas id="sgStack" width="480" height="270" style="width:100%;height:auto;image-rendering:pixelated"></canvas></div>
+        <p class="note">Below, each sigil at the four creature levels (baby, young, adult, legend), flat and then on the ground at the game's angle, drawing on.</p>
+        <div class="sigils" id="sigils"></div>
       </section>
 
       <section style="display:grid;gap:10px">
@@ -157,7 +180,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours } from "../../art/generator.js";
+import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -233,7 +256,7 @@ function layout(world, st) {
     bushes.push({ x, y, b: areaAt(x, y).area * 4 + Math.floor(r() * 4) });
   }
   const [dcx, dcy] = areas[0], crit = [];
-  [[0, 0], [1, 0], [2, 0], [3, 0], [4, 1], [5, 1], [0, 2]].forEach(([kind, level]) => crit.push({ kind: kind % world.kinds.length, level, x: uni(r, 40 * K, W - 40 * K), y: level === 2 ? H * .4 : uni(r, H * .5, H - 4), dir: r() < .5 ? -1 : 1, speed: (level === 2 ? 4 : uni(r, 4, 10)) * K }));
+  [[0, 0], [1, 1], [2, 0], [3, 2], [4, 1], [5, 2], [0, 3]].forEach(([kind, level]) => crit.push({ kind: kind % world.kinds.length, level, x: uni(r, 40 * K, W - 40 * K), y: level === 3 ? H * .4 : uni(r, H * .5, H - 4), dir: r() < .5 ? -1 : 1, speed: (level === 2 ? 4 : uni(r, 4, 10)) * K }));
   return { trees, bushes, crit, dcx, dcy, areaAt };
 }
 
@@ -289,7 +312,7 @@ function drawScene(tgt, out, st, assets, lay, t, opts) {
   if (!opts.treetop) for (const b of lay.bushes) { const s = assets.bushes[b.b]; items.push({ y: b.y, d: () => put(s, b.x - s.w / 2, b.y - s.h) }); }
   for (const tr of lay.trees) { const s = assets.trees[tr.t], img = opts.treetop ? s.top : s.whole; items.push({ y: tr.y, d: () => put(img, tr.x - img.w / 2, tr.y - img.h) }); }
   for (const c of lay.crit) {
-    if (opts.treetop && c.level < 2) continue; // only giants show above the canopy
+    if (opts.treetop && c.level < 3) continue; // only giants (legends) show above the canopy
     const span = W - 80, travel = (c.x - 40 + t * c.speed * c.dir) % (2 * span), pos = travel < 0 ? travel + 2 * span : travel;
     const right = (pos < span) === (c.dir > 0), x = 40 + (pos < span ? pos : 2 * span - pos), b = assets.creatures[c.kind][c.level][frame];
     items.push({ y: opts.treetop ? c.y + 1000 : c.y, d: () => put(b, x - b.w / 2, c.y - b.h, !right) });
@@ -304,18 +327,15 @@ function drawScene(tgt, out, st, assets, lay, t, opts) {
 
 // ================= sprite sheet (studio-lit, so colours read) =================
 function drawSheet(canvas, st, assets) {
-  const kinds = assets.creatures.length, colW = Math.max(...assets.creatures.map(k => k[2][0].w)) + 70, top = 10;
-  const legendH = Math.max(...assets.creatures.map(k => k[2][0].h)), treeH = Math.max(...assets.trees.map(t => t.whole.h));
+  const kinds = assets.creatures.length, colW = Math.max(...assets.creatures.map(k => k[3][0].w + k[2][0].w)) + 76, top = 10;
+  const legendH = Math.max(...assets.creatures.map(k => k[3][0].h)), treeH = Math.max(...assets.trees.map(t => t.whole.h));
   const w = kinds * colW + 20, h = top + legendH + 20 + treeH + 40;
   const tgt = makeTarget(w, h);
   tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
   assets.creatures.forEach((k, i) => {
     const x0 = 10 + i * colW, base = top + legendH;
-    const L = k[2][0], Md = k[1][0], B0 = k[0][0], B1 = k[0][1];
-    tgt.a.drawImage(L.A, x0, base - L.h); tgt.n.drawImage(L.N, x0, base - L.h);
-    tgt.a.drawImage(Md.A, x0 + L.w + 4, base - Md.h); tgt.n.drawImage(Md.N, x0 + L.w + 4, base - Md.h);
-    tgt.a.drawImage(B0.A, x0 + L.w + Md.w + 8, base - B0.h); tgt.n.drawImage(B0.N, x0 + L.w + Md.w + 8, base - B0.h);
-    tgt.a.drawImage(B1.A, x0 + L.w + Md.w + B0.w + 10, base - B1.h); tgt.n.drawImage(B1.N, x0 + L.w + Md.w + B0.w + 10, base - B1.h);
+    let x = x0; // legend, adult, young, baby (two frames)
+    for (const b of [k[3][0], k[2][0], k[1][0], k[0][0], k[0][1]]) { tgt.a.drawImage(b.A, x, base - b.h); tgt.n.drawImage(b.N, x, base - b.h); x += b.w + 4; }
   });
   let x = 10; const base2 = h - 10;
   assets.trees.forEach(t => { if (x + t.whole.w > w) return; tgt.a.drawImage(t.whole.A, x, base2 - t.whole.h); tgt.n.drawImage(t.whole.N, x, base2 - t.whole.h); x += t.whole.w + 6; });
@@ -368,18 +388,23 @@ function renderBestiary() {
   bestiaryTimer = setTimeout(() => {
     const host = document.getElementById("bestiary"); if (!host) return; host.textContent = "";
     const studio = { ...current, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 };
-    for (const S of SPECIES) {
+    const mode = document.getElementById("gearMode").value, on = id => document.getElementById(id).checked;
+    document.getElementById("gearItems").hidden = mode !== "party";
+    SPECIES.forEach((S, n) => {
       const facing = document.getElementById("away").checked ? "away" : "towards";
-      const lv = [0, 1, 2].map(l => bake(critter(S.id, l, 0, current, facing), speciesColours(S.id, current), current, current.cOutline));
-      const b1 = bake(critter(S.id, 0, 1, current, facing), speciesColours(S.id, current), current, current.cOutline);
-      const w = lv[2].w + lv[1].w + lv[0].w + b1.w + 18, h = Math.max(lv[2].h, 20) + 6, tgt = makeTarget(w, h);
+      // party animals: the collar always, and the chosen items (or each creature's own seeded mix); woken: angry eyes
+      const gear = mode === "woken" ? { woken: true } : mode !== "party" ? null : on("gMix") ? partyGear(n + 1, sigilColour(S.id)) : { collar: sigilColour(S.id), hat: on("gHat") ? n % 3 : null, glasses: on("gGlasses") ? GLASSES_STYLES[n % 3] : null, shoes: on("gShoes") ? Object.keys(SHOE_STYLES)[n % 3] : null };
+      const levelGear = l => gear && l === 3 && mode === "party" ? null : gear; // legends can't be invited yet
+      const lv = [0, 1, 2, 3].map(l => bake(critter(S.id, l, 0, current, facing, levelGear(l)), speciesColours(S.id, current, levelGear(l)), current, current.cOutline));
+      const b1 = bake(critter(S.id, 0, 1, current, facing, gear), speciesColours(S.id, current, gear), current, current.cOutline);
+      const w = lv[3].w + lv[2].w + lv[1].w + lv[0].w + b1.w + 22, h = Math.max(lv[3].h, 20) + 6, tgt = makeTarget(w, h);
       tgt.a.fillStyle = `rgb(${hsv2rgb(current.groundHue, .4, current.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
-      let x = 4; for (const b of [lv[2], lv[1], lv[0], b1]) { tgt.a.drawImage(b.A, x, h - 3 - b.h); tgt.n.drawImage(b.N, x, h - 3 - b.h); x += b.w + 4; }
+      let x = 4; for (const b of [lv[3], lv[2], lv[1], lv[0], b1]) { tgt.a.drawImage(b.A, x, h - 3 - b.h); tgt.n.drawImage(b.N, x, h - 3 - b.h); x += b.w + 4; }
       const card = document.createElement("figure"); card.className = "beast";
       const c = document.createElement("canvas"); c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
-      const cap = document.createElement("figcaption"); cap.innerHTML = `<b></b><span></span>`; cap.querySelector("b").textContent = S.name; cap.querySelector("span").textContent = "Legend grows " + S.legend.map(f => FEATURE_NAMES[f] || f).join(" and ") + ". Shown: legend, young, baby (two walk frames).";
+      const cap = document.createElement("figcaption"); cap.innerHTML = `<b></b><span></span>`; cap.querySelector("b").textContent = S.name; cap.insertAdjacentHTML("afterbegin", `<span class="sig" aria-hidden="true">${sigilSVG(S.id, { size: 44 })}</span>`); cap.querySelector("span:not(.sig)").textContent = "Legend grows " + S.legend.map(f => FEATURE_NAMES[f] || f).join(" and ") + ". Shown: legend, adult, young, baby (two walk frames).";
       card.append(c, cap); host.append(card);
-    }
+    });
   }, 250);
 }
 
@@ -400,6 +425,93 @@ function renderSoundsystems() {
     c.style.width = w + "px"; c.style.maxWidth = "none";
   }, 600);
 }
+
+// ================= sigils: every level flat and on the ground; the leash stack over the witch =================
+const sigilCards = [];
+let stackDemo = null;
+function buildSigils() {
+  const host = document.getElementById("sigils"); if (!host || sigilCards.length) return;
+  const ppm = 11; // ground pixels per metre in the cards
+  SIGIL_IDS.forEach((id, i) => {
+    const fig = document.createElement("figure"), name = SPECIES_BY_ID[id].name; fig.className = "sigil";
+    const flats = [0, 1, 2, 3].map(level => { const c = document.createElement("canvas"); c.width = c.height = 44; c.style.width = "44px"; c.setAttribute("aria-label", `${name} sigil, ${SIGIL_LEVELS[level]}`); return c; });
+    const grounds = [0, 1, 2, 3].map(level => { const g = groundSigil(id, { level, pxPerMetre: ppm }), c = document.createElement("canvas"); c.width = g.w; c.height = g.h; c.setAttribute("aria-label", `${name} sigil on the ground, ${SIGIL_LEVELS[level]}`); return { g, c }; });
+    const cap = document.createElement("figcaption"); cap.textContent = name;
+    fig.append(...flats, ...grounds.map(x => x.c), cap); host.append(fig);
+    sigilCards.push({ id, flats, grounds, offset: (i % 6) * .25 });
+  });
+  stackDemo = makeStackDemo();
+  let visible = true;
+  if ("IntersectionObserver" in window) new IntersectionObserver(e => { visible = e.some(x => x.isIntersecting); }).observe(host.parentElement);
+  const cycle = 3.2; let last = performance.now();
+  const frame = now => {
+    const dt = Math.min(.05, (now - last) / 1000); last = now;
+    if (visible) {
+      for (const c of sigilCards) {
+        const t = ((now / 1000 + c.offset) % cycle);
+        c.flats.forEach((cv, level) => { const x = cv.getContext("2d"); x.clearRect(0, 0, 44, 44); drawSigil(x, c.id, { size: 44, level, progress: Math.min(1, t / .6) }); });
+        c.grounds.forEach(({ g, c: cv }) => paintSigilField(g, t, { canvas: cv }));
+      }
+      stackDemo?.frame(now / 1000, dt);
+    }
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+// The leash stack demo: the witch hovering (or flying to and fro), her leashed creatures' sigils
+// floating above her, placed runes on the ground.
+function makeStackDemo() {
+  const cv = document.getElementById("sgStack"); if (!cv) return null;
+  const g = cv.getContext("2d"), W = cv.width, H = cv.height, ppm = 22, cp = Math.cos(GROUND_PITCH), sp = Math.sin(GROUND_PITCH), gy = H - 40;
+  const toScreen = ([x, y, z]) => [W / 2 + x * ppm, gy + z * ppm * sp - y * ppm * cp];
+  const wit = bake(witchSprite(current), witchColours(current), current, current.cOutline), witchH = wit.h / (ppm * cp) * 1.0;
+  const stack = new SigilStack(), placed = [], leaving = [], floats = new Map(), grounds = new Map();
+  const floatOf = (id, level) => { const k = id + level; if (!floats.has(k)) { const f = floatSigil(id, { level, px: stack.tuning.size * ppm }); floats.set(k, { f, c: paintSigilField(f, 99) }); } return floats.get(k); };
+  const groundOf = (id, level) => { const k = id + level; if (!grounds.has(k)) grounds.set(k, groundSigil(id, { level, pxPerMetre: ppm })); return grounds.get(k); };
+  let wx = 0, alt = 1.1, flyT = 0, n = 0;
+  const pickNext = () => { const id = SIGIL_IDS[(n * 7 + 3) % SIGIL_IDS.length], level = [0, 1, 2, 0, 3, 1][n % 6]; n++; return [id, level]; };
+  for (let i = 0; i < 4; i++) stack.push(...pickNext());
+  const head = () => [wx, alt + witchH, 0];
+  document.getElementById("sgLeash").onclick = () => stack.push(...pickNext());
+  document.getElementById("sgPlace").onclick = () => { const it = stack.place(); if (it) leaving.push({ ...it, ground: [wx, 0, .6], t: 0 }); };
+  document.getElementById("sgPick").onclick = () => { const r = placed.pop(); if (r) stack.push(r.id, r.level, r.ground); };
+  stack.update(0, { head: head() });
+  // a floating sigil drawn at a world point: upright 0 lies flat (squashed), scale 0 its ground size
+  const drawFloat = (id, level, pos, { tilt = 0, upright = 1, scale = 1 } = {}) => {
+    const { f, c } = floatOf(id, level), gr = groundOf(id, level), w = f.w + (gr.w - f.w) * (1 - scale), hgt = w * (sp + (1 - sp) * upright), [x, y] = toScreen(pos);
+    g.save(); g.translate(x, y); g.rotate(tilt); g.drawImage(c, -w / 2, -hgt / 2, w, hgt); g.restore();
+  };
+  return { frame(t, dt) {
+    // she hovers, or flies to and fro (fast through the middle)
+    const fly = document.getElementById("sgFly").checked;
+    if (fly) flyT += dt;
+    const tx = fly ? 6.5 * Math.sin(flyT * .9) : wx; wx += (tx - wx) * Math.min(1, dt * (fly ? 60 : 3));
+    alt = 1.1 + .06 * Math.sin(t * 2.1);
+    stack.update(dt, { head: head() });
+    g.globalCompositeOperation = "source-over"; g.fillStyle = "#101a14"; g.fillRect(0, 0, W, H);
+    g.fillStyle = "#0c120f"; for (let i = 0; i < 9; i++) g.fillRect(0, gy - 70 + i * 14, W, 1);
+    g.imageSmoothingEnabled = false; g.globalCompositeOperation = "lighter";
+    // the runes on the ground (and any being set down)
+    for (const r of placed) { const gr = groundOf(r.id, r.level), [x, y] = toScreen(r.ground); r.age += dt; g.drawImage(paintSigilField(gr, r.age), Math.round(x - gr.w / 2), Math.round(y - gr.h / 2)); }
+    for (let i = leaving.length - 1; i >= 0; i--) {
+      const L = leaving[i]; L.t += dt; const k = setDown(L.t / SIGIL_TRANSITION_TIME);
+      if (k.draw > 0) { const gr = groundOf(L.id, L.level), [x, y] = toScreen(L.ground); g.drawImage(paintSigilField(gr, 0, { progress: k.draw }), Math.round(x - gr.w / 2), Math.round(y - gr.h / 2)); }
+      else drawFloat(L.id, L.level, L.ground.map((v, j) => v + (L.pos[j] - v) * k.rise), { upright: k.upright, scale: k.scale });
+      if (L.t >= SIGIL_TRANSITION_TIME) { leaving.splice(i, 1); placed.push({ id: L.id, level: L.level, ground: L.ground, age: SIGIL_DRAW_TIME_DONE }); }
+    }
+    // the witch, then her stack (bottom, newest, first)
+    g.globalCompositeOperation = "source-over";
+    const [sx, sy] = toScreen([wx, alt, 0]); g.drawImage(wit.A, Math.round(sx - wit.w / 2), Math.round(sy - wit.h));
+    g.globalCompositeOperation = "lighter";
+    stack.layout().forEach(l => {
+      const pos = head().map((v, j) => v + l.offset[j]);
+      if (l.enter < 1) { const k = liftOff(l.enter); drawFloat(l.id, l.level, pos, { tilt: l.tilt, upright: k.upright, scale: k.scale }); }
+      else drawFloat(l.id, l.level, pos, { tilt: l.tilt });
+    });
+    g.globalCompositeOperation = "source-over";
+  } };
+}
+const SIGIL_DRAW_TIME_DONE = 1; // a placed rune has finished drawing on
 
 // ================= app =================
 const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
@@ -439,7 +551,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderSoundsystems(); renderMap();
+  syncKnobs(); renderHistory(); renderBestiary(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
@@ -522,6 +634,7 @@ document.getElementById("save").addEventListener("click", async () => {
 });
 (async () => { try { db = window.claude ? await window.claude.use("db") : null; if (db) db.collection("styles").orderBy("savedAt", "desc").onSnapshot(s => renderSaved(s.docs), () => {}); } catch { db = null; } })();
 document.getElementById("copy").addEventListener("click", async () => { const ta = document.getElementById("json"); try { await navigator.clipboard.writeText(ta.value); toast("Style file copied."); } catch { ta.select(); toast("Selected; copy it with your keyboard."); } });
+for (const id of ["gearMode", "gHat", "gGlasses", "gShoes", "gMix"]) document.getElementById(id).addEventListener("change", () => renderBestiary());
 document.getElementById("away").addEventListener("change", renderBestiary);
 document.getElementById("reroll").addEventListener("click", () => { varySeed++; makeVariants(); });
 document.getElementById("strength").addEventListener("change", () => { varySeed++; makeVariants(); });

@@ -114,7 +114,7 @@ export function broadTree(r, st, s) {
   }
   roots(sp, bx, gy, tw * Math.sqrt(n), st, r, s);
   bark(sp, st);
-  if (st.treeWebs) for (let i = 0; i + 1 < tips.length; i += 2) { const a = tips[i], c = tips[i + 1], L = Math.hypot(c[0] - a[0], c[1] - a[1]); if (L < 40 * s) for (let j = 0; j <= L; j++) { const p = lerp2(a, c, j / L); sp.px(p[0], p[1] + Math.sin(j / L * Math.PI) * L * .15, M.GLINT, 0, 0, 1); } }
+  if (st.treeWebs) for (let i = 0; i + 1 < tips.length; i += 2) { const a = tips[i], c = tips[i + 1], L = Math.hypot(c[0] - a[0], c[1] - a[1]); if (L < 40 * s) for (let j = 0; j <= L; j++) { const p = lerp2(a, c, j / L); sp.px(p[0], p[1] + Math.sin(j / L * Math.PI) * L * .15, M.WEB, 0, 0, 1); } }
   if (st.treeBare) return trim(sp, bx, crownY + 4 * s);
   // clumps at the tips: back ones darker first, then the front
   tips.sort((a, b) => a[1] - b[1]);
@@ -250,7 +250,7 @@ export function treeColours(r, st, type) {
   const h = st.leafHue + (r() - .5) * st.leafVariety * .7 + (type === firTree ? .06 : 0);
   return {
     [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212],
-    [M.LEAF]: hsv2rgb(h, .62 * st.sat, .58), [M.LEAF2]: hsv2rgb(h - .05, .55 * st.sat, .8), [M.LEAF3]: hsv2rgb(h + .03, .66 * st.sat, .38),
+    [M.LEAF]: hsv2rgb(h, .62 * st.sat, .58), [M.LEAF2]: hsv2rgb(h - .05, .55 * st.sat, .8), [M.LEAF3]: hsv2rgb(h + .03, .66 * st.sat, .38), [M.WEB]: [225, 225, 232],
   };
 }
 // The trunk was drawn with its roots and bark; this stays for callers of the old API.
