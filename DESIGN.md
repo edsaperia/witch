@@ -76,6 +76,7 @@ The trade is speed against information: treetop mode covers distance, ground mod
 - A leashed creature **roams within the length of its leash** around a **leash point**.
 - The witch can **pick up a leash point and put it down again** elsewhere.
 - The witch carries leashes as a **stack**: one button **picks up or places**, last in, first out. She can **carry many leashes at once**, and can "fight" by **leading a swarm around**.
+- **The leash stack is shown as sigils above the witch's head** (Ed, 2026-10-03): each leashed creature's sigil floats and sways above her, **first in at the bottom**, newest on top. Inviting a creature leashes it to her and adds its sigil to the top. **Placing** puts the top sigil down as a glowing neon rune on the ground, leashing that creature there. **Picking it up** returns the sigil to the stack, and the creature follows her again.
 - Leashes are **somewhat elastic**: the witch moves much faster than most creatures, so she can fly off with a leash point, put it down somewhere, and the creature makes its way towards it.
 
 ## The forest: areas and the map
