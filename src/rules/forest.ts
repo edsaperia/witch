@@ -74,11 +74,34 @@ function wallsInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
   return out;
 }
 
+// Light sources, placed by seed: campfires and magic stones mostly in clearings and at area
+// edges, and ponds that mirror the moon, more of them in the wet area types.
+export type LightKind = "campfire" | "stone" | "pond";
+export interface LightSource { x: number; z: number; kind: LightKind; size: number }
+const WET = new Set(["wetland", "stream", "bog", "beaver-pond", "moor"]);
+
+function lightsInChunk(map: ForestMap, ci: number, cj: number): LightSource[] {
+  const L = map.tuning.lightSources, sp = L.spacing, s = map.seed, out: LightSource[] = [];
+  const j0 = Math.ceil((cj * CHUNK) / sp), j1 = Math.ceil(((cj + 1) * CHUNK) / sp);
+  const i0 = Math.ceil((ci * CHUNK) / sp), i1 = Math.ceil(((ci + 1) * CHUNK) / sp);
+  for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
+    const x = (i + (hash2(i, j, s + 401) - 0.5) * 0.7) * sp, z = (j + (hash2(i, j, s + 402) - 0.5) * 0.7) * sp;
+    if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + map.tuning.dancefloor.clearing + 4) continue;
+    const a = map.areaAt(x, z), where = a.openness < 0.35 || a.openness > 0.8 ? 1 : 0.25, roll = hash2(i, j, s + 403);
+    const wet = WET.has(AREA_TYPES[a.type].id);
+    const pond = (wet ? L.wetPond : L.pond) * where, fire = L.campfire * where, stone = L.magicStone * where;
+    const kind: LightKind | null = roll < pond ? "pond" : roll < pond + fire ? "campfire" : roll < pond + fire + stone ? "stone" : null;
+    if (kind) out.push({ x, z, kind, size: 0.75 + hash2(i, j, s + 404) * 0.5 });
+  }
+  return out;
+}
+
 /** Trees and bushes near a point, chunk by chunk, remembered once made. */
 export class Forest {
   private trees = new Map<string, Plant[]>();
   private bushes = new Map<string, Plant[]>();
   private walls = new Map<string, Plant[]>();
+  private lights = new Map<string, LightSource[]>();
   constructor(readonly map: ForestMap) {}
 
   private chunks(x: number, z: number, radius: number): [number, number][] {
@@ -87,9 +110,9 @@ export class Forest {
       for (let ci = Math.floor((x - radius) / CHUNK); ci <= Math.floor((x + radius) / CHUNK); ci++) out.push([ci, cj]);
     return out;
   }
-  private gather(cache: Map<string, Plant[]>, make: (ci: number, cj: number) => Plant[], x: number, z: number, radius: number): Plant[] {
+  private gather<T extends { x: number; z: number }>(cache: Map<string, T[]>, make: (ci: number, cj: number) => T[], x: number, z: number, radius: number): T[] {
     if (cache.size > 600) cache.clear();
-    const out: Plant[] = [];
+    const out: T[] = [];
     for (const [ci, cj] of this.chunks(x, z, radius)) {
       const k = ci + "," + cj;
       let c = cache.get(k);
@@ -104,6 +127,9 @@ export class Forest {
   }
   bushesNear(x: number, z: number, radius: number): Plant[] {
     return this.gather(this.bushes, (i, j) => bushesInChunk(this.map, i, j), x, z, radius);
+  }
+  lightsNear(x: number, z: number, radius: number): LightSource[] {
+    return this.gather(this.lights, (i, j) => lightsInChunk(this.map, i, j), x, z, radius);
   }
   wallsNear(x: number, z: number, radius: number): Plant[] {
     return this.gather(this.walls, (i, j) => wallsInChunk(this.map, i, j), x, z, radius);

@@ -8,7 +8,8 @@ import { AREA_TYPES } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
 import { AssetLibrary, type TypeArt } from "./assets";
 import type { Piece } from "./artBuild";
-import type { Plant } from "../rules/forest";
+import type { LightSource, Plant } from "../rules/forest";
+import { hash2 } from "../rules/random";
 import { Ground } from "./ground";
 import { applyStyleLight, LIGHT_UNIFORMS, MAX_LIGHTS } from "./lighting";
 import { Post } from "./post";
@@ -39,6 +40,8 @@ export class View {
   private lastBuild = { x: Infinity, y: Infinity, z: Infinity, version: -1 };
   readonly post: Post;
   private dancefloor: Dancefloor;
+  private propBatch: SpriteBatch;
+  private sources: LightSource[] = [];
   /** Lights in the forest besides the witch's glow, from the light sources (set by the view). */
   private forestLights: ForestLight[] = [];
   private shadows: ShadowBatch;
@@ -58,7 +61,7 @@ export class View {
     this.camera = new THREE.PerspectiveCamera(t.camera.fov, 1, 1, 900);
     this.post = new Post(this.renderer, t);
     this.scene.background = new THREE.Color(0x0b0a16);
-    applyStyleLight(style, t.glowReach, this.mpp);
+    applyStyleLight(style, t.glowReach, this.mpp, t.tone.ambient);
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize);
     this.ground = new Ground(game.map, style, this.mpp);
     this.assets.onFloor = (type, tile) => this.ground.setFloor(type, tile);
@@ -82,6 +85,8 @@ export class View {
       stones.push({ x: d.x + Math.cos(a) * d.radius, y: 0, z: d.z + Math.sin(a) * d.radius, frame: this.assets.stones.frames[i % 4], flip: i % 2 === 0 });
     }
     this.stoneBatch.set(stones);
+    this.propBatch = new SpriteBatch(this.assets.props, this.mpp);
+    this.scene.add(this.propBatch.mesh);
     this.dancefloor = new Dancefloor(game.map, t, SPRITE_UNIFORMS, this.mpp);
     this.scene.add(this.dancefloor.ball, this.dancefloor.beam);
 
@@ -239,6 +244,7 @@ export class View {
       for (const k of this.drawn) if (!drawn.has(k)) check(k, "vanished");
     }
     this.drawn = drawn;
+    this.sources = g.forest.lightsNear(g.witch.x, g.witch.z, t.haze.far + margin);
     this.stats.trees = nt; this.stats.bushes = nb;
     this.shadowList = shadows;
   }
@@ -266,6 +272,31 @@ export class View {
     }
     this.stats.creatures = n;
     if (this.game.tuning.shadows.on) this.shadows.set(this.shadowList.concat(creatureShadows));
+  }
+
+  // Campfires flicker, magic stones pulse; their props are drawn, ponds go to the ground.
+  private fire = new THREE.Vector3(1, 0.5, 0.16);
+  private runeCyan = new THREE.Vector3(0.3, 0.9, 1);
+  private runeViolet = new THREE.Vector3(0.75, 0.45, 1);
+  private updateSources(time: number): void {
+    const f = this.assets.props.frames, items: SpriteInstance[] = [], lights: ForestLight[] = [], ponds: { x: number; z: number; r: number; d: number }[] = [];
+    const w = this.game.witch;
+    for (const src of this.sources) {
+      const k = hash2(Math.round(src.x * 10), Math.round(src.z * 10), 7);
+      if (src.kind === "pond") { ponds.push({ x: src.x, z: src.z, r: 3 * src.size, d: Math.hypot(src.x - w.x, src.z - w.z) }); continue; }
+      if (src.kind === "campfire") {
+        const flick = 0.8 + 0.12 * Math.sin(time * 11 + k * 40) + 0.08 * Math.sin(time * 23.7 + k * 13);
+        lights.push({ x: src.x + Math.sin(time * 9 + k) * 0.08, y: 1.2, z: src.z, reach: 13 * src.size, rgb: this.fire, strength: 1.6 * flick });
+        if (this.inView(src.x, src.z, 2, 2, 2)) items.push({ x: src.x, y: 0, z: src.z, frame: f[Math.floor(time * 7 + k * 10) % 2], flip: k < 0.5 });
+      } else {
+        const violet = k < 0.4, pulse = 0.7 + 0.3 * Math.sin(time * 0.9 + k * 20);
+        lights.push({ x: src.x, y: 2, z: src.z, reach: 10 * src.size, rgb: violet ? this.runeViolet : this.runeCyan, strength: 1.1 * pulse });
+        if (this.inView(src.x, src.z, 1.2, 2.6, 2)) items.push({ x: src.x, y: 0, z: src.z, frame: f[violet ? 3 : 2], flip: k < 0.5 });
+      }
+    }
+    this.propBatch.set(items);
+    this.forestLights = lights;
+    this.ground.setPonds(ponds.sort((a, b) => a.d - b.d));
   }
 
   /** Shade with only the nearest lights (the light budget), fading out those at the budget's
@@ -318,6 +349,7 @@ export class View {
     const w = g.witch, h = witchHeight(w, t);
     LIGHT_UNIFORMS.uGlowPos.value.set(w.x, h + t.glowHeight, w.z);
     LIGHT_UNIFORMS.uHazeCentre.value.set(w.x, w.z);
+    this.updateSources(time);
     this.setLights([this.dancefloor.update(time, this.ground), ...this.forestLights], w.x, w.z);
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);

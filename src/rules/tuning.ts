@@ -37,6 +37,7 @@ export interface Tuning {
   artPixelsPerMetre: number;
   viewMargin: number;
   lightBudget: number;
+  lightSources: { spacing: number; campfire: number; magicStone: number; pond: number; wetPond: number };
   haze: { near: number; far: number };
   dancefloor: {
     radius: number; stones: number; clearing: number;
@@ -49,6 +50,7 @@ export interface Tuning {
   shadows: { on: boolean; strength: number };
   canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };
   mist: { on: boolean; strength: number; height: number; wind: number };
+  tone: { black: number; gamma: number; ambient: number };
   bloom: { on: boolean; strength: number; threshold: number };
   tiltShift: { on: boolean; where: "before" | "after"; strength: number; band: number; centre: number };
   creaturesNear: number;

@@ -104,7 +104,7 @@ async function main() {
     await sleep(800);
     await shot(page, "05-treetop-zoomed-out.png");
     await page.keyboard.press("Space");
-    await sleep(1200);
+    await page.waitForFunction(() => window.witch.game.witch.mode !== "descending", null, { timeout: 60000 }).catch(() => {});
     s = await state(page);
     check(s.mode === "ground", `space descends to ground mode (${s.mode})`);
     await shot(page, "06-ground-zoomed-out.png");

@@ -34,6 +34,8 @@ uniform sampler2D uFloors;        // every type's floor tile, FLOOR_COLS to a ro
 uniform vec2 uTile, uFloorsSize;  // one tile's size and the atlas's, in art pixels
 uniform float uSat;
 uniform vec3 uFloor; // dancefloor x, z, radius
+uniform vec4 uPonds[8]; // nearest ponds: x, z, radius, (unused)
+uniform int uPondCount;
 uniform vec4 uCircle; // magic circle: hue, second hue, brightness (pulsing), rune band's turn (radians)
 
 // The magic circle on the dancefloor, in art pixels: rings, a band of rune glyphs that turns,
@@ -104,6 +106,25 @@ void main() {
       return;
     }
   }
+  // Ponds: dark water mirroring the moon. The glint is a fake highlight from the view and a
+  // moon mirrored into the sky ahead, so it slides as the camera moves, and shimmers.
+  for (int i = 0; i < 8; i++) {
+    if (i >= uPondCount) break;
+    vec2 dp = p - uPonds[i].xy;
+    float edge = uPonds[i].z * (0.85 + 0.15 * vnoise(px / 6.0 + float(i) * 7.0));
+    if (dot(dp, dp) < edge * edge) {
+      vec3 V = normalize(cameraPosition - vec3(p.x, 0.0, p.y));
+      vec3 R = reflect(-V, vec3(0.0, 1.0, 0.0));
+      vec3 moon = normalize(vec3(uMoonDir.x, uMoonDir.y, -abs(uMoonDir.z)));
+      float spec = dot(R, moon) + (vnoise(px * vec2(0.6, 2.5) + vec2(uTime * 1.5, 0.0)) - 0.5) * 0.05;
+      vec3 water = vec3(0.015, 0.03, 0.055) * nightLight(vec3(0.0, 1.0, 0.0), vWorld) * 4.0;
+      if (spec > 0.985) water = vec3(0.92, 0.95, 1.0);
+      else if (spec > 0.965) water = vec3(0.45, 0.55, 0.7);
+      else if (mod(px.y, 4.0) < 1.0 && vnoise(px / 3.0 + uTime) > 0.62) water += vec3(0.06, 0.08, 0.12); // ripples
+      gl_FragColor = vec4(haze(water, vWorld), 1.0);
+      return;
+    }
+  }
   float moonK = 1.0;
   if (uCanopy.x > 0.0) {
     // The canopy's shadow: a dappled layer at canopy height, cast along the moonlight onto the
@@ -157,6 +178,8 @@ export class Ground {
         uFloor: { value: new THREE.Vector3(map.dancefloor.x, map.dancefloor.z, map.dancefloor.radius) },
         uCanopy: { value: new THREE.Vector4() },
         uCircle: { value: new THREE.Vector4() },
+        uPonds: { value: Array.from({ length: 8 }, () => new THREE.Vector4()) },
+        uPondCount: { value: 0 },
         uClearing: { value: new THREE.Vector2(map.tuning.clearingSize, map.tuning.clearingFalloff) },
       },
     });
@@ -164,6 +187,13 @@ export class Ground {
     geo.rotateX(-Math.PI / 2);
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.position.set((e.minX + e.maxX) / 2, 0, (e.minZ + e.maxZ) / 2);
+  }
+
+  /** The ponds nearest the view (up to 8): x, z, radius. */
+  setPonds(ponds: { x: number; z: number; r: number }[]): void {
+    const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, list = u.uPonds.value as THREE.Vector4[];
+    ponds.slice(0, 8).forEach((p, i) => list[i].set(p.x, p.z, p.r, 0));
+    u.uPondCount.value = Math.min(8, ponds.length);
   }
 
   /** The magic circle: its two hues, brightness now, and the rune band's turn. */

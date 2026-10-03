@@ -41,9 +41,9 @@ export type LightUniforms = typeof LIGHT_UNIFORMS;
 
 /** Set the light colours from a style (the Art Lab's knobs). One set of uniforms is shared by
  *  every material, so this and the glow position update everything at once. */
-export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel: number): void {
+export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel: number, ambientScale = 1): void {
   const v = (rgb: number[], k: number) => new THREE.Vector3(rgb[0] / 255 * k, rgb[1] / 255 * k, rgb[2] / 255 * k);
-  LIGHT_UNIFORMS.uAmb.value.copy(v(hsv2rgb(st.ambientHue, 0.55, 1), st.ambient));
+  LIGHT_UNIFORMS.uAmb.value.copy(v(hsv2rgb(st.ambientHue, 0.55, 1), st.ambient * ambientScale));
   LIGHT_UNIFORMS.uMoon.value.copy(v(hsv2rgb(st.moonHue, 0.35, 1), st.moon));
   LIGHT_UNIFORMS.uMoonBeam.value.copy(v(hsv2rgb(st.moonHue, 0.35, 1), st.shafts * 0.25));
   LIGHT_UNIFORMS.uBands.value = st.bands;
@@ -53,7 +53,7 @@ export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel:
   LIGHT_UNIFORMS.uGlowRgb.value.copy(v(hsv2rgb(st.glowHue, st.glowSat, 1), 1));
   LIGHT_UNIFORMS.uGlowR.value = glowReach;
   LIGHT_UNIFORMS.uGlowPower.value = st.glowPower;
-  LIGHT_UNIFORMS.uHazeColour.value.copy(v(hsv2rgb(st.ambientHue, 0.45, 1), 0.16));
+  LIGHT_UNIFORMS.uHazeColour.value.copy(v(hsv2rgb(st.ambientHue - 0.08, 0.55, 1), 0.16 * Math.sqrt(ambientScale)));
 }
 
 export const LIGHT_GLSL = /* glsl */ `

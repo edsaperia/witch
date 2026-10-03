@@ -9,6 +9,7 @@ import * as THREE from "three";
 
 export interface PostTuning {
   bloom: { on: boolean; strength: number; threshold: number };
+  tone: { black: number; gamma: number; ambient: number };
   tiltShift: { on: boolean; where: "before" | "after"; strength: number; band: number; centre: number };
 }
 
@@ -33,10 +34,13 @@ void main() {
 
 // Scene (sampled as whole low-res pixels) plus bloom.
 const COMPOSITE = /* glsl */ `
-uniform sampler2D uScene, uBloom; uniform vec2 uLow; uniform float uBloomStrength; varying vec2 vUv;
+uniform sampler2D uScene, uBloom; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma; varying vec2 vUv;
 void main() {
   vec2 p = (floor(vUv * uLow) + 0.5) / uLow;
-  vec3 c = texture2D(uScene, p).rgb + texture2D(uBloom, vUv).rgb * uBloomStrength;
+  vec3 c = texture2D(uScene, p).rgb;
+  // Levels: a black point and a gamma, so the shade goes near-black and the lit stays bright.
+  c = pow(clamp((c - uBlack) / (1.0 - uBlack), 0.0, 1.0), vec3(uGamma));
+  c += texture2D(uBloom, vUv).rgb * uBloomStrength;
   gl_FragColor = vec4(min(c, vec3(1.0)), 1.0);
 }`;
 
@@ -80,7 +84,7 @@ export class Post {
     this.mats = {
       bright: m(BRIGHT, { uScene: { value: null }, uThreshold: { value: 0.6 } }),
       blur: m(BLUR, { uSrc: { value: null }, uStep: { value: new THREE.Vector2() } }),
-      composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 } }),
+      composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 } }),
       tilt: m(TILT, { uSrc: { value: null }, uTexel: { value: new THREE.Vector2() }, uDir: { value: new THREE.Vector2() }, uStrength: { value: 0 }, uBand: { value: 0.4 }, uCentre: { value: 0.5 } }),
     };
     this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mats.composite);
@@ -127,6 +131,7 @@ export class Post {
     const tilt = t.tiltShift.on && t.tiltShift.strength > 0;
     this.pass("composite", tilt ? this.a : null, u => {
       u.uScene.value = this.scene.texture; u.uBloom.value = this.bright.texture; u.uLow.value.copy(this.low); u.uBloomStrength.value = bloomOn ? t.bloom.strength : 0;
+      u.uBlack.value = t.tone.black; u.uGamma.value = t.tone.gamma;
     });
     if (!tilt) return;
     // The blur radius is given in low-res pixels; after the upscale it covers the same ground.

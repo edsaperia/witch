@@ -399,6 +399,22 @@ describe("creatures", () => {
   });
 });
 
+describe("light sources", () => {
+  const forest = new Forest(map), all = forest.lightsNear(280, 280, 280);
+  it("come in all three kinds, the same from the same seed, and keep off the dancefloor", () => {
+    const kinds = new Set(all.map(l => l.kind));
+    expect([...kinds].sort()).toEqual(["campfire", "pond", "stone"]);
+    expect(new Forest(map).lightsNear(280, 280, 280).map(l => l.x.toFixed(2)).join()).toBe(all.map(l => l.x.toFixed(2)).join());
+    const d = map.dancefloor;
+    for (const l of all) expect(Math.hypot(l.x - d.x, l.z - d.z)).toBeGreaterThan(d.radius + TUNING.dancefloor.clearing);
+  });
+  it("put more ponds in the wet areas", () => {
+    const wet = new Set(["wetland", "stream", "bog", "beaver-pond", "moor"]);
+    const ponds = all.filter(l => l.kind === "pond"), inWet = ponds.filter(l => wet.has(AREA_TYPES[map.areaAt(l.x, l.z).type].id)).length;
+    expect(inWet / ponds.length).toBeGreaterThan(0.4);
+  });
+});
+
 describe("set pieces", () => {
   it("show in a few of the areas whose type has one, never in the others", () => {
     let shown = 0, could = 0;

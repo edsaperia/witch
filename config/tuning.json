@@ -55,6 +55,8 @@
   "artPixelsPerMetre": 16,
   "viewMargin": 12,
   "lightBudget": 12,
+  "_lightSources": "Light sources placed by seed, on a grid of spacing metres, mostly in clearings and at area edges: the chance per spot of a campfire, a magic stone, or a pond mirroring the moon (wetPond in wet areas: wetland, stream, bog, beaver pond, moor).",
+  "lightSources": { "spacing": 10, "campfire": 0.035, "magicStone": 0.025, "pond": 0.02, "wetPond": 0.12 },
   "haze": { "near": 110, "far": 280 },
 
   "_post": "bloom: a gentle glow round bright things (strength 0 or on false turns it off; threshold: how bright a pixel must be to glow). tiltShift: blurs the top and bottom of the screen so the forest looks like a miniature. strength: the blur at the screen's edges, in pixels; band: the height of the sharp band (0-1 of the screen); centre: where it sits (0 top, 0.5 middle, 1 bottom); where: 'before' blurs at the low resolution, before the pixels are scaled up, 'after' blurs the scaled-up image. Add ?tilt=before, ?tilt=after or ?tilt=off to the link to compare.",
@@ -72,6 +74,8 @@
   },
   "_canopyCutout": "In ground mode the canopy stays drawn at the screen's edges, so she flies under the forest roof; only a dithered hole round her is cut out. radius and edge are fractions of the screen's height. Rising closes the hole.",
   "canopyCutout": { "radius": 0.32, "edge": 0.14 },
+  "_tone": "Contrast: ambient scales the twilight fill (lower is darker shade under the canopy); black is the black point and gamma the curve applied to the whole picture, so dark goes near-black and lit stays bright.",
+  "tone": { "black": 0.03, "gamma": 1.35, "ambient": 0.35 },
   "bloom": { "on": true, "strength": 0.7, "threshold": 0.55 },
   "tiltShift": { "on": true, "where": "before", "strength": 3, "band": 0.4, "centre": 0.55 },
 
