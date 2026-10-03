@@ -140,6 +140,40 @@ const report = await b.page.evaluate(async () => {
     }
     res.push({ what: "tree variety: every wooded area has 8+ variants over 3+ height classes, taller by class (willows wider instead), sane bounds", good: !bad.length, info: bad.slice(0, 6).join("; ") || "ok" });
   }
+  { // tree species (Ed: the forest should vary from area to area, mostly UK kinds): every species draws, standing, its crown line inside;
+    // seen from the treetops each species' crown differs measurably from every other's (fill, shade shares, leaf grain, outline, colour);
+    // no two areas with the same layout pattern share a main species, no species is the main kind of more than two areas, and the old broadleaf only of dead woods
+    const ids = Object.keys(G.TREE_SPECIES), bad = [], stats2 = {};
+    for (const id of ids) { const t = G.TREE_SPECIES[id].fn(G.rng(5), { ...st }, st.treeSize), s2 = stats(t.sp); if (!(s2.n > 200 && s2.bottom > 0 && t.crownY > 0 && t.crownY < s2.h)) bad.push(id + " draws"); stats2[id] = G.crownStats(id, st); }
+    const vec = x => [x.fill / .1, x.dark / .1, x.light / .1, x.grain, Math.log(x.shape) / .25, x.hue / .03, x.value / .06]; // in steps one can just tell apart
+    let closest = [9, "", ""]; for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) { const d = Math.hypot(...vec(stats2[ids[i]]).map((v, k) => v - vec(stats2[ids[j]])[k])); if (d < closest[0]) closest = [d, ids[i], ids[j]]; }
+    if (closest[0] < 1.5) bad.push(`${closest[1]} and ${closest[2]} look alike from above (${closest[0].toFixed(2)})`);
+    const main = A => (A.big || []).find(([k, o]) => k === "tree" && !o.minor)?.[1], byPattern = {}, uses = {};
+    for (const A of G.AREAS) { const o = main(A); if (!o) continue; const key = A.layout.pattern + ":" + o.type; if (byPattern[key]) bad.push(`${A.id} and ${byPattern[key]} (both ${A.layout.pattern}) share ${o.type}`); byPattern[key] = A.id; uses[o.type] = (uses[o.type] || 0) + 1; if (o.type === "broad" && !o.bare) bad.push(A.id + " still plain broadleaf"); if (!G.TREE_SPECIES[o.type]) bad.push(A.id + " names no species"); }
+    for (const [k, n] of Object.entries(uses)) if (n > 2) bad.push(`${k} is the main kind of ${n} areas`);
+    res.push({ what: "tree species: 20 kinds draw; each crown differs from every other's from above (1.5+ apart); neighbours by layout pattern never share a main species, none is the main kind of 3+ areas, plain broadleaf only for dead woods", good: !bad.length && ids.length >= 16, info: bad.join("; ") || `${Object.keys(uses).length} main kinds over the wooded areas; closest pair ${closest[1]}/${closest[2]} at ${closest[0].toFixed(2)}` });
+  }
+  { // life below the crown (Ed: "the trunks don't have to be totally devoid of foliage"): every species' bottom half carries some leaves (ivy, moss, sprigs, low boughs,
+    // a skirt), more on saplings than on mature trees; the top half is exactly what the tree draws without them (the canopy and its cut-out unchanged);
+    // and no wall of leaves at the witch's eye height: there, no row of the bottom half's leaves spans more than 0.6 of the crown's width (or half the witch's height, for a narrow tree)
+    const L = new Set([G.M.LEAF, G.M.LEAF2, G.M.LEAF3]), wh = G.witchSprite(st).h, bad = [], K = 2 / (st.pixel || 2); let young = 0, old = 0, worst = 0;
+    for (const [id, S] of Object.entries(G.TREE_SPECIES)) {
+      let leaves = 0;
+      for (const sc of [.5, 1]) for (let k = 0; k < 3; k++) {
+        const t = S.fn(G.rng(31 + k), { ...st }, st.treeSize * K * sc), b = S.bare(G.rng(31 + k), { ...st }, st.treeSize * K * sc), { top, bot } = G.splitTree(t), top0 = G.splitTree(b).top;
+        if (top.w !== top0.w || top.h !== top0.h || top.m.some((m, i) => m !== top0.m[i])) { bad.push(id + " canopy changed"); break; }
+        let n = 0, all = 0, cx0 = 1e9, cx1 = -1;
+        for (let i = 0; i < top.m.length; i++) if (top.m[i]) { const x = i % top.w; cx0 = Math.min(cx0, x); cx1 = Math.max(cx1, x); }
+        for (let y = 0; y < bot.h; y++) { let x0 = 1e9, x1 = -1; for (let x = 0; x < bot.w; x++) { const m = bot.m[y * bot.w + x]; if (!m) continue; all++; if (L.has(m)) { n++; x0 = Math.min(x0, x); x1 = x; } }
+          const up = bot.h - 1 - y; if (x1 >= 0 && up >= wh * .5 && up <= wh) worst = Math.max(worst, (x1 - x0 + 1) / Math.max(1, cx1 - cx0 + 1, wh * .5 / .6)); } // a narrow tree's sprigs may span half the witch's height
+        if (sc === 1) leaves += n; else young += n / Math.max(1, all); if (sc === 1) old += n / Math.max(1, all);
+      }
+      if (leaves < 15) bad.push(id + " bare below the crown");
+    }
+    if (worst > .6) bad.push(`a ${worst.toFixed(2)}-wide wall of leaves at eye height`);
+    if (young <= old) bad.push("saplings no leafier below than mature trees");
+    res.push({ what: "life below the crown: every species' bottom half carries leaves, saplings more; the canopy unchanged; no wall of leaves at eye height", good: !bad.length, info: bad.join("; ") || `widest eye-height leaves ${worst.toFixed(2)} of the crown; leaf share below, saplings ${(young / 60).toFixed(2)} vs mature ${(old / 60).toFixed(2)}` });
+  }
   { // layouts: every area has a sound layout descriptor, and between them they use most of the patterns (no pattern for more than 8 areas)
     const bad = G.AREAS.map(A => [A.id, G.layoutProblems(A)]).filter(([, p]) => p.length).map(([id, p]) => id + ": " + p.join(", "));
     const uses = {}; for (const A of G.AREAS) if (A.layout) uses[A.layout.pattern] = (uses[A.layout.pattern] || 0) + 1;
