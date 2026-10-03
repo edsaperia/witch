@@ -10,6 +10,7 @@
 //   node art/preview.mjs soundsystems all art/previews/soundsystems.png [scale]
 // Optional env LEVELS=1,0 draws only those levels; FACINGS=towards,away one row per view; TREES=wBroad,wFir only those kinds.
 // Optional env SIGIL=stag adds soundsystems carved with that creature's sigil; for lights, a list of species carves stones with their sigils.
+// Optional env SMALL=1 with sigils and a list draws each at the four levels at 30, 20, 14 and 10 px (plain and neon), as in the stack.
 // Optional env DRAWON=1 with sigils and a list draws each one on the ground through its draw-on.
 // Optional env STYLE='{"ambient": .1}' overrides style knobs.
 // Optional env NIGHT=1 lights the sheet with the style's night (as in the game) instead of even studio light.
@@ -23,6 +24,7 @@ const b = await openBrowser();
 if (process.env.TREES) await b.page.addInitScript(l => { window.TREES = l; }, process.env.TREES.split(","));
 if (process.env.FACINGS) await b.page.addInitScript(l => { window.FACINGS = l; }, process.env.FACINGS.split(","));
 if (process.env.SIGIL) await b.page.addInitScript(l => { window.SIGIL = l; }, process.env.SIGIL);
+if (process.env.SMALL) await b.page.addInitScript(() => { window.SMALL = true; });
 if (process.env.DRAWON) await b.page.addInitScript(() => { window.DRAWON = true; });
 if (process.env.STYLE) await b.page.addInitScript(o => { window.STYLE = o; }, JSON.parse(process.env.STYLE));
 if (process.env.NIGHT) await b.page.addInitScript(() => { window.NIGHT = true; });
@@ -35,6 +37,13 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   const rows = [];
   if (what === "sigils") { // every sigil, flat and on the ground (drawn), glowing on a dark ground, with its name
     const S = await import(gen.replace("generator.js", "sigils.js"));
+    if (window.SMALL) { // small sizes, as in the stack: each sigil at baby, young, adult, legend, drawn at 30, 20, 14 and 10 px, plain (as the prototype's atlas) and neon
+      const ids = list.split(","), sizes = [30, 20, 14, 10], cw = 34, W = 8 + ids.length * (4 * cw + 12), H = 8 + sizes.length * 2 * (cw + 2);
+      const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"); g.fillStyle = "#0e0c14"; g.fillRect(0, 0, W, H);
+      ids.forEach((id, n) => sizes.forEach((sz, r) => [false, true].forEach((glow, k) => [0, 1, 2, 3].forEach(level => S.drawSigil(g, id, { x: 8 + n * (4 * cw + 12) + level * cw + (cw - sz) / 2, y: 8 + (r * 2 + k) * (cw + 2) + (cw - sz) / 2, size: sz, level, glow, colour: glow ? undefined : [255, 255, 255] })))));
+      const big = document.createElement("canvas"); big.width = W * scale; big.height = H * scale; const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, W * scale, H * scale);
+      return big.toDataURL("image/png");
+    }
     if (window.DRAWON) { // the draw-on: each listed sigil on the ground at moments through its writing, then glowing
       const ids = list.split(","), ts = [.08, .16, .26, .36, .46, .6, 1.4], ppm = 22, D = S.sigilFrame(1).metres * ppm, gw = D + 6, gh = Math.ceil(D * Math.sin(S.GROUND_PITCH)) + 6, W = ts.length * (gw + 8) + 8, H = ids.length * (gh + 8) + 8;
       const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"); g.fillStyle = "#14121c"; g.fillRect(0, 0, W, H);
