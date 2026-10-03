@@ -273,7 +273,6 @@ async function main() {
       return best.id;
     });
     await sleep(800);
-    check(await page.evaluate(() => document.getElementById("bubble-creature").classList.contains("on")), "a creature in talking range shows the talk cue");
     await shot(page, "69-leash-cue.png");
     const t0 = await page.evaluate(() => window.witch.game.clock.time);
     await page.keyboard.down("KeyT");

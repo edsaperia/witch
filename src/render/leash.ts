@@ -13,7 +13,7 @@
 import * as THREE from "three";
 import { drawSigil, sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
-import { blocked, leashPoint, talkTarget, talkTurn } from "../rules/leash";
+import { blocked, leashPoint, talkTurn } from "../rules/leash";
 import { hash2 } from "../rules/random";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
@@ -269,15 +269,12 @@ export class LeashView {
     };
     const line = bc.querySelector("span")!, bar = bc.querySelector(".bar") as HTMLElement;
     if (!talk) {
-      // Cues: a creature in talking range shows it can be talked to (a legend that it won't come);
-      // Talk held in the air says to land; held with no one in range, a "…" so the press shows.
-      bc.style.opacity = "0.85";
+      // Cues: Talk held in the air says to land; held with no one in range, a "…" so the press
+      // shows. (No prompt over creatures in range: Ed, 2026-10-03.)
       bar.style.display = "none";
+      bc.classList.remove("on");
       bw.classList.toggle("on", g.leash.held);
       if (g.leash.held) { bw.textContent = g.leash.heldInAir ? "land to talk" : "…"; place(bw, w.x - 1.2, witchHeight(w, g.tuning) + 2.2, w.z); }
-      const near = w.mode === "ground" ? talkTarget(g.creatures, w.x, w.z, g.tuning) : null;
-      bc.classList.toggle("on", !!near);
-      if (near) { line.textContent = near.level === 3 ? "😒" : "💬 T"; place(bc, near.x, 1.2 + near.level * 0.8, near.z); }
       return;
     }
     const c = g.creatures[talk.id];
