@@ -23,7 +23,7 @@ CI (`.github/workflows/ci.yml`) runs on every push and pull request, in this ord
 - `npm run typecheck` (`tsc --noEmit` over `src/`, `config/` and `vite.config.ts`)
 - `npm run build` (Vite, into `dist/`)
 
-Not in CI, run by builders before a FINAL: `npm run build && npm run smoke`, a headless Chromium smoke test (`tools/smoke/smoke.cjs`, Playwright from the machine's global install; never `playwright install`) that flies both modes on the laptop and phone layouts, drives the touch controls, and saves screenshots to `previews/`.
+Not in CI, run by builders before a FINAL: `npm run build && npm run smoke`, a headless Chromium smoke test (`tools/smoke/smoke.cjs`, Playwright from the machine's global install; never `playwright install`) that flies both modes on the laptop and phone layouts, drives the touch controls, flies a path through every zoom step in both modes failing on any pop (anything appearing or vanishing in clear view), runs four party waves, and saves screenshots to `previews/` (`RECORD=1` also saves `previews/flight.webm`).
 
 The art generator (`art/`, entry `art/generator.js`) and the Witch Art Lab (`tools/art-lab/`) have one more check, not in CI, run from the repository root before every push that touches them:
 
@@ -43,3 +43,8 @@ Literal, stable names for the parts of the game, as Ed and the builders agree th
 - **Style file**: `config/style.json`, a style saved in the Witch Art Lab; every sprite is drawn from it.
 - **Top half / bottom half**: a tree's crown and its trunk, drawn as two sprites; tops show in treetop mode only.
 - **Debug overlay**: the panel toggled by `~` or a three-finger tap: frame rate, seed, area type, mode.
+- **Partified**: an area the party has reached: a soundsystem in its clearing, string lights round it, motes. Home is partified from the start.
+- **Wave**: one step of the party spreading: every area bordering a partified one is partified at once, every `party.interval` seconds (N brings the next one, P pauses the timer).
+- **String lights**: lines of party bulbs hung between pairs of trees round a partified area's clearing.
+- **Smooth effects / pixel effects**: `?fx=smooth` (default) draws mist, far haze and canopy dapple as soft gradients; `?fx=pixel` draws them as dithered pixel steps.
+- **Pop**: an object appearing or vanishing in clear view between frames. `?debug=cull` tints anything that changed visibility this frame red; the smoke check fails on any pop.

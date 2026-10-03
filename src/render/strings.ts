@@ -39,7 +39,7 @@ void main() {
   if (vOn < 0.5) discard;
   float b = 1.0 - uTwinkle * 0.5 * (1.0 + sin(uTime * (1.3 + vB.x) + vB.x * 40.0));
   if (fract((vB.y - uTime * uChase) / 60.0) < 0.06) b = 1.4;  // a chase running along now and then
-  gl_FragColor = vec4(haze(vColour * b, vWorld), 1.0);
+  gl_FragColor = vec4(haze(vColour * b * 1.6, vWorld), 1.0); // bright enough to bloom
 }`;
 
 const WIRE_VERT = /* glsl */ `
@@ -96,7 +96,7 @@ export class StringLightsView {
     const L = game.tuning.stringLights;
     this.palette = L.palette.map(h => new THREE.Color(h));
     const shared = { ...LIGHT_UNIFORMS, uWind: { value: game.tuning.canopyShadow.wind * 1.5 } };
-    this.bulbMat = new THREE.ShaderMaterial({ vertexShader: BULB_VERT, fragmentShader: BULB_FRAG, uniforms: { ...shared, uNear: { value: 60 }, uTwinkle: { value: L.twinkle }, uChase: { value: L.chaseSpeed } } });
+    this.bulbMat = new THREE.ShaderMaterial({ vertexShader: BULB_VERT, fragmentShader: BULB_FRAG, uniforms: { ...shared, uNear: { value: 240 }, uTwinkle: { value: L.twinkle }, uChase: { value: L.chaseSpeed } } });
     this.wireMat = new THREE.ShaderMaterial({ vertexShader: WIRE_VERT, fragmentShader: WIRE_FRAG, uniforms: shared });
     this.moteMat = new THREE.ShaderMaterial({ vertexShader: MOTE_VERT, fragmentShader: MOTE_FRAG, uniforms: { ...LIGHT_UNIFORMS, uMoteColour: { value: new THREE.Color(1, 0.85, 1) } } });
   }
