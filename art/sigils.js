@@ -167,7 +167,8 @@ export function sigilMark(id, level = 0) {
     if (F.band && F.rings >= 2) for (let i = 0; i < 16; i++) { const a = (90 + i * 22.5) * Math.PI / 180, r0 = R - .06 + .014, r1 = R - .014; frame.push({ ...polyline({ l: [[.5 + r0 * Math.cos(a), .5 + r0 * Math.sin(a)], [.5 + r1 * Math.cos(a), .5 + r1 * Math.sin(a)]] }), w: ring * .8, part: "band" }); }
     for (let i = 0; i < F.rays; i++) { const a = (90 + i * 360 / F.rays) * Math.PI / 180, r0 = R + .02, r1 = .5 - ring / 2; frame.push({ ...polyline({ l: [[.5 + r0 * Math.cos(a), .5 + r0 * Math.sin(a)], [.5 + r1 * Math.cos(a), .5 + r1 * Math.sin(a)]] }), w: ring * 1.3, part: "ray" }); }
   }
-  const sig = sigilStrokes(id).map(s => ({ dot: s.dot, len: s.len * k, pts: s.pts.map(([x, y]) => [o + x * k, o + y * k]), w: s.w * k * thick, r: SIGIL_DOT * k * thick, part: "sigil" }));
+  const gk = Math.min(1.25, thick); // the glyph thickens a little with level, never enough to clog (the rings carry the rest)
+  const sig = sigilStrokes(id).map(s => ({ dot: s.dot, len: s.len * k, pts: s.pts.map(([x, y]) => [o + x * k, o + y * k]), w: s.w * k * gk, r: SIGIL_DOT * k * gk, part: "sigil" }));
   const out = { level, frame: F, k, strokes: [...timeline(frame, 0, frame.length ? .15 : 0), ...timeline(sig, frame.length ? .15 : 0, 1)] };
   markCache.set(key, out);
   return out;
@@ -212,7 +213,7 @@ export function drawSigil(ctx, id, { x = 0, y = 0, size = 64, level = null, colo
       ctx.lineWidth = s.w * wk; pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke();
     }
   };
-  if (glow) { pass(colour, 2.4, halo * .55, size / 12); pass(toward(colour, WHITE, .72), .62, 1, size / 30); }
+  if (glow) { pass(colour, 2.4, Math.min(halo, .7) * .55, size / 12); pass(toward(colour, WHITE, .72), .62, 1, size / 30); }
   else pass(colour, 1, 1, 0);
   ctx.restore();
 }
@@ -253,19 +254,21 @@ export function sigilGlyph(id, size = 16, { progress = 1 } = {}) {
 export const GROUND_PITCH = 35 * Math.PI / 180;
 export function sigilField(id, { level = 0, size = 64, squash = 1 } = {}) {
   const M = sigilMark(id, level), F = M.frame || sigilFrame(0), w = Math.ceil(size) + 4, h = Math.ceil(size * squash) + 4;
-  const reach = 2 + 2 * F.halo; // halo, in pixels past the core
-  const atCore = new Float32Array(w * h).fill(Infinity), atHalo = new Float32Array(w * h).fill(Infinity), dist = new Float32Array(w * h).fill(Infinity), part = new Uint8Array(w * h);
+  // halo, in pixels past the core: the glyph's stays tight so its lines stay distinct at every level; the rings and ornament carry the extra glow
+  const reach = 2 + 2 * F.halo, reachOf = kind => kind === 1 ? Math.min(2, reach) : reach + 1;
+  const atCore = new Float32Array(w * h).fill(Infinity), atHalo = new Float32Array(w * h).fill(Infinity), fall = new Float32Array(w * h).fill(Infinity), part = new Uint8Array(w * h), haloPart = new Uint8Array(w * h);
   // segments in pixel space, each with its core radius and its place in the draw-on
   const segs = [];
   for (const s of M.strokes) {
-    const P = s.pts.map(([u, v]) => [2 + u * size, 2 + v * size * squash]), core = Math.max(.6, (s.dot ? s.r : s.w / 2) * size), kind = s.part === "sigil" ? 1 : 2;
+    // the glyph's core lines stay thin in pixels, however big the mark, so its marks never run together
+    const P = s.pts.map(([u, v]) => [2 + u * size, 2 + v * size * squash]), kind = s.part === "sigil" ? 1 : 2, core = Math.max(.6, Math.min((s.dot ? s.r : s.w / 2) * size, kind === 1 ? (s.dot ? 1.6 : 1) + .15 * F.level : Infinity));
     if (s.dot) { segs.push({ a: P[0], b: P[0], at0: s.start, at1: s.start, core, kind }); continue; }
     let run = 0;
     for (let i = 1; i < P.length; i++) { const l = Math.hypot(s.pts[i][0] - s.pts[i - 1][0], s.pts[i][1] - s.pts[i - 1][1]); segs.push({ a: P[i - 1], b: P[i], at0: s.start + run / s.len * (s.end - s.start), at1: s.start + (run + l) / s.len * (s.end - s.start), core, kind }); run += l; }
   }
   for (const g of segs) { // only the pixels near each segment
-    const x0 = Math.max(0, Math.floor(Math.min(g.a[0], g.b[0]) - g.core - reach)), x1 = Math.min(w - 1, Math.ceil(Math.max(g.a[0], g.b[0]) + g.core + reach));
-    const y0 = Math.max(0, Math.floor(Math.min(g.a[1], g.b[1]) - g.core - reach)), y1 = Math.min(h - 1, Math.ceil(Math.max(g.a[1], g.b[1]) + g.core + reach));
+    const R = reachOf(g.kind), x0 = Math.max(0, Math.floor(Math.min(g.a[0], g.b[0]) - g.core - R)), x1 = Math.min(w - 1, Math.ceil(Math.max(g.a[0], g.b[0]) + g.core + R));
+    const y0 = Math.max(0, Math.floor(Math.min(g.a[1], g.b[1]) - g.core - R)), y1 = Math.min(h - 1, Math.ceil(Math.max(g.a[1], g.b[1]) + g.core + R));
     const dx = g.b[0] - g.a[0], dy = g.b[1] - g.a[1], l2 = dx * dx + dy * dy;
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
       const px = x + .5, py = y + .5, t = l2 ? Math.max(0, Math.min(1, ((px - g.a[0]) * dx + (py - g.a[1]) * dy) / l2)) : 0;
@@ -273,11 +276,11 @@ export function sigilField(id, { level = 0, size = 64, squash = 1 } = {}) {
       const ex = px - g.a[0] - dx * t, ey = py - g.a[1] - dy * t, dPlane = Math.hypot(ex, ey / squash), dScreen = Math.hypot(ex, ey), at = g.at0 + (g.at1 - g.at0) * t, i = y * w + x;
       const inCore = dPlane <= g.core || dScreen <= .6, d = Math.max(0, Math.min(dScreen, dPlane) - g.core);
       if (inCore && at < atCore[i]) { atCore[i] = at; part[i] = g.kind; }
-      if (d <= reach && at < atHalo[i]) atHalo[i] = at;
-      if (d < dist[i]) dist[i] = d;
+      if (d <= R && at < atHalo[i]) atHalo[i] = at;
+      if (d / R < fall[i]) { fall[i] = d / R; haloPart[i] = g.kind; }
     }
   }
-  return { id, level, frame: F, w, h, size, squash, reach, atCore, atHalo, dist, part };
+  return { id, level, frame: F, w, h, size, squash, reach, atCore, atHalo, fall, part, haloPart };
 }
 // The leashing rune on the ground: a sigilField foreshortened by the pitch, sized by its
 // level's frame (metres) at pxPerMetre.
@@ -307,8 +310,8 @@ export function paintSigilField(g, t, { colour = sigilColour(g.id), canvas, prog
       const col = g.part[i] === 2 ? toward(colour, WHITE, .35 + .2 * pulse) : toward(core, WHITE, tip);
       d.set([col[0], col[1], col[2], Math.round(255 * Math.min(1, (g.part[i] === 2 ? .8 : 1) * flicker * sh))], i * 4);
     } else {
-      const f = Math.max(0, 1 - g.dist[i] / g.reach); // soft falloff
-      d.set([colour[0], colour[1], colour[2], Math.round(255 * f * f * haloK * sh)], i * 4);
+      const f = Math.max(0, 1 - g.fall[i]), k = g.haloPart[i] === 1 ? Math.min(haloK, .6) : haloK; // soft falloff; the glyph's own halo capped
+      d.set([colour[0], colour[1], colour[2], Math.round(255 * f * f * k * sh)], i * 4);
     }
   }
   ctx.putImageData(img, 0, 0);

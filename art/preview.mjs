@@ -10,6 +10,8 @@
 // Optional env LEVELS=1,0 draws only those levels; FACINGS=towards,away one row per view; TREES=wBroad,wFir only those kinds.
 // Optional env SIGIL=stag adds soundsystems carved with that creature's sigil; for lights, a list of species carves stones with their sigils.
 // Optional env DRAWON=1 with sigils and a list draws each one on the ground through its draw-on.
+// Optional env STYLE='{"ambient": .1}' overrides style knobs.
+// Optional env NIGHT=1 lights the sheet with the style's night (as in the game) instead of even studio light.
 // Optional env GEN=<path from repo root> renders with another copy of the generator (for "before" images).
 import { writeFileSync } from "node:fs";
 import { openBrowser } from "./headless.mjs";
@@ -21,6 +23,8 @@ if (process.env.TREES) await b.page.addInitScript(l => { window.TREES = l; }, pr
 if (process.env.FACINGS) await b.page.addInitScript(l => { window.FACINGS = l; }, process.env.FACINGS.split(","));
 if (process.env.SIGIL) await b.page.addInitScript(l => { window.SIGIL = l; }, process.env.SIGIL);
 if (process.env.DRAWON) await b.page.addInitScript(() => { window.DRAWON = true; });
+if (process.env.STYLE) await b.page.addInitScript(o => { window.STYLE = o; }, JSON.parse(process.env.STYLE));
+if (process.env.NIGHT) await b.page.addInitScript(() => { window.NIGHT = true; });
 if (process.env.LEVELS) await b.page.addInitScript(l => { window.LEVELS = l; }, process.env.LEVELS.split(",").map(Number));
 await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
 const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) => {
@@ -83,10 +87,12 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   const gap = 6, w = Math.max(...rows.map(r => r.reduce((a, s) => a + s.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(s => s.h)) + gap), h = rh.reduce((a, v) => a + v, gap);
   const mk = () => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
   const A = mk(), N = mk(), a = A.getContext("2d"), n = N.getContext("2d");
-  a.fillStyle = `rgb(${G.hsv2rgb(st.groundHue, .4, st.groundVal)})`; a.fillRect(0, 0, w, h); n.fillStyle = "rgb(128,75,240)"; n.fillRect(0, 0, w, h);
+  // at NIGHT the sprites go on a clear canvas, so glowing pixels keep their alpha 254 through the lighting, and the dark ground goes under afterwards
+  if (!window.NIGHT) { a.fillStyle = `rgb(${G.hsv2rgb(st.groundHue, .4, st.groundVal)})`; a.fillRect(0, 0, w, h); } n.fillStyle = "rgb(128,75,240)"; n.fillRect(0, 0, w, h);
   let y = gap;
   rows.forEach((r, i) => { let x = gap; y += rh[i] - gap; for (const s of r) { a.drawImage(s.A, x, y - s.h); n.drawImage(s.N, x, y - s.h); x += s.w + gap; } y += gap; });
-  const lit = mk(); shade({ a, n, w, h }, lit, studio, [], [0, 0, w, h]);
+  let lit = mk(); shade({ a, n, w, h }, lit, window.NIGHT ? st : studio, [], [0, 0, w, h]); // NIGHT: the style's own night light, as in the game
+  if (window.NIGHT) { const under = mk(), u = under.getContext("2d"); u.fillStyle = "#0c1014"; u.fillRect(0, 0, w, h); u.drawImage(lit, 0, 0); lit = under; }
   const big = document.createElement("canvas"); big.width = w * scale; big.height = h * scale;
   const g = big.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(lit, 0, 0, w * scale, h * scale);
   return big.toDataURL("image/png");

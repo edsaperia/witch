@@ -248,6 +248,7 @@ const M = {
   SHADES: 46, FRAME: 47,       // sunglasses: dark lenses, fancy frames
   SHOE: 48, SOLE: 49,          // fancy shoes
   WOKEN: 50,   // a woken creature's angry glowing eyes
+  WEB: 51,     // pale silk and cotton: spider webs, cotton grass (lit, not glowing)
 };
 // These glow: drawn at full colour by the lighting pass, whatever the light.
 // The rune glyphs: one carved-rune language for the magic stones and the soundsystem. Simple,
@@ -266,7 +267,9 @@ function runeGlyph(u, v, k, w = .12) {
     default: return line(.3, .08, .3, .92) || line(.3, .12, .75, .35) || line(.75, .35, .3, .55) || line(.3, .55, .78, .92); // a hooked stave
   }
 }
-const EMISSIVE = new Set([M.GLINT, M.FLOWER, M.MAGIC, M.MAGIC2, M.RUNE, M.GLOW, M.COLLAR, M.WOKEN]);
+// Glowing materials (alpha 254, drawn unlit): only magical light. Flowers, webs and cotton are lit like
+// the rest of a plant (Ed's playtest: glowing gorse flowers floated over bushes the night hid).
+const EMISSIVE = new Set([M.GLINT, M.MAGIC, M.MAGIC2, M.RUNE, M.GLOW, M.COLLAR, M.WOKEN]);
 
 // ================= geometry: smooth outlines =================
 // Points are [x, y] in sprite pixels. A closed outline is a list of control points; the
@@ -634,7 +637,7 @@ function broadTree(r, st, s) {
   }
   roots(sp, bx, gy, tw * Math.sqrt(n), st, r, s);
   bark(sp, st);
-  if (st.treeWebs) for (let i = 0; i + 1 < tips.length; i += 2) { const a = tips[i], c = tips[i + 1], L = Math.hypot(c[0] - a[0], c[1] - a[1]); if (L < 40 * s) for (let j = 0; j <= L; j++) { const p = lerp2(a, c, j / L); sp.px(p[0], p[1] + Math.sin(j / L * Math.PI) * L * .15, M.GLINT, 0, 0, 1); } }
+  if (st.treeWebs) for (let i = 0; i + 1 < tips.length; i += 2) { const a = tips[i], c = tips[i + 1], L = Math.hypot(c[0] - a[0], c[1] - a[1]); if (L < 40 * s) for (let j = 0; j <= L; j++) { const p = lerp2(a, c, j / L); sp.px(p[0], p[1] + Math.sin(j / L * Math.PI) * L * .15, M.WEB, 0, 0, 1); } }
   if (st.treeBare) return trim(sp, bx, crownY + 4 * s);
   // clumps at the tips: back ones darker first, then the front
   tips.sort((a, b) => a[1] - b[1]);
@@ -770,7 +773,7 @@ function treeColours(r, st, type) {
   const h = st.leafHue + (r() - .5) * st.leafVariety * .7 + (type === firTree ? .06 : 0);
   return {
     [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212],
-    [M.LEAF]: hsv2rgb(h, .62 * st.sat, .58), [M.LEAF2]: hsv2rgb(h - .05, .55 * st.sat, .8), [M.LEAF3]: hsv2rgb(h + .03, .66 * st.sat, .38),
+    [M.LEAF]: hsv2rgb(h, .62 * st.sat, .58), [M.LEAF2]: hsv2rgb(h - .05, .55 * st.sat, .8), [M.LEAF3]: hsv2rgb(h + .03, .66 * st.sat, .38), [M.WEB]: [225, 225, 232],
   };
 }
 // The trunk was drawn with its roots and bark; this stays for callers of the old API.
@@ -1881,7 +1884,8 @@ function sigilMark(id, level = 0) {
     if (F.band && F.rings >= 2) for (let i = 0; i < 16; i++) { const a = (90 + i * 22.5) * Math.PI / 180, r0 = R - .06 + .014, r1 = R - .014; frame.push({ ...polyline({ l: [[.5 + r0 * Math.cos(a), .5 + r0 * Math.sin(a)], [.5 + r1 * Math.cos(a), .5 + r1 * Math.sin(a)]] }), w: ring * .8, part: "band" }); }
     for (let i = 0; i < F.rays; i++) { const a = (90 + i * 360 / F.rays) * Math.PI / 180, r0 = R + .02, r1 = .5 - ring / 2; frame.push({ ...polyline({ l: [[.5 + r0 * Math.cos(a), .5 + r0 * Math.sin(a)], [.5 + r1 * Math.cos(a), .5 + r1 * Math.sin(a)]] }), w: ring * 1.3, part: "ray" }); }
   }
-  const sig = sigilStrokes(id).map(s => ({ dot: s.dot, len: s.len * k, pts: s.pts.map(([x, y]) => [o + x * k, o + y * k]), w: s.w * k * thick, r: SIGIL_DOT * k * thick, part: "sigil" }));
+  const gk = Math.min(1.25, thick); // the glyph thickens a little with level, never enough to clog (the rings carry the rest)
+  const sig = sigilStrokes(id).map(s => ({ dot: s.dot, len: s.len * k, pts: s.pts.map(([x, y]) => [o + x * k, o + y * k]), w: s.w * k * gk, r: SIGIL_DOT * k * gk, part: "sigil" }));
   const out = { level, frame: F, k, strokes: [...timeline(frame, 0, frame.length ? .15 : 0), ...timeline(sig, frame.length ? .15 : 0, 1)] };
   markCache.set(key, out);
   return out;
@@ -1926,7 +1930,7 @@ function drawSigil(ctx, id, { x = 0, y = 0, size = 64, level = null, colour = si
       ctx.lineWidth = s.w * wk; pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke();
     }
   };
-  if (glow) { pass(colour, 2.4, halo * .55, size / 12); pass(toward(colour, WHITE, .72), .62, 1, size / 30); }
+  if (glow) { pass(colour, 2.4, Math.min(halo, .7) * .55, size / 12); pass(toward(colour, WHITE, .72), .62, 1, size / 30); }
   else pass(colour, 1, 1, 0);
   ctx.restore();
 }
@@ -1967,19 +1971,21 @@ function sigilGlyph(id, size = 16, { progress = 1 } = {}) {
 const GROUND_PITCH = 35 * Math.PI / 180;
 function sigilField(id, { level = 0, size = 64, squash = 1 } = {}) {
   const M = sigilMark(id, level), F = M.frame || sigilFrame(0), w = Math.ceil(size) + 4, h = Math.ceil(size * squash) + 4;
-  const reach = 2 + 2 * F.halo; // halo, in pixels past the core
-  const atCore = new Float32Array(w * h).fill(Infinity), atHalo = new Float32Array(w * h).fill(Infinity), dist = new Float32Array(w * h).fill(Infinity), part = new Uint8Array(w * h);
+  // halo, in pixels past the core: the glyph's stays tight so its lines stay distinct at every level; the rings and ornament carry the extra glow
+  const reach = 2 + 2 * F.halo, reachOf = kind => kind === 1 ? Math.min(2, reach) : reach + 1;
+  const atCore = new Float32Array(w * h).fill(Infinity), atHalo = new Float32Array(w * h).fill(Infinity), fall = new Float32Array(w * h).fill(Infinity), part = new Uint8Array(w * h), haloPart = new Uint8Array(w * h);
   // segments in pixel space, each with its core radius and its place in the draw-on
   const segs = [];
   for (const s of M.strokes) {
-    const P = s.pts.map(([u, v]) => [2 + u * size, 2 + v * size * squash]), core = Math.max(.6, (s.dot ? s.r : s.w / 2) * size), kind = s.part === "sigil" ? 1 : 2;
+    // the glyph's core lines stay thin in pixels, however big the mark, so its marks never run together
+    const P = s.pts.map(([u, v]) => [2 + u * size, 2 + v * size * squash]), kind = s.part === "sigil" ? 1 : 2, core = Math.max(.6, Math.min((s.dot ? s.r : s.w / 2) * size, kind === 1 ? (s.dot ? 1.6 : 1) + .15 * F.level : Infinity));
     if (s.dot) { segs.push({ a: P[0], b: P[0], at0: s.start, at1: s.start, core, kind }); continue; }
     let run = 0;
     for (let i = 1; i < P.length; i++) { const l = Math.hypot(s.pts[i][0] - s.pts[i - 1][0], s.pts[i][1] - s.pts[i - 1][1]); segs.push({ a: P[i - 1], b: P[i], at0: s.start + run / s.len * (s.end - s.start), at1: s.start + (run + l) / s.len * (s.end - s.start), core, kind }); run += l; }
   }
   for (const g of segs) { // only the pixels near each segment
-    const x0 = Math.max(0, Math.floor(Math.min(g.a[0], g.b[0]) - g.core - reach)), x1 = Math.min(w - 1, Math.ceil(Math.max(g.a[0], g.b[0]) + g.core + reach));
-    const y0 = Math.max(0, Math.floor(Math.min(g.a[1], g.b[1]) - g.core - reach)), y1 = Math.min(h - 1, Math.ceil(Math.max(g.a[1], g.b[1]) + g.core + reach));
+    const R = reachOf(g.kind), x0 = Math.max(0, Math.floor(Math.min(g.a[0], g.b[0]) - g.core - R)), x1 = Math.min(w - 1, Math.ceil(Math.max(g.a[0], g.b[0]) + g.core + R));
+    const y0 = Math.max(0, Math.floor(Math.min(g.a[1], g.b[1]) - g.core - R)), y1 = Math.min(h - 1, Math.ceil(Math.max(g.a[1], g.b[1]) + g.core + R));
     const dx = g.b[0] - g.a[0], dy = g.b[1] - g.a[1], l2 = dx * dx + dy * dy;
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
       const px = x + .5, py = y + .5, t = l2 ? Math.max(0, Math.min(1, ((px - g.a[0]) * dx + (py - g.a[1]) * dy) / l2)) : 0;
@@ -1987,11 +1993,11 @@ function sigilField(id, { level = 0, size = 64, squash = 1 } = {}) {
       const ex = px - g.a[0] - dx * t, ey = py - g.a[1] - dy * t, dPlane = Math.hypot(ex, ey / squash), dScreen = Math.hypot(ex, ey), at = g.at0 + (g.at1 - g.at0) * t, i = y * w + x;
       const inCore = dPlane <= g.core || dScreen <= .6, d = Math.max(0, Math.min(dScreen, dPlane) - g.core);
       if (inCore && at < atCore[i]) { atCore[i] = at; part[i] = g.kind; }
-      if (d <= reach && at < atHalo[i]) atHalo[i] = at;
-      if (d < dist[i]) dist[i] = d;
+      if (d <= R && at < atHalo[i]) atHalo[i] = at;
+      if (d / R < fall[i]) { fall[i] = d / R; haloPart[i] = g.kind; }
     }
   }
-  return { id, level, frame: F, w, h, size, squash, reach, atCore, atHalo, dist, part };
+  return { id, level, frame: F, w, h, size, squash, reach, atCore, atHalo, fall, part, haloPart };
 }
 // The leashing rune on the ground: a sigilField foreshortened by the pitch, sized by its
 // level's frame (metres) at pxPerMetre.
@@ -2021,8 +2027,8 @@ function paintSigilField(g, t, { colour = sigilColour(g.id), canvas, progress, m
       const col = g.part[i] === 2 ? toward(colour, WHITE, .35 + .2 * pulse) : toward(core, WHITE, tip);
       d.set([col[0], col[1], col[2], Math.round(255 * Math.min(1, (g.part[i] === 2 ? .8 : 1) * flicker * sh))], i * 4);
     } else {
-      const f = Math.max(0, 1 - g.dist[i] / g.reach); // soft falloff
-      d.set([colour[0], colour[1], colour[2], Math.round(255 * f * f * haloK * sh)], i * 4);
+      const f = Math.max(0, 1 - g.fall[i]), k = g.haloPart[i] === 1 ? Math.min(haloK, .6) : haloK; // soft falloff; the glyph's own halo capped
+      d.set([colour[0], colour[1], colour[2], Math.round(255 * f * f * k * sh)], i * 4);
     }
   }
   ctx.putImageData(img, 0, 0);
@@ -2238,7 +2244,7 @@ function prop(kind, o, def, st, r, s) {
     const ts = { ...st, leafHue: def.leaf + (o.dark ? .05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs };
     const t = f(r, ts, st.treeSize * s * (o.scale || 1) * uni(r, .9, 1.1));
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
-    c[M.NOSE] = [20, 16, 24]; c[M.GLINT] = [235, 235, 240];
+    c[M.NOSE] = [20, 16, 24]; c[M.WEB] = [225, 225, 232];
     return { sp: t.sp, colours: c };
   }
   if (kind === "shrub") { // a leafy bush, flowering or berried
@@ -2254,11 +2260,11 @@ function prop(kind, o, def, st, r, s) {
     for (let k = 0; k < n; k++) {
       const x0 = cx + uni(r, -16, 16) * s, h = hgt * uni(r, .5, 1), lean = kind === "fern" ? uni(r, -6, 6) * s : uni(r, -2, 2) * s, y0 = gy - 1 - (kind === "flowerbed" ? 5 * s : 0);
       for (let j = 0; j < h; j++) { const t = j / h; sp.px(x0 + lean * t * t, y0 - j, t > .7 ? M.LEAF2 : t < .3 ? M.LEAF3 : M.LEAF, lean * .05, -.3, .9); if (kind === "fern" && j % 2) sp.px(x0 + lean * t * t + (lean > 0 ? 1 : -1), y0 - j + 1, M.LEAF2, 0, -.3, .9); }
-      if (kind === "reeds" && (o.cotton ? true : r() < .5)) for (let j = 0; j < (o.cotton ? 2 : 3); j++) sp.px(x0 + lean, y0 - h - j, o.cotton ? M.GLINT : M.TRUNK, 0, -.5, .85);
+      if (kind === "reeds" && (o.cotton ? true : r() < .5)) for (let j = 0; j < (o.cotton ? 2 : 3); j++) sp.px(x0 + lean, y0 - h - j, o.cotton ? M.WEB : M.TRUNK, 0, -.5, .85);
       if ((kind === "flowers" || kind === "flowerbed") && r() < .7) { sp.px(x0 + lean, y0 - h, M.FLOWER, 0, -.5, .85); sp.px(x0 + lean + 1, y0 - h, M.FLOWER, 0, -.5, .85); }
     }
-    colours = { ...leafCol, [M.FLOWER]: kind === "flowerbed" ? pick(r, [[230, 80, 120], [250, 210, 60], [150, 110, 230]]) : hsv2rgb(o.hue ?? .95, .6, .85), [M.TRUNK]: hsv2rgb(.07, .5, .35), [M.GLINT]: [240, 240, 235], [M.ACCENT]: hsv2rgb(.08, .1, .55) };
-    if (kind === "flowerbed") { for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.FLOWER && hash2(i, 2, 7) < .5) sp.m[i] = M.MAGIC2; colours[M.MAGIC2] = [250, 245, 240]; }
+    colours = { ...leafCol, [M.FLOWER]: kind === "flowerbed" ? pick(r, [[230, 80, 120], [250, 210, 60], [150, 110, 230]]) : hsv2rgb(o.hue ?? .95, .6, .85), [M.TRUNK]: hsv2rgb(.07, .5, .35), [M.WEB]: [240, 240, 235], [M.ACCENT]: hsv2rgb(.08, .1, .55) };
+    if (kind === "flowerbed") { for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.FLOWER && hash2(i, 2, 7) < .5) sp.m[i] = M.BELLY; colours[M.BELLY] = [250, 245, 240]; } // some white flowers among the coloured (lit: flowers never glow)
   } else if (kind === "stones") {
     for (let k = 0; k < (o.big ? 3 : 6); k++) rock(sp, [cx + uni(r, -14, 14) * s, gy - (o.big ? 5 : 2.5) * s], (o.big ? 6 : 3) * s * uni(r, .7, 1.2), (o.big ? 5 : 2.5) * s, st, r);
     colours = stoneCol();
@@ -2324,9 +2330,9 @@ function prop(kind, o, def, st, r, s) {
     colours = stoneCol();
   } else if (kind === "web") {
     const c = [cx, gy - 14 * s], R = 11 * s;
-    for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; for (let j = 0; j < R; j++) sp.px(c[0] + Math.cos(a) * j, c[1] + Math.sin(a) * j, M.GLINT, 0, 0, 1); }
-    for (let ring = 3 * s; ring < R; ring += 3 * s) for (let a = 0; a < Math.PI * 2; a += .05) sp.px(c[0] + Math.cos(a) * ring, c[1] + Math.sin(a) * ring, M.GLINT, 0, 0, 1);
-    colours = { [M.GLINT]: [225, 230, 240] };
+    for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; for (let j = 0; j < R; j++) sp.px(c[0] + Math.cos(a) * j, c[1] + Math.sin(a) * j, M.WEB, 0, 0, 1); }
+    for (let ring = 3 * s; ring < R; ring += 3 * s) for (let a = 0; a < Math.PI * 2; a += .05) sp.px(c[0] + Math.cos(a) * ring, c[1] + Math.sin(a) * ring, M.WEB, 0, 0, 1);
+    colours = { [M.WEB]: [225, 230, 240] };
   }
   return { sp, colours };
 }

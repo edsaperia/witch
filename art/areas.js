@@ -137,7 +137,7 @@ function prop(kind, o, def, st, r, s) {
     const ts = { ...st, leafHue: def.leaf + (o.dark ? .05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs };
     const t = f(r, ts, st.treeSize * s * (o.scale || 1) * uni(r, .9, 1.1));
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
-    c[M.NOSE] = [20, 16, 24]; c[M.GLINT] = [235, 235, 240];
+    c[M.NOSE] = [20, 16, 24]; c[M.WEB] = [225, 225, 232];
     return { sp: t.sp, colours: c };
   }
   if (kind === "shrub") { // a leafy bush, flowering or berried
@@ -153,11 +153,11 @@ function prop(kind, o, def, st, r, s) {
     for (let k = 0; k < n; k++) {
       const x0 = cx + uni(r, -16, 16) * s, h = hgt * uni(r, .5, 1), lean = kind === "fern" ? uni(r, -6, 6) * s : uni(r, -2, 2) * s, y0 = gy - 1 - (kind === "flowerbed" ? 5 * s : 0);
       for (let j = 0; j < h; j++) { const t = j / h; sp.px(x0 + lean * t * t, y0 - j, t > .7 ? M.LEAF2 : t < .3 ? M.LEAF3 : M.LEAF, lean * .05, -.3, .9); if (kind === "fern" && j % 2) sp.px(x0 + lean * t * t + (lean > 0 ? 1 : -1), y0 - j + 1, M.LEAF2, 0, -.3, .9); }
-      if (kind === "reeds" && (o.cotton ? true : r() < .5)) for (let j = 0; j < (o.cotton ? 2 : 3); j++) sp.px(x0 + lean, y0 - h - j, o.cotton ? M.GLINT : M.TRUNK, 0, -.5, .85);
+      if (kind === "reeds" && (o.cotton ? true : r() < .5)) for (let j = 0; j < (o.cotton ? 2 : 3); j++) sp.px(x0 + lean, y0 - h - j, o.cotton ? M.WEB : M.TRUNK, 0, -.5, .85);
       if ((kind === "flowers" || kind === "flowerbed") && r() < .7) { sp.px(x0 + lean, y0 - h, M.FLOWER, 0, -.5, .85); sp.px(x0 + lean + 1, y0 - h, M.FLOWER, 0, -.5, .85); }
     }
-    colours = { ...leafCol, [M.FLOWER]: kind === "flowerbed" ? pick(r, [[230, 80, 120], [250, 210, 60], [150, 110, 230]]) : hsv2rgb(o.hue ?? .95, .6, .85), [M.TRUNK]: hsv2rgb(.07, .5, .35), [M.GLINT]: [240, 240, 235], [M.ACCENT]: hsv2rgb(.08, .1, .55) };
-    if (kind === "flowerbed") { for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.FLOWER && hash2(i, 2, 7) < .5) sp.m[i] = M.MAGIC2; colours[M.MAGIC2] = [250, 245, 240]; }
+    colours = { ...leafCol, [M.FLOWER]: kind === "flowerbed" ? pick(r, [[230, 80, 120], [250, 210, 60], [150, 110, 230]]) : hsv2rgb(o.hue ?? .95, .6, .85), [M.TRUNK]: hsv2rgb(.07, .5, .35), [M.WEB]: [240, 240, 235], [M.ACCENT]: hsv2rgb(.08, .1, .55) };
+    if (kind === "flowerbed") { for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.FLOWER && hash2(i, 2, 7) < .5) sp.m[i] = M.BELLY; colours[M.BELLY] = [250, 245, 240]; } // some white flowers among the coloured (lit: flowers never glow)
   } else if (kind === "stones") {
     for (let k = 0; k < (o.big ? 3 : 6); k++) rock(sp, [cx + uni(r, -14, 14) * s, gy - (o.big ? 5 : 2.5) * s], (o.big ? 6 : 3) * s * uni(r, .7, 1.2), (o.big ? 5 : 2.5) * s, st, r);
     colours = stoneCol();
@@ -223,9 +223,9 @@ function prop(kind, o, def, st, r, s) {
     colours = stoneCol();
   } else if (kind === "web") {
     const c = [cx, gy - 14 * s], R = 11 * s;
-    for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; for (let j = 0; j < R; j++) sp.px(c[0] + Math.cos(a) * j, c[1] + Math.sin(a) * j, M.GLINT, 0, 0, 1); }
-    for (let ring = 3 * s; ring < R; ring += 3 * s) for (let a = 0; a < Math.PI * 2; a += .05) sp.px(c[0] + Math.cos(a) * ring, c[1] + Math.sin(a) * ring, M.GLINT, 0, 0, 1);
-    colours = { [M.GLINT]: [225, 230, 240] };
+    for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; for (let j = 0; j < R; j++) sp.px(c[0] + Math.cos(a) * j, c[1] + Math.sin(a) * j, M.WEB, 0, 0, 1); }
+    for (let ring = 3 * s; ring < R; ring += 3 * s) for (let a = 0; a < Math.PI * 2; a += .05) sp.px(c[0] + Math.cos(a) * ring, c[1] + Math.sin(a) * ring, M.WEB, 0, 0, 1);
+    colours = { [M.WEB]: [225, 230, 240] };
   }
   return { sp, colours };
 }

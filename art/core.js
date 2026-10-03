@@ -56,6 +56,7 @@ export const M = {
   SHADES: 46, FRAME: 47,       // sunglasses: dark lenses, fancy frames
   SHOE: 48, SOLE: 49,          // fancy shoes
   WOKEN: 50,   // a woken creature's angry glowing eyes
+  WEB: 51,     // pale silk and cotton: spider webs, cotton grass (lit, not glowing)
 };
 // These glow: drawn at full colour by the lighting pass, whatever the light.
 // The rune glyphs: one carved-rune language for the magic stones and the soundsystem. Simple,
@@ -74,7 +75,9 @@ export function runeGlyph(u, v, k, w = .12) {
     default: return line(.3, .08, .3, .92) || line(.3, .12, .75, .35) || line(.75, .35, .3, .55) || line(.3, .55, .78, .92); // a hooked stave
   }
 }
-export const EMISSIVE = new Set([M.GLINT, M.FLOWER, M.MAGIC, M.MAGIC2, M.RUNE, M.GLOW, M.COLLAR, M.WOKEN]);
+// Glowing materials (alpha 254, drawn unlit): only magical light. Flowers, webs and cotton are lit like
+// the rest of a plant (Ed's playtest: glowing gorse flowers floated over bushes the night hid).
+export const EMISSIVE = new Set([M.GLINT, M.MAGIC, M.MAGIC2, M.RUNE, M.GLOW, M.COLLAR, M.WOKEN]);
 
 // ================= geometry: smooth outlines =================
 // Points are [x, y] in sprite pixels. A closed outline is a list of control points; the
