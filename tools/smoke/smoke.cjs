@@ -69,7 +69,6 @@ async function main() {
     let s = await state(page);
     check(!s.paused, "a key press starts the game");
     check(s.stats.trees > 20 && s.stats.batches > 3 && s.stats.drawCalls > 15, `trees drawn round the start (${s.stats.trees} trees, ${s.stats.batches} batches, ${s.stats.drawCalls} draw calls)`);
-    check(s.stats.creatures > 0, `creatures in the start clearing (${s.stats.creatures})`);
     await shot(page, "01-ground-dancefloor.png");
     // Speeds are measured in game time: a slow headless renderer runs fewer, capped frames.
     const tuning = await page.evaluate(() => window.witch.game.tuning);
@@ -97,6 +96,8 @@ async function main() {
     await hold(page, "KeyD", 1.5);
     await page.keyboard.press("Space");
     await sleep(800);
+    const seen = await page.evaluate(() => window.witch.view.stats.creatures);
+    check(seen > 0, `creatures in view after flying out of the home area (${seen})`);
     const pops = await page.evaluate(() => window.witch.view.pops.slice(0, 10));
     check(pops.length === 0, `no tree pops in or out in clear view on a fixed flight path${pops.length ? ": " + pops.join("; ") : ""}`);
     await page.keyboard.press("KeyQ"); await page.keyboard.press("KeyQ");

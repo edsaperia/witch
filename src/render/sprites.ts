@@ -12,6 +12,8 @@ export const SPRITE_UNIFORMS = {
   uUp: { value: new THREE.Vector3(0, 1, 0) },
   uFacing: { value: new THREE.Vector3(0, 0, 1) },
   uTopFade: { value: 0 },
+  // The hole in the canopy round the witch: her place on screen (pixels), radius and edge (pixels).
+  uCutout: { value: new THREE.Vector4(0, 0, 0, 1) },
 };
 
 const VERT = /* glsl */ `
@@ -37,6 +39,7 @@ const FRAG = /* glsl */ `
 uniform sampler2D uAlbedo, uNormal;
 uniform vec3 uRight, uUp, uFacing;
 uniform float uTopFade, uUnlit;
+uniform vec4 uCutout;
 varying vec2 vUv;
 varying vec3 vWorld;
 varying vec2 vFlags;
@@ -51,7 +54,12 @@ float bayer(vec2 p) {
 void main() {
   vec4 a = texture2D(uAlbedo, vUv);
   if (a.a < 0.5) discard;
-  if (vFlags.y > 0.5 && bayer(gl_FragCoord.xy) >= uTopFade) discard;
+  if (vFlags.y > 0.5) {
+    // Crowns: hidden in a dithered hole round the witch, which closes as she rises.
+    float d = length(gl_FragCoord.xy - uCutout.xy);
+    float shown = smoothstep(uCutout.z - uCutout.w, uCutout.z, d);
+    if (bayer(gl_FragCoord.xy) >= max(shown, uTopFade)) discard;
+  }
   // Eye glints, flowers and magic glow: the generator marks them with alpha 254.
   if (uUnlit > 0.5) { gl_FragColor = vec4(a.rgb, 1.0); return; }
   if (a.a < 0.999) { gl_FragColor = vec4(haze(a.rgb, vWorld), 1.0); return; }

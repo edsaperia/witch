@@ -278,7 +278,13 @@ export class View {
     const tilt = t.spriteTilt;
     SPRITE_UNIFORMS.uUp.value.set(0, 1, 0).lerp(up, tilt).normalize();
     SPRITE_UNIFORMS.uFacing.value.crossVectors(SPRITE_UNIFORMS.uRight.value, SPRITE_UNIFORMS.uUp.value).normalize();
-    SPRITE_UNIFORMS.uTopFade.value = canopyShown(g.witch);
+    // The canopy is always drawn; round the witch a hole is cut, sized to the view, which shrinks
+    // to nothing as she rises (and opens as she descends).
+    const lifted = canopyShown(g.witch), cut = t.canopyCutout;
+    this.camera.updateMatrixWorld();
+    const ws = this.v3.set(g.witch.x, witchHeight(g.witch, t) * 0.5, g.witch.z).project(this.camera);
+    SPRITE_UNIFORMS.uCutout.value.set((ws.x * 0.5 + 0.5) * this.width, (ws.y * 0.5 + 0.5) * this.height, cut.radius * this.height * (1 - lifted), Math.max(1, cut.edge * this.height * (1 - lifted)));
+    SPRITE_UNIFORMS.uTopFade.value = lifted;
 
     const w = g.witch, h = witchHeight(w, t);
     LIGHT_UNIFORMS.uGlowPos.value.set(w.x, h + t.glowHeight, w.z);

@@ -13,6 +13,8 @@ export interface Tuning {
   clearingSize: number;
   clearingFalloff: number;
   bushDensity: number;
+  treeHeight: number;
+  crownWidth: number;
   treeSpacingX: number;
   treeSpacingZ: number;
   crownHalfWidth: number;
@@ -35,6 +37,7 @@ export interface Tuning {
   artPixelsPerMetre: number;
   viewMargin: number;
   haze: { near: number; far: number };
+  canopyCutout: { radius: number; edge: number };
   shadows: { on: boolean; strength: number };
   canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };
   mist: { on: boolean; strength: number; height: number; wind: number };

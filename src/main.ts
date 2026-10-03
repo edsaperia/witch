@@ -32,7 +32,12 @@ if (params.get("bloom") === "off") tuning.bloom.on = false;
 const game = newGame(seed, tuning);
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
-const view = new View(canvas, game, { ...loadStyle(), pixel: tuning.pixelSize });
+const style = loadStyle();
+const view = new View(canvas, game, {
+  ...style, pixel: tuning.pixelSize,
+  // Trees taller by treeHeight; crowns wider by crownWidth in all (treeHeight widens them too).
+  treeSize: style.treeSize * tuning.treeHeight, crownWidth: style.crownWidth * tuning.crownWidth / tuning.treeHeight,
+});
 const input = new Input();
 setupTouch(document.body, input.touch);
 
