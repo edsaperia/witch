@@ -42,24 +42,24 @@ async function main() {
 
   async function run(name, viewport, steps, query) {
     if (process.env.ONLY && !process.env.ONLY.split(",").includes(name)) return; // ONLY=party,cull runs just those
-    const { hasTouch, ...size } = viewport;
-    const page = await browser.newPage({ viewport: size, deviceScaleFactor: 1, hasTouch: !!hasTouch, isMobile: !!hasTouch });
+    const { hasTouch, dpr, ...size } = viewport;
+    const page = await browser.newPage({ viewport: size, deviceScaleFactor: dpr || 1, hasTouch: !!hasTouch, isMobile: !!hasTouch });
     page.on("pageerror", e => errors.push(`${name}: page error: ${e.message}`));
     page.on("console", m => { if (m.type() === "error") errors.push(`${name}: console error: ${m.text()}`); });
     await page.goto(`http://127.0.0.1:${port}/?seed=${seed}${query || "&debug"}`);
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 120000 });
     // All the art is drawn in the background after start; the software renderer here starves the
-    // workers of CPU, so wait for it before flying, so the shots show the forest as players do.
-    await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 300000, polling: 500 });
+    // workers of CPU (minutes at big window sizes), so wait for it before flying, so the shots show the forest as players do.
+    await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 900000, polling: 500 });
     await steps(page);
     await page.close();
   }
   const state = page => page.evaluate(() => { const g = window.witch.game; return { t: g.clock.time, x: g.witch.x, z: g.witch.z, mode: g.witch.mode, paused: g.clock.paused, area: window.witch.areaUnderWitch(), stats: window.witch.view.stats }; });
   // Hold a key for `secs` of game time (a slow headless renderer runs fewer, capped frames).
-  const hold = async (page, key, secs) => {
+  const hold = async (page, key, secs, timeout = 60000) => {
     const from = await state(page);
     await page.keyboard.down(key);
-    await page.waitForFunction(t => window.witch.game.clock.time - t >= 0, from.t + secs, { timeout: 60000, polling: 50 });
+    await page.waitForFunction(t => window.witch.game.clock.time - t >= 0, from.t + secs, { timeout, polling: 50 });
     const to = await state(page);
     await page.keyboard.up(key);
     return [from, to];
@@ -83,7 +83,8 @@ async function main() {
     check(s.mode === "ground", "still in ground mode");
     await shot(page, "02-ground-flying.png");
     await page.keyboard.press("Space");
-    await sleep(1500);
+    // The rise takes riseTime of game time: wait for it to finish, however slow the frames here.
+    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000, polling: 50 }).catch(() => {});
     s = await state(page);
     check(s.mode === "treetop", `space rises to treetop mode (${s.mode})`);
     await shot(page, "03-treetop.png");
@@ -166,7 +167,7 @@ async function main() {
     await touch("pointerup", 150, 600);
     check(s1.x > s0.x + 2 && s1.z < s0.z - 2, `the touch joystick flies her north-east (${(s1.x - s0.x).toFixed(1)}, ${(s1.z - s0.z).toFixed(1)} m)`);
     await page.touchscreen.tap(345, 770); // the rise / descend button
-    await sleep(1500);
+    await page.waitForFunction(() => window.witch.game.witch.mode !== "ground" && window.witch.game.witch.mode === "treetop", null, { timeout: 60000, polling: 50 }).catch(() => {});
     check((await state(page)).mode === "treetop", "the round button rises to treetop mode");
     await shot(page, "11-phone-treetop.png");
   });
@@ -323,6 +324,29 @@ async function main() {
       }
     }
   }, "&debug=cull&tilt=before");
+
+  // Ed's windows (v53-v57: trees vanished flying the treetops): big, both pixel ratios, long
+  // straight flights at full speed in both modes. Nothing set may go undrawn (view.stats.dropped:
+  // a batch three.js capped), and nothing may appear or vanish anywhere on screen.
+  for (const [w, h, dpr] of [[1900, 1240, 1], [2000, 1076, 2]]) {
+    await run(`vanish-${w}x${h}`, { width: w, height: h, dpr }, async page => {
+      await page.keyboard.press("Enter");
+      await page.evaluate(() => { const v = window.witch.view; v.pops = []; window.maxDropped = 0; setInterval(() => { window.maxDropped = Math.max(window.maxDropped, v.stats.dropped); }, 50); });
+      await hold(page, "KeyD", 4, 600000);
+      await shot(page, `vanish-${w}x${h}-ground.png`);
+      await page.keyboard.press("Space");
+      await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 300000 });
+      await hold(page, "KeyD", 5, 600000);
+      await hold(page, "KeyW", 4, 600000);
+      await shot(page, `vanish-${w}x${h}-treetop.png`);
+      await page.keyboard.press(ZOOM_OUT); await page.keyboard.press(ZOOM_OUT);
+      await hold(page, "KeyA", 4, 600000);
+      await shot(page, `vanish-${w}x${h}-treetop-out.png`);
+      const r = await page.evaluate(() => ({ dropped: window.maxDropped, pops: window.witch.view.pops.slice(0, 12), n: window.witch.view.pops.length, trees: window.witch.view.stats.trees, radius: window.witch.view.stats.sceneryRadius, fps: window.witch.view.stats.fps }));
+      check(r.dropped === 0, `${w}x${h} at DPR ${dpr}: every tree, bush and creature set is drawn (most dropped in a frame: ${r.dropped}; ${r.trees} trees now; scenery radius ${(r.radius ?? 0).toFixed(0)} m at ${(r.fps ?? 0).toFixed(1)} fps)`);
+      check(r.n === 0, `${w}x${h} at DPR ${dpr}: nothing appears or vanishes on screen in full-speed flight (${r.n})${r.n ? ": " + r.pops.join("; ") : ""}`);
+    }, "&debug=cull");
+  }
 
   if (process.env.RECORD) {
     const ctx = await browser.newContext({ viewport: { width: 960, height: 540 }, recordVideo: { dir: out, size: { width: 960, height: 540 } } });

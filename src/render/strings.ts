@@ -42,7 +42,7 @@ varying float vOn;
 varying vec2 vB;
 ${LIGHT_GLSL}
 void main() {
-  if (vOn < 0.5) discard;
+  if (vOn < 0.5 || sceneryFade(vWorld) < 0.5) discard; // scenery: gone past the scenery budget's edge
   float b = 1.0 - uTwinkle * 0.5 * (1.0 + sin(uTime * (1.3 + vB.x) + vB.x * 40.0));
   if (fract((vB.y - uTime * uChase) / 60.0) < 0.06) b = 1.4;  // a chase running along now and then
   gl_FragColor = vec4(haze(vColour * b * 1.6, vWorld), 1.0); // bright enough to bloom
@@ -62,7 +62,10 @@ void main() {
 const WIRE_FRAG = /* glsl */ `
 varying vec3 vWorld;
 ${LIGHT_GLSL}
-void main() { gl_FragColor = vec4(haze(vec3(0.03, 0.025, 0.04), vWorld), 1.0); }`;
+void main() {
+  if (sceneryFade(vWorld) < 0.5) discard;
+  gl_FragColor = vec4(haze(vec3(0.03, 0.025, 0.04), vWorld), 1.0);
+}`;
 
 const MOTE_VERT = /* glsl */ `
 attribute vec4 aMote; // phase, rise speed, drift, time it appears

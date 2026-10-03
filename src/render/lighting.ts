@@ -37,6 +37,9 @@ export const LIGHT_UNIFORMS = {
   uDisco: { value: new THREE.Vector4() },
   uDiscoParams: { value: new THREE.Vector4() },
   uDiscoColour: { value: new THREE.Vector3(1, 1, 1) },
+  // The scenery budget (view.ts): scenery fades out between radius - fade and radius metres
+  // from the haze centre (the witch). x: radius, y: fade.
+  uScenery: { value: new THREE.Vector2(1e6, 1) },
 };
 
 export type LightUniforms = typeof LIGHT_UNIFORMS;
@@ -67,6 +70,12 @@ uniform vec4 uLightPos[${MAX_LIGHTS}], uLightCol[${MAX_LIGHTS}];
 uniform int uLightCount;
 uniform vec4 uDisco, uDiscoParams;
 uniform vec3 uDiscoColour;
+uniform vec2 uScenery;
+
+// How much of a piece of scenery at P is drawn (1 well inside the scenery radius, 0 beyond it).
+float sceneryFade(vec3 P) {
+  return 1.0 - smoothstep(uScenery.x - uScenery.y, uScenery.x, length(P.xz - uHazeCentre));
+}
 
 // Fade toward the twilight haze with distance, in a few dithered steps so it stays pixel art.
 vec3 haze(vec3 c, vec3 P) {
