@@ -1682,6 +1682,12 @@ function render(model, { height, yaw = .6, pitch = .52, lineGap = .14, outlineGr
     const up = y > 0 && sp.m[i - W] === M.EYE, left = x > 0 && sp.m[i - 1] === M.EYE, more = x + 1 < W && sp.m[i + 1] === M.EYE && y + 1 < H && sp.m[i + W] === M.EYE; // only eyes 2 x 2 or bigger
     if (!up && !left && more) sp.m[i] = M.GLINT;
   }
+  // stand on the bottom row: drop the empty rows under the lowest pixels
+  let low = -1; for (let y = H - 1; y >= 0 && low < 0; y--) for (let x = 0; x < W; x++) if (sp.m[y * W + x]) { low = y; break; }
+  if (low >= 0 && low < H - 1) {
+    const d = H - 1 - low;
+    for (let y = H - 1; y >= 0; y--) for (let x = 0; x < W; x++) { const i = y * W + x, j = (y - d) * W + x, ok = y - d >= 0; sp.m[i] = ok ? sp.m[j] : 0; sp.g[i] = ok ? sp.g[j] : 0; for (let k = 0; k < 3; k++) sp.n[i * 3 + k] = ok ? sp.n[j * 3 + k] : 0; }
+  }
   return { sp, s, toScreen: p => { const w = toWorld(p); return [(dot(w, R) - X0) * s + 1, (U1 - dot(w, U)) * s]; } };
 }
 
