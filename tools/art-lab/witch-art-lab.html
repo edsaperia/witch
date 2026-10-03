@@ -155,8 +155,14 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 
       <section style="display:grid;gap:10px">
         <h2>Witch</h2>
-        <p class="note">The witch in every pose, turned towards you (top) and away (bottom): three frames of her hover, the fast-flight lean, flying flat out over the treetops (three frames), braking hard (two frames), then rising to the treetops and descending to the ground, two frames each. Below, on foot (towards, then away), after her hover for scale: standing (three idle frames), landing and taking off (three each), talking (four gestures), and placing and lifting a sigil (three each).</p>
+        <p class="note">The witch in every pose, turned towards you (top) and away (bottom): three frames of her hover, the fast-flight lean, flying flat out over the treetops (three frames), braking hard (two frames), then rising to the treetops and descending to the ground, two frames each. Below, on foot (towards, then away), after her hover for scale: standing (three idle frames), landing and taking off (three each), talking (four gestures), placing and lifting a sigil (three each), and sitting on her terrace (two).</p>
         <div class="sheet-wrap"><canvas id="witchSheet" width="420" height="160"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
+        <h2>Home</h2>
+        <p class="note">The witch's treehouse, a camper van crossed with a castle and stuck in a giant tree, with her sitting on its terrace as the game starts: turned towards you, its base alone (as seen from the ground, under the canopy), and turned away.</p>
+        <div class="sheet-wrap"><canvas id="homeSheet" width="420" height="160"></canvas></div>
       </section>
 
       <section style="display:grid;gap:10px">
@@ -192,7 +198,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours, areaTreeVariants, AREAS, WITCH_FOOT_POSES, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
+import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours, areaTreeVariants, AREAS, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -437,6 +443,26 @@ function renderTrees() {
   }, 550);
 }
 
+// ================= home: the treehouse, the witch sitting on its terrace =================
+let homeTimer;
+function renderHome() {
+  clearTimeout(homeTimer);
+  homeTimer = setTimeout(() => {
+    const c = document.getElementById("homeSheet"); if (!c) return;
+    const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 8, wc = witchColours(st), hc = treehouseColours(st);
+    const panels = [["towards", "whole"], ["towards", "bot"], ["away", "whole"]].map(([facing, part]) => {
+      const T = treehouseSprite(st, { facing }), house = bake(T[part], hc, st, "none"), wsp = witchSprite(st, { pose: "sit", facing }), wit = bake(wsp, wc, st, st.cOutline);
+      let x0 = wsp.w, x1 = -1; for (let x = 0; x < wsp.w; x++) if (wsp.get(x, wsp.h - 1)) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); }
+      return { house, wit, wx: Math.round(T.anchors.seat.x - (x0 + x1 + 1) / 2), wy: Math.round(T.anchors.seat.y - wsp.h) + 1 };
+    });
+    const w = panels.reduce((a, p) => a + p.house.w + gap, gap), h = Math.max(...panels.map(p => p.house.h)) + gap * 2, tgt = makeTarget(w, h);
+    tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+    let x = gap; for (const P of panels) { const y = h - gap - P.house.h; tgt.a.drawImage(P.house.A, x, y); tgt.n.drawImage(P.house.N, x, y); tgt.a.drawImage(P.wit.A, x + P.wx, y + P.wy); tgt.n.drawImage(P.wit.N, x + P.wx, y + P.wy); x += P.house.w + gap; }
+    c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
+    c.style.width = w + "px"; c.style.maxWidth = "none";
+  }, 650);
+}
+
 // ================= the witch: every pose, towards and away, studio-lit =================
 let witchTimer;
 function renderWitch() {
@@ -599,7 +625,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderWitch(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400);
+  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderWitch(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }

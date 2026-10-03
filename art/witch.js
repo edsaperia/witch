@@ -93,7 +93,10 @@ function fastModel(frame) {
 //   liftSigil    crouched, palm to the ground; rising with it; tossing it up into the stack
 // The sigil itself is not drawn; each frame records her free hand (where a held sigil goes) and
 // her hat tip as anchors. frames and a suggested fps per pose:
-export const WITCH_FOOT_POSES = { stand: { frames: 3, fps: 3 }, land: { frames: 3, fps: 10 }, takeoff: { frames: 3, fps: 10 }, talk: { frames: 4, fps: 2.5 }, placeSigil: { frames: 3, fps: 6 }, liftSigil: { frames: 3, fps: 6 } };
+export const WITCH_FOOT_POSES = { stand: { frames: 3, fps: 3 }, land: { frames: 3, fps: 10 }, takeoff: { frames: 3, fps: 10 }, talk: { frames: 4, fps: 2.5 }, placeSigil: { frames: 3, fps: 6 }, liftSigil: { frames: 3, fps: 6 }, sit: { frames: 2, fps: 1.5 } };
+// sit (with the treehouse): on the terrace chair, her broom leaning beside her, swinging her legs and looking out.
+// Her seat is WITCH_SEAT_HEIGHT model units above the ground she stands on (the chair's seat; the treehouse builds its chair to match).
+export const WITCH_SEAT_HEIGHT = .34;
 // Each frame: crouch (0 standing, 1 squatting), bend (the spine's forward lean, radians), hop (feet off the ground),
 // breathe, sway (hair and jacket), tilt (the head to one side), look (up), the free hand and its shape, the broom
 // (held upright, astride, or at an angle: its binding point and direction), a leg swung up, a talking mouth.
@@ -126,6 +129,8 @@ const FOOT_FRAMES = {
     { crouch: .25, bend: .18, free: [.44, .82, .12], hand: "palm", look: .05, sway: .04 },         // rising with it
     { breathe: .012, free: [.2, 1.64, .1], hand: "palm", look: .25, sway: .05, toes: true },     // tossing it up into the stack
   ],
+  sit: [0, 1].map(f => ({ sit: true, swing: [.06, -.06][f], bend: -.08, look: [.02, .1][f], tilt: [.15, -.2][f], sway: [.01, .03][f], breathe: [0, .008][f],
+    broom: { binding: [-.24, .31, -.3], dir: [.32, 1, -.06] }, free: [.2, WITCH_SEAT_HEIGHT + .14, .15], far: [.18, WITCH_SEAT_HEIGHT + .14, -.13], hand: "rest" })), // leaning back, hands on her knees
 };
 // the knee between a hip and a foot, bent forward
 function kneeOf(hip, foot, l) {
@@ -137,7 +142,7 @@ function kneeOf(hip, foot, l) {
 function footModel(pose, frame) {
   const fr = FOOT_FRAMES[pose], K = { crouch: 0, bend: 0, hop: 0, breathe: 0, sway: 0, tilt: 0, look: 0, broom: UPRIGHT, ...fr[frame % fr.length] };
   const m = new Model({ blend: .03 }), hop = K.hop, sway = K.sway;
-  const hipY = .45 - K.crouch * .21 + hop, hipX = -K.crouch * .12;
+  const hipY = K.sit ? WITCH_SEAT_HEIGHT + .06 : .45 - K.crouch * .21 + hop, hipX = -K.crouch * .12;
   // the broom: astride it (the handle level between her legs) or a binding point and a direction
   const astride = !!K.broom.astride, yb = hipY - .04;
   const bdir = astride ? [1, 0, 0] : v3.norm(K.broom.dir), bind = astride ? [-.36, yb, 0] : K.broom.binding;
@@ -147,8 +152,9 @@ function footModel(pose, frame) {
   // legs: jeans to the knee, then down to sneakers; one swung up over the broom; on her toes pushing off
   for (const side of [-1, 1]) {
     const g = side > 0 ? 6 : 4, hip = [hipX, hipY, side * .07];
-    const foot = side > 0 && K.legUp ? K.legUp : [(side > 0 ? .05 : -.01) + (K.toes ? -.03 : 0), .07 + (K.toes ? hop * .4 : hop), side * .1];
-    const knee = kneeOf(hip, foot, .21);
+    const swing = K.sit ? K.swing * side : 0; // sitting: her legs over the seat's edge, swinging one forward, one back
+    const foot = K.sit ? [.24 + swing, .09 + Math.max(0, swing) * .6, side * .1] : side > 0 && K.legUp ? K.legUp : [(side > 0 ? .05 : -.01) + (K.toes ? -.03 : 0), .07 + (K.toes ? hop * .4 : hop), side * .1];
+    const knee = K.sit ? [.21, hipY + .01, side * .09] : kneeOf(hip, foot, .21);
     m.seg(hip, knee, .055, .045, M.JEANS, { group: g }); m.seg(knee, foot, .045, .04, M.JEANS, { group: g });
     const toe = K.toes ? [.03, -.045, 0] : [.05, -.03, 0];
     m.ell(v3.add(foot, toe), [.08, .04, .045], M.SHOES, { dir: K.toes ? [1, -.6, 0] : [1, 0, 0], group: g, paint: p => p[1] < foot[1] + toe[1] - .015 ? M.BELLY : undefined });
@@ -167,7 +173,7 @@ function footModel(pose, frame) {
   const grip = astride ? [.28, yb + .03, -.05] : along(Math.max(.12, (Math.min(.62, hipY + .2) - bind[1]) / Math.max(.3, bdir[1])));
   const free = astride ? [.28, yb + .03, .05] : K.free;
   for (const side of [-1, 1]) {
-    const g = side > 0 ? 7 : 5, sh = shoulder(side), hand = side > 0 ? free : grip;
+    const g = side > 0 ? 7 : 5, sh = shoulder(side), hand = side > 0 ? free : K.far || grip;
     const elbow = side > 0 && K.elbow ? K.elbow : v3.add(v3.lerp(sh, hand, .5), [-.03, -.02, side * .05]);
     m.seg(sh, elbow, .04, .035, M.JACKET, { group: g }); m.seg(elbow, hand, .035, .03, M.JACKET, { group: g });
     const shape = side > 0 && !astride ? K.hand : "grip";
@@ -272,6 +278,8 @@ export const witchHeight = (st = {}) => Math.round((st.size || 8) * Math.sqrt(st
 // The flight poses are drawn at the same pixel scale as her ordinary hover (not fitted to a height).
 const scaleCache = new Map();
 const witchScale = h => { if (!scaleCache.has(h)) scaleCache.set(h, render(witchModel({ frame: 0 }), { height: h }).s); return scaleCache.get(h); };
+// pixels per model unit at her ordinary scale, for things built to her size (the treehouse)
+export const witchPixelsPerUnit = (st = {}) => witchScale(witchHeight(st));
 export function witchSprite(st = {}, { frame = 0, lean = false, facing = "towards", pose } = {}) {
   const h = witchHeight(st);
   const model = witchModel({ frame, lean, pose }), { sp, project } = pose ? render(model, { scale: witchScale(h), facing }) : render(model, { height: h, facing });
