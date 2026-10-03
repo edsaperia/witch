@@ -26,6 +26,13 @@ The heart of the game (Ed, 2026-10-03): **the witch is throwing a rave in the fo
 
 So the party's growth is both the goal and the source of the danger.
 
+### Waves and the end of a run (Ed, 2026-10-03)
+
+- The party grows in **waves**: every few minutes the **music gets louder** and **new soundsystems magically appear** further from the dancefloor, in a **roughly circular pattern**.
+- Because the party zone is a circle growing in 2D, **eventually the witch cannot get round it fast enough to invite all the creatures**.
+- **Destroyed soundsystems stay destroyed.**
+- **The run ends when every soundsystem is destroyed.** Soundsystems get harder to defend as the area grows.
+
 ## The witch
 
 - The player is a **witch flying on a broomstick**.
@@ -67,6 +74,7 @@ The trade is speed against information: treetop mode covers distance, ground mod
 
 ## Run structure
 
+- A run is a sequence of **waves** (above) and ends when every soundsystem is destroyed.
 - Exploring and defending are **probably in phases**; to be found by experiment.
 
 ## Camera and controls
@@ -108,8 +116,9 @@ The trade is speed against information: treetop mode covers distance, ground mod
 
 ## Open questions
 
-- Run structure: what one run is, how it ends (dawn?), what persists between runs.
-- Soundsystems: placed by the witch or found; what happens when one is destroyed.
+- What makes a run good: how many waves, how big the party got, or reaching the map's edge.
+- What persists between runs.
+- What a destroyed soundsystem does to the party zone around it.
 - Invitations: how many; which creatures count as young; whether a defeated creature can later be invited.
 - Which creatures sleep, and how the music wakes them.
 - How many leashes the witch can hold.
@@ -122,6 +131,7 @@ The trade is speed against information: treetop mode covers distance, ground mod
 ## Glossary
 
 - **Dancefloor**: the ritual circle in the middle of the map; the home the party is held at.
+- **Wave**: a step in the party's growth, every few minutes: the music gets louder and new soundsystems appear further out.
 - **Invitation**: what the witch gives a young creature, before the music wakes it, to bring it to her side.
 - **Party zone**: the area around the dancefloor where the party has spread: lit trees, party paraphernalia, music.
 - **Soundsystem**: a speaker stack that spreads the music; what woken creatures try to destroy.
