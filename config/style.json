@@ -1,0 +1,5 @@
+{
+  "_readme": "The art style: knobs from the Witch Art Lab. Paste a style saved in the Lab here (its whole saved JSON, or just its style object). Any knob left out follows the Lab's current default, so an empty style means the Lab's default look, and stays up to date as the art changes.",
+  "name": "Lab default",
+  "style": {}
+}
