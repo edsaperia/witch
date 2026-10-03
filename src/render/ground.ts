@@ -34,6 +34,31 @@ uniform sampler2D uFloors;        // every type's floor tile, FLOOR_COLS to a ro
 uniform vec2 uTile, uFloorsSize;  // one tile's size and the atlas's, in art pixels
 uniform float uSat;
 uniform vec3 uFloor; // dancefloor x, z, radius
+uniform vec4 uCircle; // magic circle: hue, second hue, brightness (pulsing), rune band's turn (radians)
+
+// The magic circle on the dancefloor, in art pixels: rings, a band of rune glyphs that turns,
+// and a five-pointed star. Returns 0 (nothing), 1 (lines) or 2 (runes).
+float magicCircle(vec2 d, float R, float px) {
+  float r = length(d), ang = atan(d.y, d.x);
+  if (abs(r - R * 0.9) < px * 0.8 || abs(r - R * 0.76) < px * 0.8 || abs(r - R * 0.36) < px * 0.6) return 1.0;
+  if (r > R * 0.78 && r < R * 0.88) {
+    float n = 44.0, a = (ang + uCircle.w) * n / 6.2831853, ci = floor(a), u = fract(a), v = (r - R * 0.78) / (R * 0.1);
+    if (u > 0.18 && u < 0.82) {
+      int gx = int((u - 0.18) / 0.64 * 3.0), gy = int(v * 4.0);
+      int bits = int(fract(sin(ci * 91.7 + 3.1) * 43758.5453) * 4095.0) | 18;
+      if (((bits >> (gx + gy * 3)) & 1) == 1) return 2.0;
+    }
+  }
+  if (r < R * 0.76) {
+    for (int k = 0; k < 5; k++) {
+      float a0 = -1.5707963 + float(k) * 2.5132741, a1 = a0 + 2.5132741;
+      vec2 p0 = vec2(cos(a0), sin(a0)) * R * 0.76, p1 = vec2(cos(a1), sin(a1)) * R * 0.76, e = p1 - p0;
+      float t = clamp(dot(d - p0, e) / dot(e, e), 0.0, 1.0);
+      if (length(d - p0 - e * t) < px * 0.7) return 1.0;
+    }
+  }
+  return 0.0;
+}
 uniform vec4 uCanopy; // canopy shadow: strength (0 off), height, cover, wind speed
 uniform vec2 uClearing; // clearingSize, clearingFalloff: where trees, and so canopy, begin
 varying vec3 vWorld;
@@ -68,10 +93,17 @@ void main() {
     c = hsv(f.x, f.y * uSat, f.z * (v < 0.38 ? 0.8 : v > 0.66 ? 1.15 : 1.0));
   }
   c *= 1.0 + max(0.0, 0.55 - open) * 0.9;        // clearings are paler
-  // The dancefloor: a worn ring of pale stones.
+  // The dancefloor: worn ground inside the stones, and the glowing magic circle (unlit: it glows).
   float r = length(p - uFloor.xy);
   if (r < uFloor.z) c = mix(c, vec3(0.42, 0.42, 0.38), 0.25);
-  if (abs(r - uFloor.z) < uPixel * 1.5 && hash(px * 0.71) < 0.8) c = vec3(150.0, 150.0, 135.0) / 255.0;
+  if (r < uFloor.z) {
+    float mc = magicCircle(p - uFloor.xy, uFloor.z, uPixel);
+    if (mc > 0.5) {
+      vec3 col = hsv(mc > 1.5 ? uCircle.y : uCircle.x, 0.75, 1.0) * uCircle.z;
+      gl_FragColor = vec4(haze(col, vWorld), 1.0);
+      return;
+    }
+  }
   float moonK = 1.0;
   if (uCanopy.x > 0.0) {
     // The canopy's shadow: a dappled layer at canopy height, cast along the moonlight onto the
@@ -124,6 +156,7 @@ export class Ground {
         uSat: { value: st.sat },
         uFloor: { value: new THREE.Vector3(map.dancefloor.x, map.dancefloor.z, map.dancefloor.radius) },
         uCanopy: { value: new THREE.Vector4() },
+        uCircle: { value: new THREE.Vector4() },
         uClearing: { value: new THREE.Vector2(map.tuning.clearingSize, map.tuning.clearingFalloff) },
       },
     });
@@ -131,6 +164,11 @@ export class Ground {
     geo.rotateX(-Math.PI / 2);
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.position.set((e.minX + e.maxX) / 2, 0, (e.minZ + e.maxZ) / 2);
+  }
+
+  /** The magic circle: its two hues, brightness now, and the rune band's turn. */
+  setCircle(hue: number, hue2: number, brightness: number, turn: number): void {
+    ((this.mesh.material as THREE.ShaderMaterial).uniforms.uCircle.value as THREE.Vector4).set(hue, hue2, brightness, turn);
   }
 
   /** The canopy shadow layer's settings (strength 0 turns it off). */

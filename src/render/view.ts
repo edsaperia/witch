@@ -10,15 +10,19 @@ import { AssetLibrary, type TypeArt } from "./assets";
 import type { Piece } from "./artBuild";
 import type { Plant } from "../rules/forest";
 import { Ground } from "./ground";
-import { applyStyleLight, LIGHT_UNIFORMS } from "./lighting";
+import { applyStyleLight, LIGHT_UNIFORMS, MAX_LIGHTS } from "./lighting";
 import { Post } from "./post";
+import { Dancefloor } from "./dancefloor";
 import { Mist } from "./mist";
 import { ShadowBatch, type ShadowInstance } from "./shadows";
 import { lerp } from "../rules/random";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
 import type { Style } from "./style";
 
-export interface ViewStats { trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number }
+/** A point light: where, how far it reaches, its colour and strength. */
+export interface ForestLight { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number }
+
+export interface ViewStats { trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number; lights: number }
 
 export class View {
   readonly renderer: THREE.WebGLRenderer;
@@ -34,12 +38,15 @@ export class View {
   private mpp: number; // metres per art pixel
   private lastBuild = { x: Infinity, y: Infinity, z: Infinity, version: -1 };
   readonly post: Post;
+  private dancefloor: Dancefloor;
+  /** Lights in the forest besides the witch's glow, from the light sources (set by the view). */
+  private forestLights: ForestLight[] = [];
   private shadows: ShadowBatch;
   private shadowList: ShadowInstance[] = [];
   private mist: Mist | null = null;
   private width = 1;
   private height = 1;
-  stats: ViewStats = { trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0 };
+  stats: ViewStats = { trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0, lights: 0 };
 
   constructor(readonly canvas: HTMLCanvasElement, readonly game: Game, readonly style: Style) {
     const t = game.tuning;
@@ -69,11 +76,14 @@ export class View {
     this.stoneBatch = new SpriteBatch(this.assets.stones, this.mpp);
     this.scene.add(this.stoneBatch.mesh);
     const d = game.map.dancefloor, stones: SpriteInstance[] = [];
-    for (let i = 0; i < 9; i++) {
-      const a = (i / 9) * Math.PI * 2 + 0.3;
+    const n = game.tuning.dancefloor.stones;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + 0.3;
       stones.push({ x: d.x + Math.cos(a) * d.radius, y: 0, z: d.z + Math.sin(a) * d.radius, frame: this.assets.stones.frames[i % 4], flip: i % 2 === 0 });
     }
     this.stoneBatch.set(stones);
+    this.dancefloor = new Dancefloor(game.map, t, SPRITE_UNIFORMS, this.mpp);
+    this.scene.add(this.dancefloor.ball, this.dancefloor.beam);
 
     // A dithered shadow under the witch, so her height reads.
     const sm = new THREE.ShaderMaterial({
@@ -258,6 +268,25 @@ export class View {
     if (this.game.tuning.shadows.on) this.shadows.set(this.shadowList.concat(creatureShadows));
   }
 
+  /** Shade with only the nearest lights (the light budget), fading out those at the budget's
+   *  edge so none pops on or off. */
+  private setLights(all: ForestLight[], x: number, z: number): void {
+    const budget = Math.min(MAX_LIGHTS, this.game.tuning.lightBudget);
+    const near = all.map(l => ({ l, d: Math.hypot(l.x - x, l.z - z) - l.reach })).sort((a, b) => a.d - b.d).slice(0, budget + 1);
+    // The light just outside the budget sets the fade: the last ones in fade as it nears them.
+    const edge = near.length > budget ? near[budget].d : Infinity;
+    const U = LIGHT_UNIFORMS;
+    let n = 0;
+    for (const { l, d } of near.slice(0, budget)) {
+      const fade = Math.min(1, Math.max(0, (edge - d) / 15));
+      U.uLightPos.value[n].set(l.x, l.y, l.z, l.reach);
+      U.uLightCol.value[n].set(l.rgb.x, l.rgb.y, l.rgb.z, l.strength * fade);
+      n++;
+    }
+    U.uLightCount.value = n;
+    this.stats.lights = n;
+  }
+
   /** Draw a frame; with draw false, only bring the camera, batches and art requests up to date. */
   render(time: number, draw = true): void {
     const g = this.game, t = g.tuning, pose = poseOf(g);
@@ -289,6 +318,7 @@ export class View {
     const w = g.witch, h = witchHeight(w, t);
     LIGHT_UNIFORMS.uGlowPos.value.set(w.x, h + t.glowHeight, w.z);
     LIGHT_UNIFORMS.uHazeCentre.value.set(w.x, w.z);
+    this.setLights([this.dancefloor.update(time, this.ground), ...this.forestLights], w.x, w.z);
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);
     const bob = Math.sin(time * 2.4) * 0.12;

@@ -52,6 +52,7 @@ function bushesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
   for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
     const x = (i + (hash2(i, j, s + 201) - 0.5) * 0.9) * sp, z = (j + (hash2(i, j, s + 202) - 0.5) * 0.9) * sp;
     if (hash2(i, j, s + 203) > (0.12 + Math.min(1, map.treeWeight(x, z)) * 0.3) * map.tuning.bushDensity) continue;
+    if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + 2) continue; // the dancefloor stays clear
     out.push({ x, z, type: map.areaAt(x, z).type, variant: Math.floor(hash2(i, j, s + 204) * BUSH_VARIANTS), flip: hash2(i, j, s + 205) < 0.5 });
   }
   return out;
@@ -67,6 +68,7 @@ function wallsInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
     if (hash2(i, j, s + 303) > map.tuning.wallDensity) continue;
     const x = (i + (hash2(i, j, s + 301) - 0.5) * 0.6) * sp, z = (j + (hash2(i, j, s + 302) - 0.5) * 0.6) * sp, a = map.areaAt(x, z);
     if (a.openness < 0.82 || !AREA_TYPES[a.type].hasWalls) continue;
+    if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + 4) continue;
     out.push({ x, z, type: a.type, variant: Math.floor(hash2(i, j, s + 304) * 4), flip: hash2(i, j, s + 305) < 0.5 });
   }
   return out;

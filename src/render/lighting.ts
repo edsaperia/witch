@@ -5,6 +5,9 @@ import * as THREE from "three";
 import { hsv2rgb } from "../../art/generator.js";
 import type { Style } from "./style";
 
+/** The most point lights shaded at once (the light budget in the tuning file may be lower). */
+export const MAX_LIGHTS = 16;
+
 export const LIGHT_UNIFORMS = {
   uAmb: { value: new THREE.Vector3() },
   uMoon: { value: new THREE.Vector3() },
@@ -23,6 +26,15 @@ export const LIGHT_UNIFORMS = {
   uHazeRange: { value: new THREE.Vector2(70, 200) },
   uHazeColour: { value: new THREE.Vector3() },
   uTime: { value: 0 },
+  // Point lights in the forest (the dancefloor's circle, campfires, magic stones...): the
+  // nearest few, as position + reach, and colour + strength. Count in uLightCount.
+  uLightPos: { value: Array.from({ length: MAX_LIGHTS }, () => new THREE.Vector4()) },
+  uLightCol: { value: Array.from({ length: MAX_LIGHTS }, () => new THREE.Vector4()) },
+  uLightCount: { value: 0 },
+  // The disco ball: position (w: 1 when present), and spin, speck density, brightness, reach.
+  uDisco: { value: new THREE.Vector4() },
+  uDiscoParams: { value: new THREE.Vector4() },
+  uDiscoColour: { value: new THREE.Vector3(1, 1, 1) },
 };
 
 export type LightUniforms = typeof LIGHT_UNIFORMS;
@@ -49,6 +61,10 @@ uniform vec3 uAmb, uMoon, uMoonDir, uMoonBeam, uGlowPos, uGlowRgb;
 uniform float uBands, uDither, uShafts, uShaftScale, uGlowR, uGlowPower, uTime;
 uniform vec2 uHazeCentre, uHazeRange;
 uniform vec3 uHazeColour;
+uniform vec4 uLightPos[${MAX_LIGHTS}], uLightCol[${MAX_LIGHTS}];
+uniform int uLightCount;
+uniform vec4 uDisco, uDiscoParams;
+uniform vec3 uDiscoColour;
 
 // Fade toward the twilight haze with distance, in a few dithered steps so it stays pixel art.
 vec3 haze(vec3 c, vec3 P) {
@@ -82,6 +98,30 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
     float ndl = max(0.0, dot(N, v / max(d, 1e-4)));
     float fall = 1.0 - d / uGlowR;
     l += uGlowRgb * lightStep(min(1.0, ndl * fall * fall * uGlowPower));
+  }
+  for (int i = 0; i < ${MAX_LIGHTS}; i++) {
+    if (i >= uLightCount) break;
+    vec3 lv = uLightPos[i].xyz - P;
+    float ld = length(lv), reach = uLightPos[i].w;
+    if (ld >= reach) continue;
+    float ndl = max(0.0, dot(N, lv / max(ld, 1e-4))) * 0.7 + 0.3;
+    float fall = 1.0 - ld / reach;
+    l += uLightCol[i].rgb * lightStep(min(1.0, ndl * fall * fall * uLightCol[i].w));
+  }
+  if (uDisco.w > 0.5) {
+    // The disco ball's specks: a grid of spots on a sphere round the ball, turning with it,
+    // thrown onto whatever stands nearby.
+    vec3 dv = P - uDisco.xyz;
+    float dd = length(dv);
+    if (dd < uDiscoParams.w && dd > 0.5) {
+      vec3 dir = dv / dd;
+      float az = atan(dir.z, dir.x) + uTime * uDiscoParams.x, el = asin(clamp(dir.y, -1.0, 1.0));
+      vec2 g = vec2(az * 9.0, el * 9.0);
+      vec2 cell = floor(g), f = fract(g) - 0.5;
+      float pick = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
+      float spot = 0.18 * (1.0 - dd / uDiscoParams.w * 0.5);
+      if (pick < uDiscoParams.y && dot(f, f) < spot * spot) l += uDiscoColour * uDiscoParams.z * (1.0 - dd / uDiscoParams.w);
+    }
   }
   return l;
 }

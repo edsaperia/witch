@@ -149,6 +149,17 @@ async function main() {
     }, `&tilt=${tilt}`);
   }
 
+  // The dancefloor from the ground and from the treetops.
+  await run("dancefloor", { width: 1280, height: 720 }, async page => {
+    await page.keyboard.press("Enter");
+    await sleep(1500);
+    await shot(page, "40-dancefloor-ground.png");
+    await page.keyboard.press("Space");
+    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
+    await sleep(1500);
+    await shot(page, "41-dancefloor-treetop.png");
+  }, "&tilt=before");
+
   // The ground effects (tree shadows, canopy shadow, mist) off and on, from the same spot, and a
   // short recording in motion with them on.
   for (const [name, q] of [["effects-off", "&shadows=off&canopy=off&mist=off"], ["effects-on", ""]]) {

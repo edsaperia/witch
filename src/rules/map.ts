@@ -160,7 +160,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     return { cell, type: typeOf(cell[0], cell[1]), openness: partition.openness(u, v) };
   };
   // The dancefloor keeps a clearing of its own, however close a neighbouring area's centre.
-  const floorR = 4.5, floorClear = floorR * 2.2;
+  const floorR = tuning.dancefloor.radius, floorClear = floorR + tuning.dancefloor.clearing;
   const treeWeight = (x: number, z: number) => {
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return 0;
     const [u, v] = toPart(x, z);

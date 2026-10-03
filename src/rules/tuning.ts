@@ -36,7 +36,15 @@ export interface Tuning {
   spriteTilt: number;
   artPixelsPerMetre: number;
   viewMargin: number;
+  lightBudget: number;
   haze: { near: number; far: number };
+  dancefloor: {
+    radius: number; stones: number; clearing: number;
+    circleHue: number; circleHue2: number; pulse: number; runeSpeed: number;
+    lightReach: number; lightStrength: number;
+    discoHeight: number; discoSize: number; spin: number;
+    specks: number; speckBrightness: number; speckReach: number;
+  };
   canopyCutout: { radius: number; edge: number };
   shadows: { on: boolean; strength: number };
   canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };

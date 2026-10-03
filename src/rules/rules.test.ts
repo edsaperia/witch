@@ -194,8 +194,9 @@ describe("trees", () => {
     expect(trees[2]).toBeGreaterThan(100);
   });
 
-  it("leave the dancefloor clear, crowns included", () => {
+  it("leave the dancefloor clear, crowns and undergrowth included", () => {
     const d = map.dancefloor;
+    for (const b of forest.bushesNear(d.x, d.z, 30)) expect(Math.hypot(b.x - d.x, b.z - d.z)).toBeGreaterThan(d.radius);
     for (const t of forest.treesNear(d.x, d.z, 30)) {
       expect(Math.hypot(t.x - d.x, t.z - d.z)).toBeGreaterThan(d.radius + 1);
       for (const dx of [-map.tuning.crownHalfWidth, 0, map.tuning.crownHalfWidth])

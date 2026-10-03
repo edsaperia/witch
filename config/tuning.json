@@ -47,13 +47,14 @@
     "follow": 8
   },
 
-  "_look": "Everything the camera can see is drawn, plus viewMargin metres round the view, so nothing appears or vanishes on screen. haze: the twilight haze fades the forest from near to far metres from the witch; nothing is drawn beyond far. pixelSize: screen pixels per art pixel. glowReach: metres the witch's light reaches. spriteTilt: 1 = sprites face the camera fully, 0 = stand upright.",
+  "_look": "Everything the camera can see is drawn, plus viewMargin metres round the view, so nothing appears or vanishes on screen. haze: the twilight haze fades the forest from near to far metres from the witch; nothing is drawn beyond far. lightBudget: how many of the nearest point lights (campfires, magic stones, the dancefloor) light the scene at once. pixelSize: screen pixels per art pixel. glowReach: metres the witch's light reaches. spriteTilt: 1 = sprites face the camera fully, 0 = stand upright.",
   "pixelSize": 3,
   "glowReach": 8,
   "glowHeight": 1,
   "spriteTilt": 1,
   "artPixelsPerMetre": 16,
   "viewMargin": 12,
+  "lightBudget": 12,
   "haze": { "near": 110, "far": 280 },
 
   "_post": "bloom: a gentle glow round bright things (strength 0 or on false turns it off; threshold: how bright a pixel must be to glow). tiltShift: blurs the top and bottom of the screen so the forest looks like a miniature. strength: the blur at the screen's edges, in pixels; band: the height of the sharp band (0-1 of the screen); centre: where it sits (0 top, 0.5 middle, 1 bottom); where: 'before' blurs at the low resolution, before the pixels are scaled up, 'after' blurs the scaled-up image. Add ?tilt=before, ?tilt=after or ?tilt=off to the link to compare.",
@@ -61,6 +62,14 @@
   "shadows": { "on": true, "strength": 0.7 },
   "canopyShadow": { "on": true, "strength": 0.45, "height": 12, "cover": 0.55, "wind": 0.6 },
   "mist": { "on": true, "strength": 0.12, "height": 3, "wind": 0.8 },
+  "_dancefloor": "The dancefloor: a ring of standing stones (radius in metres, how many stones), a clear space of clearing metres round it, a glowing magic circle (two hues 0-1, pulse per second, runeSpeed in turns per minute) lighting the ground round it (lightReach metres, lightStrength), and a magic disco ball floating discoHeight metres up (discoSize metres across, spin turns per minute) throwing specks of light: specks is the share of the sphere that throws one, speckBrightness how bright, speckReach how far.",
+  "dancefloor": {
+    "radius": 13.5, "stones": 27, "clearing": 9,
+    "circleHue": 0.86, "circleHue2": 0.52, "pulse": 0.35, "runeSpeed": 1,
+    "lightReach": 28, "lightStrength": 1.4,
+    "discoHeight": 7.5, "discoSize": 1.8, "spin": 4,
+    "specks": 0.22, "speckBrightness": 0.9, "speckReach": 32
+  },
   "_canopyCutout": "In ground mode the canopy stays drawn at the screen's edges, so she flies under the forest roof; only a dithered hole round her is cut out. radius and edge are fractions of the screen's height. Rising closes the hole.",
   "canopyCutout": { "radius": 0.32, "edge": 0.14 },
   "bloom": { "on": true, "strength": 0.7, "threshold": 0.55 },
