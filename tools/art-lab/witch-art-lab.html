@@ -1,0 +1,535 @@
+<title>Witch Art Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Karla:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a dark workbench. The current style's forest scene on top, six mutated
+   variants to pick from below it, the knobs in a side column (stacked on phones). */
+:root {
+  --bg: #0f0d16;          /* night forest floor */
+  --panel: #18151f;
+  --line: #2b2636;
+  --fg: #e6e1ee;
+  --muted: #9b93ab;
+  --accent: #ff5fc8;      /* party magenta */
+  --accent-2: #4fe0ff;    /* soundsystem cyan */
+  --font-display: "Silkscreen", ui-monospace, monospace;
+  --font-body: "Karla", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  color-scheme: dark;
+}
+html, body { background: var(--bg); color: var(--fg); }
+body { font-family: var(--font-body); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 16px 48px; }
+h1, h2 { font-family: var(--font-display); font-weight: 400; letter-spacing: .02em; margin: 0; text-wrap: balance; }
+h1 { font-size: 26px; }
+h2 { font-size: 15px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+p { margin: 0; max-width: 65ch; }
+.wrap { max-width: 1280px; margin-inline: auto; display: grid; gap: 20px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; }
+header p { color: var(--muted); }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+.main { display: grid; gap: 20px; min-width: 0; }
+canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; max-width: 100%; }
+.stage { background: #000; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.stage canvas { width: 100%; height: auto; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.sheet-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+.variants { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 640px) { .variants { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.variant { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: #000; cursor: pointer; padding: 0; display: grid; text-align: left; color: var(--fg); font: inherit; }
+.variant canvas { width: 100%; height: auto; }
+.variant span { padding: 6px 10px; font-size: 13px; color: var(--muted); background: var(--panel); display: flex; justify-content: space-between; }
+.variant:hover, .variant:focus-visible { border-color: var(--accent); outline: none; }
+.variant:hover span, .variant:focus-visible span { color: var(--fg); }
+aside { display: grid; gap: 16px; position: sticky; top: env(safe-area-inset-top, 0px); max-height: 100vh; overflow-y: auto; padding-bottom: 16px; }
+@media (max-width: 900px) { aside { position: static; max-height: none; } }
+fieldset { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px 12px; margin: 0; display: grid; gap: 8px; background: var(--panel); }
+legend { font-family: var(--font-display); font-size: 13px; padding-inline: 6px; color: var(--accent-2); }
+.knob { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; font-size: 13px; }
+.knob label { color: var(--muted); }
+.knob output { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+.knob input[type=range], .knob select { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+select, input[type=text] { background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; font: inherit; }
+button.btn { background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 7px 12px; font: inherit; font-weight: 600; cursor: pointer; }
+button.btn:hover { border-color: var(--accent-2); }
+button.btn:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #1a0716; }
+button.primary:hover { border-color: #fff; }
+label.check { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); cursor: pointer; }
+label.check input { accent-color: var(--accent); }
+.bestiary { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.beast { margin: 0; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--panel); display: grid; }
+.beast canvas { width: 100%; height: auto; }
+.beast figcaption { padding: 6px 10px 8px; font-size: 13px; color: var(--muted); display: grid; gap: 2px; }
+.beast figcaption b { color: var(--fg); font-family: var(--font-display); font-weight: 400; font-size: 14px; }
+.history { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+.history button { padding: 0; border: 1px solid var(--line); border-radius: 4px; background: #000; cursor: pointer; flex: none; }
+.history button.current { border-color: var(--accent); }
+.history canvas { width: 128px; height: auto; }
+.saved { display: grid; gap: 6px; }
+.saved-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14px; }
+.saved-item span { min-width: 0; overflow-wrap: anywhere; }
+.note { font-size: 13px; color: var(--muted); }
+.toast { min-height: 1.4em; font-size: 13px; color: var(--accent-2); }
+textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; font-family: var(--font-mono); font-size: 11px; padding: 6px; box-sizing: border-box; }
+@media (prefers-reduced-motion: reduce) { .variant { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Witch Art Lab</h1>
+    <p>Night in the forest: twilight everywhere, and the witch's glow shows the true colours near her. Pick the variant you like best and it becomes the new style; the next six grow from it. Drag knobs to steer by hand.</p>
+  </header>
+
+  <div class="layout">
+    <div class="main">
+      <section class="stage" aria-label="Current style, in a forest scene">
+        <canvas id="scene" width="448" height="252"></canvas>
+      </section>
+      <div class="row">
+        <label class="check"><input type="checkbox" id="party"> Party lights</label>
+        <label class="check"><input type="checkbox" id="treetop"> Treetop view (canopy only)</label>
+        <button class="btn" id="reseed" type="button">New creature kinds</button>
+        <button class="btn" id="reforest" type="button">New forest layout</button>
+      </div>
+
+      <section style="display:grid;gap:10px">
+        <div class="row" style="justify-content:space-between">
+          <h2>Pick one</h2>
+          <div class="row">
+            <label class="note" for="strength">Change</label>
+            <input type="range" id="strength" min="0.05" max="1" step="0.05" value="0.35" style="accent-color:var(--accent)">
+            <button class="btn" id="reroll" type="button">Six more</button>
+          </div>
+        </div>
+        <div class="row" id="vary"></div>
+        <div class="variants" id="variants"></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
+        <h2>Map</h2>
+        <p class="note">A whole run's forest: 20 × 20 areas cut by Boris the Brave's fractal jittered Voronoi. Each colour is an area type, never beside itself; white dots are area centres, where the clearings are; the ringed area in the middle holds the dancefloor. "New forest layout" draws a new map; "Border detail" sets how many fractal layers shape the borders.</p>
+        <div class="stage" style="max-width:560px"><canvas id="map" width="280" height="280" style="width:100%;height:auto"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
+        <div class="row" style="justify-content:space-between"><h2>Bestiary</h2><label class="check"><input type="checkbox" id="away"> Show turned away</label></div>
+        <p class="note">Thirty forest animals, each as legend, young and baby, in the current style under even light, turned towards you (or away, for creatures walking up the screen). Legends grow the magical features listed.</p>
+        <div class="bestiary" id="bestiary"></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
+        <h2>Sprite sheet</h2>
+        <div class="sheet-wrap"><canvas id="sheet" width="420" height="300"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
+        <h2>Soundsystems</h2>
+        <p class="note">What the party defends: a sound-system stack hewn from magic stone, with glowing crystal cones. Each of the three stacks is shown playing (three frames of the cones pumping), damaged (two frames of flicker) and destroyed, with the witch for scale.</p>
+        <div class="sheet-wrap"><canvas id="soundsystems" width="420" height="200"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
+        <h2>Your picks</h2>
+        <div class="history" id="history"></div>
+      </section>
+    </div>
+
+    <aside>
+      <fieldset>
+        <legend>Save this style</legend>
+        <div class="row">
+          <input type="text" id="saveName" placeholder="mossy dusk" aria-label="Style name" style="flex:1;min-width:0">
+          <button class="btn primary" id="save" type="button">Save</button>
+        </div>
+        <div class="toast" id="toast" role="status"></div>
+        <div class="saved" id="saved"><p class="note">Saved styles appear here. The Witch coordinator reads them from this page and turns your favourite into the game's style file.</p></div>
+      </fieldset>
+      <div id="knobs" style="display:grid;gap:16px"></div>
+      <fieldset>
+        <legend>Style file</legend>
+        <textarea id="json" readonly aria-label="Current style as JSON"></textarea>
+        <button class="btn" id="copy" type="button">Copy</button>
+      </fieldset>
+    </aside>
+  </div>
+</div>
+
+<script type="module">
+import { rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours } from "../../art/generator.js";
+import { shade } from "../../art/lighting.js";
+// ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
+// Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
+// grid; every site's parent is its nearest site one layer up. A point belongs to the root
+// of the nearest site at the deepest layer, which gives areas fractal, coastline-like borders.
+function makePartition(seed, depth) {
+  const siteCache = new Map(), rootCache = new Map();
+  const site = (layer, cx, cy) => {
+    const k = layer + "," + cx + "," + cy; let s = siteCache.get(k);
+    if (!s) { const c = Math.pow(2, -layer); s = [c * (cx + hash2(cx * 7 + layer, cy, seed)), c * (cy + hash2(cx, cy * 13 + layer, seed + 1))]; siteCache.set(k, s); }
+    return s;
+  };
+  const nearest = (layer, px, py) => {
+    const c = Math.pow(2, -layer), gx = Math.floor(px / c), gy = Math.floor(py / c);
+    let best = null, bd = Infinity;
+    for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) {
+      const s = site(layer, gx + dx, gy + dy), d = (s[0] - px) ** 2 + (s[1] - py) ** 2;
+      if (d < bd) { bd = d; best = [gx + dx, gy + dy]; }
+    }
+    return best;
+  };
+  const root = (layer, cx, cy) => {
+    const k = layer + "," + cx + "," + cy; let r = rootCache.get(k);
+    if (r) return r;
+    if (layer === 0) r = [cx, cy];
+    else { const s = site(layer, cx, cy), p = nearest(layer - 1, s[0], s[1]); r = root(layer - 1, p[0], p[1]); }
+    rootCache.set(k, r);
+    return r;
+  };
+  return {
+    site: (cx, cy) => site(0, cx, cy),
+    partition(px, py) { const c = nearest(depth, px, py); return root(depth, c[0], c[1]); },
+    // 0 at the area's site, about 1 at its border (measured against the nearest other site)
+    centreness(px, py, rc) {
+      const s = site(0, rc[0], rc[1]), d1 = Math.hypot(px - s[0], py - s[1]);
+      let d2 = Infinity; const gx = Math.floor(px), gy = Math.floor(py);
+      for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) { const cx = gx + dx, cy = gy + dy; if (cx === rc[0] && cy === rc[1]) continue; const o = site(0, cx, cy); d2 = Math.min(d2, Math.hypot(px - o[0], py - o[1])); }
+      return Math.min(1, 2 * d1 / (d1 + d2));
+    },
+  };
+}
+
+// ================= scene layout =================
+let W = 299, H = 168, K = 2 / 3; // logical resolution; K scales world sizes to the pixel size
+function setRes(p) { W = Math.round(896 / p); H = Math.round(504 / p); K = 2 / p; }
+setRes(3);
+function layout(world, st) {
+  const r = rng(world.forestSeed * 7 + 3);
+  // Areas come from the fractal partition; the view is centred on the area (0, 0), about one screen across.
+  const part = makePartition(world.forestSeed, st.depth), A = W * st.areaScale, s0 = part.site(0, 0);
+  const ox = W * .5 - s0[0] * A, oy = H * .62 - s0[1] * A / 1.7;
+  const toArea = (x, y) => [(x - ox) / A, (y - oy) * 1.7 / A];
+  const areaCache = new Map();
+  const areaAt = (x, y) => {
+    const k = (x | 0) + "," + (y | 0); let v = areaCache.get(k); if (v) return v;
+    const [u, w] = toArea(x, y), rc = part.partition(u, w);
+    v = { area: rc[0] === 0 && rc[1] === 0 ? 0 : 1 + (Math.abs(rc[0] * 3 + rc[1] * 5) % 2), t: part.centreness(u, w, rc) };
+    areaCache.set(k, v); return v;
+  };
+  const areas = [[W * .5, H * .62]];
+  const wantTree = (x, y) => { const { t } = areaAt(x, y), c = st.clearing * .75; return Math.pow(Math.max(0, (t - c) / (1 - c)), 1.6) * st.trees * .7; };
+  const trees = [], bushes = [], crownW = 40 * K * st.crownWidth * st.treeSize;
+  for (let i = 0; i < 1500 && trees.length < 70; i++) {
+    const x = uni(r, -crownW, W + crownW), y = uni(r, 20 * K, H + 60 * K);
+    const crownY = y - 70 * K * st.treeSize; // a crown must not cover a clearing either
+    if (r() > Math.min(wantTree(x, y), wantTree(x, crownY), wantTree(x - crownW * .7, crownY), wantTree(x + crownW * .7, crownY)) * 1.3) continue;
+    if (trees.some(t => Math.hypot((t.x - x) / (crownW * 1.1), (t.y - y) / (34 * K)) < 1)) continue;
+    trees.push({ x, y, t: areaAt(x, y).area * 4 + Math.floor(r() * 4) });
+  }
+  for (let i = 0; i < st.bushes * 3 && bushes.length < st.bushes; i++) {
+    const x = uni(r, -10, W + 10), y = uni(r, 10, H + 6);
+    if (r() > .25 + wantTree(x, y)) continue;
+    bushes.push({ x, y, b: areaAt(x, y).area * 4 + Math.floor(r() * 4) });
+  }
+  const [dcx, dcy] = areas[0], crit = [];
+  [[0, 0], [1, 0], [2, 0], [3, 0], [4, 1], [5, 1], [0, 2]].forEach(([kind, level]) => crit.push({ kind: kind % world.kinds.length, level, x: uni(r, 40 * K, W - 40 * K), y: level === 2 ? H * .4 : uni(r, H * .5, H - 4), dir: r() < .5 ? -1 : 1, speed: (level === 2 ? 4 : uni(r, 4, 10)) * K }));
+  return { trees, bushes, crit, dcx, dcy, areaAt };
+}
+
+// ================= deferred rendering =================
+// Sprites are drawn into an albedo buffer and a normal buffer; one lighting pass
+// then lights every pixel with twilight, moonlight and point lights, in steps.
+function makeTarget(w, h) {
+  const mk = () => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+  const A = mk(), N = mk();
+  return { A, N, a: A.getContext("2d", { willReadFrequently: true }), n: N.getContext("2d", { willReadFrequently: true }), w, h };
+}
+function groundAlbedo(st, lay) {
+  const key = JSON.stringify([st.groundHue, st.groundVal, st.sat, st.areaContrast, st.clearing, st.depth, st.areaScale, W, lay.dcx, lay.trees.length]);
+  if (groundAlbedo.cache.has(key)) return groundAlbedo.cache.get(key);
+  const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
+  const img = g.createImageData(W, H), base = [hsv2rgb(st.groundHue, .5 * st.sat, st.groundVal), hsv2rgb(st.groundHue + .04, .55 * st.sat, st.groundVal * .8), hsv2rgb(st.groundHue - .03, .45 * st.sat, st.groundVal * 1.15), hsv2rgb(st.groundHue + .1, .3 * st.sat, st.groundVal * .9)];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const v = vnoise(x / (9 * K), y / (6 * K), 3) * .7 + vnoise(x / (2.5 * K), y / (2 * K), 4) * .3;
+    const { area, t } = lay.areaAt(x, y), lift = 1 + Math.max(0, .55 - t) * .9, tint = [0, .04, -.04][area] * st.areaContrast;
+    const c = base[v < .38 ? 1 : v > .66 ? 2 : (hash2(x, y, 1) < .04 ? 3 : 0)];
+    const [cr, cg, cb] = tint ? hsv2rgb(st.groundHue + tint, .5 * st.sat, st.groundVal * (c === base[1] ? .8 : c === base[2] ? 1.15 : 1)) : c;
+    img.data.set([cr * lift, cg * lift, cb * lift, 255], (y * W + x) * 4);
+  }
+  // the ritual circle / dancefloor: a worn ring of pale stones
+  for (let a = 0; a < 96; a++) { const an = a / 96 * Math.PI * 2, x = Math.round(lay.dcx + Math.cos(an) * 44 * K), y = Math.round(lay.dcy + Math.sin(an) * 17 * K); img.data.set([150, 150, 135, 255], (y * W + x) * 4); }
+  for (let a = 0; a < 7; a++) { const an = a / 7 * Math.PI * 2 + .2, x = Math.round(lay.dcx + Math.cos(an) * 34 * K), y = Math.round(lay.dcy + Math.sin(an) * 12 * K); for (const [dx, dy] of [[0, 0], [1, 0], [0, -1], [1, -1]]) img.data.set([175, 170, 160, 255], ((y + dy) * W + x + dx) * 4); }
+  g.putImageData(img, 0, 0);
+  groundAlbedo.cache.set(key, c);
+  if (groundAlbedo.cache.size > 30) groundAlbedo.cache.clear();
+  return c;
+}
+groundAlbedo.cache = new Map();
+
+function lightsFor(st, t, wx, wy, party, lay) {
+  const glow = hsv2rgb(st.glowHue, st.glowSat, 1), L = [{ x: wx, y: wy + 6, z: 16 * K, rgb: glow, power: st.glowPower, R: st.glowRadius * K }];
+  if (party) {
+    const beat = Math.floor(t * 2) % 2;
+    L.push({ x: lay.dcx - 52 * K, y: lay.dcy - 8 * K, z: 14 * K, rgb: [255, 70, 200], power: beat ? 1.6 : 1.1, R: 110 * K });
+    L.push({ x: lay.dcx + 56 * K, y: lay.dcy + 2 * K, z: 14 * K, rgb: [70, 220, 255], power: beat ? 1.1 : 1.6, R: 110 * K });
+  }
+  return L;
+}
+
+function drawScene(tgt, out, st, assets, lay, t, opts) {
+  const { a, n } = tgt;
+  a.imageSmoothingEnabled = n.imageSmoothingEnabled = false;
+  a.drawImage(groundAlbedo(st, lay), 0, 0);
+  n.fillStyle = "rgb(128,75,240)"; n.fillRect(0, 0, W, H); // ground faces up, tipped toward the camera
+  const items = [], frame = Math.floor(t * 4) % 2;
+  const put = (b, x, y, flip) => { x = Math.round(x); y = Math.round(y);
+    if (flip) { a.save(); a.translate(x + b.w, y); a.scale(-1, 1); a.drawImage(b.A, 0, 0); a.restore(); n.save(); n.translate(x + b.w, y); n.scale(-1, 1); n.drawImage(b.NF, 0, 0); n.restore(); }
+    else { a.drawImage(b.A, x, y); n.drawImage(b.N, x, y); } };
+  if (!opts.treetop) for (const b of lay.bushes) { const s = assets.bushes[b.b]; items.push({ y: b.y, d: () => put(s, b.x - s.w / 2, b.y - s.h) }); }
+  for (const tr of lay.trees) { const s = assets.trees[tr.t], img = opts.treetop ? s.top : s.whole; items.push({ y: tr.y, d: () => put(img, tr.x - img.w / 2, tr.y - img.h) }); }
+  for (const c of lay.crit) {
+    if (opts.treetop && c.level < 2) continue; // only giants show above the canopy
+    const span = W - 80, travel = (c.x - 40 + t * c.speed * c.dir) % (2 * span), pos = travel < 0 ? travel + 2 * span : travel;
+    const right = (pos < span) === (c.dir > 0), x = 40 + (pos < span ? pos : 2 * span - pos), b = assets.creatures[c.kind][c.level][frame];
+    items.push({ y: opts.treetop ? c.y + 1000 : c.y, d: () => put(b, x - b.w / 2, c.y - b.h, !right) });
+  }
+  // the witch: in among everything else, lit by her own glow; three frames of a hover bob
+  const wx = W / 2 + Math.sin(t * .6) * 120 * K, wy = H * .52 + Math.sin(t * 1.3) * 5 * K - (opts.treetop ? 40 * K : 0);
+  const wb = (assets.witch.frames || [assets.witch])[Math.floor(t * 3) % 3], wflip = Math.cos(t * .6) < 0;
+  items.push({ y: opts.treetop ? wy + 2000 : wy + 4 * K, d: () => put(wb, wx - wb.w / 2, wy + 4 * K - wb.h, wflip) });
+  items.sort((p, q) => p.y - q.y).forEach(i => i.d());
+  shade(tgt, out, st, lightsFor(st, t, wx, wy - wb.h * .5, opts.party, lay), opts.rect || [0, 0, W, H]);
+}
+
+// ================= sprite sheet (studio-lit, so colours read) =================
+function drawSheet(canvas, st, assets) {
+  const kinds = assets.creatures.length, colW = Math.max(...assets.creatures.map(k => k[2][0].w)) + 70, top = 10;
+  const legendH = Math.max(...assets.creatures.map(k => k[2][0].h)), treeH = Math.max(...assets.trees.map(t => t.whole.h));
+  const w = kinds * colW + 20, h = top + legendH + 20 + treeH + 40;
+  const tgt = makeTarget(w, h);
+  tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+  assets.creatures.forEach((k, i) => {
+    const x0 = 10 + i * colW, base = top + legendH;
+    const L = k[2][0], Md = k[1][0], B0 = k[0][0], B1 = k[0][1];
+    tgt.a.drawImage(L.A, x0, base - L.h); tgt.n.drawImage(L.N, x0, base - L.h);
+    tgt.a.drawImage(Md.A, x0 + L.w + 4, base - Md.h); tgt.n.drawImage(Md.N, x0 + L.w + 4, base - Md.h);
+    tgt.a.drawImage(B0.A, x0 + L.w + Md.w + 8, base - B0.h); tgt.n.drawImage(B0.N, x0 + L.w + Md.w + 8, base - B0.h);
+    tgt.a.drawImage(B1.A, x0 + L.w + Md.w + B0.w + 10, base - B1.h); tgt.n.drawImage(B1.N, x0 + L.w + Md.w + B0.w + 10, base - B1.h);
+  });
+  let x = 10; const base2 = h - 10;
+  assets.trees.forEach(t => { if (x + t.whole.w > w) return; tgt.a.drawImage(t.whole.A, x, base2 - t.whole.h); tgt.n.drawImage(t.whole.N, x, base2 - t.whole.h); x += t.whole.w + 6; });
+  assets.bushes.forEach(b => { if (x + b.w > w) return; tgt.a.drawImage(b.A, x, base2 - b.h); tgt.n.drawImage(b.N, x, base2 - b.h); x += b.w + 4; });
+  // light sources: a campfire, the three magic stones, a pond
+  const L = assets.lights; if (L) [L.campfire[0], ...Object.values(L.stones), L.pond].forEach(b => { if (x + b.w > w) return; tgt.a.drawImage(b.A, x, base2 - b.h); tgt.n.drawImage(b.N, x, base2 - b.h); x += b.w + 6; });
+  canvas.width = w; canvas.height = h;
+  const studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15 };
+  const savedW = W, savedH = H;
+  shadeAny(tgt, canvas, studio, w, h);
+  canvas.style.width = w + "px"; canvas.style.maxWidth = "none";
+}
+function shadeAny(tgt, out, st, w, h) { shade(tgt, out, st, [], [0, 0, w, h]); }
+
+// ================= map: the whole forest, 20 x 20 areas =================
+let mapTimer;
+function renderMap() {
+  clearTimeout(mapTimer);
+  mapTimer = setTimeout(() => {
+    const c = document.getElementById("map"); if (!c) return;
+    const st = current, N = 20, P = 14, size = N * P, part = makePartition(world.forestSeed, st.depth);
+    c.width = size; c.height = size;
+    // area types: random, but never the same type as a neighbouring area
+    const types = new Map(), r = rng(world.forestSeed * 5 + 1), key = (x, y) => x + "," + y;
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      const near = new Set(); for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) { const t = types.get(key(x + dx, y + dy)); if (t !== undefined) near.add(t); }
+      let t, tries = 0; do { t = Math.floor(r() * st.areaTypes); } while (near.has(t) && ++tries < 40);
+      types.set(key(x, y), t);
+    }
+    const g = c.getContext("2d"), img = g.createImageData(size, size), mid = N / 2;
+    for (let py = 0; py < size; py++) for (let px = 0; px < size; px++) {
+      const u = px / P, v = py / P, rc = part.partition(u, v), t = types.get(key(rc[0], rc[1])) ?? 0;
+      const cl = part.centreness(u, v, rc), hue = (t * .618034) % 1;
+      let [cr, cg, cb] = hsv2rgb(hue, .45, .38 + (1 - cl) * .25);
+      if (rc[0] === Math.floor(mid) && rc[1] === Math.floor(mid)) [cr, cg, cb] = [cr * .6 + 102, cg * .6 + 40, cb * .6 + 90];
+      img.data.set([cr, cg, cb, 255], (py * size + px) * 4);
+    }
+    g.putImageData(img, 0, 0);
+    // area sites: where each area's clearing is (and, perhaps, its soundsystem)
+    g.fillStyle = "#fff";
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const s = part.site(x, y); g.fillRect(Math.round(s[0] * P) - 1, Math.round(s[1] * P) - 1, 2, 2); }
+    const s = part.site(Math.floor(mid), Math.floor(mid)); g.strokeStyle = "#ff5fc8"; g.lineWidth = 2; g.beginPath(); g.arc(s[0] * P, s[1] * P, 6, 0, Math.PI * 2); g.stroke();
+  }, 200);
+}
+
+// ================= bestiary: every species at every level, studio-lit =================
+let bestiaryTimer;
+function renderBestiary() {
+  clearTimeout(bestiaryTimer);
+  bestiaryTimer = setTimeout(() => {
+    const host = document.getElementById("bestiary"); if (!host) return; host.textContent = "";
+    const studio = { ...current, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 };
+    for (const S of SPECIES) {
+      const facing = document.getElementById("away").checked ? "away" : "towards";
+      const lv = [0, 1, 2].map(l => bake(critter(S.id, l, 0, current, facing), speciesColours(S.id, current), current, current.cOutline));
+      const b1 = bake(critter(S.id, 0, 1, current, facing), speciesColours(S.id, current), current, current.cOutline);
+      const w = lv[2].w + lv[1].w + lv[0].w + b1.w + 18, h = Math.max(lv[2].h, 20) + 6, tgt = makeTarget(w, h);
+      tgt.a.fillStyle = `rgb(${hsv2rgb(current.groundHue, .4, current.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+      let x = 4; for (const b of [lv[2], lv[1], lv[0], b1]) { tgt.a.drawImage(b.A, x, h - 3 - b.h); tgt.n.drawImage(b.N, x, h - 3 - b.h); x += b.w + 4; }
+      const card = document.createElement("figure"); card.className = "beast";
+      const c = document.createElement("canvas"); c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
+      const cap = document.createElement("figcaption"); cap.innerHTML = `<b></b><span></span>`; cap.querySelector("b").textContent = S.name; cap.querySelector("span").textContent = "Legend grows " + S.legend.map(f => FEATURE_NAMES[f] || f).join(" and ") + ". Shown: legend, young, baby (two walk frames).";
+      card.append(c, cap); host.append(card);
+    }
+  }, 250);
+}
+
+// ================= soundsystems: every stack in every state, studio-lit =================
+let soundTimer;
+function renderSoundsystems() {
+  clearTimeout(soundTimer);
+  soundTimer = setTimeout(() => {
+    const c = document.getElementById("soundsystems"); if (!c) return;
+    const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 6;
+    const wit = bake(witchSprite(st), witchColours(st), st, st.cOutline);
+    const rows = SOUNDSYSTEMS.map((S, v) => { const col = soundsystemColours(v), b = o => bake(soundsystemSprite(st, { variant: v, ...o }), col, st, "none"); return [b({ frame: 0 }), b({ frame: 1 }), b({ frame: 2 }), b({ state: "damaged", frame: 0 }), b({ state: "damaged", frame: 1 }), b({ state: "destroyed" }), wit]; });
+    const w = Math.max(...rows.map(r => r.reduce((a, s) => a + s.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(s => s.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
+    tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+    let y = gap;
+    rows.forEach((r, i) => { let x = gap; y += rh[i] - gap; for (const s of r) { tgt.a.drawImage(s.A, x, y - s.h); tgt.n.drawImage(s.N, x, y - s.h); x += s.w + gap; } y += gap; });
+    c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
+    c.style.width = w + "px"; c.style.maxWidth = "none";
+  }, 600);
+}
+
+// ================= app =================
+const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
+let world = store.get("witch-art-world-3") || { kinds: ["wolf", "fox", "boar", "badger", "stag", "owl"], forestSeed: 3 };
+if (!world.kinds.every(k => SPECIES_BY_ID[k])) world.kinds = ["wolf", "fox", "boar", "badger", "stag", "owl"];
+let current = { ...defaultStyle(), ...(store.get("witch-art-style-3") || {}) };
+if (!current.v4) { current.pixel = 2; current.v4 = true; }
+if (!current.v5) { current.pixel = 3; current.v5 = true; } // Ed, 2026-10-03: bigger pixels
+if (!current.v6) { current.bands = 3; current.v6 = true; } // three light steps: light top, mid side, dark underside
+current = { ...defaultStyle(), ...current }; // knobs added since a style was saved take their defaults
+let history = store.get("witch-art-history-3") || [];
+let varySeed = 1, variants = [], assetsCurrent, layoutCurrent;
+const varyGroups = new Set(GROUPS);
+const sceneCanvas = document.getElementById("scene");
+let sceneTarget, CROP;
+function applyRes(p) { setRes(p); sceneTarget = makeTarget(W, H); sceneCanvas.width = W; sceneCanvas.height = H; CROP = [Math.round(W / 4), Math.round(H / 4 - 6 * K), Math.round(W / 2), Math.round(H / 2)]; }
+
+function makeVariants() {
+  // variants are built one at a time after the page has drawn, so it never stalls on them
+  variants = []; const seed = varySeed;
+  const host = document.getElementById("variants"); host.textContent = "";
+  const one = i => {
+    if (i >= 6 || seed !== varySeed) return;
+    const st = mutate(current, +document.getElementById("strength").value, varyGroups, varySeed * 101 + i);
+    const btn = document.createElement("button"); btn.className = "variant"; btn.type = "button";
+    const c = document.createElement("canvas"); c.width = CROP[2]; c.height = CROP[3];
+    const label = document.createElement("span"); label.innerHTML = `<b>Variant ${i + 1}</b><i>pick</i>`;
+    btn.append(c, label); btn.addEventListener("click", () => choose(st)); host.append(btn);
+    variants.push({ st, c, tgt: makeTarget(W, H), assets: buildAssets(st, world, { K }), lay: layout(world, st) });
+    setTimeout(() => one(i + 1), 30);
+  };
+  setTimeout(() => one(0), 60);
+}
+function setCurrent(st, { record = true } = {}) {
+  current = st; store.set("witch-art-style-3", current);
+  if (!sceneTarget || Math.round(896 / st.pixel) !== W) applyRes(st.pixel);
+  if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
+  assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
+  drawSheet(document.getElementById("sheet"), current, assetsCurrent);
+  syncKnobs(); renderHistory(); renderBestiary(); renderSoundsystems(); renderMap();
+  document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
+}
+function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
+let historyTimer;
+function renderHistory() { clearTimeout(historyTimer); historyTimer = setTimeout(renderHistoryNow, 400); }
+function renderHistoryNow() {
+  const el = document.getElementById("history"); el.textContent = "";
+  if (!history.length) { el.innerHTML = '<p class="note">Each style you pick is kept here; tap one to go back to it.</p>'; return; }
+  const tgt = makeTarget(W, H);
+  history.slice(-10).filter(h => h.pixel === current.pixel).reverse().forEach(st => {
+    const b = document.createElement("button"); b.type = "button"; b.title = "Go back to this style"; if (st === current) b.className = "current";
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    drawScene(tgt, c, st, buildAssets(st, world, { K }), layout(world, st), 2, { party: false, treetop: false });
+    c.style.imageRendering = "pixelated";
+    b.append(c); b.addEventListener("click", () => { setCurrent(st, { record: false }); makeVariants(); }); el.append(b);
+  });
+}
+
+const knobInputs = {};
+const fmt = (k, v) => k.options ? v : k.unit ? `${Math.round(v)}${k.unit}` : k.step >= 1 ? String(Math.round(v)) : (+v).toFixed(2);
+function buildKnobs() {
+  const host = document.getElementById("knobs");
+  for (const g of GROUPS) {
+    const fs = document.createElement("fieldset"), lg = document.createElement("legend"); lg.textContent = g; fs.append(lg);
+    for (const k of KNOBS.filter(k => k.g === g)) {
+      const wrap = document.createElement("div"); wrap.className = "knob";
+      const id = "k-" + k.k, lab = document.createElement("label"); lab.htmlFor = id; lab.textContent = k.label;
+      const out = document.createElement("output"); out.htmlFor = id;
+      let input;
+      if (k.options) { input = document.createElement("select"); k.options.forEach(o => { const op = document.createElement("option"); op.value = op.textContent = o; input.append(op); }); }
+      else { input = document.createElement("input"); input.type = "range"; input.min = k.min; input.max = k.max; input.step = k.step; }
+      input.id = id;
+      let pending;
+      input.addEventListener("input", () => { out.textContent = fmt(k, input.value); clearTimeout(pending); pending = setTimeout(() => { setCurrent({ ...current, [k.k]: k.options ? input.value : +input.value }, { record: false }); makeVariants(); }, 150); });
+      input.addEventListener("change", () => { history.push(current); store.set("witch-art-history-3", history); renderHistory(); });
+      wrap.append(lab, out, input); fs.append(wrap); knobInputs[k.k] = { input, out, k };
+    }
+    host.append(fs);
+  }
+  const vary = document.getElementById("vary"), lab = document.createElement("span"); lab.className = "note"; lab.textContent = "Vary:"; vary.append(lab);
+  for (const g of GROUPS) {
+    const l = document.createElement("label"); l.className = "check";
+    const cb = document.createElement("input"); cb.type = "checkbox"; cb.checked = true; cb.id = "vary-" + g.replace(/\s/g, "-");
+    cb.addEventListener("change", () => { cb.checked ? varyGroups.add(g) : varyGroups.delete(g); varySeed++; makeVariants(); });
+    l.append(cb, document.createTextNode(g)); vary.append(l);
+  }
+}
+function syncKnobs() { for (const key in knobInputs) { const { input, out, k } = knobInputs[key]; input.value = current[key]; out.textContent = fmt(k, current[key]); } }
+
+let last = 0, lastV = 0;
+function tick(now) {
+  requestAnimationFrame(tick);
+  if (now - last < 125) return; last = now;
+  const t = now / 1000, party = document.getElementById("party").checked, treetop = document.getElementById("treetop").checked;
+  drawScene(sceneTarget, sceneCanvas, current, assetsCurrent, layoutCurrent, t, { party, treetop });
+  if (now - lastV < 250) return; lastV = now;
+  for (const v of variants) drawScene(v.tgt, v.c, v.st, v.assets, v.lay, t, { party: false, treetop, rect: CROP });
+}
+
+// ================= saving to the page's store =================
+let db = null;
+const toast = msg => { document.getElementById("toast").textContent = msg; };
+function renderSaved(docs) {
+  const el = document.getElementById("saved"); el.textContent = "";
+  if (!docs.length) { el.innerHTML = '<p class="note">No saved styles yet. Name the current style and press Save; the Witch coordinator reads saved styles from this page.</p>'; return; }
+  for (const d of docs) {
+    const data = d.data(), row = document.createElement("div"); row.className = "saved-item";
+    const name = document.createElement("span"); name.textContent = data.name || d.id;
+    const btn = document.createElement("button"); btn.className = "btn"; btn.type = "button"; btn.textContent = "Load";
+    btn.addEventListener("click", () => { if (data.kinds && data.kinds.every(k => SPECIES_BY_ID[k])) world.kinds = data.kinds; if (data.forestSeed) world.forestSeed = data.forestSeed; setCurrent({ ...defaultStyle(), ...data.style }); makeVariants(); toast(`Loaded “${data.name}”.`); });
+    row.append(name, btn); el.append(row);
+  }
+}
+document.getElementById("save").addEventListener("click", async () => {
+  const name = document.getElementById("saveName").value.trim() || "untitled";
+  if (!db) { toast("Saving needs the page opened in Claude; copy the style file below instead."); return; }
+  const id = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "untitled";
+  try { await db.collection("styles").doc(id).set({ name, version: 2, style: current, kinds: world.kinds, forestSeed: world.forestSeed, savedAt: new Date().toISOString() }); toast(`Saved “${name}”.`); }
+  catch (e) { toast(e && e.code === "quota_exceeded" ? "The style store is full; delete old styles first." : "Couldn't save just now; try again in a moment."); }
+});
+(async () => { try { db = window.claude ? await window.claude.use("db") : null; if (db) db.collection("styles").orderBy("savedAt", "desc").onSnapshot(s => renderSaved(s.docs), () => {}); } catch { db = null; } })();
+document.getElementById("copy").addEventListener("click", async () => { const ta = document.getElementById("json"); try { await navigator.clipboard.writeText(ta.value); toast("Style file copied."); } catch { ta.select(); toast("Selected; copy it with your keyboard."); } });
+document.getElementById("away").addEventListener("change", renderBestiary);
+document.getElementById("reroll").addEventListener("click", () => { varySeed++; makeVariants(); });
+document.getElementById("strength").addEventListener("change", () => { varySeed++; makeVariants(); });
+document.getElementById("reseed").addEventListener("click", () => { const ids = SPECIES.map(s => s.id).sort(() => Math.random() - .5); world = { ...world, kinds: ids.slice(0, 6) }; store.set("witch-art-world-3", world); setCurrent(current, { record: false }); makeVariants(); });
+document.getElementById("reforest").addEventListener("click", () => { world = { ...world, forestSeed: Math.floor(Math.random() * 9999) }; store.set("witch-art-world-3", world); setCurrent(current, { record: false }); makeVariants(); });
+
+buildKnobs();
+setCurrent(current, { record: history.length === 0 });
+makeVariants();
+requestAnimationFrame(tick);
+</script>
