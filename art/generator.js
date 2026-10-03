@@ -132,14 +132,15 @@ export function buildAssets(st, world, { K = 2 / (st.pixel || 2), makeCanvas = d
   // the witch: frame 0 turned towards; .frames the three hover frames, .away the same turned
   // away, .lean the fast-flight pose ({ towards, away }); .rise and .descend the flights up to the
   // treetops and down to the ground, two flutter frames each ({ towards: [2], away: [2] }); .fast
-  // her treetop top speed, barely hanging on, three flapping frames ({ towards: [3], away: [3] })
+  // her treetop top speed, barely hanging on, three flapping frames ({ towards: [3], away: [3] }); .brake
+  // a skidding stop, two wobble frames ({ towards: [2], away: [2] })
   const wc = witchColours(st), wb = o => bk(witchSprite(st, o), wc, st.cOutline);
   const witch = wb({ frame: 0 });
   witch.frames = [witch, wb({ frame: 1 }), wb({ frame: 2 })];
   let away = null, lean = null;
   Object.defineProperty(witch, "away", { enumerable: true, get: () => away || (away = [0, 1, 2].map(frame => wb({ frame, facing: "away" }))) });
   Object.defineProperty(witch, "lean", { enumerable: true, get: () => lean || (lean = { towards: wb({ lean: true }), away: wb({ lean: true, facing: "away" }) }) });
-  for (const [pose, n] of [["rise", 2], ["descend", 2], ["fast", 3]]) { let v = null; const fr = [...Array(n).keys()]; Object.defineProperty(witch, pose, { enumerable: true, get: () => v || (v = { towards: fr.map(frame => wb({ pose, frame })), away: fr.map(frame => wb({ pose, frame, facing: "away" })) }) }); }
+  for (const [pose, n] of [["rise", 2], ["descend", 2], ["fast", 3], ["brake", 2]]) { let v = null; const fr = [...Array(n).keys()]; Object.defineProperty(witch, pose, { enumerable: true, get: () => v || (v = { towards: fr.map(frame => wb({ pose, frame })), away: fr.map(frame => wb({ pose, frame, facing: "away" })) }) }); }
   // soundsystems: drawn the first time they are asked for (they are big)
   let ss = null;
   const out = { trees, bushes, creatures, witch, lights: lightProps(st, { makeCanvas }) };
