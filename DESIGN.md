@@ -122,6 +122,10 @@ The trade is speed against information: treetop mode covers distance, ground mod
 - A **list of every asset** the game needs, kept in the repository: foliage (top and bottom halves), and each creature at each level with a few frames each of **walking, attacking and being hurt**.
 - A **style**, written as a prompt plus fixed rules (palette, pixel size), that the whole list is generated from. Changing the style and regenerating is how art styles are tried out.
 
+## Engine
+
+**Prototype in Three.js in the browser; port to Godot once Ed is happy with it** (Ed, 2026-10-03). The game's state and rules live in modules with no Three.js in them, so the port carries them over. The art is drawn by JavaScript code (the Art Lab's generator), which the prototype uses directly.
+
 ## Order of work
 
 1. A character the player moves around in 3D space.
@@ -147,7 +151,7 @@ The trade is speed against information: treetop mode covers distance, ground mod
 - Which creatures count as young enough to invite.
 - Music: how it intensifies, and whether anything moves to the beat.
 - The art generator: which one; how frames are made.
-- Engine: Godot 4 exported to the web is the provisional choice, to be confirmed by the first build.
+- (Engine settled for now, below.)
 
 ## Glossary
 
