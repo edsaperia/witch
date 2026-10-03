@@ -102,7 +102,8 @@ The trade is speed against information: treetop mode covers distance, ground mod
 
 - A 3D world with **2D pixel-art sprites** for characters and objects. References: *Cult of the Lamb* and *Octopath Traveler*. Witch develops its own art style as it goes.
 - **Transistor** (Supergiant Games) is a further inspiration (Ed, 2026-10-03): colourful, moody, near-isometric; dark, rich scenes lit by saturated glows.
-- **Tilt-shift**: the view is blurred towards the top and bottom of the screen, so the forest looks like a miniature (Ed, 2026-10-03).
+- **Tilt-shift**: the view is blurred towards the top and bottom of the screen, so the forest looks like a miniature (Ed, 2026-10-03). Octopath Traveler shows tilt-shift and pixel art can be combined, unusual and charming.
+- **The art so far is placeholder**, to set the scene for prototyping; more art passes come later (Ed, 2026-10-03).
 - Art is made with **a generator**, so that the style stays consistent across all assets.
 - **For now the art is drawn by code** (Ed, 2026-10-03: "easily good enough"): sprites built from a few parameters per kind and coloured by a style file. Ed explores styles in the **Witch Art Lab** (https://claude.ai/artifact/WLBnF1NrbTezd41A8m5Cfj). An image generator may replace it later through the same asset list.
 - Art direction from Ed's references (2026-10-03):
