@@ -48,6 +48,15 @@ document.getElementById("next-wave")!.addEventListener("pointerdown", e => { e.p
 document.getElementById("pause-waves")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.pauseWaves = true; });
 setupTouch(document.body, input.touch);
 
+// The controls hint in the corner: H shows or hides it (remembered on this browser).
+const helpEl = document.getElementById("help")!;
+try { if (localStorage.getItem("witch.help") === "off") helpEl.classList.add("off"); } catch { /* storage blocked: shown */ }
+window.addEventListener("keydown", e => {
+  if (e.code !== "KeyH" || e.repeat) return;
+  const off = helpEl.classList.toggle("off");
+  try { localStorage.setItem("witch.help", off ? "off" : "on"); } catch { /* fine */ }
+});
+
 declare const __BUILD__: string;
 document.getElementById("version")!.textContent = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
 const seedEl = document.getElementById("seed")!;

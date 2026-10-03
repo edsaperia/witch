@@ -33,6 +33,9 @@ export interface LeashState {
   talk: Talk | null;
   /** What happened in the latest step, for the view (sounds, fizzles, draw-ons). */
   events: LeashEvent[];
+  /** Talk is held this step, and whether she's off the ground (so the view can say "land to talk"). */
+  held: boolean;
+  heldInAir: boolean;
 }
 
 export interface LeashControls {
@@ -44,7 +47,7 @@ export interface LeashControls {
   inviteNearest?: boolean;
 }
 
-export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, events: [] });
+export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, events: [], held: false, heldInAir: false });
 
 /** Seconds of talk a creature needs: babies 3, young 6, adults 12; legends can't be invited. */
 export const talkTime = (c: Creature, t: Tuning): number => t.invite.talkTime[Math.min(c.level, t.invite.talkTime.length - 1)];
@@ -57,6 +60,11 @@ export function leashPoint(s: LeashState, id: number, wx: number, wz: number): {
   if (s.stack.includes(id)) return { x: wx, z: wz };
   const p = s.placed.find(q => q.id === id);
   return p ? { x: p.x, z: p.z } : null;
+}
+
+/** The creature she'd talk to if she held Talk now: the nearest invitable one in range, else a legend. */
+export function talkTarget(creatures: Creature[], x: number, z: number, t: Tuning): Creature | null {
+  return nearest(creatures, x, z, t.invite.talkRange) ?? nearest(creatures, x, z, t.invite.talkRange, true);
 }
 
 function nearest(creatures: Creature[], x: number, z: number, within: number, legends = false): Creature | null {
@@ -80,6 +88,7 @@ function invite(s: LeashState, c: Creature, x: number, z: number, time: number):
  *  true only in ground mode (no inviting, placing or picking up from the treetops). */
 export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls, witch: { x: number; z: number }, onGround: boolean, time: number, dt: number, t: Tuning): void {
   s.events = [];
+  s.held = c.talk; s.heldInAir = c.talk && !onGround;
   const T = t.invite, L = t.leash, byId = (id: number) => creatures[id];
 
   // Talking: hold Talk near a creature; letting go, leaving the ground or moving away cancels it.
