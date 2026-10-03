@@ -6,7 +6,6 @@
 // pixel grids, recoloured by the style. Every animal faces right; the game mirrors it.
 import { M, Sprite, rng, uni, hash2, hsv2rgb, spline, band, tufts, rot, lerp2 } from "./core.js";
 import { BABIES } from "./babies.js";
-import { legacyCritter } from "./legacy-creatures.js";
 
 // ================= the bestiary: 20 forest animals =================
 // plan: body plan. hue/sat/val: base colour. legend: what the legendary form grows.
@@ -16,27 +15,27 @@ import { legacyCritter } from "./legacy-creatures.js";
 export const SPECIES = [
   { id: "wolf", name: "Wolf", plan: "quad", hue: .6, sat: .14, val: .74, legend: ["wings", "mane"],
     q: { len: .64, chest: .42, tuck: .6, neck: .32, neckAng: .7, neckW: .42, hr: .26, snout: .82, snoutD: .7, ear: "point", earS: .82, tail: "brush", paw: "paw", legW: 1.25, saddle: true, belly: true },
-    bw: .34, bh: .2, leg: .27, legW: .065, head: .16, snout: .6, headUp: .9, ears: "point", tail: "up" },
-  { id: "fox", name: "Fox", plan: "quad", q: { hgt: .8, len: .62, chest: .4, tuck: .5, neck: .3, neckAng: .7, neckW: .32, hr: .24, snout: 1.05, snoutD: .5, snoutTaper: .6, ear: "point", earS: 1.35, tail: "bushy", paw: "paw", legW: .9, belly: true, socks: .3 }, hue: .06, sat: .8, val: .9, bw: .3, bh: .17, leg: .2, legW: .055, head: .15, snout: .65, headUp: .8, ears: "big", tail: "bushy", belly: "white", legend: ["tails"] },
-  { id: "badger", name: "Badger", plan: "quad", q: { hgt: .62, len: .78, chest: .2, tuck: .22, neck: .18, neckAng: .1, neckW: .5, hr: .26, snout: 1.0, snoutD: .55, snoutTaper: .55, ear: "round", earS: .7, tail: "stub", paw: "paw", legW: 1.35, legMat: M.BODY3, face: "badger", shaggy: true }, hue: .65, sat: .08, val: .45, bw: .42, bh: .18, leg: .1, legW: .08, head: .14, snout: .7, headUp: .1, ears: "round", tail: "short", face: "badger", legend: ["crystals"] },
+    tail: "up" },
+  { id: "fox", name: "Fox", plan: "quad", q: { hgt: .8, len: .62, chest: .4, tuck: .5, neck: .3, neckAng: .7, neckW: .32, hr: .24, snout: 1.05, snoutD: .5, snoutTaper: .6, ear: "point", earS: 1.35, tail: "bushy", paw: "paw", legW: .9, belly: true, socks: .3 }, hue: .06, sat: .8, val: .9, belly: "white", legend: ["tails"] },
+  { id: "badger", name: "Badger", plan: "quad", q: { hgt: .62, len: .78, chest: .2, tuck: .22, neck: .18, neckAng: .1, neckW: .5, hr: .26, snout: 1.0, snoutD: .55, snoutTaper: .55, ear: "round", earS: .7, tail: "stub", paw: "paw", legW: 1.35, legMat: M.BODY3, face: "badger", shaggy: true }, hue: .65, sat: .08, val: .45, legend: ["crystals"] },
   { id: "boar", name: "Boar", plan: "quad", hue: .07, sat: .62, val: .5, legend: ["tusksBig"],
     q: { len: .72, chest: .34, tuck: .42, neck: .2, neckAng: -.15, neckW: .55, hr: .27, snout: 1.25, snoutD: .62, snoutTaper: .55, ear: "small", earS: .8, tail: "thin", paw: "hoof", legW: 1.15, ridge: true, tusks: true, back: "hump", disc: true },
-    bw: .4, bh: .27, leg: .16, legW: .09, head: .2, snout: .6, headUp: .2, ears: "small", tail: "thin", stripes: true, tusks: true, ridge: true },
-  { id: "stag", name: "Stag", plan: "quad", q: { hgt: 1.3, len: .6, chest: .6, tuck: .7, neck: .55, neckAng: .95, neckW: .32, hr: .2, snout: 1.15, snoutD: .6, snoutTaper: .65, ear: "point", earS: 1.1, tail: "deer", paw: "hoof", legW: .75, antlers: "branch", rump: true, spots: "young", belly: true }, hue: .08, sat: .5, val: .7, bw: .32, bh: .19, leg: .36, legW: .05, head: .13, snout: .5, headUp: 1.6, ears: "point", tail: "short", spots: true, antlers: "branch", legend: ["antlersGlow"] },
-  { id: "hare", name: "Hare", plan: "quad", q: { hgt: .72, len: .5, chest: .4, tuck: .45, neck: .2, neckAng: .9, neckW: .35, hr: .27, snout: .65, snoutD: .7, ear: "long", earS: 2.4, tail: "puff", paw: "paw", legW: .85, haunch: 1.35, hindFoot: 1.6, back: "arch", belly: true, whiskers: true }, hue: .08, sat: .4, val: .72, bw: .26, bh: .2, leg: .18, legW: .06, head: .15, snout: .35, headUp: .9, ears: "long", tail: "puff", legend: ["jackalope"] },
+    ridge: true },
+  { id: "stag", name: "Stag", plan: "quad", q: { hgt: 1.3, len: .6, chest: .6, tuck: .7, neck: .55, neckAng: .95, neckW: .32, hr: .2, snout: 1.15, snoutD: .6, snoutTaper: .65, ear: "point", earS: 1.1, tail: "deer", paw: "hoof", legW: .75, antlers: "branch", rump: true, spots: "young", belly: true }, hue: .08, sat: .5, val: .7, legend: ["antlersGlow"] },
+  { id: "hare", name: "Hare", plan: "quad", q: { hgt: .72, len: .5, chest: .4, tuck: .45, neck: .2, neckAng: .9, neckW: .35, hr: .27, snout: .65, snoutD: .7, ear: "long", earS: 2.4, tail: "puff", paw: "paw", legW: .85, haunch: 1.35, hindFoot: 1.6, back: "arch", belly: true, whiskers: true }, hue: .08, sat: .4, val: .72, legend: ["jackalope"] },
   { id: "owl", name: "Owl", plan: "owl", hue: .08, sat: .5, val: .55, legend: ["eyesRing", "wings"] },
-  { id: "bear", name: "Bear", plan: "quad", q: { hgt: 1.15, len: .72, chest: .38, tuck: .4, neck: .25, neckAng: .3, neckW: .55, hr: .28, snout: .7, snoutD: .62, snoutTaper: .7, ear: "round", earS: .8, tail: "stub", paw: "paw", legW: 1.55, back: "hump", muzzle: true, shaggy: true }, hue: .07, sat: .55, val: .42, bw: .42, bh: .3, leg: .17, legW: .11, head: .18, snout: .45, headUp: .5, ears: "round", tail: "short", legend: ["moss"] },
+  { id: "bear", name: "Bear", plan: "quad", q: { hgt: 1.15, len: .72, chest: .38, tuck: .4, neck: .25, neckAng: .3, neckW: .55, hr: .28, snout: .7, snoutD: .62, snoutTaper: .7, ear: "round", earS: .8, tail: "stub", paw: "paw", legW: 1.55, back: "hump", muzzle: true, shaggy: true }, hue: .07, sat: .55, val: .42, legend: ["moss"] },
   { id: "hedgehog", name: "Hedgehog", plan: "hedgehog", hue: .08, sat: .4, val: .5, legend: ["crystals"] },
-  { id: "squirrel", name: "Squirrel", plan: "quad", q: { hgt: .55, len: .45, chest: .35, tuck: .4, neck: .2, neckAng: .9, neckW: .35, hr: .3, snout: .55, snoutD: .65, ear: "tuft", earS: 1.1, tail: "squirrel", paw: "paw", legW: .8, haunch: 1.3, back: "arch", belly: true, whiskers: true }, hue: .03, sat: .75, val: .75, bw: .22, bh: .17, leg: .12, legW: .05, head: .15, snout: .35, headUp: .8, ears: "tuft", tail: "squirrel", belly: "white", legend: ["starTail"] },
+  { id: "squirrel", name: "Squirrel", plan: "quad", q: { hgt: .55, len: .45, chest: .35, tuck: .4, neck: .2, neckAng: .9, neckW: .35, hr: .3, snout: .55, snoutD: .65, ear: "tuft", earS: 1.1, tail: "squirrel", paw: "paw", legW: .8, haunch: 1.3, back: "arch", belly: true, whiskers: true }, hue: .03, sat: .75, val: .75, belly: "white", legend: ["starTail"] },
   { id: "toad", name: "Toad", plan: "toad", hue: .2, sat: .5, val: .55, legend: ["crown"] },
-  { id: "otter", name: "Otter", plan: "quad", q: { hgt: .55, len: 1.0, chest: .25, tuck: .25, neck: .3, neckAng: .35, neckW: .5, hr: .27, snout: .6, snoutD: .7, ear: "round", earS: .5, tail: "otter", paw: "paw", legW: 1.1, muzzle: true, belly: true, whiskers: true }, hue: .07, sat: .55, val: .45, bw: .44, bh: .15, leg: .09, legW: .07, head: .13, snout: .4, headUp: .5, ears: "round", tail: "long", belly: "white", legend: ["ribbons"] },
-  { id: "lynx", name: "Lynx", plan: "quad", q: { hgt: .9, len: .55, chest: .5, tuck: .55, neck: .25, neckAng: .8, neckW: .4, hr: .27, snout: .5, snoutD: .75, snoutTaper: .8, ear: "tuft", earS: 1.0, tail: "bob", paw: "paw", legW: 1.2, cheeks: true, spots: true, belly: true, whiskers: true }, hue: .09, sat: .45, val: .75, bw: .3, bh: .19, leg: .26, legW: .07, head: .16, snout: .3, headUp: .8, ears: "tuft", tail: "short", spots: true, legend: ["mane"] },
-  { id: "elk", name: "Elk", plan: "quad", q: { hgt: 1.4, len: .68, chest: .6, tuck: .66, neck: .45, neckAng: .75, neckW: .42, hr: .24, snout: 1.6, snoutD: .9, snoutTaper: .85, ear: "point", earS: .9, tail: "stub", paw: "hoof", legW: .9, back: "hump", antlers: "palm", shaggy: true }, hue: .07, sat: .55, val: .38, bw: .38, bh: .23, leg: .38, legW: .06, head: .16, snout: .8, headUp: 1.2, ears: "point", tail: "short", antlers: "palm", legend: ["antlersGlow", "moss"] },
+  { id: "otter", name: "Otter", plan: "quad", q: { hgt: .55, len: 1.0, chest: .25, tuck: .25, neck: .3, neckAng: .35, neckW: .5, hr: .27, snout: .6, snoutD: .7, ear: "round", earS: .5, tail: "otter", paw: "paw", legW: 1.1, muzzle: true, belly: true, whiskers: true }, hue: .07, sat: .55, val: .45, belly: "white", legend: ["ribbons"] },
+  { id: "lynx", name: "Lynx", plan: "quad", q: { hgt: .9, len: .55, chest: .5, tuck: .55, neck: .25, neckAng: .8, neckW: .4, hr: .27, snout: .5, snoutD: .75, snoutTaper: .8, ear: "tuft", earS: 1.0, tail: "bob", paw: "paw", legW: 1.2, cheeks: true, spots: true, belly: true, whiskers: true }, hue: .09, sat: .45, val: .75, legend: ["mane"] },
+  { id: "elk", name: "Elk", plan: "quad", q: { hgt: 1.4, len: .68, chest: .6, tuck: .66, neck: .45, neckAng: .75, neckW: .42, hr: .24, snout: 1.6, snoutD: .9, snoutTaper: .85, ear: "point", earS: .9, tail: "stub", paw: "hoof", legW: .9, back: "hump", antlers: "palm", shaggy: true }, hue: .07, sat: .55, val: .38, legend: ["antlersGlow", "moss"] },
   { id: "raven", name: "Raven", plan: "raven", hue: .68, sat: .35, val: .3, legend: ["wings", "eyesRing"] },
   { id: "bat", name: "Bat", plan: "bat", hue: .78, sat: .25, val: .45, legend: ["wingsBig"] },
   { id: "mole", name: "Mole", plan: "mole", hue: .7, sat: .15, val: .32, legend: ["crown"] },
-  { id: "beaver", name: "Beaver", plan: "quad", q: { hgt: .6, len: .65, chest: .2, tuck: .22, neck: .2, neckAng: .4, neckW: .55, hr: .28, snout: .6, snoutD: .75, ear: "round", earS: .45, tail: "flat", paw: "paw", legW: 1.2, back: "arch", teeth: true, whiskers: true }, hue: .06, sat: .6, val: .45, bw: .36, bh: .22, leg: .1, legW: .07, head: .16, snout: .35, headUp: .4, ears: "small", tail: "flat", teeth: true, legend: ["moss"] },
-  { id: "stoat", name: "Stoat", plan: "quad", q: { hgt: .5, len: 1.0, chest: .3, tuck: .33, neck: .35, neckAng: .6, neckW: .32, hr: .25, snout: .6, snoutD: .6, ear: "round", earS: .6, tail: "stoat", paw: "paw", legW: .8, belly: true, back: "arch", whiskers: true }, hue: .1, sat: .25, val: .92, bw: .42, bh: .11, leg: .11, legW: .05, head: .12, snout: .45, headUp: .7, ears: "round", tail: "long", legend: ["ribbons", "mane"] },
+  { id: "beaver", name: "Beaver", plan: "quad", q: { hgt: .6, len: .65, chest: .2, tuck: .22, neck: .2, neckAng: .4, neckW: .55, hr: .28, snout: .6, snoutD: .75, ear: "round", earS: .45, tail: "flat", paw: "paw", legW: 1.2, back: "arch", teeth: true, whiskers: true }, hue: .06, sat: .6, val: .45, legend: ["moss"] },
+  { id: "stoat", name: "Stoat", plan: "quad", q: { hgt: .5, len: 1.0, chest: .3, tuck: .33, neck: .35, neckAng: .6, neckW: .32, hr: .25, snout: .6, snoutD: .6, ear: "round", earS: .6, tail: "stoat", paw: "paw", legW: .8, belly: true, back: "arch", whiskers: true }, hue: .1, sat: .25, val: .92, legend: ["ribbons", "mane"] },
   { id: "beetle", name: "Stag beetle", plan: "beetle", hue: .78, sat: .5, val: .35, legend: ["horn", "crystals"] },
 ];
 export const SPECIES_BY_ID = Object.fromEntries(SPECIES.map(s => [s.id, s]));
@@ -45,7 +44,7 @@ export const FEATURE_NAMES = { wings: "spirit wings", mane: "a glowing mane", ta
 export function speciesColours(sp, st) {
   const s = SPECIES_BY_ID[sp], v = st.cVal / .85, sat = st.cSat / .6;
   const body = hsv2rgb(s.hue, s.sat * sat * st.sat, s.val * v);
-  const belly = s.belly === "white" || s.face === "badger" ? [236, 232, 222] : hsv2rgb(s.hue + .03, s.sat * .5 * sat, Math.min(1, s.val * v * 1.3 + .08));
+  const belly = s.belly === "white" || s.q?.face === "badger" ? [236, 232, 222] : hsv2rgb(s.hue + .03, s.sat * .5 * sat, Math.min(1, s.val * v * 1.3 + .08));
   const magic = hsv2rgb(st.magicHue + s.hue * .3, .6, 1), magic2 = hsv2rgb(st.magicHue + s.hue * .3, .18, 1);
   const pale = ["boar", "stag", "elk"].includes(s.id);
   return {
@@ -53,7 +52,7 @@ export function speciesColours(sp, st) {
     [M.BELLY]: belly, [M.ACCENT]: pale ? [236, 226, 200] : hsv2rgb(s.hue + .05, s.sat * .6, Math.min(1, s.val * v * .5 + .25)),
     [M.MAGIC]: magic, [M.MAGIC2]: magic2, [M.LEAF]: hsv2rgb(.3, .55, .55), [M.LEAF2]: hsv2rgb(.25, .5, .75), [M.LEAF3]: hsv2rgb(.33, .6, .35), [M.TRUNK]: hsv2rgb(.07, .45, .32),
     [M.EYE]: [24, 18, 30], [M.PUPIL]: [70, 40, 90], [M.GLINT]: [255, 255, 245], [M.NOSE]: [38, 28, 36], [M.EAR]: hsv2rgb(s.hue + .97, Math.min(1, s.sat * .6 + .2), Math.min(1, s.val * v * .55 + .2)),
-    [M.IRIS]: s.plan === "owl" ? [255, 176, 40] : hsv2rgb(.12, .7, .85),
+    [M.IRIS]: s.plan === "owl" ? [255, 176, 40] : hsv2rgb(.12, .7, .85), [M.SKIN]: [238, 158, 192],
   };
 }
 
@@ -65,8 +64,8 @@ export function critter(spId, level, frame, st) {
   const S = SPECIES_BY_ID[spId] || SPECIES[0];
   if (level === 0 && BABIES[S.id]) return babySprite(S.id, frame, st);
   if (S.q) return quad(S, level, frame, st);
-  if (S.plan === "owl") return owl(S, level, frame, st);
-  return legacyCritter(S, level, frame, st);
+  const draw = { owl, raven, bat, toad, hedgehog, mole, beetle }[S.plan];
+  return draw(S, level, frame, st);
 }
 
 // ================= babies: hand-drawn grids =================
@@ -77,7 +76,7 @@ function babySprite(id, frame, st) {
   return sp;
 }
 // What each character in a baby grid is.
-const KEY = { B: M.BODY, b: M.BODY2, d: M.BODY3, W: M.BELLY, A: M.ACCENT, E: M.EYE, G: M.GLINT, N: M.NOSE, I: M.IRIS, P: M.PUPIL, e: M.EAR, L: M.LINE };
+const KEY = { B: M.BODY, b: M.BODY2, d: M.BODY3, W: M.BELLY, A: M.ACCENT, E: M.EYE, G: M.GLINT, N: M.NOSE, I: M.IRIS, P: M.PUPIL, e: M.EAR, L: M.LINE, S: M.SKIN };
 
 // ================= drawing in body units =================
 // A creature is described in units of its shoulder height (ground at y = 0, up is
@@ -441,6 +440,208 @@ function sparkle(sp, seed) {
     sp.px(x, y, M.MAGIC2);
     if (i % 3 === 0) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (!sp.get(x + dx, y + dy)) sp.px(x + dx, y + dy, M.MAGIC);
   }
+}
+
+// ================= the other body plans =================
+// Same units as the quadrupeds: ground at 0, the body's top at about -1.
+
+// A crown: a band with five points and glowing gems, sitting on `c` (toad, mole).
+function crown(P, c, w, h, frame) {
+  const b = [add(c, [-w / 2, 0]), add(c, [-w / 2, -h * .35]), add(c, [w / 2, -h * .35]), add(c, [w / 2, 0])];
+  const pts = [b[0], add(c, [-w * .55, -h]), add(c, [-w * .3, -h * .45]), add(c, [-w * .15, -h * 1.05]), add(c, [0, -h * .5]), add(c, [w * .15, -h * 1.05]), add(c, [w * .3, -h * .45]), add(c, [w * .55, -h]), b[3]];
+  P.shape(pts, M.MAGIC, { group: 95, line: true, extra: true });
+  P.mark([add(c, [-w * .6, -h * .05]), add(c, [w * .6, -h * .05]), add(c, [w * .6, -h * .3]), add(c, [-w * .6, -h * .3])], M.MAGIC2, [M.MAGIC]);
+  P.fn(({ sp, T }) => { for (const k of [-.3, 0, .3]) { const [x, y] = T(add(c, [w * k, -h * .17])); sp.recolour(x, y, M.GLINT); } });
+}
+
+// Hedgehog: a dome of spines over a small pale face and little legs.
+function hedgehog(S, level, frame, st) {
+  const legend = level === 2, young = level === 1, has = f => legend && S.legend.includes(f), P = new Plan();
+  const f = frame ? .02 : 0;
+  for (const [x, m, g] of [[-.45, M.BODY3, 2], [.3, M.BODY3, 2]]) P.limb([[x + .05, -.25, .14], [x + .08 + f, 0, .1]], m, { group: g });
+  P.shape([[-.6, -.3], [.45, -.38], [.55, -.15], [.1, -.08], [-.55, -.12]], M.BELLY, { group: 1, line: true });
+  // the coat of spines, with a ragged edge
+  let coat = [[-.75, -.15], [-.82, -.5], [-.55, -.9], [-.05, -1.0], [.35, -.88], [.58, -.58], [.5, -.3], [.15, -.38], [-.3, -.28]];
+  coat = tufts(coat, 0, 6, young ? 3 : legend ? 6 : 4, young ? .06 : .09, 1);
+  P.shape(coat, M.BODY2, { group: 3, line: true });
+  P.fn(({ sp, T, s }) => { // spines: short dark strokes raking back, with pale tips
+    if (s < 18) return;
+    const r = rng(11), [x0, y0] = T([-.85, -1.05]), [x1, y1] = T([.6, -.2]), n = Math.round((x1 - x0) * (y1 - y0) / 9);
+    for (let i = 0; i < n; i++) {
+      const x = Math.round(uni(r, x0, x1)), y = Math.round(uni(r, y0, y1)), L = Math.max(2, Math.round(s * .05));
+      if (sp.g[y * sp.w + x] !== 3) continue;
+      for (let k = 0; k < L; k++) { const X = x - k, Y = y + (k >> 1); if (sp.g[Y * sp.w + X] === 3 && sp.m[Y * sp.w + X] !== M.LINE) sp.m[Y * sp.w + X] = M.BODY3; }
+      if (sp.g[y * sp.w + x + 1] === 3) sp.m[y * sp.w + x + 1] = M.BELLY;
+    }
+  });
+  // the face: a pale wedge with a dark nose
+  const sn = young ? .16 : .24;
+  P.shape([[.35, -.68], [.58, -.6], [.68 + sn, -.4], [.7 + sn, -.3], [.6, -.18], [.32, -.22]], M.BELLY, { group: 4, line: true });
+  P.shape([[.38, -.7], [.48, -.78], [.55, -.66], [.46, -.6]], M.BODY, { group: 5, line: true }); // ear
+  P.fn(({ sp, T, s }) => {
+    const [nx, ny] = T([.7 + sn, -.36]), r = Math.max(1, Math.round(s * .035));
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= 0; dx++) sp.recolour(nx + dx, ny + dy, M.NOSE);
+    const [x, y] = T([.58, -.5]); eye(sp, x, y, Math.max(2, Math.round(s * (young ? .1 : .07) * st.eye)), { glow: legend });
+  });
+  if (has("crystals")) crystals(P, t => [-.7 + t * 1.2, -.98 + Math.pow(t - .45, 2) * 1.4], frame);
+  const sp = P.draw(levelHeight(level, st) * .55, st.round);
+  if (legend) sparkle(sp, S.id);
+  return sp;
+}
+
+// Toad: squat and warty, a wide mouth, eyes on top like turrets, folded hind legs.
+function toad(S, level, frame, st) {
+  const legend = level === 2, young = level === 1, has = f => legend && S.legend.includes(f), P = new Plan();
+  const hop = frame ? -.05 : 0;
+  P.limb([[-.35, -.35 + hop, .28], [-.05, -.12, .18], [-.4, -.04, .12], [-.1, 0, .08]], M.BODY2, { group: 2 }); // far hind leg
+  P.limb([[.45, -.35 + hop, .12], [.62, 0, .08]], M.BODY2, { group: 2 });
+  const body = [[-.7, -.18 + hop], [-.72, -.5 + hop], [-.4, -.8 + hop], [.1, -.86 + hop], [.5, -.74 + hop], [.76, -.52 + hop], [.8, -.36 + hop], [.62, -.18 + hop], [.1, -.08 + hop], [-.4, -.08 + hop]];
+  P.shape(body, M.BODY, { group: 1, line: true });
+  P.mark([[-.5, -.3 + hop], [.3, -.42 + hop], [.8, -.38 + hop], [.65, -.1 + hop], [-.4, -.05 + hop]], M.BELLY, [M.BODY]);
+  P.shape([[.18, -.78 + hop], [.28, -.98 + hop], [.48, -1.0 + hop], [.58, -.8 + hop]], M.BODY, { group: 1 }); // the eye's turret
+  P.limb([[-.3, -.45 + hop, .34], [.02, -.14, .2], [-.42, -.05, .13], [-.06, 0, .09]], M.BODY, { group: 6, line: true }); // near hind leg, folded
+  const front = () => { P.limb([[.46, -.32 + hop, .16], [.56, -.14, .11], [.64, 0, .08]], M.BODY, { group: 7, line: true }); for (const x of [-.06, .64]) P.shape([[x - .06, -.04], [x + .14, -.05], [x + .16, 0], [x - .06, 0]], M.BODY, { group: 7 }); };
+  P.fn(({ sp, T, s }) => {
+    // warts
+    if (s > 18) { const r = rng(5); for (let i = 0; i < 40; i++) { const [x, y] = T([uni(r, -.65, .55), uni(r, -.8, -.35) + hop]); if (sp.m[y * sp.w + x] === M.BODY && sp.g[y * sp.w + x] === 1) { sp.m[y * sp.w + x] = M.BODY3; if (s > 50) sp.recolour(x + 1, y - 1, M.BELLY); } } }
+    // the mouth: a long line back from the snout
+    const [x0, y0] = T([.79, -.4 + hop]), [x1] = T([.35, 0]);
+    for (let x = x1; x <= x0; x++) sp.recolour(x, y0 + Math.round((x0 - x) * .08), M.LINE);
+    // the eye: gold, with a dark bar of a pupil
+    const [ex, ey] = T([.42, -.88 + hop]), d = Math.max(2, Math.round(s * (young ? .17 : .13) * st.eye));
+    owlEye(sp, ex, ey, d, legend);
+    if (d >= 4) for (let k = -Math.floor(d / 2) + 1; k < Math.floor(d / 2); k++) sp.px(ex + k, ey, M.EYE);
+  });
+  front();
+  if (has("crown")) crown(P, [.38, -1.0 + hop], .5, .32, frame);
+  const sp = P.draw(levelHeight(level, st) * .5, st.round);
+  if (legend) sparkle(sp, S.id);
+  return sp;
+}
+
+// Raven: a heavy beak, shaggy throat, folded wings over a long wedge tail.
+function raven(S, level, frame, st) {
+  const legend = level === 2, young = level === 1, has = f => legend && S.legend.includes(f), P = new Plan();
+  const bob = frame ? .02 : 0;
+  if (has("wings")) wings(P, [.05, -.72], legend, frame, -1);
+  for (const [x, g, m] of [[-.02, 2, M.BODY3], [.1, 7, M.NOSE]]) {
+    const f = frame && g === 7 ? -.04 : 0;
+    P.limb([[x, -.32, .07], [x + .04, -.02 + f, .05]], m, { group: g });
+    P.shape([[x - .1, -.04 + f], [x + .2, -.05 + f], [x + .2, 0 + f], [x - .1, 0 + f]], m, { group: g });
+  }
+  P.shape(tufts([[-.25, -.48 + bob], [-.95, -.3], [-1.0, -.2], [-.25, -.3]], 1, 2, 3, .04, 1), M.BODY2, { group: 3, line: true }); // tail
+  P.shape([[.38, -.78 + bob], [.42, -.52], [.18, -.3], [-.25, -.3], [-.48, -.45], [-.2, -.72 + bob]], M.BODY, { group: 1, line: true });
+  const hr = young ? .21 : .17, hc = [.45, -.86 + bob];
+  P.shape(tufts([add(hc, [-hr * .9, 0]), add(hc, [-hr * .4, -hr * .95]), add(hc, [hr * .5, -hr * .85]), add(hc, [hr * .95, -hr * .1]), add(hc, [hr * .6, hr * .9]), add(hc, [-hr * .2, hr * 1.6]), add(hc, [-hr * .8, hr * 1.2])], 4, 6, 3, .03, 1), M.BODY, { group: 1 });
+  const bl = young ? .28 : .38;
+  P.shape([add(hc, [hr * .6, -hr * .45]), add(hc, [hr + bl * .6, -hr * .45]), add(hc, [hr + bl, -hr * .05]), add(hc, [hr + bl * .95, hr * .15]), add(hc, [hr + bl * .4, hr * .2]), add(hc, [hr * .6, hr * .35])], M.NOSE, { group: 8, line: true });
+  if (!has("wings")) P.shape(tufts([[.28, -.72 + bob], [-.1, -.42], [-.75, -.3], [-.75, -.36], [-.2, -.66 + bob]], 1, 3, 4, .04, 1), M.BODY2, { group: 4, line: true });
+  P.fn(({ sp, T, s }) => {
+    const [x, y] = T(add(hc, [hr * .35, -hr * .2])); eye(sp, x, y, Math.max(2, Math.round(s * (young ? .1 : .07) * st.eye)), { glow: legend });
+    if (s > 30) { const [gx, gy] = T(add(hc, [hr * .1, -hr * .7])); sp.recolour(gx, gy, M.BELLY); sp.recolour(gx + 1, gy, M.BELLY); } // a sheen on the crown
+  });
+  if (has("eyesRing")) P.fn(({ sp, T, s }) => { const ep = Math.max(3, Math.round(s * .09)); for (let i = 0; i < 5; i++) { const a = Math.PI * (1.15 + i * .17), [x, y] = T(add(hc, [Math.cos(a) * .55 - .15, Math.sin(a) * .5 + .05])); owlEye(sp, x, y, ep, true, true); } });
+  if (has("wings")) wings(P, [-.02, -.66], legend, frame, 1);
+  const sp = P.draw(levelHeight(level, st) * .6, st.round);
+  if (legend) sparkle(sp, S.id);
+  return sp;
+}
+
+// Bat: on the wing, seen from the front: big ears, a furry body, membranes stretched
+// between finger bones. Two frames: wings up, wings down.
+function bat(S, level, frame, st) {
+  const legend = level === 2, young = level === 1, has = f => legend && S.legend.includes(f), P = new Plan();
+  const span = has("wingsBig") ? 1.5 : young ? .85 : 1, up = frame === 0, hov = -.25;
+  for (const sd of [-1, 1]) {
+    const X = (x, y) => [sd * x * span, y + hov], sh = X(.12 / span, -.62);
+    const wrist = up ? X(.55, -1.0) : X(.6, -.62), tips = up ? [X(1.0, -.95), X(1.05, -.62), X(.8, -.32)] : [X(1.05, -.45), X(.9, -.18), X(.6, -.02)];
+    const root = X(.12 / span, -.38), mem = [sh, wrist, tips[0]];
+    for (let i = 1; i < tips.length; i++) mem.push(lerp2(lerp2(tips[i - 1], tips[i], .5), wrist, .22), tips[i]);
+    mem.push(lerp2(lerp2(tips[2], root, .5), wrist, .1), root);
+    const mat = has("wingsBig") ? M.MAGIC : M.BODY2;
+    P.shape(sd < 0 ? mem.slice().reverse() : mem, mat, { group: 10 + (sd > 0 ? 1 : 0), line: true, extra: true, depth: 2 });
+    for (const t of tips) P.limb([[...wrist, .05], [...t, .02]], has("wingsBig") ? M.MAGIC2 : M.BODY3, { group: 12, extra: true });
+    P.limb([[...sh, .07], [...wrist, .05]], has("wingsBig") ? M.MAGIC2 : M.BODY3, { group: 12, extra: true });
+  }
+  const bc = [0, -.5 + hov];
+  P.shape(tufts([add(bc, [0, -.25]), add(bc, [.17, -.12]), add(bc, [.16, .15]), add(bc, [0, .28]), add(bc, [-.16, .15]), add(bc, [-.17, -.12])], 2, 5, 3, .03, 1), M.BODY, { group: 1, line: true });
+  const hc = [0, -.82 + hov], hr = young ? .17 : .14;
+  for (const sd of [-1, 1]) {
+    P.shape([add(hc, [sd * hr * .3, -hr * .6]), add(hc, [sd * hr * 1.05, -hr * 2.3]), add(hc, [sd * hr * 1.2, -hr * .3])], M.BODY, { group: 2, line: true });
+    P.mark([add(hc, [sd * hr * .55, -hr * .7]), add(hc, [sd * hr * 1.0, -hr * 1.9]), add(hc, [sd * hr * 1.0, -hr * .5])], M.EAR, [M.BODY]);
+  }
+  P.shape([add(hc, [0, -hr]), add(hc, [hr, -hr * .3]), add(hc, [hr * .7, hr * .8]), add(hc, [0, hr]), add(hc, [-hr * .7, hr * .8]), add(hc, [-hr, -hr * .3])], M.BODY, { group: 1 });
+  P.fn(({ sp, T, s }) => {
+    for (const sd of [-1, 1]) { const [x, y] = T(add(hc, [sd * hr * .42, -hr * .1])); if (s * hr > 7) owlEye(sp, x, y, Math.max(2, Math.round(s * hr * .4 * st.eye)), legend); else sp.px(x, y, M.EYE); }
+    const [nx, ny] = T(add(hc, [0, hr * .45])); sp.recolour(nx, ny, M.NOSE); sp.recolour(nx - 1, ny, M.NOSE);
+    if (s > 30) { sp.recolour(nx - 2, ny + 2, M.GLINT); sp.recolour(nx + 1, ny + 2, M.GLINT); } // two little fangs
+  });
+  for (const sd of [-1, 1]) P.limb([[sd * .08, -.28 + hov, .05], [sd * .1, -.18 + hov, .04]], M.BODY3, { group: 3 }); // feet
+  const sp = P.draw(levelHeight(level, st) * .45, st.round);
+  if (legend) sparkle(sp, S.id);
+  return sp;
+}
+
+// Mole: a velvet barrel, a long pink snout, huge spade hands turned out.
+function mole(S, level, frame, st) {
+  const legend = level === 2, young = level === 1, has = f => legend && S.legend.includes(f), P = new Plan();
+  const f = frame ? .03 : 0;
+  P.limb([[-.5, -.25, .14], [-.48, 0, .1]], M.SKIN, { group: 2 });
+  P.limb([[-.7, -.3, .08], [-.85, -.2, .05]], M.SKIN, { group: 2 }); // tail
+  const sn = young ? .22 : .32;
+  P.shape([[-.75, -.12], [-.82, -.5], [-.45, -.95], [.15, -1.0], [.55, -.8], [.8, -.55], [.8, -.35], [.55, -.2], [0, -.08]], M.BODY, { group: 1, line: true });
+  P.shape([[.7, -.58], [.8 + sn, -.5], [.84 + sn, -.42], [.8 + sn, -.36], [.72, -.36]], M.SKIN, { group: 4, line: true });
+  P.mark([[-.6, -.85], [.3, -.98], [.5, -.8], [-.3, -.72]], M.BODY2, [M.BODY]);
+  // a spade hand: broad, pink, with long claws, turned outwards
+  const hand = (x, m, g) => {
+    P.limb([[x - .05, -.4, .14], [x + .02, -.16 - f, .11]], m, { group: g, line: true });
+    P.shape([[x - .06, -.2 - f], [x + .12, -.22 - f], [x + .2, -.08 - f], [x + .06, -.03], [x - .08, -.06]], M.SKIN, { group: g, line: true });
+    for (let k = 0; k < 4; k++) P.limb([[x + .08 + k * .045, -.08 - f * (k % 2), .035], [x + .14 + k * .05, .0, .015]], M.ACCENT, { group: g + 1, line: true, extra: true });
+  };
+  hand(.25, M.BODY2, 5);
+  hand(.45, M.BODY, 7);
+  P.fn(({ sp, T, s }) => {
+    const [x, y] = T([.62, -.62]); sp.px(x, y, legend ? M.MAGIC2 : M.EYE); if (s > 40) sp.px(x - 1, y, legend ? M.MAGIC : M.EYE);
+    const [nx, ny] = T([.84 + sn, -.45]); sp.recolour(nx, ny, M.NOSE); sp.recolour(nx, ny + 1, M.NOSE);
+  });
+  if (has("crown")) crown(P, [.25, -.98], .42, .3, frame);
+  const sp = P.draw(levelHeight(level, st) * .45, st.round);
+  if (legend) sparkle(sp, S.id);
+  return sp;
+}
+
+// Stag beetle: glossy wing cases, a shield behind the head, antler-like jaws, six legs.
+function beetle(S, level, frame, st) {
+  const legend = level === 2, young = level === 1, has = f => legend && S.legend.includes(f), P = new Plan();
+  const leg = (x, side, i, m, g) => {
+    const ph = (i + (side > 0 ? 1 : 0) + frame) % 2 ? .06 : -.06, k = [x, -.3], kn = [x + side * .0 + ph + (i - 1) * .1, -.42], ft = [x + ph * 1.5 + (i - 1) * .22, 0];
+    P.limb([[...k, .07], [...kn, .06], [...ft, .03]], m, { group: g, line: true });
+  };
+  for (let i = 0; i < 3; i++) leg(-.3 + i * .35, -1, i, M.BODY3, 2);
+  // jaws grow with level; a legend's glow
+  const jl = [.3, .55, .8][level] * (has("horn") ? 1.3 : 1), jm = has("horn") ? M.MAGIC : M.BODY2, hc = [.62, -.5];
+  const jaw = (dy, m, g) => {
+    const b = add(hc, [.12, dy]), e = add(b, [jl * .9, -jl * .45]), t = add(b, [jl * 1.05, -jl * .2]);
+    P.limb([[...b, .1], [...add(b, [jl * .45, -jl * .4]), .085], [...e, .06], [...t, .02]], m, { group: g, line: true, extra: true, capEnd: .5 });
+    P.limb([[...add(b, [jl * .5, -jl * .4]), .05], [...add(b, [jl * .62, -jl * .18]), .015]], m, { group: g, line: true, extra: true });
+  };
+  jaw(-.02, has("horn") ? M.MAGIC : M.BODY3, 3);
+  P.shape([[-.8, -.25], [-.78, -.6], [-.35, -.85], [.12, -.8], [.3, -.58], [.25, -.28], [-.3, -.18]], M.BODY, { group: 1, line: true }); // wing cases
+  P.mark([[-.65, -.65], [-.3, -.8], [.05, -.76], [-.2, -.68]], M.BELLY, [M.BODY]); // gloss
+  P.shape([[.22, -.68], [.48, -.7], [.58, -.5], [.5, -.3], [.24, -.3]], M.BODY, { group: 4, line: true }); // pronotum
+  P.shape([[.5, -.62], [.72, -.6], [.78, -.45], [.68, -.36], [.5, -.4]], M.BODY2, { group: 5, line: true }); // head
+  jaw(.04, jm, 6);
+  P.limb([[.7, -.6, .025], [.78, -.75, .02], [.9, -.72, .02]], M.BODY3, { group: 9, extra: true }); // antenna, elbowed
+  for (let i = 0; i < 3; i++) leg(-.2 + i * .35, 1, i, M.BODY2, 7);
+  P.fn(({ sp, T, s }) => { // the seam down the wing cases, and an eye
+    const [x0, y0] = T([-.78, -.42]), [x1, y1] = T([.28, -.5]);
+    if (s > 25) for (let x = x0 + 2; x < x1 - 2; x++) sp.recolour(x, Math.round(y0 + (y1 - y0) * (x - x0) / (x1 - x0)) - Math.round(Math.sin((x - x0) / (x1 - x0) * Math.PI) * s * .12), M.LINE);
+    const [ex, ey] = T([.66, -.52]); sp.px(ex, ey, legend ? M.MAGIC2 : M.GLINT);
+  });
+  if (has("crystals")) crystals(P, t => [-.7 + t * .9, -.82 + Math.pow(t - .5, 2) * .8], frame);
+  const sp = P.draw(levelHeight(level, st) * .4, st.round);
+  if (legend) sparkle(sp, S.id);
+  return sp;
 }
 
 // ================= owl =================
