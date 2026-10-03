@@ -31,6 +31,7 @@ void main() {
 const BULB_FRAG = /* glsl */ `
 uniform float uTwinkle, uChase;
 varying vec3 vColour;
+varying vec3 vWorld;
 varying float vOn;
 varying vec2 vB;
 ${LIGHT_GLSL}
@@ -75,6 +76,7 @@ void main() {
 const MOTE_FRAG = /* glsl */ `
 uniform vec3 uMoteColour;
 varying float vA;
+varying vec3 vWorld;
 ${LIGHT_GLSL}
 void main() {
   if (vA < 0.3) discard;
