@@ -65,6 +65,8 @@ export interface Tuning {
   creaturesFar: number;
   creatureCurve: number;
   youngShareFar: number;
+  adultsFrom: number;
+  adultShareFar: number;
   legendChanceFar: number;
   legendNextToHome: boolean;
   legendsFrom: number;

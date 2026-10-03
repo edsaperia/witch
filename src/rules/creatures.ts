@@ -6,14 +6,17 @@
 import { clamp, hash2, lerp, rng, smoothstep } from "./random";
 import { AREA_TYPES, type ForestMap } from "./map";
 
+export type Level = 0 | 1 | 2 | 3;
+export const LEGEND = 3;
+
 export interface Creature {
   id: number;
   /** Its species id in the art module's bestiary: the area type's creature. */
   species: string;
   /** The area it belongs to. */
   cell: [number, number];
-  /** 0 baby, 1 young, 2 legend. */
-  level: 0 | 1 | 2;
+  /** 0 baby, 1 young, 2 adult, 3 legend. */
+  level: Level;
   /** Its area's centre. */
   homeX: number;
   homeZ: number;
@@ -42,7 +45,7 @@ export interface Creature {
   rand: () => number;
 }
 
-export interface AreaPopulation { babies: number; young: number; legends: number }
+export interface AreaPopulation { babies: number; young: number; adults: number; legends: number }
 
 /** How many of each level live in an area `remoteness` (0 home, 1 edge) from the dancefloor.
  *  `roll` varies the count; `legendRoll` decides the area's one legend, if any. */
@@ -50,8 +53,11 @@ export function population(map: ForestMap, remoteness: number, roll = 0.5, legen
   const t = map.tuning, r = clamp(remoteness, 0, 1);
   const total = Math.max(0, Math.round(lerp(t.creaturesNear, t.creaturesFar, Math.pow(r, t.creatureCurve)) + (roll - 0.5) * 2));
   const legends = total > 0 && legendRoll < legendChance(map, r) ? 1 : 0;
-  const young = Math.round(Math.max(0, total - legends) * t.youngShareFar * r);
-  return { babies: Math.max(0, total - legends - young), young, legends };
+  // Babies near home, then young, then adults further out (from adultsFrom), legends at the edge.
+  const rest = Math.max(0, total - legends);
+  const adults = Math.round(rest * t.adultShareFar * smoothstep((r - t.adultsFrom) / Math.max(0.01, 1 - t.adultsFrom)));
+  const young = Math.round((rest - adults) * t.youngShareFar * r);
+  return { babies: Math.max(0, rest - adults - young), young, adults, legends };
 }
 
 /** The chance an area has a legend: 0 inside legendsFrom, rising to legendChanceFar at the edge. */
@@ -92,21 +98,22 @@ export function spawnCreatures(map: ForestMap): Creature[] {
     if (cx === hx && cy === hy) continue;
     const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), type = AREA_TYPES[map.typeOf(cx, cy)], home = map.siteOf(cx, cy);
     const far = map.remoteness(cx, cy), pop = population(map, far, hash2(cx, cy, map.seed + 43), hash2(cx, cy, map.seed + 47));
-    const make = (level: 0 | 1 | 2): Creature => {
+    const make = (level: Level): Creature => {
       const cell: [number, number] = [cx, cy], range = wanderRange(map), [anchorX, anchorZ] = anchorOf(map, cell, home.x, home.z, range);
       const base = { cell, homeX: home.x, homeZ: home.z, range, anchorX, anchorZ };
       const [x, z] = pointInArea(map, base, r);
       return {
         id: id++, species: type.creature, level, ...base, x, z, tx: x, tz: z,
-        rest: r() * 3, speed: (level === 2 ? t.legendSpeed : t.creatureSpeed) * (0.7 + r() * 0.6),
+        rest: r() * 3, speed: (level === LEGEND ? t.legendSpeed : t.creatureSpeed) * (0.7 + r() * 0.6),
         facing: r() < 0.5 ? 1 : -1, away: false, moving: false, walk: r(), seen: 0, leashed: false,
         rand: rng(map.seed * 31 + id * 7 + 11),
       };
     };
     for (let i = 0; i < pop.babies; i++) out.push(make(0));
     for (let i = 0; i < pop.young; i++) out.push(make(1));
+    for (let i = 0; i < pop.adults; i++) out.push(make(2));
     const nextToHome = t.legendNextToHome && cx === hx + 1 && cy === hy;
-    if (pop.legends || nextToHome) out.push(make(2));
+    if (pop.legends || nextToHome) out.push(make(3));
   }
   return out;
 }
@@ -128,7 +135,7 @@ export function stepCreature(c: Creature, dt: number, map: ForestMap): void {
   if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
   if (dz < -0.3 * d) c.away = true; else if (dz > 0.3 * d) c.away = false; // up the screen is away
   c.moving = true;
-  c.walk += dt * (c.level === 2 ? 1.5 : 4);
+  c.walk += dt * (c.level === LEGEND ? 1.5 : 4);
 }
 
 /** Step only the creatures within `radius` metres of (x, z). One coming back into range after a

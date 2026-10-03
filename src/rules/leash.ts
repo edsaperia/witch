@@ -6,7 +6,7 @@
 // Sigils can't be put down on top of one another. Leashes are elastic: creatures walk or run to
 // their leash point at their own pace and never teleport. Legends can't be invited (for now).
 // No drawing here.
-import type { Creature } from "./creatures";
+import { LEGEND, type Creature } from "./creatures";
 import type { Tuning } from "./tuning";
 
 export interface PlacedSigil { id: number; x: number; z: number; /** game time it was put down */ at: number }
@@ -45,7 +45,7 @@ export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, 
 
 /** Seconds of talk a creature needs: babies 3, young 6 (adults 12); legends can't be invited. */
 export const talkTime = (c: Creature, t: Tuning): number => t.invite.talkTimes[Math.min(c.level, t.invite.talkTimes.length - 1)];
-export const invitable = (c: Creature) => !c.leashed && c.level !== 2;
+export const invitable = (c: Creature) => !c.leashed && c.level !== LEGEND;
 
 /** Where a leashed creature's leash is fixed: the witch, or its placed sigil. */
 export function leashPoint(s: LeashState, id: number, wx: number, wz: number): { x: number; z: number } | null {
@@ -143,7 +143,7 @@ export function stepLeashed(c: Creature, px: number, pz: number, dt: number, t: 
   }
   const dx = c.tx - c.x, dz = c.tz - c.z, d = Math.hypot(dx, dz);
   if (d < 1e-4) { c.moving = false; return; }
-  const speed = far ? Math.max(c.speed, L.runSpeed * (c.level === 2 ? 0.6 : 1)) : c.speed * 1.5;
+  const speed = far ? Math.max(c.speed, L.runSpeed * (c.level === LEGEND ? 0.6 : 1)) : c.speed * 1.5;
   const step = Math.min(d, speed * dt);
   c.x += (dx / d) * step; c.z += (dz / d) * step;
   if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;

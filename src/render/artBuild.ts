@@ -66,15 +66,15 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   return { sprites, layout, floor: assets.floor.sp };
 }
 
-/** A kind of creature at each level (baby, young, legend), two walking frames each. */
+/** A kind of creature at each level (baby, young, adult, legend), two walking frames each. */
 export function creatureSprites(st: Style, species: string, mk: MakeCanvas): Baked[] {
   const out: Baked[] = [];
-  for (const facing of ["towards", "away"]) for (let level = 0; level < 3; level++) for (let f = 0; f < 2; f++)
+  for (const facing of ["towards", "away"]) for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++)
     out.push(Art.bake(Art.critter(species, level, f, st, facing), Art.speciesColours(species, st), st, st.cOutline, mk) as Baked);
   return out;
 }
-/** Towards: frames 0-5 (level x 2 + walk frame); away: the same, from 6. */
-export const creatureFrame = (level: number, f: number, away = false) => (away ? 6 : 0) + level * 2 + f;
+/** Towards: frames 0-7 (level x 2 + walk frame); away: the same, from 8. */
+export const creatureFrame = (level: number, f: number, away = false) => (away ? 8 : 0) + level * 2 + f;
 
 function pixels(c: AnyCanvas, w: number, h: number): Uint8ClampedArray {
   const ctx = c.getContext("2d") as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;

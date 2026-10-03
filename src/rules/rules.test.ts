@@ -345,7 +345,7 @@ describe("creatures", () => {
       expect(here.length).toBeLessThanOrEqual(3);
       expect(here.every(c => c.level === 0)).toBe(true);
     }
-    expect(inCell(mx + 1, my).filter(c => c.level === 2).length).toBe(1);
+    expect(inCell(mx + 1, my).filter(c => c.level === 3).length).toBe(1);
   });
 
   it("grow to about 20 towards the edge, with young ones among them", () => {
@@ -360,7 +360,7 @@ describe("creatures", () => {
     let areas = 0, withLegend = 0, inner = 0;
     for (let seed = 1; seed <= 12; seed++) {
       const m = generateMap(seed * 101, TUNING), count = new Map<string, number>();
-      for (const c of spawnCreatures(m)) if (c.level === 2) count.set(c.cell.join(), (count.get(c.cell.join()) ?? 0) + 1);
+      for (const c of spawnCreatures(m)) if (c.level === 3) count.set(c.cell.join(), (count.get(c.cell.join()) ?? 0) + 1);
       for (const [k, n] of count) {
         expect(n, `seed ${seed * 101} area ${k}`).toBe(1);
         const [x, y] = k.split(",").map(Number);
@@ -377,18 +377,20 @@ describe("creatures", () => {
   it("keep the legend next to home only while legendNextToHome is on", () => {
     const off = spawnCreatures(generateMap(123, withTuning({ legendNextToHome: false })));
     const [hx, hy] = map.centreCell;
-    expect(off.some(c => c.level === 2 && c.cell[0] === hx + 1 && c.cell[1] === hy)).toBe(false);
+    expect(off.some(c => c.level === 3 && c.cell[0] === hx + 1 && c.cell[1] === hy)).toBe(false);
   });
 
   it("rise with distance from home, as the tuning file says", () => {
     let last = -1;
     for (let r = 0; r <= 1.0001; r += 0.1) {
       const p = population(map, r);
-      const total = p.babies + p.young + p.legends;
+      const total = p.babies + p.young + p.adults + p.legends;
       expect(total).toBeGreaterThanOrEqual(last);
       last = total;
     }
-    expect(population(map, 0)).toEqual({ babies: TUNING.creaturesNear, young: 0, legends: 0 });
+    expect(population(map, 0)).toEqual({ babies: TUNING.creaturesNear, young: 0, adults: 0, legends: 0 });
+    expect(population(map, 1).adults).toBeGreaterThan(0);
+    expect(population(map, TUNING.adultsFrom).adults).toBe(0);
     expect(population(map, 1).legends).toBe(0);
     expect(population(map, 1, 0.5, 0).legends).toBe(1);
     expect(legendChance(map, TUNING.legendsFrom)).toBe(0);
@@ -585,7 +587,7 @@ describe("inviting and leashing", () => {
   });
 
   it("can't invite legends", () => {
-    const all = fresh(), s = newLeash(), legend = all.find(k => k.level === 2)!;
+    const all = fresh(), s = newLeash(), legend = all.find(k => k.level === 3)!;
     for (const c of all) if (c !== legend) c.leashed = true; // only the legend is left near
     const w = { x: legend.x + 1, z: legend.z };
     for (let t = 0; t < 30; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, w, true, t, 0.1, TUNING);
