@@ -194,6 +194,12 @@ async function main() {
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
     await sleep(1500);
     await shot(page, "41-dancefloor-treetop.png");
+    // Behind the home soundsystem (up the screen from it), on the ground: she must still read.
+    await page.keyboard.press("Space");
+    await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 60000 });
+    await page.evaluate(() => { const g = window.witch.game, d = g.map.dancefloor, x = d.x + d.radius + 5, z = d.z + 3 - 2.5; g.witch = { ...g.witch, x, z, vx: 0, vz: 0 }; g.camera = { ...g.camera, tx: x, tz: z }; });
+    await sleep(1500);
+    await shot(page, "43-behind-soundsystem.png");
   }, "&tilt=before");
 
   // The ground effects (tree shadows, canopy shadow, mist) off and on, from the same spot, and a

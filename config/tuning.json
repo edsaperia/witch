@@ -69,6 +69,8 @@
   "glowPower": 2.2,
   "_beat": "The music's clock (beats per minute): the lasers sweep to it and party animals dance to it. Later the music itself drives it.",
   "beat": { "bpm": 120 },
+  "_occlusion": "Never lose the witch: tall things (over minHeight metres) standing in front of her fade to fadeOpacity where they cover her, with a soft edge of edge pixels; anything that still hides her shows her silhouette in her glow colour at silhouette opacity.",
+  "occlusion": { "on": true, "fadeOpacity": 0.38, "edge": 6, "minHeight": 2.5, "silhouette": 0.55 },
   "_stack": "The sigil stack above the witch's hat: scale (of the sigils' size), offset (the gap between her hat tip and the bottom sigil, in sigil heights), gap (between sigils, in sigil heights). It sways as a chain of springs: stiffness and damping, trail (how far it leans back per m/s of her speed), idleSway (metres of gentle sway when she's still).",
   "stack": { "offset": 0.5, "scale": 0.65, "gap": 0.15, "stiffness": 60, "damping": 9, "trail": 0.03, "idleSway": 0.1 },
   "_lasers": "Each playing soundsystem's laser show: bursts of blockBars bars, on about duty of the time (seeded per soundsystem), up to maxCount beams stepping on the bars, fanned over spread degrees (no beam tilting more than maxTilt from straight up), swinging sweep degrees once every sweepBeats beats (slow, like searchlights), opening and closing the fan every openBars bars, length metres tall, opacity 0-1, fading in over fadeIn and out over fadeOut seconds, and fading with distance from fadeNear to fadeFar metres. Glow only: no light, nothing from the light budget.",
