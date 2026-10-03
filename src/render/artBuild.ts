@@ -2,7 +2,6 @@
 // and no page needed, so it runs in a Web Worker (with OffscreenCanvas) as well as on the page.
 import * as Art from "../../art/generator.js";
 import { AREA_TYPES } from "../rules/map";
-import { TREE_VARIANTS } from "../rules/forest";
 import { AREAS, areaAssets } from "../../art/areas.js";
 import { rng } from "../rules/random";
 import type { Style } from "./style";
@@ -20,6 +19,8 @@ export type MakeCanvas = (w: number, h: number) => AnyCanvas;
 export interface Piece { bot: number; top: number | null }
 export interface TypeLayout {
   big: Piece[];
+  /** Each big object's share of the area's big objects (tree variants by height class). */
+  bigWeight: number[];
   small: Piece[];
   walls: number[];
   set: Piece | null;
@@ -46,7 +47,7 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   const id = AREA_TYPES[t].id, def = (AREAS as unknown as ArtDef[]).find(a => a.id === id)!;
   const assets = areaAssets(id, st, { K, makeCanvas: mk }) as { floor: { sp: Baked }; walls: { sp: Baked }[]; small: { sp: Baked }[]; big: { sp: Baked }[]; setPiece: { sp: Baked } | null };
   const sprites: Baked[] = [], add = (b: Baked) => sprites.push(b) - 1;
-  const layout: TypeLayout = { big: [], small: [], walls: [], set: null };
+  const layout: TypeLayout = { big: [], bigWeight: [], small: [], walls: [], set: null };
   const bk = (sp: unknown, col: unknown) => Art.bake(sp, col, st, "none", mk) as Baked;
   // Anything drawn as a tree (big objects, small trees, a tree set piece) is split into crown and
   // trunk, so its crown hides in ground mode; everything else is drawn whole.
@@ -54,11 +55,15 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
     const { parts, colours } = areaTree(def, o, st, rng(seed * 13 + t * 101 + k * 7 + 1), K);
     return { bot: add(bk(parts.bot, colours)), top: add(bk(parts.top, colours)) };
   };
-  def.big.forEach(([kind, o], i) => {
-    if (kind !== "tree") { layout.big.push({ bot: add(assets.big[i].sp), top: null }); return; }
-    const minor = (o as TreeOpts).minor, mains = def.big.filter(([, b]) => !(b as TreeOpts).minor).length || 1;
-    const n = minor ? 1 : Math.max(1, Math.round(TREE_VARIANTS / mains)); // a minor species (an area's second kind) gets one variant
-    for (let v = 0; v < n; v++) layout.big.push(tree(o as TreeOpts, i * 17 + v));
+  // Trees: the area's own UK species (a main and a minor one) across four height classes, from
+  // saplings to a rare giant over the canopy (art/areas.js areaTreeVariants), each with its share
+  // of the area's trees. Anything else big (mounds, boulders, logs) is drawn whole, as before.
+  const variants = Art.areaTreeVariants(id, st, { K, makeCanvas: mk }) as { top: Baked; bot: Baked; weight: number }[];
+  for (const v of variants) { layout.big.push({ bot: add(v.bot), top: add(v.top) }); layout.bigWeight.push(v.weight); }
+  def.big.forEach(([kind], i) => {
+    if (kind === "tree" && variants.length) return;
+    layout.big.push({ bot: add(assets.big[i].sp), top: null });
+    layout.bigWeight.push(variants.length ? 0.1 : 1);
   });
   def.small.forEach(([kind, o], i) => layout.small.push(kind === "tree" ? tree(o as TreeOpts, 500 + i) : { bot: add(assets.small[i].sp), top: null }));
   for (const a of assets.walls) layout.walls.push(add(a.sp));

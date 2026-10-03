@@ -15,7 +15,6 @@ export interface Plant {
   flip: boolean;
 }
 
-export const TREE_VARIANTS = 6;
 export const BUSH_VARIANTS = 4;
 const CHUNK = 32; // metres
 
@@ -90,7 +89,7 @@ function treesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
       if (hash2(i, j, s + 103) >= chance) continue;
       // Crowns don't hang over the dancefloor's or a set piece's clearing.
       if (map.hardClear(x, z - lift) || map.hardClear(x - half, z - lift) || map.hardClear(x + half, z - lift)) continue;
-      out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 104) * TREE_VARIANTS), flip: hash2(i, j, s + 105) < 0.5 });
+      out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 104) * 1000003) /* the view picks a variant by weight */, flip: hash2(i, j, s + 105) < 0.5 });
     }
   }
   return out;

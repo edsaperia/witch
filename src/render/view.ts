@@ -32,6 +32,15 @@ import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
 import type { Style } from "./style";
 
 /** A point light: where, how far it reaches, its colour and strength. */
+/** An index by weight, from a seeded integer (its last six digits as a share). */
+function pickWeighted(w: number[], seed: number): number {
+  let total = 0;
+  for (const x of w) total += x;
+  let u = ((seed % 1000003) / 1000003) * total;
+  for (let i = 0; i < w.length; i++) { u -= w[i]; if (u < 0) return i; }
+  return Math.max(0, w.length - 1);
+}
+
 export interface ForestLight { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number }
 
 export interface ViewStats { sceneryRadius: number; fps: number; gameplay: number; scenery: number; dropped: number; trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number; lights: number }
@@ -356,7 +365,7 @@ export class View {
     for (const p of g.forest.treesNear(cx, cz, half)) {
       const art = this.assets.typeArt(p.type);
       if (!art || !art.layout.big.length) continue;
-      const f = art.atlas.frames, big = art.layout.big[p.variant % art.layout.big.length], whole = f[big.top ?? big.bot];
+      const f = art.atlas.frames, big = art.layout.big[pickWeighted(art.layout.bigWeight, p.variant)], whole = f[big.top ?? big.bot];
       if (!this.inView(p.x, p.z, whole.w * mpp, whole.h * mpp, margin, reach)) continue;
       const fresh = this.mark("tree", p.x, p.z, whole.h * mpp);
       add(p.type, { x: p.x, y: 0, z: p.z, frame: f[big.bot], flip: p.flip, fresh });

@@ -2,6 +2,7 @@
   "_": "What's new, shown on the start screen (newest first; the last 3 entries). Every push that changes something Ed can see adds its bullets to the top entry, in plain player-facing words. The top entry's version is null until its build has a number: it then shows as the build you're playing. When you push again, write that number in (from the playable-link comment) and start a new null entry above it.",
   "entries": [
     { "version": null, "items": [
+      "Each forest now has its own kind of UK tree (oak, beech, Scots pine, yew…), in a range of heights, with leafy trunks",
       "Speech bubbles are pixel outlines, and the emoji in them are bigger pixel art",
       "Above the treetops she has momentum: hold a direction to build up to a boost (the camera draws back a little), swoop round in arcs, skid on a sharp turn, and glide when you let go. The ground stays snappy"
     ] },
