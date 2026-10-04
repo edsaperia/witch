@@ -50,7 +50,7 @@ async function main() {
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 120000 });
     // All the art is drawn in the background after start; the software renderer here starves the
     // workers of CPU (minutes at big window sizes), so wait for it before flying, so the shots show the forest as players do.
-    await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 900000, polling: 500 });
+    await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 1800000, polling: 500 });
     await steps(page);
     await page.close();
   }
