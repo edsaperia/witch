@@ -27,6 +27,8 @@ CI (`.github/workflows/ci.yml`) runs on every push and pull request, in this ord
 - `npm run typecheck` (`tsc --noEmit` over `src/`, `config/` and `vite.config.ts`)
 - `npm run build` (Vite, into `dist/`)
 
+Push first, check after (Ed, 2026-10-04: "All the builders should push first and run checks afterwards"): when a change works, run the fast checks (`npm test`, `npm run typecheck`, `npm run build`, and `node art/check.mjs` if the change touches art), push straight away so the bot builds a playable version, and post a REPORT with that version; then run the slow checks (the smoke run, preview sheets), report and fix any failure and push again, and post FINAL once they're done. Never hold a playable build back waiting for the smoke run.
+
 Not in CI, run by builders before a FINAL: `npm run build && npm run smoke`, a headless Chromium smoke test (`tools/smoke/smoke.cjs`, Playwright from the machine's global install; never `playwright install`) that flies both modes on the laptop and phone layouts, drives the touch controls, flies a path through every zoom step in both modes failing on any pop (anything appearing or vanishing in clear view), flies full-speed straight lines in both modes at Ed's window sizes (1900×1240 at DPR 1, 2000×1076 at DPR 2) failing on any pop or any sprite instance set but not drawn (`view.stats.dropped`), runs four party waves, and saves screenshots to `previews/` (`RECORD=1` also saves `previews/flight.webm`).
 
 The art generator (`art/`, entry `art/generator.js`) and the Witch Art Lab (`tools/art-lab/`) have one more check, not in CI, run from the repository root before every push that touches them:

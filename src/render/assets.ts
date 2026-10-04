@@ -7,13 +7,14 @@ import { rng } from "../rules/random";
 import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
 import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PathPieceArt, type RelicArt, type RelicLayouts, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
+import { ART_HASH, cacheGet, cachePut, hashText } from "./artCache";
 
 export interface TypeArt { atlas: Atlas; layout: TypeLayout }
 export interface RelicSet { atlas: Atlas; byId: Record<string, RelicArt>; modern: RelicArt[]; layouts: RelicLayouts }
 export interface DecorArt { atlas: Atlas; pieces: DecorPiece[]; families: Record<string, DecorPiece[]> }
 export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number }
 
-type Reply = { job: ArtJob; result?: ArtResult; error?: string };
+type Reply = { job: ArtJob; result?: ArtResult; error?: string; ms?: number; cached?: boolean };
 
 export class AssetLibrary {
   private types = new Map<number, TypeArt>();
@@ -42,11 +43,18 @@ export class AssetLibrary {
   readonly K: number;
   /** Bumped whenever a new set is ready, so the view knows to refresh its batches. */
   version = 0;
+  /** How long each set took to draw (ms, in its worker or on the page), and when it arrived
+   *  (ms since the page started), for the debug overlay and the smoke test's load report. */
+  readonly timings: { set: string; ms: number; at: number; cached: boolean }[] = [];
+  /** Sets drawn or loaded so far (with pending: the start screen's progress). */
+  get done(): number { return this.timings.length; }
+  private styleHash: string;
   /** Called with an area type's floor tile when its set is ready. */
   onFloor: (type: number, tile: TilePixels) => void = () => {};
 
   constructor(readonly style: Style, readonly seed: number, pixelSize: number) {
     this.K = 2 / pixelSize;
+    this.styleHash = hashText(JSON.stringify(style));
     // The witch: hover frames 0-2 towards, 3-5 away, then leaning towards (6) and away (7); then
     // rising (8-9 towards, 10-11 away) and descending (12-13 towards, 14-15 away), two frames each.
     const wc = Art.witchColours(style), wb = (o: object) => Art.bake(Art.witchSprite(style, o), wc, style, style.cOutline) as Baked;
@@ -81,7 +89,8 @@ export class AssetLibrary {
     this.treehouse = { atlas: packAtlas([th.bot, th.top].map(sp => Art.bake(sp, thc, style, "none") as Baked), 2048), ...th.anchors };
     this.useWorkers = typeof Worker !== "undefined" && typeof OffscreenCanvas !== "undefined";
     if (this.useWorkers) {
-      const n = Math.max(1, Math.min(3, (navigator.hardwareConcurrency || 2) - 1));
+      // One worker per core but the page's own, up to six: the area types' trees are most of the work.
+      const n = Math.max(1, Math.min(6, (navigator.hardwareConcurrency || 2) - 1));
       try {
         for (let i = 0; i < n; i++) {
           const w = new Worker(new URL("./artWorker.ts", import.meta.url), { type: "module" });
@@ -106,12 +115,25 @@ export class AssetLibrary {
   }
 
   private key = (j: ArtJob) => j.kind + ":" + j.id;
-  private ask(job: ArtJob): void {
+  /** Where a set is kept between visits: the art's code, the style, the set, and for an area type
+   *  its seed and scale. Party looks are per creature, so they aren't kept. */
+  private cacheKey = (j: ArtJob) => j.kind === "party" ? null : [ART_HASH, this.styleHash, this.key(j), j.kind === "type" ? `${j.seed}|${j.K}` : ""].join("|");
+  /** Ask for a set: from the browser's store if it was drawn before, else drawn by a worker. An
+   *  urgent ask (the view needs it now) goes ahead of the sets drawn ahead of need. */
+  private ask(job: ArtJob, urgent = false): void {
     const k = this.key(job);
-    if (this.inFlight.has(k)) return;
+    if (this.inFlight.has(k)) {
+      const i = urgent ? this.queue.findIndex(q => this.key(q) === k) : -1;
+      if (i > 0) this.queue.unshift(...this.queue.splice(i, 1));
+      return;
+    }
     this.inFlight.add(k);
-    this.queue.push(job);
-    this.dispatch();
+    const ck = this.cacheKey(job), draw = () => { if (urgent) this.queue.unshift(job); else this.queue.push(job); this.dispatch(); };
+    if (!ck) { draw(); return; }
+    cacheGet(ck).then(hit => {
+      if (hit && hit.px) this.receive({ job, result: hit, ms: 0, cached: true });
+      else draw();
+    }, draw);
   }
   private dispatch(): void {
     if (!this.useWorkers) return;
@@ -129,7 +151,9 @@ export class AssetLibrary {
       this.queue.unshift(r.job);
       return;
     }
+    if (!r.cached) { const ck = this.cacheKey(r.job); if (ck) cachePut(ck, r.result); }
     const atlas = atlasFromPixels(r.result.px);
+    this.timings.push({ set: this.key(r.job), ms: r.ms ?? 0, at: performance.now(), cached: !!r.cached });
     if (r.job.kind === "relics") {
       const list = r.result.relics!;
       this.relicSet = { atlas, byId: Object.fromEntries(list.map(p => [p.id, p])), modern: list.filter(p => p.family === "modern"), layouts: r.result.layouts! };
@@ -150,7 +174,7 @@ export class AssetLibrary {
   /** An area type's art, or undefined (and asked for) if it is not drawn yet. */
   typeArt(t: number): TypeArt | undefined {
     const a = this.types.get(t);
-    if (!a) this.ask({ kind: "type", id: t, style: this.style, seed: this.seed, K: this.K });
+    if (!a) this.ask({ kind: "type", id: t, style: this.style, seed: this.seed, K: this.K }, true);
     return a;
   }
   /** The decorations' art (ruins, rocks, freak trees), or undefined (and asked for). */
@@ -180,7 +204,7 @@ export class AssetLibrary {
     return a;
   }
   /** Ask for a set ahead of need, without using it. */
-  prefetchType(t: number): void { if (!this.types.has(t)) this.typeArt(t); }
+  prefetchType(t: number): void { if (!this.types.has(t)) this.ask({ kind: "type", id: t, style: this.style, seed: this.seed, K: this.K }); }
 
   get pending(): number { return this.inFlight.size; }
 
@@ -191,7 +215,8 @@ export class AssetLibrary {
     let made = 0;
     while (this.queue.length && (made === 0 || performance.now() - t0 < budgetMs)) {
       const job = this.queue.shift()!;
-      this.receive({ job, result: runJob(job, (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; }) });
+      const t1 = performance.now(), result = runJob(job, (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; });
+      this.receive({ job, result, ms: performance.now() - t1 });
       made++;
     }
   }

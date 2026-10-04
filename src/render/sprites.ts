@@ -68,7 +68,7 @@ uniform sampler2D uAlbedo, uNormal;
 uniform vec3 uRight, uUp, uFacing;
 uniform float uTopFade, uUnlit;
 uniform vec4 uCutout;
-uniform float uDebugCull, uIsScenery;
+uniform float uDebugCull, uIsScenery, uAppear;
 uniform vec4 uWitch, uOcc, uSilhouette;
 uniform float uFadePass;
 uniform float uFlat; // lies flat on the ground (a court's decal): never stands in front of her
@@ -137,7 +137,7 @@ void main() {
   shade();
   // Scenery past the budget's radius fades out smoothly (alpha), from the far edge inward.
   if (uIsScenery > 0.5) {
-    float k = sceneryFade(vWorld);
+    float k = sceneryFade(vWorld) * uAppear; // and a set just drawn fades in
     if (k < 0.004) discard;
     gl_FragColor.a *= k;
   }
@@ -169,7 +169,7 @@ export class SpriteBatch {
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.pos = this.size = this.uvs = this.flags = undefined as never;
     this.grow(64);
-    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uFadePass: { value: 0 }, uFlat: { value: opts.flat ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, ...extra });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uFlat: { value: opts.flat ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, ...extra });
     // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
     // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
     const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};
@@ -212,6 +212,8 @@ export class SpriteBatch {
   }
 
   /** Replace every instance. */
+  /** Scenery batches: how far a set just drawn has faded in (0 to 1; the view eases it). */
+  readonly appearU = { value: 1 };
   /** What was last set (for checks: the smoke test's floating-sprite check reads it). */
   items: SpriteInstance[] = [];
 

@@ -59,11 +59,14 @@ if (waveParam !== null) waveChoice = waveParam === "off" ? 0 : Math.max(0, +wave
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = loadStyle();
+/** Load timings (ms since the page started): the view built (the page's own sprites drawn), ready to play. */
+const loadTimes = { viewStart: performance.now(), view: 0, ready: 0 };
 const view = new View(canvas, game, {
   ...style, pixel: tuning.pixelSize,
   // Trees taller by treeHeight; crowns wider by crownWidth in all (treeHeight widens them too).
   treeSize: style.treeSize * tuning.treeHeight, crownWidth: style.crownWidth * tuning.crownWidth / tuning.treeHeight,
 });
+loadTimes.view = performance.now();
 view.debugCull = params.get("debug") === "cull";
 // ?scenery=<metres>: a fixed scenery radius instead of the adaptive budget.
 const sceneryAt = Number(params.get("scenery"));
@@ -111,9 +114,19 @@ fit();
 
 // Make the art and ground round the start before the first frame, behind the start screen.
 let ready = false;
+// The start screen's progress bar: the sets of sprites drawn so far. Play can start once what the
+// start needs is ready; the rest is drawn in the background (nearest areas first).
+const progressEl = document.getElementById("progress")!, progressFill = progressEl.querySelector<HTMLElement>(".fill")!, progressLabel = progressEl.querySelector<HTMLElement>(".label")!;
+const showProgress = setInterval(() => {
+  const a = view.assets, done = a.done, total = done + a.pending;
+  progressFill.style.width = `${total ? (100 * done) / total : 0}%`;
+  progressLabel.textContent = ready ? `the rest of the forest, in the background: ${done} of ${total}` : `growing the forest: ${done} of ${total}`;
+  if (ready && !a.pending) { progressEl.classList.add("done"); clearInterval(showProgress); }
+}, 250);
 requestAnimationFrame(() => setTimeout(async () => {
   await view.prepare();
   ready = true;
+  loadTimes.ready = performance.now();
   startEl.classList.remove("loading");
 }, 0));
 
@@ -143,6 +156,7 @@ wavesEl.addEventListener("pointerdown", e => {
 setWaveInterval(waveChoice);
 document.addEventListener("visibilitychange", () => { if (document.hidden) last = 0; });
 
+let lastDraw = 0;
 let last = 0, fps = 60, frames = 0, fpsT = 0;
 function frame(now: number): void {
   requestAnimationFrame(frame);
@@ -161,6 +175,10 @@ function frame(now: number): void {
   const left = tuning.party.interval >= 1e9 ? "waves off" : cd.left >= 60 ? `${Math.floor(cd.left / 60)}:${String(Math.ceil(cd.left) % 60).padStart(2, "0")}` : `${Math.ceil(cd.left)} s`;
   waveLabel.textContent = `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}`;
   waveEl.classList.toggle("paused", game.party.paused);
+  // Behind the start screen, a frame every 0.3 s is plenty: the CPU goes to drawing the forest's
+  // art in the background instead (and so slow a frame doesn't count against the scenery budget).
+  if (game.clock.paused && now - lastDraw < 300) return;
+  lastDraw = now;
   view.render(game.clock.time); // game time: party transitions, sigils and waves are stamped in it
   if (debugOn) {
     const w = game.witch, s = view.stats;
@@ -179,4 +197,4 @@ function frame(now: number): void {
 requestAnimationFrame(frame);
 
 // For the smoke test and for poking at in the console.
-(window as unknown as { witch: unknown }).witch = { game, view, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, spriteUp: () => SPRITE_UNIFORMS.uUp.value, get ready() { return ready; } };
+(window as unknown as { witch: unknown }).witch = { game, view, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, spriteUp: () => SPRITE_UNIFORMS.uUp.value, loadTimes, get ready() { return ready; } };
