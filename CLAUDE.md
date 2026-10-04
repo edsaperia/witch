@@ -14,18 +14,23 @@ The playable game is a static site on GitHub Pages, served from the `gh-pages` b
 
 Pages must be switched on once in the repository's settings (Source: *Deploy from a branch*, `gh-pages`, `/ (root)`); until then the links return 404. A deploy is verified by opening the link and checking the seed and the game load.
 
+## What's new
+
+The start screen shows a **What's new** panel: the last three entries of `config/changelog.json`, newest first. Every push that changes something Ed can see adds its bullets to the top entry, in plain player-facing words ("Trees no longer pop in and out"), not commit-speak. The top entry's `version` is `null` until its build has a number (it shows as the build being played); on the next push, write in that number from the playable-link comment and start a new `null` entry above it.
+
 ## Testing
 
 CI (`.github/workflows/ci.yml`) runs on every push and pull request, in this order:
 
 - `npm ci`
-- `npm test` (Vitest: the rules modules in `src/rules/`, including the partition checked against the Art Lab's own `makePartition`)
+- `npm test` (Vitest: the rules modules in `src/rules/`, including the partition checked against the Art Lab's own `makePartition`, and the geometry of the on-screen cues in `src/render/indicator.test.ts`)
 - `npm run typecheck` (`tsc --noEmit` over `src/`, `config/` and `vite.config.ts`)
 - `npm run build` (Vite, into `dist/`)
+- then, in a second job, `npm run smoke:quick` on that build: the quick smoke test (`tools/smoke/quick.cjs`, headless Chromium with Playwright installed in CI and its Chromium cached; a few minutes). It loads the game at 1280×720 with `?quick=1` (only the art the start needs), starts, flies about 5 s on the ground, rises, flies about 5 s in the treetops and descends, and fails on any page or console error, a blank picture, or a witch that doesn't move, rise or descend. Its screenshot and log are kept as the run's `smoke-quick` artifact. The full smoke test below still covers pops, floating, big windows, touch and waves.
 
 **Push first, slow checks after** (Ed, 2026-10-04: "All the builders should push first and run checks afterwards"): when a change works, run the fast checks (`npm test`, `npm run typecheck`, `npm run build`, and `node art/check.mjs` if it touches art), then push straight away so the bot builds a playable version, and post a short REPORT with the version. Then run the slow checks (the smoke run, preview sheets); report any failure, fix it and push again. Post the FINAL once the slow checks are done. Never hold a playable build back waiting for the smoke run.
 
-Not in CI, run by builders before a FINAL: `npm run build && npm run smoke`, a headless Chromium smoke test (`tools/smoke/smoke.cjs`, Playwright from the machine's global install; never `playwright install`) that flies both modes on the laptop and phone layouts, drives the touch controls, and saves screenshots to `previews/`.
+Not in CI, run by builders before a FINAL: `npm run build && npm run smoke`, a headless Chromium smoke test (`tools/smoke/smoke.cjs`, Playwright from the machine's global install; never `playwright install`) that flies both modes on the laptop and phone layouts, drives the touch controls, flies a path through every zoom step in both modes failing on any pop (anything appearing or vanishing in clear view), flies full-speed straight lines in both modes at Ed's window sizes (1900×1240 at DPR 1, 2000×1076 at DPR 2) failing on any pop or any sprite instance set but not drawn (`view.stats.dropped`), runs four party waves, and saves screenshots to `previews/` (`RECORD=1` also saves `previews/flight.webm`).
 
 The art generator (`art/`, entry `art/generator.js`) and the Witch Art Lab (`tools/art-lab/`) have one more check, not in CI, run from the repository root before every push that touches them:
 
@@ -42,7 +47,7 @@ Literal, stable names for the parts of the game, as Ed and the builders agree th
 - **Party witches**: the witches who fly in to the dancefloor, one for each active soundsystem (`PARTY_OUTFITS`, `partyWitch(seed)` in `art/witch.js`): our witch's model in a party look (hat, hair, top, shades, glow sticks) and palette; they and our witch share the party poses (dances, pairs, social, running, resting).
 - **Pair poses**: party poses two witches do together (`WITCH_PAIRS`): each draws her own sprite, placed so their `pair` anchors meet (the partner mirrored, so they face each other; the conga's hands on the `back` of the witch ahead).
 - **Lean cycle**: the witch's ordinary flying speed at ground level as a 4-frame loop (`pose: "lean"`), played faster with speed.
-- **Treehouse**: the witch's home near the dancefloor (`art/treehouse.js`), a tall timber tower of storeys stacked up a giant living tree, mostly wood with modern touches, its shingled witch's-hat tower standing above the treetops; she starts the game sitting behind the decks in its cutaway DJ booth (`sit` pose at its `seat` anchor, the `fore` sprite, the DJ table, drawn over her), the camera zoomed in on its `camera` anchor; its tree is a giant, unlike any forest species.
+- **Treehouse**: the witch's home near the dancefloor (`art/treehouse.js`), a tall timber tower of storeys stacked up a giant living tree, mostly wood with modern touches, its shingled witch's-hat tower standing above the treetops; she starts the game sitting behind the decks in its cutaway DJ booth (`sit` pose at its `seat` anchor, the `fore` sprite, the DJ table, drawn over her), the camera zoomed in on its `camera` anchor; its tree is a giant, unlike any forest species. She stays seated (`witch.seated` in the rules) until the first move or rise. It stands just beyond the dancefloor's clearing (`map.treehouse`, placed by `treehouse` in the tuning file).
 - **Layout**: an area type's `layout` in `art/areas.js`: how its trees and undergrowth are arranged (pattern, density, clumping, glades, height mix, lean, terrain, decorations, a one-line feel); data the prototype's layout engine reads.
 - **Modern relics**: the forest's reclaimed modern world (`art/relics.js`): cars, trolleys, cones, broken highway, odds and ends, an overgrown playground and sports grounds, with suggested arrangements; no brands or text.
 - **World decorations**: scattered features any area can have, independent of its own props (`art/decor.js`): ruins, rocks, freak trees, and the lake kit; an area's `layout.decor` will weight their families.
@@ -61,3 +66,17 @@ Literal, stable names for the parts of the game, as Ed and the builders agree th
 - **Style file**: `config/style.json`, a style saved in the Witch Art Lab; every sprite is drawn from it.
 - **Top half / bottom half**: a tree's crown and its trunk, drawn as two sprites; tops show in treetop mode only. The bottom half also carries the life below the crown (ivy, moss, epicormic sprigs, low boughs, a skirt on yew, holly and the conifers), so ground mode isn't a forest of bare poles.
 - **Debug overlay**: the panel toggled by `~` or a three-finger tap: frame rate, seed, area type, mode.
+- **Partified**: an area the party has reached: a soundsystem in its clearing, string lights round it, motes. Home is partified from the start.
+- **Wave**: one step of the party spreading: every area bordering a partified one is partified at once, every `party.interval` seconds (N brings the next one, P pauses the timer).
+- **String lights**: lines of party bulbs hung between pairs of trees round a partified area's clearing.
+- **Smooth effects / pixel effects**: `?fx=smooth` (default) draws mist, far haze and canopy dapple as soft gradients; `?fx=pixel` draws them as dithered pixel steps.
+- **Pop**: an object appearing or vanishing in clear view between frames. `?debug=cull` tints anything that has just appeared red and frames anything that has just vanished in red for a second; the smoke check fails on any pop.
+- **Talk / invite**: on the ground she talks by herself (no button: Ed, v244) to the nearest invitable creature within `invite.talkRange`, sticking with it within `invite.cancelDistance`: emoji bubbles take turns, and after its talk time (babies 3 s, young 6 s, adults 12 s) it is invited, and so leashed. Legends can't be invited.
+- **Sigil stack**: the sigils of the creatures leashed to the witch, floating above her head, newest at the bottom. The Sigil button (E; gamepad X; touch "sigil") puts the bottom one down as a rune on the ground (a **leash point**) or picks a placed one back up.
+- **Party animal**: an invited creature, in party gear, dancing on the beat (`beat.bpm`).
+- **Partified border**: the sparkling line round the outside of the partified region, in each area's sigil colour.
+- **Path network**: the paths, roads, railways and streams (`src/rules/paths.ts`, on the map as `map.paths`): seeded spline lines with tree-free corridors and bushes thick along their edges, drawn as ground ribbons with the art's strips (`src/render/paths.ts`). A path's kind follows the area it crosses; broken railway lets trees grow between the sleepers.
+- **Decor**: ruins, rocks and freak trees (`art/decor.js`) scattered sparsely as scenery (`Forest.decorNear`), never on a path, in an area's central clearing or by the dancefloor.
+- **Rolling ground**: the hills everything stands on (`src/render/height.ts`): one height h(x, z) from noise, levelled across paths and into plateaus under the dancefloor, treehouse, soundsystems, set pieces, grounds and ponds; kept in a half-float texture round the witch that the shaders read and `groundHeight` reads the same way. Drawing only: the rules stay flat (`ground.hills`, `?hills=`).
+- **Bend**: the world curving away toward the top of the screen in treetop mode, every vertex ahead of the camera's focus dropped by curve × d² (`camera.curve`, `?curve=`), so the night sky shows over the forest.
+- **Sky**: the night sky over the bend (`src/render/sky.ts`): gradient, stars, the moon, and clouds lit from below by the party (`sky`); left sharp by the tilt-shift.

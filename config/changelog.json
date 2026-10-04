@@ -1,0 +1,229 @@
+{
+  "_": "What's new, shown on the start screen (newest first; the last 3 entries). Every push that changes something Ed can see adds its bullets to the top entry, in plain player-facing words. The top entry's version is null until its build has a number: it then shows as the build you're playing. When you push again, write that number in (from the playable-link comment) and start a new null entry above it.",
+  "entries": [
+    {
+      "version": null,
+      "items": [
+        "Legend buffs: a party legend (an adult you've fed until it evolves) gives you its species' own buff while it lives: faster flight, quicker invites, berries found further off, longer between waves and more. Its sigil shows in a row at the top of the screen (hover for what it does), and a line says what you've gained or lost",
+        "Party legends lumber: a creature that evolves into a legend slows to a legend's pace, following you too",
+        "Wild legends are rare, late threats: only 3 to 5 a map, far out in remote areas. They're bigger, breathe slowly, and have a dark aura that you can see glowing through the treetops. They sleep until the party reaches their area, then lumber about it (no fighting yet). The legend next to home has gone",
+        "The ground rolls: gentle hills and hollows that everything stands on, with the dancefloor, the treehouse, ponds and every path kept level (?hills=0 for flat)",
+        "Over the treetops the world curves away, so you see the night sky above the forest: stars, the moon, and slow clouds that glow in the party's colours over partying areas (?curve=0 for flat, ?curve=0.004 for more)",
+        "No more Talk button: on the ground the witch chats with the nearest creature in range by herself, on the fly as you move, settling into her talk pose when you stop; move away or rise and the chat pauses, and coming back picks it up",
+        "A legend gives you one unimpressed look as you pass, not over and over"
+      ]
+    },
+    {
+      "version": 244,
+      "items": [
+        "Evolving is much quicker: eating a berry is a quick nibble with a sparkle, and babies evolve after just 1 berry, young after 3, adults after 8",
+        "Berries grow in patches of a few bushes, clusters of red glints you can spot",
+        "Party animals run to a berry at the same pace they follow you, a quick hop rather than a slow amble",
+        "Party animals take berries on their way: following you, they nip over to one near their path; set a sigil in the middle of a patch and they'll eat their way round it",
+        "Placed sigils are easier to see: the grass is trampled flat round them, and their runes glow a little brighter",
+        "Trunks stay visible in short, dense woods like the tangly forest: only their top part fades where the crowns are hidden"
+      ]
+    },
+    {
+      "version": 240,
+      "items": [
+        "Berries: every area has bushes with shiny dark-red berries (8–12 per area), glowing softly at night and glinting red through the treetops",
+        "Party animals walk over to a berry near them and eat it; it grows again somewhere else in the forest",
+        "Feed a party animal enough berries and it evolves (babies after 5, young after 10, adults after 30): it glows and pulses for a bar, then flashes into its next size with a burst of sparkles, and the dancefloor flashes in its colour. Adults become legends: the only way to get a party legend",
+        "A red ring round each party animal shows how close it is to evolving (near the witch, and just after it eats). Debug: B feeds the nearest party animal a berry",
+        "At the start the speakers round the dancefloor boot up one by one, giving you about a minute before the countdown to the first wave begins",
+        "A spell: Q (gamepad B, touch 'spell') casts a speed boost: much faster for a few seconds, with a trail; the ring in the corner shows it recharging",
+        "Cycle: C (gamepad right-stick click, touch 'cycle') sends the bottom sigil of your stack to the top, so you choose which creature goes down next",
+        "A few creatures (hares, stoats, martens) are quick on their feet; legends are very slow; you're still much faster than any of them",
+        "The witch is lit by the lights around her: she turns red by a red soundsystem, warm by a campfire, and catches a coloured rim on the side facing a light, while staying easy to see in the dark",
+        "Forecasting: the next two areas to join the party are certain, and a few more are likely. Their rune stones grow rings of magic symbols, a full ring of 12 on the next one, and their beams grow as the countdown runs",
+        "A smaller, dimmer cue at the screen's edge points to the area after next",
+        "Music: a beat plays, loud and clear near the dancefloor and other playing soundsystems, quiet and muffled deep in the forest, and crackling when a speaker nearby is damaged (?music=off)",
+        "The new treehouse: a tall timber tower in a giant tree, its turret above the treetops; you start at the decks in its studio, and step down out of it when you set off",
+        "Scenes to find: a farmyard corner, a bus stop, a picnic gone wild, an allotment, festival remnants, a cemetery, a car park, a scrap yard, ruined churches and temples, castle ruins and more, each one at most once per map",
+        "Tractors, hay bales, fences, gates, lampposts, road signs and other countryside and street finds turn up in the forest, each one at most once per map"
+      ]
+    },
+    {
+      "version": 194,
+      "items": [
+        "No more 'land to talk' prompt",
+        "The dancefloor's old soundsystem is gone; its ring of speakers carries the music",
+        "The next-stone arrow now points the right way",
+        "The next-stone cue shows the area's rune, and its ring fills as the countdown to the next wave runs",
+        "The party's border twinkles and flickers between the colours of the areas on either side",
+        "Flying straight up or down the screen, the witch is seen from behind or coming at you"
+      ]
+    },
+    {
+      "version": 190,
+      "items": [
+        "Railways and paths no longer run across the dancefloor: they stop, frayed, at the edge of its clearing",
+        "Tufts of grass, fern, heather, reeds, moss and clover cover the ground round you, each area its own, swaying in the wind and parting as you and the creatures pass (?grass=0 to 2)",
+        "The ground has gentle rises and hollows that your light and the campfires pick out (?relief=0 for flat)",
+        "Trees and undergrowth sway in gusts that roll across the forest; gentler over the treetops (?wind=0 for still)"
+      ]
+    },
+    {
+      "version": 181,
+      "items": [
+        "Stronger tilt-shift over the treetops",
+        "The game opens close in on the witch in her seat on the treehouse, and eases out as she sets off"
+      ]
+    },
+    {
+      "version": 177,
+      "items": [
+        "The dancefloor is a magic disco floor of glass tiles: dark until you step off the terrace, then it switches on and plays shapes and patterns to the beat, changing on the bar",
+        "The floor lights up under you, rippling out on each beat and leaving footprints; landing on it sends a big ripple",
+        "It grows wilder as the party spreads: more tiles, more colours, faster changes, more motes; a pulse runs out towards each area the party reaches, and areas with the party add their own shapes"
+      ]
+    },
+    {
+      "version": 175,
+      "items": [
+        "Where two areas meet, their ground textures meander and speckle into each other instead of meeting on a blocky edge (?blend=off to compare)"
+      ]
+    },
+    {
+      "version": 174,
+      "items": [
+        "The standing stones round the dancefloor are now twelve stone speakers, twice as far out, thumping on the beat: the ones beyond the floor face in, the near ones face out, so you always see their fronts (K cycles them through damaged and destroyed, for testing)",
+        "The dancefloor's clearing is wider, and the treehouse stands outside the speaker ring"
+      ]
+    },
+    {
+      "version": 171,
+      "items": [
+        "The forest is dark again: the witch's light only reaches as far as the gap in the canopy round her, and the moonlight and twilight fill are lower",
+        "Tree trunks fade out at the top in pixel steps where the crowns are hidden, instead of ending in a flat cut",
+        "Paths, roads, tracks and streams fray out at their ends instead of stopping square",
+        "Creatures, soundsystems and the rune stones are never made see-through round the witch; only the scenery is",
+        "Each wave now wakes just one area, chosen as soon as the last one woke, bordering the party and spreading in lobes rather than a circle; its rune stone is the one that wakes",
+        "A new pixel cue at the screen's edge points to the next stone to wake, with its distance; the music cue is bigger and pixelled",
+        "Awake rune stones can show a thin laser straight up, a column of light, or both (?rune=beam|column|both)",
+        "M shows a minimap of the party's spread (debug)",
+        "Witch walks 10% faster",
+        "Leashes arc gently and their dots flow back towards you",
+        "Treetop turns are tight when you're slow; the big skid only comes at speed",
+        "The rune stones' beam and laser now rise from the top of the stone",
+        "Paths keep one look for their whole length, and run on unbroken past clearings",
+        "Every ruin, freak tree, relic, set piece and playground or sports ground is one of a kind: you'll find each at most once per map, facing either way",
+        "Stone stairs are a rare find by ravines, rocky slopes, cave mouths and stone shrines, not a path fitting",
+        "Soundsystems and set pieces stand clear of the paths"
+      ]
+    },
+    {
+      "version": 154,
+      "items": [
+        "Nothing floats any more: trees, rocks, ruins, the treehouse and set pieces all stand on the ground, and big scenery keeps clear of the soundsystems",
+        "Fewer ruins, rocks, relics, stairs and bridges: each is a find now, not clutter",
+        "The witch's own light is a tighter pool round her that fades out within about 40 m (try ?glow=50,2.5 to tune it)",
+        "Garden walls stand in joined runs along the paths, with flower beds in rows beside them; shrine stones stand in circles; hedges, brambles and rock walls run in lines; water, reeds and boulders gather in clumps, with open ground between",
+        "The edge of the see-through hole in the treetops round the witch fades smoothly (no dither)",
+        "Big rune stones now mark where every soundsystem will come, glowing with their area's creature's sigil. The next wave's stones wake: they pulse to the beat, throw light and motes, brighter as the wave nears, and send a beam above the trees; when the party arrives the stone flares and sinks as its soundsystem appears. The random rune stones are gone"
+      ]
+    },
+    {
+      "version": 144,
+      "items": [
+        "Points where a branch line leaves the railway"
+      ]
+    },
+    {
+      "version": 136,
+      "items": [
+        "Tapping the start screen on a phone starts the game again, wherever you tap",
+        "Along the railways: old wagons, a carriage with a tree through it, little platforms, signal gantries and posts, and buffer stops where the track ends; bridges where paths cross streams, level crossings, stairs into rocky hollows, and verge posts along the roads",
+        "Relics of the modern world turn up now and then, more by the roads and railways: a car nose-down in the moss, shopping trolleys, cones, broken highway, a phone box, a sofa, a fridge full of fireflies",
+        "A few overgrown playgrounds and sports grounds (tennis, football, baseball, basketball) lie in clearings of their own"
+      ]
+    },
+    {
+      "version": 127,
+      "items": [
+        "Each kind of area has its own mix of tree heights and its own ruins, rocks and odd trees",
+        "The ground has shape: moonlit mounds, dark hollows and ridges where the area has them, and more pools in the boggy ones"
+      ]
+    },
+    {
+      "version": 125,
+      "items": [
+        "Each forest now has its own kind of UK tree (oak, beech, Scots pine, yew…), in a range of heights, with leafy trunks"
+      ]
+    },
+    {
+      "version": 124,
+      "items": [
+        "Speech bubbles are pixel outlines, and the emoji in them are bigger pixel art",
+        "Above the treetops she has momentum: hold a direction to build up to a boost (the camera draws back a little), swoop round in arcs, skid on a sharp turn, and glide when you let go. The ground stays snappy"
+      ]
+    },
+    {
+      "version": 123,
+      "items": [
+        "Paths wind between the areas, their look changing with each area (dirt tracks, flagstones, root paths, boardwalks...), and some peter out",
+        "Old roads sweep across the forest, and two to four railway lines curve across it, broken in places with trees growing between the sleepers",
+        "Bushes crowd along the edges of paths and tracks",
+        "Streams wind through the forest, and join the wet areas",
+        "Ruins, rocks and strange trees turn up here and there to discover",
+        "You start sitting on the terrace of the witch's treehouse, by the dancefloor; move or rise to take off"
+      ]
+    },
+    {
+      "version": 117,
+      "items": [
+        "Removed the diagonal stripes across the forest (moonbeams are off; ?moonbeams=on brings them back)",
+        "When a tree stands in front of the witch, you now see her through a soft round window that fades in gently, not a square"
+      ]
+    },
+    {
+      "version": 116,
+      "items": [
+        "Land first to talk or to put down and pick up sigils, with new poses",
+        "Talking to a creature keeps its progress for a while if you break off",
+        "Placed sigils show above the canopy from the treetops",
+        "Waves every 5 minutes by default; pick how often on this screen",
+        "A small arrow points the way to the music",
+        "Slower lasers, party motes drifting over whole areas, and party light on the treetops",
+        "Woods have groves, thickets, glades and lone trees, and areas blend into each other",
+        "G shows metre rulers and a ground grid"
+      ]
+    },
+    {
+      "version": 111,
+      "items": [
+        "The witch's glow lights up a much wider pool of forest round her",
+        "Fewer bushes"
+      ]
+    },
+    {
+      "version": 108,
+      "items": [
+        "Trees no longer pop in and out as you fly",
+        "The witch is never lost: tall things in front of her fade, and her silhouette shows through"
+      ]
+    },
+    {
+      "version": 105,
+      "items": [
+        "No more speech icons over every creature in range"
+      ]
+    },
+    {
+      "version": 99,
+      "items": [
+        "String lights hang in long garlands from tree to tree",
+        "Soundsystems face different ways",
+        "Set pieces are bigger, and areas have ragged edges"
+      ]
+    },
+    {
+      "version": 93,
+      "items": [
+        "The witch has rise and descend poses",
+        "Sigils show rings, and creatures show when they're ready to talk"
+      ]
+    }
+  ]
+}

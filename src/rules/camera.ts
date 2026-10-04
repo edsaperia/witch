@@ -21,6 +21,11 @@ export interface CameraState {
   az: number;
   /** Lift (0 ground, 1 treetop) as the camera has eased to it, for angle and distance. */
   lift: number;
+  /** Drawn back with treetop speed: a share of the distance, eased. */
+  pull?: number;
+  /** The opening shot (Ed, v171): 1 while she sits on the treehouse, close in on her seat
+   *  (camera.intro), running down to 0 over camera.intro.ease seconds once she leaves it. */
+  intro?: number;
 }
 
 export interface CameraPose {
@@ -39,7 +44,7 @@ export interface CameraPose {
 export function newCamera(t: Tuning, x: number, y: number, z: number): CameraState {
   const steps = Math.max(1, t.camera.zoomSteps), s = clamp(Math.round(t.camera.startZoom), 0, steps - 1);
   const zoom = steps > 1 ? s / (steps - 1) : 0;
-  return { zoomStep: s, zoom, tx: x, ty: y, tz: z, vx: 0, vy: 0, vz: 0, ax: 0, az: 0, lift: 0 };
+  return { zoomStep: s, zoom, tx: x, ty: y, tz: z, vx: 0, vy: 0, vz: 0, ax: 0, az: 0, lift: 0, intro: 1 };
 }
 
 /** One step of a critically damped spring toward `to`: no overshoot, no wobble. */
@@ -48,9 +53,12 @@ function spring(x: number, v: number, to: number, w: number, dt: number): [numbe
   return [to + (d + c * dt) * e, (v - w * c * dt) * e];
 }
 
-/** Follow the witch: `target` is where she is, `vel` how fast she flies, `lift` her height (0-1). */
-export function stepCamera(c: CameraState, zoomDelta: number, target: { x: number; y: number; z: number }, vel: { x: number; z: number }, lift: number, dt: number, t: Tuning): CameraState {
+/** Follow the witch: `target` is where she is, `vel` how fast she flies, `lift` her height (0-1).
+ *  While she's `seated`, it frames `focus` (her seat, as drawn) for the opening shot. */
+export function stepCamera(c: CameraState, zoomDelta: number, target: { x: number; y: number; z: number }, vel: { x: number; z: number }, lift: number, dt: number, t: Tuning, seated = false, focus?: { x: number; y: number; z: number } | null): CameraState {
   const cam = t.camera, steps = Math.max(1, cam.zoomSteps);
+  const intro = seated ? (c.intro ?? 0) : Math.max(0, (c.intro ?? 0) - dt / Math.max(0.05, cam.intro.ease));
+  if (seated && focus) target = focus;
   const zoomStep = clamp(c.zoomStep + Math.sign(zoomDelta), 0, steps - 1);
   const want = steps > 1 ? zoomStep / (steps - 1) : 0;
   // A small look-ahead in the direction of flight, capped, eased in and out slowly.
@@ -64,14 +72,20 @@ export function stepCamera(c: CameraState, zoomDelta: number, target: { x: numbe
   const [tz, vz] = spring(c.tz, c.vz, target.z + naz, cam.follow, dt);
   const zoom = c.zoom + (want - c.zoom) * (1 - Math.exp(-cam.zoomEase * dt));
   const l = c.lift + (lift - c.lift) * (1 - Math.exp(-cam.liftEase * dt));
-  return { zoomStep, zoom, tx, ty, tz, vx, vy, vz, ax: nax, az: naz, lift: clamp(l, 0, 1) };
+  // Boosting in the treetops, it draws back a little (a few per cent), eased.
+  const T = t.treetop, over = clamp((Math.hypot(vel.x, vel.z) - t.treetopSpeed) / Math.max(1, t.treetopSpeed * (T.boost - 1)), 0, 1);
+  const pull = (c.pull ?? 0) + (T.cameraPull * over * smoothstep(l) - (c.pull ?? 0)) * (1 - Math.exp(-1.5 * dt));
+  return { zoomStep, zoom, tx, ty, tz, vx, vy, vz, ax: nax, az: naz, lift: clamp(l, 0, 1), pull, intro };
 }
 
 /** Where the camera is for the witch's lift (0 ground, 1 treetop) and the zoom. */
 export function cameraPose(c: CameraState, lift: number, t: Tuning): CameraPose {
   const g = t.camera.ground, tt = t.camera.treetop, m = smoothstep(lift);
-  const angle = lerp(lerp(g.angleIn, g.angleOut, c.zoom), lerp(tt.angleIn, tt.angleOut, c.zoom), m);
-  const distance = lerp(lerp(g.distanceIn, g.distanceOut, c.zoom), lerp(tt.distanceIn, tt.distanceOut, c.zoom), m);
+  let angle = lerp(lerp(g.angleIn, g.angleOut, c.zoom), lerp(tt.angleIn, tt.angleOut, c.zoom), m);
+  let distance = lerp(lerp(g.distanceIn, g.distanceOut, c.zoom), lerp(tt.distanceIn, tt.distanceOut, c.zoom), m) * (1 + (c.pull ?? 0));
+  // The opening shot: closer and lower, easing out to the normal view as she leaves her seat.
+  const k = smoothstep(c.intro ?? 0), I = t.camera.intro;
+  angle = lerp(angle, I.angle, k); distance = lerp(distance, I.distance, k);
   const a = (angle * Math.PI) / 180;
   return { angle, distance, x: c.tx, y: c.ty + Math.sin(a) * distance, z: c.tz + Math.cos(a) * distance, tx: c.tx, ty: c.ty, tz: c.tz };
 }
