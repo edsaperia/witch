@@ -45,6 +45,12 @@ const beef = (m, k) => { for (const q of m.parts) { if (q.type === "ell") q.r = 
 // sunglasses or fancy shoes (Ed). Each builder records anchors on its model (head, eyes, neck,
 // feet); gearUp adds the parts before it is drawn. The gear in force is set by critter.
 let GEAR = null;
+// A creature's form, if not its ordinary one: a hook that draws the finished model instead of
+// render (legends.js: the sleeping legends, sunk and overgrown, waking, and woken). It returns the
+// sprite; form.motes says whether the glowing motes still float round it.
+let FORM = null;
+export function withForm(form, f) { const was = FORM; FORM = form; try { return f(); } finally { FORM = was; } }
+const drawForm = (m, o, S, level) => FORM ? FORM(m, o, S, level) : render(m, o).sp, formMotes = () => !FORM || FORM.motes;
 export function withGear(gear, f) { const was = GEAR; GEAR = gear; try { return f(); } finally { GEAR = was; } }
 const star = (s, t) => { const a = Math.atan2(t, s), r = Math.hypot(s, t); return r < .55 + .4 * Math.pow(Math.abs(Math.cos(a * 2.5 + Math.PI / 2)), 3); };
 const heart = (s, t) => { const x = s * 1.2, y = -t * 1.2 + .25; return Math.pow(x * x + y * y - .6, 3) - x * x * y * y * y < 0; };
@@ -180,8 +186,8 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   }
   if (has("ribbons")) for (let i = 0; i < 3; i++) { const pts = []; for (let k = 0; k < 9; k++) { const t = k / 8; pts.push([len * (.5 - t * 2.2), top + .05 + i * .1 + t * (.25 + i * .12) + Math.sin(t * 6 + frame + i) * .07, (i - 1) * .18, .04 * (1 - t * .6)]); } m.chain(pts, i % 2 ? M.MAGIC2 : M.MAGIC, { group: 90 + i, extra: true }); }
   gearUp(m);
-  const { sp } = render(m, { height: drawHeight(level, st, q.hgt), facing });
-  if (legend) glowMotes(sp, S.id.length * 7919); else if (level === 2) glowMotes(sp, S.id.length * 7919, 3);
+  const sp = drawForm(m, { height: drawHeight(level, st, q.hgt), facing }, S, level);
+  if (formMotes()) { if (legend) glowMotes(sp, S.id.length * 7919); else if (level === 2) glowMotes(sp, S.id.length * 7919, 3); }
   return sp;
 }
 
@@ -248,8 +254,8 @@ export function owl3d(S, level, frame, st, facing = "towards") {
   m.anchors.neck = { c: [0, hy - hr * .75, 0], r: hr * .85, dir: [0, 1, 0] };
   if (level >= 2) beef(m, 1.18);
   gearUp(m);
-  const { sp } = render(m, { height: drawHeight(level, st, .95), facing });
-  if (legend) glowMotes(sp, 31); else if (level === 2) glowMotes(sp, 31, 3);
+  const sp = drawForm(m, { height: drawHeight(level, st, .95), facing }, S, level);
+  if (formMotes()) { if (legend) glowMotes(sp, 31); else if (level === 2) glowMotes(sp, 31, 3); }
   return sp;
 }
 
@@ -262,8 +268,8 @@ const shadow = (m, x, w) => m.ell([x, .005, 0], [w, .005, w * .6], M.NOSE, { gro
 function finish(m, S, level, st, k, facing) {
   if (level >= 2) beef(m, 1.18); // the adult's and legend's heavier build
   gearUp(m);
-  const { sp } = render(m, { height: drawHeight(level, st, k), facing });
-  if (level === 3) glowMotes(sp, S.id.length * 131); else if (level === 2) glowMotes(sp, S.id.length * 131, 3);
+  const sp = drawForm(m, { height: drawHeight(level, st, k), facing }, S, level);
+  if (formMotes()) { if (level === 3) glowMotes(sp, S.id.length * 131); else if (level === 2) glowMotes(sp, S.id.length * 131, 3); }
   return sp;
 }
 const crown3d = (m, c, w) => { m.ell(c, [w, w * .35, w], M.MAGIC, { group: 95, extra: true, paint: p => p[1] > c[1] ? M.MAGIC2 : undefined }); for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; m.ell(v3.add(c, [Math.cos(a) * w * .8, w * .55, Math.sin(a) * w * .8]), [w * .38, w * .12, w * .12], M.MAGIC, { dir: [0, 1, 0], up: [1, 0, 0], group: 96, extra: true }); } };

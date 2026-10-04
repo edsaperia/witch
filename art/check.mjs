@@ -42,6 +42,22 @@ const report = await b.page.evaluate(async () => {
       res.push({ what: `${S.id}: baby < young < adult < legend, in clear steps (young 1.3+ times the baby, adult 1.55+ times the young, legend 2.1+ times the adult)`, good: hs[3] > hs[2] && hs[2] > hs[1] && hs[1] > hs[0] && r[0] >= 1.3 && r[1] >= 1.55 && r[2] >= 2.1, info: bh.join(" < ") + " (" + r.map(x => x.toFixed(2)).join(", ") + ")" }); }
     if (["wolf", "boar", "stag", "bear", "elk", "lynx"].includes(S.id)) { const w = G.witchSprite(st).bodyH, k = G.critter(S.id, 2, 0, st).bodyH / w, hi = ["elk", "stag"].includes(S.id) ? 2.5 : 2.1; res.push({ what: `${S.id}: an adult clearly bigger than the witch (1.45 to ${hi} times, body without antlers; the elk and stag stand taller)`, good: k >= 1.45 && k <= hi, info: k.toFixed(2) }); }
   }
+  { // sleeping legends (Ed, 2026-10-04): asleep (2 breathing frames), waking (4) and awake (2), both facings, every one drawn, standing on its bottom row,
+    // its origin on the sprite and every material coloured; asleep it is sunk (its ground line above its feet), no taller than awake, nothing glows and its
+    // eyes are shut, its two breaths differ; waking it opens its eyes red by the last two frames; awake, woken eyes
+    const glows = sp => { let n = 0; for (const m of sp.m) if (G.EMISSIVE.has(m)) n++; return n; }, woken = sp => { let n = 0; for (const m of sp.m) if (m === G.M.WOKEN) n++; return n; };
+    for (const id of G.LEGEND_IDS) for (const facing of ["towards", "away"]) {
+      const F = {}, bad = [];
+      for (const state of G.LEGEND_STATES) F[state] = [...Array(G.LEGEND_FRAMES[state]).keys()].map(frame => G.legendForm(id, st, { state, frame, facing }));
+      for (const [state, fs] of Object.entries(F)) fs.forEach(({ sp, colours }, i) => { const s = stats(sp), o = sp.origin, nan = sp.n.some(Number.isNaN), miss = [...new Set(sp.m)].filter(m => m && m !== G.M.LINE && !colours[m]);
+        if (!(s.n > 200 && s.bottom > 0 && o && o[0] >= 0 && o[0] <= sp.w && o[1] >= 0 && o[1] <= sp.h + 1 && !nan && !miss.length)) bad.push(`${state}${i} ${s.w}x${s.h}${nan ? " NaN" : ""}${miss.length ? " uncoloured " + miss : ""}${o ? "" : " no origin"}`); });
+      const [a0, a1] = F.asleep.map(f => f.sp), aw = F.awake[0].sp;
+      if (!(a0.groundLine > 0)) bad.push("not sunk"); if (a0.h > aw.h) bad.push(`asleep ${a0.h} taller than awake ${aw.h}`);
+      if (glows(a0) || glows(a1)) bad.push("asleep glows"); if (a0.m.length === a1.m.length && a0.m.every((m, i) => m === a1.m[i])) bad.push("no breath");
+      if (F.waking.slice(0, 2).some(f => woken(f.sp)) || F.waking.slice(2).some(f => !woken(f.sp)) || !woken(aw)) bad.push("eyes");
+      res.push({ what: `sleeping legend ${id} ${facing}: asleep x2 (sunk, no taller than awake, no glow, eyes shut, breathing), waking x4 (eyes open red by the last two), awake x2 (woken eyes); all drawn, standing, origin on the sprite, coloured`, good: !bad.length, info: bad.join(", ") || `asleep ${a0.w}x${a0.h}, awake ${aw.w}x${aw.h}` });
+    }
+  }
   for (const [key, f] of G.TREE_TYPES) for (let v = 0; v < 3; v++) { const r = G.rng(v + 1), t = f(r, st, st.treeSize * G.uni(r, .9, 1.1)), s = stats(t.sp); res.push({ what: `tree ${key} ${v}`, good: s.n > 200 && s.bottom > 0 && t.crownY > 0 && t.crownY < s.h, info: `${s.w}x${s.h}` }); }
   for (let v = 0; v < 8; v++) { const s = stats(G.bush(G.rng(v), st).sp); res.push({ what: `bush ${v}`, good: s.n > 20, info: `${s.w}x${s.h}` }); }
   for (const facing of ["towards", "away"]) for (const frame of [0, 1, 2]) { const s = stats(G.witchSprite(st, { frame, facing })); res.push({ what: `witch ${facing} frame ${frame}`, good: s.n > 200 && s.bottom > 0, info: `${s.w}x${s.h}` }); }
