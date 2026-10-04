@@ -9,7 +9,7 @@ import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, h
 import { newCamera, stepCamera, cameraPose } from "./camera";
 import { legendChance, population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
 import { newGame, stepGame } from "./game";
-import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, speakersOn, waveCountdown } from "./party";
+import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, speakersOn, waveCountdown, symbolCount } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
 import { laserShow } from "./lasers";
@@ -21,6 +21,7 @@ import { floorClearing, speakerRadius, nextSpeakerState } from "./speakers";
 import { composeFloor, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
 import { floorInputs } from "./game";
 import { castSpell, newSpells, spellCharge, speedMultiplier } from "./spells";
+import { musicMix } from "./music";
 import { tuftsInCell, TUFT_KINDS } from "./groundcover";
 import { DECOR } from "../../art/decor.js";
 import { RELICS } from "../../art/relics.js";
@@ -628,6 +629,29 @@ describe("the party", () => {
     // Pausing during the boot holds it too.
     p.paused = true; stepParty(p, map, B / 2, 5); expect(p.bootUntil).toBe(B + 5);
   });
+  it("forecasts two waves ahead, confirmed, and a probable set that holds the wave after (Ed, 2026-10-04)", () => {
+    const p = newParty(map);
+    expect(p.next).not.toBeNull(); expect(p.afterNext).not.toBeNull();
+    expect(p.probable.length).toBeGreaterThan(0); expect(p.probable.length).toBeLessThanOrEqual(TUNING.forecast.probable);
+    for (let w = 0; w < 6; w++) {
+      const after = p.afterNext!, probable = p.probable.map(key);
+      spreadWave(p, map, w + 1);
+      expect(p.next).toEqual(after); // the confirmed after-next is next now
+      expect(probable).toContain(key(p.afterNext!)); // and the new after-next was among the probable
+    }
+    const m = spawnMarkers(p, map), stage = (c: readonly [number, number] | null) => m.find(x => x.key === key(c! as [number, number]))!.stage;
+    expect(stage(p.next)).toBe("next"); expect(stage(p.afterNext)).toBe("afterNext");
+    for (const c of p.probable) expect(stage(c)).toBe("probable");
+  });
+  it("rings the stones with symbols: 12 on the next, the after-next filling through the middle, probable ones a few", () => {
+    const F = TUNING.forecast;
+    expect(symbolCount("next", 0, 0, TUNING)).toBe(F.symbols);
+    expect(symbolCount("afterNext", 0, 0, TUNING)).toBe(F.afterNext[0]);
+    expect(symbolCount("afterNext", 1, 0, TUNING)).toBe(F.afterNext[1]);
+    expect(symbolCount("afterNext", 1, 0, TUNING)).toBeLessThan(F.symbols); // only the next has all 12
+    for (const f of [0, 0.5, 0.99]) { const n = symbolCount("probable", 0, f, TUNING); expect(n).toBeGreaterThanOrEqual(1); expect(n).toBeLessThanOrEqual(F.probableMax); }
+    expect(symbolCount("dormant", 1, 1, TUNING)).toBe(0);
+  });
   it("comes in waves every interval seconds, and pauses", () => {
     const p = newParty(map), I = TUNING.party.interval, start = TUNING.party.startDelay + TUNING.boot.time;
     expect(stepParty(p, map, start + I - 0.1, 0.1)).toEqual([]);
@@ -1223,6 +1247,33 @@ describe("ground cover (Ed, v171)", () => {
     const per = (id: string) => { let n = 0, area = 0; for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++) { if (AREA_TYPES[map.typeOf(x, y)].id !== id) continue; const s = map.siteOf(x, y); const l = around(s.x + 30, s.z + 30, 8).filter(f => map.areaAt(f.x, f.z).type === map.typeOf(x, y)); n += l.length; area++; if (area >= 3) break; } return n / Math.max(1, area); };
     expect(per("grassland")).toBeGreaterThan(per("cave-mouth") * 2);
     expect(tuftsInCell(map, 140, 150, G.cell, G.spacing, 0)).toEqual([]);
+  });
+});
+
+describe("music by proximity (Ed, 2026-10-04)", () => {
+  const M = TUNING.music;
+  const g0 = newGame(6, TUNING), map = g0.map; // the game's own map
+  const at = (x: number, z: number, time: number) => { const g = { ...g0, speakers: [...g0.speakers], clock: { ...g0.clock, time } }; g.witch = { ...g.witch, x, z, seated: false }; return g; };
+  it("is full and clear by the playing dancefloor, quiet and muffled in the deep forest", () => {
+    const d = map.dancefloor, after = TUNING.boot.time + 1;
+    const g = at(d.x, d.z, after), near = musicMix(g);
+    expect(near.volume).toBeCloseTo(1); expect(near.cutoff).toBeCloseTo(M.clear);
+    const far = musicMix(at(d.x + M.farDist + 50, d.z, after));
+    expect(far.volume).toBeCloseTo(M.floor); expect(far.cutoff).toBeCloseTo(M.muffle);
+    const mid = musicMix(at(d.x + (M.nearDist + M.farDist) / 2, d.z, after));
+    expect(mid.volume).toBeGreaterThan(far.volume); expect(mid.volume).toBeLessThan(near.volume);
+    expect(mid.cutoff).toBeGreaterThan(far.cutoff); expect(mid.cutoff).toBeLessThan(near.cutoff);
+  });
+  it("grows as the home speakers boot up, and is distorted by damage close by", () => {
+    const d = map.dancefloor;
+    expect(musicMix(at(d.x, d.z, 0)).volume).toBeCloseTo(M.floor); // none on yet
+    expect(musicMix(at(d.x, d.z, TUNING.boot.time / 2)).volume).toBeLessThan(musicMix(at(d.x, d.z, TUNING.boot.time + 1)).volume);
+    const g = at(d.x, d.z, TUNING.boot.time + 1);
+    expect(musicMix(g).distort).toBe(0);
+    g.speakers = g.speakers.map(() => "damaged");
+    expect(musicMix(g).distort).toBeGreaterThan(0.3);
+    g.witch = { ...g.witch, x: d.x + M.farDist * 2 };
+    expect(musicMix(g).distort).toBe(0); // far away, nothing heard of it
   });
 });
 

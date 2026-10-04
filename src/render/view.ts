@@ -22,8 +22,8 @@ import { SpellFx } from "./spellfx";
 import { BuffHud } from "./buffhud";
 import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
-import { MarkerArt, MarkerFx, MARKER_LEVELS, type Beacon, type Laser, type Mote } from "./markers";
-import { spawnMarkers, speakersOn, waveCountdown, type SpawnMarker } from "../rules/party";
+import { MarkerArt, MarkerFx, MARKER_LEVELS, SymbolRings, type Beacon, type Laser, type Mote, type RingSymbol } from "./markers";
+import { spawnMarkers, speakersOn, symbolCount, waveCountdown, type SpawnMarker } from "../rules/party";
 import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
 import { Lasers } from "./lasers";
@@ -94,6 +94,7 @@ export class View {
   private borders: BorderView;
   private music = new MusicIndicator(document.body);
   private nextStone = new StoneIndicator(document.body);
+  private afterNextStone = new StoneIndicator(document.body, 2.5, 0.6); // smaller and dimmer (Ed, 2026-10-04)
   readonly minimap: Minimap;
   /** Metre rulers and a ground grid (G). */
   readonly rulers = new Rulers(document.body);
@@ -169,7 +170,7 @@ export class View {
     this.minimap = new Minimap(document.body, game.map);
     this.markerArt = new MarkerArt(style, t);
     this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true });
-    this.scene.add(...this.markerBatch.meshes, this.markerFx.group);
+    this.scene.add(...this.markerBatch.meshes, this.markerFx.group, this.rings.mesh);
     // The ground cover: tufts round the witch, in ground mode.
     this.grass = new GrassView(game.map, t, this.mpp);
     this.scene.add(this.grass.mesh);
@@ -565,7 +566,7 @@ export class View {
     if (mc.wave !== g.party.wave || mc.n !== g.party.areas.size) { mc.wave = g.party.wave; mc.n = g.party.areas.size; mc.list = spawnMarkers(g.party, g.map); }
     const cd = waveCountdown(g.party, g.map, time), build = g.party.paused ? 0 : cd.gone;
     const phase = (time * t.beat.bpm) / 60, beat = Math.pow(0.5 + 0.5 * Math.cos(phase * Math.PI * 2), 2); // 1 on the beat
-    const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes: Mote[] = [], lasers: Laser[] = [];
+    const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes: Mote[] = [], lasers: Laser[] = [], symbols: RingSymbol[] = [];
     const style = R.awakeStyle, column = style !== "beam", laser = style !== "column";
     const scale = R.scale;
     const stone = (x: number, z: number, species: string, level: number, y = 0) => {
@@ -588,9 +589,27 @@ export class View {
       const strength = m.awake ? (A.light + A.lightBuild * build) * (0.55 + 0.45 * beat) : D.light;
       if (d < R.lightRange) near.push({ d, l: { x: m.x, y: 0.5, z: m.z + 1.5, reach: m.awake ? A.reach : D.reach, rgb: col, strength } });
       // Awake: a column of light (column), a thin laser straight up (beam), or both (Ed, v149: "let's
-      // see both"); dormant: only the faint column above the canopy.
-      if (!m.awake || column) beacons.push({ x: m.x, z: m.z, colour: col, strength: m.awake ? A.beam * (0.6 + 0.4 * beat) * (1 + build) : D.beam, base: top });
-      if (m.awake && laser) lasers.push({ x: m.x, z: m.z, colour: col, strength: R.laser.opacity * (0.55 + 0.45 * beat) * (0.7 + 0.6 * build), width: R.laser.width, height: R.laser.length, base: top });
+      // see both"); dormant: only the faint column above the canopy. The beams grow as the
+      // countdown to the stone's wake runs (Ed, 2026-10-04): the next stone's from half to full,
+      // the after-next's up to half.
+      const grow = m.stage === "next" ? 0.5 + 0.5 * build : m.stage === "afterNext" ? 0.15 + 0.35 * build : 1;
+      if (!m.awake || column) beacons.push({ x: m.x, z: m.z, colour: col, strength: m.awake ? A.beam * (0.6 + 0.4 * beat) * (1 + build) : m.stage === "afterNext" ? A.beam * 0.6 : D.beam, base: top, height: R.beamHeight * grow });
+      if (m.awake && laser) lasers.push({ x: m.x, z: m.z, colour: col, strength: R.laser.opacity * (0.55 + 0.45 * beat) * (0.7 + 0.6 * build), width: R.laser.width, height: R.laser.length * grow, base: top });
+      // The forecast's ring of symbols round it: all 12 on the next stone, the after-next filling
+      // through the middle as the countdown runs, a flickering few on the probable ones. Each
+      // appears with a flare and pulses on the beat.
+      const flick = hash2(m.cell[0] * 7 + Math.floor(time * 1.3), m.cell[1], 991), count = symbolCount(m.stage, build, flick, t);
+      if (count > 0) {
+        const F = t.forecast, seen = this.symbolSeen.get(m.key) ?? [];
+        for (let k = 0; k < count; k++) {
+          if (seen[k] === undefined) seen[k] = time;
+          const a = (k / F.symbols) * Math.PI * 2 - Math.PI / 2, fl = Math.max(0, 1 - (time - seen[k]) / F.flare);
+          const alpha = (m.stage === "probable" ? 0.45 : m.stage === "afterNext" ? 0.75 : 1) * (0.7 + 0.3 * beat) + fl * 1.2;
+          symbols.push({ x: m.x + Math.cos(a) * F.radius, z: m.z + Math.sin(a) * F.radius, size: F.size * (1 + fl * 0.6), glyph: k, colour: col, alpha });
+        }
+        seen.length = count;
+        this.symbolSeen.set(m.key, seen);
+      } else this.symbolSeen.delete(m.key);
       if (m.awake) {
         const n = Math.round(A.motes + A.moteBuild * build);
         for (let i = 0; i < n; i++) {
@@ -612,6 +631,8 @@ export class View {
     for (const n of near.slice(0, 8)) lights.push(n.l);
     this.markerBatch.set(inst);
     this.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes, lasers);
+    const up = canopyShown(w);
+    this.rings.update(symbols, up * (t.treetopHeight - 2)); // above the canopy from the treetops
     return lights;
   }
 
@@ -757,6 +778,9 @@ export class View {
    *  sprite is the drawn angle nearest its yaw, flipped for the other side; a playing speaker's
    *  cones pump on the beat. Anchored by its ground point, like a path piece. */
   private speakerFlare: (number | undefined)[] = [];
+  private rings = new SymbolRings();
+  /** When each symbol round each stone appeared (for its flare), by marker. */
+  private symbolSeen = new Map<string, number[]>();
   private drawSpeakers(time: number, angle: number): ForestLight[] {
     const A = this.assets.speakerArt(), g = this.game, lights: ForestLight[] = [];
     if (!A) return lights;
@@ -980,6 +1004,12 @@ export class View {
         const cd = waveCountdown(g.party, g.map, time);
         this.nextStone.update(this.camera, cw, ch, { x: s.x, z: s.z, colour: this.markerArt.colour.get(species)!, species }, w.x, w.z, time, t.beat.bpm, cd.booting ? cd.boot : cd.gone, cd.booting ? `booting ${Math.ceil(cd.bootLeft)} s` : undefined); // pausing holds the countdown; while home boots up, the ring fills with the boot
       } else this.nextStone.update(this.camera, cw, ch, null, w.x, w.z, time, t.beat.bpm, 0);
+      // The after-next stone: its ring fills over the countdown too, a wave behind.
+      const an = g.party.afterNext;
+      if (an) {
+        const s = g.map.soundsystemSpot(an[0], an[1]), species = AREA_TYPES[g.map.typeOf(an[0], an[1])].creature, cd = waveCountdown(g.party, g.map, time);
+        this.afterNextStone.update(this.camera, cw, ch, { x: s.x, z: s.z, colour: this.markerArt.colour.get(species)!, species }, w.x, w.z, time, t.beat.bpm, cd.booting ? 0 : cd.gone * 0.5);
+      } else this.afterNextStone.update(this.camera, cw, ch, null, w.x, w.z, time, t.beat.bpm, 0);
     }
     this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
     this.assets.work(6);

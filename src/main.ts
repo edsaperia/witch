@@ -1,4 +1,6 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
+import { Music } from "./platform/music";
+import { musicMix } from "./rules/music";
 import { areaUnderWitch, newGame, stepGame } from "./rules/game";
 import { AREA_TYPES } from "./rules/map";
 import { waveCountdown } from "./rules/party";
@@ -46,6 +48,8 @@ if (pickerParam && ["noisy", "near3", "near3touch", "nearest"].includes(pickerPa
 const glowParam = params.get("glow")?.split(",").map(Number);
 if (glowParam && glowParam[0] > 0) { tuning.glowReach = glowParam[0]; tuning.glowFixed = true; }
 if (glowParam && glowParam[1] > 0) tuning.glowFalloff = glowParam[1];
+// ?music=off: no music.
+if (params.get("music") === "off") tuning.music = { ...tuning.music, on: false };
 // ?blend=off: neighbouring areas' floors meet on a plain edge (to compare); ?blend=<warp>,<fine>,<band> tunes it.
 const blendParam = params.get("blend");
 if (blendParam === "off") tuning.groundBlend = { ...tuning.groundBlend, on: false };
@@ -158,10 +162,10 @@ requestAnimationFrame(() => setTimeout(async () => {
 }, 0));
 
 // Browsers keep sound off until the player presses something: the start screen is that press.
-let audio: AudioContext | null = null;
+let audio: AudioContext | null = null, music: Music | null = null;
 function start(): boolean {
   if (!ready || !game.clock.paused) return false;
-  try { audio ??= new AudioContext(); void audio.resume(); } catch { /* no sound yet anyway */ }
+  try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume, tuning.music.src); } catch { /* no sound yet anyway */ }
   game.clock.paused = false;
   startEl.style.display = "none";
   input.clearPresses();
@@ -195,6 +199,8 @@ function frame(now: number): void {
   if (c.debug) { debugOn = !debugOn; debugEl.classList.toggle("on", debugOn); debugButtons.classList.toggle("on", debugOn); }
   view.debugReadouts = debugOn;
   stepGame(game, c, dt);
+  // The music: one track, mixed by how near the witch is to a playing soundsystem.
+  music?.update(musicMix(game), game.clock.time, tuning.beat.bpm, !game.clock.paused);
   if (!ready) return;
   // The wave countdown bar: empties toward the next wave.
   const cd = waveCountdown(game.party, game.map, game.clock.time);
