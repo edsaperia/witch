@@ -23,6 +23,8 @@
 //   node art/preview.mjs sigils all art/previews/sigils.png [scale]
 //   node art/preview.mjs witch headings art/previews/witch-headings.png [scale]   (her side view, then heading straight up the screen (away) and straight down it (towards): hover x3, lean, fast x3, brake x2; ANCHORS=1 marks her hand and hat tip)
 //   node art/preview.mjs soundsystems all art/previews/soundsystems.png [scale]
+//   node art/preview.mjs tufts all|<areas> art/previews/tufts.png [scale]   (each area's ground-cover tufts on its floor, then their sway masks in grey; weights under them)
+//   node art/preview.mjs sway <areas> art/previews/sway.png [scale]   (each area's trees and leafy props beside their sway masks: black is rigid, white sways most)
 //   node art/preview.mjs disco all|<ids> art/previews/dancefloor-patterns.png [scale]   (every dancefloor pattern's key frame from above, named, grouped by kind; PER=n to a row)
 //   node art/preview.mjs discolooks all art/previews/dancefloor-looks.png [scale]   (the floor's looks: the unlit tile, the lit tile at intensities 1 to 3 tinted in four neons, the grout, the rim strip, and the whole unlit floor)
 //   node art/preview.mjs discostrip all art/previews/dancefloor-strip.png [scale]   (the floor at the game's camera angle, at night, through the switch-on and four patterns with their transitions; the speaker ring when the generator has it; the witch)
@@ -63,6 +65,25 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   const st = { ...G.defaultStyle(), ...(window.STYLE || {}) };
   const studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 };
   const rows = [];
+  if (what === "tufts" || what === "sway") { // raw canvases (not lit): the sprites as baked, then their sway masks in grey
+    const ids = list === "all" ? G.AREAS.map(a => a.id) : list.split(","), K = what === "tufts" ? 4 : 1, rowsC = [];
+    for (const id of ids) {
+      const items = what === "tufts" ? G.bakeTufts(id, st).map(t => ({ A: t.A, S: t.S, w: t.w, h: t.h, label: t.kind + " " + Math.round(t.weight * 100) + "%" }))
+        : [...G.areaTreeVariants(id, st).filter((v, i) => i % 3 === 0).map(v => ({ A: v.whole.A, S: v.sway.whole, w: v.whole.w, h: v.whole.h })), ...G.areaAssets(id, st).small.concat(G.areaAssets(id, st).big).filter(b => b.sway).map(b => ({ A: b.sp.A, S: b.sway, w: b.sp.w, h: b.sp.h }))];
+      rowsC.push({ id, items, h: Math.max(...items.map(t => t.h), 1) * K });
+    }
+    const gap = 8, lab = what === "tufts" ? 14 : 4, W = Math.max(...rowsC.map(r => r.items.reduce((a, t) => a + t.w * K * 2 + gap * 2, 150))), H = rowsC.reduce((a, r) => a + r.h + gap + lab, gap);
+    const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"); g.imageSmoothingEnabled = false; g.fillStyle = "#1c1c22"; g.fillRect(0, 0, W, H); g.font = "11px monospace"; g.textBaseline = "top";
+    let y = gap;
+    for (const R of rowsC) {
+      const A = G.AREA_BY_ID[R.id], fl = G.hsv2rgb(A.floor[1], A.floor[2] * .9, A.floor[3]); g.fillStyle = "#c8c0e0"; g.fillText(R.id, 6, y + R.h / 2 - 6);
+      let x = 150;
+      for (const t of R.items) { g.fillStyle = `rgb(${fl})`; g.fillRect(x - 2, y - 2, t.w * K + 4, R.h + 4); g.drawImage(t.A, x, y + R.h - t.h * K, t.w * K, t.h * K); g.fillStyle = "#000"; g.fillRect(x + t.w * K + gap - 2, y - 2, t.w * K + 4, R.h + 4); g.drawImage(t.S, x + t.w * K + gap, y + R.h - t.h * K, t.w * K, t.h * K); if (t.label) { g.fillStyle = "#9a92b4"; g.fillText(t.label, x, y + R.h + 3); } x += t.w * K * 2 + gap * 2; }
+      y += R.h + gap + lab;
+    }
+    const big = document.createElement("canvas"); big.width = W * scale; big.height = H * scale; const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, W * scale, H * scale);
+    return big.toDataURL("image/png");
+  }
   if (what === "disco") { // every pattern's key frame from above, painted as the floor shows it, with its name, kind, level and beats
     const L = G.discoPatterns().filter(p => list === "all" || list.split(",").includes(p.id)), per = window.PER || 8, cell = 6, F = G.DISCO_GRID * cell, cw = F + 16, ch = F + 34;
     const W = per * cw + 16, H = Math.ceil(L.length / per) * ch + 16, c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
