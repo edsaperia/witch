@@ -68,15 +68,15 @@ float lh(float p) { return fract(sin(p * 127.1) * 43758.5453); }
 float ln(float p) { float i = floor(p), f = fract(p); return mix(lh(i), lh(i + 1.0), f * f * (3.0 - 2.0 * f)); }
 void main() {
   if (vSeen < 0.5) discard;
-  float across = 1.0 - abs(vSide), core = across * across * across;
+  float across = 1.0 - abs(vSide), core = across * across * across, halo = across * across;
   // The shimmer: bright heads travelling from the earlier stone to the later, each trailing off behind.
   float f = fract(vS / uFlow.y - uTime * uFlow.x / uFlow.y), pulse = pow(f, 7.0) * (1.0 - smoothstep(0.96, 1.0, f));
   // Wisps: the glow thins and thickens along the line, drifting with the flow.
-  float wisp = 0.55 + 0.45 * ln(vS * 0.09 - uTime * 0.8 + vLink * 13.0);
+  float wisp = 0.35 + 0.65 * ln(vS * 0.09 - uTime * 0.8 + vLink * 13.0) * ln(vS * 0.023 + uTime * 0.31 + vLink * 5.0 + vSide * 0.7);
   // Into each stone softly; each link fainter than the one before (easing to its new place after a wave).
   float ends = smoothstep(0.0, 0.05, vT) * smoothstep(1.0, 0.95, vT);
-  float link = uBright * pow(uFade, max(0.0, vLink + uShift));
-  float a = uGlowPass > 0.5 ? 0.18 * across * across * wisp * uLift : (core * (0.45 + 1.4 * pulse) + 0.25 * across * pulse) * wisp;
+  float link = uBright * pow(uFade, max(0.0, vLink + uShift)) * mix(1.0, 0.55, uLift); // (over the treetops, against the dark canopy, less is plenty)
+  float a = uGlowPass > 0.5 ? 0.18 * halo * wisp * uLift : (core * (0.6 + 1.6 * pulse) + halo * (0.18 + 0.5 * pulse)) * wisp;
   gl_FragColor = vec4(vCol * a * link * ends, 1.0);
 }`;
 
