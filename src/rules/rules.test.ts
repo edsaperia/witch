@@ -9,7 +9,7 @@ import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway } 
 import { newCamera, stepCamera, cameraPose } from "./camera";
 import { legendChance, population, spawnCreatures, stepCreature, stepCreaturesNear } from "./creatures";
 import { newGame, stepGame } from "./game";
-import { newParty, spreadWave, stepParty } from "./party";
+import { newParty, spreadWave, stepParty, spawnMarkers, nextWave } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
 import { laserShow } from "./lasers";
@@ -511,9 +511,9 @@ describe("creatures", () => {
 
 describe("light sources", () => {
   const forest = new Forest(map), all = forest.lightsNear(280, 280, 280);
-  it("come in all three kinds, the same from the same seed, and keep off the dancefloor", () => {
+  it("come as campfires and ponds (rune stones now only mark soundsystem spots), the same from the same seed, and keep off the dancefloor", () => {
     const kinds = new Set(all.map(l => l.kind));
-    expect([...kinds].sort()).toEqual(["campfire", "pond", "stone"]);
+    expect([...kinds].sort()).toEqual(["campfire", "pond"]);
     expect(new Forest(map).lightsNear(280, 280, 280).map(l => l.x.toFixed(2)).join()).toBe(all.map(l => l.x.toFixed(2)).join());
     const d = map.dancefloor;
     for (const l of all) expect(Math.hypot(l.x - d.x, l.z - d.z)).toBeGreaterThan(d.radius + TUNING.dancefloor.clearing);
@@ -986,5 +986,24 @@ describe("wall objects as features", () => {
       expect(wallFeatures(map, cx, cy)).toEqual(f);
       for (const p of f.walls) { expect(map.paths.at(p.x, p.z)).toBeNull(); expect(map.reserved(p.x, p.z, 1.5)).toBe(false); }
     }
+  });
+});
+
+describe("spawn markers", () => {
+  it("stand on every area the party hasn't reached, at its soundsystem's spot; awake exactly where the next wave will spread", () => {
+    const p = newParty(map);
+    for (let w = 0; w < 3; w++) {
+      const marks = spawnMarkers(p, map), awake = marks.filter(m => m.awake).map(m => m.key).sort();
+      for (const m of marks) { expect(p.areas.has(m.key)).toBe(false); const s = map.soundsystemSpot(m.cell[0], m.cell[1]); expect([m.x, m.z]).toEqual([s.x, s.z]); }
+      expect(awake.length).toBeGreaterThan(0);
+      expect(awake).toEqual(nextWave(p, map).map(c => c.key).sort());
+      const taken = spreadWave(p, map, w * 10).map(a => `${a.cell[0]},${a.cell[1]}`).sort();
+      expect(taken).toEqual(awake);
+    }
+  });
+  it("replace the random rune stones (campfires stay)", () => {
+    const f = new Forest(map), s = map.start, l = f.lightsNear(s.x, s.z, 900);
+    expect(l.some(x => x.kind === "stone")).toBe(false);
+    expect(l.some(x => x.kind === "campfire")).toBe(true);
   });
 });
