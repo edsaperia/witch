@@ -171,6 +171,70 @@ Decided in a long design session with the coordinator; built in stages, with a p
   - **Content:** built from data-driven parts (movement, behaviour drives, attack delivery, effect and timing, skins). The first slice is **10 contrasting species**; balance tools are a dashboard page and an in-game arena mode.
 - **Mode roles:** treetop mode is the strategic map, ground mode is for micro.
 
+### Creature movement (Stage 5; proposed by the builder, 2026-10-04; Ed's direction added the same day)
+
+Ed: this is "really the whole game: leading animals around, and evading animals while they attack you and you're inviting them". Animals should move differently and interestingly, not just straight at you, and usually move together with their own kind. With waves about a minute apart in the final game, a fight has to read at a glance: each kind's movement is its signature.
+
+The system has three layers, all data (`config/movement.json`), so a new species is a few lines:
+
+1. **Steering behaviours**, small and composable. Each one asks for a direction and speed; a creature moves by their weighted sum, capped by its gait, with its own acceleration (heavy creatures turn slowly).
+   - **seek** / **arrive** (to a point or target, slowing near it), **flee** (from a threat);
+   - **keep range** (between near and far of a target: kiting), **orbit** (circle a target at a radius, either way round), **strafe** (sideways to a target while facing it);
+   - **slot** (go to an assigned spot round a target, for group tactics);
+   - **separation**, **cohesion**, **alignment** (flocking, with its own kind);
+   - **dodge** (step sideways out of a telegraphed attack's path: a shot's line, a lob's ring, a beam);
+   - **wander** (a little jitter), **tether** (stay near home, or the leash point).
+2. **Movement profiles**, one per species: its gait (walk, run, burst speeds; acceleration), and for each mood (roaming, noticing her, fighting, fleeing) a list of behaviours with weights and settings. A profile also names its kind's **move**: a short special pattern on a cooldown, such as a **charge** (burst in a straight line, then a slow turn), a **pounce** (crouch, then leap at a point), a **hop** (bounding in arcs), a **burrow** (vanish, reappear near the target), or an **ambush** (hold still until something comes close, then burst).
+3. **Group tactics.** Creatures of one kind near each other form a **pack**, which picks a tactic when it engages (weighted by species, re-picked every few seconds, seeded):
+   - **surround**: slots evenly round the target;
+   - **pincer**: two halves come at it from opposite sides;
+   - **hit and run**: members take turns darting in to strike, then fall back to a ring;
+   - **volley line**: ranged members spread into a line at range and fire together on the beat;
+   - **swarm**: everyone rushes in, strongly separated and jittery;
+   - **screen**: melee members hold a line between the target and their ranged friends.
+
+**New attack deliveries**, where a pattern needs them:
+- **Lob**: an arcing shot at a point, landing after a flight time; a ring on the ground shows where. Step out of the ring.
+- **Beam**: a thin line telegraphs it, then it burns along the line for a moment, sweeping slowly. Step out of the line.
+
+Each delivery has a factor so its expected damage a second (allowing for misses and area hits) stays within the level's **equal power budget**.
+
+**Ed's direction (2026-10-04, after a long design talk):** the game is mostly about **your hero unit (the witch), your army and your defence**; the wave clock stays for now. His playtest problem: creatures read as interchangeable "soldiers", and who beats whom is "emergent and totally opaque, and totally overrun by quantity". So each kind needs an identity you read on sight (how it moves, how it attacks, how it telegraphs), and **counters you can see**, so a fight isn't decided by numbers alone.
+
+**The first slice: 11 contrasting species** (personalities in `config/movement.json`, attacks and traits in `config/combat.json`):
+
+| Species | Moves like | Pack tactic | Attack (telegraph) | Trait |
+|---|---|---|---|---|
+| wolf | trots, then flanks | surround, pincer | melee lunge (ring at its feet) | — |
+| boar | charges in a straight line, turns slowly | none | charge with knockback (dust, then a straight run) | heavy |
+| hare | darts in and back out, sidesteps telegraphs | hit and run | melee nip | nimble |
+| raven | keeps its distance, strafing | volley line | long shot (aim line) | flier |
+| bat | flits in erratic circles | swarm | screech: a short pulse all round it (ring) | flier, swarm |
+| owl | circles wide and slow | volley line | lob (a ring where it lands) | flier |
+| salamander | creeps, holds still to aim | none | beam (aim line, then a burning line) | — |
+| spider | lies still until you come close, then springs | ambush | web shot (aim line; an adult's slows) | — |
+| mole | burrows (a moving mound, untouchable) and surfaces under its target | none | upheaval: a pulse as it surfaces (ring) | burrower |
+| toad | leaps in arcs, landing near its target | none | slam on landing: a small pulse (ring where it lands) | — |
+| beetle | plods straight in, slow to turn | none | melee shove with knockback | armoured |
+
+The other species keep today's straight approach until they get a profile. Babies never fight. Party animals use the same profiles against wild ones, inside their leash. Everything is deterministic (seeded, fixed steps).
+
+**Traits and counters** (data: `combat.json` `traits` and `counters`). The raw numbers stay on the **equal power budget** for the level (same health, same damage a second). The difference is in behaviour and in a few multipliers anyone can read:
+- **Flier**: melee hits it for half (it flits up out of reach). Ranged attackers beat fliers' melee enemies; fliers beat melee.
+- **Armoured**: shots, lobs and beams hit it for a third; knockback hits it for double and stuns it a moment (flipped on its back). Melee knockback beats armour; armour beats ranged.
+- **Swarm**: area hits (pulses, quakes, lobs, beams) hit it for double. Area attackers beat swarms.
+- **Heavy**: no knockback and slows last half as long; but it turns slowly, so sidestepping beats it.
+- **Nimble**: steps out of telegraphed shots and lobs; area pulses catch it.
+- **Burrower**: untouchable while burrowed; it has to surface to strike.
+
+A counter is **shown**: a hit that's strong against its target flashes big and gold with a "!!"; a resisted one goes "tink", small and grey. Each creature with a trait wears its trait's mark by its health bar while it fights (placeholders: flier sky blue, armoured a steel square, swarm violet, heavy a brown square, nimble green, burrower earth).
+
+**Wild legends get move sets** (`movement.json` `legends`): a looping **pattern** of big, telegraphed moves (a **slam** pulse; a **nova** ring of shots; a **spin** beam sweeping all round; a **charge**, backing off first to get a run), with long wind-ups you can read and dodge (a reach ring, spokes, the circle a spin will sweep, the lane a charge will run down), and a **phase change** at half health: a roar and a burst, a red aura, it speeds up and its pattern gains the spin. Try one in the arena: `?arena=wolf*4@2,bear*1@3`. This is a step toward the legend states below.
+
+**Debug arena** (Ed, to see and judge patterns): `?arena=wolf*4,beetle*3` spawns, in the home clearing, your side (parked by sigils: the first group) against the wild side (the second); `wolf*4@2` sets the level (default young, 1). It's set below the dancefloor; she stands behind her side (the wild go for the nearest, so hers first). `J` sets the arena up again.
+
+**Planned direction, not built yet (Ed, 2026-10-04):** each area will have a **legendary animal that can be flipped between asleep, happy and angry**, by things that aren't only fighting (quests, mostly exploring the forest). So legends need **distinctive, readable move sets of their own**; the move sets above are written as data per legend so each can get its own later.
+
 ### Multiplayer (Ed, 2026-10-04)
 
 - **Online co-op** is a goal (not versus, not same-screen); networking comes later. Each player is a witch with her own leash stack, spell and camera; creatures, soundsystems, waves and the forecast are shared.

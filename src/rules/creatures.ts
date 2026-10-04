@@ -60,11 +60,26 @@ export interface Creature {
   kx?: number;
   kz?: number;
   slowUntil?: number;
+  /** Stunned until (an armoured creature knocked over: Stage 5 counters). */
+  stunUntil?: number;
+  /** Burrowed (the mole, Stage 5): under the ground until, untouchable. */
+  burrow?: { until: number };
+  /** Leaping (the toad, Stage 5): from, to, when it took off and lands, how high. */
+  leap?: { fx: number; fz: number; tx: number; tz: number; at: number; lands: number; height: number };
   fight?: Fight;
   /** Beaten in a fight: running for (fleeX, fleeZ), just off the map's edge (fleeUntil set), then gone. */
   fleeUntil?: number;
   fleeX?: number;
   fleeZ?: number;
+  /** Stage 5 movement (rules/movement.ts): its velocity in a fight, a charge under way, when its
+   *  signature move is ready again, and when an ambush was sprung. */
+  vx?: number;
+  vz?: number;
+  charge?: { dx: number; dz: number; speed: number; until: number; /** a legend's charge: whom it has trampled */ hit?: number[] };
+  /** A wild legend's move set (Stage 5): where it is in its pattern, and its phase. */
+  legend?: { step: number; phase: 1 | 2 };
+  moveReadyAt?: number;
+  sprung?: number;
   /** Enraged by a wave (it's besieging or marching on a soundsystem): it can't be invited (Ed's playtest). */
   enraged?: boolean;
   /** Gone for the run: a beaten creature that ran off the map. */

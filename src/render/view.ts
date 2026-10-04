@@ -853,6 +853,7 @@ export class View {
     let n = 0;
     for (const c of g.creatures) {
       if (c.gone || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
+      if (c.burrow) continue; // under the ground (Stage 5: the mole), a mound shows where (leash view)
       // Invited creatures are party animals: their party gear once it's drawn (the wild look till then).
       const party = c.leashed ? this.assets.partyArt(c.species, c.id, sigilColour(c.species)) : undefined;
       // Enraged by a wave (besieging, marching on): angry red eyes, and it can't be invited (Ed's playtest).
@@ -888,8 +889,10 @@ export class View {
       if (!c.leashed) { const ph = time * 0.7 + c.id * 0.37; if (hash2(c.id, Math.floor(ph), 41) < g.tuning.find.eyeshine.blink * 6 && ph % 1 < 1 / 6) glow = -1; }
       // Hit: a white flash and a little pop (combat: medium hit feel).
       if (c.hurtAt !== undefined && time - c.hurtAt < 0.25) { const k = (time - c.hurtAt) / 0.25; glow = Math.max(glow, 1 - k); scale *= 1 + 0.15 * (1 - k); }
-      l.push({ x: c.x + sway, y: dance, z: c.z, frame, flip: c.facing < 0, fresh, glow, scale });
-      this.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * this.mpp * scale + dance); // its health bar goes over it
+      // Leaping (Stage 5: the toad): up in an arc over its shadow.
+      const hop = c.leap ? Math.sin(Math.min(1, Math.max(0, (time - c.leap.at) / Math.max(0.01, c.leap.lands - c.leap.at))) * Math.PI) * c.leap.height : 0;
+      l.push({ x: c.x + sway, y: dance + hop, z: c.z, frame, flip: c.facing < 0, fresh, glow, scale });
+      this.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * this.mpp * scale + dance + hop); // its health bar goes over it
       creatureShadows.push({ x: c.x, z: c.z, w: frame.w * this.mpp * 0.7, d: frame.w * this.mpp * 0.25 });
       n++;
     }
