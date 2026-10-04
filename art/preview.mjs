@@ -19,8 +19,8 @@
 //   node art/preview.mjs party wolf,fox,owl art/previews/party.png [scale]
 //   node art/preview.mjs sigils all art/previews/sigils.png [scale]
 //   node art/preview.mjs soundsystems all art/previews/soundsystems.png [scale]
-//   node art/preview.mjs speakers all art/previews/dancefloor-speakers.png [scale]   (the dancefloor speaker at each of its 6 angles: 3 playing, 2 damaged, destroyed; the witch for scale)
-//   node art/preview.mjs ring 9 art/previews/dancefloor-ring.png [scale]   (12 speakers round the dancefloor, the list the ring's radius in metres: all playing, then a mix of states; mirrored by the facing rule)
+//   node art/preview.mjs speakers all art/previews/dancefloor-speakers.png [scale]   (the dancefloor speaker at each of its 3 angles: 3 playing, 2 damaged, destroyed; the witch for scale)
+//   node art/preview.mjs ring 9 art/previews/dancefloor-ring.png [scale]   (12 speakers round the dancefloor, the far half facing in and the near half out, the list the ring's radius in metres: all playing, then a mix of states; picked and mirrored by the facing rule)
 // Optional env LEVELS=1,0 draws only those levels; FACINGS=towards,away one row per view; TREES=wBroad,wFir only those kinds.
 // Optional env SIGIL=stag adds soundsystems carved with that creature's sigil; for lights, a list of species carves stones with their sigils.
 // Optional env SMALL=1 with sigils and a list draws each at the four levels at 30, 20, 14 and 10 px (plain and neon), as in the stack.
@@ -133,7 +133,7 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   } else if (what === "speakers") { // per angle (yaw from facing us): playing x3, damaged x2, destroyed; the witch for scale
     const col = G.dancefloorSpeakerColours(), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
     for (const angle of G.DANCEFLOOR_SPEAKER_ANGLES) rows.push([...[0, 1, 2].map(frame => ({ state: "playing", frame })), ...[0, 1].map(frame => ({ state: "damaged", frame })), { state: "destroyed" }].map(o => G.bake(G.dancefloorSpeakerSprite(st, { angle, ...o }).sp, col, st, "none")).concat([wit]));
-  } else if (what === "ring") { // 12 speakers round the dancefloor (radius 4.5 m), at the given ring radius, each facing the centre: the sprite and flip from dancefloorSpeakerFacing
+  } else if (what === "ring") { // 12 speakers round the dancefloor (radius 4.5 m), at the given ring radius, the far half facing the centre, the near half away: the sprite and flip from dancefloorSpeakerFacing
     const col = G.dancefloorSpeakerColours(), ppm = 16 * 2 / (st.pixel || 3), R = (+list || 9) * ppm, fr = 4.5 * ppm, k = Math.sin(.52), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
     const flipC = (c, normal) => { const o = document.createElement("canvas"); o.width = c.width; o.height = c.height; const g = o.getContext("2d"); g.translate(c.width, 0); g.scale(-1, 1); g.drawImage(c, 0, 0); if (normal) { const d = g.getImageData(0, 0, o.width, o.height); for (let i = 0; i < d.data.length; i += 4) if (d.data[i + 3]) d.data[i] = 255 - d.data[i]; g.putImageData(d, 0, 0); } return o; }; // a mirrored sprite's normals point the other way
     for (const mix of [false, true]) {

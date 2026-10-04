@@ -170,17 +170,21 @@ export function soundsystems(st, bk) {
 // One column of hewn stone, like a standing stone: a plinth with a glowing slot, two bass bins,
 // a horn, a mid and two floating tweeter stones. Its front (+z in the model) has the crystal cones
 // and horn mouths; its back is plain stone with a carved rune or two and moss running down it.
-// Drawn at six yaws (degrees from facing the camera); their mirrors give the other six:
+// Every speaker shows its front to the camera (Ed: "the ones at the bottom half of the circle face
+// outwards, the ones at the top half face inwards"), so three yaws are drawn (degrees from facing the
+// camera) and mirrored for the other side:
 //   a speaker at ring angle a (degrees round the dancefloor from the side nearest the camera, its
-//   ground position centre + R (sin a, cos a) in x right and z towards the camera), facing the centre,
-//   has yaw 180 - a (wrapped to -180..180): the sprite is the angle |yaw|, flipped if yaw < 0.
-// With a = 15 + 30 i that uses exactly the six angles. Near the camera we see backs, far side fronts.
-export const DANCEFLOOR_SPEAKER_ANGLES = [15, 45, 75, 105, 135, 165];
+//   ground position centre + R (sin a, cos a) in x right and z towards the camera) faces the centre
+//   if it is in the far half (cos a < 0): yaw 180 - a; in the near half it faces away: yaw -a (each
+//   wrapped to -180..180). The sprite is the angle |yaw|, flipped if yaw < 0.
+// With a = 15 + 30 i every yaw is one of +-15, +-45, +-75. The back is modelled too, though unused.
+export const DANCEFLOOR_SPEAKER_ANGLES = [15, 45, 75];
 export const DANCEFLOOR_SPEAKER_STATES = { playing: 3, damaged: 2, destroyed: 1 };
 export function dancefloorSpeakerFacing(ringDeg) {
-  let yaw = 180 - ringDeg; yaw = ((yaw + 180) % 360 + 360) % 360 - 180;
+  const r = ringDeg * Math.PI / 180, outward = Math.cos(r) > 0;
+  let yaw = outward ? -ringDeg : 180 - ringDeg; yaw = ((yaw + 180) % 360 + 360) % 360 - 180;
   const angle = DANCEFLOOR_SPEAKER_ANGLES.reduce((b, a) => Math.abs(a - Math.abs(yaw)) < Math.abs(b - Math.abs(yaw)) ? a : b);
-  return { yaw, angle, flip: yaw < 0 };
+  return { yaw, angle, flip: yaw < 0, outward };
 }
 // A little shorter than the soundsystems (three times the witch): the ring shouldn't wall in the floor.
 export const dancefloorSpeakerHeight = st => witchHeight(st) * 2.6;
@@ -258,7 +262,7 @@ function dfRubbleModel() {
 }
 
 const dfScales = new Map();
-// One dancefloor speaker: angle (one of DANCEFLOOR_SPEAKER_ANGLES, degrees of yaw from facing us),
+// One dancefloor speaker: angle (one of DANCEFLOOR_SPEAKER_ANGLES, degrees of yaw from facing us; any yaw draws, 165 shows the back),
 // state "playing" (frame 0..2), "damaged" (0..1) or "destroyed". Every angle and state shares one
 // scale. Returns { sp, origin: { x, y } (its middle on the ground, in the sprite), angle }.
 export function dancefloorSpeakerSprite(st = {}, { angle = 15, state = "playing", frame = 0 } = {}) {
