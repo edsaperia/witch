@@ -13,6 +13,8 @@ import { treehouseSprite, treehouseColours, TREEHOUSE_STOREYS } from "./treehous
 import { swayMask, bakeSway } from "./sway.js";
 import { tuftSprites, bakeTufts } from "./tufts.js";
 export { swayMask, bakeSway, tuftSprites, bakeTufts };
+import { TALL_KINDS, tallPiece } from "./tall.js";
+export { TALL_KINDS, tallPiece };
 import { NEW_SET_PIECES, SET_PIECE_KINDS } from "./setpieces.js";
 import { RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset } from "./relics.js";
 import { DECOR, DECOR_BY_ID, decorSprite, decorColours, lakeKit, rockTint } from "./decor.js";
