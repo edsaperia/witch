@@ -147,7 +147,7 @@ label.check input { accent-color: var(--accent); }
   // config/music-style.json
   var music_style_default = {
     name: "Forest rave",
-    notes: "Witch's first music style (2026-10-04), from the genres in Ed's reference playlist (a screenshot of its track list he shared in the music builder's session that day: melodic organic house and melodic techno, dark synth and French electro, chiptune and bubblegum electro, hyperpop, dark minimal pop and phonk). Nothing is taken from any track: every sound is synthesised and every tune generated. it starts as warm melodic, organic house in the dark forest (marimba plucks, soft pads, shakers), deepens into melodic techno with strings, turns to dark synth-electro (driving saw bass, gated pads, supersaw leads), sparkles into chiptune and bubblegum electro (square arps, bouncing octave bass), and ends in phonk (a sliding 808, a cowbell hook, trap hats) for the frantic finale. Breakdowns go minimal and dark (finger snaps over a sub). Sections are named in the arc below, one step per wave; the last step repeats.",
+    notes: `Witch's music style (2026-10-04). The mood, Ed's two best references from his playlist (a screenshot he shared in the music builder's session): Grimes' "4\xC6M" and Grimes and Janelle Mon\xE1e's "Venus Fly": dreamy, ethereal layers (airy pads, choir-like voices) crashing into hard, distorted, industrial drums and breakbeat energy, a gritty reese bass, string stabs. The rest of his playlist adds melodic organic house and techno, dark synth and French electro, chiptune and hyperpop, dark minimal pop and phonk. Only their genres are used: every sound is synthesised and every tune generated. The arc, one step per wave: an ethereal forest (choir, marimba, heartbeat), deep house, melodic techno, dark synth, industrial, breakbeat, a frenzy, phonk, and the finale; breakdowns go dreamy (the choir and sung notes) or minimal and dark (snaps over a sub).`,
     bpm: 120,
     tempoRampBars: 8,
     swing: 0.08,
@@ -161,14 +161,7 @@ label.check input { accent-color: var(--accent); }
       mixolydian: [0, 2, 4, 5, 7, 9, 10],
       ionian: [0, 2, 4, 5, 7, 9, 11]
     },
-    progressions: {
-      forest: [0, 3, 6, 4],
-      home: [0, 5, 2, 6],
-      lift: [5, 6, 0, 0],
-      dark: [0, 5, 3, 4],
-      chip: [3, 4, 2, 5],
-      phonk: [0, 1, 0, 6]
-    },
+    progressions: { forest: [0, 3, 6, 4], home: [0, 5, 2, 6], lift: [5, 6, 0, 0], dark: [0, 5, 3, 4], chip: [3, 4, 2, 5], phonk: [0, 1, 0, 6] },
     blockBars: 4,
     buildBars: 8,
     mix: { master: 0.58, reverb: 0.3, reverbTime: 2.4, delay: 0.22, delayBeats: 0.75, feedback: 0.35, duck: 0.45 },
@@ -194,7 +187,13 @@ label.check input { accent-color: var(--accent); }
       supersaw: { kind: "synth", gain: 0.491, waves: ["sawtooth"], unison: 7, detune: 28, width: 0.9, attack: 0.01, decay: 0.3, sustain: 0.6, release: 0.25, filter: "lowpass", cutoff: 3200, q: 1, envAmt: 3500, delay: 0.25, reverb: 0.3, duck: true, hp: 180 },
       chip: { kind: "synth", gain: 0.251, waves: ["square"], attack: 2e-3, decay: 0.09, sustain: 0.25, release: 0.05, filter: "lowpass", cutoff: 9e3, delay: 0.25, hp: 250, pan: 0.15 },
       arp: { kind: "synth", gain: 0.176, waves: ["square", "square"], detune: 8, width: 0.5, attack: 2e-3, decay: 0.08, sustain: 0, release: 0.04, filter: "lowpass", cutoff: 4e3, q: 1, envAmt: 2e3, delay: 0.3, duck: true, hp: 300 },
+      clank: { kind: "noise", source: "metal", gain: 8, filter: "highpass", cutoff: 3e3, q: 1.5, decay: 0.12, reverb: 0.4, hp: 300, pan: -0.2 },
+      choir: { kind: "voice", gain: 0.2, vowels: ["oo", "ah", "oh"], unison: 3, detune: 12, width: 0.8, attack: 0.8, decay: 1, sustain: 0.9, release: 1.5, q: 7, vibrato: 12, breath: 0.06, reverb: 0.6, hp: 200, duck: true },
+      vox: { kind: "voice", gain: 0.35, vowels: ["ah", "eh", "oo", "ee"], formantShift: 1.1, attack: 5e-3, decay: 0.18, sustain: 0.3, release: 0.1, q: 9, vibrato: 8, breath: 0.04, delay: 0.35, reverb: 0.4, hp: 300, pan: 0.2 },
+      reese: { kind: "synth", gain: 0.4, waves: ["sawtooth", "sawtooth"], detune: 22, attack: 0.01, decay: 0.4, sustain: 0.8, release: 0.1, filter: "lowpass", cutoff: 700, q: 2, envAmt: 800, lfoRate: 0.5, lfoDepth: 300, drive: 0.6, duck: true },
+      stab: { kind: "synth", gain: 0.7, waves: ["sawtooth"], unison: 3, detune: 14, width: 0.7, attack: 3e-3, decay: 0.12, sustain: 0, release: 0.08, filter: "lowpass", cutoff: 5e3, q: 1, envAmt: 3e3, reverb: 0.3, hp: 250 },
       tension: { kind: "synth", gain: 0.06, waves: ["square"], attack: 2e-3, decay: 0.06, sustain: 0, release: 0.03, filter: "bandpass", cutoff: 3e3, q: 4, pan: -0.3 },
+      kickHard: { kind: "kick", gain: 1, pitch: 180, pitchEnd: 46, pitchTime: 0.05, decay: 0.36, drive: 0.85, click: 0.5 },
       riser: { kind: "riser", gain: 0.25, cutoff: 400, q: 4, reverb: 0.4 },
       impact: { kind: "impact", gain: 0.6, pitch: 90, pitchEnd: 30, pitchTime: 0.6, decay: 1.8, reverb: 0.6 }
     },
@@ -203,16 +202,9 @@ label.check input { accent-color: var(--accent); }
       softkick: { patch: "softKick", role: "drum", patterns: { heart: "x.....x.x.......", soft: "x.......x.......", four: "x...x...x...x..." } },
       boom: { patch: "kick808", role: "drum", patterns: { phonk: "x.....x...x..x..x.....x...x.....", four: "x...x...x...x..." } },
       clap: { patch: "clap", role: "drum", patterns: { back: "....x.......x...", backGhost: "....x.......x..o" } },
-      snare: {
-        patch: "snare",
-        role: "drum",
-        patterns: {
-          back: "....x.......x...",
-          roll: "x...x...x...x...x...x...x...x...x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrrrrrrrrrrrrrrrrrrrrrrr...."
-        }
-      },
+      snare: { patch: "snare", role: "drum", patterns: { back: "....x.......x...", break: "....x..o.o..x..o.o..x.......x.o.", roll: "x...x...x...x...x...x...x...x...x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrrrrrrrrrrrrrrrrrrrrrrr...." } },
       snap: { patch: "snap", role: "drum", patterns: { back: "....x.......x...", lazy: "....x.......x.o." } },
-      hat: { patch: "hat", role: "drum", patterns: { off: "..x...x...x...x.", busy: "o.x?o.x?o.x?o.x?", sixteen: "xoxoxoxoxoxoxoxo", trap: "x.x.x.x.xrx.x.rrx.x.x.x.rrrrx.x." } },
+      hat: { patch: "hat", role: "drum", patterns: { off: "..x...x...x...x.", busy: "o.x?o.x?o.x?o.x?", sixteen: "xoxoxoxoxoxoxoxo", trap: "x.x.x.x.xrx.x.rrx.x.x.x.rrrrx.x.", breaks: "xoxoxoxrxoxoxoxoxoxoxoxrxoxrxoxo" } },
       ohat: { patch: "openHat", role: "drum", patterns: { off: "..x...x...x...x." } },
       shaker: { patch: "shaker", role: "drum", patterns: { eighth: "x.o.x.o.x.o.x.o.", sixteen: "oxoxoxoxoxoxoxox" } },
       bell: { patch: "cowbell", role: "motif", octave: 3, patterns: { phonk: "X..x..x.x..x.x..X..x..x.x..x?x?x" } },
@@ -227,129 +219,36 @@ label.check input { accent-color: var(--accent); }
       lead: { patch: "supersaw", role: "motif", octave: 3, patterns: { hook: "x-.x-.x-x-.x-.x-", long: "x---x---x-x-x---" } },
       chiplead: { patch: "chip", role: "motif", octave: 4, patterns: { melody: "x.x.xx.x.x.xx.x.", run: "xxxxx.x.xxxxx.x." } },
       arp: { patch: "arp", role: "arp", octave: 3, patterns: { sixteen: "xxxxxxxxxxxxxxxx", eighth: "x.x.x.x.x.x.x.x." } },
+      hardkick: { patch: "kickHard", role: "drum", patterns: { four: "x...x...x...x...", break: "x.........x.....x.x.......x..x.." } },
+      clank: { patch: "clank", role: "drum", patterns: { off: "......x.......x.", industrial: "..x...x...x.x..." } },
+      choir: { patch: "choir", role: "chord", octave: 2, patterns: { hold: "x---------------" } },
+      vox: { patch: "vox", role: "motif", octave: 3, patterns: { sparse: "x.......x.....x.", chops: "x..x....x.x.....", stutter: "x.xx..x...x.x..." } },
+      reese: { patch: "reese", role: "bass", octave: 1, patterns: { long: "1-------5-------", drive: "1---1-8-1---5-8-" } },
+      stab: { patch: "stab", role: "chord", octave: 3, patterns: { stabs: "x..x..x...x..x..", push: "..x...x...x...xx" } },
       tension: { patch: "tension", role: "bass", octave: 4, patterns: { pulse: "1.2.1.2.1.2.1.2." } }
     },
     sections: {
-      intro: {
-        feel: "The home speakers boot up: a pad, then plucks, a shaker, the sub and a soft kick as they power on.",
-        progression: "forest",
-        chordBars: 2,
-        cutoff: [600, 9e3],
-        ending: "none",
-        parts: { pad: "hold", pluck: { p: "sparse", from: 0.2, level: 0.8 }, shaker: { p: "eighth", from: 0.45, level: 0.6 }, sub: { p: "long", from: 0.6, level: 0.6 }, softkick: { p: "soft", from: 0.8, level: 0.7 } }
-      },
-      forest: {
-        feel: "Gentle and mysterious: a heartbeat kick, marimba, shaker, warm pad.",
-        progression: "forest",
-        chordBars: 2,
-        cutoff: 7e3,
-        ending: "none",
-        parts: { pad: "hold", pluck: "flow", shaker: { p: "eighth", level: 0.7 }, softkick: { p: "heart", level: 0.7 }, sub: { p: "roots", level: 0.6 } }
-      },
-      forestBeat: {
-        feel: "The forest finds a pulse: four soft kicks and an offbeat hat.",
-        base: "forest",
-        cutoff: 9e3,
-        parts: { softkick: { p: "four", level: 0.75 }, hat: { p: "off", level: 0.5 } }
-      },
-      whisper: {
-        feel: "A minimal, dark breakdown: finger snaps over a long sub.",
-        progression: "home",
-        chordBars: 2,
-        cutoff: 2600,
-        ending: "none",
-        parts: { pad: { p: "hold", level: 0.6 }, sub: "long", snap: "lazy", pluck: { p: "sparse", level: 0.7 } }
-      },
-      rise: {
-        feel: "A gentle build: the shaker doubles, the filter opens, a soft riser.",
-        base: "forestBeat",
-        cutoff: [1500, 12e3],
-        riser: true,
-        ending: "mute",
-        parts: { shaker: "sixteen" }
-      },
-      deep: {
-        feel: "Deep melodic house: four on the floor, rolling offbeat bass, plucks, pumping chords.",
-        progression: "home",
-        chordBars: 2,
-        sevenths: true,
-        cutoff: 14e3,
-        parts: { kick: "four", hat: "off", shaker: { p: "sixteen", level: 0.5, energy: 0.3 }, clap: { p: "back", level: 0.8, energy: 0.4 }, bass: "roll", pad: { p: "pump", level: 0.8 }, pluck: "flow" }
-      },
-      breakdown: {
-        feel: "The kick drops out: strings and a long pad, the filter half shut.",
-        progression: "lift",
-        chordBars: 2,
-        sevenths: true,
-        cutoff: [1200, 5e3],
-        ending: "none",
-        parts: { pad: "hold", strings: "swell", pluck: { p: "sparse", level: 0.7 }, sub: { p: "long", level: 0.6 }, shaker: { p: "eighth", level: 0.5 } }
-      },
-      build: {
-        feel: "The build into a wave: a snare roll, hats in sixteenths, a riser, the filter sweeping open.",
-        base: "deep",
-        cutoff: [700, 18e3],
-        riser: true,
-        ending: "mute",
-        parts: { clap: null, hat: "sixteen", snare: "roll" }
-      },
-      drop: {
-        feel: "The wave lands: everything in, a supersaw hook.",
-        base: "deep",
-        impact: true,
-        cutoff: 18e3,
-        parts: { hat: "busy", ohat: { p: "off", level: 0.6 }, clap: "back", lead: "hook", strings: { p: "long", level: 0.5 } }
-      },
-      dark: {
-        feel: "Dark synth-electro: a driving octave saw bass, gated pads, a snare on two and four.",
-        progression: "dark",
-        chordBars: 1,
-        cutoff: 16e3,
-        parts: { kick: "drive", snare: "back", hat: { p: "sixteen", level: 0.7 }, darkbass: "octaves", gatepad: "gate" }
-      },
-      darkDrop: {
-        feel: "The dark drop: the supersaw hook over the octave bass.",
-        base: "dark",
-        impact: true,
-        cutoff: 18e3,
-        parts: { lead: "hook", ohat: { p: "off", level: 0.5 }, darkbass: "drive" }
-      },
-      chip: {
-        feel: "Chiptune electro: square arps, a bouncing octave bass, a chip melody.",
-        progression: "chip",
-        chordBars: 1,
-        cutoff: 16e3,
-        parts: { kick: "four", clap: "back", hat: "off", chipbass: "bounce", arp: "sixteen", pad: { p: "pump", level: 0.6 }, chiplead: { p: "melody", energy: 0.5 } }
-      },
-      chipDrop: {
-        feel: "Bubblegum drop: galloping bass, a running chip lead and the supersaw.",
-        base: "chip",
-        impact: true,
-        cutoff: 18e3,
-        parts: { hat: "busy", chipbass: "gallop", chiplead: "run", lead: { p: "long", level: 0.7 } }
-      },
-      phonk: {
-        feel: "Phonk: a sliding 808, a cowbell hook, trap hats.",
-        progression: "phonk",
-        chordBars: 2,
-        cutoff: 16e3,
-        parts: { boom: "phonk", clap: "back", hat: "trap", bell: "phonk", sub: "phonk", pad: { p: "hold", level: 0.45 } }
-      },
-      phonkDrop: {
-        feel: "The finale: phonk with the dark bass and a supersaw over it.",
-        base: "phonk",
-        impact: true,
-        cutoff: 18e3,
-        parts: { darkbass: { p: "drive", level: 0.6 }, lead: { p: "hook", level: 0.7 }, snare: { p: "back", level: 0.6 } }
-      },
-      knockout: {
-        feel: "She's knocked out: everything far away and underwater.",
-        progression: "lift",
-        chordBars: 2,
-        cutoff: 420,
-        ending: "none",
-        parts: { pad: { p: "hold", level: 0.8 }, sub: { p: "long", level: 0.5 }, strings: { p: "long", level: 0.6 }, softkick: { p: "soft", level: 0.5 } }
-      }
+      intro: { feel: "The home speakers boot up: a pad, then plucks, a shaker, the sub and a soft kick as they power on.", progression: "forest", chordBars: 2, cutoff: [600, 9e3], ending: "none", parts: { pad: "hold", pluck: { p: "sparse", from: 0.2, level: 0.8 }, shaker: { p: "eighth", from: 0.45, level: 0.6 }, sub: { p: "long", from: 0.6, level: 0.6 }, softkick: { p: "soft", from: 0.8, level: 0.7 }, choir: { p: "hold", from: 0.1, level: 0.7 } } },
+      forest: { feel: "Gentle and mysterious: a heartbeat kick, marimba, shaker, warm pad.", progression: "forest", chordBars: 2, cutoff: 7e3, ending: "none", parts: { pad: { p: "hold", level: 0.6 }, pluck: "flow", shaker: { p: "eighth", level: 0.7 }, softkick: { p: "heart", level: 0.7 }, sub: { p: "roots", level: 0.6 }, choir: { p: "hold", level: 0.7 } } },
+      forestBeat: { feel: "The forest finds a pulse: four soft kicks and an offbeat hat.", base: "forest", cutoff: 9e3, parts: { softkick: { p: "four", level: 0.75 }, hat: { p: "off", level: 0.5 } } },
+      whisper: { feel: "A minimal, dark breakdown: finger snaps over a long sub.", progression: "home", chordBars: 2, cutoff: 2600, ending: "none", parts: { pad: { p: "hold", level: 0.6 }, sub: "long", snap: "lazy", pluck: { p: "sparse", level: 0.7 }, vox: { p: "sparse", level: 0.6 } } },
+      rise: { feel: "A gentle build: the shaker doubles, the filter opens, a soft riser.", base: "forestBeat", cutoff: [1500, 12e3], riser: true, ending: "mute", parts: { shaker: "sixteen" } },
+      deep: { feel: "Deep melodic house: four on the floor, rolling offbeat bass, plucks, pumping chords.", progression: "home", chordBars: 2, sevenths: true, cutoff: 14e3, parts: { kick: "four", hat: "off", shaker: { p: "sixteen", level: 0.5, energy: 0.3 }, clap: { p: "back", level: 0.8, energy: 0.4 }, bass: "roll", pad: { p: "pump", level: 0.8 }, pluck: "flow", vox: { p: "sparse", level: 0.6, energy: 0.35 } } },
+      breakdown: { feel: "The kick drops out: strings and a long pad, the filter half shut.", progression: "lift", chordBars: 2, sevenths: true, cutoff: [1200, 5e3], ending: "none", parts: { pad: "hold", strings: "swell", pluck: { p: "sparse", level: 0.7 }, sub: { p: "long", level: 0.6 }, shaker: { p: "eighth", level: 0.5 }, choir: { p: "hold", level: 0.7 } } },
+      build: { feel: "The build into a wave: a snare roll, hats in sixteenths, a riser, the filter sweeping open.", base: "deep", cutoff: [700, 18e3], riser: true, ending: "mute", parts: { clap: null, hat: "sixteen", snare: "roll" } },
+      drop: { feel: "The wave lands: everything in, a supersaw hook.", base: "deep", impact: true, cutoff: 18e3, parts: { hat: "busy", ohat: { p: "off", level: 0.6 }, clap: "back", lead: "hook", strings: { p: "long", level: 0.5 } } },
+      dark: { feel: "Dark synth-electro: a driving octave saw bass, gated pads, a snare on two and four.", progression: "dark", chordBars: 1, cutoff: 16e3, parts: { kick: "drive", snare: "back", hat: { p: "sixteen", level: 0.7 }, darkbass: "octaves", gatepad: "gate", clank: { p: "off", level: 0.7 } } },
+      darkDrop: { feel: "The dark drop: the supersaw hook over the octave bass.", base: "dark", impact: true, cutoff: 18e3, parts: { lead: "hook", ohat: { p: "off", level: 0.5 }, darkbass: "drive" } },
+      chip: { feel: "Chiptune electro: square arps, a bouncing octave bass, a chip melody.", progression: "chip", chordBars: 1, cutoff: 16e3, parts: { kick: "four", clap: "back", hat: "off", chipbass: "bounce", arp: "sixteen", pad: { p: "pump", level: 0.6 }, chiplead: { p: "melody", energy: 0.5 } } },
+      chipDrop: { feel: "Bubblegum drop: galloping bass, a running chip lead and the supersaw.", base: "chip", impact: true, cutoff: 18e3, parts: { hat: "busy", chipbass: "gallop", chiplead: "run", lead: { p: "long", level: 0.7 } } },
+      phonk: { feel: "Phonk: a sliding 808, a cowbell hook, trap hats.", progression: "phonk", chordBars: 2, cutoff: 16e3, parts: { boom: "phonk", clap: "back", hat: "trap", bell: "phonk", sub: "phonk", pad: { p: "hold", level: 0.45 } } },
+      phonkDrop: { feel: "The finale: phonk with the dark bass and a supersaw over it.", base: "phonk", impact: true, cutoff: 18e3, parts: { darkbass: { p: "drive", level: 0.6 }, lead: { p: "hook", level: 0.7 }, snare: { p: "back", level: 0.6 }, choir: { p: "hold", level: 0.4 } } },
+      industrial: { feel: "Industrial: a distorted kick, metal clanks, a reese bass, string stabs, chopped voices.", progression: "dark", chordBars: 1, cutoff: 16e3, parts: { hardkick: "four", clank: "industrial", snare: "back", hat: { p: "sixteen", level: 0.7 }, reese: "drive", stab: "stabs", vox: { p: "stutter", energy: 0.6, level: 0.8 } } },
+      industrialDrop: { feel: "The industrial drop: the supersaw over it all, the choir behind.", base: "industrial", impact: true, cutoff: 18e3, parts: { lead: { p: "hook", level: 0.7 }, choir: { p: "hold", level: 0.5 }, ohat: { p: "off", level: 0.5 } } },
+      breaks: { feel: "Breakbeat: broken drums and rolling hats, the reese underneath, voices and glitter above.", progression: "home", chordBars: 2, sevenths: true, cutoff: 16e3, parts: { hardkick: "break", snare: "break", hat: "breaks", reese: "long", choir: { p: "hold", level: 0.6 }, vox: "chops", stab: { p: "push", level: 0.7 }, arp: { p: "sixteen", level: 0.5, energy: 0.8 } } },
+      breaksDrop: { feel: "The breakbeat drop: the supersaw hook and an open hat.", base: "breaks", impact: true, cutoff: 18e3, parts: { lead: "hook", ohat: { p: "off", level: 0.6 } } },
+      ether: { feel: "A dreamy breakdown: the choir, a few sung notes, a long sub.", progression: "lift", chordBars: 2, sevenths: true, cutoff: [3e3, 12e3], ending: "none", parts: { choir: "hold", vox: { p: "sparse", level: 0.7 }, sub: { p: "long", level: 0.6 }, pluck: { p: "sparse", level: 0.6 } } },
+      knockout: { feel: "She's knocked out: everything far away and underwater.", progression: "lift", chordBars: 2, cutoff: 420, ending: "none", parts: { pad: { p: "hold", level: 0.8 }, sub: { p: "long", level: 0.5 }, strings: { p: "long", level: 0.6 }, softkick: { p: "soft", level: 0.5 }, choir: { p: "hold", level: 0.6 } } }
     },
     intro: "intro",
     knockout: "knockout",
@@ -360,11 +259,11 @@ label.check input { accent-color: var(--accent); }
       { name: "Clearing", bpm: 122, energy: 0.3, scale: "dorian", arrive: [["deep", 16]], loop: [["deep", 16], ["breakdown", 8], ["deep", 16], ["forestBeat", 8]], build: "rise" },
       { name: "Lanterns", bpm: 124, energy: 0.45, arrive: [["drop", 16]], loop: [["deep", 16], ["breakdown", 8], ["drop", 16]], build: "build" },
       { name: "Night drive", bpm: 126, energy: 0.6, scale: "harmonicMinor", arrive: [["darkDrop", 16]], loop: [["dark", 16], ["whisper", 8], ["darkDrop", 16]], build: "build" },
-      { name: "Electro", bpm: 128, energy: 0.7, scale: "harmonicMinor", transpose: 2, arrive: [["darkDrop", 16]], loop: [["dark", 16], ["breakdown", 8], ["darkDrop", 16]], build: "build" },
-      { name: "Sparkle", bpm: 131, energy: 0.8, scale: "aeolian", transpose: 3, arrive: [["chipDrop", 16]], loop: [["chip", 16], ["breakdown", 8], ["chipDrop", 16]], build: "build" },
-      { name: "Bubblegum", bpm: 134, energy: 0.88, scale: "aeolian", transpose: 5, arrive: [["chipDrop", 16]], loop: [["chip", 16], ["whisper", 8], ["chipDrop", 16], ["darkDrop", 16]], build: "build" },
+      { name: "Industrial", bpm: 128, energy: 0.7, scale: "harmonicMinor", transpose: 2, arrive: [["industrialDrop", 16]], loop: [["industrial", 16], ["ether", 8], ["industrialDrop", 16]], build: "build" },
+      { name: "Breakbeat", bpm: 131, energy: 0.8, scale: "aeolian", transpose: 3, arrive: [["breaksDrop", 16]], loop: [["breaks", 16], ["ether", 8], ["breaksDrop", 16]], build: "build" },
+      { name: "Frenzy", bpm: 134, energy: 0.88, scale: "aeolian", transpose: 5, arrive: [["breaksDrop", 16]], loop: [["breaks", 16], ["chipDrop", 8], ["industrialDrop", 16], ["ether", 4], ["breaksDrop", 16]], build: "build" },
       { name: "Phonk", bpm: 137, energy: 0.95, scale: "phrygian", arrive: [["phonkDrop", 16]], loop: [["phonk", 16], ["whisper", 4], ["phonkDrop", 16]], build: "build" },
-      { name: "Finale", bpm: 140, energy: 1, scale: "phrygian", transpose: 1, arrive: [["phonkDrop", 16]], loop: [["phonkDrop", 16], ["darkDrop", 8], ["phonk", 8]], build: "build", buildBars: 4 }
+      { name: "Finale", bpm: 140, energy: 1, scale: "phrygian", transpose: 1, arrive: [["phonkDrop", 16]], loop: [["phonkDrop", 16], ["breaksDrop", 8], ["industrialDrop", 8]], build: "build", buildBars: 4 }
     ]
   };
 
