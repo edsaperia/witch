@@ -4,7 +4,9 @@
     {
       "version": null,
       "items": [
-        "Nothing floats any more: trees, rocks, ruins, the treehouse and set pieces all stand on the ground, and big scenery keeps clear of the soundsystems"
+        "Nothing floats any more: trees, rocks, ruins, the treehouse and set pieces all stand on the ground, and big scenery keeps clear of the soundsystems",
+        "Fewer ruins, rocks, relics, stairs and bridges: each is a find now, not clutter",
+        "The witch's own light is a tighter pool round her that fades out within about 40 m (try ?glow=50,2.5 to tune it)"
       ]
     },
     {

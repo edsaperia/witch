@@ -109,7 +109,7 @@ export class View {
     this.camera = new THREE.PerspectiveCamera(t.camera.fov, 1, 1, 900);
     this.post = new Post(this.renderer, t);
     this.scene.background = new THREE.Color(0x0b0a16);
-    applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams }, t.glowReach, this.mpp, t.tone.ambient);
+    applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams }, t.glowReach, this.mpp, t.tone.ambient, t.glowFalloff);
     LIGHT_UNIFORMS.uGlowPower.value = t.glowPower;
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize);
     this.ground = new Ground(game.map, game.forest, style, this.mpp);

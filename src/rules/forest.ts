@@ -139,50 +139,71 @@ function wallsInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
 export type DecorFamily = "ruins" | "rocks" | "freak";
 export interface Decor { x: number; z: number; family: DecorFamily; variant: number; flip: boolean }
 
-function decorInChunk(map: ForestMap, ci: number, cj: number): Decor[] {
-  const D = map.tuning.decor, sp = D.spacing, s = map.seed, out: Decor[] = [];
-  const j0 = Math.ceil((cj * CHUNK) / sp), j1 = Math.ceil(((cj + 1) * CHUNK) / sp);
-  const i0 = Math.ceil((ci * CHUNK) / sp), i1 = Math.ceil(((ci + 1) * CHUNK) / sp);
+// Where a decoration would go in cell (i, j), before the spacing (null: none there).
+function decorCandidate(map: ForestMap, i: number, j: number): (Decor & { rank: number }) | null {
+  const D = map.tuning.decor, sp = D.spacing, s = map.seed;
+  // The area's layout says how much decor it has (its rate, against a typical 0.3) and of which
+  // families; "rocky" ground has more rocks.
+  const x = (i + (hash2(i, j, s + 501) - 0.5) * 0.8) * sp, z = (j + (hash2(i, j, s + 502) - 0.5) * 0.8) * sp, a = map.areaAt(x, z);
+  const L = AREA_TYPES[a.type].layout, ad = L.decor, rate = ad ? ad.rate / 0.3 : 1, rocky = L.terrain?.includes("rocky") ? 2 : 1;
+  const w = ad ? [ad.ruins, ad.rocks * rocky, ad.freak] : [D.ruins, D.rocks * rocky, D.freak], sum = w[0] + w[1] + w[2] || 1;
+  const total = (D.ruins + D.rocks + D.freak) * rate * (ad ? (ad.ruins + ad.rocks + ad.freak) / Math.max(0.01, ad.ruins + ad.rocks + ad.freak + ad.lake + ad.modern) : 1) * (rocky > 1 ? 1.5 : 1);
+  const roll = hash2(i, j, s + 503);
+  if (roll >= total) return null;
+  if (a.openness < D.clearing || map.hardClear(x, z) || map.paths.at(x, z, D.pathGap)) return null;
+  if (map.reserved(x, z, D.footprint)) return null; // its whole footprint clear of the gameplay and set pieces
+  if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + map.tuning.dancefloor.clearing + 6) return null;
+  // Open ground keeps them all; dense canopy only some.
+  const open = 1 - Math.min(1, treeChance(map, x, z, a.type) / 0.8);
+  if (hash2(i, j, s + 504) > 0.35 + 0.65 * open) return null;
+  const f = (roll / total) * sum, family: DecorFamily = f < w[0] ? "ruins" : f < w[0] + w[1] ? "rocks" : "freak";
+  return { x, z, family, variant: Math.floor(hash2(i, j, s + 505) * 1e6), flip: hash2(i, j, s + 506) < 0.5, rank: hash2(i, j, s + 507) };
+}
+
+/** Keep the candidates no stronger one lies within `gap` metres of (Ed, v147: "too numerous"):
+ *  seeded and the same whichever chunk asks, so it never pops. */
+function spaced<T extends { x: number; z: number; rank: number }>(cand: (i: number, j: number) => T | null, sp: number, gap: number, i0: number, i1: number, j0: number, j1: number): T[] {
+  const out: T[] = [], k = Math.ceil(gap / sp) + 1;
   for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
-    // The area's layout says how much decor it has (its rate, against a typical 0.3) and of which
-    // families; "rocky" ground has more rocks.
-    const x = (i + (hash2(i, j, s + 501) - 0.5) * 0.8) * sp, z = (j + (hash2(i, j, s + 502) - 0.5) * 0.8) * sp, a = map.areaAt(x, z);
-    const L = AREA_TYPES[a.type].layout, ad = L.decor, rate = ad ? ad.rate / 0.3 : 1, rocky = L.terrain?.includes("rocky") ? 2 : 1;
-    const w = ad ? [ad.ruins, ad.rocks * rocky, ad.freak] : [D.ruins, D.rocks * rocky, D.freak], sum = w[0] + w[1] + w[2] || 1;
-    const total = (D.ruins + D.rocks + D.freak) * rate * (ad ? (ad.ruins + ad.rocks + ad.freak) / Math.max(0.01, ad.ruins + ad.rocks + ad.freak + ad.lake + ad.modern) : 1) * (rocky > 1 ? 1.5 : 1);
-    const roll = hash2(i, j, s + 503);
-    if (roll >= total) continue;
-    if (a.openness < D.clearing || map.hardClear(x, z) || map.paths.at(x, z, D.pathGap)) continue;
-    if (map.reserved(x, z, D.footprint)) continue; // its whole footprint clear of the gameplay and set pieces
-    if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + map.tuning.dancefloor.clearing + 6) continue;
-    // Open ground keeps them all; dense canopy only some.
-    const open = 1 - Math.min(1, treeChance(map, x, z, a.type) / 0.8);
-    if (hash2(i, j, s + 504) > 0.35 + 0.65 * open) continue;
-    const f = (roll / total) * sum, family: DecorFamily = f < w[0] ? "ruins" : f < w[0] + w[1] ? "rocks" : "freak";
-    out.push({ x, z, family, variant: Math.floor(hash2(i, j, s + 505) * 1e6), flip: hash2(i, j, s + 506) < 0.5 });
+    const c = cand(i, j);
+    if (!c) continue;
+    let keep = true;
+    for (let dj = -k; dj <= k && keep; dj++) for (let di = -k; di <= k; di++) {
+      if (!di && !dj) continue;
+      const o = cand(i + di, j + dj);
+      if (o && o.rank > c.rank && Math.hypot(o.x - c.x, o.z - c.z) < gap) { keep = false; break; }
+    }
+    if (keep) out.push(c);
   }
   return out;
+}
+
+function decorInChunk(map: ForestMap, ci: number, cj: number): Decor[] {
+  const D = map.tuning.decor, sp = D.spacing;
+  return spaced((i, j) => decorCandidate(map, i, j), sp, D.minGap, Math.ceil((ci * CHUNK) / sp), Math.ceil(((ci + 1) * CHUNK) / sp), Math.ceil((cj * CHUNK) / sp), Math.ceil(((cj + 1) * CHUNK) / sp))
+    .map(({ rank: _rank, ...d }) => d);
 }
 
 // Modern relics (Ed: the occasional half-buried car, shopping trolley, traffic cone, broken bit of
 // highway): rare, more of them by the roads and railways; the view picks which by variant.
 export interface Relic { x: number; z: number; variant: number; flip: boolean }
 
+function relicCandidate(map: ForestMap, i: number, j: number): (Relic & { rank: number }) | null {
+  const R = map.tuning.relics, sp = R.spacing, s = map.seed;
+  const x = (i + (hash2(i, j, s + 881) - 0.5) * 0.8) * sp, z = (j + (hash2(i, j, s + 882) - 0.5) * 0.8) * sp, a = map.areaAt(x, z);
+  const ad = AREA_TYPES[a.type].layout.decor, share = ad ? ad.modern / Math.max(0.01, ad.ruins + ad.rocks + ad.freak + ad.lake + ad.modern) : 0.1;
+  const near = map.paths.at(x, z, 20), byRoad = near && (near.kind === "road" || near.kind === "rail") ? R.nearRoad : 1;
+  if (hash2(i, j, s + 883) >= R.chance * (0.5 + 5 * share) * byRoad) return null;
+  if (a.openness < map.tuning.decor.clearing || map.hardClear(x, z) || map.paths.at(x, z, 2) || map.paths.pieceAt(x, z)) return null;
+  if (map.reserved(x, z, map.tuning.decor.footprint)) return null; // its footprint clear of the gameplay, set pieces and grounds
+  if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + map.tuning.dancefloor.clearing + 6) return null;
+  return { x, z, variant: Math.floor(hash2(i, j, s + 884) * 1e6), flip: hash2(i, j, s + 885) < 0.5, rank: hash2(i, j, s + 886) };
+}
+
 function relicsInChunk(map: ForestMap, ci: number, cj: number): Relic[] {
-  const R = map.tuning.relics, sp = R.spacing, s = map.seed, out: Relic[] = [];
-  const j0 = Math.ceil((cj * CHUNK) / sp), j1 = Math.ceil(((cj + 1) * CHUNK) / sp);
-  const i0 = Math.ceil((ci * CHUNK) / sp), i1 = Math.ceil(((ci + 1) * CHUNK) / sp);
-  for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
-    const x = (i + (hash2(i, j, s + 881) - 0.5) * 0.8) * sp, z = (j + (hash2(i, j, s + 882) - 0.5) * 0.8) * sp, a = map.areaAt(x, z);
-    const ad = AREA_TYPES[a.type].layout.decor, share = ad ? ad.modern / Math.max(0.01, ad.ruins + ad.rocks + ad.freak + ad.lake + ad.modern) : 0.1;
-    const near = map.paths.at(x, z, 20), byRoad = near && (near.kind === "road" || near.kind === "rail") ? R.nearRoad : 1;
-    if (hash2(i, j, s + 883) >= R.chance * (0.5 + 5 * share) * byRoad) continue;
-    if (a.openness < map.tuning.decor.clearing || map.hardClear(x, z) || map.paths.at(x, z, 2) || map.paths.pieceAt(x, z)) continue;
-    if (map.reserved(x, z, map.tuning.decor.footprint)) continue; // its footprint clear of the gameplay, set pieces and grounds
-    if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + map.tuning.dancefloor.clearing + 6) continue;
-    out.push({ x, z, variant: Math.floor(hash2(i, j, s + 884) * 1e6), flip: hash2(i, j, s + 885) < 0.5 });
-  }
-  return out;
+  const R = map.tuning.relics, sp = R.spacing;
+  return spaced((i, j) => relicCandidate(map, i, j), sp, R.minGap, Math.ceil((ci * CHUNK) / sp), Math.ceil(((ci + 1) * CHUNK) / sp), Math.ceil((cj * CHUNK) / sp), Math.ceil(((cj + 1) * CHUNK) / sp))
+    .map(({ rank: _rank, ...r }) => r);
 }
 
 // Light sources, placed by seed: campfires and magic stones mostly in clearings and at area

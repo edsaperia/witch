@@ -887,7 +887,7 @@ describe("paths, roads and railways", () => {
     for (let seed = 1; seed <= 6; seed++) bridges += generateMap(seed, TUNING).paths.pieces.filter(p => p.id.includes("bridge")).length;
     expect(bridges).toBeGreaterThan(0);
     for (const b of P.pieces.filter(p => p.id.includes("bridge"))) expect(P.at(b.x, b.z)?.kind).toBeDefined();
-    for (const a of P.pieces) for (const b of P.pieces) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(12); // never a row of them
+    for (const a of P.pieces) for (const b of P.pieces) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(TUNING.paths.pieceGap); // never a row of them
     for (const p of P.pieces) expect(map.reserved(p.x, p.z, p.r)).toBe(false); // clear of soundsystems, set pieces, grounds
     const forest = new Forest(map);
     for (const p of P.pieces.slice(0, 60)) for (const t of forest.treesNear(p.x, p.z, p.r + 1)) expect(Math.hypot(t.x - p.x, t.z - p.z)).toBeGreaterThanOrEqual(p.r - 1e-6);
@@ -906,14 +906,19 @@ describe("decorations", () => {
     const forest = new Forest(map), s = map.start, list = forest.decorNear(s.x, s.z, 700), D = TUNING.decor;
     const fam = new Set(list.map(d => d.family));
     expect(fam.has("ruins") && fam.has("rocks")).toBe(true);
-    expect(list.length).toBeGreaterThan(20);
-    expect(list.length).toBeLessThan((1400 / D.spacing) ** 2 * 0.15);
+    expect(list.length).toBeGreaterThan(5);
+    expect(list.length).toBeLessThan((1400 / D.spacing) ** 2 * 0.03); // sparse: discoveries, not clutter
     for (const d of list) {
       expect(map.paths.at(d.x, d.z)).toBeNull();
       expect(map.areaAt(d.x, d.z).openness).toBeGreaterThanOrEqual(D.clearing);
       expect(Math.hypot(d.x - map.dancefloor.x, d.z - map.dancefloor.z)).toBeGreaterThan(map.dancefloor.radius + TUNING.dancefloor.clearing);
     }
     expect(new Forest(map).decorNear(s.x, s.z, 700)).toEqual(list);
+    for (const a of list) for (const b of list) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(D.minGap); // never a cluster (Ed, v147)
+    // The same from another chunk's point of view: spacing doesn't depend on who asks.
+    const other = new Forest(map).decorNear(s.x + 300, s.z, 700).filter(d => Math.abs(d.x - s.x) <= 700 && Math.abs(d.z - s.z) <= 700);
+    expect(other.length).toBeGreaterThan(0);
+    for (const d of other) expect(list.some(e => e.x === d.x && e.z === d.z)).toBe(true);
   });
 });
 
@@ -933,7 +938,15 @@ describe("relics and grounds", () => {
     expect(list.length).toBeGreaterThan(3);
     expect(list.length).toBeLessThan((1800 / TUNING.relics.spacing) ** 2 * 0.1);
     for (const r of list) { expect(map.paths.at(r.x, r.z)).toBeNull(); expect(map.hardClear(r.x, r.z)).toBe(false); }
+    for (const a of list) for (const b of list) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(TUNING.relics.minGap);
     const byRoad = list.filter(r => { const h = map.paths.at(r.x, r.z, 20); return h && (h.kind === "road" || h.kind === "rail"); }).length;
     expect(byRoad).toBeGreaterThan(0);
+  });
+});
+
+describe("set pieces, again", () => {
+  it("stand at most one per area", () => {
+    const f = new Forest(map), s = map.start, seen = new Set<string>();
+    for (const p of f.setPiecesNear(s.x, s.z, 900)) { const k = map.areaAt(p.x, p.z + 4).cell.join(","); expect(seen.has(k)).toBe(false); seen.add(k); }
   });
 });

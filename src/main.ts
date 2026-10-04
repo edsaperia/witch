@@ -34,6 +34,10 @@ if (tilt === "off") tuning.tiltShift.on = false;
 else if (tilt === "before" || tilt === "after") { tuning.tiltShift.on = true; tuning.tiltShift.where = tilt; }
 if (params.get("bloom") === "off") tuning.bloom.on = false;
 if (params.get("moonbeams") === "on") tuning.moonbeams = 1;
+// ?glow=<reach>,<falloff>: the witch's glow, to tune live (e.g. ?glow=50,2.5).
+const glowParam = params.get("glow")?.split(",").map(Number);
+if (glowParam && glowParam[0] > 0) tuning.glowReach = glowParam[0];
+if (glowParam && glowParam[1] > 0) tuning.glowFalloff = glowParam[1];
 const fx = params.get("fx");
 if (fx === "pixel" || fx === "smooth") tuning.fx = fx;
 
