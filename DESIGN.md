@@ -171,6 +171,49 @@ Decided in a long design session with the coordinator; built in stages, with a p
   - **Content:** built from data-driven parts (movement, behaviour drives, attack delivery, effect and timing, skins). The first slice is **10 contrasting species**; balance tools are a dashboard page and an in-game arena mode.
 - **Mode roles:** treetop mode is the strategic map, ground mode is for micro.
 
+### Creature movement (Stage 5; proposed by the builder, 2026-10-04, for Ed to react to)
+
+Ed: this is "really the whole game: leading animals around, and evading animals while they attack you and you're inviting them". Animals should move differently and interestingly, not just straight at you, and usually move together with their own kind. With waves about a minute apart in the final game, a fight has to read at a glance: each kind's movement is its signature.
+
+The system has three layers, all data (`config/movement.json`), so a new species is a few lines:
+
+1. **Steering behaviours**, small and composable. Each one asks for a direction and speed; a creature moves by their weighted sum, capped by its gait, with its own acceleration (heavy creatures turn slowly).
+   - **seek** / **arrive** (to a point or target, slowing near it), **flee** (from a threat);
+   - **keep range** (between near and far of a target: kiting), **orbit** (circle a target at a radius, either way round), **strafe** (sideways to a target while facing it);
+   - **slot** (go to an assigned spot round a target, for group tactics);
+   - **separation**, **cohesion**, **alignment** (flocking, with its own kind);
+   - **dodge** (step sideways out of a telegraphed attack's path: a shot's line, a lob's ring, a beam);
+   - **wander** (a little jitter), **tether** (stay near home, or the leash point).
+2. **Movement profiles**, one per species: its gait (walk, run, burst speeds; acceleration), and for each mood (roaming, noticing her, fighting, fleeing) a list of behaviours with weights and settings. A profile also names its kind's **move**: a short special pattern on a cooldown, such as a **charge** (burst in a straight line, then a slow turn), a **pounce** (crouch, then leap at a point), a **hop** (bounding in arcs), a **burrow** (vanish, reappear near the target), or an **ambush** (hold still until something comes close, then burst).
+3. **Group tactics.** Creatures of one kind near each other form a **pack**, which picks a tactic when it engages (weighted by species, re-picked every few seconds, seeded):
+   - **surround**: slots evenly round the target;
+   - **pincer**: two halves come at it from opposite sides;
+   - **hit and run**: members take turns darting in to strike, then fall back to a ring;
+   - **volley line**: ranged members spread into a line at range and fire together on the beat;
+   - **swarm**: everyone rushes in, strongly separated and jittery;
+   - **screen**: melee members hold a line between the target and their ranged friends.
+
+**New attack deliveries**, where a pattern needs them:
+- **Lob**: an arcing shot at a point, landing after a flight time; a ring on the ground shows where. Step out of the ring.
+- **Beam**: a thin line telegraphs it, then it burns along the line for a moment, sweeping slowly. Step out of the line.
+
+Each delivery has a factor so its expected damage a second (allowing for misses and area hits) stays within the level's **equal power budget**.
+
+**First set, to try the system** (personalities, all in the config):
+
+| Species | Moves like | Tactic | Attack |
+|---|---|---|---|
+| wolf | trots, then flanks in a loose ring | surround, pincer | melee lunge |
+| boar | charges in a straight line, turns slowly | charge (no pack tactic) | melee lunge |
+| hare | darts in and away, zig-zagging | hit and run | melee nip |
+| raven | keeps its distance, strafing | volley line | long-range shot |
+| bat | flits in erratic circles | swarm | shot |
+| owl | circles wide and slow | volley line | lob |
+| salamander | creeps, holds still to aim | screen behind melee | beam |
+| spider | waits in ambush, then bursts | ambush | beam (a silk line) |
+
+The other species keep today's straight approach until they get a profile. Babies roam, notice and react, but never fight. Party animals use the same profiles against wild ones, inside their leash. Everything is deterministic (seeded per pack and creature, fixed steps). It's cheap: neighbours come from the grid combat already builds, and packs are worked out per area.
+
 ### Multiplayer (Ed, 2026-10-04)
 
 - **Online co-op** is a goal (not versus, not same-screen); networking comes later. Each player is a witch with her own leash stack, spell and camera; creatures, soundsystems, waves and the forecast are shared.
