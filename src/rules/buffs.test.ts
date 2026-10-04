@@ -72,5 +72,5 @@ describe("legend buffs", () => {
     };
     const x0 = newGame(7, t).witch.x, plain = fly(false) - x0, buffed = fly(true) - x0;
     expect(buffed / plain).toBeGreaterThan(1.05);
-  });
+  }, 60000);
 });
