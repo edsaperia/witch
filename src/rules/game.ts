@@ -63,6 +63,8 @@ export interface Game {
   koEvents: KnockoutEvent[];
   /** The creatures by home area (rebuilt when one settles somewhere new). */
   byArea?: Map<string, Creature[]> | null;
+  /** The debug arena (?arena=, rules/arena.ts): its spec and the creatures it put down. */
+  arena?: { spec: string; ids: number[] };
   /** The run is over (every soundsystem destroyed): when. */
   over: { at: number } | null;
   /** One-shot presses (rise, sigil, spell...) waiting for the next step. */

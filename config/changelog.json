@@ -11,7 +11,8 @@
         "Creatures notice you from further away: they turn to look at you, curious babies come up to you and shy ones keep their distance; fights pick up from further off too",
         "Creatures fight in their own ways: wolves spread out to surround you, hares dart in and back out, boars charge in a straight line (sidestep!), bats swarm without piling up, ravens line up and shoot on the beat, spiders lie still until you come close",
         "New attacks: owls lob shots that land where you were standing (a ring shows where; move out of it), salamanders and spiders burn you with beams",
-        "A big glowing number over every rune stone: the wave that will wake it (dimmed once the party's there)"
+        "A big glowing number over every rune stone: the wave that will wake it (dimmed once the party's there)",
+        "A test arena for creature fights: add ?arena=wolf*4,raven*3 to the link (your side first, @2 for adults); J starts it again"
       ]
     },
     {

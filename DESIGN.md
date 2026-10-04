@@ -231,7 +231,7 @@ A counter is **shown**: a hit that's strong against its target flashes big and g
 
 **Wild legends get move sets** (`movement.json` `legends`): a looping **pattern** of big, telegraphed moves (a **slam** pulse; a **nova** ring of shots; a **spin** beam sweeping all round; a **charge**), with long wind-ups you can read and dodge, and a **phase change** at half health: a roar and a burst, a glow, it speeds up and its pattern gains a move. This is a step toward the legend states below.
 
-**Debug arena** (Ed, to see and judge patterns): `?arena=wolf*4,beetle*3` spawns, in the home clearing, your side (parked by sigils: the first group) against the wild side (the second); `wolf*4@2` sets the level (default young, 1). The witch starts hovering in the treetops, out of it; land to join in. `R` restarts the arena.
+**Debug arena** (Ed, to see and judge patterns): `?arena=wolf*4,beetle*3` spawns, in the home clearing, your side (parked by sigils: the first group) against the wild side (the second); `wolf*4@2` sets the level (default young, 1). It's set below the dancefloor; she stands behind her side (the wild go for the nearest, so hers first). `J` sets the arena up again.
 
 **Planned direction, not built yet (Ed, 2026-10-04):** each area will have a **legendary animal that can be flipped between asleep, happy and angry**, by things that aren't only fighting (quests, mostly exploring the forest). So legends need **distinctive, readable move sets of their own**; the move sets above are written as data per legend so each can get its own later.
 
