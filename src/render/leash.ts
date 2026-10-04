@@ -134,6 +134,8 @@ export class LeashView {
   private shakeAt = -Infinity;
   private shakeAmp = 0;
   private pips: HTMLElement | null = null;
+  /** Each creature's height as drawn (the view sets it), so its health bar sits just over it. */
+  readonly tops = new Map<number, number>();
 
   constructor(scene: THREE.Scene, private game: Game) {
     this.canvas.width = this.canvas.height = SLOT * SLOTS;
@@ -341,10 +343,10 @@ export class LeashView {
       // Health bars, only when hurt: ten squares over its head.
       const max = maxHp(c.level), hp = c.hp ?? max;
       if (hp < max && !c.fleeUntil) {
-        const y = 1.6 + c.level * 0.7, share = Math.max(0, hp / max), R = SPRITE_UNIFORMS.uRight.value;
-        for (let i = 0; i < 10; i++) {
-          const o = (i - 4.5) * 0.17, lit = (i + 0.5) / 10 <= share;
-          this.standing.add(c.x + R.x * o, y, c.z + R.z * o, 0.2, sq, lit ? 1 - share * 0.7 : 0.3, lit ? 0.3 + share * 0.7 : 0.3, lit ? 0.3 : 0.35, lit ? 0.95 : 0.35);
+        const y = (this.tops.get(c.id) ?? 1.6 + c.level * 0.7) + 0.5, share = Math.max(0, hp / max), R = SPRITE_UNIFORMS.uRight.value, wide = 1 + c.level * 0.25;
+        for (let i = 0; i < 10; i++) { // drawn over everything, so a big creature's own sprite doesn't hide it
+          const o = (i - 4.5) * 0.17 * wide, lit = (i + 0.5) / 10 <= share;
+          this.over.add(c.x + R.x * o, y, c.z + R.z * o, 0.2 * wide, sq, lit ? 1 - share * 0.7 : 0.3, lit ? 0.3 + share * 0.7 : 0.3, lit ? 0.3 : 0.35, lit ? 0.95 : 0.35);
         }
       }
       // Let go on a knockout and walking home: a faint marker and its sigil, grey and flickering.
@@ -358,7 +360,7 @@ export class LeashView {
     for (const [, h] of g.combat.sounds) {
       if (h.hp >= h.max || h.hp <= 0 || !close(h.x, h.z, 200)) continue;
       const share = h.hp / h.max, R = SPRITE_UNIFORMS.uRight.value, n = 20, y = h.radius > 5 ? 9 : 7;
-      for (let i = 0; i < n; i++) { const o = (i - (n - 1) / 2) * 0.35, lit = (i + 0.5) / n <= share; this.standing.add(h.x + R.x * o, y, h.z + R.z * o, 0.32, sq, lit ? 1 : 0.3, lit ? 0.35 + 0.5 * share : 0.3, lit ? 0.55 : 0.35, lit ? 1 : 0.35); }
+      for (let i = 0; i < n; i++) { const o = (i - (n - 1) / 2) * 0.35, lit = (i + 0.5) / n <= share; this.over.add(h.x + R.x * o, y, h.z + R.z * o, 0.32, sq, lit ? 1 : 0.3, lit ? 0.35 + 0.5 * share : 0.3, lit ? 0.55 : 0.35, lit ? 1 : 0.35); }
     }
     // Knocked out: dizzy stars over her while she's down.
     if (W.ko && time < W.ko.teleportAt) for (let i = 0; i < 5; i++) { const a = time * 3 + (i / 5) * Math.PI * 2; this.standing.add(w.x + Math.cos(a) * 0.7, 1.6 + Math.sin(a * 2) * 0.1, w.z + Math.sin(a) * 0.5, 0.25, dot, 1, 0.95, 0.5, 0.9); }
