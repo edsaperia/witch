@@ -9,9 +9,15 @@
         "Creatures enraged by a wave (attacking a soundsystem) have angry red eyes and can't be invited",
         "Beaten creatures no longer vanish: they run off, out of the forest, and are gone for good (yours too: a beaten party animal runs away off its leash)",
         "Creatures notice you from further away: they turn to look at you, curious babies come up to you and shy ones keep their distance; fights pick up from further off too",
-        "Flagstones round the dancefloor out past its speakers: rings of mossy old stone where there was bare grass",
         "Creatures fight in their own ways: wolves spread out to surround you, hares dart in and back out, boars charge in a straight line (sidestep!), bats swarm without piling up, ravens line up and shoot on the beat, spiders lie still until you come close",
-        "New attacks: owls lob shots that land where you were standing (a ring shows where; move out of it), salamanders and spiders burn you with beams"
+        "New attacks: owls lob shots that land where you were standing (a ring shows where; move out of it), salamanders and spiders burn you with beams",
+        "A big glowing number over every rune stone: the wave that will wake it (dimmed once the party's there)"
+      ]
+    },
+    {
+      "version": 337,
+      "items": [
+        "Flagstones round the dancefloor out past its speakers: rings of mossy old stone where there was bare grass"
       ]
     },
     {

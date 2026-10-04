@@ -126,6 +126,8 @@ export interface Tuning {
     discoHeight: number; discoSize: number; spin: number;
     specks: number; speckBrightness: number; speckReach: number;
   };
+  /** Wave numbers over the rune stones (Ed, 2026-10-04, a design aid): on, a digit's height as a share of the screen's, metres above the stone (or the canopy), and how bright the reached areas' are (0-1). */
+  waveNumbers: { on: boolean; size: number; lift: number; spent: number };
   canopyCutout: { screenFraction: number; edge: number };
   shadows: { on: boolean; strength: number; trees: boolean };
   canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };
