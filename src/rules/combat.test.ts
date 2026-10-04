@@ -40,13 +40,15 @@ describe("combat (Stage 4)", () => {
       expect(l.attack.delivery).toBe("quake");
       expect(l.attack.windup).toBeGreaterThan(a.attack.windup); // slow and heavy
     }
-    expect(attackOf("owl", 1)!.attack.delivery).toBe("shot");
+    expect(attackOf("toad", 1)!.attack.delivery).toBe("shot");
+    expect(attackOf("owl", 1)!.attack.delivery).toBe("lob"); // (Stage 5: the owl lobs, the salamander and spider beam)
+    expect(attackOf("salamander", 1)!.attack.delivery).toBe("beam");
     expect(attackOf("wolf", 1)!.attack.delivery).toBe("melee");
   });
 
   it("gives every attack of a level the same power budget (damage a second)", () => {
     for (const level of [1, 2, 3] as Level[]) {
-      const rates = AREA_TYPES.map(a => { const k = attackOf(a.creature, level)!; return k.damage / k.attack.cooldown; });
+      const rates = AREA_TYPES.map(a => { const k = attackOf(a.creature, level)!; return k.damage / k.attack.cooldown / (k.attack.factor ?? 1); }); // (each delivery's factor allows for misses and area hits)
       for (const r of rates) expect(r).toBeCloseTo(COMBAT.levels.dps[level]);
     }
   });

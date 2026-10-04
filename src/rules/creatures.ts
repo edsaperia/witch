@@ -65,6 +65,13 @@ export interface Creature {
   fleeUntil?: number;
   fleeX?: number;
   fleeZ?: number;
+  /** Stage 5 movement (rules/movement.ts): its velocity in a fight, a charge under way, when its
+   *  signature move is ready again, and when an ambush was sprung. */
+  vx?: number;
+  vz?: number;
+  charge?: { dx: number; dz: number; speed: number; until: number };
+  moveReadyAt?: number;
+  sprung?: number;
   /** Enraged by a wave (it's besieging or marching on a soundsystem): it can't be invited (Ed's playtest). */
   enraged?: boolean;
   /** Gone for the run: a beaten creature that ran off the map. */

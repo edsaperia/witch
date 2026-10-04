@@ -289,6 +289,10 @@ export class LeashView {
         const d = Math.hypot(e.x - w.x, e.z - w.z);
         if (d < 60) { this.shakeAt = time; this.shakeAmp = t.combat.shake * (1 - d / 60); } // screen shake: legends only
       }
+      // Stage 5: a lob lands in a ring the size of its splash; an ambusher springs; a charge slams home.
+      if (e.kind === "landed" && close(e.x, e.z, 150)) { const sh = c ? attackOf(c.species, c.level) : null; this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.5, r: 1, g: 0.5, b: 0.35, seed: 0, size: sh?.attack.radius ?? 1.8 }); this.fx.push({ kind: "puff", x: e.x, y: 0.4, z: e.z, at: time, life: 0.6, r: 0.9, g: 0.7, b: 0.6, seed: e.at * 17 }); }
+      if (e.kind === "sprung" && close(e.x, e.z)) this.fx.push({ kind: "spark", x: e.x, y: 0.8, z: e.z, at: time, life: 0.4, r: 1, g: 0.3, b: 0.3, seed: e.at * 23, size: 1.4 });
+      if (e.kind === "charged" && close(e.x, e.z)) this.fx.push({ kind: "puff", x: e.x, y: 0.4, z: e.z, at: time, life: 0.7, r: 0.8, g: 0.7, b: 0.55, seed: e.at * 29 });
       if (e.kind === "soundHit" && close(e.x, e.z, 150) && (e.at * 10) % 3 < 1) this.fx.push({ kind: "spark", x: e.x, y: 2.5, z: e.z, at: time, life: 0.3, r: 1, g: 0.6, b: 0.3, seed: e.at * 3 });
       if (e.kind === "soundDestroyed") this.fx.push({ kind: "spark", x: e.x, y: 3, z: e.z, at: time, life: 2, r: 1, g: 0.4, b: 0.6, seed: e.at, size: 6 });
     }
@@ -319,12 +323,33 @@ export class LeashView {
     for (const sh of g.combat.shots) {
       if (!close(sh.x, sh.z, 150)) continue;
       const col = sh.side === "wild" ? { r: 1, g: 0.25, b: 0.35 } : neon(sh.species);
+      if (sh.lob) {
+        // A lob: high over everything, and a ring tightening where it'll land (get out of it).
+        const L = sh.lob, k = Math.max(0, Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at))), y = 1 + Math.sin(k * Math.PI) * 5;
+        this.standing.add(sh.x, y, sh.z, 0.7, dot, 1, 1, 1, 0.9);
+        this.standing.add(sh.x, y, sh.z, 1.8, dot, col.r, col.g, col.b, 0.7);
+        const R = sh.radius * (1.4 - 0.4 * k);
+        for (let i = 0; i < 24; i++) { const a = (i / 24) * Math.PI * 2; this.flat.add(L.tx + Math.cos(a) * R, 0, L.tz + Math.sin(a) * R * 0.8, 0.4, dot, col.r, col.g, col.b, 0.3 + 0.6 * k); }
+        continue;
+      }
       this.standing.add(sh.x, 1, sh.z, 0.55, dot, 1, 1, 1, 0.9);
       this.standing.add(sh.x, 1, sh.z, 1.6, dot, col.r, col.g, col.b, 0.7);
       this.standing.add(sh.x - sh.vx * 0.05, 1, sh.z - sh.vz * 0.05, 1, dot, col.r, col.g, col.b, 0.3);
     }
+    // Beams: a burning line from the creature, as wide as it hurts.
+    for (const b of g.combat.beams) {
+      const c = g.creatures[b.from];
+      if (!c || !close(c.x, c.z, 150)) continue;
+      const col = b.side === "wild" ? { r: 1, g: 0.3, b: 0.3 } : neon(b.species), ex = Math.cos(b.angle), ez = Math.sin(b.angle), fl = 0.75 + 0.25 * Math.sin(time * 40 + b.id);
+      for (let s2 = 0.6; s2 < b.length; s2 += 0.45) {
+        this.standing.add(c.x + ex * s2, 0.7, c.z + ez * s2, Math.max(0.5, b.width * 0.9), dot, col.r, col.g, col.b, 0.45 * fl);
+        this.standing.add(c.x + ex * s2, 0.7, c.z + ez * s2, 0.3, dot, 1, 1, 1, 0.8 * fl);
+      }
+    }
     for (const c of g.creatures) {
       if (c.gone || !close(c.x, c.z)) continue;
+      // Charging (the boar): dust kicked up behind it.
+      if (c.charge && time < c.charge.until) for (let i = 0; i < 4; i++) { const q = hash2(c.id, Math.floor(time * 20) + i, 17); this.standing.add(c.x - c.charge.dx * (0.8 + i * 0.5), 0.3 + q * 0.4, c.z - c.charge.dz * (0.8 + i * 0.5), 0.5 + i * 0.15, dot, 0.75, 0.65, 0.5, 0.5 - i * 0.1); }
       // Telegraphs: winding up, a ring tightens at its feet; a shot shows its line; the quake its reach.
       const f = c.fight, atk = f && f.windupUntil > 0 ? attackOf(c.species, c.level) : null;
       if (atk && f) {
@@ -336,7 +361,7 @@ export class LeashView {
         } else {
           const R = 1.8 - 0.9 * k;
           for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; this.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.35, dot, r, gg, b, 0.4 + 0.5 * k); }
-          if (A.delivery === "shot" && wild) {
+          if ((A.delivery === "shot" || A.delivery === "beam") && wild) {
             const dx = f.aimX - c.x, dz = f.aimZ - c.z, d = Math.hypot(dx, dz) || 1, L = Math.min(A.range, d + 2);
             for (let s2 = 1.2; s2 < L; s2 += 0.9) this.flat.add(c.x + (dx / d) * s2, 0, c.z + (dz / d) * s2, 0.28, dot, 1, 0.3, 0.3, 0.12 + 0.3 * k);
           }
