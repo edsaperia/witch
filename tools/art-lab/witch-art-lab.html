@@ -166,6 +166,18 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
+        <h2>Farm and street</h2>
+        <p class="note">Countryside and street decorations, single pieces: the farm (tractor, trailers, hay bales, fences, a gate, trough, water butt, scarecrow, churn, barrow, plough), the street (lampposts, one still flickering warm; signs blank or symbol-only; a bench, bin bags, a bus shelter), then the pieces the small scenes are built from, with the witch for scale.</p>
+        <div class="sheet-wrap"><canvas id="countrySheet" width="420" height="160"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
+        <h2>Scenes</h2>
+        <p class="note">Scenes: a few related pieces arranged together, each counting as one piece on the map. Each is composed from reused piece sprites at its positions, the witch at its middle.</p>
+        <div class="sheet-wrap"><canvas id="sceneSheet" width="420" height="160"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
         <div class="row" style="justify-content:space-between"><h2>Paths</h2><div class="row"><label class="note" for="pathKind">Kind</label><select id="pathKind"></select></div></div>
         <p class="note">A path kind laid along a curve with a branch meeting it, as the game would sweep it; then its strip, end, Y and T junction textures; then the 3D pieces (edge props, stairs, bridges, railway landmarks), with the witch for scale.</p>
         <p class="note" id="pathInfo"></p>
@@ -235,7 +247,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, DISCO_GRID, DISCO_MASK, discoPatterns, DISCO_TRANSITIONS, discoCompose, discoPaint, DANCEFLOOR_SPEAKER_ANGLES, dancefloorSpeakerSprite, dancefloorSpeakerColours, soundsystemColours, witchSprite, witchColours, areaTreeVariants, TREE_SPECIES, splitTree, treeColours, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
+import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, DISCO_GRID, DISCO_MASK, discoPatterns, DISCO_TRANSITIONS, discoCompose, discoPaint, DANCEFLOOR_SPEAKER_ANGLES, dancefloorSpeakerSprite, dancefloorSpeakerColours, soundsystemColours, witchSprite, witchColours, areaTreeVariants, TREE_SPECIES, splitTree, treeColours, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS, COUNTRY, countrySprite, countryColours, SCENES, scenePlacements } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -559,6 +571,38 @@ function renderRelics() {
   }, 1000);
 }
 
+// ================= farm and street: countryside and street pieces; scenes composed from reused pieces =================
+let countryTimer;
+function renderCountry() {
+  clearTimeout(countryTimer);
+  countryTimer = setTimeout(() => {
+    const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 8, wit = bake(witchSprite(st), witchColours(st), st, st.cOutline);
+    const sheet = (id, rows) => {
+      const c = document.getElementById(id); if (!c) return;
+      const w = Math.max(...rows.map(r => r.reduce((a, x) => a + x.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(x => x.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
+      tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+      let y = gap;
+      rows.forEach((r, i) => { let x = gap; y += rh[i] - gap; for (const s2 of r) { tgt.a.drawImage(s2.A, x, y - s2.h); tgt.n.drawImage(s2.N, x, y - s2.h); x += s2.w + gap; } y += gap; });
+      c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
+      c.style.width = w + "px"; c.style.maxWidth = "none";
+    };
+    const col = countryColours(st), rows = [];
+    for (const fam of ["farm", "street", "scene"]) { const items = COUNTRY.filter(d => d.family === fam).map(d => bake(countrySprite(d.id, st).whole, col, st, "none")); for (let i = 0; i < items.length; i += 9) rows.push([...items.slice(i, i + 9), wit]); }
+    sheet("countrySheet", rows);
+    const baked = new Map(), bk = p => { if (!baked.has(p.ref)) baked.set(p.ref, bake(p.sprite.whole, p.colours, st, "none")); return baked.get(p.ref); };
+    const scenes = SCENES.map(S => { // each scene, composed from its pieces (mirrored ones drawn flipped with their mirrored normals)
+      const parts = scenePlacements(S.id, st).map(p => ({ ...p, b: bk(p.piece), decal: p.piece.decal })); parts.push({ b: wit, x: -wit.w / 2, y: -wit.h, depth: 0 });
+      const x0 = Math.min(...parts.map(p => p.x)), y0 = Math.min(...parts.map(p => p.y)), w = Math.ceil(Math.max(...parts.map(p => p.x + p.b.w)) - x0), h = Math.ceil(Math.max(...parts.map(p => p.y + p.b.h)) - y0);
+      const A = document.createElement("canvas"), N = document.createElement("canvas"); A.width = N.width = w; A.height = N.height = h;
+      const draw = (ctx, img, p) => { const x = Math.round(p.x - x0), y = Math.round(p.y - y0); if (!p.flip) return ctx.drawImage(img, x, y); ctx.save(); ctx.translate(x + p.b.w, y); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0); ctx.restore(); };
+      parts.sort((p, q) => (q.decal ? 1 : 0) - (p.decal ? 1 : 0) || p.depth - q.depth).forEach(p => { draw(A.getContext("2d"), p.b.A, p); draw(N.getContext("2d"), p.flip ? p.b.NF : p.b.N, p); });
+      return { A, N, w, h };
+    });
+    const srows = []; for (let i = 0; i < scenes.length; i += 3) srows.push(scenes.slice(i, i + 3));
+    sheet("sceneSheet", srows);
+  }, 1100);
+}
+
 // ================= decorations: ruins, rocks, freak trees, the lake kit =================
 let decorTimer;
 function renderDecor() {
@@ -806,7 +850,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderRelics(); renderSets(); renderWitch(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
+  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderCountry(); renderRelics(); renderSets(); renderWitch(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
