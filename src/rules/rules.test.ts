@@ -9,7 +9,7 @@ import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway } 
 import { newCamera, stepCamera, cameraPose } from "./camera";
 import { legendChance, population, spawnCreatures, stepCreature, stepCreaturesNear } from "./creatures";
 import { newGame, stepGame } from "./game";
-import { newParty, spreadWave, stepParty, spawnMarkers, nextWave } from "./party";
+import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
 import { laserShow } from "./lasers";
@@ -532,18 +532,36 @@ describe("the party", () => {
     expect([...p.areas.keys()]).toEqual([key(map.centreCell)]);
     expect(p.areas.get(key(map.centreCell))!.soundsystem).toBeNull();
   });
-  it("spreads exactly to home's neighbours on the first wave, then ring by ring, never further", () => {
+  it("wakes exactly one area a wave, the one chosen in advance, always bordering the party (no islands), spreading away from the last", () => {
     const p = newParty(map);
-    spreadWave(p, map, 30);
-    const first = [...p.areas.keys()].filter(k => k !== key(map.centreCell)).sort();
-    expect(first).toEqual([...map.neighbours.get(key(map.centreCell))!].sort());
-    for (let w = 2; w <= 5; w++) {
-      const before = new Set(p.areas.keys());
-      for (const a of spreadWave(p, map, w * 30)) {
-        expect([...map.neighbours.get(key(a.cell))!].some(n => before.has(n))).toBe(true);
-        expect(a.wave).toBe(w);
+    let besideLast = 0, couldAvoid = 0;
+    for (let w = 1; w <= 25; w++) {
+      const next = p.next!, before = new Set(p.areas.keys());
+      expect(before.has(key(next))).toBe(false);
+      const touchesParty = [...map.neighbours.get(key(next))!].some(n => before.has(n));
+      expect(touchesParty).toBe(true); // noisy: no islands
+      const fresh = spreadWave(p, map, w * 30);
+      expect(fresh.length).toBe(1);
+      expect(fresh[0].cell).toEqual(next);
+      expect(fresh[0].wave).toBe(w);
+      if (p.last && p.next && w > 1) {
+        // when another candidate exists, the pick isn't beside the last one
+        const beside = map.neighbours.get(key(p.last))!;
+        if (beside.has(key(p.next))) besideLast++;
+        couldAvoid++;
       }
     }
+    expect(besideLast).toBeLessThan(couldAvoid * 0.5);
+  });
+  it("offers the other pickers: near3 picks one of the 3 dormant areas nearest the dancefloor", () => {
+    const p = newParty(map), d = map.dancefloor;
+    const dist = (c: [number, number]) => { const s = map.soundsystemSpot(c[0], c[1]); return Math.hypot(s.x - d.x, s.z - d.z); };
+    const all: [number, number][] = [];
+    for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++) if (!p.areas.has(`${x},${y}`)) all.push([x, y]);
+    const three = all.sort((a, b) => dist(a) - dist(b)).slice(0, 3).map(c => key(c));
+    expect(three).toContain(key(pickNext(p, map, "near3")!));
+    const n = pickNext(p, map, "nearest")!;
+    expect([...map.neighbours.get(key(n))!].some(k => p.areas.has(k))).toBe(true);
   });
   it("comes in waves every interval seconds, and pauses", () => {
     const p = newParty(map), I = TUNING.party.interval, start = TUNING.party.startDelay;

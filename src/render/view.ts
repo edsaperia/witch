@@ -18,13 +18,14 @@ import { applyStyleLight, LIGHT_UNIFORMS, MAX_LIGHTS } from "./lighting";
 import { Post } from "./post";
 import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
-import { MarkerArt, MarkerFx, MARKER_LEVELS, type Beacon, type Mote } from "./markers";
+import { MarkerArt, MarkerFx, MARKER_LEVELS, type Beacon, type Laser, type Mote } from "./markers";
 import { spawnMarkers, waveCountdown, type SpawnMarker } from "../rules/party";
 import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
 import { Lasers } from "./lasers";
 import { BorderView } from "./borders";
-import { MusicIndicator } from "./indicator";
+import { MusicIndicator, StoneIndicator } from "./indicator";
+import { Minimap } from "./minimap";
 import { Rulers } from "./rulers";
 import { Mist } from "./mist";
 import { ShadowBatch, type ShadowInstance } from "./shadows";
@@ -83,6 +84,8 @@ export class View {
   private lasers: Lasers;
   private borders: BorderView;
   private music = new MusicIndicator(document.body);
+  private nextStone = new StoneIndicator(document.body);
+  readonly minimap: Minimap;
   /** Metre rulers and a ground grid (G). */
   readonly rulers = new Rulers(document.body);
   /** Show debug readouts (the debug overlay is on). */
@@ -152,6 +155,7 @@ export class View {
       this.scene.add(...this.treehouseBatch.meshes);
     }
     // Spawn markers: gameplay (always drawn in range, never budget-culled).
+    this.minimap = new Minimap(document.body, game.map);
     this.markerArt = new MarkerArt(style, t);
     this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true });
     this.scene.add(...this.markerBatch.meshes, this.markerFx.group);
@@ -513,7 +517,8 @@ export class View {
     if (mc.wave !== g.party.wave || mc.n !== g.party.areas.size) { mc.wave = g.party.wave; mc.n = g.party.areas.size; mc.list = spawnMarkers(g.party, g.map); }
     const cd = waveCountdown(g.party, g.map, time), build = g.party.paused ? 0 : cd.gone;
     const phase = (time * t.beat.bpm) / 60, beat = Math.pow(0.5 + 0.5 * Math.cos(phase * Math.PI * 2), 2); // 1 on the beat
-    const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes: Mote[] = [];
+    const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes: Mote[] = [], lasers: Laser[] = [];
+    const style = R.awakeStyle, column = style !== "beam", laser = style !== "column";
     const scale = R.scale;
     const stone = (x: number, z: number, species: string, level: number, y = 0) => {
       const frame = this.markerArt.atlas.frames[this.markerArt.frame(species, level)];
@@ -532,7 +537,10 @@ export class View {
       const A = R.awake, D = R.dormant;
       const strength = m.awake ? (A.light + A.lightBuild * build) * (0.55 + 0.45 * beat) : D.light;
       if (d < R.lightRange) near.push({ d, l: { x: m.x, y: 0.5, z: m.z + 1.5, reach: m.awake ? A.reach : D.reach, rgb: col, strength } });
-      beacons.push({ x: m.x, z: m.z, colour: col, strength: m.awake ? A.beam * (0.6 + 0.4 * beat) * (1 + build) : D.beam });
+      // Awake: a column of light (column), a thin laser straight up (beam), or both (Ed, v149: "let's
+      // see both"); dormant: only the faint column above the canopy.
+      if (!m.awake || column) beacons.push({ x: m.x, z: m.z, colour: col, strength: m.awake ? A.beam * (0.6 + 0.4 * beat) * (1 + build) : D.beam });
+      if (m.awake && laser) lasers.push({ x: m.x, z: m.z, colour: col, strength: R.laser.opacity * (0.55 + 0.45 * beat) * (0.7 + 0.6 * build), width: R.laser.width, height: R.laser.length });
       if (m.awake) {
         const n = Math.round(A.motes + A.moteBuild * build);
         for (let i = 0; i < n; i++) {
@@ -553,7 +561,7 @@ export class View {
     near.sort((p, q) => p.d - q.d);
     for (const n of near.slice(0, 8)) lights.push(n.l);
     this.markerBatch.set(inst);
-    this.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes);
+    this.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes, lasers);
     return lights;
   }
 
@@ -817,6 +825,16 @@ export class View {
     this.rulers.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, w.x, w.z);
     const df = g.map.dancefloor;
     this.music.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, df.x, df.z, w.x, w.z, time, t.beat.bpm, this.debugReadouts);
+    this.minimap.update(g.party, w.x, w.z);
+    // The next waking stone, when it's off screen.
+    {
+      const nx = g.party.next, cw = this.canvas.clientWidth || window.innerWidth, ch = this.canvas.clientHeight || window.innerHeight;
+      if (nx) {
+        const s = g.map.soundsystemSpot(nx[0], nx[1]), species = AREA_TYPES[g.map.typeOf(nx[0], nx[1])].creature;
+        const cd = waveCountdown(g.party, g.map, time);
+        this.nextStone.update(this.camera, cw, ch, { x: s.x, z: s.z, colour: this.markerArt.colour.get(species)! }, w.x, w.z, time, t.beat.bpm, g.party.paused ? 0 : cd.gone);
+      } else this.nextStone.update(this.camera, cw, ch, null, w.x, w.z, time, t.beat.bpm, 0);
+    }
     this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
     this.assets.work(6);
     // The ground's area tiles: everything the cameras can see, plus a band ahead.

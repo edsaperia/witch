@@ -1,8 +1,8 @@
-// The party spreads (Ed, 2026-10-03): at the start only home, the dancefloor's area, is partified.
-// Every `interval` seconds a wave comes: every area touching a partified area (sharing a border
-// in the fractal partition) gets a soundsystem and is partified too, so the party grows a ring of
-// areas at a time. Seeded and deterministic; no drawing here.
-import { hash2 } from "./random";
+// The party spreads (Ed): at the start only home, the dancefloor's area, is partified. Every
+// `interval` seconds a wave comes and wakes one area (Ed, v149), chosen as soon as the previous one
+// woke (see pickNext), which gets a soundsystem and is partified. Seeded and deterministic; no
+// drawing here.
+import { hash2, rng, vnoise } from "./random";
 import type { ForestMap } from "./map";
 import type { Cell } from "./partition";
 
@@ -26,13 +26,65 @@ export interface PartyState {
   /** Game time of the next wave. */
   nextAt: number;
   paused: boolean;
+  /** The area the next wave will wake (Ed, v149: one area a wave), chosen as soon as the previous
+   *  one woke, so the player knows where to go; null when every area has the party. */
+  next: Cell | null;
+  /** The area the last wave woke (the picker spreads away from it). */
+  last: Cell | null;
 }
 
 export const cellKey = (c: Cell) => `${c[0]},${c[1]}`;
 
 export function newParty(map: ForestMap): PartyState {
   const home: Partified = { cell: map.centreCell, wave: 0, at: 0, from: null, soundsystem: null };
-  return { areas: new Map([[cellKey(map.centreCell), home]]), wave: 0, nextAt: map.tuning.party.startDelay + map.tuning.party.interval, paused: false };
+  const p: PartyState = { areas: new Map([[cellKey(map.centreCell), home]]), wave: 0, nextAt: map.tuning.party.startDelay + map.tuning.party.interval, paused: false, next: null, last: null };
+  p.next = pickNext(p, map);
+  return p;
+}
+
+export type Picker = "noisy" | "near3" | "near3touch" | "nearest";
+
+/** Choose the area the next wave wakes, by the tuning's picker (?picker= in the URL):
+ *  - noisy (default): of the dormant areas bordering the party (no islands), the `candidates`
+ *    cheapest by distance to the dancefloor times a smooth seeded wobble (lobes, not a disc),
+ *    not beside the last pick if there's another, one at random;
+ *  - near3: of all the dormant areas, the 3 nearest the dancefloor, one at random;
+ *  - near3touch: the same among those bordering the party;
+ *  - nearest: the nearest dormant area bordering the party. */
+export function pickNext(p: PartyState, map: ForestMap, picker: Picker = map.tuning.party.picker as Picker, candidates?: Cell[]): Cell | null {
+  const d = map.dancefloor, N = map.tuning.party.noisy, r = rng(map.seed * 131 + p.wave * 7919 + 3);
+  const touching = new Set<string>();
+  for (const k of p.areas.keys()) for (const nk of map.neighbours.get(k) ?? []) if (!p.areas.has(nk)) touching.add(nk);
+  const dormant: { key: string; cell: Cell; dist: number }[] = [];
+  for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
+    const key = `${cx},${cy}`;
+    if (p.areas.has(key)) continue;
+    const s = map.soundsystemSpot(cx, cy);
+    dormant.push({ key, cell: [cx, cy], dist: Math.hypot(s.x - d.x, s.z - d.z) });
+  }
+  const frontier = dormant.filter(c => touching.has(c.key));
+  const pool = picker === "near3" ? dormant : frontier.length ? frontier : dormant;
+  if (!pool.length) return null;
+  if (picker === "nearest") { const c = [...pool].sort((a, b) => a.dist - b.dist)[0].cell; candidates?.push(c); return c; }
+  if (picker === "noisy") {
+    const L = N.lobeSize, s0 = map.seed + 911;
+    const cost = (c: { cell: Cell; dist: number }) => {
+      const site = map.siteOf(c.cell[0], c.cell[1]);
+      const n = 0.65 * vnoise(site.x / L, site.z / L, s0) + 0.35 * vnoise(site.x / (L / 2.3), site.z / (L / 2.3), s0 + 1);
+      return c.dist * (1 + N.wobble * (n - 0.5) * 2);
+    };
+    let best = [...pool].sort((a, b) => cost(a) - cost(b)).slice(0, Math.max(1, N.candidates));
+    if (N.spreadFromLast && p.last) {
+      const beside = map.neighbours.get(cellKey(p.last)) ?? new Set<string>();
+      const away = best.filter(c => !beside.has(c.key));
+      if (away.length) best = away;
+    }
+    candidates?.push(...best.map(c => c.cell));
+    return best[Math.floor(r() * best.length)].cell;
+  }
+  const three = [...pool].sort((a, b) => a.dist - b.dist).slice(0, 3);
+  candidates?.push(...three.map(c => c.cell));
+  return three[Math.floor(r() * three.length)].cell;
 }
 
 /** Where an area's soundsystem stands: in its clearing, beside its centre, inside its own ground. */
@@ -42,21 +94,20 @@ export function soundsystemFor(map: ForestMap, cell: Cell): Soundsystem {
   return { ...map.soundsystemSpot(cell[0], cell[1]), variant };
 }
 
-const inMap = (map: ForestMap, c: Cell) => c[0] >= 0 && c[1] >= 0 && c[0] < map.n && c[1] < map.n;
 
-/** The areas the next wave will partify, and where the party comes to each from: every area
- *  touching a partified one, in a seeded order, maxPerWave of them if the ring is too big. */
+/** The area the next wave will partify (one a wave, Ed v149), and where the party comes to it
+ *  from: its nearest partified neighbour, or home if none touches it. */
 export function nextWave(p: PartyState, map: ForestMap): { key: string; cell: Cell; from: Cell }[] {
-  const wave = p.wave + 1, candidates = new Map<string, { key: string; cell: Cell; from: Cell }>();
-  for (const [k, a] of p.areas) for (const nk of map.neighbours.get(k) ?? []) {
-    if (p.areas.has(nk) || candidates.has(nk)) continue;
-    const c = nk.split(",").map(Number) as unknown as Cell;
-    if (!inMap(map, c)) continue;
-    candidates.set(nk, { key: nk, cell: c, from: a.cell });
+  if (!p.next) return [];
+  const key = cellKey(p.next), site = map.siteOf(p.next[0], p.next[1]);
+  let from: Cell = map.centreCell, best = Infinity;
+  for (const nk of map.neighbours.get(key) ?? []) {
+    const a = p.areas.get(nk);
+    if (!a) continue;
+    const s = map.siteOf(a.cell[0], a.cell[1]), dd = Math.hypot(s.x - site.x, s.z - site.z);
+    if (dd < best) { best = dd; from = a.cell; }
   }
-  const list = [...candidates.values()].sort((a, b) => hash2(a.cell[0], a.cell[1], map.seed + wave) - hash2(b.cell[0], b.cell[1], map.seed + wave));
-  const max = map.tuning.party.maxPerWave > 0 ? map.tuning.party.maxPerWave : Infinity;
-  return list.slice(0, max);
+  return [{ key, cell: p.next, from }];
 }
 
 /** Spread the party one ring now. Returns the newly partified areas. */
@@ -68,6 +119,8 @@ export function spreadWave(p: PartyState, map: ForestMap, time: number): Partifi
     fresh.push(a);
   }
   p.wave = wave;
+  if (fresh.length) p.last = fresh[fresh.length - 1].cell;
+  p.next = pickNext(p, map); // chosen at once, so the next stone wakes now
   return fresh;
 }
 

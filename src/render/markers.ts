@@ -75,6 +75,8 @@ void main() {
 `;
 
 export interface Beacon { x: number; z: number; colour: THREE.Vector3; strength: number }
+/** A thin laser straight up from an awake stone (Ed, v149), like the disco ball's: width and height in metres. */
+export interface Laser { x: number; z: number; colour: THREE.Vector3; strength: number; width: number; height: number }
 export interface Mote { x: number; y: number; z: number; colour: THREE.Vector3; alpha: number }
 
 /** The columns of light over the stones (seen from the treetops) and the motes rising from them. */
@@ -82,6 +84,8 @@ export class MarkerFx {
   readonly group = new THREE.Group();
   private beams: THREE.InstancedMesh;
   private beamAttr: THREE.InstancedBufferAttribute;
+  private lasers: THREE.InstancedMesh;
+  private laserAttr: THREE.InstancedBufferAttribute;
   private motes: THREE.Points;
   private mPos: Float32Array;
   private mCol: Float32Array;
@@ -94,6 +98,13 @@ export class MarkerFx {
     this.beams = new THREE.InstancedMesh(geo, new THREE.ShaderMaterial({ vertexShader: BEAM_VERT, fragmentShader: BEAM_FRAG, uniforms: { uShown: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }), maxBeams);
     this.beams.frustumCulled = false;
     this.beams.renderOrder = 9;
+    // The lasers: the same shader on a thin cylinder, always shown (ground and treetop).
+    const lg = new THREE.CylinderGeometry(0.5, 0.5, 1, 6, 1, true);
+    this.laserAttr = new THREE.InstancedBufferAttribute(new Float32Array(maxBeams * 4), 4);
+    lg.setAttribute("iBeam", this.laserAttr);
+    this.lasers = new THREE.InstancedMesh(lg, new THREE.ShaderMaterial({ vertexShader: BEAM_VERT, fragmentShader: BEAM_FRAG, uniforms: { uShown: { value: 1 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }), maxBeams);
+    this.lasers.frustumCulled = false;
+    this.lasers.renderOrder = 9;
     this.mPos = new Float32Array(maxMotes * 3);
     this.mCol = new Float32Array(maxMotes * 4);
     const mg = new THREE.BufferGeometry();
@@ -101,11 +112,21 @@ export class MarkerFx {
     mg.setAttribute("color", new THREE.BufferAttribute(this.mCol, 4));
     this.motes = new THREE.Points(mg, new THREE.PointsMaterial({ size: 3, sizeAttenuation: false, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     this.motes.frustumCulled = false;
-    this.group.add(this.beams, this.motes);
+    this.group.add(this.beams, this.lasers, this.motes);
   }
 
   /** shown: how much the beacons show (0 on the ground, 1 at the treetops). */
-  update(beacons: Beacon[], height: number, shown: number, motes: Mote[]): void {
+  update(beacons: Beacon[], height: number, shown: number, motes: Mote[], lasers: Laser[] = []): void {
+    const nl = Math.min(this.maxBeams, lasers.length);
+    for (let i = 0; i < nl; i++) {
+      const b = lasers[i];
+      this.m4.makeScale(b.width, b.height, b.width).setPosition(b.x, b.height / 2 + 1.5, b.z);
+      this.lasers.setMatrixAt(i, this.m4);
+      this.laserAttr.setXYZW(i, b.colour.x, b.colour.y, b.colour.z, b.strength);
+    }
+    this.lasers.count = nl;
+    this.lasers.instanceMatrix.needsUpdate = true;
+    this.laserAttr.needsUpdate = true;
     const n = Math.min(this.maxBeams, beacons.length);
     for (let i = 0; i < n; i++) {
       const b = beacons[i];

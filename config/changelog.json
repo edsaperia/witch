@@ -7,7 +7,11 @@
         "The forest is dark again: the witch's light only reaches as far as the gap in the canopy round her, and the moonlight and twilight fill are lower",
         "Tree trunks fade out at the top in pixel steps where the crowns are hidden, instead of ending in a flat cut",
         "Paths, roads, tracks and streams fray out at their ends instead of stopping square",
-        "Creatures, soundsystems and the rune stones are never made see-through round the witch; only the scenery is"
+        "Creatures, soundsystems and the rune stones are never made see-through round the witch; only the scenery is",
+        "Each wave now wakes just one area, chosen as soon as the last one woke, bordering the party and spreading in lobes rather than a circle; its rune stone is the one that wakes",
+        "A new pixel cue at the screen's edge points to the next stone to wake, with its distance; the music cue is bigger and pixelled",
+        "Awake rune stones can show a thin laser straight up, a column of light, or both (?rune=beam|column|both)",
+        "M shows a minimap of the party's spread (debug)"
       ]
     },
     {

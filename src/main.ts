@@ -34,6 +34,12 @@ if (tilt === "off") tuning.tiltShift.on = false;
 else if (tilt === "before" || tilt === "after") { tuning.tiltShift.on = true; tuning.tiltShift.where = tilt; }
 if (params.get("bloom") === "off") tuning.bloom.on = false;
 if (params.get("moonbeams") === "on") tuning.moonbeams = 1;
+// ?rune=beam|column|both: how an awake rune stone shows above it.
+const runeParam = params.get("rune");
+if (runeParam && ["beam", "column", "both"].includes(runeParam)) tuning.runeMarkers = { ...tuning.runeMarkers, awakeStyle: runeParam };
+// ?picker=noisy|near3|near3touch|nearest: how the party picks the next area to wake.
+const pickerParam = params.get("picker");
+if (pickerParam && ["noisy", "near3", "near3touch", "nearest"].includes(pickerParam)) tuning.party.picker = pickerParam;
 // ?glow=<reach>,<falloff>: the witch's glow, to tune live (e.g. ?glow=50,2.5).
 const glowParam = params.get("glow")?.split(",").map(Number);
 if (glowParam && glowParam[0] > 0) { tuning.glowReach = glowParam[0]; tuning.glowFixed = true; }
@@ -77,6 +83,8 @@ setupTouch(document.body, input.touch);
 view.rulers.on = params.has("debug");
 const toggleRulers = () => { view.rulers.on = !view.rulers.on; };
 window.addEventListener("keydown", e => { if (e.code === "KeyG" && !e.repeat) toggleRulers(); });
+// M: the debug minimap (the party's spread: woken areas, the next to wake, the candidates).
+window.addEventListener("keydown", e => { if (e.code === "KeyM" && !e.repeat) view.minimap.on = !view.minimap.on; });
 document.getElementById("rulers")!.addEventListener("pointerdown", e => { e.preventDefault(); toggleRulers(); });
 
 // The controls hint in the corner: H shows or hides it (remembered on this browser).
