@@ -18,6 +18,7 @@ import { hash2 } from "../rules/random";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
+import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, placed } from "./height";
 
 const SLOT = 32, SLOTS = 16; // the glyph atlas: 16 x 16 slots of 32 px; slot 0 is a soft dot
 
@@ -33,12 +34,14 @@ varying vec2 vUv, vP;
 varying vec4 vCol;
 varying float vDraw;
 varying vec3 vWorld;
+${HEIGHT_VERT_GLSL}
 void main() {
   vec2 p = position.xy;
-  vec3 w = uFlat > 0.5 ? iPos + vec3(p.x * iSize, 0.04, -p.y * iSize) : iPos + uRight * (p.x * iSize) + uUp * (p.y * iSize);
+  // On the rolling ground: a rune lying flat follows it corner by corner; the rest stand above it.
+  vec3 w = uFlat > 0.5 ? onGround(iPos + vec3(p.x * iSize, 0.04, -p.y * iSize)) : onGround(iPos) + uRight * (p.x * iSize) + uUp * (p.y * iSize);
   vUv = vec2(mix(iUv.x, iUv.z, uv.x), mix(iUv.w, iUv.y, uv.y));
   vP = p; vCol = iCol; vDraw = iDraw; vWorld = w;
-  gl_Position = projectionMatrix * viewMatrix * vec4(w, 1.0);
+  gl_Position = clipOf(w);
 }`;
 
 const FRAG = /* glsl */ `
@@ -125,7 +128,7 @@ export class LeashView {
     this.tex.magFilter = THREE.NearestFilter; this.tex.minFilter = THREE.NearestFilter; this.tex.generateMipmaps = false;
     const mat = (flat: number) => new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
-      uniforms: { ...LIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uFlat: { value: flat }, uGlyphs: { value: this.tex } },
+      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uFlat: { value: flat }, uGlyphs: { value: this.tex } },
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     });
     this.standing = new Instances(mat(0));
@@ -304,7 +307,7 @@ export class LeashView {
     const g = this.game, talk = g.leash.talk, bw = this.bubbleWitch, bc = this.bubbleCreature;
     if (!bw || !bc) return;
     const w = g.witch, place = (el: HTMLElement, x: number, y: number, z: number) => {
-      this.v.set(x, y, z).project(camera);
+      placed(this.v.set(x, y, z)).project(camera);
       el.style.left = `${((this.v.x + 1) / 2) * width}px`;
       el.style.top = `${((1 - this.v.y) / 2) * height}px`;
     };

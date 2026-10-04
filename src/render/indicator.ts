@@ -10,13 +10,14 @@
 // Directions are in screen space, y down: an angle a points along (cos a, sin a) on the canvas.
 import * as THREE from "three";
 import { sigilGlyph } from "../../art/generator.js";
+import { placed } from "./height";
 
 const N = 40; // art pixels across
 const SCALE = 4; // screen pixels per art pixel
 
 /** Where on the screen's edge to put a cue for (x, z), and how much it shows (0 when on screen). */
 function edgeSpot(v: THREE.Vector3, camera: THREE.Camera, width: number, height: number, x: number, z: number) {
-  const p = v.set(x, 1, z).project(camera);
+  const p = placed(v.set(x, 1, z)).project(camera); // on the rolling ground, bent as drawn
   const inside = Math.max(Math.abs(p.x), Math.abs(p.y));
   const show = p.z < 1 ? Math.min(1, Math.max(0, (inside - 0.9) / 0.25)) : 1;
   let dx = p.x, dy = p.y;

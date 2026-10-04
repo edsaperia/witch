@@ -6,6 +6,7 @@
 // party comes, the stone flares and sinks into the ground as its soundsystem arrives.
 // The art (frames), the beacons and the motes; which stones to draw is the view's.
 import * as THREE from "three";
+import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import * as Art from "../../art/generator.js";
 import { AREA_TYPES } from "../rules/map";
 import type { Tuning } from "../rules/tuning";
@@ -68,10 +69,14 @@ const BEAM_VERT = /* glsl */ `
 attribute vec4 iBeam; // colour rgb, strength
 varying vec4 vBeam;
 varying float vY;
+${HEIGHT_VERT_GLSL}
 void main() {
   vBeam = iBeam;
   vY = position.y + 0.5;
-  gl_Position = projectionMatrix * viewMatrix * modelMatrix * instanceMatrix * vec4(position, 1.0);
+  // Rising from the rolling ground at its foot (height.ts).
+  vec3 w = (modelMatrix * instanceMatrix * vec4(position, 1.0)).xyz;
+  w.y += groundH((modelMatrix * instanceMatrix * vec4(0.0, -0.5, 0.0, 1.0)).xz);
+  gl_Position = clipOf(w);
 }
 `;
 const BEAM_FRAG = /* glsl */ `
@@ -83,6 +88,18 @@ void main() {
   if (a < 0.003) discard;
   gl_FragColor = vec4(vBeam.rgb * a, 1.0);
 }
+`;
+
+// The motes: 3-pixel points in their own colour, over the rolling ground.
+const MOTE_VERT = /* glsl */ `
+attribute vec4 color;
+varying vec4 vCol;
+${HEIGHT_VERT_GLSL}
+void main() { vCol = color; gl_Position = clipOf(onGround(position)); gl_PointSize = 3.0; }
+`;
+const MOTE_FRAG = /* glsl */ `
+varying vec4 vCol;
+void main() { gl_FragColor = vCol; } // additive: rgb times alpha, as the points material did
 `;
 
 /** base: the height (metres) it rises from, the top of its stone. */
@@ -107,14 +124,14 @@ export class MarkerFx {
     const geo = new THREE.CylinderGeometry(0.5, 0.5, 1, 8, 1, true);
     this.beamAttr = new THREE.InstancedBufferAttribute(new Float32Array(maxBeams * 4), 4);
     geo.setAttribute("iBeam", this.beamAttr);
-    this.beams = new THREE.InstancedMesh(geo, new THREE.ShaderMaterial({ vertexShader: BEAM_VERT, fragmentShader: BEAM_FRAG, uniforms: { uShown: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }), maxBeams);
+    this.beams = new THREE.InstancedMesh(geo, new THREE.ShaderMaterial({ vertexShader: BEAM_VERT, fragmentShader: BEAM_FRAG, uniforms: { ...HEIGHT_UNIFORMS, uShown: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }), maxBeams);
     this.beams.frustumCulled = false;
     this.beams.renderOrder = 9;
     // The lasers: the same shader on a thin cylinder, always shown (ground and treetop).
     const lg = new THREE.CylinderGeometry(0.5, 0.5, 1, 6, 1, true);
     this.laserAttr = new THREE.InstancedBufferAttribute(new Float32Array(maxBeams * 4), 4);
     lg.setAttribute("iBeam", this.laserAttr);
-    this.lasers = new THREE.InstancedMesh(lg, new THREE.ShaderMaterial({ vertexShader: BEAM_VERT, fragmentShader: BEAM_FRAG, uniforms: { uShown: { value: 1 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }), maxBeams);
+    this.lasers = new THREE.InstancedMesh(lg, new THREE.ShaderMaterial({ vertexShader: BEAM_VERT, fragmentShader: BEAM_FRAG, uniforms: { ...HEIGHT_UNIFORMS, uShown: { value: 1 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }), maxBeams);
     this.lasers.frustumCulled = false;
     this.lasers.renderOrder = 9;
     this.mPos = new Float32Array(maxMotes * 3);
@@ -122,7 +139,7 @@ export class MarkerFx {
     const mg = new THREE.BufferGeometry();
     mg.setAttribute("position", new THREE.BufferAttribute(this.mPos, 3));
     mg.setAttribute("color", new THREE.BufferAttribute(this.mCol, 4));
-    this.motes = new THREE.Points(mg, new THREE.PointsMaterial({ size: 3, sizeAttenuation: false, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    this.motes = new THREE.Points(mg, new THREE.ShaderMaterial({ vertexShader: MOTE_VERT, fragmentShader: MOTE_FRAG, uniforms: { ...HEIGHT_UNIFORMS }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     this.motes.frustumCulled = false;
     this.group.add(this.beams, this.lasers, this.motes);
   }

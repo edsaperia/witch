@@ -11,6 +11,7 @@ import type { ForestMap } from "../rules/map";
 import type { Tuning } from "../rules/tuning";
 import { tuftsInCell, TUFT_KINDS, type Tuft } from "../rules/groundcover";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
+import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { SPRITE_UNIFORMS } from "./sprites";
 
 const PX = 12; // a tuft's sprite, art pixels square
@@ -48,9 +49,10 @@ attribute vec2 iCell;       // atlas column (kind * variants + variant), unused
 varying vec2 vUv;
 varying vec3 vColour;
 varying vec3 vWorld;
+${HEIGHT_VERT_GLSL}
 void main() {
   float s = iTuft.z * ${PX}.0 * uGrass.x;
-  vec3 base = vec3(iTuft.x, 0.0, iTuft.y);
+  vec3 base = onGround(vec3(iTuft.x, 0.0, iTuft.y)); // on the rolling ground
   vec3 w = base + uRight * (position.x * s) + uUp * (position.y * s);
   float top = uv.y;
   // The same wind as the trees, stronger for their size.
@@ -71,8 +73,8 @@ void main() {
   vUv = vec2((iCell.x + u) / iCell.y, uv.y);
   vColour = iColour;
   vWorld = w;
-  gl_Position = projectionMatrix * viewMatrix * vec4(w, 1.0);
-  vec4 b = projectionMatrix * viewMatrix * vec4(base, 1.0);
+  gl_Position = clipOf(w);
+  vec4 b = clipOf(base);
   vec2 ndc = b.xy / b.w, snapped = (floor((ndc * 0.5 + 0.5) * uRes) + 0.5) / uRes * 2.0 - 1.0;
   gl_Position.xy += (snapped - ndc) * gl_Position.w;
 }`;
@@ -125,7 +127,7 @@ export class GrassView {
     this.geo.instanceCount = 0;
     this.mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
-      uniforms: { ...LIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uRes: SPRITE_UNIFORMS.uRes, uWind: SPRITE_UNIFORMS.uWind,
+      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uRes: SPRITE_UNIFORMS.uRes, uWind: SPRITE_UNIFORMS.uWind,
         uTufts: { value: tex }, uPart: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) },
         uGrass: { value: new THREE.Vector4(metresPerPixel, t.groundCover.sway, t.groundCover.part, 0) }, uFade: { value: new THREE.Vector4() } },
     });

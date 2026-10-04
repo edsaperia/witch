@@ -5,6 +5,7 @@
 // a stronger line every 50 m; and a readout of the camera's height and the ground width across
 // the screen. Redrawn every frame, so it's right at every zoom and in both modes. G toggles it.
 import * as THREE from "three";
+import { placed } from "./height";
 
 export class Rulers {
   private canvas = document.createElement("canvas");
@@ -31,7 +32,7 @@ export class Rulers {
     this.canvas.style.display = this.on ? "block" : "none";
     if (!this.on) return;
     if (this.canvas.width !== width || this.canvas.height !== height) { this.canvas.width = width; this.canvas.height = height; }
-    const g = this.g, scr = (x: number, z: number) => { const p = this.v.set(x, 0, z).project(camera); return [((p.x + 1) / 2) * width, ((1 - p.y) / 2) * height, p.z] as const; };
+    const g = this.g, scr = (x: number, z: number) => { const p = placed(this.v.set(x, 0, z)).project(camera); return [((p.x + 1) / 2) * width, ((1 - p.y) / 2) * height, p.z] as const; };
     g.clearRect(0, 0, width, height);
     const line = (x0: number, y0: number, x1: number, y1: number, a: number) => {
       g.strokeStyle = "rgba(0,0,0,0.6)"; g.lineWidth = 3; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
