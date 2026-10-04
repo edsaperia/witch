@@ -115,7 +115,7 @@ export class View {
     this.camera = new THREE.PerspectiveCamera(t.camera.fov, 1, 1, 900);
     this.post = new Post(this.renderer, t);
     this.scene.background = new THREE.Color(0x0b0a16);
-    applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams }, t.glowReach, this.mpp, t.tone.ambient, t.glowFalloff);
+    applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams }, t.glowReach, this.mpp, t.tone.ambient, t.glowFalloff, t.tone.moon);
     LIGHT_UNIFORMS.uGlowPower.value = t.glowPower;
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize);
     this.ground = new Ground(game.map, game.forest, style, this.mpp);
@@ -135,7 +135,7 @@ export class View {
     LIGHT_UNIFORMS.uHazeRange.value.set(t.haze.near, t.haze.far);
     this.ground.mesh.renderOrder = -1; // first: the grounds' decals go on it before anything stands on it
     this.scene.add(this.ground.mesh);
-    this.scene.add(new PathView(game.map, style, this.mpp).group);
+    this.scene.add(new PathView(game.map, style, this.mpp, t.pathFade.metres).group);
 
     // The witch is depth-tested like everything else, drawn after it; where something still hides
     // her, a silhouette in her glow colour shows through, and tall things in front of her fade.
@@ -153,9 +153,9 @@ export class View {
     }
     // Spawn markers: gameplay (always drawn in range, never budget-culled).
     this.markerArt = new MarkerArt(style, t);
-    this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { fade: true });
+    this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true });
     this.scene.add(...this.markerBatch.meshes, this.markerFx.group);
-    this.stoneBatch = new SpriteBatch(this.assets.stones, this.mpp, { fade: true });
+    this.stoneBatch = new SpriteBatch(this.assets.stones, this.mpp, { solid: true });
     this.scene.add(...this.stoneBatch.meshes);
     const d = game.map.dancefloor, stones: SpriteInstance[] = [];
     const n = game.tuning.dancefloor.stones;
@@ -171,7 +171,7 @@ export class View {
     this.leashView = new LeashView(this.scene, game);
     this.lasers = new Lasers(this.scene, game);
     this.borders = new BorderView(this.scene, game);
-    this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp, { fade: true });
+    this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp, { solid: true });
     this.scene.add(...this.soundBatch.meshes);
     this.dancefloor = new Dancefloor(game.map, t, SPRITE_UNIFORMS, this.mpp);
     this.scene.add(this.dancefloor.ball, this.dancefloor.beam, this.dancefloor.motes);
@@ -390,7 +390,7 @@ export class View {
       const tall = whole.h * mpp, C = t.treeCap, scale = tall > C.from ? (C.from + (tall - C.from) * C.keep) / tall : 1;
       const fresh = this.mark("tree", p.x, p.z, tall * scale);
       const at = stand(p.x, p.z, f[big.bot], mpp * scale);
-      add(p.type, { ...at, frame: f[big.bot], flip: p.flip, fresh, scale });
+      add(p.type, { ...at, frame: f[big.bot], flip: p.flip, fresh, scale, cut: big.top !== null ? art.cut.get(big.bot) : undefined });
       if (big.top !== null) add(p.type, { ...at, frame: f[big.top], flip: p.flip, top: true, fresh, scale });
       const w = whole.w * mpp, h = whole.h * mpp * (big.top === null ? 0.2 : 0.6);
       if (t.shadows.trees) shadows.push({ x: p.x + sx * h, z: p.z + sz * h, w: w * 0.8, d: w * 0.45, scenery: true });
@@ -584,7 +584,7 @@ export class View {
     }
     for (const [s, b] of this.creatureBatches) if (!per.has(s)) b.set([]);
     for (const [s, list] of per) {
-      const b = this.batchFor(this.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, this.mpp); });
+      const b = this.batchFor(this.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, this.mpp, { solid: true }); }); // creatures stay solid round her (Ed, v149)
       b?.set(list);
     }
     this.stats.creatures = n;
@@ -707,6 +707,16 @@ export class View {
     const ws = this.v3.set(g.witch.x, witchHeight(g.witch, t) * 0.5, g.witch.z).project(this.camera);
     SPRITE_UNIFORMS.uCutout.value.set((ws.x * 0.5 + 0.5) * this.width, (ws.y * 0.5 + 0.5) * this.height, 0.5 * cut.screenFraction * this.width * (1 - lifted), Math.max(1, cut.edge * this.width * (1 - lifted)));
     SPRITE_UNIFORMS.uTopFade.value = lifted;
+    SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, this.mpp);
+    // The witch's glow reaches as far as the ground-mode canopy hole round her (Ed, v149: "about
+    // the width of the canopy hiding circle"): the hole's radius plus its soft edge, in metres at
+    // her depth, times glowToCutout; beyond it the forest is dark. ?glow= fixes it instead.
+    if (!t.glowFixed) {
+      const wx = g.witch.x, wz = g.witch.z, R = SPRITE_UNIFORMS.uRight.value;
+      const a = this.v3.set(wx, 0, wz).project(this.camera).x, b = this.v3.set(wx + R.x * 10, 0, wz + R.z * 10).project(this.camera).x;
+      const pxPerM = Math.max(1e-3, (Math.abs(b - a) * 0.5 * this.width) / 10);
+      LIGHT_UNIFORMS.uGlowR.value = ((0.5 * cut.screenFraction + cut.edge) * this.width / pxPerM) * t.glowToCutout;
+    }
     SPRITE_UNIFORMS.uDebugCull.value = this.debugCull ? 1 : 0;
 
     const w = g.witch, h = witchHeight(w, t);

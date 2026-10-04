@@ -8,7 +8,12 @@ import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
 import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PathPieceArt, type RelicArt, type RelicLayouts, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 
-export interface TypeArt { atlas: Atlas; layout: TypeLayout }
+export interface TypeArt {
+  atlas: Atlas; layout: TypeLayout;
+  /** For each tree's bottom-half frame: where its trunk was cut from the crown, as a share of the
+   *  frame's height from its top (the trunk fades out below it in ground mode, Ed v149). */
+  cut: Map<number, number>;
+}
 export interface RelicSet { atlas: Atlas; byId: Record<string, RelicArt>; modern: RelicArt[]; layouts: RelicLayouts }
 export interface DecorArt { atlas: Atlas; pieces: DecorPiece[]; families: Record<string, DecorPiece[]> }
 export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number }
@@ -140,7 +145,16 @@ export class AssetLibrary {
       for (const p of pieces) (families[p.family] ??= []).push(p);
       this.decor = { atlas, pieces, families };
     } else if (r.job.kind === "type") {
-      this.types.set(r.job.id, { atlas, layout: r.result.layout! });
+      // Each tree's cut: the lowest drawn row of its top half (both halves share the frame's box).
+      const px = r.result.px, cut = new Map<number, number>();
+      for (const p of r.result.layout!.big) {
+        if (p.top === null) continue;
+        const f = px.frames[p.top], x0 = Math.round(f.uv[0] * px.width), y0 = Math.round(f.uv[1] * px.height);
+        let row = -1;
+        for (let y = f.h - 1; y >= 0 && row < 0; y--) for (let x = 0; x < f.w; x++) if (px.albedo[((y0 + y) * px.width + x0 + x) * 4 + 3] > 0) { row = y; break; }
+        if (row >= 0) cut.set(p.bot, (row + 1) / f.h);
+      }
+      this.types.set(r.job.id, { atlas, layout: r.result.layout!, cut });
       if (r.result.floor) this.onFloor(r.job.id, r.result.floor);
     } else this.creatures.set(r.job.id, { atlas, frame: creatureFrame });
     this.inFlight.delete(this.key(r.job));

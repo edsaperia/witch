@@ -30,6 +30,8 @@ export const SPRITE_UNIFORMS = {
   uPartyCol: { value: Array.from({ length: 16 }, () => new THREE.Vector3()) },
   uPartyCount: { value: 0 },
   uUplight: { value: new THREE.Vector4() },
+  /** The trunk fade: metres covered (0 off), metres per art pixel. */
+  uTrunkFade: { value: new THREE.Vector2(0, 0.125) },
 };
 
 const VERT = /* glsl */ `
@@ -45,6 +47,8 @@ varying vec2 vUv;
 varying vec3 vWorld;
 varying vec3 vFlags;
 varying float vFront;
+varying vec2 vLocal;
+varying float vSizeY;
 void main() {
   // Tall and nearer the camera than the witch: it may stand in front of her.
   // Eased over a few metres of depth and of height, so nothing snaps into the fade as she moves.
@@ -53,6 +57,8 @@ void main() {
   float u = iFlags.x > 0.5 ? 1.0 - uv.x : uv.x;
   vUv = vec2(mix(iUv.x, iUv.z, u), mix(iUv.w, iUv.y, uv.y));
   vFlags = iFlags;
+  vLocal = uv;
+  vSizeY = iSize.y;
   vWorld = w;
   gl_Position = projectionMatrix * viewMatrix * vec4(w, 1.0);
   // Snap the whole sprite by its base to the pixel grid, so it moves a whole pixel at a time and
@@ -71,7 +77,7 @@ uniform vec4 uCutout;
 uniform float uDebugCull, uIsScenery;
 uniform vec4 uWitch, uOcc, uSilhouette;
 uniform float uFadePass;
-uniform float uFlat; // lies flat on the ground (a court's decal): never stands in front of her
+uniform float uFlat; // lies flat on the ground (a court's decal), or gameplay that stays solid: never cut away round her
 uniform vec4 uParty[16];
 uniform vec3 uPartyCol[16];
 uniform int uPartyCount;
@@ -80,6 +86,9 @@ varying vec2 vUv;
 varying vec3 vWorld;
 varying vec3 vFlags;
 varying float vFront;
+varying vec2 vLocal;
+varying float vSizeY;
+uniform vec2 uTrunkFade; // metres of trunk the fade covers, metres per art pixel
 ${LIGHT_GLSL}
 // 4x4 ordered dither, for fading the canopy in pixel-art style.
 float bayer(vec2 p) {
@@ -108,6 +117,17 @@ void shade() {
     float shown = max(smoothstep(uCutout.z - uCutout.w, uCutout.z, d), uTopFade);
     if (uSmooth > 0.5) { if (shown < 0.004) discard; alpha *= shown; }
     else if (bayer(gl_FragCoord.xy) >= shown) discard;
+  }
+  if (vFlags.y < -0.001 && uTrunkFade.x > 0.0) {
+    // A trunk cut from its crown (Ed, v149: "fade out instead of just stop"): where the crowns are
+    // hidden, its top fades out over uTrunkFade.x metres in an ordered dither on the art's own
+    // pixel grid; where the crowns show, it stays whole under them.
+    float d = length(gl_FragCoord.xy - uCutout.xy);
+    float crown = max(smoothstep(uCutout.z - uCutout.w, uCutout.z, d), uTopFade);
+    float topY = 1.0 + vFlags.y, band = uTrunkFade.x / max(vSizeY, 0.01);
+    float t = clamp((topY - vLocal.y) / band, 0.0, 1.0);
+    vec2 artPx = vec2(floor(vUv.x * float(textureSize(uAlbedo, 0).x)), floor(vLocal.y * vSizeY / uTrunkFade.y));
+    if (bayer(artPx) >= max(t, crown)) discard;
   }
   // Eye glints, flowers and magic glow: the generator marks them with alpha 254.
   if (uDebugCull > 0.5 && vFlags.z > 0.5) { gl_FragColor = vec4(1.0, 0.0, 0.0, alpha); return; }
@@ -144,7 +164,7 @@ void main() {
 }
 `;
 
-export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** Drawn this much bigger (1 if left out). */ scale?: number }
+export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number }
 
 export class SpriteBatch {
   readonly mesh: THREE.Mesh;
@@ -160,7 +180,7 @@ export class SpriteBatch {
   count = 0;
 
   /** metresPerPixel: world size of one art pixel. */
-  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number } } = {}) {
+  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; /** Gameplay (creatures, soundsystems, markers...): never faded or cut away round the witch (Ed, v149). */ solid?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number } } = {}) {
     const quad = new THREE.PlaneGeometry(1, 1);
     quad.translate(0, 0.5, 0); // stand on the base
     this.geo = new THREE.InstancedBufferGeometry();
@@ -169,7 +189,7 @@ export class SpriteBatch {
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.pos = this.size = this.uvs = this.flags = undefined as never;
     this.grow(64);
-    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uFadePass: { value: 0 }, uFlat: { value: opts.flat ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, ...extra });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uFadePass: { value: 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, ...extra });
     // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
     // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
     const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};
@@ -224,7 +244,7 @@ export class SpriteBatch {
       const k = it.scale ?? 1;
       S[i * 2] = it.frame.w * this.metresPerPixel * k; S[i * 2 + 1] = it.frame.h * this.metresPerPixel * k;
       U.set(it.frame.uv, i * 4);
-      F[i * 3] = it.flip ? 1 : 0; F[i * 3 + 1] = it.top ? 1 : 0; F[i * 3 + 2] = it.fresh ? 1 : 0;
+      F[i * 3] = it.flip ? 1 : 0; F[i * 3 + 1] = it.top ? 1 : it.cut ? -it.cut : 0; F[i * 3 + 2] = it.fresh ? 1 : 0;
     });
     for (const a of [this.pos, this.size, this.uvs, this.flags]) a.needsUpdate = true;
     this.count = items.length;

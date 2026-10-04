@@ -55,6 +55,10 @@ export interface Tuning {
   pixelSize: number;
   glowReach: number;
   glowFalloff: number;
+  /** The glow reaches the canopy hole's edge times this (Ed, v149); off when ?glow= fixes the reach. */
+  glowToCutout: number;
+  /** Set by ?glow=: use glowReach as it is. */
+  glowFixed?: boolean;
   glowHeight: number;
   spriteTilt: number;
   artPixelsPerMetre: number;
@@ -83,6 +87,8 @@ export interface Tuning {
   /** How mist, far haze and canopy dapple are drawn: smooth gradients, or dithered pixel steps. */
   fx: "smooth" | "pixel";
   moonbeams: number;
+  trunkFade: { metres: number; dither: boolean };
+  pathFade: { metres: number; dither: boolean };
   runeMarkers: { scale: number; beamHeight: number; lightRange: number; dormant: { glow: number; light: number; reach: number; beam: number }; awake: { glow: number[]; light: number; lightBuild: number; reach: number; beam: number; motes: number; moteBuild: number }; flare: { time: number; light: number } };
   walls: { runs: number[]; runLength: number[]; gateChance: number; rings: number[]; ringStones: number[]; ringRadius: number[]; avenueChance: number; loneChance: number; clumps: number[]; clumpSize: number[]; clumpRadius: number };
   grounds: { chance: number; kinds: string[]; radius: Record<string, number> };
@@ -104,7 +110,7 @@ export interface Tuning {
   invite: { talkRange: number; cancelDistance: number; talkTime: number[]; turn: number[]; decayRate: number };
   leash: { length: number; runSpeed: number; pickRadius: number; spacing: number };
   bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number };
-  tone: { black: number; gamma: number; ambient: number };
+  tone: { black: number; gamma: number; ambient: number; moon: number };
   bloom: { on: boolean; strength: number; threshold: number };
   tiltShift: { on: boolean; where: "before" | "after"; strength: number; band: number; centre: number };
   creaturesNear: number;

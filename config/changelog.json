@@ -4,6 +4,15 @@
     {
       "version": null,
       "items": [
+        "The forest is dark again: the witch's light only reaches as far as the gap in the canopy round her, and the moonlight and twilight fill are lower",
+        "Tree trunks fade out at the top in pixel steps where the crowns are hidden, instead of ending in a flat cut",
+        "Paths, roads, tracks and streams fray out at their ends instead of stopping square",
+        "Creatures, soundsystems and the rune stones are never made see-through round the witch; only the scenery is"
+      ]
+    },
+    {
+      "version": 154,
+      "items": [
         "Nothing floats any more: trees, rocks, ruins, the treehouse and set pieces all stand on the ground, and big scenery keeps clear of the soundsystems",
         "Fewer ruins, rocks, relics, stairs and bridges: each is a find now, not clutter",
         "The witch's own light is a tighter pool round her that fades out within about 40 m (try ?glow=50,2.5 to tune it)",
