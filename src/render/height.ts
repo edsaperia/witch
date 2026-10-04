@@ -26,8 +26,8 @@ export const RES = 2;
 export const N = 400;
 const STEP = 8;
 /** How far beyond its edge a path levels the ground, and the plateaus' easing (metres). */
-const PATH_EDGE = 3;
-const PLATEAU_FADE = 10;
+const PATH_EDGE = 6;
+const PLATEAU_FADE = 16;
 const BUCKET = 64;
 
 /** The hills' raw noise at (x, z): centred on 0, between -amplitude and +amplitude. */
@@ -181,6 +181,11 @@ export class HeightField {
       const l = P.lines[hit.line], a = l.pts[hit.seg], b = l.pts[hit.seg + 1];
       const ex = b[0] - a[0], ez = b[1] - a[1], u = Math.min(1, Math.max(0, ((x - a[0]) * ex + (z - a[1]) * ez) / (ex * ex + ez * ez || 1)));
       h += (this.plateaued(a[0] + ex * u, a[1] + ez * u) - h) * (1 - smoothstep((hit.d - l.half) / PATH_EDGE));
+      // A plateau's level core still wins over a path's easing (eased back over PATH_EDGE at its edge).
+      for (const c of this.circles.get(`${Math.floor(x / BUCKET)},${Math.floor(z / BUCKET)}`) ?? []) {
+        const d = Math.hypot(x - c.x, z - c.z);
+        if (d < c.r + PATH_EDGE) h += (c.h - h) * (1 - smoothstep((d - c.r) / PATH_EDGE));
+      }
     }
     return h;
   }
