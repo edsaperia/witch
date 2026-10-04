@@ -109,12 +109,22 @@ const assets = await b.page.evaluate(async ({ style, seed }) => {
     // its trees across a range of heights: each whole, and split into the crown (top, cut out from the treetops) and the trunk (bottom)
     G.areaTreeVariants(A.id, st).forEach((v, i) => { for (const [part, b] of [["whole", v.whole], ["top", v.top], ["bottom", v.bot]]) list.push({ id: `area-${A.id}-tree-${i}${part === "whole" ? "" : "-" + part}`, kind: "area-tree", area: A.id, variant: i, part, species: v.species, heightClass: v.heightClass, weight: v.weight, scale: v.scale, metres: v.metres, crownY: v.crownY, frame: 0, w: b.w, h: b.h, anchor: { x: b.w / 2, y: b.h }, albedo: png(b.A), normal: png(b.N) }); });
   }
+  // the hero dancefloor's looks: the unlit tile, the lit tile at three intensities (white, to tint), the grout, the rim strip and the whole unlit floor
+  const dl = { kind: "dancefloor", ground: true, frame: 0 };
+  push({ ...dl, id: "dancefloor-tile-unlit", part: "tile", lit: 0, anchorX: 0 }, G.discoTileSprite("unlit"), G.discoColours(), "none");
+  for (const l of [1, 2, 3]) push({ ...dl, id: `dancefloor-tile-lit-${l}`, part: "tile", lit: l, tint: true, anchorX: 0 }, G.discoTileSprite("lit", { level: l }), G.discoColours(l), "none");
+  push({ ...dl, id: "dancefloor-grout", part: "grout", anchorX: 0 }, G.discoGroutSprite(), G.discoColours(), "none");
+  push({ ...dl, id: "dancefloor-rim", part: "rim", period: G.DISCO_RIM.period, anchorX: 0 }, G.discoRimStrip(G.DISCO_RIM.period), G.discoRimColours(), "none");
+  const fb = G.discoFloorBase(); push({ ...dl, id: "dancefloor-base", part: "base", centre: fb.centre, gridOrigin: fb.gridOrigin, pitch: fb.pitch, rimInner: fb.rimInner, rimOuter: fb.rimOuter, anchorX: fb.centre }, fb.sp, { ...G.discoColours(), ...G.discoRimColours() }, "none");
+  const dancefloor = { grid: G.DISCO_GRID, radius: G.DISCO_RADIUS, tileMetres: G.DISCO_TILE_METRES, ppm: G.DISCO_PPM, tilePx: G.DISCO_TILE_PX, pitchPx: G.DISCO_PITCH, rim: G.DISCO_RIM, neon: G.NEON, look: G.DISCO_LOOK,
+    mask: Array.from(G.DISCO_MASK).join(""), transitions: G.DISCO_TRANSITIONS,
+    patterns: G.discoPatterns().map(p => ({ id: p.id, name: p.name, kind: p.kind, level: p.level, beats: p.beats, fpb: p.fpb, palette: p.palette, key: p.key, ...(p.area ? { area: p.area, creature: p.creature } : {}), frames: p.frames.map(f => Array.from(f).join("")) })) };
   // sigils: an SVG and a 64 px PNG each, with their strokes (in writing order) for the manifest
   const sigils = G.SIGIL_IDS.map(id => {
     const c = document.createElement("canvas"); c.width = c.height = 64; G.drawSigil(c.getContext("2d"), id, { size: 64, glow: 4 });
     return { id: `sigil-${id}`, species: id, neon: G.SIGIL_NEON[id], colour: G.sigilColour(id), svg: G.sigilSVG(id, { size: 64 }), levels: [0, 1, 2, 3].map(level => G.sigilSVG(id, { size: 128, level })), levelPngs: [0, 1, 2, 3].map(level => { const k = document.createElement("canvas"); k.width = k.height = 64; G.drawSigil(k.getContext("2d"), id, { size: 64, level, glow: 4 }); return png(k); }), png: png(c), strokes: G.SIGILS[id] };
   });
-  return { list, sigils, sigilFormat: { box: "unit square, x right, y down", stroke: G.SIGIL_STROKE, dot: G.SIGIL_DOT, drawTime: G.SIGIL_DRAW_TIME, groundPitch: G.GROUND_PITCH, neon: G.NEON, levels: [0, 1, 2, 3].map(l => G.sigilFrame(l)), stack: G.STACK_TUNING, transitionTime: G.SIGIL_TRANSITION_TIME }, style: st, placement: { wallsBlock: G.WALLS_BLOCK, setPieceChance: G.SET_PIECE_CHANCE }, paths, areaPaths: G.areaPathKinds(), arrangements: G.relicLayouts(st), areas: G.AREAS.map(A => ({ id: A.id, name: A.name, creature: A.creature, by: A.by, text: A.text, layout: A.layout, rockTint: G.rockTint(A) })) };
+  return { list, sigils, dancefloor, sigilFormat: { box: "unit square, x right, y down", stroke: G.SIGIL_STROKE, dot: G.SIGIL_DOT, drawTime: G.SIGIL_DRAW_TIME, groundPitch: G.GROUND_PITCH, neon: G.NEON, levels: [0, 1, 2, 3].map(l => G.sigilFrame(l)), stack: G.STACK_TUNING, transitionTime: G.SIGIL_TRANSITION_TIME }, style: st, placement: { wallsBlock: G.WALLS_BLOCK, setPieceChance: G.SET_PIECE_CHANCE }, paths, areaPaths: G.areaPathKinds(), arrangements: G.relicLayouts(st), areas: G.AREAS.map(A => ({ id: A.id, name: A.name, creature: A.creature, by: A.by, text: A.text, layout: A.layout, rockTint: G.rockTint(A) })) };
 }, { style, seed });
 if (b.errors.length) console.error(b.errors.join("\n"));
 await b.close();
@@ -139,5 +149,7 @@ for (const sg of assets.sigils) {
   names.forEach((n, l) => { writeFileSync(join(out, `${sg.id}-${n}.svg`), sg.levels[l]); writeFileSync(join(out, `${sg.id}-${n}.png`), Buffer.from(sg.levelPngs[l], "base64")); lv[n] = { svg: `${sg.id}-${n}.svg`, png: `${sg.id}-${n}.png` }; });
   manifest.sigils.list.push({ id: sg.id, species: sg.species, neon: sg.neon, colour: sg.colour, files: { svg: `${sg.id}.svg`, png: `${sg.id}.png`, ...lv }, strokes: sg.strokes });
 }
+writeFileSync(join(out, "dancefloor.json"), JSON.stringify(assets.dancefloor));
+manifest.dancefloor = { file: "dancefloor.json", format: "the hero dancefloor's data for the tile-lighting engine: grid (32) x grid tiles, row by row; mask: 1 inside the circle; patterns: { id, name, kind (shape, loop, fill, area, boot), level (1 calm to 4 full rave), beats, fpb (frames per beat), palette (2 to 4 neon names; neon has their colours), key (the fullest frame), area and creature for an area's own shape, frames: one string of grid x grid digits each, 0 off, k = palette[k - 1] }; transitions: { id, beats, onBar, desc } (art/dancefloor.js discoTransition gives their masks); looks: the dancefloor-* sprites (tile unlit, tile lit 1 to 3 in white to tint with the cell's neon, grout, the rim strip repeating every rim.period px, and the whole unlit floor, base, with its centre, gridOrigin, pitch and rim radii in px) at ppm px per metre, ground space seen from above", patterns: assets.dancefloor.patterns.length };
 writeFileSync(join(out, "manifest.json"), JSON.stringify(manifest, null, 1));
 console.log(`exported ${assets.list.length} assets (${assets.list.length * 2} PNGs) and ${assets.sigils.length} sigils (SVG and PNG) to ${out.startsWith(ROOT + "/") ? out.slice(ROOT.length + 1) : out}`);
