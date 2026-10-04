@@ -39,6 +39,7 @@ export function stringsFor(map: ForestMap, forest: Forest, cell: Cell): StringLi
     let at = start, dir = heading;
     const path: Plant[] = [start];
     for (let k = 0; k < spans; k++) {
+      if (!free(at)) break; // a run arriving at a full tree (a junction's third end) stops there
       const ok: { b: Plant; d: number }[] = [];
       for (const b of trees) {
         if (b === at || !free(b)) continue;

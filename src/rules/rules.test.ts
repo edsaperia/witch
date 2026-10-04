@@ -166,13 +166,26 @@ describe("the map", () => {
     expect(used.size).toBeGreaterThanOrEqual(25);
   });
 
-  it("puts the dancefloor in the clearing of the middle area, where the witch starts", () => {
+  it("puts the dancefloor in the clearing of the middle area, the treehouse by it, where the witch starts", () => {
     const d = map.dancefloor, a = map.areaAt(d.x, d.z);
     expect(a.cell).toEqual(map.centreCell);
     expect(Math.abs(map.centreCell[0] - 10) + Math.abs(map.centreCell[1] - 10)).toBeLessThanOrEqual(2);
     expect(a.openness).toBeLessThan(0.05);
     expect(map.treeWeight(d.x, d.z)).toBe(0);
-    expect(Math.hypot(map.start.x - d.x, map.start.z - d.z)).toBeLessThan(d.radius);
+    const th = map.treehouse, far = Math.hypot(th.x - d.x, th.z - d.z);
+    expect(far).toBeGreaterThan(d.radius + TUNING.dancefloor.clearing);
+    expect(far).toBeLessThan(d.radius + TUNING.dancefloor.clearing + 20);
+    expect(map.hardClear(th.x, th.z)).toBe(true);
+    expect(Math.hypot(map.start.x - th.x, map.start.z - th.z)).toBeLessThan(3);
+  });
+  it("starts the witch seated on the terrace; she stays put till the first move or rise", () => {
+    const g = newGame(5, TUNING);
+    expect(g.witch.seated).toBe(true);
+    const still = stepWitch(g.witch, NO_INTENT, 1, TUNING, map.bounds);
+    expect(still.seated).toBe(true);
+    const off = stepWitch(g.witch, { ...NO_INTENT, moveX: 1 }, 0.1, TUNING, map.bounds);
+    expect(off.seated).toBeFalsy();
+    expect(off.x).toBeGreaterThan(g.witch.x);
   });
 
   it("reads seeds from the URL: numbers as they are, words hashed", () => {
@@ -267,7 +280,41 @@ describe("the witch", () => {
     let t = stepWitch(newWitch(200, 200), { ...NO_INTENT, toggleMode: true }, 1 / 60, TUNING, b);
     t = fly(t, 120);
     expect(t.mode).toBe("treetop");
-    expect(Math.hypot(t.vx, t.vz)).toBeCloseTo(TUNING.treetopSpeed, 1);
+    t = fly(t, 60 * (TUNING.treetop.boostTime + 1));
+    expect(Math.hypot(t.vx, t.vz)).toBeCloseTo(TUNING.treetopSpeed * TUNING.treetop.boost, 0); // held straight: full boost
+  });
+
+  describe("treetop momentum", () => {
+    const T = TUNING.treetop, up = (): ReturnType<typeof newWitch> => ({ ...newWitch(200, 200), lift: 1, mode: "treetop" });
+    const speed = (w: { vx: number; vz: number }) => Math.hypot(w.vx, w.vz);
+    it("reaches cruise in well under half a second, then builds to boost over boostTime holding straight", () => {
+      expect(speed(fly(up(), 24))).toBeGreaterThan(TUNING.treetopSpeed * 0.9);
+      const half = fly(up(), 60 * T.boostTime * 0.5), full = fly(up(), 60 * (T.boostTime + 0.5));
+      expect(half.boost!).toBeGreaterThan(0.4); expect(half.boost!).toBeLessThan(0.7);
+      expect(full.boost).toBe(1);
+      expect(speed(full)).toBeGreaterThan(TUNING.treetopSpeed * T.boost * 0.95);
+    });
+    it("turns gradually, in an arc, and a reversal bleeds the boost and brakes", () => {
+      const fast = fly(up(), 60 * (T.boostTime + 0.5));
+      const one = stepWitch(fast, { moveX: 0, moveZ: 1, toggleMode: false }, 1 / 60, TUNING, b);
+      const turned = (Math.atan2(one.vz, one.vx) * 180) / Math.PI;
+      expect(turned).toBeGreaterThan(0); expect(turned).toBeLessThan(T.turnRate / 60 + 0.5); // no snapping round
+      let back = fast;
+      for (let i = 0; i < 30; i++) back = stepWitch(back, { moveX: -1, moveZ: 0, toggleMode: false }, 1 / 60, TUNING, b);
+      expect(back.boost!).toBeLessThan(0.3);
+      expect(stepWitch(fast, { moveX: -1, moveZ: 0, toggleMode: false }, 1 / 60, TUNING, b).braking).toBe(true);
+    });
+    it("glides when let go, rather than stopping dead", () => {
+      const fast = fly(up(), 60);
+      const glide = fly(fast, 15, NO_INTENT), stopped = fly(fast, 60 * T.glideTime * 1.5, NO_INTENT);
+      expect(speed(glide)).toBeGreaterThan(speed(fast) * 0.3);
+      expect(speed(stopped)).toBeLessThan(speed(fast) * 0.05);
+    });
+    it("leaves the ground snappy: full ground speed in a tenth of a second or so, and a quick stop", () => {
+      expect(speed(fly(newWitch(200, 200), 8))).toBeGreaterThan(TUNING.groundSpeed * 0.9);
+      expect(speed(fly(fly(), 8, NO_INTENT))).toBeLessThan(TUNING.groundSpeed * 0.1);
+      expect(fly().boost ?? 0).toBe(0);
+    });
   });
 
   it("rises in riseTime and descends in descendTime: fast, but not instant", () => {
@@ -769,7 +816,7 @@ describe("the density field", () => {
     const chances: number[] = [];
     for (let i = 0; i < 3000; i++) {
       const x = map.bounds.minX + hash2(i, 5, 9) * (map.bounds.maxX - map.bounds.minX), z = map.bounds.minZ + hash2(i, 6, 9) * (map.bounds.maxZ - map.bounds.minZ);
-      if (map.hardClear(x, z)) continue;
+      if (map.hardClear(x, z) || map.paths.at(x, z)) continue; // corridors are kept clear (tested with the paths)
       chances.push(treeChance(map, x, z, map.areaAt(x, z).type));
     }
     const share = (lo: number, hi: number) => chances.filter(c => c >= lo && c < hi).length / chances.length;
@@ -781,5 +828,78 @@ describe("the density field", () => {
   it("keeps the dancefloor clear of every tree", () => {
     const d = map.dancefloor;
     expect(treeChance(map, d.x + 3, d.z - 2, map.areaAt(d.x, d.z).type)).toBe(0);
+  });
+});
+
+describe("paths, roads and railways", () => {
+  const P = map.paths, T = TUNING.paths;
+  it("are seeded: the same map makes the same network", () => {
+    expect(generateMap(123, TUNING).paths.lines).toEqual(P.lines);
+    expect(generateMap(124, TUNING).paths.lines).not.toEqual(P.lines);
+  });
+  it("have two to four railway lines crossing many areas, a road or two, and paths between areas", () => {
+    const of = (k: string) => P.lines.filter(l => l.kind === k);
+    const trunk = of("rail").filter(l => l.pts.length > 100);
+    expect(trunk.length).toBeGreaterThanOrEqual(T.rails[0]);
+    expect(of("rail").length).toBeLessThanOrEqual(T.rails[1] + 1); // plus a branch line
+    for (const l of trunk) expect(new Set(l.pts.map(p => map.areaAt(p[0], p[1]).cell.join(","))).size).toBeGreaterThan(5);
+    expect(of("road").length).toBeGreaterThanOrEqual(T.roads[0]);
+    expect(of("path").length).toBeGreaterThan(20);
+    expect(of("stream").filter(l => l.pts.length > 100).length).toBeGreaterThanOrEqual(T.streams[0]);
+  });
+  it("meander: no path is a ruler-straight line", () => {
+    for (const l of P.lines.filter(l => l.kind === "path")) {
+      const a = l.pts[0], b = l.pts[l.pts.length - 1], len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (len < 40) continue;
+      const off = Math.max(...l.pts.map(p => Math.abs(((p[0] - a[0]) * (b[1] - a[1]) - (p[1] - a[1]) * (b[0] - a[0])) / len)));
+      expect(off).toBeGreaterThan(0.5);
+    }
+  });
+  it("keep their corridors clear of trees (but for a few on broken railway) and bushes, with bushes thick along the edges", () => {
+    const forest = new Forest(map), s = map.start;
+    let inside = 0, broken = 0;
+    for (const t of forest.treesNear(s.x, s.z, 600)) {
+      const h = P.at(t.x, t.z);
+      if (!h) continue;
+      if (h.kind === "rail" && P.railBroken(t.x, t.z)) broken++; else inside++;
+    }
+    expect(inside).toBe(0);
+    expect(broken).toBeGreaterThan(0);
+    let edge = 0, open = 0, edgeN = 0, openN = 0;
+    for (const b of forest.bushesNear(s.x, s.z, 600)) {
+      const h = P.at(b.x, b.z, T.edgeBushes);
+      if (h && h.d <= P.lines[h.line].half) expect(h.kind === "rail" && P.railBroken(b.x, b.z)).toBe(true);
+      else if (h) edge++; else open++;
+    }
+    // Bushes per square metre along the edges against elsewhere, from a grid of samples.
+    for (let i = 0; i < 40000; i++) {
+      const x = s.x - 600 + hash2(i, 1, 3) * 1200, z = s.z - 600 + hash2(i, 2, 3) * 1200, h = P.at(x, z, T.edgeBushes);
+      if (h && h.d > P.lines[h.line].half) edgeN++; else if (!h) openN++;
+    }
+    expect(edge / edgeN).toBeGreaterThan((open / openN) * 1.5);
+    for (const w of forest.wallsNear(s.x, s.z, 600)) { const h = P.at(w.x, w.z); if (h) expect(h.kind === "rail" && P.railBroken(w.x, w.z)).toBe(true); }
+  });
+  it("stop at the edge of clearings, so they never run under the dancefloor or a set piece", () => {
+    const d = map.dancefloor, clear = d.radius + TUNING.dancefloor.clearing;
+    for (const l of P.lines) for (const p of l.pts) {
+      if (l.kind !== "path") continue;
+      expect(Math.hypot(p[0] - d.x, p[1] - d.z)).toBeGreaterThan(clear - l.half);
+    }
+  });
+});
+
+describe("decorations", () => {
+  it("are scattered sparsely, all three families, never on a path, in a central clearing or by the dancefloor", () => {
+    const forest = new Forest(map), s = map.start, list = forest.decorNear(s.x, s.z, 700), D = TUNING.decor;
+    const fam = new Set(list.map(d => d.family));
+    expect(fam.has("ruins") && fam.has("rocks")).toBe(true);
+    expect(list.length).toBeGreaterThan(20);
+    expect(list.length).toBeLessThan((1400 / D.spacing) ** 2 * 0.15);
+    for (const d of list) {
+      expect(map.paths.at(d.x, d.z)).toBeNull();
+      expect(map.areaAt(d.x, d.z).openness).toBeGreaterThanOrEqual(D.clearing);
+      expect(Math.hypot(d.x - map.dancefloor.x, d.z - map.dancefloor.z)).toBeGreaterThan(map.dancefloor.radius + TUNING.dancefloor.clearing);
+    }
+    expect(new Forest(map).decorNear(s.x, s.z, 700)).toEqual(list);
   });
 });

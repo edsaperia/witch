@@ -330,7 +330,7 @@ async function main() {
   }, "&debug=cull&tilt=before");
 
   // Nothing floats (Ed, v108: rocks in the cave mouth hovered over their shadows): every placed
-  // sprite's lowest drawn pixel, read from the atlas itself, sits on the ground. Close-up in a
+  // sprite's (trees, plants, walls, set pieces, decor, the treehouse) lowest drawn pixel, read from the atlas itself, sits on the ground. Close-up in a
   // cave mouth, in ground mode, zoomed in.
   await run("ground", { width: 1280, height: 800 }, async page => {
     await page.keyboard.press("Enter");
@@ -357,7 +357,7 @@ async function main() {
     await shot(page, "ground-cave-mouth.png");
     const r = await page.evaluate(() => {
       const v = window.witch.view, out = { n: 0, worst: 0, bad: [] };
-      for (const [type, b] of v.typeBatches) {
+      for (const [type, b] of [...v.typeBatches, ...v.decorBatches, ["treehouse", v.treehouseBatch]]) {
         const img = b.atlas.albedo.image, W = img.width, H = img.height, D = img.data;
         for (const it of b.items) {
           if (it.top) continue;
@@ -370,7 +370,7 @@ async function main() {
           const lift = (it.y + upY * (f.h - 1 - low) * m) / m; // in art pixels
           out.n++;
           if (Math.abs(lift) > Math.abs(out.worst)) out.worst = lift;
-          if (Math.abs(lift) > 2 && out.bad.length < 6) out.bad.push(`${window.witch.areaTypeId(type)} ${lift.toFixed(1)} px`);
+          if (Math.abs(lift) > 2 && out.bad.length < 6) out.bad.push(`${typeof type === "number" ? window.witch.areaTypeId(type) : type} ${lift.toFixed(1)} px`);
         }
       }
       return out;

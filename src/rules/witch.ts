@@ -20,6 +20,12 @@ export interface WitchState {
   away: boolean;
   /** Leaning into fast flight: above leanAt of the mode's top speed. */
   lean: boolean;
+  /** Treetop boost: 0 at cruise, 1 at full boost (treetop.boost times cruise). */
+  boost?: number;
+  /** Slowing hard in the treetops (a sharp turn or reversal bleeding speed): the brake pose. */
+  braking?: boolean;
+  /** Sitting on the treehouse terrace (the start), until the first move or rise. */
+  seated?: boolean;
 }
 
 /** What the player asks for this frame: a direction (length up to 1) and button presses. */
@@ -52,6 +58,10 @@ export const witchMaxSpeed = (w: WitchState, t: Tuning) => lerp(t.groundSpeed, t
 export const canopyShown = (w: WitchState) => smoothstep(w.lift);
 
 export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, bounds: { minX: number; maxX: number; minZ: number; maxZ: number }): WitchState {
+  if (w.seated) {
+    if (!intent.toggleMode && Math.hypot(intent.moveX, intent.moveZ) < 0.1) return w;
+    w = { ...w, seated: false };
+  }
   let { mode, lift } = w;
   if (intent.toggleMode) mode = mode === "ground" || mode === "descending" ? "rising" : "descending";
   if (mode === "rising") { lift += dt / Math.max(1e-3, t.riseTime); if (lift >= 1) { lift = 1; mode = "treetop"; } }
@@ -60,13 +70,54 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   let mx = intent.moveX, mz = intent.moveZ;
   const len = Math.hypot(mx, mz);
   if (len > 1) { mx /= len; mz /= len; }
-  const max = lerp(t.groundSpeed, t.treetopSpeed, smoothstep(lift));
-  const k = 1 - Math.exp(-lerp(t.groundAcceleration, t.acceleration, smoothstep(lift)) * dt);
-  let vx = w.vx + (mx * max - w.vx) * k, vz = w.vz + (mz * max - w.vz) * k;
+  const L = smoothstep(lift), max = lerp(t.groundSpeed, t.treetopSpeed, L);
+  // On the ground: snappy, straight to the input's speed (Ed: "ground should feel snappy").
+  const kg = 1 - Math.exp(-t.groundAcceleration * dt);
+  const gx = w.vx + (mx * t.groundSpeed - w.vx) * kg, gz = w.vz + (mz * t.groundSpeed - w.vz) * kg;
+  // In the treetops: momentum (Ed: "a high top speed and more momentum"). See treetopFlight.
+  const top = treetopFlight(w, mx, mz, dt, t);
+  // Rising and descending blend the two, keeping her speed.
+  let vx = lerp(gx, top.vx, L), vz = lerp(gz, top.vz, L);
+  const boost = top.boost * L, braking = top.braking && L > 0.5;
   let x = w.x + vx * dt, z = w.z + vz * dt;
   if (x < bounds.minX || x > bounds.maxX) { x = clamp(x, bounds.minX, bounds.maxX); vx = 0; }
   if (z < bounds.minZ || z > bounds.maxZ) { z = clamp(z, bounds.minZ, bounds.maxZ); vz = 0; }
   const facing: 1 | -1 = vx > 0.3 ? 1 : vx < -0.3 ? -1 : w.facing;
   const speed = Math.hypot(vx, vz), away = facingAway(vx, vz, w.away, Math.max(1, max * 0.15), t);
-  return { x, z, vx, vz, lift, mode, facing, away, lean: speed > max * t.leanAt };
+  return { x, z, vx, vz, lift, mode, facing, away, lean: speed > max * t.leanAt, boost, braking };
+}
+
+/** Treetop flight with momentum: pressing a direction reaches cruise (treetopSpeed) quickly;
+ *  holding it within treetop.boostAngle builds boost over boostTime, up to treetop.boost times
+ *  cruise; her heading turns toward the input at no more than turnRate degrees a second (slower
+ *  at boost), so she swoops in arcs; a sharp turn or a reversal bleeds the boost fast (and she
+ *  brakes); letting go, she glides to a stop over about glideTime. */
+export function treetopFlight(w: WitchState, mx: number, mz: number, dt: number, t: Tuning): { vx: number; vz: number; boost: number; braking: boolean } {
+  const T = t.treetop, m = Math.min(1, Math.hypot(mx, mz)), s = Math.hypot(w.vx, w.vz);
+  let boost = w.boost ?? 0, braking = false;
+  if (m < 0.1) {
+    // Gliding: speed and boost fade over glideTime (to about 5%).
+    const k = Math.exp((-3 * dt) / Math.max(0.05, T.glideTime));
+    return { vx: w.vx * k, vz: w.vz * k, boost: boost * k, braking: false };
+  }
+  const dx = mx / m, dz = mz / m;
+  let hx = dx, hz = dz;
+  let ang = 0;
+  if (s > 2) {
+    // Turn the heading toward the input, at a limited rate.
+    const cx = w.vx / s, cz = w.vz / s;
+    ang = Math.acos(clamp(cx * dx + cz * dz, -1, 1));
+    const cross = cx * dz - cz * dx, rate = ((T.turnRate * (1 - 0.5 * boost)) * Math.PI) / 180, turn = Math.min(ang, rate * dt) * (cross >= 0 ? 1 : -1);
+    const c = Math.cos(turn), sn = Math.sin(turn);
+    hx = cx * c - cz * sn; hz = cx * sn + cz * c;
+  }
+  const deg = (ang * 180) / Math.PI;
+  if (deg <= T.boostAngle) boost = Math.min(1, boost + dt / Math.max(0.05, T.boostTime));
+  else if (deg >= 90) { boost = Math.max(0, boost - dt * T.sharpTurnBleed); braking = s > t.treetopSpeed * 0.5; }
+  else boost = Math.max(0, boost - dt * 0.5);
+  const target = t.treetopSpeed * (1 + (T.boost - 1) * boost) * m;
+  // Reaching cruise takes about 0.3 s; above it, the boost sets the pace. Turning hard bleeds speed.
+  const k = 1 - Math.exp(-t.acceleration * dt * (deg >= 90 ? T.sharpTurnBleed : 1));
+  const speed = s + (target - s) * k;
+  return { vx: hx * speed, vz: hz * speed, boost, braking };
 }

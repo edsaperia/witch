@@ -5,10 +5,11 @@
 import * as Art from "../../art/generator.js";
 import { rng } from "../rules/random";
 import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
-import { creatureFrame, runJob, type ArtJob, type ArtResult, type TilePixels, type TypeLayout } from "./artBuild";
+import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 
 export interface TypeArt { atlas: Atlas; layout: TypeLayout }
+export interface DecorArt { atlas: Atlas; pieces: DecorPiece[]; families: Record<string, DecorPiece[]> }
 export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number }
 
 type Reply = { job: ArtJob; result?: ArtResult; error?: string };
@@ -16,6 +17,7 @@ type Reply = { job: ArtJob; result?: ArtResult; error?: string };
 export class AssetLibrary {
   private types = new Map<number, TypeArt>();
   private creatures = new Map<string, CreatureArt>();
+  private decor: DecorArt | undefined;
   private queue: ArtJob[] = [];
   private inFlight = new Set<string>();
   private workers: { w: Worker; busy: boolean; job?: ArtJob }[] = [];
@@ -23,11 +25,16 @@ export class AssetLibrary {
   readonly witch: Atlas;
   /** On foot (from frame 16): each pose's frames, towards and away. */
   readonly witchFoot: Record<string, { towards: number[]; away: number[]; fps: number }> = {};
+  /** In the treetops: the fast and brake poses' frames, towards and away. */
+  readonly witchFly: Record<string, { towards: number[]; away: number[]; fps: number }> = {};
   readonly stones: Atlas;
   /** Light-source props from the art module: campfire (frames 0-2), then magic stones (cyan, violet, green). */
   readonly props: Atlas;
   /** Soundsystems: variant x 3 + frame (the cones pumping), playing. */
   readonly soundsystems: Atlas;
+  /** The witch's treehouse: its base (frame 0) and top (frame 1, the crown: treetop mode), and
+   *  anchors in its sprite's pixels: the trunk's foot, her seat on the terrace, its lights. */
+  readonly treehouse: { atlas: Atlas; base: { x: number; y: number }; seat: { x: number; y: number }; lights: { x: number; y: number; rgb: number[]; kind: string }[] };
   /** Style scale: the lab's K, 2 / pixel size. */
   readonly K: number;
   /** Bumped whenever a new set is ready, so the view knows to refresh its batches. */
@@ -44,18 +51,31 @@ export class AssetLibrary {
       ...["rise", "descend"].flatMap(pose => ["towards", "away"].flatMap(facing => [0, 1].map(frame => wb({ pose, frame, facing })))));
     // On foot, from 16: standing, landing, taking off, talking, putting a sigil down, lifting one.
     const FOOT = Art.WITCH_FOOT_POSES as Record<string, { frames: number; fps: number }>;
-    for (const pose of ["stand", "land", "takeoff", "talk", "placeSigil", "liftSigil"]) {
+    for (const pose of ["stand", "land", "takeoff", "talk", "placeSigil", "liftSigil", "sit"]) {
       const n = FOOT[pose].frames, entry = { towards: [] as number[], away: [] as number[], fps: FOOT[pose].fps };
       for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < n; frame++) { entry[facing].push(sprites.length); sprites.push(wb({ pose, frame, facing })); }
       this.witchFoot[pose] = entry;
     }
-    this.witch = packAtlas(sprites, 1024);
+    // Treetop flight: fast (at boost: three frames) and brake (a skid: two frames), towards and away.
+    for (const [pose, n] of [["fast", 3], ["brake", 2]] as const) {
+      const entry = { towards: [] as number[], away: [] as number[], fps: pose === "fast" ? 10 : 8 };
+      for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < n; frame++) { entry[facing].push(sprites.length); sprites.push(wb({ pose, frame, facing })); }
+      this.witchFly[pose] = entry;
+    }
+    this.witch = packAtlas(sprites, 2048);
     this.stones = packAtlas([0, 1, 2, 3].map(i => this.stone(i)));
     const lp = Art.lightProps(style) as { campfire: Baked[]; stones: Record<string, Baked> };
     this.props = packAtlas([...lp.campfire, lp.stones.cyan, lp.stones.violet, lp.stones.green], 1024);
     const ss: Baked[] = [];
     for (let v = 0; v < 3; v++) for (let f = 0; f < 3; f++) ss.push(Art.bake(Art.soundsystemSprite(style, { variant: v, frame: f, state: "playing" }), Art.soundsystemColours(v), style, style.cOutline) as Baked);
     this.soundsystems = packAtlas(ss, 2048);
+    const th = Art.treehouseSprite(style) as { bot: unknown; top: unknown; anchors: { base: { x: number; y: number }; seat: { x: number; y: number }; lights: { x: number; y: number; rgb: number[]; kind: string }[] } };
+    const thc = Art.treehouseColours(style);
+    // Its model draws a hard dark shadow ellipse on the ground round the trunk's foot: drop it (a
+    // soft contact shadow goes there instead), as Ed asked for set pieces.
+    for (const sp of [th.bot, th.top] as { w: number; h: number; m: Uint8Array }[])
+      for (let y = Math.max(0, Math.floor(th.anchors.base.y - 14)); y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x] === Art.M.NOSE) sp.m[y * sp.w + x] = 0;
+    this.treehouse = { atlas: packAtlas([th.bot, th.top].map(sp => Art.bake(sp, thc, style, "none") as Baked), 2048), ...th.anchors };
     this.useWorkers = typeof Worker !== "undefined" && typeof OffscreenCanvas !== "undefined";
     if (this.useWorkers) {
       const n = Math.max(1, Math.min(3, (navigator.hardwareConcurrency || 2) - 1));
@@ -107,7 +127,11 @@ export class AssetLibrary {
       return;
     }
     const atlas = atlasFromPixels(r.result.px);
-    if (r.job.kind === "type") {
+    if (r.job.kind === "decor") {
+      const pieces = r.result.decor!, families: Record<string, DecorPiece[]> = {};
+      for (const p of pieces) (families[p.family] ??= []).push(p);
+      this.decor = { atlas, pieces, families };
+    } else if (r.job.kind === "type") {
       this.types.set(r.job.id, { atlas, layout: r.result.layout! });
       if (r.result.floor) this.onFloor(r.job.id, r.result.floor);
     } else this.creatures.set(r.job.id, { atlas, frame: creatureFrame });
@@ -120,6 +144,11 @@ export class AssetLibrary {
     const a = this.types.get(t);
     if (!a) this.ask({ kind: "type", id: t, style: this.style, seed: this.seed, K: this.K });
     return a;
+  }
+  /** The decorations' art (ruins, rocks, freak trees), or undefined (and asked for). */
+  decorArt(): DecorArt | undefined {
+    if (!this.decor) this.ask({ kind: "decor", id: "all", style: this.style });
+    return this.decor;
   }
   creatureArt(species: string): CreatureArt | undefined {
     const a = this.creatures.get(species);

@@ -2,7 +2,6 @@
 // and no page needed, so it runs in a Web Worker (with OffscreenCanvas) as well as on the page.
 import * as Art from "../../art/generator.js";
 import { AREA_TYPES } from "../rules/map";
-import { TREE_VARIANTS } from "../rules/forest";
 import { AREAS, areaAssets } from "../../art/areas.js";
 import { rng } from "../rules/random";
 import type { Style } from "./style";
@@ -27,19 +26,20 @@ export interface Piece {
 }
 export interface TypeLayout {
   big: Piece[];
+  /** Each big object's share of the area's big objects (tree variants by height class). */
+  bigWeight: number[];
   small: Piece[];
   walls: number[];
   set: Piece | null;
 }
 
 interface ArtDef { id: string; leaf: number; big: [string, Record<string, unknown>][]; small: [string, Record<string, unknown>][]; set?: [string, Record<string, unknown>] }
-type TreeOpts = { type: string; dark?: boolean; gnarl?: number; bare?: boolean; trunks?: number; lean?: number; thick?: boolean; thin?: boolean; hollow?: boolean; webs?: boolean; scale?: number };
-const TREE_FN: Record<string, unknown> = { broad: Art.broadTree, fir: Art.firTree, willow: Art.willowTree, birch: Art.birchTree, flat: Art.flatTree };
+type TreeOpts = { type: string; minor?: boolean; dark?: boolean; gnarl?: number; bare?: boolean; trunks?: number; lean?: number; thick?: boolean; thin?: boolean; hollow?: boolean; webs?: boolean; scale?: number };
 
 // One of an area's trees, drawn as art/areas.js draws its "tree" props, but keeping the crown
 // line so it splits into a top half (shown from the treetops) and a bottom half (the trunk).
 function areaTree(def: ArtDef, o: TreeOpts, st: Style, r: () => number, K: number) {
-  const f = TREE_FN[o.type] as (r: () => number, st: Style, s: number) => { sp: unknown; crownY: number };
+  const f = (Art.treeSpecies as (type: string) => { fn: unknown })(o.type).fn as (r: () => number, st: Style, s: number) => { sp: unknown; crownY: number }; // any species art/trees.js knows
   const ts = { ...st, leafHue: def.leaf + (o.dark ? 0.05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs } as unknown as Style;
   const t = f(r, ts, st.treeSize * K * (o.scale || 1) * Art.uni(r, 0.9, 1.1));
   const c = Art.treeColours(r, ts, f) as Record<number, number[]>;
@@ -54,7 +54,7 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   const id = AREA_TYPES[t].id, def = (AREAS as unknown as ArtDef[]).find(a => a.id === id)!;
   const assets = areaAssets(id, st, { K, makeCanvas: mk }) as { floor: { sp: Baked }; walls: { sp: Baked }[]; small: { sp: Baked }[]; big: { sp: Baked }[]; setPiece: { sp: Baked; origin?: { x: number; y: number } } | null };
   const sprites: Baked[] = [], add = (b: Baked) => sprites.push(b) - 1;
-  const layout: TypeLayout = { big: [], small: [], walls: [], set: null };
+  const layout: TypeLayout = { big: [], bigWeight: [], small: [], walls: [], set: null };
   const bk = (sp: unknown, col: unknown) => Art.bake(sp, col, st, "none", mk) as Baked;
   // Anything drawn as a tree (big objects, small trees, a tree set piece) is split into crown and
   // trunk, so its crown hides in ground mode; everything else is drawn whole.
@@ -62,10 +62,18 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
     const { parts, colours } = areaTree(def, o, st, rng(seed * 13 + t * 101 + k * 7 + 1), K);
     return { bot: add(bk(parts.bot, colours)), top: add(bk(parts.top, colours)) };
   };
-  def.big.forEach(([kind, o], i) => {
-    if (kind !== "tree") { layout.big.push({ bot: add(assets.big[i].sp), top: null }); return; }
-    const n = Math.max(1, Math.round(TREE_VARIANTS / def.big.length));
-    for (let v = 0; v < n; v++) layout.big.push(tree(o as TreeOpts, i * 17 + v));
+  // Trees: the area's own UK species (a main and a minor one) across four height classes, from
+  // saplings to a rare giant over the canopy (art/areas.js areaTreeVariants), each with its share
+  // of the area's trees. Anything else big (mounds, boulders, logs) is drawn whole, as before.
+  // Each height class gets the area's own share of its trees (its layout's heightMix), split among
+  // that class's variants; without one, the art's default weights.
+  const variants = Art.areaTreeVariants(id, st, { K, makeCanvas: mk }) as { top: Baked; bot: Baked; weight: number; heightClass: "sapling" | "mature" | "tall" | "giant" }[];
+  const mix = AREA_TYPES[t].layout.heightMix, perClass = (c: string) => variants.filter(v => v.heightClass === c).length || 1;
+  for (const v of variants) { layout.big.push({ bot: add(v.bot), top: add(v.top) }); layout.bigWeight.push(mix ? mix[v.heightClass] / perClass(v.heightClass) : v.weight); }
+  def.big.forEach(([kind], i) => {
+    if (kind === "tree" && variants.length) return;
+    layout.big.push({ bot: add(assets.big[i].sp), top: null });
+    layout.bigWeight.push(variants.length ? 0.1 : 1);
   });
   def.small.forEach(([kind, o], i) => layout.small.push(kind === "tree" ? tree(o as TreeOpts, 500 + i) : { bot: add(assets.small[i].sp), top: null }));
   for (const a of assets.walls) layout.walls.push(add(a.sp));
@@ -116,14 +124,34 @@ export function packPixels(sprites: Baked[], width = 2048): AtlasPixels {
 
 export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: number } | { kind: "creature"; id: string; style: Style }
   /** A party animal: an invited creature in its party gear (seeded by its id: collar in its sigil colour, maybe a hat, sunglasses, shoes). */
-  | { kind: "party"; id: string; species: string; seed: number; colour: number[]; style: Style };
+  | { kind: "party"; id: string; species: string; seed: number; colour: number[]; style: Style }
+  /** Every decoration (ruins in both conditions, rocks, freak trees), split as trees are. */
+  | { kind: "decor"; id: string; style: Style };
+
+/** One decoration in the decor atlas: its family, bottom (and top, if tall) frames, and the radius it covers on the ground (m). */
+export interface DecorPiece { id: string; family: string; bot: number; top: number | null; footprint: number }
 
 /** A floor tile's pixels: albedo and normal map, w x h. */
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
-export interface ArtResult { px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels }
+export interface ArtResult { px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[] }
+
+function decorSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; decor: DecorPiece[] } {
+  const sprites: Baked[] = [], decor: DecorPiece[] = [], colours = Art.decorColours(st);
+  const empty = (sp: { m: ArrayLike<number> }) => { for (let i = 0; i < sp.m.length; i++) if (sp.m[i]) return false; return true; };
+  for (const d of Art.DECOR as { id: string; family: string; variants: number }[])
+    for (let v = 0; v < d.variants; v++) {
+      const r = Art.decorSprite(d.id, st, { variant: v }) as { top: { m: ArrayLike<number> }; bot: unknown; whole: unknown; crownY: number; metres: { footprint: number } };
+      const tall = r.crownY > 0 && !empty(r.top);
+      const bot = sprites.push(Art.bake(tall ? r.bot : r.whole, colours, st, "none", mk) as Baked) - 1;
+      const top = tall ? sprites.push(Art.bake(r.top, colours, st, "none", mk) as Baked) - 1 : null;
+      decor.push({ id: d.id, family: d.family, bot, top, footprint: r.metres.footprint });
+    }
+  return { sprites, decor };
+}
 
 export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };
+  if (job.kind === "decor") { const { sprites, decor } = decorSprites(job.style, mk); return { px: packPixels(sprites, 2048), decor }; }
   if (job.kind === "party") return { px: packPixels(creatureSprites(job.style, job.species, mk, { ...Art.partyGear(job.seed), collar: job.colour }), 2048) };
   const { sprites, layout, floor } = typeSprites(job.style, job.seed, job.id, job.K, mk);
   return { px: packPixels(sprites), layout, floor: { albedo: new Uint8Array(pixels(floor.A, floor.w, floor.h)), normal: new Uint8Array(pixels(floor.N, floor.w, floor.h)), w: floor.w, h: floor.h } };

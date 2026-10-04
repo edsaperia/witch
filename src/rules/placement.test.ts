@@ -8,7 +8,7 @@ import { TUNING } from "./tuning";
 describe("scenery placement", () => {
   const t = TUNING, R = t.setPieceFootprint * t.setPieceScale;
   for (const seed of [1, 123, 4242, 90210, 777777]) {
-    it(`no set piece's footprint touches a soundsystem or the dancefloor (seed ${seed})`, () => {
+    it(`no set piece's or decoration's footprint touches a soundsystem, the dancefloor, the treehouse or a set piece (seed ${seed})`, () => {
       const map = generateMap(seed, t), forest = new Forest(map), d = map.dancefloor;
       const sounds: { x: number; z: number }[] = [];
       for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++)
@@ -21,7 +21,17 @@ describe("scenery placement", () => {
         const c = map.areaAt(p.x, p.z).cell, s = map.setPieceSpot(c[0], c[1]);
         expect(s).toEqual({ x: p.x, z: p.z }); // in its own area
       }
-    });
+      const th = map.treehouse, thClear = t.treehouse.clear;
+      for (const p of pieces) expect(Math.hypot(p.x - th.x, p.z - th.z)).toBeGreaterThanOrEqual(R + thClear);
+      // Decorations: their footprint clear of soundsystems, the dancefloor, the treehouse and set pieces.
+      const decor = forest.decorNear(half, half, half + map.areaSize), F = t.decor.footprint;
+      for (const p of decor) {
+        for (const s of sounds) expect(Math.hypot(p.x - s.x, p.z - s.z)).toBeGreaterThanOrEqual(F + t.soundsystemFootprint);
+        expect(Math.hypot(p.x - d.x, p.z - d.z)).toBeGreaterThanOrEqual(F + d.radius);
+        expect(Math.hypot(p.x - th.x, p.z - th.z)).toBeGreaterThanOrEqual(F + thClear);
+        for (const q of pieces) expect(Math.hypot(p.x - q.x, p.z - q.z)).toBeGreaterThanOrEqual(F + R);
+      }
+    }, 60000); // the whole map's set pieces and decor
   }
   it("soundsystems stand in their own area, and trees keep clear of them", () => {
     const map = generateMap(123, t), forest = new Forest(map);

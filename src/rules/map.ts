@@ -6,6 +6,7 @@ import { AREAS } from "../../art/areas.js";
 import { makePartition, type Cell, type Partition } from "./partition";
 import { hash2, rng, smoothstep, vnoise } from "./random";
 import type { Tuning } from "./tuning";
+import { PathNetwork } from "./paths";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
  *  the game's own numbers. Only plain data is read here. */
@@ -26,7 +27,15 @@ export interface AreaType {
   layout: AreaLayout;
 }
 
-export interface AreaLayout { pattern: string; along?: number | string; density: number; clump: number; undergrowth: number; lean?: { dir: number; amount: number } }
+export interface AreaLayout {
+  pattern: string; along?: number | string; density: number; clump: number; undergrowth: number; lean?: { dir: number; amount: number };
+  /** Shares of its trees by height class. */
+  heightMix?: { sapling: number; mature: number; tall: number; giant: number } | null;
+  /** Its ground's features: stream, pools, rocky, mounds, paths, hollows, ridges. */
+  terrain?: string[];
+  /** How many decorations it has (rate, 0-1) and of which families. */
+  decor?: { rate: number; ruins: number; rocks: number; freak: number; lake: number; modern: number };
+}
 
 interface ArtArea { id: string; name: string; creature: string; text: AreaType["text"]; floor: [string, number, number, number]; wall?: unknown[]; set?: unknown; layout?: AreaLayout }
 const settings = (rawTypes as { types: Record<string, { treeDensity: number }> }).types;
@@ -56,7 +65,9 @@ export interface ForestMap {
   /** The middle area, whose clearing holds the dancefloor. */
   readonly centreCell: Cell;
   readonly dancefloor: { x: number; z: number; radius: number };
-  /** Where the witch starts: the dancefloor. */
+  /** The witch's treehouse: its trunk's foot, just beyond the dancefloor's clearing. */
+  readonly treehouse: { x: number; z: number };
+  /** Where the witch starts: at the treehouse (sitting on its terrace). */
   readonly start: { x: number; z: number };
   /** Where the witch may fly (metres). */
   readonly bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
@@ -73,6 +84,9 @@ export interface ForestMap {
   /** Where an area's set piece stands: in its clearing, its footprint clear of every soundsystem
    *  and the dancefloor; null if it has none, or there is no room for it. */
   setPieceSpot(cx: number, cy: number): { x: number; z: number } | null;
+  /** Whether a footprint r metres round (x, z) comes within reserveMargin of anything placed for
+   *  gameplay (soundsystems, the dancefloor, the treehouse) or of a set piece: scenery keeps out. */
+  reserved(x: number, z: number, r: number): boolean;
   /** How far an area is from home: 0 at the middle area, 1 at the map's edge. */
   remoteness(cx: number, cy: number): number;
   /** An area's centre (its layer-0 site), in metres. */
@@ -83,6 +97,8 @@ export interface ForestMap {
   hardClear(x: number, z: number): boolean;
   /** Pairs of areas that touch, as "cx,cy|cx,cy" keys, for tests and the debug view. */
   readonly neighbours: ReadonlyMap<string, ReadonlySet<string>>;
+  /** Paths, roads and railways, with the corridors they keep clear. */
+  readonly paths: PathNetwork;
 }
 
 const cellKey = (cx: number, cy: number) => cx + "," + cy;
@@ -200,6 +216,8 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     soundSpots.set(key, spot);
     return spot;
   };
+  const TH = tuning.treehouse, ta = (TH.angle * Math.PI) / 180;
+  const treehouse = { x: centre.x + Math.cos(ta) * (floorClear + TH.distance), z: centre.z + Math.sin(ta) * (floorClear + TH.distance) };
   const pieceSpots = new Map<string, { x: number; z: number } | null>();
   const setPieceSpot = (cx: number, cy: number) => {
     const key = cellKey(cx, cy);
@@ -210,7 +228,8 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
       const sounds = [cellKey(cx, cy), ...(neighbours.get(cellKey(cx, cy)) ?? [])].map(k => { const [x, y] = k.split(",").map(Number); return soundsystemSpot(x, y); });
       const clear = (x: number, z: number) => inCell(x, z, cx, cy)
         && sounds.every(p => Math.hypot(x - p.x, z - p.z) >= R + tuning.soundsystemFootprint + gap)
-        && Math.hypot(x - centre.x, z - centre.z) >= R + floorClear + gap;
+        && Math.hypot(x - centre.x, z - centre.z) >= R + floorClear + gap
+        && Math.hypot(x - treehouse.x, z - treehouse.z) >= R + TH.clear + gap;
       // Its old place (a little north of the centre) if that is clear, else the nearest clear
       // spot round it, out to the edge of the clearing.
       const s = siteOf(cx, cy);
@@ -222,8 +241,21 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     pieceSpots.set(key, spot);
     return spot;
   };
+  const reserved = (x: number, z: number, r: number) => {
+    const gap = tuning.reserveMargin, cell = areaAt(x, z).cell;
+    if (Math.hypot(x - centre.x, z - centre.z) < r + floorClear + gap) return true;
+    if (Math.hypot(x - treehouse.x, z - treehouse.z) < r + TH.clear + gap) return true;
+    for (const k of [cellKey(cell[0], cell[1]), ...(neighbours.get(cellKey(cell[0], cell[1])) ?? [])]) {
+      const [cx, cy] = k.split(",").map(Number);
+      if (!(cx === centreCell[0] && cy === centreCell[1])) { const q = soundsystemSpot(cx, cy); if (Math.hypot(x - q.x, z - q.z) < r + tuning.soundsystemFootprint + gap) return true; }
+      const p = setPieceSpot(cx, cy);
+      if (p && Math.hypot(x - p.x, z - p.z) < r + tuning.setPieceFootprint * tuning.setPieceScale + gap) return true;
+    }
+    return false;
+  };
   const hardCell = (x: number, z: number, cell: Cell) => {
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return true;
+    if (Math.hypot(x - treehouse.x, z - treehouse.z) < TH.clear) return true;
     // A set piece keeps a clearing round it, sized with it; a soundsystem a little room.
     const p = setPieceSpot(cell[0], cell[1]);
     if (p && Math.hypot(x - p.x, z - p.z) < tuning.setPieceClear * tuning.setPieceScale) return true;
@@ -242,12 +274,16 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
 
   const remoteness = (cx: number, cy: number) => Math.min(1, Math.hypot(cx - centreCell[0], cy - centreCell[1]) / (n / 2));
   const pad = A * 0.5;
-  return {
+  const map = {
     seed, tuning, n, margin, areaSize: A, partition, centreCell,
     dancefloor: { x: centre.x, z: centre.z, radius: floorR },
-    start: { x: centre.x, z: centre.z + 2 },
+    treehouse,
+    start: { x: treehouse.x, z: treehouse.z + 1 },
     bounds: { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad },
     extent: { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A },
-    typeOf, areaAt, siteOf, treeWeight, hardClear, neighbours, setPieceOf, soundsystemSpot, setPieceSpot, remoteness,
+    typeOf, areaAt, siteOf, treeWeight, hardClear, neighbours, setPieceOf, soundsystemSpot, setPieceSpot, reserved, remoteness,
+    paths: null as unknown as PathNetwork,
   };
+  map.paths = new PathNetwork(map);
+  return map;
 }

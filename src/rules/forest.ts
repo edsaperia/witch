@@ -15,7 +15,6 @@ export interface Plant {
   flip: boolean;
 }
 
-export const TREE_VARIANTS = 6;
 export const BUSH_VARIANTS = 4;
 const CHUNK = 32; // metres
 
@@ -45,10 +44,12 @@ export function plantType(map: ForestMap, x: number, z: number, i: number, j: nu
 export function treeChance(map: ForestMap, x: number, z: number, type: number): number {
   const t = map.tuning, D = t.density, L = AREA_TYPES[type].layout, s = map.seed;
   if (map.hardClear(x, z)) return 0;
+  const along = map.paths.clearance(x, z).trees;
+  if (along === 0) return 0;
   const n = vnoise(x / D.patchScale, z / D.patchScale, s + 91);
   const patch = D.patchMin + (D.patchMax - D.patchMin) * smoothstep((n - 0.25) / 0.5);
   const w = map.treeWeight(x, z) * L.density * patch * patternMask(map, x, z, L) * t.treeDensity;
-  return Math.max(w, D.lone);
+  return Math.max(w, D.lone) * along;
 }
 
 /** How a type's pattern shapes its trees, around 1 on average. */
@@ -88,7 +89,7 @@ function treesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
       if (hash2(i, j, s + 103) >= chance) continue;
       // Crowns don't hang over the dancefloor's or a set piece's clearing.
       if (map.hardClear(x, z - lift) || map.hardClear(x - half, z - lift) || map.hardClear(x + half, z - lift)) continue;
-      out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 104) * TREE_VARIANTS), flip: hash2(i, j, s + 105) < 0.5 });
+      out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 104) * 1000003) /* the view picks a variant by weight */, flip: hash2(i, j, s + 105) < 0.5 });
     }
   }
   return out;
@@ -104,9 +105,13 @@ function bushesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
     const clump = 1 + map.tuning.bushClump * (2 * smoothstep((vnoise(x / 13, z / 13, s + 207) - 0.35) / 0.3) - 1);
     // Fewer under dense canopy, more where the trees are sparse (clearing rims, glades, open
     // ground), as the type's undergrowth says (Ed, 2026-10-03).
+    // Paths keep their corridors clear, with bushes thick along their edges.
+    const along = map.paths.clearance(x, z).bushes;
+    if (along === 0) continue;
     const type = plantType(map, x, z, i, j, s + 206), sparse = 1 - Math.min(1, treeChance(map, x, z, type) / 0.8);
-    if (hash2(i, j, s + 203) > (0.15 + 0.85 * sparse) * AREA_TYPES[type].layout.undergrowth * map.tuning.bushDensity * clump) continue;
+    if (hash2(i, j, s + 203) > (0.15 + 0.85 * sparse) * AREA_TYPES[type].layout.undergrowth * map.tuning.bushDensity * clump * along) continue;
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + 2) continue; // the dancefloor stays clear
+    if (Math.hypot(x - map.treehouse.x, z - map.treehouse.z) < map.tuning.treehouse.clear) continue; // and the treehouse's foot
     out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 204) * BUSH_VARIANTS), flip: hash2(i, j, s + 205) < 0.5 });
   }
   return out;
@@ -121,9 +126,40 @@ function wallsInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
   for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
     if (hash2(i, j, s + 303) > map.tuning.wallDensity) continue;
     const x = (i + (hash2(i, j, s + 301) - 0.5) * 0.6) * sp, z = (j + (hash2(i, j, s + 302) - 0.5) * 0.6) * sp, a = map.areaAt(x, z);
-    if (a.openness < 0.82 || !AREA_TYPES[a.type].hasWalls) continue;
+    if (a.openness < 0.82 || !AREA_TYPES[a.type].hasWalls || map.paths.clearance(x, z).bushes === 0) continue; // not across a path
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + 4) continue;
     out.push({ x, z, type: a.type, variant: Math.floor(hash2(i, j, s + 304) * 4), flip: hash2(i, j, s + 305) < 0.5 });
+  }
+  return out;
+}
+
+// Decorations (Ed: "rocks, ruins, lakes, weird freak trees ... just around"): scattered sparsely as
+// discoveries, more of them on open ground than under dense canopy; never on a path's corridor, in
+// an area's central clearing (its soundsystem and set piece stand there) or by the dancefloor.
+export type DecorFamily = "ruins" | "rocks" | "freak";
+export interface Decor { x: number; z: number; family: DecorFamily; variant: number; flip: boolean }
+
+function decorInChunk(map: ForestMap, ci: number, cj: number): Decor[] {
+  const D = map.tuning.decor, sp = D.spacing, s = map.seed, out: Decor[] = [];
+  const j0 = Math.ceil((cj * CHUNK) / sp), j1 = Math.ceil(((cj + 1) * CHUNK) / sp);
+  const i0 = Math.ceil((ci * CHUNK) / sp), i1 = Math.ceil(((ci + 1) * CHUNK) / sp);
+  for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
+    // The area's layout says how much decor it has (its rate, against a typical 0.3) and of which
+    // families; "rocky" ground has more rocks.
+    const x = (i + (hash2(i, j, s + 501) - 0.5) * 0.8) * sp, z = (j + (hash2(i, j, s + 502) - 0.5) * 0.8) * sp, a = map.areaAt(x, z);
+    const L = AREA_TYPES[a.type].layout, ad = L.decor, rate = ad ? ad.rate / 0.3 : 1, rocky = L.terrain?.includes("rocky") ? 2 : 1;
+    const w = ad ? [ad.ruins, ad.rocks * rocky, ad.freak] : [D.ruins, D.rocks * rocky, D.freak], sum = w[0] + w[1] + w[2] || 1;
+    const total = (D.ruins + D.rocks + D.freak) * rate * (ad ? (ad.ruins + ad.rocks + ad.freak) / Math.max(0.01, ad.ruins + ad.rocks + ad.freak + ad.lake + ad.modern) : 1) * (rocky > 1 ? 1.5 : 1);
+    const roll = hash2(i, j, s + 503);
+    if (roll >= total) continue;
+    if (a.openness < D.clearing || map.hardClear(x, z) || map.paths.at(x, z, D.pathGap)) continue;
+    if (map.reserved(x, z, D.footprint)) continue; // its whole footprint clear of the gameplay and set pieces
+    if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + map.tuning.dancefloor.clearing + 6) continue;
+    // Open ground keeps them all; dense canopy only some.
+    const open = 1 - Math.min(1, treeChance(map, x, z, a.type) / 0.8);
+    if (hash2(i, j, s + 504) > 0.35 + 0.65 * open) continue;
+    const f = (roll / total) * sum, family: DecorFamily = f < w[0] ? "ruins" : f < w[0] + w[1] ? "rocks" : "freak";
+    out.push({ x, z, family, variant: Math.floor(hash2(i, j, s + 505) * 1e6), flip: hash2(i, j, s + 506) < 0.5 });
   }
   return out;
 }
@@ -142,7 +178,7 @@ function lightsInChunk(map: ForestMap, ci: number, cj: number): LightSource[] {
     const x = (i + (hash2(i, j, s + 401) - 0.5) * 0.7) * sp, z = (j + (hash2(i, j, s + 402) - 0.5) * 0.7) * sp;
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + map.tuning.dancefloor.clearing + 4) continue;
     const a = map.areaAt(x, z), where = a.openness < 0.35 || a.openness > 0.8 ? 1 : 0.25, roll = hash2(i, j, s + 403);
-    const wet = WET.has(AREA_TYPES[a.type].id);
+    const wet = WET.has(AREA_TYPES[a.type].id) || !!AREA_TYPES[a.type].layout.terrain?.includes("pools");
     const pond = (wet ? L.wetPond : L.pond) * where, fire = L.campfire * where, stone = L.magicStone * where;
     const kind: LightKind | null = roll < pond ? "pond" : roll < pond + fire ? "campfire" : roll < pond + fire + stone ? "stone" : null;
     if (kind) out.push({ x, z, kind, size: 0.75 + hash2(i, j, s + 404) * 0.5 });
@@ -156,6 +192,7 @@ export class Forest {
   private bushes = new Map<string, Plant[]>();
   private walls = new Map<string, Plant[]>();
   private lights = new Map<string, LightSource[]>();
+  private decor = new Map<string, Decor[]>();
   constructor(readonly map: ForestMap) {}
 
   private chunks(x: number, z: number, radius: number): [number, number][] {
@@ -184,6 +221,9 @@ export class Forest {
   }
   lightsNear(x: number, z: number, radius: number): LightSource[] {
     return this.gather(this.lights, (i, j) => lightsInChunk(this.map, i, j), x, z, radius);
+  }
+  decorNear(x: number, z: number, radius: number): Decor[] {
+    return this.gather(this.decor, (i, j) => decorInChunk(this.map, i, j), x, z, radius);
   }
   wallsNear(x: number, z: number, radius: number): Plant[] {
     return this.gather(this.walls, (i, j) => wallsInChunk(this.map, i, j), x, z, radius);

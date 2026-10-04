@@ -13,6 +13,7 @@ import type { Frame, Piece } from "./artBuild";
 import type { LightSource, Plant } from "../rules/forest";
 import { hash2 } from "../rules/random";
 import { Ground } from "./ground";
+import { PathView } from "./paths";
 import { applyStyleLight, LIGHT_UNIFORMS, MAX_LIGHTS } from "./lighting";
 import { Post } from "./post";
 import { Dancefloor } from "./dancefloor";
@@ -31,6 +32,15 @@ import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
 import type { Style } from "./style";
 
 /** A point light: where, how far it reaches, its colour and strength. */
+/** An index by weight, from a seeded integer (its last six digits as a share). */
+function pickWeighted(w: number[], seed: number): number {
+  let total = 0;
+  for (const x of w) total += x;
+  let u = ((seed % 1000003) / 1000003) * total;
+  for (let i = 0; i < w.length; i++) { u -= w[i]; if (u < 0) return i; }
+  return Math.max(0, w.length - 1);
+}
+
 export interface ForestLight { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number }
 
 export interface ViewStats { sceneryRadius: number; fps: number; gameplay: number; scenery: number; dropped: number; trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number; lights: number }
@@ -42,8 +52,13 @@ export class View {
   private ground: Ground;
   readonly assets: AssetLibrary;
   private typeBatches = new Map<number, SpriteBatch>();
+  private decorBatches = new Map<string, SpriteBatch>();
   private creatureBatches = new Map<string, SpriteBatch>();
   private witchBatch: SpriteBatch;
+  private treehouseBatch: SpriteBatch;
+  /** 1 while she sits on the treehouse terrace, easing to 0 as she takes off. */
+  private seatK = 1;
+  private seatTime = 0;
   private stoneBatch: SpriteBatch;
   private shadow: THREE.Mesh;
   private mpp: number; // metres per art pixel
@@ -113,6 +128,7 @@ export class View {
     }
     LIGHT_UNIFORMS.uHazeRange.value.set(t.haze.near, t.haze.far);
     this.scene.add(this.ground.mesh);
+    this.scene.add(new PathView(game.map, style, this.mpp).group);
 
     // The witch is depth-tested like everything else, drawn after it; where something still hides
     // her, a silhouette in her glow colour shows through, and tall things in front of her fade.
@@ -121,6 +137,13 @@ export class View {
     this.witchBatch.mesh.renderOrder = 10;
     this.scene.add(...this.witchBatch.meshes);
     SPRITE_UNIFORMS.uOcc.value.set(O.fadeOpacity, O.edge, O.minHeight, O.on ? 1 : 0);
+    // The treehouse, home: its base and its crown (the crown only from the treetops), its trunk's
+    // foot on its spot. It fades like other tall things when she's behind it.
+    {
+      // (Placed each frame by placeTreehouse: where it stands depends on the camera's angle.)
+      this.treehouseBatch = new SpriteBatch(this.assets.treehouse.atlas, this.mpp, { fade: true });
+      this.scene.add(...this.treehouseBatch.meshes);
+    }
     this.stoneBatch = new SpriteBatch(this.assets.stones, this.mpp, { fade: true });
     this.scene.add(...this.stoneBatch.meshes);
     const d = game.map.dancefloor, stones: SpriteInstance[] = [];
@@ -348,12 +371,14 @@ export class View {
     for (const p of g.forest.treesNear(cx, cz, half)) {
       const art = this.assets.typeArt(p.type);
       if (!art || !art.layout.big.length) continue;
-      const f = art.atlas.frames, big = art.layout.big[p.variant % art.layout.big.length], whole = f[big.top ?? big.bot];
+      const f = art.atlas.frames, big = art.layout.big[pickWeighted(art.layout.bigWeight, p.variant)], whole = f[big.top ?? big.bot];
       if (!this.inView(p.x, p.z, whole.w * mpp, whole.h * mpp, margin, reach)) continue;
-      const fresh = this.mark("tree", p.x, p.z, whole.h * mpp);
-      const at = stand(p.x, p.z, f[big.bot], mpp);
-      add(p.type, { ...at, frame: f[big.bot], flip: p.flip, fresh });
-      if (big.top !== null) add(p.type, { ...at, frame: f[big.top], flip: p.flip, top: true, fresh });
+      // Squeeze the tallest variants so they never bury her flight (treeCap).
+      const tall = whole.h * mpp, C = t.treeCap, scale = tall > C.from ? (C.from + (tall - C.from) * C.keep) / tall : 1;
+      const fresh = this.mark("tree", p.x, p.z, tall * scale);
+      const at = stand(p.x, p.z, f[big.bot], mpp * scale);
+      add(p.type, { ...at, frame: f[big.bot], flip: p.flip, fresh, scale });
+      if (big.top !== null) add(p.type, { ...at, frame: f[big.top], flip: p.flip, top: true, fresh, scale });
       const w = whole.w * mpp, h = whole.h * mpp * (big.top === null ? 0.2 : 0.6);
       if (t.shadows.trees) shadows.push({ x: p.x + sx * h, z: p.z + sz * h, w: w * 0.8, d: w * 0.45, scenery: true });
       nt++;
@@ -391,11 +416,27 @@ export class View {
     scatter("small", g.forest.bushesNear(cx, cz, half), l => l.small);
     scatter("wall", g.forest.wallsNear(cx, cz, half), l => l.walls.map(bot => ({ bot, top: null })));
     scatter("setpiece", g.forest.setPiecesNear(cx, cz, half), l => (l.set === null ? [] : [l.set]));
+    // Decorations: ruins, rocks and freak trees, as scenery (each family's pieces picked by its variant).
+    const decor = this.assets.decorArt(), dl: SpriteInstance[] = [];
+    if (decor) for (const d of g.forest.decorNear(cx, cz, half)) {
+      const list = decor.families[d.family];
+      if (!list?.length) continue;
+      const piece = list[d.variant % list.length], f = decor.atlas.frames, frame = f[piece.bot], whole = f[piece.top ?? piece.bot];
+      if (!this.inView(d.x, d.z, whole.w * mpp, whole.h * mpp, margin, reach)) continue;
+      const fresh = this.mark("decor", d.x, d.z, whole.h * mpp), at = stand(d.x, d.z, frame, mpp);
+      dl.push({ ...at, frame, flip: d.flip, fresh });
+      if (piece.top !== null) dl.push({ ...at, frame: f[piece.top], flip: d.flip, top: true, fresh });
+      const sd = frame.w * mpp * 0.3; // its shadow under it, front edge at its base
+      shadows.push({ x: d.x, z: d.z - sd * 0.4, w: frame.w * mpp * 0.8, d: sd, scenery: true });
+      nb++;
+    }
+    if (decor) this.batchFor(this.decorBatches, "all", () => new SpriteBatch(decor.atlas, mpp, { scenery: true, fade: true }))?.set(dl);
     for (const [type, b] of this.typeBatches) if (!per.has(type)) b.set([]);
     for (const [type, list] of per) {
       const b = this.batchFor(this.typeBatches, type, () => { const a = this.assets.typeArt(type); return a && new SpriteBatch(a.atlas, mpp, { scenery: true, fade: true }); });
       b?.set(list);
     }
+    { const th = g.map.treehouse; shadows.push({ x: th.x, z: th.z, w: 7, d: 3.5, scenery: false }); } // soft, under the treehouse
     this.checkPops("placed", !force);
     this.sources = g.forest.lightsNear(g.witch.x, g.witch.z, t.haze.far + margin);
     this.stats.trees = nt; this.stats.bushes = nb;
@@ -503,6 +544,19 @@ export class View {
     this.ghostLines.visible = pts.length > 0;
   }
 
+  /** Stand the treehouse with its trunk's foot (its base anchor) on its spot: like a set piece's
+   *  origin, the roots drawn below the foot lie on the ground nearer the camera, its lowest drawn
+   *  pixel on the ground. Returns where its sprite stands (the bottom middle of its box). */
+  private placeTreehouse(angle: number): { x: number; y: number; z: number } {
+    const T = this.assets.treehouse, f = T.atlas.frames, th = this.game.map.treehouse, mpp = this.mpp, U = SPRITE_UNIFORMS.uUp.value;
+    const pitch = (angle * Math.PI) / 180, upOnScreen = U.dot(this.v3.set(0, Math.cos(pitch), -Math.sin(pitch)));
+    const pad = f[0].pad ?? 0, below = Math.max(0, f[0].h - pad - T.base.y) * mpp, d = pad * mpp;
+    const x = th.x - (T.base.x - f[0].w / 2) * mpp, z = th.z + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch));
+    const at = { x: x - U.x * d, y: -U.y * d, z: z - U.z * d };
+    this.treehouseBatch.set([{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true }]);
+    return at;
+  }
+
   /** Draw a frame; with draw false, only bring the camera, batches and art requests up to date. */
   render(time: number, draw = true): void {
     const g = this.game, t = g.tuning, pose = poseOf(g);
@@ -565,7 +619,16 @@ export class View {
     }
     this.strings.update();
     this.borders.update();
-    this.setLights([this.dancefloor.update(time, this.ground), ...party.lights, ...this.forestLights], w.x, w.z);
+    // A point on the treehouse's sprite (its pixels) in the world, standing on its spot.
+    const T = this.assets.treehouse, thf = T.atlas.frames[0], at = this.placeTreehouse(pose.angle), U2 = SPRITE_UNIFORMS;
+    const onTreehouse = (px: number, py: number) => {
+      const r = U2.uRight.value, u = U2.uUp.value, dx = (px - thf.w / 2) * this.mpp, dy = (thf.h - py) * this.mpp;
+      return { x: at.x + r.x * dx + u.x * dy, y: at.y + r.y * dx + u.y * dy, z: at.z + r.z * dx + u.z * dy };
+    };
+    const thLights: ForestLight[] = T.lights.filter(l => l.kind === "lantern" || l.kind === "window").slice(0, 2).map(l => ({
+      ...onTreehouse(l.x, l.y), reach: t.treehouse.lightReach, rgb: new THREE.Vector3(l.rgb[0] / 255, l.rgb[1] / 255, l.rgb[2] / 255), strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3 + l.x)),
+    }));
+    this.setLights([this.dancefloor.update(time, this.ground), ...party.lights, ...thLights, ...this.forestLights], w.x, w.z);
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);
     const bob = Math.sin(time * 2.4) * 0.12;
@@ -575,6 +638,12 @@ export class View {
     const climbing = w.mode === "rising" && w.lift < 0.9, dropping = w.mode === "descending" && w.lift > 0.1;
     let wf = climbing || dropping ? (climbing ? 8 : 12) + (w.away ? 2 : 0) + (Math.floor(time * 7) % 2)
       : w.lean ? 6 + (w.away ? 1 : 0) : (w.away ? 3 : 0) + (Math.floor(time * 4) % 3);
+    // Treetop momentum: skidding to brake on a sharp turn, and the fast pose at boost.
+    if (!climbing && !dropping) {
+      const Fl = this.assets.witchFly, sideF = w.away ? "away" : "towards";
+      if (w.braking) wf = Fl.brake[sideF][Math.floor(time * Fl.brake.fps) % Fl.brake[sideF].length];
+      else if ((w.boost ?? 0) > 0.7) wf = Fl.fast[sideF][Math.floor(time * Fl.fast.fps) % Fl.fast[sideF].length];
+    }
     // Talking or handling a sigil, she lands first (Ed, 2026-10-03): down to the ground, then the
     // talk, placeSigil or liftSigil pose, and back up into the air when she's done.
     const L = g.leash, F = this.assets.witchFoot, side = w.away ? "away" : "towards";
@@ -593,17 +662,29 @@ export class View {
       else wf = pick("stand", Math.floor(time * F.stand.fps) % F.stand[side].length);
     } else if (this.foot > 0.02) wf = this.foot >= prevFoot ? pick("land", Math.floor(this.foot * 3)) : pick("takeoff", Math.floor((1 - this.foot) * 3));
     const footEase = this.foot * this.foot * (3 - 2 * this.foot), wy = (h + bob - 0.4) * (1 - footEase);
-    const wframe = this.assets.witch.frames[wf], hatTop = wy + wframe.h * this.mpp;
-    this.witchBatch.set([{ x: w.x, y: wy, z: w.z, frame: wframe, flip: w.facing < 0 }]);
+    // At the start she sits on the treehouse terrace (the sit pose, swinging her legs), and eases
+    // off it into the air when she first moves.
+    const sdt = Math.min(0.1, Math.max(0, time - this.seatTime));
+    this.seatTime = time;
+    this.seatK = w.seated ? 1 : Math.max(0, this.seatK - sdt / 0.6);
+    let wx = w.x, wz = w.z, wyy = wy;
+    if (this.seatK > 0) {
+      const seat = onTreehouse(T.seat.x, T.seat.y), k = this.seatK * this.seatK * (3 - 2 * this.seatK);
+      const fwd = this.camera.getWorldDirection(this.v3);
+      wx += (seat.x - fwd.x * 0.6 - wx) * k; wyy += (seat.y - fwd.y * 0.6 - wyy) * k; wz += (seat.z - fwd.z * 0.6 - wz) * k;
+      if (w.seated) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
+    }
+    const wframe = this.assets.witch.frames[wf], hatTop = wyy + wframe.h * this.mpp;
+    this.witchBatch.set([{ x: wx, y: wyy, z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
     // Where she is on screen (low-res pixels) and how far from the camera, for the occluder fade.
     {
       const px = (x: number, y: number, z: number) => { const p = this.v3.set(x, y, z).project(this.camera); return [(p.x + 1) / 2 * this.width, (p.y + 1) / 2 * this.height]; };
-      const base = px(w.x, wy, w.z), top = px(w.x, hatTop, w.z), side = px(w.x + wframe.w * this.mpp / 2, wy, w.z);
+      const base = px(wx, wyy, wz), top = px(wx, hatTop, wz), side = px(wx + wframe.w * this.mpp / 2, wyy, wz);
       SPRITE_UNIFORMS.uWitch.value.set((base[0] + top[0]) / 2, (base[1] + top[1]) / 2, Math.abs(side[0] - base[0]) + 1, Math.abs(top[1] - base[1]) / 2 + 1);
-      SPRITE_UNIFORMS.uWitchDepth.value = -this.v3.set(w.x, h, w.z).applyMatrix4(this.camera.matrixWorldInverse).z;
+      SPRITE_UNIFORMS.uWitchDepth.value = -this.v3.set(wx, this.seatK > 0 ? wyy : h, wz).applyMatrix4(this.camera.matrixWorldInverse).z;
     }
-    this.shadow.position.set(w.x, 0.03, w.z);
-    this.shadow.scale.setScalar(1 - 0.5 * canopyShown(w));
+    this.shadow.position.set(wx, 0.03, wz);
+    this.shadow.scale.setScalar((1 - 0.5 * canopyShown(w)) * (1 - this.seatK) + 1e-3); // none while she's up on the terrace
 
     this.refresh();
     this.drawCreatures(time);

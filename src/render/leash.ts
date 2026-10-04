@@ -273,6 +273,27 @@ export class LeashView {
     this.bubbles(time, camera, width, height);
   }
 
+  /** Show an emoji in a bubble as a pixel sprite: drawn small (bubbles.emojiPixels across), its
+   *  edges made hard (no half-see-through pixels), and scaled up by the game's pixel size. */
+  private emoji(el: HTMLElement, e: string): void {
+    if (el.dataset.e === e) return;
+    el.dataset.e = e;
+    const B = this.game.tuning.bubbles, n = B.emojiPixels, k = this.game.tuning.pixelSize * B.scale;
+    const c = document.createElement("canvas");
+    c.width = c.height = n;
+    c.style.width = c.style.height = `${n * k}px`;
+    const x = c.getContext("2d");
+    if (x) {
+      x.font = `${n - 1}px sans-serif`; x.textAlign = "center"; x.textBaseline = "middle";
+      x.fillText(e, n / 2, n / 2 + 0.5);
+      const d = x.getImageData(0, 0, n, n);
+      for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] < 110 ? 0 : 255;
+      x.putImageData(d, 0, 0);
+    }
+    el.replaceChildren(c);
+  }
+  private say(el: HTMLElement, text: string): void { if (el.dataset.e !== text) { el.dataset.e = text; el.textContent = text; } }
+
   /** The emoji conversation: bubbles taking turns over the witch and the creature. */
   private bubbles(time: number, camera: THREE.Camera, width: number, height: number): void {
     const g = this.game, talk = g.leash.talk, bw = this.bubbleWitch, bc = this.bubbleCreature;
@@ -289,7 +310,7 @@ export class LeashView {
       bar.style.display = "none";
       bc.classList.remove("on");
       bw.classList.toggle("on", g.leash.held);
-      if (g.leash.held) { bw.textContent = g.leash.heldInAir ? "land to talk" : "…"; place(bw, w.x - 1.2, witchHeight(w, g.tuning) + 2.2, w.z); }
+      if (g.leash.held) { this.say(bw, g.leash.heldInAir ? "land to talk" : "…"); place(bw, w.x - 1.2, witchHeight(w, g.tuning) + 2.2, w.z); }
       return;
     }
     const c = g.creatures[talk.id];
@@ -298,7 +319,7 @@ export class LeashView {
     if (talk.refused) {
       // A legend: one unimpressed look, and nothing more.
       bw.classList.remove("on");
-      line.textContent = hash2(talk.id, 1, 9) < 0.5 ? "😒" : "🙄";
+      this.emoji(line, hash2(talk.id, 1, 9) < 0.5 ? "😒" : "🙄");
       bar.style.display = "none";
       bc.classList.toggle("on", talk.t < 1.6);
       bc.style.opacity = "1";
@@ -310,9 +331,9 @@ export class LeashView {
     // Hers on even turns, always party; theirs on odd turns, from a mood that warms up from where
     // its level starts (babies delighted, young curious, adults bored and busy) to delighted.
     const start = [4, 2, 0][Math.min(2, c.level)], mood = Math.round(start + (4 - start) * progress);
-    bw.textContent = pick(PARTY, turn - (turn % 2));
+    this.emoji(bw, pick(PARTY, turn - (turn % 2)));
     bw.classList.toggle("on", turn % 2 === 0);
-    line.textContent = turn >= 1 ? pick(MOODS[mood], turn - ((turn + 1) % 2)) : "…";
+    if (turn >= 1) this.emoji(line, pick(MOODS[mood], turn - ((turn + 1) % 2))); else this.say(line, "…");
     (bar.querySelector("i") as HTMLElement).style.width = `${progress * 100}%`;
     bc.classList.add("on");
     bc.style.opacity = turn % 2 === 1 ? "1" : "0.6";
