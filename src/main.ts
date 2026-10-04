@@ -68,6 +68,7 @@ const view = new View(canvas, game, {
 });
 loadTimes.view = performance.now();
 view.debugCull = params.get("debug") === "cull";
+view.quick = params.get("quick") === "1";
 // ?scenery=<metres>: a fixed scenery radius instead of the adaptive budget.
 const sceneryAt = Number(params.get("scenery"));
 if (params.has("scenery") && sceneryAt > 0) view.sceneryFixed = sceneryAt;

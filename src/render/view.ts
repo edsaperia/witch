@@ -99,6 +99,8 @@ export class View {
   /** ?debug=cull: tint anything that has just appeared bright red, and mark where anything has
    *  just vanished with a red frame for a second. */
   debugCull = false;
+  /** ?quick=1, for the quick smoke test in CI: no drawing the rest of the map's art ahead of need. */
+  quick = false;
   private ghosts: { x: number; z: number; h: number; until: number }[] = [];
   private ghostLines: THREE.LineSegments | null = null;
   private now = 0;
@@ -227,8 +229,9 @@ export class View {
       if (!(near.get(t)! <= d)) near.set(t, d);
     }
     for (let t = 0; t < AREA_TYPES.length; t++) if (!near.has(t)) near.set(t, Infinity);
-    for (const [t] of [...near].sort((a, b) => a[1] - b[1])) this.assets.prefetchType(t);
     this.prepared = true;
+    if (this.quick) return; // ?quick=1 (the CI smoke test): only what's needed, as it's needed
+    for (const [t] of [...near].sort((a, b) => a[1] - b[1])) this.assets.prefetchType(t);
     for (const t of AREA_TYPES) this.assets.creatureArt(t.creature);
   }
 
