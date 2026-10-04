@@ -91,7 +91,6 @@ const buildName = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev
 const esc = (s: string) => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!);
 newsEl.innerHTML = "<b>What's new</b>" + changelog.entries.slice(0, 3).map(e =>
   `<div>${e.version === null ? `${buildName} (this version)` : "v" + e.version}</div><ul>${e.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>`).join("");
-newsEl.addEventListener("pointerdown", e => e.stopPropagation()); // scrolling it doesn't start the game
 const seedEl = document.getElementById("seed")!;
 seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;
 const debugEl = document.getElementById("debug")!, startEl = document.getElementById("start")!;

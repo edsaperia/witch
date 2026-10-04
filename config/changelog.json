@@ -4,6 +4,12 @@
     {
       "version": null,
       "items": [
+        "Tapping the start screen on a phone starts the game again, wherever you tap"
+      ]
+    },
+    {
+      "version": 127,
+      "items": [
         "Each kind of area has its own mix of tree heights and its own ruins, rocks and odd trees",
         "The ground has shape: moonlit mounds, dark hollows and ridges where the area has them, and more pools in the boggy ones"
       ]
