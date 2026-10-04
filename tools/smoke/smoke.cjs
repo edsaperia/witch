@@ -26,6 +26,7 @@ function serve() {
 
 // Zoom keys (rise and descend are Space; E is the sigil button).
 const ZOOM_IN = "KeyZ", ZOOM_OUT = "KeyX";
+const TRUNK_SPREAD = 1.6; // a lit trunk's brightest tenth over its darkest: a flat slab is near 1
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -340,7 +341,8 @@ async function main() {
   // black on black) in the lit frame.
   await run("trunks", { width: 960, height: 540 }, async page => {
     await page.keyboard.press("Enter");
-    for (const id of ["tangly-forest", "old-oaks"]) {
+    // (The bluebell glade's smooth pale beeches drew as flat grey slabs on brown stumps: Ed, 2026-10-04.)
+    for (const id of ["tangly-forest", "old-oaks", "bluebell-glade"]) {
       const at = await page.evaluate(id => {
         const g = window.witch.game, m = g.map, B = m.bounds;
         let t = -1;
@@ -374,11 +376,15 @@ async function main() {
         const load = src => new Promise(res => { const i = new Image(); i.onload = () => { const c = document.createElement("canvas"); c.width = i.width; c.height = i.height; const x = c.getContext("2d"); x.drawImage(i, 0, 0); res(x.getImageData(0, 0, i.width, i.height).data); }; i.src = "data:image/png;base64," + src; });
         const A = await load(a), M = await load(m);
         let n = 0, readable = 0;
-        for (let i = 0; i < M.length; i += 4) if (M[i] > 200 && M[i + 1] < 60 && M[i + 2] > 200) { n++; if (0.3 * A[i] + 0.55 * A[i + 1] + 0.15 * A[i + 2] > 25) readable++; }
-        return { share: n / (M.length / 4), readable: n ? readable / n : 0 };
+        const lumas = [];
+        for (let i = 0; i < M.length; i += 4) if (M[i] > 200 && M[i + 1] < 60 && M[i + 2] > 200) { n++; const l = 0.3 * A[i] + 0.55 * A[i + 1] + 0.15 * A[i + 2]; if (l > 25) { readable++; lumas.push(l); } }
+        lumas.sort((p, q) => p - q);
+        const pc = k => lumas[Math.floor(k * (lumas.length - 1))] ?? 0;
+        return { share: n / (M.length / 4), readable: n ? readable / n : 0, spread: lumas.length ? pc(0.9) / Math.max(1, pc(0.1)) : 0 };
       }, [lit.toString("base64"), mask.toString("base64")]);
       check(r.share > 0.02, `trunks are drawn on the ground in the ${id} (${(r.share * 100).toFixed(1)}% of the screen)`);
       check(r.readable > 0.15, `the ${id}'s trunks are readable, not black on black (${(r.readable * 100).toFixed(0)}% of their pixels)`);
+      check(r.spread > TRUNK_SPREAD, `the ${id}'s trunks are shaded, not flat slabs: their brightest tenth over their darkest ${r.spread.toFixed(2)}x (over ${TRUNK_SPREAD}x)`);
     }
   }, "&tilt=before");
 
