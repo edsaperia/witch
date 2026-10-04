@@ -9,7 +9,7 @@ import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway } 
 import { newCamera, stepCamera, cameraPose } from "./camera";
 import { legendChance, population, spawnCreatures, stepCreature, stepCreaturesNear } from "./creatures";
 import { newGame, stepGame } from "./game";
-import { newParty, spreadWave, stepParty, spawnMarkers, nextWave } from "./party";
+import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
 import { laserShow } from "./lasers";
@@ -17,6 +17,9 @@ import { borderOf } from "./borders";
 import { newLeash, stepLeash, type LeashControls } from "./leash";
 import { newClock, tick, MAX_STEP } from "./clock";
 import { TUNING, withTuning } from "./tuning";
+import { floorClearing, speakerRadius, nextSpeakerState } from "./speakers";
+import { DECOR } from "../../art/decor.js";
+import { RELICS } from "../../art/relics.js";
 
 const map = generateMap(123, TUNING);
 
@@ -174,8 +177,8 @@ describe("the map", () => {
     expect(a.openness).toBeLessThan(0.05);
     expect(map.treeWeight(d.x, d.z)).toBe(0);
     const th = map.treehouse, far = Math.hypot(th.x - d.x, th.z - d.z);
-    expect(far).toBeGreaterThan(d.radius + TUNING.dancefloor.clearing);
-    expect(far).toBeLessThan(d.radius + TUNING.dancefloor.clearing + 20);
+    expect(far).toBeGreaterThan(floorClearing(TUNING)); // outside the speakers and the clearing
+    expect(far).toBeLessThan(floorClearing(TUNING) + 20);
     expect(map.hardClear(th.x, th.z)).toBe(true);
     expect(Math.hypot(map.start.x - th.x, map.start.z - th.z)).toBeLessThan(3);
   });
@@ -304,6 +307,20 @@ describe("the witch", () => {
       for (let i = 0; i < 30; i++) back = stepWitch(back, { moveX: -1, moveZ: 0, toggleMode: false }, 1 / 60, TUNING, b);
       expect(back.boost!).toBeLessThan(0.3);
       expect(stepWitch(fast, { moveX: -1, moveZ: 0, toggleMode: false }, 1 / 60, TUNING, b).braking).toBe(true);
+    });
+    it("turns tight when slow and swoops wide only at speed (Ed: the skid scales with speed)", () => {
+      const sweep = (v: number) => {
+        let w: ReturnType<typeof newWitch> = { ...up(), vx: v, vz: 0, boost: v > TUNING.treetopSpeed ? 1 : 0 }, maxZ = 0;
+        for (let i = 0; i < 600 && w.vx >= 0; i++) { w = stepWitch(w, { moveX: -1, moveZ: 0, toggleMode: false }, 1 / 60, TUNING, b); maxZ = Math.max(maxZ, Math.abs(w.z - 200)); }
+        return maxZ;
+      };
+      const slow = sweep(5), cruise = sweep(TUNING.treetopSpeed), fast = sweep(TUNING.treetopSpeed * T.boost);
+      expect(slow).toBeLessThan(1);
+      expect(slow).toBeLessThan(fast / 4);
+      expect(slow).toBeLessThan(cruise);
+      expect(cruise).toBeLessThan(fast);
+      const slowTurn = stepWitch({ ...up(), vx: 8, vz: 0 }, { moveX: -1, moveZ: 0, toggleMode: false }, 1 / 60, TUNING, b);
+      expect(slowTurn.braking).toBe(false); // no skid pose for a slow about-face
     });
     it("glides when let go, rather than stopping dead", () => {
       const fast = fly(up(), 60);
@@ -532,18 +549,36 @@ describe("the party", () => {
     expect([...p.areas.keys()]).toEqual([key(map.centreCell)]);
     expect(p.areas.get(key(map.centreCell))!.soundsystem).toBeNull();
   });
-  it("spreads exactly to home's neighbours on the first wave, then ring by ring, never further", () => {
+  it("wakes exactly one area a wave, the one chosen in advance, always bordering the party (no islands), spreading away from the last", () => {
     const p = newParty(map);
-    spreadWave(p, map, 30);
-    const first = [...p.areas.keys()].filter(k => k !== key(map.centreCell)).sort();
-    expect(first).toEqual([...map.neighbours.get(key(map.centreCell))!].sort());
-    for (let w = 2; w <= 5; w++) {
-      const before = new Set(p.areas.keys());
-      for (const a of spreadWave(p, map, w * 30)) {
-        expect([...map.neighbours.get(key(a.cell))!].some(n => before.has(n))).toBe(true);
-        expect(a.wave).toBe(w);
+    let besideLast = 0, couldAvoid = 0;
+    for (let w = 1; w <= 25; w++) {
+      const next = p.next!, before = new Set(p.areas.keys());
+      expect(before.has(key(next))).toBe(false);
+      const touchesParty = [...map.neighbours.get(key(next))!].some(n => before.has(n));
+      expect(touchesParty).toBe(true); // noisy: no islands
+      const fresh = spreadWave(p, map, w * 30);
+      expect(fresh.length).toBe(1);
+      expect(fresh[0].cell).toEqual(next);
+      expect(fresh[0].wave).toBe(w);
+      if (p.last && p.next && w > 1) {
+        // when another candidate exists, the pick isn't beside the last one
+        const beside = map.neighbours.get(key(p.last))!;
+        if (beside.has(key(p.next))) besideLast++;
+        couldAvoid++;
       }
     }
+    expect(besideLast).toBeLessThan(couldAvoid * 0.5);
+  });
+  it("offers the other pickers: near3 picks one of the 3 dormant areas nearest the dancefloor", () => {
+    const p = newParty(map), d = map.dancefloor;
+    const dist = (c: [number, number]) => { const s = map.soundsystemSpot(c[0], c[1]); return Math.hypot(s.x - d.x, s.z - d.z); };
+    const all: [number, number][] = [];
+    for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++) if (!p.areas.has(`${x},${y}`)) all.push([x, y]);
+    const three = all.sort((a, b) => dist(a) - dist(b)).slice(0, 3).map(c => key(c));
+    expect(three).toContain(key(pickNext(p, map, "near3")!));
+    const n = pickNext(p, map, "nearest")!;
+    expect([...map.neighbours.get(key(n))!].some(k => p.areas.has(k))).toBe(true);
   });
   it("comes in waves every interval seconds, and pauses", () => {
     const p = newParty(map), I = TUNING.party.interval, start = TUNING.party.startDelay;
@@ -848,6 +883,15 @@ describe("paths, roads and railways", () => {
     expect(of("path").length).toBeGreaterThan(20);
     expect(of("stream").filter(l => l.pts.length > 100).length).toBeGreaterThanOrEqual(T.streams[0]);
   });
+  it("keep one kind for their whole length: each line carries the area it starts in (Ed, v160)", () => {
+    for (const l of P.lines) {
+      const a = map.areaAt(l.pts[0][0], l.pts[0][1]);
+      expect(l.area).toEqual({ cell: [a.cell[0], a.cell[1]], type: a.type });
+    }
+    // Crossing areas doesn't change it: many paths leave their start area, but carry one area each.
+    const crossers = P.lines.filter(l => l.kind === "path" && new Set(l.pts.map(p => map.areaAt(p[0], p[1]).cell.join(","))).size > 1);
+    expect(crossers.length).toBeGreaterThan(5);
+  });
   it("meander: no path is a ruler-straight line", () => {
     for (const l of P.lines.filter(l => l.kind === "path")) {
       const a = l.pts[0], b = l.pts[l.pts.length - 1], len = Math.hypot(b[0] - a[0], b[1] - a[1]);
@@ -935,9 +979,9 @@ describe("relics and grounds", () => {
     }
   });
   it("scatter modern relics rarely, more of them by the roads and railways, never on a path", () => {
-    const forest = new Forest(map), s = map.start, list = forest.relicsNear(s.x, s.z, 900);
+    const forest = new Forest(map), b = map.extent, list = forest.relicsNear((b.minX + b.maxX) / 2, (b.minZ + b.maxZ) / 2, b.maxX - b.minX);
     expect(list.length).toBeGreaterThan(3);
-    expect(list.length).toBeLessThan((1800 / TUNING.relics.spacing) ** 2 * 0.1);
+    expect(list.length).toBeLessThanOrEqual(RELICS.filter(r => r.family === "modern").length); // each at most once
     for (const r of list) { expect(map.paths.at(r.x, r.z)).toBeNull(); expect(map.hardClear(r.x, r.z)).toBe(false); }
     for (const a of list) for (const b of list) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(TUNING.relics.minGap);
     const byRoad = list.filter(r => { const h = map.paths.at(r.x, r.z, 20); return h && (h.kind === "road" || h.kind === "rail"); }).length;
@@ -949,6 +993,94 @@ describe("set pieces, again", () => {
   it("stand at most one per area", () => {
     const f = new Forest(map), s = map.start, seen = new Set<string>();
     for (const p of f.setPiecesNear(s.x, s.z, 900)) { const k = map.areaAt(p.x, p.z + 4).cell.join(","); expect(seen.has(k)).toBe(false); seen.add(k); }
+  });
+});
+
+describe("finds, each at most once per map (Ed, v160)", () => {
+  const maps = [11, 22, 33, 44, 55].map(seed => generateMap(seed, TUNING));
+  const whole = (m: ReturnType<typeof generateMap>) => { const b = m.extent; return [(b.minX + b.maxX) / 2, (b.minZ + b.maxZ) / 2, b.maxX - b.minX] as const; };
+  // The view's lists: each family's pieces in the art's table order, a ruin's conditions in a row.
+  const ruinOf: number[] = [];
+  DECOR.filter(d => d.family === "ruins").forEach((d, k) => { for (let v = 0; v < d.variants; v++) ruinOf.push(k); });
+  it("no ruin, freak tree, relic, set piece or grounds arrangement appears twice, over 5 seeds", () => {
+    for (const m of maps) {
+      const f = new Forest(m), [x, z, r] = whole(m), decor = f.decorNear(x, z, r);
+      const ruins = decor.filter(d => d.family === "ruins").map(d => ruinOf[d.variant % ruinOf.length]);
+      const freaks = decor.filter(d => d.family === "freak").map(d => d.variant % DECOR.filter(q => q.family === "freak").length);
+      const relics = f.relicsNear(x, z, r).map(q => q.variant % RELICS.filter(q => q.family === "modern").length);
+      const pieces = f.setPiecesNear(x, z, r).map(p => AREA_TYPES[p.type].setPiece);
+      const grounds = m.grounds.map(g => g.kind), stairs = m.paths.pieces.filter(p => p.id.startsWith("stairs")).map(p => p.id);
+      for (const list of [ruins, freaks, relics, pieces, grounds, stairs] as unknown[][]) expect(new Set(list).size).toBe(list.length);
+      expect(ruins.length + freaks.length).toBeGreaterThan(5);
+      expect(decor.filter(d => d.family === "rocks").length).toBeGreaterThan(50); // rocks are generic scatter
+    }
+  });
+  it("stairs stand only by ravines, rocky slopes, cave mouths and stone shrines", () => {
+    for (const m of maps) for (const p of m.paths.pieces.filter(p => p.id.startsWith("stairs")))
+      expect(["ravine", "rocky-slope", "cave-mouth", "stone-shrine"]).toContain(AREA_TYPES[m.areaAt(p.x, p.z).type].id);
+  });
+  it("give each set piece to one area only, which has room for it", () => {
+    for (const m of maps) {
+      const seen = new Set<string>();
+      for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+        const sp = m.setPieceOf(x, y);
+        if (!sp) continue;
+        expect(seen.has(sp)).toBe(false); seen.add(sp);
+        expect(m.setPieceSpot(x, y)).not.toBeNull();
+      }
+      expect(seen.size).toBeGreaterThan(5);
+    }
+  });
+  it("keep soundsystems and set pieces off the paths, so paths run on unbroken", () => {
+    for (const m of maps) for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+      if (x === m.centreCell[0] && y === m.centreCell[1]) continue;
+      const q = m.soundsystemSpot(x, y);
+      expect(m.paths.at(q.x, q.z, TUNING.soundsystemFootprint)).toBeNull();
+      const p = m.setPieceSpot(x, y);
+      if (p) expect(m.paths.at(p.x, p.z)).toBeNull();
+    }
+  });
+});
+
+describe("the dancefloor's speakers (Ed, v160)", () => {
+  const D = TUNING.dancefloor, S = D.speakers;
+  it("stand count of them evenly round the floor at radiusFactor times its radius, from start degrees", () => {
+    const sp = map.dancefloor.speakers;
+    expect(sp.length).toBe(S.count);
+    expect(speakerRadius(TUNING)).toBeCloseTo(D.radius * S.radiusFactor);
+    sp.forEach((p, i) => {
+      expect(Math.hypot(p.x - map.dancefloor.x, p.z - map.dancefloor.z)).toBeCloseTo(speakerRadius(TUNING), 5);
+      expect(p.ring).toBeCloseTo(S.start + (360 / S.count) * i);
+    });
+  });
+  it("are gameplay: reserved, with no trees, bushes or scenery on their feet", () => {
+    const f = new Forest(map);
+    for (const p of map.dancefloor.speakers) {
+      expect(map.reserved(p.x, p.z, 1)).toBe(true);
+      expect(map.hardClear(p.x, p.z)).toBe(true);
+      for (const t of f.treesNear(p.x, p.z, S.footprint + 2)) expect(Math.hypot(t.x - p.x, t.z - p.z)).toBeGreaterThan(S.footprint + 2);
+      for (const b of f.bushesNear(p.x, p.z, S.footprint + 1)) expect(Math.hypot(b.x - p.x, b.z - p.z)).toBeGreaterThan(S.footprint + 1);
+    }
+  });
+  it("keep the treehouse outside their ring and the floor's clearing, over seeds", () => {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      const m = generateMap(seed, TUNING), d = Math.hypot(m.treehouse.x - m.dancefloor.x, m.treehouse.z - m.dancefloor.z);
+      expect(d - TUNING.treehouse.clear).toBeGreaterThan(speakerRadius(TUNING) + S.footprint); // its footprint clear of the ring
+      expect(d).toBeGreaterThan(floorClearing(TUNING));
+      for (const p of m.dancefloor.speakers) expect(Math.hypot(m.treehouse.x - p.x, m.treehouse.z - p.z)).toBeGreaterThan(TUNING.treehouse.clear + S.footprint);
+    }
+    // More of them, further out: still outside.
+    const T2 = withTuning({ dancefloor: { ...D, speakers: { ...S, count: 20, radiusFactor: 3 } } }), m = generateMap(1, T2);
+    expect(Math.hypot(m.treehouse.x - m.dancefloor.x, m.treehouse.z - m.dancefloor.z) - T2.treehouse.clear).toBeGreaterThan(speakerRadius(T2) + S.footprint);
+  });
+  it("cycle playing, damaged, destroyed on the debug key", () => {
+    expect(nextSpeakerState("playing")).toBe("damaged");
+    expect(nextSpeakerState("damaged")).toBe("destroyed");
+    expect(nextSpeakerState("destroyed")).toBe("playing");
+    const g = newGame(5, TUNING);
+    expect(g.speakers.every(s => s === "playing")).toBe(true);
+    stepGame(g, { ...NO_INTENT, zoom: 0, cycleSpeakers: true }, 1 / 60);
+    expect(g.speakers.every(s => s === "damaged")).toBe(true);
   });
 });
 

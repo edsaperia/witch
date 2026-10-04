@@ -5,6 +5,9 @@
 import { hash2, smoothstep, vnoise } from "./random";
 import { wallFeatures, bedsInRows, type WallFeatures } from "./walls";
 import { AREA_TYPES, type AreaLayout, type ForestMap } from "./map";
+import { DECOR } from "../../art/decor.js";
+import { floorClearing } from "./speakers";
+import { RELICS } from "../../art/relics.js";
 
 export interface Plant {
   x: number;
@@ -113,7 +116,7 @@ function bushesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
     if (bedsInRows(map, type)) continue; // a formal garden's beds are laid in rows along its walls
     const sparse = 1 - Math.min(1, treeChance(map, x, z, type) / 0.8);
     if (hash2(i, j, s + 203) > (0.15 + 0.85 * sparse) * AREA_TYPES[type].layout.undergrowth * map.tuning.bushDensity * clump * along) continue;
-    if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + 2) continue; // the dancefloor stays clear
+    if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < floorClearing(map.tuning)) continue; // the dancefloor and its speakers stay clear
     if (map.hardClear(x, z)) continue; // and the treehouse's foot, the grounds, the set pieces' clearings
     out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 204) * BUSH_VARIANTS), flip: hash2(i, j, s + 205) < 0.5 });
   }
@@ -126,25 +129,39 @@ function bushesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
 export type DecorFamily = "ruins" | "rocks" | "freak";
 export interface Decor { x: number; z: number; family: DecorFamily; variant: number; flip: boolean }
 
+// The most any area's odds of a decoration can be (its rate, rocky ground's boost).
+const decorOdds = new WeakMap<ForestMap, number>();
+function decorOddsMax(map: ForestMap): number {
+  let v = decorOdds.get(map);
+  if (v === undefined) {
+    const D = map.tuning.decor;
+    v = (D.ruins + D.rocks + D.freak) * 1.5 * Math.max(1, ...AREA_TYPES.map(t => (t.layout.decor ? t.layout.decor.rate / 0.3 : 1)));
+    decorOdds.set(map, v);
+  }
+  return v;
+}
+
 // Where a decoration would go in cell (i, j), before the spacing (null: none there).
-function decorCandidate(map: ForestMap, i: number, j: number): (Decor & { rank: number }) | null {
+type Cand<T> = T & { rank: number; i: number; j: number };
+function decorCandidate(map: ForestMap, i: number, j: number): Cand<Decor> | null {
   const D = map.tuning.decor, sp = D.spacing, s = map.seed;
   // The area's layout says how much decor it has (its rate, against a typical 0.3) and of which
   // families; "rocky" ground has more rocks.
+  const roll = hash2(i, j, s + 503);
+  if (roll >= decorOddsMax(map)) return null; // out of the running in any area: skip the lookups
   const x = (i + (hash2(i, j, s + 501) - 0.5) * 0.8) * sp, z = (j + (hash2(i, j, s + 502) - 0.5) * 0.8) * sp, a = map.areaAt(x, z);
   const L = AREA_TYPES[a.type].layout, ad = L.decor, rate = ad ? ad.rate / 0.3 : 1, rocky = L.terrain?.includes("rocky") ? 2 : 1;
   const w = ad ? [ad.ruins, ad.rocks * rocky, ad.freak] : [D.ruins, D.rocks * rocky, D.freak], sum = w[0] + w[1] + w[2] || 1;
   const total = (D.ruins + D.rocks + D.freak) * rate * (ad ? (ad.ruins + ad.rocks + ad.freak) / Math.max(0.01, ad.ruins + ad.rocks + ad.freak + ad.lake + ad.modern) : 1) * (rocky > 1 ? 1.5 : 1);
-  const roll = hash2(i, j, s + 503);
   if (roll >= total) return null;
   if (a.openness < D.clearing || map.hardClear(x, z) || map.paths.at(x, z, D.pathGap)) return null;
   if (map.reserved(x, z, D.footprint)) return null; // its whole footprint clear of the gameplay and set pieces
-  if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + map.tuning.dancefloor.clearing + 6) return null;
+  if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < floorClearing(map.tuning) + 6) return null;
   // Open ground keeps them all; dense canopy only some.
   const open = 1 - Math.min(1, treeChance(map, x, z, a.type) / 0.8);
   if (hash2(i, j, s + 504) > 0.35 + 0.65 * open) return null;
   const f = (roll / total) * sum, family: DecorFamily = f < w[0] ? "ruins" : f < w[0] + w[1] ? "rocks" : "freak";
-  return { x, z, family, variant: Math.floor(hash2(i, j, s + 505) * 1e6), flip: hash2(i, j, s + 506) < 0.5, rank: hash2(i, j, s + 507) };
+  return { x, z, family, variant: Math.floor(hash2(i, j, s + 505) * 1e6), flip: hash2(i, j, s + 506) < 0.5, rank: hash2(i, j, s + 507), i, j };
 }
 
 /** Keep the candidates no stronger one lies within `gap` metres of (Ed, v147: "too numerous"):
@@ -166,31 +183,84 @@ function spaced<T extends { x: number; z: number; rank: number }>(cand: (i: numb
 }
 
 function decorInChunk(map: ForestMap, ci: number, cj: number): Decor[] {
-  const D = map.tuning.decor, sp = D.spacing;
-  return spaced((i, j) => decorCandidate(map, i, j), sp, D.minGap, Math.ceil((ci * CHUNK) / sp), Math.ceil(((ci + 1) * CHUNK) / sp), Math.ceil((cj * CHUNK) / sp), Math.ceil(((cj + 1) * CHUNK) / sp))
-    .map(({ rank: _rank, ...d }) => d);
+  const D = map.tuning.decor, sp = D.spacing, u = uniques(map).decor, out: Decor[] = [];
+  for (const { rank: _rank, i, j, ...d } of spaced((i, j) => decorCandidate(map, i, j), sp, D.minGap, Math.ceil((ci * CHUNK) / sp), Math.ceil(((ci + 1) * CHUNK) / sp), Math.ceil((cj * CHUNK) / sp), Math.ceil(((cj + 1) * CHUNK) / sp))) {
+    if (d.family === "rocks") { out.push(d); continue; } // rocks are generic scatter, not finds
+    const v = u.get(i + "," + j);
+    if (v !== undefined) out.push({ ...d, variant: v });
+  }
+  return out;
 }
 
 // Modern relics (Ed: the occasional half-buried car, shopping trolley, traffic cone, broken bit of
 // highway): rare, more of them by the roads and railways; the view picks which by variant.
 export interface Relic { x: number; z: number; variant: number; flip: boolean }
 
-function relicCandidate(map: ForestMap, i: number, j: number): (Relic & { rank: number }) | null {
+function relicCandidate(map: ForestMap, i: number, j: number): Cand<Relic> | null {
   const R = map.tuning.relics, sp = R.spacing, s = map.seed;
+  if (hash2(i, j, s + 883) >= R.chance * 5.5 * Math.max(1, R.nearRoad)) return null; // out of the running anywhere
   const x = (i + (hash2(i, j, s + 881) - 0.5) * 0.8) * sp, z = (j + (hash2(i, j, s + 882) - 0.5) * 0.8) * sp, a = map.areaAt(x, z);
   const ad = AREA_TYPES[a.type].layout.decor, share = ad ? ad.modern / Math.max(0.01, ad.ruins + ad.rocks + ad.freak + ad.lake + ad.modern) : 0.1;
+  const roll = hash2(i, j, s + 883), odds = R.chance * (0.5 + 5 * share);
+  if (roll >= odds * Math.max(1, R.nearRoad)) return null; // out of the running even by a road: skip the path lookup
   const near = map.paths.at(x, z, 20), byRoad = near && (near.kind === "road" || near.kind === "rail") ? R.nearRoad : 1;
-  if (hash2(i, j, s + 883) >= R.chance * (0.5 + 5 * share) * byRoad) return null;
+  if (roll >= odds * byRoad) return null;
   if (a.openness < map.tuning.decor.clearing || map.hardClear(x, z) || map.paths.at(x, z, 2) || map.paths.pieceAt(x, z)) return null;
   if (map.reserved(x, z, map.tuning.decor.footprint)) return null; // its footprint clear of the gameplay, set pieces and grounds
-  if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + map.tuning.dancefloor.clearing + 6) return null;
-  return { x, z, variant: Math.floor(hash2(i, j, s + 884) * 1e6), flip: hash2(i, j, s + 885) < 0.5, rank: hash2(i, j, s + 886) };
+  if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < floorClearing(map.tuning) + 6) return null;
+  return { x, z, variant: Math.floor(hash2(i, j, s + 884) * 1e6), flip: hash2(i, j, s + 885) < 0.5, rank: hash2(i, j, s + 886), i, j };
 }
 
 function relicsInChunk(map: ForestMap, ci: number, cj: number): Relic[] {
-  const R = map.tuning.relics, sp = R.spacing;
-  return spaced((i, j) => relicCandidate(map, i, j), sp, R.minGap, Math.ceil((ci * CHUNK) / sp), Math.ceil(((ci + 1) * CHUNK) / sp), Math.ceil((cj * CHUNK) / sp), Math.ceil(((cj + 1) * CHUNK) / sp))
-    .map(({ rank: _rank, ...r }) => r);
+  const R = map.tuning.relics, sp = R.spacing, u = uniques(map).relics, out: Relic[] = [];
+  for (const { rank: _rank, i, j, ...r } of spaced((i, j) => relicCandidate(map, i, j), sp, R.minGap, Math.ceil((ci * CHUNK) / sp), Math.ceil(((ci + 1) * CHUNK) / sp), Math.ceil((cj * CHUNK) / sp), Math.ceil(((cj + 1) * CHUNK) / sp))) {
+    const v = u.get(i + "," + j);
+    if (v !== undefined) out.push({ ...r, variant: v });
+  }
+  return out;
+}
+
+// Each find at most once per map (Ed, v160): every ruin (its weathered and overgrown conditions
+// count as one), freak tree and modern relic. One seeded pass over the whole map, strongest
+// candidate first, gives each spot the piece it rolled or the next one still unused, or nothing
+// once they're all used; never a repeat. The variant is the piece's index in the view's list for
+// its family (the art's table order, a ruin's conditions in a row).
+interface Uniques { decor: Map<string, number>; relics: Map<string, number> }
+const UNIQUES = new WeakMap<ForestMap, Uniques>();
+const ruinStarts: number[] = [], freakCount = DECOR.filter(d => d.family === "freak").length;
+for (let k = 0, n = 0; k < DECOR.length; k++) if (DECOR[k].family === "ruins") { ruinStarts.push(n); n += DECOR[k].variants; }
+const ruinVariants = DECOR.filter(d => d.family === "ruins").map(d => d.variants);
+const modernCount = RELICS.filter(d => d.family === "modern").length;
+
+function uniques(map: ForestMap): Uniques {
+  let u = UNIQUES.get(map);
+  if (u) return u;
+  const b = map.extent, s = map.seed;
+  const pass = <T extends { x: number; z: number; rank: number; i: number; j: number }>(cand: (i: number, j: number) => T | null, sp: number, gap: number, pool: (c: T) => [string, number] | null, assign: (c: T, k: number) => number): Map<string, number> => {
+    const memo = new Map<string, T | null>(), m = (i: number, j: number) => { const k = i + "," + j; let c = memo.get(k); if (c === undefined) memo.set(k, (c = cand(i, j))); return c; };
+    const all = spaced(m, sp, gap, Math.floor(b.minX / sp), Math.ceil(b.maxX / sp) + 1, Math.floor(b.minZ / sp), Math.ceil(b.maxZ / sp) + 1).sort((p, q) => q.rank - p.rank);
+    const used = new Map<string, Set<number>>(), out = new Map<string, number>();
+    for (const c of all) {
+      const p = pool(c);
+      if (!p) continue;
+      const [name, N] = p, set = used.get(name) ?? new Set<number>();
+      used.set(name, set);
+      if (set.size >= N) continue;
+      let k = Math.floor(hash2(c.i, c.j, s + 509) * N);
+      while (set.has(k)) k = (k + 1) % N;
+      set.add(k);
+      out.set(c.i + "," + c.j, assign(c, k));
+    }
+    return out;
+  };
+  const D = map.tuning.decor, R = map.tuning.relics;
+  u = {
+    decor: pass((i, j) => decorCandidate(map, i, j), D.spacing, D.minGap, c => (c.family === "ruins" ? ["ruins", ruinStarts.length] : c.family === "freak" ? ["freak", freakCount] : null),
+      (c, k) => (c.family === "ruins" ? ruinStarts[k] + (c.variant % ruinVariants[k]) : k)),
+    relics: pass((i, j) => relicCandidate(map, i, j), R.spacing, R.minGap, () => ["modern", modernCount], (_c, k) => k),
+  };
+  UNIQUES.set(map, u);
+  return u;
 }
 
 // Light sources, placed by seed: campfires and magic stones mostly in clearings and at area
@@ -205,7 +275,7 @@ function lightsInChunk(map: ForestMap, ci: number, cj: number): LightSource[] {
   const i0 = Math.ceil((ci * CHUNK) / sp), i1 = Math.ceil(((ci + 1) * CHUNK) / sp);
   for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
     const x = (i + (hash2(i, j, s + 401) - 0.5) * 0.7) * sp, z = (j + (hash2(i, j, s + 402) - 0.5) * 0.7) * sp;
-    if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + map.tuning.dancefloor.clearing + 4) continue;
+    if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < floorClearing(map.tuning) + 4) continue;
     const a = map.areaAt(x, z), where = a.openness < 0.35 || a.openness > 0.8 ? 1 : 0.25, roll = hash2(i, j, s + 403);
     const wet = WET.has(AREA_TYPES[a.type].id) || !!AREA_TYPES[a.type].layout.terrain?.includes("pools");
     const pond = (wet ? L.wetPond : L.pond) * where, fire = L.campfire * where, stone = L.magicStone * where;
@@ -228,7 +298,8 @@ export class Forest {
   /** Chunks kept per kind before the farthest are dropped: well over a treetop view's ~700. */
   static readonly KEEP = 2500;
   private centre = { x: 0, z: 0 };
-  constructor(readonly map: ForestMap) {}
+  // The one whole-map pass (which finds go where) runs with the map, not on the first frame that needs it.
+  constructor(readonly map: ForestMap) { uniques(map); }
 
   private chunks(x: number, z: number, radius: number): [number, number][] {
     const out: [number, number][] = [];

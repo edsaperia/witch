@@ -19,6 +19,8 @@ export interface Tuning {
   density: { patchScale: number; patchMin: number; patchMax: number; lone: number };
   /** Ragged area edges: plants take their look from up to width metres away (noise scale metres, plus a per-plant stray share). */
   areaEdgeBlend: { width: number; scale: number; stray: number };
+  /** How neighbouring areas' floor textures meet: a two-octave warp of warp and fine metres, and a dithered band metres wide. */
+  groundBlend: { on: boolean; warp: number; fine: number; band: number; dither: boolean };
   /** Set pieces drawn this much bigger than the art, with a clearing of setPieceClear metres (times the scale) round them. */
   setPieceScale: number;
   setPieceClear: number;
@@ -55,6 +57,10 @@ export interface Tuning {
   pixelSize: number;
   glowReach: number;
   glowFalloff: number;
+  /** The glow reaches the canopy hole's edge times this (Ed, v149); off when ?glow= fixes the reach. */
+  glowToCutout: number;
+  /** Set by ?glow=: use glowReach as it is. */
+  glowFixed?: boolean;
   glowHeight: number;
   spriteTilt: number;
   artPixelsPerMetre: number;
@@ -67,10 +73,12 @@ export interface Tuning {
   stringLights: { on: boolean; runsPerArea: number[]; spansPerRun: number[]; coneAngle: number; junctionChance: number; spanMin: number; spanMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; twinkle: number; chaseSpeed: number };
   party: {
     motes: { perPatch: number; from: number; to: number; speed: number };
-    uplight: { strength: number; pulse: number; edge: number }; interval: number; startDelay: number; maxPerWave: number; transition: number; lightReach: number; lightStrength: number };
+    uplight: { strength: number; pulse: number; edge: number }; interval: number; startDelay: number; maxPerWave: number; picker: string; noisy: { wobble: number; lobeSize: number; candidates: number; spreadFromLast: boolean }; transition: number; lightReach: number; lightStrength: number };
   dancefloor: {
     motes: { count: number; rise: number; speed: number; column: number };
-    radius: number; stones: number; clearing: number;
+    radius: number; clearing: number;
+    /** The ring of speakers: how many, the first's ring angle (degrees), their distance as a multiple of radius, and each one's footprint radius (metres). */
+    speakers: { count: number; start: number; radiusFactor: number; footprint: number };
     circleHue: number; circleHue2: number; pulse: number; runeSpeed: number;
     lightReach: number; lightStrength: number;
     discoHeight: number; discoSize: number; spin: number;
@@ -83,16 +91,18 @@ export interface Tuning {
   /** How mist, far haze and canopy dapple are drawn: smooth gradients, or dithered pixel steps. */
   fx: "smooth" | "pixel";
   moonbeams: number;
-  runeMarkers: { scale: number; beamHeight: number; lightRange: number; dormant: { glow: number; light: number; reach: number; beam: number }; awake: { glow: number[]; light: number; lightBuild: number; reach: number; beam: number; motes: number; moteBuild: number }; flare: { time: number; light: number } };
+  trunkFade: { metres: number; dither: boolean };
+  pathFade: { metres: number; dither: boolean };
+  runeMarkers: { awakeStyle: string; laser: { opacity: number; width: number; length: number }; scale: number; beamHeight: number; lightRange: number; dormant: { glow: number; light: number; reach: number; beam: number }; awake: { glow: number[]; light: number; lightBuild: number; reach: number; beam: number; motes: number; moteBuild: number }; flare: { time: number; light: number } };
   walls: { runs: number[]; runLength: number[]; gateChance: number; rings: number[]; ringStones: number[]; ringRadius: number[]; avenueChance: number; loneChance: number; clumps: number[]; clumpSize: number[]; clumpRadius: number };
   grounds: { chance: number; kinds: string[]; radius: Record<string, number> };
   relics: { spacing: number; chance: number; nearRoad: number; minGap: number };
   treeCap: { from: number; keep: number };
-  treetop: { boost: number; boostTime: number; boostAngle: number; turnRate: number; glideTime: number; sharpTurnBleed: number; cameraPull: number };
+  treetop: { boost: number; boostTime: number; boostAngle: number; turnRate: number; turnRateSlow: number; sharpTurnSpeed: number; brakeAt: number; glideTime: number; sharpTurnBleed: number; cameraPull: number };
   bubbles: { emojiPixels: number; scale: number };
   treehouse: { distance: number; angle: number; clear: number; lightReach: number; lightStrength: number };
   decor: { spacing: number; ruins: number; rocks: number; freak: number; minGap: number; clearing: number; pathGap: number; /** A decoration's footprint radius (metres): kept clear of the gameplay (map.reserved). */ footprint: number };
-  paths: { rails: number[]; roads: number[]; linkChance: number; deadEndChance: number; pathHalf: number; roadHalf: number; railHalf: number; railBroken: number; streams: number[]; streamHalf: number; landmarkSpacing: number; landmarkChance: number; vergeSpacing: number; pieceGap: number; stairsChance: number; treesOnBroken: number; edgeBushes: number; bushBoost: number };
+  paths: { rails: number[]; roads: number[]; linkChance: number; deadEndChance: number; pathHalf: number; roadHalf: number; railHalf: number; railBroken: number; streams: number[]; streamHalf: number; landmarkSpacing: number; landmarkChance: number; vergeSpacing: number; pieceGap: number; treesOnBroken: number; edgeBushes: number; bushBoost: number };
   lights: { campfire: { reach: number; strength: number }; stone: { reach: number; strength: number } };
   glowPower: number;
   beat: { bpm: number };
@@ -107,8 +117,8 @@ export interface Tuning {
   borders: { on: boolean; width: number; brightness: number; sparkle: number; step: number };
   invite: { talkRange: number; cancelDistance: number; talkTime: number[]; turn: number[]; decayRate: number };
   leash: { length: number; runSpeed: number; pickRadius: number; spacing: number };
-  bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number };
-  tone: { black: number; gamma: number; ambient: number };
+  bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number; /** The thread's upward bow: metres per metre of length, up to threadArcMax. */ threadArc: number; threadArcMax: number };
+  tone: { black: number; gamma: number; ambient: number; moon: number };
   bloom: { on: boolean; strength: number; threshold: number };
   tiltShift: { on: boolean; where: "before" | "after"; strength: number; band: number; centre: number };
   creaturesNear: number;

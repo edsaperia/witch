@@ -130,7 +130,12 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   /** The paths' 3D pieces: bridges, stairs, railway landmarks, signal and verge posts. */
   | { kind: "pathPieces"; id: string; style: Style }
   /** Modern relics, playground and sports pieces, with the art's arrangements. */
-  | { kind: "relics"; id: string; style: Style };
+  | { kind: "relics"; id: string; style: Style }
+  /** The dancefloor's speakers: every drawn angle, state and frame. */
+  | { kind: "speakers"; id: string; style: Style };
+
+/** The dancefloor speakers in their atlas: the frame for "angle:state:frame", and each angle's ground point. */
+export interface SpeakerArt { frames: Record<string, number>; origin: Record<number, { x: number; y: number }> }
 
 /** One relic in its atlas: family (modern, playground, sports), whether it's a flat ground decal, and its ground point. */
 export interface RelicArt { id: string; family: string; decal: boolean; frame: number; originX: number; originY: number }
@@ -144,7 +149,19 @@ export interface DecorPiece { id: string; family: string; bot: number; top: numb
 
 /** A floor tile's pixels: albedo and normal map, w x h. */
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
-export interface ArtResult { px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; layouts?: RelicLayouts }
+export interface ArtResult { px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; layouts?: RelicLayouts; speakers?: SpeakerArt }
+
+function speakerSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; speakers: SpeakerArt } {
+  const sprites: Baked[] = [], speakers: SpeakerArt = { frames: {}, origin: {} }, colours = Art.dancefloorSpeakerColours();
+  for (const angle of Art.DANCEFLOOR_SPEAKER_ANGLES as number[])
+    for (const [state, n] of Object.entries(Art.DANCEFLOOR_SPEAKER_STATES as Record<string, number>))
+      for (let frame = 0; frame < n; frame++) {
+        const r = Art.dancefloorSpeakerSprite(st, { angle, state, frame }) as { sp: unknown; origin: { x: number; y: number } };
+        speakers.frames[`${angle}:${state}:${frame}`] = sprites.push(Art.bake(r.sp, colours, st, st.cOutline, mk) as Baked) - 1;
+        if (!speakers.origin[angle]) speakers.origin[angle] = r.origin;
+      }
+  return { sprites, speakers };
+}
 
 function relicSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; relics: RelicArt[]; layouts: RelicLayouts } {
   const sprites: Baked[] = [], relics: RelicArt[] = [], colours = Art.relicColours(st);
@@ -182,6 +199,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };
   if (job.kind === "relics") { const { sprites, relics, layouts } = relicSprites(job.style, mk); return { px: packPixels(sprites, 2048), relics, layouts }; }
   if (job.kind === "pathPieces") { const { sprites, pieces } = pathPieceSprites(job.style, mk); return { px: packPixels(sprites, 2048), pieces }; }
+  if (job.kind === "speakers") { const { sprites, speakers } = speakerSprites(job.style, mk); return { px: packPixels(sprites, 2048), speakers }; }
   if (job.kind === "decor") { const { sprites, decor } = decorSprites(job.style, mk); return { px: packPixels(sprites, 2048), decor }; }
   if (job.kind === "party") return { px: packPixels(creatureSprites(job.style, job.species, mk, { ...Art.partyGear(job.seed), collar: job.colour }), 2048) };
   const { sprites, layout, floor } = typeSprites(job.style, job.seed, job.id, job.K, mk);

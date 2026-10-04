@@ -5,6 +5,7 @@
 // corridors with bushes along their edges. Seeded, so they never change; no drawing here.
 import { clamp, hash2, rng, vnoise } from "./random";
 import { AREA_TYPES, type ForestMap } from "./map";
+import { floorClearing } from "./speakers";
 
 export type PathKind = "path" | "road" | "rail" | "stream";
 export const PATH_KINDS: PathKind[] = ["path", "road", "rail", "stream"];
@@ -17,6 +18,8 @@ export interface PathLine {
   half: number;
   /** A path out to nothing in particular: it peters out at its far end. */
   deadEnd?: boolean;
+  /** The area it starts in: a path keeps that area's kind (dirt, flagstones...) for its whole length (Ed, v160). */
+  area?: { cell: [number, number]; type: number };
 }
 
 /** A 3D piece along the network (its id is the art's path piece): a bridge where a path crosses a
@@ -136,6 +139,8 @@ export class PathNetwork {
       }
     }
     this.lines.forEach((l, li) => {
+      const a0 = map.areaAt(l.pts[0][0], l.pts[0][1]);
+      l.area = { cell: [a0.cell[0], a0.cell[1]], type: a0.type };
       for (let i = 0; i < l.pts.length - 1; i++) {
         const [a, c] = [l.pts[i], l.pts[i + 1]], pad = l.half + 4;
         for (let gx = Math.floor((Math.min(a[0], c[0]) - pad) / this.cell); gx <= Math.floor((Math.max(a[0], c[0]) + pad) / this.cell); gx++)
@@ -147,11 +152,11 @@ export class PathNetwork {
           }
       }
     });
-    this.placePieces();
   }
 
-  /** The 3D pieces: seeded, from the lines alone. */
-  private placePieces(): void {
+  /** The 3D pieces: seeded, from the lines alone; placed once the map has put its gameplay spots
+   *  (soundsystems, set pieces, grounds), which they keep clear of. */
+  placePieces(): void {
     const m = this.map, s = m.seed, T = m.tuning.paths, add = (id: string, x: number, z: number, r: number) => {
       // Pieces keep apart (several crossings close together make one bridge, not a row of them).
       if (m.hardClear(x, z) || m.reserved(x, z, r) || this.pieces.some(q => Math.hypot(q.x - x, q.z - z) < Math.max(T.pieceGap, q.r + r))) return;
@@ -189,14 +194,26 @@ export class PathNetwork {
           add("verge-post", ...side(l, i, (hash2(li, i, s + 847) < 0.5 ? 1 : -1) * (l.half - 0.7)), 0.8);
         }
       }
-      // Stairs only where a path goes down into a steep or sunken area (a slope, a ravine, a cave
-      // mouth, hollows), at its clearing end, and at most one flight per path (Ed, v147).
-      if (l.kind === "path" && !l.deadEnd) {
-        const steep = (e: [number, number]) => { const L = AREA_TYPES[m.areaAt(e[0], e[1]).type]; return ["rocky-slope", "ravine", "cave-mouth"].includes(L.id) || !!L.layout.terrain?.includes("hollows"); };
-        const ends = [l.pts[0], l.pts[l.pts.length - 1]].filter(steep), end = ends[Math.floor(hash2(li, 7, s + 849) * ends.length)];
-        if (end && hash2(Math.round(end[0]), Math.round(end[1]), s + 849) < T.stairsChance) add(hash2(Math.round(end[1]), 3, s + 851) < 0.7 ? "stairs" : "stairs-turn", end[0], end[1], 3);
-      }
     });
+    // Stairs (Ed, v160): a find, not a path fitting: each flight at most once per map, standing on
+    // its own at the edge of the clearing of a ravine, rocky slope, cave mouth or stone shrine
+    // (seeded which), clear of the paths and everything placed for gameplay.
+    const steep = new Set(["ravine", "rocky-slope", "cave-mouth", "stone-shrine"]), homes: [number, number, number][] = [];
+    for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) if (steep.has(AREA_TYPES[m.typeOf(x, y)].id)) homes.push([x, y, hash2(x, y, s + 849)]);
+    homes.sort((a, b) => a[2] - b[2]);
+    let flight = 0;
+    const flights = ["stairs", "stairs-turn"];
+    for (const [cx, cy] of homes) {
+      if (flight >= flights.length) break;
+      const site = m.siteOf(cx, cy), a0 = hash2(cx, cy, s + 851) * Math.PI * 2, d = this.clearOf(cx, cy) + 4;
+      for (let k = 0; k < 12; k++) {
+        const a = a0 + (k / 12) * Math.PI * 2, x = site.x + Math.cos(a) * d, z = site.z + Math.sin(a) * d, c = m.areaAt(x, z).cell;
+        if (c[0] !== cx || c[1] !== cy || this.at(x, z, 3)) continue;
+        const before = this.pieces.length;
+        add(flights[flight], x, z, 3);
+        if (this.pieces.length > before) { flight++; break; }
+      }
+    }
     // Crossings: a bridge where a path or road crosses a stream; a level crossing where a road
     // crosses a railway. Found segment against segment, through the grid.
     const seen = new Set<string>();
@@ -234,7 +251,7 @@ export class PathNetwork {
    *  into it but never run under its soundsystem, set piece or the dancefloor. */
   private clearOf(cx: number, cy: number): number {
     const m = this.map, home = cx === m.centreCell[0] && cy === m.centreCell[1];
-    return home ? m.dancefloor.radius + m.tuning.dancefloor.clearing + 2 : m.tuning.setPieceClear * m.tuning.setPieceScale + 2;
+    return home ? floorClearing(m.tuning) + 2 : m.tuning.setPieceClear * m.tuning.setPieceScale + 2;
   }
   private trim(a: { x: number; z: number }, b: { x: number; z: number }, ka: number, kb: number): [{ x: number; z: number } | null, { x: number; z: number }] {
     const dx = b.x - a.x, dz = b.z - a.z, len = Math.hypot(dx, dz);

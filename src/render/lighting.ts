@@ -47,10 +47,10 @@ export type LightUniforms = typeof LIGHT_UNIFORMS;
 
 /** Set the light colours from a style (the Art Lab's knobs). One set of uniforms is shared by
  *  every material, so this and the glow position update everything at once. */
-export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel: number, ambientScale = 1, glowFalloff = 2.5): void {
+export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel: number, ambientScale = 1, glowFalloff = 2.5, moonScale = 1): void {
   const v = (rgb: number[], k: number) => new THREE.Vector3(rgb[0] / 255 * k, rgb[1] / 255 * k, rgb[2] / 255 * k);
   LIGHT_UNIFORMS.uAmb.value.copy(v(hsv2rgb(st.ambientHue, 0.55, 1), st.ambient * ambientScale));
-  LIGHT_UNIFORMS.uMoon.value.copy(v(hsv2rgb(st.moonHue, 0.35, 1), st.moon));
+  LIGHT_UNIFORMS.uMoon.value.copy(v(hsv2rgb(st.moonHue, 0.35, 1), st.moon * moonScale));
   LIGHT_UNIFORMS.uMoonBeam.value.copy(v(hsv2rgb(st.moonHue, 0.35, 1), st.shafts * 0.25));
   LIGHT_UNIFORMS.uBands.value = st.bands;
   LIGHT_UNIFORMS.uDither.value = st.dither * 0.5;

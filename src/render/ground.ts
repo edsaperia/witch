@@ -65,6 +65,7 @@ float magicCircle(vec2 d, float R, float px) {
 }
 uniform vec4 uCanopy; // canopy shadow: strength (0 off), height, cover, wind speed
 uniform vec2 uClearing; // clearingSize, clearingFalloff: where trees, and so canopy, begin
+uniform vec4 uBlend; // ground blend: warp, fine (metres), band (metres), dither (0 or 1)
 varying vec3 vWorld;
 ${LIGHT_GLSL}
 float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
@@ -73,6 +74,9 @@ float vnoise(vec2 p) {
   float a = hash(i), b = hash(i + vec2(1, 0)), c = hash(i + vec2(0, 1)), d = hash(i + vec2(1, 1));
   return a + (b - a) * u.x + (c - a) * u.y + (a - b - c + d) * u.x * u.y;
 }
+// An ordered (Bayer) threshold on the art's pixel grid, 0 to 1.
+float bayer2(vec2 a) { a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
+float bayer4(vec2 a) { return bayer2(0.5 * a) * 0.25 + bayer2(a); }
 vec3 hsv(float h, float s, float v) {
   vec3 k = clamp(abs(mod(fract(h) * 6.0 + vec3(0, 4, 2), 6.0) - 3.0) - 1.0, 0.0, 1.0);
   return clamp(v, 0.0, 1.0) * mix(vec3(1.0), k, clamp(s, 0.0, 1.0));
@@ -85,6 +89,24 @@ void main() {
   vec4 area = texture2D(uAreas, (p + j - uExtent.xy) / uExtent.zw);
   float open = area.a > 0.5 ? area.g : 1.0;
   int t = int(area.r * 255.0 + 0.5);
+  // Which floor shows (Ed, v160: blend the ground textures): the area lookup warped in two
+  // octaves, so borders meander instead of following the texture's grid, then a second lookup a
+  // little way off; where the two disagree (near a border), each art pixel takes one or the other
+  // by noise and an ordered dither, a speckled band of grass creeping into dirt. Visual only:
+  // openness and ponds keep the plain lookup, and gameplay's partition is untouched.
+  if (uBlend.x + uBlend.y > 0.0) {
+    vec2 w1 = vec2(vnoise(p / 40.0), vnoise(p / 40.0 + 31.0)) - 0.5, w2 = vec2(vnoise(p / 6.0 + 7.0), vnoise(p / 6.0 + 53.0)) - 0.5;
+    vec2 q = p + w1 * 2.0 * uBlend.x + w2 * 2.0 * uBlend.y;
+    vec4 a1 = texture2D(uAreas, (q - uExtent.xy) / uExtent.zw);
+    vec2 off = (vec2(vnoise(px / 3.0 + 91.0), vnoise(px / 3.0 + 37.0)) - 0.5) * uBlend.z;
+    vec4 a2 = texture2D(uAreas, (q + off - uExtent.xy) / uExtent.zw);
+    int t1 = int(a1.r * 255.0 + 0.5), t2 = int(a2.r * 255.0 + 0.5);
+    if (a1.a > 0.5) t = t1;
+    if (a2.a > 0.5 && t2 != t1) {
+      float k = uBlend.w > 0.5 ? vnoise(px / 2.0) * 0.6 + bayer4(px) * 0.4 : vnoise(px / 2.0);
+      if (k < 0.5) t = t2;
+    }
+  }
   vec3 c;
   if (area.a > 0.5 && uFloorReady[t] > 0.5) {
     // The area's floor tile, repeated on the art's pixel grid.
@@ -211,6 +233,7 @@ export class Ground {
         uSweeps: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) },
         uSweepCount: { value: 0 },
         uClearing: { value: new THREE.Vector2(map.tuning.clearingSize, map.tuning.clearingFalloff) },
+        uBlend: { value: (B => (B.on ? new THREE.Vector4(B.warp, B.fine, B.band, B.dither ? 1 : 0) : new THREE.Vector4()))(map.tuning.groundBlend) },
       },
     });
     const geo = new THREE.PlaneGeometry(w + 400, d + 400);

@@ -3,13 +3,17 @@
 // Sets are asked for as the witch nears them and drawn by a few Web Workers in the background;
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
-import { rng } from "../rules/random";
 import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
-import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PathPieceArt, type RelicArt, type RelicLayouts, type TilePixels, type TypeLayout } from "./artBuild";
+import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PathPieceArt, type RelicArt, type RelicLayouts, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { ART_HASH, cacheGet, cachePut, hashText } from "./artCache";
 
-export interface TypeArt { atlas: Atlas; layout: TypeLayout }
+export interface TypeArt {
+  atlas: Atlas; layout: TypeLayout;
+  /** For each tree's bottom-half frame: where its trunk was cut from the crown, as a share of the
+   *  frame's height from its top (the trunk fades out below it in ground mode, Ed v149). */
+  cut: Map<number, number>;
+}
 export interface RelicSet { atlas: Atlas; byId: Record<string, RelicArt>; modern: RelicArt[]; layouts: RelicLayouts }
 export interface DecorArt { atlas: Atlas; pieces: DecorPiece[]; families: Record<string, DecorPiece[]> }
 export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number }
@@ -20,6 +24,7 @@ export class AssetLibrary {
   private types = new Map<number, TypeArt>();
   private creatures = new Map<string, CreatureArt>();
   private decor: DecorArt | undefined;
+  private speakers: (SpeakerArt & { atlas: Atlas }) | undefined;
   private pieces: { atlas: Atlas; byId: Record<string, PathPieceArt> } | undefined;
   private relicSet: RelicSet | undefined;
   private queue: ArtJob[] = [];
@@ -31,7 +36,6 @@ export class AssetLibrary {
   readonly witchFoot: Record<string, { towards: number[]; away: number[]; fps: number }> = {};
   /** In the treetops: the fast and brake poses' frames, towards and away. */
   readonly witchFly: Record<string, { towards: number[]; away: number[]; fps: number }> = {};
-  readonly stones: Atlas;
   /** Light-source props from the art module: campfire (frames 0-2), then magic stones (cyan, violet, green). */
   readonly props: Atlas;
   /** Soundsystems: variant x 3 + frame (the cones pumping), playing. */
@@ -74,7 +78,6 @@ export class AssetLibrary {
       this.witchFly[pose] = entry;
     }
     this.witch = packAtlas(sprites, 2048);
-    this.stones = packAtlas([0, 1, 2, 3].map(i => this.stone(i)));
     const lp = Art.lightProps(style) as { campfire: Baked[]; stones: Record<string, Baked> };
     this.props = packAtlas([...lp.campfire, lp.stones.cyan, lp.stones.violet, lp.stones.green], 1024);
     const ss: Baked[] = [];
@@ -105,13 +108,6 @@ export class AssetLibrary {
         }
       } catch { this.useWorkers = false; }
     }
-  }
-
-  private stone(i: number): Baked {
-    const r = rng(this.seed * 3 + i), w = 5 + Math.floor(r() * 3), h = 7 + Math.floor(r() * 5), sp = new Art.Sprite(w + 2, h + 1);
-    sp.ellipse((w + 2) / 2, h / 2 + 1, w / 2, h / 2 + 0.5, Art.M.BODY, { round: this.style.round });
-    sp.ellipse((w + 2) / 2 - 1, h / 2, w / 3, h / 3, Art.M.BODY2, { round: this.style.round, onlyOn: new Set([Art.M.BODY]), density: 0.5, seed: i });
-    return Art.bake(sp, { [Art.M.BODY]: [178, 174, 162], [Art.M.BODY2]: [140, 138, 130] }, this.style, "dark") as Baked;
   }
 
   private key = (j: ArtJob) => j.kind + ":" + j.id;
@@ -157,6 +153,8 @@ export class AssetLibrary {
     if (r.job.kind === "relics") {
       const list = r.result.relics!;
       this.relicSet = { atlas, byId: Object.fromEntries(list.map(p => [p.id, p])), modern: list.filter(p => p.family === "modern"), layouts: r.result.layouts! };
+    } else if (r.job.kind === "speakers") {
+      this.speakers = { atlas, ...r.result.speakers! };
     } else if (r.job.kind === "pathPieces") {
       this.pieces = { atlas, byId: Object.fromEntries(r.result.pieces!.map(p => [p.id, p])) };
     } else if (r.job.kind === "decor") {
@@ -164,7 +162,16 @@ export class AssetLibrary {
       for (const p of pieces) (families[p.family] ??= []).push(p);
       this.decor = { atlas, pieces, families };
     } else if (r.job.kind === "type") {
-      this.types.set(r.job.id, { atlas, layout: r.result.layout! });
+      // Each tree's cut: the lowest drawn row of its top half (both halves share the frame's box).
+      const px = r.result.px, cut = new Map<number, number>();
+      for (const p of r.result.layout!.big) {
+        if (p.top === null) continue;
+        const f = px.frames[p.top], x0 = Math.round(f.uv[0] * px.width), y0 = Math.round(f.uv[1] * px.height);
+        let row = -1;
+        for (let y = f.h - 1; y >= 0 && row < 0; y--) for (let x = 0; x < f.w; x++) if (px.albedo[((y0 + y) * px.width + x0 + x) * 4 + 3] > 0) { row = y; break; }
+        if (row >= 0) cut.set(p.bot, (row + 1) / f.h);
+      }
+      this.types.set(r.job.id, { atlas, layout: r.result.layout!, cut });
       if (r.result.floor) this.onFloor(r.job.id, r.result.floor);
     } else this.creatures.set(r.job.id, { atlas, frame: creatureFrame });
     this.inFlight.delete(this.key(r.job));
@@ -186,6 +193,11 @@ export class AssetLibrary {
   relicArt(): RelicSet | undefined {
     if (!this.relicSet) this.ask({ kind: "relics", id: "all", style: this.style });
     return this.relicSet;
+  }
+  /** The dancefloor's speakers, or undefined (and asked for, ahead of the scenery: they're gameplay). */
+  speakerArt(): (SpeakerArt & { atlas: Atlas }) | undefined {
+    if (!this.speakers) this.ask({ kind: "speakers", id: "all", style: this.style }, true);
+    return this.speakers;
   }
   /** The paths' 3D pieces, or undefined (and asked for). */
   pathPieceArt(): { atlas: Atlas; byId: Record<string, PathPieceArt> } | undefined {

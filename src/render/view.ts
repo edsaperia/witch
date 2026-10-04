@@ -2,6 +2,7 @@
 // (window size / pixel size) and stretched with nearest-neighbour by the browser, so every art
 // pixel stays a crisp square.
 import * as THREE from "three";
+import * as Art from "../../art/generator.js";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { poseOf } from "../rules/game";
@@ -18,13 +19,14 @@ import { applyStyleLight, LIGHT_UNIFORMS, MAX_LIGHTS } from "./lighting";
 import { Post } from "./post";
 import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
-import { MarkerArt, MarkerFx, MARKER_LEVELS, type Beacon, type Mote } from "./markers";
+import { MarkerArt, MarkerFx, MARKER_LEVELS, type Beacon, type Laser, type Mote } from "./markers";
 import { spawnMarkers, waveCountdown, type SpawnMarker } from "../rules/party";
 import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
 import { Lasers } from "./lasers";
 import { BorderView } from "./borders";
-import { MusicIndicator } from "./indicator";
+import { MusicIndicator, StoneIndicator } from "./indicator";
+import { Minimap } from "./minimap";
 import { Rulers } from "./rulers";
 import { Mist } from "./mist";
 import { ShadowBatch, type ShadowInstance } from "./shadows";
@@ -67,7 +69,7 @@ export class View {
   /** 1 while she sits on the treehouse terrace, easing to 0 as she takes off. */
   private seatK = 1;
   private seatTime = 0;
-  private stoneBatch: SpriteBatch;
+  private speakerBatch: SpriteBatch | null = null;
   private shadow: THREE.Mesh;
   private mpp: number; // metres per art pixel
   private lastBuild = { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1 };
@@ -85,6 +87,8 @@ export class View {
   private lasers: Lasers;
   private borders: BorderView;
   private music = new MusicIndicator(document.body);
+  private nextStone = new StoneIndicator(document.body);
+  readonly minimap: Minimap;
   /** Metre rulers and a ground grid (G). */
   readonly rulers = new Rulers(document.body);
   /** Show debug readouts (the debug overlay is on). */
@@ -119,7 +123,7 @@ export class View {
     this.camera = new THREE.PerspectiveCamera(t.camera.fov, 1, 1, 900);
     this.post = new Post(this.renderer, t);
     this.scene.background = new THREE.Color(0x0b0a16);
-    applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams }, t.glowReach, this.mpp, t.tone.ambient, t.glowFalloff);
+    applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams }, t.glowReach, this.mpp, t.tone.ambient, t.glowFalloff, t.tone.moon);
     LIGHT_UNIFORMS.uGlowPower.value = t.glowPower;
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize);
     this.ground = new Ground(game.map, game.forest, style, this.mpp);
@@ -139,7 +143,7 @@ export class View {
     LIGHT_UNIFORMS.uHazeRange.value.set(t.haze.near, t.haze.far);
     this.ground.mesh.renderOrder = -1; // first: the grounds' decals go on it before anything stands on it
     this.scene.add(this.ground.mesh);
-    this.scene.add(new PathView(game.map, style, this.mpp).group);
+    this.scene.add(new PathView(game.map, style, this.mpp, t.pathFade.metres).group);
 
     // The witch is depth-tested like everything else, drawn after it; where something still hides
     // her, a silhouette in her glow colour shows through, and tall things in front of her fade.
@@ -156,18 +160,12 @@ export class View {
       this.scene.add(...this.treehouseBatch.meshes);
     }
     // Spawn markers: gameplay (always drawn in range, never budget-culled).
+    this.minimap = new Minimap(document.body, game.map);
     this.markerArt = new MarkerArt(style, t);
-    this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { fade: true });
+    this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true });
     this.scene.add(...this.markerBatch.meshes, this.markerFx.group);
-    this.stoneBatch = new SpriteBatch(this.assets.stones, this.mpp, { fade: true });
-    this.scene.add(...this.stoneBatch.meshes);
-    const d = game.map.dancefloor, stones: SpriteInstance[] = [];
-    const n = game.tuning.dancefloor.stones;
-    for (let i = 0; i < n; i++) {
-      const a = (i / n) * Math.PI * 2 + 0.3;
-      stones.push({ x: d.x + Math.cos(a) * d.radius, y: 0, z: d.z + Math.sin(a) * d.radius, frame: this.assets.stones.frames[i % 4], flip: i % 2 === 0 });
-    }
-    this.stoneBatch.set(stones);
+    // The dancefloor's speakers: their batch comes with their art (drawSpeakers).
+    this.assets.speakerArt();
     this.propBatch = new SpriteBatch(this.assets.props, this.mpp, { fade: true });
     // Berries: a small shiny dark-red berry, drawn here (a highlight upper left, a darker side),
     // always drawn (gameplay), unlit so it reads at night; its halo and glints are in leash.ts.
@@ -179,7 +177,7 @@ export class View {
     this.leashView = new LeashView(this.scene, game);
     this.lasers = new Lasers(this.scene, game);
     this.borders = new BorderView(this.scene, game);
-    this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp, { fade: true });
+    this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp, { solid: true });
     this.scene.add(...this.soundBatch.meshes);
     this.dancefloor = new Dancefloor(game.map, t, SPRITE_UNIFORMS, this.mpp);
     this.scene.add(this.dancefloor.ball, this.dancefloor.beam, this.dancefloor.motes);
@@ -429,7 +427,7 @@ export class View {
       const tall = whole.h * mpp, C = t.treeCap, scale = tall > C.from ? (C.from + (tall - C.from) * C.keep) / tall : 1;
       const fresh = this.mark("tree", p.x, p.z, tall * scale);
       const at = stand(p.x, p.z, f[big.bot], mpp * scale);
-      add(p.type, { ...at, frame: f[big.bot], flip: p.flip, fresh, scale });
+      add(p.type, { ...at, frame: f[big.bot], flip: p.flip, fresh, scale, cut: big.top !== null ? art.cut.get(big.bot) : undefined });
       if (big.top !== null) add(p.type, { ...at, frame: f[big.top], flip: p.flip, top: true, fresh, scale });
       const w = whole.w * mpp, h = whole.h * mpp * (big.top === null ? 0.2 : 0.6);
       if (t.shadows.trees) shadows.push({ x: p.x + sx * h, z: p.z + sz * h, w: w * 0.8, d: w * 0.45, scenery: true });
@@ -525,7 +523,7 @@ export class View {
       if (ra.modern.length) for (const r of g.forest.relicsNear(cx, cz, half)) put(ra.modern[r.variant % ra.modern.length], r.x, r.z, r.flip);
       for (const gr of g.map.grounds) {
         if (Math.abs(gr.x - cx) > half + gr.r || Math.abs(gr.z - cz) > half + gr.r) continue;
-        for (const p of ra.layouts[gr.kind] ?? []) { const a = ra.byId[p.id]; if (a) put(a, gr.x + p.x, gr.z + p.z, false); }
+        for (const p of ra.layouts[gr.kind] ?? []) { const a = ra.byId[p.id]; if (a) put(a, gr.x + (gr.flip ? -p.x : p.x), gr.z + p.z, gr.flip); } // mirrored whole
       }
       this.batchFor(this.decorBatches, "relics", () => new SpriteBatch(ra.atlas, mpp, { scenery: true, fade: true }))?.set(upright);
       this.batchFor(this.decorBatches, "decals", () => {
@@ -554,7 +552,8 @@ export class View {
     if (mc.wave !== g.party.wave || mc.n !== g.party.areas.size) { mc.wave = g.party.wave; mc.n = g.party.areas.size; mc.list = spawnMarkers(g.party, g.map); }
     const cd = waveCountdown(g.party, g.map, time), build = g.party.paused ? 0 : cd.gone;
     const phase = (time * t.beat.bpm) / 60, beat = Math.pow(0.5 + 0.5 * Math.cos(phase * Math.PI * 2), 2); // 1 on the beat
-    const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes: Mote[] = [];
+    const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes: Mote[] = [], lasers: Laser[] = [];
+    const style = R.awakeStyle, column = style !== "beam", laser = style !== "column";
     const scale = R.scale;
     const stone = (x: number, z: number, species: string, level: number, y = 0) => {
       const frame = this.markerArt.atlas.frames[this.markerArt.frame(species, level)];
@@ -570,10 +569,15 @@ export class View {
       // Awake: brighter on the beat, more so as the countdown runs out; dormant: a steady glow.
       const level = m.awake ? 1 + Math.round(Math.min(1, beat * (0.4 + 0.6 * build)) * (MARKER_LEVELS - 2)) : 0;
       stone(m.x, m.z, species, level);
+      // The beam and laser rise from the top of the stone, not from inside it.
+      const top = (this.markerArt.height.get(species) ?? 0) * this.mpp * scale;
       const A = R.awake, D = R.dormant;
       const strength = m.awake ? (A.light + A.lightBuild * build) * (0.55 + 0.45 * beat) : D.light;
       if (d < R.lightRange) near.push({ d, l: { x: m.x, y: 0.5, z: m.z + 1.5, reach: m.awake ? A.reach : D.reach, rgb: col, strength } });
-      beacons.push({ x: m.x, z: m.z, colour: col, strength: m.awake ? A.beam * (0.6 + 0.4 * beat) * (1 + build) : D.beam });
+      // Awake: a column of light (column), a thin laser straight up (beam), or both (Ed, v149: "let's
+      // see both"); dormant: only the faint column above the canopy.
+      if (!m.awake || column) beacons.push({ x: m.x, z: m.z, colour: col, strength: m.awake ? A.beam * (0.6 + 0.4 * beat) * (1 + build) : D.beam, base: top });
+      if (m.awake && laser) lasers.push({ x: m.x, z: m.z, colour: col, strength: R.laser.opacity * (0.55 + 0.45 * beat) * (0.7 + 0.6 * build), width: R.laser.width, height: R.laser.length, base: top });
       if (m.awake) {
         const n = Math.round(A.motes + A.moteBuild * build);
         for (let i = 0; i < n; i++) {
@@ -594,7 +598,7 @@ export class View {
     near.sort((p, q) => p.d - q.d);
     for (const n of near.slice(0, 8)) lights.push(n.l);
     this.markerBatch.set(inst);
-    this.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes);
+    this.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes, lasers);
     return lights;
   }
 
@@ -661,7 +665,7 @@ export class View {
     }
     for (const [s, b] of this.creatureBatches) if (!per.has(s)) b.set([]);
     for (const [s, list] of per) {
-      const b = this.batchFor(this.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, this.mpp); });
+      const b = this.batchFor(this.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, this.mpp, { solid: true }); }); // creatures stay solid round her (Ed, v149)
       b?.set(list);
     }
     this.stats.creatures = n;
@@ -735,6 +739,36 @@ export class View {
     this.ghostLines.visible = pts.length > 0;
   }
 
+  /** The dancefloor's ring of speakers (Ed, v160): gameplay, always drawn and never see-through.
+   *  Each shows its front to the camera, the far half facing in and the near half out, so its
+   *  sprite is the drawn angle nearest its yaw, flipped for the other side; a playing speaker's
+   *  cones pump on the beat. Anchored by its ground point, like a path piece. */
+  private drawSpeakers(time: number, angle: number): void {
+    const A = this.assets.speakerArt(), g = this.game;
+    if (!A) return;
+    if (!this.speakerBatch) {
+      this.speakerBatch = new SpriteBatch(A.atlas, this.mpp, { solid: true });
+      this.scene.add(...this.speakerBatch.meshes);
+    }
+    const mpp = this.mpp, U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value;
+    const pitch = (angle * Math.PI) / 180, upOnScreen = U.dot(this.v3.set(0, Math.cos(pitch), -Math.sin(pitch)));
+    const beat = (time * g.tuning.beat.bpm) / 60, ph = beat - Math.floor(beat);
+    const list: SpriteInstance[] = [];
+    g.map.dancefloor.speakers.forEach((sp, i) => {
+      const face = Art.dancefloorSpeakerFacing(sp.ring) as { angle: number; flip: boolean }, state = g.speakers[i] ?? "playing";
+      // Playing: rest, then the cones thump out and settle, once a beat; damaged: a slow stutter.
+      const frame = state === "playing" ? (ph < 0.12 ? 2 : ph < 0.3 ? 1 : 0) : state === "damaged" ? Math.floor(time * 2.5 + i) % 2 : 0;
+      const fi = A.frames[`${face.angle}:${state}:${frame}`];
+      if (fi === undefined) return;
+      const f = A.atlas.frames[fi], o = A.origin[face.angle], ox = face.flip ? f.w - o.x : o.x;
+      const dx = (ox - f.w / 2) * mpp, below = Math.max(0, f.h - (f.pad ?? 0) - o.y) * mpp, d = (f.pad ?? 0) * mpp;
+      const x = sp.x - R.x * dx, z = sp.z - R.z * dx + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch));
+      if (!this.inView(x, z, f.w * mpp, f.h * mpp, 6)) return;
+      list.push({ x: x - U.x * d, y: -U.y * d, z: z - U.z * d, frame: f, flip: face.flip, fresh: this.mark("speaker", sp.x, sp.z, f.h * mpp) });
+    });
+    this.speakerBatch.set(list);
+  }
+
   /** Stand the treehouse with its trunk's foot (its base anchor) on its spot: like a set piece's
    *  origin, the roots drawn below the foot lie on the ground nearer the camera, its lowest drawn
    *  pixel on the ground. Returns where its sprite stands (the bottom middle of its box). */
@@ -784,6 +818,16 @@ export class View {
     const ws = this.v3.set(g.witch.x, witchHeight(g.witch, t) * 0.5, g.witch.z).project(this.camera);
     SPRITE_UNIFORMS.uCutout.value.set((ws.x * 0.5 + 0.5) * this.width, (ws.y * 0.5 + 0.5) * this.height, 0.5 * cut.screenFraction * this.width * (1 - lifted), Math.max(1, cut.edge * this.width * (1 - lifted)));
     SPRITE_UNIFORMS.uTopFade.value = lifted;
+    SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, this.mpp);
+    // The witch's glow reaches as far as the ground-mode canopy hole round her (Ed, v149: "about
+    // the width of the canopy hiding circle"): the hole's radius plus its soft edge, in metres at
+    // her depth, times glowToCutout; beyond it the forest is dark. ?glow= fixes it instead.
+    if (!t.glowFixed) {
+      const wx = g.witch.x, wz = g.witch.z, R = SPRITE_UNIFORMS.uRight.value;
+      const a = this.v3.set(wx, 0, wz).project(this.camera).x, b = this.v3.set(wx + R.x * 10, 0, wz + R.z * 10).project(this.camera).x;
+      const pxPerM = Math.max(1e-3, (Math.abs(b - a) * 0.5 * this.width) / 10);
+      LIGHT_UNIFORMS.uGlowR.value = ((0.5 * cut.screenFraction + cut.edge) * this.width / pxPerM) * t.glowToCutout;
+    }
     SPRITE_UNIFORMS.uDebugCull.value = this.debugCull ? 1 : 0;
 
     const w = g.witch, h = witchHeight(w, t);
@@ -820,6 +864,7 @@ export class View {
       ...onTreehouse(l.x, l.y), reach: t.treehouse.lightReach, rgb: new THREE.Vector3(l.rgb[0] / 255, l.rgb[1] / 255, l.rgb[2] / 255), strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3 + l.x)),
     }));
     const markerLights = this.drawMarkers(time);
+    this.drawSpeakers(time, pose.angle);
     this.setLights([this.dancefloor.update(time, this.ground), ...party.lights, ...thLights, ...markerLights, ...this.forestLights], w.x, w.z);
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);
@@ -892,6 +937,16 @@ export class View {
     this.rulers.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, w.x, w.z);
     const df = g.map.dancefloor;
     this.music.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, df.x, df.z, w.x, w.z, time, t.beat.bpm, this.debugReadouts);
+    this.minimap.update(g.party, w.x, w.z);
+    // The next waking stone, when it's off screen.
+    {
+      const nx = g.party.next, cw = this.canvas.clientWidth || window.innerWidth, ch = this.canvas.clientHeight || window.innerHeight;
+      if (nx) {
+        const s = g.map.soundsystemSpot(nx[0], nx[1]), species = AREA_TYPES[g.map.typeOf(nx[0], nx[1])].creature;
+        const cd = waveCountdown(g.party, g.map, time);
+        this.nextStone.update(this.camera, cw, ch, { x: s.x, z: s.z, colour: this.markerArt.colour.get(species)! }, w.x, w.z, time, t.beat.bpm, g.party.paused ? 0 : cd.gone);
+      } else this.nextStone.update(this.camera, cw, ch, null, w.x, w.z, time, t.beat.bpm, 0);
+    }
     this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
     this.assets.work(6);
     // The ground's area tiles: everything the cameras can see, plus a band ahead.
@@ -903,7 +958,7 @@ export class View {
     this.post.render(this.scene, this.camera);
     // Anything set but not drawn (three.js capping a batch's instances) is a bug: count and log it.
     let dropped = 0;
-    for (const b of [...this.typeBatches.values(), ...this.creatureBatches.values(), this.propBatch, this.soundBatch]) dropped += b.dropped;
+    for (const b of [...this.typeBatches.values(), ...this.creatureBatches.values(), this.propBatch, this.soundBatch, ...(this.speakerBatch ? [this.speakerBatch] : [])]) dropped += b.dropped;
     if (dropped && !this.stats.dropped) console.warn(`view: ${dropped} sprite instances set but not drawn`);
     this.stats.dropped = dropped;
     this.stats.drawCalls = this.renderer.info.render.calls;

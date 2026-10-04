@@ -7,6 +7,7 @@ import { leashPoint, newLeash, stepLeash, type LeashControls, type LeashState } 
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
 import { newParty, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
+import { nextSpeakerState, type SpeakerState } from "./speakers";
 import type { Tuning } from "./tuning";
 import { newWitch, stepWitch, witchHeight, type Intent, type WitchState } from "./witch";
 
@@ -22,6 +23,8 @@ export interface Game {
   party: PartyState;
   leash: LeashState;
   berries: BerryState;
+  /** Each dancefloor speaker's state, in map.dancefloor.speakers' order. */
+  speakers: SpeakerState[];
 }
 
 export interface Controls extends Intent, Partial<LeashControls> {
@@ -32,6 +35,8 @@ export interface Controls extends Intent, Partial<LeashControls> {
   pauseWaves?: boolean;
   /** Debug: the nearest party animal eats a berry now. */
   feedNearest?: boolean;
+  /** Debug: every dancefloor speaker on to its next state (playing, damaged, destroyed). */
+  cycleSpeakers?: boolean;
 }
 
 export function newGame(seed: number, tuning: Tuning): Game {
@@ -40,11 +45,13 @@ export function newGame(seed: number, tuning: Tuning): Game {
   return {
     seed, tuning, map, forest: new Forest(map), creatures: spawnCreatures(map), clock: newClock(),
     witch, camera: newCamera(tuning, witch.x, witchHeight(witch, tuning), witch.z), party: newParty(map), leash: newLeash(), berries: newBerries(map, tuning),
+    speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
   };
 }
 
 /** Advance the game by one real frame of `realDt` seconds. */
 export function stepGame(g: Game, c: Controls, realDt: number): void {
+  if (c.cycleSpeakers) g.speakers = g.speakers.map(nextSpeakerState); // a debug key: even while paused
   const dt = tick(g.clock, realDt);
   if (dt === 0) return;
   g.witch = stepWitch(g.witch, c, dt, g.tuning, g.map.bounds);
