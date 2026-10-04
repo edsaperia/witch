@@ -27,7 +27,7 @@ export interface SimPlayer { growth: number; fromWave: number; fightTime: number
  *  next wave will wake get reinforcements (adults) worth budget = (base + perWave × wave^power) × max(0,
  *  1 + alpha × (player's F / expected − 1)) fighting value, expected being `expected` F a minute
  *  since the first wave's countdown began. alpha 0: the same whatever the player does. */
-export interface SimDirector { base: number; perWave: number; alpha: number; expected: number; /** The budget's growth: perWave × wave^power (1 straight; 1.5 makes survival scale with skill, see the REPORT). */ power?: number }
+export interface SimDirector { base: number; perWave: number; alpha: number; expected: number; /** The budget's growth: perWave × wave^power (1 straight; 1.5 makes survival scale with skill, see the REPORT). */ power?: number; /** By time, not waves: `wave` is the minutes since the first countdown began and the budget is per minute (times the gap in minutes), so the same pressure comes whatever the gap; at one-minute waves the same as by waves. */ byTime?: boolean }
 
 export interface SimOptions {
   /** Seconds between waves. */
@@ -135,7 +135,7 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
       // The director: reinforcements for the areas the next wave wakes, by the player's progress.
       if (D && party.next.length) {
         const start = t.boot.time + t.party.startDelay, expected = (D.expected * Math.max(0, time - start)) / 60;
-        const k = Math.max(0, 1 + D.alpha * ((expected > 0 ? playerF / expected : 1) - 1)), budget = (D.base + D.perWave * Math.pow(party.wave, D.power ?? 1)) * k;
+        const k = Math.max(0, 1 + D.alpha * ((expected > 0 ? playerF / expected : 1) - 1)), w = D.byTime ? Math.max(0, time - start) / 60 : party.wave, budget = (D.base + D.perWave * Math.pow(w, D.power ?? 1)) * k * (D.byTime ? o.interval / 60 : 1);
         owed += budget;
         for (; owed >= adult; owed -= adult) {
           const cell = party.next[Math.floor(-nextId) % party.next.length], key = cellKey(cell), site = map.siteOf(cell[0], cell[1]);

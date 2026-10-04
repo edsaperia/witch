@@ -60,5 +60,10 @@ describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () =
     const soft = simulate(map, { interval: 300, maxWaves: 4, director: { ...dir, alpha: 0.6 } }), hard = simulate(map, { interval: 300, maxWaves: 4, director: dir });
     expect(soft.waves[soft.waves.length - 1].reinforced).toBeLessThan(hard.waves[hard.waves.length - 1].reinforced);
     expect(simulate(map, { interval: 300, maxWaves: 30 })).toEqual(base); // reinforcements don't outlive their run
+    // By time: at one-minute waves the same as by waves; at five-minute waves far more a wave.
+    const one = (byTime: boolean, interval: number) => simulate(map, { interval, maxWaves: 6, director: { ...dir, power: 1.5, byTime } });
+    const r = (x: ReturnType<typeof one>) => x.waves[x.waves.length - 1].reinforced;
+    expect(Math.abs(r(one(true, 60)) - r(one(false, 60)))).toBeLessThanOrEqual(2 * levelValue(2));
+    expect(r(one(true, 300))).toBeGreaterThan(r(one(false, 300)) * 5);
   }, 30000);
 });

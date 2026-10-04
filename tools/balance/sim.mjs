@@ -10,11 +10,12 @@
 //
 //   node tools/balance/sim.mjs [--seeds 12] [--gaps 60,300] [--skills 10,30,50,70,100] [--cap 60]
 //     [--growth 30,50,70] [--starts 0,3,6,9,12,15,20] [--waves 30] [--fight 30]
-//     [--attrition 0.5] [--director base,perWave,power] [--expected 50] [--alphas 0,0.3,0.6]
+//     [--attrition 0.5] [--director base,perWave,power] [--by-wave] [--expected 50] [--alphas 0,0.3,0.6]
 //     [--table '<population table JSON>'] [--scale 1] [--health 4000] [--home 8000] [--legacy] [--quick] [--json out.json]
 // --table, --scale (young and adults times this), --health and --home (soundsystems' and home's
 // health) try numbers without editing the tuning file; --legacy uses today's populations by
-// remoteness instead of the distance table; --quick leaves out the catch-up check.
+// remoteness instead of the distance table; --quick leaves out the catch-up check; --by-wave sets
+// the director's budget by waves rather than by minutes.
 // It loads the game's own rules modules through Vite (no build needed).
 import { createServer } from "vite";
 import { writeFileSync } from "node:fs";
@@ -42,7 +43,7 @@ const seeds = Array.from({ length: SEEDS }, (_, i) => 1000 + i * 7919);
 const t0 = Date.now(), maps = seeds.map(s => generateMap(s, tuning)), out = { seeds, tuning: { table, health: tuning.combat.soundsystemHealth, home: tuning.combat.homeHealth }, gaps: {} };
 const lines = [];
 const say = s => { lines.push(s); console.log(s); };
-const director = alpha => ({ base: DBASE, perWave: DPER, power: DPOW, alpha, expected: EXPECTED });
+const BY_WAVE = flag("by-wave"), director = alpha => ({ base: DBASE, perWave: DPER, power: DPOW, alpha, expected: EXPECTED, byTime: !BY_WAVE });
 const VARIANTS = [
   { id: "a", name: "a. distance table only", o: {} },
   { id: "b", name: `b. a + attrition (${Math.round(ATTRITION * 100)}% march on)`, o: { marchOn: ATTRITION } },
@@ -54,7 +55,7 @@ const runAll = o => maps.map(m => simulate(m, o));
 const lastTime = r => (r.lost ? r.lost.time : r.waves[r.waves.length - 1]?.time ?? 0);
 
 say(`Balance simulator: ${SEEDS} seeds (${seeds[0]}, ${seeds[1]}, …), ${flag("legacy") ? "today's populations by remoteness" : `population table ${TABLE ? "from --table" : "from config/tuning.json"}${SCALE !== 1 ? ` (young and adults × ${SCALE})` : ""}`}, soundsystems ${tuning.combat.soundsystemHealth} hp, home ${tuning.combat.homeHealth} hp.`);
-say(`Player model (a guess): their party's F grows by g a minute from the wave they start; whenever free they fight the biggest siege they can beat (square law: they keep √(theirs² − its²)), then are busy ${FIGHT} s. Director (a guess): reinforcements (adults) for the next wave's areas worth (${DBASE} + ${DPER} × wave${DPOW !== 1 ? `^${DPOW}` : ""}) F × max(0, 1 + α(player F / expected − 1)), expected ${EXPECTED} F a minute.\n`);
+say(`Player model (a guess): their party's F grows by g a minute from the wave they start; whenever free they fight the biggest siege they can beat (square law: they keep √(theirs² − its²)), then are busy ${FIGHT} s. Director (a guess): reinforcements (adults) for the next wave's areas worth (${DBASE} + ${DPER} × ${BY_WAVE ? "wave" : "minute"}${DPOW !== 1 ? `^${DPOW}` : ""}) F ${BY_WAVE ? "a wave" : "a minute (by time, the same whatever the gap)"} × max(0, 1 + α(player F / expected − 1)), expected ${EXPECTED} F a minute.\n`);
 
 for (const gap of GAPS) {
   const g = (out.gaps[gap] = { variants: {} });
