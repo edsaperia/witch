@@ -310,12 +310,13 @@ export class LeashView {
     };
     const line = bc.querySelector("span")!, bar = bc.querySelector(".bar") as HTMLElement;
     if (!talk) {
-      // Cues: Talk held in the air says to land; held with no one in range, a "…" so the press
-      // shows. (No prompt over creatures in range: Ed, 2026-10-03.)
+      // Cues: Talk held on the ground with no one in range, a "…" so the press shows; held in the
+      // air, nothing (Ed, v183: no "land to talk" prompt). (No prompt over creatures in range: Ed, 2026-10-03.)
       bar.style.display = "none";
       bc.classList.remove("on");
-      bw.classList.toggle("on", g.leash.held);
-      if (g.leash.held) { this.say(bw, g.leash.heldInAir ? "land to talk" : "…"); place(bw, w.x - 1.2, witchHeight(w, g.tuning) + 2.2, w.z); }
+      const cue = g.leash.held && !g.leash.heldInAir;
+      bw.classList.toggle("on", cue);
+      if (cue) { this.say(bw, "…"); place(bw, w.x - 1.2, witchHeight(w, g.tuning) + 2.2, w.z); }
       return;
     }
     const c = g.creatures[talk.id];

@@ -5,7 +5,21 @@
       "version": null,
       "items": [
         "The witch is lit by the lights around her: she turns red by a red soundsystem, warm by a campfire, and catches a coloured rim on the side facing a light, while staying easy to see in the dark",
-        "Railways and paths no longer run across the dancefloor: they stop, frayed, at the edge of its clearing"
+        "No more 'land to talk' prompt",
+        "The dancefloor's old soundsystem is gone; its ring of speakers carries the music",
+        "The next-stone arrow now points the right way",
+        "The next-stone cue shows the area's rune, and its ring fills as the countdown to the next wave runs",
+        "The party's border twinkles and flickers between the colours of the areas on either side",
+        "Flying straight up or down the screen, the witch is seen from behind or coming at you"
+      ]
+    },
+    {
+      "version": 190,
+      "items": [
+        "Railways and paths no longer run across the dancefloor: they stop, frayed, at the edge of its clearing",
+        "Tufts of grass, fern, heather, reeds, moss and clover cover the ground round you, each area its own, swaying in the wind and parting as you and the creatures pass (?grass=0 to 2)",
+        "The ground has gentle rises and hollows that your light and the campfires pick out (?relief=0 for flat)",
+        "Trees and undergrowth sway in gusts that roll across the forest; gentler over the treetops (?wind=0 for still)"
       ]
     },
     {

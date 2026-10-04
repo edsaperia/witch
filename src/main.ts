@@ -50,6 +50,18 @@ if (glowParam && glowParam[1] > 0) tuning.glowFalloff = glowParam[1];
 const blendParam = params.get("blend");
 if (blendParam === "off") tuning.groundBlend = { ...tuning.groundBlend, on: false };
 else if (blendParam) { const [w, f, b] = blendParam.split(",").map(Number); tuning.groundBlend = { ...tuning.groundBlend, warp: w || 0, fine: f || 0, band: b || 0 }; }
+// ?border=<twinkle>,<swapRate>,<swapBeat>: the party border's sparkle.
+const borderParam = params.get("border")?.split(",").map(Number);
+if (borderParam) { const [tw, sr, sb] = borderParam; tuning.borders = { ...tuning.borders, ...(tw >= 0 ? { twinkle: tw } : {}), ...(sr >= 0 ? { swapRate: sr } : {}), ...(sb >= 0 ? { swapBeat: sb } : {}) }; }
+// ?grass=0..2: how thick the ground cover is (0 none).
+const grassParam = params.get("grass");
+if (grassParam !== null && !isNaN(Number(grassParam))) tuning.groundCover = { ...tuning.groundCover, density: Number(grassParam) };
+// ?wind=<strength>: the wind's sway (0 still).
+const windParam = params.get("wind");
+if (windParam !== null && !isNaN(Number(windParam))) tuning.wind = { ...tuning.wind, strength: Number(windParam) };
+// ?relief=<strength>: the ground's fake relief (0 flat).
+const reliefParam = params.get("relief");
+if (reliefParam !== null && !isNaN(Number(reliefParam))) tuning.ground = { relief: { ...tuning.ground.relief, strength: Number(reliefParam) } };
 const fx = params.get("fx");
 if (fx === "pixel" || fx === "smooth") tuning.fx = fx;
 

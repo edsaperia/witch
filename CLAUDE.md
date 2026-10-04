@@ -23,7 +23,7 @@ The start screen shows a **What's new** panel: the last three entries of `config
 CI (`.github/workflows/ci.yml`) runs on every push and pull request, in this order:
 
 - `npm ci`
-- `npm test` (Vitest: the rules modules in `src/rules/`, including the partition checked against the Art Lab's own `makePartition`)
+- `npm test` (Vitest: the rules modules in `src/rules/`, including the partition checked against the Art Lab's own `makePartition`, and the geometry of the on-screen cues in `src/render/indicator.test.ts`)
 - `npm run typecheck` (`tsc --noEmit` over `src/`, `config/` and `vite.config.ts`)
 - `npm run build` (Vite, into `dist/`)
 - then, in a second job, `npm run smoke:quick` on that build: the quick smoke test (`tools/smoke/quick.cjs`, headless Chromium with Playwright installed in CI and its Chromium cached; a few minutes). It loads the game at 1280×720 with `?quick=1` (only the art the start needs), starts, flies about 5 s on the ground, rises, flies about 5 s in the treetops and descends, and fails on any page or console error, a blank picture, or a witch that doesn't move, rise or descend. Its screenshot and log are kept as the run's `smoke-quick` artifact. The full smoke test below still covers pops, floating, big windows, touch and waves.

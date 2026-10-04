@@ -17,6 +17,7 @@ import { Ground } from "./ground";
 import { PathView } from "./paths";
 import { applyStyleLight, LIGHT_UNIFORMS, MAX_LIGHTS } from "./lighting";
 import { Post } from "./post";
+import { GrassView } from "./grass";
 import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
 import { MarkerArt, MarkerFx, MARKER_LEVELS, type Beacon, type Laser, type Mote } from "./markers";
@@ -68,6 +69,7 @@ export class View {
   private seatK = 1;
   private seatTime = 0;
   private speakerBatch: SpriteBatch | null = null;
+  readonly grass: GrassView;
   private shadow: THREE.Mesh;
   private mpp: number; // metres per art pixel
   private lastBuild = { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1 };
@@ -162,6 +164,9 @@ export class View {
     this.markerArt = new MarkerArt(style, t);
     this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true });
     this.scene.add(...this.markerBatch.meshes, this.markerFx.group);
+    // The ground cover: tufts round the witch, in ground mode.
+    this.grass = new GrassView(game.map, t, this.mpp);
+    this.scene.add(this.grass.mesh);
     // The dancefloor's speakers: their batch comes with their art (drawSpeakers).
     this.assets.speakerArt();
     this.propBatch = new SpriteBatch(this.assets.props, this.mpp, { fade: true });
@@ -421,8 +426,10 @@ export class View {
       const tall = whole.h * mpp, C = t.treeCap, scale = tall > C.from ? (C.from + (tall - C.from) * C.keep) / tall : 1;
       const fresh = this.mark("tree", p.x, p.z, tall * scale);
       const at = stand(p.x, p.z, f[big.bot], mpp * scale);
-      add(p.type, { ...at, frame: f[big.bot], flip: p.flip, fresh, scale, cut: big.top !== null ? art.cut.get(big.bot) : undefined });
-      if (big.top !== null) add(p.type, { ...at, frame: f[big.top], flip: p.flip, top: true, fresh, scale });
+      // A tree's two halves share one box and sway alike (from its foot), so crown and trunk stay together.
+      const sway = big.top !== null ? 1 : 0;
+      add(p.type, { ...at, frame: f[big.bot], flip: p.flip, fresh, scale, cut: big.top !== null ? art.cut.get(big.bot) : undefined, sway });
+      if (big.top !== null) add(p.type, { ...at, frame: f[big.top], flip: p.flip, top: true, fresh, scale, sway });
       const w = whole.w * mpp, h = whole.h * mpp * (big.top === null ? 0.2 : 0.6);
       if (t.shadows.trees) shadows.push({ x: p.x + sx * h, z: p.z + sz * h, w: w * 0.8, d: w * 0.45, scenery: true });
       nt++;
@@ -447,8 +454,9 @@ export class View {
         if (!this.inView(x, z, whole.w * m, whole.h * m, margin, reach)) continue;
         const fresh = this.mark(kind, p.x, p.z, whole.h * m);
         const at = stand(x, z, frame, m);
-        add(p.type, { ...at, frame, flip: p.flip, fresh, scale });
-        if (piece.top !== null) add(p.type, { ...at, frame: f[piece.top], flip: p.flip, top: true, fresh, scale });
+        const sway = kind === "small" ? 1 : 0; // undergrowth sways; walls and set pieces stand still
+        add(p.type, { ...at, frame, flip: p.flip, fresh, scale, sway });
+        if (piece.top !== null) add(p.type, { ...at, frame: f[piece.top], flip: p.flip, top: true, fresh, scale, sway });
         // Set pieces model their own ground: no blob under them (it read as a hard dark oval).
         // Its shadow lies under it, its front edge at its base (not centred on its bottom edge,
         // which leaves half of it in front, reading as a shadow below something hovering).
@@ -775,6 +783,9 @@ export class View {
     SPRITE_UNIFORMS.uCutout.value.set((ws.x * 0.5 + 0.5) * this.width, (ws.y * 0.5 + 0.5) * this.height, 0.5 * cut.screenFraction * this.width * (1 - lifted), Math.max(1, cut.edge * this.width * (1 - lifted)));
     SPRITE_UNIFORMS.uTopFade.value = lifted;
     SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, this.mpp);
+    // The wind: gentler over the treetops (Ed, v171: "gentle and lovely").
+    const W = t.wind;
+    SPRITE_UNIFORMS.uWind.value.set(W.on ? W.strength * (1 + (W.treetop - 1) * lifted) : 0, W.speed, W.gustScale, time);
     // The witch's glow reaches as far as the ground-mode canopy hole round her (Ed, v149: "about
     // the width of the canopy hiding circle"): the hole's radius plus its soft edge, in metres at
     // her depth, times glowToCutout; beyond it the forest is dark. ?glow= fixes it instead.
@@ -821,6 +832,9 @@ export class View {
     }));
     const markerLights = this.drawMarkers(time);
     this.drawSpeakers(time, pose.angle);
+    // Tufts part round her and the three nearest creatures.
+    const parts = [{ x: w.x, z: w.z, r: 1.6 * (1 - canopyShown(w)) }, ...g.creatures.map(c => ({ x: c.x, z: c.z, r: 1.2, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(c => c.d < t.groundCover.radius).sort((a, b) => a.d - b.d).slice(0, 3)];
+    this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05); // out to the canopy hole's edge
     this.setLights([this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...this.forestLights], w.x, w.z);
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);
@@ -836,6 +850,9 @@ export class View {
       const Fl = this.assets.witchFly, sideF = w.away ? "away" : "towards";
       if (w.braking) wf = Fl.brake[sideF][Math.floor(time * Fl.brake.fps) % Fl.brake[sideF].length];
       else if ((w.boost ?? 0) > 0.7) wf = Fl.fast[sideF][Math.floor(time * Fl.fast.fps) % Fl.fast[sideF].length];
+      // Straight up or down the screen (#27): her heading frames, from behind or coming at us.
+      const Hd = w.heading && w.heading !== "side" ? this.assets.witchHeading[w.heading] : null;
+      if (Hd) wf = w.braking ? Hd.brake[Math.floor(time * Fl.brake.fps) % Hd.brake.length] : (w.boost ?? 0) > 0.7 ? Hd.fast[Math.floor(time * Fl.fast.fps) % Hd.fast.length] : w.lean ? Hd.lean : Hd.hover[Math.floor(time * 4) % Hd.hover.length];
     }
     // Talking or handling a sigil, she lands first (Ed, 2026-10-03): down to the ground, then the
     // talk, placeSigil or liftSigil pose, and back up into the air when she's done.
@@ -900,7 +917,7 @@ export class View {
       if (nx) {
         const s = g.map.soundsystemSpot(nx[0], nx[1]), species = AREA_TYPES[g.map.typeOf(nx[0], nx[1])].creature;
         const cd = waveCountdown(g.party, g.map, time);
-        this.nextStone.update(this.camera, cw, ch, { x: s.x, z: s.z, colour: this.markerArt.colour.get(species)! }, w.x, w.z, time, t.beat.bpm, g.party.paused ? 0 : cd.gone);
+        this.nextStone.update(this.camera, cw, ch, { x: s.x, z: s.z, colour: this.markerArt.colour.get(species)!, species }, w.x, w.z, time, t.beat.bpm, cd.gone); // pausing holds the countdown
       } else this.nextStone.update(this.camera, cw, ch, null, w.x, w.z, time, t.beat.bpm, 0);
     }
     this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);

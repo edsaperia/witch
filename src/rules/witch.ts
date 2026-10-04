@@ -18,6 +18,9 @@ export interface WitchState {
   facing: 1 | -1;
   /** Turned away from the viewer: only while clearly flying up the screen (see facingAway). */
   away: boolean;
+  /** Flying straight up the screen ("up": seen from behind) or straight down it ("down": coming at
+   *  us), within facing.heading degrees of the vertical (see headingOf); otherwise "side". */
+  heading?: Heading;
   /** Leaning into fast flight: above leanAt of the mode's top speed. */
   lean: boolean;
   /** Treetop boost: 0 at cruise, 1 at full boost (treetop.boost times cruise). */
@@ -44,6 +47,16 @@ export function facingAway(vx: number, vz: number, wasAway: boolean, minSpeed: n
   if (Math.hypot(vx, vz) < minSpeed || vz >= 0) return false;
   const angle = (Math.atan2(Math.abs(vx), -vz) * 180) / Math.PI; // 0 straight up the screen
   return angle < (wasAway ? t.facing.awayLeave : t.facing.awayEnter);
+}
+
+export type Heading = "side" | "up" | "down";
+
+/** Straight up or down the screen (Ed, #27: her heading sprites), with hysteresis: entering within
+ *  facing.headingEnter degrees of the vertical, leaving past headingLeave, and only above minSpeed. */
+export function headingOf(vx: number, vz: number, was: Heading | undefined, minSpeed: number, t: Tuning): Heading {
+  if (Math.hypot(vx, vz) < minSpeed) return "side";
+  const off = (Math.atan2(Math.abs(vx), Math.abs(vz)) * 180) / Math.PI, want: Heading = vz < 0 ? "up" : "down"; // off: degrees from the vertical
+  return off < (was === want ? t.facing.headingLeave : t.facing.headingEnter) ? want : "side";
 }
 
 export const NO_INTENT: Intent = { moveX: 0, moveZ: 0, toggleMode: false };
@@ -83,8 +96,8 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   if (x < bounds.minX || x > bounds.maxX) { x = clamp(x, bounds.minX, bounds.maxX); vx = 0; }
   if (z < bounds.minZ || z > bounds.maxZ) { z = clamp(z, bounds.minZ, bounds.maxZ); vz = 0; }
   const facing: 1 | -1 = vx > 0.3 ? 1 : vx < -0.3 ? -1 : w.facing;
-  const speed = Math.hypot(vx, vz), away = facingAway(vx, vz, w.away, Math.max(1, max * 0.15), t);
-  return { x, z, vx, vz, lift, mode, facing, away, lean: speed > max * t.leanAt, boost, braking };
+  const speed = Math.hypot(vx, vz), away = facingAway(vx, vz, w.away, Math.max(1, max * 0.15), t), heading = headingOf(vx, vz, w.heading, Math.max(1, max * 0.15), t);
+  return { x, z, vx, vz, lift, mode, facing, away, heading, lean: speed > max * t.leanAt, boost, braking };
 }
 
 /** Treetop flight with momentum: pressing a direction reaches cruise (treetopSpeed) quickly;

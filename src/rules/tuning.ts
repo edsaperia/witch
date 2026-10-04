@@ -21,6 +21,12 @@ export interface Tuning {
   areaEdgeBlend: { width: number; scale: number; stray: number };
   /** How neighbouring areas' floor textures meet: a two-octave warp of warp and fine metres, and a dithered band metres wide. */
   groundBlend: { on: boolean; warp: number; fine: number; band: number; dither: boolean };
+  /** The ground's fake relief: rises and hollows from noise (scale metres across) tilting the ground's normal by strength, so lights pick out the bumps, and shading hollows darker by shade. */
+  ground: { relief: { strength: number; scale: number; shade: number } };
+  /** Wind sway on leafy things: metres at the top of a crown, gusts' speed (m/s) and size (m), and a share for the treetop view. */
+  wind: { on: boolean; strength: number; speed: number; gustScale: number; treetop: number };
+  /** Tufts on the ground round the witch, in ground mode: overall density (times each area's), within radius metres, at most cap; one chance every spacing metres, worked out cell metres at a time within budgetMs a frame; sway (share of a tuft's height) and part (how far they part round her). */
+  groundCover: { on: boolean; density: number; radius: number; cap: number; spacing: number; cell: number; budgetMs: number; sway: number; part: number };
   /** Set pieces drawn this much bigger than the art, with a clearing of setPieceClear metres (times the scale) round them. */
   setPieceScale: number;
   setPieceClear: number;
@@ -48,7 +54,7 @@ export interface Tuning {
   groundAcceleration: number;
   leanAt: number;
   /** The away cone round straight up the screen, degrees: enter under awayEnter, leave over awayLeave. */
-  facing: { awayEnter: number; awayLeave: number };
+  facing: { awayEnter: number; awayLeave: number; /** degrees from straight up or down the screen for her up/down heading sprites, entering and leaving */ headingEnter: number; headingLeave: number };
   riseTime: number;
   descendTime: number;
   groundHeight: number;
@@ -115,7 +121,7 @@ export interface Tuning {
   occlusion: { on: boolean; fadeOpacity: number; edge: number; minHeight: number; silhouette: number };
   stack: { offset: number; scale: number; gap: number; stiffness: number; damping: number; trail: number; idleSway: number };
   lasers: { on: boolean; maxCount: number; length: number; spread: number; maxTilt: number; sweep: number; sweepBeats: number; openBars: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };
-  borders: { on: boolean; width: number; brightness: number; sparkle: number; step: number };
+  borders: { on: boolean; width: number; brightness: number; sparkle: number; step: number; /** 0 a gentle breathing, 1 star-like flashes and dropouts */ twinkle: number; /** colour swaps a second */ swapRate: number; /** the share of sparks that swap on the beat */ swapBeat: number };
   invite: { talkRange: number; cancelDistance: number; talkTime: number[]; turn: number[]; decayRate: number };
   leash: { length: number; runSpeed: number; pickRadius: number; spacing: number };
   bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number; /** The thread's upward bow: metres per metre of length, up to threadArcMax. */ threadArc: number; threadArcMax: number };

@@ -51,6 +51,7 @@ uniform vec4 uBlend; // ground blend: warp, fine (metres), band (metres), dither
 uniform sampler2D uDiscoBase, uDiscoLit, uDiscoTiles;
 uniform vec4 uDiscoGeom;
 uniform float uDiscoRim;
+uniform vec3 uRelief; // the ground's relief: strength, scale (metres), shade
 varying vec3 vWorld;
 ${LIGHT_GLSL}
 float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
@@ -180,7 +181,18 @@ void main() {
     if (uSmooth > 0.5) moonK = 1.0 - uCanopy.x * smoothstep(-0.07, 0.07, cover - leaves);
     else if (leaves + edge < cover) moonK = 1.0 - uCanopy.x;
   }
-  vec3 light = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, moonK);
+  // Fake relief (Ed, v171): two octaves of noise as a height; its slope tilts the ground's normal
+  // so lights pick out rises and hollows, and the hollows are a little darker. Shading only.
+  vec3 N = vec3(0.0, 1.0, 0.0);
+  if (uRelief.x > 0.0) {
+    float S = uRelief.y, e = S * 0.25;
+    float h0 = vnoise(p / S) * 0.7 + vnoise(p / (S * 0.37) + 13.0) * 0.3;
+    float hx = vnoise((p + vec2(e, 0.0)) / S) * 0.7 + vnoise((p + vec2(e, 0.0)) / (S * 0.37) + 13.0) * 0.3;
+    float hz = vnoise((p + vec2(0.0, e)) / S) * 0.7 + vnoise((p + vec2(0.0, e)) / (S * 0.37) + 13.0) * 0.3;
+    N = normalize(vec3(-(hx - h0) / e * S * uRelief.x, 1.0, -(hz - h0) / e * S * uRelief.x));
+    c *= 1.0 - uRelief.z * smoothstep(0.55, 0.2, h0);
+  }
+  vec3 light = nightLightShaded(N, vWorld, moonK);
   gl_FragColor = vec4(haze(min(vec3(1.0), c * light * 1.25), vWorld), 1.0);
 }
 `;
@@ -231,6 +243,7 @@ export class Ground {
         uClearing: { value: new THREE.Vector2(map.tuning.clearingSize, map.tuning.clearingFalloff) },
         uDiscoBase: { value: disco.base }, uDiscoLit: { value: disco.lit }, uDiscoTiles: { value: this.discoTiles },
         uDiscoGeom: { value: new THREE.Vector4(disco.tileM, disco.pitch, disco.size, disco.gridOrigin) }, uDiscoRim: { value: disco.rimOuter },
+        uRelief: { value: new THREE.Vector3(map.tuning.ground.relief.strength, map.tuning.ground.relief.scale, map.tuning.ground.relief.shade) },
         uBlend: { value: (B => (B.on ? new THREE.Vector4(B.warp, B.fine, B.band, B.dither ? 1 : 0) : new THREE.Vector4()))(map.tuning.groundBlend) },
       },
     });

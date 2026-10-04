@@ -5,7 +5,7 @@ import { makePartition } from "./partition";
 import { hash2 } from "./random";
 import { AREA_TYPES, generateMap, parseSeed } from "./map";
 import { Forest, crownReach, treeChance } from "./forest";
-import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway } from "./witch";
+import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
 import { legendChance, population, spawnCreatures, stepCreature, stepCreaturesNear } from "./creatures";
 import { newGame, stepGame } from "./game";
@@ -20,6 +20,7 @@ import { TUNING, withTuning } from "./tuning";
 import { floorClearing, speakerRadius, nextSpeakerState } from "./speakers";
 import { composeFloor, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
 import { floorInputs } from "./game";
+import { tuftsInCell, TUFT_KINDS } from "./groundcover";
 import { DECOR } from "../../art/decor.js";
 import { RELICS } from "../../art/relics.js";
 
@@ -290,6 +291,19 @@ describe("the witch", () => {
     expect(Math.hypot(t.vx, t.vz)).toBeCloseTo(TUNING.treetopSpeed * TUNING.treetop.boost, 0); // held straight: full boost
   });
 
+  it("flies in her up and down heading sprites only near straight up or down the screen, with hysteresis", () => {
+    const F = TUNING.facing, at = (deg: number, up: boolean) => { const a = (deg * Math.PI) / 180; return [Math.sin(a) * 10, (up ? -1 : 1) * Math.cos(a) * 10] as const; };
+    expect(headingOf(...at(5, true), "side", 1, TUNING)).toBe("up");
+    expect(headingOf(...at(5, false), "side", 1, TUNING)).toBe("down");
+    expect(headingOf(...at(45, true), "side", 1, TUNING)).toBe("side");
+    const mid = (F.headingEnter + F.headingLeave) / 2;
+    expect(headingOf(...at(mid, true), "side", 1, TUNING)).toBe("side"); // not yet in
+    expect(headingOf(...at(mid, true), "up", 1, TUNING)).toBe("up"); // not yet out
+    expect(headingOf(0, -0.5, "up", 1, TUNING)).toBe("side"); // too slow
+    let w: ReturnType<typeof newWitch> = { ...newWitch(200, 200), lift: 1, mode: "treetop" };
+    for (let i = 0; i < 60; i++) w = stepWitch(w, { moveX: 0, moveZ: -1, toggleMode: false }, 1 / 60, TUNING, b);
+    expect(w.heading).toBe("up");
+  });
   describe("treetop momentum", () => {
     const T = TUNING.treetop, up = (): ReturnType<typeof newWitch> => ({ ...newWitch(200, 200), lift: 1, mode: "treetop" });
     const speed = (w: { vx: number; vz: number }) => Math.hypot(w.vx, w.vz);
@@ -1091,6 +1105,17 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
     const T2 = withTuning({ dancefloor: { ...D, speakers: { ...S, count: 20, radiusFactor: 3 } } }), m = generateMap(1, T2);
     expect(Math.hypot(m.treehouse.x - m.dancefloor.x, m.treehouse.z - m.dancefloor.z) - T2.treehouse.clear).toBeGreaterThan(speakerRadius(T2) + S.footprint);
   });
+  it("are the dancefloor's only sound: no soundsystem stands in their ring or the floor's clearing, over seeds (Ed, v183)", () => {
+    for (const seed of [1, 2, 3, 123]) {
+      const m = generateMap(seed, TUNING), d = m.dancefloor;
+      for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+        if (x === m.centreCell[0] && y === m.centreCell[1]) continue;
+        const q = m.soundsystemSpot(x, y);
+        expect(Math.hypot(q.x - d.x, q.z - d.z)).toBeGreaterThan(speakerRadius(TUNING) + S.footprint + TUNING.soundsystemFootprint);
+      }
+      expect(newParty(m).areas.get(m.centreCell.join(","))?.soundsystem ?? null).toBeNull(); // home has none
+    }
+  });
   it("cycle playing, damaged, destroyed on the debug key", () => {
     expect(nextSpeakerState("playing")).toBe("damaged");
     expect(nextSpeakerState("damaged")).toBe("destroyed");
@@ -1159,6 +1184,29 @@ describe("the dancefloor's tile lights (Ed, v160)", () => {
     for (let n = 0; n < GRID * GRID; n++) if (after[n * 4] === 9 && before[n * 4] !== 9) { if (n % GRID > GRID / 2) right++; else left++; }
     expect(right).toBeGreaterThan(3);
     expect(left).toBe(0);
+  });
+});
+
+describe("ground cover (Ed, v171)", () => {
+  const G = TUNING.groundCover, d = map.dancefloor;
+  const around = (x: number, z: number, r: number) => { const out = []; for (let cj = Math.floor((z - r) / G.cell); cj <= Math.floor((z + r) / G.cell); cj++) for (let ci = Math.floor((x - r) / G.cell); ci <= Math.floor((x + r) / G.cell); ci++) out.push(...tuftsInCell(map, ci, cj, G.cell, G.spacing, G.density)); return out; };
+  it("is seeded per cell: the same patch every time", () => {
+    expect(tuftsInCell(map, 140, 150, G.cell, G.spacing, 1)).toEqual(tuftsInCell(map, 140, 150, G.cell, G.spacing, 1));
+  });
+  it("keeps off paths, the dancefloor's clearing and cleared ground, in each area's own kinds", () => {
+    const list = around(d.x + 60, d.z + 40, 70);
+    expect(list.length).toBeGreaterThan(500);
+    for (const f of list) {
+      expect(map.paths.at(f.x, f.z)).toBeNull();
+      expect(map.hardClear(f.x, f.z)).toBe(false);
+      expect(Math.hypot(f.x - d.x, f.z - d.z)).toBeGreaterThan(floorClearing(TUNING));
+      expect(AREA_TYPES[f.type].groundCover.kinds).toContain(TUFT_KINDS[f.kind]);
+    }
+  });
+  it("is thick where the area says (grassland) and thin where it doesn't (cave mouth), and none at density 0", () => {
+    const per = (id: string) => { let n = 0, area = 0; for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++) { if (AREA_TYPES[map.typeOf(x, y)].id !== id) continue; const s = map.siteOf(x, y); const l = around(s.x + 30, s.z + 30, 8).filter(f => map.areaAt(f.x, f.z).type === map.typeOf(x, y)); n += l.length; area++; if (area >= 3) break; } return n / Math.max(1, area); };
+    expect(per("grassland")).toBeGreaterThan(per("cave-mouth") * 2);
+    expect(tuftsInCell(map, 140, 150, G.cell, G.spacing, 0)).toEqual([]);
   });
 });
 
