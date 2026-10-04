@@ -109,10 +109,10 @@ const spSETS = {
     // turf drooping a little over them; plank gables at both ends; the chimney rising through the ridge
     const eave = 1.1, ridge = 1.68, run = .86, slope = Math.hypot(run, ridge - eave), nz = run / slope, ny = (ridge - eave) / slope;
     for (const s of [-1, 1]) {
-      m.box([0, (eave + ridge) / 2 + .03, s * run / 2], [1.22, .06, slope / 2 + .05], M.MOSS, { dir: [1, 0, 0], up: [0, nz, s * ny], round: .03, group: 2, paint: p => spHash(Math.floor(p[0] * 12), Math.floor(p[2] * 12)) < .25 ? M.LEAF2 : undefined });
-      for (let i = 0; i < 8; i++) m.ell([-1.1 + i * .31, eave - .02, s * (run + .02)], [.17, .07, .06], M.MOSS, { group: 2, paint: p => p[1] < eave - .05 ? M.LEAF2 : undefined }); // the turf's lip over the eaves
+      m.box([0, (eave + ridge) / 2 + .03, s * run / 2], [1.12, .06, slope / 2 + .05], M.MOSS, { dir: [1, 0, 0], up: [0, nz, s * ny], round: .03, group: 2, paint: p => spHash(Math.floor(p[0] * 12), Math.floor(p[2] * 12)) < .25 ? M.LEAF2 : undefined });
+      for (let i = 0; i < 7; i++) m.ell([-.95 + i * .317, eave - .02, s * (run + .02)], [.16, .07, .06], M.MOSS, { group: 2, paint: p => p[1] < eave - .05 ? M.LEAF2 : undefined }); // the turf's lip over the eaves
     }
-    m.box([0, ridge + .04, 0], [1.18, .05, .06], M.MOSS, { group: 2 }); // the ridge
+    m.box([0, ridge + .04, 0], [1.1, .05, .06], M.MOSS, { group: 2 }); // the ridge
     for (const x of [-1.0, 1.0]) m.flat([x, (eave + ridge) / 2, 0], [0, 0, 1], [0, 1, 0], run, (ridge - eave) / 2, (u, v) => Math.abs(u) <= (1 - v) / 2 + .02 ? (((v + 1) * 4) % 1 < .14 ? M.BARKD : M.WOOD) : null, { group: 1, bend: 0 }); // plank gables
     m.seg([.6, .9, 0], [.6, ridge + .45, 0], .15, .13, M.STONE, { group: 3, rough: .015 }); // a stone chimney through the ridge
     for (let i = 0; i < 5; i++) spRockAt(m, [-1.4 + i * .7, .12, .9 + spHash(i) * .3], [.2, .15, .18], 4 + i);
