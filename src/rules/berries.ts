@@ -52,7 +52,7 @@ export interface BerryState {
 /** Berries needed to go up from a level (babies, young, adults); legends don't eat. */
 export const toEvolve = (level: Level, t: Tuning): number => (level >= LEGEND ? Infinity : t.berries.toEvolve[Math.min(level, t.berries.toEvolve.length - 1)]);
 /** Who may eat berries: party animals that aren't legends (and aren't already evolving). */
-export const canEat = (c: Creature, s: BerryState): boolean => c.leashed && c.level < LEGEND && !s.evolving.has(c.id);
+export const canEat = (c: Creature, s: BerryState): boolean => c.leashed && c.level < LEGEND && !s.evolving.has(c.id) && !c.fight?.target; // (not mid-fight)
 
 /** The berry bushes and the berries on them, from the seed: in every area of the playable map,
  *  berries.bushesPerArea bushes at spots a bush may grow (in its own area, not on a path or in a

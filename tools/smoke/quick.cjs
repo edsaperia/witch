@@ -53,12 +53,12 @@ async function main() {
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 30000 });
     check(true, "a key press starts the game");
-    let [a, b] = await hold("KeyD", 5);
+    let [a, b] = await hold("ArrowRight", 5);
     check(b.mode === "ground" && b.x - a.x > 20, `flies on the ground (${(b.x - a.x).toFixed(0)} m east in ${(b.t - a.t).toFixed(1)} s)`);
     await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 120000, polling: 100 }).catch(() => {});
     check((await state()).mode === "treetop", "space rises to the treetops");
-    [a, b] = await hold("KeyW", 5);
+    [a, b] = await hold("ArrowUp", 5);
     check(a.z - b.z > 40, `flies in the treetops (${(a.z - b.z).toFixed(0)} m north in ${(b.t - a.t).toFixed(1)} s)`);
     check(b.trees > 20, `the forest is drawn (${b.trees} trees)`);
     // Not a blank picture: the canvas holds many distinct colours.

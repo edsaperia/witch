@@ -40,7 +40,28 @@ export function musicCue(g: Game, prev?: MusicCue): MusicCue {
     for (let i = 0; i < p.wave; i++) times[i] ??= i > 0 ? times[i - 1] : 0;
     waves = times.map(bar);
   }
-  return { waves, nextAt: g.tuning.party.interval >= 1e9 ? Infinity : bar(p.nextAt), bootUntil: bar(p.bootUntil), knockedOut: false, siege: 0, forceSection: prev?.forceSection, forceWave: prev?.forceWave };
+  return {
+    waves, nextAt: g.tuning.party.interval >= 1e9 ? Infinity : bar(p.nextAt), bootUntil: bar(p.bootUntil),
+    knockedOut: !!g.witches[0]?.ko, siege: siegeNear(g, g.witch), forceSection: prev?.forceSection, forceWave: prev?.forceWave,
+  };
+}
+
+/** How much a soundsystem under siege is heard from `at` (0-1): the nearest standing one with wild
+ *  creatures fighting at it, by how near it is (the music's nearDist to farDist). */
+export function siegeNear(g: Game, at: { x: number; z: number }): number {
+  const M = g.tuning.music, S = g.combat;
+  if (!S || !S.busy.size) return 0;
+  let best = 0;
+  for (const h of S.sounds.values()) {
+    if (h.hp <= 0) continue;
+    const d = Math.hypot(h.x - at.x, h.z - at.z), near = 1 - Math.min(1, Math.max(0, (d - M.nearDist) / Math.max(1, M.farDist - M.nearDist)));
+    if (near <= best) continue;
+    for (const id of S.busy) {
+      const c = g.creatures[id];
+      if (!c.gone && !c.leashed && !c.fleeUntil && !c.wanderTo && Math.hypot(c.x - h.x, c.z - h.z) < h.radius + 15) { best = near; break; }
+    }
+  }
+  return best;
 }
 
 /** Seconds a bar lasts at `bpm`. */

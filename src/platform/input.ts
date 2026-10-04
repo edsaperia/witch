@@ -1,12 +1,34 @@
 // Gathers the player's input from keyboard, gamepad and touch into one set of controls per frame.
-// Keyboard: WASD or arrows to fly, space to rise or descend, Z/X or +/- to zoom in/out, ~ for
-// debug, E or R to put down or pick up a sigil, I (debug) to invite the nearest creature. (No Talk
-// button: she talks to creatures in range by herself, Ed v244; T, F, Shift and gamepad A are free.)
-// Gamepad: left stick (or d-pad) to fly, X for the sigil, Y to rise or descend,
-// shoulders or triggers to zoom, Back/Select for debug. Touch: the joystick and buttons in ui/touch.ts write into `touch`.
+// The bindings are all in KEYS and PAD below (Ed, 2026-10-04: MOBA style, movement on the arrow
+// keys and actions on 1 2 3 4 Q W E R). Touch: the joystick and buttons in ui/touch.ts write into
+// `touch`. (No Talk button: she talks to creatures in range by herself, Ed v244.)
 import type { Controls } from "../rules/game";
 
-export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean; nextWave?: boolean; pauseWaves?: boolean; sigil?: boolean; spell?: boolean; cycle?: boolean }
+/** Keyboard bindings: each action and the keys (KeyboardEvent.code) that do it. */
+export const KEYS = {
+  left: ["ArrowLeft"], right: ["ArrowRight"], up: ["ArrowUp"], down: ["ArrowDown"],
+  rise: ["Space"],
+  spell: ["KeyQ"], dash: ["KeyW"], sigil: ["KeyE"], cycle: ["KeyR"],
+  slot1: ["Digit1"], slot2: ["Digit2"], slot3: ["Digit3"], slot4: ["Digit4"],
+  zoomIn: ["KeyZ", "Equal", "NumpadAdd"], zoomOut: ["KeyX", "Minus", "NumpadSubtract"],
+  debug: ["Backquote"],
+  // Playtest and debug keys.
+  nextWave: ["KeyN"], pauseWaves: ["KeyP"], cycleSpeakers: ["KeyK"], inviteNearest: ["KeyI"], feedNearest: ["KeyB"],
+} as const;
+
+/** The action bar's eight slots, in order, and what each holds (null: empty, for later spells,
+ *  items and totems). */
+export const ACTION_BAR: { key: string; code: string; action: "spell" | "dash" | "sigil" | "cycle" | null }[] = [
+  { key: "1", code: "Digit1", action: null }, { key: "2", code: "Digit2", action: null }, { key: "3", code: "Digit3", action: null }, { key: "4", code: "Digit4", action: null },
+  { key: "Q", code: "KeyQ", action: "spell" }, { key: "W", code: "KeyW", action: "dash" }, { key: "E", code: "KeyE", action: "sigil" }, { key: "R", code: "KeyR", action: "cycle" },
+];
+
+/** Gamepad bindings (standard mapping button numbers): left stick or d-pad moves. */
+export const PAD = { rise: [3], dash: [0], spell: [1], sigil: [2], cycle: [11], zoomOut: [4, 6], zoomIn: [5, 7], debug: [8] } as const;
+
+const GAME_KEYS = new Set<string>(Object.values(KEYS).flat());
+
+export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean; nextWave?: boolean; pauseWaves?: boolean; sigil?: boolean; spell?: boolean; cycle?: boolean; dash?: boolean }
 
 export class Input {
   private keys = new Set<string>();
@@ -28,9 +50,7 @@ export class Input {
     target.addEventListener("blur", () => this.keys.clear());
   }
 
-  private isGameKey(code: string): boolean {
-    return /^(Arrow|Space$|Key[WASDZXENPTIFRKQCB]$|Shift|Minus$|Equal$|NumpadAdd$|NumpadSubtract$|Backquote$)/.test(code);
-  }
+  private isGameKey(code: string): boolean { return GAME_KEYS.has(code); }
 
   /** Forget presses not yet read (the press that started the game is not also a move). */
   clearPresses(): void {
@@ -41,17 +61,16 @@ export class Input {
 
   /** This frame's controls; button presses are reported once. */
   read(): Controls & { debug: boolean } {
-    const nextWave = this.pressed.has("KeyN") || this.touch.nextWave, pauseWaves = this.pressed.has("KeyP") || this.touch.pauseWaves, cycleSpeakers = this.pressed.has("KeyK");
+    const k = (a: readonly string[]) => (a.some(c => this.keys.has(c)) ? 1 : 0), p = (a: readonly string[]) => a.some(c => this.pressed.has(c));
+    const nextWave = p(KEYS.nextWave) || this.touch.nextWave, pauseWaves = p(KEYS.pauseWaves) || this.touch.pauseWaves, cycleSpeakers = p(KEYS.cycleSpeakers);
     this.touch.nextWave = false; this.touch.pauseWaves = false;
-    const k = (c: string) => (this.keys.has(c) ? 1 : 0), p = (c: string) => this.pressed.has(c);
-    let moveX = k("KeyD") + k("ArrowRight") - k("KeyA") - k("ArrowLeft");
-    let moveZ = k("KeyS") + k("ArrowDown") - k("KeyW") - k("ArrowUp");
-    let toggleMode = p("Space");
-    let zoom = (p("KeyX") || p("Minus") || p("NumpadSubtract") ? 1 : 0) - (p("KeyZ") || p("Equal") || p("NumpadAdd") ? 1 : 0);
-    let debug = p("Backquote");
-    let sigil = p("KeyE") || p("KeyR"); // (no Talk button: she talks by herself, Ed v244)
-    const inviteNearest = p("KeyI"), feedNearest = p("KeyB");
-    let spell = p("KeyQ"), cycle = p("KeyC");
+    let moveX = k(KEYS.right) - k(KEYS.left);
+    let moveZ = k(KEYS.down) - k(KEYS.up);
+    let toggleMode = p(KEYS.rise);
+    let zoom = (p(KEYS.zoomOut) ? 1 : 0) - (p(KEYS.zoomIn) ? 1 : 0);
+    let debug = p(KEYS.debug);
+    let sigil = p(KEYS.sigil), spell = p(KEYS.spell), cycle = p(KEYS.cycle), dash = p(KEYS.dash);
+    const inviteNearest = p(KEYS.inviteNearest), feedNearest = p(KEYS.feedNearest);
     this.pressed.clear();
 
     // Gamepads: the first one connected with any input.
@@ -68,13 +87,15 @@ export class Input {
       sx += (btn(15) ? 1 : 0) - (btn(14) ? 1 : 0);
       sy += (btn(13) ? 1 : 0) - (btn(12) ? 1 : 0);
       moveX += sx; moveZ += sy;
-      if (edge(3)) toggleMode = true;
-      if (edge(4) || edge(6)) zoom += 1;
-      if (edge(5) || edge(7)) zoom -= 1;
-      if (edge(8)) debug = true;
-      if (edge(2)) sigil = true;
-      if (edge(1)) spell = true;
-      if (edge(11)) cycle = true;
+      const any = (a: readonly number[]) => a.some(edge);
+      if (any(PAD.rise)) toggleMode = true;
+      if (any(PAD.zoomOut)) zoom += 1;
+      if (any(PAD.zoomIn)) zoom -= 1;
+      if (any(PAD.debug)) debug = true;
+      if (any(PAD.sigil)) sigil = true;
+      if (any(PAD.spell)) spell = true;
+      if (any(PAD.cycle)) cycle = true;
+      if (any(PAD.dash)) dash = true;
       this.padPrev = pad.buttons.map(b => b.pressed);
       break;
     }
@@ -87,10 +108,11 @@ export class Input {
     if (t.sigil) sigil = true;
     if (t.spell) spell = true;
     if (t.cycle) cycle = true;
-    t.toggle = false; t.zoom = 0; t.debug = false; t.sigil = false; t.spell = false; t.cycle = false;
+    if (t.dash) dash = true;
+    t.toggle = false; t.zoom = 0; t.debug = false; t.sigil = false; t.spell = false; t.cycle = false; t.dash = false;
 
     const len = Math.hypot(moveX, moveZ);
     if (len > 1) { moveX /= len; moveZ /= len; }
-    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug, nextWave, pauseWaves, cycleSpeakers, sigil, inviteNearest, spell, cycle, feedNearest };
+    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug, nextWave, pauseWaves, cycleSpeakers, sigil, inviteNearest, spell, cycle, feedNearest, dash };
   }
 }

@@ -37,6 +37,8 @@ export interface PartyState {
    *  picker is seeded, so it's what that wave will pick), and the probable ones for the wave
    *  after that (the picker's candidates then, about forecast.probable of them). */
   afterNext: Cell[];
+  /** Areas whose soundsystem was destroyed (rules/combat.ts): the party there is over; no wave wakes them again. */
+  ruined?: Set<string>;
   probable: Cell[];
   /** Waves further the forecast sees (a legend buff, rules/buffs.ts): 1 or more and the wave after
    *  the after-next is confirmed too, so `probable` holds just the areas it will wake. */
@@ -74,7 +76,7 @@ export function pickNext(p: PartyState, map: ForestMap, picker: Picker = map.tun
   const dormant: { key: string; cell: Cell; dist: number }[] = [];
   for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
     const key = `${cx},${cy}`;
-    if (p.areas.has(key)) continue;
+    if (p.areas.has(key) || p.ruined?.has(key)) continue;
     const s = map.soundsystemSpot(cx, cy);
     dormant.push({ key, cell: [cx, cy], dist: Math.hypot(s.x - d.x, s.z - d.z) });
   }

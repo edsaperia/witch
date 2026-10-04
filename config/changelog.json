@@ -4,7 +4,24 @@
     {
       "version": null,
       "items": [
+        "The music reacts to the fight: knocked out, it sinks to a muffled, far-off breakdown; near a soundsystem under siege a nervous pulse joins in",
         "The music speeds up as the party grows: from 120 bpm in the quiet forest to about 140 by the finale, easing in a few bars after each wave lands, and everything on the beat (the dancefloor, the lasers, dancing creatures and witches, the border's sparkle) speeds up with it, never skipping a beat",
+        "Wild creatures fight back: on the ground, the young and older shoot or lunge at you (watch for the red ring tightening at their feet, and the line a shot will fly along), so dash out of the way. Over the treetops you're safe. Babies never attack",
+        "You can still invite creatures while they attack you, but every hit knocks back the chat a couple of seconds: big, strong groups are hard to win over without getting hit",
+        "You can take three hits (pips under your feet show what's left); one comes back every 20 seconds once you're out of the fight",
+        "Knocked out: your sigil stack lets go from the bottom up, a second each, and each creature on your leash goes back to the wild, walking off to an area of its own kind (catch it on the way to invite it again). Creatures at sigils on the ground stay yours: park your army before you scout! Careful leashing legends: if you're knocked out, they go back to the wild too. Then you sparkle home to the treehouse",
+        "Party animals fight wild creatures of other kinds near their leash point by themselves; creatures of the same kind never fight each other, whichever side they're on. A beaten wild creature runs off and vanishes; a beaten party animal is lost for good",
+        "Sieges: when a wave wakes an area, its wild creatures attack the new soundsystem (a health bar shows over it, and its music crunches as it's damaged). If it falls, its party is over and the attackers march on to the next-nearest soundsystem, the dancefloor included. When every soundsystem has fallen, the run is over",
+        "Hits flash and knock creatures back; a legend's quake shakes the screen",
+        "New controls, MOBA style: the arrow keys fly (WASD no longer does); Q casts the spell, W dashes, E puts down or picks up a sigil, R cycles the stack; 1 2 3 4 are empty slots for later spells and items. An action bar along the bottom shows all eight with their keys and recharge",
+        "Dash: W (gamepad A, touch 'dash') bursts a few metres the way you're steering, on the ground only, about once a second. You can still be hit mid-dash: dash out of a shot's path",
+        "The game now runs in fixed steps (60 a second) and draws smoothly between them, ready for co-op",
+        "Campfires and bonfires no longer jitter as they flicker: only the flames move"
+      ]
+    },
+    {
+      "version": 300,
+      "items": [
         "Real music: the party's track is now composed live as you play, every sound synthesised. It moves through sections with the waves: the home speakers' boot is the intro, the forest is gentle and mysterious, each wave builds up and drops as it lands, and the run climbs from melodic forest house through dark synth and chiptune to a phonk finale (?music=drop or ?music=wave7 to hear one part)",
         "Tree trunks are back on the ground: they'd gone black on black in the canopy's shadow, and the big crowns' low boughs hid all but their stumps; trunks now stand clear up to their crowns and stay readable in the dark",
         "No more glowing party cubes",

@@ -22,6 +22,7 @@ import { applyStyleLight, LIGHT_UNIFORMS, MAX_LIGHTS } from "./lighting";
 import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
+import { ActionBar } from "./actionbar";
 import { BuffHud } from "./buffhud";
 import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
@@ -92,7 +93,8 @@ export class View {
   private seatTime = 0;
   private speakerBatch: SpriteBatch | null = null;
   readonly grass: GrassView;
-  private spellFx = new SpellFx(document.body);
+  private spellFx = new SpellFx();
+  readonly actionBar = new ActionBar(document.body);
   private buffHud = new BuffHud(document.body);
   private shadow: THREE.Mesh;
   private mpp: number; // metres per art pixel
@@ -769,7 +771,7 @@ export class View {
     const beat = 60 / g.tuning.beat.bpm, bt = beatTime(g.beat, time); // beat-time, on the beat clock
     let n = 0;
     for (const c of g.creatures) {
-      if (Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
+      if (c.gone || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
       // Invited creatures are party animals: their party gear once it's drawn (the wild look till then).
       const party = c.leashed ? this.assets.partyArt(c.species, c.id, sigilColour(c.species)) : undefined;
       const art = party ?? this.assets.creatureArt(c.species), key = party ? `party-${c.id}` : c.species;
@@ -801,7 +803,10 @@ export class View {
       }
       // Wild creatures blink now and then: their eyeshine goes out about find.eyeshine.blink of the time (Ed, v244).
       if (!c.leashed) { const ph = time * 0.7 + c.id * 0.37; if (hash2(c.id, Math.floor(ph), 41) < g.tuning.find.eyeshine.blink * 6 && ph % 1 < 1 / 6) glow = -1; }
+      // Hit: a white flash and a little pop (combat: medium hit feel).
+      if (c.hurtAt !== undefined && time - c.hurtAt < 0.25) { const k = (time - c.hurtAt) / 0.25; glow = Math.max(glow, 1 - k); scale *= 1 + 0.15 * (1 - k); }
       l.push({ x: c.x + sway, y: dance, z: c.z, frame, flip: c.facing < 0, fresh, glow, scale });
+      this.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * this.mpp * scale + dance); // its health bar goes over it
       creatureShadows.push({ x: c.x, z: c.z, w: frame.w * this.mpp * 0.7, d: frame.w * this.mpp * 0.25 });
       n++;
     }
@@ -821,11 +826,13 @@ export class View {
   private runeGreen = new THREE.Vector3(0.45, 1, 0.5);
   /** Sparks from campfires lighting up as the party arrives (drawn with the markers' motes, next frame). */
   private fireSparks: Mote[] = [];
+  /** The world's campfires showing this frame, for the party objects to draw. */
+  private worldFires: { x: number; z: number; scale: number; flip: boolean }[] = [];
   /** Each light source's area (a campfire's party), worked out once. */
   private sourceCell = new WeakMap<object, string>();
   private updateSources(time: number): void {
     const f = this.assets.props.frames, items: SpriteInstance[] = [], lights: ForestLight[] = [], g = this.game;
-    this.fireSparks = [];
+    this.fireSparks = []; this.worldFires = [];
     for (const src of this.sources) {
       if (src.kind === "pond") continue;
       const k = hash2(Math.round(src.x * 10), Math.round(src.z * 10), 7);
@@ -845,6 +852,9 @@ export class View {
           const ang = i * 2.4 + k * 9, r = (1 - whoosh) * (0.4 + (i % 3) * 0.5);
           this.fireSparks.push({ x: src.x + Math.cos(ang) * r, y: 0.5 + (1 - whoosh) * (2 + (i % 4) * 1.2), z: src.z + Math.sin(ang) * r, colour: this.fire, alpha: whoosh });
         }
+        // Drawn as the party's small campfire (partyObjects.ts) once its art is in: its frames share one
+        // box and scale, where these old ones changed scale every frame and jittered (Ed).
+        if (this.partyObjects.ready) { this.worldFires.push({ x: src.x, z: src.z, scale: grow, flip: k < 0.5 }); continue; }
         const fr = f[Math.floor(time * 8 + k * 10) % 3];
         if (this.inView(src.x, src.z, fr.w * this.mpp, fr.h * this.mpp, 4)) items.push({ x: src.x, y: 0, z: src.z, frame: fr, flip: k < 0.5, scale: grow, fresh: this.mark("prop", src.x, src.z, 2) });
       } else {
@@ -1008,6 +1018,9 @@ export class View {
     this.camera.position.copy(target).add(back);
     this.camera.up.set(0, 1, 0);
     this.camera.lookAt(target);
+    // A legend's quake nearby shakes the screen (only legends: Stage 4).
+    const shake = this.leashView.shake(time);
+    if (shake > 0) this.camera.position.add(this.v3.set(Math.sin(time * 61) * shake, Math.sin(time * 47 + 1) * shake * 0.6, 0));
     this.updateFrustum();
 
     // Sprites face the camera, tilted back toward it by spriteTilt.
@@ -1080,6 +1093,7 @@ export class View {
     const markerLights = this.drawMarkers(time);
     const speakerLights = this.drawSpeakers(time, pose.angle);
     this.spellFx.update(g, time, witchHeight(w, t) + 0.6);
+    this.actionBar.update(g, time);
     this.buffHud.update(g, time);
     // Tufts part round her and the three nearest creatures.
     const parts = [{ x: w.x, z: w.z, r: 1.6 * (1 - canopyShown(w)) }, ...g.creatures.map(c => ({ x: c.x, z: c.z, r: 1.2, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(c => c.d < t.groundCover.radius).sort((a, b) => a.d - b.d).slice(0, 3)];
@@ -1087,7 +1101,7 @@ export class View {
     const clear = g.leash.placed.map(p => ({ x: p.x, z: p.z, r: Math.max(t.groundCover.sigilClear, (3 + g.creatures[p.id].level * 0.8) * 0.45) }));
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
-    const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => this.inView(x, z, ww, hh, 4));
+    const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => this.inView(x, z, ww, hh, 4), this.worldFires);
     this.setLights([this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...this.forestLights], w.x, w.z);
     this.time("grass+lights");
     LIGHT_UNIFORMS.uTime.value = time;
@@ -1147,10 +1161,18 @@ export class View {
       wx += (seat.x - fwd.x * 0.6 - wx) * k; wyy += (seat.y - fwd.y * 0.6 - wyy) * k; wz += (seat.z - fwd.z * 0.6 - wz) * k;
       if (w.seated) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
     }
+    // Knocked out (Ed, 2026-10-04): she sits slumped on the ground while her stack lets go, then
+    // vanishes in a sparkle and comes back in one at the treehouse.
+    const KO = g.witches[0].ko;
+    let hidden = false;
+    if (KO) {
+      if (time < KO.teleportAt) { wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length]; wyy = 0; }
+      else hidden = time < KO.backAt - (KO.backAt - KO.teleportAt) * 0.25;
+    }
     const wframe = this.assets.witch.frames[wf], hatTop = wyy + wframe.h * this.mpp;
     this.partyWitchView.update(g, time, (x, z, ww, hh) => this.inView(x, z, ww, hh, 4));
     // Idling into the party, she's drawn in her party pose there instead.
-    this.witchBatch.set(this.partyWitchView.herIdle ? [] : [{ x: wx, y: wyy, z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
+    this.witchBatch.set(this.partyWitchView.herIdle || hidden ? [] : [{ x: wx, y: wyy, z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
     // Where she is on screen (low-res pixels) and how far from the camera, for the occluder fade.
     {
       const px = (x: number, y: number, z: number) => { const p = placed(this.v3.set(x, y, z)).project(this.camera); return [(p.x + 1) / 2 * this.width, (p.y + 1) / 2 * this.height]; };

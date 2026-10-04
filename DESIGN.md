@@ -44,7 +44,10 @@ So the party's growth is both the goal and the source of the danger.
 ## The witch
 
 - The player is a **witch flying on a broomstick**.
-- She **does not fight and is never attacked**. Only her creatures and her home are.
+- She **does not fight**. She is not safe from attack: **wild creatures attack her on the ground** (Ed, 2026-10-04, after a playtest: inviting was too cheap, flying into the next wave's area and inviting everything before it woke). Wild young and up shoot at her or strike her in ground mode within range, with telegraphed, dodgeable attacks; she's safe over the treetops. **She can still invite them while they attack**, so inviting means dodging while staying near them: a main part of the game loop. Big, strong groups are hard to invite without getting hit; babies are the easiest (they don't attack and are quick to convince); some kinds are fast and evade her.
+- **Her health** (Ed, 2026-10-04): she takes **three hits** (one point each, whatever hits her). One comes back every **20 s**, the timer starting over whenever she's hit, so to recover she has to get right out of the fight. Pips under her show her hits once she's been hit.
+- **Knocked out** (Ed, 2026-10-04): at no hits left she collapses where she is (no more hits, no input). **Her sigil stack lets go from the bottom up, about a second each**, each sigil splashing away and its leash dissolving; as each goes, **its creature is no longer hers**: it turns **neutral** (it attacks no one) and walks at its own pace to the **nearest area of its own kind** (else the nearest area the party hasn't reached), where it becomes an ordinary wild creature of that area, keeping its level (and wakes with that area's wave). On the way it can be invited again, at the normal time. **Creatures at sigils on the ground aren't on her leash, so they stay hers: park your army before you scout** (Ed: "leashed creatures going wild when you're knocked out might be the best design idea so far, and might be the thing that makes the whole game work"). **Legends aren't loyal either: they go back to the wild ("they're too old for this")**, a home-made boss; their buff ends then. Then she sparkles out and back in at the treehouse. A big stack takes a long time to let go: "dramatic, and it probably means you just lost the game".
+- **The dash** (Ed, 2026-10-04): on the ground, a quick burst of a few metres the way she's steering, about once a second. She can still be hit while dashing ("then you have to dash in the right direction").
 - The pressure on the player is **defending the party**. What she does while her creatures defend is **invite, collect and upgrade more creatures**.
 
 ### Two modes of movement
@@ -138,6 +141,7 @@ One area type per creature, each a small definition in Ed's columns: **floor** t
 
 Decided in a long design session with the coordinator; built in stages, with a playable release after each (quick, easy things first, the creature menagerie last).
 
+- **Park your army before you scout** (Ed, 2026-10-04): a knockout lets go of every creature on her leash, but not those at sigils on the ground.
 - **Core loop:** the forecast shows where the party spreads next. You head there, inviting, feeding and evolving creatures on the way. Arrive early and you can invite that area's young before the music wakes them. Arrive late and its woken creatures are attacking the new soundsystem, so you defend with what you brought or pre-placed. High-level play is pre-positioning evolved creatures and sigils so you can react, and keeping your creatures alive by using them well.
 - **Pace:** one new area per wave, at a fixed pace. Fights are **long**, and soundsystems take a long while to destroy, so you always have time to feed babies. Pressure builds because sieges outlast the wave gap and overlap, and survivors of a lost defence march on to the next-nearest soundsystem. (An "annoyance" raid system is parked as an optional setting.)
 - **Start:** the home speaker ring boots up first.
@@ -146,9 +150,9 @@ Decided in a long design session with the coordinator; built in stages, with a p
 - **Music:** one track; louder and clearer near playing soundsystems, muffled in the deep forest, distorted by damage nearby.
 - **Spells:** one chosen per run from a list unlocked across runs, used on a cooldown. The list includes spells, placed items (buff totem, knockback bomb), speed boots and instant evolve. The first is the speed boost.
 - **Legends,** while alive, each give the witch a unique buff.
-- **Controls:** talk, sigil, spell, cycle, plus rise/descend; more buttons only when needed. Feeding is automatic: party animals eat berries near them.
+- **Controls** (Ed, 2026-10-04: MOBA style): movement on the arrow keys, actions on **1 2 3 4 Q W E R**: Q spell, W dash, E sigil, R cycle, 1–4 for later spells, items and totems, shown on an action bar with their recharge; space rises or descends. Talking is automatic (Ed, v244). Feeding is automatic: party animals eat berries near them.
 - **Combat** (later stages):
-  - **Sides:** wild and party animals fight each other with one shared system. No friendly fire. The witch is never attacked.
+  - **Sides:** wild and party animals fight each other with one shared system. No friendly fire. Wild creatures attack the witch on the ground (Ed, 2026-10-04: see The witch). **Same kind never fights same kind**, whichever side: inviting doesn't start fights inside a group, and your wolves can't defend against wild wolves (a defence puzzle).
   - **Level-ups:** babies don't attack. Young have one attack; adults a stronger one plus a second ability or modifier; legends one slow, powerful signature move.
   - **Defeat:** health bars show only when hurt. A defeated party animal is **lost for the run**; a defeated wild creature flees and vanishes.
   - **Control:** leash position only.
@@ -168,7 +172,7 @@ Decided in a long design session with the coordinator; built in stages, with a p
 - **Waves:** the clock stays the same; each wave wakes **one new area per witch** in the game at that moment, so witches can join and leave mid-game and it still works.
 - **Sigils:** each witch has her own stack, but a sigil placed on the ground belongs to no one: **any witch can pick it up**.
 - **Legend buffs apply to every witch** while that legend lives, whoever evolved it.
-- **For builders now:** no single-witch assumptions in new rules code (pass the acting witch explicitly); per-player state (camera, mode, music mix, HUD, edge cues) lives in `src/render/`; inputs go through one place that could later carry a player id; the picker and forecast take `areasPerWave` (1 for now). Later (Stage 4): `game.witch` becomes `game.witches[]`, with a fixed-timestep deterministic simulation driven only by inputs (for balance sims, off-screen fights and netcode).
+- **For builders now:** no single-witch assumptions in new rules code (pass the acting witch explicitly); per-player state (camera, mode, music mix, HUD, edge cues) lives in `src/render/`; inputs go through one place that could later carry a player id; the picker and forecast take `areasPerWave` (1 for now). Done in Stage 4: `game.witches[]` (each with her body, leash, spell, dash and health; `game.witch` reads the first), and a fixed-timestep (1/60 s) deterministic simulation driven only by inputs and the seed, drawn eased between steps (for balance sims, off-screen fights and netcode).
 
 ## Run structure
 
@@ -178,7 +182,7 @@ Decided in a long design session with the coordinator; built in stages, with a p
 ## Camera and controls
 
 - **Fixed camera angle**. Zooming in and out may change the angle, and ground mode and treetop mode may have different angles.
-- **Gamepad** is the model. Everything should work with **WASD and a few action buttons**, and so also with a **touch joystick and buttons** on phones.
+- **Gamepad** is the model. Everything should work with **the arrow keys and a few action buttons** (MOBA style, Ed 2026-10-04: actions on 1 2 3 4 Q W E R), and so also with a **touch joystick and buttons** on phones.
 
 ## Look
 
