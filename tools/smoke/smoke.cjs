@@ -430,6 +430,56 @@ async function main() {
     check(dist > 150 && r.p99 <= 16, `flying into new forest at full boost, building it costs at most 16 ms in 99% of frames (p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms)`);
   });
 
+  // The hills at their default (Ed, v289): from the steepest spot near home (its shot, to catch
+  // streaks or cliffs again), fly north, directly away from the camera, over it, stepped at a
+  // fixed 1/60 s in ground mode and then the treetops: the slope limit keeps the ground under the
+  // camera's sightline to her, so its lift (the safety net) stays small; and she rides the hills
+  // smoothly, her height's up-and-down acceleration well under the bare ground's.
+  await run("slope", { width: 960, height: 600 }, async page => {
+    await page.keyboard.press("Enter");
+    const at = await page.evaluate(() => {
+      const W = window.witch, g = W.game, h = W.groundHeight, d = g.map.dancefloor;
+      let best = null, bs = 0;
+      for (let k = 0; k < 4000; k++) {
+        const x = d.x + ((k * 37.7) % 800) - 400, z = d.z + ((k * 91.3) % 800) - 400;
+        if (Math.hypot(x - d.x, z - d.z) < 120 || g.map.paths.at(x, z, 2)) continue;
+        const s = Math.abs(h(x, z - 12) - h(x, z + 12)) / 24;
+        if (s > bs) { bs = s; best = [x, z]; }
+      }
+      g.witch = { ...g.witch, x: best[0], z: best[1], vx: 0, vz: 0, seated: false }; g.camera = { ...g.camera, tx: best[0], tz: best[1], intro: 0 };
+      return { x: best[0], z: best[1], slope: bs };
+    });
+    await sleep(1500);
+    await page.waitForFunction(() => window.witch.view.assets.pending === 0 && window.witch.view.stats.forestMissing === 0, null, { timeout: 900000, polling: 1000 }).catch(() => {});
+    await sleep(1500);
+    await shot(page, "60-steep-slope.png");
+    const r = await page.evaluate(async () => {
+      const w = window.witch, v = w.view, dt = 1 / 60, C = o => ({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }), yieldNow = () => new Promise(res => setTimeout(res, 0));
+      w.manual = true;
+      const fly = async (n, extra) => {
+        const ride = [], ground = [];
+        let lift = 0;
+        for (let i = 0; i < n; i++) {
+          w.frame(C({ moveZ: -1, ...extra }), dt, false);
+          if (i >= 60) { ride.push(v.ride.h); ground.push(w.groundHeight(w.game.witch.x, w.game.witch.z)); lift = Math.max(lift, v.camLift); }
+          if (i % 30 === 0) await yieldNow();
+        }
+        const acc = a => { let s = 0; for (let i = 1; i < a.length - 1; i++) s += ((a[i + 1] - 2 * a[i] + a[i - 1]) / (dt * dt)) ** 2; return Math.sqrt(s / Math.max(1, a.length - 2)); };
+        return { lift, ride: acc(ride), ground: acc(ground) };
+      };
+      const ground = await fly(360, {});
+      w.frame(C({ toggleMode: true }), dt, false);
+      for (let i = 0; i < 240 && w.game.witch.mode !== "treetop"; i++) w.frame(C({}), dt, false);
+      const treetop = await fly(360, { spell: true }); // (at full boost, the speed spell cast when ready)
+      w.manual = false;
+      return { ground, treetop };
+    });
+    results.push(`info slope: the steepest spot near home ${(at.slope * 100).toFixed(0)}% (${at.x.toFixed(0)}, ${at.z.toFixed(0)}); flying north from it, camera lift at most ${r.ground.lift.toFixed(1)} m on the ground and ${r.treetop.lift.toFixed(1)} m over the treetops; her height's rms acceleration ${r.ground.ride.toFixed(1)} against the ground's ${r.ground.ground.toFixed(1)} m/s² (ground), ${r.treetop.ride.toFixed(1)} against ${r.treetop.ground.toFixed(1)} (treetops)`);
+    check(at.slope < Math.tan(30 * Math.PI / 180), `the steepest slope near home is under the camera's shallowest pitch (${(at.slope * 100).toFixed(0)}%, 30° is 58%)`);
+    check(Math.max(r.ground.lift, r.treetop.lift) < 3, `flying directly away from the camera over the steepest hill, no rise hides her: the camera's safety-net lift stays under 3 m (${r.ground.lift.toFixed(1)} m, ${r.treetop.lift.toFixed(1)} m)`);
+    check(r.ground.ride < r.ground.ground * 0.8 && r.treetop.ride < r.treetop.ground * 0.8, `she rides the hills smoothly: her height bobs less than the ground under her (rms acceleration ${r.ground.ride.toFixed(1)} vs ${r.ground.ground.toFixed(1)}, ${r.treetop.ride.toFixed(1)} vs ${r.treetop.ground.toFixed(1)} m/s²)`);
+  });
+
   // Boosting over the treetops (Ed, v256: "framerate drops a bit during boost mode in treetop
   // view"): the game is stepped frame by frame at a fixed 1/60 s (window.witch.frame), so the
   // flight covers what a 60 fps player's does however slow the software renderer is, and each
