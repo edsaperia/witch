@@ -616,7 +616,7 @@ async function main() {
       return out;
     });
     check(r.n > 50 && r.bad.length === 0, `nothing floats: every placed sprite's lowest drawn pixel is on the ground (${r.n} checked, worst ${r.worst.toFixed(1)} art px)${r.bad.length ? ": " + r.bad.join("; ") : ""}`);
-    // The rolling ground: a sprite stands upright at the lowest ground under its foot (most of its width, up to 4 m either
+    // The rolling ground: a sprite stands upright at the lowest ground under its foot (most of its width, up to 5 m either
     // side of its base), so its uphill side is planted in the slope; where the ground at an end of
     // its drawn foot is lower than that, the end floats. None may float past 1 art px.
     const hr = await page.evaluate(() => {
@@ -630,8 +630,8 @@ async function main() {
           for (let row = f.h - 1; row >= 0 && low < 0; row--) for (let x = 0; x < f.w; x++) if (D[((y0 + row) * W + x0 + x) * 4 + 3] >= 128) { if (low < 0) { low = row; left = x; } right = x; }
           if (low < 0) continue;
           const m = b.metresPerPixel * (it.scale ?? 1), c = ((left + right) / 2 - f.w / 2) * m * (it.flip ? -1 : 1), half = ((right - left) / 2 + 0.5) * m;
-          const cx = it.x + R.x * c, cz = it.z + R.z * c, fw = Math.min(f.w * m * 0.45, 4);
-          const base = Math.min(h(it.x, it.z), h(it.x - R.x * fw, it.z - R.z * fw), h(it.x + R.x * fw, it.z + R.z * fw));
+          const cx = it.x + R.x * c, cz = it.z + R.z * c, fw = Math.min(f.w * m * 0.45, 5);
+          const base = Math.min(...[-1, -0.5, 0, 0.5, 1].map(k => h(it.x + R.x * fw * k, it.z + R.z * fw * k)));
           const err = Math.max(0, ...[-half, half].map(s => base - h(cx + R.x * s, cz + R.z * s))) / b.metresPerPixel;
           out.n++; if (Math.abs(base) > 0.3) out.hilly++;
           if (err > out.worst) out.worst = err;
