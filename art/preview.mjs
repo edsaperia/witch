@@ -21,6 +21,7 @@
 //   node art/preview.mjs species all|<ids> art/previews/tree-species.png [scale]   (each species at mature height from the side, then its crown as treetop mode shows it, then its trunk alone as ground mode shows it; PER=n species to a row)
 //   node art/preview.mjs canopy <areas> art/previews/canopy-patches.png [scale]   (a 3 x 3 patch of each area's crowns from the treetops)
 //   node art/preview.mjs witch all art/previews/witch-flight.png [scale]   ("fast" instead of all: hover, lean and the fast pose; "foot": hover and every on-foot pose, POSES=stand,talk,... to pick, ANCHORS=1 to mark her hand and hat tip)
+//   node art/preview.mjs effects all|<ids> art/previews/attack-effects.png [scale]   (the attack effects: light on night ground in red, dark on bright ground in neon, then as the treetop camera sees them, ground and treetop drawings; ground decals laid flat)
 //   node art/preview.mjs partywitches poses|outfits|pairs|lean art/previews/party-witches.png [scale]   (her party poses, a row per facing; the party outfits; pairs put together at their anchors; her lean cycle. ANCHORS=1, POSES=...)
 //   node art/preview.mjs treeheights fern-forest,garden art/previews/tree-heights.png [scale]
 //   node art/preview.mjs lights all art/previews/light-sources.png [scale]
@@ -86,6 +87,28 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
       for (const t of R.items) { g.fillStyle = `rgb(${fl})`; g.fillRect(x - 2, y - 2, t.w * K + 4, R.h + 4); g.drawImage(t.A, x, y + R.h - t.h * K, t.w * K, t.h * K); g.fillStyle = "#000"; g.fillRect(x + t.w * K + gap - 2, y - 2, t.w * K + 4, R.h + 4); g.drawImage(t.S, x + t.w * K + gap, y + R.h - t.h * K, t.w * K, t.h * K); if (t.label) { g.fillStyle = "#9a92b4"; g.fillText(t.label, x, y + R.h + 3); } x += t.w * K * 2 + gap * 2; }
       y += R.h + gap + lab;
     }
+    const big = document.createElement("canvas"); big.width = W * scale; big.height = H * scale; const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, W * scale, H * scale);
+    return big.toDataURL("image/png");
+  }
+  if (what === "effects") { // the attack effects (list: all or ids): a row each, its frames light on the night ground tinted red (the wild), dark on bright
+    // ground in a neon (the party), then as the treetop camera sees them (shrunk 2.6 times): the ground drawing, then the treetop one; ground decals also laid flat
+    const ids = list === "all" ? G.EFFECTS.map(e => e.id) : list.split(","), red = [255, 70, 90], neon = [70, 240, 255], gap = 6, rows2 = [];
+    const night = "#16201a", bright = "#d9cfae", K = G.EFFECT_TREETOP_SHRINK;
+    const bk = (r, tint) => G.bake(r.sp, G.effectColours(tint), st, "none");
+    const shrink = (c, k) => { const o = document.createElement("canvas"); o.width = Math.max(1, Math.round(c.width / k)); o.height = Math.max(1, Math.round(c.height / k)); const g = o.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(c, 0, 0, o.width, o.height); return o; };
+    const flat = c => { const o = document.createElement("canvas"); o.width = c.width; o.height = Math.max(1, Math.round(c.height * Math.sin(.52))); const g = o.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(c, 0, 0, o.width, o.height); return o; };
+    for (const id of ids) {
+      const E = G.EFFECT_BY_ID[id], fr = [...Array(E.frames).keys()], cells = [];
+      for (const f of fr) cells.push({ c: bk(G.effectSprite(id, { frame: f }), red).A, bg: night });
+      for (const f of fr) cells.push({ c: bk(G.effectSprite(id, { frame: f, variant: "dark" }), neon).A, bg: bright });
+      cells.push({ c: shrink(bk(G.effectSprite(id, {}), red).A, K), bg: night, sep: true }, { c: shrink(bk(G.effectSprite(id, { zoom: "treetop" }), red).A, K), bg: night });
+      if (E.plane === "ground") cells.push({ c: flat(bk(G.effectSprite(id, {}), red).A), bg: night, sep: true });
+      rows2.push({ id, cells });
+    }
+    const lab = 92, W = Math.max(...rows2.map(r => r.cells.reduce((a, x) => a + x.c.width + gap + (x.sep ? 8 : 0), lab))) + gap, H = rows2.reduce((a, r) => a + Math.max(...r.cells.map(x => x.c.height)) + gap * 2, gap);
+    const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"); g.fillStyle = "#0e0c14"; g.fillRect(0, 0, W, H); g.font = "9px monospace"; g.textBaseline = "top";
+    let y = gap;
+    for (const r of rows2) { const rh = Math.max(...r.cells.map(x => x.c.height)) + gap; g.fillStyle = "#c8c0e0"; g.fillText(r.id, 4, y + 2); let x = lab; for (const cell of r.cells) { if (cell.sep) x += 8; g.fillStyle = cell.bg; g.fillRect(x - 2, y - 2, cell.c.width + 4, rh); g.drawImage(cell.c, x, y + (rh - gap - cell.c.height)); x += cell.c.width + gap; } y += rh + gap; }
     const big = document.createElement("canvas"); big.width = W * scale; big.height = H * scale; const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, W * scale, H * scale);
     return big.toDataURL("image/png");
   }
