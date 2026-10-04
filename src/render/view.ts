@@ -91,8 +91,8 @@ export class View {
   private lasers: Lasers;
   private borders: BorderView;
   private music = new MusicIndicator(document.body);
-  private nextStone = new StoneIndicator(document.body);
-  private afterNextStone = new StoneIndicator(document.body, 2.5, 0.6); // smaller and dimmer (Ed, 2026-10-04)
+  private nextStones: StoneIndicator[] = [];
+  private afterNextStones: StoneIndicator[] = []; // smaller and dimmer (Ed, 2026-10-04)
   readonly minimap: Minimap;
   /** Metre rulers and a ground grid (G). */
   readonly rulers = new Rulers(document.body);
@@ -993,20 +993,22 @@ export class View {
     const df = g.map.dancefloor;
     this.music.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, df.x, df.z, w.x, w.z, time, t.beat.bpm, this.debugReadouts);
     this.minimap.update(g.party, w.x, w.z);
-    // The next waking stone, when it's off screen.
+    // The next waking stones (one per witch each wave: Ed, 2026-10-04), when they're off screen,
+    // and smaller, dimmer cues for the ones after.
     {
-      const nx = g.party.next, cw = this.canvas.clientWidth || window.innerWidth, ch = this.canvas.clientHeight || window.innerHeight;
-      if (nx) {
-        const s = g.map.soundsystemSpot(nx[0], nx[1]), species = AREA_TYPES[g.map.typeOf(nx[0], nx[1])].creature;
-        const cd = waveCountdown(g.party, g.map, time);
-        this.nextStone.update(this.camera, cw, ch, { x: s.x, z: s.z, colour: this.markerArt.colour.get(species)!, species }, w.x, w.z, time, t.beat.bpm, cd.booting ? cd.boot : cd.gone, cd.booting ? `booting ${Math.ceil(cd.bootLeft)} s` : undefined); // pausing holds the countdown; while home boots up, the ring fills with the boot
-      } else this.nextStone.update(this.camera, cw, ch, null, w.x, w.z, time, t.beat.bpm, 0);
-      // The after-next stone: its ring fills over the countdown too, a wave behind.
-      const an = g.party.afterNext;
-      if (an) {
-        const s = g.map.soundsystemSpot(an[0], an[1]), species = AREA_TYPES[g.map.typeOf(an[0], an[1])].creature, cd = waveCountdown(g.party, g.map, time);
-        this.afterNextStone.update(this.camera, cw, ch, { x: s.x, z: s.z, colour: this.markerArt.colour.get(species)!, species }, w.x, w.z, time, t.beat.bpm, cd.booting ? 0 : cd.gone * 0.5);
-      } else this.afterNextStone.update(this.camera, cw, ch, null, w.x, w.z, time, t.beat.bpm, 0);
+      const cw = this.canvas.clientWidth || window.innerWidth, ch = this.canvas.clientHeight || window.innerHeight, cd = waveCountdown(g.party, g.map, time);
+      const cue = (list: StoneIndicator[], cells: readonly (readonly [number, number])[], make: () => StoneIndicator, fill: number, label?: string) => {
+        while (list.length < cells.length) list.push(make());
+        list.forEach((ind, i) => {
+          const c = cells[i];
+          if (!c) { ind.update(this.camera, cw, ch, null, w.x, w.z, time, t.beat.bpm, 0); return; }
+          const s = g.map.soundsystemSpot(c[0], c[1]), species = AREA_TYPES[g.map.typeOf(c[0], c[1])].creature;
+          ind.update(this.camera, cw, ch, { x: s.x, z: s.z, colour: this.markerArt.colour.get(species)!, species }, w.x, w.z, time, t.beat.bpm, fill, label);
+        });
+      };
+      // Pausing holds the countdown; while home boots up, the next ring fills with the boot.
+      cue(this.nextStones, g.party.next, () => new StoneIndicator(document.body), cd.booting ? cd.boot : cd.gone, cd.booting ? `booting ${Math.ceil(cd.bootLeft)} s` : undefined);
+      cue(this.afterNextStones, g.party.afterNext, () => new StoneIndicator(document.body, 2.5, 0.6), cd.booting ? 0 : cd.gone * 0.5);
     }
     this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
     this.assets.work(6);
