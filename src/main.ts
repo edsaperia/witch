@@ -1,6 +1,9 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { Music } from "./platform/music";
 import { musicMix } from "./rules/music";
+import { musicCue, type MusicCue } from "./rules/musicPlan";
+import type { MusicStyle } from "./rules/musicScore";
+import musicStyleJson from "../config/music-style.json";
 import { areaUnderWitch, newGame, stepGame } from "./rules/game";
 import { AREA_TYPES } from "./rules/map";
 import { waveCountdown } from "./rules/party";
@@ -52,8 +55,18 @@ if (pickerParam && ["noisy", "near3", "near3touch", "nearest"].includes(pickerPa
 const glowParam = params.get("glow")?.split(",").map(Number);
 if (glowParam && glowParam[0] > 0) { tuning.glowReach = glowParam[0]; tuning.glowFixed = true; }
 if (glowParam && glowParam[1] > 0) tuning.glowFalloff = glowParam[1];
-// ?music=off: no music.
-if (params.get("music") === "off") tuning.music = { ...tuning.music, on: false };
+// The music's style (config/music-style.json) sets the beat everything pulses to.
+const musicStyle = musicStyleJson as unknown as MusicStyle;
+tuning.beat = { ...tuning.beat, bpm: musicStyle.bpm };
+// ?music=off: no music; ?music=<section> plays that section of the style over and over (e.g.
+// ?music=drop); ?music=wave<N> plays wave N's music whatever the wave (e.g. ?music=wave7).
+const musicParam = params.get("music") ?? "";
+if (musicParam === "off") tuning.music = { ...tuning.music, on: false };
+let musicCueNow: MusicCue | undefined;
+{
+  const m = /^wave(\d+)$/.exec(musicParam);
+  if (m || musicStyle.sections[musicParam]) musicCueNow = { waves: [], nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0, forceWave: m ? +m[1] : undefined, forceSection: m ? undefined : musicParam };
+}
 // ?blend=off: neighbouring areas' floors meet on a plain edge (to compare); ?blend=<warp>,<fine>,<band> tunes it.
 const blendParam = params.get("blend");
 if (blendParam === "off") tuning.groundBlend = { ...tuning.groundBlend, on: false };
@@ -177,7 +190,7 @@ requestAnimationFrame(() => setTimeout(async () => {
 let audio: AudioContext | null = null, music: Music | null = null;
 function start(): boolean {
   if (!ready || !game.clock.paused) return false;
-  try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume, tuning.music.src); } catch { /* no sound yet anyway */ }
+  try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume, musicStyle, seed!, tuning.music.src); } catch { /* no sound yet anyway */ }
   game.clock.paused = false;
   startEl.style.display = "none";
   input.clearPresses();
@@ -216,7 +229,8 @@ function frame(now: number): void {
   view.debugReadouts = debugOn;
   stepGame(game, c, dt);
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
-  music?.update(musicMix(game, game.witch), game.clock.time, tuning.beat.bpm, !game.clock.paused);
+  musicCueNow = musicCue(game, musicCueNow);
+  music?.update(musicMix(game, game.witch), musicCueNow, game.clock.time, tuning.beat.bpm, !game.clock.paused);
   if (!ready) return;
   // The wave countdown bar: empties toward the next wave.
   const cd = waveCountdown(game.party, game.map, game.clock.time);
