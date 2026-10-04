@@ -106,6 +106,8 @@ export class View {
   private lasers: Lasers;
   /** The party witches on the dancefloor, and our witch when she idles into the party. */
   private partyWitchView: PartyWitchView;
+  /** The smoke test sets this to draw trunks flat magenta for a frame, to count them on screen. */
+  debugTrunks = false;
   /** The party objects strewn over partified areas (#38). */
   private partyObjects: PartyObjectsView;
   private borders: BorderView;
@@ -152,6 +154,7 @@ export class View {
     applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams, ...moonLook }, t.glowReach, this.mpp, t.find.on ? t.find.ambient : t.tone.ambient, t.glowFalloff, t.tone.moon);
     LIGHT_UNIFORMS.uGlowPower.value = t.glowPower;
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize);
+    this.assets.crownShare = t.trunkFade.crownShare;
     this.heights = new HeightField(game.map, game.forest, t.ground.hills);
     useHeightField(this.heights);
     this.heights.follow(game.witch.x, game.witch.z);
@@ -978,6 +981,8 @@ export class View {
     SPRITE_UNIFORMS.uCutout.value.set((ws.x * 0.5 + 0.5) * this.width, (ws.y * 0.5 + 0.5) * this.height, 0.5 * cut.screenFraction * this.width * (1 - lifted), Math.max(1, cut.edge * this.width * (1 - lifted)));
     SPRITE_UNIFORMS.uTopFade.value = lifted;
     SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, this.mpp, t.trunkFade.share);
+    SPRITE_UNIFORMS.uTrunkLook.value.set(t.trunkFade.lightFloor, t.trunkFade.rim);
+    SPRITE_UNIFORMS.uDebugTrunks.value = this.debugTrunks ? 1 : 0;
     const Fd = t.find; // finding wild creatures in the dark (Ed, v244; ?find=0 turns it off)
     SPRITE_UNIFORMS.uFindLook.value.set(Fd.on ? Fd.lightFloor : 0, Fd.on ? Fd.rim : 0, Fd.on ? Fd.eyeshine.strength : 0, Fd.eyeshine.blink);
     SPRITE_UNIFORMS.uEyeRange.value = Fd.eyeshine.range;

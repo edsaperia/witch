@@ -45,8 +45,12 @@ export function refFor(d: PartyDef, r: () => number): string {
   return `party:${d.id}${neon}${pal}`;
 }
 
+/** Whether a piece is left out (partyObjects.exclude; Ed, v271: "the glowing party cubes look too much like game objects"). */
+export const excluded = (ref: string, t: Tuning) => t.partyObjects.exclude.includes(pieceId(ref));
+
 /** The party objects of a partified area (seeded by its cell). */
 export function dressingOf(map: ForestMap, cell: Cell, t: Tuning): Dressing {
+  const pool = POOL.filter(d => !t.partyObjects.exclude.includes(d.id)), sets = SETS.filter(d => !t.partyObjects.exclude.includes(d.id));
   const P = t.partyObjects, r = rng(map.seed * 4517 + cell[0] * 7349 + cell[1] * 2903 + 11), site = map.siteOf(cell[0], cell[1]);
   const d = map.dancefloor, clear = floorClearing(t) + 3, ss = map.soundsystemSpot(cell[0], cell[1]);
   const taken: { x: number; z: number; r: number }[] = [];
@@ -70,10 +74,10 @@ export function dressingOf(map: ForestMap, cell: Cell, t: Tuning): Dressing {
     const s = spotFor(4);
     if (s) out.clusters.push({ id: PARTY_CLUSTERS[Math.floor(r() * PARTY_CLUSTERS.length)].id, ...s, mirror: r() < 0.5 });
   }
-  if (r() < P.setChance && SETS.length) { const s = spotFor(3); if (s) out.loose.push({ ref: refFor(SETS[Math.floor(r() * SETS.length)], r), ...s, flip: r() < 0.5 }); }
+  if (r() < P.setChance && sets.length) { const s = spotFor(3); if (s) out.loose.push({ ref: refFor(sets[Math.floor(r() * sets.length)], r), ...s, flip: r() < 0.5 }); }
   for (let i = 0, n = between(P.loose); i < n; i++) {
     const s = spotFor(0.6, 0.05, 0.5);
-    if (s) out.loose.push({ ref: refFor(POOL[Math.floor(r() * POOL.length)], r), ...s, flip: r() < 0.5 });
+    if (s) out.loose.push({ ref: refFor(pool[Math.floor(r() * pool.length)], r), ...s, flip: r() < 0.5 });
   }
   if (r() < P.caughtChance) { const s = spotFor(1, 0.2, 0.55); if (s) out.caught = { ref: `party:balloon-caught~${PALETTES[Math.floor(r() * PALETTES.length)]}`, ...s, flip: r() < 0.5 }; }
   // Real lights: the loose campfires and lanterns first (the clusters' own are added by the view, which knows their layout), at most lightsPerArea.

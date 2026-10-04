@@ -6,7 +6,7 @@
 // Decals (confetti, streamers, glitter) lie flat under everything.
 import * as THREE from "three";
 import type { Game } from "../rules/game";
-import { dressingOf, isLit, lightOf, partyDef, type Dressing } from "../rules/partyDressing";
+import { dressingOf, excluded, isLit, lightOf, partyDef, type Dressing } from "../rules/partyDressing";
 import { hash2 } from "../rules/random";
 import type { AssetLibrary } from "./assets";
 import type { ForestLight } from "./view";
@@ -47,7 +47,7 @@ export class PartyObjectsView {
       let lit = d.lights.length;
       const put = (ref: string, gx: number, gz: number, flip: boolean, i: number, hang = 0) => {
         const a = art.pieces[ref], def = partyDef(ref);
-        if (!a || !def) return;
+        if (!a || !def || excluded(ref, t)) return; // (left out of the clusters too)
         // Each pops up in turn as the party arrives.
         const since = time - from - hash2(i, Math.round(gx * 3), 77) * 2.5;
         if (since < 0) return;

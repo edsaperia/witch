@@ -63,6 +63,9 @@ export class AssetLibrary {
   /** Called with an area type's floor tile when its set is ready. */
   onFloor: (type: number, tile: TilePixels) => void = () => {};
 
+  /** The share of a crown's pixels above its cut (tuning trunkFade.crownShare; the view sets it). */
+  crownShare = 0.85;
+
   constructor(readonly style: Style, readonly seed: number, pixelSize: number) {
     this.K = 2 / pixelSize;
     this.styleHash = hashText(JSON.stringify(style));
@@ -181,14 +184,20 @@ export class AssetLibrary {
       for (const p of pieces) (families[p.family] ??= []).push(p);
       this.decor = { atlas, pieces, families };
     } else if (r.job.kind === "type") {
-      // Each tree's cut: the lowest drawn row of its top half (both halves share the frame's box).
-      const px = r.result.px, cut = new Map<number, number>();
+      // Each tree's cut: where its crown's bulk ends (both halves share the frame's box): the row
+      // above which trunkFade.crownShare of its top half's pixels lie. Not its lowest drawn pixel:
+      // the crowns' low boughs and skirts hang nearly to the ground, and a cut down there hid
+      // nearly every trunk where the crowns are cut away (Ed, v271: "lots of crowns, zero stumps").
+      const px = r.result.px, cut = new Map<number, number>(), share = this.crownShare;
       for (const p of r.result.layout!.big) {
         if (p.top === null) continue;
-        const f = px.frames[p.top], x0 = Math.round(f.uv[0] * px.width), y0 = Math.round(f.uv[1] * px.height);
-        let row = -1;
-        for (let y = f.h - 1; y >= 0 && row < 0; y--) for (let x = 0; x < f.w; x++) if (px.albedo[((y0 + y) * px.width + x0 + x) * 4 + 3] > 0) { row = y; break; }
-        if (row >= 0) cut.set(p.bot, (row + 1) / f.h);
+        const f = px.frames[p.top], x0 = Math.round(f.uv[0] * px.width), y0 = Math.round(f.uv[1] * px.height), rows = new Array<number>(f.h).fill(0);
+        let total = 0;
+        for (let y = 0; y < f.h; y++) for (let x = 0; x < f.w; x++) if (px.albedo[((y0 + y) * px.width + x0 + x) * 4 + 3] > 0) { rows[y]++; total++; }
+        if (!total) continue;
+        let row = 0, seen = 0;
+        for (let y = 0; y < f.h; y++) { seen += rows[y]; if (seen >= total * share) { row = y; break; } }
+        cut.set(p.bot, (row + 1) / f.h);
       }
       this.types.set(r.job.id, { atlas, layout: r.result.layout!, cut });
       if (r.result.floor) this.onFloor(r.job.id, r.result.floor);

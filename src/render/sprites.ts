@@ -40,6 +40,10 @@ export const SPRITE_UNIFORMS = {
   uFindLook: { value: new THREE.Vector4() },
   uEyeRgb: { value: new THREE.Vector3(1, 0.8, 0.35) },
   uEyeRange: { value: 40 },
+  /** Trees' trunks: their light floor (a share of their unlit look) and the rim from her glow (Ed, v271). */
+  uTrunkLook: { value: new THREE.Vector2(0.8, 0.5) },
+  /** The smoke test: trunks drawn flat magenta, to count where they are on screen. */
+  uDebugTrunks: { value: 0 },
   /** The wind (Ed, v171): sway at the top of a crown (metres), the gusts' speed (m/s) and size (m), and the time. */
   uWind: { value: new THREE.Vector4(0, 0, 1, 0) },
 };
@@ -135,6 +139,8 @@ varying vec2 vLocal;
 varying float vSizeY;
 uniform float uFind; // this batch: 1 for wild creatures (eyeshine, light floor, rim)
 uniform vec4 uFindLook;
+uniform vec2 uTrunkLook;   // trunks: light floor, rim
+uniform float uDebugTrunks; // smoke: trunks drawn flat magenta
 uniform vec3 uEyeRgb;
 uniform float uEyeRange;
 uniform vec3 uTrunkFade; // metres of trunk the fade covers at most, metres per art pixel, its most share of the visible trunk
@@ -211,14 +217,21 @@ void shade() {
   vec3 N = normalize(uRight * nx - uUp * ny + uFacing * nz);
   if (uWitchLight.x > 0.5) { gl_FragColor = vec4(witchShade(a.rgb, N, uFacing, vWorld), alpha); return; }
   vec3 col = min(vec3(1.0), a.rgb * nightLight(N, vWorld) * 1.25);
-  if (uFind > 0.5) {
+  // Trees' trunks (bottom halves cut from their crowns) stand in the canopy's shadow, where the
+  // ambient and the moon barely reach: lit only by that they went black on black (Ed, v271: "We
+  // have really lost our treetrunks"). Like wild creatures, they never drop below a share of
+  // their unlit look and catch a rim from her glow.
+  bool trunk = vFlags.y < -0.001;
+  if (uDebugTrunks > 0.5 && trunk) { gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0); return; } // smoke: where trunks are drawn
+  if (uFind > 0.5 || trunk) {
     // Wild creatures never drop below a share of their unlit look, and catch a faint rim from her
     // glow on the edge facing her, so they read against the dark ground (Ed, v244).
-    col = max(col, a.rgb * uFindLook.x);
+    vec2 look = uFind > 0.5 ? uFindLook.xy : uTrunkLook;
+    col = max(col, a.rgb * look.x);
     vec3 lv = uGlowPos - vWorld;
     float d = length(lv), k = 1.0 - smoothstep(uGlowR * 0.5, uGlowR * 1.8, d);
     float edge = 1.0 - clamp(dot(N, uFacing), 0.0, 1.0);
-    col = min(vec3(1.0), col + mix(a.rgb, vec3(1.0), 0.5) * uGlowRgb * edge * max(0.0, dot(N, lv / max(d, 1e-3))) * k * uFindLook.y);
+    col = min(vec3(1.0), col + mix(a.rgb, vec3(1.0), 0.5) * uGlowRgb * edge * max(0.0, dot(N, lv / max(d, 1e-3))) * k * look.y);
   }
   if (vFlags.y > 0.5 && uPartyCount > 0) {
     // Crowns over a party catch a faint glow from below, on their undersides and lower edges.

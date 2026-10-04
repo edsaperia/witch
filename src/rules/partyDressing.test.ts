@@ -17,6 +17,7 @@ describe("party objects (Ed, 2026-10-04)", () => {
       expect(d.loose.length).toBeLessThanOrEqual(P.loose[1] + 1);
       expect(d.lights.length).toBeLessThanOrEqual(P.lightsPerArea);
       expect(d.lights.every(p => isLit(p.ref))).toBe(true);
+      expect(d.loose.some(p => p.ref.includes("led-cube"))).toBe(false); // left out (Ed, v271)
       for (const p of [...d.loose, ...d.clusters]) {
         expect(map.paths.at(p.x, p.z, 1)).toBeFalsy();
         expect(Math.hypot(p.x - map.dancefloor.x, p.z - map.dancefloor.z)).toBeGreaterThan(floorClearing(t));
