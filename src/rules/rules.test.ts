@@ -17,6 +17,8 @@ import { borderOf } from "./borders";
 import { newLeash, stepLeash, type LeashControls } from "./leash";
 import { newClock, tick, MAX_STEP } from "./clock";
 import { TUNING, withTuning } from "./tuning";
+import { DECOR } from "../../art/decor.js";
+import { RELICS } from "../../art/relics.js";
 
 const map = generateMap(123, TUNING);
 
@@ -976,9 +978,9 @@ describe("relics and grounds", () => {
     }
   });
   it("scatter modern relics rarely, more of them by the roads and railways, never on a path", () => {
-    const forest = new Forest(map), s = map.start, list = forest.relicsNear(s.x, s.z, 900);
+    const forest = new Forest(map), b = map.extent, list = forest.relicsNear((b.minX + b.maxX) / 2, (b.minZ + b.maxZ) / 2, b.maxX - b.minX);
     expect(list.length).toBeGreaterThan(3);
-    expect(list.length).toBeLessThan((1800 / TUNING.relics.spacing) ** 2 * 0.1);
+    expect(list.length).toBeLessThanOrEqual(RELICS.filter(r => r.family === "modern").length); // each at most once
     for (const r of list) { expect(map.paths.at(r.x, r.z)).toBeNull(); expect(map.hardClear(r.x, r.z)).toBe(false); }
     for (const a of list) for (const b of list) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(TUNING.relics.minGap);
     const byRoad = list.filter(r => { const h = map.paths.at(r.x, r.z, 20); return h && (h.kind === "road" || h.kind === "rail"); }).length;
@@ -990,6 +992,52 @@ describe("set pieces, again", () => {
   it("stand at most one per area", () => {
     const f = new Forest(map), s = map.start, seen = new Set<string>();
     for (const p of f.setPiecesNear(s.x, s.z, 900)) { const k = map.areaAt(p.x, p.z + 4).cell.join(","); expect(seen.has(k)).toBe(false); seen.add(k); }
+  });
+});
+
+describe("finds, each at most once per map (Ed, v160)", () => {
+  const maps = [11, 22, 33, 44, 55].map(seed => generateMap(seed, TUNING));
+  const whole = (m: ReturnType<typeof generateMap>) => { const b = m.extent; return [(b.minX + b.maxX) / 2, (b.minZ + b.maxZ) / 2, b.maxX - b.minX] as const; };
+  // The view's lists: each family's pieces in the art's table order, a ruin's conditions in a row.
+  const ruinOf: number[] = [];
+  DECOR.filter(d => d.family === "ruins").forEach((d, k) => { for (let v = 0; v < d.variants; v++) ruinOf.push(k); });
+  it("no ruin, freak tree, relic, set piece or grounds arrangement appears twice, over 5 seeds", () => {
+    for (const m of maps) {
+      const f = new Forest(m), [x, z, r] = whole(m), decor = f.decorNear(x, z, r);
+      const ruins = decor.filter(d => d.family === "ruins").map(d => ruinOf[d.variant % ruinOf.length]);
+      const freaks = decor.filter(d => d.family === "freak").map(d => d.variant % DECOR.filter(q => q.family === "freak").length);
+      const relics = f.relicsNear(x, z, r).map(q => q.variant % RELICS.filter(q => q.family === "modern").length);
+      const pieces = f.setPiecesNear(x, z, r).map(p => AREA_TYPES[p.type].setPiece);
+      const grounds = m.grounds.map(g => g.kind), stairs = m.paths.pieces.filter(p => p.id.startsWith("stairs")).map(p => p.id);
+      for (const list of [ruins, freaks, relics, pieces, grounds, stairs] as unknown[][]) expect(new Set(list).size).toBe(list.length);
+      expect(ruins.length + freaks.length).toBeGreaterThan(5);
+      expect(decor.filter(d => d.family === "rocks").length).toBeGreaterThan(50); // rocks are generic scatter
+    }
+  });
+  it("stairs stand only by ravines, rocky slopes, cave mouths and stone shrines", () => {
+    for (const m of maps) for (const p of m.paths.pieces.filter(p => p.id.startsWith("stairs")))
+      expect(["ravine", "rocky-slope", "cave-mouth", "stone-shrine"]).toContain(AREA_TYPES[m.areaAt(p.x, p.z).type].id);
+  });
+  it("give each set piece to one area only, which has room for it", () => {
+    for (const m of maps) {
+      const seen = new Set<string>();
+      for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+        const sp = m.setPieceOf(x, y);
+        if (!sp) continue;
+        expect(seen.has(sp)).toBe(false); seen.add(sp);
+        expect(m.setPieceSpot(x, y)).not.toBeNull();
+      }
+      expect(seen.size).toBeGreaterThan(5);
+    }
+  });
+  it("keep soundsystems and set pieces off the paths, so paths run on unbroken", () => {
+    for (const m of maps) for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+      if (x === m.centreCell[0] && y === m.centreCell[1]) continue;
+      const q = m.soundsystemSpot(x, y);
+      expect(m.paths.at(q.x, q.z, TUNING.soundsystemFootprint)).toBeNull();
+      const p = m.setPieceSpot(x, y);
+      if (p) expect(m.paths.at(p.x, p.z)).toBeNull();
+    }
   });
 });
 

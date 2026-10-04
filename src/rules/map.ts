@@ -104,7 +104,8 @@ export interface ForestMap {
   readonly paths: PathNetwork;
 }
 
-export interface Ground { kind: string; x: number; z: number; r: number }
+/** flip: the whole arrangement mirrored left to right. */
+export interface Ground { kind: string; x: number; z: number; r: number; flip: boolean }
 
 const cellKey = (cx: number, cy: number) => cx + "," + cy;
 
@@ -192,9 +193,24 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     const [u, v] = toPart(x, z), cell = partition.partition(u, v);
     return { cell, type: typeOf(cell[0], cell[1]), openness: partition.openness(u, v) };
   };
-  const setPieceOf = (cx: number, cy: number) => {
+  // An area that rolls a set piece (setPieceChance of those whose type has one; not home).
+  const rollsSetPiece = (cx: number, cy: number) => {
     const t = AREA_TYPES[typeOf(cx, cy)];
-    return t.setPiece && hash2(cx, cy, seed + 61) < tuning.setPieceChance ? t.setPiece : null;
+    return !!t.setPiece && !(cx === centreCell[0] && cy === centreCell[1]) && hash2(cx, cy, seed + 61) < tuning.setPieceChance;
+  };
+  // Each set piece at most once per map (Ed, v160): in the area of its type nearest home that
+  // rolls one and has room for it; the type's other areas get none.
+  let pieceHome: Map<number, string> | null = null;
+  const setPieceOf = (cx: number, cy: number) => {
+    if (!pieceHome) {
+      pieceHome = new Map();
+      const cand: [number, number, number][] = [];
+      for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (rollsSetPiece(x, y)) cand.push([x, y, Math.hypot(x - centreCell[0], y - centreCell[1]) + hash2(x, y, seed + 63) * 0.5]);
+      cand.sort((a, b) => a[2] - b[2]);
+      for (const [x, y] of cand) { const t = typeOf(x, y); if (!pieceHome.has(t) && pieceSpotOf(x, y)) pieceHome.set(t, cellKey(x, y)); }
+    }
+    const t = typeOf(cx, cy);
+    return pieceHome.get(t) === cellKey(cx, cy) ? AREA_TYPES[t].setPiece! : null;
   };
   // The dancefloor keeps a clearing of its own, however close a neighbouring area's centre.
   const floorR = tuning.dancefloor.radius, floorClear = floorR + tuning.dancefloor.clearing;
@@ -218,23 +234,33 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
       const a = r() * Math.PI * 2, d = 3 + r() * 4, x = ax + Math.cos(a) * d, z = az + Math.sin(a) * d + 3;
       if (inCell(x, z, cx, cy)) { spot = { x, z }; break; }
     }
+    // Off any path, road, railway or stream's corridor (Ed, v160: paths run on unbroken), the
+    // nearest clear spot round it if it fell on one.
+    const onPath = (x: number, z: number) => !!map.paths.at(x, z, tuning.soundsystemFootprint + 1);
+    if (onPath(spot.x, spot.z)) search: for (let d = 3; d < A * 0.3; d += 3) for (let k = 0; k < 16; k++) {
+      const a = (k / 16) * Math.PI * 2, x = spot.x + Math.cos(a) * d, z = spot.z + Math.sin(a) * d;
+      if (inCell(x, z, cx, cy) && !onPath(x, z)) { spot = { x, z }; break search; }
+    }
     soundSpots.set(key, spot);
     return spot;
   };
   const TH = tuning.treehouse, ta = (TH.angle * Math.PI) / 180;
   const treehouse = { x: centre.x + Math.cos(ta) * (floorClear + TH.distance), z: centre.z + Math.sin(ta) * (floorClear + TH.distance) };
   const pieceSpots = new Map<string, { x: number; z: number } | null>();
-  const setPieceSpot = (cx: number, cy: number) => {
+  const setPieceSpot = (cx: number, cy: number) => (setPieceOf(cx, cy) ? pieceSpotOf(cx, cy) : null);
+  // Where a set piece would stand in an area that rolls one, or null if there's no room.
+  const pieceSpotOf = (cx: number, cy: number) => {
     const key = cellKey(cx, cy);
     if (pieceSpots.has(key)) return pieceSpots.get(key)!;
     let spot: { x: number; z: number } | null = null;
-    if (setPieceOf(cx, cy) && !(cx === centreCell[0] && cy === centreCell[1])) {
+    if (rollsSetPiece(cx, cy)) {
       const R = tuning.setPieceFootprint * tuning.setPieceScale, gap = tuning.reserveMargin;
       const sounds = [cellKey(cx, cy), ...(neighbours.get(cellKey(cx, cy)) ?? [])].map(k => { const [x, y] = k.split(",").map(Number); return soundsystemSpot(x, y); });
       const clear = (x: number, z: number) => inCell(x, z, cx, cy)
         && sounds.every(p => Math.hypot(x - p.x, z - p.z) >= R + tuning.soundsystemFootprint + gap)
         && Math.hypot(x - centre.x, z - centre.z) >= R + floorClear + gap
-        && Math.hypot(x - treehouse.x, z - treehouse.z) >= R + TH.clear + gap;
+        && Math.hypot(x - treehouse.x, z - treehouse.z) >= R + TH.clear + gap
+        && !map.paths.at(x, z, R);
       // Its old place (a little north of the centre) if that is clear, else the nearest clear
       // spot round it, out to the edge of the clearing.
       const s = siteOf(cx, cy);
@@ -260,18 +286,6 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     }
     return false;
   };
-  // The grounds: some areas (not home) have one, off to the side of the area's centre; its whole
-  // clearing keeps clear of everything placed before it (soundsystems, the dancefloor, the
-  // treehouse, set pieces, other grounds), turning round the centre to find room, or left out.
-  const G = tuning.grounds;
-  for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) {
-    if ((cx === centreCell[0] && cy === centreCell[1]) || hash2(cx, cy, seed + 871) >= G.chance) continue;
-    const kind = G.kinds[Math.floor(hash2(cx, cy, seed + 873) * G.kinds.length)], r = G.radius[kind] ?? 8, a = hash2(cx, cy, seed + 875) * Math.PI * 2, site = siteOf(cx, cy);
-    search: for (const d of [r + 6, r + 14, r + 24]) for (let k = 0; k < 12; k++) {
-      const b = a + (k / 12) * Math.PI * 2, x = site.x + Math.cos(b) * d, z = site.z + Math.sin(b) * d;
-      if (inCell(x, z, cx, cy) && !reserved(x, z, r)) { grounds.push({ kind, x, z, r }); break search; }
-    }
-  }
   const hardCell = (x: number, z: number, cell: Cell) => {
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return true;
     if (Math.hypot(x - treehouse.x, z - treehouse.z) < TH.clear) return true;
@@ -304,6 +318,25 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     typeOf, areaAt, siteOf, treeWeight, hardClear, neighbours, setPieceOf, soundsystemSpot, setPieceSpot, reserved, remoteness,
     paths: null as unknown as PathNetwork,
   };
+  // The paths first (their lines need only the areas), so soundsystems, set pieces and the
+  // grounds can keep off them; then the grounds; then the paths' pieces, clear of all of those.
   map.paths = new PathNetwork(map);
+  // The grounds: some areas (not home) have one, off to the side of the area's centre; its whole
+  // clearing keeps clear of everything placed before it (soundsystems, the dancefloor, the
+  // treehouse, set pieces, other grounds), turning round the centre to find room, or left out.
+  const G = tuning.grounds, usedGrounds = new Set<string>();
+  for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) {
+    if ((cx === centreCell[0] && cy === centreCell[1]) || hash2(cx, cy, seed + 871) >= G.chance) continue;
+    // Each kind at most once per map (Ed, v160): the kind it rolled, or the next one not yet used.
+    let ki = Math.floor(hash2(cx, cy, seed + 873) * G.kinds.length), tries = 0;
+    while (usedGrounds.has(G.kinds[ki]) && tries++ < G.kinds.length) ki = (ki + 1) % G.kinds.length;
+    if (usedGrounds.has(G.kinds[ki])) continue;
+    const kind = G.kinds[ki], r = G.radius[kind] ?? 8, a = hash2(cx, cy, seed + 875) * Math.PI * 2, site = siteOf(cx, cy);
+    search: for (const d of [r + 6, r + 14, r + 24]) for (let k = 0; k < 12; k++) {
+      const b = a + (k / 12) * Math.PI * 2, x = site.x + Math.cos(b) * d, z = site.z + Math.sin(b) * d;
+      if (inCell(x, z, cx, cy) && !reserved(x, z, r)) { grounds.push({ kind, x, z, r, flip: hash2(cx, cy, seed + 877) < 0.5 }); usedGrounds.add(kind); break search; }
+    }
+  }
+  map.paths.placePieces();
   return map;
 }
