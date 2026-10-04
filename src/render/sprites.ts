@@ -66,15 +66,15 @@ varying vec2 vLocal;
 varying float vSizeY;
 ${HEIGHT_VERT_GLSL}
 void main() {
-  // Every sprite stands on the rolling ground (height.ts): its base lifted by the ground's height
-  // there, and its bottom corners each by the ground under them, so its foot follows the slope
-  // (a pixel or two of skew at most) instead of one end floating; the top rises with the base.
-  vec3 base = onGround(iPos);
-  float hFoot = groundH((iPos + uRight * (position.x * iSize.x)).xz);
+  // Every sprite stands upright on the rolling ground (height.ts), at the lowest ground under its
+  // foot (up to a metre either side of its base): on a slope its uphill side is planted in the
+  // hillside and nothing floats (Ed, v276: 50 m hills, too steep to skew sprites to).
+  float fw = min(iSize.x * 0.5, 1.0);
+  vec3 base = iPos + vec3(0.0, min(groundH(iPos.xz), min(groundH((iPos - uRight * fw).xz), groundH((iPos + uRight * fw).xz))), 0.0);
   // Tall and nearer the camera than the witch: it may stand in front of her.
   // Eased over a few metres of depth and of height, so nothing snaps into the fade as she moves.
   vFront = smoothstep(0.0, 3.0, uWitchDepth - 0.5 + (viewMatrix * vec4(base, 1.0)).z) * smoothstep(uOcc.z * 0.7, uOcc.z * 1.3, iSize.y);
-  vec3 w = base + vec3(0.0, (hFoot - (base.y - iPos.y)) * (1.0 - position.y), 0.0) + uRight * (position.x * iSize.x) + uUp * (position.y * iSize.y);
+  vec3 w = base + uRight * (position.x * iSize.x) + uUp * (position.y * iSize.y);
   // Wind (Ed, v171): leafy things lean with gusts travelling across the forest, anchored at their
   // base (a crown at its foot, a trunk barely), so the trunks stay put and the foliage moves.
   if (iFlags.w > 0.0 && uWind.x > 0.0) {

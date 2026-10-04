@@ -65,4 +65,19 @@ describe("rolling ground", () => {
     flat.follow(df.x, df.z);
     expect(flat.heightAt(df.x + 50, df.z + 50)).toBe(0);
   });
+  it("at 50 m hills (Ed, v276) the dancefloor is still level and paths level across", () => {
+    const big = new HeightField(map, forest, { on: true, amplitude: 50, scale: 170, octaves: 2 });
+    big.follow(df.x, df.z);
+    const r = floorClearing(TUNING), h0 = big.heightAt(df.x, df.z);
+    for (let a = 0; a < 12; a++) expect(Math.abs(big.heightAt(df.x + Math.cos(a) * r, df.z + Math.sin(a) * r) - h0)).toBeLessThan(0.1);
+    let checked = 0, tilted = 0;
+    for (const l of map.paths.lines) for (let s = 0; s < l.pts.length - 1; s += 5) {
+      const [a, b] = [l.pts[s], l.pts[s + 1]], ex = b[0] - a[0], ez = b[1] - a[1], len = Math.hypot(ex, ez) || 1, nx = -ez / len, nz = ex / len;
+      if (Math.hypot(a[0] - df.x, a[1] - df.z) > 300) continue;
+      if (Math.abs(big.sourceAt(a[0] + nx * l.half * 0.9, a[1] + nz * l.half * 0.9) - big.sourceAt(a[0] - nx * l.half * 0.9, a[1] - nz * l.half * 0.9)) > 0.3) tilted++;
+      checked++;
+    }
+    expect(checked).toBeGreaterThan(20);
+    expect(tilted / checked).toBeLessThan(0.08);
+  });
 });

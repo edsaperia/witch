@@ -26,8 +26,6 @@ export const RES = 2;
 export const N = 400;
 const STEP = 8;
 /** How far beyond its edge a path levels the ground, and the plateaus' easing (metres). */
-const PATH_EDGE = 10;
-const PLATEAU_FADE = 30;
 const BUCKET = 64;
 
 /** The hills' raw noise at (x, z): centred on 0, between -amplitude and +amplitude. */
@@ -88,7 +86,7 @@ float overBend(vec3 w) {
   if (uBend.x <= 0.0) return 1.0;
   float ahead = dot(w.xz - uBend.yz, uBendFwd);
   if (ahead <= 0.0) return 1.0;
-  float D = max(1.0, -dot(cameraPosition.xz - uBend.yz, uBendFwd)), H = cameraPosition.y + 3.0;
+  float D = max(1.0, -dot(cameraPosition.xz - uBend.yz, uBendFwd)), H = cameraPosition.y + uBend.w + 3.0; // (uBend.w: the hills' amplitude)
   float dh = -D + sqrt(D * D + H / uBend.x);
   if (ahead <= dh) return 1.0;
   float m = (H + uBend.x * dh * dh) / (dh + D);
@@ -128,7 +126,14 @@ export class HeightField {
   /** The window position and heading the strip ahead was last finished for. */
   private prepared = "";
 
+  /** How far a path levels the ground beyond its edge, and the plateaus' easing (metres): wider for taller hills. */
+  private PATH_EDGE: number;
+  private PLATEAU_FADE: number;
+
   constructor(private map: ForestMap, private forest: Forest, readonly H: HillsTuning) {
+    this.PATH_EDGE = Math.max(6, H.amplitude * 0.4);
+    this.PLATEAU_FADE = Math.max(16, H.amplitude * 1.5);
+    amplitude = H.on ? H.amplitude : 0;
     this.seed = map.seed + 6113;
     this.texture = new THREE.DataTexture(this.half, N, N, THREE.RedFormat, THREE.HalfFloatType);
     const t = this.texture;
@@ -160,7 +165,7 @@ export class HeightField {
   private raw(x: number, z: number): number { return this.H.on ? hillsAt(x, z, this.seed, this.H) : 0; }
 
   private addCircle(c: Circle): void {
-    const R = c.r + PLATEAU_FADE;
+    const R = c.r + this.PLATEAU_FADE;
     for (let by = Math.floor((c.z - R) / BUCKET); by <= Math.floor((c.z + R) / BUCKET); by++)
       for (let bx = Math.floor((c.x - R) / BUCKET); bx <= Math.floor((c.x + R) / BUCKET); bx++) {
         const k = bucketKey(bx, by);
@@ -176,18 +181,28 @@ export class HeightField {
     if (this.pondBuckets.has(k)) return;
     this.pondBuckets.add(k);
     for (const l of this.forest.lightsNear((bx + 0.5) * BUCKET, (by + 0.5) * BUCKET, BUCKET * 0.75))
-      if (l.kind === "pond" && Math.floor(l.x / BUCKET) === bx && Math.floor(l.z / BUCKET) === by) this.addCircle({ x: l.x, z: l.z, r: 3 * l.size + 1.5, h: this.plateaued(l.x, l.z, false) });
+      if (l.kind === "pond" && Math.floor(l.x / BUCKET) === bx && Math.floor(l.z / BUCKET) === by) {
+        // A pond overlapping a plateau already placed joins it, at its height (as add() does).
+        const r = 3 * l.size + 1.5, near = (this.circles.get(bucketKey(bx, by)) ?? []).find(c => Math.hypot(c.x - l.x, c.z - l.z) < c.r + r);
+        this.addCircle({ x: l.x, z: l.z, r, h: near ? near.h : this.plateaued(l.x, l.z, false) });
+      }
   }
 
   /** The hills eased to the plateaus (ponds' buckets added first, unless asked not to). */
   private plateaued(x: number, z: number, ponds = true): number {
     let h = this.raw(x, z);
     const bx = Math.floor(x / BUCKET), by = Math.floor(z / BUCKET);
-    if (ponds) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) this.ponds(bx + dx, by + dy);
+    const reach = Math.ceil((this.PLATEAU_FADE + 16) / BUCKET); // any pond whose plateau could reach here
+    if (ponds) for (let dy = -reach; dy <= reach; dy++) for (let dx = -reach; dx <= reach; dx++) this.ponds(bx + dx, by + dy);
+    // Weakest first, so the strongest pull (a level core) always wins: with tall hills the easings
+    // are wide, and one plateau's would otherwise reach into a neighbour's level core.
+    const pulls: [number, number][] = [];
     for (const c of this.circles.get(bucketKey(bx, by)) ?? []) {
       const d = Math.hypot(x - c.x, z - c.z);
-      if (d < c.r + PLATEAU_FADE) h += (c.h - h) * (1 - smoothstep((d - c.r) / PLATEAU_FADE));
+      if (d < c.r + this.PLATEAU_FADE) pulls.push([1 - smoothstep((d - c.r) / this.PLATEAU_FADE), c.h]);
     }
+    if (pulls.length > 1) pulls.sort((a, b) => a[0] - b[0]);
+    for (const [w, ch] of pulls) h += (ch - h) * w;
     return h;
   }
 
@@ -196,16 +211,19 @@ export class HeightField {
   sourceAt(x: number, z: number): number {
     if (!this.H.on) return 0;
     let h = this.plateaued(x, z);
-    const P = this.map.paths, hit = P.at(x, z, PATH_EDGE);
+    const P = this.map.paths, hit = P.at(x, z, this.PATH_EDGE);
     if (hit) {
       const l = P.lines[hit.line], a = l.pts[hit.seg], b = l.pts[hit.seg + 1];
       const ex = b[0] - a[0], ez = b[1] - a[1], u = Math.min(1, Math.max(0, ((x - a[0]) * ex + (z - a[1]) * ez) / (ex * ex + ez * ez || 1)));
-      h += (this.plateaued(a[0] + ex * u, a[1] + ez * u) - h) * (1 - smoothstep((hit.d - l.half) / PATH_EDGE));
-      // A plateau's level core still wins over a path's easing (eased back over PATH_EDGE at its edge).
+      h += (this.plateaued(a[0] + ex * u, a[1] + ez * u) - h) * (1 - smoothstep((hit.d - l.half) / this.PATH_EDGE));
+      // A plateau's level core still wins over a path's easing (eased back over this.PATH_EDGE at its edge).
+      const pulls: [number, number][] = []; // (weakest first, as in plateaued)
       for (const c of this.circles.get(bucketKey(Math.floor(x / BUCKET), Math.floor(z / BUCKET))) ?? []) {
         const d = Math.hypot(x - c.x, z - c.z);
-        if (d < c.r + PATH_EDGE) h += (c.h - h) * (1 - smoothstep((d - c.r) / PATH_EDGE));
+        if (d < c.r + this.PATH_EDGE) pulls.push([1 - smoothstep((d - c.r) / this.PATH_EDGE), c.h]);
       }
+      if (pulls.length > 1) pulls.sort((p, q) => p[0] - q[0]);
+      for (const [w, ch] of pulls) h += (ch - h) * w;
     }
     return h;
   }
@@ -269,6 +287,9 @@ export class HeightField {
   }
 }
 
+/** The hills' amplitude in use (metres), for the bend's horizon test. */
+let amplitude = 0;
+
 /** The field in use (one game, one field), for everything that stands a thing on the ground. */
 let current: HeightField | null = null;
 export function useHeightField(f: HeightField | null): void { current = f; }
@@ -290,7 +311,7 @@ export function bendPoint<V extends { x: number; y: number; z: number }>(v: V): 
  *  past it, things count as hidden more than `beyond` metres on. */
 export function seenOverBend(ahead: number, top: number, k: number, cam: { y: number; z: number }, beyond = Infinity): boolean {
   if (k <= 0 || ahead <= 0) return true;
-  const B = HEIGHT_UNIFORMS.uBend.value, D = Math.max(1, cam.z - B.z), H = cam.y + 3; // (+3: the hills' rises)
+  const B = HEIGHT_UNIFORMS.uBend.value, D = Math.max(1, cam.z - B.z), H = cam.y + amplitude + 3; // (from the lowest the hills go: a valley at the horizon hides less)
   const dh = -D + Math.sqrt(D * D + H / k); // where the camera's line of sight grazes the bent ground
   if (ahead <= dh) return true;
   if (ahead > dh + beyond) return false;

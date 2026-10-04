@@ -77,6 +77,8 @@ export class View {
   private heights: HeightField;
   /** The bend the view is easing to (the treetops' when she's rising or up there), for culling. */
   private bendTo = 0;
+  /** How far the camera is lifted to see her over a hill in between (metres, eased). */
+  private camLift = 0;
   /** The night sky that shows over the bend, in treetop mode. */
   private sky: Sky;
   /** Real clouds over the bend, with lightning. */
@@ -375,7 +377,8 @@ export class View {
       const o = cam.position, reach = far + Math.hypot(o.x - w.x, o.z - w.z) + margin;
       for (const nx of [-1, 1]) for (const ny of [-1, 1]) {
         const d = this.v3.set(nx, ny, 1).unproject(cam).sub(o).normalize();
-        for (const h of [0, 25]) {
+        const A = this.game.tuning.ground.hills.on ? this.game.tuning.ground.hills.amplitude : 0;
+        for (const h of [-A, 25 + A]) { // (the ground in a valley is seen further off; a hilltop's trees nearer)
           let t = d.y < -1e-3 ? (h - o.y) / d.y : Infinity;
           // With the bend, the ground drops away under the top of the view: it sees on past where
           // the flat ground would meet it, out to the reach.
@@ -1029,7 +1032,7 @@ export class View {
     // camera's focus, along its forward on the ground.
     {
       const C = t.camera.curve, m = Math.min(1, Math.max(0, g.witch.lift)), k = C.ground + (C.treetop - C.ground) * m * m * (3 - 2 * m);
-      HEIGHT_UNIFORMS.uBend.value.set(Math.max(0, k), pose.tx, pose.tz, 0);
+      HEIGHT_UNIFORMS.uBend.value.set(Math.max(0, k), pose.tx, pose.tz, t.ground.hills.on ? t.ground.hills.amplitude : 0); // (w: the hills' amplitude, for the horizon test)
       this.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground);
       HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); // the camera always looks north (toward -z)
       const far = t.haze.far;
@@ -1041,6 +1044,17 @@ export class View {
     target.x += Math.round(r / wpp) * wpp - r;
     const back = new THREE.Vector3(0, Math.sin(a), Math.cos(a)).multiplyScalar(pose.distance);
     this.camera.position.copy(target).add(back);
+    // Over tall hills a rise between the camera and her could hide her: lift the camera (eased)
+    // just enough that its line of sight to her clears the ground in between by 4 m.
+    {
+      let need = 0;
+      for (let f = 0.08; f < 0.95; f += 0.08) {
+        const px = target.x + back.x * f, pz = target.z + back.z * f, line = target.y + back.y * f;
+        need = Math.max(need, (groundHeight(px, pz) + 4 - line) / f);
+      }
+      this.camLift += (Math.max(0, need) - this.camLift) * (need > this.camLift ? 0.35 : 0.06);
+      this.camera.position.y += this.camLift;
+    }
     this.camera.up.set(0, 1, 0);
     this.camera.lookAt(target);
     this.updateFrustum();
