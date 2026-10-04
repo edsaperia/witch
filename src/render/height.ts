@@ -316,10 +316,10 @@ export class HeightField {
    *  so neither is their average; a cliff becomes a slope of the limit, half cut, half filled,
    *  and ground already gentler (the bumps) is left exactly as it was. From the samples alone, so
    *  the same however the window came to be where it is. */
-  limited(i: number, j: number): number {
+  limited(i: number, j: number, ready = false): number {
     const h = this.src(i, j);
     if (!(this.limit > 0)) return h;
-    for (let dj = -RAD; dj <= RAD; dj++) for (let di = -RAD; di <= RAD; di++) this.src(i + di, j + dj); // (all there)
+    if (!ready) for (let dj = -RAD; dj <= RAD; dj++) for (let di = -RAD; di <= RAD; di++) this.src(i + di, j + dj); // (all there)
     const V = this.srcV, col = this.cols, L = this.limit;
     for (let k = 0; k <= 2 * RAD; k++) col[k] = (((i + k - RAD) % SM) + SM) % SM;
     let lo = h, hi = h;
@@ -337,10 +337,57 @@ export class HeightField {
   }
   private cols = new Int32Array(2 * RAD + 1);
 
+  /** Make sure every source sample a block of samples' limits read is there, once for the block
+   *  (asking per sample re-checked 289 neighbours each: the window's move cost 60 to 85 ms headless). */
+  private ensure(i0: number, i1: number, j0: number, j1: number): void {
+    if (!(this.limit > 0)) return;
+    for (let j = j0 - RAD; j < j1 + RAD; j++) for (let i = i0 - RAD; i < i1 + RAD; i++) this.src(i, j);
+  }
+
+  /** limited() for every sample of a block, handed to `put` (same values, much faster): each
+   *  sample's 17 x 17 neighbourhood's lowest and highest source heights come from two sliding
+   *  passes, and where they're closer than the limit allows between neighbours (gentle ground,
+   *  nearly everywhere) the limit can't change the sample, so the 289-neighbour loop only runs on
+   *  steep ground. */
+  private limitedBlock(i0: number, i1: number, j0: number, j1: number, put: (i: number, j: number, v: number) => void): void {
+    const w = i1 - i0, hgt = j1 - j0;
+    if (w <= 0 || hgt <= 0) return;
+    if (!(this.limit > 0)) { for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) put(i, j, this.src(i, j)); return; }
+    this.ensure(i0, i1, j0, j1);
+    const W = w + 2 * RAD, H = hgt + 2 * RAD, V = this.srcV, K = 2 * RAD + 1;
+    const A = new Float64Array(W * H);
+    for (let y = 0; y < H; y++) { const row = ((((j0 - RAD + y) % SM) + SM) % SM) * SM; for (let x = 0; x < W; x++) A[y * W + x] = V[row + ((((i0 - RAD + x) % SM) + SM) % SM)]; }
+    // Along rows, then down columns: each sample's square neighbourhood's lowest and highest.
+    const rmin = new Float64Array(H * w), rmax = new Float64Array(H * w);
+    for (let y = 0; y < H; y++) for (let x = 0; x < w; x++) {
+      let lo = Infinity, hi = -Infinity;
+      for (let k = 0; k < K; k++) { const v = A[y * W + x + k]; if (v < lo) lo = v; if (v > hi) hi = v; }
+      rmin[y * w + x] = lo; rmax[y * w + x] = hi;
+    }
+    const gentle = this.limit * RES * (1 - 1e-6); // the limit times the nearest neighbour's distance
+    for (let y = 0; y < hgt; y++) for (let x = 0; x < w; x++) {
+      let lo = Infinity, hi = -Infinity;
+      for (let k = 0; k < K; k++) { const a = rmin[(y + k) * w + x], b = rmax[(y + k) * w + x]; if (a < lo) lo = a; if (b > hi) hi = b; }
+      const i = i0 + x, j = j0 + y;
+      put(i, j, hi - lo < gentle ? A[(y + RAD) * W + x + RAD] : this.limited(i, j, true));
+    }
+  }
+
+  /** The blocks a window centred on (ci, cj) gains over one centred on (oci, ocj): a column strip
+   *  and a row strip (or the whole window, when it jumped). */
+  private gained(ci: number, cj: number, oci: number, ocj: number, had: boolean): [number, number, number, number][] {
+    const h = N / 2, i0 = ci - h, j0 = cj - h, oi0 = oci - h, oj0 = ocj - h;
+    if (!had || Math.abs(ci - oci) >= N || Math.abs(cj - ocj) >= N) return [[i0, i0 + N, j0, j0 + N]];
+    const out: [number, number, number, number][] = [];
+    if (ci > oci) out.push([oi0 + N, i0 + N, j0, j0 + N]); else if (ci < oci) out.push([i0, oi0, j0, j0 + N]);
+    if (cj > ocj) out.push([i0, i0 + N, oj0 + N, j0 + N]); else if (cj < ocj) out.push([i0, i0 + N, j0, oj0]);
+    return out;
+  }
+
   private put(i: number, j: number): void {
     const k = sampleKey(i, j), pre = this.ahead.get(k);
     if (pre !== undefined) this.ahead.delete(k);
-    const s = ((j % N) + N) % N * N + ((i % N) + N) % N, v = pre ?? this.limited(i, j);
+    const s = ((j % N) + N) % N * N + ((i % N) + N) % N, v = pre ?? this.limited(i, j, true);
     this.half[s] = THREE.DataUtils.toHalfFloat(v);
     this.data[s] = quantise(v);
   }
@@ -351,7 +398,16 @@ export class HeightField {
     if (this.filled && ci === this.ci && cj === this.cj) return false;
     const h = N / 2, i0 = ci - h, j0 = cj - h, oi0 = this.ci - h, oj0 = this.cj - h;
     const was = (i: number, j: number) => this.filled && i >= oi0 && i < oi0 + N && j >= oj0 && j < oj0 + N;
-    if (this.H.on) for (let j = j0; j < j0 + N; j++) for (let i = i0; i < i0 + N; i++) if (!was(i, j)) this.put(i, j);
+    if (this.H.on) {
+      // Samples worked out ahead (prepare) are taken as they are; the rest a block at a time.
+      for (const [a, b, c, d] of this.gained(ci, cj, this.ci, this.cj, this.filled)) {
+        const ahead = this.ahead;
+        let missing = false;
+        for (let j = c; j < d && !missing; j++) for (let i = a; i < b; i++) if (!ahead.has(sampleKey(i, j))) { missing = true; break; }
+        if (missing) this.limitedBlock(a, b, c, d, (i, j, v) => { if (!was(i, j) && !ahead.has(sampleKey(i, j))) ahead.set(sampleKey(i, j), v); });
+      }
+      for (let j = j0; j < j0 + N; j++) for (let i = i0; i < i0 + N; i++) if (!was(i, j)) this.put(i, j);
+    }
     this.ci = ci; this.cj = cj; this.filled = true;
     this.texture.needsUpdate = true;
     HEIGHT_UNIFORMS.uHeightWin.value.set(this.H.on ? RES : 0, N, ci * RES, cj * RES);
@@ -369,15 +425,15 @@ export class HeightField {
     if (!di && !dj) return true;
     const plan = `${this.ci},${this.cj},${di},${dj}`;
     if (plan === this.prepared) return true;
-    const h = N / 2, i0 = this.ci - h, j0 = this.cj - h, ni0 = i0 + di, nj0 = j0 + dj, t0 = performance.now();
-    for (let j = nj0; j < nj0 + N; j++) {
-      const rowNew = j < j0 || j >= j0 + N;
-      for (let i = ni0; i < ni0 + N; i++) {
-        if (!rowNew && i >= i0 && i < i0 + N) { i = i0 + N - 1; continue; } // inside the window now: skip to its far side
-        const k = sampleKey(i, j);
-        if (this.ahead.has(k)) continue;
+    // A few rows (or columns) of the strip at a time, until this frame's budget is spent.
+    const t0 = performance.now(), CH = 16, put = (i: number, j: number, v: number) => { const k = sampleKey(i, j); if (!this.ahead.has(k)) this.ahead.set(k, v); };
+    for (const [a, b, c, d] of this.gained(this.ci + di, this.cj + dj, this.ci, this.cj, true)) {
+      const tall = d - c >= b - a; // chunk along the strip's length
+      for (let s0 = tall ? c : a; s0 < (tall ? d : b); s0 += CH) {
+        const s1 = Math.min(s0 + CH, tall ? d : b), [ca, cb, cc, cd] = tall ? [a, b, s0, s1] : [s0, s1, c, d];
+        if (this.ahead.has(sampleKey(ca, cc)) && this.ahead.has(sampleKey(cb - 1, cd - 1))) continue; // done already
         if (performance.now() - t0 > budgetMs) return false;
-        this.ahead.set(k, this.limited(i, j));
+        this.limitedBlock(ca, cb, cc, cd, put);
       }
     }
     this.prepared = plan;
