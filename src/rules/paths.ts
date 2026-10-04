@@ -48,6 +48,9 @@ const WET = new Set(["stream", "wetland", "bog", "beaver-pond"]);
 export class PathNetwork {
   readonly lines: PathLine[] = [];
   readonly pieces: PathPiece[] = [];
+  /** Where a branch line leaves a railway (the points): the spot, the main line's direction and
+   *  the side the branch curves off to (+1 left of the direction of travel, -1 right). */
+  readonly junctions: { x: number; z: number; dx: number; dz: number; side: number; line: number }[] = [];
   private pieceGrid = new Map<string, PathPiece[]>();
   private grid = new Map<string, [number, number][]>(); // cell -> [line, segment]
   private readonly cell = 24;
@@ -79,8 +82,12 @@ export class PathNetwork {
       const pts = crossing(edgePoint(s, 0.15 + r() * 0.7), edgePoint(e, 0.15 + r() * 0.7), 320, 140);
       this.lines.push({ kind: "rail", pts, half: t.railHalf });
       if (i === 0 && pts.length > 20) {
-        const at = pts[Math.floor(pts.length * (0.3 + r() * 0.4))], side = Math.floor(r() * 4);
-        this.lines.push({ kind: "rail", pts: crossing(at, edgePoint(side, 0.2 + r() * 0.6), 300, 120), half: t.railHalf });
+        const k = Math.floor(pts.length * (0.3 + r() * 0.4)), at = pts[k], side = Math.floor(r() * 4);
+        const branch = crossing(at, edgePoint(side, 0.2 + r() * 0.6), 300, 120);
+        this.lines.push({ kind: "rail", pts: branch, half: t.railHalf });
+        const nx = pts[k + 1][0] - at[0], nz = pts[k + 1][1] - at[1], n = Math.hypot(nx, nz) || 1;
+        const b = branch[Math.min(branch.length - 1, 6)], cross = nx * (b[1] - at[1]) - nz * (b[0] - at[0]);
+        this.junctions.push({ x: at[0], z: at[1], dx: nx / n, dz: nz / n, side: cross >= 0 ? 1 : -1, line: this.lines.length - 2 });
       }
     }
     // Old roads: fewer, broad, sweeping; they may cross a railway (a level crossing).
