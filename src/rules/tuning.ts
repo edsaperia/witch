@@ -116,6 +116,8 @@ export interface Tuning {
     radius: number; clearing: number;
     /** The ring of speakers: how many, the first's ring angle (degrees), their distance as a multiple of radius, and each one's footprint radius (metres). */
     speakers: { count: number; start: number; radiusFactor: number; footprint: number };
+    /** The plaza round the floor (Ed, 2026-10-04): flagstones in rings from the rim out to `beyond` metres past the speakers' feet, each course `course` metres deep and its stones about `stone` long; the outer edge breaks up over `ragged` metres, `missing` of the outermost stones gone to grass; `moss` the share of mossy stones. */
+    paving: { on: boolean; beyond: number; course: number; stone: number; ragged: number; missing: number; moss: number };
     /** The tile-lighting engine: partified areas for each level up from 1; the witch's tiles (below witchLift, in her neon), ripples, trail and event times (seconds), and the share of lit tiles shown at level 1. */
     levels: number[];
     tiles: { witchLift: number; witchColour: string; rippleTime: number; trailTime: number; eventTime: number; lowLevelShare: number };
@@ -124,6 +126,8 @@ export interface Tuning {
     discoHeight: number; discoSize: number; spin: number;
     specks: number; speckBrightness: number; speckReach: number;
   };
+  /** Wave numbers over the rune stones (Ed, 2026-10-04, a design aid): on, a digit's height as a share of the screen's, metres above the stone (or the canopy), and how bright the reached areas' are (0-1). */
+  waveNumbers: { on: boolean; size: number; lift: number; spent: number };
   canopyCutout: { screenFraction: number; edge: number };
   shadows: { on: boolean; strength: number; trees: boolean };
   canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };

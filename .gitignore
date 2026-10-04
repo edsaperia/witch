@@ -3,3 +3,4 @@ node_modules/
 *.log
 tools/smoke/out/
 art/out/
+tools/music-lab/out/

@@ -9,7 +9,7 @@ import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, h
 import { newCamera, stepCamera, cameraPose } from "./camera";
 import { population, spawnCreatures, wildLegendCells, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
 import { dormant, newGame, STEP, stepGame } from "./game";
-import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, symbolCount } from "./party";
+import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, symbolCount, wavePlan } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
 import { laserShow } from "./lasers";
@@ -673,6 +673,18 @@ describe("the party", () => {
     const m = spawnMarkers(p, map), stage = (c: readonly [number, number]) => m.find(x => x.key === key(c as [number, number]))!.stage;
     expect(stage(p.next[0])).toBe("next"); expect(stage(p.afterNext[0])).toBe("afterNext");
     for (const c of p.probable) expect(stage(c)).toBe("probable");
+  });
+  it("numbers every dormant area by the wave that will wake it, as the waves then do (Ed, 2026-10-04: numbers over the stones)", () => {
+    for (const per of [1, 2]) {
+      const p = newParty(map);
+      if (per > 1) { p.areasPerWave = per; p.next = pickSet(p, map, per); planAhead(p, map); }
+      const plan = wavePlan(p, map);
+      expect(plan.size).toBe(map.n * map.n - 1); // all but home
+      for (let w = 1; w <= 12; w++) {
+        for (const c of p.next) expect(plan.get(key(c))).toBe(w);
+        spreadWave(p, map, w);
+      }
+    }
   });
   it("sees a wave further with a forecast buff (the owl's): the third wave's one area, confirmed", () => {
     const p = newParty(map);

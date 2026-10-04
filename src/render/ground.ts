@@ -9,6 +9,7 @@ import * as Art from "../../art/generator.js";
 import type { ForestMap } from "../rules/map";
 import type { Forest } from "../rules/forest";
 import { AREA_TYPES } from "../rules/map";
+import { speakerRadius } from "../rules/speakers";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import type { TilePixels } from "./artBuild";
@@ -58,6 +59,11 @@ uniform vec4 uBlend; // ground blend: warp, fine (metres), band (metres), dither
 uniform sampler2D uDiscoBase, uDiscoLit, uDiscoTiles;
 uniform vec4 uDiscoGeom;
 uniform float uDiscoRim;
+// The plaza round the floor (Ed, 2026-10-04): rings of flagstones from the rim out past the speakers.
+// uPave: inner and outer radius, course depth, stone length (metres); uPave2: ragged edge (metres),
+// share of the outer stones missing, share mossy, the speakers' radius; on when uPave.y > 0.
+uniform vec4 uPave, uPave2;
+uniform vec3 uPaveStone, uPaveDark, uPaveMoss, uPaveGrout;
 uniform vec3 uRelief; // the ground's relief: strength, scale (metres), shade
 uniform float uHillShade; // the hills' slopes in the light, exaggerated this much
 uniform float uBare;  // ?bare=2: a flat grey ground with contour lines (0.5 m) and a 10 m grid
@@ -147,6 +153,31 @@ void main() {
         }
       }
       if (base.a > 0.5) c = base.rgb;
+    } else if (uPave.y > 0.0) {
+      // The plaza: courses of flagstones in rings round the floor, in the rim's stone, joints
+      // staggered course to course; the speakers stand on a course of darker stone; moss on some,
+      // grass in the joints, and the outer edge breaking up into the grass.
+      float d = length(fd), ragged = (vnoise(p / 3.0) - 0.5) * uPave2.x;
+      if (d < uPave.y + ragged) {
+        float rr = d - uPave.x, ci = floor(rr / uPave.z), mid = uPave.x + (ci + 0.5) * uPave.z;
+        float n = max(8.0, floor(6.2832 * mid / uPave.w)), u = atan(fd.y, fd.x) / 6.2832 + 0.5 + fract(sin(ci * 12.9898) * 43758.5453);
+        float si = floor(u * n), arc = fract(u * n) * 6.2832 * mid / n, depth = rr - ci * uPave.z;
+        float h = fract(sin(dot(vec2(ci, si), vec2(12.9898, 78.233))) * 43758.5453);
+        bool kerb = abs(mid - uPave2.w) < uPave.z * 0.5;
+        bool gone = d > uPave.y - uPave.z * 1.5 + ragged && h < uPave2.y;
+        if (!gone) {
+          bool joint = depth < uPixel * 1.01 || arc < uPixel * 1.01;
+          float grain = vnoise(px / 2.0) * 0.6 + vnoise(px / 0.7 + 11.0) * 0.4;
+          if (joint) c = vnoise(px / 1.5 + 5.0) > 0.55 ? uPaveMoss * 0.7 : uPaveGrout;
+          else {
+            vec3 s = mix(uPaveStone, uPaveDark, kerb ? 0.65 + h * 0.2 : h * 0.45);
+            s *= grain < 0.3 ? 0.88 : grain > 0.72 ? 1.08 : 1.0;
+            if (depth < uPixel * 2.01 || arc < uPixel * 2.01) s *= 1.12;      // the lit edge of the stone
+            if (h > 1.0 - uPave2.z && vnoise(p / 1.2 + h * 40.0) > 0.55) s = mix(s, uPaveMoss, 0.75);
+            c = s;
+          }
+        }
+      }
     }
   }
   // Ponds: dark water mirroring the moon. The glint is a fake highlight from the view and a
@@ -266,6 +297,7 @@ export class Ground {
         uClearing: { value: new THREE.Vector2(map.tuning.clearingSize, map.tuning.clearingFalloff) },
         uDiscoBase: { value: disco.base }, uDiscoLit: { value: disco.lit }, uDiscoTiles: { value: this.discoTiles },
         uDiscoGeom: { value: new THREE.Vector4(disco.tileM, disco.pitch, disco.size, disco.gridOrigin) }, uDiscoRim: { value: disco.rimOuter },
+        ...paving(map, disco),
         uBare: { value: map.tuning.bare ?? 0 }, uHillShade: { value: map.tuning.ground.hills.shade ?? 1 },
         uRelief: { value: new THREE.Vector3(map.tuning.ground.relief.strength, map.tuning.ground.relief.scale, map.tuning.ground.relief.shade) },
         uBlend: { value: (B => (B.on ? new THREE.Vector4(B.warp, B.fine, B.band, B.dither ? 1 : 0) : new THREE.Vector4()))(map.tuning.groundBlend) },
@@ -366,6 +398,17 @@ export class Ground {
   }
 
   dispose(): void { this.texture.dispose(); this.tile.dispose(); this.mesh.geometry.dispose(); (this.mesh.material as THREE.Material).dispose(); }
+}
+
+/** The plaza round the floor (tuning dancefloor.paving), in the rim's stone (art/dancefloor.js DISCO_LOOK). */
+function paving(map: ForestMap, disco: { tileM: number; pitch: number; rimOuter: number }) {
+  const t = map.tuning, P = t.dancefloor.paving, L = Art.DISCO_LOOK as Record<string, number[]>, rgb = (c: number[]) => new THREE.Vector3(c[0] / 255, c[1] / 255, c[2] / 255);
+  const inner = (disco.rimOuter * disco.tileM) / disco.pitch, R = speakerRadius(t), outer = R + t.dancefloor.speakers.footprint + P.beyond;
+  return {
+    uPave: { value: new THREE.Vector4(inner, P.on ? outer : 0, P.course, P.stone) },
+    uPave2: { value: new THREE.Vector4(P.ragged, P.missing, P.moss, R) },
+    uPaveStone: { value: rgb(L.rim) }, uPaveDark: { value: rgb(L.rimDark) }, uPaveMoss: { value: rgb(L.moss) }, uPaveGrout: { value: rgb(L.grout) },
+  };
 }
 
 // The dancefloor's looks from the art (art/dancefloor.js): the unlit floor with its rim, and the lit
