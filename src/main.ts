@@ -8,6 +8,7 @@ import { parseSeed } from "./rules/map";
 import { TUNING } from "./rules/tuning";
 import { Input } from "./platform/input";
 import { View } from "./render/view";
+import { groundHeight } from "./render/height";
 import { SPRITE_UNIFORMS } from "./render/sprites";
 import { loadStyle } from "./render/style";
 import { setupTouch } from "./ui/touch";
@@ -66,7 +67,15 @@ const windParam = params.get("wind");
 if (windParam !== null && !isNaN(Number(windParam))) tuning.wind = { ...tuning.wind, strength: Number(windParam) };
 // ?relief=<strength>: the ground's fake relief (0 flat).
 const reliefParam = params.get("relief");
-if (reliefParam !== null && !isNaN(Number(reliefParam))) tuning.ground = { relief: { ...tuning.ground.relief, strength: Number(reliefParam) } };
+if (reliefParam !== null && !isNaN(Number(reliefParam))) tuning.ground = { ...tuning.ground, relief: { ...tuning.ground.relief, strength: Number(reliefParam) } };
+// ?hills=0: the ground flat again; ?hills=<amplitude>: the rolling ground's swells, in metres.
+const hillsParam = params.get("hills");
+if (hillsParam !== null && !isNaN(Number(hillsParam))) tuning.ground = { ...tuning.ground, hills: { ...tuning.ground.hills, on: Number(hillsParam) > 0, amplitude: Number(hillsParam) > 0 ? Number(hillsParam) : tuning.ground.hills.amplitude } };
+// ?sky=off: no night sky over the bend (the plain dark background), to compare and to measure.
+if (params.get("sky") === "off") tuning.sky = { ...tuning.sky, on: false };
+// ?curve=<treetop>: the world's bend over the treetops (0 off), to try values live.
+const curveParam = params.get("curve");
+if (curveParam !== null && !isNaN(Number(curveParam))) tuning.camera = { ...tuning.camera, curve: { ...tuning.camera.curve, treetop: Number(curveParam) } };
 const fx = params.get("fx");
 if (fx === "pixel" || fx === "smooth") tuning.fx = fx;
 
@@ -232,4 +241,4 @@ function frame(now: number): void {
 requestAnimationFrame(frame);
 
 // For the smoke test and for poking at in the console.
-(window as unknown as { witch: unknown }).witch = { game, view, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, spriteUp: () => SPRITE_UNIFORMS.uUp.value, loadTimes, get ready() { return ready; } };
+(window as unknown as { witch: unknown }).witch = { game, view, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, spriteUp: () => SPRITE_UNIFORMS.uUp.value, spriteRight: () => SPRITE_UNIFORMS.uRight.value, groundHeight, loadTimes, get ready() { return ready; } };

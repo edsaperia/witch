@@ -7,8 +7,8 @@ import { AREA_TYPES, generateMap, parseSeed, sceneFootprint } from "./map";
 import { Forest, crownReach, treeChance } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
-import { legendChance, population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
-import { newGame, stepGame } from "./game";
+import { population, spawnCreatures, wildLegendCells, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
+import { dormant, newGame, stepGame } from "./game";
 import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, symbolCount } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
@@ -462,7 +462,7 @@ describe("creatures", () => {
     expect(new Set(AREA_TYPES.map(t => t.creature)).size).toBe(30);
   });
 
-  it("are none in the home area, a couple of babies round it, and one legend next door", () => {
+  it("are none in the home area, and a couple of babies round it", () => {
     expect(inCell(mx, my)).toEqual([]);
     for (const [dx, dy] of [[-1, 0], [0, 1], [0, -1]]) {
       const here = inCell(mx + dx, my + dy);
@@ -470,7 +470,6 @@ describe("creatures", () => {
       expect(here.length).toBeLessThanOrEqual(3);
       expect(here.every(c => c.level === 0)).toBe(true);
     }
-    expect(inCell(mx + 1, my).filter(c => c.level === 3).length).toBe(1);
   });
 
   it("grow to about 20 towards the edge, with young ones among them", () => {
@@ -481,45 +480,56 @@ describe("creatures", () => {
     for (const l of edge.slice(0, 4)) expect(l.filter(c => c.level === 1).length).toBeGreaterThan(3);
   });
 
-  it("have at most one legend in any area, on many seeds, and legends are rare", () => {
-    let areas = 0, withLegend = 0, inner = 0;
+  it("have a few wild legends a map, each a boss, only in remote areas, spaced apart, one an area (Ed, 2026-10-04)", () => {
+    const W = TUNING.wildLegends;
     for (let seed = 1; seed <= 12; seed++) {
-      const m = generateMap(seed * 101, TUNING), count = new Map<string, number>();
-      for (const c of spawnCreatures(m)) if (c.level === 3) count.set(c.cell.join(), (count.get(c.cell.join()) ?? 0) + 1);
-      for (const [k, n] of count) {
-        expect(n, `seed ${seed * 101} area ${k}`).toBe(1);
-        const [x, y] = k.split(",").map(Number);
-        const nextToHome = x === m.centreCell[0] + 1 && y === m.centreCell[1];
-        if (!nextToHome && m.remoteness(x, y) < TUNING.legendsFrom) inner++;
+      const m = generateMap(seed * 101, TUNING), legends = spawnCreatures(m).filter(c => c.level === 3);
+      expect(legends.length, `seed ${seed * 101}`).toBeGreaterThanOrEqual(W.perMap[0]);
+      expect(legends.length).toBeLessThanOrEqual(W.perMap[1]);
+      expect(new Set(legends.map(c => c.cell.join())).size).toBe(legends.length);
+      for (const c of legends) {
+        expect(c.boss).toBe(true);
+        expect(m.remoteness(c.cell[0], c.cell[1])).toBeGreaterThanOrEqual(W.from);
+        expect(c.speed).toBeLessThanOrEqual(TUNING.legendSpeed * 1.3 + 1e-9);
+        for (const o of legends) if (o !== c) expect(Math.hypot(o.cell[0] - c.cell[0], o.cell[1] - c.cell[1])).toBeGreaterThanOrEqual(W.spacing);
       }
-      areas += m.n * m.n; withLegend += count.size;
+      expect(legends.map(c => c.cell.join()).sort()).toEqual(wildLegendCells(m).map(c => c.join()).sort()); // the same seed, the same places
     }
-    expect(inner).toBe(0);
-    expect(withLegend / areas).toBeLessThan(TUNING.legendChanceFar * 0.7);
-    expect(withLegend).toBeGreaterThan(12);
   }, 60000);
 
-  it("keep the legend next to home only while legendNextToHome is on", () => {
-    const off = spawnCreatures(generateMap(123, withTuning({ legendNextToHome: false })));
-    const [hx, hy] = map.centreCell;
-    expect(off.some(c => c.level === 3 && c.cell[0] === hx + 1 && c.cell[1] === hy)).toBe(false);
+  it("sleep until the party reaches their area, then lumber about it", () => {
+    const g = newGame(123, TUNING), boss = g.creatures.find(c => c.boss)!;
+    g.clock.paused = false;
+    g.witch = { ...g.witch, seated: false, x: boss.x + 30, z: boss.z };
+    const at = [boss.x, boss.z];
+    expect(dormant(g, boss)).toBe(true);
+    for (let i = 0; i < 100; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20);
+    expect([boss.x, boss.z]).toEqual(at);
+    g.party.areas.set(boss.cell.join(), { cell: boss.cell, wave: 1, at: 0, from: null, soundsystem: null });
+    expect(dormant(g, boss)).toBe(false);
+    let moved = 0;
+    for (let i = 0; i < 400; i++) { const x = boss.x, z = boss.z; stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20); moved += Math.hypot(boss.x - x, boss.z - z); }
+    expect(moved).toBeGreaterThan(0.5);
+    expect(moved / 20).toBeLessThanOrEqual(TUNING.legendSpeed * 1.3 + 1e-6); // no faster than a legend
+  }, 60000);
+
+  it("keep a legend next to home only while legendNextToHome is on", () => {
+    const [hx, hy] = map.centreCell, at = (cs: { level: number; cell: [number, number] }[]) => cs.some(c => c.level === 3 && c.cell[0] === hx + 1 && c.cell[1] === hy);
+    expect(at(spawnCreatures(generateMap(123, withTuning({ legendNextToHome: true }))))).toBe(true);
+    expect(at(spawnCreatures(generateMap(123, withTuning({ legendNextToHome: false }))))).toBe(false);
   });
 
   it("rise with distance from home, as the tuning file says", () => {
     let last = -1;
     for (let r = 0; r <= 1.0001; r += 0.1) {
       const p = population(map, r);
-      const total = p.babies + p.young + p.adults + p.legends;
+      const total = p.babies + p.young + p.adults;
       expect(total).toBeGreaterThanOrEqual(last);
       last = total;
     }
-    expect(population(map, 0)).toEqual({ babies: TUNING.creaturesNear, young: 0, adults: 0, legends: 0 });
+    expect(population(map, 0)).toEqual({ babies: TUNING.creaturesNear, young: 0, adults: 0 });
     expect(population(map, 1).adults).toBeGreaterThan(0);
     expect(population(map, TUNING.adultsFrom).adults).toBe(0);
-    expect(population(map, 1).legends).toBe(0);
-    expect(population(map, 1, 0.5, 0).legends).toBe(1);
-    expect(legendChance(map, TUNING.legendsFrom)).toBe(0);
-    expect(legendChance(map, 1)).toBeCloseTo(TUNING.legendChanceFar);
   });
 
   it("roam their whole area, slowly, and never leave it", () => {
@@ -647,6 +657,17 @@ describe("the party", () => {
     expect(stage(p.next[0])).toBe("next"); expect(stage(p.afterNext[0])).toBe("afterNext");
     for (const c of p.probable) expect(stage(c)).toBe("probable");
   });
+  it("sees a wave further with a forecast buff (the owl's): the third wave's one area, confirmed", () => {
+    const p = newParty(map);
+    p.seeAhead = 1; planAhead(p, map);
+    for (let w = 0; w < 6; w++) {
+      expect(p.probable.length).toBe(1);
+      const third = p.probable;
+      spreadWave(p, map, w + 1);
+      expect(p.afterNext).toEqual(third);
+    }
+  });
+
   it("wakes one area per witch each wave (Ed, 2026-10-04): areasPerWave, all different, forecast as sets, and it can change between waves", () => {
     const p = newParty(map);
     p.areasPerWave = 3; p.next = pickSet(p, map, 3); planAhead(p, map);

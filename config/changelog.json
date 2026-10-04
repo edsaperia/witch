@@ -4,6 +4,11 @@
     {
       "version": null,
       "items": [
+        "Legend buffs: a party legend (an adult you've fed until it evolves) gives you its species' own buff while it lives: faster flight, quicker invites, berries found further off, longer between waves and more. Its sigil shows in a row at the top of the screen (hover for what it does), and a line says what you've gained or lost",
+        "Party legends lumber: a creature that evolves into a legend slows to a legend's pace, following you too",
+        "Wild legends are rare, late threats: only 3 to 5 a map, far out in remote areas. They're bigger, breathe slowly, and have a dark aura that you can see glowing through the treetops. They sleep until the party reaches their area, then lumber about it (no fighting yet). The legend next to home has gone",
+        "The ground rolls: gentle hills and hollows that everything stands on, with the dancefloor, the treehouse, ponds and every path kept level (?hills=0 for flat)",
+        "Over the treetops the world curves away, so you see the night sky above the forest: stars, the moon, and slow clouds that glow in the party's colours over partying areas (?curve=0 for flat, ?curve=0.004 for more)",
         "No more Talk button: on the ground the witch chats with the nearest creature in range by herself, on the fly as you move, settling into her talk pose when you stop; move away or rise and the chat pauses, and coming back picks it up",
         "A legend gives you one unimpressed look as you pass, not over and over",
         "Wild creatures are easier to find in the dark: they never sink fully into the shadows, catch a faint rim from your light, and their eyes catch the light now and then; the moonlight is a little cooler and more coloured (?find=0 to compare)"

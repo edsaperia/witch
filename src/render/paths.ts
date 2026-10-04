@@ -11,6 +11,7 @@ import { floorClearing } from "../rules/speakers";
 import { AREA_TYPES } from "../rules/map";
 import { hash2 } from "../rules/random";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
+import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import type { Style } from "./style";
 
 type Kind = { width: number; period: number };
@@ -19,14 +20,19 @@ const NOT_PATHS = new Set(["tarmac", "railway", "stairs", "bridges"]);
 
 const VERT = /* glsl */ `
 attribute vec3 uvw; // across (0-1), along (in periods), metres to the nearer end of its stretch
+attribute vec2 centre; // the centreline's point across from this corner
 varying vec3 vWorld;
 varying vec2 vUv;
 varying float vEnd;
+${HEIGHT_VERT_GLSL}
 void main() {
-  vWorld = position;
+  // On the rolling ground, at its centreline's height: following the land along, level across
+  // (height.ts levels the ground under it to the same height).
+  vec3 w = position + vec3(0.0, groundH(centre), 0.0);
+  vWorld = w;
   vUv = uvw.xy;
   vEnd = uvw.z;
-  gl_Position = projectionMatrix * viewMatrix * vec4(position, 1.0);
+  gl_Position = clipOf(w);
 }
 `;
 
@@ -119,7 +125,7 @@ export class PathView {
       return k;
     };
     // One geometry per strip texture (kind and variant).
-    const quads = new Map<string, { pos: number[]; uv: number[] }>();
+    const quads = new Map<string, { pos: number[]; uv: number[]; c: number[] }>();
     net.lines.forEach((l, li) => {
       const variant = l.kind === "rail" ? Math.floor(hash2(li, 1, seed + 835) * 3) : 0;
       const lineKind = l.kind === "path" ? pathKind(l.area ?? map.areaAt(l.pts[0][0], l.pts[0][1])) : "dirt";
@@ -150,12 +156,13 @@ export class PathView {
         const W = K ?? KINDS[kind];
         const key = kind + ":" + variant;
         let q = quads.get(key);
-        if (!q) quads.set(key, (q = { pos: [], uv: [] }));
+        if (!q) quads.set(key, (q = { pos: [], uv: [], c: [] }));
         const half = (j: number) => (W.width / 2) * (l.deadEnd ? Math.min(1, (total - along[j]) / 6) : 1);
         const corner = (j: number, side: number) => {
           const h = half(j) * side;
           q!.pos.push(pts[j][0] + nrm[j][0] * h, 0.02, pts[j][1] + nrm[j][1] * h);
           q!.uv.push(side > 0 ? 1 : 0, along[j] / W.period, Math.min(along[j] - runStart[i], runEnd[i] - along[j]));
+          q!.c.push(pts[j][0], pts[j][1]);
         };
         // Two triangles: (i-, i+, j+) and (i-, j+, j-).
         corner(i, -1); corner(i, 1); corner(i + 1, 1);
@@ -177,7 +184,8 @@ export class PathView {
       const g = new THREE.BufferGeometry();
       g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
       g.setAttribute("uvw", new THREE.Float32BufferAttribute(uv, 3));
-      const mesh = new THREE.Mesh(g, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6, uniforms: { ...LIGHT_UNIFORMS, uStrip: { value: t }, uPixel: { value: mpp }, uPathFade: { value: fade } } }));
+      g.setAttribute("centre", new THREE.Float32BufferAttribute(Array.from({ length: 6 }, () => [j.x, j.z]).flat(), 2)); // the points' patch: level, at the junction
+      const mesh = new THREE.Mesh(g, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6, uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uStrip: { value: t }, uPixel: { value: mpp }, uPathFade: { value: fade } } }));
       mesh.renderOrder = 0.55; // over the track's own strip
       this.group.add(mesh);
     }
@@ -186,8 +194,9 @@ export class PathView {
       const g = new THREE.BufferGeometry();
       g.setAttribute("position", new THREE.Float32BufferAttribute(q.pos, 3));
       g.setAttribute("uvw", new THREE.Float32BufferAttribute(q.uv, 3));
+      g.setAttribute("centre", new THREE.Float32BufferAttribute(q.c, 2));
       if (kind === "stream") {
-        const m = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: WATER, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2, uniforms: { ...LIGHT_UNIFORMS, uPixel: { value: mpp }, uPathFade: { value: fade } } });
+        const m = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: WATER, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -2, uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uPixel: { value: mpp }, uPathFade: { value: fade } } });
         const mesh = new THREE.Mesh(g, m);
         mesh.frustumCulled = false; mesh.renderOrder = 0.4; // under the paths that ford it
         this.group.add(mesh);
@@ -201,7 +210,7 @@ export class PathView {
       const m = new THREE.ShaderMaterial({
         vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false,
         polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -4,
-        uniforms: { ...LIGHT_UNIFORMS, uStrip: { value: t }, uPixel: { value: mpp }, uPathFade: { value: fade } },
+        uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uStrip: { value: t }, uPixel: { value: mpp }, uPathFade: { value: fade } },
       });
       const mesh = new THREE.Mesh(g, m);
       mesh.frustumCulled = false; // one mesh spans the map; the haze and the scenery fade see to distance

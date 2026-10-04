@@ -5,11 +5,12 @@ import { spawnCreatures, stepCreaturesNear, wanderRange, type Creature } from ".
 import { Forest } from "./forest";
 import { leashPoint, newLeash, stepLeash, type LeashControls, type LeashState } from "./leash";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
-import { newParty, spreadWave, stepParty, type PartyState } from "./party";
+import { cellKey, newParty, planAhead, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { nextSpeakerState, type SpeakerState } from "./speakers";
 import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
 import { SIGIL_NEON } from "../../art/sigils.js";
+import { newBuffs, stepBuffs, type BuffState } from "./buffs";
 import { castSpell, newSpells, speedMultiplier, type SpellState } from "./spells";
 import type { Tuning } from "./tuning";
 import { newWitch, stepWitch, witchHeight, type Intent, type WitchState } from "./witch";
@@ -32,6 +33,8 @@ export interface Game {
   floor: FloorState;
   /** The equipped spell and its recharge (rules/spells.ts). */
   spells: SpellState;
+  /** The legend buffs on now, and the tuning they make (rules/buffs.ts): the game plays by buffs.tuning. */
+  buffs: BuffState;
   /** Where the opening shot looks: her seat on the treehouse as drawn (the view sets it; the art knows where it is). */
   introFocus?: { x: number; y: number; z: number };
 }
@@ -57,7 +60,7 @@ export function newGame(seed: number, tuning: Tuning): Game {
     seed, tuning, map, forest: new Forest(map), creatures: spawnCreatures(map), clock: newClock(),
     witch, camera: newCamera(tuning, witch.x, witchHeight(witch, tuning), witch.z), party: newParty(map), leash: newLeash(), berries: newBerries(map, tuning),
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
-    floor: newFloor(), spells: newSpells(tuning),
+    floor: newFloor(), spells: newSpells(tuning), buffs: newBuffs(tuning),
   };
 }
 
@@ -67,19 +70,26 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   const dt = tick(g.clock, realDt);
   if (dt === 0) return;
   const wave = g.party.wave, seated = g.witch.seated;
-  if (c.spell) castSpell(g.spells, g.clock.time, g.tuning);
+  // Legend buffs: the party legends alive now change the numbers the rest of the step plays by.
+  stepBuffs(g.buffs, g.creatures, [...g.leash.stack, ...g.leash.placed.map(p => p.id)], g.tuning);
+  const t = g.buffs.tuning;
+  if ((g.party.seeAhead ?? 0) !== g.buffs.totals.forecastAhead) { g.party.seeAhead = g.buffs.totals.forecastAhead; planAhead(g.party, g.map); }
+  if (c.spell) castSpell(g.spells, g.clock.time, t);
   // The speed boost: her speeds times its multiplier while it's on.
-  const boost = speedMultiplier(g.spells, g.clock.time, g.tuning);
-  g.witch = stepWitch(g.witch, c, dt, boost === 1 ? g.tuning : { ...g.tuning, groundSpeed: g.tuning.groundSpeed * boost, treetopSpeed: g.tuning.treetopSpeed * boost }, g.map.bounds);
+  const boost = speedMultiplier(g.spells, g.clock.time, t);
+  g.witch = stepWitch(g.witch, c, dt, boost === 1 ? t : { ...t, groundSpeed: t.groundSpeed * boost, treetopSpeed: t.treetopSpeed * boost }, g.map.bounds);
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, dt, g.tuning, !!g.witch.seated, g.introFocus);
   if (c.pauseWaves) g.party.paused = !g.party.paused;
-  if (c.nextWave) { spreadWave(g.party, g.map, g.clock.time); g.party.nextAt = g.clock.time + g.tuning.party.interval; }
+  if (c.nextWave) { spreadWave(g.party, g.map, g.clock.time); g.party.nextAt = g.clock.time + t.party.interval; }
+  const before = g.party.wave;
   stepParty(g.party, g.map, g.clock.time, dt);
-  stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map);
+  // A wave-countdown buff: each new countdown runs longer by its share of the interval.
+  if (g.party.wave > before) g.party.nextAt += t.party.interval - g.tuning.party.interval;
+  stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map, c => dormant(g, c));
   const B = g.berries, busy = (id: number) => B.feeding.has(id) || B.evolving.has(id);
-  stepLeash(g.leash, g.creatures, { sigil: !!c.sigil, inviteNearest: c.inviteNearest, cycle: !!c.cycle }, g.witch, g.witch.mode === "ground", g.clock.time, dt, g.tuning, busy);
-  if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, g.tuning);
-  stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, g.tuning);
+  stepLeash(g.leash, g.creatures, { sigil: !!c.sigil, inviteNearest: c.inviteNearest, cycle: !!c.cycle }, g.witch, g.witch.mode === "ground", g.clock.time, dt, t, busy);
+  if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, t);
+  stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, t);
   stepDancefloor(g, wave, seated);
 }
 
@@ -116,6 +126,9 @@ function stepDancefloor(g: Game, waveBefore: number, wasSeated: boolean | undefi
   for (const e of g.berries.events) if (e.kind === "evolved") floorEvent(f, { kind: "sigil", at: time, dir: 0, rgb: neonOf((SIGIL_NEON as Record<string, string>)[g.creatures[e.id].species]) });
   stepFloor(f, floorInputs(g), g.tuning);
 }
+
+/** A wild legend still asleep: it wakes when the party reaches its area (Ed, 2026-10-04). */
+export const dormant = (g: Game, c: Creature): boolean => !!c.boss && !c.leashed && !g.party.areas.has(cellKey(c.cell));
 
 /** How far from the witch creatures are simulated (by their home): at least far enough that one
  *  resuming anywhere in its area does so beyond the draw distance (the haze), so none ever jumps

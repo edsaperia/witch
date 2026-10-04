@@ -8,6 +8,7 @@ import type { Game } from "../rules/game";
 import { stringsFor, type StringLine } from "../rules/strings";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { SPRITE_UNIFORMS } from "./sprites";
+import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 
 const BULB_VERT = /* glsl */ `
 attribute vec3 aColour;
@@ -18,11 +19,13 @@ varying vec3 vColour;
 varying vec3 vWorld;
 varying float vOn;
 varying vec2 vB;
+${HEIGHT_VERT_GLSL}
 void main() {
   vec3 p = position;
   p.x += sin(uTime * uWind + aBulb.x * 6.0) * 0.18 * aBulb.w;
   p.z += cos(uTime * uWind * 0.8 + aBulb.x * 4.0) * 0.1 * aBulb.w;
-  vec4 mv = viewMatrix * vec4(p, 1.0);
+  p = onGround(p); // hung over the rolling ground
+  vec4 mv = viewMatrix * vec4(bendW(p), 1.0);
   gl_Position = projectionMatrix * mv;
   vOn = uTime >= aBulb.z ? 1.0 : 0.0;
   float size = vOn > 0.5 ? (-mv.z < uNear ? 2.0 : 1.0) : 0.0;
@@ -52,11 +55,13 @@ const WIRE_VERT = /* glsl */ `
 attribute float aSway;
 uniform float uWind, uTime;
 varying vec3 vWorld;
+${HEIGHT_VERT_GLSL}
 void main() {
   vec3 p = position;
   p.x += sin(uTime * uWind + aSway * 6.0) * 0.18 * fract(aSway * 7.0);
+  p = onGround(p);
   vWorld = p;
-  gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
+  gl_Position = clipOf(p);
 }`;
 
 const WIRE_FRAG = /* glsl */ `
@@ -72,12 +77,13 @@ attribute vec4 aMote; // phase, rise speed, drift, time it appears
 uniform float uTime, uRise;
 varying vec3 vWorld;
 varying float vA;
+${HEIGHT_VERT_GLSL}
 void main() {
   float t = uTime + aMote.x * 20.0, y = mod(t * aMote.y + aMote.x * uRise, uRise), k = y / uRise;
-  vec3 p = position + vec3(sin(t * 0.7 + aMote.x * 9.0) * aMote.z, y, cos(t * 0.5 + aMote.x * 5.0) * aMote.z);
+  vec3 p = onGround(position) + vec3(sin(t * 0.7 + aMote.x * 9.0) * aMote.z, y, cos(t * 0.5 + aMote.x * 5.0) * aMote.z);
   vWorld = p;
   vA = (uTime >= aMote.w ? 1.0 : 0.0) * smoothstep(0.0, 0.15, k) * (1.0 - smoothstep(0.7, 1.0, k));
-  vec4 mv = viewMatrix * vec4(p, 1.0);
+  vec4 mv = viewMatrix * vec4(bendW(p), 1.0);
   gl_Position = projectionMatrix * mv;
   gl_PointSize = vA > 0.3 ? 1.0 : 0.0;
 }`;
@@ -104,10 +110,10 @@ export class StringLightsView {
   constructor(private scene: THREE.Scene, private game: Game) {
     const L = game.tuning.stringLights;
     this.palette = L.palette.map(h => new THREE.Color(h));
-    const shared = { ...LIGHT_UNIFORMS, uWind: { value: game.tuning.canopyShadow.wind * 1.5 } };
+    const shared = { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uWind: { value: game.tuning.canopyShadow.wind * 1.5 } };
     this.bulbMat = new THREE.ShaderMaterial({ vertexShader: BULB_VERT, fragmentShader: BULB_FRAG, uniforms: { ...shared, uRes: SPRITE_UNIFORMS.uRes, uNear: { value: 240 }, uTwinkle: { value: L.twinkle }, uChase: { value: L.chaseSpeed } } });
     this.wireMat = new THREE.ShaderMaterial({ vertexShader: WIRE_VERT, fragmentShader: WIRE_FRAG, uniforms: shared });
-    this.moteMat = new THREE.ShaderMaterial({ vertexShader: MOTE_VERT, fragmentShader: MOTE_FRAG, uniforms: { ...LIGHT_UNIFORMS, uMoteColour: { value: new THREE.Color(1, 0.85, 1) }, uRise: { value: game.tuning.party.motes.to - game.tuning.party.motes.from } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+    this.moteMat = new THREE.ShaderMaterial({ vertexShader: MOTE_VERT, fragmentShader: MOTE_FRAG, uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uMoteColour: { value: new THREE.Color(1, 0.85, 1) }, uRise: { value: game.tuning.party.motes.to - game.tuning.party.motes.from } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
   }
 
   /** The lines of one area, and when each bulb switches on (as the party's front passes it). */

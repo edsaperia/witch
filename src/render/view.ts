@@ -5,7 +5,7 @@ import * as THREE from "three";
 import * as Art from "../../art/generator.js";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
-import { poseOf } from "../rules/game";
+import { dormant, poseOf } from "../rules/game";
 import { cameraPose } from "../rules/camera";
 import { AREA_TYPES } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
@@ -14,17 +14,20 @@ import type { Frame, Piece, RelicArt } from "./artBuild";
 import type { LightSource, Plant } from "../rules/forest";
 import { hash2 } from "../rules/random";
 import { Ground } from "./ground";
+import { Sky } from "./sky";
+import { bendPoint, groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, placed, useHeightField } from "./height";
 import { PathView } from "./paths";
 import { applyStyleLight, LIGHT_UNIFORMS, MAX_LIGHTS } from "./lighting";
 import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
+import { BuffHud } from "./buffhud";
 import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
 import { MarkerArt, MarkerFx, MARKER_LEVELS, SymbolRings, type Beacon, type Laser, type Mote, type RingSymbol } from "./markers";
 import { spawnMarkers, speakersOn, symbolCount, waveCountdown, type SpawnMarker } from "../rules/party";
 import { StringLightsView } from "./strings";
-import { LeashView } from "./leash";
+import { bossBreath, LeashView } from "./leash";
 import { Lasers } from "./lasers";
 import { BorderView } from "./borders";
 import { MusicIndicator, StoneIndicator } from "./indicator";
@@ -49,15 +52,24 @@ function pickWeighted(w: number[], seed: number): number {
   return Math.max(0, w.length - 1);
 }
 
+/** Her shadow, lying on the rolling ground corner by corner. */
+const SHADOW_VERT = `varying vec2 vUv;
+${HEIGHT_VERT_GLSL}
+void main(){ vUv = uv; gl_Position = clipOf(onGround((modelMatrix * vec4(position, 1.0)).xyz)); }`;
+
 export interface ForestLight { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number }
 
-export interface ViewStats { berries: number; forestMs: number; forestMissing: number; sceneryRadius: number; fps: number; gameplay: number; scenery: number; dropped: number; trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number; lights: number }
+export interface ViewStats { berries: number; forestMs: number; forestMissing: number; sceneryRadius: number; fps: number; gameplay: number; scenery: number; dropped: number; trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number; lights: number; heightMoves?: number }
 
 export class View {
   readonly renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
   private camera: THREE.PerspectiveCamera;
   private ground: Ground;
+  /** The rolling ground (height.ts): drawn only, the rules stay flat. */
+  private heights: HeightField;
+  /** The night sky that shows over the bend, in treetop mode. */
+  private sky: Sky;
   readonly assets: AssetLibrary;
   private typeBatches = new Map<number, SpriteBatch>();
   private decorBatches = new Map<string, SpriteBatch>();
@@ -74,6 +86,7 @@ export class View {
   private speakerBatch: SpriteBatch | null = null;
   readonly grass: GrassView;
   private spellFx = new SpellFx(document.body);
+  private buffHud = new BuffHud(document.body);
   private shadow: THREE.Mesh;
   private mpp: number; // metres per art pixel
   private lastBuild = { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1 };
@@ -133,7 +146,12 @@ export class View {
     applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams, ...moonLook }, t.glowReach, this.mpp, t.find.on ? t.find.ambient : t.tone.ambient, t.glowFalloff, t.tone.moon);
     LIGHT_UNIFORMS.uGlowPower.value = t.glowPower;
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize);
+    this.heights = new HeightField(game.map, game.forest, t.ground.hills);
+    useHeightField(this.heights);
+    this.heights.follow(game.witch.x, game.witch.z);
     this.ground = new Ground(game.map, game.forest, style, this.mpp);
+    this.sky = new Sky(t.sky);
+    this.scene.add(this.sky.mesh);
     this.assets.onFloor = (type, tile) => this.ground.setFloor(type, tile);
     const cs = t.canopyShadow;
     this.ground.setCanopyShadow(cs.on ? cs.strength : 0, cs.height, cs.cover, cs.wind);
@@ -198,12 +216,12 @@ export class View {
     const sm = t.fx === "smooth"
       ? new THREE.ShaderMaterial({
         transparent: true, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.ZeroFactor, blendDst: THREE.SrcColorFactor,
-        vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+        vertexShader: SHADOW_VERT, uniforms: { ...HEIGHT_UNIFORMS },
         fragmentShader: "varying vec2 vUv; void main(){ vec2 p = vUv * 2.0 - 1.0; float r = dot(p, p); if (r > 1.0) discard; gl_FragColor = vec4(vec3(1.0 - 0.75 * (1.0 - r) * (1.0 - r)), 1.0); }",
       })
       : new THREE.ShaderMaterial({
         transparent: false, depthWrite: false,
-        vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }",
+        vertexShader: SHADOW_VERT, uniforms: { ...HEIGHT_UNIFORMS },
         fragmentShader: "varying vec2 vUv; void main(){ vec2 p = vUv * 2.0 - 1.0; if (dot(p, p) > 1.0 || mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) > 0.5) discard; gl_FragColor = vec4(0.02, 0.02, 0.05, 1.0); }",
       });
     this.shadow = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.7).rotateX(-Math.PI / 2), sm);
@@ -311,7 +329,7 @@ export class View {
     const to = cameraPose({ ...g.camera, zoom: steps > 1 ? g.camera.zoomStep / (steps - 1) : 0 }, lift, t);
     const c = this.cullCam;
     c.fov = cam.fov; c.aspect = cam.aspect; c.near = cam.near; c.far = cam.far; c.updateProjectionMatrix();
-    this.poseCamera(c, { ...to, ty: lerp(t.groundHeight, t.treetopHeight, lift) });
+    this.poseCamera(c, { ...to, ty: lerp(t.groundHeight, t.treetopHeight, lift) + groundHeight(to.tx, to.tz) });
     this.m4.multiplyMatrices(c.projectionMatrix, c.matrixWorldInverse);
     this.frustumTo.setFromProjectionMatrix(this.m4);
   }
@@ -325,7 +343,9 @@ export class View {
         const d = this.v3.set(nx, ny, 1).unproject(cam).sub(o).normalize();
         for (const h of [0, 25]) {
           let t = d.y < -1e-3 ? (h - o.y) / d.y : Infinity;
-          if (!(t > 0)) t = Infinity;
+          // With the bend, the ground drops away under the top of the view: it sees on past where
+          // the flat ground would meet it, out to the reach.
+          if (!(t > 0) || (ny > 0 && HEIGHT_UNIFORMS.uBend.value.x > 0)) t = Infinity;
           t = Math.min(t, reach);
           pts.push([o.x + d.x * t, o.z + d.z * t]);
         }
@@ -341,8 +361,10 @@ export class View {
   private inView(x: number, z: number, w: number, h: number, margin: number, reach = this.game.tuning.haze.far): boolean {
     const wx = this.game.witch.x, wz = this.game.witch.z, far = reach + margin;
     if ((x - wx) ** 2 + (z - wz) ** 2 > far * far) return false;
-    this.box.min.set(x - w / 2 - margin, -margin, z - h - margin);
-    this.box.max.set(x + w / 2 + margin, h + margin, z + margin);
+    // On the rolling ground, and dropped by the bend (things far ahead come down into view).
+    const lift = bendPoint(this.v3c.set(x, groundHeight(x, z), z)).y;
+    this.box.min.set(x - w / 2 - margin, lift - margin, z - h - margin);
+    this.box.max.set(x + w / 2 + margin, lift + h + margin, z + margin);
     return this.frustum.intersectsBox(this.box) || this.frustumTo.intersectsBox(this.box);
   }
 
@@ -351,7 +373,7 @@ export class View {
     const w = this.game.witch, hz = this.game.tuning.haze;
     if (Math.hypot(x - w.x, z - w.z) > hz.near + (hz.far - hz.near) * 0.6) return false;
     for (const y of [0, h * 0.5, h]) {
-      const p = this.v3.set(x, y, z).project(this.camera);
+      const p = placed(this.v3.set(x, y, z)).project(this.camera);
       if (Math.abs(p.x) < 1 && Math.abs(p.y) < 1 && p.z < 1) return true;
     }
     return false;
@@ -716,8 +738,11 @@ export class View {
       if (!art) continue;
       arts.set(key, art);
       const frame = art.atlas.frames[art.frame(c.level, c.moving ? Math.floor(c.walk) % 2 : 0, c.away)];
-      if (!this.inView(c.x, c.z, frame.w * this.mpp, frame.h * this.mpp, 4)) continue;
-      const fresh = this.mark("creature", c.x, c.z, frame.h * this.mpp, c.id);
+      // A wild legend (Ed, 2026-10-04): bigger and imposing, swelling slowly as it breathes (slower asleep).
+      const boss = c.boss && !c.leashed ? g.tuning.wildLegends : null;
+      const bossScale = boss ? boss.scale * (1 + boss.breathe * bossBreath(time, c.id, boss.breathEvery * (dormant(g, c) ? 1.5 : 1))) : 1;
+      if (!this.inView(c.x, c.z, frame.w * this.mpp * bossScale, frame.h * this.mpp * bossScale, 4)) continue;
+      const fresh = this.mark("creature", c.x, c.z, frame.h * this.mpp * (boss ? boss.scale : 1), c.id);
       let l = per.get(key);
       if (!l) per.set(key, (l = []));
       // Party animals never stand still: a bounce and a sway on the beat when idle, a little
@@ -727,7 +752,7 @@ export class View {
       // Evolving: glowing white, pulsing on the beat, brighter toward the bar line; then the flash
       // as it becomes its next level, and a pop from 1.3 times its size back to its own.
       const ev = g.berries.evolving.get(c.id), done = this.evolvedAt.get(c.id);
-      let glow = 0, scale = 1;
+      let glow = 0, scale = bossScale;
       if (ev) {
         const k = Math.min(1, (time - ev.since) / Math.max(0.1, ev.at - ev.since)), pulse = 0.5 + 0.5 * Math.cos((time / beat) * Math.PI * 2);
         glow = Math.min(1, (0.25 + 0.5 * k) * (0.55 + 0.45 * pulse) + (ev.at - time < 0.12 ? 1 : 0));
@@ -787,7 +812,7 @@ export class View {
     let n = 0;
     for (const { l, d } of near.slice(0, budget)) {
       const fade = Math.min(1, Math.max(0, (edge - d) / 15));
-      U.uLightPos.value[n].set(l.x, l.y, l.z, l.reach);
+      U.uLightPos.value[n].set(l.x, l.y + groundHeight(l.x, l.z), l.z, l.reach); // its height above the rolling ground
       U.uLightCol.value[n].set(l.rgb.x, l.rgb.y, l.rgb.z, l.strength * fade);
       n++;
     }
@@ -807,7 +832,7 @@ export class View {
     }
     const R = SPRITE_UNIFORMS.uRight.value, U = SPRITE_UNIFORMS.uUp.value, pts: number[] = [];
     for (const g of this.ghosts) {
-      const w = g.h * 0.4, c = (sx: number, sy: number) => [g.x + R.x * sx * w + U.x * sy * g.h, R.y * sx * w + U.y * sy * g.h, g.z + R.z * sx * w + U.z * sy * g.h];
+      const w = g.h * 0.4, gh = groundHeight(g.x, g.z), c = (sx: number, sy: number) => { const p = bendPoint({ x: g.x + R.x * sx * w + U.x * sy * g.h, y: gh + R.y * sx * w + U.y * sy * g.h, z: g.z + R.z * sx * w + U.z * sy * g.h }); return [p.x, p.y, p.z]; };
       const a = c(-1, 0), b = c(1, 0), d = c(1, 1), e = c(-1, 1);
       pts.push(...a, ...b, ...b, ...d, ...d, ...e, ...e, ...a, ...a, ...d);
     }
@@ -891,7 +916,19 @@ export class View {
     // Camera, snapped to the pixel grid along the screen's axes so the art does not shimmer.
     const wpp = (2 * pose.distance * Math.tan((t.camera.fov * Math.PI) / 360)) / this.height;
     const up = new THREE.Vector3(0, Math.cos(a), -Math.sin(a));
-    const target = new THREE.Vector3(pose.tx, pose.ty, pose.tz);
+    // The rolling ground: its window follows her, and the camera rides over its height.
+    if (this.heights.follow(g.witch.x, g.witch.z)) this.stats.heightMoves = (this.stats.heightMoves ?? 0) + 1;
+    this.ground.follow(g.witch.x, g.witch.z);
+    const target = new THREE.Vector3(pose.tx, pose.ty + groundHeight(pose.tx, pose.tz), pose.tz);
+    // The world's bend: only over the treetops (Ed, 2026-10-04), eased in as she rises; from the
+    // camera's focus, along its forward on the ground.
+    {
+      const C = t.camera.curve, m = Math.min(1, Math.max(0, g.witch.lift)), k = C.ground + (C.treetop - C.ground) * m * m * (3 - 2 * m);
+      HEIGHT_UNIFORMS.uBend.value.set(Math.max(0, k), pose.tx, pose.tz, 0);
+      HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); // the camera always looks north (toward -z)
+      const far = t.haze.far;
+      this.sky.update(k, pose.tx, pose.tz, far, 2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (this.width / this.height));
+    }
     const u = target.dot(up), r = target.x;
     target.addScaledVector(up, Math.round(u / wpp) * wpp - u);
     target.x += Math.round(r / wpp) * wpp - r;
@@ -909,7 +946,7 @@ export class View {
     // to nothing as she rises (and opens as she descends).
     const lifted = canopyShown(g.witch), cut = t.canopyCutout;
     this.camera.updateMatrixWorld();
-    const ws = this.v3.set(g.witch.x, witchHeight(g.witch, t) * 0.5, g.witch.z).project(this.camera);
+    const ws = placed(this.v3.set(g.witch.x, witchHeight(g.witch, t) * 0.5, g.witch.z)).project(this.camera);
     SPRITE_UNIFORMS.uCutout.value.set((ws.x * 0.5 + 0.5) * this.width, (ws.y * 0.5 + 0.5) * this.height, 0.5 * cut.screenFraction * this.width * (1 - lifted), Math.max(1, cut.edge * this.width * (1 - lifted)));
     SPRITE_UNIFORMS.uTopFade.value = lifted;
     SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, this.mpp, t.trunkFade.share);
@@ -924,14 +961,14 @@ export class View {
     // her depth, times glowToCutout; beyond it the forest is dark. ?glow= fixes it instead.
     if (!t.glowFixed) {
       const wx = g.witch.x, wz = g.witch.z, R = SPRITE_UNIFORMS.uRight.value;
-      const a = this.v3.set(wx, 0, wz).project(this.camera).x, b = this.v3.set(wx + R.x * 10, 0, wz + R.z * 10).project(this.camera).x;
+      const a = placed(this.v3.set(wx, 0, wz)).project(this.camera).x, b = placed(this.v3.set(wx + R.x * 10, 0, wz + R.z * 10)).project(this.camera).x;
       const pxPerM = Math.max(1e-3, (Math.abs(b - a) * 0.5 * this.width) / 10);
-      LIGHT_UNIFORMS.uGlowR.value = ((0.5 * cut.screenFraction + cut.edge) * this.width / pxPerM) * t.glowToCutout;
+      LIGHT_UNIFORMS.uGlowR.value = ((0.5 * cut.screenFraction + cut.edge) * this.width / pxPerM) * t.glowToCutout * g.buffs.totals.glowReach; // a glow-reach legend buff widens it
     }
     SPRITE_UNIFORMS.uDebugCull.value = this.debugCull ? 1 : 0;
 
     const w = g.witch, h = witchHeight(w, t);
-    LIGHT_UNIFORMS.uGlowPos.value.set(w.x, h + t.glowHeight, w.z);
+    LIGHT_UNIFORMS.uGlowPos.value.set(w.x, groundHeight(w.x, w.z) + h + t.glowHeight, w.z);
     LIGHT_UNIFORMS.uHazeCentre.value.set(w.x, w.z);
     this.updateSources(time);
     // The party: soundsystems rising in partifying areas, their lights, the sweeping fronts.
@@ -966,6 +1003,7 @@ export class View {
     const markerLights = this.drawMarkers(time);
     const speakerLights = this.drawSpeakers(time, pose.angle);
     this.spellFx.update(g, time, witchHeight(w, t) + 0.6);
+    this.buffHud.update(g, time);
     // Tufts part round her and the three nearest creatures.
     const parts = [{ x: w.x, z: w.z, r: 1.6 * (1 - canopyShown(w)) }, ...g.creatures.map(c => ({ x: c.x, z: c.z, r: 1.2, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(c => c.d < t.groundCover.radius).sort((a, b) => a.d - b.d).slice(0, 3)];
     // No tufts over a placed sigil's rune (Ed, v233): trampled out to groundCover.sigilClear, or the rune's own size.
@@ -1028,10 +1066,10 @@ export class View {
     this.witchBatch.set([{ x: wx, y: wyy, z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
     // Where she is on screen (low-res pixels) and how far from the camera, for the occluder fade.
     {
-      const px = (x: number, y: number, z: number) => { const p = this.v3.set(x, y, z).project(this.camera); return [(p.x + 1) / 2 * this.width, (p.y + 1) / 2 * this.height]; };
+      const px = (x: number, y: number, z: number) => { const p = placed(this.v3.set(x, y, z)).project(this.camera); return [(p.x + 1) / 2 * this.width, (p.y + 1) / 2 * this.height]; };
       const base = px(wx, wyy, wz), top = px(wx, hatTop, wz), side = px(wx + wframe.w * this.mpp / 2, wyy, wz);
       SPRITE_UNIFORMS.uWitch.value.set((base[0] + top[0]) / 2, (base[1] + top[1]) / 2, Math.abs(side[0] - base[0]) + 1, Math.abs(top[1] - base[1]) / 2 + 1);
-      SPRITE_UNIFORMS.uWitchDepth.value = -this.v3.set(wx, this.seatK > 0 ? wyy : h, wz).applyMatrix4(this.camera.matrixWorldInverse).z;
+      SPRITE_UNIFORMS.uWitchDepth.value = -placed(this.v3.set(wx, this.seatK > 0 ? wyy : h, wz)).applyMatrix4(this.camera.matrixWorldInverse).z;
     }
     this.shadow.position.set(wx, 0.03, wz);
     this.shadow.scale.setScalar((1 - 0.5 * canopyShown(w)) * (1 - this.seatK) + 1e-3); // none while she's up on the terrace
