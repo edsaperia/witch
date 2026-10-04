@@ -86,6 +86,9 @@ if (bare) {
   tuning.stringLights = { ...tuning.stringLights, on: false };
   tuning.bare = bare;
 }
+// ?clouds=<count>: how many clouds (0 none), to compare and to measure.
+const cloudsParam = params.get("clouds");
+if (cloudsParam !== null && !isNaN(Number(cloudsParam))) tuning.sky = { ...tuning.sky, clouds: { ...tuning.sky.clouds, count: Math.max(0, Number(cloudsParam)) } };
 // ?sky=off: no night sky over the bend (the plain dark background), to compare and to measure.
 if (params.get("sky") === "off") tuning.sky = { ...tuning.sky, on: false };
 // ?curve=<treetop>: the world's bend over the treetops (0 off), to try values live.
