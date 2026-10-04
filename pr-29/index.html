@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0a16">
+  <title>Witch — prototype</title>
+  <style>
+    :root { --ink: #e8e2f4; --dim: #9a93b4; --panel: rgba(14, 11, 28, .82); --accent: #ff7fd0; }
+    html, body { margin: 0; height: 100%; background: #0b0a16; overflow: hidden; color: var(--ink); font: 14px/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+    #game { position: fixed; left: 0; top: 0; image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+    #seed { position: fixed; left: 10px; bottom: 8px; color: var(--dim); font-size: 12px; text-shadow: 0 1px 0 #000; pointer-events: auto; }
+    #seed a { color: var(--dim); }
+    #version { position: fixed; right: 10px; bottom: 8px; color: var(--dim); font-size: 12px; text-shadow: 0 1px 0 #000; pointer-events: none; }
+    .touch #version { bottom: auto; top: 8px; }
+    #debug { position: fixed; left: 10px; top: 10px; background: var(--panel); padding: 8px 10px; border-radius: 6px; white-space: pre; font-size: 12px; display: none; pointer-events: none; }
+    #debug.on { display: block; }
+    #start { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(8, 6, 18, .78); cursor: pointer; z-index: 5; }
+    #start .card { max-width: 30em; margin: 16px; padding: 22px 24px; background: var(--panel); border: 1px solid #3a2f5c; border-radius: 10px; text-align: center; }
+    #start h1 { margin: 0 0 4px; font-size: 28px; letter-spacing: .08em; color: var(--accent); }
+    #start .go { margin: 18px 0 12px; font-size: 18px; }
+    #start .keys { color: var(--dim); font-size: 12px; text-align: left; }
+    #start .keys b { color: var(--ink); font-weight: normal; }
+    #start.loading .go::after { content: " (growing the forest…)"; color: var(--dim); }
+    #touch { position: fixed; inset: 0; display: none; pointer-events: none; }
+    .touch #touch { display: block; }
+    #stick-zone { position: absolute; left: 0; top: 0; bottom: 0; width: 55%; pointer-events: auto; }
+    #stick { position: absolute; width: 112px; height: 112px; margin: -56px 0 0 -56px; border-radius: 50%; border: 2px solid rgba(232, 226, 244, .3); display: none; }
+    #stick.on { display: block; }
+    #stick .knob { position: absolute; left: 32px; top: 32px; width: 48px; height: 48px; border-radius: 50%; background: rgba(232, 226, 244, .35); }
+    .tbtn { position: absolute; pointer-events: auto; border-radius: 50%; border: 2px solid rgba(232, 226, 244, .45); background: rgba(14, 11, 28, .45); color: var(--ink); display: flex; align-items: center; justify-content: center; text-align: center; }
+    .tbtn.down { background: rgba(255, 127, 208, .45); }
+    #rise { right: 22px; bottom: 30px; width: 86px; height: 86px; font-size: 12px; }
+    #zoom-in, #zoom-out { width: 46px; height: 46px; font-size: 22px; right: 42px; }
+    #zoom-in { bottom: 186px; }
+    #zoom-out { bottom: 128px; }
+  </style>
+  <script type="module" crossorigin src="./assets/index-Bh52-5sX.js"></script>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="seed"></div>
+  <div id="version"></div>
+  <div id="debug"></div>
+  <div id="touch">
+    <div id="stick-zone"></div>
+    <div id="stick"><div class="knob"></div></div>
+    <div class="tbtn" id="rise">rise /<br>descend</div>
+    <div class="tbtn" id="zoom-in">+</div>
+    <div class="tbtn" id="zoom-out">−</div>
+  </div>
+  <div id="start" class="loading">
+    <div class="card">
+      <h1>WITCH</h1>
+      <div>a prototype: fly the witch round the forest at night</div>
+      <div class="go">Tap, click or press any key to start</div>
+      <div class="keys">
+        <b>Keyboard</b> WASD or arrows fly · space rises or descends · Q/E or −/+ zoom · ~ debug<br>
+        <b>Gamepad</b> left stick flies · A rises or descends · shoulders zoom<br>
+        <b>Phone</b> drag on the left to fly · the round button rises or descends · three-finger tap for debug
+      </div>
+    </div>
+  </div>
+</body>
+</html>
