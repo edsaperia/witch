@@ -161,6 +161,8 @@
   "_canopyCutout": "In ground mode the canopy stays drawn at the screen's edges, so she flies under the forest roof; a dithered hole round her is cut out, screenFraction of the screen's width across, with a soft edge (a fraction of the width). Rising closes the hole.",
   "canopyCutout": { "screenFraction": 0.8, "edge": 0.1 },
   "_tone": "Contrast: ambient scales the twilight fill (lower is darker shade under the canopy), moon the moonlight (both lowered for Ed's dark forest, v149); black is the black point and gamma the curve applied to the whole picture, so dark goes near-black and lit stays bright.",
+  "_find": "Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest... I don't want to go overboard'), all off with ?find=0 to compare: eyeshine, their eyes catching the light in pale gold (strength over their own colour, out to range metres from her, blinking about blink of the time; woken creatures' red eyes stay red); lightFloor, never darker than that share of their unlit look; rim, a faint rim from her glow on the edge facing her; and in place of tone.ambient, ambient, with a cooler, more coloured moon (moonHue, moonSat).",
+  "find": { "on": true, "eyeshine": { "range": 45, "strength": 1.2, "blink": 0.08 }, "lightFloor": 0.45, "rim": 0.5, "ambient": 0.28, "moonHue": 0.5, "moonSat": 0.5 },
   "tone": { "black": 0.03, "gamma": 1.35, "ambient": 0.22, "moon": 0.7 },
   "bloom": { "on": true, "strength": 0.7, "threshold": 0.55 },
   "tiltShift": { "on": true, "where": "before", "strength": 3, "band": 0.4, "centre": 0.55, "treetop": { "strength": 6, "band": 0.28 } },

@@ -33,6 +33,12 @@ export const SPRITE_UNIFORMS = {
   uUplight: { value: new THREE.Vector4() },
   /** The trunk fade: metres covered (0 off), metres per art pixel. */
   uTrunkFade: { value: new THREE.Vector3(0, 0.125, 0.3) },
+  /** Finding wild creatures in the dark (Ed, v244; tuning find, off with ?find=0), for wild
+   *  creatures' batches only: their light floor (a share of their unlit look), a rim from her
+   *  glow, their eyeshine's strength (0 off) and the share of the time they blink; uEyeRgb its colour, uEyeRange its reach (m). */
+  uFindLook: { value: new THREE.Vector4() },
+  uEyeRgb: { value: new THREE.Vector3(1, 0.9, 0.6) },
+  uEyeRange: { value: 40 },
   /** The wind (Ed, v171): sway at the top of a crown (metres), the gusts' speed (m/s) and size (m), and the time. */
   uWind: { value: new THREE.Vector4(0, 0, 1, 0) },
 };
@@ -46,7 +52,7 @@ attribute vec3 iPos;
 attribute vec2 iSize;
 attribute vec4 iUv;
 attribute vec4 iFlags; // flip, top (or a trunk's cut, negative), fresh, sway
-attribute float iGlow; // glowing white, 0 to 1 (a party animal evolving)
+attribute float iGlow; // glowing white, 0 to 1 (a party animal evolving); -1: a wild creature blinking (no eyeshine)
 varying float vGlow;
 uniform vec4 uWind;
 varying vec2 vUv;
@@ -107,6 +113,10 @@ varying float vGlow;
 varying float vFront;
 varying vec2 vLocal;
 varying float vSizeY;
+uniform float uFind; // this batch: 1 for wild creatures (eyeshine, light floor, rim)
+uniform vec4 uFindLook;
+uniform vec3 uEyeRgb;
+uniform float uEyeRange;
 uniform vec3 uTrunkFade; // metres of trunk the fade covers at most, metres per art pixel, its most share of the visible trunk
 ${LIGHT_GLSL}
 ${WITCH_LIGHT_GLSL}
@@ -154,13 +164,33 @@ void shade() {
   // Eye glints, flowers and magic glow: the generator marks them with alpha 254.
   if (uDebugCull > 0.5 && vFlags.z > 0.5) { gl_FragColor = vec4(1.0, 0.0, 0.0, alpha); return; }
   if (uUnlit > 0.5) { gl_FragColor = vec4(a.rgb, alpha); return; }
-  if (a.a < 0.999) { gl_FragColor = vec4(haze(a.rgb, vWorld), alpha); return; }
+  // A wild creature's eye pixels are marked with alpha 253 (artBuild.ts markEyes); glowing ones 254.
+  bool eyePx = a.a < 0.994;
+  if (eyePx && uFind > 0.5 && uFindLook.z > 0.0 && vGlow > -0.5) {
+    // Eyeshine (Ed, v244): a wild creature's eyes catch the light, pale gold, well beyond her
+    // glow, blinking now and then (the view sets each one's blinks; a woken creature's red eyes
+    // are glowing pixels, and stay red).
+    float far = 1.0 - smoothstep(uEyeRange * 0.75, uEyeRange, length(vWorld.xz - uHazeCentre));
+    float luma = dot(a.rgb, vec3(0.3, 0.55, 0.15));
+    vec3 eye = uEyeRgb * (0.55 + 0.45 * luma) * (1.0 + uFindLook.z);
+    gl_FragColor = vec4(mix(haze(a.rgb * 0.3, vWorld), min(vec3(1.0), eye), far), alpha); return;
+  }
+  if (a.a < 0.999 && !eyePx) { gl_FragColor = vec4(haze(a.rgb, vWorld), alpha); return; }
   vec4 n = texture2D(uNormal, vUv);
   float nx = (n.r * 255.0 - 128.0) / 127.0, ny = (n.g * 255.0 - 128.0) / 127.0, nz = n.b;
   if (vFlags.x > 0.5) nx = -nx;
   vec3 N = normalize(uRight * nx - uUp * ny + uFacing * nz);
   if (uWitchLight.x > 0.5) { gl_FragColor = vec4(witchShade(a.rgb, N, uFacing, vWorld), alpha); return; }
   vec3 col = min(vec3(1.0), a.rgb * nightLight(N, vWorld) * 1.25);
+  if (uFind > 0.5) {
+    // Wild creatures never drop below a share of their unlit look, and catch a faint rim from her
+    // glow on the edge facing her, so they read against the dark ground (Ed, v244).
+    col = max(col, a.rgb * uFindLook.x);
+    vec3 lv = uGlowPos - vWorld;
+    float d = length(lv), k = 1.0 - smoothstep(uGlowR * 0.5, uGlowR * 1.8, d);
+    float edge = 1.0 - clamp(dot(N, uFacing), 0.0, 1.0);
+    col = min(vec3(1.0), col + mix(a.rgb, vec3(1.0), 0.5) * uGlowRgb * edge * max(0.0, dot(N, lv / max(d, 1e-3))) * k * uFindLook.y);
+  }
   if (vFlags.y > 0.5 && uPartyCount > 0) {
     // Crowns over a party catch a faint glow from below, on their undersides and lower edges.
     vec3 up = vec3(0.0);
@@ -189,7 +219,7 @@ void main() {
 }
 `;
 
-export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number; /** How much it sways in the wind (0 still, 1 a crown): leafy things only. */ sway?: number; /** Glowing white, 0 to 1 (an evolving party animal). */ glow?: number }
+export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number; /** How much it sways in the wind (0 still, 1 a crown): leafy things only. */ sway?: number; /** Glowing white, 0 to 1 (an evolving party animal); -1, a wild creature blinking (its eyeshine off). */ glow?: number }
 
 export class SpriteBatch {
   readonly mesh: THREE.Mesh;
@@ -206,7 +236,7 @@ export class SpriteBatch {
   count = 0;
 
   /** metresPerPixel: world size of one art pixel. */
-  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; /** Gameplay (creatures, soundsystems, markers...): never faded or cut away round the witch (Ed, v149). */ solid?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number }; /** The witch: lit by the world's lights but not her own glow (witchLight.ts). */ witchLight?: { lightFloor: number; lightTint: number; lightRim: number } } = {}) {
+  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; /** Gameplay (creatures, soundsystems, markers...): never faded or cut away round the witch (Ed, v149). */ solid?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number }; /** The witch: lit by the world's lights but not her own glow (witchLight.ts). */ witchLight?: { lightFloor: number; lightTint: number; lightRim: number }; /** Wild creatures: eyeshine, a light floor and a rim, so they can be found in the dark (Ed, v244). */ find?: boolean } = {}) {
     const quad = new THREE.PlaneGeometry(1, 1);
     quad.translate(0, 0.5, 0); // stand on the base
     this.geo = new THREE.InstancedBufferGeometry();
@@ -215,7 +245,7 @@ export class SpriteBatch {
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.pos = this.size = this.uvs = this.flags = this.glow = undefined as never;
     this.grow(64);
-    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), ...extra });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, ...extra });
     // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
     // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
     const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};

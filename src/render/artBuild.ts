@@ -84,9 +84,23 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
 /** A kind of creature at each level (baby, young, adult, legend), two walking frames each. */
 export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear: unknown = null): Baked[] {
   const out: Baked[] = [];
-  for (const facing of ["towards", "away"]) for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++)
-    out.push(Art.bake(Art.critter(species, level, f, st, facing, gear as null), Art.speciesColours(species, st, gear as null), st, st.cOutline, mk) as Baked);
+  for (const facing of ["towards", "away"]) for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++) {
+    const sp = Art.critter(species, level, f, st, facing, gear as null) as { m: ArrayLike<number> };
+    const b = Art.bake(sp, Art.speciesColours(species, st, gear as null), st, st.cOutline, mk) as Baked;
+    if (!gear) markEyes(b, sp.m);
+    out.push(b);
+  }
   return out;
+}
+
+// Wild creatures' eyes (Ed, v244): alpha 253 on their eye pixels, so the sprite shader can make
+// them catch the light (eyeshine) when finding is on; otherwise they're lit like the rest.
+const EYES = new Set([Art.M.EYE, Art.M.IRIS, Art.M.PUPIL]);
+function markEyes(b: Baked, m: ArrayLike<number>): void {
+  const ctx = b.A.getContext("2d") as CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D, img = ctx.getImageData(0, 0, b.w, b.h);
+  let any = false;
+  for (let i = 0; i < m.length; i++) if (EYES.has(m[i]) && img.data[i * 4 + 3] === 255) { img.data[i * 4 + 3] = 253; any = true; }
+  if (any) ctx.putImageData(img, 0, 0);
 }
 /** Towards: frames 0-7 (level x 2 + walk frame); away: the same, from 8. */
 export const creatureFrame = (level: number, f: number, away = false) => (away ? 8 : 0) + level * 2 + f;
