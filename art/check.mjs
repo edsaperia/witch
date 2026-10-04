@@ -103,6 +103,25 @@ const report = await b.page.evaluate(async () => {
     const fb = G.discoFloorBase(); if (!(stats(fb.sp).n > fb.size * fb.size * .7)) bad.push("floor base");
     res.push({ what: "dancefloor: every pattern fits the circle, keeps to its 2-4 neon palette, runs whole beats and lights up; levels 1-4; 20+ general patterns, the switch-on, one shape per area in its neon; transitions old to new; tiles, grout, rim (repeating), floor", good: !bad.length, info: bad.slice(0, 6).join("; ") || `${L.length} patterns (${Object.entries(kinds).map(([k, n]) => k + " " + n).join(", ")}); ${G.DISCO_TRANSITIONS.length} transitions; floor ${fb.size} px` });
   }
+  { // the dancefloor speakers (Ed: one column, 12 round the floor, the far half facing in and the near half out, so 3 angles drawn and mirrored; destroyable): every angle draws in every state, standing;
+    // all share one scale (every intact one as tall at every angle, about the soundsystem's height or a little less; rubble low); the front (cones) and the back (plain stone) differ;
+    // the facing rule maps the 12 ring places onto the 3 angles, each twice plain and twice mirrored, every one showing us its front (|yaw| 75 or less)
+    const bad = [], ws = G.witchSprite(st), hs = [], glow = {}, GL = new Set([G.M.GLOW, G.M.MAGIC2]);
+    for (const angle of G.DANCEFLOOR_SPEAKER_ANGLES) for (const [state, n] of Object.entries(G.DANCEFLOOR_SPEAKER_STATES)) for (let frame = 0; frame < n; frame++) {
+      const S = G.dancefloorSpeakerSprite(st, { angle, state, frame }), s2 = stats(S.sp);
+      if (!(s2.n > 150 && s2.bottom > 0 && S.origin.x > 0 && S.origin.x < s2.w && S.origin.y > 0 && S.origin.y <= s2.h)) bad.push(`${angle} ${state} ${frame}`);
+      if (state === "playing") { hs.push(s2.h); if (frame === 0) { let g2 = 0; for (const m of S.sp.m) if (GL.has(m)) g2++; glow[angle] = g2; } }
+      if (state === "destroyed" && s2.h > ws.h * 1.6) bad.push(`${angle} rubble too tall`);
+    }
+    if (Math.max(...hs) - Math.min(...hs) > 3) bad.push("heights differ by angle " + Math.min(...hs) + "-" + Math.max(...hs));
+    if (!(hs[0] > ws.h * 2.2 && hs[0] < ws.h * 3.1)) bad.push(`${hs[0]} px against the witch's ${ws.h}`);
+    const backGlow = a => { let g2 = 0; for (const m of G.dancefloorSpeakerSprite(st, { angle: a }).sp.m) if (GL.has(m)) g2++; return g2; }; glow[165] = backGlow(165); glow[135] = backGlow(135); // the back, modelled though unused
+    if (!(glow[15] > glow[165] * 3 && glow[45] > glow[135] * 2)) bad.push(`front and back look alike (glow ${glow[15]} vs ${glow[165]})`);
+    const uses = {}; for (let i = 0; i < 12; i++) { const f = G.dancefloorSpeakerFacing(15 + 30 * i); uses[f.angle + (f.flip ? "f" : "")] = (uses[f.angle + (f.flip ? "f" : "")] || 0) + 1; }
+    if (Object.keys(uses).length !== 6 || Object.values(uses).some(n => n !== 2)) bad.push("the ring doesn't use each angle twice plain and twice mirrored");
+    for (let i = 0; i < 12; i++) { const a = 15 + 30 * i, f = G.dancefloorSpeakerFacing(a); if (Math.abs(f.yaw) > 75 || f.outward !== Math.cos(a * Math.PI / 180) > 0) bad.push(`ring place ${a} shows its back`); }
+    res.push({ what: "dancefloor speakers: 3 angles x (3 playing, 2 damaged, destroyed) stand at one scale, about 2.6 times the witch, rubble low; front and back differ; 12 ring places (far half facing in, near half out) all show fronts, each angle twice plain, twice mirrored", good: !bad.length, info: bad.join("; ") || `${hs[0]} px tall (witch ${ws.h}); glow front ${glow[15]} vs back ${glow[165]}` });
+  }
   // sigils: one per species; non-empty as vector (SVG, and drawn on a canvas) and as a 12 px pixel glyph; strokes inside the box;
   // on the ground at every level, the draw-on only adds ink, and each level's rune is bigger and has more rings than the one below
   const pixels = f => { let n = 0; for (let i = 0; i < f.atCore.length; i++) if (f.atCore[i] <= 1) n++; return n; };
