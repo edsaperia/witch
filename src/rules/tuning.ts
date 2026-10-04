@@ -39,8 +39,6 @@ export interface Tuning {
   crownHalfWidth: number;
   crownHeight: number;
   bushSpacing: number;
-  wallSpacing: number;
-  wallDensity: number;
   groundSpeed: number;
   treetopSpeed: number;
   acceleration: number;
@@ -85,6 +83,7 @@ export interface Tuning {
   /** How mist, far haze and canopy dapple are drawn: smooth gradients, or dithered pixel steps. */
   fx: "smooth" | "pixel";
   moonbeams: number;
+  walls: { runs: number[]; runLength: number[]; gateChance: number; rings: number[]; ringStones: number[]; ringRadius: number[]; avenueChance: number; loneChance: number; clumps: number[]; clumpSize: number[]; clumpRadius: number };
   grounds: { chance: number; kinds: string[]; radius: Record<string, number> };
   relics: { spacing: number; chance: number; nearRoad: number; minGap: number };
   treeCap: { from: number; keep: number };

@@ -102,10 +102,12 @@ void shade() {
   if (uFadePass > 0.5 ? occl <= 0.001 : occl > 0.001) discard;
   float alpha = uFadePass > 0.5 ? mix(1.0, uOcc.x, occl) : 1.0;
   if (vFlags.y > 0.5) {
-    // Crowns: hidden in a dithered hole round the witch, which closes as she rises.
+    // Crowns: hidden in a hole round the witch, which closes as she rises; its edge a smooth fade
+    // (Ed: no dithering), or dithered steps with ?fx=pixel.
     float d = length(gl_FragCoord.xy - uCutout.xy);
-    float shown = smoothstep(uCutout.z - uCutout.w, uCutout.z, d);
-    if (bayer(gl_FragCoord.xy) >= max(shown, uTopFade)) discard;
+    float shown = max(smoothstep(uCutout.z - uCutout.w, uCutout.z, d), uTopFade);
+    if (uSmooth > 0.5) { if (shown < 0.004) discard; alpha *= shown; }
+    else if (bayer(gl_FragCoord.xy) >= shown) discard;
   }
   // Eye glints, flowers and magic glow: the generator marks them with alpha 254.
   if (uDebugCull > 0.5 && vFlags.z > 0.5) { gl_FragColor = vec4(1.0, 0.0, 0.0, alpha); return; }

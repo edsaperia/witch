@@ -3,6 +3,7 @@
 // round each area's centre. Every cell is decided from the seed alone, so any patch of forest
 // can be produced on its own, near the camera, in any order, and always comes out the same.
 import { hash2, smoothstep, vnoise } from "./random";
+import { wallFeatures, bedsInRows, type WallFeatures } from "./walls";
 import { AREA_TYPES, type AreaLayout, type ForestMap } from "./map";
 
 export interface Plant {
@@ -108,27 +109,13 @@ function bushesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
     // Paths keep their corridors clear, with bushes thick along their edges.
     const along = map.paths.clearance(x, z).bushes;
     if (along === 0) continue;
-    const type = plantType(map, x, z, i, j, s + 206), sparse = 1 - Math.min(1, treeChance(map, x, z, type) / 0.8);
+    const type = plantType(map, x, z, i, j, s + 206);
+    if (bedsInRows(map, type)) continue; // a formal garden's beds are laid in rows along its walls
+    const sparse = 1 - Math.min(1, treeChance(map, x, z, type) / 0.8);
     if (hash2(i, j, s + 203) > (0.15 + 0.85 * sparse) * AREA_TYPES[type].layout.undergrowth * map.tuning.bushDensity * clump * along) continue;
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + 2) continue; // the dancefloor stays clear
     if (map.hardClear(x, z)) continue; // and the treehouse's foot, the grounds, the set pieces' clearings
     out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 204) * BUSH_VARIANTS), flip: hash2(i, j, s + 205) < 0.5 });
-  }
-  return out;
-}
-
-// Wall objects (edges and barriers: puddles, henges, hedges...) stand where areas meet, only in
-// the types that have them. They are scenery: nothing blocks movement (Ed, 2026-10-03).
-function wallsInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
-  const sp = map.tuning.wallSpacing, s = map.seed, out: Plant[] = [];
-  const j0 = Math.ceil((cj * CHUNK) / sp), j1 = Math.ceil(((cj + 1) * CHUNK) / sp);
-  const i0 = Math.ceil((ci * CHUNK) / sp), i1 = Math.ceil(((ci + 1) * CHUNK) / sp);
-  for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
-    if (hash2(i, j, s + 303) > map.tuning.wallDensity) continue;
-    const x = (i + (hash2(i, j, s + 301) - 0.5) * 0.6) * sp, z = (j + (hash2(i, j, s + 302) - 0.5) * 0.6) * sp, a = map.areaAt(x, z);
-    if (a.openness < 0.82 || !AREA_TYPES[a.type].hasWalls || map.paths.clearance(x, z).bushes === 0 || map.hardClear(x, z)) continue; // not across a path or a ground
-    if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + 4) continue;
-    out.push({ x, z, type: a.type, variant: Math.floor(hash2(i, j, s + 304) * 4), flip: hash2(i, j, s + 305) < 0.5 });
   }
   return out;
 }
@@ -232,7 +219,7 @@ function lightsInChunk(map: ForestMap, ci: number, cj: number): LightSource[] {
 export class Forest {
   private trees = new Map<string, Plant[]>();
   private bushes = new Map<string, Plant[]>();
-  private walls = new Map<string, Plant[]>();
+  private wallFeatureCache = new Map<string, WallFeatures>();
   private lights = new Map<string, LightSource[]>();
   private decor = new Map<string, Decor[]>();
   private relics = new Map<string, Relic[]>();
@@ -271,9 +258,22 @@ export class Forest {
   relicsNear(x: number, z: number, radius: number): Relic[] {
     return this.gather(this.relics, (i, j) => relicsInChunk(this.map, i, j), x, z, radius);
   }
-  wallsNear(x: number, z: number, radius: number): Plant[] {
-    return this.gather(this.walls, (i, j) => wallsInChunk(this.map, i, j), x, z, radius);
+  /** Each area's wall-object features (runs, rings, clumps; see walls.ts), remembered per area. */
+  private features(x: number, z: number, radius: number, pick: (f: WallFeatures) => Plant[]): Plant[] {
+    const m = this.map, A = m.areaSize, out: Plant[] = [];
+    if (this.wallFeatureCache.size > 400) this.wallFeatureCache.clear();
+    for (let cy = Math.floor((z - radius) / A) - 1; cy <= Math.floor((z + radius) / A) + 1; cy++)
+      for (let cx = Math.floor((x - radius) / A) - 1; cx <= Math.floor((x + radius) / A) + 1; cx++) {
+        const k = cx + "," + cy;
+        let f = this.wallFeatureCache.get(k);
+        if (!f) this.wallFeatureCache.set(k, (f = wallFeatures(m, cx, cy)));
+        for (const p of pick(f)) if (Math.abs(p.x - x) <= radius && Math.abs(p.z - z) <= radius) out.push(p);
+      }
+    return out;
   }
+  wallsNear(x: number, z: number, radius: number): Plant[] { return this.features(x, z, radius, f => f.walls); }
+  /** A formal garden's flower beds, in rows along its walls. */
+  bedsNear(x: number, z: number, radius: number): Plant[] { return this.features(x, z, radius, f => f.beds); }
   /** Set pieces near a point: each stands in its area's clearing, a little north of the centre. */
   setPiecesNear(x: number, z: number, radius: number): Plant[] {
     const m = this.map, A = m.areaSize, out: Plant[] = [];

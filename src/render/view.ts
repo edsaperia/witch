@@ -417,6 +417,7 @@ export class View {
       }
     };
     scatter("small", g.forest.bushesNear(cx, cz, half), l => l.small);
+    scatter("small", g.forest.bedsNear(cx, cz, half), l => l.small); // a formal garden's beds, in rows
     scatter("wall", g.forest.wallsNear(cx, cz, half), l => l.walls.map(bot => ({ bot, top: null })));
     scatter("setpiece", g.forest.setPiecesNear(cx, cz, half), l => (l.set === null ? [] : [l.set]));
     // Decorations: ruins, rocks and freak trees, as scenery (each family's pieces picked by its variant).

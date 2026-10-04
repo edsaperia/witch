@@ -11,6 +11,7 @@ import { legendChance, population, spawnCreatures, stepCreature, stepCreaturesNe
 import { newGame, stepGame } from "./game";
 import { newParty, spreadWave, stepParty } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
+import { wallFeatures } from "./walls";
 import { laserShow } from "./lasers";
 import { borderOf } from "./borders";
 import { newLeash, stepLeash, type LeashControls } from "./leash";
@@ -948,5 +949,42 @@ describe("set pieces, again", () => {
   it("stand at most one per area", () => {
     const f = new Forest(map), s = map.start, seen = new Set<string>();
     for (const p of f.setPiecesNear(s.x, s.z, 900)) { const k = map.areaAt(p.x, p.z + 4).cell.join(","); expect(seen.has(k)).toBe(false); seen.add(k); }
+  });
+});
+
+describe("wall objects as features", () => {
+  const W = TUNING.walls;
+  // Areas of a type that own ground (a cell whose site lies in another area has none).
+  const cellsOf = (id: string) => { const out: [number, number][] = []; for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++) { if (AREA_TYPES[map.typeOf(x, y)].id !== id) continue; const s = map.siteOf(x, y), c = map.areaAt(s.x, s.z).cell; if (c[0] === x && c[1] === y) out.push([x, y]); } return out; };
+  it("lay garden walls as joined runs (no isolated stubs), with flower beds along them, a few runs per garden", () => {
+    const cells = cellsOf("garden");
+    expect(cells.length).toBeGreaterThan(0);
+    let pieces = 0, joined = 0, beds = 0;
+    for (const [cx, cy] of cells) {
+      const f = wallFeatures(map, cx, cy);
+      expect(f.walls.length).toBeLessThanOrEqual(W.runs[1] * W.runLength[1]);
+      for (const p of f.walls) { pieces++; if (f.walls.some(q => q !== p && Math.hypot(q.x - p.x, q.z - p.z) < 3.2)) joined++; }
+      beds += f.beds.length;
+    }
+    expect(joined / pieces).toBeGreaterThan(0.85);
+    expect(beds).toBeGreaterThan(0);
+  });
+  it("set the shrine's henge stones in circles, not an even field", () => {
+    let stones = 0, inRing = 0;
+    for (const [cx, cy] of cellsOf("stone-shrine")) {
+      const f = wallFeatures(map, cx, cy);
+      expect(f.walls.length).toBeLessThanOrEqual(W.rings[1] * (W.ringStones[1] + 8) + 1);
+      expect(f.walls.length).toBeGreaterThanOrEqual(Math.ceil(W.ringStones[0] / 2)); // every shrine has its circle
+      for (const p of f.walls) { stones++; if (f.walls.filter(q => q !== p && Math.hypot(q.x - p.x, q.z - p.z) < 14).length >= 2) inRing++; }
+    }
+    expect(stones).toBeGreaterThan(5);
+    expect(inRing / stones).toBeGreaterThan(0.8);
+  });
+  it("are the same every time and keep off paths and the reserved spots", () => {
+    for (const [cx, cy] of [...cellsOf("garden"), ...cellsOf("stone-shrine"), ...cellsOf("wetland")].slice(0, 8)) {
+      const f = wallFeatures(map, cx, cy);
+      expect(wallFeatures(map, cx, cy)).toEqual(f);
+      for (const p of f.walls) { expect(map.paths.at(p.x, p.z)).toBeNull(); expect(map.reserved(p.x, p.z, 1.5)).toBe(false); }
+    }
   });
 });
