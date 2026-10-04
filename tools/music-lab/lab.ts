@@ -271,7 +271,11 @@ $("apply").addEventListener("click", () => {
   } catch (e) { $("json-msg").textContent = "Not applied: " + (e as Error).message; }
 });
 $("copy").addEventListener("click", () => { void navigator.clipboard?.writeText(JSON.stringify(style, null, 2)).then(() => ($("json-msg").textContent = "Copied: paste it over config/music-style.json.")); });
-$("download").addEventListener("click", () => {
+// downloads don't work inside a hosted page's frame (an artifact): there, Copy is the way out
+let framed = true;
+try { framed = window.self !== window.top; } catch { /* a cross-origin parent: framed */ }
+if (framed) $("download").remove();
+else $("download").addEventListener("click", () => {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([JSON.stringify(style, null, 2) + "\n"], { type: "application/json" }));
   a.download = "music-style.json"; a.click();
