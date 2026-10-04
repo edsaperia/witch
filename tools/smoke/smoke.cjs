@@ -376,7 +376,8 @@ async function main() {
     check(!!cave, `there is a cave mouth to look at (${cave})`);
     await page.keyboard.press(ZOOM_IN); await page.keyboard.press("KeyH");
     await sleep(2000);
-    await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 300000, polling: 500 });
+    // The art, and the forest round her (built a few chunks a frame since the speed work), all in.
+    await page.waitForFunction(() => window.witch.view.assets.pending === 0 && window.witch.view.stats.forestMissing === 0 && window.witch.view.stats.trees > 0, null, { timeout: 300000, polling: 500 });
     await sleep(1500);
     await shot(page, "ground-cave-mouth.png");
     const r = await page.evaluate(() => {
