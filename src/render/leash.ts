@@ -313,12 +313,13 @@ export class LeashView {
       this.standing.add(pos.x, pos.y, pos.z, size, this.uv(this.slotOf(c.species, c.level)), col.r, col.g, col.b, 1);
     }
 
-    // Placed sigils, written on the ground.
+    // Placed sigils, written on the ground, a little brighter than they were so they read in the
+    // grass (Ed, v233; the grass is trampled clear round them, grass.ts).
     for (const p of s.placed) {
       const c = g.creatures[p.id], slot = this.slotOf(c.species, c.level), col = this.colours.get(c.species)!;
-      const pulse = 0.8 + 0.2 * Math.sin(time * 2 + p.id);
-      this.flat.add(p.x, 0, p.z, 3 + c.level * 0.8, this.uv(slot), col.r * pulse, col.g * pulse, col.b * pulse, 1, Math.min(1, (time - p.at) / 0.8));
-      this.flat.add(p.x, 0, p.z, 5, dot, col.r, col.g, col.b, 0.25);
+      const pulse = 1.05 + 0.25 * Math.sin(time * 2 + p.id);
+      this.flat.add(p.x, 0.02, p.z, 3 + c.level * 0.8, this.uv(slot), col.r * pulse, col.g * pulse, col.b * pulse, 1, Math.min(1, (time - p.at) / 0.8));
+      this.flat.add(p.x, 0.01, p.z, 5.5, dot, col.r, col.g, col.b, 0.38);
     }
 
     // From the treetops, each placed sigil is projected up above the canopy over its spot, flat

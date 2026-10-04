@@ -7,6 +7,16 @@
         "Legend buffs: a party legend (an adult you've fed until it evolves) gives you its species' own buff while it lives: faster flight, quicker invites, berries found further off, longer between waves and more. Its sigil shows in a row at the top of the screen (hover for what it does), and a line says what you've gained or lost",
         "Party legends lumber: a creature that evolves into a legend slows to a legend's pace, following you too",
         "Wild legends are rare, late threats: only 3 to 5 a map, far out in remote areas. They're bigger, breathe slowly, and have a dark aura that you can see glowing through the treetops. They sleep until the party reaches their area, then lumber about it (no fighting yet). The legend next to home has gone",
+        "Evolving is much quicker: eating a berry is a quick nibble with a sparkle, and babies evolve after just 1 berry, young after 3, adults after 8",
+        "Berries grow in patches of a few bushes, clusters of red glints you can spot",
+        "Party animals take berries on their way: following you, they nip over to one near their path; set a sigil in the middle of a patch and they'll eat their way round it",
+        "Placed sigils are easier to see: the grass is trampled flat round them, and their runes glow a little brighter",
+        "Trunks stay visible in short, dense woods like the tangly forest: only their top part fades where the crowns are hidden"
+      ]
+    },
+    {
+      "version": 240,
+      "items": [
         "Berries: every area has bushes with shiny dark-red berries (8–12 per area), glowing softly at night and glinting red through the treetops",
         "Party animals walk over to a berry near them and eat it; it grows again somewhere else in the forest",
         "Feed a party animal enough berries and it evolves (babies after 5, young after 10, adults after 30): it glows and pulses for a bar, then flashes into its next size with a burst of sparkles, and the dancefloor flashes in its colour. Adults become legends: the only way to get a party legend",
@@ -18,7 +28,10 @@
         "The witch is lit by the lights around her: she turns red by a red soundsystem, warm by a campfire, and catches a coloured rim on the side facing a light, while staying easy to see in the dark",
         "Forecasting: the next two areas to join the party are certain, and a few more are likely. Their rune stones grow rings of magic symbols, a full ring of 12 on the next one, and their beams grow as the countdown runs",
         "A smaller, dimmer cue at the screen's edge points to the area after next",
-        "Music: a beat plays, loud and clear near the dancefloor and other playing soundsystems, quiet and muffled deep in the forest, and crackling when a speaker nearby is damaged (?music=off)"
+        "Music: a beat plays, loud and clear near the dancefloor and other playing soundsystems, quiet and muffled deep in the forest, and crackling when a speaker nearby is damaged (?music=off)",
+        "The new treehouse: a tall timber tower in a giant tree, its turret above the treetops; you start at the decks in its studio, and step down out of it when you set off",
+        "Scenes to find: a farmyard corner, a bus stop, a picnic gone wild, an allotment, festival remnants, a cemetery, a car park, a scrap yard, ruined churches and temples, castle ruins and more, each one at most once per map",
+        "Tractors, hay bales, fences, gates, lampposts, road signs and other countryside and street finds turn up in the forest, each one at most once per map"
       ]
     },
     {

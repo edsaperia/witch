@@ -116,8 +116,9 @@ export function floorInputs(g: Game): FloorInputs {
 function stepDancefloor(g: Game, waveBefore: number, wasSeated: boolean | undefined): void {
   const f = g.floor, time = g.clock.time, d = g.map.dancefloor;
   if (wasSeated !== false && !g.witch.seated) switchOn(f, time);
-  if (g.party.wave > waveBefore && g.party.last) {
-    const s = g.map.soundsystemSpot(g.party.last[0], g.party.last[1]), sp = AREA_TYPES[g.map.typeOf(g.party.last[0], g.party.last[1])].creature;
+  if (g.party.wave > waveBefore) for (const a of g.party.areas.values()) {
+    if (a.wave !== g.party.wave) continue; // a pulse towards each area this wave woke
+    const s = g.map.soundsystemSpot(a.cell[0], a.cell[1]), sp = AREA_TYPES[g.map.typeOf(a.cell[0], a.cell[1])].creature;
     floorEvent(f, { kind: "wave", at: time, dir: Math.atan2(s.z - d.z, s.x - d.x), rgb: neonOf((SIGIL_NEON as Record<string, string>)[sp]) });
   }
   for (const e of g.leash.events) if (e.kind === "placed") floorEvent(f, { kind: "sigil", at: time, dir: 0, rgb: neonOf(g.tuning.dancefloor.tiles.witchColour) });

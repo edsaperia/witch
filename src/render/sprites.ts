@@ -32,7 +32,7 @@ export const SPRITE_UNIFORMS = {
   uPartyCount: { value: 0 },
   uUplight: { value: new THREE.Vector4() },
   /** The trunk fade: metres covered (0 off), metres per art pixel. */
-  uTrunkFade: { value: new THREE.Vector2(0, 0.125) },
+  uTrunkFade: { value: new THREE.Vector3(0, 0.125, 0.3) },
   /** The wind (Ed, v171): sway at the top of a crown (metres), the gusts' speed (m/s) and size (m), and the time. */
   uWind: { value: new THREE.Vector4(0, 0, 1, 0) },
 };
@@ -107,7 +107,7 @@ varying float vGlow;
 varying float vFront;
 varying vec2 vLocal;
 varying float vSizeY;
-uniform vec2 uTrunkFade; // metres of trunk the fade covers, metres per art pixel
+uniform vec3 uTrunkFade; // metres of trunk the fade covers at most, metres per art pixel, its most share of the visible trunk
 ${LIGHT_GLSL}
 ${WITCH_LIGHT_GLSL}
 // 4x4 ordered dither, for fading the canopy in pixel-art style.
@@ -141,10 +141,12 @@ void shade() {
   if (vFlags.y < -0.001 && uTrunkFade.x > 0.0) {
     // A trunk cut from its crown (Ed, v149: "fade out instead of just stop"): where the crowns are
     // hidden, its top fades out over uTrunkFade.x metres in an ordered dither on the art's own
-    // pixel grid; where the crowns show, it stays whole under them.
+    // pixel grid; where the crowns show, it stays whole under them. The fade covers at most
+    // uTrunkFade.z of the trunk's visible height (Ed, v233: short tangly trees kept no trunk at
+    // all), so every trunk keeps a solid base.
     float d = length(gl_FragCoord.xy - uCutout.xy);
     float crown = max(smoothstep(uCutout.z - uCutout.w, uCutout.z, d), uTopFade);
-    float topY = 1.0 + vFlags.y, band = uTrunkFade.x / max(vSizeY, 0.01);
+    float topY = 1.0 + vFlags.y, band = min(uTrunkFade.x / max(vSizeY, 0.01), topY * uTrunkFade.z);
     float t = clamp((topY - vLocal.y) / band, 0.0, 1.0);
     vec2 artPx = vec2(floor(vUv.x * float(textureSize(uAlbedo, 0).x)), floor(vLocal.y * vSizeY / uTrunkFade.y));
     if (bayer(artPx) >= max(t, crown)) discard;

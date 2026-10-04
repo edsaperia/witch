@@ -162,6 +162,14 @@ Decided in a long design session with the coordinator; built in stages, with a p
   - **Content:** built from data-driven parts (movement, behaviour drives, attack delivery, effect and timing, skins). The first slice is **10 contrasting species**; balance tools are a dashboard page and an in-game arena mode.
 - **Mode roles:** treetop mode is the strategic map, ground mode is for micro.
 
+### Multiplayer (Ed, 2026-10-04)
+
+- **Online co-op** is a goal (not versus, not same-screen); networking comes later. Each player is a witch with her own leash stack, spell and camera; creatures, soundsystems, waves and the forecast are shared.
+- **Waves:** the clock stays the same; each wave wakes **one new area per witch** in the game at that moment, so witches can join and leave mid-game and it still works.
+- **Sigils:** each witch has her own stack, but a sigil placed on the ground belongs to no one: **any witch can pick it up**.
+- **Legend buffs apply to every witch** while that legend lives, whoever evolved it.
+- **For builders now:** no single-witch assumptions in new rules code (pass the acting witch explicitly); per-player state (camera, mode, music mix, HUD, edge cues) lives in `src/render/`; inputs go through one place that could later carry a player id; the picker and forecast take `areasPerWave` (1 for now). Later (Stage 4): `game.witch` becomes `game.witches[]`, with a fixed-timestep deterministic simulation driven only by inputs (for balance sims, off-screen fights and netcode).
+
 ## Run structure
 
 - A run is a sequence of **waves** (above) and ends when every soundsystem is destroyed.

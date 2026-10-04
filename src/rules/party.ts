@@ -27,19 +27,22 @@ export interface PartyState {
   /** Game time of the next wave. */
   nextAt: number;
   paused: boolean;
-  /** The area the next wave will wake (Ed, v149: one area a wave), chosen as soon as the previous
-   *  one woke, so the player knows where to go; null when every area has the party. */
-  next: Cell | null;
+  /** The areas the next wave will wake (Ed, v149: one area a wave; 2026-10-04: one per witch in
+   *  the game, areasPerWave), chosen as soon as the previous ones woke, so the players know where
+   *  to go; empty when every area has the party. */
+  next: Cell[];
   /** The area the last wave woke (the picker spreads away from it). */
   last: Cell | null;
   /** Forecasting (Ed, 2026-10-04): the area the wave after next will wake (confirmed too: the
    *  picker is seeded, so it's what that wave will pick), and the probable ones for the wave
    *  after that (the picker's candidates then, about forecast.probable of them). */
-  afterNext: Cell | null;
+  afterNext: Cell[];
   probable: Cell[];
   /** Waves further the forecast sees (a legend buff, rules/buffs.ts): 1 or more and the wave after
-   *  the after-next is confirmed too, so `probable` holds just the one area it will wake. */
+   *  the after-next is confirmed too, so `probable` holds just the areas it will wake. */
   seeAhead?: number;
+  /** How many areas each wave wakes: one per witch present (Ed, 2026-10-04), read at each wave. */
+  areasPerWave: number;
   /** Game time the home speaker ring finishes booting up (Ed, 2026-10-04): the first wave's countdown starts then. */
   bootUntil: number;
 }
@@ -49,8 +52,8 @@ export const cellKey = (c: Cell) => `${c[0]},${c[1]}`;
 export function newParty(map: ForestMap): PartyState {
   const home: Partified = { cell: map.centreCell, wave: 0, at: 0, from: null, soundsystem: null };
   const boot = map.tuning.boot.time;
-  const p: PartyState = { areas: new Map([[cellKey(map.centreCell), home]]), wave: 0, nextAt: boot + map.tuning.party.startDelay + map.tuning.party.interval, paused: false, next: null, last: null, bootUntil: boot, afterNext: null, probable: [] };
-  p.next = pickNext(p, map);
+  const p: PartyState = { areas: new Map([[cellKey(map.centreCell), home]]), wave: 0, nextAt: boot + map.tuning.party.startDelay + map.tuning.party.interval, paused: false, next: [], last: null, bootUntil: boot, afterNext: [], probable: [], areasPerWave: Math.max(1, map.tuning.party.areasPerWave) };
+  p.next = pickSet(p, map, p.areasPerWave);
   planAhead(p, map);
   return p;
 }
@@ -64,8 +67,8 @@ export type Picker = "noisy" | "near3" | "near3touch" | "nearest";
  *  - near3: of all the dormant areas, the 3 nearest the dancefloor, one at random;
  *  - near3touch: the same among those bordering the party;
  *  - nearest: the nearest dormant area bordering the party. */
-export function pickNext(p: PartyState, map: ForestMap, picker: Picker = map.tuning.party.picker as Picker, candidates?: Cell[]): Cell | null {
-  const d = map.dancefloor, N = map.tuning.party.noisy, r = rng(map.seed * 131 + p.wave * 7919 + 3);
+export function pickNext(p: PartyState, map: ForestMap, picker: Picker = map.tuning.party.picker as Picker, candidates?: Cell[], salt = 0): Cell | null {
+  const d = map.dancefloor, N = map.tuning.party.noisy, r = rng(map.seed * 131 + p.wave * 7919 + 3 + salt * 104729);
   const touching = new Set<string>();
   for (const k of p.areas.keys()) for (const nk of map.neighbours.get(k) ?? []) if (!p.areas.has(nk)) touching.add(nk);
   const dormant: { key: string; cell: Cell; dist: number }[] = [];
@@ -100,19 +103,37 @@ export function pickNext(p: PartyState, map: ForestMap, picker: Picker = map.tun
   return three[Math.floor(r() * three.length)].cell;
 }
 
+/** A wave's areas: `n` picked one after another, each as if the ones before had already woken,
+ *  so they're all different (and, from the same party, always the same). */
+export function pickSet(p: PartyState, map: ForestMap, n: number, candidates?: Cell[]): Cell[] {
+  const out: Cell[] = [];
+  let v = p;
+  for (let k = 0; k < n; k++) {
+    const c = pickNext(v, map, undefined, k === n - 1 ? candidates : undefined, k);
+    if (!c) break;
+    out.push(c);
+    v = { ...v, areas: new Map(v.areas).set(cellKey(c), dummyArea(c)), last: c };
+  }
+  return out;
+}
+const dummyArea = (c: Cell): Partified => ({ cell: c, wave: 0, at: 0, from: null, soundsystem: null });
+
 /** Plan the waves after `next` (Ed, 2026-10-04): what the picker will choose once next has woken
  *  (confirmed: the same seed, the same party), and its candidates the wave after (probable). */
 export function planAhead(p: PartyState, map: ForestMap): void {
-  p.afterNext = null; p.probable = [];
-  if (!p.next) return;
-  const dummy = (c: Cell): Partified => ({ cell: c, wave: 0, at: 0, from: null, soundsystem: null });
-  const v1: PartyState = { ...p, areas: new Map(p.areas).set(cellKey(p.next), dummy(p.next)), wave: p.wave + 1, last: p.next };
-  p.afterNext = pickNext(v1, map);
-  if (!p.afterNext) return;
-  const v2: PartyState = { ...v1, areas: new Map(v1.areas).set(cellKey(p.afterNext), dummy(p.afterNext)), wave: p.wave + 2, last: p.afterNext };
+  p.afterNext = []; p.probable = [];
+  if (!p.next.length) return;
+  const n = p.areasPerWave, woke = (v: PartyState, set: Cell[], wave: number): PartyState => {
+    const areas = new Map(v.areas);
+    for (const c of set) areas.set(cellKey(c), dummyArea(c));
+    return { ...v, areas, wave, last: set[set.length - 1] };
+  };
+  const v1 = woke(p, p.next, p.wave + 1);
+  p.afterNext = pickSet(v1, map, n);
+  if (!p.afterNext.length) return;
   const cands: Cell[] = [];
-  const third = pickNext(v2, map, undefined, cands);
-  p.probable = (p.seeAhead ?? 0) >= 1 && third ? [third] : cands.slice(0, Math.max(1, map.tuning.forecast.probable));
+  const third = pickSet(woke(v1, p.afterNext, p.wave + 2), map, n, cands);
+  p.probable = (p.seeAhead ?? 0) >= 1 && third.length ? third : cands.slice(0, Math.max(1, map.tuning.forecast.probable * n));
 }
 
 /** Where an area's soundsystem stands: in its clearing, beside its centre, inside its own ground. */
@@ -123,19 +144,20 @@ export function soundsystemFor(map: ForestMap, cell: Cell): Soundsystem {
 }
 
 
-/** The area the next wave will partify (one a wave, Ed v149), and where the party comes to it
- *  from: its nearest partified neighbour, or home if none touches it. */
+/** The areas the next wave will partify (one per witch, Ed 2026-10-04), and where the party comes
+ *  to each from: its nearest partified neighbour, or home if none touches it. */
 export function nextWave(p: PartyState, map: ForestMap): { key: string; cell: Cell; from: Cell }[] {
-  if (!p.next) return [];
-  const key = cellKey(p.next), site = map.siteOf(p.next[0], p.next[1]);
-  let from: Cell = map.centreCell, best = Infinity;
-  for (const nk of map.neighbours.get(key) ?? []) {
-    const a = p.areas.get(nk);
-    if (!a) continue;
-    const s = map.siteOf(a.cell[0], a.cell[1]), dd = Math.hypot(s.x - site.x, s.z - site.z);
-    if (dd < best) { best = dd; from = a.cell; }
-  }
-  return [{ key, cell: p.next, from }];
+  return p.next.map(cell => {
+    const key = cellKey(cell), site = map.siteOf(cell[0], cell[1]);
+    let from: Cell = map.centreCell, best = Infinity;
+    for (const nk of map.neighbours.get(key) ?? []) {
+      const a = p.areas.get(nk);
+      if (!a) continue;
+      const s = map.siteOf(a.cell[0], a.cell[1]), dd = Math.hypot(s.x - site.x, s.z - site.z);
+      if (dd < best) { best = dd; from = a.cell; }
+    }
+    return { key, cell, from };
+  });
 }
 
 /** Spread the party one ring now. Returns the newly partified areas. */
@@ -148,8 +170,9 @@ export function spreadWave(p: PartyState, map: ForestMap, time: number): Partifi
   }
   p.wave = wave;
   if (fresh.length) p.last = fresh[fresh.length - 1].cell;
-  // The confirmed after-next is the next now (the same as picking it afresh), and the plan moves on a wave.
-  p.next = p.afterNext ?? pickNext(p, map);
+  // The confirmed after-next is the next now (the same as picking it afresh), unless the number of
+  // witches has changed since (then it's picked afresh), and the plan moves on a wave.
+  p.next = p.afterNext.length === p.areasPerWave ? p.afterNext : pickSet(p, map, p.areasPerWave);
   planAhead(p, map);
   return fresh;
 }
@@ -186,12 +209,12 @@ export interface SpawnMarker { key: string; cell: Cell; x: number; z: number; aw
 /** The spawn markers: one for every area the party hasn't reached (where its soundsystem will stand). */
 export function spawnMarkers(p: PartyState, map: ForestMap): SpawnMarker[] {
   const next = new Set(nextWave(p, map).map(c => c.key)), out: SpawnMarker[] = [];
-  const after = p.afterNext ? cellKey(p.afterNext) : "", probable = new Set(p.probable.map(cellKey));
+  const after = new Set(p.afterNext.map(cellKey)), probable = new Set(p.probable.map(cellKey));
   for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
     const key = `${cx},${cy}`;
     if (p.areas.has(key)) continue;
     const s = map.soundsystemSpot(cx, cy), awake = next.has(key);
-    out.push({ key, cell: [cx, cy], x: s.x, z: s.z, awake, stage: awake ? "next" : key === after ? "afterNext" : probable.has(key) ? "probable" : "dormant" });
+    out.push({ key, cell: [cx, cy], x: s.x, z: s.z, awake, stage: awake ? "next" : after.has(key) ? "afterNext" : probable.has(key) ? "probable" : "dormant" });
   }
   return out;
 }

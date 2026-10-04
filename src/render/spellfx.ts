@@ -5,7 +5,7 @@ import * as THREE from "three";
 import { spellActive, spellCharge } from "../rules/spells";
 import type { Game } from "../rules/game";
 
-const N = 28, SCALE = 3, MAX = 160;
+const N = 28, SCALE = 3, MAX = 240;
 
 export class SpellFx {
   readonly trail: THREE.Points;
@@ -21,7 +21,7 @@ export class SpellFx {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(this.pos, 3));
     geo.setAttribute("color", new THREE.BufferAttribute(this.col, 4));
-    this.trail = new THREE.Points(geo, new THREE.PointsMaterial({ size: 3, sizeAttenuation: false, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    this.trail = new THREE.Points(geo, new THREE.PointsMaterial({ size: 5, sizeAttenuation: false, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     this.trail.frustumCulled = false;
     this.canvas.width = this.canvas.height = N;
     Object.assign(this.canvas.style, { position: "fixed", left: "14px", bottom: "44px", width: `${N * SCALE}px`, height: `${N * SCALE}px`, imageRendering: "pixelated", pointerEvents: "none", zIndex: "2" });
@@ -36,11 +36,11 @@ export class SpellFx {
     // The trail: a mote dropped every 1/60 s while it's on, each fading over 0.6 s.
     if (active && time - this.lastDrop > 1 / 60) {
       this.lastDrop = time;
-      for (let k = 0; k < 2; k++) this.pts.push({ x: w.x + (Math.random() - 0.5) * 0.8, y: y + (Math.random() - 0.5) * 0.8, z: w.z + (Math.random() - 0.5) * 0.8, at: time });
+      for (let k = 0; k < 3; k++) this.pts.push({ x: w.x + (Math.random() - 0.5) * 0.8, y: y + (Math.random() - 0.5) * 0.8, z: w.z + (Math.random() - 0.5) * 0.8, at: time });
     }
-    this.pts = this.pts.filter(p => time - p.at < 0.6).slice(-MAX);
+    this.pts = this.pts.filter(p => time - p.at < 0.8).slice(-MAX);
     this.pts.forEach((p, i) => {
-      const k = 1 - (time - p.at) / 0.6;
+      const k = 1 - (time - p.at) / 0.8;
       this.pos.set([p.x, p.y, p.z], i * 3);
       this.col.set([0.55 + 0.45 * k, 0.9, 1, k], i * 4);
     });

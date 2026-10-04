@@ -200,7 +200,7 @@ function frame(now: number): void {
   view.debugReadouts = debugOn;
   stepGame(game, c, dt);
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
-  music?.update(musicMix(game), game.clock.time, tuning.beat.bpm, !game.clock.paused);
+  music?.update(musicMix(game, game.witch), game.clock.time, tuning.beat.bpm, !game.clock.paused);
   if (!ready) return;
   // The wave countdown bar: empties toward the next wave.
   const cd = waveCountdown(game.party, game.map, game.clock.time);

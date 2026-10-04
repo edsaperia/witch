@@ -34,7 +34,7 @@ export interface Tuning {
   music: { on: boolean; volume: number; nearDist: number; farDist: number; floor: number; muffle: number; clear: number; distort: number; src: string };
   /** The home speaker ring's boot-up at the start (Ed, 2026-10-04): seconds before the first wave's countdown begins. */
   boot: { time: number };
-  groundCover: { on: boolean; density: number; radius: number; cap: number; spacing: number; cell: number; budgetMs: number; sway: number; part: number };
+  groundCover: { on: boolean; density: number; radius: number; cap: number; spacing: number; cell: number; budgetMs: number; sway: number; part: number; sigilClear: number };
   /** Set pieces drawn this much bigger than the art, with a clearing of setPieceClear metres (times the scale) round them. */
   setPieceScale: number;
   setPieceClear: number;
@@ -89,7 +89,7 @@ export interface Tuning {
   stringLights: { on: boolean; runsPerArea: number[]; spansPerRun: number[]; coneAngle: number; junctionChance: number; spanMin: number; spanMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; twinkle: number; chaseSpeed: number };
   party: {
     motes: { perPatch: number; from: number; to: number; speed: number };
-    uplight: { strength: number; pulse: number; edge: number }; interval: number; startDelay: number; maxPerWave: number; picker: string; noisy: { wobble: number; lobeSize: number; candidates: number; spreadFromLast: boolean }; transition: number; lightReach: number; lightStrength: number };
+    uplight: { strength: number; pulse: number; edge: number }; interval: number; startDelay: number; maxPerWave: number; /** areas each wave wakes: one per witch present (1 until multiplayer) */ areasPerWave: number; picker: string; noisy: { wobble: number; lobeSize: number; candidates: number; spreadFromLast: boolean }; transition: number; lightReach: number; lightStrength: number };
   dancefloor: {
     motes: { count: number; rise: number; speed: number; column: number };
     radius: number; clearing: number;
@@ -110,11 +110,13 @@ export interface Tuning {
   /** How mist, far haze and canopy dapple are drawn: smooth gradients, or dithered pixel steps. */
   fx: "smooth" | "pixel";
   moonbeams: number;
-  trunkFade: { metres: number; dither: boolean };
+  trunkFade: { metres: number; share: number; dither: boolean };
   pathFade: { metres: number; dither: boolean };
   runeMarkers: { awakeStyle: string; laser: { opacity: number; width: number; length: number }; scale: number; beamHeight: number; lightRange: number; dormant: { glow: number; light: number; reach: number; beam: number }; awake: { glow: number[]; light: number; lightBuild: number; reach: number; beam: number; motes: number; moteBuild: number }; flare: { time: number; light: number } };
   walls: { runs: number[]; runLength: number[]; gateChance: number; rings: number[]; ringStones: number[]; ringRadius: number[]; avenueChance: number; loneChance: number; clumps: number[]; clumpSize: number[]; clumpRadius: number };
   grounds: { chance: number; kinds: string[]; radius: Record<string, number> };
+  /** Scenes (art/scenes.js): the share of areas that get one (if an unused scene suits them); footprint = farthest piece's authored offset times scale, plus pad metres. */
+  scenes: { chance: number; scale: number; pad: number };
   relics: { spacing: number; chance: number; nearRoad: number; minGap: number };
   treeCap: { from: number; keep: number };
   treetop: { boost: number; boostTime: number; boostAngle: number; turnRate: number; turnRateSlow: number; sharpTurnSpeed: number; brakeAt: number; glideTime: number; sharpTurnBleed: number; cameraPull: number };
@@ -128,7 +130,7 @@ export interface Tuning {
   /** Berries and evolving (rules/berries.ts): berries per area at the start [min, max], berry bushes
    *  per area, how far a party animal looks for one (m), how long it eats (s), berries to evolve
    *  (babies, young, adults), the berry's colour and glow. */
-  berries: { perArea: number[]; bushesPerArea: number; seekRadius: number; eatTime: number; toEvolve: number[]; colour: string; glow: number };
+  berries: { perArea: number[]; bushesPerArea: number; patch: { bushes: number[]; radius: number }; detour: number; seekRadius: number; eatTime: number; toEvolve: number[]; colour: string; glow: number };
   sigilProjection: { height: number; opacity: number; beam: number; size: number };
   occlusion: { on: boolean; fadeOpacity: number; edge: number; minHeight: number; silhouette: number };
   stack: { offset: number; scale: number; gap: number; stiffness: number; damping: number; trail: number; idleSway: number };

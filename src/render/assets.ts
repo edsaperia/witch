@@ -4,7 +4,7 @@
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
 import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
-import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PathPieceArt, type RelicArt, type RelicLayouts, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
+import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { ART_HASH, cacheGet, cachePut, hashText } from "./artCache";
 
@@ -25,6 +25,7 @@ export class AssetLibrary {
   private creatures = new Map<string, CreatureArt>();
   private decor: DecorArt | undefined;
   private speakers: (SpeakerArt & { atlas: Atlas }) | undefined;
+  private scenes: (SceneArt & { atlas: Atlas }) | undefined;
   private pieces: { atlas: Atlas; byId: Record<string, PathPieceArt> } | undefined;
   private relicSet: RelicSet | undefined;
   private queue: ArtJob[] = [];
@@ -44,7 +45,7 @@ export class AssetLibrary {
   readonly soundsystems: Atlas;
   /** The witch's treehouse: its base (frame 0) and top (frame 1, the crown: treetop mode), and
    *  anchors in its sprite's pixels: the trunk's foot, her seat on the terrace, its lights. */
-  readonly treehouse: { atlas: Atlas; base: { x: number; y: number }; seat: { x: number; y: number }; lights: { x: number; y: number; rgb: number[]; kind: string }[] };
+  readonly treehouse: { atlas: Atlas; base: { x: number; y: number }; seat: { x: number; y: number }; camera: { x: number; y: number }; hasFore: boolean; lights: { x: number; y: number; rgb: number[]; kind: string }[] };
   /** Style scale: the lab's K, 2 / pixel size. */
   readonly K: number;
   /** Bumped whenever a new set is ready, so the view knows to refresh its batches. */
@@ -89,13 +90,14 @@ export class AssetLibrary {
     const ss: Baked[] = [];
     for (let v = 0; v < 3; v++) for (let f = 0; f < 3; f++) ss.push(Art.bake(Art.soundsystemSprite(style, { variant: v, frame: f, state: "playing" }), Art.soundsystemColours(v), style, style.cOutline) as Baked);
     this.soundsystems = packAtlas(ss, 2048);
-    const th = Art.treehouseSprite(style) as { bot: unknown; top: unknown; anchors: { base: { x: number; y: number }; seat: { x: number; y: number }; lights: { x: number; y: number; rgb: number[]; kind: string }[] } };
+    const th = Art.treehouseSprite(style) as { bot: unknown; top: unknown; fore?: unknown; anchors: { base: { x: number; y: number }; seat: { x: number; y: number }; camera?: { x: number; y: number }; lights: { x: number; y: number; rgb: number[]; kind: string }[] } };
     const thc = Art.treehouseColours(style);
     // Its model draws a hard dark shadow ellipse on the ground round the trunk's foot: drop it (a
     // soft contact shadow goes there instead), as Ed asked for set pieces.
     for (const sp of [th.bot, th.top] as { w: number; h: number; m: Uint8Array }[])
       for (let y = Math.max(0, Math.floor(th.anchors.base.y - 14)); y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x] === Art.M.NOSE) sp.m[y * sp.w + x] = 0;
-    this.treehouse = { atlas: packAtlas([th.bot, th.top].map(sp => Art.bake(sp, thc, style, "none") as Baked), 2048), ...th.anchors };
+    // Frames: 0 its base, 1 its top (treetop mode), 2 the studio's DJ table alone (v2), drawn over her.
+    this.treehouse = { atlas: packAtlas([th.bot, th.top, ...(th.fore ? [th.fore] : [])].map(sp => Art.bake(sp, thc, style, "none") as Baked), 2048), ...th.anchors, camera: th.anchors.camera ?? th.anchors.seat, hasFore: !!th.fore };
     this.useWorkers = typeof Worker !== "undefined" && typeof OffscreenCanvas !== "undefined";
     if (this.useWorkers) {
       // One worker per core but the page's own, up to six: the area types' trees are most of the work.
@@ -159,6 +161,8 @@ export class AssetLibrary {
     if (r.job.kind === "relics") {
       const list = r.result.relics!;
       this.relicSet = { atlas, byId: Object.fromEntries(list.map(p => [p.id, p])), modern: list.filter(p => p.family === "modern"), layouts: r.result.layouts! };
+    } else if (r.job.kind === "scenes") {
+      this.scenes = { atlas, ...r.result.scenes! };
     } else if (r.job.kind === "speakers") {
       this.speakers = { atlas, ...r.result.speakers! };
     } else if (r.job.kind === "pathPieces") {
@@ -199,6 +203,11 @@ export class AssetLibrary {
   relicArt(): RelicSet | undefined {
     if (!this.relicSet) this.ask({ kind: "relics", id: "all", style: this.style });
     return this.relicSet;
+  }
+  /** The scenes' pieces and layouts, or undefined (and asked for). */
+  sceneArt(): (SceneArt & { atlas: Atlas }) | undefined {
+    if (!this.scenes) this.ask({ kind: "scenes", id: "all", style: this.style });
+    return this.scenes;
   }
   /** The dancefloor's speakers, or undefined (and asked for, ahead of the scenery: they're gameplay). */
   speakerArt(): (SpeakerArt & { atlas: Atlas }) | undefined {
