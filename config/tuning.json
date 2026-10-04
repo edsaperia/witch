@@ -189,25 +189,8 @@
   "bloom": { "on": true, "strength": 0.7, "threshold": 0.55 },
   "tiltShift": { "on": true, "where": "before", "strength": 3, "band": 0.4, "centre": 0.55, "treetop": { "strength": 6, "band": 0.28 } },
 
-  "_creatures": "Wild creatures by area. Today (population.byDistance false) they grow with an area's remoteness (0 at the dancefloor, 1 at the map's edge): creaturesNear in the areas round home, creaturesFar at the edge (creatureCurve shapes the rise), youngShareFar of them young at the edge; adults from adultsFrom outward, adultShareFar of them at the edge. With population.byDistance true (Ed, 2026-10-04: populations tied to how far each area's rune stone, its soundsystem's spot, is from the dancefloor, so the map stays dangerous far from home; off until Ed picks a pacing variant from the balance simulator's REPORT): population.table, rows of at (metres from the dancefloor to the area's rune stone) and how many babies, young and adults live there, read between rows by straight lines (the last row beyond it); population.roll scales an area's young and adults by up to that share either way (0.25: 75% to 125%) and its babies by one either way; babies are always at least one, for inviting. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so the table's first ring (about 100 m) brings 58 to its siege, 250 m about 118, 400 m (about wave 30 with one-minute waves) about 190. The home area holds none. Wild legends (Ed, 2026-10-04: rare, late mini-bosses; see wildLegends) live only in remote areas; legendNextToHome puts one more next to home, to look at early. Idle creatures roam their whole area. Only creatures whose home is within creatureSimRadius metres of the witch move (never less than the haze far edge plus 2.5 areas, so a creature resuming its roam always does so out of sight). node tools/balance/sim.mjs forecasts the sieges these numbers make (it reads the table whatever byDistance says).",
-  "creaturesNear": 2,
-  "creaturesFar": 20,
-  "creatureCurve": 1.3,
-  "youngShareFar": 0.5,
-  "adultsFrom": 0.35,
-  "adultShareFar": 0.35,
-  "population": {
-    "byDistance": false,
-    "table": [
-      { "at": 0, "babies": 2, "young": 0, "adults": 0 },
-      { "at": 100, "babies": 2, "young": 0, "adults": 2 },
-      { "at": 250, "babies": 2, "young": 2, "adults": 3 },
-      { "at": 400, "babies": 2, "young": 3, "adults": 5 },
-      { "at": 700, "babies": 3, "young": 4, "adults": 9 },
-      { "at": 1100, "babies": 4, "young": 4, "adults": 12 }
-    ],
-    "roll": 0.25
-  },
+  "_creatures": "Wild creatures (Ed, 2026-10-04): every area starts with the same population, population.start (one baby and one adult), and while it stays wild it grows: every wave, each area the party hasn't reached gains growth.perWave more, each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about n/3 young and 1 + n/3 adults (F about 29 + 14.8 n). Wild legends (Ed, 2026-10-04: rare, late mini-bosses; see wildLegends) live only in remote areas; legendNextToHome puts one more next to home, to look at early. Idle creatures roam their whole area. Only creatures whose home is within creatureSimRadius metres of the witch move (never less than the haze far edge plus 2.5 areas, so a creature resuming its roam always does so out of sight). node tools/balance/sim.mjs forecasts the sieges these numbers make.",
+  "population": { "start": { "babies": 1, "young": 0, "adults": 1 }, "growth": { "on": true, "perWave": 1, "weights": [1, 1, 1], "hide": 20 } },
   "legendNextToHome": false,
   "_wildLegends": "Wild legends (Ed, 2026-10-04): rare, late threats, mini-bosses when combat comes (each has the boss flag). perMap [min, max] of them per map, only in areas at least from remote (0 home, 1 the edge), at least spacing areas apart, at most one an area. They sleep (dormant: still, breathing slowly) until the party reaches their area, then lumber about it at legendSpeed. Drawn scale times a legend's size, swelling by breathe as they breathe (once every breathEvery seconds), with an aura on the ground aura metres across and, from the treetops, a glow over the canopy (glow its strength) in a dark mix of their sigil's colour.",
   "wildLegends": { "perMap": [3, 5], "from": 0.7, "spacing": 4, "scale": 1.35, "breathe": 0.04, "breathEvery": 4, "aura": 6, "glow": 1 },

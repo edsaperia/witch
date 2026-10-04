@@ -1,6 +1,7 @@
 // The balance simulator (Ed, 2026-10-04: "how powerful we think a player can get, and how
 // quickly"; what matters more is whether a late-reacting player can still catch up). A headless
-// model of only what decides a run: the real map, its creatures and the real wave order (the
+// model of only what decides a run: the real map, its creatures (each area's start, and what it
+// grew while wild, by the game's own growthLevel) and the real wave order (the
 // party's own picker, ruined areas dropping out as in the game); each wave's soundsystem with its
 // health; its area's young and up marching on it in straight lines at their march speed
 // (creatureSpeed × marchMult, as combat.ts moves them) and, once in reach, hitting it at their
@@ -11,6 +12,7 @@
 // game manages about 3.5 times real time. Read by tools/balance/sim.mjs and balance.test.ts.
 import { attackOf, COMBAT } from "./combat";
 import { spawnCreatures, type Creature, type Level } from "./creatures";
+import { growthLevel } from "./growth";
 import type { ForestMap } from "./map";
 import { cellKey, newParty, soundsystemFor, spreadWave } from "./party";
 import { lanchester, levelValue } from "./power";
@@ -136,6 +138,15 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
         const key = cellKey(a.cell), at = soundsystemFor(map, a.cell);
         sounds.set(key, { key, x: at.x, z: at.z, hp: C.soundsystemHealth, radius: C.soundsystemRadius });
         for (const f of by.get(key) ?? []) if (!f.gone && (!o.areaLegends || f.level < 3)) { f.siege = key; live.push(f); }
+        // What it grew while wild (rules/growth.ts): a creature a wave, waves 1 to this one, at the game's own levels.
+        const G = t.population.growth, site = map.siteOf(a.cell[0], a.cell[1]);
+        if (G.on) for (let w = 1; w <= party.wave; w++) for (let n = 0; n < G.perWave; n++) {
+          const level = growthLevel(map.seed, a.cell, w, n, G.weights);
+          if (level === 0) continue; // babies never join a siege
+          const f = reinforcement(-2e6 - live.length, key, site.x, site.z, map);
+          if (level === 1) { const A = COMBAT.attacks[COMBAT.byLevel.melee[1]!]; Object.assign(f, { level: 1, dps: COMBAT.levels.dps[1], value: levelValue(1), reach: A.range + (A.lunge ?? 0) - 0.3 }); }
+          f.siege = key; live.push(f);
+        }
         if (o.areaLegends) {
           const site = map.siteOf(a.cell[0], a.cell[1]), L: Fighter = { ...reinforcement(-1e6 - live.length, key, site.x, site.z, map), level: 3, dps: COMBAT.levels.dps[3], value: levelValue(3), speed: t.legendSpeed * C.marchMult, reach: COMBAT.attacks[COMBAT.byLevel.melee[3]!].range, stay: true, siege: key };
           live.push(L);

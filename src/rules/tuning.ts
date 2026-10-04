@@ -172,17 +172,10 @@ export interface Tuning {
   tone: { black: number; gamma: number; ambient: number; moon: number };
   bloom: { on: boolean; strength: number; threshold: number };
   tiltShift: { on: boolean; where: "before" | "after"; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
-  /** Wild creatures by the distance (metres) from the dancefloor to an area's rune stone (Ed,
-   *  2026-10-04): rows read between by straight lines; roll, each area's variation. Off
-   *  (byDistance false) until Ed picks a pacing variant: then today's remoteness rule below. */
-  population: { byDistance: boolean; table: PopulationRow[]; roll: number };
-  /** Today's populations, by remoteness (used while population.byDistance is off). */
-  creaturesNear: number;
-  creaturesFar: number;
-  creatureCurve: number;
-  youngShareFar: number;
-  adultsFrom: number;
-  adultShareFar: number;
+  /** Wild creatures (Ed, 2026-10-04): every area starts with `start`; while wild it gains
+   *  growth.perWave a wave at a random level by growth.weights (baby, young, adult); new ones
+   *  appear beyond the haze's far edge plus growth.hide metres from every witch (rules/growth.ts). */
+  population: { start: { babies: number; young: number; adults: number }; growth: { on: boolean; perWave: number; weights: number[]; hide: number } };
   legendNextToHome: boolean;
   /** Wild legends (Ed, 2026-10-04): rare, late mini-bosses in remote areas, dormant till the party reaches their area. */
   wildLegends: { perMap: number[]; from: number; spacing: number; scale: number; breathe: number; breathEvery: number; aura: number; glow: number };
@@ -193,8 +186,6 @@ export interface Tuning {
   /** Species speeds (Ed, 2026-10-04): the fast few move fastMult times the usual; legends legend times (when leashed and running to catch up). */
   creatureSpeeds: { fast: string[]; fastMult: number; legend: number };
 }
-
-export interface PopulationRow { at: number; babies: number; young: number; adults: number }
 
 export const TUNING: Tuning = raw as Tuning;
 

@@ -3,7 +3,7 @@ import { simulate } from "./balance";
 import { generateMap } from "./map";
 import { lanchester, levelValue, powerReport } from "./power";
 import { newGame } from "./game";
-import { TUNING, withTuning } from "./tuning";
+import { TUNING } from "./tuning";
 
 describe("fighting value (rules/power.ts)", () => {
   it("is √(hp × dps) by level: babies 0, young 15.5, adults 29, legends 76", () => {
@@ -16,8 +16,8 @@ describe("fighting value (rules/power.ts)", () => {
   });
 
   it("reads the party and the sieges off a game", () => {
-    const g = newGame(123, TUNING), young = g.creatures.find(c => c.level === 1)!, adult = g.creatures.find(c => c.level === 2)!;
-    young.leashed = true; g.leash.stack.push(young.id);
+    const g = newGame(123, TUNING), adults = g.creatures.filter(c => c.level === 2), young = adults[0], adult = adults[1];
+    young.level = 1; young.leashed = true; g.leash.stack.push(young.id);
     adult.siege = "home";
     const p = powerReport(g.creatures, g.witches, g.combat.sounds);
     expect(p.leashed).toBeCloseTo(levelValue(1), 9);
@@ -29,13 +29,13 @@ describe("fighting value (rules/power.ts)", () => {
 });
 
 describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () => {
-  const map = generateMap(1000, withTuning({ population: { ...TUNING.population, byDistance: true } }));
+  const map = generateMap(1000, TUNING);
 
   it("runs a quick idle run: sieges grow wave by wave, soundsystems fall, the same every time", () => {
     const t0 = Date.now(), a = simulate(map, { interval: 60, maxWaves: 12 });
     expect(Date.now() - t0).toBeLessThan(5000);
     expect(a.waves.length).toBeGreaterThanOrEqual(Math.min(12, a.survived));
-    expect(a.waves[0].largest).toBeGreaterThan(0); // the first ring brings adults (Ed, 2026-10-04)
+    expect(a.waves[0].largest).toBeGreaterThan(0); // every area has an adult (Ed, 2026-10-04)
     expect(a.waves[a.waves.length - 1].marching).toBeGreaterThan(a.waves[0].marching);
     expect(simulate(map, { interval: 60, maxWaves: 12 })).toEqual(a); // deterministic, and the cached fighters reset
   }, 30000);

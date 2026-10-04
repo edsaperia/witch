@@ -3,7 +3,8 @@
 //  - the idle player's loss, and the enemy's fighting value wave by wave;
 //  - the skill spread (Ed, 2026-10-04: "the difference between a good player and a bad player is
 //    small... you just go along and then suddenly get steamrolled"): the wave and time a player
-//    growing at g F a minute lasts to, for each pacing variant: (a) the distance table only,
+//    growing at g F a minute lasts to, for each pacing variant: (a) the populations alone (every
+//    area starts with a baby and an adult and grows a creature a wave while wild, Ed 2026-10-04),
 //    (b) a + attrition on the march, (c) a + the director at a few alphas, (d) b + c; and no
 //    merging at all (every survivor scatters), to show what the snowball costs;
 //  - the catch-up check: players starting late.
@@ -11,10 +12,10 @@
 //   node tools/balance/sim.mjs [--seeds 12] [--gaps 60,300] [--skills 10,30,50,70,100] [--cap 60]
 //     [--growth 30,50,70] [--starts 0,3,6,9,12,15,20] [--waves 30] [--fight 30]
 //     [--attrition 0.5] [--director base,perWave,power] [--by-wave] [--expected 50] [--alphas 0,0.3,0.6]
-//     [--table '<population table JSON>'] [--scale 1] [--health 4000] [--home 8000] [--legacy] [--quick] [--json out.json]
-// --table, --scale (young and adults times this), --health and --home (soundsystems' and home's
-// health) try numbers without editing the tuning file; --legacy uses today's populations by
-// remoteness instead of the distance table; --quick leaves out the catch-up check; --by-wave sets
+//     [--weights 1,1,1] [--per-wave 1] [--health 4000] [--home 8000] [--quick] [--json out.json]
+// --weights (the grown creatures' baby, young, adult shares), --per-wave (how many a wave), --health
+// and --home (soundsystems' and home's health) try numbers without editing the tuning file;
+// --quick leaves out the catch-up check; --by-wave sets
 // the director's budget by waves rather than by minutes; --no-area-legends leaves out every area's
 // own legend (Ed, 2026-10-04) and keeps the map's wild legends as today.
 // It loads the game's own rules modules through Vite (no build needed).
@@ -27,26 +28,26 @@ const list = s => String(s).split(",").map(Number);
 const SEEDS = +arg("seeds", 12), GAPS = list(arg("gaps", "60,300")), GROWTH = list(arg("growth", "30,50,70")), SKILLS = list(arg("skills", "10,30,50,70,100"));
 const WAVES = +arg("waves", 30), CAP = +arg("cap", 60), IDLE_CAP = +arg("idle-cap", 80), FIGHT = +arg("fight", 30), STARTS = list(arg("starts", "0,3,6,9,12,15,20"));
 const ATTRITION = +arg("attrition", 0.5), [DBASE, DPER, DPOW = 1] = list(arg("director", "0,4,1.5")), EXPECTED = +arg("expected", 50), ALPHAS = list(arg("alphas", "0,0.3,0.6"));
-const TABLE = arg("table", null), OUT = arg("json", null), SCALE = +arg("scale", 1), HEALTH = arg("health", null), HOME = arg("home", null);
+const OUT = arg("json", null), HEALTH = arg("health", null), HOME = arg("home", null), WEIGHTS = arg("weights", null), PER_WAVE = arg("per-wave", null);
 
 const server = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: "custom", logLevel: "error", optimizeDeps: { noDiscovery: true, include: [] } });
 const load = p => server.ssrLoadModule(p);
 const { generateMap } = await load("/src/rules/map.ts");
 const { TUNING } = await load("/src/rules/tuning.ts");
 const { simulate } = await load("/src/rules/balance.ts");
-const table = (TABLE ? JSON.parse(TABLE) : TUNING.population.table).map(r => ({ ...r, young: r.young * SCALE, adults: r.adults * SCALE }));
-const tuning = { ...TUNING, population: { ...TUNING.population, byDistance: !flag("legacy"), table }, combat: { ...TUNING.combat, ...(HEALTH ? { soundsystemHealth: +HEALTH } : {}), ...(HOME ? { homeHealth: +HOME } : {}) } };
+const G0 = TUNING.population.growth, growth = { ...G0, ...(WEIGHTS ? { weights: list(WEIGHTS) } : {}), ...(PER_WAVE ? { perWave: +PER_WAVE } : {}) };
+const tuning = { ...TUNING, population: { ...TUNING.population, growth }, combat: { ...TUNING.combat, ...(HEALTH ? { soundsystemHealth: +HEALTH } : {}), ...(HOME ? { homeHealth: +HOME } : {}) } };
 
 const mean = a => a.reduce((x, y) => x + y, 0) / Math.max(1, a.length);
 const f0 = x => (x === null || x === undefined || Number.isNaN(x) ? "–" : Math.round(x).toString());
 const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 const seeds = Array.from({ length: SEEDS }, (_, i) => 1000 + i * 7919);
-const t0 = Date.now(), maps = seeds.map(s => generateMap(s, tuning)), out = { seeds, tuning: { table, health: tuning.combat.soundsystemHealth, home: tuning.combat.homeHealth }, gaps: {} };
+const t0 = Date.now(), maps = seeds.map(s => generateMap(s, tuning)), out = { seeds, tuning: { population: tuning.population, health: tuning.combat.soundsystemHealth, home: tuning.combat.homeHealth }, gaps: {} };
 const lines = [];
 const say = s => { lines.push(s); console.log(s); };
 const BY_WAVE = flag("by-wave"), director = alpha => ({ base: DBASE, perWave: DPER, power: DPOW, alpha, expected: EXPECTED, byTime: !BY_WAVE });
 const VARIANTS = [
-  { id: "a", name: "a. distance table only", o: {} },
+  { id: "a", name: "a. growth only", o: {} },
   { id: "b", name: `b. a + attrition (${Math.round(ATTRITION * 100)}% march on)`, o: { marchOn: ATTRITION } },
   ...ALPHAS.map(al => ({ id: `c${al}`, name: `c. a + director, α ${al}`, o: { director: director(al) } })),
   ...ALPHAS.filter(al => al > 0).map(al => ({ id: `d${al}`, name: `d. b + director, α ${al}`, o: { marchOn: ATTRITION, director: director(al) } })),
@@ -55,7 +56,7 @@ const VARIANTS = [
 const LEGENDS = !flag("no-area-legends"), runAll = o => maps.map(m => simulate(m, { areaLegends: LEGENDS, ...o }));
 const lastTime = r => (r.lost ? r.lost.time : r.waves[r.waves.length - 1]?.time ?? 0);
 
-say(`Balance simulator: ${SEEDS} seeds (${seeds[0]}, ${seeds[1]}, …), ${flag("legacy") ? "today's populations by remoteness" : `population table ${TABLE ? "from --table" : "from config/tuning.json"}${SCALE !== 1 ? ` (young and adults × ${SCALE})` : ""}`}, soundsystems ${tuning.combat.soundsystemHealth} hp, home ${tuning.combat.homeHealth} hp.`);
+say(`Balance simulator: ${SEEDS} seeds (${seeds[0]}, ${seeds[1]}, …), every area starting with ${JSON.stringify(tuning.population.start)} and growing ${growth.on ? `${growth.perWave} a wave while wild (baby, young, adult weights ${growth.weights.join(" : ")})` : "not at all"}, soundsystems ${tuning.combat.soundsystemHealth} hp, home ${tuning.combat.homeHealth} hp.`);
 say(`${LEGENDS ? "Every woken area's own legend (Ed, 2026-10-04: 480 hp, 12 dps, F 76) besieges its own soundsystem and never marches on; no other legends" : "The map's wild legends as today (--no-area-legends)"}. Evolution stops at adult (Ed, 2026-10-04), so the player's F is adults' worth at most: 29 each, so g F a minute is about g / 29 adults a minute.\n`);
 say(`Player model (a guess): their party's F grows by g a minute from the wave they start; whenever free they fight the biggest siege they can beat (square law: they keep √(theirs² − its²)), then are busy ${FIGHT} s. Director (a guess): reinforcements (adults) for the next wave's areas worth (${DBASE} + ${DPER} × ${BY_WAVE ? "wave" : "minute"}${DPOW !== 1 ? `^${DPOW}` : ""}) F ${BY_WAVE ? "a wave" : "a minute (by time, the same whatever the gap)"} × max(0, 1 + α(player F / expected − 1)), expected ${EXPECTED} F a minute.\n`);
 
