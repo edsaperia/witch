@@ -55,6 +55,11 @@ jobs:
         run: |
           mkdir -p quick
           NODE_PATH=$PWD/.pw/node_modules QUICK_OUT=quick/quick.png node tools/smoke/quick.cjs 2>&1 | tee quick/log.txt
+      # The music: the Music Lab builds (esbuild, from the game's dependencies) and every section
+      # renders offline in headless Chromium, none silent or clipping (tools/music-lab/check.cjs).
+      - run: npm ci
+      - name: Music check
+        run: NODE_PATH=$PWD/.pw/node_modules node tools/music-lab/check.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
