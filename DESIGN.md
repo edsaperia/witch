@@ -61,7 +61,7 @@ The trade is speed against information: treetop mode covers distance, ground mod
 ## Creatures
 
 - **One kind of creature per area type**, so as many kinds as area types: about **30 to test with**, **100 or more by release**.
-- Each kind has **four levels: baby, young, adult and legendary** (Ed, 2026-10-03), from **cute babies** up to **giant legendary magical creatures**. **Adults are a bit larger than the witch.**
+- Each kind has **four levels: baby, young, adult and legendary** (Ed, 2026-10-03), from **cute babies** up to **giant legendary magical creatures**. Each level is a clear size step up from the last: **adults clearly bigger than young** (Ed, 2026-10-04: "the size difference should be obvious ... use the current Adult models for Youths, and come up with something larger for Adults"), so the bigger kinds' adults stand well over the witch.
 - **Levelling up**: the witch leads creatures around to **eat berries** that grow in the forest; it is the only way to level up. Berries may not regrow, or regrow slowly, so taking creatures into the forest to level them up is an adventure.
 - **Neutral behaviour varies by kind, and perhaps by level**: some attack, some run away, some ignore her, some are friendly, some flock or surround her.
 - How deeply music wakes a creature **varies by kind**.

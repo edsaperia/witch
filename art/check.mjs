@@ -77,13 +77,18 @@ const report = await b.page.evaluate(async () => {
       const inside = a && pin(a.hand) && pin(a.hatTip) && meets;
       const up = (pose === "placeSigil" && frame === 0) || (pose === "liftSigil" && frame === 2), down = (pose === "placeSigil" && frame === 2) || (pose === "liftSigil" && frame === 0);
       const reach = !inside || ((!up || a.hand[1] < a.hatTip[1]) && (!down || a.hand[1] > sp.h * .8));
-      const lying = pose === "stargaze", hk = lying ? [.5, 1] : [.7, 1.6], wk = lying ? 2.2 : 1.8;
+      const lying = pose === "stargaze" || pose === "limbo", hk = lying ? [.5, 1] : [.7, 1.6], wk = lying ? 2.2 : 1.8;
       if (!(s2.n > 200 && s2.bottom > 0 && !nan && s2.h > base.h * hk[0] && s2.h < base.h * hk[1] && s2.w < base.w * wk && inside && reach && fps > 0 && (!party || ["dance", "pair", "social", "move", "rest"].includes(party)))) bad.push(`${pose} ${facing} ${frame} ${s2.w}x${s2.h}${nan ? " NaN" : ""}${inside ? "" : " anchors"}${reach ? "" : " reach"}`);
     }
-    for (const [pose, pr] of Object.entries(PR)) if (!P[pose] || !(pr.meet === "pair")) bad.push(`pair ${pose}`);
+    for (const [pose, pr] of Object.entries(PR)) if (!P[pose] || !(pr.meet === "pair") || (pr.partnerPose && !P[pr.partnerPose]) || (pr.third && !P[pr.third.pose])) bad.push(`pair ${pose}`);
+    { // the twirl's partner and the limbo's: their meeting anchors inside; the limbo dancer's top under the holder's bar (model heights), the bar held level
+      const hold = G.witchSprite(st, { pose: "limboHold" }), help = G.witchSprite(st, { pose: "limboHelp" }), tw = G.witchSprite(st, { pose: "twirled", frame: 1 });
+      if (!(hold.anchors.bar && help.anchors.pair && tw.anchors.pair)) bad.push("twirl/limbo anchors");
+      for (let f = 0; f < P.limbo.frames; f++) { const top = G.witchModel({ pose: "limbo", frame: f }).anchors.top; if (!(top && top[1] < G.LIMBO_BAR - .02)) bad.push(`limbo ${f} top ${top && top[1].toFixed(2)} not under the bar ${G.LIMBO_BAR}`); }
+    }
     const counts = Object.fromEntries(Object.entries(P).map(([k, v]) => [k, v.frames])), want = { stand: 3, land: 3, takeoff: 3, talk: 4, placeSigil: 3, liftSigil: 3, sit: 2,
-      twoStep: 4, bounce: 2, shuffle: 4, spin: 4, headbang: 2, jump: 3, dancePair: 4, holdHands: 2, hug: 2, highFive: 2, laugh: 3, drink: 4, run: 4, sitGround: 2, stargaze: 2, conga: 4 };
-    res.push({ what: "witch on foot: stand (3), land and takeoff (3 each), talk (4), placeSigil and liftSigil (3 each), sit (2), and the party's 16 (6 dances, dance with a partner, hold hands, hug, high-five, laugh, drink, run, sit on the ground, stargaze, conga), towards and away, at her ordinary scale, standing, no NaN; hand and hat-tip anchors inside, and the pairs' meeting anchors; reaching up above her hat, down to the ground", good: !bad.length && JSON.stringify(counts) === JSON.stringify(want), info: bad.join(", ") || Object.entries(counts).map(([k, n]) => k + " " + n).join(", ") });
+      twoStep: 4, bounce: 2, shuffle: 4, spin: 4, headbang: 2, jump: 3, dancePair: 4, holdHands: 2, hug: 2, highFive: 2, laugh: 3, drink: 4, run: 4, sitGround: 2, stargaze: 2, conga: 4, twirl: 4, twirled: 4, limboHold: 2, limboHelp: 2, limbo: 4 };
+    res.push({ what: "witch on foot: stand (3), land and takeoff (3 each), talk (4), placeSigil and liftSigil (3 each), sit (2), and the party's 21 (7 dances with the limbo, dance with a partner, hold hands, hug, high-five, laugh, drink, run, sit on the ground, stargaze, conga, twirl and twirled, the broom limbo's two holders), towards and away, at her ordinary scale, standing, no NaN; hand and hat-tip anchors inside, and the pairs' meeting anchors, the limbo dancer under the bar; reaching up above her hat, down to the ground", good: !bad.length && JSON.stringify(counts) === JSON.stringify(want), info: bad.join(", ") || Object.entries(counts).map(([k, n]) => k + " " + n).join(", ") });
   }
   { // her lean cycle (WITCH_FLIGHT_POSES.lean): 4 frames, both facings and both headings, at her ordinary scale, standing, hand and hat-tip anchors inside; the frames differ (it moves)
     const bad = [], scale = G.witchSprite(st, { pose: "fast" }).scale, F = G.WITCH_FLIGHT_POSES;

@@ -231,11 +231,14 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
         const frames = Pr.frame !== undefined ? [Pr.frame] : [...Array(G.WITCH_FOOT_POSES[pose].frames).keys()], row = [];
         for (const frame of frames) {
           const w1 = G.partyWitch(3 + frame), w2 = G.partyWitch(11 + frame), o = { pose, frame, ...(Pr.heading ? { heading: Pr.heading } : {}) };
-          const sa = G.witchSprite(st, { ...o, look: w1.look }), sb = G.witchSprite(st, { ...o, look: w2.look }), ba = G.bake(sa, w1.colours(st), st, st.cOutline), bb = G.bake(sb, w2.colours(st), st, st.cOutline);
+          // her partner (in Pr.partnerPose, if given) and, for the broom limbo, a third witch passing under the bar
+          const sa = G.witchSprite(st, { ...o, look: w1.look }), sb = G.witchSprite(st, { ...o, pose: Pr.partnerPose || pose, look: w2.look }), ba = G.bake(sa, w1.colours(st), st, st.cOutline), bb = G.bake(sb, w2.colours(st), st, st.cOutline);
           const [ax, ay] = sa.anchors[Pr.meet], [bx0, by] = sb.anchors[Pr.partner || Pr.meet], bx = Pr.mirror ? sb.w - bx0 : bx0, ox = Math.round(ax - bx), oy = Math.round(ay - by);
-          const x0 = Math.min(0, ox), y0 = Math.min(0, oy), W = Math.max(sa.w, ox + sb.w) - x0, H = Math.max(sa.h, oy + sb.h) - y0, A = mk(W, H), N = mk(W, H);
-          for (const [cv, src, srcF] of [[A, bb.A, bb.A], [N, bb.N, bb.NF]]) { const g = cv.getContext("2d"); if (Pr.mirror) { g.save(); g.translate(ox - x0 + sb.w, oy - y0); g.scale(-1, 1); g.drawImage(srcF, 0, 0); g.restore(); } else g.drawImage(src, ox - x0, oy - y0); }
-          A.getContext("2d").drawImage(ba.A, -x0, -y0); N.getContext("2d").drawImage(ba.N, -x0, -y0);
+          const layers = [{ bk: bb, sp: sb, x: ox, y: oy, mirror: Pr.mirror }];
+          if (Pr.third) { const w3 = G.partyWitch(19 + frame), T = G.WITCH_FOOT_POSES[Pr.third.pose], sc = G.witchSprite(st, { pose: Pr.third.pose, frame: frame % T.frames, look: w3.look }), [ux, uy] = sa.anchors[Pr.third.under], [tx, ty] = sc.anchors[Pr.third.anchor]; layers.push({ bk: G.bake(sc, w3.colours(st), st, st.cOutline), sp: sc, x: Math.round(ux - tx), y: Math.round(uy + 2 - ty) }); }
+          layers.push({ bk: ba, sp: sa, x: 0, y: 0 });
+          const x0 = Math.min(...layers.map(l => l.x)), y0 = Math.min(...layers.map(l => l.y)), W = Math.max(...layers.map(l => l.x + l.sp.w)) - x0, H = Math.max(...layers.map(l => l.y + l.sp.h)) - y0, A = mk(W, H), N = mk(W, H);
+          for (const l of layers) for (const [cv, src] of [[A, l.bk.A], [N, l.mirror ? l.bk.NF : l.bk.N]]) { const g = cv.getContext("2d"); if (l.mirror) { g.save(); g.translate(l.x - x0 + l.sp.w, l.y - y0); g.scale(-1, 1); g.drawImage(src, 0, 0); g.restore(); } else g.drawImage(src, l.x - x0, l.y - y0); }
           row.push({ A, N, w: W, h: H });
         }
         rows.push(row);
