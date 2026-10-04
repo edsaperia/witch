@@ -6,7 +6,10 @@
       "items": [
         "The standing stones round the dancefloor are now twelve stone speakers, twice as far out, thumping on the beat: the ones beyond the floor face in, the near ones face out, so you always see their fronts (K cycles them through damaged and destroyed, for testing)",
         "The dancefloor's clearing is wider, and the treehouse stands outside the speaker ring",
-        "Where two areas meet, their ground textures meander and speckle into each other instead of meeting on a blocky edge (?blend=off to compare)"
+        "Where two areas meet, their ground textures meander and speckle into each other instead of meeting on a blocky edge (?blend=off to compare)",
+        "The dancefloor is a magic disco floor of glass tiles: dark until you step off the terrace, then it switches on and plays shapes and patterns to the beat, changing on the bar",
+        "The floor lights up under you, rippling out on each beat and leaving footprints; landing on it sends a big ripple",
+        "It grows wilder as the party spreads: more tiles, more colours, faster changes, more motes; a pulse runs out towards each area the party reaches, and areas with the party add their own shapes"
       ]
     },
     {

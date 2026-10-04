@@ -821,7 +821,7 @@ export class View {
     }));
     const markerLights = this.drawMarkers(time);
     this.drawSpeakers(time, pose.angle);
-    this.setLights([this.dancefloor.update(time, this.ground), ...party.lights, ...thLights, ...markerLights, ...this.forestLights], w.x, w.z);
+    this.setLights([this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...this.forestLights], w.x, w.z);
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);
     const bob = Math.sin(time * 2.4) * 0.12;

@@ -1,10 +1,13 @@
-// The dancefloor's show: the magic circle's pulse and turning runes (drawn by the ground), its
-// coloured light, and a magic disco ball floating above the centre, turning, glinting, hanging
-// from a thin beam of moonlight, and throwing specks of light round the circle (in the lighting);
-// and magic particles drifting up off the circle, high into the sky, wobbling as they fade.
+// The dancefloor's show: its glass tiles, lit by the engine (rules/dancefloor.ts) and drawn by the
+// ground; its light, coloured and brightened by the lit tiles; a magic disco ball floating above the
+// centre, turning, glinting, hanging from a thin beam of moonlight, and throwing specks of light
+// round the floor (in the lighting); and magic particles drifting up off it, high into the sky,
+// wobbling as they fade, more of them as the party grows. Dark until the floor switches on.
 import * as THREE from "three";
 import { hsv2rgb } from "../../art/generator.js";
 import type { ForestMap } from "../rules/map";
+import { composeFloor, GRID } from "../rules/dancefloor";
+import { floorInputs, type Game } from "../rules/game";
 import type { Tuning } from "../rules/tuning";
 import { LIGHT_UNIFORMS } from "./lighting";
 import type { Ground } from "./ground";
@@ -69,6 +72,8 @@ export class Dancefloor {
   readonly motes: THREE.Points;
   private ballMat: THREE.ShaderMaterial;
   private lightRgb: THREE.Vector3;
+  private tiles = new Uint8Array(GRID * GRID * 4);
+  private moteCount: number;
   readonly centre: THREE.Vector3;
 
   constructor(map: ForestMap, private tuning: Tuning, sprite: { uRight: THREE.IUniform; uUp: THREE.IUniform }, metresPerPixel: number) {
@@ -98,6 +103,7 @@ export class Dancefloor {
     const mc = hsv2rgb(d.circleHue, 0.55, 1);
     this.motes = new THREE.Points(mg, new THREE.ShaderMaterial({ vertexShader: MOTE_VERT, fragmentShader: MOTE_FRAG, uniforms: { uTime: LIGHT_UNIFORMS.uTime, uRise: { value: M.rise }, uTint: { value: new THREE.Vector3(mc[0] / 255, mc[1] / 255, mc[2] / 255) } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     this.motes.frustumCulled = false;
+    this.moteCount = M.count;
     const c = hsv2rgb(d.circleHue, 0.7, 1);
     this.lightRgb = new THREE.Vector3(c[0] / 255, c[1] / 255, c[2] / 255);
     const s = LIGHT_UNIFORMS;
@@ -105,14 +111,22 @@ export class Dancefloor {
     s.uDiscoColour.value.copy(tint);
   }
 
-  /** Bring the show to `time` seconds; returns the circle's light for the light list. */
-  update(time: number, ground: Ground): { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number } {
-    const d = this.tuning.dancefloor, pulse = 0.75 + 0.25 * Math.sin(time * d.pulse * Math.PI * 2);
-    ground.setCircle(d.circleHue, d.circleHue2, 0.7 + 0.3 * pulse, (time * d.runeSpeed / 60) * Math.PI * 2);
+  /** Bring the show to `time` seconds; returns the floor's light for the light list. */
+  update(time: number, ground: Ground, g: Game): { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number } {
+    const d = this.tuning.dancefloor, inp = floorInputs(g), tiles = composeFloor(g.floor, inp, this.tuning, this.tiles), on = g.floor.on !== null;
+    ground.setFloorTiles(tiles.rgbi);
+    const pulse = 0.75 + 0.25 * Math.sin(time * d.pulse * Math.PI * 2);
+    ground.setCircle(d.circleHue, d.circleHue2, 0.7 + 0.3 * pulse, (time * d.runeSpeed / 60) * Math.PI * 2); // the party's sweeps still use its hues
     const y = d.discoHeight + Math.sin(time * 0.8) * 0.3;
     this.ball.position.set(this.centre.x, y, this.centre.z);
     this.beam.position.set(this.centre.x, y + d.discoSize / 2, this.centre.z);
-    LIGHT_UNIFORMS.uDisco.value.set(this.centre.x, y, this.centre.z, 1);
-    return { x: this.centre.x, y: 2.5, z: this.centre.z, reach: d.lightReach, rgb: this.lightRgb, strength: d.lightStrength * pulse };
+    // The ball lights and the motes rise once the floor is on; more motes at higher levels.
+    this.ball.visible = this.beam.visible = on;
+    LIGHT_UNIFORMS.uDisco.value.set(this.centre.x, y, this.centre.z, on ? 1 : 0);
+    this.motes.geometry.setDrawRange(0, on ? Math.round(this.moteCount * (0.25 + 0.25 * inp.level)) : 0);
+    // The light takes the lit tiles' colour, brighter the more of the floor is lit and the higher the level.
+    if (tiles.lit > 0) this.lightRgb.set(...tiles.average).multiplyScalar(1 / Math.max(0.3, ...tiles.average));
+    const strength = on ? d.lightStrength * (0.35 + 0.65 * Math.min(1, tiles.lit * 3)) * (0.6 + 0.15 * inp.level) : 0;
+    return { x: this.centre.x, y: 2.5, z: this.centre.z, reach: d.lightReach, rgb: this.lightRgb, strength };
   }
 }

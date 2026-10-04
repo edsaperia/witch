@@ -79,6 +79,9 @@ export interface Tuning {
     radius: number; clearing: number;
     /** The ring of speakers: how many, the first's ring angle (degrees), their distance as a multiple of radius, and each one's footprint radius (metres). */
     speakers: { count: number; start: number; radiusFactor: number; footprint: number };
+    /** The tile-lighting engine: partified areas for each level up from 1; the witch's tiles (below witchLift, in her neon), ripples, trail and event times (seconds), and the share of lit tiles shown at level 1. */
+    levels: number[];
+    tiles: { witchLift: number; witchColour: string; rippleTime: number; trailTime: number; eventTime: number; lowLevelShare: number };
     circleHue: number; circleHue2: number; pulse: number; runeSpeed: number;
     lightReach: number; lightStrength: number;
     discoHeight: number; discoSize: number; spin: number;
