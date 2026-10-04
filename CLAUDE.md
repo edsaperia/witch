@@ -26,6 +26,7 @@ CI (`.github/workflows/ci.yml`) runs on every push and pull request, in this ord
 - `npm test` (Vitest: the rules modules in `src/rules/`, including the partition checked against the Art Lab's own `makePartition`)
 - `npm run typecheck` (`tsc --noEmit` over `src/`, `config/` and `vite.config.ts`)
 - `npm run build` (Vite, into `dist/`)
+- then, in a second job, `npm run smoke:quick` on that build: the quick smoke test (`tools/smoke/quick.cjs`, headless Chromium with Playwright installed in CI and its Chromium cached; a few minutes). It loads the game at 1280×720 with `?quick=1` (only the art the start needs), starts, flies about 5 s on the ground, rises, flies about 5 s in the treetops and descends, and fails on any page or console error, a blank picture, or a witch that doesn't move, rise or descend. Its screenshot and log are kept as the run's `smoke-quick` artifact. The full smoke test below still covers pops, floating, big windows, touch and waves.
 
 Push first, check after (Ed, 2026-10-04: "All the builders should push first and run checks afterwards"): when a change works, run the fast checks (`npm test`, `npm run typecheck`, `npm run build`, and `node art/check.mjs` if the change touches art), push straight away so the bot builds a playable version, and post a REPORT with that version; then run the slow checks (the smoke run, preview sheets), report and fix any failure and push again, and post FINAL once they're done. Never hold a playable build back waiting for the smoke run.
 
