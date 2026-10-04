@@ -25,7 +25,7 @@ import { BuffHud } from "./buffhud";
 import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
 import { MarkerArt, MarkerFx, MARKER_LEVELS, SymbolRings, type Beacon, type Laser, type Mote, type RingSymbol } from "./markers";
-import { spawnMarkers, speakersOn, symbolCount, waveCountdown, type SpawnMarker } from "../rules/party";
+import { cellKey, spawnMarkers, speakersOn, symbolCount, waveCountdown, type SpawnMarker } from "../rules/party";
 import { StringLightsView } from "./strings";
 import { bossBreath, LeashView } from "./leash";
 import { Lasers, type RingSpeaker } from "./lasers";
@@ -683,7 +683,7 @@ export class View {
     near.sort((p, q) => p.d - q.d);
     for (const n of near.slice(0, 8)) lights.push(n.l);
     this.markerBatch.set(inst);
-    this.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes, lasers);
+    this.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes.concat(this.fireSparks), lasers);
     const up = canopyShown(w);
     this.rings.update(symbols, up * (t.treetopHeight - 2)); // above the canopy from the treetops
     return lights;
@@ -781,16 +781,30 @@ export class View {
   private runeCyan = new THREE.Vector3(0.3, 0.9, 1);
   private runeViolet = new THREE.Vector3(0.75, 0.45, 1);
   private runeGreen = new THREE.Vector3(0.45, 1, 0.5);
+  /** Sparks from campfires lighting up as the party arrives (drawn with the markers' motes, next frame). */
+  private fireSparks: Mote[] = [];
   private updateSources(time: number): void {
-    const f = this.assets.props.frames, items: SpriteInstance[] = [], lights: ForestLight[] = [];
+    const f = this.assets.props.frames, items: SpriteInstance[] = [], lights: ForestLight[] = [], g = this.game;
+    this.fireSparks = [];
     for (const src of this.sources) {
       if (src.kind === "pond") continue;
       const k = hash2(Math.round(src.x * 10), Math.round(src.z * 10), 7);
       if (src.kind === "campfire") {
+        // Campfires are party objects (Ed, 2026-10-04): none in the dormant forest; in a partified
+        // area they light up with a whoosh of sparks as the party arrives (late in its transition).
+        const a = g.party.areas.get(cellKey(g.map.areaAt(src.x, src.z).cell));
+        if (!a) continue;
+        const since = time - (a.at + g.tuning.party.transition * 0.7 + k * 1.5);
+        if (since < 0) continue;
+        const grow = Math.min(1, since / 0.5), whoosh = Math.max(0, 1 - since / 1.2);
         const flick = 0.8 + 0.12 * Math.sin(time * 11 + k * 40) + 0.08 * Math.sin(time * 23.7 + k * 13);
-        lights.push({ x: src.x + Math.sin(time * 9 + k) * 0.08, y: 1.2, z: src.z, reach: this.game.tuning.lights.campfire.reach * src.size, rgb: this.fire, strength: this.game.tuning.lights.campfire.strength * flick });
+        lights.push({ x: src.x + Math.sin(time * 9 + k) * 0.08, y: 1.2, z: src.z, reach: g.tuning.lights.campfire.reach * src.size, rgb: this.fire, strength: g.tuning.lights.campfire.strength * (flick * grow + whoosh * 2) });
+        if (whoosh > 0) for (let i = 0; i < 10; i++) {
+          const ang = i * 2.4 + k * 9, r = (1 - whoosh) * (0.4 + (i % 3) * 0.5);
+          this.fireSparks.push({ x: src.x + Math.cos(ang) * r, y: 0.5 + (1 - whoosh) * (2 + (i % 4) * 1.2), z: src.z + Math.sin(ang) * r, colour: this.fire, alpha: whoosh });
+        }
         const fr = f[Math.floor(time * 8 + k * 10) % 3];
-        if (this.inView(src.x, src.z, fr.w * this.mpp, fr.h * this.mpp, 4)) items.push({ x: src.x, y: 0, z: src.z, frame: fr, flip: k < 0.5, fresh: this.mark("prop", src.x, src.z, 2) });
+        if (this.inView(src.x, src.z, fr.w * this.mpp, fr.h * this.mpp, 4)) items.push({ x: src.x, y: 0, z: src.z, frame: fr, flip: k < 0.5, scale: grow, fresh: this.mark("prop", src.x, src.z, 2) });
       } else {
         const kind = k < 0.33 ? 1 : k < 0.66 ? 0 : 2, pulse = 0.7 + 0.3 * Math.sin(time * 0.9 + k * 20), fr = f[3 + kind];
         lights.push({ x: src.x, y: 2, z: src.z, reach: this.game.tuning.lights.stone.reach * src.size, rgb: [this.runeCyan, this.runeViolet, this.runeGreen][kind], strength: this.game.tuning.lights.stone.strength * pulse });
