@@ -81,6 +81,15 @@ export const HEIGHT_VERT_GLSL = HEIGHT_GLSL + /* glsl */ `
 vec4 clipOf(vec3 w) { return projectionMatrix * viewMatrix * vec4(bendW(w), 1.0); }
 `;
 
+/** Glowing points (rgba vertex colours, added on) given as height above the ground: motes, trails. */
+export function groundPoints(size: number): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    vertexShader: `attribute vec4 color;\nvarying vec4 vCol;\n${HEIGHT_VERT_GLSL}\nvoid main() { vCol = color; gl_Position = clipOf(onGround(position)); gl_PointSize = ${size.toFixed(1)}; }`,
+    fragmentShader: "varying vec4 vCol;\nvoid main() { gl_FragColor = vCol; }", // added on: rgb times alpha, as a points material does
+    uniforms: { ...HEIGHT_UNIFORMS }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+}
+
 /** The window's fade toward its edge (the same as the shader's). */
 function edgeFade(x: number, z: number, cx: number, cz: number): number {
   const hw = N * RES * 0.5, e = Math.max(Math.abs(x - cx), Math.abs(z - cz));

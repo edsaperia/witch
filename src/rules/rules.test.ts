@@ -7,9 +7,9 @@ import { AREA_TYPES, generateMap, parseSeed } from "./map";
 import { Forest, crownReach, treeChance } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
-import { legendChance, population, spawnCreatures, stepCreature, stepCreaturesNear } from "./creatures";
+import { legendChance, population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
 import { newGame, stepGame } from "./game";
-import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext } from "./party";
+import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, speakersOn, waveCountdown, symbolCount } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
 import { laserShow } from "./lasers";
@@ -20,6 +20,8 @@ import { TUNING, withTuning } from "./tuning";
 import { floorClearing, speakerRadius, nextSpeakerState } from "./speakers";
 import { composeFloor, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
 import { floorInputs } from "./game";
+import { castSpell, newSpells, spellCharge, speedMultiplier } from "./spells";
+import { musicMix } from "./music";
 import { tuftsInCell, TUFT_KINDS } from "./groundcover";
 import { DECOR } from "../../art/decor.js";
 import { RELICS } from "../../art/relics.js";
@@ -612,8 +614,46 @@ describe("the party", () => {
     const n = pickNext(p, map, "nearest")!;
     expect([...map.neighbours.get(key(n))!].some(k => p.areas.has(k))).toBe(true);
   });
+  it("boots the home speakers up first, one by one, then counts down to the first wave (Ed, 2026-10-04)", () => {
+    const p = newParty(map), B = TUNING.boot.time, n = map.dancefloor.speakers.length;
+    expect(p.bootUntil).toBe(B);
+    expect(speakersOn(p, map, 0, n)).toBe(0);
+    const counts = Array.from({ length: 61 }, (_, i) => speakersOn(p, map, (i / 60) * B, n));
+    for (let i = 1; i < counts.length; i++) expect(counts[i]).toBeGreaterThanOrEqual(counts[i - 1]); // one by one, never off again
+    expect(counts[30]).toBeGreaterThan(2); expect(counts[30]).toBeLessThan(n);
+    expect(speakersOn(p, map, B, n)).toBe(n);
+    const cd = waveCountdown(p, map, B / 2);
+    expect(cd.booting).toBe(true); expect(cd.boot).toBeCloseTo(0.5); expect(cd.gone).toBe(0);
+    expect(waveCountdown(p, map, B + 1).booting).toBe(false);
+    expect(p.nextAt).toBe(B + TUNING.party.startDelay + TUNING.party.interval);
+    // Pausing during the boot holds it too.
+    p.paused = true; stepParty(p, map, B / 2, 5); expect(p.bootUntil).toBe(B + 5);
+  });
+  it("forecasts two waves ahead, confirmed, and a probable set that holds the wave after (Ed, 2026-10-04)", () => {
+    const p = newParty(map);
+    expect(p.next).not.toBeNull(); expect(p.afterNext).not.toBeNull();
+    expect(p.probable.length).toBeGreaterThan(0); expect(p.probable.length).toBeLessThanOrEqual(TUNING.forecast.probable);
+    for (let w = 0; w < 6; w++) {
+      const after = p.afterNext!, probable = p.probable.map(key);
+      spreadWave(p, map, w + 1);
+      expect(p.next).toEqual(after); // the confirmed after-next is next now
+      expect(probable).toContain(key(p.afterNext!)); // and the new after-next was among the probable
+    }
+    const m = spawnMarkers(p, map), stage = (c: readonly [number, number] | null) => m.find(x => x.key === key(c! as [number, number]))!.stage;
+    expect(stage(p.next)).toBe("next"); expect(stage(p.afterNext)).toBe("afterNext");
+    for (const c of p.probable) expect(stage(c)).toBe("probable");
+  });
+  it("rings the stones with symbols: 12 on the next, the after-next filling through the middle, probable ones a few", () => {
+    const F = TUNING.forecast;
+    expect(symbolCount("next", 0, 0, TUNING)).toBe(F.symbols);
+    expect(symbolCount("afterNext", 0, 0, TUNING)).toBe(F.afterNext[0]);
+    expect(symbolCount("afterNext", 1, 0, TUNING)).toBe(F.afterNext[1]);
+    expect(symbolCount("afterNext", 1, 0, TUNING)).toBeLessThan(F.symbols); // only the next has all 12
+    for (const f of [0, 0.5, 0.99]) { const n = symbolCount("probable", 0, f, TUNING); expect(n).toBeGreaterThanOrEqual(1); expect(n).toBeLessThanOrEqual(F.probableMax); }
+    expect(symbolCount("dormant", 1, 1, TUNING)).toBe(0);
+  });
   it("comes in waves every interval seconds, and pauses", () => {
-    const p = newParty(map), I = TUNING.party.interval, start = TUNING.party.startDelay;
+    const p = newParty(map), I = TUNING.party.interval, start = TUNING.party.startDelay + TUNING.boot.time;
     expect(stepParty(p, map, start + I - 0.1, 0.1)).toEqual([]);
     expect(stepParty(p, map, start + I, 0.1).length).toBeGreaterThan(0);
     p.paused = true;
@@ -1046,7 +1086,7 @@ describe("finds, each at most once per map (Ed, v160)", () => {
       expect(ruins.length + freaks.length).toBeGreaterThan(5);
       expect(decor.filter(d => d.family === "rocks").length).toBeGreaterThan(50); // rocks are generic scatter
     }
-  });
+  }, 30000); // five whole maps
   it("stairs stand only by ravines, rocky slopes, cave mouths and stone shrines", () => {
     for (const m of maps) for (const p of m.paths.pieces.filter(p => p.id.startsWith("stairs")))
       expect(["ravine", "rocky-slope", "cave-mouth", "stone-shrine"]).toContain(AREA_TYPES[m.areaAt(p.x, p.z).type].id);
@@ -1207,6 +1247,77 @@ describe("ground cover (Ed, v171)", () => {
     const per = (id: string) => { let n = 0, area = 0; for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++) { if (AREA_TYPES[map.typeOf(x, y)].id !== id) continue; const s = map.siteOf(x, y); const l = around(s.x + 30, s.z + 30, 8).filter(f => map.areaAt(f.x, f.z).type === map.typeOf(x, y)); n += l.length; area++; if (area >= 3) break; } return n / Math.max(1, area); };
     expect(per("grassland")).toBeGreaterThan(per("cave-mouth") * 2);
     expect(tuftsInCell(map, 140, 150, G.cell, G.spacing, 0)).toEqual([]);
+  });
+});
+
+describe("music by proximity (Ed, 2026-10-04)", () => {
+  const M = TUNING.music;
+  const g0 = newGame(6, TUNING), map = g0.map; // the game's own map
+  const at = (x: number, z: number, time: number) => { const g = { ...g0, speakers: [...g0.speakers], clock: { ...g0.clock, time } }; g.witch = { ...g.witch, x, z, seated: false }; return g; };
+  it("is full and clear by the playing dancefloor, quiet and muffled in the deep forest", () => {
+    const d = map.dancefloor, after = TUNING.boot.time + 1;
+    const g = at(d.x, d.z, after), near = musicMix(g);
+    expect(near.volume).toBeCloseTo(1); expect(near.cutoff).toBeCloseTo(M.clear);
+    const far = musicMix(at(d.x + M.farDist + 50, d.z, after));
+    expect(far.volume).toBeCloseTo(M.floor); expect(far.cutoff).toBeCloseTo(M.muffle);
+    const mid = musicMix(at(d.x + (M.nearDist + M.farDist) / 2, d.z, after));
+    expect(mid.volume).toBeGreaterThan(far.volume); expect(mid.volume).toBeLessThan(near.volume);
+    expect(mid.cutoff).toBeGreaterThan(far.cutoff); expect(mid.cutoff).toBeLessThan(near.cutoff);
+  });
+  it("grows as the home speakers boot up, and is distorted by damage close by", () => {
+    const d = map.dancefloor;
+    expect(musicMix(at(d.x, d.z, 0)).volume).toBeCloseTo(M.floor); // none on yet
+    expect(musicMix(at(d.x, d.z, TUNING.boot.time / 2)).volume).toBeLessThan(musicMix(at(d.x, d.z, TUNING.boot.time + 1)).volume);
+    const g = at(d.x, d.z, TUNING.boot.time + 1);
+    expect(musicMix(g).distort).toBe(0);
+    g.speakers = g.speakers.map(() => "damaged");
+    expect(musicMix(g).distort).toBeGreaterThan(0.3);
+    g.witch = { ...g.witch, x: d.x + M.farDist * 2 };
+    expect(musicMix(g).distort).toBe(0); // far away, nothing heard of it
+  });
+});
+
+describe("the spell (Ed, 2026-10-04)", () => {
+  const S = TUNING.spells.speed;
+  it("casts the equipped speed boost: much faster for its duration, then recharges over its cooldown", () => {
+    const s = newSpells(TUNING);
+    expect(s.equipped).toBe("speed");
+    expect(spellCharge(s, 0)).toBe(1);
+    expect(castSpell(s, 10, TUNING)).toBe(true);
+    expect(speedMultiplier(s, 10.1, TUNING)).toBeCloseTo(S.mult);
+    expect(speedMultiplier(s, 10 + S.duration + 0.01, TUNING)).toBe(1);
+    expect(castSpell(s, 11, TUNING)).toBe(false); // still recharging
+    expect(spellCharge(s, 10 + (S.duration + S.cooldown) / 2)).toBeCloseTo(0.5);
+    expect(castSpell(s, 10 + S.duration + S.cooldown, TUNING)).toBe(true);
+  });
+  it("makes her fly faster in the game", () => {
+    const run = (spell: boolean) => { const g = newGame(4, TUNING); g.clock.paused = false; g.witch = { ...g.witch, seated: false }; stepGame(g, { ...NO_INTENT, zoom: 0, spell }, 1 / 60); for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60); return Math.hypot(g.witch.vx, g.witch.vz); };
+    expect(run(true)).toBeGreaterThan(run(false) * (S.mult - 0.3));
+  });
+});
+
+describe("creature speeds (Ed, 2026-10-04: she is much faster than almost all of them)", () => {
+  it("leaves the witch several times faster than any creature, the fast few rare, legends slowest", () => {
+    const cs = spawnCreatures(map), L = TUNING.leash, run = (c: (typeof cs)[number]) => Math.max(c.speed, L.runSpeed * speedFactor(c.species, c.level, TUNING));
+    const fastest = Math.max(...cs.map(run));
+    expect(TUNING.groundSpeed).toBeGreaterThan(fastest * 2.5);
+    const fast = cs.filter(c => TUNING.creatureSpeeds.fast.includes(c.species));
+    expect(fast.length / cs.length).toBeLessThan(0.15); // rare
+    const legends = cs.filter(c => c.level === 3), others = cs.filter(c => c.level !== 3);
+    if (legends.length) expect(Math.max(...legends.map(run))).toBeLessThan(Math.min(...others.map(run)));
+  });
+});
+
+describe("the cycle button (Ed, 2026-10-04)", () => {
+  it("sends the bottom sigil of the stack to the top", () => {
+    const s = newLeash(), none: LeashControls = { talk: false, sigil: false }, cs = spawnCreatures(map);
+    s.stack.push(1, 2, 3); // 3 is the bottom (next down)
+    for (const id of s.stack) cs[id].leashed = true;
+    stepLeash(s, cs, { ...none, cycle: true }, { x: 0, z: 0 }, false, 1, 1 / 60, TUNING);
+    expect(s.stack).toEqual([3, 1, 2]);
+    expect(s.events.some(e => e.kind === "cycled" && e.id === 3)).toBe(true);
+    stepLeash(s, cs, none, { x: 0, z: 0 }, false, 1, 1 / 60, TUNING);
+    expect(s.stack).toEqual([3, 1, 2]);
   });
 });
 

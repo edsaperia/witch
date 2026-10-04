@@ -6,9 +6,18 @@
 import { clamp, hash2, lerp, rng, smoothstep } from "./random";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { facingAway } from "./witch";
+import type { Tuning } from "./tuning";
 
 export type Level = 0 | 1 | 2 | 3;
 export const LEGEND = 3;
+
+/** How fast a species moves, against the usual (Ed, 2026-10-04): the witch is much faster than
+ *  almost all of them; a few species are fast (rare, and weaker when combat comes); legends are
+ *  very slow. */
+export function speedFactor(species: string, level: Level, t: Tuning): number {
+  const S = t.creatureSpeeds;
+  return level === LEGEND ? S.legend : S.fast.includes(species) ? S.fastMult : 1;
+}
 
 export interface Creature {
   id: number;
@@ -105,7 +114,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
       const [x, z] = pointInArea(map, base, r);
       return {
         id: id++, species: type.creature, level, ...base, x, z, tx: x, tz: z,
-        rest: r() * 3, speed: (level === LEGEND ? t.legendSpeed : t.creatureSpeed) * (0.7 + r() * 0.6),
+        rest: r() * 3, speed: (level === LEGEND ? t.legendSpeed : t.creatureSpeed * speedFactor(type.creature, level, t)) * (0.7 + r() * 0.6),
         facing: r() < 0.5 ? 1 : -1, away: false, moving: false, walk: r(), seen: 0, leashed: false,
         rand: rng(map.seed * 31 + id * 7 + 11),
       };

@@ -29,6 +29,14 @@ export interface Tuning {
   /** Wind sway on leafy things: metres at the top of a crown, gusts' speed (m/s) and size (m), and a share for the treetop view. */
   wind: { on: boolean; strength: number; speed: number; gustScale: number; treetop: number };
   /** Tufts on the ground round the witch, in ground mode: overall density (times each area's), within radius metres, at most cap; one chance every spacing metres, worked out cell metres at a time within budgetMs a frame; sway (share of a tuft's height) and part (how far they part round her). */
+  /** Spells (Ed, 2026-10-04): the one equipped this run, and each spell's numbers. speed: her speed times mult for duration seconds, then cooldown seconds to recharge. */
+  spells: { equipped: string; speed: { mult: number; duration: number; cooldown: number } };
+  /** Forecasting (Ed, 2026-10-04): symbols round each stone (12 = next; the after-next stone fills afterNext[0]..[1] over the countdown; probable ones flicker 1..probableMax); probable: how many probable stones; radius (m), size (m) of each symbol, height above the canopy in treetop mode. */
+  forecast: { symbols: number; probable: number; probableMax: number; afterNext: number[]; radius: number; size: number; flare: number };
+  /** Music by proximity (Ed, 2026-10-04): full and clear within nearDist metres of a playing soundsystem, down to floor volume and a muffle Hz low-pass by farDist; clear: the cutoff when near; distort: how much a damaged one nearby is heard; volume: the master; src: an audio file to play, or empty for the built-in loop. */
+  music: { on: boolean; volume: number; nearDist: number; farDist: number; floor: number; muffle: number; clear: number; distort: number; src: string };
+  /** The home speaker ring's boot-up at the start (Ed, 2026-10-04): seconds before the first wave's countdown begins. */
+  boot: { time: number };
   groundCover: { on: boolean; density: number; radius: number; cap: number; spacing: number; cell: number; budgetMs: number; sway: number; part: number };
   /** Set pieces drawn this much bigger than the art, with a clearing of setPieceClear metres (times the scale) round them. */
   setPieceScale: number;
@@ -120,6 +128,10 @@ export interface Tuning {
   lights: { campfire: { reach: number; strength: number }; stone: { reach: number; strength: number } };
   glowPower: number;
   beat: { bpm: number };
+  /** Berries and evolving (rules/berries.ts): berries per area at the start [min, max], berry bushes
+   *  per area, how far a party animal looks for one (m), how long it eats (s), berries to evolve
+   *  (babies, young, adults), the berry's colour and glow. */
+  berries: { perArea: number[]; bushesPerArea: number; seekRadius: number; eatTime: number; toEvolve: number[]; colour: string; glow: number };
   sigilProjection: { height: number; opacity: number; beam: number; size: number };
   occlusion: { on: boolean; fadeOpacity: number; edge: number; minHeight: number; silhouette: number };
   stack: { offset: number; scale: number; gap: number; stiffness: number; damping: number; trail: number; idleSway: number };
@@ -144,6 +156,8 @@ export interface Tuning {
   creatureSpeed: number;
   setPieceChance: number;
   legendSpeed: number;
+  /** Species speeds (Ed, 2026-10-04): the fast few move fastMult times the usual; legends legend times (when leashed and running to catch up). */
+  creatureSpeeds: { fast: string[]; fastMult: number; legend: number };
 }
 
 export const TUNING: Tuning = raw as Tuning;

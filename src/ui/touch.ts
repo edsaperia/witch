@@ -46,6 +46,8 @@ export function setupTouch(root: HTMLElement, touch: TouchInput): void {
   button("#zoom-in", () => (touch.zoom -= 1));
   button("#zoom-out", () => (touch.zoom += 1));
   button("#sigil", () => (touch.sigil = true));
+  button("#spell", () => (touch.spell = true));
+  button("#cycle", () => (touch.cycle = true));
   // Talk is held: on while the finger is down.
   const talk = root.querySelector<HTMLElement>("#talk")!;
   talk.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); touch.talk = true; talk.classList.add("down"); });

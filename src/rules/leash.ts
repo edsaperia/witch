@@ -6,7 +6,7 @@
 // Sigils can't be put down on top of one another. Leashes are elastic: creatures walk or run to
 // their leash point at their own pace and never teleport. Legends can't be invited (for now).
 // No drawing here.
-import { LEGEND, type Creature } from "./creatures";
+import { LEGEND, speedFactor, type Creature } from "./creatures";
 import type { Tuning } from "./tuning";
 import { facingAway } from "./witch";
 
@@ -22,7 +22,7 @@ export interface Talk {
   total: number;
 }
 
-export type LeashEventKind = "invited" | "placed" | "picked" | "fizzled" | "cancelled";
+export type LeashEventKind = "invited" | "placed" | "picked" | "fizzled" | "cancelled" | "cycled";
 export interface LeashEvent { kind: LeashEventKind; id: number; x: number; z: number; at: number }
 
 export interface LeashState {
@@ -49,6 +49,8 @@ export interface LeashControls {
   sigil: boolean;
   /** Debug: invite the nearest invitable creature, however far. */
   inviteNearest?: boolean;
+  /** The cycle button (Ed, 2026-10-04): the bottom sigil of her stack goes to the top, so the next one down is chosen. */
+  cycle?: boolean;
 }
 
 export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, progress: new Map(), events: [], held: false, heldInAir: false });
@@ -90,7 +92,7 @@ function invite(s: LeashState, c: Creature, x: number, z: number, time: number):
 
 /** One step: talking, placing and picking up, and the leashed creatures moving. `onGround` is
  *  true only in ground mode (no inviting, placing or picking up from the treetops). */
-export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls, witch: { x: number; z: number }, onGround: boolean, time: number, dt: number, t: Tuning): void {
+export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls, witch: { x: number; z: number }, onGround: boolean, time: number, dt: number, t: Tuning, busy: (id: number) => boolean = () => false): void {
   s.events = [];
   s.held = c.talk; s.heldInAir = c.talk && !onGround;
   const T = t.invite, L = t.leash, byId = (id: number) => creatures[id];
@@ -130,6 +132,12 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   }
 
   // The sigil button: pick up a placed sigil she's over, else put the bottom one down.
+  // Cycle: the bottom sigil (the one the sigil button puts down next) goes to the top, in the air or on the ground.
+  if (c.cycle && s.stack.length > 1) {
+    const id = s.stack.pop()!;
+    s.stack.unshift(id);
+    s.events.push({ kind: "cycled", id, x: witch.x, z: witch.z, at: time });
+  }
   if (c.sigil && onGround) {
     let pick = -1, pd = L.pickRadius;
     s.placed.forEach((p, i) => { const d = Math.hypot(p.x - witch.x, p.z - witch.z); if (d <= pd) { pd = d; pick = i; } });
@@ -148,8 +156,9 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     }
   }
 
-  for (const id of s.stack) stepLeashed(byId(id), witch.x, witch.z, dt, t);
-  for (const p of s.placed) stepLeashed(byId(p.id), p.x, p.z, dt, t);
+  // (A party animal busy with a berry, or evolving, is moved by rules/berries.ts instead.)
+  for (const id of s.stack) if (!busy(id)) stepLeashed(byId(id), witch.x, witch.z, dt, t);
+  for (const p of s.placed) if (!busy(p.id)) stepLeashed(byId(p.id), p.x, p.z, dt, t);
 }
 
 /** Whether a sigil put down at (x, z) would land on another. */
@@ -173,7 +182,7 @@ export function stepLeashed(c: Creature, px: number, pz: number, dt: number, t: 
   }
   const dx = c.tx - c.x, dz = c.tz - c.z, d = Math.hypot(dx, dz);
   if (d < 1e-4) { c.moving = false; return; }
-  const speed = far ? Math.max(c.speed, L.runSpeed * (c.level === LEGEND ? 0.6 : 1)) : c.speed * 1.5;
+  const speed = far ? Math.max(c.speed, L.runSpeed * speedFactor(c.species, c.level, t)) : c.speed * 1.5;
   const step = Math.min(d, speed * dt);
   c.x += (dx / d) * step; c.z += (dz / d) * step;
   if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;

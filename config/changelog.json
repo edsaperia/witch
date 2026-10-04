@@ -6,7 +6,23 @@
       "items": [
         "The ground rolls: gentle hills and hollows that everything stands on, with the dancefloor, the treehouse, ponds and every path kept level (?hills=0 for flat)",
         "Over the treetops the world curves away, so you see the night sky above the forest: stars, the moon, and slow clouds that glow in the party's colours over partying areas (?curve=0 for flat, ?curve=0.004 for more)",
+        "Berries: every area has bushes with shiny dark-red berries (8–12 per area), glowing softly at night and glinting red through the treetops",
+        "Party animals walk over to a berry near them and eat it; it grows again somewhere else in the forest",
+        "Feed a party animal enough berries and it evolves (babies after 5, young after 10, adults after 30): it glows and pulses for a bar, then flashes into its next size with a burst of sparkles, and the dancefloor flashes in its colour. Adults become legends: the only way to get a party legend",
+        "A red ring round each party animal shows how close it is to evolving (near the witch, and just after it eats). Debug: B feeds the nearest party animal a berry",
+        "At the start the speakers round the dancefloor boot up one by one, giving you about a minute before the countdown to the first wave begins",
+        "A spell: Q (gamepad B, touch 'spell') casts a speed boost: much faster for a few seconds, with a trail; the ring in the corner shows it recharging",
+        "Cycle: C (gamepad right-stick click, touch 'cycle') sends the bottom sigil of your stack to the top, so you choose which creature goes down next",
+        "A few creatures (hares, stoats, martens) are quick on their feet; legends are very slow; you're still much faster than any of them",
         "The witch is lit by the lights around her: she turns red by a red soundsystem, warm by a campfire, and catches a coloured rim on the side facing a light, while staying easy to see in the dark",
+        "Forecasting: the next two areas to join the party are certain, and a few more are likely. Their rune stones grow rings of magic symbols, a full ring of 12 on the next one, and their beams grow as the countdown runs",
+        "A smaller, dimmer cue at the screen's edge points to the area after next",
+        "Music: a beat plays, loud and clear near the dancefloor and other playing soundsystems, quiet and muffled deep in the forest, and crackling when a speaker nearby is damaged (?music=off)"
+      ]
+    },
+    {
+      "version": 194,
+      "items": [
         "No more 'land to talk' prompt",
         "The dancefloor's old soundsystem is gone; its ring of speakers carries the music",
         "The next-stone arrow now points the right way",
