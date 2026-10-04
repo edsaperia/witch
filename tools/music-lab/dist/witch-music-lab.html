@@ -1,0 +1,1779 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Witch Music Lab</title>
+<style>
+/* A dark workbench like the Art Lab's: the run's transport and timeline on top, the sections and
+   waves to jump between, the mix and the hooks; the style's knobs in a side column (stacked on phones).
+   No fonts or files fetched: the page is one self-contained file. */
+:root {
+  --bg: #0f0d16; --panel: #18151f; --line: #2b2636; --fg: #e6e1ee; --muted: #9b93ab;
+  --accent: #ff5fc8; --accent-2: #4fe0ff; --good: #7dff8a;
+  --font-display: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--fg); margin: 0; }
+body { font-family: var(--font-body); font-size: 15px; line-height: 1.5; padding: 16px 16px 48px; }
+h1, h2 { font-family: var(--font-display); font-weight: 600; margin: 0; }
+h1 { font-size: 22px; letter-spacing: .04em; }
+h2 { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+p { margin: 0; max-width: 70ch; }
+.wrap { max-width: 1280px; margin-inline: auto; display: grid; gap: 20px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; }
+header p { color: var(--muted); }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+.main { display: grid; gap: 18px; min-width: 0; }
+.card { border: 1px solid var(--line); border-radius: 6px; background: var(--panel); padding: 12px 14px; display: grid; gap: 10px; min-width: 0; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.now { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.stat { display: grid; gap: 2px; }
+.stat b { font-family: var(--font-mono); font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+.feel { color: var(--muted); min-height: 1.5em; }
+.beats { display: flex; gap: 6px; }
+.beats i { width: 14px; height: 14px; border-radius: 50%; background: var(--line); transition: background .05s; }
+.beats i.on { background: var(--accent); }
+.bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar > div { height: 100%; background: var(--accent-2); width: 0; }
+.timeline { display: flex; gap: 2px; overflow-x: auto; padding-bottom: 4px; }
+.timeline div { flex: 0 0 auto; font-family: var(--font-mono); font-size: 11px; padding: 4px 6px; border-radius: 3px; background: var(--bg); border: 1px solid var(--line); white-space: nowrap; }
+.timeline div.cur { border-color: var(--accent); color: var(--accent); }
+.timeline div.wave { border-left: 3px solid var(--accent-2); }
+aside { display: grid; gap: 14px; position: sticky; top: 0; max-height: 100vh; overflow-y: auto; padding-bottom: 16px; }
+@media (max-width: 900px) { aside { position: static; max-height: none; } }
+fieldset { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px 12px; margin: 0; display: grid; gap: 8px; background: var(--panel); min-width: 0; }
+legend { font-family: var(--font-display); font-size: 13px; padding-inline: 6px; color: var(--accent-2); }
+details { border-top: 1px solid var(--line); padding-top: 6px; }
+summary { cursor: pointer; font-family: var(--font-mono); font-size: 13px; color: var(--fg); }
+.knob { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 8px; font-size: 13px; }
+.knob label { color: var(--muted); }
+.knob output { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+.knob input[type=range], .knob select { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+select, textarea { background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; font: inherit; }
+textarea { width: 100%; min-height: 220px; font-family: var(--font-mono); font-size: 12px; }
+button.btn { background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 6px 11px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+button.btn:hover { border-color: var(--accent-2); }
+button.btn:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+button.btn.on { border-color: var(--accent); color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: #1a0716; min-width: 96px; }
+label.check { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); cursor: pointer; }
+label.check input { accent-color: var(--accent); }
+.small { font-size: 12px; color: var(--muted); }
+#check-out { font-family: var(--font-mono); font-size: 12px; white-space: pre-wrap; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>WITCH MUSIC LAB</h1>
+    <p id="style-name"></p>
+  </header>
+  <div class="layout">
+    <div class="main">
+      <section class="card" aria-label="Transport">
+        <div class="row">
+          <button class="btn primary" id="play">Play</button>
+          <button class="btn" id="restart" title="Back to the start of a run: the home speakers boot up">Restart run</button>
+          <button class="btn" id="next-wave" title="Bring the next wave now (N in the game)">Next wave now</button>
+          <button class="btn" id="pause-waves" title="Stop the wave countdown (P in the game)">Pause waves</button>
+        </div>
+        <div class="now">
+          <div class="stat"><span>Wave</span><b id="s-wave">–</b></div>
+          <div class="stat"><span>Section</span><b id="s-section">–</b></div>
+          <div class="stat"><span>Bar in section</span><b id="s-bar">–</b></div>
+          <div class="stat"><span>Next wave</span><b id="s-next">–</b></div>
+          <div class="stat"><span>Tempo</span><b id="s-tempo">–</b></div>
+        </div>
+        <div class="row" style="justify-content: space-between"><p class="feel" id="s-feel"></p><div class="beats" id="beats"><i></i><i></i><i></i><i></i></div></div>
+        <div class="bar"><div id="s-progress"></div></div>
+        <h2>Coming up</h2>
+        <div class="timeline" id="timeline"></div>
+      </section>
+      <section class="card" aria-label="Waves">
+        <h2>Jump to a wave</h2>
+        <p class="small">The wave arrives now; the music changes on the next 4-bar line.</p>
+        <div class="row" id="waves"></div>
+      </section>
+      <section class="card" aria-label="Sections">
+        <h2>Play one section</h2>
+        <p class="small">Loops it, as <code>?music=&lt;name&gt;</code> does in the game. Follow the waves to go back to the run.</p>
+        <div class="row" id="sections"></div>
+      </section>
+      <section class="card" aria-label="Where she is">
+        <h2>Where she is, and hooks</h2>
+        <div class="now">
+          <div class="knob"><label for="dist">Distance to the nearest playing soundsystem</label><output id="dist-out"></output><input type="range" id="dist" min="0" max="320" step="1" value="0"></div>
+          <div class="knob"><label for="damage">Its damage</label><output id="damage-out"></output><input type="range" id="damage" min="0" max="1" step="0.01" value="0"></div>
+          <div class="knob"><label for="siege">Siege nearby (hook)</label><output id="siege-out"></output><input type="range" id="siege" min="0" max="1" step="0.01" value="0"></div>
+          <div class="knob"><label for="volume">Volume</label><output id="volume-out"></output><input type="range" id="volume" min="0" max="1" step="0.01" value="0.6"></div>
+        </div>
+        <div class="row">
+          <label class="check"><input type="checkbox" id="ko"> She's knocked out (hook)</label>
+          <span class="small" id="mix-out"></span>
+        </div>
+        <div class="now">
+          <div class="knob"><label for="interval">Seconds between waves</label><output id="interval-out"></output><select id="interval"><option value="30">30 s</option><option value="60" selected>1 min</option><option value="120">2 min</option><option value="300">5 min (the game's)</option></select></div>
+          <div class="knob"><label for="boot">Boot seconds</label><output id="boot-out"></output><select id="boot"><option value="0">none</option><option value="16">16 s</option><option value="30" selected>30 s</option><option value="60">60 s (the game's)</option></select></div>
+        </div>
+      </section>
+      <section class="card" aria-label="Check">
+        <h2>Check</h2>
+        <div class="row"><button class="btn" id="check">Render every section offline</button><span class="small">Each section's first bars rendered silently and measured: nothing silent, nothing clipping.</span></div>
+        <div id="check-out"></div>
+      </section>
+    </div>
+    <aside>
+      <fieldset id="f-style"><legend>Style</legend></fieldset>
+      <fieldset id="f-mix"><legend>Mix</legend></fieldset>
+      <fieldset id="f-patches"><legend>Sounds</legend></fieldset>
+      <fieldset><legend>Style file</legend>
+        <p class="small">The whole style as config/music-style.json: edit and apply, or copy it out to save.</p>
+        <textarea id="json" spellcheck="false" aria-label="Style JSON"></textarea>
+        <div class="row"><button class="btn" id="apply">Apply</button><button class="btn" id="copy">Copy</button><button class="btn" id="download">Download</button><button class="btn" id="reset">Reset to the repo's</button></div>
+        <p class="small" id="json-msg"></p>
+      </fieldset>
+    </aside>
+  </div>
+</div>
+<script>
+"use strict";
+(() => {
+  // config/music-style.json
+  var music_style_default = {
+    name: "Forest rave",
+    notes: "Witch's first music style (2026-10-04), from the genres in Ed's reference playlist (a screenshot of its track list he shared in the music builder's session that day: melodic organic house and melodic techno, dark synth and French electro, chiptune and bubblegum electro, hyperpop, dark minimal pop and phonk). Nothing is taken from any track: every sound is synthesised and every tune generated. it starts as warm melodic, organic house in the dark forest (marimba plucks, soft pads, shakers), deepens into melodic techno with strings, turns to dark synth-electro (driving saw bass, gated pads, supersaw leads), sparkles into chiptune and bubblegum electro (square arps, bouncing octave bass), and ends in phonk (a sliding 808, a cowbell hook, trap hats) for the frantic finale. Breakdowns go minimal and dark (finger snaps over a sub). Sections are named in the arc below, one step per wave; the last step repeats.",
+    bpm: 120,
+    tempoRampBars: 8,
+    swing: 0.08,
+    root: 33,
+    scale: "aeolian",
+    scales: {
+      aeolian: [0, 2, 3, 5, 7, 8, 10],
+      dorian: [0, 2, 3, 5, 7, 9, 10],
+      phrygian: [0, 1, 3, 5, 7, 8, 10],
+      harmonicMinor: [0, 2, 3, 5, 7, 8, 11],
+      mixolydian: [0, 2, 4, 5, 7, 9, 10],
+      ionian: [0, 2, 4, 5, 7, 9, 11]
+    },
+    progressions: {
+      forest: [0, 3, 6, 4],
+      home: [0, 5, 2, 6],
+      lift: [5, 6, 0, 0],
+      dark: [0, 5, 3, 4],
+      chip: [3, 4, 2, 5],
+      phonk: [0, 1, 0, 6]
+    },
+    blockBars: 4,
+    buildBars: 8,
+    mix: { master: 0.75, reverb: 0.3, reverbTime: 2.4, delay: 0.22, delayBeats: 0.75, feedback: 0.35, duck: 0.45 },
+    patches: {
+      kick: { kind: "kick", gain: 0.95, pitch: 150, pitchEnd: 45, pitchTime: 0.08, decay: 0.38, drive: 0.15 },
+      softKick: { kind: "kick", gain: 0.6, pitch: 105, pitchEnd: 46, pitchTime: 0.06, decay: 0.3 },
+      kick808: { kind: "kick", gain: 1, pitch: 130, pitchEnd: 38, pitchTime: 0.1, decay: 0.7, drive: 0.55 },
+      clap: { kind: "noise", gain: 0.5, filter: "bandpass", cutoff: 1400, q: 1.4, decay: 0.16, bursts: 3, reverb: 0.25 },
+      snare: { kind: "snare", gain: 0.42, pitch: 190, cutoff: 2200, q: 0.9, decay: 0.14, reverb: 0.15 },
+      snap: { kind: "noise", gain: 0.45, filter: "highpass", cutoff: 2800, q: 0.8, decay: 0.05, reverb: 0.4 },
+      hat: { kind: "noise", gain: 0.2, filter: "highpass", cutoff: 8e3, q: 0.7, decay: 0.035 },
+      openHat: { kind: "noise", gain: 0.13, filter: "highpass", cutoff: 7e3, q: 0.7, decay: 0.22 },
+      shaker: { kind: "noise", gain: 0.16, filter: "bandpass", cutoff: 7e3, q: 1.2, attack: 0.012, decay: 0.05 },
+      cowbell: { kind: "bell", gain: 0.16, ratio: 1.48, decay: 0.28, cutoff: 2400, q: 1.5, reverb: 0.2 },
+      sub808: { kind: "synth", gain: 0.38, waves: ["sine"], attack: 5e-3, decay: 1.2, sustain: 0.6, release: 0.15, filter: "lowpass", cutoff: 900, glide: 0.05, drive: 0.45 },
+      houseBass: { kind: "synth", gain: 0.26, waves: ["sawtooth", "square"], detune: 6, attack: 5e-3, decay: 0.2, sustain: 0.2, release: 0.08, filter: "lowpass", cutoff: 220, q: 6, envAmt: 1100, duck: true },
+      darkBass: { kind: "synth", gain: 0.24, waves: ["sawtooth", "sawtooth"], detune: 12, attack: 4e-3, decay: 0.12, sustain: 0.5, release: 0.05, filter: "lowpass", cutoff: 380, q: 3, envAmt: 2400, drive: 0.5, duck: true },
+      chipBass: { kind: "synth", gain: 0.17, waves: ["square"], attack: 2e-3, decay: 0.12, sustain: 0.3, release: 0.04, filter: "lowpass", cutoff: 2200, q: 1, duck: true },
+      pad: { kind: "synth", gain: 0.065, waves: ["sawtooth", "sawtooth", "triangle"], detune: 14, attack: 0.7, decay: 1, sustain: 0.8, release: 1.4, filter: "lowpass", cutoff: 1300, q: 0.6, envAmt: 300, reverb: 0.45, duck: true },
+      gatePad: { kind: "synth", gain: 0.06, waves: ["sawtooth", "sawtooth"], detune: 18, attack: 0.01, decay: 0.15, sustain: 0.6, release: 0.05, filter: "lowpass", cutoff: 1800, q: 2, envAmt: 1500, reverb: 0.3, duck: true },
+      marimba: { kind: "synth", gain: 0.15, waves: ["triangle", "sine"], detune: 3, attack: 2e-3, decay: 0.32, sustain: 0, release: 0.1, filter: "lowpass", cutoff: 3200, q: 1, envAmt: 2e3, delay: 0.35, reverb: 0.35 },
+      strings: { kind: "synth", gain: 0.06, waves: ["sawtooth", "sawtooth"], detune: 9, attack: 0.35, decay: 0.5, sustain: 0.85, release: 0.9, filter: "lowpass", cutoff: 2600, q: 0.5, reverb: 0.5, delay: 0.1 },
+      supersaw: { kind: "synth", gain: 0.075, waves: ["sawtooth", "sawtooth", "sawtooth"], detune: 22, attack: 0.01, decay: 0.3, sustain: 0.55, release: 0.25, filter: "lowpass", cutoff: 2200, q: 2, envAmt: 3e3, delay: 0.3, reverb: 0.3, duck: true },
+      chip: { kind: "synth", gain: 0.075, waves: ["square"], attack: 2e-3, decay: 0.09, sustain: 0.25, release: 0.05, filter: "lowpass", cutoff: 9e3, delay: 0.25 },
+      arp: { kind: "synth", gain: 0.055, waves: ["square", "square"], detune: 8, attack: 2e-3, decay: 0.08, sustain: 0, release: 0.04, filter: "lowpass", cutoff: 4e3, q: 1, envAmt: 2e3, delay: 0.3, duck: true },
+      tension: { kind: "synth", gain: 0.05, waves: ["square"], attack: 2e-3, decay: 0.06, sustain: 0, release: 0.03, filter: "bandpass", cutoff: 3e3, q: 4 },
+      riser: { kind: "riser", gain: 0.2, cutoff: 400, q: 4, reverb: 0.4 },
+      impact: { kind: "impact", gain: 0.55, pitch: 90, pitchEnd: 30, pitchTime: 0.6, decay: 1.8, reverb: 0.6 }
+    },
+    parts: {
+      kick: { patch: "kick", role: "drum", patterns: { four: "x...x...x...x...", drive: "X...x...X...x..." } },
+      softkick: { patch: "softKick", role: "drum", patterns: { heart: "x.....x.x.......", soft: "x.......x.......", four: "x...x...x...x..." } },
+      boom: { patch: "kick808", role: "drum", patterns: { phonk: "x.....x...x..x..x.....x...x.....", four: "x...x...x...x..." } },
+      clap: { patch: "clap", role: "drum", patterns: { back: "....x.......x...", backGhost: "....x.......x..o" } },
+      snare: {
+        patch: "snare",
+        role: "drum",
+        patterns: {
+          back: "....x.......x...",
+          roll: "x...x...x...x...x...x...x...x...x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxrrrrrrrrrrrrrrrrrrrrrrrrrrrr...."
+        }
+      },
+      snap: { patch: "snap", role: "drum", patterns: { back: "....x.......x...", lazy: "....x.......x.o." } },
+      hat: { patch: "hat", role: "drum", patterns: { off: "..x...x...x...x.", busy: "o.x?o.x?o.x?o.x?", sixteen: "xoxoxoxoxoxoxoxo", trap: "x.x.x.x.xrx.x.rrx.x.x.x.rrrrx.x." } },
+      ohat: { patch: "openHat", role: "drum", patterns: { off: "..x...x...x...x." } },
+      shaker: { patch: "shaker", role: "drum", patterns: { eighth: "x.o.x.o.x.o.x.o.", sixteen: "oxoxoxoxoxoxoxox" } },
+      bell: { patch: "cowbell", role: "motif", octave: 3, patterns: { phonk: "X..x..x.x..x.x..X..x..x.x..x?x?x" } },
+      sub: { patch: "sub808", role: "bass", patterns: { long: "1---------------", roots: "1-------5-------", phonk: "1-----1---8--5--1-----1---1-.8--" } },
+      bass: { patch: "houseBass", role: "bass", octave: 1, patterns: { roll: "..1-..1-..1-..1-", walk: "..1-..1-..5-..8-" } },
+      darkbass: { patch: "darkBass", role: "bass", octave: 1, patterns: { octaves: "1818181818181818", drive: "1.1811.81.1811.8" } },
+      chipbass: { patch: "chipBass", role: "bass", octave: 1, patterns: { bounce: "1.8.1.8.1.8.1.8.", gallop: "1.88.18.1.88.18." } },
+      pad: { patch: "pad", role: "chord", octave: 2, patterns: { hold: "x---------------", pump: "x-------x-------" } },
+      gatepad: { patch: "gatePad", role: "chord", octave: 2, patterns: { gate: "x-.x-.x-.x-.x-x-", stabs: "..x...x...x...x." } },
+      pluck: { patch: "marimba", role: "motif", octave: 3, patterns: { sparse: "x.....x.....x...", flow: "x..x..x.x..x..x.", busy: "x.xx.xx.x.xx.x.x" } },
+      strings: { patch: "strings", role: "motif", octave: 2, patterns: { long: "x-------x-------", swell: "x---------------x-------x-------" } },
+      lead: { patch: "supersaw", role: "motif", octave: 3, patterns: { hook: "x-.x-.x-x-.x-.x-", long: "x---x---x-x-x---" } },
+      chiplead: { patch: "chip", role: "motif", octave: 4, patterns: { melody: "x.x.xx.x.x.xx.x.", run: "xxxxx.x.xxxxx.x." } },
+      arp: { patch: "arp", role: "arp", octave: 3, patterns: { sixteen: "xxxxxxxxxxxxxxxx", eighth: "x.x.x.x.x.x.x.x." } },
+      tension: { patch: "tension", role: "bass", octave: 4, patterns: { pulse: "1.2.1.2.1.2.1.2." } }
+    },
+    sections: {
+      intro: {
+        feel: "The home speakers boot up: a pad, then plucks, a shaker, the sub and a soft kick as they power on.",
+        progression: "forest",
+        chordBars: 2,
+        cutoff: [600, 9e3],
+        ending: "none",
+        parts: { pad: "hold", pluck: { p: "sparse", from: 0.2, level: 0.8 }, shaker: { p: "eighth", from: 0.45, level: 0.6 }, sub: { p: "long", from: 0.6, level: 0.6 }, softkick: { p: "soft", from: 0.8, level: 0.7 } }
+      },
+      forest: {
+        feel: "Gentle and mysterious: a heartbeat kick, marimba, shaker, warm pad.",
+        progression: "forest",
+        chordBars: 2,
+        cutoff: 7e3,
+        ending: "none",
+        parts: { pad: "hold", pluck: "flow", shaker: { p: "eighth", level: 0.7 }, softkick: { p: "heart", level: 0.7 }, sub: { p: "roots", level: 0.6 } }
+      },
+      forestBeat: {
+        feel: "The forest finds a pulse: four soft kicks and an offbeat hat.",
+        base: "forest",
+        cutoff: 9e3,
+        parts: { softkick: { p: "four", level: 0.75 }, hat: { p: "off", level: 0.5 } }
+      },
+      whisper: {
+        feel: "A minimal, dark breakdown: finger snaps over a long sub.",
+        progression: "home",
+        chordBars: 2,
+        cutoff: 2600,
+        ending: "none",
+        parts: { pad: { p: "hold", level: 0.6 }, sub: "long", snap: "lazy", pluck: { p: "sparse", level: 0.7 } }
+      },
+      rise: {
+        feel: "A gentle build: the shaker doubles, the filter opens, a soft riser.",
+        base: "forestBeat",
+        cutoff: [1500, 12e3],
+        riser: true,
+        ending: "mute",
+        parts: { shaker: "sixteen" }
+      },
+      deep: {
+        feel: "Deep melodic house: four on the floor, rolling offbeat bass, plucks, pumping chords.",
+        progression: "home",
+        chordBars: 2,
+        sevenths: true,
+        cutoff: 14e3,
+        parts: { kick: "four", hat: "off", shaker: { p: "sixteen", level: 0.5, energy: 0.3 }, clap: { p: "back", level: 0.8, energy: 0.4 }, bass: "roll", pad: { p: "pump", level: 0.8 }, pluck: "flow" }
+      },
+      breakdown: {
+        feel: "The kick drops out: strings and a long pad, the filter half shut.",
+        progression: "lift",
+        chordBars: 2,
+        sevenths: true,
+        cutoff: [1200, 5e3],
+        ending: "none",
+        parts: { pad: "hold", strings: "swell", pluck: { p: "sparse", level: 0.7 }, sub: { p: "long", level: 0.6 }, shaker: { p: "eighth", level: 0.5 } }
+      },
+      build: {
+        feel: "The build into a wave: a snare roll, hats in sixteenths, a riser, the filter sweeping open.",
+        base: "deep",
+        cutoff: [700, 18e3],
+        riser: true,
+        ending: "mute",
+        parts: { clap: null, hat: "sixteen", snare: "roll" }
+      },
+      drop: {
+        feel: "The wave lands: everything in, a supersaw hook.",
+        base: "deep",
+        impact: true,
+        cutoff: 18e3,
+        parts: { hat: "busy", ohat: { p: "off", level: 0.6 }, clap: "back", lead: "hook", strings: { p: "long", level: 0.5 } }
+      },
+      dark: {
+        feel: "Dark synth-electro: a driving octave saw bass, gated pads, a snare on two and four.",
+        progression: "dark",
+        chordBars: 1,
+        cutoff: 16e3,
+        parts: { kick: "drive", snare: "back", hat: { p: "sixteen", level: 0.7 }, darkbass: "octaves", gatepad: "gate" }
+      },
+      darkDrop: {
+        feel: "The dark drop: the supersaw hook over the octave bass.",
+        base: "dark",
+        impact: true,
+        cutoff: 18e3,
+        parts: { lead: "hook", ohat: { p: "off", level: 0.5 }, darkbass: "drive" }
+      },
+      chip: {
+        feel: "Chiptune electro: square arps, a bouncing octave bass, a chip melody.",
+        progression: "chip",
+        chordBars: 1,
+        cutoff: 16e3,
+        parts: { kick: "four", clap: "back", hat: "off", chipbass: "bounce", arp: "sixteen", pad: { p: "pump", level: 0.6 }, chiplead: { p: "melody", energy: 0.5 } }
+      },
+      chipDrop: {
+        feel: "Bubblegum drop: galloping bass, a running chip lead and the supersaw.",
+        base: "chip",
+        impact: true,
+        cutoff: 18e3,
+        parts: { hat: "busy", chipbass: "gallop", chiplead: "run", lead: { p: "long", level: 0.7 } }
+      },
+      phonk: {
+        feel: "Phonk: a sliding 808, a cowbell hook, trap hats.",
+        progression: "phonk",
+        chordBars: 2,
+        cutoff: 16e3,
+        parts: { boom: "phonk", clap: "back", hat: "trap", bell: "phonk", sub: "phonk", pad: { p: "hold", level: 0.45 } }
+      },
+      phonkDrop: {
+        feel: "The finale: phonk with the dark bass and a supersaw over it.",
+        base: "phonk",
+        impact: true,
+        cutoff: 18e3,
+        parts: { darkbass: { p: "drive", level: 0.6 }, lead: { p: "hook", level: 0.7 }, snare: { p: "back", level: 0.6 } }
+      },
+      knockout: {
+        feel: "She's knocked out: everything far away and underwater.",
+        progression: "lift",
+        chordBars: 2,
+        cutoff: 420,
+        ending: "none",
+        parts: { pad: { p: "hold", level: 0.8 }, sub: { p: "long", level: 0.5 }, strings: { p: "long", level: 0.6 }, softkick: { p: "soft", level: 0.5 } }
+      }
+    },
+    intro: "intro",
+    knockout: "knockout",
+    fill: { part: "snare", pattern: "........x.x.xxXX", mute: ["kick", "softkick", "boom", "bass", "sub", "darkbass", "chipbass"] },
+    siege: { tension: { p: "pulse", level: 0.8 } },
+    arc: [
+      { name: "Forest", bpm: 120, energy: 0.2, scale: "dorian", progression: "forest", arrive: [["forest", 16]], loop: [["forest", 16], ["forestBeat", 16], ["whisper", 8], ["forestBeat", 16]], build: "rise" },
+      { name: "Clearing", bpm: 122, energy: 0.3, scale: "dorian", arrive: [["deep", 16]], loop: [["deep", 16], ["breakdown", 8], ["deep", 16], ["forestBeat", 8]], build: "rise" },
+      { name: "Lanterns", bpm: 124, energy: 0.45, arrive: [["drop", 16]], loop: [["deep", 16], ["breakdown", 8], ["drop", 16]], build: "build" },
+      { name: "Night drive", bpm: 126, energy: 0.6, scale: "harmonicMinor", arrive: [["darkDrop", 16]], loop: [["dark", 16], ["whisper", 8], ["darkDrop", 16]], build: "build" },
+      { name: "Electro", bpm: 128, energy: 0.7, scale: "harmonicMinor", transpose: 2, arrive: [["darkDrop", 16]], loop: [["dark", 16], ["breakdown", 8], ["darkDrop", 16]], build: "build" },
+      { name: "Sparkle", bpm: 131, energy: 0.8, scale: "aeolian", transpose: 3, arrive: [["chipDrop", 16]], loop: [["chip", 16], ["breakdown", 8], ["chipDrop", 16]], build: "build" },
+      { name: "Bubblegum", bpm: 134, energy: 0.88, scale: "aeolian", transpose: 5, arrive: [["chipDrop", 16]], loop: [["chip", 16], ["whisper", 8], ["chipDrop", 16], ["darkDrop", 16]], build: "build" },
+      { name: "Phonk", bpm: 137, energy: 0.95, scale: "phrygian", arrive: [["phonkDrop", 16]], loop: [["phonk", 16], ["whisper", 4], ["phonkDrop", 16]], build: "build" },
+      { name: "Finale", bpm: 140, energy: 1, scale: "phrygian", transpose: 1, arrive: [["phonkDrop", 16]], loop: [["phonkDrop", 16], ["darkDrop", 8], ["phonk", 8]], build: "build", buildBars: 4 }
+    ]
+  };
+
+  // src/rules/beat.ts
+  function newBeatClock(base, bpm = base) {
+    return { base, segs: [{ time: 0, beat: 0, bpm, bpmTo: bpm, dur: 0 }], wave: 0 };
+  }
+  function segAtTime(c, time) {
+    let s = c.segs[0];
+    for (const x of c.segs) {
+      if (x.time <= time) s = x;
+      else break;
+    }
+    return s;
+  }
+  function segAtBeat(c, beat) {
+    let s = c.segs[0];
+    for (const x of c.segs) {
+      if (x.beat <= beat) s = x;
+      else break;
+    }
+    return s;
+  }
+  var rampBeats = (s) => (s.bpm + s.bpmTo) / 2 * s.dur / 60;
+  function beatAt(c, time) {
+    const s = segAtTime(c, time), dt = time - s.time;
+    if (dt <= 0) return s.beat + s.bpm * dt / 60;
+    if (dt < s.dur) return s.beat + (s.bpm * dt + (s.bpmTo - s.bpm) * dt * dt / (2 * s.dur)) / 60;
+    return s.beat + rampBeats(s) + s.bpmTo * (dt - s.dur) / 60;
+  }
+  function bpmAt(c, time) {
+    const s = segAtTime(c, time), dt = time - s.time;
+    return dt <= 0 ? s.bpm : dt < s.dur ? s.bpm + (s.bpmTo - s.bpm) * dt / s.dur : s.bpmTo;
+  }
+  function timeAt(c, beat) {
+    const s = segAtBeat(c, beat), db = beat - s.beat;
+    if (db <= 0) return s.time + db * 60 / s.bpm;
+    const rb = rampBeats(s);
+    if (s.dur > 0 && db < rb) {
+      const a = (s.bpmTo - s.bpm) / (2 * s.dur), b = s.bpm, k = 60 * db;
+      return s.time + (Math.abs(a) < 1e-9 ? k / b : (-b + Math.sqrt(b * b + 4 * a * k)) / (2 * a));
+    }
+    return s.time + s.dur + (db - rb) * 60 / s.bpmTo;
+  }
+  function rampTo(c, atBeat, bpm, beats) {
+    const time = timeAt(c, atBeat), from = bpmAt(c, time);
+    c.segs = c.segs.filter((s) => s.time < time);
+    if (!c.segs.length) c.segs.push({ time: 0, beat: 0, bpm: from, bpmTo: from, dur: 0 });
+    const last = c.segs[c.segs.length - 1];
+    if (last.time + last.dur > time) {
+      const k = (time - last.time) / Math.max(1e-9, last.dur);
+      last.bpmTo = last.bpm + (last.bpmTo - last.bpm) * k;
+      last.dur = time - last.time;
+    }
+    const dur = beats > 0 && bpm !== from ? beats * 60 / ((from + bpm) / 2) : 0;
+    c.segs.push({ time, beat: atBeat, bpm: from, bpmTo: bpm, dur });
+  }
+  function waveTempo(t, wave) {
+    const T = t.beat.tempos;
+    return T && T.length ? T[Math.max(0, Math.min(T.length - 1, wave))] : t.beat.bpm;
+  }
+  function blockLineAfter(beat, blockBars) {
+    const B = 4 * Math.max(1, blockBars), b = Math.floor(beat / B) * B;
+    return beat - b <= 1 ? b : b + B;
+  }
+  function waveArrived(c, t, wave, time) {
+    if (wave === c.wave) return;
+    c.wave = wave;
+    const target = waveTempo(t, wave), line = blockLineAfter(beatAt(c, time), t.beat.blockBars ?? 4);
+    if (Math.abs(target - bpmAt(c, timeAt(c, line))) < 1e-6) return;
+    rampTo(c, line, target, 4 * (t.beat.rampBars ?? 8));
+  }
+
+  // src/rules/random.ts
+  function hash2(x, y, s) {
+    let h = Math.imul(x | 0, 374761393) ^ Math.imul(y | 0, 668265263) ^ Math.imul(s | 0, 2147483647);
+    h = Math.imul(h ^ h >>> 13, 1274126177);
+    return ((h ^ h >>> 16) >>> 0) / 4294967296;
+  }
+
+  // src/rules/musicScore.ts
+  var resolvedCache = /* @__PURE__ */ new WeakMap();
+  function resolveSection(style2, name) {
+    let cache = resolvedCache.get(style2);
+    if (!cache) resolvedCache.set(style2, cache = /* @__PURE__ */ new Map());
+    const hit = cache.get(name);
+    if (hit) return hit;
+    const chain = [];
+    for (let n = name, i = 0; n && i < 8; i++) {
+      const s = style2.sections[n];
+      if (!s) throw new Error(`music style: no section "${n}"`);
+      chain.unshift(s);
+      n = s.base;
+    }
+    const out = { progression: "", chordBars: 2, parts: {} };
+    for (const s of chain) {
+      const { parts, ...rest } = s;
+      Object.assign(out, rest);
+      for (const [k, v] of Object.entries(parts ?? {})) {
+        if (v === null) delete out.parts[k];
+        else out.parts[k] = v;
+      }
+    }
+    delete out.base;
+    cache.set(name, out);
+    return out;
+  }
+  var arcStep = (style2, arc) => style2.arc[Math.max(0, Math.min(style2.arc.length - 1, arc))];
+  var use = (u) => typeof u === "string" ? { p: u, level: 1, from: 0, energy: 0 } : { p: u.p, level: u.level ?? 1, from: u.from ?? 0, energy: u.energy ?? 0 };
+  function degreeToMidi(style2, scale, degree, octave, transpose) {
+    const n = scale.length, o = Math.floor(degree / n), d = degree - o * n;
+    let m = style2.root + transpose + 12 * (octave + o) + scale[d];
+    while (m > 96) m -= 12;
+    return m;
+  }
+  function motif(seed2, arc, part) {
+    let salt = 0;
+    for (let i = 0; i < part.length; i++) salt = salt * 31 + part.charCodeAt(i) | 0;
+    const out = [];
+    let v = [0, 2, 4][Math.floor(hash2(seed2, arc, salt) * 3)];
+    for (let i = 0; i < 32; i++) {
+      const r = hash2(seed2 + i * 7919, arc, salt);
+      if (i % 4 === 0) v = [0, 2, 4, 7, 4, 2][Math.floor(r * 6)] + (v > 6 && r < 0.5 ? -7 : 0);
+      else v += [-2, -1, -1, 1, 1, 2, 0, 3][Math.floor(r * 8)];
+      v = Math.max(-2, Math.min(9, v));
+      out.push(v);
+    }
+    for (let i = 16; i < 28; i++) if (hash2(seed2 + i, arc, salt + 1) < 0.6) out[i] = out[i - 16];
+    return out;
+  }
+  var motifCache = /* @__PURE__ */ new Map();
+  function motifFor(seed2, arc, part) {
+    const k = `${seed2}|${arc}|${part}`;
+    let m = motifCache.get(k);
+    if (!m) {
+      if (motifCache.size > 256) motifCache.clear();
+      motifCache.set(k, m = motif(seed2, arc, part));
+    }
+    return m;
+  }
+  function chordAt(style2, sec, step2, barIn) {
+    const prog = style2.progressions[sec.progression || step2.progression || ""] ?? style2.progressions[Object.keys(style2.progressions)[0]];
+    const root = prog[Math.floor(barIn / Math.max(1, sec.chordBars)) % prog.length];
+    const tones = [root, root + 2, root + 4];
+    if (sec.sevenths) tones.push(root + 6);
+    return { root, tones };
+  }
+  function sectionCutoff(sec, progress) {
+    const c = sec.cutoff ?? 18e3;
+    if (typeof c === "number") return c;
+    return c[0] * Math.pow(c[1] / c[0], Math.max(0, Math.min(1, progress)));
+  }
+  function hitAt(pat, i) {
+    const n = pat.length, ch = pat[i % n];
+    let dur = 1;
+    while (dur < n && pat[(i + dur) % n] === "-" && i % n + dur < n) dur++;
+    return { ch, dur };
+  }
+  var VEL = { X: 1, x: 0.8, o: 0.45, r: 0.7, "?": 0.75 };
+  var BASS = { "1": 0, "2": 1, "3": 2, "5": 4, "7": 6, "8": 7 };
+  function notesAt(style2, plan, next, step2, ctx2) {
+    const bar2 = Math.floor(step2 / 16), s = step2 - bar2 * 16, barIn = bar2 - plan.start;
+    const sec = resolveSection(style2, plan.section), a = arcStep(style2, plan.arc);
+    const scale = style2.scales[a.scale ?? style2.scale] ?? style2.scales[style2.scale];
+    const transpose = a.transpose ?? 0;
+    const progress = (barIn + s / 16) / Math.max(1, plan.bars);
+    const chord = chordAt(style2, sec, a, barIn);
+    const out = [];
+    const ending = next !== null && (next.section !== plan.section || next.start !== plan.start) ? sec.ending ?? "fill" : "none";
+    const fillBar = ending === "fill";
+    const muted = ending !== "none" && s >= 12 ? style2.fill.mute : [];
+    const parts = Object.entries(sec.parts).map(([k, u]) => [k, u, 1]);
+    if (ctx2.siege > 0.01) for (const [k, u] of Object.entries(style2.siege)) parts.push([k, u, ctx2.siege]);
+    if (fillBar) parts.push([style2.fill.part, { p: "__fill" }, 1]);
+    for (const [name, u0, scaleLevel] of parts) {
+      const def = style2.parts[name];
+      if (!def) continue;
+      const u = use(u0);
+      if (progress < u.from || a.energy < u.energy || muted.includes(name)) continue;
+      if (fillBar && name === style2.fill.part && u.p !== "__fill") continue;
+      const pat = u.p === "__fill" ? style2.fill.pattern : def.patterns[u.p];
+      if (!pat) continue;
+      const i = (barIn * 16 + s) % pat.length;
+      const { ch, dur } = hitAt(pat, i);
+      if (ch === "." || ch === "-") continue;
+      const r = hash2(step2, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), ctx2.seed);
+      if (ch === "?" && r >= a.energy) continue;
+      const level = u.level * scaleLevel * (0.94 + 0.06 * r);
+      const base = { part: name, patch: def.patch, step: step2, offset: 0, dur };
+      if (def.role === "drum") {
+        if (ch === "r") {
+          out.push({ ...base, dur: 0.5, midi: null, vel: 0.6 * level }, { ...base, offset: 0.5, dur: 0.5, midi: null, vel: 0.75 * level });
+          continue;
+        }
+        out.push({ ...base, midi: null, vel: (VEL[ch] ?? 0.8) * level });
+        continue;
+      }
+      const oct = def.octave ?? 0, accent = ch === ch.toUpperCase() && ch !== ch.toLowerCase() ? 1 : s % 4 === 0 ? 0.9 : 0.78;
+      if (def.role === "bass") {
+        const k = BASS[ch] ?? (ch.toLowerCase() === "x" ? 0 : BASS[ch.toLowerCase()] ?? 0);
+        out.push({ ...base, midi: degreeToMidi(style2, scale, chord.root + k, oct, transpose), vel: (ch in BASS ? 0.85 : VEL[ch] ?? 0.85) * level });
+      } else if (def.role === "chord") {
+        for (const t of chord.tones) out.push({ ...base, midi: degreeToMidi(style2, scale, t, oct, transpose), vel: (VEL[ch] ?? accent) * level });
+      } else if (def.role === "arp") {
+        let k = 0;
+        for (let j = 0; j < s; j++) {
+          const c = pat[(barIn * 16 + j) % pat.length];
+          if (c !== "." && c !== "-") k++;
+        }
+        const n = chord.tones.length, t = chord.tones[k % n] + 7 * (Math.floor(k / n) % 2);
+        out.push({ ...base, midi: degreeToMidi(style2, scale, t, oct, transpose), vel: (VEL[ch] ?? accent) * level });
+      } else {
+        const m = motifFor(ctx2.seed, plan.arc, name), pos = (barIn % 4 * 16 + s) % 32;
+        const vary = barIn % 4 === 3 && s >= 8 ? hash2(bar2, plan.arc, ctx2.seed + 5) < 0.5 ? 2 : -1 : 0;
+        out.push({ ...base, midi: degreeToMidi(style2, scale, chord.root + m[pos] + vary, oct, transpose), vel: (VEL[ch] ?? accent) * level });
+      }
+    }
+    if (s === 0 && barIn === 0 && sec.impact && style2.patches.impact) out.push({ part: "impact", patch: "impact", step: step2, offset: 0, dur: 16, midi: null, vel: 1 });
+    if (s === 0 && sec.riser && style2.patches.riser) out.push({ part: "riser", patch: "riser", step: step2, offset: 0, dur: 16, midi: null, vel: 1, from: barIn / plan.bars, to: (barIn + 1) / plan.bars });
+    return out;
+  }
+  function checkStyle(style2) {
+    const errs = [], B = style2.blockBars;
+    const checkUse = (where, name, u) => {
+      const def = style2.parts[name];
+      if (!def) {
+        errs.push(`${where}: no part "${name}"`);
+        return;
+      }
+      const p = use(u).p;
+      if (!def.patterns[p]) errs.push(`${where}: part "${name}" has no pattern "${p}"`);
+    };
+    for (const [n, d] of Object.entries(style2.parts)) {
+      if (!style2.patches[d.patch]) errs.push(`part ${n}: no patch "${d.patch}"`);
+      for (const [pn, p] of Object.entries(d.patterns)) if (p.length % 16 !== 0) errs.push(`part ${n}, pattern ${pn}: ${p.length} steps, not whole bars`);
+    }
+    for (const n of Object.keys(style2.sections)) {
+      try {
+        const r = resolveSection(style2, n);
+        for (const [pn, u] of Object.entries(r.parts)) checkUse(`section ${n}`, pn, u);
+        const prog = r.progression;
+        if (prog && !style2.progressions[prog]) errs.push(`section ${n}: no progression "${prog}"`);
+      } catch (e) {
+        errs.push(String(e.message));
+      }
+    }
+    for (const [pn, u] of Object.entries(style2.siege)) checkUse("siege", pn, u);
+    if (style2.fill.pattern.length !== 16) errs.push("fill: not one bar");
+    if (!style2.parts[style2.fill.part]) errs.push(`fill: no part "${style2.fill.part}"`);
+    for (const n of [style2.intro, style2.knockout]) if (!style2.sections[n]) errs.push(`no section "${n}"`);
+    if (!style2.scales[style2.scale]) errs.push(`no scale "${style2.scale}"`);
+    style2.arc.forEach((a, i) => {
+      for (const [s, bars] of [...a.arrive, ...a.loop, [a.build, a.buildBars ?? style2.buildBars]]) {
+        if (!style2.sections[s]) errs.push(`arc ${i} (${a.name}): no section "${s}"`);
+        if (!(bars > 0) || bars % B !== 0) errs.push(`arc ${i} (${a.name}): ${s} is ${bars} bars, not a multiple of ${B}`);
+      }
+      if (!a.loop.length) errs.push(`arc ${i} (${a.name}): nothing to loop`);
+      if (a.scale && !style2.scales[a.scale]) errs.push(`arc ${i} (${a.name}): no scale "${a.scale}"`);
+      if (a.progression && !style2.progressions[a.progression]) errs.push(`arc ${i} (${a.name}): no progression "${a.progression}"`);
+    });
+    return errs;
+  }
+
+  // src/rules/musicPlan.ts
+  var barAt = (clock2, time) => beatAt(clock2, time) / 4;
+  var barSeconds = (bpm) => 4 * 60 / bpm;
+  function blockAfter(bars, B, snap = 0.25) {
+    const b = Math.floor(bars / B) * B;
+    return bars - b <= snap ? b : b + B;
+  }
+  function walk(seq, k) {
+    for (const [section, bars] of seq) {
+      if (k < bars) return { section, offset: k, bars };
+      k -= bars;
+    }
+    return null;
+  }
+  function planBlock(style2, cue2, bar2) {
+    const B = style2.blockBars;
+    let w = 0;
+    while (w < cue2.waves.length && blockAfter(cue2.waves[w], B) <= bar2) w++;
+    let next = w < cue2.waves.length ? cue2.waves[w] : cue2.nextAt;
+    let arrival = w > 0 ? cue2.waves[w - 1] : cue2.bootUntil;
+    if (w >= cue2.waves.length && Number.isFinite(next) && blockAfter(next, B) <= bar2 && bar2 >= cue2.bootUntil) {
+      arrival = next;
+      next = Infinity;
+      w++;
+    }
+    const arc = cue2.forceWave ?? w, step2 = arcStep(style2, arc);
+    const plan = (section, start, bars) => ({ section, start, bars, wave: w, arc });
+    if (cue2.forceSection && style2.sections[cue2.forceSection]) return plan(cue2.forceSection, bar2 - bar2 % 16, 16);
+    if (cue2.knockedOut) return plan(style2.knockout, bar2 - bar2 % (2 * B), 2 * B);
+    if (bar2 < cue2.bootUntil) return plan(style2.intro, 0, Math.max(B, blockAfter(cue2.bootUntil, B)));
+    const buildBars = step2.buildBars ?? style2.buildBars;
+    if (Number.isFinite(next)) {
+      const drop = blockAfter(next, B);
+      if (drop > bar2 && drop - bar2 <= buildBars) return plan(step2.build, drop - buildBars, buildBars);
+    }
+    const k = Math.max(0, bar2 - blockAfter(arrival, B));
+    const arrive = step2.arrive.reduce((n, [, b]) => n + b, 0), loop = step2.loop.reduce((n, [, b]) => n + b, 0);
+    const hit = walk(step2.arrive, k) ?? walk(step2.loop, (k - arrive) % Math.max(1, loop));
+    return plan(hit.section, bar2 - hit.offset, hit.bars);
+  }
+  var Conductor = class {
+    constructor(style2) {
+      this.style = style2;
+    }
+    style;
+    cache = /* @__PURE__ */ new Map();
+    /** The plan for the block holding `bar`. */
+    plan(cue2, bar2) {
+      const B = this.style.blockBars, b = Math.floor(bar2 / B) * B;
+      let p = this.cache.get(b);
+      if (!p) {
+        p = planBlock(this.style, cue2, b);
+        this.cache.set(b, p);
+        for (const k of this.cache.keys()) if (k < b - 4 * B || k > b + 4 * B) this.cache.delete(k);
+      }
+      return p;
+    }
+    /** Forget the plans (a new style, a jump in time). */
+    reset(style2 = this.style) {
+      this.style = style2;
+      this.cache.clear();
+    }
+  };
+
+  // src/platform/musicEngine.ts
+  var mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
+  var MusicEngine = class {
+    constructor(ctx2, dest, style2, seed2 = 0) {
+      this.ctx = ctx2;
+      this.style = style2;
+      this.seed = seed2;
+      this.conductor = new Conductor(style2);
+      const c = ctx2;
+      this.out = c.createGain();
+      const limit = c.createDynamicsCompressor();
+      limit.threshold.value = -10;
+      limit.knee.value = 6;
+      limit.ratio.value = 4;
+      limit.attack.value = 3e-3;
+      limit.release.value = 0.2;
+      this.tone = c.createBiquadFilter();
+      this.tone.type = "lowpass";
+      this.tone.frequency.value = 18e3;
+      this.tone.Q.value = 0.9;
+      this.duckBus = c.createGain();
+      this.dryBus = c.createGain();
+      this.reverb = c.createConvolver();
+      this.reverbIn = c.createGain();
+      this.delay = c.createDelay(4);
+      this.delayIn = c.createGain();
+      this.feedback = c.createGain();
+      const delayTone = c.createBiquadFilter();
+      delayTone.type = "lowpass";
+      delayTone.frequency.value = 3200;
+      this.duckBus.connect(this.tone);
+      this.dryBus.connect(this.tone);
+      this.reverbIn.connect(this.reverb);
+      this.reverb.connect(this.tone);
+      this.delayIn.connect(this.delay);
+      this.delay.connect(delayTone);
+      delayTone.connect(this.feedback);
+      this.feedback.connect(this.delay);
+      delayTone.connect(this.tone);
+      this.tone.connect(limit);
+      limit.connect(this.out);
+      this.out.connect(dest);
+      this.noise = c.createBuffer(1, 2 * c.sampleRate, c.sampleRate);
+      const d = this.noise.getChannelData(0);
+      let r = 22222;
+      for (let i = 0; i < d.length; i++) {
+        r = Math.imul(r, 1103515245) + 12345 >>> 0;
+        d[i] = r / 4294967296 * 2 - 1;
+      }
+      this.setStyle(style2);
+    }
+    ctx;
+    style;
+    seed;
+    conductor;
+    /** What was last scheduled (a fraction of a second ahead of what's heard): for the Music Lab. */
+    current = null;
+    out;
+    tone;
+    duckBus;
+    dryBus;
+    reverb;
+    reverbIn;
+    delay;
+    delayIn;
+    feedback;
+    noise;
+    channels = /* @__PURE__ */ new Map();
+    curves = /* @__PURE__ */ new Map();
+    nextStep = -1;
+    anchor = NaN;
+    // audio time of game time 0
+    reverbTime = 0;
+    /** A new or edited style: takes effect from the next block. */
+    setStyle(style2) {
+      this.style = style2;
+      this.conductor.reset(style2);
+      const m = style2.mix;
+      this.out.gain.value = m.master;
+      this.reverbIn.gain.value = m.reverb;
+      this.delayIn.gain.value = m.delay;
+      this.feedback.gain.value = Math.min(0.85, m.feedback);
+      if (m.reverbTime !== this.reverbTime) {
+        this.reverbTime = m.reverbTime;
+        this.reverb.buffer = this.impulse(m.reverbTime);
+      }
+      this.channels.clear();
+    }
+    /** Each frame: schedule what's due in the next `ahead` seconds of audio time, at game time
+     *  `gameTime` (seconds) on the beat clock `clock`. `playing` false: nothing new is scheduled. */
+    update(cue2, gameTime, clock2, playing2, ahead = 0.3) {
+      const now = this.ctx.currentTime, stepNow = beatAt(clock2, gameTime) * 4;
+      if (!playing2) {
+        this.nextStep = -1;
+        return;
+      }
+      const raw = now - gameTime;
+      if (!(Math.abs(raw - this.anchor) < 0.06)) {
+        this.anchor = raw;
+        this.nextStep = -1;
+      } else this.anchor += (raw - this.anchor) * 0.05;
+      if (this.nextStep < 0 || this.nextStep < stepNow - 1 || this.nextStep > stepNow + 64) this.nextStep = Math.ceil(stepNow);
+      this.delay.delayTime.setTargetAtTime(Math.min(4, this.style.mix.delayBeats * 60 / bpmAt(clock2, gameTime)), now, 0.05);
+      for (; ; ) {
+        const g = timeAt(clock2, this.nextStep / 4), t = this.anchor + g;
+        if (t >= now + ahead) break;
+        if (t >= now) this.step(cue2, this.nextStep, t, 60 / bpmAt(clock2, g) / 4);
+        this.nextStep++;
+      }
+    }
+    /** Schedule game time [from, from + seconds) to play from audio time `at` (offline rendering). */
+    renderAhead(cue2, from, seconds, clock2, at = 0) {
+      const first = Math.ceil(beatAt(clock2, from) * 4 - 1e-9);
+      for (let s = first; ; s++) {
+        const g = timeAt(clock2, s / 4);
+        if (g >= from + seconds) break;
+        this.step(cue2, s, at + (g - from), 60 / bpmAt(clock2, g) / 4);
+      }
+    }
+    /** Stop scheduling and forget the plans (a jump in the timeline). */
+    reset() {
+      this.nextStep = -1;
+      this.conductor.reset();
+    }
+    /** One sixteenth: `t` its audio time, `sps` seconds a sixteenth lasts now. */
+    step(cue2, step2, t, sps) {
+      const S = this.style, B = S.blockBars, bar2 = Math.floor(step2 / 16), s = step2 - bar2 * 16;
+      const plan = this.conductor.plan(cue2, bar2);
+      const next = bar2 % B === B - 1 ? this.conductor.plan(cue2, bar2 + 1) : null;
+      this.current = { plan, bar: bar2, step: step2 };
+      if (s === 0) {
+        const sec = resolveSection(S, plan.section), barIn = bar2 - plan.start;
+        const f0 = sectionCutoff(sec, barIn / plan.bars), f1 = sectionCutoff(sec, (barIn + 1) / plan.bars);
+        this.tone.frequency.setValueAtTime(f0, t);
+        if (f1 !== f0) this.tone.frequency.exponentialRampToValueAtTime(f1, t + 16 * sps);
+      }
+      const events = notesAt(S, plan, next, step2, { seed: this.seed, siege: cue2.siege });
+      const swing = step2 % 2 === 1 ? S.swing * sps : 0;
+      for (const e of events) this.play(e, t + swing + e.offset * sps, e.dur * sps, sps);
+    }
+    channel(part, p) {
+      let ch = this.channels.get(part);
+      if (!ch) {
+        const g = this.ctx.createGain();
+        g.connect(p.duck ? this.duckBus : this.dryBus);
+        if (p.reverb) {
+          const r = this.ctx.createGain();
+          r.gain.value = p.reverb;
+          g.connect(r);
+          r.connect(this.reverbIn);
+        }
+        if (p.delay) {
+          const d = this.ctx.createGain();
+          d.gain.value = p.delay;
+          g.connect(d);
+          d.connect(this.delayIn);
+        }
+        this.channels.set(part, ch = { in: g, lastFreq: 0 });
+      }
+      return ch;
+    }
+    play(e, t, dur, sps) {
+      const p = this.style.patches[e.patch];
+      if (!p) return;
+      const ch = this.channel(e.part, p), peak = p.gain * e.vel;
+      switch (p.kind) {
+        case "kick":
+          this.kick(t, p, peak, ch.in);
+          this.duck(t, e.vel, sps);
+          break;
+        case "noise":
+          this.noiseHit(t, p, peak, ch.in);
+          break;
+        case "snare":
+          this.snare(t, p, peak, ch.in);
+          break;
+        case "bell":
+          this.bell(t, p, peak, mtof(e.midi ?? 69), ch.in);
+          break;
+        case "synth":
+          this.synth(t, p, peak, mtof(e.midi ?? 45), dur, ch);
+          break;
+        case "riser":
+          this.riser(t, p, dur, e.from ?? 0, e.to ?? 1, ch.in);
+          break;
+        case "impact":
+          this.impact(t, p, peak, ch.in);
+          break;
+      }
+    }
+    duck(t, vel, sps) {
+      const depth = this.style.mix.duck * Math.min(1, vel), g = this.duckBus.gain;
+      if (depth <= 0) return;
+      g.setTargetAtTime(1 - depth, t, 4e-3);
+      g.setTargetAtTime(1, t + 0.03, sps * 0.7);
+    }
+    env(t, peak, attack, decay) {
+      const g = this.ctx.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(peak, t + Math.max(1e-3, attack));
+      g.gain.exponentialRampToValueAtTime(5e-4, t + Math.max(1e-3, attack) + Math.max(0.01, decay));
+      return g;
+    }
+    shaper(drive) {
+      const k = Math.round(drive * 40) + 1;
+      let curve = this.curves.get(k);
+      if (!curve) {
+        curve = new Float32Array(1024);
+        for (let i = 0; i < 1024; i++) {
+          const x = i / 1023 * 2 - 1;
+          curve[i] = Math.tanh(k * 0.6 * x) / Math.tanh(k * 0.6);
+        }
+        this.curves.set(k, curve);
+      }
+      const w = this.ctx.createWaveShaper();
+      w.curve = curve;
+      return w;
+    }
+    chain(nodes, dest) {
+      for (let i = 0; i < nodes.length - 1; i++) nodes[i].connect(nodes[i + 1]);
+      nodes[nodes.length - 1].connect(dest);
+    }
+    kick(t, p, peak, dest) {
+      const c = this.ctx, o = c.createOscillator(), decay = p.decay ?? 0.35;
+      o.frequency.setValueAtTime(p.pitch ?? 150, t);
+      o.frequency.exponentialRampToValueAtTime(p.pitchEnd ?? 45, t + (p.pitchTime ?? 0.08));
+      const g = this.env(t, peak, 2e-3, decay);
+      this.chain(p.drive ? [o, this.shaper(p.drive), g] : [o, g], dest);
+      o.start(t);
+      o.stop(t + decay + 0.05);
+    }
+    noiseSource(t, length) {
+      const s = this.ctx.createBufferSource();
+      s.buffer = this.noise;
+      s.loop = length > 1.5;
+      s.start(t, t * 7.31 % 1 * 0.5);
+      s.stop(t + length);
+      return s;
+    }
+    noiseHit(t, p, peak, dest) {
+      const c = this.ctx, decay = p.decay ?? 0.05, bursts = p.bursts ?? 1, gap = 0.011;
+      const f = c.createBiquadFilter();
+      f.type = p.filter ?? "highpass";
+      f.frequency.value = p.cutoff ?? 8e3;
+      f.Q.value = p.q ?? 0.7;
+      const g = c.createGain(), t0 = t + (bursts - 1) * gap;
+      g.gain.setValueAtTime(0, t);
+      for (let i = 0; i < bursts - 1; i++) {
+        g.gain.linearRampToValueAtTime(peak, t + i * gap + 1e-3);
+        g.gain.exponentialRampToValueAtTime(peak * 0.15, t + i * gap + gap * 0.9);
+      }
+      g.gain.linearRampToValueAtTime(peak, t0 + Math.max(1e-3, p.attack ?? 1e-3));
+      g.gain.exponentialRampToValueAtTime(5e-4, t0 + (p.attack ?? 1e-3) + decay);
+      this.chain([this.noiseSource(t, t0 - t + decay + 0.06), f, g], dest);
+    }
+    snare(t, p, peak, dest) {
+      const c = this.ctx, decay = p.decay ?? 0.14;
+      const f = c.createBiquadFilter();
+      f.type = "highpass";
+      f.frequency.value = p.cutoff ?? 1800;
+      f.Q.value = p.q ?? 0.7;
+      this.chain([this.noiseSource(t, decay + 0.05), f, this.env(t, peak, 1e-3, decay)], dest);
+      const o = c.createOscillator();
+      o.type = "triangle";
+      o.frequency.setValueAtTime((p.pitch ?? 190) * 1.5, t);
+      o.frequency.exponentialRampToValueAtTime(p.pitch ?? 190, t + 0.03);
+      this.chain([o, this.env(t, peak * 0.7, 1e-3, decay * 0.5)], dest);
+      o.start(t);
+      o.stop(t + decay + 0.05);
+    }
+    bell(t, p, peak, freq, dest) {
+      const c = this.ctx, decay = p.decay ?? 0.3;
+      const f = c.createBiquadFilter();
+      f.type = "bandpass";
+      f.frequency.value = p.cutoff ?? 2400;
+      f.Q.value = p.q ?? 1.5;
+      const g = this.env(t, peak, 1e-3, decay);
+      f.connect(g);
+      g.connect(dest);
+      for (const k of [1, p.ratio ?? 1.48]) {
+        const o = c.createOscillator();
+        o.type = "square";
+        o.frequency.value = freq * k;
+        o.connect(f);
+        o.start(t);
+        o.stop(t + decay + 0.05);
+      }
+    }
+    synth(t, p, peak, freq, dur, ch) {
+      const c = this.ctx, waves = p.waves ?? ["sawtooth"], n = waves.length;
+      const attack = Math.max(2e-3, p.attack ?? 5e-3), decay = Math.max(0.01, p.decay ?? 0.2), sustain = p.sustain ?? 0.5, release = Math.max(0.01, p.release ?? 0.1);
+      const end = t + Math.max(dur, attack), stop = end + release * 4 + 0.02;
+      const g = c.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(peak / Math.sqrt(n), t + attack);
+      if (end > t + attack) g.gain.setTargetAtTime(peak / Math.sqrt(n) * sustain, t + attack, decay / 3);
+      g.gain.setTargetAtTime(0, end, release / 3);
+      const nodes = [];
+      if (p.filter) {
+        const f = c.createBiquadFilter();
+        f.type = p.filter;
+        f.Q.value = p.q ?? 0.7;
+        const base = p.cutoff ?? 2e3, top = Math.min(18e3, base + (p.envAmt ?? 0) * peak / Math.max(1e-3, p.gain));
+        f.frequency.setValueAtTime(top, t);
+        if (top > base) f.frequency.exponentialRampToValueAtTime(base, t + attack + decay);
+        nodes.push(f);
+      }
+      if (p.drive) nodes.push(this.shaper(p.drive));
+      nodes.push(g);
+      this.chain(nodes, ch.in);
+      waves.forEach((w, i) => {
+        const o = c.createOscillator();
+        o.type = w;
+        o.detune.value = n > 1 ? (p.detune ?? 0) * (2 * i / (n - 1) - 1) : 0;
+        if (p.glide && ch.lastFreq > 0 && ch.lastFreq !== freq) {
+          o.frequency.setValueAtTime(ch.lastFreq, t);
+          o.frequency.exponentialRampToValueAtTime(freq, t + p.glide);
+        } else o.frequency.value = freq;
+        o.connect(nodes[0]);
+        o.start(t);
+        o.stop(stop);
+      });
+      ch.lastFreq = freq;
+    }
+    riser(t, p, dur, from, to, dest) {
+      const c = this.ctx, lo = p.cutoff ?? 400, f = c.createBiquadFilter(), g = c.createGain();
+      f.type = "bandpass";
+      f.Q.value = p.q ?? 4;
+      const fq = (k) => lo * Math.pow(12e3 / lo, k), lvl = (k) => p.gain * (0.1 + 0.9 * k * k);
+      f.frequency.setValueAtTime(fq(from), t);
+      f.frequency.exponentialRampToValueAtTime(fq(to), t + dur);
+      g.gain.setValueAtTime(lvl(from), t);
+      g.gain.linearRampToValueAtTime(lvl(to), t + dur);
+      g.gain.linearRampToValueAtTime(0, t + dur + 0.02);
+      this.chain([this.noiseSource(t, dur + 0.05), f, g], dest);
+    }
+    impact(t, p, peak, dest) {
+      const c = this.ctx, decay = p.decay ?? 1.5;
+      const f = c.createBiquadFilter();
+      f.type = "lowpass";
+      f.frequency.setValueAtTime(6e3, t);
+      f.frequency.exponentialRampToValueAtTime(300, t + decay);
+      this.chain([this.noiseSource(t, decay + 0.1), f, this.env(t, peak * 0.6, 2e-3, decay)], dest);
+      const o = c.createOscillator();
+      o.frequency.setValueAtTime(p.pitch ?? 90, t);
+      o.frequency.exponentialRampToValueAtTime(p.pitchEnd ?? 30, t + (p.pitchTime ?? 0.6));
+      this.chain([o, this.env(t, peak, 2e-3, decay * 0.6)], dest);
+      o.start(t);
+      o.stop(t + decay);
+    }
+    impulse(seconds) {
+      const c = this.ctx, n = Math.max(1, Math.floor(seconds * c.sampleRate)), b = c.createBuffer(2, n, c.sampleRate);
+      let r = 777;
+      for (let ch = 0; ch < 2; ch++) {
+        const d = b.getChannelData(ch);
+        for (let i = 0; i < n; i++) {
+          r = Math.imul(r, 1664525) + 1013904223 >>> 0;
+          d[i] = (r / 4294967296 * 2 - 1) * Math.pow(1 - i / n, 3);
+        }
+      }
+      return b;
+    }
+  };
+
+  // src/platform/music.ts
+  var Music = class {
+    constructor(ctx2, volume, style2, seed2, src = "") {
+      this.ctx = ctx2;
+      this.volume = volume;
+      this.master = ctx2.createGain();
+      this.master.gain.value = 0;
+      this.wobble = ctx2.createGain();
+      this.filter = ctx2.createBiquadFilter();
+      this.filter.type = "lowpass";
+      this.filter.frequency.value = 16e3;
+      this.filter.Q.value = 0.7;
+      this.shaper = ctx2.createWaveShaper();
+      this.shaper.curve = crunch(30);
+      this.dry = ctx2.createGain();
+      this.wet = ctx2.createGain();
+      this.wet.gain.value = 0;
+      this.bus = ctx2.createGain();
+      this.bus.connect(this.dry);
+      this.bus.connect(this.shaper);
+      this.shaper.connect(this.wet);
+      this.dry.connect(this.filter);
+      this.wet.connect(this.filter);
+      this.filter.connect(this.wobble);
+      this.wobble.connect(this.master);
+      this.master.connect(ctx2.destination);
+      this.noise = ctx2.createBuffer(1, ctx2.sampleRate, ctx2.sampleRate);
+      const d = this.noise.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      if (src && ctx2 instanceof AudioContext) {
+        const el = new Audio(src);
+        el.loop = true;
+        el.crossOrigin = "anonymous";
+        ctx2.createMediaElementSource(el).connect(this.bus);
+        void el.play().catch(() => {
+        });
+      } else this.engine = new MusicEngine(ctx2, this.bus, style2, seed2);
+    }
+    ctx;
+    volume;
+    master;
+    wobble;
+    filter;
+    shaper;
+    dry;
+    wet;
+    bus;
+    noise;
+    dropUntil = 0;
+    /** The generative track (none with a recorded one). */
+    engine = null;
+    /** Each frame: the mix to hear, the music's cue (waves, boot), the game's time and beat. */
+    update(mix, cue2, gameTime, clock2, on) {
+      const c = this.ctx, now = c.currentTime, k = 0.08;
+      if (mix.distort > 0.05 && now > this.dropUntil && Math.random() < mix.distort * 0.01) this.dropUntil = now + 0.08 + Math.random() * 0.3 * mix.distort;
+      const vol = on && now >= this.dropUntil ? mix.volume * this.volume : 0;
+      this.master.gain.setTargetAtTime(vol, now, k);
+      this.filter.frequency.setTargetAtTime(mix.cutoff, now, k);
+      this.wet.gain.setTargetAtTime(mix.distort * 0.8, now, k);
+      this.dry.gain.setTargetAtTime(1 - mix.distort * 0.6, now, k);
+      this.wobble.gain.setTargetAtTime(1 - mix.distort * 0.45 * (0.5 + 0.5 * Math.sin(now * 7.3 + Math.sin(now * 2.1) * 2)), now, 0.02);
+      if (on && mix.distort > 0.05 && Math.random() < mix.distort * 0.15) this.crackle(now + Math.random() * 0.05, mix.distort);
+      this.engine?.update(cue2, gameTime, clock2, on);
+    }
+    crackle(at, amount) {
+      const c = this.ctx, s = c.createBufferSource(), g = c.createGain();
+      s.buffer = this.noise;
+      g.gain.setValueAtTime(0.25 * amount, at);
+      g.gain.exponentialRampToValueAtTime(1e-3, at + 0.02);
+      s.connect(g);
+      g.connect(this.master);
+      s.start(at, Math.random() * 0.9, 0.025);
+    }
+  };
+  function crunch(k) {
+    const n = 1024, out = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const x = i / (n - 1) * 2 - 1;
+      out[i] = (1 + k) * x / (1 + k * Math.abs(x));
+    }
+    return out;
+  }
+
+  // src/rules/music.ts
+  function mixAt(M, level, damage, distance) {
+    const k = level;
+    return {
+      volume: M.floor + (1 - M.floor) * k,
+      cutoff: M.muffle * Math.pow(M.clear / M.muffle, k),
+      // log between muffled and clear
+      distort: Math.min(1, damage * M.distort),
+      distance
+    };
+  }
+  var nearness = (M, distance) => 1 - Math.min(1, Math.max(0, (distance - M.nearDist) / Math.max(1, M.farDist - M.nearDist)));
+
+  // config/tuning.json
+  var tuning_default = {
+    _readme: "Witch tuning. Edit the numbers, push, and the playable link rebuilds. Distances are metres, times seconds, angles degrees. Keys starting with _ are notes.",
+    _map: "The forest: mapAreas x mapAreas areas cut by the fractal partition. An area is areaSize x areaScale metres across on average (areaScale 4 makes them four times as wide as the first 28 m areas; push it for bigger). areaSizeVariance (0-1) makes areas vary in size, some small, some large. borderLayers sets how wiggly borders are.",
+    mapAreas: 20,
+    areaSize: 28,
+    areaScale: 4,
+    areaSizeVariance: 0.7,
+    borderLayers: 4,
+    _trees: "treeHeight and crownWidth scale the art's trees (1 is the Art Lab's size; crowns widen with treeHeight too, crownWidth is the total). treeDensity (0-1): the chance of a tree on each spot outside the clearings; clearingSize (0-1): how far out from an area's centre the ground stays fully open; clearingFalloff (0-1): over how much of the way to the border trees thicken to full density (small: crisp clearing edges); gladeAmount (0-1) of the woods is open in random glades about gladeScale metres across; trees sit on a staggered grid treeSpacingX by treeSpacingZ metres, so no two crowns pile up. A tree is left out where its crown (crownHalfWidth either side, crownHeight up) would hang over a clearing seen from the treetops.",
+    treeDensity: 1,
+    clearingSize: 0.2,
+    clearingFalloff: 0.18,
+    gladeAmount: 0.25,
+    gladeScale: 38,
+    _areaEdgeBlend: "Ragged area edges: each tree and bush takes its look (its area type) from a point up to width metres away, by a smooth noise scale metres across plus a per-plant stray (stray, share of width), so neighbouring areas' plants mix in a band along the border. Only the look: creatures, partifying and the party border keep the exact borders.",
+    areaEdgeBlend: { width: 20, scale: 40, stray: 0.5 },
+    _groundBlend: "How neighbouring areas' floor textures meet (Ed, v160): the border is warped by noise in two octaves (up to warp metres over about 40 m, and fine metres over about 6 m), so it meanders rather than following the texture's grid; across a band metres wide the two floors mix pixel by pixel, by noise and (dither) an ordered dither, like grass creeping into dirt. Visual only. ?blend=off turns it off.",
+    groundBlend: { on: true, warp: 8, fine: 1.5, band: 5, dither: true },
+    _ground: "The ground's fake relief (Ed, v171: so the ground doesn't look flat): low rises and hollows from noise about relief.scale metres across, tilting the ground's lighting by relief.strength (0 flat) so the witch's light and the campfires pick out the bumps, and hollows shaded darker by relief.shade. ?relief=0 turns it off.",
+    ground: { relief: { strength: 0.9, scale: 7, shade: 0.22 }, hills: { on: true, amplitude: 1.5, scale: 112, octaves: 1 } },
+    _hills: "The rolling ground (Ed, 2026-10-04): ground.hills lifts the ground and everything standing on it into broad swells up to amplitude metres up or down, scale metres across, in octaves layers of noise; drawing only, the game itself stays flat. Paths stay level across, and the ground is levelled into plateaus under the dancefloor, the treehouse, soundsystems, set pieces, the grounds and ponds. ?hills=0 turns it off; ?hills=<amplitude> tries another. relief (above) adds the small bumps on top.",
+    _sky: "The night sky that shows over the bend in treetop mode (on; ?sky=off leaves the plain dark background there, which costs nothing): stars (how many, 0-1), moon (brightness), and clouds: count (roughly how many in view), speed (m/s they drift), partyGlow (how strongly the party's colours light their undersides; over dormant forest they stay moonlit grey).",
+    sky: { on: true, stars: 0.6, moon: 1, clouds: { count: 6, speed: 2.5, partyGlow: 0.8 } },
+    _wind: "Wind sway on leafy things (Ed, v171): trees (both halves together, from the foot) and undergrowth lean with gusts that travel across the forest: strength metres at the top of a crown, gusts moving at speed m/s, gustScale metres across; treetop: the share of it seen over the treetops (gentler). Walls and set pieces stand still. ?wind=0 turns it off.",
+    wind: { on: true, strength: 0.25, speed: 6, gustScale: 40, treetop: 0.6 },
+    _groundCover: "Tufts of grass, fern, heather, reeds, moss and clover on the ground round the witch (Ed, v171: so the ground doesn't look flat), in ground mode only: density (times each area type's groundCover.density in area-types.json; ?grass=0..2 scales it live), out to the canopy hole round her, at most radius metres (fading out towards it), at most cap at once; one chance every spacing metres, worked out cell metres square at a time, within budgetMs of each frame; they sway in the wind by sway of their height and part round her and nearby creatures by part. None within sigilClear metres of a placed sigil (or over its rune, if bigger), trampled short just beyond (Ed, v233). None on paths, the dancefloor or ground kept clear; thicker along path edges.",
+    groundCover: { on: true, density: 1, radius: 48, cap: 9e3, spacing: 0.9, cell: 8, budgetMs: 2, sway: 0.12, part: 0.6, sigilClear: 1.75 },
+    _density: "Tree density is a field, not two states (Ed, 2026-10-03): each area's own density (its layout in art/areas.js) times a patch noise patchScale metres across, from patchMin to patchMax times (dense patches, sparse patches, glades), times the area's pattern (groves, stands, rings, rows, thicket, edges only), times the clearings (soft edges); and lone trees at lone density almost everywhere, so open ground isn't empty. treeDensity scales it all.",
+    density: { patchScale: 45, patchMin: 0.1, patchMax: 1.3, lone: 0.03 },
+    bushDensity: 0.16,
+    bushClump: 0.8,
+    treeHeight: 2.25,
+    _treeCap: "The tallest tree variants (tall, giant) are drawn squeezed so the treetop flight (treetopHeight) stays above the canopy: any height over from metres keeps only keep of the rest (so a 45 m giant shows about 29 m: still over the canopy, not burying her).",
+    treeCap: { from: 20, keep: 0.35 },
+    crownWidth: 1.7,
+    treeSpacingX: 4.6,
+    treeSpacingZ: 2.8,
+    crownHalfWidth: 10.5,
+    crownHeight: 11.25,
+    bushSpacing: 3.4,
+    _witch: "Speeds per mode, and how long rising and descending take. acceleration: how quickly she reaches her speed or stops in the treetops (per second; higher is snappier); groundAcceleration: the same on the ground. leanAt: the share of the top speed above which she leans into her flight. facing: she (and every creature) faces the viewer unless clearly heading up the screen, within awayEnter degrees of straight up (and stays turned away until past awayLeave); sideways, down or stopped faces the viewer. Within headingEnter degrees of straight up or straight down the screen (until past headingLeave) she flies in her heading sprites: seen from behind going up, coming at us going down.",
+    groundSpeed: 19.25,
+    treetopSpeed: 32,
+    acceleration: 10,
+    _treetop: "Treetop flight (Ed: a high top speed and momentum; the ground stays snappy): pressing a direction reaches treetopSpeed in about 0.3 s (acceleration); holding it within boostAngle degrees builds boost over boostTime seconds, up to boost times treetopSpeed; her heading turns toward the input at turnRateSlow degrees a second below sharpTurnSpeed of cruise, falling to turnRate at cruise (half that at full boost), so the size of her swoop grows with her speed (Ed); a turn of 90 degrees or more bleeds boost sharpTurnBleed times a second, and above brakeAt of cruise she skids in the brake pose; letting go, she glides to a stop over about glideTime seconds. cameraPull: how far the camera draws back at full boost (a share of its distance).",
+    treetop: { boost: 1.7, boostTime: 2, boostAngle: 25, turnRate: 150, turnRateSlow: 720, sharpTurnSpeed: 0.4, brakeAt: 0.9, glideTime: 1, sharpTurnBleed: 3, cameraPull: 0.06 },
+    groundAcceleration: 28,
+    leanAt: 0.7,
+    facing: { awayEnter: 55, awayLeave: 65, headingEnter: 20, headingLeave: 28 },
+    riseTime: 0.7,
+    descendTime: 0.55,
+    groundHeight: 1.4,
+    treetopHeight: 24,
+    _camera: "curve: the world bends away toward the top of the screen (Ed, 2026-10-04: only over the treetops, so a little night sky shows), per metre ahead of the witch, eased in as she rises; ?curve=<treetop> tries values (0.0025 a sliver of sky, 0.004 a band; 0 off). Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase. zoomEase and liftEase: how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out. Zoom moves between them in zoomSteps steps, starting at startZoom: with 4 steps and startZoom 1 the start is a third of the way out, so the defaults are ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with one step in and two out from each.",
+    camera: {
+      fov: 20,
+      ground: { angleIn: 30, angleOut: 36, distanceIn: 80, distanceOut: 140 },
+      treetop: { angleIn: 34, angleOut: 40, distanceIn: 150, distanceOut: 210 },
+      lookAhead: 0.1,
+      lookAheadMax: 3,
+      lookAheadEase: 1.5,
+      zoomEase: 5,
+      liftEase: 8,
+      curve: { ground: 0, treetop: 3e-3 },
+      zoomSteps: 4,
+      startZoom: 1,
+      follow: 8,
+      intro: { distance: 34, angle: 22, ease: 1.3 }
+    },
+    _look: "Everything the camera can see is drawn, plus viewMargin metres round the view, so nothing appears or vanishes on screen. haze: the twilight haze fades the forest from near to far metres from the witch; nothing is drawn beyond far. lightBudget: how many of the nearest point lights (campfires, magic stones, the dancefloor) light the scene at once. pixelSize: screen pixels per art pixel. The witch's light reaches as far as the canopy hole round her in ground mode (its radius plus its soft edge, in metres at her depth, times glowToCutout), so beyond it the forest is dark (Ed, v149); glowFalloff: how fast it falls off, as (1 - distance/reach)^glowFalloff. ?glow=<reach>,<falloff> in the URL fixes the reach (glowReach metres) and the falloff, to try values live. spriteTilt: 1 = sprites face the camera fully, 0 = stand upright.",
+    pixelSize: 3,
+    glowReach: 50,
+    glowFalloff: 1.5,
+    glowToCutout: 1,
+    glowHeight: 8,
+    spriteTilt: 1,
+    artPixelsPerMetre: 16,
+    viewMargin: 12,
+    lightBudget: 20,
+    _lightSources: "Light sources placed by seed, on a grid of spacing metres, mostly in clearings and at area edges: the chance per spot of a campfire (shown only once its area is partified: campfires are party objects, Ed 2026-10-04; they light up with a whoosh of sparks as the party arrives), a magic stone, or a pond mirroring the moon (wetPond in wet areas: wetland, stream, bog, beaver pond, moor).",
+    _lights: "How far (reach, metres) and how strongly each kind of light lights its surroundings. glowPower: the witch's own glow at its brightest (0-1; 0.65 lights without blowing out), full under her, falling off as glowFalloff says out to glowReach metres, lit from a source glowHeight metres above her. Light falls off smoothly to nothing at its reach: no rings or bands.",
+    lights: { campfire: { reach: 22, strength: 2.6 }, stone: { reach: 16, strength: 1.8 } },
+    glowPower: 0.65,
+    _beat: "The music's clock (beats per minute): the lasers sweep to it and party animals dance to it. Later the music itself drives it.",
+    beat: { bpm: 120 },
+    _berries: "Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start. Bushes grow in patches of patch.bushes [min, max] within patch.radius metres. Party animals (invited, not legends), following her or held at a sigil, take a berry on their way (Ed, v233): within detour metres of the line to where they're heading or of their sigil, never beyond their leash; they nip over, eat it (eatTime seconds) and carry on. seekRadius is kept for free-roaming animals' seek. the berry grows again at once on a free berry bush somewhere else on the map. After toEvolve berries (babies, young, adults) a party animal evolves on the next bar line; adults become legends (the only way to get a party legend). colour: the berry's (shiny dark cherry red); glow: its soft halo's strength. B (debug) feeds the nearest party animal one berry.",
+    berries: { perArea: [8, 12], bushesPerArea: 20, patch: { bushes: [3, 5], radius: 3 }, detour: 4.5, seekRadius: 15, eatTime: 0.25, toEvolve: [1, 3, 8], colour: "#9e1024", glow: 0.8 },
+    _witchLight: `The witch is lit by the world's lights like everything else (Ed: "I can go near a coloured light source and not change colour"), but not by her own glow: never darker than lightFloor times her old unlit look, so she reads in the dark; coloured lights (soundsystems, campfires, rune stones, the dancefloor) tint her by lightTint and rim the edge of her facing them by lightRim.`,
+    witch: { lightFloor: 0.75, lightTint: 1, lightRim: 0.6 },
+    _occlusion: "Never lose the witch: tall things (over minHeight metres) standing in front of her fade to fadeOpacity where they cover her, in a soft circle round her body (a little bigger than her sprite) that eases from see-through at the centre to opaque past edge (a share of its radius), and eases in over a few metres as she moves behind; anything that still hides her shows her silhouette in her glow colour at silhouette opacity.",
+    _sigilProjection: "From the treetops, each placed sigil shows above the canopy over its spot: height metres above the crowns, opacity, size (times the ground rune), and a faint column of light (beam opacity) from the rune up to it. Fades in as she rises.",
+    sigilProjection: { height: 3, opacity: 0.65, beam: 0.25, size: 1 },
+    occlusion: { on: true, fadeOpacity: 0.38, edge: 0.8, minHeight: 2.5, silhouette: 0.55 },
+    _stack: "The sigil stack above the witch's hat: scale (of the sigils' size), offset (the gap between her hat tip and the bottom sigil, in sigil heights), gap (between sigils, in sigil heights). It sways as a chain of springs: stiffness and damping, trail (how far it leans back per m/s of her speed), idleSway (metres of gentle sway when she's still).",
+    stack: { offset: 0.5, scale: 0.65, gap: 0.15, stiffness: 60, damping: 9, trail: 0.03, idleSway: 0.1 },
+    _lasers: "Each playing soundsystem's laser show: bursts of blockBars bars, on about duty of the time (seeded per soundsystem), up to maxCount beams stepping on the bars, fanned over spread degrees (no beam tilting more than maxTilt from straight up), swinging sweep degrees once every sweepBeats beats (slow, like searchlights), opening and closing the fan every openBars bars, length metres tall, opacity 0-1, fading in over fadeIn and out over fadeOut seconds, and fading with distance from fadeNear to fadeFar metres. Glow only: no light, nothing from the light budget.",
+    _speakerLasers: "The dancefloor ring's lasers (Ed, 2026-10-04: none from the disco ball; one on top of each ring speaker): a single beam from each playing speaker, at most tilt degrees off straight up and leaning outwards, swinging sweep degrees sideways, over sweepBeats beats, neighbours out of phase; length metres, at opacity (thinner-looking than the area soundsystems' fans). Damaged speakers flicker theirs; destroyed ones have none. 12 more beams on top of the lasers' own.",
+    _partyWitches: "Party witches (Ed, 2026-10-04): one per playing soundsystem (not the dancefloor's), at most max, flying in from its side (from flyFrom metres out, at flyHeight, over arriveTime seconds) to land on the dancefloor (within floorShare of its radius, clear of the speakers), and off again if it stops. Each holds an activity activityMin to activityMax seconds, picked by weights: dance alone, pair (dance together, hug, high five, hold hands, conga, a toast: with a free witch within pairRange, pairGap metres apart), chat (laughing together), drink, run (at runSpeed), rest (on the ground), fly (laps over the floor at lapSpeed radians a second). Holding hands they wander at walkSpeed. A player standing still on foot within idleReach times the floor's radius for idleAfter seconds joins in; any input stops it. ?witches=N brings N more for testing.",
+    _partyObjects: "Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters [min, max] of the art's clusters, loose [min, max] loose pieces (litter, small lights, balloons; neon and balloon colours random per placement), set dressing at setChance, and at caughtChance an escaped balloon caught in a tree. They appear as the party arrives. Real point lights only from campfires and lanterns (lanternReach metres, warm), at most lightsPerArea an area; everything else glows without lighting. exclude: pieces never placed, loose or in clusters (Ed, v271: the glowing LED cube looked too much like a game object).",
+    partyObjects: { on: true, clusters: [2, 4], loose: [20, 40], setChance: 0.6, caughtChance: 0.6, lightsPerArea: 3, lanternReach: 5, exclude: ["led-cube"] },
+    partyWitches: { max: 24, idleAfter: 6, idleReach: 1.4, activityMin: 4, activityMax: 16, weights: { dance: 4, pair: 2.2, chat: 1.2, drink: 1, run: 0.8, rest: 0.6, fly: 0.4 }, arriveTime: 6, flyFrom: 70, flyHeight: 9, runSpeed: 3, walkSpeed: 1, lapSpeed: 0.6, pairRange: 7, pairGap: 0.75, floorShare: 0.8, debugExtra: 0 },
+    speakerLasers: { on: true, tilt: 24, sweep: 14, sweepBeats: 8, length: 300, opacity: 0.4 },
+    lasers: { on: true, maxCount: 9, length: 420, spread: 100, maxTilt: 55, sweep: 22, sweepBeats: 36, openBars: 18, opacity: 0.6, duty: 0.35, blockBars: 4, fadeIn: 0.12, fadeOut: 0.4, fadeNear: 140, fadeFar: 480 },
+    _borders: "A sparkling line round the partified region's outside edge, in each area's sigil colour: width (px), brightness, sparkle (0-1, how much it twinkles and runs), step (metres between its sparks); twinkle (0 a gentle breathing, 1 star-like: brief flashes and dips, now and then a spark out for a moment); each spark flickers between its own area's colour and the one across the edge (Ed, v183), swapRate times a second on its own phase, and swapBeat of them snap on the beat instead. ?border=<twinkle>,<swapRate>,<swapBeat> tries values.",
+    borders: { on: true, width: 2, brightness: 1.2, sparkle: 0.9, step: 1.6, twinkle: 1, swapRate: 0.8, swapBeat: 0.3 },
+    lightSources: { spacing: 10, campfire: 0.03, magicStone: 0, pond: 0.02, wetPond: 0.12 },
+    haze: { near: 150, far: 360 },
+    _scenery: "The scenery budget (Ed, 2026-10-03: gameplay always drawn, scenery as much as we can). Creatures, sigils, soundsystems, the dancefloor, the party border, campfires and stones are always drawn. Scenery (trees, bushes, wall objects, set pieces, string lights) is drawn out to a radius round the witch, at most the haze's far edge, fading out over its last fade metres so nothing pops. With adaptive on, the radius follows the frame rate: if it stays under fps minus hysteresis for sustain seconds the radius shrinks by shrink metres a second, never below minRadius; if it stays at fps or more, it grows back by grow metres a second. ?scenery=<metres> fixes the radius (for testing).",
+    scenery: { adaptive: true, fps: 55, hysteresis: 8, sustain: 1.5, minRadius: 110, shrink: 40, grow: 15, fade: 40 },
+    _post: "bloom: a gentle glow round bright things (strength 0 or on false turns it off; threshold: how bright a pixel must be to glow). tiltShift: blurs the top and bottom of the screen so the forest looks like a miniature. strength: the blur at the screen's edges, in pixels; band: the height of the sharp band (0-1 of the screen); centre: where it sits (0 top, 0.5 middle, 1 bottom); treetop: the strength and band over the treetops (Ed, v160: a stronger miniature look there), blended in as she rises; ?tilt=<strength>,<band> tries treetop values live; where: 'before' blurs at the low resolution, before the pixels are scaled up, 'after' blurs the scaled-up image. Add ?tilt=before, ?tilt=after or ?tilt=off to the link to compare.",
+    _shadows: "shadows: a small contact shadow under the witch, each bush, creature and prop; trees: a crown-sized shadow under every tree too, cast away from the moon (off: Ed, 2026-10-03). canopyShadow: a dappled shadow from the canopy overhead (height in metres), thinner in clearings, drifting with the wind. mist: a low drifting mist (height in metres above the ground). Each has on and strength.",
+    shadows: { on: true, strength: 0.7, trees: false },
+    canopyShadow: { on: true, strength: 0.45, height: 18, cover: 0.55, wind: 0.6 },
+    mist: { on: true, strength: 0.12, height: 3, wind: 0.8 },
+    _fx: "fx: how the mist, the far haze and the canopy dapple are drawn. smooth: soft gradients (the mist in its own buffer, blurred a little and scaled up smoothly); pixel: dithered steps on the art's pixel grid. In smooth, the moonlight's bands, moonbeams and the soft contact shadows under the witch, creatures, bushes and props are smooth too (no dither anywhere); pixel brings all the dithers back. ?fx=pixel or ?fx=smooth in the URL.",
+    fx: "smooth",
+    _moonbeams: "How strong the diagonal moonbeam bands are, times the style's Moonbeams knob: 0 is off (Ed, v108: they read as stripes over a dense canopy). ?moonbeams=on brings them back at 1.",
+    moonbeams: 0,
+    _treehouse: "The witch's treehouse, home (Ed): it stands distance metres beyond the dancefloor's clearing (which reaches past the speaker ring, so however many speakers or how far out, the treehouse stays outside them), at angle degrees (-90 is straight up the screen), and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength. The game starts with her sitting on its terrace; the first move or rise takes her off.",
+    treehouse: { distance: 6, angle: -115, clear: 9, lightReach: 16, lightStrength: 0.6 },
+    _bubbles: "The talk's speech bubbles (Ed): an outline only, no fill. The emoji in them are pixel sprites emojiPixels across, each pixel scale times the game's pixel size on screen (the outline's colour and thickness are in index.html's .bubble).",
+    bubbles: { emojiPixels: 11, scale: 1 },
+    _grounds: "Old playgrounds and sports grounds (the relics art's arrangements): an area has one with chance (not home), off to the side of its centre, keeping a clearing of radius metres (per kind) where nothing grows.",
+    _scenes: "Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bus stop, a picnic gone wild...) and large landmarks (a cemetery, a car park, ruined churches and temples, castle ruins...), each a few pieces counting as one, each at most once per map. An area gets one with chance, if a scene that suits it (its suits) is still unused; it stands off to the side of the area's centre, its footprint clear of the paths, gameplay and other features, trees kept off it, mirrored at random. footprint: the farthest piece's authored offset times scale, plus pad metres (a test checks it covers the art's own).",
+    scenes: { chance: 0.12, scale: 2.2, pad: 4 },
+    grounds: { chance: 0.035, kinds: ["playground", "tennis", "baseball", "football", "basketball"], radius: { playground: 12, tennis: 14, baseball: 14, football: 21, basketball: 5 } },
+    _relics: "Modern relics (cars, trolleys, cones, highway slabs, a phone box, a sofa...): one chance per spacing-metre cell (chance, steered by the area's decor share of modern), nearRoad times as likely within 20 m of a road or railway; never on a path, in a central clearing or a ground; at least minGap metres from the next relic (Ed, v147: too numerous).",
+    relics: { spacing: 34, chance: 67e-4, nearRoad: 4, minGap: 80 },
+    _walls: "Wall objects as features (Ed, v147), per area: man-made and linear ones (garden walls, hedges, brambles, rock walls) as runs [min,max] of runLength [min,max] pieces joined end to end, along a path where one passes (with a gateway gap gateChance of the time; a garden's flower beds in a row along them); henge stones as rings [min,max] of ringStones [min,max] (the first round the shrine, others ringRadius [min,max] metres across in a glade), an avenue leading in avenueChance of the time, and a lone stone loneChance; water, reeds and boulders as clumps [min,max] of clumpSize [min,max] within clumpRadius metres. Open ground between.",
+    walls: { runs: [3, 5], runLength: [5, 10], gateChance: 0.5, rings: [1, 2], ringStones: [6, 12], ringRadius: [6, 11], avenueChance: 0.35, loneChance: 0.3, clumps: [2, 4], clumpSize: [3, 6], clumpRadius: 5 },
+    _runeMarkers: `Spawn markers (Ed, v147): a rune stone on every spot where a soundsystem will come, scale times the old rune stone's size. Dormant (not the next wave): the rune glows steadily at dormant.glow (0-1), a modest light (light strength, reach metres) and a faint beacon above the canopy (beam opacity). Awake (the next wave comes here): the rune, its light and its motes pulse on the beat, from awake.glow[0] to [1], light strength plus lightBuild as the wave's countdown runs out, motes rising (motes per stone, plus moteBuild near the end), a stronger beam. beamHeight: the beacon's height (metres); lightRange: stones within this many metres light the scene. When the party comes, the stone flares (flare.light) and sinks over flare.time seconds as its soundsystem arrives. awakeStyle (Ed, v149: "let's see both"): an awake stone shows a column of light above the canopy ("column"), a thin laser straight up like the disco ball's ("beam": laser opacity, width and length in metres; glow only, no light), or both; ?rune=beam|column|both in the URL.`,
+    runeMarkers: { awakeStyle: "both", laser: { opacity: 0.55, width: 0.25, length: 70 }, scale: 2.25, beamHeight: 46, lightRange: 160, dormant: { glow: 0.5, light: 0.55, reach: 12, beam: 0.1 }, awake: { glow: [0.7, 1], light: 0.9, lightBuild: 1, reach: 18, beam: 0.3, motes: 8, moteBuild: 12 }, flare: { time: 1.6, light: 3.5 } },
+    _pathFade: "Every end of a path, road, railway or stream (where it stops, peters out or is broken) frays out over its last metres in an ordered dither on the art's pixel grid, broken up by noise (Ed, v149).",
+    pathFade: { metres: 6, dither: true },
+    _trunkFade: `In ground mode, where the crowns are hidden, each tree's trunk fades out over its top metres in an ordered dither on the art's pixel grid (Ed, v149), instead of ending in a flat cut; over at most share of the trunk's visible height, so short trees keep a solid trunk (Ed, v233). Trunks stand in the canopy's shadow: never darker than lightFloor of their unlit look, with a rim from her glow; and the cut between trunk and crown is where crownShare of the crown's pixels lie above, not its lowest low bough (Ed, v271: "We have really lost our treetrunks").`,
+    trunkFade: { metres: 2.5, share: 0.3, dither: true, lightFloor: 0.8, rim: 0.5, crownShare: 0.85 },
+    _decor: "Decorations scattered as discoveries: one chance per spacing-metre cell, of a ruin (ruins), a rock (rocks) or a freak tree (freak), each at least minGap metres from the next (Ed, v147: too numerous); fewer under dense canopy; never in an area's central clearing (openness under clearing), on or within pathGap metres of a path, or by the dancefloor. footprint: metres round a decoration kept clear of soundsystems, the dancefloor, the treehouse and set pieces (plus reserveMargin).",
+    decor: { spacing: 26, ruins: 0.01, rocks: 0.03, freak: 4e-3, minGap: 80, clearing: 0.3, pathGap: 2, footprint: 4 },
+    _paths: "Paths, roads and railways (Ed): rails [min,max] railway lines edge to edge in wide curves (one with a branch); roads [min,max] broad sweeping old roads; linkChance: the share of neighbouring areas joined by a meandering path; deadEndChance: the share of areas with a path out to nothing; pathHalf, roadHalf, railHalf: half each corridor's width (metres), kept clear of trees, with bushes thick along the edges for edgeBushes metres (bushBoost times as many); streams [min,max] long streams winding across the map (and short ones join wet areas that touch), streamHalf metres half-wide; along a railway, every landmarkSpacing metres, a landmarkChance of a landmark (a wagon, a carriage, a platform, a gantry) and otherwise sometimes a signal post; verge posts along roads every vergeSpacing metres; every 3D piece at least pieceGap metres from the next; the two flights of stairs are finds, each at most once per map, by the clearing of a ravine, rocky slope, cave mouth or stone shrine; railBroken: the share of the railway that's broken, where trees grow between the sleepers (treesOnBroken times the usual chance).",
+    paths: { rails: [2, 4], roads: [1, 2], linkChance: 0.55, deadEndChance: 0.3, pathHalf: 2.2, roadHalf: 6, railHalf: 3, railBroken: 0.3, streams: [1, 2], streamHalf: 2.5, landmarkSpacing: 260, landmarkChance: 0.35, vergeSpacing: 45, pieceGap: 40, treesOnBroken: 0.35, edgeBushes: 3, bushBoost: 3 },
+    _invite: "Inviting (DESIGN.md, the leash): on the ground, she talks by herself (no button: Ed, v244) to the nearest invitable creature within talkRange metres, and sticks with it; you chat in emoji for talkTime seconds (babies, young, adults), taking turns every turn seconds (babies, young, adults), then it is invited and leashed to you. Rising or moving further than cancelDistance stops it, and the chat's progress drains at decayRate of the rate it filled (0.5: half), so coming back soon picks up where it left off. Legends can't be invited: they give one unimpressed look. leash.length: how far a leashed creature roams from its leash point (you, or its sigil on the ground); runSpeed: how fast it hurries back when out of range (m/s); pickRadius: how near a placed sigil you must be to pick it up; spacing: how close two sigils may be put down (keep it above pickRadius, or a blocked spot picks up instead of fizzling). bond: how a creature shows its tie to its sigil (rim: a glow at its feet in the sigil's colour; sparks: one spark every sparkEvery seconds from sigil to creature, staggered; thread: a dotted line only under strain). A legend gives her one unimpressed look for snubTime seconds per approach (not again till she's been beyond cancelDistance). hitPenalty: seconds of a chat's progress lost each time she's hit while talking (Ed, 2026-10-04: big, strong groups are hard to invite without getting hit). talkTime's fourth value is for legends let go on a knockout (wild legends still can't be invited).",
+    invite: { hitPenalty: 2, talkRange: 12, cancelDistance: 18, snubTime: 2, talkTime: [3, 6, 12, 24], turn: [0.7, 0.9, 1.3], decayRate: 0.5 },
+    leash: { length: 8, runSpeed: 4, pickRadius: 2, spacing: 4 },
+    bond: { rim: true, sparks: true, thread: true, sparkEvery: 4, threadArc: 0.12, threadArcMax: 2.5 },
+    _music: "Music by proximity (Ed, 2026-10-04): one shared track, full and clear within nearDist metres of a playing soundsystem (or the dancefloor's ring, as loud as its speakers are on), fading to floor of the volume and muffled to a muffle Hz low-pass by farDist metres (clear: the cutoff close by); a damaged soundsystem nearby wobbles, crackles and drops out, by its damage times distort. volume: the master. src: an audio file to loop (empty: the built-in loop at beat.bpm until there's a real track). ?music=off silences it.",
+    music: { on: true, volume: 0.5, nearDist: 25, farDist: 260, floor: 0.08, muffle: 380, clear: 16e3, distort: 1, src: "" },
+    _forecast: "Forecasting (Ed, 2026-10-04): the next two waves are confirmed and the one after has a few probable areas. Every such rune stone grows a circle of up to symbols magic symbols round it on the ground, in its area's neon: the next stone has all of them; the after-next stone fills from afterNext[0] to afterNext[1] as the countdown runs; probable stones (probable of them) flicker with 1 to probableMax. They stand radius metres out, each size metres across, appear with a flare (flare seconds) and pulse on the beat; from the treetops the circle shows above the canopy.",
+    forecast: { symbols: 12, probable: 3, probableMax: 4, afterNext: [5, 11], radius: 6, size: 1.9, flare: 0.6 },
+    _spells: "Spells (Ed, 2026-10-04): one is equipped per run (equipped; later chosen from a list unlocked across runs), cast with the spell button (Q; gamepad B; touch 'spell'), then it recharges. speed: she moves mult times as fast for duration seconds, with a trail, then cooldown seconds before it can go again (a ring in the corner shows it recharging).",
+    _combat: "Combat (Stage 4; the attacks themselves are data in config/combat.json). Wild creatures attack party animals of other kinds within aggro metres, and the witch while she's on the ground within aggroWitch metres (she's safe over the treetops); party animals take on wild ones within engage metres beyond their leash (leash.length) of their leash point. In a fight wild ones move at chaseMult times their own speed, party animals at partyChaseMult; marching on a soundsystem, marchMult. A beaten wild creature flees at fleeMult times its speed for fleeTime seconds and is gone; a beaten party animal is lost for the run. A soundsystem has soundsystemHealth (the dancefloor at home homeHealth), passive, and is hit within soundsystemRadius (homeRadius) metres: sieges should outlast the wave gap. shake: how hard a legend's quake shakes the screen (0 none).",
+    combat: { aggro: 9, aggroWitch: 13, engage: 7, chaseMult: 3, partyChaseMult: 5, marchMult: 1.5, fleeTime: 2.5, fleeMult: 5, soundsystemHealth: 4e3, soundsystemRadius: 2.5, homeHealth: 8e3, homeRadius: 9, shake: 0.6 },
+    _witchHealth: "The witch (Ed, 2026-10-04): she takes hits (one point each, whatever hits her) before she's knocked out; one comes back every repairTime seconds, the timer starting over whenever she's hit, so to heal she has to get right out of the fight.",
+    witchHealth: { hits: 3, repairTime: 20 },
+    _knockout: "Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each creature turning neutral as its sigil goes and walking to the nearest area of its own kind, where it turns wild again; then she sparkles out and in at the treehouse over teleport seconds. Creatures at sigils on the ground stay hers. legendsLoyal: leashed legends stay with her (false: they go back to the wild too: 'they're too old for this').",
+    knockout: { releaseEach: 1, releaseMax: 0, emptyBeat: 0.5, teleport: 1.6, legendsLoyal: false },
+    _dash: "The dash (Ed, 2026-10-04; W, gamepad A, touch 'dash'): on the ground only, a quick burst of distance metres over duration seconds the way she's steering (or facing), then cooldown seconds before the next. She can still be hit while dashing: it's for slipping out of a shot's path.",
+    dash: { distance: 5, duration: 0.18, cooldown: 1 },
+    spells: { equipped: "speed", speed: { mult: 2.2, duration: 4, cooldown: 12 } },
+    _boot: "At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power on one by one over time seconds, and only then does the first wave's countdown begin: extra time to find and invite your first creatures.",
+    boot: { time: 60 },
+    _party: "motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, rising from from to to metres (under the crowns to above them) at about speed m/s. uplight: crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border). The party spreads: a wave every interval seconds (the first after startDelay more), partifying every area touching a partified one; maxPerWave caps a wave (0: no cap). transition: seconds an area takes to partify, 0 to skip the show. partyLight: the coloured light at each soundsystem (reach in metres, strength).",
+    party: { motes: { perPatch: 4, from: 10, to: 34, speed: 1.2 }, uplight: { strength: 0.13, pulse: 0.04, edge: 10 }, interval: 300, startDelay: 0, areasPerWave: 1, maxPerWave: 0, picker: "noisy", noisy: { wobble: 0.8, lobeSize: 500, candidates: 3, spreadFromLast: true }, transition: 2.5, lightReach: 30, lightStrength: 1.6 },
+    _stringLights: "Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart. Each span is spanMin to spanMax metres. No span crosses another and each tree holds at most two ends, except junction trees (junctionChance per tree on a run) where a branch leaves, so three meet. At height metres, sagging sag metres per 8 m of span, a bulb every bulbSpacing metres in the palette's colours, twinkling (twinkle 0-1), a chase running along now and then at chaseSpeed bulbs per second. The bulbs only glow (bloom); they cast no light.",
+    stringLights: { on: true, runsPerArea: [3, 6], spansPerRun: [4, 10], coneAngle: 35, junctionChance: 0.15, spanMin: 6, spanMax: 20, spread: 24, height: 6.5, sag: 0.9, bulbSpacing: 0.8, palette: ["#fff1d6", "#ff6fcf", "#5fe8ff", "#ffe25c", "#b48cff", "#7dff8a"], twinkle: 0.35, chaseSpeed: 8 },
+    _dancefloor: "The dancefloor: motes: magic particles drifting up off the circle (count, how high they rise in metres, speed in m/s, column: the share of the circle they rise from); its radius in metres; a ring of speakers.count stone speakers (Ed, v160), the first at speakers.start degrees round from the camera side and the rest evenly spaced, speakers.radiusFactor times the radius out, each speakers.footprint metres round; a clear space of clearing metres beyond the speakers' feet (the treehouse stands outside that); the floor's glass tiles light up (Ed, v160): levels: how many areas must have the party for each level of intensity above 1 (up to 4, a full rave); tiles: the witch lights the tiles under her (in witchColour, from the neon) when below witchLift, with a ripple each beat lasting rippleTime seconds (a landing's twice as long), footsteps fading over trailTime, events (a wave arriving, a sigil placed) over eventTime, and at level 1 only lowLevelShare of the lit tiles show; a glowing magic circle (two hues 0-1, pulse per second, runeSpeed in turns per minute) lighting the ground round it (lightReach metres, lightStrength), and a magic disco ball floating discoHeight metres up (discoSize metres across, spin turns per minute) throwing specks of light: specks is the share of the sphere that throws one, speckBrightness how bright, speckReach how far.",
+    dancefloor: {
+      motes: { count: 220, rise: 110, speed: 3.2, column: 0.8 },
+      radius: 13.5,
+      clearing: 9,
+      speakers: { count: 12, start: 15, radiusFactor: 2, footprint: 1.5 },
+      levels: [3, 8, 15],
+      tiles: { witchLift: 0.3, witchColour: "lemon", rippleTime: 0.8, trailTime: 1.5, eventTime: 1.6, lowLevelShare: 0.6 },
+      circleHue: 0.86,
+      circleHue2: 0.52,
+      pulse: 0.35,
+      runeSpeed: 1,
+      lightReach: 36,
+      lightStrength: 2,
+      discoHeight: 7.5,
+      discoSize: 1.8,
+      spin: 4,
+      specks: 0.22,
+      speckBrightness: 0.9,
+      speckReach: 32
+    },
+    _canopyCutout: "In ground mode the canopy stays drawn at the screen's edges, so she flies under the forest roof; a dithered hole round her is cut out, screenFraction of the screen's width across, with a soft edge (a fraction of the width). Rising closes the hole.",
+    canopyCutout: { screenFraction: 0.8, edge: 0.1 },
+    _tone: "Contrast: ambient scales the twilight fill (lower is darker shade under the canopy), moon the moonlight (both lowered for Ed's dark forest, v149); black is the black point and gamma the curve applied to the whole picture, so dark goes near-black and lit stays bright.",
+    _find: "Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest... I don't want to go overboard'), all off with ?find=0 to compare: eyeshine, their eyes catching the light in pale gold (strength over their own colour, out to range metres from her, blinking about blink of the time; woken creatures' red eyes stay red); lightFloor, never darker than that share of their unlit look; rim, a faint rim from her glow on the edge facing her; and in place of tone.ambient, ambient, with a cooler, more coloured moon (moonHue, moonSat).",
+    find: { on: true, eyeshine: { range: 45, strength: 1.2, blink: 0.08 }, lightFloor: 0.45, rim: 0.5, ambient: 0.28, moonHue: 0.5, moonSat: 0.5 },
+    tone: { black: 0.03, gamma: 1.35, ambient: 0.22, moon: 0.7 },
+    bloom: { on: true, strength: 0.7, threshold: 0.55 },
+    tiltShift: { on: true, where: "before", strength: 3, band: 0.4, centre: 0.55, treetop: { strength: 6, band: 0.28 } },
+    _creatures: "Creatures grow more numerous and older with an area's distance from home (0 at the dancefloor, 1 at the map's edge): creaturesNear in the areas round home, creaturesFar at the edge (creatureCurve shapes the rise), youngShareFar of them young at the edge; adults from adultsFrom outward, adultShareFar of them at the edge. Wild legends (Ed, 2026-10-04: rare, late mini-bosses; see wildLegends) live only in remote areas; legendNextToHome puts one more next to home, to look at early. Idle creatures roam their whole area. Only creatures whose home is within creatureSimRadius metres of the witch move (never less than the haze far edge plus 2.5 areas, so a creature resuming its roam always does so out of sight).",
+    creaturesNear: 2,
+    creaturesFar: 20,
+    creatureCurve: 1.3,
+    youngShareFar: 0.5,
+    adultsFrom: 0.35,
+    adultShareFar: 0.35,
+    legendNextToHome: false,
+    _wildLegends: "Wild legends (Ed, 2026-10-04): rare, late threats, mini-bosses when combat comes (each has the boss flag). perMap [min, max] of them per map, only in areas at least from remote (0 home, 1 the edge), at least spacing areas apart, at most one an area. They sleep (dormant: still, breathing slowly) until the party reaches their area, then lumber about it at legendSpeed. Drawn scale times a legend's size, swelling by breathe as they breathe (once every breathEvery seconds), with an aura on the ground aura metres across and, from the treetops, a glow over the canopy (glow its strength) in a dark mix of their sigil's colour.",
+    wildLegends: { perMap: [3, 5], from: 0.7, spacing: 4, scale: 1.35, breathe: 0.04, breathEvery: 4, aura: 6, glow: 1 },
+    creatureSimRadius: 600,
+    creatureSpeed: 0.6,
+    _setPieces: "setPieceChance: the share of areas, among the types that have a set piece, that show theirs. Wall objects are laid out as features (see walls); they do not block movement.",
+    setPieceChance: 0.25,
+    setPieceScale: 1.8,
+    setPieceClear: 9,
+    _placement: "Gameplay is placed first, then scenery keeps clear of it: a set piece's footprint (setPieceFootprint metres round its middle, times setPieceScale) stays reserveMargin metres clear of every soundsystem's spot (soundsystemFootprint metres round it, reserved from the start) and of the dancefloor's clearing; a set piece with no room left is left out. Trees keep treeMarginFromSoundsystem metres from a soundsystem's footprint.",
+    setPieceFootprint: 7,
+    soundsystemFootprint: 6,
+    reserveMargin: 3,
+    treeMarginFromSoundsystem: 1.5,
+    legendSpeed: 0.35,
+    _creatureSpeeds: "Ed (2026-10-04): the witch is much faster than almost all creatures (she flies at 19 m/s on the ground, 32 over the treetops). Wild creatures amble at creatureSpeed m/s (legends legendSpeed); leashed ones run after their leash point at leash.runSpeed. The fast few (fast: hare, stoat, marten; rare, and weaker when combat comes) move fastMult times the usual; legends run at legend times it: very slow.",
+    creatureSpeeds: { fast: ["hare", "stoat", "marten"], fastMult: 1.7, legend: 0.4 }
+  };
+
+  // src/rules/tuning.ts
+  var TUNING = tuning_default;
+
+  // tools/music-lab/lab.ts
+  var REPO_STYLE = music_style_default;
+  var clone = (x) => JSON.parse(JSON.stringify(x));
+  var style = clone(REPO_STYLE);
+  var $ = (id) => document.getElementById(id);
+  var run = { time: 0, bootUntil: 30, waves: [], nextAt: 90, interval: 60, boot: 30, paused: false };
+  var hooks = { knockedOut: false, siege: 0, distance: 0, damage: 0, volume: 0.6 };
+  var force = {};
+  var seed = 1;
+  var ctx = null;
+  var music = null;
+  var playing = false;
+  var lastAudio = 0;
+  var beatTuning = () => ({ beat: { bpm: style.bpm, tempos: style.arc.map((a) => a.bpm ?? style.bpm), blockBars: style.blockBars, rampBars: style.tempoRampBars ?? 8 } });
+  var clock = newBeatClock(style.bpm, waveTempo(beatTuning(), 0));
+  var arrived = () => waveArrived(clock, beatTuning(), force.wave ?? run.waves.length, run.time);
+  var bar = (time) => barAt(clock, time);
+  var cue = () => ({ waves: run.waves.map(bar), nextAt: bar(run.nextAt), bootUntil: bar(run.bootUntil), knockedOut: hooks.knockedOut, siege: hooks.siege, forceSection: force.section, forceWave: force.wave });
+  function restart() {
+    Object.assign(run, { time: 0, bootUntil: run.boot, waves: [], nextAt: run.boot + run.interval });
+    clock = newBeatClock(style.bpm, waveTempo(beatTuning(), 0));
+    music?.engine?.reset();
+  }
+  function jumpToWave(n) {
+    force = {};
+    const t = run.time;
+    run.bootUntil = Math.min(run.bootUntil, t);
+    run.waves = Array.from({ length: n }, (_, i) => t - (n - 1 - i) * run.interval);
+    run.nextAt = t + run.interval;
+    arrived();
+    renderButtons();
+  }
+  function nextWave() {
+    run.waves = [...run.waves, run.time];
+    run.nextAt = run.time + run.interval;
+    run.bootUntil = Math.min(run.bootUntil, run.time);
+    arrived();
+  }
+  function step() {
+    requestAnimationFrame(step);
+    if (!ctx || !music) return;
+    const now = ctx.currentTime, dt = playing ? Math.max(0, Math.min(0.25, now - lastAudio)) : 0;
+    lastAudio = now;
+    run.time += dt;
+    if (run.paused) {
+      run.nextAt += dt;
+      if (run.time < run.bootUntil) run.bootUntil += dt;
+    }
+    while (run.time >= run.nextAt && run.time >= run.bootUntil) {
+      run.waves = [...run.waves, run.time];
+      run.nextAt += run.interval;
+      arrived();
+    }
+    const M = TUNING.music, level = nearness(M, hooks.distance);
+    const mix = mixAt(M, level, hooks.damage * level, hooks.distance);
+    music.volume = hooks.volume;
+    music.update(mix, cue(), run.time, clock, playing);
+    $("mix-out").textContent = `heard at ${(mix.volume * 100).toFixed(0)}%, muffled above ${Math.round(mix.cutoff)} Hz, damage ${(mix.distort * 100).toFixed(0)}%`;
+    showNow();
+  }
+  function showNow() {
+    const cur = music?.engine?.current;
+    if (cur) {
+      const a = arcStep(style, cur.plan.arc), sec = resolveSection(style, cur.plan.section);
+      $("s-wave").textContent = `${cur.plan.wave} \xB7 ${a.name}`;
+      $("s-section").textContent = cur.plan.section;
+      $("s-bar").textContent = `${cur.bar - cur.plan.start + 1} / ${cur.plan.bars}`;
+      $("s-feel").textContent = sec.feel ?? "";
+      $("s-progress").style.width = `${100 * (cur.bar - cur.plan.start + 1) / cur.plan.bars}%`;
+    }
+    const left = run.nextAt - run.time;
+    $("s-next").textContent = run.time < run.bootUntil ? `booting ${Math.ceil(run.bootUntil - run.time)} s` : run.paused ? "paused" : `${Math.ceil(left)} s`;
+    const beat = Math.floor(beatAt(clock, run.time)) % 4;
+    $("s-tempo").textContent = `${bpmAt(clock, run.time).toFixed(1)} bpm`;
+    $("beats").querySelectorAll("i").forEach((el, i) => el.classList.toggle("on", playing && i === beat));
+    const B = style.blockBars, first = Math.floor(Math.floor(bar(run.time)) / B) * B, c = cue();
+    const chips = [];
+    let last = "";
+    for (let b = first; b < first + 16 * B; b += B) {
+      const p = b === first && cur ? cur.plan : planBlock(style, c, b);
+      const key = `${p.section}|${p.start}|${p.wave}`;
+      if (key === last) continue;
+      const prev = last.split("|")[2];
+      last = key;
+      chips.push(`<div class="${b === first ? "cur" : ""}${prev !== void 0 && prev !== String(p.wave) ? " wave" : ""}">bar ${Math.max(b, p.start)} \xB7 ${p.section}${b === first ? " \u25C0" : ""}</div>`);
+    }
+    const html = chips.join("");
+    if ($("timeline").innerHTML !== html) $("timeline").innerHTML = html;
+  }
+  function renderButtons() {
+    $("waves").innerHTML = style.arc.map((a, i) => `<button class="btn" data-wave="${i}">${i} ${a.name}</button>`).join("") + `<button class="btn" data-wave="${style.arc.length + 2}">${style.arc.length + 2} (later)</button>`;
+    $("sections").innerHTML = `<button class="btn ${force.section ? "" : "on"}" data-section="">Follow the waves</button>` + Object.keys(style.sections).map((s) => `<button class="btn ${force.section === s ? "on" : ""}" data-section="${s}" title="${(resolveSection(style, s).feel ?? "").replace(/"/g, "&quot;")}">${s}</button>`).join("");
+  }
+  function knob(parent, label, value, min, max, stepSize, set, opts = {}) {
+    const id = "k" + Math.random().toString(36).slice(2, 8), el = document.createElement("div");
+    el.className = "knob";
+    const toSlider = (v) => opts.log ? 1e3 * Math.log(Math.max(min, v) / min) / Math.log(max / min) : v;
+    const fromSlider = (s) => opts.log ? min * Math.pow(max / min, s / 1e3) : s;
+    el.innerHTML = `<label for="${id}">${label}</label><output></output><input type="range" id="${id}" min="${opts.log ? 0 : min}" max="${opts.log ? 1e3 : max}" step="${opts.log ? 1 : stepSize}" value="${toSlider(value)}">`;
+    const out = el.querySelector("output"), input = el.querySelector("input");
+    const show = (v) => {
+      out.textContent = (Math.abs(v) >= 100 ? Math.round(v) : +v.toFixed(3)) + (opts.unit ?? "");
+    };
+    show(value);
+    input.addEventListener("input", () => {
+      const v = fromSlider(+input.value);
+      show(v);
+      set(opts.log ? Math.round(v) : v);
+    });
+    parent.appendChild(el);
+  }
+  function select(parent, label, options, value, set) {
+    const id = "s" + Math.random().toString(36).slice(2, 8), el = document.createElement("div");
+    el.className = "knob";
+    el.innerHTML = `<label for="${id}">${label}</label><output></output><select id="${id}">${options.map(([v, t]) => `<option value="${v}"${v === value ? " selected" : ""}>${t}</option>`).join("")}</select>`;
+    el.querySelector("select").addEventListener("change", (e) => set(e.target.value));
+    parent.appendChild(el);
+  }
+  var RANGES = {
+    gain: [0, 1.5, 5e-3],
+    cutoff: [40, 18e3, 1, true],
+    q: [0.1, 20, 0.1],
+    envAmt: [0, 6e3, 10],
+    attack: [1e-3, 2, 1e-3],
+    decay: [0.01, 3, 0.01],
+    sustain: [0, 1, 0.01],
+    release: [0.01, 3, 0.01],
+    detune: [0, 50, 1],
+    drive: [0, 1, 0.01],
+    glide: [0, 0.3, 5e-3],
+    pitch: [20, 400, 1],
+    pitchEnd: [20, 200, 1],
+    pitchTime: [5e-3, 1, 5e-3],
+    ratio: [1, 3, 0.01],
+    bursts: [1, 5, 1],
+    reverb: [0, 1, 0.01],
+    delay: [0, 1, 0.01]
+  };
+  var NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+  var applyTimer = 0;
+  function changed(now = false) {
+    clearTimeout(applyTimer);
+    const go = () => {
+      music?.engine?.setStyle(style);
+      showJson();
+    };
+    if (now) go();
+    else applyTimer = window.setTimeout(go, 60);
+  }
+  function buildKnobs() {
+    const fs = $("f-style"), fm = $("f-mix"), fp = $("f-patches");
+    for (const f of [fs, fm, fp]) f.querySelectorAll(":scope > :not(legend)").forEach((n) => n.remove());
+    knob(fs, "Tempo (first wave; the rest keep their rise)", style.bpm, 70, 180, 1, (v) => {
+      const d = v - style.bpm;
+      style.bpm = v;
+      for (const a of style.arc) if (a.bpm !== void 0) a.bpm += d;
+      rampTo(clock, Math.ceil(beatAt(clock, run.time)) + 1, waveTempo(beatTuning(), force.wave ?? run.waves.length), 0);
+      changed();
+    }, { unit: " bpm" });
+    knob(fs, "Tempo ramp (bars)", style.tempoRampBars ?? 8, 0, 32, 4, (v) => {
+      style.tempoRampBars = v;
+      changed();
+    });
+    knob(fs, "Swing", style.swing, 0, 0.5, 0.01, (v) => {
+      style.swing = v;
+      changed();
+    });
+    const roots = [];
+    for (let m2 = 28; m2 <= 39; m2++) roots.push([String(m2), NOTE_NAMES[m2 % 12]]);
+    select(fs, "Key (root)", roots, String(style.root), (v) => {
+      style.root = +v;
+      changed();
+    });
+    select(fs, "Scale", [["", "each wave's own"], ...Object.keys(style.scales).map((s) => [s, s])], "", (v) => {
+      style.arc.forEach((a, i) => {
+        a.scale = v || REPO_STYLE.arc[i]?.scale;
+      });
+      if (v) style.scale = v;
+      else style.scale = REPO_STYLE.scale;
+      changed();
+    });
+    knob(fs, "Seed (the run's tunes)", seed, 1, 99, 1, (v) => {
+      seed = v;
+      if (music?.engine) music.engine.seed = v;
+    });
+    const m = style.mix;
+    knob(fm, "Master", m.master, 0, 1.5, 0.01, (v) => {
+      m.master = v;
+      changed();
+    });
+    knob(fm, "Reverb", m.reverb, 0, 1, 0.01, (v) => {
+      m.reverb = v;
+      changed();
+    });
+    knob(fm, "Reverb time", m.reverbTime, 0.2, 6, 0.1, (v) => {
+      m.reverbTime = v;
+      changed();
+    }, { unit: " s" });
+    knob(fm, "Delay", m.delay, 0, 1, 0.01, (v) => {
+      m.delay = v;
+      changed();
+    });
+    knob(fm, "Delay (beats)", m.delayBeats, 0.25, 1.5, 0.25, (v) => {
+      m.delayBeats = v;
+      changed();
+    });
+    knob(fm, "Delay feedback", m.feedback, 0, 0.85, 0.01, (v) => {
+      m.feedback = v;
+      changed();
+    });
+    knob(fm, "Kick pump (duck)", m.duck, 0, 1, 0.01, (v) => {
+      m.duck = v;
+      changed();
+    });
+    for (const [name, p] of Object.entries(style.patches)) {
+      const d = document.createElement("details");
+      d.innerHTML = `<summary>${name} <span class="small">${p.kind}${p.waves ? " \xB7 " + p.waves.join(", ") : ""}</span></summary>`;
+      const box = document.createElement("div");
+      box.style.display = "grid";
+      box.style.gap = "6px";
+      box.style.paddingTop = "6px";
+      for (const [k, v] of Object.entries(p)) {
+        const r = RANGES[k];
+        if (!r || typeof v !== "number") continue;
+        knob(box, k, v, r[0], Math.max(r[1], v), r[2], (nv) => {
+          p[k] = nv;
+          changed();
+        }, { log: r[3] });
+      }
+      if (p.kind === "synth") {
+        const waves = ["sine", "triangle", "sawtooth", "square"];
+        select(box, "waves", [...waves.map((w) => [w, w]), ["sawtooth,sawtooth", "2 saws"], ["sawtooth,sawtooth,sawtooth", "3 saws"], ["square,square", "2 squares"]], (p.waves ?? []).join(","), (v) => {
+          p.waves = v.split(",");
+          changed();
+        });
+      }
+      d.appendChild(box);
+      fp.appendChild(d);
+    }
+  }
+  function showJson() {
+    const ta = $("json");
+    if (document.activeElement !== ta) ta.value = JSON.stringify(style, null, 2);
+    const bpms = style.arc.map((a) => a.bpm ?? style.bpm);
+    $("style-name").textContent = `${style.name} \xB7 ${bpms[0]} to ${bpms[bpms.length - 1]} bpm \xB7 ${style.arc.length} waves of music`;
+  }
+  async function musicLabCheck(bars = 2) {
+    const errors = checkStyle(style), results = [];
+    const rate = 22050, spBar = barSeconds(style.bpm), steady = newBeatClock(style.bpm);
+    const measure = (name, buf) => {
+      let sum = 0, peak = 0, n = 0;
+      for (let ch = 0; ch < buf.numberOfChannels; ch++) for (const v of buf.getChannelData(ch)) {
+        sum += v * v;
+        n++;
+        if (!(Math.abs(v) <= peak)) peak = Math.abs(v);
+      }
+      const rms = Math.sqrt(sum / Math.max(1, n));
+      results.push({ name, rms, peak });
+      if (!(rms > 3e-3)) errors.push(`${name}: silent (rms ${rms.toFixed(5)})`);
+      if (!Number.isFinite(peak) || Number.isNaN(rms)) errors.push(`${name}: NaN`);
+      else if (peak > 1.2) errors.push(`${name}: clips (peak ${peak.toFixed(2)})`);
+    };
+    const quiet = { waves: [], nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0 };
+    for (const name of Object.keys(style.sections)) {
+      const oc = new OfflineAudioContext(2, Math.ceil(rate * bars * spBar), rate);
+      const e = new MusicEngine(oc, oc.destination, style, 7);
+      const from = name === style.intro || resolveSection(style, name).riser ? 8 * spBar : 0;
+      e.renderAhead({ ...quiet, forceSection: name, forceWave: 3 }, from, bars * spBar, steady);
+      measure(name, await oc.startRendering());
+    }
+    {
+      const oc = new OfflineAudioContext(2, Math.ceil(rate * 24 * spBar), rate);
+      const e = new MusicEngine(oc, oc.destination, style, 7), c = newBeatClock(style.bpm, waveTempo(beatTuning(), 6));
+      c.wave = 6;
+      waveArrived(c, beatTuning(), 7, 20 * spBar);
+      if (!(bpmAt(c, timeAt(c, 4 * 32)) > bpmAt(c, 0))) errors.push("the tempo doesn't rise with a wave");
+      e.renderAhead({ waves: [], nextAt: 20, bootUntil: 0, knockedOut: false, siege: 0.5 }, 8 * spBar, 24 * spBar, c);
+      measure("run: into wave 7, tempo rising, siege", await oc.startRendering());
+    }
+    {
+      const oc = new OfflineAudioContext(2, Math.ceil(rate * 2 * spBar), rate);
+      const m = new Music(oc, 1, style, 7), M = TUNING.music;
+      m.update(mixAt(M, nearness(M, 120), 0.8, 120), { ...quiet, forceSection: "drop" }, 0, steady, true);
+      m.engine.renderAhead({ ...quiet, forceSection: "drop" }, 0, 2 * spBar, steady);
+      measure("mix: 120 m away, damaged", await oc.startRendering());
+    }
+    return { ok: errors.length === 0, errors, results };
+  }
+  window.musicLabCheck = musicLabCheck;
+  async function togglePlay() {
+    if (!ctx) {
+      ctx = new AudioContext();
+      music = new Music(ctx, hooks.volume, style, seed);
+      lastAudio = ctx.currentTime;
+    }
+    playing = !playing;
+    if (playing) {
+      await ctx.resume();
+      lastAudio = ctx.currentTime;
+    }
+    $("play").textContent = playing ? "Stop" : "Play";
+  }
+  $("play").addEventListener("click", () => void togglePlay());
+  $("restart").addEventListener("click", () => {
+    force = {};
+    restart();
+    renderButtons();
+  });
+  $("next-wave").addEventListener("click", nextWave);
+  $("pause-waves").addEventListener("click", (e) => {
+    run.paused = !run.paused;
+    e.target.classList.toggle("on", run.paused);
+  });
+  $("waves").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (b) jumpToWave(+b.dataset.wave);
+  });
+  $("sections").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    force = b.dataset.section ? { section: b.dataset.section } : {};
+    renderButtons();
+  });
+  var bindRange = (id, set, fmt) => {
+    const el = $(id), out = $(id + "-out");
+    const go = () => {
+      set(+el.value);
+      out.textContent = fmt(+el.value);
+    };
+    el.addEventListener("input", go);
+    go();
+  };
+  bindRange("dist", (v) => hooks.distance = v, (v) => `${v} m`);
+  bindRange("damage", (v) => hooks.damage = v, (v) => `${Math.round(v * 100)}%`);
+  bindRange("siege", (v) => hooks.siege = v, (v) => `${Math.round(v * 100)}%`);
+  bindRange("volume", (v) => hooks.volume = v, (v) => `${Math.round(v * 100)}%`);
+  $("ko").addEventListener("change", (e) => hooks.knockedOut = e.target.checked);
+  $("interval").addEventListener("change", (e) => {
+    run.interval = +e.target.value;
+    run.nextAt = Math.max(run.bootUntil, run.time) + run.interval;
+  });
+  $("boot").addEventListener("change", (e) => {
+    run.boot = +e.target.value;
+  });
+  $("check").addEventListener("click", async () => {
+    $("check-out").textContent = "rendering\u2026";
+    try {
+      const r = await musicLabCheck();
+      $("check-out").textContent = (r.ok ? "All good.\n" : "Problems:\n" + r.errors.join("\n") + "\n") + r.results.map((x) => `${x.name.padEnd(40)} rms ${x.rms.toFixed(3)}  peak ${x.peak.toFixed(2)}`).join("\n");
+    } catch (e) {
+      $("check-out").textContent = String(e);
+    }
+  });
+  $("apply").addEventListener("click", () => {
+    try {
+      const next = JSON.parse($("json").value), errs = checkStyle(next);
+      if (errs.length) {
+        $("json-msg").textContent = "Not applied: " + errs.slice(0, 4).join("; ");
+        return;
+      }
+      style = next;
+      buildKnobs();
+      renderButtons();
+      changed(true);
+      $("json-msg").textContent = "Applied.";
+    } catch (e) {
+      $("json-msg").textContent = "Not applied: " + e.message;
+    }
+  });
+  $("copy").addEventListener("click", () => {
+    void navigator.clipboard?.writeText(JSON.stringify(style, null, 2)).then(() => $("json-msg").textContent = "Copied: paste it over config/music-style.json.");
+  });
+  var framed = true;
+  try {
+    framed = window.self !== window.top;
+  } catch {
+  }
+  if (framed) $("download").remove();
+  else $("download").addEventListener("click", () => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(style, null, 2) + "\n"], { type: "application/json" }));
+    a.download = "music-style.json";
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1e3);
+  });
+  $("reset").addEventListener("click", () => {
+    style = clone(REPO_STYLE);
+    buildKnobs();
+    renderButtons();
+    changed(true);
+    $("json-msg").textContent = "Back to the repo's style.";
+  });
+  restart();
+  buildKnobs();
+  renderButtons();
+  showJson();
+  requestAnimationFrame(step);
+})();
+
+</script>
+</body>
+</html>

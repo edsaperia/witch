@@ -3,6 +3,7 @@
 // as 1 px additive lines (glow and bloom only: no light), fading along their length and with
 // distance from the witch, so many partified areas in view stay readable. A newly partified
 // area's first burst fires as it finishes rising: the reveal.
+import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import type { Game } from "../rules/game";
 import { beatClock, laserShow } from "../rules/lasers";
@@ -50,7 +51,7 @@ export class Lasers {
     // The dancefloor's ring (Ed, 2026-10-04): one laser from the top of each speaker, mostly
     // upwards, sweeping slowly on the beat, neighbours out of phase, so the ring wears a crown of
     // moving beams in the party neons. Damaged ones flicker; destroyed ones (and ones not yet booted) have none.
-    const S = t.speakerLasers, beats = (time * t.beat.bpm) / 60;
+    const S = t.speakerLasers, bt = beatTime(this.game.beat, time), beats = (bt * t.beat.bpm) / 60;
     if (L.on && S.on) ring.forEach((sp, i) => {
       if (!sp || !sp.powered || sp.state === "destroyed") return;
       if (sp.state === "damaged" && Math.sin(time * 23 + i * 5.1) + Math.sin(time * 37 + i) < 0.4) return;
@@ -65,7 +66,7 @@ export class Lasers {
     if (L.on) for (const s of playing) {
       const fade = 1 - Math.min(1, Math.max(0, (Math.hypot(s.x - wx, s.z - wz) - L.fadeNear) / Math.max(1, L.fadeFar - L.fadeNear)));
       if (fade <= 0) continue;
-      const show = laserShow(time, s.seed, 1, t), since = time - s.ready;
+      const show = laserShow(bt, s.seed, 1, t), since = time - s.ready;
       // The reveal: a newly partified area's lasers come on as its soundsystem finishes rising.
       const reveal = since >= 0 && since < blockLen ? Math.min(1, since / L.fadeIn) * Math.min(1, (blockLen - since) / L.fadeOut) : 0;
       const on = Math.max(show.on, reveal), n = reveal > show.on ? L.maxCount : show.count;

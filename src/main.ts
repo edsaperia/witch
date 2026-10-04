@@ -1,7 +1,10 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { Music } from "./platform/music";
 import { musicMix } from "./rules/music";
-import { areaUnderWitch, newGame, stepGame } from "./rules/game";
+import { musicCue, type MusicCue } from "./rules/musicPlan";
+import type { MusicStyle } from "./rules/musicScore";
+import musicStyleJson from "../config/music-style.json";
+import { areaUnderWitch, interpolated, newGame, STEP, stepGame } from "./rules/game";
 import { AREA_TYPES } from "./rules/map";
 import { waveCountdown } from "./rules/party";
 import { parseSeed } from "./rules/map";
@@ -52,8 +55,21 @@ if (pickerParam && ["noisy", "near3", "near3touch", "nearest"].includes(pickerPa
 const glowParam = params.get("glow")?.split(",").map(Number);
 if (glowParam && glowParam[0] > 0) { tuning.glowReach = glowParam[0]; tuning.glowFixed = true; }
 if (glowParam && glowParam[1] > 0) tuning.glowFalloff = glowParam[1];
-// ?music=off: no music.
-if (params.get("music") === "off") tuning.music = { ...tuning.music, on: false };
+// The music's style (config/music-style.json) sets the beat everything pulses to.
+const musicStyle = musicStyleJson as unknown as MusicStyle;
+// The beat's base tempo is the style's; each wave's tempo is its arc step's (Ed: 120 rising to about 140).
+tuning.beat = { ...tuning.beat, bpm: musicStyle.bpm, tempos: musicStyle.arc.map(a => a.bpm ?? musicStyle.bpm), blockBars: musicStyle.blockBars, rampBars: musicStyle.tempoRampBars ?? 8 };
+// ?music=off: no music; ?music=<section> plays that section of the style over and over (e.g.
+// ?music=drop); ?music=wave<N> plays wave N's music whatever the wave (e.g. ?music=wave7).
+const musicParam = params.get("music") ?? "";
+if (musicParam === "off") tuning.music = { ...tuning.music, on: false };
+let musicCueNow: MusicCue | undefined;
+{
+  const m = /^wave(\d+)$/.exec(musicParam);
+  if (m || musicStyle.sections[musicParam]) musicCueNow = { waves: [], nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0, forceWave: m ? +m[1] : undefined, forceSection: m ? undefined : musicParam };
+  // a wave's music plays at that wave's tempo throughout
+  if (m) tuning.beat = { ...tuning.beat, tempos: [tuning.beat.tempos![Math.min(+m[1], tuning.beat.tempos!.length - 1)]] };
+}
 // ?blend=off: neighbouring areas' floors meet on a plain edge (to compare); ?blend=<warp>,<fine>,<band> tunes it.
 const blendParam = params.get("blend");
 if (blendParam === "off") tuning.groundBlend = { ...tuning.groundBlend, on: false };
@@ -193,7 +209,7 @@ requestAnimationFrame(() => setTimeout(async () => {
 let audio: AudioContext | null = null, music: Music | null = null;
 function start(): boolean {
   if (!ready || !game.clock.paused) return false;
-  try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume, tuning.music.src); } catch { /* no sound yet anyway */ }
+  try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume, musicStyle, seed!, tuning.music.src); } catch { /* no sound yet anyway */ }
   game.clock.paused = false;
   startEl.style.display = "none";
   input.clearPresses();
@@ -220,6 +236,9 @@ let last = 0, fps = 60, frames = 0, fpsT = 0;
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
 let manual = false;
+let overShown = false;
+document.getElementById("again")?.addEventListener("click", () => location.reload());
+document.getElementById("fresh")?.addEventListener("click", () => { const u = new URL(location.href); u.searchParams.set("seed", String(Math.floor(Math.random() * 1e6))); location.href = u.toString(); });
 function frame(now: number): void {
   requestAnimationFrame(frame);
   if (manual) return;
@@ -231,8 +250,16 @@ function frame(now: number): void {
   if (c.debug) { debugOn = !debugOn; debugEl.classList.toggle("on", debugOn); debugButtons.classList.toggle("on", debugOn); }
   view.debugReadouts = debugOn;
   stepGame(game, c, dt);
+  // The run is over when every soundsystem has fallen (Stage 4): the end screen, and a restart.
+  if (game.over && !overShown) {
+    overShown = true;
+    game.clock.paused = true;
+    document.getElementById("over-stats")!.textContent = `You lasted ${Math.floor(game.clock.time / 60)} min ${Math.floor(game.clock.time % 60)} s and ${game.party.wave} waves.`;
+    document.getElementById("over")!.classList.add("on");
+  }
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
-  music?.update(musicMix(game, game.witch), game.clock.time, tuning.beat.bpm, !game.clock.paused);
+  musicCueNow = musicCue(game, musicCueNow);
+  music?.update(musicMix(game, game.witch), musicCueNow, game.clock.time, game.beat, !game.clock.paused);
   if (!ready) return;
   // The wave countdown bar: empties toward the next wave.
   const cd = waveCountdown(game.party, game.map, game.clock.time);
@@ -245,7 +272,8 @@ function frame(now: number): void {
   // art in the background instead (and so slow a frame doesn't count against the scenery budget).
   if (game.clock.paused && now - lastDraw < 300) return;
   lastDraw = now;
-  view.render(game.clock.time); // game time: party transitions, sigils and waves are stamped in it
+  // Drawn between the last two fixed steps (game time: party transitions, sigils and waves are stamped in it).
+  interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP)));
   if (debugOn) {
     const w = game.witch, s = view.stats;
     debugEl.textContent = [

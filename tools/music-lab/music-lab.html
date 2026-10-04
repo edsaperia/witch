@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Witch Music Lab</title>
+<style>
+/* A dark workbench like the Art Lab's: the run's transport and timeline on top, the sections and
+   waves to jump between, the mix and the hooks; the style's knobs in a side column (stacked on phones).
+   No fonts or files fetched: the page is one self-contained file. */
+:root {
+  --bg: #0f0d16; --panel: #18151f; --line: #2b2636; --fg: #e6e1ee; --muted: #9b93ab;
+  --accent: #ff5fc8; --accent-2: #4fe0ff; --good: #7dff8a;
+  --font-display: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--fg); margin: 0; }
+body { font-family: var(--font-body); font-size: 15px; line-height: 1.5; padding: 16px 16px 48px; }
+h1, h2 { font-family: var(--font-display); font-weight: 600; margin: 0; }
+h1 { font-size: 22px; letter-spacing: .04em; }
+h2 { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+p { margin: 0; max-width: 70ch; }
+.wrap { max-width: 1280px; margin-inline: auto; display: grid; gap: 20px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; }
+header p { color: var(--muted); }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; align-items: start; }
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+.main { display: grid; gap: 18px; min-width: 0; }
+.card { border: 1px solid var(--line); border-radius: 6px; background: var(--panel); padding: 12px 14px; display: grid; gap: 10px; min-width: 0; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.now { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.stat { display: grid; gap: 2px; }
+.stat b { font-family: var(--font-mono); font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stat span { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+.feel { color: var(--muted); min-height: 1.5em; }
+.beats { display: flex; gap: 6px; }
+.beats i { width: 14px; height: 14px; border-radius: 50%; background: var(--line); transition: background .05s; }
+.beats i.on { background: var(--accent); }
+.bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.bar > div { height: 100%; background: var(--accent-2); width: 0; }
+.timeline { display: flex; gap: 2px; overflow-x: auto; padding-bottom: 4px; }
+.timeline div { flex: 0 0 auto; font-family: var(--font-mono); font-size: 11px; padding: 4px 6px; border-radius: 3px; background: var(--bg); border: 1px solid var(--line); white-space: nowrap; }
+.timeline div.cur { border-color: var(--accent); color: var(--accent); }
+.timeline div.wave { border-left: 3px solid var(--accent-2); }
+aside { display: grid; gap: 14px; position: sticky; top: 0; max-height: 100vh; overflow-y: auto; padding-bottom: 16px; }
+@media (max-width: 900px) { aside { position: static; max-height: none; } }
+fieldset { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px 12px; margin: 0; display: grid; gap: 8px; background: var(--panel); min-width: 0; }
+legend { font-family: var(--font-display); font-size: 13px; padding-inline: 6px; color: var(--accent-2); }
+details { border-top: 1px solid var(--line); padding-top: 6px; }
+summary { cursor: pointer; font-family: var(--font-mono); font-size: 13px; color: var(--fg); }
+.knob { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 8px; font-size: 13px; }
+.knob label { color: var(--muted); }
+.knob output { font-family: var(--font-mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+.knob input[type=range], .knob select { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+select, textarea { background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; font: inherit; }
+textarea { width: 100%; min-height: 220px; font-family: var(--font-mono); font-size: 12px; }
+button.btn { background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 6px 11px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+button.btn:hover { border-color: var(--accent-2); }
+button.btn:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+button.btn.on { border-color: var(--accent); color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: #1a0716; min-width: 96px; }
+label.check { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--muted); cursor: pointer; }
+label.check input { accent-color: var(--accent); }
+.small { font-size: 12px; color: var(--muted); }
+#check-out { font-family: var(--font-mono); font-size: 12px; white-space: pre-wrap; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>WITCH MUSIC LAB</h1>
+    <p id="style-name"></p>
+  </header>
+  <div class="layout">
+    <div class="main">
+      <section class="card" aria-label="Transport">
+        <div class="row">
+          <button class="btn primary" id="play">Play</button>
+          <button class="btn" id="restart" title="Back to the start of a run: the home speakers boot up">Restart run</button>
+          <button class="btn" id="next-wave" title="Bring the next wave now (N in the game)">Next wave now</button>
+          <button class="btn" id="pause-waves" title="Stop the wave countdown (P in the game)">Pause waves</button>
+        </div>
+        <div class="now">
+          <div class="stat"><span>Wave</span><b id="s-wave">–</b></div>
+          <div class="stat"><span>Section</span><b id="s-section">–</b></div>
+          <div class="stat"><span>Bar in section</span><b id="s-bar">–</b></div>
+          <div class="stat"><span>Next wave</span><b id="s-next">–</b></div>
+          <div class="stat"><span>Tempo</span><b id="s-tempo">–</b></div>
+        </div>
+        <div class="row" style="justify-content: space-between"><p class="feel" id="s-feel"></p><div class="beats" id="beats"><i></i><i></i><i></i><i></i></div></div>
+        <div class="bar"><div id="s-progress"></div></div>
+        <h2>Coming up</h2>
+        <div class="timeline" id="timeline"></div>
+      </section>
+      <section class="card" aria-label="Waves">
+        <h2>Jump to a wave</h2>
+        <p class="small">The wave arrives now; the music changes on the next 4-bar line.</p>
+        <div class="row" id="waves"></div>
+      </section>
+      <section class="card" aria-label="Sections">
+        <h2>Play one section</h2>
+        <p class="small">Loops it, as <code>?music=&lt;name&gt;</code> does in the game. Follow the waves to go back to the run.</p>
+        <div class="row" id="sections"></div>
+      </section>
+      <section class="card" aria-label="Where she is">
+        <h2>Where she is, and hooks</h2>
+        <div class="now">
+          <div class="knob"><label for="dist">Distance to the nearest playing soundsystem</label><output id="dist-out"></output><input type="range" id="dist" min="0" max="320" step="1" value="0"></div>
+          <div class="knob"><label for="damage">Its damage</label><output id="damage-out"></output><input type="range" id="damage" min="0" max="1" step="0.01" value="0"></div>
+          <div class="knob"><label for="siege">Siege nearby (hook)</label><output id="siege-out"></output><input type="range" id="siege" min="0" max="1" step="0.01" value="0"></div>
+          <div class="knob"><label for="volume">Volume</label><output id="volume-out"></output><input type="range" id="volume" min="0" max="1" step="0.01" value="0.6"></div>
+        </div>
+        <div class="row">
+          <label class="check"><input type="checkbox" id="ko"> She's knocked out (hook)</label>
+          <span class="small" id="mix-out"></span>
+        </div>
+        <div class="now">
+          <div class="knob"><label for="interval">Seconds between waves</label><output id="interval-out"></output><select id="interval"><option value="30">30 s</option><option value="60" selected>1 min</option><option value="120">2 min</option><option value="300">5 min (the game's)</option></select></div>
+          <div class="knob"><label for="boot">Boot seconds</label><output id="boot-out"></output><select id="boot"><option value="0">none</option><option value="16">16 s</option><option value="30" selected>30 s</option><option value="60">60 s (the game's)</option></select></div>
+        </div>
+      </section>
+      <section class="card" aria-label="Check">
+        <h2>Check</h2>
+        <div class="row"><button class="btn" id="check">Render every section offline</button><span class="small">Each section's first bars rendered silently and measured: nothing silent, nothing clipping.</span></div>
+        <div id="check-out"></div>
+      </section>
+    </div>
+    <aside>
+      <fieldset id="f-style"><legend>Style</legend></fieldset>
+      <fieldset id="f-mix"><legend>Mix</legend></fieldset>
+      <fieldset id="f-patches"><legend>Sounds</legend></fieldset>
+      <fieldset><legend>Style file</legend>
+        <p class="small">The whole style as config/music-style.json: edit and apply, or copy it out to save.</p>
+        <textarea id="json" spellcheck="false" aria-label="Style JSON"></textarea>
+        <div class="row"><button class="btn" id="apply">Apply</button><button class="btn" id="copy">Copy</button><button class="btn" id="download">Download</button><button class="btn" id="reset">Reset to the repo's</button></div>
+        <p class="small" id="json-msg"></p>
+      </fieldset>
+    </aside>
+  </div>
+</div>
+<script>
+/*SCRIPT*/
+</script>
+</body>
+</html>
