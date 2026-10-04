@@ -1,9 +1,10 @@
-// Creatures: each area's own kind, more of them and older the further the area is from home
-// (Ed, 2026-10-03). The home area holds none and the areas round it a couple of babies; areas near
-// the map's edge hold about 20, young ones among them. Wild legends are rare, late threats (Ed,
+// Creatures: each area's own kind, more of them and older the longer the area stays wild
+// (Ed, 2026-10-04): every area starts the same, a baby and an adult, and grows by a creature
+// of a random level every wave while it stays wild (rules/growth.ts), so the areas the party
+// reaches late are the dangerous ones. The home area holds none. Wild legends are rare, late threats (Ed,
 // 2026-10-04): a few a map, only in remote areas, each a boss, asleep until the party reaches it. Idle creatures roam their whole area, never leaving it.
 // Only those near the witch are simulated; the rest pick up where they would plausibly be.
-import { clamp, hash2, lerp, rng, smoothstep } from "./random";
+import { rng } from "./random";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { facingAway } from "./witch";
 import type { Tuning } from "./tuning";
@@ -102,16 +103,32 @@ export interface Creature {
 
 export interface AreaPopulation { babies: number; young: number; adults: number }
 
-/** How many of each level live in an area `remoteness` (0 home, 1 edge) from the dancefloor.
- *  `roll` varies the count. (Wild legends are placed a map at a time: wildLegendCells.) */
-export function population(map: ForestMap, remoteness: number, roll = 0.5): AreaPopulation {
-  const t = map.tuning, r = clamp(remoteness, 0, 1);
-  const total = Math.max(0, Math.round(lerp(t.creaturesNear, t.creaturesFar, Math.pow(r, t.creatureCurve)) + (roll - 0.5) * 2));
-  // Babies near home, then young, then adults further out (from adultsFrom).
-  const rest = total;
-  const adults = Math.round(rest * t.adultShareFar * smoothstep((r - t.adultsFrom) / Math.max(0.01, 1 - t.adultsFrom)));
-  const young = Math.round((rest - adults) * t.youngShareFar * r);
-  return { babies: Math.max(0, rest - adults - young), young, adults };
+/** How many of each level every area starts with (Ed, 2026-10-04: every area the same, one baby
+ *  and one adult; it grows by a creature a wave while it stays wild: rules/growth.ts). (Wild
+ *  legends are placed a map at a time: wildLegendCells.) */
+export function population(map: ForestMap): AreaPopulation {
+  const S = map.tuning.population.start;
+  return { babies: S.babies, young: S.young, adults: S.adults };
+}
+
+/** How far an area's rune stone (where its soundsystem will stand) is from the dancefloor, in metres. */
+export function runeDistance(map: ForestMap, cx: number, cy: number): number {
+  const s = map.soundsystemSpot(cx, cy), d = map.dancefloor;
+  return Math.hypot(s.x - d.x, s.z - d.z);
+}
+
+/** A new wild creature of an area: at `at` if given, else somewhere in the area chosen by `r`. */
+export function makeCreature(map: ForestMap, cell: [number, number], level: Level, id: number, r: () => number, at?: [number, number]): Creature {
+  const t = map.tuning, type = AREA_TYPES[map.typeOf(cell[0], cell[1])], home = map.siteOf(cell[0], cell[1]);
+  const range = wanderRange(map), [anchorX, anchorZ] = anchorOf(map, cell, home.x, home.z, range);
+  const base = { cell, homeX: home.x, homeZ: home.z, range, anchorX, anchorZ };
+  const [x, z] = at ?? pointInArea(map, base, r);
+  return {
+    id, species: type.creature, level, ...base, x, z, tx: x, tz: z,
+    rest: r() * 3, speed: (level === LEGEND ? t.legendSpeed : t.creatureSpeed * speedFactor(type.creature, level, t)) * (0.7 + r() * 0.6),
+    facing: r() < 0.5 ? 1 : -1, away: false, moving: false, walk: r(), seen: 0, leashed: false, ...(level === LEGEND ? { boss: true } : {}),
+    rand: rng(map.seed * 31 + (id + 1) * 7 + 11),
+  };
 }
 
 /** The areas a map's wild legends live in (Ed, 2026-10-04): wildLegends.perMap of them, chosen by
@@ -166,30 +183,17 @@ export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" |
 }
 
 export function spawnCreatures(map: ForestMap): Creature[] {
-  const out: Creature[] = [], t = map.tuning;
-  let id = 0;
+  const out: Creature[] = [], t = map.tuning, pop = population(map);
   // The home area holds none (Ed, 2026-10-03); with legendNextToHome, one legend lives next door.
   const [hx, hy] = map.centreCell, bosses = new Set(wildLegendCells(map).map(c => c.join()));
   for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
     if (cx === hx && cy === hy) continue;
-    const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), type = AREA_TYPES[map.typeOf(cx, cy)], home = map.siteOf(cx, cy);
-    const far = map.remoteness(cx, cy), pop = population(map, far, hash2(cx, cy, map.seed + 43));
-    const make = (level: Level): Creature => {
-      const cell: [number, number] = [cx, cy], range = wanderRange(map), [anchorX, anchorZ] = anchorOf(map, cell, home.x, home.z, range);
-      const base = { cell, homeX: home.x, homeZ: home.z, range, anchorX, anchorZ };
-      const [x, z] = pointInArea(map, base, r);
-      return {
-        id: id++, species: type.creature, level, ...base, x, z, tx: x, tz: z,
-        rest: r() * 3, speed: (level === LEGEND ? t.legendSpeed : t.creatureSpeed * speedFactor(type.creature, level, t)) * (0.7 + r() * 0.6),
-        facing: r() < 0.5 ? 1 : -1, away: false, moving: false, walk: r(), seen: 0, leashed: false, ...(level === LEGEND ? { boss: true } : {}),
-        rand: rng(map.seed * 31 + id * 7 + 11),
-      };
-    };
-    for (let i = 0; i < pop.babies; i++) out.push(make(0));
-    for (let i = 0; i < pop.young; i++) out.push(make(1));
-    for (let i = 0; i < pop.adults; i++) out.push(make(2));
+    const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), cell: [number, number] = [cx, cy], make = (level: Level) => out.push(makeCreature(map, cell, level, out.length, r));
+    for (let i = 0; i < pop.babies; i++) make(0);
+    for (let i = 0; i < pop.young; i++) make(1);
+    for (let i = 0; i < pop.adults; i++) make(2);
     const nextToHome = t.legendNextToHome && cx === hx + 1 && cy === hy;
-    if (bosses.has(`${cx},${cy}`) || nextToHome) out.push(make(3));
+    if (bosses.has(`${cx},${cy}`) || nextToHome) make(3);
   }
   return out;
 }
@@ -230,10 +234,16 @@ export const heldByCombat = (c: Creature) => !!(c.gone || c.fleeUntil || c.wande
  *  while is put where it would plausibly be by now (a point in its area chosen from its id and
  *  the time), rather than where it was left. A `dormant` one (a wild legend still asleep) stays
  *  where it lies. */
-export function stepCreaturesNear(all: Creature[], x: number, z: number, radius: number, dt: number, time: number, map: ForestMap, dormant: (c: Creature) => boolean = () => false): void {
+export function stepCreaturesNear(all: Creature[], x: number, z: number, radius: number, dt: number, time: number, map: ForestMap, dormant: (c: Creature) => boolean = () => false, seen = Infinity): void {
+  // Beyond `seen` (where none can be in sight: wild areas grow, Ed 2026-10-04, so there are
+  // thousands more) they roam every 4th step, by four steps at once, taking turns by id.
+  const tick = Math.round(time / dt);
   for (const c of all) {
     if (c.leashed || c.gone) continue;
-    if (Math.abs(c.homeX - x) > radius || Math.abs(c.homeZ - z) > radius) continue;
+    const ax = Math.abs(c.homeX - x), az = Math.abs(c.homeZ - z);
+    if (ax > radius || az > radius) continue;
+    const slow = ax > seen || az > seen;
+    if (slow && (tick + c.id) % 4 !== 0 && time - c.seen <= 3) { if (!heldByCombat(c)) c.seen = time; continue; }
     if (dormant(c)) { c.seen = time; c.moving = false; c.away = false; continue; }
     if (heldByCombat(c)) { c.seen = time; continue; } // fighting, fleeing, marching or walking home: moved by combat and knockout
     if (time - c.seen > 3) {
@@ -243,7 +253,7 @@ export function stepCreaturesNear(all: Creature[], x: number, z: number, radius:
       c.rest = r() * 2;
     }
     c.seen = time;
-    stepCreature(c, dt, map);
+    stepCreature(c, slow ? dt * 4 : dt, map);
   }
 }
 
