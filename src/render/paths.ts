@@ -7,6 +7,7 @@
 import * as THREE from "three";
 import * as Art from "../../art/generator.js";
 import type { ForestMap } from "../rules/map";
+import { floorClearing } from "../rules/speakers";
 import { AREA_TYPES } from "../rules/map";
 import { hash2 } from "../rules/random";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
@@ -131,12 +132,13 @@ export class PathView {
         return [-dz / d, dx / d];
       });
       const total = along[n - 1];
-      // Which segments are drawn (none where the track's gone; cleared and reserved spots no longer
-      // cut it, Ed v160), and for each
+      // Which segments are drawn (none where the track's gone, nor across the dancefloor's clearing,
+      // which the long roads, rails and streams may cross; other cleared spots no longer cut it, Ed
+      // v160), and for each
       // point how far it is to the nearer end of its drawn stretch, so the ends fray out.
       const keep = Array.from({ length: n - 1 }, (_, i) => {
         const mx = (pts[i][0] + pts[i + 1][0]) / 2, mz = (pts[i][1] + pts[i + 1][1]) / 2;
-        return !(l.kind === "rail" && net.railBroken(mx, mz));
+        return !(l.kind === "rail" && net.railBroken(mx, mz)) && Math.hypot(mx - map.dancefloor.x, mz - map.dancefloor.z) > floorClearing(map.tuning);
       });
       const runStart: number[] = [], runEnd: number[] = [];
       for (let i = 0, st = 0; i < n - 1; i++) { if (!keep[i]) continue; if (i === 0 || !keep[i - 1]) st = along[i]; runStart[i] = st; }
