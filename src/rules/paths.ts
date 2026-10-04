@@ -146,7 +146,8 @@ export class PathNetwork {
   /** The 3D pieces: seeded, from the lines alone. */
   private placePieces(): void {
     const m = this.map, s = m.seed, T = m.tuning.paths, add = (id: string, x: number, z: number, r: number) => {
-      if (m.hardClear(x, z)) return;
+      // Pieces keep apart (several crossings close together make one bridge, not a row of them).
+      if (m.hardClear(x, z) || this.pieces.some(q => Math.hypot(q.x - x, q.z - z) < Math.max(12, q.r + r))) return;
       const p = { id, x, z, r };
       this.pieces.push(p);
       const k = `${Math.floor(x / this.cell)},${Math.floor(z / this.cell)}`;
