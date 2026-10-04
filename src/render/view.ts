@@ -15,6 +15,7 @@ import type { LightSource, Plant } from "../rules/forest";
 import { hash2 } from "../rules/random";
 import { Ground } from "./ground";
 import { Sky } from "./sky";
+import { Clouds } from "./clouds";
 import { bendPoint, groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, placed, seenOverBend, useHeightField } from "./height";
 import { PathView } from "./paths";
 import { applyStyleLight, LIGHT_UNIFORMS, MAX_LIGHTS } from "./lighting";
@@ -78,6 +79,8 @@ export class View {
   private bendTo = 0;
   /** The night sky that shows over the bend, in treetop mode. */
   private sky: Sky;
+  /** Real clouds over the bend, with lightning. */
+  private clouds: Clouds;
   readonly assets: AssetLibrary;
   private typeBatches = new Map<number, SpriteBatch>();
   private decorBatches = new Map<string, SpriteBatch>();
@@ -171,6 +174,8 @@ export class View {
     this.ground = new Ground(game.map, game.forest, style, this.mpp);
     this.sky = new Sky(t.sky);
     this.scene.add(this.sky.mesh);
+    this.clouds = new Clouds(t.sky.clouds, t.sky.lightning, game.seed);
+    this.scene.add(this.clouds.mesh, this.clouds.bolt);
     this.assets.onFloor = (type, tile) => this.ground.setFloor(type, tile);
     const cs = t.canopyShadow;
     this.ground.setCanopyShadow(cs.on ? cs.strength : 0, cs.height, cs.cover, cs.wind);
@@ -1186,6 +1191,7 @@ export class View {
       SPRITE_UNIFORMS.uWitch.value.set((base[0] + top[0]) / 2, (base[1] + top[1]) / 2, Math.abs(side[0] - base[0]) + 1, Math.abs(top[1] - base[1]) / 2 + 1);
       SPRITE_UNIFORMS.uWitchDepth.value = -placed(this.v3.set(wx, this.seatK > 0 ? wyy : h, wz)).applyMatrix4(this.camera.matrixWorldInverse).z;
     }
+    this.clouds.update(time, this.camera, SPRITE_UNIFORMS.uWitch.value, this.width, this.height);
     this.shadow.position.set(wx, 0.03, wz);
     this.shadow.scale.setScalar((1 - 0.5 * canopyShown(w)) * (1 - this.seatK) + 1e-3); // none while she's up on the terrace
 

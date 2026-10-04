@@ -5,15 +5,14 @@
 //
 // One full-screen pass at the low resolution (so it is pixel art for free), drawn after the opaque
 // scene on the far plane with a depth test, so only the pixels nothing covered are shaded: a
-// gradient from the haze's colour (the far canopy fades into it) up to deep night; a twinkling starfield in a few
-// sizes and colours, drifting a little with the camera; a pixel moon on the moonlight's side; and a
-// few slow clouds, moonlit grey-blue with a silver rim on the moon's side, their undersides lit in
-// the colours of the partified areas beneath them, pulsing on the beat.
+// gradient from the haze's colour (the far canopy fades into it) up to deep night; a starfield in a
+// few sizes and colours, drifting a little with the camera, a few stars twinkling; and a pixel moon
+// on the moonlight's side. (The clouds are real ones in the world: clouds.ts.)
 import * as THREE from "three";
 import { LIGHT_UNIFORMS } from "./lighting";
 import { SPRITE_UNIFORMS } from "./sprites";
 
-export interface SkyTuning { on: boolean; stars: number; moon: number; clouds: { count: number; speed: number; partyGlow: number } }
+export interface SkyTuning { on: boolean; stars: number; moon: number }
 
 const VERT = /* glsl */ `
 varying vec2 vNdc;
@@ -24,14 +23,9 @@ const FRAG = /* glsl */ `
 uniform vec2 uRes;
 uniform vec3 uHazeColour, uMoon, uMoonDir;
 uniform float uTime;
-uniform vec4 uSky;     // stars, moon, cloud cover (from count), cloud speed
+uniform vec4 uSky;     // stars, moon
 uniform vec4 uCam;     // the camera's focus x, z; how far ahead the top of the screen looks (m); width there (m)
 uniform float uShow;   // 0 to 1, with the bend
-uniform float uGlow;   // party glow
-uniform vec4 uParty[16];
-uniform vec3 uPartyCol[16];
-uniform int uPartyCount;
-uniform vec4 uUplight;  // strength, pulse, edge, the beat's phase
 varying vec2 vNdc;
 float h21(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
 float vn(vec2 p) {
@@ -65,37 +59,6 @@ void main() {
       col = mix(col, vec3(0.92, 0.94, 0.86) * sea * lit * uSky.y, 1.0);
     }
   }
-  // Clouds: a few slow drifting shapes (wider than tall), sometimes across the moon.
-  if (uSky.z > 0.0) {
-    vec2 cq = vec2(px.x / uRes.y, px.y / uRes.y) * vec2(2.2, 5.5) + vec2(uCam.x * 0.004 + uTime * uSky.w * 0.01, -uCam.y * 0.002);
-    float n = vn(cq) * 0.6 + vn(cq * 2.3 + 7.0) * 0.3 + vn(cq * 5.1 + 3.0) * 0.1;
-    float cover = 0.78 - uSky.z * 0.22;
-    float c = smoothstep(cover, cover + 0.06, n);
-    if (c > 0.0) {
-      // Its underside: lower in the cloud (where n falls off below), and its moon side's rim.
-      float below = clamp((n - vn(cq + vec2(0.0, 0.18)) * 0.6 - vn((cq + vec2(0.0, 0.18)) * 2.3 + 7.0) * 0.3 - 0.1 * vn((cq + vec2(0.0, 0.18)) * 5.1 + 3.0)) * 6.0, 0.0, 1.0);
-      float rim = clamp((n - vn(cq + vec2(uMoonDir.x * 0.2, -0.12)) * 0.6 - 0.3 * vn((cq + vec2(uMoonDir.x * 0.2, -0.12)) * 2.3 + 7.0) - 0.1 * vn((cq + vec2(uMoonDir.x * 0.2, -0.12)) * 5.1 + 3.0)) * 8.0, 0.0, 1.0);
-      vec3 cl = mix(vec3(0.07, 0.08, 0.13), vec3(0.11, 0.12, 0.18), t) + uMoon * 0.12;
-      cl += uMoon * 0.55 * rim * (1.0 - below);
-      // The party below (Ed, 2026-10-04: "can't see that clouds are lit at all"): any cloud over or
-      // near partified ground glows in its colours: each partified area lights the clouds in the
-      // columns of sky above it (by how far it is across the view from this column) and the nearer
-      // it is to her the stronger; brightest on the underside, a wash through the rest, and a thump
-      // on every beat.
-      float gx = uCam.x + (uv.x - 0.5) * uCam.w;
-      vec3 up = vec3(0.0);
-      for (int i = 0; i < 16; i++) {
-        if (i >= uPartyCount) break;
-        float across = 1.0 - smoothstep(0.0, uCam.w * 0.3 + uParty[i].z, abs(uParty[i].x - gx));
-        float near = 1.0 - smoothstep(uCam.z * 0.6, uCam.z * 1.8, length(uParty[i].xy - uCam.xy));
-        up = max(up, uPartyCol[i] * across * near * uParty[i].w);
-      }
-      float beat = pow(0.5 + 0.5 * cos(uUplight.w), 6.0);
-      vec3 glow = up * uGlow * (0.75 + 0.6 * beat);
-      cl = mix(cl, cl + glow * 0.8, 0.6) + glow * below * 1.4;
-      col = mix(col, cl, c);
-    }
-  }
   gl_FragColor = vec4(col, 1.0);
 }
 `;
@@ -112,9 +75,8 @@ export class Sky {
     geo.setAttribute("position", new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3)); // one triangle over the screen
     this.u = {
       uRes: SPRITE_UNIFORMS.uRes, uHazeColour: LIGHT_UNIFORMS.uHazeColour, uMoon: LIGHT_UNIFORMS.uMoon, uMoonDir: LIGHT_UNIFORMS.uMoonDir, uTime: LIGHT_UNIFORMS.uTime,
-      uParty: SPRITE_UNIFORMS.uParty, uPartyCol: SPRITE_UNIFORMS.uPartyCol, uPartyCount: SPRITE_UNIFORMS.uPartyCount, uUplight: SPRITE_UNIFORMS.uUplight,
-      uSky: { value: new THREE.Vector4(T.stars, T.moon, Math.min(1, T.clouds.count / 10), T.clouds.speed) },
-      uCam: { value: new THREE.Vector4() }, uShow: { value: 0 }, uGlow: { value: T.clouds.partyGlow },
+      uSky: { value: new THREE.Vector4(T.stars, T.moon, 0, 0) },
+      uCam: { value: new THREE.Vector4() }, uShow: { value: 0 },
     };
     this.mesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: this.u, depthTest: true, depthFunc: THREE.LessEqualDepth, depthWrite: false }));
     this.mesh.frustumCulled = false;

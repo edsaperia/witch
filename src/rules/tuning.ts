@@ -27,7 +27,11 @@ export interface Tuning {
   /** The night sky over the bend (treetop mode): stars, the moon, and clouds (count, speed m/s, how much the party lights their undersides). */
   /** ?bare=1 or 2 (not in the file): the terrain on its own (render/view.ts). */
   bare?: number;
-  sky: { on: boolean; stars: number; moon: number; clouds: { count: number; speed: number; partyGlow: number } };
+  sky: { on: boolean; stars: number; moon: number;
+    /** Real clouds over the forest (render/clouds.ts): how many (about, per screenful of sky), altitude (m over the ground), speed (m/s drift), opacity, partyGlow (their undersides in the party's colours). */
+    clouds: { count: number; altitude: number; speed: number; opacity: number; partyGlow: number };
+    /** Lightning in them: about every so many seconds, flashes per strike, ground (the faint flash on the forest, 0 none). */
+    lightning: { every: number; flashes: number; ground: number } };
   /** Wind sway on leafy things: metres at the top of a crown, gusts' speed (m/s) and size (m), and a share for the treetop view. */
   wind: { on: boolean; strength: number; speed: number; gustScale: number; treetop: number };
   /** Tufts on the ground round the witch, in ground mode: overall density (times each area's), within radius metres, at most cap; one chance every spacing metres, worked out cell metres at a time within budgetMs a frame; sway (share of a tuft's height) and part (how far they part round her). */
