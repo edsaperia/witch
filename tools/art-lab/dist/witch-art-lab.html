@@ -193,7 +193,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 
       <section style="display:grid;gap:10px">
         <h2>Soundsystems</h2>
-        <p class="note">What the party defends: a sound-system stack hewn from magic stone, with glowing crystal cones. Each of the three stacks is shown playing (three frames of the cones pumping), damaged (two frames of flicker) and destroyed, with the witch for scale.</p>
+        <p class="note">What the party defends: a sound-system stack hewn from magic stone, with glowing crystal cones. Each of the three stacks is shown playing (three frames of the cones pumping), damaged (two frames of flicker) and destroyed, with the witch for scale. Below them, the dancefloor speakers: one column each, twelve round the dancefloor facing its centre, drawn at six angles (15&deg; to 165&deg; from facing us; mirrored for the other six), playing, damaged and destroyed.</p>
         <div class="sheet-wrap"><canvas id="soundsystems" width="420" height="200"></canvas></div>
       </section>
 
@@ -4407,6 +4407,113 @@ function soundsystems(st, bk) {
   });
 }
 
+// ================= the dancefloor speakers =================
+// Ed: "instead of a regular soundsystem, the stones around the dancefloor should be speakers (still a
+// stack but less wide, one column) ... 12 of them equally spaced ... 6 angles, so they face both
+// either directly towards the center of the dancefloor and away ... a 'destroyed' state as well."
+// One column of hewn stone, like a standing stone: a plinth with a glowing slot, two bass bins,
+// a horn, a mid and two floating tweeter stones. Its front (+z in the model) has the crystal cones
+// and horn mouths; its back is plain stone with a carved rune or two and moss running down it.
+// Drawn at six yaws (degrees from facing the camera); their mirrors give the other six:
+//   a speaker at ring angle a (degrees round the dancefloor from the side nearest the camera, its
+//   ground position centre + R (sin a, cos a) in x right and z towards the camera), facing the centre,
+//   has yaw 180 - a (wrapped to -180..180): the sprite is the angle |yaw|, flipped if yaw < 0.
+// With a = 15 + 30 i that uses exactly the six angles. Near the camera we see backs, far side fronts.
+const DANCEFLOOR_SPEAKER_ANGLES = [15, 45, 75, 105, 135, 165];
+const DANCEFLOOR_SPEAKER_STATES = { playing: 3, damaged: 2, destroyed: 1 };
+function dancefloorSpeakerFacing(ringDeg) {
+  let yaw = 180 - ringDeg; yaw = ((yaw + 180) % 360 + 360) % 360 - 180;
+  const angle = DANCEFLOOR_SPEAKER_ANGLES.reduce((b, a) => Math.abs(a - Math.abs(yaw)) < Math.abs(b - Math.abs(yaw)) ? a : b);
+  return { yaw, angle, flip: yaw < 0 };
+}
+// A little shorter than the soundsystems (three times the witch): the ring shouldn't wall in the floor.
+const dancefloorSpeakerHeight = st => witchHeight(st) * 2.6;
+const dancefloorSpeakerColours = () => soundsystemColours(0); // the stacks' cyan crystal
+
+function dfSpeakerModel(frame, state) {
+  const m = new Model({ blend: .02 }), dmg = state === "damaged", pump = dmg ? 0 : [0, .5, 1][frame % 3];
+  const dark = i => dmg && hash2(i, frame, 37) < .5, BW = .2, BD = .2, fz = BD;
+  let y = 0, g = 1, cone = 0;
+  const crack = p => Math.abs(Math.sin(p[0] * 37 + p[1] * 23 + Math.sin(p[2] * 17) * 2)) < .07;
+  // the stone's surface: cracks when damaged, moss along the top edges and down the back, a rune carved on the back
+  const stone = (top, k, rune) => p => {
+    if (dmg && crack(p)) return M.STONED;
+    const back = p[2] < -BD + .025;
+    if (back && rune) { const S = rune.s, u = (p[0] - rune.x) / S + .5, v = (rune.y - p[1]) / S + .5; if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && runeGlyph(1 - u, v, rune.k, .12)) return dmg && hash2(rune.k, frame, 5) < .5 ? M.STONED : M.RUNE; }
+    if (p[1] > top - .02 && hash2(Math.floor(p[0] * 40), Math.floor(p[2] * 40), k + 1) < .55) return M.MOSS;
+    if (back) { const col = Math.floor(p[0] * 26); if (hash2(col, 0, k + 2) < .3 && Math.sin(p[1] * 7 + hash2(col, 1, k) * 6) > .1) return M.MOSS; } // moss in streaks down the shaded back
+    return undefined;
+  };
+  const disc = (cx, cy, r, i) => {
+    const off = dark(i), sw = 1 + pump * .08;
+    m.ell([cx, cy, fz], [r * 1.18, r * 1.18, .06], M.STONED, { group: g, cut: true });
+    m.ell([cx, cy, fz - .02], [r * sw, r * sw, .035 + pump * .025], M.CRYSTAL, { group: 900 + i, paint: p => {
+      const d = Math.hypot(p[0] - cx, p[1] - cy) / (r * sw);
+      if (off) return d < .3 ? M.GLOW : M.CRYSTAL;
+      return d < .2 + pump * .15 ? M.MAGIC2 : d < .5 ? M.GLOW : d < .78 ? M.CRYSTAL : M.GLOW;
+    } });
+  };
+  const lintel = () => { m.box([0, y + .012, fz - .015], [BW + .01, .012, .015], M.WOOD, { group: g++, round: .008 }); y += .024; };
+  // the plinth, with a glowing slot along its front
+  m.box([0, .055, 0], [BW + .06, .055, BD + .05], M.STONE, { group: g, round: .03, rough: .006, paint: stone(.11, 3) });
+  m.box([0, .05, fz + .05], [BW - .02, .025, .1], M.STONED, { group: g, cut: true, paint: p => p[2] < fz - .03 && !(dmg && hash2(frame, 1, 9) < .5) ? M.GLOW : undefined });
+  y = .11; g++;
+  // two bass bins, a big cone each
+  for (let i = 0; i < 2; i++) { const bh = .22, by = y + bh; m.box([0, by, 0], [BW, bh, BD], M.STONE, { group: g, round: .035, rough: .004, paint: stone(by + bh, g, i === 0 ? { x: 0, y: by, s: .3, k: 11 } : null) }); disc(0, by + .02, .15, cone++); y += bh * 2; g++; lintel(); }
+  // a horn: a flared mouth over a deep throat, a small cone beneath
+  { const bh = .2, by = y + bh, tilt = dmg ? [.08, 1, 0] : undefined; m.box([0, by, 0], [BW - .005, bh, BD], M.STONE, { group: g, round: .035, rough: .004, dir: tilt, paint: stone(by + bh, g, { x: 0, y: by + .03, s: .26, k: 17 }) });
+    const my = by + bh * .25; m.seg([0, my, fz - BD * 1.5], [0, my, fz + .03], .03, .15, M.STONED, { group: g, cut: true, paint: p => p[2] < fz - BD * .55 ? (dark(cone) ? M.STONED : M.GLOW) : undefined });
+    disc(0, by - bh * .62, .045, cone++); y += bh * 2; g++; lintel(); }
+  // a mid: a wide, shallow horn with a fin down the middle
+  { const bh = .12, by = y + bh; m.box([0, by, 0], [BW - .01, bh, BD], M.STONE, { group: g, round: .03, rough: .004, paint: stone(by + bh, g) });
+    m.ell([0, by, fz], [BW * .8, bh * .7, BD * .9], M.STONED, { group: g, cut: true, paint: p => p[2] < fz - BD * .45 ? (dark(cone) ? M.STONED : M.GLOW) : undefined });
+    m.box([0, by, fz - BD * .5], [.018, bh * .6, BD * .45], M.STONE, { group: g }); cone++; y += bh * 2; g++; }
+  // two tweeter stones floating over it, light in the gaps (damaged: the top one has fallen to the foot)
+  for (let i = 0; i < 2; i++) {
+    const float = .07, bh = .06, by = y + float + bh;
+    if (dmg && i === 1) { m.box([.34, .07, .3], [.15, bh, .12], M.STONE, { group: g++, dir: [.5, .85, .2], round: .03, rough: .006, paint: stone(1, 9) }); continue; }
+    if (!dmg) m.flat([0, y + float / 2, 0], [1, 0, 0], [0, 1, 0], BW * .7, float / 2, (s, t) => Math.abs(t) < .45 && Math.sin(s * 31) > -.4 ? M.GLOW : null, { group: g++, bend: 0 });
+    m.box([0, by, 0], [.15, bh, .13], M.STONE, { group: g, round: .03, rough: .004, dir: dmg ? [.12, 1, 0] : undefined, paint: stone(by + bh, g) });
+    for (const dx of [-.5, .5]) { const cx = dx * .15, z = .13; m.ell([cx, by, z], [.045, .045, .05], M.STONED, { group: g, cut: true }); m.ell([cx, by, z - .015], [.035 * (1 + pump * .08), .035 * (1 + pump * .08), .03], M.CRYSTAL, { group: 900 + cone, paint: p => dark(cone) ? M.CRYSTAL : Math.hypot(p[0] - cx, p[1] - by) < .015 + pump * .008 ? M.MAGIC2 : M.GLOW }); cone++; }
+    y = by + bh; g++;
+  }
+  // crystal shards at its foot
+  [[-.3, .2, .22, -.3], [.3, .16, .2, .35], [-.26, -.22, .18, -.35], [.27, -.18, .16, .3]].forEach(([x, z, len, lean], i) => {
+    if (dmg && i % 2) { m.seg([x, .03, z], [x + .1, .05, z + .04], .035, .018, M.CRYSTAL, { group: 700 + i }); return; }
+    m.seg([x, 0, z], [x + lean * len, len, z + .04], .04 + len * .05, .006, M.CRYSTAL, { group: 700 + i, paint: p => p[1] > len * (.65 - pump * .1) && !dmg ? M.GLOW : undefined });
+  });
+  if (!dmg) for (const [x, dy, z, r] of [[-.32, .06, .05, .025], [.3, .13, -.05, .02]]) m.ell([x, y + dy - .1, z], [r, r * .8, r], M.STONE, { group: 800 + Math.round(x * 100), extra: true, rough: .004 }); // floating chips
+  return m;
+}
+
+// Destroyed: the plinth and a broken stump of the lower bass bin, its blocks tumbled round it, a dying glow.
+function dfRubbleModel() {
+  const m = new Model({ blend: .02 }), r = (i, k) => hash2(i, k, 71);
+  m.box([0, .055, 0], [.26, .055, .25], M.STONE, { group: 1, round: .03, rough: .006 });
+  m.box([0, .2, 0], [.2, .1, .2], M.STONE, { group: 2, round: .03, rough: .01, dir: [.1, 1, .05], paint: p => p[1] > .26 && Math.sin(p[0] * 50 + p[2] * 30) > 0 ? M.STONED : undefined }); // the stump, its top broken
+  m.ell([.02, .3, .12], [.08, .05, .05], M.GLOW, { group: 3, paint: p => p[1] > .32 ? M.MAGIC2 : undefined }); // the core, still glowing
+  m.seg([-.05, .25, .05], [-.12, .52, .1], .05, .008, M.CRYSTAL, { group: 4, paint: p => p[1] > .42 ? M.GLOW : undefined }); // a cracked crystal standing out of it
+  for (let i = 0; i < 9; i++) {
+    const a = i * 2.3 + .4, rad = .3 + r(i, 1) * .3, x = Math.cos(a) * rad, z = Math.sin(a) * rad * .8, s = .06 + r(i, 2) * .07;
+    m.box([x, s * .9, z], [s * 1.3, s, s * 1.1], M.STONE, { group: 10 + i, dir: [Math.cos(a * 1.7), .4 + r(i, 3), Math.sin(a * 2.3)], round: .025, rough: .008, paint: p => Math.abs(Math.sin(p[0] * 41 + p[1] * 29)) < .08 ? M.STONED : r(i, 4) < .3 && p[1] > s * 1.4 ? M.MOSS : undefined });
+  }
+  for (let i = 0; i < 3; i++) { const a = i * 2.1 + 1, x = Math.cos(a) * .42, z = Math.sin(a) * .3; m.ell([x, .04, z], [.08, .07, .025], M.CRYSTAL, { group: 50 + i, dir: [Math.cos(a), .5, Math.sin(a)], paint: () => r(i, 5) < .4 ? M.GLOW : undefined }); } // fallen cones
+  return m;
+}
+
+const dfScales = new Map();
+// One dancefloor speaker: angle (one of DANCEFLOOR_SPEAKER_ANGLES, degrees of yaw from facing us),
+// state "playing" (frame 0..2), "damaged" (0..1) or "destroyed". Every angle and state shares one
+// scale. Returns { sp, origin: { x, y } (its middle on the ground, in the sprite), angle }.
+function dancefloorSpeakerSprite(st = {}, { angle = 15, state = "playing", frame = 0 } = {}) {
+  const H = dancefloorSpeakerHeight(st);
+  if (!dfScales.has(H)) dfScales.set(H, render(dfSpeakerModel(0, "playing"), { height: H, yaw: 15 * Math.PI / 180 }).s);
+  const scale = dfScales.get(H), yaw = angle * Math.PI / 180;
+  const R = render(state === "destroyed" ? dfRubbleModel() : dfSpeakerModel(frame, state), { scale, yaw }), [ox, oy] = R.project([0, 0, 0]);
+  motes(R.sp, state === "destroyed" ? 2 : state === "damaged" ? 3 : 6 + frame * 2, angle + frame);
+  return { sp: R.sp, origin: { x: +ox.toFixed(1), y: +oy.toFixed(1) }, angle };
+}
+
 
 
 
@@ -4964,6 +5071,7 @@ function renderSoundsystems() {
     const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 6;
     const wit = bake(witchSprite(st), witchColours(st), st, st.cOutline);
     const rows = SOUNDSYSTEMS.map((S, v) => { const col = soundsystemColours(v), b = o => bake(soundsystemSprite(st, { variant: v, ...o }), col, st, "none"); return [b({ frame: 0 }), b({ frame: 1 }), b({ frame: 2 }), b({ state: "damaged", frame: 0 }), b({ state: "damaged", frame: 1 }), b({ state: "destroyed" }), wit]; });
+    { const col = dancefloorSpeakerColours(); for (const angle of DANCEFLOOR_SPEAKER_ANGLES) { const b = o => bake(dancefloorSpeakerSprite(st, { angle, ...o }).sp, col, st, "none"); rows.push([b({ frame: 0 }), b({ frame: 1 }), b({ frame: 2 }), b({ state: "damaged", frame: 0 }), b({ state: "damaged", frame: 1 }), b({ state: "destroyed" }), wit]); } } // the dancefloor speakers, one row per angle
     const w = Math.max(...rows.map(r => r.reduce((a, s) => a + s.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(s => s.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
     tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
     let y = gap;
