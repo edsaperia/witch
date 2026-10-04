@@ -114,6 +114,8 @@ export class LeashView {
   private berryRgb: [number, number, number];
   private fizzles: { x: number; z: number; at: number }[] = [];
   private bursts: { x: number; z: number; at: number; seed: number }[] = [];
+  /** Each stacked sigil's eased height above her hat, by creature. */
+  private stackY = new Map<number, number>();
   private chain: { x: number; z: number; vx: number; vz: number }[] = [];
   private lastTime = 0;
   private bubbleWitch = document.getElementById("bubble-witch");
@@ -262,6 +264,7 @@ export class LeashView {
     this.lastTime = time;
     while (this.chain.length < s.stack.length) this.chain.push({ x: 0, z: 0, vx: 0, vz: 0 });
     let below = { x: 0, z: 0 }, y = hatTop;
+    for (const id of [...this.stackY.keys()]) if (!s.stack.includes(id)) this.stackY.delete(id);
     for (let k = s.stack.length - 1; k >= 0; k--) {
       const id = s.stack[k], c = g.creatures[id], j = s.stack.length - 1 - k, link = this.chain[j]; // j: 0 at the bottom
       const size = (2 + c.level * 0.4) * S.scale;
@@ -271,7 +274,11 @@ export class LeashView {
       link.x += link.vx * dt; link.z += link.vz * dt;
       below = link;
       y += (j === 0 ? S.offset * size : S.gap * size) + size / 2;
-      const pos = new THREE.Vector3(w.x + link.x, y, w.z + link.z);
+      // Each sigil eases to its height in the stack, so when the cycle button sends the bottom one
+      // to the top (Ed, 2026-10-04) it rises past the others and they settle down a place.
+      const rel = y - hatTop, had = this.stackY.get(id), sy = had === undefined ? rel : had + (rel - had) * (1 - Math.exp(-dt * 9));
+      this.stackY.set(id, sy);
+      const pos = new THREE.Vector3(w.x + link.x, hatTop + sy, w.z + link.z);
       y += size / 2;
       slotPos.set(id, pos);
       const col = (this.slotOf(c.species, c.level), this.colours.get(c.species)!);

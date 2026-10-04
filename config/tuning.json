@@ -136,6 +136,10 @@
   "invite": { "talkRange": 12, "cancelDistance": 18, "talkTime": [3, 6, 12], "turn": [0.7, 0.9, 1.3], "decayRate": 0.5 },
   "leash": { "length": 8, "runSpeed": 4, "pickRadius": 2, "spacing": 4 },
   "bond": { "rim": true, "sparks": true, "thread": true, "sparkEvery": 4, "threadArc": 0.12, "threadArcMax": 2.5 },
+  "_spells": "Spells (Ed, 2026-10-04): one is equipped per run (equipped; later chosen from a list unlocked across runs), cast with the spell button (Q; gamepad B; touch 'spell'), then it recharges. speed: she moves mult times as fast for duration seconds, with a trail, then cooldown seconds before it can go again (a ring in the corner shows it recharging).",
+  "spells": { "equipped": "speed", "speed": { "mult": 2.2, "duration": 4, "cooldown": 12 } },
+  "_boot": "At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power on one by one over time seconds, and only then does the first wave's countdown begin: extra time to find and invite your first creatures.",
+  "boot": { "time": 60 },
   "_party": "motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, rising from from to to metres (under the crowns to above them) at about speed m/s. uplight: crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border). The party spreads: a wave every interval seconds (the first after startDelay more), partifying every area touching a partified one; maxPerWave caps a wave (0: no cap). transition: seconds an area takes to partify, 0 to skip the show. partyLight: the coloured light at each soundsystem (reach in metres, strength).",
   "party": { "motes": { "perPatch": 4, "from": 10, "to": 34, "speed": 1.2 }, "uplight": { "strength": 0.13, "pulse": 0.04, "edge": 10 }, "interval": 300, "startDelay": 0, "maxPerWave": 0, "picker": "noisy", "noisy": { "wobble": 0.8, "lobeSize": 500, "candidates": 3, "spreadFromLast": true }, "transition": 2.5, "lightReach": 30, "lightStrength": 1.6 },
   "_stringLights": "Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart. Each span is spanMin to spanMax metres. No span crosses another and each tree holds at most two ends, except junction trees (junctionChance per tree on a run) where a branch leaves, so three meet. At height metres, sagging sag metres per 8 m of span, a bulb every bulbSpacing metres in the palette's colours, twinkling (twinkle 0-1), a chase running along now and then at chaseSpeed bulbs per second. The bulbs only glow (bloom); they cast no light.",
@@ -176,5 +180,7 @@
   "soundsystemFootprint": 6,
   "reserveMargin": 3,
   "treeMarginFromSoundsystem": 1.5,
-  "legendSpeed": 0.35
+  "legendSpeed": 0.35,
+  "_creatureSpeeds": "Ed (2026-10-04): the witch is much faster than almost all creatures (she flies at 19 m/s on the ground, 32 over the treetops). Wild creatures amble at creatureSpeed m/s (legends legendSpeed); leashed ones run after their leash point at leash.runSpeed. The fast few (fast: hare, stoat, marten; rare, and weaker when combat comes) move fastMult times the usual; legends run at legend times it: very slow.",
+  "creatureSpeeds": { "fast": ["hare", "stoat", "marten"], "fastMult": 1.7, "legend": 0.4 }
 }

@@ -18,10 +18,11 @@ import { PathView } from "./paths";
 import { applyStyleLight, LIGHT_UNIFORMS, MAX_LIGHTS } from "./lighting";
 import { Post } from "./post";
 import { GrassView } from "./grass";
+import { SpellFx } from "./spellfx";
 import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
 import { MarkerArt, MarkerFx, MARKER_LEVELS, type Beacon, type Laser, type Mote } from "./markers";
-import { spawnMarkers, waveCountdown, type SpawnMarker } from "../rules/party";
+import { spawnMarkers, speakersOn, waveCountdown, type SpawnMarker } from "../rules/party";
 import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
 import { Lasers } from "./lasers";
@@ -72,6 +73,7 @@ export class View {
   private seatTime = 0;
   private speakerBatch: SpriteBatch | null = null;
   readonly grass: GrassView;
+  private spellFx = new SpellFx(document.body);
   private shadow: THREE.Mesh;
   private mpp: number; // metres per art pixel
   private lastBuild = { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1 };
@@ -169,6 +171,7 @@ export class View {
     // The ground cover: tufts round the witch, in ground mode.
     this.grass = new GrassView(game.map, t, this.mpp);
     this.scene.add(this.grass.mesh);
+    this.scene.add(this.spellFx.trail);
     // The dancefloor's speakers: their batch comes with their art (drawSpeakers).
     this.assets.speakerArt();
     this.propBatch = new SpriteBatch(this.assets.props, this.mpp, { fade: true });
@@ -751,9 +754,13 @@ export class View {
    *  Each shows its front to the camera, the far half facing in and the near half out, so its
    *  sprite is the drawn angle nearest its yaw, flipped for the other side; a playing speaker's
    *  cones pump on the beat. Anchored by its ground point, like a path piece. */
-  private drawSpeakers(time: number, angle: number): void {
-    const A = this.assets.speakerArt(), g = this.game;
-    if (!A) return;
+  private speakerFlare: (number | undefined)[] = [];
+  private drawSpeakers(time: number, angle: number): ForestLight[] {
+    const A = this.assets.speakerArt(), g = this.game, lights: ForestLight[] = [];
+    if (!A) return lights;
+    // The boot-up (Ed, 2026-10-04): they power on one by one round the ring, each with a flare;
+    // the ones still off stand silent.
+    const on = speakersOn(g.party, g.map, time, g.map.dancefloor.speakers.length);
     if (!this.speakerBatch) {
       this.speakerBatch = new SpriteBatch(A.atlas, this.mpp, { solid: true });
       this.scene.add(...this.speakerBatch.meshes);
@@ -763,9 +770,13 @@ export class View {
     const beat = (time * g.tuning.beat.bpm) / 60, ph = beat - Math.floor(beat);
     const list: SpriteInstance[] = [];
     g.map.dancefloor.speakers.forEach((sp, i) => {
-      const face = Art.dancefloorSpeakerFacing(sp.ring) as { angle: number; flip: boolean }, state = g.speakers[i] ?? "playing";
-      // Playing: rest, then the cones thump out and settle, once a beat; damaged: a slow stutter.
-      const frame = state === "playing" ? (ph < 0.12 ? 2 : ph < 0.3 ? 1 : 0) : state === "damaged" ? Math.floor(time * 2.5 + i) % 2 : 0;
+      const face = Art.dancefloorSpeakerFacing(sp.ring) as { angle: number; flip: boolean }, state = g.speakers[i] ?? "playing", powered = i < on;
+      if (powered && this.speakerFlare[i] === undefined) this.speakerFlare[i] = time;
+      if (!powered) this.speakerFlare[i] = undefined;
+      const flare = powered ? Math.max(0, 1 - (time - (this.speakerFlare[i] ?? time)) / 0.8) : 0;
+      if (flare > 0) lights.push({ x: sp.x, y: 3, z: sp.z, reach: 14, rgb: new THREE.Vector3(0.3, 0.9, 1), strength: 3 * flare });
+      // Playing: rest, then the cones thump out and settle, once a beat; damaged: a slow stutter; off: still.
+      const frame = !powered ? 0 : state === "playing" ? (ph < 0.12 ? 2 : ph < 0.3 ? 1 : 0) : state === "damaged" ? Math.floor(time * 2.5 + i) % 2 : 0;
       const fi = A.frames[`${face.angle}:${state}:${frame}`];
       if (fi === undefined) return;
       const f = A.atlas.frames[fi], o = A.origin[face.angle], ox = face.flip ? f.w - o.x : o.x;
@@ -775,6 +786,7 @@ export class View {
       list.push({ x: x - U.x * d, y: -U.y * d, z: z - U.z * d, frame: f, flip: face.flip, fresh: this.mark("speaker", sp.x, sp.z, f.h * mpp) });
     });
     this.speakerBatch.set(list);
+    return lights;
   }
 
   /** Stand the treehouse with its trunk's foot (its base anchor) on its spot: like a set piece's
@@ -875,11 +887,12 @@ export class View {
       ...onTreehouse(l.x, l.y), reach: t.treehouse.lightReach, rgb: new THREE.Vector3(l.rgb[0] / 255, l.rgb[1] / 255, l.rgb[2] / 255), strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3 + l.x)),
     }));
     const markerLights = this.drawMarkers(time);
-    this.drawSpeakers(time, pose.angle);
+    const speakerLights = this.drawSpeakers(time, pose.angle);
+    this.spellFx.update(g, time, witchHeight(w, t) + 0.6);
     // Tufts part round her and the three nearest creatures.
     const parts = [{ x: w.x, z: w.z, r: 1.6 * (1 - canopyShown(w)) }, ...g.creatures.map(c => ({ x: c.x, z: c.z, r: 1.2, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(c => c.d < t.groundCover.radius).sort((a, b) => a.d - b.d).slice(0, 3)];
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05); // out to the canopy hole's edge
-    this.setLights([this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...this.forestLights], w.x, w.z);
+    this.setLights([this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...this.forestLights], w.x, w.z);
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);
     const bob = Math.sin(time * 2.4) * 0.12;
@@ -962,7 +975,7 @@ export class View {
       if (nx) {
         const s = g.map.soundsystemSpot(nx[0], nx[1]), species = AREA_TYPES[g.map.typeOf(nx[0], nx[1])].creature;
         const cd = waveCountdown(g.party, g.map, time);
-        this.nextStone.update(this.camera, cw, ch, { x: s.x, z: s.z, colour: this.markerArt.colour.get(species)!, species }, w.x, w.z, time, t.beat.bpm, cd.gone); // pausing holds the countdown
+        this.nextStone.update(this.camera, cw, ch, { x: s.x, z: s.z, colour: this.markerArt.colour.get(species)!, species }, w.x, w.z, time, t.beat.bpm, cd.booting ? cd.boot : cd.gone, cd.booting ? `booting ${Math.ceil(cd.bootLeft)} s` : undefined); // pausing holds the countdown; while home boots up, the ring fills with the boot
       } else this.nextStone.update(this.camera, cw, ch, null, w.x, w.z, time, t.beat.bpm, 0);
     }
     this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);

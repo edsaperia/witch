@@ -73,7 +73,7 @@ const WAVE_CHOICES = [30, 60, 120, 300, 600, 0];
 function setWaveInterval(sec: number): void {
   tuning.party.interval = sec > 0 ? sec : 1e9;
   game.party.paused = sec === 0;
-  game.party.nextAt = game.clock.time + tuning.party.startDelay + tuning.party.interval;
+  game.party.nextAt = Math.max(game.clock.time, game.party.bootUntil) + tuning.party.startDelay + tuning.party.interval; // after the boot-up
   document.querySelectorAll<HTMLButtonElement>("#waves button").forEach(b => b.classList.toggle("on", +b.dataset.s! === sec));
 }
 let waveChoice = tuning.party.interval;
@@ -199,7 +199,8 @@ function frame(now: number): void {
   // The wave countdown bar: empties toward the next wave.
   const cd = waveCountdown(game.party, game.map, game.clock.time);
   waveFill.style.height = `${(1 - cd.gone) * 100}%`;
-  const left = tuning.party.interval >= 1e9 ? "waves off" : cd.left >= 60 ? `${Math.floor(cd.left / 60)}:${String(Math.ceil(cd.left) % 60).padStart(2, "0")}` : `${Math.ceil(cd.left)} s`;
+  const clock = (s: number) => (s >= 60 ? `${Math.floor(s / 60)}:${String(Math.ceil(s) % 60).padStart(2, "0")}` : `${Math.ceil(s)} s`);
+  const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : cd.left >= 60 ? `${Math.floor(cd.left / 60)}:${String(Math.ceil(cd.left) % 60).padStart(2, "0")}` : `${Math.ceil(cd.left)} s`;
   waveLabel.textContent = `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}`;
   waveEl.classList.toggle("paused", game.party.paused);
   // Behind the start screen, a frame every 0.3 s is plenty: the CPU goes to drawing the forest's
