@@ -288,24 +288,6 @@ export class PathNetwork {
     return best;
   }
 
-  /** Every segment within `extra` metres of its line's edge at (x, z) (up to 24 m: a grid cell
-   *  round), with where along it is nearest (u, 0 to 1): the rolling ground levels across them
-   *  all (`at` keeps to its own cell and the nearest line). */
-  near(x: number, z: number, extra = 0): (PathHit & { u: number })[] {
-    const out: (PathHit & { u: number })[] = [], seen = new Set<number>(), cx = Math.floor(x / this.cell), cz = Math.floor(z / this.cell);
-    for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++)
-      for (const [li, si] of this.grid.get(`${cx + dx},${cz + dz}`) ?? []) {
-        const key = li * 1e6 + si;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        const l = this.lines[li], [a, c] = [l.pts[si], l.pts[si + 1]];
-        const ex = c[0] - a[0], ez = c[1] - a[1], L2 = ex * ex + ez * ez || 1;
-        const u = clamp(((x - a[0]) * ex + (z - a[1]) * ez) / L2, 0, 1), d = Math.hypot(x - a[0] - ex * u, z - a[1] - ez * u);
-        if (d <= l.half + extra) out.push({ kind: l.kind, line: li, d, seg: si, u });
-      }
-    return out;
-  }
-
   /** How a point's trees and bushes are changed by the corridors: trees (0 on a corridor; a few on a
    *  broken railway, between the sleepers), bushes (0 on it, bushBoost along its edges). */
   clearance(x: number, z: number): { trees: number; bushes: number } {

@@ -1302,7 +1302,7 @@ export class View {
     const took = (from: number) => { spare -= performance.now() - from; };
     let t0 = performance.now();
     // The hills' next strip, in the direction she's flying (the window moves every 16 m).
-    this.heights.prepare(w.vx, w.vz, give(2, 0.5));
+    this.heights.prepare(w.vx, w.vz, give(4, 1.5)); // (at full boost, about 3 ms a frame keeps up with the slope-limited strips)
     took(t0); this.time("heightsAhead"); t0 = performance.now();
     // The forest ahead, centred where the view will be in two seconds at her speed, so a rebuild
     // finds its chunks already made instead of making a whole strip at once.
