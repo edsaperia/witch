@@ -14,6 +14,7 @@
 //   node art/preview.mjs species all|<ids> art/previews/tree-species.png [scale]   (each species at mature height from the side, then its crown as treetop mode shows it, then its trunk alone as ground mode shows it; PER=n species to a row)
 //   node art/preview.mjs canopy <areas> art/previews/canopy-patches.png [scale]   (a 3 x 3 patch of each area's crowns from the treetops)
 //   node art/preview.mjs witch all art/previews/witch-flight.png [scale]   ("fast" instead of all: hover, lean and the fast pose; "foot": hover and every on-foot pose, POSES=stand,talk,... to pick, ANCHORS=1 to mark her hand and hat tip)
+//   node art/preview.mjs partywitches poses|outfits|pairs|lean art/previews/party-witches.png [scale]   (her party poses, a row per facing; the party outfits; pairs put together at their anchors; her lean cycle. ANCHORS=1, POSES=...)
 //   node art/preview.mjs treeheights fern-forest,garden art/previews/tree-heights.png [scale]
 //   node art/preview.mjs lights all art/previews/light-sources.png [scale]
 //   node art/preview.mjs party wolf,fox,owl art/previews/party.png [scale]
@@ -178,12 +179,38 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   } else if (what === "witch") { // per facing: the ordinary hover frame, then rise (two frames) and descend (two frames)
     const wc = G.witchColours(st), b = o => G.bake(G.witchSprite(st, o), wc, st, st.cOutline);
     // "foot": hover, then every on-foot pose's frames (stand, land, takeoff, talk, placeSigil, liftSigil); with ANCHORS=1 her hand and hat tip marked
-    const mark = (sp, bk) => { if (window.ANCHORS && sp.anchors) { const g = bk.A.getContext("2d"); for (const [[x, y], c] of [[sp.anchors.hand, "#0ff"], [sp.anchors.hatTip, "#f0f"]]) { g.fillStyle = c; g.fillRect(Math.round(x) - 1, Math.round(y) - 1, 3, 3); } } return bk; };
+    const mark = (sp, bk) => { if (window.ANCHORS && sp.anchors) { const g = bk.A.getContext("2d"); for (const [k, c] of [["hand", "#0ff"], ["hatTip", "#f0f"], ["pair", "#ff0"], ["back", "#fff"], ["cup", "#f80"]]) { if (!sp.anchors[k]) continue; const [x, y] = sp.anchors[k]; g.fillStyle = c; g.fillRect(Math.round(x) - 1, Math.round(y) - 1, 3, 3); } } return bk; };
     const fb = o => { const sp = G.witchSprite(st, o); return mark(sp, G.bake(sp, wc, st, st.cOutline)); };
     if (list === "headings") for (const heading of ["away", "towards"]) rows.push([b({}), ...[0, 1, 2].map(frame => fb({ heading, frame })), fb({ heading, lean: true }), ...[0, 1, 2].map(frame => fb({ heading, pose: "fast", frame })), ...[0, 1].map(frame => fb({ heading, pose: "brake", frame }))]); // the side view for comparison, then heading straight up (away) and down (towards) the screen: hover x3, lean, fast x3, brake x2
-    else if (list === "foot") for (const facing of window.FACINGS || ["towards", "away"]) rows.push([b({ facing }), ...Object.entries(G.WITCH_FOOT_POSES).filter(([pose]) => !window.POSES || window.POSES.includes(pose)).flatMap(([pose, { frames }]) => [...Array(frames).keys()].map(frame => fb({ facing, pose, frame })))]);
+    else if (list === "foot") for (const facing of window.FACINGS || ["towards", "away"]) rows.push([b({ facing }), ...Object.entries(G.WITCH_FOOT_POSES).filter(([pose, P]) => window.POSES ? window.POSES.includes(pose) : !P.party).flatMap(([pose, { frames }]) => [...Array(frames).keys()].map(frame => fb({ facing, pose, frame })))]);
     else for (const facing of ["towards", "away"]) rows.push(list === "fast" ? [b({ facing }), b({ facing, lean: true }), ...[0, 1, 2].map(frame => b({ facing, pose: "fast", frame })), ...[0, 1].map(frame => b({ facing, pose: "brake", frame }))] // hover, lean, fast's three frames, brake's two
       : [b({ facing }), b({ facing, pose: "rise", frame: 0 }), b({ facing, pose: "rise", frame: 1 }), b({ facing, pose: "descend", frame: 0 }), b({ facing, pose: "descend", frame: 1 })]);
+  } else if (what === "partywitches") { // the party (list): "poses" her in every party pose, a row per facing (ANCHORS=1 marks hand, hat tip, pair, back, cup);
+    // "outfits" each party outfit (a row each: hover, the lean cycle, then party poses); "pairs" two witches put together at their WITCH_PAIRS anchors; "lean" her lean cycle, both facings and both headings
+    const mark = (sp, bk) => { if (window.ANCHORS && sp.anchors) { const g = bk.A.getContext("2d"); for (const [k, c] of [["hand", "#0ff"], ["hatTip", "#f0f"], ["pair", "#ff0"], ["back", "#fff"], ["cup", "#f80"]]) { if (!sp.anchors[k]) continue; const [x, y] = sp.anchors[k]; g.fillStyle = c; g.fillRect(Math.round(x) - 1, Math.round(y) - 1, 3, 3); } } return bk; };
+    const one = (o, col = G.witchColours(st)) => { const sp = G.witchSprite(st, o); return mark(sp, G.bake(sp, col, st, st.cOutline)); };
+    const party = Object.entries(G.WITCH_FOOT_POSES).filter(([pose, P]) => P.party && (!window.POSES || window.POSES.includes(pose)));
+    if (list === "poses") for (const facing of window.FACINGS || ["towards", "away"]) rows.push(party.flatMap(([pose, { frames }]) => [...Array(frames).keys()].map(frame => one({ facing, pose, frame }))));
+    else if (list === "lean") { for (const facing of ["towards", "away"]) rows.push([one({ facing, lean: true }), ...[0, 1, 2, 3].map(frame => one({ facing, pose: "lean", frame }))]); for (const heading of ["away", "towards"]) rows.push([one({ heading, lean: true }), ...[0, 1, 2, 3].map(frame => one({ heading, pose: "lean", frame }))]); }
+    else if (list === "pairs") { // A, and her partner (mirrored, or the conga's witch ahead) placed so their anchors meet
+      const mk = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+      for (const [pose, Pr] of Object.entries(G.WITCH_PAIRS)) {
+        const frames = Pr.frame !== undefined ? [Pr.frame] : [...Array(G.WITCH_FOOT_POSES[pose].frames).keys()], row = [];
+        for (const frame of frames) {
+          const w1 = G.partyWitch(3 + frame), w2 = G.partyWitch(11 + frame), o = { pose, frame, ...(Pr.heading ? { heading: Pr.heading } : {}) };
+          const sa = G.witchSprite(st, { ...o, look: w1.look }), sb = G.witchSprite(st, { ...o, look: w2.look }), ba = G.bake(sa, w1.colours(st), st, st.cOutline), bb = G.bake(sb, w2.colours(st), st, st.cOutline);
+          const [ax, ay] = sa.anchors[Pr.meet], [bx0, by] = sb.anchors[Pr.partner || Pr.meet], bx = Pr.mirror ? sb.w - bx0 : bx0, ox = Math.round(ax - bx), oy = Math.round(ay - by);
+          const x0 = Math.min(0, ox), y0 = Math.min(0, oy), W = Math.max(sa.w, ox + sb.w) - x0, H = Math.max(sa.h, oy + sb.h) - y0, A = mk(W, H), N = mk(W, H);
+          for (const [cv, src, srcF] of [[A, bb.A, bb.A], [N, bb.N, bb.NF]]) { const g = cv.getContext("2d"); if (Pr.mirror) { g.save(); g.translate(ox - x0 + sb.w, oy - y0); g.scale(-1, 1); g.drawImage(srcF, 0, 0); g.restore(); } else g.drawImage(src, ox - x0, oy - y0); }
+          A.getContext("2d").drawImage(ba.A, -x0, -y0); N.getContext("2d").drawImage(ba.N, -x0, -y0);
+          row.push({ A, N, w: W, h: H });
+        }
+        rows.push(row);
+      }
+    } else for (const P of G.PARTY_OUTFITS) { // outfits
+      const pw = G.partyWitch(P.id.length * 7, { outfit: P.id }), col = pw.colours(st), lk = pw.look;
+      rows.push([one({ look: lk }, col), ...[0, 1, 2, 3].map(frame => one({ look: lk, pose: "lean", frame }, col)), one({ look: lk, pose: "stand" }, col), ...(window.POSES || ["twoStep", "bounce", "spin", "headbang", "drink", "run", "hug", "sitGround", "stargaze"]).map((pose, k) => one({ look: lk, pose, frame: k % G.WITCH_FOOT_POSES[pose].frames, facing: k % 3 === 2 ? "away" : "towards" }, col))]);
+    }
   } else if (what === "treeheights") { // per area: its tree variants, saplings to the giant, then the witch for scale
     const wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
     for (const id of list.split(",")) rows.push([...G.areaTreeVariants(id, st).map(v => v.whole), wit]);

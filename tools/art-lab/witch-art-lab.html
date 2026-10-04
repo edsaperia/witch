@@ -181,8 +181,14 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 
       <section style="display:grid;gap:10px">
         <h2>Witch</h2>
-        <p class="note">The witch in every pose, turned towards you (top) and away (bottom): three frames of her hover, the fast-flight lean, flying flat out over the treetops (three frames), braking hard (two frames), then rising to the treetops and descending to the ground, two frames each. Then flying straight up the screen (seen from behind) and straight down it (at you): three hover frames, the lean, flat out (three) and braking (two). Below, on foot (towards, then away), after her hover for scale: standing (three idle frames), landing and taking off (three each), talking (four gestures), placing and lifting a sigil (three each), and sitting on her terrace (two).</p>
+        <p class="note">The witch in every pose, turned towards you (top) and away (bottom): three frames of her hover, the fast-flight lean and its four-frame cycle (legs kicking, jacket and hair fluttering, bristles flickering), flying flat out over the treetops (three frames), braking hard (two frames), then rising to the treetops and descending to the ground, two frames each. Then flying straight up the screen (seen from behind) and straight down it (at you): three hover frames, the lean and its cycle, flat out (three) and braking (two). Below, on foot (towards, then away), after her hover for scale: standing (three idle frames), landing and taking off (three each), talking (four gestures), placing and lifting a sigil (three each), and sitting on her terrace (two).</p>
         <div class="sheet-wrap"><canvas id="witchSheet" width="420" height="160"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
+        <div class="row" style="justify-content:space-between"><h2>Party witches</h2><div class="row"><label class="note" for="partyPose">Pose</label><select id="partyPose"></select><button id="partyShuffle">Shuffle</button></div></div>
+        <p class="note">Witches who fly in to the party, one for each soundsystem: a row per party outfit (raver, flower child, disco, punk, festival, cat hat, glam, goth, candy, boho), each with its own hat, hair and top, its colours and skin picked by its seed (Shuffle picks others). With "a mix": hovering, the lean cycle, then a pose of each kind (dancing, drinking, running, hugging, sitting, stargazing). Pick a pose to see every frame of it, our witch first, then every outfit. Below, the pairs, put together at their anchors: dancing face to face, a hug, a high-five, holding hands (facing you), a toast, the conga.</p>
+        <div class="sheet-wrap"><canvas id="partySheet" width="420" height="160"></canvas></div>
       </section>
 
       <section style="display:grid;gap:10px">
@@ -235,7 +241,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, DISCO_GRID, DISCO_MASK, discoPatterns, DISCO_TRANSITIONS, discoCompose, discoPaint, DANCEFLOOR_SPEAKER_ANGLES, dancefloorSpeakerSprite, dancefloorSpeakerColours, soundsystemColours, witchSprite, witchColours, areaTreeVariants, TREE_SPECIES, splitTree, treeColours, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
+import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, DISCO_GRID, DISCO_MASK, discoPatterns, DISCO_TRANSITIONS, discoCompose, discoPaint, DANCEFLOOR_SPEAKER_ANGLES, dancefloorSpeakerSprite, dancefloorSpeakerColours, soundsystemColours, witchSprite, witchColours, areaTreeVariants, TREE_SPECIES, splitTree, treeColours, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, WITCH_PAIRS, PARTY_OUTFITS, partyWitch, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -609,11 +615,11 @@ function renderWitch() {
   witchTimer = setTimeout(() => {
     const c = document.getElementById("witchSheet"); if (!c) return;
     const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 6, wc = witchColours(st), b = o => bake(witchSprite(st, o), wc, st, st.cOutline);
-    const rows = ["towards", "away"].map(facing => [...[0, 1, 2].map(frame => b({ frame, facing })), b({ lean: true, facing }), ...[0, 1, 2].map(frame => b({ pose: "fast", frame, facing })), ...[0, 1].map(frame => b({ pose: "brake", frame, facing })), ...["rise", "descend"].flatMap(pose => [0, 1].map(frame => b({ pose, frame, facing })))]);
+    const rows = ["towards", "away"].map(facing => [...[0, 1, 2].map(frame => b({ frame, facing })), b({ lean: true, facing }), ...[0, 1, 2, 3].map(frame => b({ pose: "lean", frame, facing })), ...[0, 1, 2].map(frame => b({ pose: "fast", frame, facing })), ...[0, 1].map(frame => b({ pose: "brake", frame, facing })), ...["rise", "descend"].flatMap(pose => [0, 1].map(frame => b({ pose, frame, facing })))]);
     // heading straight up the screen (away) and straight down it (towards): hover x3, lean, fast x3, brake x2
-    for (const heading of ["away", "towards"]) rows.push([...[0, 1, 2].map(frame => b({ frame, heading })), b({ lean: true, heading }), ...[0, 1, 2].map(frame => b({ pose: "fast", frame, heading })), ...[0, 1].map(frame => b({ pose: "brake", frame, heading }))]);
+    for (const heading of ["away", "towards"]) rows.push([...[0, 1, 2].map(frame => b({ frame, heading })), b({ lean: true, heading }), ...[0, 1, 2, 3].map(frame => b({ pose: "lean", frame, heading })), ...[0, 1, 2].map(frame => b({ pose: "fast", frame, heading })), ...[0, 1].map(frame => b({ pose: "brake", frame, heading }))]);
     // on foot: stand, land, takeoff, talk, placeSigil, liftSigil, each turned towards and away, after her hover frame for scale
-    for (const facing of ["towards", "away"]) rows.push([b({ facing }), ...Object.entries(WITCH_FOOT_POSES).flatMap(([pose, { frames }]) => [...Array(frames).keys()].map(frame => b({ pose, frame, facing })))]);
+    for (const facing of ["towards", "away"]) rows.push([b({ facing }), ...Object.entries(WITCH_FOOT_POSES).filter(([, P]) => !P.party).flatMap(([pose, { frames }]) => [...Array(frames).keys()].map(frame => b({ pose, frame, facing })))]);
     const w = Math.max(...rows.map(r => r.reduce((a, x) => a + x.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(x => x.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
     tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
     let y = gap;
@@ -621,6 +627,39 @@ function renderWitch() {
     c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
     c.style.width = w * 2 + "px"; c.style.maxWidth = "none"; c.style.imageRendering = "pixelated";
   }, 500);
+}
+
+// ================= party witches: the outfits, the party poses (ours too), and the pairs put together =================
+let partyTimer, partySeed = 0;
+function renderParty() {
+  clearTimeout(partyTimer);
+  partyTimer = setTimeout(() => {
+    const c = document.getElementById("partySheet"), sel = document.getElementById("partyPose"); if (!c) return;
+    if (!sel.options.length) { sel.add(new Option("a mix", "")); for (const [pose, P] of Object.entries(WITCH_FOOT_POSES)) if (P.party) sel.add(new Option(pose, pose)); sel.onchange = renderParty; document.getElementById("partyShuffle").onclick = () => { partySeed += 17; renderParty(); }; }
+    const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 6, pose = sel.value, rows = [];
+    const witches = PARTY_OUTFITS.map((P, k) => partyWitch(partySeed + k * 5 + 1, { outfit: P.id }));
+    const b = (w, o) => bake(witchSprite(st, { ...o, look: w ? w.look : undefined }), w ? w.colours(st) : witchColours(st), st, st.cOutline);
+    if (pose) { const n = WITCH_FOOT_POSES[pose].frames, fr = [...Array(n).keys()]; for (const w of [null, ...witches]) rows.push([...fr.map(frame => b(w, { pose, frame })), ...fr.map(frame => b(w, { pose, frame, facing: "away" }))]); }
+    else for (const w of witches) rows.push([b(w, {}), ...[0, 1, 2, 3].map(frame => b(w, { pose: "lean", frame })), ...["twoStep", "bounce", "spin", "headbang", "jump", "drink", "laugh", "run", "hug", "sitGround", "stargaze"].map((p, k) => b(w, { pose: p, frame: k % WITCH_FOOT_POSES[p].frames, facing: k % 4 === 3 ? "away" : "towards" }))]);
+    // the pairs: her partner flipped left-right (normals too) unless it's the conga, placed so their anchors meet
+    const pairRow = [];
+    for (const [pp, Pr] of Object.entries(WITCH_PAIRS)) {
+      const frame = Pr.frame ?? 0, w1 = witches[(partySeed + pairRow.length) % witches.length], w2 = witches[(partySeed + pairRow.length + 3) % witches.length], o = { pose: pp, frame, ...(Pr.heading ? { heading: Pr.heading } : {}) };
+      const sa = witchSprite(st, { ...o, look: w1.look }), sb = witchSprite(st, { ...o, look: w2.look }), ba = bake(sa, w1.colours(st), st, st.cOutline), bb = bake(sb, w2.colours(st), st, st.cOutline);
+      const [ax, ay] = sa.anchors[Pr.meet], [bx0, by] = sb.anchors[Pr.partner || Pr.meet], bx = Pr.mirror ? sb.w - bx0 : bx0, ox = Math.round(ax - bx), oy = Math.round(ay - by);
+      const x0 = Math.min(0, ox), y0 = Math.min(0, oy), W = Math.max(sa.w, ox + sb.w) - x0, H = Math.max(sa.h, oy + sb.h) - y0, A = document.createElement("canvas"), N = document.createElement("canvas"); A.width = N.width = W; A.height = N.height = H;
+      for (const [cv, src] of [[A, bb.A], [N, Pr.mirror ? bb.NF : bb.N]]) { const g = cv.getContext("2d"); if (Pr.mirror) { g.save(); g.translate(ox - x0 + sb.w, oy - y0); g.scale(-1, 1); g.drawImage(src, 0, 0); g.restore(); } else g.drawImage(src, ox - x0, oy - y0); }
+      A.getContext("2d").drawImage(ba.A, -x0, -y0); N.getContext("2d").drawImage(ba.N, -x0, -y0);
+      pairRow.push({ A, N, w: W, h: H });
+    }
+    rows.push(pairRow);
+    const w = Math.max(...rows.map(r => r.reduce((a, x) => a + x.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(x => x.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
+    tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+    let y = gap;
+    rows.forEach((r, i) => { let x = gap; y += rh[i] - gap; for (const s2 of r) { tgt.a.drawImage(s2.A, x, y - s2.h); tgt.n.drawImage(s2.N, x, y - s2.h); x += s2.w + gap; } y += gap; });
+    c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
+    c.style.width = w * 2 + "px"; c.style.maxWidth = "none"; c.style.imageRendering = "pixelated";
+  }, 650);
 }
 
 // ================= soundsystems: every stack in every state, studio-lit =================
@@ -806,7 +845,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderRelics(); renderSets(); renderWitch(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
+  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderRelics(); renderSets(); renderWitch(); renderParty(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
