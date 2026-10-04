@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "smoke": "node tools/smoke/smoke.cjs"
+    "smoke": "node tools/smoke/smoke.cjs",
+    "smoke:quick": "node tools/smoke/quick.cjs"
   },
   "dependencies": {
     "three": "0.186.1"

@@ -46,7 +46,7 @@ function pickWeighted(w: number[], seed: number): number {
 
 export interface ForestLight { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number }
 
-export interface ViewStats { sceneryRadius: number; fps: number; gameplay: number; scenery: number; dropped: number; trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number; lights: number }
+export interface ViewStats { forestMs: number; forestMissing: number; sceneryRadius: number; fps: number; gameplay: number; scenery: number; dropped: number; trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number; lights: number }
 
 export class View {
   readonly renderer: THREE.WebGLRenderer;
@@ -102,10 +102,12 @@ export class View {
   /** ?debug=cull: tint anything that has just appeared bright red, and mark where anything has
    *  just vanished with a red frame for a second. */
   debugCull = false;
+  /** ?quick=1, for the quick smoke test in CI: no drawing the rest of the map's art ahead of need. */
+  quick = false;
   private ghosts: { x: number; z: number; h: number; until: number }[] = [];
   private ghostLines: THREE.LineSegments | null = null;
   private now = 0;
-  stats: ViewStats = { sceneryRadius: 0, fps: 0, gameplay: 0, scenery: 0, dropped: 0, trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0, lights: 0 };
+  stats: ViewStats = { forestMs: 0, forestMissing: 0, sceneryRadius: 0, fps: 0, gameplay: 0, scenery: 0, dropped: 0, trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0, lights: 0 };
 
   constructor(readonly canvas: HTMLCanvasElement, readonly game: Game, readonly style: Style) {
     const t = game.tuning;
@@ -224,15 +226,42 @@ export class View {
     this.render(0, false);
     this.refresh(true);
     // There are only 30 area types and 30 creatures: draw them all in the background now, so
-    // the forest ahead is ready however fast she flies.
-    for (let t = 0; t < AREA_TYPES.length; t++) this.assets.prefetchType(t);
+    // the forest ahead is ready however fast she flies; the area types nearest her first.
+    const m = this.game.map, w = this.game.witch, near = new Map<number, number>();
+    for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+      const s = m.siteOf(x, y), t = m.typeOf(x, y), d = Math.hypot(s.x - w.x, s.z - w.z);
+      if (!(near.get(t)! <= d)) near.set(t, d);
+    }
+    for (let t = 0; t < AREA_TYPES.length; t++) if (!near.has(t)) near.set(t, Infinity);
+    this.prepared = true;
+    if (this.quick) return; // ?quick=1 (the CI smoke test): only what's needed, as it's needed
+    for (const [t] of [...near].sort((a, b) => a[1] - b[1])) this.assets.prefetchType(t);
     for (const t of AREA_TYPES) this.assets.creatureArt(t.creature);
   }
 
   private batchFor<K>(map: Map<K, SpriteBatch>, key: K, atlas: () => SpriteBatch | undefined): SpriteBatch | undefined {
     let b = map.get(key);
-    if (!b) { b = atlas(); if (b) { map.set(key, b); this.scene.add(...b.meshes); } }
+    if (!b) {
+      b = atlas();
+      if (b) {
+        map.set(key, b); this.scene.add(...b.meshes);
+        // A set drawn after the start (flying toward an area whose art was still being drawn)
+        // fades in rather than popping in.
+        if (this.prepared) { b.appearU.value = 0; this.appearing.set(b, performance.now()); }
+      }
+    }
     return b;
+  }
+  /** Sets fading in since they were drawn, and when they arrived (real ms). */
+  private appearing = new Map<SpriteBatch, number>();
+  private prepared = false;
+  private easeAppearing(): void {
+    const now = performance.now();
+    for (const [b, at] of this.appearing) {
+      const k = Math.min(1, (now - at) / 800);
+      b.appearU.value = k * k * (3 - 2 * k);
+      if (k >= 1) this.appearing.delete(b);
+    }
   }
 
   // What the camera can see: its frustum now, and the frustum it is easing toward (a zoom step
@@ -342,7 +371,8 @@ export class View {
         const w = this.game.witch, faded = which === "placed" && Math.hypot(+x - w.x, +z - w.z) > this.budget.radius - this.game.tuning.scenery.fade;
         if (!faded && this.inInnerView(+x, +z, +h)) this.pops.push(`${what} ${kind} ${(+x).toFixed(0)},${(+z).toFixed(0)}`);
       };
-      for (const k of tr.now) if (!tr.before.has(k)) at(k, "appeared");
+      // (Scenery appearing while a just-drawn set fades in is that fade, not a pop.)
+      if (which !== "placed" || !this.appearing.size) for (const k of tr.now) if (!tr.before.has(k)) at(k, "appeared");
       for (const k of tr.before) if (!tr.now.has(k)) at(k, "vanished");
     }
     tr.before = tr.now;
@@ -354,6 +384,8 @@ export class View {
   private footTime = 0;
   private footAct: { pose: string; at: number } | null = null;
 
+  /** Where the last rebuild looked: the middle and half-size of its square (for the prefetch). */
+  private lastView: { x: number; z: number; half: number } | null = null;
   private lastPose = { distance: 0, angle: 0, zoomStep: -1, lift: -1 };
 
   /** Rebuild the batches for what the camera sees, once it has moved, turned or zoomed. */
@@ -371,6 +403,7 @@ export class View {
     this.lastBuild = { ...key, version: this.assets.version, radius };
     this.lastPose = { distance: pose.distance, angle: pose.angle, zoomStep: g.camera.zoomStep, lift };
     const r = this.viewRect(reach, margin), cx = (r.minX + r.maxX) / 2, cz = (r.minZ + r.maxZ) / 2, half = Math.max(r.maxX - r.minX, r.maxZ - r.minZ) / 2;
+    this.lastView = { x: cx, z: cz, half };
     const shadows: ShadowInstance[] = [];
     // Shadows fall away from the moon: from the upper left, so toward the lower right.
     const L = LIGHT_UNIFORMS.uMoonDir.value, sx = -L.x / Math.max(0.2, L.y), sz = -L.z / Math.max(0.2, L.y);
@@ -820,6 +853,13 @@ export class View {
     this.shadow.scale.setScalar((1 - 0.5 * canopyShown(w)) * (1 - this.seatK) + 1e-3); // none while she's up on the terrace
 
     this.refresh();
+    this.easeAppearing();
+    // Make the forest ahead a little each frame (about 4 ms), centred where the view will be in two
+    // seconds at her speed, so a rebuild finds its chunks already made instead of making a whole
+    // strip at once (a stutter flying into new forest).
+    const lv = this.lastView;
+    if (lv) this.stats.forestMissing = g.forest.prefetch(lv.x + w.vx * 2, lv.z + w.vz * 2, lv.half + 64, 4);
+    this.stats.forestMs = g.forest.buildMs; g.forest.buildMs = 0;
     this.drawCreatures(time);
     this.checkPops("moving");
     this.rulers.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, w.x, w.z);

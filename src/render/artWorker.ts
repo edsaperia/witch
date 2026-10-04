@@ -7,8 +7,8 @@ const mk = (w: number, h: number) => new OffscreenCanvas(w, h);
 self.onmessage = (e: MessageEvent<ArtJob>) => {
   const job = e.data;
   try {
-    const result = runJob(job, mk);
-    (self as unknown as Worker).postMessage({ job, result }, transferables(result));
+    const t0 = performance.now(), result = runJob(job, mk), ms = performance.now() - t0;
+    (self as unknown as Worker).postMessage({ job, result, ms }, transferables(result));
   } catch (err) {
     (self as unknown as Worker).postMessage({ job, error: String(err) });
   }
