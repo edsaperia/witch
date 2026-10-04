@@ -133,9 +133,9 @@ export function packPixels(sprites: Baked[], width = 2048): AtlasPixels {
     for (let row = 0; row < s.h; row++) {
       const src = row * s.w * 4, dst = ((p.y + row) * W + p.x) * 4;
       albedo.set(pa.subarray(src, src + s.w * 4), dst);
-      if (s.S) { const ps = sway![row]; for (let x = 0; x < s.w; x++) if (normal[dst + x * 4 + 3]) normal[dst + x * 4 + 3] = ps[x]; }
       if (s.eyes) for (let x = 0; x < s.w; x++) if (s.eyes[row * s.w + x] && albedo[dst + x * 4 + 3] === 255) albedo[dst + x * 4 + 3] = 253;
       normal.set(pn.subarray(src, src + s.w * 4), dst);
+      if (s.S) { const ps = sway![row]; for (let x = 0; x < s.w; x++) if (normal[dst + x * 4 + 3]) normal[dst + x * 4 + 3] = ps[x]; } // after the normals: the mask in their alpha
     }
     // Its lowest drawn row (the sprite shader drops alpha under a half).
     let pad = 0;
