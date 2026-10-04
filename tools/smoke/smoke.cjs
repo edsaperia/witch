@@ -61,7 +61,7 @@ async function main() {
   }
   const state = page => page.evaluate(() => { const g = window.witch.game; return { t: g.clock.time, x: g.witch.x, z: g.witch.z, mode: g.witch.mode, paused: g.clock.paused, area: window.witch.areaUnderWitch(), stats: window.witch.view.stats }; });
   // Hold a key for `secs` of game time (a slow headless renderer runs fewer, capped frames).
-  const hold = async (page, key, secs, timeout = 60000) => {
+  const hold = async (page, key, secs, timeout = 240000) => { // the software renderer here runs the treetops (sky, bend) at about a frame a second
     const from = await state(page);
     await page.keyboard.down(key);
     await page.waitForFunction(t => window.witch.game.clock.time - t >= 0, from.t + secs, { timeout, polling: 50 });

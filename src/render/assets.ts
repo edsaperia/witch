@@ -4,7 +4,7 @@
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
 import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
-import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
+import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { ART_HASH, cacheGet, cachePut, hashText } from "./artCache";
 
@@ -23,6 +23,8 @@ type Reply = { job: ArtJob; result?: ArtResult; error?: string; ms?: number; cac
 export class AssetLibrary {
   private types = new Map<number, TypeArt>();
   private creatures = new Map<string, CreatureArt>();
+  private partyWitches = new Map<string, PartyWitchArt & { atlas: Atlas }>();
+  private party: (PartyArt & { atlas: Atlas }) | undefined;
   private decor: DecorArt | undefined;
   private speakers: (SpeakerArt & { atlas: Atlas }) | undefined;
   private scenes: (SceneArt & { atlas: Atlas }) | undefined;
@@ -38,7 +40,9 @@ export class AssetLibrary {
   /** In the treetops: the fast and brake poses' frames, towards and away. */
   readonly witchFly: Record<string, { towards: number[]; away: number[]; fps: number }> = {};
   /** Her straight-up ("up": seen from behind) and straight-down ("down": coming at us) flight frames (#27): hover, lean, fast, brake. */
-  readonly witchHeading = {} as Record<"up" | "down", { hover: number[]; lean: number; fast: number[]; brake: number[] }>;
+  readonly witchHeading = {} as Record<"up" | "down", { hover: number[]; lean: number; leanCycle: number[]; fast: number[]; brake: number[] }>;
+  /** Her lean as a four-frame loop (#37), side-on: towards and away; the game plays it faster with her speed. */
+  readonly witchLean = { towards: [] as number[], away: [] as number[] };
   /** Light-source props from the art module: campfire (frames 0-2), then magic stones (cyan, violet, green). */
   readonly props: Atlas;
   /** Soundsystems: variant x 3 + frame (the cones pumping), playing. */
@@ -80,9 +84,10 @@ export class AssetLibrary {
       for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < n; frame++) { entry[facing].push(sprites.length); sprites.push(wb({ pose, frame, facing })); }
       this.witchFly[pose] = entry;
     }
+    for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < 4; frame++) { this.witchLean[facing].push(sprites.length); sprites.push(wb({ pose: "lean", frame, facing })); }
     for (const [h, heading] of [["up", "away"], ["down", "towards"]] as const) {
       const at = (o: object) => sprites.push(wb({ ...o, heading })) - 1;
-      this.witchHeading[h] = { hover: [0, 1, 2].map(frame => at({ frame })), lean: at({ lean: true }), fast: [0, 1, 2].map(frame => at({ pose: "fast", frame })), brake: [0, 1].map(frame => at({ pose: "brake", frame })) };
+      this.witchHeading[h] = { hover: [0, 1, 2].map(frame => at({ frame })), lean: at({ lean: true }), leanCycle: [0, 1, 2, 3].map(frame => at({ pose: "lean", frame })), fast: [0, 1, 2].map(frame => at({ pose: "fast", frame })), brake: [0, 1].map(frame => at({ pose: "brake", frame })) };
     }
     this.witch = packAtlas(sprites, 2048);
     const lp = Art.lightProps(style) as { campfire: Baked[]; stones: Record<string, Baked> };
@@ -167,6 +172,10 @@ export class AssetLibrary {
       this.speakers = { atlas, ...r.result.speakers! };
     } else if (r.job.kind === "pathPieces") {
       this.pieces = { atlas, byId: Object.fromEntries(r.result.pieces!.map(p => [p.id, p])) };
+    } else if (r.job.kind === "partyObjects") {
+      this.party = { atlas, ...r.result.party! };
+    } else if (r.job.kind === "partyWitch") {
+      this.partyWitches.set(r.job.id, { atlas, ...r.result.witch! });
     } else if (r.job.kind === "decor") {
       const pieces = r.result.decor!, families: Record<string, DecorPiece[]> = {};
       for (const p of pieces) (families[p.family] ??= []).push(p);
@@ -228,6 +237,18 @@ export class AssetLibrary {
   partyArt(species: string, id: number, colour: number[]): CreatureArt | undefined {
     const k = `party-${id}`, a = this.creatures.get(k);
     if (!a) this.ask({ kind: "party", id: k, species, seed: id, colour, style: this.style });
+    return a;
+  }
+  /** The party objects' art (#38), or undefined (and asked for). */
+  partyObjectArt(): (PartyArt & { atlas: Atlas }) | undefined {
+    if (!this.party) this.ask({ kind: "partyObjects", id: "party", style: this.style });
+    return this.party;
+  }
+  /** A party witch's art (#37: her look from partyWitch(seed), or seed null for our witch's own),
+   *  or undefined (and asked for). Looks repeat after a few, so there are only so many to draw. */
+  partyWitchArt(seed: number | null): (PartyWitchArt & { atlas: Atlas }) | undefined {
+    const id = seed === null ? "her" : `pw-${seed}`, a = this.partyWitches.get(id);
+    if (!a) this.ask({ kind: "partyWitch", id, seed, style: this.style });
     return a;
   }
   /** Ask for a set ahead of need, without using it. */

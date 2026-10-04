@@ -2,40 +2,20 @@
 // draw, in ground mode only. Each grid cell's tufts are worked out once, a few cells a frame,
 // nearest first, and kept; the batch is rebuilt as she moves. In the vertex shader they sway in
 // the same wind as the trees and part round the witch and nearby creatures; they fade out in an
-// ordered dither towards the edge of their radius. Placeholder tufts are drawn here (blades, fern,
-// heather, reeds, moss, clover) until the art builder's tuftSprites land.
+// ordered dither towards the edge of their radius. The tufts are the art's own (art/tufts.js,
+// bakeTufts: each area's kinds in its palette, with their shares), lit by their normal maps; each
+// sways by its sway mask (rigid pebbles, litter and mushrooms stay still).
 import * as THREE from "three";
-import { hsv2rgb } from "../../art/generator.js";
+import * as Art from "../../art/generator.js";
 import { AREA_TYPES } from "../rules/map";
 import type { ForestMap } from "../rules/map";
 import type { Tuning } from "../rules/tuning";
-import { tuftsInCell, TUFT_KINDS, type Tuft } from "../rules/groundcover";
+import { tuftsInCell, type Tuft } from "../rules/groundcover";
+import { hash2 } from "../rules/random";
+import { packAtlas, type Atlas, type Baked } from "./atlas";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { SPRITE_UNIFORMS } from "./sprites";
-
-const PX = 12; // a tuft's sprite, art pixels square
-
-// The placeholder tufts: an alpha mask with two tones (0 none, 1 dark, 2 light) per kind.
-function tuftMask(kind: string, v: number): Uint8Array {
-  const m = new Uint8Array(PX * PX), put = (x: number, y: number, t: number) => { x = Math.round(x); y = Math.round(y); if (x >= 0 && y >= 0 && x < PX && y < PX) m[y * PX + x] = t; };
-  const r = (k: number) => { const s = Math.sin(v * 91.7 + k * 12.9) * 43758.5453; return s - Math.floor(s); };
-  if (kind === "blades" || kind === "reeds") {
-    const n = kind === "reeds" ? 4 : 6, h = kind === "reeds" ? 11 : 7;
-    for (let b = 0; b < n; b++) { const x0 = 2 + r(b) * 8, lean = (r(b + 9) - 0.5) * 3, hh = h * (0.6 + r(b + 3) * 0.4); for (let y = 0; y < hh; y++) put(x0 + lean * (y / hh), PX - 1 - y, y > hh * 0.6 ? 2 : 1); if (kind === "reeds") put(x0 + lean, PX - hh, 2), put(x0 + lean, PX - hh + 1, 1); }
-  } else if (kind === "fern") {
-    for (let f = 0; f < 3; f++) { const a = -0.9 + f * 0.9 + (r(f) - 0.5) * 0.3; for (let t = 0; t < 8; t++) { const x = 6 + Math.sin(a) * t, y = PX - 1 - Math.cos(a) * t * 0.9; put(x, y, 1); if (t % 2 === 0) { put(x - 1, y - 1, 2); put(x + 1, y - 1, 2); } } }
-  } else if (kind === "heather") {
-    for (let b = 0; b < 5; b++) { const x0 = 2 + r(b) * 8; for (let y = 0; y < 5; y++) put(x0 + (r(b + 5) - 0.5) * y * 0.5, PX - 1 - y, 1); for (let k = 0; k < 4; k++) put(x0 + (r(b * 4 + k) - 0.5) * 3, PX - 5 - r(k + b) * 3, 2); }
-  } else if (kind === "moss") {
-    for (let y = 0; y < 4; y++) for (let x = 0; x < PX; x++) { const dx = (x - 5.5) / 6, dy = y / 4; if (dx * dx + dy * dy < 1 && r(x * 7 + y) > 0.25) put(x, PX - 1 - y, y > 1 && r(x + y * 13) > 0.5 ? 2 : 1); }
-  } else { // clover
-    for (let b = 0; b < 4; b++) { const x0 = 2 + r(b) * 8, y0 = PX - 3 - r(b + 4) * 3; for (let y = PX - 1; y > y0; y--) put(x0, y, 1); for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 0]]) put(x0 + dx, y0 + dy, 2); }
-  }
-  return m;
-}
-
-const VARIANTS = 3;
 
 const VERT = /* glsl */ `
 uniform vec3 uRight, uUp;
@@ -45,39 +25,37 @@ uniform vec4 uPart[4];      // x, z, radius, on: where tufts part (the witch, cr
 uniform vec4 uClear[8];     // x, z, radius, on: trampled flat round placed sigils (Ed, v233)
 uniform vec4 uGrass;        // metres per art pixel, sway, part, (unused)
 attribute vec4 iTuft;       // x, z, size, flip
-attribute vec3 iColour;
-attribute vec2 iCell;       // atlas column (kind * variants + variant), unused
+attribute vec4 iUv;         // its frame in the tuft atlas
+attribute vec3 iPx;         // its size in art pixels (w, h), and how much it sways (from its sway mask)
 varying vec2 vUv;
-varying vec3 vColour;
 varying vec3 vWorld;
 ${HEIGHT_VERT_GLSL}
 void main() {
-  float s = iTuft.z * ${PX}.0 * uGrass.x;
+  float s = iTuft.z * uGrass.x;
   vec3 base = onGround(vec3(iTuft.x, 0.0, iTuft.y)); // on the rolling ground
   // Round a placed sigil the cover is trampled: none over its rune, short and flattened just beyond.
   for (int k = 0; k < 8; k++) {
     if (uClear[k].w < 0.5) continue;
     s *= smoothstep(uClear[k].z, uClear[k].z + 1.2, length(base.xz - uClear[k].xy));
   }
-  vec3 w = base + uRight * (position.x * s) + uUp * (position.y * s);
-  float top = uv.y;
+  vec3 w = base + uRight * (position.x * iPx.x * s) + uUp * (position.y * iPx.y * s);
+  float top = uv.y * iPx.z, hgt = iPx.y * s; // rigid tufts (pebbles, litter) don't sway or part
   // The same wind as the trees, stronger for their size.
   vec2 q = base.xz / uWind.z - vec2(0.8, 0.35) * uWind.w * uWind.y / uWind.z;
   vec2 i = floor(q), f = fract(q), e = f * f * (3.0 - 2.0 * f);
   float h00 = fract(sin(dot(i, vec2(127.1, 311.7))) * 43758.5453), h10 = fract(sin(dot(i + vec2(1, 0), vec2(127.1, 311.7))) * 43758.5453);
   float h01 = fract(sin(dot(i + vec2(0, 1), vec2(127.1, 311.7))) * 43758.5453), h11 = fract(sin(dot(i + vec2(1, 1), vec2(127.1, 311.7))) * 43758.5453);
   float gust = mix(mix(h00, h10, e.x), mix(h01, h11, e.x), e.y);
-  w += uRight * top * s * uGrass.y * (gust * 0.8 + sin(uWind.w * 2.3 + base.x * 0.7 + base.z * 0.4) * 0.3) * step(0.0001, uWind.x);
+  w += uRight * top * hgt * uGrass.y * (gust * 0.8 + sin(uWind.w * 2.3 + base.x * 0.7 + base.z * 0.4) * 0.3) * step(0.0001, uWind.x);
   // Parting round the witch and creatures: the top pushed away and down.
   for (int k = 0; k < 4; k++) {
     if (uPart[k].w < 0.5) continue;
     vec2 d = base.xz - uPart[k].xy;
     float r = length(d);
-    if (r < uPart[k].z && r > 1e-3) { float a = (1.0 - r / uPart[k].z) * uGrass.z; w.xz += d / r * top * s * a; w.y -= top * s * a * 0.5; }
+    if (r < uPart[k].z && r > 1e-3) { float a = (1.0 - r / uPart[k].z) * uGrass.z; w.xz += d / r * top * hgt * a; w.y -= top * hgt * a * 0.5; }
   }
   float u = iTuft.w > 0.5 ? 1.0 - uv.x : uv.x;
-  vUv = vec2((iCell.x + u) / iCell.y, uv.y);
-  vColour = iColour;
+  vUv = vec2(mix(iUv.x, iUv.z, u), mix(iUv.w, iUv.y, uv.y));
   vWorld = w;
   gl_Position = clipOf(w);
   vec4 b = clipOf(base);
@@ -86,10 +64,10 @@ void main() {
 }`;
 
 const FRAG = /* glsl */ `
-uniform sampler2D uTufts;
+uniform sampler2D uTufts, uTuftN;
+uniform vec3 uRight, uUp, uFacing;
 uniform vec4 uFade; // centre x, z, radius, how much shows (0 in the treetops)
 varying vec2 vUv;
-varying vec3 vColour;
 varying vec3 vWorld;
 ${LIGHT_GLSL}
 float bayer2(vec2 a) { a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
@@ -100,41 +78,55 @@ void main() {
   // Fading out towards the edge of the cover, and as she rises, in an ordered dither.
   float k = (1.0 - smoothstep(uFade.z * 0.7, uFade.z, length(vWorld.xz - uFade.xy))) * uFade.w;
   if (k < 0.999 && bayer4(gl_FragCoord.xy) > k) discard;
-  vec3 c = vColour * (m.r > 0.75 ? 1.15 : 0.8);
-  gl_FragColor = vec4(haze(min(vec3(1.0), c * nightLight(vec3(0.0, 1.0, 0.0), vWorld) * 1.25), vWorld), 1.0);
+  vec4 n = texture2D(uTuftN, vUv);
+  vec3 N = normalize(uRight * ((n.r * 255.0 - 128.0) / 127.0) - uUp * ((n.g * 255.0 - 128.0) / 127.0) + uFacing * n.b);
+  gl_FragColor = vec4(haze(min(vec3(1.0), m.rgb * nightLight(N, vWorld) * 1.25), vWorld), 1.0);
 }`;
 
 export class GrassView {
   readonly mesh: THREE.Mesh;
   private geo: THREE.InstancedBufferGeometry;
   private tuft: THREE.InstancedBufferAttribute;
-  private colour: THREE.InstancedBufferAttribute;
-  private cellA: THREE.InstancedBufferAttribute;
+  private uvA: THREE.InstancedBufferAttribute;
+  private pxA: THREE.InstancedBufferAttribute;
+  /** The tuft art: every area type's tufts in one atlas; per type, its frames, their shares (running total) and sways. */
+  private atlas: Atlas;
+  private kinds: { frame: number; upTo: number; sway: number }[][] = [];
   private cells = new Map<string, Tuft[]>();
   private mat: THREE.ShaderMaterial;
   private lastKey = "";
   /** Tufts drawn, and milliseconds spent working out cells, this frame (for the debug overlay and perf). */
   stats = { tufts: 0, buildMs: 0 };
 
-  constructor(private map: ForestMap, private t: Tuning, metresPerPixel: number) {
-    const cap = t.groundCover.cap, kinds = TUFT_KINDS.length * VARIANTS;
-    // The tuft atlas: one row of PX x PX cells, each kind in VARIANTS variants; r: light tone, a: drawn.
-    const data = new Uint8Array(kinds * PX * PX * 4);
-    TUFT_KINDS.forEach((k, ki) => { for (let v = 0; v < VARIANTS; v++) { const m = tuftMask(k, v + ki * 3); for (let y = 0; y < PX; y++) for (let x = 0; x < PX; x++) { const t2 = m[y * PX + x]; if (!t2) continue; const i = ((PX - 1 - y) * kinds * PX + (ki * VARIANTS + v) * PX + x) * 4; data[i] = t2 === 2 ? 255 : 128; data[i + 3] = 255; } } });
-    const tex = new THREE.DataTexture(data, kinds * PX, PX);
-    tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.needsUpdate = true;
+  constructor(private map: ForestMap, private t: Tuning, metresPerPixel: number, style: object) {
+    const cap = t.groundCover.cap, sprites: Baked[] = [];
+    // The art's tufts for every area type (#34), with how much each sways: the mean of its sway
+    // mask over its drawn pixels (0 for pebbles and litter, most for long grass and rushes).
+    for (const type of AREA_TYPES) {
+      const list = Art.bakeTufts(type.id, style) as { weight: number; A: Baked["A"]; N: Baked["N"]; S: Baked["A"]; w: number; h: number }[];
+      let upTo = 0;
+      this.kinds.push(list.map(b => {
+        sprites.push({ A: b.A, N: b.N, w: b.w, h: b.h });
+        const px = (b.S.getContext("2d") as CanvasRenderingContext2D).getImageData(0, 0, b.w, b.h).data;
+        let sum = 0, n = 0;
+        for (let i = 0; i < px.length; i += 4) if (px[i + 3] > 0) { sum += px[i]; n++; }
+        upTo += b.weight;
+        return { frame: sprites.length - 1, upTo, sway: n ? Math.min(1, (sum / n / 255) * 2) : 0 };
+      }));
+    }
+    this.atlas = packAtlas(sprites, 512);
     this.geo = new THREE.InstancedBufferGeometry();
     const quad = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
     this.geo.index = quad.index; this.geo.setAttribute("position", quad.getAttribute("position")); this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.tuft = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4); this.tuft.setUsage(THREE.DynamicDrawUsage);
-    this.colour = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3); this.colour.setUsage(THREE.DynamicDrawUsage);
-    this.cellA = new THREE.InstancedBufferAttribute(new Float32Array(cap * 2), 2); this.cellA.setUsage(THREE.DynamicDrawUsage);
-    this.geo.setAttribute("iTuft", this.tuft); this.geo.setAttribute("iColour", this.colour); this.geo.setAttribute("iCell", this.cellA);
+    this.uvA = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4); this.uvA.setUsage(THREE.DynamicDrawUsage);
+    this.pxA = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3); this.pxA.setUsage(THREE.DynamicDrawUsage);
+    this.geo.setAttribute("iTuft", this.tuft); this.geo.setAttribute("iUv", this.uvA); this.geo.setAttribute("iPx", this.pxA);
     this.geo.instanceCount = 0;
     this.mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
-      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uRes: SPRITE_UNIFORMS.uRes, uWind: SPRITE_UNIFORMS.uWind,
-        uTufts: { value: tex }, uPart: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) }, uClear: { value: Array.from({ length: 8 }, () => new THREE.Vector4()) },
+      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uFacing: SPRITE_UNIFORMS.uFacing, uRes: SPRITE_UNIFORMS.uRes, uWind: SPRITE_UNIFORMS.uWind,
+        uTufts: { value: this.atlas.albedo }, uTuftN: { value: this.atlas.normal }, uPart: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) }, uClear: { value: Array.from({ length: 8 }, () => new THREE.Vector4()) },
         uGrass: { value: new THREE.Vector4(metresPerPixel, t.groundCover.sway, t.groundCover.part, 0) }, uFade: { value: new THREE.Vector4() } },
     });
     this.mesh = new THREE.Mesh(this.geo, this.mat);
@@ -177,7 +169,7 @@ export class GrassView {
     this.lastKey = key;
     // Forget cells well out of reach.
     if (this.cells.size > want.length * 3) for (const k of this.cells.keys()) { const [a, b] = k.split(",").map(Number); if (Math.hypot((a + 0.5) * C - x, (b + 0.5) * C - z) > G.radius * 2 + C) this.cells.delete(k); }
-    const T = this.tuft.array as Float32Array, Co = this.colour.array as Float32Array, Ce = this.cellA.array as Float32Array, cap = G.cap, cols = TUFT_KINDS.length * VARIANTS;
+    const T = this.tuft.array as Float32Array, U = this.uvA.array as Float32Array, P = this.pxA.array as Float32Array, cap = G.cap, F = this.atlas.frames;
     let n = 0;
     for (const [ci, cj] of want) {
       const list = this.cells.get(ci + "," + cj);
@@ -185,30 +177,19 @@ export class GrassView {
       for (const f of list) {
         if (n >= cap) break;
         if (Math.hypot(f.x - x, f.z - z) > G.radius + C) continue; // a cell's slack: it's rebuilt as she crosses cells
+        // Which of its area's tufts, by their shares, seeded from where it stands.
+        const ks = this.kinds[f.type], roll = hash2(Math.round(f.x * 64), Math.round(f.z * 64), 1107) * (ks[ks.length - 1]?.upTo ?? 1);
+        const kd = ks.find(k => roll <= k.upTo) ?? ks[ks.length - 1];
+        if (!kd) continue;
+        const fr = F[kd.frame];
         T.set([f.x, f.z, f.size, f.flip ? 1 : 0], n * 4);
-        Co.set(tuftColour(f), n * 3);
-        Ce.set([f.kind * VARIANTS + (Math.floor(f.size * 97) % VARIANTS), cols], n * 2);
+        U.set(fr.uv, n * 4);
+        P.set([fr.w, fr.h, kd.sway], n * 3);
         n++;
       }
     }
     this.geo.instanceCount = n;
     this.stats.tufts = n;
-    for (const a of [this.tuft, this.colour, this.cellA]) { a.needsUpdate = true; a.clearUpdateRanges(); a.addUpdateRange(0, n * a.itemSize); }
+    for (const a of [this.tuft, this.uvA, this.pxA]) { a.needsUpdate = true; a.clearUpdateRanges(); a.addUpdateRange(0, n * a.itemSize); }
   }
-}
-
-// A tuft's colour from its area's floor, by kind: heather purple, reeds straw, moss deep, clover fresh.
-const colourCache = new Map<string, [number, number, number]>();
-function tuftColour(f: Tuft): [number, number, number] {
-  const k = f.type * 16 + f.kind + ":" + Math.round(f.size * 4);
-  let c = colourCache.get(k);
-  if (!c) {
-    const fl = AREA_TYPES[f.type].floor, kind = TUFT_KINDS[f.kind];
-    const h = kind === "heather" ? 0.83 : kind === "reeds" ? 0.14 : kind === "moss" ? 0.3 : kind === "clover" ? 0.33 : (fl[0] + 0.28) / 2 + 0.05;
-    const s = Math.min(1, (kind === "heather" ? 0.45 : fl[1] * 1.2 + 0.15)), v = Math.min(1, fl[2] * (kind === "moss" ? 0.9 : 1.25) * (0.9 + f.size * 0.1));
-    const rgb = hsv2rgb(h, s, v) as number[];
-    c = [rgb[0] / 255, rgb[1] / 255, rgb[2] / 255];
-    colourCache.set(k, c);
-  }
-  return c;
 }
