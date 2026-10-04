@@ -79,6 +79,19 @@ vec3 bendW(vec3 w) {
 /** HEIGHT_GLSL plus clipOf(w): a world point bent and projected (vertex shaders only). */
 export const HEIGHT_VERT_GLSL = HEIGHT_GLSL + /* glsl */ `
 vec4 clipOf(vec3 w) { return projectionMatrix * viewMatrix * vec4(bendW(w), 1.0); }
+// 1 if a (lifted, unbent) world point shows over the bent ground's horizon, 0 if the bend hides it
+// (seenOverBend's twin): for what is drawn without a depth test, like lights glimmering through the
+// canopy, so they don't show through the earth (Ed, v256).
+float overBend(vec3 w) {
+  if (uBend.x <= 0.0) return 1.0;
+  float ahead = dot(w.xz - uBend.yz, uBendFwd);
+  if (ahead <= 0.0) return 1.0;
+  float D = max(1.0, -dot(cameraPosition.xz - uBend.yz, uBendFwd)), H = cameraPosition.y + 3.0;
+  float dh = -D + sqrt(D * D + H / uBend.x);
+  if (ahead <= dh) return 1.0;
+  float m = (H + uBend.x * dh * dh) / (dh + D);
+  return (H - w.y + uBend.x * ahead * ahead) / (ahead + D) <= m + 0.02 ? 1.0 : 0.0;
+}
 `;
 
 /** Glowing points (rgba vertex colours, added on) given as height above the ground: motes, trails. */
@@ -236,6 +249,19 @@ export function bendPoint<V extends { x: number; y: number; z: number }>(v: V): 
   const d = Math.max(0, (v.x - B.y) * F.x + (v.z - B.z) * F.y);
   v.y -= B.x * d * d;
   return v;
+}
+
+/** Whether something `ahead` metres ahead of the bend's focus, its top `top` metres up, shows over
+ *  the horizon of ground bent by `k`, seen from `cam` (true without a bend, or before the horizon);
+ *  past it, things count as hidden more than `beyond` metres on. */
+export function seenOverBend(ahead: number, top: number, k: number, cam: { y: number; z: number }, beyond = Infinity): boolean {
+  if (k <= 0 || ahead <= 0) return true;
+  const B = HEIGHT_UNIFORMS.uBend.value, D = Math.max(1, cam.z - B.z), H = cam.y + 3; // (+3: the hills' rises)
+  const dh = -D + Math.sqrt(D * D + H / k); // where the camera's line of sight grazes the bent ground
+  if (ahead <= dh) return true;
+  if (ahead > dh + beyond) return false;
+  const m = (H + k * dh * dh) / (dh + D); // the grazing line's drop per metre
+  return (H - top + k * ahead * ahead) / (ahead + D) <= m + 0.02;
 }
 
 /** A point given as height above the ground, lifted onto it and bent (in place): where it is drawn. */

@@ -43,6 +43,7 @@ void main() {
   vUv = vec2(mix(iUv.x, iUv.z, uv.x), mix(iUv.w, iUv.y, uv.y));
   vP = p; vCol = iCol; vDraw = iDraw; vWorld = w;
   gl_Position = clipOf(w);
+  if (overBend(onGround(iPos)) < 0.5) gl_Position = vec4(2.0, 2.0, 2.0, 1.0); // (the glows seen through the canopy: never through the earth)
 }`;
 
 const FRAG = /* glsl */ `

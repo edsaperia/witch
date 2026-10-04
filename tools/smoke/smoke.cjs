@@ -270,6 +270,36 @@ async function main() {
     await shot(page, "57-party-four-waves.png");
   }, "&debug&tilt=before");
 
+  // Nothing through the earth (Ed, v256: "due to the bend, I can see string lights through the
+  // earth"): in treetop mode with the bend on and the party's lights out, every layer in the scene
+  // stands on the rolling ground and bends with the world, and anything drawn without a depth test
+  // (lights glimmering through the canopy) is dropped behind the bent horizon.
+  await run("earth", { width: 960, height: 600 }, async page => {
+    await page.keyboard.press("Enter");
+    for (let i = 0; i < 2; i++) { await page.keyboard.press("KeyN"); await sleep(400); }
+    await page.keyboard.press("Space");
+    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 300000 });
+    await sleep(1500);
+    const r = await page.evaluate(() => {
+      const v = window.witch.view, out = { n: 0, flat: [], through: [] };
+      v.scene.traverse(o => {
+        const m = o.material;
+        if (!m || !o.visible) return;
+        for (const mat of Array.isArray(m) ? m : [m]) {
+          if (mat === v.sky?.mesh.material || o.renderOrder >= 20) continue; // the sky; debug overlays
+          const vs = mat.vertexShader || "";
+          if (!vs) { out.flat.push(`${o.type} ${mat.type}`); continue; } // a built-in material: neither lifted nor bent
+          out.n++;
+          if (!/clipOf|bendW/.test(vs)) out.flat.push(`${o.type} ${mat.type} (not bent)`);
+          if (mat.depthTest === false && !/overBend/.test(vs)) out.through.push(`${o.type} ${mat.type}`);
+        }
+      });
+      return out;
+    });
+    check(r.n > 10 && r.flat.length === 0, `every layer stands on the rolling ground and bends with the world (${r.n} checked)${r.flat.length ? ": " + r.flat.slice(0, 6).join("; ") : ""}`);
+    check(r.through.length === 0, `nothing drawn without a depth test shows through the bent earth${r.through.length ? ": " + r.through.join("; ") : ""}`);
+  });
+
   // Inviting and leashing: stand by a creature while she talks it into joining her, gather a few more, fly with the
   // stack, put a sigil down and pick it up again.
   await run("leash", { width: 1900, height: 1240 }, async page => {

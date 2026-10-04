@@ -15,7 +15,7 @@ import type { LightSource, Plant } from "../rules/forest";
 import { hash2 } from "../rules/random";
 import { Ground } from "./ground";
 import { Sky } from "./sky";
-import { bendPoint, groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, placed, useHeightField } from "./height";
+import { bendPoint, groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, placed, seenOverBend, useHeightField } from "./height";
 import { PathView } from "./paths";
 import { applyStyleLight, LIGHT_UNIFORMS, MAX_LIGHTS } from "./lighting";
 import { Post } from "./post";
@@ -393,13 +393,7 @@ export class View {
   /** Whether something `ahead` metres ahead of the bend's focus, its top `top` metres up, shows
    *  over the horizon of ground bent by `k` (true without a bend, or before the horizon). */
   private overHorizon(ahead: number, top: number, k: number): boolean {
-    if (k <= 0) return true;
-    const cam = this.camera.position, B = HEIGHT_UNIFORMS.uBend.value, D = Math.max(1, cam.z - B.z), H = cam.y + 3; // (+3: the hills' rises)
-    const dh = -D + Math.sqrt(D * D + H / k); // where the camera's line of sight grazes the bent ground
-    if (ahead <= dh) return true;
-    if (ahead > dh + this.game.tuning.camera.curve.beyond) return false; // only a strip of distant treetops past it (the bend's cost)
-    const m = (H + k * dh * dh) / (dh + D); // the grazing line's drop per metre
-    return (H - top + k * ahead * ahead) / (ahead + D) <= m + 0.02;
+    return seenOverBend(ahead, top, k, this.camera.position, this.game.tuning.camera.curve.beyond); // (only a strip of distant treetops past the horizon: the bend's cost)
   }
 
   /** Whether a point is on screen and clear of the haze, so a change there would be seen. */

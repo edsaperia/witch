@@ -29,6 +29,7 @@ void main() {
   gl_Position = projectionMatrix * mv;
   vOn = uTime >= aBulb.z ? 1.0 : 0.0;
   float size = vOn > 0.5 ? (-mv.z < uNear ? 2.0 : 1.0) : 0.0;
+  size *= overBend(p); // from the treetops they glimmer through the canopy, never through the earth
   gl_PointSize = size;
   // On the pixel grid, so each bulb is a whole square, never a broken fragment.
   vec2 px = (gl_Position.xy / gl_Position.w * 0.5 + 0.5) * uRes;
