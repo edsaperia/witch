@@ -141,7 +141,9 @@ export interface Tuning {
   paths: { rails: number[]; roads: number[]; linkChance: number; deadEndChance: number; pathHalf: number; roadHalf: number; railHalf: number; railBroken: number; streams: number[]; streamHalf: number; landmarkSpacing: number; landmarkChance: number; vergeSpacing: number; pieceGap: number; treesOnBroken: number; edgeBushes: number; bushBoost: number };
   lights: { campfire: { reach: number; strength: number }; stone: { reach: number; strength: number } };
   glowPower: number;
-  beat: { bpm: number };
+  /** The beat clock (rules/beat.ts): the base tempo; each wave's tempo (from the music style's arc),
+   *  eased over rampBars from the block line (blockBars) its music lands on. */
+  beat: { bpm: number; tempos?: number[]; rampBars?: number; blockBars?: number };
   /** Berries and evolving (rules/berries.ts): berries per area at the start [min, max], berry bushes
    *  per area, how far a party animal looks for one (m), how long it eats (s), berries to evolve
    *  (babies, young, adults), the berry's colour and glow. */

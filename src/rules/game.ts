@@ -1,4 +1,5 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
+import { beatAt, newBeatClock, waveArrived, waveTempo, type BeatClock } from "./beat";
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState } from "./camera";
 import { MAX_STEP, newClock, type Clock } from "./clock";
 import { heldByCombat, spawnCreatures, stepCreaturesNear, wanderRange, type Creature } from "./creatures";
@@ -70,6 +71,8 @@ export interface Game {
   prev: { witches: { x: number; z: number; lift: number }[]; creatures: Float64Array; camera: CameraState | null };
   /** Each dancefloor speaker's state, in map.dancefloor.speakers' order. */
   speakers: SpeakerState[];
+  /** The beat clock: beats by game time, its tempo rising wave by wave (rules/beat.ts). */
+  beat: BeatClock;
   /** The dancefloor's tile lights (rules/dancefloor.ts). */
   floor: FloorState;
   /** The legend buffs on now, and the tuning they make (rules/buffs.ts): the game plays by buffs.tuning. */
@@ -111,6 +114,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
     get spells() { return this.witches[0].spells; }, set spells(s: SpellState) { this.witches[0].spells = s; },
     camera: newCamera(tuning, body.x, witchHeight(body, tuning), body.z), party: newParty(map), berries: newBerries(map, tuning),
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
+    beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)),
     floor: newFloor(), buffs: newBuffs(tuning), partyWitches: newPartyWitches(seed),
     combat: newCombat(), koEvents: [] as KnockoutEvent[], over: null as { at: number } | null,
     acc: 0, alpha: 1, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
@@ -200,6 +204,8 @@ function fixedStep(g: Game, controls: Controls): void {
   stepParty(g.party, g.map, g.clock.time, dt);
   // A wave-countdown buff: each new countdown runs longer by its share of the interval.
   if (g.party.wave > before) g.party.nextAt += t.party.interval - g.tuning.party.interval;
+  // Each wave brings its tempo, eased in from the block line its music lands on.
+  if (g.party.wave !== g.beat.wave) waveArrived(g.beat, g.tuning, g.party.wave, g.clock.time);
   if (W.ko) {
     const r = stepKnockout(W.ko, W.body, W.leash, g.creatures, g.map, g.clock.time, k => g.party.areas.has(k), g.koEvents);
     W.body = r.body;
@@ -213,8 +219,8 @@ function fixedStep(g: Game, controls: Controls): void {
   if (stepWanderers([...g.combat.busy].map(id => g.creatures[id]), g.map, dt)) g.byArea = null; // (those walking home are among combat's busy)
   // (A party animal in a fight is moved by combat, not its leash.)
   stepLeash(g.leash, g.creatures, { sigil: !!c.sigil && !W.ko, inviteNearest: c.inviteNearest, cycle: !!c.cycle && !W.ko }, g.witch, g.witch.mode === "ground" && !W.ko, g.clock.time, dt, t, id => busy(id) || heldByCombat(g.creatures[id]));
-  if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, t);
-  stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, t);
+  if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, t, g.beat);
+  stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, t, g.beat);
   stepDancefloor(g, wave, seated);
   stepWitchParty(g, c, dt);
 }
@@ -298,7 +304,7 @@ export function floorInputs(g: Game): FloorInputs {
     dancers.push({ x: p.x, y: p.y, rgb: neonOf((SIGIL_NEON as Record<string, string>)[c.species]) });
   }
   return {
-    time: g.clock.time, seed: g.seed, level: floorLevel(g.party.areas.size, g.tuning), partifiedAreas: areas,
+    time: g.clock.time, beatAt: tm => beatAt(g.beat, tm), seed: g.seed, level: floorLevel(g.party.areas.size, g.tuning), partifiedAreas: areas,
     witch: { x: w.x, y: w.y, lift: g.witch.lift, rgb: neonOf(g.tuning.dancefloor.tiles.witchColour) }, dancers,
   };
 }
