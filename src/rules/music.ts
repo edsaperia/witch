@@ -5,6 +5,7 @@
 // loud as its share of speakers powered on, damaged as its speakers are. The numbers only: the
 // platform plays them.
 import type { Game } from "./game";
+import type { Tuning } from "./tuning";
 import { speakersOn } from "./party";
 
 export interface MusicMix {
@@ -37,15 +38,24 @@ export function musicMix(g: Game, at: { x: number; z: number }): MusicMix {
   }
   let best = { level: 0, damage: 0, distance: Infinity };
   for (const s of sources) {
-    const dist = Math.hypot(s.x - w.x, s.z - w.z), near = 1 - Math.min(1, Math.max(0, (dist - M.nearDist) / Math.max(1, M.farDist - M.nearDist)));
+    const dist = Math.hypot(s.x - w.x, s.z - w.z), near = nearness(M, dist);
     const level = near * s.loud;
     if (level > best.level || (best.level === 0 && dist < best.distance)) best = { level, damage: s.damage * near, distance: dist };
   }
-  const k = best.level; // 1 right by a source, 0 beyond farDist
+  return mixAt(M, best.level, best.damage, best.distance);
+}
+
+/** The mix `distance` metres from a source heard at `level` (1 right by it, 0 beyond farDist),
+ *  with `damage` (0-1, scaled by nearness) heard from it. */
+export function mixAt(M: Tuning["music"], level: number, damage: number, distance: number): MusicMix {
+  const k = level;
   return {
     volume: M.floor + (1 - M.floor) * k,
     cutoff: M.muffle * Math.pow(M.clear / M.muffle, k), // log between muffled and clear
-    distort: Math.min(1, best.damage * M.distort),
-    distance: best.distance,
+    distort: Math.min(1, damage * M.distort),
+    distance,
   };
 }
+
+/** How near `distance` metres is, 1 within nearDist to 0 at farDist. */
+export const nearness = (M: Tuning["music"], distance: number) => 1 - Math.min(1, Math.max(0, (distance - M.nearDist) / Math.max(1, M.farDist - M.nearDist)));

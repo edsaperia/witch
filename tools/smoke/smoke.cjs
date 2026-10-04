@@ -270,6 +270,54 @@ async function main() {
     await shot(page, "57-party-four-waves.png");
   }, "&debug&tilt=before");
 
+  // Trunks (Ed, v271: "We have really lost our treetrunks"): in the densest wooded spot of a
+  // tangly forest and of old oaks, on the ground, trunks must be drawn (drawn flat magenta for a
+  // frame to find them) over at least 2% of the screen, and a good share of them readable (not
+  // black on black) in the lit frame.
+  await run("trunks", { width: 960, height: 540 }, async page => {
+    await page.keyboard.press("Enter");
+    for (const id of ["tangly-forest", "old-oaks"]) {
+      const at = await page.evaluate(id => {
+        const g = window.witch.game, m = g.map, B = m.bounds;
+        let t = -1;
+        for (let i = 0; i < 64 && t < 0; i++) { try { if (window.witch.areaTypeId(i) === id) t = i; } catch { break; } }
+        let best = null, bn = -1;
+        for (let cy = 0; cy < m.n; cy++) for (let cx = 0; cx < m.n; cx++) if (m.typeOf(cx, cy) === t) {
+          const s = m.siteOf(cx, cy);
+          for (let k = 0; k < 60; k++) {
+            const a = k * 0.7, d = m.areaSize * (0.1 + (k % 6) * 0.07), x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
+            if (x < B.minX + 30 || x > B.maxX - 30 || z < B.minZ + 30 || z > B.maxZ - 30) continue;
+            const q = m.areaAt(x, z);
+            if (q.cell[0] !== cx || q.cell[1] !== cy || m.paths.at(x, z, 3)) continue;
+            const n = g.forest.treesNear(x, z, 14).filter(p => Math.hypot(p.x - x, p.z - z) < 14).length;
+            if (n > bn) { bn = n; best = [x, z]; }
+          }
+        }
+        if (best) { g.witch = { ...g.witch, seated: false, x: best[0], z: best[1], vx: 0, vz: 0 }; g.camera = { ...g.camera, tx: best[0], tz: best[1], intro: 0 }; }
+        return best;
+      }, id);
+      if (!at) { results.push(`skip trunks: no ${id} on this map`); continue; }
+      await sleep(1500);
+      await page.waitForFunction(() => window.witch.view.assets.pending === 0 && window.witch.view.stats.forestMissing === 0, null, { timeout: 900000, polling: 1000 }).catch(() => {});
+      await sleep(1500);
+      const lit = await page.screenshot({ timeout: 300000 });
+      await page.evaluate(() => { window.witch.view.debugTrunks = true; });
+      await sleep(1000);
+      const mask = await page.screenshot({ timeout: 300000 });
+      await page.evaluate(() => { window.witch.view.debugTrunks = false; });
+      fs.writeFileSync(path.join(out, `trunks-${id}.png`), lit);
+      const r = await page.evaluate(async ([a, m]) => {
+        const load = src => new Promise(res => { const i = new Image(); i.onload = () => { const c = document.createElement("canvas"); c.width = i.width; c.height = i.height; const x = c.getContext("2d"); x.drawImage(i, 0, 0); res(x.getImageData(0, 0, i.width, i.height).data); }; i.src = "data:image/png;base64," + src; });
+        const A = await load(a), M = await load(m);
+        let n = 0, readable = 0;
+        for (let i = 0; i < M.length; i += 4) if (M[i] > 200 && M[i + 1] < 60 && M[i + 2] > 200) { n++; if (0.3 * A[i] + 0.55 * A[i + 1] + 0.15 * A[i + 2] > 25) readable++; }
+        return { share: n / (M.length / 4), readable: n ? readable / n : 0 };
+      }, [lit.toString("base64"), mask.toString("base64")]);
+      check(r.share > 0.02, `trunks are drawn on the ground in the ${id} (${(r.share * 100).toFixed(1)}% of the screen)`);
+      check(r.readable > 0.15, `the ${id}'s trunks are readable, not black on black (${(r.readable * 100).toFixed(0)}% of their pixels)`);
+    }
+  }, "&tilt=before");
+
   // Inviting and leashing: stand by a creature while she talks it into joining her, gather a few more, fly with the
   // stack, put a sigil down and pick it up again.
   await run("leash", { width: 1900, height: 1240 }, async page => {
@@ -447,7 +495,7 @@ async function main() {
       for (const [type, b] of [...v.typeBatches, ...[...v.decorBatches].filter(([k]) => k !== "decals" && k !== "sceneDecals"), ["treehouse", v.treehouseBatch]]) { // decals lie flat
         const img = b.atlas.albedo.image, W = img.width, H = img.height, D = img.data;
         for (const it of b.items) {
-          if (it.top) continue;
+          if (it.top || it.overlay) continue; // (crowns, and the treehouse's DJ table drawn over it, stand on their trunk)
           const f = it.frame, x0 = Math.round(f.uv[0] * W), y0 = Math.round(f.uv[1] * H);
           let low = -1;
           for (let row = f.h - 1; row >= 0 && low < 0; row--) for (let x = 0; x < f.w; x++) if (D[((y0 + row) * W + x0 + x) * 4 + 3] >= 128) { low = row; break; }
@@ -470,7 +518,7 @@ async function main() {
       for (const [type, b] of [...v.typeBatches, ...v.creatureBatches, ...[...v.decorBatches].filter(([k]) => k !== "decals"), ["treehouse", v.treehouseBatch]]) { // (she hovers)
         const img = b.atlas.albedo.image, W = img.width, D = img.data;
         for (const it of b.items) {
-          if (it.top) continue;
+          if (it.top || it.overlay) continue; // (crowns, and the treehouse's DJ table drawn over it, stand on their trunk)
           const f = it.frame, x0 = Math.round(f.uv[0] * W), y0 = Math.round(f.uv[1] * img.height);
           let low = -1, left = 0, right = 0;
           for (let row = f.h - 1; row >= 0 && low < 0; row--) for (let x = 0; x < f.w; x++) if (D[((y0 + row) * W + x0 + x) * 4 + 3] >= 128) { if (low < 0) { low = row; left = x; } right = x; }

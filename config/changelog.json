@@ -14,7 +14,16 @@
         "New controls, MOBA style: the arrow keys fly (WASD no longer does); Q casts the spell, W dashes, E puts down or picks up a sigil, R cycles the stack; 1 2 3 4 are empty slots for later spells and items. An action bar along the bottom shows all eight with their keys and recharge",
         "Dash: W (gamepad A, touch 'dash') bursts a few metres the way you're steering, on the ground only, about once a second. You can still be hit mid-dash: dash out of a shot's path",
         "The game now runs in fixed steps (60 a second) and draws smoothly between them, ready for co-op",
+        "Real music: the party's track is now composed live as you play, every sound synthesised. It moves through sections with the waves: the home speakers' boot is the intro, the forest is gentle and mysterious, each wave builds up and drops as it lands, and the run climbs from melodic forest house through dark synth and chiptune to a phonk finale (?music=drop or ?music=wave7 to hear one part)",
+        "Tree trunks are back on the ground: they'd gone black on black in the canopy's shadow, and the big crowns' low boughs hid all but their stumps; trunks now stand clear up to their crowns and stay readable in the dark",
+        "No more glowing party cubes",
         "Smoother boosting over the treetops: the work of streaming in new forest, hills and ground is spread across frames, and creatures cost far less to move, so frames stay steady at full speed",
+        "Home is a party area too: party things round the dancefloor (never on it)"
+      ]
+    },
+    {
+      "version": 275,
+      "items": [
         "Legend buffs: a party legend (an adult you've fed until it evolves) gives you its species' own buff while it lives: faster flight, quicker invites, berries found further off, longer between waves and more. Its sigil shows in a row at the top of the screen (hover for what it does), and a line says what you've gained or lost",
         "Party legends lumber: a creature that evolves into a legend slows to a legend's pace, following you too",
         "Wild legends are rare, late threats: only 3 to 5 a map, far out in remote areas. They're bigger, breathe slowly, and have a dark aura that you can see glowing through the treetops. They sleep until the party reaches their area, then lumber about it (no fighting yet). The legend next to home has gone",
@@ -24,7 +33,14 @@
         "A legend gives you one unimpressed look as you pass, not over and over",
         "Wild creatures are easier to find in the dark: they never sink fully into the shadows, catch a faint rim from your light, and their eyes catch the light now and then; the moonlight is a little cooler and more coloured (?find=0 to compare)",
         "The disco ball no longer shoots lasers; instead each of the 12 speakers round the dancefloor has its own laser, sweeping slowly on the beat to crown the floor in moving beams (damaged speakers flicker theirs, destroyed ones go dark)",
-        "Campfires belong to the party now: the sleeping forest has none and is darker for it, and when the party reaches an area its campfires light up with a whoosh of sparks"
+        "Campfires belong to the party now: the sleeping forest has none and is darker for it, and when the party reaches an area its campfires light up with a whoosh of sparks",
+        "Flying low and fast, the witch leans into a proper four-frame flying cycle that speeds up the faster you go",
+        "Treeless places have tall landmarks now and then: snags in the log piles, cairns and standing stones on the moor, pillars at the stone shrines, rock spires in the ravines",
+        "The grass is new: each area's own little tufts (grass, ferns, heather, rushes, moss, clover, needles, fallen leaves, pebbles, the odd flower or mushroom), lit by your light, and only the leafy ones sway",
+        "In the wind only the leaves move now: trunks, branches and rocks stay still",
+        "Party witches: for every soundsystem playing out in the forest, another witch in her own party outfit flies in to the dancefloor, where she dances (in time with the beat), pairs up to dance, hug, high-five, hold hands, conga or toast, laughs, drinks, runs about, lies back to rest or flies a few laps over the floor",
+        "Stand still by the dancefloor for a few seconds and the witch joins the party herself, on her own or with a party witch; move and she stops",
+        "Party areas are strewn with party things as the party arrives: tables and chairs, candle rings, glowsticks, deck chairs, crate bars, DJ corners, campfire circles and bonfires, balloons bobbing in the breeze (one even caught up in a tree), cups, cans, confetti and more, in random neons; campfires and lanterns light up their corner"
       ]
     },
     {
