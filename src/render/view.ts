@@ -19,6 +19,7 @@ import { applyStyleLight, LIGHT_UNIFORMS, MAX_LIGHTS } from "./lighting";
 import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
+import { BuffHud } from "./buffhud";
 import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
 import { MarkerArt, MarkerFx, MARKER_LEVELS, type Beacon, type Laser, type Mote } from "./markers";
@@ -74,6 +75,7 @@ export class View {
   private speakerBatch: SpriteBatch | null = null;
   readonly grass: GrassView;
   private spellFx = new SpellFx(document.body);
+  private buffHud = new BuffHud(document.body);
   private shadow: THREE.Mesh;
   private mpp: number; // metres per art pixel
   private lastBuild = { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1 };
@@ -849,7 +851,7 @@ export class View {
       const wx = g.witch.x, wz = g.witch.z, R = SPRITE_UNIFORMS.uRight.value;
       const a = this.v3.set(wx, 0, wz).project(this.camera).x, b = this.v3.set(wx + R.x * 10, 0, wz + R.z * 10).project(this.camera).x;
       const pxPerM = Math.max(1e-3, (Math.abs(b - a) * 0.5 * this.width) / 10);
-      LIGHT_UNIFORMS.uGlowR.value = ((0.5 * cut.screenFraction + cut.edge) * this.width / pxPerM) * t.glowToCutout;
+      LIGHT_UNIFORMS.uGlowR.value = ((0.5 * cut.screenFraction + cut.edge) * this.width / pxPerM) * t.glowToCutout * g.buffs.totals.glowReach; // a glow-reach legend buff widens it
     }
     SPRITE_UNIFORMS.uDebugCull.value = this.debugCull ? 1 : 0;
 
@@ -889,6 +891,7 @@ export class View {
     const markerLights = this.drawMarkers(time);
     const speakerLights = this.drawSpeakers(time, pose.angle);
     this.spellFx.update(g, time, witchHeight(w, t) + 0.6);
+    this.buffHud.update(g, time);
     // Tufts part round her and the three nearest creatures.
     const parts = [{ x: w.x, z: w.z, r: 1.6 * (1 - canopyShown(w)) }, ...g.creatures.map(c => ({ x: c.x, z: c.z, r: 1.2, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(c => c.d < t.groundCover.radius).sort((a, b) => a.d - b.d).slice(0, 3)];
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05); // out to the canopy hole's edge

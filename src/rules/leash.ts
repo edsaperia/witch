@@ -157,16 +157,16 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   }
 
   // (A party animal busy with a berry, or evolving, is moved by rules/berries.ts instead.)
-  for (const id of s.stack) if (!busy(id)) stepLeashed(byId(id), witch.x, witch.z, dt, t);
+  for (const id of s.stack) if (!busy(id)) stepLeashed(byId(id), witch.x, witch.z, dt, t, t.leash.pace ?? 1);
   for (const p of s.placed) if (!busy(p.id)) stepLeashed(byId(p.id), p.x, p.z, dt, t);
 }
 
 /** Whether a sigil put down at (x, z) would land on another. */
 export const blocked = (s: LeashState, x: number, z: number, t: Tuning) => s.placed.some(p => Math.hypot(p.x - x, p.z - z) < t.leash.spacing);
 
-/** A leashed creature: out of range, it hurries back toward its leash point (at its run speed,
+/** A leashed creature (`pace`: a legend buff's speed-up for those following her): out of range, it hurries back toward its leash point (at its run speed,
  *  never teleporting); in range, it roams round it, within the leash, pausing now and then. */
-export function stepLeashed(c: Creature, px: number, pz: number, dt: number, t: Tuning): void {
+export function stepLeashed(c: Creature, px: number, pz: number, dt: number, t: Tuning, pace = 1): void {
   const L = t.leash, len = L.length, far = Math.hypot(c.x - px, c.z - pz) > len;
   if (far) {
     // Head for a spot inside the leash on its own side of the point.
@@ -182,7 +182,7 @@ export function stepLeashed(c: Creature, px: number, pz: number, dt: number, t: 
   }
   const dx = c.tx - c.x, dz = c.tz - c.z, d = Math.hypot(dx, dz);
   if (d < 1e-4) { c.moving = false; return; }
-  const speed = far ? Math.max(c.speed, L.runSpeed * speedFactor(c.species, c.level, t)) : c.speed * 1.5;
+  const speed = (far ? Math.max(c.speed, L.runSpeed * speedFactor(c.species, c.level, t)) : c.speed * 1.5) * pace;
   const step = Math.min(d, speed * dt);
   c.x += (dx / d) * step; c.z += (dz / d) * step;
   if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;

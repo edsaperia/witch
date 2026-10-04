@@ -79,6 +79,7 @@ describe("berries and evolving", () => {
       expect(c.level).toBe(level + 1);
     }
     expect(c.level).toBe(LEGEND);
+    expect(c.speed).toBeLessThanOrEqual(t.legendSpeed); // a legend lumbers
     expect(c.leashed).toBe(true);
     stepLeash(leash, [c], { talk: false, sigil: false }, { x: c.x, z: c.z }, true, time, 0.05, t);
     expect(leash.stack).toContain(c.id);

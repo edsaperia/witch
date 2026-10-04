@@ -132,6 +132,7 @@ export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: 
   for (const [id, e] of s.evolving) if (time >= e.at) {
     const c = creatures[id];
     c.level = e.to;
+    if (c.level >= LEGEND) c.speed = Math.min(c.speed, t.legendSpeed); // a legend lumbers
     s.evolving.delete(id);
     s.events.push({ kind: "evolved", id, x: c.x, z: c.z, at: time });
   }
