@@ -50,9 +50,9 @@ export const SCENES = Object.entries(SMALL).map(([id, d]) => ({ id, size: "small
 export const SCENE_BY_ID = Object.fromEntries(SCENES.map(d => [d.id, d]));
 
 // A piece by name: { ref, def, sprite: { whole, top, bot, crownY, origin, metres }, colours, glow, decal }. Drawn once per style.
-const cache = new WeakMap();
+const sceneCache = new WeakMap();
 export function scenePiece(ref, st = {}) {
-  let c = cache.get(st); if (!c) cache.set(st, c = new Map());
+  let c = sceneCache.get(st); if (!c) sceneCache.set(st, c = new Map());
   if (c.has(ref)) return c.get(ref);
   const [ns, rest] = ref.includes(":") ? ref.split(":") : ["country", ref];
   let out;

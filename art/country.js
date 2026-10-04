@@ -123,7 +123,7 @@ const FARM = {
   "hay-round-mouldy": { desc: "a round bale gone black with mould and sagging, mushrooms at its foot", build(m) { const n = mark(m); ctHayRound(m, [0, 0, 0], 1, { mould: true }); place(m, n, { roll: .06, at: [0, -.06, 0] }); ctMushrooms(m, [.5, 0, .35], 6, 3, 1); ctTufts(m, 10, 1.1, 5, 5); } },
   "hay-square": { desc: "a small square hay bale", build(m) { ctHaySquare(m, [0, 0, 0], 1); ctTufts(m, 5, .6, 3, 6); } },
   "hay-square-mouldy": { desc: "a square bale gone soft and mouldy", build(m) { ctHaySquare(m, [0, 0, 0], 1, { mould: true, yaw: .3 }); ctTufts(m, 6, .6, 3, 7); } },
-  "hay-stack": { desc: "square bales stacked three high, the stack slumping, one fallen", split: 1.6, build(m) {
+  "hay-stack": { desc: "square bales stacked three high, the stack slumping, one fallen", build(m) {
     const at = [[-.42, 0, -.25], [.42, 0, -.25], [-.42, 0, .25], [.42, 0, .25], [0, .38, -.25], [0, .38, .25], [-.05, .76, 0]];
     at.forEach(([x, y, z], i) => ctHaySquare(m, [x, y, z], 1 + i, { mould: i === 6 || i === 2, yaw: (ctHash(i, 9) - .5) * .25 }));
     const n = mark(m); ctHaySquare(m, [0, 0, 0], 10, { mould: true }); place(m, n, { roll: 1.2, yaw: .8, at: [1.1, .15, .45] }); ctTufts(m, 10, 1.4, 12, 8);
@@ -303,7 +303,7 @@ const SCENE_PIECES = {
     ctIvy(m, [-1.0, 0, .6], [-.7, 1.4, .62], 6, 47); ctTufts(m, 12, 1.8, 7, 48);
   } },
   // festival remnants
-  "tent-frame": { desc: "a dome tent's bent poles, a few rags of its fabric still caught on them", split: 1.2, build(m) {
+  "tent-frame": { desc: "a dome tent's bent poles, a few rags of its fabric still caught on them", build(m) {
     for (const a of [.6, -.6]) { const pts = []; for (let k = 0; k <= 10; k++) { const t = k / 10 * Math.PI, r = .85; pts.push([Math.cos(t) * r * Math.cos(a), Math.sin(t) * .95 + (k === 6 ? -.08 : 0), Math.cos(t) * r * Math.sin(a), .02]); } m.chain(pts, M.FRAME, { group: 1 }); }
     for (const [c, u, v, su, sv, mat] of [[[-.4, .6, .3], [1, .3, 0], [.4, -1, .3], .28, .25, M.HAT1], [[.35, .75, -.3], [1, -.2, 0], [0, -.6, -1], .3, .22, M.ACCENT], [[.05, .9, 0], [1, 0, 0], [0, .2, 1], .2, .25, M.HAT1]]) m.flat(c, u, v, su, sv, (s, t) => t < -1 + .4 * Math.abs(Math.sin(s * 7)) + .3 * ctHash(Math.floor(s * 5)) ? null : mat, { group: 2, bend: .2 });
     for (const [x, z] of [[-.85, .2], [.85, -.2]]) ctBar(m, [x, .02, z], [x * 1.4, 0, z * 1.6], 3, .006, M.CLOTH, undefined); // guy lines
