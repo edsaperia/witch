@@ -19,6 +19,8 @@ export interface Tuning {
   density: { patchScale: number; patchMin: number; patchMax: number; lone: number };
   /** Ragged area edges: plants take their look from up to width metres away (noise scale metres, plus a per-plant stray share). */
   areaEdgeBlend: { width: number; scale: number; stray: number };
+  /** How neighbouring areas' floor textures meet: a two-octave warp of warp and fine metres, and a dithered band metres wide. */
+  groundBlend: { on: boolean; warp: number; fine: number; band: number; dither: boolean };
   /** Set pieces drawn this much bigger than the art, with a clearing of setPieceClear metres (times the scale) round them. */
   setPieceScale: number;
   setPieceClear: number;

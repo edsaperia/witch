@@ -44,6 +44,10 @@ if (pickerParam && ["noisy", "near3", "near3touch", "nearest"].includes(pickerPa
 const glowParam = params.get("glow")?.split(",").map(Number);
 if (glowParam && glowParam[0] > 0) { tuning.glowReach = glowParam[0]; tuning.glowFixed = true; }
 if (glowParam && glowParam[1] > 0) tuning.glowFalloff = glowParam[1];
+// ?blend=off: neighbouring areas' floors meet on a plain edge (to compare); ?blend=<warp>,<fine>,<band> tunes it.
+const blendParam = params.get("blend");
+if (blendParam === "off") tuning.groundBlend = { ...tuning.groundBlend, on: false };
+else if (blendParam) { const [w, f, b] = blendParam.split(",").map(Number); tuning.groundBlend = { ...tuning.groundBlend, warp: w || 0, fine: f || 0, band: b || 0 }; }
 const fx = params.get("fx");
 if (fx === "pixel" || fx === "smooth") tuning.fx = fx;
 

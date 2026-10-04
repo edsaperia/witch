@@ -16,6 +16,8 @@
   "gladeScale": 38,
   "_areaEdgeBlend": "Ragged area edges: each tree and bush takes its look (its area type) from a point up to width metres away, by a smooth noise scale metres across plus a per-plant stray (stray, share of width), so neighbouring areas' plants mix in a band along the border. Only the look: creatures, partifying and the party border keep the exact borders.",
   "areaEdgeBlend": { "width": 20, "scale": 40, "stray": 0.5 },
+  "_groundBlend": "How neighbouring areas' floor textures meet (Ed, v160): the border is warped by noise in two octaves (up to warp metres over about 40 m, and fine metres over about 6 m), so it meanders rather than following the texture's grid; across a band metres wide the two floors mix pixel by pixel, by noise and (dither) an ordered dither, like grass creeping into dirt. Visual only. ?blend=off turns it off.",
+  "groundBlend": { "on": true, "warp": 8, "fine": 1.5, "band": 5, "dither": true },
   "_density": "Tree density is a field, not two states (Ed, 2026-10-03): each area's own density (its layout in art/areas.js) times a patch noise patchScale metres across, from patchMin to patchMax times (dense patches, sparse patches, glades), times the area's pattern (groves, stands, rings, rows, thicket, edges only), times the clearings (soft edges); and lone trees at lone density almost everywhere, so open ground isn't empty. treeDensity scales it all.",
   "density": { "patchScale": 45, "patchMin": 0.1, "patchMax": 1.3, "lone": 0.03 },
   "bushDensity": 0.16,

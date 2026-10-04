@@ -5,7 +5,8 @@
       "version": null,
       "items": [
         "The standing stones round the dancefloor are now twelve stone speakers, twice as far out, thumping on the beat: the ones beyond the floor face in, the near ones face out, so you always see their fronts (K cycles them through damaged and destroyed, for testing)",
-        "The dancefloor's clearing is wider, and the treehouse stands outside the speaker ring"
+        "The dancefloor's clearing is wider, and the treehouse stands outside the speaker ring",
+        "Where two areas meet, their ground textures meander and speckle into each other instead of meeting on a blocky edge (?blend=off to compare)"
       ]
     },
     {
