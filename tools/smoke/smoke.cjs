@@ -369,7 +369,8 @@ async function main() {
       if (!best) return null;
       // Into the woods a little way from its centre, where its plants grow.
       const px = best.s.x + 18, pz = best.s.z + 22;
-      g.witch = { ...g.witch, x: px, z: pz, vx: 0, vz: 0 }; g.camera = { ...g.camera, tx: px, tz: pz };
+      // Off the treehouse's seat (else the opening shot keeps the camera close in on her).
+      g.witch = { ...g.witch, x: px, z: pz, vx: 0, vz: 0, seated: false }; g.camera = { ...g.camera, tx: px, tz: pz };
       document.getElementById("debug").classList.remove("on");
       return `${best.x},${best.y}`;
     });

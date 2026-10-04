@@ -4,6 +4,10 @@
     {
       "version": null,
       "items": [
+        "Berries: every area has bushes with shiny dark-red berries (8–12 per area), glowing softly at night and glinting red through the treetops",
+        "Party animals walk over to a berry near them and eat it; it grows again somewhere else in the forest",
+        "Feed a party animal enough berries and it evolves (babies after 5, young after 10, adults after 30): it glows and pulses for a bar, then flashes into its next size with a burst of sparkles, and the dancefloor flashes in its colour. Adults become legends: the only way to get a party legend",
+        "A red ring round each party animal shows how close it is to evolving (near the witch, and just after it eats). Debug: B feeds the nearest party animal a berry",
         "At the start the speakers round the dancefloor boot up one by one, giving you about a minute before the countdown to the first wave begins",
         "A spell: Q (gamepad B, touch 'spell') casts a speed boost: much faster for a few seconds, with a trail; the ring in the corner shows it recharging",
         "Cycle: C (gamepad right-stick click, touch 'cycle') sends the bottom sigil of your stack to the top, so you choose which creature goes down next",

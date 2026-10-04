@@ -46,6 +46,8 @@ attribute vec3 iPos;
 attribute vec2 iSize;
 attribute vec4 iUv;
 attribute vec4 iFlags; // flip, top (or a trunk's cut, negative), fresh, sway
+attribute float iGlow; // glowing white, 0 to 1 (a party animal evolving)
+varying float vGlow;
 uniform vec4 uWind;
 varying vec2 vUv;
 varying vec3 vWorld;
@@ -72,6 +74,7 @@ void main() {
   float u = iFlags.x > 0.5 ? 1.0 - uv.x : uv.x;
   vUv = vec2(mix(iUv.x, iUv.z, u), mix(iUv.w, iUv.y, uv.y));
   vFlags = iFlags.xyz;
+  vGlow = iGlow;
   vLocal = uv;
   vSizeY = iSize.y;
   vWorld = w;
@@ -100,6 +103,7 @@ uniform vec4 uUplight;
 varying vec2 vUv;
 varying vec3 vWorld;
 varying vec3 vFlags;
+varying float vGlow;
 varying float vFront;
 varying vec2 vLocal;
 varying float vSizeY;
@@ -172,6 +176,8 @@ void shade() {
 }
 void main() {
   shade();
+  // Glowing white (a party animal evolving).
+  if (vGlow > 0.0 && uSilhouette.a <= 0.0) gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0), vGlow);
   // Scenery past the budget's radius fades out smoothly (alpha), from the far edge inward.
   if (uIsScenery > 0.5) {
     float k = sceneryFade(vWorld) * uAppear; // and a set just drawn fades in
@@ -181,7 +187,7 @@ void main() {
 }
 `;
 
-export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number; /** How much it sways in the wind (0 still, 1 a crown): leafy things only. */ sway?: number }
+export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number; /** How much it sways in the wind (0 still, 1 a crown): leafy things only. */ sway?: number; /** Glowing white, 0 to 1 (an evolving party animal). */ glow?: number }
 
 export class SpriteBatch {
   readonly mesh: THREE.Mesh;
@@ -193,6 +199,7 @@ export class SpriteBatch {
   private size: THREE.InstancedBufferAttribute;
   private uvs: THREE.InstancedBufferAttribute;
   private flags: THREE.InstancedBufferAttribute;
+  private glow: THREE.InstancedBufferAttribute;
   private capacity = 0;
   count = 0;
 
@@ -204,7 +211,7 @@ export class SpriteBatch {
     this.geo.index = quad.index;
     this.geo.setAttribute("position", quad.getAttribute("position"));
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
-    this.pos = this.size = this.uvs = this.flags = undefined as never;
+    this.pos = this.size = this.uvs = this.flags = this.glow = undefined as never;
     this.grow(64);
     const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), ...extra });
     // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
@@ -242,9 +249,9 @@ export class SpriteBatch {
       if (old) (a.array as Float32Array).set(old.array as Float32Array);
       return a;
     };
-    this.pos = make(3, this.pos); this.size = make(2, this.size); this.uvs = make(4, this.uvs); this.flags = make(4, this.flags);
+    this.pos = make(3, this.pos); this.size = make(2, this.size); this.uvs = make(4, this.uvs); this.flags = make(4, this.flags); this.glow = make(1, this.glow);
     this.geo.setAttribute("iPos", this.pos); this.geo.setAttribute("iSize", this.size);
-    this.geo.setAttribute("iUv", this.uvs); this.geo.setAttribute("iFlags", this.flags);
+    this.geo.setAttribute("iUv", this.uvs); this.geo.setAttribute("iFlags", this.flags); this.geo.setAttribute("iGlow", this.glow);
     this.capacity = cap;
   }
 
@@ -257,15 +264,16 @@ export class SpriteBatch {
   set(items: SpriteInstance[]): void {
     this.items = items;
     if (items.length > this.capacity) this.grow(items.length);
-    const P = this.pos.array as Float32Array, S = this.size.array as Float32Array, U = this.uvs.array as Float32Array, F = this.flags.array as Float32Array;
+    const P = this.pos.array as Float32Array, S = this.size.array as Float32Array, U = this.uvs.array as Float32Array, F = this.flags.array as Float32Array, G = this.glow.array as Float32Array;
     items.forEach((it, i) => {
       P[i * 3] = it.x; P[i * 3 + 1] = it.y; P[i * 3 + 2] = it.z;
       const k = it.scale ?? 1;
       S[i * 2] = it.frame.w * this.metresPerPixel * k; S[i * 2 + 1] = it.frame.h * this.metresPerPixel * k;
       U.set(it.frame.uv, i * 4);
       F[i * 4] = it.flip ? 1 : 0; F[i * 4 + 1] = it.top ? 1 : it.cut ? -it.cut : 0; F[i * 4 + 2] = it.fresh ? 1 : 0; F[i * 4 + 3] = it.sway ?? 0;
+      G[i] = it.glow ?? 0;
     });
-    for (const a of [this.pos, this.size, this.uvs, this.flags]) a.needsUpdate = true;
+    for (const a of [this.pos, this.size, this.uvs, this.flags, this.glow]) a.needsUpdate = true;
     this.count = items.length;
     this.geo.instanceCount = items.length;
     for (const m of this.meshes) m.visible = items.length > 0;

@@ -3,7 +3,8 @@ import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState } 
 import { newClock, tick, type Clock } from "./clock";
 import { spawnCreatures, stepCreaturesNear, wanderRange, type Creature } from "./creatures";
 import { Forest } from "./forest";
-import { newLeash, stepLeash, type LeashControls, type LeashState } from "./leash";
+import { leashPoint, newLeash, stepLeash, type LeashControls, type LeashState } from "./leash";
+import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
 import { newParty, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { nextSpeakerState, type SpeakerState } from "./speakers";
@@ -24,6 +25,7 @@ export interface Game {
   camera: CameraState;
   party: PartyState;
   leash: LeashState;
+  berries: BerryState;
   /** Each dancefloor speaker's state, in map.dancefloor.speakers' order. */
   speakers: SpeakerState[];
   /** The dancefloor's tile lights (rules/dancefloor.ts). */
@@ -40,6 +42,8 @@ export interface Controls extends Intent, Partial<LeashControls> {
   /** Playtest keys: bring the next wave now; pause or resume the wave timer. */
   nextWave?: boolean;
   pauseWaves?: boolean;
+  /** Debug: the nearest party animal eats a berry now. */
+  feedNearest?: boolean;
   /** Debug: every dancefloor speaker on to its next state (playing, damaged, destroyed). */
   cycleSpeakers?: boolean;
   /** The spell button: cast the equipped spell. */
@@ -51,7 +55,7 @@ export function newGame(seed: number, tuning: Tuning): Game {
   const witch = { ...newWitch(map.start.x, map.start.z), seated: true };
   return {
     seed, tuning, map, forest: new Forest(map), creatures: spawnCreatures(map), clock: newClock(),
-    witch, camera: newCamera(tuning, witch.x, witchHeight(witch, tuning), witch.z), party: newParty(map), leash: newLeash(),
+    witch, camera: newCamera(tuning, witch.x, witchHeight(witch, tuning), witch.z), party: newParty(map), leash: newLeash(), berries: newBerries(map, tuning),
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
     floor: newFloor(), spells: newSpells(tuning),
   };
@@ -72,7 +76,10 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   if (c.nextWave) { spreadWave(g.party, g.map, g.clock.time); g.party.nextAt = g.clock.time + g.tuning.party.interval; }
   stepParty(g.party, g.map, g.clock.time, dt);
   stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map);
-  stepLeash(g.leash, g.creatures, { talk: !!c.talk, sigil: !!c.sigil, inviteNearest: c.inviteNearest, cycle: !!c.cycle }, g.witch, g.witch.mode === "ground", g.clock.time, dt, g.tuning);
+  const B = g.berries, busy = (id: number) => B.feeding.has(id) || B.evolving.has(id);
+  stepLeash(g.leash, g.creatures, { talk: !!c.talk, sigil: !!c.sigil, inviteNearest: c.inviteNearest, cycle: !!c.cycle }, g.witch, g.witch.mode === "ground", g.clock.time, dt, g.tuning, busy);
+  if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, g.tuning);
+  stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, g.tuning);
   stepDancefloor(g, wave, seated);
 }
 
@@ -104,6 +111,8 @@ function stepDancefloor(g: Game, waveBefore: number, wasSeated: boolean | undefi
     floorEvent(f, { kind: "wave", at: time, dir: Math.atan2(s.z - d.z, s.x - d.x), rgb: neonOf((SIGIL_NEON as Record<string, string>)[sp]) });
   }
   for (const e of g.leash.events) if (e.kind === "placed") floorEvent(f, { kind: "sigil", at: time, dir: 0, rgb: neonOf(g.tuning.dancefloor.tiles.witchColour) });
+  // A party animal evolving: a burst out from the floor's centre in its sigil's neon.
+  for (const e of g.berries.events) if (e.kind === "evolved") floorEvent(f, { kind: "sigil", at: time, dir: 0, rgb: neonOf((SIGIL_NEON as Record<string, string>)[g.creatures[e.id].species]) });
   stepFloor(f, floorInputs(g), g.tuning);
 }
 
