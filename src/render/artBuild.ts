@@ -7,11 +7,11 @@ import { rng } from "../rules/random";
 import type { Style } from "./style";
 
 type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
-export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** A wild creature's eye pixels (1), for eyeshine (Ed, v244). */ eyes?: Uint8Array }
+export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** A wild creature's eye pixels (1), for eyeshine (Ed, v244). */ eyes?: Uint8Array; /** Its sway mask (#34: grey, 0 rigid to 255 the leafy tips), packed into the normal map's alpha. */ S?: AnyCanvas }
 /** Where a sprite sits in its atlas: u0, vTop, u1, vBottom, and its size in art pixels. */
 /** pad: empty rows (nothing drawn) at the bottom of the sprite, so it can stand on its lowest
  *  drawn pixel rather than on its box. */
-export interface Frame { uv: [number, number, number, number]; w: number; h: number; pad?: number }
+export interface Frame { uv: [number, number, number, number]; w: number; h: number; pad?: number; /** Its sway mask is in its normal map's alpha (#34): it sways per pixel, leaves only. */ masked?: boolean }
 export interface AtlasPixels { albedo: Uint8Array; normal: Uint8Array; width: number; height: number; frames: Frame[] }
 
 export type MakeCanvas = (w: number, h: number) => AnyCanvas;
@@ -67,19 +67,21 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   // of the area's trees. Anything else big (mounds, boulders, logs) is drawn whole, as before.
   // Each height class gets the area's own share of its trees (its layout's heightMix), split among
   // that class's variants; without one, the art's default weights.
-  const variants = Art.areaTreeVariants(id, st, { K, makeCanvas: mk }) as { top: Baked; bot: Baked; weight: number; heightClass: "sapling" | "mature" | "tall" | "giant" }[];
+  const variants = Art.areaTreeVariants(id, st, { K, makeCanvas: mk }) as { top: Baked; bot: Baked; weight: number; heightClass: "sapling" | "mature" | "tall" | "giant"; sway?: { top: unknown; bot: unknown } }[];
   const mix = AREA_TYPES[t].layout.heightMix, perClass = (c: string) => variants.filter(v => v.heightClass === c).length || 1;
-  for (const v of variants) { layout.big.push({ bot: add(v.bot), top: add(v.top) }); layout.bigWeight.push(mix ? mix[v.heightClass] / perClass(v.heightClass) : v.weight); }
+  // Each carries its sway mask (#34), so only its leaves move in the wind.
+  const withSway = (b: Baked, S?: unknown) => (S ? { ...b, S: S as Baked["A"] } : b);
+  for (const v of variants) { layout.big.push({ bot: add(withSway(v.bot, v.sway?.bot)), top: add(withSway(v.top, v.sway?.top)) }); layout.bigWeight.push(mix ? mix[v.heightClass] / perClass(v.heightClass) : v.weight); }
   def.big.forEach(([kind], i) => {
     if (kind === "tree" && variants.length) return;
-    layout.big.push({ bot: add(assets.big[i].sp), top: null });
+    layout.big.push({ bot: add(withSway(assets.big[i].sp, (assets.big[i] as { sway?: unknown }).sway)), top: null });
     // Tall pieces in the open areas (snags, cairns, standing stones, pillars, spires: #33) stand
     // sparsely: their art's own sparse share as their weight among the area's big objects (about
     // a fifth of them all), the mounds, boulders and logs at 1.
     const sparse = (assets.big[i] as { sparse?: number }).sparse;
     layout.bigWeight.push(variants.length ? 0.1 : sparse ?? 1);
   });
-  def.small.forEach(([kind, o], i) => layout.small.push(kind === "tree" ? tree(o as TreeOpts, 500 + i) : { bot: add(assets.small[i].sp), top: null }));
+  def.small.forEach(([kind, o], i) => layout.small.push(kind === "tree" ? tree(o as TreeOpts, 500 + i) : { bot: add(withSway(assets.small[i].sp, (assets.small[i] as { sway?: unknown }).sway)), top: null }));
   for (const a of assets.walls) layout.walls.push(add(a.sp));
   if (assets.setPiece) layout.set = def.set?.[0] === "tree" ? tree(def.set[1] as TreeOpts, 900) : { bot: add(assets.setPiece.sp), top: null, origin: assets.setPiece.origin };
   return { sprites, layout, floor: assets.floor.sp };
@@ -127,16 +129,18 @@ export function packPixels(sprites: Baked[], width = 2048): AtlasPixels {
   const albedo = new Uint8Array(W * H * 4), normal = new Uint8Array(W * H * 4);
   const frames: Frame[] = sprites.map((s, i) => {
     const p = place[i], pa = pixels(s.A, s.w, s.h), pn = pixels(s.N, s.w, s.h);
+    const sd = s.S ? pixels(s.S, s.w, s.h) : null, sway = sd ? Array.from({ length: s.h }, (_, row) => Array.from({ length: s.w }, (_, x) => sd[(row * s.w + x) * 4])) : null;
     for (let row = 0; row < s.h; row++) {
       const src = row * s.w * 4, dst = ((p.y + row) * W + p.x) * 4;
       albedo.set(pa.subarray(src, src + s.w * 4), dst);
+      if (s.S) { const ps = sway![row]; for (let x = 0; x < s.w; x++) if (normal[dst + x * 4 + 3]) normal[dst + x * 4 + 3] = ps[x]; }
       if (s.eyes) for (let x = 0; x < s.w; x++) if (s.eyes[row * s.w + x] && albedo[dst + x * 4 + 3] === 255) albedo[dst + x * 4 + 3] = 253;
       normal.set(pn.subarray(src, src + s.w * 4), dst);
     }
     // Its lowest drawn row (the sprite shader drops alpha under a half).
     let pad = 0;
     bottom: for (let row = s.h - 1; row >= 0; row--, pad++) for (let x = 0; x < s.w; x++) if (pa[(row * s.w + x) * 4 + 3] >= 128) break bottom;
-    return { uv: [p.x / W, p.y / H, (p.x + s.w) / W, (p.y + s.h) / H], w: s.w, h: s.h, pad: Math.min(pad, s.h) };
+    return { uv: [p.x / W, p.y / H, (p.x + s.w) / W, (p.y + s.h) / H], w: s.w, h: s.h, pad: Math.min(pad, s.h), ...(s.S ? { masked: true } : {}) };
   });
   return { albedo, normal, width: W, height: H, frames };
 }

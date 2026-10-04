@@ -190,7 +190,7 @@ export class View {
     this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true });
     this.scene.add(...this.markerBatch.meshes, this.markerFx.group, this.rings.mesh);
     // The ground cover: tufts round the witch, in ground mode.
-    this.grass = new GrassView(game.map, t, this.mpp);
+    this.grass = new GrassView(game.map, t, this.mpp, style);
     this.scene.add(this.grass.mesh);
     this.scene.add(this.spellFx.trail);
     // The dancefloor's speakers: their batch comes with their art (drawSpeakers).
