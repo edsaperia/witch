@@ -5,7 +5,7 @@ import { spawnCreatures, stepCreaturesNear, wanderRange, type Creature } from ".
 import { Forest } from "./forest";
 import { leashPoint, newLeash, stepLeash, type LeashControls, type LeashState } from "./leash";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
-import { newParty, planAhead, spreadWave, stepParty, type PartyState } from "./party";
+import { cellKey, newParty, planAhead, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { nextSpeakerState, type SpeakerState } from "./speakers";
 import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
@@ -85,7 +85,7 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   stepParty(g.party, g.map, g.clock.time, dt);
   // A wave-countdown buff: each new countdown runs longer by its share of the interval.
   if (g.party.wave > before) g.party.nextAt += t.party.interval - g.tuning.party.interval;
-  stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map);
+  stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map, c => dormant(g, c));
   const B = g.berries, busy = (id: number) => B.feeding.has(id) || B.evolving.has(id);
   stepLeash(g.leash, g.creatures, { talk: !!c.talk, sigil: !!c.sigil, inviteNearest: c.inviteNearest, cycle: !!c.cycle }, g.witch, g.witch.mode === "ground", g.clock.time, dt, t, busy);
   if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, t);
@@ -125,6 +125,9 @@ function stepDancefloor(g: Game, waveBefore: number, wasSeated: boolean | undefi
   for (const e of g.berries.events) if (e.kind === "evolved") floorEvent(f, { kind: "sigil", at: time, dir: 0, rgb: neonOf((SIGIL_NEON as Record<string, string>)[g.creatures[e.id].species]) });
   stepFloor(f, floorInputs(g), g.tuning);
 }
+
+/** A wild legend still asleep: it wakes when the party reaches its area (Ed, 2026-10-04). */
+export const dormant = (g: Game, c: Creature): boolean => !!c.boss && !c.leashed && !g.party.areas.has(cellKey(c.cell));
 
 /** How far from the witch creatures are simulated (by their home): at least far enough that one
  *  resuming anywhere in its area does so beyond the draw distance (the haze), so none ever jumps

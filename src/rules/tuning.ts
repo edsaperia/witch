@@ -147,9 +147,9 @@ export interface Tuning {
   youngShareFar: number;
   adultsFrom: number;
   adultShareFar: number;
-  legendChanceFar: number;
   legendNextToHome: boolean;
-  legendsFrom: number;
+  /** Wild legends (Ed, 2026-10-04): rare, late mini-bosses in remote areas, dormant till the party reaches their area. */
+  wildLegends: { perMap: number[]; from: number; spacing: number; scale: number; breathe: number; breathEvery: number; aura: number; glow: number };
   creatureSimRadius: number;
   creatureSpeed: number;
   setPieceChance: number;

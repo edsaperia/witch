@@ -5,7 +5,7 @@ import * as THREE from "three";
 import * as Art from "../../art/generator.js";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
-import { poseOf } from "../rules/game";
+import { dormant, poseOf } from "../rules/game";
 import { cameraPose } from "../rules/camera";
 import { AREA_TYPES } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
@@ -25,7 +25,7 @@ import { PartyView } from "./party";
 import { MarkerArt, MarkerFx, MARKER_LEVELS, SymbolRings, type Beacon, type Laser, type Mote, type RingSymbol } from "./markers";
 import { spawnMarkers, speakersOn, symbolCount, waveCountdown, type SpawnMarker } from "../rules/party";
 import { StringLightsView } from "./strings";
-import { LeashView } from "./leash";
+import { bossBreath, LeashView } from "./leash";
 import { Lasers } from "./lasers";
 import { BorderView } from "./borders";
 import { MusicIndicator, StoneIndicator } from "./indicator";
@@ -673,8 +673,11 @@ export class View {
       if (!art) continue;
       arts.set(key, art);
       const frame = art.atlas.frames[art.frame(c.level, c.moving ? Math.floor(c.walk) % 2 : 0, c.away)];
-      if (!this.inView(c.x, c.z, frame.w * this.mpp, frame.h * this.mpp, 4)) continue;
-      const fresh = this.mark("creature", c.x, c.z, frame.h * this.mpp, c.id);
+      // A wild legend (Ed, 2026-10-04): bigger and imposing, swelling slowly as it breathes (slower asleep).
+      const boss = c.boss && !c.leashed ? g.tuning.wildLegends : null;
+      const bossScale = boss ? boss.scale * (1 + boss.breathe * bossBreath(time, c.id, boss.breathEvery * (dormant(g, c) ? 1.5 : 1))) : 1;
+      if (!this.inView(c.x, c.z, frame.w * this.mpp * bossScale, frame.h * this.mpp * bossScale, 4)) continue;
+      const fresh = this.mark("creature", c.x, c.z, frame.h * this.mpp * (boss ? boss.scale : 1), c.id);
       let l = per.get(key);
       if (!l) per.set(key, (l = []));
       // Party animals never stand still: a bounce and a sway on the beat when idle, a little
@@ -684,7 +687,7 @@ export class View {
       // Evolving: glowing white, pulsing on the beat, brighter toward the bar line; then the flash
       // as it becomes its next level, and a pop from 1.3 times its size back to its own.
       const ev = g.berries.evolving.get(c.id), done = this.evolvedAt.get(c.id);
-      let glow = 0, scale = 1;
+      let glow = 0, scale = bossScale;
       if (ev) {
         const k = Math.min(1, (time - ev.since) / Math.max(0.1, ev.at - ev.since)), pulse = 0.5 + 0.5 * Math.cos((time / beat) * Math.PI * 2);
         glow = Math.min(1, (0.25 + 0.5 * k) * (0.55 + 0.45 * pulse) + (ev.at - time < 0.12 ? 1 : 0));
