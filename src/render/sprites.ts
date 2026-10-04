@@ -40,10 +40,10 @@ uniform vec4 uOcc;
 attribute vec3 iPos;
 attribute vec2 iSize;
 attribute vec4 iUv;
-attribute vec3 iFlags;
+attribute vec4 iFlags; // flip, top half, just appeared (debug), glow (0-1: white)
 varying vec2 vUv;
 varying vec3 vWorld;
-varying vec3 vFlags;
+varying vec4 vFlags;
 varying float vFront;
 void main() {
   // Tall and nearer the camera than the witch: it may stand in front of her.
@@ -78,7 +78,7 @@ uniform int uPartyCount;
 uniform vec4 uUplight;
 varying vec2 vUv;
 varying vec3 vWorld;
-varying vec3 vFlags;
+varying vec4 vFlags;
 varying float vFront;
 ${LIGHT_GLSL}
 // 4x4 ordered dither, for fading the canopy in pixel-art style.
@@ -135,6 +135,8 @@ void shade() {
 }
 void main() {
   shade();
+  // Glowing white (a party animal evolving), by vFlags.w.
+  if (vFlags.w > 0.0 && uSilhouette.a <= 0.0) gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0), vFlags.w);
   // Scenery past the budget's radius fades out smoothly (alpha), from the far edge inward.
   if (uIsScenery > 0.5) {
     float k = sceneryFade(vWorld) * uAppear; // and a set just drawn fades in
@@ -144,7 +146,7 @@ void main() {
 }
 `;
 
-export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** Drawn this much bigger (1 if left out). */ scale?: number }
+export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** Drawn this much bigger (1 if left out). */ scale?: number; /** Glowing white, 0 to 1 (an evolving party animal). */ glow?: number }
 
 export class SpriteBatch {
   readonly mesh: THREE.Mesh;
@@ -205,7 +207,7 @@ export class SpriteBatch {
       if (old) (a.array as Float32Array).set(old.array as Float32Array);
       return a;
     };
-    this.pos = make(3, this.pos); this.size = make(2, this.size); this.uvs = make(4, this.uvs); this.flags = make(3, this.flags);
+    this.pos = make(3, this.pos); this.size = make(2, this.size); this.uvs = make(4, this.uvs); this.flags = make(4, this.flags);
     this.geo.setAttribute("iPos", this.pos); this.geo.setAttribute("iSize", this.size);
     this.geo.setAttribute("iUv", this.uvs); this.geo.setAttribute("iFlags", this.flags);
     this.capacity = cap;
@@ -226,7 +228,7 @@ export class SpriteBatch {
       const k = it.scale ?? 1;
       S[i * 2] = it.frame.w * this.metresPerPixel * k; S[i * 2 + 1] = it.frame.h * this.metresPerPixel * k;
       U.set(it.frame.uv, i * 4);
-      F[i * 3] = it.flip ? 1 : 0; F[i * 3 + 1] = it.top ? 1 : 0; F[i * 3 + 2] = it.fresh ? 1 : 0;
+      F[i * 4] = it.flip ? 1 : 0; F[i * 4 + 1] = it.top ? 1 : 0; F[i * 4 + 2] = it.fresh ? 1 : 0; F[i * 4 + 3] = it.glow ?? 0;
     });
     for (const a of [this.pos, this.size, this.uvs, this.flags]) a.needsUpdate = true;
     this.count = items.length;

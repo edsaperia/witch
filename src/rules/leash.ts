@@ -90,7 +90,7 @@ function invite(s: LeashState, c: Creature, x: number, z: number, time: number):
 
 /** One step: talking, placing and picking up, and the leashed creatures moving. `onGround` is
  *  true only in ground mode (no inviting, placing or picking up from the treetops). */
-export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls, witch: { x: number; z: number }, onGround: boolean, time: number, dt: number, t: Tuning): void {
+export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls, witch: { x: number; z: number }, onGround: boolean, time: number, dt: number, t: Tuning, busy: (id: number) => boolean = () => false): void {
   s.events = [];
   s.held = c.talk; s.heldInAir = c.talk && !onGround;
   const T = t.invite, L = t.leash, byId = (id: number) => creatures[id];
@@ -148,8 +148,9 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     }
   }
 
-  for (const id of s.stack) stepLeashed(byId(id), witch.x, witch.z, dt, t);
-  for (const p of s.placed) stepLeashed(byId(p.id), p.x, p.z, dt, t);
+  // (A party animal busy with a berry, or evolving, is moved by rules/berries.ts instead.)
+  for (const id of s.stack) if (!busy(id)) stepLeashed(byId(id), witch.x, witch.z, dt, t);
+  for (const p of s.placed) if (!busy(p.id)) stepLeashed(byId(p.id), p.x, p.z, dt, t);
 }
 
 /** Whether a sigil put down at (x, z) would land on another. */

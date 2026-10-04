@@ -30,6 +30,8 @@ import { Mist } from "./mist";
 import { ShadowBatch, type ShadowInstance } from "./shadows";
 import { lerp } from "../rules/random";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
+import { packAtlas } from "./atlas";
+import { berrySprite } from "./berries";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
 import type { Style } from "./style";
 
@@ -45,7 +47,7 @@ function pickWeighted(w: number[], seed: number): number {
 
 export interface ForestLight { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number }
 
-export interface ViewStats { forestMs: number; forestMissing: number; sceneryRadius: number; fps: number; gameplay: number; scenery: number; dropped: number; trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number; lights: number }
+export interface ViewStats { berries: number; forestMs: number; forestMissing: number; sceneryRadius: number; fps: number; gameplay: number; scenery: number; dropped: number; trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number; lights: number }
 
 export class View {
   readonly renderer: THREE.WebGLRenderer;
@@ -104,7 +106,7 @@ export class View {
   private ghosts: { x: number; z: number; h: number; until: number }[] = [];
   private ghostLines: THREE.LineSegments | null = null;
   private now = 0;
-  stats: ViewStats = { forestMs: 0, forestMissing: 0, sceneryRadius: 0, fps: 0, gameplay: 0, scenery: 0, dropped: 0, trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0, lights: 0 };
+  stats: ViewStats = { berries: 0, forestMs: 0, forestMissing: 0, sceneryRadius: 0, fps: 0, gameplay: 0, scenery: 0, dropped: 0, trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0, lights: 0 };
 
   constructor(readonly canvas: HTMLCanvasElement, readonly game: Game, readonly style: Style) {
     const t = game.tuning;
@@ -167,6 +169,10 @@ export class View {
     }
     this.stoneBatch.set(stones);
     this.propBatch = new SpriteBatch(this.assets.props, this.mpp, { fade: true });
+    // Berries: a small shiny dark-red berry, drawn here (a highlight upper left, a darker side),
+    // always drawn (gameplay), unlit so it reads at night; its halo and glints are in leash.ts.
+    this.berryBatch = new SpriteBatch(packAtlas([berrySprite(t.berries.colour)], 64), this.mpp, { unlit: true });
+    this.scene.add(...this.berryBatch.meshes);
     this.scene.add(...this.propBatch.meshes);
     this.partyView = new PartyView(this.assets.soundsystems, this.mpp);
     this.strings = new StringLightsView(this.scene, game);
@@ -461,6 +467,8 @@ export class View {
     };
     scatter("small", g.forest.bushesNear(cx, cz, half), l => l.small);
     scatter("small", g.forest.bedsNear(cx, cz, half), l => l.small); // a formal garden's beds, in rows
+    // Berry bushes (rules/berries.ts): normal bushes of their area, a berry on some of them.
+    scatter("berrybush", g.berries.bushes.filter(b => Math.abs(b.x - cx) <= half && Math.abs(b.z - cz) <= half), l => l.small);
     scatter("wall", g.forest.wallsNear(cx, cz, half), l => l.walls.map(bot => ({ bot, top: null })));
     scatter("setpiece", g.forest.setPiecesNear(cx, cz, half), l => (l.set === null ? [] : [l.set]));
     // Decorations: ruins, rocks and freak trees, as scenery (each family's pieces picked by its variant).
@@ -590,6 +598,30 @@ export class View {
     return lights;
   }
 
+  private berryBatch: SpriteBatch;
+  /** When each berry last grew again (game time), so it grows in rather than appearing. */
+  private regrewAt = new Map<number, number>();
+  /** When each party animal evolved (game time): the flash, the pop and the sparkles. */
+  readonly evolvedAt = new Map<number, number>();
+  private drawBerries(time: number): void {
+    const g = this.game, B = g.berries, w = g.witch, R = g.tuning.haze.far, f = this.berryBatch.atlas.frames[0], items: SpriteInstance[] = [];
+    for (const e of B.events) {
+      if (e.kind === "regrew") this.regrewAt.set(e.id, time);
+      if (e.kind === "evolved") this.evolvedAt.set(e.id, time);
+    }
+    for (const [id, at] of this.regrewAt) if (time - at > 0.6) this.regrewAt.delete(id);
+    for (const [id, at] of this.evolvedAt) if (time - at > 1.2) this.evolvedAt.delete(id);
+    for (const b of B.berries) {
+      const p = B.bushes[b.bush];
+      if (Math.abs(p.x - w.x) > R || Math.abs(p.z - w.z) > R || !this.inView(p.x, p.z, 0.5, 1.2, 2)) continue;
+      const at = this.regrewAt.get(b.id), grow = at === undefined ? 1 : Math.min(1, (time - at) / 0.5);
+      if (grow <= 0.05) continue;
+      items.push({ x: p.x, y: 0.75, z: p.z + 0.25, frame: f, flip: false, scale: grow });
+    }
+    this.berryBatch.set(items);
+    this.stats.berries = items.length;
+  }
+
   private drawCreatures(time = 0): void {
     const g = this.game, R = g.tuning.haze.far + 20;
     const per = new Map<string, SpriteInstance[]>(), arts = new Map<string, CreatureArt>(), creatureShadows: ShadowInstance[] = [];
@@ -611,7 +643,19 @@ export class View {
       // bounce as they go. (Wild ones roam, graze and pause.)
       const ph = (time / beat + (c.id % 4) * 0.25) * Math.PI;
       const dance = c.leashed ? Math.abs(Math.sin(ph)) * (c.moving ? 0.15 : 0.4) : 0, sway = c.leashed && !c.moving ? Math.sin(ph * 0.5) * 0.12 : 0;
-      l.push({ x: c.x + sway, y: dance, z: c.z, frame, flip: c.facing < 0, fresh });
+      // Evolving: glowing white, pulsing on the beat, brighter toward the bar line; then the flash
+      // as it becomes its next level, and a pop from 1.3 times its size back to its own.
+      const ev = g.berries.evolving.get(c.id), done = this.evolvedAt.get(c.id);
+      let glow = 0, scale = 1;
+      if (ev) {
+        const k = Math.min(1, (time - ev.since) / Math.max(0.1, ev.at - ev.since)), pulse = 0.5 + 0.5 * Math.cos((time / beat) * Math.PI * 2);
+        glow = Math.min(1, (0.25 + 0.5 * k) * (0.55 + 0.45 * pulse) + (ev.at - time < 0.12 ? 1 : 0));
+      } else if (done !== undefined) {
+        const d = time - done;
+        glow = Math.max(0, 1 - d / 0.2);
+        scale = 1 + 0.3 * Math.max(0, 1 - d / 0.5) ** 2;
+      }
+      l.push({ x: c.x + sway, y: dance, z: c.z, frame, flip: c.facing < 0, fresh, glow, scale });
       creatureShadows.push({ x: c.x, z: c.z, w: frame.w * this.mpp * 0.7, d: frame.w * this.mpp * 0.25 });
       n++;
     }
@@ -843,6 +887,7 @@ export class View {
     if (lv) this.stats.forestMissing = g.forest.prefetch(lv.x + w.vx * 2, lv.z + w.vz * 2, lv.half + 64, 4);
     this.stats.forestMs = g.forest.buildMs; g.forest.buildMs = 0;
     this.drawCreatures(time);
+    this.drawBerries(time);
     this.checkPops("moving");
     this.rulers.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, w.x, w.z);
     const df = g.map.dancefloor;

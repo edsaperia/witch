@@ -14,6 +14,7 @@ import * as THREE from "three";
 import { drawSigil, sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { blocked, leashPoint, talkTime, talkTurn } from "../rules/leash";
+import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
@@ -107,6 +108,10 @@ export class LeashView {
   private colours = new Map<string, THREE.Color>();
   private standing: Instances;
   private flat: Instances;
+  /** Drawn over everything (no depth test): the berries' glints seen from the treetops. */
+  private over: Instances;
+  private evolved = new Map<number, number>();
+  private berryRgb: [number, number, number];
   private fizzles: { x: number; z: number; at: number }[] = [];
   private bursts: { x: number; z: number; at: number; seed: number }[] = [];
   private chain: { x: number; z: number; vx: number; vz: number }[] = [];
@@ -123,14 +128,17 @@ export class LeashView {
     g.fillStyle = dot; g.fillRect(0, 0, SLOT, SLOT);
     this.tex = new THREE.CanvasTexture(this.canvas);
     this.tex.magFilter = THREE.NearestFilter; this.tex.minFilter = THREE.NearestFilter; this.tex.generateMipmaps = false;
-    const mat = (flat: number) => new THREE.ShaderMaterial({
+    const mat = (flat: number, depthTest = true) => new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
       uniforms: { ...LIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uFlat: { value: flat }, uGlyphs: { value: this.tex } },
-      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      transparent: true, depthWrite: false, depthTest, blending: THREE.AdditiveBlending,
     });
     this.standing = new Instances(mat(0));
     this.flat = new Instances(mat(1));
-    scene.add(this.standing.mesh, this.flat.mesh);
+    this.over = new Instances(mat(0, false));
+    scene.add(this.standing.mesh, this.flat.mesh, this.over.mesh);
+    const hex = game.tuning.berries.colour.replace("#", "");
+    this.berryRgb = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
   }
 
   /** A species' sigil at a level (it grows more ornate with level), white in the atlas, tinted
@@ -154,6 +162,59 @@ export class LeashView {
     return s;
   }
 
+  /** Berries (rules/berries.ts): each one's soft red halo, and from the treetops a red glint over
+   *  the canopy; the ring of how near a party animal is to evolving; and evolving itself: motes
+   *  spiralling up through the bar, a flash on the bar line as it becomes its next level, a burst
+   *  of party sparkles. */
+  private drawBerries(time: number): void {
+    const g = this.game, B = g.berries, t = g.tuning, w = g.witch, dot = this.uv(0), [r, gg, b] = this.berryRgb, glow = t.berries.glow;
+    const treetops = w.lift > 0.5, near = treetops ? 260 : 90, beat = 60 / t.beat.bpm;
+    for (const e of B.events) if (e.kind === "evolved") this.evolved.set(e.id, time);
+    for (const [id, at] of this.evolved) if (time - at > 1) this.evolved.delete(id);
+    for (const berry of B.berries) {
+      const p = B.bushes[berry.bush];
+      if (Math.abs(p.x - w.x) > near || Math.abs(p.z - w.z) > near) continue;
+      const tw = 0.85 + 0.15 * Math.sin(time * 2.3 + berry.id);
+      if (treetops) this.over.add(p.x, 1, p.z + 0.25, 0.9, dot, r * 1.6 * tw, gg * 1.6, b * 1.6, 0.8 * glow);
+      else {
+        this.standing.add(p.x, 0.8, p.z + 0.3, 1.5, dot, r * 0.9, gg * 0.9, b * 0.9, 0.6 * glow * tw); // the soft halo
+        this.standing.add(p.x - 0.07, 0.86, p.z + 0.32, 0.25, dot, 1, 0.9, 0.9, 0.7 * tw); // the shine
+      }
+    }
+    // How near each party animal is to evolving: always while she's within 20 m, and for a few
+    // seconds after it eats.
+    for (const c of g.creatures) {
+      if (!c.leashed || B.evolving.has(c.id)) continue;
+      const need = toEvolve(c.level, t), ate = B.ateAt.get(c.id);
+      if (!Number.isFinite(need)) continue;
+      if (Math.hypot(c.x - w.x, c.z - w.z) > 20 && !(ate !== undefined && time - ate < 3)) continue;
+      const fed = B.fed.get(c.id) ?? 0, n = 28;
+      for (let i = 0; i < n; i++) {
+        const a = Math.PI / 2 - (i / n) * Math.PI * 2, lit = i / n < fed / need;
+        this.flat.add(c.x + Math.cos(a) * 1.5, 0, c.z + Math.sin(a) * 1.1, 0.35, dot, lit ? 1 : 0.9, lit ? 0.25 : 0.9, lit ? 0.3 : 1, lit ? 0.9 : 0.15);
+      }
+    }
+    // Evolving: motes spiralling up round it through the bar, quicker and tighter toward the line.
+    for (const [id, e] of B.evolving) {
+      const c = g.creatures[id], k = Math.min(1, (time - e.since) / Math.max(0.1, e.at - e.since)), pulse = 0.6 + 0.4 * Math.cos((time / beat) * Math.PI * 2);
+      for (let i = 0; i < 18; i++) {
+        const f = (time * (0.5 + k) + i / 18) % 1, a = i * 2.4 + time * (2 + 4 * k), rad = 1.6 * (1 - 0.6 * k) * (1 - f * 0.4);
+        this.standing.add(c.x + Math.cos(a) * rad, 0.2 + f * 3.2, c.z + Math.sin(a) * rad * 0.7, 0.3, dot, 1, 0.95, 0.75, (1 - f) * pulse);
+      }
+    }
+    // The flash on the bar line, and a burst of party sparkles.
+    for (const [id, at] of this.evolved) {
+      const c = g.creatures[id], d = time - at;
+      if (d < 0.25) this.standing.add(c.x, 1.2, c.z, 6 * (1 - d / 0.25) + 1, dot, 1, 1, 1, 1 - d / 0.25);
+      const k = d / 1;
+      for (let i = 0; i < 36; i++) {
+        const a = hash2(id, i, 13) * Math.PI * 2, sp = 2.5 + hash2(id, i, 17) * 3.5, up = 2 + hash2(id, i, 19) * 4;
+        const col = [[1, 0.4, 0.8], [0.3, 0.95, 1], [1, 0.9, 0.3], [0.6, 1, 0.4], [1, 1, 1]][i % 5];
+        this.standing.add(c.x + Math.cos(a) * sp * k, 0.8 + up * k - 4 * k * k, c.z + Math.sin(a) * sp * k, 0.35, dot, col[0], col[1], col[2], 1 - k);
+      }
+    }
+  }
+
   private uv(slot: number): number[] {
     const N = SLOT * SLOTS, x = (slot % SLOTS) * SLOT, y = Math.floor(slot / SLOTS) * SLOT;
     // u0, v0 (top), u1, v1 (bottom); the canvas texture is flipped in v.
@@ -163,7 +224,8 @@ export class LeashView {
   /** hatTop: the height of the tip of her hat this frame (the stack floats above it). */
   update(time: number, camera: THREE.Camera, width: number, height: number, hatTop: number): void {
     const g = this.game, s = g.leash, t = g.tuning, w = g.witch, B = t.bond, L = t.leash, dot = this.uv(0);
-    this.standing.begin(); this.flat.begin();
+    this.standing.begin(); this.flat.begin(); this.over.begin();
+    this.drawBerries(time);
     for (const e of s.events) {
       if (e.kind === "fizzled") this.fizzles.push({ x: e.x, z: e.z, at: time });
       if (e.kind === "invited") this.bursts.push({ x: e.x, z: e.z, at: time, seed: e.id });
@@ -269,7 +331,7 @@ export class LeashView {
         }
       }
     }
-    this.standing.end(); this.flat.end();
+    this.standing.end(); this.flat.end(); this.over.end();
     this.bubbles(time, camera, width, height);
   }
 

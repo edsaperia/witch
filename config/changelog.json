@@ -4,6 +4,10 @@
     {
       "version": null,
       "items": [
+        "Berries: every area has bushes with shiny dark-red berries (8–12 per area), glowing softly at night and glinting red through the treetops",
+        "Party animals walk over to a berry near them and eat it; it grows again somewhere else in the forest",
+        "Feed a party animal enough berries and it evolves (babies after 5, young after 10, adults after 30): it glows and pulses for a bar, then flashes into its next size with a burst of sparkles. Adults become legends: the only way to get a party legend",
+        "A red ring round each party animal shows how close it is to evolving (near the witch, and just after it eats). Debug: B feeds the nearest party animal a berry",
         "Nothing floats any more: trees, rocks, ruins, the treehouse and set pieces all stand on the ground, and big scenery keeps clear of the soundsystems",
         "Fewer ruins, rocks, relics, stairs and bridges: each is a find now, not clutter",
         "The witch's own light is a tighter pool round her that fades out within about 40 m (try ?glow=50,2.5 to tune it)",
