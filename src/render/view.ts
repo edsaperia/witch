@@ -451,7 +451,7 @@ export class View {
       }
       this.batchFor(this.decorBatches, "relics", () => new SpriteBatch(ra.atlas, mpp, { scenery: true, fade: true }))?.set(stand);
       this.batchFor(this.decorBatches, "decals", () => {
-        const b = new SpriteBatch(ra.atlas, mpp, { scenery: true });
+        const b = new SpriteBatch(ra.atlas, mpp, { scenery: true, flat: true });
         for (const m of b.meshes) { m.renderOrder = -0.5; (m.material as THREE.Material).depthWrite = false; } // right after the ground, under everything standing
         return b;
       })?.set(flat);
