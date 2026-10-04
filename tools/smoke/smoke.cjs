@@ -270,7 +270,7 @@ async function main() {
     await shot(page, "57-party-four-waves.png");
   }, "&debug&tilt=before");
 
-  // Inviting and leashing: talk to a creature until it joins her, gather a few more, fly with the
+  // Inviting and leashing: stand by a creature while she talks it into joining her, gather a few more, fly with the
   // stack, put a sigil down and pick it up again.
   await run("leash", { width: 1900, height: 1240 }, async page => {
     await page.keyboard.press("Enter");
@@ -285,12 +285,11 @@ async function main() {
     await sleep(800);
     await shot(page, "69-leash-cue.png");
     const t0 = await page.evaluate(() => window.witch.game.clock.time);
-    await page.keyboard.down("KeyT");
+    // No Talk button (Ed, v244): standing by it, she talks to it by herself.
     await page.waitForFunction(t => window.witch.game.clock.time >= t, t0 + 1.6, { timeout: 400000, polling: 50 });
     await shot(page, "70-leash-talk.png");
     await page.waitForFunction(i => window.witch.game.creatures[i].leashed, id, { timeout: 400000, polling: 100 });
-    await page.keyboard.up("KeyT");
-    check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "holding Talk by a creature invites it onto her sigil stack");
+    check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "standing by a creature, she talks to it by herself and invites it onto her sigil stack");
     // One press a frame: wait for each invite to land before the next (the headless renderer is slow).
     for (let i = 0; i < 3; i++) {
       const before = await page.evaluate(() => window.witch.game.leash.stack.length);

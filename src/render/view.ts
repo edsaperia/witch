@@ -983,13 +983,15 @@ export class View {
       const Hd = w.heading && w.heading !== "side" ? this.assets.witchHeading[w.heading] : null;
       if (Hd) wf = w.braking ? Hd.brake[Math.floor(time * Fl.brake.fps) % Hd.brake.length] : (w.boost ?? 0) > 0.7 ? Hd.fast[Math.floor(time * Fl.fast.fps) % Hd.fast.length] : w.lean ? Hd.lean : Hd.hover[Math.floor(time * 4) % Hd.hover.length];
     }
-    // Talking or handling a sigil, she lands first (Ed, 2026-10-03): down to the ground, then the
-    // talk, placeSigil or liftSigil pose, and back up into the air when she's done.
+    // Handling a sigil, she lands first (Ed, 2026-10-03): down to the ground, then the placeSigil or
+    // liftSigil pose, and back up into the air when she's done. Talking (by herself, Ed v244), she
+    // chats on the fly while moving and settles into the talk pose when she comes to rest.
     const L = g.leash, F = this.assets.witchFoot, side = w.away ? "away" : "towards";
     for (const e of L.events) if (e.kind === "placed" || e.kind === "fizzled") this.footAct = { pose: "placeSigil", at: time }; else if (e.kind === "picked") this.footAct = { pose: "liftSigil", at: time };
     const actLen = this.footAct ? F[this.footAct.pose].towards.length / F[this.footAct.pose].fps : 0;
     const acting = !!this.footAct && time - this.footAct.at < actLen + 0.3;
-    const wantFoot = w.mode === "ground" && (!!L.talk || L.held || acting) ? 1 : 0;
+    const still = Math.hypot(w.vx, w.vz) < 0.6;
+    const wantFoot = w.mode === "ground" && ((!!L.talk && still) || acting) ? 1 : 0;
     const fdt = Math.min(0.1, Math.max(0, time - this.footTime)), prevFoot = this.foot;
     this.footTime = time;
     this.foot += (wantFoot - this.foot) * Math.min(1, fdt * 8);

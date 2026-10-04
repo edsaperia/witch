@@ -1,12 +1,12 @@
 // Gathers the player's input from keyboard, gamepad and touch into one set of controls per frame.
 // Keyboard: WASD or arrows to fly, space to rise or descend, Z/X or +/- to zoom in/out, ~ for
-// debug, hold T, F or Shift to talk (invite), E or R to put down or pick up a sigil, I (debug) to
-// invite the nearest creature.
-// Gamepad: left stick (or d-pad) to fly, hold A to talk, X for the sigil, Y to rise or descend,
+// debug, E or R to put down or pick up a sigil, I (debug) to invite the nearest creature. (No Talk
+// button: she talks to creatures in range by herself, Ed v244; T, F, Shift and gamepad A are free.)
+// Gamepad: left stick (or d-pad) to fly, X for the sigil, Y to rise or descend,
 // shoulders or triggers to zoom, Back/Select for debug. Touch: the joystick and buttons in ui/touch.ts write into `touch`.
 import type { Controls } from "../rules/game";
 
-export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean; nextWave?: boolean; pauseWaves?: boolean; talk?: boolean; sigil?: boolean; spell?: boolean; cycle?: boolean }
+export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean; nextWave?: boolean; pauseWaves?: boolean; sigil?: boolean; spell?: boolean; cycle?: boolean }
 
 export class Input {
   private keys = new Set<string>();
@@ -49,7 +49,7 @@ export class Input {
     let toggleMode = p("Space");
     let zoom = (p("KeyX") || p("Minus") || p("NumpadSubtract") ? 1 : 0) - (p("KeyZ") || p("Equal") || p("NumpadAdd") ? 1 : 0);
     let debug = p("Backquote");
-    let talk = k("KeyT") + k("KeyF") + k("ShiftLeft") + k("ShiftRight") > 0, sigil = p("KeyE") || p("KeyR");
+    let sigil = p("KeyE") || p("KeyR"); // (no Talk button: she talks by herself, Ed v244)
     const inviteNearest = p("KeyI"), feedNearest = p("KeyB");
     let spell = p("KeyQ"), cycle = p("KeyC");
     this.pressed.clear();
@@ -72,7 +72,6 @@ export class Input {
       if (edge(4) || edge(6)) zoom += 1;
       if (edge(5) || edge(7)) zoom -= 1;
       if (edge(8)) debug = true;
-      if (btn(0)) talk = true;
       if (edge(2)) sigil = true;
       if (edge(1)) spell = true;
       if (edge(11)) cycle = true;
@@ -85,7 +84,6 @@ export class Input {
     if (t.toggle) toggleMode = true;
     zoom += t.zoom;
     if (t.debug) debug = true;
-    if (t.talk) talk = true;
     if (t.sigil) sigil = true;
     if (t.spell) spell = true;
     if (t.cycle) cycle = true;
@@ -93,6 +91,6 @@ export class Input {
 
     const len = Math.hypot(moveX, moveZ);
     if (len > 1) { moveX /= len; moveZ /= len; }
-    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug, nextWave, pauseWaves, cycleSpeakers, talk, sigil, inviteNearest, spell, cycle, feedNearest };
+    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug, nextWave, pauseWaves, cycleSpeakers, sigil, inviteNearest, spell, cycle, feedNearest };
   }
 }

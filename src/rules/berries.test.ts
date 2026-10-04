@@ -80,7 +80,7 @@ describe("berries and evolving", () => {
     }
     expect(c.level).toBe(LEGEND);
     expect(c.leashed).toBe(true);
-    stepLeash(leash, [c], { talk: false, sigil: false }, { x: c.x, z: c.z }, true, time, 0.05, t);
+    stepLeash(leash, [c], { sigil: false }, { x: c.x, z: c.z }, true, time, 0.05, t);
     expect(leash.stack).toContain(c.id);
     feed(s, c, time, t); // legends don't eat
     expect(s.evolving.has(c.id)).toBe(false);
