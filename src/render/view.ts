@@ -59,6 +59,10 @@ void main(){ vUv = uv; gl_Position = clipOf(onGround((modelMatrix * vec4(positio
 
 export interface ForestLight { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number }
 
+/** A frame's CPU budget (ms) for the view, of which the work done ahead (the forest, the hills,
+ *  ground tiles, art) gets whatever the frame's own work has left, each at least its floor. */
+const BACKGROUND_MS = 9;
+
 export interface ViewStats { berries: number; forestMs: number; forestMissing: number; sceneryRadius: number; fps: number; gameplay: number; scenery: number; dropped: number; trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number; lights: number; heightMoves?: number }
 
 export class View {
@@ -307,9 +311,17 @@ export class View {
   /** What was drawn last time, for the fresh tint and the pop check: one record for what the
    *  rebuild places (trees, undergrowth, walls, set pieces), one for what moves every frame
    *  (creatures, light props). */
-  private at = new Map<string, [number, number, number]>();
-  private tracks = { placed: { now: new Set<string>(), before: new Set<string>() }, moving: { now: new Set<string>(), before: new Set<string>() } };
+  private kindIds = new Map<string, number>();
+  private kindNames: string[] = [];
+  /** What was drawn this frame and last, by key: each key's index into its list of x, z, height, kind. */
+  private tracks = {
+    placed: { now: new Map<number, number>(), before: new Map<number, number>(), nowAt: [] as number[], beforeAt: [] as number[] },
+    moving: { now: new Map<number, number>(), before: new Map<number, number>(), nowAt: [] as number[], beforeAt: [] as number[] },
+  };
   pops: string[] = [];
+  /** Keep track of what appears and vanishes (into pops): the smoke check turns it on (and
+   *  ?debug=cull); off, a rebuild skips the bookkeeping. */
+  trackPops = false;
 
   private poseCamera(cam: THREE.PerspectiveCamera, pose: { angle: number; distance: number; tx: number; ty: number; tz: number }): void {
     const a = (pose.angle * Math.PI) / 180;
@@ -380,36 +392,48 @@ export class View {
   }
 
   /** Note that an object is drawn this frame; returns whether it has just appeared. */
-  private mark(kind: string, x: number, z: number, h: number, id: string | number = ""): boolean {
-    // Placed things are known by where they stand; moving ones (creatures) by their id, with
-    // where they are this frame kept for the in-view test.
+  private mark(kind: string, x: number, z: number, h: number, id: number = 0): boolean {
+    if (!this.trackPops && !this.debugCull) return false; // only the smoke check and ?debug=cull look
+    // Placed things are known by where they stand; moving ones (creatures) by their id. Keys are
+    // numbers (a hash of kind and place, 52 bits), not strings: a rebuild marks thousands.
     const tr = kind === "creature" || kind === "prop" ? this.tracks.moving : this.tracks.placed;
-    const k = kind === "creature" ? `${kind}|${id}` : `${kind}|${x.toFixed(1)}|${z.toFixed(1)}|${h.toFixed(1)}|${id}`;
-    if (kind === "creature") this.at.set(k, [x, z, h]);
-    tr.now.add(k);
+    let ki = this.kindIds.get(kind);
+    if (ki === undefined) { ki = this.kindNames.length; this.kindIds.set(kind, ki); this.kindNames.push(kind); }
+    let k: number;
+    if (kind === "creature") k = ki * 2 ** 40 + id;
+    else {
+      const xi = Math.round(x * 10), zi = Math.round(z * 10), hi = Math.round(h * 10);
+      const a = Math.imul(xi, 0x9e3779b1) ^ Math.imul(zi, 0x85ebca77) ^ Math.imul(hi, 0xc2b2ae3d) ^ Math.imul(ki + 1, 0x27d4eb2f);
+      const b = Math.imul(xi ^ 0x5bd1e995, 0x165667b1) ^ Math.imul(zi + 0x3c6ef372, 0xd3a2646c) ^ Math.imul(hi, 0xfd7046c5) ^ Math.imul(ki + 7, 0xb55a4f09);
+      k = (a >>> 6) * 67108864 + (b >>> 6);
+    }
+    if (!tr.now.has(k)) { tr.now.set(k, tr.nowAt.length); tr.nowAt.push(x, z, h, ki); }
     return !tr.before.has(k);
   }
 
   /** Compare what was drawn with last time: anything appearing or vanishing in clear view is a pop. */
   private checkPops(which: "placed" | "moving", record = true): void {
     const tr = this.tracks[which], live = record && this.assets.pending === 0 && tr.before.size > 0;
-    if (this.debugCull) for (const k of tr.before) if (!tr.now.has(k)) {
-      const p = this.at.get(k), [, ...rest] = k.split("|"), [x, z, h] = p ?? rest.map(Number);
-      this.ghosts.push({ x: +x, z: +z, h: Math.max(1, +h), until: this.now + 1 });
+    if (this.debugCull) for (const [k, i] of tr.before) if (!tr.now.has(k)) {
+      const A = tr.beforeAt;
+      this.ghosts.push({ x: A[i], z: A[i + 1], h: Math.max(1, A[i + 2]), until: this.now + 1 });
     }
     if (live) {
-      const at = (k: string, what: string) => {
-        const p = this.at.get(k), [kind, ...rest] = k.split("|"), [x, z, h] = p ?? rest.map(Number);
+      const at = (A: number[], i: number, what: string) => {
+        const x = A[i], z = A[i + 1], h = A[i + 2], kind = this.kindNames[A[i + 3]];
         // Scenery in or past the budget's fade has faded out: its coming and going isn't seen.
-        const w = this.game.witch, faded = which === "placed" && Math.hypot(+x - w.x, +z - w.z) > this.budget.radius - this.game.tuning.scenery.fade;
-        if (!faded && this.inInnerView(+x, +z, +h)) this.pops.push(`${what} ${kind} ${(+x).toFixed(0)},${(+z).toFixed(0)}`);
+        const w = this.game.witch, faded = which === "placed" && Math.hypot(x - w.x, z - w.z) > this.budget.radius - this.game.tuning.scenery.fade;
+        if (!faded && this.inInnerView(x, z, h)) this.pops.push(`${what} ${kind} ${x.toFixed(0)},${z.toFixed(0)}`);
       };
       // (Scenery appearing while a just-drawn set fades in is that fade, not a pop.)
-      if (which !== "placed" || !this.appearing.size) for (const k of tr.now) if (!tr.before.has(k)) at(k, "appeared");
-      for (const k of tr.before) if (!tr.now.has(k)) at(k, "vanished");
+      if (which !== "placed" || !this.appearing.size) for (const [k, i] of tr.now) if (!tr.before.has(k)) at(tr.nowAt, i, "appeared");
+      for (const [k, i] of tr.before) if (!tr.now.has(k)) at(tr.beforeAt, i, "vanished");
     }
-    tr.before = tr.now;
-    tr.now = new Set();
+    // Swap, reusing last time's map and list for next time.
+    const oldMap = tr.before, oldAt = tr.beforeAt;
+    tr.before = tr.now; tr.beforeAt = tr.nowAt;
+    oldMap.clear(); oldAt.length = 0;
+    tr.now = oldMap; tr.nowAt = oldAt;
   }
 
   /** On foot: 0 flying, 1 landed (eased), and the sigil pose she's playing, if any. */
@@ -423,7 +447,9 @@ export class View {
 
   /** Rebuild the batches for what the camera sees, once it has moved, turned or zoomed. */
   private refresh(force = false): void {
-    const g = this.game, t = g.tuning, cam = this.camera, margin = t.viewMargin, pose = poseOf(g);
+    // The margin grows with her speed (a quarter second's flight), so at full boost the batches are
+    // rebuilt every 10 m or so rather than every 4 (Ed, v256: dropped frames boosting over the treetops).
+    const g = this.game, t = g.tuning, cam = this.camera, margin = Math.max(t.viewMargin, Math.hypot(g.witch.vx, g.witch.vz) * 0.25), pose = poseOf(g);
     const key = { x: cam.position.x, y: cam.position.y, z: cam.position.z };
     const lp = this.lastPose, lift = g.witch.mode === "rising" || g.witch.mode === "treetop" ? 1 : 0;
     const moved = Math.hypot(key.x - this.lastBuild.x, key.y - this.lastBuild.y, key.z - this.lastBuild.z) >= margin / 3;
@@ -783,6 +809,8 @@ export class View {
   private runeGreen = new THREE.Vector3(0.45, 1, 0.5);
   /** Sparks from campfires lighting up as the party arrives (drawn with the markers' motes, next frame). */
   private fireSparks: Mote[] = [];
+  /** Each light source's area (a campfire's party), worked out once. */
+  private sourceCell = new WeakMap<object, string>();
   private updateSources(time: number): void {
     const f = this.assets.props.frames, items: SpriteInstance[] = [], lights: ForestLight[] = [], g = this.game;
     this.fireSparks = [];
@@ -792,7 +820,9 @@ export class View {
       if (src.kind === "campfire") {
         // Campfires are party objects (Ed, 2026-10-04): none in the dormant forest; in a partified
         // area they light up with a whoosh of sparks as the party arrives (late in its transition).
-        const a = g.party.areas.get(cellKey(g.map.areaAt(src.x, src.z).cell));
+        let key = this.sourceCell.get(src);
+        if (key === undefined) this.sourceCell.set(src, (key = cellKey(g.map.cellSafe(src.x, src.z).cell))); // it never moves: ask once
+        const a = g.party.areas.get(key);
         if (!a) continue;
         const since = time - (a.at + g.tuning.party.transition * 0.7 + k * 1.5);
         if (since < 0) continue;
@@ -925,10 +955,11 @@ export class View {
   /** Milliseconds each part of the latest frame took (for the perf check: tools/smoke). */
   ms: Record<string, number> = {};
   private lap = 0;
+  private frameStart = 0;
   private time(part: string): void { const now = performance.now(); this.ms[part] = (this.ms[part] ?? 0) + now - this.lap; this.lap = now; }
 
   render(time: number, draw = true): void {
-    this.ms = {}; this.lap = performance.now();
+    this.ms = {}; this.lap = this.frameStart = performance.now();
     const g = this.game, t = g.tuning, pose = poseOf(g);
     // The scenery budget follows the real frame rate (only frames that are drawn count).
     if (draw) {
@@ -1117,13 +1148,6 @@ export class View {
     this.refresh();
     this.time("refresh");
     this.easeAppearing();
-    // Make the forest ahead a little each frame (about 4 ms), centred where the view will be in two
-    // seconds at her speed, so a rebuild finds its chunks already made instead of making a whole
-    // strip at once (a stutter flying into new forest).
-    const lv = this.lastView;
-    if (lv) this.stats.forestMissing = g.forest.prefetch(lv.x + w.vx * 2, lv.z + w.vz * 2, lv.half + 64, 4);
-    this.stats.forestMs = g.forest.buildMs; g.forest.buildMs = 0;
-    this.time("prefetch");
     this.drawCreatures(time);
     this.drawBerries(time);
     this.checkPops("moving");
@@ -1152,10 +1176,26 @@ export class View {
     this.time("hud");
     this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
     this.time("leash");
-    this.assets.work(6);
-    this.time("art");
+    // Work done ahead, a little each frame, out of what's left of the frame's budget (Ed, v256:
+    // boosting over the treetops dropped frames when a rebuild, the hills' window moving and
+    // these all fell in one frame). Each gets at least its floor, so all keep up at full boost.
+    let spare = BACKGROUND_MS - (performance.now() - this.frameStart);
+    const give = (most: number, floor: number) => Math.max(floor, Math.min(most, spare));
+    const took = (from: number) => { spare -= performance.now() - from; };
+    let t0 = performance.now();
+    // The hills' next strip, in the direction she's flying (the window moves every 16 m).
+    this.heights.prepare(w.vx, w.vz, give(2, 0.5));
+    took(t0); this.time("heightsAhead"); t0 = performance.now();
+    // The forest ahead, centred where the view will be in two seconds at her speed, so a rebuild
+    // finds its chunks already made instead of making a whole strip at once.
+    const lv = this.lastView;
+    if (lv) this.stats.forestMissing = g.forest.prefetch(lv.x + w.vx * 2, lv.z + w.vz * 2, lv.half + 64, give(4, 1));
+    this.stats.forestMs = g.forest.buildMs; g.forest.buildMs = 0;
+    took(t0); this.time("prefetch"); t0 = performance.now();
+    this.assets.work(give(6, 1));
+    took(t0); this.time("art");
     // The ground's area tiles: everything the cameras can see, plus a band ahead.
-    this.stats.pendingGround = this.ground.fill(this.renderer, this.viewRect(t.haze.far, 40), w.x, w.z, 4);
+    this.stats.pendingGround = this.ground.fill(this.renderer, this.viewRect(t.haze.far, 40), w.x, w.z, give(4, 1));
     this.stats.pendingArt = this.assets.pending;
     this.time("groundTiles");
     if (this.debugCull) this.drawGhosts(time);

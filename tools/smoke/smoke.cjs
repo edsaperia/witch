@@ -99,7 +99,7 @@ async function main() {
     await shot(page, "04-treetop-flying.png");
     // Fly a fixed path through every zoom level in both modes; nothing of any kind may appear or
     // vanish in clear view on the way (trees, undergrowth, walls, set pieces, creatures, props).
-    await page.evaluate(() => { window.witch.view.pops = []; });
+    await page.evaluate(() => { window.witch.view.pops = []; window.witch.view.trackPops = true; });
     const steps = await page.evaluate(() => window.witch.game.tuning.camera.zoomSteps);
     const keys = ["KeyA", "KeyS", "KeyD", "KeyW"];
     const path = async () => {
@@ -134,7 +134,7 @@ async function main() {
       const t0 = await page.evaluate(() => window.witch.game.clock.time);
       await page.waitForFunction(t => window.witch.game.clock.time - t >= 0.5, t0, { timeout: 120000, polling: 50 });
       await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 900000, polling: 500 });
-      await page.evaluate(() => { window.witch.view.pops = []; });
+      await page.evaluate(() => { window.witch.view.pops = []; window.witch.view.trackPops = true; });
       await path();
       await shot(page, "08-heath.png");
     }
@@ -432,7 +432,7 @@ async function main() {
   for (const [w, h, dpr] of [[1900, 1240, 1], [2000, 1076, 2]]) {
     await run(`vanish-${w}x${h}`, { width: w, height: h, dpr }, async page => {
       await page.keyboard.press("Enter");
-      await page.evaluate(() => { const v = window.witch.view; v.pops = []; window.maxDropped = 0; setInterval(() => { window.maxDropped = Math.max(window.maxDropped, v.stats.dropped); }, 50); });
+      await page.evaluate(() => { const v = window.witch.view; v.pops = []; v.trackPops = true; window.maxDropped = 0; setInterval(() => { window.maxDropped = Math.max(window.maxDropped, v.stats.dropped); }, 50); });
       await hold(page, "KeyD", 4, 600000);
       await shot(page, `vanish-${w}x${h}-ground.png`);
       await page.keyboard.press("Space");
