@@ -45,6 +45,8 @@ function rlCar(m, g, { len = 1.5, van = false, glow = false, flat = false } = {}
   if (glow) for (const z of [-.45, .45]) rlGlow(m, [len + .05, y + h * .2, z], .07, g + 2, M.MAGIC2);
 }
 
+export const carModel = (m, g, o) => rlCar(m, g, o); // a car's model, for the country pieces' parked car
+
 // ---------------- modern relics ----------------
 const MODERN = {
   "car-nose-down": { desc: "a hatchback nose-down in the earth, ferns round it", build(m) {
