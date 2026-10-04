@@ -969,7 +969,7 @@ describe("laser shows", () => {
     let same = 0;
     for (let t = 0; t < 300; t += 0.5) if ((laserShow(t, 3, 1, TUNING).on > 0.5) === (laserShow(t, 4, 1, TUNING).on > 0.5)) same++;
     expect(same / 600).toBeLessThan(0.9);
-  });
+  }, 60000); // (144 000 shows compared: near the default 5 s on a busy CI runner)
 });
 
 describe("area borders", () => {
