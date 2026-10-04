@@ -38,6 +38,10 @@
     #news b { color: var(--ink); font-weight: normal; }
     #news ul { margin: 2px 0 6px; padding-left: 1.3em; }
     #start .keys b { color: var(--ink); font-weight: normal; }
+    #progress { position: relative; height: 16px; margin: -4px 0 14px; border: 1px solid #3a2f5c; border-radius: 8px; overflow: hidden; }
+    #progress .fill { position: absolute; inset: 0 auto 0 0; width: 0; background: #3a2f5c; transition: width .3s; }
+    #progress .label { position: relative; font-size: 11px; line-height: 16px; color: var(--dim); }
+    #progress.done { display: none; }
     #start.loading .go::after { content: " (growing the forest…)"; color: var(--dim); }
     #touch { position: fixed; inset: 0; display: none; pointer-events: none; }
     .touch #touch { display: block; }
@@ -66,7 +70,7 @@
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
     .bubble .bar i { display: block; height: 100%; background: #ff7fd0; }
   </style>
-  <script type="module" crossorigin src="./assets/index-PDZopjFS.js"></script>
+  <script type="module" crossorigin src="./assets/index-CBmu1GrJ.js"></script>
 </head>
 <body>
   <canvas id="game"></canvas>
@@ -91,6 +95,7 @@
       <h1>WITCH</h1>
       <div>a prototype: fly the witch round the forest at night</div>
       <div class="go">Tap, click or press any key to start</div>
+      <div id="progress"><div class="fill"></div><span class="label"></span></div>
       <div id="waves"></div>
       <div id="news"></div>
       <div class="keys">
