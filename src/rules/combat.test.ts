@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { attackOf, COMBAT, maxHp } from "./combat";
 import { LEGEND, type Creature, type Level } from "./creatures";
-import { newGame, stepGame, STEP, type Game } from "./game";
+import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING, type Tuning } from "./tuning";
 import { AREA_TYPES } from "./map";
 import { canEat, feed } from "./berries";
 import { invitable } from "./leash";
 import { hurt, knockOut, newHealth, repair } from "./knockout";
 
-const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
+const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const run = (g: Game, secs: number, c = idle) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, c, STEP); };
 /** A game with the witch off her seat, on the ground, somewhere quiet (no creature within 60 m). */
 function quiet(t: Tuning = TUNING): Game {
@@ -40,35 +40,42 @@ describe("combat (Stage 4)", () => {
       expect(l.attack.delivery).toBe("quake");
       expect(l.attack.windup).toBeGreaterThan(a.attack.windup); // slow and heavy
     }
-    expect(attackOf("owl", 1)!.attack.delivery).toBe("shot");
+    expect(attackOf("moth", 1)!.attack.delivery).toBe("shot");
+    expect(attackOf("toad", 1)!.attack.delivery).toBe("pulse"); // (Stage 5: the toad slams as it lands, the bat screeches)
+    expect(attackOf("owl", 1)!.attack.delivery).toBe("lob"); // (Stage 5: the owl lobs, the salamander and spider beam)
+    expect(attackOf("salamander", 1)!.attack.delivery).toBe("beam");
     expect(attackOf("wolf", 1)!.attack.delivery).toBe("melee");
   });
 
   it("gives every attack of a level the same power budget (damage a second)", () => {
     for (const level of [1, 2, 3] as Level[]) {
-      const rates = AREA_TYPES.map(a => { const k = attackOf(a.creature, level)!; return k.damage / k.attack.cooldown; });
+      const rates = AREA_TYPES.map(a => { const k = attackOf(a.creature, level)!; return k.damage / k.attack.cooldown / (k.attack.factor ?? 1); }); // (each delivery's factor allows for misses and area hits)
       for (const r of rates) expect(r).toBeCloseTo(COMBAT.levels.dps[level]);
     }
   });
 
-  it("party animals and wild ones of other kinds fight until one side is beaten: the wild one flees and is gone", () => {
+  it("party animals and wild ones of other kinds fight until one side is beaten: the wild one runs off the map", () => {
     const g = quiet(), w = g.witch;
     const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true), wild = place(g, 0, "boar", 1, w.x + 4, w.z);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // (on the ground she'd chat the boar into her party)
     run(g, 40);
     expect(mine.hp).toBeLessThan(maxHp(2)); // it was hit too
-    expect(wild.gone).toBe(true);
+    expect(wild.fleeUntil).toBeTruthy(); // running for the map's edge (Ed: beaten creatures run off the map)
+    const x0 = wild.x, z0 = wild.z; run(g, 3);
+    expect(Math.hypot(wild.x - x0, wild.z - z0)).toBeGreaterThan(5);
+    expect(wild.fight).toBeUndefined();
     expect(mine.gone).toBeFalsy();
     expect(g.leash.stack).toContain(mine.id);
   }, 60000);
 
-  it("loses a beaten party animal for the run", () => {
+  it("loses a beaten party animal for the run: it runs off the map, off its leash", () => {
     const g = quiet(), w = g.witch;
     const mine = place(g, 0, "hedgehog", 1, w.x + 2, w.z, true);
     place(g, 0, "bear", 2, w.x + 4, w.z); place(g, 0, "bear", 2, w.x + 3, w.z + 2);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // out of reach herself
     run(g, 60);
-    expect(mine.gone).toBe(true);
+    expect(mine.fleeUntil).toBeTruthy();
+    expect(mine.leashed).toBe(false);
     expect(g.leash.stack).not.toContain(mine.id);
   }, 60000);
 
@@ -87,6 +94,7 @@ describe("combat (Stage 4)", () => {
     run(g, 10);
     expect(g.witches[0].health.hp).toBe(TUNING.witchHealth.hits);
     const owl = place(g, 0, "owl", 1, w.x + 8, w.z);
+    place(g, 0, "owl", 1, w.x - 8, w.z); // (two: the one she chats with holds its fire on her)
     g.witch = { ...g.witch, mode: "treetop", lift: 1 };
     run(g, 8);
     expect(g.witches[0].health.hp).toBe(TUNING.witchHealth.hits);
@@ -98,8 +106,8 @@ describe("combat (Stage 4)", () => {
 
   it("keeps the wild ones' shots off their own kind and their own side", () => {
     const g = quiet(), w = g.witch;
-    const a = place(g, 0, "owl", 2, w.x + 8, w.z), b = place(g, 0, "toad", 1, w.x + 4, w.z); // the toad between the owl and her
-    run(g, 12);
+    const a = place(g, 0, "owl", 2, w.x + 8, w.z), b = place(g, 0, "toad", 2, w.x + 4, w.z); // the toad between the owl and her
+    run(g, 9); // (before she's chatted the toad into her party)
     expect(a.hp ?? maxHp(2)).toBe(maxHp(2));
     expect(b.hp ?? maxHp(1)).toBe(maxHp(1));
   }, 60000);
@@ -191,7 +199,7 @@ describe("a hit at her last point", () => {
   it("knocks her out", () => {
     const g = quiet(), w = g.witch;
     g.witches[0].health.hp = 1;
-    place(g, 0, "owl", 2, w.x + 11, w.z); // (an adult: too long a chat to invite before it shoots)
+    place(g, 0, "owl", 2, w.x + 11, w.z); place(g, 0, "owl", 2, w.x - 11, w.z); // (two: the one she chats with holds its fire on her)
     for (let i = 0; i < 20 / STEP && !g.witches[0].ko; i++) stepGame(g, idle, STEP);
     expect(g.witches[0].ko).not.toBeNull();
     expect(g.koEvents.length + 1).toBeGreaterThan(0);
@@ -253,7 +261,7 @@ describe("Ed's Stage 4 rulings", () => {
   it("has party animals following her take on only what attacks her or them; parked ones guard round their sigil", () => {
     const g = quiet(), w = g.witch;
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // nothing attacks her up there
-    const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true), idler = place(g, 0, "boar", 1, w.x + 14, w.z); // beyond its aggro of the wolf
+    const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true), idler = place(g, 0, "boar", 1, w.x + 22, w.z); // beyond its aggro of the wolf
     idler.rest = 100;
     run(g, 3);
     expect(mine.fight?.target ?? null).toBeNull(); // the boar isn't attacking anyone: leave it
@@ -296,7 +304,7 @@ describe("Ed's Stage 4 rulings", () => {
   it("has kiting kinds (the raven) keep their distance while they shoot", () => {
     const g = quiet(), w = g.witch;
     const raven = place(g, 0, "raven", 1, w.x + 4, w.z);
-    run(g, 4);
+    run(g, 10, { ...idle, autoTalk: false }); // (auto-talk off: she doesn't chat with it, so it shoots)
     const d = Math.hypot(raven.x - g.witch.x, raven.z - g.witch.z), R = attackOf("raven", 1)!.attack.range;
     expect(d).toBeGreaterThan(R * COMBAT.kite.near * 0.8);
   }, 60000);
@@ -331,4 +339,74 @@ describe("sieges (Stage 4)", () => {
     for (let i = 0; i < 30 / STEP && !g.over; i++) stepGame(g, idle, STEP);
     expect(g.over).not.toBeNull(); // every soundsystem down: the run is over
   }, 180000);
+});
+
+describe("Ed's playtest (2026-10-04)", () => {
+  /** A spot `d` metres from the witch in a given direction that's in her area (or not). */
+  const spot = (g: Game, d: number, sameArea: boolean) => {
+    const w = g.witch, k = g.map.cellSafe(w.x, w.z).cell;
+    for (const r of sameArea ? [d, d - 8, d - 16, d - 24] : [d, d + 15, d + 30, d + 45, d + 60, d + 80]) for (let a = 0; a < 64; a++) {
+      const x = w.x + Math.cos(a * 0.37) * r, z = w.z + Math.sin(a * 0.37) * r, c = g.map.cellSafe(x, z).cell;
+      if ((c[0] === k[0] && c[1] === k[1]) === sameArea) return { x, z };
+    }
+    throw new Error("no such spot");
+  };
+
+  it("wild creatures go for her as soon as she's on the ground in their area, not before", () => {
+    const g = quiet(), inside = spot(g, 40, true), outside = spot(g, 25, false);
+    const a = place(g, 0, "wolf", 1, inside.x, inside.z), b = place(g, 0, "boar", 1, outside.x, outside.z);
+    run(g, 1, { ...idle, autoTalk: false });
+    expect(a.fight?.target).toEqual({ kind: "witch", id: 0 }); // well out of its range, but in her area
+    expect(b.fight?.target ?? null).toBeNull(); // out of her area, and out of its range
+  }, 60000);
+
+  it("holds the fire of the one she's chatting with (its friends still shoot)", () => {
+    const g = quiet(), w = g.witch;
+    const owl = place(g, 0, "owl", 2, w.x + 6, w.z);
+    run(g, 6);
+    expect(g.leash.talk?.id).toBe(owl.id);
+    expect(owl.fight?.target ?? null).toBeNull();
+    expect(g.witches[0].health.hp).toBe(TUNING.witchHealth.hits);
+    const friend = place(g, 0, "owl", 2, w.x - 7, w.z);
+    run(g, 5);
+    expect(friend.fight?.target).toEqual({ kind: "witch", id: 0 });
+  }, 60000);
+
+  it("can't invite a creature enraged by a wave (besieging); a woken area's babies stay invitable", () => {
+    const g = newGame(77, TUNING);
+    g.clock.paused = false;
+    g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
+    const next = g.party.next[0], here = g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1]);
+    here.slice(1).forEach(c => { c.level = 1; }); here[0].level = 0;
+    stepGame(g, { ...idle, nextWave: true }, STEP);
+    const angry = here[1];
+    expect(angry.enraged).toBe(true);
+    expect(invitable(angry)).toBe(false);
+    expect(here[0].enraged).toBeFalsy();
+    expect(invitable(here[0])).toBe(true);
+  }, 60000);
+
+  it("has a beaten creature run off, out of sight, and then it's gone for good", () => {
+    const g = quiet(), w = g.witch;
+    const wild = place(g, 0, "boar", 1, w.x + 4, w.z);
+    wild.hp = 1;
+    const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true);
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 };
+    for (let i = 0; i < 20 / STEP && !wild.fleeUntil; i++) stepGame(g, idle, STEP);
+    expect(wild.fleeUntil).toBeTruthy();
+    expect(wild.gone).toBeFalsy(); // not on the spot
+    for (let i = 0; i < 600 / STEP && !wild.gone; i++) stepGame(g, idle, STEP / 1);
+    expect(wild.gone).toBe(true);
+    expect(Math.hypot(wild.x - g.witch.x, wild.z - g.witch.z)).toBeGreaterThan(TUNING.haze.far);
+    expect(mine.gone).toBeFalsy();
+  }, 180000);
+
+  it("has creatures notice her: curious babies come up, skittish ones keep off, others turn to look", () => {
+    const g = quiet(), w = g.witch, near = spot(g, 18, true), near2 = spot(g, 8, true);
+    const pup = place(g, 0, "squirrel", 0, near.x, near.z), shy = place(g, 0, "hare", 0, near2.x, near2.z);
+    const d0 = Math.hypot(pup.x - w.x, pup.z - w.z), s0 = Math.hypot(shy.x - w.x, shy.z - w.z);
+    run(g, 6, { ...idle, autoTalk: false });
+    expect(Math.hypot(pup.x - g.witch.x, pup.z - g.witch.z)).toBeLessThan(d0 - 2); // curious
+    expect(Math.hypot(shy.x - g.witch.x, shy.z - g.witch.z)).toBeGreaterThan(s0); // skittish
+  }, 60000);
 });

@@ -8,8 +8,9 @@ import { hash2 } from "./random";
 export interface Patch {
   /** kick: a falling sine; noise: filtered noise (hats, claps, shakers, snaps); snare: noise and a
    *  tone; synth: oscillators through a filter; bell: two square tones (a cowbell, pitched);
-   *  riser: noise swept up over a build; impact: a noise burst and a falling sub. */
-  kind: "kick" | "noise" | "snare" | "synth" | "bell" | "riser" | "impact";
+   *  riser: noise swept up over a build; impact: a noise burst and a falling sub; voice: a sung
+   *  note, synthesised (a buzz through vowel formants, vibrato, breath). */
+  kind: "kick" | "noise" | "snare" | "synth" | "voice" | "bell" | "riser" | "impact";
   gain: number;
   /** synth: oscillator shapes (one oscillator each, spread by detune cents). */
   waves?: OscillatorType[];
@@ -27,6 +28,27 @@ export interface Patch {
   ratio?: number;
   /** noise: bursts (a clap's 3). */
   bursts?: number;
+  /** kick: the beater's click (0-1). noise: "metal" for the 808's six square tones (hats, cymbals). */
+  click?: number;
+  source?: "noise" | "metal";
+  /** synth: each wave as this many detuned voices (a supersaw: 7), spread across ±width of the stereo field. */
+  unison?: number;
+  width?: number;
+  /** synth: each note starts this many semitones off and slides to its pitch over bendTime. */
+  bend?: number;
+  bendTime?: number;
+  /** synth: a slow filter wobble, lfoRate Hz by lfoDepth Hz. */
+  lfoRate?: number;
+  lfoDepth?: number;
+  /** voice: the vowels it sings in turn (ah, oh, oo, eh, ee), their formants scaled by formantShift,
+   *  vibrato depth in cents, and how much breath (noise). */
+  vowels?: string[];
+  formantShift?: number;
+  vibrato?: number;
+  breath?: number;
+  /** The part's channel: a high-pass (Hz) to keep the low end clear, and its place left (-1) to right (1). */
+  hp?: number;
+  pan?: number;
   /** sends 0-1, and whether the kick ducks it (the house pump). */
   reverb?: number; delay?: number; duck?: boolean;
 }

@@ -4,6 +4,7 @@ import { musicMix } from "./rules/music";
 import { musicCue, type MusicCue } from "./rules/musicPlan";
 import type { MusicStyle } from "./rules/musicScore";
 import musicStyleJson from "../config/music-style.json";
+import { setupArena } from "./rules/arena";
 import { areaUnderWitch, interpolated, newGame, STEP, stepGame } from "./rules/game";
 import { AREA_TYPES } from "./rules/map";
 import { waveCountdown } from "./rules/party";
@@ -16,6 +17,8 @@ import { SPRITE_UNIFORMS } from "./render/sprites";
 import { loadStyle } from "./render/style";
 import { setupTouch } from "./ui/touch";
 import changelog from "../config/changelog.json";
+import { PlaytestLog } from "./platform/playtestLog";
+import { powerReport } from "./rules/power";
 
 const params = new URLSearchParams(location.search);
 let seed = parseSeed(params.get("seed"));
@@ -89,6 +92,8 @@ if (reliefParam !== null && !isNaN(Number(reliefParam))) tuning.ground = { ...tu
 // ?hills=0: the ground flat again; ?hills=<amplitude>: the rolling ground's swells, in metres.
 const hillsParam = params.get("hills");
 if (hillsParam !== null && !isNaN(Number(hillsParam))) tuning.ground = { ...tuning.ground, hills: { ...tuning.ground.hills, on: Number(hillsParam) > 0, amplitude: Number(hillsParam) > 0 ? Number(hillsParam) : tuning.ground.hills.amplitude } };
+// ?ley=0: no ley lines through the runestones.
+if (params.get("ley") === "0") tuning.leyLines = { ...tuning.leyLines, on: false };
 // ?bare=1: the terrain on its own, to judge the hills, the bumps and the bend (Ed, 2026-10-04): no
 // trees, undergrowth, grass, decor, scenes, relics, path props, string lights, mist or shadows; no
 // point lights, glow or haze, and a low raking moonlight. ?bare=2: a flat grey ground with contour
@@ -114,6 +119,13 @@ const fx = params.get("fx");
 if (fx === "pixel" || fx === "smooth") tuning.fx = fx;
 
 const game = newGame(seed, tuning);
+// ?arena=wolf*4,beetle*3 (Stage 5, a debug arena): hers against the wild in the home clearing,
+// no waves; J sets it up again.
+const arenaParam = params.get("arena");
+if (arenaParam) {
+  setupArena(game, arenaParam);
+  window.addEventListener("keydown", e => { if (e.code === "KeyJ" && !e.repeat) setupArena(game, arenaParam); });
+}
 
 // How often the party spreads: the tuning file's interval (5 minutes), or ?wave=<seconds> (0 or
 // "off": no waves), or what this viewer last picked on the start screen.
@@ -128,6 +140,7 @@ let waveChoice = tuning.party.interval;
 try { const saved = localStorage.getItem("witch.wave"); if (saved !== null && WAVE_CHOICES.includes(+saved)) waveChoice = +saved; } catch { /* storage blocked */ }
 const waveParam = params.get("wave");
 if (waveParam !== null) waveChoice = waveParam === "off" ? 0 : Math.max(0, +waveParam || 0);
+if (arenaParam) waveChoice = 0;
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = loadStyle();
@@ -156,6 +169,11 @@ window.addEventListener("keydown", e => { if (e.code === "KeyG" && !e.repeat) to
 // M: the debug minimap (the party's spread: woken areas, the next to wake, the candidates).
 window.addEventListener("keydown", e => { if (e.code === "KeyM" && !e.repeat) view.minimap.on = !view.minimap.on; });
 document.getElementById("rulers")!.addEventListener("pointerdown", e => { e.preventDefault(); toggleRulers(); });
+// The playtest log (Ed, 2026-10-04): a sample every 10 s of play, kept on this browser; L, or
+// opening the game with ?playtest=download, saves the last few runs as JSON.
+const playtest = new PlaytestLog(game, typeof __BUILD__ === "string" ? __BUILD__ : "dev");
+window.addEventListener("keydown", e => { if (e.code === "KeyL" && !e.repeat) playtest.download(); });
+if (params.get("playtest") === "download") setTimeout(() => playtest.download(), 500);
 
 // The action bar (1 2 3 4 Q W E R, its keys and recharge) replaces the old line of controls (Ed,
 // 2026-10-04); H shows or hides it (remembered on this browser).
@@ -292,6 +310,7 @@ function frame(now: number): void {
     document.getElementById("over-stats")!.textContent = `You lasted ${Math.floor(game.clock.time / 60)} min ${Math.floor(game.clock.time % 60)} s and ${game.party.wave} waves.`;
     document.getElementById("over")!.classList.add("on");
   }
+  playtest.update();
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
   musicCueNow = musicCue(game, musicCueNow);
   music?.update(musicMix(game, game.witch), musicCueNow, game.clock.time, game.beat, !game.clock.paused);
@@ -320,10 +339,23 @@ function frame(now: number): void {
       `trees  ${s.trees}  bushes ${s.bushes}  creatures ${s.creatures}`,
       `budget scenery to ${s.sceneryRadius.toFixed(0)} m (${s.scenery})  gameplay ${s.gameplay}  dropped ${s.dropped}`,
       `draws  ${s.drawCalls}  art queued ${s.pendingArt}  ground tiles ${s.pendingGround}`,
+      ...powerLines(),
     ].join("\n");
   }
 }
 requestAnimationFrame(frame);
+
+/** The power meter (Ed, 2026-10-04): fighting value, Σ √(hp × dps) (rules/power.ts), of the party
+ *  (leashed and parked) against each siege and every besieger together. */
+function powerLines(): string[] {
+  const p = powerReport(game.creatures, game.witches, game.combat.sounds), n = p.counts, f = (x: number) => x.toFixed(0);
+  const sieges = p.sieges.slice(0, 4).map(s => `${s.key} ${f(s.value)} (${s.count}, ${f(s.hp)} hp)`).join("  ");
+  return [
+    `power  party ${f(p.leashed + p.parked)} = leashed ${f(p.leashed)} + parked ${f(p.parked)}   ${n[0]}b ${n[1]}y ${n[2]}a ${n[3]}L   berries ${game.tally.berries} invites ${game.tally.invites}`,
+    `wild   grown ${game.growth.grown} a wave at a time, ${game.growth.made} come out, ${game.growth.grown - game.growth.made} waiting as counts   creatures ${game.creatures.length}`,
+    `enemy  marching ${f(p.marching)}${p.sieges.length ? `   ${sieges}${p.sieges.length > 4 ? ` +${p.sieges.length - 4} more` : ""}` : ""}   (L saves the playtest log)`,
+  ];
+}
 
 // For the smoke test and for poking at in the console.
 (window as unknown as { witch: unknown }).witch = { game, view,

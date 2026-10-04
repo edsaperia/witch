@@ -45,7 +45,9 @@ So the party's growth is both the goal and the source of the danger.
 
 - The player is a **witch flying on a broomstick**.
 - She **does not fight**. She is not safe from attack: **wild creatures attack her on the ground** (Ed, 2026-10-04, after a playtest: inviting was too cheap, flying into the next wave's area and inviting everything before it woke). Wild young and up shoot at her or strike her in ground mode within range, with telegraphed, dodgeable attacks; she's safe over the treetops. **She can still invite them while they attack**, so inviting means dodging while staying near them: a main part of the game loop. Big, strong groups are hard to invite without getting hit; babies are the easiest (they don't attack and are quick to convince). A hit doesn't set an invite back: losing a hit is the cost (Ed, 2026-10-04).
-- **Aggro on the witch** (Ed, 2026-10-04): a wild creature goes for her once she's within its attack range or 30 m; it lets her go when she rises to the treetops, or once she's out of its area **and** out of its range **and** at least 30 m away, and then walks back to its spot. Attacks are mixed by species: some shoot slow, telegraphed shots; melee ones wind up and lunge. Both can be dodged. Some kinds **kite**: long-range attackers that hold a distance as part of their attack, backing off when she closes in and closing in when she's too far (Ed: "some creatures try and keep a certain distance as part of their attack pattern, rather than they run away per se").
+- **Aggro on the witch** (Ed, 2026-10-04): a wild creature goes for her as soon as she's on the ground **in its area** (Ed's playtest, 2026-10-04; it replaced "within its attack range or 30 m"), or within its attack range; it lets her go when she rises to the treetops, or once she's out of its area **and** out of its range **and** at least 30 m away, and then walks back to its spot. Attacks are mixed by species: some shoot slow, telegraphed shots; melee ones wind up and lunge. Both can be dodged. Some kinds **kite**: long-range attackers that hold a distance as part of their attack, backing off when she closes in and closing in when she's too far (Ed: "some creatures try and keep a certain distance as part of their attack pattern, rather than they run away per se").
+- **Inviting under fire** (Ed's playtest, 2026-10-04): **the creature she's inviting doesn't attack her** while the chat runs (its friends still do). **A creature enraged by a wave (besieging or marching on a soundsystem) can't be invited**: repelling a big mixed attack shouldn't turn into inviting one and watching the rest set on it. Enraged creatures show angry red eyes. A creature that's only going for the witch (above) isn't enraged and stays invitable.
+- **A larger responsive area** (Ed's playtest: "this will make them feel much more alive and responsive"): creatures notice and react from further off (to each other, the party and her: `combat.aggro`, `combat.engage`, `guard.radius`, `notice` in the tuning file). Wild ones roaming near her on the ground turn to look at her when they pause; babies of a curious kind come up to her, skittish ones keep their distance.
 - **Her health** (Ed, 2026-10-04): she takes **three hits** (one point each, whatever hits her). One comes back every **20 s**, the timer starting over whenever she's hit, so to recover she has to get right out of the fight. Pips under her show her hits once she's been hit.
 - **Knocked out** (Ed, 2026-10-04): at no hits left she collapses where she is (no more hits, no input). **Her sigil stack lets go from the bottom up, about a second each**, each sigil splashing away and its leash dissolving; as each goes, **its creature is no longer hers**: it turns **neutral** (it attacks no one) and walks at its own pace to the **nearest area of its own kind** (else the nearest area the party hasn't reached), where it becomes an ordinary wild creature of that area, keeping its level (and wakes with that area's wave). On the way it can be invited again, at the normal time. **Creatures at sigils on the ground aren't on her leash, so they stay hers: park your army before you scout** (Ed: "leashed creatures going wild when you're knocked out might be the best design idea so far, and might be the thing that makes the whole game work"). **Legends aren't loyal either: they go back to the wild ("they're too old for this")**, a home-made boss; their buff ends then. Then she sparkles out and back in at the treehouse. A big stack takes a long time to let go: "dramatic, and it probably means you just lost the game".
 - **The dash** (Ed, 2026-10-04): on the ground, a quick burst of a few metres the way she's steering, about once a second. She can still be hit while dashing ("then you have to dash in the right direction").
@@ -69,7 +71,7 @@ The trade is speed against information: treetop mode covers distance, ground mod
 - **Levelling up**: the witch leads creatures around to **eat berries** that grow in the forest; it is the only way to level up. Berries may not regrow, or regrow slowly, so taking creatures into the forest to level them up is an adventure.
 - **Neutral behaviour varies by kind, and perhaps by level**: some attack, some run away, some ignore her, some are friendly, some flock or surround her.
 - How deeply music wakes a creature **varies by kind**.
-- **Defeated creatures run away and disappear.**
+- **Beaten creatures run off the map** (Ed, 2026-10-04: "it's sad when animals die"): a beaten creature, wild or party, runs away visibly to the edge of the map, out of the world, and is gone for good (it no longer vanishes on the spot). A beaten party animal is lost for the run, off its leash as it goes.
 - Creatures **pass through each other**, with a **repulsion force** as they get close.
 - **The main work of the game is unique behaviour for each creature.**
 - **Creatures grow more numerous and higher level with distance from home** (Ed, 2026-10-03): the **home area** (the dancefloor's own) holds **no creatures** (Ed, 2026-10-03); the areas next to it hold a couple of babies; areas towards the edge of the map hold about 20 creatures. **Legendary creatures are rare: at most one in any area**, and most areas have none (Ed, 2026-10-03). **Idle creatures roam throughout their own area**, never leaving it (Ed, 2026-10-03). **Each creature species has a magical sigil**: an abstract stave-like symbol that evokes the animal. It is the **leashing rune**: when the witch leashes a creature, its sigil is drawn on the ground at the camera's angle, glowing **neon** (Ed, 2026-10-03). **A sigil grows more impressive with the creature's level** (bigger, thicker, brighter, with rings and ornament), so a glance at the runes on the ground shows which creatures of which level are around (Ed, 2026-10-03).
@@ -144,7 +146,7 @@ Decided in a long design session with the coordinator; built in stages, with a p
 
 - **Park your army before you scout** (Ed, 2026-10-04): a knockout lets go of every creature on her leash, but not those at sigils on the ground.
 - **Core loop:** the forecast shows where the party spreads next. You head there, inviting, feeding and evolving creatures on the way. Arrive early and you can invite that area's young before the music wakes them. Arrive late and its woken creatures are attacking the new soundsystem, so you defend with what you brought or pre-placed. High-level play is pre-positioning evolved creatures and sigils so you can react, and keeping your creatures alive by using them well.
-- **Pace:** one new area per wave, at a fixed pace (5 minutes for now, Ed 2026-10-04; wild creatures don't grow over time). Fights are **long**, and soundsystems take a long while to destroy, so you always have time to feed babies. Pressure builds because sieges outlast the wave gap and overlap, and survivors of a lost defence march on to the next-nearest soundsystem. (An "annoyance" raid system is parked as an optional setting.)
+- **Pace:** one new area per wave, at a fixed pace (5 minutes for now, Ed 2026-10-04; wild creatures don't grow over time). In the final game waves will likely be **about a minute apart, about 30 of them** (Ed, 2026-10-04). Fights are **long**, and soundsystems take a long while to destroy, so you always have time to feed babies. Pressure builds because sieges outlast the wave gap and overlap, and survivors of a lost defence march on to the next-nearest soundsystem. (An "annoyance" raid system is parked as an optional setting.)
 - **Start:** the home speaker ring boots up first.
 - **Movement:** creatures move at their own pace and are never carried by the witch. She is much faster than almost all of them; fast creatures are rare and weaker; legends are very slow.
 - **Forecasting:** the next two waves are confirmed, plus a probable set. Rune stones grow a circle of up to 12 symbols, and the 12th means next. The beams grow with the countdown.
@@ -155,7 +157,7 @@ Decided in a long design session with the coordinator; built in stages, with a p
 - **Combat** (later stages):
   - **Sides:** wild and party animals fight each other with one shared system. No friendly fire. Wild creatures attack the witch on the ground (Ed, 2026-10-04: see The witch). **Same kind never fights same kind**, whichever side, always (Ed, 2026-10-04: even at a soundsystem): inviting doesn't start fights inside a group, and your wolves can't defend against wild wolves. Mixed defences are the puzzle.
   - **Level-ups:** babies don't attack. Young have one attack; adults a stronger one plus a second ability or modifier; legends one slow, powerful signature move.
-  - **Defeat:** health bars show only when hurt. A defeated party animal is **lost for the run**; a defeated wild creature flees and vanishes.
+  - **Defeat:** health bars show only when hurt. A beaten creature, wild or party, **runs off the map** and is gone for good (Ed, 2026-10-04); a beaten party animal is lost for the run.
   - **Control:** leash position only. Party animals on her leash take on whatever attacks her or them, staying near the leash; parked ones (at a sigil) guard a small radius round it and come back to it (Ed, 2026-10-04).
   - **Babies are never attacked** (Ed, 2026-10-04: "Babies don't attack. No animals should attack babies."): by either side; shots and quakes pass them by, and they can't be beaten in a fight. A leash of babies is safe in a fight; only a knockout loses them. **Babies don't get enraged** either: when a wave wakes their area they stay home as before, join no siege, and **stay invitable** (Ed: "yes, babies stay invitable").
   - **Healing** (Ed, 2026-10-04): a party animal is healed to full when it eats a berry (a hurt one goes for berries even at a legend's level) and when it's invited ("animals should go to full health after they've invited"). Wild creatures don't heal. Berry patches near a soundsystem are a defensive resource.
@@ -168,6 +170,79 @@ Decided in a long design session with the coordinator; built in stages, with a p
   - **Hit feel:** medium, with screen shake only for legends.
   - **Content:** built from data-driven parts (movement, behaviour drives, attack delivery, effect and timing, skins). The first slice is **10 contrasting species**; balance tools are a dashboard page and an in-game arena mode.
 - **Mode roles:** treetop mode is the strategic map, ground mode is for micro.
+
+### Balance and forecasting power (Ed, 2026-10-04)
+
+- **Measure it** (Ed, 2026-10-04: "We need some kind of measure of how powerful we think a player can get, and how quickly"). The measure is **fighting value**, F = Σ √(hp × dps) over a side's fighters (Lanchester's square law): a baby 0, a young 15.5, an adult 29, a legend 76. The side with more F wins, with about √(F_big² − F_small²) left. The idle-loss time ("if you do nothing at all, how long will it take for you to lose?") is a useful **lower bound**; what matters more is how irrecoverable the end is: whether a player who reacts late can still catch up.
+- **Populations** (Ed, 2026-10-04; this replaced an earlier "populations by distance from the centre" ruling, and relaxes "wild creatures don't grow over time"): **every area starts the same, one baby and one adult** (plus its sleeping legend, when that's built). **Every wave, each still-wild area spawns one more non-legend creature at a random level**, by tuned weights (equal thirds of baby, young and adult to start); partified areas don't spawn. So the areas the party reaches late are the dangerous ones, and older areas get dangerous to cross on foot. New creatures arrive naturally: out of the witch's view, never popping in on screen. Far from every witch they stay counts, made (from the seed) when she comes within the creature simulation radius or their area wakes, so the game never simulates or draws thousands of idle creatures.
+- **Skill should matter** (Ed, 2026-10-04: "A worry is that all games last about the same time, and the difference between a good player and a bad player is small (because the enemies grow exponentially). You just go along and then suddenly get steamrolled. We might need to adjust as we go along to keep pressure on players but not suddenly overwhelm them. The obvious way to do this is have areas spawn creatures over time in response to the player's progress."). The key measure is the **skill spread**: how long a player lasts by how fast they grow; roughly twice the skill should give twice the survival, never a common cliff. Spawning over time relaxes the earlier "wild creatures don't grow over time"; it stays behind a tuning flag, and reinforcements must arrive visibly (from the map's edge or deeper areas, never popping in) and only out of the witch's view. The population growth above is built; the other pacing variants (attrition on the march, a director) stay in the simulator until Ed picks one.
+- **Direction** (Ed, 2026-10-04, via the coordinator): the game stays mostly about the hero (the witch), her army and defence. The wave clock stays for now, though its meaning will probably change later. Not to build yet: each area's legend flipping between asleep, happy and angry through quests.
+- **Every area has a sleeping legend** (Ed, 2026-10-04, via the coordinator): it wakes angry when its area's wave arrives and stays in its own area as a mini-boss (480 hp, 12 dps), attacking the witch, her creatures and that area's soundsystem; it doesn't march (alone it topples a 4000 hp soundsystem in about 5.6 minutes). **Evolution stops at adult**, so players can't make legends, and **no other legends spawn**. Modelled in the balance simulator (`areaLegends`); not built in the game yet.
+- **Tools:** the debug overlay's power meter (the party's F, leashed and parked, against each siege's and every marcher's together); a **playtest log** (every 10 s: time, wave, party F, creatures by level, berries, invites, each siege's F; L downloads it) so Ed's playtests give the real growth rate; and a headless **balance simulator** (`node tools/balance/sim.mjs`) that plays the real map and wave order with only the sieges, in seconds, for the idle loss, the enemy's F wave by wave, and whether players growing at 30, 50 or 70 F a minute, starting late, can catch up.
+
+### Creature movement (Stage 5; proposed by the builder, 2026-10-04; Ed's direction added the same day)
+
+Ed: this is "really the whole game: leading animals around, and evading animals while they attack you and you're inviting them". Animals should move differently and interestingly, not just straight at you, and usually move together with their own kind. With waves about a minute apart in the final game, a fight has to read at a glance: each kind's movement is its signature.
+
+The system has three layers, all data (`config/movement.json`), so a new species is a few lines:
+
+1. **Steering behaviours**, small and composable. Each one asks for a direction and speed; a creature moves by their weighted sum, capped by its gait, with its own acceleration (heavy creatures turn slowly).
+   - **seek** / **arrive** (to a point or target, slowing near it), **flee** (from a threat);
+   - **keep range** (between near and far of a target: kiting), **orbit** (circle a target at a radius, either way round), **strafe** (sideways to a target while facing it);
+   - **slot** (go to an assigned spot round a target, for group tactics);
+   - **separation**, **cohesion**, **alignment** (flocking, with its own kind);
+   - **dodge** (step sideways out of a telegraphed attack's path: a shot's line, a lob's ring, a beam);
+   - **wander** (a little jitter), **tether** (stay near home, or the leash point).
+2. **Movement profiles**, one per species: its gait (walk, run, burst speeds; acceleration), and for each mood (roaming, noticing her, fighting, fleeing) a list of behaviours with weights and settings. A profile also names its kind's **move**: a short special pattern on a cooldown, such as a **charge** (burst in a straight line, then a slow turn), a **pounce** (crouch, then leap at a point), a **hop** (bounding in arcs), a **burrow** (vanish, reappear near the target), or an **ambush** (hold still until something comes close, then burst).
+3. **Group tactics.** Creatures of one kind near each other form a **pack**, which picks a tactic when it engages (weighted by species, re-picked every few seconds, seeded):
+   - **surround**: slots evenly round the target;
+   - **pincer**: two halves come at it from opposite sides;
+   - **hit and run**: members take turns darting in to strike, then fall back to a ring;
+   - **volley line**: ranged members spread into a line at range and fire together on the beat;
+   - **swarm**: everyone rushes in, strongly separated and jittery;
+   - **screen**: melee members hold a line between the target and their ranged friends.
+
+**New attack deliveries**, where a pattern needs them:
+- **Lob**: an arcing shot at a point, landing after a flight time; a ring on the ground shows where. Step out of the ring.
+- **Beam**: a thin line telegraphs it, then it burns along the line for a moment, sweeping slowly. Step out of the line.
+
+Each delivery has a factor so its expected damage a second (allowing for misses and area hits) stays within the level's **equal power budget**.
+
+**Ed's direction (2026-10-04, after a long design talk):** the game is mostly about **your hero unit (the witch), your army and your defence**; the wave clock stays for now. His playtest problem: creatures read as interchangeable "soldiers", and who beats whom is "emergent and totally opaque, and totally overrun by quantity". So each kind needs an identity you read on sight (how it moves, how it attacks, how it telegraphs), and **counters you can see**, so a fight isn't decided by numbers alone.
+
+**The first slice: 11 contrasting species** (personalities in `config/movement.json`, attacks and traits in `config/combat.json`):
+
+| Species | Moves like | Pack tactic | Attack (telegraph) | Trait |
+|---|---|---|---|---|
+| wolf | trots, then flanks | surround, pincer | melee lunge (ring at its feet) | — |
+| boar | charges in a straight line, turns slowly | none | charge with knockback (dust, then a straight run) | heavy |
+| hare | darts in and back out, sidesteps telegraphs | hit and run | melee nip | nimble |
+| raven | keeps its distance, strafing | volley line | long shot (aim line) | flier |
+| bat | flits in erratic circles | swarm | screech: a short pulse all round it (ring) | flier, swarm |
+| owl | circles wide and slow | volley line | lob (a ring where it lands) | flier |
+| salamander | creeps, holds still to aim | none | beam (aim line, then a burning line) | — |
+| spider | lies still until you come close, then springs | ambush | web shot (aim line; an adult's slows) | — |
+| mole | burrows (a moving mound, untouchable) and surfaces under its target | none | upheaval: a pulse as it surfaces (ring) | burrower |
+| toad | leaps in arcs, landing near its target | none | slam on landing: a small pulse (ring where it lands) | — |
+| beetle | plods straight in, slow to turn | none | melee shove with knockback | armoured |
+
+The other species keep today's straight approach until they get a profile. Babies never fight. Party animals use the same profiles against wild ones, inside their leash. Everything is deterministic (seeded, fixed steps).
+
+**Traits and counters** (data: `combat.json` `traits` and `counters`). The raw numbers stay on the **equal power budget** for the level (same health, same damage a second). The difference is in behaviour and in a few multipliers anyone can read:
+- **Flier**: melee hits it for half (it flits up out of reach). Ranged attackers beat fliers' melee enemies; fliers beat melee.
+- **Armoured**: shots, lobs and beams hit it for a third; knockback hits it for double and stuns it a moment (flipped on its back). Melee knockback beats armour; armour beats ranged.
+- **Swarm**: area hits (pulses, quakes, lobs, beams) hit it for double. Area attackers beat swarms.
+- **Heavy**: no knockback and slows last half as long; but it turns slowly, so sidestepping beats it.
+- **Nimble**: steps out of telegraphed shots and lobs; area pulses catch it.
+- **Burrower**: untouchable while burrowed; it has to surface to strike.
+
+A counter is **shown**: a hit that's strong against its target flashes big and gold with a "!!"; a resisted one goes "tink", small and grey. Each creature with a trait wears its trait's mark by its health bar while it fights (placeholders: flier sky blue, armoured a steel square, swarm violet, heavy a brown square, nimble green, burrower earth).
+
+**Wild legends get move sets** (`movement.json` `legends`): a looping **pattern** of big, telegraphed moves (a **slam** pulse; a **nova** ring of shots; a **spin** beam sweeping all round; a **charge**, backing off first to get a run), with long wind-ups you can read and dodge (a reach ring, spokes, the circle a spin will sweep, the lane a charge will run down), and a **phase change** at half health: a roar and a burst, a red aura, it speeds up and its pattern gains the spin. Try one in the arena: `?arena=wolf*4@2,bear*1@3`. This is a step toward the legend states below.
+
+**Debug arena** (Ed, to see and judge patterns): `?arena=wolf*4,beetle*3` spawns, in the home clearing, your side (parked by sigils: the first group) against the wild side (the second); `wolf*4@2` sets the level (default young, 1). It's set below the dancefloor; she stands behind her side (the wild go for the nearest, so hers first). `J` sets the arena up again.
+
+**Planned direction, not built yet (Ed, 2026-10-04):** each area will have a **legendary animal that can be flipped between asleep, happy and angry**, by things that aren't only fighting (quests, mostly exploring the forest). So legends need **distinctive, readable move sets of their own**; the move sets above are written as data per legend so each can get its own later.
 
 ### Multiplayer (Ed, 2026-10-04)
 

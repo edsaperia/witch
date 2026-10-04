@@ -83,7 +83,23 @@ export const ATTACK_EFFECTS = {
   beam: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], beam: ["beamShortStart", "beamShortLoop", "beamShortEnd"], hit: "hitSpark" },
   widebeam: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], beam: ["beamLongStart", "beamLongLoop", "beamLongEnd"], hit: "hitSparkBig", status: ["slowRing", "slowMark"] },
   quake: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "quakeRing", hit: "hitSparkBig", status: ["knockback", "dust"] },
+  // Stage 5's pulses, webs and the legends' moves: stand-ins from the art above until their own (a follow-up: screech waves, an upheaval,
+  // a slam, web globs, a nova, a spin, a charge's dust, stun stars, "!!" and "tink" marks, trait marks)
+  screech: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "quakeRing", hit: "hitSpark" },
+  bigscreech: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "quakeRing", hit: "hitSpark", status: ["slowRing", "slowMark"] },
+  upheaval: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "quakeRing", hit: "hitSpark", status: ["dust"] },
+  bigupheaval: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "quakeRing", hit: "hitSparkBig", status: ["knockback", "dust"] },
+  slam: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "quakeRing", hit: "hitSparkBig", status: ["dust"] },
+  bigslam: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "quakeRing", hit: "hitSparkBig", status: ["knockback", "dust"] },
+  web: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "spit", hit: "hitSpark" },
+  bigweb: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "spit", hit: "hitSpark", status: ["slowRing", "slowMark"] },
+  legendSlam: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "quakeRing", hit: "hitSparkBig", status: ["knockback", "dust"] },
+  legendNova: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "mote", hit: "hitSparkBig" },
+  legendSpin: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], beam: ["beamLongStart", "beamLongLoop", "beamLongEnd"], hit: "hitSparkBig" },
+  legendCharge: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], hit: "hitSparkBig", status: ["knockback", "dust"] },
 };
+// each effect's attacks, kept in step with ATTACK_EFFECTS
+for (const [atk, fx] of Object.entries(ATTACK_EFFECTS)) for (const id of Object.values(fx).flat()) if (!EFFECT_BY_ID[id].attacks.includes(atk)) EFFECT_BY_ID[id].attacks.push(atk);
 // Species whose shots aren't the plain glob: the glowing ones throw motes, the raven feathers (its long shots, by level).
 export const SPECIES_PROJECTILE = { moth: "mote", glowworm: "mote", bat: "mote", raven: "feather", woodlouse: "barb", owl: "lobSeed" };
 
