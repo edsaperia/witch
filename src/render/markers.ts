@@ -19,6 +19,8 @@ export class MarkerArt {
   readonly atlas: Atlas;
   private index = new Map<string, number>();
   readonly colour = new Map<string, THREE.Vector3>();
+  /** Per species: how many art pixels the stone stands above its frame's bottom (to its topmost drawn row). */
+  readonly height = new Map<string, number>();
 
   constructor(style: Style, t: Tuning) {
     const R = t.runeMarkers, sprites: Baked[] = [];
@@ -28,6 +30,7 @@ export class MarkerArt {
       const base = (Art.runeStone as unknown as (st: Style, o: { glow: string; sigil: string }) => Baked & { A: HTMLCanvasElement })(style, { glow: "cyan", sigil: sp });
       const c = Art.sigilColour(sp) as number[];
       this.index.set(sp, sprites.length);
+      this.height.set(sp, drawnHeight(base.A));
       this.colour.set(sp, new THREE.Vector3(c[0] / 255, c[1] / 255, c[2] / 255));
       for (const k of levels) sprites.push(recolour(base, c, k));
     }
@@ -35,6 +38,14 @@ export class MarkerArt {
   }
   /** The frame for a species' stone at a level (0 dormant, 1.. awake). */
   frame(species: string, level: number): number { return (this.index.get(species) ?? 0) + Math.max(0, Math.min(MARKER_LEVELS - 1, level)); }
+}
+
+// Rows from the topmost drawn pixel to the lowest (sprites stand on their lowest drawn pixel).
+function drawnHeight(c: HTMLCanvasElement): number {
+  const d = c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data;
+  let top = -1, bottom = -1;
+  for (let i = 3; i < d.length; i += 4) if (d[i] > 0) { const y = Math.floor((i >> 2) / c.width); if (top < 0) top = y; bottom = y; }
+  return top < 0 ? 0 : bottom - top + 1;
 }
 
 // The rune's glowing pixels (alpha 254) in the sigil's colour, by their brightness, times k.
@@ -74,9 +85,10 @@ void main() {
 }
 `;
 
-export interface Beacon { x: number; z: number; colour: THREE.Vector3; strength: number }
+/** base: the height (metres) it rises from, the top of its stone. */
+export interface Beacon { x: number; z: number; colour: THREE.Vector3; strength: number; base?: number }
 /** A thin laser straight up from an awake stone (Ed, v149), like the disco ball's: width and height in metres. */
-export interface Laser { x: number; z: number; colour: THREE.Vector3; strength: number; width: number; height: number }
+export interface Laser { x: number; z: number; colour: THREE.Vector3; strength: number; width: number; height: number; base?: number }
 export interface Mote { x: number; y: number; z: number; colour: THREE.Vector3; alpha: number }
 
 /** The columns of light over the stones (seen from the treetops) and the motes rising from them. */
@@ -120,7 +132,7 @@ export class MarkerFx {
     const nl = Math.min(this.maxBeams, lasers.length);
     for (let i = 0; i < nl; i++) {
       const b = lasers[i];
-      this.m4.makeScale(b.width, b.height, b.width).setPosition(b.x, b.height / 2 + 1.5, b.z);
+      this.m4.makeScale(b.width, b.height, b.width).setPosition(b.x, b.height / 2 + (b.base ?? 1.5), b.z);
       this.lasers.setMatrixAt(i, this.m4);
       this.laserAttr.setXYZW(i, b.colour.x, b.colour.y, b.colour.z, b.strength);
     }
@@ -130,7 +142,7 @@ export class MarkerFx {
     const n = Math.min(this.maxBeams, beacons.length);
     for (let i = 0; i < n; i++) {
       const b = beacons[i];
-      this.m4.makeScale(1.2, height, 1.2).setPosition(b.x, height / 2, b.z);
+      this.m4.makeScale(1.2, height, 1.2).setPosition(b.x, height / 2 + (b.base ?? 0), b.z);
       this.beams.setMatrixAt(i, this.m4);
       this.beamAttr.setXYZW(i, b.colour.x, b.colour.y, b.colour.z, b.strength);
     }

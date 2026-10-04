@@ -107,15 +107,20 @@ export function treetopFlight(w: WitchState, mx: number, mz: number, dt: number,
     // Turn the heading toward the input, at a limited rate.
     const cx = w.vx / s, cz = w.vz / s;
     ang = Math.acos(clamp(cx * dx + cz * dz, -1, 1));
-    const cross = cx * dz - cz * dx, rate = ((T.turnRate * (1 - 0.5 * boost)) * Math.PI) / 180, turn = Math.min(ang, rate * dt) * (cross >= 0 ? 1 : -1);
+    // Slow (under sharpTurnSpeed of cruise), she turns crisply, at turnRateSlow; at cruise, at
+    // turnRate; boosting, slower still (Ed: the size of the skid should depend on how fast she's going).
+    const pace = clamp((s / t.treetopSpeed - T.sharpTurnSpeed) / Math.max(0.05, 1 - T.sharpTurnSpeed), 0, 1), deg0 = T.turnRateSlow + (T.turnRate - T.turnRateSlow) * pace;
+    const cross = cx * dz - cz * dx, rate = ((deg0 * (1 - 0.5 * boost)) * Math.PI) / 180, turn = Math.min(ang, rate * dt) * (cross >= 0 ? 1 : -1);
     const c = Math.cos(turn), sn = Math.sin(turn);
     hx = cx * c - cz * sn; hz = cx * sn + cz * c;
   }
   const deg = (ang * 180) / Math.PI;
   if (deg <= T.boostAngle) boost = Math.min(1, boost + dt / Math.max(0.05, T.boostTime));
-  else if (deg >= 90) { boost = Math.max(0, boost - dt * T.sharpTurnBleed); braking = s > t.treetopSpeed * 0.5; }
-  else boost = Math.max(0, boost - dt * 0.5);
-  const target = t.treetopSpeed * (1 + (T.boost - 1) * boost) * m;
+  else if (deg >= 90) { boost = Math.max(0, boost - dt * T.sharpTurnBleed); braking = s > t.treetopSpeed * T.brakeAt; }
+  // Between, the boost bleeds the more the sharper the turn.
+  else boost = Math.max(0, boost - dt * Math.max(0.5, (T.sharpTurnBleed * (deg - T.boostAngle)) / (90 - T.boostAngle)));
+  // Turning hard, she doesn't speed up along her old heading (so a slow about-face stays tight).
+  const target = deg >= 90 ? Math.min(s, t.treetopSpeed * (1 + (T.boost - 1) * boost) * m) : t.treetopSpeed * (1 + (T.boost - 1) * boost) * m;
   // Reaching cruise takes about 0.3 s; above it, the boost sets the pace. Turning hard bleeds speed.
   const k = 1 - Math.exp(-t.acceleration * dt * (deg >= 90 ? T.sharpTurnBleed : 1));
   const speed = s + (target - s) * k;

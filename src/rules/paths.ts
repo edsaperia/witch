@@ -17,6 +17,8 @@ export interface PathLine {
   half: number;
   /** A path out to nothing in particular: it peters out at its far end. */
   deadEnd?: boolean;
+  /** The area it starts in: a path keeps that area's kind (dirt, flagstones...) for its whole length (Ed, v160). */
+  area?: { cell: [number, number]; type: number };
 }
 
 /** A 3D piece along the network (its id is the art's path piece): a bridge where a path crosses a
@@ -136,6 +138,8 @@ export class PathNetwork {
       }
     }
     this.lines.forEach((l, li) => {
+      const a0 = map.areaAt(l.pts[0][0], l.pts[0][1]);
+      l.area = { cell: [a0.cell[0], a0.cell[1]], type: a0.type };
       for (let i = 0; i < l.pts.length - 1; i++) {
         const [a, c] = [l.pts[i], l.pts[i + 1]], pad = l.half + 4;
         for (let gx = Math.floor((Math.min(a[0], c[0]) - pad) / this.cell); gx <= Math.floor((Math.max(a[0], c[0]) + pad) / this.cell); gx++)

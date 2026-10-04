@@ -567,13 +567,15 @@ export class View {
       // Awake: brighter on the beat, more so as the countdown runs out; dormant: a steady glow.
       const level = m.awake ? 1 + Math.round(Math.min(1, beat * (0.4 + 0.6 * build)) * (MARKER_LEVELS - 2)) : 0;
       stone(m.x, m.z, species, level);
+      // The beam and laser rise from the top of the stone, not from inside it.
+      const top = (this.markerArt.height.get(species) ?? 0) * this.mpp * scale;
       const A = R.awake, D = R.dormant;
       const strength = m.awake ? (A.light + A.lightBuild * build) * (0.55 + 0.45 * beat) : D.light;
       if (d < R.lightRange) near.push({ d, l: { x: m.x, y: 0.5, z: m.z + 1.5, reach: m.awake ? A.reach : D.reach, rgb: col, strength } });
       // Awake: a column of light (column), a thin laser straight up (beam), or both (Ed, v149: "let's
       // see both"); dormant: only the faint column above the canopy.
-      if (!m.awake || column) beacons.push({ x: m.x, z: m.z, colour: col, strength: m.awake ? A.beam * (0.6 + 0.4 * beat) * (1 + build) : D.beam });
-      if (m.awake && laser) lasers.push({ x: m.x, z: m.z, colour: col, strength: R.laser.opacity * (0.55 + 0.45 * beat) * (0.7 + 0.6 * build), width: R.laser.width, height: R.laser.length });
+      if (!m.awake || column) beacons.push({ x: m.x, z: m.z, colour: col, strength: m.awake ? A.beam * (0.6 + 0.4 * beat) * (1 + build) : D.beam, base: top });
+      if (m.awake && laser) lasers.push({ x: m.x, z: m.z, colour: col, strength: R.laser.opacity * (0.55 + 0.45 * beat) * (0.7 + 0.6 * build), width: R.laser.width, height: R.laser.length, base: top });
       if (m.awake) {
         const n = Math.round(A.motes + A.moteBuild * build);
         for (let i = 0; i < n; i++) {

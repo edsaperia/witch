@@ -104,10 +104,11 @@ export class PathView {
   constructor(map: ForestMap, style: Style, mpp: number, fade = 6) {
     const net = map.paths, seed = map.seed;
     const byArea = Art.areaPathKinds() as unknown as Record<string, string[]>;
-    // A path's kind in each area: one of the kinds that area suits, seeded per area; dirt where none.
+    // A path's kind: one of the kinds the area it starts in suits, seeded per area, for its whole
+    // length (Ed, v160: no switching mid-path); dirt where none.
     const areaKind = new Map<string, string>();
-    const pathKind = (x: number, z: number) => {
-      const a = map.areaAt(x, z), key = a.cell.join(",");
+    const pathKind = (a: { cell: readonly [number, number]; type: number }) => {
+      const key = a.cell.join(",");
       let k = areaKind.get(key);
       if (!k) {
         const ok = (byArea[AREA_TYPES[a.type].id] ?? []).filter(k => !NOT_PATHS.has(k) && KINDS[k] && (k !== "magic" || hash2(a.cell[0], a.cell[1], seed + 831) < 0.15));
@@ -116,10 +117,11 @@ export class PathView {
       }
       return k;
     };
-    // One geometry per strip texture (kind and variant), each quad its own so a kind can switch mid-line.
+    // One geometry per strip texture (kind and variant).
     const quads = new Map<string, { pos: number[]; uv: number[] }>();
     net.lines.forEach((l, li) => {
       const variant = l.kind === "rail" ? Math.floor(hash2(li, 1, seed + 835) * 3) : 0;
+      const lineKind = l.kind === "path" ? pathKind(l.area ?? map.areaAt(l.pts[0][0], l.pts[0][1])) : "dirt";
       const pts = l.pts, n = pts.length;
       // Distance along the line, and a mitred normal at each point (so neighbouring quads meet).
       const along = [0];
@@ -129,20 +131,20 @@ export class PathView {
         return [-dz / d, dx / d];
       });
       const total = along[n - 1];
-      // Which segments are drawn (none where the track's gone, nor on cleared ground), and for each
+      // Which segments are drawn (none where the track's gone; cleared and reserved spots no longer
+      // cut it, Ed v160), and for each
       // point how far it is to the nearer end of its drawn stretch, so the ends fray out.
       const keep = Array.from({ length: n - 1 }, (_, i) => {
         const mx = (pts[i][0] + pts[i + 1][0]) / 2, mz = (pts[i][1] + pts[i + 1][1]) / 2;
-        return !(l.kind === "rail" && net.railBroken(mx, mz)) && !map.hardClear(mx, mz);
+        return !(l.kind === "rail" && net.railBroken(mx, mz));
       });
       const runStart: number[] = [], runEnd: number[] = [];
       for (let i = 0, st = 0; i < n - 1; i++) { if (!keep[i]) continue; if (i === 0 || !keep[i - 1]) st = along[i]; runStart[i] = st; }
       for (let i = n - 2, en = 0; i >= 0; i--) { if (!keep[i]) continue; if (i === n - 2 || !keep[i + 1]) en = along[i + 1]; runEnd[i] = en; }
       for (let i = 0; i < n - 1; i++) {
-        const mx = (pts[i][0] + pts[i + 1][0]) / 2, mz = (pts[i][1] + pts[i + 1][1]) / 2;
         if (!keep[i]) continue;
         const K = l.kind === "stream" ? { width: l.half * 2, period: 4 } : null;
-        const kind = l.kind === "stream" ? "stream" : l.kind === "rail" ? "railway" : l.kind === "road" ? "tarmac" : pathKind(mx, mz);
+        const kind = l.kind === "stream" ? "stream" : l.kind === "rail" ? "railway" : l.kind === "road" ? "tarmac" : lineKind;
         const W = K ?? KINDS[kind];
         const key = kind + ":" + variant;
         let q = quads.get(key);

@@ -305,6 +305,20 @@ describe("the witch", () => {
       expect(back.boost!).toBeLessThan(0.3);
       expect(stepWitch(fast, { moveX: -1, moveZ: 0, toggleMode: false }, 1 / 60, TUNING, b).braking).toBe(true);
     });
+    it("turns tight when slow and swoops wide only at speed (Ed: the skid scales with speed)", () => {
+      const sweep = (v: number) => {
+        let w: ReturnType<typeof newWitch> = { ...up(), vx: v, vz: 0, boost: v > TUNING.treetopSpeed ? 1 : 0 }, maxZ = 0;
+        for (let i = 0; i < 600 && w.vx >= 0; i++) { w = stepWitch(w, { moveX: -1, moveZ: 0, toggleMode: false }, 1 / 60, TUNING, b); maxZ = Math.max(maxZ, Math.abs(w.z - 200)); }
+        return maxZ;
+      };
+      const slow = sweep(5), cruise = sweep(TUNING.treetopSpeed), fast = sweep(TUNING.treetopSpeed * T.boost);
+      expect(slow).toBeLessThan(1);
+      expect(slow).toBeLessThan(fast / 4);
+      expect(slow).toBeLessThan(cruise);
+      expect(cruise).toBeLessThan(fast);
+      const slowTurn = stepWitch({ ...up(), vx: 8, vz: 0 }, { moveX: -1, moveZ: 0, toggleMode: false }, 1 / 60, TUNING, b);
+      expect(slowTurn.braking).toBe(false); // no skid pose for a slow about-face
+    });
     it("glides when let go, rather than stopping dead", () => {
       const fast = fly(up(), 60);
       const glide = fly(fast, 15, NO_INTENT), stopped = fly(fast, 60 * T.glideTime * 1.5, NO_INTENT);
@@ -865,6 +879,15 @@ describe("paths, roads and railways", () => {
     expect(of("road").length).toBeGreaterThanOrEqual(T.roads[0]);
     expect(of("path").length).toBeGreaterThan(20);
     expect(of("stream").filter(l => l.pts.length > 100).length).toBeGreaterThanOrEqual(T.streams[0]);
+  });
+  it("keep one kind for their whole length: each line carries the area it starts in (Ed, v160)", () => {
+    for (const l of P.lines) {
+      const a = map.areaAt(l.pts[0][0], l.pts[0][1]);
+      expect(l.area).toEqual({ cell: [a.cell[0], a.cell[1]], type: a.type });
+    }
+    // Crossing areas doesn't change it: many paths leave their start area, but carry one area each.
+    const crossers = P.lines.filter(l => l.kind === "path" && new Set(l.pts.map(p => map.areaAt(p[0], p[1]).cell.join(","))).size > 1);
+    expect(crossers.length).toBeGreaterThan(5);
   });
   it("meander: no path is a ruler-straight line", () => {
     for (const l of P.lines.filter(l => l.kind === "path")) {

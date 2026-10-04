@@ -256,16 +256,21 @@ export class LeashView {
       if (B.sparks) {
         const period = Math.max(0.5, B.sparkEvery), ph = (time + ((id * 0.618) % 1) * period) % period;
         if (ph < 0.7) {
-          const k = ph / 0.7;
+          // From the creature back to the leash point (Ed: the dots flow towards you).
+          const k = 1 - ph / 0.7;
           this.standing.add(from.x + (c.x - from.x) * k, from.y + (0.6 - from.y) * k + Math.sin(k * Math.PI) * 1.2, from.z + (c.z - from.z) * k, 0.35, dot, col.r, col.g, col.b, 1);
         }
       }
       const d = Math.hypot(c.x - lp.x, c.z - lp.z);
       if (B.thread && d > L.length * 0.85) {
         const strain = Math.min(1, (d - L.length * 0.85) / L.length), n = Math.min(60, Math.floor(d / 1.2));
+        // A gentle upward bow (Ed: "arc upwards a little"), and the dots march from the creature
+        // to the leash point.
+        const arc = Math.min(B.threadArcMax, B.threadArc * d);
         for (let i = 1; i < n; i++) {
-          const k = (i + (time * 2) % 1) / n;
-          this.standing.add(from.x + (c.x - from.x) * k, from.y + (0.5 - from.y) * k, from.z + (c.z - from.z) * k, 0.22, dot, col.r, col.g, col.b, 0.25 + 0.75 * strain);
+          const k = (i + 1 - (time * 2) % 1) / n;
+          if (k >= 1) continue;
+          this.standing.add(from.x + (c.x - from.x) * k, from.y + (0.5 - from.y) * k + Math.sin(k * Math.PI) * arc, from.z + (c.z - from.z) * k, 0.22, dot, col.r, col.g, col.b, 0.25 + 0.75 * strain);
         }
       }
     }

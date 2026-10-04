@@ -11,7 +11,12 @@
         "Each wave now wakes just one area, chosen as soon as the last one woke, bordering the party and spreading in lobes rather than a circle; its rune stone is the one that wakes",
         "A new pixel cue at the screen's edge points to the next stone to wake, with its distance; the music cue is bigger and pixelled",
         "Awake rune stones can show a thin laser straight up, a column of light, or both (?rune=beam|column|both)",
-        "M shows a minimap of the party's spread (debug)"
+        "M shows a minimap of the party's spread (debug)",
+        "Witch walks 10% faster",
+        "Leashes arc gently and their dots flow back towards you",
+        "Treetop turns are tight when you're slow; the big skid only comes at speed",
+        "The rune stones' beam and laser now rise from the top of the stone",
+        "Paths keep one look for their whole length, and run on unbroken past clearings"
       ]
     },
     {
