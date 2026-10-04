@@ -9,6 +9,8 @@
 //   node art/preview.mjs country farm|street|scene|<ids> art/previews/country-farm.png [scale]   (countryside and street pieces; PER=n to a row)
 //   node art/preview.mjs scenes small|large|all|<ids> art/previews/scenes-small.png [scale]   (each scene composed from its pieces, the witch at its middle; MIRROR=1 the other way; PER=n to a row)
 //   node art/preview.mjs landmarks cemetery|carpark|scrap|worship|castle|classical|<ids> art/previews/landmarks-worship.png [scale]   (the large scenes' pieces; buildings' two halves composed, HALVES=1 apart; PER=n to a row)
+//   node art/preview.mjs partyobjects litter|small|furniture|set|all|<ids> art/previews/party-objects.png [scale]   (the party objects, neon ones cycling the neons; NIGHT=1 to see them glow)
+//   node art/preview.mjs partypatch 1 art/previews/party-patch.png [scale]   (a sample patch of party ground: clusters and loose objects, seeded; NIGHT=1)
 //   node art/preview.mjs grounds playground,tennis,baseball,football,basketball|all art/previews/grounds.png [scale]   (each arrangement composed; NIGHT=1)
 //   node art/preview.mjs decor ruins|rocks|freak|<ids> art/previews/ruins.png [scale]   (VARIANTS=1: ruins weathered and overgrown)
 //   node art/preview.mjs lake 0 art/previews/lake.png [scale]   (a sample lake composed from the kit; NIGHT=1)
@@ -276,6 +278,19 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
       items.push({ A, N, w: W, h: H });
     }
     for (let i = 0; i < items.length; i += per) rows.push([...items.slice(i, i + per), wit]);
+  } else if (what === "partyobjects") { // the party objects: a class (litter, small, furniture, set), all, or listed ids, PER to a row (default 8), the witch closing each row; neon pieces cycle through the neons
+    const ids = G.PARTY_CLASSES.includes(list) ? G.PARTY_OBJECTS.filter(d => d.cls === list).map(d => d.id) : list === "all" ? G.PARTY_OBJECTS.map(d => d.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), per = window.PER || 8;
+    const items = ids.map((id, i) => G.bake(G.partySprite(id, st).whole, G.partyColours(st, G.PARTY_NEONS[i % G.PARTY_NEONS.length]), st, "none"));
+    for (let i = 0; i < items.length; i += per) rows.push([...items.slice(i, i + per), wit]);
+  } else if (what === "partypatch") { // a sample patch of party ground (partyPatch): clusters and loose objects over grass, seeded by the list (a number); the witch in the middle
+    const W = 420, H = 250, baked = new Map(), bk = p => { if (!baked.has(p.ref)) baked.set(p.ref, G.bake(p.sprite.whole, p.colours, st, "none")); return baked.get(p.ref); };
+    const parts = G.partyPatch(+list || 1, (id, o) => G.scenePlacements(id, st, o), { w: W, h: H }).map(q => { const p = G.scenePiece(q.ref, st), b = bk(p); return { b, flip: q.flip, decal: p.decal, depth: q.depth, x: q.x - (q.flip ? b.w - p.sprite.origin.x : p.sprite.origin.x), y: q.y - p.sprite.origin.y }; });
+    const A = document.createElement("canvas"), N = document.createElement("canvas"); A.width = N.width = W; A.height = N.height = H; const a = A.getContext("2d"), n = N.getContext("2d");
+    n.fillStyle = "rgb(128,75,240)"; n.fillRect(0, 0, W, H); // (the albedo stays transparent: the sheet lays the ground, and glowing pixels keep their alpha 254)
+    const draw = (ctx, img, p) => { const x = Math.round(p.x), y = Math.round(p.y); if (!p.flip) return ctx.drawImage(img, x, y); ctx.save(); ctx.translate(x + p.b.w, y); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0); ctx.restore(); };
+    const wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline); parts.push({ b: wit, x: W / 2 - wit.w / 2, y: H / 2 - wit.h + 20, depth: H / 2 + 20 });
+    parts.sort((p, q) => (q.decal ? 1 : 0) - (p.decal ? 1 : 0) || p.depth - q.depth).forEach(p => { draw(a, p.b.A, p); draw(n, p.flip ? p.b.NF : p.b.N, p); });
+    rows.push([{ A, N, w: W, h: H }]);
   } else if (what === "scenes") { // each scene (small, large, all, or listed ids) composed from its pieces as the prototype would, the witch at its middle; MIRROR=1 turns them the other way
     const names = ["small", "large", "all"].includes(list) ? G.SCENES.filter(S => list === "all" || S.size === list).map(S => S.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), baked = new Map();
     const bk = piece => { if (!baked.has(piece.ref)) baked.set(piece.ref, G.bake(piece.sprite.whole, piece.colours, st, "none")); return baked.get(piece.ref); };

@@ -323,6 +323,25 @@ const report = await b.page.evaluate(async () => {
     const halves = Object.keys(G.LANDMARK_BUILDINGS).filter(b => G.LANDMARK_BY_ID[b + "-far"] && G.LANDMARK_BY_ID[b + "-near"]).length;
     res.push({ what: "large scenes' pieces: cemetery, car park, scrap yard, 7 places of worship, castle, classical; standing, sized, tall ones split, decals flat, only the flagged ones glow; walk-in buildings in far and near halves", good: !bad.length && fam.worship === 7 && fam.cemetery >= 8 && fam.castle >= 5 && fam.classical >= 6 && halves >= 5, info: bad.join(", ") || Object.entries(fam).map(([k, n]) => k + " " + n).join(", ") + `, ${halves} in halves` });
   }
+  { // party objects: each standing, nothing NaN, small in pixel area for its class (litter, small, furniture, set: they're reused many times), decals flat;
+    // only the flagged ones glow, each glowing one says its light (neon: its glow in the MAGIC materials, so it recolours by neon; warm: candle gold);
+    // every light source glows, half of everything or more glows; a neon piece baked in two neons glows in two colours; clusters of 3 to 8 real objects, 1 to 6 m, mirroring true
+    const bad = [], EM = new Set([...G.EMISSIVE]), area = { litter: 1200, small: 4000, furniture: 7000, set: 7000 }; let glowing = 0;
+    for (const d of G.PARTY_OBJECTS) {
+      const R = G.partySprite(d.id, st), sp = R.whole, s2 = stats(sp), mats = new Set(sp.m), lit = [...mats].some(v => EM.has(v)), nan = [...sp.n].some(v => !Number.isFinite(v)); if (lit) glowing++;
+      const light = !d.glow ? d.light == null : d.light === "neon" ? mats.has(G.M.MAGIC) || mats.has(G.M.MAGIC2) : d.light === "warm" ? mats.has(G.M.GLOW) || mats.has(G.M.RUNE) : false;
+      const flat = !d.decal || R.metres.height < R.metres.width * .7, small = sp.w * sp.h <= area[d.cls];
+      if (!(s2.n > 8 && s2.bottom > 0 && !nan && lit === !!d.glow && light && flat && small && (d.cls !== "small" || d.glow))) bad.push(`${d.id} ${sp.w}x${sp.h}px${lit === !!d.glow ? "" : " glow"}${light ? "" : " light"}${flat ? "" : " not flat"}${small ? "" : " too big"}`);
+    }
+    { const sp = G.partySprite("glowsticks-stuck", st).whole, col = n => { const c = G.partyColours(st, n); return c[G.M.MAGIC].join(); }; if (col("pink") === col("cyan") || !sp.m.includes(G.M.MAGIC)) bad.push("neon recolour"); }
+    for (const C of G.PARTY_CLUSTERS) {
+      const L = G.sceneLayout(C.id, st), M2 = G.sceneLayout(C.id, st, { mirror: true }), real = C.pieces.every(p => G.sceneRefExists(p[0]));
+      const mirrored = L.pieces.every((p, i) => Math.abs(Math.hypot(p.dx, p.dz) - Math.hypot(M2.pieces[i].dx, M2.pieces[i].dz)) < .02);
+      if (!(real && L.pieces.length >= 3 && L.pieces.length <= 8 && L.footprint >= 1 && L.footprint <= 6 && mirrored)) bad.push(`cluster ${C.id}: ${L.pieces.length} pieces, ${L.footprint} m`);
+    }
+    const n = G.PARTY_OBJECTS.length, cls = G.PARTY_CLASSES.map(c => G.PARTY_OBJECTS.filter(d => d.cls === c).length);
+    res.push({ what: "party objects: 40+ over the four classes (litter, small, furniture, set); standing, small in pixel area for their class, decals flat; only the flagged ones glow, with their light (neon recolourable, or warm); every light source glows, half or more glow; 6+ clusters of 3 to 8, 1 to 6 m", good: !bad.length && n >= 40 && cls.every(k => k >= 6) && glowing * 2 >= n && G.PARTY_CLUSTERS.length >= 6, info: bad.join(", ") || `${n} objects (${cls.join("/")}), ${glowing} glowing, ${G.PARTY_CLUSTERS.length} clusters` });
+  }
   { // scenes: every piece names a real sprite; 3+ pieces; at most one glowing kind; footprints sane (small 3 to 12 m) and holding every piece; mirroring keeps every distance and the footprint
     const bad = [], sizes = [];
     for (const S of G.SCENES) {

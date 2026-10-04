@@ -190,6 +190,12 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
+        <h2>Party</h2>
+        <p class="note">The party objects scattered over partified areas, at night as in the game: litter, the light sources (neon pieces in a different neon each), furniture and set dressing, with the witch for scale. Then a sample patch of party ground: clusters and loose objects strewn as the prototype might.</p>
+        <div class="sheet-wrap"><canvas id="partySheet" width="420" height="160"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
         <div class="row" style="justify-content:space-between"><h2>Paths</h2><div class="row"><label class="note" for="pathKind">Kind</label><select id="pathKind"></select></div></div>
         <p class="note">A path kind laid along a curve with a branch meeting it, as the game would sweep it; then its strip, end, Y and T junction textures; then the 3D pieces (edge props, stairs, bridges, railway landmarks), with the witch for scale.</p>
         <p class="note" id="pathInfo"></p>
@@ -5186,6 +5192,155 @@ function landmarkModel(id) { const d = LANDMARK_BY_ID[id]; if (!d) throw new Err
 function landmarkSprite(id, st = {}, { ppm = 16 } = {}) { return pieceSprite(landmarkModel(id), LANDMARK_BY_ID[id], st, ppm); }
 
 
+// ---- inlined from art/party.js ----
+// Party objects (Ed, 2026-10-04: "a library of party objects that become scattered around party areas ... Cups, cans,
+// party hats, tables and chairs, glowsticks, candles, other light sources?"): what a partified area is strewn with, so
+// party ground reads at a glance from dormant forest, even in the dark and from the treetops. Readability first: many
+// carry a small glow, a neon or warm light, while the dormant forest stays dark. No brands or readable text.
+// Small, cheap sprites, reused heavily (many per area, unlike the once-per-map scenes). Each piece has a size class:
+//   litter     cups, cans, bottles, party hats, streamers, balloons, confetti and glitter decals, crushed glowsticks;
+//   small      the light sources: glowsticks, tea lights, candles, jam-jar lanterns, paper lanterns, fairy lights, a tiki
+//              torch, a fire pit, an LED cube, a mirror ball, UV paint on a rock and a stump;
+//   furniture  folding tables, chairs, deck chairs, a picnic blanket, a cool box, hay-bale seating, a hammock, a gazebo,
+//              a little tent;
+//   set        rarer set dressing: a small DJ booth, inflatables, a crate bar, bunting, neon outline signs, flags.
+// Glowing pieces light in one neon (the MAGIC materials) or warm candlelight (GLOW, RUNE): `light` says which. A neon
+// piece is drawn once and baked in any neon (partyColours(style, neon)): the game picks the colour per placement.
+// Built in 3D (model3d.js) at the witch's scale, like the country pieces.
+
+
+
+
+// ---------------- building blocks ----------------
+const pCup = (m, c, g, mat = M.ACCENT, tip = 0) => { const n = mark(m); m.seg([0, 0, 0], [0, .13, 0], .045, .06, mat, { group: g, paint: p => p[1] > .11 ? M.BELLY : undefined }); m.seg([0, .02, 0], [0, .15, 0], .035, .05, M.NOSE, { group: g, cut: true }); place(m, n, { roll: tip, at: c }); };
+const pCan = (m, c, g, mat = M.FRAME, o = {}) => { const n = mark(m); ctCyl(m, [0, 0, 0], [0, o.crushed ? .07 : .15, 0], .045, mat, g, { paint: p => Math.abs(p[1] - .06) < .03 && !o.crushed ? M.HAT1 : undefined, end: M.FRAME }); place(m, n, { roll: o.roll ?? 0, yaw: o.yaw ?? 0, at: c }); };
+const pBottle = (m, c, g, o = {}) => { const n = mark(m); m.seg([0, 0, 0], [0, .2, 0], .05, .05, M.HAT2, { group: g }); m.seg([0, .2, 0], [0, .32, 0], .045, .018, M.HAT2, { group: g }); place(m, n, { roll: o.roll ?? 0, yaw: o.yaw ?? 0, at: c }); };
+const pHat = (m, c, g, o = {}) => { const n = mark(m); m.seg([0, 0, 0], [0, .28, 0], .1, .008, M.HAT1, { group: g, paint: p => ((p[1] + Math.atan2(p[2], p[0]) * .04) * 14) % 1 < .5 ? M.BODY : M.POM }); m.ell([0, .29, 0], [.03, .03, .03], M.POM, { group: g + 1 }); place(m, n, { roll: o.roll ?? 0, yaw: o.yaw ?? 0, at: c }); };
+// a glowstick: a thin neon rod (MAGIC, bright core MAGIC2)
+const pStick = (m, a, b, g) => m.seg(a, b, .03, .03, M.MAGIC, { group: g, paint: p => ctCell(p, 40) < .3 ? M.MAGIC2 : undefined });
+// a candle: wax stub, a flame (GLOW) with a hot core (RUNE)
+const pCandle = (m, c, h, r, g) => { ctCyl(m, c, v3.add(c, [0, h, 0]), r, M.BELLY, g, { end: M.CLOTH }); m.ell(v3.add(c, [0, h + .045, 0]), [.025, .05, .025], M.GLOW, { group: g + 1, paint: p => p[1] < c[1] + h + .04 ? M.RUNE : undefined }); };
+// a string of bulbs along a polyline (each bulb glows: warm or neon)
+const pString = (m, pts, n, g, mat = M.GLOW) => { const seg = []; for (let i = 0; i + 1 < pts.length; i++) seg.push([pts[i], pts[i + 1]]); const L = seg.map(([a, b]) => Math.hypot(...v3.sub(b, a))), T = L.reduce((a, b) => a + b, 0);
+  m.chain(pts.map(p => [...p, .006]), M.NOSE, { group: g }); for (let k = 0; k < n; k++) { let d = (k + .5) / n * T, i = 0; while (i < L.length - 1 && d > L[i]) { d -= L[i]; i++; } const p = v3.lerp(seg[i][0], seg[i][1], d / L[i]); m.ell(v3.add(p, [0, -.03, 0]), [.035, .04, .035], k % 3 === 1 && mat === M.GLOW ? M.MAGIC : mat, { group: g + 1 }); } };
+// a sagging curve between two points
+const pSag = (a, b, sag, n = 10) => Array.from({ length: n + 1 }, (_, i) => { const t = i / n; return v3.add(v3.lerp(a, b, t), [0, -Math.sin(t * Math.PI) * sag, 0]); });
+const pChair = (m, c, g, { yaw = 0, mat = M.BELLY } = {}) => { const n = mark(m); m.box([0, .4, 0], [.2, .025, .2], mat, { round: .02, group: g }); m.box([-.19, .65, 0], [.025, .22, .2], mat, { round: .02, group: g, dir: [0, 1, 0], up: [1, .15, 0] }); for (const x of [-.17, .17]) for (const z of [-.17, .17]) m.seg([x, 0, z], [x * .95, .4, z * .95], .02, .02, mat, { group: g }); place(m, n, { yaw, at: c }); };
+const pNeon = shape => (s, t) => { const d = shape(s, t); return d < .06 ? M.MAGIC2 : d < .14 ? M.MAGIC : null; }; // a neon tube along an outline, as a distance
+
+const PARTY = {
+  // ---- litter: small and many ----
+  "cup-red": { cls: "litter", desc: "a red party cup on its side", build(m) { pCup(m, [0, .045, 0], 1, M.ACCENT, 1.5); } },
+  "cup-paper": { cls: "litter", desc: "a paper cup, standing, a little crushed", build(m) { pCup(m, [0, 0, 0], 1, M.CLOTH); } },
+  "cups": { cls: "litter", desc: "three party cups, two knocked over", build(m) { pCup(m, [0, 0, 0], 1); pCup(m, [.2, .045, .1], 2, M.ACCENT, 1.5); pCup(m, [-.15, .045, .15], 3, M.CLOTH, -1.4); } },
+  "can": { cls: "litter", desc: "a drinks can lying in the grass (no label)", build(m) { pCan(m, [0, .045, 0], 1, M.FRAME, { roll: 1.57, yaw: .4 }); } },
+  "cans": { cls: "litter", desc: "a few cans, one crushed flat", build(m) { pCan(m, [0, 0, 0], 1, M.FRAME); pCan(m, [.18, .045, .08], 2, M.BODY2, { roll: 1.57, yaw: -.5 }); pCan(m, [-.14, .02, .14], 3, M.HAT1, { crushed: true, roll: 1.4 }); } },
+  "bottle": { cls: "litter", desc: "a green glass bottle, standing", build(m) { pBottle(m, [0, 0, 0], 1); } },
+  "bottle-fallen": { cls: "litter", desc: "a bottle on its side", build(m) { pBottle(m, [0, .05, 0], 1, { roll: 1.57, yaw: .6 }); } },
+  "party-hat": { cls: "litter", desc: "a striped party hat fallen in the grass, its pompom gold", build(m) { pHat(m, [0, .06, 0], 1, { roll: 1.2, yaw: .3 }); } },
+  "party-hat-up": { cls: "litter", desc: "a party hat set upright on the ground", build(m) { pHat(m, [0, 0, 0], 1); } },
+  "streamers": { cls: "litter", desc: "curls of party streamer across the ground", decal: true, build(m) { for (let k = 0; k < 3; k++) { const pts = []; for (let i = 0; i <= 14; i++) { const t = i / 14; pts.push([-.4 + t * .8, .012, (k - 1) * .12 + Math.sin(t * 9 + k) * .08, .012]); } m.chain(pts, [M.BODY, M.HAT1, M.POM][k], { group: 1 + k }); } } },
+  "balloons": { cls: "litter", desc: "three balloons tied to a stake, bobbing (pink, cyan, gold)", build(m) { ctBar(m, [0, 0, 0], [0, .25, 0], 1, .012, M.WOOD, undefined); [[M.BODY, -.12, .95, .02], [M.HAT1, .1, 1.05, -.04], [M.POM, .02, .82, .1]].forEach(([mat, x, y, z], i) => { m.chain([[0, .25, 0, .004], [x * .6, (y + .25) / 2, z * .6, .004], [x, y - .12, z, .004]], M.CLOTH, { group: 2 }); m.ell([x, y, z], [.1, .12, .1], mat, { group: 3 + i }); }); } },
+  "balloon-deflated": { cls: "litter", desc: "a deflated balloon, wrinkled on the ground", build(m) { m.ell([0, .02, 0], [.09, .02, .07], M.BODY, { group: 1, rough: .008 }); m.chain([[.08, .01, 0, .004], [.2, .01, .05, .004], [.3, .01, -.02, .004]], M.CLOTH, { group: 2 }); } },
+  "confetti": { cls: "litter", desc: "a scatter of confetti over the ground", decal: true, build(m) { m.flat([0, .008, 0], [1, 0, 0], [0, 0, 1], .6, .45, (u, v) => { const p = [u * 3, 0, v * 3], r = Math.hypot(u, v), n = ctCell(p, 8, 1); if (r > .6 + ctCell(p, 2, 4) * .4 || n > .4) return null; return n < .1 ? M.BODY : n < .2 ? M.HAT1 : n < .28 ? M.POM : n < .34 ? M.TOP : M.BELLY; }, { group: 1, bend: 0 }); } },
+  "glitter": { cls: "litter", desc: "spilt glitter catching the light, a faint sparkle on the ground", decal: true, glow: true, light: "neon", build(m) { m.flat([0, .008, 0], [1, 0, 0], [0, 0, 1], .45, .35, (u, v) => { const p = [u * 3, 0, v * 3], r = Math.hypot(u, v), n = ctCell(p, 9, 2); if (r > .55 + ctCell(p, 2, 6) * .45 || n > .45) return null; return n < .12 ? M.MAGIC2 : n < .3 ? M.MAGIC : M.FRAME; }, { group: 1, bend: 0 }); } },
+  "glowstick-crushed": { cls: "litter", desc: "a glowstick snapped and crushed, its glow leaking into the grass", glow: true, light: "neon", build(m) { pStick(m, [-.1, .02, 0], [.02, .02, .03], 1); pStick(m, [.04, .02, .02], [.13, .02, -.05], 2); m.flat([0, .006, .01], [1, 0, 0], [0, 0, 1], .14, .1, (u, v) => Math.hypot(u, v) < .8 && ctCell([u * 3, 0, v * 3], 6) < .6 ? M.MAGIC : null, { group: 3, bend: 0 }); } },
+
+  // ---- light sources: the readability workhorses ----
+  "glowsticks-stuck": { cls: "small", desc: "glowsticks stuck upright in the ground like candles", glow: true, light: "neon", build(m) { for (let i = 0; i < 5; i++) { const a = i * 1.3, x = Math.cos(a) * .18 * (i % 2 + .4), z = Math.sin(a) * .14; pStick(m, [x, 0, z], [x + (ctHash(i) - .5) * .06, .2 + ctHash(i, 2) * .06, z], 1 + i); } } },
+  "glowsticks-strewn": { cls: "small", desc: "glowsticks strewn across the grass", glow: true, light: "neon", build(m) { for (let i = 0; i < 6; i++) { const x = (ctHash(i, 5) - .5) * .9, z = (ctHash(5, i) - .5) * .6, a = ctHash(i, 6) * 6.28; pStick(m, [x, .02, z], [x + Math.cos(a) * .15, .02, z + Math.sin(a) * .15], 1 + i); } } },
+  "glowstick-bracelets": { cls: "small", desc: "glowstick bracelets looped over a stick in the ground", glow: true, light: "neon", build(m) { ctBar(m, [0, 0, 0], [.03, .45, 0], 1, .015, M.WOOD, undefined); for (let i = 0; i < 3; i++) m.flat([.02, .15 + i * .1, 0], [1, .2 * (i - 1), 0], [0, .3, 1], .08, .08, (s, t) => Math.abs(Math.hypot(s, t) - .8) < .18 ? (i === 1 ? M.MAGIC2 : M.MAGIC) : null, { group: 2 + i, bend: .1 }); } },
+  "tea-lights": { cls: "small", desc: "a little cluster of tea lights flickering on a flat stone", glow: true, light: "warm", build(m) { m.ell([0, .03, 0], [.25, .035, .2], M.STONE, { group: 1, rough: .006 }); for (let i = 0; i < 5; i++) { const a = i * 1.26, c = [Math.cos(a) * .13, .06, Math.sin(a) * .09]; ctCyl(m, c, v3.add(c, [0, .025, 0]), .035, M.FRAME, 2 + i, { end: M.BELLY }); m.ell(v3.add(c, [0, .06, 0]), [.022, .04, .022], M.GLOW, { group: 10 + i, paint: p => p[1] < c[1] + .055 ? M.RUNE : undefined }); } } },
+  "candles": { cls: "small", desc: "a cluster of pillar candles of different heights, wax pooled round them", glow: true, light: "warm", build(m) { m.ell([0, .01, 0], [.2, .012, .16], M.BELLY, { group: 1 }); [[0, 0, .3, .05], [.09, .04, .2, .04], [-.08, .05, .15, .04], [.03, -.07, .1, .035]].forEach(([x, z, h, r], i) => pCandle(m, [x, .01, z], h, r, 2 + i * 2)); } },
+  "jam-jar-lantern": { cls: "small", desc: "a jam-jar lantern, a candle glowing inside", glow: true, light: "warm", build(m) { ctCyl(m, [0, 0, 0], [0, .18, 0], .07, M.SHADES, 1, { paint: p => p[2] > .04 && p[1] > .03 && p[1] < .15 ? M.GLOW : undefined, end: M.FRAME }); m.ell([0, .08, 0], [.03, .05, .03], M.RUNE, { group: 2, extra: true }); m.chain([[-.07, .18, 0, .005], [0, .28, 0, .005], [.07, .18, 0, .005]], M.FRAME, { group: 3 }); } },
+  "lantern-pole": { cls: "small", desc: "a paper lantern hanging from a shepherd's-crook pole, glowing in a neon", glow: true, light: "neon", build(m) { m.chain([[0, 0, 0, .018], [0, 1.4, 0, .015], [.1, 1.55, 0, .012], [.25, 1.5, 0, .012]], M.FRAME, { group: 1 }); m.seg([.25, 1.5, 0], [.25, 1.38, 0], .004, .004, M.NOSE, { group: 2 }); m.ell([.25, 1.24, 0], [.14, .15, .14], M.MAGIC, { group: 3, paint: p => Math.abs(Math.sin(p[1] * 60)) > .85 ? M.MAGIC2 : undefined }); } },
+  "lantern-string": { cls: "small", desc: "a string of round paper lanterns sagging between two poles", glow: true, light: "neon", build(m) { for (const x of [-.9, .9]) ctBar(m, [x, 0, 0], [x, 1.45, 0], 1, .02, M.WOOD, undefined); const pts = pSag([-.9, 1.42, 0], [.9, 1.42, 0], .25); m.chain(pts.map(p => [...p, .005]), M.NOSE, { group: 2 }); [2, 4, 6, 8].forEach((i, k) => m.ell(v3.add(pts[i], [0, -.12, 0]), [.09, .1, .09], k % 2 ? M.MAGIC2 : M.MAGIC, { group: 3 + k })); } },
+  "fairy-bush": { cls: "small", desc: "a bush draped in warm fairy lights, a few bulbs in neon", glow: true, light: "warm", build(m) { for (const [x, y, z, r] of [[0, .3, 0, .38], [-.25, .22, .1, .25], [.25, .24, -.05, .26]]) m.ell([x, y, z], [r, r * .85, r], M.LEAF, { group: 1, rough: .03, paint: p => ctCell(p, 10, 2) < .3 ? M.LEAF3 : undefined }); const pts = []; for (let i = 0; i <= 16; i++) { const a = i / 16 * Math.PI * 2.4 - 1, y = .12 + i * .032; pts.push([Math.cos(a) * .5, y, Math.sin(a) * .42]); } pString(m, pts, 12, 3); } },
+  "fairy-branch": { cls: "small", desc: "a fallen bough propped up, wound with fairy lights", glow: true, light: "warm", build(m) { m.chain([[-.7, 0, 0, .06], [-.3, .45, 0, .05], [.2, .6, .05, .04], [.6, .4, .05, .03]], M.TRUNK, { group: 1, rough: .01 }); m.seg([-.3, .45, 0], [-.4, 0, .1], .03, .03, M.TRUNK, { group: 1 }); const pts = []; for (let i = 0; i <= 18; i++) { const t = i / 18, b = t < .33 ? v3.lerp([-.7, 0, 0], [-.3, .45, 0], t * 3) : t < .66 ? v3.lerp([-.3, .45, 0], [.2, .6, .05], (t - .33) * 3) : v3.lerp([.2, .6, .05], [.6, .4, .05], (t - .66) * 3); pts.push(v3.add(b, [0, Math.sin(i * 1.7) * .06, Math.cos(i * 1.7) * .06])); } pString(m, pts, 10, 2); } },
+  "tiki-torch": { cls: "small", desc: "a bamboo tiki torch, its flame burning", glow: true, light: "warm", build(m) { m.seg([0, 0, 0], [0, 1.25, 0], .025, .03, M.STRAW, { group: 1, paint: p => (p[1] * 6) % 1 < .08 ? M.WOOD : undefined }); m.seg([0, 1.2, 0], [0, 1.38, 0], .06, .05, M.STRAW, { group: 2, paint: p => ctCell(p, 30) < .3 ? M.WOOD : undefined }); m.flat([0, 1.52, .01], [1, 0, .3], [0, 1, 0], .1, .17, (s, t) => { const u = (t + 1) / 2, half = Math.sin(Math.PI * Math.min(1, u * 1.1)) * (1 - u) * 1.4; return Math.abs(s) > half ? null : Math.abs(s) < half * .45 && u < .6 ? M.RUNE : M.GLOW; }, { group: 3, bend: .2 }); } },
+  "fire-pit-lit": { cls: "small", desc: "a little fire pit in a ring of stones, its fire lit", glow: true, light: "warm", build(m) { for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283; m.ell([Math.cos(a) * .32, .06, Math.sin(a) * .26], [.08, .065, .07], M.STONE, { group: 1 + (i % 2), rough: .01 }); } for (const [a, b] of [[[-.18, .04, -.05], [.15, .1, .06]], [[-.06, .04, .14], [.12, .08, -.12]]]) m.seg(a, b, .035, .03, M.BARKD, { group: 3, paint: p => ctCell(p, 25) < .4 ? M.GLOW : undefined }); [[0, 0], [.05, .05], [-.05, .03]].forEach(([x, z], i) => m.flat([x, .2 + i * .02, z], [1, 0, .4], [0, 1, 0], .08 - i * .015, .16 - i * .03, (s, t) => { const u = (t + 1) / 2, half = Math.sin(Math.PI * Math.min(1, u * 1.1)) * (1 - u) * 1.4; return Math.abs(s) > half ? null : Math.abs(s) < half * .45 && u < .6 ? M.RUNE : M.GLOW; }, { group: 4 + i, bend: .2 })); } },
+  "led-cube": { cls: "small", desc: "a glowing LED cube seat, lit from within in a neon", glow: true, light: "neon", build(m) { m.box([0, .2, 0], [.2, .2, .2], M.MAGIC, { round: .03, group: 1, paint: p => p[1] > .38 || ctCell(p, 8) < .15 ? M.MAGIC2 : undefined }); } },
+  "mirror-ball": { cls: "small", desc: "a little mirror ball hanging from a crooked branch stand, throwing sparkles", glow: true, light: "neon", build(m) { m.chain([[0, 0, 0, .03], [.02, .9, 0, .025], [.2, 1.25, 0, .02], [.45, 1.32, 0, .015]], M.TRUNK, { group: 1, rough: .006 }); m.seg([.45, 1.32, 0], [.45, 1.12, 0], .004, .004, M.NOSE, { group: 2 }); m.ell([.45, 1.0, 0], [.12, .12, .12], M.FRAME, { group: 3, paint: p => { const a = Math.atan2(p[2], p[0] - .45), b = p[1]; return (Math.floor(a * 5) + Math.floor(b * 30)) % 2 ? M.SHADES : ctCell(p, 30) < .25 ? M.MAGIC2 : undefined; } }); for (let i = 0; i < 4; i++) ctGlow(m, [.45 + Math.cos(i * 1.6) * .35, .55 + ctHash(i) * .5, Math.sin(i * 1.6) * .3], .018, 4 + i, M.MAGIC2); } },
+  "uv-rock": { cls: "small", desc: "a mossy rock splashed with ultraviolet paint, glowing", glow: true, light: "neon", build(m) { m.ell([0, .2, 0], [.4, .25, .3], M.STONE, { group: 1, rough: .03, paint: p => { const n = ctCell(p, 9, 2), s = Math.hypot(p[0] - .1, p[1] - .3) < .12 || Math.hypot(p[0] + .2, p[2] - .2) < .08; return s || n < .08 ? M.MAGIC : n > .85 ? M.MOSS : undefined; } }); } },
+  "uv-stump": { cls: "small", desc: "a stump daubed with glowing ultraviolet spirals", glow: true, light: "neon", build(m) { ctCyl(m, [0, 0, 0], [0, .35, 0], .22, M.TRUNK, 1, { paint: p => { const a = Math.atan2(p[2], p[0]); return Math.abs(Math.sin(a * 2 + p[1] * 18)) > .9 && p[2] > 0 ? M.MAGIC : ctCell(p, 12) < .15 ? M.BARKD : undefined; }, end: p => (Math.hypot(p[0], p[2]) * 30) % 1 < .2 ? M.MAGIC : M.STRAW }); } },
+
+  // ---- furniture ----
+  "folding-table": { cls: "furniture", desc: "a folding table left out, cups, cans and a bottle on it", build(m) { m.box([0, .55, 0], [.6, .02, .3], M.BELLY, { round: .02, group: 1, paint: p => ctCell(p, 14) < .1 ? M.STONED : undefined }); for (const x of [-.5, .5]) for (const s of [-1, 1]) ctBar(m, [x, 0, s * .25], [x, .54, -s * .2], 2, .015, M.FRAME, undefined); pCup(m, [-.3, .57, .1], 3); pCup(m, [-.15, .57, -.1], 4, M.CLOTH); pCan(m, [.1, .57, .05], 5, M.FRAME); pBottle(m, [.35, .57, -.05], 6); pCup(m, [.25, .6, .15], 7, M.ACCENT, 1.5); } },
+  "plastic-chair": { cls: "furniture", desc: "a white plastic garden chair", build(m) { pChair(m, [0, 0, 0], 1); } },
+  "plastic-chair-tipped": { cls: "furniture", desc: "a plastic chair tipped on its back", build(m) { const n = mark(m); pChair(m, [0, 0, 0], 1); place(m, n, { roll: 0, pitch: 1.3, at: [.3, .12, 0] }); } },
+  "camping-chair": { cls: "furniture", desc: "a folding camping chair in bright fabric, a can in its cup holder", build(m) { for (const s of [-1, 1]) { ctBar(m, [-.2, 0, s * .22], [.2, .42, s * .22], 1, .015, M.FRAME, undefined); ctBar(m, [.2, 0, s * .22], [-.2, .42, s * .22], 1, .015, M.FRAME, undefined); ctBar(m, [-.2, .42, s * .22], [-.28, .82, s * .22], 1, .015, M.FRAME, undefined); } m.box([0, .38, 0], [.21, .04, .22], M.TOP, { round: .03, group: 2 }); m.box([-.24, .62, 0], [.02, .2, .22], M.TOP, { dir: [0, 1, 0], up: [1, .2, 0], round: .01, group: 2 }); pCan(m, [.05, .4, .3], 3, M.HAT1); } },
+  "deck-chair": { cls: "furniture", desc: "a striped deck chair", build(m) { for (const z of [-.25, .25]) { ctBar(m, [-.4, 0, z], [.2, .75, z], 1, .018, M.WOOD, undefined); ctBar(m, [.3, 0, z], [-.15, .35, z], 1, .018, M.WOOD, undefined); } m.box([-.08, .38, 0], [.42, .01, .24], M.BODY, { dir: [.8, .9, 0], up: [-.9, .8, 0], round: .005, group: 2, paint: p => Math.floor((p[2] + 1) * 12) % 2 ? M.BELLY : undefined }); } },
+  "picnic-rug": { cls: "furniture", desc: "a bright picnic rug with crisps, cups and a birthday cake, its candle lit", glow: true, light: "warm", build(m) { m.box([0, .012, 0], [.55, .012, .42], M.BODY, { round: .006, group: 1, paint: p => (Math.floor((p[0] + 5) * 7) + Math.floor((p[2] + 5) * 7)) % 2 ? M.HAT1 : undefined }); pCup(m, [-.3, .02, .1], 2); pCup(m, [.25, .02, -.2], 3, M.CLOTH); m.box([.05, .04, .1], [.08, .02, .1], M.POM, { group: 4, dir: [1, 0, .4] }); ctCyl(m, [-.05, .02, -.15], [-.05, .1, -.15], .09, M.BELLY, 5, { end: M.BODY }); pCandle(m, [-.05, .1, -.15], .05, .01, 7); } },
+  "cool-box": { cls: "furniture", desc: "a cool box, its lid open, cans inside", build(m) { m.box([0, .18, 0], [.3, .18, .2], M.HAT1, { round: .04, group: 1, paint: p => p[1] > .3 ? M.BELLY : undefined }); m.box([0, .32, 0], [.26, .1, .16], M.NOSE, { group: 1, cut: true }); const n = mark(m); m.box([0, 0, 0], [.3, .03, .2], M.BELLY, { round: .02, group: 2 }); place(m, n, { roll: -1.3, at: [0, .52, -.24] }); for (let i = 0; i < 3; i++) pCan(m, [-.12 + i * .12, .2, 0], 3 + i, i % 2 ? M.BODY2 : M.FRAME); } },
+  "hay-seat": { cls: "furniture", desc: "a square hay bale with a blanket thrown over it for a seat", build(m) { m.box([0, .2, 0], [.42, .2, .24], M.STRAW, { round: .05, group: 1, rough: .008, paint: p => ctCell(p, 22) < .16 ? M.BARK2 : undefined }); m.box([.05, .41, 0], [.32, .02, .27], M.TOP, { round: .02, group: 2, rough: .006, paint: p => Math.floor((p[0] + 5) * 10) % 2 ? M.POM : undefined }); } },
+  "hammock": { cls: "furniture", desc: "a hammock slung between two posts, a cushion in it", build(m) { for (const x of [-1.0, 1.0]) m.seg([x, 0, 0], [x * 1.02, 1.1, 0], .05, .045, M.TRUNK, { group: 1, rough: .006 }); const pts = pSag([-.95, .95, 0], [.95, .95, 0], .5, 12); m.chain(pts.map(p => [...p, .006]), M.CLOTH, { group: 2 }); m.ell([0, .5, 0], [.62, .1, .22], M.HAT1, { group: 3, paint: p => Math.floor((p[0] + 5) * 8) % 2 ? M.POM : undefined }); m.ell([.4, .62, 0], [.12, .06, .12], M.BODY, { group: 4 }); } },
+  "gazebo": { cls: "furniture", desc: "a pop-up gazebo, string lights round its edge, one leg bent", glow: true, light: "warm", build(m) { for (const [x, z, bend] of [[-.8, -.8, 0], [.8, -.8, 0], [.8, .8, .15], [-.8, .8, 0]]) ctBar(m, [x, 0, z], [x - bend, 1.55, z], 1, .02, M.FRAME, undefined); m.seg([0, 1.55, 0], [0, 1.95, 0], 1.1, .05, M.BELLY, { group: 2, paint: p => Math.floor((Math.atan2(p[2], p[0]) + 4) * 2.5) % 2 ? M.BODY : undefined }); m.box([0, 1.0, 0], [1.4, .8, 1.4], M.BELLY, { group: 2, cut: true }); const c = [[-.8, 1.55, -.8], [.8, 1.55, -.8], [.8, 1.55, .8], [-.8, 1.55, .8]]; for (let i = 0; i < 4; i++) pString(m, pSag(c[i], c[(i + 1) % 4], .12, 6), 6, 3 + i * 2); } },
+  "party-tent": { cls: "furniture", desc: "a little dome tent, a lantern glowing inside it", glow: true, light: "warm", build(m) { m.ell([0, 0, 0], [.75, .62, .6], M.HAT2, { group: 1, paint: p => p[2] > .35 && Math.abs(p[0]) < .2 && p[1] < .45 ? M.GLOW : Math.abs(Math.sin(Math.atan2(p[2], p[0]) * 2)) > .97 ? M.BODY3 : undefined }); m.box([0, -.5, 0], [1, .5, 1], M.NOSE, { group: 1, cut: true }); } },
+
+  // ---- set dressing: rarer ----
+  "dj-booth": { cls: "set", desc: "a small DJ booth: decks on a trestle table, a speaker beside it, lights on the decks", glow: true, light: "neon", build(m) { m.box([0, .7, 0], [.6, .03, .3], M.WOOD, { round: .02, group: 1, paint: ctPlank(7, 0) }); for (const x of [-.5, .5]) ctBar(m, [x, 0, 0], [x, .68, 0], 1, .025, M.FRAME, undefined); m.box([0, .65, .29], [.6, .3, .01], M.TOP, { group: 2, paint: p => Math.floor((p[0] + 5) * 6) % 2 ? M.BODY3 : undefined }); for (const x of [-.32, .32]) { m.box([x, .76, 0], [.22, .03, .2], M.BODY3, { round: .02, group: 3 }); m.ell([x, .8, 0], [.13, .012, .13], M.NOSE, { group: 4, paint: p => Math.abs(Math.hypot(p[0] - x, p[2]) - .1) < .012 ? M.MAGIC : undefined }); } m.box([0, .78, .1], [.07, .02, .09], M.BODY3, { group: 5, paint: p => ctCell(p, 30) < .4 ? M.MAGIC2 : undefined }); m.box([.95, .45, 0], [.22, .45, .22], M.BODY3, { round: .03, group: 6, paint: p => p[2] > .2 && (Math.hypot(p[0] - .95, p[1] - .3) < .14 || Math.hypot(p[0] - .95, p[1] - .7) < .08) ? M.NOSE : undefined }); } },
+  "inflatable-flamingo": { cls: "set", desc: "a pink inflatable flamingo, a little saggy", build(m) { m.ell([0, .3, 0], [.45, .28, .3], M.BODY, { group: 1 }); m.chain([[.35, .4, 0, .09], [.5, .75, 0, .07], [.45, 1.0, 0, .06], [.55, 1.1, 0, .06]], M.BODY, { group: 1 }); m.ell([.6, 1.12, 0], [.1, .07, .07], M.BODY, { group: 1 }); m.seg([.68, 1.12, 0], [.8, 1.0, 0], .035, .02, M.BELLY, { group: 2, paint: p => p[1] < 1.04 ? M.NOSE : undefined }); m.ell([.6, 1.15, .06], [.015, .015, .015], M.NOSE, { group: 3 }); m.ell([-.4, .4, 0], [.15, .1, .2], M.BODY, { group: 1 }); } },
+  "inflatable-ring": { cls: "set", desc: "an inflatable unicorn ring left on the grass, its horn gold", build(m) { m.ell([0, .12, 0], [.55, .14, .5], M.BELLY, { group: 1, paint: p => Math.floor((Math.atan2(p[2], p[0]) + 4) * 2) % 2 ? M.TOP : undefined }); m.ell([0, .12, 0], [.28, .3, .24], M.NOSE, { group: 1, cut: true }); m.chain([[.5, .2, 0, .1], [.65, .45, 0, .08], [.75, .55, 0, .08]], M.BELLY, { group: 2 }); m.seg([.78, .62, 0], [.85, .85, 0], .03, .006, M.POM, { group: 3 }); } },
+  "crate-bar": { cls: "set", desc: "a bar built of stacked crates, bottles on top, fairy lights along its front", glow: true, light: "warm", build(m) { for (const [x, y] of [[-.55, .18], [0, .18], [.55, .18], [-.55, .54], [0, .54], [.55, .54]]) m.box([x, y, 0], [.26, .17, .2], M.WOOD, { round: .015, group: 1 + (y > .3 ? 1 : 0), paint: p => ((p[1] + 5) * 9 % 1) < .22 ? M.NOSE : ctPlank(7, 0)(p) }); m.box([0, .74, 0], [.85, .025, .25], M.WOOD, { round: .01, group: 3, paint: ctPlank(7, 0) }); for (let i = 0; i < 5; i++) pBottle(m, [-.6 + i * .3, .77, (ctHash(i) - .5) * .2], 4 + i); pString(m, pSag([-.82, .72, .22], [.82, .72, .22], .12, 10), 9, 10); } },
+  "bunting-run": { cls: "set", desc: "a run of bright bunting on two poles", build(m) { for (const x of [-1.2, 1.2]) ctBar(m, [x, 0, 0], [x, 1.6, 0], 1, .025, M.WOOD, undefined); const pts = pSag([-1.2, 1.55, 0], [1.2, 1.55, 0], .3, 12), cols = [M.BODY, M.HAT1, M.POM, M.TOP, M.HAT2]; m.chain(pts.map(p => [...p, .006]), M.CLOTH, { group: 2 }); for (let i = 1; i < 12; i++) m.flat(v3.add(pts[i], [0, -.1, 0]), [1, 0, 0], [0, 1, 0], .07, .1, (s, t) => Math.abs(s) < (t + 1) / 2 ? cols[i % 5] : null, { group: 3, bend: .1 }); } },
+  "neon-heart": { cls: "set", desc: "a neon heart outline on a stake, glowing (no words)", glow: true, light: "neon", build(m) { ctBar(m, [0, 0, -.02], [0, .9, -.02], 1, .02, M.FRAME, undefined); m.flat([0, 1.15, 0], [1, 0, 0], [0, 1, 0], .35, .35, pNeon((s, t) => { const x = s * 1.2, y = t * 1.2 + .25; const a = x * x + y * y - 1; return Math.abs(a * a * a - x * x * y * y * y) * 2.2; }), { group: 2, bend: .05 }); } },
+  "neon-star": { cls: "set", desc: "a neon star outline on a stake, glowing", glow: true, light: "neon", build(m) { ctBar(m, [0, 0, -.02], [0, .9, -.02], 1, .02, M.FRAME, undefined); m.flat([0, 1.15, 0], [1, 0, 0], [0, 1, 0], .35, .35, pNeon((s, t) => { const a = Math.atan2(t, s) + Math.PI / 2, r = Math.hypot(s, t), R = .45 + .4 * Math.abs(Math.cos(a * 2.5)); return Math.abs(r - R * .95); }), { group: 2, bend: .05 }); } },
+  "neon-moon": { cls: "set", desc: "a neon crescent moon on a stake, glowing", glow: true, light: "neon", build(m) { ctBar(m, [0, 0, -.02], [0, .9, -.02], 1, .02, M.FRAME, undefined); m.flat([0, 1.15, 0], [1, 0, 0], [0, 1, 0], .35, .35, pNeon((s, t) => { const a = Math.hypot(s, t) - .8, b = Math.hypot(s - .35, t - .15) - .65; return Math.abs(Math.max(a, -b)); }), { group: 2, bend: .05 }); } },
+  "flag-poles": { cls: "set", desc: "festival flags on tall bending poles: plain bright colours and stripes", build(m) { [[-.4, 0, 2.1, M.BODY], [.1, -.15, 2.4, M.HAT1], [.5, .1, 1.9, M.POM]].forEach(([x, z, h, mat], i) => { m.chain([[x, 0, z, .025], [x, h * .6, z, .02], [x + .08, h, z, .012]], M.FRAME, { group: 1 + i }); m.flat([x + .22, h - .45, z + .01], [.2, 1, 0], [1, -.1, 0], .4, .14, (s, t) => { const w = .7 + .3 * (1 - (s + 1) / 2); return Math.abs(t) > w ? null : i === 1 && Math.abs(t) < .3 ? M.BELLY : mat; }, { group: 5 + i, bend: .2 }); }); } },
+};
+
+// ---------------- the table ----------------
+const SIZE = { litter: 1.5, small: 1.2, furniture: 1, set: 1 }; // litter a touch larger than life, to read at all
+const PARTY_CLASSES = ["litter", "small", "furniture", "set"];
+const PARTY_OBJECTS = Object.entries(PARTY).map(([id, d]) => ({ id, size: SIZE[d.cls], split: null, glow: false, decal: false, light: null, ...d }));
+const PARTY_BY_ID = Object.fromEntries(PARTY_OBJECTS.map(d => [d.id, d]));
+// The party neons (the sigils' neon palette) a neon piece can be baked in; warm light is candle gold.
+const PARTY_NEONS = Object.keys(NEON);
+const PARTY_WARM = [255, 186, 96];
+function partyColours(st = {}, neon = "pink") {
+  const leaf = st.leafHue ?? .3, trunk = st.trunkHue ?? .07, n = NEON[neon] || NEON.pink, core = n.map(v => Math.round(v + (255 - v) * .7));
+  return {
+    [M.MAGIC]: n, [M.MAGIC2]: core, [M.GLOW]: PARTY_WARM, [M.RUNE]: [255, 240, 200], // the neon and its white-hot core; candle gold and its core
+    [M.ACCENT]: [214, 40, 50], [M.BODY]: [240, 90, 170], [M.HAT1]: [40, 190, 230], [M.POM]: [245, 200, 60], [M.TOP]: [150, 80, 230], [M.HAT2]: [44, 120, 70], [M.BODY2]: [235, 120, 40], // party red, hot pink, cyan, gold, violet, bottle green, orange
+    [M.BELLY]: [236, 234, 228], [M.CLOTH]: [222, 210, 186], [M.FRAME]: [170, 174, 182], [M.BODY3]: [36, 34, 42], [M.NOSE]: [14, 12, 18], [M.SHADES]: [60, 70, 80], // white plastic, paper, metal, black kit, dark, glass
+    [M.WOOD]: [150, 116, 78], [M.STRAW]: [200, 172, 104], [M.BARK2]: [110, 82, 54], [M.STONE]: [118, 116, 122], [M.STONED]: [60, 58, 66],
+    [M.MOSS]: hsv2rgb(.26, .45, .45), [M.TRUNK]: hsv2rgb(trunk, .45, .36), [M.BARKD]: hsv2rgb(trunk + .03, .5, .17),
+    [M.LEAF]: hsv2rgb(leaf, .55, .45), [M.LEAF2]: hsv2rgb(leaf - .03, .5, .6), [M.LEAF3]: hsv2rgb(leaf + .03, .6, .28), [M.LINE]: [24, 22, 30],
+  };
+}
+function partyModel(id) { const d = PARTY_BY_ID[id]; if (!d) throw new Error(`no party object "${id}"`); const m = new Model({ blend: .03 }); d.build(m); return m; }
+// One party object, drawn: { whole, top, bot, crownY, origin, metres }, like the country pieces. Bake it with partyColours(style, neon).
+function partySprite(id, st = {}, { ppm = 16 } = {}) { return pieceSprite(partyModel(id), PARTY_BY_ID[id], st, ppm); }
+
+// ---------------- clusters ----------------
+// Small groupings of 3 to 8 objects, scattered many times over party ground (unlike scenes, not once per map). Each piece:
+// [object, x, z, facing, neon] in model units (x right, z towards the viewer); sceneLayout(id) gives metres, like a scene's.
+const CLUSTERS = {
+  "table-and-chairs": { desc: "a folding table with cups and cans, chairs pulled round it, one tipped", pieces: [["folding-table", 0, 0], ["plastic-chair", -.9, .3], ["plastic-chair", .9, .4, "left"], ["plastic-chair-tipped", .2, -.8], ["cups", -.4, .9], ["cans", .7, 1.0]] },
+  "candle-ring": { desc: "tea lights and candles in a ring round a picnic rug", pieces: [["picnic-rug", 0, 0], ["tea-lights", -.9, -.4], ["candles", .9, -.5], ["tea-lights", .8, .6, "left"], ["candles", -.7, .7, "left"], ["jam-jar-lantern", 0, -.9]] },
+  "glowstick-scatter": { desc: "glowsticks in mixed neons, stuck in the ground and strewn about", pieces: [["glowsticks-stuck", 0, 0, undefined, "pink"], ["glowsticks-strewn", .7, .3, undefined, "cyan"], ["glowstick-crushed", -.6, .4, undefined, "acid"], ["glowsticks-stuck", -.4, -.5, "left", "lemon"], ["glowstick-crushed", .5, -.4, undefined, "violet"]] },
+  "chill-corner": { desc: "deck chairs and a cool box under a paper lantern", pieces: [["deck-chair", -.5, 0], ["deck-chair", .5, .1, "left"], ["cool-box", 0, .7], ["lantern-pole", -1.0, -.6, undefined, "cyan"], ["can", .3, 1.1]] },
+  "bar-corner": { desc: "a crate bar between two tiki torches, cups and cans in front", pieces: [["crate-bar", 0, 0], ["tiki-torch", -1.2, .1], ["tiki-torch", 1.2, .1, "left"], ["cups", -.3, .8], ["cans", .4, .9], ["bottle-fallen", .9, .7]] },
+  "dj-corner": { desc: "a little DJ booth with a neon star and glowsticks round it", pieces: [["dj-booth", 0, 0, undefined, "magenta"], ["neon-star", -1.3, -.3, undefined, "cyan"], ["glowsticks-strewn", .2, .9, undefined, "acid"], ["cups", -.6, .8], ["led-cube", 1.5, .7, undefined, "pink"]] },
+  "campfire-circle": { desc: "a lit fire pit, camping chairs and hay seats round it", pieces: [["fire-pit-lit", 0, 0], ["camping-chair", -.9, -.2], ["camping-chair", .9, -.3, "left"], ["hay-seat", 0, .9], ["cans", .6, .7], ["party-hat", -.5, .7]] },
+  "balloon-spot": { desc: "balloons on a stake, confetti and a fallen party hat", pieces: [["confetti", 0, 0], ["balloons", .1, -.2], ["party-hat", -.3, .2], ["balloon-deflated", .4, .3], ["streamers", -.2, -.4]] },
+};
+const PARTY_CLUSTERS = Object.entries(CLUSTERS).map(([id, d]) => ({ id, size: "party", ...d, pieces: d.pieces.map(([p, x, z, f, neon]) => [`party:${p}${neon ? "@" + neon : ""}`, x, z, f]) }));
+const PARTY_CLUSTER_BY_ID = Object.fromEntries(PARTY_CLUSTERS.map(d => [d.id, d]));
+
+// A sample patch of party ground, for the lab and previews: clusters and loose litter and lights scattered over a w × h
+// pixel patch, as the prototype might. Returns [{ ref, x, y, depth }] (each piece's origin on the patch, in pixels; depth for
+// sorting); compose with scenePiece(ref) and draw decals first. Clusters come from layout(id, { mirror }) (scenePlacements).
+function partyPatch(seed, layout, { w = 420, h = 250, clusters = 5, loose = 46 } = {}) {
+  let t = seed * 9301 + 49297; const r = () => (t = (t * 9301 + 49297) % 233280) / 233280;
+  const out = [], spots = [[.21, .28], [.71, .24], [.48, .6], [.17, .76], [.81, .76]].slice(0, clusters);
+  spots.forEach(([fx, fy], i) => { const id = PARTY_CLUSTERS[(i * 3 + seed) % PARTY_CLUSTERS.length].id; for (const p of layout(id, { mirror: r() < .5 })) out.push({ ref: p.ref, x: fx * w + p.ox, y: fy * h + p.oy, flip: p.flip, depth: fy * h + p.oy }); });
+  const pool = PARTY_OBJECTS.filter(d => d.cls === "litter" || d.cls === "small");
+  for (let i = 0; i < loose; i++) { const d = pool[Math.floor(r() * pool.length)], n = PARTY_NEONS[Math.floor(r() * PARTY_NEONS.length)], x = 10 + r() * (w - 20), y = 14 + r() * (h - 20); out.push({ ref: `party:${d.id}${d.light === "neon" ? "@" + n : ""}`, x, y, flip: r() < .5, depth: y }); }
+  return out;
+}
+
+
 // ---- inlined from art/scenes.js ----
 // Scenes (Ed, 2026-10-04: "Feel free to think of decorations that might be in 'scenes', and scatter a few
 // of them together"): vignettes of related pieces arranged together, each counting as ONE piece. Ed's rule:
@@ -5195,10 +5350,11 @@ function landmarkSprite(id, st = {}, { ppm = 16 } = {}) { return pieceSprite(lan
 // headstone drawn once, placed twenty times), since baking costs by pixel area and drawing is cheap.
 //   { id, size: "small" | "large", desc, suits: [area ids], pieces: [{ sprite, dx, dz, facing? }], footprint }
 // sprite names a piece: a country piece's or a landmark piece's id (country.js, landmarks.js), "relic:<id>" (relics.js) or "decor:<id>[/<variant>]"
-// (decor.js); dx, dz in metres from the scene's middle on the ground (x right, z towards the viewer, before
+// (decor.js) or "party:<id>[@<neon>]" (party.js, baked in that neon); dx, dz in metres from the scene's middle on the ground (x right, z towards the viewer, before
 // the camera's turn: put a piece's origin at groundOffset(dx, dz)); facing "left" draws it mirrored (its NF
 // normals); footprint, the scene's radius on the ground in metres. The pieces are turned towards the viewer,
 // so a scene can face two ways, as authored or mirrored (sceneLayout's `mirror`): the game picks one at random.
+
 
 
 
@@ -5285,17 +5441,18 @@ function scenePiece(ref, st = {}) {
   if (ns === "country" && COUNTRY_BY_ID[rest]) { const d = COUNTRY_BY_ID[rest]; out = { def: d, sprite: countrySprite(rest, st), colours: countryColours(st) }; }
   else if (ns === "country" && LANDMARK_BY_ID[rest]) { const d = LANDMARK_BY_ID[rest]; out = { def: d, sprite: landmarkSprite(rest, st), colours: landmarkColours(st) }; }
   else if (ns === "relic" && RELIC_BY_ID[rest]) { const d = RELIC_BY_ID[rest]; out = { def: d, sprite: relicSprite(rest, st), colours: relicColours(st) }; }
+  else if (ns === "party") { const [id, neon] = rest.split("@"), d = PARTY_BY_ID[id]; if (d) out = { def: d, sprite: partySprite(id, st), colours: partyColours(st, neon || "pink"), neon: d.light === "neon" ? neon || "pink" : undefined }; }
   else if (ns === "decor") { const [id, v = "0"] = rest.split("/"), d = DECOR_BY_ID[id]; if (d) out = { def: d, sprite: decorSprite(id, st, { variant: +v }), colours: decorColours(st) }; }
   if (!out) throw new Error(`no scene piece "${ref}"`);
   out = { ref, ...out, glow: !!out.def.glow, decal: !!out.def.decal };
   c.set(ref, out); return out;
 }
-const sceneRefExists = ref => { const [ns, rest] = ref.includes(":") ? ref.split(":") : ["country", ref]; return ns === "country" ? !!(COUNTRY_BY_ID[rest] || LANDMARK_BY_ID[rest]) : ns === "relic" ? !!RELIC_BY_ID[rest] : ns === "decor" ? !!DECOR_BY_ID[rest.split("/")[0]] : false; };
+const sceneRefExists = ref => { const [ns, rest] = ref.includes(":") ? ref.split(":") : ["country", ref]; return ns === "country" ? !!(COUNTRY_BY_ID[rest] || LANDMARK_BY_ID[rest]) : ns === "relic" ? !!RELIC_BY_ID[rest] : ns === "party" ? !!PARTY_BY_ID[rest.split("@")[0]] : ns === "decor" ? !!DECOR_BY_ID[rest.split("/")[0]] : false; };
 
 // A scene in metres: { id, size, desc, suits, pieces: [{ sprite, dx, dz, facing? }], footprint }. mirror: the scene
 // turned the other way (reflected across the line up the screen through its middle, every piece mirrored).
 function sceneLayout(id, st = {}, { mirror = false, ppm = 16 } = {}) {
-  const S = SCENE_BY_ID[id]; if (!S) throw new Error(`no scene "${id}"`);
+  const S = SCENE_BY_ID[id] || PARTY_CLUSTER_BY_ID[id]; if (!S) throw new Error(`no scene or party cluster "${id}"`);
   const k = witchPixelsPerUnit(st) / ppm, ny = Math.sin(YAW.towards), nz = Math.cos(YAW.towards); // n: the ground direction straight up the screen
   let footprint = 0;
   const pieces = S.pieces.map(([sprite, x, z, facing]) => {
@@ -5306,12 +5463,12 @@ function sceneLayout(id, st = {}, { mirror = false, ppm = 16 } = {}) {
   });
   return { id, size: S.size, desc: S.desc, suits: S.suits, pieces, footprint: +footprint.toFixed(1) };
 }
-// Where each piece's sprite goes on screen, for composing a scene (the lab, previews): [{ ref, piece, x, y, flip, depth }],
+// Where each piece's sprite goes on screen, for composing a scene (the lab, previews): [{ ref, piece, x, y, ox, oy, flip, depth }],
 // x, y the sprite's top-left in pixels from the scene's middle; draw decals first, then by depth (further first).
 function scenePlacements(id, st = {}, { mirror = false, ppm = 16 } = {}) {
   return sceneLayout(id, st, { mirror, ppm }).pieces.map(p => {
     const piece = scenePiece(p.sprite, st), sp = piece.sprite, [sx, sy] = groundOffset(p.dx, p.dz, ppm), flip = p.facing === "left";
-    return { ref: p.sprite, piece, flip, depth: sy, x: sx - (flip ? sp.whole.w - sp.origin.x : sp.origin.x), y: sy - sp.origin.y };
+    return { ref: p.sprite, piece, flip, depth: sy, ox: sx, oy: sy, x: sx - (flip ? sp.whole.w - sp.origin.x : sp.origin.x), y: sy - sp.origin.y }; // ox, oy: where its origin goes
   });
 }
 
@@ -5484,6 +5641,7 @@ function pathPieceSprite(id, st = {}, ppm = 16) {
 }
 // The areas each path kind suits, turned round: { areaId: [kinds] }, for an area's layout to name its preferred paths.
 function areaPathKinds() { const out = {}; for (const [k, K] of Object.entries(PATH_KINDS)) for (const a of K.moods) (out[a] = out[a] || []).push(k); out["ravine"] = [...(out["ravine"] || []), "stairs"]; out["rocky-slope"] = [...(out["rocky-slope"] || []), "stairs"]; out["cave-mouth"] = [...(out["cave-mouth"] || []), "stairs"]; out["stream"] = [...(out["stream"] || []), "bridges"]; return out; }
+
 
 
 
@@ -6721,6 +6879,35 @@ function renderCountry() {
   }, 1100);
 }
 
+// ================= party: the party objects at night, and a sample patch of party ground =================
+let partyTimer;
+function renderParty() {
+  clearTimeout(partyTimer);
+  partyTimer = setTimeout(() => {
+    const c = document.getElementById("partySheet"); if (!c) return;
+    const st = current, gap = 8, wit = bake(witchSprite(st), witchColours(st), st, st.cOutline), rows = [];
+    PARTY_CLASSES.forEach(cls => { const items = PARTY_OBJECTS.filter(d => d.cls === cls).map((d, i) => bake(partySprite(d.id, st).whole, partyColours(st, PARTY_NEONS[i % PARTY_NEONS.length]), st, "none")); for (let i = 0; i < items.length; i += 12) rows.push([...items.slice(i, i + 12), wit]); });
+    const PW = 420, PH = 250, baked = new Map(), bk = p => { if (!baked.has(p.ref)) baked.set(p.ref, bake(p.sprite.whole, p.colours, st, "none")); return baked.get(p.ref); };
+    const parts = partyPatch(1, (id, o) => scenePlacements(id, st, o), { w: PW, h: PH }).map(q => { const p = scenePiece(q.ref, st), b = bk(p); return { b, flip: q.flip, decal: p.decal, depth: q.depth, x: q.x - (q.flip ? b.w - p.sprite.origin.x : p.sprite.origin.x), y: q.y - p.sprite.origin.y }; });
+    parts.push({ b: wit, x: PW / 2 - wit.w / 2, y: PH / 2 - wit.h + 20, depth: PH / 2 + 20 });
+    const A = document.createElement("canvas"), N = document.createElement("canvas"); A.width = N.width = PW; A.height = N.height = PH;
+    const draw = (ctx, img, p) => { const x = Math.round(p.x), y = Math.round(p.y); if (!p.flip) return ctx.drawImage(img, x, y); ctx.save(); ctx.translate(x + p.b.w, y); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0); ctx.restore(); };
+    parts.sort((p, q) => (q.decal ? 1 : 0) - (p.decal ? 1 : 0) || p.depth - q.depth).forEach(p => { draw(A.getContext("2d"), p.b.A, p); draw(N.getContext("2d"), p.flip ? p.b.NF : p.b.N, p); });
+    rows.push([{ A, N, w: PW, h: PH }]);
+    // composed over a transparent albedo (so glowing pixels keep their alpha 254), lit at night, then the lit ground laid under
+    const w = Math.max(...rows.map(r => r.reduce((a, x) => a + x.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(x => x.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
+    tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+    let y = gap;
+    rows.forEach((r, i) => { let x = gap; y += rh[i] - gap; for (const s2 of r) { tgt.a.drawImage(s2.A, x, y - s2.h); tgt.n.drawImage(s2.N, x, y - s2.h); x += s2.w + gap; } y += gap; });
+    const g = makeTarget(1, 1); g.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; g.a.fillRect(0, 0, 1, 1); g.n.fillStyle = "rgb(128,75,240)"; g.n.fillRect(0, 0, 1, 1); const gc = document.createElement("canvas"); gc.width = gc.height = 1; shade(g, gc, st, [], [0, 0, 1, 1]);
+    c.width = w; c.height = h; shade(tgt, c, st, [], [0, 0, w, h]);
+    const ctx = c.getContext("2d"), img = ctx.getImageData(0, 0, w, h), al = tgt.a.getImageData(0, 0, w, h).data, gp = gc.getContext("2d").getImageData(0, 0, 1, 1).data;
+    for (let i = 0; i < al.length; i += 4) if (!al[i + 3]) { img.data[i] = gp[0]; img.data[i + 1] = gp[1]; img.data[i + 2] = gp[2]; } // shade leaves empty pixels black: lay the lit ground there
+    ctx.putImageData(img, 0, 0);
+    c.style.width = w + "px"; c.style.maxWidth = "none";
+  }, 1200);
+}
+
 // ================= decorations: ruins, rocks, freak trees, the lake kit =================
 let decorTimer;
 function renderDecor() {
@@ -6968,7 +7155,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderCountry(); renderRelics(); renderSets(); renderTall(); renderTufts(); renderWitch(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
+  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderCountry(); renderParty(); renderRelics(); renderSets(); renderTall(); renderTufts(); renderWitch(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }

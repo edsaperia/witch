@@ -6,7 +6,7 @@
 // headstone drawn once, placed twenty times), since baking costs by pixel area and drawing is cheap.
 //   { id, size: "small" | "large", desc, suits: [area ids], pieces: [{ sprite, dx, dz, facing? }], footprint }
 // sprite names a piece: a country piece's or a landmark piece's id (country.js, landmarks.js), "relic:<id>" (relics.js) or "decor:<id>[/<variant>]"
-// (decor.js); dx, dz in metres from the scene's middle on the ground (x right, z towards the viewer, before
+// (decor.js) or "party:<id>[@<neon>]" (party.js, baked in that neon); dx, dz in metres from the scene's middle on the ground (x right, z towards the viewer, before
 // the camera's turn: put a piece's origin at groundOffset(dx, dz)); facing "left" draws it mirrored (its NF
 // normals); footprint, the scene's radius on the ground in metres. The pieces are turned towards the viewer,
 // so a scene can face two ways, as authored or mirrored (sceneLayout's `mirror`): the game picks one at random.
@@ -15,6 +15,7 @@ import { YAW } from "./model3d.js";
 import { COUNTRY_BY_ID, countrySprite, countryColours } from "./country.js";
 import { RELIC_BY_ID, relicSprite, relicColours, groundOffset } from "./relics.js";
 import { DECOR_BY_ID, decorSprite, decorColours } from "./decor.js";
+import { PARTY_BY_ID, PARTY_CLUSTER_BY_ID, partySprite, partyColours } from "./party.js";
 import { LANDMARK_BY_ID, LANDMARK_BUILDINGS, landmarkSprite, landmarkColours } from "./landmarks.js";
 
 // Each scene: [piece, x, z, facing] in model units at the witch's scale (x right, z towards the viewer); sceneLayout gives metres.
@@ -97,17 +98,18 @@ export function scenePiece(ref, st = {}) {
   if (ns === "country" && COUNTRY_BY_ID[rest]) { const d = COUNTRY_BY_ID[rest]; out = { def: d, sprite: countrySprite(rest, st), colours: countryColours(st) }; }
   else if (ns === "country" && LANDMARK_BY_ID[rest]) { const d = LANDMARK_BY_ID[rest]; out = { def: d, sprite: landmarkSprite(rest, st), colours: landmarkColours(st) }; }
   else if (ns === "relic" && RELIC_BY_ID[rest]) { const d = RELIC_BY_ID[rest]; out = { def: d, sprite: relicSprite(rest, st), colours: relicColours(st) }; }
+  else if (ns === "party") { const [id, neon] = rest.split("@"), d = PARTY_BY_ID[id]; if (d) out = { def: d, sprite: partySprite(id, st), colours: partyColours(st, neon || "pink"), neon: d.light === "neon" ? neon || "pink" : undefined }; }
   else if (ns === "decor") { const [id, v = "0"] = rest.split("/"), d = DECOR_BY_ID[id]; if (d) out = { def: d, sprite: decorSprite(id, st, { variant: +v }), colours: decorColours(st) }; }
   if (!out) throw new Error(`no scene piece "${ref}"`);
   out = { ref, ...out, glow: !!out.def.glow, decal: !!out.def.decal };
   c.set(ref, out); return out;
 }
-export const sceneRefExists = ref => { const [ns, rest] = ref.includes(":") ? ref.split(":") : ["country", ref]; return ns === "country" ? !!(COUNTRY_BY_ID[rest] || LANDMARK_BY_ID[rest]) : ns === "relic" ? !!RELIC_BY_ID[rest] : ns === "decor" ? !!DECOR_BY_ID[rest.split("/")[0]] : false; };
+export const sceneRefExists = ref => { const [ns, rest] = ref.includes(":") ? ref.split(":") : ["country", ref]; return ns === "country" ? !!(COUNTRY_BY_ID[rest] || LANDMARK_BY_ID[rest]) : ns === "relic" ? !!RELIC_BY_ID[rest] : ns === "party" ? !!PARTY_BY_ID[rest.split("@")[0]] : ns === "decor" ? !!DECOR_BY_ID[rest.split("/")[0]] : false; };
 
 // A scene in metres: { id, size, desc, suits, pieces: [{ sprite, dx, dz, facing? }], footprint }. mirror: the scene
 // turned the other way (reflected across the line up the screen through its middle, every piece mirrored).
 export function sceneLayout(id, st = {}, { mirror = false, ppm = 16 } = {}) {
-  const S = SCENE_BY_ID[id]; if (!S) throw new Error(`no scene "${id}"`);
+  const S = SCENE_BY_ID[id] || PARTY_CLUSTER_BY_ID[id]; if (!S) throw new Error(`no scene or party cluster "${id}"`);
   const k = witchPixelsPerUnit(st) / ppm, ny = Math.sin(YAW.towards), nz = Math.cos(YAW.towards); // n: the ground direction straight up the screen
   let footprint = 0;
   const pieces = S.pieces.map(([sprite, x, z, facing]) => {
@@ -118,11 +120,11 @@ export function sceneLayout(id, st = {}, { mirror = false, ppm = 16 } = {}) {
   });
   return { id, size: S.size, desc: S.desc, suits: S.suits, pieces, footprint: +footprint.toFixed(1) };
 }
-// Where each piece's sprite goes on screen, for composing a scene (the lab, previews): [{ ref, piece, x, y, flip, depth }],
+// Where each piece's sprite goes on screen, for composing a scene (the lab, previews): [{ ref, piece, x, y, ox, oy, flip, depth }],
 // x, y the sprite's top-left in pixels from the scene's middle; draw decals first, then by depth (further first).
 export function scenePlacements(id, st = {}, { mirror = false, ppm = 16 } = {}) {
   return sceneLayout(id, st, { mirror, ppm }).pieces.map(p => {
     const piece = scenePiece(p.sprite, st), sp = piece.sprite, [sx, sy] = groundOffset(p.dx, p.dz, ppm), flip = p.facing === "left";
-    return { ref: p.sprite, piece, flip, depth: sy, x: sx - (flip ? sp.whole.w - sp.origin.x : sp.origin.x), y: sy - sp.origin.y };
+    return { ref: p.sprite, piece, flip, depth: sy, ox: sx, oy: sy, x: sx - (flip ? sp.whole.w - sp.origin.x : sp.origin.x), y: sy - sp.origin.y }; // ox, oy: where its origin goes
   });
 }
