@@ -54,6 +54,10 @@ export interface Creature {
   leashed: boolean;
   /** A wild legend: a mini-boss when combat comes (a hook: no fighting yet). */
   boss?: boolean;
+  /** A disc (centre, radius in metres) found to lie wholly in its own area: see inOwnArea. */
+  safeX?: number;
+  safeZ?: number;
+  safeR?: number;
   rand: () => number;
 }
 
@@ -89,7 +93,18 @@ export function wildLegendCells(map: ForestMap): [number, number][] {
 /** How far from its area's centre a creature looks for places to go: the whole area. */
 export const wanderRange = (map: ForestMap) => map.areaSize * 0.75;
 
-const inCell = (map: ForestMap, x: number, z: number, cell: [number, number]) => { const c = map.areaAt(x, z).cell; return c[0] === cell[0] && c[1] === cell[1]; };
+const inCell = (map: ForestMap, x: number, z: number, cell: [number, number]) => { const c = map.cellSafe(x, z).cell; return c[0] === cell[0] && c[1] === cell[1]; };
+
+/** Whether (x, z) is in the creature's own area: asked of the map only once it leaves the disc
+ *  last found to be surely inside (map.cellSafe), so a creature ambling about asks every metre
+ *  or so, not every step (the area lookup was most of a frame's work with hundreds of them). */
+function inOwnArea(map: ForestMap, c: Creature, x: number, z: number): boolean {
+  if (c.safeR !== undefined && Math.hypot(x - c.safeX!, z - c.safeZ!) < c.safeR) return true;
+  const r = map.cellSafe(x, z);
+  if (r.cell[0] !== c.cell[0] || r.cell[1] !== c.cell[1]) return false;
+  c.safeX = x; c.safeZ = z; c.safeR = r.safe;
+  return true;
+}
 
 /** A point surely inside an area: its centre if that lies in its own ground, else the nearest
  *  such point found on rings round it. */
@@ -152,7 +167,7 @@ export function stepCreature(c: Creature, dt: number, map: ForestMap): void {
   }
   const step = Math.min(d, c.speed * dt), nx = c.x + (dx / d) * step, nz = c.z + (dz / d) * step;
   // Every step checks where it would stand: still its own area? If not, it stops and chooses again.
-  if (!inCell(map, nx, nz, c.cell)) { c.tx = c.x; c.tz = c.z; c.moving = false; return; }
+  if (!inOwnArea(map, c, nx, nz)) { c.tx = c.x; c.tz = c.z; c.moving = false; return; }
   c.x = nx; c.z = nz;
   if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
   c.away = facingAway(dx, dz, c.away, 0, map.tuning); // away only while heading up the screen

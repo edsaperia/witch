@@ -7,6 +7,7 @@
         "String lights no longer show through the curved earth over the treetops",
         "The arrows at the screen's edge always point the right way, even to things past the curve of the world",
         "The rune stone markers stay on screen: once the stone is in view, the marker floats above it with its countdown, so it's easy to find in a busy forest",
+        "Smoother boosting over the treetops: the work of streaming in new forest, hills and ground is spread across frames, and creatures cost far less to move, so frames stay steady at full speed",
         "Legend buffs: a party legend (an adult you've fed until it evolves) gives you its species' own buff while it lives: faster flight, quicker invites, berries found further off, longer between waves and more. Its sigil shows in a row at the top of the screen (hover for what it does), and a line says what you've gained or lost",
         "Party legends lumber: a creature that evolves into a legend slows to a legend's pace, following you too",
         "Wild legends are rare, late threats: only 3 to 5 a map, far out in remote areas. They're bigger, breathe slowly, and have a dark aura that you can see glowing through the treetops. They sleep until the party reaches their area, then lumber about it (no fighting yet). The legend next to home has gone",

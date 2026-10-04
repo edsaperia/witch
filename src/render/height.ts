@@ -41,6 +41,8 @@ export function hillsAt(x: number, z: number, seed: number, H: HillsTuning): num
 }
 
 /** One sample as the texture holds it (half float). */
+const bucketKey = (bx: number, by: number) => (bx + 32768) * 65536 + (by + 32768);
+const sampleKey = (i: number, j: number) => (i + 1048576) * 2097152 + (j + 1048576);
 const quantise = (v: number) => THREE.DataUtils.fromHalfFloat(THREE.DataUtils.toHalfFloat(v));
 
 interface Circle { x: number; z: number; r: number; h: number }
@@ -119,8 +121,12 @@ export class HeightField {
   private cj = 0;
   private filled = false;
   private seed: number;
-  private circles = new Map<string, Circle[]>();
-  private pondBuckets = new Set<string>();
+  private circles = new Map<number, Circle[]>();
+  private pondBuckets = new Set<number>();
+  /** Samples worked out ahead of the window (prepare), by sample: follow takes them as it moves. */
+  private ahead = new Map<number, number>();
+  /** The window position and heading the strip ahead was last finished for. */
+  private prepared = "";
 
   constructor(private map: ForestMap, private forest: Forest, readonly H: HillsTuning) {
     this.seed = map.seed + 6113;
@@ -157,7 +163,7 @@ export class HeightField {
     const R = c.r + PLATEAU_FADE;
     for (let by = Math.floor((c.z - R) / BUCKET); by <= Math.floor((c.z + R) / BUCKET); by++)
       for (let bx = Math.floor((c.x - R) / BUCKET); bx <= Math.floor((c.x + R) / BUCKET); bx++) {
-        const k = `${bx},${by}`;
+        const k = bucketKey(bx, by);
         let l = this.circles.get(k);
         if (!l) this.circles.set(k, (l = []));
         l.push(c);
@@ -166,7 +172,7 @@ export class HeightField {
 
   /** Ponds come from the forest's light sources, made as they're asked for: add a bucket's once. */
   private ponds(bx: number, by: number): void {
-    const k = `${bx},${by}`;
+    const k = bucketKey(bx, by);
     if (this.pondBuckets.has(k)) return;
     this.pondBuckets.add(k);
     for (const l of this.forest.lightsNear((bx + 0.5) * BUCKET, (by + 0.5) * BUCKET, BUCKET * 0.75))
@@ -178,7 +184,7 @@ export class HeightField {
     let h = this.raw(x, z);
     const bx = Math.floor(x / BUCKET), by = Math.floor(z / BUCKET);
     if (ponds) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) this.ponds(bx + dx, by + dy);
-    for (const c of this.circles.get(`${bx},${by}`) ?? []) {
+    for (const c of this.circles.get(bucketKey(bx, by)) ?? []) {
       const d = Math.hypot(x - c.x, z - c.z);
       if (d < c.r + PLATEAU_FADE) h += (c.h - h) * (1 - smoothstep((d - c.r) / PLATEAU_FADE));
     }
@@ -196,7 +202,7 @@ export class HeightField {
       const ex = b[0] - a[0], ez = b[1] - a[1], u = Math.min(1, Math.max(0, ((x - a[0]) * ex + (z - a[1]) * ez) / (ex * ex + ez * ez || 1)));
       h += (this.plateaued(a[0] + ex * u, a[1] + ez * u) - h) * (1 - smoothstep((hit.d - l.half) / PATH_EDGE));
       // A plateau's level core still wins over a path's easing (eased back over PATH_EDGE at its edge).
-      for (const c of this.circles.get(`${Math.floor(x / BUCKET)},${Math.floor(z / BUCKET)}`) ?? []) {
+      for (const c of this.circles.get(bucketKey(Math.floor(x / BUCKET), Math.floor(z / BUCKET))) ?? []) {
         const d = Math.hypot(x - c.x, z - c.z);
         if (d < c.r + PATH_EDGE) h += (c.h - h) * (1 - smoothstep((d - c.r) / PATH_EDGE));
       }
@@ -205,7 +211,9 @@ export class HeightField {
   }
 
   private put(i: number, j: number): void {
-    const s = ((j % N) + N) % N * N + ((i % N) + N) % N, v = this.sourceAt(i * RES, j * RES);
+    const k = sampleKey(i, j), pre = this.ahead.get(k);
+    if (pre !== undefined) this.ahead.delete(k);
+    const s = ((j % N) + N) % N * N + ((i % N) + N) % N, v = pre ?? this.sourceAt(i * RES, j * RES);
     this.half[s] = THREE.DataUtils.toHalfFloat(v);
     this.data[s] = quantise(v);
   }
@@ -220,6 +228,32 @@ export class HeightField {
     this.ci = ci; this.cj = cj; this.filled = true;
     this.texture.needsUpdate = true;
     HEIGHT_UNIFORMS.uHeightWin.value.set(this.H.on ? RES : 0, N, ci * RES, cj * RES);
+    return true;
+  }
+
+  /** Work out, within budgetMs, the samples the window will take in when it next moves on along
+   *  (vx, vz): a strip STEP samples deep on each side it is heading for, so the move itself (one
+   *  every 16 m, all at once) finds them ready instead of computing thousands in one frame (a
+   *  stutter at boost). Returns whether that strip is all ready. */
+  prepare(vx: number, vz: number, budgetMs: number): boolean {
+    if (!this.H.on || !this.filled) return true;
+    if (this.ahead.size > N * STEP * 6) this.ahead.clear(); // turned about too often: start afresh
+    const di = Math.abs(vx) > 1 ? Math.sign(vx) * STEP : 0, dj = Math.abs(vz) > 1 ? Math.sign(vz) * STEP : 0;
+    if (!di && !dj) return true;
+    const plan = `${this.ci},${this.cj},${di},${dj}`;
+    if (plan === this.prepared) return true;
+    const h = N / 2, i0 = this.ci - h, j0 = this.cj - h, ni0 = i0 + di, nj0 = j0 + dj, t0 = performance.now();
+    for (let j = nj0; j < nj0 + N; j++) {
+      const rowNew = j < j0 || j >= j0 + N;
+      for (let i = ni0; i < ni0 + N; i++) {
+        if (!rowNew && i >= i0 && i < i0 + N) { i = i0 + N - 1; continue; } // inside the window now: skip to its far side
+        const k = sampleKey(i, j);
+        if (this.ahead.has(k)) continue;
+        if (performance.now() - t0 > budgetMs) return false;
+        this.ahead.set(k, this.sourceAt(i * RES, j * RES));
+      }
+    }
+    this.prepared = plan;
     return true;
   }
 
