@@ -4,7 +4,10 @@
     {
       "version": null,
       "items": [
-        "A big glowing number over every rune stone: the wave that will wake it (dimmed once the party's there)"
+        "A big glowing number over every rune stone: the wave that will wake it (dimmed once the party's there)",
+        "Wild creatures now go by how far each area's rune stone is from the dancefloor: the areas next to home have a couple of adults as well as babies, about 250 m out a few young and three adults, and far out mostly adults. So the first sieges fight back, and the map gets dangerous the further you go",
+        "Debug overlay (~): a power meter, your party's fighting strength (on your leash and parked) against each siege's and all the marchers together",
+        "A playtest log: every 10 s of play it notes your party, the waves and the sieges on this browser; press L (or open the game with ?playtest=download) to save it as a file to send"
       ]
     },
     {

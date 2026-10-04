@@ -7,7 +7,7 @@ import { AREA_TYPES, generateMap, parseSeed, sceneFootprint } from "./map";
 import { Forest, crownReach, treeChance } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
-import { population, spawnCreatures, wildLegendCells, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
+import { population, populationAt, spawnCreatures, wildLegendCells, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
 import { dormant, newGame, STEP, stepGame } from "./game";
 import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, symbolCount, wavePlan } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
@@ -479,13 +479,14 @@ describe("creatures", () => {
     expect(new Set(AREA_TYPES.map(t => t.creature)).size).toBe(30);
   });
 
-  it("are none in the home area, and a couple of babies round it", () => {
+  it("are none in the home area; round it a couple of babies and a couple of adults (Ed, 2026-10-04: the first ring's siege)", () => {
     expect(inCell(mx, my)).toEqual([]);
     for (const [dx, dy] of [[-1, 0], [0, 1], [0, -1]]) {
       const here = inCell(mx + dx, my + dy);
-      expect(here.length).toBeGreaterThanOrEqual(1);
-      expect(here.length).toBeLessThanOrEqual(3);
-      expect(here.every(c => c.level === 0)).toBe(true);
+      expect(here.filter(c => c.level === 0).length).toBeGreaterThanOrEqual(1);
+      expect(here.filter(c => c.level === 0).length).toBeLessThanOrEqual(3);
+      expect(here.filter(c => c.level === 2).length).toBeLessThanOrEqual(4);
+      expect(here.every(c => c.level !== 3 || c.boss)).toBe(true);
     }
   });
 
@@ -494,7 +495,7 @@ describe("creatures", () => {
     const mean = edge.reduce((a, l) => a + l.length, 0) / edge.length;
     expect(mean).toBeGreaterThan(15);
     expect(mean).toBeLessThan(23);
-    for (const l of edge.slice(0, 4)) expect(l.filter(c => c.level === 1).length).toBeGreaterThan(3);
+    for (const l of edge.slice(0, 4)) { expect(l.filter(c => c.level === 1).length).toBeGreaterThanOrEqual(2); expect(l.filter(c => c.level === 2).length).toBeGreaterThan(6); }
   });
 
   it("have a few wild legends a map, each a boss, only in remote areas, spaced apart, one an area (Ed, 2026-10-04)", () => {
@@ -517,7 +518,8 @@ describe("creatures", () => {
   it("sleep until the party reaches their area, then lumber about it", () => {
     const g = newGame(123, TUNING), boss = g.creatures.find(c => c.boss)!;
     g.clock.paused = false;
-    g.witch = { ...g.witch, seated: false, x: boss.x + 30, z: boss.z };
+    // (Over the treetops, out of reach of its neighbours' adults, so none knocks her out.)
+    g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1, x: boss.x + 30, z: boss.z };
     const at = [boss.x, boss.z];
     expect(dormant(g, boss)).toBe(true);
     for (let i = 0; i < 100; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20);
@@ -536,17 +538,30 @@ describe("creatures", () => {
     expect(at(spawnCreatures(generateMap(123, withTuning({ legendNextToHome: false }))))).toBe(false);
   });
 
-  it("rise with distance from home, as the tuning file says", () => {
+  it("rise with the rune stone's distance from the dancefloor, as the tuning file's table says (Ed, 2026-10-04)", () => {
+    const T = TUNING.population.table;
     let last = -1;
-    for (let r = 0; r <= 1.0001; r += 0.1) {
-      const p = population(map, r);
-      const total = p.babies + p.young + p.adults;
-      expect(total).toBeGreaterThanOrEqual(last);
+    for (let m = 0; m <= 1500; m += 50) {
+      const p = population(map, m), total = p.babies + p.young + p.adults;
+      expect(total, `${m} m`).toBeGreaterThanOrEqual(last);
+      expect(p.babies).toBeGreaterThanOrEqual(1); // always some to invite
       last = total;
     }
-    expect(population(map, 0)).toEqual({ babies: TUNING.creaturesNear, young: 0, adults: 0 });
-    expect(population(map, 1).adults).toBeGreaterThan(0);
-    expect(population(map, TUNING.adultsFrom).adults).toBe(0);
+    for (const row of T) {
+      const p = population(map, row.at);
+      expect(p.adults).toBe(Math.floor(row.adults + 0.5));
+      expect(p.young).toBe(Math.floor(row.young + 0.5));
+    }
+    // Between rows by straight lines; the roll varies an area's young and adults by up to population.roll.
+    const a = T[1], b = T[2], mid = populationAt(T, (a.at + b.at) / 2);
+    expect(mid.adults).toBeCloseTo((a.adults + b.adults) / 2, 9);
+    const hi = population(map, b.at, 1, 0), lo = population(map, b.at, 0, 0.999);
+    expect(hi.adults).toBe(Math.floor(b.adults * (1 + TUNING.population.roll)));
+    expect(lo.adults).toBe(Math.floor(b.adults * (1 - TUNING.population.roll) + 0.999));
+    // Over many areas the rounding keeps the table's average.
+    let sum = 0;
+    for (let i = 0; i < 400; i++) sum += population(map, 175, ((i * 0.618) % 1), ((i * 0.381 + 0.13) % 1)).adults;
+    expect(sum / 400).toBeCloseTo(populationAt(T, 175).adults, 0);
   });
 
   it("roam their whole area, slowly, and never leave it", () => {

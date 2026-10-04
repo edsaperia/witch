@@ -16,6 +16,8 @@ import { SPRITE_UNIFORMS } from "./render/sprites";
 import { loadStyle } from "./render/style";
 import { setupTouch } from "./ui/touch";
 import changelog from "../config/changelog.json";
+import { PlaytestLog } from "./platform/playtestLog";
+import { powerReport } from "./rules/power";
 
 const params = new URLSearchParams(location.search);
 let seed = parseSeed(params.get("seed"));
@@ -156,6 +158,11 @@ window.addEventListener("keydown", e => { if (e.code === "KeyG" && !e.repeat) to
 // M: the debug minimap (the party's spread: woken areas, the next to wake, the candidates).
 window.addEventListener("keydown", e => { if (e.code === "KeyM" && !e.repeat) view.minimap.on = !view.minimap.on; });
 document.getElementById("rulers")!.addEventListener("pointerdown", e => { e.preventDefault(); toggleRulers(); });
+// The playtest log (Ed, 2026-10-04): a sample every 10 s of play, kept on this browser; L, or
+// opening the game with ?playtest=download, saves the last few runs as JSON.
+const playtest = new PlaytestLog(game, typeof __BUILD__ === "string" ? __BUILD__ : "dev");
+window.addEventListener("keydown", e => { if (e.code === "KeyL" && !e.repeat) playtest.download(); });
+if (params.get("playtest") === "download") setTimeout(() => playtest.download(), 500);
 
 // The action bar (1 2 3 4 Q W E R, its keys and recharge) replaces the old line of controls (Ed,
 // 2026-10-04); H shows or hides it (remembered on this browser).
@@ -292,6 +299,7 @@ function frame(now: number): void {
     document.getElementById("over-stats")!.textContent = `You lasted ${Math.floor(game.clock.time / 60)} min ${Math.floor(game.clock.time % 60)} s and ${game.party.wave} waves.`;
     document.getElementById("over")!.classList.add("on");
   }
+  playtest.update();
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
   musicCueNow = musicCue(game, musicCueNow);
   music?.update(musicMix(game, game.witch), musicCueNow, game.clock.time, game.beat, !game.clock.paused);
@@ -320,10 +328,22 @@ function frame(now: number): void {
       `trees  ${s.trees}  bushes ${s.bushes}  creatures ${s.creatures}`,
       `budget scenery to ${s.sceneryRadius.toFixed(0)} m (${s.scenery})  gameplay ${s.gameplay}  dropped ${s.dropped}`,
       `draws  ${s.drawCalls}  art queued ${s.pendingArt}  ground tiles ${s.pendingGround}`,
+      ...powerLines(),
     ].join("\n");
   }
 }
 requestAnimationFrame(frame);
+
+/** The power meter (Ed, 2026-10-04): fighting value, Σ √(hp × dps) (rules/power.ts), of the party
+ *  (leashed and parked) against each siege and every besieger together. */
+function powerLines(): string[] {
+  const p = powerReport(game.creatures, game.witches, game.combat.sounds), n = p.counts, f = (x: number) => x.toFixed(0);
+  const sieges = p.sieges.slice(0, 4).map(s => `${s.key} ${f(s.value)} (${s.count}, ${f(s.hp)} hp)`).join("  ");
+  return [
+    `power  party ${f(p.leashed + p.parked)} = leashed ${f(p.leashed)} + parked ${f(p.parked)}   ${n[0]}b ${n[1]}y ${n[2]}a ${n[3]}L   berries ${game.tally.berries} invites ${game.tally.invites}`,
+    `enemy  marching ${f(p.marching)}${p.sieges.length ? `   ${sieges}${p.sieges.length > 4 ? ` +${p.sieges.length - 4} more` : ""}` : ""}   (L saves the playtest log)`,
+  ];
+}
 
 // For the smoke test and for poking at in the console.
 (window as unknown as { witch: unknown }).witch = { game, view,

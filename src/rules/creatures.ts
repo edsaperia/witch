@@ -1,12 +1,13 @@
 // Creatures: each area's own kind, more of them and older the further the area is from home
-// (Ed, 2026-10-03). The home area holds none and the areas round it a couple of babies; areas near
-// the map's edge hold about 20, young ones among them. Wild legends are rare, late threats (Ed,
+// (Ed, 2026-10-03), by the metres from the dancefloor to its rune stone (Ed, 2026-10-04: the
+// tuning's population table). The home area holds none; the first ring a couple of babies and a
+// couple of adults; areas near the map's edge about 20, mostly adults. Wild legends are rare, late threats (Ed,
 // 2026-10-04): a few a map, only in remote areas, each a boss, asleep until the party reaches it. Idle creatures roam their whole area, never leaving it.
 // Only those near the witch are simulated; the rest pick up where they would plausibly be.
-import { clamp, hash2, lerp, rng, smoothstep } from "./random";
+import { hash2, lerp, rng } from "./random";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { facingAway } from "./witch";
-import type { Tuning } from "./tuning";
+import type { PopulationRow, Tuning } from "./tuning";
 import type { Fight } from "./combat";
 
 export type Level = 0 | 1 | 2 | 3;
@@ -85,16 +86,34 @@ export interface Creature {
 
 export interface AreaPopulation { babies: number; young: number; adults: number }
 
-/** How many of each level live in an area `remoteness` (0 home, 1 edge) from the dancefloor.
- *  `roll` varies the count. (Wild legends are placed a map at a time: wildLegendCells.) */
-export function population(map: ForestMap, remoteness: number, roll = 0.5): AreaPopulation {
-  const t = map.tuning, r = clamp(remoteness, 0, 1);
-  const total = Math.max(0, Math.round(lerp(t.creaturesNear, t.creaturesFar, Math.pow(r, t.creatureCurve)) + (roll - 0.5) * 2));
-  // Babies near home, then young, then adults further out (from adultsFrom).
-  const rest = total;
-  const adults = Math.round(rest * t.adultShareFar * smoothstep((r - t.adultsFrom) / Math.max(0.01, 1 - t.adultsFrom)));
-  const young = Math.round((rest - adults) * t.youngShareFar * r);
-  return { babies: Math.max(0, rest - adults - young), young, adults };
+/** The table's numbers `metres` from the dancefloor, read between its rows (unrounded). */
+export function populationAt(table: readonly PopulationRow[], metres: number): AreaPopulation {
+  const rows = [...table].sort((a, b) => a.at - b.at), last = rows[rows.length - 1];
+  if (!rows.length) return { babies: 0, young: 0, adults: 0 };
+  if (metres <= rows[0].at) return { babies: rows[0].babies, young: rows[0].young, adults: rows[0].adults };
+  if (metres >= last.at) return { babies: last.babies, young: last.young, adults: last.adults };
+  let i = 0;
+  while (rows[i + 1].at < metres) i++;
+  const a = rows[i], b = rows[i + 1], k = (metres - a.at) / Math.max(1e-9, b.at - a.at);
+  return { babies: lerp(a.babies, b.babies, k), young: lerp(a.young, b.young, k), adults: lerp(a.adults, b.adults, k) };
+}
+
+/** How many of each level live in an area whose rune stone (its soundsystem's spot) is `metres`
+ *  from the dancefloor (Ed, 2026-10-04: populations stay tied to that distance). `roll` (0-1) is
+ *  the area's own: it scales the young and adults by up to population.roll either way and moves
+ *  the babies by one; `round` (0-1) rounds the fractions up or down (stochastic rounding, so the
+ *  table's averages hold over many areas). Babies are always at least one, for inviting. (Wild
+ *  legends are placed a map at a time: wildLegendCells.) */
+export function population(map: ForestMap, metres: number, roll = 0.5, round = 0.5): AreaPopulation {
+  const P = map.tuning.population, base = populationAt(P.table, metres), m = 1 + P.roll * (roll * 2 - 1);
+  const n = (v: number) => Math.max(0, Math.floor(v + round));
+  return { babies: Math.max(1, n(base.babies + (roll - 0.5) * 2)), young: n(base.young * m), adults: n(base.adults * m) };
+}
+
+/** How far an area's rune stone (where its soundsystem will stand) is from the dancefloor, in metres. */
+export function runeDistance(map: ForestMap, cx: number, cy: number): number {
+  const s = map.soundsystemSpot(cx, cy), d = map.dancefloor;
+  return Math.hypot(s.x - d.x, s.z - d.z);
 }
 
 /** The areas a map's wild legends live in (Ed, 2026-10-04): wildLegends.perMap of them, chosen by
@@ -156,7 +175,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
   for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
     if (cx === hx && cy === hy) continue;
     const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), type = AREA_TYPES[map.typeOf(cx, cy)], home = map.siteOf(cx, cy);
-    const far = map.remoteness(cx, cy), pop = population(map, far, hash2(cx, cy, map.seed + 43));
+    const pop = population(map, runeDistance(map, cx, cy), hash2(cx, cy, map.seed + 43), hash2(cx, cy, map.seed + 47));
     const make = (level: Level): Creature => {
       const cell: [number, number] = [cx, cy], range = wanderRange(map), [anchorX, anchorZ] = anchorOf(map, cell, home.x, home.z, range);
       const base = { cell, homeX: home.x, homeZ: home.z, range, anchorX, anchorZ };
