@@ -126,6 +126,24 @@ export class PathView {
       }
     });
     const colours = Art.pathColours(style);
+    // The points where a branch line leaves a railway: the art's ground patch (a straight track
+    // and one curving off it), laid along the main line, curving to the branch's side.
+    for (const j of net.junctions) {
+      const sp = Art.railPoints({ variant: Math.floor(hash2(j.line, 1, seed + 835) * 3) }) as { w: number; h: number }, ppm = Art.PATH_PPM as number;
+      const W = sp.w / ppm, H = sp.h / ppm, o = KINDS.railway.width / 2; // the straight's start and centreline, metres into the patch
+      const nx = j.side > 0 ? -j.dz : j.dz, nz = j.side > 0 ? j.dx : -j.dx;
+      const at = (u: number, v: number) => [j.x + j.dx * (u - o) + nx * (v - o), 0.03, j.z + j.dz * (u - o) + nz * (v - o)];
+      const pos = [at(0, 0), at(W, 0), at(W, H), at(0, 0), at(W, H), at(0, H)].flat();
+      const uv = [0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1];
+      const t = new THREE.CanvasTexture((Art.bake(sp, colours, style, "none") as { A: HTMLCanvasElement }).A);
+      t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.flipY = false; t.colorSpace = THREE.NoColorSpace;
+      const g = new THREE.BufferGeometry();
+      g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+      g.setAttribute("uvw", new THREE.Float32BufferAttribute(uv, 2));
+      const mesh = new THREE.Mesh(g, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -6, uniforms: { ...LIGHT_UNIFORMS, uStrip: { value: t }, uPixel: { value: mpp } } }));
+      mesh.renderOrder = 0.55; // over the track's own strip
+      this.group.add(mesh);
+    }
     for (const [key, q] of quads) {
       const [kind, variant] = key.split(":");
       const g = new THREE.BufferGeometry();
