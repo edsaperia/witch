@@ -121,8 +121,8 @@ const assets = await b.page.evaluate(async ({ style, seed }) => {
     const fsfx = d.frames > 1 ? `-f${frame}` : "", pals = d.cls === "balloon" ? Object.keys(G.BALLOON_PALETTES) : [null];
     for (const neon of d.light === "neon" ? G.PARTY_LIGHT_NEONS : [null]) for (const pal of pals) push({ ...meta, id: `party-${d.cls}-${d.id}${neon ? "-" + neon : ""}${pal ? "-" + pal : ""}${fsfx}`, neon: neon ?? undefined, palette: pal ?? undefined, lightRgb: neon ? G.NEON[neon] : meta.lightRgb, pointLight: d.pointLight && { ...d.pointLight, rgb: d.pointLight.rgb === "neon" ? G.NEON[neon || "pink"] : d.pointLight.rgb }, part: "whole" }, R.whole, G.partyColours(st, neon || "pink", pal || "mixed"), "none");
   }
-  // sleeping legends: each species' legend asleep (2 frames, a slow breath), waking (4) and awake (2), towards and away, at the legend's
-  // scale, in its area's colours; origin: the ground under its middle (asleep, the ground line it is sunk to)
+  // sleeping legends: each species' legend asleep (2 frames, a slow breath), towards and away, at the legend's scale, in its area's
+  // colours; origin: the ground under its middle, on the ground line it is sunk to (awake it is the ordinary legend, critter level 3)
   for (const id of G.LEGEND_IDS) for (const facing of ["towards", "away"]) for (const state of G.LEGEND_STATES) for (let frame = 0; frame < G.LEGEND_FRAMES[state]; frame++) {
     const { sp, colours } = G.legendForm(id, st, { state, frame, facing });
     push({ id: `legend-${id}-${state}${frame}${facing === "away" ? "-away" : ""}`, kind: "legend", species: id, state, frame, frames: G.LEGEND_FRAMES[state], facing, origin: sp.origin }, sp, colours, st.cOutline);

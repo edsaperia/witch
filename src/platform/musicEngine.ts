@@ -4,8 +4,12 @@
 // second on the audio clock, on the game's beat clock (rules/beat.ts: step 0 is game time 0, the
 // tempo rising wave by wave). One output: Music
 // (platform/music.ts) puts it through the proximity mix; the Music Lab plays it straight.
-// The parts share a reverb (a generated impulse), a dotted delay and the kick's duck (the pump),
-// then the section's low-pass (sweeps in builds, half shut in breakdowns) and a gentle limiter.
+// The parts share a reverb (a generated impulse, pre-delayed, its tail darkening), a dotted delay
+// and the kick's duck (the pump), then the section's low-pass (sweeps in builds, half shut in
+// breakdowns) and a gentle limiter. Each part has its own channel: a high-pass to keep the low end
+// to the kick and bass, and a place in the stereo field. Sound design after common practice: the
+// kick a pitched sine with a click; hats the 808's six square tones through band- and high-pass;
+// supersaws as unison voices detuned and spread wide; pads breathing with a slow filter LFO.
 import { beatAt, bpmAt, timeAt, type BeatClock } from "../rules/beat";
 import { Conductor, type MusicCue } from "../rules/musicPlan";
 import { notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../rules/musicScore";
@@ -14,10 +18,24 @@ const mtof = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
 
 interface Channel { in: GainNode; lastFreq: number }
 
+/** Vowels for the synthesised voice: three formants each (Hz) and their levels. */
+const VOWELS: Record<string, [number, number][]> = {
+  ah: [[800, 1], [1150, 0.6], [2900, 0.25]],
+  oh: [[450, 1], [800, 0.5], [2830, 0.15]],
+  oo: [[325, 1], [700, 0.3], [2530, 0.1]],
+  eh: [[530, 1], [1840, 0.5], [2480, 0.3]],
+  ee: [[270, 1], [2290, 0.45], [3010, 0.35]],
+};
+
+/** The 808's hi-hat and cymbal tones: six square waves at these ratios of a 40 Hz fundamental. */
+const METAL_RATIOS = [2, 3, 4.16, 5.43, 6.79, 8.21];
+
 export class MusicEngine {
   readonly conductor: Conductor;
   /** What was last scheduled (a fraction of a second ahead of what's heard): for the Music Lab. */
   current: { plan: BlockPlan; bar: number; step: number } | null = null;
+  /** Only these parts sound (the Music Lab's analysis); null: all. */
+  solo: Set<string> | null = null;
   private out: GainNode;
   private tone: BiquadFilterNode;
   private duckBus: GainNode;
@@ -28,6 +46,7 @@ export class MusicEngine {
   private delayIn: GainNode;
   private feedback: GainNode;
   private noise: AudioBuffer;
+  private metal: AudioBuffer;
   private channels = new Map<string, Channel>();
   private curves = new Map<number, Float32Array<ArrayBuffer>>();
   private nextStep = -1;
@@ -39,7 +58,7 @@ export class MusicEngine {
     const c = ctx;
     this.out = c.createGain();
     const limit = c.createDynamicsCompressor();
-    limit.threshold.value = -10; limit.knee.value = 6; limit.ratio.value = 4; limit.attack.value = 0.003; limit.release.value = 0.2;
+    limit.threshold.value = -8; limit.knee.value = 4; limit.ratio.value = 12; limit.attack.value = 0.002; limit.release.value = 0.15;
     this.tone = c.createBiquadFilter(); this.tone.type = "lowpass"; this.tone.frequency.value = 18000; this.tone.Q.value = 0.9;
     this.duckBus = c.createGain(); this.dryBus = c.createGain();
     this.reverb = c.createConvolver(); this.reverbIn = c.createGain();
@@ -47,13 +66,26 @@ export class MusicEngine {
     const delayTone = c.createBiquadFilter(); delayTone.type = "lowpass"; delayTone.frequency.value = 3200;
     // parts -> (duck | dry) + reverb + delay -> section low-pass -> limiter -> out
     this.duckBus.connect(this.tone); this.dryBus.connect(this.tone);
-    this.reverbIn.connect(this.reverb); this.reverb.connect(this.tone);
+    // the reverb's return, its lows cut so the tails don't muddy the kick and bass
+    const reverbLow = c.createBiquadFilter(); reverbLow.type = "highpass"; reverbLow.frequency.value = 220;
+    this.reverbIn.connect(this.reverb); this.reverb.connect(reverbLow); reverbLow.connect(this.tone);
     this.delayIn.connect(this.delay); this.delay.connect(delayTone); delayTone.connect(this.feedback); this.feedback.connect(this.delay); delayTone.connect(this.tone);
     this.tone.connect(limit); limit.connect(this.out); this.out.connect(dest);
     this.noise = c.createBuffer(1, 2 * c.sampleRate, c.sampleRate);
     const d = this.noise.getChannelData(0);
     let r = 22222;
     for (let i = 0; i < d.length; i++) { r = (Math.imul(r, 1103515245) + 12345) >>> 0; d[i] = (r / 4294967296) * 2 - 1; }
+    this.metal = c.createBuffer(1, 2 * c.sampleRate, c.sampleRate);
+    const m = this.metal.getChannelData(0), phase = METAL_RATIOS.map((_, i) => i * 0.37);
+    for (let i = 0; i < m.length; i++) {
+      let v = 0;
+      for (let k = 0; k < METAL_RATIOS.length; k++) v += ((40 * METAL_RATIOS[k] * i) / c.sampleRate + phase[k]) % 1 < 0.5 ? 1 : -1;
+      m[i] = v / METAL_RATIOS.length;
+    }
+    // tilt it bright (twice differenced) and bring it to full scale: the 808 keeps only the top of these tones
+    let peak = 0, a = 0, b = 0;
+    for (let i = 0; i < m.length; i++) { const x = m[i], d1 = x - a; a = x; const d2 = d1 - b; b = d1; m[i] = d2; peak = Math.max(peak, Math.abs(d2)); }
+    for (let i = 0; i < m.length; i++) m[i] /= peak || 1;
     this.setStyle(style);
   }
 
@@ -124,10 +156,13 @@ export class MusicEngine {
   private channel(part: string, p: Patch): Channel {
     let ch = this.channels.get(part);
     if (!ch) {
-      const g = this.ctx.createGain();
-      g.connect(p.duck ? this.duckBus : this.dryBus);
-      if (p.reverb) { const r = this.ctx.createGain(); r.gain.value = p.reverb; g.connect(r); r.connect(this.reverbIn); }
-      if (p.delay) { const d = this.ctx.createGain(); d.gain.value = p.delay; g.connect(d); d.connect(this.delayIn); }
+      const c = this.ctx, g = c.createGain();
+      let out: AudioNode = g;
+      if (p.hp) { const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = p.hp; f.Q.value = 0.7; out.connect(f); out = f; }
+      if (p.pan) { const s = c.createStereoPanner(); s.pan.value = p.pan; out.connect(s); out = s; }
+      out.connect(p.duck ? this.duckBus : this.dryBus);
+      if (p.reverb) { const r = c.createGain(); r.gain.value = p.reverb; out.connect(r); r.connect(this.reverbIn); }
+      if (p.delay) { const d = c.createGain(); d.gain.value = p.delay; out.connect(d); d.connect(this.delayIn); }
       this.channels.set(part, ch = { in: g, lastFreq: 0 });
     }
     return ch;
@@ -135,7 +170,7 @@ export class MusicEngine {
 
   private play(e: NoteEvent, t: number, dur: number, sps: number): void {
     const p = this.style.patches[e.patch];
-    if (!p) return;
+    if (!p || (this.solo && !this.solo.has(e.part))) return;
     const ch = this.channel(e.part, p), peak = p.gain * e.vel;
     switch (p.kind) {
       case "kick": this.kick(t, p, peak, ch.in); this.duck(t, e.vel, sps); break;
@@ -143,6 +178,7 @@ export class MusicEngine {
       case "snare": this.snare(t, p, peak, ch.in); break;
       case "bell": this.bell(t, p, peak, mtof(e.midi ?? 69), ch.in); break;
       case "synth": this.synth(t, p, peak, mtof(e.midi ?? 45), dur, ch); break;
+      case "voice": this.voice(t, p, peak, mtof(e.midi ?? 57), dur, e.step, ch.in); break;
       case "riser": this.riser(t, p, dur, e.from ?? 0, e.to ?? 1, ch.in); break;
       case "impact": this.impact(t, p, peak, ch.in); break;
     }
@@ -181,17 +217,26 @@ export class MusicEngine {
   }
 
   private kick(t: number, p: Patch, peak: number, dest: AudioNode): void {
+    // the body: a sine falling fast from a punch to its fundamental, holding a little then dying
     const c = this.ctx, o = c.createOscillator(), decay = p.decay ?? 0.35;
     o.frequency.setValueAtTime(p.pitch ?? 150, t);
     o.frequency.exponentialRampToValueAtTime(p.pitchEnd ?? 45, t + (p.pitchTime ?? 0.08));
-    const g = this.env(t, peak, 0.002, decay);
+    const g = c.createGain();
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + 0.002);
+    g.gain.setTargetAtTime(peak * 0.6, t + 0.01, decay * 0.25);
+    g.gain.setTargetAtTime(0, t + decay * 0.5, decay * 0.18);
     this.chain(p.drive ? [o, this.shaper(p.drive), g] : [o, g], dest);
-    o.start(t); o.stop(t + decay + 0.05);
+    o.start(t); o.stop(t + decay * 1.3 + 0.05);
+    // the click: a few milliseconds of bright noise for the beater, so it cuts through on small speakers
+    if (p.click) {
+      const f = c.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = 3500; f.Q.value = 0.8;
+      this.chain([this.noiseSource(t, 0.03), f, this.env(t, peak * p.click, 0.0005, 0.012)], dest);
+    }
   }
 
-  private noiseSource(t: number, length: number): AudioBufferSourceNode {
+  private noiseSource(t: number, length: number, metal = false): AudioBufferSourceNode {
     const s = this.ctx.createBufferSource();
-    s.buffer = this.noise;
+    s.buffer = metal ? this.metal : this.noise;
     s.loop = length > 1.5;
     s.start(t, ((t * 7.31) % 1) * 0.5);
     s.stop(t + length);
@@ -201,22 +246,29 @@ export class MusicEngine {
   private noiseHit(t: number, p: Patch, peak: number, dest: AudioNode): void {
     const c = this.ctx, decay = p.decay ?? 0.05, bursts = p.bursts ?? 1, gap = 0.011;
     const f = c.createBiquadFilter(); f.type = p.filter ?? "highpass"; f.frequency.value = p.cutoff ?? 8000; f.Q.value = p.q ?? 0.7;
-    const g = c.createGain(), t0 = t + (bursts - 1) * gap;
+    const g = c.createGain(), t0 = t + (bursts - 1) * gap, metal = p.source === "metal";
     g.gain.setValueAtTime(0, t);
     for (let i = 0; i < bursts - 1; i++) { g.gain.linearRampToValueAtTime(peak, t + i * gap + 0.001); g.gain.exponentialRampToValueAtTime(peak * 0.15, t + i * gap + gap * 0.9); }
     g.gain.linearRampToValueAtTime(peak, t0 + Math.max(0.001, p.attack ?? 0.001));
     g.gain.exponentialRampToValueAtTime(0.0005, t0 + (p.attack ?? 0.001) + decay);
-    this.chain([this.noiseSource(t, t0 - t + decay + 0.06), f, g], dest);
+    const nodes: AudioNode[] = [this.noiseSource(t, t0 - t + decay + 0.06, metal), f];
+    // the 808's metal: its six tones through a band-pass at 10 kHz, then the filter (a high-pass at 7 kHz or so)
+    if (metal) { const b = c.createBiquadFilter(); b.type = "bandpass"; b.frequency.value = 10000; b.Q.value = 0.6; nodes.splice(1, 0, b); }
+    this.chain([...nodes, g], dest);
   }
 
   private snare(t: number, p: Patch, peak: number, dest: AudioNode): void {
     const c = this.ctx, decay = p.decay ?? 0.14;
     const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = p.cutoff ?? 1800; f.Q.value = p.q ?? 0.7;
     this.chain([this.noiseSource(t, decay + 0.05), f, this.env(t, peak, 0.001, decay)], dest);
-    const o = c.createOscillator(); o.type = "triangle";
-    o.frequency.setValueAtTime((p.pitch ?? 190) * 1.5, t); o.frequency.exponentialRampToValueAtTime(p.pitch ?? 190, t + 0.03);
-    this.chain([o, this.env(t, peak * 0.7, 0.001, decay * 0.5)], dest);
-    o.start(t); o.stop(t + decay + 0.05);
+    // the shell: two tones, the second a little under a ninth above, each dropping into place
+    for (const [k, lvl] of [[1, 0.7], [1.85, 0.35]]) {
+      const o = c.createOscillator(); o.type = "triangle";
+      const f0 = (p.pitch ?? 190) * k;
+      o.frequency.setValueAtTime(f0 * 1.5, t); o.frequency.exponentialRampToValueAtTime(f0, t + 0.03);
+      this.chain([o, this.env(t, peak * lvl, 0.001, decay * 0.5)], dest);
+      o.start(t); o.stop(t + decay + 0.05);
+    }
   }
 
   private bell(t: number, p: Patch, peak: number, freq: number, dest: AudioNode): void {
@@ -228,7 +280,7 @@ export class MusicEngine {
   }
 
   private synth(t: number, p: Patch, peak: number, freq: number, dur: number, ch: Channel): void {
-    const c = this.ctx, waves = p.waves ?? ["sawtooth"], n = waves.length;
+    const c = this.ctx, waves = p.waves ?? ["sawtooth"], U = Math.max(1, Math.round(p.unison ?? 1)), n = waves.length * U;
     const attack = Math.max(0.002, p.attack ?? 0.005), decay = Math.max(0.01, p.decay ?? 0.2), sustain = p.sustain ?? 0.5, release = Math.max(0.01, p.release ?? 0.1);
     const end = t + Math.max(dur, attack), stop = end + release * 4 + 0.02;
     const g = c.createGain();
@@ -242,19 +294,65 @@ export class MusicEngine {
       const base = p.cutoff ?? 2000, top = Math.min(18000, base + (p.envAmt ?? 0) * peak / Math.max(0.001, p.gain));
       f.frequency.setValueAtTime(top, t);
       if (top > base) f.frequency.exponentialRampToValueAtTime(base, t + attack + decay);
+      // a slow wobble of the filter: pads breathe
+      if (p.lfoRate && p.lfoDepth) {
+        const l = c.createOscillator(), lg = c.createGain();
+        l.frequency.value = p.lfoRate; lg.gain.value = p.lfoDepth;
+        l.connect(lg); lg.connect(f.frequency); l.start(t); l.stop(stop);
+      }
       nodes.push(f);
     }
     if (p.drive) nodes.push(this.shaper(p.drive));
     nodes.push(g);
     this.chain(nodes, ch.in);
-    waves.forEach((w, i) => {
-      const o = c.createOscillator(); o.type = w;
-      o.detune.value = n > 1 ? (p.detune ?? 0) * ((2 * i) / (n - 1) - 1) : 0;
+    // every wave as `unison` voices, detuned across ±detune cents and spread across ±width in the
+    // stereo field (outer voices widest), each starting at its own point in the cycle
+    let v = 0;
+    for (const w of waves) for (let u = 0; u < U; u++, v++) {
+      const o = c.createOscillator(), x = n > 1 ? (2 * v) / (n - 1) - 1 : 0;
+      o.type = w;
+      o.detune.value = (p.detune ?? 0) * x;
       if (p.glide && ch.lastFreq > 0 && ch.lastFreq !== freq) { o.frequency.setValueAtTime(ch.lastFreq, t); o.frequency.exponentialRampToValueAtTime(freq, t + p.glide); }
+      else if (p.bend) { o.frequency.setValueAtTime(freq * Math.pow(2, p.bend / 12), t); o.frequency.exponentialRampToValueAtTime(freq, t + (p.bendTime ?? 0.08)); }
       else o.frequency.value = freq;
-      o.connect(nodes[0]); o.start(t); o.stop(stop);
-    });
+      let src: AudioNode = o;
+      if (p.width && n > 1) { const s = c.createStereoPanner(); s.pan.value = p.width * (v % 2 ? x : -x); o.connect(s); src = s; }
+      src.connect(nodes[0]); o.start(t + (U > 1 ? (u * 0.0007) % 0.004 : 0)); o.stop(stop);
+    }
     ch.lastFreq = freq;
+  }
+
+  /** A sung note, synthesised: a buzzy source (saws, a touch of breath) through three formant
+   *  band-passes for its vowel (chosen by the note, from the patch's vowels), with a vibrato that
+   *  creeps in; unison voices spread wide make a choir. */
+  private voice(t: number, p: Patch, peak: number, freq: number, dur: number, step: number, dest: AudioNode): void {
+    const c = this.ctx, vowels = p.vowels?.length ? p.vowels : ["ah"], vowel = VOWELS[vowels[Math.abs(step >> 2) % vowels.length]] ?? VOWELS.ah;
+    const U = Math.max(1, Math.round(p.unison ?? 1)), attack = Math.max(0.005, p.attack ?? 0.08), decay = Math.max(0.01, p.decay ?? 0.3), sustain = p.sustain ?? 0.8, release = Math.max(0.02, p.release ?? 0.3);
+    const end = t + Math.max(dur, attack), stop = end + release * 4 + 0.02;
+    const g = c.createGain(), lvl = peak / Math.sqrt(U);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(lvl, t + attack);
+    if (end > t + attack) g.gain.setTargetAtTime(lvl * sustain, t + attack, decay / 3);
+    g.gain.setTargetAtTime(0, end, release / 3);
+    g.connect(dest);
+    const src = c.createGain(); // the buzz, into the formants in parallel
+    for (const [f, a] of vowel) {
+      const b = c.createBiquadFilter(), bg = c.createGain();
+      b.type = "bandpass"; b.frequency.value = f * (p.formantShift ?? 1); b.Q.value = p.q ?? 8; bg.gain.value = a * 3;
+      src.connect(b); b.connect(bg); bg.connect(g);
+    }
+    // vibrato: a few cents, creeping in after the attack
+    const vib = c.createOscillator(), vg = c.createGain();
+    vib.frequency.value = 5.2; vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(p.vibrato ?? 15, t + Math.min(0.6, attack + 0.25));
+    vib.connect(vg); vib.start(t); vib.stop(stop);
+    for (let u = 0; u < U; u++) {
+      const o = c.createOscillator(), x = U > 1 ? (2 * u) / (U - 1) - 1 : 0;
+      o.type = "sawtooth"; o.frequency.value = freq; o.detune.value = (p.detune ?? 0) * x;
+      vg.connect(o.detune);
+      let out: AudioNode = o;
+      if (p.width && U > 1) { const s = c.createStereoPanner(); s.pan.value = p.width * x; o.connect(s); out = s; }
+      out.connect(src); o.start(t); o.stop(stop);
+    }
+    if (p.breath) { const h = c.createBiquadFilter(); h.type = "highpass"; h.frequency.value = 2500; this.chain([this.noiseSource(t, stop - t), h, this.env(t, p.breath, attack, Math.max(dur, 0.05) + release)], src); }
   }
 
   private riser(t: number, p: Patch, dur: number, from: number, to: number, dest: AudioNode): void {
@@ -278,11 +376,19 @@ export class MusicEngine {
   }
 
   private impulse(seconds: number): AudioBuffer {
-    const c = this.ctx, n = Math.max(1, Math.floor(seconds * c.sampleRate)), b = c.createBuffer(2, n, c.sampleRate);
+    // decorrelated noise in each ear, after a short pre-delay, decaying, and darkening as it goes
+    // (a one-pole low-pass closing over the tail, as air and walls soak up the highs)
+    const c = this.ctx, rate = c.sampleRate, pre = Math.floor(0.015 * rate), n = Math.max(pre + 1, Math.floor(seconds * rate)), b = c.createBuffer(2, n, rate);
     let r = 777;
     for (let ch = 0; ch < 2; ch++) {
       const d = b.getChannelData(ch);
-      for (let i = 0; i < n; i++) { r = (Math.imul(r, 1664525) + 1013904223) >>> 0; d[i] = ((r / 4294967296) * 2 - 1) * Math.pow(1 - i / n, 3); }
+      let y = 0;
+      for (let i = pre; i < n; i++) {
+        r = (Math.imul(r, 1664525) + 1013904223) >>> 0;
+        const k = (i - pre) / (n - pre), a = 0.85 - 0.75 * k;
+        y += a * ((r / 4294967296) * 2 - 1 - y);
+        d[i] = y * Math.pow(1 - k, 2.5) * (1 + 0.6 * (1 - a));
+      }
     }
     return b;
   }

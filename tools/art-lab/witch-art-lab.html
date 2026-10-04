@@ -191,7 +191,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 
       <section style="display:grid;gap:10px">
         <h2>Sleeping legends</h2>
-        <p class="note">Every area's legend asleep, centuries deep: sunk half into its area's earth, head down and eyes shut, its glow gone to stone and old wood, mossed, lichened and grown over, so it passes for a boulder, a log or a mound. Each row: asleep (two frames of a slow breath), waking (four: it heaves up out of the ground, shedding soil, moss and roots, and opens its eyes red), awake (two), then the witch for scale.</p>
+        <p class="note">Every area's legend asleep, centuries deep: sunk half into its area's earth, head down and eyes shut, its glow gone to stone and old wood, mossed, lichened and grown over, so it passes for a boulder, a log or a mound. Each row: asleep (two frames of a slow breath), the legend awake as it is, then the witch for scale.</p>
         <div class="sheet-wrap"><canvas id="legendSheet" width="420" height="160"></canvas></div>
       </section>
 
@@ -672,14 +672,14 @@ function renderCountry() {
   }, 1100);
 }
 
-// ================= sleeping legends: asleep, waking and awake, a row per species =================
+// ================= sleeping legends: asleep (2 breaths) beside the legend awake, a row per species =================
 let legendTimer;
 function renderLegends() {
   clearTimeout(legendTimer);
   legendTimer = setTimeout(() => {
     const c = document.getElementById("legendSheet"); if (!c) return;
     const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 8, wit = bake(witchSprite(st), witchColours(st), st, st.cOutline);
-    const rows = LEGEND_IDS.map(id => [...LEGEND_STATES.flatMap(state => [...Array(LEGEND_FRAMES[state]).keys()].map(frame => { const { sp, colours } = legendForm(id, st, { state, frame }); return bake(sp, colours, st, st.cOutline); })), wit]);
+    const rows = LEGEND_IDS.map(id => [...LEGEND_STATES.flatMap(state => [...Array(LEGEND_FRAMES[state]).keys()].map(frame => { const { sp, colours } = legendForm(id, st, { state, frame }); return bake(sp, colours, st, st.cOutline); })), bake(critter(id, 3, 0, st), speciesColours(id, st), st, st.cOutline), wit]);
     const w = Math.max(...rows.map(r => r.reduce((a, x) => a + x.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(x => x.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
     tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
     let y = gap;
