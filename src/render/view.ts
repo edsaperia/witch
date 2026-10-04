@@ -914,7 +914,7 @@ export class View {
       if (nx) {
         const s = g.map.soundsystemSpot(nx[0], nx[1]), species = AREA_TYPES[g.map.typeOf(nx[0], nx[1])].creature;
         const cd = waveCountdown(g.party, g.map, time);
-        this.nextStone.update(this.camera, cw, ch, { x: s.x, z: s.z, colour: this.markerArt.colour.get(species)! }, w.x, w.z, time, t.beat.bpm, g.party.paused ? 0 : cd.gone);
+        this.nextStone.update(this.camera, cw, ch, { x: s.x, z: s.z, colour: this.markerArt.colour.get(species)!, species }, w.x, w.z, time, t.beat.bpm, cd.gone); // pausing holds the countdown
       } else this.nextStone.update(this.camera, cw, ch, null, w.x, w.z, time, t.beat.bpm, 0);
     }
     this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);

@@ -18,16 +18,14 @@ export interface Playing { x: number; y: number; z: number; seed: number; ready:
 export class PartyView {
   constructor(private atlas: Atlas, private metresPerPixel: number) {}
 
-  /** The soundsystem standing at the edge of the dancefloor's clearing. */
-  private homeSoundsystem(g: Game) {
-    const d = g.map.dancefloor;
-    return { x: d.x + d.radius + 5, z: d.z + 3, variant: 0, at: -Infinity, from: null as null | { x: number; z: number } };
-  }
-
   /** This frame's soundsystem sprites, their lights, and the ground's sweeping fronts. */
   update(g: Game, time: number, visible: (x: number, z: number, w: number, h: number) => boolean, mark: (x: number, z: number, h: number) => boolean) {
     const t = g.tuning.party, items: SpriteInstance[] = [], lights: ForestLight[] = [], sweeps: Sweep[] = [], playing: Playing[] = [];
-    const list = [this.homeSoundsystem(g)];
+    // Home has no soundsystem of its own: the dancefloor's ring of speakers carries its music (Ed,
+    // v183), and its laser show rises from the floor's centre once the floor has switched on.
+    const list: { x: number; z: number; variant: number; at: number; from: null | { x: number; z: number } }[] = [];
+    const d = g.map.dancefloor;
+    if (g.floor.on !== null) playing.push({ x: d.x, y: g.tuning.dancefloor.discoHeight, z: d.z, seed: 1, ready: g.floor.on });
     for (const [, a] of g.party.areas) {
       if (!a.soundsystem) continue;
       const from = a.from ? g.map.siteOf(a.from[0], a.from[1]) : null;

@@ -119,7 +119,7 @@ export interface Tuning {
   occlusion: { on: boolean; fadeOpacity: number; edge: number; minHeight: number; silhouette: number };
   stack: { offset: number; scale: number; gap: number; stiffness: number; damping: number; trail: number; idleSway: number };
   lasers: { on: boolean; maxCount: number; length: number; spread: number; maxTilt: number; sweep: number; sweepBeats: number; openBars: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };
-  borders: { on: boolean; width: number; brightness: number; sparkle: number; step: number };
+  borders: { on: boolean; width: number; brightness: number; sparkle: number; step: number; /** 0 a gentle breathing, 1 star-like flashes and dropouts */ twinkle: number; /** colour swaps a second */ swapRate: number; /** the share of sparks that swap on the beat */ swapBeat: number };
   invite: { talkRange: number; cancelDistance: number; talkTime: number[]; turn: number[]; decayRate: number };
   leash: { length: number; runSpeed: number; pickRadius: number; spacing: number };
   bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number; /** The thread's upward bow: metres per metre of length, up to threadArcMax. */ threadArc: number; threadArcMax: number };

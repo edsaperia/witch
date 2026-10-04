@@ -1092,6 +1092,17 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
     const T2 = withTuning({ dancefloor: { ...D, speakers: { ...S, count: 20, radiusFactor: 3 } } }), m = generateMap(1, T2);
     expect(Math.hypot(m.treehouse.x - m.dancefloor.x, m.treehouse.z - m.dancefloor.z) - T2.treehouse.clear).toBeGreaterThan(speakerRadius(T2) + S.footprint);
   });
+  it("are the dancefloor's only sound: no soundsystem stands in their ring or the floor's clearing, over seeds (Ed, v183)", () => {
+    for (const seed of [1, 2, 3, 123]) {
+      const m = generateMap(seed, TUNING), d = m.dancefloor;
+      for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+        if (x === m.centreCell[0] && y === m.centreCell[1]) continue;
+        const q = m.soundsystemSpot(x, y);
+        expect(Math.hypot(q.x - d.x, q.z - d.z)).toBeGreaterThan(speakerRadius(TUNING) + S.footprint + TUNING.soundsystemFootprint);
+      }
+      expect(newParty(m).areas.get(m.centreCell.join(","))?.soundsystem ?? null).toBeNull(); // home has none
+    }
+  });
   it("cycle playing, damaged, destroyed on the debug key", () => {
     expect(nextSpeakerState("playing")).toBe("damaged");
     expect(nextSpeakerState("damaged")).toBe("destroyed");

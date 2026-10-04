@@ -50,6 +50,9 @@ if (glowParam && glowParam[1] > 0) tuning.glowFalloff = glowParam[1];
 const blendParam = params.get("blend");
 if (blendParam === "off") tuning.groundBlend = { ...tuning.groundBlend, on: false };
 else if (blendParam) { const [w, f, b] = blendParam.split(",").map(Number); tuning.groundBlend = { ...tuning.groundBlend, warp: w || 0, fine: f || 0, band: b || 0 }; }
+// ?border=<twinkle>,<swapRate>,<swapBeat>: the party border's sparkle.
+const borderParam = params.get("border")?.split(",").map(Number);
+if (borderParam) { const [tw, sr, sb] = borderParam; tuning.borders = { ...tuning.borders, ...(tw >= 0 ? { twinkle: tw } : {}), ...(sr >= 0 ? { swapRate: sr } : {}), ...(sb >= 0 ? { swapBeat: sb } : {}) }; }
 // ?grass=0..2: how thick the ground cover is (0 none).
 const grassParam = params.get("grass");
 if (grassParam !== null && !isNaN(Number(grassParam))) tuning.groundCover = { ...tuning.groundCover, density: Number(grassParam) };
