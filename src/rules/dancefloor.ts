@@ -89,7 +89,7 @@ export function tileOf(x: number, z: number, cx: number, cz: number, radius: num
   return { x: (x - cx) / m + C, y: (z - cz) / m + C };
 }
 
-const beatOf = (time: number, t: Tuning) => (time * t.beat.bpm) / 60;
+const beatOf = (time: number, t: Tuning, inp?: { beatAt?: (time: number) => number }) => (inp?.beatAt ? inp.beatAt(time) : (time * t.beat.bpm) / 60);
 const BOOT_BEATS = () => bootPattern().beats;
 
 /** Switch it on (once). */
@@ -111,6 +111,8 @@ export function pickPattern(cur: number, played: number, level: number, partifie
 
 export interface FloorInputs {
   time: number; seed: number; level: number;
+  /** Beats gone by at a game time (the beat clock, rules/beat.ts); without it, time × beat.bpm / 60. */
+  beatAt?: (time: number) => number;
   /** The area types (ids) that have the party: their shapes join the mix. */
   partifiedAreas: ReadonlySet<string>;
   /** The witch on the grid (tile units), her lift (0 ground, 1 treetops) and glow colour. */
@@ -121,9 +123,9 @@ export interface FloorInputs {
 
 /** Advance the sequence and the witch's marks to `time` (call every frame). */
 export function stepFloor(f: FloorState, inp: FloorInputs, t: Tuning): void {
-  const D = t.dancefloor.tiles, beat = beatOf(inp.time, t);
+  const D = t.dancefloor.tiles, beat = beatOf(inp.time, t, inp);
   if (f.on === null) return;
-  const bootEnd = beatOf(f.on, t) + BOOT_BEATS();
+  const bootEnd = beatOf(f.on, t, inp) + BOOT_BEATS();
   if (beat < bootEnd) { f.from = Math.ceil(bootEnd / 4) * 4; f.pattern = pickPattern(-1, 0, inp.level, inp.partifiedAreas, inp.seed); return; }
   // On a bar line once the pattern has played its length (held longer at lower levels), the next comes in.
   const lib = floorPatterns(), p = lib[f.pattern], hold = p.beats * (inp.level >= 4 ? 1 : inp.level >= 2 ? 2 : 3), bar = Math.floor(beat / 4) * 4;
@@ -165,7 +167,7 @@ export interface FloorTiles {
 
 /** The floor's tiles at `time`: every layer composed. */
 export function composeFloor(f: FloorState, inp: FloorInputs, t: Tuning, out?: Uint8Array): FloorTiles {
-  const D = t.dancefloor.tiles, rgbi = out ?? new Uint8Array(GRID * GRID * 4), level = inp.level, time = inp.time, beat = beatOf(time, t);
+  const D = t.dancefloor.tiles, rgbi = out ?? new Uint8Array(GRID * GRID * 4), level = inp.level, time = inp.time, beat = beatOf(time, t, inp);
   rgbi.fill(0);
   if (f.on === null) return { rgbi, average: [0, 0, 0], lit: 0 };
   const set = (n: number, c: Rgb, i: number, add = false) => {
@@ -184,7 +186,7 @@ export function composeFloor(f: FloorState, inp: FloorInputs, t: Tuning, out?: U
   };
   const colourOf = (p: FloorPattern, v: number): Rgb => neon(p.palette[Math.min(v, colours, p.palette.length) - 1] ?? p.palette[0]);
   // 1. The pattern (or the switch-on sequence), and the next one through the transition's mask.
-  const bootFrom = beatOf(f.on, t), booting = beat < bootFrom + BOOT_BEATS();
+  const bootFrom = beatOf(f.on, t, inp), booting = beat < bootFrom + BOOT_BEATS();
   const lib = floorPatterns(), p = booting ? bootPattern() : lib[f.pattern], from = booting ? bootFrom : f.from;
   const tr = !booting && f.transition && f.next !== null ? f.transition : null;
   const mask = tr ? (discoTransition(tr.id, Math.min(1, Math.max(0, (beat - tr.start) / tr.beats)), { angle: tr.angle }) as Uint8Array) : null;

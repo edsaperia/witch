@@ -9,8 +9,9 @@ import * as THREE from "three";
 import * as Art from "../../art/generator.js";
 import { AREA_TYPES } from "../rules/map";
 import type { ForestMap } from "../rules/map";
+import type { Forest } from "../rules/forest";
 import type { Tuning } from "../rules/tuning";
-import { tuftsInCell, type Tuft } from "../rules/groundcover";
+import { tuftsInCell, TUFT_KINDS, type Tuft } from "../rules/groundcover";
 import { hash2 } from "../rules/random";
 import { packAtlas, type Atlas, type Baked } from "./atlas";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
@@ -27,9 +28,21 @@ uniform vec4 uGrass;        // metres per art pixel, sway, part, (unused)
 attribute vec4 iTuft;       // x, z, size, flip
 attribute vec4 iUv;         // its frame in the tuft atlas
 attribute vec3 iPx;         // its size in art pixels (w, h), and how much it sways (from its sway mask)
+attribute float iOpen;      // how open the ground is there: where the canopy is
+uniform vec4 uCanopy;       // the ground's canopy shadow: strength (0 off), height, cover, wind speed
+uniform vec2 uClearing;     // clearingSize, clearingFalloff
+uniform vec3 uMoonDir;
+uniform float uTime, uSmooth;
 varying vec2 vUv;
 varying vec3 vWorld;
+varying float vMoonK;
 ${HEIGHT_VERT_GLSL}
+float gHash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float gNoise(vec2 p) {
+  vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f);
+  float a = gHash(i), b = gHash(i + vec2(1, 0)), c = gHash(i + vec2(0, 1)), d = gHash(i + vec2(1, 1));
+  return a + (b - a) * u.x + (c - a) * u.y + (a - b - c + d) * u.x * u.y;
+}
 void main() {
   float s = iTuft.z * uGrass.x;
   vec3 base = onGround(vec3(iTuft.x, 0.0, iTuft.y)); // on the rolling ground
@@ -57,6 +70,15 @@ void main() {
   float u = iTuft.w > 0.5 ? 1.0 - uv.x : uv.x;
   vUv = vec2(mix(iUv.x, iUv.z, u), mix(iUv.w, iUv.y, uv.y));
   vWorld = w;
+  // In the canopy's dappled shade as the ground under it is (Ed, 2026-10-04): the ground's own
+  // canopy layer, worked out once at the tuft's root.
+  vMoonK = 1.0;
+  if (uCanopy.x > 0.0) {
+    vec2 p = vec2(iTuft.x, iTuft.y), cq = p + uMoonDir.xz / max(0.2, uMoonDir.y) * uCanopy.y + vec2(0.7, 0.3) * uCanopy.w * uTime;
+    float leaves = gNoise(cq / 2.6) * 0.6 + gNoise(cq / 1.1 + 31.0) * 0.4;
+    float cover = uCanopy.z * smoothstep(0.0, 1.0, (iOpen - uClearing.x) / max(0.01, uClearing.y));
+    vMoonK = 1.0 - uCanopy.x * (uSmooth > 0.5 ? smoothstep(-0.07, 0.07, cover - leaves) : step(leaves, cover));
+  }
   gl_Position = clipOf(w);
   vec4 b = clipOf(base);
   vec2 ndc = b.xy / b.w, snapped = (floor((ndc * 0.5 + 0.5) * uRes) + 0.5) / uRes * 2.0 - 1.0;
@@ -69,6 +91,7 @@ uniform vec3 uRight, uUp, uFacing;
 uniform vec4 uFade; // centre x, z, radius, how much shows (0 in the treetops)
 varying vec2 vUv;
 varying vec3 vWorld;
+varying float vMoonK;
 ${LIGHT_GLSL}
 float bayer2(vec2 a) { a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
 float bayer4(vec2 a) { return bayer2(0.5 * a) * 0.25 + bayer2(a); }
@@ -80,7 +103,7 @@ void main() {
   if (k < 0.999 && bayer4(gl_FragCoord.xy) > k) discard;
   vec4 n = texture2D(uTuftN, vUv);
   vec3 N = normalize(uRight * ((n.r * 255.0 - 128.0) / 127.0) - uUp * ((n.g * 255.0 - 128.0) / 127.0) + uFacing * n.b);
-  gl_FragColor = vec4(haze(min(vec3(1.0), m.rgb * nightLight(N, vWorld) * 1.25), vWorld), 1.0);
+  gl_FragColor = vec4(haze(min(vec3(1.0), m.rgb * nightLightShaded(N, vWorld, vMoonK) * 1.25), vWorld), 1.0);
 }`;
 
 export class GrassView {
@@ -92,18 +115,22 @@ export class GrassView {
   /** The tuft art: every area type's tufts in one atlas; per type, its frames, their shares (running total) and sways. */
   private atlas: Atlas;
   private kinds: { frame: number; upTo: number; sway: number }[][] = [];
+  /** Each area's rushes (or any area's), for the reeds that ring ponds. */
+  private rushes: ({ frame: number; sway: number } | undefined)[] = [];
+  private open!: THREE.InstancedBufferAttribute;
   private cells = new Map<string, Tuft[]>();
   private mat: THREE.ShaderMaterial;
   private lastKey = "";
   /** Tufts drawn, and milliseconds spent working out cells, this frame (for the debug overlay and perf). */
   stats = { tufts: 0, buildMs: 0 };
 
-  constructor(private map: ForestMap, private t: Tuning, metresPerPixel: number, style: object) {
+  /** forest: for the tufts round trunks, rocks and ponds; ground: the ground material's uniforms, for its canopy shade. */
+  constructor(private map: ForestMap, private t: Tuning, metresPerPixel: number, style: object, private forest?: Forest, ground?: Record<string, THREE.IUniform>) {
     const cap = t.groundCover.cap, sprites: Baked[] = [];
     // The art's tufts for every area type (#34), with how much each sways: the mean of its sway
     // mask over its drawn pixels (0 for pebbles and litter, most for long grass and rushes).
     for (const type of AREA_TYPES) {
-      const list = Art.bakeTufts(type.id, style) as { weight: number; A: Baked["A"]; N: Baked["N"]; S: Baked["A"]; w: number; h: number }[];
+      const list = Art.bakeTufts(type.id, style) as { kind: string; weight: number; A: Baked["A"]; N: Baked["N"]; S: Baked["A"]; w: number; h: number }[];
       let upTo = 0;
       this.kinds.push(list.map(b => {
         sprites.push({ A: b.A, N: b.N, w: b.w, h: b.h });
@@ -111,9 +138,13 @@ export class GrassView {
         let sum = 0, n = 0;
         for (let i = 0; i < px.length; i += 4) if (px[i + 3] > 0) { sum += px[i]; n++; }
         upTo += b.weight;
-        return { frame: sprites.length - 1, upTo, sway: n ? Math.min(1, (sum / n / 255) * 2) : 0 };
+        const k = { frame: sprites.length - 1, upTo, sway: n ? Math.min(1, (sum / n / 255) * 2) : 0 };
+        if (b.kind === "rushes") this.rushes[this.kinds.length] = k;
+        return k;
       }));
     }
+    const anyRushes = this.rushes.find(r => r);
+    for (let i = 0; i < AREA_TYPES.length; i++) this.rushes[i] ??= anyRushes;
     this.atlas = packAtlas(sprites, 512);
     this.geo = new THREE.InstancedBufferGeometry();
     const quad = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
@@ -121,13 +152,15 @@ export class GrassView {
     this.tuft = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4); this.tuft.setUsage(THREE.DynamicDrawUsage);
     this.uvA = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4); this.uvA.setUsage(THREE.DynamicDrawUsage);
     this.pxA = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3); this.pxA.setUsage(THREE.DynamicDrawUsage);
-    this.geo.setAttribute("iTuft", this.tuft); this.geo.setAttribute("iUv", this.uvA); this.geo.setAttribute("iPx", this.pxA);
+    this.open = new THREE.InstancedBufferAttribute(new Float32Array(cap), 1); this.open.setUsage(THREE.DynamicDrawUsage);
+    this.geo.setAttribute("iTuft", this.tuft); this.geo.setAttribute("iUv", this.uvA); this.geo.setAttribute("iPx", this.pxA); this.geo.setAttribute("iOpen", this.open);
     this.geo.instanceCount = 0;
     this.mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
       uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uFacing: SPRITE_UNIFORMS.uFacing, uRes: SPRITE_UNIFORMS.uRes, uWind: SPRITE_UNIFORMS.uWind,
         uTufts: { value: this.atlas.albedo }, uTuftN: { value: this.atlas.normal }, uPart: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) }, uClear: { value: Array.from({ length: 8 }, () => new THREE.Vector4()) },
-        uGrass: { value: new THREE.Vector4(metresPerPixel, t.groundCover.sway, t.groundCover.part, 0) }, uFade: { value: new THREE.Vector4() } },
+        uGrass: { value: new THREE.Vector4(metresPerPixel, t.groundCover.sway, t.groundCover.part, 0) }, uFade: { value: new THREE.Vector4() },
+        uCanopy: ground?.uCanopy ?? { value: new THREE.Vector4() }, uClearing: ground?.uClearing ?? { value: new THREE.Vector2(1, 1) } },
     });
     this.mesh = new THREE.Mesh(this.geo, this.mat);
     this.mesh.frustumCulled = false;
@@ -160,7 +193,7 @@ export class GrassView {
       const k = ci + "," + cj;
       if (this.cells.has(k)) continue;
       if (performance.now() - t0 > G.budgetMs) break;
-      this.cells.set(k, tuftsInCell(this.map, ci, cj, C, G.spacing, G.density));
+      this.cells.set(k, tuftsInCell(this.map, ci, cj, C, G.spacing, G.density, this.forest));
       built = true;
     }
     this.stats.buildMs = performance.now() - t0;
@@ -179,17 +212,19 @@ export class GrassView {
         if (Math.hypot(f.x - x, f.z - z) > G.radius + C) continue; // a cell's slack: it's rebuilt as she crosses cells
         // Which of its area's tufts, by their shares, seeded from where it stands.
         const ks = this.kinds[f.type], roll = hash2(Math.round(f.x * 64), Math.round(f.z * 64), 1107) * (ks[ks.length - 1]?.upTo ?? 1);
-        const kd = ks.find(k => roll <= k.upTo) ?? ks[ks.length - 1];
+        // (Reeds ringing a pond: the area's rushes, or any area's.)
+        const kd = (TUFT_KINDS[f.kind] === "reeds" ? this.rushes[f.type] : undefined) ?? ks.find(k => roll <= k.upTo) ?? ks[ks.length - 1];
         if (!kd) continue;
         const fr = F[kd.frame];
         T.set([f.x, f.z, f.size, f.flip ? 1 : 0], n * 4);
         U.set(fr.uv, n * 4);
         P.set([fr.w, fr.h, kd.sway], n * 3);
+        (this.open.array as Float32Array)[n] = f.open;
         n++;
       }
     }
     this.geo.instanceCount = n;
     this.stats.tufts = n;
-    for (const a of [this.tuft, this.uvA, this.pxA]) { a.needsUpdate = true; a.clearUpdateRanges(); a.addUpdateRange(0, n * a.itemSize); }
+    for (const a of [this.tuft, this.uvA, this.pxA, this.open]) { a.needsUpdate = true; a.clearUpdateRanges(); a.addUpdateRange(0, n * a.itemSize); }
   }
 }

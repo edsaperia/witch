@@ -10,6 +10,7 @@
 // - the talk: emoji speech bubbles taking turns over the witch and the creature (HTML, over the
 //   canvas), with a bar for how far the conversation has got.
 // The sigils are the art builder's (art/sigils.js), drawn per species and level into an atlas.
+import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { drawSigil, sigilColour } from "../../art/generator.js";
 import { dormant, type Game } from "../rules/game";
@@ -45,6 +46,7 @@ void main() {
   vUv = vec2(mix(iUv.x, iUv.z, uv.x), mix(iUv.w, iUv.y, uv.y));
   vP = p; vCol = iCol; vDraw = iDraw; vWorld = w;
   gl_Position = clipOf(w);
+  if (overBend(onGround(iPos)) < 0.5) gl_Position = vec4(2.0, 2.0, 2.0, 1.0); // (the glows seen through the canopy: never through the earth)
 }`;
 
 const FRAG = /* glsl */ `
@@ -216,7 +218,7 @@ export class LeashView {
     }
     // Evolving: motes spiralling up round it through the bar, quicker and tighter toward the line.
     for (const [id, e] of B.evolving) {
-      const c = g.creatures[id], k = Math.min(1, (time - e.since) / Math.max(0.1, e.at - e.since)), pulse = 0.6 + 0.4 * Math.cos((time / beat) * Math.PI * 2);
+      const c = g.creatures[id], k = Math.min(1, (time - e.since) / Math.max(0.1, e.at - e.since)), pulse = 0.6 + 0.4 * Math.cos((beatTime(g.beat, time) / beat) * Math.PI * 2);
       for (let i = 0; i < 18; i++) {
         const f = (time * (0.5 + k) + i / 18) % 1, a = i * 2.4 + time * (2 + 4 * k), rad = 1.6 * (1 - 0.6 * k) * (1 - f * 0.4);
         this.standing.add(c.x + Math.cos(a) * rad, 0.2 + f * 3.2, c.z + Math.sin(a) * rad * 0.7, 0.3, dot, 1, 0.95, 0.75, (1 - f) * pulse);

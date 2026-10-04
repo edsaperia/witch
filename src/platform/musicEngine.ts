@@ -1,10 +1,12 @@
 // The music engine (Ed, 2026-10-04: generative music, in code): plays the score
 // (rules/musicScore.ts) from the conductor's sections (rules/musicPlan.ts) with Web Audio, every
 // sound synthesised (no samples). Each frame it schedules the sixteenths of the next fraction of a
-// second on the audio clock, on the game's beat (step 0 is game time 0). One output: Music
+// second on the audio clock, on the game's beat clock (rules/beat.ts: step 0 is game time 0, the
+// tempo rising wave by wave). One output: Music
 // (platform/music.ts) puts it through the proximity mix; the Music Lab plays it straight.
 // The parts share a reverb (a generated impulse), a dotted delay and the kick's duck (the pump),
 // then the section's low-pass (sweeps in builds, half shut in breakdowns) and a gentle limiter.
+import { beatAt, bpmAt, timeAt, type BeatClock } from "../rules/beat";
 import { Conductor, type MusicCue } from "../rules/musicPlan";
 import { notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../rules/musicScore";
 
@@ -29,7 +31,7 @@ export class MusicEngine {
   private channels = new Map<string, Channel>();
   private curves = new Map<number, Float32Array<ArrayBuffer>>();
   private nextStep = -1;
-  private anchor = NaN; // audio time of step 0
+  private anchor = NaN; // audio time of game time 0
   private reverbTime = 0;
 
   constructor(private ctx: BaseAudioContext, dest: AudioNode, public style: MusicStyle, public seed = 0) {
@@ -69,37 +71,43 @@ export class MusicEngine {
   }
 
   /** Each frame: schedule what's due in the next `ahead` seconds of audio time, at game time
-   *  `gameTime` (seconds, the beat clock). `playing` false: nothing new is scheduled. */
-  update(cue: MusicCue, gameTime: number, bpm: number, playing: boolean, ahead = 0.3): void {
-    const now = this.ctx.currentTime, sps = 60 / bpm / 4, stepNow = gameTime / sps;
+   *  `gameTime` (seconds) on the beat clock `clock`. `playing` false: nothing new is scheduled. */
+  update(cue: MusicCue, gameTime: number, clock: BeatClock, playing: boolean, ahead = 0.3): void {
+    const now = this.ctx.currentTime, stepNow = beatAt(clock, gameTime) * 4;
     if (!playing) { this.nextStep = -1; return; }
-    // the audio time of step 0, smoothed so the frames' jitter doesn't reach the notes; a jump
+    // the audio time of game time 0, smoothed so the frames' jitter doesn't reach the notes; a jump
     // (a hitch, a pause, a jump in game time) resets it
-    const raw = now - stepNow * sps;
+    const raw = now - gameTime;
     if (!(Math.abs(raw - this.anchor) < 0.06)) { this.anchor = raw; this.nextStep = -1; } else this.anchor += (raw - this.anchor) * 0.05;
     if (this.nextStep < 0 || this.nextStep < stepNow - 1 || this.nextStep > stepNow + 64) this.nextStep = Math.ceil(stepNow);
-    this.delay.delayTime.setTargetAtTime(Math.min(4, this.style.mix.delayBeats * 60 / bpm), now, 0.05);
-    while (this.anchor + this.nextStep * sps < now + ahead) {
-      const t = this.anchor + this.nextStep * sps;
-      if (t >= now) this.step(cue, this.nextStep, t, bpm);
+    this.delay.delayTime.setTargetAtTime(Math.min(4, (this.style.mix.delayBeats * 60) / bpmAt(clock, gameTime)), now, 0.05);
+    for (;;) {
+      const g = timeAt(clock, this.nextStep / 4), t = this.anchor + g;
+      if (t >= now + ahead) break;
+      if (t >= now) this.step(cue, this.nextStep, t, 60 / bpmAt(clock, g) / 4);
       this.nextStep++;
     }
   }
 
   /** Schedule game time [from, from + seconds) to play from audio time `at` (offline rendering). */
-  renderAhead(cue: MusicCue, from: number, seconds: number, bpm: number, at = 0): void {
-    const sps = 60 / bpm / 4, first = Math.ceil(from / sps - 1e-9), last = (from + seconds) / sps;
-    for (let s = first; s < last; s++) this.step(cue, s, at + (s * sps - from), bpm);
+  renderAhead(cue: MusicCue, from: number, seconds: number, clock: BeatClock, at = 0): void {
+    const first = Math.ceil(beatAt(clock, from) * 4 - 1e-9);
+    for (let s = first; ; s++) {
+      const g = timeAt(clock, s / 4);
+      if (g >= from + seconds) break;
+      this.step(cue, s, at + (g - from), 60 / bpmAt(clock, g) / 4);
+    }
   }
 
   /** Stop scheduling and forget the plans (a jump in the timeline). */
   reset(): void { this.nextStep = -1; this.conductor.reset(); }
 
-  private step(cue: MusicCue, step: number, t: number, bpm: number): void {
-    const S = this.style, B = S.blockBars, sps = 60 / bpm / 4, bar = Math.floor(step / 16), s = step - bar * 16;
-    const plan = this.conductor.plan(cue, bar, bpm);
+  /** One sixteenth: `t` its audio time, `sps` seconds a sixteenth lasts now. */
+  private step(cue: MusicCue, step: number, t: number, sps: number): void {
+    const S = this.style, B = S.blockBars, bar = Math.floor(step / 16), s = step - bar * 16;
+    const plan = this.conductor.plan(cue, bar);
     // in a block's last bar, the next block's plan (for the fill): fixed a bar early
-    const next = bar % B === B - 1 ? this.conductor.plan(cue, bar + 1, bpm) : null;
+    const next = bar % B === B - 1 ? this.conductor.plan(cue, bar + 1) : null;
     this.current = { plan, bar, step };
     if (s === 0) {
       // the section's low-pass over this bar

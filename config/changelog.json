@@ -10,6 +10,11 @@
         "Nothing attacks babies, on either side: a leash of babies is safe in a fight. Babies never get angry when their area wakes: they stay home and you can still invite them",
         "Berries heal: a party animal that eats one is back to full health (a hurt one goes for berries even if it's a legend), and so is a creature you've just invited, with a green sparkle",
         "The old line of controls in the corner is gone: the action bar shows them (H hides it)",
+        "Flying fast over the hills is smooth: you and the camera glide over the bumps, rising early for a crest, instead of jerking up and down",
+        "No cliffs on the hills: no slope anywhere is steeper than the camera looks down, so the ground never stretches into streaks or wedges, and the trees on it stand properly (try ?seed=165272)",
+        "Rising and landing no longer show a hard-edged circle in the canopy round you, and you're drawn as yourself under the see-through leaves, not as a flat silhouette",
+        "The music reacts to the fight: knocked out, it sinks to a muffled, far-off breakdown; near a soundsystem under siege a nervous pulse joins in",
+        "The music speeds up as the party grows: from 120 bpm in the quiet forest to about 140 by the finale, easing in a few bars after each wave lands, and everything on the beat (the dancefloor, the lasers, dancing creatures and witches, the border's sparkle) speeds up with it, never skipping a beat",
         "Wild creatures fight back: on the ground, the young and older shoot or lunge at you (watch for the red ring tightening at their feet, and the line a shot will fly along), so dash out of the way. Over the treetops you're safe. Babies never attack",
         "You can still invite creatures while they attack you: big, strong groups are hard to win over without getting hit (a hit doesn't set the chat back; losing a hit is the cost)",
         "You can take three hits (pips under your feet show what's left); one comes back every 20 seconds once you're out of the fight",
@@ -31,6 +36,21 @@
         "No more glowing party cubes",
         "Smoother boosting over the treetops: the work of streaming in new forest, hills and ground is spread across frames, and creatures cost far less to move, so frames stay steady at full speed",
         "Home is a party area too: party things round the dancefloor (never on it)"
+      ]
+    },
+    {
+      "version": 297,
+      "items": [
+        "Real clouds over the treetops: a few soft, see-through clouds drifting high over the curve of the world, glowing in the colours of the party beneath them and pulsing on the beat; now and then one flickers with lightning, sometimes with a forked bolt",
+        "Big hills: the forest rolls over broad hills and valleys up to 40 m high, never steep enough to hide you behind a bump (?hills=6 gentle, ?hills=0 flat); the blotchy slope shading is gone",
+        "Calmer stars: most barely twinkle, each in its own time",
+        "String lights no longer show through the curved earth over the treetops",
+        "The arrows at the screen's edge always point the right way, even to things past the curve of the world",
+        "The rune stone markers stay on screen: once the stone is in view, the marker floats above it with its countdown, so it's easy to find in a busy forest",
+        "Grass grows thicker round the feet of trees and rocks, reeds ring the ponds, and the tufts sit in the canopy's dappled shade like the ground under them",
+        "Clouds over the party glow in its colours and pulse on the beat (from the start, over home)",
+        "Things stand upright on the hills, planted at their lowest foot: creatures and the witch no longer shear with the slope, and shadows lie neatly on it",
+        "?bare=1 shows just the ground, hills and bend under a low moon (?bare=2: grey ground with contour lines), to judge the terrain"
       ]
     },
     {
