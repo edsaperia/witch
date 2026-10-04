@@ -411,12 +411,22 @@ const report = await b.page.evaluate(async () => {
       if (B.length < 10 || B.filter(d => d.bob).length < 8 || ![G.M.SKIN, G.M.HAIR, G.M.IRIS, G.M.JACKET, G.M.JEANS, G.M.SHOES, G.M.PHONES].every(v => slots.has(v))) bad.push("balloons: too few, without bob, or colour slots unused");
       const a = G.partyColours(st, "pink", "neon"), b = G.partyColours(st, "pink", "metallic"); if (a[G.M.SKIN].join() === b[G.M.SKIN].join()) bad.push("balloon palettes");
     }
+    { // Ed's rulings: hanging pieces hang from a `hang` anchor inside the sprite (the top attach point) and swing (bob); lanterns, fairy lights and the
+      // mirror ball swing; point lights only on campfires and lanterns
+      for (const d of G.PARTY_OBJECTS) {
+        const R = G.partySprite(d.id, st), sp = R.whole, h = R.anchors?.hang, lantern = /lantern|jar/.test(d.id), fire = /campfire|bonfire/.test(d.id) && !d.cold;
+        if (d.hang && !(h && h.x >= 0 && h.x <= sp.w && h.y >= 0 && h.y <= sp.h * .25 && d.bob)) bad.push(`${d.id} hang`);
+        if (/lantern-pole|lantern-string|hanging|fairy|mirror-ball/.test(d.id) && !d.bob) bad.push(`${d.id} bob`);
+        if (!!d.pointLight !== (lantern || fire)) bad.push(`${d.id} pointLight`);
+      }
+      if (G.PARTY_OBJECTS.filter(d => d.hang).length < 5) bad.push("too few hanging pieces");
+    }
     { // campfires: the lit ones animate (3 frames, each different), warm, with a point light; the cold ones don't glow
       const F = G.PARTY_OBJECTS.filter(d => /fire|ashes/.test(d.id) && d.id !== "fire-pit-lit");
       for (const d of F) { if (d.glow) { const fr = [0, 1, 2].map(f => G.partySprite(d.id, st, { frame: f }).whole), sig = fr.map(sp => sp.m.join("")); if (!(d.frames === 3 && d.light === "warm" && d.pointLight?.radius > 0 && new Set(sig).size === 3)) bad.push(`campfire ${d.id}`); } else if ([...G.partySprite(d.id, st).whole.m].some(v => EM.has(v))) bad.push(`cold ${d.id}`); }
       if (F.filter(d => d.glow).length < 4 || F.filter(d => !d.glow).length < 1) bad.push("campfires: too few sizes or no cold one");
     }
-    res.push({ what: "party objects: 40+ over the five classes (litter, balloon, small, furniture, set); balloons shiny not glowing, every colour slot, bob hints, tie anchors; campfires in 4+ sizes animated in 3 frames with point lights, a cold one; standing, small in pixel area for their class, decals flat; only the flagged ones glow, with their light (neon recolourable, or warm); every light source glows, half or more of the rest (balloons aside) glow; 6+ clusters of 3 to 8, 1 to 6 m", good: !bad.length && n >= 40 && cls.every(k => k >= 6) && glowing * 2 >= n - cls[1] && G.PARTY_CLUSTERS.length >= 6, info: bad.join(", ") || `${n} objects (${cls.join("/")}), ${glowing} glowing, ${G.PARTY_CLUSTERS.length} clusters` });
+    res.push({ what: "party objects: 40+ over the five classes (litter, balloon, small, furniture, set); balloons shiny not glowing, every colour slot, bob hints, tie anchors; campfires in 4+ sizes animated in 3 frames with point lights, a cold one; hanging pieces with a hang anchor at the top, lanterns and lights swinging, point lights only on campfires and lanterns; standing, small in pixel area for their class, decals flat; only the flagged ones glow, with their light (neon recolourable, or warm); every light source glows, half or more of the rest (balloons aside) glow; 6+ clusters of 3 to 8, 1 to 6 m", good: !bad.length && n >= 40 && cls.every(k => k >= 6) && glowing * 2 >= n - cls[1] && G.PARTY_CLUSTERS.length >= 6, info: bad.join(", ") || `${n} objects (${cls.join("/")}), ${glowing} glowing, ${G.PARTY_CLUSTERS.length} clusters` });
   }
   { // scenes: every piece names a real sprite; 3+ pieces; at most one glowing kind; footprints sane (small 3 to 12 m) and holding every piece; mirroring keeps every distance and the footprint
     const bad = [], sizes = [];
