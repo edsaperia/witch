@@ -90,6 +90,8 @@ if (reliefParam !== null && !isNaN(Number(reliefParam))) tuning.ground = { ...tu
 // ?hills=0: the ground flat again; ?hills=<amplitude>: the rolling ground's swells, in metres.
 const hillsParam = params.get("hills");
 if (hillsParam !== null && !isNaN(Number(hillsParam))) tuning.ground = { ...tuning.ground, hills: { ...tuning.ground.hills, on: Number(hillsParam) > 0, amplitude: Number(hillsParam) > 0 ? Number(hillsParam) : tuning.ground.hills.amplitude } };
+// ?ley=0: no ley lines through the runestones.
+if (params.get("ley") === "0") tuning.leyLines = { ...tuning.leyLines, on: false };
 // ?bare=1: the terrain on its own, to judge the hills, the bumps and the bend (Ed, 2026-10-04): no
 // trees, undergrowth, grass, decor, scenes, relics, path props, string lights, mist or shadows; no
 // point lights, glow or haze, and a low raking moonlight. ?bare=2: a flat grey ground with contour
