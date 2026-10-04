@@ -9,7 +9,7 @@ import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, h
 import { newCamera, stepCamera, cameraPose } from "./camera";
 import { legendChance, population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
 import { newGame, stepGame } from "./game";
-import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, speakersOn, waveCountdown, symbolCount } from "./party";
+import { newParty, planAhead, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, speakersOn, waveCountdown, symbolCount } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
 import { laserShow } from "./lasers";
@@ -642,6 +642,16 @@ describe("the party", () => {
     const m = spawnMarkers(p, map), stage = (c: readonly [number, number] | null) => m.find(x => x.key === key(c! as [number, number]))!.stage;
     expect(stage(p.next)).toBe("next"); expect(stage(p.afterNext)).toBe("afterNext");
     for (const c of p.probable) expect(stage(c)).toBe("probable");
+  });
+  it("sees a wave further with a forecast buff (the owl's): the third wave's one area, confirmed", () => {
+    const p = newParty(map);
+    p.seeAhead = 1; planAhead(p, map);
+    for (let w = 0; w < 6; w++) {
+      expect(p.probable.length).toBe(1);
+      const third = p.probable[0];
+      spreadWave(p, map, w + 1);
+      expect(p.afterNext).toEqual(third);
+    }
   });
   it("rings the stones with symbols: 12 on the next, the after-next filling through the middle, probable ones a few", () => {
     const F = TUNING.forecast;

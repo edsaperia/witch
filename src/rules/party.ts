@@ -37,6 +37,9 @@ export interface PartyState {
    *  after that (the picker's candidates then, about forecast.probable of them). */
   afterNext: Cell | null;
   probable: Cell[];
+  /** Waves further the forecast sees (a legend buff, rules/buffs.ts): 1 or more and the wave after
+   *  the after-next is confirmed too, so `probable` holds just the one area it will wake. */
+  seeAhead?: number;
   /** Game time the home speaker ring finishes booting up (Ed, 2026-10-04): the first wave's countdown starts then. */
   bootUntil: number;
 }
@@ -108,8 +111,8 @@ export function planAhead(p: PartyState, map: ForestMap): void {
   if (!p.afterNext) return;
   const v2: PartyState = { ...v1, areas: new Map(v1.areas).set(cellKey(p.afterNext), dummy(p.afterNext)), wave: p.wave + 2, last: p.afterNext };
   const cands: Cell[] = [];
-  pickNext(v2, map, undefined, cands);
-  p.probable = cands.slice(0, Math.max(1, map.tuning.forecast.probable));
+  const third = pickNext(v2, map, undefined, cands);
+  p.probable = (p.seeAhead ?? 0) >= 1 && third ? [third] : cands.slice(0, Math.max(1, map.tuning.forecast.probable));
 }
 
 /** Where an area's soundsystem stands: in its clearing, beside its centre, inside its own ground. */

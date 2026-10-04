@@ -5,7 +5,7 @@ import { spawnCreatures, stepCreaturesNear, wanderRange, type Creature } from ".
 import { Forest } from "./forest";
 import { leashPoint, newLeash, stepLeash, type LeashControls, type LeashState } from "./leash";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
-import { newParty, spreadWave, stepParty, type PartyState } from "./party";
+import { newParty, planAhead, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { nextSpeakerState, type SpeakerState } from "./speakers";
 import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
@@ -73,6 +73,7 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   // Legend buffs: the party legends alive now change the numbers the rest of the step plays by.
   stepBuffs(g.buffs, g.creatures, [...g.leash.stack, ...g.leash.placed.map(p => p.id)], g.tuning);
   const t = g.buffs.tuning;
+  if ((g.party.seeAhead ?? 0) !== g.buffs.totals.forecastAhead) { g.party.seeAhead = g.buffs.totals.forecastAhead; planAhead(g.party, g.map); }
   if (c.spell) castSpell(g.spells, g.clock.time, t);
   // The speed boost: her speeds times its multiplier while it's on.
   const boost = speedMultiplier(g.spells, g.clock.time, t);
