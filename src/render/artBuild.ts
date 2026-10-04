@@ -157,7 +157,13 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   /** The dancefloor's speakers: every drawn angle, state and frame. */
   | { kind: "speakers"; id: string; style: Style }
   /** Every scene's pieces (each drawn once) and each scene's layout, as authored and mirrored. */
-  | { kind: "scenes"; id: string; style: Style };
+  | { kind: "scenes"; id: string; style: Style }
+  /** A party witch (#37): her look from partyWitch(seed) (or, seed null, our witch's own), in every party pose. */
+  | { kind: "partyWitch"; id: string; seed: number | null; style: Style };
+
+/** A party witch's frames: each foot pose's frames facing us (the view mirrors them), her hover
+ *  frames for flying (towards and away), and each frame's anchors in its sprite's pixels (pair, back, cup, hand, hatTip). */
+export interface PartyWitchArt { poses: Record<string, number[]>; fps: Record<string, number>; hover: { towards: number[]; away: number[] }; anchors: (Record<string, [number, number]> | null)[] }
 
 /** A scene piece in its atlas (by its name in the scenes' table), with its ground point; and each
  *  scene's pieces in metres from its middle, as authored and mirrored. */
@@ -179,7 +185,7 @@ export interface DecorPiece { id: string; family: string; bot: number; top: numb
 
 /** A floor tile's pixels: albedo and normal map, w x h. */
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
-export interface ArtResult { px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt }
+export interface ArtResult { px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt }
 
 function sceneSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; scenes: SceneArt } {
   const sprites: Baked[] = [], scenes: SceneArt = { pieces: {}, layouts: {} };
@@ -247,7 +253,27 @@ function decorSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; decor: Dec
   return { sprites, decor };
 }
 
+function partyWitchSprites(st: Style, seed: number | null, mk: MakeCanvas): { sprites: Baked[]; witch: PartyWitchArt } {
+  const pw = seed === null ? null : (Art.partyWitch(seed) as { look: unknown; colours: (st: Style) => unknown });
+  const colours = pw ? pw.colours(st) : Art.witchColours(st), look = pw?.look;
+  const sprites: Baked[] = [], witch: PartyWitchArt = { poses: {}, fps: {}, hover: { towards: [], away: [] }, anchors: [] };
+  const draw = (o: object) => {
+    const sp = (Art.witchSprite as (st: Style, o: object) => unknown)(st, { ...o, look }) as { anchors?: Record<string, [number, number]> };
+    witch.anchors.push(sp.anchors ? Object.fromEntries(Object.entries(sp.anchors).map(([k, p]) => [k, [p[0], p[1]] as [number, number]])) : null);
+    return sprites.push(Art.bake(sp, colours, st, st.cOutline, mk) as Baked) - 1;
+  };
+  const FOOT = Art.WITCH_FOOT_POSES as Record<string, { frames: number; fps: number; party?: string }>;
+  for (const [pose, P] of Object.entries(FOOT)) {
+    if (!P.party && pose !== "stand" && pose !== "land" && pose !== "takeoff") continue;
+    witch.poses[pose] = Array.from({ length: P.frames }, (_, frame) => draw({ pose, frame }));
+    witch.fps[pose] = P.fps;
+  }
+  for (const facing of ["towards", "away"] as const) witch.hover[facing] = [0, 1, 2].map(frame => draw({ frame, facing }));
+  return { sprites, witch };
+}
+
 export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
+  if (job.kind === "partyWitch") { const { sprites, witch } = partyWitchSprites(job.style, job.seed, mk); return { px: packPixels(sprites, 2048), witch }; }
   if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };
   if (job.kind === "relics") { const { sprites, relics, layouts } = relicSprites(job.style, mk); return { px: packPixels(sprites, 2048), relics, layouts }; }
   if (job.kind === "pathPieces") { const { sprites, pieces } = pathPieceSprites(job.style, mk); return { px: packPixels(sprites, 2048), pieces }; }
