@@ -51,7 +51,7 @@ async function main() {
     else page = await browser.newPage({ viewport: size, deviceScaleFactor: dpr || 1, hasTouch: !!hasTouch, isMobile: !!hasTouch });
     page.on("pageerror", e => errors.push(`${name}: page error: ${e.message}`));
     page.on("console", m => { if (m.type() === "error") errors.push(`${name}: console error: ${m.text()}`); });
-    await page.goto(`http://127.0.0.1:${port}/?seed=${seed}${query || "&debug"}`);
+    await page.goto(`http://127.0.0.1:${port}/?${/(^|&)seed=/.test(query || "") ? (query || "").replace(/^&/, "") : `seed=${seed}${query || "&debug"}`}`); // (a run may ask for its own seed)
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 120000 });
     // All the art is drawn in the background after start; the software renderer here starves the
     // workers of CPU (minutes at big window sizes), so wait for it before flying, so the shots show the forest as players do.
@@ -435,7 +435,7 @@ async function main() {
   // fixed 1/60 s in ground mode and then the treetops: the slope limit keeps the ground under the
   // camera's sightline to her, so its lift (the safety net) stays small; and she rides the hills
   // smoothly, her height's up-and-down acceleration well under the bare ground's.
-  await run("slope", { width: 960, height: 600 }, async page => {
+  for (const [slopeSeed, file] of [[seed, "60-steep-slope.png"], [165272, "61-steep-slope-165272.png"]]) await run("slope", { width: 960, height: 600 }, async page => {
     await page.keyboard.press("Enter");
     const at = await page.evaluate(() => {
       const W = window.witch, g = W.game, h = W.groundHeight, d = g.map.dancefloor;
@@ -452,7 +452,7 @@ async function main() {
     await sleep(1500);
     await page.waitForFunction(() => window.witch.view.assets.pending === 0 && window.witch.view.stats.forestMissing === 0, null, { timeout: 900000, polling: 1000 }).catch(() => {});
     await sleep(1500);
-    await shot(page, "60-steep-slope.png");
+    await shot(page, file);
     const r = await page.evaluate(async () => {
       const w = window.witch, v = w.view, dt = 1 / 60, C = o => ({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }), yieldNow = () => new Promise(res => setTimeout(res, 0));
       w.manual = true;
@@ -474,11 +474,11 @@ async function main() {
       w.manual = false;
       return { ground, treetop };
     });
-    results.push(`info slope: the steepest spot near home ${(at.slope * 100).toFixed(0)}% (${at.x.toFixed(0)}, ${at.z.toFixed(0)}); flying north from it, camera lift at most ${r.ground.lift.toFixed(1)} m on the ground and ${r.treetop.lift.toFixed(1)} m over the treetops; her height's rms acceleration ${r.ground.ride.toFixed(1)} against the ground's ${r.ground.ground.toFixed(1)} m/s² (ground), ${r.treetop.ride.toFixed(1)} against ${r.treetop.ground.toFixed(1)} (treetops)`);
-    check(at.slope < Math.tan(30 * Math.PI / 180), `the steepest slope near home is under the camera's shallowest pitch (${(at.slope * 100).toFixed(0)}%, 30° is 58%)`);
-    check(Math.max(r.ground.lift, r.treetop.lift) < 3, `flying directly away from the camera over the steepest hill, no rise hides her: the camera's safety-net lift stays under 3 m (${r.ground.lift.toFixed(1)} m, ${r.treetop.lift.toFixed(1)} m)`);
-    check(r.ground.ride < r.ground.ground * 0.8 && r.treetop.ride < r.treetop.ground * 0.8, `she rides the hills smoothly: her height bobs less than the ground under her (rms acceleration ${r.ground.ride.toFixed(1)} vs ${r.ground.ground.toFixed(1)}, ${r.treetop.ride.toFixed(1)} vs ${r.treetop.ground.toFixed(1)} m/s²)`);
-  });
+    results.push(`info slope (seed ${slopeSeed}): the steepest spot near home ${(at.slope * 100).toFixed(0)}% (${at.x.toFixed(0)}, ${at.z.toFixed(0)}); flying north from it, camera lift at most ${r.ground.lift.toFixed(1)} m on the ground and ${r.treetop.lift.toFixed(1)} m over the treetops; her height's rms acceleration ${r.ground.ride.toFixed(1)} against the ground's ${r.ground.ground.toFixed(1)} m/s² (ground), ${r.treetop.ride.toFixed(1)} against ${r.treetop.ground.toFixed(1)} (treetops)`);
+    check(at.slope < Math.tan(30 * Math.PI / 180), `seed ${slopeSeed}: the steepest slope near home is under the camera's shallowest pitch (${(at.slope * 100).toFixed(0)}%, 30° is 58%)`);
+    check(Math.max(r.ground.lift, r.treetop.lift) < 3, `seed ${slopeSeed}: flying directly away from the camera over the steepest hill, no rise hides her: the camera's safety-net lift stays under 3 m (${r.ground.lift.toFixed(1)} m, ${r.treetop.lift.toFixed(1)} m)`);
+    check(r.ground.ride < r.ground.ground * 0.8 && r.treetop.ride < r.treetop.ground * 0.8, `seed ${slopeSeed}: she rides the hills smoothly: her height bobs less than the ground under her (rms acceleration ${r.ground.ride.toFixed(1)} vs ${r.ground.ground.toFixed(1)}, ${r.treetop.ride.toFixed(1)} vs ${r.treetop.ground.toFixed(1)} m/s²)`);
+  }, slopeSeed === seed ? "&debug" : `&seed=${slopeSeed}&debug`); // (Ed, v297: seed 165272 had cliffs and broken trees)
 
   // Boosting over the treetops (Ed, v256: "framerate drops a bit during boost mode in treetop
   // view"): the game is stepped frame by frame at a fixed 1/60 s (window.witch.frame), so the

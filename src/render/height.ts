@@ -31,6 +31,12 @@ export const SLOPE_SCALE = 4.3;
 export const RES = 2;
 export const N = 400;
 const STEP = 8;
+/** The slope limit's reach (samples): no two samples this close differ by more than the limit allows. */
+const RAD = 8;
+/** Its neighbourhood: each sample offset's distance (m), 0 for itself and those past RAD. */
+const DIST = Array.from({ length: 2 * RAD + 1 }, (_, a) => Float32Array.from({ length: 2 * RAD + 1 }, (_, b) => { const d = Math.hypot(a - RAD, b - RAD) * RES; return d <= RAD * RES ? d : 0; }));
+/** The source samples kept round the window (wrapping like it), for the limit's neighbourhoods. */
+const SM = N + 2 * (RAD + STEP);
 /** How far beyond its edge a path levels the ground, and the plateaus' easing (metres). */
 const BUCKET = 64;
 
@@ -144,6 +150,13 @@ export class HeightField {
   private pondBuckets = new Set<number>();
   /** Samples worked out ahead of the window (prepare), by sample: follow takes them as it moves. */
   private ahead = new Map<number, number>();
+  /** h before the slope limit, at samples round the window (a ring like the window's, each slot
+   *  tagged with the sample it holds). */
+  private srcV = new Float32Array(SM * SM);
+  private srcI = new Int32Array(SM * SM).fill(-2147483648);
+  private srcJ = new Int32Array(SM * SM);
+  /** The steepest slope allowed (m per m), or none. */
+  private limit = 0;
   /** The window position and heading the strip ahead was last finished for. */
   private prepared = "";
 
@@ -157,6 +170,8 @@ export class HeightField {
     // Broad enough that no slope rises past the camera's sightline (the shallowest pitch); taller
     // hills come broader, not steeper.
     const H = this.H = hills.maxSlope ? { ...hills, scale: Math.max(hills.scale, SLOPE_SCALE * hills.amplitude / hills.maxSlope) } : hills;
+    // The slope limit: a little under the camera's shallowest pitch.
+    this.limit = hills.maxSlope ? hills.maxSlope * 0.85 : 0;
     this.PATH_EDGE = Math.max(6, H.amplitude * 0.6);
     this.PLATEAU_FADE = Math.max(16, H.amplitude * 2);
     amplitude = H.on ? H.amplitude : 0;
@@ -287,10 +302,45 @@ export class HeightField {
     return blend(h, pulls);
   }
 
+  /** h at sample (i, j) before the slope limit (kept). */
+  private src(i: number, j: number): number {
+    const s = ((j % SM) + SM) % SM * SM + ((i % SM) + SM) % SM;
+    if (this.srcI[s] !== i || this.srcJ[s] !== j) { this.srcV[s] = this.sourceAt(i * RES, j * RES); this.srcI[s] = i; this.srcJ[s] = j; }
+    return this.srcV[s];
+  }
+
+  /** The stored height at sample (i, j): h with its slopes limited (Ed, v297: "bumps are fine,
+   *  it's cliffs that really show the fact that this is a shader and not true 3d"). The average
+   *  of h cut down from above (the lowest of every neighbour's height plus the limit times its
+   *  distance) and filled up from below (the highest, minus): each never steeper than the limit,
+   *  so neither is their average; a cliff becomes a slope of the limit, half cut, half filled,
+   *  and ground already gentler (the bumps) is left exactly as it was. From the samples alone, so
+   *  the same however the window came to be where it is. */
+  limited(i: number, j: number): number {
+    const h = this.src(i, j);
+    if (!(this.limit > 0)) return h;
+    for (let dj = -RAD; dj <= RAD; dj++) for (let di = -RAD; di <= RAD; di++) this.src(i + di, j + dj); // (all there)
+    const V = this.srcV, col = this.cols, L = this.limit;
+    for (let k = 0; k <= 2 * RAD; k++) col[k] = (((i + k - RAD) % SM) + SM) % SM;
+    let lo = h, hi = h;
+    for (let dj = -RAD; dj <= RAD; dj++) {
+      const row = ((((j + dj) % SM) + SM) % SM) * SM, D = DIST[dj + RAD];
+      for (let di = -RAD; di <= RAD; di++) {
+        const d = D[di + RAD];
+        if (d === 0) continue;
+        const v = V[row + col[di + RAD]], e = L * d;
+        if (v + e < lo) lo = v + e;
+        if (v - e > hi) hi = v - e;
+      }
+    }
+    return (lo + hi) / 2;
+  }
+  private cols = new Int32Array(2 * RAD + 1);
+
   private put(i: number, j: number): void {
     const k = sampleKey(i, j), pre = this.ahead.get(k);
     if (pre !== undefined) this.ahead.delete(k);
-    const s = ((j % N) + N) % N * N + ((i % N) + N) % N, v = pre ?? this.sourceAt(i * RES, j * RES);
+    const s = ((j % N) + N) % N * N + ((i % N) + N) % N, v = pre ?? this.limited(i, j);
     this.half[s] = THREE.DataUtils.toHalfFloat(v);
     this.data[s] = quantise(v);
   }
@@ -327,7 +377,7 @@ export class HeightField {
         const k = sampleKey(i, j);
         if (this.ahead.has(k)) continue;
         if (performance.now() - t0 > budgetMs) return false;
-        this.ahead.set(k, this.sourceAt(i * RES, j * RES));
+        this.ahead.set(k, this.limited(i, j));
       }
     }
     this.prepared = plan;
