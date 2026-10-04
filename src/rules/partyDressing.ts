@@ -78,6 +78,20 @@ export function dressingOf(map: ForestMap, cell: Cell, t: Tuning): Dressing {
   };
   const between = ([lo, hi]: number[]) => lo + Math.floor(r() * (hi - lo + 1));
   const out: Dressing = { clusters: [], loose: [], caught: null, hanging: [], lights: [] };
+  // Home (Ed's playtest, 2026-10-04: decorate it round the dancefloor): a lit ring of party pieces
+  // just outside the floor's clearing, every lanePitch metres round, laneWidth out from its edge,
+  // clear of the treehouse and the paths. (The treehouse stands right at the clearing's edge, so
+  // there's no stretch between the two to line.)
+  if (cell[0] === map.centreCell[0] && cell[1] === map.centreCell[1]) {
+    const R = floorClearing(t) + P.laneWidth, lane = P.lane.filter(id => BY_ID[id] && !P.exclude.includes(id)), n = Math.floor((Math.PI * 2 * R) / P.lanePitch);
+    let k = 0;
+    for (let i = 0; i < n && lane.length; i++) {
+      const a = (i / n) * Math.PI * 2, x = d.x + Math.cos(a) * R, z = d.z + Math.sin(a) * R;
+      if (map.paths.at(x, z, 1) || Math.hypot(x - map.treehouse.x, z - map.treehouse.z) < t.treehouse.clear + 2) continue;
+      out.loose.push({ ref: refFor(BY_ID[lane[k++ % lane.length]], r), x, z, flip: i % 2 === 0 });
+      taken.push({ x, z, r: 1 });
+    }
+  }
   for (let i = 0, n = between(P.clusters); i < n; i++) {
     const s = spotFor(4);
     if (s) out.clusters.push({ id: PARTY_CLUSTERS[Math.floor(r() * PARTY_CLUSTERS.length)].id, ...s, mirror: r() < 0.5 });
