@@ -22,7 +22,7 @@ export const ACTIVITIES: Activity[] = ["dance", "pair", "chat", "drink", "run", 
 /** The art's poses for each activity (art/witch.js WITCH_FOOT_POSES). */
 export const POSES: Record<Activity, string[]> = {
   dance: ["twoStep", "bounce", "shuffle", "spin", "headbang", "jump"],
-  pair: ["dancePair", "hug", "highFive", "holdHands", "conga", "drink"],
+  pair: ["dancePair", "hug", "highFive", "holdHands", "conga", "drink", "twirl", "limboHold"],
   chat: ["laugh"],
   drink: ["drink"],
   run: ["run"],
@@ -55,9 +55,14 @@ export interface PartyWitch {
   partner: number | null;
   /** In a pair, the one who leads (walks; the other keeps beside her). */
   lead: boolean;
+  /** The broom limbo's dancer: under the bar held by her partner (the holder) and the holder's helper. */
+  third?: boolean;
   /** Where she's heading on foot (running, wandering hand in hand). */
   tx: number; tz: number;
 }
+
+/** What the partner does in a pair whose lead does this (art/witch.js WITCH_PAIRS partnerPose). */
+export const PARTNER_POSE: Record<string, string> = { twirl: "twirled", limboHold: "limboHelp" };
 
 /** A player on foot near the floor, idling into the party. */
 export interface PlayerIdle { still: number; activity: Activity | null; pose: string | null; partner: number | null; until: number; facing: 1 | -1 }
@@ -115,8 +120,17 @@ function begin(s: PartyWitches, w: PartyWitch, time: number, floor: Floor, t: Tu
     for (const o of s.list) if (o !== w && free(o)) { const d = Math.hypot(o.x - w.x, o.z - w.z); if (d < bd) { bd = d; best = o; } }
     if (!best) a = "dance";
     else {
-      const pose = pick(r, POSES[a]), until = time + duration(r, t, a);
-      for (const [m, lead] of [[w, true], [best, false]] as const) Object.assign(m, { activity: a, pose, until, partner: (lead ? best : w).id, lead });
+      let pose = pick(r, POSES[a]);
+      const until = time + duration(r, t, a);
+      // The broom limbo needs a third witch to dance under the bar; without one, they dance together.
+      let dancer: PartyWitch | null = null;
+      if (pose === "limboHold") {
+        let dd = P.pairRange;
+        for (const o of s.list) if (o !== w && o !== best && free(o)) { const d = Math.hypot(o.x - w.x, o.z - w.z); if (d < dd) { dd = d; dancer = o; } }
+        if (!dancer) pose = "dancePair";
+      }
+      for (const [m, lead] of [[w, true], [best, false]] as const) Object.assign(m, { activity: a, pose: lead ? pose : PARTNER_POSE[pose] ?? pose, until, partner: (lead ? best : w).id, lead, third: false });
+      if (dancer) Object.assign(dancer, { activity: a, pose: "limbo", until, partner: w.id, lead: false, third: true, facing: w.facing, away: false, since: time });
       // Face each other; holding hands they stand side by side facing us; a conga is a line, same way round.
       w.facing = best.x >= w.x ? 1 : -1;
       best.facing = pose === "conga" ? w.facing : (w.facing === 1 ? -1 : 1);
@@ -132,6 +146,8 @@ function begin(s: PartyWitches, w: PartyWitch, time: number, floor: Floor, t: Tu
 /** Let go of a pair (both pick something new when it's their turn). */
 function release(s: PartyWitches, w: PartyWitch, time: number): void {
   if (w.partner === null) return;
+  // A limbo holder lets her dancer go too.
+  for (const o of s.list) if (o.third && o.partner === w.id) { o.partner = null; o.third = false; o.until = Math.min(o.until, time); }
   const o = s.list.find(p => p.id === w.partner);
   if (o && o.partner === w.id) { o.partner = null; o.until = Math.min(o.until, time); }
   w.partner = null;
@@ -140,7 +156,7 @@ function release(s: PartyWitches, w: PartyWitch, time: number): void {
 /** Where a partner stands beside the one who leads. */
 export function pairOffset(pose: string, facing: 1 | -1, t: Tuning): { dx: number; dz: number } {
   const g = t.partyWitches.pairGap;
-  return pose === "conga" ? { dx: -facing * g * 1.1, dz: 0.05 } : { dx: facing * g, dz: 0 };
+  return pose === "conga" ? { dx: -facing * g * 1.1, dz: 0.05 } : pose === "limboHold" ? { dx: facing * g * 2.6, dz: 0 } : { dx: facing * g, dz: 0 };
 }
 
 /**
@@ -185,6 +201,12 @@ export function stepPartyWitches(s: PartyWitches, areas: { key: string; x: numbe
       const ang = time * P.lapSpeed + w.id;
       w.x = floor.x + Math.cos(ang) * floor.radius * 0.6; w.z = floor.z + Math.sin(ang) * floor.radius * 0.6;
       w.y = P.flyHeight * 0.7 * Math.max(0, up); w.facing = -Math.sin(ang) >= 0 ? 1 : -1; w.away = Math.cos(ang) > 0.5;
+    } else if (w.third && w.partner !== null) {
+      // The limbo dancer shuffles along under the bar, from the holder's end to the helper's and round again.
+      const o = s.list.find(p => p.id === w.partner);
+      if (!o || o.pose !== "limboHold") { w.partner = null; w.third = false; continue; }
+      const off = pairOffset("limboHold", o.facing, t), k = ((time - w.since) / P.limboPass) % 1;
+      w.x = o.x + off.dx * (0.15 + 0.7 * k); w.z = o.z + 0.35; w.facing = o.facing;
     } else if (w.partner !== null && w.partner >= 0) {
       const o = s.list.find(p => p.id === w.partner);
       if (!o || o.partner !== w.id) { w.partner = null; continue; }
@@ -224,9 +246,9 @@ export function stepPartyWitches(s: PartyWitches, areas: { key: string; x: numbe
       for (const o of s.list) if (free(o)) { const d = Math.hypot(o.x - p.x, o.z - p.z); if (d < bd) { bd = d; best = o; } }
       if (!best) a = "dance";
       else {
-        const pose = a === "pair" ? pick(r, POSES.pair.filter(q => q !== "holdHands" && q !== "conga")) : "laugh", until = time + duration(r, t, a);
+        const pose = a === "pair" ? pick(r, POSES.pair.filter(q => q !== "holdHands" && q !== "conga" && q !== "limboHold")) : "laugh", until = time + duration(r, t, a);
         I.facing = best.x >= p.x ? 1 : -1;
-        Object.assign(best, { activity: a, pose, until, partner: -1 - i, lead: false, facing: I.facing === 1 ? -1 : 1, away: false });
+        Object.assign(best, { activity: a, pose: PARTNER_POSE[pose] ?? pose, until, partner: -1 - i, lead: false, facing: I.facing === 1 ? -1 : 1, away: false });
         Object.assign(I, { activity: a, pose, until, partner: best.id });
         return;
       }

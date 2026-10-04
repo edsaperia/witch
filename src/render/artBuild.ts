@@ -164,7 +164,7 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   | { kind: "partyObjects"; id: string; style: Style };
 
 /** The party objects in their atlas, by ref ("party:<id>[@<neon>][~<palette>]"): frames (more than one: animated), ground point, decal; and each cluster's layout. */
-export interface PartyArt { pieces: Record<string, { frames: number[]; originX: number; originY: number; decal: boolean }>; layouts: Record<string, { plain: ScenePlace[]; mirror: ScenePlace[] }> }
+export interface PartyArt { pieces: Record<string, { frames: number[]; originX: number; originY: number; decal: boolean; /** Where it hangs from (hanging pieces): pixels from its top-left. */ hang?: { x: number; y: number } }>; layouts: Record<string, { plain: ScenePlace[]; mirror: ScenePlace[] }> }
 
 /** A party witch's frames: each foot pose's frames facing us (the view mirrors them), her hover
  *  frames for flying (towards and away), and each frame's anchors in its sprite's pixels (pair, back, cup, hand, hatTip). */
@@ -260,7 +260,7 @@ function decorSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; decor: Dec
 
 function partyObjectSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; party: PartyArt } {
   const sprites: Baked[] = [], party: PartyArt = { pieces: {}, layouts: {} };
-  type Def = { id: string; cls: string; light: string | null; frames: number };
+  type Def = { id: string; cls: string; light: string | null; frames: number; hang?: boolean };
   const refs = new Set<string>(), palettes = ["neon", "pastel", "metallic", "mixed"];
   for (const d of Art.PARTY_OBJECTS as Def[]) {
     const neons = d.light === "neon" ? (Art.PARTY_LIGHT_NEONS as string[]).map(n => "@" + n) : [""];
@@ -273,10 +273,11 @@ function partyObjectSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; part
     for (const p of party.layouts[c.id].plain) refs.add(p.ref);
   }
   for (const ref of refs) {
-    const piece = Art.scenePiece(ref, st) as { sprite: { whole: unknown; origin: { x: number; y: number } }; colours: unknown; decal: boolean; def?: { frames?: number } };
+    const piece = Art.scenePiece(ref, st) as { sprite: { whole: unknown; origin: { x: number; y: number }; anchors?: Record<string, { x: number; y: number }> }; colours: unknown; decal: boolean; def?: { frames?: number } };
+    const hang = piece.sprite.anchors?.hang ?? piece.sprite.anchors?.tie;
     const id = ref.replace(/^party:/, "").split("~")[0].split("@")[0], n = (Art.PARTY_BY_ID as Record<string, { frames: number }>)[id]?.frames ?? 1;
     if (n <= 1) {
-      party.pieces[ref] = { frames: [sprites.push(Art.bake(piece.sprite.whole, piece.colours, st, "none", mk) as Baked) - 1], originX: piece.sprite.origin.x, originY: piece.sprite.origin.y, decal: piece.decal };
+      party.pieces[ref] = { frames: [sprites.push(Art.bake(piece.sprite.whole, piece.colours, st, "none", mk) as Baked) - 1], originX: piece.sprite.origin.x, originY: piece.sprite.origin.y, decal: piece.decal, ...(hang ? { hang } : {}) };
       continue;
     }
     // Animated (the fires): each frame is its own size with its own origin, so they're laid into one

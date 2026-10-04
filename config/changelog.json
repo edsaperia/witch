@@ -4,6 +4,15 @@
     {
       "version": null,
       "items": [
+        "Party witches twirl each other, and play broom limbo: two hold a broom as the bar while a third shuffles under it",
+        "Party witches chatting show little emoji bubbles, taking turns",
+        "Party witches fly in from just off-screen, so you see them arrive",
+        "Lanterns, jam jars, fairy lights and mirror balls hang from the trees in party areas"
+      ]
+    },
+    {
+      "version": 306,
+      "items": [
         "Flying fast over the hills is smooth: you and the camera glide over the bumps, rising early for a crest, instead of jerking up and down",
         "No cliffs on the hills: no slope anywhere is steeper than the camera looks down, so the ground never stretches into streaks or wedges, and the trees on it stand properly (try ?seed=165272)",
         "Rising and landing no longer show a hard-edged circle in the canopy round you, and you're drawn as yourself under the see-through leaves, not as a flat silhouette",
