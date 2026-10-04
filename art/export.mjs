@@ -68,10 +68,10 @@ const assets = await b.page.evaluate(async ({ style, seed }) => {
   L.campfire.forEach((bk, frame) => addBaked({ id: `light-campfire-${frame}`, kind: "light", light: "campfire", frame }, bk));
   for (const [v, bk] of Object.entries(L.stones)) addBaked({ id: `light-magic-stone-${v}`, kind: "light", light: "magic-stone", variant: v, frame: 0 }, bk);
   addBaked({ id: "light-pond", kind: "light", light: "pond", frame: 0 }, L.pond);
-  // the witch's treehouse: whole, top and bottom, towards and away, with its anchors (base, seat, door, lights)
+  // the witch's treehouse: whole, top and bottom, and fore (the DJ table, drawn over her as she sits behind it; same size and origin as whole), towards and away, with its anchors (base, seat, door, camera, lights)
   for (const facing of ["towards", "away"]) {
     const T = G.treehouseSprite(st, { facing }), hc = G.treehouseColours(st), sfx = facing === "away" ? "-away" : "";
-    for (const [part, sp] of [["whole", T.whole], ["top", T.top], ["bottom", T.bot]]) push({ id: `treehouse${part === "whole" ? "" : "-" + part}${sfx}`, kind: "treehouse", part, facing, frame: 0, crownY: T.crownY, metres: T.metres, anchors: T.anchors, anchorX: T.anchors.base.x }, sp, hc, "none");
+    for (const [part, sp] of [["whole", T.whole], ["top", T.top], ["bottom", T.bot], ["fore", T.fore]]) push({ id: `treehouse${part === "whole" ? "" : "-" + part}${sfx}`, kind: "treehouse", part, facing, frame: 0, crownY: T.crownY, metres: T.metres, anchors: T.anchors, anchorX: T.anchors.base.x }, sp, hc, "none");
   }
   // modern relics, the playground and the sports grounds; tall ones also split into top and bottom; decals lie flat on the ground
   const rcol = G.relicColours(st);
