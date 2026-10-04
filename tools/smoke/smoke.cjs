@@ -64,7 +64,7 @@ async function main() {
     await page.keyboard.up(key);
     return [from, to];
   };
-  const shot = async (page, file) => { await sleep(400); await page.screenshot({ path: path.join(out, file) }); results.push(`shot previews/${file}`); };
+  const shot = async (page, file) => { await sleep(400); await page.screenshot({ path: path.join(out, file), timeout: 300000 }); /* big windows: seconds a frame in the software renderer */ results.push(`shot previews/${file}`); };
 
   await run("laptop", { width: 1280, height: 720 }, async page => {
     await shot(page, "00-start-screen.png");
