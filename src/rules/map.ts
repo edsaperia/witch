@@ -24,6 +24,8 @@ export interface AreaType {
   /** The floor's colour, [hue, saturation, value], for the ground before its tile is drawn. */
   floor: [number, number, number];
   treeDensity: number;
+  /** The tufts on its ground (config/area-types.json): density 0-1 and which kinds. */
+  groundCover: { density: number; kinds: string[] };
   /** How its vegetation is arranged (art/areas.js AREA_LAYOUTS): pattern, density, clump, undergrowth... */
   layout: AreaLayout;
 }
@@ -39,11 +41,12 @@ export interface AreaLayout {
 }
 
 interface ArtArea { id: string; name: string; creature: string; text: AreaType["text"]; floor: [string, number, number, number]; wall?: unknown[]; set?: unknown; layout?: AreaLayout }
-const settings = (rawTypes as { types: Record<string, { treeDensity: number }> }).types;
+const settings = (rawTypes as { types: Record<string, { treeDensity: number; groundCover?: { density: number; kinds: string[] } }> }).types;
 export const AREA_TYPES: readonly AreaType[] = (AREAS as unknown as ArtArea[]).map(a => ({
   id: a.id, name: a.name, creature: a.creature, text: a.text,
   setPiece: a.set ? a.text.set ?? "a set piece" : "", hasWalls: !!a.wall?.length,
   floor: [a.floor[1], a.floor[2], a.floor[3]], treeDensity: settings[a.id]?.treeDensity ?? 1,
+  groundCover: settings[a.id]?.groundCover ?? { density: 0.5, kinds: ["blades"] },
   layout: a.layout ?? { pattern: "scatter", density: 0.6, clump: 0.3, undergrowth: 0.5 },
 }));
 
@@ -235,9 +238,10 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
       const a = r() * Math.PI * 2, d = 3 + r() * 4, x = ax + Math.cos(a) * d, z = az + Math.sin(a) * d + 3;
       if (inCell(x, z, cx, cy)) { spot = { x, z }; break; }
     }
-    // Off any path, road, railway or stream's corridor (Ed, v160: paths run on unbroken), the
-    // nearest clear spot round it if it fell on one.
-    const onPath = (x: number, z: number) => !!map.paths.at(x, z, tuning.soundsystemFootprint + 1);
+    // Off any path, road, railway or stream's corridor (Ed, v160: paths run on unbroken), and never
+    // in the dancefloor's ring of speakers or its clearing (Ed, v183), the nearest clear spot round
+    // it if it fell on one.
+    const onPath = (x: number, z: number) => !!map.paths.at(x, z, tuning.soundsystemFootprint + 1) || Math.hypot(x - centre.x, z - centre.z) < floorClear + tuning.soundsystemFootprint;
     if (onPath(spot.x, spot.z)) search: for (let d = 3; d < A * 0.3; d += 3) for (let k = 0; k < 16; k++) {
       const a = (k / 16) * Math.PI * 2, x = spot.x + Math.cos(a) * d, z = spot.z + Math.sin(a) * d;
       if (inCell(x, z, cx, cy) && !onPath(x, z)) { spot = { x, z }; break search; }

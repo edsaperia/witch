@@ -37,7 +37,7 @@ export interface LeashState {
   progress: Map<number, number>;
   /** What happened in the latest step, for the view (sounds, fizzles, draw-ons). */
   events: LeashEvent[];
-  /** Talk is held this step, and whether she's off the ground (so the view can say "land to talk"). */
+  /** Talk is held this step, and whether she's off the ground (the view shows no cue then: Ed, v183). */
   held: boolean;
   heldInAir: boolean;
 }

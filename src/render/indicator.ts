@@ -3,9 +3,13 @@
 // pixellated"): plotted pixel by pixel on a small canvas, scaled up without smoothing.
 //  - "Music this way" (Ed, 2026-10-03): sound-wave arcs pulsing outward on the beat, in the party
 //    colours, toward home's dancefloor; bigger and brighter when near.
-//  - "Next stone" (Ed, v149): a standing-stone icon in the next waking area's neon, pulsing on the
-//    beat, with its distance in metres, toward the stone the next wave will wake.
+//  - "Next stone" (Ed, v149; redrawn v183): the next waking area's rune (its creature's sigil) in
+//    its neon, in a ring that fills clockwise from 12 o'clock as the countdown to the next wave
+//    runs, flashing when the party spreads; an arrowhead toward the stone and its distance in
+//    metres, on the far side of the ring from the arrow.
+// Directions are in screen space, y down: an angle a points along (cos a, sin a) on the canvas.
 import * as THREE from "three";
+import { sigilGlyph } from "../../art/generator.js";
 
 const N = 40; // art pixels across
 const SCALE = 4; // screen pixels per art pixel
@@ -19,7 +23,22 @@ function edgeSpot(v: THREE.Vector3, camera: THREE.Camera, width: number, height:
   if (p.z >= 1) { dx = -dx; dy = -dy; } // behind the camera: flip
   // Clamped to a box inside the edge, clear of the countdown bar on the right and the panels top left.
   const k = 1 / Math.max(Math.abs(dx) / 0.84, Math.abs(dy) / 0.76, 1e-6);
-  return { show, sx: ((dx * k + 1) / 2) * width, sy: ((1 - dy * k) / 2) * height, angle: Math.atan2(-dy, dx) };
+  return { show, sx: ((dx * k + 1) / 2) * width, sy: ((1 - dy * k) / 2) * height, angle: screenAngle(dx, dy) };
+}
+
+/** A direction given in the view's own terms (x right, y up) as a screen angle (y down). */
+export const screenAngle = (dx: number, dy: number) => Math.atan2(-dy, dx);
+
+/** The arrowhead's pixels on an n x n cue, pointing along screen angle `a` (y down): a solid
+ *  triangle from radius `from` out to its tip at radius `tip`. */
+export function arrowPixels(a: number, n: number, from: number, tip: number, halfWidth: number): [number, number][] {
+  const out: [number, number][] = [], c = n / 2, ux = Math.cos(a), uy = Math.sin(a), vx = -uy, vy = ux;
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    const px = x + 0.5 - c, py = y + 0.5 - c, along = px * ux + py * uy, side = px * vx + py * vy;
+    if (along < from || along > tip) continue;
+    if (Math.abs(side) <= halfWidth * (tip - along) / (tip - from) + 0.25) out.push([x, y]);
+  }
+  return out;
 }
 
 class PixelCue {
@@ -84,60 +103,52 @@ export class MusicIndicator {
   }
 }
 
-// A small standing stone, 9 wide and 14 tall, with a rune slot; "#" stone, "r" rune.
-const STONE = [
-  "  ####   ",
-  " ######  ",
-  " ####### ",
-  "#########",
-  "####r####",
-  "###rrr###",
-  "####r####",
-  "###r#r###",
-  "#########",
-  "#########",
-  "#########",
-  " ####### ",
-  "#########",
-  "#########",
-];
-
 export class StoneIndicator {
   private cue: PixelCue;
   private v = new THREE.Vector3();
+  private glyphs = new Map<string, { w: number; m: Uint8Array }>();
+  private lastFill = 0;
+  private flashAt = -Infinity;
   constructor(parent: HTMLElement) { this.cue = new PixelCue(parent); }
 
-  /** Point at the next waking stone at (x, z), in its area's neon (rgb 0-1); null hides it. */
-  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3 } | null, wx: number, wz: number, time: number, bpm: number, build: number): void {
+  /** Point at the next waking stone at (x, z), its area's creature `species` and neon (rgb 0-1);
+   *  `fill`: how far the countdown to the next wave has run (0 just after one, 1 as it comes). null hides it. */
+  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string } | null, wx: number, wz: number, time: number, bpm: number, fill: number): void {
     const c = this.cue;
+    // The party spread (the countdown went back to the start): a flash.
+    if (fill < this.lastFill - 0.5) this.flashAt = time;
+    this.lastFill = fill;
     if (!at) { c.hide(); return; }
     const e = edgeSpot(this.v, camera, width, height, at.x, at.z);
     if (e.show <= 0.01) { c.hide(); return; }
     c.place(e.sx, e.sy);
     c.clear();
-    const beat = (time * bpm) / 60, pulse = Math.pow(0.5 + 0.5 * Math.cos((beat % 1) * Math.PI * 2), 2) * (0.5 + 0.5 * build);
-    const neon = [at.colour.x * 255, at.colour.y * 255, at.colour.z * 255], stone = [150, 150, 165];
-    // The stone in the middle, its rune glowing; a pointer pixel trail toward the stone's direction.
-    const ox = N / 2 - 4, oy = N / 2 - 8;
-    STONE.forEach((row, y) => [...row].forEach((ch, x) => {
-      if (ch === "#") c.dot(ox + x, oy + y, stone, e.show * 0.95);
-      else if (ch === "r") c.dot(ox + x, oy + y, neon.map(v => Math.min(255, v * (0.7 + 0.6 * pulse))), e.show);
-    }));
-    // A glow ring round it, pulsing on the beat.
+    const beat = (time * bpm) / 60, pulse = Math.pow(0.5 + 0.5 * Math.cos((beat % 1) * Math.PI * 2), 2);
+    const flash = Math.max(0, 1 - (time - this.flashAt) / 0.5);
+    const neon = [at.colour.x * 255, at.colour.y * 255, at.colour.z * 255], bright = neon.map(v => Math.min(255, v * (0.8 + 0.4 * pulse) + 255 * flash * 0.6));
+    // The ring: dim all round, bright neon clockwise from 12 o'clock as far as the countdown has run.
+    const R = 13;
     for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-      const r = Math.hypot(x - N / 2 + 0.5, y - N / 2 + 0.5), R = 11 + pulse * 3;
-      if (Math.abs(r - R) < 0.6) c.dot(x, y, neon, e.show * (0.45 + 0.55 * pulse));
+      const px = x + 0.5 - N / 2, py = y + 0.5 - N / 2, r = Math.hypot(px, py);
+      if (Math.abs(r - R) > 1.05) continue;
+      const turn = ((Math.atan2(px, -py) / (Math.PI * 2)) + 1) % 1; // 0 at 12 o'clock, clockwise
+      if (turn <= fill || flash > 0) c.dot(x, y, bright, e.show);
+      else c.dot(x, y, neon.map(v => v * 0.35), e.show * 0.8);
     }
-    // An arrowhead on the ring, toward the stone.
-    for (let i = 0; i < 4; i++) for (let j = -i; j <= i; j++) {
-      const d = 17 - i, px = N / 2 + Math.cos(e.angle) * d - Math.sin(e.angle) * j, py = N / 2 - Math.sin(e.angle) * d - Math.cos(e.angle) * j;
-      c.dot(px, py, neon, e.show);
-    }
+    // The rune in the middle: the area's creature's sigil, in its neon.
+    let g = this.glyphs.get(at.species);
+    if (!g) { g = sigilGlyph(at.species, 17) as { w: number; m: Uint8Array }; this.glyphs.set(at.species, g); }
+    const o = Math.floor((N - g.w) / 2);
+    for (let y = 0; y < g.w; y++) for (let x = 0; x < g.w; x++) if (g.m[y * g.w + x]) c.dot(o + x, o + y, bright, e.show);
+    // The arrowhead outside the ring, toward the stone.
+    for (const [x, y] of arrowPixels(e.angle, N, R + 2, R + 7, 3.5)) c.dot(x, y, bright, e.show);
     c.flush();
+    // The distance on the far side of the ring from the arrow.
     c.label.style.display = "block";
     c.label.textContent = `${Math.round(Math.hypot(at.x - wx, at.z - wz))} m`;
     c.label.style.color = `rgb(${neon.map(Math.round).join(",")})`;
-    c.label.style.left = `${e.sx}px`;
-    c.label.style.top = `${e.sy + (N * SCALE) / 2 - 22}px`;
+    const lx = e.sx - Math.cos(e.angle) * (R + 6) * SCALE, ly = e.sy - Math.sin(e.angle) * (R + 6) * SCALE;
+    c.label.style.left = `${lx}px`;
+    c.label.style.top = `${ly - 7}px`;
   }
 }

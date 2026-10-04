@@ -5,6 +5,7 @@
 import * as THREE from "three";
 import type { Atlas, Frame } from "./atlas";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
+import { WITCH_LIGHT_GLSL, witchLightUniform } from "./witchLight";
 
 /** Shared by every sprite batch: the camera's right and (tilted) up, and the canopy fade. */
 export const SPRITE_UNIFORMS = {
@@ -32,6 +33,8 @@ export const SPRITE_UNIFORMS = {
   uUplight: { value: new THREE.Vector4() },
   /** The trunk fade: metres covered (0 off), metres per art pixel. */
   uTrunkFade: { value: new THREE.Vector2(0, 0.125) },
+  /** The wind (Ed, v171): sway at the top of a crown (metres), the gusts' speed (m/s) and size (m), and the time. */
+  uWind: { value: new THREE.Vector4(0, 0, 1, 0) },
 };
 
 const VERT = /* glsl */ `
@@ -42,10 +45,13 @@ uniform vec4 uOcc;
 attribute vec3 iPos;
 attribute vec2 iSize;
 attribute vec4 iUv;
-attribute vec4 iFlags; // flip, top half, just appeared (debug), glow (0-1: white)
+attribute vec4 iFlags; // flip, top (or a trunk's cut, negative), fresh, sway
+attribute float iGlow; // glowing white, 0 to 1 (a party animal evolving)
+varying float vGlow;
+uniform vec4 uWind;
 varying vec2 vUv;
 varying vec3 vWorld;
-varying vec4 vFlags;
+varying vec3 vFlags;
 varying float vFront;
 varying vec2 vLocal;
 varying float vSizeY;
@@ -54,9 +60,21 @@ void main() {
   // Eased over a few metres of depth and of height, so nothing snaps into the fade as she moves.
   vFront = smoothstep(0.0, 3.0, uWitchDepth - 0.5 + (viewMatrix * vec4(iPos, 1.0)).z) * smoothstep(uOcc.z * 0.7, uOcc.z * 1.3, iSize.y);
   vec3 w = iPos + uRight * (position.x * iSize.x) + uUp * (position.y * iSize.y);
+  // Wind (Ed, v171): leafy things lean with gusts travelling across the forest, anchored at their
+  // base (a crown at its foot, a trunk barely), so the trunks stay put and the foliage moves.
+  if (iFlags.w > 0.0 && uWind.x > 0.0) {
+    vec2 q = iPos.xz / uWind.z - vec2(0.8, 0.35) * uWind.w * uWind.y / uWind.z;
+    vec2 i = floor(q), f = fract(q), e = f * f * (3.0 - 2.0 * f);
+    float h00 = fract(sin(dot(i, vec2(127.1, 311.7))) * 43758.5453), h10 = fract(sin(dot(i + vec2(1, 0), vec2(127.1, 311.7))) * 43758.5453);
+    float h01 = fract(sin(dot(i + vec2(0, 1), vec2(127.1, 311.7))) * 43758.5453), h11 = fract(sin(dot(i + vec2(1, 1), vec2(127.1, 311.7))) * 43758.5453);
+    float gust = mix(mix(h00, h10, e.x), mix(h01, h11, e.x), e.y);
+    float flutter = sin(uWind.w * 1.7 + dot(iPos.xz, vec2(0.31, 0.17))) * 0.35;
+    w += uRight * (uWind.x * iFlags.w * uv.y * uv.y * (gust * 0.9 + flutter)) * min(1.0, iSize.y / 8.0);
+  }
   float u = iFlags.x > 0.5 ? 1.0 - uv.x : uv.x;
   vUv = vec2(mix(iUv.x, iUv.z, u), mix(iUv.w, iUv.y, uv.y));
-  vFlags = iFlags;
+  vFlags = iFlags.xyz;
+  vGlow = iGlow;
   vLocal = uv;
   vSizeY = iSize.y;
   vWorld = w;
@@ -84,12 +102,14 @@ uniform int uPartyCount;
 uniform vec4 uUplight;
 varying vec2 vUv;
 varying vec3 vWorld;
-varying vec4 vFlags;
+varying vec3 vFlags;
+varying float vGlow;
 varying float vFront;
 varying vec2 vLocal;
 varying float vSizeY;
 uniform vec2 uTrunkFade; // metres of trunk the fade covers, metres per art pixel
 ${LIGHT_GLSL}
+${WITCH_LIGHT_GLSL}
 // 4x4 ordered dither, for fading the canopy in pixel-art style.
 float bayer(vec2 p) {
   int x = int(mod(p.x, 4.0)), y = int(mod(p.y, 4.0));
@@ -137,6 +157,7 @@ void shade() {
   float nx = (n.r * 255.0 - 128.0) / 127.0, ny = (n.g * 255.0 - 128.0) / 127.0, nz = n.b;
   if (vFlags.x > 0.5) nx = -nx;
   vec3 N = normalize(uRight * nx - uUp * ny + uFacing * nz);
+  if (uWitchLight.x > 0.5) { gl_FragColor = vec4(witchShade(a.rgb, N, uFacing, vWorld), alpha); return; }
   vec3 col = min(vec3(1.0), a.rgb * nightLight(N, vWorld) * 1.25);
   if (vFlags.y > 0.5 && uPartyCount > 0) {
     // Crowns over a party catch a faint glow from below, on their undersides and lower edges.
@@ -155,8 +176,8 @@ void shade() {
 }
 void main() {
   shade();
-  // Glowing white (a party animal evolving), by vFlags.w.
-  if (vFlags.w > 0.0 && uSilhouette.a <= 0.0) gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0), vFlags.w);
+  // Glowing white (a party animal evolving).
+  if (vGlow > 0.0 && uSilhouette.a <= 0.0) gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0), vGlow);
   // Scenery past the budget's radius fades out smoothly (alpha), from the far edge inward.
   if (uIsScenery > 0.5) {
     float k = sceneryFade(vWorld) * uAppear; // and a set just drawn fades in
@@ -166,7 +187,7 @@ void main() {
 }
 `;
 
-export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number; /** Glowing white, 0 to 1 (an evolving party animal). */ glow?: number }
+export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number; /** How much it sways in the wind (0 still, 1 a crown): leafy things only. */ sway?: number; /** Glowing white, 0 to 1 (an evolving party animal). */ glow?: number }
 
 export class SpriteBatch {
   readonly mesh: THREE.Mesh;
@@ -178,20 +199,21 @@ export class SpriteBatch {
   private size: THREE.InstancedBufferAttribute;
   private uvs: THREE.InstancedBufferAttribute;
   private flags: THREE.InstancedBufferAttribute;
+  private glow: THREE.InstancedBufferAttribute;
   private capacity = 0;
   count = 0;
 
   /** metresPerPixel: world size of one art pixel. */
-  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; /** Gameplay (creatures, soundsystems, markers...): never faded or cut away round the witch (Ed, v149). */ solid?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number } } = {}) {
+  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; /** Gameplay (creatures, soundsystems, markers...): never faded or cut away round the witch (Ed, v149). */ solid?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number }; /** The witch: lit by the world's lights but not her own glow (witchLight.ts). */ witchLight?: { lightFloor: number; lightTint: number; lightRim: number } } = {}) {
     const quad = new THREE.PlaneGeometry(1, 1);
     quad.translate(0, 0.5, 0); // stand on the base
     this.geo = new THREE.InstancedBufferGeometry();
     this.geo.index = quad.index;
     this.geo.setAttribute("position", quad.getAttribute("position"));
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
-    this.pos = this.size = this.uvs = this.flags = undefined as never;
+    this.pos = this.size = this.uvs = this.flags = this.glow = undefined as never;
     this.grow(64);
-    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, ...extra });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), ...extra });
     // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
     // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
     const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};
@@ -227,9 +249,9 @@ export class SpriteBatch {
       if (old) (a.array as Float32Array).set(old.array as Float32Array);
       return a;
     };
-    this.pos = make(3, this.pos); this.size = make(2, this.size); this.uvs = make(4, this.uvs); this.flags = make(4, this.flags);
+    this.pos = make(3, this.pos); this.size = make(2, this.size); this.uvs = make(4, this.uvs); this.flags = make(4, this.flags); this.glow = make(1, this.glow);
     this.geo.setAttribute("iPos", this.pos); this.geo.setAttribute("iSize", this.size);
-    this.geo.setAttribute("iUv", this.uvs); this.geo.setAttribute("iFlags", this.flags);
+    this.geo.setAttribute("iUv", this.uvs); this.geo.setAttribute("iFlags", this.flags); this.geo.setAttribute("iGlow", this.glow);
     this.capacity = cap;
   }
 
@@ -242,15 +264,16 @@ export class SpriteBatch {
   set(items: SpriteInstance[]): void {
     this.items = items;
     if (items.length > this.capacity) this.grow(items.length);
-    const P = this.pos.array as Float32Array, S = this.size.array as Float32Array, U = this.uvs.array as Float32Array, F = this.flags.array as Float32Array;
+    const P = this.pos.array as Float32Array, S = this.size.array as Float32Array, U = this.uvs.array as Float32Array, F = this.flags.array as Float32Array, G = this.glow.array as Float32Array;
     items.forEach((it, i) => {
       P[i * 3] = it.x; P[i * 3 + 1] = it.y; P[i * 3 + 2] = it.z;
       const k = it.scale ?? 1;
       S[i * 2] = it.frame.w * this.metresPerPixel * k; S[i * 2 + 1] = it.frame.h * this.metresPerPixel * k;
       U.set(it.frame.uv, i * 4);
-      F[i * 4] = it.flip ? 1 : 0; F[i * 4 + 1] = it.top ? 1 : it.cut ? -it.cut : 0; F[i * 4 + 2] = it.fresh ? 1 : 0; F[i * 4 + 3] = it.glow ?? 0;
+      F[i * 4] = it.flip ? 1 : 0; F[i * 4 + 1] = it.top ? 1 : it.cut ? -it.cut : 0; F[i * 4 + 2] = it.fresh ? 1 : 0; F[i * 4 + 3] = it.sway ?? 0;
+      G[i] = it.glow ?? 0;
     });
-    for (const a of [this.pos, this.size, this.uvs, this.flags]) a.needsUpdate = true;
+    for (const a of [this.pos, this.size, this.uvs, this.flags, this.glow]) a.needsUpdate = true;
     this.count = items.length;
     this.geo.instanceCount = items.length;
     for (const m of this.meshes) m.visible = items.length > 0;
