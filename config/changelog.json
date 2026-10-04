@@ -8,7 +8,10 @@
         "A spell: Q (gamepad B, touch 'spell') casts a speed boost: much faster for a few seconds, with a trail; the ring in the corner shows it recharging",
         "Cycle: C (gamepad right-stick click, touch 'cycle') sends the bottom sigil of your stack to the top, so you choose which creature goes down next",
         "A few creatures (hares, stoats, martens) are quick on their feet; legends are very slow; you're still much faster than any of them",
-        "The witch is lit by the lights around her: she turns red by a red soundsystem, warm by a campfire, and catches a coloured rim on the side facing a light, while staying easy to see in the dark"
+        "The witch is lit by the lights around her: she turns red by a red soundsystem, warm by a campfire, and catches a coloured rim on the side facing a light, while staying easy to see in the dark",
+        "Forecasting: the next two areas to join the party are certain, and a few more are likely. Their rune stones grow rings of magic symbols, a full ring of 12 on the next one, and their beams grow as the countdown runs",
+        "A smaller, dimmer cue at the screen's edge points to the area after next",
+        "Music: a beat plays, loud and clear near the dancefloor and other playing soundsystems, quiet and muffled deep in the forest, and crackling when a speaker nearby is damaged (?music=off)"
       ]
     },
     {

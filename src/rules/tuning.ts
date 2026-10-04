@@ -28,6 +28,10 @@ export interface Tuning {
   /** Tufts on the ground round the witch, in ground mode: overall density (times each area's), within radius metres, at most cap; one chance every spacing metres, worked out cell metres at a time within budgetMs a frame; sway (share of a tuft's height) and part (how far they part round her). */
   /** Spells (Ed, 2026-10-04): the one equipped this run, and each spell's numbers. speed: her speed times mult for duration seconds, then cooldown seconds to recharge. */
   spells: { equipped: string; speed: { mult: number; duration: number; cooldown: number } };
+  /** Forecasting (Ed, 2026-10-04): symbols round each stone (12 = next; the after-next stone fills afterNext[0]..[1] over the countdown; probable ones flicker 1..probableMax); probable: how many probable stones; radius (m), size (m) of each symbol, height above the canopy in treetop mode. */
+  forecast: { symbols: number; probable: number; probableMax: number; afterNext: number[]; radius: number; size: number; flare: number };
+  /** Music by proximity (Ed, 2026-10-04): full and clear within nearDist metres of a playing soundsystem, down to floor volume and a muffle Hz low-pass by farDist; clear: the cutoff when near; distort: how much a damaged one nearby is heard; volume: the master; src: an audio file to play, or empty for the built-in loop. */
+  music: { on: boolean; volume: number; nearDist: number; farDist: number; floor: number; muffle: number; clear: number; distort: number; src: string };
   /** The home speaker ring's boot-up at the start (Ed, 2026-10-04): seconds before the first wave's countdown begins. */
   boot: { time: number };
   groundCover: { on: boolean; density: number; radius: number; cap: number; spacing: number; cell: number; budgetMs: number; sway: number; part: number };

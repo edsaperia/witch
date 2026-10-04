@@ -46,9 +46,11 @@ class PixelCue {
   readonly label = document.createElement("div");
   readonly g: CanvasRenderingContext2D;
   readonly img: ImageData;
-  constructor(parent: HTMLElement) {
+  /** `scale`: screen pixels per art pixel; `opacity`: how strongly it shows (a dimmer cue for later). */
+  constructor(parent: HTMLElement, readonly scale = SCALE, opacity = 1) {
     this.canvas.width = this.canvas.height = N;
-    Object.assign(this.canvas.style, { position: "fixed", width: `${N * SCALE}px`, height: `${N * SCALE}px`, imageRendering: "pixelated", pointerEvents: "none", zIndex: "2", display: "none" });
+    Object.assign(this.canvas.style, { position: "fixed", width: `${N * scale}px`, height: `${N * scale}px`, imageRendering: "pixelated", pointerEvents: "none", zIndex: "2", display: "none", opacity: `${opacity}` });
+    this.label.style.opacity = `${opacity}`;
     Object.assign(this.label.style, { position: "fixed", pointerEvents: "none", zIndex: "2", display: "none", font: "bold 12px monospace", color: "#fff", textShadow: "0 1px 0 #000, 1px 0 0 #000", transform: "translate(-50%, 0)" });
     parent.append(this.canvas, this.label);
     this.g = this.canvas.getContext("2d")!;
@@ -57,8 +59,8 @@ class PixelCue {
   hide(): void { this.canvas.style.display = "none"; this.label.style.display = "none"; }
   place(sx: number, sy: number): void {
     this.canvas.style.display = "block";
-    this.canvas.style.left = `${sx - (N * SCALE) / 2}px`;
-    this.canvas.style.top = `${sy - (N * SCALE) / 2}px`;
+    this.canvas.style.left = `${sx - (N * this.scale) / 2}px`;
+    this.canvas.style.top = `${sy - (N * this.scale) / 2}px`;
   }
   clear(): void { this.img.data.fill(0); }
   dot(x: number, y: number, rgb: number[], a: number): void {
@@ -109,7 +111,8 @@ export class StoneIndicator {
   private glyphs = new Map<string, { w: number; m: Uint8Array }>();
   private lastFill = 0;
   private flashAt = -Infinity;
-  constructor(parent: HTMLElement) { this.cue = new PixelCue(parent); }
+  /** A smaller, dimmer one (`scale`, `opacity`) points at the after-next stone. */
+  constructor(parent: HTMLElement, scale = SCALE, opacity = 1) { this.cue = new PixelCue(parent, scale, opacity); }
 
   /** Point at the next waking stone at (x, z), its area's creature `species` and neon (rgb 0-1);
    *  `fill`: how far the countdown to the next wave has run (0 just after one, 1 as it comes). null hides it. */
@@ -147,7 +150,7 @@ export class StoneIndicator {
     c.label.style.display = "block";
     c.label.textContent = label ?? `${Math.round(Math.hypot(at.x - wx, at.z - wz))} m`;
     c.label.style.color = `rgb(${neon.map(Math.round).join(",")})`;
-    const lx = e.sx - Math.cos(e.angle) * (R + 6) * SCALE, ly = e.sy - Math.sin(e.angle) * (R + 6) * SCALE;
+    const lx = e.sx - Math.cos(e.angle) * (R + 6) * c.scale, ly = e.sy - Math.sin(e.angle) * (R + 6) * c.scale;
     c.label.style.left = `${lx}px`;
     c.label.style.top = `${ly - 7}px`;
   }
