@@ -2,8 +2,7 @@
 // the legend's sigil glyph in its neon, its line as a tooltip. When a buff is gained or lost its
 // icon flashes and a short line shows under the row for a few seconds.
 import type { Game } from "../rules/game";
-import { sigilGlyph } from "../../art/generator.js";
-import { SIGIL_NEON } from "../../art/sigils.js";
+import { sigilColour, sigilGlyph } from "../../art/generator.js";
 
 const G = 15, SCALE = 2, SHOW = 4;
 
@@ -22,12 +21,12 @@ export class BuffHud {
     parent.append(this.row, this.line);
   }
 
-  private neon(species: string): string { return (SIGIL_NEON as Record<string, string>)[species] ?? "#ffffff"; }
+  private neon(species: string): string { return `rgb(${(sigilColour(species) as number[]).join(",")})`; }
 
   private icon(species: string, label: string): HTMLCanvasElement {
     const c = document.createElement("canvas"), pad = 2, n = G + pad * 2;
     c.width = c.height = n;
-    Object.assign(c.style, { width: `${n * SCALE}px`, height: `${n * SCALE}px`, imageRendering: "pixelated", background: "rgba(14, 11, 28, .55)", borderRadius: "4px", boxShadow: `0 0 6px ${this.neon(species)}66` });
+    Object.assign(c.style, { width: `${n * SCALE}px`, height: `${n * SCALE}px`, imageRendering: "pixelated", background: "rgba(14, 11, 28, .55)", borderRadius: "4px", boxShadow: `0 0 6px ${this.neon(species)}` });
     c.title = label;
     const g = c.getContext("2d")!, m = sigilGlyph(species, G) as { w: number; m: Uint8Array };
     g.fillStyle = this.neon(species);

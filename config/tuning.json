@@ -172,7 +172,7 @@
   "adultShareFar": 0.35,
   "legendNextToHome": false,
   "_wildLegends": "Wild legends (Ed, 2026-10-04): rare, late threats, mini-bosses when combat comes (each has the boss flag). perMap [min, max] of them per map, only in areas at least from remote (0 home, 1 the edge), at least spacing areas apart, at most one an area. They sleep (dormant: still, breathing slowly) until the party reaches their area, then lumber about it at legendSpeed. Drawn scale times a legend's size, swelling by breathe as they breathe (once every breathEvery seconds), with an aura on the ground aura metres across and, from the treetops, a glow over the canopy (glow its strength) in a dark mix of their sigil's colour.",
-  "wildLegends": { "perMap": [3, 5], "from": 0.7, "spacing": 4, "scale": 1.35, "breathe": 0.04, "breathEvery": 4, "aura": 6, "glow": 0.7 },
+  "wildLegends": { "perMap": [3, 5], "from": 0.7, "spacing": 4, "scale": 1.35, "breathe": 0.04, "breathEvery": 4, "aura": 6, "glow": 1 },
   "creatureSimRadius": 600,
   "creatureSpeed": 0.6,
   "_setPieces": "setPieceChance: the share of areas, among the types that have a set piece, that show theirs. Wall objects are laid out as features (see walls); they do not block movement.",
