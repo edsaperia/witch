@@ -11,13 +11,14 @@
 //
 //   node tools/balance/sim.mjs [--seeds 12] [--gaps 60,300] [--skills 10,30,50,70,100] [--cap 60]
 //     [--growth 30,50,70] [--starts 0,3,6,9,12,15,20] [--waves 30] [--fight 30]
-//     [--attrition 0.5] [--director base,perWave,power] [--by-wave] [--expected 50] [--alphas 0,0.3,0.6]
+//     [--attrition 0.5] [--director base,perWave,power] [--by-wave] [--happy 0.1,0.2,...] [--expected 50] [--alphas 0,0.3,0.6]
 //     [--weights 1,1,1] [--per-wave 1] [--health 4000] [--home 8000] [--quick] [--json out.json]
 // --weights (the grown creatures' baby, young, adult shares), --per-wave (how many a wave), --health
 // and --home (soundsystems' and home's health) try numbers without editing the tuning file;
 // --quick leaves out the catch-up check; --by-wave sets
 // the director's budget by waves rather than by minutes; --no-area-legends leaves out every area's
-// own legend (Ed, 2026-10-04) and keeps the map's wild legends as today.
+// own legend (Ed, 2026-10-04) and keeps the map's wild legends as today; --happy compares, in place
+// of the pacing variants, legends happy with each chance p (guarding their areas against sieges).
 // It loads the game's own rules modules through Vite (no build needed).
 import { createServer } from "vite";
 import { writeFileSync } from "node:fs";
@@ -46,7 +47,12 @@ const t0 = Date.now(), maps = seeds.map(s => generateMap(s, tuning)), out = { se
 const lines = [];
 const say = s => { lines.push(s); console.log(s); };
 const BY_WAVE = flag("by-wave"), director = alpha => ({ base: DBASE, perWave: DPER, power: DPOW, alpha, expected: EXPECTED, byTime: !BY_WAVE });
-const VARIANTS = [
+const HAPPY = list(arg("happy", "")).filter(x => !Number.isNaN(x) && arg("happy", "") !== "");
+const VARIANTS = HAPPY.length ? [
+  { id: "a", name: "a. growth only (p 0)", o: {} },
+  { id: "b", name: `b. growth + attrition (${Math.round(ATTRITION * 100)}% march on)`, o: { marchOn: ATTRITION } },
+  ...HAPPY.filter(p => p > 0).map(p => ({ id: `h${p}`, name: `happy legends, p ${Math.round(p * 100)}%`, o: { happyChance: p } })),
+] : [
   { id: "a", name: "a. growth only", o: {} },
   { id: "b", name: `b. a + attrition (${Math.round(ATTRITION * 100)}% march on)`, o: { marchOn: ATTRITION } },
   ...ALPHAS.map(al => ({ id: `c${al}`, name: `c. a + director, α ${al}`, o: { director: director(al) } })),

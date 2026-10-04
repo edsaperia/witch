@@ -54,6 +54,12 @@ describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () =
     expect(legends.survived).toBeLessThan(plain.survived); // a legend alone topples its soundsystem in about 5.6 minutes
   }, 30000);
 
+  it("lets happy legends guard their areas against sieges (Ed, 2026-10-04: happy with chance p)", () => {
+    const angry = simulate(map, { interval: 60, maxWaves: 40, areaLegends: true }), happy = simulate(map, { interval: 60, maxWaves: 40, areaLegends: true, happyChance: 1 });
+    expect(happy.survived).toBeGreaterThan(angry.survived);
+    expect(simulate(map, { interval: 60, maxWaves: 40, areaLegends: true, happyChance: 1 })).toEqual(happy); // the same every time
+  }, 30000);
+
   it("models the pacing variants: attrition on the march and the director's reinforcements", () => {
     const base = simulate(map, { interval: 300, maxWaves: 30 });
     const scatter = simulate(map, { interval: 300, maxWaves: 30, marchOn: 0 });

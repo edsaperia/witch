@@ -15,6 +15,7 @@ import { spawnCreatures, type Creature, type Level } from "./creatures";
 import { growthLevel } from "./growth";
 import type { ForestMap } from "./map";
 import { cellKey, newParty, soundsystemFor, spreadWave } from "./party";
+import { hash2 } from "./random";
 import { lanchester, levelValue } from "./power";
 
 /** A player in the model (the guesses are here): from the start of wave `fromWave` (0: from the
@@ -43,6 +44,14 @@ export interface SimOptions {
    *  soundsystem; it never marches on; no other legends). With this on, the map's wild legends
    *  are left out and each woken area gets one, at its centre. */
   areaLegends?: boolean;
+  /** Happy legends (Ed, 2026-10-04, for simulation): with areaLegends, each woken area's legend
+   *  is happy with this chance (by the seed and area). A happy one doesn't besiege: it guards its
+   *  area, fighting every besieger that comes within guardRadius of its soundsystem (on or through
+   *  it) with its area attack (its dps on each of them), healing to full over healTime while none
+   *  is near; beaten, it goes back to sleep. An angry one besieges its soundsystem, as before. */
+  happyChance?: number;
+  guardRadius?: number;
+  healTime?: number;
   /** Stop once this many waves have come (and the wave after it would arrive), lost or not. */
   maxWaves: number;
   /** The model's step (seconds). */
@@ -80,7 +89,7 @@ export interface SimResult {
   falls: { wave: number; after: number }[];
 }
 
-interface Fighter { id: number; level: Level; cell: string; x: number; z: number; x0: number; z0: number; speed: number; dps: number; reach: number; value: number; siege: string | null; gone: boolean; /** Stays in its own area: never marches on (an area's legend). */ stay?: boolean }
+interface Fighter { id: number; level: Level; cell: string; x: number; z: number; x0: number; z0: number; speed: number; dps: number; reach: number; value: number; /** Health left (a happy legend wears it down). */ hp?: number; siege: string | null; gone: boolean; /** Stays in its own area: never marches on (an area's legend). */ stay?: boolean }
 interface Sound { key: string; x: number; z: number; hp: number; radius: number; wave?: number; at?: number }
 
 /** A map's fighters (young and up), by area, worth working out once per map. */
@@ -108,12 +117,13 @@ export function fightersOf(map: ForestMap, creatures: Creature[] = spawnCreature
 export function simulate(map: ForestMap, o: SimOptions): SimResult {
   const t = map.tuning, C = t.combat, dt = o.dt ?? 0.5, by = fightersOf(map);
   for (const [k, l] of by) by.set(k, l.filter(f => f.id >= 0)); // (a previous run's reinforcements)
-  for (const l of by.values()) for (const f of l) { f.gone = false; f.siege = null; f.x = f.x0; f.z = f.z0; }
+  for (const l of by.values()) for (const f of l) { f.gone = false; f.siege = null; f.x = f.x0; f.z = f.z0; f.hp = undefined; f.value = levelValue(f.level); }
   const falls: SimResult["falls"] = [], live: Fighter[] = [], sounds = new Map<string, Sound>(), party = newParty(map), waves: WaveSample[] = [];
   const d = map.dancefloor;
   sounds.set("home", { key: "home", x: d.x, z: d.z, hp: C.homeHealth, radius: C.homeRadius });
   const P = o.player, ruined = new Set<string>(), D = o.director, share = o.marchOn ?? 1, adult = levelValue(2);
   let reinforced = 0, owed = 0, nextId = -1;
+  const guards: { key: string; x: number; z: number; hp: number; asleep: boolean }[] = [], GR = o.guardRadius ?? 30, LHP = COMBAT.levels.hp[3], LDPS = COMBAT.levels.dps[3];
   let time = 0, nextAt = t.boot.time + t.party.startDelay + o.interval, playerF = 0, busyUntil = 0, lost: SimResult["lost"] = null;
   const nearest = (x: number, z: number) => {
     let best: string | null = null, bd = Infinity;
@@ -149,7 +159,9 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
           if (level === 1) { const A = COMBAT.attacks[COMBAT.byLevel.melee[1]!]; Object.assign(f, { level: 1, dps: COMBAT.levels.dps[1], value: levelValue(1), reach: A.range + (A.lunge ?? 0) - 0.3 }); }
           f.siege = key; live.push(f);
         }
-        if (o.areaLegends) {
+        const happy = o.areaLegends && (o.happyChance ?? 0) > 0 && hash2(a.cell[0], a.cell[1], map.seed + 991) < (o.happyChance ?? 0);
+        if (happy) { const at = soundsystemFor(map, a.cell); guards.push({ key, x: at.x, z: at.z, hp: COMBAT.levels.hp[3], asleep: false }); }
+        else if (o.areaLegends) {
           const site = map.siteOf(a.cell[0], a.cell[1]), L: Fighter = { ...reinforcement(-1e6 - live.length, key, site.x, site.z, map), level: 3, dps: COMBAT.levels.dps[3], value: levelValue(3), speed: t.legendSpeed * C.marchMult, reach: COMBAT.attacks[COMBAT.byLevel.melee[3]!].range, stay: true, siege: key };
           live.push(L);
         }
@@ -181,9 +193,26 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
         }
       }
     }
+    // Happy legends take on every besieger near their soundsystem: those stop to fight it.
+    const held = new Set<Fighter>();
+    for (const g of guards) {
+      if (g.asleep) continue;
+      let dps = 0;
+      const near: Fighter[] = [];
+      for (const f of live) if (!f.gone && f.siege && Math.abs(f.x - g.x) < GR && Math.abs(f.z - g.z) < GR && Math.hypot(f.x - g.x, f.z - g.z) < GR) { near.push(f); dps += f.dps; }
+      if (!near.length) { g.hp = Math.min(LHP, g.hp + (LHP / (o.healTime ?? 60)) * dt); continue; }
+      g.hp -= dps * dt;
+      for (const f of near) {
+        held.add(f);
+        f.hp = (f.hp ?? COMBAT.levels.hp[f.level]) - LDPS * dt;
+        if (f.hp <= 0) f.gone = true;
+        f.value = Math.sqrt(Math.max(0, f.hp) * f.dps);
+      }
+      if (g.hp <= 0) g.asleep = true; // beaten: back to sleep
+    }
     // The sieges march and hit.
     for (const f of live) {
-      if (f.gone || !f.siege) continue;
+      if (f.gone || !f.siege || held.has(f)) continue;
       const s = sounds.get(f.siege)!;
       const dx = s.x - f.x, dz = s.z - f.z, dist = Math.hypot(dx, dz), want = f.reach + s.radius;
       if (dist > want) { const step = Math.min(dist - want, f.speed * dt); f.x += (dx / dist) * step; f.z += (dz / dist) * step; }
