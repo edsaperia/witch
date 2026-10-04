@@ -90,7 +90,7 @@ document.getElementById("version")!.textContent = typeof __BUILD__ === "string" 
 const newsEl = document.getElementById("news")!;
 const buildName = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev";
 const esc = (s: string) => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!);
-newsEl.innerHTML = "<b>What's new</b>" + changelog.entries.slice(0, 3).map(e =>
+newsEl.innerHTML = "<b>What's new</b>" + changelog.entries.filter(e => e.items.length).slice(0, 3).map(e =>
   `<div>${e.version === null ? `${buildName} (this version)` : "v" + e.version}</div><ul>${e.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>`).join("");
 const seedEl = document.getElementById("seed")!;
 seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;

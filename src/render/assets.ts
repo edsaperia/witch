@@ -5,10 +5,11 @@
 import * as Art from "../../art/generator.js";
 import { rng } from "../rules/random";
 import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
-import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PathPieceArt, type TilePixels, type TypeLayout } from "./artBuild";
+import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PathPieceArt, type RelicArt, type RelicLayouts, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 
 export interface TypeArt { atlas: Atlas; layout: TypeLayout }
+export interface RelicSet { atlas: Atlas; byId: Record<string, RelicArt>; modern: RelicArt[]; layouts: RelicLayouts }
 export interface DecorArt { atlas: Atlas; pieces: DecorPiece[]; families: Record<string, DecorPiece[]> }
 export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number }
 
@@ -19,6 +20,7 @@ export class AssetLibrary {
   private creatures = new Map<string, CreatureArt>();
   private decor: DecorArt | undefined;
   private pieces: { atlas: Atlas; byId: Record<string, PathPieceArt> } | undefined;
+  private relicSet: RelicSet | undefined;
   private queue: ArtJob[] = [];
   private inFlight = new Set<string>();
   private workers: { w: Worker; busy: boolean; job?: ArtJob }[] = [];
@@ -128,7 +130,10 @@ export class AssetLibrary {
       return;
     }
     const atlas = atlasFromPixels(r.result.px);
-    if (r.job.kind === "pathPieces") {
+    if (r.job.kind === "relics") {
+      const list = r.result.relics!;
+      this.relicSet = { atlas, byId: Object.fromEntries(list.map(p => [p.id, p])), modern: list.filter(p => p.family === "modern"), layouts: r.result.layouts! };
+    } else if (r.job.kind === "pathPieces") {
       this.pieces = { atlas, byId: Object.fromEntries(r.result.pieces!.map(p => [p.id, p])) };
     } else if (r.job.kind === "decor") {
       const pieces = r.result.decor!, families: Record<string, DecorPiece[]> = {};
@@ -152,6 +157,11 @@ export class AssetLibrary {
   decorArt(): DecorArt | undefined {
     if (!this.decor) this.ask({ kind: "decor", id: "all", style: this.style });
     return this.decor;
+  }
+  /** Modern relics and the grounds' pieces, or undefined (and asked for). */
+  relicArt(): RelicSet | undefined {
+    if (!this.relicSet) this.ask({ kind: "relics", id: "all", style: this.style });
+    return this.relicSet;
   }
   /** The paths' 3D pieces, or undefined (and asked for). */
   pathPieceArt(): { atlas: Atlas; byId: Record<string, PathPieceArt> } | undefined {

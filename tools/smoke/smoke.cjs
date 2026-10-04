@@ -50,7 +50,7 @@ async function main() {
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 120000 });
     // All the art is drawn in the background after start; the software renderer here starves the
     // workers of CPU (minutes at big window sizes), so wait for it before flying, so the shots show the forest as players do.
-    await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 1800000, polling: 500 });
+    await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 2400000, polling: 1000 });
     await steps(page);
     await page.close();
   }
@@ -357,7 +357,7 @@ async function main() {
     await shot(page, "ground-cave-mouth.png");
     const r = await page.evaluate(() => {
       const v = window.witch.view, out = { n: 0, worst: 0, bad: [] };
-      for (const [type, b] of [...v.typeBatches, ...v.decorBatches, ["treehouse", v.treehouseBatch]]) {
+      for (const [type, b] of [...v.typeBatches, ...[...v.decorBatches].filter(([k]) => k !== "decals"), ["treehouse", v.treehouseBatch]]) { // decals lie flat
         const img = b.atlas.albedo.image, W = img.width, H = img.height, D = img.data;
         for (const it of b.items) {
           if (it.top) continue;

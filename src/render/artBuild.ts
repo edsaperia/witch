@@ -128,7 +128,13 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   /** Every decoration (ruins in both conditions, rocks, freak trees), split as trees are. */
   | { kind: "decor"; id: string; style: Style }
   /** The paths' 3D pieces: bridges, stairs, railway landmarks, signal and verge posts. */
-  | { kind: "pathPieces"; id: string; style: Style };
+  | { kind: "pathPieces"; id: string; style: Style }
+  /** Modern relics, playground and sports pieces, with the art's arrangements. */
+  | { kind: "relics"; id: string; style: Style };
+
+/** One relic in its atlas: family (modern, playground, sports), whether it's a flat ground decal, and its ground point. */
+export interface RelicArt { id: string; family: string; decal: boolean; frame: number; originX: number; originY: number }
+export type RelicLayouts = Record<string, { id: string; x: number; z: number }[]>;
 
 /** One path piece in its atlas: its frame and where its middle on the ground lands (art pixels from the left). */
 export interface PathPieceArt { id: string; frame: number; originX: number; /** Where its middle on the ground lands, from the top. */ originY: number }
@@ -138,7 +144,16 @@ export interface DecorPiece { id: string; family: string; bot: number; top: numb
 
 /** A floor tile's pixels: albedo and normal map, w x h. */
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
-export interface ArtResult { px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[] }
+export interface ArtResult { px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; layouts?: RelicLayouts }
+
+function relicSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; relics: RelicArt[]; layouts: RelicLayouts } {
+  const sprites: Baked[] = [], relics: RelicArt[] = [], colours = Art.relicColours(st);
+  for (const d of Art.RELICS as { id: string; family: string; decal?: boolean }[]) {
+    const r = Art.relicSprite(d.id, st) as { whole: unknown; origin: { x: number; y: number } };
+    relics.push({ id: d.id, family: d.family, decal: !!d.decal, frame: sprites.push(Art.bake(r.whole, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
+  }
+  return { sprites, relics, layouts: Art.relicLayouts(st) as RelicLayouts };
+}
 
 function pathPieceSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; pieces: PathPieceArt[] } {
   const sprites: Baked[] = [], pieces: PathPieceArt[] = [], colours = Art.pathColours(st);
@@ -165,6 +180,7 @@ function decorSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; decor: Dec
 
 export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };
+  if (job.kind === "relics") { const { sprites, relics, layouts } = relicSprites(job.style, mk); return { px: packPixels(sprites, 2048), relics, layouts }; }
   if (job.kind === "pathPieces") { const { sprites, pieces } = pathPieceSprites(job.style, mk); return { px: packPixels(sprites, 2048), pieces }; }
   if (job.kind === "decor") { const { sprites, decor } = decorSprites(job.style, mk); return { px: packPixels(sprites, 2048), decor }; }
   if (job.kind === "party") return { px: packPixels(creatureSprites(job.style, job.species, mk, { ...Art.partyGear(job.seed), collar: job.colour }), 2048) };

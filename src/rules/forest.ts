@@ -111,7 +111,7 @@ function bushesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
     const type = plantType(map, x, z, i, j, s + 206), sparse = 1 - Math.min(1, treeChance(map, x, z, type) / 0.8);
     if (hash2(i, j, s + 203) > (0.15 + 0.85 * sparse) * AREA_TYPES[type].layout.undergrowth * map.tuning.bushDensity * clump * along) continue;
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + 2) continue; // the dancefloor stays clear
-    if (Math.hypot(x - map.treehouse.x, z - map.treehouse.z) < map.tuning.treehouse.clear) continue; // and the treehouse's foot
+    if (map.hardClear(x, z)) continue; // and the treehouse's foot, the grounds, the set pieces' clearings
     out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 204) * BUSH_VARIANTS), flip: hash2(i, j, s + 205) < 0.5 });
   }
   return out;
@@ -126,7 +126,7 @@ function wallsInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
   for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
     if (hash2(i, j, s + 303) > map.tuning.wallDensity) continue;
     const x = (i + (hash2(i, j, s + 301) - 0.5) * 0.6) * sp, z = (j + (hash2(i, j, s + 302) - 0.5) * 0.6) * sp, a = map.areaAt(x, z);
-    if (a.openness < 0.82 || !AREA_TYPES[a.type].hasWalls || map.paths.clearance(x, z).bushes === 0) continue; // not across a path
+    if (a.openness < 0.82 || !AREA_TYPES[a.type].hasWalls || map.paths.clearance(x, z).bushes === 0 || map.hardClear(x, z)) continue; // not across a path or a ground
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + 4) continue;
     out.push({ x, z, type: a.type, variant: Math.floor(hash2(i, j, s + 304) * 4), flip: hash2(i, j, s + 305) < 0.5 });
   }
@@ -164,6 +164,27 @@ function decorInChunk(map: ForestMap, ci: number, cj: number): Decor[] {
   return out;
 }
 
+// Modern relics (Ed: the occasional half-buried car, shopping trolley, traffic cone, broken bit of
+// highway): rare, more of them by the roads and railways; the view picks which by variant.
+export interface Relic { x: number; z: number; variant: number; flip: boolean }
+
+function relicsInChunk(map: ForestMap, ci: number, cj: number): Relic[] {
+  const R = map.tuning.relics, sp = R.spacing, s = map.seed, out: Relic[] = [];
+  const j0 = Math.ceil((cj * CHUNK) / sp), j1 = Math.ceil(((cj + 1) * CHUNK) / sp);
+  const i0 = Math.ceil((ci * CHUNK) / sp), i1 = Math.ceil(((ci + 1) * CHUNK) / sp);
+  for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
+    const x = (i + (hash2(i, j, s + 881) - 0.5) * 0.8) * sp, z = (j + (hash2(i, j, s + 882) - 0.5) * 0.8) * sp, a = map.areaAt(x, z);
+    const ad = AREA_TYPES[a.type].layout.decor, share = ad ? ad.modern / Math.max(0.01, ad.ruins + ad.rocks + ad.freak + ad.lake + ad.modern) : 0.1;
+    const near = map.paths.at(x, z, 20), byRoad = near && (near.kind === "road" || near.kind === "rail") ? R.nearRoad : 1;
+    if (hash2(i, j, s + 883) >= R.chance * (0.5 + 5 * share) * byRoad) continue;
+    if (a.openness < map.tuning.decor.clearing || map.hardClear(x, z) || map.paths.at(x, z, 2) || map.paths.pieceAt(x, z)) continue;
+    if (map.reserved(x, z, map.tuning.decor.footprint)) continue; // its footprint clear of the gameplay, set pieces and grounds
+    if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + map.tuning.dancefloor.clearing + 6) continue;
+    out.push({ x, z, variant: Math.floor(hash2(i, j, s + 884) * 1e6), flip: hash2(i, j, s + 885) < 0.5 });
+  }
+  return out;
+}
+
 // Light sources, placed by seed: campfires and magic stones mostly in clearings and at area
 // edges, and ponds that mirror the moon, more of them in the wet area types.
 export type LightKind = "campfire" | "stone" | "pond";
@@ -193,6 +214,7 @@ export class Forest {
   private walls = new Map<string, Plant[]>();
   private lights = new Map<string, LightSource[]>();
   private decor = new Map<string, Decor[]>();
+  private relics = new Map<string, Relic[]>();
   constructor(readonly map: ForestMap) {}
 
   private chunks(x: number, z: number, radius: number): [number, number][] {
@@ -224,6 +246,9 @@ export class Forest {
   }
   decorNear(x: number, z: number, radius: number): Decor[] {
     return this.gather(this.decor, (i, j) => decorInChunk(this.map, i, j), x, z, radius);
+  }
+  relicsNear(x: number, z: number, radius: number): Relic[] {
+    return this.gather(this.relics, (i, j) => relicsInChunk(this.map, i, j), x, z, radius);
   }
   wallsNear(x: number, z: number, radius: number): Plant[] {
     return this.gather(this.walls, (i, j) => wallsInChunk(this.map, i, j), x, z, radius);

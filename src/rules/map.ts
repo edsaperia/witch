@@ -67,6 +67,9 @@ export interface ForestMap {
   readonly dancefloor: { x: number; z: number; radius: number };
   /** The witch's treehouse: its trunk's foot, just beyond the dancefloor's clearing. */
   readonly treehouse: { x: number; z: number };
+  /** The old playgrounds and sports grounds: a handful per map, each in a clearing of its own off
+   *  an area's centre; kind is the art's arrangement (playground, tennis, baseball, football, basketball). */
+  readonly grounds: readonly Ground[];
   /** Where the witch starts: at the treehouse (sitting on its terrace). */
   readonly start: { x: number; z: number };
   /** Where the witch may fly (metres). */
@@ -100,6 +103,8 @@ export interface ForestMap {
   /** Paths, roads and railways, with the corridors they keep clear. */
   readonly paths: PathNetwork;
 }
+
+export interface Ground { kind: string; x: number; z: number; r: number }
 
 const cellKey = (cx: number, cy: number) => cx + "," + cy;
 
@@ -241,10 +246,12 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     pieceSpots.set(key, spot);
     return spot;
   };
+  const grounds: Ground[] = [];
   const reserved = (x: number, z: number, r: number) => {
     const gap = tuning.reserveMargin, cell = areaAt(x, z).cell;
     if (Math.hypot(x - centre.x, z - centre.z) < r + floorClear + gap) return true;
     if (Math.hypot(x - treehouse.x, z - treehouse.z) < r + TH.clear + gap) return true;
+    for (const g of grounds) if (Math.hypot(x - g.x, z - g.z) < r + g.r + gap) return true;
     for (const k of [cellKey(cell[0], cell[1]), ...(neighbours.get(cellKey(cell[0], cell[1])) ?? [])]) {
       const [cx, cy] = k.split(",").map(Number);
       if (!(cx === centreCell[0] && cy === centreCell[1])) { const q = soundsystemSpot(cx, cy); if (Math.hypot(x - q.x, z - q.z) < r + tuning.soundsystemFootprint + gap) return true; }
@@ -253,9 +260,22 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     }
     return false;
   };
+  // The grounds: some areas (not home) have one, off to the side of the area's centre; its whole
+  // clearing keeps clear of everything placed before it (soundsystems, the dancefloor, the
+  // treehouse, set pieces, other grounds), turning round the centre to find room, or left out.
+  const G = tuning.grounds;
+  for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) {
+    if ((cx === centreCell[0] && cy === centreCell[1]) || hash2(cx, cy, seed + 871) >= G.chance) continue;
+    const kind = G.kinds[Math.floor(hash2(cx, cy, seed + 873) * G.kinds.length)], r = G.radius[kind] ?? 8, a = hash2(cx, cy, seed + 875) * Math.PI * 2, site = siteOf(cx, cy);
+    search: for (const d of [r + 6, r + 14, r + 24]) for (let k = 0; k < 12; k++) {
+      const b = a + (k / 12) * Math.PI * 2, x = site.x + Math.cos(b) * d, z = site.z + Math.sin(b) * d;
+      if (inCell(x, z, cx, cy) && !reserved(x, z, r)) { grounds.push({ kind, x, z, r }); break search; }
+    }
+  }
   const hardCell = (x: number, z: number, cell: Cell) => {
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return true;
     if (Math.hypot(x - treehouse.x, z - treehouse.z) < TH.clear) return true;
+    for (const g of grounds) if (Math.abs(x - g.x) < g.r && Math.abs(z - g.z) < g.r && Math.hypot(x - g.x, z - g.z) < g.r) return true;
     // A set piece keeps a clearing round it, sized with it; a soundsystem a little room.
     const p = setPieceSpot(cell[0], cell[1]);
     if (p && Math.hypot(x - p.x, z - p.z) < tuning.setPieceClear * tuning.setPieceScale) return true;
@@ -277,7 +297,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const map = {
     seed, tuning, n, margin, areaSize: A, partition, centreCell,
     dancefloor: { x: centre.x, z: centre.z, radius: floorR },
-    treehouse,
+    treehouse, grounds,
     start: { x: treehouse.x, z: treehouse.z + 1 },
     bounds: { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad },
     extent: { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A },

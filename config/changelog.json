@@ -3,9 +3,15 @@
   "entries": [
     {
       "version": null,
+      "items": []
+    },
+    {
+      "version": 136,
       "items": [
         "Tapping the start screen on a phone starts the game again, wherever you tap",
-        "Along the railways: old wagons, a carriage with a tree through it, little platforms, signal gantries and posts, and buffer stops where the track ends; bridges where paths cross streams, level crossings, stairs into rocky hollows, and verge posts along the roads"
+        "Along the railways: old wagons, a carriage with a tree through it, little platforms, signal gantries and posts, and buffer stops where the track ends; bridges where paths cross streams, level crossings, stairs into rocky hollows, and verge posts along the roads",
+        "Relics of the modern world turn up now and then, more by the roads and railways: a car nose-down in the moss, shopping trolleys, cones, broken highway, a phone box, a sofa, a fridge full of fireflies",
+        "A few overgrown playgrounds and sports grounds (tennis, football, baseball, basketball) lie in clearings of their own"
       ]
     },
     {

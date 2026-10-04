@@ -8,7 +8,7 @@ import { TUNING } from "./tuning";
 describe("scenery placement", () => {
   const t = TUNING, R = t.setPieceFootprint * t.setPieceScale;
   for (const seed of [1, 123, 4242, 90210, 777777]) {
-    it(`no set piece's or decoration's footprint touches a soundsystem, the dancefloor, the treehouse or a set piece (seed ${seed})`, () => {
+    it(`no set piece's, decoration's, relic's or ground's footprint touches a soundsystem, the dancefloor, the treehouse or a set piece (seed ${seed})`, () => {
       const map = generateMap(seed, t), forest = new Forest(map), d = map.dancefloor;
       const sounds: { x: number; z: number }[] = [];
       for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++)
@@ -30,6 +30,19 @@ describe("scenery placement", () => {
         expect(Math.hypot(p.x - d.x, p.z - d.z)).toBeGreaterThanOrEqual(F + d.radius);
         expect(Math.hypot(p.x - th.x, p.z - th.z)).toBeGreaterThanOrEqual(F + thClear);
         for (const q of pieces) expect(Math.hypot(p.x - q.x, p.z - q.z)).toBeGreaterThanOrEqual(F + R);
+      }
+      // Grounds (playgrounds, sports grounds): their whole clearing clear of all of it, and of each other.
+      for (const gr of map.grounds) {
+        for (const s of sounds) expect(Math.hypot(gr.x - s.x, gr.z - s.z)).toBeGreaterThanOrEqual(gr.r + t.soundsystemFootprint);
+        expect(Math.hypot(gr.x - d.x, gr.z - d.z)).toBeGreaterThanOrEqual(gr.r + d.radius);
+        expect(Math.hypot(gr.x - th.x, gr.z - th.z)).toBeGreaterThanOrEqual(gr.r + thClear);
+        for (const q of pieces) expect(Math.hypot(gr.x - q.x, gr.z - q.z)).toBeGreaterThanOrEqual(gr.r + R);
+        for (const o of map.grounds) if (o !== gr) expect(Math.hypot(gr.x - o.x, gr.z - o.z)).toBeGreaterThanOrEqual(gr.r + o.r);
+      }
+      // Modern relics: their footprint clear too.
+      for (const p of forest.relicsNear(half, half, half + map.areaSize)) {
+        for (const s of sounds) expect(Math.hypot(p.x - s.x, p.z - s.z)).toBeGreaterThanOrEqual(F + t.soundsystemFootprint);
+        for (const gr of map.grounds) expect(Math.hypot(p.x - gr.x, p.z - gr.z)).toBeGreaterThanOrEqual(F + gr.r);
       }
     }, 60000); // the whole map's set pieces and decor
   }
