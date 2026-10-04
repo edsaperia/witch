@@ -207,8 +207,9 @@ void main() {
     // The bare view's plain ground: grey, a darker line where the height crosses each half metre
     // (the art pixel next door on the other side of it), and a faint 10 m grid.
     float hc = groundH(p), hx = groundH(p + vec2(uPixel, 0.0)), hz = groundH(p + vec2(0.0, uPixel));
-    c = vec3(0.42, 0.42, 0.44);
-    if (floor(hc / 0.5) != floor(hx / 0.5) || floor(hc / 0.5) != floor(hz / 0.5)) c = mod(floor(hc / 0.5 + 0.5), 4.0) < 0.5 ? vec3(0.12, 0.12, 0.16) : vec3(0.24, 0.24, 0.28);
+    // Tinted by height (low ground cool and dark, high warm and light), so the swells read at a glance.
+    c = mix(vec3(0.3, 0.36, 0.48), vec3(0.82, 0.76, 0.6), clamp(hc / 5.0 + 0.5, 0.0, 1.0));
+    if (floor(hc / 0.5) != floor(hx / 0.5) || floor(hc / 0.5) != floor(hz / 0.5)) c *= mod(floor(hc / 0.5 + 0.5), 5.0) < 0.5 ? 0.35 : 0.65; // every 2.5 m darker
     if (mod(px.x, 10.0 / uPixel) < 1.0 || mod(px.y, 10.0 / uPixel) < 1.0) c *= 0.85;
   }
   vec3 light = nightLightShaded(N, vWorld, moonK);

@@ -146,7 +146,8 @@ export class View {
     if (t.bare) {
       // The bare view: a low moon raking across the ground so the slopes read; no glow, no haze.
       LIGHT_UNIFORMS.uMoonDir.value.set(-0.85, 0.28, 0.42).normalize();
-      LIGHT_UNIFORMS.uMoon.value.multiplyScalar(1.8);
+      LIGHT_UNIFORMS.uMoon.value.multiplyScalar(4);
+      LIGHT_UNIFORMS.uAmb.value.multiplyScalar(2);
       LIGHT_UNIFORMS.uGlowPower.value = 0;
     }
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize);
@@ -619,8 +620,13 @@ export class View {
         return b;
       })?.set(flat);
     }
+    dl.sort((a, b) => b.z - a.z); // nearest first, as the trees below
     if (decor) this.batchFor(this.decorBatches, "all", () => new SpriteBatch(decor.atlas, mpp, { scenery: true, fade: true }))?.set(dl);
     for (const [type, b] of this.typeBatches) if (!per.has(type)) b.set([]);
+    // Nearest the camera first (it looks north: larger z is nearer), so the GPU's early depth test
+    // skips the pixels of the trees behind them: in the treetops most of the forest, and with the
+    // bend the far forest folded in behind the near canopy, is hidden behind trees in front.
+    for (const list of per.values()) list.sort((a, b) => b.z - a.z);
     for (const [type, list] of per) {
       const b = this.batchFor(this.typeBatches, type, () => { const a = this.assets.typeArt(type); return a && new SpriteBatch(a.atlas, mpp, { scenery: true, fade: true }); });
       b?.set(list);
