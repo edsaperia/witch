@@ -77,7 +77,7 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   stepParty(g.party, g.map, g.clock.time, dt);
   stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map);
   const B = g.berries, busy = (id: number) => B.feeding.has(id) || B.evolving.has(id);
-  stepLeash(g.leash, g.creatures, { talk: !!c.talk, sigil: !!c.sigil, inviteNearest: c.inviteNearest, cycle: !!c.cycle }, g.witch, g.witch.mode === "ground", g.clock.time, dt, g.tuning, busy);
+  stepLeash(g.leash, g.creatures, { sigil: !!c.sigil, inviteNearest: c.inviteNearest, cycle: !!c.cycle }, g.witch, g.witch.mode === "ground", g.clock.time, dt, g.tuning, busy);
   if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, g.tuning);
   stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, g.tuning);
   stepDancefloor(g, wave, seated);

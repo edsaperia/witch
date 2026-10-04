@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { feed, newBerries, stepBerries, toEvolve, type BerryState } from "./berries";
 import { LEGEND, spawnCreatures, type Creature, type Level } from "./creatures";
-import { invitable, newLeash, stepLeash } from "./leash";
+import { invitable, leashSpeed, newLeash, stepLeash } from "./leash";
 import { generateMap } from "./map";
 import { TUNING } from "./tuning";
 
@@ -46,7 +46,7 @@ describe("berries and evolving", () => {
     run(s, cs, points, 6);
     expect(s.berries.length).toBe(total);
     bushesOk(s);
-    for (const c of cs) expect(s.fed.get(c.id)).toBeGreaterThanOrEqual(1);
+    for (const c of cs) expect(s.ateAt.has(c.id)).toBe(true); // (a baby evolves after one, so fed is back to 0)
     expect(s.berries.filter((b, i) => b.bush !== before[i]).length).toBeGreaterThanOrEqual(3); // eaten ones moved
   });
 
@@ -60,11 +60,11 @@ describe("berries and evolving", () => {
     expect(s.berries.every(b => b.claimedBy === null)).toBe(true);
   });
 
-  it("evolves after 5, 10 and 30 berries, on a bar line; an evolved legend stays in the party, wild legends still can't be invited", () => {
+  it("evolves after 1, 3 and 8 berries, on a bar line; an evolved legend stays in the party, wild legends still can't be invited", () => {
     const s = newBerries(map, t), [c, wild] = spawnCreatures(map), leash = newLeash();
     Object.assign(c, { leashed: true, level: 0 });
     leash.stack.push(c.id);
-    expect([0, 1, 2].map(l => toEvolve(l as Level, t))).toEqual([5, 10, 30]);
+    expect([0, 1, 2].map(l => toEvolve(l as Level, t))).toEqual([1, 3, 8]);
     let time = 0;
     for (const level of [0, 1, 2] as Level[]) {
       expect(c.level).toBe(level);
@@ -80,11 +80,46 @@ describe("berries and evolving", () => {
     }
     expect(c.level).toBe(LEGEND);
     expect(c.leashed).toBe(true);
-    stepLeash(leash, [c], { talk: false, sigil: false }, { x: c.x, z: c.z }, true, time, 0.05, t);
+    stepLeash(leash, [c], { sigil: false }, { x: c.x, z: c.z }, true, time, 0.05, t);
     expect(leash.stack).toContain(c.id);
     feed(s, c, time, t); // legends don't eat
     expect(s.evolving.has(c.id)).toBe(false);
     Object.assign(wild, { leashed: false, level: LEGEND });
     expect(invitable(wild)).toBe(false);
+  });
+
+  it("bushes grow in patches: each bush has others of its patch close by", () => {
+    const s = newBerries(map, t), R = t.berries.patch.radius;
+    const near = s.bushes.filter(b => s.bushes.some(o => o !== b && Math.hypot(o.x - b.x, o.z - b.z) <= R * 2));
+    expect(near.length / s.bushes.length).toBeGreaterThan(0.9);
+  });
+
+  it("a party animal takes a berry on its way (within the detour), not one off to the side", () => {
+    const s = newBerries(map, t), [a, b] = spawnCreatures(map), D = t.berries.detour;
+    // Lone berries, for a clean test: everything else is taken.
+    for (const x of s.berries) x.claimedBy = -1;
+    const on = s.berries[0], off = s.berries[1], po = s.bushes[on.bush], pf = s.bushes[off.bush];
+    on.claimedBy = off.claimedBy = null;
+    // a walks towards its leash point past the first berry, 1 m off its line; b's line passes far from the second.
+    Object.assign(a, { x: po.x - 5, z: po.z + 1, leashed: true, level: 0, rest: 0 });
+    Object.assign(b, { x: pf.x - 5, z: pf.z + D + 3, leashed: true, level: 0, rest: 0 });
+    const points = new Map([[a.id, { x: po.x + 5, z: po.z + 1 }], [b.id, { x: pf.x + 5, z: pf.z + D + 3 }]]);
+    stepBerries(s, [a, b], id => points.get(id) ?? null, 0.05, 0.05, t);
+    expect(s.feeding.get(a.id)?.berry).toBe(on.id);
+    expect(s.feeding.has(b.id)).toBe(false);
+  });
+
+  it("a party animal goes to a berry at its leash pace, not its idle amble", () => {
+    const s = newBerries(map, t), [a] = spawnCreatures(map);
+    for (const x of s.berries) x.claimedBy = -1;
+    const on = s.berries[0], p = s.bushes[on.bush];
+    on.claimedBy = null;
+    Object.assign(a, { x: p.x - 4, z: p.z + 0.6, leashed: true, level: 1, rest: 0 });
+    const lp = { x: p.x + 4, z: p.z + 0.6 };
+    stepBerries(s, [a], () => lp, 0.05, 0.05, t); // claims it
+    const x0 = a.x;
+    stepBerries(s, [a], () => lp, 0.1, 0.05, t);
+    expect((a.x - x0) / 0.05).toBeCloseTo(leashSpeed(a, t), 5);
+    expect(leashSpeed(a, t)).toBeGreaterThan(a.speed * 1.5);
   });
 });

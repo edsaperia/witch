@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { hash2 as labHash2, SPECIES_BY_ID } from "../../art/generator.js";
 import { makePartition } from "./partition";
 import { hash2 } from "./random";
-import { AREA_TYPES, generateMap, parseSeed } from "./map";
+import { AREA_TYPES, generateMap, parseSeed, sceneFootprint } from "./map";
 import { Forest, crownReach, treeChance } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
@@ -25,6 +25,9 @@ import { musicMix } from "./music";
 import { tuftsInCell, TUFT_KINDS } from "./groundcover";
 import { DECOR } from "../../art/decor.js";
 import { RELICS } from "../../art/relics.js";
+import { SCENES, sceneLayout } from "../../art/scenes.js";
+import { COUNTRY } from "../../art/country.js";
+const MODERN = RELICS.filter(r => r.family === "modern").length + (COUNTRY as { family: string }[]).filter(d => d.family === "farm" || d.family === "street").length;
 
 const map = generateMap(123, TUNING);
 
@@ -755,13 +758,13 @@ describe("the game clock and a whole step", () => {
 describe("inviting and leashing", () => {
   const creatures = spawnCreatures(map);
   const fresh = () => creatures.map(c => ({ ...c, rand: (() => { let k = c.id * 7 + 1; return () => (k = (k * 16807) % 2147483647) / 2147483647; })() }));
-  const none: LeashControls = { talk: false, sigil: false };
+  const none: LeashControls = { sigil: false };
   // Stand the witch next to a creature of the given level and talk until it is invited.
   const inviteOne = (all: ReturnType<typeof fresh>, s: ReturnType<typeof newLeash>, level: 0 | 1 | 2, time = 0) => {
     const c = all.find(k => k.level === level && !k.leashed)!;
     const w = { x: c.x + 1, z: c.z };
     let t = time;
-    for (let i = 0; i < 20 * 10 && !c.leashed; i++, t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, w, true, t, 0.1, TUNING);
+    for (let i = 0; i < 20 * 10 && !c.leashed; i++, t += 0.1) stepLeash(s, all, none, w, true, t, 0.1, TUNING);
     return { c, w, t };
   };
 
@@ -770,27 +773,29 @@ describe("inviting and leashing", () => {
       const all = fresh(), s = newLeash(), c = all.find(k => k.level === level)!, w = { x: c.x + 1, z: c.z };
       const need = TUNING.invite.talkTime[level];
       let t = 0;
-      for (; t < need - 0.25; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, w, true, t, 0.1, TUNING);
+      for (; t < need - 0.25; t += 0.1) stepLeash(s, all, none, w, true, t, 0.1, TUNING);
       expect(c.leashed).toBe(false);
-      for (let i = 0; i < 6; i++, t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, w, true, t, 0.1, TUNING);
+      for (let i = 0; i < 6; i++, t += 0.1) stepLeash(s, all, none, w, true, t, 0.1, TUNING);
       expect(c.leashed).toBe(true);
       expect(s.stack).toEqual([c.id]);
     }
   });
 
-  it("cancels the talk when Talk is let go or she moves away, and never invites from the treetops", () => {
+  it("talks by herself, no button (Ed, v244); rising cancels it, and she never invites from the treetops", () => {
     const all = fresh(), s = newLeash(), c = all.find(k => k.level === 0)!, w = { x: c.x + 1, z: c.z };
-    for (let t = 0; t < 2; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, w, true, t, 0.1, TUNING);
-    stepLeash(s, all, none, w, true, 2, 0.1, TUNING);
+    stepLeash(s, all, none, w, true, 0, 0.1, TUNING);
+    expect(s.talk?.id).toBe(c.id); // started on its own
+    for (let t = 0.1; t < 2; t += 0.1) stepLeash(s, all, none, w, true, t, 0.1, TUNING);
+    stepLeash(s, all, none, w, false, 2, 0.1, TUNING); // she rises
     expect(s.talk).toBeNull();
     expect(s.events.map(e => e.kind)).toContain("cancelled");
-    for (let t = 2; t < 2.5; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, w, true, t, 0.1, TUNING);
+    for (let t = 2; t < 2.5; t += 0.1) stepLeash(s, all, none, w, true, t, 0.1, TUNING);
     expect(c.leashed).toBe(false); // picked up where it left off, not finished yet
     const s2 = newLeash(), c2 = all.find(k => k.level === 0 && k !== c)!, w2 = { x: c2.x + 1, z: c2.z };
-    for (let t = 0; t < 20; t += 0.1) stepLeash(s2, all, { talk: true, sigil: false }, w2, false, t, 0.1, TUNING);
+    for (let t = 0; t < 20; t += 0.1) stepLeash(s2, all, none, w2, false, t, 0.1, TUNING);
     expect(c2.leashed).toBe(false); // never from the treetops
     const far = { x: c.x + TUNING.invite.cancelDistance + 30, z: c.z };
-    for (let t = 0; t < 20; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, far, true, t, 0.1, TUNING);
+    for (let t = 0; t < 20; t += 0.1) stepLeash(s, all, none, far, true, t, 0.1, TUNING);
     expect(c.leashed).toBe(false);
   });
 
@@ -798,21 +803,21 @@ describe("inviting and leashing", () => {
     const all = fresh(), s = newLeash(), babies = all.filter(k => k.level === 1).slice(0, 2), c = babies[0], other = babies[1];
     const near = { x: c.x + 1, z: c.z }, total = TUNING.invite.talkTime[1];
     let t = 0;
-    for (; t < 2.05; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, near, true, t, 0.1, TUNING);
+    for (; t < 2.05; t += 0.1) stepLeash(s, all, none, near, true, t, 0.1, TUNING);
     const talked = s.progress.get(c.id)!;
     expect(talked).toBeCloseTo(2, 0);
-    for (let i = 0; i < 20; i++, t += 0.1) stepLeash(s, all, { talk: false, sigil: false }, near, true, t, 0.1, TUNING);
+    for (let i = 0; i < 20; i++, t += 0.1) stepLeash(s, all, none, near, false, t, 0.1, TUNING); // up in the treetops for 2 s
     const left = s.progress.get(c.id)!;
     expect(left).toBeCloseTo(talked - 2 * TUNING.invite.decayRate, 5); // 2 s off drains 1 s
     // Resume: done after total - 1 s more.
     let n = 0;
-    while (!c.leashed && n < 400) { stepLeash(s, all, { talk: true, sigil: false }, near, true, t, 0.1, TUNING); t += 0.1; n++; }
+    while (!c.leashed && n < 400) { stepLeash(s, all, none, near, true, t, 0.1, TUNING); t += 0.1; n++; }
     expect(Math.abs(n * 0.1 - (total - left))).toBeLessThanOrEqual(0.25);
     // Switching creatures: the first keeps draining while the second fills.
     const s2 = newLeash(), d = all.filter(k => k.level === 1 && !k.leashed)[1], e = other;
-    for (let i = 0; i < 20; i++) stepLeash(s2, all, { talk: true, sigil: false }, { x: d.x + 1, z: d.z }, true, i * 0.1, 0.1, TUNING);
+    for (let i = 0; i < 20; i++) stepLeash(s2, all, none, { x: d.x + 1, z: d.z }, true, i * 0.1, 0.1, TUNING);
     const before = s2.progress.get(d.id)!;
-    for (let i = 0; i < 10; i++) stepLeash(s2, all, { talk: true, sigil: false }, { x: e.x + 1, z: e.z }, true, 2 + i * 0.1, 0.1, TUNING);
+    for (let i = 0; i < 10; i++) stepLeash(s2, all, none, { x: e.x + 1, z: e.z }, true, 2 + i * 0.1, 0.1, TUNING);
     expect(s2.progress.get(d.id)!).toBeLessThan(before);
     expect(s2.progress.get(e.id)!).toBeGreaterThan(0);
   });
@@ -821,11 +826,35 @@ describe("inviting and leashing", () => {
     const all = fresh(), s = newLeash(), legend = all.find(k => k.level === 3)!;
     for (const c of all) if (c !== legend) c.leashed = true; // only the legend is left near
     const w = { x: legend.x + 1, z: legend.z };
-    for (let t = 0; t < 30; t += 0.1) stepLeash(s, all, { talk: true, sigil: false }, w, true, t, 0.1, TUNING);
+    stepLeash(s, all, none, w, true, 0, 0.1, TUNING);
+    expect(s.talk?.refused).toBe(true); // one unimpressed look...
+    let looks = 1, was = true;
+    for (let t = 0.1; t < 30; t += 0.1) { stepLeash(s, all, none, w, true, t, 0.1, TUNING); const now = !!s.talk?.refused; if (now && !was) looks++; was = now; }
     expect(legend.leashed).toBe(false);
-    expect(s.talk?.refused).toBe(true); // one unimpressed look, and nothing more
-    stepLeash(s, all, { talk: false, sigil: false, inviteNearest: true }, w, true, 30, 0.1, TUNING);
+    expect(looks).toBe(1); // ...and nothing more while she stays near
+    expect(s.talk).toBeNull();
+    // Away beyond cancelDistance and back: a new approach, a new look.
+    stepLeash(s, all, none, { x: legend.x + TUNING.invite.cancelDistance + 5, z: legend.z }, true, 30, 0.1, TUNING);
+    stepLeash(s, all, none, w, true, 30.1, 0.1, TUNING);
+    expect(s.talk?.refused).toBe(true);
+    stepLeash(s, all, { sigil: false, inviteNearest: true }, w, true, 30.2, 0.1, TUNING);
     expect(legend.leashed).toBe(false);
+  });
+
+  it("sticks with the creature she's talking to while it stays within cancelDistance, and drops it beyond", () => {
+    const all = fresh(), s = newLeash(), [a, b] = all.filter(k => k.level === 2).slice(0, 2);
+    for (const c of all) if (c !== a && c !== b) c.leashed = true; // just these two about
+    Object.assign(a, { x: 0, z: 0 }); Object.assign(b, { x: 10, z: 0 });
+    stepLeash(s, all, none, { x: 2, z: 0 }, true, 0, 0.1, TUNING);
+    expect(s.talk?.id).toBe(a.id);
+    // Now b is nearer, but a is still within cancelDistance: she keeps talking to a.
+    for (let t = 0.1; t < 2; t += 0.1) stepLeash(s, all, none, { x: 9, z: 0 }, true, t, 0.1, TUNING);
+    expect(s.talk?.id).toBe(a.id);
+    // Beyond cancelDistance of a: that chat is cancelled, and she turns to b.
+    stepLeash(s, all, none, { x: TUNING.invite.cancelDistance + 1, z: 0 }, true, 2, 0.1, TUNING);
+    expect(s.events.some(e => e.kind === "cancelled" && e.id === a.id)).toBe(true);
+    expect(s.talk?.id).toBe(b.id);
+    expect(s.progress.get(a.id)).toBeGreaterThan(0); // draining, so coming back resumes
   });
 
   it("stacks last in, first out: places the newest, picks up back onto the bottom", () => {
@@ -833,30 +862,30 @@ describe("inviting and leashing", () => {
     const a = inviteOne(all, s, 0), b = inviteOne(all, s, 0, a.t), c = inviteOne(all, s, 1, b.t);
     expect(s.stack).toEqual([a.c.id, b.c.id, c.c.id]);
     const here = { x: 500, z: 500 };
-    stepLeash(s, all, { talk: false, sigil: true }, here, true, 100, 0.1, TUNING);
+    stepLeash(s, all, { sigil: true }, here, true, 100, 0.1, TUNING);
     expect(s.placed.map(p => p.id)).toEqual([c.c.id]);
     expect(s.stack).toEqual([a.c.id, b.c.id]);
-    stepLeash(s, all, { talk: false, sigil: true }, { x: 520, z: 500 }, true, 101, 0.1, TUNING);
+    stepLeash(s, all, { sigil: true }, { x: 520, z: 500 }, true, 101, 0.1, TUNING);
     expect(s.placed.map(p => p.id)).toEqual([c.c.id, b.c.id]);
     // Picking up: over a placed sigil, the button puts it back on the bottom of the stack.
-    stepLeash(s, all, { talk: false, sigil: true }, { x: 500.5, z: 500 }, true, 102, 0.1, TUNING);
+    stepLeash(s, all, { sigil: true }, { x: 500.5, z: 500 }, true, 102, 0.1, TUNING);
     expect(s.stack).toEqual([a.c.id, c.c.id]);
     expect(s.placed.map(p => p.id)).toEqual([b.c.id]);
     // Not on top of another sigil (too near to put down, too far to pick up): it fizzles.
     const gap = (TUNING.leash.pickRadius + TUNING.leash.spacing) / 2;
     expect(TUNING.leash.spacing).toBeGreaterThan(TUNING.leash.pickRadius);
-    stepLeash(s, all, { talk: false, sigil: true }, { x: 520 + gap, z: 500 }, true, 103, 0.1, TUNING);
+    stepLeash(s, all, { sigil: true }, { x: 520 + gap, z: 500 }, true, 103, 0.1, TUNING);
     expect(s.events.map(e => e.kind)).toEqual(["fizzled"]);
     expect(s.stack).toEqual([a.c.id, c.c.id]);
     // No placing from the treetops.
-    stepLeash(s, all, { talk: false, sigil: true }, { x: 700, z: 700 }, false, 104, 0.1, TUNING);
+    stepLeash(s, all, { sigil: true }, { x: 700, z: 700 }, false, 104, 0.1, TUNING);
     expect(s.stack).toEqual([a.c.id, c.c.id]);
   });
 
   it("is elastic: a creature walks to its new leash point, never jumps, then stays within the leash", () => {
     const all = fresh(), s = newLeash(), { c, w } = inviteOne(all, s, 0);
     const to = { x: w.x + 60, z: w.z + 20 };
-    stepLeash(s, all, { talk: false, sigil: true }, to, true, 50, 0.1, TUNING);
+    stepLeash(s, all, { sigil: true }, to, true, 50, 0.1, TUNING);
     const L = TUNING.leash.length;
     let arrived = -1, px = c.x, pz = c.z, outside = 0;
     for (let i = 0; i < 1200; i++) {
@@ -871,7 +900,7 @@ describe("inviting and leashing", () => {
     expect(outside).toBe(0);
   });
 
-  it("goes through the game: Talk and the sigil button in its controls", () => {
+  it("goes through the game: the debug invite and the sigil button in its controls", () => {
     const g = newGame(123, TUNING);
     g.clock.paused = false;
     stepGame(g, { ...NO_INTENT, zoom: 0, inviteNearest: true }, 1 / 60);
@@ -1074,7 +1103,7 @@ describe("relics and grounds", () => {
   it("scatter modern relics rarely, more of them by the roads and railways, never on a path", () => {
     const forest = new Forest(map), b = map.extent, list = forest.relicsNear((b.minX + b.maxX) / 2, (b.minZ + b.maxZ) / 2, b.maxX - b.minX);
     expect(list.length).toBeGreaterThan(3);
-    expect(list.length).toBeLessThanOrEqual(RELICS.filter(r => r.family === "modern").length); // each at most once
+    expect(list.length).toBeLessThanOrEqual(MODERN); // each at most once (relics and the standalone country pieces)
     for (const r of list) { expect(map.paths.at(r.x, r.z)).toBeNull(); expect(map.hardClear(r.x, r.z)).toBe(false); }
     for (const a of list) for (const b of list) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(TUNING.relics.minGap);
     const byRoad = list.filter(r => { const h = map.paths.at(r.x, r.z, 20); return h && (h.kind === "road" || h.kind === "rail"); }).length;
@@ -1100,7 +1129,7 @@ describe("finds, each at most once per map (Ed, v160)", () => {
       const f = new Forest(m), [x, z, r] = whole(m), decor = f.decorNear(x, z, r);
       const ruins = decor.filter(d => d.family === "ruins").map(d => ruinOf[d.variant % ruinOf.length]);
       const freaks = decor.filter(d => d.family === "freak").map(d => d.variant % DECOR.filter(q => q.family === "freak").length);
-      const relics = f.relicsNear(x, z, r).map(q => q.variant % RELICS.filter(q => q.family === "modern").length);
+      const relics = f.relicsNear(x, z, r).map(q => q.variant % MODERN);
       const pieces = f.setPiecesNear(x, z, r).map(p => AREA_TYPES[p.type].setPiece);
       const grounds = m.grounds.map(g => g.kind), stairs = m.paths.pieces.filter(p => p.id.startsWith("stairs")).map(p => p.id);
       for (const list of [ruins, freaks, relics, pieces, grounds, stairs] as unknown[][]) expect(new Set(list).size).toBe(list.length);
@@ -1108,6 +1137,26 @@ describe("finds, each at most once per map (Ed, v160)", () => {
       expect(decor.filter(d => d.family === "rocks").length).toBeGreaterThan(50); // rocks are generic scatter
     }
   }, 30000); // five whole maps
+  it("places scenes, each at most once, in areas they suit, off the paths and clear of the gameplay (Ed, 2026-10-04)", () => {
+    let total = 0;
+    for (const m of maps) {
+      const ids = m.scenes.map(c => c.id);
+      expect(new Set(ids).size).toBe(ids.length);
+      total += ids.length;
+      for (const c of m.scenes) {
+        const sc = (SCENES as unknown as { id: string; suits: string[] }[]).find(x => x.id === c.id)!;
+        expect(sc.suits).toContain(AREA_TYPES[m.areaAt(c.x, c.z).type].id);
+        expect(m.paths.at(c.x, c.z, c.r * 0.6)).toBeNull();
+        expect(m.hardClear(c.x, c.z)).toBe(true); // its ground is kept clear of trees
+        for (const q of m.dancefloor.speakers) expect(Math.hypot(q.x - c.x, q.z - c.z)).toBeGreaterThan(c.r);
+      }
+    }
+    expect(total / maps.length).toBeGreaterThan(4);
+  });
+  it("gives each scene a footprint at least the art's own", () => {
+    const style = JSON.parse(readFileSync(new URL("../../config/style.json", import.meta.url), "utf8"));
+    for (const sc of SCENES as unknown as { id: string }[]) expect(sceneFootprint(sc.id, TUNING)).toBeGreaterThanOrEqual((sceneLayout as unknown as (id: string, st: unknown) => { footprint: number })(sc.id, style).footprint);
+  }, 60000);
   it("stairs stand only by ravines, rocky slopes, cave mouths and stone shrines", () => {
     for (const m of maps) for (const p of m.paths.pieces.filter(p => p.id.startsWith("stairs")))
       expect(["ravine", "rocky-slope", "cave-mouth", "stone-shrine"]).toContain(AREA_TYPES[m.areaAt(p.x, p.z).type].id);
@@ -1177,6 +1226,11 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
       expect(newParty(m).areas.get(m.centreCell.join(","))?.soundsystem ?? null).toBeNull(); // home has none
     }
   });
+  it("give the treehouse a clearing at least as wide as the art's footprint (v2: a tall tower in a giant tree)", async () => {
+    const Art = await import("../../art/generator.js"), style = JSON.parse(readFileSync(new URL("../../config/style.json", import.meta.url), "utf8"));
+    const th = (Art as unknown as { treehouseSprite: (st: unknown) => { metres: { footprint: number } } }).treehouseSprite(style);
+    expect(TUNING.treehouse.clear).toBeGreaterThanOrEqual(th.metres.footprint);
+  }, 60000);
   it("cycle playing, damaged, destroyed on the debug key", () => {
     expect(nextSpeakerState("playing")).toBe("damaged");
     expect(nextSpeakerState("damaged")).toBe("destroyed");
@@ -1332,7 +1386,7 @@ describe("creature speeds (Ed, 2026-10-04: she is much faster than almost all of
 
 describe("the cycle button (Ed, 2026-10-04)", () => {
   it("sends the bottom sigil of the stack to the top", () => {
-    const s = newLeash(), none: LeashControls = { talk: false, sigil: false }, cs = spawnCreatures(map);
+    const s = newLeash(), none: LeashControls = { sigil: false }, cs = spawnCreatures(map);
     s.stack.push(1, 2, 3); // 3 is the bottom (next down)
     for (const id of s.stack) cs[id].leashed = true;
     stepLeash(s, cs, { ...none, cycle: true }, { x: 0, z: 0 }, false, 1, 1 / 60, TUNING);

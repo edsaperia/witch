@@ -288,12 +288,13 @@ export class LeashView {
       this.standing.add(pos.x, pos.y, pos.z, size, this.uv(this.slotOf(c.species, c.level)), col.r, col.g, col.b, 1);
     }
 
-    // Placed sigils, written on the ground.
+    // Placed sigils, written on the ground, a little brighter than they were so they read in the
+    // grass (Ed, v233; the grass is trampled clear round them, grass.ts).
     for (const p of s.placed) {
       const c = g.creatures[p.id], slot = this.slotOf(c.species, c.level), col = this.colours.get(c.species)!;
-      const pulse = 0.8 + 0.2 * Math.sin(time * 2 + p.id);
-      this.flat.add(p.x, 0, p.z, 3 + c.level * 0.8, this.uv(slot), col.r * pulse, col.g * pulse, col.b * pulse, 1, Math.min(1, (time - p.at) / 0.8));
-      this.flat.add(p.x, 0, p.z, 5, dot, col.r, col.g, col.b, 0.25);
+      const pulse = 1.05 + 0.25 * Math.sin(time * 2 + p.id);
+      this.flat.add(p.x, 0.02, p.z, 3 + c.level * 0.8, this.uv(slot), col.r * pulse, col.g * pulse, col.b * pulse, 1, Math.min(1, (time - p.at) / 0.8));
+      this.flat.add(p.x, 0.01, p.z, 5.5, dot, col.r, col.g, col.b, 0.38);
     }
 
     // From the treetops, each placed sigil is projected up above the canopy over its spot, flat
@@ -383,13 +384,10 @@ export class LeashView {
     };
     const line = bc.querySelector("span")!, bar = bc.querySelector(".bar") as HTMLElement;
     if (!talk) {
-      // Cues: Talk held on the ground with no one in range, a "…" so the press shows; held in the
-      // air, nothing (Ed, v183: no "land to talk" prompt). (No prompt over creatures in range: Ed, 2026-10-03.)
+      // (No prompt over creatures in range: Ed, 2026-10-03; she talks to them by herself, Ed v244.)
       bar.style.display = "none";
       bc.classList.remove("on");
-      const cue = g.leash.held && !g.leash.heldInAir;
-      bw.classList.toggle("on", cue);
-      if (cue) { this.say(bw, "…"); place(bw, w.x - 1.2, witchHeight(w, g.tuning) + 2.2, w.z); }
+      bw.classList.remove("on");
       return;
     }
     const c = g.creatures[talk.id];

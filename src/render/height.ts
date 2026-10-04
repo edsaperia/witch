@@ -129,6 +129,7 @@ export class HeightField {
     add(df.x, df.z, floorClearing(T) + 2);
     add(th.x, th.z, T.treehouse.clear + 2);
     for (const g of m.grounds) add(g.x, g.z, g.r + 2);
+    for (const s of m.scenes ?? []) add(s.x, s.z, s.r + 2); // the scenes: each on its own terrace
     for (let cy = 0; cy < m.n; cy++) for (let cx = 0; cx < m.n; cx++) {
       const s = m.soundsystemSpot(cx, cy);
       if (cx !== m.centreCell[0] || cy !== m.centreCell[1]) add(s.x, s.z, T.soundsystemFootprint + 2); // (home's has none)

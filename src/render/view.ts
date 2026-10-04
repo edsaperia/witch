@@ -564,6 +564,37 @@ export class View {
         return b;
       })?.set(flat);
     }
+    // Scenes (Ed, 2026-10-04): each a few pieces standing round its middle, as authored or
+    // mirrored as a whole, each piece nudged a little; anchored by their ground points like relics.
+    const sa = g.map.scenes.length ? this.assets.sceneArt() : undefined;
+    if (sa) {
+      const fwd = this.camera.getWorldDirection(this.v3b), up = this.v3c.set(0, 1, 0).applyQuaternion(this.camera.quaternion);
+      const U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value, rise = U.dot(up) / Math.max(0.2, -fwd.y);
+      const upright: SpriteInstance[] = [], flat: SpriteInstance[] = [];
+      for (const sc of g.map.scenes) {
+        if (Math.abs(sc.x - cx) > half + sc.r || Math.abs(sc.z - cz) > half + sc.r) continue;
+        const lay = sa.layouts[sc.id];
+        if (!lay) continue;
+        (sc.mirror ? lay.mirror : lay.plain).forEach((p, i) => {
+          const a = sa.pieces[p.ref];
+          if (!a) return;
+          const jx = (hash2(i, Math.round(sc.x), 901) - 0.5) * 0.4, jz = (hash2(i, Math.round(sc.z), 903) - 0.5) * 0.4;
+          const gx = sc.x + p.dx + jx, gz = sc.z + p.dz + jz, flip = p.left;
+          const frame = sa.atlas.frames[a.frame], pad = a.decal ? 0 : frame.pad ?? 0, dx = (a.originX - frame.w / 2) * mpp * (flip ? -1 : 1), toward = Math.max(0, frame.h - pad - a.originY) * mpp * rise;
+          const at = a.decal ? { x: gx - R.x * dx, y: 0, z: gz - R.z * dx + toward } : stand(gx - R.x * dx, gz - R.z * dx + toward, frame, mpp);
+          if (!this.inView(at.x, at.z, frame.w * mpp, frame.h * mpp, margin, reach)) return;
+          (a.decal ? flat : upright).push({ ...at, frame, flip, fresh: this.mark("scene", gx, gz, frame.h * mpp) });
+          if (!a.decal) shadows.push({ x: gx, z: gz, w: frame.w * mpp * 0.6, d: frame.w * mpp * 0.22, scenery: true });
+          nb++;
+        });
+      }
+      this.batchFor(this.decorBatches, "scenes", () => new SpriteBatch(sa.atlas, mpp, { scenery: true, fade: true }))?.set(upright);
+      this.batchFor(this.decorBatches, "sceneDecals", () => {
+        const b = new SpriteBatch(sa.atlas, mpp, { scenery: true, flat: true });
+        for (const m of b.meshes) { m.renderOrder = -0.5; (m.material as THREE.Material).depthWrite = false; }
+        return b;
+      })?.set(flat);
+    }
     if (decor) this.batchFor(this.decorBatches, "all", () => new SpriteBatch(decor.atlas, mpp, { scenery: true, fade: true }))?.set(dl);
     for (const [type, b] of this.typeBatches) if (!per.has(type)) b.set([]);
     for (const [type, list] of per) {
@@ -657,6 +688,8 @@ export class View {
   private berryBatch: SpriteBatch;
   /** When each berry last grew again (game time), so it grows in rather than appearing. */
   private regrewAt = new Map<number, number>();
+  /** Berries just eaten: where, and when (game time), for the nibble's sparkle. */
+  private nibbles: { x: number; z: number; at: number }[] = [];
   /** When each party animal evolved (game time): the flash, the pop and the sparkles. */
   readonly evolvedAt = new Map<number, number>();
   private drawBerries(time: number): void {
@@ -664,8 +697,18 @@ export class View {
     for (const e of B.events) {
       if (e.kind === "regrew") this.regrewAt.set(e.id, time);
       if (e.kind === "evolved") this.evolvedAt.set(e.id, time);
+      if (e.kind === "ate") this.nibbles.push({ x: e.x, z: e.z, at: time });
     }
     for (const [id, at] of this.regrewAt) if (time - at > 0.6) this.regrewAt.delete(id);
+    // The nibble (Ed, v233): a quick sparkle where a berry was eaten, white bits bursting out and fading.
+    this.nibbles = this.nibbles.filter(n => time - n.at < 0.45);
+    for (const n of this.nibbles) {
+      const k = (time - n.at) / 0.45;
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + n.x, r = 0.25 + k * 0.9;
+        items.push({ x: n.x + Math.cos(a) * r, y: 0.75 + Math.sin(a) * r * 0.7 + k * 0.4, z: n.z + 0.3, frame: f, flip: false, scale: 0.45 * (1 - k), glow: 1 });
+      }
+    }
     for (const [id, at] of this.evolvedAt) if (time - at > 1.2) this.evolvedAt.delete(id);
     for (const b of B.berries) {
       const p = B.bushes[b.bush];
@@ -842,7 +885,10 @@ export class View {
     const pad = f[0].pad ?? 0, below = Math.max(0, f[0].h - pad - T.base.y) * mpp, d = pad * mpp;
     const x = th.x - (T.base.x - f[0].w / 2) * mpp, z = th.z + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch));
     const at = { x: x - U.x * d, y: -U.y * d, z: z - U.z * d };
-    this.treehouseBatch.set([{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true }]);
+    const items: SpriteInstance[] = [{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true }];
+    // The studio's DJ table (v2) a little nearer the camera than her stool, so it stands in front of her.
+    if (T.hasFore) { const fwd = this.camera.getWorldDirection(this.v3b); items.push({ x: at.x - fwd.x * 1.2, y: at.y - fwd.y * 1.2, z: at.z - fwd.z * 1.2, frame: f[2], flip: false }); }
+    this.treehouseBatch.set(items);
     return at;
   }
 
@@ -894,7 +940,7 @@ export class View {
     const ws = placed(this.v3.set(g.witch.x, witchHeight(g.witch, t) * 0.5, g.witch.z)).project(this.camera);
     SPRITE_UNIFORMS.uCutout.value.set((ws.x * 0.5 + 0.5) * this.width, (ws.y * 0.5 + 0.5) * this.height, 0.5 * cut.screenFraction * this.width * (1 - lifted), Math.max(1, cut.edge * this.width * (1 - lifted)));
     SPRITE_UNIFORMS.uTopFade.value = lifted;
-    SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, this.mpp);
+    SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, this.mpp, t.trunkFade.share);
     // The wind: gentler over the treetops (Ed, v171: "gentle and lovely").
     const W = t.wind;
     SPRITE_UNIFORMS.uWind.value.set(W.on ? W.strength * (1 + (W.treetop - 1) * lifted) : 0, W.speed, W.gustScale, time);
@@ -947,7 +993,9 @@ export class View {
     this.spellFx.update(g, time, witchHeight(w, t) + 0.6);
     // Tufts part round her and the three nearest creatures.
     const parts = [{ x: w.x, z: w.z, r: 1.6 * (1 - canopyShown(w)) }, ...g.creatures.map(c => ({ x: c.x, z: c.z, r: 1.2, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(c => c.d < t.groundCover.radius).sort((a, b) => a.d - b.d).slice(0, 3)];
-    this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05); // out to the canopy hole's edge
+    // No tufts over a placed sigil's rune (Ed, v233): trampled out to groundCover.sigilClear, or the rune's own size.
+    const clear = g.leash.placed.map(p => ({ x: p.x, z: p.z, r: Math.max(t.groundCover.sigilClear, (3 + g.creatures[p.id].level * 0.8) * 0.45) }));
+    this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
     this.setLights([this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...this.forestLights], w.x, w.z);
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);
@@ -967,13 +1015,15 @@ export class View {
       const Hd = w.heading && w.heading !== "side" ? this.assets.witchHeading[w.heading] : null;
       if (Hd) wf = w.braking ? Hd.brake[Math.floor(time * Fl.brake.fps) % Hd.brake.length] : (w.boost ?? 0) > 0.7 ? Hd.fast[Math.floor(time * Fl.fast.fps) % Hd.fast.length] : w.lean ? Hd.lean : Hd.hover[Math.floor(time * 4) % Hd.hover.length];
     }
-    // Talking or handling a sigil, she lands first (Ed, 2026-10-03): down to the ground, then the
-    // talk, placeSigil or liftSigil pose, and back up into the air when she's done.
+    // Handling a sigil, she lands first (Ed, 2026-10-03): down to the ground, then the placeSigil or
+    // liftSigil pose, and back up into the air when she's done. Talking (by herself, Ed v244), she
+    // chats on the fly while moving and settles into the talk pose when she comes to rest.
     const L = g.leash, F = this.assets.witchFoot, side = w.away ? "away" : "towards";
     for (const e of L.events) if (e.kind === "placed" || e.kind === "fizzled") this.footAct = { pose: "placeSigil", at: time }; else if (e.kind === "picked") this.footAct = { pose: "liftSigil", at: time };
     const actLen = this.footAct ? F[this.footAct.pose].towards.length / F[this.footAct.pose].fps : 0;
     const acting = !!this.footAct && time - this.footAct.at < actLen + 0.3;
-    const wantFoot = w.mode === "ground" && (!!L.talk || L.held || acting) ? 1 : 0;
+    const still = Math.hypot(w.vx, w.vz) < 0.6;
+    const wantFoot = w.mode === "ground" && ((!!L.talk && still) || acting) ? 1 : 0;
     const fdt = Math.min(0.1, Math.max(0, time - this.footTime)), prevFoot = this.foot;
     this.footTime = time;
     this.foot += (wantFoot - this.foot) * Math.min(1, fdt * 8);
@@ -989,11 +1039,12 @@ export class View {
     // off it into the air when she first moves.
     const sdt = Math.min(0.1, Math.max(0, time - this.seatTime));
     this.seatTime = time;
-    this.seatK = w.seated ? 1 : Math.max(0, this.seatK - sdt / 0.6);
+    this.seatK = w.seated ? 1 : Math.max(0, this.seatK - sdt / 1.0); // down from the studio (some 7 m up) over a second
     let wx = w.x, wz = w.z, wyy = wy;
     if (this.seatK > 0) {
       const seat = onTreehouse(T.seat.x, T.seat.y), k = this.seatK * this.seatK * (3 - 2 * this.seatK);
-      g.introFocus = { x: seat.x, y: seat.y + 1, z: seat.z }; // the opening shot frames her seat (the art's camera anchor when it has one)
+      const cam = onTreehouse(T.camera.x, T.camera.y);
+      g.introFocus = { x: cam.x, y: cam.y, z: cam.z }; // the opening shot frames the studio (the art's camera anchor)
       const fwd = this.camera.getWorldDirection(this.v3);
       wx += (seat.x - fwd.x * 0.6 - wx) * k; wyy += (seat.y - fwd.y * 0.6 - wyy) * k; wz += (seat.z - fwd.z * 0.6 - wz) * k;
       if (w.seated) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
