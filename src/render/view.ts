@@ -822,7 +822,10 @@ export class View {
     const pad = f[0].pad ?? 0, below = Math.max(0, f[0].h - pad - T.base.y) * mpp, d = pad * mpp;
     const x = th.x - (T.base.x - f[0].w / 2) * mpp, z = th.z + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch));
     const at = { x: x - U.x * d, y: -U.y * d, z: z - U.z * d };
-    this.treehouseBatch.set([{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true }]);
+    const items: SpriteInstance[] = [{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true }];
+    // The studio's DJ table (v2) a little nearer the camera than her stool, so it stands in front of her.
+    if (T.hasFore) { const fwd = this.camera.getWorldDirection(this.v3b); items.push({ x: at.x - fwd.x * 1.2, y: at.y - fwd.y * 1.2, z: at.z - fwd.z * 1.2, frame: f[2], flip: false }); }
+    this.treehouseBatch.set(items);
     return at;
   }
 
@@ -957,11 +960,12 @@ export class View {
     // off it into the air when she first moves.
     const sdt = Math.min(0.1, Math.max(0, time - this.seatTime));
     this.seatTime = time;
-    this.seatK = w.seated ? 1 : Math.max(0, this.seatK - sdt / 0.6);
+    this.seatK = w.seated ? 1 : Math.max(0, this.seatK - sdt / 1.0); // down from the studio (some 7 m up) over a second
     let wx = w.x, wz = w.z, wyy = wy;
     if (this.seatK > 0) {
       const seat = onTreehouse(T.seat.x, T.seat.y), k = this.seatK * this.seatK * (3 - 2 * this.seatK);
-      g.introFocus = { x: seat.x, y: seat.y + 1, z: seat.z }; // the opening shot frames her seat (the art's camera anchor when it has one)
+      const cam = onTreehouse(T.camera.x, T.camera.y);
+      g.introFocus = { x: cam.x, y: cam.y, z: cam.z }; // the opening shot frames the studio (the art's camera anchor)
       const fwd = this.camera.getWorldDirection(this.v3);
       wx += (seat.x - fwd.x * 0.6 - wx) * k; wyy += (seat.y - fwd.y * 0.6 - wyy) * k; wz += (seat.z - fwd.z * 0.6 - wz) * k;
       if (w.seated) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];

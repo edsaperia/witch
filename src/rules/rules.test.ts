@@ -1177,6 +1177,11 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
       expect(newParty(m).areas.get(m.centreCell.join(","))?.soundsystem ?? null).toBeNull(); // home has none
     }
   });
+  it("give the treehouse a clearing at least as wide as the art's footprint (v2: a tall tower in a giant tree)", async () => {
+    const Art = await import("../../art/generator.js"), style = JSON.parse(readFileSync(new URL("../../config/style.json", import.meta.url), "utf8"));
+    const th = (Art as unknown as { treehouseSprite: (st: unknown) => { metres: { footprint: number } } }).treehouseSprite(style);
+    expect(TUNING.treehouse.clear).toBeGreaterThanOrEqual(th.metres.footprint);
+  }, 60000);
   it("cycle playing, damaged, destroyed on the debug key", () => {
     expect(nextSpeakerState("playing")).toBe("damaged");
     expect(nextSpeakerState("damaged")).toBe("destroyed");
