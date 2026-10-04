@@ -4,13 +4,37 @@
     {
       "version": null,
       "items": [
+        "Auto-talk can be turned off: press 1 or T, or click its button on the action bar (remembered); with it off, hold Shift to talk",
+        "A volume slider in the corner (remembered); all the way down mutes",
+        "Home is decorated: a ring of lanterns, torches, balloons, fairy lights and candles just outside the dancefloor's clearing"
+      ]
+    },
+    {
+      "version": 332,
+      "items": [
+        "Wild creatures notice you once you're within their attack range or 30 m, and give up when you rise to the treetops, or once you've left their area and are out of range and at least 30 m away; then they wander back home",
+        "Melee attackers wind up and lunge at where you were: step aside. Ravens keep their distance and shoot from far off",
+        "Party animals following you fight whatever attacks you or them; creatures parked at a sigil guard the ground round it",
+        "Nothing attacks babies, on either side: a leash of babies is safe in a fight. Babies never get angry when their area wakes: they stay home and you can still invite them",
+        "Berries heal: a party animal that eats one is back to full health (a hurt one goes for berries even if it's a legend), and so is a creature you've just invited, with a green sparkle",
+        "The old line of controls in the corner is gone: the action bar shows them (H hides it)",
+        "Party witches twirl each other, and play broom limbo: two hold a broom as the bar while a third shuffles under it",
+        "Party witches chatting show little emoji bubbles, taking turns",
+        "Party witches fly in from just off-screen, so you see them arrive",
+        "Lanterns, jam jars, fairy lights and mirror balls hang from the trees in party areas",
+        "Talk bubbles and markers sit over a creature's head however big it is, and the grass parts round big creatures as widely as they are"
+      ]
+    },
+    {
+      "version": 306,
+      "items": [
         "Flying fast over the hills is smooth: you and the camera glide over the bumps, rising early for a crest, instead of jerking up and down",
         "No cliffs on the hills: no slope anywhere is steeper than the camera looks down, so the ground never stretches into streaks or wedges, and the trees on it stand properly (try ?seed=165272)",
         "Rising and landing no longer show a hard-edged circle in the canopy round you, and you're drawn as yourself under the see-through leaves, not as a flat silhouette",
         "The music reacts to the fight: knocked out, it sinks to a muffled, far-off breakdown; near a soundsystem under siege a nervous pulse joins in",
         "The music speeds up as the party grows: from 120 bpm in the quiet forest to about 140 by the finale, easing in a few bars after each wave lands, and everything on the beat (the dancefloor, the lasers, dancing creatures and witches, the border's sparkle) speeds up with it, never skipping a beat",
         "Wild creatures fight back: on the ground, the young and older shoot or lunge at you (watch for the red ring tightening at their feet, and the line a shot will fly along), so dash out of the way. Over the treetops you're safe. Babies never attack",
-        "You can still invite creatures while they attack you, but every hit knocks back the chat a couple of seconds: big, strong groups are hard to win over without getting hit",
+        "You can still invite creatures while they attack you: big, strong groups are hard to win over without getting hit (a hit doesn't set the chat back; losing a hit is the cost)",
         "You can take three hits (pips under your feet show what's left); one comes back every 20 seconds once you're out of the fight",
         "Knocked out: your sigil stack lets go from the bottom up, a second each, and each creature on your leash goes back to the wild, walking off to an area of its own kind (catch it on the way to invite it again). Creatures at sigils on the ground stay yours: park your army before you scout! Careful leashing legends: if you're knocked out, they go back to the wild too. Then you sparkle home to the treehouse",
         "Party animals fight wild creatures of other kinds near their leash point by themselves; creatures of the same kind never fight each other, whichever side they're on. A beaten wild creature runs off and vanishes; a beaten party animal is lost for good",

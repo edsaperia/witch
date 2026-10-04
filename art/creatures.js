@@ -91,9 +91,9 @@ function baseColours(sp, st) {
   };
 }
 
-// A creature's height in art pixels at each level: 0 baby, 1 young (about 45 at the default
-// style), 2 adult (1.3 times young), 3 legend (about 4.5 times young). They keep their size on
-// screen as pixels grow.
+// A creature's height in art pixels at each level: 0 baby (about 30), 1 young (about 45 at the
+// default style, what was the adult model), 2 adult (1.65 times young, a heavier build), 3 legend
+// (about 4.5 times young, at least 2.2 times its adult). They keep their size on screen as pixels grow.
 export const LEVELS = ["baby", "young", "adult", "legend"];
 export const levelHeight = (level, st) => height3d(level, st);
 

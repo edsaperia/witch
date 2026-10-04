@@ -387,11 +387,12 @@ async function main() {
     await page.waitForFunction(t => window.witch.game.clock.time >= t, t2 + 2, { timeout: 300000, polling: 100 });
     await shot(page, "72-leash-placed.png");
     check(await page.evaluate(() => window.witch.game.leash.placed.length === 1 && window.witch.game.leash.stack.length >= 2), "the sigil button puts the bottom sigil down");
-    await page.evaluate(() => { const g = window.witch.game, p = g.leash.placed[0]; g.witch = { ...g.witch, x: p.x, z: p.z, vx: 0, vz: 0 }; });
+    const placedId = await page.evaluate(() => { const g = window.witch.game, p = g.leash.placed[0]; g.witch = { ...g.witch, x: p.x, z: p.z, vx: 0, vz: 0 }; return p.id; });
     await sleep(200);
     await page.keyboard.press("KeyE");
     await page.waitForFunction(() => window.witch.game.leash.placed.length === 0, null, { timeout: 30000 });
-    check(await page.evaluate(n => window.witch.game.leash.stack.length === n, n), "over a placed sigil, the button picks it up again");
+    // (Back on her stack: she may have talked another creature in by herself meanwhile, Ed v244, so not by the count.)
+    check(await page.evaluate(id => window.witch.game.leash.stack.includes(id), placedId), "over a placed sigil, the button picks it up again");
   }, "&tilt=before");
 
   // ?debug=cull: anything that changed visibility this frame is tinted red. A strip of frames

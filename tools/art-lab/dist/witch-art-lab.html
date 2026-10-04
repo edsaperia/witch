@@ -217,7 +217,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 
       <section style="display:grid;gap:10px">
         <div class="row" style="justify-content:space-between"><h2>Party witches</h2><div class="row"><label class="note" for="partyPose">Pose</label><select id="partyPose"></select><button id="partyShuffle">Shuffle</button></div></div>
-        <p class="note">Witches who fly in to the party, one for each soundsystem: a row per party outfit (raver, flower child, disco, punk, festival, cat hat, glam, goth, candy, boho), each with its own hat, hair and top, its colours and skin picked by its seed (Shuffle picks others). With "a mix": hovering, the lean cycle, then a pose of each kind (dancing, drinking, running, hugging, sitting, stargazing). Pick a pose to see every frame of it, our witch first, then every outfit. Below, the pairs, put together at their anchors: dancing face to face, a hug, a high-five, holding hands (facing you), a toast, the conga.</p>
+        <p class="note">Witches who fly in to the party, one for each soundsystem: a row per party outfit (raver, flower child, disco, punk, festival, cat hat, glam, goth, candy, boho), each with its own hat, hair and top, its colours and skin picked by its seed (Shuffle picks others). With "a mix": hovering, the lean cycle, then a pose of each kind (dancing, drinking, running, hugging, sitting, stargazing). Pick a pose to see every frame of it, our witch first, then every outfit. Below, the pairs, put together at their anchors: dancing face to face, a hug, a high-five, holding hands (facing you), a toast, the conga, a twirl, and the broom limbo (two holding the broom, a third leaning back under it).</p>
         <div class="sheet-wrap"><canvas id="partySheet" width="420" height="160"></canvas></div>
       </section>
 
@@ -1527,13 +1527,14 @@ function drawWrap(m, L, chest, fwd, spine, flying) {
     else m.ell(v3.add(chest, v3.add(v3.mul(fwd, -.11), v3.mul(spine, -.12))), [.3, .035, .16], M.JACKET, { dir: v3.add(spine, v3.mul(fwd, .12)), up: fwd, group: 12 });
   }
 }
-// Every part, flat and anchor of m turned by angle a about the vertical ("y") or the side-to-side ("z") axis through P.
-function turnModel(m, axis, a, P) {
+// Every part (those `only` picks), flat and anchor of m turned by angle a about the vertical ("y") or the side-to-side ("z") axis through P.
+function turnModel(m, axis, a, P, only = () => true) {
   const c = Math.cos(a), s = Math.sin(a);
   const R = axis === "y" ? q => [q[0] * c + q[2] * s, q[1], -q[0] * s + q[2] * c] : q => [q[0] * c - q[1] * s, q[0] * s + q[1] * c, q[2]];
   const Ri = axis === "y" ? q => [q[0] * c - q[2] * s, q[1], q[0] * s + q[2] * c] : q => [q[0] * c + q[1] * s, -q[0] * s + q[1] * c, q[2]];
   const pt = q => v3.add(P, R(v3.sub(q, P))), unpt = q => v3.add(P, Ri(v3.sub(q, P)));
   for (const q of m.parts) {
+    if (!only(q)) continue;
     if (q.type === "cone") { q.a = pt(q.a); q.b = pt(q.b); } else { q.c = pt(q.c); q.axes = q.axes.map(R); }
     if (q.paint) { const f = q.paint; q.paint = (p, part) => f(unpt(p), part); } // markings stay where they were painted
   }
@@ -1637,9 +1638,12 @@ function fastModel(frame) {
 //   sitGround    resting: sitting on the ground, leaning back on her hands, her broom lying beside her
 //   stargaze     resting: lying back, hands behind her head, knees up, a foot tapping
 //   conga        paired: hands on the shoulders of the witch ahead, kicking out to the sides
+//   twirl        paired: twirling a partner under her raised hand (the partner does twirled: spinning on her toes, her hand up in it)
+//   limboHold    the broom limbo: holding the broom level, its handle's far end to a partner (who does limboHelp: holding it); a third
+//                witch does limbo: knees bent, leaning far back, arms out, shuffling under the bar
 // The sigil itself is not drawn; each frame records her free hand (where a held sigil goes) and
 // her hat tip as anchors. frames and a suggested fps per pose; the party's poses loop, and say what they are
-// (party: dance, pair, social, move or rest); WITCH_PAIRS says how two witches meet.
+// (party: dance, pair, social, move or rest); WITCH_PAIRS says how two witches meet (or three: the broom limbo).
 const WITCH_FOOT_POSES = {
   stand: { frames: 3, fps: 3 }, land: { frames: 3, fps: 10 }, takeoff: { frames: 3, fps: 10 }, talk: { frames: 4, fps: 2.5 }, placeSigil: { frames: 3, fps: 6 }, liftSigil: { frames: 3, fps: 6 }, sit: { frames: 2, fps: 1.5 },
   twoStep: { frames: 4, fps: 4, party: "dance" }, bounce: { frames: 2, fps: 4, party: "dance" }, shuffle: { frames: 4, fps: 6, party: "dance" }, spin: { frames: 4, fps: 6, party: "dance" },
@@ -1647,15 +1651,20 @@ const WITCH_FOOT_POSES = {
   dancePair: { frames: 4, fps: 4, party: "pair" }, holdHands: { frames: 2, fps: 2, party: "pair" }, hug: { frames: 2, fps: 1.5, party: "pair" }, highFive: { frames: 2, fps: 3, party: "pair" },
   laugh: { frames: 3, fps: 4, party: "social" }, drink: { frames: 4, fps: 1.5, party: "social" }, run: { frames: 4, fps: 10, party: "move" },
   sitGround: { frames: 2, fps: 1, party: "rest" }, stargaze: { frames: 2, fps: 1, party: "rest" }, conga: { frames: 4, fps: 4, party: "pair" },
+  twirl: { frames: 4, fps: 4, party: "pair" }, twirled: { frames: 4, fps: 4, party: "pair" }, limboHold: { frames: 2, fps: 2, party: "pair" }, limboHelp: { frames: 2, fps: 2, party: "pair" }, limbo: { frames: 4, fps: 3, party: "dance" },
 };
 // Two witches together: each is her own sprite, and the game puts them so that her `meet` anchor and her partner's land on
 // the same pixel. mirror: the partner's sprite is flipped left-right (anchors too: x becomes w - x), so the two face each
 // other; heading: the heading to draw both in ("towards", facing us, for side by side). frame: only that frame meets (the
 // toast); conga: the partner ahead's `back` anchor takes this witch's `pair` (her hands on its shoulders), same way round.
+// partnerPose: the partner does this pose instead (twirl: twirled; limboHold: limboHelp). third: a third witch doing that pose
+// passes under the arrangement: the broom limbo's dancer moves along with her `top` anchor just below the holder's `bar` anchor.
 const WITCH_PAIRS = {
   dancePair: { meet: "pair", mirror: true }, hug: { meet: "pair", mirror: true }, highFive: { meet: "pair", mirror: true },
   holdHands: { meet: "pair", mirror: true, heading: "towards" }, drink: { meet: "pair", mirror: true, frame: 3 },
   conga: { meet: "pair", partner: "back", mirror: false },
+  twirl: { meet: "pair", mirror: true, partnerPose: "twirled" },
+  limboHold: { meet: "pair", mirror: true, partnerPose: "limboHelp", third: { pose: "limbo", anchor: "top", under: "bar" } },
 };
 // sit (with the treehouse): on the terrace chair, her broom leaning beside her, swinging her legs and looking out.
 // Her seat is WITCH_SEAT_HEIGHT model units above the ground she stands on (the chair's seat; the treehouse builds its chair to match).
@@ -1668,6 +1677,8 @@ const WITCH_SEAT_HEIGHT = .34;
 // laughing mouth, shut eyes, a cup, a turn (spinning, about the vertical), lie (lying back), and the pair anchor.
 const UPRIGHT = { binding: [-.02, .31, -.2], dir: [.02, 1, -.04] };
 const Q = Math.PI / 2;
+// the broom limbo's bar: how high the holders hold the broom (model units; her limbo's top passes just under it)
+const LIMBO_BAR = .82;
 const FOOT_FRAMES = {
   stand: [0, 1, 2].map(f => ({ breathe: [0, .006, .012][f], sway: [0, .02, .035][f], free: [.04, .5 + [0, .006, .012][f], .18], hand: "rest", broom: UPRIGHT })),
   land: [
@@ -1743,6 +1754,16 @@ const FOOT_FRAMES = {
     feet: [[-.06, .2, -.1], [-.06 + f * .02, .2 + f * .05, .1]], free: [-.12, 1.0, .12], elbow: [.02, .98, .27], far: [-.12, 1.0, -.12], farElbow: [.02, .98, -.27] })),
   conga: [0, 1, 2, 3].map(f => { const s = [0, 1, 0, -1][f]; return { broom: null, hop: [.02, 0, .02, 0][f], roll: s * .07, tilt: s * .2, sway: .03, mouth: f === 0, look: .05,
     feet: [[0, .07 + (s < 0 ? .14 : 0), -.1 - (s < 0 ? .2 : 0)], [0, .07 + (s > 0 ? .14 : 0), .1 + (s > 0 ? .2 : 0)]], free: [.36, .82, .13], far: [.36, .82, -.13], pair: [.36, .82, 0], backAt: true }; }),
+  twirl: [0, 1, 2, 3].map(f => { const a = f * Math.PI / 2, hand = [.32 + Math.cos(a) * .03, 1.12, .08 + Math.sin(a) * .03]; return { broom: null, roll: -.04, tilt: [.2, .1, -.1, .1][f], look: .15, sway: .02, mouth: f === 2,
+    free: hand, hand: "grip", elbow: [.14, .98, .2], far: [.02, .6, -.2], farElbow: [-.08, .66, -.24], pair: hand }; }), // her hand circling a little over the partner's head
+  twirled: [0, 1, 2, 3].map(f => ({ broom: null, turn: f * Q, toes: true, hop: .015, sway: .06, look: .12, mouth: f === 0, feet: [[.02, .07, -.05], [.02, .07, .05]],
+    free: [0, 1.26, 0], elbow: [.0, 1.02, .14], hand: "grip", far: [.04, .76, -.4], farHand: "palm", pair: [0, 1.26, 0] })), // her hand straight up, over her middle, so it stays put as she turns
+  limboHold: [0, 1].map(f => ({ broom: { binding: [.42, LIMBO_BAR, 0], dir: [1, 0, 0] }, roll: [.02, -.02][f], tilt: [.15, -.1][f], look: .02, sway: .02, mouth: !!f,
+    free: [.45, LIMBO_BAR, .06], hand: "grip", far: [-.04, .52, -.17], pair: [1.45, LIMBO_BAR, 0], bar: [.97, LIMBO_BAR, 0] })), // her far hand on her hip
+  limboHelp: [0, 1].map(f => ({ broom: null, roll: [-.02, .02][f], tilt: [-.1, .15][f], look: .02, sway: .02, mouth: !f,
+    free: [.3, LIMBO_BAR, .06], hand: "grip", far: [-.04, .52, -.17], pair: [.3, LIMBO_BAR, .06] })),
+  limbo: [0, 1, 2, 3].map(f => ({ broom: null, crouch: .62, limbo: 1.12 + [0, .05, 0, -.04][f], look: .3, sway: .02, mouth: f === 1,
+    feet: [[.26 + [0, .05, .08, .03][f], .07, -.1], [.26 + [.08, .03, 0, .05][f], .07, .1]], free: [.0, .82 + [0, .03, 0, -.03][f], .44], hand: "palm", far: [.0, .82 - [0, .03, 0, -.03][f], -.44], farHand: "palm" })), // arms out for balance, shuffling forward
 };
 // the knee between a hip and a foot, bent forward
 function kneeOf(hip, foot, l) {
@@ -1819,7 +1840,14 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
   if (K.pairAt === "cup") m.anchors.pair = m.anchors.cup;
   if (K.backAt) m.anchors.back = [shoulder(1)[0], K.free[1], 0];
   // spinning, she turns about her middle; lying back, she tips over onto the ground
+  if (K.bar) m.anchors.bar = K.bar;
   if (K.turn) turnModel(m, "y", K.turn, [hipX, 0, 0]);
+  // the limbo: everything above her hips leans far back over her bent legs; her top is the highest point of her (what passes under the bar)
+  if (K.limbo) {
+    turnModel(m, "z", K.limbo, hips, q => q.group !== 4 && q.group !== 6);
+    let top = null; for (const q of m.parts) { if (q.extra) continue; for (const [p, r] of q.type === "cone" ? [[q.a, q.r1], [q.b, q.r2]] : [[q.c, Math.max(...q.r)]]) if (!top || p[1] + r > top[1]) top = [p[0], p[1] + r, 0]; }
+    m.anchors.top = top;
+  }
   if (K.lie) { turnModel(m, "z", K.lie, hips); restOn(m, .015); }
   m.ell([.02, .005, 0], [.2, .005, .12], M.NOSE, { group: 0 }); // her shadow at her feet
   if (K.lie) Object.assign(m.parts[m.parts.length - 1], { c: [-.18, .005, 0], r: [.45, .005, .14] }); // (all of her, lying down)
@@ -2612,17 +2640,20 @@ function setPiece3d(kind, def, st, ppm = 16) {
 
 
 // Levels (Ed): 0 baby, 1 young, 2 adult, 3 legend.
-// Height on screen in art pixels: young about 45 at the default style (the coordinator's
-// "40 to 55"), about the witch's height for the bigger species; adults 1.3 times their young
-// (Ed: "a bit larger than you"); legends about 4.5 times their young. They keep their size on
-// screen as pixels grow.
-const ADULT_SCALE = 1.3;
+// Height on screen in art pixels: babies about 30; young about 45 at the default style, about the
+// witch's height for the bigger species, built on what was the adult model; adults a clear step up
+// (Ed, 2026-10-04: "the size difference should be obvious ... use the current Adult models for
+// Youths, and come up with something larger for Adults"): 1.65 times their young, heavier in build
+// (thicker body, legs and neck, a bigger head, bigger horns, antlers and tusks) with a few glowing
+// motes; legends about 4.5 times their young and never less than 2.2 times their adult. They keep
+// their size on screen as pixels grow.
+const ADULT_SCALE = 1.65, LEGEND_OVER_ADULT = 2.2;
 const LEVEL_SCALE = st => [1, Math.sqrt(st.growth), Math.sqrt(st.growth) * ADULT_SCALE, st.growth];
 const height3d = (level, st, hgt = 1) => Math.round(st.size * LEVEL_SCALE(st)[Math.max(0, Math.min(3, level))] * (2 / (st.pixel || 2)) * 1.9 * hgt);
 
-const glowMotes = (sp, seed) => { // a few glowing motes around a legend
+const glowMotes = (sp, seed, n = 9) => { // a few glowing motes around a legend (9) or an adult (3)
   const r = rng(seed);
-  for (let i = 0; i < 9; i++) {
+  for (let i = 0; i < n; i++) {
     const x = Math.floor(uni(r, 2, sp.w - 2)), y = Math.floor(uni(r, 2, sp.h * .6));
     if (sp.get(x, y) || sp.get(x + 1, y) || sp.get(x - 1, y) || sp.get(x, y + 1) || sp.get(x, y - 1)) continue;
     sp.px(x, y, M.MAGIC2); if (i % 3 === 0) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) sp.px(x + dx, y + dy, M.MAGIC);
@@ -2639,8 +2670,11 @@ function wing3d(m, root, side, span, up, mat, mat2, group) {
 
 // The size a creature is drawn at: babies are chunky, about 28 to 32 pixels (the coordinator).
 const drawHeight = (level, st, k = 1) => level === 0 ? Math.round(Math.max(12, Math.min(30 * Math.max(.75, Math.min(1.1, k)), height3d(1, st) * k * .72))) // a baby: about 30, never taller than 3/4 of its young
-  : level === 2 ? Math.round(Math.max(height3d(1, st) * k * 1.08, Math.min(height3d(2, st, k), height3d(1, st) * 1.4))) // an adult: 1.3 times its young, but no more than 1.4 times the witch (Ed: "a bit larger than you")
+  : level === 2 ? height3d(2, st, k) // an adult: 1.65 times its young
+  : level === 3 ? Math.round(Math.max(height3d(3, st) * k, height3d(2, st, k) * LEGEND_OVER_ADULT)) // a legend: far above its adult
   : height3d(level, st) * k;
+// An adult's heavier build for the body plans without their own: every part thicker across (x and z), not taller.
+const beef = (m, k) => { for (const q of m.parts) { if (q.type === "ell") q.r = [q.r[0] * k, q.r[1], q.r[2] * k]; else if (q.type === "box") q.h = [q.h[0] * k, q.h[1], q.h[2] * k]; else { q.r1 *= k; q.r2 *= k; } } };
 
 // ================= party gear =================
 // Party animals (creatures the witch has invited) wear a glowing collar, and some a party hat,
@@ -2696,19 +2730,19 @@ function gearUp(m) {
 
 // ================= four-legged animals =================
 function quad3d(S, level, frame, st, facing = "towards") {
-  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q }, legend = level === 3, young = level === 1, baby = level === 0, has = f => legend && S.legend.includes(f);
+  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q }, legend = level === 3, young = false, juv = level === 1, big = level >= 2, baby = level === 0, has = f => legend && S.legend.includes(f); // young: what was the adult model (young = false keeps its shape); big: the heavier adult and legend build
   const m = new Model();
-  const hr = q.hr * (baby ? 1.75 : young ? 1.25 : 1) * (st.head / .44) ** .5, len = q.len * (baby ? .8 : young ? .9 : 1.02) * st.long;
+  const hr = q.hr * (baby ? 1.75 : young ? 1.25 : big ? 1.12 : 1) * (st.head / .44) ** .5, len = q.len * (baby ? .8 : young ? .9 : big ? 1.06 : 1.02) * st.long;
   const legK = baby ? .55 : young ? .9 : 1.04;
-  const bob = frame ? -.04 : 0, top = 1 + bob, chest = q.chest * (legend ? 1.06 : 1) / legK + bob, tuck = q.tuck / legK + bob;
-  const bw = q.bw * (baby ? 1.15 : level >= 2 ? 1.06 : 1) * (q.legW > 1.2 ? 1.15 : 1), lw = .06 * q.legW * (legend ? 1.1 : baby ? 1.7 : 1);
+  const bob = frame ? -.04 : 0, top = 1 + bob, chest = q.chest * (legend ? 1.06 : 1) * (big ? .9 : 1) / legK + bob, tuck = q.tuck * (big ? .92 : 1) / legK + bob; // a big one's deeper chest and belly
+  const bw = q.bw * (baby ? 1.15 : big ? 1.28 : 1) * (q.legW > 1.2 ? 1.15 : 1), lw = .06 * q.legW * (legend ? 1.1 : baby ? 1.7 : 1) * (big ? 1.3 : 1);
   const hump = q.back === "hump" ? .1 : 0, arch = q.back === "arch" ? .1 : 0;
   // ---- markings, painted by where a point is on the body ----
   const bellyY = chest + .12;
   const paintBody = p => {
     if (q.belly && p[1] < bellyY && p[0] > -len * .5) return M.BELLY;
     if (q.saddle && p[1] > top - .18 && p[0] < len * .55) return M.BODY2;
-    if (q.spots && p[1] > chest + .1 && spotty(p, 10, .22)) return q.spotMat === "belly" || (q.spots === "young" && young) ? M.BELLY : q.spots === "young" ? undefined : M.BODY3;
+    if (q.spots && p[1] > chest + .1 && spotty(p, 10, .22)) return q.spotMat === "belly" || (q.spots === "young" && juv) ? M.BELLY : q.spots === "young" ? undefined : M.BODY3;
     if (q.ridge && p[1] > top - .08 + hump * .5) return M.BODY3;
     return undefined;
   };
@@ -2734,7 +2768,7 @@ function quad3d(S, level, frame, st, facing = "towards") {
   for (const side of [-1, 1]) { leg(true, side); leg(false, side); }
   // ---- neck and head, turned towards us ----
   const nb = [len * .82, top - .12, 0], H = [nb[0] + Math.cos(q.neckAng) * q.neck * .9, nb[1] + Math.sin(q.neckAng) * q.neck * .9 + (baby ? .1 : 0), 0];
-  m.seg(nb, H, q.neckW * .55, q.neckW * .42, M.BODY, { paint: p => q.belly && p[1] < (nb[1] + H[1]) / 2 - .05 ? M.BELLY : q.face === "dark" ? M.BODY2 : undefined });
+  m.seg(nb, H, q.neckW * .55 * (big ? 1.25 : 1), q.neckW * .42 * (big ? 1.2 : 1), M.BODY, { paint: p => q.belly && p[1] < (nb[1] + H[1]) / 2 - .05 ? M.BELLY : q.face === "dark" ? M.BODY2 : undefined });
   const headPaint = p => {
     if (q.face === "badger") return Math.abs(p[2]) < hr * .22 + (p[0] - H[0]) * .1 || p[1] < H[1] - hr * .1 ? M.BELLY : M.BODY3;
     if (q.face === "dark") return M.BODY2;
@@ -2765,9 +2799,9 @@ function quad3d(S, level, frame, st, facing = "towards") {
   const tb = [-len * 1.05, top - .1 + arch * .5, 0], tw = frame ? .04 : -.02;
   if (!has("tails")) tail3d(m, has("starTail") ? "star" : q.tail, tb, len, top, tw);
   // ---- horns, antlers, tusks ----
-  if (q.horns) for (const side of [-1, 1]) { const k = young ? .6 : baby ? .35 : has("hornsGlow") ? 1.4 : 1, pts = []; for (let i = 0; i <= 8; i++) { const a = .3 - i / 8 * Math.PI * 1.6, r = hr * .65 * k * (1 - .45 * i / 8); pts.push([H[0] - hr * .1 + Math.cos(a) * r, H[1] + hr * .45 + Math.sin(a) * r, side * (hr * .6 + i * .015)]); pts[i].push(hr * .2 * k * (1 - .6 * i / 8)); } m.chain(pts, has("hornsGlow") ? M.MAGIC : M.ACCENT, { group: 13 }); }
+  if (q.horns) for (const side of [-1, 1]) { const k = young ? .6 : baby ? .35 : has("hornsGlow") ? 1.5 : big ? 1.3 : 1, pts = []; for (let i = 0; i <= 8; i++) { const a = .3 - i / 8 * Math.PI * 1.6, r = hr * .65 * k * (1 - .45 * i / 8); pts.push([H[0] - hr * .1 + Math.cos(a) * r, H[1] + hr * .45 + Math.sin(a) * r, side * (hr * .6 + i * .015)]); pts[i].push(hr * .2 * k * (1 - .6 * i / 8)); } m.chain(pts, has("hornsGlow") ? M.MAGIC : M.ACCENT, { group: 13 }); }
   if (q.antlers || has("jackalope")) for (const side of [-1, 1]) antlers3d(m, q, [H[0] - hr * .05, H[1] + hr * .75, side * hr * .4], side, level, has);
-  if (q.tusks) for (const side of [-1, 1]) { const k = young ? .4 : baby ? 0 : has("tusksBig") ? 1.3 : .75; if (!k) continue; const b = [sn[0] + L * .25, sn[1] - Dm * .4, side * Dm * .8]; m.chain([[...b, .045 * k], [...v3.add(b, [.1 * k, .1 * k, side * .03]), .04 * k], [...v3.add(b, [.06 * k, .24 * k, side * .05]), .02 * k]], M.ACCENT, { group: 8 }); }
+  if (q.tusks) for (const side of [-1, 1]) { const k = young ? .4 : baby ? 0 : has("tusksBig") ? 1.4 : big ? 1.05 : .75; if (!k) continue; const b = [sn[0] + L * .25, sn[1] - Dm * .4, side * Dm * .8]; m.chain([[...b, .045 * k], [...v3.add(b, [.1 * k, .1 * k, side * .03]), .04 * k], [...v3.add(b, [.06 * k, .24 * k, side * .05]), .02 * k]], M.ACCENT, { group: 8 }); }
   if (q.teeth && !baby) m.ell([tip[0] - hr * .1, tip[1] - hr * .25, 0], [hr * .08, hr * .14, hr * .12], M.ACCENT, { group: 1 });
   // ---- legendary features ----
   const backAt = t => [-len * .9 + t * len * 1.65, top + hump * Math.max(0, 1 - Math.abs(t - .8) * 3) + arch * (1 - Math.abs(t - .4) * 2), 0];
@@ -2783,7 +2817,7 @@ function quad3d(S, level, frame, st, facing = "towards") {
   if (has("ribbons")) for (let i = 0; i < 3; i++) { const pts = []; for (let k = 0; k < 9; k++) { const t = k / 8; pts.push([len * (.5 - t * 2.2), top + .05 + i * .1 + t * (.25 + i * .12) + Math.sin(t * 6 + frame + i) * .07, (i - 1) * .18, .04 * (1 - t * .6)]); } m.chain(pts, i % 2 ? M.MAGIC2 : M.MAGIC, { group: 90 + i, extra: true }); }
   gearUp(m);
   const { sp } = render(m, { height: drawHeight(level, st, q.hgt), facing });
-  if (legend) glowMotes(sp, S.id.length * 7919);
+  if (legend) glowMotes(sp, S.id.length * 7919); else if (level === 2) glowMotes(sp, S.id.length * 7919, 3);
   return sp;
 }
 
@@ -2801,7 +2835,7 @@ function tail3d(m, kind, tb, len, top, tw) {
 }
 
 function antlers3d(m, q, b, side, level, has) {
-  const jack = !q.antlers, A = jack ? .45 : [0, .5, .95, .95][level] * (has("antlersGlow") ? 1.15 : 1), mat = has("antlersGlow") ? (side > 0 ? M.MAGIC2 : M.MAGIC) : M.ACCENT, o = { group: 11 + (side > 0 ? 1 : 0), extra: true };
+  const jack = !q.antlers, A = jack ? .45 : [0, .95, 1.25, 1.25][level] * (has("antlersGlow") ? 1.15 : 1), mat = has("antlersGlow") ? (side > 0 ? M.MAGIC2 : M.MAGIC) : M.ACCENT, o = { group: 11 + (side > 0 ? 1 : 0), extra: true };
   if (!A) return;
   const w = .045 * Math.max(.8, A), out = side * .35 * A;
   if (q.antlers === "palm") { // a short beam, then broad fingers fanning back and out from one root
@@ -2820,7 +2854,7 @@ function antlers3d(m, q, b, side, level, has) {
 
 // ================= owl =================
 function owl3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 3, young = level === 1, baby = level === 0, has = f => legend && S.legend.includes(f), m = new Model();
+  const legend = level === 3, young = false, baby = level === 0, has = f => legend && S.legend.includes(f), m = new Model();
   const bob = frame ? .03 : 0, hr = baby ? .48 : young ? .42 : .36, hy = (baby ? .95 : 1.08) + bob;
   // feet and a short tail
   for (const side of [-1, 1]) { const f = frame && side > 0 ? .04 : 0; m.seg([.05, .2, side * .14], [.08, .05 + f, side * .15], .07, .06, M.BODY2, { group: 2 }); for (const dz of [-.04, 0, .04]) m.ell([.16, .03 + f, side * .15 + dz], [.06, .025, .02], M.ACCENT, { group: 2 }); m.anchors.feet.push({ c: [.13, .04 + f, side * .15], r: .08, group: side > 0 ? 6 : 2 }); }
@@ -2848,9 +2882,10 @@ function owl3d(S, level, frame, st, facing = "towards") {
   if (has("eyesRing")) for (let i = 0; i < 7; i++) { const a = Math.PI * (.15 + i / 6 * .7); m.ell([Math.cos(a) * .2 - .1, hy + .1 + Math.sin(a) * .6, (i - 3) * .15], [.07, .07, .07], M.MAGIC2, { group: 95 + i, extra: true }); m.ell([Math.cos(a) * .2 - .05, hy + .1 + Math.sin(a) * .6, (i - 3) * .15], [.035, .035, .035], M.EYE, { group: 95 + i, extra: true }); }
   m.anchors.head = { c: [0, hy, 0], r: [hr, hr * .9, hr] };
   m.anchors.neck = { c: [0, hy - hr * .75, 0], r: hr * .85, dir: [0, 1, 0] };
+  if (level >= 2) beef(m, 1.18);
   gearUp(m);
   const { sp } = render(m, { height: drawHeight(level, st, .95), facing });
-  if (legend) glowMotes(sp, 31);
+  if (legend) glowMotes(sp, 31); else if (level === 2) glowMotes(sp, 31, 3);
   return sp;
 }
 
@@ -2861,9 +2896,10 @@ const eyesOn = (m, c, r, dirs, size, mat, group = 1) => {
 };
 const shadow = (m, x, w) => m.ell([x, .005, 0], [w, .005, w * .6], M.NOSE, { group: 0 }); // a flyer's shadow on the ground
 function finish(m, S, level, st, k, facing) {
+  if (level >= 2) beef(m, 1.18); // the adult's and legend's heavier build
   gearUp(m);
   const { sp } = render(m, { height: drawHeight(level, st, k), facing });
-  if (level === 3) glowMotes(sp, S.id.length * 131);
+  if (level === 3) glowMotes(sp, S.id.length * 131); else if (level === 2) glowMotes(sp, S.id.length * 131, 3);
   return sp;
 }
 const crown3d = (m, c, w) => { m.ell(c, [w, w * .35, w], M.MAGIC, { group: 95, extra: true, paint: p => p[1] > c[1] ? M.MAGIC2 : undefined }); for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; m.ell(v3.add(c, [Math.cos(a) * w * .8, w * .55, Math.sin(a) * w * .8]), [w * .38, w * .12, w * .12], M.MAGIC, { dir: [0, 1, 0], up: [1, 0, 0], group: 96, extra: true }); } };
@@ -2902,7 +2938,7 @@ function toad3d(S, level, frame, st, facing = "towards") {
 }
 
 function raven3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 3, young = level === 1, has = f => legend && S.legend.includes(f), m = new Model(), bob = frame ? .02 : 0;
+  const legend = level === 3, young = false, has = f => legend && S.legend.includes(f), m = new Model(), bob = frame ? .02 : 0;
   for (const side of [-1, 1]) { const f = frame && side > 0 ? .04 : 0; m.seg([0, .3, side * .08], [.03, .03 + f, side * .08], .03, .025, M.NOSE, { group: side > 0 ? 7 : 2 }); m.ell([.08, .02 + f, side * .08], [.08, .015, .04], M.NOSE, { group: 2 }); m.anchors.feet.push({ c: [.07, .03 + f, side * .08], r: .06, group: side > 0 ? 7 : 2 }); }
   m.ell([-.55, .42, 0], [.32, .035, .12], M.BODY2, { dir: [-1, -.25, 0], group: 3 });
   m.ell([0, .52 + bob, 0], [.42, .26, .24], M.BODY, { dir: [1, .45, 0] });
@@ -2967,7 +3003,7 @@ function beetle3d(S, level, frame, st, facing = "towards") {
   m.ell([.38, .33, 0], [.16, .16, .26], M.BODY, { group: 1 });
   const hc = [.56, .3, 0];
   m.ell(hc, [.1, .1, .17], M.BODY2, { group: 1 });
-  const jl = [.3, .5, .7, .75][level] * (has("horn") ? 1.3 : 1), jm = has("horn") ? M.MAGIC : M.BODY3;
+  const jl = [.3, .7, .95, 1.0][level] * (has("horn") ? 1.3 : 1), jm = has("horn") ? M.MAGIC : M.BODY3;
   for (const side of [-1, 1]) { const b = v3.add(hc, [.08, .02, side * .1]), e = v3.add(b, [jl * .7, jl * .45, side * jl * .15]), t = v3.add(e, [jl * .25, -jl * .12, -side * jl * .12]); m.chain([[...b, .045], [...e, .035], [...t, .015]], jm, { group: 8 + (side > 0 ? 1 : 0) }); m.seg(v3.lerp(b, e, .55), v3.add(v3.lerp(b, e, .55), [.0, jl * .22, 0]), .02, .008, jm, { group: 8 }); }
   for (const side of [-1, 1]) m.chain([[...v3.add(hc, [.05, .06, side * .1]), .012], [hc[0] + .1, .5, side * .22, .012], [hc[0] + .2, .5, side * .26, .012]], M.BODY3, { group: 9, extra: true });
   eyesOn(m, hc, [.1, .1, .17], [[.4, .3, .85], [.4, .3, -.85]], .032, legend ? M.MAGIC2 : M.EYE, 9); // its own group: too small to survive melting into the head
@@ -2999,7 +3035,7 @@ function woodlouse3d(S, level, frame, st, facing = "towards") {
 }
 
 function snake3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 3, young = level === 1, has = f => legend && S.legend.includes(f), m = new Model(), ph = frame ? .7 : 0, pts = [];
+  const legend = level === 3, young = false, has = f => legend && S.legend.includes(f), m = new Model(), ph = frame ? .7 : 0, pts = [];
   for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push([-.9 + t * 1.2, .07, Math.sin(t * Math.PI * 2 + ph) * .25 * (1 - t * .5), .03 + .045 * Math.sin(Math.min(1, t * 1.4) * Math.PI / 2)]); }
   pts.push([.38, .25, pts[12][2], .07], [.42, .45, pts[12][2] * .8, .065]);
   m.chain(pts, M.BODY, { paint: p => p[1] < .05 && p[0] < .35 ? M.BELLY : spotty([p[0] * 1.5, p[1], p[2]], 14, .3) ? M.BODY3 : undefined });
@@ -3147,9 +3183,9 @@ function baseColours(sp, st) {
   };
 }
 
-// A creature's height in art pixels at each level: 0 baby, 1 young (about 45 at the default
-// style), 2 adult (1.3 times young), 3 legend (about 4.5 times young). They keep their size on
-// screen as pixels grow.
+// A creature's height in art pixels at each level: 0 baby (about 30), 1 young (about 45 at the
+// default style, what was the adult model), 2 adult (1.65 times young, a heavier build), 3 legend
+// (about 4.5 times young, at least 2.2 times its adult). They keep their size on screen as pixels grow.
 const LEVELS = ["baby", "young", "adult", "legend"];
 const levelHeight = (level, st) => height3d(level, st);
 
@@ -5565,18 +5601,25 @@ const PARTY = {
   "glowstick-bracelets": { cls: "small", desc: "glowstick bracelets looped over a stick in the ground", glow: true, light: "neon", build(m) { ctBar(m, [0, 0, 0], [.03, .45, 0], 1, .015, M.WOOD, undefined); for (let i = 0; i < 3; i++) m.flat([.02, .15 + i * .1, 0], [1, .2 * (i - 1), 0], [0, .3, 1], .08, .08, (s, t) => Math.abs(Math.hypot(s, t) - .8) < .18 ? (i === 1 ? M.MAGIC2 : M.MAGIC) : null, { group: 2 + i, bend: .1 }); } },
   "tea-lights": { cls: "small", desc: "a little cluster of tea lights flickering on a flat stone", glow: true, light: "warm", build(m) { m.ell([0, .03, 0], [.25, .035, .2], M.STONE, { group: 1, rough: .006 }); for (let i = 0; i < 5; i++) { const a = i * 1.26, c = [Math.cos(a) * .13, .06, Math.sin(a) * .09]; ctCyl(m, c, v3.add(c, [0, .025, 0]), .035, M.FRAME, 2 + i, { end: M.BELLY }); m.ell(v3.add(c, [0, .06, 0]), [.022, .04, .022], M.GLOW, { group: 10 + i, paint: p => p[1] < c[1] + .055 ? M.RUNE : undefined }); } } },
   "candles": { cls: "small", desc: "a cluster of pillar candles of different heights, wax pooled round them", glow: true, light: "warm", build(m) { m.ell([0, .01, 0], [.2, .012, .16], M.BELLY, { group: 1 }); [[0, 0, .3, .05], [.09, .04, .2, .04], [-.08, .05, .15, .04], [.03, -.07, .1, .035]].forEach(([x, z, h, r], i) => pCandle(m, [x, .01, z], h, r, 2 + i * 2)); } },
-  "jam-jar-lantern": { cls: "small", desc: "a jam-jar lantern, a candle glowing inside", glow: true, light: "warm", build(m) { ctCyl(m, [0, 0, 0], [0, .18, 0], .07, M.SHADES, 1, { paint: p => p[2] > .04 && p[1] > .03 && p[1] < .15 ? M.GLOW : undefined, end: M.FRAME }); m.ell([0, .08, 0], [.03, .05, .03], M.RUNE, { group: 2, extra: true }); m.chain([[-.07, .18, 0, .005], [0, .28, 0, .005], [.07, .18, 0, .005]], M.FRAME, { group: 3 }); } },
-  "lantern-pole": { cls: "small", desc: "a paper lantern hanging from a shepherd's-crook pole, glowing in a neon", glow: true, light: "neon", build(m) { m.chain([[0, 0, 0, .018], [0, 1.4, 0, .015], [.1, 1.55, 0, .012], [.25, 1.5, 0, .012]], M.FRAME, { group: 1 }); m.seg([.25, 1.5, 0], [.25, 1.38, 0], .004, .004, M.NOSE, { group: 2 }); m.ell([.25, 1.24, 0], [.14, .15, .14], M.MAGIC, { group: 3, paint: p => Math.abs(Math.sin(p[1] * 60)) > .85 ? M.MAGIC2 : undefined }); } },
-  "lantern-string": { cls: "small", desc: "a string of round paper lanterns sagging between two poles", glow: true, light: "neon", build(m) { for (const x of [-.9, .9]) ctBar(m, [x, 0, 0], [x, 1.45, 0], 1, .02, M.WOOD, undefined); const pts = pSag([-.9, 1.42, 0], [.9, 1.42, 0], .25); m.chain(pts.map(p => [...p, .005]), M.NOSE, { group: 2 }); [2, 4, 6, 8].forEach((i, k) => m.ell(v3.add(pts[i], [0, -.12, 0]), [.09, .1, .09], k % 2 ? M.MAGIC2 : M.MAGIC, { group: 3 + k })); } },
-  "fairy-bush": { cls: "small", desc: "a bush draped in warm fairy lights, a few bulbs in neon", glow: true, light: "warm", build(m) { for (const [x, y, z, r] of [[0, .3, 0, .38], [-.25, .22, .1, .25], [.25, .24, -.05, .26]]) m.ell([x, y, z], [r, r * .85, r], M.LEAF, { group: 1, rough: .03, paint: p => ctCell(p, 10, 2) < .3 ? M.LEAF3 : undefined }); const pts = []; for (let i = 0; i <= 16; i++) { const a = i / 16 * Math.PI * 2.4 - 1, y = .12 + i * .032; pts.push([Math.cos(a) * .5, y, Math.sin(a) * .42]); } pString(m, pts, 12, 3); } },
-  "fairy-branch": { cls: "small", desc: "a fallen bough propped up, wound with fairy lights", glow: true, light: "warm", build(m) { m.chain([[-.7, 0, 0, .06], [-.3, .45, 0, .05], [.2, .6, .05, .04], [.6, .4, .05, .03]], M.TRUNK, { group: 1, rough: .01 }); m.seg([-.3, .45, 0], [-.4, 0, .1], .03, .03, M.TRUNK, { group: 1 }); const pts = []; for (let i = 0; i <= 18; i++) { const t = i / 18, b = t < .33 ? v3.lerp([-.7, 0, 0], [-.3, .45, 0], t * 3) : t < .66 ? v3.lerp([-.3, .45, 0], [.2, .6, .05], (t - .33) * 3) : v3.lerp([.2, .6, .05], [.6, .4, .05], (t - .66) * 3); pts.push(v3.add(b, [0, Math.sin(i * 1.7) * .06, Math.cos(i * 1.7) * .06])); } pString(m, pts, 10, 2); } },
+  "jam-jar-lantern": { cls: "small", desc: "a jam-jar lantern, a candle glowing inside", glow: true, light: "warm", pointLight: { rgb: [255, 186, 96], radius: 2.5, height: .2 }, build(m) { ctCyl(m, [0, 0, 0], [0, .18, 0], .07, M.SHADES, 1, { paint: p => p[2] > .04 && p[1] > .03 && p[1] < .15 ? M.GLOW : undefined, end: M.FRAME }); m.ell([0, .08, 0], [.03, .05, .03], M.RUNE, { group: 2, extra: true }); m.chain([[-.07, .18, 0, .005], [0, .28, 0, .005], [.07, .18, 0, .005]], M.FRAME, { group: 3 }); } },
+  "lantern-pole": { cls: "small", desc: "a paper lantern hanging from a shepherd's-crook pole, glowing in a neon", glow: true, light: "neon", bob: [.04, 2.8], pointLight: { rgb: "neon", radius: 3.5, height: 1.3 }, build(m) { m.chain([[0, 0, 0, .018], [0, 1.4, 0, .015], [.1, 1.55, 0, .012], [.25, 1.5, 0, .012]], M.FRAME, { group: 1 }); m.seg([.25, 1.5, 0], [.25, 1.38, 0], .004, .004, M.NOSE, { group: 2 }); m.ell([.25, 1.24, 0], [.14, .15, .14], M.MAGIC, { group: 3, paint: p => Math.abs(Math.sin(p[1] * 60)) > .85 ? M.MAGIC2 : undefined }); } },
+  "lantern-string": { cls: "small", desc: "a string of round paper lanterns sagging between two poles", glow: true, light: "neon", bob: [.05, 3.2], pointLight: { rgb: "neon", radius: 4.5, height: 1.2 }, build(m) { for (const x of [-.9, .9]) ctBar(m, [x, 0, 0], [x, 1.45, 0], 1, .02, M.WOOD, undefined); const pts = pSag([-.9, 1.42, 0], [.9, 1.42, 0], .25); m.chain(pts.map(p => [...p, .005]), M.NOSE, { group: 2 }); [2, 4, 6, 8].forEach((i, k) => m.ell(v3.add(pts[i], [0, -.12, 0]), [.09, .1, .09], k % 2 ? M.MAGIC2 : M.MAGIC, { group: 3 + k })); } },
+  "fairy-bush": { cls: "small", desc: "a bush draped in warm fairy lights, a few bulbs in neon", glow: true, light: "warm", bob: [.015, 3.6], build(m) { for (const [x, y, z, r] of [[0, .3, 0, .38], [-.25, .22, .1, .25], [.25, .24, -.05, .26]]) m.ell([x, y, z], [r, r * .85, r], M.LEAF, { group: 1, rough: .03, paint: p => ctCell(p, 10, 2) < .3 ? M.LEAF3 : undefined }); const pts = []; for (let i = 0; i <= 16; i++) { const a = i / 16 * Math.PI * 2.4 - 1, y = .12 + i * .032; pts.push([Math.cos(a) * .5, y, Math.sin(a) * .42]); } pString(m, pts, 12, 3); } },
+  "fairy-branch": { cls: "small", desc: "a fallen bough propped up, wound with fairy lights", glow: true, light: "warm", bob: [.02, 3.4], build(m) { m.chain([[-.7, 0, 0, .06], [-.3, .45, 0, .05], [.2, .6, .05, .04], [.6, .4, .05, .03]], M.TRUNK, { group: 1, rough: .01 }); m.seg([-.3, .45, 0], [-.4, 0, .1], .03, .03, M.TRUNK, { group: 1 }); const pts = []; for (let i = 0; i <= 18; i++) { const t = i / 18, b = t < .33 ? v3.lerp([-.7, 0, 0], [-.3, .45, 0], t * 3) : t < .66 ? v3.lerp([-.3, .45, 0], [.2, .6, .05], (t - .33) * 3) : v3.lerp([.2, .6, .05], [.6, .4, .05], (t - .66) * 3); pts.push(v3.add(b, [0, Math.sin(i * 1.7) * .06, Math.cos(i * 1.7) * .06])); } pString(m, pts, 10, 2); } },
   "tiki-torch": { cls: "small", desc: "a bamboo tiki torch, its flame burning", glow: true, light: "warm", build(m) { m.seg([0, 0, 0], [0, 1.25, 0], .025, .03, M.STRAW, { group: 1, paint: p => (p[1] * 6) % 1 < .08 ? M.WOOD : undefined }); m.seg([0, 1.2, 0], [0, 1.38, 0], .06, .05, M.STRAW, { group: 2, paint: p => ctCell(p, 30) < .3 ? M.WOOD : undefined }); m.flat([0, 1.52, .01], [1, 0, .3], [0, 1, 0], .1, .17, (s, t) => { const u = (t + 1) / 2, half = Math.sin(Math.PI * Math.min(1, u * 1.1)) * (1 - u) * 1.4; return Math.abs(s) > half ? null : Math.abs(s) < half * .45 && u < .6 ? M.RUNE : M.GLOW; }, { group: 3, bend: .2 }); } },
   "fire-pit-lit": { cls: "small", desc: "a little fire pit in a ring of stones, its fire lit", glow: true, light: "warm", build(m) { for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283; m.ell([Math.cos(a) * .32, .06, Math.sin(a) * .26], [.08, .065, .07], M.STONE, { group: 1 + (i % 2), rough: .01 }); } for (const [a, b] of [[[-.18, .04, -.05], [.15, .1, .06]], [[-.06, .04, .14], [.12, .08, -.12]]]) m.seg(a, b, .035, .03, M.BARKD, { group: 3, paint: p => ctCell(p, 25) < .4 ? M.GLOW : undefined }); [[0, 0], [.05, .05], [-.05, .03]].forEach(([x, z], i) => m.flat([x, .2 + i * .02, z], [1, 0, .4], [0, 1, 0], .08 - i * .015, .16 - i * .03, (s, t) => { const u = (t + 1) / 2, half = Math.sin(Math.PI * Math.min(1, u * 1.1)) * (1 - u) * 1.4; return Math.abs(s) > half ? null : Math.abs(s) < half * .45 && u < .6 ? M.RUNE : M.GLOW; }, { group: 4 + i, bend: .2 })); } },
   "led-cube": { cls: "small", desc: "a glowing LED cube seat, lit from within in a neon", glow: true, light: "neon", build(m) { m.box([0, .2, 0], [.2, .2, .2], M.MAGIC, { round: .03, group: 1, paint: p => p[1] > .38 || ctCell(p, 8) < .15 ? M.MAGIC2 : undefined }); } },
-  "mirror-ball": { cls: "small", desc: "a little mirror ball hanging from a crooked branch stand, throwing sparkles", glow: true, light: "neon", build(m) { m.chain([[0, 0, 0, .03], [.02, .9, 0, .025], [.2, 1.25, 0, .02], [.45, 1.32, 0, .015]], M.TRUNK, { group: 1, rough: .006 }); m.seg([.45, 1.32, 0], [.45, 1.12, 0], .004, .004, M.NOSE, { group: 2 }); m.ell([.45, 1.0, 0], [.12, .12, .12], M.FRAME, { group: 3, paint: p => { const a = Math.atan2(p[2], p[0] - .45), b = p[1]; return (Math.floor(a * 5) + Math.floor(b * 30)) % 2 ? M.SHADES : ctCell(p, 30) < .25 ? M.MAGIC2 : undefined; } }); for (let i = 0; i < 4; i++) ctGlow(m, [.45 + Math.cos(i * 1.6) * .35, .55 + ctHash(i) * .5, Math.sin(i * 1.6) * .3], .018, 4 + i, M.MAGIC2); } },
+  "mirror-ball": { cls: "small", desc: "a little mirror ball hanging from a crooked branch stand, throwing sparkles", glow: true, light: "neon", bob: [.03, 4.0], build(m) { m.chain([[0, 0, 0, .03], [.02, .9, 0, .025], [.2, 1.25, 0, .02], [.45, 1.32, 0, .015]], M.TRUNK, { group: 1, rough: .006 }); m.seg([.45, 1.32, 0], [.45, 1.12, 0], .004, .004, M.NOSE, { group: 2 }); m.ell([.45, 1.0, 0], [.12, .12, .12], M.FRAME, { group: 3, paint: p => { const a = Math.atan2(p[2], p[0] - .45), b = p[1]; return (Math.floor(a * 5) + Math.floor(b * 30)) % 2 ? M.SHADES : ctCell(p, 30) < .25 ? M.MAGIC2 : undefined; } }); for (let i = 0; i < 4; i++) ctGlow(m, [.45 + Math.cos(i * 1.6) * .35, .55 + ctHash(i) * .5, Math.sin(i * 1.6) * .3], .018, 4 + i, M.MAGIC2); } },
   "uv-rock": { cls: "small", desc: "a mossy rock splashed with ultraviolet paint, glowing", glow: true, light: "neon", build(m) { m.ell([0, .2, 0], [.4, .25, .3], M.STONE, { group: 1, rough: .03, paint: p => { const n = ctCell(p, 9, 2), s = Math.hypot(p[0] - .1, p[1] - .3) < .12 || Math.hypot(p[0] + .2, p[2] - .2) < .08; return s || n < .08 ? M.MAGIC : n > .85 ? M.MOSS : undefined; } }); } },
   "uv-stump": { cls: "small", desc: "a stump daubed with glowing ultraviolet spirals", glow: true, light: "neon", build(m) { ctCyl(m, [0, 0, 0], [0, .35, 0], .22, M.TRUNK, 1, { paint: p => { const a = Math.atan2(p[2], p[0]); return Math.abs(Math.sin(a * 2 + p[1] * 18)) > .9 && p[2] > 0 ? M.MAGIC : ctCell(p, 12) < .15 ? M.BARKD : undefined; }, end: p => (Math.hypot(p[0], p[2]) * 30) % 1 < .2 ? M.MAGIC : M.STRAW }); } },
 
+  // ---- hanging from real branches (Ed: hang them from real branch points; the pole versions stay for open ground). Each hangs from its
+  // `hang` anchor (the top attach point, pixels from the sprite's top-left), which the prototype puts on a branch point; `bob` swings it ----
+  "lantern-hanging": { cls: "small", desc: "a paper lantern hanging on its cord from a branch, glowing in a neon", glow: true, light: "neon", hang: true, anchors: { hang: [0, 1.6, 0] }, bob: [.05, 2.8], pointLight: { rgb: "neon", radius: 3.5, height: 1.2 }, build(m) { m.seg([0, 1.6, 0], [0, 1.4, 0], .004, .004, M.NOSE, { group: 1 }); m.ell([0, 1.26, 0], [.14, .15, .14], M.MAGIC, { group: 2, paint: p => Math.abs(Math.sin(p[1] * 60)) > .85 ? M.MAGIC2 : undefined }); m.seg([0, 1.1, 0], [0, 1.06, 0], .03, .02, M.BODY3, { group: 3 }); } },
+  "lanterns-hanging": { cls: "small", desc: "three paper lanterns hanging at different heights from one branch", glow: true, light: "neon", hang: true, anchors: { hang: [0, 1.7, 0] }, bob: [.06, 3.1], pointLight: { rgb: "neon", radius: 4, height: 1.2 }, build(m) { [[-.2, 1.25, .02, .11], [.05, 1.0, -.05, .14], [.25, 1.3, .04, .1]].forEach(([x, y, z, r], i) => { m.chain([[0, 1.7, 0, .004], [x, y + r + .02, z, .004]], M.NOSE, { group: 1 }); m.ell([x, y, z], [r, r * 1.08, r], i === 1 ? M.MAGIC2 : M.MAGIC, { group: 2 + i, paint: p => Math.abs(Math.sin(p[1] * 70)) > .85 ? M.MAGIC2 : undefined }); }); } },
+  "jar-hanging": { cls: "small", desc: "a jam-jar lantern hanging on a wire from a branch, its candle lit", glow: true, light: "warm", hang: true, anchors: { hang: [0, 1.3, 0] }, bob: [.04, 2.6], pointLight: { rgb: [255, 186, 96], radius: 2.5, height: 1.0 }, build(m) { m.chain([[0, 1.3, 0, .005], [0, 1.15, 0, .005]], M.FRAME, { group: 1 }); m.chain([[-.07, 1.1, 0, .005], [0, 1.15, 0, .005], [.07, 1.1, 0, .005]], M.FRAME, { group: 1 }); ctCyl(m, [0, .92, 0], [0, 1.1, 0], .07, M.SHADES, 2, { paint: p => p[2] > .04 && p[1] > .95 && p[1] < 1.07 ? M.GLOW : undefined, end: M.FRAME }); m.ell([0, 1.0, 0], [.03, .05, .03], M.RUNE, { group: 3, extra: true }); } },
+  "fairy-lights-hanging": { cls: "small", desc: "a strand of warm fairy lights hanging in loops from a branch", glow: true, light: "warm", hang: true, anchors: { hang: [0, 1.6, 0] }, bob: [.02, 3.3], build(m) { const pts = []; for (let i = 0; i <= 20; i++) { const t = i / 20; pts.push([Math.sin(t * Math.PI * 3) * .3, 1.6 - Math.sin(t * Math.PI) * .9 - t * .2, Math.cos(t * Math.PI * 3) * .08]); } pString(m, pts, 12, 1); } },
+  "mirror-ball-hanging": { cls: "small", desc: "a little mirror ball hanging on a cord from a branch, throwing sparkles", glow: true, light: "neon", hang: true, anchors: { hang: [0, 1.5, 0] }, bob: [.03, 4.0], build(m) { m.seg([0, 1.5, 0], [0, 1.2, 0], .004, .004, M.NOSE, { group: 1 }); m.ell([0, 1.08, 0], [.12, .12, .12], M.FRAME, { group: 2, paint: p => { const a = Math.atan2(p[2], p[0]), b = p[1]; return (Math.floor(a * 5) + Math.floor(b * 30)) % 2 ? M.SHADES : ctCell(p, 30) < .25 ? M.MAGIC2 : undefined; } }); for (let i = 0; i < 4; i++) ctGlow(m, [Math.cos(i * 1.6) * .35, .6 + ctHash(i) * .5, Math.sin(i * 1.6) * .3], .018, 3 + i, M.MAGIC2); } },
   // ---- furniture ----
   "folding-table": { cls: "furniture", desc: "a folding table left out, cups, cans and a bottle on it", build(m) { m.box([0, .55, 0], [.6, .02, .3], M.BELLY, { round: .02, group: 1, paint: p => ctCell(p, 14) < .1 ? M.STONED : undefined }); for (const x of [-.5, .5]) for (const s of [-1, 1]) ctBar(m, [x, 0, s * .25], [x, .54, -s * .2], 2, .015, M.FRAME, undefined); pCup(m, [-.3, .57, .1], 3); pCup(m, [-.15, .57, -.1], 4, M.CLOTH); pCan(m, [.1, .57, .05], 5, M.FRAME); pBottle(m, [.35, .57, -.05], 6); pCup(m, [.25, .6, .15], 7, M.ACCENT, 1.5); } },
   "plastic-chair": { cls: "furniture", desc: "a white plastic garden chair", build(m) { pChair(m, [0, 0, 0], 1); } },
@@ -5629,7 +5672,7 @@ const BALLOONS = {
   "balloon-foil-heart": { desc: "a foil heart balloon on a string weighted to the ground", bob: [.09, 3.1], anchors: { tie: [0, .06, 0] }, build(m) { m.ell([0, .04, 0], [.06, .05, .06], M.BODY3, { group: 1 }); m.chain([[0, .06, 0, .006], [-.04, .6, 0, .006], [0, 1.05, 0, .006]], M.CLOTH, { group: 2 }); m.flat([0, 1.3, 0], [1, 0, .2], [0, 1, 0], .25, .25, (s, t) => { const x = s * 1.15, y = t * 1.15 + .2, a = x * x + y * y - 1; return a * a * a - x * x * y * y * y > 0 ? null : Math.hypot(s + .3, t - .25) < .12 ? SHINE : BALLOON[1]; }, { group: 3, bend: .5 }); } },
   "balloon-deflated": { desc: "a deflated balloon, wrinkled on the ground, its string trailing", build(m) { m.ell([0, .02, 0], [.11, .025, .08], BALLOON[0], { group: 1, rough: .012, paint: pShine([0, 0, 0], [-.3, .9, .3], .97) }); m.chain([[.1, .01, 0, .005], [.25, .01, .06, .005], [.38, .01, -.03, .005]], M.CLOTH, { group: 2 }); } },
   "balloon-half": { desc: "a half-deflated balloon sagging on the ground at the end of its string", bob: [.02, 4.5], build(m) { pBalloon(m, [0, .12, 0], .13, BALLOON[5], 1, { dir: [.3, 1, .2], flat: .8 }); m.chain([[0, .0, .05, .005], [.2, .01, .1, .005], [.35, .01, 0, .005]], M.CLOTH, { group: 2 }); } },
-  "balloon-caught": { desc: "an escaped balloon caught high in a tree, its string hanging down; hangs from its `tie` (top) anchor in a crown", bob: [.05, 2.6], hang: true, anchors: { tie: [0, 1.0, 0] }, build(m) { pBalloon(m, [0, 1.12, 0], .13, BALLOON[6], 1); const pts = []; for (let k = 0; k <= 8; k++) { const t = k / 8; pts.push([Math.sin(t * 7) * .04, .97 - t * .97, 0, .005]); } m.chain(pts, M.CLOTH, { group: 2 }); } },
+  "balloon-caught": { desc: "an escaped balloon caught high in a tree, its string hanging down; hangs from its `tie` (top) anchor in a crown", bob: [.05, 2.6], hang: true, anchors: { tie: [0, 1.0, 0], hang: [0, 1.0, 0] }, build(m) { pBalloon(m, [0, 1.12, 0], .13, BALLOON[6], 1); const pts = []; for (let k = 0; k <= 8; k++) { const t = k / 8; pts.push([Math.sin(t * 7) * .04, .97 - t * .97, 0, .005]); } m.chain(pts, M.CLOTH, { group: 2 }); } },
 };
 
 // ---------------- campfires (Ed: "Put campfires into the party objects library") ----------------
@@ -5683,7 +5726,7 @@ function partyColours(st = {}, neon = "pink", balloons = "mixed") {
     [M.LEAF]: hsv2rgb(leaf, .55, .45), [M.LEAF2]: hsv2rgb(leaf - .03, .5, .6), [M.LEAF3]: hsv2rgb(leaf + .03, .6, .28), [M.LINE]: [24, 22, 30],
   };
 }
-function partyModel(id, frame = 0) { const d = PARTY_BY_ID[id]; if (!d) throw new Error(`no party object "${id}"`); const m = new Model({ blend: .03 }); d.build(m, frame % d.frames); return m; }
+function partyModel(id, frame = 0) { const d = PARTY_BY_ID[id]; if (!d) throw new Error(`no party object "${id}"`); const m = new Model({ blend: .03 }); d.build(m, frame % d.frames); if (d.anchors?.hang) m.ell(d.anchors.hang, [.022, .022, .022], M.BODY3, { group: 99 }); return m; } // a hanging piece's knot at its hang point, so the crop keeps it
 // One party object, drawn: { whole, top, bot, crownY, origin, anchors?, metres }, like the country pieces; `frame` for the animated ones
 // (frames > 1: the campfires). Bake it with partyColours(style, neon, balloonPalette).
 function partySprite(id, st = {}, { ppm = 16, frame = 0 } = {}) { return pieceSprite(partyModel(id, frame), PARTY_BY_ID[id], st, ppm); }
@@ -7073,6 +7116,7 @@ function renderMap() {
 
 // ================= bestiary: every species at every level, studio-lit =================
 let bestiaryTimer;
+function bestiaryWitch() { const k = JSON.stringify(current); if (bestiaryWitch.k !== k) { bestiaryWitch.k = k; bestiaryWitch.b = bake(witchSprite(current), witchColours(current), current, current.cOutline); } return bestiaryWitch.b; }
 function renderBestiary() {
   clearTimeout(bestiaryTimer);
   bestiaryTimer = setTimeout(() => {
@@ -7086,10 +7130,11 @@ function renderBestiary() {
       const gear = mode === "woken" ? { woken: true } : mode !== "party" ? null : on("gMix") ? partyGear(n + 1, sigilColour(S.id)) : { collar: sigilColour(S.id), hat: on("gHat") ? n % 3 : null, glasses: on("gGlasses") ? GLASSES_STYLES[n % 3] : null, shoes: on("gShoes") ? Object.keys(SHOE_STYLES)[n % 3] : null };
       const levelGear = l => gear && l === 3 && mode === "party" ? null : gear; // legends can't be invited yet
       const lv = [0, 1, 2, 3].map(l => bake(critter(S.id, l, 0, current, facing, levelGear(l)), speciesColours(S.id, current, levelGear(l)), current, current.cOutline));
-      const b1 = bake(critter(S.id, 0, 1, current, facing, gear), speciesColours(S.id, current, gear), current, current.cOutline);
-      const w = lv[3].w + lv[2].w + lv[1].w + lv[0].w + b1.w + 22, h = Math.max(lv[3].h, 20) + 6, tgt = makeTarget(w, h);
+      // all four levels side by side, baby to legend, then the witch for scale (Ed: the size steps should be obvious)
+      const wit = bestiaryWitch(), row = [lv[0], lv[1], lv[2], lv[3], wit];
+      const w = row.reduce((a, b) => a + b.w + 4, 4), h = Math.max(lv[3].h, 20) + 6, tgt = makeTarget(w, h);
       tgt.a.fillStyle = `rgb(${hsv2rgb(current.groundHue, .4, current.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
-      let x = 4; for (const b of [lv[3], lv[2], lv[1], lv[0], b1]) { tgt.a.drawImage(b.A, x, h - 3 - b.h); tgt.n.drawImage(b.N, x, h - 3 - b.h); x += b.w + 4; }
+      let x = 4; for (const b of row) { tgt.a.drawImage(b.A, x, h - 3 - b.h); tgt.n.drawImage(b.N, x, h - 3 - b.h); x += b.w + 4; }
       const card = document.createElement("figure"); card.className = "beast";
       const c = document.createElement("canvas"); c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
       const cap = document.createElement("figcaption"); cap.innerHTML = `<b></b><span></span>`; cap.querySelector("b").textContent = S.name; cap.insertAdjacentHTML("afterbegin", `<span class="sig" aria-hidden="true">${sigilSVG(S.id, { size: 44 })}</span>`); cap.querySelector("span:not(.sig)").textContent = "Legend grows " + S.legend.map(f => FEATURE_NAMES[f] || f).join(" and ") + ". Shown: legend, adult, young, baby (two walk frames).";
@@ -7377,16 +7422,18 @@ function renderParty() {
     const witches = PARTY_OUTFITS.map((P, k) => partyWitch(partySeed + k * 5 + 1, { outfit: P.id }));
     const b = (w, o) => bake(witchSprite(st, { ...o, look: w ? w.look : undefined }), w ? w.colours(st) : witchColours(st), st, st.cOutline);
     if (pose) { const n = WITCH_FOOT_POSES[pose].frames, fr = [...Array(n).keys()]; for (const w of [null, ...witches]) rows.push([...fr.map(frame => b(w, { pose, frame })), ...fr.map(frame => b(w, { pose, frame, facing: "away" }))]); }
-    else for (const w of witches) rows.push([b(w, {}), ...[0, 1, 2, 3].map(frame => b(w, { pose: "lean", frame })), ...["twoStep", "bounce", "spin", "headbang", "jump", "drink", "laugh", "run", "hug", "sitGround", "stargaze"].map((p, k) => b(w, { pose: p, frame: k % WITCH_FOOT_POSES[p].frames, facing: k % 4 === 3 ? "away" : "towards" }))]);
+    else for (const w of witches) rows.push([b(w, {}), ...[0, 1, 2, 3].map(frame => b(w, { pose: "lean", frame })), ...["twoStep", "bounce", "spin", "headbang", "jump", "drink", "laugh", "run", "hug", "sitGround", "stargaze", "limbo"].map((p, k) => b(w, { pose: p, frame: k % WITCH_FOOT_POSES[p].frames, facing: k % 4 === 3 ? "away" : "towards" }))]);
     // the pairs: her partner flipped left-right (normals too) unless it's the conga, placed so their anchors meet
     const pairRow = [];
     for (const [pp, Pr] of Object.entries(WITCH_PAIRS)) {
       const frame = Pr.frame ?? 0, w1 = witches[(partySeed + pairRow.length) % witches.length], w2 = witches[(partySeed + pairRow.length + 3) % witches.length], o = { pose: pp, frame, ...(Pr.heading ? { heading: Pr.heading } : {}) };
-      const sa = witchSprite(st, { ...o, look: w1.look }), sb = witchSprite(st, { ...o, look: w2.look }), ba = bake(sa, w1.colours(st), st, st.cOutline), bb = bake(sb, w2.colours(st), st, st.cOutline);
+      const sa = witchSprite(st, { ...o, look: w1.look }), sb = witchSprite(st, { ...o, pose: Pr.partnerPose || pp, look: w2.look }), ba = bake(sa, w1.colours(st), st, st.cOutline), bb = bake(sb, w2.colours(st), st, st.cOutline);
       const [ax, ay] = sa.anchors[Pr.meet], [bx0, by] = sb.anchors[Pr.partner || Pr.meet], bx = Pr.mirror ? sb.w - bx0 : bx0, ox = Math.round(ax - bx), oy = Math.round(ay - by);
-      const x0 = Math.min(0, ox), y0 = Math.min(0, oy), W = Math.max(sa.w, ox + sb.w) - x0, H = Math.max(sa.h, oy + sb.h) - y0, A = document.createElement("canvas"), N = document.createElement("canvas"); A.width = N.width = W; A.height = N.height = H;
-      for (const [cv, src] of [[A, bb.A], [N, Pr.mirror ? bb.NF : bb.N]]) { const g = cv.getContext("2d"); if (Pr.mirror) { g.save(); g.translate(ox - x0 + sb.w, oy - y0); g.scale(-1, 1); g.drawImage(src, 0, 0); g.restore(); } else g.drawImage(src, ox - x0, oy - y0); }
-      A.getContext("2d").drawImage(ba.A, -x0, -y0); N.getContext("2d").drawImage(ba.N, -x0, -y0);
+      const layers = [{ bk: bb, sp: sb, x: ox, y: oy, mirror: Pr.mirror }];
+      if (Pr.third) { const w3 = witches[(partySeed + pairRow.length + 6) % witches.length], sc = witchSprite(st, { pose: Pr.third.pose, frame: 0, look: w3.look }), [ux, uy] = sa.anchors[Pr.third.under], [tx, ty] = sc.anchors[Pr.third.anchor]; layers.push({ bk: bake(sc, w3.colours(st), st, st.cOutline), sp: sc, x: Math.round(ux - tx), y: Math.round(uy + 2 - ty) }); } // the broom limbo's dancer, under the bar
+      layers.push({ bk: ba, sp: sa, x: 0, y: 0 });
+      const x0 = Math.min(...layers.map(l => l.x)), y0 = Math.min(...layers.map(l => l.y)), W = Math.max(...layers.map(l => l.x + l.sp.w)) - x0, H = Math.max(...layers.map(l => l.y + l.sp.h)) - y0, A = document.createElement("canvas"), N = document.createElement("canvas"); A.width = N.width = W; A.height = N.height = H;
+      for (const l of layers) for (const [cv, src] of [[A, l.bk.A], [N, l.mirror ? l.bk.NF : l.bk.N]]) { const g = cv.getContext("2d"); if (l.mirror) { g.save(); g.translate(l.x - x0 + l.sp.w, l.y - y0); g.scale(-1, 1); g.drawImage(src, 0, 0); g.restore(); } else g.drawImage(src, l.x - x0, l.y - y0); }
       pairRow.push({ A, N, w: W, h: H });
     }
     rows.push(pairRow);

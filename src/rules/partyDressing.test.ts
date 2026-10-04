@@ -10,6 +10,9 @@ describe("party objects (Ed, 2026-10-04)", () => {
   it("home (the dancefloor's area) is dressed too, but nothing lands on the floor, its rim, its speakers, the treehouse or her seat (Ed)", () => {
     const d = dressingOf(map, map.centreCell, t), D = map.dancefloor;
     expect(d.loose.length + d.clusters.length).toBeGreaterThan(5);
+    // The lit ring round the floor's clearing (Ed's playtest): many pieces just outside it.
+    const ring = d.loose.filter(p => Math.abs(Math.hypot(p.x - D.x, p.z - D.z) - (floorClearing(t) + t.partyObjects.laneWidth)) < 0.5);
+    expect(ring.length).toBeGreaterThan(20);
     for (const p of [...d.loose, ...d.clusters, ...(d.caught ? [d.caught] : [])]) {
       expect(Math.hypot(p.x - D.x, p.z - D.z)).toBeGreaterThan(floorClearing(t));
       expect(Math.hypot(p.x - map.treehouse.x, p.z - map.treehouse.z)).toBeGreaterThan(t.treehouse.clear);

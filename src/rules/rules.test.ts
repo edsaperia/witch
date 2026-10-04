@@ -879,6 +879,17 @@ describe("inviting and leashing", () => {
     expect(legend.leashed).toBe(false);
   });
 
+  it("with auto-talk off she talks only while Talk is held (Ed's playtest, 2026-10-04)", () => {
+    const all = fresh(), s = newLeash(), c = all.find(k => k.level === 0)!, w = { x: c.x + 1, z: c.z };
+    for (let t = 0; t < 2; t += 0.1) stepLeash(s, all, { sigil: false, talk: false }, w, true, t, 0.1, TUNING);
+    expect(s.talk).toBeNull();
+    expect(s.progress.size).toBe(0);
+    stepLeash(s, all, { sigil: false, talk: true }, w, true, 2, 0.1, TUNING); // held
+    expect(s.talk?.id).toBe(c.id);
+    stepLeash(s, all, { sigil: false, talk: false }, w, true, 2.1, 0.1, TUNING); // let go
+    expect(s.talk).toBeNull();
+  });
+
   it("sticks with the creature she's talking to while it stays within cancelDistance, and drops it beyond", () => {
     const all = fresh(), s = newLeash(), [a, b] = all.filter(k => k.level === 2).slice(0, 2);
     for (const c of all) if (c !== a && c !== b) c.leashed = true; // just these two about
@@ -969,7 +980,7 @@ describe("laser shows", () => {
     let same = 0;
     for (let t = 0; t < 300; t += 0.5) if ((laserShow(t, 3, 1, TUNING).on > 0.5) === (laserShow(t, 4, 1, TUNING).on > 0.5)) same++;
     expect(same / 600).toBeLessThan(0.9);
-  });
+  }, 60000); // (144 000 shows compared: near the default 5 s on a busy CI runner)
 });
 
 describe("area borders", () => {

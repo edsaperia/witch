@@ -16,6 +16,8 @@ export class PartyObjectsView {
   private upright: SpriteBatch | null = null;
   private flat: SpriteBatch | null = null;
   private dressings = new Map<string, Dressing>();
+  /** The tree each hanging piece hangs in (by area and piece), found once. */
+  private trees = new Map<string, { x: number; z: number } | null>();
   /** Instances drawn this frame (for the debug overlay). */
   count = 0;
 
@@ -84,11 +86,18 @@ export class PartyObjectsView {
       });
       d.loose.forEach((p, i) => put(p.ref, p.x, p.z, p.flip, 200 + i));
       for (const p of d.lights) lights.push(light(p.x, p.z, lightOf(p.ref, t)!, time, since(time, from)));
-      if (d.caught) {
-        // Caught up in the nearest tree's crown, hanging from its tie.
-        const tree = g.forest.treesNear(d.caught.x, d.caught.z, 10).sort((a, b) => Math.hypot(a.x - d!.caught!.x, a.z - d!.caught!.z) - Math.hypot(b.x - d!.caught!.x, b.z - d!.caught!.z))[0];
-        if (tree) put(d.caught.ref, tree.x + 0.6, tree.z + 0.4, d.caught.flip, 400, 3.5 + hash2(Math.round(tree.x), Math.round(tree.z), 5) * 2);
-      }
+      // Hanging things, and the caught balloon: from a branch point in the nearest tree's crown, their
+      // hang (or tie) anchor at that height, a little out from the trunk towards us; none if no tree is near.
+      [...d.hanging, ...(d.caught ? [d.caught] : [])].forEach((p, i) => {
+        const a = art.pieces[p.ref], tk = `${key}:${i}`;
+        // Its tree, found once (asking the forest every frame cost a boosting flight its frame budget).
+        if (!this.trees.has(tk)) this.trees.set(tk, g.forest.treesNear(p.x, p.z, 10).sort((u, v) => Math.hypot(u.x - p.x, u.z - p.z) - Math.hypot(v.x - p.x, v.z - p.z))[0] ?? null);
+        const tree = this.trees.get(tk);
+        if (!a || !tree) return;
+        const k = hash2(Math.round(tree.x * 7) + i, Math.round(tree.z * 7), 5), side = k < 0.5 ? -1 : 1;
+        const branch = 3 + hash2(i, Math.round(tree.x), 6) * 2.5, below = ((a.originY - (a.hang?.y ?? 0)) * mpp);
+        put(p.ref, tree.x + side * (0.6 + k), tree.z + 0.5, p.flip, 400 + i, branch - below);
+      });
     }
     this.upright.set(upright);
     this.flat!.set(flat);

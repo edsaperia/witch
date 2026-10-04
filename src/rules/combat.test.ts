@@ -4,6 +4,8 @@ import { LEGEND, type Creature, type Level } from "./creatures";
 import { newGame, stepGame, STEP, type Game } from "./game";
 import { TUNING, type Tuning } from "./tuning";
 import { AREA_TYPES } from "./map";
+import { canEat, feed } from "./berries";
+import { invitable } from "./leash";
 import { hurt, knockOut, newHealth, repair } from "./knockout";
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
@@ -20,7 +22,7 @@ function quiet(t: Tuning = TUNING): Game {
 /** Put a creature at (x, z) as a given kind and level, wild or in the witch's party. */
 function place(g: Game, i: number, species: string, level: Level, x: number, z: number, party = false): Creature {
   const c = g.creatures.find(k => !k.gone && !k.leashed && k.id >= i && Math.hypot(k.x - g.witch.x, k.z - g.witch.z) > 80)!;
-  Object.assign(c, { species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, hp: undefined, boss: false, siege: undefined, rest: 0 });
+  Object.assign(c, { species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, rest: 0 });
   c.cell = g.map.cellSafe(x, z).cell as [number, number];
   if (party) { c.leashed = true; g.leash.stack.push(c.id); }
   g.byArea = null;
@@ -197,19 +199,106 @@ describe("a hit at her last point", () => {
 });
 
 describe("inviting under fire (Ed, 2026-10-04)", () => {
-  it("loses invite.hitPenalty seconds of a chat each time she's hit", () => {
+  it("keeps a chat's progress when she's hit (losing a hit is the cost)", () => {
     const g = quiet(), w = g.witch;
-    const pup = place(g, 0, "fox", 2, w.x + 5, w.z); // an adult fox: a long chat
+    place(g, 0, "fox", 2, w.x + 5, w.z); // an adult fox: a long chat
     place(g, 0, "owl", 1, w.x - 9, w.z);
-    let hits = 0, last = TUNING.witchHealth.hits, peak = 0;
+    let hits = 0, last = TUNING.witchHealth.hits, prev = 0;
     for (let i = 0; i < 8 / STEP; i++) {
       stepGame(g, idle, STEP);
       const hp = g.witches[0].health.hp, t = g.leash.talk?.t ?? 0;
-      if (hp < last) { hits++; expect(t).toBeLessThanOrEqual(Math.max(0, peak - TUNING.invite.hitPenalty) + 0.05); }
-      last = hp; peak = t;
+      if (hp < last) { hits++; expect(t).toBeGreaterThanOrEqual(prev); }
+      last = hp; prev = t;
     }
     expect(hits).toBeGreaterThan(0);
-    expect(pup.leashed).toBe(false); // not yet: the hits set it back
+  }, 60000);
+});
+
+describe("Ed's Stage 4 rulings", () => {
+  it("never lets anything attack a baby: a party of babies is safe in a fight, and wild babies are left alone", () => {
+    const g = quiet(), w = g.witch;
+    const pup = place(g, 0, "hedgehog", 0, w.x + 2, w.z, true);
+    const wildPup = place(g, 0, "boar", 0, w.x + 3, w.z + 1);
+    place(g, 0, "bear", 2, w.x + 4, w.z); place(g, 0, "owl", 2, w.x + 6, w.z + 3);
+    place(g, 0, "wolf", 2, w.x + 2, w.z - 1, true);
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 };
+    run(g, 30);
+    expect(pup.gone).toBeFalsy(); expect(pup.hp ?? maxHp(0)).toBe(maxHp(0));
+    expect(wildPup.gone).toBeFalsy(); expect(wildPup.hp ?? maxHp(0)).toBe(maxHp(0));
+  }, 60000);
+
+  it("goes for her within 30 m and lets her go when she rises, or once she's out of its area, range and 30 m; then it walks back", () => {
+    const g = quiet(), w = g.witch;
+    const wolf = place(g, 0, "wolf", 1, w.x + 25, w.z);
+    run(g, 1);
+    expect(wolf.fight?.target).toEqual({ kind: "witch", id: 0 });
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 };
+    run(g, 0.5);
+    expect(wolf.fight?.target ?? null).toBeNull();
+    g.witch = { ...g.witch, mode: "ground", lift: 0 };
+    run(g, 0.5);
+    expect(wolf.fight?.target).toEqual({ kind: "witch", id: 0 });
+    // Away out of its area, past its range and 30 m: it gives up and heads home.
+    const far = { x: wolf.homeX + 400, z: wolf.homeZ };
+    g.witch = { ...g.witch, x: far.x, z: far.z };
+    run(g, 1);
+    expect(wolf.fight?.target ?? null).toBeNull();
+    wolf.x = wolf.homeX + 150; wolf.z = wolf.homeZ; // (as if it had chased her out of its area)
+    const d0 = Math.hypot(wolf.x - wolf.anchorX, wolf.z - wolf.anchorZ);
+    g.witch = { ...g.witch, x: wolf.homeX + 120, z: wolf.homeZ + 200, mode: "treetop", lift: 1 }; // near enough to simulate it
+    run(g, 5);
+    expect(Math.hypot(wolf.x - wolf.anchorX, wolf.z - wolf.anchorZ)).toBeLessThan(d0);
+  }, 60000);
+
+  it("has party animals following her take on only what attacks her or them; parked ones guard round their sigil", () => {
+    const g = quiet(), w = g.witch;
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // nothing attacks her up there
+    const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true), idler = place(g, 0, "boar", 1, w.x + 14, w.z); // beyond its aggro of the wolf
+    idler.rest = 100;
+    run(g, 3);
+    expect(mine.fight?.target ?? null).toBeNull(); // the boar isn't attacking anyone: leave it
+    // Parked by the boar, it guards.
+    g.leash.stack = g.leash.stack.filter(id => id !== mine.id);
+    g.leash.placed.push({ id: mine.id, x: idler.x - 3, z: idler.z, at: g.clock.time });
+    run(g, 3);
+    expect(mine.fight?.target).toEqual({ kind: "creature", id: idler.id });
+  }, 60000);
+
+  it("heals a party animal to full when it eats a berry (even a legend) or is invited", () => {
+    const g = quiet(), w = g.witch;
+    const a = place(g, 0, "fox", 1, w.x + 2, w.z, true), l = place(g, 0, "stag", LEGEND, w.x + 3, w.z, true);
+    a.hp = 10; l.hp = 50;
+    feed(g.berries, a, g.clock.time, TUNING); feed(g.berries, l, g.clock.time, TUNING);
+    expect(a.hp).toBeUndefined(); expect(l.hp).toBeUndefined(); // undefined: full
+    expect(a.healedAt).toBe(g.clock.time);
+    expect(canEat(Object.assign(l, { hp: 1 }), g.berries)).toBe(true); // a hurt legend wants a berry
+    expect(canEat(Object.assign(l, { hp: undefined }), g.berries)).toBe(false); // a whole one doesn't
+    const wild = place(g, 0, "badger", 1, w.x + 4, w.z);
+    wild.hp = 5;
+    for (let i = 0; i < 10 / STEP && !wild.leashed; i++) stepGame(g, { ...idle, inviteNearest: i === 0 }, STEP);
+    expect(wild.leashed).toBe(true);
+    expect(wild.hp).toBeUndefined();
+  }, 60000);
+
+  it("leaves a woken area's babies out of its siege: they stay home and can still be invited", () => {
+    const g = newGame(77, TUNING);
+    g.clock.paused = false;
+    g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
+    const next = g.party.next[0], here = g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1]);
+    here.slice(1).forEach(c => { c.level = 1; });
+    const baby = here[0]; baby.level = 0;
+    stepGame(g, { ...idle, nextWave: true }, STEP);
+    expect(baby.siege).toBeUndefined();
+    expect(here.slice(1).every(c => c.siege)).toBe(true);
+    expect(invitable(baby)).toBe(true);
+  }, 60000);
+
+  it("has kiting kinds (the raven) keep their distance while they shoot", () => {
+    const g = quiet(), w = g.witch;
+    const raven = place(g, 0, "raven", 1, w.x + 4, w.z);
+    run(g, 4);
+    const d = Math.hypot(raven.x - g.witch.x, raven.z - g.witch.z), R = attackOf("raven", 1)!.attack.range;
+    expect(d).toBeGreaterThan(R * COMBAT.kite.near * 0.8);
   }, 60000);
 });
 

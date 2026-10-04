@@ -9,6 +9,8 @@ export const KEYS = {
   left: ["ArrowLeft"], right: ["ArrowRight"], up: ["ArrowUp"], down: ["ArrowDown"],
   rise: ["Space"],
   spell: ["KeyQ"], dash: ["KeyW"], sigil: ["KeyE"], cycle: ["KeyR"],
+  // Auto-talk on or off (Ed's playtest, 2026-10-04); with it off, she talks while Talk is held.
+  autoTalk: ["KeyT", "Digit1"], talk: ["ShiftLeft", "ShiftRight"],
   slot1: ["Digit1"], slot2: ["Digit2"], slot3: ["Digit3"], slot4: ["Digit4"],
   zoomIn: ["KeyZ", "Equal", "NumpadAdd"], zoomOut: ["KeyX", "Minus", "NumpadSubtract"],
   debug: ["Backquote"],
@@ -18,8 +20,8 @@ export const KEYS = {
 
 /** The action bar's eight slots, in order, and what each holds (null: empty, for later spells,
  *  items and totems). */
-export const ACTION_BAR: { key: string; code: string; action: "spell" | "dash" | "sigil" | "cycle" | null }[] = [
-  { key: "1", code: "Digit1", action: null }, { key: "2", code: "Digit2", action: null }, { key: "3", code: "Digit3", action: null }, { key: "4", code: "Digit4", action: null },
+export const ACTION_BAR: { key: string; code: string; action: "spell" | "dash" | "sigil" | "cycle" | "autoTalk" | null }[] = [
+  { key: "1", code: "Digit1", action: "autoTalk" }, { key: "2", code: "Digit2", action: null }, { key: "3", code: "Digit3", action: null }, { key: "4", code: "Digit4", action: null },
   { key: "Q", code: "KeyQ", action: "spell" }, { key: "W", code: "KeyW", action: "dash" }, { key: "E", code: "KeyE", action: "sigil" }, { key: "R", code: "KeyR", action: "cycle" },
 ];
 
@@ -28,7 +30,7 @@ export const PAD = { rise: [3], dash: [0], spell: [1], sigil: [2], cycle: [11], 
 
 const GAME_KEYS = new Set<string>(Object.values(KEYS).flat());
 
-export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean; nextWave?: boolean; pauseWaves?: boolean; sigil?: boolean; spell?: boolean; cycle?: boolean; dash?: boolean }
+export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean; nextWave?: boolean; pauseWaves?: boolean; sigil?: boolean; spell?: boolean; cycle?: boolean; dash?: boolean; /** The action bar's auto-talk slot was clicked. */ autoTalk?: boolean }
 
 export class Input {
   private keys = new Set<string>();
@@ -60,7 +62,7 @@ export class Input {
   }
 
   /** This frame's controls; button presses are reported once. */
-  read(): Controls & { debug: boolean } {
+  read(): Controls & { debug: boolean; toggleAutoTalk: boolean } {
     const k = (a: readonly string[]) => (a.some(c => this.keys.has(c)) ? 1 : 0), p = (a: readonly string[]) => a.some(c => this.pressed.has(c));
     const nextWave = p(KEYS.nextWave) || this.touch.nextWave, pauseWaves = p(KEYS.pauseWaves) || this.touch.pauseWaves, cycleSpeakers = p(KEYS.cycleSpeakers);
     this.touch.nextWave = false; this.touch.pauseWaves = false;
@@ -113,6 +115,8 @@ export class Input {
 
     const len = Math.hypot(moveX, moveZ);
     if (len > 1) { moveX /= len; moveZ /= len; }
-    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug, nextWave, pauseWaves, cycleSpeakers, sigil, inviteNearest, spell, cycle, feedNearest, dash };
+    const toggleAutoTalk = p(KEYS.autoTalk) || this.touch.autoTalk === true, talkHeld = k(KEYS.talk) > 0;
+    this.touch.autoTalk = false;
+    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug, nextWave, pauseWaves, cycleSpeakers, sigil, inviteNearest, spell, cycle, feedNearest, dash, toggleAutoTalk, talkHeld };
   }
 }
