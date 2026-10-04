@@ -922,7 +922,13 @@ export class View {
   }
 
   /** Draw a frame; with draw false, only bring the camera, batches and art requests up to date. */
+  /** Milliseconds each part of the latest frame took (for the perf check: tools/smoke). */
+  ms: Record<string, number> = {};
+  private lap = 0;
+  private time(part: string): void { const now = performance.now(); this.ms[part] = (this.ms[part] ?? 0) + now - this.lap; this.lap = now; }
+
   render(time: number, draw = true): void {
+    this.ms = {}; this.lap = performance.now();
     const g = this.game, t = g.tuning, pose = poseOf(g);
     // The scenery budget follows the real frame rate (only frames that are drawn count).
     if (draw) {
@@ -937,7 +943,9 @@ export class View {
     const wpp = (2 * pose.distance * Math.tan((t.camera.fov * Math.PI) / 360)) / this.height;
     const up = new THREE.Vector3(0, Math.cos(a), -Math.sin(a));
     // The rolling ground: its window follows her, and the camera rides over its height.
+    this.time("start");
     if (this.heights.follow(g.witch.x, g.witch.z)) this.stats.heightMoves = (this.stats.heightMoves ?? 0) + 1;
+    this.time("heights");
     this.ground.follow(g.witch.x, g.witch.z);
     const target = new THREE.Vector3(pose.tx, pose.ty + groundHeight(pose.tx, pose.tz), pose.tz);
     // The world's bend: only over the treetops (Ed, 2026-10-04), eased in as she rises; from the
@@ -949,6 +957,7 @@ export class View {
       const far = t.haze.far;
       this.sky.update(k, pose.tx, pose.tz, far, 2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (this.width / this.height));
     }
+    this.time("sky");
     const u = target.dot(up), r = target.x;
     target.addScaledVector(up, Math.round(u / wpp) * wpp - u);
     target.x += Math.round(r / wpp) * wpp - r;
@@ -990,12 +999,15 @@ export class View {
     const w = g.witch, h = witchHeight(w, t);
     LIGHT_UNIFORMS.uGlowPos.value.set(w.x, groundHeight(w.x, w.z) + h + t.glowHeight, w.z);
     LIGHT_UNIFORMS.uHazeCentre.value.set(w.x, w.z);
+    this.time("uniforms");
     this.updateSources(time);
+    this.time("sources");
     // The party: soundsystems rising in partifying areas, their lights, the sweeping fronts.
     const party = this.partyView.update(g, time, (x, z, ww, hh) => this.inView(x, z, ww, hh, 4), () => false);
     this.soundBatch.set(party.items);
     this.ground.setSweeps(party.sweeps);
     this.lasers.update(time, party.playing, w.x, w.z, this.speakerTops, g.map.dancefloor);
+    this.time("party");
     // The canopy uplight over the nearest partified areas, fading in with each one's transition.
     {
       const U = SPRITE_UNIFORMS, P = t.party, list = [...g.party.areas.values()].map(a => ({ a, s: g.map.siteOf(a.cell[0], a.cell[1]) }))
@@ -1028,8 +1040,10 @@ export class View {
     const parts = [{ x: w.x, z: w.z, r: 1.6 * (1 - canopyShown(w)) }, ...g.creatures.map(c => ({ x: c.x, z: c.z, r: 1.2, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(c => c.d < t.groundCover.radius).sort((a, b) => a.d - b.d).slice(0, 3)];
     // No tufts over a placed sigil's rune (Ed, v233): trampled out to groundCover.sigilClear, or the rune's own size.
     const clear = g.leash.placed.map(p => ({ x: p.x, z: p.z, r: Math.max(t.groundCover.sigilClear, (3 + g.creatures[p.id].level * 0.8) * 0.45) }));
+    this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
     this.setLights([this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...this.forestLights], w.x, w.z);
+    this.time("grass+lights");
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);
     const bob = Math.sin(time * 2.4) * 0.12;
@@ -1099,7 +1113,9 @@ export class View {
     this.shadow.position.set(wx, 0.03, wz);
     this.shadow.scale.setScalar((1 - 0.5 * canopyShown(w)) * (1 - this.seatK) + 1e-3); // none while she's up on the terrace
 
+    this.time("witch");
     this.refresh();
+    this.time("refresh");
     this.easeAppearing();
     // Make the forest ahead a little each frame (about 4 ms), centred where the view will be in two
     // seconds at her speed, so a rebuild finds its chunks already made instead of making a whole
@@ -1107,9 +1123,11 @@ export class View {
     const lv = this.lastView;
     if (lv) this.stats.forestMissing = g.forest.prefetch(lv.x + w.vx * 2, lv.z + w.vz * 2, lv.half + 64, 4);
     this.stats.forestMs = g.forest.buildMs; g.forest.buildMs = 0;
+    this.time("prefetch");
     this.drawCreatures(time);
     this.drawBerries(time);
     this.checkPops("moving");
+    this.time("creatures");
     this.rulers.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, w.x, w.z);
     const df = g.map.dancefloor;
     this.music.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, df.x, df.z, w.x, w.z, time, t.beat.bpm, this.debugReadouts);
@@ -1131,16 +1149,21 @@ export class View {
       cue(this.nextStones, g.party.next, () => new StoneIndicator(document.body), cd.booting ? cd.boot : cd.gone, cd.booting ? `booting ${Math.ceil(cd.bootLeft)} s` : undefined);
       cue(this.afterNextStones, g.party.afterNext, () => new StoneIndicator(document.body, 2.5, 0.6), cd.booting ? 0 : cd.gone * 0.5);
     }
+    this.time("hud");
     this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
+    this.time("leash");
     this.assets.work(6);
+    this.time("art");
     // The ground's area tiles: everything the cameras can see, plus a band ahead.
     this.stats.pendingGround = this.ground.fill(this.renderer, this.viewRect(t.haze.far, 40), w.x, w.z, 4);
     this.stats.pendingArt = this.assets.pending;
+    this.time("groundTiles");
     if (this.debugCull) this.drawGhosts(time);
     if (!draw) return;
     this.renderer.info.reset();
     this.post.lift = this.game.witch.lift;
     this.post.render(this.scene, this.camera);
+    this.time("draw");
     // Anything set but not drawn (three.js capping a batch's instances) is a bug: count and log it.
     let dropped = 0;
     for (const b of [...this.typeBatches.values(), ...this.creatureBatches.values(), this.propBatch, this.soundBatch, ...(this.speakerBatch ? [this.speakerBatch] : [])]) dropped += b.dropped;
