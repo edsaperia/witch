@@ -474,6 +474,7 @@ function renderMap() {
 
 // ================= bestiary: every species at every level, studio-lit =================
 let bestiaryTimer;
+function bestiaryWitch() { const k = JSON.stringify(current); if (bestiaryWitch.k !== k) { bestiaryWitch.k = k; bestiaryWitch.b = bake(witchSprite(current), witchColours(current), current, current.cOutline); } return bestiaryWitch.b; }
 function renderBestiary() {
   clearTimeout(bestiaryTimer);
   bestiaryTimer = setTimeout(() => {
@@ -487,10 +488,11 @@ function renderBestiary() {
       const gear = mode === "woken" ? { woken: true } : mode !== "party" ? null : on("gMix") ? partyGear(n + 1, sigilColour(S.id)) : { collar: sigilColour(S.id), hat: on("gHat") ? n % 3 : null, glasses: on("gGlasses") ? GLASSES_STYLES[n % 3] : null, shoes: on("gShoes") ? Object.keys(SHOE_STYLES)[n % 3] : null };
       const levelGear = l => gear && l === 3 && mode === "party" ? null : gear; // legends can't be invited yet
       const lv = [0, 1, 2, 3].map(l => bake(critter(S.id, l, 0, current, facing, levelGear(l)), speciesColours(S.id, current, levelGear(l)), current, current.cOutline));
-      const b1 = bake(critter(S.id, 0, 1, current, facing, gear), speciesColours(S.id, current, gear), current, current.cOutline);
-      const w = lv[3].w + lv[2].w + lv[1].w + lv[0].w + b1.w + 22, h = Math.max(lv[3].h, 20) + 6, tgt = makeTarget(w, h);
+      // all four levels side by side, baby to legend, then the witch for scale (Ed: the size steps should be obvious)
+      const wit = bestiaryWitch(), row = [lv[0], lv[1], lv[2], lv[3], wit];
+      const w = row.reduce((a, b) => a + b.w + 4, 4), h = Math.max(lv[3].h, 20) + 6, tgt = makeTarget(w, h);
       tgt.a.fillStyle = `rgb(${hsv2rgb(current.groundHue, .4, current.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
-      let x = 4; for (const b of [lv[3], lv[2], lv[1], lv[0], b1]) { tgt.a.drawImage(b.A, x, h - 3 - b.h); tgt.n.drawImage(b.N, x, h - 3 - b.h); x += b.w + 4; }
+      let x = 4; for (const b of row) { tgt.a.drawImage(b.A, x, h - 3 - b.h); tgt.n.drawImage(b.N, x, h - 3 - b.h); x += b.w + 4; }
       const card = document.createElement("figure"); card.className = "beast";
       const c = document.createElement("canvas"); c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
       const cap = document.createElement("figcaption"); cap.innerHTML = `<b></b><span></span>`; cap.querySelector("b").textContent = S.name; cap.insertAdjacentHTML("afterbegin", `<span class="sig" aria-hidden="true">${sigilSVG(S.id, { size: 44 })}</span>`); cap.querySelector("span:not(.sig)").textContent = "Legend grows " + S.legend.map(f => FEATURE_NAMES[f] || f).join(" and ") + ". Shown: legend, adult, young, baby (two walk frames).";
