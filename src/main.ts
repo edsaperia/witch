@@ -1,7 +1,7 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { Music } from "./platform/music";
 import { musicMix } from "./rules/music";
-import { areaUnderWitch, newGame, stepGame } from "./rules/game";
+import { areaUnderWitch, interpolated, newGame, STEP, stepGame } from "./rules/game";
 import { AREA_TYPES } from "./rules/map";
 import { waveCountdown } from "./rules/party";
 import { parseSeed } from "./rules/map";
@@ -225,7 +225,8 @@ function frame(now: number): void {
   // art in the background instead (and so slow a frame doesn't count against the scenery budget).
   if (game.clock.paused && now - lastDraw < 300) return;
   lastDraw = now;
-  view.render(game.clock.time); // game time: party transitions, sigils and waves are stamped in it
+  // Drawn between the last two fixed steps (game time: party transitions, sigils and waves are stamped in it).
+  interpolated(game, () => view.render(game.clock.time - (1 - game.alpha) * STEP));
   if (debugOn) {
     const w = game.witch, s = view.stats;
     debugEl.textContent = [

@@ -8,7 +8,7 @@ import { Forest, crownReach, treeChance } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
 import { population, spawnCreatures, wildLegendCells, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
-import { dormant, newGame, stepGame } from "./game";
+import { dormant, newGame, STEP, stepGame } from "./game";
 import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, symbolCount } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
@@ -1471,5 +1471,57 @@ describe("spawn markers", () => {
     const f = new Forest(map), s = map.start, l = f.lightsNear(s.x, s.z, 900);
     expect(l.some(x => x.kind === "stone")).toBe(false);
     expect(l.some(x => x.kind === "campfire")).toBe(true);
+  });
+});
+
+describe("the simulation (Stage 4)", () => {
+  // A digest of the game's state: every witch, creature, the party and the clock.
+  const digest = (g: ReturnType<typeof newGame>) => {
+    const parts: number[] = [g.clock.time, g.party.wave, g.party.areas.size];
+    for (const w of g.witches) parts.push(w.body.x, w.body.z, w.body.lift, w.leash.stack.length);
+    for (const c of g.creatures) parts.push(c.x, c.z, c.level, c.leashed ? 1 : 0);
+    let h = 2166136261;
+    for (const v of parts) { const s = v.toFixed(9); for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619); }
+    return (h >>> 0).toString(16);
+  };
+  const play = (frames: number[]) => {
+    const g = newGame(321, TUNING);
+    g.clock.paused = false;
+    frames.forEach((dt, i) => stepGame(g, { moveX: Math.sin(i / 40), moveZ: Math.cos(i / 55), toggleMode: i === 200, zoom: 0, spell: i === 90 }, dt));
+    return g;
+  };
+
+  it("is deterministic: the same seed and inputs give the same state", () => {
+    const frames = Array.from({ length: 600 }, (_, i) => (i % 7 === 0 ? 1 / 30 : 1 / 60));
+    expect(digest(play(frames))).toBe(digest(play(frames)));
+  }, 60000);
+
+  it("steps in fixed steps: a frame's length only decides how many", () => {
+    const g = newGame(321, TUNING);
+    g.clock.paused = false;
+    stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 120);
+    expect(g.clock.time).toBe(0); // half a step: nothing yet, eased between
+    expect(g.alpha).toBeCloseTo(0.5);
+    stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 120);
+    expect(g.clock.time).toBeCloseTo(STEP);
+    stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 3 * STEP);
+    expect(g.clock.time).toBeCloseTo(4 * STEP);
+  });
+
+  it("keeps a press made in a frame too short for a step for the next step", () => {
+    const g = newGame(321, TUNING);
+    g.clock.paused = false;
+    g.witch = { ...g.witch, seated: false };
+    stepGame(g, { moveX: 0, moveZ: 0, toggleMode: true, zoom: 0 }, STEP / 4);
+    expect(g.witch.mode).toBe("ground");
+    stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, STEP);
+    expect(g.witch.mode).toBe("rising");
+  });
+
+  it("has a witch per player, the first the camera's", () => {
+    const g = newGame(321, TUNING, 3);
+    expect(g.witches.length).toBe(3);
+    expect(g.witch).toBe(g.witches[0].body);
+    expect(g.leash).toBe(g.witches[0].leash);
   });
 });
