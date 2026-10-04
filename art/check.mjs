@@ -397,7 +397,7 @@ const report = await b.page.evaluate(async () => {
   { // party objects: each standing, nothing NaN, small in pixel area for its class (litter, small, furniture, set: they're reused many times), decals flat;
     // only the flagged ones glow, each glowing one says its light (neon: its glow in the MAGIC materials, so it recolours by neon; warm: candle gold);
     // every light source glows, half of everything or more glows; a neon piece baked in two neons glows in two colours; clusters of 3 to 8 real objects, 1 to 6 m, mirroring true
-    const bad = [], EM = new Set([...G.EMISSIVE]), area = { litter: 1200, balloon: 4000, small: 4000, furniture: 7000, set: 7000 }; let glowing = 0;
+    const bad = [], EM = new Set([...G.EMISSIVE]), area = { litter: 1200, balloon: 4000, small: 4000, furniture: 7000, set: 7000, home: 7000 }; let glowing = 0;
     for (const d of G.PARTY_OBJECTS) {
       const R = G.partySprite(d.id, st), sp = R.whole, s2 = stats(sp), mats = new Set(sp.m), lit = [...mats].some(v => EM.has(v)), nan = [...sp.n].some(v => !Number.isFinite(v)); if (lit) glowing++;
       const light = !d.glow ? d.light == null : d.light === "neon" ? mats.has(G.M.MAGIC) || mats.has(G.M.MAGIC2) : d.light === "warm" ? [G.M.GLOW, G.M.RUNE, G.M.WOKEN, G.M.COLLAR].some(v => mats.has(v)) : false; // warm: candle gold or fire
