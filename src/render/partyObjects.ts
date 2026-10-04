@@ -37,7 +37,6 @@ export class PartyObjectsView {
     const fwd = camera.getWorldDirection(new THREE.Vector3()), up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion), rise = U.dot(up) / Math.max(0.2, -fwd.y);
     const upright: SpriteInstance[] = [], flat: SpriteInstance[] = [], reach = t.haze.far + g.map.areaSize;
     for (const [key, area] of g.party.areas) {
-      if (!area.soundsystem) continue; // home has the dancefloor
       const site = g.map.siteOf(area.cell[0], area.cell[1]);
       if (Math.abs(site.x - w.x) > reach || Math.abs(site.z - w.z) > reach) continue;
       let d = this.dressings.get(key);

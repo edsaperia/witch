@@ -61,7 +61,10 @@ export function dressingOf(map: ForestMap, cell: Cell, t: Tuning): Dressing {
       const a = r() * Math.PI * 2, dist = map.areaSize * (from + r() * (to - from)), x = site.x + Math.cos(a) * dist, z = site.z + Math.sin(a) * dist;
       const at = map.areaAt(x, z);
       if (at.cell[0] !== cell[0] || at.cell[1] !== cell[1] || map.paths.at(x, z, 1) || map.hardClear(x, z)) continue;
+      // Never on the dancefloor, its rim or its ring of speakers (Ed: home is a party area too, but
+      // its things stay off the floor), nor on the treehouse, its terrace or her start seat.
       if (Math.hypot(x - d.x, z - d.z) < clear || Math.hypot(x - ss.x, z - ss.z) < 4) continue;
+      if (Math.hypot(x - map.treehouse.x, z - map.treehouse.z) < t.treehouse.clear + 2 || Math.hypot(x - map.start.x, z - map.start.z) < 4) continue;
       if (taken.some(q => Math.hypot(q.x - x, q.z - z) < q.r + gap)) continue;
       taken.push({ x, z, r: gap });
       return { x, z };
