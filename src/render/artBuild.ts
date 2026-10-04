@@ -275,9 +275,24 @@ function partyObjectSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; part
   for (const ref of refs) {
     const piece = Art.scenePiece(ref, st) as { sprite: { whole: unknown; origin: { x: number; y: number } }; colours: unknown; decal: boolean; def?: { frames?: number } };
     const id = ref.replace(/^party:/, "").split("~")[0].split("@")[0], n = (Art.PARTY_BY_ID as Record<string, { frames: number }>)[id]?.frames ?? 1;
-    const frames = [sprites.push(Art.bake(piece.sprite.whole, piece.colours, st, "none", mk) as Baked) - 1];
-    for (let f = 1; f < n; f++) frames.push(sprites.push(Art.bake((Art.partySprite(id, st, { frame: f }) as { whole: unknown }).whole, piece.colours, st, "none", mk) as Baked) - 1);
-    party.pieces[ref] = { frames, originX: piece.sprite.origin.x, originY: piece.sprite.origin.y, decal: piece.decal };
+    if (n <= 1) {
+      party.pieces[ref] = { frames: [sprites.push(Art.bake(piece.sprite.whole, piece.colours, st, "none", mk) as Baked) - 1], originX: piece.sprite.origin.x, originY: piece.sprite.origin.y, decal: piece.decal };
+      continue;
+    }
+    // Animated (the fires): each frame is its own size with its own origin, so they're laid into one
+    // shared box with their origins on the same pixel; only the flames move (Ed: "fires of all kinds
+    // seem to jitter during their animations").
+    const raw = Array.from({ length: n }, (_, f) => Art.partySprite(id, st, { frame: f }) as { whole: unknown; origin: { x: number; y: number } });
+    const baked = raw.map(r => Art.bake(r.whole, piece.colours, st, "none", mk) as Baked);
+    const left = Math.max(...raw.map(r => r.origin.x)), up = Math.max(...raw.map(r => r.origin.y));
+    const W = Math.ceil(left + Math.max(...raw.map((r, f) => baked[f].w - r.origin.x))), H = Math.ceil(up + Math.max(...raw.map((r, f) => baked[f].h - r.origin.y)));
+    const frames = baked.map((b, f) => {
+      const dx = Math.round(left - raw[f].origin.x), dy = Math.round(up - raw[f].origin.y), A = mk(W, H), N = mk(W, H);
+      (A.getContext("2d") as CanvasRenderingContext2D).drawImage(b.A as CanvasImageSource, dx, dy);
+      (N.getContext("2d") as CanvasRenderingContext2D).drawImage(b.N as CanvasImageSource, dx, dy);
+      return sprites.push({ A, N, w: W, h: H }) - 1;
+    });
+    party.pieces[ref] = { frames, originX: left, originY: up, decal: piece.decal };
   }
   return { sprites, party };
 }
