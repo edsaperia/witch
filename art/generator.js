@@ -10,6 +10,8 @@ import { defaultCanvas, rng, uni, pick, gauss, hash2, vnoise, hsv2rgb, M, EMISSI
 import { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree, TREE_SPECIES, treeSpecies, crownStats } from "./trees.js";
 import { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, WITCH_HEADINGS } from "./witch.js";
 import { treehouseSprite, treehouseColours } from "./treehouse.js";
+import { TALL_KINDS, tallPiece } from "./tall.js";
+export { TALL_KINDS, tallPiece };
 import { NEW_SET_PIECES, SET_PIECE_KINDS } from "./setpieces.js";
 import { RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset } from "./relics.js";
 import { DECOR, DECOR_BY_ID, decorSprite, decorColours, lakeKit, rockTint } from "./decor.js";
