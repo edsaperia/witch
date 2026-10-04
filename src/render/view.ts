@@ -668,6 +668,8 @@ export class View {
   private berryBatch: SpriteBatch;
   /** When each berry last grew again (game time), so it grows in rather than appearing. */
   private regrewAt = new Map<number, number>();
+  /** Berries just eaten: where, and when (game time), for the nibble's sparkle. */
+  private nibbles: { x: number; z: number; at: number }[] = [];
   /** When each party animal evolved (game time): the flash, the pop and the sparkles. */
   readonly evolvedAt = new Map<number, number>();
   private drawBerries(time: number): void {
@@ -675,8 +677,18 @@ export class View {
     for (const e of B.events) {
       if (e.kind === "regrew") this.regrewAt.set(e.id, time);
       if (e.kind === "evolved") this.evolvedAt.set(e.id, time);
+      if (e.kind === "ate") this.nibbles.push({ x: e.x, z: e.z, at: time });
     }
     for (const [id, at] of this.regrewAt) if (time - at > 0.6) this.regrewAt.delete(id);
+    // The nibble (Ed, v233): a quick sparkle where a berry was eaten, white bits bursting out and fading.
+    this.nibbles = this.nibbles.filter(n => time - n.at < 0.45);
+    for (const n of this.nibbles) {
+      const k = (time - n.at) / 0.45;
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + n.x, r = 0.25 + k * 0.9;
+        items.push({ x: n.x + Math.cos(a) * r, y: 0.75 + Math.sin(a) * r * 0.7 + k * 0.4, z: n.z + 0.3, frame: f, flip: false, scale: 0.45 * (1 - k), glow: 1 });
+      }
+    }
     for (const [id, at] of this.evolvedAt) if (time - at > 1.2) this.evolvedAt.delete(id);
     for (const b of B.berries) {
       const p = B.bushes[b.bush];
@@ -896,7 +908,7 @@ export class View {
     const ws = this.v3.set(g.witch.x, witchHeight(g.witch, t) * 0.5, g.witch.z).project(this.camera);
     SPRITE_UNIFORMS.uCutout.value.set((ws.x * 0.5 + 0.5) * this.width, (ws.y * 0.5 + 0.5) * this.height, 0.5 * cut.screenFraction * this.width * (1 - lifted), Math.max(1, cut.edge * this.width * (1 - lifted)));
     SPRITE_UNIFORMS.uTopFade.value = lifted;
-    SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, this.mpp);
+    SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, this.mpp, t.trunkFade.share);
     // The wind: gentler over the treetops (Ed, v171: "gentle and lovely").
     const W = t.wind;
     SPRITE_UNIFORMS.uWind.value.set(W.on ? W.strength * (1 + (W.treetop - 1) * lifted) : 0, W.speed, W.gustScale, time);
@@ -949,7 +961,9 @@ export class View {
     this.spellFx.update(g, time, witchHeight(w, t) + 0.6);
     // Tufts part round her and the three nearest creatures.
     const parts = [{ x: w.x, z: w.z, r: 1.6 * (1 - canopyShown(w)) }, ...g.creatures.map(c => ({ x: c.x, z: c.z, r: 1.2, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(c => c.d < t.groundCover.radius).sort((a, b) => a.d - b.d).slice(0, 3)];
-    this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05); // out to the canopy hole's edge
+    // No tufts over a placed sigil's rune (Ed, v233): trampled out to groundCover.sigilClear, or the rune's own size.
+    const clear = g.leash.placed.map(p => ({ x: p.x, z: p.z, r: Math.max(t.groundCover.sigilClear, (3 + g.creatures[p.id].level * 0.8) * 0.45) }));
+    this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
     this.setLights([this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...this.forestLights], w.x, w.z);
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);

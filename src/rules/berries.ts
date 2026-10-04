@@ -1,11 +1,13 @@
 // Berries and evolving (Ed, 2026-10-04). Every area has berry bushes; a small glowing berry grows
 // on some of them, one per bush, berries.perArea of them in each area at the start. Party animals
 // (invited creatures, following the witch or held at a sigil; never wild ones, never legends)
-// notice a berry within berries.seekRadius, claim it, walk to it, eat it, and go back to what they
-// were doing. An eaten berry grows again at once on a free berry bush somewhere else on the map,
-// so the number of berries never changes. A party animal that has eaten enough evolves: babies
-// after 5, young after 10, adults after 30 (to a legend: the only way to get a party legend). It
-// evolves on the next bar line of the music, so the view can make a show of it. No drawing here.
+// take a berry on their way: within berries.detour of the line to where they're heading (the witch,
+// or their sigil) or of their sigil, never beyond their leash; they nip over, eat it, and carry on.
+// Bushes grow in patches (berries.patch), so a sigil set in the middle of one is a feeding spot.
+// An eaten berry grows again at once on a free berry bush somewhere else on the map, so the number
+// of berries never changes. A party animal that has eaten enough evolves: babies after 1, young
+// after 3, adults after 8 (berries.toEvolve; adults to a legend, the only way to get a party
+// legend). It evolves on the next bar line of the music, so the view can make a show of it. No drawing here.
 import { LEGEND, type Creature, type Level } from "./creatures";
 import type { ForestMap } from "./map";
 import { rng } from "./random";
@@ -55,16 +57,26 @@ export const canEat = (c: Creature, s: BerryState): boolean => c.leashed && c.le
  *  kept clearing), and berries.perArea (a seeded number in that range) berries on distinct ones. */
 export function newBerries(map: ForestMap, t: Tuning): BerryState {
   const B = t.berries, r = rng(map.seed * 6151 + 29), bushes: BerryBush[] = [], berries: Berry[] = [];
+  const P = B.patch;
   for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
     if (cx === map.centreCell[0] && cy === map.centreCell[1]) continue; // home: the dancefloor's clearing
     const s = map.siteOf(cx, cy), ar = rng(map.seed * 3571 + cx * 389 + cy * 7741 + 17), first = bushes.length;
+    // In patches (Ed, v233): a few bushes clustered within patch.radius of a centre, so a sigil in
+    // the middle of one is a feeding spot. Patch centres lie out in the area's woods, between its
+    // clearing and its edge.
     for (let tries = 0; tries < B.bushesPerArea * 12 && bushes.length - first < B.bushesPerArea; tries++) {
-      // Out in the area's woods, between its clearing and its edge.
-      const a = ar() * Math.PI * 2, d = map.areaSize * (0.15 + ar() * 0.5), x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
-      const at = map.areaAt(x, z);
-      if (at.cell[0] !== cx || at.cell[1] !== cy || map.hardClear(x, z) || map.paths.at(x, z, 1.5)) continue;
-      if (bushes.slice(first).some(b => Math.hypot(b.x - x, b.z - z) < 3)) continue;
-      bushes.push({ x, z, type: at.type, variant: Math.floor(ar() * 1e6), flip: ar() < 0.5 });
+      const a = ar() * Math.PI * 2, d = map.areaSize * (0.15 + ar() * 0.5), px = s.x + Math.cos(a) * d, pz = s.z + Math.sin(a) * d;
+      const at = map.areaAt(px, pz);
+      if (at.cell[0] !== cx || at.cell[1] !== cy || map.hardClear(px, pz) || map.paths.at(px, pz, 1.5)) continue;
+      if (bushes.slice(first).some(b => Math.hypot(b.x - px, b.z - pz) < P.radius * 2.5)) continue; // patches apart
+      const want = Math.min(B.bushesPerArea - (bushes.length - first), P.bushes[0] + Math.floor(ar() * (P.bushes[1] - P.bushes[0] + 1))), from = bushes.length;
+      for (let k = 0; k < want * 8 && bushes.length - from < want; k++) {
+        const ba = ar() * Math.PI * 2, bd = bushes.length === from ? 0 : P.radius * (0.35 + 0.65 * ar());
+        const x = px + Math.cos(ba) * bd, z = pz + Math.sin(ba) * bd, here = map.areaAt(x, z);
+        if (here.cell[0] !== cx || here.cell[1] !== cy || map.hardClear(x, z) || map.paths.at(x, z, 1.5)) continue;
+        if (bushes.slice(from).some(b => Math.hypot(b.x - x, b.z - z) < 1.2)) continue;
+        bushes.push({ x, z, type: here.type, variant: Math.floor(ar() * 1e6), flip: ar() < 0.5 });
+      }
     }
     const here = bushes.length - first, want = Math.min(here, B.perArea[0] + Math.floor(ar() * (B.perArea[1] - B.perArea[0] + 1)));
     // A seeded shuffle of this area's bushes; the first `want` carry berries.
@@ -92,13 +104,26 @@ function regrow(s: BerryState, b: Berry): void {
   b.claimedBy = null;
 }
 
-/** The nearest unclaimed berry within `within` of (x, z), or null. */
-function nearestBerry(s: BerryState, x: number, z: number, within: number): Berry | null {
-  let best: Berry | null = null, bd = within * within;
+/** How far (x, z) is from the line from a to b. */
+function offPath(x: number, z: number, ax: number, az: number, bx: number, bz: number): number {
+  const vx = bx - ax, vz = bz - az, l2 = vx * vx + vz * vz;
+  const k = l2 > 0 ? Math.max(0, Math.min(1, ((x - ax) * vx + (z - az) * vz) / l2)) : 0;
+  return Math.hypot(x - ax - vx * k, z - az - vz * k);
+}
+
+/** The nearest unclaimed berry a party animal at (x, z), leashed at lp, would go for (Ed, v233): one
+ *  on its way, within berries.detour of the line from it to its leash point (where it's heading), or
+ *  of the leash point itself; and never beyond its leash's length (plus the detour) from that point. */
+function berryFor(s: BerryState, x: number, z: number, lp: { x: number; z: number }, t: Tuning): Berry | null {
+  const D = t.berries.detour, reach = t.leash.length + D;
+  let best: Berry | null = null, bd = Infinity;
   for (const b of s.berries) {
     if (b.claimedBy !== null) continue;
-    const p = s.bushes[b.bush], d = (p.x - x) ** 2 + (p.z - z) ** 2;
-    if (d <= bd) { bd = d; best = b; }
+    const p = s.bushes[b.bush];
+    if (Math.abs(p.x - x) > reach * 2 || Math.abs(p.z - z) > reach * 2) continue;
+    if (Math.hypot(p.x - lp.x, p.z - lp.z) > reach || offPath(p.x, p.z, x, z, lp.x, lp.z) > D) continue;
+    const d = (p.x - x) ** 2 + (p.z - z) ** 2;
+    if (d < bd) { bd = d; best = b; }
   }
   return best;
 }
@@ -138,7 +163,7 @@ export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: 
   // Animals busy with a berry: give it up if pulled away or no longer a party animal; else walk to it and eat it.
   for (const [id, f] of s.feeding) {
     const c = creatures[id], b = s.berries[f.berry], p = s.bushes[b.bush], lp = leashPointOf(id);
-    if (!canEat(c, s) || !lp || Math.hypot(p.x - lp.x, p.z - lp.z) > B.seekRadius + t.leash.length) { release(s, id); continue; }
+    if (!canEat(c, s) || !lp || Math.hypot(p.x - lp.x, p.z - lp.z) > t.leash.length + B.detour * 2) { release(s, id); continue; } // left behind
     const dx = p.x - c.x, dz = p.z - c.z + 0.6, d = Math.hypot(dx, dz); // it stands just in front of the bush
     if (!f.eating) {
       if (d > 0.3) {
@@ -163,15 +188,14 @@ export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: 
       c.rest = 0.6; c.away = false; // a moment's pause, then back to following or dancing
     }
   }
-  // Party animals with nothing to do look for a berry near them.
+  // Party animals with nothing to do take a berry on their way.
   for (const c of creatures) {
     if (!canEat(c, s) || s.feeding.has(c.id)) continue;
     const lp = leashPointOf(c.id);
     if (!lp) continue;
-    const b = nearestBerry(s, c.x, c.z, B.seekRadius);
+    const b = berryFor(s, c.x, c.z, lp, t);
     if (!b) continue;
     const p = s.bushes[b.bush];
-    if (Math.hypot(p.x - lp.x, p.z - lp.z) > B.seekRadius + t.leash.length) continue; // too far from its leash to wander to
     b.claimedBy = c.id;
     s.feeding.set(c.id, { berry: b.id, eating: false, eatLeft: 0 });
     s.events.push({ kind: "claimed", id: c.id, x: p.x, z: p.z, at: time });

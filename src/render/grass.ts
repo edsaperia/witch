@@ -41,6 +41,7 @@ uniform vec3 uRight, uUp;
 uniform vec2 uRes;
 uniform vec4 uWind;
 uniform vec4 uPart[4];      // x, z, radius, on: where tufts part (the witch, creatures)
+uniform vec4 uClear[8];     // x, z, radius, on: trampled flat round placed sigils (Ed, v233)
 uniform vec4 uGrass;        // metres per art pixel, sway, part, (unused)
 attribute vec4 iTuft;       // x, z, size, flip
 attribute vec3 iColour;
@@ -51,6 +52,11 @@ varying vec3 vWorld;
 void main() {
   float s = iTuft.z * ${PX}.0 * uGrass.x;
   vec3 base = vec3(iTuft.x, 0.0, iTuft.y);
+  // Round a placed sigil the cover is trampled: none over its rune, short and flattened just beyond.
+  for (int k = 0; k < 8; k++) {
+    if (uClear[k].w < 0.5) continue;
+    s *= smoothstep(uClear[k].z, uClear[k].z + 1.2, length(base.xz - uClear[k].xy));
+  }
   vec3 w = base + uRight * (position.x * s) + uUp * (position.y * s);
   float top = uv.y;
   // The same wind as the trees, stronger for their size.
@@ -126,7 +132,7 @@ export class GrassView {
     this.mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
       uniforms: { ...LIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uRes: SPRITE_UNIFORMS.uRes, uWind: SPRITE_UNIFORMS.uWind,
-        uTufts: { value: tex }, uPart: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) },
+        uTufts: { value: tex }, uPart: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) }, uClear: { value: Array.from({ length: 8 }, () => new THREE.Vector4()) },
         uGrass: { value: new THREE.Vector4(metresPerPixel, t.groundCover.sway, t.groundCover.part, 0) }, uFade: { value: new THREE.Vector4() } },
     });
     this.mesh = new THREE.Mesh(this.geo, this.mat);
@@ -135,14 +141,17 @@ export class GrassView {
   }
 
   /** Bring the cover to the witch at (x, z): `shown` 0 in the treetops to 1 on the ground; `part`:
-   *  where tufts part; `reach`: how far it shows (the canopy hole round her), up to groundCover.radius. */
-  update(x: number, z: number, shown: number, part: { x: number; z: number; r: number }[], reach = Infinity): void {
+   *  where tufts part; `reach`: how far it shows (the canopy hole round her), up to groundCover.radius;
+   *  `clear`: where no tufts grow (placed sigils' runes, the nearest eight). */
+  update(x: number, z: number, shown: number, part: { x: number; z: number; r: number }[], reach = Infinity, clear: { x: number; z: number; r: number }[] = []): void {
     const G = { ...this.t.groundCover, radius: Math.max(8, Math.min(this.t.groundCover.radius, reach)) };
     this.mesh.visible = G.on && shown > 0.01 && G.density > 0;
     if (!this.mesh.visible) return;
     const u = this.mat.uniforms;
     (u.uFade.value as THREE.Vector4).set(x, z, G.radius, shown);
     (u.uPart.value as THREE.Vector4[]).forEach((v, i) => { const p = part[i]; if (p) v.set(p.x, p.z, p.r, 1); else v.set(0, 0, 0, 0); });
+    const near = clear.map(c => ({ ...c, d: Math.hypot(c.x - x, c.z - z) })).filter(c => c.d < G.radius + c.r + 2).sort((a, b) => a.d - b.d);
+    (u.uClear.value as THREE.Vector4[]).forEach((v, i) => { const p = near[i]; if (p) v.set(p.x, p.z, p.r, 1); else v.set(0, 0, 0, 0); });
     // Work out the cells in reach, nearest first, within a time budget; rebuild when she moves a cell.
     const C = G.cell, ci0 = Math.floor((x - G.radius) / C), ci1 = Math.floor((x + G.radius) / C), cj0 = Math.floor((z - G.radius) / C), cj1 = Math.floor((z + G.radius) / C);
     const want: [number, number, number][] = [];

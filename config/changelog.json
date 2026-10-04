@@ -4,6 +4,16 @@
     {
       "version": null,
       "items": [
+        "Evolving is much quicker: eating a berry is a quick nibble with a sparkle, and babies evolve after just 1 berry, young after 3, adults after 8",
+        "Berries grow in patches of a few bushes, clusters of red glints you can spot",
+        "Party animals take berries on their way: following you, they nip over to one near their path; set a sigil in the middle of a patch and they'll eat their way round it",
+        "Placed sigils are easier to see: the grass is trampled flat round them, and their runes glow a little brighter",
+        "Trunks stay visible in short, dense woods like the tangly forest: only their top part fades where the crowns are hidden"
+      ]
+    },
+    {
+      "version": 240,
+      "items": [
         "Berries: every area has bushes with shiny dark-red berries (8–12 per area), glowing softly at night and glinting red through the treetops",
         "Party animals walk over to a berry near them and eat it; it grows again somewhere else in the forest",
         "Feed a party animal enough berries and it evolves (babies after 5, young after 10, adults after 30): it glows and pulses for a bar, then flashes into its next size with a burst of sparkles, and the dancefloor flashes in its colour. Adults become legends: the only way to get a party legend",
