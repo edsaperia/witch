@@ -77,17 +77,23 @@ const report = await b.page.evaluate(async () => {
     res.push({ what: "witch on foot: stand (3), land and takeoff (3 each), talk (4), placeSigil and liftSigil (3 each), towards and away, at her ordinary scale, standing, no NaN; hand and hat-tip anchors inside; reaching up above her hat, down to the ground", good: !bad.length && JSON.stringify(counts) === JSON.stringify(want), info: bad.join(", ") || Object.entries(counts).map(([k, n]) => k + " " + n).join(", ") });
   }
   for (const id of ["wolf", "owl", "snake"]) { const s = stats(G.critter(id, 1, 0, st, "away")); res.push({ what: `${id} turned away`, good: s.n > 50 && s.bottom > 0, info: `${s.w}x${s.h}` }); }
-  { // the treehouse: towards and away, 12 to 18 m tall, standing; top and bottom split it with nothing lost; lit windows glow; anchors inside, the seat on the terrace's planks
+  { // the treehouse (Ed's second go: mostly wood, modern touches, its top standing above the treeline, her seat in a cutaway studio): towards and away,
+    // 28 to 40 m tall, standing; its top storey's floor above the 24 m treetops and its roof tip well over them; top and bottom split it with nothing
+    // lost, the tower in the top half and the studio in the bottom; lit windows glow; anchors inside, the seat on the studio's floor (planks or rug)
+    // and the camera anchor just above it
     const bad = []; let info = "";
     for (const facing of ["towards", "away"]) {
-      const T = G.treehouseSprite(st, { facing }), sp = T.whole, s2 = stats(sp), count = x => { let n = 0; for (let i = 0; i < x.m.length; i++) if (x.m[i]) n++; return n; };
-      const glow = [...sp.m].filter(v => v === G.M.GLOW).length, A = T.anchors, inside = [A.base, A.seat, A.door, ...A.lights].every(({ x, y }) => x >= 0 && x <= sp.w && y >= 0 && y <= sp.h);
-      let deck = false; for (let dy = -2; dy <= 3 && !deck; dy++) for (let dx = -3; dx <= 3; dx++) if ([G.M.WOOD, G.M.FRAME, G.M.CLOTH, G.M.BODY2, G.M.BARKD].includes(sp.get(Math.round(A.seat.x) + dx, Math.round(A.seat.y) + dy))) { deck = true; break; }
-      const split = count(T.top) + count(T.bot) === count(sp) && count(T.top) > 500 && count(T.bot) > 500;
-      if (!(s2.bottom > 0 && T.metres.height >= 12 && T.metres.height <= 18 && glow > 40 && inside && deck && split && A.lights.length >= 4)) bad.push(`${facing} ${T.metres.height} m, ${glow} glowing${inside ? "" : ", anchors outside"}${deck ? "" : ", seat off the deck"}${split ? "" : ", split"}`);
-      info = `${sp.w}x${sp.h} (${T.metres.height} m), ${A.lights.length} lights`;
+      const T = G.treehouseSprite(st, { facing }), sp = T.whole, s2 = stats(sp), count = x => { let n = 0; for (let i = 0; i < x.m.length; i++) if (x.m[i]) n++; return n; }, Mx = T.metres;
+      const glow = [...sp.m].filter(v => v === G.M.GLOW).length, A = T.anchors, inside = [A.base, A.seat, A.door, A.camera, ...A.lights].every(({ x, y }) => x >= 0 && x <= sp.w && y >= 0 && y <= sp.h);
+      let deck = false; for (let dy = -2; dy <= 3 && !deck; dy++) for (let dx = -3; dx <= 3; dx++) if ([G.M.WOOD, G.M.CLOTH, G.M.BODY2, G.M.ACCENT, G.M.BARKD].includes(sp.get(Math.round(A.seat.x) + dx, Math.round(A.seat.y) + dy))) { deck = true; break; }
+      const split = count(T.top) + count(T.bot) === count(sp) && count(T.top) > 500 && count(T.bot) > 500 && A.seat.y > T.crownY;
+      let foreOk = T.fore.w === sp.w && T.fore.h === sp.h && count(T.fore) > 200; for (let i = 0; i < sp.m.length && foreOk; i++) if (T.fore.m[i] && T.fore.m[i] !== sp.m[i]) foreOk = false; // the DJ table: a part of the whole, at its size
+      const giant = Mx.trunk >= 5 && Mx.crown >= 11; // far bigger than any forest tree (their trunks under 4 m across, crowns under 8.5 m)
+      const tall = Mx.height >= 28 && Mx.height <= 40 && Mx.towerFloor >= 24.5 && Mx.roofTip >= 30 && giant && foreOk, cam = Math.hypot(A.camera.x - A.seat.x, A.camera.y - A.seat.y) < 60 && A.camera.y < A.seat.y;
+      if (!(s2.bottom > 0 && tall && glow > 40 && inside && deck && split && cam && A.lights.length >= 8 && A.lights.some(L => L.kind === "decks"))) bad.push(`${facing} ${Mx.height} m (floor ${Mx.towerFloor}, tip ${Mx.roofTip}), ${glow} glowing${inside ? "" : ", anchors outside"}${deck ? "" : ", seat off the floor"}${split ? "" : ", split"}${cam ? "" : ", camera"}`);
+      info = `${sp.w}x${sp.h} (${Mx.height} m; top storey at ${Mx.towerFloor} m, roof tip ${Mx.roofTip} m; trunk ${Mx.trunk} m across, crown ${Mx.crown} m; footprint ${Mx.footprint} m, decks to ${Mx.overhang} m), ${A.lights.length} lights (${A.lights.filter(L => L.kind === "decks").length} on the decks)`;
     }
-    res.push({ what: "treehouse: towards and away, 12 to 18 m, standing; top + bottom = whole; windows glow; anchors inside; the seat on the terrace", good: !bad.length, info: bad.join("; ") || info });
+    res.push({ what: "treehouse: towards and away, 28 to 40 m, its top storey above the 24 m treetops; its giant tree's trunk 5 m+ across and crown 11 m+; fore (the DJ table) part of the whole; top + bottom = whole, the studio below the split; windows glow; anchors inside; the seat on the studio floor, the camera over it", good: !bad.length, info: bad.join("; ") || info });
   }
   { const H = G.soundsystemHeight(st), ws = G.witchSprite(st);
     for (let v = 0; v < G.SOUNDSYSTEMS.length; v++) {
@@ -269,6 +275,39 @@ const report = await b.page.evaluate(async () => {
     }
     const L = G.lakeKit(st), lake = L.water.w === 64 && L.water.h === 48 && L.shore.w === 64 && L.shore.h === 16 && [...L.reeds, ...L.lilies].every(x => stats(x).n > 20) && [...L.water.m].filter(v => v === G.M.WATER).length > 64 * 48 * .8;
     res.push({ what: "world decorations: 12 ruins (two conditions), 8 rocks, 8 freak trees; standing; ruins 4-14 m, a few tall enough for the treetops; tall ones split top and bottom; only the flagged ones glow (3+ ruins); the lake kit", good: !bad.length && fam.ruins === 12 && fam.rocks === 8 && fam.freak === 8 && tallRuins >= 2 && glowing >= 3 && lake, info: bad.join(", ") || `${tallRuins} tall ruins, ${glowing} glowing` });
+  }
+  { // countryside and street pieces: each standing on its bottom row, its origin on it, a sane size and footprint, tall ones split, only the flagged ones glow
+    const bad = [], fam = {}, EM = new Set([...G.EMISSIVE]);
+    for (const d of G.COUNTRY) {
+      const R = G.countrySprite(d.id, st), sp = R.whole, s2 = stats(sp), lit = [...sp.m].some(v => EM.has(v)), big = Math.max(R.metres.width, R.metres.height); fam[d.family] = (fam[d.family] || 0) + 1;
+      const split = d.split == null || (stats(R.top).n > 20 && stats(R.top).n + stats(R.bot).n === s2.n), nan = [...sp.n].some(v => !Number.isFinite(v));
+      if (!(s2.n > 30 && s2.bottom > 0 && !nan && split && lit === !!d.glow && big >= .5 && big <= 9 && R.metres.footprint > 0 && R.metres.footprint <= 6 && R.origin.x >= 0 && R.origin.x <= sp.w && R.origin.y >= 0 && R.origin.y <= sp.h + 1)) bad.push(`${d.id} ${R.metres.width}x${R.metres.height} m, footprint ${R.metres.footprint}${split ? "" : " split"}${lit === !!d.glow ? "" : " glow"}`);
+    }
+    res.push({ what: "farm and street pieces: farm 15+, street 10+; standing, origin on the sprite, 0.5 to 9 m, footprint up to 6 m, tall ones split, only the flagged ones glow", good: !bad.length && fam.farm >= 15 && fam.street >= 10, info: bad.join(", ") || Object.entries(fam).map(([k, n]) => k + " " + n).join(", ") });
+  }
+  { // the large scenes' pieces: each standing, origin on the sprite, 0.3 to 16 m, tall ones split, decals flat, only the flagged ones glow; buildings in two halves
+    const bad = [], fam = {}, EM = new Set([...G.EMISSIVE]);
+    for (const d of G.LANDMARKS) {
+      const R = G.landmarkSprite(d.id, st), sp = R.whole, s2 = stats(sp), lit = [...sp.m].some(v => EM.has(v)), big = Math.max(R.metres.width, R.metres.height); fam[d.family] = (fam[d.family] || 0) + (d.half === "near" ? 0 : 1);
+      const split = d.split == null || ((stats(R.top).n > 20 || d.half === "near") && stats(R.top).n + stats(R.bot).n === s2.n), flat = !d.decal || R.metres.height < R.metres.width * .7, nan = [...sp.n].some(v => !Number.isFinite(v));
+      if (!(s2.n > 30 && s2.bottom > 0 && !nan && split && flat && lit === !!d.glow && big >= .3 && big <= 26 && R.metres.footprint > 0 && R.origin.x >= 0 && R.origin.x <= sp.w)) bad.push(`${d.id} ${R.metres.width}x${R.metres.height} m${split ? "" : " split"}${flat ? "" : " not flat"}${lit === !!d.glow ? "" : " glow"}`);
+    }
+    const halves = Object.keys(G.LANDMARK_BUILDINGS).filter(b => G.LANDMARK_BY_ID[b + "-far"] && G.LANDMARK_BY_ID[b + "-near"]).length;
+    res.push({ what: "large scenes' pieces: cemetery, car park, scrap yard, 7 places of worship, castle, classical; standing, sized, tall ones split, decals flat, only the flagged ones glow; walk-in buildings in far and near halves", good: !bad.length && fam.worship === 7 && fam.cemetery >= 8 && fam.castle >= 5 && fam.classical >= 6 && halves >= 5, info: bad.join(", ") || Object.entries(fam).map(([k, n]) => k + " " + n).join(", ") + `, ${halves} in halves` });
+  }
+  { // scenes: every piece names a real sprite; 3+ pieces; at most one glowing kind; footprints sane (small 3 to 12 m) and holding every piece; mirroring keeps every distance and the footprint
+    const bad = [], sizes = [];
+    for (const S of G.SCENES) {
+      const refs = S.pieces.map(p => p[0]), missing = refs.filter(r => !G.sceneRefExists(r));
+      if (missing.length) { bad.push(`${S.id}: no ${missing.join(", ")}`); continue; }
+      const L = G.sceneLayout(S.id, st), M2 = G.sceneLayout(S.id, st, { mirror: true }), glowKinds = new Set(refs.filter(r => G.scenePiece(r, st).glow)).size;
+      const [lo, hi] = S.size === "large" ? [8, 40] : [3, 12], inside = L.pieces.every(p => Math.hypot(p.dx, p.dz) < L.footprint);
+      const mirrored = M2.footprint === L.footprint && L.pieces.every((p, i) => Math.abs(Math.hypot(p.dx, p.dz) - Math.hypot(M2.pieces[i].dx, M2.pieces[i].dz)) < .02 && (p.facing === "left") !== (M2.pieces[i].facing === "left"));
+      sizes.push(L.footprint);
+      if (!(L.pieces.length >= 3 && glowKinds <= 1 && L.footprint >= lo && L.footprint <= hi && inside && mirrored)) bad.push(`${S.id}: ${L.pieces.length} pieces, ${glowKinds} glowing, footprint ${L.footprint} m${inside ? "" : ", a piece outside"}${mirrored ? "" : ", mirror"}`);
+    }
+    const small = G.SCENES.filter(S => S.size === "small").length, large = G.SCENES.filter(S => S.size === "large").length;
+    res.push({ what: "scenes: 10+ small, 12 large; every piece real, 3+ each, one glowing kind at most, footprints sane and holding their pieces, mirroring keeps distances; hay bales and fences as scenes", good: !bad.length && small >= 10 && large >= 12 && !!G.SCENE_BY_ID["hay-bales"] && !!G.SCENE_BY_ID["fence-line"], info: bad.join(", ") || `${small} small, ${large} large, footprints ${Math.min(...sizes)} to ${Math.max(...sizes)} m` });
   }
   { // paths: every kind's strip tiles along its length, its end, Y and T are drawn, only the magic trail glows; the railway's three variants, points, broken end and crossing; the 3D pieces stand, only flagged ones glow; every area has a path kind
     const bad = [], EM = new Set([...G.EMISSIVE]), lit = sp => [...sp.m].some(v => EM.has(v)), n = sp => { let k = 0; for (const v of sp.m) if (v) k++; return k; };
