@@ -121,6 +121,10 @@ export interface Tuning {
   lights: { campfire: { reach: number; strength: number }; stone: { reach: number; strength: number } };
   glowPower: number;
   beat: { bpm: number };
+  /** Berries and evolving (rules/berries.ts): berries per area at the start [min, max], berry bushes
+   *  per area, how far a party animal looks for one (m), how long it eats (s), berries to evolve
+   *  (babies, young, adults), the berry's colour and glow. */
+  berries: { perArea: number[]; bushesPerArea: number; seekRadius: number; eatTime: number; toEvolve: number[]; colour: string; glow: number };
   sigilProjection: { height: number; opacity: number; beam: number; size: number };
   occlusion: { on: boolean; fadeOpacity: number; edge: number; minHeight: number; silhouette: number };
   stack: { offset: number; scale: number; gap: number; stiffness: number; damping: number; trail: number; idleSway: number };

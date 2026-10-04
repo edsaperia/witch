@@ -1,0 +1,187 @@
+// Berries and evolving (Ed, 2026-10-04). Every area has berry bushes; a small glowing berry grows
+// on some of them, one per bush, berries.perArea of them in each area at the start. Party animals
+// (invited creatures, following the witch or held at a sigil; never wild ones, never legends)
+// notice a berry within berries.seekRadius, claim it, walk to it, eat it, and go back to what they
+// were doing. An eaten berry grows again at once on a free berry bush somewhere else on the map,
+// so the number of berries never changes. A party animal that has eaten enough evolves: babies
+// after 5, young after 10, adults after 30 (to a legend: the only way to get a party legend). It
+// evolves on the next bar line of the music, so the view can make a show of it. No drawing here.
+import { LEGEND, type Creature, type Level } from "./creatures";
+import type { ForestMap } from "./map";
+import { rng } from "./random";
+import type { Tuning } from "./tuning";
+
+/** A berry bush: where it stands, and its area's type (it's one of that area's own bushes). */
+export interface BerryBush { x: number; z: number; type: number; variant: number; flip: boolean }
+
+export interface Berry {
+  id: number;
+  /** The bush it grows on (an index into bushes). */
+  bush: number;
+  /** The party animal on its way to eat it, if any. */
+  claimedBy: number | null;
+}
+
+/** A party animal busy with a berry: walking to it, or eating it (eatLeft counts down). */
+export interface Feeding { berry: number; eating: boolean; eatLeft: number }
+
+export interface Evolving { from: Level; to: Level; /** game time of the bar line it evolves on */ at: number; /** when it began */ since: number }
+
+export type BerryEventKind = "claimed" | "ate" | "regrew" | "evolving" | "evolved";
+export interface BerryEvent { kind: BerryEventKind; id: number; x: number; z: number; at: number }
+
+export interface BerryState {
+  bushes: BerryBush[];
+  berries: Berry[];
+  /** Which bush carries a berry (by bush index): the berry's id, or -1. */
+  onBush: Int32Array;
+  /** Berries eaten towards the next level, per creature. */
+  fed: Map<number, number>;
+  feeding: Map<number, Feeding>;
+  evolving: Map<number, Evolving>;
+  /** Game time each creature last ate (for the view's progress ring). */
+  ateAt: Map<number, number>;
+  events: BerryEvent[];
+  rand: () => number;
+}
+
+/** Berries needed to go up from a level (babies, young, adults); legends don't eat. */
+export const toEvolve = (level: Level, t: Tuning): number => (level >= LEGEND ? Infinity : t.berries.toEvolve[Math.min(level, t.berries.toEvolve.length - 1)]);
+/** Who may eat berries: party animals that aren't legends (and aren't already evolving). */
+export const canEat = (c: Creature, s: BerryState): boolean => c.leashed && c.level < LEGEND && !s.evolving.has(c.id);
+
+/** The berry bushes and the berries on them, from the seed: in every area of the playable map,
+ *  berries.bushesPerArea bushes at spots a bush may grow (in its own area, not on a path or in a
+ *  kept clearing), and berries.perArea (a seeded number in that range) berries on distinct ones. */
+export function newBerries(map: ForestMap, t: Tuning): BerryState {
+  const B = t.berries, r = rng(map.seed * 6151 + 29), bushes: BerryBush[] = [], berries: Berry[] = [];
+  for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
+    if (cx === map.centreCell[0] && cy === map.centreCell[1]) continue; // home: the dancefloor's clearing
+    const s = map.siteOf(cx, cy), ar = rng(map.seed * 3571 + cx * 389 + cy * 7741 + 17), first = bushes.length;
+    for (let tries = 0; tries < B.bushesPerArea * 12 && bushes.length - first < B.bushesPerArea; tries++) {
+      // Out in the area's woods, between its clearing and its edge.
+      const a = ar() * Math.PI * 2, d = map.areaSize * (0.15 + ar() * 0.5), x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
+      const at = map.areaAt(x, z);
+      if (at.cell[0] !== cx || at.cell[1] !== cy || map.hardClear(x, z) || map.paths.at(x, z, 1.5)) continue;
+      if (bushes.slice(first).some(b => Math.hypot(b.x - x, b.z - z) < 3)) continue;
+      bushes.push({ x, z, type: at.type, variant: Math.floor(ar() * 1e6), flip: ar() < 0.5 });
+    }
+    const here = bushes.length - first, want = Math.min(here, B.perArea[0] + Math.floor(ar() * (B.perArea[1] - B.perArea[0] + 1)));
+    // A seeded shuffle of this area's bushes; the first `want` carry berries.
+    const order = Array.from({ length: here }, (_, i) => first + i);
+    for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(ar() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+    for (let i = 0; i < want; i++) berries.push({ id: berries.length, bush: order[i], claimedBy: null });
+  }
+  const onBush = new Int32Array(bushes.length).fill(-1);
+  for (const b of berries) onBush[b.bush] = b.id;
+  return { bushes, berries, onBush, fed: new Map(), feeding: new Map(), evolving: new Map(), ateAt: new Map(), events: [], rand: r };
+}
+
+/** Where a berry is (its bush). */
+export const berryAt = (s: BerryState, b: Berry): BerryBush => s.bushes[b.bush];
+
+/** Grow an eaten berry again on a random free bush anywhere on the map (never its own). */
+function regrow(s: BerryState, b: Berry): void {
+  s.onBush[b.bush] = -1;
+  const free = s.bushes.length - s.berries.length;
+  if (free > 0) {
+    let k = Math.floor(s.rand() * free);
+    for (let i = 0; i < s.bushes.length; i++) if (s.onBush[i] < 0 && i !== b.bush && k-- <= 0) { b.bush = i; break; }
+  }
+  s.onBush[b.bush] = b.id;
+  b.claimedBy = null;
+}
+
+/** The nearest unclaimed berry within `within` of (x, z), or null. */
+function nearestBerry(s: BerryState, x: number, z: number, within: number): Berry | null {
+  let best: Berry | null = null, bd = within * within;
+  for (const b of s.berries) {
+    if (b.claimedBy !== null) continue;
+    const p = s.bushes[b.bush], d = (p.x - x) ** 2 + (p.z - z) ** 2;
+    if (d <= bd) { bd = d; best = b; }
+  }
+  return best;
+}
+
+/** Let go of a creature's claim (pulled away, or no longer a party animal). */
+function release(s: BerryState, id: number): void {
+  const f = s.feeding.get(id);
+  if (f) { const b = s.berries[f.berry]; if (b.claimedBy === id) b.claimedBy = null; s.feeding.delete(id); }
+}
+
+/** Count one berry eaten; at the threshold, start evolving on the next bar line. */
+export function feed(s: BerryState, c: Creature, time: number, t: Tuning): void {
+  if (c.level >= LEGEND || s.evolving.has(c.id)) return;
+  const n = (s.fed.get(c.id) ?? 0) + 1;
+  s.ateAt.set(c.id, time);
+  if (n >= toEvolve(c.level, t)) {
+    s.fed.set(c.id, 0);
+    const bar = (60 / t.beat.bpm) * 4, at = (Math.floor(time / bar) + 2) * bar; // a whole bar of build-up, then the bar line
+    s.evolving.set(c.id, { from: c.level, to: (c.level + 1) as Level, at, since: time });
+    release(s, c.id);
+    s.events.push({ kind: "evolving", id: c.id, x: c.x, z: c.z, at: time });
+  } else s.fed.set(c.id, n);
+}
+
+/** One step. `leashPointOf` says where each party animal's leash is fixed (the witch, or its
+ *  sigil); a feeding animal is moved here (the leash leaves it alone while it has a berry). */
+export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: (id: number) => { x: number; z: number } | null, time: number, dt: number, t: Tuning): void {
+  s.events = [];
+  const B = t.berries;
+  // Evolving: on its bar line, it goes up a level (and stays a party animal, legends too).
+  for (const [id, e] of s.evolving) if (time >= e.at) {
+    const c = creatures[id];
+    c.level = e.to;
+    s.evolving.delete(id);
+    s.events.push({ kind: "evolved", id, x: c.x, z: c.z, at: time });
+  }
+  // Animals busy with a berry: give it up if pulled away or no longer a party animal; else walk to it and eat it.
+  for (const [id, f] of s.feeding) {
+    const c = creatures[id], b = s.berries[f.berry], p = s.bushes[b.bush], lp = leashPointOf(id);
+    if (!canEat(c, s) || !lp || Math.hypot(p.x - lp.x, p.z - lp.z) > B.seekRadius + t.leash.length) { release(s, id); continue; }
+    const dx = p.x - c.x, dz = p.z - c.z + 0.6, d = Math.hypot(dx, dz); // it stands just in front of the bush
+    if (!f.eating) {
+      if (d > 0.3) {
+        const step = Math.min(d, c.speed * 1.5 * dt);
+        c.x += (dx / d) * step; c.z += (dz / d) * step;
+        if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
+        c.away = dz < -0.3 && Math.abs(dz) > Math.abs(dx);
+        c.moving = true; c.walk += dt * 4;
+        continue;
+      }
+      f.eating = true; f.eatLeft = B.eatTime;
+    }
+    c.moving = false; c.away = true;
+    f.eatLeft -= dt;
+    if (f.eatLeft <= 0) {
+      s.feeding.delete(id);
+      s.events.push({ kind: "ate", id, x: p.x, z: p.z, at: time });
+      regrow(s, b);
+      const q = s.bushes[b.bush];
+      s.events.push({ kind: "regrew", id: b.id, x: q.x, z: q.z, at: time });
+      feed(s, c, time, t);
+      c.rest = 0.6; c.away = false; // a moment's pause, then back to following or dancing
+    }
+  }
+  // Party animals with nothing to do look for a berry near them.
+  for (const c of creatures) {
+    if (!canEat(c, s) || s.feeding.has(c.id)) continue;
+    const lp = leashPointOf(c.id);
+    if (!lp) continue;
+    const b = nearestBerry(s, c.x, c.z, B.seekRadius);
+    if (!b) continue;
+    const p = s.bushes[b.bush];
+    if (Math.hypot(p.x - lp.x, p.z - lp.z) > B.seekRadius + t.leash.length) continue; // too far from its leash to wander to
+    b.claimedBy = c.id;
+    s.feeding.set(c.id, { berry: b.id, eating: false, eatLeft: 0 });
+    s.events.push({ kind: "claimed", id: c.id, x: p.x, z: p.z, at: time });
+  }
+}
+
+/** Debug: the nearest party animal to (x, z) eats a berry at once (it must be one that can eat). */
+export function feedNearest(s: BerryState, creatures: Creature[], x: number, z: number, time: number, t: Tuning): Creature | null {
+  let best: Creature | null = null, bd = Infinity;
+  for (const c of creatures) if (canEat(c, s)) { const d = Math.hypot(c.x - x, c.z - z); if (d < bd) { bd = d; best = c; } }
+  if (best) { release(s, best.id); feed(s, best, time, t); s.events.push({ kind: "ate", id: best.id, x: best.x, z: best.z, at: time }); }
+  return best;
+}
