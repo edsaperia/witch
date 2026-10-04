@@ -51,7 +51,7 @@ async function main() {
     else page = await browser.newPage({ viewport: size, deviceScaleFactor: dpr || 1, hasTouch: !!hasTouch, isMobile: !!hasTouch });
     page.on("pageerror", e => errors.push(`${name}: page error: ${e.message}`));
     page.on("console", m => { if (m.type() === "error") errors.push(`${name}: console error: ${m.text()}`); });
-    await page.goto(`http://127.0.0.1:${port}/?seed=${seed}${query || "&debug"}`);
+    await page.goto(`http://127.0.0.1:${port}/?${/(^|&)seed=/.test(query || "") ? (query || "").replace(/^&/, "") : `seed=${seed}${query || "&debug"}`}`); // (a run may ask for its own seed)
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 120000 });
     // All the art is drawn in the background after start; the software renderer here starves the
     // workers of CPU (minutes at big window sizes), so wait for it before flying, so the shots show the forest as players do.
@@ -82,7 +82,7 @@ async function main() {
     // Speeds are measured in game time: a slow headless renderer runs fewer, capped frames.
     const tuning = await page.evaluate(() => window.witch.game.tuning);
     let s0;
-    [s0, s] = await hold(page, "KeyD", 2);
+    [s0, s] = await hold(page, "ArrowRight", 2);
     const groundSpeed = (s.x - s0.x) / (s.t - s0.t);
     check(groundSpeed > tuning.groundSpeed * 0.6 && groundSpeed <= tuning.groundSpeed * 1.01, `flies east on the ground (${groundSpeed.toFixed(1)} m/s)`);
     check(s.mode === "ground", "still in ground mode");
@@ -93,7 +93,7 @@ async function main() {
     s = await state(page);
     check(s.mode === "treetop", `space rises to treetop mode (${s.mode})`);
     await shot(page, "03-treetop.png");
-    [s0, s] = await hold(page, "KeyW", 2);
+    [s0, s] = await hold(page, "ArrowUp", 2);
     const topSpeed = (s0.z - s.z) / (s.t - s0.t);
     check(topSpeed > groundSpeed * 1.5 && topSpeed <= tuning.treetopSpeed * (tuning.treetop?.boost ?? 1) * 1.01, `flies north faster in treetop mode, at most its full boost (${topSpeed.toFixed(1)} m/s)`);
     await shot(page, "04-treetop-flying.png");
@@ -101,7 +101,7 @@ async function main() {
     // vanish in clear view on the way (trees, undergrowth, walls, set pieces, creatures, props).
     await page.evaluate(() => { window.witch.view.pops = []; window.witch.view.trackPops = true; });
     const steps = await page.evaluate(() => window.witch.game.tuning.camera.zoomSteps);
-    const keys = ["KeyA", "KeyS", "KeyD", "KeyW"];
+    const keys = ["ArrowLeft", "ArrowDown", "ArrowRight", "ArrowUp"];
     const path = async () => {
       for (const mode of ["treetop", "ground"]) {
         for (let i = 0; i < steps; i++) await page.keyboard.press(ZOOM_IN); // all the way in
@@ -112,7 +112,7 @@ async function main() {
         }
         for (let i = 0; i < steps; i++) { await page.keyboard.press(ZOOM_IN); await hold(page, keys[i % 4], 0.3); }
         await page.keyboard.press("Space"); // change mode mid-path
-        await hold(page, "KeyW", 1.2);
+        await hold(page, "ArrowUp", 1.2);
       }
     };
     await path();
@@ -185,7 +185,7 @@ async function main() {
   for (const tilt of ["before", "after", "off"]) {
     await run(`tilt-${tilt}`, { width: 1280, height: 720 }, async page => {
       await page.keyboard.press("Enter");
-      await hold(page, "KeyW", 1);
+      await hold(page, "ArrowUp", 1);
       await page.keyboard.press("Space");
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
       await sleep(600);
@@ -217,7 +217,7 @@ async function main() {
   for (const [name, q] of [["effects-off", "&shadows=off&canopy=off&mist=off"], ["effects-on", ""], ["fx-pixel", "&fx=pixel"]]) {
     await run(name, { width: 1280, height: 720 }, async page => {
       await page.keyboard.press("Enter");
-      await hold(page, "KeyD", 1.5);
+      await hold(page, "ArrowRight", 1.5);
       await sleep(300);
       await shot(page, `30-ground-${name}.png`);
       await page.keyboard.press("Space");
@@ -269,6 +269,36 @@ async function main() {
     check(n > 1, `after four waves ${n} areas are partified`);
     await shot(page, "57-party-four-waves.png");
   }, "&debug&tilt=before");
+
+  // Nothing through the earth (Ed, v256: "due to the bend, I can see string lights through the
+  // earth"): in treetop mode with the bend on and the party's lights out, every layer in the scene
+  // stands on the rolling ground and bends with the world, and anything drawn without a depth test
+  // (lights glimmering through the canopy) is dropped behind the bent horizon.
+  await run("earth", { width: 960, height: 600 }, async page => {
+    await page.keyboard.press("Enter");
+    for (let i = 0; i < 2; i++) { await page.keyboard.press("KeyN"); await sleep(400); }
+    await page.keyboard.press("Space");
+    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 300000 });
+    await sleep(1500);
+    const r = await page.evaluate(() => {
+      const v = window.witch.view, out = { n: 0, flat: [], through: [] };
+      v.scene.traverse(o => {
+        const m = o.material;
+        if (!m || !o.visible) return;
+        for (const mat of Array.isArray(m) ? m : [m]) {
+          if (mat === v.sky?.mesh.material || o.renderOrder >= 20) continue; // the sky; debug overlays
+          const vs = mat.vertexShader || "";
+          if (!vs) { out.flat.push(`${o.type} ${mat.type}`); continue; } // a built-in material: neither lifted nor bent
+          out.n++;
+          if (!/clipOf|bendW/.test(vs)) out.flat.push(`${o.type} ${mat.type} (not bent)`);
+          if (mat.depthTest === false && !/overBend/.test(vs)) out.through.push(`${o.type} ${mat.type}`);
+        }
+      });
+      return out;
+    });
+    check(r.n > 10 && r.flat.length === 0, `every layer stands on the rolling ground and bends with the world (${r.n} checked)${r.flat.length ? ": " + r.flat.slice(0, 6).join("; ") : ""}`);
+    check(r.through.length === 0, `nothing drawn without a depth test shows through the bent earth${r.through.length ? ": " + r.through.join("; ") : ""}`);
+  });
 
   // Trunks (Ed, v271: "We have really lost our treetrunks"): in the densest wooded spot of a
   // tangly forest and of old oaks, on the ground, trunks must be drawn (drawn flat magenta for a
@@ -346,13 +376,13 @@ async function main() {
     }
     const n = await page.evaluate(() => window.witch.game.leash.stack.length);
     check(n >= 3, `the debug key invites more (${n} on the stack)`);
-    await hold(page, "KeyD", 2, 400000); // big window, software renderer: seconds a frame
+    await hold(page, "ArrowRight", 2, 400000); // big window, software renderer: seconds a frame
     await shot(page, "71-leash-stack-flying.png");
     const t1 = await page.evaluate(() => window.witch.game.clock.time);
     await page.waitForFunction(t => window.witch.game.clock.time >= t, t1 + 4, { timeout: 400000, polling: 100 });
     await page.keyboard.press("KeyE");
     await page.waitForFunction(() => window.witch.game.leash.placed.length === 1, null, { timeout: 30000 });
-    await hold(page, "KeyW", 0.6, 400000);
+    await hold(page, "ArrowUp", 0.6, 400000);
     const t2 = await page.evaluate(() => window.witch.game.clock.time);
     await page.waitForFunction(t => window.witch.game.clock.time >= t, t2 + 2, { timeout: 300000, polling: 100 });
     await shot(page, "72-leash-placed.png");
@@ -373,10 +403,10 @@ async function main() {
       if (mode === "treetop") { await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 }); }
       for (const z of [ZOOM_OUT, ZOOM_OUT, ZOOM_IN, ZOOM_IN, ZOOM_IN]) {
         await page.keyboard.press(z);
-        await page.keyboard.down("KeyD");
+        await page.keyboard.down("ArrowRight");
         await sleep(250);
         await shot(page, `cull-${String(k++).padStart(2, "0")}.png`);
-        await page.keyboard.up("KeyD");
+        await page.keyboard.up("ArrowRight");
       }
     }
   }, "&debug=cull&tilt=before");
@@ -393,12 +423,63 @@ async function main() {
       const tick = now => { const L = window.speedLog; if (L.stop) return; L.forest.push(window.witch.view.stats.forestMs); if (L.last) L.frame.push(now - L.last); L.last = now; requestAnimationFrame(tick); };
       requestAnimationFrame(tick);
     });
-    const [s0, s1] = await hold(page, "KeyW", 12, 900000);
+    const [s0, s1] = await hold(page, "ArrowUp", 12, 900000);
     const r = await page.evaluate(() => { const L = window.speedLog; L.stop = true; const q = (a, k) => { const b = [...a].sort((x, y) => x - y); return b.length ? b[Math.min(b.length - 1, Math.floor(k * (b.length - 1)))] : 0; }; return { n: L.forest.length, worst: q(L.forest, 1), p99: q(L.forest, 0.99), median: q(L.forest, 0.5), frameMedian: q(L.frame, 0.5), frameWorst: q(L.frame, 1), missing: window.witch.view.stats.forestMissing }; });
     const dist = Math.hypot(s1.x - s0.x, s1.z - s0.z), speed = dist / (s1.t - s0.t);
     results.push(`info speed: ${dist.toFixed(0)} m of fresh forest at ${speed.toFixed(1)} m/s; forest building per frame: median ${r.median.toFixed(1)} ms, p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms over ${r.n} frames; frames here (software renderer): median ${r.frameMedian.toFixed(0)} ms, worst ${r.frameWorst.toFixed(0)} ms`);
     check(dist > 150 && r.p99 <= 16, `flying into new forest at full boost, building it costs at most 16 ms in 99% of frames (p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms)`);
   });
+
+  // The hills at their default (Ed, v289): from the steepest spot near home (its shot, to catch
+  // streaks or cliffs again), fly north, directly away from the camera, over it, stepped at a
+  // fixed 1/60 s in ground mode and then the treetops: the slope limit keeps the ground under the
+  // camera's sightline to her, so its lift (the safety net) stays small; and she rides the hills
+  // smoothly, her height's up-and-down acceleration well under the bare ground's.
+  for (const [slopeSeed, file] of [[seed, "60-steep-slope.png"], [165272, "61-steep-slope-165272.png"]]) await run("slope", { width: 960, height: 600 }, async page => {
+    await page.keyboard.press("Enter");
+    const at = await page.evaluate(() => {
+      const W = window.witch, g = W.game, h = W.groundHeight, d = g.map.dancefloor;
+      let best = null, bs = 0;
+      for (let k = 0; k < 4000; k++) {
+        // (well inside the hills' window round her, which fades to flat at its edges)
+        const x = d.x + ((k * 37.7) % 560) - 280, z = d.z + ((k * 91.3) % 560) - 280;
+        if (Math.hypot(x - d.x, z - d.z) < 120 || g.map.paths.at(x, z, 2)) continue;
+        const s = Math.abs(h(x, z - 12) - h(x, z + 12)) / 24;
+        if (s > bs) { bs = s; best = [x, z]; }
+      }
+      g.witch = { ...g.witch, x: best[0], z: best[1], vx: 0, vz: 0, seated: false }; g.camera = { ...g.camera, tx: best[0], tz: best[1], intro: 0 };
+      return { x: best[0], z: best[1], slope: bs };
+    });
+    await sleep(1500);
+    await page.waitForFunction(() => window.witch.view.assets.pending === 0 && window.witch.view.stats.forestMissing === 0, null, { timeout: 900000, polling: 1000 }).catch(() => {});
+    await sleep(1500);
+    await shot(page, file);
+    const r = await page.evaluate(async () => {
+      const w = window.witch, v = w.view, dt = 1 / 60, C = o => ({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }), yieldNow = () => new Promise(res => setTimeout(res, 0));
+      w.manual = true;
+      const fly = async (n, extra) => {
+        const ride = [], ground = [];
+        let lift = 0;
+        for (let i = 0; i < n; i++) {
+          w.frame(C({ moveZ: -1, ...extra }), dt, false);
+          if (i >= 60) { ride.push(v.ride.h); ground.push(w.groundHeight(w.game.witch.x, w.game.witch.z)); lift = Math.max(lift, v.camLift); }
+          if (i % 30 === 0) await yieldNow();
+        }
+        const acc = a => { let s = 0; for (let i = 1; i < a.length - 1; i++) s += ((a[i + 1] - 2 * a[i] + a[i - 1]) / (dt * dt)) ** 2; return Math.sqrt(s / Math.max(1, a.length - 2)); };
+        return { lift, ride: acc(ride), ground: acc(ground) };
+      };
+      const ground = await fly(360, {});
+      w.frame(C({ toggleMode: true }), dt, false);
+      for (let i = 0; i < 240 && w.game.witch.mode !== "treetop"; i++) w.frame(C({}), dt, false);
+      const treetop = await fly(360, { spell: true }); // (at full boost, the speed spell cast when ready)
+      w.manual = false;
+      return { ground, treetop };
+    });
+    results.push(`info slope (seed ${slopeSeed}): the steepest spot near home ${(at.slope * 100).toFixed(0)}% (${at.x.toFixed(0)}, ${at.z.toFixed(0)}); flying north from it, camera lift at most ${r.ground.lift.toFixed(1)} m on the ground and ${r.treetop.lift.toFixed(1)} m over the treetops; her height's rms acceleration ${r.ground.ride.toFixed(1)} against the ground's ${r.ground.ground.toFixed(1)} m/s² (ground), ${r.treetop.ride.toFixed(1)} against ${r.treetop.ground.toFixed(1)} (treetops)`);
+    check(at.slope < Math.tan(30 * Math.PI / 180), `seed ${slopeSeed}: the steepest slope near home is under the camera's shallowest pitch (${(at.slope * 100).toFixed(0)}%, 30° is 58%)`);
+    check(Math.max(r.ground.lift, r.treetop.lift) < 3, `seed ${slopeSeed}: flying directly away from the camera over the steepest hill, no rise hides her: the camera's safety-net lift stays under 3 m (${r.ground.lift.toFixed(1)} m, ${r.treetop.lift.toFixed(1)} m)`);
+    check(r.ground.ride < r.ground.ground * 0.8 && r.treetop.ride < r.treetop.ground * 0.8, `seed ${slopeSeed}: she rides the hills smoothly: her height bobs less than the ground under her (rms acceleration ${r.ground.ride.toFixed(1)} vs ${r.ground.ground.toFixed(1)}, ${r.treetop.ride.toFixed(1)} vs ${r.treetop.ground.toFixed(1)} m/s²)`);
+  }, slopeSeed === seed ? "&debug" : `&seed=${slopeSeed}&debug`); // (Ed, v297: seed 165272 had cliffs and broken trees)
 
   // Boosting over the treetops (Ed, v256: "framerate drops a bit during boost mode in treetop
   // view"): the game is stepped frame by frame at a fixed 1/60 s (window.witch.frame), so the
@@ -406,6 +487,41 @@ async function main() {
   // frame's own work (rules and view, not the software renderer's drawing) is timed: hovering,
   // then 10 s north at full boost with the speed spell cast whenever it's ready. The limits are
   // for a builder's cloud machine (v256 there: p99 35 ms, worst 49 ms; Ed's is several times faster).
+  // A siege (Stage 4), headless and frame by frame: a wave wakes the next area (its creatures grown
+  // to young, as the areas round home hold only babies), they march on its new soundsystem and bring
+  // it down (its health cut short for the test); its party ends and they march on to the dancefloor;
+  // when that falls too, the run is over and the end screen shows.
+  await run("siege", { width: 1280, height: 800 }, async page => {
+    await page.keyboard.press("Enter");
+    const r = await page.evaluate(async () => {
+      const w = window.witch, g = w.game, dt = 1 / 60, idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, yieldNow = () => new Promise(res => setTimeout(res, 0));
+      w.manual = true;
+      g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
+      const next = g.party.next[0];
+      g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1]).forEach(c => { c.level = 1; });
+      w.frame({ ...idle, nextWave: true }, dt, false);
+      const key = `${next[0]},${next[1]}`, sound = g.combat.sounds.get(key);
+      if (!sound) return { error: "no siege began" };
+      sound.hp = sound.max = 150;
+      const besiegers = g.creatures.filter(c => c.siege === key);
+      for (const c of besiegers) { c.x = sound.x + (c.rand() - 0.5) * 8; c.z = sound.z + 5 + c.rand() * 3; }
+      let hit = false;
+      for (let i = 0; i < 120 * 60 && sound.hp > 0; i++) { w.frame(idle, dt, false); hit ||= sound.hp < sound.max; if (i % 120 === 0) await yieldNow(); }
+      const fell = sound.hp === 0, ended = !g.party.areas.has(key), marched = besiegers.filter(c => !c.gone).every(c => c.siege === "home");
+      const home = g.combat.sounds.get("home"); home.hp = 0.001;
+      for (const c of besiegers) if (!c.gone) { c.x = g.map.dancefloor.x + 6; c.z = g.map.dancefloor.z + 6; }
+      for (let i = 0; i < 60 * 60 && !g.over; i++) { w.frame(idle, dt, false); if (i % 120 === 0) await yieldNow(); }
+      w.manual = false;
+      return { besiegers: besiegers.length, hit, fell, ended, marched, over: !!g.over };
+    });
+    if (r.error) { check(false, `a siege: ${r.error}`); return; }
+    await page.waitForFunction(() => document.getElementById("over").classList.contains("on"), null, { timeout: 120000 }).catch(() => {});
+    const screen = await page.evaluate(() => document.getElementById("over").classList.contains("on"));
+    await shot(page, "80-siege-over.png");
+    check(r.besiegers > 0 && r.hit && r.fell && r.ended && r.marched, `a woken area's creatures besiege its soundsystem, bring it down, end its party and march on to the dancefloor (${JSON.stringify(r)})`);
+    check(r.over && screen, `when every soundsystem has fallen the run is over and the end screen shows (${r.over}, ${screen})`);
+  });
+
   await run("boost", { width: 1900, height: 1240 }, async page => {
     await page.keyboard.press("Enter");
     const r = await page.evaluate(async () => {
@@ -460,7 +576,7 @@ async function main() {
       for (const [type, b] of [...v.typeBatches, ...[...v.decorBatches].filter(([k]) => k !== "decals" && k !== "sceneDecals"), ["treehouse", v.treehouseBatch]]) { // decals lie flat
         const img = b.atlas.albedo.image, W = img.width, H = img.height, D = img.data;
         for (const it of b.items) {
-          if (it.top) continue;
+          if (it.top || it.overlay) continue; // (crowns, and the treehouse's DJ table drawn over it, stand on their trunk)
           const f = it.frame, x0 = Math.round(f.uv[0] * W), y0 = Math.round(f.uv[1] * H);
           let low = -1;
           for (let row = f.h - 1; row >= 0 && low < 0; row--) for (let x = 0; x < f.w; x++) if (D[((y0 + row) * W + x0 + x) * 4 + 3] >= 128) { low = row; break; }
@@ -476,21 +592,23 @@ async function main() {
       return out;
     });
     check(r.n > 50 && r.bad.length === 0, `nothing floats: every placed sprite's lowest drawn pixel is on the ground (${r.n} checked, worst ${r.worst.toFixed(1)} art px)${r.bad.length ? ": " + r.bad.join("; ") : ""}`);
-    // The rolling ground: a sprite stands upright on h at its base point, so across its foot (its
-    // lowest drawn row) the ground's rise or fall is how far one end floats or sinks; under 1 art px.
+    // The rolling ground: a sprite stands upright at the lowest ground under its foot (two metres either
+    // side of its base), so its uphill side is planted in the slope; where the ground at an end of
+    // its drawn foot is lower than that, the end floats. None may float past 1 art px.
     const hr = await page.evaluate(() => {
       const v = window.witch.view, h = window.witch.groundHeight, R = window.witch.spriteRight(), out = { n: 0, worst: 0, bad: [], hilly: 0 };
       for (const [type, b] of [...v.typeBatches, ...v.creatureBatches, ...[...v.decorBatches].filter(([k]) => k !== "decals"), ["treehouse", v.treehouseBatch]]) { // (she hovers)
         const img = b.atlas.albedo.image, W = img.width, D = img.data;
         for (const it of b.items) {
-          if (it.top) continue;
+          if (it.top || it.overlay) continue; // (crowns, and the treehouse's DJ table drawn over it, stand on their trunk)
           const f = it.frame, x0 = Math.round(f.uv[0] * W), y0 = Math.round(f.uv[1] * img.height);
           let low = -1, left = 0, right = 0;
           for (let row = f.h - 1; row >= 0 && low < 0; row--) for (let x = 0; x < f.w; x++) if (D[((y0 + row) * W + x0 + x) * 4 + 3] >= 128) { if (low < 0) { low = row; left = x; } right = x; }
           if (low < 0) continue;
           const m = b.metresPerPixel * (it.scale ?? 1), c = ((left + right) / 2 - f.w / 2) * m * (it.flip ? -1 : 1), half = ((right - left) / 2 + 0.5) * m;
-          const cx = it.x + R.x * c, cz = it.z + R.z * c, base = h(it.x, it.z);
-          const err = Math.max(Math.abs(h(cx - R.x * half, cz - R.z * half) - base), Math.abs(h(cx + R.x * half, cz + R.z * half) - base)) / b.metresPerPixel;
+          const cx = it.x + R.x * c, cz = it.z + R.z * c, fw = Math.min(f.w * m * 0.5, 2);
+          const base = Math.min(h(it.x, it.z), h(it.x - R.x * fw, it.z - R.z * fw), h(it.x + R.x * fw, it.z + R.z * fw));
+          const err = Math.max(0, ...[-half, half].map(s => base - h(cx + R.x * s, cz + R.z * s))) / b.metresPerPixel;
           out.n++; if (Math.abs(base) > 0.3) out.hilly++;
           if (err > out.worst) out.worst = err;
           if (err > 1 && out.bad.length < 6) out.bad.push(`${typeof type === "number" ? window.witch.areaTypeId(type) : type} ${err.toFixed(1)} px`);
@@ -508,15 +626,15 @@ async function main() {
     await run(`vanish-${w}x${h}`, { width: w, height: h, dpr }, async page => {
       await page.keyboard.press("Enter");
       await page.evaluate(() => { const v = window.witch.view; v.pops = []; v.trackPops = true; window.maxDropped = 0; setInterval(() => { window.maxDropped = Math.max(window.maxDropped, v.stats.dropped); }, 50); });
-      await hold(page, "KeyD", 4, 600000);
+      await hold(page, "ArrowRight", 4, 600000);
       await shot(page, `vanish-${w}x${h}-ground.png`);
       await page.keyboard.press("Space");
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 300000 });
-      await hold(page, "KeyD", 5, 600000);
-      await hold(page, "KeyW", 4, 600000);
+      await hold(page, "ArrowRight", 5, 600000);
+      await hold(page, "ArrowUp", 4, 600000);
       await shot(page, `vanish-${w}x${h}-treetop.png`);
       await page.keyboard.press(ZOOM_OUT); await page.keyboard.press(ZOOM_OUT);
-      await hold(page, "KeyA", 4, 600000);
+      await hold(page, "ArrowLeft", 4, 600000);
       await shot(page, `vanish-${w}x${h}-treetop-out.png`);
       const r = await page.evaluate(() => ({ dropped: window.maxDropped, pops: window.witch.view.pops.slice(0, 12), n: window.witch.view.pops.length, trees: window.witch.view.stats.trees, radius: window.witch.view.stats.sceneryRadius, fps: window.witch.view.stats.fps }));
       check(r.dropped === 0, `${w}x${h} at DPR ${dpr}: every tree, bush and creature set is drawn (most dropped in a frame: ${r.dropped}; ${r.trees} trees now; scenery radius ${(r.radius ?? 0).toFixed(0)} m at ${(r.fps ?? 0).toFixed(1)} fps)`);
@@ -530,9 +648,9 @@ async function main() {
     await page.goto(`http://127.0.0.1:${port}/?seed=${seed}`);
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 120000 });
     await page.keyboard.press("Enter");
-    await page.keyboard.down("KeyD"); await sleep(2500); await page.keyboard.up("KeyD");
+    await page.keyboard.down("ArrowRight"); await sleep(2500); await page.keyboard.up("ArrowRight");
     await page.keyboard.press("Space"); await sleep(800);
-    await page.keyboard.down("KeyW"); await sleep(3500); await page.keyboard.up("KeyW");
+    await page.keyboard.down("ArrowUp"); await sleep(3500); await page.keyboard.up("ArrowUp");
     const video = page.video();
     await ctx.close();
     if (video) { fs.renameSync(await video.path(), path.join(out, "flight.webm")); results.push("video previews/flight.webm"); }

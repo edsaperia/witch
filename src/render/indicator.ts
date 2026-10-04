@@ -10,21 +10,30 @@
 // Directions are in screen space, y down: an angle a points along (cos a, sin a) on the canvas.
 import * as THREE from "three";
 import { sigilGlyph } from "../../art/generator.js";
-import { placed } from "./height";
+import { groundHeight, HEIGHT_UNIFORMS, placed, seenOverBend } from "./height";
 
 const N = 40; // art pixels across
 const SCALE = 4; // screen pixels per art pixel
 
-/** Where on the screen's edge to put a cue for (x, z), and how much it shows (0 when on screen). */
-function edgeSpot(v: THREE.Vector3, camera: THREE.Camera, width: number, height: number, x: number, z: number) {
-  const p = placed(v.set(x, 1, z)).project(camera); // on the rolling ground, bent as drawn
+/** A cue for (x, z), seen from the witch at (wx, wz): where on the screen's edge it goes, pointing
+ *  the way, and how much it shows there (0 when the target is on screen); and where the target's
+ *  top (`top` metres up) is on screen (sx, sy: CSS pixels), for cues that sit over it when in view.
+ *  The direction is the ground bearing from her to it in the camera's frame (north up the screen),
+ *  not its projection, so the world's bend can't turn it round (Ed, v256: "sees things past the bend
+ *  as south"); the projection, through the same lift and bend the shaders use, only decides whether
+ *  it is on screen, and a target hidden past the bent horizon is not. */
+export function edgeSpot(v: THREE.Vector3, camera: THREE.Camera, width: number, height: number, x: number, z: number, wx: number, wz: number, top = 1) {
+  const f = camera.getWorldDirection(v), fx = f.x, fz = f.z, fl = Math.hypot(fx, fz) || 1;
+  const gx = x - wx, gz = z - wz, ahead = (gx * fx + gz * fz) / fl, right = (gx * -fz + gz * fx) / fl;
+  const B = HEIGHT_UNIFORMS.uBend.value, past = -(z - B.z), gh = groundHeight(x, z);
+  const p = placed(v.set(x, top, z)).project(camera);
+  const seen = p.z < 1 && seenOverBend(past, gh + top, B.x, camera.position);
   const inside = Math.max(Math.abs(p.x), Math.abs(p.y));
-  const show = p.z < 1 ? Math.min(1, Math.max(0, (inside - 0.9) / 0.25)) : 1;
-  let dx = p.x, dy = p.y;
-  if (p.z >= 1) { dx = -dx; dy = -dy; } // behind the camera: flip
-  // Clamped to a box inside the edge, clear of the countdown bar on the right and the panels top left.
-  const k = 1 / Math.max(Math.abs(dx) / 0.84, Math.abs(dy) / 0.76, 1e-6);
-  return { show, sx: ((dx * k + 1) / 2) * width, sy: ((1 - dy * k) / 2) * height, angle: screenAngle(dx, dy) };
+  const show = seen ? Math.min(1, Math.max(0, (inside - 0.9) / 0.25)) : 1;
+  // Clamped to a box inside the edge (screen pixels, y down), clear of the countdown bar on the right
+  // and the panels top left.
+  const dx = right, dy = -ahead, k = 1 / Math.max(Math.abs(dx) / (0.84 * width / 2), Math.abs(dy) / (0.76 * height / 2), 1e-9);
+  return { show, ex: width / 2 + dx * k, ey: height / 2 + dy * k, angle: Math.atan2(dy, dx), sx: ((p.x + 1) / 2) * width, sy: ((1 - p.y) / 2) * height, seen };
 }
 
 /** A direction given in the view's own terms (x right, y up) as a screen angle (y down). */
@@ -58,10 +67,13 @@ class PixelCue {
     this.img = this.g.createImageData(N, N);
   }
   hide(): void { this.canvas.style.display = "none"; this.label.style.display = "none"; }
-  place(sx: number, sy: number): void {
+  /** Centred on (sx, sy), `size` times its usual size. */
+  place(sx: number, sy: number, size = 1): void {
+    const s = N * this.scale * size;
     this.canvas.style.display = "block";
-    this.canvas.style.left = `${sx - (N * this.scale) / 2}px`;
-    this.canvas.style.top = `${sy - (N * this.scale) / 2}px`;
+    this.canvas.style.width = this.canvas.style.height = `${s}px`;
+    this.canvas.style.left = `${sx - s / 2}px`;
+    this.canvas.style.top = `${sy - s / 2}px`;
   }
   clear(): void { this.img.data.fill(0); }
   dot(x: number, y: number, rgb: number[], a: number): void {
@@ -83,10 +95,10 @@ export class MusicIndicator {
 
   /** Point at (x, z) on the ground; width and height: the screen's size (CSS pixels). */
   update(camera: THREE.Camera, width: number, height: number, x: number, z: number, wx: number, wz: number, time: number, bpm: number, debug: boolean): void {
-    const e = edgeSpot(this.v, camera, width, height, x, z), c = this.cue;
+    const e = edgeSpot(this.v, camera, width, height, x, z, wx, wz), c = this.cue;
     if (e.show <= 0.01) { c.hide(); return; }
     const dist = Math.hypot(x - wx, z - wz), near = Math.max(0.35, Math.min(1, 1 - dist / 900));
-    c.place(e.sx, e.sy);
+    c.place(e.ex, e.ey);
     c.clear();
     const beat = (time * bpm) / 60, ph = beat - Math.floor(beat), ca = Math.cos(-e.angle), sa = Math.sin(-e.angle);
     // Three arcs centred off toward the music, bulging back toward the middle of the screen,
@@ -102,7 +114,7 @@ export class MusicIndicator {
     }
     c.flush();
     c.label.style.display = debug ? "block" : "none";
-    if (debug) { c.label.textContent = `${Math.round(dist)} m`; c.label.style.left = `${e.sx}px`; c.label.style.top = `${e.sy + (N * SCALE) / 2 - 18}px`; }
+    if (debug) { c.label.textContent = `${Math.round(dist)} m`; c.label.style.left = `${e.ex}px`; c.label.style.top = `${e.ey + (N * SCALE) / 2 - 18}px`; }
   }
 }
 
@@ -123,9 +135,15 @@ export class StoneIndicator {
     if (fill < this.lastFill - 0.5) this.flashAt = time;
     this.lastFill = fill;
     if (!at) { c.hide(); return; }
-    const e = edgeSpot(this.v, camera, width, height, at.x, at.z);
-    if (e.show <= 0.01) { c.hide(); return; }
-    c.place(e.sx, e.sy);
+    // Off screen: on the edge, pointing the way; on screen (Ed, v256: "runestone UI markers
+    // shouldn't disappear"): gliding from the edge to hover over the stone, without the arrow,
+    // smaller when she's close so it doesn't cover her, the distance gone within 20 m.
+    const e = edgeSpot(this.v, camera, width, height, at.x, at.z, wx, wz, 3.2);
+    const dist = Math.hypot(at.x - wx, at.z - wz), over = 1 - e.show, ease = over * over * (3 - 2 * over);
+    const size = 1 - 0.3 * ease * (1 - Math.min(1, Math.max(0, (dist - 12) / 28)));
+    const lift = (N * c.scale * size) / 2 + 6; // above the stone's top, clear of it
+    const cx = e.ex + (e.sx - e.ex) * ease, cy = e.ey + (e.sy - lift - e.ey) * ease;
+    c.place(cx, cy, size);
     c.clear();
     const beat = (time * bpm) / 60, pulse = Math.pow(0.5 + 0.5 * Math.cos((beat % 1) * Math.PI * 2), 2);
     const flash = Math.max(0, 1 - (time - this.flashAt) / 0.5);
@@ -136,22 +154,25 @@ export class StoneIndicator {
       const px = x + 0.5 - N / 2, py = y + 0.5 - N / 2, r = Math.hypot(px, py);
       if (Math.abs(r - R) > 1.05) continue;
       const turn = ((Math.atan2(px, -py) / (Math.PI * 2)) + 1) % 1; // 0 at 12 o'clock, clockwise
-      if (turn <= fill || flash > 0) c.dot(x, y, bright, e.show);
-      else c.dot(x, y, neon.map(v => v * 0.35), e.show * 0.8);
+      if (turn <= fill || flash > 0) c.dot(x, y, bright, 1);
+      else c.dot(x, y, neon.map(v => v * 0.35), 0.8);
     }
     // The rune in the middle: the area's creature's sigil, in its neon.
     let g = this.glyphs.get(at.species);
     if (!g) { g = sigilGlyph(at.species, 17) as { w: number; m: Uint8Array }; this.glyphs.set(at.species, g); }
     const o = Math.floor((N - g.w) / 2);
-    for (let y = 0; y < g.w; y++) for (let x = 0; x < g.w; x++) if (g.m[y * g.w + x]) c.dot(o + x, o + y, bright, e.show);
-    // The arrowhead outside the ring, toward the stone.
+    for (let y = 0; y < g.w; y++) for (let x = 0; x < g.w; x++) if (g.m[y * g.w + x]) c.dot(o + x, o + y, bright, 1);
+    // The arrowhead outside the ring, toward the stone (fading as it comes over the stone).
     for (const [x, y] of arrowPixels(e.angle, N, R + 2, R + 7, 3.5)) c.dot(x, y, bright, e.show);
     c.flush();
-    // The distance on the far side of the ring from the arrow.
-    c.label.style.display = "block";
-    c.label.textContent = label ?? `${Math.round(Math.hypot(at.x - wx, at.z - wz))} m`;
+    // The distance on the far side of the ring from the arrow (or under the ring, over the stone).
+    const showLabel = !!label || dist > 20;
+    c.label.style.display = showLabel ? "block" : "none";
+    if (!showLabel) return;
+    c.label.textContent = label ?? `${Math.round(dist)} m`;
     c.label.style.color = `rgb(${neon.map(Math.round).join(",")})`;
-    const lx = e.sx - Math.cos(e.angle) * (R + 6) * c.scale, ly = e.sy - Math.sin(e.angle) * (R + 6) * c.scale;
+    const ax = -Math.cos(e.angle) * e.show, ay = -Math.sin(e.angle) * e.show + (1 - e.show), al = Math.hypot(ax, ay) || 1;
+    const lx = cx + (ax / al) * (R + 6) * c.scale * size, ly = cy + (ay / al) * (R + 6) * c.scale * size;
     c.label.style.left = `${lx}px`;
     c.label.style.top = `${ly - 7}px`;
   }

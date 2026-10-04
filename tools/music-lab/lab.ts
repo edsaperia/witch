@@ -7,7 +7,8 @@ import styleJson from "../../config/music-style.json";
 import { Music } from "../../src/platform/music";
 import { MusicEngine } from "../../src/platform/musicEngine";
 import { mixAt, nearness } from "../../src/rules/music";
-import { barSeconds, planBlock, type MusicCue } from "../../src/rules/musicPlan";
+import { beatAt, bpmAt, newBeatClock, rampTo, timeAt, waveArrived, waveTempo, type BeatClock } from "../../src/rules/beat";
+import { barAt, barSeconds, planBlock, type MusicCue } from "../../src/rules/musicPlan";
 import { arcStep, checkStyle, resolveSection, type MusicStyle, type Patch } from "../../src/rules/musicScore";
 import { TUNING } from "../../src/rules/tuning";
 
@@ -23,10 +24,16 @@ let force: { section?: string; wave?: number } = {};
 let seed = 1;
 let ctx: AudioContext | null = null, music: Music | null = null, playing = false, lastAudio = 0;
 
-const cue = (): MusicCue => ({ waves: run.waves, nextAt: run.nextAt, bootUntil: run.bootUntil, knockedOut: hooks.knockedOut, siege: hooks.siege, forceSection: force.section, forceWave: force.wave });
+// the beat clock, as the game's: each wave's tempo from the style's arc, eased in from its block line
+const beatTuning = () => ({ beat: { bpm: style.bpm, tempos: style.arc.map(a => a.bpm ?? style.bpm), blockBars: style.blockBars, rampBars: style.tempoRampBars ?? 8 } });
+let clock: BeatClock = newBeatClock(style.bpm, waveTempo(beatTuning(), 0));
+const arrived = () => waveArrived(clock, beatTuning(), force.wave ?? run.waves.length, run.time);
+const bar = (time: number) => barAt(clock, time);
+const cue = (): MusicCue => ({ waves: run.waves.map(bar), nextAt: bar(run.nextAt), bootUntil: bar(run.bootUntil), knockedOut: hooks.knockedOut, siege: hooks.siege, forceSection: force.section, forceWave: force.wave });
 
 function restart(): void {
   Object.assign(run, { time: 0, bootUntil: run.boot, waves: [], nextAt: run.boot + run.interval });
+  clock = newBeatClock(style.bpm, waveTempo(beatTuning(), 0));
   music?.engine?.reset();
 }
 
@@ -36,10 +43,11 @@ function jumpToWave(n: number): void {
   run.bootUntil = Math.min(run.bootUntil, t);
   run.waves = Array.from({ length: n }, (_, i) => t - (n - 1 - i) * run.interval);
   run.nextAt = t + run.interval;
+  arrived();
   renderButtons();
 }
 
-function nextWave(): void { run.waves = [...run.waves, run.time]; run.nextAt = run.time + run.interval; run.bootUntil = Math.min(run.bootUntil, run.time); }
+function nextWave(): void { run.waves = [...run.waves, run.time]; run.nextAt = run.time + run.interval; run.bootUntil = Math.min(run.bootUntil, run.time); arrived(); }
 
 function step(): void {
   requestAnimationFrame(step);
@@ -48,11 +56,11 @@ function step(): void {
   lastAudio = now;
   run.time += dt;
   if (run.paused) { run.nextAt += dt; if (run.time < run.bootUntil) run.bootUntil += dt; }
-  while (run.time >= run.nextAt && run.time >= run.bootUntil) { run.waves = [...run.waves, run.time]; run.nextAt += run.interval; }
+  while (run.time >= run.nextAt && run.time >= run.bootUntil) { run.waves = [...run.waves, run.time]; run.nextAt += run.interval; arrived(); }
   const M = TUNING.music, level = nearness(M, hooks.distance);
   const mix = mixAt(M, level, hooks.damage * level, hooks.distance);
   music.volume = hooks.volume;
-  music.update(mix, cue(), run.time, style.bpm, playing);
+  music.update(mix, cue(), run.time, clock, playing);
   $("mix-out").textContent = `heard at ${(mix.volume * 100).toFixed(0)}%, muffled above ${Math.round(mix.cutoff)} Hz, damage ${(mix.distort * 100).toFixed(0)}%`;
   showNow();
 }
@@ -60,7 +68,6 @@ function step(): void {
 // ---- what's playing ----
 function showNow(): void {
   const cur = music?.engine?.current;
-  const spBar = barSeconds(style.bpm);
   if (cur) {
     const a = arcStep(style, cur.plan.arc), sec = resolveSection(style, cur.plan.section);
     $("s-wave").textContent = `${cur.plan.wave} · ${a.name}`;
@@ -71,14 +78,15 @@ function showNow(): void {
   }
   const left = run.nextAt - run.time;
   $("s-next").textContent = run.time < run.bootUntil ? `booting ${Math.ceil(run.bootUntil - run.time)} s` : run.paused ? "paused" : `${Math.ceil(left)} s`;
-  const beat = Math.floor((run.time * style.bpm) / 60) % 4;
+  const beat = Math.floor(beatAt(clock, run.time)) % 4;
+  $("s-tempo").textContent = `${bpmAt(clock, run.time).toFixed(1)} bpm`;
   $("beats").querySelectorAll("i").forEach((el, i) => el.classList.toggle("on", playing && i === beat));
   // the next blocks as planned now
-  const B = style.blockBars, bar = Math.floor(run.time / spBar), first = Math.floor(bar / B) * B, c = cue();
+  const B = style.blockBars, first = Math.floor(Math.floor(bar(run.time)) / B) * B, c = cue();
   const chips: string[] = [];
   let last = "";
   for (let b = first; b < first + 16 * B; b += B) {
-    const p = b === first && cur ? cur.plan : planBlock(style, c, b, style.bpm);
+    const p = b === first && cur ? cur.plan : planBlock(style, c, b);
     const key = `${p.section}|${p.start}|${p.wave}`;
     if (key === last) continue;
     const prev = last.split("|")[2];
@@ -133,12 +141,15 @@ function changed(now = false): void {
 function buildKnobs(): void {
   const fs = $("f-style"), fm = $("f-mix"), fp = $("f-patches");
   for (const f of [fs, fm, fp]) f.querySelectorAll(":scope > :not(legend)").forEach(n => n.remove());
-  knob(fs, "Tempo", style.bpm, 70, 180, 1, v => {
-    // keep the place in the music: the run's clock scales with the tempo
-    const k = style.bpm / v;
-    run.time *= k; run.nextAt *= k; run.bootUntil *= k; run.waves = run.waves.map(t => t * k); run.interval *= k;
-    style.bpm = v; music?.engine?.reset(); changed();
+  knob(fs, "Tempo (first wave; the rest keep their rise)", style.bpm, 70, 180, 1, v => {
+    const d = v - style.bpm;
+    style.bpm = v;
+    for (const a of style.arc) if (a.bpm !== undefined) a.bpm += d;
+    // from the next beat, straight to the shifted tempo: the beat carries on
+    rampTo(clock, Math.ceil(beatAt(clock, run.time)) + 1, waveTempo(beatTuning(), force.wave ?? run.waves.length), 0);
+    changed();
   }, { unit: " bpm" });
+  knob(fs, "Tempo ramp (bars)", style.tempoRampBars ?? 8, 0, 32, 4, v => { style.tempoRampBars = v; changed(); });
   knob(fs, "Swing", style.swing, 0, 0.5, 0.01, v => { style.swing = v; changed(); });
   const roots: [string, string][] = [];
   for (let m = 28; m <= 39; m++) roots.push([String(m), NOTE_NAMES[m % 12]]);
@@ -179,7 +190,8 @@ function buildKnobs(): void {
 function showJson(): void {
   const ta = $<HTMLTextAreaElement>("json");
   if (document.activeElement !== ta) ta.value = JSON.stringify(style, null, 2);
-  $("style-name").textContent = `${style.name} · ${style.bpm} bpm · ${style.arc.length} waves of music`;
+  const bpms = style.arc.map(a => a.bpm ?? style.bpm);
+  $("style-name").textContent = `${style.name} · ${bpms[0]} to ${bpms[bpms.length - 1]} bpm · ${style.arc.length} waves of music`;
 }
 
 // ---- the offline check ----
@@ -187,7 +199,7 @@ function showJson(): void {
  *  offline, measuring each: the check fails on a script error, silence, NaN or clipping. */
 async function musicLabCheck(bars = 2): Promise<{ ok: boolean; errors: string[]; results: { name: string; rms: number; peak: number }[] }> {
   const errors = checkStyle(style), results: { name: string; rms: number; peak: number }[] = [];
-  const rate = 22050, spBar = barSeconds(style.bpm);
+  const rate = 22050, spBar = barSeconds(style.bpm), steady = newBeatClock(style.bpm);
   const measure = (name: string, buf: AudioBuffer) => {
     let sum = 0, peak = 0, n = 0;
     for (let ch = 0; ch < buf.numberOfChannels; ch++) for (const v of buf.getChannelData(ch)) { sum += v * v; n++; if (!(Math.abs(v) <= peak)) peak = Math.abs(v); }
@@ -203,22 +215,26 @@ async function musicLabCheck(bars = 2): Promise<{ ok: boolean; errors: string[];
     const e = new MusicEngine(oc, oc.destination, style, 7);
     // the intro and builds start part-way, so their later parts sound too
     const from = name === style.intro || resolveSection(style, name).riser ? 8 * spBar : 0;
-    e.renderAhead({ ...quiet, forceSection: name, forceWave: 3 }, from, bars * spBar, style.bpm);
+    e.renderAhead({ ...quiet, forceSection: name, forceWave: 3 }, from, bars * spBar, steady);
     measure(name, await oc.startRendering());
   }
   {
-    // a run: wave 1 due at bar 20; render bars 8 to 24 (the build and the drop)
-    const oc = new OfflineAudioContext(2, Math.ceil(rate * 16 * spBar), rate);
-    const e = new MusicEngine(oc, oc.destination, style, 7);
-    e.renderAhead({ waves: [], nextAt: 20 * spBar, bootUntil: 0, knockedOut: false, siege: 0.5 }, 8 * spBar, 16 * spBar, style.bpm);
-    measure("run: build into wave 1, under siege", await oc.startRendering());
+    // a run: wave 7 due at bar 20, its tempo easing in from there; render bars 8 to 32 (the build,
+    // the drop and the ramp), under siege
+    const oc = new OfflineAudioContext(2, Math.ceil(rate * 24 * spBar), rate);
+    const e = new MusicEngine(oc, oc.destination, style, 7), c = newBeatClock(style.bpm, waveTempo(beatTuning(), 6));
+    c.wave = 6;
+    waveArrived(c, beatTuning(), 7, 20 * spBar);
+    if (!(bpmAt(c, timeAt(c, 4 * 32)) > bpmAt(c, 0))) errors.push("the tempo doesn't rise with a wave");
+    e.renderAhead({ waves: [], nextAt: 20, bootUntil: 0, knockedOut: false, siege: 0.5 }, 8 * spBar, 24 * spBar, c);
+    measure("run: into wave 7, tempo rising, siege", await oc.startRendering());
   }
   {
     // the game's mix: far off and damaged (muffled, crunched, wobbling)
     const oc = new OfflineAudioContext(2, Math.ceil(rate * 2 * spBar), rate);
     const m = new Music(oc, 1, style, 7), M = TUNING.music;
-    m.update(mixAt(M, nearness(M, 120), 0.8, 120), { ...quiet, forceSection: "drop" }, 0, style.bpm, true);
-    m.engine!.renderAhead({ ...quiet, forceSection: "drop" }, 0, 2 * spBar, style.bpm);
+    m.update(mixAt(M, nearness(M, 120), 0.8, 120), { ...quiet, forceSection: "drop" }, 0, steady, true);
+    m.engine!.renderAhead({ ...quiet, forceSection: "drop" }, 0, 2 * spBar, steady);
     measure("mix: 120 m away, damaged", await oc.startRendering());
   }
   return { ok: errors.length === 0, errors, results };

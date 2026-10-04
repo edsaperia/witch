@@ -88,6 +88,7 @@ label.check input { accent-color: var(--accent); }
           <div class="stat"><span>Section</span><b id="s-section">–</b></div>
           <div class="stat"><span>Bar in section</span><b id="s-bar">–</b></div>
           <div class="stat"><span>Next wave</span><b id="s-next">–</b></div>
+          <div class="stat"><span>Tempo</span><b id="s-tempo">–</b></div>
         </div>
         <div class="row" style="justify-content: space-between"><p class="feel" id="s-feel"></p><div class="beats" id="beats"><i></i><i></i><i></i><i></i></div></div>
         <div class="bar"><div id="s-progress"></div></div>
@@ -148,6 +149,7 @@ label.check input { accent-color: var(--accent); }
     name: "Forest rave",
     notes: "Witch's first music style (2026-10-04), from the genres in Ed's reference playlist (a screenshot of its track list he shared in the music builder's session that day: melodic organic house and melodic techno, dark synth and French electro, chiptune and bubblegum electro, hyperpop, dark minimal pop and phonk). Nothing is taken from any track: every sound is synthesised and every tune generated. it starts as warm melodic, organic house in the dark forest (marimba plucks, soft pads, shakers), deepens into melodic techno with strings, turns to dark synth-electro (driving saw bass, gated pads, supersaw leads), sparkles into chiptune and bubblegum electro (square arps, bouncing octave bass), and ends in phonk (a sliding 808, a cowbell hook, trap hats) for the frantic finale. Breakdowns go minimal and dark (finger snaps over a sub). Sections are named in the arc below, one step per wave; the last step repeats.",
     bpm: 120,
+    tempoRampBars: 8,
     swing: 0.08,
     root: 33,
     scale: "aeolian",
@@ -354,17 +356,87 @@ label.check input { accent-color: var(--accent); }
     fill: { part: "snare", pattern: "........x.x.xxXX", mute: ["kick", "softkick", "boom", "bass", "sub", "darkbass", "chipbass"] },
     siege: { tension: { p: "pulse", level: 0.8 } },
     arc: [
-      { name: "Forest", energy: 0.2, scale: "dorian", progression: "forest", arrive: [["forest", 16]], loop: [["forest", 16], ["forestBeat", 16], ["whisper", 8], ["forestBeat", 16]], build: "rise" },
-      { name: "Clearing", energy: 0.3, scale: "dorian", arrive: [["deep", 16]], loop: [["deep", 16], ["breakdown", 8], ["deep", 16], ["forestBeat", 8]], build: "rise" },
-      { name: "Lanterns", energy: 0.45, arrive: [["drop", 16]], loop: [["deep", 16], ["breakdown", 8], ["drop", 16]], build: "build" },
-      { name: "Night drive", energy: 0.6, scale: "harmonicMinor", arrive: [["darkDrop", 16]], loop: [["dark", 16], ["whisper", 8], ["darkDrop", 16]], build: "build" },
-      { name: "Electro", energy: 0.7, scale: "harmonicMinor", transpose: 2, arrive: [["darkDrop", 16]], loop: [["dark", 16], ["breakdown", 8], ["darkDrop", 16]], build: "build" },
-      { name: "Sparkle", energy: 0.8, scale: "aeolian", transpose: 3, arrive: [["chipDrop", 16]], loop: [["chip", 16], ["breakdown", 8], ["chipDrop", 16]], build: "build" },
-      { name: "Bubblegum", energy: 0.88, scale: "aeolian", transpose: 5, arrive: [["chipDrop", 16]], loop: [["chip", 16], ["whisper", 8], ["chipDrop", 16], ["darkDrop", 16]], build: "build" },
-      { name: "Phonk", energy: 0.95, scale: "phrygian", arrive: [["phonkDrop", 16]], loop: [["phonk", 16], ["whisper", 4], ["phonkDrop", 16]], build: "build" },
-      { name: "Finale", energy: 1, scale: "phrygian", transpose: 1, arrive: [["phonkDrop", 16]], loop: [["phonkDrop", 16], ["darkDrop", 8], ["phonk", 8]], build: "build", buildBars: 4 }
+      { name: "Forest", bpm: 120, energy: 0.2, scale: "dorian", progression: "forest", arrive: [["forest", 16]], loop: [["forest", 16], ["forestBeat", 16], ["whisper", 8], ["forestBeat", 16]], build: "rise" },
+      { name: "Clearing", bpm: 122, energy: 0.3, scale: "dorian", arrive: [["deep", 16]], loop: [["deep", 16], ["breakdown", 8], ["deep", 16], ["forestBeat", 8]], build: "rise" },
+      { name: "Lanterns", bpm: 124, energy: 0.45, arrive: [["drop", 16]], loop: [["deep", 16], ["breakdown", 8], ["drop", 16]], build: "build" },
+      { name: "Night drive", bpm: 126, energy: 0.6, scale: "harmonicMinor", arrive: [["darkDrop", 16]], loop: [["dark", 16], ["whisper", 8], ["darkDrop", 16]], build: "build" },
+      { name: "Electro", bpm: 128, energy: 0.7, scale: "harmonicMinor", transpose: 2, arrive: [["darkDrop", 16]], loop: [["dark", 16], ["breakdown", 8], ["darkDrop", 16]], build: "build" },
+      { name: "Sparkle", bpm: 131, energy: 0.8, scale: "aeolian", transpose: 3, arrive: [["chipDrop", 16]], loop: [["chip", 16], ["breakdown", 8], ["chipDrop", 16]], build: "build" },
+      { name: "Bubblegum", bpm: 134, energy: 0.88, scale: "aeolian", transpose: 5, arrive: [["chipDrop", 16]], loop: [["chip", 16], ["whisper", 8], ["chipDrop", 16], ["darkDrop", 16]], build: "build" },
+      { name: "Phonk", bpm: 137, energy: 0.95, scale: "phrygian", arrive: [["phonkDrop", 16]], loop: [["phonk", 16], ["whisper", 4], ["phonkDrop", 16]], build: "build" },
+      { name: "Finale", bpm: 140, energy: 1, scale: "phrygian", transpose: 1, arrive: [["phonkDrop", 16]], loop: [["phonkDrop", 16], ["darkDrop", 8], ["phonk", 8]], build: "build", buildBars: 4 }
     ]
   };
+
+  // src/rules/beat.ts
+  function newBeatClock(base, bpm = base) {
+    return { base, segs: [{ time: 0, beat: 0, bpm, bpmTo: bpm, dur: 0 }], wave: 0 };
+  }
+  function segAtTime(c, time) {
+    let s = c.segs[0];
+    for (const x of c.segs) {
+      if (x.time <= time) s = x;
+      else break;
+    }
+    return s;
+  }
+  function segAtBeat(c, beat) {
+    let s = c.segs[0];
+    for (const x of c.segs) {
+      if (x.beat <= beat) s = x;
+      else break;
+    }
+    return s;
+  }
+  var rampBeats = (s) => (s.bpm + s.bpmTo) / 2 * s.dur / 60;
+  function beatAt(c, time) {
+    const s = segAtTime(c, time), dt = time - s.time;
+    if (dt <= 0) return s.beat + s.bpm * dt / 60;
+    if (dt < s.dur) return s.beat + (s.bpm * dt + (s.bpmTo - s.bpm) * dt * dt / (2 * s.dur)) / 60;
+    return s.beat + rampBeats(s) + s.bpmTo * (dt - s.dur) / 60;
+  }
+  function bpmAt(c, time) {
+    const s = segAtTime(c, time), dt = time - s.time;
+    return dt <= 0 ? s.bpm : dt < s.dur ? s.bpm + (s.bpmTo - s.bpm) * dt / s.dur : s.bpmTo;
+  }
+  function timeAt(c, beat) {
+    const s = segAtBeat(c, beat), db = beat - s.beat;
+    if (db <= 0) return s.time + db * 60 / s.bpm;
+    const rb = rampBeats(s);
+    if (s.dur > 0 && db < rb) {
+      const a = (s.bpmTo - s.bpm) / (2 * s.dur), b = s.bpm, k = 60 * db;
+      return s.time + (Math.abs(a) < 1e-9 ? k / b : (-b + Math.sqrt(b * b + 4 * a * k)) / (2 * a));
+    }
+    return s.time + s.dur + (db - rb) * 60 / s.bpmTo;
+  }
+  function rampTo(c, atBeat, bpm, beats) {
+    const time = timeAt(c, atBeat), from = bpmAt(c, time);
+    c.segs = c.segs.filter((s) => s.time < time);
+    if (!c.segs.length) c.segs.push({ time: 0, beat: 0, bpm: from, bpmTo: from, dur: 0 });
+    const last = c.segs[c.segs.length - 1];
+    if (last.time + last.dur > time) {
+      const k = (time - last.time) / Math.max(1e-9, last.dur);
+      last.bpmTo = last.bpm + (last.bpmTo - last.bpm) * k;
+      last.dur = time - last.time;
+    }
+    const dur = beats > 0 && bpm !== from ? beats * 60 / ((from + bpm) / 2) : 0;
+    c.segs.push({ time, beat: atBeat, bpm: from, bpmTo: bpm, dur });
+  }
+  function waveTempo(t, wave) {
+    const T = t.beat.tempos;
+    return T && T.length ? T[Math.max(0, Math.min(T.length - 1, wave))] : t.beat.bpm;
+  }
+  function blockLineAfter(beat, blockBars) {
+    const B = 4 * Math.max(1, blockBars), b = Math.floor(beat / B) * B;
+    return beat - b <= 1 ? b : b + B;
+  }
+  function waveArrived(c, t, wave, time) {
+    if (wave === c.wave) return;
+    c.wave = wave;
+    const target = waveTempo(t, wave), line = blockLineAfter(beatAt(c, time), t.beat.blockBars ?? 4);
+    if (Math.abs(target - bpmAt(c, timeAt(c, line))) < 1e-6) return;
+    rampTo(c, line, target, 4 * (t.beat.rampBars ?? 8));
+  }
 
   // src/rules/random.ts
   function hash2(x, y, s) {
@@ -454,7 +526,7 @@ label.check input { accent-color: var(--accent); }
   var VEL = { X: 1, x: 0.8, o: 0.45, r: 0.7, "?": 0.75 };
   var BASS = { "1": 0, "2": 1, "3": 2, "5": 4, "7": 6, "8": 7 };
   function notesAt(style2, plan, next, step2, ctx2) {
-    const bar = Math.floor(step2 / 16), s = step2 - bar * 16, barIn = bar - plan.start;
+    const bar2 = Math.floor(step2 / 16), s = step2 - bar2 * 16, barIn = bar2 - plan.start;
     const sec = resolveSection(style2, plan.section), a = arcStep(style2, plan.arc);
     const scale = style2.scales[a.scale ?? style2.scale] ?? style2.scales[style2.scale];
     const transpose = a.transpose ?? 0;
@@ -506,7 +578,7 @@ label.check input { accent-color: var(--accent); }
         out.push({ ...base, midi: degreeToMidi(style2, scale, t, oct, transpose), vel: (VEL[ch] ?? accent) * level });
       } else {
         const m = motifFor(ctx2.seed, plan.arc, name), pos = (barIn % 4 * 16 + s) % 32;
-        const vary = barIn % 4 === 3 && s >= 8 ? hash2(bar, plan.arc, ctx2.seed + 5) < 0.5 ? 2 : -1 : 0;
+        const vary = barIn % 4 === 3 && s >= 8 ? hash2(bar2, plan.arc, ctx2.seed + 5) < 0.5 ? 2 : -1 : 0;
         out.push({ ...base, midi: degreeToMidi(style2, scale, chord.root + m[pos] + vary, oct, transpose), vel: (VEL[ch] ?? accent) * level });
       }
     }
@@ -557,10 +629,11 @@ label.check input { accent-color: var(--accent); }
   }
 
   // src/rules/musicPlan.ts
+  var barAt = (clock2, time) => beatAt(clock2, time) / 4;
   var barSeconds = (bpm) => 4 * 60 / bpm;
-  function blockAfter(timeBars, B, snap = 0.25) {
-    const b = Math.floor(timeBars / B) * B;
-    return timeBars - b <= snap ? b : b + B;
+  function blockAfter(bars, B, snap = 0.25) {
+    const b = Math.floor(bars / B) * B;
+    return bars - b <= snap ? b : b + B;
   }
   function walk(seq, k) {
     for (const [section, bars] of seq) {
@@ -569,34 +642,31 @@ label.check input { accent-color: var(--accent); }
     }
     return null;
   }
-  function planBlock(style2, cue2, bar, bpm) {
-    const B = style2.blockBars, spBar = barSeconds(bpm), t = bar * spBar;
+  function planBlock(style2, cue2, bar2) {
+    const B = style2.blockBars;
     let w = 0;
-    while (w < cue2.waves.length && blockAfter(cue2.waves[w] / spBar, B) <= bar) w++;
+    while (w < cue2.waves.length && blockAfter(cue2.waves[w], B) <= bar2) w++;
     let next = w < cue2.waves.length ? cue2.waves[w] : cue2.nextAt;
     let arrival = w > 0 ? cue2.waves[w - 1] : cue2.bootUntil;
-    if (w >= cue2.waves.length && Number.isFinite(next) && blockAfter(next / spBar, B) <= bar && t >= cue2.bootUntil) {
+    if (w >= cue2.waves.length && Number.isFinite(next) && blockAfter(next, B) <= bar2 && bar2 >= cue2.bootUntil) {
       arrival = next;
       next = Infinity;
       w++;
     }
     const arc = cue2.forceWave ?? w, step2 = arcStep(style2, arc);
     const plan = (section, start, bars) => ({ section, start, bars, wave: w, arc });
-    if (cue2.forceSection && style2.sections[cue2.forceSection]) return plan(cue2.forceSection, bar - bar % 16, 16);
-    if (cue2.knockedOut) return plan(style2.knockout, bar - bar % (2 * B), 2 * B);
-    if (t < cue2.bootUntil) {
-      const end = blockAfter(cue2.bootUntil / spBar, B);
-      return plan(style2.intro, 0, Math.max(B, end));
-    }
+    if (cue2.forceSection && style2.sections[cue2.forceSection]) return plan(cue2.forceSection, bar2 - bar2 % 16, 16);
+    if (cue2.knockedOut) return plan(style2.knockout, bar2 - bar2 % (2 * B), 2 * B);
+    if (bar2 < cue2.bootUntil) return plan(style2.intro, 0, Math.max(B, blockAfter(cue2.bootUntil, B)));
     const buildBars = step2.buildBars ?? style2.buildBars;
     if (Number.isFinite(next)) {
-      const drop = blockAfter(next / spBar, B);
-      if (drop > bar && drop - bar <= buildBars) return plan(step2.build, drop - buildBars, buildBars);
+      const drop = blockAfter(next, B);
+      if (drop > bar2 && drop - bar2 <= buildBars) return plan(step2.build, drop - buildBars, buildBars);
     }
-    const k = Math.max(0, bar - blockAfter(arrival / spBar, B));
+    const k = Math.max(0, bar2 - blockAfter(arrival, B));
     const arrive = step2.arrive.reduce((n, [, b]) => n + b, 0), loop = step2.loop.reduce((n, [, b]) => n + b, 0);
     const hit = walk(step2.arrive, k) ?? walk(step2.loop, (k - arrive) % Math.max(1, loop));
-    return plan(hit.section, bar - hit.offset, hit.bars);
+    return plan(hit.section, bar2 - hit.offset, hit.bars);
   }
   var Conductor = class {
     constructor(style2) {
@@ -605,11 +675,11 @@ label.check input { accent-color: var(--accent); }
     style;
     cache = /* @__PURE__ */ new Map();
     /** The plan for the block holding `bar`. */
-    plan(cue2, bar, bpm) {
-      const B = this.style.blockBars, b = Math.floor(bar / B) * B;
+    plan(cue2, bar2) {
+      const B = this.style.blockBars, b = Math.floor(bar2 / B) * B;
       let p = this.cache.get(b);
       if (!p) {
-        p = planBlock(this.style, cue2, b, bpm);
+        p = planBlock(this.style, cue2, b);
         this.cache.set(b, p);
         for (const k of this.cache.keys()) if (k < b - 4 * B || k > b + 4 * B) this.cache.delete(k);
       }
@@ -693,7 +763,7 @@ label.check input { accent-color: var(--accent); }
     curves = /* @__PURE__ */ new Map();
     nextStep = -1;
     anchor = NaN;
-    // audio time of step 0
+    // audio time of game time 0
     reverbTime = 0;
     /** A new or edited style: takes effect from the next block. */
     setStyle(style2) {
@@ -711,43 +781,49 @@ label.check input { accent-color: var(--accent); }
       this.channels.clear();
     }
     /** Each frame: schedule what's due in the next `ahead` seconds of audio time, at game time
-     *  `gameTime` (seconds, the beat clock). `playing` false: nothing new is scheduled. */
-    update(cue2, gameTime, bpm, playing2, ahead = 0.3) {
-      const now = this.ctx.currentTime, sps = 60 / bpm / 4, stepNow = gameTime / sps;
+     *  `gameTime` (seconds) on the beat clock `clock`. `playing` false: nothing new is scheduled. */
+    update(cue2, gameTime, clock2, playing2, ahead = 0.3) {
+      const now = this.ctx.currentTime, stepNow = beatAt(clock2, gameTime) * 4;
       if (!playing2) {
         this.nextStep = -1;
         return;
       }
-      const raw = now - stepNow * sps;
+      const raw = now - gameTime;
       if (!(Math.abs(raw - this.anchor) < 0.06)) {
         this.anchor = raw;
         this.nextStep = -1;
       } else this.anchor += (raw - this.anchor) * 0.05;
       if (this.nextStep < 0 || this.nextStep < stepNow - 1 || this.nextStep > stepNow + 64) this.nextStep = Math.ceil(stepNow);
-      this.delay.delayTime.setTargetAtTime(Math.min(4, this.style.mix.delayBeats * 60 / bpm), now, 0.05);
-      while (this.anchor + this.nextStep * sps < now + ahead) {
-        const t = this.anchor + this.nextStep * sps;
-        if (t >= now) this.step(cue2, this.nextStep, t, bpm);
+      this.delay.delayTime.setTargetAtTime(Math.min(4, this.style.mix.delayBeats * 60 / bpmAt(clock2, gameTime)), now, 0.05);
+      for (; ; ) {
+        const g = timeAt(clock2, this.nextStep / 4), t = this.anchor + g;
+        if (t >= now + ahead) break;
+        if (t >= now) this.step(cue2, this.nextStep, t, 60 / bpmAt(clock2, g) / 4);
         this.nextStep++;
       }
     }
     /** Schedule game time [from, from + seconds) to play from audio time `at` (offline rendering). */
-    renderAhead(cue2, from, seconds, bpm, at = 0) {
-      const sps = 60 / bpm / 4, first = Math.ceil(from / sps - 1e-9), last = (from + seconds) / sps;
-      for (let s = first; s < last; s++) this.step(cue2, s, at + (s * sps - from), bpm);
+    renderAhead(cue2, from, seconds, clock2, at = 0) {
+      const first = Math.ceil(beatAt(clock2, from) * 4 - 1e-9);
+      for (let s = first; ; s++) {
+        const g = timeAt(clock2, s / 4);
+        if (g >= from + seconds) break;
+        this.step(cue2, s, at + (g - from), 60 / bpmAt(clock2, g) / 4);
+      }
     }
     /** Stop scheduling and forget the plans (a jump in the timeline). */
     reset() {
       this.nextStep = -1;
       this.conductor.reset();
     }
-    step(cue2, step2, t, bpm) {
-      const S = this.style, B = S.blockBars, sps = 60 / bpm / 4, bar = Math.floor(step2 / 16), s = step2 - bar * 16;
-      const plan = this.conductor.plan(cue2, bar, bpm);
-      const next = bar % B === B - 1 ? this.conductor.plan(cue2, bar + 1, bpm) : null;
-      this.current = { plan, bar, step: step2 };
+    /** One sixteenth: `t` its audio time, `sps` seconds a sixteenth lasts now. */
+    step(cue2, step2, t, sps) {
+      const S = this.style, B = S.blockBars, bar2 = Math.floor(step2 / 16), s = step2 - bar2 * 16;
+      const plan = this.conductor.plan(cue2, bar2);
+      const next = bar2 % B === B - 1 ? this.conductor.plan(cue2, bar2 + 1) : null;
+      this.current = { plan, bar: bar2, step: step2 };
       if (s === 0) {
-        const sec = resolveSection(S, plan.section), barIn = bar - plan.start;
+        const sec = resolveSection(S, plan.section), barIn = bar2 - plan.start;
         const f0 = sectionCutoff(sec, barIn / plan.bars), f1 = sectionCutoff(sec, (barIn + 1) / plan.bars);
         this.tone.frequency.setValueAtTime(f0, t);
         if (f1 !== f0) this.tone.frequency.exponentialRampToValueAtTime(f1, t + 16 * sps);
@@ -1032,7 +1108,7 @@ label.check input { accent-color: var(--accent); }
     /** The generative track (none with a recorded one). */
     engine = null;
     /** Each frame: the mix to hear, the music's cue (waves, boot), the game's time and beat. */
-    update(mix, cue2, gameTime, bpm, on) {
+    update(mix, cue2, gameTime, clock2, on) {
       const c = this.ctx, now = c.currentTime, k = 0.08;
       if (mix.distort > 0.05 && now > this.dropUntil && Math.random() < mix.distort * 0.01) this.dropUntil = now + 0.08 + Math.random() * 0.3 * mix.distort;
       const vol = on && now >= this.dropUntil ? mix.volume * this.volume : 0;
@@ -1042,7 +1118,7 @@ label.check input { accent-color: var(--accent); }
       this.dry.gain.setTargetAtTime(1 - mix.distort * 0.6, now, k);
       this.wobble.gain.setTargetAtTime(1 - mix.distort * 0.45 * (0.5 + 0.5 * Math.sin(now * 7.3 + Math.sin(now * 2.1) * 2)), now, 0.02);
       if (on && mix.distort > 0.05 && Math.random() < mix.distort * 0.15) this.crackle(now + Math.random() * 0.05, mix.distort);
-      this.engine?.update(cue2, gameTime, bpm, on);
+      this.engine?.update(cue2, gameTime, clock2, on);
     }
     crackle(at, amount) {
       const c = this.ctx, s = c.createBufferSource(), g = c.createGain();
@@ -1217,8 +1293,8 @@ label.check input { accent-color: var(--accent); }
     decor: { spacing: 26, ruins: 0.01, rocks: 0.03, freak: 4e-3, minGap: 80, clearing: 0.3, pathGap: 2, footprint: 4 },
     _paths: "Paths, roads and railways (Ed): rails [min,max] railway lines edge to edge in wide curves (one with a branch); roads [min,max] broad sweeping old roads; linkChance: the share of neighbouring areas joined by a meandering path; deadEndChance: the share of areas with a path out to nothing; pathHalf, roadHalf, railHalf: half each corridor's width (metres), kept clear of trees, with bushes thick along the edges for edgeBushes metres (bushBoost times as many); streams [min,max] long streams winding across the map (and short ones join wet areas that touch), streamHalf metres half-wide; along a railway, every landmarkSpacing metres, a landmarkChance of a landmark (a wagon, a carriage, a platform, a gantry) and otherwise sometimes a signal post; verge posts along roads every vergeSpacing metres; every 3D piece at least pieceGap metres from the next; the two flights of stairs are finds, each at most once per map, by the clearing of a ravine, rocky slope, cave mouth or stone shrine; railBroken: the share of the railway that's broken, where trees grow between the sleepers (treesOnBroken times the usual chance).",
     paths: { rails: [2, 4], roads: [1, 2], linkChance: 0.55, deadEndChance: 0.3, pathHalf: 2.2, roadHalf: 6, railHalf: 3, railBroken: 0.3, streams: [1, 2], streamHalf: 2.5, landmarkSpacing: 260, landmarkChance: 0.35, vergeSpacing: 45, pieceGap: 40, treesOnBroken: 0.35, edgeBushes: 3, bushBoost: 3 },
-    _invite: "Inviting (DESIGN.md, the leash): on the ground, she talks by herself (no button: Ed, v244) to the nearest invitable creature within talkRange metres, and sticks with it; you chat in emoji for talkTime seconds (babies, young, adults), taking turns every turn seconds (babies, young, adults), then it is invited and leashed to you. Rising or moving further than cancelDistance stops it, and the chat's progress drains at decayRate of the rate it filled (0.5: half), so coming back soon picks up where it left off. Legends can't be invited: they give one unimpressed look. leash.length: how far a leashed creature roams from its leash point (you, or its sigil on the ground); runSpeed: how fast it hurries back when out of range (m/s); pickRadius: how near a placed sigil you must be to pick it up; spacing: how close two sigils may be put down (keep it above pickRadius, or a blocked spot picks up instead of fizzling). bond: how a creature shows its tie to its sigil (rim: a glow at its feet in the sigil's colour; sparks: one spark every sparkEvery seconds from sigil to creature, staggered; thread: a dotted line only under strain). A legend gives her one unimpressed look for snubTime seconds per approach (not again till she's been beyond cancelDistance).",
-    invite: { talkRange: 12, cancelDistance: 18, snubTime: 2, talkTime: [3, 6, 12], turn: [0.7, 0.9, 1.3], decayRate: 0.5 },
+    _invite: "Inviting (DESIGN.md, the leash): on the ground, she talks by herself (no button: Ed, v244) to the nearest invitable creature within talkRange metres, and sticks with it; you chat in emoji for talkTime seconds (babies, young, adults), taking turns every turn seconds (babies, young, adults), then it is invited and leashed to you. Rising or moving further than cancelDistance stops it, and the chat's progress drains at decayRate of the rate it filled (0.5: half), so coming back soon picks up where it left off. Legends can't be invited: they give one unimpressed look. leash.length: how far a leashed creature roams from its leash point (you, or its sigil on the ground); runSpeed: how fast it hurries back when out of range (m/s); pickRadius: how near a placed sigil you must be to pick it up; spacing: how close two sigils may be put down (keep it above pickRadius, or a blocked spot picks up instead of fizzling). bond: how a creature shows its tie to its sigil (rim: a glow at its feet in the sigil's colour; sparks: one spark every sparkEvery seconds from sigil to creature, staggered; thread: a dotted line only under strain). A legend gives her one unimpressed look for snubTime seconds per approach (not again till she's been beyond cancelDistance). hitPenalty: seconds of a chat's progress lost each time she's hit while talking (Ed, 2026-10-04: big, strong groups are hard to invite without getting hit). talkTime's fourth value is for legends let go on a knockout (wild legends still can't be invited).",
+    invite: { hitPenalty: 2, talkRange: 12, cancelDistance: 18, snubTime: 2, talkTime: [3, 6, 12, 24], turn: [0.7, 0.9, 1.3], decayRate: 0.5 },
     leash: { length: 8, runSpeed: 4, pickRadius: 2, spacing: 4 },
     bond: { rim: true, sparks: true, thread: true, sparkEvery: 4, threadArc: 0.12, threadArcMax: 2.5 },
     _music: "Music by proximity (Ed, 2026-10-04): one shared track, full and clear within nearDist metres of a playing soundsystem (or the dancefloor's ring, as loud as its speakers are on), fading to floor of the volume and muffled to a muffle Hz low-pass by farDist metres (clear: the cutoff close by); a damaged soundsystem nearby wobbles, crackles and drops out, by its damage times distort. volume: the master. src: an audio file to loop (empty: the built-in loop at beat.bpm until there's a real track). ?music=off silences it.",
@@ -1226,6 +1302,14 @@ label.check input { accent-color: var(--accent); }
     _forecast: "Forecasting (Ed, 2026-10-04): the next two waves are confirmed and the one after has a few probable areas. Every such rune stone grows a circle of up to symbols magic symbols round it on the ground, in its area's neon: the next stone has all of them; the after-next stone fills from afterNext[0] to afterNext[1] as the countdown runs; probable stones (probable of them) flicker with 1 to probableMax. They stand radius metres out, each size metres across, appear with a flare (flare seconds) and pulse on the beat; from the treetops the circle shows above the canopy.",
     forecast: { symbols: 12, probable: 3, probableMax: 4, afterNext: [5, 11], radius: 6, size: 1.9, flare: 0.6 },
     _spells: "Spells (Ed, 2026-10-04): one is equipped per run (equipped; later chosen from a list unlocked across runs), cast with the spell button (Q; gamepad B; touch 'spell'), then it recharges. speed: she moves mult times as fast for duration seconds, with a trail, then cooldown seconds before it can go again (a ring in the corner shows it recharging).",
+    _combat: "Combat (Stage 4; the attacks themselves are data in config/combat.json). Wild creatures attack party animals of other kinds within aggro metres, and the witch while she's on the ground within aggroWitch metres (she's safe over the treetops); party animals take on wild ones within engage metres beyond their leash (leash.length) of their leash point. In a fight wild ones move at chaseMult times their own speed, party animals at partyChaseMult; marching on a soundsystem, marchMult. A beaten wild creature flees at fleeMult times its speed for fleeTime seconds and is gone; a beaten party animal is lost for the run. A soundsystem has soundsystemHealth (the dancefloor at home homeHealth), passive, and is hit within soundsystemRadius (homeRadius) metres: sieges should outlast the wave gap. shake: how hard a legend's quake shakes the screen (0 none).",
+    combat: { aggro: 9, aggroWitch: 13, engage: 7, chaseMult: 3, partyChaseMult: 5, marchMult: 1.5, fleeTime: 2.5, fleeMult: 5, soundsystemHealth: 4e3, soundsystemRadius: 2.5, homeHealth: 8e3, homeRadius: 9, shake: 0.6 },
+    _witchHealth: "The witch (Ed, 2026-10-04): she takes hits (one point each, whatever hits her) before she's knocked out; one comes back every repairTime seconds, the timer starting over whenever she's hit, so to heal she has to get right out of the fight.",
+    witchHealth: { hits: 3, repairTime: 20 },
+    _knockout: "Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each creature turning neutral as its sigil goes and walking to the nearest area of its own kind, where it turns wild again; then she sparkles out and in at the treehouse over teleport seconds. Creatures at sigils on the ground stay hers. legendsLoyal: leashed legends stay with her (false: they go back to the wild too: 'they're too old for this').",
+    knockout: { releaseEach: 1, releaseMax: 0, emptyBeat: 0.5, teleport: 1.6, legendsLoyal: false },
+    _dash: "The dash (Ed, 2026-10-04; W, gamepad A, touch 'dash'): on the ground only, a quick burst of distance metres over duration seconds the way she's steering (or facing), then cooldown seconds before the next. She can still be hit while dashing: it's for slipping out of a shot's path.",
+    dash: { distance: 5, duration: 0.18, cooldown: 1 },
     spells: { equipped: "speed", speed: { mult: 2.2, duration: 4, cooldown: 12 } },
     _boot: "At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power on one by one over time seconds, and only then does the first wave's countdown begin: extra time to find and invite your first creatures.",
     boot: { time: 60 },
@@ -1304,9 +1388,14 @@ label.check input { accent-color: var(--accent); }
   var music = null;
   var playing = false;
   var lastAudio = 0;
-  var cue = () => ({ waves: run.waves, nextAt: run.nextAt, bootUntil: run.bootUntil, knockedOut: hooks.knockedOut, siege: hooks.siege, forceSection: force.section, forceWave: force.wave });
+  var beatTuning = () => ({ beat: { bpm: style.bpm, tempos: style.arc.map((a) => a.bpm ?? style.bpm), blockBars: style.blockBars, rampBars: style.tempoRampBars ?? 8 } });
+  var clock = newBeatClock(style.bpm, waveTempo(beatTuning(), 0));
+  var arrived = () => waveArrived(clock, beatTuning(), force.wave ?? run.waves.length, run.time);
+  var bar = (time) => barAt(clock, time);
+  var cue = () => ({ waves: run.waves.map(bar), nextAt: bar(run.nextAt), bootUntil: bar(run.bootUntil), knockedOut: hooks.knockedOut, siege: hooks.siege, forceSection: force.section, forceWave: force.wave });
   function restart() {
     Object.assign(run, { time: 0, bootUntil: run.boot, waves: [], nextAt: run.boot + run.interval });
+    clock = newBeatClock(style.bpm, waveTempo(beatTuning(), 0));
     music?.engine?.reset();
   }
   function jumpToWave(n) {
@@ -1315,12 +1404,14 @@ label.check input { accent-color: var(--accent); }
     run.bootUntil = Math.min(run.bootUntil, t);
     run.waves = Array.from({ length: n }, (_, i) => t - (n - 1 - i) * run.interval);
     run.nextAt = t + run.interval;
+    arrived();
     renderButtons();
   }
   function nextWave() {
     run.waves = [...run.waves, run.time];
     run.nextAt = run.time + run.interval;
     run.bootUntil = Math.min(run.bootUntil, run.time);
+    arrived();
   }
   function step() {
     requestAnimationFrame(step);
@@ -1335,17 +1426,17 @@ label.check input { accent-color: var(--accent); }
     while (run.time >= run.nextAt && run.time >= run.bootUntil) {
       run.waves = [...run.waves, run.time];
       run.nextAt += run.interval;
+      arrived();
     }
     const M = TUNING.music, level = nearness(M, hooks.distance);
     const mix = mixAt(M, level, hooks.damage * level, hooks.distance);
     music.volume = hooks.volume;
-    music.update(mix, cue(), run.time, style.bpm, playing);
+    music.update(mix, cue(), run.time, clock, playing);
     $("mix-out").textContent = `heard at ${(mix.volume * 100).toFixed(0)}%, muffled above ${Math.round(mix.cutoff)} Hz, damage ${(mix.distort * 100).toFixed(0)}%`;
     showNow();
   }
   function showNow() {
     const cur = music?.engine?.current;
-    const spBar = barSeconds(style.bpm);
     if (cur) {
       const a = arcStep(style, cur.plan.arc), sec = resolveSection(style, cur.plan.section);
       $("s-wave").textContent = `${cur.plan.wave} \xB7 ${a.name}`;
@@ -1356,13 +1447,14 @@ label.check input { accent-color: var(--accent); }
     }
     const left = run.nextAt - run.time;
     $("s-next").textContent = run.time < run.bootUntil ? `booting ${Math.ceil(run.bootUntil - run.time)} s` : run.paused ? "paused" : `${Math.ceil(left)} s`;
-    const beat = Math.floor(run.time * style.bpm / 60) % 4;
+    const beat = Math.floor(beatAt(clock, run.time)) % 4;
+    $("s-tempo").textContent = `${bpmAt(clock, run.time).toFixed(1)} bpm`;
     $("beats").querySelectorAll("i").forEach((el, i) => el.classList.toggle("on", playing && i === beat));
-    const B = style.blockBars, bar = Math.floor(run.time / spBar), first = Math.floor(bar / B) * B, c = cue();
+    const B = style.blockBars, first = Math.floor(Math.floor(bar(run.time)) / B) * B, c = cue();
     const chips = [];
     let last = "";
     for (let b = first; b < first + 16 * B; b += B) {
-      const p = b === first && cur ? cur.plan : planBlock(style, c, b, style.bpm);
+      const p = b === first && cur ? cur.plan : planBlock(style, c, b);
       const key = `${p.section}|${p.start}|${p.wave}`;
       if (key === last) continue;
       const prev = last.split("|")[2];
@@ -1435,17 +1527,17 @@ label.check input { accent-color: var(--accent); }
   function buildKnobs() {
     const fs = $("f-style"), fm = $("f-mix"), fp = $("f-patches");
     for (const f of [fs, fm, fp]) f.querySelectorAll(":scope > :not(legend)").forEach((n) => n.remove());
-    knob(fs, "Tempo", style.bpm, 70, 180, 1, (v) => {
-      const k = style.bpm / v;
-      run.time *= k;
-      run.nextAt *= k;
-      run.bootUntil *= k;
-      run.waves = run.waves.map((t) => t * k);
-      run.interval *= k;
+    knob(fs, "Tempo (first wave; the rest keep their rise)", style.bpm, 70, 180, 1, (v) => {
+      const d = v - style.bpm;
       style.bpm = v;
-      music?.engine?.reset();
+      for (const a of style.arc) if (a.bpm !== void 0) a.bpm += d;
+      rampTo(clock, Math.ceil(beatAt(clock, run.time)) + 1, waveTempo(beatTuning(), force.wave ?? run.waves.length), 0);
       changed();
     }, { unit: " bpm" });
+    knob(fs, "Tempo ramp (bars)", style.tempoRampBars ?? 8, 0, 32, 4, (v) => {
+      style.tempoRampBars = v;
+      changed();
+    });
     knob(fs, "Swing", style.swing, 0, 0.5, 0.01, (v) => {
       style.swing = v;
       changed();
@@ -1526,11 +1618,12 @@ label.check input { accent-color: var(--accent); }
   function showJson() {
     const ta = $("json");
     if (document.activeElement !== ta) ta.value = JSON.stringify(style, null, 2);
-    $("style-name").textContent = `${style.name} \xB7 ${style.bpm} bpm \xB7 ${style.arc.length} waves of music`;
+    const bpms = style.arc.map((a) => a.bpm ?? style.bpm);
+    $("style-name").textContent = `${style.name} \xB7 ${bpms[0]} to ${bpms[bpms.length - 1]} bpm \xB7 ${style.arc.length} waves of music`;
   }
   async function musicLabCheck(bars = 2) {
     const errors = checkStyle(style), results = [];
-    const rate = 22050, spBar = barSeconds(style.bpm);
+    const rate = 22050, spBar = barSeconds(style.bpm), steady = newBeatClock(style.bpm);
     const measure = (name, buf) => {
       let sum = 0, peak = 0, n = 0;
       for (let ch = 0; ch < buf.numberOfChannels; ch++) for (const v of buf.getChannelData(ch)) {
@@ -1549,20 +1642,23 @@ label.check input { accent-color: var(--accent); }
       const oc = new OfflineAudioContext(2, Math.ceil(rate * bars * spBar), rate);
       const e = new MusicEngine(oc, oc.destination, style, 7);
       const from = name === style.intro || resolveSection(style, name).riser ? 8 * spBar : 0;
-      e.renderAhead({ ...quiet, forceSection: name, forceWave: 3 }, from, bars * spBar, style.bpm);
+      e.renderAhead({ ...quiet, forceSection: name, forceWave: 3 }, from, bars * spBar, steady);
       measure(name, await oc.startRendering());
     }
     {
-      const oc = new OfflineAudioContext(2, Math.ceil(rate * 16 * spBar), rate);
-      const e = new MusicEngine(oc, oc.destination, style, 7);
-      e.renderAhead({ waves: [], nextAt: 20 * spBar, bootUntil: 0, knockedOut: false, siege: 0.5 }, 8 * spBar, 16 * spBar, style.bpm);
-      measure("run: build into wave 1, under siege", await oc.startRendering());
+      const oc = new OfflineAudioContext(2, Math.ceil(rate * 24 * spBar), rate);
+      const e = new MusicEngine(oc, oc.destination, style, 7), c = newBeatClock(style.bpm, waveTempo(beatTuning(), 6));
+      c.wave = 6;
+      waveArrived(c, beatTuning(), 7, 20 * spBar);
+      if (!(bpmAt(c, timeAt(c, 4 * 32)) > bpmAt(c, 0))) errors.push("the tempo doesn't rise with a wave");
+      e.renderAhead({ waves: [], nextAt: 20, bootUntil: 0, knockedOut: false, siege: 0.5 }, 8 * spBar, 24 * spBar, c);
+      measure("run: into wave 7, tempo rising, siege", await oc.startRendering());
     }
     {
       const oc = new OfflineAudioContext(2, Math.ceil(rate * 2 * spBar), rate);
       const m = new Music(oc, 1, style, 7), M = TUNING.music;
-      m.update(mixAt(M, nearness(M, 120), 0.8, 120), { ...quiet, forceSection: "drop" }, 0, style.bpm, true);
-      m.engine.renderAhead({ ...quiet, forceSection: "drop" }, 0, 2 * spBar, style.bpm);
+      m.update(mixAt(M, nearness(M, 120), 0.8, 120), { ...quiet, forceSection: "drop" }, 0, steady, true);
+      m.engine.renderAhead({ ...quiet, forceSection: "drop" }, 0, 2 * spBar, steady);
       measure("mix: 120 m away, damaged", await oc.startRendering());
     }
     return { ok: errors.length === 0, errors, results };

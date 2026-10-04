@@ -18,7 +18,7 @@ ${HEIGHT_VERT_GLSL}
 void main() {
   vLocal = position.xz * 2.0;
   vScenery = iShadow.z < 0.0 ? 1.0 : 0.0;
-  vec3 w = onGround(vec3(iShadow.x + position.x * abs(iShadow.z), 0.03, iShadow.y + position.z * iShadow.w)); // lying on the rolling ground
+  vec3 w = onGround(vec3(iShadow.x + position.x * abs(iShadow.z), 0.08, iShadow.y + position.z * iShadow.w)); // lying on the rolling ground (point by point; see the PlaneGeometry)
   vWorld = w;
   gl_Position = clipOf(w);
 }`;
@@ -57,11 +57,11 @@ export class ShadowBatch {
   private capacity = 0;
 
   constructor(strength: number, smooth = true) {
-    const quad = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+    const quad = new THREE.PlaneGeometry(1, 1, 4, 4).rotateX(-Math.PI / 2); // divided, to lie on the slopes
     this.geo.index = quad.index;
     this.geo.setAttribute("position", quad.getAttribute("position"));
     this.attr = this.grow(1024);
-    const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uStrength: { value: strength } }, depthWrite: false,
+    const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uStrength: { value: strength } }, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4,
       ...(smooth ? { transparent: true, blending: THREE.CustomBlending, blendSrc: THREE.ZeroFactor, blendDst: THREE.SrcColorFactor } : {}) });
     this.mesh = new THREE.Mesh(this.geo, mat);
     this.mesh.frustumCulled = false;

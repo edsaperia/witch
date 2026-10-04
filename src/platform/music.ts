@@ -4,6 +4,7 @@
 // (platform/musicEngine.ts, from config/music-style.json), its sections following the waves
 // (rules/musicPlan.ts), on the game's beat; a recorded track (music.src) can stand in for it.
 import type { MusicMix } from "../rules/music";
+import type { BeatClock } from "../rules/beat";
 import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle } from "../rules/musicScore";
 import { MusicEngine } from "./musicEngine";
@@ -44,7 +45,7 @@ export class Music {
   }
 
   /** Each frame: the mix to hear, the music's cue (waves, boot), the game's time and beat. */
-  update(mix: MusicMix, cue: MusicCue, gameTime: number, bpm: number, on: boolean): void {
+  update(mix: MusicMix, cue: MusicCue, gameTime: number, clock: BeatClock, on: boolean): void {
     const c = this.ctx, now = c.currentTime, k = 0.08;
     // Drop-outs: with damage close by, now and then the sound cuts for a moment.
     if (mix.distort > 0.05 && now > this.dropUntil && Math.random() < mix.distort * 0.01) this.dropUntil = now + 0.08 + Math.random() * 0.3 * mix.distort;
@@ -57,7 +58,7 @@ export class Music {
     this.wobble.gain.setTargetAtTime(1 - mix.distort * 0.45 * (0.5 + 0.5 * Math.sin(now * 7.3 + Math.sin(now * 2.1) * 2)), now, 0.02);
     // Crackle: little bursts of noise.
     if (on && mix.distort > 0.05 && Math.random() < mix.distort * 0.15) this.crackle(now + Math.random() * 0.05, mix.distort);
-    this.engine?.update(cue, gameTime, bpm, on);
+    this.engine?.update(cue, gameTime, clock, on);
   }
 
   private crackle(at: number, amount: number): void {

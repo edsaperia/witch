@@ -58,7 +58,9 @@ export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, 
 export const talkTime = (c: Creature, t: Tuning): number => t.invite.talkTime[Math.min(c.level, t.invite.talkTime.length - 1)];
 /** Seconds per turn of the conversation (hers, then theirs): slower for older creatures. */
 export const talkTurn = (c: Creature, t: Tuning): number => t.invite.turn[Math.min(c.level, t.invite.turn.length - 1)];
-export const invitable = (c: Creature) => !c.leashed && c.level !== LEGEND;
+/** Whether she can invite it: wild, alive, not fleeing; legends only when let go on a knockout and
+ *  walking home (wild legends can't be invited). Inviting works while it attacks her (Ed, 2026-10-04). */
+export const invitable = (c: Creature) => !c.leashed && !c.gone && !c.fleeUntil && (c.level !== LEGEND || !!c.wanderTo);
 
 /** Where a leashed creature's leash is fixed: the witch, or its placed sigil. */
 export function leashPoint(s: LeashState, id: number, wx: number, wz: number): { x: number; z: number } | null {
@@ -76,7 +78,8 @@ export function talkTarget(creatures: Creature[], x: number, z: number, t: Tunin
 function nearest(creatures: Creature[], x: number, z: number, within: number, legends = false, skip?: Set<number>): Creature | null {
   let best: Creature | null = null, bd = within;
   for (const c of creatures) {
-    if (c.leashed || (!legends && !invitable(c)) || skip?.has(c.id)) continue;
+    if (Math.abs(c.x - x) > bd || Math.abs(c.z - z) > bd) continue; // (cheap: thousands of creatures, every step)
+    if (c.leashed || c.gone || c.fleeUntil || (!legends && !invitable(c)) || skip?.has(c.id)) continue;
     const d = Math.hypot(c.x - x, c.z - z);
     if (d <= bd) { bd = d; best = c; }
   }
@@ -86,6 +89,7 @@ function nearest(creatures: Creature[], x: number, z: number, within: number, le
 function invite(s: LeashState, c: Creature, x: number, z: number, time: number): void {
   c.leashed = true;
   c.rest = 0;
+  c.wanderTo = undefined; c.siege = undefined; c.fight = undefined; c.evading = false;
   s.stack.push(c.id);
   s.events.push({ kind: "invited", id: c.id, x, z, at: time });
 }

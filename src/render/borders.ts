@@ -7,6 +7,7 @@
 // flashes and dips, now and then going out for a moment, and a shimmer runs along them; on partify the line draws itself in from the side the party came
 // from. Glow only (bloom): no light, nothing from the light budget. Where the borders run comes
 // from rules/borders.ts, worked out a few milliseconds a frame as areas partify.
+import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { sigilColour } from "../../art/generator.js";
 import { borderSteps, type BorderPoint } from "../rules/borders";
@@ -76,7 +77,7 @@ export class BorderView {
   update(): void {
     const g = this.game, B = g.tuning.borders;
     if (!B.on) { this.mesh.visible = false; return; }
-    (this.mesh.material as THREE.ShaderMaterial).uniforms.uBeat.value = (g.clock.time * g.tuning.beat.bpm) / 60;
+    (this.mesh.material as THREE.ShaderMaterial).uniforms.uBeat.value = (beatTime(g.beat, g.clock.time) * g.tuning.beat.bpm) / 60;
     // New areas: start working out their borders.
     for (const [k, a] of g.party.areas) {
       if (this.areas.has(k)) continue;

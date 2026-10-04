@@ -8,6 +8,7 @@
 // of berries never changes. A party animal that has eaten enough evolves: babies after 1, young
 // after 3, adults after 8 (berries.toEvolve; adults to a legend, the only way to get a party
 // legend). It evolves on the next bar line of the music, so the view can make a show of it. No drawing here.
+import { beatAt, timeAt, type BeatClock } from "./beat";
 import { LEGEND, type Creature, type Level } from "./creatures";
 import { gaitRate, leashSpeed } from "./leash";
 import type { ForestMap } from "./map";
@@ -51,7 +52,7 @@ export interface BerryState {
 /** Berries needed to go up from a level (babies, young, adults); legends don't eat. */
 export const toEvolve = (level: Level, t: Tuning): number => (level >= LEGEND ? Infinity : t.berries.toEvolve[Math.min(level, t.berries.toEvolve.length - 1)]);
 /** Who may eat berries: party animals that aren't legends (and aren't already evolving). */
-export const canEat = (c: Creature, s: BerryState): boolean => c.leashed && c.level < LEGEND && !s.evolving.has(c.id);
+export const canEat = (c: Creature, s: BerryState): boolean => c.leashed && c.level < LEGEND && !s.evolving.has(c.id) && !c.fight?.target; // (not mid-fight)
 
 /** The berry bushes and the berries on them, from the seed: in every area of the playable map,
  *  berries.bushesPerArea bushes at spots a bush may grow (in its own area, not on a path or in a
@@ -136,13 +137,14 @@ function release(s: BerryState, id: number): void {
 }
 
 /** Count one berry eaten; at the threshold, start evolving on the next bar line. */
-export function feed(s: BerryState, c: Creature, time: number, t: Tuning): void {
+export function feed(s: BerryState, c: Creature, time: number, t: Tuning, clock?: BeatClock): void {
   if (c.level >= LEGEND || s.evolving.has(c.id)) return;
   const n = (s.fed.get(c.id) ?? 0) + 1;
   s.ateAt.set(c.id, time);
   if (n >= toEvolve(c.level, t)) {
     s.fed.set(c.id, 0);
-    const bar = (60 / t.beat.bpm) * 4, at = (Math.floor(time / bar) + 2) * bar; // a whole bar of build-up, then the bar line
+    // a whole bar of build-up, then the bar line (on the beat clock when there is one)
+    const at = clock ? timeAt(clock, (Math.floor(beatAt(clock, time) / 4) + 2) * 4) : (Math.floor(time / ((60 / t.beat.bpm) * 4)) + 2) * ((60 / t.beat.bpm) * 4);
     s.evolving.set(c.id, { from: c.level, to: (c.level + 1) as Level, at, since: time });
     release(s, c.id);
     s.events.push({ kind: "evolving", id: c.id, x: c.x, z: c.z, at: time });
@@ -151,7 +153,7 @@ export function feed(s: BerryState, c: Creature, time: number, t: Tuning): void 
 
 /** One step. `leashPointOf` says where each party animal's leash is fixed (the witch, or its
  *  sigil); a feeding animal is moved here (the leash leaves it alone while it has a berry). */
-export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: (id: number) => { x: number; z: number } | null, time: number, dt: number, t: Tuning): void {
+export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: (id: number) => { x: number; z: number } | null, time: number, dt: number, t: Tuning, clock?: BeatClock): void {
   s.events = [];
   const B = t.berries;
   // Evolving: on its bar line, it goes up a level (and stays a party animal, legends too).
@@ -186,7 +188,7 @@ export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: 
       regrow(s, b);
       const q = s.bushes[b.bush];
       s.events.push({ kind: "regrew", id: b.id, x: q.x, z: q.z, at: time });
-      feed(s, c, time, t);
+      feed(s, c, time, t, clock);
       c.rest = 0.6; c.away = false; // a moment's pause, then back to following or dancing
     }
   }
@@ -205,9 +207,9 @@ export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: 
 }
 
 /** Debug: the nearest party animal to (x, z) eats a berry at once (it must be one that can eat). */
-export function feedNearest(s: BerryState, creatures: Creature[], x: number, z: number, time: number, t: Tuning): Creature | null {
+export function feedNearest(s: BerryState, creatures: Creature[], x: number, z: number, time: number, t: Tuning, clock?: BeatClock): Creature | null {
   let best: Creature | null = null, bd = Infinity;
   for (const c of creatures) if (canEat(c, s)) { const d = Math.hypot(c.x - x, c.z - z); if (d < bd) { bd = d; best = c; } }
-  if (best) { release(s, best.id); feed(s, best, time, t); s.events.push({ kind: "ate", id: best.id, x: best.x, z: best.z, at: time }); }
+  if (best) { release(s, best.id); feed(s, best, time, t, clock); s.events.push({ kind: "ate", id: best.id, x: best.x, z: best.z, at: time }); }
   return best;
 }
