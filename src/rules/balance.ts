@@ -76,10 +76,12 @@ export interface SimResult {
   /** Waves seen through (the run lasted until wave survived + 1 would come). */
   survived: number;
   waves: WaveSample[];
+  /** Each fallen soundsystem (not home): the wave that woke it and how long it stood (s). */
+  falls: { wave: number; after: number }[];
 }
 
 interface Fighter { id: number; level: Level; cell: string; x: number; z: number; x0: number; z0: number; speed: number; dps: number; reach: number; value: number; siege: string | null; gone: boolean; /** Stays in its own area: never marches on (an area's legend). */ stay?: boolean }
-interface Sound { key: string; x: number; z: number; hp: number; radius: number }
+interface Sound { key: string; x: number; z: number; hp: number; radius: number; wave?: number; at?: number }
 
 /** A map's fighters (young and up), by area, worth working out once per map. */
 const FIGHTERS = new WeakMap<ForestMap, Map<string, Fighter[]>>();
@@ -107,7 +109,7 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
   const t = map.tuning, C = t.combat, dt = o.dt ?? 0.5, by = fightersOf(map);
   for (const [k, l] of by) by.set(k, l.filter(f => f.id >= 0)); // (a previous run's reinforcements)
   for (const l of by.values()) for (const f of l) { f.gone = false; f.siege = null; f.x = f.x0; f.z = f.z0; }
-  const live: Fighter[] = [], sounds = new Map<string, Sound>(), party = newParty(map), waves: WaveSample[] = [];
+  const falls: SimResult["falls"] = [], live: Fighter[] = [], sounds = new Map<string, Sound>(), party = newParty(map), waves: WaveSample[] = [];
   const d = map.dancefloor;
   sounds.set("home", { key: "home", x: d.x, z: d.z, hp: C.homeHealth, radius: C.homeRadius });
   const P = o.player, ruined = new Set<string>(), D = o.director, share = o.marchOn ?? 1, adult = levelValue(2);
@@ -136,7 +138,7 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
       nextAt += o.interval;
       for (const a of spreadWave(party, map, time)) {
         const key = cellKey(a.cell), at = soundsystemFor(map, a.cell);
-        sounds.set(key, { key, x: at.x, z: at.z, hp: C.soundsystemHealth, radius: C.soundsystemRadius });
+        sounds.set(key, { key, x: at.x, z: at.z, hp: C.soundsystemHealth, radius: C.soundsystemRadius, wave: party.wave, at: time });
         for (const f of by.get(key) ?? []) if (!f.gone && (!o.areaLegends || f.level < 3)) { f.siege = key; live.push(f); }
         // What it grew while wild (rules/growth.ts): a creature a wave, waves 1 to this one, at the game's own levels.
         const G = t.population.growth, site = map.siteOf(a.cell[0], a.cell[1]);
@@ -190,6 +192,7 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
     for (const s of sounds.values()) {
       if (s.hp > 0 || ruined.has(s.key)) continue;
       ruined.add(s.key);
+      if (s.wave !== undefined) falls.push({ wave: s.wave, after: time - s.at! });
       if (s.key !== "home") { party.areas.delete(s.key); (party.ruined ??= new Set()).add(s.key); }
       // Survivors march on to the next-nearest (with attrition, only a share of them; the rest scatter).
       for (const f of live) if (f.siege === s.key) f.siege = f.stay ? null : share >= 1 || frac(f.id * 0.6180339887 + s.x * 0.013) < share ? nearest(f.x, f.z) : null;
@@ -198,7 +201,7 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
     time += dt;
   }
   if (lost) sample();
-  return { seed: map.seed, interval: o.interval, lost, survived: lost ? lost.wave - 1 : party.wave, waves };
+  return { seed: map.seed, interval: o.interval, lost, survived: lost ? lost.wave - 1 : party.wave, waves, falls };
 }
 
 const frac = (x: number) => x - Math.floor(x);

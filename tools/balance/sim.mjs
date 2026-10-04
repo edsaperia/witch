@@ -77,6 +77,12 @@ for (const gap of GAPS) {
   say("| biggest / all | " + W.map(w => { const a = at(w), m = mean(a.map(s => s.marching)); return a.length && m > 0 ? (mean(a.map(s => s.largest)) / m).toFixed(2) : "–"; }).join(" | ") + " |");
   say("| standing | " + W.map(w => (at(w).length ? mean(at(w).map(s => s.standing)).toFixed(1) : "–")).join(" | ") + " |\n");
 
+  // How long a woken soundsystem stands, idle, by the wave that woke it.
+  const FW = [1, 3, 5, 10, 15, 20, 25, 30].filter(w => w <= IDLE_CAP), fallsAt = w => idle.flatMap(r => r.falls.filter(f => f.wave === w).map(f => f.after));
+  say(`**How long a woken soundsystem stands** (idle player, variant a, mean over seeds, m:ss; – if none fell):\n`);
+  say("| woke at wave | " + FW.join(" | ") + " |");
+  say("|---|" + FW.map(() => "---").join("|") + "|");
+  say("| stood for | " + FW.map(w => { const a = fallsAt(w); return a.length ? mmss(mean(a)) : "–"; }).join(" | ") + " |\n");
   // The skill spread, every variant.
   say(`**Skill spread**: the wave a player growing at g F/min lasts to (mean over seeds; cap ${CAP}: "${CAP}+" when every seed got there), and the time; idle is g = 0. The last column is the survival of g 100 over g 50 (2.0 would be "twice the skill, twice the survival").\n`);
   say("| variant | idle | " + SKILLS.map(s => `g ${s}`).join(" | ") + " | 100 / 50 |");
