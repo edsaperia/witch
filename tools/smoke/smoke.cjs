@@ -300,6 +300,29 @@ async function main() {
     check(r.through.length === 0, `nothing drawn without a depth test shows through the bent earth${r.through.length ? ": " + r.through.join("; ") : ""}`);
   });
 
+  // The ley lines (Ed, 2026-10-04): six links through the runestones in wave order, drawn on the
+  // ground and over the treetops; a wave moves the chain on a link (the stone after the current
+  // one is the one the wave wakes). Shots of both.
+  await run("ley", { width: 960, height: 600 }, async page => {
+    await page.keyboard.press("Enter");
+    const drawn = () => page.evaluate(() => { const L = window.witch.view.ley; return { visible: L.meshes[0].visible, links: L.chain.length - 1, tris: (L.meshes[0].geometry.index?.count ?? 0) / 3, first: L.chain[0]?.cell.join(","), second: L.chain[1]?.cell.join(","), third: L.chain[2]?.cell.join(",") }; });
+    await page.waitForFunction(() => window.witch.view.ley.chain.length > 1, null, { timeout: 120000, polling: 200 });
+    const a = await drawn();
+    check(a.visible && a.links === 6 && a.tris > 100, `the ley lines are drawn: ${a.links} links (${a.tris} triangles)`);
+    await page.evaluate(() => { const g = window.witch.game; g.witch = { ...g.witch, seated: false }; });
+    await sleep(2500);
+    await shot(page, "62-ley-ground.png");
+    for (let i = 0; i < 2; i++) { await page.keyboard.press("KeyN"); await sleep(600); }
+    await page.waitForFunction(k => window.witch.view.ley.chain[0]?.cell.join(",") !== k, a.first, { timeout: 120000, polling: 200 }).catch(() => {});
+    const b = await drawn();
+    check(b.first === a.second && b.second === a.third, `two waves on, the chain has moved on a link (${a.first} → ${a.second} → ${a.third}, now ${b.first} → ${b.second})`);
+    await page.keyboard.press("Space");
+    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 300000 });
+    await page.keyboard.press(ZOOM_OUT); await page.keyboard.press(ZOOM_OUT);
+    await sleep(3000);
+    await shot(page, "63-ley-treetop.png");
+  });
+
   // Trunks (Ed, v271: "We have really lost our treetrunks"): in the densest wooded spot of a
   // tangly forest and of old oaks, on the ground, trunks must be drawn (drawn flat magenta for a
   // frame to find them) over at least 2% of the screen, and a good share of them readable (not
@@ -593,7 +616,7 @@ async function main() {
       return out;
     });
     check(r.n > 50 && r.bad.length === 0, `nothing floats: every placed sprite's lowest drawn pixel is on the ground (${r.n} checked, worst ${r.worst.toFixed(1)} art px)${r.bad.length ? ": " + r.bad.join("; ") : ""}`);
-    // The rolling ground: a sprite stands upright at the lowest ground under its foot (two metres either
+    // The rolling ground: a sprite stands upright at the lowest ground under its foot (most of its width, up to 5 m either
     // side of its base), so its uphill side is planted in the slope; where the ground at an end of
     // its drawn foot is lower than that, the end floats. None may float past 1 art px.
     const hr = await page.evaluate(() => {
@@ -607,8 +630,8 @@ async function main() {
           for (let row = f.h - 1; row >= 0 && low < 0; row--) for (let x = 0; x < f.w; x++) if (D[((y0 + row) * W + x0 + x) * 4 + 3] >= 128) { if (low < 0) { low = row; left = x; } right = x; }
           if (low < 0) continue;
           const m = b.metresPerPixel * (it.scale ?? 1), c = ((left + right) / 2 - f.w / 2) * m * (it.flip ? -1 : 1), half = ((right - left) / 2 + 0.5) * m;
-          const cx = it.x + R.x * c, cz = it.z + R.z * c, fw = Math.min(f.w * m * 0.5, 2);
-          const base = Math.min(h(it.x, it.z), h(it.x - R.x * fw, it.z - R.z * fw), h(it.x + R.x * fw, it.z + R.z * fw));
+          const cx = it.x + R.x * c, cz = it.z + R.z * c, fw = Math.min(f.w * m * 0.45, 5);
+          const base = Math.min(...[-1, -0.5, 0, 0.5, 1].map(k => h(it.x + R.x * fw * k, it.z + R.z * fw * k)));
           const err = Math.max(0, ...[-half, half].map(s => base - h(cx + R.x * s, cz + R.z * s))) / b.metresPerPixel;
           out.n++; if (Math.abs(base) > 0.3) out.hilly++;
           if (err > out.worst) out.worst = err;

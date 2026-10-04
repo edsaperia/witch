@@ -46,6 +46,8 @@ import { lerp } from "../rules/random";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
 import { berrySprite } from "./berries";
+import { LeyLines } from "./leylines";
+import { leyChain, leyKey } from "../rules/leylines";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
 import type { Style } from "./style";
 
@@ -128,6 +130,8 @@ export class View {
   private strings: StringLightsView;
   private leashView: LeashView;
   private lasers: Lasers;
+  /** The ley lines through the runestones in wave order (Ed, 2026-10-04). */
+  private ley: LeyLines;
   /** The party witches on the dancefloor, and our witch when she idles into the party. */
   private partyWitchView: PartyWitchView;
   /** The smoke test sets this to draw trunks flat magenta for a frame, to count them on screen. */
@@ -251,6 +255,8 @@ export class View {
     this.strings = new StringLightsView(this.scene, game);
     this.leashView = new LeashView(this.scene, game);
     this.lasers = new Lasers(this.scene, game);
+    this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z), t.treetopHeight);
+    this.scene.add(...this.ley.meshes);
     this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
     this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
     this.borders = new BorderView(this.scene, game);
@@ -443,6 +449,10 @@ export class View {
   private inInnerView(x: number, z: number, h: number): boolean {
     const w = this.game.witch, hz = this.game.tuning.haze;
     if (Math.hypot(x - w.x, z - w.z) > hz.near + (hz.far - hz.near) * 0.6) return false;
+    // Past the bent horizon, where the culling counts it hidden behind the bulge and the forest in
+    // front (inView), its coming and going isn't seen either.
+    const B = HEIGHT_UNIFORMS.uBend.value, ahead = Math.max(0, -(z - B.z));
+    if (ahead > 0 && !this.overHorizon(ahead, groundHeight(x, z) + h, B.x)) return false;
     for (const y of [0, h * 0.5, h]) {
       const p = placed(this.v3.set(x, y, z)).project(this.camera);
       if (Math.abs(p.x) < 1 && Math.abs(p.y) < 1 && p.z < 1) return true;
@@ -1170,6 +1180,14 @@ export class View {
     this.soundBatch.set(party.items);
     this.ground.setSweeps(party.sweeps);
     this.lasers.update(time, party.playing, w.x, w.z, this.speakerTops, g.map.dancefloor);
+    {
+      // The ley lines: each stone in its area's sigil colour (home's a pale violet).
+      const P = g.party, M = g.map, home = new THREE.Vector3(0.8, 0.7, 1);
+      this.ley.update(leyKey(P), () => leyChain(P, M, t.leyLines.links + 1), s => {
+        if (s.cell[0] === M.centreCell[0] && s.cell[1] === M.centreCell[1]) return home;
+        return this.markerArt.colour.get(AREA_TYPES[M.typeOf(s.cell[0], s.cell[1])].creature) ?? home;
+      }, time, canopyShown(w));
+    }
     this.time("party");
     // The canopy uplight over the nearest partified areas, fading in with each one's transition.
     {

@@ -39,6 +39,8 @@ const DIST = Array.from({ length: 2 * RAD + 1 }, (_, a) => Float32Array.from({ l
 const SM = N + 2 * (RAD + STEP);
 /** How far beyond its edge a path levels the ground, and the plateaus' easing (metres). */
 const BUCKET = 64;
+/** The path segments' index: cell size (m), and floats a segment. */
+const SEG_CELL = 24, SEG = 8;
 
 /** The hills' raw noise at (x, z): centred on 0, between -amplitude and +amplitude. */
 export function hillsAt(x: number, z: number, seed: number, H: HillsTuning): number {
@@ -148,6 +150,8 @@ export class HeightField {
   private seed: number;
   private circles = new Map<number, Circle[]>();
   private pondBuckets = new Set<number>();
+  /** The bucket whose ponds round it were last made sure of. */
+  private pondsAt = [NaN, NaN];
   /** Samples worked out ahead of the window (prepare), by sample: follow takes them as it moves. */
   private ahead = new Map<number, number>();
   /** h before the slope limit, at samples round the window (a ring like the window's, each slot
@@ -157,6 +161,17 @@ export class HeightField {
   private srcJ = new Int32Array(SM * SM);
   /** The steepest slope allowed (m per m), or none. */
   private limit = 0;
+  /** The paths' segments, for levelling across them: per segment its start x, z, its run x, z, the
+   *  run's length squared, the line's half-width, the line and the segment's index (SEG floats
+   *  each), filed by the 24 m cell they reach into (their edge plus PATH_EDGE): one lookup a sample. */
+  private segs = new Float64Array(0);
+  private segGrid = new Map<number, number[]>();
+  /** Each segment's ends' heights (the hills eased to the plateaus), made as they're first needed. */
+  private segH = new Float64Array(0);
+  private lnId = new Float64Array(16);
+  private lnW = new Float64Array(16);
+  private lnS = new Float64Array(16);
+  private lnK = new Float64Array(16);
   /** The window position and heading the strip ahead was last finished for. */
   private prepared = "";
 
@@ -191,6 +206,7 @@ export class HeightField {
       const c = { x, z, r, h: near ? near.h : this.plateaued(x, z, false) };
       placed.push(c); this.addCircle(c);
     };
+    this.indexPaths();
     add(df.x, df.z, floorClearing(T) + 2);
     add(th.x, th.z, T.treehouse.clear + 2);
     for (const g of m.grounds) add(g.x, g.z, g.r + 2);
@@ -255,7 +271,10 @@ export class HeightField {
     let h = this.raw(x, z);
     const bx = Math.floor(x / BUCKET), by = Math.floor(z / BUCKET);
     const reach = Math.ceil((this.PLATEAU_FADE + 16) / BUCKET); // any pond whose plateau could reach here
-    if (ponds) for (let dy = -reach; dy <= reach; dy++) for (let dx = -reach; dx <= reach; dx++) this.ponds(bx + dx, by + dy);
+    if (ponds && (bx !== this.pondsAt[0] || by !== this.pondsAt[1])) {
+      for (let dy = -reach; dy <= reach; dy++) for (let dx = -reach; dx <= reach; dx++) this.ponds(bx + dx, by + dy);
+      this.pondsAt[0] = bx; this.pondsAt[1] = by;
+    }
     const pulls: number[] = [];
     for (const c of this.circles.get(bucketKey(bx, by)) ?? []) {
       if (c.pond && !ponds) continue; // (a pond's own level: the fixed plateaus only)
@@ -265,13 +284,25 @@ export class HeightField {
     return blend(h, pulls);
   }
 
-  /** A path's centreline point's height (the hills eased to the plateaus), kept. */
-  private centreH = new Map<number, number>();
-  private centre(line: number, i: number, p: [number, number]): number {
-    const k = line * 1e6 + i;
-    let h = this.centreH.get(k);
-    if (h === undefined) this.centreH.set(k, (h = this.plateaued(p[0], p[1])));
-    return h;
+  private indexPaths(): void {
+    const lines = this.map.paths.lines, out: number[] = [];
+    lines.forEach((l, li) => {
+      // Chords of every 4th point (8 m; a curve's spline points are 2 m apart, and its chords keep
+      // within half a metre of it): a quarter of the segments to look at, levelled the same.
+      for (let i = 0; i < l.pts.length - 1; i += 4) {
+        const [a, b] = [l.pts[i], l.pts[Math.min(i + 4, l.pts.length - 1)]], ex = b[0] - a[0], ez = b[1] - a[1], id = out.length / SEG, pad = l.half + this.PATH_EDGE;
+        out.push(a[0], a[1], ex, ez, ex * ex + ez * ez || 1, l.half, li, i);
+        for (let cz = Math.floor((Math.min(a[1], b[1]) - pad) / SEG_CELL); cz <= Math.floor((Math.max(a[1], b[1]) + pad) / SEG_CELL); cz++)
+          for (let cx = Math.floor((Math.min(a[0], b[0]) - pad) / SEG_CELL); cx <= Math.floor((Math.max(a[0], b[0]) + pad) / SEG_CELL); cx++) {
+            const k = bucketKey(cx, cz);
+            let list = this.segGrid.get(k);
+            if (!list) this.segGrid.set(k, (list = []));
+            list.push(id);
+          }
+      }
+    });
+    this.segs = Float64Array.from(out);
+    this.segH = new Float64Array((out.length / SEG) * 2).fill(NaN);
   }
 
   /** h before it is stored: the hills eased to the plateaus, then levelled across paths (to the
@@ -279,21 +310,28 @@ export class HeightField {
   sourceAt(x: number, z: number): number {
     if (!this.H.on) return 0;
     const h = this.plateaued(x, z);
-    const P = this.map.paths, hits = P.near(x, z, this.PATH_EDGE);
-    if (!hits.length) return h;
+    const list = this.segGrid.get(bucketKey(Math.floor(x / SEG_CELL), Math.floor(z / SEG_CELL)));
+    if (!list) return h;
     // Every path near pulls to its centreline's height, all at once (order free: where two meet
     // the ground stays smooth). A path's level is the average along its nearby centreline, weighted
     // to the nearest stretch: a single nearest point jumps across a bend's inside (a cliff).
-    const lines = new Map<number, [number, number, number]>(); // line: its pull, sum of weights × level, sum of weights
-    for (const hit of hits) {
-      const l = P.lines[hit.line], a = l.pts[hit.seg], b = l.pts[hit.seg + 1];
-      const w = 1 - smoothstep((hit.d - l.half) / this.PATH_EDGE), k = w * w * w * w + 1e-9;
-      const level = this.centre(hit.line, hit.seg, a) * (1 - hit.u) + this.centre(hit.line, hit.seg + 1, b) * hit.u;
-      const s = lines.get(hit.line);
-      if (s) { s[0] = Math.max(s[0], w); s[1] += k * level; s[2] += k; } else lines.set(hit.line, [w, k * level, k]);
+    const S = this.segs, LI = this.lnId, LW = this.lnW, LS = this.lnS, LK = this.lnK; // per line near: its pull, sum of weights × level, sum of weights
+    let n = 0;
+    for (const id of list) {
+      const o = id * SEG, ax = S[o], az = S[o + 1], ex = S[o + 2], ez = S[o + 3], half = S[o + 5];
+      const u = Math.min(1, Math.max(0, ((x - ax) * ex + (z - az) * ez) / S[o + 4])), d = Math.hypot(x - ax - ex * u, z - az - ez * u);
+      if (d > half + this.PATH_EDGE) continue;
+      const line = S[o + 6], w = 1 - smoothstep((d - half) / this.PATH_EDGE), k = w * w * w * w + 1e-9;
+      if (Number.isNaN(this.segH[id * 2])) { this.segH[id * 2] = this.plateaued(ax, az); this.segH[id * 2 + 1] = this.plateaued(ax + ex, az + ez); }
+      const level = this.segH[id * 2] * (1 - u) + this.segH[id * 2 + 1] * u;
+      let m = 0;
+      while (m < n && LI[m] !== line) m++;
+      if (m === n) { if (n === LI.length) continue; LI[m] = line; LW[m] = 0; LS[m] = 0; LK[m] = 0; n++; }
+      LW[m] = Math.max(LW[m], w); LS[m] += k * level; LK[m] += k;
     }
+    if (!n) return h;
     const pulls: number[] = [];
-    for (const [w, kl, k] of lines.values()) pulls.push(w, kl / k, 1e3);
+    for (let m = 0; m < n; m++) pulls.push(LW[m], LS[m] / LK[m], 1e3);
     // A plateau's level core still wins over a path's (eased back over PATH_EDGE at its edge).
     for (const c of this.circles.get(bucketKey(Math.floor(x / BUCKET), Math.floor(z / BUCKET))) ?? []) {
       const d = Math.hypot(x - c.x, z - c.z);
@@ -319,8 +357,7 @@ export class HeightField {
   limited(i: number, j: number, ready = false): number {
     const h = this.src(i, j);
     if (!(this.limit > 0)) return h;
-    if (!ready) for (let dj = -RAD; dj <= RAD; dj++) for (let di = -RAD; di <= RAD; di++) this.src(i + di, j + dj); // (all there)
-    const V = this.srcV, col = this.cols, L = this.limit;
+    const V = this.srcV, TI = this.srcI, TJ = this.srcJ, col = this.cols, L = this.limit; // (ready: the block's source samples were all made first, ensure)
     for (let k = 0; k <= 2 * RAD; k++) col[k] = (((i + k - RAD) % SM) + SM) % SM;
     let lo = h, hi = h;
     for (let dj = -RAD; dj <= RAD; dj++) {
@@ -328,7 +365,8 @@ export class HeightField {
       for (let di = -RAD; di <= RAD; di++) {
         const d = D[di + RAD];
         if (d === 0) continue;
-        const v = V[row + col[di + RAD]], e = L * d;
+        const at = row + col[di + RAD], ii = i + di, jj = j + dj;
+        const v = ready || (TI[at] === ii && TJ[at] === jj) ? V[at] : this.src(ii, jj), e = L * d; // (made if not yet)
         if (v + e < lo) lo = v + e;
         if (v - e > hi) hi = v - e;
       }
