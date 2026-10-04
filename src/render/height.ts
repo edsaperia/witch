@@ -26,8 +26,8 @@ export const RES = 2;
 export const N = 400;
 const STEP = 8;
 /** How far beyond its edge a path levels the ground, and the plateaus' easing (metres). */
-const PATH_EDGE = 6;
-const PLATEAU_FADE = 16;
+const PATH_EDGE = 10;
+const PLATEAU_FADE = 30;
 const BUCKET = 64;
 
 /** The hills' raw noise at (x, z): centred on 0, between -amplitude and +amplitude. */

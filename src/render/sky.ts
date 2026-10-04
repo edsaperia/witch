@@ -47,7 +47,9 @@ void main() {
   // as she flies (they're far, but not infinitely: a hint of parallax).
   vec2 sp = px + floor(vec2(uCam.x, -uCam.y) * 0.02);
   float r = h21(sp), big = h21(floor(sp / 2.0) + 71.0);
-  float tw = 0.6 + 0.4 * sin(uTime * (1.5 + r * 4.0) + r * 60.0);
+  // Each star its own slow rate and phase; most barely twinkle, a few noticeably (Ed, v276: "too much and too in sync").
+  float tPhase = h21(sp + 5.0) * 6.2832, tRate = 0.25 + 0.9 * h21(sp + 9.0), tAmp = h21(sp + 41.0) > 0.9 ? 0.4 : 0.07;
+  float tw = 1.0 - tAmp * (0.5 + 0.5 * sin(uTime * tRate + tPhase));
   float star = (r > 1.0 - 0.004 * uSky.x ? 1.0 : 0.0) + (big > 1.0 - 0.0008 * uSky.x && mod(px.x, 2.0) + mod(px.y, 2.0) < 1.5 ? 0.8 : 0.0);
   vec3 tint = h21(sp + 13.0) > 0.85 ? vec3(1.0, 0.75, 0.6) : h21(sp + 29.0) > 0.85 ? vec3(0.65, 0.8, 1.0) : vec3(1.0);
   col += tint * star * tw * (0.35 + 0.65 * t) * 0.9;
