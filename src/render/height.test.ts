@@ -105,6 +105,26 @@ describe("rolling ground", () => {
     expect(steepest).toBeLessThan(PITCH);
     expect(over).toBeLessThanOrEqual(0.05);
   });
+  it("stores exactly the slope-limited heights when filled a block at a time, moving and working ahead (the fast path)", { timeout: 120000 }, () => {
+    const f = new HeightField(map, forest, { on: true, amplitude: 40, scale: 170, octaves: 2, maxSlope: PITCH });
+    let x = df.x, z = df.z;
+    f.follow(x, z);
+    const check = () => {
+      let worst = 0, n = 0;
+      for (let k = 0; k < 400; k++) {
+        const W = f as unknown as { ci: number; cj: number }, i = W.ci - N / 2 + ((k * 37) % N), j = W.cj - N / 2 + ((k * 91) % N); // inside the window
+        const stored = (f as unknown as { data: Float32Array }).data[((j % N) + N) % N * N + ((i % N) + N) % N];
+        worst = Math.max(worst, Math.abs(stored - THREE.DataUtils.fromHalfFloat(THREE.DataUtils.toHalfFloat(f.limited(i, j)))));
+        n++;
+      }
+      return { worst, n };
+    };
+    expect(check().worst).toBe(0);
+    for (let step = 0; step < 6; step++) { f.prepare(30, -30, 100); x += 18; z -= 18; f.follow(x, z); } // diagonal, with the strip worked out ahead
+    expect(check().worst).toBe(0);
+    x += 900; f.follow(x, z); // a jump: the whole window afresh
+    expect(check().worst).toBe(0);
+  });
   it("is the same whichever way it was visited (ponds' levels don't depend on what was made first)", () => {
     const Hb = { on: true, amplitude: 40, scale: 300, octaves: 2 }, a = new HeightField(map, forest, Hb), b = new HeightField(map, forest, Hb);
     const pts = Array.from({ length: 300 }, (_, k) => [df.x + ((k * 53.1) % 900) - 450, df.z + ((k * 71.9) % 900) - 450]);

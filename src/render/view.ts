@@ -1033,6 +1033,8 @@ export class View {
   ms: Record<string, number> = {};
   private lap = 0;
   private frameStart = 0;
+  /** Whether the hills' next strip was all worked out last frame. */
+  private heightsReady = true;
   private time(part: string): void { const now = performance.now(); this.ms[part] = (this.ms[part] ?? 0) + now - this.lap; this.lap = now; }
 
   render(time: number, draw = true): void {
@@ -1303,7 +1305,8 @@ export class View {
     const took = (from: number) => { spare -= performance.now() - from; };
     let t0 = performance.now();
     // The hills' next strip, in the direction she's flying (the window moves every 16 m).
-    this.heights.prepare(w.vx, w.vz, give(2, 0.5));
+    // (More while it's behind: at full boost the next strip is due every 8 frames or so.)
+    this.heightsReady = this.heights.prepare(w.vx, w.vz, give(this.heightsReady ? 2 : 6, 0.5));
     took(t0); this.time("heightsAhead"); t0 = performance.now();
     // The forest ahead, centred where the view will be in two seconds at her speed, so a rebuild
     // finds its chunks already made instead of making a whole strip at once.
