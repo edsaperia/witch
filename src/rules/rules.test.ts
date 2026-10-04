@@ -816,7 +816,7 @@ describe("the density field", () => {
     const chances: number[] = [];
     for (let i = 0; i < 3000; i++) {
       const x = map.bounds.minX + hash2(i, 5, 9) * (map.bounds.maxX - map.bounds.minX), z = map.bounds.minZ + hash2(i, 6, 9) * (map.bounds.maxZ - map.bounds.minZ);
-      if (map.hardClear(x, z) || map.paths.at(x, z)) continue; // corridors are kept clear (tested with the paths)
+      if (map.hardClear(x, z) || map.paths.at(x, z) || map.paths.pieceAt(x, z)) continue; // corridors and path pieces are kept clear (tested with the paths)
       chances.push(treeChance(map, x, z, map.areaAt(x, z).type));
     }
     const share = (lo: number, hi: number) => chances.filter(c => c >= lo && c < hi).length / chances.length;
