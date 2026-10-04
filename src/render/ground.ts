@@ -59,6 +59,7 @@ uniform sampler2D uDiscoBase, uDiscoLit, uDiscoTiles;
 uniform vec4 uDiscoGeom;
 uniform float uDiscoRim;
 uniform vec3 uRelief; // the ground's relief: strength, scale (metres), shade
+uniform float uHillShade; // the hills' slopes in the light, exaggerated this much
 uniform float uBare;  // ?bare=2: a flat grey ground with contour lines (0.5 m) and a 10 m grid
 varying vec3 vWorld;
 ${LIGHT_GLSL}
@@ -193,7 +194,9 @@ void main() {
   // Fake relief (Ed, v171): two octaves of noise as a height; its slope tilts the ground's normal
   // so lights pick out rises and hollows, and the hollows are a little darker. Shading only.
   // The rolling ground's slope (height.ts), across 4 m so the 2 m samples read smooth.
-  vec2 hg = vec2(groundH(p + vec2(2.0, 0.0)) - groundH(p - vec2(2.0, 0.0)), groundH(p + vec2(0.0, 2.0)) - groundH(p - vec2(0.0, 2.0))) / 4.0;
+  // Lit as if uHillShade times steeper (Ed, 2026-10-04: "can't identify the hills"): relief shading,
+  // so gentle swells (which things can stand on upright) still read in the light.
+  vec2 hg = vec2(groundH(p + vec2(2.0, 0.0)) - groundH(p - vec2(2.0, 0.0)), groundH(p + vec2(0.0, 2.0)) - groundH(p - vec2(0.0, 2.0))) / 4.0 * uHillShade;
   vec3 N = normalize(vec3(-hg.x, 1.0, -hg.y));
   if (uRelief.x > 0.0) {
     float S = uRelief.y, e = S * 0.25;
@@ -209,7 +212,7 @@ void main() {
     float hc = groundH(p), hx = groundH(p + vec2(uPixel, 0.0)), hz = groundH(p + vec2(0.0, uPixel));
     // Tinted by height (low ground cool and dark, high warm and light), so the swells read at a glance.
     c = mix(vec3(0.3, 0.36, 0.48), vec3(0.82, 0.76, 0.6), clamp(hc / 5.0 + 0.5, 0.0, 1.0));
-    if (floor(hc / 0.5) != floor(hx / 0.5) || floor(hc / 0.5) != floor(hz / 0.5)) c *= mod(floor(hc / 0.5 + 0.5), 5.0) < 0.5 ? 0.35 : 0.65; // every 2.5 m darker
+    if (floor(hc / 0.5) != floor(hx / 0.5) || floor(hc / 0.5) != floor(hz / 0.5)) c = mod(floor(hc / 0.5 + 0.5), 5.0) < 0.5 ? vec3(0.02, 0.02, 0.04) : vec3(0.12, 0.1, 0.16); // every 2.5 m darkest
     if (mod(px.x, 10.0 / uPixel) < 1.0 || mod(px.y, 10.0 / uPixel) < 1.0) c *= 0.85;
   }
   vec3 light = nightLightShaded(N, vWorld, moonK);
@@ -263,7 +266,7 @@ export class Ground {
         uClearing: { value: new THREE.Vector2(map.tuning.clearingSize, map.tuning.clearingFalloff) },
         uDiscoBase: { value: disco.base }, uDiscoLit: { value: disco.lit }, uDiscoTiles: { value: this.discoTiles },
         uDiscoGeom: { value: new THREE.Vector4(disco.tileM, disco.pitch, disco.size, disco.gridOrigin) }, uDiscoRim: { value: disco.rimOuter },
-        uBare: { value: map.tuning.bare ?? 0 },
+        uBare: { value: map.tuning.bare ?? 0 }, uHillShade: { value: map.tuning.ground.hills.shade ?? 1 },
         uRelief: { value: new THREE.Vector3(map.tuning.ground.relief.strength, map.tuning.ground.relief.scale, map.tuning.ground.relief.shade) },
         uBlend: { value: (B => (B.on ? new THREE.Vector4(B.warp, B.fine, B.band, B.dither ? 1 : 0) : new THREE.Vector4()))(map.tuning.groundBlend) },
       },
