@@ -171,7 +171,7 @@ Decided in a long design session with the coordinator; built in stages, with a p
   - **Content:** built from data-driven parts (movement, behaviour drives, attack delivery, effect and timing, skins). The first slice is **10 contrasting species**; balance tools are a dashboard page and an in-game arena mode.
 - **Mode roles:** treetop mode is the strategic map, ground mode is for micro.
 
-### Creature movement (Stage 5; proposed by the builder, 2026-10-04, for Ed to react to)
+### Creature movement (Stage 5; proposed by the builder, 2026-10-04; Ed's direction added the same day)
 
 Ed: this is "really the whole game: leading animals around, and evading animals while they attack you and you're inviting them". Animals should move differently and interestingly, not just straight at you, and usually move together with their own kind. With waves about a minute apart in the final game, a fight has to read at a glance: each kind's movement is its signature.
 
@@ -199,20 +199,41 @@ The system has three layers, all data (`config/movement.json`), so a new species
 
 Each delivery has a factor so its expected damage a second (allowing for misses and area hits) stays within the level's **equal power budget**.
 
-**First set, to try the system** (personalities, all in the config):
+**Ed's direction (2026-10-04, after a long design talk):** the game is mostly about **your hero unit (the witch), your army and your defence**; the wave clock stays for now. His playtest problem: creatures read as interchangeable "soldiers", and who beats whom is "emergent and totally opaque, and totally overrun by quantity". So each kind needs an identity you read on sight (how it moves, how it attacks, how it telegraphs), and **counters you can see**, so a fight isn't decided by numbers alone.
 
-| Species | Moves like | Tactic | Attack |
-|---|---|---|---|
-| wolf | trots, then flanks in a loose ring | surround, pincer | melee lunge |
-| boar | charges in a straight line, turns slowly | charge (no pack tactic) | melee lunge |
-| hare | darts in and away, zig-zagging | hit and run | melee nip |
-| raven | keeps its distance, strafing | volley line | long-range shot |
-| bat | flits in erratic circles | swarm | shot |
-| owl | circles wide and slow | volley line | lob |
-| salamander | creeps, holds still to aim | screen behind melee | beam |
-| spider | waits in ambush, then bursts | ambush | beam (a silk line) |
+**The first slice: 11 contrasting species** (personalities in `config/movement.json`, attacks and traits in `config/combat.json`):
 
-The other species keep today's straight approach until they get a profile. Babies roam, notice and react, but never fight. Party animals use the same profiles against wild ones, inside their leash. Everything is deterministic (seeded per pack and creature, fixed steps). It's cheap: neighbours come from the grid combat already builds, and packs are worked out per area.
+| Species | Moves like | Pack tactic | Attack (telegraph) | Trait |
+|---|---|---|---|---|
+| wolf | trots, then flanks | surround, pincer | melee lunge (ring at its feet) | — |
+| boar | charges in a straight line, turns slowly | none | charge with knockback (dust, then a straight run) | heavy |
+| hare | darts in and back out, sidesteps telegraphs | hit and run | melee nip | nimble |
+| raven | keeps its distance, strafing | volley line | long shot (aim line) | flier |
+| bat | flits in erratic circles | swarm | screech: a short pulse all round it (ring) | flier, swarm |
+| owl | circles wide and slow | volley line | lob (a ring where it lands) | flier |
+| salamander | creeps, holds still to aim | none | beam (aim line, then a burning line) | — |
+| spider | lies still until you come close, then springs | ambush | web shot that slows (aim line) | — |
+| mole | burrows (a moving mound, untouchable) and surfaces under its target | none | upheaval: a pulse as it surfaces (ring) | burrower |
+| toad | leaps in arcs, landing near its target | none | slam on landing: a small pulse (ring where it lands) | — |
+| beetle | plods straight in, slow to turn | none | melee shove with knockback | armoured |
+
+The other species keep today's straight approach until they get a profile. Babies never fight. Party animals use the same profiles against wild ones, inside their leash. Everything is deterministic (seeded, fixed steps).
+
+**Traits and counters** (data: `combat.json` `traits` and `counters`). The raw numbers stay on the **equal power budget** for the level (same health, same damage a second). The difference is in behaviour and in a few multipliers anyone can read:
+- **Flier**: melee hits it for half (it flits up out of reach). Ranged attackers beat fliers' melee enemies; fliers beat melee.
+- **Armoured**: shots, lobs and beams hit it for half; knockback hits it for double and stuns it a moment (flipped on its back). Melee knockback beats armour; armour beats ranged.
+- **Swarm**: area hits (pulses, quakes, lobs, beams) hit it for double. Area attackers beat swarms.
+- **Heavy**: no knockback and slows last half as long; but it turns slowly, so sidestepping beats it.
+- **Nimble**: steps out of telegraphed shots and lobs; area pulses catch it.
+- **Burrower**: untouchable while burrowed; it has to surface to strike.
+
+A counter is **shown**: a hit that's strong against its target flashes big and gold with a "!!"; a resisted one goes "tink", small and grey. Each creature with a trait wears its trait's mark over its health bar.
+
+**Wild legends get move sets** (`movement.json` `legends`): a looping **pattern** of big, telegraphed moves (a **slam** pulse; a **nova** ring of shots; a **spin** beam sweeping all round; a **charge**), with long wind-ups you can read and dodge, and a **phase change** at half health: a roar and a burst, a glow, it speeds up and its pattern gains a move. This is a step toward the legend states below.
+
+**Debug arena** (Ed, to see and judge patterns): `?arena=wolf*4,beetle*3` spawns, in the home clearing, your side (parked by sigils: the first group) against the wild side (the second); `wolf*4@2` sets the level (default young, 1). The witch starts hovering in the treetops, out of it; land to join in. `R` restarts the arena.
+
+**Planned direction, not built yet (Ed, 2026-10-04):** each area will have a **legendary animal that can be flipped between asleep, happy and angry**, by things that aren't only fighting (quests, mostly exploring the forest). So legends need **distinctive, readable move sets of their own**; the move sets above are written as data per legend so each can get its own later.
 
 ### Multiplayer (Ed, 2026-10-04)
 
