@@ -42,6 +42,19 @@ const report = await b.page.evaluate(async () => {
   for (const [key, f] of G.TREE_TYPES) for (let v = 0; v < 3; v++) { const r = G.rng(v + 1), t = f(r, st, st.treeSize * G.uni(r, .9, 1.1)), s = stats(t.sp); res.push({ what: `tree ${key} ${v}`, good: s.n > 200 && s.bottom > 0 && t.crownY > 0 && t.crownY < s.h, info: `${s.w}x${s.h}` }); }
   for (let v = 0; v < 8; v++) { const s = stats(G.bush(G.rng(v), st).sp); res.push({ what: `bush ${v}`, good: s.n > 20, info: `${s.w}x${s.h}` }); }
   for (const facing of ["towards", "away"]) for (const frame of [0, 1, 2]) { const s = stats(G.witchSprite(st, { frame, facing })); res.push({ what: `witch ${facing} frame ${frame}`, good: s.n > 200 && s.bottom > 0, info: `${s.w}x${s.h}` }); }
+  { // the witch heading straight up the screen (away, seen from behind) and straight down it (towards, at us): hover x3, lean, fast x3 and brake x2 each,
+    // at her ordinary scale (the same pixels per unit as her side view), standing on the bottom row, nothing NaN, her hand and hat tip anchors inside the sprite;
+    // heading towards shows her face (eyes), heading away doesn't
+    const bad = [], side = G.witchSprite(st, { pose: "fast" }).scale, eyes = {};
+    for (const heading of ["away", "towards"]) for (const o of [{ frame: 0 }, { frame: 1 }, { frame: 2 }, { lean: true }, { pose: "fast", frame: 0 }, { pose: "fast", frame: 1 }, { pose: "fast", frame: 2 }, { pose: "brake", frame: 0 }, { pose: "brake", frame: 1 }]) {
+      const sp = G.witchSprite(st, { heading, ...o }), s2 = stats(sp), name = `${heading} ${o.pose || (o.lean ? "lean" : "hover")}${o.frame ?? ""}`, A = sp.anchors;
+      const inside = q => q && q.every(Number.isFinite) && q[0] >= 0 && q[0] < sp.w && q[1] >= 0 && q[1] < sp.h;
+      if (!(s2.n > 100 && s2.bottom > 0 && Math.abs(sp.scale - side) < 1e-6 && A && inside(A.hand) && inside(A.hatTip))) bad.push(name);
+      if (!o.pose && !o.lean && o.frame === 0) { let e = 0; for (const m of sp.m) if (m === G.M.EYE) e++; eyes[heading] = e; }
+    }
+    if (!(eyes.towards > 0 && eyes.away === 0)) bad.push(`eyes towards ${eyes.towards}, away ${eyes.away}`);
+    res.push({ what: "witch heading away and towards (straight up and down the screen): hover x3, lean, fast x3, brake x2 each, at her ordinary scale, standing, hand and hat-tip anchors inside; her face only heading towards", good: !bad.length, info: bad.join(", ") || `eyes towards ${eyes.towards}` });
+  }
   { // the witch's rise and descend: two frames each, both facings; drawn at her ordinary scale (bounds within reason), standing on the bottom row, nothing NaN
     const base = stats(G.witchSprite(st)), bad = [];
     for (const [pose, n] of [["rise", 2], ["descend", 2], ["fast", 3], ["brake", 2]]) for (const facing of ["towards", "away"]) for (let frame = 0; frame < n; frame++) {

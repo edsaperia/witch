@@ -54,6 +54,14 @@ const assets = await b.page.evaluate(async ({ style, seed }) => {
     for (const [pose, { frames, fps }] of Object.entries(G.WITCH_FOOT_POSES)) for (let frame = 0; frame < frames; frame++) { const sp = G.witchSprite(st, { pose, frame, facing }); push({ id: `witch-${pose}${frame}${facing === "away" ? "-away" : ""}`, kind: "witch", pose, frame, frames, fps, facing, onFoot: true, anchors: sp.anchors }, sp, wc, st.cOutline); }
     for (const [pose, n] of [["rise", 2], ["descend", 2], ["fast", 3], ["brake", 2]]) for (let frame = 0; frame < n; frame++) push({ id: `witch-${pose}${frame}${facing === "away" ? "-away" : ""}`, kind: "witch", pose, frame, facing }, G.witchSprite(st, { pose, frame, facing }), wc, st.cOutline);
   }
+  // heading straight up the screen (away) and straight down it (towards): hover x3, lean, fast x3, brake x2, with her hand and hat-tip anchors
+  for (const heading of ["away", "towards"]) {
+    const one = (o, name) => { const sp = G.witchSprite(st, { heading, ...o }); push({ id: `witch-${heading === "away" ? "up" : "down"}-${name}`, kind: "witch", heading, pose: o.pose || (o.lean ? "lean" : "hover"), frame: o.frame || 0, anchors: sp.anchors }, sp, wc, st.cOutline); };
+    for (const frame of [0, 1, 2]) one({ frame }, `hover${frame}`);
+    one({ lean: true }, "lean");
+    for (const frame of [0, 1, 2]) one({ pose: "fast", frame }, `fast${frame}`);
+    for (const frame of [0, 1]) one({ pose: "brake", frame }, `brake${frame}`);
+  }
   // light sources: campfire frames, magic stones, and a pond with a mask of its water
   const L = G.lightProps(st);
   const addBaked = (meta, bk) => list.push({ ...meta, w: bk.w, h: bk.h, anchor: { x: bk.w / 2, y: bk.h }, albedo: png(bk.A), normal: png(bk.N), ...(bk.mask ? { mask: png(bk.mask) } : {}) });
