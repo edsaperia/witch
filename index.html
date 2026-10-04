@@ -55,7 +55,9 @@
     #zoom-in, #zoom-out { width: 46px; height: 46px; font-size: 22px; right: 42px; }
     #zoom-in { bottom: 186px; }
     #zoom-out { bottom: 128px; }
-    #sigil, #spell, #cycle { width: 62px; height: 62px; font-size: 12px; }
+    #sigil, #spell, #cycle, #dash { width: 62px; height: 62px; font-size: 12px; }
+    #dash { right: 126px; bottom: 104px; }
+    .touch #actionbar { display: none !important; }
     #sigil { right: 126px; bottom: 30px; }
     #spell { right: 200px; bottom: 30px; }
     #cycle { right: 200px; bottom: 104px; }
@@ -74,7 +76,7 @@
 </head>
 <body>
   <canvas id="game"></canvas>
-  <div id="help">WASD fly · Space rise / land · walk near a creature to talk · E sigil · C cycle · Q spell · Z/X zoom · H hide this</div>
+  <div id="help">arrows fly · Space rise / land · walk near a creature to talk · Q spell · W dash · E sigil · R cycle · Z/X zoom · H hide this</div>
   <div id="seed"></div>
   <div id="version"></div>
   <div id="debug"></div>
@@ -90,6 +92,7 @@
     <div class="tbtn" id="sigil">sigil</div>
     <div class="tbtn" id="spell">spell</div>
     <div class="tbtn" id="cycle">cycle</div>
+    <div class="tbtn" id="dash">dash</div>
   </div>
   <div id="start" class="loading">
     <div class="card">
@@ -100,9 +103,9 @@
       <div id="waves"></div>
       <div id="news"></div>
       <div class="keys">
-        <b>Keyboard</b> WASD or arrows fly · space rises or descends · Z/X or +/− zoom · on the ground she talks to (invites) any creature in range by herself · E or R puts down / picks up a sigil · C cycles the stack (the bottom sigil to the top) · Q casts the spell (speed boost) · ~ debug · N next wave · P pause waves · I invite nearest (debug)<br>
-        <b>Gamepad</b> left stick flies · X sigil · B spell · right stick click cycles · Y rises or descends · shoulders zoom<br>
-        <b>Phone</b> drag on the left to fly · the round button rises or descends · go near a creature to talk · sigil puts down or picks up · cycle and spell · three-finger tap for debug
+        <b>Keyboard</b> arrow keys fly · space rises or descends · Q spell (speed boost) · W dash (on the ground) · E puts down / picks up a sigil · R cycles the stack (the bottom sigil to the top) · 1–4 empty slots for now · Z/X or +/− zoom · on the ground she talks to (invites) any creature in range by herself · ~ debug · N next wave · P pause waves · I invite nearest (debug)<br>
+        <b>Gamepad</b> left stick flies · A dash · B spell · X sigil · right stick click cycles · Y rises or descends · shoulders zoom<br>
+        <b>Phone</b> drag on the left to fly · the round button rises or descends · go near a creature to talk · sigil puts down or picks up · cycle, spell and dash · three-finger tap for debug
       </div>
     </div>
   </div>

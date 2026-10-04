@@ -1525,3 +1525,31 @@ describe("the simulation (Stage 4)", () => {
     expect(g.leash).toBe(g.witches[0].leash);
   });
 });
+
+describe("the dash (Ed, 2026-10-04)", () => {
+  const ready = () => { const g = newGame(321, TUNING); g.clock.paused = false; g.witch = { ...g.witch, seated: false }; return g; };
+  const run = (g: ReturnType<typeof newGame>, n: number, c: Partial<Parameters<typeof stepGame>[1]> = {}) => { for (let i = 0; i < n; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c }, STEP); };
+
+  it("bursts dash.distance metres the way she steers, on the ground, then waits out its cooldown", () => {
+    const g = ready(), x0 = g.witch.x, z0 = g.witch.z;
+    run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
+    run(g, Math.ceil(TUNING.dash.duration / STEP) + 1);
+    expect(z0 - g.witch.z).toBeGreaterThan(TUNING.dash.distance * 0.8);
+    expect(Math.abs(g.witch.x - x0)).toBeLessThan(0.5);
+    const z1 = g.witch.z;
+    run(g, 1, { dash: true, moveX: 0, moveZ: -1 }); // still cooling down: no burst
+    run(g, 10);
+    expect(z1 - g.witch.z).toBeLessThan(TUNING.dash.distance * 0.5);
+  });
+
+  it("does nothing over the treetops or while she sits", () => {
+    const g = newGame(321, TUNING); g.clock.paused = false;
+    const x0 = g.witch.x;
+    run(g, 1, { dash: true });
+    expect(g.witches[0].dash.until).toBe(-Infinity);
+    g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
+    run(g, 1, { dash: true });
+    expect(g.witches[0].dash.until).toBe(-Infinity);
+    expect(Math.abs(g.witch.x - x0)).toBeLessThan(1);
+  });
+});

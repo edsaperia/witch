@@ -11,6 +11,7 @@ import { nextSpeakerState, type SpeakerState } from "./speakers";
 import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
 import { SIGIL_NEON } from "../../art/sigils.js";
 import { newBuffs, stepBuffs, type BuffState } from "./buffs";
+import { applyDash, newDash, startDash, type DashState } from "./dash";
 import { castSpell, newSpells, speedMultiplier, type SpellState } from "./spells";
 import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWitches";
 import type { Tuning } from "./tuning";
@@ -23,6 +24,7 @@ export interface Witch {
   body: WitchState;
   leash: LeashState;
   spells: SpellState;
+  dash: DashState;
 }
 
 /** The simulation's fixed step (seconds): the rules advance only in these, driven only by the
@@ -77,10 +79,12 @@ export interface Controls extends Intent, Partial<LeashControls> {
   cycleSpeakers?: boolean;
   /** The spell button: cast the equipped spell. */
   spell?: boolean;
+  /** The dash button (rules/dash.ts). */
+  dash?: boolean;
 }
 
 export function newWitchPlayer(id: number, x: number, z: number, t: Tuning): Witch {
-  return { id, body: { ...newWitch(x, z), seated: true }, leash: newLeash(), spells: newSpells(t) };
+  return { id, body: { ...newWitch(x, z), seated: true }, leash: newLeash(), spells: newSpells(t), dash: newDash() };
 }
 
 export function newGame(seed: number, tuning: Tuning, players = 1): Game {
@@ -101,7 +105,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
 }
 
 /** The presses that happen once (not held): kept for the next step if a frame runs none. */
-const ONE_SHOT = ["toggleMode", "sigil", "spell", "cycle", "nextWave", "pauseWaves", "feedNearest", "inviteNearest"] as const;
+const ONE_SHOT = ["toggleMode", "sigil", "spell", "cycle", "dash", "nextWave", "pauseWaves", "feedNearest", "inviteNearest"] as const;
 
 /** Advance the game by one real frame of `realDt` seconds: as many fixed STEPs as that makes up
  *  (at most a few, so a hitch doesn't run away), with the held controls each step and each
@@ -164,7 +168,9 @@ function fixedStep(g: Game, c: Controls): void {
   if (c.spell) castSpell(g.spells, g.clock.time, t);
   // The speed boost: her speeds times its multiplier while it's on.
   const boost = speedMultiplier(g.spells, g.clock.time, t);
-  g.witch = stepWitch(g.witch, c, dt, boost === 1 ? t : { ...t, groundSpeed: t.groundSpeed * boost, treetopSpeed: t.treetopSpeed * boost }, g.map.bounds);
+  const W = g.witches[0], was = W.body;
+  if (c.dash) startDash(W.dash, was, c.moveX, c.moveZ, g.clock.time, t);
+  W.body = applyDash(W.dash, was, stepWitch(was, c, dt, boost === 1 ? t : { ...t, groundSpeed: t.groundSpeed * boost, treetopSpeed: t.treetopSpeed * boost }, g.map.bounds), g.clock.time, dt, t, g.map.bounds);
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, dt, g.tuning, !!g.witch.seated, g.introFocus);
   if (c.pauseWaves) g.party.paused = !g.party.paused;
   if (c.nextWave) { spreadWave(g.party, g.map, g.clock.time); g.party.nextAt = g.clock.time + t.party.interval; }

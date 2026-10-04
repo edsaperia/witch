@@ -4,6 +4,9 @@
     {
       "version": null,
       "items": [
+        "New controls, MOBA style: the arrow keys fly (WASD no longer does); Q casts the spell, W dashes, E puts down or picks up a sigil, R cycles the stack; 1 2 3 4 are empty slots for later spells and items. An action bar along the bottom shows all eight with their keys and recharge",
+        "Dash: W (gamepad A, touch 'dash') bursts a few metres the way you're steering, on the ground only, about once a second. You can still be hit mid-dash: dash out of a shot's path",
+        "The game now runs in fixed steps (60 a second) and draws smoothly between them, ready for co-op",
         "Legend buffs: a party legend (an adult you've fed until it evolves) gives you its species' own buff while it lives: faster flight, quicker invites, berries found further off, longer between waves and more. Its sigil shows in a row at the top of the screen (hover for what it does), and a line says what you've gained or lost",
         "Party legends lumber: a creature that evolves into a legend slows to a legend's pace, following you too",
         "Wild legends are rare, late threats: only 3 to 5 a map, far out in remote areas. They're bigger, breathe slowly, and have a dark aura that you can see glowing through the treetops. They sleep until the party reaches their area, then lumber about it (no fighting yet). The legend next to home has gone",
