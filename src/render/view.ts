@@ -9,6 +9,7 @@ import { cameraPose } from "../rules/camera";
 import { AREA_TYPES } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
 import { AssetLibrary, type CreatureArt, type TypeArt } from "./assets";
+import type { RelicArt } from "./artBuild";
 import type { Piece } from "./artBuild";
 import type { LightSource, Plant } from "../rules/forest";
 import { hash2 } from "../rules/random";
@@ -127,6 +128,7 @@ export class View {
       else this.scene.add(this.mist.mesh);
     }
     LIGHT_UNIFORMS.uHazeRange.value.set(t.haze.near, t.haze.far);
+    this.ground.mesh.renderOrder = -1; // first: the grounds' decals go on it before anything stands on it
     this.scene.add(this.ground.mesh);
     this.scene.add(new PathView(game.map, style, this.mpp).group);
 
@@ -230,6 +232,8 @@ export class View {
   private box = new THREE.Box3();
   private m4 = new THREE.Matrix4();
   private v3 = new THREE.Vector3();
+  private v3b = new THREE.Vector3();
+  private v3c = new THREE.Vector3();
   /** What was drawn last time, for the fresh tint and the pop check: one record for what the
    *  rebuild places (trees, undergrowth, walls, set pieces), one for what moves every frame
    *  (creatures, light props). */
@@ -424,6 +428,33 @@ export class View {
         nb++;
       }
       this.batchFor(this.decorBatches, "pieces", () => new SpriteBatch(pa.atlas, mpp, { scenery: true, fade: true }))?.set(pl);
+    }
+    // Modern relics and the grounds (playgrounds, sports grounds: the art's arrangements, the
+    // court or pitch decal first, under everything), each piece standing on its ground point.
+    const ra = this.assets.relicArt();
+    if (ra) {
+      const fwd = this.camera.getWorldDirection(this.v3b), up = this.v3c.set(0, 1, 0).applyQuaternion(this.camera.quaternion);
+      const U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value, rise = U.dot(up) / Math.max(0.2, -fwd.y);
+      const stand: SpriteInstance[] = [], flat: SpriteInstance[] = [];
+      const put = (a: RelicArt, gx: number, gz: number, flip: boolean) => {
+        const frame = ra.atlas.frames[a.frame], dx = (a.originX - frame.w / 2) * mpp * (flip ? -1 : 1), toward = (frame.h - a.originY) * mpp * rise;
+        const x = gx - R.x * dx, z = gz - R.z * dx + toward;
+        if (!this.inView(x, z, frame.w * mpp, frame.h * mpp, margin, reach)) return;
+        (a.decal ? flat : stand).push({ x, y: 0, z, frame, flip, fresh: this.mark("relic", gx, gz, frame.h * mpp) });
+        if (!a.decal) shadows.push({ x: gx, z: gz, w: frame.w * mpp * 0.6, d: frame.w * mpp * 0.22, scenery: true });
+        nb++;
+      };
+      if (ra.modern.length) for (const r of g.forest.relicsNear(cx, cz, half)) put(ra.modern[r.variant % ra.modern.length], r.x, r.z, r.flip);
+      for (const gr of g.map.grounds) {
+        if (Math.abs(gr.x - cx) > half + gr.r || Math.abs(gr.z - cz) > half + gr.r) continue;
+        for (const p of ra.layouts[gr.kind] ?? []) { const a = ra.byId[p.id]; if (a) put(a, gr.x + p.x, gr.z + p.z, false); }
+      }
+      this.batchFor(this.decorBatches, "relics", () => new SpriteBatch(ra.atlas, mpp, { scenery: true, fade: true }))?.set(stand);
+      this.batchFor(this.decorBatches, "decals", () => {
+        const b = new SpriteBatch(ra.atlas, mpp, { scenery: true });
+        for (const m of b.meshes) { m.renderOrder = -0.5; (m.material as THREE.Material).depthWrite = false; } // right after the ground, under everything standing
+        return b;
+      })?.set(flat);
     }
     if (decor) this.batchFor(this.decorBatches, "all", () => new SpriteBatch(decor.atlas, mpp, { scenery: true, fade: true }))?.set(dl);
     for (const [type, b] of this.typeBatches) if (!per.has(type)) b.set([]);

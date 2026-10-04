@@ -890,7 +890,7 @@ describe("paths, roads and railways", () => {
     for (const a of P.pieces) for (const b of P.pieces) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(12); // never a row of them
     const forest = new Forest(map);
     for (const p of P.pieces.slice(0, 60)) for (const t of forest.treesNear(p.x, p.z, p.r + 1)) expect(Math.hypot(t.x - p.x, t.z - p.z)).toBeGreaterThanOrEqual(p.r - 1e-6);
-  });
+  }, 20000); // six maps
   it("stop at the edge of clearings, so they never run under the dancefloor or a set piece", () => {
     const d = map.dancefloor, clear = d.radius + TUNING.dancefloor.clearing;
     for (const l of P.lines) for (const p of l.pts) {
@@ -913,5 +913,26 @@ describe("decorations", () => {
       expect(Math.hypot(d.x - map.dancefloor.x, d.z - map.dancefloor.z)).toBeGreaterThan(map.dancefloor.radius + TUNING.dancefloor.clearing);
     }
     expect(new Forest(map).decorNear(s.x, s.z, 700)).toEqual(list);
+  });
+});
+
+describe("relics and grounds", () => {
+  it("lay out a handful of playgrounds and sports grounds per map, each in a clearing of its own", () => {
+    expect(map.grounds.length).toBeGreaterThanOrEqual(2); expect(map.grounds.length).toBeLessThanOrEqual(30);
+    expect(generateMap(123, TUNING).grounds).toEqual(map.grounds);
+    const forest = new Forest(map);
+    for (const g of map.grounds) {
+      expect(map.hardClear(g.x, g.z)).toBe(true);
+      for (const p of [...forest.treesNear(g.x, g.z, g.r), ...forest.bushesNear(g.x, g.z, g.r), ...forest.wallsNear(g.x, g.z, g.r)]) expect(Math.hypot(p.x - g.x, p.z - g.z)).toBeGreaterThanOrEqual(g.r - 1e-6);
+      expect(Math.hypot(g.x - map.dancefloor.x, g.z - map.dancefloor.z)).toBeGreaterThan(map.dancefloor.radius + g.r);
+    }
+  });
+  it("scatter modern relics rarely, more of them by the roads and railways, never on a path", () => {
+    const forest = new Forest(map), s = map.start, list = forest.relicsNear(s.x, s.z, 900);
+    expect(list.length).toBeGreaterThan(3);
+    expect(list.length).toBeLessThan((1800 / TUNING.relics.spacing) ** 2 * 0.1);
+    for (const r of list) { expect(map.paths.at(r.x, r.z)).toBeNull(); expect(map.hardClear(r.x, r.z)).toBe(false); }
+    const byRoad = list.filter(r => { const h = map.paths.at(r.x, r.z, 20); return h && (h.kind === "road" || h.kind === "rail"); }).length;
+    expect(byRoad).toBeGreaterThan(0);
   });
 });
