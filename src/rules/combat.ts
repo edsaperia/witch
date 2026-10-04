@@ -39,6 +39,8 @@ export interface CombatData {
   /** Kiting (Ed, 2026-10-04: "keep a certain distance as part of their attack pattern"): these
    *  hold between near and far of their range from what they shoot at, backing off or closing in. */
   kite: { species: string[]; near: number; far: number };
+  /** How a species' babies take to the witch close by (Ed's playtest: curious or skittish). */
+  temperament: { curious: string[]; skittish: string[] };
 }
 
 export const COMBAT = raw as unknown as CombatData;
@@ -126,6 +128,12 @@ export interface CombatWorld {
   leashPoint: (id: number) => { x: number; z: number } | null;
   /** Whether a party animal is parked (at a sigil on the ground): it guards round it. */
   parked: (id: number) => boolean;
+  /** The witch a creature is being invited by right now (it holds its fire on her: Ed's playtest), or -1. */
+  talkingTo: (id: number) => number;
+  /** How far a creature at (x, z) runs to leave the map, and where (a point just past its edge). */
+  exit: (x: number, z: number) => { x: number; z: number };
+  /** Whether (x, z) is out of every witch's sight (far beyond the haze): a fleeing creature there is gone. */
+  unseen: (x: number, z: number) => boolean;
   /** Whether (x, z) is in the creature's own area. */
   inArea: (c: Creature, x: number, z: number) => boolean;
   /** A wild creature still asleep (a dormant legend): no fighting. */
@@ -158,7 +166,7 @@ function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): boolean
     // A wild one loses her when she rises, or once she's out of its area, out of its attack range
     // and at least combat.witchLose away (Ed, 2026-10-04); then it walks back to its spot.
     const v = w.witches[tg.id];
-    if (c.leashed || !v || !v.onGround || v.down) return false;
+    if (c.leashed || !v || !v.onGround || v.down || w.talkingTo(c.id) === tg.id) return false;
     const d = Math.hypot(v.x - c.x, v.z - c.z), range = attackOf(c.species, c.level)?.attack.range ?? 0;
     return !(d > range && d >= w.t.combat.witchLose && !w.inArea(c, v.x, v.z));
   }
@@ -167,11 +175,10 @@ function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): boolean
 
 /** What a creature goes for: the nearest enemy within `range` of (x, z), of the other side and
  *  another kind, never a baby. A wild one goes for a witch on the ground once she's within its
- *  attack range or combat.witchStart (Ed, 2026-10-04). A party animal following her takes on only
+ *  attack range or she's on the ground in its area (Ed's playtest, 2026-10-04). A party animal following her takes on only
  *  what attacks her or her party (Ed: they engage anything that attacks the witch or them); a
  *  parked one, anything within guard.radius of its sigil. */
 function acquire(w: CombatWorld, c: Creature, x: number, z: number, range: number, attackRange: number, grid: Grid, guarding: boolean): Target | null {
-  const C = w.t.combat;
   let best: Target | null = null, bd = range;
   for (const o of grid.near(x, z, range)) {
     if (o === c || !targetable(o) || sideOf(o) === sideOf(c) || truce(c, o) || w.asleep(o)) continue;
@@ -183,9 +190,9 @@ function acquire(w: CombatWorld, c: Creature, x: number, z: number, range: numbe
     if (d < bd) { bd = d; best = { kind: "creature", id: o.id }; }
   }
   if (!c.leashed) for (const v of w.witches) {
-    if (!v.onGround || v.down) continue;
+    if (!v.onGround || v.down || w.talkingTo(c.id) === v.id) continue; // (the one she's inviting holds its fire on her)
     const d = Math.hypot(v.x - c.x, v.z - c.z);
-    if (d < Math.max(attackRange, C.witchStart) && (!best || d < bd)) { bd = d; best = { kind: "witch", id: v.id }; }
+    if ((d < attackRange || w.inArea(c, v.x, v.z)) && (!best || d < bd)) { bd = d; best = { kind: "witch", id: v.id }; }
   }
   return best;
 }
@@ -243,8 +250,13 @@ function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target,
   // It turns on whoever hit it, if it isn't busy with another.
   if (from && o.fight && !o.fight.target) o.fight.target = { kind: "creature", id: from.id };
   if (o.hp <= 0) {
-    if (o.leashed) { w.loseParty(o.id); o.gone = true; s.events.push({ kind: "lost", x: o.x, z: o.z, at: time, id: o.id }); }
-    else { o.fleeUntil = time + w.t.combat.fleeTime; o.fleeX = fx; o.fleeZ = fz; o.fight = undefined; s.events.push({ kind: "fled", x: o.x, z: o.z, at: time, id: o.id }); }
+    // Beaten (Ed, 2026-10-04: "it's sad when animals die"): it runs off the map, visibly, and is
+    // gone for good. A party animal is lost for the run: off its leash as it goes.
+    const party = o.leashed;
+    if (party) { w.loseParty(o.id); o.leashed = false; }
+    const out = w.exit(o.x, o.z);
+    o.fleeUntil = Infinity; o.fleeX = out.x; o.fleeZ = out.z; o.fight = undefined; o.siege = undefined; o.enraged = false;
+    s.events.push({ kind: party ? "lost" : "fled", x: o.x, z: o.z, at: time, id: o.id });
   }
 }
 
@@ -273,11 +285,12 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   for (const c of w.active) {
     stepKnock(c, dt);
     if (c.gone) continue;
-    // Fleeing: it runs from the fight, then vanishes.
+    // Beaten: it runs for the map's edge, and is gone once it's off the map or out of every witch's sight.
     if (c.fleeUntil) {
-      if (time >= c.fleeUntil) { c.gone = true; continue; }
-      const ax = c.x - (c.fleeX ?? c.x - 1), az = c.z - (c.fleeZ ?? c.z), d = Math.hypot(ax, az) || 1;
+      const ax = (c.fleeX ?? c.x) - c.x, az = (c.fleeZ ?? c.z) - c.z, d = Math.hypot(ax, az);
+      if (d < 1 || w.unseen(c.x, c.z)) { c.gone = true; continue; }
       c.x += (ax / d) * c.speed * C.fleeMult * dt; c.z += (az / d) * c.speed * C.fleeMult * dt;
+      c.facing = ax > 0 ? 1 : -1; c.away = az < -Math.abs(ax);
       c.moving = true; c.walk += dt * 8;
       continue;
     }
@@ -360,7 +373,7 @@ export function nearestSound(s: CombatState, x: number, z: number): string | nul
 /** A soundsystem rises (a wave woke its area): its health, and the wild creatures of the area march on it. */
 export function startSiege(s: CombatState, key: string, at: { x: number; z: number }, cell: Cell, creatures: Creature[], t: Tuning): void {
   s.sounds.set(key, { hp: t.combat.soundsystemHealth, max: t.combat.soundsystemHealth, x: at.x, z: at.z, radius: t.combat.soundsystemRadius });
-  for (const c of creatures) if (!c.gone && !c.leashed && !c.wanderTo && c.cell[0] === cell[0] && c.cell[1] === cell[1] && c.level > 0) c.siege = key;
+  for (const c of creatures) if (!c.gone && !c.leashed && !c.wanderTo && c.cell[0] === cell[0] && c.cell[1] === cell[1] && c.level > 0) { c.siege = key; c.enraged = true; }
 }
 
 /** After a soundsystem falls: the survivors march on to the next-nearest still standing. */

@@ -61,9 +61,10 @@ export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, 
 export const talkTime = (c: Creature, t: Tuning): number => t.invite.talkTime[Math.min(c.level, t.invite.talkTime.length - 1)];
 /** Seconds per turn of the conversation (hers, then theirs): slower for older creatures. */
 export const talkTurn = (c: Creature, t: Tuning): number => t.invite.turn[Math.min(c.level, t.invite.turn.length - 1)];
-/** Whether she can invite it: wild, alive, not fleeing; legends only when let go on a knockout and
+/** Whether she can invite it: wild, alive, not fleeing, not enraged by a wave (Ed's playtest:
+ *  mid-siege, an invited one is set on by the rest); legends only when let go on a knockout and
  *  walking home (wild legends can't be invited). Inviting works while it attacks her (Ed, 2026-10-04). */
-export const invitable = (c: Creature) => !c.leashed && !c.gone && !c.fleeUntil && (c.level !== LEGEND || !!c.wanderTo);
+export const invitable = (c: Creature) => !c.leashed && !c.gone && !c.fleeUntil && !c.enraged && (c.level !== LEGEND || !!c.wanderTo);
 
 /** Where a leashed creature's leash is fixed: the witch, or its placed sigil. */
 export function leashPoint(s: LeashState, id: number, wx: number, wz: number): { x: number; z: number } | null {

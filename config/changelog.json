@@ -4,6 +4,11 @@
     {
       "version": null,
       "items": [
+        "Wild creatures go for you as soon as you land in their area (not just when you're close); they still give up when you rise, or once you've left their area and are well away",
+        "The creature you're chatting to won't attack you while you talk (its friends still will)",
+        "Creatures enraged by a wave (attacking a soundsystem) have angry red eyes and can't be invited",
+        "Beaten creatures no longer vanish: they run off, out of the forest, and are gone for good (yours too: a beaten party animal runs away off its leash)",
+        "Creatures notice you from further away: they turn to look at you, curious babies come up to you and shy ones keep their distance; fights pick up from further off too",
         "Ley lines: a glowing chain runs through the runestones in the order the waves will wake them, from the last wave's stone on through the next few, each link fainter than the one before. They wander along the valleys between the stones, a shimmer flows along them toward the later stone, and over the treetops they rise above the canopy so you can steer by them (?ley=0 hides them)",
         "Boosting over the hills is smooth again: no more hitches as new ground streams in ahead of you",
         "Wide undergrowth and thickets no longer float at their downhill end on steep slopes",

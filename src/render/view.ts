@@ -855,7 +855,9 @@ export class View {
       if (c.gone || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
       // Invited creatures are party animals: their party gear once it's drawn (the wild look till then).
       const party = c.leashed ? this.assets.partyArt(c.species, c.id, sigilColour(c.species)) : undefined;
-      const art = party ?? this.assets.creatureArt(c.species), key = party ? `party-${c.id}` : c.species;
+      // Enraged by a wave (besieging, marching on): angry red eyes, and it can't be invited (Ed's playtest).
+      const woken = !party && c.enraged ? this.assets.wokenArt(c.species) : undefined;
+      const art = party ?? woken ?? this.assets.creatureArt(c.species), key = party ? `party-${c.id}` : woken ? `woken-${c.species}` : c.species;
       if (!art) continue;
       arts.set(key, art);
       const frame = art.atlas.frames[art.frame(c.level, c.moving ? Math.floor(c.walk) % 2 : 0, c.away)];
@@ -893,7 +895,7 @@ export class View {
     }
     for (const [s, b] of this.creatureBatches) if (!per.has(s)) b.set([]);
     for (const [s, list] of per) {
-      const b = this.batchFor(this.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, this.mpp, { solid: true, find: !s.startsWith("party-") }); }); // creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
+      const b = this.batchFor(this.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, this.mpp, { solid: true, find: !s.startsWith("party-") && !s.startsWith("woken-") }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
       b?.set(list);
     }
     this.stats.creatures = n;
