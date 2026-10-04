@@ -9,8 +9,7 @@ import { cameraPose } from "../rules/camera";
 import { AREA_TYPES } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
 import { AssetLibrary, type CreatureArt, type TypeArt } from "./assets";
-import type { RelicArt } from "./artBuild";
-import type { Piece } from "./artBuild";
+import type { Frame, Piece, RelicArt } from "./artBuild";
 import type { LightSource, Plant } from "../rules/forest";
 import { hash2 } from "../rules/random";
 import { Ground } from "./ground";
@@ -142,9 +141,8 @@ export class View {
     // The treehouse, home: its base and its crown (the crown only from the treetops), its trunk's
     // foot on its spot. It fades like other tall things when she's behind it.
     {
-      const T = this.assets.treehouse, f = T.atlas.frames, th = game.map.treehouse, x = th.x - (T.base.x - f[0].w / 2) * this.mpp;
-      this.treehouseBatch = new SpriteBatch(T.atlas, this.mpp, { fade: true });
-      this.treehouseBatch.set([{ x, y: 0, z: th.z, frame: f[0], flip: false }, { x, y: 0, z: th.z, frame: f[1], flip: false, top: true }]);
+      // (Placed each frame by placeTreehouse: where it stands depends on the camera's angle.)
+      this.treehouseBatch = new SpriteBatch(this.assets.treehouse.atlas, this.mpp, { fade: true });
       this.scene.add(...this.treehouseBatch.meshes);
     }
     this.stoneBatch = new SpriteBatch(this.assets.stones, this.mpp, { fade: true });
@@ -365,6 +363,13 @@ export class View {
     const per = new Map<number, SpriteInstance[]>();
     const add = (type: number, inst: SpriteInstance) => { let l = per.get(type); if (!l) per.set(type, (l = [])); l.push(inst); };
     const mpp = this.mpp;
+    // How far up the screen a step up a sprite goes, for each step of ground toward the camera.
+    const pitch = (pose.angle * Math.PI) / 180, upOnScreen = SPRITE_UNIFORMS.uUp.value.dot(this.v3.set(0, Math.cos(pitch), -Math.sin(pitch)));
+    // Every sprite stands on its lowest drawn pixel, not on the bottom of its box: it is slid back
+    // along its own up (so that pixel lands exactly on the ground point, nothing sinks into the
+    // ground) by the empty rows under its drawing. A tree's crown moves with its trunk.
+    const U = SPRITE_UNIFORMS.uUp.value;
+    const stand = (x: number, z: number, frame: Frame, m: number) => { const d = (frame.pad ?? 0) * m; return { x: x - U.x * d, y: -U.y * d, z: z - U.z * d }; };
     let nt = 0, nb = 0;
     for (const p of g.forest.treesNear(cx, cz, half)) {
       const art = this.assets.typeArt(p.type);
@@ -374,8 +379,9 @@ export class View {
       // Squeeze the tallest variants so they never bury her flight (treeCap).
       const tall = whole.h * mpp, C = t.treeCap, scale = tall > C.from ? (C.from + (tall - C.from) * C.keep) / tall : 1;
       const fresh = this.mark("tree", p.x, p.z, tall * scale);
-      add(p.type, { x: p.x, y: 0, z: p.z, frame: f[big.bot], flip: p.flip, fresh, scale });
-      if (big.top !== null) add(p.type, { x: p.x, y: 0, z: p.z, frame: f[big.top], flip: p.flip, top: true, fresh, scale });
+      const at = stand(p.x, p.z, f[big.bot], mpp * scale);
+      add(p.type, { ...at, frame: f[big.bot], flip: p.flip, fresh, scale });
+      if (big.top !== null) add(p.type, { ...at, frame: f[big.top], flip: p.flip, top: true, fresh, scale });
       const w = whole.w * mpp, h = whole.h * mpp * (big.top === null ? 0.2 : 0.6);
       if (t.shadows.trees) shadows.push({ x: p.x + sx * h, z: p.z + sz * h, w: w * 0.8, d: w * 0.45, scenery: true });
       nt++;
@@ -388,11 +394,25 @@ export class View {
         if (!pieces.length) continue;
         const piece = pieces[p.variant % pieces.length], f = art.atlas.frames, frame = f[piece.bot], whole = f[piece.top ?? piece.bot];
         const scale = kind === "setpiece" ? t.setPieceScale : 1, m = mpp * scale; // set pieces: each area's landmark, drawn big
-        if (!this.inView(p.x, p.z, whole.w * m, whole.h * m, margin, reach)) continue;
+        // A piece drawn in perspective is anchored by its origin, its middle on the ground: its
+        // bottom row (the front of it, nearest the camera) stands on the ground that much nearer
+        // the camera, so the origin lands on its spot and nothing of it sinks under the ground.
+        let x = p.x, z = p.z;
+        if (piece.origin) {
+          const ox = p.flip ? frame.w - piece.origin.x : piece.origin.x;
+          x += (frame.w / 2 - ox) * m;
+          z += ((frame.h - (frame.pad ?? 0) - piece.origin.y) * m * upOnScreen) / Math.max(0.2, Math.sin(pitch));
+        }
+        if (!this.inView(x, z, whole.w * m, whole.h * m, margin, reach)) continue;
         const fresh = this.mark(kind, p.x, p.z, whole.h * m);
-        add(p.type, { x: p.x, y: 0, z: p.z, frame, flip: p.flip, fresh, scale });
-        if (piece.top !== null) add(p.type, { x: p.x, y: 0, z: p.z, frame: f[piece.top], flip: p.flip, top: true, fresh, scale });
-        shadows.push({ x: p.x, z: p.z, w: frame.w * m * 0.8, d: frame.w * m * 0.3, scenery: true });
+        const at = stand(x, z, frame, m);
+        add(p.type, { ...at, frame, flip: p.flip, fresh, scale });
+        if (piece.top !== null) add(p.type, { ...at, frame: f[piece.top], flip: p.flip, top: true, fresh, scale });
+        // Set pieces model their own ground: no blob under them (it read as a hard dark oval).
+        // Its shadow lies under it, its front edge at its base (not centred on its bottom edge,
+        // which leaves half of it in front, reading as a shadow below something hovering).
+        const sd = frame.w * m * 0.3;
+        if (kind !== "setpiece") shadows.push({ x: p.x, z: p.z - sd * 0.4, w: frame.w * m * 0.8, d: sd, scenery: true });
         nb++;
       }
     };
@@ -406,10 +426,11 @@ export class View {
       if (!list?.length) continue;
       const piece = list[d.variant % list.length], f = decor.atlas.frames, frame = f[piece.bot], whole = f[piece.top ?? piece.bot];
       if (!this.inView(d.x, d.z, whole.w * mpp, whole.h * mpp, margin, reach)) continue;
-      const fresh = this.mark("decor", d.x, d.z, whole.h * mpp);
-      dl.push({ x: d.x, y: 0, z: d.z, frame, flip: d.flip, fresh });
-      if (piece.top !== null) dl.push({ x: d.x, y: 0, z: d.z, frame: f[piece.top], flip: d.flip, top: true, fresh });
-      shadows.push({ x: d.x, z: d.z, w: frame.w * mpp * 0.8, d: frame.w * mpp * 0.3, scenery: true });
+      const fresh = this.mark("decor", d.x, d.z, whole.h * mpp), at = stand(d.x, d.z, frame, mpp);
+      dl.push({ ...at, frame, flip: d.flip, fresh });
+      if (piece.top !== null) dl.push({ ...at, frame: f[piece.top], flip: d.flip, top: true, fresh });
+      const sd = frame.w * mpp * 0.3; // its shadow under it, front edge at its base
+      shadows.push({ x: d.x, z: d.z - sd * 0.4, w: frame.w * mpp * 0.8, d: sd, scenery: true });
       nb++;
     }
     // The paths' 3D pieces (bridges, stairs, railway landmarks, posts), as scenery, each with its
@@ -421,10 +442,14 @@ export class View {
         if (Math.abs(p.x - cx) > half || Math.abs(p.z - cz) > half) continue;
         const a = pa.byId[p.id];
         if (!a) continue;
-        const frame = pa.atlas.frames[a.frame], dx = (a.originX - frame.w / 2) * mpp, x = p.x - R.x * dx, z = p.z - R.z * dx;
-        if (!this.inView(x, z, frame.w * mpp, frame.h * mpp, margin, reach)) continue;
-        pl.push({ x, y: 0, z, frame, flip: false, fresh: this.mark("pathpiece", p.x, p.z, frame.h * mpp) });
-        shadows.push({ x: p.x, z: p.z, w: frame.w * mpp * 0.7, d: frame.w * mpp * 0.25, scenery: true });
+        // Anchored by its origin like a set piece: the part drawn below its middle lies on the
+        // ground nearer the camera, its lowest drawn pixel on the ground.
+        const frame = pa.atlas.frames[a.frame], dx = (a.originX - frame.w / 2) * mpp, below = Math.max(0, frame.h - (frame.pad ?? 0) - a.originY) * mpp;
+        const at = stand(p.x - R.x * dx, p.z - R.z * dx + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch)), frame, mpp);
+        if (!this.inView(at.x, at.z, frame.w * mpp, frame.h * mpp, margin, reach)) continue;
+        pl.push({ ...at, frame, flip: false, fresh: this.mark("pathpiece", p.x, p.z, frame.h * mpp) });
+        const sd = frame.w * mpp * 0.25; // under it, round its middle
+        shadows.push({ x: p.x, z: p.z, w: frame.w * mpp * 0.7, d: sd, scenery: true });
         nb++;
       }
       this.batchFor(this.decorBatches, "pieces", () => new SpriteBatch(pa.atlas, mpp, { scenery: true, fade: true }))?.set(pl);
@@ -435,12 +460,13 @@ export class View {
     if (ra) {
       const fwd = this.camera.getWorldDirection(this.v3b), up = this.v3c.set(0, 1, 0).applyQuaternion(this.camera.quaternion);
       const U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value, rise = U.dot(up) / Math.max(0.2, -fwd.y);
-      const stand: SpriteInstance[] = [], flat: SpriteInstance[] = [];
+      const upright: SpriteInstance[] = [], flat: SpriteInstance[] = [];
       const put = (a: RelicArt, gx: number, gz: number, flip: boolean) => {
-        const frame = ra.atlas.frames[a.frame], dx = (a.originX - frame.w / 2) * mpp * (flip ? -1 : 1), toward = (frame.h - a.originY) * mpp * rise;
-        const x = gx - R.x * dx, z = gz - R.z * dx + toward;
-        if (!this.inView(x, z, frame.w * mpp, frame.h * mpp, margin, reach)) return;
-        (a.decal ? flat : stand).push({ x, y: 0, z, frame, flip, fresh: this.mark("relic", gx, gz, frame.h * mpp) });
+        // Upright pieces stand on their lowest drawn pixel too (decals lie flat, as they are).
+        const frame = ra.atlas.frames[a.frame], pad = a.decal ? 0 : frame.pad ?? 0, dx = (a.originX - frame.w / 2) * mpp * (flip ? -1 : 1), toward = Math.max(0, frame.h - pad - a.originY) * mpp * rise;
+        const at = a.decal ? { x: gx - R.x * dx, y: 0, z: gz - R.z * dx + toward } : stand(gx - R.x * dx, gz - R.z * dx + toward, frame, mpp);
+        if (!this.inView(at.x, at.z, frame.w * mpp, frame.h * mpp, margin, reach)) return;
+        (a.decal ? flat : upright).push({ ...at, frame, flip, fresh: this.mark("relic", gx, gz, frame.h * mpp) });
         if (!a.decal) shadows.push({ x: gx, z: gz, w: frame.w * mpp * 0.6, d: frame.w * mpp * 0.22, scenery: true });
         nb++;
       };
@@ -449,7 +475,7 @@ export class View {
         if (Math.abs(gr.x - cx) > half + gr.r || Math.abs(gr.z - cz) > half + gr.r) continue;
         for (const p of ra.layouts[gr.kind] ?? []) { const a = ra.byId[p.id]; if (a) put(a, gr.x + p.x, gr.z + p.z, false); }
       }
-      this.batchFor(this.decorBatches, "relics", () => new SpriteBatch(ra.atlas, mpp, { scenery: true, fade: true }))?.set(stand);
+      this.batchFor(this.decorBatches, "relics", () => new SpriteBatch(ra.atlas, mpp, { scenery: true, fade: true }))?.set(upright);
       this.batchFor(this.decorBatches, "decals", () => {
         const b = new SpriteBatch(ra.atlas, mpp, { scenery: true, flat: true });
         for (const m of b.meshes) { m.renderOrder = -0.5; (m.material as THREE.Material).depthWrite = false; } // right after the ground, under everything standing
@@ -570,6 +596,19 @@ export class View {
     this.ghostLines.visible = pts.length > 0;
   }
 
+  /** Stand the treehouse with its trunk's foot (its base anchor) on its spot: like a set piece's
+   *  origin, the roots drawn below the foot lie on the ground nearer the camera, its lowest drawn
+   *  pixel on the ground. Returns where its sprite stands (the bottom middle of its box). */
+  private placeTreehouse(angle: number): { x: number; y: number; z: number } {
+    const T = this.assets.treehouse, f = T.atlas.frames, th = this.game.map.treehouse, mpp = this.mpp, U = SPRITE_UNIFORMS.uUp.value;
+    const pitch = (angle * Math.PI) / 180, upOnScreen = U.dot(this.v3.set(0, Math.cos(pitch), -Math.sin(pitch)));
+    const pad = f[0].pad ?? 0, below = Math.max(0, f[0].h - pad - T.base.y) * mpp, d = pad * mpp;
+    const x = th.x - (T.base.x - f[0].w / 2) * mpp, z = th.z + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch));
+    const at = { x: x - U.x * d, y: -U.y * d, z: z - U.z * d };
+    this.treehouseBatch.set([{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true }]);
+    return at;
+  }
+
   /** Draw a frame; with draw false, only bring the camera, batches and art requests up to date. */
   render(time: number, draw = true): void {
     const g = this.game, t = g.tuning, pose = poseOf(g);
@@ -633,10 +672,10 @@ export class View {
     this.strings.update();
     this.borders.update();
     // A point on the treehouse's sprite (its pixels) in the world, standing on its spot.
-    const T = this.assets.treehouse, thf = T.atlas.frames[0], th = g.map.treehouse, U2 = SPRITE_UNIFORMS;
+    const T = this.assets.treehouse, thf = T.atlas.frames[0], at = this.placeTreehouse(pose.angle), U2 = SPRITE_UNIFORMS;
     const onTreehouse = (px: number, py: number) => {
-      const r = U2.uRight.value, u = U2.uUp.value, dx = (px - T.base.x) * this.mpp, dy = (thf.h - py) * this.mpp;
-      return { x: th.x + r.x * dx + u.x * dy, y: r.y * dx + u.y * dy, z: th.z + r.z * dx + u.z * dy };
+      const r = U2.uRight.value, u = U2.uUp.value, dx = (px - thf.w / 2) * this.mpp, dy = (thf.h - py) * this.mpp;
+      return { x: at.x + r.x * dx + u.x * dy, y: at.y + r.y * dx + u.y * dy, z: at.z + r.z * dx + u.z * dy };
     };
     const thLights: ForestLight[] = T.lights.filter(l => l.kind === "lantern" || l.kind === "window").slice(0, 2).map(l => ({
       ...onTreehouse(l.x, l.y), reach: t.treehouse.lightReach, rgb: new THREE.Vector3(l.rgb[0] / 255, l.rgb[1] / 255, l.rgb[2] / 255), strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3 + l.x)),

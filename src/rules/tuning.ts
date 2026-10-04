@@ -22,6 +22,13 @@ export interface Tuning {
   /** Set pieces drawn this much bigger than the art, with a clearing of setPieceClear metres (times the scale) round them. */
   setPieceScale: number;
   setPieceClear: number;
+  /** Placement: a set piece's footprint radius (metres, before setPieceScale) and a soundsystem's;
+   *  set pieces keep reserveMargin more from soundsystems and the dancefloor, trees
+   *  treeMarginFromSoundsystem from a soundsystem's footprint. */
+  setPieceFootprint: number;
+  soundsystemFootprint: number;
+  reserveMargin: number;
+  treeMarginFromSoundsystem: number;
   bushDensity: number;
   /** How much bushes gather in clumps with open floor between (0 even, 1 strongly clumped). */
   bushClump: number;
@@ -83,7 +90,7 @@ export interface Tuning {
   treetop: { boost: number; boostTime: number; boostAngle: number; turnRate: number; glideTime: number; sharpTurnBleed: number; cameraPull: number };
   bubbles: { emojiPixels: number; scale: number };
   treehouse: { distance: number; angle: number; clear: number; lightReach: number; lightStrength: number };
-  decor: { spacing: number; ruins: number; rocks: number; freak: number; clearing: number; pathGap: number };
+  decor: { spacing: number; ruins: number; rocks: number; freak: number; clearing: number; pathGap: number; /** A decoration's footprint radius (metres): kept clear of the gameplay (map.reserved). */ footprint: number };
   paths: { rails: number[]; roads: number[]; linkChance: number; deadEndChance: number; pathHalf: number; roadHalf: number; railHalf: number; railBroken: number; streams: number[]; streamHalf: number; landmarkSpacing: number; landmarkChance: number; vergeSpacing: number; treesOnBroken: number; edgeBushes: number; bushBoost: number };
   lights: { campfire: { reach: number; strength: number }; stone: { reach: number; strength: number } };
   glowPower: number;

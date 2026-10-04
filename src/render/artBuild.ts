@@ -9,14 +9,21 @@ import type { Style } from "./style";
 type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
 export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number }
 /** Where a sprite sits in its atlas: u0, vTop, u1, vBottom, and its size in art pixels. */
-export interface Frame { uv: [number, number, number, number]; w: number; h: number }
+/** pad: empty rows (nothing drawn) at the bottom of the sprite, so it can stand on its lowest
+ *  drawn pixel rather than on its box. */
+export interface Frame { uv: [number, number, number, number]; w: number; h: number; pad?: number }
 export interface AtlasPixels { albedo: Uint8Array; normal: Uint8Array; width: number; height: number; frames: Frame[] }
 
 export type MakeCanvas = (w: number, h: number) => AnyCanvas;
 
 /** Where each of an area type's sprites sits in its atlas. A big object with a top half (a
  *  tree's crown) has `top`; one without (a mound, a boulder, a log) is drawn whole, always. */
-export interface Piece { bot: number; top: number | null }
+export interface Piece {
+  bot: number; top: number | null;
+  /** The pixel (from the sprite's top left) where its middle on the ground lands, for the 3D set
+   *  pieces drawn in perspective; without one the sprite stands on its bottom row. */
+  origin?: { x: number; y: number };
+}
 export interface TypeLayout {
   big: Piece[];
   /** Each big object's share of the area's big objects (tree variants by height class). */
@@ -45,7 +52,7 @@ function areaTree(def: ArtDef, o: TreeOpts, st: Style, r: () => number, K: numbe
  *  variants, split into halves), small objects, wall objects, set piece, and floor tile. */
 export function typeSprites(st: Style, seed: number, t: number, K: number, mk: MakeCanvas): { sprites: Baked[]; layout: TypeLayout; floor: Baked } {
   const id = AREA_TYPES[t].id, def = (AREAS as unknown as ArtDef[]).find(a => a.id === id)!;
-  const assets = areaAssets(id, st, { K, makeCanvas: mk }) as { floor: { sp: Baked }; walls: { sp: Baked }[]; small: { sp: Baked }[]; big: { sp: Baked }[]; setPiece: { sp: Baked } | null };
+  const assets = areaAssets(id, st, { K, makeCanvas: mk }) as { floor: { sp: Baked }; walls: { sp: Baked }[]; small: { sp: Baked }[]; big: { sp: Baked }[]; setPiece: { sp: Baked; origin?: { x: number; y: number } } | null };
   const sprites: Baked[] = [], add = (b: Baked) => sprites.push(b) - 1;
   const layout: TypeLayout = { big: [], bigWeight: [], small: [], walls: [], set: null };
   const bk = (sp: unknown, col: unknown) => Art.bake(sp, col, st, "none", mk) as Baked;
@@ -70,7 +77,7 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   });
   def.small.forEach(([kind, o], i) => layout.small.push(kind === "tree" ? tree(o as TreeOpts, 500 + i) : { bot: add(assets.small[i].sp), top: null }));
   for (const a of assets.walls) layout.walls.push(add(a.sp));
-  if (assets.setPiece) layout.set = def.set?.[0] === "tree" ? tree(def.set[1] as TreeOpts, 900) : { bot: add(assets.setPiece.sp), top: null };
+  if (assets.setPiece) layout.set = def.set?.[0] === "tree" ? tree(def.set[1] as TreeOpts, 900) : { bot: add(assets.setPiece.sp), top: null, origin: assets.setPiece.origin };
   return { sprites, layout, floor: assets.floor.sp };
 }
 
@@ -107,7 +114,10 @@ export function packPixels(sprites: Baked[], width = 2048): AtlasPixels {
       albedo.set(pa.subarray(src, src + s.w * 4), dst);
       normal.set(pn.subarray(src, src + s.w * 4), dst);
     }
-    return { uv: [p.x / W, p.y / H, (p.x + s.w) / W, (p.y + s.h) / H], w: s.w, h: s.h };
+    // Its lowest drawn row (the sprite shader drops alpha under a half).
+    let pad = 0;
+    bottom: for (let row = s.h - 1; row >= 0; row--, pad++) for (let x = 0; x < s.w; x++) if (pa[(row * s.w + x) * 4 + 3] >= 128) break bottom;
+    return { uv: [p.x / W, p.y / H, (p.x + s.w) / W, (p.y + s.h) / H], w: s.w, h: s.h, pad: Math.min(pad, s.h) };
   });
   return { albedo, normal, width: W, height: H, frames };
 }
@@ -127,7 +137,7 @@ export interface RelicArt { id: string; family: string; decal: boolean; frame: n
 export type RelicLayouts = Record<string, { id: string; x: number; z: number }[]>;
 
 /** One path piece in its atlas: its frame and where its middle on the ground lands (art pixels from the left). */
-export interface PathPieceArt { id: string; frame: number; originX: number }
+export interface PathPieceArt { id: string; frame: number; originX: number; /** Where its middle on the ground lands, from the top. */ originY: number }
 
 /** One decoration in the decor atlas: its family, bottom (and top, if tall) frames, and the radius it covers on the ground (m). */
 export interface DecorPiece { id: string; family: string; bot: number; top: number | null; footprint: number }
@@ -149,7 +159,7 @@ function pathPieceSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; pieces
   const sprites: Baked[] = [], pieces: PathPieceArt[] = [], colours = Art.pathColours(st);
   for (const d of Art.PATH_PIECES as { id: string }[]) {
     const r = Art.pathPieceSprite(d.id, st) as { sp: unknown; origin: { x: number; y: number } };
-    pieces.push({ id: d.id, frame: sprites.push(Art.bake(r.sp, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x });
+    pieces.push({ id: d.id, frame: sprites.push(Art.bake(r.sp, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
   }
   return { sprites, pieces };
 }

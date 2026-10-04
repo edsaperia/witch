@@ -153,6 +153,7 @@ function decorInChunk(map: ForestMap, ci: number, cj: number): Decor[] {
     const roll = hash2(i, j, s + 503);
     if (roll >= total) continue;
     if (a.openness < D.clearing || map.hardClear(x, z) || map.paths.at(x, z, D.pathGap)) continue;
+    if (map.reserved(x, z, D.footprint)) continue; // its whole footprint clear of the gameplay and set pieces
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + map.tuning.dancefloor.clearing + 6) continue;
     // Open ground keeps them all; dense canopy only some.
     const open = 1 - Math.min(1, treeChance(map, x, z, a.type) / 0.8);
@@ -177,6 +178,7 @@ function relicsInChunk(map: ForestMap, ci: number, cj: number): Relic[] {
     const near = map.paths.at(x, z, 20), byRoad = near && (near.kind === "road" || near.kind === "rail") ? R.nearRoad : 1;
     if (hash2(i, j, s + 883) >= R.chance * (0.5 + 5 * share) * byRoad) continue;
     if (a.openness < map.tuning.decor.clearing || map.hardClear(x, z) || map.paths.at(x, z, 2) || map.paths.pieceAt(x, z)) continue;
+    if (map.reserved(x, z, map.tuning.decor.footprint)) continue; // its footprint clear of the gameplay, set pieces and grounds
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + map.tuning.dancefloor.clearing + 6) continue;
     out.push({ x, z, variant: Math.floor(hash2(i, j, s + 884) * 1e6), flip: hash2(i, j, s + 885) < 0.5 });
   }
@@ -256,10 +258,9 @@ export class Forest {
     const m = this.map, A = m.areaSize, out: Plant[] = [];
     for (let cy = Math.floor((z - radius) / A) - 1; cy <= Math.floor((z + radius) / A) + 1; cy++)
       for (let cx = Math.floor((x - radius) / A) - 1; cx <= Math.floor((x + radius) / A) + 1; cx++) {
-        if ((cx === m.centreCell[0] && cy === m.centreCell[1]) || !m.setPieceOf(cx, cy)) continue;
-        const s = m.siteOf(cx, cy);
-        if (Math.abs(s.x - x) <= radius && Math.abs(s.z - 4 - z) <= radius)
-          out.push({ x: s.x, z: s.z - 4, type: m.typeOf(cx, cy), variant: 0, flip: hash2(cx, cy, m.seed + 71) < 0.5 });
+        const s = m.setPieceSpot(cx, cy); // none at home, nor where it can't keep clear of the gameplay
+        if (s && Math.abs(s.x - x) <= radius && Math.abs(s.z - z) <= radius)
+          out.push({ x: s.x, z: s.z, type: m.typeOf(cx, cy), variant: 0, flip: hash2(cx, cy, m.seed + 71) < 0.5 });
       }
     return out;
   }

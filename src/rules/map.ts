@@ -82,6 +82,14 @@ export interface ForestMap {
   areaAt(x: number, z: number): AreaSample;
   /** The area's set piece, if this one has one (rare: setPieceChance of the types that have one). */
   setPieceOf(cx: number, cy: number): string | null;
+  /** Where an area's soundsystem stands when the party reaches it (reserved from the start). */
+  soundsystemSpot(cx: number, cy: number): { x: number; z: number };
+  /** Where an area's set piece stands: in its clearing, its footprint clear of every soundsystem
+   *  and the dancefloor; null if it has none, or there is no room for it. */
+  setPieceSpot(cx: number, cy: number): { x: number; z: number } | null;
+  /** Whether a footprint r metres round (x, z) comes within reserveMargin of anything placed for
+   *  gameplay (soundsystems, the dancefloor, the treehouse) or of a set piece: scenery keeps out. */
+  reserved(x: number, z: number, r: number): boolean;
   /** How far an area is from home: 0 at the middle area, 1 at the map's edge. */
   remoteness(cx: number, cy: number): number;
   /** An area's centre (its layer-0 site), in metres. */
@@ -190,25 +198,90 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   };
   // The dancefloor keeps a clearing of its own, however close a neighbouring area's centre.
   const floorR = tuning.dancefloor.radius, floorClear = floorR + tuning.dancefloor.clearing;
+
+  // Gameplay is placed first: each area's soundsystem spot is reserved from the start (whether or
+  // not the party has reached it yet), then scenery keeps clear of it and of the dancefloor.
+  const inCell = (x: number, z: number, cx: number, cy: number) => { const c = areaAt(x, z).cell; return c[0] === cx && c[1] === cy; };
+  const soundSpots = new Map<string, { x: number; z: number }>();
+  const soundsystemSpot = (cx: number, cy: number) => {
+    const key = cellKey(cx, cy), had = soundSpots.get(key);
+    if (had) return had;
+    // Beside the area's centre, in its clearing, inside its own ground.
+    const s = siteOf(cx, cy), r = rng(seed * 17 + cx * 53 + cy * 911);
+    let [ax, az] = [s.x, s.z];
+    if (!inCell(s.x, s.z, cx, cy)) search: for (let d = 2; d < A * 0.75 * 1.5; d += 2) for (let k = 0; k < 16; k++) {
+      const a = (k / 16) * Math.PI * 2, x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
+      if (inCell(x, z, cx, cy)) { [ax, az] = [x, z]; break search; }
+    }
+    let spot = { x: ax, z: az };
+    for (let i = 0; i < 24; i++) {
+      const a = r() * Math.PI * 2, d = 3 + r() * 4, x = ax + Math.cos(a) * d, z = az + Math.sin(a) * d + 3;
+      if (inCell(x, z, cx, cy)) { spot = { x, z }; break; }
+    }
+    soundSpots.set(key, spot);
+    return spot;
+  };
   const TH = tuning.treehouse, ta = (TH.angle * Math.PI) / 180;
   const treehouse = { x: centre.x + Math.cos(ta) * (floorClear + TH.distance), z: centre.z + Math.sin(ta) * (floorClear + TH.distance) };
-  // The grounds: some areas (not home) have one, off to the side of the area's centre, clear of
-  // its soundsystem and set piece; each keeps a clearing of its own.
-  const G = tuning.grounds, grounds: Ground[] = [];
+  const pieceSpots = new Map<string, { x: number; z: number } | null>();
+  const setPieceSpot = (cx: number, cy: number) => {
+    const key = cellKey(cx, cy);
+    if (pieceSpots.has(key)) return pieceSpots.get(key)!;
+    let spot: { x: number; z: number } | null = null;
+    if (setPieceOf(cx, cy) && !(cx === centreCell[0] && cy === centreCell[1])) {
+      const R = tuning.setPieceFootprint * tuning.setPieceScale, gap = tuning.reserveMargin;
+      const sounds = [cellKey(cx, cy), ...(neighbours.get(cellKey(cx, cy)) ?? [])].map(k => { const [x, y] = k.split(",").map(Number); return soundsystemSpot(x, y); });
+      const clear = (x: number, z: number) => inCell(x, z, cx, cy)
+        && sounds.every(p => Math.hypot(x - p.x, z - p.z) >= R + tuning.soundsystemFootprint + gap)
+        && Math.hypot(x - centre.x, z - centre.z) >= R + floorClear + gap
+        && Math.hypot(x - treehouse.x, z - treehouse.z) >= R + TH.clear + gap;
+      // Its old place (a little north of the centre) if that is clear, else the nearest clear
+      // spot round it, out to the edge of the clearing.
+      const s = siteOf(cx, cy);
+      search: for (let d = 0; d <= A * 0.35; d += 3) for (let k = 0; k < (d ? 16 : 1); k++) {
+        const a = (k / 16) * Math.PI * 2, x = s.x + Math.cos(a) * d, z = s.z - 4 + Math.sin(a) * d;
+        if (clear(x, z)) { spot = { x, z }; break search; }
+      }
+    }
+    pieceSpots.set(key, spot);
+    return spot;
+  };
+  const grounds: Ground[] = [];
+  const reserved = (x: number, z: number, r: number) => {
+    const gap = tuning.reserveMargin, cell = areaAt(x, z).cell;
+    if (Math.hypot(x - centre.x, z - centre.z) < r + floorClear + gap) return true;
+    if (Math.hypot(x - treehouse.x, z - treehouse.z) < r + TH.clear + gap) return true;
+    for (const g of grounds) if (Math.hypot(x - g.x, z - g.z) < r + g.r + gap) return true;
+    for (const k of [cellKey(cell[0], cell[1]), ...(neighbours.get(cellKey(cell[0], cell[1])) ?? [])]) {
+      const [cx, cy] = k.split(",").map(Number);
+      if (!(cx === centreCell[0] && cy === centreCell[1])) { const q = soundsystemSpot(cx, cy); if (Math.hypot(x - q.x, z - q.z) < r + tuning.soundsystemFootprint + gap) return true; }
+      const p = setPieceSpot(cx, cy);
+      if (p && Math.hypot(x - p.x, z - p.z) < r + tuning.setPieceFootprint * tuning.setPieceScale + gap) return true;
+    }
+    return false;
+  };
+  // The grounds: some areas (not home) have one, off to the side of the area's centre; its whole
+  // clearing keeps clear of everything placed before it (soundsystems, the dancefloor, the
+  // treehouse, set pieces, other grounds), turning round the centre to find room, or left out.
+  const G = tuning.grounds;
   for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) {
     if ((cx === centreCell[0] && cy === centreCell[1]) || hash2(cx, cy, seed + 871) >= G.chance) continue;
     const kind = G.kinds[Math.floor(hash2(cx, cy, seed + 873) * G.kinds.length)], r = G.radius[kind] ?? 8, a = hash2(cx, cy, seed + 875) * Math.PI * 2, site = siteOf(cx, cy);
-    const d = tuning.setPieceClear * tuning.setPieceScale + r + 4;
-    grounds.push({ kind, x: site.x + Math.cos(a) * d, z: site.z + Math.sin(a) * d, r });
+    search: for (const d of [r + 6, r + 14, r + 24]) for (let k = 0; k < 12; k++) {
+      const b = a + (k / 12) * Math.PI * 2, x = site.x + Math.cos(b) * d, z = site.z + Math.sin(b) * d;
+      if (inCell(x, z, cx, cy) && !reserved(x, z, r)) { grounds.push({ kind, x, z, r }); break search; }
+    }
   }
   const hardCell = (x: number, z: number, cell: Cell) => {
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return true;
     if (Math.hypot(x - treehouse.x, z - treehouse.z) < TH.clear) return true;
     for (const g of grounds) if (Math.abs(x - g.x) < g.r && Math.abs(z - g.z) < g.r && Math.hypot(x - g.x, z - g.z) < g.r) return true;
-    // A set piece keeps a clearing round it, sized with it.
-    if (!setPieceOf(cell[0], cell[1])) return false;
-    const p = siteOf(cell[0], cell[1]);
-    return Math.hypot(x - p.x, z - (p.z - 4)) < tuning.setPieceClear * tuning.setPieceScale;
+    // A set piece keeps a clearing round it, sized with it; a soundsystem a little room.
+    const p = setPieceSpot(cell[0], cell[1]);
+    if (p && Math.hypot(x - p.x, z - p.z) < tuning.setPieceClear * tuning.setPieceScale) return true;
+    if (cell[0] === centreCell[0] && cell[1] === centreCell[1]) return false;
+    const q = soundsystemSpot(cell[0], cell[1]);
+    return Math.hypot(x - q.x, z - q.z) < tuning.soundsystemFootprint + tuning.treeMarginFromSoundsystem;
   };
   const hardClear = (x: number, z: number) => { const [u, v] = toPart(x, z); return hardCell(x, z, partition.partition(u, v)); };
   const treeWeight = (x: number, z: number) => {
@@ -228,7 +301,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     start: { x: treehouse.x, z: treehouse.z + 1 },
     bounds: { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad },
     extent: { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A },
-    typeOf, areaAt, siteOf, treeWeight, hardClear, neighbours, setPieceOf, remoteness,
+    typeOf, areaAt, siteOf, treeWeight, hardClear, neighbours, setPieceOf, soundsystemSpot, setPieceSpot, reserved, remoteness,
     paths: null as unknown as PathNetwork,
   };
   map.paths = new PathNetwork(map);
