@@ -4,7 +4,7 @@
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
 import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
-import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PathPieceArt, type RelicArt, type RelicLayouts, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
+import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { ART_HASH, cacheGet, cachePut, hashText } from "./artCache";
 
@@ -25,6 +25,7 @@ export class AssetLibrary {
   private creatures = new Map<string, CreatureArt>();
   private decor: DecorArt | undefined;
   private speakers: (SpeakerArt & { atlas: Atlas }) | undefined;
+  private scenes: (SceneArt & { atlas: Atlas }) | undefined;
   private pieces: { atlas: Atlas; byId: Record<string, PathPieceArt> } | undefined;
   private relicSet: RelicSet | undefined;
   private queue: ArtJob[] = [];
@@ -160,6 +161,8 @@ export class AssetLibrary {
     if (r.job.kind === "relics") {
       const list = r.result.relics!;
       this.relicSet = { atlas, byId: Object.fromEntries(list.map(p => [p.id, p])), modern: list.filter(p => p.family === "modern"), layouts: r.result.layouts! };
+    } else if (r.job.kind === "scenes") {
+      this.scenes = { atlas, ...r.result.scenes! };
     } else if (r.job.kind === "speakers") {
       this.speakers = { atlas, ...r.result.speakers! };
     } else if (r.job.kind === "pathPieces") {
@@ -200,6 +203,11 @@ export class AssetLibrary {
   relicArt(): RelicSet | undefined {
     if (!this.relicSet) this.ask({ kind: "relics", id: "all", style: this.style });
     return this.relicSet;
+  }
+  /** The scenes' pieces and layouts, or undefined (and asked for). */
+  sceneArt(): (SceneArt & { atlas: Atlas }) | undefined {
+    if (!this.scenes) this.ask({ kind: "scenes", id: "all", style: this.style });
+    return this.scenes;
   }
   /** The dancefloor's speakers, or undefined (and asked for, ahead of the scenery: they're gameplay). */
   speakerArt(): (SpeakerArt & { atlas: Atlas }) | undefined {

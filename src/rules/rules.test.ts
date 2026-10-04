@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { hash2 as labHash2, SPECIES_BY_ID } from "../../art/generator.js";
 import { makePartition } from "./partition";
 import { hash2 } from "./random";
-import { AREA_TYPES, generateMap, parseSeed } from "./map";
+import { AREA_TYPES, generateMap, parseSeed, sceneFootprint } from "./map";
 import { Forest, crownReach, treeChance } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
@@ -25,6 +25,9 @@ import { musicMix } from "./music";
 import { tuftsInCell, TUFT_KINDS } from "./groundcover";
 import { DECOR } from "../../art/decor.js";
 import { RELICS } from "../../art/relics.js";
+import { SCENES, sceneLayout } from "../../art/scenes.js";
+import { COUNTRY } from "../../art/country.js";
+const MODERN = RELICS.filter(r => r.family === "modern").length + (COUNTRY as { family: string }[]).filter(d => d.family === "farm" || d.family === "street").length;
 
 const map = generateMap(123, TUNING);
 
@@ -1074,7 +1077,7 @@ describe("relics and grounds", () => {
   it("scatter modern relics rarely, more of them by the roads and railways, never on a path", () => {
     const forest = new Forest(map), b = map.extent, list = forest.relicsNear((b.minX + b.maxX) / 2, (b.minZ + b.maxZ) / 2, b.maxX - b.minX);
     expect(list.length).toBeGreaterThan(3);
-    expect(list.length).toBeLessThanOrEqual(RELICS.filter(r => r.family === "modern").length); // each at most once
+    expect(list.length).toBeLessThanOrEqual(MODERN); // each at most once (relics and the standalone country pieces)
     for (const r of list) { expect(map.paths.at(r.x, r.z)).toBeNull(); expect(map.hardClear(r.x, r.z)).toBe(false); }
     for (const a of list) for (const b of list) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(TUNING.relics.minGap);
     const byRoad = list.filter(r => { const h = map.paths.at(r.x, r.z, 20); return h && (h.kind === "road" || h.kind === "rail"); }).length;
@@ -1100,7 +1103,7 @@ describe("finds, each at most once per map (Ed, v160)", () => {
       const f = new Forest(m), [x, z, r] = whole(m), decor = f.decorNear(x, z, r);
       const ruins = decor.filter(d => d.family === "ruins").map(d => ruinOf[d.variant % ruinOf.length]);
       const freaks = decor.filter(d => d.family === "freak").map(d => d.variant % DECOR.filter(q => q.family === "freak").length);
-      const relics = f.relicsNear(x, z, r).map(q => q.variant % RELICS.filter(q => q.family === "modern").length);
+      const relics = f.relicsNear(x, z, r).map(q => q.variant % MODERN);
       const pieces = f.setPiecesNear(x, z, r).map(p => AREA_TYPES[p.type].setPiece);
       const grounds = m.grounds.map(g => g.kind), stairs = m.paths.pieces.filter(p => p.id.startsWith("stairs")).map(p => p.id);
       for (const list of [ruins, freaks, relics, pieces, grounds, stairs] as unknown[][]) expect(new Set(list).size).toBe(list.length);
@@ -1108,6 +1111,26 @@ describe("finds, each at most once per map (Ed, v160)", () => {
       expect(decor.filter(d => d.family === "rocks").length).toBeGreaterThan(50); // rocks are generic scatter
     }
   }, 30000); // five whole maps
+  it("places scenes, each at most once, in areas they suit, off the paths and clear of the gameplay (Ed, 2026-10-04)", () => {
+    let total = 0;
+    for (const m of maps) {
+      const ids = m.scenes.map(c => c.id);
+      expect(new Set(ids).size).toBe(ids.length);
+      total += ids.length;
+      for (const c of m.scenes) {
+        const sc = (SCENES as unknown as { id: string; suits: string[] }[]).find(x => x.id === c.id)!;
+        expect(sc.suits).toContain(AREA_TYPES[m.areaAt(c.x, c.z).type].id);
+        expect(m.paths.at(c.x, c.z, c.r * 0.6)).toBeNull();
+        expect(m.hardClear(c.x, c.z)).toBe(true); // its ground is kept clear of trees
+        for (const q of m.dancefloor.speakers) expect(Math.hypot(q.x - c.x, q.z - c.z)).toBeGreaterThan(c.r);
+      }
+    }
+    expect(total / maps.length).toBeGreaterThan(4);
+  });
+  it("gives each scene a footprint at least the art's own", () => {
+    const style = JSON.parse(readFileSync(new URL("../../config/style.json", import.meta.url), "utf8"));
+    for (const sc of SCENES as unknown as { id: string }[]) expect(sceneFootprint(sc.id, TUNING)).toBeGreaterThanOrEqual((sceneLayout as unknown as (id: string, st: unknown) => { footprint: number })(sc.id, style).footprint);
+  }, 60000);
   it("stairs stand only by ravines, rocky slopes, cave mouths and stone shrines", () => {
     for (const m of maps) for (const p of m.paths.pieces.filter(p => p.id.startsWith("stairs")))
       expect(["ravine", "rocky-slope", "cave-mouth", "stone-shrine"]).toContain(AREA_TYPES[m.areaAt(p.x, p.z).type].id);

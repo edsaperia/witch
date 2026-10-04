@@ -383,7 +383,7 @@ async function main() {
     await shot(page, "ground-cave-mouth.png");
     const r = await page.evaluate(() => {
       const v = window.witch.view, out = { n: 0, worst: 0, bad: [] };
-      for (const [type, b] of [...v.typeBatches, ...[...v.decorBatches].filter(([k]) => k !== "decals"), ["treehouse", v.treehouseBatch]]) { // decals lie flat
+      for (const [type, b] of [...v.typeBatches, ...[...v.decorBatches].filter(([k]) => k !== "decals" && k !== "sceneDecals"), ["treehouse", v.treehouseBatch]]) { // decals lie flat
         const img = b.atlas.albedo.image, W = img.width, H = img.height, D = img.data;
         for (const it of b.items) {
           if (it.top) continue;

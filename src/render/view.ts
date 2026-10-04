@@ -544,6 +544,37 @@ export class View {
         return b;
       })?.set(flat);
     }
+    // Scenes (Ed, 2026-10-04): each a few pieces standing round its middle, as authored or
+    // mirrored as a whole, each piece nudged a little; anchored by their ground points like relics.
+    const sa = g.map.scenes.length ? this.assets.sceneArt() : undefined;
+    if (sa) {
+      const fwd = this.camera.getWorldDirection(this.v3b), up = this.v3c.set(0, 1, 0).applyQuaternion(this.camera.quaternion);
+      const U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value, rise = U.dot(up) / Math.max(0.2, -fwd.y);
+      const upright: SpriteInstance[] = [], flat: SpriteInstance[] = [];
+      for (const sc of g.map.scenes) {
+        if (Math.abs(sc.x - cx) > half + sc.r || Math.abs(sc.z - cz) > half + sc.r) continue;
+        const lay = sa.layouts[sc.id];
+        if (!lay) continue;
+        (sc.mirror ? lay.mirror : lay.plain).forEach((p, i) => {
+          const a = sa.pieces[p.ref];
+          if (!a) return;
+          const jx = (hash2(i, Math.round(sc.x), 901) - 0.5) * 0.4, jz = (hash2(i, Math.round(sc.z), 903) - 0.5) * 0.4;
+          const gx = sc.x + p.dx + jx, gz = sc.z + p.dz + jz, flip = p.left;
+          const frame = sa.atlas.frames[a.frame], pad = a.decal ? 0 : frame.pad ?? 0, dx = (a.originX - frame.w / 2) * mpp * (flip ? -1 : 1), toward = Math.max(0, frame.h - pad - a.originY) * mpp * rise;
+          const at = a.decal ? { x: gx - R.x * dx, y: 0, z: gz - R.z * dx + toward } : stand(gx - R.x * dx, gz - R.z * dx + toward, frame, mpp);
+          if (!this.inView(at.x, at.z, frame.w * mpp, frame.h * mpp, margin, reach)) return;
+          (a.decal ? flat : upright).push({ ...at, frame, flip, fresh: this.mark("scene", gx, gz, frame.h * mpp) });
+          if (!a.decal) shadows.push({ x: gx, z: gz, w: frame.w * mpp * 0.6, d: frame.w * mpp * 0.22, scenery: true });
+          nb++;
+        });
+      }
+      this.batchFor(this.decorBatches, "scenes", () => new SpriteBatch(sa.atlas, mpp, { scenery: true, fade: true }))?.set(upright);
+      this.batchFor(this.decorBatches, "sceneDecals", () => {
+        const b = new SpriteBatch(sa.atlas, mpp, { scenery: true, flat: true });
+        for (const m of b.meshes) { m.renderOrder = -0.5; (m.material as THREE.Material).depthWrite = false; }
+        return b;
+      })?.set(flat);
+    }
     if (decor) this.batchFor(this.decorBatches, "all", () => new SpriteBatch(decor.atlas, mpp, { scenery: true, fade: true }))?.set(dl);
     for (const [type, b] of this.typeBatches) if (!per.has(type)) b.set([]);
     for (const [type, list] of per) {

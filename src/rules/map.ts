@@ -3,6 +3,7 @@
 // visibly ends. World units are metres: x runs east, z runs south, one area cell is areaSize.
 import rawTypes from "../../config/area-types.json";
 import { AREAS } from "../../art/areas.js";
+import { SCENES as SCENES_RAW, SCENE_BY_ID as SCENE_BY_ID_RAW } from "../../art/scenes.js";
 import { makePartition, type Cell, type Partition } from "./partition";
 import { hash2, rng, smoothstep, vnoise } from "./random";
 import type { Tuning } from "./tuning";
@@ -74,6 +75,8 @@ export interface ForestMap {
   /** The old playgrounds and sports grounds: a handful per map, each in a clearing of its own off
    *  an area's centre; kind is the art's arrangement (playground, tennis, baseball, football, basketball). */
   readonly grounds: readonly Ground[];
+  /** The scenes: each at most once per map, in an area it suits (Ed, 2026-10-04). */
+  readonly scenes: readonly Scene[];
   /** Where the witch starts: at the treehouse (sitting on its terrace). */
   readonly start: { x: number; z: number };
   /** Where the witch may fly (metres). */
@@ -110,6 +113,11 @@ export interface ForestMap {
 
 /** flip: the whole arrangement mirrored left to right. */
 export interface Ground { kind: string; x: number; z: number; r: number; flip: boolean }
+/** A scene (art/scenes.js) on the map: its id, middle, footprint radius, and whether it's mirrored. */
+export interface Scene { id: string; x: number; z: number; r: number; mirror: boolean }
+
+type SceneDef = { id: string; size: string; suits?: string[]; pieces: [string, number, number, string?][] };
+const SCENES = SCENES_RAW as unknown as SceneDef[], SCENE_BY_ID = SCENE_BY_ID_RAW as unknown as Record<string, SceneDef>;
 
 const cellKey = (cx: number, cy: number) => cx + "," + cy;
 
@@ -277,12 +285,13 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     pieceSpots.set(key, spot);
     return spot;
   };
-  const grounds: Ground[] = [];
+  const grounds: Ground[] = [], scenes: Scene[] = [];
   const reserved = (x: number, z: number, r: number) => {
     const gap = tuning.reserveMargin, cell = areaAt(x, z).cell;
     if (Math.hypot(x - centre.x, z - centre.z) < r + floorClear + gap) return true;
     if (Math.hypot(x - treehouse.x, z - treehouse.z) < r + TH.clear + gap) return true;
     for (const g of grounds) if (Math.hypot(x - g.x, z - g.z) < r + g.r + gap) return true;
+    for (const c of scenes) if (Math.hypot(x - c.x, z - c.z) < r + c.r + gap) return true;
     for (const k of [cellKey(cell[0], cell[1]), ...(neighbours.get(cellKey(cell[0], cell[1])) ?? [])]) {
       const [cx, cy] = k.split(",").map(Number);
       if (!(cx === centreCell[0] && cy === centreCell[1])) { const q = soundsystemSpot(cx, cy); if (Math.hypot(x - q.x, z - q.z) < r + tuning.soundsystemFootprint + gap) return true; }
@@ -295,6 +304,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return true;
     if (Math.hypot(x - treehouse.x, z - treehouse.z) < TH.clear) return true;
     for (const g of grounds) if (Math.abs(x - g.x) < g.r && Math.abs(z - g.z) < g.r && Math.hypot(x - g.x, z - g.z) < g.r) return true;
+    for (const c of scenes) if (Math.abs(x - c.x) < c.r && Math.abs(z - c.z) < c.r && Math.hypot(x - c.x, z - c.z) < c.r * 0.85) return true; // a scene's ground is clear of trees
     // A set piece keeps a clearing round it, sized with it; a soundsystem a little room.
     const p = setPieceSpot(cell[0], cell[1]);
     if (p && Math.hypot(x - p.x, z - p.z) < tuning.setPieceClear * tuning.setPieceScale) return true;
@@ -316,7 +326,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const map = {
     seed, tuning, n, margin, areaSize: A, partition, centreCell,
     dancefloor: { x: centre.x, z: centre.z, radius: floorR, speakers: speakerRing(centre, tuning) },
-    treehouse, grounds,
+    treehouse, grounds, scenes,
     start: { x: treehouse.x, z: treehouse.z + 1 },
     bounds: { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad },
     extent: { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A },
@@ -342,6 +352,31 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
       if (inCell(x, z, cx, cy) && !reserved(x, z, r)) { grounds.push({ kind, x, z, r, flip: hash2(cx, cy, seed + 877) < 0.5 }); usedGrounds.add(kind); break search; }
     }
   }
+  // Scenes (Ed, 2026-10-04): small vignettes and large landmarks of a few pieces each, each at
+  // most once per map, in an area it suits; like a ground, off to the side of the area's centre,
+  // its whole footprint clear of everything placed before it and of the paths, mirrored at random.
+  const SC = tuning.scenes, usedScenes = new Set<string>();
+  const order: [number, number, number][] = [];
+  for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) if (!(cx === centreCell[0] && cy === centreCell[1])) order.push([cx, cy, hash2(cx, cy, seed + 881)]);
+  order.sort((a, b) => a[2] - b[2]);
+  for (const [cx, cy, roll] of order) {
+    if (roll >= SC.chance) continue;
+    const id = AREA_TYPES[typeOf(cx, cy)].id, fits = SCENES.filter(sc => !usedScenes.has(sc.id) && (sc.suits ?? []).includes(id));
+    if (!fits.length) continue;
+    const sc = fits[Math.floor(hash2(cx, cy, seed + 883) * fits.length)], r = sceneFootprint(sc.id, tuning), a = hash2(cx, cy, seed + 885) * Math.PI * 2, site = siteOf(cx, cy);
+    search: for (const d of [r + 8, r + 16, r + 26]) for (let k = 0; k < 12; k++) {
+      const b = a + (k / 12) * Math.PI * 2, x = site.x + Math.cos(b) * d, z = site.z + Math.sin(b) * d;
+      if (inCell(x, z, cx, cy) && !reserved(x, z, r) && !map.paths.at(x, z, r * 0.7)) { scenes.push({ id: sc.id, x, z, r, mirror: hash2(cx, cy, seed + 887) < 0.5 }); usedScenes.add(sc.id); break search; }
+    }
+  }
   map.paths.placePieces();
   return map;
+}
+
+/** A scene's footprint radius (metres), from its pieces' authored offsets: a little more than the
+ *  art's own (sceneLayout's footprint, which a test checks it covers), without drawing anything. */
+export function sceneFootprint(id: string, tuning: Tuning): number {
+  const sc = SCENE_BY_ID[id];
+  if (!sc) return 0;
+  return Math.max(...sc.pieces.map(([, x, z]) => Math.hypot(x, z))) * tuning.scenes.scale + tuning.scenes.pad;
 }

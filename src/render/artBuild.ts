@@ -132,7 +132,14 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   /** Modern relics, playground and sports pieces, with the art's arrangements. */
   | { kind: "relics"; id: string; style: Style }
   /** The dancefloor's speakers: every drawn angle, state and frame. */
-  | { kind: "speakers"; id: string; style: Style };
+  | { kind: "speakers"; id: string; style: Style }
+  /** Every scene's pieces (each drawn once) and each scene's layout, as authored and mirrored. */
+  | { kind: "scenes"; id: string; style: Style };
+
+/** A scene piece in its atlas (by its name in the scenes' table), with its ground point; and each
+ *  scene's pieces in metres from its middle, as authored and mirrored. */
+export interface SceneArt { pieces: Record<string, { frame: number; originX: number; originY: number; decal: boolean }>; layouts: Record<string, { plain: ScenePlace[]; mirror: ScenePlace[] }> }
+export interface ScenePlace { ref: string; dx: number; dz: number; left: boolean }
 
 /** The dancefloor speakers in their atlas: the frame for "angle:state:frame", and each angle's ground point. */
 export interface SpeakerArt { frames: Record<string, number>; origin: Record<number, { x: number; y: number }> }
@@ -149,7 +156,22 @@ export interface DecorPiece { id: string; family: string; bot: number; top: numb
 
 /** A floor tile's pixels: albedo and normal map, w x h. */
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
-export interface ArtResult { px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; layouts?: RelicLayouts; speakers?: SpeakerArt }
+export interface ArtResult { px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt }
+
+function sceneSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; scenes: SceneArt } {
+  const sprites: Baked[] = [], scenes: SceneArt = { pieces: {}, layouts: {} };
+  type Layout = { pieces: { sprite: string; dx: number; dz: number; facing?: string }[] };
+  for (const sc of Art.SCENES as { id: string }[]) {
+    const lay = (mirror: boolean) => (Art.sceneLayout(sc.id, st, { mirror }) as Layout).pieces.map(p => ({ ref: p.sprite, dx: p.dx, dz: p.dz, left: p.facing === "left" }));
+    scenes.layouts[sc.id] = { plain: lay(false), mirror: lay(true) };
+    for (const p of scenes.layouts[sc.id].plain) {
+      if (scenes.pieces[p.ref]) continue;
+      const piece = Art.scenePiece(p.ref, st) as { sprite: { whole: unknown; origin: { x: number; y: number } }; colours: unknown; decal: boolean };
+      scenes.pieces[p.ref] = { frame: sprites.push(Art.bake(piece.sprite.whole, piece.colours, st, "none", mk) as Baked) - 1, originX: piece.sprite.origin.x, originY: piece.sprite.origin.y, decal: piece.decal };
+    }
+  }
+  return { sprites, scenes };
+}
 
 function speakerSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; speakers: SpeakerArt } {
   const sprites: Baked[] = [], speakers: SpeakerArt = { frames: {}, origin: {} }, colours = Art.dancefloorSpeakerColours();
@@ -168,6 +190,13 @@ function relicSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; relics: Re
   for (const d of Art.RELICS as { id: string; family: string; decal?: boolean }[]) {
     const r = Art.relicSprite(d.id, st) as { whole: unknown; origin: { x: number; y: number } };
     relics.push({ id: d.id, family: d.family, decal: !!d.decal, frame: sprites.push(Art.bake(r.whole, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
+  }
+  // The countryside and street pieces that stand alone (Ed, 2026-10-04) join the modern finds, after the relics' own (the rules count them in this order).
+  const cc = Art.countryColours(st);
+  for (const d of Art.COUNTRY as { id: string; family: string }[]) {
+    if (d.family !== "farm" && d.family !== "street") continue;
+    const r = Art.countrySprite(d.id, st) as { whole: unknown; origin: { x: number; y: number } };
+    relics.push({ id: d.id, family: "modern", decal: false, frame: sprites.push(Art.bake(r.whole, cc, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
   }
   return { sprites, relics, layouts: Art.relicLayouts(st) as RelicLayouts };
 }
@@ -199,6 +228,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };
   if (job.kind === "relics") { const { sprites, relics, layouts } = relicSprites(job.style, mk); return { px: packPixels(sprites, 2048), relics, layouts }; }
   if (job.kind === "pathPieces") { const { sprites, pieces } = pathPieceSprites(job.style, mk); return { px: packPixels(sprites, 2048), pieces }; }
+  if (job.kind === "scenes") { const { sprites, scenes } = sceneSprites(job.style, mk); return { px: packPixels(sprites, 2048), scenes }; }
   if (job.kind === "speakers") { const { sprites, speakers } = speakerSprites(job.style, mk); return { px: packPixels(sprites, 2048), speakers }; }
   if (job.kind === "decor") { const { sprites, decor } = decorSprites(job.style, mk); return { px: packPixels(sprites, 2048), decor }; }
   if (job.kind === "party") return { px: packPixels(creatureSprites(job.style, job.species, mk, { ...Art.partyGear(job.seed), collar: job.colour }), 2048) };
