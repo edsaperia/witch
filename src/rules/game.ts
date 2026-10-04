@@ -138,9 +138,9 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   while (g.acc >= STEP - 1e-9) {
     g.acc -= STEP;
     const step: Controls = { ...c, zoom: 0 };
-    for (const k of ONE_SHOT) step[k] = !!P[k];
+    for (const k of ONE_SHOT) { step[k] = !!P[k]; delete P[k]; } // each press on one step only
     step.zoom = (P.zoom as number) ?? 0;
-    g.pending = {};
+    delete P.zoom;
     remember(g);
     fixedStep(g, step);
   }

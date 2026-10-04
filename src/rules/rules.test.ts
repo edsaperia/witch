@@ -1535,6 +1535,14 @@ describe("the simulation (Stage 4)", () => {
     expect(g.witch.mode).toBe("rising");
   });
 
+  it("applies a press once, however many steps a slow frame runs", () => {
+    const g = newGame(321, TUNING);
+    g.clock.paused = false;
+    g.witch = { ...g.witch, seated: false };
+    stepGame(g, { moveX: 0, moveZ: 0, toggleMode: true, zoom: 0 }, 0.1); // six steps
+    expect(g.witch.mode).toBe("rising");
+  });
+
   it("has a witch per player, the first the camera's", () => {
     const g = newGame(321, TUNING, 3);
     expect(g.witches.length).toBe(3);

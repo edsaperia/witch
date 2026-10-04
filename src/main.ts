@@ -240,7 +240,7 @@ function frame(now: number): void {
   if (game.clock.paused && now - lastDraw < 300) return;
   lastDraw = now;
   // Drawn between the last two fixed steps (game time: party transitions, sigils and waves are stamped in it).
-  interpolated(game, () => view.render(game.clock.time - (1 - game.alpha) * STEP));
+  interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP)));
   if (debugOn) {
     const w = game.witch, s = view.stats;
     debugEl.textContent = [
