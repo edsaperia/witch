@@ -42,18 +42,18 @@ attribute float aS;      // metres along its link from the earlier stone
 attribute float aT;      // 0 to 1 along its link
 attribute float aLink;   // which link (0 the first: the brightest)
 attribute vec3 aCol;
-uniform vec2 uWidth, uHeight;
+uniform vec2 uLeyWidth, uLeyHeight;
 uniform float uLift, uTime, uGlowPass;
 varying float vSide, vS, vT, vLink, vSeen;
 varying vec3 vCol;
 ${HEIGHT_VERT_GLSL}
 void main() {
   vec2 side = vec2(-aDir.y, aDir.x);
-  float w = mix(uWidth.x, uWidth.y, uLift) * (uGlowPass > 0.5 ? 3.0 : 1.0);
+  float w = mix(uLeyWidth.x, uLeyWidth.y, uLift) * (uGlowPass > 0.5 ? 3.0 : 1.0);
   // Wispy: the line drifts a little side to side as it goes, slowly.
   float drift = sin(aS * 0.11 + uTime * 0.6 + aLink * 1.7) * 0.6 + sin(aS * 0.037 - uTime * 0.23) * 1.2;
   vec2 xz = position.xz + side * (drift * sin(3.14159 * aT) + aSide * w * 0.5);
-  vec3 p = onGround(vec3(xz.x, mix(uHeight.x, uHeight.y, uLift), xz.y));
+  vec3 p = onGround(vec3(xz.x, mix(uLeyHeight.x, uLeyHeight.y, uLift), xz.y));
   vSeen = uGlowPass > 0.5 ? overBend(p) : 1.0; // (seen through the leaves, never through the earth)
   vSide = aSide; vS = aS; vT = aT; vLink = aLink; vCol = aCol;
   gl_Position = clipOf(p);
@@ -94,7 +94,7 @@ export class LeyLines {
   constructor(private T: LeyTuning, private ground: (x: number, z: number) => number, canopy: number) {
     this.u = {
       ...HEIGHT_UNIFORMS, uTime: LIGHT_UNIFORMS.uTime,
-      uWidth: { value: new THREE.Vector2(T.width[0], T.width[1]) }, uHeight: { value: new THREE.Vector2(T.height[0], canopy + T.height[1]) },
+      uLeyWidth: { value: new THREE.Vector2(T.width[0], T.width[1]) }, uLeyHeight: { value: new THREE.Vector2(T.height[0], canopy + T.height[1]) },
       uLift: { value: 0 }, uGlowPass: { value: 0 }, uBright: { value: T.brightness }, uFade: { value: T.fade },
       uShift: { value: 0 }, uFlow: { value: new THREE.Vector2(T.flow[0], T.flow[1]) },
     };

@@ -446,6 +446,10 @@ export class View {
   private inInnerView(x: number, z: number, h: number): boolean {
     const w = this.game.witch, hz = this.game.tuning.haze;
     if (Math.hypot(x - w.x, z - w.z) > hz.near + (hz.far - hz.near) * 0.6) return false;
+    // Past the bent horizon, where the culling counts it hidden behind the bulge and the forest in
+    // front (inView), its coming and going isn't seen either.
+    const B = HEIGHT_UNIFORMS.uBend.value, ahead = Math.max(0, -(z - B.z));
+    if (ahead > 0 && !this.overHorizon(ahead, groundHeight(x, z) + h, B.x)) return false;
     for (const y of [0, h * 0.5, h]) {
       const p = placed(this.v3.set(x, y, z)).project(this.camera);
       if (Math.abs(p.x) < 1 && Math.abs(p.y) < 1 && p.z < 1) return true;
