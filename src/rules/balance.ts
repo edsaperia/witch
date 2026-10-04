@@ -36,6 +36,11 @@ export interface SimOptions {
    *  that march on to the next (the rest scatter home and leave the fight). 1, as in the game. */
   marchOn?: number;
   director?: SimDirector;
+  /** Every area's own legend (Ed, 2026-10-04: each area has a sleeping legend; it wakes angry
+   *  with its area's wave and stays in its own area as a mini-boss, hitting that area's
+   *  soundsystem; it never marches on; no other legends). With this on, the map's wild legends
+   *  are left out and each woken area gets one, at its centre. */
+  areaLegends?: boolean;
   /** Stop once this many waves have come (and the wave after it would arrive), lost or not. */
   maxWaves: number;
   /** The model's step (seconds). */
@@ -71,7 +76,7 @@ export interface SimResult {
   waves: WaveSample[];
 }
 
-interface Fighter { id: number; level: Level; cell: string; x: number; z: number; x0: number; z0: number; speed: number; dps: number; reach: number; value: number; siege: string | null; gone: boolean }
+interface Fighter { id: number; level: Level; cell: string; x: number; z: number; x0: number; z0: number; speed: number; dps: number; reach: number; value: number; siege: string | null; gone: boolean; /** Stays in its own area: never marches on (an area's legend). */ stay?: boolean }
 interface Sound { key: string; x: number; z: number; hp: number; radius: number }
 
 /** A map's fighters (young and up), by area, worth working out once per map. */
@@ -130,7 +135,11 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
       for (const a of spreadWave(party, map, time)) {
         const key = cellKey(a.cell), at = soundsystemFor(map, a.cell);
         sounds.set(key, { key, x: at.x, z: at.z, hp: C.soundsystemHealth, radius: C.soundsystemRadius });
-        for (const f of by.get(key) ?? []) if (!f.gone) { f.siege = key; live.push(f); }
+        for (const f of by.get(key) ?? []) if (!f.gone && (!o.areaLegends || f.level < 3)) { f.siege = key; live.push(f); }
+        if (o.areaLegends) {
+          const site = map.siteOf(a.cell[0], a.cell[1]), L: Fighter = { ...reinforcement(-1e6 - live.length, key, site.x, site.z, map), level: 3, dps: COMBAT.levels.dps[3], value: levelValue(3), speed: t.legendSpeed * C.marchMult, reach: COMBAT.attacks[COMBAT.byLevel.melee[3]!].range, stay: true, siege: key };
+          live.push(L);
+        }
       }
       // The director: reinforcements for the areas the next wave wakes, by the player's progress.
       if (D && party.next.length) {
@@ -172,7 +181,7 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
       ruined.add(s.key);
       if (s.key !== "home") { party.areas.delete(s.key); (party.ruined ??= new Set()).add(s.key); }
       // Survivors march on to the next-nearest (with attrition, only a share of them; the rest scatter).
-      for (const f of live) if (f.siege === s.key) f.siege = share >= 1 || frac(f.id * 0.6180339887 + s.x * 0.013) < share ? nearest(f.x, f.z) : null;
+      for (const f of live) if (f.siege === s.key) f.siege = f.stay ? null : share >= 1 || frac(f.id * 0.6180339887 + s.x * 0.013) < share ? nearest(f.x, f.z) : null;
     }
     if ([...sounds.values()].every(s => s.hp <= 0)) lost = { wave: party.wave, time };
     time += dt;

@@ -48,6 +48,12 @@ describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () =
     expect(strong.waves.some(w => w.player! > 0)).toBe(true);
   }, 30000);
 
+  it("gives every woken area its own legend, besieging only its own soundsystem (Ed, 2026-10-04)", () => {
+    const plain = simulate(map, { interval: 60, maxWaves: 40 }), legends = simulate(map, { interval: 60, maxWaves: 40, areaLegends: true });
+    expect(legends.waves[0].largest).toBeGreaterThanOrEqual(plain.waves[0].largest + levelValue(3) - 1);
+    expect(legends.survived).toBeLessThan(plain.survived); // a legend alone topples its soundsystem in about 5.6 minutes
+  }, 30000);
+
   it("models the pacing variants: attrition on the march and the director's reinforcements", () => {
     const base = simulate(map, { interval: 300, maxWaves: 30 });
     const scatter = simulate(map, { interval: 300, maxWaves: 30, marchOn: 0 });

@@ -15,7 +15,8 @@
 // --table, --scale (young and adults times this), --health and --home (soundsystems' and home's
 // health) try numbers without editing the tuning file; --legacy uses today's populations by
 // remoteness instead of the distance table; --quick leaves out the catch-up check; --by-wave sets
-// the director's budget by waves rather than by minutes.
+// the director's budget by waves rather than by minutes; --no-area-legends leaves out every area's
+// own legend (Ed, 2026-10-04) and keeps the map's wild legends as today.
 // It loads the game's own rules modules through Vite (no build needed).
 import { createServer } from "vite";
 import { writeFileSync } from "node:fs";
@@ -51,10 +52,11 @@ const VARIANTS = [
   ...ALPHAS.filter(al => al > 0).map(al => ({ id: `d${al}`, name: `d. b + director, α ${al}`, o: { marchOn: ATTRITION, director: director(al) } })),
   { id: "none", name: "no merging (every survivor scatters)", o: { marchOn: 0 } },
 ];
-const runAll = o => maps.map(m => simulate(m, o));
+const LEGENDS = !flag("no-area-legends"), runAll = o => maps.map(m => simulate(m, { areaLegends: LEGENDS, ...o }));
 const lastTime = r => (r.lost ? r.lost.time : r.waves[r.waves.length - 1]?.time ?? 0);
 
 say(`Balance simulator: ${SEEDS} seeds (${seeds[0]}, ${seeds[1]}, …), ${flag("legacy") ? "today's populations by remoteness" : `population table ${TABLE ? "from --table" : "from config/tuning.json"}${SCALE !== 1 ? ` (young and adults × ${SCALE})` : ""}`}, soundsystems ${tuning.combat.soundsystemHealth} hp, home ${tuning.combat.homeHealth} hp.`);
+say(`${LEGENDS ? "Every woken area's own legend (Ed, 2026-10-04: 480 hp, 12 dps, F 76) besieges its own soundsystem and never marches on; no other legends" : "The map's wild legends as today (--no-area-legends)"}. Evolution stops at adult (Ed, 2026-10-04), so the player's F is adults' worth at most: 29 each, so g F a minute is about g / 29 adults a minute.\n`);
 say(`Player model (a guess): their party's F grows by g a minute from the wave they start; whenever free they fight the biggest siege they can beat (square law: they keep √(theirs² − its²)), then are busy ${FIGHT} s. Director (a guess): reinforcements (adults) for the next wave's areas worth (${DBASE} + ${DPER} × ${BY_WAVE ? "wave" : "minute"}${DPOW !== 1 ? `^${DPOW}` : ""}) F ${BY_WAVE ? "a wave" : "a minute (by time, the same whatever the gap)"} × max(0, 1 + α(player F / expected − 1)), expected ${EXPECTED} F a minute.\n`);
 
 for (const gap of GAPS) {
