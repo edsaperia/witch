@@ -182,11 +182,17 @@ export function stepLeashed(c: Creature, px: number, pz: number, dt: number, t: 
   }
   const dx = c.tx - c.x, dz = c.tz - c.z, d = Math.hypot(dx, dz);
   if (d < 1e-4) { c.moving = false; return; }
-  const speed = far ? Math.max(c.speed, L.runSpeed * speedFactor(c.species, c.level, t)) : c.speed * 1.5;
+  const speed = far ? leashSpeed(c, t) : c.speed * 1.5;
   const step = Math.min(d, speed * dt);
   c.x += (dx / d) * step; c.z += (dz / d) * step;
   if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
   c.away = facingAway(dx, dz, c.away, 0, t);
   c.moving = true;
-  c.walk += dt * (far ? 7 : 4);
+  c.walk += dt * (far ? gaitRate(speed) : 4);
 }
+
+/** How fast a party animal runs to keep up with its leash (legends still slow); berries.ts uses
+ *  it too, so a detour to a berry is a quick hop at the same pace (Ed, v233). */
+export const leashSpeed = (c: Creature, t: Tuning): number => Math.max(c.speed, t.leash.runSpeed * speedFactor(c.species, c.level, t));
+/** Walk-cycle frames a second for a pace, so the gait matches the speed (7 at the leash's 4 m/s). */
+export const gaitRate = (speed: number): number => Math.max(4, speed * 1.75);

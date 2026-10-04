@@ -9,6 +9,7 @@
 // after 3, adults after 8 (berries.toEvolve; adults to a legend, the only way to get a party
 // legend). It evolves on the next bar line of the music, so the view can make a show of it. No drawing here.
 import { LEGEND, type Creature, type Level } from "./creatures";
+import { gaitRate, leashSpeed } from "./leash";
 import type { ForestMap } from "./map";
 import { rng } from "./random";
 import type { Tuning } from "./tuning";
@@ -167,11 +168,11 @@ export function stepBerries(s: BerryState, creatures: Creature[], leashPointOf: 
     const dx = p.x - c.x, dz = p.z - c.z + 0.6, d = Math.hypot(dx, dz); // it stands just in front of the bush
     if (!f.eating) {
       if (d > 0.3) {
-        const step = Math.min(d, c.speed * 1.5 * dt);
+        const speed = leashSpeed(c, t), step = Math.min(d, speed * dt); // at its leash pace, not its idle amble (Ed, v233)
         c.x += (dx / d) * step; c.z += (dz / d) * step;
         if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
         c.away = dz < -0.3 && Math.abs(dz) > Math.abs(dx);
-        c.moving = true; c.walk += dt * 4;
+        c.moving = true; c.walk += dt * gaitRate(speed);
         continue;
       }
       f.eating = true; f.eatLeft = B.eatTime;

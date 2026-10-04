@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { feed, newBerries, stepBerries, toEvolve, type BerryState } from "./berries";
 import { LEGEND, spawnCreatures, type Creature, type Level } from "./creatures";
-import { invitable, newLeash, stepLeash } from "./leash";
+import { invitable, leashSpeed, newLeash, stepLeash } from "./leash";
 import { generateMap } from "./map";
 import { TUNING } from "./tuning";
 
@@ -107,5 +107,19 @@ describe("berries and evolving", () => {
     stepBerries(s, [a, b], id => points.get(id) ?? null, 0.05, 0.05, t);
     expect(s.feeding.get(a.id)?.berry).toBe(on.id);
     expect(s.feeding.has(b.id)).toBe(false);
+  });
+
+  it("a party animal goes to a berry at its leash pace, not its idle amble", () => {
+    const s = newBerries(map, t), [a] = spawnCreatures(map);
+    for (const x of s.berries) x.claimedBy = -1;
+    const on = s.berries[0], p = s.bushes[on.bush];
+    on.claimedBy = null;
+    Object.assign(a, { x: p.x - 4, z: p.z + 0.6, leashed: true, level: 1, rest: 0 });
+    const lp = { x: p.x + 4, z: p.z + 0.6 };
+    stepBerries(s, [a], () => lp, 0.05, 0.05, t); // claims it
+    const x0 = a.x;
+    stepBerries(s, [a], () => lp, 0.1, 0.05, t);
+    expect((a.x - x0) / 0.05).toBeCloseTo(leashSpeed(a, t), 5);
+    expect(leashSpeed(a, t)).toBeGreaterThan(a.speed * 1.5);
   });
 });
