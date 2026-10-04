@@ -24,6 +24,8 @@ export interface AreaType {
   /** The floor's colour, [hue, saturation, value], for the ground before its tile is drawn. */
   floor: [number, number, number];
   treeDensity: number;
+  /** The tufts on its ground (config/area-types.json): density 0-1 and which kinds. */
+  groundCover: { density: number; kinds: string[] };
   /** How its vegetation is arranged (art/areas.js AREA_LAYOUTS): pattern, density, clump, undergrowth... */
   layout: AreaLayout;
 }
@@ -39,11 +41,12 @@ export interface AreaLayout {
 }
 
 interface ArtArea { id: string; name: string; creature: string; text: AreaType["text"]; floor: [string, number, number, number]; wall?: unknown[]; set?: unknown; layout?: AreaLayout }
-const settings = (rawTypes as { types: Record<string, { treeDensity: number }> }).types;
+const settings = (rawTypes as { types: Record<string, { treeDensity: number; groundCover?: { density: number; kinds: string[] } }> }).types;
 export const AREA_TYPES: readonly AreaType[] = (AREAS as unknown as ArtArea[]).map(a => ({
   id: a.id, name: a.name, creature: a.creature, text: a.text,
   setPiece: a.set ? a.text.set ?? "a set piece" : "", hasWalls: !!a.wall?.length,
   floor: [a.floor[1], a.floor[2], a.floor[3]], treeDensity: settings[a.id]?.treeDensity ?? 1,
+  groundCover: settings[a.id]?.groundCover ?? { density: 0.5, kinds: ["blades"] },
   layout: a.layout ?? { pattern: "scatter", density: 0.6, clump: 0.3, undergrowth: 0.5 },
 }));
 

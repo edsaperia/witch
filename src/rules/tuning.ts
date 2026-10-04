@@ -21,6 +21,12 @@ export interface Tuning {
   areaEdgeBlend: { width: number; scale: number; stray: number };
   /** How neighbouring areas' floor textures meet: a two-octave warp of warp and fine metres, and a dithered band metres wide. */
   groundBlend: { on: boolean; warp: number; fine: number; band: number; dither: boolean };
+  /** The ground's fake relief: rises and hollows from noise (scale metres across) tilting the ground's normal by strength, so lights pick out the bumps, and shading hollows darker by shade. */
+  ground: { relief: { strength: number; scale: number; shade: number } };
+  /** Wind sway on leafy things: metres at the top of a crown, gusts' speed (m/s) and size (m), and a share for the treetop view. */
+  wind: { on: boolean; strength: number; speed: number; gustScale: number; treetop: number };
+  /** Tufts on the ground round the witch, in ground mode: overall density (times each area's), within radius metres, at most cap; one chance every spacing metres, worked out cell metres at a time within budgetMs a frame; sway (share of a tuft's height) and part (how far they part round her). */
+  groundCover: { on: boolean; density: number; radius: number; cap: number; spacing: number; cell: number; budgetMs: number; sway: number; part: number };
   /** Set pieces drawn this much bigger than the art, with a clearing of setPieceClear metres (times the scale) round them. */
   setPieceScale: number;
   setPieceClear: number;

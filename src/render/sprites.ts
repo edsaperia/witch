@@ -32,6 +32,8 @@ export const SPRITE_UNIFORMS = {
   uUplight: { value: new THREE.Vector4() },
   /** The trunk fade: metres covered (0 off), metres per art pixel. */
   uTrunkFade: { value: new THREE.Vector2(0, 0.125) },
+  /** The wind (Ed, v171): sway at the top of a crown (metres), the gusts' speed (m/s) and size (m), and the time. */
+  uWind: { value: new THREE.Vector4(0, 0, 1, 0) },
 };
 
 const VERT = /* glsl */ `
@@ -42,7 +44,8 @@ uniform vec4 uOcc;
 attribute vec3 iPos;
 attribute vec2 iSize;
 attribute vec4 iUv;
-attribute vec3 iFlags;
+attribute vec4 iFlags; // flip, top (or a trunk's cut, negative), fresh, sway
+uniform vec4 uWind;
 varying vec2 vUv;
 varying vec3 vWorld;
 varying vec3 vFlags;
@@ -54,9 +57,20 @@ void main() {
   // Eased over a few metres of depth and of height, so nothing snaps into the fade as she moves.
   vFront = smoothstep(0.0, 3.0, uWitchDepth - 0.5 + (viewMatrix * vec4(iPos, 1.0)).z) * smoothstep(uOcc.z * 0.7, uOcc.z * 1.3, iSize.y);
   vec3 w = iPos + uRight * (position.x * iSize.x) + uUp * (position.y * iSize.y);
+  // Wind (Ed, v171): leafy things lean with gusts travelling across the forest, anchored at their
+  // base (a crown at its foot, a trunk barely), so the trunks stay put and the foliage moves.
+  if (iFlags.w > 0.0 && uWind.x > 0.0) {
+    vec2 q = iPos.xz / uWind.z - vec2(0.8, 0.35) * uWind.w * uWind.y / uWind.z;
+    vec2 i = floor(q), f = fract(q), e = f * f * (3.0 - 2.0 * f);
+    float h00 = fract(sin(dot(i, vec2(127.1, 311.7))) * 43758.5453), h10 = fract(sin(dot(i + vec2(1, 0), vec2(127.1, 311.7))) * 43758.5453);
+    float h01 = fract(sin(dot(i + vec2(0, 1), vec2(127.1, 311.7))) * 43758.5453), h11 = fract(sin(dot(i + vec2(1, 1), vec2(127.1, 311.7))) * 43758.5453);
+    float gust = mix(mix(h00, h10, e.x), mix(h01, h11, e.x), e.y);
+    float flutter = sin(uWind.w * 1.7 + dot(iPos.xz, vec2(0.31, 0.17))) * 0.35;
+    w += uRight * (uWind.x * iFlags.w * uv.y * uv.y * (gust * 0.9 + flutter)) * min(1.0, iSize.y / 8.0);
+  }
   float u = iFlags.x > 0.5 ? 1.0 - uv.x : uv.x;
   vUv = vec2(mix(iUv.x, iUv.z, u), mix(iUv.w, iUv.y, uv.y));
-  vFlags = iFlags;
+  vFlags = iFlags.xyz;
   vLocal = uv;
   vSizeY = iSize.y;
   vWorld = w;
@@ -164,7 +178,7 @@ void main() {
 }
 `;
 
-export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number }
+export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number; /** How much it sways in the wind (0 still, 1 a crown): leafy things only. */ sway?: number }
 
 export class SpriteBatch {
   readonly mesh: THREE.Mesh;
@@ -225,7 +239,7 @@ export class SpriteBatch {
       if (old) (a.array as Float32Array).set(old.array as Float32Array);
       return a;
     };
-    this.pos = make(3, this.pos); this.size = make(2, this.size); this.uvs = make(4, this.uvs); this.flags = make(3, this.flags);
+    this.pos = make(3, this.pos); this.size = make(2, this.size); this.uvs = make(4, this.uvs); this.flags = make(4, this.flags);
     this.geo.setAttribute("iPos", this.pos); this.geo.setAttribute("iSize", this.size);
     this.geo.setAttribute("iUv", this.uvs); this.geo.setAttribute("iFlags", this.flags);
     this.capacity = cap;
@@ -246,7 +260,7 @@ export class SpriteBatch {
       const k = it.scale ?? 1;
       S[i * 2] = it.frame.w * this.metresPerPixel * k; S[i * 2 + 1] = it.frame.h * this.metresPerPixel * k;
       U.set(it.frame.uv, i * 4);
-      F[i * 3] = it.flip ? 1 : 0; F[i * 3 + 1] = it.top ? 1 : it.cut ? -it.cut : 0; F[i * 3 + 2] = it.fresh ? 1 : 0;
+      F[i * 4] = it.flip ? 1 : 0; F[i * 4 + 1] = it.top ? 1 : it.cut ? -it.cut : 0; F[i * 4 + 2] = it.fresh ? 1 : 0; F[i * 4 + 3] = it.sway ?? 0;
     });
     for (const a of [this.pos, this.size, this.uvs, this.flags]) a.needsUpdate = true;
     this.count = items.length;

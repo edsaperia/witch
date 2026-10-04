@@ -4,7 +4,10 @@
     {
       "version": null,
       "items": [
-        "Railways and paths no longer run across the dancefloor: they stop, frayed, at the edge of its clearing"
+        "Railways and paths no longer run across the dancefloor: they stop, frayed, at the edge of its clearing",
+        "Tufts of grass, fern, heather, reeds, moss and clover cover the ground round you, each area its own, swaying in the wind and parting as you and the creatures pass (?grass=0 to 2)",
+        "The ground has gentle rises and hollows that your light and the campfires pick out (?relief=0 for flat)",
+        "Trees and undergrowth sway in gusts that roll across the forest; gentler over the treetops (?wind=0 for still)"
       ]
     },
     {

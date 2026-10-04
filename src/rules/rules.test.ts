@@ -20,6 +20,7 @@ import { TUNING, withTuning } from "./tuning";
 import { floorClearing, speakerRadius, nextSpeakerState } from "./speakers";
 import { composeFloor, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
 import { floorInputs } from "./game";
+import { tuftsInCell, TUFT_KINDS } from "./groundcover";
 import { DECOR } from "../../art/decor.js";
 import { RELICS } from "../../art/relics.js";
 
@@ -1159,6 +1160,29 @@ describe("the dancefloor's tile lights (Ed, v160)", () => {
     for (let n = 0; n < GRID * GRID; n++) if (after[n * 4] === 9 && before[n * 4] !== 9) { if (n % GRID > GRID / 2) right++; else left++; }
     expect(right).toBeGreaterThan(3);
     expect(left).toBe(0);
+  });
+});
+
+describe("ground cover (Ed, v171)", () => {
+  const G = TUNING.groundCover, d = map.dancefloor;
+  const around = (x: number, z: number, r: number) => { const out = []; for (let cj = Math.floor((z - r) / G.cell); cj <= Math.floor((z + r) / G.cell); cj++) for (let ci = Math.floor((x - r) / G.cell); ci <= Math.floor((x + r) / G.cell); ci++) out.push(...tuftsInCell(map, ci, cj, G.cell, G.spacing, G.density)); return out; };
+  it("is seeded per cell: the same patch every time", () => {
+    expect(tuftsInCell(map, 140, 150, G.cell, G.spacing, 1)).toEqual(tuftsInCell(map, 140, 150, G.cell, G.spacing, 1));
+  });
+  it("keeps off paths, the dancefloor's clearing and cleared ground, in each area's own kinds", () => {
+    const list = around(d.x + 60, d.z + 40, 70);
+    expect(list.length).toBeGreaterThan(500);
+    for (const f of list) {
+      expect(map.paths.at(f.x, f.z)).toBeNull();
+      expect(map.hardClear(f.x, f.z)).toBe(false);
+      expect(Math.hypot(f.x - d.x, f.z - d.z)).toBeGreaterThan(floorClearing(TUNING));
+      expect(AREA_TYPES[f.type].groundCover.kinds).toContain(TUFT_KINDS[f.kind]);
+    }
+  });
+  it("is thick where the area says (grassland) and thin where it doesn't (cave mouth), and none at density 0", () => {
+    const per = (id: string) => { let n = 0, area = 0; for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++) { if (AREA_TYPES[map.typeOf(x, y)].id !== id) continue; const s = map.siteOf(x, y); const l = around(s.x + 30, s.z + 30, 8).filter(f => map.areaAt(f.x, f.z).type === map.typeOf(x, y)); n += l.length; area++; if (area >= 3) break; } return n / Math.max(1, area); };
+    expect(per("grassland")).toBeGreaterThan(per("cave-mouth") * 2);
+    expect(tuftsInCell(map, 140, 150, G.cell, G.spacing, 0)).toEqual([]);
   });
 });
 
