@@ -27,6 +27,8 @@ export interface Game {
   speakers: SpeakerState[];
   /** The dancefloor's tile lights (rules/dancefloor.ts). */
   floor: FloorState;
+  /** Where the opening shot looks: her seat on the treehouse as drawn (the view sets it; the art knows where it is). */
+  introFocus?: { x: number; y: number; z: number };
 }
 
 export interface Controls extends Intent, Partial<LeashControls> {
@@ -57,7 +59,7 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   if (dt === 0) return;
   const wave = g.party.wave, seated = g.witch.seated;
   g.witch = stepWitch(g.witch, c, dt, g.tuning, g.map.bounds);
-  g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, dt, g.tuning);
+  g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, dt, g.tuning, !!g.witch.seated, g.introFocus);
   if (c.pauseWaves) g.party.paused = !g.party.paused;
   if (c.nextWave) { spreadWave(g.party, g.map, g.clock.time); g.party.nextAt = g.clock.time + g.tuning.party.interval; }
   stepParty(g.party, g.map, g.clock.time, dt);

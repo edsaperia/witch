@@ -378,8 +378,24 @@ describe("the witch", () => {
 });
 
 describe("the camera", () => {
+  it("opens close in on her seat, and eases out to the starting zoom once she leaves it (Ed, v171)", () => {
+    const I = TUNING.camera.intro, seat = { x: 10, y: 6, z: 20 };
+    let c = newCamera(TUNING, 0, 0, 0);
+    for (let i = 0; i < 120; i++) c = stepCamera(c, 0, { x: 0, y: 0, z: 0 }, { x: 0, z: 0 }, 0, 1 / 60, TUNING, true, seat);
+    const p0 = cameraPose(c, 0, TUNING);
+    expect(p0.distance).toBeCloseTo(I.distance, 1);
+    expect(p0.distance).toBeLessThan(TUNING.camera.ground.distanceIn); // closer than zoom step 0
+    expect(Math.hypot(p0.tx - seat.x, p0.ty - seat.y, p0.tz - seat.z)).toBeLessThan(0.5); // framed on the seat
+    const half = Math.round((I.ease / 2) * 60);
+    for (let i = 0; i < half; i++) c = stepCamera(c, 0, { x: 0, y: 0, z: 0 }, { x: 0, z: 0 }, 0, 1 / 60, TUNING);
+    const mid = cameraPose(c, 0, TUNING).distance;
+    expect(mid).toBeGreaterThan(I.distance + 5);
+    for (let i = 0; i < 60 * I.ease; i++) c = stepCamera(c, 0, { x: 0, y: 0, z: 0 }, { x: 0, z: 0 }, 0, 1 / 60, TUNING);
+    expect(c.intro).toBe(0);
+    expect(cameraPose(c, 0, TUNING).distance).toBeGreaterThan(mid);
+  });
   it("uses each mode's angle and distance, and zoom moves between in and out", () => {
-    let c = newCamera(withTuning({ camera: { ...TUNING.camera, startZoom: 0 } }), 0, 0, 0);
+    let c = { ...newCamera(withTuning({ camera: { ...TUNING.camera, startZoom: 0 } }), 0, 0, 0), intro: 0 }; // past the opening shot
     const g = TUNING.camera.ground, t = TUNING.camera.treetop;
     expect(cameraPose(c, 0, TUNING).angle).toBeCloseTo(g.angleIn);
     expect(cameraPose(c, 1, TUNING).angle).toBeCloseTo(t.angleIn);

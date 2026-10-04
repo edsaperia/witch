@@ -863,6 +863,7 @@ export class View {
     let wx = w.x, wz = w.z, wyy = wy;
     if (this.seatK > 0) {
       const seat = onTreehouse(T.seat.x, T.seat.y), k = this.seatK * this.seatK * (3 - 2 * this.seatK);
+      g.introFocus = { x: seat.x, y: seat.y + 1, z: seat.z }; // the opening shot frames her seat (the art's camera anchor when it has one)
       const fwd = this.camera.getWorldDirection(this.v3);
       wx += (seat.x - fwd.x * 0.6 - wx) * k; wyy += (seat.y - fwd.y * 0.6 - wyy) * k; wz += (seat.z - fwd.z * 0.6 - wz) * k;
       if (w.seated) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
@@ -910,6 +911,7 @@ export class View {
     if (this.debugCull) this.drawGhosts(time);
     if (!draw) return;
     this.renderer.info.reset();
+    this.post.lift = this.game.witch.lift;
     this.post.render(this.scene, this.camera);
     // Anything set but not drawn (three.js capping a batch's instances) is a bug: count and log it.
     let dropped = 0;

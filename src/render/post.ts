@@ -10,7 +10,7 @@ import * as THREE from "three";
 export interface PostTuning {
   bloom: { on: boolean; strength: number; threshold: number };
   tone: { black: number; gamma: number; ambient: number };
-  tiltShift: { on: boolean; where: "before" | "after"; strength: number; band: number; centre: number };
+  tiltShift: { on: boolean; where: "before" | "after"; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
 }
 
 const VERT = "varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }";
@@ -101,6 +101,8 @@ export class Post {
   }
 
   /** Whether the canvas holds the full-resolution image (tilt-shift after the upscale). */
+  /** How far the witch is risen (0 ground, 1 treetops): the tilt-shift blends from the ground's to the treetops'. */
+  lift = 0;
   get fullResolution(): boolean { return this.tuning.tiltShift.on && this.tuning.tiltShift.where === "after"; }
 
   /** lowW x lowH: the scene; outW x outH: the canvas. */
@@ -164,7 +166,8 @@ export class Post {
     // The blur radius is given in low-res pixels; after the upscale it covers the same ground.
     const w = this.a.width, h = this.a.height, scale = this.fullResolution ? this.out.y / this.low.y : 1;
     const common = (u: Record<string, THREE.IUniform>) => {
-      u.uTexel.value.set(1 / w, 1 / h); u.uStrength.value = t.tiltShift.strength * scale; u.uBand.value = t.tiltShift.band; u.uCentre.value = 1 - t.tiltShift.centre;
+      const T = t.tiltShift, k = Math.max(0, Math.min(1, this.lift)), k2 = k * k * (3 - 2 * k);
+      u.uTexel.value.set(1 / w, 1 / h); u.uStrength.value = (T.strength + (T.treetop.strength - T.strength) * k2) * scale; u.uBand.value = T.band + (T.treetop.band - T.band) * k2; u.uCentre.value = 1 - T.centre;
     };
     this.pass("tilt", this.b, u => { common(u); u.uSrc.value = this.a.texture; u.uDir.value.set(1, 0); });
     this.pass("tilt", null, u => { common(u); u.uSrc.value = this.b.texture; u.uDir.value.set(0, 1); });
