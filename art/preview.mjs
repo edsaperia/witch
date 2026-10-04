@@ -11,6 +11,7 @@
 //   node art/preview.mjs landmarks cemetery|carpark|scrap|worship|castle|classical|<ids> art/previews/landmarks-worship.png [scale]   (the large scenes' pieces; buildings' two halves composed, HALVES=1 apart; PER=n to a row)
 //   node art/preview.mjs partyobjects litter|small|furniture|set|all|<ids> art/previews/party-objects.png [scale]   (the party objects, neon ones cycling the neons; NIGHT=1 to see them glow)
 //   node art/preview.mjs partypatch 1 art/previews/party-patch.png [scale]   (a sample patch of party ground: clusters and loose objects, seeded; NIGHT=1)
+//   node art/preview.mjs lineup all|<species> art/previews/lineup.png [scale]   (each species' baby, young, adult and legend side by side, the witch for scale; PER=n species to a row)
 //   node art/preview.mjs grounds playground,tennis,baseball,football,basketball|all art/previews/grounds.png [scale]   (each arrangement composed; NIGHT=1)
 //   node art/preview.mjs decor ruins|rocks|freak|<ids> art/previews/ruins.png [scale]   (VARIANTS=1: ruins weathered and overgrown)
 //   node art/preview.mjs lake 0 art/previews/lake.png [scale]   (a sample lake composed from the kit; NIGHT=1)
@@ -201,6 +202,10 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
       const woken = { woken: true }; row.push(G.bake(G.critter(id, 1, 0, st, "towards", woken), G.speciesColours(id, st, woken), st, st.cOutline));
       rows.push(row);
     });
+  } else if (what === "lineup") { // per species (or all): baby, young, adult and legend standing side by side, then the witch for scale; PER=n species to a row
+    const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), per = window.PER || 1, items = [];
+    for (const id of ids) items.push(...[0, 1, 2, 3].map(l => G.bake(G.critter(id, l, 0, st), G.speciesColours(id, st), st, st.cOutline)));
+    for (let i = 0; i < ids.length; i += per) rows.push([...items.slice(i * 4, (i + per) * 4), wit]);
   } else if (what === "animals") {
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(",");
     for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push((window.LEVELS || [3, 2, 1, 0]).flatMap(l => [0, 1].map(f => G.bake(G.critter(id, l, f, st, facing), G.speciesColours(id, st), st, st.cOutline))));
