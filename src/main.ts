@@ -89,6 +89,22 @@ if (reliefParam !== null && !isNaN(Number(reliefParam))) tuning.ground = { ...tu
 // ?hills=0: the ground flat again; ?hills=<amplitude>: the rolling ground's swells, in metres.
 const hillsParam = params.get("hills");
 if (hillsParam !== null && !isNaN(Number(hillsParam))) tuning.ground = { ...tuning.ground, hills: { ...tuning.ground.hills, on: Number(hillsParam) > 0, amplitude: Number(hillsParam) > 0 ? Number(hillsParam) : tuning.ground.hills.amplitude } };
+// ?bare=1: the terrain on its own, to judge the hills, the bumps and the bend (Ed, 2026-10-04): no
+// trees, undergrowth, grass, decor, scenes, relics, path props, string lights, mist or shadows; no
+// point lights, glow or haze, and a low raking moonlight. ?bare=2: a flat grey ground with contour
+// lines every 0.5 m and a 10 m grid, instead of its textures.
+const bare = Math.max(0, Math.min(2, Number(params.get("bare")) || 0));
+if (bare) {
+  tuning.groundCover = { ...tuning.groundCover, on: false };
+  tuning.mist = { ...tuning.mist, on: false };
+  tuning.canopyShadow = { ...tuning.canopyShadow, on: false };
+  tuning.shadows = { ...tuning.shadows, on: false };
+  tuning.stringLights = { ...tuning.stringLights, on: false };
+  tuning.bare = bare;
+}
+// ?clouds=<count>: how many clouds (0 none), to compare and to measure.
+const cloudsParam = params.get("clouds");
+if (cloudsParam !== null && !isNaN(Number(cloudsParam))) tuning.sky = { ...tuning.sky, clouds: { ...tuning.sky.clouds, count: Math.max(0, Number(cloudsParam)) } };
 // ?sky=off: no night sky over the bend (the plain dark background), to compare and to measure.
 if (params.get("sky") === "off") tuning.sky = { ...tuning.sky, on: false };
 // ?curve=<treetop>: the world's bend over the treetops (0 off), to try values live.

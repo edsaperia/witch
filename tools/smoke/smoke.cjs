@@ -51,7 +51,7 @@ async function main() {
     else page = await browser.newPage({ viewport: size, deviceScaleFactor: dpr || 1, hasTouch: !!hasTouch, isMobile: !!hasTouch });
     page.on("pageerror", e => errors.push(`${name}: page error: ${e.message}`));
     page.on("console", m => { if (m.type() === "error") errors.push(`${name}: console error: ${m.text()}`); });
-    await page.goto(`http://127.0.0.1:${port}/?seed=${seed}${query || "&debug"}`);
+    await page.goto(`http://127.0.0.1:${port}/?${/(^|&)seed=/.test(query || "") ? (query || "").replace(/^&/, "") : `seed=${seed}${query || "&debug"}`}`); // (a run may ask for its own seed)
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 120000 });
     // All the art is drawn in the background after start; the software renderer here starves the
     // workers of CPU (minutes at big window sizes), so wait for it before flying, so the shots show the forest as players do.
@@ -270,6 +270,36 @@ async function main() {
     await shot(page, "57-party-four-waves.png");
   }, "&debug&tilt=before");
 
+  // Nothing through the earth (Ed, v256: "due to the bend, I can see string lights through the
+  // earth"): in treetop mode with the bend on and the party's lights out, every layer in the scene
+  // stands on the rolling ground and bends with the world, and anything drawn without a depth test
+  // (lights glimmering through the canopy) is dropped behind the bent horizon.
+  await run("earth", { width: 960, height: 600 }, async page => {
+    await page.keyboard.press("Enter");
+    for (let i = 0; i < 2; i++) { await page.keyboard.press("KeyN"); await sleep(400); }
+    await page.keyboard.press("Space");
+    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 300000 });
+    await sleep(1500);
+    const r = await page.evaluate(() => {
+      const v = window.witch.view, out = { n: 0, flat: [], through: [] };
+      v.scene.traverse(o => {
+        const m = o.material;
+        if (!m || !o.visible) return;
+        for (const mat of Array.isArray(m) ? m : [m]) {
+          if (mat === v.sky?.mesh.material || o.renderOrder >= 20) continue; // the sky; debug overlays
+          const vs = mat.vertexShader || "";
+          if (!vs) { out.flat.push(`${o.type} ${mat.type}`); continue; } // a built-in material: neither lifted nor bent
+          out.n++;
+          if (!/clipOf|bendW/.test(vs)) out.flat.push(`${o.type} ${mat.type} (not bent)`);
+          if (mat.depthTest === false && !/overBend/.test(vs)) out.through.push(`${o.type} ${mat.type}`);
+        }
+      });
+      return out;
+    });
+    check(r.n > 10 && r.flat.length === 0, `every layer stands on the rolling ground and bends with the world (${r.n} checked)${r.flat.length ? ": " + r.flat.slice(0, 6).join("; ") : ""}`);
+    check(r.through.length === 0, `nothing drawn without a depth test shows through the bent earth${r.through.length ? ": " + r.through.join("; ") : ""}`);
+  });
+
   // Trunks (Ed, v271: "We have really lost our treetrunks"): in the densest wooded spot of a
   // tangly forest and of old oaks, on the ground, trunks must be drawn (drawn flat magenta for a
   // frame to find them) over at least 2% of the screen, and a good share of them readable (not
@@ -400,6 +430,57 @@ async function main() {
     check(dist > 150 && r.p99 <= 16, `flying into new forest at full boost, building it costs at most 16 ms in 99% of frames (p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms)`);
   });
 
+  // The hills at their default (Ed, v289): from the steepest spot near home (its shot, to catch
+  // streaks or cliffs again), fly north, directly away from the camera, over it, stepped at a
+  // fixed 1/60 s in ground mode and then the treetops: the slope limit keeps the ground under the
+  // camera's sightline to her, so its lift (the safety net) stays small; and she rides the hills
+  // smoothly, her height's up-and-down acceleration well under the bare ground's.
+  for (const [slopeSeed, file] of [[seed, "60-steep-slope.png"], [165272, "61-steep-slope-165272.png"]]) await run("slope", { width: 960, height: 600 }, async page => {
+    await page.keyboard.press("Enter");
+    const at = await page.evaluate(() => {
+      const W = window.witch, g = W.game, h = W.groundHeight, d = g.map.dancefloor;
+      let best = null, bs = 0;
+      for (let k = 0; k < 4000; k++) {
+        // (well inside the hills' window round her, which fades to flat at its edges)
+        const x = d.x + ((k * 37.7) % 560) - 280, z = d.z + ((k * 91.3) % 560) - 280;
+        if (Math.hypot(x - d.x, z - d.z) < 120 || g.map.paths.at(x, z, 2)) continue;
+        const s = Math.abs(h(x, z - 12) - h(x, z + 12)) / 24;
+        if (s > bs) { bs = s; best = [x, z]; }
+      }
+      g.witch = { ...g.witch, x: best[0], z: best[1], vx: 0, vz: 0, seated: false }; g.camera = { ...g.camera, tx: best[0], tz: best[1], intro: 0 };
+      return { x: best[0], z: best[1], slope: bs };
+    });
+    await sleep(1500);
+    await page.waitForFunction(() => window.witch.view.assets.pending === 0 && window.witch.view.stats.forestMissing === 0, null, { timeout: 900000, polling: 1000 }).catch(() => {});
+    await sleep(1500);
+    await shot(page, file);
+    const r = await page.evaluate(async () => {
+      const w = window.witch, v = w.view, dt = 1 / 60, C = o => ({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }), yieldNow = () => new Promise(res => setTimeout(res, 0));
+      w.manual = true;
+      const fly = async (n, extra) => {
+        const ride = [], ground = [];
+        let lift = 0;
+        for (let i = 0; i < n; i++) {
+          w.frame(C({ moveZ: -1, ...extra }), dt, false);
+          if (i >= 60) { ride.push(v.ride.h); ground.push(w.groundHeight(w.game.witch.x, w.game.witch.z)); lift = Math.max(lift, v.camLift); }
+          if (i % 30 === 0) await yieldNow();
+        }
+        const acc = a => { let s = 0; for (let i = 1; i < a.length - 1; i++) s += ((a[i + 1] - 2 * a[i] + a[i - 1]) / (dt * dt)) ** 2; return Math.sqrt(s / Math.max(1, a.length - 2)); };
+        return { lift, ride: acc(ride), ground: acc(ground) };
+      };
+      const ground = await fly(360, {});
+      w.frame(C({ toggleMode: true }), dt, false);
+      for (let i = 0; i < 240 && w.game.witch.mode !== "treetop"; i++) w.frame(C({}), dt, false);
+      const treetop = await fly(360, { spell: true }); // (at full boost, the speed spell cast when ready)
+      w.manual = false;
+      return { ground, treetop };
+    });
+    results.push(`info slope (seed ${slopeSeed}): the steepest spot near home ${(at.slope * 100).toFixed(0)}% (${at.x.toFixed(0)}, ${at.z.toFixed(0)}); flying north from it, camera lift at most ${r.ground.lift.toFixed(1)} m on the ground and ${r.treetop.lift.toFixed(1)} m over the treetops; her height's rms acceleration ${r.ground.ride.toFixed(1)} against the ground's ${r.ground.ground.toFixed(1)} m/s² (ground), ${r.treetop.ride.toFixed(1)} against ${r.treetop.ground.toFixed(1)} (treetops)`);
+    check(at.slope < Math.tan(30 * Math.PI / 180), `seed ${slopeSeed}: the steepest slope near home is under the camera's shallowest pitch (${(at.slope * 100).toFixed(0)}%, 30° is 58%)`);
+    check(Math.max(r.ground.lift, r.treetop.lift) < 3, `seed ${slopeSeed}: flying directly away from the camera over the steepest hill, no rise hides her: the camera's safety-net lift stays under 3 m (${r.ground.lift.toFixed(1)} m, ${r.treetop.lift.toFixed(1)} m)`);
+    check(r.ground.ride < r.ground.ground * 0.8 && r.treetop.ride < r.treetop.ground * 0.8, `seed ${slopeSeed}: she rides the hills smoothly: her height bobs less than the ground under her (rms acceleration ${r.ground.ride.toFixed(1)} vs ${r.ground.ground.toFixed(1)}, ${r.treetop.ride.toFixed(1)} vs ${r.treetop.ground.toFixed(1)} m/s²)`);
+  }, slopeSeed === seed ? "&debug" : `&seed=${slopeSeed}&debug`); // (Ed, v297: seed 165272 had cliffs and broken trees)
+
   // Boosting over the treetops (Ed, v256: "framerate drops a bit during boost mode in treetop
   // view"): the game is stepped frame by frame at a fixed 1/60 s (window.witch.frame), so the
   // flight covers what a 60 fps player's does however slow the software renderer is, and each
@@ -511,8 +592,9 @@ async function main() {
       return out;
     });
     check(r.n > 50 && r.bad.length === 0, `nothing floats: every placed sprite's lowest drawn pixel is on the ground (${r.n} checked, worst ${r.worst.toFixed(1)} art px)${r.bad.length ? ": " + r.bad.join("; ") : ""}`);
-    // The rolling ground: a sprite stands upright on h at its base point, so across its foot (its
-    // lowest drawn row) the ground's rise or fall is how far one end floats or sinks; under 1 art px.
+    // The rolling ground: a sprite stands upright at the lowest ground under its foot (two metres either
+    // side of its base), so its uphill side is planted in the slope; where the ground at an end of
+    // its drawn foot is lower than that, the end floats. None may float past 1 art px.
     const hr = await page.evaluate(() => {
       const v = window.witch.view, h = window.witch.groundHeight, R = window.witch.spriteRight(), out = { n: 0, worst: 0, bad: [], hilly: 0 };
       for (const [type, b] of [...v.typeBatches, ...v.creatureBatches, ...[...v.decorBatches].filter(([k]) => k !== "decals"), ["treehouse", v.treehouseBatch]]) { // (she hovers)
@@ -524,8 +606,9 @@ async function main() {
           for (let row = f.h - 1; row >= 0 && low < 0; row--) for (let x = 0; x < f.w; x++) if (D[((y0 + row) * W + x0 + x) * 4 + 3] >= 128) { if (low < 0) { low = row; left = x; } right = x; }
           if (low < 0) continue;
           const m = b.metresPerPixel * (it.scale ?? 1), c = ((left + right) / 2 - f.w / 2) * m * (it.flip ? -1 : 1), half = ((right - left) / 2 + 0.5) * m;
-          const cx = it.x + R.x * c, cz = it.z + R.z * c, base = h(it.x, it.z);
-          const err = Math.max(Math.abs(h(cx - R.x * half, cz - R.z * half) - base), Math.abs(h(cx + R.x * half, cz + R.z * half) - base)) / b.metresPerPixel;
+          const cx = it.x + R.x * c, cz = it.z + R.z * c, fw = Math.min(f.w * m * 0.5, 2);
+          const base = Math.min(h(it.x, it.z), h(it.x - R.x * fw, it.z - R.z * fw), h(it.x + R.x * fw, it.z + R.z * fw));
+          const err = Math.max(0, ...[-half, half].map(s => base - h(cx + R.x * s, cz + R.z * s))) / b.metresPerPixel;
           out.n++; if (Math.abs(base) > 0.3) out.hilly++;
           if (err > out.worst) out.worst = err;
           if (err > 1 && out.bad.length < 6) out.bad.push(`${typeof type === "number" ? window.witch.areaTypeId(type) : type} ${err.toFixed(1)} px`);

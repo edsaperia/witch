@@ -6,12 +6,14 @@ import { generateMap } from "../rules/map";
 import { Forest } from "../rules/forest";
 import { TUNING } from "../rules/tuning";
 import { floorClearing } from "../rules/speakers";
-import { HeightField, hillsAt, N, RES } from "./height";
+import { HeightField, hillsAt, N, RES, SLOPE_SCALE } from "./height";
 
 const map = generateMap(123, TUNING), forest = new Forest(map);
 const H = { on: true, amplitude: 2, scale: 48, octaves: 3 };
 const field = new HeightField(map, forest, H);
 const df = map.dancefloor;
+/** The camera's shallowest pitch (its ground angleIn, 30°), as a slope. */
+const PITCH = Math.tan((Math.min(TUNING.camera.ground.angleIn, TUNING.camera.treetop.angleIn) * Math.PI) / 180);
 field.follow(df.x + 60, df.z + 40);
 
 /** What the GPU's linear filter reads at (x, z), from the texture's own half floats. */
@@ -64,5 +66,49 @@ describe("rolling ground", () => {
     const flat = new HeightField(map, forest, { ...H, on: false });
     flat.follow(df.x, df.z);
     expect(flat.heightAt(df.x + 50, df.z + 50)).toBe(0);
+  });
+  it("at 40 m hills (Ed, v289) the dancefloor is still level and paths level across", { timeout: 60000 }, () => {
+    const big = new HeightField(map, forest, { on: true, amplitude: 40, scale: 170, octaves: 2, maxSlope: PITCH });
+    big.follow(df.x, df.z);
+    const r = floorClearing(TUNING), h0 = big.heightAt(df.x, df.z);
+    for (let a = 0; a < 12; a++) expect(Math.abs(big.heightAt(df.x + Math.cos(a) * r, df.z + Math.sin(a) * r) - h0)).toBeLessThan(0.1);
+    let checked = 0, tilted = 0;
+    for (const l of map.paths.lines) for (let s = 0; s < l.pts.length - 1; s += 5) {
+      const [a, b] = [l.pts[s], l.pts[s + 1]], ex = b[0] - a[0], ez = b[1] - a[1], len = Math.hypot(ex, ez) || 1, nx = -ez / len, nz = ex / len;
+      if (Math.hypot(a[0] - df.x, a[1] - df.z) > 300) continue;
+      if (Math.abs(big.heightAt(a[0] + nx * l.half * 0.9, a[1] + nz * l.half * 0.9) - big.heightAt(a[0] - nx * l.half * 0.9, a[1] - nz * l.half * 0.9)) > 0.3) tilted++;
+      checked++;
+    }
+    expect(checked).toBeGreaterThan(20);
+    expect(tilted / checked).toBeLessThan(0.08);
+  });
+  it("no ground rises past the camera's sightline to her, and no cliffs (Ed, v289, v297)", { timeout: 60000 }, () => {
+    // The ground as stored (the slope limit applied), from spots all round home and in every
+    // direction (the camera can be any way round the terrain): no slope between samples steeper
+    // than the limit, a little under the camera's shallowest pitch (Ed, v297: "bumps are fine, it's
+    // cliffs"); and so ground up to 80 m off never rises above a line climbing at that pitch from
+    // her feet ("so that you never go behind a bump").
+    const f = new HeightField(map, forest, { on: true, amplitude: 40, scale: 170, octaves: 2, maxSlope: PITCH });
+    expect(f.H.scale).toBeCloseTo(SLOPE_SCALE * 40 / PITCH, 5); // broadened from 170 to suit the pitch
+    const t0 = performance.now();
+    f.follow(df.x, df.z);
+    console.log(`the window filled in ${(performance.now() - t0).toFixed(0)} ms`);
+    let steepest = 0, over = 0;
+    for (let k = 0; k < 600; k++) {
+      const x = df.x + ((k * 37.7) % 560) - 280, z = df.z + ((k * 91.3) % 560) - 280, g0 = f.heightAt(x, z);
+      for (let a = 0; a < 8; a++) {
+        const ux = Math.cos(a * Math.PI / 4), uz = Math.sin(a * Math.PI / 4);
+        steepest = Math.max(steepest, (f.heightAt(x + ux * 2, z + uz * 2) - g0) / 2);
+        for (let s = 2; s <= 80; s += 3) over = Math.max(over, f.heightAt(x + ux * s, z + uz * s) - g0 - s * PITCH);
+      }
+    }
+    expect(steepest).toBeLessThan(PITCH);
+    expect(over).toBeLessThanOrEqual(0.05);
+  });
+  it("is the same whichever way it was visited (ponds' levels don't depend on what was made first)", () => {
+    const Hb = { on: true, amplitude: 40, scale: 300, octaves: 2 }, a = new HeightField(map, forest, Hb), b = new HeightField(map, forest, Hb);
+    const pts = Array.from({ length: 300 }, (_, k) => [df.x + ((k * 53.1) % 900) - 450, df.z + ((k * 71.9) % 900) - 450]);
+    const ha = pts.map(([x, z]) => a.sourceAt(x, z)), hb = [...pts].reverse().map(([x, z]) => b.sourceAt(x, z)).reverse();
+    for (let i = 0; i < pts.length; i++) expect(Math.abs(ha[i] - hb[i])).toBeLessThan(1e-4); // (but rounding: the sums run in another order)
   });
 });
