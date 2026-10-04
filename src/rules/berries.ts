@@ -8,6 +8,7 @@
 // of berries never changes. A party animal that has eaten enough evolves: babies after 1, young
 // after 3, adults after 8 (berries.toEvolve; adults to a legend, the only way to get a party
 // legend). It evolves on the next bar line of the music, so the view can make a show of it. No drawing here.
+import { maxHp } from "./combat";
 import { beatAt, timeAt, type BeatClock } from "./beat";
 import { LEGEND, type Creature, type Level } from "./creatures";
 import { gaitRate, leashSpeed } from "./leash";
@@ -52,7 +53,10 @@ export interface BerryState {
 /** Berries needed to go up from a level (babies, young, adults); legends don't eat. */
 export const toEvolve = (level: Level, t: Tuning): number => (level >= LEGEND ? Infinity : t.berries.toEvolve[Math.min(level, t.berries.toEvolve.length - 1)]);
 /** Who may eat berries: party animals that aren't legends (and aren't already evolving). */
-export const canEat = (c: Creature, s: BerryState): boolean => c.leashed && c.level < LEGEND && !s.evolving.has(c.id) && !c.fight?.target; // (not mid-fight)
+/** Whether a party animal goes for berries: not mid-fight or evolving; below a legend, or hurt
+ *  (a berry heals it to full, Ed 2026-10-04: so a hurt one wants one whatever its level). */
+export const canEat = (c: Creature, s: BerryState): boolean => c.leashed && !s.evolving.has(c.id) && !c.fight?.target && (c.level < LEGEND || hurtNow(c));
+const hurtNow = (c: Creature) => c.hp !== undefined && c.hp < maxHp(c.level);
 
 /** The berry bushes and the berries on them, from the seed: in every area of the playable map,
  *  berries.bushesPerArea bushes at spots a bush may grow (in its own area, not on a path or in a
@@ -138,6 +142,8 @@ function release(s: BerryState, id: number): void {
 
 /** Count one berry eaten; at the threshold, start evolving on the next bar line. */
 export function feed(s: BerryState, c: Creature, time: number, t: Tuning, clock?: BeatClock): void {
+  // A berry heals a party animal to full (Ed, 2026-10-04), as well as counting toward evolving.
+  if (c.leashed && hurtNow(c)) { c.hp = undefined; c.healedAt = time; }
   if (c.level >= LEGEND || s.evolving.has(c.id)) return;
   const n = (s.fed.get(c.id) ?? 0) + 1;
   s.ateAt.set(c.id, time);

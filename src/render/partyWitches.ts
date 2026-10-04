@@ -17,12 +17,16 @@ import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
 /** How many different looks are drawn: party witches beyond that share them (each look is a set of sprites to draw). */
 export const LOOKS = 12;
 const PAIRS = Art.WITCH_PAIRS as Record<string, { meet: string; partner?: string; mirror: boolean; frame?: number }>;
-const DANCE = new Set(["twoStep", "bounce", "shuffle", "spin", "headbang", "jump", "dancePair", "conga"]);
+const DANCE = new Set(["twoStep", "bounce", "shuffle", "spin", "headbang", "jump", "dancePair", "conga", "twirl", "twirled", "limbo"]);
+const CHAT = ["🎉", "😆", "🍹", "💃", "🥳", "😂", "🎶", "✨", "🍕", "😎", "🙌", "🤭"];
 
 type WitchArt = PartyWitchArt & { atlas: Atlas };
 
 export class PartyWitchView {
   private batches = new Map<string, SpriteBatch>();
+  /** The chats' emoji bubbles (HTML over the canvas, lighter than her own conversations). */
+  private bubblePool: HTMLDivElement[] = [];
+  private v = new THREE.Vector3();
   /** Whether our witch is drawn here this frame (idling in a party pose), so the view leaves her out. */
   herIdle = false;
 
@@ -42,9 +46,32 @@ export class PartyWitchView {
     return fr[Math.floor(time * fps + phase * 7) % n];
   }
 
+  /** The chats: a small emoji over whoever's turn it is in each chatting pair, taking turns. */
+  bubbles(g: Game, time: number, camera: THREE.Camera, width: number, height: number): void {
+    let n = 0;
+    for (const w of g.partyWitches.list) {
+      if (w.state !== "floor" || w.activity !== "chat" || w.partner === null || n >= 8) continue;
+      const turn = Math.floor(time / 1.4 + (w.lead ? 0 : 0.5));
+      if ((turn + (w.lead ? 0 : 1)) % 2) continue; // their turn or their partner's
+      let el = this.bubblePool[n];
+      if (!el) {
+        el = document.createElement("div");
+        el.style.cssText = "position:absolute;transform:translate(-50%,-100%);font-size:13px;padding:1px 4px;border-radius:8px;background:rgba(255,255,255,.55);pointer-events:none;z-index:4";
+        document.body.appendChild(el); this.bubblePool.push(el);
+      }
+      this.v.set(w.x, 2.4, w.z).project(camera);
+      el.style.left = `${((this.v.x + 1) / 2) * width}px`; el.style.top = `${((1 - this.v.y) / 2) * height}px`;
+      const e = CHAT[(turn * 7 + w.id * 3) % CHAT.length];
+      if (el.textContent !== e) el.textContent = e;
+      el.style.display = this.v.z < 1 ? "" : "none";
+      n++;
+    }
+    for (let i = n; i < this.bubblePool.length; i++) this.bubblePool[i].style.display = "none";
+  }
+
   update(g: Game, time: number, visible: (x: number, z: number, w: number, h: number) => boolean): void {
     const per = new Map<string, { art: WitchArt; list: SpriteInstance[] }>(), bpm = g.tuning.beat.bpm, bt = beatTime(g.beat, time), R = SPRITE_UNIFORMS.uRight.value;
-    const placed = new Map<number, { x: number; z: number; frame: number; art: WitchArt; flip: boolean }>();
+    const placed = new Map<number, { x: number; z: number; frame: number; art: WitchArt; flip: boolean; pose: string }>();
     const put = (key: string, art: WitchArt, inst: SpriteInstance) => { let e = per.get(key); if (!e) per.set(key, (e = { art, list: [] })); e.list.push(inst); };
     const lookOf = (w: PartyWitch) => this.assets.partyWitchArt(w.seed % LOOKS);
     // Leads first, so a partner can line up with her.
@@ -59,7 +86,8 @@ export class PartyWitchView {
       else {
         fi = this.frameOf(art, w.pose, time, bpm, (w.id % 4) * 0.25, bt);
         // A partner lines up with her lead: their meeting anchors on the same pixel.
-        const pair = PAIRS[w.pose], lead = w.partner !== null && w.partner >= 0 && !w.lead ? placed.get(w.partner) : undefined;
+        // (By the lead's pose: a partner's own may differ: twirled, limboHelp.)
+        const lead = w.partner !== null && w.partner >= 0 && !w.lead && !w.third ? placed.get(w.partner) : undefined, pair = lead ? PAIRS[lead.pose] : undefined;
         if (pair && lead) {
           fi = this.frameOf(art, w.pose, time, bpm, 0, bt); // in step with her
           const la = art.anchors[lead.frame] ? lead : null, A = la ? lead.art.anchors[lead.frame]?.[pair.partner ?? pair.meet] : undefined, B = art.anchors[fi]?.[pair.meet];
@@ -72,7 +100,7 @@ export class PartyWitchView {
         }
       }
       const f = art.atlas.frames[fi];
-      placed.set(w.id, { x, z, frame: fi, art, flip });
+      placed.set(w.id, { x, z, frame: fi, art, flip, pose: w.pose });
       if (!visible(x, z, f.w * this.mpp, f.h * this.mpp)) continue;
       put(`pw-${w.seed % LOOKS}`, art, { x, y: w.y, z, frame: f, flip });
     }

@@ -342,9 +342,12 @@ export class LeashView {
           }
         }
       }
+      // Healed (a berry, or invited: Ed, 2026-10-04): a green sparkle, and its bar shows full a moment.
+      const healed = c.healedAt !== undefined && time - c.healedAt < 0.8;
+      if (healed) for (let i = 0; i < 10; i++) { const k = (time - c.healedAt!) / 0.8, a = hash2(c.id, i, 11) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 0.9 * (0.4 + k), 0.4 + k * 2 + hash2(c.id, i, 13), c.z + Math.sin(a) * 0.6 * (0.4 + k), 0.3, dot, 0.4, 1, 0.5, 1 - k); }
       // Health bars, only when hurt: ten squares over its head.
       const max = maxHp(c.level), hp = c.hp ?? max;
-      if (hp < max && !c.fleeUntil) {
+      if ((hp < max || healed) && !c.fleeUntil) {
         const y = (this.tops.get(c.id) ?? 1.6 + c.level * 0.7) + 0.5, share = Math.max(0, hp / max), R = SPRITE_UNIFORMS.uRight.value, wide = 1 + c.level * 0.25;
         for (let i = 0; i < 10; i++) { // drawn over everything, so a big creature's own sprite doesn't hide it
           const o = (i - 4.5) * 0.17 * wide, lit = (i + 0.5) / 10 <= share;
@@ -354,7 +357,7 @@ export class LeashView {
       // Let go on a knockout and walking home: a faint marker and its sigil, grey and flickering.
       if (c.wanderTo) {
         const col = neon(c.species), fl = 0.25 + 0.15 * Math.sin(time * 5 + c.id);
-        this.standing.add(c.x, 2 + c.level * 0.6 + Math.sin(time * 2 + c.id) * 0.1, c.z, 1.1, this.uv(this.slotOf(c.species, c.level)), col.r * 0.6 + 0.3, col.g * 0.6 + 0.3, col.b * 0.6 + 0.3, fl);
+        this.standing.add(c.x, (this.tops.get(c.id) ?? 1.4 + c.level * 0.6) + 0.6 + Math.sin(time * 2 + c.id) * 0.1, c.z, 1.1, this.uv(this.slotOf(c.species, c.level)), col.r * 0.6 + 0.3, col.g * 0.6 + 0.3, col.b * 0.6 + 0.3, fl);
         for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2 + time; if (i % 2) this.flat.add(c.x + Math.cos(a) * 1.4, 0, c.z + Math.sin(a) * 1.1, 0.25, dot, 0.8, 0.8, 0.9, 0.35); }
       }
     }
@@ -565,7 +568,7 @@ export class LeashView {
     }
     const c = g.creatures[talk.id];
     place(bw, w.x - 1.2, witchHeight(w, g.tuning) + 2.2, w.z);
-    place(bc, c.x, 1.2 + c.level * 0.8, c.z);
+    place(bc, c.x, (this.tops.get(c.id) ?? 1.2 + c.level * 0.8) + 0.3, c.z); // over its head, however big it is drawn (#47)
     if (talk.refused) {
       // A legend: one unimpressed look, and nothing more.
       bw.classList.remove("on");
