@@ -12,7 +12,7 @@
 // The sigils are the art builder's (art/sigils.js), drawn per species and level into an atlas.
 import * as THREE from "three";
 import { drawSigil, sigilColour } from "../../art/generator.js";
-import type { Game } from "../rules/game";
+import { dormant, type Game } from "../rules/game";
 import { blocked, leashPoint, talkTime, talkTurn } from "../rules/leash";
 import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
@@ -221,6 +221,33 @@ export class LeashView {
     }
   }
 
+  /** Wild legends (Ed, 2026-10-04): a slow, breathing aura on the ground round each, in a dark
+   *  mix of its sigil's colour and blood red, with motes drifting up; from the treetops a glow
+   *  over the canopy, so they read as special from above. Dimmer while they sleep. */
+  private drawBosses(time: number): void {
+    const g = this.game, W = g.tuning.wildLegends, w = g.witch, dot = this.uv(0), treetops = w.lift > 0.5, near = treetops ? 420 : 110;
+    for (const c of g.creatures) {
+      if (!c.boss || c.leashed || Math.abs(c.x - w.x) > near || Math.abs(c.z - w.z) > near) continue;
+      const asleep = dormant(g, c), b = bossBreath(time, c.id, W.breathEvery * (asleep ? 1.5 : 1)), k = (asleep ? 0.7 : 1) * W.glow;
+      const sc = sigilColour(c.species), rgb = [0.5 * sc[0] / 255 + 0.45, 0.5 * sc[1] / 255 + 0.02, 0.5 * sc[2] / 255 + 0.08];
+      if (treetops) {
+        this.over.add(c.x, 1, c.z, W.aura * 2.2 * (1 + 0.1 * b), dot, rgb[0], rgb[1], rgb[2], 0.6 * k * (0.7 + 0.3 * b));
+        this.over.add(c.x, 1, c.z, W.aura * 0.6, dot, rgb[0] * 1.6, rgb[1] * 1.6, rgb[2] * 1.6, 0.8 * k * (0.6 + 0.4 * b));
+        continue;
+      }
+      const R = W.aura * 0.5 * (1 + 0.06 * b), n = 40, turn = time * 0.15 * (c.id % 2 ? 1 : -1);
+      this.flat.add(c.x, 0, c.z, W.aura * 1.3, dot, rgb[0], rgb[1], rgb[2], 0.6 * k * (0.6 + 0.4 * b));
+      for (let i = 0; i < n; i++) {
+        const a = turn + (i / n) * Math.PI * 2, gap = Math.sin(a * 3 + time * 0.4) > 0.6 ? 0.25 : 1; // a broken, slowly turning ring
+        this.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.55, dot, rgb[0] * 1.6, rgb[1] * 1.6, rgb[2] * 1.6, 1 * k * gap * (0.6 + 0.4 * b));
+      }
+      for (let i = 0; i < 7; i++) { // motes drifting slowly up round it
+        const ph = (time * 0.18 + hash2(c.id, i, 5)) % 1, a = hash2(c.id, i, 9) * Math.PI * 2 + time * 0.1, r = R * (0.4 + 0.6 * hash2(c.id, i, 13));
+        this.standing.add(c.x + Math.cos(a) * r, ph * 4.5, c.z + Math.sin(a) * r * 0.8, 0.28, dot, rgb[0] * 1.5, rgb[1] * 1.5, rgb[2] * 1.5, 0.8 * k * Math.sin(ph * Math.PI));
+      }
+    }
+  }
+
   private uv(slot: number): number[] {
     const N = SLOT * SLOTS, x = (slot % SLOTS) * SLOT, y = Math.floor(slot / SLOTS) * SLOT;
     // u0, v0 (top), u1, v1 (bottom); the canvas texture is flipped in v.
@@ -232,6 +259,7 @@ export class LeashView {
     const g = this.game, s = g.leash, t = g.tuning, w = g.witch, B = t.bond, L = t.leash, dot = this.uv(0);
     this.standing.begin(); this.flat.begin(); this.over.begin();
     this.drawBerries(time);
+    this.drawBosses(time);
     for (const e of s.events) {
       if (e.kind === "fizzled") this.fizzles.push({ x: e.x, z: e.z, at: time });
       if (e.kind === "invited") this.bursts.push({ x: e.x, z: e.z, at: time, seed: e.id });
@@ -417,3 +445,6 @@ export class LeashView {
     void time;
   }
 }
+
+/** A wild legend's slow breath, 0 out to 1 in, once every `every` seconds (offset by its id). */
+export const bossBreath = (time: number, id: number, every: number) => 0.5 - 0.5 * Math.cos((time / Math.max(0.1, every) + (id % 7) / 7) * Math.PI * 2);
