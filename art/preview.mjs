@@ -8,6 +8,7 @@
 //   node art/preview.mjs relics modern|playground|sports|<ids> art/previews/relics-modern.png [scale]   (PER=n to a row)
 //   node art/preview.mjs country farm|street|scene|<ids> art/previews/country-farm.png [scale]   (countryside and street pieces; PER=n to a row)
 //   node art/preview.mjs scenes small|large|all|<ids> art/previews/scenes-small.png [scale]   (each scene composed from its pieces, the witch at its middle; MIRROR=1 the other way; PER=n to a row)
+//   node art/preview.mjs landmarks cemetery|carpark|scrap|worship|castle|classical|<ids> art/previews/landmarks-worship.png [scale]   (the large scenes' pieces; buildings' two halves composed, HALVES=1 apart; PER=n to a row)
 //   node art/preview.mjs grounds playground,tennis,baseball,football,basketball|all art/previews/grounds.png [scale]   (each arrangement composed; NIGHT=1)
 //   node art/preview.mjs decor ruins|rocks|freak|<ids> art/previews/ruins.png [scale]   (VARIANTS=1: ruins weathered and overgrown)
 //   node art/preview.mjs lake 0 art/previews/lake.png [scale]   (a sample lake composed from the kit; NIGHT=1)
@@ -49,6 +50,7 @@ if (process.env.STYLE) await b.page.addInitScript(o => { window.STYLE = o; }, JS
 if (process.env.NIGHT) await b.page.addInitScript(() => { window.NIGHT = true; });
 if (process.env.PER) await b.page.addInitScript(n => { window.PER = n; }, +process.env.PER);
 if (process.env.VARIANTS) await b.page.addInitScript(() => { window.VARIANTS = true; });
+if (process.env.HALVES) await b.page.addInitScript(() => { window.HALVES = true; });
 if (process.env.MIRROR) await b.page.addInitScript(() => { window.MIRROR = true; });
 if (process.env.VARIANT) await b.page.addInitScript(n => { window.VARIANT = n; }, +process.env.VARIANT);
 if (process.env.LEVELS) await b.page.addInitScript(l => { window.LEVELS = l; }, process.env.LEVELS.split(",").map(Number));
@@ -232,6 +234,20 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   } else if (what === "country") { // a family's countryside and street pieces (farm, street, scene) or listed ids, PER to a row (default 6), the witch closing each row
     const ids = ["farm", "street", "scene"].includes(list) ? G.COUNTRY.filter(d => d.family === list).map(d => d.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), col = G.countryColours(st), per = window.PER || 6;
     const items = ids.map(id => G.bake(G.countrySprite(id, st).whole, col, st, "none"));
+    for (let i = 0; i < items.length; i += per) rows.push([...items.slice(i, i + per), wit]);
+  } else if (what === "landmarks") { // the large scenes' pieces: a family (cemetery, carpark, scrap, worship, castle, classical) or listed ids, PER to a row (default 6), the witch closing each row; buildings in halves are drawn whole (far then near) unless HALVES=1
+    const fams = ["cemetery", "carpark", "scrap", "worship", "castle", "classical"], wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), col = G.landmarkColours(st), per = window.PER || 6;
+    const defs = fams.includes(list) ? G.LANDMARKS.filter(d => d.family === list) : list.split(",").flatMap(id => G.LANDMARK_BY_ID[id] ? [G.LANDMARK_BY_ID[id]] : G.LANDMARKS.filter(d => d.building === id));
+    const items = [], seen = new Set();
+    for (const d of defs) {
+      if (!d.building || window.HALVES) { items.push(G.bake(G.landmarkSprite(d.id, st).whole, col, st, "none")); continue; }
+      if (seen.has(d.building)) continue; seen.add(d.building); // the two halves composed at their offsets, as a scene would place them
+      const hs = ["far", "near"].map(h => { const L = G.landmarkSprite(`${d.building}-${h}`, st), [dx, dy] = G.groundOffset(0, G.LANDMARK_BY_ID[`${d.building}-${h}`].offset * G.witchPixelsPerUnit(st) / 16); return { b: G.bake(L.whole, col, st, "none"), x: dx - L.origin.x, y: dy - L.origin.y }; });
+      const x0 = Math.min(...hs.map(h => h.x)), y0 = Math.min(...hs.map(h => h.y)), W = Math.ceil(Math.max(...hs.map(h => h.x + h.b.w)) - x0), H = Math.ceil(Math.max(...hs.map(h => h.y + h.b.h)) - y0);
+      const A = document.createElement("canvas"), N = document.createElement("canvas"); A.width = N.width = W; A.height = N.height = H;
+      for (const h of hs) { A.getContext("2d").drawImage(h.b.A, Math.round(h.x - x0), Math.round(h.y - y0)); N.getContext("2d").drawImage(h.b.N, Math.round(h.x - x0), Math.round(h.y - y0)); }
+      items.push({ A, N, w: W, h: H });
+    }
     for (let i = 0; i < items.length; i += per) rows.push([...items.slice(i, i + per), wit]);
   } else if (what === "scenes") { // each scene (small, large, all, or listed ids) composed from its pieces as the prototype would, the witch at its middle; MIRROR=1 turns them the other way
     const names = ["small", "large", "all"].includes(list) ? G.SCENES.filter(S => list === "all" || S.size === list).map(S => S.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), baked = new Map();

@@ -16,32 +16,32 @@ import { Model, render, v3 } from "./model3d.js";
 import { witchPixelsPerUnit } from "./witch.js";
 import { carModel } from "./relics.js";
 
-const ctHash = (a, b = 0) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
-const ctCell = (p, k, s = 0) => ctHash(Math.floor(p[0] * k) + Math.floor(p[2] * k) * 57 + s, Math.floor(p[1] * k));
+export const ctHash = (a, b = 0) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
+export const ctCell = (p, k, s = 0) => ctHash(Math.floor(p[0] * k) + Math.floor(p[2] * k) * 57 + s, Math.floor(p[1] * k));
 // weathering: rust and moss patches over a material
-const ctWorn = (rust = .2, moss = .15) => p => { const r = ctCell(p, 16, 3), n = ctCell(p, 6, 5); return n < moss && p[1] > .1 ? M.MOSS : r > 1 - rust * .7 ? M.BODY2 : undefined; };
+export const ctWorn = (rust = .2, moss = .15) => p => { const r = ctCell(p, 16, 3), n = ctCell(p, 6, 5); return n < moss && p[1] > .1 ? M.MOSS : r > 1 - rust * .7 ? M.BODY2 : undefined; };
 // weathered planks: grain along x, dark seams, moss
-const ctPlank = (k = 7, moss = .15) => p => { const n = ctCell(p, 6, 9); if (n < moss && p[1] > .15) return M.MOSS; if (Math.abs(Math.sin(p[1] * 60 + Math.sin(p[0] * 9) * 1.5)) > .97) return M.BARK2; return ctCell(p, k * 3, 2) > .9 ? M.BARKD : undefined; };
-const ctTufts = (m, n, R, g, seed, cx = 0, cz = 0) => { for (let i = 0; i < n; i++) { const a = ctHash(seed, i) * 6.283, d = R * Math.sqrt(ctHash(i, seed)); m.ell([cx + Math.cos(a) * d, .07, cz + Math.sin(a) * d * .7], [.07, .1 + ctHash(i, 4) * .08, .07], M.LEAF2, { group: g + (i % 3), paint: p => p[1] > .13 ? M.LEAF : undefined }); } };
-const ctFern = (m, c, g, k = 1) => { for (let i = 0; i < 6; i++) { const a = i / 6 * 6.283 + c[0], d = [Math.cos(a), 0, Math.sin(a)]; m.chain([[...c, .03 * k], [...v3.add(c, v3.add(v3.mul(d, .25 * k), [0, .2 * k, 0])), .025 * k], [...v3.add(c, v3.add(v3.mul(d, .5 * k), [0, .05 * k, 0])), .01 * k]], i % 2 ? M.LEAF : M.LEAF2, { group: g }); } };
-const ctIvy = (m, from, to, g, seed) => { const pts = []; for (let k = 0; k <= 4; k++) pts.push([...v3.add(v3.lerp(from, to, k / 4), [(ctHash(seed, k) - .5) * .12, 0, .02]), .03]); m.chain(pts, M.LEAF, { group: g, paint: p => ctCell(p, 30) < .3 ? M.LEAF2 : undefined }); };
-const ctCrown = (m, c, r, g) => m.ell(c, r, M.LEAF, { group: g, rough: .04, paint: p => { const n = ctCell(p, 10, 2); return p[1] < c[1] - .15 || n < .2 ? M.LEAF3 : n > .8 ? M.LEAF2 : undefined; } });
-const ctBar = (m, a, b, g, r = .025, mat = M.FRAME, paint = ctWorn(.35, .05)) => m.seg(a, b, r, r, mat, { group: g, paint });
-const ctGlow = (m, c, r, g, mat = M.MAGIC) => m.ell(c, [r, r, r], mat, { group: g, extra: true });
-const ctMoss = (m, c, r, g) => m.ell(c, r, M.MOSS, { group: g, rough: .03, paint: p => ctCell(p, 12, 4) < .25 ? M.LEAF2 : ctCell(p, 9, 6) < .15 ? M.LEAF3 : undefined });
+export const ctPlank = (k = 7, moss = .15) => p => { const n = ctCell(p, 6, 9); if (n < moss && p[1] > .15) return M.MOSS; if (Math.abs(Math.sin(p[1] * 60 + Math.sin(p[0] * 9) * 1.5)) > .97) return M.BARK2; return ctCell(p, k * 3, 2) > .9 ? M.BARKD : undefined; };
+export const ctTufts = (m, n, R, g, seed, cx = 0, cz = 0) => { for (let i = 0; i < n; i++) { const a = ctHash(seed, i) * 6.283, d = R * Math.sqrt(ctHash(i, seed)); m.ell([cx + Math.cos(a) * d, .07, cz + Math.sin(a) * d * .7], [.07, .1 + ctHash(i, 4) * .08, .07], M.LEAF2, { group: g + (i % 3), paint: p => p[1] > .13 ? M.LEAF : undefined }); } };
+export const ctFern = (m, c, g, k = 1) => { for (let i = 0; i < 6; i++) { const a = i / 6 * 6.283 + c[0], d = [Math.cos(a), 0, Math.sin(a)]; m.chain([[...c, .03 * k], [...v3.add(c, v3.add(v3.mul(d, .25 * k), [0, .2 * k, 0])), .025 * k], [...v3.add(c, v3.add(v3.mul(d, .5 * k), [0, .05 * k, 0])), .01 * k]], i % 2 ? M.LEAF : M.LEAF2, { group: g }); } };
+export const ctIvy = (m, from, to, g, seed) => { const pts = []; for (let k = 0; k <= 4; k++) pts.push([...v3.add(v3.lerp(from, to, k / 4), [(ctHash(seed, k) - .5) * .12, 0, .02]), .03]); m.chain(pts, M.LEAF, { group: g, paint: p => ctCell(p, 30) < .3 ? M.LEAF2 : undefined }); };
+export const ctCrown = (m, c, r, g) => m.ell(c, r, M.LEAF, { group: g, rough: .04, paint: p => { const n = ctCell(p, 10, 2); return p[1] < c[1] - .15 || n < .2 ? M.LEAF3 : n > .8 ? M.LEAF2 : undefined; } });
+export const ctBar = (m, a, b, g, r = .025, mat = M.FRAME, paint = ctWorn(.35, .05)) => m.seg(a, b, r, r, mat, { group: g, paint });
+export const ctGlow = (m, c, r, g, mat = M.MAGIC) => m.ell(c, [r, r, r], mat, { group: g, extra: true });
+export const ctMoss = (m, c, r, g) => m.ell(c, r, M.MOSS, { group: g, rough: .03, paint: p => ctCell(p, 12, 4) < .25 ? M.LEAF2 : ctCell(p, 9, 6) < .15 ? M.LEAF3 : undefined });
 // A cylinder with flat ends from a to b: a capsule, cut square at both ends (the ends drawn in `end`, a material or a paint).
-function ctCyl(m, a, b, r, mat, g, o = {}) {
+export function ctCyl(m, a, b, r, mat, g, o = {}) {
   const d = v3.norm(v3.sub(b, a)), endPaint = typeof o.end === "function" ? o.end : undefined, endMat = typeof o.end === "number" ? o.end : endPaint ? mat : mat;
   m.seg(a, b, r, r, mat, { group: g, paint: o.paint });
   for (const [e, s] of [[b, 1], [a, -1]]) m.box(v3.add(e, v3.mul(d, s * r * .75)), [r * .75, r * 1.25, r * 1.25], endMat, { dir: v3.mul(d, s), up: Math.abs(d[1]) > .9 ? [1, 0, 0] : [0, 1, 0], round: .005, group: g, cut: true, paint: endPaint });
 }
 // Rings and radial cracks on a log's or stump's cut end (centre c, axis along `axis` 0 x, 1 y, 2 z).
-const ctRings = (c, axis) => p => { const q = [0, 1, 2].filter(i => i !== axis), r = Math.hypot(p[q[0]] - c[q[0]], p[q[1]] - c[q[1]]); return (r * 34) % 1 < .22 ? M.BARK2 : ctCell(p, 30) < .05 ? M.BARKD : M.STRAW; };
+export const ctRings = (c, axis) => p => { const q = [0, 1, 2].filter(i => i !== axis), r = Math.hypot(p[q[0]] - c[q[0]], p[q[1]] - c[q[1]]); return (r * 34) % 1 < .22 ? M.BARK2 : ctCell(p, 30) < .05 ? M.BARKD : M.STRAW; };
 // A wheel: a tyre (rubber, treads) round a rusty hub; axis along z.
-const ctWheel = (m, c, r, w, g, flat = false) => m.ell(c, [r, flat ? r * .8 : r, w], M.BODY3, { group: g, paint: p => { const d = Math.hypot(p[0] - c[0], p[1] - c[1]); if (d < r * .45) return ctCell(p, 20) < .3 ? M.BODY2 : M.FRAME; return d > r * .8 && Math.abs(Math.sin(Math.atan2(p[1] - c[1], p[0] - c[0]) * 14)) < .3 ? M.NOSE : undefined; } });
+export const ctWheel = (m, c, r, w, g, flat = false) => m.ell(c, [r, flat ? r * .8 : r, w], M.BODY3, { group: g, paint: p => { const d = Math.hypot(p[0] - c[0], p[1] - c[1]); if (d < r * .45) return ctCell(p, 20) < .3 ? M.BODY2 : M.FRAME; return d > r * .8 && Math.abs(Math.sin(Math.atan2(p[1] - c[1], p[0] - c[0]) * 14)) < .3 ? M.NOSE : undefined; } });
 
 // Turns the parts and planes added since `from` (and their paint) by yaw (about y), pitch (about z: nose up) and roll (about x), then moves them by `at`.
-function ctPlace(m, from, { yaw = 0, pitch = 0, roll = 0, at = [0, 0, 0] } = {}, fromFlat = m.flats.length) {
+export function ctPlace(m, from, { yaw = 0, pitch = 0, roll = 0, at = [0, 0, 0] } = {}, fromFlat = m.flats.length) {
   const R = (v, a, i, j) => { const c = Math.cos(a), s = Math.sin(a), o = [...v]; o[i] = v[i] * c - v[j] * s; o[j] = v[i] * s + v[j] * c; return o; };
   const rot = v => R(R(R(v, roll, 1, 2), pitch, 0, 1), -yaw, 0, 2), inv = v => R(R(R(v, yaw, 0, 2), -pitch, 0, 1), -roll, 1, 2);
   const fwd = p => v3.add(rot(p), at), back = p => inv(v3.sub(p, at));
@@ -51,8 +51,8 @@ function ctPlace(m, from, { yaw = 0, pitch = 0, roll = 0, at = [0, 0, 0] } = {},
   }
   for (const f of m.flats.slice(fromFlat)) { f.c = fwd(f.c); f.u = rot(f.u); f.v = rot(f.v); }
 }
-const mark = m => [m.parts.length, m.flats.length];
-const place = (m, [n, nf], o) => ctPlace(m, n, o, nf);
+export const mark = m => [m.parts.length, m.flats.length];
+export const place = (m, [n, nf], o) => ctPlace(m, n, o, nf);
 
 // ---------------- building blocks ----------------
 function ctFence(m, g, { broken = false, len = 1.0 } = {}) { // a post-and-rail section along x, from -len to len
@@ -77,11 +77,11 @@ function ctHaySquare(m, c, g, { mould = false, yaw = 0 } = {}) { // a small squa
   const dir = [Math.cos(yaw), 0, Math.sin(yaw)];
   m.box(v3.add(c, [0, .19, 0]), [.4, .19, .23], M.STRAW, { dir, round: .05, group: g, rough: .008, paint: p => { if (mould && ctCell(p, 5, 7) < .35) return ctCell(p, 13) < .4 ? M.BODY3 : M.SKIN; const u = (p[0] - c[0]) * dir[0] + (p[2] - c[2]) * dir[2]; if (Math.abs(Math.abs(u) - .2) < .02) return M.BARK2; const n = ctCell(p, 22, 1); return n < .16 ? M.BARK2 : n > .86 ? M.BELLY : undefined; } });
 }
-const ctLog = (m, a, b, r, g) => ctCyl(m, a, b, r, M.TRUNK, g, { paint: p => { const n = ctCell(p, 14, 2); return n < .15 ? M.BARKD : n > .88 ? M.BARKL : ctCell(p, 5, 8) < .12 && p[1] > a[1] ? M.MOSS : undefined; }, end: ctRings(a, v3.sub(b, a).map(Math.abs).indexOf(Math.max(...v3.sub(b, a).map(Math.abs)))) });
-const ctTyre = (m, c, g, o = {}) => { m.ell(c, [.3, .1, .3], M.BODY3, { group: g, axes: o.axes, paint: p => Math.abs(Math.sin(Math.atan2(p[2] - c[2], p[0] - c[0]) * 16)) < .25 ? M.NOSE : ctCell(p, 9, 4) < .1 ? M.MOSS : undefined }); m.ell(c, [.15, .2, .15], M.NOSE, { group: g, axes: o.axes, cut: true }); };
-const ctMushrooms = (m, c, n, g, seed, { cap = M.EAR, k = 1 } = {}) => { for (let i = 0; i < n; i++) { const a = ctHash(seed, i) * 6.283, d = .16 * k * Math.sqrt(ctHash(i, seed)), x = c[0] + Math.cos(a) * d, z = c[2] + Math.sin(a) * d, h = (.06 + ctHash(i, 3) * .09) * k; m.seg([x, c[1], z], [x, c[1] + h, z], .012 * k, .01 * k, M.CLOTH, { group: g }); m.ell([x, c[1] + h, z], [.04 * k, .022 * k, .04 * k], cap, { group: g + 1 }); } };
+export const ctLog = (m, a, b, r, g) => ctCyl(m, a, b, r, M.TRUNK, g, { paint: p => { const n = ctCell(p, 14, 2); return n < .15 ? M.BARKD : n > .88 ? M.BARKL : ctCell(p, 5, 8) < .12 && p[1] > a[1] ? M.MOSS : undefined; }, end: ctRings(a, v3.sub(b, a).map(Math.abs).indexOf(Math.max(...v3.sub(b, a).map(Math.abs)))) });
+export const ctTyre = (m, c, g, o = {}) => { m.ell(c, [.3, .1, .3], M.BODY3, { group: g, axes: o.axes, paint: p => Math.abs(Math.sin(Math.atan2(p[2] - c[2], p[0] - c[0]) * 16)) < .25 ? M.NOSE : ctCell(p, 9, 4) < .1 ? M.MOSS : undefined }); m.ell(c, [.15, .2, .15], M.NOSE, { group: g, axes: o.axes, cut: true }); };
+export const ctMushrooms = (m, c, n, g, seed, { cap = M.EAR, k = 1 } = {}) => { for (let i = 0; i < n; i++) { const a = ctHash(seed, i) * 6.283, d = .16 * k * Math.sqrt(ctHash(i, seed)), x = c[0] + Math.cos(a) * d, z = c[2] + Math.sin(a) * d, h = (.06 + ctHash(i, 3) * .09) * k; m.seg([x, c[1], z], [x, c[1] + h, z], .012 * k, .01 * k, M.CLOTH, { group: g }); m.ell([x, c[1] + h, z], [.04 * k, .022 * k, .04 * k], cap, { group: g + 1 }); } };
 // a flat panel: crossbars FRAME, panes of dark glass, some missing, some cracked (seed picks which)
-const ctPanes = (cols, rows, seed, missing = .35) => (s, t) => { const u = (s + 1) / 2 * cols, v = (t + 1) / 2 * rows; if (u % 1 < .07 || u % 1 > .93 || v % 1 < .07 || v % 1 > .93) return M.FRAME; const k = Math.floor(u) + Math.floor(v) * 7; if (ctHash(k, seed) < missing) return null; return Math.abs(Math.sin((u + v * .7) * 9 + k)) < .06 ? M.STONED : M.SHADES; };
+export const ctPanes = (cols, rows, seed, missing = .35) => (s, t) => { const u = (s + 1) / 2 * cols, v = (t + 1) / 2 * rows; if (u % 1 < .07 || u % 1 > .93 || v % 1 < .07 || v % 1 > .93) return M.FRAME; const k = Math.floor(u) + Math.floor(v) * 7; if (ctHash(k, seed) < missing) return null; return Math.abs(Math.sin((u + v * .7) * 9 + k)) < .06 ? M.STONED : M.SHADES; };
 // a plate's border (a road sign's)
 const ctTriangle = (border, fill, sym) => (s, t) => { const half = (1 - t) / 2; if (t < -1 || Math.abs(s) > half) return null; const edge = Math.min(half - Math.abs(s), t + 1); if (edge < .17) return border; return sym(s, t) ? M.NOSE : fill; };
 
@@ -396,9 +396,10 @@ export function countryColours(st = {}) {
 }
 // One piece, drawn: { whole, top, bot, crownY, origin, metres: { width, height, footprint } }, like the relics. origin: where
 // its middle on the ground lands (put it at its spot in a scene); footprint: its radius on the ground, in metres.
-export function countrySprite(id, st = {}, { ppm = 16 } = {}) {
-  const d = COUNTRY_BY_ID[id]; if (!d) throw new Error(`no country piece "${id}"`);
-  const m = countryModel(id); m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // a common ground line
+export function countrySprite(id, st = {}, { ppm = 16 } = {}) { return pieceSprite(countryModel(id), COUNTRY_BY_ID[id], st, ppm); }
+// Renders a piece's model (d: its table entry, with size and split) at the witch's scale, cropped to what is drawn.
+export function pieceSprite(m, d, st = {}, ppm = 16) {
+  m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // a common ground line
   const s = witchPixelsPerUnit(st) * d.size, { sp, project } = render(m, { scale: s });
   let x0 = sp.w, x1 = -1, y0 = sp.h; for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
   const W = x1 - x0 + 1, H = sp.h - y0, crop = new Sprite(W, H), top = new Sprite(W, H), bot = new Sprite(W, H);
