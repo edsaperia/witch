@@ -18,9 +18,9 @@ export interface MusicMix {
   distance: number;
 }
 
-/** The music the witch hears now. */
-export function musicMix(g: Game): MusicMix {
-  const M = g.tuning.music, w = g.witch, time = g.clock.time, d = g.map.dancefloor;
+/** The music heard now at `at` (a listener: each witch hears her own mix, Ed's co-op). */
+export function musicMix(g: Game, at: { x: number; z: number }): MusicMix {
+  const M = g.tuning.music, w = at, time = g.clock.time, d = g.map.dancefloor;
   const sources: { x: number; z: number; loud: number; damage: number }[] = [];
   // The home ring: its share of speakers on, its damage from the speakers' states.
   const n = d.speakers.length, on = speakersOn(g.party, g.map, time, n);
