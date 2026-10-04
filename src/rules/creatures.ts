@@ -60,6 +60,8 @@ export interface Creature {
   kx?: number;
   kz?: number;
   slowUntil?: number;
+  /** Stunned until (an armoured creature knocked over: Stage 5 counters). */
+  stunUntil?: number;
   fight?: Fight;
   /** Beaten in a fight: running for (fleeX, fleeZ), just off the map's edge (fleeUntil set), then gone. */
   fleeUntil?: number;

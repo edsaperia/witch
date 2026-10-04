@@ -68,7 +68,7 @@ export interface SteerContext {
   /** Nearby fighting creatures (for separation and cohesion). */
   neighbours: Iterable<Creature>;
   /** Shots and lobs in flight (for dodging). */
-  threats: { x: number; z: number; vx: number; vz: number; side: string }[];
+  threats: { x: number; z: number; vx: number; vz: number; side: string; radius?: number; lob?: { tx: number; tz: number } }[];
   side: string;
   /** Its attack is ready (hit and run goes in only then). */
   ready: boolean;
@@ -128,6 +128,8 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
         const R = b.radius ?? 5;
         for (const s of x.threats) {
           if (s.side === x.side) continue;
+          // A lob coming down on it: out of its ring, away from where it lands.
+          if (s.lob) { const lx = c.x - s.lob.tx, lz = c.z - s.lob.tz, ld = Math.hypot(lx, lz), lr = (s.radius ?? 1.8) + 1; if (ld < lr) add(ld > 1e-3 ? lx / ld : 1, ld > 1e-3 ? lz / ld : 0, b.w * 1.5); continue; }
           const rx = c.x - s.x, rz = c.z - s.z, rd = Math.hypot(rx, rz), sv = Math.hypot(s.vx, s.vz) || 1;
           if (rd > R) continue;
           const along = (rx * s.vx + rz * s.vz) / sv; // ahead of the shot

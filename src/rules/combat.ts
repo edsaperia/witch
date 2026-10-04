@@ -50,9 +50,29 @@ export interface CombatData {
   kite: { species: string[]; near: number; far: number };
   /** How a species' babies take to the witch close by (Ed's playtest: curious or skittish). */
   temperament: { curious: string[]; skittish: string[] };
+  /** Traits (Stage 5, readable counters): the species with each. */
+  traits: Record<Trait, string[]>;
+  /** What each trait does to a blow: its damage times counters[trait][delivery]; and knockback
+   *  (its distance times this), stun (seconds a knockback stuns it), slow (a slow's time times this). */
+  counters: Record<Trait, Partial<Record<Delivery | "knockback" | "stun" | "slow", number>>>;
 }
 
+export type Trait = "flier" | "armoured" | "swarm" | "heavy" | "nimble" | "burrower";
 export const COMBAT = raw as unknown as CombatData;
+let D: CombatData = COMBAT; // (the data stepCombat was given, for land)
+
+/** A species' traits. */
+export const traitsOf = (species: string, data: CombatData = COMBAT): Trait[] => (Object.keys(data.traits) as Trait[]).filter(k => data.traits[k].includes(species));
+/** What a target's traits make of a blow: damage, knockback and slow multipliers, and a stun. */
+export function counterOf(species: string, delivery: Delivery, data: CombatData = COMBAT): { damage: number; knockback: number; stun: number; slow: number } {
+  const out = { damage: 1, knockback: 1, stun: 0, slow: 1 };
+  for (const tr of traitsOf(species, data)) {
+    const k = data.counters[tr];
+    if (!k) continue;
+    out.damage *= k[delivery] ?? 1; out.knockback *= k.knockback ?? 1; out.stun = Math.max(out.stun, k.stun ?? 0); out.slow *= k.slow ?? 1;
+  }
+  return out;
+}
 
 /** Who a blow lands on: a creature, a witch, or a soundsystem (by its area's key; "home" the dancefloor). */
 export type Target = { kind: "creature"; id: number } | { kind: "witch"; id: number } | { kind: "sound"; key: string };
@@ -90,8 +110,8 @@ export interface Shot {
 /** A beam burning (Stage 5): from its creature toward an angle, sweeping toward its target. */
 export interface Beam { id: number; from: number; angle: number; length: number; width: number; until: number; nextTick: number; tick: number; damage: number; side: "wild" | "party"; species: string; attack: string; target: Target }
 
-export type CombatEventKind = "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed";
-export interface CombatEvent { kind: CombatEventKind; x: number; z: number; at: number; id?: number; key?: string; big?: boolean }
+export type CombatEventKind = "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed";
+export interface CombatEvent { kind: CombatEventKind; x: number; z: number; at: number; id?: number; key?: string; big?: boolean; /** A hit: strong against its target's traits (1), resisted (-1). */ counter?: number }
 
 /** A soundsystem's health (home: the dancefloor's ring). */
 export interface SoundHealth { hp: number; max: number; x: number; z: number; radius: number }
@@ -254,14 +274,17 @@ function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target,
   }
   const o = w.creatures[tg.id];
   if (!o || o.gone || o.level === 0) return; // babies can't be hurt
-  o.hp = (o.hp ?? maxHp(o.level)) - damage;
+  // Its traits against this kind of blow (Stage 5): shown as strong or resisted.
+  const k = counterOf(o.species, a.delivery, D);
+  o.hp = (o.hp ?? maxHp(o.level)) - damage * k.damage;
   o.hurtAt = time;
-  s.events.push({ kind: "hit", x: o.x, z: o.z, at: time, id: o.id, big: from?.level === LEGEND });
-  if (a.modifier === "knockback" && a.knockback) {
-    const dx = o.x - fx, dz = o.z - fz, d = Math.hypot(dx, dz) || 1;
-    o.kx = (dx / d) * a.knockback * 6; o.kz = (dz / d) * a.knockback * 6; // eased off over a moment (stepKnock)
+  s.events.push({ kind: "hit", x: o.x, z: o.z, at: time, id: o.id, big: from?.level === LEGEND, counter: k.damage > 1 ? 1 : k.damage < 1 ? -1 : 0 });
+  if (a.modifier === "knockback" && a.knockback && k.knockback > 0) {
+    const dx = o.x - fx, dz = o.z - fz, d = Math.hypot(dx, dz) || 1, kb = a.knockback * k.knockback;
+    o.kx = (dx / d) * kb * 6; o.kz = (dz / d) * kb * 6; // eased off over a moment (stepKnock)
+    if (k.stun > 0) { o.stunUntil = time + k.stun; if (o.fight) o.fight.windupUntil = 0; s.events.push({ kind: "stunned", x: o.x, z: o.z, at: time, id: o.id }); }
   }
-  if (a.modifier === "slow") o.slowUntil = time + (a.slowTime ?? 2); // a new slow renews, never stacks
+  if (a.modifier === "slow") o.slowUntil = time + (a.slowTime ?? 2) * k.slow; // a new slow renews, never stacks
   // It turns on whoever hit it, if it isn't busy with another.
   if (from && o.fight && !o.fight.target) o.fight.target = { kind: "creature", id: from.id };
   if (o.hp <= 0) {
@@ -279,6 +302,7 @@ function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target,
 export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = COMBAT): void {
   // (Events gather over a frame's steps: stepGame clears them once a frame, for the view.)
   const { time, dt, t } = w, C = t.combat;
+  D = data;
   // Shots fly; each hits the first enemy (not its own kind) it reaches, or fizzles at its range.
   const grid = new Grid(w.active.filter(c => fighting(c)));
   s.shots = s.shots.filter(sh => {
@@ -348,6 +372,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       continue;
     }
     if (!fighting(c) || w.asleep(c) || (c.leashed && w.busy(c.id))) { c.fight = undefined; continue; }
+    // Stunned (an armoured one knocked over): it does nothing for a moment.
+    if (c.stunUntil !== undefined && time < c.stunUntil) { c.moving = false; c.vx = 0; c.vz = 0; continue; }
     const atk = attackOf(c.species, c.level, data);
     if (!atk) { c.fight = undefined; continue; } // babies don't attack
     const f = (c.fight ??= { target: null, readyAt: time + atk.attack.cooldown * 0.5 * (c.rand() + 0.5), windupUntil: 0, aimX: 0, aimZ: 0 });

@@ -221,13 +221,13 @@ The other species keep today's straight approach until they get a profile. Babie
 
 **Traits and counters** (data: `combat.json` `traits` and `counters`). The raw numbers stay on the **equal power budget** for the level (same health, same damage a second). The difference is in behaviour and in a few multipliers anyone can read:
 - **Flier**: melee hits it for half (it flits up out of reach). Ranged attackers beat fliers' melee enemies; fliers beat melee.
-- **Armoured**: shots, lobs and beams hit it for half; knockback hits it for double and stuns it a moment (flipped on its back). Melee knockback beats armour; armour beats ranged.
+- **Armoured**: shots, lobs and beams hit it for a third; knockback hits it for double and stuns it a moment (flipped on its back). Melee knockback beats armour; armour beats ranged.
 - **Swarm**: area hits (pulses, quakes, lobs, beams) hit it for double. Area attackers beat swarms.
 - **Heavy**: no knockback and slows last half as long; but it turns slowly, so sidestepping beats it.
 - **Nimble**: steps out of telegraphed shots and lobs; area pulses catch it.
 - **Burrower**: untouchable while burrowed; it has to surface to strike.
 
-A counter is **shown**: a hit that's strong against its target flashes big and gold with a "!!"; a resisted one goes "tink", small and grey. Each creature with a trait wears its trait's mark over its health bar.
+A counter is **shown**: a hit that's strong against its target flashes big and gold with a "!!"; a resisted one goes "tink", small and grey. Each creature with a trait wears its trait's mark by its health bar while it fights (placeholders: flier sky blue, armoured a steel square, swarm violet, heavy a brown square, nimble green, burrower earth).
 
 **Wild legends get move sets** (`movement.json` `legends`): a looping **pattern** of big, telegraphed moves (a **slam** pulse; a **nova** ring of shots; a **spin** beam sweeping all round; a **charge**), with long wind-ups you can read and dodge, and a **phase change** at half health: a roar and a burst, a glow, it speeds up and its pattern gains a move. This is a step toward the legend states below.
 

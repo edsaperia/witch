@@ -14,7 +14,18 @@ import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { drawSigil, sigilColour } from "../../art/generator.js";
 import { dormant, type Game } from "../rules/game";
-import { attackOf, COMBAT, maxHp } from "../rules/combat";
+import { attackOf, COMBAT, maxHp, traitsOf, type Trait } from "../rules/combat";
+
+/** Each trait's mark over a fighting creature (placeholders until the art lands): flier sky blue,
+ *  armoured a steel square, swarm violet, heavy a brown square, nimble green, burrower earth. */
+const TRAIT_MARKS: Record<Trait, { r: number; g: number; b: number; size: number; square?: boolean }> = {
+  flier: { r: 0.55, g: 0.85, b: 1, size: 0.26 },
+  armoured: { r: 0.75, g: 0.78, b: 0.85, size: 0.26, square: true },
+  swarm: { r: 0.8, g: 0.5, b: 1, size: 0.22 },
+  heavy: { r: 0.7, g: 0.45, b: 0.25, size: 0.3, square: true },
+  nimble: { r: 0.5, g: 1, b: 0.55, size: 0.22 },
+  burrower: { r: 0.6, g: 0.42, b: 0.3, size: 0.26 },
+};
 import { blocked, leashPoint, talkTime, talkTurn } from "../rules/leash";
 import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
@@ -280,7 +291,12 @@ export class LeashView {
     // New happenings become effects.
     for (const e of g.combat.events) {
       const c = e.id !== undefined ? g.creatures[e.id] : null;
-      if (e.kind === "hit" && close(e.x, e.z)) this.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 0.35, r: 1, g: 0.95, b: 0.7, seed: e.at * 97 + (e.id ?? 0) });
+      if (e.kind === "hit" && close(e.x, e.z)) {
+        // Counters (Stage 5): strong against its traits, a big gold burst and "!!"; resisted, a small grey tink.
+        if (e.counter === 1) { const top = (c && this.tops.get(c.id)) ?? 1.8; this.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 0.5, r: 1, g: 0.8, b: 0.2, seed: e.at * 97 + (e.id ?? 0), size: 1.8 }); this.fx.push({ kind: "bang", x: e.x, y: top + 0.4, z: e.z, at: time, life: 0.8, r: 1, g: 0.85, b: 0.25, seed: 0 }); }
+        else if (e.counter === -1) this.fx.push({ kind: "tink", x: e.x, y: 1, z: e.z, at: time, life: 0.35, r: 0.7, g: 0.72, b: 0.78, seed: e.at * 97 + (e.id ?? 0), size: 0.7 });
+        else this.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 0.35, r: 1, g: 0.95, b: 0.7, seed: e.at * 97 + (e.id ?? 0) });
+      }
       if (e.kind === "witchHit") this.fx.push({ kind: "spark", x: e.x, y: 1.4, z: e.z, at: time, life: 0.5, r: 1, g: 0.25, b: 0.35, seed: e.at * 31, size: 1.6 });
       if (e.kind === "fled" && close(e.x, e.z)) this.fx.push({ kind: "puff", x: e.x, y: 0.5, z: e.z, at: time, life: 0.8, r: 0.8, g: 0.75, b: 0.7, seed: e.at * 13 });
       if (e.kind === "lost" && c) { const col = neon(c.species); this.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 1.2, r: col.r, g: col.g, b: col.b, seed: e.at * 7, size: 2.5 }); }
@@ -316,6 +332,8 @@ export class LeashView {
         else if (f.kind === "splash") this.standing.add(f.x + Math.cos(a) * (0.5 + r1 * 2) * k, f.y + (1 + r2 * 2) * k - 5 * k * k, f.z + Math.sin(a) * (0.5 + r1 * 2) * k, 0.3, dot, f.r * 1.4, f.g * 1.4, f.b * 1.4, 1 - k * k);
         else if (f.kind === "snap") { const q = (i + 0.5) / n, cut = q > k; if (cut) this.standing.add(f.x + (f.tx! - f.x) * q, f.y + (0.6 - f.y) * q + Math.sin(q * Math.PI) * 1.2 - k * 2 * q, f.z + (f.tz! - f.z) * q, 0.24, dot, f.r, f.g, f.b, (1 - k) * 0.9); }
         else if (f.kind === "teleport") this.standing.add(f.x + Math.cos(a + k * 6) * (0.4 + r1), r2 * 3 + k * 2, f.z + Math.sin(a + k * 6) * (0.4 + r1), 0.25, dot, f.r * 1.3, f.g * 1.3, f.b * 1.3, Math.sin(k * Math.PI));
+        else if (f.kind === "bang") { if (i < 8) { const col = i < 4 ? -1 : 1, row = i % 4, R = SPRITE_UNIFORMS.uRight.value; if (row !== 2) this.over.add(f.x + R.x * col * 0.22, f.y + k * 0.6 + (3 - row) * 0.17, f.z + R.z * col * 0.22, 0.2, sq, f.r, f.g, f.b, 1 - k * k); } }
+        else if (f.kind === "tink") { const aa = (i / n) * Math.PI * 2, R = sz * (0.4 + 0.6 * k); this.standing.add(f.x + Math.cos(aa) * R, f.y + Math.sin(aa) * R * 0.6, f.z, 0.16, dot, f.r, f.g, f.b, 1 - k); }
         else if (f.kind === "ring") { const aa = (i / n) * Math.PI * 2, R = sz * (0.3 + 0.7 * k); this.flat.add(f.x + Math.cos(aa) * R, 0, f.z + Math.sin(aa) * R * 0.8, 0.7, dot, f.r, f.g, f.b, 1 - k); }
       }
     }
@@ -372,6 +390,16 @@ export class LeashView {
       if (healed) for (let i = 0; i < 10; i++) { const k = (time - c.healedAt!) / 0.8, a = hash2(c.id, i, 11) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 0.9 * (0.4 + k), 0.4 + k * 2 + hash2(c.id, i, 13), c.z + Math.sin(a) * 0.6 * (0.4 + k), 0.3, dot, 0.4, 1, 0.5, 1 - k); }
       // Health bars, only when hurt: ten squares over its head.
       const max = maxHp(c.level), hp = c.hp ?? max;
+      // Stunned (an armoured one knocked over): stars round its head.
+      if (c.stunUntil !== undefined && time < c.stunUntil) { const y = (this.tops.get(c.id) ?? 1.4) + 0.2; for (let i = 0; i < 3; i++) { const a = time * 5 + (i / 3) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 0.6, y + Math.sin(a * 2) * 0.08, c.z + Math.sin(a) * 0.4, 0.22, dot, 1, 0.95, 0.5, 0.9); } }
+      // Its traits' marks (Stage 5, readable counters), left of its health bar, while it fights or is hurt.
+      if ((hp < max || healed || c.fight?.target) && !c.fleeUntil && c.level > 0) {
+        const tr = traitsOf(c.species);
+        if (tr.length) {
+          const y = (this.tops.get(c.id) ?? 1.6 + c.level * 0.7) + 0.5, R = SPRITE_UNIFORMS.uRight.value, wide = 1 + c.level * 0.25;
+          tr.forEach((m, j) => { const o = -5.2 * 0.17 * wide - 0.3 - j * 0.35, px = c.x + R.x * o, pz = c.z + R.z * o, M = TRAIT_MARKS[m]; this.over.add(px, y, pz, M.size, M.square ? sq : dot, M.r, M.g, M.b, 0.95); });
+        }
+      }
       if ((hp < max || healed) && !c.fleeUntil) {
         const y = (this.tops.get(c.id) ?? 1.6 + c.level * 0.7) + 0.5, share = Math.max(0, hp / max), R = SPRITE_UNIFORMS.uRight.value, wide = 1 + c.level * 0.25;
         for (let i = 0; i < 10; i++) { // drawn over everything, so a big creature's own sprite doesn't hide it

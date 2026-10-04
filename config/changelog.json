@@ -12,7 +12,9 @@
         "Creatures fight in their own ways: wolves spread out to surround you, hares dart in and back out, boars charge in a straight line (sidestep!), bats swarm without piling up, ravens line up and shoot on the beat, spiders lie still until you come close",
         "New attacks: owls lob shots that land where you were standing (a ring shows where; move out of it), salamanders and spiders burn you with beams",
         "A big glowing number over every rune stone: the wave that will wake it (dimmed once the party's there)",
-        "A test arena for creature fights: add ?arena=wolf*4,raven*3 to the link (your side first, @2 for adults); J starts it again"
+        "A test arena for creature fights: add ?arena=wolf*4,raven*3 to the link (your side first, @2 for adults); J starts it again",
+        "Creatures have traits you can see, as marks by their health bars: fliers (blue) take half from melee, armoured ones (grey square) take a third from shots, lobs and beams but get knocked over and stunned by knockback, swarms (violet) take double from area attacks, heavy ones (brown square) won't be knocked back",
+        "A hit that's strong against its target bursts gold with \"!!\"; one it resists goes \"tink\""
       ]
     },
     {

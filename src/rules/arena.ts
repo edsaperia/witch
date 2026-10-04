@@ -37,7 +37,7 @@ export function setupArena(g: Game, spec: string): void {
   // Borrow creatures from far off (the map's edge holds plenty).
   const spare = g.creatures.filter(c => !c.gone && !c.leashed && !c.boss && Math.hypot(c.x - cx, c.z - cz) > 200).sort((a, b) => Math.hypot(b.x - cx, b.z - cz) - Math.hypot(a.x - cx, a.z - cz));
   groups.forEach((gr, side) => {
-    const party = side === 0, sx = party ? -7 : 7;
+    const party = side === 0, sx = party ? -5.5 : 5.5; // (within the wild's aggro of hers)
     for (let i = 0; i < gr.count; i++) {
       const c = spare.shift();
       if (!c) return;
@@ -54,8 +54,8 @@ export function setupArena(g: Game, spec: string): void {
   });
   g.arena = { spec, ids };
   g.byArea = null;
-  // She stands behind her side (the wild go for the nearest, so hers first), the camera on her.
-  g.witch = { ...g.witch, x: cx - 16, z: cz, mode: "ground", lift: 0, seated: false, vx: 0, vz: 0 };
+  // She stands behind her side (the wild go for the nearest, so hers first; out of talking range), the camera on her.
+  g.witch = { ...g.witch, x: cx - 13, z: cz + 3, mode: "ground", lift: 0, seated: false, vx: 0, vz: 0 };
   g.camera = newCamera(t, g.witch.x, witchHeight(g.witch, t), g.witch.z);
   g.introFocus = undefined;
 }
