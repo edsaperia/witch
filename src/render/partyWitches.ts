@@ -25,11 +25,12 @@ export class PartyWitchView {
   /** Whether our witch is drawn here this frame (idling in a party pose), so the view leaves her out. */
   herIdle = false;
 
-  constructor(private scene: THREE.Scene, private assets: AssetLibrary, private mpp: number) {}
+  constructor(private scene: THREE.Scene, private assets: AssetLibrary, private mpp: number, private light: { lightFloor: number; lightTint: number; lightRim: number }) {}
 
   private batch(key: string, art: WitchArt): SpriteBatch {
     let b = this.batches.get(key);
-    if (!b) { b = new SpriteBatch(art.atlas, this.mpp, { solid: true }); this.batches.set(key, b); this.scene.add(...b.meshes); }
+    // Lit as our witch is (witchLight.ts): by the world's lights, tinted and rimmed by coloured ones, never lost in the dark.
+    if (!b) { b = new SpriteBatch(art.atlas, this.mpp, { solid: true, witchLight: this.light }); this.batches.set(key, b); this.scene.add(...b.meshes); }
     return b;
   }
 

@@ -208,7 +208,7 @@ export class View {
     this.strings = new StringLightsView(this.scene, game);
     this.leashView = new LeashView(this.scene, game);
     this.lasers = new Lasers(this.scene, game);
-    this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp);
+    this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
     this.borders = new BorderView(this.scene, game);
     this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp, { solid: true });
     this.scene.add(...this.soundBatch.meshes);
