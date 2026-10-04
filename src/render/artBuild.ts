@@ -73,7 +73,11 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   def.big.forEach(([kind], i) => {
     if (kind === "tree" && variants.length) return;
     layout.big.push({ bot: add(assets.big[i].sp), top: null });
-    layout.bigWeight.push(variants.length ? 0.1 : 1);
+    // Tall pieces in the open areas (snags, cairns, standing stones, pillars, spires: #33) stand
+    // sparsely: their art's own sparse share as their weight among the area's big objects (about
+    // a fifth of them all), the mounds, boulders and logs at 1.
+    const sparse = (assets.big[i] as { sparse?: number }).sparse;
+    layout.bigWeight.push(variants.length ? 0.1 : sparse ?? 1);
   });
   def.small.forEach(([kind, o], i) => layout.small.push(kind === "tree" ? tree(o as TreeOpts, 500 + i) : { bot: add(assets.small[i].sp), top: null }));
   for (const a of assets.walls) layout.walls.push(add(a.sp));

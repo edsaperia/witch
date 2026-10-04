@@ -862,6 +862,9 @@ export class View {
    *  sprite is the drawn angle nearest its yaw, flipped for the other side; a playing speaker's
    *  cones pump on the beat. Anchored by its ground point, like a path piece. */
   private speakerFlare: (number | undefined)[] = [];
+  /** Her lean cycle's phase (frames) and the time it was last stepped. */
+  private leanPhase = 0;
+  private leanTime = 0;
   /** Each ring speaker's top, state and power, for its laser (Ed: one each, none from the disco ball). */
   private speakerTops: RingSpeaker[] = [];
   private rings = new SymbolRings();
@@ -1034,8 +1037,13 @@ export class View {
     // Climbing to the treetops or dropping to the ground: the rise or descend pose, fluttering
     // between its two frames, until the move is about 90% done.
     const climbing = w.mode === "rising" && w.lift < 0.9, dropping = w.mode === "descending" && w.lift > 0.1;
+    // Leaning, her four-frame lean cycle (#37) plays faster the faster she goes: 8 fps at her ordinary ground speed.
+    const ldt = Math.min(0.1, Math.max(0, time - this.leanTime));
+    this.leanTime = time;
+    this.leanPhase += ldt * 8 * Math.hypot(w.vx, w.vz) / Math.max(1, t.groundSpeed);
+    const leanK = Math.floor(this.leanPhase) % 4, LC = this.assets.witchLean[w.away ? "away" : "towards"];
     let wf = climbing || dropping ? (climbing ? 8 : 12) + (w.away ? 2 : 0) + (Math.floor(time * 7) % 2)
-      : w.lean ? 6 + (w.away ? 1 : 0) : (w.away ? 3 : 0) + (Math.floor(time * 4) % 3);
+      : w.lean ? LC[leanK] ?? 6 + (w.away ? 1 : 0) : (w.away ? 3 : 0) + (Math.floor(time * 4) % 3);
     // Treetop momentum: skidding to brake on a sharp turn, and the fast pose at boost.
     if (!climbing && !dropping) {
       const Fl = this.assets.witchFly, sideF = w.away ? "away" : "towards";
@@ -1043,7 +1051,7 @@ export class View {
       else if ((w.boost ?? 0) > 0.7) wf = Fl.fast[sideF][Math.floor(time * Fl.fast.fps) % Fl.fast[sideF].length];
       // Straight up or down the screen (#27): her heading frames, from behind or coming at us.
       const Hd = w.heading && w.heading !== "side" ? this.assets.witchHeading[w.heading] : null;
-      if (Hd) wf = w.braking ? Hd.brake[Math.floor(time * Fl.brake.fps) % Hd.brake.length] : (w.boost ?? 0) > 0.7 ? Hd.fast[Math.floor(time * Fl.fast.fps) % Hd.fast.length] : w.lean ? Hd.lean : Hd.hover[Math.floor(time * 4) % Hd.hover.length];
+      if (Hd) wf = w.braking ? Hd.brake[Math.floor(time * Fl.brake.fps) % Hd.brake.length] : (w.boost ?? 0) > 0.7 ? Hd.fast[Math.floor(time * Fl.fast.fps) % Hd.fast.length] : w.lean ? Hd.leanCycle[leanK] ?? Hd.lean : Hd.hover[Math.floor(time * 4) % Hd.hover.length];
     }
     // Handling a sigil, she lands first (Ed, 2026-10-03): down to the ground, then the placeSigil or
     // liftSigil pose, and back up into the air when she's done. Talking (by herself, Ed v244), she
