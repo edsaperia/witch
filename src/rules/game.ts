@@ -58,7 +58,7 @@ export interface Game {
   alpha: number;
   /** Fights, shots and soundsystems' health (rules/combat.ts). */
   combat: CombatState;
-  /** What knockouts did in the latest step (for the view). */
+  /** What knockouts did in this frame's steps (for the view). */
   koEvents: KnockoutEvent[];
   /** The creatures by home area (rebuilt when one settles somewhere new). */
   byArea?: Map<string, Creature[]> | null;
@@ -132,6 +132,8 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   for (const k of ONE_SHOT) if (c[k]) P[k] = true;
   if (c.zoom) P.zoom = c.zoom;
   if (g.clock.paused || !(realDt > 0)) return;
+  // This frame's combat and knockout events (several steps' worth, or none), for the view.
+  g.combat.events = []; g.koEvents = [];
   g.acc = Math.min(g.acc + Math.min(realDt, MAX_STEP), MAX_STEP + STEP);
   while (g.acc >= STEP - 1e-9) {
     g.acc -= STEP;
@@ -186,7 +188,6 @@ function fixedStep(g: Game, controls: Controls): void {
   // The speed boost: her speeds times its multiplier while it's on.
   const boost = speedMultiplier(g.spells, g.clock.time, t);
   const W = g.witches[0];
-  g.koEvents = [];
   // Knocked out: no input but the camera's zoom while it plays out.
   if (W.ko) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   const was = W.body;
@@ -262,7 +263,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     },
   }, COMBAT);
   for (const c of active) if (!c.gone && !c.leashed && (c.siege || c.fleeUntil || c.fight?.target || c.wanderTo)) S.busy.add(c.id); // carried on wherever she is
-  for (const e of S.events) if (e.kind === "soundDestroyed" && e.key) {
+  for (const e of S.events) if (e.kind === "soundDestroyed" && e.key && e.at === time) {
     if (e.key === "home") g.speakers = g.speakers.map(() => "destroyed" as SpeakerState);
     else { g.party.areas.delete(e.key); S.ruined.add(e.key); (g.party.ruined ??= new Set()).add(e.key); }
     marchOn(S, e.key, g.creatures);

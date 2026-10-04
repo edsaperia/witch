@@ -82,6 +82,7 @@ export interface CombatState {
   sounds: Map<string, SoundHealth>;
   /** Areas whose soundsystem was destroyed: the party there is over for the run. */
   ruined: Set<string>;
+  /** What happened in this frame's steps (cleared by stepGame each frame), for the view. */
   events: CombatEvent[];
   /** Creatures besieging, fleeing, mid-fight or walking home: stepped wherever the witches are. */
   busy: Set<number>;
@@ -224,7 +225,7 @@ function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target,
 
 /** One step of every fight. Creatures fighting move here (their roam and leash leave them be). */
 export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = COMBAT): void {
-  s.events = [];
+  // (Events gather over a frame's steps: stepGame clears them once a frame, for the view.)
   const { time, dt, t } = w, C = t.combat;
   // Shots fly; each hits the first enemy (not its own kind) it reaches, or fizzles at its range.
   const grid = new Grid(w.active.filter(c => fighting(c)));

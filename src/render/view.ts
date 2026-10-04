@@ -767,7 +767,7 @@ export class View {
     const beat = 60 / g.tuning.beat.bpm;
     let n = 0;
     for (const c of g.creatures) {
-      if (Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
+      if (c.gone || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
       // Invited creatures are party animals: their party gear once it's drawn (the wild look till then).
       const party = c.leashed ? this.assets.partyArt(c.species, c.id, sigilColour(c.species)) : undefined;
       const art = party ?? this.assets.creatureArt(c.species), key = party ? `party-${c.id}` : c.species;
@@ -799,6 +799,8 @@ export class View {
       }
       // Wild creatures blink now and then: their eyeshine goes out about find.eyeshine.blink of the time (Ed, v244).
       if (!c.leashed) { const ph = time * 0.7 + c.id * 0.37; if (hash2(c.id, Math.floor(ph), 41) < g.tuning.find.eyeshine.blink * 6 && ph % 1 < 1 / 6) glow = -1; }
+      // Hit: a white flash and a little pop (combat: medium hit feel).
+      if (c.hurtAt !== undefined && time - c.hurtAt < 0.25) { const k = (time - c.hurtAt) / 0.25; glow = Math.max(glow, 1 - k); scale *= 1 + 0.15 * (1 - k); }
       l.push({ x: c.x + sway, y: dance, z: c.z, frame, flip: c.facing < 0, fresh, glow, scale });
       creatureShadows.push({ x: c.x, z: c.z, w: frame.w * this.mpp * 0.7, d: frame.w * this.mpp * 0.25 });
       n++;
@@ -1006,6 +1008,9 @@ export class View {
     this.camera.position.copy(target).add(back);
     this.camera.up.set(0, 1, 0);
     this.camera.lookAt(target);
+    // A legend's quake nearby shakes the screen (only legends: Stage 4).
+    const shake = this.leashView.shake(time);
+    if (shake > 0) this.camera.position.add(this.v3.set(Math.sin(time * 61) * shake, Math.sin(time * 47 + 1) * shake * 0.6, 0));
     this.updateFrustum();
 
     // Sprites face the camera, tilted back toward it by spriteTilt.
@@ -1144,10 +1149,18 @@ export class View {
       wx += (seat.x - fwd.x * 0.6 - wx) * k; wyy += (seat.y - fwd.y * 0.6 - wyy) * k; wz += (seat.z - fwd.z * 0.6 - wz) * k;
       if (w.seated) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
     }
+    // Knocked out (Ed, 2026-10-04): she sits slumped on the ground while her stack lets go, then
+    // vanishes in a sparkle and comes back in one at the treehouse.
+    const KO = g.witches[0].ko;
+    let hidden = false;
+    if (KO) {
+      if (time < KO.teleportAt) { wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length]; wyy = 0; }
+      else hidden = time < KO.backAt - (KO.backAt - KO.teleportAt) * 0.25;
+    }
     const wframe = this.assets.witch.frames[wf], hatTop = wyy + wframe.h * this.mpp;
     this.partyWitchView.update(g, time, (x, z, ww, hh) => this.inView(x, z, ww, hh, 4));
     // Idling into the party, she's drawn in her party pose there instead.
-    this.witchBatch.set(this.partyWitchView.herIdle ? [] : [{ x: wx, y: wyy, z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
+    this.witchBatch.set(this.partyWitchView.herIdle || hidden ? [] : [{ x: wx, y: wyy, z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
     // Where she is on screen (low-res pixels) and how far from the camera, for the occluder fade.
     {
       const px = (x: number, y: number, z: number) => { const p = placed(this.v3.set(x, y, z)).project(this.camera); return [(p.x + 1) / 2 * this.width, (p.y + 1) / 2 * this.height]; };

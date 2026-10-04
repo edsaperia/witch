@@ -204,6 +204,9 @@ let last = 0, fps = 60, frames = 0, fpsT = 0;
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
 let manual = false;
+let overShown = false;
+document.getElementById("again")?.addEventListener("click", () => location.reload());
+document.getElementById("fresh")?.addEventListener("click", () => { const u = new URL(location.href); u.searchParams.set("seed", String(Math.floor(Math.random() * 1e6))); location.href = u.toString(); });
 function frame(now: number): void {
   requestAnimationFrame(frame);
   if (manual) return;
@@ -215,6 +218,13 @@ function frame(now: number): void {
   if (c.debug) { debugOn = !debugOn; debugEl.classList.toggle("on", debugOn); debugButtons.classList.toggle("on", debugOn); }
   view.debugReadouts = debugOn;
   stepGame(game, c, dt);
+  // The run is over when every soundsystem has fallen (Stage 4): the end screen, and a restart.
+  if (game.over && !overShown) {
+    overShown = true;
+    game.clock.paused = true;
+    document.getElementById("over-stats")!.textContent = `You lasted ${Math.floor(game.clock.time / 60)} min ${Math.floor(game.clock.time % 60)} s and ${game.party.wave} waves.`;
+    document.getElementById("over")!.classList.add("on");
+  }
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
   music?.update(musicMix(game, game.witch), game.clock.time, tuning.beat.bpm, !game.clock.paused);
   if (!ready) return;
