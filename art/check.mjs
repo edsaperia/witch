@@ -285,6 +285,16 @@ const report = await b.page.evaluate(async () => {
     }
     res.push({ what: "farm and street pieces: farm 15+, street 10+; standing, origin on the sprite, 0.5 to 9 m, footprint up to 6 m, tall ones split, only the flagged ones glow", good: !bad.length && fam.farm >= 15 && fam.street >= 10, info: bad.join(", ") || Object.entries(fam).map(([k, n]) => k + " " + n).join(", ") });
   }
+  { // the large scenes' pieces: each standing, origin on the sprite, 0.3 to 16 m, tall ones split, decals flat, only the flagged ones glow; buildings in two halves
+    const bad = [], fam = {}, EM = new Set([...G.EMISSIVE]);
+    for (const d of G.LANDMARKS) {
+      const R = G.landmarkSprite(d.id, st), sp = R.whole, s2 = stats(sp), lit = [...sp.m].some(v => EM.has(v)), big = Math.max(R.metres.width, R.metres.height); fam[d.family] = (fam[d.family] || 0) + (d.half === "near" ? 0 : 1);
+      const split = d.split == null || ((stats(R.top).n > 20 || d.half === "near") && stats(R.top).n + stats(R.bot).n === s2.n), flat = !d.decal || R.metres.height < R.metres.width * .7, nan = [...sp.n].some(v => !Number.isFinite(v));
+      if (!(s2.n > 30 && s2.bottom > 0 && !nan && split && flat && lit === !!d.glow && big >= .3 && big <= 26 && R.metres.footprint > 0 && R.origin.x >= 0 && R.origin.x <= sp.w)) bad.push(`${d.id} ${R.metres.width}x${R.metres.height} m${split ? "" : " split"}${flat ? "" : " not flat"}${lit === !!d.glow ? "" : " glow"}`);
+    }
+    const halves = Object.keys(G.LANDMARK_BUILDINGS).filter(b => G.LANDMARK_BY_ID[b + "-far"] && G.LANDMARK_BY_ID[b + "-near"]).length;
+    res.push({ what: "large scenes' pieces: cemetery, car park, scrap yard, 7 places of worship, castle, classical; standing, sized, tall ones split, decals flat, only the flagged ones glow; walk-in buildings in far and near halves", good: !bad.length && fam.worship === 7 && fam.cemetery >= 8 && fam.castle >= 5 && fam.classical >= 6 && halves >= 5, info: bad.join(", ") || Object.entries(fam).map(([k, n]) => k + " " + n).join(", ") + `, ${halves} in halves` });
+  }
   { // scenes: every piece names a real sprite; 3+ pieces; at most one glowing kind; footprints sane (small 3 to 12 m) and holding every piece; mirroring keeps every distance and the footprint
     const bad = [], sizes = [];
     for (const S of G.SCENES) {
@@ -296,8 +306,8 @@ const report = await b.page.evaluate(async () => {
       sizes.push(L.footprint);
       if (!(L.pieces.length >= 3 && glowKinds <= 1 && L.footprint >= lo && L.footprint <= hi && inside && mirrored)) bad.push(`${S.id}: ${L.pieces.length} pieces, ${glowKinds} glowing, footprint ${L.footprint} m${inside ? "" : ", a piece outside"}${mirrored ? "" : ", mirror"}`);
     }
-    const small = G.SCENES.filter(S => S.size === "small").length;
-    res.push({ what: "scenes: 10+ small; every piece real, 3+ each, one glowing kind at most, footprints sane and holding their pieces, mirroring keeps distances; hay bales and fences as scenes", good: !bad.length && small >= 10 && !!G.SCENE_BY_ID["hay-bales"] && !!G.SCENE_BY_ID["fence-line"], info: bad.join(", ") || `${small} small, footprints ${Math.min(...sizes)} to ${Math.max(...sizes)} m` });
+    const small = G.SCENES.filter(S => S.size === "small").length, large = G.SCENES.filter(S => S.size === "large").length;
+    res.push({ what: "scenes: 10+ small, 12 large; every piece real, 3+ each, one glowing kind at most, footprints sane and holding their pieces, mirroring keeps distances; hay bales and fences as scenes", good: !bad.length && small >= 10 && large >= 12 && !!G.SCENE_BY_ID["hay-bales"] && !!G.SCENE_BY_ID["fence-line"], info: bad.join(", ") || `${small} small, ${large} large, footprints ${Math.min(...sizes)} to ${Math.max(...sizes)} m` });
   }
   { // paths: every kind's strip tiles along its length, its end, Y and T are drawn, only the magic trail glows; the railway's three variants, points, broken end and crossing; the 3D pieces stand, only flagged ones glow; every area has a path kind
     const bad = [], EM = new Set([...G.EMISSIVE]), lit = sp => [...sp.m].some(v => EM.has(v)), n = sp => { let k = 0; for (const v of sp.m) if (v) k++; return k; };

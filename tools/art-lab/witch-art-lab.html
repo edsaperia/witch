@@ -166,14 +166,14 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
-        <h2>Farm and street</h2>
-        <p class="note">Countryside and street decorations, single pieces: the farm (tractor, trailers, hay bales, fences, a gate, trough, water butt, scarecrow, churn, barrow, plough), the street (lampposts, one still flickering warm; signs blank or symbol-only; a bench, bin bags, a bus shelter), then the pieces the small scenes are built from, with the witch for scale.</p>
+        <h2>Farm, street and landmarks</h2>
+        <p class="note">Countryside and street decorations, single pieces: the farm (tractor, trailers, hay bales, fences, a gate, trough, water butt, scarecrow, churn, barrow, plough), the street (lampposts, one still flickering warm; signs blank or symbol-only; a bench, bin bags, a bus shelter), then the pieces the small scenes are built from, then the large scenes' pieces (cemetery, car park, scrap yard, the places of worship as far and near halves, castle, classical ruins), with the witch for scale.</p>
         <div class="sheet-wrap"><canvas id="countrySheet" width="420" height="160"></canvas></div>
       </section>
 
       <section style="display:grid;gap:10px">
         <h2>Scenes</h2>
-        <p class="note">Scenes: a few related pieces arranged together, each counting as one piece on the map. Each is composed from reused piece sprites at its positions, the witch at its middle.</p>
+        <p class="note">Scenes: a few related pieces arranged together, each counting as one piece on the map. Each is composed from reused piece sprites at its positions, the witch at its middle: the small ones, then the large ones at set-piece scale.</p>
         <div class="sheet-wrap"><canvas id="sceneSheet" width="420" height="160"></canvas></div>
       </section>
 
@@ -247,7 +247,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, DISCO_GRID, DISCO_MASK, discoPatterns, DISCO_TRANSITIONS, discoCompose, discoPaint, DANCEFLOOR_SPEAKER_ANGLES, dancefloorSpeakerSprite, dancefloorSpeakerColours, soundsystemColours, witchSprite, witchColours, areaTreeVariants, TREE_SPECIES, splitTree, treeColours, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS, COUNTRY, countrySprite, countryColours, SCENES, scenePlacements } from "../../art/generator.js";
+import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, DISCO_GRID, DISCO_MASK, discoPatterns, DISCO_TRANSITIONS, discoCompose, discoPaint, DANCEFLOOR_SPEAKER_ANGLES, dancefloorSpeakerSprite, dancefloorSpeakerColours, soundsystemColours, witchSprite, witchColours, areaTreeVariants, TREE_SPECIES, splitTree, treeColours, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS, COUNTRY, countrySprite, countryColours, SCENES, scenePlacements, LANDMARKS, landmarkSprite, landmarkColours } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -588,6 +588,7 @@ function renderCountry() {
     };
     const col = countryColours(st), rows = [];
     for (const fam of ["farm", "street", "scene"]) { const items = COUNTRY.filter(d => d.family === fam).map(d => bake(countrySprite(d.id, st).whole, col, st, "none")); for (let i = 0; i < items.length; i += 9) rows.push([...items.slice(i, i + 9), wit]); }
+    const lcol = landmarkColours(st); for (const fam of ["cemetery", "carpark", "scrap", "worship", "castle", "classical"]) { const items = LANDMARKS.filter(d => d.family === fam && !d.decal).map(d => bake(landmarkSprite(d.id, st).whole, lcol, st, "none")); for (let i = 0; i < items.length; i += 9) rows.push([...items.slice(i, i + 9), wit]); }
     sheet("countrySheet", rows);
     const baked = new Map(), bk = p => { if (!baked.has(p.ref)) baked.set(p.ref, bake(p.sprite.whole, p.colours, st, "none")); return baked.get(p.ref); };
     const scenes = SCENES.map(S => { // each scene, composed from its pieces (mirrored ones drawn flipped with their mirrored normals)
@@ -598,7 +599,7 @@ function renderCountry() {
       parts.sort((p, q) => (q.decal ? 1 : 0) - (p.decal ? 1 : 0) || p.depth - q.depth).forEach(p => { draw(A.getContext("2d"), p.b.A, p); draw(N.getContext("2d"), p.flip ? p.b.NF : p.b.N, p); });
       return { A, N, w, h };
     });
-    const srows = []; for (let i = 0; i < scenes.length; i += 3) srows.push(scenes.slice(i, i + 3));
+    const srows = []; for (let i = 0; i < scenes.length; i += 3) srows.push(scenes.slice(i, i + 3)); // (the small ones first, then the large)
     sheet("sceneSheet", srows);
   }, 1100);
 }
