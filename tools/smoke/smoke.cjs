@@ -90,7 +90,7 @@ async function main() {
     await shot(page, "03-treetop.png");
     [s0, s] = await hold(page, "KeyW", 2);
     const topSpeed = (s0.z - s.z) / (s.t - s0.t);
-    check(topSpeed > groundSpeed * 1.5 && topSpeed <= tuning.treetopSpeed * 1.01, `flies north faster in treetop mode (${topSpeed.toFixed(1)} m/s)`);
+    check(topSpeed > groundSpeed * 1.5 && topSpeed <= tuning.treetopSpeed * (tuning.treetop?.boost ?? 1) * 1.01, `flies north faster in treetop mode, at most its full boost (${topSpeed.toFixed(1)} m/s)`);
     await shot(page, "04-treetop-flying.png");
     // Fly a fixed path through every zoom level in both modes; nothing of any kind may appear or
     // vanish in clear view on the way (trees, undergrowth, walls, set pieces, creatures, props).
