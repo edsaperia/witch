@@ -75,7 +75,9 @@ export interface Creature {
    *  signature move is ready again, and when an ambush was sprung. */
   vx?: number;
   vz?: number;
-  charge?: { dx: number; dz: number; speed: number; until: number };
+  charge?: { dx: number; dz: number; speed: number; until: number; /** a legend's charge: whom it has trampled */ hit?: number[] };
+  /** A wild legend's move set (Stage 5): where it is in its pattern, and its phase. */
+  legend?: { step: number; phase: 1 | 2 };
   moveReadyAt?: number;
   sprung?: number;
   /** Enraged by a wave (it's besieging or marching on a soundsystem): it can't be invited (Ed's playtest). */

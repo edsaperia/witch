@@ -17,7 +17,9 @@
         "A hit that's strong against its target bursts gold with \"!!\"; one it resists goes \"tink\"",
         "Moles burrow: a mound of earth races over the ground at you (nothing can hit it) and the mole bursts up under you",
         "Toads leap at you in an arc and slam down: a ring shows where they'll land",
-        "Bats screech all round themselves (a ring shows its reach), spiders spit webs (an adult's slows you), beetles plod in slowly but are hard to stop"
+        "Bats screech all round themselves (a ring shows its reach), spiders spit webs (an adult's slows you), beetles plod in slowly but are hard to stop",
+        "Wild legends fight with big, slow, telegraphed moves in a pattern: a ground slam (a ring shows its reach), a nova of shots all round (spokes show it coming), and a charge (it backs off, then thunders down a lane you can see)",
+        "At half health a wild legend roars (a red burst, the screen shakes) into its second phase: faster, with a beam it spins all the way round (a circle shows its reach), and a red aura"
       ]
     },
     {

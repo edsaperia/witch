@@ -20,10 +20,13 @@ export interface Profile {
   tactics?: { kind: TacticKind; w: number }[];
   move?: Move;
 }
-export interface MovementData { repick: number; packRadius: number; profiles: Record<string, Profile> }
+/** A wild legend's move set (Stage 5): moves (combat.json attacks) in a loop, and its second phase. */
+export interface LegendSet { pattern: string[]; phase2: { at: number; pattern: string[]; speed: number; cooldown: number } }
+export interface MovementData { repick: number; packRadius: number; profiles: Record<string, Profile>; legends: LegendSet & { bySpecies: Record<string, LegendSet> } }
 export const MOVEMENT = raw as unknown as MovementData;
 
 export const profileOf = (species: string, data: MovementData = MOVEMENT): Profile | null => data.profiles[species] ?? null;
+export const legendSetOf = (species: string, data: MovementData = MOVEMENT): LegendSet => data.legends.bySpecies[species] ?? data.legends;
 
 /** A pack: creatures of one kind on one side going for the same target, and the tactic it's using. */
 export interface Pack { tactic: TacticKind; members: Creature[]; seed: number; cx: number; cz: number }

@@ -9,7 +9,7 @@
 import raw from "../../config/combat.json";
 import { LEGEND, type Creature, type Level } from "./creatures";
 import type { Cell } from "./partition";
-import { packsOf, profileOf, steer, stepBurrow, stepCharge, stepLeap } from "./movement";
+import { legendSetOf, packsOf, profileOf, steer, stepBurrow, stepCharge, stepLeap, type LegendSet } from "./movement";
 import type { Tuning } from "./tuning";
 
 export type Delivery = "melee" | "shot" | "quake" | "lob" | "beam" | "pulse";
@@ -36,6 +36,9 @@ export interface Attack {
   sweep?: number;
   /** Its damage times this, so its expected damage a second matches the level's budget. */
   factor?: number;
+  /** A legend's nova: how many shots, in a ring. A legend's spin: degrees a second its beam turns. */
+  shots?: number;
+  spin?: number;
 }
 
 export interface CombatData {
@@ -86,6 +89,8 @@ export interface Fight {
   windupUntil: number;
   aimX: number;
   aimZ: number;
+  /** A wild legend's move being wound up (Stage 5), for the view's telegraph. */
+  move?: string;
 }
 
 /** A projectile in flight: dodgeable (it flies at a point, not after its target). */
@@ -108,9 +113,9 @@ export interface Shot {
 }
 
 /** A beam burning (Stage 5): from its creature toward an angle, sweeping toward its target. */
-export interface Beam { id: number; from: number; angle: number; length: number; width: number; until: number; nextTick: number; tick: number; damage: number; side: "wild" | "party"; species: string; attack: string; target: Target }
+export interface Beam { /** A legend's spin (radians a second), and when each thing it swept was last hit. */ spin?: number; last?: Record<string, number>; id: number; from: number; angle: number; length: number; width: number; until: number; nextTick: number; tick: number; damage: number; side: "wild" | "party"; species: string; attack: string; target: Target }
 
-export type CombatEventKind = "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed";
+export type CombatEventKind = "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed";
 export interface CombatEvent { kind: CombatEventKind; x: number; z: number; at: number; id?: number; key?: string; big?: boolean; /** A hit: strong against its target's traits (1), resisted (-1). */ counter?: number }
 
 /** A soundsystem's health (home: the dancefloor's ring). */
@@ -335,6 +340,19 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   s.beams = s.beams.filter(b => {
     const c = w.creatures[b.from];
     if (!c || c.gone || c.fleeUntil || time >= b.until) return false;
+    if (b.spin) {
+      // A legend's spin: the beam goes all the way round; whatever it sweeps over is hit, once a pass.
+      const prev = b.angle, a = data.attacks[b.attack], turn = b.spin * dt, last = (b.last ??= {}), again = (Math.PI * 2 / b.spin) * 0.8;
+      b.angle += turn;
+      const swept = (x: number, z: number, r: number) => { const rx = x - c.x, rz = z - c.z, dd = Math.hypot(rx, rz); if (dd > b.length + r || dd < 0.3) return false; const da = (((Math.atan2(rz, rx) - prev) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2); return da <= turn + (b.width / 2 + r) / dd; };
+      const once = (key: string) => { if (last[key] !== undefined && time - last[key] < again) return false; last[key] = time; return true; };
+      for (const o of grid.near(c.x, c.z, b.length + 2)) if (o !== c && targetable(o) && sideOf(o) !== b.side && o.species !== b.species && !w.asleep(o) && swept(o.x, o.z, 0.4 + o.level * 0.2) && once(`c${o.id}`)) land(w, s, c, { kind: "creature", id: o.id }, b.damage, a, c.x, c.z);
+      if (b.side === "wild") {
+        for (const v of w.witches) if (v.onGround && !v.down && swept(v.x, v.z, 0.3) && once(`w${v.id}`)) land(w, s, c, { kind: "witch", id: v.id }, b.damage, a, c.x, c.z);
+        for (const [key, h] of s.sounds) if (h.hp > 0 && swept(h.x, h.z, h.radius) && once(`s${key}`)) land(w, s, c, { kind: "sound", key }, b.damage, a, c.x, c.z);
+      }
+      return true;
+    }
     const p = targetPos(w, s, b.target);
     if (p) {
       const want = Math.atan2(p.z - c.z, p.x - c.x);
@@ -400,6 +418,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     const d = Math.hypot(p.x - c.x, p.z - c.z), A = atk.attack, K = data.kite, kites = A.delivery === "shot" && K.species.includes(c.species);
     const want = A.delivery === "shot" || A.delivery === "lob" || A.delivery === "beam" ? A.range * (kites ? K.far : 0.8) : A.delivery === "pulse" ? Math.max(0.8, (A.radius ?? 2) * 0.6) : A.range + p.r + (A.lunge ?? 0) - 0.3;
     const speed = c.speed * (c.leashed ? C.partyChaseMult : C.chaseMult) * (c.slowUntil && time < c.slowUntil ? A.slowMult ?? 0.5 : 1) * (c.level === LEGEND ? 0.6 : 1);
+    // A wild legend fights by its move set (Stage 5): long, telegraphed moves in a pattern, and a second phase.
+    if (c.level === LEGEND && !c.leashed && !(f.target.kind === "sound" && d > 25)) { stepLegend(w, s, c, f, p, d, legendSetOf(c.species), data, grid); continue; }
     const P = profileOf(c.species), marching = f.target.kind === "sound" && d > 25;
     if (f.windupUntil === 0 && P && !marching) {
       // A movement profile (Stage 5): its signature move, then its behaviours and its pack's tactic.
@@ -489,6 +509,71 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         for (const [key, h] of s.sounds) if (h.hp > 0 && Math.hypot(h.x - c.x, h.z - c.z) <= R + h.radius) land(w, s, c, { kind: "sound", key }, dmg, A, c.x, c.z);
       }
     }
+  }
+}
+
+/** A wild legend's turn (Stage 5): it works through its pattern of big moves, approaching each one's
+ *  reach and winding it up long and visibly (the view telegraphs each), and roars into its second
+ *  phase at phase2.at of its health: a faster pattern with more in it. */
+function stepLegend(w: CombatWorld, s: CombatState, c: Creature, f: Fight, p: { x: number; z: number; r: number }, d: number, L: LegendSet, data: CombatData, grid: Grid): void {
+  const { time, dt } = w, C = w.t.combat, st = (c.legend ??= { step: 0, phase: 1 }), max = maxHp(c.level, data);
+  if (st.phase === 1 && (c.hp ?? max) <= max * L.phase2.at) {
+    // The phase change: a roar (a burst and the screen shaking), and it starts its second pattern.
+    st.phase = 2; st.step = 0; f.windupUntil = 0; f.move = undefined; c.charge = undefined; f.readyAt = time + 1.2; c.moving = false;
+    s.events.push({ kind: "phase", x: c.x, z: c.z, at: time, id: c.id, big: true });
+    return;
+  }
+  const two = st.phase === 2, pat = two ? L.phase2.pattern : L.pattern, name = pat[st.step % pat.length], A = data.attacks[name];
+  if (!A) { st.step++; return; }
+  const fast = two ? L.phase2.speed : 1, cool = two ? L.phase2.cooldown : 1, dmg = data.levels.dps[LEGEND] * A.cooldown * (A.factor ?? 1);
+  // Charging: a straight run, trampling everything of the other side it meets, once each.
+  if (c.charge) {
+    const ch = c.charge, hit = (ch.hit ??= []);
+    if (time < ch.until) {
+      c.x += ch.dx * ch.speed * dt; c.z += ch.dz * ch.speed * dt; c.moving = true; c.walk += dt * 8; c.facing = ch.dx >= 0 ? 1 : -1;
+      for (const o of grid.near(c.x, c.z, A.range + 2)) if (o !== c && targetable(o) && sideOf(o) !== sideOf(c) && !truce(c, o) && !hit.includes(o.id) && Math.hypot(o.x - c.x, o.z - c.z) <= A.range + 0.4 + o.level * 0.2) { hit.push(o.id); land(w, s, c, { kind: "creature", id: o.id }, dmg, A, c.x, c.z); }
+      for (const v of w.witches) if (v.onGround && !v.down && !hit.includes(-1 - v.id) && Math.hypot(v.x - c.x, v.z - c.z) <= A.range + 0.3) { hit.push(-1 - v.id); land(w, s, c, { kind: "witch", id: v.id }, dmg, A, c.x, c.z); }
+      return;
+    }
+    c.charge = undefined; c.moving = false;
+    return;
+  }
+  if (f.windupUntil > 0) {
+    c.moving = false;
+    if (time < f.windupUntil) return;
+    f.windupUntil = 0; f.move = undefined; f.readyAt = time + A.cooldown * cool; st.step++;
+    const aim = Math.atan2(f.aimZ - c.z, f.aimX - c.x);
+    if (A.delivery === "quake") {
+      s.events.push({ kind: "quake", x: c.x, z: c.z, at: time, id: c.id, big: true });
+      area(w, s, c, sideOf(c), c.species, c.x, c.z, A.radius ?? 5, dmg, A, grid);
+    } else if (A.delivery === "shot") {
+      // The nova: a ring of shots outward, one straight at where it aimed.
+      const n = A.shots ?? 8, v = A.speed ?? 8;
+      for (let i = 0; i < n; i++) { const a = aim + (i / n) * Math.PI * 2; s.shots.push({ id: s.nextShot++, x: c.x, z: c.z, vx: Math.cos(a) * v, vz: Math.sin(a) * v, until: time + A.range / v, from: c.id, side: sideOf(c), species: c.species, damage: dmg, radius: A.radius ?? 0.8, attack: name }); }
+      s.events.push({ kind: "nova", x: c.x, z: c.z, at: time, id: c.id });
+    } else if (A.delivery === "beam") {
+      const dur = A.duration ?? 2;
+      s.beams.push({ id: s.nextShot++, from: c.id, angle: aim, length: A.range, width: A.width ?? 1.5, until: time + dur, nextTick: time, tick: A.tick ?? 0.2, damage: dmg, side: sideOf(c), species: c.species, attack: name, target: f.target!, spin: ((A.spin ?? 150) * Math.PI / 180) * fast });
+      s.events.push({ kind: "beam", x: c.x, z: c.z, at: time, id: c.id });
+    } else {
+      const dx = f.aimX - c.x, dz = f.aimZ - c.z, dd = Math.hypot(dx, dz) || 1;
+      c.charge = { dx: dx / dd, dz: dz / dd, speed: (A.speed ?? 8) * fast, until: time + (A.duration ?? 1.5), hit: [] };
+      s.events.push({ kind: "rush", x: c.x, z: c.z, at: time, id: c.id });
+    }
+    return;
+  }
+  // To each move's reach, then wind it up (where it aims is fixed then: step out of it).
+  const reach = A.delivery === "quake" ? (A.radius ?? 5) * 0.7 : A.delivery === "shot" ? A.range * 0.6 : A.delivery === "beam" ? A.range * 0.7 : 14;
+  if (A.delivery === "melee" && d < 6 && !(time >= f.readyAt && d >= 4)) {
+    // Too close to charge: it backs off first, heavily, to get a run at its target.
+    if (d > 1e-3) { c.x -= ((p.x - c.x) / d) * 2.5 * dt; c.z -= ((p.z - c.z) / d) * 2.5 * dt; c.moving = true; c.walk += dt * 3; c.facing = p.x >= c.x ? 1 : -1; }
+    return;
+  }
+  if (d > reach) { moveToward(c, p.x, p.z, reach * 0.9, c.speed * C.chaseMult * 0.6 * fast, dt); return; }
+  c.moving = false; c.facing = p.x >= c.x ? 1 : -1;
+  if (time >= f.readyAt) {
+    f.windupUntil = time + A.windup; f.aimX = p.x; f.aimZ = p.z; f.move = name;
+    s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id });
   }
 }
 
