@@ -324,7 +324,7 @@ export class LeashView {
       // Stage 5: a lob lands in a ring the size of its splash; an ambusher springs; a charge slams home.
       if (e.kind === "landed" && close(e.x, e.z, 150)) { const sh = c ? attackOf(c.species, c.level) : null; this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.5, r: 1, g: 0.5, b: 0.35, seed: 0, size: sh?.attack.radius ?? 1.8 }); this.fx.push({ kind: "puff", x: e.x, y: 0.4, z: e.z, at: time, life: 0.6, r: 0.9, g: 0.7, b: 0.6, seed: e.at * 17 }); }
       // A pulse (a screech, an upheaval) or a toad's slam: a ring out to its reach; burrowing or surfacing, a spray of earth.
-      if ((e.kind === "pulse" || e.kind === "slammed") && c && close(e.x, e.z)) { const A = attackOf(c.species, c.level)?.attack, col = c.leashed ? neon(c.species) : { r: 1, g: 0.45, b: 0.4 }; this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.45, r: col.r, g: col.g, b: col.b, seed: 0, size: A?.radius ?? 2.5 }); }
+      if ((e.kind === "pulse" || e.kind === "slammed") && c && close(e.x, e.z)) { const A = attackOf(c.species, c.level)?.attack, col = c.leashed || c.legendState === "happy" ? neon(c.species) : { r: 1, g: 0.45, b: 0.4 }; this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.45, r: col.r, g: col.g, b: col.b, seed: 0, size: A?.radius ?? 2.5 }); }
       if (e.kind === "slept" && close(e.x, e.z, 150)) for (let i = 0; i < 3; i++) this.fx.push({ kind: "puff", x: e.x + (i - 1) * 1.2, y: 0.4, z: e.z, at: time, life: 1.4, r: 0.5, g: 0.4, b: 0.28, seed: e.at * 7 + i });
       if ((e.kind === "burrowed" || e.kind === "surfaced" || e.kind === "slammed") && close(e.x, e.z)) this.fx.push({ kind: "puff", x: e.x, y: 0.3, z: e.z, at: time, life: 0.6, r: 0.55, g: 0.42, b: 0.3, seed: e.at * 41 + (e.id ?? 0) });
       if (e.kind === "sprung" && close(e.x, e.z)) this.fx.push({ kind: "spark", x: e.x, y: 0.8, z: e.z, at: time, life: 0.4, r: 1, g: 0.3, b: 0.3, seed: e.at * 23, size: 1.4 });
@@ -398,7 +398,7 @@ export class LeashView {
       // Telegraphs: winding up, a ring tightens at its feet; a shot shows its line; the quake its reach.
       const f = c.fight, atk = f && f.windupUntil > 0 ? attackOf(c.species, c.level) : null;
       if (atk && f) {
-        const A = (f.move && COMBAT.attacks[f.move]) || atk.attack, k = Math.max(0, Math.min(1, 1 - (f.windupUntil - time) / Math.max(0.05, A.windup))), wild = !c.leashed;
+        const A = (f.move && COMBAT.attacks[f.move]) || atk.attack, k = Math.max(0, Math.min(1, 1 - (f.windupUntil - time) / Math.max(0.05, A.windup))), wild = !c.leashed && c.legendState !== "happy"; // (a happy legend fights for her, in her colours)
         const [r, gg, b] = wild ? [1, 0.3, 0.3] : [neon(c.species).r, neon(c.species).g, neon(c.species).b];
         if (A.delivery === "quake" || A.delivery === "pulse") {
           const R = A.radius ?? 5;

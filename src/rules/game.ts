@@ -12,7 +12,7 @@ import { nextSpeakerState, type SpeakerState } from "./speakers";
 import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
 import { SIGIL_NEON } from "../../art/sigils.js";
 import { newBuffs, stepBuffs, type BuffState } from "./buffs";
-import { COMBAT, marchOn, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
+import { COMBAT, marchOn, maxHp, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
 import { hurt, knockOut, newHealth, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
 import { applyDash, newDash, startDash, type DashState } from "./dash";
 import { castSpell, newSpells, speedMultiplier, type SpellState } from "./spells";
@@ -294,7 +294,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     creatures: g.creatures, active, time, dt, t, busy,
     witches: g.witches.map((w, i) => ({ id: i, x: w.body.x, z: w.body.z, onGround: w.body.mode === "ground" && !w.body.seated, down: !!w.ko })),
     leashPoint: id => { for (const w of g.witches) { const p = leashPoint(w.leash, id, w.body.x, w.body.z); if (p) return p; } return null; },
-    asleep: c => dormant(g, c) || c.legendState === "happy", // (a happy legend is at peace: in no fights, for now)
+    asleep: c => dormant(g, c),
     parked: id => g.witches.some(w => w.leash.placed.some(p => p.id === id)),
     talkingTo: id => g.witches.findIndex(w => !!w.leash.talk && w.leash.talk.id === id && !w.leash.talk.refused),
     exit: (x, z) => {
@@ -378,7 +378,8 @@ export const dormant = (_g: Game, c: Creature): boolean => !!c.boss && !c.leashe
 /** The legends' states (Ed, 2026-10-04): asleep ones wake when the party reaches their area,
  *  heaving out of the ground for wildLegends.wake seconds (untouchable), then awake and angry,
  *  guarding their area (combat: stepLegend). Beaten, combat puts them to sleep for good. Debug: the
- *  nearest not asleep for good turns happy. */
+ *  nearest not asleep for good turns happy; a happy one guards its area for her (combat) and heals
+ *  while no enemy is near. */
 function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
   const time = g.clock.time, W = g.tuning.wildLegends;
   for (const id of ids) {
@@ -390,6 +391,8 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
       if (g.combat.sounds.has(key)) c.siege = key; // its area's soundsystem, never another's
     }
   }
+  // A happy legend heals while no enemy is near (Ed's default, 2026-10-04).
+  for (const id of ids) { const c = g.creatures[id]; if (c.legendState === "happy" && c.hp !== undefined && !c.fight?.target) { c.hp += W.heal * STEP; if (c.hp >= maxHp(c.level)) c.hp = undefined; } }
   if (happyNearest) {
     let best: Creature | null = null, bd = Infinity;
     for (const id of ids) { const c = g.creatures[id], d = Math.hypot(c.x - g.witch.x, c.z - g.witch.z); if (c.legendState !== "slept" && c.legendState !== "happy" && d < bd) { bd = d; best = c; } }

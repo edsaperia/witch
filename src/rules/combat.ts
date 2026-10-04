@@ -153,7 +153,8 @@ export const fighting = (c: Creature) => !c.gone && !c.fleeUntil && !c.wanderTo;
  *  attack babies"; shots and quakes pass them by, and they can't be beaten in a fight). */
 export const targetable = (c: Creature) => fighting(c) && c.level > 0 && !c.burrow; // (a burrower underground can't be hit)
 
-const sideOf = (c: Creature): "wild" | "party" => (c.leashed ? "party" : "wild");
+/** Whose side: hers (on her leash, at a sigil, or a happy area legend: Ed, 2026-10-04) or the wild's. */
+const sideOf = (c: Creature): "wild" | "party" => (c.leashed || c.legendState === "happy" ? "party" : "wild");
 
 /** Same kind never fights same kind (Ed, 2026-10-04), on any side. */
 export const truce = (a: Creature, b: Creature) => a.species === b.species;
@@ -402,10 +403,12 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     const atk = attackOf(c.species, c.level, data);
     if (!atk) { c.fight = undefined; continue; } // babies don't attack
     const f = (c.fight ??= { target: null, readyAt: time + atk.attack.cooldown * 0.5 * (c.rand() + 0.5), windupUntil: 0, aimX: 0, aimZ: 0 });
-    const lp = c.leashed ? w.leashPoint(c.id) : null, guarding = !!lp && w.parked(c.id);
+    // A happy area legend guards its area like a parked party animal with a far bigger reach, round its home (Ed, 2026-10-04).
+    const happy = !c.leashed && c.legendState === "happy";
+    const lp = c.leashed ? w.leashPoint(c.id) : happy ? { x: c.homeX, z: c.homeZ } : null, guarding = (!!lp && w.parked(c.id)) || happy;
     // Party animals fight only near their leash point (a parked one within guard.radius of its
     // sigil); wild ones within aggro of where they are.
-    const reachX = lp ? lp.x : c.x, reachZ = lp ? lp.z : c.z, reach = lp ? (guarding ? t.guard.radius : t.leash.length + C.engage) : C.aggro;
+    const reachX = lp ? lp.x : c.x, reachZ = lp ? lp.z : c.z, reach = lp ? (happy ? t.wildLegends.guard : guarding ? t.guard.radius : t.leash.length + C.engage) : C.aggro;
     if (f.target && !valid(w, s, c, f.target)) f.target = null;
     if (f.target && lp) { const p = targetPos(w, s, f.target); if (!p || Math.hypot(p.x - lp.x, p.z - lp.z) > reach + atk.attack.range) f.target = null; }
     if (!f.target || f.windupUntil === 0) {

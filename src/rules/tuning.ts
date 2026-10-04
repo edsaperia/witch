@@ -181,7 +181,7 @@ export interface Tuning {
    *  appear beyond the haze's far edge plus growth.hide metres from every witch (rules/growth.ts). */
   population: { start: { babies: number; young: number; adults: number }; growth: { on: boolean; perWave: number; weights: number[]; hide: number } };
   /** Area legends (Ed, 2026-10-04): one an area, asleep till its area's wave, then a mini-boss guarding it. */
-  wildLegends: { wake: number; sink: number; moss: number; scale: number; breathe: number; breathEvery: number; aura: number; glow: number };
+  wildLegends: { wake: number; sink: number; moss: number; guard: number; heal: number; scale: number; breathe: number; breathEvery: number; aura: number; glow: number };
   creatureSimRadius: number;
   creatureSpeed: number;
   setPieceChance: number;

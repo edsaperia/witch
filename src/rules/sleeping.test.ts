@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { setupArena } from "./arena";
 import { toEvolve } from "./berries";
 import { LEGEND_BUFFS } from "./buffs";
 import { maxHp } from "./combat";
@@ -52,7 +53,7 @@ describe("sleeping legends (Ed, 2026-10-04)", () => {
     wake(g, L);
     L.hp = 1;
     // A wolf of hers finishes it.
-    const wolf = g.creatures.find(c => !c.boss && !c.gone && c.level === 1)!;
+    const wolf = g.creatures.find(c => !c.boss && !c.gone && c.level === 2)!;
     const wx = (L.x + g.witch.x) / 2, wz = (L.z + g.witch.z) / 2;
     Object.assign(wolf, { species: "wolf", leashed: true, x: wx, z: wz, tx: wx, tz: wz, seen: g.clock.time, gone: false });
     g.leash.stack.push(wolf.id);
@@ -85,4 +86,36 @@ describe("sleeping legends (Ed, 2026-10-04)", () => {
     expect(toEvolve(1, TUNING)).toBe(TUNING.berries.toEvolve[1]);
     expect(toEvolve(2, TUNING)).toBe(Infinity);
   });
+});
+
+describe("happy legends defend (Ed, 2026-10-04)", () => {
+  it("guards its area against a siege with its move set, heals when it's over, and sleeps for good if beaten", () => {
+    const g = newGame(5, TUNING);
+    g.clock.paused = false; g.party.paused = true;
+    setupArena(g, "home,wolf*4@2!");
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // (out of it)
+    const ids = g.arena!.ids, L = g.creatures[ids[0]], wolves = ids.slice(1).map(id => g.creatures[id]);
+    expect(L.legendState).toBe("happy");
+    expect(wolves.every(w => w.siege === "home")).toBe(true);
+    let moves = 0;
+    for (let i = 0; i < 40 / STEP; i++) { stepGame(g, idle, STEP); for (const e of g.combat.events) if (e.id === L.id && e.at === g.clock.time && ["quake", "nova", "rush", "beam"].includes(e.kind)) moves++; }
+    expect(moves).toBeGreaterThan(0);
+    expect(wolves.some(w => w.hp !== undefined || w.fleeUntil || w.gone)).toBe(true);
+    // The fight over (the wolves gone), it heals.
+    for (const w of wolves) w.gone = true;
+    expect(L.legendState).toBe("happy"); // (it held)
+    {
+      L.hp = maxHp(3) * 0.5; L.fight = undefined;
+      run(g, 5);
+      expect(L.hp ?? maxHp(3)).toBeGreaterThan(maxHp(3) * 0.5);
+      // Beaten: asleep for good, its buff gone.
+      g.creatures[ids[0]].hp = 0.5;
+      const wolf = g.creatures.find(c => !c.gone && !c.boss && c.level === 2 && Math.hypot(c.x - L.x, c.z - L.z) > 100)!;
+      Object.assign(wolf, { species: "wolf", x: L.x + 1.5, z: L.z, tx: L.x + 1.5, tz: L.z, cell: L.cell, homeX: L.x, homeZ: L.z, anchorX: L.x, anchorZ: L.z, seen: g.clock.time, safeR: undefined, siege: "home", enraged: true });
+      g.byArea = null;
+      run(g, 10);
+      expect(L.legendState).toBe("slept");
+      expect(g.buffs.active.map(b => b.id)).not.toContain(L.id);
+    }
+  }, 60000);
 });

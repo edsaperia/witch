@@ -14,7 +14,7 @@ function legendNear(dx: number): { g: Game; c: Game["creatures"][number] } {
   g.witch = { ...g.witch, seated: false, x: d.x, z: d.z + 20, mode: "ground", lift: 0 };
   for (const c of g.creatures) if (Math.hypot(c.x - g.witch.x, c.z - g.witch.z) < 80) c.gone = true;
   g.witches[0].health.hp = 1e6;
-  const c = g.creatures.find(k => !k.gone && !k.leashed && Math.hypot(k.x - g.witch.x, k.z - g.witch.z) > 150)!;
+  const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && Math.hypot(k.x - g.witch.x, k.z - g.witch.z) > 150)!;
   const x = g.witch.x + dx, z = g.witch.z;
   Object.assign(c, { species: "bear", level: LEGEND, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: 0, hp: undefined, boss: false, siege: undefined, rest: 0, speed: TUNING.legendSpeed });
   c.cell = g.map.cellSafe(g.witch.x, g.witch.z).cell as [number, number];
