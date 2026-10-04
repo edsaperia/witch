@@ -1,5 +1,5 @@
 // Legend buffs (Ed, 2026-10-04; DESIGN.md, "Combat, pacing and forecasting"): while a party legend
-// lives, it gives every witch its species' one buff (config/legend-buffs.json: a kind and a value).
+// lives (now: a happy area legend, DESIGN.md "Sleeping legends"), it gives every witch its species' one buff (config/legend-buffs.json: a kind and a value).
 // Buffs of one kind multiply (forecastAhead adds), held inside the file's limits; the game then
 // plays by a copy of the tuning with those numbers changed. No drawing here.
 import raw from "../../config/legend-buffs.json";
@@ -48,10 +48,11 @@ export function newBuffs(t: Tuning): BuffState {
   return { active: [], totals: noBuffs(), tuning: t, events: [], base: t };
 }
 
-/** The party legends alive now: creatures in the party (following her or at a sigil) that are legends. */
+/** The legends giving their buffs now: happy area legends (Ed, 2026-10-04), and any legend in
+ *  the party (following her or at a sigil: none since legends stopped evolving, kept for later). */
 export function partyLegends(creatures: readonly Creature[], partyIds: Iterable<number>): Creature[] {
   const out: Creature[] = [];
-  for (const id of partyIds) { const c = creatures[id]; if (c && c.leashed && c.level >= LEGEND) out.push(c); }
+  for (const id of partyIds) { const c = creatures[id]; if (c && c.level >= LEGEND && (c.leashed || c.legendState === "happy")) out.push(c); }
   return out;
 }
 

@@ -50,6 +50,9 @@ export interface LeashControls {
   inviteNearest?: boolean;
   /** The cycle button (Ed, 2026-10-04): the bottom sigil of her stack goes to the top, so the next one down is chosen. */
   cycle?: boolean;
+  /** Whether she may talk this frame: always with auto-talk on (the default); with it off, only
+   *  while Talk is held (Ed's playtest, 2026-10-04: auto-talk can be turned off). */
+  talk?: boolean;
 }
 
 export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, progress: new Map(), events: [], snubbed: new Set() });
@@ -58,9 +61,10 @@ export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, 
 export const talkTime = (c: Creature, t: Tuning): number => t.invite.talkTime[Math.min(c.level, t.invite.talkTime.length - 1)];
 /** Seconds per turn of the conversation (hers, then theirs): slower for older creatures. */
 export const talkTurn = (c: Creature, t: Tuning): number => t.invite.turn[Math.min(c.level, t.invite.turn.length - 1)];
-/** Whether she can invite it: wild, alive, not fleeing; legends only when let go on a knockout and
+/** Whether she can invite it: wild, alive, not fleeing, not enraged by a wave (Ed's playtest:
+ *  mid-siege, an invited one is set on by the rest); legends only when let go on a knockout and
  *  walking home (wild legends can't be invited). Inviting works while it attacks her (Ed, 2026-10-04). */
-export const invitable = (c: Creature) => !c.leashed && !c.gone && !c.fleeUntil && (c.level !== LEGEND || !!c.wanderTo);
+export const invitable = (c: Creature) => !c.leashed && !c.gone && !c.fleeUntil && !c.enraged && (c.level !== LEGEND || !!c.wanderTo);
 
 /** Where a leashed creature's leash is fixed: the witch, or its placed sigil. */
 export function leashPoint(s: LeashState, id: number, wx: number, wz: number): { x: number; z: number } | null {
@@ -80,6 +84,7 @@ function nearest(creatures: Creature[], x: number, z: number, within: number, le
   for (const c of creatures) {
     if (Math.abs(c.x - x) > bd || Math.abs(c.z - z) > bd) continue; // (cheap: thousands of creatures, every step)
     if (c.leashed || c.gone || c.fleeUntil || (!legends && !invitable(c)) || skip?.has(c.id)) continue;
+    if (c.legendState && c.legendState !== "awake") continue; // (a sleeping legend is scenery; a happy one's at peace)
     const d = Math.hypot(c.x - x, c.z - z);
     if (d <= bd) { bd = d; best = c; }
   }
@@ -110,7 +115,8 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   // invitable creature in range.
   for (const id of s.snubbed) if (away(byId(id)) > T.cancelDistance) s.snubbed.delete(id);
   const cur = s.talk ? byId(s.talk.id) : null;
-  let keep = !!cur && onGround && !cur.leashed && away(cur) <= T.cancelDistance;
+  const talking = onGround && c.talk !== false;
+  let keep = !!cur && talking && !cur.leashed && away(cur) <= T.cancelDistance;
   if (keep && s.talk!.refused && (s.talk!.t >= T.snubTime || nearest(creatures, witch.x, witch.z, T.talkRange))) {
     if (s.talk!.t >= T.snubTime) s.snubbed.add(s.talk!.id);
     keep = false;
@@ -125,7 +131,7 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     if (!s.talk!.refused && s.talk!.t >= s.talk!.total) { invite(s, cur!, cur!.x, cur!.z, time); s.progress.delete(cur!.id); s.talk = null; }
   } else {
     if (s.talk) { s.events.push({ kind: "cancelled", id: s.talk.id, x: witch.x, z: witch.z, at: time }); s.talk = null; }
-    const n = onGround ? talkTarget(creatures, witch.x, witch.z, t, s.snubbed) : null;
+    const n = talking ? talkTarget(creatures, witch.x, witch.z, t, s.snubbed) : null;
     if (n) s.talk = { id: n.id, refused: !invitable(n), t: invitable(n) ? s.progress.get(n.id) ?? 0 : 0, total: invitable(n) ? talkTime(n, t) : Infinity };
   }
 

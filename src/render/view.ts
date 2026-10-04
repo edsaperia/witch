@@ -29,7 +29,8 @@ import { BuffHud } from "./buffhud";
 import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
 import { MarkerArt, MarkerFx, MARKER_LEVELS, SymbolRings, type Beacon, type Laser, type Mote, type RingSymbol } from "./markers";
-import { cellKey, spawnMarkers, speakersOn, symbolCount, waveCountdown, type SpawnMarker } from "../rules/party";
+import { cellKey, spawnMarkers, speakersOn, symbolCount, waveCountdown, wavePlan, type SpawnMarker } from "../rules/party";
+import { WaveNumbers, type WaveNumber } from "./waveNumbers";
 import { StringLightsView } from "./strings";
 import { bossBreath, LeashView } from "./leash";
 import { Lasers, type RingSpeaker } from "./lasers";
@@ -45,6 +46,8 @@ import { lerp } from "../rules/random";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
 import { berrySprite } from "./berries";
+import { LeyLines } from "./leylines";
+import { leyChain, leyKey } from "../rules/leylines";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
 import type { Style } from "./style";
 
@@ -68,6 +71,8 @@ export interface ForestLight { x: number; y: number; z: number; reach: number; r
 /** A frame's CPU budget (ms) for the view, of which the work done ahead (the forest, the hills,
  *  ground tiles, art) gets whatever the frame's own work has left, each at least its floor. */
 const BACKGROUND_MS = 9;
+/** The wave numbers' colour over areas the party has reached (spent). */
+const SPENT = new THREE.Vector3(0.7, 0.7, 0.8);
 
 export interface ViewStats { berries: number; forestMs: number; forestMissing: number; sceneryRadius: number; fps: number; gameplay: number; scenery: number; dropped: number; trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number; lights: number; heightMoves?: number }
 
@@ -125,6 +130,8 @@ export class View {
   private strings: StringLightsView;
   private leashView: LeashView;
   private lasers: Lasers;
+  /** The ley lines through the runestones in wave order (Ed, 2026-10-04). */
+  private ley: LeyLines;
   /** The party witches on the dancefloor, and our witch when she idles into the party. */
   private partyWitchView: PartyWitchView;
   /** The smoke test sets this to draw trunks flat magenta for a frame, to count them on screen. */
@@ -231,7 +238,7 @@ export class View {
     this.minimap = new Minimap(document.body, game.map);
     this.markerArt = new MarkerArt(style, t);
     this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true });
-    this.scene.add(...this.markerBatch.meshes, this.markerFx.group, this.rings.mesh);
+    this.scene.add(...this.markerBatch.meshes, this.markerFx.group, this.rings.mesh, this.waveNumbers.mesh);
     // The ground cover: tufts round the witch, in ground mode.
     this.grass = new GrassView(game.map, t, this.mpp, style, game.forest, (this.ground.mesh.material as THREE.ShaderMaterial).uniforms);
     this.scene.add(this.grass.mesh);
@@ -248,6 +255,8 @@ export class View {
     this.strings = new StringLightsView(this.scene, game);
     this.leashView = new LeashView(this.scene, game);
     this.lasers = new Lasers(this.scene, game);
+    this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z), t.treetopHeight);
+    this.scene.add(...this.ley.meshes);
     this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
     this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
     this.borders = new BorderView(this.scene, game);
@@ -440,6 +449,10 @@ export class View {
   private inInnerView(x: number, z: number, h: number): boolean {
     const w = this.game.witch, hz = this.game.tuning.haze;
     if (Math.hypot(x - w.x, z - w.z) > hz.near + (hz.far - hz.near) * 0.6) return false;
+    // Past the bent horizon, where the culling counts it hidden behind the bulge and the forest in
+    // front (inView), its coming and going isn't seen either.
+    const B = HEIGHT_UNIFORMS.uBend.value, ahead = Math.max(0, -(z - B.z));
+    if (ahead > 0 && !this.overHorizon(ahead, groundHeight(x, z) + h, B.x)) return false;
     for (const y of [0, h * 0.5, h]) {
       const p = placed(this.v3.set(x, y, z)).project(this.camera);
       if (Math.abs(p.x) < 1 && Math.abs(p.y) < 1 && p.z < 1) return true;
@@ -773,6 +786,27 @@ export class View {
     this.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes.concat(this.fireSparks), lasers);
     const up = canopyShown(w);
     this.rings.update(symbols, up * (t.treetopHeight - 2)); // above the canopy from the treetops
+    // Wave numbers over the stones (Ed, 2026-10-04, a design aid): above the stone on the ground,
+    // above the canopy from the treetops; the reached areas' dimmed.
+    const WN = t.waveNumbers, nums: WaveNumber[] = [];
+    if (WN.on) {
+      const P = g.party, pk = `${P.wave}:${P.areas.size}:${P.ruined?.size ?? 0}:${P.areasPerWave}:${P.next.map(cellKey).join(";")}`;
+      if (this.plan.key !== pk) this.plan = { key: pk, waves: wavePlan(P, g.map) };
+      const lift = (top: number) => top + WN.lift + up * (t.treetopHeight + WN.lift - top - WN.lift);
+      for (const m of mc.list) {
+        const wave = this.plan.waves.get(m.key);
+        if (wave === undefined || Math.hypot(m.x - w.x, m.z - w.z) > range) continue;
+        const species = AREA_TYPES[g.map.typeOf(m.cell[0], m.cell[1])].creature;
+        nums.push({ x: m.x, z: m.z, y: lift((this.markerArt.height.get(species) ?? 0) * this.mpp * scale), wave, colour: this.markerArt.colour.get(species)!, alpha: 1 });
+      }
+      for (const a of g.party.areas.values()) {
+        if (!a.wave) continue;
+        const s0 = g.map.soundsystemSpot(a.cell[0], a.cell[1]);
+        if (Math.hypot(s0.x - w.x, s0.z - w.z) > range) continue;
+        nums.push({ x: s0.x, z: s0.z, y: lift(4), wave: a.wave, colour: SPENT, alpha: WN.spent });
+      }
+    }
+    this.waveNumbers.update(nums, WN.size, this.width / this.height);
     return lights;
   }
 
@@ -819,9 +853,17 @@ export class View {
     let n = 0;
     for (const c of g.creatures) {
       if (c.gone || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
+      if (c.burrow) continue; // under the ground (Stage 5: the mole), a mound shows where (leash view)
       // Invited creatures are party animals: their party gear once it's drawn (the wild look till then).
       const party = c.leashed ? this.assets.partyArt(c.species, c.id, sigilColour(c.species)) : undefined;
-      const art = party ?? this.assets.creatureArt(c.species), key = party ? `party-${c.id}` : c.species;
+      // Enraged by a wave (besieging, marching on): angry red eyes, and it can't be invited (Ed's playtest).
+      const woken = !party && c.enraged ? this.assets.wokenArt(c.species) : undefined;
+      // A sleeping area legend (Ed, 2026-10-04: "ancient creatures, half sunken into the ground,
+      // they could almost be mistaken for scenery"): sunk and mossed over, in a batch of its own
+      // with no find-in-the-dark look. Waking, it heaves up out of the ground.
+      const W = g.tuning.wildLegends, st = c.boss && !c.leashed ? c.legendState : undefined;
+      const sleeping = st === "asleep" || st === "slept", rising = st === "waking" ? Math.min(1, (time - (c.stateAt ?? 0)) / Math.max(0.1, W.wake * 0.5)) : 1;
+      const art = party ?? woken ?? this.assets.creatureArt(c.species), key = party ? `party-${c.id}` : sleeping ? `sleep-${c.species}` : woken ? `woken-${c.species}` : c.species;
       if (!art) continue;
       arts.set(key, art);
       const frame = art.atlas.frames[art.frame(c.level, c.moving ? Math.floor(c.walk) % 2 : 0, c.away)];
@@ -852,14 +894,18 @@ export class View {
       if (!c.leashed) { const ph = time * 0.7 + c.id * 0.37; if (hash2(c.id, Math.floor(ph), 41) < g.tuning.find.eyeshine.blink * 6 && ph % 1 < 1 / 6) glow = -1; }
       // Hit: a white flash and a little pop (combat: medium hit feel).
       if (c.hurtAt !== undefined && time - c.hurtAt < 0.25) { const k = (time - c.hurtAt) / 0.25; glow = Math.max(glow, 1 - k); scale *= 1 + 0.15 * (1 - k); }
-      l.push({ x: c.x + sway, y: dance, z: c.z, frame, flip: c.facing < 0, fresh, glow, scale });
-      this.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * this.mpp * scale + dance); // its health bar goes over it
+      // Leaping (Stage 5: the toad): up in an arc over its shadow.
+      const hop = c.leap ? Math.sin(Math.min(1, Math.max(0, (time - c.leap.at) / Math.max(0.01, c.leap.lands - c.leap.at))) * Math.PI) * c.leap.height : 0;
+      const sink = sleeping ? W.sink : W.sink * (1 - rising), sunk = -sink * (frame.h - (frame.pad ?? 0)) * this.mpp * scale;
+      if (sleeping) glow = -2 - W.moss; else if (rising < 1) glow = -2 - W.moss * (1 - rising);
+      l.push({ x: c.x + sway, y: dance + hop + sunk, z: c.z, frame, flip: c.facing < 0, fresh, glow, scale });
+      this.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * this.mpp * scale + dance + hop + sunk); // its health bar goes over it
       creatureShadows.push({ x: c.x, z: c.z, w: frame.w * this.mpp * 0.7, d: frame.w * this.mpp * 0.25 });
       n++;
     }
     for (const [s, b] of this.creatureBatches) if (!per.has(s)) b.set([]);
     for (const [s, list] of per) {
-      const b = this.batchFor(this.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, this.mpp, { solid: true, find: !s.startsWith("party-") }); }); // creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
+      const b = this.batchFor(this.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, this.mpp, { solid: true, find: !s.startsWith("party-") && !s.startsWith("woken-") && !s.startsWith("sleep-") }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
       b?.set(list);
     }
     this.stats.creatures = n;
@@ -975,6 +1021,9 @@ export class View {
   /** Each ring speaker's top, state and power, for its laser (Ed: one each, none from the disco ball). */
   private speakerTops: RingSpeaker[] = [];
   private rings = new SymbolRings();
+  private waveNumbers = new WaveNumbers();
+  /** Each dormant area's wave (wavePlan), worked out again when the party changes. */
+  private plan = { key: "", waves: new Map<string, number>() };
   /** When each symbol round each stone appeared (for its flare), by marker. */
   private symbolSeen = new Map<string, number[]>();
   private drawSpeakers(time: number, angle: number): ForestLight[] {
@@ -1033,6 +1082,8 @@ export class View {
   ms: Record<string, number> = {};
   private lap = 0;
   private frameStart = 0;
+  /** Whether the hills' next strip was all worked out last frame. */
+  private heightsReady = true;
   private time(part: string): void { const now = performance.now(); this.ms[part] = (this.ms[part] ?? 0) + now - this.lap; this.lap = now; }
 
   render(time: number, draw = true): void {
@@ -1141,6 +1192,14 @@ export class View {
     this.soundBatch.set(party.items);
     this.ground.setSweeps(party.sweeps);
     this.lasers.update(time, party.playing, w.x, w.z, this.speakerTops, g.map.dancefloor);
+    {
+      // The ley lines: each stone in its area's sigil colour (home's a pale violet).
+      const P = g.party, M = g.map, home = new THREE.Vector3(0.8, 0.7, 1);
+      this.ley.update(leyKey(P), () => leyChain(P, M, t.leyLines.links + 1), s => {
+        if (s.cell[0] === M.centreCell[0] && s.cell[1] === M.centreCell[1]) return home;
+        return this.markerArt.colour.get(AREA_TYPES[M.typeOf(s.cell[0], s.cell[1])].creature) ?? home;
+      }, time, canopyShown(w));
+    }
     this.time("party");
     // The canopy uplight over the nearest partified areas, fading in with each one's transition.
     {
@@ -1303,7 +1362,8 @@ export class View {
     const took = (from: number) => { spare -= performance.now() - from; };
     let t0 = performance.now();
     // The hills' next strip, in the direction she's flying (the window moves every 16 m).
-    this.heights.prepare(w.vx, w.vz, give(2, 0.5));
+    // (More while it's behind: at full boost the next strip is due every 8 frames or so.)
+    this.heightsReady = this.heights.prepare(w.vx, w.vz, give(this.heightsReady ? 2 : 6, 0.5));
     took(t0); this.time("heightsAhead"); t0 = performance.now();
     // The forest ahead, centred where the view will be in two seconds at her speed, so a rebuild
     // finds its chunks already made instead of making a whole strip at once.

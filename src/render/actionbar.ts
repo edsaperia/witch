@@ -11,12 +11,16 @@ const LOOK: Record<string, { icon: string; name: string }> = {
   dash: { icon: "»", name: "dash (on the ground)" },
   sigil: { icon: "◈", name: "put down / pick up a sigil" },
   cycle: { icon: "↻", name: "cycle the sigil stack" },
+  autoTalk: { icon: "💬", name: "auto-talk on or off (also T); off, hold Shift to talk" },
 };
 
 export class ActionBar {
   private root = document.createElement("div");
   private shades: (HTMLElement | null)[] = [];
   private slots: HTMLElement[] = [];
+  /** Auto-talk's state (shown lit when on), and what a click on its slot does. */
+  autoTalk = true;
+  onAutoTalk: (() => void) | null = null;
 
   constructor(parent: HTMLElement) {
     this.root.id = "actionbar";
@@ -32,6 +36,7 @@ export class ActionBar {
         Object.assign(shade.style, { position: "absolute", left: "0", right: "0", top: "0", background: "rgba(8,6,18,.7)", height: "0%" });
         el.append(shade);
       }
+      if (s.action === "autoTalk") { el.style.pointerEvents = "auto"; el.style.cursor = "pointer"; el.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); this.onAutoTalk?.(); }); }
       this.shades.push(shade); this.slots.push(el);
       this.root.append(el);
     }
@@ -44,6 +49,7 @@ export class ActionBar {
     const W = g.witches[0];
     ACTION_BAR.forEach((s, i) => {
       const shade = this.shades[i], el = this.slots[i];
+      if (s.action === "autoTalk") { el.style.borderColor = this.autoTalk ? "rgba(111,230,255,.9)" : "rgba(232,226,244,.35)"; el.style.opacity = this.autoTalk ? "1" : "0.55"; el.title = `1 / T: auto-talk ${this.autoTalk ? "on" : "off (hold Shift to talk)"}`; return; }
       if (!shade) return;
       const charge = s.action === "spell" ? spellCharge(W.spells, time) : dashCharge(W.dash, time);
       const on = s.action === "spell" ? spellActive(W.spells, time) : dashing(W.dash, time);

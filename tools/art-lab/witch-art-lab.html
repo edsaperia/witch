@@ -190,6 +190,12 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
+        <h2>Sleeping legends</h2>
+        <p class="note">Every area's legend asleep, centuries deep: sunk half into its area's earth, head down and eyes shut, its glow gone to stone and old wood, mossed, lichened and grown over, so it passes for a boulder, a log or a mound. Each row: asleep (two frames of a slow breath), the legend awake as it is, then the witch for scale.</p>
+        <div class="sheet-wrap"><canvas id="legendSheet" width="420" height="160"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
         <h2>Party objects</h2>
         <p class="note">The party objects scattered over partified areas, at night as in the game: litter, the light sources (neon pieces in a different neon each), furniture and set dressing, with the witch for scale. Then a sample patch of party ground: clusters and loose objects strewn as the prototype might. Last, balloons unlit and then beside a lantern: they don't glow, they catch the light.</p>
         <div class="sheet-wrap"><canvas id="partyObjectsSheet" width="420" height="160"></canvas></div>
@@ -219,6 +225,12 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
         <div class="row" style="justify-content:space-between"><h2>Party witches</h2><div class="row"><label class="note" for="partyPose">Pose</label><select id="partyPose"></select><button id="partyShuffle">Shuffle</button></div></div>
         <p class="note">Witches who fly in to the party, one for each soundsystem: a row per party outfit (raver, flower child, disco, punk, festival, cat hat, glam, goth, candy, boho), each with its own hat, hair and top, its colours and skin picked by its seed (Shuffle picks others). With "a mix": hovering, the lean cycle, then a pose of each kind (dancing, drinking, running, hugging, sitting, stargazing). Pick a pose to see every frame of it, our witch first, then every outfit. Below, the pairs, put together at their anchors: dancing face to face, a hug, a high-five, holding hands (facing you), a toast, the conga, a twirl, and the broom limbo (two holding the broom, a third leaning back under it).</p>
         <div class="sheet-wrap"><canvas id="partySheet" width="420" height="160"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
+        <div class="row" style="justify-content:space-between"><h2>Attack effects</h2><div class="row"><label class="note" for="fxTint">Tint</label><select id="fxTint"><option value="255,70,90">wild (red)</option><option value="70,240,255">party (cyan)</option><option value="255,90,220">party (pink)</option><option value="150,255,80">party (green)</option><option value="255,220,70">party (yellow)</option></select></div></div>
+        <p class="note">What a fight looks like (Stage 5): projectiles (spit, a barb, a seed and a stone lobbed with their shadow, a feather dart, a glowing mote), short and long beams (start, the loop that repeats along the beam, end), the quake's ring and a spore cloud, the telegraphs (a target circle where a lob will land, a line along a beam or a charge with its start and arrowhead, the wind-up flash, the quake's reach), hit sparks, and the slow and knockback marks. Each row: its frames light (for the dark forest) on night ground, then dark (for bright ground) on a lit floor, then how the treetop camera shows it, the ground drawing and then the treetop one; ground decals also laid flat as the camera sees them. Tinted by the attack's side.</p>
+        <div class="sheet-wrap"><canvas id="fxSheet" width="420" height="160"></canvas></div>
       </section>
 
       <section style="display:grid;gap:10px">
@@ -271,7 +283,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, bakeTufts, DISCO_GRID, DISCO_MASK, discoPatterns, DISCO_TRANSITIONS, discoCompose, discoPaint, DANCEFLOOR_SPEAKER_ANGLES, dancefloorSpeakerSprite, dancefloorSpeakerColours, soundsystemColours, witchSprite, witchColours, areaTreeVariants, TREE_SPECIES, splitTree, treeColours, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS, COUNTRY, countrySprite, countryColours, SCENES, scenePlacements, LANDMARKS, landmarkSprite, landmarkColours, WITCH_PAIRS, PARTY_OUTFITS, partyWitch, PARTY_OBJECTS, PARTY_CLASSES, PARTY_LIGHT_NEONS, partySprite, partyColours, partyPatch, scenePiece } from "../../art/generator.js";
+import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, bakeTufts, DISCO_GRID, DISCO_MASK, discoPatterns, DISCO_TRANSITIONS, discoCompose, discoPaint, DANCEFLOOR_SPEAKER_ANGLES, dancefloorSpeakerSprite, dancefloorSpeakerColours, soundsystemColours, witchSprite, witchColours, areaTreeVariants, TREE_SPECIES, splitTree, treeColours, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS, COUNTRY, countrySprite, countryColours, SCENES, scenePlacements, LANDMARKS, landmarkSprite, landmarkColours, WITCH_PAIRS, PARTY_OUTFITS, partyWitch, PARTY_OBJECTS, PARTY_CLASSES, PARTY_LIGHT_NEONS, partySprite, partyColours, partyPatch, scenePiece, LEGEND_IDS, LEGEND_STATES, LEGEND_FRAMES, legendForm, EFFECTS, EFFECT_BY_ID, effectSprite, effectColours, EFFECT_TREETOP_SHRINK } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -666,6 +678,22 @@ function renderCountry() {
   }, 1100);
 }
 
+// ================= sleeping legends: asleep (2 breaths) beside the legend awake, a row per species =================
+let legendTimer;
+function renderLegends() {
+  clearTimeout(legendTimer);
+  legendTimer = setTimeout(() => {
+    const c = document.getElementById("legendSheet"); if (!c) return;
+    const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 8, wit = bake(witchSprite(st), witchColours(st), st, st.cOutline);
+    const rows = LEGEND_IDS.map(id => [...LEGEND_STATES.flatMap(state => [...Array(LEGEND_FRAMES[state]).keys()].map(frame => { const { sp, colours } = legendForm(id, st, { state, frame }); return bake(sp, colours, st, st.cOutline); })), bake(critter(id, 3, 0, st), speciesColours(id, st), st, st.cOutline), wit]);
+    const w = Math.max(...rows.map(r => r.reduce((a, x) => a + x.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(x => x.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
+    tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+    let y = gap;
+    rows.forEach((r, i) => { let x = gap; y += rh[i] - gap; for (const s2 of r) { tgt.a.drawImage(s2.A, x, y - s2.h); tgt.n.drawImage(s2.N, x, y - s2.h); x += s2.w + gap; } y += gap; });
+    c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
+  }, 1200);
+}
+
 // ================= party: the party objects at night, and a sample patch of party ground =================
 let partyObjectsTimer;
 function renderPartyObjects() {
@@ -802,6 +830,30 @@ function renderParty() {
     c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
     c.style.width = w * 2 + "px"; c.style.maxWidth = "none"; c.style.imageRendering = "pixelated";
   }, 650);
+}
+
+// ================= attack effects: every effect's frames, light and dark, ground and treetop =================
+let fxTimer;
+function renderEffects() {
+  clearTimeout(fxTimer);
+  fxTimer = setTimeout(() => {
+    const c = document.getElementById("fxSheet"), sel = document.getElementById("fxTint"); if (!c) return;
+    sel.onchange = renderEffects;
+    const tint = sel.value.split(",").map(Number), gap = 6, lab = 96, night = "#16201a", bright = "#d9cfae", K = EFFECT_TREETOP_SHRINK, st = current;
+    const bk = r => bake(r.sp, effectColours(tint), st, "none").A;
+    const scaled = (src, kx, ky) => { const o = document.createElement("canvas"); o.width = Math.max(1, Math.round(src.width * kx)); o.height = Math.max(1, Math.round(src.height * ky)); const g = o.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(src, 0, 0, o.width, o.height); return o; };
+    const rows = EFFECTS.map(e => { const fr = [...Array(e.frames).keys()], cells = [];
+      for (const f of fr) cells.push({ c: bk(effectSprite(e.id, { frame: f })), bg: night });
+      for (const f of fr) cells.push({ c: bk(effectSprite(e.id, { frame: f, variant: "dark" })), bg: bright });
+      cells.push({ c: scaled(bk(effectSprite(e.id, {})), 1 / K, 1 / K), bg: night, sep: true }, { c: scaled(bk(effectSprite(e.id, { zoom: "treetop" })), 1 / K, 1 / K), bg: night });
+      if (e.plane === "ground") cells.push({ c: scaled(bk(effectSprite(e.id, {})), 1, Math.sin(.52)), bg: night, sep: true });
+      return { id: e.id, cells }; });
+    const W = Math.max(...rows.map(r => r.cells.reduce((a, x) => a + x.c.width + gap + (x.sep ? 8 : 0), lab))) + gap, H = rows.reduce((a, r) => a + Math.max(...r.cells.map(x => x.c.height)) + gap * 2, gap);
+    c.width = W; c.height = H; const g = c.getContext("2d"); g.fillStyle = "#0e0c14"; g.fillRect(0, 0, W, H); g.font = "9px monospace"; g.textBaseline = "top";
+    let y = gap;
+    for (const r of rows) { const rh = Math.max(...r.cells.map(x => x.c.height)) + gap; g.fillStyle = "#c8c0e0"; g.fillText(r.id, 4, y + 2); let x = lab; for (const cell of r.cells) { if (cell.sep) x += 8; g.fillStyle = cell.bg; g.fillRect(x - 2, y - 2, cell.c.width + 4, rh); g.drawImage(cell.c, x, y + (rh - gap - cell.c.height)); x += cell.c.width + gap; } y += rh + gap; }
+    c.style.width = W * 2 + "px"; c.style.maxWidth = "none"; c.style.imageRendering = "pixelated";
+  }, 700);
 }
 
 // ================= soundsystems: every stack in every state, studio-lit =================
@@ -987,7 +1039,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderCountry(); renderPartyObjects(); renderRelics(); renderSets(); renderTall(); renderTufts(); renderWitch(); renderParty(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
+  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderCountry(); renderPartyObjects(); renderLegends(); renderRelics(); renderSets(); renderTall(); renderTufts(); renderWitch(); renderParty(); renderEffects(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }

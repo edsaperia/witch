@@ -1,5 +1,5 @@
 {
- "_": "Combat (Stage 4; DESIGN.md 'Combat, pacing and forecasting'). One system for wild and party creatures. levels: by level (baby, young, adult, legend): hp, the health it has; dps, its power budget (damage a second, the same for every attack of that level, so no species is stronger for its level: equal power budget). attacks: each is data. delivery: melee (a hit within range), shot (a projectile flying at speed m/s, dodgeable, hitting the first enemy within its radius), or quake (everything of the other side within radius round the attacker: the legends' slow, heavy signature move). windup: seconds it telegraphs before it lands or flies; cooldown: seconds from one to the next; damage is dps times cooldown; range: metres it attacks from; modifier: none, knockback (pushes the target knockback metres) or slow (the target moves at slowMult for slowTime seconds; slows don't stack: a new one only renews it). Babies don't attack; the young have one attack, adults a stronger one with a modifier, legends the signature. ranged: the species that shoot (the rest fight in melee). Melee attacks wind up and lunge lunge metres at where they aimed (step aside to dodge); shots fly at where they aimed (dodgeable). bySpecies: a species' own attacks by level, overriding byLevel. kite: species that keep their distance as part of their attack (Ed, 2026-10-04), holding between near and far of their attack's range from their target, backing off or closing in (the raven, with long-range shots). Babies are never attacked by anything, on either side (Ed, 2026-10-04).",
+ "_": "Combat (Stage 4; DESIGN.md 'Combat, pacing and forecasting'). One system for wild and party creatures. levels: by level (baby, young, adult, legend): hp, the health it has; dps, its power budget (damage a second, the same for every attack of that level, so no species is stronger for its level: equal power budget). attacks: each is data. delivery: melee (a hit within range), shot (a projectile flying at speed m/s, dodgeable, hitting the first enemy within its radius), or quake (everything of the other side within radius round the attacker: the legends' slow, heavy signature move). windup: seconds it telegraphs before it lands or flies; cooldown: seconds from one to the next; damage is dps times cooldown; range: metres it attacks from; modifier: none, knockback (pushes the target knockback metres) or slow (the target moves at slowMult for slowTime seconds; slows don't stack: a new one only renews it). Babies don't attack; the young have one attack, adults a stronger one with a modifier, legends the signature. ranged: the species that shoot (the rest fight in melee). Melee attacks wind up and lunge lunge metres at where they aimed (step aside to dodge); shots fly at where they aimed (dodgeable). bySpecies: a species' own attacks by level, overriding byLevel. kite: species that keep their distance as part of their attack (Ed, 2026-10-04), holding between near and far of their attack's range from their target, backing off or closing in (the raven, with long-range shots). Babies are never attacked by anything, on either side (Ed, 2026-10-04). temperament: how a species' babies take to the witch close by (tuning notice): curious ones come up to her, skittish ones keep off; the rest just turn to look. Stage 5 deliveries: lob (an arcing shot at the point it aimed at, landing after flight seconds and hitting everything of the other side within radius there: step out of the ring), beam (a line range metres long and width wide from the attacker toward its aim, burning for duration seconds in ticks every tick seconds, sweeping toward its target at sweep degrees a second: step out of the line). factor: a delivery's damage times this, so its expected damage a second (allowing for misses and area hits) matches the level's budget. traits (Stage 5, readable counters): the species with each trait. counters: what a trait does to a blow, by its delivery: its damage times this (flier: melee 0.5, it flits out of reach; armoured: shots, lobs and beams 0.35; swarm: area hits 2); knockback: its distance times this (heavy 0: it won't budge; armoured 2), stun: seconds a knockback stuns it (armoured: knocked on its back), slow: a slow's time times this (heavy 0.5). Nimble creatures sidestep telegraphs (their movement profile's dodge); burrowers can't be hit while burrowed. The raw numbers stay on the level's budget: counters are the difference between kinds. pulse (Stage 5): everything of the other side within radius round the attacker, at once (a bat's screech, a mole's upheaval as it surfaces, a toad's slam as it lands): a small quake that any level may have; factor below 1 as it can hit several. Wild legends' moves (Stage 5; their patterns in movement.json legends): legendSlam (a quake round it), legendNova (shots shots in a ring outward, each factor of the move's damage), legendSpin (a beam spinning all the way round at spin degrees a second for duration seconds: each pass hits once, for factor of the damage), legendCharge (a straight run at speed m/s for up to duration seconds, trampling everything of the other side it meets, once each, with knockback). Damage is the legend budget times the move's cooldown, as for any attack.",
  "levels": {
   "hp": [
    30,
@@ -80,6 +80,174 @@
    "modifier": "slow",
    "slowMult": 0.5,
    "slowTime": 2.5
+  },
+  "lob": {
+   "delivery": "lob",
+   "range": 16,
+   "radius": 1.8,
+   "flight": 1.2,
+   "windup": 0.8,
+   "cooldown": 2.6,
+   "modifier": "none",
+   "factor": 1.2
+  },
+  "biglob": {
+   "delivery": "lob",
+   "range": 18,
+   "radius": 2.4,
+   "flight": 1.3,
+   "windup": 0.9,
+   "cooldown": 3.0,
+   "modifier": "slow",
+   "slowMult": 0.5,
+   "slowTime": 2,
+   "factor": 1.2
+  },
+  "beam": {
+   "delivery": "beam",
+   "range": 10,
+   "width": 1.0,
+   "duration": 0.8,
+   "tick": 0.2,
+   "sweep": 25,
+   "windup": 1.0,
+   "cooldown": 3.0,
+   "modifier": "none",
+   "factor": 1
+  },
+  "widebeam": {
+   "delivery": "beam",
+   "range": 12,
+   "width": 1.4,
+   "duration": 1.0,
+   "tick": 0.2,
+   "sweep": 30,
+   "windup": 1.1,
+   "cooldown": 3.4,
+   "modifier": "slow",
+   "slowMult": 0.6,
+   "slowTime": 1.5,
+   "factor": 1
+  },
+  "screech": {
+   "delivery": "pulse",
+   "range": 2.2,
+   "radius": 2.6,
+   "windup": 0.5,
+   "cooldown": 1.8,
+   "modifier": "none",
+   "factor": 0.8
+  },
+  "bigscreech": {
+   "delivery": "pulse",
+   "range": 2.6,
+   "radius": 3.2,
+   "windup": 0.55,
+   "cooldown": 2.2,
+   "modifier": "slow",
+   "slowMult": 0.6,
+   "slowTime": 1.5,
+   "factor": 0.8
+  },
+  "upheaval": {
+   "delivery": "pulse",
+   "range": 2,
+   "radius": 2.8,
+   "windup": 0.6,
+   "cooldown": 3,
+   "modifier": "none",
+   "factor": 0.9
+  },
+  "bigupheaval": {
+   "delivery": "pulse",
+   "range": 2.4,
+   "radius": 3.4,
+   "windup": 0.6,
+   "cooldown": 3.4,
+   "modifier": "knockback",
+   "knockback": 2.5,
+   "factor": 0.9
+  },
+  "slam": {
+   "delivery": "pulse",
+   "range": 2,
+   "radius": 2.4,
+   "windup": 0.5,
+   "cooldown": 2.6,
+   "modifier": "none",
+   "factor": 0.9
+  },
+  "bigslam": {
+   "delivery": "pulse",
+   "range": 2.4,
+   "radius": 3,
+   "windup": 0.5,
+   "cooldown": 3,
+   "modifier": "knockback",
+   "knockback": 2.5,
+   "factor": 0.9
+  },
+  "web": {
+   "delivery": "shot",
+   "range": 11,
+   "speed": 10,
+   "radius": 0.7,
+   "windup": 0.6,
+   "cooldown": 2.2,
+   "modifier": "none"
+  },
+  "bigweb": {
+   "delivery": "shot",
+   "range": 12,
+   "speed": 11,
+   "radius": 0.9,
+   "windup": 0.7,
+   "cooldown": 2.6,
+   "modifier": "slow",
+   "slowMult": 0.4,
+   "slowTime": 3
+  },
+  "legendSlam": {
+   "delivery": "quake",
+   "range": 4.5,
+   "radius": 5.5,
+   "windup": 1.6,
+   "cooldown": 4,
+   "modifier": "knockback",
+   "knockback": 4
+  },
+  "legendNova": {
+   "delivery": "shot",
+   "range": 16,
+   "speed": 8,
+   "radius": 0.8,
+   "windup": 1.2,
+   "cooldown": 4,
+   "modifier": "none",
+   "shots": 10,
+   "factor": 0.35
+  },
+  "legendSpin": {
+   "delivery": "beam",
+   "range": 9,
+   "width": 1.6,
+   "duration": 2.4,
+   "tick": 0.2,
+   "spin": 150,
+   "windup": 1.4,
+   "cooldown": 5,
+   "modifier": "none",
+   "factor": 0.7
+  },
+  "legendCharge": {
+   "delivery": "melee",
+   "range": 2.5,
+   "speed": 9,
+   "duration": 1.6,
+   "windup": 1.0,
+   "cooldown": 4,
+   "modifier": "knockback",
+   "knockback": 5
   }
  },
  "byLevel": {
@@ -114,6 +282,42 @@
    "longspit",
    "longbarb",
    "quake"
+  ],
+  "owl": [
+   null,
+   "lob",
+   "biglob",
+   "quake"
+  ],
+  "salamander": [
+   null,
+   "beam",
+   "widebeam",
+   "quake"
+  ],
+  "spider": [
+   null,
+   "web",
+   "bigweb",
+   "quake"
+  ],
+  "bat": [
+   null,
+   "screech",
+   "bigscreech",
+   "quake"
+  ],
+  "mole": [
+   null,
+   "upheaval",
+   "bigupheaval",
+   "quake"
+  ],
+  "toad": [
+   null,
+   "slam",
+   "bigslam",
+   "quake"
   ]
  },
  "kite": {
@@ -122,5 +326,96 @@
   ],
   "near": 0.55,
   "far": 0.9
+ },
+ "temperament": {
+  "curious": [
+   "squirrel",
+   "fox",
+   "otter",
+   "hedgehog",
+   "dormouse",
+   "badger",
+   "bear",
+   "beaver",
+   "mole",
+   "raven",
+   "wolf",
+   "boar"
+  ],
+  "skittish": [
+   "hare",
+   "stag",
+   "elk",
+   "owl",
+   "bat",
+   "moth",
+   "toad",
+   "salamander",
+   "lynx",
+   "marten",
+   "stoat",
+   "snake",
+   "spider",
+   "glowworm",
+   "woodlouse",
+   "beetle",
+   "snail",
+   "ram"
+  ]
+ },
+ "traits": {
+  "flier": [
+   "raven",
+   "bat",
+   "owl",
+   "moth"
+  ],
+  "armoured": [
+   "beetle",
+   "woodlouse",
+   "snail",
+   "hedgehog"
+  ],
+  "swarm": [
+   "bat",
+   "moth"
+  ],
+  "heavy": [
+   "boar",
+   "bear",
+   "elk",
+   "stag"
+  ],
+  "nimble": [
+   "hare",
+   "stoat"
+  ],
+  "burrower": [
+   "mole"
+  ]
+ },
+ "counters": {
+  "flier": {
+   "melee": 0.5
+  },
+  "armoured": {
+   "shot": 0.35,
+   "lob": 0.35,
+   "beam": 0.35,
+   "knockback": 2,
+   "stun": 1.2
+  },
+  "swarm": {
+   "quake": 2,
+   "lob": 2,
+   "beam": 2,
+   "pulse": 2
+  },
+  "heavy": {
+   "knockback": 0,
+   "slow": 0.5
+  },
+  "nimble": {},
+  "burrower": {}
  }
 }

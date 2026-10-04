@@ -11,6 +11,7 @@ import { beatAt, bpmAt, newBeatClock, rampTo, timeAt, waveArrived, waveTempo, ty
 import { barAt, barSeconds, planBlock, type MusicCue } from "../../src/rules/musicPlan";
 import { arcStep, checkStyle, resolveSection, type MusicStyle, type Patch } from "../../src/rules/musicScore";
 import { TUNING } from "../../src/rules/tuning";
+import { analyse, type Analysis } from "./analyse";
 
 const REPO_STYLE = styleJson as unknown as MusicStyle;
 const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x));
@@ -240,6 +241,28 @@ async function musicLabCheck(bars = 2): Promise<{ ok: boolean; errors: string[];
   return { ok: errors.length === 0, errors, results };
 }
 (window as unknown as { musicLabCheck: typeof musicLabCheck }).musicLabCheck = musicLabCheck;
+
+/** Measure every section (or those named): loudness, peak, bands, centroid and a spectrogram, and
+ *  each part's own loudness soloed (tools/music-lab/analyse.cjs). */
+async function musicLabAnalyse(opts: { sections?: string[]; bars?: number; parts?: boolean; wave?: number } = {}): Promise<Record<string, { all: Analysis; parts: Record<string, number> }>> {
+  const rate = 44100, bars = opts.bars ?? 4, spBar = barSeconds(style.bpm), steady = newBeatClock(style.bpm), out: Record<string, { all: Analysis; parts: Record<string, number> }> = {};
+  const quiet: MusicCue = { waves: [], nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0 };
+  const render = async (name: string, solo: string | null) => {
+    const oc = new OfflineAudioContext(2, Math.ceil(rate * bars * spBar), rate);
+    const e = new MusicEngine(oc, oc.destination, style, 7);
+    if (solo) e.solo = new Set([solo]);
+    const from = name === style.intro || resolveSection(style, name).riser ? Math.max(0, (resolveSection(style, name).riser ? 8 : 24) - bars) * spBar : 0;
+    e.renderAhead({ ...quiet, forceSection: name, forceWave: opts.wave ?? 3 }, from, bars * spBar, steady);
+    return oc.startRendering();
+  };
+  for (const name of opts.sections ?? Object.keys(style.sections)) {
+    const all = analyse(await render(name, null), true), parts: Record<string, number> = {};
+    if (opts.parts !== false) for (const p of Object.keys(resolveSection(style, name).parts)) parts[p] = analyse(await render(name, p)).short;
+    out[name] = { all, parts };
+  }
+  return out;
+}
+(window as unknown as { musicLabAnalyse: typeof musicLabAnalyse }).musicLabAnalyse = musicLabAnalyse;
 
 // ---- wiring ----
 async function togglePlay(): Promise<void> {

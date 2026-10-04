@@ -42,6 +42,8 @@ export interface Dressing {
 const POOL = DEFS.filter(d => (d.cls === "litter" || d.cls === "small" || d.cls === "balloon") && !d.hang);
 const HANGING = DEFS.filter(d => d.hang && d.cls !== "balloon" && d.id !== "balloon-caught");
 const SETS = DEFS.filter(d => d.cls === "set");
+/** The clusters any party area can have: all but home's own (#53). */
+const WILD_CLUSTERS = PARTY_CLUSTERS.filter(c => !c.id.startsWith("home-"));
 
 /** A ref for a piece, its neon and balloons picked at random (Ed: random per placement). */
 export function refFor(d: PartyDef, r: () => number): string {
@@ -78,9 +80,44 @@ export function dressingOf(map: ForestMap, cell: Cell, t: Tuning): Dressing {
   };
   const between = ([lo, hi]: number[]) => lo + Math.floor(r() * (hi - lo + 1));
   const out: Dressing = { clusters: [], loose: [], caught: null, hanging: [], lights: [] };
+  // Home (Ed's playtest, 2026-10-04: decorate it round the dancefloor): a lit ring of party pieces
+  // just outside the floor's clearing, every lanePitch metres round, laneWidth out from its edge,
+  // clear of the treehouse and the paths. (The treehouse stands right at the clearing's edge, so
+  // there's no stretch between the two to line.)
+  // Its pieces are the home set (art/party.js class home, #53): the ring of lights and pots, a
+  // branch arch over each path where it crosses the ring, and the home clusters either side of the
+  // treehouse, between it and the floor.
+  const home = cell[0] === map.centreCell[0] && cell[1] === map.centreCell[1];
+  if (home) {
+    const R = floorClearing(t) + P.laneWidth, lane = P.lane.filter(id => BY_ID[id] && !P.exclude.includes(id)), n = Math.floor((Math.PI * 2 * R) / P.lanePitch);
+    const th = map.treehouse, nearHouse = (x: number, z: number, m = 2) => Math.hypot(x - th.x, z - th.z) < t.treehouse.clear + m;
+    let k = 0, onPath = false;
+    for (let i = 0; i < n && lane.length; i++) {
+      const a = (i / n) * Math.PI * 2, x = d.x + Math.cos(a) * R, z = d.z + Math.sin(a) * R, path = !!map.paths.at(x, z, 1);
+      // One arch where each path crosses (the first ring spot on it), over the path itself.
+      if (path && !onPath && BY_ID[P.arch] && !P.exclude.includes(P.arch) && !nearHouse(x, z)) { out.loose.push({ ref: refFor(BY_ID[P.arch], r), x, z, flip: false }); taken.push({ x, z, r: 1.5 }); }
+      onPath = path;
+      if (path || nearHouse(x, z)) continue;
+      out.loose.push({ ref: refFor(BY_ID[lane[k++ % lane.length]], r), x, z, flip: i % 2 === 0 });
+      taken.push({ x, z, r: 1 });
+    }
+    // The home clusters, a little outside the ring, either side of the treehouse.
+    const toHouse = Math.atan2(th.z - d.z, th.x - d.x);
+    P.homeClusters.forEach((id, i) => {
+      if (!PARTY_CLUSTERS.some(c => c.id === id)) return;
+      for (let tries = 0; tries < 24; tries++) {
+        const side = i % 2 ? 1 : -1, a = toHouse + side * (0.35 + 0.18 * Math.floor(i / 2) + Math.floor(tries / 2) * 0.1), Rc = R + (tries % 2 ? 7 : 3.5);
+        const x = d.x + Math.cos(a) * Rc, z = d.z + Math.sin(a) * Rc;
+        if (map.paths.at(x, z, 3) || nearHouse(x, z, 4) || taken.some(q => Math.hypot(q.x - x, q.z - z) < q.r + 3)) continue;
+        out.clusters.push({ id, x, z, mirror: side > 0 });
+        taken.push({ x, z, r: 3 });
+        break;
+      }
+    });
+  }
   for (let i = 0, n = between(P.clusters); i < n; i++) {
     const s = spotFor(4);
-    if (s) out.clusters.push({ id: PARTY_CLUSTERS[Math.floor(r() * PARTY_CLUSTERS.length)].id, ...s, mirror: r() < 0.5 });
+    if (s) out.clusters.push({ id: WILD_CLUSTERS[Math.floor(r() * WILD_CLUSTERS.length)].id, ...s, mirror: r() < 0.5 });
   }
   if (r() < P.setChance && sets.length) { const s = spotFor(3); if (s) out.loose.push({ ref: refFor(sets[Math.floor(r() * sets.length)], r), ...s, flip: r() < 0.5 }); }
   for (let i = 0, n = between(P.loose); i < n; i++) {

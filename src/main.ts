@@ -4,6 +4,7 @@ import { musicMix } from "./rules/music";
 import { musicCue, type MusicCue } from "./rules/musicPlan";
 import type { MusicStyle } from "./rules/musicScore";
 import musicStyleJson from "../config/music-style.json";
+import { setupArena } from "./rules/arena";
 import { areaUnderWitch, interpolated, newGame, STEP, stepGame } from "./rules/game";
 import { AREA_TYPES } from "./rules/map";
 import { waveCountdown } from "./rules/party";
@@ -16,6 +17,8 @@ import { SPRITE_UNIFORMS } from "./render/sprites";
 import { loadStyle } from "./render/style";
 import { setupTouch } from "./ui/touch";
 import changelog from "../config/changelog.json";
+import { PlaytestLog } from "./platform/playtestLog";
+import { powerReport } from "./rules/power";
 
 const params = new URLSearchParams(location.search);
 let seed = parseSeed(params.get("seed"));
@@ -89,6 +92,8 @@ if (reliefParam !== null && !isNaN(Number(reliefParam))) tuning.ground = { ...tu
 // ?hills=0: the ground flat again; ?hills=<amplitude>: the rolling ground's swells, in metres.
 const hillsParam = params.get("hills");
 if (hillsParam !== null && !isNaN(Number(hillsParam))) tuning.ground = { ...tuning.ground, hills: { ...tuning.ground.hills, on: Number(hillsParam) > 0, amplitude: Number(hillsParam) > 0 ? Number(hillsParam) : tuning.ground.hills.amplitude } };
+// ?ley=0: no ley lines through the runestones.
+if (params.get("ley") === "0") tuning.leyLines = { ...tuning.leyLines, on: false };
 // ?bare=1: the terrain on its own, to judge the hills, the bumps and the bend (Ed, 2026-10-04): no
 // trees, undergrowth, grass, decor, scenes, relics, path props, string lights, mist or shadows; no
 // point lights, glow or haze, and a low raking moonlight. ?bare=2: a flat grey ground with contour
@@ -114,6 +119,13 @@ const fx = params.get("fx");
 if (fx === "pixel" || fx === "smooth") tuning.fx = fx;
 
 const game = newGame(seed, tuning);
+// ?arena=wolf*4,beetle*3 (Stage 5, a debug arena): hers against the wild in the home clearing,
+// no waves; J sets it up again.
+const arenaParam = params.get("arena");
+if (arenaParam) {
+  setupArena(game, arenaParam);
+  window.addEventListener("keydown", e => { if (e.code === "KeyJ" && !e.repeat) setupArena(game, arenaParam); });
+}
 
 // How often the party spreads: the tuning file's interval (5 minutes), or ?wave=<seconds> (0 or
 // "off": no waves), or what this viewer last picked on the start screen.
@@ -128,6 +140,7 @@ let waveChoice = tuning.party.interval;
 try { const saved = localStorage.getItem("witch.wave"); if (saved !== null && WAVE_CHOICES.includes(+saved)) waveChoice = +saved; } catch { /* storage blocked */ }
 const waveParam = params.get("wave");
 if (waveParam !== null) waveChoice = waveParam === "off" ? 0 : Math.max(0, +waveParam || 0);
+if (arenaParam) waveChoice = 0;
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = loadStyle();
@@ -156,6 +169,11 @@ window.addEventListener("keydown", e => { if (e.code === "KeyG" && !e.repeat) to
 // M: the debug minimap (the party's spread: woken areas, the next to wake, the candidates).
 window.addEventListener("keydown", e => { if (e.code === "KeyM" && !e.repeat) view.minimap.on = !view.minimap.on; });
 document.getElementById("rulers")!.addEventListener("pointerdown", e => { e.preventDefault(); toggleRulers(); });
+// The playtest log (Ed, 2026-10-04): a sample every 10 s of play, kept on this browser; L, or
+// opening the game with ?playtest=download, saves the last few runs as JSON.
+const playtest = new PlaytestLog(game, typeof __BUILD__ === "string" ? __BUILD__ : "dev");
+window.addEventListener("keydown", e => { if (e.code === "KeyL" && !e.repeat) playtest.download(); });
+if (params.get("playtest") === "download") setTimeout(() => playtest.download(), 500);
 
 // The action bar (1 2 3 4 Q W E R, its keys and recharge) replaces the old line of controls (Ed,
 // 2026-10-04); H shows or hides it (remembered on this browser).
@@ -166,6 +184,17 @@ window.addEventListener("keydown", e => {
   barOn = !barOn; view.actionBar.visible = barOn;
   try { localStorage.setItem("witch.bar", barOn ? "on" : "off"); } catch { /* fine */ }
 });
+
+// Auto-talk (Ed's playtest, 2026-10-04: a new player wanted to turn it off): 1 or T, or a click
+// on its slot, turns it on or off (remembered on this browser); off, she talks while Shift is held.
+let autoTalk = true;
+try { if (localStorage.getItem("witch.autotalk") === "off") autoTalk = false; } catch { /* storage blocked: on */ }
+view.actionBar.autoTalk = autoTalk;
+view.actionBar.onAutoTalk = () => { input.touch.autoTalk = true; };
+const setAutoTalk = (on: boolean) => {
+  autoTalk = on; view.actionBar.autoTalk = on;
+  try { localStorage.setItem("witch.autotalk", on ? "on" : "off"); } catch { /* fine */ }
+};
 
 declare const __BUILD__: string;
 document.getElementById("version")!.textContent = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
@@ -206,11 +235,32 @@ requestAnimationFrame(() => setTimeout(async () => {
   startEl.classList.remove("loading");
 }, 0));
 
+// The volume (Ed's playtest, 2026-10-04): a slider in the corner, 0 mutes; remembered on this browser.
+// (The music is the only sound for now; sound effects will follow the same level.)
+let level = 0.8;
+try { const v = localStorage.getItem("witch.volume"); if (v !== null && !isNaN(+v)) level = Math.min(1, Math.max(0, +v)); } catch { /* storage blocked */ }
+const volumeEl = document.createElement("label");
+volumeEl.id = "volume";
+volumeEl.title = "volume (0 mutes)";
+Object.assign(volumeEl.style, { position: "fixed", right: "10px", bottom: "12px", zIndex: "3", display: "flex", alignItems: "center", gap: "4px", padding: "2px 6px", borderRadius: "6px", background: "rgba(14,11,28,.55)", color: "#e8e2f4", font: "12px ui-monospace, Menlo, Consolas, monospace", pointerEvents: "auto" });
+const volumeIcon = document.createElement("span"), volumeRange = document.createElement("input");
+volumeRange.type = "range"; volumeRange.min = "0"; volumeRange.max = "100"; volumeRange.value = String(Math.round(level * 100));
+volumeRange.style.width = "80px";
+const showVolume = () => { volumeIcon.textContent = level === 0 ? "🔇" : level < 0.4 ? "🔈" : "🔊"; };
+volumeRange.addEventListener("input", () => {
+  level = +volumeRange.value / 100; showVolume();
+  if (music) music.volume = tuning.music.volume * level;
+  try { localStorage.setItem("witch.volume", String(level)); } catch { /* fine */ }
+});
+for (const ev of ["pointerdown", "keydown"]) volumeRange.addEventListener(ev, e => e.stopPropagation()); // its own presses and arrow keys don't fly her
+volumeEl.append(volumeIcon, volumeRange); showVolume();
+document.body.append(volumeEl);
+
 // Browsers keep sound off until the player presses something: the start screen is that press.
 let audio: AudioContext | null = null, music: Music | null = null;
 function start(): boolean {
   if (!ready || !game.clock.paused) return false;
-  try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume, musicStyle, seed!, tuning.music.src); } catch { /* no sound yet anyway */ }
+  try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume * level, musicStyle, seed!, tuning.music.src); } catch { /* no sound yet anyway */ }
   game.clock.paused = false;
   startEl.style.display = "none";
   input.clearPresses();
@@ -248,6 +298,8 @@ function frame(now: number): void {
   frames++; fpsT += dt;
   if (fpsT >= 0.5) { fps = frames / fpsT; frames = 0; fpsT = 0; }
   const c = input.read();
+  if (c.toggleAutoTalk) setAutoTalk(!autoTalk);
+  c.autoTalk = autoTalk;
   if (c.debug) { debugOn = !debugOn; debugEl.classList.toggle("on", debugOn); debugButtons.classList.toggle("on", debugOn); }
   view.debugReadouts = debugOn;
   stepGame(game, c, dt);
@@ -258,6 +310,7 @@ function frame(now: number): void {
     document.getElementById("over-stats")!.textContent = `You lasted ${Math.floor(game.clock.time / 60)} min ${Math.floor(game.clock.time % 60)} s and ${game.party.wave} waves.`;
     document.getElementById("over")!.classList.add("on");
   }
+  playtest.update();
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
   musicCueNow = musicCue(game, musicCueNow);
   music?.update(musicMix(game, game.witch), musicCueNow, game.clock.time, game.beat, !game.clock.paused);
@@ -286,10 +339,23 @@ function frame(now: number): void {
       `trees  ${s.trees}  bushes ${s.bushes}  creatures ${s.creatures}`,
       `budget scenery to ${s.sceneryRadius.toFixed(0)} m (${s.scenery})  gameplay ${s.gameplay}  dropped ${s.dropped}`,
       `draws  ${s.drawCalls}  art queued ${s.pendingArt}  ground tiles ${s.pendingGround}`,
+      ...powerLines(),
     ].join("\n");
   }
 }
 requestAnimationFrame(frame);
+
+/** The power meter (Ed, 2026-10-04): fighting value, Σ √(hp × dps) (rules/power.ts), of the party
+ *  (leashed and parked) against each siege and every besieger together. */
+function powerLines(): string[] {
+  const p = powerReport(game.creatures, game.witches, game.combat.sounds), n = p.counts, f = (x: number) => x.toFixed(0);
+  const sieges = p.sieges.slice(0, 4).map(s => `${s.key} ${f(s.value)} (${s.count}, ${f(s.hp)} hp)`).join("  ");
+  return [
+    `power  party ${f(p.leashed + p.parked)} = leashed ${f(p.leashed)} + parked ${f(p.parked)}   ${n[0]}b ${n[1]}y ${n[2]}a ${n[3]}L   berries ${game.tally.berries} invites ${game.tally.invites}`,
+    `wild   grown ${game.growth.grown} a wave at a time, ${game.growth.made} come out, ${game.growth.grown - game.growth.made} waiting as counts   creatures ${game.creatures.length}`,
+    `enemy  marching ${f(p.marching)}${p.sieges.length ? `   ${sieges}${p.sieges.length > 4 ? ` +${p.sieges.length - 4} more` : ""}` : ""}   (L saves the playtest log)`,
+  ];
+}
 
 // For the smoke test and for poking at in the console.
 (window as unknown as { witch: unknown }).witch = { game, view,

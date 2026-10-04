@@ -7,9 +7,9 @@ import { AREA_TYPES, generateMap, parseSeed, sceneFootprint } from "./map";
 import { Forest, crownReach, treeChance } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
-import { population, spawnCreatures, wildLegendCells, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
+import { population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
 import { dormant, newGame, STEP, stepGame } from "./game";
-import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, symbolCount } from "./party";
+import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, symbolCount, wavePlan } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
 import { laserShow } from "./lasers";
@@ -479,75 +479,53 @@ describe("creatures", () => {
     expect(new Set(AREA_TYPES.map(t => t.creature)).size).toBe(30);
   });
 
-  it("are none in the home area, and a couple of babies round it", () => {
-    expect(inCell(mx, my)).toEqual([]);
-    for (const [dx, dy] of [[-1, 0], [0, 1], [0, -1]]) {
-      const here = inCell(mx + dx, my + dy);
-      expect(here.length).toBeGreaterThanOrEqual(1);
-      expect(here.length).toBeLessThanOrEqual(3);
-      expect(here.every(c => c.level === 0)).toBe(true);
+  it("start the same in every area (Ed, 2026-10-04): none at home but its legend, one baby and one adult elsewhere, and one legend in each", () => {
+    expect(inCell(mx, my).filter(c => !c.boss)).toEqual([]);
+    const S = TUNING.population.start;
+    for (let cy = 0; cy < map.n; cy += 3) for (let cx = 0; cx < map.n; cx += 3) {
+      if (cx === mx && cy === my) continue;
+      const here = inCell(cx, cy);
+      expect(here.filter(c => c.level === 0).length).toBe(S.babies);
+      expect(here.filter(c => c.level === 1).length).toBe(S.young);
+      expect(here.filter(c => c.level === 2).length).toBe(S.adults);
+      expect(here.filter(c => c.level === 3 && c.boss).length).toBe(1);
     }
+    expect(population(map)).toEqual(S);
   });
 
-  it("grow to about 20 towards the edge, with young ones among them", () => {
-    const edge = [[0, 0], [19, 0], [0, 19], [19, 19], [0, 10], [19, 10], [10, 0], [10, 19]].map(([x, y]) => inCell(x, y));
-    const mean = edge.reduce((a, l) => a + l.length, 0) / edge.length;
-    expect(mean).toBeGreaterThan(15);
-    expect(mean).toBeLessThan(23);
-    for (const l of edge.slice(0, 4)) expect(l.filter(c => c.level === 1).length).toBeGreaterThan(3);
-  });
-
-  it("have a few wild legends a map, each a boss, only in remote areas, spaced apart, one an area (Ed, 2026-10-04)", () => {
-    const W = TUNING.wildLegends;
-    for (let seed = 1; seed <= 12; seed++) {
-      const m = generateMap(seed * 101, TUNING), legends = spawnCreatures(m).filter(c => c.level === 3);
-      expect(legends.length, `seed ${seed * 101}`).toBeGreaterThanOrEqual(W.perMap[0]);
-      expect(legends.length).toBeLessThanOrEqual(W.perMap[1]);
+  it("have one legend an area, each a boss: home's happy, the rest asleep, out of their clearings (Ed, 2026-10-04)", () => {
+    for (let seed = 1; seed <= 4; seed++) {
+      const m = generateMap(seed * 101, TUNING), legends = spawnCreatures(m).filter(c => c.level === 3), [hx, hy] = m.centreCell;
+      expect(legends.length, `seed ${seed * 101}`).toBe(m.n * m.n);
       expect(new Set(legends.map(c => c.cell.join())).size).toBe(legends.length);
       for (const c of legends) {
         expect(c.boss).toBe(true);
-        expect(m.remoteness(c.cell[0], c.cell[1])).toBeGreaterThanOrEqual(W.from);
+        expect(c.legendState).toBe(c.cell[0] === hx && c.cell[1] === hy ? "happy" : "asleep");
         expect(c.speed).toBeLessThanOrEqual(TUNING.legendSpeed * 1.3 + 1e-9);
-        for (const o of legends) if (o !== c) expect(Math.hypot(o.cell[0] - c.cell[0], o.cell[1] - c.cell[1])).toBeGreaterThanOrEqual(W.spacing);
       }
-      expect(legends.map(c => c.cell.join()).sort()).toEqual(wildLegendCells(m).map(c => c.join()).sort()); // the same seed, the same places
     }
   }, 60000);
 
-  it("sleep until the party reaches their area, then lumber about it", () => {
-    const g = newGame(123, TUNING), boss = g.creatures.find(c => c.boss)!;
+  it("sleep until the party reaches their area, then heave up (untouchable a while) and lumber about it", () => {
+    const g = newGame(123, TUNING), boss = g.creatures.find(c => c.boss && c.legendState === "asleep")!;
     g.clock.paused = false;
-    g.witch = { ...g.witch, seated: false, x: boss.x + 30, z: boss.z };
+    g.witch = { ...g.witch, seated: false, x: boss.x + 30, z: boss.z, mode: "treetop", lift: 1 }; // (on the ground in its area, it would go for her once awake)
     const at = [boss.x, boss.z];
     expect(dormant(g, boss)).toBe(true);
     for (let i = 0; i < 100; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20);
     expect([boss.x, boss.z]).toEqual(at);
     g.party.areas.set(boss.cell.join(), { cell: boss.cell, wave: 1, at: 0, from: null, soundsystem: null });
+    stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20);
+    expect(boss.legendState).toBe("waking");
+    expect(dormant(g, boss)).toBe(true); // (untouchable while it heaves up)
+    for (let i = 0; i < (TUNING.wildLegends.wake + 0.2) * 20; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20);
+    expect(boss.legendState).toBe("awake");
     expect(dormant(g, boss)).toBe(false);
     let moved = 0;
     for (let i = 0; i < 400; i++) { const x = boss.x, z = boss.z; stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20); moved += Math.hypot(boss.x - x, boss.z - z); }
     expect(moved).toBeGreaterThan(0.5);
     expect(moved / 20).toBeLessThanOrEqual(TUNING.legendSpeed * 1.3 + 1e-6); // no faster than a legend
   }, 60000);
-
-  it("keep a legend next to home only while legendNextToHome is on", () => {
-    const [hx, hy] = map.centreCell, at = (cs: { level: number; cell: [number, number] }[]) => cs.some(c => c.level === 3 && c.cell[0] === hx + 1 && c.cell[1] === hy);
-    expect(at(spawnCreatures(generateMap(123, withTuning({ legendNextToHome: true }))))).toBe(true);
-    expect(at(spawnCreatures(generateMap(123, withTuning({ legendNextToHome: false }))))).toBe(false);
-  });
-
-  it("rise with distance from home, as the tuning file says", () => {
-    let last = -1;
-    for (let r = 0; r <= 1.0001; r += 0.1) {
-      const p = population(map, r);
-      const total = p.babies + p.young + p.adults;
-      expect(total).toBeGreaterThanOrEqual(last);
-      last = total;
-    }
-    expect(population(map, 0)).toEqual({ babies: TUNING.creaturesNear, young: 0, adults: 0 });
-    expect(population(map, 1).adults).toBeGreaterThan(0);
-    expect(population(map, TUNING.adultsFrom).adults).toBe(0);
-  });
 
   it("roam their whole area, slowly, and never leave it", () => {
     const sample = all.filter((_, i) => i % 97 === 0).slice(0, 5);
@@ -674,6 +652,18 @@ describe("the party", () => {
     expect(stage(p.next[0])).toBe("next"); expect(stage(p.afterNext[0])).toBe("afterNext");
     for (const c of p.probable) expect(stage(c)).toBe("probable");
   });
+  it("numbers every dormant area by the wave that will wake it, as the waves then do (Ed, 2026-10-04: numbers over the stones)", () => {
+    for (const per of [1, 2]) {
+      const p = newParty(map);
+      if (per > 1) { p.areasPerWave = per; p.next = pickSet(p, map, per); planAhead(p, map); }
+      const plan = wavePlan(p, map);
+      expect(plan.size).toBe(map.n * map.n - 1); // all but home
+      for (let w = 1; w <= 12; w++) {
+        for (const c of p.next) expect(plan.get(key(c))).toBe(w);
+        spreadWave(p, map, w);
+      }
+    }
+  });
   it("sees a wave further with a forecast buff (the owl's): the third wave's one area, confirmed", () => {
     const p = newParty(map);
     p.seeAhead = 1; planAhead(p, map);
@@ -794,7 +784,8 @@ describe("the game clock and a whole step", () => {
 });
 
 describe("inviting and leashing", () => {
-  const creatures = spawnCreatures(map);
+  // (Every level to talk to: areas start with a baby and an adult, so a young is added to each.)
+  const creatures = spawnCreatures(generateMap(123, withTuning({ population: { ...TUNING.population, start: { babies: 1, young: 1, adults: 1 } } })));
   const fresh = () => creatures.map(c => ({ ...c, rand: (() => { let k = c.id * 7 + 1; return () => (k = (k * 16807) % 2147483647) / 2147483647; })() }));
   const none: LeashControls = { sigil: false };
   // Stand the witch next to a creature of the given level and talk until it is invited.
@@ -861,7 +852,8 @@ describe("inviting and leashing", () => {
   });
 
   it("can't invite legends", () => {
-    const all = fresh(), s = newLeash(), legend = all.find(k => k.level === 3)!;
+    const all = fresh(), s = newLeash(), legend = all.find(k => k.level === 3 && k.legendState === "asleep")!;
+    legend.legendState = "awake"; // (asleep, it's scenery: not even a look)
     for (const c of all) if (c !== legend) c.leashed = true; // only the legend is left near
     const w = { x: legend.x + 1, z: legend.z };
     stepLeash(s, all, none, w, true, 0, 0.1, TUNING);
@@ -877,6 +869,17 @@ describe("inviting and leashing", () => {
     expect(s.talk?.refused).toBe(true);
     stepLeash(s, all, { sigil: false, inviteNearest: true }, w, true, 30.2, 0.1, TUNING);
     expect(legend.leashed).toBe(false);
+  });
+
+  it("with auto-talk off she talks only while Talk is held (Ed's playtest, 2026-10-04)", () => {
+    const all = fresh(), s = newLeash(), c = all.find(k => k.level === 0)!, w = { x: c.x + 1, z: c.z };
+    for (let t = 0; t < 2; t += 0.1) stepLeash(s, all, { sigil: false, talk: false }, w, true, t, 0.1, TUNING);
+    expect(s.talk).toBeNull();
+    expect(s.progress.size).toBe(0);
+    stepLeash(s, all, { sigil: false, talk: true }, w, true, 2, 0.1, TUNING); // held
+    expect(s.talk?.id).toBe(c.id);
+    stepLeash(s, all, { sigil: false, talk: false }, w, true, 2.1, 0.1, TUNING); // let go
+    expect(s.talk).toBeNull();
   });
 
   it("sticks with the creature she's talking to while it stays within cancelDistance, and drops it beyond", () => {
