@@ -14,6 +14,12 @@
         "New controls, MOBA style: the arrow keys fly (WASD no longer does); Q casts the spell, W dashes, E puts down or picks up a sigil, R cycles the stack; 1 2 3 4 are empty slots for later spells and items. An action bar along the bottom shows all eight with their keys and recharge",
         "Dash: W (gamepad A, touch 'dash') bursts a few metres the way you're steering, on the ground only, about once a second. You can still be hit mid-dash: dash out of a shot's path",
         "The game now runs in fixed steps (60 a second) and draws smoothly between them, ready for co-op",
+        "Campfires and bonfires no longer jitter as they flicker: only the flames move"
+      ]
+    },
+    {
+      "version": 300,
+      "items": [
         "Real music: the party's track is now composed live as you play, every sound synthesised. It moves through sections with the waves: the home speakers' boot is the intro, the forest is gentle and mysterious, each wave builds up and drops as it lands, and the run climbs from melodic forest house through dark synth and chiptune to a phonk finale (?music=drop or ?music=wave7 to hear one part)",
         "Tree trunks are back on the ground: they'd gone black on black in the canopy's shadow, and the big crowns' low boughs hid all but their stumps; trunks now stand clear up to their crowns and stay readable in the dark",
         "No more glowing party cubes",

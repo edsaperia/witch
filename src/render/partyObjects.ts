@@ -21,7 +21,12 @@ export class PartyObjectsView {
 
   constructor(private scene: THREE.Scene, private assets: AssetLibrary, private mpp: number) {}
 
-  update(g: Game, time: number, camera: THREE.Camera, visible: (x: number, z: number, w: number, h: number) => boolean): ForestLight[] {
+  /** Whether the art is in (the world's campfires are drawn here then, with the party campfire's frames). */
+  get ready(): boolean { return !!this.assets.partyObjectArt(); }
+
+  /** `fires`: the world's campfires showing now (view.ts lights them): drawn as the party's small
+   *  campfire, whose frames share one box and one scale (the old ones changed scale every frame). */
+  update(g: Game, time: number, camera: THREE.Camera, visible: (x: number, z: number, w: number, h: number) => boolean, fires: { x: number; z: number; scale: number; flip: boolean }[] = []): ForestLight[] {
     const lights: ForestLight[] = [], t = g.tuning;
     this.count = 0;
     if (!t.partyObjects.on) { this.upright?.set([]); this.flat?.set([]); return lights; }
@@ -36,6 +41,13 @@ export class PartyObjectsView {
     const mpp = this.mpp, U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value, w = g.witch;
     const fwd = camera.getWorldDirection(new THREE.Vector3()), up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion), rise = U.dot(up) / Math.max(0.2, -fwd.y);
     const upright: SpriteInstance[] = [], flat: SpriteInstance[] = [], reach = t.haze.far + g.map.areaSize;
+    const fire = art.pieces["party:campfire-small"];
+    if (fire) fires.forEach((c, i) => {
+      const fi = fire.frames[Math.floor(time * 8 + i) % fire.frames.length], frame = art.atlas.frames[fi], pad = art.atlas.frames[fire.frames[0]].pad ?? 0;
+      const dx = (fire.originX - frame.w / 2) * mpp * (c.flip ? -1 : 1), toward = Math.max(0, frame.h - pad - fire.originY) * mpp * rise;
+      const x = c.x - R.x * dx, z = c.z - R.z * dx + toward, d0 = pad * mpp;
+      if (visible(x, z, frame.w * mpp, frame.h * mpp)) upright.push({ x: x - U.x * d0, y: -U.y * d0, z: z - U.z * d0, frame, flip: c.flip, scale: c.scale });
+    });
     for (const [key, area] of g.party.areas) {
       const site = g.map.siteOf(area.cell[0], area.cell[1]);
       if (Math.abs(site.x - w.x) > reach || Math.abs(site.z - w.z) > reach) continue;
@@ -52,7 +64,8 @@ export class PartyObjectsView {
         if (since < 0) return;
         const grow = Math.min(1, since / 0.35), k = grow * grow * (3 - 2 * grow) * (1 + 0.25 * Math.sin(Math.min(1, since / 0.5) * Math.PI));
         const fi = a.frames[a.frames.length > 1 ? Math.floor(time * 8 + i) % a.frames.length : 0], frame = art.atlas.frames[fi];
-        const pad = a.decal ? 0 : frame.pad ?? 0, dx = (a.originX - frame.w / 2) * mpp * (flip ? -1 : 1), toward = Math.max(0, frame.h - pad - a.originY) * mpp * rise;
+        // The first frame's pad for every frame, so nothing hops as it animates.
+        const pad = a.decal ? 0 : art.atlas.frames[a.frames[0]].pad ?? 0, dx = (a.originX - frame.w / 2) * mpp * (flip ? -1 : 1), toward = Math.max(0, frame.h - pad - a.originY) * mpp * rise;
         const bob = def.bob ? def.bob.amplitude * Math.sin(((time / def.bob.period) + def.bob.phase + i * 0.17) * Math.PI * 2) : 0;
         const x = gx - R.x * dx, z = gz - R.z * dx + toward;
         if (!visible(x, z, frame.w * mpp, frame.h * mpp + hang)) return;
