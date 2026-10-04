@@ -171,32 +171,32 @@ label.check input { accent-color: var(--accent); }
     },
     blockBars: 4,
     buildBars: 8,
-    mix: { master: 0.75, reverb: 0.3, reverbTime: 2.4, delay: 0.22, delayBeats: 0.75, feedback: 0.35, duck: 0.45 },
+    mix: { master: 0.58, reverb: 0.3, reverbTime: 2.4, delay: 0.22, delayBeats: 0.75, feedback: 0.35, duck: 0.45 },
     patches: {
-      kick: { kind: "kick", gain: 0.95, pitch: 150, pitchEnd: 45, pitchTime: 0.08, decay: 0.38, drive: 0.15 },
-      softKick: { kind: "kick", gain: 0.6, pitch: 105, pitchEnd: 46, pitchTime: 0.06, decay: 0.3 },
-      kick808: { kind: "kick", gain: 1, pitch: 130, pitchEnd: 38, pitchTime: 0.1, decay: 0.7, drive: 0.55 },
-      clap: { kind: "noise", gain: 0.5, filter: "bandpass", cutoff: 1400, q: 1.4, decay: 0.16, bursts: 3, reverb: 0.25 },
-      snare: { kind: "snare", gain: 0.42, pitch: 190, cutoff: 2200, q: 0.9, decay: 0.14, reverb: 0.15 },
-      snap: { kind: "noise", gain: 0.45, filter: "highpass", cutoff: 2800, q: 0.8, decay: 0.05, reverb: 0.4 },
-      hat: { kind: "noise", gain: 0.2, filter: "highpass", cutoff: 8e3, q: 0.7, decay: 0.035 },
-      openHat: { kind: "noise", gain: 0.13, filter: "highpass", cutoff: 7e3, q: 0.7, decay: 0.22 },
-      shaker: { kind: "noise", gain: 0.16, filter: "bandpass", cutoff: 7e3, q: 1.2, attack: 0.012, decay: 0.05 },
-      cowbell: { kind: "bell", gain: 0.16, ratio: 1.48, decay: 0.28, cutoff: 2400, q: 1.5, reverb: 0.2 },
-      sub808: { kind: "synth", gain: 0.38, waves: ["sine"], attack: 5e-3, decay: 1.2, sustain: 0.6, release: 0.15, filter: "lowpass", cutoff: 900, glide: 0.05, drive: 0.45 },
-      houseBass: { kind: "synth", gain: 0.26, waves: ["sawtooth", "square"], detune: 6, attack: 5e-3, decay: 0.2, sustain: 0.2, release: 0.08, filter: "lowpass", cutoff: 220, q: 6, envAmt: 1100, duck: true },
-      darkBass: { kind: "synth", gain: 0.24, waves: ["sawtooth", "sawtooth"], detune: 12, attack: 4e-3, decay: 0.12, sustain: 0.5, release: 0.05, filter: "lowpass", cutoff: 380, q: 3, envAmt: 2400, drive: 0.5, duck: true },
+      kick: { kind: "kick", gain: 1, pitch: 160, pitchEnd: 48, pitchTime: 0.06, decay: 0.42, drive: 0.25, click: 0.35 },
+      softKick: { kind: "kick", gain: 0.7, pitch: 110, pitchEnd: 50, pitchTime: 0.05, decay: 0.32, click: 0.12 },
+      kick808: { kind: "kick", gain: 1, pitch: 140, pitchEnd: 40, pitchTime: 0.09, decay: 0.8, drive: 0.6, click: 0.2 },
+      clap: { kind: "noise", gain: 2.372, filter: "bandpass", cutoff: 1300, q: 1.1, decay: 0.2, bursts: 4, reverb: 0.3, hp: 400 },
+      snare: { kind: "snare", gain: 1.197, pitch: 185, cutoff: 1500, q: 0.9, decay: 0.17, reverb: 0.2, hp: 120 },
+      snap: { kind: "noise", gain: 1.382, filter: "highpass", cutoff: 2500, q: 0.8, decay: 0.05, reverb: 0.45, hp: 1500, pan: 0.1 },
+      hat: { kind: "noise", source: "metal", gain: 12.56, filter: "highpass", cutoff: 7e3, q: 0.7, decay: 0.045, hp: 400, pan: 0.22 },
+      openHat: { kind: "noise", source: "metal", gain: 5.69, filter: "highpass", cutoff: 6500, q: 0.7, decay: 0.28, hp: 400, pan: -0.2 },
+      shaker: { kind: "noise", gain: 2.124, filter: "bandpass", cutoff: 7500, q: 1, attack: 0.012, decay: 0.055, hp: 500, pan: -0.35 },
+      cowbell: { kind: "bell", gain: 0.502, ratio: 1.48, decay: 0.3, cutoff: 1800, q: 1.2, reverb: 0.25, hp: 300, pan: 0.1 },
+      sub808: { kind: "synth", gain: 0.32, waves: ["sine"], attack: 3e-3, decay: 1.2, sustain: 0.7, release: 0.12, filter: "lowpass", cutoff: 700, glide: 0.06, drive: 0.55 },
+      houseBass: { kind: "synth", gain: 0.519, waves: ["sawtooth", "square"], detune: 6, attack: 5e-3, decay: 0.2, sustain: 0.2, release: 0.08, filter: "lowpass", cutoff: 220, q: 6, envAmt: 1100, duck: true },
+      darkBass: { kind: "synth", gain: 0.603, waves: ["sawtooth", "sawtooth"], detune: 12, attack: 4e-3, decay: 0.12, sustain: 0.5, release: 0.05, filter: "lowpass", cutoff: 380, q: 3, envAmt: 2400, drive: 0.5, duck: true },
       chipBass: { kind: "synth", gain: 0.17, waves: ["square"], attack: 2e-3, decay: 0.12, sustain: 0.3, release: 0.04, filter: "lowpass", cutoff: 2200, q: 1, duck: true },
-      pad: { kind: "synth", gain: 0.065, waves: ["sawtooth", "sawtooth", "triangle"], detune: 14, attack: 0.7, decay: 1, sustain: 0.8, release: 1.4, filter: "lowpass", cutoff: 1300, q: 0.6, envAmt: 300, reverb: 0.45, duck: true },
-      gatePad: { kind: "synth", gain: 0.06, waves: ["sawtooth", "sawtooth"], detune: 18, attack: 0.01, decay: 0.15, sustain: 0.6, release: 0.05, filter: "lowpass", cutoff: 1800, q: 2, envAmt: 1500, reverb: 0.3, duck: true },
-      marimba: { kind: "synth", gain: 0.15, waves: ["triangle", "sine"], detune: 3, attack: 2e-3, decay: 0.32, sustain: 0, release: 0.1, filter: "lowpass", cutoff: 3200, q: 1, envAmt: 2e3, delay: 0.35, reverb: 0.35 },
-      strings: { kind: "synth", gain: 0.06, waves: ["sawtooth", "sawtooth"], detune: 9, attack: 0.35, decay: 0.5, sustain: 0.85, release: 0.9, filter: "lowpass", cutoff: 2600, q: 0.5, reverb: 0.5, delay: 0.1 },
-      supersaw: { kind: "synth", gain: 0.075, waves: ["sawtooth", "sawtooth", "sawtooth"], detune: 22, attack: 0.01, decay: 0.3, sustain: 0.55, release: 0.25, filter: "lowpass", cutoff: 2200, q: 2, envAmt: 3e3, delay: 0.3, reverb: 0.3, duck: true },
-      chip: { kind: "synth", gain: 0.075, waves: ["square"], attack: 2e-3, decay: 0.09, sustain: 0.25, release: 0.05, filter: "lowpass", cutoff: 9e3, delay: 0.25 },
-      arp: { kind: "synth", gain: 0.055, waves: ["square", "square"], detune: 8, attack: 2e-3, decay: 0.08, sustain: 0, release: 0.04, filter: "lowpass", cutoff: 4e3, q: 1, envAmt: 2e3, delay: 0.3, duck: true },
-      tension: { kind: "synth", gain: 0.05, waves: ["square"], attack: 2e-3, decay: 0.06, sustain: 0, release: 0.03, filter: "bandpass", cutoff: 3e3, q: 4 },
-      riser: { kind: "riser", gain: 0.2, cutoff: 400, q: 4, reverb: 0.4 },
-      impact: { kind: "impact", gain: 0.55, pitch: 90, pitchEnd: 30, pitchTime: 0.6, decay: 1.8, reverb: 0.6 }
+      pad: { kind: "synth", gain: 0.188, waves: ["sawtooth", "sawtooth"], unison: 2, detune: 16, width: 0.7, attack: 0.6, decay: 1, sustain: 0.8, release: 1.4, filter: "lowpass", cutoff: 1600, q: 0.7, envAmt: 400, lfoRate: 0.15, lfoDepth: 350, reverb: 0.45, duck: true, hp: 180 },
+      gatePad: { kind: "synth", gain: 0.176, waves: ["sawtooth", "sawtooth"], unison: 2, detune: 18, width: 0.6, attack: 0.01, decay: 0.15, sustain: 0.6, release: 0.05, filter: "lowpass", cutoff: 1800, q: 2, envAmt: 1500, reverb: 0.3, duck: true, hp: 200 },
+      marimba: { kind: "synth", gain: 0.356, waves: ["triangle", "sine"], detune: 3, attack: 2e-3, decay: 0.32, sustain: 0, release: 0.1, filter: "lowpass", cutoff: 3200, q: 1, envAmt: 2e3, delay: 0.35, reverb: 0.35, hp: 200, pan: -0.25 },
+      strings: { kind: "synth", gain: 0.442, waves: ["sawtooth", "sawtooth"], unison: 2, detune: 10, width: 0.8, attack: 0.35, decay: 0.5, sustain: 0.85, release: 0.9, filter: "lowpass", cutoff: 2600, q: 0.5, lfoRate: 0.2, lfoDepth: 300, reverb: 0.5, delay: 0.1, hp: 250 },
+      supersaw: { kind: "synth", gain: 0.491, waves: ["sawtooth"], unison: 7, detune: 28, width: 0.9, attack: 0.01, decay: 0.3, sustain: 0.6, release: 0.25, filter: "lowpass", cutoff: 3200, q: 1, envAmt: 3500, delay: 0.25, reverb: 0.3, duck: true, hp: 180 },
+      chip: { kind: "synth", gain: 0.251, waves: ["square"], attack: 2e-3, decay: 0.09, sustain: 0.25, release: 0.05, filter: "lowpass", cutoff: 9e3, delay: 0.25, hp: 250, pan: 0.15 },
+      arp: { kind: "synth", gain: 0.176, waves: ["square", "square"], detune: 8, width: 0.5, attack: 2e-3, decay: 0.08, sustain: 0, release: 0.04, filter: "lowpass", cutoff: 4e3, q: 1, envAmt: 2e3, delay: 0.3, duck: true, hp: 300 },
+      tension: { kind: "synth", gain: 0.06, waves: ["square"], attack: 2e-3, decay: 0.06, sustain: 0, release: 0.03, filter: "bandpass", cutoff: 3e3, q: 4, pan: -0.3 },
+      riser: { kind: "riser", gain: 0.25, cutoff: 400, q: 4, reverb: 0.4 },
+      impact: { kind: "impact", gain: 0.6, pitch: 90, pitchEnd: 30, pitchTime: 0.6, decay: 1.8, reverb: 0.6 }
     },
     parts: {
       kick: { patch: "kick", role: "drum", patterns: { four: "x...x...x...x...", drive: "X...x...X...x..." } },
@@ -400,14 +400,14 @@ label.check input { accent-color: var(--accent); }
     return dt <= 0 ? s.bpm : dt < s.dur ? s.bpm + (s.bpmTo - s.bpm) * dt / s.dur : s.bpmTo;
   }
   function timeAt(c, beat) {
-    const s = segAtBeat(c, beat), db = beat - s.beat;
-    if (db <= 0) return s.time + db * 60 / s.bpm;
+    const s = segAtBeat(c, beat), db2 = beat - s.beat;
+    if (db2 <= 0) return s.time + db2 * 60 / s.bpm;
     const rb = rampBeats(s);
-    if (s.dur > 0 && db < rb) {
-      const a = (s.bpmTo - s.bpm) / (2 * s.dur), b = s.bpm, k = 60 * db;
+    if (s.dur > 0 && db2 < rb) {
+      const a = (s.bpmTo - s.bpm) / (2 * s.dur), b = s.bpm, k = 60 * db2;
       return s.time + (Math.abs(a) < 1e-9 ? k / b : (-b + Math.sqrt(b * b + 4 * a * k)) / (2 * a));
     }
-    return s.time + s.dur + (db - rb) * 60 / s.bpmTo;
+    return s.time + s.dur + (db2 - rb) * 60 / s.bpmTo;
   }
   function rampTo(c, atBeat, bpm, beats) {
     const time = timeAt(c, atBeat), from = bpmAt(c, time);
@@ -694,6 +694,14 @@ label.check input { accent-color: var(--accent); }
 
   // src/platform/musicEngine.ts
   var mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
+  var VOWELS = {
+    ah: [[800, 1], [1150, 0.6], [2900, 0.25]],
+    oh: [[450, 1], [800, 0.5], [2830, 0.15]],
+    oo: [[325, 1], [700, 0.3], [2530, 0.1]],
+    eh: [[530, 1], [1840, 0.5], [2480, 0.3]],
+    ee: [[270, 1], [2290, 0.45], [3010, 0.35]]
+  };
+  var METAL_RATIOS = [2, 3, 4.16, 5.43, 6.79, 8.21];
   var MusicEngine = class {
     constructor(ctx2, dest, style2, seed2 = 0) {
       this.ctx = ctx2;
@@ -703,11 +711,11 @@ label.check input { accent-color: var(--accent); }
       const c = ctx2;
       this.out = c.createGain();
       const limit = c.createDynamicsCompressor();
-      limit.threshold.value = -10;
-      limit.knee.value = 6;
-      limit.ratio.value = 4;
-      limit.attack.value = 3e-3;
-      limit.release.value = 0.2;
+      limit.threshold.value = -8;
+      limit.knee.value = 4;
+      limit.ratio.value = 12;
+      limit.attack.value = 2e-3;
+      limit.release.value = 0.15;
       this.tone = c.createBiquadFilter();
       this.tone.type = "lowpass";
       this.tone.frequency.value = 18e3;
@@ -724,8 +732,12 @@ label.check input { accent-color: var(--accent); }
       delayTone.frequency.value = 3200;
       this.duckBus.connect(this.tone);
       this.dryBus.connect(this.tone);
+      const reverbLow = c.createBiquadFilter();
+      reverbLow.type = "highpass";
+      reverbLow.frequency.value = 220;
       this.reverbIn.connect(this.reverb);
-      this.reverb.connect(this.tone);
+      this.reverb.connect(reverbLow);
+      reverbLow.connect(this.tone);
       this.delayIn.connect(this.delay);
       this.delay.connect(delayTone);
       delayTone.connect(this.feedback);
@@ -741,6 +753,23 @@ label.check input { accent-color: var(--accent); }
         r = Math.imul(r, 1103515245) + 12345 >>> 0;
         d[i] = r / 4294967296 * 2 - 1;
       }
+      this.metal = c.createBuffer(1, 2 * c.sampleRate, c.sampleRate);
+      const m = this.metal.getChannelData(0), phase = METAL_RATIOS.map((_, i) => i * 0.37);
+      for (let i = 0; i < m.length; i++) {
+        let v = 0;
+        for (let k = 0; k < METAL_RATIOS.length; k++) v += (40 * METAL_RATIOS[k] * i / c.sampleRate + phase[k]) % 1 < 0.5 ? 1 : -1;
+        m[i] = v / METAL_RATIOS.length;
+      }
+      let peak = 0, a = 0, b = 0;
+      for (let i = 0; i < m.length; i++) {
+        const x = m[i], d1 = x - a;
+        a = x;
+        const d2 = d1 - b;
+        b = d1;
+        m[i] = d2;
+        peak = Math.max(peak, Math.abs(d2));
+      }
+      for (let i = 0; i < m.length; i++) m[i] /= peak || 1;
       this.setStyle(style2);
     }
     ctx;
@@ -749,6 +778,8 @@ label.check input { accent-color: var(--accent); }
     conductor;
     /** What was last scheduled (a fraction of a second ahead of what's heard): for the Music Lab. */
     current = null;
+    /** Only these parts sound (the Music Lab's analysis); null: all. */
+    solo = null;
     out;
     tone;
     duckBus;
@@ -759,6 +790,7 @@ label.check input { accent-color: var(--accent); }
     delayIn;
     feedback;
     noise;
+    metal;
     channels = /* @__PURE__ */ new Map();
     curves = /* @__PURE__ */ new Map();
     nextStep = -1;
@@ -835,18 +867,33 @@ label.check input { accent-color: var(--accent); }
     channel(part, p) {
       let ch = this.channels.get(part);
       if (!ch) {
-        const g = this.ctx.createGain();
-        g.connect(p.duck ? this.duckBus : this.dryBus);
+        const c = this.ctx, g = c.createGain();
+        let out = g;
+        if (p.hp) {
+          const f = c.createBiquadFilter();
+          f.type = "highpass";
+          f.frequency.value = p.hp;
+          f.Q.value = 0.7;
+          out.connect(f);
+          out = f;
+        }
+        if (p.pan) {
+          const s = c.createStereoPanner();
+          s.pan.value = p.pan;
+          out.connect(s);
+          out = s;
+        }
+        out.connect(p.duck ? this.duckBus : this.dryBus);
         if (p.reverb) {
-          const r = this.ctx.createGain();
+          const r = c.createGain();
           r.gain.value = p.reverb;
-          g.connect(r);
+          out.connect(r);
           r.connect(this.reverbIn);
         }
         if (p.delay) {
-          const d = this.ctx.createGain();
+          const d = c.createGain();
           d.gain.value = p.delay;
-          g.connect(d);
+          out.connect(d);
           d.connect(this.delayIn);
         }
         this.channels.set(part, ch = { in: g, lastFreq: 0 });
@@ -855,7 +902,7 @@ label.check input { accent-color: var(--accent); }
     }
     play(e, t, dur, sps) {
       const p = this.style.patches[e.patch];
-      if (!p) return;
+      if (!p || this.solo && !this.solo.has(e.part)) return;
       const ch = this.channel(e.part, p), peak = p.gain * e.vel;
       switch (p.kind) {
         case "kick":
@@ -873,6 +920,9 @@ label.check input { accent-color: var(--accent); }
           break;
         case "synth":
           this.synth(t, p, peak, mtof(e.midi ?? 45), dur, ch);
+          break;
+        case "voice":
+          this.voice(t, p, peak, mtof(e.midi ?? 57), dur, e.step, ch.in);
           break;
         case "riser":
           this.riser(t, p, dur, e.from ?? 0, e.to ?? 1, ch.in);
@@ -918,14 +968,25 @@ label.check input { accent-color: var(--accent); }
       const c = this.ctx, o = c.createOscillator(), decay = p.decay ?? 0.35;
       o.frequency.setValueAtTime(p.pitch ?? 150, t);
       o.frequency.exponentialRampToValueAtTime(p.pitchEnd ?? 45, t + (p.pitchTime ?? 0.08));
-      const g = this.env(t, peak, 2e-3, decay);
+      const g = c.createGain();
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(peak, t + 2e-3);
+      g.gain.setTargetAtTime(peak * 0.6, t + 0.01, decay * 0.25);
+      g.gain.setTargetAtTime(0, t + decay * 0.5, decay * 0.18);
       this.chain(p.drive ? [o, this.shaper(p.drive), g] : [o, g], dest);
       o.start(t);
-      o.stop(t + decay + 0.05);
+      o.stop(t + decay * 1.3 + 0.05);
+      if (p.click) {
+        const f = c.createBiquadFilter();
+        f.type = "bandpass";
+        f.frequency.value = 3500;
+        f.Q.value = 0.8;
+        this.chain([this.noiseSource(t, 0.03), f, this.env(t, peak * p.click, 5e-4, 0.012)], dest);
+      }
     }
-    noiseSource(t, length) {
+    noiseSource(t, length, metal = false) {
       const s = this.ctx.createBufferSource();
-      s.buffer = this.noise;
+      s.buffer = metal ? this.metal : this.noise;
       s.loop = length > 1.5;
       s.start(t, t * 7.31 % 1 * 0.5);
       s.stop(t + length);
@@ -937,7 +998,7 @@ label.check input { accent-color: var(--accent); }
       f.type = p.filter ?? "highpass";
       f.frequency.value = p.cutoff ?? 8e3;
       f.Q.value = p.q ?? 0.7;
-      const g = c.createGain(), t0 = t + (bursts - 1) * gap;
+      const g = c.createGain(), t0 = t + (bursts - 1) * gap, metal = p.source === "metal";
       g.gain.setValueAtTime(0, t);
       for (let i = 0; i < bursts - 1; i++) {
         g.gain.linearRampToValueAtTime(peak, t + i * gap + 1e-3);
@@ -945,7 +1006,15 @@ label.check input { accent-color: var(--accent); }
       }
       g.gain.linearRampToValueAtTime(peak, t0 + Math.max(1e-3, p.attack ?? 1e-3));
       g.gain.exponentialRampToValueAtTime(5e-4, t0 + (p.attack ?? 1e-3) + decay);
-      this.chain([this.noiseSource(t, t0 - t + decay + 0.06), f, g], dest);
+      const nodes = [this.noiseSource(t, t0 - t + decay + 0.06, metal), f];
+      if (metal) {
+        const b = c.createBiquadFilter();
+        b.type = "bandpass";
+        b.frequency.value = 1e4;
+        b.Q.value = 0.6;
+        nodes.splice(1, 0, b);
+      }
+      this.chain([...nodes, g], dest);
     }
     snare(t, p, peak, dest) {
       const c = this.ctx, decay = p.decay ?? 0.14;
@@ -954,13 +1023,16 @@ label.check input { accent-color: var(--accent); }
       f.frequency.value = p.cutoff ?? 1800;
       f.Q.value = p.q ?? 0.7;
       this.chain([this.noiseSource(t, decay + 0.05), f, this.env(t, peak, 1e-3, decay)], dest);
-      const o = c.createOscillator();
-      o.type = "triangle";
-      o.frequency.setValueAtTime((p.pitch ?? 190) * 1.5, t);
-      o.frequency.exponentialRampToValueAtTime(p.pitch ?? 190, t + 0.03);
-      this.chain([o, this.env(t, peak * 0.7, 1e-3, decay * 0.5)], dest);
-      o.start(t);
-      o.stop(t + decay + 0.05);
+      for (const [k, lvl] of [[1, 0.7], [1.85, 0.35]]) {
+        const o = c.createOscillator();
+        o.type = "triangle";
+        const f0 = (p.pitch ?? 190) * k;
+        o.frequency.setValueAtTime(f0 * 1.5, t);
+        o.frequency.exponentialRampToValueAtTime(f0, t + 0.03);
+        this.chain([o, this.env(t, peak * lvl, 1e-3, decay * 0.5)], dest);
+        o.start(t);
+        o.stop(t + decay + 0.05);
+      }
     }
     bell(t, p, peak, freq, dest) {
       const c = this.ctx, decay = p.decay ?? 0.3;
@@ -981,7 +1053,7 @@ label.check input { accent-color: var(--accent); }
       }
     }
     synth(t, p, peak, freq, dur, ch) {
-      const c = this.ctx, waves = p.waves ?? ["sawtooth"], n = waves.length;
+      const c = this.ctx, waves = p.waves ?? ["sawtooth"], U = Math.max(1, Math.round(p.unison ?? 1)), n = waves.length * U;
       const attack = Math.max(2e-3, p.attack ?? 5e-3), decay = Math.max(0.01, p.decay ?? 0.2), sustain = p.sustain ?? 0.5, release = Math.max(0.01, p.release ?? 0.1);
       const end = t + Math.max(dur, attack), stop = end + release * 4 + 0.02;
       const g = c.createGain();
@@ -997,24 +1069,99 @@ label.check input { accent-color: var(--accent); }
         const base = p.cutoff ?? 2e3, top = Math.min(18e3, base + (p.envAmt ?? 0) * peak / Math.max(1e-3, p.gain));
         f.frequency.setValueAtTime(top, t);
         if (top > base) f.frequency.exponentialRampToValueAtTime(base, t + attack + decay);
+        if (p.lfoRate && p.lfoDepth) {
+          const l = c.createOscillator(), lg = c.createGain();
+          l.frequency.value = p.lfoRate;
+          lg.gain.value = p.lfoDepth;
+          l.connect(lg);
+          lg.connect(f.frequency);
+          l.start(t);
+          l.stop(stop);
+        }
         nodes.push(f);
       }
       if (p.drive) nodes.push(this.shaper(p.drive));
       nodes.push(g);
       this.chain(nodes, ch.in);
-      waves.forEach((w, i) => {
-        const o = c.createOscillator();
+      let v = 0;
+      for (const w of waves) for (let u = 0; u < U; u++, v++) {
+        const o = c.createOscillator(), x = n > 1 ? 2 * v / (n - 1) - 1 : 0;
         o.type = w;
-        o.detune.value = n > 1 ? (p.detune ?? 0) * (2 * i / (n - 1) - 1) : 0;
+        o.detune.value = (p.detune ?? 0) * x;
         if (p.glide && ch.lastFreq > 0 && ch.lastFreq !== freq) {
           o.frequency.setValueAtTime(ch.lastFreq, t);
           o.frequency.exponentialRampToValueAtTime(freq, t + p.glide);
+        } else if (p.bend) {
+          o.frequency.setValueAtTime(freq * Math.pow(2, p.bend / 12), t);
+          o.frequency.exponentialRampToValueAtTime(freq, t + (p.bendTime ?? 0.08));
         } else o.frequency.value = freq;
-        o.connect(nodes[0]);
+        let src = o;
+        if (p.width && n > 1) {
+          const s = c.createStereoPanner();
+          s.pan.value = p.width * (v % 2 ? x : -x);
+          o.connect(s);
+          src = s;
+        }
+        src.connect(nodes[0]);
+        o.start(t + (U > 1 ? u * 7e-4 % 4e-3 : 0));
+        o.stop(stop);
+      }
+      ch.lastFreq = freq;
+    }
+    /** A sung note, synthesised: a buzzy source (saws, a touch of breath) through three formant
+     *  band-passes for its vowel (chosen by the note, from the patch's vowels), with a vibrato that
+     *  creeps in; unison voices spread wide make a choir. */
+    voice(t, p, peak, freq, dur, step2, dest) {
+      const c = this.ctx, vowels = p.vowels?.length ? p.vowels : ["ah"], vowel = VOWELS[vowels[Math.abs(step2 >> 2) % vowels.length]] ?? VOWELS.ah;
+      const U = Math.max(1, Math.round(p.unison ?? 1)), attack = Math.max(5e-3, p.attack ?? 0.08), decay = Math.max(0.01, p.decay ?? 0.3), sustain = p.sustain ?? 0.8, release = Math.max(0.02, p.release ?? 0.3);
+      const end = t + Math.max(dur, attack), stop = end + release * 4 + 0.02;
+      const g = c.createGain(), lvl = peak / Math.sqrt(U);
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(lvl, t + attack);
+      if (end > t + attack) g.gain.setTargetAtTime(lvl * sustain, t + attack, decay / 3);
+      g.gain.setTargetAtTime(0, end, release / 3);
+      g.connect(dest);
+      const src = c.createGain();
+      for (const [f, a] of vowel) {
+        const b = c.createBiquadFilter(), bg = c.createGain();
+        b.type = "bandpass";
+        b.frequency.value = f * (p.formantShift ?? 1);
+        b.Q.value = p.q ?? 8;
+        bg.gain.value = a * 3;
+        src.connect(b);
+        b.connect(bg);
+        bg.connect(g);
+      }
+      const vib = c.createOscillator(), vg = c.createGain();
+      vib.frequency.value = 5.2;
+      vg.gain.setValueAtTime(0, t);
+      vg.gain.linearRampToValueAtTime(p.vibrato ?? 15, t + Math.min(0.6, attack + 0.25));
+      vib.connect(vg);
+      vib.start(t);
+      vib.stop(stop);
+      for (let u = 0; u < U; u++) {
+        const o = c.createOscillator(), x = U > 1 ? 2 * u / (U - 1) - 1 : 0;
+        o.type = "sawtooth";
+        o.frequency.value = freq;
+        o.detune.value = (p.detune ?? 0) * x;
+        vg.connect(o.detune);
+        let out = o;
+        if (p.width && U > 1) {
+          const s = c.createStereoPanner();
+          s.pan.value = p.width * x;
+          o.connect(s);
+          out = s;
+        }
+        out.connect(src);
         o.start(t);
         o.stop(stop);
-      });
-      ch.lastFreq = freq;
+      }
+      if (p.breath) {
+        const h = c.createBiquadFilter();
+        h.type = "highpass";
+        h.frequency.value = 2500;
+        this.chain([this.noiseSource(t, stop - t), h, this.env(t, p.breath, attack, Math.max(dur, 0.05) + release)], src);
+      }
     }
     riser(t, p, dur, from, to, dest) {
       const c = this.ctx, lo = p.cutoff ?? 400, f = c.createBiquadFilter(), g = c.createGain();
@@ -1043,13 +1190,16 @@ label.check input { accent-color: var(--accent); }
       o.stop(t + decay);
     }
     impulse(seconds) {
-      const c = this.ctx, n = Math.max(1, Math.floor(seconds * c.sampleRate)), b = c.createBuffer(2, n, c.sampleRate);
+      const c = this.ctx, rate = c.sampleRate, pre = Math.floor(0.015 * rate), n = Math.max(pre + 1, Math.floor(seconds * rate)), b = c.createBuffer(2, n, rate);
       let r = 777;
       for (let ch = 0; ch < 2; ch++) {
         const d = b.getChannelData(ch);
-        for (let i = 0; i < n; i++) {
+        let y = 0;
+        for (let i = pre; i < n; i++) {
           r = Math.imul(r, 1664525) + 1013904223 >>> 0;
-          d[i] = (r / 4294967296 * 2 - 1) * Math.pow(1 - i / n, 3);
+          const k = (i - pre) / (n - pre), a = 0.85 - 0.75 * k;
+          y += a * (r / 4294967296 * 2 - 1 - y);
+          d[i] = y * Math.pow(1 - k, 2.5) * (1 + 0.6 * (1 - a));
         }
       }
       return b;
@@ -1172,10 +1322,10 @@ label.check input { accent-color: var(--accent); }
     _groundBlend: "How neighbouring areas' floor textures meet (Ed, v160): the border is warped by noise in two octaves (up to warp metres over about 40 m, and fine metres over about 6 m), so it meanders rather than following the texture's grid; across a band metres wide the two floors mix pixel by pixel, by noise and (dither) an ordered dither, like grass creeping into dirt. Visual only. ?blend=off turns it off.",
     groundBlend: { on: true, warp: 8, fine: 1.5, band: 5, dither: true },
     _ground: "The ground's fake relief (Ed, v171: so the ground doesn't look flat): low rises and hollows from noise about relief.scale metres across, tilting the ground's lighting by relief.strength (0 flat) so the witch's light and the campfires pick out the bumps, and hollows shaded darker by relief.shade. ?relief=0 turns it off.",
-    ground: { relief: { strength: 0.9, scale: 7, shade: 0.22 }, hills: { on: true, amplitude: 1.5, scale: 112, octaves: 1 } },
-    _hills: "The rolling ground (Ed, 2026-10-04): ground.hills lifts the ground and everything standing on it into broad swells up to amplitude metres up or down, scale metres across, in octaves layers of noise; drawing only, the game itself stays flat. Paths stay level across, and the ground is levelled into plateaus under the dancefloor, the treehouse, soundsystems, set pieces, the grounds and ponds. ?hills=0 turns it off; ?hills=<amplitude> tries another. relief (above) adds the small bumps on top.",
-    _sky: "The night sky that shows over the bend in treetop mode (on; ?sky=off leaves the plain dark background there, which costs nothing): stars (how many, 0-1), moon (brightness), and clouds: count (roughly how many in view), speed (m/s they drift), partyGlow (how strongly the party's colours light their undersides; over dormant forest they stay moonlit grey).",
-    sky: { on: true, stars: 0.6, moon: 1, clouds: { count: 6, speed: 2.5, partyGlow: 0.8 } },
+    ground: { relief: { strength: 0, scale: 7, shade: 0 }, hills: { on: true, amplitude: 40, scale: 300, octaves: 2, shade: 1 } },
+    _hills: `The rolling ground (Ed, 2026-10-04): ground.hills lifts the ground and everything standing on it into broad swells up to amplitude metres up or down, scale metres across, in octaves layers of noise; drawing only, the game itself stays flat. Paths stay level across, and the ground is levelled into plateaus under the dancefloor, the treehouse, soundsystems, set pieces, the grounds and ponds. ?hills=0 turns it off; ?hills=<amplitude> tries another (6 gentle, 20 rolling, 40 the default: Ed, v289 "I guess hills=50 is just too much, maybe 40 is enough"). No slope may rise past the camera's sightline to her (Ed, v289: "so that you never go behind a bump"): the hills are made at least 4.3 \xD7 amplitude / tan(the camera's shallowest pitch) metres across (300 at 40 m and 30\xB0), so taller hills come broader, not steeper; and after everything is combined (the noise, the plateaus' and paths' easing) no slope anywhere is steeper than 0.85 of that pitch (Ed, v297: "bumps are fine, it's cliffs that really show"): a cliff is cut and filled into a slope of the limit, gentler ground left as it is. Plateaus ease in over 2 times the amplitude and paths over 0.6 times, and sprites stand at the lowest ground under their foot. Off (Ed, v276: "remove the slope shading"): the fake relief (relief.strength 0; ?relief=0.9 brings its bumps back) and the slopes' exaggerated light (shade 1). shade: the light reads their slopes this many times steeper, so gentle swells (which trees can stand on upright) still show. relief (above) adds the small bumps on top.`,
+    _sky: "The night sky that shows over the bend in treetop mode (on; ?sky=off leaves the plain dark background there, which costs nothing): stars (how many, 0-1), moon (brightness). clouds (Ed, 2026-10-04: real ones, seen only from underneath, over the bend): count (roughly how many to a screenful of sky), altitude (metres over the ground: above the treetop camera, so never between her and it), speed (m/s they drift), opacity (translucent: stars show through), partyGlow (how strongly what's beneath them lights their undersides: the partified areas' colours, pulsing on the beat; campfires faintly; over dormant forest they stay moonlit grey). lightning: about every so many seconds a cloud in view flickers (flashes per strike), sometimes with a forked bolt toward the horizon; ground: the faint flash on the forest (0 none).",
+    sky: { on: true, stars: 0.6, moon: 1, clouds: { count: 4, altitude: 250, speed: 3, opacity: 0.6, partyGlow: 1.4 }, lightning: { every: 30, flashes: 2.5, ground: 0.5 } },
     _wind: "Wind sway on leafy things (Ed, v171): trees (both halves together, from the foot) and undergrowth lean with gusts that travel across the forest: strength metres at the top of a crown, gusts moving at speed m/s, gustScale metres across; treetop: the share of it seen over the treetops (gentler). Walls and set pieces stand still. ?wind=0 turns it off.",
     wind: { on: true, strength: 0.25, speed: 6, gustScale: 40, treetop: 0.6 },
     _groundCover: "Tufts of grass, fern, heather, reeds, moss and clover on the ground round the witch (Ed, v171: so the ground doesn't look flat), in ground mode only: density (times each area type's groundCover.density in area-types.json; ?grass=0..2 scales it live), out to the canopy hole round her, at most radius metres (fading out towards it), at most cap at once; one chance every spacing metres, worked out cell metres square at a time, within budgetMs of each frame; they sway in the wind by sway of their height and part round her and nearby creatures by part. None within sigilClear metres of a placed sigil (or over its rune, if bigger), trampled short just beyond (Ed, v233). None on paths, the dancefloor or ground kept clear; thicker along path edges.",
@@ -1206,7 +1356,7 @@ label.check input { accent-color: var(--accent); }
     descendTime: 0.55,
     groundHeight: 1.4,
     treetopHeight: 24,
-    _camera: "curve: the world bends away toward the top of the screen (Ed, 2026-10-04: only over the treetops, so a little night sky shows), per metre ahead of the witch, eased in as she rises; ?curve=<treetop> tries values (0.0025 a sliver of sky, 0.004 a band; 0 off). Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase. zoomEase and liftEase: how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out. Zoom moves between them in zoomSteps steps, starting at startZoom: with 4 steps and startZoom 1 the start is a third of the way out, so the defaults are ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with one step in and two out from each.",
+    _camera: "curve: the world bends away toward the top of the screen (Ed, 2026-10-04: only over the treetops, so a little night sky shows), per metre ahead of the witch, eased in as she rises; ?curve=<treetop> tries values (0.0015: about 11% of the screen sky in ?bare=1, Ed v276 asked 10-12%; 0.0022 about 24%; under 0.001 none; 0 off); beyond: how many metres past the bent ground's horizon the distant treetops are still drawn (fewer is cheaper). Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase. zoomEase and liftEase: how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out. Zoom moves between them in zoomSteps steps, starting at startZoom: with 4 steps and startZoom 1 the start is a third of the way out, so the defaults are ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with one step in and two out from each.",
     camera: {
       fov: 20,
       ground: { angleIn: 30, angleOut: 36, distanceIn: 80, distanceOut: 140 },
@@ -1216,7 +1366,7 @@ label.check input { accent-color: var(--accent); }
       lookAheadEase: 1.5,
       zoomEase: 5,
       liftEase: 8,
-      curve: { ground: 0, treetop: 3e-3 },
+      curve: { ground: 0, treetop: 15e-4, beyond: 60 },
       zoomSteps: 4,
       startZoom: 1,
       follow: 8,
@@ -1240,8 +1390,8 @@ label.check input { accent-color: var(--accent); }
     beat: { bpm: 120 },
     _berries: "Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start. Bushes grow in patches of patch.bushes [min, max] within patch.radius metres. Party animals (invited, not legends), following her or held at a sigil, take a berry on their way (Ed, v233): within detour metres of the line to where they're heading or of their sigil, never beyond their leash; they nip over, eat it (eatTime seconds) and carry on. seekRadius is kept for free-roaming animals' seek. the berry grows again at once on a free berry bush somewhere else on the map. After toEvolve berries (babies, young, adults) a party animal evolves on the next bar line; adults become legends (the only way to get a party legend). colour: the berry's (shiny dark cherry red); glow: its soft halo's strength. B (debug) feeds the nearest party animal one berry.",
     berries: { perArea: [8, 12], bushesPerArea: 20, patch: { bushes: [3, 5], radius: 3 }, detour: 4.5, seekRadius: 15, eatTime: 0.25, toEvolve: [1, 3, 8], colour: "#9e1024", glow: 0.8 },
-    _witchLight: `The witch is lit by the world's lights like everything else (Ed: "I can go near a coloured light source and not change colour"), but not by her own glow: never darker than lightFloor times her old unlit look, so she reads in the dark; coloured lights (soundsystems, campfires, rune stones, the dancefloor) tint her by lightTint and rim the edge of her facing them by lightRim.`,
-    witch: { lightFloor: 0.75, lightTint: 1, lightRim: 0.6 },
+    _witchLight: `The witch is lit by the world's lights like everything else (Ed: "I can go near a coloured light source and not change colour"), but not by her own glow: never darker than lightFloor times her old unlit look, so she reads in the dark; coloured lights (soundsystems, campfires, rune stones, the dancefloor) tint her by lightTint and rim the edge of her facing them by lightRim. Over the hills (Ed, v289: "when you're moving quickly, you jerk up and down with the roll of hills") she and the camera ride a smoothed height, not the ground under her: the ground averaged over heightLookAhead seconds of her flight behind and ahead of her (so the hills' bumps smooth out and she rises early for a crest), eased by heightSmooth seconds at full speed (a damped spring; less as she slows, none standing still; 0 off), and her feet always at least heightClearance metres over the ground under her and a stride ahead.`,
+    witch: { lightFloor: 0.75, lightTint: 1, lightRim: 0.6, heightSmooth: 0.2, heightLookAhead: 0.4, heightClearance: 0.3 },
     _occlusion: "Never lose the witch: tall things (over minHeight metres) standing in front of her fade to fadeOpacity where they cover her, in a soft circle round her body (a little bigger than her sprite) that eases from see-through at the centre to opaque past edge (a share of its radius), and eases in over a few metres as she moves behind; anything that still hides her shows her silhouette in her glow colour at silhouette opacity.",
     _sigilProjection: "From the treetops, each placed sigil shows above the canopy over its spot: height metres above the crowns, opacity, size (times the ground rune), and a faint column of light (beam opacity) from the rune up to it. Fades in as she rises.",
     sigilProjection: { height: 3, opacity: 0.65, beam: 0.25, size: 1 },
@@ -1250,10 +1400,10 @@ label.check input { accent-color: var(--accent); }
     stack: { offset: 0.5, scale: 0.65, gap: 0.15, stiffness: 60, damping: 9, trail: 0.03, idleSway: 0.1 },
     _lasers: "Each playing soundsystem's laser show: bursts of blockBars bars, on about duty of the time (seeded per soundsystem), up to maxCount beams stepping on the bars, fanned over spread degrees (no beam tilting more than maxTilt from straight up), swinging sweep degrees once every sweepBeats beats (slow, like searchlights), opening and closing the fan every openBars bars, length metres tall, opacity 0-1, fading in over fadeIn and out over fadeOut seconds, and fading with distance from fadeNear to fadeFar metres. Glow only: no light, nothing from the light budget.",
     _speakerLasers: "The dancefloor ring's lasers (Ed, 2026-10-04: none from the disco ball; one on top of each ring speaker): a single beam from each playing speaker, at most tilt degrees off straight up and leaning outwards, swinging sweep degrees sideways, over sweepBeats beats, neighbours out of phase; length metres, at opacity (thinner-looking than the area soundsystems' fans). Damaged speakers flicker theirs; destroyed ones have none. 12 more beams on top of the lasers' own.",
-    _partyWitches: "Party witches (Ed, 2026-10-04): one per playing soundsystem (not the dancefloor's), at most max, flying in from its side (from flyFrom metres out, at flyHeight, over arriveTime seconds) to land on the dancefloor (within floorShare of its radius, clear of the speakers), and off again if it stops. Each holds an activity activityMin to activityMax seconds, picked by weights: dance alone, pair (dance together, hug, high five, hold hands, conga, a toast: with a free witch within pairRange, pairGap metres apart), chat (laughing together), drink, run (at runSpeed), rest (on the ground), fly (laps over the floor at lapSpeed radians a second). Holding hands they wander at walkSpeed. A player standing still on foot within idleReach times the floor's radius for idleAfter seconds joins in; any input stops it. ?witches=N brings N more for testing.",
-    _partyObjects: "Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters [min, max] of the art's clusters, loose [min, max] loose pieces (litter, small lights, balloons; neon and balloon colours random per placement), set dressing at setChance, and at caughtChance an escaped balloon caught in a tree. They appear as the party arrives. Real point lights only from campfires and lanterns (lanternReach metres, warm), at most lightsPerArea an area; everything else glows without lighting. exclude: pieces never placed, loose or in clusters (Ed, v271: the glowing LED cube looked too much like a game object).",
-    partyObjects: { on: true, clusters: [2, 4], loose: [20, 40], setChance: 0.6, caughtChance: 0.6, lightsPerArea: 3, lanternReach: 5, exclude: ["led-cube"] },
-    partyWitches: { max: 24, idleAfter: 6, idleReach: 1.4, activityMin: 4, activityMax: 16, weights: { dance: 4, pair: 2.2, chat: 1.2, drink: 1, run: 0.8, rest: 0.6, fly: 0.4 }, arriveTime: 6, flyFrom: 70, flyHeight: 9, runSpeed: 3, walkSpeed: 1, lapSpeed: 0.6, pairRange: 7, pairGap: 0.75, floorShare: 0.8, debugExtra: 0 },
+    _partyWitches: "Party witches (Ed, 2026-10-04): one per playing soundsystem (not the dancefloor's), at most max, flying in from its side (from flyFrom metres out, at flyHeight, over arriveTime seconds) to land on the dancefloor (within floorShare of its radius, clear of the speakers), and off again if it stops. Each holds an activity activityMin to activityMax seconds, picked by weights: dance alone, pair (dance together, hug, high five, hold hands, conga, a toast: with a free witch within pairRange, pairGap metres apart), chat (laughing together), drink, run (at runSpeed), rest (on the ground), fly (laps over the floor at lapSpeed radians a second). Holding hands they wander at walkSpeed. The twirl and the broom limbo (two hold the broom as a bar, a third shuffles under it, from one end to the other in limboPass seconds) come from the art's pairs. A player standing still on foot within idleReach times the floor's radius for idleAfter seconds joins in; any input stops it. ?witches=N brings N more for testing.",
+    _partyObjects: "Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters [min, max] of the art's clusters, loose [min, max] loose pieces (litter, small lights, balloons; neon and balloon colours random per placement), set dressing at setChance, and at caughtChance an escaped balloon caught in a tree; hanging [min, max] lanterns, jars, fairy lights or mirror balls hung from branches in nearby crowns. They appear as the party arrives. Real point lights only from campfires and lanterns (lanternReach metres, warm), at most lightsPerArea an area; everything else glows without lighting. Home gets a lit ring just outside the dancefloor's clearing: the lane pieces in turn, every lanePitch metres round, laneWidth out from the clearing's edge, clear of the treehouse and paths (Ed's playtest, 2026-10-04). exclude: pieces never placed, loose or in clusters (Ed, v271: the glowing LED cube looked too much like a game object).",
+    partyObjects: { on: true, clusters: [2, 4], loose: [20, 40], setChance: 0.6, caughtChance: 0.6, hanging: [1, 3], lightsPerArea: 3, lanternReach: 5, lane: ["lantern-pole", "tiki-torch", "balloons-stake", "fairy-bush", "candles", "glowsticks-stuck"], lanePitch: 5, laneWidth: 2.5, exclude: ["led-cube"] },
+    partyWitches: { max: 24, idleAfter: 6, idleReach: 1.4, activityMin: 4, activityMax: 16, weights: { dance: 4, pair: 2.2, chat: 1.2, drink: 1, run: 0.8, rest: 0.6, fly: 0.4 }, arriveTime: 4, flyFrom: 40, flyHeight: 7, runSpeed: 3, walkSpeed: 1, lapSpeed: 0.6, pairRange: 7, pairGap: 0.75, limboPass: 5, floorShare: 0.8, debugExtra: 0 },
     speakerLasers: { on: true, tilt: 24, sweep: 14, sweepBeats: 8, length: 300, opacity: 0.4 },
     lasers: { on: true, maxCount: 9, length: 420, spread: 100, maxTilt: 55, sweep: 22, sweepBeats: 36, openBars: 18, opacity: 0.6, duty: 0.35, blockBars: 4, fadeIn: 0.12, fadeOut: 0.4, fadeNear: 140, fadeFar: 480 },
     _borders: "A sparkling line round the partified region's outside edge, in each area's sigil colour: width (px), brightness, sparkle (0-1, how much it twinkles and runs), step (metres between its sparks); twinkle (0 a gentle breathing, 1 star-like: brief flashes and dips, now and then a spark out for a moment); each spark flickers between its own area's colour and the one across the edge (Ed, v183), swapRate times a second on its own phase, and swapBeat of them snap on the beat instead. ?border=<twinkle>,<swapRate>,<swapBeat> tries values.",
@@ -1293,8 +1443,8 @@ label.check input { accent-color: var(--accent); }
     decor: { spacing: 26, ruins: 0.01, rocks: 0.03, freak: 4e-3, minGap: 80, clearing: 0.3, pathGap: 2, footprint: 4 },
     _paths: "Paths, roads and railways (Ed): rails [min,max] railway lines edge to edge in wide curves (one with a branch); roads [min,max] broad sweeping old roads; linkChance: the share of neighbouring areas joined by a meandering path; deadEndChance: the share of areas with a path out to nothing; pathHalf, roadHalf, railHalf: half each corridor's width (metres), kept clear of trees, with bushes thick along the edges for edgeBushes metres (bushBoost times as many); streams [min,max] long streams winding across the map (and short ones join wet areas that touch), streamHalf metres half-wide; along a railway, every landmarkSpacing metres, a landmarkChance of a landmark (a wagon, a carriage, a platform, a gantry) and otherwise sometimes a signal post; verge posts along roads every vergeSpacing metres; every 3D piece at least pieceGap metres from the next; the two flights of stairs are finds, each at most once per map, by the clearing of a ravine, rocky slope, cave mouth or stone shrine; railBroken: the share of the railway that's broken, where trees grow between the sleepers (treesOnBroken times the usual chance).",
     paths: { rails: [2, 4], roads: [1, 2], linkChance: 0.55, deadEndChance: 0.3, pathHalf: 2.2, roadHalf: 6, railHalf: 3, railBroken: 0.3, streams: [1, 2], streamHalf: 2.5, landmarkSpacing: 260, landmarkChance: 0.35, vergeSpacing: 45, pieceGap: 40, treesOnBroken: 0.35, edgeBushes: 3, bushBoost: 3 },
-    _invite: "Inviting (DESIGN.md, the leash): on the ground, she talks by herself (no button: Ed, v244) to the nearest invitable creature within talkRange metres, and sticks with it; you chat in emoji for talkTime seconds (babies, young, adults), taking turns every turn seconds (babies, young, adults), then it is invited and leashed to you. Rising or moving further than cancelDistance stops it, and the chat's progress drains at decayRate of the rate it filled (0.5: half), so coming back soon picks up where it left off. Legends can't be invited: they give one unimpressed look. leash.length: how far a leashed creature roams from its leash point (you, or its sigil on the ground); runSpeed: how fast it hurries back when out of range (m/s); pickRadius: how near a placed sigil you must be to pick it up; spacing: how close two sigils may be put down (keep it above pickRadius, or a blocked spot picks up instead of fizzling). bond: how a creature shows its tie to its sigil (rim: a glow at its feet in the sigil's colour; sparks: one spark every sparkEvery seconds from sigil to creature, staggered; thread: a dotted line only under strain). A legend gives her one unimpressed look for snubTime seconds per approach (not again till she's been beyond cancelDistance). hitPenalty: seconds of a chat's progress lost each time she's hit while talking (Ed, 2026-10-04: big, strong groups are hard to invite without getting hit). talkTime's fourth value is for legends let go on a knockout (wild legends still can't be invited).",
-    invite: { hitPenalty: 2, talkRange: 12, cancelDistance: 18, snubTime: 2, talkTime: [3, 6, 12, 24], turn: [0.7, 0.9, 1.3], decayRate: 0.5 },
+    _invite: "Inviting (DESIGN.md, the leash): on the ground, she talks by herself (no button: Ed, v244) to the nearest invitable creature within talkRange metres, and sticks with it; you chat in emoji for talkTime seconds (babies, young, adults), taking turns every turn seconds (babies, young, adults), then it is invited and leashed to you. Rising or moving further than cancelDistance stops it, and the chat's progress drains at decayRate of the rate it filled (0.5: half), so coming back soon picks up where it left off. Legends can't be invited: they give one unimpressed look. leash.length: how far a leashed creature roams from its leash point (you, or its sigil on the ground); runSpeed: how fast it hurries back when out of range (m/s); pickRadius: how near a placed sigil you must be to pick it up; spacing: how close two sigils may be put down (keep it above pickRadius, or a blocked spot picks up instead of fizzling). bond: how a creature shows its tie to its sigil (rim: a glow at its feet in the sigil's colour; sparks: one spark every sparkEvery seconds from sigil to creature, staggered; thread: a dotted line only under strain). A legend gives her one unimpressed look for snubTime seconds per approach (not again till she's been beyond cancelDistance). Being hit doesn't set a chat back (Ed, 2026-10-04: losing a hit point is the cost). talkTime's fourth value is for legends let go on a knockout (wild legends still can't be invited).",
+    invite: { talkRange: 12, cancelDistance: 18, snubTime: 2, talkTime: [3, 6, 12, 24], turn: [0.7, 0.9, 1.3], decayRate: 0.5 },
     leash: { length: 8, runSpeed: 4, pickRadius: 2, spacing: 4 },
     bond: { rim: true, sparks: true, thread: true, sparkEvery: 4, threadArc: 0.12, threadArcMax: 2.5 },
     _music: "Music by proximity (Ed, 2026-10-04): one shared track, full and clear within nearDist metres of a playing soundsystem (or the dancefloor's ring, as loud as its speakers are on), fading to floor of the volume and muffled to a muffle Hz low-pass by farDist metres (clear: the cutoff close by); a damaged soundsystem nearby wobbles, crackles and drops out, by its damage times distort. volume: the master. src: an audio file to loop (empty: the built-in loop at beat.bpm until there's a real track). ?music=off silences it.",
@@ -1302,8 +1452,10 @@ label.check input { accent-color: var(--accent); }
     _forecast: "Forecasting (Ed, 2026-10-04): the next two waves are confirmed and the one after has a few probable areas. Every such rune stone grows a circle of up to symbols magic symbols round it on the ground, in its area's neon: the next stone has all of them; the after-next stone fills from afterNext[0] to afterNext[1] as the countdown runs; probable stones (probable of them) flicker with 1 to probableMax. They stand radius metres out, each size metres across, appear with a flare (flare seconds) and pulse on the beat; from the treetops the circle shows above the canopy.",
     forecast: { symbols: 12, probable: 3, probableMax: 4, afterNext: [5, 11], radius: 6, size: 1.9, flare: 0.6 },
     _spells: "Spells (Ed, 2026-10-04): one is equipped per run (equipped; later chosen from a list unlocked across runs), cast with the spell button (Q; gamepad B; touch 'spell'), then it recharges. speed: she moves mult times as fast for duration seconds, with a trail, then cooldown seconds before it can go again (a ring in the corner shows it recharging).",
-    _combat: "Combat (Stage 4; the attacks themselves are data in config/combat.json). Wild creatures attack party animals of other kinds within aggro metres, and the witch while she's on the ground within aggroWitch metres (she's safe over the treetops); party animals take on wild ones within engage metres beyond their leash (leash.length) of their leash point. In a fight wild ones move at chaseMult times their own speed, party animals at partyChaseMult; marching on a soundsystem, marchMult. A beaten wild creature flees at fleeMult times its speed for fleeTime seconds and is gone; a beaten party animal is lost for the run. A soundsystem has soundsystemHealth (the dancefloor at home homeHealth), passive, and is hit within soundsystemRadius (homeRadius) metres: sieges should outlast the wave gap. shake: how hard a legend's quake shakes the screen (0 none).",
-    combat: { aggro: 9, aggroWitch: 13, engage: 7, chaseMult: 3, partyChaseMult: 5, marchMult: 1.5, fleeTime: 2.5, fleeMult: 5, soundsystemHealth: 4e3, soundsystemRadius: 2.5, homeHealth: 8e3, homeRadius: 9, shake: 0.6 },
+    _combat: "Combat (Stage 4; the attacks themselves are data in config/combat.json). Wild creatures attack party animals of other kinds within aggro metres. They go for the witch on the ground once she's within their attack's range or witchStart metres (Ed, 2026-10-04), and let her go when she rises to the treetops, or once she's out of their area, out of their range and at least witchLose metres away; then they walk back to their spot. Party animals following her take on what attacks her or her party, within engage metres beyond their leash (leash.length); parked ones (at a sigil) guard within guard.radius of it. Babies are never attacked, by either side. In a fight wild ones move at chaseMult times their own speed, party animals at partyChaseMult; marching on a soundsystem, marchMult. A beaten wild creature flees at fleeMult times its speed for fleeTime seconds and is gone; a beaten party animal is lost for the run. A soundsystem has soundsystemHealth (the dancefloor at home homeHealth), passive, and is hit within soundsystemRadius (homeRadius) metres: sieges should outlast the wave gap. shake: how hard a legend's quake shakes the screen (0 none).",
+    combat: { aggro: 9, witchStart: 30, witchLose: 30, engage: 7, chaseMult: 3, partyChaseMult: 5, marchMult: 1.5, fleeTime: 2.5, fleeMult: 5, soundsystemHealth: 4e3, soundsystemRadius: 2.5, homeHealth: 8e3, homeRadius: 9, shake: 0.6 },
+    _guard: "Parked party animals (at a sigil on the ground) guard it (Ed, 2026-10-04): they take on any wild creature of another kind within radius metres of the sigil, and come back to it.",
+    guard: { radius: 10 },
     _witchHealth: "The witch (Ed, 2026-10-04): she takes hits (one point each, whatever hits her) before she's knocked out; one comes back every repairTime seconds, the timer starting over whenever she's hit, so to heal she has to get right out of the fight.",
     witchHealth: { hits: 3, repairTime: 20 },
     _knockout: "Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each creature turning neutral as its sigil goes and walking to the nearest area of its own kind, where it turns wild again; then she sparkles out and in at the treehouse over teleport seconds. Creatures at sigils on the ground stay hers. legendsLoyal: leashed legends stay with her (false: they go back to the wild too: 'they're too old for this').",
@@ -1374,6 +1526,102 @@ label.check input { accent-color: var(--accent); }
 
   // src/rules/tuning.ts
   var TUNING = tuning_default;
+
+  // tools/music-lab/analyse.ts
+  var BANDS = [60, 250, 1e3, 4e3, 1e4, 2e4];
+  var db = (x) => x > 0 ? 20 * Math.log10(x) : -120;
+  function fft(re, im) {
+    const n = re.length;
+    for (let i = 1, j = 0; i < n; i++) {
+      let bit = n >> 1;
+      for (; j & bit; bit >>= 1) j ^= bit;
+      j ^= bit;
+      if (i < j) {
+        [re[i], re[j]] = [re[j], re[i]];
+        [im[i], im[j]] = [im[j], im[i]];
+      }
+    }
+    for (let len = 2; len <= n; len <<= 1) {
+      const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang);
+      for (let i = 0; i < n; i += len) {
+        let cr = 1, ci = 0;
+        for (let k = 0; k < len / 2; k++) {
+          const ar = re[i + k], ai = im[i + k], br = re[i + k + len / 2] * cr - im[i + k + len / 2] * ci, bi = re[i + k + len / 2] * ci + im[i + k + len / 2] * cr;
+          re[i + k] = ar + br;
+          im[i + k] = ai + bi;
+          re[i + k + len / 2] = ar - br;
+          im[i + k + len / 2] = ai - bi;
+          const t = cr * wr - ci * wi;
+          ci = cr * wi + ci * wr;
+          cr = t;
+        }
+      }
+    }
+  }
+  function analyse(buf, picture = false) {
+    const n = buf.length, rate = buf.sampleRate, chans = Array.from({ length: buf.numberOfChannels }, (_, c) => buf.getChannelData(c));
+    let sum = 0, peak = 0;
+    for (const d of chans) for (let i = 0; i < n; i++) {
+      const v = d[i];
+      sum += v * v;
+      const a = Math.abs(v);
+      if (a > peak) peak = a;
+    }
+    const rms = Math.sqrt(sum / (n * chans.length));
+    const win50 = Math.floor(rate * 0.05);
+    let short = 0;
+    for (let s = 0; s + win50 <= n; s += win50 >> 1) {
+      let e = 0;
+      for (const d of chans) for (let i = s; i < s + win50; i++) e += d[i] * d[i];
+      short = Math.max(short, Math.sqrt(e / (win50 * chans.length)));
+    }
+    const N = 2048, hop = 512, frames = Math.max(1, Math.floor((n - N) / hop)), win = new Float64Array(N);
+    for (let i = 0; i < N; i++) win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (N - 1));
+    const bands = new Array(BANDS.length).fill(0), H = 200, W = Math.min(frames, 900), cols = [];
+    let cw = 0, cs = 0;
+    for (let f = 0; f < frames; f++) {
+      const re = new Float64Array(N), im = new Float64Array(N);
+      for (let i = 0; i < N; i++) {
+        let v = 0;
+        for (const d of chans) v += d[f * hop + i];
+        re[i] = v / chans.length * win[i];
+      }
+      fft(re, im);
+      const mag = new Float64Array(N / 2);
+      for (let k = 1; k < N / 2; k++) {
+        const p = re[k] * re[k] + im[k] * im[k], hz = k * rate / N;
+        mag[k] = p;
+        const b = BANDS.findIndex((e) => hz < e);
+        bands[b < 0 ? BANDS.length - 1 : b] += p;
+        cw += hz * p;
+        cs += p;
+      }
+      if (picture && f % Math.ceil(frames / W) === 0) cols.push(mag);
+    }
+    const total = bands.reduce((a, b) => a + b, 0) || 1;
+    const out = { rms: db(rms), peak: db(peak), short: db(short), bands: bands.map((b) => 10 * Math.log10(b / total + 1e-12)), centroid: cs ? cw / cs : 0 };
+    if (picture && typeof document !== "undefined") {
+      const cv = document.createElement("canvas");
+      cv.width = cols.length;
+      cv.height = H;
+      const g = cv.getContext("2d"), img = g.createImageData(cols.length, H);
+      const lo = Math.log(30), hi = Math.log(16e3);
+      cols.forEach((mag, x) => {
+        for (let y = 0; y < H; y++) {
+          const hz = Math.exp(lo + (H - 1 - y) / (H - 1) * (hi - lo)), k = Math.min(N / 2 - 1, Math.max(1, Math.round(hz * N / rate)));
+          const v = Math.max(0, Math.min(1, (10 * Math.log10(mag[k] + 1e-12) + 30) / 70));
+          const o = (y * cols.length + x) * 4;
+          img.data[o] = Math.round(255 * Math.min(1, v * 1.6));
+          img.data[o + 1] = Math.round(255 * Math.max(0, v * 1.6 - 0.6));
+          img.data[o + 2] = Math.round(255 * (v < 0.5 ? v : 1 - v) * 1.2);
+          img.data[o + 3] = 255;
+        }
+      });
+      g.putImageData(img, 0, 0);
+      out.png = cv.toDataURL("image/png");
+    }
+    return out;
+  }
 
   // tools/music-lab/lab.ts
   var REPO_STYLE = music_style_default;
@@ -1664,6 +1912,25 @@ label.check input { accent-color: var(--accent); }
     return { ok: errors.length === 0, errors, results };
   }
   window.musicLabCheck = musicLabCheck;
+  async function musicLabAnalyse(opts = {}) {
+    const rate = 44100, bars = opts.bars ?? 4, spBar = barSeconds(style.bpm), steady = newBeatClock(style.bpm), out = {};
+    const quiet = { waves: [], nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0 };
+    const render = async (name, solo) => {
+      const oc = new OfflineAudioContext(2, Math.ceil(rate * bars * spBar), rate);
+      const e = new MusicEngine(oc, oc.destination, style, 7);
+      if (solo) e.solo = /* @__PURE__ */ new Set([solo]);
+      const from = name === style.intro || resolveSection(style, name).riser ? Math.max(0, (resolveSection(style, name).riser ? 8 : 24) - bars) * spBar : 0;
+      e.renderAhead({ ...quiet, forceSection: name, forceWave: opts.wave ?? 3 }, from, bars * spBar, steady);
+      return oc.startRendering();
+    };
+    for (const name of opts.sections ?? Object.keys(style.sections)) {
+      const all = analyse(await render(name, null), true), parts = {};
+      if (opts.parts !== false) for (const p of Object.keys(resolveSection(style, name).parts)) parts[p] = analyse(await render(name, p)).short;
+      out[name] = { all, parts };
+    }
+    return out;
+  }
+  window.musicLabAnalyse = musicLabAnalyse;
   async function togglePlay() {
     if (!ctx) {
       ctx = new AudioContext();
