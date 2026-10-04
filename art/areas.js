@@ -12,6 +12,9 @@ import { M, Sprite, rng, uni, pick, hash2, vnoise, hsv2rgb, tufts, lerp2, add, b
 import { Model, render, masks, v3 } from "./model3d.js";
 import { sigilHit } from "./sigils.js";
 import { treeSpecies, treeColours, splitTree, bush } from "./trees.js";
+import { bakeSway } from "./sway.js";
+// the props that sway in the wind: they get a sway mask (sway.js) beside their albedo and normals
+export const SWAYING_PROPS = new Set(["tree", "shrub", "grass", "reeds", "fern", "flowers", "flowerbed", "bramble", "hedge"]);
 
 // [kind, params] shorthands for the prop library below
 const tree = (type, o = {}) => ["tree", { type, ...o }];
@@ -392,7 +395,7 @@ export function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defau
   const r = rng(id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 7) >>> 0);
   const bk = (p, kind, text) => ({ sp: bake(p.sp, p.colours, st, "none", makeCanvas), kind, text });
   const ft = floorTile(def, st);
-  const col = list => (list || []).map(([kind, o]) => bk(prop(kind, o, def, st, r, K), kind, ""));
+  const col = list => (list || []).map(([kind, o]) => { const p = prop(kind, o, def, st, r, K), b = bk(p, kind, ""); if (SWAYING_PROPS.has(kind)) b.sway = bakeSway(p.sp, makeCanvas); return b; }); // leafy props carry their sway mask
   const out = { def, floor: { sp: bake(ft.sp, ft.colours, st, "none", makeCanvas), kind: def.floor[0], text: def.text.floor }, walls: col(def.wall), small: col(def.small), big: col(def.big), setPiece: null };
   out.walls.forEach(a => a.text = def.text.wall); out.small.forEach(a => a.text = def.text.small); out.big.forEach(a => a.text = def.text.big);
   if (def.set) { const sp0 = setPiece(def.set[0], def.set[1], def, st, r, K); out.setPiece = { ...bk(sp0, def.set[0], def.text.set), metres: sp0.metres, origin: sp0.origin }; } // the new 3D ones: their size, and where their middle on the ground lands
@@ -438,8 +441,8 @@ export function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas =
     const t = f(r, ts, st.treeSize * K * (o.scale || 1) * scale * uni(r, .95, 1.05));
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
     c[M.NOSE] = [20, 16, 24]; c[M.WEB] = [225, 225, 232];
-    const parts = splitTree(t), bk = sp => bake(sp, c, st, "none", makeCanvas), m = px => +(px / ppm).toFixed(2);
-    out.push({ heightClass: cls.id, species: o.type, scale: +scale.toFixed(2), weight: +(cls.weight / cls.count).toFixed(4), whole: bk(t.sp), top: bk(parts.top), bot: bk(parts.bot), crownY: t.crownY,
+    const parts = splitTree(t), bk = sp => bake(sp, c, st, "none", makeCanvas), sw = sp => bakeSway(sp, makeCanvas), m = px => +(px / ppm).toFixed(2);
+    out.push({ heightClass: cls.id, species: o.type, scale: +scale.toFixed(2), weight: +(cls.weight / cls.count).toFixed(4), whole: bk(t.sp), top: bk(parts.top), bot: bk(parts.bot), sway: { whole: sw(t.sp), top: sw(parts.top), bot: sw(parts.bot) }, crownY: t.crownY,
       metres: { height: m(t.sp.h), crownBase: m(t.sp.h - t.crownY), crownHeight: m(t.crownY), crownRadius: m(t.sp.w / 2) } });
   }
   return out;

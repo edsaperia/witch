@@ -154,6 +154,12 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
+        <div class="row" style="justify-content:space-between"><h2>Ground cover and wind</h2><div class="row"><label class="note" for="tuftArea">Area</label><select id="tuftArea"></select></div></div>
+        <p class="note">The area's ground-cover tufts, scattered thickly over its floor (each with its share of the area's tufts), drawn four times their size; then a few of its trees and leafy props. Beside each, its sway mask for the wind: black stays still (trunks, rocks), white sways most (the leafy tips).</p>
+        <div class="sheet-wrap"><canvas id="tuftSheet" width="420" height="160"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
         <h2>Relics</h2>
         <p class="note">The modern world, reclaimed by the forest: cars, trolleys, cones, broken highway and odds and ends; the overgrown playground's pieces; the sports grounds' pieces (tennis, baseball, football, a basketball hoop). Then each arrangement as suggested, the witch at its middle.</p>
         <div class="sheet-wrap"><canvas id="relicSheet" width="420" height="160"></canvas></div>
@@ -235,7 +241,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, DISCO_GRID, DISCO_MASK, discoPatterns, DISCO_TRANSITIONS, discoCompose, discoPaint, DANCEFLOOR_SPEAKER_ANGLES, dancefloorSpeakerSprite, dancefloorSpeakerColours, soundsystemColours, witchSprite, witchColours, areaTreeVariants, TREE_SPECIES, splitTree, treeColours, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
+import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, bakeTufts, DISCO_GRID, DISCO_MASK, discoPatterns, DISCO_TRANSITIONS, discoCompose, discoPaint, DANCEFLOOR_SPEAKER_ANGLES, dancefloorSpeakerSprite, dancefloorSpeakerColours, soundsystemColours, witchSprite, witchColours, areaTreeVariants, TREE_SPECIES, splitTree, treeColours, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -506,6 +512,24 @@ function renderSets() {
     c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
     c.style.width = w + "px"; c.style.maxWidth = "none";
   }, 800);
+}
+
+// ================= ground cover and wind: an area's tufts and its leafy sprites, each beside its sway mask =================
+let tuftTimer;
+function renderTufts() {
+  clearTimeout(tuftTimer);
+  tuftTimer = setTimeout(() => {
+    const c = document.getElementById("tuftSheet"), sel = document.getElementById("tuftArea"); if (!c || !sel) return;
+    if (!sel.options.length) { sel.innerHTML = AREAS.map(a => `<option value="${a.id}">${a.name}</option>`).join(""); sel.value = "meadow"; sel.onchange = renderTufts; }
+    const st = current, id = sel.value, A = AREA_BY_ID[id], K = 4, gap = 8, fl = hsv2rgb(A.floor[1], A.floor[2] * .9, A.floor[3]);
+    const tufts = bakeTufts(id, st), assets = areaAssets(id, st), trees = areaTreeVariants(id, st).filter((v, i) => i % 3 === 0).map(v => ({ A: v.whole.A, S: v.sway.whole, w: v.whole.w, h: v.whole.h }));
+    const leafy = [...assets.small, ...assets.big].filter(b => b.sway).map(b => ({ A: b.sp.A, S: b.sway, w: b.sp.w, h: b.sp.h }));
+    const rows = [tufts.map(t => ({ A: t.A, S: t.S, w: t.w, h: t.h, k: K, label: `${t.kind} ${Math.round(t.weight * 100)}%` })), [...trees, ...leafy].map(t => ({ ...t, k: 1 }))].filter(r => r.length);
+    const rh = rows.map(r => Math.max(...r.map(t => t.h * t.k)) + 16), W = Math.max(...rows.map(r => r.reduce((a, t) => a + t.w * t.k * 2 + gap * 2, gap))), H = rh.reduce((a, v) => a + v + gap, gap);
+    c.width = W; c.height = H; const g = c.getContext("2d"); g.imageSmoothingEnabled = false; g.fillStyle = "#1c1c22"; g.fillRect(0, 0, W, H); g.font = "11px monospace"; g.textBaseline = "top";
+    let y = gap; rows.forEach((r, ri) => { let x = gap; const h = rh[ri] - 16; for (const t of r) { const w = t.w * t.k, hh = t.h * t.k; g.fillStyle = `rgb(${fl})`; g.fillRect(x, y, w, h); g.drawImage(t.A, x, y + h - hh, w, hh); g.fillStyle = "#000"; g.fillRect(x + w + 2, y, w, h); g.drawImage(t.S, x + w + 2, y + h - hh, w, hh); if (t.label) { g.fillStyle = "#9a92b4"; g.fillText(t.label, x, y + h + 2); } x += w * 2 + gap * 2; } y += rh[ri] + gap; });
+    c.style.width = W + "px"; c.style.maxWidth = "none";
+  }, 900);
 }
 
 // ================= home: the treehouse, the witch sitting on its terrace =================
@@ -801,7 +825,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderRelics(); renderSets(); renderWitch(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
+  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderRelics(); renderSets(); renderTufts(); renderWitch(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
