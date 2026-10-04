@@ -18,6 +18,8 @@ import { newLeash, stepLeash, type LeashControls } from "./leash";
 import { newClock, tick, MAX_STEP } from "./clock";
 import { TUNING, withTuning } from "./tuning";
 import { floorClearing, speakerRadius, nextSpeakerState } from "./speakers";
+import { composeFloor, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
+import { floorInputs } from "./game";
 import { DECOR } from "../../art/decor.js";
 import { RELICS } from "../../art/relics.js";
 
@@ -376,8 +378,24 @@ describe("the witch", () => {
 });
 
 describe("the camera", () => {
+  it("opens close in on her seat, and eases out to the starting zoom once she leaves it (Ed, v171)", () => {
+    const I = TUNING.camera.intro, seat = { x: 10, y: 6, z: 20 };
+    let c = newCamera(TUNING, 0, 0, 0);
+    for (let i = 0; i < 120; i++) c = stepCamera(c, 0, { x: 0, y: 0, z: 0 }, { x: 0, z: 0 }, 0, 1 / 60, TUNING, true, seat);
+    const p0 = cameraPose(c, 0, TUNING);
+    expect(p0.distance).toBeCloseTo(I.distance, 1);
+    expect(p0.distance).toBeLessThan(TUNING.camera.ground.distanceIn); // closer than zoom step 0
+    expect(Math.hypot(p0.tx - seat.x, p0.ty - seat.y, p0.tz - seat.z)).toBeLessThan(0.5); // framed on the seat
+    const half = Math.round((I.ease / 2) * 60);
+    for (let i = 0; i < half; i++) c = stepCamera(c, 0, { x: 0, y: 0, z: 0 }, { x: 0, z: 0 }, 0, 1 / 60, TUNING);
+    const mid = cameraPose(c, 0, TUNING).distance;
+    expect(mid).toBeGreaterThan(I.distance + 5);
+    for (let i = 0; i < 60 * I.ease; i++) c = stepCamera(c, 0, { x: 0, y: 0, z: 0 }, { x: 0, z: 0 }, 0, 1 / 60, TUNING);
+    expect(c.intro).toBe(0);
+    expect(cameraPose(c, 0, TUNING).distance).toBeGreaterThan(mid);
+  });
   it("uses each mode's angle and distance, and zoom moves between in and out", () => {
-    let c = newCamera(withTuning({ camera: { ...TUNING.camera, startZoom: 0 } }), 0, 0, 0);
+    let c: ReturnType<typeof newCamera> = { ...newCamera(withTuning({ camera: { ...TUNING.camera, startZoom: 0 } }), 0, 0, 0), intro: 0 }; // past the opening shot
     const g = TUNING.camera.ground, t = TUNING.camera.treetop;
     expect(cameraPose(c, 0, TUNING).angle).toBeCloseTo(g.angleIn);
     expect(cameraPose(c, 1, TUNING).angle).toBeCloseTo(t.angleIn);
@@ -1078,9 +1096,69 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
     expect(nextSpeakerState("damaged")).toBe("destroyed");
     expect(nextSpeakerState("destroyed")).toBe("playing");
     const g = newGame(5, TUNING);
-    expect(g.speakers.every(s => s === "playing")).toBe(true);
+    expect(g.speakers.every(s => s === "playing")).toBe(true); // (works with the clock paused too)
     stepGame(g, { ...NO_INTENT, zoom: 0, cycleSpeakers: true }, 1 / 60);
     expect(g.speakers.every(s => s === "damaged")).toBe(true);
+  });
+});
+
+describe("the dancefloor's tile lights (Ed, v160)", () => {
+  const beat = 60 / TUNING.beat.bpm, boot = 8 * beat; // the switch-on sequence is 8 beats
+  const inputs = (time: number, o: Partial<FloorInputs> = {}): FloorInputs => ({ time, seed: 7, level: 2, partifiedAreas: new Set(), witch: { x: -50, y: -50, lift: 1, rgb: [255, 238, 70] }, dancers: [], ...o });
+  const run = (f: ReturnType<typeof newFloor>, from: number, to: number, o: Partial<FloorInputs> = {}) => { for (let t = from; t <= to; t += 1 / 30) stepFloor(f, inputs(t, o), TUNING); };
+  const litCount = (rgbi: Uint8Array) => { let n = 0; for (let i = 3; i < rgbi.length; i += 4) if (rgbi[i]) n++; return n; };
+  it("is dark until it switches on, once, when the witch first leaves the terrace", () => {
+    const g = newGame(3, TUNING);
+    g.clock.paused = false;
+    expect(litCount(composeFloor(g.floor, floorInputs(g), TUNING).rgbi)).toBe(0);
+    for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
+    expect(g.floor.on).toBeNull(); // still seated
+    stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60);
+    const on = g.floor.on;
+    expect(on).not.toBeNull();
+    for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, toggleMode: i === 5, zoom: 0 }, 1 / 60);
+    expect(g.floor.on).toBe(on); // only once
+    expect(litCount(composeFloor(g.floor, floorInputs(g), TUNING).rgbi)).toBeGreaterThan(0); // booting
+  });
+  it("plays patterns on the beat, changing on bar lines, never the same one twice running", () => {
+    const f = newFloor(); switchOn(f, 0);
+    const seen: number[] = [];
+    for (let t = 0; t < boot + 400 * beat; t += 1 / 30) { stepFloor(f, inputs(t, { level: 4 }), TUNING); if (seen[seen.length - 1] !== f.pattern) seen.push(f.pattern); }
+    expect(seen.length).toBeGreaterThan(8);
+    for (let i = 1; i < seen.length; i++) expect(seen[i]).not.toBe(seen[i - 1]);
+    for (let i = 0; i < 50; i++) expect(pickPattern(5, i, 4, new Set(), 3)).not.toBe(5);
+    // Low levels keep to simple patterns; an area's shape only once its area has the party.
+    for (let i = 0; i < 50; i++) { const p = floorPatterns()[pickPattern(-1, i, 1, new Set(), 3)]; expect(p.level).toBe(1); expect(p.kind).not.toBe("area"); }
+    const area = floorPatterns().find(p => p.kind === "area")!, picks = Array.from({ length: 400 }, (_, i) => floorPatterns()[pickPattern(-1, i, 4, new Set([area.area!]), 3)]);
+    expect(picks.some(p => p.id === area.id)).toBe(true);
+  });
+  it("rises in level with the party, and a higher level lights more of the floor", () => {
+    expect(floorLevel(1, TUNING)).toBe(1);
+    expect(floorLevel(TUNING.dancefloor.levels[0], TUNING)).toBe(2);
+    expect(floorLevel(999, TUNING)).toBe(4);
+    const lit = (level: number) => { const f = newFloor(); switchOn(f, 0); let sum = 0; for (let t = boot + 1; t < boot + 120; t += 0.5) { stepFloor(f, inputs(t, { level }), TUNING); sum += composeFloor(f, inputs(t, { level }), TUNING).lit; } return sum; };
+    expect(lit(4)).toBeGreaterThan(lit(1) * 1.5);
+  });
+  it("lights the witch's tile where she stands, and ripples out from her", () => {
+    const f = newFloor(); switchOn(f, 0);
+    const me = { x: 10.5, y: 20.5, lift: 0, rgb: [1, 2, 3] as [number, number, number] };
+    run(f, 0, boot + 2, { witch: me });
+    const t = boot + 2, out = composeFloor(f, inputs(t, { witch: me }), TUNING).rgbi, n = 20 * GRID + 10;
+    expect([...out.slice(n * 4, n * 4 + 4)]).toEqual([1, 2, 3, 3]);
+    expect(f.ripples.length).toBeGreaterThan(0);
+    // Flying high over it: no light under her.
+    const high = composeFloor(f, inputs(t, { witch: { ...me, lift: 1 } }), TUNING).rgbi;
+    expect(high[n * 4 + 3] === 0 || high[n * 4] !== 1).toBe(true);
+  });
+  it("composes the layers: an event's pulse shows over the pattern, towards its area", () => {
+    const f = newFloor(); switchOn(f, 0); run(f, 0, boot + 1);
+    const t = boot + 1, before = composeFloor(f, inputs(t), TUNING).rgbi.slice();
+    floorEvent(f, { kind: "wave", at: t - 0.5, dir: 0, rgb: [9, 9, 9] });
+    const after = composeFloor(f, inputs(t), TUNING).rgbi;
+    let right = 0, left = 0;
+    for (let n = 0; n < GRID * GRID; n++) if (after[n * 4] === 9 && before[n * 4] !== 9) { if (n % GRID > GRID / 2) right++; else left++; }
+    expect(right).toBeGreaterThan(3);
+    expect(left).toBe(0);
   });
 });
 

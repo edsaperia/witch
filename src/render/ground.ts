@@ -5,6 +5,7 @@
 // Which area each spot belongs to comes from a data texture filled in small tiles near the
 // camera (working the partition out for the whole map at once takes seconds on a phone).
 import * as THREE from "three";
+import * as Art from "../../art/generator.js";
 import type { ForestMap } from "../rules/map";
 import type { Forest } from "../rules/forest";
 import { AREA_TYPES } from "../rules/map";
@@ -40,32 +41,16 @@ uniform vec4 uCircle;
 uniform vec4 uSweeps[4]; // partifying areas: the front's origin x, z, its radius, strength
 uniform int uSweepCount; // magic circle: hue, second hue, brightness (pulsing), rune band's turn (radians)
 
-// The magic circle on the dancefloor, in art pixels: rings, a band of rune glyphs that turns,
-// and a five-pointed star. Returns 0 (nothing), 1 (lines) or 2 (runes).
-float magicCircle(vec2 d, float R, float px) {
-  float r = length(d), ang = atan(d.y, d.x);
-  if (abs(r - R * 0.9) < px * 0.8 || abs(r - R * 0.76) < px * 0.8 || abs(r - R * 0.36) < px * 0.6) return 1.0;
-  if (r > R * 0.78 && r < R * 0.88) {
-    float n = 44.0, a = (ang + uCircle.w) * n / 6.2831853, ci = floor(a), u = fract(a), v = (r - R * 0.78) / (R * 0.1);
-    if (u > 0.18 && u < 0.82) {
-      int gx = int((u - 0.18) / 0.64 * 3.0), gy = int(v * 4.0);
-      int bits = int(fract(sin(ci * 91.7 + 3.1) * 43758.5453) * 4095.0) | 18;
-      if (((bits >> (gx + gy * 3)) & 1) == 1) return 2.0;
-    }
-  }
-  if (r < R * 0.76) {
-    for (int k = 0; k < 5; k++) {
-      float a0 = -1.5707963 + float(k) * 2.5132741, a1 = a0 + 2.5132741;
-      vec2 p0 = vec2(cos(a0), sin(a0)) * R * 0.76, p1 = vec2(cos(a1), sin(a1)) * R * 0.76, e = p1 - p0;
-      float t = clamp(dot(d - p0, e) / dot(e, e), 0.0, 1.0);
-      if (length(d - p0 - e * t) < px * 0.7) return 1.0;
-    }
-  }
-  return 0.0;
-}
 uniform vec4 uCanopy; // canopy shadow: strength (0 off), height, cover, wind speed
 uniform vec2 uClearing; // clearingSize, clearingFalloff: where trees, and so canopy, begin
 uniform vec4 uBlend; // ground blend: warp, fine (metres), band (metres), dither (0 or 1)
+// The dancefloor's glass tiles (Ed, v160): the art's unlit floor (tiles, grout, rim) from above, the
+// lit tile's look at intensities 1 to 3 side by side, and this frame's tiles from the engine
+// (rgb, and intensity x 85 in alpha); geometry: metres a tile, art px a tile (pitch), the floor
+// texture's size, the grid's origin in it (px); and the rim's outer radius (px).
+uniform sampler2D uDiscoBase, uDiscoLit, uDiscoTiles;
+uniform vec4 uDiscoGeom;
+uniform float uDiscoRim;
 varying vec3 vWorld;
 ${LIGHT_GLSL}
 float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
@@ -133,15 +118,24 @@ void main() {
       if (T.z > 0.0) c *= 1.0 + T.z * 0.14 * sin((p.x * 0.55 + p.y) / 4.0 + vnoise(p / 30.0) * 6.0);
     }
   }
-  // The dancefloor: worn ground inside the stones, and the glowing magic circle (unlit: it glows).
-  float r = length(p - uFloor.xy);
-  if (r < uFloor.z) c = mix(c, vec3(0.42, 0.42, 0.38), 0.25);
-  if (r < uFloor.z) {
-    float mc = magicCircle(p - uFloor.xy, uFloor.z, uPixel);
-    if (mc > 0.5) {
-      vec3 col = hsv(mc > 1.5 ? uCircle.y : uCircle.x, 0.75, 1.0) * uCircle.z;
-      gl_FragColor = vec4(haze(col, vWorld), 1.0);
-      return;
+  // The dancefloor: the art's floor of glass tiles inside its stone rim; a lit tile glows in its
+  // colour (unlit by the night: it is the light), the rest is lit like the ground.
+  {
+    vec2 fd = p - uFloor.xy;
+    if (length(fd) / uDiscoGeom.x * uDiscoGeom.y < uDiscoRim) {
+      vec2 bpx = floor(fd / uDiscoGeom.x * uDiscoGeom.y + uDiscoGeom.z * 0.5);
+      vec4 base = texture2D(uDiscoBase, (bpx + 0.5) / uDiscoGeom.z);
+      vec2 g = bpx - uDiscoGeom.w, tile = floor(g / uDiscoGeom.y), tp = g - tile * uDiscoGeom.y - 1.0;
+      if (tile.x >= 0.0 && tile.y >= 0.0 && tile.x < 32.0 && tile.y < 32.0 && tp.x >= 0.0 && tp.y >= 0.0 && tp.x < 14.0 && tp.y < 14.0) {
+        vec4 cell = texture2D(uDiscoTiles, (tile + 0.5) / 32.0);
+        float k = floor(cell.a * 3.0 + 0.5);
+        if (k > 0.5) {
+          vec3 look = texture2D(uDiscoLit, (vec2(tp.x + (k - 1.0) * 14.0, tp.y) + 0.5) / vec2(42.0, 14.0)).rgb;
+          gl_FragColor = vec4(haze(look * cell.rgb * 1.25, vWorld), 1.0);
+          return;
+        }
+      }
+      if (base.a > 0.5) c = base.rgb;
     }
   }
   // Ponds: dark water mirroring the moon. The glint is a fake highlight from the view and a
@@ -201,6 +195,7 @@ export class Ground {
   private initialised = false;
   private floorReady = new Array(32).fill(0);
   private floors: THREE.DataTexture;
+  private discoTiles = (t => { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; return t; })(new THREE.DataTexture(new Uint8Array(32 * 32 * 4), 32, 32));
   private pendingFloors: [number, TilePixels][] = [];
 
   constructor(private map: ForestMap, private forest: Forest, st: Style, metresPerPixel: number) {
@@ -213,6 +208,7 @@ export class Ground {
     nearest(this.tile);
     this.floors = nearest(new THREE.DataTexture(new Uint8Array(64 * FLOOR_COLS * 48 * 4 * 4), 64 * FLOOR_COLS, 48 * 4));
     const floors = Array.from({ length: 32 }, (_, i) => new THREE.Vector3(...(AREA_TYPES[i]?.floor ?? [0.25, 0.45, 0.4])));
+    const disco = discoLooks(st, map.dancefloor.radius);
     const mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
       uniforms: {
@@ -233,6 +229,8 @@ export class Ground {
         uSweeps: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) },
         uSweepCount: { value: 0 },
         uClearing: { value: new THREE.Vector2(map.tuning.clearingSize, map.tuning.clearingFalloff) },
+        uDiscoBase: { value: disco.base }, uDiscoLit: { value: disco.lit }, uDiscoTiles: { value: this.discoTiles },
+        uDiscoGeom: { value: new THREE.Vector4(disco.tileM, disco.pitch, disco.size, disco.gridOrigin) }, uDiscoRim: { value: disco.rimOuter },
         uBlend: { value: (B => (B.on ? new THREE.Vector4(B.warp, B.fine, B.band, B.dither ? 1 : 0) : new THREE.Vector4()))(map.tuning.groundBlend) },
       },
     });
@@ -240,6 +238,13 @@ export class Ground {
     geo.rotateX(-Math.PI / 2);
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.position.set((e.minX + e.maxX) / 2, 0, (e.minZ + e.maxZ) / 2);
+  }
+
+  /** This frame's dancefloor tiles: per tile r, g, b and intensity (0 to 3), row by row (rules/dancefloor.ts). */
+  setFloorTiles(rgbi: Uint8Array): void {
+    const d = this.discoTiles.image.data as Uint8Array;
+    for (let i = 0; i < d.length; i += 4) { d[i] = rgbi[i]; d[i + 1] = rgbi[i + 1]; d[i + 2] = rgbi[i + 2]; d[i + 3] = Math.min(255, rgbi[i + 3] * 85); }
+    this.discoTiles.needsUpdate = true;
   }
 
   /** The fronts of light sweeping across areas as the party arrives (up to 4). */
@@ -315,4 +320,17 @@ export class Ground {
   }
 
   dispose(): void { this.texture.dispose(); this.tile.dispose(); this.mesh.geometry.dispose(); (this.mesh.material as THREE.Material).dispose(); }
+}
+
+// The dancefloor's looks from the art (art/dancefloor.js): the unlit floor with its rim, and the lit
+// tile at its three intensities, white for the shader to tint; the tile grid sized to the floor's radius.
+function discoLooks(st: Style, radius: number) {
+  const tex = (c: HTMLCanvasElement) => { const t = new THREE.CanvasTexture(c); t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.flipY = false; t.colorSpace = THREE.NoColorSpace; return t; };
+  const fb = Art.discoFloorBase() as { sp: unknown; size: number; pitch: number; gridOrigin: number; rimOuter: number };
+  const base = (Art.bake(fb.sp, { ...Art.discoColours(3), ...Art.discoRimColours() }, st, "none") as { A: HTMLCanvasElement }).A;
+  const lit = document.createElement("canvas");
+  lit.width = 42; lit.height = 14;
+  const g = lit.getContext("2d")!;
+  for (let k = 1; k <= 3; k++) g.drawImage((Art.bake(Art.discoTileSprite("lit", { level: k }), Art.discoColours(k), st, "none") as { A: HTMLCanvasElement }).A, (k - 1) * 14, 0);
+  return { base: tex(base), lit: tex(lit), tileM: radius / (Art.DISCO_RADIUS as number), pitch: fb.pitch, size: fb.size, gridOrigin: fb.gridOrigin, rimOuter: fb.rimOuter };
 }

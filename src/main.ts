@@ -22,7 +22,7 @@ if (seed === null) {
 // Variants as switches in the link: ?tilt=before|after|off, ?bloom=off, ?shadows=off,
 // ?canopy=off (the canopy shadow layer), ?mist=off.
 const tuning = {
-  ...TUNING, bloom: { ...TUNING.bloom }, tiltShift: { ...TUNING.tiltShift },
+  ...TUNING, bloom: { ...TUNING.bloom }, tiltShift: { ...TUNING.tiltShift, treetop: { ...TUNING.tiltShift.treetop } },
   shadows: { ...TUNING.shadows }, canopyShadow: { ...TUNING.canopyShadow }, mist: { ...TUNING.mist },
   party: { ...TUNING.party },
 };
@@ -32,6 +32,8 @@ if (params.get("mist") === "off") tuning.mist.on = false;
 const tilt = params.get("tilt");
 if (tilt === "off") tuning.tiltShift.on = false;
 else if (tilt === "before" || tilt === "after") { tuning.tiltShift.on = true; tuning.tiltShift.where = tilt; }
+// ?tilt=<strength>,<band>: the treetops' tilt-shift, to try values live (e.g. ?tilt=6,0.28).
+else if (tilt && /^[\d.]+(,[\d.]+)?$/.test(tilt)) { const [st, bd] = tilt.split(",").map(Number); tuning.tiltShift.on = true; tuning.tiltShift.treetop.strength = st; if (bd > 0) tuning.tiltShift.treetop.band = bd; }
 if (params.get("bloom") === "off") tuning.bloom.on = false;
 if (params.get("moonbeams") === "on") tuning.moonbeams = 1;
 // ?rune=beam|column|both: how an awake rune stone shows above it.
