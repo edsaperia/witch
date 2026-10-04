@@ -1,7 +1,7 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState } from "./camera";
 import { MAX_STEP, newClock, type Clock } from "./clock";
-import { spawnCreatures, stepCreaturesNear, wanderRange, type Creature } from "./creatures";
+import { heldByCombat, spawnCreatures, stepCreaturesNear, wanderRange, type Creature } from "./creatures";
 import { Forest } from "./forest";
 import { leashPoint, newLeash, stepLeash, type LeashControls, type LeashState } from "./leash";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
@@ -11,6 +11,8 @@ import { nextSpeakerState, type SpeakerState } from "./speakers";
 import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
 import { SIGIL_NEON } from "../../art/sigils.js";
 import { newBuffs, stepBuffs, type BuffState } from "./buffs";
+import { COMBAT, marchOn, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
+import { hurt, knockOut, newHealth, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
 import { applyDash, newDash, startDash, type DashState } from "./dash";
 import { castSpell, newSpells, speedMultiplier, type SpellState } from "./spells";
 import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWitches";
@@ -25,6 +27,9 @@ export interface Witch {
   leash: LeashState;
   spells: SpellState;
   dash: DashState;
+  /** Her hits left and repair (rules/knockout.ts), and her knockout while it plays out. */
+  health: Health;
+  ko: Knockout | null;
 }
 
 /** The simulation's fixed step (seconds): the rules advance only in these, driven only by the
@@ -51,6 +56,14 @@ export interface Game {
    *  the last two steps (see interpolated). */
   acc: number;
   alpha: number;
+  /** Fights, shots and soundsystems' health (rules/combat.ts). */
+  combat: CombatState;
+  /** What knockouts did in the latest step (for the view). */
+  koEvents: KnockoutEvent[];
+  /** The creatures by home area (rebuilt when one settles somewhere new). */
+  byArea?: Map<string, Creature[]> | null;
+  /** The run is over (every soundsystem destroyed): when. */
+  over: { at: number } | null;
   /** One-shot presses (rise, sigil, spell...) waiting for the next step. */
   pending: Partial<Controls>;
   /** Where each witch and creature was before the latest step, for interpolation. */
@@ -84,7 +97,7 @@ export interface Controls extends Intent, Partial<LeashControls> {
 }
 
 export function newWitchPlayer(id: number, x: number, z: number, t: Tuning): Witch {
-  return { id, body: { ...newWitch(x, z), seated: true }, leash: newLeash(), spells: newSpells(t), dash: newDash() };
+  return { id, body: { ...newWitch(x, z), seated: true }, leash: newLeash(), spells: newSpells(t), dash: newDash(), health: newHealth(t), ko: null };
 }
 
 export function newGame(seed: number, tuning: Tuning, players = 1): Game {
@@ -99,8 +112,11 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
     camera: newCamera(tuning, body.x, witchHeight(body, tuning), body.z), party: newParty(map), berries: newBerries(map, tuning),
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
     floor: newFloor(), buffs: newBuffs(tuning), partyWitches: newPartyWitches(seed),
+    combat: newCombat(), koEvents: [] as KnockoutEvent[], over: null as { at: number } | null,
     acc: 0, alpha: 1, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
   };
+  const d = map.dancefloor, C = tuning.combat;
+  g.combat.sounds.set("home", { hp: C.homeHealth, max: C.homeHealth, x: d.x, z: d.z, radius: C.homeRadius });
   return g as Game;
 }
 
@@ -157,7 +173,8 @@ export function interpolated<T>(g: Game, draw: () => T): T {
 }
 
 /** One fixed step of the whole game. */
-function fixedStep(g: Game, c: Controls): void {
+function fixedStep(g: Game, controls: Controls): void {
+  let c = controls;
   const dt = STEP;
   g.clock.time += dt;
   const wave = g.party.wave, seated = g.witch.seated;
@@ -168,7 +185,11 @@ function fixedStep(g: Game, c: Controls): void {
   if (c.spell) castSpell(g.spells, g.clock.time, t);
   // The speed boost: her speeds times its multiplier while it's on.
   const boost = speedMultiplier(g.spells, g.clock.time, t);
-  const W = g.witches[0], was = W.body;
+  const W = g.witches[0];
+  g.koEvents = [];
+  // Knocked out: no input but the camera's zoom while it plays out.
+  if (W.ko) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
+  const was = W.body;
   if (c.dash) startDash(W.dash, was, c.moveX, c.moveZ, g.clock.time, t);
   W.body = applyDash(W.dash, was, stepWitch(was, c, dt, boost === 1 ? t : { ...t, groundSpeed: t.groundSpeed * boost, treetopSpeed: t.treetopSpeed * boost }, g.map.bounds), g.clock.time, dt, t, g.map.bounds);
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, dt, g.tuning, !!g.witch.seated, g.introFocus);
@@ -178,13 +199,78 @@ function fixedStep(g: Game, c: Controls): void {
   stepParty(g.party, g.map, g.clock.time, dt);
   // A wave-countdown buff: each new countdown runs longer by its share of the interval.
   if (g.party.wave > before) g.party.nextAt += t.party.interval - g.tuning.party.interval;
-  stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map, c => dormant(g, c));
+  if (W.ko) {
+    const r = stepKnockout(W.ko, W.body, W.leash, g.creatures, g.map, g.clock.time, k => g.party.areas.has(k), g.koEvents);
+    W.body = r.body;
+    for (const e of g.koEvents) if (e.kind === "released" && e.id !== undefined) g.combat.busy.add(e.id); // walking home from wherever it is
+    if (r.done) { W.ko = null; W.health.hp = t.witchHealth.hits; W.health.repairAt = Infinity; }
+  }
+  repair(W.health, g.clock.time, t);
   const B = g.berries, busy = (id: number) => B.feeding.has(id) || B.evolving.has(id);
-  stepLeash(g.leash, g.creatures, { sigil: !!c.sigil, inviteNearest: c.inviteNearest, cycle: !!c.cycle }, g.witch, g.witch.mode === "ground", g.clock.time, dt, t, busy);
+  stepFights(g, t, dt, busy);
+  stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map, c => dormant(g, c));
+  if (stepWanderers([...g.combat.busy].map(id => g.creatures[id]), g.map, dt)) g.byArea = null; // (those walking home are among combat's busy)
+  // (A party animal in a fight is moved by combat, not its leash.)
+  stepLeash(g.leash, g.creatures, { sigil: !!c.sigil && !W.ko, inviteNearest: c.inviteNearest, cycle: !!c.cycle && !W.ko }, g.witch, g.witch.mode === "ground" && !W.ko, g.clock.time, dt, t, id => busy(id) || heldByCombat(g.creatures[id]));
   if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, t);
   stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, t);
   stepDancefloor(g, wave, seated);
   stepWitchParty(g, c, dt);
+}
+
+/** The wild creatures by the area they live in (its key). */
+function indexByArea(creatures: Creature[]): Map<string, Creature[]> {
+  const m = new Map<string, Creature[]>();
+  for (const c of creatures) { const k = cellKey(c.cell); let l = m.get(k); if (!l) m.set(k, (l = [])); l.push(c); }
+  return m;
+}
+
+/** Fights and sieges (rules/combat.ts): new soundsystems come under siege, every creature near a
+ *  witch or busy with a siege fights, blows land on creatures, witches and soundsystems; a fallen
+ *  soundsystem ends its party and its besiegers march on; the run ends when none stands. */
+function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolean): void {
+  const S = g.combat, time = g.clock.time;
+  for (const [key, a] of g.party.areas) if (a.soundsystem && !S.sounds.has(key) && !S.ruined.has(key)) startSiege(S, key, a.soundsystem, a.cell, g.creatures, t);
+  // Only creatures with something to fight near them take part: wild ones in or next to the area
+  // of a witch, a party animal or a standing soundsystem (wild never fights wild; areas are far
+  // wider than any reach), and every party animal, besieger, and one fleeing or mid-fight.
+  const byArea = (g.byArea ??= indexByArea(g.creatures)), hot = new Set<string>(), active: Creature[] = [];
+  const near = (x: number, z: number) => { const k = cellKey(g.map.cellSafe(x, z).cell); if (hot.has(k)) return; hot.add(k); for (const n of g.map.neighbours.get(k) ?? []) hot.add(n); };
+  for (const w of g.witches) near(w.body.x, w.body.z);
+  for (const w of g.witches) for (const id of [...w.leash.stack, ...w.leash.placed.map(p => p.id)]) { const c = g.creatures[id]; if (!c.gone) { near(c.x, c.z); active.push(c); } }
+  for (const h of S.sounds.values()) if (h.hp > 0) near(h.x, h.z);
+  const seen = new Set<number>(active.map(c => c.id));
+  for (const k of hot) for (const c of byArea.get(k) ?? []) if (!c.gone && !c.leashed && !seen.has(c.id)) { seen.add(c.id); active.push(c); }
+  for (const id of S.busy) { const c = g.creatures[id]; if (!seen.has(id) && !c.gone && !c.leashed) { seen.add(id); active.push(c); } }
+  S.busy = new Set();
+  stepCombat(S, {
+    creatures: g.creatures, active, time, dt, t, busy,
+    witches: g.witches.map((w, i) => ({ id: i, x: w.body.x, z: w.body.z, onGround: w.body.mode === "ground" && !w.body.seated, down: !!w.ko })),
+    leashPoint: id => { for (const w of g.witches) { const p = leashPoint(w.leash, id, w.body.x, w.body.z); if (p) return p; } return null; },
+    asleep: c => dormant(g, c),
+    hitWitch: (id, at) => {
+      const w = g.witches[id];
+      if (!w || w.ko) return;
+      // Hit mid-chat: the chat loses invite.hitPenalty seconds (Ed: big groups are hard to invite without getting hit).
+      const talk = w.leash.talk;
+      if (talk && !talk.refused) { talk.t = Math.max(0, talk.t - t.invite.hitPenalty); w.leash.progress.set(talk.id, talk.t); }
+      if (hurt(w.health, at, t)) { w.ko = knockOut(w.leash, g.creatures, at, t); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z }); }
+    },
+    loseParty: id => {
+      for (const w of g.witches) { w.leash.stack = w.leash.stack.filter(i => i !== id); w.leash.placed = w.leash.placed.filter(p => p.id !== id); }
+      g.creatures[id].leashed = false;
+    },
+  }, COMBAT);
+  for (const c of active) if (!c.gone && !c.leashed && (c.siege || c.fleeUntil || c.fight?.target || c.wanderTo)) S.busy.add(c.id); // carried on wherever she is
+  for (const e of S.events) if (e.kind === "soundDestroyed" && e.key) {
+    if (e.key === "home") g.speakers = g.speakers.map(() => "destroyed" as SpeakerState);
+    else { g.party.areas.delete(e.key); S.ruined.add(e.key); (g.party.ruined ??= new Set()).add(e.key); }
+    marchOn(S, e.key, g.creatures);
+  }
+  // The home ring shows its damage speaker by speaker.
+  const home = S.sounds.get("home");
+  if (home && home.hp < home.max) { const f = 1 - home.hp / home.max, n = g.speakers.length; g.speakers = g.speakers.map((_, i) => (f >= (i + 1) / n ? "destroyed" : f >= (i + 0.5) / n ? "damaged" : "playing")); }
+  if (!g.over && [...S.sounds.values()].every(h => h.hp <= 0)) g.over = { at: time };
 }
 
 /** The party witches: one for each soundsystem playing (oldest first), and the player idling in. */

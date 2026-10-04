@@ -7,6 +7,7 @@ import { clamp, hash2, lerp, rng, smoothstep } from "./random";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { facingAway } from "./witch";
 import type { Tuning } from "./tuning";
+import type { Fight } from "./combat";
 
 export type Level = 0 | 1 | 2 | 3;
 export const LEGEND = 3;
@@ -52,6 +53,27 @@ export interface Creature {
   seen: number;
   /** Invited, so leashed: to the witch or a placed sigil (rules/leash.ts moves it, not its roam). */
   leashed: boolean;
+  /** Combat (rules/combat.ts): its health (maxHp by level when unset), when it was last hurt,
+   *  knockback still to ease off, slowed until, its fight. */
+  hp?: number;
+  hurtAt?: number;
+  kx?: number;
+  kz?: number;
+  slowUntil?: number;
+  fight?: Fight;
+  /** Beaten in a fight (wild): fleeing from (fleeX, fleeZ) until fleeUntil, then gone. */
+  fleeUntil?: number;
+  fleeX?: number;
+  fleeZ?: number;
+  /** Gone for the run: a party animal defeated, or a wild one that fled. */
+  gone?: boolean;
+  /** Marching on a soundsystem (its area's key, "home" for the dancefloor): a siege. */
+  siege?: string;
+  /** Let go when its witch was knocked out (Ed, 2026-10-04): neutral, walking to this area of its
+   *  own kind, where it becomes an ordinary wild creature of that area. */
+  wanderTo?: { x: number; z: number; cell: [number, number] };
+  /** Keeping its distance from the witch this step (an evasive kind). */
+  evading?: boolean;
   /** A wild legend: a mini-boss when combat comes (a hook: no fighting yet). */
   boss?: boolean;
   /** A disc (centre, radius in metres) found to lie wholly in its own area: see inOwnArea. */
@@ -175,15 +197,20 @@ export function stepCreature(c: Creature, dt: number, map: ForestMap): void {
   c.walk += dt * (c.level === LEGEND ? 1.5 : 4);
 }
 
+/** A creature moved by combat (rules/combat.ts) or a knockout (rules/knockout.ts) this step,
+ *  not by its roam or its leash. */
+export const heldByCombat = (c: Creature) => !!(c.gone || c.fleeUntil || c.wanderTo || c.evading || c.fight?.target || (c.siege && !c.leashed));
+
 /** Step only the creatures within `radius` metres of (x, z). One coming back into range after a
  *  while is put where it would plausibly be by now (a point in its area chosen from its id and
  *  the time), rather than where it was left. A `dormant` one (a wild legend still asleep) stays
  *  where it lies. */
 export function stepCreaturesNear(all: Creature[], x: number, z: number, radius: number, dt: number, time: number, map: ForestMap, dormant: (c: Creature) => boolean = () => false): void {
   for (const c of all) {
-    if (c.leashed) continue;
+    if (c.leashed || c.gone) continue;
     if (Math.abs(c.homeX - x) > radius || Math.abs(c.homeZ - z) > radius) continue;
     if (dormant(c)) { c.seen = time; c.moving = false; c.away = false; continue; }
+    if (heldByCombat(c)) { c.seen = time; continue; } // fighting, fleeing, marching or walking home: moved by combat and knockout
     if (time - c.seen > 3) {
       const r = rng(c.id * 7919 + Math.floor(time / 20) * 131 + 5);
       [c.x, c.z] = pointInArea(map, c, r);

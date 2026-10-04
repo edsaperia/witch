@@ -30,7 +30,11 @@ export function musicMix(g: Game, at: { x: number; z: number }): MusicMix {
     if (live > 0) sources.push({ x: d.x, z: d.z, loud: (on / n) * (live / n), damage: dmg / n });
   }
   // Every partified area's soundsystem, once it has risen.
-  for (const a of g.party.areas.values()) if (a.soundsystem && time >= a.at + g.tuning.party.transition) sources.push({ x: a.soundsystem.x, z: a.soundsystem.z, loud: 1, damage: 0 });
+  // Their damage is a siege's (rules/combat.ts): the crunch grows as their health goes.
+  for (const [key, a] of g.party.areas) if (a.soundsystem && time >= a.at + g.tuning.party.transition) {
+    const h = g.combat?.sounds.get(key);
+    sources.push({ x: a.soundsystem.x, z: a.soundsystem.z, loud: 1, damage: h ? 1 - h.hp / h.max : 0 });
+  }
   let best = { level: 0, damage: 0, distance: Infinity };
   for (const s of sources) {
     const dist = Math.hypot(s.x - w.x, s.z - w.z), near = 1 - Math.min(1, Math.max(0, (dist - M.nearDist) / Math.max(1, M.farDist - M.nearDist)));
