@@ -10,13 +10,14 @@ const bpm = style.bpm, spBar = barSeconds(bpm);
 function cueAt(time: number, boot = 60, interval = 300, times?: number[]): MusicCue {
   const all = times ?? Array.from({ length: 40 }, (_, i) => boot + interval * (i + 1));
   const waves = all.filter(t => t <= time);
-  return { waves, nextAt: all[waves.length] ?? Infinity, bootUntil: boot, knockedOut: false, siege: 0 };
+  const bar = (t: number) => t / spBar; // the cue is in bars (a steady tempo here)
+  return { waves: waves.map(bar), nextAt: bar(all[waves.length] ?? Infinity), bootUntil: bar(boot), knockedOut: false, siege: 0 };
 }
 
 /** Play a run like the engine: each block planned a bar before it starts, from the cue known then. */
 function run(bars: number, cue: (time: number) => MusicCue = cueAt): BlockPlan[] {
   const c = new Conductor(style), out: BlockPlan[] = [];
-  for (let bar = 0; bar < bars; bar++) out.push(c.plan(cue(Math.max(0, (bar - 1) * spBar)), bar, bpm));
+  for (let bar = 0; bar < bars; bar++) out.push(c.plan(cue(Math.max(0, (bar - 1) * spBar)), bar));
   return out;
 }
 
@@ -71,7 +72,7 @@ describe("music sections", () => {
     for (let i = 0; i < style.arc.length; i++) expect(arcs.has(i)).toBe(true);
     const last = plans[plans.length - 1];
     expect(last.arc).toBeGreaterThanOrEqual(style.arc.length - 1);
-    expect(planBlock(style, cueAt(1e5), 50000, bpm).arc).toBeGreaterThan(style.arc.length);
+    expect(planBlock(style, cueAt(1e5), 50000).arc).toBeGreaterThan(style.arc.length);
   });
 
   it("drops on the next block line when a wave comes early (N)", () => {
@@ -97,15 +98,15 @@ describe("music sections", () => {
 
   it("keeps a block's plan once made, whatever comes after", () => {
     const c = new Conductor(style);
-    const before = c.plan(cueAt(370), 184, bpm);
-    expect(c.plan({ ...cueAt(370), knockedOut: true }, 186, bpm)).toEqual(before);
-    expect(c.plan({ ...cueAt(370), knockedOut: true }, 188, bpm).section).toBe(style.knockout);
+    const before = c.plan(cueAt(370), 184);
+    expect(c.plan({ ...cueAt(370), knockedOut: true }, 186)).toEqual(before);
+    expect(c.plan({ ...cueAt(370), knockedOut: true }, 188).section).toBe(style.knockout);
   });
 
   it("previews: ?music=<section> loops it, ?music=wave<N> plays wave N's music", () => {
-    const forced = planBlock(style, { ...cueAt(10), forceSection: "phonk" }, 8, bpm);
+    const forced = planBlock(style, { ...cueAt(10), forceSection: "phonk" }, 8);
     expect(forced.section).toBe("phonk");
-    const w = planBlock(style, { ...cueAt(500), forceWave: 7 }, 260, bpm);
+    const w = planBlock(style, { ...cueAt(500), forceWave: 7 }, 260);
     expect(w.arc).toBe(7);
   });
 });

@@ -1,6 +1,7 @@
 // The Three.js view: reads the game state each frame and draws it. Rendered into a canvas of
 // (window size / pixel size) and stretched with nearest-neighbour by the browser, so every art
 // pixel stays a crisp square.
+import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import * as Art from "../../art/generator.js";
 import { sigilColour } from "../../art/generator.js";
@@ -655,7 +656,7 @@ export class View {
     const g = this.game, t = g.tuning, R = t.runeMarkers, w = g.witch, range = t.haze.far + 20, mc = this.markerCache;
     if (mc.wave !== g.party.wave || mc.n !== g.party.areas.size) { mc.wave = g.party.wave; mc.n = g.party.areas.size; mc.list = spawnMarkers(g.party, g.map); }
     const cd = waveCountdown(g.party, g.map, time), build = g.party.paused ? 0 : cd.gone;
-    const phase = (time * t.beat.bpm) / 60, beat = Math.pow(0.5 + 0.5 * Math.cos(phase * Math.PI * 2), 2); // 1 on the beat
+    const phase = (beatTime(g.beat, time) * t.beat.bpm) / 60, beat = Math.pow(0.5 + 0.5 * Math.cos(phase * Math.PI * 2), 2); // 1 on the beat
     const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes: Mote[] = [], lasers: Laser[] = [], symbols: RingSymbol[] = [];
     const style = R.awakeStyle, column = style !== "beam", laser = style !== "column";
     const scale = R.scale;
@@ -765,7 +766,7 @@ export class View {
   private drawCreatures(time = 0): void {
     const g = this.game, R = g.tuning.haze.far + 20;
     const per = new Map<string, SpriteInstance[]>(), arts = new Map<string, CreatureArt>(), creatureShadows: ShadowInstance[] = [];
-    const beat = 60 / g.tuning.beat.bpm;
+    const beat = 60 / g.tuning.beat.bpm, bt = beatTime(g.beat, time); // beat-time, on the beat clock
     let n = 0;
     for (const c of g.creatures) {
       if (Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
@@ -784,14 +785,14 @@ export class View {
       if (!l) per.set(key, (l = []));
       // Party animals never stand still: a bounce and a sway on the beat when idle, a little
       // bounce as they go. (Wild ones roam, graze and pause.)
-      const ph = (time / beat + (c.id % 4) * 0.25) * Math.PI;
+      const ph = (bt / beat + (c.id % 4) * 0.25) * Math.PI;
       const dance = c.leashed ? Math.abs(Math.sin(ph)) * (c.moving ? 0.15 : 0.4) : 0, sway = c.leashed && !c.moving ? Math.sin(ph * 0.5) * 0.12 : 0;
       // Evolving: glowing white, pulsing on the beat, brighter toward the bar line; then the flash
       // as it becomes its next level, and a pop from 1.3 times its size back to its own.
       const ev = g.berries.evolving.get(c.id), done = this.evolvedAt.get(c.id);
       let glow = 0, scale = bossScale;
       if (ev) {
-        const k = Math.min(1, (time - ev.since) / Math.max(0.1, ev.at - ev.since)), pulse = 0.5 + 0.5 * Math.cos((time / beat) * Math.PI * 2);
+        const k = Math.min(1, (time - ev.since) / Math.max(0.1, ev.at - ev.since)), pulse = 0.5 + 0.5 * Math.cos((bt / beat) * Math.PI * 2);
         glow = Math.min(1, (0.25 + 0.5 * k) * (0.55 + 0.45 * pulse) + (ev.at - time < 0.12 ? 1 : 0));
       } else if (done !== undefined) {
         const d = time - done;
@@ -923,7 +924,7 @@ export class View {
     }
     const mpp = this.mpp, U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value;
     const pitch = (angle * Math.PI) / 180, upOnScreen = U.dot(this.v3.set(0, Math.cos(pitch), -Math.sin(pitch)));
-    const beat = (time * g.tuning.beat.bpm) / 60, ph = beat - Math.floor(beat);
+    const beat = (beatTime(g.beat, time) * g.tuning.beat.bpm) / 60, ph = beat - Math.floor(beat);
     const list: SpriteInstance[] = [];
     g.map.dancefloor.speakers.forEach((sp, i) => {
       const face = Art.dancefloorSpeakerFacing(sp.ring) as { angle: number; flip: boolean }, state = g.speakers[i] ?? "playing", powered = i < on;
@@ -1063,7 +1064,7 @@ export class View {
         U.uPartyCol.value[i].set(c[0] / 255, c[1] / 255, c[2] / 255);
       });
       U.uPartyCount.value = list.length;
-      U.uUplight.value.set(P.uplight.strength, P.uplight.pulse, P.uplight.edge, (time * t.beat.bpm / 60) * Math.PI * 2);
+      U.uUplight.value.set(P.uplight.strength, P.uplight.pulse, P.uplight.edge, (beatTime(g.beat, time) * t.beat.bpm / 60) * Math.PI * 2);
     }
     this.strings.update();
     this.borders.update();
@@ -1170,7 +1171,7 @@ export class View {
     this.time("creatures");
     this.rulers.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, w.x, w.z);
     const df = g.map.dancefloor;
-    this.music.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, df.x, df.z, w.x, w.z, time, t.beat.bpm, this.debugReadouts);
+    this.music.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, df.x, df.z, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, this.debugReadouts);
     this.minimap.update(g.party, w.x, w.z);
     // The next waking stones (one per witch each wave: Ed, 2026-10-04), when they're off screen,
     // and smaller, dimmer cues for the ones after.
@@ -1180,9 +1181,9 @@ export class View {
         while (list.length < cells.length) list.push(make());
         list.forEach((ind, i) => {
           const c = cells[i];
-          if (!c) { ind.update(this.camera, cw, ch, null, w.x, w.z, time, t.beat.bpm, 0); return; }
+          if (!c) { ind.update(this.camera, cw, ch, null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 0); return; }
           const s = g.map.soundsystemSpot(c[0], c[1]), species = AREA_TYPES[g.map.typeOf(c[0], c[1])].creature;
-          ind.update(this.camera, cw, ch, { x: s.x, z: s.z, colour: this.markerArt.colour.get(species)!, species }, w.x, w.z, time, t.beat.bpm, fill, label);
+          ind.update(this.camera, cw, ch, { x: s.x, z: s.z, colour: this.markerArt.colour.get(species)!, species }, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, fill, label);
         });
       };
       // Pausing holds the countdown; while home boots up, the next ring fills with the boot.

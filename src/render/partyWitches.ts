@@ -4,6 +4,7 @@
 // beat; flying in, out or round the floor, her hover frames. A pair's two sprites are lined up so
 // their meeting anchors (WITCH_PAIRS: hands, a hug, a toast, a conga's shoulders) land on the
 // same pixel.
+import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import * as Art from "../../art/generator.js";
 import type { Game } from "../rules/game";
@@ -35,14 +36,14 @@ export class PartyWitchView {
   }
 
   /** Which frame of a pose: dance moves in whole beats, the rest at the art's own rate. */
-  private frameOf(art: WitchArt, pose: string, time: number, bpm: number, phase: number): number {
+  private frameOf(art: WitchArt, pose: string, time: number, bpm: number, phase: number, bt = time): number {
     const fr = art.poses[pose] ?? art.poses.stand, n = fr.length, fps = art.fps[pose] ?? 3;
-    if (DANCE.has(pose)) { const beats = (time * bpm) / 60 + phase, perCycle = Math.max(1, Math.round((n / fps) * (bpm / 60))); return fr[Math.floor(((beats % perCycle) / perCycle) * n) % n]; }
+    if (DANCE.has(pose)) { const beats = (bt * bpm) / 60 + phase, perCycle = Math.max(1, Math.round((n / fps) * (bpm / 60))); return fr[Math.floor(((beats % perCycle) / perCycle) * n) % n]; }
     return fr[Math.floor(time * fps + phase * 7) % n];
   }
 
   update(g: Game, time: number, visible: (x: number, z: number, w: number, h: number) => boolean): void {
-    const per = new Map<string, { art: WitchArt; list: SpriteInstance[] }>(), bpm = g.tuning.beat.bpm, R = SPRITE_UNIFORMS.uRight.value;
+    const per = new Map<string, { art: WitchArt; list: SpriteInstance[] }>(), bpm = g.tuning.beat.bpm, bt = beatTime(g.beat, time), R = SPRITE_UNIFORMS.uRight.value;
     const placed = new Map<number, { x: number; z: number; frame: number; art: WitchArt; flip: boolean }>();
     const put = (key: string, art: WitchArt, inst: SpriteInstance) => { let e = per.get(key); if (!e) per.set(key, (e = { art, list: [] })); e.list.push(inst); };
     const lookOf = (w: PartyWitch) => this.assets.partyWitchArt(w.seed % LOOKS);
@@ -56,11 +57,11 @@ export class PartyWitchView {
       const flip = w.facing < 0;
       if (flying) fi = art.hover[w.away ? "away" : "towards"][Math.floor(time * 4 + w.id) % 3];
       else {
-        fi = this.frameOf(art, w.pose, time, bpm, (w.id % 4) * 0.25);
+        fi = this.frameOf(art, w.pose, time, bpm, (w.id % 4) * 0.25, bt);
         // A partner lines up with her lead: their meeting anchors on the same pixel.
         const pair = PAIRS[w.pose], lead = w.partner !== null && w.partner >= 0 && !w.lead ? placed.get(w.partner) : undefined;
         if (pair && lead) {
-          fi = this.frameOf(art, w.pose, time, bpm, 0); // in step with her
+          fi = this.frameOf(art, w.pose, time, bpm, 0, bt); // in step with her
           const la = art.anchors[lead.frame] ? lead : null, A = la ? lead.art.anchors[lead.frame]?.[pair.partner ?? pair.meet] : undefined, B = art.anchors[fi]?.[pair.meet];
           if (A && B) {
             const lf = lead.art.atlas.frames[lead.frame], pf = art.atlas.frames[fi];
@@ -81,7 +82,7 @@ export class PartyWitchView {
     if (I?.activity && I.pose && wt.mode === "ground" && !wt.seated) {
       const art = this.assets.partyWitchArt(null);
       if (art) {
-        const fi = this.frameOf(art, I.pose, time, bpm, 0), f = art.atlas.frames[fi];
+        const fi = this.frameOf(art, I.pose, time, bpm, 0, bt), f = art.atlas.frames[fi];
         put("her", art, { x: wt.x, y: 0, z: wt.z, frame: f, flip: I.facing < 0 });
         this.herIdle = true;
       }

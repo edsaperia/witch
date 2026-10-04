@@ -79,6 +79,8 @@ export interface ArcStep {
   progression?: string;
   /** Semitones above the style's root. */
   transpose?: number;
+  /** Its tempo (bpm; the style's bpm if none): the beat clock eases to it as the wave lands. */
+  bpm?: number;
   /** The sections played as the wave arrives, then the ones looped till the next wave: [name, bars]. */
   arrive: [string, number][];
   loop: [string, number][];
@@ -90,7 +92,10 @@ export interface ArcStep {
 export interface MusicStyle {
   name: string;
   notes?: string;
+  /** The base tempo: the first wave's, unless its arc step has its own. */
   bpm: number;
+  /** Bars a tempo change takes to ease in, from the block line the wave's music lands on. */
+  tempoRampBars?: number;
   /** 0 straight, 0.5 the off sixteenths pushed half a sixteenth late. */
   swing: number;
   /** MIDI note of the style's root (the bass's lowest octave). */
