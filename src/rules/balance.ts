@@ -22,9 +22,20 @@ import { lanchester, levelValue } from "./power";
  *  the fight, regrouping). */
 export interface SimPlayer { growth: number; fromWave: number; fightTime: number }
 
+/** The director (a pacing variant, Ed 2026-10-04: "have areas spawn creatures over time in
+ *  response to the player's progress"; not in the game yet): at each wave the dormant areas the
+ *  next wave will wake get reinforcements (adults) worth budget = (base + perWave × wave^power) × max(0,
+ *  1 + alpha × (player's F / expected − 1)) fighting value, expected being `expected` F a minute
+ *  since the first wave's countdown began. alpha 0: the same whatever the player does. */
+export interface SimDirector { base: number; perWave: number; alpha: number; expected: number; /** The budget's growth: perWave × wave^power (1 straight; 1.5 makes survival scale with skill, see the REPORT). */ power?: number }
+
 export interface SimOptions {
   /** Seconds between waves. */
   interval: number;
+  /** Attrition on the march (a pacing variant): the share of a fallen soundsystem's besiegers
+   *  that march on to the next (the rest scatter home and leave the fight). 1, as in the game. */
+  marchOn?: number;
+  director?: SimDirector;
   /** Stop once this many waves have come (and the wave after it would arrive), lost or not. */
   maxWaves: number;
   /** The model's step (seconds). */
@@ -45,6 +56,9 @@ export interface WaveSample {
   player?: number;
   /** Whether the player could beat the biggest siege then. */
   ahead?: boolean;
+  /** Sieges marching or fighting then, and the director's reinforcements so far (F). */
+  groups: number;
+  reinforced: number;
 }
 
 export interface SimResult {
@@ -84,11 +98,13 @@ export function fightersOf(map: ForestMap, creatures: Creature[] = spawnCreature
 /** One run of the model on `map` (its tuning's population, combat and health numbers). */
 export function simulate(map: ForestMap, o: SimOptions): SimResult {
   const t = map.tuning, C = t.combat, dt = o.dt ?? 0.5, by = fightersOf(map);
+  for (const [k, l] of by) by.set(k, l.filter(f => f.id >= 0)); // (a previous run's reinforcements)
   for (const l of by.values()) for (const f of l) { f.gone = false; f.siege = null; f.x = f.x0; f.z = f.z0; }
   const live: Fighter[] = [], sounds = new Map<string, Sound>(), party = newParty(map), waves: WaveSample[] = [];
   const d = map.dancefloor;
   sounds.set("home", { key: "home", x: d.x, z: d.z, hp: C.homeHealth, radius: C.homeRadius });
-  const P = o.player, ruined = new Set<string>();
+  const P = o.player, ruined = new Set<string>(), D = o.director, share = o.marchOn ?? 1, adult = levelValue(2);
+  let reinforced = 0, owed = 0, nextId = -1;
   let time = 0, nextAt = t.boot.time + t.party.startDelay + o.interval, playerF = 0, busyUntil = 0, lost: SimResult["lost"] = null;
   const nearest = (x: number, z: number) => {
     let best: string | null = null, bd = Infinity;
@@ -102,7 +118,7 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
   };
   const sample = () => {
     const g = groups(), vals = [...g.values()], largest = vals.length ? Math.max(...vals) : 0;
-    const s: WaveSample = { wave: party.wave, time, largest, marching: vals.reduce((a, b) => a + b, 0), standing: [...sounds.values()].filter(h => h.hp > 0).length };
+    const s: WaveSample = { wave: party.wave, time, largest, marching: vals.reduce((a, b) => a + b, 0), standing: [...sounds.values()].filter(h => h.hp > 0).length, groups: vals.length, reinforced };
     if (P) { s.player = playerF; s.ahead = playerF > largest; }
     waves.push(s);
   };
@@ -115,6 +131,19 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
         const key = cellKey(a.cell), at = soundsystemFor(map, a.cell);
         sounds.set(key, { key, x: at.x, z: at.z, hp: C.soundsystemHealth, radius: C.soundsystemRadius });
         for (const f of by.get(key) ?? []) if (!f.gone) { f.siege = key; live.push(f); }
+      }
+      // The director: reinforcements for the areas the next wave wakes, by the player's progress.
+      if (D && party.next.length) {
+        const start = t.boot.time + t.party.startDelay, expected = (D.expected * Math.max(0, time - start)) / 60;
+        const k = Math.max(0, 1 + D.alpha * ((expected > 0 ? playerF / expected : 1) - 1)), budget = (D.base + D.perWave * Math.pow(party.wave, D.power ?? 1)) * k;
+        owed += budget;
+        for (; owed >= adult; owed -= adult) {
+          const cell = party.next[Math.floor(-nextId) % party.next.length], key = cellKey(cell), site = map.siteOf(cell[0], cell[1]);
+          let l = by.get(key);
+          if (!l) by.set(key, (l = []));
+          l.push(reinforcement(nextId--, key, site.x, site.z, map));
+          reinforced += adult;
+        }
       }
     }
     // The player grows and fights the biggest siege they can beat.
@@ -142,11 +171,20 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
       if (s.hp > 0 || ruined.has(s.key)) continue;
       ruined.add(s.key);
       if (s.key !== "home") { party.areas.delete(s.key); (party.ruined ??= new Set()).add(s.key); }
-      for (const f of live) if (f.siege === s.key) f.siege = nearest(f.x, f.z);
+      // Survivors march on to the next-nearest (with attrition, only a share of them; the rest scatter).
+      for (const f of live) if (f.siege === s.key) f.siege = share >= 1 || frac(f.id * 0.6180339887 + s.x * 0.013) < share ? nearest(f.x, f.z) : null;
     }
     if ([...sounds.values()].every(s => s.hp <= 0)) lost = { wave: party.wave, time };
     time += dt;
   }
   if (lost) sample();
   return { seed: map.seed, interval: o.interval, lost, survived: lost ? lost.wave - 1 : party.wave, waves };
+}
+
+const frac = (x: number) => x - Math.floor(x);
+
+/** A director's reinforcement: an adult at its area's centre, marching and hitting as one. */
+function reinforcement(id: number, cell: string, x: number, z: number, map: ForestMap): Fighter {
+  const A = COMBAT.attacks[COMBAT.byLevel.melee[2]!];
+  return { id, level: 2, cell, x, z, x0: x, z0: z, speed: map.tuning.creatureSpeed * map.tuning.combat.marchMult, dps: COMBAT.levels.dps[2], reach: A.range + (A.lunge ?? 0) - 0.3, value: levelValue(2), siege: null, gone: false };
 }

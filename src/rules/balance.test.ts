@@ -3,7 +3,7 @@ import { simulate } from "./balance";
 import { generateMap } from "./map";
 import { lanchester, levelValue, powerReport } from "./power";
 import { newGame } from "./game";
-import { TUNING } from "./tuning";
+import { TUNING, withTuning } from "./tuning";
 
 describe("fighting value (rules/power.ts)", () => {
   it("is √(hp × dps) by level: babies 0, young 15.5, adults 29, legends 76", () => {
@@ -29,7 +29,7 @@ describe("fighting value (rules/power.ts)", () => {
 });
 
 describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () => {
-  const map = generateMap(1000, TUNING);
+  const map = generateMap(1000, withTuning({ population: { ...TUNING.population, byDistance: true } }));
 
   it("runs a quick idle run: sieges grow wave by wave, soundsystems fall, the same every time", () => {
     const t0 = Date.now(), a = simulate(map, { interval: 60, maxWaves: 12 });
@@ -46,5 +46,19 @@ describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () =
     const strong = simulate(map, { interval: 300, maxWaves: 30, player: { growth: 200, fromWave: 0, fightTime: 20 } });
     expect(strong.survived).toBeGreaterThan(idle.survived);
     expect(strong.waves.some(w => w.player! > 0)).toBe(true);
+  }, 30000);
+
+  it("models the pacing variants: attrition on the march and the director's reinforcements", () => {
+    const base = simulate(map, { interval: 300, maxWaves: 30 });
+    const scatter = simulate(map, { interval: 300, maxWaves: 30, marchOn: 0 });
+    expect(scatter.survived).toBeGreaterThanOrEqual(base.survived); // no survivor marches on: nothing merges
+    const dir = { base: 0, perWave: 10, alpha: 0, expected: 50 };
+    const directed = simulate(map, { interval: 300, maxWaves: 30, director: dir });
+    expect(directed.waves[directed.waves.length - 1].reinforced).toBeGreaterThan(0);
+    expect(directed.survived).toBeLessThanOrEqual(base.survived);
+    // Responsive: an idle player (F 0) gets fewer reinforcements at alpha 0.6 than at alpha 0.
+    const soft = simulate(map, { interval: 300, maxWaves: 4, director: { ...dir, alpha: 0.6 } }), hard = simulate(map, { interval: 300, maxWaves: 4, director: dir });
+    expect(soft.waves[soft.waves.length - 1].reinforced).toBeLessThan(hard.waves[hard.waves.length - 1].reinforced);
+    expect(simulate(map, { interval: 300, maxWaves: 30 })).toEqual(base); // reinforcements don't outlive their run
   }, 30000);
 });

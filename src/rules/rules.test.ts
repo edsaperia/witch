@@ -7,7 +7,7 @@ import { AREA_TYPES, generateMap, parseSeed, sceneFootprint } from "./map";
 import { Forest, crownReach, treeChance } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
-import { population, populationAt, spawnCreatures, wildLegendCells, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
+import { population, populationAt, populationByRemoteness, spawnCreatures, wildLegendCells, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
 import { dormant, newGame, STEP, stepGame } from "./game";
 import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, symbolCount, wavePlan } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
@@ -469,7 +469,7 @@ describe("the camera", () => {
 });
 
 describe("creatures", () => {
-  const all = spawnCreatures(map);
+  const all = spawnCreatures(map), distance = withTuning({ population: { ...TUNING.population, byDistance: true } });
   const inCell = (x: number, y: number) => all.filter(c => c.cell[0] === x && c.cell[1] === y);
   const [mx, my] = map.centreCell;
 
@@ -479,13 +479,25 @@ describe("creatures", () => {
     expect(new Set(AREA_TYPES.map(t => t.creature)).size).toBe(30);
   });
 
-  it("are none in the home area; round it a couple of babies and a couple of adults (Ed, 2026-10-04: the first ring's siege)", () => {
+  it("are none in the home area, and a couple of babies round it", () => {
+    expect(inCell(mx, my)).toEqual([]);
+    for (const [dx, dy] of [[-1, 0], [0, 1], [0, -1]]) {
+      const here = inCell(mx + dx, my + dy);
+      expect(here.length).toBeGreaterThanOrEqual(1);
+      expect(here.length).toBeLessThanOrEqual(3);
+      expect(here.every(c => c.level === 0)).toBe(true);
+    }
+  });
+
+  it("by distance (population.byDistance): none in the home area; round it a couple of babies and a couple of adults (Ed, 2026-10-04: the first ring's siege)", () => {
+    const m = generateMap(123, distance), all = spawnCreatures(m), inCell = (x: number, y: number) => all.filter(c => c.cell[0] === x && c.cell[1] === y), [mx, my] = m.centreCell;
     expect(inCell(mx, my)).toEqual([]);
     for (const [dx, dy] of [[-1, 0], [0, 1], [0, -1]]) {
       const here = inCell(mx + dx, my + dy);
       expect(here.filter(c => c.level === 0).length).toBeGreaterThanOrEqual(1);
       expect(here.filter(c => c.level === 0).length).toBeLessThanOrEqual(3);
       expect(here.filter(c => c.level === 2).length).toBeLessThanOrEqual(4);
+      expect(here.filter(c => c.level === 2).length).toBeGreaterThanOrEqual(1);
       expect(here.every(c => c.level !== 3 || c.boss)).toBe(true);
     }
   });
@@ -495,7 +507,7 @@ describe("creatures", () => {
     const mean = edge.reduce((a, l) => a + l.length, 0) / edge.length;
     expect(mean).toBeGreaterThan(15);
     expect(mean).toBeLessThan(23);
-    for (const l of edge.slice(0, 4)) { expect(l.filter(c => c.level === 1).length).toBeGreaterThanOrEqual(2); expect(l.filter(c => c.level === 2).length).toBeGreaterThan(6); }
+    for (const l of edge.slice(0, 4)) expect(l.filter(c => c.level === 1).length).toBeGreaterThan(3);
   });
 
   it("have a few wild legends a map, each a boss, only in remote areas, spaced apart, one an area (Ed, 2026-10-04)", () => {
@@ -536,6 +548,19 @@ describe("creatures", () => {
     const [hx, hy] = map.centreCell, at = (cs: { level: number; cell: [number, number] }[]) => cs.some(c => c.level === 3 && c.cell[0] === hx + 1 && c.cell[1] === hy);
     expect(at(spawnCreatures(generateMap(123, withTuning({ legendNextToHome: true }))))).toBe(true);
     expect(at(spawnCreatures(generateMap(123, withTuning({ legendNextToHome: false }))))).toBe(false);
+  });
+
+  it("rise with distance from home, as the tuning file says", () => {
+    let last = -1;
+    for (let r = 0; r <= 1.0001; r += 0.1) {
+      const p = populationByRemoteness(map, r);
+      const total = p.babies + p.young + p.adults;
+      expect(total).toBeGreaterThanOrEqual(last);
+      last = total;
+    }
+    expect(populationByRemoteness(map, 0)).toEqual({ babies: TUNING.creaturesNear, young: 0, adults: 0 });
+    expect(populationByRemoteness(map, 1).adults).toBeGreaterThan(0);
+    expect(populationByRemoteness(map, TUNING.adultsFrom).adults).toBe(0);
   });
 
   it("rise with the rune stone's distance from the dancefloor, as the tuning file's table says (Ed, 2026-10-04)", () => {
