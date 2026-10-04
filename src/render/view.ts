@@ -67,6 +67,8 @@ export class View {
   private ground: Ground;
   /** The rolling ground (height.ts): drawn only, the rules stay flat. */
   private heights: HeightField;
+  /** The bend the view is easing to (the treetops' when she's rising or up there), for culling. */
+  private bendTo = 0;
   /** The night sky that shows over the bend, in treetop mode. */
   private sky: Sky;
   readonly assets: AssetLibrary;
@@ -141,6 +143,12 @@ export class View {
     this.scene.background = new THREE.Color(0x0b0a16);
     applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams }, t.glowReach, this.mpp, t.tone.ambient, t.glowFalloff, t.tone.moon);
     LIGHT_UNIFORMS.uGlowPower.value = t.glowPower;
+    if (t.bare) {
+      // The bare view: a low moon raking across the ground so the slopes read; no glow, no haze.
+      LIGHT_UNIFORMS.uMoonDir.value.set(-0.85, 0.28, 0.42).normalize();
+      LIGHT_UNIFORMS.uMoon.value.multiplyScalar(1.8);
+      LIGHT_UNIFORMS.uGlowPower.value = 0;
+    }
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize);
     this.heights = new HeightField(game.map, game.forest, t.ground.hills);
     useHeightField(this.heights);
@@ -161,7 +169,7 @@ export class View {
       if (smooth) { this.post.fxScene = new THREE.Scene(); this.post.fxScene.add(this.mist.mesh); }
       else this.scene.add(this.mist.mesh);
     }
-    LIGHT_UNIFORMS.uHazeRange.value.set(t.haze.near, t.haze.far);
+    LIGHT_UNIFORMS.uHazeRange.value.set(t.bare ? 1e5 : t.haze.near, t.bare ? 2e5 : t.haze.far); // (no haze in the bare view)
     this.ground.mesh.renderOrder = -1; // first: the grounds' decals go on it before anything stands on it
     this.scene.add(this.ground.mesh);
     this.scene.add(new PathView(game.map, style, this.mpp, t.pathFade.metres).group);
@@ -186,7 +194,7 @@ export class View {
     this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true });
     this.scene.add(...this.markerBatch.meshes, this.markerFx.group, this.rings.mesh);
     // The ground cover: tufts round the witch, in ground mode.
-    this.grass = new GrassView(game.map, t, this.mpp);
+    this.grass = new GrassView(game.map, t, this.mpp, game.forest, (this.ground.mesh.material as THREE.ShaderMaterial).uniforms);
     this.scene.add(this.grass.mesh);
     this.scene.add(this.spellFx.trail);
     // The dancefloor's speakers: their batch comes with their art (drawSpeakers).
@@ -341,7 +349,7 @@ export class View {
           let t = d.y < -1e-3 ? (h - o.y) / d.y : Infinity;
           // With the bend, the ground drops away under the top of the view: it sees on past where
           // the flat ground would meet it, out to the reach.
-          if (!(t > 0) || (ny > 0 && HEIGHT_UNIFORMS.uBend.value.x > 0)) t = Infinity;
+          if (!(t > 0) || (ny > 0 && (HEIGHT_UNIFORMS.uBend.value.x > 0 || this.bendTo > 0))) t = Infinity;
           t = Math.min(t, reach);
           pts.push([o.x + d.x * t, o.z + d.z * t]);
         }
@@ -357,11 +365,27 @@ export class View {
   private inView(x: number, z: number, w: number, h: number, margin: number, reach = this.game.tuning.haze.far): boolean {
     const wx = this.game.witch.x, wz = this.game.witch.z, far = reach + margin;
     if ((x - wx) ** 2 + (z - wz) ** 2 > far * far) return false;
-    // On the rolling ground, and dropped by the bend (things far ahead come down into view).
-    const lift = bendPoint(this.v3c.set(x, groundHeight(x, z), z)).y;
-    this.box.min.set(x - w / 2 - margin, lift - margin, z - h - margin);
-    this.box.max.set(x + w / 2 + margin, lift + h + margin, z + margin);
+    // On the rolling ground, and dropped by the bend (things far ahead come down into view): by the
+    // bend now and the bend it is easing to (as she rises), as the culling isn't redone as it grows.
+    const B = HEIGHT_UNIFORMS.uBend.value, ahead = Math.max(0, -(z - B.z)), g = groundHeight(x, z);
+    const d1 = B.x * ahead * ahead, d2 = this.bendTo * ahead * ahead;
+    // Past the bent ground's horizon, only what stands tall enough to show over the bulge is seen:
+    // everything else there is hidden behind the forest in front (and was the bend's cost).
+    if (ahead > 0 && !this.overHorizon(ahead, g + h + margin, B.x) && !this.overHorizon(ahead, g + h + margin, this.bendTo)) return false;
+    this.box.min.set(x - w / 2 - margin, g - Math.max(d1, d2) - margin, z - h - margin);
+    this.box.max.set(x + w / 2 + margin, g - Math.min(d1, d2) + h + margin, z + margin);
     return this.frustum.intersectsBox(this.box) || this.frustumTo.intersectsBox(this.box);
+  }
+
+  /** Whether something `ahead` metres ahead of the bend's focus, its top `top` metres up, shows
+   *  over the horizon of ground bent by `k` (true without a bend, or before the horizon). */
+  private overHorizon(ahead: number, top: number, k: number): boolean {
+    if (k <= 0) return true;
+    const cam = this.camera.position, B = HEIGHT_UNIFORMS.uBend.value, D = Math.max(1, cam.z - B.z), H = cam.y + 3; // (+3: the hills' rises)
+    const dh = -D + Math.sqrt(D * D + H / k); // where the camera's line of sight grazes the bent ground
+    if (ahead <= dh) return true;
+    const m = (H + k * dh * dh) / (dh + D); // the grazing line's drop per metre
+    return (H - top + k * ahead * ahead) / (ahead + D) <= m + 0.02;
   }
 
   /** Whether a point is on screen and clear of the haze, so a change there would be seen. */
@@ -792,6 +816,14 @@ export class View {
     this.forestLights = lights;
   }
 
+  /** ?bare: hide everything but the ground, the witch, soundsystems, the dancefloor and its
+   *  speakers, the bend and the sky (set each frame, as the batches show themselves when set). */
+  private hideForBare(): void {
+    for (const b of [...this.typeBatches.values(), ...this.decorBatches.values(), ...this.creatureBatches.values(), this.treehouseBatch, this.propBatch, this.markerBatch])
+      for (const m of b.meshes) m.visible = false;
+    for (const o of [this.grass.mesh, this.markerFx.group, this.borders.mesh, this.lasers.mesh, this.spellFx.trail]) o.visible = false;
+  }
+
   /** Shade with only the nearest lights (the light budget), fading out those at the budget's
    *  edge so none pops on or off. */
   private setLights(all: ForestLight[], x: number, z: number): void {
@@ -916,6 +948,7 @@ export class View {
     {
       const C = t.camera.curve, m = Math.min(1, Math.max(0, g.witch.lift)), k = C.ground + (C.treetop - C.ground) * m * m * (3 - 2 * m);
       HEIGHT_UNIFORMS.uBend.value.set(Math.max(0, k), pose.tx, pose.tz, 0);
+      this.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground);
       HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); // the camera always looks north (toward -z)
       const far = t.haze.far;
       this.sky.update(k, pose.tx, pose.tz, far, 2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (this.width / this.height));
@@ -996,7 +1029,7 @@ export class View {
     // No tufts over a placed sigil's rune (Ed, v233): trampled out to groundCover.sigilClear, or the rune's own size.
     const clear = g.leash.placed.map(p => ({ x: p.x, z: p.z, r: Math.max(t.groundCover.sigilClear, (3 + g.creatures[p.id].level * 0.8) * 0.45) }));
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
-    this.setLights([this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...this.forestLights], w.x, w.z);
+    if (t.bare) { this.dancefloor.update(time, this.ground, g); this.setLights([], w.x, w.z); } else this.setLights([this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...this.forestLights], w.x, w.z);
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);
     const bob = Math.sin(time * 2.4) * 0.12;
@@ -1102,6 +1135,7 @@ export class View {
     if (!draw) return;
     this.renderer.info.reset();
     this.post.lift = this.game.witch.lift;
+    if (t.bare) this.hideForBare();
     this.post.render(this.scene, this.camera);
     // Anything set but not drawn (three.js capping a batch's instances) is a bug: count and log it.
     let dropped = 0;

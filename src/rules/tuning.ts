@@ -25,6 +25,8 @@ export interface Tuning {
   /** relief: the fake bumps in the ground's shading; hills: the rolling ground, drawn only (render/height.ts): amplitude (m), scale (m across a swell), octaves. */
   ground: { relief: { strength: number; scale: number; shade: number }; hills: { on: boolean; amplitude: number; scale: number; octaves: number } };
   /** The night sky over the bend (treetop mode): stars, the moon, and clouds (count, speed m/s, how much the party lights their undersides). */
+  /** ?bare=1 or 2 (not in the file): the terrain on its own (render/view.ts). */
+  bare?: number;
   sky: { on: boolean; stars: number; moon: number; clouds: { count: number; speed: number; partyGlow: number } };
   /** Wind sway on leafy things: metres at the top of a crown, gusts' speed (m/s) and size (m), and a share for the treetop view. */
   wind: { on: boolean; strength: number; speed: number; gustScale: number; treetop: number };

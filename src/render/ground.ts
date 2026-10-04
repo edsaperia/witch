@@ -59,6 +59,7 @@ uniform sampler2D uDiscoBase, uDiscoLit, uDiscoTiles;
 uniform vec4 uDiscoGeom;
 uniform float uDiscoRim;
 uniform vec3 uRelief; // the ground's relief: strength, scale (metres), shade
+uniform float uBare;  // ?bare=2: a flat grey ground with contour lines (0.5 m) and a 10 m grid
 varying vec3 vWorld;
 ${LIGHT_GLSL}
 ${HEIGHT_GLSL}
@@ -202,6 +203,14 @@ void main() {
     N = normalize(vec3(-(hx - h0) / e * S * uRelief.x - hg.x, 1.0, -(hz - h0) / e * S * uRelief.x - hg.y));
     c *= 1.0 - uRelief.z * smoothstep(0.55, 0.2, h0);
   }
+  if (uBare > 1.5) {
+    // The bare view's plain ground: grey, a darker line where the height crosses each half metre
+    // (the art pixel next door on the other side of it), and a faint 10 m grid.
+    float hc = groundH(p), hx = groundH(p + vec2(uPixel, 0.0)), hz = groundH(p + vec2(0.0, uPixel));
+    c = vec3(0.42, 0.42, 0.44);
+    if (floor(hc / 0.5) != floor(hx / 0.5) || floor(hc / 0.5) != floor(hz / 0.5)) c = mod(floor(hc / 0.5 + 0.5), 4.0) < 0.5 ? vec3(0.12, 0.12, 0.16) : vec3(0.24, 0.24, 0.28);
+    if (mod(px.x, 10.0 / uPixel) < 1.0 || mod(px.y, 10.0 / uPixel) < 1.0) c *= 0.85;
+  }
   vec3 light = nightLightShaded(N, vWorld, moonK);
   gl_FragColor = vec4(haze(min(vec3(1.0), c * light * 1.25), vWorld), 1.0);
 }
@@ -253,6 +262,7 @@ export class Ground {
         uClearing: { value: new THREE.Vector2(map.tuning.clearingSize, map.tuning.clearingFalloff) },
         uDiscoBase: { value: disco.base }, uDiscoLit: { value: disco.lit }, uDiscoTiles: { value: this.discoTiles },
         uDiscoGeom: { value: new THREE.Vector4(disco.tileM, disco.pitch, disco.size, disco.gridOrigin) }, uDiscoRim: { value: disco.rimOuter },
+        uBare: { value: map.tuning.bare ?? 0 },
         uRelief: { value: new THREE.Vector3(map.tuning.ground.relief.strength, map.tuning.ground.relief.scale, map.tuning.ground.relief.shade) },
         uBlend: { value: (B => (B.on ? new THREE.Vector4(B.warp, B.fine, B.band, B.dither ? 1 : 0) : new THREE.Vector4()))(map.tuning.groundBlend) },
       },

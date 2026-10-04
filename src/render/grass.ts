@@ -8,6 +8,7 @@ import * as THREE from "three";
 import { hsv2rgb } from "../../art/generator.js";
 import { AREA_TYPES } from "../rules/map";
 import type { ForestMap } from "../rules/map";
+import type { Forest } from "../rules/forest";
 import type { Tuning } from "../rules/tuning";
 import { tuftsInCell, TUFT_KINDS, type Tuft } from "../rules/groundcover";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
@@ -47,10 +48,22 @@ uniform vec4 uGrass;        // metres per art pixel, sway, part, (unused)
 attribute vec4 iTuft;       // x, z, size, flip
 attribute vec3 iColour;
 attribute vec2 iCell;       // atlas column (kind * variants + variant), unused
+attribute float iOpen;      // how open the ground is there: where the canopy is
+uniform vec4 uCanopy;       // the ground's canopy shadow: strength (0 off), height, cover, wind speed
+uniform vec2 uClearing;     // clearingSize, clearingFalloff
+uniform vec3 uMoonDir;
+uniform float uTime, uSmooth;
 varying vec2 vUv;
 varying vec3 vColour;
 varying vec3 vWorld;
+varying float vMoonK;
 ${HEIGHT_VERT_GLSL}
+float gHash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float gNoise(vec2 p) {
+  vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f);
+  float a = gHash(i), b = gHash(i + vec2(1, 0)), c = gHash(i + vec2(0, 1)), d = gHash(i + vec2(1, 1));
+  return a + (b - a) * u.x + (c - a) * u.y + (a - b - c + d) * u.x * u.y;
+}
 void main() {
   float s = iTuft.z * ${PX}.0 * uGrass.x;
   vec3 base = onGround(vec3(iTuft.x, 0.0, iTuft.y)); // on the rolling ground
@@ -79,6 +92,15 @@ void main() {
   vUv = vec2((iCell.x + u) / iCell.y, uv.y);
   vColour = iColour;
   vWorld = w;
+  // In the canopy's dappled shade as the ground under it is (Ed, 2026-10-04): the ground's own
+  // canopy layer, worked out once at the tuft's root.
+  vMoonK = 1.0;
+  if (uCanopy.x > 0.0) {
+    vec2 p = vec2(iTuft.x, iTuft.y), cq = p + uMoonDir.xz / max(0.2, uMoonDir.y) * uCanopy.y + vec2(0.7, 0.3) * uCanopy.w * uTime;
+    float leaves = gNoise(cq / 2.6) * 0.6 + gNoise(cq / 1.1 + 31.0) * 0.4;
+    float cover = uCanopy.z * smoothstep(0.0, 1.0, (iOpen - uClearing.x) / max(0.01, uClearing.y));
+    vMoonK = 1.0 - uCanopy.x * (uSmooth > 0.5 ? smoothstep(-0.07, 0.07, cover - leaves) : step(leaves, cover));
+  }
   gl_Position = clipOf(w);
   vec4 b = clipOf(base);
   vec2 ndc = b.xy / b.w, snapped = (floor((ndc * 0.5 + 0.5) * uRes) + 0.5) / uRes * 2.0 - 1.0;
@@ -91,6 +113,7 @@ uniform vec4 uFade; // centre x, z, radius, how much shows (0 in the treetops)
 varying vec2 vUv;
 varying vec3 vColour;
 varying vec3 vWorld;
+varying float vMoonK;
 ${LIGHT_GLSL}
 float bayer2(vec2 a) { a = floor(a); return fract(a.x / 2.0 + a.y * a.y * 0.75); }
 float bayer4(vec2 a) { return bayer2(0.5 * a) * 0.25 + bayer2(a); }
@@ -101,7 +124,7 @@ void main() {
   float k = (1.0 - smoothstep(uFade.z * 0.7, uFade.z, length(vWorld.xz - uFade.xy))) * uFade.w;
   if (k < 0.999 && bayer4(gl_FragCoord.xy) > k) discard;
   vec3 c = vColour * (m.r > 0.75 ? 1.15 : 0.8);
-  gl_FragColor = vec4(haze(min(vec3(1.0), c * nightLight(vec3(0.0, 1.0, 0.0), vWorld) * 1.25), vWorld), 1.0);
+  gl_FragColor = vec4(haze(min(vec3(1.0), c * nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, vMoonK) * 1.25), vWorld), 1.0);
 }`;
 
 export class GrassView {
@@ -110,13 +133,15 @@ export class GrassView {
   private tuft: THREE.InstancedBufferAttribute;
   private colour: THREE.InstancedBufferAttribute;
   private cellA: THREE.InstancedBufferAttribute;
+  private open: THREE.InstancedBufferAttribute;
   private cells = new Map<string, Tuft[]>();
   private mat: THREE.ShaderMaterial;
   private lastKey = "";
   /** Tufts drawn, and milliseconds spent working out cells, this frame (for the debug overlay and perf). */
   stats = { tufts: 0, buildMs: 0 };
 
-  constructor(private map: ForestMap, private t: Tuning, metresPerPixel: number) {
+  /** forest: for the tufts round trunks, rocks and ponds; ground: the ground material's uniforms, for its canopy shade. */
+  constructor(private map: ForestMap, private t: Tuning, metresPerPixel: number, private forest?: Forest, ground?: Record<string, THREE.IUniform>) {
     const cap = t.groundCover.cap, kinds = TUFT_KINDS.length * VARIANTS;
     // The tuft atlas: one row of PX x PX cells, each kind in VARIANTS variants; r: light tone, a: drawn.
     const data = new Uint8Array(kinds * PX * PX * 4);
@@ -129,13 +154,15 @@ export class GrassView {
     this.tuft = new THREE.InstancedBufferAttribute(new Float32Array(cap * 4), 4); this.tuft.setUsage(THREE.DynamicDrawUsage);
     this.colour = new THREE.InstancedBufferAttribute(new Float32Array(cap * 3), 3); this.colour.setUsage(THREE.DynamicDrawUsage);
     this.cellA = new THREE.InstancedBufferAttribute(new Float32Array(cap * 2), 2); this.cellA.setUsage(THREE.DynamicDrawUsage);
-    this.geo.setAttribute("iTuft", this.tuft); this.geo.setAttribute("iColour", this.colour); this.geo.setAttribute("iCell", this.cellA);
+    this.open = new THREE.InstancedBufferAttribute(new Float32Array(cap), 1); this.open.setUsage(THREE.DynamicDrawUsage);
+    this.geo.setAttribute("iTuft", this.tuft); this.geo.setAttribute("iColour", this.colour); this.geo.setAttribute("iCell", this.cellA); this.geo.setAttribute("iOpen", this.open);
     this.geo.instanceCount = 0;
     this.mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
       uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uRes: SPRITE_UNIFORMS.uRes, uWind: SPRITE_UNIFORMS.uWind,
         uTufts: { value: tex }, uPart: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) }, uClear: { value: Array.from({ length: 8 }, () => new THREE.Vector4()) },
-        uGrass: { value: new THREE.Vector4(metresPerPixel, t.groundCover.sway, t.groundCover.part, 0) }, uFade: { value: new THREE.Vector4() } },
+        uGrass: { value: new THREE.Vector4(metresPerPixel, t.groundCover.sway, t.groundCover.part, 0) }, uFade: { value: new THREE.Vector4() },
+        uCanopy: ground?.uCanopy ?? { value: new THREE.Vector4() }, uClearing: ground?.uClearing ?? { value: new THREE.Vector2(1, 1) } },
     });
     this.mesh = new THREE.Mesh(this.geo, this.mat);
     this.mesh.frustumCulled = false;
@@ -168,7 +195,7 @@ export class GrassView {
       const k = ci + "," + cj;
       if (this.cells.has(k)) continue;
       if (performance.now() - t0 > G.budgetMs) break;
-      this.cells.set(k, tuftsInCell(this.map, ci, cj, C, G.spacing, G.density));
+      this.cells.set(k, tuftsInCell(this.map, ci, cj, C, G.spacing, G.density, this.forest));
       built = true;
     }
     this.stats.buildMs = performance.now() - t0;
@@ -188,12 +215,13 @@ export class GrassView {
         T.set([f.x, f.z, f.size, f.flip ? 1 : 0], n * 4);
         Co.set(tuftColour(f), n * 3);
         Ce.set([f.kind * VARIANTS + (Math.floor(f.size * 97) % VARIANTS), cols], n * 2);
+        (this.open.array as Float32Array)[n] = f.open;
         n++;
       }
     }
     this.geo.instanceCount = n;
     this.stats.tufts = n;
-    for (const a of [this.tuft, this.colour, this.cellA]) { a.needsUpdate = true; a.clearUpdateRanges(); a.addUpdateRange(0, n * a.itemSize); }
+    for (const a of [this.tuft, this.colour, this.cellA, this.open]) { a.needsUpdate = true; a.clearUpdateRanges(); a.addUpdateRange(0, n * a.itemSize); }
   }
 }
 

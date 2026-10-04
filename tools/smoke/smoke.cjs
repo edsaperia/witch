@@ -401,8 +401,9 @@ async function main() {
       return out;
     });
     check(r.n > 50 && r.bad.length === 0, `nothing floats: every placed sprite's lowest drawn pixel is on the ground (${r.n} checked, worst ${r.worst.toFixed(1)} art px)${r.bad.length ? ": " + r.bad.join("; ") : ""}`);
-    // The rolling ground: a sprite stands upright on h at its base point, so across its foot (its
-    // lowest drawn row) the ground's rise or fall is how far one end floats or sinks; under 1 art px.
+    // The rolling ground: a sprite's bottom corners stand on h under each (its foot drawn along the
+    // straight line between them), so across its foot (its lowest drawn row) the ground's departure
+    // from that line is how far one end floats or sinks; under 1 art px.
     const hr = await page.evaluate(() => {
       const v = window.witch.view, h = window.witch.groundHeight, R = window.witch.spriteRight(), out = { n: 0, worst: 0, bad: [], hilly: 0 };
       for (const [type, b] of [...v.typeBatches, ...v.creatureBatches, ...[...v.decorBatches].filter(([k]) => k !== "decals"), ["treehouse", v.treehouseBatch]]) { // (she hovers)
@@ -414,8 +415,10 @@ async function main() {
           for (let row = f.h - 1; row >= 0 && low < 0; row--) for (let x = 0; x < f.w; x++) if (D[((y0 + row) * W + x0 + x) * 4 + 3] >= 128) { if (low < 0) { low = row; left = x; } right = x; }
           if (low < 0) continue;
           const m = b.metresPerPixel * (it.scale ?? 1), c = ((left + right) / 2 - f.w / 2) * m * (it.flip ? -1 : 1), half = ((right - left) / 2 + 0.5) * m;
-          const cx = it.x + R.x * c, cz = it.z + R.z * c, base = h(it.x, it.z);
-          const err = Math.max(Math.abs(h(cx - R.x * half, cz - R.z * half) - base), Math.abs(h(cx + R.x * half, cz + R.z * half) - base)) / b.metresPerPixel;
+          const cx = it.x + R.x * c, cz = it.z + R.z * c, base = h(it.x, it.z), W = f.w * m;
+          const hl = h(it.x - R.x * W / 2, it.z - R.z * W / 2), hr = h(it.x + R.x * W / 2, it.z + R.z * W / 2);
+          const drawn = o => hl + (hr - hl) * (o / W + 0.5); // o: metres right of the base, flipped as drawn
+          const err = Math.max(...[-half, half].map(s => Math.abs(h(cx + R.x * s, cz + R.z * s) - drawn(c + s)))) / b.metresPerPixel;
           out.n++; if (Math.abs(base) > 0.3) out.hilly++;
           if (err > out.worst) out.worst = err;
           if (err > 1 && out.bad.length < 6) out.bad.push(`${typeof type === "number" ? window.witch.areaTypeId(type) : type} ${err.toFixed(1)} px`);

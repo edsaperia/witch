@@ -75,15 +75,22 @@ void main() {
       float rim = clamp((n - vn(cq + vec2(uMoonDir.x * 0.2, -0.12)) * 0.6 - 0.3 * vn((cq + vec2(uMoonDir.x * 0.2, -0.12)) * 2.3 + 7.0) - 0.1 * vn((cq + vec2(uMoonDir.x * 0.2, -0.12)) * 5.1 + 3.0)) * 8.0, 0.0, 1.0);
       vec3 cl = mix(vec3(0.07, 0.08, 0.13), vec3(0.11, 0.12, 0.18), t) + uMoon * 0.12;
       cl += uMoon * 0.55 * rim * (1.0 - below);
-      // The party below: the ground far ahead under this part of the sky, and its partified areas' colours.
-      vec2 g = vec2(uCam.x + (uv.x - 0.5) * uCam.w, uCam.y - uCam.z * (0.8 + uv.y * 0.6));
+      // The party below (Ed, 2026-10-04: "can't see that clouds are lit at all"): any cloud over or
+      // near partified ground glows in its colours: each partified area lights the clouds in the
+      // columns of sky above it (by how far it is across the view from this column) and the nearer
+      // it is to her the stronger; brightest on the underside, a wash through the rest, and a thump
+      // on every beat.
+      float gx = uCam.x + (uv.x - 0.5) * uCam.w;
       vec3 up = vec3(0.0);
       for (int i = 0; i < 16; i++) {
         if (i >= uPartyCount) break;
-        float d = length(g - uParty[i].xy), reach = uParty[i].z * 2.5;
-        if (d < reach) up = max(up, uPartyCol[i] * (1.0 - d / reach) * uParty[i].w);
+        float across = 1.0 - smoothstep(0.0, uCam.w * 0.3 + uParty[i].z, abs(uParty[i].x - gx));
+        float near = 1.0 - smoothstep(uCam.z * 0.6, uCam.z * 1.8, length(uParty[i].xy - uCam.xy));
+        up = max(up, uPartyCol[i] * across * near * uParty[i].w);
       }
-      cl += up * uGlow * (0.6 + 0.4 * below) * (1.0 + uUplight.y * sin(uUplight.w));
+      float beat = pow(0.5 + 0.5 * cos(uUplight.w), 6.0);
+      vec3 glow = up * uGlow * (0.75 + 0.6 * beat);
+      cl = mix(cl, cl + glow * 0.8, 0.6) + glow * below * 1.4;
       col = mix(col, cl, c);
     }
   }
