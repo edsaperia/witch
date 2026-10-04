@@ -12,6 +12,7 @@ import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, ty
 import { SIGIL_NEON } from "../../art/sigils.js";
 import { newBuffs, stepBuffs, type BuffState } from "./buffs";
 import { castSpell, newSpells, speedMultiplier, type SpellState } from "./spells";
+import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWitches";
 import type { Tuning } from "./tuning";
 import { newWitch, stepWitch, witchHeight, type Intent, type WitchState } from "./witch";
 
@@ -35,6 +36,8 @@ export interface Game {
   spells: SpellState;
   /** The legend buffs on now, and the tuning they make (rules/buffs.ts): the game plays by buffs.tuning. */
   buffs: BuffState;
+  /** The party witches on the dancefloor, and the players idling into the party (rules/partyWitches.ts). */
+  partyWitches: PartyWitches;
   /** Where the opening shot looks: her seat on the treehouse as drawn (the view sets it; the art knows where it is). */
   introFocus?: { x: number; y: number; z: number };
 }
@@ -60,7 +63,7 @@ export function newGame(seed: number, tuning: Tuning): Game {
     seed, tuning, map, forest: new Forest(map), creatures: spawnCreatures(map), clock: newClock(),
     witch, camera: newCamera(tuning, witch.x, witchHeight(witch, tuning), witch.z), party: newParty(map), leash: newLeash(), berries: newBerries(map, tuning),
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
-    floor: newFloor(), spells: newSpells(tuning), buffs: newBuffs(tuning),
+    floor: newFloor(), spells: newSpells(tuning), buffs: newBuffs(tuning), partyWitches: newPartyWitches(seed),
   };
 }
 
@@ -91,6 +94,18 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, t);
   stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, t);
   stepDancefloor(g, wave, seated);
+  stepWitchParty(g, c, dt);
+}
+
+/** The party witches: one for each soundsystem playing (oldest first), and the player idling in. */
+function stepWitchParty(g: Game, c: Controls, dt: number): void {
+  const d = g.map.dancefloor, t = g.tuning, areas: { key: string; x: number; z: number; at: number }[] = [];
+  for (const [key, a] of g.party.areas) if (a.soundsystem) areas.push({ key, x: a.soundsystem.x, z: a.soundsystem.z, at: a.at });
+  areas.sort((a, b) => a.at - b.at);
+  // Debug (?witches=N): N more, as if from soundsystems round the floor.
+  for (let i = 0; i < t.partyWitches.debugExtra; i++) areas.push({ key: `debug-${i}`, x: d.x + Math.cos(i * 2.4) * 100, z: d.z + Math.sin(i * 2.4) * 100, at: 0 });
+  const w = g.witch, moving = Math.hypot(c.moveX, c.moveZ) > 0.05 || Math.hypot(w.vx, w.vz) > 0.3 || !!(c.toggleMode || c.sigil || c.spell || c.cycle);
+  stepPartyWitches(g.partyWitches, areas, { x: d.x, z: d.z, radius: d.radius }, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated, moving }], g.clock.time, dt, t);
 }
 
 const neonOf = neon;

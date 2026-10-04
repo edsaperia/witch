@@ -25,10 +25,12 @@ import { BuffHud } from "./buffhud";
 import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
 import { MarkerArt, MarkerFx, MARKER_LEVELS, SymbolRings, type Beacon, type Laser, type Mote, type RingSymbol } from "./markers";
-import { spawnMarkers, speakersOn, symbolCount, waveCountdown, type SpawnMarker } from "../rules/party";
+import { cellKey, spawnMarkers, speakersOn, symbolCount, waveCountdown, type SpawnMarker } from "../rules/party";
 import { StringLightsView } from "./strings";
 import { bossBreath, LeashView } from "./leash";
-import { Lasers } from "./lasers";
+import { Lasers, type RingSpeaker } from "./lasers";
+import { PartyWitchView } from "./partyWitches";
+import { PartyObjectsView } from "./partyObjects";
 import { BorderView } from "./borders";
 import { MusicIndicator, StoneIndicator } from "./indicator";
 import { Minimap } from "./minimap";
@@ -102,6 +104,10 @@ export class View {
   private strings: StringLightsView;
   private leashView: LeashView;
   private lasers: Lasers;
+  /** The party witches on the dancefloor, and our witch when she idles into the party. */
+  private partyWitchView: PartyWitchView;
+  /** The party objects strewn over partified areas (#38). */
+  private partyObjects: PartyObjectsView;
   private borders: BorderView;
   private music = new MusicIndicator(document.body);
   private nextStones: StoneIndicator[] = [];
@@ -141,7 +147,9 @@ export class View {
     this.camera = new THREE.PerspectiveCamera(t.camera.fov, 1, 1, 900);
     this.post = new Post(this.renderer, t);
     this.scene.background = new THREE.Color(0x0b0a16);
-    applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams }, t.glowReach, this.mpp, t.tone.ambient, t.glowFalloff, t.tone.moon);
+    // With find on (Ed, v244), a touch more ambient and a cooler, more coloured moonlight.
+    const moonLook: Record<string, number> = t.find.on ? { moonHue: t.find.moonHue, moonSat: t.find.moonSat } : {};
+    applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams, ...moonLook }, t.glowReach, this.mpp, t.find.on ? t.find.ambient : t.tone.ambient, t.glowFalloff, t.tone.moon);
     LIGHT_UNIFORMS.uGlowPower.value = t.glowPower;
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize);
     this.heights = new HeightField(game.map, game.forest, t.ground.hills);
@@ -188,7 +196,7 @@ export class View {
     this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true });
     this.scene.add(...this.markerBatch.meshes, this.markerFx.group, this.rings.mesh);
     // The ground cover: tufts round the witch, in ground mode.
-    this.grass = new GrassView(game.map, t, this.mpp);
+    this.grass = new GrassView(game.map, t, this.mpp, style);
     this.scene.add(this.grass.mesh);
     this.scene.add(this.spellFx.trail);
     // The dancefloor's speakers: their batch comes with their art (drawSpeakers).
@@ -203,6 +211,8 @@ export class View {
     this.strings = new StringLightsView(this.scene, game);
     this.leashView = new LeashView(this.scene, game);
     this.lasers = new Lasers(this.scene, game);
+    this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
+    this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
     this.borders = new BorderView(this.scene, game);
     this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp, { solid: true });
     this.scene.add(...this.soundBatch.meshes);
@@ -681,7 +691,7 @@ export class View {
     near.sort((p, q) => p.d - q.d);
     for (const n of near.slice(0, 8)) lights.push(n.l);
     this.markerBatch.set(inst);
-    this.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes, lasers);
+    this.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes.concat(this.fireSparks), lasers);
     const up = canopyShown(w);
     this.rings.update(symbols, up * (t.treetopHeight - 2)); // above the canopy from the treetops
     return lights;
@@ -759,13 +769,15 @@ export class View {
         glow = Math.max(0, 1 - d / 0.2);
         scale = 1 + 0.3 * Math.max(0, 1 - d / 0.5) ** 2;
       }
+      // Wild creatures blink now and then: their eyeshine goes out about find.eyeshine.blink of the time (Ed, v244).
+      if (!c.leashed) { const ph = time * 0.7 + c.id * 0.37; if (hash2(c.id, Math.floor(ph), 41) < g.tuning.find.eyeshine.blink * 6 && ph % 1 < 1 / 6) glow = -1; }
       l.push({ x: c.x + sway, y: dance, z: c.z, frame, flip: c.facing < 0, fresh, glow, scale });
       creatureShadows.push({ x: c.x, z: c.z, w: frame.w * this.mpp * 0.7, d: frame.w * this.mpp * 0.25 });
       n++;
     }
     for (const [s, b] of this.creatureBatches) if (!per.has(s)) b.set([]);
     for (const [s, list] of per) {
-      const b = this.batchFor(this.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, this.mpp, { solid: true }); }); // creatures stay solid round her (Ed, v149)
+      const b = this.batchFor(this.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, this.mpp, { solid: true, find: !s.startsWith("party-") }); }); // creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
       b?.set(list);
     }
     this.stats.creatures = n;
@@ -777,16 +789,30 @@ export class View {
   private runeCyan = new THREE.Vector3(0.3, 0.9, 1);
   private runeViolet = new THREE.Vector3(0.75, 0.45, 1);
   private runeGreen = new THREE.Vector3(0.45, 1, 0.5);
+  /** Sparks from campfires lighting up as the party arrives (drawn with the markers' motes, next frame). */
+  private fireSparks: Mote[] = [];
   private updateSources(time: number): void {
-    const f = this.assets.props.frames, items: SpriteInstance[] = [], lights: ForestLight[] = [];
+    const f = this.assets.props.frames, items: SpriteInstance[] = [], lights: ForestLight[] = [], g = this.game;
+    this.fireSparks = [];
     for (const src of this.sources) {
       if (src.kind === "pond") continue;
       const k = hash2(Math.round(src.x * 10), Math.round(src.z * 10), 7);
       if (src.kind === "campfire") {
+        // Campfires are party objects (Ed, 2026-10-04): none in the dormant forest; in a partified
+        // area they light up with a whoosh of sparks as the party arrives (late in its transition).
+        const a = g.party.areas.get(cellKey(g.map.areaAt(src.x, src.z).cell));
+        if (!a) continue;
+        const since = time - (a.at + g.tuning.party.transition * 0.7 + k * 1.5);
+        if (since < 0) continue;
+        const grow = Math.min(1, since / 0.5), whoosh = Math.max(0, 1 - since / 1.2);
         const flick = 0.8 + 0.12 * Math.sin(time * 11 + k * 40) + 0.08 * Math.sin(time * 23.7 + k * 13);
-        lights.push({ x: src.x + Math.sin(time * 9 + k) * 0.08, y: 1.2, z: src.z, reach: this.game.tuning.lights.campfire.reach * src.size, rgb: this.fire, strength: this.game.tuning.lights.campfire.strength * flick });
+        lights.push({ x: src.x + Math.sin(time * 9 + k) * 0.08, y: 1.2, z: src.z, reach: g.tuning.lights.campfire.reach * src.size, rgb: this.fire, strength: g.tuning.lights.campfire.strength * (flick * grow + whoosh * 2) });
+        if (whoosh > 0) for (let i = 0; i < 10; i++) {
+          const ang = i * 2.4 + k * 9, r = (1 - whoosh) * (0.4 + (i % 3) * 0.5);
+          this.fireSparks.push({ x: src.x + Math.cos(ang) * r, y: 0.5 + (1 - whoosh) * (2 + (i % 4) * 1.2), z: src.z + Math.sin(ang) * r, colour: this.fire, alpha: whoosh });
+        }
         const fr = f[Math.floor(time * 8 + k * 10) % 3];
-        if (this.inView(src.x, src.z, fr.w * this.mpp, fr.h * this.mpp, 4)) items.push({ x: src.x, y: 0, z: src.z, frame: fr, flip: k < 0.5, fresh: this.mark("prop", src.x, src.z, 2) });
+        if (this.inView(src.x, src.z, fr.w * this.mpp, fr.h * this.mpp, 4)) items.push({ x: src.x, y: 0, z: src.z, frame: fr, flip: k < 0.5, scale: grow, fresh: this.mark("prop", src.x, src.z, 2) });
       } else {
         const kind = k < 0.33 ? 1 : k < 0.66 ? 0 : 2, pulse = 0.7 + 0.3 * Math.sin(time * 0.9 + k * 20), fr = f[3 + kind];
         lights.push({ x: src.x, y: 2, z: src.z, reach: this.game.tuning.lights.stone.reach * src.size, rgb: [this.runeCyan, this.runeViolet, this.runeGreen][kind], strength: this.game.tuning.lights.stone.strength * pulse });
@@ -844,6 +870,11 @@ export class View {
    *  sprite is the drawn angle nearest its yaw, flipped for the other side; a playing speaker's
    *  cones pump on the beat. Anchored by its ground point, like a path piece. */
   private speakerFlare: (number | undefined)[] = [];
+  /** Her lean cycle's phase (frames) and the time it was last stepped. */
+  private leanPhase = 0;
+  private leanTime = 0;
+  /** Each ring speaker's top, state and power, for its laser (Ed: one each, none from the disco ball). */
+  private speakerTops: RingSpeaker[] = [];
   private rings = new SymbolRings();
   /** When each symbol round each stone appeared (for its flare), by marker. */
   private symbolSeen = new Map<string, number[]>();
@@ -872,6 +903,7 @@ export class View {
       const fi = A.frames[`${face.angle}:${state}:${frame}`];
       if (fi === undefined) return;
       const f = A.atlas.frames[fi], o = A.origin[face.angle], ox = face.flip ? f.w - o.x : o.x;
+      this.speakerTops[i] = { x: sp.x, y: o.y * mpp * 0.96, z: sp.z, state, powered }; // its laser's source (lasers.ts)
       const dx = (ox - f.w / 2) * mpp, below = Math.max(0, f.h - (f.pad ?? 0) - o.y) * mpp, d = (f.pad ?? 0) * mpp;
       const x = sp.x - R.x * dx, z = sp.z - R.z * dx + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch));
       if (!this.inView(x, z, f.w * mpp, f.h * mpp, 6)) return;
@@ -946,6 +978,9 @@ export class View {
     SPRITE_UNIFORMS.uCutout.value.set((ws.x * 0.5 + 0.5) * this.width, (ws.y * 0.5 + 0.5) * this.height, 0.5 * cut.screenFraction * this.width * (1 - lifted), Math.max(1, cut.edge * this.width * (1 - lifted)));
     SPRITE_UNIFORMS.uTopFade.value = lifted;
     SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, this.mpp, t.trunkFade.share);
+    const Fd = t.find; // finding wild creatures in the dark (Ed, v244; ?find=0 turns it off)
+    SPRITE_UNIFORMS.uFindLook.value.set(Fd.on ? Fd.lightFloor : 0, Fd.on ? Fd.rim : 0, Fd.on ? Fd.eyeshine.strength : 0, Fd.eyeshine.blink);
+    SPRITE_UNIFORMS.uEyeRange.value = Fd.eyeshine.range;
     // The wind: gentler over the treetops (Ed, v171: "gentle and lovely").
     const W = t.wind;
     SPRITE_UNIFORMS.uWind.value.set(W.on ? W.strength * (1 + (W.treetop - 1) * lifted) : 0, W.speed, W.gustScale, time);
@@ -968,7 +1003,7 @@ export class View {
     const party = this.partyView.update(g, time, (x, z, ww, hh) => this.inView(x, z, ww, hh, 4), () => false);
     this.soundBatch.set(party.items);
     this.ground.setSweeps(party.sweeps);
-    this.lasers.update(time, party.playing, w.x, w.z);
+    this.lasers.update(time, party.playing, w.x, w.z, this.speakerTops, g.map.dancefloor);
     // The canopy uplight over the nearest partified areas, fading in with each one's transition.
     {
       const U = SPRITE_UNIFORMS, P = t.party, list = [...g.party.areas.values()].map(a => ({ a, s: g.map.siteOf(a.cell[0], a.cell[1]) }))
@@ -1002,7 +1037,8 @@ export class View {
     // No tufts over a placed sigil's rune (Ed, v233): trampled out to groundCover.sigilClear, or the rune's own size.
     const clear = g.leash.placed.map(p => ({ x: p.x, z: p.z, r: Math.max(t.groundCover.sigilClear, (3 + g.creatures[p.id].level * 0.8) * 0.45) }));
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
-    this.setLights([this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...this.forestLights], w.x, w.z);
+    const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => this.inView(x, z, ww, hh, 4));
+    this.setLights([this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...this.forestLights], w.x, w.z);
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);
     const bob = Math.sin(time * 2.4) * 0.12;
@@ -1010,8 +1046,13 @@ export class View {
     // Climbing to the treetops or dropping to the ground: the rise or descend pose, fluttering
     // between its two frames, until the move is about 90% done.
     const climbing = w.mode === "rising" && w.lift < 0.9, dropping = w.mode === "descending" && w.lift > 0.1;
+    // Leaning, her four-frame lean cycle (#37) plays faster the faster she goes: 8 fps at her ordinary ground speed.
+    const ldt = Math.min(0.1, Math.max(0, time - this.leanTime));
+    this.leanTime = time;
+    this.leanPhase += ldt * 8 * Math.hypot(w.vx, w.vz) / Math.max(1, t.groundSpeed);
+    const leanK = Math.floor(this.leanPhase) % 4, LC = this.assets.witchLean[w.away ? "away" : "towards"];
     let wf = climbing || dropping ? (climbing ? 8 : 12) + (w.away ? 2 : 0) + (Math.floor(time * 7) % 2)
-      : w.lean ? 6 + (w.away ? 1 : 0) : (w.away ? 3 : 0) + (Math.floor(time * 4) % 3);
+      : w.lean ? LC[leanK] ?? 6 + (w.away ? 1 : 0) : (w.away ? 3 : 0) + (Math.floor(time * 4) % 3);
     // Treetop momentum: skidding to brake on a sharp turn, and the fast pose at boost.
     if (!climbing && !dropping) {
       const Fl = this.assets.witchFly, sideF = w.away ? "away" : "towards";
@@ -1019,7 +1060,7 @@ export class View {
       else if ((w.boost ?? 0) > 0.7) wf = Fl.fast[sideF][Math.floor(time * Fl.fast.fps) % Fl.fast[sideF].length];
       // Straight up or down the screen (#27): her heading frames, from behind or coming at us.
       const Hd = w.heading && w.heading !== "side" ? this.assets.witchHeading[w.heading] : null;
-      if (Hd) wf = w.braking ? Hd.brake[Math.floor(time * Fl.brake.fps) % Hd.brake.length] : (w.boost ?? 0) > 0.7 ? Hd.fast[Math.floor(time * Fl.fast.fps) % Hd.fast.length] : w.lean ? Hd.lean : Hd.hover[Math.floor(time * 4) % Hd.hover.length];
+      if (Hd) wf = w.braking ? Hd.brake[Math.floor(time * Fl.brake.fps) % Hd.brake.length] : (w.boost ?? 0) > 0.7 ? Hd.fast[Math.floor(time * Fl.fast.fps) % Hd.fast.length] : w.lean ? Hd.leanCycle[leanK] ?? Hd.lean : Hd.hover[Math.floor(time * 4) % Hd.hover.length];
     }
     // Handling a sigil, she lands first (Ed, 2026-10-03): down to the ground, then the placeSigil or
     // liftSigil pose, and back up into the air when she's done. Talking (by herself, Ed v244), she
@@ -1056,7 +1097,9 @@ export class View {
       if (w.seated) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
     }
     const wframe = this.assets.witch.frames[wf], hatTop = wyy + wframe.h * this.mpp;
-    this.witchBatch.set([{ x: wx, y: wyy, z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
+    this.partyWitchView.update(g, time, (x, z, ww, hh) => this.inView(x, z, ww, hh, 4));
+    // Idling into the party, she's drawn in her party pose there instead.
+    this.witchBatch.set(this.partyWitchView.herIdle ? [] : [{ x: wx, y: wyy, z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
     // Where she is on screen (low-res pixels) and how far from the camera, for the occluder fade.
     {
       const px = (x: number, y: number, z: number) => { const p = placed(this.v3.set(x, y, z)).project(this.camera); return [(p.x + 1) / 2 * this.width, (p.y + 1) / 2 * this.height]; };
