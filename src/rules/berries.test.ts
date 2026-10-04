@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { feed, newBerries, stepBerries, toEvolve, type BerryState } from "./berries";
 import { LEGEND, spawnCreatures, type Creature, type Level } from "./creatures";
-import { invitable, leashSpeed, newLeash, stepLeash } from "./leash";
+import { invitable, leashSpeed, newLeash } from "./leash";
 import { generateMap } from "./map";
 import { TUNING } from "./tuning";
 
@@ -60,13 +60,13 @@ describe("berries and evolving", () => {
     expect(s.berries.every(b => b.claimedBy === null)).toBe(true);
   });
 
-  it("evolves after 1, 3 and 8 berries, on a bar line; an evolved legend stays in the party, wild legends still can't be invited", () => {
+  it("evolves after 1 and 3 berries, on a bar line, up to adult and no further (Ed, 2026-10-04); legends can't be invited", () => {
     const s = newBerries(map, t), [c, wild] = spawnCreatures(map), leash = newLeash();
     Object.assign(c, { leashed: true, level: 0 });
     leash.stack.push(c.id);
-    expect([0, 1, 2].map(l => toEvolve(l as Level, t))).toEqual([1, 3, 8]);
+    expect([0, 1, 2].map(l => toEvolve(l as Level, t))).toEqual([1, 3, Infinity]);
     let time = 0;
-    for (const level of [0, 1, 2] as Level[]) {
+    for (const level of [0, 1] as Level[]) {
       expect(c.level).toBe(level);
       for (let i = 0; i < toEvolve(level, t) - 1; i++) feed(s, c, time, t);
       expect(s.evolving.has(c.id)).toBe(false);
@@ -78,13 +78,10 @@ describe("berries and evolving", () => {
       time = run(s, [c], new Map([[c.id, { x: c.x, z: c.z }]]), e.at - time + 0.1, time);
       expect(c.level).toBe(level + 1);
     }
-    expect(c.level).toBe(LEGEND);
-    expect(c.speed).toBeLessThanOrEqual(t.legendSpeed); // a legend lumbers
-    expect(c.leashed).toBe(true);
-    stepLeash(leash, [c], { sigil: false }, { x: c.x, z: c.z }, true, time, 0.05, t);
-    expect(leash.stack).toContain(c.id);
-    feed(s, c, time, t); // legends don't eat
+    expect(c.level).toBe(2);
+    for (let i = 0; i < 20; i++) feed(s, c, time, t); // an adult eats (a hurt one heals) but doesn't evolve
     expect(s.evolving.has(c.id)).toBe(false);
+    expect(c.leashed).toBe(true);
     Object.assign(wild, { leashed: false, level: LEGEND });
     expect(invitable(wild)).toBe(false);
   });

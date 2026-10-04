@@ -42,6 +42,20 @@ const report = await b.page.evaluate(async () => {
       res.push({ what: `${S.id}: baby < young < adult < legend, in clear steps (young 1.3+ times the baby, adult 1.55+ times the young, legend 2.1+ times the adult)`, good: hs[3] > hs[2] && hs[2] > hs[1] && hs[1] > hs[0] && r[0] >= 1.3 && r[1] >= 1.55 && r[2] >= 2.1, info: bh.join(" < ") + " (" + r.map(x => x.toFixed(2)).join(", ") + ")" }); }
     if (["wolf", "boar", "stag", "bear", "elk", "lynx"].includes(S.id)) { const w = G.witchSprite(st).bodyH, k = G.critter(S.id, 2, 0, st).bodyH / w, hi = ["elk", "stag"].includes(S.id) ? 2.5 : 2.1; res.push({ what: `${S.id}: an adult clearly bigger than the witch (1.45 to ${hi} times, body without antlers; the elk and stag stand taller)`, good: k >= 1.45 && k <= hi, info: k.toFixed(2) }); }
   }
+  { // sleeping legends (Ed, 2026-10-04: just the sleeping form for now): asleep in 2 breathing frames, both facings, each drawn, standing on its bottom
+    // row, its origin on the sprite and every material coloured; sunk (its ground line above its feet), no taller than the legend awake, nothing glowing,
+    // eyes shut, its two breaths different
+    const glows = sp => { let n = 0; for (const m of sp.m) if (G.EMISSIVE.has(m)) n++; return n; };
+    for (const id of G.LEGEND_IDS) for (const facing of ["towards", "away"]) {
+      const fs = [0, 1].map(frame => G.legendForm(id, st, { frame, facing })), bad = [], aw = G.critter(id, 3, 0, st, facing);
+      fs.forEach(({ sp, colours }, i) => { const s = stats(sp), o = sp.origin, nan = sp.n.some(Number.isNaN), miss = [...new Set(sp.m)].filter(m => m && m !== G.M.LINE && !colours[m]);
+        if (!(s.n > 200 && s.bottom > 0 && o && o[0] >= 0 && o[0] <= sp.w && o[1] >= 0 && o[1] <= sp.h + 1 && !nan && !miss.length)) bad.push(`asleep${i} ${s.w}x${s.h}${nan ? " NaN" : ""}${miss.length ? " uncoloured " + miss : ""}${o ? "" : " no origin"}`);
+        if (!(sp.groundLine > 0)) bad.push(`asleep${i} not sunk`); if (sp.h > aw.h) bad.push(`asleep${i} ${sp.h} taller than awake ${aw.h}`); if (glows(sp)) bad.push(`asleep${i} glows`);
+        if (sp.m.some(m => m === G.M.EYE || m === G.M.IRIS || m === G.M.WOKEN)) bad.push(`asleep${i} eyes open`); });
+      if (fs[0].sp.m.length === fs[1].sp.m.length && fs[0].sp.m.every((m, i) => m === fs[1].sp.m[i])) bad.push("no breath");
+      res.push({ what: `sleeping legend ${id} ${facing}: asleep x2 (sunk, no taller than awake, no glow, eyes shut, breathing; drawn, standing, origin on the sprite, coloured)`, good: !bad.length, info: bad.join(", ") || `asleep ${fs[0].sp.w}x${fs[0].sp.h}, awake ${aw.w}x${aw.h}` });
+    }
+  }
   for (const [key, f] of G.TREE_TYPES) for (let v = 0; v < 3; v++) { const r = G.rng(v + 1), t = f(r, st, st.treeSize * G.uni(r, .9, 1.1)), s = stats(t.sp); res.push({ what: `tree ${key} ${v}`, good: s.n > 200 && s.bottom > 0 && t.crownY > 0 && t.crownY < s.h, info: `${s.w}x${s.h}` }); }
   for (let v = 0; v < 8; v++) { const s = stats(G.bush(G.rng(v), st).sp); res.push({ what: `bush ${v}`, good: s.n > 20, info: `${s.w}x${s.h}` }); }
   for (const facing of ["towards", "away"]) for (const frame of [0, 1, 2]) { const s = stats(G.witchSprite(st, { frame, facing })); res.push({ what: `witch ${facing} frame ${frame}`, good: s.n > 200 && s.bottom > 0, info: `${s.w}x${s.h}` }); }
@@ -146,6 +160,35 @@ const report = await b.page.evaluate(async () => {
     for (const P of G.PARTY_OUTFITS) { const pw = G.partyWitch(2, { outfit: P.id }), col = pw.colours(st);
       for (const o of [{ frame: 0 }, { frame: 1 }, ...[0, 1, 2, 3].map(frame => ({ pose: "lean", frame })), { pose: "rise", frame: 0 }, { pose: "descend", frame: 0 }, ...Object.entries(G.WITCH_FOOT_POSES).flatMap(([pose, { frames }]) => [...Array(frames).keys()].map(frame => ({ pose, frame })))]) { const f = flecks(G.witchSprite(st, { ...o, look: pw.look }), col); n++; if (f.length) bad.push(`${P.id} ${o.pose || "hover"}${o.frame ?? ""}: ${f.slice(0, 3).join(" ")}`); } }
     res.push({ what: "witch flecks: no stray single pixels (a colour unlike all 4 neighbours, none of its own round it), no one- or two-pixel interior-line dots, no eye past her face's edge, on all her sprites and every party outfit's", good: !bad.length, info: bad.slice(0, 6).join("; ") || `${n} sprites clean` });
+  }
+  { // attack effects (Stage 5): projectiles (spit, barb, two lobs and their shadow, a feather, a mote), short and long beams (start, a loop that
+    // repeats exactly, end), pulses (the quake's ring, a spore cloud and stain), telegraphs (a target circle, a line that repeats exactly with its
+    // start and arrowhead, a wind-up flash, the quake's reach), hit sparks, and slow and knockback marks: every frame, light and dark, ground and
+    // treetop, drawn, anchors inside, frames differing, the light ones haloed and the dark ones rimmed, only glowing pixels tinted, the treetop
+    // drawing as big from the treetops as the ground one from the ground (or more); every attack in config/combat.json has its effects
+    const bad = [], E = G.EFFECTS, glowing = new Set([G.M.MAGIC2, G.M.MAGIC, G.M.GLOW, G.M.COLLAR]), need = ["spit", "barb", "lobSeed", "lobStone", "lobShadow", "feather", "mote", "beamShortStart", "beamShortLoop", "beamShortEnd", "beamLongStart", "beamLongLoop", "beamLongEnd", "quakeRing", "sporeCloud", "targetCircle", "line", "lineStart", "lineEnd", "windupFlash", "quakeReach", "hitSpark", "hitSparkBig", "slowRing", "slowMark", "knockback", "dust", "screechRing", "upheavalRing", "slamRing", "webGlob", "webSplat", "moleMound", "chargeDust", "stunStars", "hitStrong", "hitResisted", "traitFlier", "traitArmoured", "traitSwarm", "traitHeavy", "traitNimble", "traitBurrower"];
+    for (const id of need) if (!G.EFFECT_BY_ID[id]) bad.push(`no ${id}`);
+    let n = 0;
+    for (const e of E) for (const zoom of ["ground", "treetop"]) for (const variant of ["light", "dark"]) {
+      const sigs = new Set();
+      for (let f = 0; f < e.frames; f++) {
+        const r = G.effectSprite(e.id, { frame: f, variant, zoom }), sp = r.sp, name = `${e.id} ${zoom} ${variant} ${f}`; n++;
+        let px = 0, lit = 0, halo = 0, rim = 0, tintBad = 0;
+        for (let i = 0; i < sp.m.length; i++) { const m = sp.m[i]; if (!m) continue; px++; if (glowing.has(m)) lit++; if (m === G.M.COLLAR) halo++; if (m === G.M.LINE) rim++; if (sp.tint[i] && !glowing.has(m) && m !== G.M.LINE) tintBad++; }
+        const inside = Object.values(r.anchors).every(([x, y]) => x >= 0 && x <= sp.w && y >= 0 && y <= sp.h), physical = ["lobShadow", "dust", "chargeDust", "moleMound"].includes(e.id);
+        if (!px || !inside || tintBad || (!physical && !lit) || (variant === "dark" ? !rim : (!physical && !halo))) bad.push(`${name}: ${px} px, ${lit} glowing, halo ${halo}, rim ${rim}${inside ? "" : ", anchors outside"}${tintBad ? ", tints a solid pixel" : ""}`);
+        if (r.period) { let rep = sp.w % r.period === 0 && sp.w >= r.period; for (let y = 0; y < sp.h && rep; y++) for (let x = 0; x + r.period < sp.w; x++) if (sp.m[y * sp.w + x] !== sp.m[y * sp.w + x + r.period]) { rep = false; break; } if (!rep) bad.push(`${name}: doesn't repeat every ${r.period} px`); }
+        sigs.add([...sp.m].join(""));
+      }
+      if (e.frames > 1 && sigs.size < e.frames) bad.push(`${e.id} ${zoom} ${variant}: frames repeat`);
+    }
+    // (over every frame; ringed decals are sized to the attack's radius in the game: from the treetops their strokes must be at least 1.5 times the pixels, the stain as many)
+    for (const e of E) { const count = z => [...Array(e.frames).keys()].reduce((s, frame) => s + [...G.effectSprite(e.id, { zoom: z, frame }).sp.m].filter(Boolean).length, 0), g0 = count("ground"), t0 = count("treetop") / (e.radius ? (e.id === "sporeStain" ? 1 : 1.5) : G.EFFECT_TREETOP_SHRINK ** 2); if (t0 < g0 * (e.radius ? 1 : .6)) bad.push(`${e.id}: from the treetops ${t0.toFixed(0)} px against ${g0} on the ground`); }
+    const combat = await (await fetch("/config/combat.json")).json(), A = G.ATTACK_EFFECTS;
+    for (const atk of Object.keys(combat.attacks)) { const fx = A[atk]; if (!fx) { bad.push(`attack ${atk} has no effects`); continue; } for (const v of Object.values(fx).flat()) if (!G.EFFECT_BY_ID[v]) bad.push(`attack ${atk}: no effect ${v}`); }
+    for (const [atk, fx] of Object.entries(A)) for (const v of Object.values(fx).flat()) if (!G.EFFECT_BY_ID[v].attacks.includes(atk)) bad.push(`${v} doesn't list ${atk}`);
+    for (const v of Object.values(G.STATE_EFFECTS).flatMap(x => typeof x === "string" ? [x] : Object.values(x))) if (!G.EFFECT_BY_ID[v]) bad.push(`state effect ${v} missing`);
+    res.push({ what: "attack effects: projectiles, short and long beams (start, a repeating loop, end), quake ring and spore cloud, telegraphs (target circle, a repeating line with its ends, wind-up flash, quake reach), hit sparks, slow and knockback marks, Stage 5's pulse rings, web, mole mound, charge dust, stun stars, strong and resisted hits, six trait marks; every frame light and dark, ground and treetop, drawn, anchors inside, frames differing, halos and rims, only glowing pixels tinted, as big from the treetops; every attack in config/combat.json has its effects", good: !bad.length, info: bad.slice(0, 6).join("; ") || `${E.length} effects, ${n} sprites; ${Object.keys(combat.attacks).length} attacks covered` });
   }
   for (const id of ["wolf", "owl", "snake"]) { const s = stats(G.critter(id, 1, 0, st, "away")); res.push({ what: `${id} turned away`, good: s.n > 50 && s.bottom > 0, info: `${s.w}x${s.h}` }); }
   { // the treehouse (Ed's second go: mostly wood, modern touches, its top standing above the treeline, her seat in a cutaway studio): towards and away,

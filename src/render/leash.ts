@@ -14,7 +14,21 @@ import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { drawSigil, sigilColour } from "../../art/generator.js";
 import { dormant, type Game } from "../rules/game";
-import { attackOf, COMBAT, maxHp } from "../rules/combat";
+import { attackOf, COMBAT, maxHp, traitsOf, type Trait } from "../rules/combat";
+
+/** Each trait's mark over a fighting creature (placeholders until the art lands): flier sky blue,
+ *  armoured a steel square, swarm violet, heavy a brown square, nimble green, burrower earth. */
+/** A legend mid-charge (it throws up more dust than a boar). */
+const legendCharging = (c: { level: number; charge?: { until: number } }, time: number) => c.level === 3 && !!c.charge && time < c.charge.until;
+
+const TRAIT_MARKS: Record<Trait, { r: number; g: number; b: number; size: number; square?: boolean }> = {
+  flier: { r: 0.55, g: 0.85, b: 1, size: 0.26 },
+  armoured: { r: 0.75, g: 0.78, b: 0.85, size: 0.26, square: true },
+  swarm: { r: 0.8, g: 0.5, b: 1, size: 0.22 },
+  heavy: { r: 0.7, g: 0.45, b: 0.25, size: 0.3, square: true },
+  nimble: { r: 0.5, g: 1, b: 0.55, size: 0.22 },
+  burrower: { r: 0.6, g: 0.42, b: 0.3, size: 0.26 },
+};
 import { blocked, leashPoint, talkTime, talkTurn } from "../rules/leash";
 import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
@@ -131,6 +145,8 @@ export class LeashView {
   /** Where each stacked sigil was last frame (a knockout's release splashes from there). */
   private lastSlots = new Map<number, THREE.Vector3>();
   /** Short-lived effects: hit sparks, puffs, splashes, released leashes, teleport sparkles, quake rings. */
+  /** Legends seen waking (their burst of soil shown once). */
+  private woke = new Set<number>();
   private fx: { kind: string; x: number; y: number; z: number; at: number; life: number; r: number; g: number; b: number; seed: number; tx?: number; tz?: number; size?: number }[] = [];
   /** The screen shake (a legend's quake): when it started and how hard. */
   private shakeAt = -Infinity;
@@ -244,6 +260,14 @@ export class LeashView {
     const g = this.game, W = g.tuning.wildLegends, w = g.witch, dot = this.uv(0), treetops = w.lift > 0.5, near = treetops ? 420 : 110;
     for (const c of g.creatures) {
       if (!c.boss || c.leashed || Math.abs(c.x - w.x) > near || Math.abs(c.z - w.z) > near) continue;
+      // Asleep (or asleep for good), it's scenery: nothing marks it (Ed, 2026-10-04). Waking, a burst
+      // of soil as it heaves up; happy, a few hearts' worth of rosy motes rising.
+      if (c.legendState === "asleep" || c.legendState === "slept") { this.woke.delete(c.id); continue; }
+      if (c.legendState === "waking" && !this.woke.has(c.id)) { this.woke.add(c.id); for (let i = 0; i < 3; i++) this.fx.push({ kind: "puff", x: c.x + (i - 1) * 1.2, y: 0.4, z: c.z, at: time, life: 1.4, r: 0.5, g: 0.4, b: 0.28, seed: c.id * 13 + i }); }
+      if (c.legendState === "happy") {
+        for (let i = 0; i < 5; i++) { const ph = (time * 0.3 + hash2(c.id, i, 31)) % 1, a = hash2(c.id, i, 37) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 1.4, 0.8 + ph * 4, c.z + Math.sin(a) * 1, 0.3, dot, 1, 0.55, 0.75, 0.8 * Math.sin(ph * Math.PI)); }
+        continue;
+      }
       const asleep = dormant(g, c), b = bossBreath(time, c.id, W.breathEvery * (asleep ? 1.5 : 1)), k = (asleep ? 0.7 : 1) * W.glow;
       const sc = sigilColour(c.species), rgb = [0.5 * sc[0] / 255 + 0.45, 0.5 * sc[1] / 255 + 0.02, 0.5 * sc[2] / 255 + 0.08];
       if (treetops) {
@@ -280,15 +304,31 @@ export class LeashView {
     // New happenings become effects.
     for (const e of g.combat.events) {
       const c = e.id !== undefined ? g.creatures[e.id] : null;
-      if (e.kind === "hit" && close(e.x, e.z)) this.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 0.35, r: 1, g: 0.95, b: 0.7, seed: e.at * 97 + (e.id ?? 0) });
+      if (e.kind === "hit" && close(e.x, e.z)) {
+        // Counters (Stage 5): strong against its traits, a big gold burst and "!!"; resisted, a small grey tink.
+        if (e.counter === 1) { const top = (c && this.tops.get(c.id)) ?? 1.8; this.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 0.5, r: 1, g: 0.8, b: 0.2, seed: e.at * 97 + (e.id ?? 0), size: 1.8 }); this.fx.push({ kind: "bang", x: e.x, y: top + 0.4, z: e.z, at: time, life: 0.8, r: 1, g: 0.85, b: 0.25, seed: 0 }); }
+        else if (e.counter === -1) this.fx.push({ kind: "tink", x: e.x, y: 1, z: e.z, at: time, life: 0.35, r: 0.7, g: 0.72, b: 0.78, seed: e.at * 97 + (e.id ?? 0), size: 0.7 });
+        else this.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 0.35, r: 1, g: 0.95, b: 0.7, seed: e.at * 97 + (e.id ?? 0) });
+      }
       if (e.kind === "witchHit") this.fx.push({ kind: "spark", x: e.x, y: 1.4, z: e.z, at: time, life: 0.5, r: 1, g: 0.25, b: 0.35, seed: e.at * 31, size: 1.6 });
       if (e.kind === "fled" && close(e.x, e.z)) this.fx.push({ kind: "puff", x: e.x, y: 0.5, z: e.z, at: time, life: 0.8, r: 0.8, g: 0.75, b: 0.7, seed: e.at * 13 });
       if (e.kind === "lost" && c) { const col = neon(c.species); this.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 1.2, r: col.r, g: col.g, b: col.b, seed: e.at * 7, size: 2.5 }); }
-      if (e.kind === "quake" && close(e.x, e.z, 150)) {
-        this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.7, r: 1, g: 0.55, b: 0.3, seed: 0, size: COMBAT.attacks.quake.radius ?? 5 });
+      if ((e.kind === "quake" || e.kind === "phase") && close(e.x, e.z, 150)) {
+        // A quake's ring; a legend's roar into its second phase, a bigger, redder one.
+        const phase = e.kind === "phase";
+        this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: phase ? 1.2 : 0.7, r: 1, g: phase ? 0.2 : 0.55, b: phase ? 0.25 : 0.3, seed: 0, size: phase ? 10 : (c && c.fight?.move && COMBAT.attacks[c.fight.move]?.radius) || (COMBAT.attacks.quake.radius ?? 5) });
+        if (phase) this.fx.push({ kind: "spark", x: e.x, y: 2, z: e.z, at: time, life: 1, r: 1, g: 0.3, b: 0.3, seed: e.at * 3, size: 5 });
         const d = Math.hypot(e.x - w.x, e.z - w.z);
         if (d < 60) { this.shakeAt = time; this.shakeAmp = t.combat.shake * (1 - d / 60); } // screen shake: legends only
       }
+      // Stage 5: a lob lands in a ring the size of its splash; an ambusher springs; a charge slams home.
+      if (e.kind === "landed" && close(e.x, e.z, 150)) { const sh = c ? attackOf(c.species, c.level) : null; this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.5, r: 1, g: 0.5, b: 0.35, seed: 0, size: sh?.attack.radius ?? 1.8 }); this.fx.push({ kind: "puff", x: e.x, y: 0.4, z: e.z, at: time, life: 0.6, r: 0.9, g: 0.7, b: 0.6, seed: e.at * 17 }); }
+      // A pulse (a screech, an upheaval) or a toad's slam: a ring out to its reach; burrowing or surfacing, a spray of earth.
+      if ((e.kind === "pulse" || e.kind === "slammed") && c && close(e.x, e.z)) { const A = attackOf(c.species, c.level)?.attack, col = c.leashed || c.legendState === "happy" ? neon(c.species) : { r: 1, g: 0.45, b: 0.4 }; this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.45, r: col.r, g: col.g, b: col.b, seed: 0, size: A?.radius ?? 2.5 }); }
+      if (e.kind === "slept" && close(e.x, e.z, 150)) for (let i = 0; i < 3; i++) this.fx.push({ kind: "puff", x: e.x + (i - 1) * 1.2, y: 0.4, z: e.z, at: time, life: 1.4, r: 0.5, g: 0.4, b: 0.28, seed: e.at * 7 + i });
+      if ((e.kind === "burrowed" || e.kind === "surfaced" || e.kind === "slammed") && close(e.x, e.z)) this.fx.push({ kind: "puff", x: e.x, y: 0.3, z: e.z, at: time, life: 0.6, r: 0.55, g: 0.42, b: 0.3, seed: e.at * 41 + (e.id ?? 0) });
+      if (e.kind === "sprung" && close(e.x, e.z)) this.fx.push({ kind: "spark", x: e.x, y: 0.8, z: e.z, at: time, life: 0.4, r: 1, g: 0.3, b: 0.3, seed: e.at * 23, size: 1.4 });
+      if (e.kind === "charged" && close(e.x, e.z)) this.fx.push({ kind: "puff", x: e.x, y: 0.4, z: e.z, at: time, life: 0.7, r: 0.8, g: 0.7, b: 0.55, seed: e.at * 29 });
       if (e.kind === "soundHit" && close(e.x, e.z, 150) && (e.at * 10) % 3 < 1) this.fx.push({ kind: "spark", x: e.x, y: 2.5, z: e.z, at: time, life: 0.3, r: 1, g: 0.6, b: 0.3, seed: e.at * 3 });
       if (e.kind === "soundDestroyed") this.fx.push({ kind: "spark", x: e.x, y: 3, z: e.z, at: time, life: 2, r: 1, g: 0.4, b: 0.6, seed: e.at, size: 6 });
     }
@@ -312,6 +352,8 @@ export class LeashView {
         else if (f.kind === "splash") this.standing.add(f.x + Math.cos(a) * (0.5 + r1 * 2) * k, f.y + (1 + r2 * 2) * k - 5 * k * k, f.z + Math.sin(a) * (0.5 + r1 * 2) * k, 0.3, dot, f.r * 1.4, f.g * 1.4, f.b * 1.4, 1 - k * k);
         else if (f.kind === "snap") { const q = (i + 0.5) / n, cut = q > k; if (cut) this.standing.add(f.x + (f.tx! - f.x) * q, f.y + (0.6 - f.y) * q + Math.sin(q * Math.PI) * 1.2 - k * 2 * q, f.z + (f.tz! - f.z) * q, 0.24, dot, f.r, f.g, f.b, (1 - k) * 0.9); }
         else if (f.kind === "teleport") this.standing.add(f.x + Math.cos(a + k * 6) * (0.4 + r1), r2 * 3 + k * 2, f.z + Math.sin(a + k * 6) * (0.4 + r1), 0.25, dot, f.r * 1.3, f.g * 1.3, f.b * 1.3, Math.sin(k * Math.PI));
+        else if (f.kind === "bang") { if (i < 8) { const col = i < 4 ? -1 : 1, row = i % 4, R = SPRITE_UNIFORMS.uRight.value; if (row !== 2) this.over.add(f.x + R.x * col * 0.22, f.y + k * 0.6 + (3 - row) * 0.17, f.z + R.z * col * 0.22, 0.2, sq, f.r, f.g, f.b, 1 - k * k); } }
+        else if (f.kind === "tink") { const aa = (i / n) * Math.PI * 2, R = sz * (0.4 + 0.6 * k); this.standing.add(f.x + Math.cos(aa) * R, f.y + Math.sin(aa) * R * 0.6, f.z, 0.16, dot, f.r, f.g, f.b, 1 - k); }
         else if (f.kind === "ring") { const aa = (i / n) * Math.PI * 2, R = sz * (0.3 + 0.7 * k); this.flat.add(f.x + Math.cos(aa) * R, 0, f.z + Math.sin(aa) * R * 0.8, 0.7, dot, f.r, f.g, f.b, 1 - k); }
       }
     }
@@ -319,24 +361,65 @@ export class LeashView {
     for (const sh of g.combat.shots) {
       if (!close(sh.x, sh.z, 150)) continue;
       const col = sh.side === "wild" ? { r: 1, g: 0.25, b: 0.35 } : neon(sh.species);
+      if (sh.lob) {
+        // A lob: high over everything, and a ring tightening where it'll land (get out of it).
+        const L = sh.lob, k = Math.max(0, Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at))), y = 1 + Math.sin(k * Math.PI) * 5;
+        this.standing.add(sh.x, y, sh.z, 0.7, dot, 1, 1, 1, 0.9);
+        this.standing.add(sh.x, y, sh.z, 1.8, dot, col.r, col.g, col.b, 0.7);
+        const R = sh.radius * (1.4 - 0.4 * k);
+        for (let i = 0; i < 24; i++) { const a = (i / 24) * Math.PI * 2; this.flat.add(L.tx + Math.cos(a) * R, 0, L.tz + Math.sin(a) * R * 0.8, 0.4, dot, col.r, col.g, col.b, 0.3 + 0.6 * k); }
+        continue;
+      }
       this.standing.add(sh.x, 1, sh.z, 0.55, dot, 1, 1, 1, 0.9);
       this.standing.add(sh.x, 1, sh.z, 1.6, dot, col.r, col.g, col.b, 0.7);
       this.standing.add(sh.x - sh.vx * 0.05, 1, sh.z - sh.vz * 0.05, 1, dot, col.r, col.g, col.b, 0.3);
     }
+    // Beams: a burning line from the creature, as wide as it hurts.
+    for (const b of g.combat.beams) {
+      const c = g.creatures[b.from];
+      if (!c || !close(c.x, c.z, 150)) continue;
+      const col = b.side === "wild" ? { r: 1, g: 0.3, b: 0.3 } : neon(b.species), ex = Math.cos(b.angle), ez = Math.sin(b.angle), fl = 0.75 + 0.25 * Math.sin(time * 40 + b.id);
+      for (let s2 = 0.6; s2 < b.length; s2 += 0.45) {
+        this.standing.add(c.x + ex * s2, 0.7, c.z + ez * s2, Math.max(0.5, b.width * 0.9), dot, col.r, col.g, col.b, 0.45 * fl);
+        this.standing.add(c.x + ex * s2, 0.7, c.z + ez * s2, 0.3, dot, 1, 1, 1, 0.8 * fl);
+      }
+    }
     for (const c of g.creatures) {
       if (c.gone || !close(c.x, c.z)) continue;
+      // Burrowed (the mole): a mound of earth moving over the ground, flecks thrown up.
+      if (c.burrow) for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2, q = hash2(c.id, Math.floor(time * 12) + i, 19); this.standing.add(c.x + Math.cos(a) * 0.45, 0.1 + (i === 0 ? 0.25 : 0) + q * 0.12, c.z + Math.sin(a) * 0.3, 0.45, dot, 0.42, 0.3, 0.2, 0.9); }
+      // Leaping (the toad): a ring tightening where it'll land.
+      if (c.leap) { const L = c.leap, k = Math.max(0, Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at))), A = attackOf(c.species, c.level)?.attack, R = (A?.radius ?? 2.4) * (1.3 - 0.3 * k), col = c.leashed ? neon(c.species) : { r: 1, g: 0.35, b: 0.35 }; for (let i = 0; i < 20; i++) { const a = (i / 20) * Math.PI * 2; this.flat.add(L.tx + Math.cos(a) * R, 0, L.tz + Math.sin(a) * R * 0.8, 0.35, dot, col.r, col.g, col.b, 0.3 + 0.6 * k); } }
+      // A wild legend in its second phase: a red aura pulsing round its feet.
+      if (c.legend?.phase === 2 && !c.leashed) { const pk = 0.5 + 0.5 * Math.sin(time * 6 + c.id); for (let i = 0; i < 28; i++) { const a = (i / 28) * Math.PI * 2 + time * 0.5, R = 2.6 + pk * 0.4; this.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.45, dot, 1, 0.2, 0.25, 0.3 + 0.4 * pk); } }
+      if (legendCharging(c, time)) for (let i = 0; i < 3; i++) this.standing.add(c.x + (hash2(c.id, Math.floor(time * 15) + i, 23) - 0.5) * 2, 0.4, c.z + (hash2(c.id, Math.floor(time * 15) + i, 29) - 0.5) * 1.2, 0.8, dot, 0.7, 0.6, 0.5, 0.4);
+      // Charging (the boar): dust kicked up behind it.
+      if (c.charge && time < c.charge.until) for (let i = 0; i < 4; i++) { const q = hash2(c.id, Math.floor(time * 20) + i, 17); this.standing.add(c.x - c.charge.dx * (0.8 + i * 0.5), 0.3 + q * 0.4, c.z - c.charge.dz * (0.8 + i * 0.5), 0.5 + i * 0.15, dot, 0.75, 0.65, 0.5, 0.5 - i * 0.1); }
       // Telegraphs: winding up, a ring tightens at its feet; a shot shows its line; the quake its reach.
       const f = c.fight, atk = f && f.windupUntil > 0 ? attackOf(c.species, c.level) : null;
       if (atk && f) {
-        const A = atk.attack, k = Math.max(0, Math.min(1, 1 - (f.windupUntil - time) / Math.max(0.05, A.windup))), wild = !c.leashed;
+        const A = (f.move && COMBAT.attacks[f.move]) || atk.attack, k = Math.max(0, Math.min(1, 1 - (f.windupUntil - time) / Math.max(0.05, A.windup))), wild = !c.leashed && c.legendState !== "happy"; // (a happy legend fights for her, in her colours)
         const [r, gg, b] = wild ? [1, 0.3, 0.3] : [neon(c.species).r, neon(c.species).g, neon(c.species).b];
-        if (A.delivery === "quake") {
+        if (A.delivery === "quake" || A.delivery === "pulse") {
           const R = A.radius ?? 5;
           for (let i = 0; i < 40; i++) { const a = (i / 40) * Math.PI * 2; this.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.5, dot, r, gg * 0.6, b * 0.6, 0.25 + 0.6 * k); }
+        } else if (f.move && A.delivery === "shot") {
+          // A legend's nova: spokes out all round, growing as it winds up.
+          const n = A.shots ?? 8, aim = Math.atan2(f.aimZ - c.z, f.aimX - c.x);
+          for (let i = 0; i < n; i++) { const a = aim + (i / n) * Math.PI * 2; for (let s2 = 1.5; s2 < 1.5 + 4 * k; s2 += 0.7) this.flat.add(c.x + Math.cos(a) * s2, 0, c.z + Math.sin(a) * s2 * 0.8, 0.35, dot, r, gg, b, 0.25 + 0.6 * k); }
+        } else if (f.move && A.delivery === "beam") {
+          // A legend's spin: the whole circle it will sweep, and where the beam starts.
+          const R = A.range, aim = Math.atan2(f.aimZ - c.z, f.aimX - c.x);
+          for (let i = 0; i < 48; i++) { const a = (i / 48) * Math.PI * 2; this.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.4, dot, r, gg, b, 0.2 + 0.5 * k); }
+          for (let s2 = 1.2; s2 < R; s2 += 0.7) this.flat.add(c.x + Math.cos(aim) * s2, 0, c.z + Math.sin(aim) * s2, 0.35, dot, 1, 0.3, 0.3, 0.2 + 0.6 * k);
+        } else if (f.move && A.delivery === "melee") {
+          // A legend's charge: the long lane it will run down.
+          const dx = f.aimX - c.x, dz = f.aimZ - c.z, d = Math.hypot(dx, dz) || 1, L = (A.speed ?? 8) * (A.duration ?? 1.5);
+          for (let s2 = 1.5; s2 < L; s2 += 0.8) for (const side of [-1, 1]) this.flat.add(c.x + (dx / d) * s2 - (dz / d) * side * 1.4, 0, c.z + (dz / d) * s2 + (dx / d) * side * 1.4, 0.32, dot, r, gg, b, 0.15 + 0.55 * k);
         } else {
           const R = 1.8 - 0.9 * k;
           for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; this.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.35, dot, r, gg, b, 0.4 + 0.5 * k); }
-          if (A.delivery === "shot" && wild) {
+          if ((A.delivery === "shot" || A.delivery === "beam") && wild) {
             const dx = f.aimX - c.x, dz = f.aimZ - c.z, d = Math.hypot(dx, dz) || 1, L = Math.min(A.range, d + 2);
             for (let s2 = 1.2; s2 < L; s2 += 0.9) this.flat.add(c.x + (dx / d) * s2, 0, c.z + (dz / d) * s2, 0.28, dot, 1, 0.3, 0.3, 0.12 + 0.3 * k);
           }
@@ -347,6 +430,16 @@ export class LeashView {
       if (healed) for (let i = 0; i < 10; i++) { const k = (time - c.healedAt!) / 0.8, a = hash2(c.id, i, 11) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 0.9 * (0.4 + k), 0.4 + k * 2 + hash2(c.id, i, 13), c.z + Math.sin(a) * 0.6 * (0.4 + k), 0.3, dot, 0.4, 1, 0.5, 1 - k); }
       // Health bars, only when hurt: ten squares over its head.
       const max = maxHp(c.level), hp = c.hp ?? max;
+      // Stunned (an armoured one knocked over): stars round its head.
+      if (c.stunUntil !== undefined && time < c.stunUntil) { const y = (this.tops.get(c.id) ?? 1.4) + 0.2; for (let i = 0; i < 3; i++) { const a = time * 5 + (i / 3) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 0.6, y + Math.sin(a * 2) * 0.08, c.z + Math.sin(a) * 0.4, 0.22, dot, 1, 0.95, 0.5, 0.9); } }
+      // Its traits' marks (Stage 5, readable counters), left of its health bar, while it fights or is hurt.
+      if ((hp < max || healed || c.fight?.target) && !c.fleeUntil && c.level > 0) {
+        const tr = traitsOf(c.species);
+        if (tr.length) {
+          const y = (this.tops.get(c.id) ?? 1.6 + c.level * 0.7) + 0.5, R = SPRITE_UNIFORMS.uRight.value, wide = 1 + c.level * 0.25;
+          tr.forEach((m, j) => { const o = -5.2 * 0.17 * wide - 0.3 - j * 0.35, px = c.x + R.x * o, pz = c.z + R.z * o, M = TRAIT_MARKS[m]; this.over.add(px, y, pz, M.size, M.square ? sq : dot, M.r, M.g, M.b, 0.95); });
+        }
+      }
       if ((hp < max || healed) && !c.fleeUntil) {
         const y = (this.tops.get(c.id) ?? 1.6 + c.level * 0.7) + 0.5, share = Math.max(0, hp / max), R = SPRITE_UNIFORMS.uRight.value, wide = 1 + c.level * 0.25;
         for (let i = 0; i < 10; i++) { // drawn over everything, so a big creature's own sprite doesn't hide it
