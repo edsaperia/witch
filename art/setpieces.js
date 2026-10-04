@@ -105,8 +105,16 @@ const spSETS = {
   // Norway: a little log cabin with a turf roof, abandoned
   "turf-hut"(m) {
     m.box([0, .55, 0], [1.0, .55, .7], M.WOOD, { round: .04, group: 1, paint: p => (p[1] * 7) % 1 < .18 ? M.BARKD : p[2] > .66 && Math.abs(p[0] + .2) < .2 && p[1] < .85 ? M.NOSE : p[2] > .66 && Math.abs(p[0] - .5) < .14 && Math.abs(p[1] - .7) < .12 ? M.SHADES : undefined }); // log walls, a door, a dark window
-    for (const s of [-1, 1]) m.box([0, 1.3, s * .4], [1.15, .05, .5], M.MOSS, { dir: [1, 0, 0], up: [0, 1, -s * .75], round: .03, group: 2, paint: p => spHash(Math.floor(p[0] * 12), Math.floor(p[2] * 12)) < .25 ? M.LEAF2 : undefined }); // the turf roof
-    m.seg([.65, 1.2, -.3], [.65, 1.9, -.3], .15, .13, M.STONE, { group: 3, rough: .015 }); // a stone chimney
+    // the turf roof: two panels meeting at a ridge along x, resting on the wall tops (1.1) and overhanging the eaves; the
+    // turf drooping a little over them; plank gables at both ends; the chimney rising through the ridge
+    const eave = 1.1, ridge = 1.68, run = .86, slope = Math.hypot(run, ridge - eave), nz = run / slope, ny = (ridge - eave) / slope;
+    for (const s of [-1, 1]) {
+      m.box([0, (eave + ridge) / 2 + .03, s * run / 2], [1.12, .06, slope / 2 + .05], M.MOSS, { dir: [1, 0, 0], up: [0, nz, s * ny], round: .03, group: 2, paint: p => spHash(Math.floor(p[0] * 12), Math.floor(p[2] * 12)) < .25 ? M.LEAF2 : undefined });
+      for (let i = 0; i < 7; i++) m.ell([-.95 + i * .317, eave - .02, s * (run + .02)], [.16, .07, .06], M.MOSS, { group: 2, paint: p => p[1] < eave - .05 ? M.LEAF2 : undefined }); // the turf's lip over the eaves
+    }
+    m.box([0, ridge + .04, 0], [1.1, .05, .06], M.MOSS, { group: 2 }); // the ridge
+    for (const x of [-1.0, 1.0]) m.flat([x, (eave + ridge) / 2, 0], [0, 0, 1], [0, 1, 0], run, (ridge - eave) / 2, (u, v) => Math.abs(u) <= (1 - v) / 2 + .02 ? (((v + 1) * 4) % 1 < .14 ? M.BARKD : M.WOOD) : null, { group: 1, bend: 0 }); // plank gables
+    m.seg([.6, .9, 0], [.6, ridge + .45, 0], .15, .13, M.STONE, { group: 3, rough: .015 }); // a stone chimney through the ridge
     for (let i = 0; i < 5; i++) spRockAt(m, [-1.4 + i * .7, .12, .9 + spHash(i) * .3], [.2, .15, .18], 4 + i);
     spTufts(m, 16, 1.8, 10, 9, .25);
   },
