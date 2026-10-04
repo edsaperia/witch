@@ -238,11 +238,11 @@ export class Forest {
   }
   /** Over KEEP chunks, drop the farthest from where the forest was last asked about (never the
    *  whole cache: clearing it made a treetop view rebuild every chunk at once, a second's stall). */
-  private evict<T>(cache: Map<string, T[]>): void {
-    if (cache.size <= Forest.KEEP) return;
-    const c = this.centre, far = [...cache.keys()].map(k => { const [i, j] = k.split(",").map(Number); return [k, ((i + 0.5) * CHUNK - c.x) ** 2 + ((j + 0.5) * CHUNK - c.z) ** 2] as const; });
+  private evict(cache: Map<string, unknown>, keep = Forest.KEEP, size = CHUNK): void {
+    if (cache.size <= keep) return;
+    const c = this.centre, far = [...cache.keys()].map(k => { const [i, j] = k.split(",").map(Number); return [k, ((i + 0.5) * size - c.x) ** 2 + ((j + 0.5) * size - c.z) ** 2] as const; });
     far.sort((a, b) => b[1] - a[1]);
-    for (const [k] of far.slice(0, cache.size - Math.floor(Forest.KEEP * 0.8))) cache.delete(k);
+    for (const [k] of far.slice(0, cache.size - Math.floor(keep * 0.8))) cache.delete(k);
   }
   private chunk<T>(cache: Map<string, T[]>, make: (ci: number, cj: number) => T[], ci: number, cj: number): T[] {
     const k = ci + "," + cj;
@@ -260,7 +260,7 @@ export class Forest {
   }
   private kinds(): [Map<string, { x: number; z: number }[]>, (ci: number, cj: number) => { x: number; z: number }[]][] {
     const m = this.map;
-    return [[this.trees, (i, j) => treesInChunk(m, i, j)], [this.bushes, (i, j) => bushesInChunk(m, i, j)], [this.walls, (i, j) => wallsInChunk(m, i, j)],
+    return [[this.trees, (i, j) => treesInChunk(m, i, j)], [this.bushes, (i, j) => bushesInChunk(m, i, j)],
       [this.decor, (i, j) => decorInChunk(m, i, j)], [this.relics, (i, j) => relicsInChunk(m, i, j)], [this.lights, (i, j) => lightsInChunk(m, i, j)]];
   }
   /** Make chunks round (x, z) ahead of need, nearest first, for at most budgetMs (at least one
@@ -276,7 +276,19 @@ export class Forest {
       for (const [c, make] of kinds) this.chunk(c, make, i, j);
       done++;
     }
-    return todo.length - done;
+    // And each area's wall-object features (made per area, not per chunk), nearest first.
+    const A = this.map.areaSize, areas: [number, number, number][] = [];
+    for (let cy = Math.floor((z - radius) / A) - 1; cy <= Math.floor((z + radius) / A) + 1; cy++)
+      for (let cx = Math.floor((x - radius) / A) - 1; cx <= Math.floor((x + radius) / A) + 1; cx++)
+        if (!this.wallFeatureCache.has(cx + "," + cy)) areas.push([cx, cy, ((cx + 0.5) * A - x) ** 2 + ((cy + 0.5) * A - z) ** 2]);
+    areas.sort((a, b) => a[2] - b[2]);
+    let made = 0;
+    for (const [cx, cy] of areas) {
+      if (performance.now() - t0 > budgetMs) break;
+      this.featuresOf(cx, cy);
+      made++;
+    }
+    return todo.length - done + areas.length - made;
   }
   /** Trees within a square of half-size `radius` round (x, z). */
   treesNear(x: number, z: number, radius: number): Plant[] {
@@ -296,16 +308,19 @@ export class Forest {
   }
   /** Each area's wall-object features (runs, rings, clumps; see walls.ts), remembered per area. */
   private features(x: number, z: number, radius: number, pick: (f: WallFeatures) => Plant[]): Plant[] {
-    const m = this.map, A = m.areaSize, out: Plant[] = [];
-    if (this.wallFeatureCache.size > 400) this.wallFeatureCache.clear();
+    const A = this.map.areaSize, out: Plant[] = [];
+    this.centre = { x, z };
+    this.evict(this.wallFeatureCache, 400, A); // the farthest areas go, never all at once
     for (let cy = Math.floor((z - radius) / A) - 1; cy <= Math.floor((z + radius) / A) + 1; cy++)
-      for (let cx = Math.floor((x - radius) / A) - 1; cx <= Math.floor((x + radius) / A) + 1; cx++) {
-        const k = cx + "," + cy;
-        let f = this.wallFeatureCache.get(k);
-        if (!f) this.wallFeatureCache.set(k, (f = wallFeatures(m, cx, cy)));
-        for (const p of pick(f)) if (Math.abs(p.x - x) <= radius && Math.abs(p.z - z) <= radius) out.push(p);
-      }
+      for (let cx = Math.floor((x - radius) / A) - 1; cx <= Math.floor((x + radius) / A) + 1; cx++)
+        for (const p of pick(this.featuresOf(cx, cy))) if (Math.abs(p.x - x) <= radius && Math.abs(p.z - z) <= radius) out.push(p);
     return out;
+  }
+  private featuresOf(cx: number, cy: number): WallFeatures {
+    const k = cx + "," + cy;
+    let f = this.wallFeatureCache.get(k);
+    if (!f) { const t0 = performance.now(); f = wallFeatures(this.map, cx, cy); this.buildMs += performance.now() - t0; this.wallFeatureCache.set(k, f); }
+    return f;
   }
   wallsNear(x: number, z: number, radius: number): Plant[] { return this.features(x, z, radius, f => f.walls); }
   /** A formal garden's flower beds, in rows along its walls. */
