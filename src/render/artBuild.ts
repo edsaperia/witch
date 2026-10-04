@@ -7,7 +7,7 @@ import { rng } from "../rules/random";
 import type { Style } from "./style";
 
 type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
-export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number }
+export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** A wild creature's eye pixels (1), for eyeshine (Ed, v244). */ eyes?: Uint8Array }
 /** Where a sprite sits in its atlas: u0, vTop, u1, vBottom, and its size in art pixels. */
 /** pad: empty rows (nothing drawn) at the bottom of the sprite, so it can stand on its lowest
  *  drawn pixel rather than on its box. */
@@ -73,7 +73,11 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   def.big.forEach(([kind], i) => {
     if (kind === "tree" && variants.length) return;
     layout.big.push({ bot: add(assets.big[i].sp), top: null });
-    layout.bigWeight.push(variants.length ? 0.1 : 1);
+    // Tall pieces in the open areas (snags, cairns, standing stones, pillars, spires: #33) stand
+    // sparsely: their art's own sparse share as their weight among the area's big objects (about
+    // a fifth of them all), the mounds, boulders and logs at 1.
+    const sparse = (assets.big[i] as { sparse?: number }).sparse;
+    layout.bigWeight.push(variants.length ? 0.1 : sparse ?? 1);
   });
   def.small.forEach(([kind, o], i) => layout.small.push(kind === "tree" ? tree(o as TreeOpts, 500 + i) : { bot: add(assets.small[i].sp), top: null }));
   for (const a of assets.walls) layout.walls.push(add(a.sp));
@@ -84,9 +88,23 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
 /** A kind of creature at each level (baby, young, adult, legend), two walking frames each. */
 export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear: unknown = null): Baked[] {
   const out: Baked[] = [];
-  for (const facing of ["towards", "away"]) for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++)
-    out.push(Art.bake(Art.critter(species, level, f, st, facing, gear as null), Art.speciesColours(species, st, gear as null), st, st.cOutline, mk) as Baked);
+  for (const facing of ["towards", "away"]) for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++) {
+    const sp = Art.critter(species, level, f, st, facing, gear as null) as { m: ArrayLike<number> };
+    const b = Art.bake(sp, Art.speciesColours(species, st, gear as null), st, st.cOutline, mk) as Baked;
+    if (!gear) b.eyes = eyeMask(sp.m);
+    out.push(b);
+  }
   return out;
+}
+
+// Wild creatures' eyes (Ed, v244): packPixels gives their eye pixels alpha 253, so the sprite
+// shader can make them catch the light (eyeshine) when finding is on; otherwise they're lit like the rest.
+const EYES = new Set([Art.M.EYE, Art.M.IRIS, Art.M.PUPIL]);
+function eyeMask(m: ArrayLike<number>): Uint8Array | undefined {
+  const out = new Uint8Array(m.length);
+  let any = false;
+  for (let i = 0; i < m.length; i++) if (EYES.has(m[i])) { out[i] = 1; any = true; }
+  return any ? out : undefined;
 }
 /** Towards: frames 0-7 (level x 2 + walk frame); away: the same, from 8. */
 export const creatureFrame = (level: number, f: number, away = false) => (away ? 8 : 0) + level * 2 + f;
@@ -112,6 +130,7 @@ export function packPixels(sprites: Baked[], width = 2048): AtlasPixels {
     for (let row = 0; row < s.h; row++) {
       const src = row * s.w * 4, dst = ((p.y + row) * W + p.x) * 4;
       albedo.set(pa.subarray(src, src + s.w * 4), dst);
+      if (s.eyes) for (let x = 0; x < s.w; x++) if (s.eyes[row * s.w + x] && albedo[dst + x * 4 + 3] === 255) albedo[dst + x * 4 + 3] = 253;
       normal.set(pn.subarray(src, src + s.w * 4), dst);
     }
     // Its lowest drawn row (the sprite shader drops alpha under a half).

@@ -8,8 +8,13 @@
 
 import { defaultCanvas, rng, uni, pick, gauss, hash2, vnoise, hsv2rgb, M, EMISSIVE, Sprite, spline, band, tufts, polyMask, edgeVectors, rot, lerp2, bake } from "./core.js";
 import { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree, TREE_SPECIES, treeSpecies, crownStats } from "./trees.js";
-import { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, WITCH_HEADINGS, witchPixelsPerUnit } from "./witch.js";
+import { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, WITCH_HEADINGS, witchPixelsPerUnit , WITCH_FLIGHT_POSES, WITCH_PAIRS, WITCH_LOOKS, DEFAULT_LOOK, PARTY_OUTFITS, PARTY_OUTFIT_BY_ID, partyWitch, cleanFlecks} from "./witch.js";
 import { treehouseSprite, treehouseColours, TREEHOUSE_STOREYS } from "./treehouse.js";
+import { swayMask, bakeSway } from "./sway.js";
+import { tuftSprites, bakeTufts } from "./tufts.js";
+export { swayMask, bakeSway, tuftSprites, bakeTufts };
+import { TALL_KINDS, tallPiece } from "./tall.js";
+export { TALL_KINDS, tallPiece };
 import { NEW_SET_PIECES, SET_PIECE_KINDS } from "./setpieces.js";
 import { RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset } from "./relics.js";
 import { DECOR, DECOR_BY_ID, decorSprite, decorColours, lakeKit, rockTint } from "./decor.js";
@@ -17,8 +22,9 @@ import { COUNTRY, COUNTRY_BY_ID, countrySprite, countryColours } from "./country
 import { LANDMARKS, LANDMARK_BY_ID, LANDMARK_BUILDINGS, landmarkSprite, landmarkColours } from "./landmarks.js";
 import { SCENES, SCENE_BY_ID, scenePiece, sceneLayout, scenePlacements, sceneRefExists } from "./scenes.js";
 import { PATH_KINDS, PATH_IDS, PATH_PPM, pathTextures, sweepPath, railPoints, railBrokenEnd, railCrossing, PATH_PIECES, PATH_PIECE_BY_ID, pathColours, pathPieceSprite, areaPathKinds } from "./paths.js";
-import { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone, areaTreeVariants, TREE_HEIGHT_CLASSES, ART_PIXELS_PER_METRE, AREA_LAYOUTS, layoutProblems, LAYOUT_PATTERNS, LAYOUT_TERRAIN, LAYOUT_DECOR } from "./areas.js";
+import { AREAS, AREA_BY_ID, SWAYING_PROPS, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone, areaTreeVariants, TREE_HEIGHT_CLASSES, ART_PIXELS_PER_METRE, AREA_LAYOUTS, layoutProblems, LAYOUT_PATTERNS, LAYOUT_TERRAIN, LAYOUT_DECOR } from "./areas.js";
 import { SPECIES, SPECIES_BY_ID, FEATURE_NAMES, LEVELS, speciesColours, critter, levelHeight, partyGear, HAT_COLOURWAYS, SHOE_STYLES, GLASSES_STYLES } from "./creatures.js";
+export { WITCH_FLIGHT_POSES, WITCH_PAIRS, WITCH_LOOKS, DEFAULT_LOOK, PARTY_OUTFITS, PARTY_OUTFIT_BY_ID, partyWitch, cleanFlecks };
 export { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, WITCH_HEADINGS, treehouseSprite, treehouseColours, TREEHOUSE_STOREYS };
 export { NEW_SET_PIECES, SET_PIECE_KINDS };
 export { RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset };
@@ -27,7 +33,7 @@ export { COUNTRY, COUNTRY_BY_ID, countrySprite, countryColours };
 export { LANDMARKS, LANDMARK_BY_ID, LANDMARK_BUILDINGS, landmarkSprite, landmarkColours, witchPixelsPerUnit };
 export { SCENES, SCENE_BY_ID, scenePiece, sceneLayout, scenePlacements, sceneRefExists };
 export { PATH_KINDS, PATH_IDS, PATH_PPM, pathTextures, sweepPath, railPoints, railBrokenEnd, railCrossing, PATH_PIECES, PATH_PIECE_BY_ID, pathColours, pathPieceSprite, areaPathKinds };
-export { AREAS, AREA_BY_ID, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone, areaTreeVariants, TREE_HEIGHT_CLASSES, ART_PIXELS_PER_METRE, AREA_LAYOUTS, layoutProblems, LAYOUT_PATTERNS, LAYOUT_TERRAIN, LAYOUT_DECOR };
+export { AREAS, AREA_BY_ID, SWAYING_PROPS, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone, areaTreeVariants, TREE_HEIGHT_CLASSES, ART_PIXELS_PER_METRE, AREA_LAYOUTS, layoutProblems, LAYOUT_PATTERNS, LAYOUT_TERRAIN, LAYOUT_DECOR };
 import { SIGILS, SIGIL_IDS, SIGIL_STROKE, SIGIL_DOT, SIGIL_DRAW_TIME, GROUND_PITCH, NEON, SIGIL_NEON, SIGIL_LEVELS, sigilColour, sigilFrame, sigilStrokes, sigilMark, sigilSVG, drawSigil, sigilHit, sigilGlyph, sigilField, groundSigil, floatSigil, floatSize, paintSigilField, SigilStack, STACK_TUNING, SIGIL_TRANSITION_TIME, liftOff, setDown } from "./sigils.js";
 export { SIGILS, SIGIL_IDS, SIGIL_STROKE, SIGIL_DOT, SIGIL_DRAW_TIME, GROUND_PITCH, NEON, SIGIL_NEON, SIGIL_LEVELS, sigilColour, sigilFrame, sigilStrokes, sigilMark, sigilSVG, drawSigil, sigilHit, sigilGlyph, sigilField, groundSigil, floatSigil, floatSize, paintSigilField, SigilStack, STACK_TUNING, SIGIL_TRANSITION_TIME, liftOff, setDown };
 import { DISCO_GRID, DISCO_RADIUS, DISCO_TILE_METRES, DISCO_MASK, discoPatterns, discoPatternById, DISCO_TRANSITIONS, discoTransition, discoCompose, discoCells, discoPaint, discoTileSprite, discoGroutSprite, discoRimStrip, discoFloorBase, discoColours, discoRimColours, DISCO_PPM, DISCO_TILE_PX, DISCO_PITCH, DISCO_RIM, DISCO_LOOK } from "./dancefloor.js";
@@ -119,7 +125,9 @@ export function mutate(style, strength, groups, seed) {
 
 // ================= the witch =================
 // Built in 3D (witch.js): named outfit parts, towards and away, three hover frames, a lean, rise and descend,
-// fast and brake, and on foot (WITCH_FOOT_POSES: stand, land, takeoff, talk, placeSigil, liftSigil; each sprite's .anchors has her hand and hat tip).
+// fast and brake, the lean cycle (WITCH_FLIGHT_POSES), and on foot (WITCH_FOOT_POSES: stand, land, takeoff, talk, placeSigil, liftSigil, sit,
+// and the party's poses; each sprite's .anchors has her hand and hat tip, and a pair pose's meeting points, WITCH_PAIRS). Party witches:
+// PARTY_OUTFITS (a look and a palette each) and partyWitch(seed); witchSprite(style, { look }) draws any pose in a look.
 // ================= per-style assets =================
 // Each area has its own leaf colour and its own kind of tree; "Difference between areas" sets how far apart.
 export function areaStyle(st, world, area) {
@@ -151,13 +159,16 @@ export function buildAssets(st, world, { K = 2 / (st.pixel || 2), makeCanvas = d
   // away, .lean the fast-flight pose ({ towards, away }); .rise and .descend the flights up to the
   // treetops and down to the ground, two flutter frames each ({ towards: [2], away: [2] }); .fast
   // her treetop top speed, barely hanging on, three flapping frames ({ towards: [3], away: [3] }); .brake
-  // a skidding stop, two wobble frames ({ towards: [2], away: [2] })
+  // a skidding stop, two wobble frames ({ towards: [2], away: [2] }); .leanCycle her lean as a 4-frame loop ({ towards: [4], away: [4] });
+  // each on-foot pose, the party's too ({ towards: [n], away: [n] })
   const wc = witchColours(st), wb = o => bk(witchSprite(st, o), wc, st.cOutline);
   const witch = wb({ frame: 0 });
   witch.frames = [witch, wb({ frame: 1 }), wb({ frame: 2 })];
   let away = null, lean = null;
   Object.defineProperty(witch, "away", { enumerable: true, get: () => away || (away = [0, 1, 2].map(frame => wb({ frame, facing: "away" }))) });
   Object.defineProperty(witch, "lean", { enumerable: true, get: () => lean || (lean = { towards: wb({ lean: true }), away: wb({ lean: true, facing: "away" }) }) });
+  let leanCycle = null; // the lean cycle (WITCH_FLIGHT_POSES.lean): four frames ({ towards: [4], away: [4] })
+  Object.defineProperty(witch, "leanCycle", { enumerable: true, get: () => leanCycle || (leanCycle = { towards: [0, 1, 2, 3].map(frame => wb({ pose: "lean", frame })), away: [0, 1, 2, 3].map(frame => wb({ pose: "lean", frame, facing: "away" })) }) });
   for (const [pose, n] of [["rise", 2], ["descend", 2], ["fast", 3], ["brake", 2], ...Object.entries(WITCH_FOOT_POSES).map(([k, v]) => [k, v.frames])]) { let v = null; const fr = [...Array(n).keys()]; Object.defineProperty(witch, pose, { enumerable: true, get: () => v || (v = { towards: fr.map(frame => wb({ pose, frame })), away: fr.map(frame => wb({ pose, frame, facing: "away" })) }) }); }
   // soundsystems: drawn the first time they are asked for (they are big)
   let ss = null;

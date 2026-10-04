@@ -38,7 +38,9 @@ export class AssetLibrary {
   /** In the treetops: the fast and brake poses' frames, towards and away. */
   readonly witchFly: Record<string, { towards: number[]; away: number[]; fps: number }> = {};
   /** Her straight-up ("up": seen from behind) and straight-down ("down": coming at us) flight frames (#27): hover, lean, fast, brake. */
-  readonly witchHeading = {} as Record<"up" | "down", { hover: number[]; lean: number; fast: number[]; brake: number[] }>;
+  readonly witchHeading = {} as Record<"up" | "down", { hover: number[]; lean: number; leanCycle: number[]; fast: number[]; brake: number[] }>;
+  /** Her lean as a four-frame loop (#37), side-on: towards and away; the game plays it faster with her speed. */
+  readonly witchLean = { towards: [] as number[], away: [] as number[] };
   /** Light-source props from the art module: campfire (frames 0-2), then magic stones (cyan, violet, green). */
   readonly props: Atlas;
   /** Soundsystems: variant x 3 + frame (the cones pumping), playing. */
@@ -80,9 +82,10 @@ export class AssetLibrary {
       for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < n; frame++) { entry[facing].push(sprites.length); sprites.push(wb({ pose, frame, facing })); }
       this.witchFly[pose] = entry;
     }
+    for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < 4; frame++) { this.witchLean[facing].push(sprites.length); sprites.push(wb({ pose: "lean", frame, facing })); }
     for (const [h, heading] of [["up", "away"], ["down", "towards"]] as const) {
       const at = (o: object) => sprites.push(wb({ ...o, heading })) - 1;
-      this.witchHeading[h] = { hover: [0, 1, 2].map(frame => at({ frame })), lean: at({ lean: true }), fast: [0, 1, 2].map(frame => at({ pose: "fast", frame })), brake: [0, 1].map(frame => at({ pose: "brake", frame })) };
+      this.witchHeading[h] = { hover: [0, 1, 2].map(frame => at({ frame })), lean: at({ lean: true }), leanCycle: [0, 1, 2, 3].map(frame => at({ pose: "lean", frame })), fast: [0, 1, 2].map(frame => at({ pose: "fast", frame })), brake: [0, 1].map(frame => at({ pose: "brake", frame })) };
     }
     this.witch = packAtlas(sprites, 2048);
     const lp = Art.lightProps(style) as { campfire: Baked[]; stones: Record<string, Baked> };

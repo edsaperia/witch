@@ -115,6 +115,8 @@ export interface Tuning {
   /** How mist, far haze and canopy dapple are drawn: smooth gradients, or dithered pixel steps. */
   fx: "smooth" | "pixel";
   moonbeams: number;
+  speakerLasers: { on: boolean; tilt: number; sweep: number; sweepBeats: number; length: number; opacity: number };
+  find: { on: boolean; eyeshine: { range: number; strength: number; blink: number }; lightFloor: number; rim: number; ambient: number; moonHue: number; moonSat: number };
   trunkFade: { metres: number; share: number; dither: boolean };
   pathFade: { metres: number; dither: boolean };
   runeMarkers: { awakeStyle: string; laser: { opacity: number; width: number; length: number }; scale: number; beamHeight: number; lightRange: number; dormant: { glow: number; light: number; reach: number; beam: number }; awake: { glow: number[]; light: number; lightBuild: number; reach: number; beam: number; motes: number; moteBuild: number }; flare: { time: number; light: number } };
@@ -142,7 +144,8 @@ export interface Tuning {
   lasers: { on: boolean; maxCount: number; length: number; spread: number; maxTilt: number; sweep: number; sweepBeats: number; openBars: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };
   borders: { on: boolean; width: number; brightness: number; sparkle: number; step: number; /** 0 a gentle breathing, 1 star-like flashes and dropouts */ twinkle: number; /** colour swaps a second */ swapRate: number; /** the share of sparks that swap on the beat */ swapBeat: number };
   invite: { talkRange: number; cancelDistance: number; snubTime: number; talkTime: number[]; turn: number[]; decayRate: number };
-  leash: { length: number; runSpeed: number; pickRadius: number; spacing: number };
+  /** pace: party animals following her move this much faster (a legend buff; 1 in the file). */
+  leash: { length: number; runSpeed: number; pickRadius: number; spacing: number; pace?: number };
   bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number; /** The thread's upward bow: metres per metre of length, up to threadArcMax. */ threadArc: number; threadArcMax: number };
   tone: { black: number; gamma: number; ambient: number; moon: number };
   bloom: { on: boolean; strength: number; threshold: number };
@@ -153,9 +156,9 @@ export interface Tuning {
   youngShareFar: number;
   adultsFrom: number;
   adultShareFar: number;
-  legendChanceFar: number;
   legendNextToHome: boolean;
-  legendsFrom: number;
+  /** Wild legends (Ed, 2026-10-04): rare, late mini-bosses in remote areas, dormant till the party reaches their area. */
+  wildLegends: { perMap: number[]; from: number; spacing: number; scale: number; breathe: number; breathEvery: number; aura: number; glow: number };
   creatureSimRadius: number;
   creatureSpeed: number;
   setPieceChance: number;

@@ -28,6 +28,9 @@ const ramp = (h: number): number[] => {
   return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
 };
 
+/** A dancefloor ring speaker, for its single laser: its top, its state, and whether it has booted. */
+export interface RingSpeaker { x: number; y: number; z: number; state: "playing" | "damaged" | "destroyed"; powered: boolean }
+
 export class Lasers {
   private geo = new THREE.BufferGeometry();
   private pos = new Float32Array(0);
@@ -41,9 +44,24 @@ export class Lasers {
     scene.add(this.mesh);
   }
 
-  update(time: number, playing: Playing[], wx: number, wz: number): void {
+  update(time: number, playing: Playing[], wx: number, wz: number, ring: RingSpeaker[] = [], centre = { x: 0, z: 0 }): void {
     const t = this.game.tuning, L = t.lasers, { bar } = beatClock(t), blockLen = bar * L.blockBars;
     const verts: number[] = [], cols: number[] = [], us: number[] = [];
+    // The dancefloor's ring (Ed, 2026-10-04): one laser from the top of each speaker, mostly
+    // upwards, sweeping slowly on the beat, neighbours out of phase, so the ring wears a crown of
+    // moving beams in the party neons. Damaged ones flicker; destroyed ones (and ones not yet booted) have none.
+    const S = t.speakerLasers, beats = (time * t.beat.bpm) / 60;
+    if (L.on && S.on) ring.forEach((sp, i) => {
+      if (!sp || !sp.powered || sp.state === "destroyed") return;
+      if (sp.state === "damaged" && Math.sin(time * 23 + i * 5.1) + Math.sin(time * 37 + i) < 0.4) return;
+      const out = Math.atan2(sp.z - centre.z, sp.x - centre.x), ph = (beats / S.sweepBeats) * Math.PI * 2 + (i % 2) * Math.PI + i * 0.4;
+      const tilt = ((S.tilt * (0.55 + 0.45 * Math.sin(ph))) * Math.PI) / 180, swing = ((S.sweep * Math.cos(ph * 0.5 + i)) * Math.PI) / 180;
+      const az = out + swing, dx = Math.sin(tilt) * Math.cos(az), dz = Math.sin(tilt) * Math.sin(az), dy = Math.cos(tilt);
+      const c = ramp(i / ring.length + time * 0.03), alpha = S.opacity * (0.75 + 0.25 * Math.cos(beats * Math.PI * 2));
+      verts.push(sp.x, sp.y, sp.z, sp.x + dx * S.length, sp.y + dy * S.length, sp.z + dz * S.length);
+      cols.push(...c, alpha, ...c, alpha);
+      us.push(0, 1);
+    });
     if (L.on) for (const s of playing) {
       const fade = 1 - Math.min(1, Math.max(0, (Math.hypot(s.x - wx, s.z - wz) - L.fadeNear) / Math.max(1, L.fadeFar - L.fadeNear)));
       if (fade <= 0) continue;

@@ -64,17 +64,80 @@ const report = await b.page.evaluate(async () => {
     res.push({ what: "witch rise, descend and brake (two frames) and fast (three): towards and away, at her ordinary scale, standing, no NaN", good: !bad.length, info: bad.join(", ") || `hover ${base.w}x${base.h}` });
   }
   { // the witch on foot: every pose's frames, both facings, at her ordinary scale, standing, no NaN; a hand and a hat tip inside the sprite;
-    // reaching up for the stack her hand is above her hat tip, crouched to the ground it is down by her feet
-    const base = stats(G.witchSprite(st)), bad = [], P = G.WITCH_FOOT_POSES;
-    for (const [pose, { frames, fps }] of Object.entries(P)) for (const facing of ["towards", "away"]) for (let frame = 0; frame < frames; frame++) {
+    // reaching up for the stack her hand is above her hat tip, crouched to the ground it is down by her feet; the party's poses too
+    // (lying back she is low and long); a pair pose's meeting anchors inside every frame (the conga's back too)
+    const base = stats(G.witchSprite(st)), bad = [], P = G.WITCH_FOOT_POSES, PR = G.WITCH_PAIRS;
+    for (const [pose, { frames, fps, party }] of Object.entries(P)) for (const facing of ["towards", "away"]) for (let frame = 0; frame < frames; frame++) {
       const sp = G.witchSprite(st, { pose, frame, facing }), s2 = stats(sp), nan = [...sp.n].some(v => Number.isNaN(v)), a = sp.anchors;
-      const inside = a && [a.hand, a.hatTip].every(([x, y]) => x >= 0 && x <= sp.w && y >= 0 && y <= sp.h);
+      const pin = q => q && q.every(Number.isFinite) && q[0] >= 0 && q[0] <= sp.w && q[1] >= 0 && q[1] <= sp.h;
+      const pr = PR[pose], meets = !pr || ((pr.frame === undefined || pr.frame === frame) ? pin(a.pair) && (!pr.partner || pin(a[pr.partner])) : true);
+      const inside = a && pin(a.hand) && pin(a.hatTip) && meets;
       const up = (pose === "placeSigil" && frame === 0) || (pose === "liftSigil" && frame === 2), down = (pose === "placeSigil" && frame === 2) || (pose === "liftSigil" && frame === 0);
       const reach = !inside || ((!up || a.hand[1] < a.hatTip[1]) && (!down || a.hand[1] > sp.h * .8));
-      if (!(s2.n > 200 && s2.bottom > 0 && !nan && s2.h > base.h * .7 && s2.h < base.h * 1.6 && s2.w < base.w * 1.8 && inside && reach && fps > 0)) bad.push(`${pose} ${facing} ${frame} ${s2.w}x${s2.h}${nan ? " NaN" : ""}${inside ? "" : " anchors"}${reach ? "" : " reach"}`);
+      const lying = pose === "stargaze", hk = lying ? [.5, 1] : [.7, 1.6], wk = lying ? 2.2 : 1.8;
+      if (!(s2.n > 200 && s2.bottom > 0 && !nan && s2.h > base.h * hk[0] && s2.h < base.h * hk[1] && s2.w < base.w * wk && inside && reach && fps > 0 && (!party || ["dance", "pair", "social", "move", "rest"].includes(party)))) bad.push(`${pose} ${facing} ${frame} ${s2.w}x${s2.h}${nan ? " NaN" : ""}${inside ? "" : " anchors"}${reach ? "" : " reach"}`);
     }
-    const counts = Object.fromEntries(Object.entries(P).map(([k, v]) => [k, v.frames])), want = { stand: 3, land: 3, takeoff: 3, talk: 4, placeSigil: 3, liftSigil: 3, sit: 2 };
-    res.push({ what: "witch on foot: stand (3), land and takeoff (3 each), talk (4), placeSigil and liftSigil (3 each), towards and away, at her ordinary scale, standing, no NaN; hand and hat-tip anchors inside; reaching up above her hat, down to the ground", good: !bad.length && JSON.stringify(counts) === JSON.stringify(want), info: bad.join(", ") || Object.entries(counts).map(([k, n]) => k + " " + n).join(", ") });
+    for (const [pose, pr] of Object.entries(PR)) if (!P[pose] || !(pr.meet === "pair")) bad.push(`pair ${pose}`);
+    const counts = Object.fromEntries(Object.entries(P).map(([k, v]) => [k, v.frames])), want = { stand: 3, land: 3, takeoff: 3, talk: 4, placeSigil: 3, liftSigil: 3, sit: 2,
+      twoStep: 4, bounce: 2, shuffle: 4, spin: 4, headbang: 2, jump: 3, dancePair: 4, holdHands: 2, hug: 2, highFive: 2, laugh: 3, drink: 4, run: 4, sitGround: 2, stargaze: 2, conga: 4 };
+    res.push({ what: "witch on foot: stand (3), land and takeoff (3 each), talk (4), placeSigil and liftSigil (3 each), sit (2), and the party's 16 (6 dances, dance with a partner, hold hands, hug, high-five, laugh, drink, run, sit on the ground, stargaze, conga), towards and away, at her ordinary scale, standing, no NaN; hand and hat-tip anchors inside, and the pairs' meeting anchors; reaching up above her hat, down to the ground", good: !bad.length && JSON.stringify(counts) === JSON.stringify(want), info: bad.join(", ") || Object.entries(counts).map(([k, n]) => k + " " + n).join(", ") });
+  }
+  { // her lean cycle (WITCH_FLIGHT_POSES.lean): 4 frames, both facings and both headings, at her ordinary scale, standing, hand and hat-tip anchors inside; the frames differ (it moves)
+    const bad = [], scale = G.witchSprite(st, { pose: "fast" }).scale, F = G.WITCH_FLIGHT_POSES;
+    for (const o of [{ facing: "towards" }, { facing: "away" }, { heading: "away" }, { heading: "towards" }]) {
+      const sps = [0, 1, 2, 3].map(frame => G.witchSprite(st, { ...o, pose: "lean", frame }));
+      for (const [k, sp] of sps.entries()) { const s2 = stats(sp), A = sp.anchors, pin = q => q && q[0] >= 0 && q[0] <= sp.w && q[1] >= 0 && q[1] <= sp.h; if (!(s2.n > 100 && s2.bottom > 0 && Math.abs(sp.scale - scale) < 1e-6 && A && pin(A.hand) && pin(A.hatTip) && ![...sp.n].some(Number.isNaN))) bad.push(`${o.facing || o.heading} ${k}`); }
+      const sig = sps.map(sp => sp.w + "x" + sp.h + ":" + [...sp.m].join("")); if (new Set(sig).size < 4) bad.push(`${o.facing || o.heading}: frames repeat`);
+    }
+    if (!(F.lean && F.lean.frames === 4 && F.lean.fps > 0 && F.hover.frames === 3 && F.fast.frames === 3 && F.brake.frames === 2)) bad.push("WITCH_FLIGHT_POSES");
+    res.push({ what: "witch lean cycle: 4 frames, towards and away and heading up and down the screen, at her ordinary scale, standing, hand and hat-tip anchors inside, every frame different", good: !bad.length, info: bad.join(", ") || `lean ${F.lean.frames} frames at ${F.lean.fps} fps` });
+  }
+  { // party witches: 8 to 12 outfits, each a different look from WITCH_LOOKS, every one drawn in her flight frames and every pose on foot at her
+    // ordinary scale, standing, a hat in every pose and its glowing hatband showing hovering and standing (still a witch); partyWitch is seeded (same seed, same witch) and varied (outfits, skins, glow sticks)
+    const bad = [], O = G.PARTY_OUTFITS, Lk = G.WITCH_LOOKS, scale = G.witchSprite(st, { pose: "stand" }).scale, looks = new Set();
+    if (!(O.length >= 8 && O.length <= 12) || new Set(O.map(o => o.id)).size !== O.length) bad.push(`${O.length} outfits`);
+    for (const o of O) {
+      const L = { ...G.DEFAULT_LOOK, ...o.look }; looks.add(JSON.stringify(L));
+      if (!Lk.hat.includes(L.hat) || !Lk.hair.includes(L.hair) || !Lk.top.includes(L.top)) bad.push(`${o.id} look`);
+      const pw = G.partyWitch(1, { outfit: o.id }), col = pw.colours(st);
+      for (const opts of [{ frame: 0 }, { pose: "lean", frame: 1 }, { pose: "rise", frame: 0 }, { pose: "stand", frame: 0 }, ...Object.entries(G.WITCH_FOOT_POSES).map(([pose, { frames }]) => ({ pose, frame: frames - 1 }))]) {
+        const sp = G.witchSprite(st, { ...opts, look: pw.look }), s2 = stats(sp), band = [...sp.m].filter(m => m === G.M.MAGIC).length + (opts.pose === undefined || (opts.pose === "stand" && opts.frame === 0) ? 0 : 1), hat = [...sp.m].some(m => m === G.M.HAT), magenta = [...sp.m].some(m => m && !col[m] && m !== G.M.LINE);
+        if (!(s2.n > 150 && s2.bottom > 0 && (opts.pose === "rise" || !opts.pose || Math.abs(sp.scale - scale) < 1e-6) && band > 0 && hat && !magenta && ![...sp.n].some(Number.isNaN))) bad.push(`${o.id} ${opts.pose || "hover"}${magenta ? " (a part without a colour)" : ""}${band ? "" : " (no hatband)"}${hat ? "" : " (no hat)"}`);
+      }
+    }
+    if (looks.size !== O.length) bad.push("two outfits share a look");
+    const a = G.partyWitch(7), b = G.partyWitch(7), seen = new Set(), skins = new Set(), glows = new Set();
+    for (let k = 0; k < 40; k++) { const w = G.partyWitch(k); seen.add(w.id); skins.add(w.outfit.skin.join()); glows.add(w.outfit.glow.join()); }
+    if (JSON.stringify([a.id, a.outfit, a.look]) !== JSON.stringify([b.id, b.outfit, b.look])) bad.push("partyWitch not seeded");
+    if (seen.size < Math.min(8, O.length) || skins.size < 4 || glows.size < 4) bad.push(`partyWitch varied: ${seen.size} outfits, ${skins.size} skins, ${glows.size} neons over 40 seeds`);
+    res.push({ what: "party witches: 8 to 12 outfits, each its own look (hat, hair, top, shades, glow sticks, headphones), drawn in flight and every pose on foot at her scale, a witch's hat on, its band glowing; partyWitch seeded and varied", good: !bad.length, info: bad.slice(0, 8).join(", ") || `${O.length} outfits; 40 seeds: ${seen.size} outfits, ${skins.size} skins, ${glows.size} glow-stick neons` });
+  }
+  { // no flecks on the witch (Ed: "these little flecks"): in every sprite of hers (flight, headings, the lean cycle, on foot) and of every party outfit, no pixel
+    // whose colour differs strongly from all 4 neighbours (or that stands alone) without one of its own colour round it, no interior-line dot one or two pixels long,
+    // and no eye poking out past her face's edge; her eyes' glints and her mouth are meant
+    const KEEP = new Set([G.M.EYE, G.M.GLINT, G.M.NOSE]), diff = (a, b) => Math.max(...[0, 1, 2].map(k => Math.abs(a[k] - b[k])));
+    const flecks = (sp, col) => {
+      const c = m => m === G.M.LINE ? [0, 0, 0] : col[m] || [255, 0, 255], out = [];
+      for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) {
+        const m = sp.m[y * sp.w + x]; if (!m) continue;
+        const n4 = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => sp.get(x + dx, y + dy));
+        if (m === G.M.EYE) { if (n4.filter(v => !v).length >= 2) out.push(`eye at ${x},${y}`); continue; }
+        if (KEEP.has(m)) continue;
+        const own = [[1, 1], [-1, 1], [1, -1], [-1, -1], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => sp.get(x + dx, y + dy) === m);
+        if (!own && n4.every(v => !v || diff(c(v), c(m)) > 48)) out.push(`${x},${y}`);
+      }
+      const seen = new Uint8Array(sp.m.length); // interior-line runs of 1 or 2 pixels
+      for (let i = 0; i < sp.m.length; i++) { if (sp.m[i] !== G.M.LINE || seen[i]) continue; let n = 0; const todo = [i]; seen[i] = 1; while (todo.length) { const j = todo.pop(); n++; const x = j % sp.w, y = (j / sp.w) | 0; for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const X = x + dx, Y = y + dy, k = Y * sp.w + X; if (X >= 0 && Y >= 0 && X < sp.w && Y < sp.h && !seen[k] && sp.m[k] === G.M.LINE) { seen[k] = 1; todo.push(k); } } } if (n <= 2) out.push(`line dot at ${i % sp.w},${(i / sp.w) | 0}`); }
+      return out;
+    };
+    const bad = [], wc = G.witchColours(st); let n = 0;
+    const her = [];
+    for (const facing of ["towards", "away"]) { for (const frame of [0, 1, 2]) her.push({ facing, frame }); her.push({ facing, lean: true }); for (const [pose, { frames }] of Object.entries(G.WITCH_FLIGHT_POSES)) if (pose !== "hover") for (let frame = 0; frame < frames; frame++) her.push({ facing, pose, frame }); for (const [pose, { frames }] of Object.entries(G.WITCH_FOOT_POSES)) for (let frame = 0; frame < frames; frame++) her.push({ facing, pose, frame }); }
+    for (const heading of ["away", "towards"]) for (const o of [{ frame: 0 }, { frame: 1 }, { frame: 2 }, { lean: true }, ...[0, 1, 2, 3].map(frame => ({ pose: "lean", frame })), ...[0, 1, 2].map(frame => ({ pose: "fast", frame })), { pose: "brake", frame: 0 }, { pose: "brake", frame: 1 }]) her.push({ heading, ...o });
+    for (const o of her) { const f = flecks(G.witchSprite(st, o), wc); n++; if (f.length) bad.push(`her ${o.heading || o.facing} ${o.pose || (o.lean ? "lean" : "hover")}${o.frame ?? ""}: ${f.slice(0, 3).join(" ")}`); }
+    for (const P of G.PARTY_OUTFITS) { const pw = G.partyWitch(2, { outfit: P.id }), col = pw.colours(st);
+      for (const o of [{ frame: 0 }, { frame: 1 }, ...[0, 1, 2, 3].map(frame => ({ pose: "lean", frame })), { pose: "rise", frame: 0 }, { pose: "descend", frame: 0 }, ...Object.entries(G.WITCH_FOOT_POSES).flatMap(([pose, { frames }]) => [...Array(frames).keys()].map(frame => ({ pose, frame })))]) { const f = flecks(G.witchSprite(st, { ...o, look: pw.look }), col); n++; if (f.length) bad.push(`${P.id} ${o.pose || "hover"}${o.frame ?? ""}: ${f.slice(0, 3).join(" ")}`); } }
+    res.push({ what: "witch flecks: no stray single pixels (a colour unlike all 4 neighbours, none of its own round it), no one- or two-pixel interior-line dots, no eye past her face's edge, on all her sprites and every party outfit's", good: !bad.length, info: bad.slice(0, 6).join("; ") || `${n} sprites clean` });
   }
   for (const id of ["wolf", "owl", "snake"]) { const s = stats(G.critter(id, 1, 0, st, "away")); res.push({ what: `${id} turned away`, good: s.n > 50 && s.bottom > 0, info: `${s.w}x${s.h}` }); }
   { // the treehouse (Ed's second go: mostly wood, modern touches, its top standing above the treeline, her seat in a cutaway studio): towards and away,
@@ -233,6 +296,34 @@ const report = await b.page.evaluate(async () => {
     if (worst > .6) bad.push(`a ${worst.toFixed(2)}-wide wall of leaves at eye height`);
     if (young <= old) bad.push("saplings no leafier below than mature trees");
     res.push({ what: "life below the crown: every species' bottom half carries leaves, saplings more; the canopy unchanged; no wall of leaves at eye height", good: !bad.length, info: bad.join("; ") || `widest eye-height leaves ${worst.toFixed(2)} of the crown; leaf share below, saplings ${(young / 60).toFixed(2)} vs mature ${(old / 60).toFixed(2)}` });
+  }
+  { // ground cover and wind (for the prototype's rendering): every area has 3+ kinds of tuft, 8 to 13 px, each drawn, their weights adding up to 1;
+    // sway masks: on every species' trees the trunk's foot is still (0) and the leaves sway (their top more than their low leaves), rocks never sway,
+    // and the leafy props carry a mask the size of their albedo
+    const bad = [], L = new Set([G.M.LEAF, G.M.LEAF2, G.M.LEAF3]);
+    for (const A of G.AREAS) { const ts = G.tuftSprites(A.id, st), sum = ts.reduce((a, t) => a + t.weight, 0); if (ts.length < 3 || Math.abs(sum - 1) > .001) bad.push(`${A.id} tufts ${ts.length}, weights ${sum.toFixed(3)}`); for (const t of ts) { const n = t.sp.m.filter(v => v).length; if (!(n >= 6 && t.sp.w >= 8 && t.sp.w <= 13 && t.sp.h >= 3 && t.sp.h <= 13)) bad.push(`${A.id} ${t.kind} ${t.sp.w}x${t.sp.h} (${n} px)`); } }
+    for (const id of Object.keys(G.TREE_SPECIES)) {
+      const t = G.TREE_SPECIES[id].fn(G.rng(9), { ...st }, st.treeSize), sp = t.sp, sw = G.swayMask(sp); let footMax = 0, leafHi = 0, leafLo = 255, leaves = 0;
+      for (let y = sp.h - 3; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const i = y * sp.w + x; if ([G.M.TRUNK, G.M.BARK2, G.M.BARKD, G.M.BARKL, G.M.BELLY].includes(sp.m[i])) footMax = Math.max(footMax, sw[i]); }
+      for (let i = 0; i < sp.m.length; i++) if (L.has(sp.m[i])) { leaves++; const y = (i / sp.w) | 0; if (y < sp.h * .4) leafHi = Math.max(leafHi, sw[i]); else leafLo = Math.min(leafLo, sw[i]); }
+      if (!(footMax === 0 && leaves && leafHi > 150 && (leafLo === 255 || leafLo < leafHi))) bad.push(`${id} sway foot ${footMax}, leaves ${leafLo}-${leafHi}`);
+    }
+    { const rock = G.areaAssets("ravine", st).big[0]; if (rock.sway) bad.push("a boulder sways"); }
+    for (const id of ["meadow", "moor", "heath"]) for (const b of [...G.areaAssets(id, st).small, ...G.areaAssets(id, st).big]) if (G.SWAYING_PROPS.has(b.kind) && !(b.sway && b.sway.width === b.sp.w && b.sway.height === b.sp.h)) bad.push(`${id} ${b.kind} has no sway mask`);
+    res.push({ what: "ground cover and wind: every area has 3+ tufts (8 to 13 px), weights adding to 1; trees' feet still and leaves swaying (tops most), rocks still, leafy props masked", good: !bad.length, info: bad.slice(0, 6).join("; ") || `${G.AREAS.reduce((a, A) => a + G.tuftSprites(A.id, st).length, 0)} tufts over ${G.AREAS.length} areas` });
+  }
+  { // something tall in every area (Ed: "each area should have at least some kind of taller thing"): each area's big pieces include one at least 4 m tall
+    // (its trees across their heights, or for the open areas the tall pieces); the tall pieces (snag, cairn, standing stone, pillar, spire, stalagmite)
+    // stand on the ground, 4.5 to 12 m tall, and are flagged sparse (a small share of the area's big objects)
+    const bad = [], tallest = {};
+    for (const A of G.AREAS) {
+      const a = G.areaAssets(A.id, st), hs = [...a.big.filter((b, i) => A.big[i][0] !== "tree").map(b => b.sp.h / 16), ...G.areaTreeVariants(A.id, st).map(v => v.metres.height)]; tallest[A.id] = Math.max(0, ...hs); // trees: their variants, sapling to giant
+      if (!(tallest[A.id] >= 4)) bad.push(`${A.id} ${tallest[A.id].toFixed(1)} m`);
+      a.big.forEach((b, i) => { const [kind, o] = A.big[i]; if (!G.TALL_KINDS.includes(kind)) return; let bottom = 0; const d = b.sp.A.getContext("2d").getImageData(0, b.sp.h - 1, b.sp.w, 1).data; for (let k = 3; k < d.length; k += 4) if (d[k]) bottom++;
+        if (!(bottom > 0 && b.metres && b.metres.height >= 4.5 && b.metres.height <= 12 && o.sparse > 0 && o.sparse <= .3)) bad.push(`${A.id} ${kind} ${b.metres?.height} m${bottom ? "" : ", floating"}`); });
+    }
+    const open = ["moor", "stone-shrine", "log-pile", "ravine"].map(id => `${id} ${tallest[id].toFixed(1)} m`).join(", ");
+    res.push({ what: "something tall in every area: a big piece 4 m+ in each; the open areas' tall pieces stand, 4.5 to 12 m, sparse", good: !bad.length, info: bad.join("; ") || `the open areas' tallest: ${open}` });
   }
   { // layouts: every area has a sound layout descriptor, and between them they use most of the patterns (no pattern for more than 8 areas)
     const bad = G.AREAS.map(A => [A.id, G.layoutProblems(A)]).filter(([, p]) => p.length).map(([id, p]) => id + ": " + p.join(", "));
