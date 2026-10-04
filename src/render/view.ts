@@ -150,7 +150,7 @@ export class View {
     // The witch is depth-tested like everything else, drawn after it; where something still hides
     // her, a silhouette in her glow colour shows through, and tall things in front of her fade.
     const O = t.occlusion;
-    this.witchBatch = new SpriteBatch(this.assets.witch, this.mpp, { unlit: true, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: O.silhouette } });
+    this.witchBatch = new SpriteBatch(this.assets.witch, this.mpp, { witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: O.silhouette } });
     this.witchBatch.mesh.renderOrder = 10;
     this.scene.add(...this.witchBatch.meshes);
     SPRITE_UNIFORMS.uOcc.value.set(O.fadeOpacity, O.edge, O.minHeight, O.on ? 1 : 0);

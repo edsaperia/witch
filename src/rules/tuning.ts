@@ -72,6 +72,8 @@ export interface Tuning {
   /** Set by ?glow=: use glowReach as it is. */
   glowFixed?: boolean;
   glowHeight: number;
+  /** The witch lit by the world's lights (not her own glow): never darker than lightFloor times her unlit look; coloured lights tint her (lightTint) and rim her edge facing them (lightRim). */
+  witch: { lightFloor: number; lightTint: number; lightRim: number };
   spriteTilt: number;
   artPixelsPerMetre: number;
   viewMargin: number;
