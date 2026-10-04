@@ -6,7 +6,7 @@
 // Decals (confetti, streamers, glitter) lie flat under everything.
 import * as THREE from "three";
 import type { Game } from "../rules/game";
-import { dressingOf, isLit, lightOf, partyDef, type Dressing } from "../rules/partyDressing";
+import { dressingOf, excluded, isLit, lightOf, partyDef, type Dressing } from "../rules/partyDressing";
 import { hash2 } from "../rules/random";
 import type { AssetLibrary } from "./assets";
 import type { ForestLight } from "./view";
@@ -37,7 +37,6 @@ export class PartyObjectsView {
     const fwd = camera.getWorldDirection(new THREE.Vector3()), up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion), rise = U.dot(up) / Math.max(0.2, -fwd.y);
     const upright: SpriteInstance[] = [], flat: SpriteInstance[] = [], reach = t.haze.far + g.map.areaSize;
     for (const [key, area] of g.party.areas) {
-      if (!area.soundsystem) continue; // home has the dancefloor
       const site = g.map.siteOf(area.cell[0], area.cell[1]);
       if (Math.abs(site.x - w.x) > reach || Math.abs(site.z - w.z) > reach) continue;
       let d = this.dressings.get(key);
@@ -47,7 +46,7 @@ export class PartyObjectsView {
       let lit = d.lights.length;
       const put = (ref: string, gx: number, gz: number, flip: boolean, i: number, hang = 0) => {
         const a = art.pieces[ref], def = partyDef(ref);
-        if (!a || !def) return;
+        if (!a || !def || excluded(ref, t)) return; // (left out of the clusters too)
         // Each pops up in turn as the party arrives.
         const since = time - from - hash2(i, Math.round(gx * 3), 77) * 2.5;
         if (since < 0) return;
