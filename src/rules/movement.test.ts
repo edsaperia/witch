@@ -101,4 +101,29 @@ describe("creature movement (Stage 5)", () => {
     expect(sp.sprung).toBeDefined();
     expect(struck).toBe(true); // in range of its beam: it strikes from where it lay
   }, 60000);
+
+  it("has a mole burrow (untouchable) to her and surface under her, striking", () => {
+    const g = quiet(), W = g.witches[0], hp0 = W.health.hp, mole = pick(g, "mole", 1, 10, 0), seen = new Set<string>();
+    let under = false;
+    run(g, 8, () => { if (mole.burrow) under = true; for (const e of g.combat.events) if (e.id === mole.id) seen.add(e.kind); });
+    expect(under).toBe(true);
+    expect(seen.has("surfaced")).toBe(true);
+    expect(W.health.hp).toBeLessThan(hp0);
+  }, 60000);
+
+  it("has a toad leap at her and slam down where it lands", () => {
+    const g = quiet(), W = g.witches[0], hp0 = W.health.hp, toad = pick(g, "toad", 1, 7, 0);
+    let flew = false, slammed = false;
+    run(g, 6, () => { if (toad.leap) flew = true; if (g.combat.events.some(e => e.id === toad.id && e.kind === "slammed")) slammed = true; });
+    expect(flew).toBe(true);
+    expect(slammed).toBe(true);
+    expect(W.health.hp).toBeLessThan(hp0);
+  }, 60000);
+
+  it("has a bat screech: a pulse all round it", () => {
+    const g = quiet(), bat = pick(g, "bat", 1, 6, 0);
+    let pulsed = false;
+    run(g, 6, () => { if (g.combat.events.some(e => e.id === bat.id && e.kind === "pulse")) pulsed = true; });
+    expect(pulsed).toBe(true);
+  }, 60000);
 });

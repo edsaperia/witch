@@ -62,6 +62,10 @@ export interface Creature {
   slowUntil?: number;
   /** Stunned until (an armoured creature knocked over: Stage 5 counters). */
   stunUntil?: number;
+  /** Burrowed (the mole, Stage 5): under the ground until, untouchable. */
+  burrow?: { until: number };
+  /** Leaping (the toad, Stage 5): from, to, when it took off and lands, how high. */
+  leap?: { fx: number; fz: number; tx: number; tz: number; at: number; lands: number; height: number };
   fight?: Fight;
   /** Beaten in a fight: running for (fleeX, fleeZ), just off the map's edge (fleeUntil set), then gone. */
   fleeUntil?: number;

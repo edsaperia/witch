@@ -307,6 +307,9 @@ export class LeashView {
       }
       // Stage 5: a lob lands in a ring the size of its splash; an ambusher springs; a charge slams home.
       if (e.kind === "landed" && close(e.x, e.z, 150)) { const sh = c ? attackOf(c.species, c.level) : null; this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.5, r: 1, g: 0.5, b: 0.35, seed: 0, size: sh?.attack.radius ?? 1.8 }); this.fx.push({ kind: "puff", x: e.x, y: 0.4, z: e.z, at: time, life: 0.6, r: 0.9, g: 0.7, b: 0.6, seed: e.at * 17 }); }
+      // A pulse (a screech, an upheaval) or a toad's slam: a ring out to its reach; burrowing or surfacing, a spray of earth.
+      if ((e.kind === "pulse" || e.kind === "slammed") && c && close(e.x, e.z)) { const A = attackOf(c.species, c.level)?.attack, col = c.leashed ? neon(c.species) : { r: 1, g: 0.45, b: 0.4 }; this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.45, r: col.r, g: col.g, b: col.b, seed: 0, size: A?.radius ?? 2.5 }); }
+      if ((e.kind === "burrowed" || e.kind === "surfaced" || e.kind === "slammed") && close(e.x, e.z)) this.fx.push({ kind: "puff", x: e.x, y: 0.3, z: e.z, at: time, life: 0.6, r: 0.55, g: 0.42, b: 0.3, seed: e.at * 41 + (e.id ?? 0) });
       if (e.kind === "sprung" && close(e.x, e.z)) this.fx.push({ kind: "spark", x: e.x, y: 0.8, z: e.z, at: time, life: 0.4, r: 1, g: 0.3, b: 0.3, seed: e.at * 23, size: 1.4 });
       if (e.kind === "charged" && close(e.x, e.z)) this.fx.push({ kind: "puff", x: e.x, y: 0.4, z: e.z, at: time, life: 0.7, r: 0.8, g: 0.7, b: 0.55, seed: e.at * 29 });
       if (e.kind === "soundHit" && close(e.x, e.z, 150) && (e.at * 10) % 3 < 1) this.fx.push({ kind: "spark", x: e.x, y: 2.5, z: e.z, at: time, life: 0.3, r: 1, g: 0.6, b: 0.3, seed: e.at * 3 });
@@ -366,6 +369,10 @@ export class LeashView {
     }
     for (const c of g.creatures) {
       if (c.gone || !close(c.x, c.z)) continue;
+      // Burrowed (the mole): a mound of earth moving over the ground, flecks thrown up.
+      if (c.burrow) for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2, q = hash2(c.id, Math.floor(time * 12) + i, 19); this.standing.add(c.x + Math.cos(a) * 0.45, 0.1 + (i === 0 ? 0.25 : 0) + q * 0.12, c.z + Math.sin(a) * 0.3, 0.45, dot, 0.42, 0.3, 0.2, 0.9); }
+      // Leaping (the toad): a ring tightening where it'll land.
+      if (c.leap) { const L = c.leap, k = Math.max(0, Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at))), A = attackOf(c.species, c.level)?.attack, R = (A?.radius ?? 2.4) * (1.3 - 0.3 * k), col = c.leashed ? neon(c.species) : { r: 1, g: 0.35, b: 0.35 }; for (let i = 0; i < 20; i++) { const a = (i / 20) * Math.PI * 2; this.flat.add(L.tx + Math.cos(a) * R, 0, L.tz + Math.sin(a) * R * 0.8, 0.35, dot, col.r, col.g, col.b, 0.3 + 0.6 * k); } }
       // Charging (the boar): dust kicked up behind it.
       if (c.charge && time < c.charge.until) for (let i = 0; i < 4; i++) { const q = hash2(c.id, Math.floor(time * 20) + i, 17); this.standing.add(c.x - c.charge.dx * (0.8 + i * 0.5), 0.3 + q * 0.4, c.z - c.charge.dz * (0.8 + i * 0.5), 0.5 + i * 0.15, dot, 0.75, 0.65, 0.5, 0.5 - i * 0.1); }
       // Telegraphs: winding up, a ring tightens at its feet; a shot shows its line; the quake its reach.
@@ -373,7 +380,7 @@ export class LeashView {
       if (atk && f) {
         const A = atk.attack, k = Math.max(0, Math.min(1, 1 - (f.windupUntil - time) / Math.max(0.05, A.windup))), wild = !c.leashed;
         const [r, gg, b] = wild ? [1, 0.3, 0.3] : [neon(c.species).r, neon(c.species).g, neon(c.species).b];
-        if (A.delivery === "quake") {
+        if (A.delivery === "quake" || A.delivery === "pulse") {
           const R = A.radius ?? 5;
           for (let i = 0; i < 40; i++) { const a = (i / 40) * Math.PI * 2; this.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.5, dot, r, gg * 0.6, b * 0.6, 0.25 + 0.6 * k); }
         } else {

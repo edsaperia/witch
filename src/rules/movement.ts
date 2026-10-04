@@ -10,7 +10,7 @@ import { hash2 } from "./random";
 export type BehaviourKind = "arrive" | "keepRange" | "orbit" | "strafe" | "slot" | "separation" | "cohesion" | "wander" | "dodge";
 export interface Behaviour { kind: BehaviourKind; w: number; near?: number; far?: number; radius?: number; swap?: number }
 export type TacticKind = "surround" | "pincer" | "hitAndRun" | "volley" | "swarm" | "none";
-export interface Move { kind: "charge" | "ambush"; cooldown: number; from?: number; to?: number; speed?: number; time?: number; trigger?: number }
+export interface Move { kind: "charge" | "ambush" | "burrow" | "leap"; cooldown: number; from?: number; to?: number; speed?: number; time?: number; trigger?: number; height?: number }
 export interface Profile {
   /** Its speed in a fight, times its own (the usual is combat.chaseMult). */
   run?: number;
@@ -174,6 +174,43 @@ export function stepCharge(c: Creature, mv: Move, px: number, pz: number, reach:
     c.charge = { dx: (px - c.x) / d, dz: (pz - c.z) / d, speed: s, until: time + (mv.time ?? 1.2) };
     c.moveReadyAt = time + mv.cooldown;
     return "charging";
+  }
+  return "none";
+}
+
+/** The burrow (Stage 5: the mole): from `from` metres off it goes under (untouchable: a mound
+ *  moving over the ground) and tunnels at `speed` times its run to its target, surfacing under it
+ *  (or after `time` seconds), then the move cools down. */
+export function stepBurrow(c: Creature, mv: Move, px: number, pz: number, base: number, time: number, dt: number): "none" | "burrowed" | "under" | "surfaced" {
+  const dx = px - c.x, dz = pz - c.z, d = Math.hypot(dx, dz);
+  if (c.burrow) {
+    const step = Math.min(d, base * (mv.speed ?? 1.5) * dt);
+    if (d > 1e-3) { c.x += (dx / d) * step; c.z += (dz / d) * step; c.facing = dx >= 0 ? 1 : -1; }
+    c.moving = true; c.walk += dt * 6; c.vx = 0; c.vz = 0;
+    if (d < 1.2 || time >= c.burrow.until) { c.burrow = undefined; c.moveReadyAt = time + mv.cooldown; return "surfaced"; }
+    return "under";
+  }
+  if (time >= (c.moveReadyAt ?? 0) && d >= (mv.from ?? 4)) { c.burrow = { until: time + (mv.time ?? 4) }; c.moving = false; return "burrowed"; }
+  return "none";
+}
+
+/** The leap (Stage 5: the toad): when its attack is ready and its target is between `from` and
+ *  `to` metres off, it leaps in an arc to just short of it, `time` seconds in the air, landing
+ *  where it aimed (step out of the ring). Returns "landed" on the step it comes down. */
+export function stepLeap(c: Creature, mv: Move, px: number, pz: number, ready: boolean, time: number): "none" | "leapt" | "air" | "landed" {
+  const L = c.leap;
+  if (L) {
+    const k = Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at));
+    c.x = L.fx + (L.tx - L.fx) * k; c.z = L.fz + (L.tz - L.fz) * k; c.moving = false; c.vx = 0; c.vz = 0;
+    if (k >= 1) { c.leap = undefined; return "landed"; }
+    return "air";
+  }
+  const dx = px - c.x, dz = pz - c.z, d = Math.hypot(dx, dz);
+  if (ready && time >= (c.moveReadyAt ?? 0) && d >= (mv.from ?? 3) && d <= (mv.to ?? 10)) {
+    const stop = Math.min(d, 0.8);
+    c.leap = { fx: c.x, fz: c.z, tx: px - (dx / d) * stop, tz: pz - (dz / d) * stop, at: time, lands: time + (mv.time ?? 0.8), height: mv.height ?? 2.5 };
+    c.moveReadyAt = time + mv.cooldown; c.facing = dx >= 0 ? 1 : -1;
+    return "leapt";
   }
   return "none";
 }

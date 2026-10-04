@@ -40,7 +40,8 @@ describe("combat (Stage 4)", () => {
       expect(l.attack.delivery).toBe("quake");
       expect(l.attack.windup).toBeGreaterThan(a.attack.windup); // slow and heavy
     }
-    expect(attackOf("toad", 1)!.attack.delivery).toBe("shot");
+    expect(attackOf("moth", 1)!.attack.delivery).toBe("shot");
+    expect(attackOf("toad", 1)!.attack.delivery).toBe("pulse"); // (Stage 5: the toad slams as it lands, the bat screeches)
     expect(attackOf("owl", 1)!.attack.delivery).toBe("lob"); // (Stage 5: the owl lobs, the salamander and spider beam)
     expect(attackOf("salamander", 1)!.attack.delivery).toBe("beam");
     expect(attackOf("wolf", 1)!.attack.delivery).toBe("melee");

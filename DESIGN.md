@@ -212,7 +212,7 @@ Each delivery has a factor so its expected damage a second (allowing for misses 
 | bat | flits in erratic circles | swarm | screech: a short pulse all round it (ring) | flier, swarm |
 | owl | circles wide and slow | volley line | lob (a ring where it lands) | flier |
 | salamander | creeps, holds still to aim | none | beam (aim line, then a burning line) | — |
-| spider | lies still until you come close, then springs | ambush | web shot that slows (aim line) | — |
+| spider | lies still until you come close, then springs | ambush | web shot (aim line; an adult's slows) | — |
 | mole | burrows (a moving mound, untouchable) and surfaces under its target | none | upheaval: a pulse as it surfaces (ring) | burrower |
 | toad | leaps in arcs, landing near its target | none | slam on landing: a small pulse (ring where it lands) | — |
 | beetle | plods straight in, slow to turn | none | melee shove with knockback | armoured |
