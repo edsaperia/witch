@@ -72,10 +72,10 @@ varying float vSizeY;
 ${HEIGHT_VERT_GLSL}
 void main() {
   // Every sprite stands upright on the rolling ground (height.ts), at the lowest ground under its
-  // foot (up to two metres either side of its base): on a slope its uphill side is planted in the
+  // foot (most of its width, up to 4 m either side of its base): on a slope its uphill side is planted in the
   // hillside and nothing floats (Ed, v276: 50 m hills, too steep to skew sprites to).
   // (Or, for her, at the height given: she rides a smoothed height over the hills, ride.ts.)
-  float fw = min(iSize.x * 0.5, 2.0);
+  float fw = min(iSize.x * 0.45, 4.0);
   vec3 base = iPos + vec3(0.0, uAbsolute > 0.5 ? 0.0 : min(groundH(iPos.xz), min(groundH((iPos - uRight * fw).xz), groundH((iPos + uRight * fw).xz))), 0.0);
   // Tall and nearer the camera than the witch: it may stand in front of her.
   // Eased over a few metres of depth and of height, so nothing snaps into the fade as she moves.
