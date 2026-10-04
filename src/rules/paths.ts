@@ -19,6 +19,11 @@ export interface PathLine {
   deadEnd?: boolean;
 }
 
+/** A 3D piece along the network (its id is the art's path piece): a bridge where a path crosses a
+ *  stream, a railway landmark, a level crossing, stairs, a verge post... r: the clear radius kept
+ *  round it (no trees or bushes). */
+export interface PathPiece { id: string; x: number; z: number; r: number }
+
 export interface PathHit { kind: PathKind; line: number; /** distance from the centreline */ d: number; /** index of the nearest segment */ seg: number }
 
 /** A smooth curve through control points (centripetal Catmull-Rom), sampled every `step` metres. */
@@ -42,6 +47,8 @@ const WET = new Set(["stream", "wetland", "bog", "beaver-pond"]);
 
 export class PathNetwork {
   readonly lines: PathLine[] = [];
+  readonly pieces: PathPiece[] = [];
+  private pieceGrid = new Map<string, PathPiece[]>();
   private grid = new Map<string, [number, number][]>(); // cell -> [line, segment]
   private readonly cell = 24;
 
@@ -133,6 +140,86 @@ export class PathNetwork {
           }
       }
     });
+    this.placePieces();
+  }
+
+  /** The 3D pieces: seeded, from the lines alone. */
+  private placePieces(): void {
+    const m = this.map, s = m.seed, T = m.tuning.paths, add = (id: string, x: number, z: number, r: number) => {
+      // Pieces keep apart (several crossings close together make one bridge, not a row of them).
+      if (m.hardClear(x, z) || this.pieces.some(q => Math.hypot(q.x - x, q.z - z) < Math.max(12, q.r + r))) return;
+      const p = { id, x, z, r };
+      this.pieces.push(p);
+      const k = `${Math.floor(x / this.cell)},${Math.floor(z / this.cell)}`;
+      let l = this.pieceGrid.get(k);
+      if (!l) this.pieceGrid.set(k, (l = []));
+      l.push(p);
+    };
+    const side = (l: PathLine, i: number, d: number): [number, number] => {
+      const a = l.pts[i], b = l.pts[Math.min(l.pts.length - 1, i + 1)], dx = b[0] - a[0], dz = b[1] - a[1], n = Math.hypot(dx, dz) || 1;
+      return [a[0] - (dz / n) * d, a[1] + (dx / n) * d];
+    };
+    this.lines.forEach((l, li) => {
+      let run = 0, broken = false;
+      for (let i = 1; i < l.pts.length; i++) {
+        const [x, z] = l.pts[i], step = Math.hypot(x - l.pts[i - 1][0], z - l.pts[i - 1][1]);
+        run += step;
+        if (l.kind === "rail") {
+          // Where the track breaks off, now and then a buffer stop.
+          const b = this.railBroken(x, z);
+          if (b && !broken && hash2(li, i, s + 841) < 0.5) add("buffer-stop", x, z, 4);
+          broken = b;
+          // Every landmarkSpacing metres or so, a chance of a landmark on or by the line; between
+          // them, a signal post by the track now and then.
+          if (run >= T.landmarkSpacing) {
+            run = 0;
+            const h = hash2(li, i, s + 843);
+            if (h < T.landmarkChance) { const ids = ["goods-wagon", "carriage", "platform", "signal-gantry"]; add(ids[Math.floor(hash2(li, i, s + 845) * ids.length)], x, z, 7); }
+            else if (h < T.landmarkChance + 0.3 && !b) add("signal-post", ...side(l, i, l.half - 0.6), 1.2);
+          }
+        } else if (l.kind === "road" && run >= T.vergeSpacing) {
+          run = 0;
+          add("verge-post", ...side(l, i, (hash2(li, i, s + 847) < 0.5 ? 1 : -1) * (l.half - 0.7)), 0.8);
+        }
+      }
+      // Stairs where a path climbs into a rocky or sunken area (at its clearing end).
+      if (l.kind === "path" && !l.deadEnd) for (const end of [l.pts[0], l.pts[l.pts.length - 1]]) {
+        const L = AREA_TYPES[m.areaAt(end[0], end[1]).type];
+        const steep = ["rocky-slope", "ravine", "cave-mouth"].includes(L.id) || !!L.layout.terrain?.some(t => t === "hollows" || t === "rocky");
+        if (steep && hash2(Math.round(end[0]), Math.round(end[1]), s + 849) < 0.5) add(hash2(Math.round(end[1]), 3, s + 851) < 0.7 ? "stairs" : "stairs-turn", end[0], end[1], 3);
+      }
+    });
+    // Crossings: a bridge where a path or road crosses a stream; a level crossing where a road
+    // crosses a railway. Found segment against segment, through the grid.
+    const seen = new Set<string>();
+    this.lines.forEach((l, li) => {
+      if (l.kind !== "path" && l.kind !== "road") return;
+      for (let i = 0; i < l.pts.length - 1; i++) {
+        const a = l.pts[i], b = l.pts[i + 1], key = `${Math.floor(a[0] / this.cell)},${Math.floor(a[1] / this.cell)}`;
+        for (const [lj, j] of this.grid.get(key) ?? []) {
+          const o = this.lines[lj];
+          if (o.kind !== "stream" && !(o.kind === "rail" && l.kind === "road")) continue;
+          const c = o.pts[j], d = o.pts[j + 1], X = crossPoint(a, b, c, d);
+          if (!X) continue;
+          const tag = `${li}|${lj}|${Math.round(X[0] / 20)},${Math.round(X[1] / 20)}`;
+          if (seen.has(tag)) continue;
+          seen.add(tag);
+          if (o.kind === "stream") add(l.kind === "road" ? "footbridge" : hash2(li, lj, s + 853) < 0.5 ? "footbridge" : "rope-bridge", X[0], X[1], 4);
+          else add("level-crossing", ...side(l, i, l.half + 0.8), 2);
+        }
+      }
+    });
+  }
+
+  /** The clear radius of any piece covering (x, z). */
+  pieceAt(x: number, z: number): PathPiece | null {
+    for (const p of this.pieceGrid.get(`${Math.floor(x / this.cell)},${Math.floor(z / this.cell)}`) ?? []) if (Math.hypot(p.x - x, p.z - z) < p.r) return p;
+    // A piece near a cell's edge can reach into the next cell.
+    for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) {
+      if (!dx && !dz) continue;
+      for (const p of this.pieceGrid.get(`${Math.floor(x / this.cell) + dx},${Math.floor(z / this.cell) + dz}`) ?? []) if (Math.hypot(p.x - x, p.z - z) < p.r) return p;
+    }
+    return null;
   }
 
   /** How far short of an area's centre its paths stop: at the edge of its clearing, so they lead
@@ -179,6 +266,7 @@ export class PathNetwork {
   /** How a point's trees and bushes are changed by the corridors: trees (0 on a corridor; a few on a
    *  broken railway, between the sleepers), bushes (0 on it, bushBoost along its edges). */
   clearance(x: number, z: number): { trees: number; bushes: number } {
+    if (this.pieces.length && this.pieceAt(x, z)) return { trees: 0, bushes: 0 };
     const T = this.map.tuning.paths, h = this.at(x, z, T.edgeBushes);
     if (!h) return { trees: 1, bushes: 1 };
     const half = this.lines[h.line].half;
@@ -191,4 +279,12 @@ export class PathNetwork {
   railBroken(x: number, z: number): boolean {
     return vnoise(x / 60, z / 60, this.map.seed + 817) < this.map.tuning.paths.railBroken;
   }
+}
+
+/** Where segments ab and cd cross, if they do. */
+function crossPoint(a: [number, number], b: [number, number], c: [number, number], d: [number, number]): [number, number] | null {
+  const r = [b[0] - a[0], b[1] - a[1]], q = [d[0] - c[0], d[1] - c[1]], den = r[0] * q[1] - r[1] * q[0];
+  if (Math.abs(den) < 1e-9) return null;
+  const t = ((c[0] - a[0]) * q[1] - (c[1] - a[1]) * q[0]) / den, u = ((c[0] - a[0]) * r[1] - (c[1] - a[1]) * r[0]) / den;
+  return t >= 0 && t <= 1 && u >= 0 && u <= 1 ? [a[0] + r[0] * t, a[1] + r[1] * t] : null;
 }

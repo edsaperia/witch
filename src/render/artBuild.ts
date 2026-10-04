@@ -126,14 +126,28 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   /** A party animal: an invited creature in its party gear (seeded by its id: collar in its sigil colour, maybe a hat, sunglasses, shoes). */
   | { kind: "party"; id: string; species: string; seed: number; colour: number[]; style: Style }
   /** Every decoration (ruins in both conditions, rocks, freak trees), split as trees are. */
-  | { kind: "decor"; id: string; style: Style };
+  | { kind: "decor"; id: string; style: Style }
+  /** The paths' 3D pieces: bridges, stairs, railway landmarks, signal and verge posts. */
+  | { kind: "pathPieces"; id: string; style: Style };
+
+/** One path piece in its atlas: its frame and where its middle on the ground lands (art pixels from the left). */
+export interface PathPieceArt { id: string; frame: number; originX: number; /** Where its middle on the ground lands, from the top. */ originY: number }
 
 /** One decoration in the decor atlas: its family, bottom (and top, if tall) frames, and the radius it covers on the ground (m). */
 export interface DecorPiece { id: string; family: string; bot: number; top: number | null; footprint: number }
 
 /** A floor tile's pixels: albedo and normal map, w x h. */
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
-export interface ArtResult { px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[] }
+export interface ArtResult { px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[] }
+
+function pathPieceSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; pieces: PathPieceArt[] } {
+  const sprites: Baked[] = [], pieces: PathPieceArt[] = [], colours = Art.pathColours(st);
+  for (const d of Art.PATH_PIECES as { id: string }[]) {
+    const r = Art.pathPieceSprite(d.id, st) as { sp: unknown; origin: { x: number; y: number } };
+    pieces.push({ id: d.id, frame: sprites.push(Art.bake(r.sp, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
+  }
+  return { sprites, pieces };
+}
 
 function decorSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; decor: DecorPiece[] } {
   const sprites: Baked[] = [], decor: DecorPiece[] = [], colours = Art.decorColours(st);
@@ -151,6 +165,7 @@ function decorSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; decor: Dec
 
 export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };
+  if (job.kind === "pathPieces") { const { sprites, pieces } = pathPieceSprites(job.style, mk); return { px: packPixels(sprites, 2048), pieces }; }
   if (job.kind === "decor") { const { sprites, decor } = decorSprites(job.style, mk); return { px: packPixels(sprites, 2048), decor }; }
   if (job.kind === "party") return { px: packPixels(creatureSprites(job.style, job.species, mk, { ...Art.partyGear(job.seed), collar: job.colour }), 2048) };
   const { sprites, layout, floor } = typeSprites(job.style, job.seed, job.id, job.K, mk);

@@ -64,7 +64,7 @@ async function main() {
     await page.keyboard.up(key);
     return [from, to];
   };
-  const shot = async (page, file) => { await sleep(400); await page.screenshot({ path: path.join(out, file) }); results.push(`shot previews/${file}`); };
+  const shot = async (page, file) => { await sleep(400); await page.screenshot({ path: path.join(out, file), timeout: 300000 }); /* big windows: seconds a frame in the software renderer */ results.push(`shot previews/${file}`); };
 
   await run("laptop", { width: 1280, height: 720 }, async page => {
     await shot(page, "00-start-screen.png");
@@ -294,13 +294,13 @@ async function main() {
     }
     const n = await page.evaluate(() => window.witch.game.leash.stack.length);
     check(n >= 3, `the debug key invites more (${n} on the stack)`);
-    await hold(page, "KeyD", 2);
+    await hold(page, "KeyD", 2, 400000); // big window, software renderer: seconds a frame
     await shot(page, "71-leash-stack-flying.png");
     const t1 = await page.evaluate(() => window.witch.game.clock.time);
     await page.waitForFunction(t => window.witch.game.clock.time >= t, t1 + 4, { timeout: 400000, polling: 100 });
     await page.keyboard.press("KeyE");
     await page.waitForFunction(() => window.witch.game.leash.placed.length === 1, null, { timeout: 30000 });
-    await hold(page, "KeyW", 0.6);
+    await hold(page, "KeyW", 0.6, 400000);
     const t2 = await page.evaluate(() => window.witch.game.clock.time);
     await page.waitForFunction(t => window.witch.game.clock.time >= t, t2 + 2, { timeout: 300000, polling: 100 });
     await shot(page, "72-leash-placed.png");
