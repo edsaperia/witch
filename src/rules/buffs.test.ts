@@ -40,7 +40,7 @@ describe("legend buffs", () => {
     expect(b.groundSpeed).toBeCloseTo(t.groundSpeed * B.species.hare.value);
     expect(b.treetopSpeed).toBeCloseTo(t.treetopSpeed * B.species.hare.value);
     expect(b.invite.talkTime[2]).toBeCloseTo(t.invite.talkTime[2] * B.species.fox.value);
-    expect(b.berries.toEvolve[2]).toBe(Math.round(t.berries.toEvolve[2] * B.species.bear.value));
+    expect(b.berries.toEvolve[1]).toBe(Math.max(1, Math.round(t.berries.toEvolve[1] * B.species.bear.value)));
     expect(b.party.interval).toBeCloseTo(t.party.interval * B.species.snail.value);
     expect(b.leash).toEqual({ ...t.leash, pace: 1 });
   });

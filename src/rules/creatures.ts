@@ -92,8 +92,14 @@ export interface Creature {
   wanderTo?: { x: number; z: number; cell: [number, number] };
   /** When it was last healed to full (a berry, or being invited): the view's heal pop. */
   healedAt?: number;
-  /** A wild legend: a mini-boss when combat comes (a hook: no fighting yet). */
+  /** An area's legend (Ed, 2026-10-04: every area has one, sleeping): a mini-boss once awake. */
   boss?: boolean;
+  /** A legend's state (DESIGN.md, "Sleeping legends"): asleep (sunk in the ground, scenery) →
+   *  its area's wave → waking (wildLegends.wake seconds, untouchable) → awake (angry, guarding its
+   *  area) → beaten → slept (asleep for good). Asleep or awake → (later: mollified) → happy (its
+   *  buff on, at home in its area). And when it last changed. */
+  legendState?: LegendState;
+  stateAt?: number;
   /** A disc (centre, radius in metres) found to lie wholly in its own area: see inOwnArea. */
   safeX?: number;
   safeZ?: number;
@@ -101,11 +107,13 @@ export interface Creature {
   rand: () => number;
 }
 
+export type LegendState = "asleep" | "waking" | "awake" | "slept" | "happy";
+
 export interface AreaPopulation { babies: number; young: number; adults: number }
 
 /** How many of each level every area starts with (Ed, 2026-10-04: every area the same, one baby
- *  and one adult; it grows by a creature a wave while it stays wild: rules/growth.ts). (Wild
- *  legends are placed a map at a time: wildLegendCells.) */
+ *  and one adult; it grows by a creature a wave while it stays wild: rules/growth.ts). (Each
+ *  area also has its sleeping legend: spawnCreatures.) */
 export function population(map: ForestMap): AreaPopulation {
   const S = map.tuning.population.start;
   return { babies: S.babies, young: S.young, adults: S.adults };
@@ -126,24 +134,19 @@ export function makeCreature(map: ForestMap, cell: [number, number], level: Leve
   return {
     id, species: type.creature, level, ...base, x, z, tx: x, tz: z,
     rest: r() * 3, speed: (level === LEGEND ? t.legendSpeed : t.creatureSpeed * speedFactor(type.creature, level, t)) * (0.7 + r() * 0.6),
-    facing: r() < 0.5 ? 1 : -1, away: false, moving: false, walk: r(), seen: 0, leashed: false, ...(level === LEGEND ? { boss: true } : {}),
+    facing: r() < 0.5 ? 1 : -1, away: false, moving: false, walk: r(), seen: 0, leashed: false, ...(level === LEGEND ? { boss: true, legendState: "asleep" as const, stateAt: 0 } : {}),
     rand: rng(map.seed * 31 + (id + 1) * 7 + 11),
   };
 }
 
-/** The areas a map's wild legends live in (Ed, 2026-10-04): wildLegends.perMap of them, chosen by
- *  the seed among the areas at least `from` remote, at least `spacing` areas apart. */
-export function wildLegendCells(map: ForestMap): [number, number][] {
-  const W = map.tuning.wildLegends, r = rng(map.seed * 4057 + 29);
-  const pool: [number, number][] = [];
-  for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) if (map.remoteness(cx, cy) >= W.from) pool.push([cx, cy]);
-  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
-  const want = W.perMap[0] + Math.floor(r() * (W.perMap[1] - W.perMap[0] + 1)), out: [number, number][] = [];
-  for (const c of pool) {
-    if (out.length >= want) break;
-    if (out.every(o => Math.hypot(o[0] - c[0], o[1] - c[1]) >= W.spacing)) out.push(c);
-  }
-  return out;
+/** Where an area's legend lies (Ed, 2026-10-04): out of its clearing, but well inside the map (where she can fly). */
+function legendSpot(map: ForestMap, cell: [number, number], r: () => number): [number, number] {
+  const site = map.siteOf(cell[0], cell[1]), range = wanderRange(map), [anchorX, anchorZ] = anchorOf(map, cell, site.x, site.z, range);
+  const base = { cell, homeX: site.x, homeZ: site.z, range, anchorX, anchorZ }, B = map.bounds;
+  const inside = (px: number, pz: number) => px > B.minX + 15 && px < B.maxX - 15 && pz > B.minZ + 15 && pz < B.maxZ - 15;
+  let best = -1, at: [number, number] = [anchorX, anchorZ];
+  for (let i = 0; i < 9; i++) { const [px, pz] = pointInArea(map, base, r), dd = Math.hypot(px - site.x, pz - site.z); if (inside(px, pz) && dd > best) { best = dd; at = [px, pz]; } }
+  return at;
 }
 
 /** How far from its area's centre a creature looks for places to go: the whole area. */
@@ -183,17 +186,21 @@ export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" |
 }
 
 export function spawnCreatures(map: ForestMap): Creature[] {
-  const out: Creature[] = [], t = map.tuning, pop = population(map);
-  // The home area holds none (Ed, 2026-10-03); with legendNextToHome, one legend lives next door.
-  const [hx, hy] = map.centreCell, bosses = new Set(wildLegendCells(map).map(c => c.join()));
+  const out: Creature[] = [], pop = population(map);
+  // The home area holds no ordinary creatures (Ed, 2026-10-03). Every area, home too, has its
+  // legend (Ed, 2026-10-04): sleeping, out of its clearing; home's is already happy, with the party.
+  const [hx, hy] = map.centreCell;
   for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
-    if (cx === hx && cy === hy) continue;
+    const home = cx === hx && cy === hy;
     const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), cell: [number, number] = [cx, cy], make = (level: Level) => out.push(makeCreature(map, cell, level, out.length, r));
-    for (let i = 0; i < pop.babies; i++) make(0);
-    for (let i = 0; i < pop.young; i++) make(1);
-    for (let i = 0; i < pop.adults; i++) make(2);
-    const nextToHome = t.legendNextToHome && cx === hx + 1 && cy === hy;
-    if (bosses.has(`${cx},${cy}`) || nextToHome) make(3);
+    if (!home) {
+      for (let i = 0; i < pop.babies; i++) make(0);
+      for (let i = 0; i < pop.young; i++) make(1);
+      for (let i = 0; i < pop.adults; i++) make(2);
+    }
+    const L = makeCreature(map, cell, LEGEND, out.length, r, legendSpot(map, cell, r));
+    L.legendState = home ? "happy" : "asleep"; L.stateAt = 0;
+    out.push(L);
   }
   return out;
 }

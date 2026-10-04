@@ -6,8 +6,8 @@
 // Bushes grow in patches (berries.patch), so a sigil set in the middle of one is a feeding spot.
 // An eaten berry grows again at once on a free berry bush somewhere else on the map, so the number
 // of berries never changes. A party animal that has eaten enough evolves: babies after 1, young
-// after 3, adults after 8 (berries.toEvolve; adults to a legend, the only way to get a party
-// legend). It evolves on the next bar line of the music, so the view can make a show of it. No drawing here.
+// after 3 (berries.toEvolve); evolving stops at adult (Ed, 2026-10-04: legends are the areas'
+// own, never grown). It evolves on the next bar line of the music, so the view can make a show of it. No drawing here.
 import { maxHp } from "./combat";
 import { beatAt, timeAt, type BeatClock } from "./beat";
 import { LEGEND, type Creature, type Level } from "./creatures";
@@ -50,12 +50,14 @@ export interface BerryState {
   rand: () => number;
 }
 
-/** Berries needed to go up from a level (babies, young, adults); legends don't eat. */
-export const toEvolve = (level: Level, t: Tuning): number => (level >= LEGEND ? Infinity : t.berries.toEvolve[Math.min(level, t.berries.toEvolve.length - 1)]);
+/** The highest level a party animal evolves to: adult (Ed, 2026-10-04). */
+export const TOP_LEVEL: Level = 2;
+/** Berries needed to go up from a level (babies, young); adults and legends don't evolve. */
+export const toEvolve = (level: Level, t: Tuning): number => (level >= TOP_LEVEL ? Infinity : t.berries.toEvolve[Math.min(level, t.berries.toEvolve.length - 1)]);
 /** Who may eat berries: party animals that aren't legends (and aren't already evolving). */
-/** Whether a party animal goes for berries: not mid-fight or evolving; below a legend, or hurt
- *  (a berry heals it to full, Ed 2026-10-04: so a hurt one wants one whatever its level). */
-export const canEat = (c: Creature, s: BerryState): boolean => c.leashed && !s.evolving.has(c.id) && !c.fight?.target && (c.level < LEGEND || hurtNow(c));
+/** Whether a party animal goes for berries: not mid-fight or evolving; still able to evolve
+ *  (below adult), or hurt (a berry heals it to full, Ed 2026-10-04: so a hurt one wants one whatever its level). */
+export const canEat = (c: Creature, s: BerryState): boolean => c.leashed && !s.evolving.has(c.id) && !c.fight?.target && (c.level < TOP_LEVEL || hurtNow(c));
 const hurtNow = (c: Creature) => c.hp !== undefined && c.hp < maxHp(c.level);
 
 /** The berry bushes and the berries on them, from the seed: in every area of the playable map,
@@ -144,7 +146,7 @@ function release(s: BerryState, id: number): void {
 export function feed(s: BerryState, c: Creature, time: number, t: Tuning, clock?: BeatClock): void {
   // A berry heals a party animal to full (Ed, 2026-10-04), as well as counting toward evolving.
   if (c.leashed && hurtNow(c)) { c.hp = undefined; c.healedAt = time; }
-  if (c.level >= LEGEND || s.evolving.has(c.id)) return;
+  if (c.level >= TOP_LEVEL || s.evolving.has(c.id)) return;
   const n = (s.fed.get(c.id) ?? 0) + 1;
   s.ateAt.set(c.id, time);
   if (n >= toEvolve(c.level, t)) {

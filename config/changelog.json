@@ -33,7 +33,12 @@
         "Wide undergrowth and thickets no longer float at their downhill end on steep slopes",
         "The music takes its mood from Ed's two favourite references: dreamy, ethereal choirs and sung notes over the forest, then harder, darker waves with distorted industrial drums, metal clanks, a gritty bass and string stabs, then breakbeats; the bubblegum and chiptune waves have made way (a flash of chiptune still sparkles in the frenzy)",
         "The music sounds bigger and clearer: crisp 808-style hats, a punchier kick with a click, wide detuned supersaw leads, breathing pads, a darker, deeper reverb, and everything rebalanced so the drums, bass, chords and melodies each have their own space",
-        "A big glowing number over every rune stone: the wave that will wake it (dimmed once the party's there)"
+        "A big glowing number over every rune stone: the wave that will wake it (dimmed once the party's there)",
+        "Every area now has its own legend, asleep for centuries: half sunk into the ground and grown over with moss, easy to mistake for a mound. Walking by won't wake it",
+        "When the party reaches its area, the legend heaves up out of the ground, angry, and guards its area: it goes for you, your animals and that area's soundsystem, but never leaves its area",
+        "Beat a legend and it sinks back to sleep for good. Home's legend is happy and on your side from the start; press L to make the nearest legend happy (a stand-in until quests): its buff turns on",
+        "Party animals now evolve only up to adult: legends are the areas' own",
+        "A happy legend guards its area for you: it takes on sieges marching through or on its soundsystem with its big moves, heals between fights, and if it's beaten it sinks back to sleep (its buff gone). See it in the arena: ?arena=home,wolf*6@2!"
       ]
     },
     {

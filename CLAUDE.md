@@ -108,3 +108,6 @@ Literal, stable names for the parts of the game, as Ed and the builders agree th
 - **Playtest log**: `src/platform/playtestLog.ts`: a sample every 10 s of play on this browser (localStorage `witch.playtest`, the last 8 runs); L or `?playtest=download` saves it as JSON.
 - **Balance simulator**: `rules/balance.ts` and `tools/balance/sim.mjs` (see Testing).
 - **Sky**: the night sky over the bend (`src/render/sky.ts`): gradient, stars, the moon, and clouds lit from below by the party (`sky`); left sharp by the tilt-shift.
+- **Area legend / sleeping legend**: the one legend of its kind in every area, asleep (sunk and mossed over, scenery) until its area's wave wakes it, angry, to guard its area; beaten, it sleeps for good (DESIGN.md, "Sleeping legends").
+- **Happy legend**: an area legend at peace, its buff on (for now only by the debug key L; quests later). Home's is happy from the start.
+- **Debug arena**: `?arena=wolf*4@2,beetle*3`, hers against the wild below the dancefloor; J sets it up again.

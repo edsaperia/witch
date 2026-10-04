@@ -12,7 +12,7 @@ import { nextSpeakerState, type SpeakerState } from "./speakers";
 import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
 import { SIGIL_NEON } from "../../art/sigils.js";
 import { newBuffs, stepBuffs, type BuffState } from "./buffs";
-import { COMBAT, marchOn, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
+import { COMBAT, marchOn, maxHp, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
 import { hurt, knockOut, newHealth, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
 import { applyDash, newDash, startDash, type DashState } from "./dash";
 import { castSpell, newSpells, speedMultiplier, type SpellState } from "./spells";
@@ -67,6 +67,8 @@ export interface Game {
   koEvents: KnockoutEvent[];
   /** The creatures by home area (rebuilt when one settles somewhere new). */
   byArea?: Map<string, Creature[]> | null;
+  /** The areas' legends, by id (rules/creatures.ts: one an area), found once. */
+  legendIds?: number[];
   /** The debug arena (?arena=, rules/arena.ts): its spec and the creatures it put down. */
   arena?: { spec: string; ids: number[] };
   /** The run is over (every soundsystem destroyed): when. */
@@ -92,6 +94,8 @@ export interface Game {
 }
 
 export interface Controls extends Intent, Partial<LeashControls> {
+  /** Debug (L): the nearest area legend turns happy (how it will is a quest, undecided). */
+  happyNearest?: boolean;
   /** Auto-talk (the player's setting, on unless turned off), and Talk held (how she talks with it off). */
   autoTalk?: boolean;
   talkHeld?: boolean;
@@ -136,7 +140,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
 }
 
 /** The presses that happen once (not held): kept for the next step if a frame runs none. */
-const ONE_SHOT = ["toggleMode", "sigil", "spell", "cycle", "dash", "nextWave", "pauseWaves", "feedNearest", "inviteNearest"] as const;
+const ONE_SHOT = ["toggleMode", "sigil", "spell", "cycle", "dash", "nextWave", "pauseWaves", "feedNearest", "inviteNearest", "happyNearest"] as const;
 
 /** Advance the game by one real frame of `realDt` seconds: as many fixed STEPs as that makes up
  *  (at most a few, so a hitch doesn't run away), with the held controls each step and each
@@ -195,8 +199,9 @@ function fixedStep(g: Game, controls: Controls): void {
   const dt = STEP;
   g.clock.time += dt;
   const wave = g.party.wave, seated = g.witch.seated;
-  // Legend buffs: the party legends alive now change the numbers the rest of the step plays by.
-  stepBuffs(g.buffs, g.creatures, [...g.leash.stack, ...g.leash.placed.map(p => p.id)], g.tuning);
+  // Legend buffs: the happy legends (and any party legend) change the numbers the rest of the step plays by.
+  const legends = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id));
+  stepBuffs(g.buffs, g.creatures, [...g.leash.stack, ...g.leash.placed.map(p => p.id), ...legends.filter(id => g.creatures[id].legendState === "happy")], g.tuning);
   const t = g.buffs.tuning;
   if ((g.party.seeAhead ?? 0) !== g.buffs.totals.forecastAhead) { g.party.seeAhead = g.buffs.totals.forecastAhead; planAhead(g.party, g.map); }
   if (c.spell) castSpell(g.spells, g.clock.time, t);
@@ -217,6 +222,7 @@ function fixedStep(g: Game, controls: Controls): void {
   if (g.party.wave > before) g.party.nextAt += t.party.interval - g.tuning.party.interval;
   // Each wave brings its tempo, eased in from the block line its music lands on.
   if (g.party.wave !== g.beat.wave) waveArrived(g.beat, g.tuning, g.party.wave, g.clock.time);
+  stepLegends(g, legends, !!c.happyNearest);
   if (W.ko) {
     const r = stepKnockout(W.ko, W.body, W.leash, g.creatures, g.map, g.clock.time, k => g.party.areas.has(k), g.koEvents);
     W.body = r.body;
@@ -365,8 +371,34 @@ function stepDancefloor(g: Game, waveBefore: number, wasSeated: boolean | undefi
   stepFloor(f, floorInputs(g), g.tuning);
 }
 
-/** A wild legend still asleep: it wakes when the party reaches its area (Ed, 2026-10-04). */
-export const dormant = (g: Game, c: Creature): boolean => !!c.boss && !c.leashed && !g.party.areas.has(cellKey(c.cell));
+/** An area legend that isn't up and about (asleep, waking, or asleep for good): no roaming, no
+ *  fighting, nothing to invite (DESIGN.md, "Sleeping legends"). */
+export const dormant = (_g: Game, c: Creature): boolean => !!c.boss && !c.leashed && (c.legendState === "asleep" || c.legendState === "waking" || c.legendState === "slept");
+
+/** The legends' states (Ed, 2026-10-04): asleep ones wake when the party reaches their area,
+ *  heaving out of the ground for wildLegends.wake seconds (untouchable), then awake and angry,
+ *  guarding their area (combat: stepLegend). Beaten, combat puts them to sleep for good. Debug: the
+ *  nearest not asleep for good turns happy; a happy one guards its area for her (combat) and heals
+ *  while no enemy is near. */
+function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
+  const time = g.clock.time, W = g.tuning.wildLegends;
+  for (const id of ids) {
+    const c = g.creatures[id];
+    if (c.legendState === "asleep" && g.party.areas.has(cellKey(c.cell))) { c.legendState = "waking"; c.stateAt = time; }
+    else if (c.legendState === "waking" && time - (c.stateAt ?? 0) >= W.wake) {
+      c.legendState = "awake"; c.stateAt = time; c.enraged = true; // (it guards its area: combat keeps it there)
+      const key = cellKey(c.cell);
+      if (g.combat.sounds.has(key)) c.siege = key; // its area's soundsystem, never another's
+    }
+  }
+  // A happy legend heals while no enemy is near (Ed's default, 2026-10-04).
+  for (const id of ids) { const c = g.creatures[id]; if (c.legendState === "happy" && c.hp !== undefined && !c.fight?.target) { c.hp += W.heal * STEP; if (c.hp >= maxHp(c.level)) c.hp = undefined; } }
+  if (happyNearest) {
+    let best: Creature | null = null, bd = Infinity;
+    for (const id of ids) { const c = g.creatures[id], d = Math.hypot(c.x - g.witch.x, c.z - g.witch.z); if (c.legendState !== "slept" && c.legendState !== "happy" && d < bd) { bd = d; best = c; } }
+    if (best) Object.assign(best, { legendState: "happy", stateAt: time, enraged: false, siege: undefined, fight: undefined, charge: undefined, legend: undefined, hp: undefined });
+  }
+}
 
 /** How far from the witch creatures are simulated (by their home): at least far enough that one
  *  resuming anywhere in its area does so beyond the draw distance (the haze), so none ever jumps

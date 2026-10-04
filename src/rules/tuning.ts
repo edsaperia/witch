@@ -180,9 +180,8 @@ export interface Tuning {
    *  growth.perWave a wave at a random level by growth.weights (baby, young, adult); new ones
    *  appear beyond the haze's far edge plus growth.hide metres from every witch (rules/growth.ts). */
   population: { start: { babies: number; young: number; adults: number }; growth: { on: boolean; perWave: number; weights: number[]; hide: number } };
-  legendNextToHome: boolean;
-  /** Wild legends (Ed, 2026-10-04): rare, late mini-bosses in remote areas, dormant till the party reaches their area. */
-  wildLegends: { perMap: number[]; from: number; spacing: number; scale: number; breathe: number; breathEvery: number; aura: number; glow: number };
+  /** Area legends (Ed, 2026-10-04): one an area, asleep till its area's wave, then a mini-boss guarding it. */
+  wildLegends: { wake: number; sink: number; moss: number; guard: number; heal: number; scale: number; breathe: number; breathEvery: number; aura: number; glow: number };
   creatureSimRadius: number;
   creatureSpeed: number;
   setPieceChance: number;

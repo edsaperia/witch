@@ -21,7 +21,7 @@ function quiet(t: Tuning = TUNING): Game {
 }
 /** Put a creature at (x, z) as a given kind and level, wild or in the witch's party. */
 function place(g: Game, i: number, species: string, level: Level, x: number, z: number, party = false): Creature {
-  const c = g.creatures.find(k => !k.gone && !k.leashed && k.id >= i && Math.hypot(k.x - g.witch.x, k.z - g.witch.z) > 80)!;
+  const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && k.id >= i && Math.hypot(k.x - g.witch.x, k.z - g.witch.z) > 80)!;
   Object.assign(c, { species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, rest: 0 });
   c.cell = g.map.cellSafe(x, z).cell as [number, number];
   if (party) { c.leashed = true; g.leash.stack.push(c.id); }
@@ -318,12 +318,12 @@ describe("sieges (Stage 4)", () => {
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
     const next = g.party.next[0]; // (the areas round home hold only babies, who don't attack: grow a few)
-    g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1]).forEach(c => { c.level = 1; });
+    g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1] && !c.boss).forEach(c => { c.level = 1; }); // (its legend wakes and guards it: sleeping.test.ts)
     stepGame(g, { ...idle, nextWave: true }, STEP);
     const [key, area] = [...g.party.areas].find(([, a]) => a.wave === 1)!;
     const sound = g.combat.sounds.get(key)!;
     expect(sound.hp).toBe(60);
-    const besiegers = g.creatures.filter(c => c.siege === key);
+    const besiegers = g.creatures.filter(c => c.siege === key && !c.boss);
     expect(besiegers.length).toBeGreaterThan(0);
     expect(besiegers.every(c => c.cell[0] === area.cell[0] && c.cell[1] === area.cell[1] && c.level > 0)).toBe(true);
     // March them close, then let the siege run.

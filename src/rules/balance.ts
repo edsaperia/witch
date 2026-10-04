@@ -93,6 +93,7 @@ export function fightersOf(map: ForestMap, creatures: Creature[] = spawnCreature
   const t = map.tuning, C = t.combat, by = new Map<string, Fighter[]>();
   for (const c of creatures) {
     if (c.level === 0) continue; // babies never join a siege
+    if (c.boss) continue; // (the areas' own legends: the areaLegends option models them)
     const atk = attackOf(c.species, c.level, COMBAT)!, A = atk.attack, kites = A.delivery === "shot" && COMBAT.kite.species.includes(c.species);
     const reach = A.delivery === "shot" ? A.range * (kites ? COMBAT.kite.far : 0.8) : A.range + (A.lunge ?? 0) - 0.3;
     const f: Fighter = { id: c.id, level: c.level, cell: cellKey(c.cell), x: c.x, z: c.z, x0: c.x, z0: c.z, speed: c.speed * C.marchMult, dps: COMBAT.levels.dps[c.level], reach, value: levelValue(c.level), siege: null, gone: false };
