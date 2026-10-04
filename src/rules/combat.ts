@@ -25,6 +25,8 @@ export interface Attack {
   knockback?: number;
   slowMult?: number;
   slowTime?: number;
+  /** Melee: how far it lunges at where it aimed when the blow lands (dodgeable: it's committed). */
+  lunge?: number;
 }
 
 export interface CombatData {
@@ -32,9 +34,11 @@ export interface CombatData {
   attacks: Record<string, Attack>;
   byLevel: { melee: (string | null)[]; ranged: (string | null)[] };
   ranged: string[];
-  evasive: string[];
-  evadeDistance: number;
-  evadeMult: number;
+  /** Species with their own attacks by level (overriding byLevel). */
+  bySpecies: Record<string, (string | null)[]>;
+  /** Kiting (Ed, 2026-10-04: "keep a certain distance as part of their attack pattern"): these
+   *  hold between near and far of their range from what they shoot at, backing off or closing in. */
+  kite: { species: string[]; near: number; far: number };
 }
 
 export const COMBAT = raw as unknown as CombatData;
@@ -92,7 +96,7 @@ export const newCombat = (): CombatState => ({ shots: [], nextShot: 0, sounds: n
 
 /** The attack a creature has: none for babies; by its level and whether its kind shoots. */
 export function attackOf(species: string, level: Level, data: CombatData = COMBAT): { name: string; attack: Attack; damage: number } | null {
-  const list = data.ranged.includes(species) ? data.byLevel.ranged : data.byLevel.melee, name = list[level];
+  const list = data.bySpecies[species] ?? (data.ranged.includes(species) ? data.byLevel.ranged : data.byLevel.melee), name = list[level];
   if (!name) return null;
   const attack = data.attacks[name];
   return { name, attack, damage: data.levels.dps[level] * attack.cooldown };
@@ -102,6 +106,10 @@ export const maxHp = (level: Level, data: CombatData = COMBAT) => data.levels.hp
 
 /** Whether a creature takes part in fights now: alive, not wandering home neutral, not asleep. */
 export const fighting = (c: Creature) => !c.gone && !c.fleeUntil && !c.wanderTo;
+
+/** Whether anything may attack it: fighting, and not a baby (Ed, 2026-10-04: "No animals should
+ *  attack babies"; shots and quakes pass them by, and they can't be beaten in a fight). */
+export const targetable = (c: Creature) => fighting(c) && c.level > 0;
 
 const sideOf = (c: Creature): "wild" | "party" => (c.leashed ? "party" : "wild");
 
@@ -116,6 +124,10 @@ export interface CombatWorld {
   witches: { id: number; x: number; z: number; onGround: boolean; down: boolean }[];
   /** Where a party animal's leash is fixed. */
   leashPoint: (id: number) => { x: number; z: number } | null;
+  /** Whether a party animal is parked (at a sigil on the ground): it guards round it. */
+  parked: (id: number) => boolean;
+  /** Whether (x, z) is in the creature's own area. */
+  inArea: (c: Creature, x: number, z: number) => boolean;
   /** A wild creature still asleep (a dormant legend): no fighting. */
   asleep: (c: Creature) => boolean;
   time: number;
@@ -140,27 +152,40 @@ function targetPos(w: CombatWorld, s: CombatState, tg: Target): { x: number; z: 
 function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): boolean {
   if (tg.kind === "creature") {
     const o = w.creatures[tg.id];
-    return !!o && fighting(o) && sideOf(o) !== sideOf(c) && !truce(c, o) && !w.asleep(o);
+    return !!o && targetable(o) && sideOf(o) !== sideOf(c) && !truce(c, o) && !w.asleep(o);
   }
-  if (tg.kind === "witch") { const v = w.witches[tg.id]; return !c.leashed && !!v && v.onGround && !v.down; }
+  if (tg.kind === "witch") {
+    // A wild one loses her when she rises, or once she's out of its area, out of its attack range
+    // and at least combat.witchLose away (Ed, 2026-10-04); then it walks back to its spot.
+    const v = w.witches[tg.id];
+    if (c.leashed || !v || !v.onGround || v.down) return false;
+    const d = Math.hypot(v.x - c.x, v.z - c.z), range = attackOf(c.species, c.level)?.attack.range ?? 0;
+    return !(d > range && d >= w.t.combat.witchLose && !w.inArea(c, v.x, v.z));
+  }
   return !c.leashed && (s.sounds.get(tg.key)?.hp ?? 0) > 0;
 }
 
-/** The nearest enemy within `range` of (x, z): creatures of the other side and other kinds, and (for
- *  wild ones) the witches on the ground within aggro.witch. */
-function acquire(w: CombatWorld, c: Creature, x: number, z: number, range: number, grid: Grid): Target | null {
+/** What a creature goes for: the nearest enemy within `range` of (x, z), of the other side and
+ *  another kind, never a baby. A wild one goes for a witch on the ground once she's within its
+ *  attack range or combat.witchStart (Ed, 2026-10-04). A party animal following her takes on only
+ *  what attacks her or her party (Ed: they engage anything that attacks the witch or them); a
+ *  parked one, anything within guard.radius of its sigil. */
+function acquire(w: CombatWorld, c: Creature, x: number, z: number, range: number, attackRange: number, grid: Grid, guarding: boolean): Target | null {
   const C = w.t.combat;
   let best: Target | null = null, bd = range;
   for (const o of grid.near(x, z, range)) {
-    if (o === c || !fighting(o) || sideOf(o) === sideOf(c) || truce(c, o) || w.asleep(o)) continue;
+    if (o === c || !targetable(o) || sideOf(o) === sideOf(c) || truce(c, o) || w.asleep(o)) continue;
+    if (c.leashed && !guarding) {
+      const tg = o.fight?.target;
+      if (!tg || (tg.kind !== "witch" && !(tg.kind === "creature" && w.creatures[tg.id]?.leashed))) continue;
+    }
     const d = Math.hypot(o.x - x, o.z - z);
     if (d < bd) { bd = d; best = { kind: "creature", id: o.id }; }
   }
-  // Wild ones go for a witch on the ground within aggroWitch, if she's nearer than any creature.
   if (!c.leashed) for (const v of w.witches) {
     if (!v.onGround || v.down) continue;
     const d = Math.hypot(v.x - c.x, v.z - c.z);
-    if (d < C.aggroWitch && (!best || d < bd)) { bd = d; best = { kind: "witch", id: v.id }; }
+    if (d < Math.max(attackRange, C.witchStart) && (!best || d < bd)) { bd = d; best = { kind: "witch", id: v.id }; }
   }
   return best;
 }
@@ -206,7 +231,7 @@ function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target,
     return;
   }
   const o = w.creatures[tg.id];
-  if (!o || o.gone) return;
+  if (!o || o.gone || o.level === 0) return; // babies can't be hurt
   o.hp = (o.hp ?? maxHp(o.level)) - damage;
   o.hurtAt = time;
   s.events.push({ kind: "hit", x: o.x, z: o.z, at: time, id: o.id, big: from?.level === LEGEND });
@@ -234,7 +259,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (time >= sh.until) return false;
     const from = w.creatures[sh.from], a = data.attacks[sh.attack];
     for (const o of grid.near(sh.x, sh.z, sh.radius + 2)) {
-      if (!fighting(o) || sideOf(o) === sh.side || o.species === sh.species || w.asleep(o)) continue;
+      if (!targetable(o) || sideOf(o) === sh.side || o.species === sh.species || w.asleep(o)) continue;
       if (Math.hypot(o.x - sh.x, o.z - sh.z) <= sh.radius + 0.4 + o.level * 0.2) { land(w, s, from ?? null, { kind: "creature", id: o.id }, sh.damage, a, sh.x - sh.vx, sh.z - sh.vz); return false; }
     }
     if (sh.side === "wild") for (const v of w.witches) {
@@ -258,37 +283,29 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     }
     if (!fighting(c) || w.asleep(c) || (c.leashed && w.busy(c.id))) { c.fight = undefined; continue; }
     const atk = attackOf(c.species, c.level, data);
-    // Evasive kinds keep their distance from the witch (Ed, 2026-10-04: "some of them are fast and evade you").
-    if (!c.leashed && data.evasive.includes(c.species)) {
-      for (const v of w.witches) {
-        if (!v.onGround || v.down) continue;
-        const d = Math.hypot(c.x - v.x, c.z - v.z);
-        if (d < data.evadeDistance && d > 0.01) {
-          c.x += ((c.x - v.x) / d) * c.speed * data.evadeMult * dt; c.z += ((c.z - v.z) / d) * c.speed * data.evadeMult * dt;
-          c.moving = true; c.walk += dt * 8; c.facing = c.x > v.x ? 1 : -1;
-          c.evading = true;
-        }
-      }
-    }
     if (!atk) { c.fight = undefined; continue; } // babies don't attack
     const f = (c.fight ??= { target: null, readyAt: time + atk.attack.cooldown * 0.5 * (c.rand() + 0.5), windupUntil: 0, aimX: 0, aimZ: 0 });
-    const lp = c.leashed ? w.leashPoint(c.id) : null;
-    // Party animals fight only within reach of their leash point; wild ones within aggro of where they are.
-    const reachX = lp ? lp.x : c.x, reachZ = lp ? lp.z : c.z, reach = lp ? t.leash.length + C.engage : C.aggro;
+    const lp = c.leashed ? w.leashPoint(c.id) : null, guarding = !!lp && w.parked(c.id);
+    // Party animals fight only near their leash point (a parked one within guard.radius of its
+    // sigil); wild ones within aggro of where they are.
+    const reachX = lp ? lp.x : c.x, reachZ = lp ? lp.z : c.z, reach = lp ? (guarding ? t.guard.radius : t.leash.length + C.engage) : C.aggro;
     if (f.target && !valid(w, s, c, f.target)) f.target = null;
     if (f.target && lp) { const p = targetPos(w, s, f.target); if (!p || Math.hypot(p.x - lp.x, p.z - lp.z) > reach + atk.attack.range) f.target = null; }
     if (!f.target || f.windupUntil === 0) {
-      const near = acquire(w, c, reachX, reachZ, reach, grid);
+      const near = acquire(w, c, reachX, reachZ, reach, atk.attack.range, grid, guarding);
       if (near) f.target = near;
       else if (!f.target && c.siege && !c.leashed) f.target = { kind: "sound", key: c.siege };
     }
     if (!f.target) { if (f.windupUntil) f.windupUntil = 0; continue; }
     const p = targetPos(w, s, f.target);
     if (!p) { f.target = null; f.windupUntil = 0; continue; } // (it fell this very step)
-    const d = Math.hypot(p.x - c.x, p.z - c.z), A = atk.attack, want = A.delivery === "shot" ? A.range * 0.8 : A.range + p.r - 0.3;
+    const d = Math.hypot(p.x - c.x, p.z - c.z), A = atk.attack, K = data.kite, kites = A.delivery === "shot" && K.species.includes(c.species);
+    const want = A.delivery === "shot" ? A.range * (kites ? K.far : 0.8) : A.range + p.r + (A.lunge ?? 0) - 0.3;
     const speed = c.speed * (c.leashed ? C.partyChaseMult : C.chaseMult) * (c.slowUntil && time < c.slowUntil ? A.slowMult ?? 0.5 : 1) * (c.level === LEGEND ? 0.6 : 1);
     if (f.windupUntil === 0) {
       if (d > want) { moveToward(c, p.x, p.z, want, f.target.kind === "sound" ? c.speed * C.marchMult : speed, dt); continue; }
+      // A kiter backs off when its target comes too close, keeping its distance while it shoots.
+      if (kites && d < A.range * K.near && d > 0.01) { c.x -= ((p.x - c.x) / d) * speed * dt; c.z -= ((p.z - c.z) / d) * speed * dt; c.moving = true; c.walk += dt * 6; c.facing = p.x >= c.x ? 1 : -1; if (time < f.readyAt) continue; }
       c.moving = false; c.facing = p.x >= c.x ? 1 : -1;
       if (time >= f.readyAt) {
         f.windupUntil = time + A.windup; f.aimX = p.x; f.aimZ = p.z;
@@ -301,7 +318,12 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (time < f.windupUntil) continue;
     f.windupUntil = 0; f.readyAt = time + A.cooldown;
     const dmg = atk.damage;
-    if (A.delivery === "melee") { if (d <= A.range + p.r + 0.8) land(w, s, c, f.target, dmg, A, c.x, c.z); }
+    if (A.delivery === "melee") {
+      // The lunge: at where it aimed when it wound up, so stepping aside dodges it.
+      const ax = f.aimX - c.x, az = f.aimZ - c.z, ad = Math.hypot(ax, az), L = Math.min(A.lunge ?? 0, Math.max(0, ad - 0.5));
+      if (ad > 0.01 && L > 0) { c.x += (ax / ad) * L; c.z += (az / ad) * L; }
+      if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range + p.r) land(w, s, c, f.target, dmg, A, c.x, c.z);
+    }
     else if (A.delivery === "shot") {
       const ax = f.aimX - c.x, az = f.aimZ - c.z, ad = Math.hypot(ax, az) || 1, v = A.speed ?? 9;
       s.shots.push({ id: s.nextShot++, x: c.x, z: c.z, vx: (ax / ad) * v, vz: (az / ad) * v, until: time + (A.range * 1.3) / v, from: c.id, side: sideOf(c), species: c.species, damage: dmg, radius: A.radius ?? 0.6, attack: atk.name });
@@ -310,7 +332,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       // The quake: everything of the other side round it, and the witch if she's on the ground in it.
       const R = A.radius ?? 5;
       s.events.push({ kind: "quake", x: c.x, z: c.z, at: time, id: c.id, big: true });
-      for (const o of grid.near(c.x, c.z, R)) if (o !== c && fighting(o) && sideOf(o) !== sideOf(c) && !truce(c, o) && Math.hypot(o.x - c.x, o.z - c.z) <= R) land(w, s, c, { kind: "creature", id: o.id }, dmg, A, c.x, c.z);
+      for (const o of grid.near(c.x, c.z, R)) if (o !== c && targetable(o) && sideOf(o) !== sideOf(c) && !truce(c, o) && Math.hypot(o.x - c.x, o.z - c.z) <= R) land(w, s, c, { kind: "creature", id: o.id }, dmg, A, c.x, c.z);
       if (!c.leashed) {
         for (const v of w.witches) if (v.onGround && !v.down && Math.hypot(v.x - c.x, v.z - c.z) <= R) land(w, s, c, { kind: "witch", id: v.id }, dmg, A, c.x, c.z);
         for (const [key, h] of s.sounds) if (h.hp > 0 && Math.hypot(h.x - c.x, h.z - c.z) <= R + h.radius) land(w, s, c, { kind: "sound", key }, dmg, A, c.x, c.z);

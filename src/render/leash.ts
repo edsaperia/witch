@@ -340,9 +340,12 @@ export class LeashView {
           }
         }
       }
+      // Healed (a berry, or invited: Ed, 2026-10-04): a green sparkle, and its bar shows full a moment.
+      const healed = c.healedAt !== undefined && time - c.healedAt < 0.8;
+      if (healed) for (let i = 0; i < 10; i++) { const k = (time - c.healedAt!) / 0.8, a = hash2(c.id, i, 11) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 0.9 * (0.4 + k), 0.4 + k * 2 + hash2(c.id, i, 13), c.z + Math.sin(a) * 0.6 * (0.4 + k), 0.3, dot, 0.4, 1, 0.5, 1 - k); }
       // Health bars, only when hurt: ten squares over its head.
       const max = maxHp(c.level), hp = c.hp ?? max;
-      if (hp < max && !c.fleeUntil) {
+      if ((hp < max || healed) && !c.fleeUntil) {
         const y = (this.tops.get(c.id) ?? 1.6 + c.level * 0.7) + 0.5, share = Math.max(0, hp / max), R = SPRITE_UNIFORMS.uRight.value, wide = 1 + c.level * 0.25;
         for (let i = 0; i < 10; i++) { // drawn over everything, so a big creature's own sprite doesn't hide it
           const o = (i - 4.5) * 0.17 * wide, lit = (i + 0.5) / 10 <= share;

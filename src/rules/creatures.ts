@@ -72,8 +72,8 @@ export interface Creature {
   /** Let go when its witch was knocked out (Ed, 2026-10-04): neutral, walking to this area of its
    *  own kind, where it becomes an ordinary wild creature of that area. */
   wanderTo?: { x: number; z: number; cell: [number, number] };
-  /** Keeping its distance from the witch this step (an evasive kind). */
-  evading?: boolean;
+  /** When it was last healed to full (a berry, or being invited): the view's heal pop. */
+  healedAt?: number;
   /** A wild legend: a mini-boss when combat comes (a hook: no fighting yet). */
   boss?: boolean;
   /** A disc (centre, radius in metres) found to lie wholly in its own area: see inOwnArea. */
@@ -180,6 +180,14 @@ export function spawnCreatures(map: ForestMap): Creature[] {
 /** Roam: walk to a random spot in its own area, pause a while, pick another. It never crosses
  *  its area's border: a step that would cross it is not taken, and it chooses again. */
 export function stepCreature(c: Creature, dt: number, map: ForestMap): void {
+  // Out of its own area (it chased the witch, Ed 2026-10-04): it walks back to its spot first.
+  if (!inOwnArea(map, c, c.x, c.z)) {
+    const dx = c.anchorX - c.x, dz = c.anchorZ - c.z, d = Math.hypot(dx, dz) || 1, step = Math.min(d, c.speed * 2 * dt);
+    c.x += (dx / d) * step; c.z += (dz / d) * step; c.tx = c.anchorX; c.tz = c.anchorZ; c.rest = 0;
+    if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
+    c.moving = true; c.walk += dt * 4;
+    return;
+  }
   if (c.rest > 0) { c.rest -= dt; c.moving = false; c.away = false; return; }
   const dx = c.tx - c.x, dz = c.tz - c.z, d = Math.hypot(dx, dz);
   if (d < 0.05) {
@@ -199,7 +207,7 @@ export function stepCreature(c: Creature, dt: number, map: ForestMap): void {
 
 /** A creature moved by combat (rules/combat.ts) or a knockout (rules/knockout.ts) this step,
  *  not by its roam or its leash. */
-export const heldByCombat = (c: Creature) => !!(c.gone || c.fleeUntil || c.wanderTo || c.evading || c.fight?.target || (c.siege && !c.leashed));
+export const heldByCombat = (c: Creature) => !!(c.gone || c.fleeUntil || c.wanderTo || c.fight?.target || (c.siege && !c.leashed));
 
 /** Step only the creatures within `radius` metres of (x, z). One coming back into range after a
  *  while is put where it would plausibly be by now (a point in its area chosen from its id and

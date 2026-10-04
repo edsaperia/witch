@@ -249,12 +249,11 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     witches: g.witches.map((w, i) => ({ id: i, x: w.body.x, z: w.body.z, onGround: w.body.mode === "ground" && !w.body.seated, down: !!w.ko })),
     leashPoint: id => { for (const w of g.witches) { const p = leashPoint(w.leash, id, w.body.x, w.body.z); if (p) return p; } return null; },
     asleep: c => dormant(g, c),
+    parked: id => g.witches.some(w => w.leash.placed.some(p => p.id === id)),
+    inArea: (c, x, z) => { const k = g.map.cellSafe(x, z).cell; return k[0] === c.cell[0] && k[1] === c.cell[1]; },
     hitWitch: (id, at) => {
       const w = g.witches[id];
       if (!w || w.ko) return;
-      // Hit mid-chat: the chat loses invite.hitPenalty seconds (Ed: big groups are hard to invite without getting hit).
-      const talk = w.leash.talk;
-      if (talk && !talk.refused) { talk.t = Math.max(0, talk.t - t.invite.hitPenalty); w.leash.progress.set(talk.id, talk.t); }
       if (hurt(w.health, at, t)) { w.ko = knockOut(w.leash, g.creatures, at, t); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z }); }
     },
     loseParty: id => {

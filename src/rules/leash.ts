@@ -89,7 +89,9 @@ function nearest(creatures: Creature[], x: number, z: number, within: number, le
 function invite(s: LeashState, c: Creature, x: number, z: number, time: number): void {
   c.leashed = true;
   c.rest = 0;
-  c.wanderTo = undefined; c.siege = undefined; c.fight = undefined; c.evading = false;
+  c.wanderTo = undefined; c.siege = undefined; c.fight = undefined;
+  // Invited, it's whole again (Ed, 2026-10-04), with a heal pop if it was hurt.
+  if (c.hp !== undefined) { c.hp = undefined; c.healedAt = time; }
   s.stack.push(c.id);
   s.events.push({ kind: "invited", id: c.id, x, z, at: time });
 }

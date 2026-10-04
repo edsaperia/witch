@@ -138,13 +138,14 @@ window.addEventListener("keydown", e => { if (e.code === "KeyG" && !e.repeat) to
 window.addEventListener("keydown", e => { if (e.code === "KeyM" && !e.repeat) view.minimap.on = !view.minimap.on; });
 document.getElementById("rulers")!.addEventListener("pointerdown", e => { e.preventDefault(); toggleRulers(); });
 
-// The controls hint in the corner: H shows or hides it (remembered on this browser).
-const helpEl = document.getElementById("help")!;
-try { if (localStorage.getItem("witch.help") === "off") helpEl.classList.add("off"); } catch { /* storage blocked: shown */ }
+// The action bar (1 2 3 4 Q W E R, its keys and recharge) replaces the old line of controls (Ed,
+// 2026-10-04); H shows or hides it (remembered on this browser).
+let barOn = true;
+try { if (localStorage.getItem("witch.bar") === "off") { barOn = false; view.actionBar.visible = false; } } catch { /* storage blocked: shown */ }
 window.addEventListener("keydown", e => {
   if (e.code !== "KeyH" || e.repeat) return;
-  const off = helpEl.classList.toggle("off");
-  try { localStorage.setItem("witch.help", off ? "off" : "on"); } catch { /* fine */ }
+  barOn = !barOn; view.actionBar.visible = barOn;
+  try { localStorage.setItem("witch.bar", barOn ? "on" : "off"); } catch { /* fine */ }
 });
 
 declare const __BUILD__: string;
