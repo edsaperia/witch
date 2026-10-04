@@ -441,7 +441,8 @@ async function main() {
       const W = window.witch, g = W.game, h = W.groundHeight, d = g.map.dancefloor;
       let best = null, bs = 0;
       for (let k = 0; k < 4000; k++) {
-        const x = d.x + ((k * 37.7) % 800) - 400, z = d.z + ((k * 91.3) % 800) - 400;
+        // (well inside the hills' window round her, which fades to flat at its edges)
+        const x = d.x + ((k * 37.7) % 560) - 280, z = d.z + ((k * 91.3) % 560) - 280;
         if (Math.hypot(x - d.x, z - d.z) < 120 || g.map.paths.at(x, z, 2)) continue;
         const s = Math.abs(h(x, z - 12) - h(x, z + 12)) / 24;
         if (s > bs) { bs = s; best = [x, z]; }
