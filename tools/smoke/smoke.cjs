@@ -123,7 +123,11 @@ async function main() {
       return null;
     });
     if (heath) {
-      await sleep(1500);
+      // Wait for frames drawn at the new place (game time passing), not wall time: the first
+      // rebuild there makes new forest, which a slow renderer can take over a second to finish,
+      // and what it draws then must not count as popping in.
+      const t0 = await page.evaluate(() => window.witch.game.clock.time);
+      await page.waitForFunction(t => window.witch.game.clock.time - t >= 0.5, t0, { timeout: 120000, polling: 50 });
       await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 900000, polling: 500 });
       await page.evaluate(() => { window.witch.view.pops = []; });
       await path();
