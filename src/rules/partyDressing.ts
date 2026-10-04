@@ -5,6 +5,7 @@
 // mirror ball stand on their poles); point lights from campfires and lanterns only, a few per area.
 // Everything is seeded from the area's cell, so it's the same each time. No drawing here.
 import { PARTY_BY_ID, PARTY_CLUSTERS, PARTY_LIGHT_NEONS, PARTY_OBJECTS } from "../../art/party.js";
+import { NEON } from "../../art/sigils.js";
 import type { ForestMap } from "./map";
 
 import type { Cell } from "./partition";
@@ -30,12 +31,16 @@ export interface Dressing {
   loose: Placed[];
   /** An escaped balloon caught up in a crown near here (the view hangs it from the nearest tree). */
   caught: Placed | null;
+  /** Lanterns, a jar, fairy lights or a mirror ball hanging from the trees near here (the view
+   *  hangs each from a branch point in the nearest tree's crown by its hang anchor). */
+  hanging: Placed[];
   /** The pieces whose light is real (campfires and lanterns: at most partyObjects.lightsPerArea), by their ref and place. */
   lights: Placed[];
 }
 
 /** Each piece that can be a loose one. */
 const POOL = DEFS.filter(d => (d.cls === "litter" || d.cls === "small" || d.cls === "balloon") && !d.hang);
+const HANGING = DEFS.filter(d => d.hang && d.cls !== "balloon" && d.id !== "balloon-caught");
 const SETS = DEFS.filter(d => d.cls === "set");
 
 /** A ref for a piece, its neon and balloons picked at random (Ed: random per placement). */
@@ -72,7 +77,7 @@ export function dressingOf(map: ForestMap, cell: Cell, t: Tuning): Dressing {
     return null;
   };
   const between = ([lo, hi]: number[]) => lo + Math.floor(r() * (hi - lo + 1));
-  const out: Dressing = { clusters: [], loose: [], caught: null, lights: [] };
+  const out: Dressing = { clusters: [], loose: [], caught: null, hanging: [], lights: [] };
   for (let i = 0, n = between(P.clusters); i < n; i++) {
     const s = spotFor(4);
     if (s) out.clusters.push({ id: PARTY_CLUSTERS[Math.floor(r() * PARTY_CLUSTERS.length)].id, ...s, mirror: r() < 0.5 });
@@ -82,9 +87,11 @@ export function dressingOf(map: ForestMap, cell: Cell, t: Tuning): Dressing {
     const s = spotFor(0.6, 0.05, 0.5);
     if (s) out.loose.push({ ref: refFor(pool[Math.floor(r() * pool.length)], r), ...s, flip: r() < 0.5 });
   }
+  const hangs = HANGING.filter(d => !t.partyObjects.exclude.includes(d.id));
+  for (let i = 0, n = hangs.length ? between(P.hanging) : 0; i < n; i++) { const s = spotFor(2, 0.1, 0.5); if (s) out.hanging.push({ ref: refFor(hangs[Math.floor(r() * hangs.length)], r), ...s, flip: r() < 0.5 }); }
   if (r() < P.caughtChance) { const s = spotFor(1, 0.2, 0.55); if (s) out.caught = { ref: `party:balloon-caught~${PALETTES[Math.floor(r() * PALETTES.length)]}`, ...s, flip: r() < 0.5 }; }
   // Real lights: the loose campfires and lanterns first (the clusters' own are added by the view, which knows their layout), at most lightsPerArea.
-  for (const p of out.loose) { const def = partyDef(p.ref); if (def && (def.pointLight || LANTERNS.has(def.id)) && !def.cold && out.lights.length < P.lightsPerArea) out.lights.push(p); }
+  for (const p of [...out.loose, ...out.hanging]) { const def = partyDef(p.ref); if (def && (def.pointLight || LANTERNS.has(def.id)) && !def.cold && out.lights.length < P.lightsPerArea) out.lights.push(p); }
   return out;
 }
 
@@ -92,7 +99,11 @@ export function dressingOf(map: ForestMap, cell: Cell, t: Tuning): Dressing {
 export function lightOf(ref: string, t: Tuning): { rgb: number[]; radius: number; height: number } | null {
   const def = partyDef(ref);
   if (!def || def.cold) return null;
-  if (def.pointLight) return def.pointLight;
+  if (def.pointLight) {
+    // "neon": the light of the neon this one was baked in.
+    const rgb = def.pointLight.rgb as unknown;
+    return rgb === "neon" ? { ...def.pointLight, rgb: (NEON as Record<string, number[]>)[ref.split("@")[1]?.split("~")[0] ?? "pink"] ?? NEON.pink } : def.pointLight;
+  }
   return LANTERNS.has(def.id) ? { rgb: [255, 186, 96], radius: t.partyObjects.lanternReach, height: 1.4 } : null;
 }
 

@@ -217,7 +217,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 
       <section style="display:grid;gap:10px">
         <div class="row" style="justify-content:space-between"><h2>Party witches</h2><div class="row"><label class="note" for="partyPose">Pose</label><select id="partyPose"></select><button id="partyShuffle">Shuffle</button></div></div>
-        <p class="note">Witches who fly in to the party, one for each soundsystem: a row per party outfit (raver, flower child, disco, punk, festival, cat hat, glam, goth, candy, boho), each with its own hat, hair and top, its colours and skin picked by its seed (Shuffle picks others). With "a mix": hovering, the lean cycle, then a pose of each kind (dancing, drinking, running, hugging, sitting, stargazing). Pick a pose to see every frame of it, our witch first, then every outfit. Below, the pairs, put together at their anchors: dancing face to face, a hug, a high-five, holding hands (facing you), a toast, the conga.</p>
+        <p class="note">Witches who fly in to the party, one for each soundsystem: a row per party outfit (raver, flower child, disco, punk, festival, cat hat, glam, goth, candy, boho), each with its own hat, hair and top, its colours and skin picked by its seed (Shuffle picks others). With "a mix": hovering, the lean cycle, then a pose of each kind (dancing, drinking, running, hugging, sitting, stargazing). Pick a pose to see every frame of it, our witch first, then every outfit. Below, the pairs, put together at their anchors: dancing face to face, a hug, a high-five, holding hands (facing you), a toast, the conga, a twirl, and the broom limbo (two holding the broom, a third leaning back under it).</p>
         <div class="sheet-wrap"><canvas id="partySheet" width="420" height="160"></canvas></div>
       </section>
 
@@ -778,16 +778,18 @@ function renderParty() {
     const witches = PARTY_OUTFITS.map((P, k) => partyWitch(partySeed + k * 5 + 1, { outfit: P.id }));
     const b = (w, o) => bake(witchSprite(st, { ...o, look: w ? w.look : undefined }), w ? w.colours(st) : witchColours(st), st, st.cOutline);
     if (pose) { const n = WITCH_FOOT_POSES[pose].frames, fr = [...Array(n).keys()]; for (const w of [null, ...witches]) rows.push([...fr.map(frame => b(w, { pose, frame })), ...fr.map(frame => b(w, { pose, frame, facing: "away" }))]); }
-    else for (const w of witches) rows.push([b(w, {}), ...[0, 1, 2, 3].map(frame => b(w, { pose: "lean", frame })), ...["twoStep", "bounce", "spin", "headbang", "jump", "drink", "laugh", "run", "hug", "sitGround", "stargaze"].map((p, k) => b(w, { pose: p, frame: k % WITCH_FOOT_POSES[p].frames, facing: k % 4 === 3 ? "away" : "towards" }))]);
+    else for (const w of witches) rows.push([b(w, {}), ...[0, 1, 2, 3].map(frame => b(w, { pose: "lean", frame })), ...["twoStep", "bounce", "spin", "headbang", "jump", "drink", "laugh", "run", "hug", "sitGround", "stargaze", "limbo"].map((p, k) => b(w, { pose: p, frame: k % WITCH_FOOT_POSES[p].frames, facing: k % 4 === 3 ? "away" : "towards" }))]);
     // the pairs: her partner flipped left-right (normals too) unless it's the conga, placed so their anchors meet
     const pairRow = [];
     for (const [pp, Pr] of Object.entries(WITCH_PAIRS)) {
       const frame = Pr.frame ?? 0, w1 = witches[(partySeed + pairRow.length) % witches.length], w2 = witches[(partySeed + pairRow.length + 3) % witches.length], o = { pose: pp, frame, ...(Pr.heading ? { heading: Pr.heading } : {}) };
-      const sa = witchSprite(st, { ...o, look: w1.look }), sb = witchSprite(st, { ...o, look: w2.look }), ba = bake(sa, w1.colours(st), st, st.cOutline), bb = bake(sb, w2.colours(st), st, st.cOutline);
+      const sa = witchSprite(st, { ...o, look: w1.look }), sb = witchSprite(st, { ...o, pose: Pr.partnerPose || pp, look: w2.look }), ba = bake(sa, w1.colours(st), st, st.cOutline), bb = bake(sb, w2.colours(st), st, st.cOutline);
       const [ax, ay] = sa.anchors[Pr.meet], [bx0, by] = sb.anchors[Pr.partner || Pr.meet], bx = Pr.mirror ? sb.w - bx0 : bx0, ox = Math.round(ax - bx), oy = Math.round(ay - by);
-      const x0 = Math.min(0, ox), y0 = Math.min(0, oy), W = Math.max(sa.w, ox + sb.w) - x0, H = Math.max(sa.h, oy + sb.h) - y0, A = document.createElement("canvas"), N = document.createElement("canvas"); A.width = N.width = W; A.height = N.height = H;
-      for (const [cv, src] of [[A, bb.A], [N, Pr.mirror ? bb.NF : bb.N]]) { const g = cv.getContext("2d"); if (Pr.mirror) { g.save(); g.translate(ox - x0 + sb.w, oy - y0); g.scale(-1, 1); g.drawImage(src, 0, 0); g.restore(); } else g.drawImage(src, ox - x0, oy - y0); }
-      A.getContext("2d").drawImage(ba.A, -x0, -y0); N.getContext("2d").drawImage(ba.N, -x0, -y0);
+      const layers = [{ bk: bb, sp: sb, x: ox, y: oy, mirror: Pr.mirror }];
+      if (Pr.third) { const w3 = witches[(partySeed + pairRow.length + 6) % witches.length], sc = witchSprite(st, { pose: Pr.third.pose, frame: 0, look: w3.look }), [ux, uy] = sa.anchors[Pr.third.under], [tx, ty] = sc.anchors[Pr.third.anchor]; layers.push({ bk: bake(sc, w3.colours(st), st, st.cOutline), sp: sc, x: Math.round(ux - tx), y: Math.round(uy + 2 - ty) }); } // the broom limbo's dancer, under the bar
+      layers.push({ bk: ba, sp: sa, x: 0, y: 0 });
+      const x0 = Math.min(...layers.map(l => l.x)), y0 = Math.min(...layers.map(l => l.y)), W = Math.max(...layers.map(l => l.x + l.sp.w)) - x0, H = Math.max(...layers.map(l => l.y + l.sp.h)) - y0, A = document.createElement("canvas"), N = document.createElement("canvas"); A.width = N.width = W; A.height = N.height = H;
+      for (const l of layers) for (const [cv, src] of [[A, l.bk.A], [N, l.mirror ? l.bk.NF : l.bk.N]]) { const g = cv.getContext("2d"); if (l.mirror) { g.save(); g.translate(l.x - x0 + l.sp.w, l.y - y0); g.scale(-1, 1); g.drawImage(src, 0, 0); g.restore(); } else g.drawImage(src, l.x - x0, l.y - y0); }
       pairRow.push({ A, N, w: W, h: H });
     }
     rows.push(pairRow);

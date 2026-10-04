@@ -117,13 +117,14 @@ function drawWrap(m, L, chest, fwd, spine, flying) {
     else m.ell(v3.add(chest, v3.add(v3.mul(fwd, -.11), v3.mul(spine, -.12))), [.3, .035, .16], M.JACKET, { dir: v3.add(spine, v3.mul(fwd, .12)), up: fwd, group: 12 });
   }
 }
-// Every part, flat and anchor of m turned by angle a about the vertical ("y") or the side-to-side ("z") axis through P.
-function turnModel(m, axis, a, P) {
+// Every part (those `only` picks), flat and anchor of m turned by angle a about the vertical ("y") or the side-to-side ("z") axis through P.
+function turnModel(m, axis, a, P, only = () => true) {
   const c = Math.cos(a), s = Math.sin(a);
   const R = axis === "y" ? q => [q[0] * c + q[2] * s, q[1], -q[0] * s + q[2] * c] : q => [q[0] * c - q[1] * s, q[0] * s + q[1] * c, q[2]];
   const Ri = axis === "y" ? q => [q[0] * c - q[2] * s, q[1], q[0] * s + q[2] * c] : q => [q[0] * c + q[1] * s, -q[0] * s + q[1] * c, q[2]];
   const pt = q => v3.add(P, R(v3.sub(q, P))), unpt = q => v3.add(P, Ri(v3.sub(q, P)));
   for (const q of m.parts) {
+    if (!only(q)) continue;
     if (q.type === "cone") { q.a = pt(q.a); q.b = pt(q.b); } else { q.c = pt(q.c); q.axes = q.axes.map(R); }
     if (q.paint) { const f = q.paint; q.paint = (p, part) => f(unpt(p), part); } // markings stay where they were painted
   }
@@ -227,9 +228,12 @@ function fastModel(frame) {
 //   sitGround    resting: sitting on the ground, leaning back on her hands, her broom lying beside her
 //   stargaze     resting: lying back, hands behind her head, knees up, a foot tapping
 //   conga        paired: hands on the shoulders of the witch ahead, kicking out to the sides
+//   twirl        paired: twirling a partner under her raised hand (the partner does twirled: spinning on her toes, her hand up in it)
+//   limboHold    the broom limbo: holding the broom level, its handle's far end to a partner (who does limboHelp: holding it); a third
+//                witch does limbo: knees bent, leaning far back, arms out, shuffling under the bar
 // The sigil itself is not drawn; each frame records her free hand (where a held sigil goes) and
 // her hat tip as anchors. frames and a suggested fps per pose; the party's poses loop, and say what they are
-// (party: dance, pair, social, move or rest); WITCH_PAIRS says how two witches meet.
+// (party: dance, pair, social, move or rest); WITCH_PAIRS says how two witches meet (or three: the broom limbo).
 export const WITCH_FOOT_POSES = {
   stand: { frames: 3, fps: 3 }, land: { frames: 3, fps: 10 }, takeoff: { frames: 3, fps: 10 }, talk: { frames: 4, fps: 2.5 }, placeSigil: { frames: 3, fps: 6 }, liftSigil: { frames: 3, fps: 6 }, sit: { frames: 2, fps: 1.5 },
   twoStep: { frames: 4, fps: 4, party: "dance" }, bounce: { frames: 2, fps: 4, party: "dance" }, shuffle: { frames: 4, fps: 6, party: "dance" }, spin: { frames: 4, fps: 6, party: "dance" },
@@ -237,15 +241,20 @@ export const WITCH_FOOT_POSES = {
   dancePair: { frames: 4, fps: 4, party: "pair" }, holdHands: { frames: 2, fps: 2, party: "pair" }, hug: { frames: 2, fps: 1.5, party: "pair" }, highFive: { frames: 2, fps: 3, party: "pair" },
   laugh: { frames: 3, fps: 4, party: "social" }, drink: { frames: 4, fps: 1.5, party: "social" }, run: { frames: 4, fps: 10, party: "move" },
   sitGround: { frames: 2, fps: 1, party: "rest" }, stargaze: { frames: 2, fps: 1, party: "rest" }, conga: { frames: 4, fps: 4, party: "pair" },
+  twirl: { frames: 4, fps: 4, party: "pair" }, twirled: { frames: 4, fps: 4, party: "pair" }, limboHold: { frames: 2, fps: 2, party: "pair" }, limboHelp: { frames: 2, fps: 2, party: "pair" }, limbo: { frames: 4, fps: 3, party: "dance" },
 };
 // Two witches together: each is her own sprite, and the game puts them so that her `meet` anchor and her partner's land on
 // the same pixel. mirror: the partner's sprite is flipped left-right (anchors too: x becomes w - x), so the two face each
 // other; heading: the heading to draw both in ("towards", facing us, for side by side). frame: only that frame meets (the
 // toast); conga: the partner ahead's `back` anchor takes this witch's `pair` (her hands on its shoulders), same way round.
+// partnerPose: the partner does this pose instead (twirl: twirled; limboHold: limboHelp). third: a third witch doing that pose
+// passes under the arrangement: the broom limbo's dancer moves along with her `top` anchor just below the holder's `bar` anchor.
 export const WITCH_PAIRS = {
   dancePair: { meet: "pair", mirror: true }, hug: { meet: "pair", mirror: true }, highFive: { meet: "pair", mirror: true },
   holdHands: { meet: "pair", mirror: true, heading: "towards" }, drink: { meet: "pair", mirror: true, frame: 3 },
   conga: { meet: "pair", partner: "back", mirror: false },
+  twirl: { meet: "pair", mirror: true, partnerPose: "twirled" },
+  limboHold: { meet: "pair", mirror: true, partnerPose: "limboHelp", third: { pose: "limbo", anchor: "top", under: "bar" } },
 };
 // sit (with the treehouse): on the terrace chair, her broom leaning beside her, swinging her legs and looking out.
 // Her seat is WITCH_SEAT_HEIGHT model units above the ground she stands on (the chair's seat; the treehouse builds its chair to match).
@@ -258,6 +267,8 @@ export const WITCH_SEAT_HEIGHT = .34;
 // laughing mouth, shut eyes, a cup, a turn (spinning, about the vertical), lie (lying back), and the pair anchor.
 const UPRIGHT = { binding: [-.02, .31, -.2], dir: [.02, 1, -.04] };
 const Q = Math.PI / 2;
+// the broom limbo's bar: how high the holders hold the broom (model units; her limbo's top passes just under it)
+export const LIMBO_BAR = .82;
 const FOOT_FRAMES = {
   stand: [0, 1, 2].map(f => ({ breathe: [0, .006, .012][f], sway: [0, .02, .035][f], free: [.04, .5 + [0, .006, .012][f], .18], hand: "rest", broom: UPRIGHT })),
   land: [
@@ -333,6 +344,16 @@ const FOOT_FRAMES = {
     feet: [[-.06, .2, -.1], [-.06 + f * .02, .2 + f * .05, .1]], free: [-.12, 1.0, .12], elbow: [.02, .98, .27], far: [-.12, 1.0, -.12], farElbow: [.02, .98, -.27] })),
   conga: [0, 1, 2, 3].map(f => { const s = [0, 1, 0, -1][f]; return { broom: null, hop: [.02, 0, .02, 0][f], roll: s * .07, tilt: s * .2, sway: .03, mouth: f === 0, look: .05,
     feet: [[0, .07 + (s < 0 ? .14 : 0), -.1 - (s < 0 ? .2 : 0)], [0, .07 + (s > 0 ? .14 : 0), .1 + (s > 0 ? .2 : 0)]], free: [.36, .82, .13], far: [.36, .82, -.13], pair: [.36, .82, 0], backAt: true }; }),
+  twirl: [0, 1, 2, 3].map(f => { const a = f * Math.PI / 2, hand = [.32 + Math.cos(a) * .03, 1.12, .08 + Math.sin(a) * .03]; return { broom: null, roll: -.04, tilt: [.2, .1, -.1, .1][f], look: .15, sway: .02, mouth: f === 2,
+    free: hand, hand: "grip", elbow: [.14, .98, .2], far: [.02, .6, -.2], farElbow: [-.08, .66, -.24], pair: hand }; }), // her hand circling a little over the partner's head
+  twirled: [0, 1, 2, 3].map(f => ({ broom: null, turn: f * Q, toes: true, hop: .015, sway: .06, look: .12, mouth: f === 0, feet: [[.02, .07, -.05], [.02, .07, .05]],
+    free: [0, 1.26, 0], elbow: [.0, 1.02, .14], hand: "grip", far: [.04, .76, -.4], farHand: "palm", pair: [0, 1.26, 0] })), // her hand straight up, over her middle, so it stays put as she turns
+  limboHold: [0, 1].map(f => ({ broom: { binding: [.42, LIMBO_BAR, 0], dir: [1, 0, 0] }, roll: [.02, -.02][f], tilt: [.15, -.1][f], look: .02, sway: .02, mouth: !!f,
+    free: [.45, LIMBO_BAR, .06], hand: "grip", far: [-.04, .52, -.17], pair: [1.45, LIMBO_BAR, 0], bar: [.97, LIMBO_BAR, 0] })), // her far hand on her hip
+  limboHelp: [0, 1].map(f => ({ broom: null, roll: [-.02, .02][f], tilt: [-.1, .15][f], look: .02, sway: .02, mouth: !f,
+    free: [.3, LIMBO_BAR, .06], hand: "grip", far: [-.04, .52, -.17], pair: [.3, LIMBO_BAR, .06] })),
+  limbo: [0, 1, 2, 3].map(f => ({ broom: null, crouch: .62, limbo: 1.12 + [0, .05, 0, -.04][f], look: .3, sway: .02, mouth: f === 1,
+    feet: [[.26 + [0, .05, .08, .03][f], .07, -.1], [.26 + [.08, .03, 0, .05][f], .07, .1]], free: [.0, .82 + [0, .03, 0, -.03][f], .44], hand: "palm", far: [.0, .82 - [0, .03, 0, -.03][f], -.44], farHand: "palm" })), // arms out for balance, shuffling forward
 };
 // the knee between a hip and a foot, bent forward
 function kneeOf(hip, foot, l) {
@@ -409,7 +430,14 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
   if (K.pairAt === "cup") m.anchors.pair = m.anchors.cup;
   if (K.backAt) m.anchors.back = [shoulder(1)[0], K.free[1], 0];
   // spinning, she turns about her middle; lying back, she tips over onto the ground
+  if (K.bar) m.anchors.bar = K.bar;
   if (K.turn) turnModel(m, "y", K.turn, [hipX, 0, 0]);
+  // the limbo: everything above her hips leans far back over her bent legs; her top is the highest point of her (what passes under the bar)
+  if (K.limbo) {
+    turnModel(m, "z", K.limbo, hips, q => q.group !== 4 && q.group !== 6);
+    let top = null; for (const q of m.parts) { if (q.extra) continue; for (const [p, r] of q.type === "cone" ? [[q.a, q.r1], [q.b, q.r2]] : [[q.c, Math.max(...q.r)]]) if (!top || p[1] + r > top[1]) top = [p[0], p[1] + r, 0]; }
+    m.anchors.top = top;
+  }
   if (K.lie) { turnModel(m, "z", K.lie, hips); restOn(m, .015); }
   m.ell([.02, .005, 0], [.2, .005, .12], M.NOSE, { group: 0 }); // her shadow at her feet
   if (K.lie) Object.assign(m.parts[m.parts.length - 1], { c: [-.18, .005, 0], r: [.45, .005, .14] }); // (all of her, lying down)

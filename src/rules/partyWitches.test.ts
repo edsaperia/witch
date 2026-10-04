@@ -30,7 +30,8 @@ describe("party witches (Ed, 2026-10-04)", () => {
         seen.add(w.activity);
         if (w.state !== "floor") continue;
         if (w.activity !== "fly") expect(Math.hypot(w.x - floor.x, w.z - floor.z)).toBeLessThanOrEqual(floor.radius * P.floorShare + 1e-6);
-        if (w.partner !== null && w.partner >= 0) { const o = s.list.find(p => p.id === w.partner)!; expect(o.partner).toBe(w.id); }
+        if (w.partner !== null && w.partner >= 0 && !w.third) { const o = s.list.find(p => p.id === w.partner)!; expect(o.partner).toBe(w.id); }
+        if (w.third) { const o = s.list.find(p => p.id === w.partner)!; expect(o.pose).toBe("limboHold"); }
       }
     });
     for (const a of ["dance", "pair"]) expect(seen.has(a)).toBe(true);
@@ -47,6 +48,7 @@ describe("party witches (Ed, 2026-10-04)", () => {
     run(s, areas(10), 200, 0, [], () => {
       for (const w of s.list) {
         if (w.state !== "floor" || w.partner === null || w.partner < 0 || w.lead || w.activity !== "pair") continue;
+        if (w.third) continue;
         const o = s.list.find(p => p.id === w.partner)!, off = pairOffset(o.pose, o.facing, t);
         if (o.pose !== "holdHands" && Math.hypot(w.x - (o.x + off.dx), w.z - (o.z + off.dz)) < 0.05) checked++;
       }
@@ -69,5 +71,11 @@ describe("party witches (Ed, 2026-10-04)", () => {
     expect(s2.players[0].activity).toBeNull();
     run(s2, areas(3), P.idleAfter + 5, 20, [{ ...p, onFoot: false }]);
     expect(s2.players[0].activity).toBeNull();
+  });
+
+  it("the twirl and the broom limbo: partners do the partner's pose, and a third shuffles under the bar", () => {
+    const s = newPartyWitches(11), seen = new Set<string>();
+    run(s, areas(14), 400, 0, [], () => { for (const w of s.list) if (w.state === "floor") seen.add(w.pose); });
+    for (const p of ["twirl", "twirled", "limboHold", "limboHelp", "limbo"]) expect(seen.has(p)).toBe(true);
   });
 });
