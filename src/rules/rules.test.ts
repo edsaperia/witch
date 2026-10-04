@@ -479,22 +479,18 @@ describe("creatures", () => {
     expect(new Set(AREA_TYPES.map(t => t.creature)).size).toBe(30);
   });
 
-  it("are none in the home area but its legend, and a couple of babies round it", () => {
+  it("start the same in every area (Ed, 2026-10-04): none at home but its legend, one baby and one adult elsewhere, and one legend in each", () => {
     expect(inCell(mx, my).filter(c => !c.boss)).toEqual([]);
-    for (const [dx, dy] of [[-1, 0], [0, 1], [0, -1]]) {
-      const here = inCell(mx + dx, my + dy).filter(c => !c.boss); // (each area also has its sleeping legend)
-      expect(here.length).toBeGreaterThanOrEqual(1);
-      expect(here.length).toBeLessThanOrEqual(3);
-      expect(here.every(c => c.level === 0)).toBe(true);
+    const S = TUNING.population.start;
+    for (let cy = 0; cy < map.n; cy += 3) for (let cx = 0; cx < map.n; cx += 3) {
+      if (cx === mx && cy === my) continue;
+      const here = inCell(cx, cy);
+      expect(here.filter(c => c.level === 0).length).toBe(S.babies);
+      expect(here.filter(c => c.level === 1).length).toBe(S.young);
+      expect(here.filter(c => c.level === 2).length).toBe(S.adults);
+      expect(here.filter(c => c.level === 3 && c.boss).length).toBe(1);
     }
-  });
-
-  it("grow to about 20 towards the edge, with young ones among them", () => {
-    const edge = [[0, 0], [19, 0], [0, 19], [19, 19], [0, 10], [19, 10], [10, 0], [10, 19]].map(([x, y]) => inCell(x, y));
-    const mean = edge.reduce((a, l) => a + l.length, 0) / edge.length;
-    expect(mean).toBeGreaterThan(15);
-    expect(mean).toBeLessThan(23);
-    for (const l of edge.slice(0, 4)) expect(l.filter(c => c.level === 1).length).toBeGreaterThan(3);
+    expect(population(map)).toEqual(S);
   });
 
   it("have one legend an area, each a boss: home's happy, the rest asleep, out of their clearings (Ed, 2026-10-04)", () => {
@@ -530,19 +526,6 @@ describe("creatures", () => {
     expect(moved).toBeGreaterThan(0.5);
     expect(moved / 20).toBeLessThanOrEqual(TUNING.legendSpeed * 1.3 + 1e-6); // no faster than a legend
   }, 60000);
-
-  it("rise with distance from home, as the tuning file says", () => {
-    let last = -1;
-    for (let r = 0; r <= 1.0001; r += 0.1) {
-      const p = population(map, r);
-      const total = p.babies + p.young + p.adults;
-      expect(total).toBeGreaterThanOrEqual(last);
-      last = total;
-    }
-    expect(population(map, 0)).toEqual({ babies: TUNING.creaturesNear, young: 0, adults: 0 });
-    expect(population(map, 1).adults).toBeGreaterThan(0);
-    expect(population(map, TUNING.adultsFrom).adults).toBe(0);
-  });
 
   it("roam their whole area, slowly, and never leave it", () => {
     const sample = all.filter((_, i) => i % 97 === 0).slice(0, 5);
@@ -801,7 +784,8 @@ describe("the game clock and a whole step", () => {
 });
 
 describe("inviting and leashing", () => {
-  const creatures = spawnCreatures(map);
+  // (Every level to talk to: areas start with a baby and an adult, so a young is added to each.)
+  const creatures = spawnCreatures(generateMap(123, withTuning({ population: { ...TUNING.population, start: { babies: 1, young: 1, adults: 1 } } })));
   const fresh = () => creatures.map(c => ({ ...c, rand: (() => { let k = c.id * 7 + 1; return () => (k = (k * 16807) % 2147483647) / 2147483647; })() }));
   const none: LeashControls = { sigil: false };
   // Stand the witch next to a creature of the given level and talk until it is invited.
