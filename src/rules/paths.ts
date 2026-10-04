@@ -154,7 +154,7 @@ export class PathNetwork {
   private placePieces(): void {
     const m = this.map, s = m.seed, T = m.tuning.paths, add = (id: string, x: number, z: number, r: number) => {
       // Pieces keep apart (several crossings close together make one bridge, not a row of them).
-      if (m.hardClear(x, z) || m.reserved(x, z, r) || this.pieces.some(q => Math.hypot(q.x - x, q.z - z) < Math.max(12, q.r + r))) return;
+      if (m.hardClear(x, z) || m.reserved(x, z, r) || this.pieces.some(q => Math.hypot(q.x - x, q.z - z) < Math.max(T.pieceGap, q.r + r))) return;
       const p = { id, x, z, r };
       this.pieces.push(p);
       const k = `${Math.floor(x / this.cell)},${Math.floor(z / this.cell)}`;
@@ -189,11 +189,12 @@ export class PathNetwork {
           add("verge-post", ...side(l, i, (hash2(li, i, s + 847) < 0.5 ? 1 : -1) * (l.half - 0.7)), 0.8);
         }
       }
-      // Stairs where a path climbs into a rocky or sunken area (at its clearing end).
-      if (l.kind === "path" && !l.deadEnd) for (const end of [l.pts[0], l.pts[l.pts.length - 1]]) {
-        const L = AREA_TYPES[m.areaAt(end[0], end[1]).type];
-        const steep = ["rocky-slope", "ravine", "cave-mouth"].includes(L.id) || !!L.layout.terrain?.some(t => t === "hollows" || t === "rocky");
-        if (steep && hash2(Math.round(end[0]), Math.round(end[1]), s + 849) < 0.5) add(hash2(Math.round(end[1]), 3, s + 851) < 0.7 ? "stairs" : "stairs-turn", end[0], end[1], 3);
+      // Stairs only where a path goes down into a steep or sunken area (a slope, a ravine, a cave
+      // mouth, hollows), at its clearing end, and at most one flight per path (Ed, v147).
+      if (l.kind === "path" && !l.deadEnd) {
+        const steep = (e: [number, number]) => { const L = AREA_TYPES[m.areaAt(e[0], e[1]).type]; return ["rocky-slope", "ravine", "cave-mouth"].includes(L.id) || !!L.layout.terrain?.includes("hollows"); };
+        const ends = [l.pts[0], l.pts[l.pts.length - 1]].filter(steep), end = ends[Math.floor(hash2(li, 7, s + 849) * ends.length)];
+        if (end && hash2(Math.round(end[0]), Math.round(end[1]), s + 849) < T.stairsChance) add(hash2(Math.round(end[1]), 3, s + 851) < 0.7 ? "stairs" : "stairs-turn", end[0], end[1], 3);
       }
     });
     // Crossings: a bridge where a path or road crosses a stream; a level crossing where a road

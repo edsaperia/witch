@@ -18,6 +18,8 @@ import { applyStyleLight, LIGHT_UNIFORMS, MAX_LIGHTS } from "./lighting";
 import { Post } from "./post";
 import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
+import { MarkerArt, MarkerFx, MARKER_LEVELS, type Beacon, type Mote } from "./markers";
+import { spawnMarkers, waveCountdown, type SpawnMarker } from "../rules/party";
 import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
 import { Lasers } from "./lasers";
@@ -56,6 +58,10 @@ export class View {
   private creatureBatches = new Map<string, SpriteBatch>();
   private witchBatch: SpriteBatch;
   private treehouseBatch: SpriteBatch;
+  private markerArt: MarkerArt;
+  private markerBatch: SpriteBatch;
+  private markerFx = new MarkerFx();
+  private markerCache = { wave: -1, n: -1, list: [] as SpawnMarker[] };
   /** 1 while she sits on the treehouse terrace, easing to 0 as she takes off. */
   private seatK = 1;
   private seatTime = 0;
@@ -109,7 +115,7 @@ export class View {
     this.camera = new THREE.PerspectiveCamera(t.camera.fov, 1, 1, 900);
     this.post = new Post(this.renderer, t);
     this.scene.background = new THREE.Color(0x0b0a16);
-    applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams }, t.glowReach, this.mpp, t.tone.ambient);
+    applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams }, t.glowReach, this.mpp, t.tone.ambient, t.glowFalloff);
     LIGHT_UNIFORMS.uGlowPower.value = t.glowPower;
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize);
     this.ground = new Ground(game.map, game.forest, style, this.mpp);
@@ -145,6 +151,10 @@ export class View {
       this.treehouseBatch = new SpriteBatch(this.assets.treehouse.atlas, this.mpp, { fade: true });
       this.scene.add(...this.treehouseBatch.meshes);
     }
+    // Spawn markers: gameplay (always drawn in range, never budget-culled).
+    this.markerArt = new MarkerArt(style, t);
+    this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { fade: true });
+    this.scene.add(...this.markerBatch.meshes, this.markerFx.group);
     this.stoneBatch = new SpriteBatch(this.assets.stones, this.mpp, { fade: true });
     this.scene.add(...this.stoneBatch.meshes);
     const d = game.map.dancefloor, stones: SpriteInstance[] = [];
@@ -447,6 +457,7 @@ export class View {
       }
     };
     scatter("small", g.forest.bushesNear(cx, cz, half), l => l.small);
+    scatter("small", g.forest.bedsNear(cx, cz, half), l => l.small); // a formal garden's beds, in rows
     scatter("wall", g.forest.wallsNear(cx, cz, half), l => l.walls.map(bot => ({ bot, top: null })));
     scatter("setpiece", g.forest.setPiecesNear(cx, cz, half), l => (l.set === null ? [] : [l.set]));
     // Decorations: ruins, rocks and freak trees, as scenery (each family's pieces picked by its variant).
@@ -523,6 +534,57 @@ export class View {
     this.sources = g.forest.lightsNear(g.witch.x, g.witch.z, t.haze.far + margin);
     this.stats.trees = nt; this.stats.bushes = nb;
     this.shadowList = shadows;
+  }
+
+  /** The spawn markers (rune stones where soundsystems will come): their sprites, beacons and
+   *  motes; returns the lights of the nearest. */
+  private drawMarkers(time: number): ForestLight[] {
+    const g = this.game, t = g.tuning, R = t.runeMarkers, w = g.witch, range = t.haze.far + 20, mc = this.markerCache;
+    if (mc.wave !== g.party.wave || mc.n !== g.party.areas.size) { mc.wave = g.party.wave; mc.n = g.party.areas.size; mc.list = spawnMarkers(g.party, g.map); }
+    const cd = waveCountdown(g.party, g.map, time), build = g.party.paused ? 0 : cd.gone;
+    const phase = (time * t.beat.bpm) / 60, beat = Math.pow(0.5 + 0.5 * Math.cos(phase * Math.PI * 2), 2); // 1 on the beat
+    const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes: Mote[] = [];
+    const scale = R.scale;
+    const stone = (x: number, z: number, species: string, level: number, y = 0) => {
+      const frame = this.markerArt.atlas.frames[this.markerArt.frame(species, level)];
+      if (!this.inView(x, z, frame.w * this.mpp * scale, frame.h * this.mpp * scale, 6)) return false;
+      inst.push({ x, y, z, frame, flip: false, scale, fresh: this.mark("marker", x, z, frame.h * this.mpp * scale) });
+      return true;
+    };
+    const near: { d: number; l: ForestLight }[] = [];
+    for (const m of mc.list) {
+      const d = Math.hypot(m.x - w.x, m.z - w.z);
+      if (d > range) continue;
+      const species = AREA_TYPES[g.map.typeOf(m.cell[0], m.cell[1])].creature, col = this.markerArt.colour.get(species)!;
+      // Awake: brighter on the beat, more so as the countdown runs out; dormant: a steady glow.
+      const level = m.awake ? 1 + Math.round(Math.min(1, beat * (0.4 + 0.6 * build)) * (MARKER_LEVELS - 2)) : 0;
+      stone(m.x, m.z, species, level);
+      const A = R.awake, D = R.dormant;
+      const strength = m.awake ? (A.light + A.lightBuild * build) * (0.55 + 0.45 * beat) : D.light;
+      if (d < R.lightRange) near.push({ d, l: { x: m.x, y: 0.5, z: m.z + 1.5, reach: m.awake ? A.reach : D.reach, rgb: col, strength } });
+      beacons.push({ x: m.x, z: m.z, colour: col, strength: m.awake ? A.beam * (0.6 + 0.4 * beat) * (1 + build) : D.beam });
+      if (m.awake) {
+        const n = Math.round(A.motes + A.moteBuild * build);
+        for (let i = 0; i < n; i++) {
+          const s = (m.cell[0] * 31 + m.cell[1] * 17 + i * 7.3) % 1 || 0.37 * (i + 1) % 1, rise = ((time * (0.25 + 0.15 * ((i * 0.618) % 1)) + i / n) % 1);
+          const a = i * 2.399 + m.cell[0];
+          motes.push({ x: m.x + Math.cos(a) * (0.6 + rise * 1.4), y: 0.6 + rise * 7, z: m.z + Math.sin(a) * (0.6 + rise * 1.4), colour: col, alpha: (1 - rise) * (0.5 + 0.5 * beat) * (0.6 + s * 0.4) });
+        }
+      }
+    }
+    // The stones the party has just reached: they flare and sink as the soundsystems arrive.
+    for (const a of g.party.areas.values()) {
+      if (!a.soundsystem || time - a.at > R.flare.time || time < a.at) continue;
+      const k = (time - a.at) / R.flare.time, species = AREA_TYPES[g.map.typeOf(a.cell[0], a.cell[1])].creature, col = this.markerArt.colour.get(species)!;
+      const s0 = g.map.soundsystemSpot(a.cell[0], a.cell[1]);
+      stone(s0.x, s0.z, species, MARKER_LEVELS - 1, -k * k * 4 * scale);
+      near.push({ d: 0, l: { x: s0.x, y: 2.5, z: s0.z, reach: R.awake.reach * 1.5, rgb: col, strength: R.flare.light * (1 - k) } });
+    }
+    near.sort((p, q) => p.d - q.d);
+    for (const n of near.slice(0, 8)) lights.push(n.l);
+    this.markerBatch.set(inst);
+    this.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes);
+    return lights;
   }
 
   private drawCreatures(time = 0): void {
@@ -710,7 +772,8 @@ export class View {
     const thLights: ForestLight[] = T.lights.filter(l => l.kind === "lantern" || l.kind === "window").slice(0, 2).map(l => ({
       ...onTreehouse(l.x, l.y), reach: t.treehouse.lightReach, rgb: new THREE.Vector3(l.rgb[0] / 255, l.rgb[1] / 255, l.rgb[2] / 255), strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3 + l.x)),
     }));
-    this.setLights([this.dancefloor.update(time, this.ground), ...party.lights, ...thLights, ...this.forestLights], w.x, w.z);
+    const markerLights = this.drawMarkers(time);
+    this.setLights([this.dancefloor.update(time, this.ground), ...party.lights, ...thLights, ...markerLights, ...this.forestLights], w.x, w.z);
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);
     const bob = Math.sin(time * 2.4) * 0.12;

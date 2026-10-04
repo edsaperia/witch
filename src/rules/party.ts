@@ -44,23 +44,26 @@ export function soundsystemFor(map: ForestMap, cell: Cell): Soundsystem {
 
 const inMap = (map: ForestMap, c: Cell) => c[0] >= 0 && c[1] >= 0 && c[0] < map.n && c[1] < map.n;
 
-/** Spread the party one ring now. Returns the newly partified areas. */
-export function spreadWave(p: PartyState, map: ForestMap, time: number): Partified[] {
-  const wave = p.wave + 1, fresh: Partified[] = [];
-  const candidates = new Map<string, Cell>();
-  const from = new Map<string, Cell>();
+/** The areas the next wave will partify, and where the party comes to each from: every area
+ *  touching a partified one, in a seeded order, maxPerWave of them if the ring is too big. */
+export function nextWave(p: PartyState, map: ForestMap): { key: string; cell: Cell; from: Cell }[] {
+  const wave = p.wave + 1, candidates = new Map<string, { key: string; cell: Cell; from: Cell }>();
   for (const [k, a] of p.areas) for (const nk of map.neighbours.get(k) ?? []) {
     if (p.areas.has(nk) || candidates.has(nk)) continue;
     const c = nk.split(",").map(Number) as unknown as Cell;
     if (!inMap(map, c)) continue;
-    candidates.set(nk, c);
-    from.set(nk, a.cell);
+    candidates.set(nk, { key: nk, cell: c, from: a.cell });
   }
-  // A seeded order, and maxPerWave of them if the ring is too big.
-  const list = [...candidates.entries()].sort((a, b) => hash2(a[1][0], a[1][1], map.seed + wave) - hash2(b[1][0], b[1][1], map.seed + wave));
+  const list = [...candidates.values()].sort((a, b) => hash2(a.cell[0], a.cell[1], map.seed + wave) - hash2(b.cell[0], b.cell[1], map.seed + wave));
   const max = map.tuning.party.maxPerWave > 0 ? map.tuning.party.maxPerWave : Infinity;
-  for (const [k, c] of list.slice(0, max)) {
-    const a: Partified = { cell: c, wave, at: time, from: from.get(k) ?? null, soundsystem: soundsystemFor(map, c) };
+  return list.slice(0, max);
+}
+
+/** Spread the party one ring now. Returns the newly partified areas. */
+export function spreadWave(p: PartyState, map: ForestMap, time: number): Partified[] {
+  const wave = p.wave + 1, fresh: Partified[] = [];
+  for (const { key: k, cell: c, from } of nextWave(p, map)) {
+    const a: Partified = { cell: c, wave, at: time, from, soundsystem: soundsystemFor(map, c) };
     p.areas.set(k, a);
     fresh.push(a);
   }
@@ -80,4 +83,20 @@ export function stepParty(p: PartyState, map: ForestMap, time: number, dt: numbe
 export function waveCountdown(p: PartyState, map: ForestMap, time: number): { left: number; gone: number } {
   const left = Math.max(0, p.nextAt - time), interval = map.tuning.party.interval;
   return { left, gone: 1 - Math.min(1, left / interval) };
+}
+
+/** A spawn marker (Ed, v147): a rune stone on the spot where an area's soundsystem will stand,
+ *  until the party reaches it; awake when the next wave will take its area, dormant otherwise. */
+export interface SpawnMarker { key: string; cell: Cell; x: number; z: number; awake: boolean }
+
+/** The spawn markers: one for every area the party hasn't reached (where its soundsystem will stand). */
+export function spawnMarkers(p: PartyState, map: ForestMap): SpawnMarker[] {
+  const next = new Set(nextWave(p, map).map(c => c.key)), out: SpawnMarker[] = [];
+  for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
+    const key = `${cx},${cy}`;
+    if (p.areas.has(key)) continue;
+    const s = map.soundsystemSpot(cx, cy);
+    out.push({ key, cell: [cx, cy], x: s.x, z: s.z, awake: next.has(key) });
+  }
+  return out;
 }

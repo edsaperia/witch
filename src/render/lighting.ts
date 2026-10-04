@@ -20,6 +20,7 @@ export const LIGHT_UNIFORMS = {
   uGlowPos: { value: new THREE.Vector3() },
   uGlowRgb: { value: new THREE.Vector3() },
   uGlowR: { value: 8 },
+  uGlowFalloff: { value: 2.5 },
   uGlowPower: { value: 1.4 },
   // The twilight haze: the forest fades into it from near to far metres from the witch.
   uHazeCentre: { value: new THREE.Vector2() },
@@ -46,7 +47,7 @@ export type LightUniforms = typeof LIGHT_UNIFORMS;
 
 /** Set the light colours from a style (the Art Lab's knobs). One set of uniforms is shared by
  *  every material, so this and the glow position update everything at once. */
-export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel: number, ambientScale = 1): void {
+export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel: number, ambientScale = 1, glowFalloff = 2.5): void {
   const v = (rgb: number[], k: number) => new THREE.Vector3(rgb[0] / 255 * k, rgb[1] / 255 * k, rgb[2] / 255 * k);
   LIGHT_UNIFORMS.uAmb.value.copy(v(hsv2rgb(st.ambientHue, 0.55, 1), st.ambient * ambientScale));
   LIGHT_UNIFORMS.uMoon.value.copy(v(hsv2rgb(st.moonHue, 0.35, 1), st.moon));
@@ -57,13 +58,14 @@ export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel:
   LIGHT_UNIFORMS.uShaftScale.value = metresPerArtPixel * 2;
   LIGHT_UNIFORMS.uGlowRgb.value.copy(v(hsv2rgb(st.glowHue, st.glowSat, 1), 1));
   LIGHT_UNIFORMS.uGlowR.value = glowReach;
+  LIGHT_UNIFORMS.uGlowFalloff.value = glowFalloff;
   LIGHT_UNIFORMS.uGlowPower.value = st.glowPower;
   LIGHT_UNIFORMS.uHazeColour.value.copy(v(hsv2rgb(st.ambientHue - 0.08, 0.55, 1), 0.16 * Math.sqrt(ambientScale)));
 }
 
 export const LIGHT_GLSL = /* glsl */ `
 uniform vec3 uAmb, uMoon, uMoonDir, uMoonBeam, uGlowPos, uGlowRgb;
-uniform float uBands, uDither, uShafts, uShaftScale, uGlowR, uGlowPower, uTime, uSmooth;
+uniform float uBands, uDither, uShafts, uShaftScale, uGlowR, uGlowFalloff, uGlowPower, uTime, uSmooth;
 uniform vec2 uHazeCentre, uHazeRange;
 uniform vec3 uHazeColour;
 uniform vec4 uLightPos[${MAX_LIGHTS}], uLightCol[${MAX_LIGHTS}];
@@ -108,13 +110,14 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
       if (s < 34.0 && (chk > 0.5 || (s > 4.0 && s < 30.0))) l += uMoonBeam;
     }
   }
-  // The witch's glow: a broad, soft pool, fairly flat for the first part of its reach, easing to
-  // nothing at the edge (no ring), from a source well above her so there's no hot spot under her.
+  // The witch's glow (Ed, v147: "should fall off faster"): full under her, falling off with the
+  // distance along the ground as (1 - d/reach)^falloff (about half at 12 m, a faint tail, nothing
+  // at the reach); lit from a source above her, so there's no hot spot under her.
   vec3 v = uGlowPos - P;
-  float d = length(v);
-  if (d < uGlowR) {
-    float ndl = max(0.0, dot(N, v / max(d, 1e-4))) * 0.35 + 0.65;
-    float fall = 1.0 - smoothstep(0.0, uGlowR, d);
+  float dg = length(v.xz);
+  if (dg < uGlowR) {
+    float ndl = max(0.0, dot(N, normalize(v + vec3(0.0, 1e-4, 0.0)))) * 0.35 + 0.65;
+    float fall = pow(1.0 - dg / uGlowR, uGlowFalloff);
     l += uGlowRgb * min(1.0, ndl * fall * uGlowPower);
   }
   for (int i = 0; i < ${MAX_LIGHTS}; i++) {

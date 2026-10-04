@@ -39,8 +39,6 @@ export interface Tuning {
   crownHalfWidth: number;
   crownHeight: number;
   bushSpacing: number;
-  wallSpacing: number;
-  wallDensity: number;
   groundSpeed: number;
   treetopSpeed: number;
   acceleration: number;
@@ -56,6 +54,7 @@ export interface Tuning {
   camera: { fov: number; ground: CameraModeTuning; treetop: CameraModeTuning; zoomSteps: number; startZoom: number; follow: number; lookAhead: number; lookAheadMax: number; lookAheadEase: number; zoomEase: number; liftEase: number };
   pixelSize: number;
   glowReach: number;
+  glowFalloff: number;
   glowHeight: number;
   spriteTilt: number;
   artPixelsPerMetre: number;
@@ -84,14 +83,16 @@ export interface Tuning {
   /** How mist, far haze and canopy dapple are drawn: smooth gradients, or dithered pixel steps. */
   fx: "smooth" | "pixel";
   moonbeams: number;
+  runeMarkers: { scale: number; beamHeight: number; lightRange: number; dormant: { glow: number; light: number; reach: number; beam: number }; awake: { glow: number[]; light: number; lightBuild: number; reach: number; beam: number; motes: number; moteBuild: number }; flare: { time: number; light: number } };
+  walls: { runs: number[]; runLength: number[]; gateChance: number; rings: number[]; ringStones: number[]; ringRadius: number[]; avenueChance: number; loneChance: number; clumps: number[]; clumpSize: number[]; clumpRadius: number };
   grounds: { chance: number; kinds: string[]; radius: Record<string, number> };
-  relics: { spacing: number; chance: number; nearRoad: number };
+  relics: { spacing: number; chance: number; nearRoad: number; minGap: number };
   treeCap: { from: number; keep: number };
   treetop: { boost: number; boostTime: number; boostAngle: number; turnRate: number; glideTime: number; sharpTurnBleed: number; cameraPull: number };
   bubbles: { emojiPixels: number; scale: number };
   treehouse: { distance: number; angle: number; clear: number; lightReach: number; lightStrength: number };
-  decor: { spacing: number; ruins: number; rocks: number; freak: number; clearing: number; pathGap: number; /** A decoration's footprint radius (metres): kept clear of the gameplay (map.reserved). */ footprint: number };
-  paths: { rails: number[]; roads: number[]; linkChance: number; deadEndChance: number; pathHalf: number; roadHalf: number; railHalf: number; railBroken: number; streams: number[]; streamHalf: number; landmarkSpacing: number; landmarkChance: number; vergeSpacing: number; treesOnBroken: number; edgeBushes: number; bushBoost: number };
+  decor: { spacing: number; ruins: number; rocks: number; freak: number; minGap: number; clearing: number; pathGap: number; /** A decoration's footprint radius (metres): kept clear of the gameplay (map.reserved). */ footprint: number };
+  paths: { rails: number[]; roads: number[]; linkChance: number; deadEndChance: number; pathHalf: number; roadHalf: number; railHalf: number; railBroken: number; streams: number[]; streamHalf: number; landmarkSpacing: number; landmarkChance: number; vergeSpacing: number; pieceGap: number; stairsChance: number; treesOnBroken: number; edgeBushes: number; bushBoost: number };
   lights: { campfire: { reach: number; strength: number }; stone: { reach: number; strength: number } };
   glowPower: number;
   beat: { bpm: number };

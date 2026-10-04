@@ -9,8 +9,9 @@ import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway } 
 import { newCamera, stepCamera, cameraPose } from "./camera";
 import { legendChance, population, spawnCreatures, stepCreature, stepCreaturesNear } from "./creatures";
 import { newGame, stepGame } from "./game";
-import { newParty, spreadWave, stepParty } from "./party";
+import { newParty, spreadWave, stepParty, spawnMarkers, nextWave } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
+import { wallFeatures } from "./walls";
 import { laserShow } from "./lasers";
 import { borderOf } from "./borders";
 import { newLeash, stepLeash, type LeashControls } from "./leash";
@@ -510,9 +511,9 @@ describe("creatures", () => {
 
 describe("light sources", () => {
   const forest = new Forest(map), all = forest.lightsNear(280, 280, 280);
-  it("come in all three kinds, the same from the same seed, and keep off the dancefloor", () => {
+  it("come as campfires and ponds (rune stones now only mark soundsystem spots), the same from the same seed, and keep off the dancefloor", () => {
     const kinds = new Set(all.map(l => l.kind));
-    expect([...kinds].sort()).toEqual(["campfire", "pond", "stone"]);
+    expect([...kinds].sort()).toEqual(["campfire", "pond"]);
     expect(new Forest(map).lightsNear(280, 280, 280).map(l => l.x.toFixed(2)).join()).toBe(all.map(l => l.x.toFixed(2)).join());
     const d = map.dancefloor;
     for (const l of all) expect(Math.hypot(l.x - d.x, l.z - d.z)).toBeGreaterThan(d.radius + TUNING.dancefloor.clearing);
@@ -887,7 +888,7 @@ describe("paths, roads and railways", () => {
     for (let seed = 1; seed <= 6; seed++) bridges += generateMap(seed, TUNING).paths.pieces.filter(p => p.id.includes("bridge")).length;
     expect(bridges).toBeGreaterThan(0);
     for (const b of P.pieces.filter(p => p.id.includes("bridge"))) expect(P.at(b.x, b.z)?.kind).toBeDefined();
-    for (const a of P.pieces) for (const b of P.pieces) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(12); // never a row of them
+    for (const a of P.pieces) for (const b of P.pieces) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(TUNING.paths.pieceGap); // never a row of them
     for (const p of P.pieces) expect(map.reserved(p.x, p.z, p.r)).toBe(false); // clear of soundsystems, set pieces, grounds
     const forest = new Forest(map);
     for (const p of P.pieces.slice(0, 60)) for (const t of forest.treesNear(p.x, p.z, p.r + 1)) expect(Math.hypot(t.x - p.x, t.z - p.z)).toBeGreaterThanOrEqual(p.r - 1e-6);
@@ -906,14 +907,19 @@ describe("decorations", () => {
     const forest = new Forest(map), s = map.start, list = forest.decorNear(s.x, s.z, 700), D = TUNING.decor;
     const fam = new Set(list.map(d => d.family));
     expect(fam.has("ruins") && fam.has("rocks")).toBe(true);
-    expect(list.length).toBeGreaterThan(20);
-    expect(list.length).toBeLessThan((1400 / D.spacing) ** 2 * 0.15);
+    expect(list.length).toBeGreaterThan(5);
+    expect(list.length).toBeLessThan((1400 / D.spacing) ** 2 * 0.03); // sparse: discoveries, not clutter
     for (const d of list) {
       expect(map.paths.at(d.x, d.z)).toBeNull();
       expect(map.areaAt(d.x, d.z).openness).toBeGreaterThanOrEqual(D.clearing);
       expect(Math.hypot(d.x - map.dancefloor.x, d.z - map.dancefloor.z)).toBeGreaterThan(map.dancefloor.radius + TUNING.dancefloor.clearing);
     }
     expect(new Forest(map).decorNear(s.x, s.z, 700)).toEqual(list);
+    for (const a of list) for (const b of list) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(D.minGap); // never a cluster (Ed, v147)
+    // The same from another chunk's point of view: spacing doesn't depend on who asks.
+    const other = new Forest(map).decorNear(s.x + 300, s.z, 700).filter(d => Math.abs(d.x - s.x) <= 700 && Math.abs(d.z - s.z) <= 700);
+    expect(other.length).toBeGreaterThan(0);
+    for (const d of other) expect(list.some(e => e.x === d.x && e.z === d.z)).toBe(true);
   });
 });
 
@@ -933,7 +939,71 @@ describe("relics and grounds", () => {
     expect(list.length).toBeGreaterThan(3);
     expect(list.length).toBeLessThan((1800 / TUNING.relics.spacing) ** 2 * 0.1);
     for (const r of list) { expect(map.paths.at(r.x, r.z)).toBeNull(); expect(map.hardClear(r.x, r.z)).toBe(false); }
+    for (const a of list) for (const b of list) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(TUNING.relics.minGap);
     const byRoad = list.filter(r => { const h = map.paths.at(r.x, r.z, 20); return h && (h.kind === "road" || h.kind === "rail"); }).length;
     expect(byRoad).toBeGreaterThan(0);
+  });
+});
+
+describe("set pieces, again", () => {
+  it("stand at most one per area", () => {
+    const f = new Forest(map), s = map.start, seen = new Set<string>();
+    for (const p of f.setPiecesNear(s.x, s.z, 900)) { const k = map.areaAt(p.x, p.z + 4).cell.join(","); expect(seen.has(k)).toBe(false); seen.add(k); }
+  });
+});
+
+describe("wall objects as features", () => {
+  const W = TUNING.walls;
+  // Areas of a type that own ground (a cell whose site lies in another area has none).
+  const cellsOf = (id: string) => { const out: [number, number][] = []; for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++) { if (AREA_TYPES[map.typeOf(x, y)].id !== id) continue; const s = map.siteOf(x, y), c = map.areaAt(s.x, s.z).cell; if (c[0] === x && c[1] === y) out.push([x, y]); } return out; };
+  it("lay garden walls as joined runs (no isolated stubs), with flower beds along them, a few runs per garden", () => {
+    const cells = cellsOf("garden");
+    expect(cells.length).toBeGreaterThan(0);
+    let pieces = 0, joined = 0, beds = 0;
+    for (const [cx, cy] of cells) {
+      const f = wallFeatures(map, cx, cy);
+      expect(f.walls.length).toBeLessThanOrEqual(W.runs[1] * W.runLength[1]);
+      for (const p of f.walls) { pieces++; if (f.walls.some(q => q !== p && Math.hypot(q.x - p.x, q.z - p.z) < 3.2)) joined++; }
+      beds += f.beds.length;
+    }
+    expect(joined / pieces).toBeGreaterThan(0.85);
+    expect(beds).toBeGreaterThan(0);
+  });
+  it("set the shrine's henge stones in circles, not an even field", () => {
+    let stones = 0, inRing = 0;
+    for (const [cx, cy] of cellsOf("stone-shrine")) {
+      const f = wallFeatures(map, cx, cy);
+      expect(f.walls.length).toBeLessThanOrEqual(W.rings[1] * (W.ringStones[1] + 8) + 1);
+      expect(f.walls.length).toBeGreaterThanOrEqual(Math.ceil(W.ringStones[0] / 2)); // every shrine has its circle
+      for (const p of f.walls) { stones++; if (f.walls.filter(q => q !== p && Math.hypot(q.x - p.x, q.z - p.z) < 14).length >= 2) inRing++; }
+    }
+    expect(stones).toBeGreaterThan(5);
+    expect(inRing / stones).toBeGreaterThan(0.8);
+  });
+  it("are the same every time and keep off paths and the reserved spots", () => {
+    for (const [cx, cy] of [...cellsOf("garden"), ...cellsOf("stone-shrine"), ...cellsOf("wetland")].slice(0, 8)) {
+      const f = wallFeatures(map, cx, cy);
+      expect(wallFeatures(map, cx, cy)).toEqual(f);
+      for (const p of f.walls) { expect(map.paths.at(p.x, p.z)).toBeNull(); expect(map.reserved(p.x, p.z, 1.5)).toBe(false); }
+    }
+  });
+});
+
+describe("spawn markers", () => {
+  it("stand on every area the party hasn't reached, at its soundsystem's spot; awake exactly where the next wave will spread", () => {
+    const p = newParty(map);
+    for (let w = 0; w < 3; w++) {
+      const marks = spawnMarkers(p, map), awake = marks.filter(m => m.awake).map(m => m.key).sort();
+      for (const m of marks) { expect(p.areas.has(m.key)).toBe(false); const s = map.soundsystemSpot(m.cell[0], m.cell[1]); expect([m.x, m.z]).toEqual([s.x, s.z]); }
+      expect(awake.length).toBeGreaterThan(0);
+      expect(awake).toEqual(nextWave(p, map).map(c => c.key).sort());
+      const taken = spreadWave(p, map, w * 10).map(a => `${a.cell[0]},${a.cell[1]}`).sort();
+      expect(taken).toEqual(awake);
+    }
+  });
+  it("replace the random rune stones (campfires stay)", () => {
+    const f = new Forest(map), s = map.start, l = f.lightsNear(s.x, s.z, 900);
+    expect(l.some(x => x.kind === "stone")).toBe(false);
+    expect(l.some(x => x.kind === "campfire")).toBe(true);
   });
 });
