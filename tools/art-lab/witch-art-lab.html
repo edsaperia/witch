@@ -154,6 +154,12 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
+        <h2>Tall pieces</h2>
+        <p class="note">Something tall for the open areas that have no trees, standing sparsely among their mounds, boulders and logs: cairns and standing stones on the moor, pillars and a tall cairn at the stone shrine, dead snags hung with bracket fungi in the log pile, rock spires and a stalagmite in the ravine. Each row is an area's own big pieces, then the witch for scale; the last row is the Norway turf hut with its roof mended.</p>
+        <div class="sheet-wrap"><canvas id="tallSheet" width="420" height="160"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
         <h2>Relics</h2>
         <p class="note">The modern world, reclaimed by the forest: cars, trolleys, cones, broken highway and odds and ends; the overgrown playground's pieces; the sports grounds' pieces (tennis, baseball, football, a basketball hoop). Then each arrangement as suggested, the witch at its middle.</p>
         <div class="sheet-wrap"><canvas id="relicSheet" width="420" height="160"></canvas></div>
@@ -526,6 +532,24 @@ function renderSets() {
   }, 800);
 }
 
+// ================= tall pieces: the open areas' big pieces, with the witch for scale; the turf hut =================
+let tallTimer;
+function renderTall() {
+  clearTimeout(tallTimer);
+  tallTimer = setTimeout(() => {
+    const c = document.getElementById("tallSheet"); if (!c) return;
+    const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 8, wit = bake(witchSprite(st), witchColours(st), st, st.cOutline);
+    const rows = ["moor", "stone-shrine", "log-pile", "ravine"].map(id => [...areaAssets(id, st).big.map(b => b.sp), wit]);
+    rows.push([areaAssets("norway", st).setPiece.sp, wit]);
+    const w = Math.max(...rows.map(r => r.reduce((a, x) => a + x.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(x => x.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
+    tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+    let y = gap;
+    rows.forEach((r, i) => { let x = gap; y += rh[i] - gap; for (const s2 of r) { tgt.a.drawImage(s2.A, x, y - s2.h); tgt.n.drawImage(s2.N, x, y - s2.h); x += s2.w + gap; } y += gap; });
+    c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
+    c.style.width = w + "px"; c.style.maxWidth = "none";
+  }, 850);
+}
+
 // ================= home: the treehouse, the witch sitting on its terrace =================
 let homeTimer;
 function renderHome() {
@@ -890,7 +914,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderCountry(); renderRelics(); renderSets(); renderWitch(); renderParty(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
+  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderCountry(); renderRelics(); renderSets(); renderTall(); renderWitch(); renderParty(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
