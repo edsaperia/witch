@@ -78,6 +78,8 @@
   "glowPower": 0.65,
   "_beat": "The music's clock (beats per minute): the lasers sweep to it and party animals dance to it. Later the music itself drives it.",
   "beat": { "bpm": 120 },
+  "_witchLight": "The witch is lit by the world's lights like everything else (Ed: \"I can go near a coloured light source and not change colour\"), but not by her own glow: never darker than lightFloor times her old unlit look, so she reads in the dark; coloured lights (soundsystems, campfires, rune stones, the dancefloor) tint her by lightTint and rim the edge of her facing them by lightRim.",
+  "witch": { "lightFloor": 0.75, "lightTint": 1, "lightRim": 0.6 },
   "_occlusion": "Never lose the witch: tall things (over minHeight metres) standing in front of her fade to fadeOpacity where they cover her, in a soft circle round her body (a little bigger than her sprite) that eases from see-through at the centre to opaque past edge (a share of its radius), and eases in over a few metres as she moves behind; anything that still hides her shows her silhouette in her glow colour at silhouette opacity.",
   "_sigilProjection": "From the treetops, each placed sigil shows above the canopy over its spot: height metres above the crowns, opacity, size (times the ground rune), and a faint column of light (beam opacity) from the rune up to it. Fades in as she rises.",
   "sigilProjection": { "height": 3, "opacity": 0.65, "beam": 0.25, "size": 1 },

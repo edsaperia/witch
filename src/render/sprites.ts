@@ -5,6 +5,7 @@
 import * as THREE from "three";
 import type { Atlas, Frame } from "./atlas";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
+import { WITCH_LIGHT_GLSL, witchLightUniform } from "./witchLight";
 
 /** Shared by every sprite batch: the camera's right and (tilted) up, and the canopy fade. */
 export const SPRITE_UNIFORMS = {
@@ -90,6 +91,7 @@ varying vec2 vLocal;
 varying float vSizeY;
 uniform vec2 uTrunkFade; // metres of trunk the fade covers, metres per art pixel
 ${LIGHT_GLSL}
+${WITCH_LIGHT_GLSL}
 // 4x4 ordered dither, for fading the canopy in pixel-art style.
 float bayer(vec2 p) {
   int x = int(mod(p.x, 4.0)), y = int(mod(p.y, 4.0));
@@ -137,6 +139,7 @@ void shade() {
   float nx = (n.r * 255.0 - 128.0) / 127.0, ny = (n.g * 255.0 - 128.0) / 127.0, nz = n.b;
   if (vFlags.x > 0.5) nx = -nx;
   vec3 N = normalize(uRight * nx - uUp * ny + uFacing * nz);
+  if (uWitchLight.x > 0.5) { gl_FragColor = vec4(witchShade(a.rgb, N, uFacing, vWorld), alpha); return; }
   vec3 col = min(vec3(1.0), a.rgb * nightLight(N, vWorld) * 1.25);
   if (vFlags.y > 0.5 && uPartyCount > 0) {
     // Crowns over a party catch a faint glow from below, on their undersides and lower edges.
@@ -180,7 +183,7 @@ export class SpriteBatch {
   count = 0;
 
   /** metresPerPixel: world size of one art pixel. */
-  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; /** Gameplay (creatures, soundsystems, markers...): never faded or cut away round the witch (Ed, v149). */ solid?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number } } = {}) {
+  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; /** Gameplay (creatures, soundsystems, markers...): never faded or cut away round the witch (Ed, v149). */ solid?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number }; /** The witch: lit by the world's lights but not her own glow (witchLight.ts). */ witchLight?: { lightFloor: number; lightTint: number; lightRim: number } } = {}) {
     const quad = new THREE.PlaneGeometry(1, 1);
     quad.translate(0, 0.5, 0); // stand on the base
     this.geo = new THREE.InstancedBufferGeometry();
@@ -189,7 +192,7 @@ export class SpriteBatch {
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.pos = this.size = this.uvs = this.flags = undefined as never;
     this.grow(64);
-    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, ...extra });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), ...extra });
     // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
     // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
     const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};
