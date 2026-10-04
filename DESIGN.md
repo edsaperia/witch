@@ -68,7 +68,7 @@ The trade is speed against information: treetop mode covers distance, ground mod
 
 - **One kind of creature per area type**, so as many kinds as area types: about **30 to test with**, **100 or more by release**.
 - Each kind has **four levels: baby, young, adult and legendary** (Ed, 2026-10-03), from **cute babies** up to **giant legendary magical creatures**. Each level is a clear size step up from the last: **adults clearly bigger than young** (Ed, 2026-10-04: "the size difference should be obvious ... use the current Adult models for Youths, and come up with something larger for Adults"), so the bigger kinds' adults stand well over the witch.
-- **Levelling up**: the witch leads creatures around to **eat berries** that grow in the forest; it is the only way to level up. Berries may not regrow, or regrow slowly, so taking creatures into the forest to level them up is an adventure.
+- **Levelling up**: the witch leads creatures around to **eat berries** that grow in the forest; it is the only way to level up. **Evolving stops at adult** (Ed, 2026-10-04): legends are the areas' own, never grown from a party animal (an adult still eats to heal). Berries may not regrow, or regrow slowly, so taking creatures into the forest to level them up is an adventure.
 - **Neutral behaviour varies by kind, and perhaps by level**: some attack, some run away, some ignore her, some are friendly, some flock or surround her.
 - How deeply music wakes a creature **varies by kind**.
 - **Beaten creatures run off the map** (Ed, 2026-10-04: "it's sad when animals die"): a beaten creature, wild or party, runs away visibly to the edge of the map, out of the world, and is gone for good (it no longer vanishes on the spot). A beaten party animal is lost for the run, off its leash as it goes.
@@ -152,7 +152,7 @@ Decided in a long design session with the coordinator; built in stages, with a p
 - **Forecasting:** the next two waves are confirmed, plus a probable set. Rune stones grow a circle of up to 12 symbols, and the 12th means next. The beams grow with the countdown.
 - **Music:** one track; louder and clearer near playing soundsystems, muffled in the deep forest, distorted by damage nearby.
 - **Spells:** one chosen per run from a list unlocked across runs, used on a cooldown. The list includes spells, placed items (buff totem, knockback bomb), speed boots and instant evolve. The first is the speed boost.
-- **Legends,** while alive, each give the witch a unique buff.
+- **Legends,** while happy, each give the witch a unique buff.
 - **Controls** (Ed, 2026-10-04: MOBA style): movement on the arrow keys, actions on **1 2 3 4 Q W E R**: Q spell, W dash, E sigil, R cycle, 1–4 for later spells, items and totems, shown on an action bar with their recharge; space rises or descends. Talking is automatic (Ed, v244). Feeding is automatic: party animals eat berries near them.
 - **Combat** (later stages):
   - **Sides:** wild and party animals fight each other with one shared system. No friendly fire. Wild creatures attack the witch on the ground (Ed, 2026-10-04: see The witch). **Same kind never fights same kind**, whichever side, always (Ed, 2026-10-04: even at a soundsystem): inviting doesn't start fights inside a group, and your wolves can't defend against wild wolves. Mixed defences are the puzzle.
@@ -165,7 +165,7 @@ Decided in a long design session with the coordinator; built in stages, with a p
   - **Dodging:** some species dodge, as a behaviour trait.
   - **Status effects:** a brief immunity after a stun or ensnare; slows don't stack.
   - **Cover:** nothing blocks attacks.
-  - **Wild legends** are rare, late mini-bosses.
+  - **Legends** are the areas' own: one sleeping in every area, a mini-boss once its area's wave wakes it (see Sleeping legends).
   - **Balance:** an equal power budget per level, spent differently.
   - **Hit feel:** medium, with screen shake only for legends.
   - **Content:** built from data-driven parts (movement, behaviour drives, attack delivery, effect and timing, skins). The first slice is **10 contrasting species**; balance tools are a dashboard page and an in-game arena mode.
@@ -233,6 +233,32 @@ A counter is **shown**: a hit that's strong against its target flashes big and g
 
 **Debug arena** (Ed, to see and judge patterns): `?arena=wolf*4,beetle*3` spawns, in the home clearing, your side (parked by sigils: the first group) against the wild side (the second); `wolf*4@2` sets the level (default young, 1). It's set below the dancefloor; she stands behind her side (the wild go for the nearest, so hers first). `J` sets the arena up again.
 
+### Sleeping legends (Ed, 2026-10-04)
+
+**Every area has a legend of its kind, sleeping** (Ed: "The first major change, I think, is that every area has a sleeping legend in it"). They replace the rare wild legends: no legend comes from anywhere else. Party animals evolve no further than adult, and nothing else makes a legend.
+
+- **Asleep, it's scenery.** Ed: "ancient creatures, half sunken into the ground, they could almost be mistaken for scenery. They have been sleeping for centuries."
+  - It lies out of its area's clearing, sunk into the ground and grown over (a placeholder until art builder 2's sleeping forms land: the legend's art, sunk and tinted toward moss).
+  - It has no health bar, no glow, no eyeshine and no aura: nothing marks it as a creature from afar.
+  - You can't attack it or invite it, and walking by doesn't wake it.
+  - It costs almost nothing: no AI and no roaming, drawn in an instanced batch.
+- **Its area's wave wakes it, angry.**
+  - A burst of soil, then it heaves up out of the ground over `wildLegends.wake` seconds, untouchable meanwhile.
+  - Then it's a mini-boss with red eyes and its move set (Creature movement, above). It guards its own area: it attacks the witch, her creatures and its area's soundsystem there, never beyond.
+  - It doesn't march when that soundsystem falls. Its area's ordinary creatures march on the soundsystem as before.
+- **Beaten, it sleeps for good.** It doesn't run off. It sinks back into the ground where it stands and never wakes again that run, so its soundsystem is safe from it.
+- **Happy, it joins the party in its area and gives its buff.**
+  - It stays in its own area, at peace: not on her leash or her stack, and in no fights for now.
+  - Its legend buff is on while it's happy.
+  - **How a legend becomes happy is undecided** (quests later). For now it's a debug key: **L** makes the nearest legend happy.
+  - **Home's legend is happy from the start**, already with the party. So its buff is on from the start (my call; easy to change).
+- **The state machine:** asleep → its area's wave → waking → awake (angry) → beaten → asleep for good; and asleep or awake → (later: mollified) → happy.
+- **Consequences.**
+  - Legend buffs now come from happy legends (`rules/buffs.ts`). The party-legend path stays in the code, dormant, for mollified legends joining her later.
+  - The knockout rule "legends aren't loyal" is moot, since no legend is ever on her leash; it's left in place.
+  - The legend moves' power budget is unchanged: 480 hp, 12 dps.
+  - Early pressure: from the first wave on, every woken area has a legend to beat or avoid next to its soundsystem. That's much more pressure than before, when legends were rare and remote. The balance builder's simulator can model it.
+
 **Planned direction, not built yet (Ed, 2026-10-04):** each area will have a **legendary animal that can be flipped between asleep, happy and angry**, by things that aren't only fighting (quests, mostly exploring the forest). So legends need **distinctive, readable move sets of their own**; the move sets above are written as data per legend so each can get its own later.
 
 ### Multiplayer (Ed, 2026-10-04)
@@ -240,7 +266,7 @@ A counter is **shown**: a hit that's strong against its target flashes big and g
 - **Online co-op** is a goal (not versus, not same-screen); networking comes later. Each player is a witch with her own leash stack, spell and camera; creatures, soundsystems, waves and the forecast are shared.
 - **Waves:** the clock stays the same; each wave wakes **one new area per witch** in the game at that moment, so witches can join and leave mid-game and it still works.
 - **Sigils:** each witch has her own stack, but a sigil placed on the ground belongs to no one: **any witch can pick it up**.
-- **Legend buffs apply to every witch** while that legend lives, whoever evolved it.
+- **Legend buffs apply to every witch** while that legend is happy, whoever made it so.
 - **For builders now:** no single-witch assumptions in new rules code (pass the acting witch explicitly); per-player state (camera, mode, music mix, HUD, edge cues) lives in `src/render/`; inputs go through one place that could later carry a player id; the picker and forecast take `areasPerWave` (1 for now). Done in Stage 4: `game.witches[]` (each with her body, leash, spell, dash and health; `game.witch` reads the first), and a fixed-timestep (1/60 s) deterministic simulation driven only by inputs and the seed, drawn eased between steps (for balance sims, off-screen fights and netcode).
 
 ## Run structure

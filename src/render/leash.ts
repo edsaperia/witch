@@ -145,6 +145,8 @@ export class LeashView {
   /** Where each stacked sigil was last frame (a knockout's release splashes from there). */
   private lastSlots = new Map<number, THREE.Vector3>();
   /** Short-lived effects: hit sparks, puffs, splashes, released leashes, teleport sparkles, quake rings. */
+  /** Legends seen waking (their burst of soil shown once). */
+  private woke = new Set<number>();
   private fx: { kind: string; x: number; y: number; z: number; at: number; life: number; r: number; g: number; b: number; seed: number; tx?: number; tz?: number; size?: number }[] = [];
   /** The screen shake (a legend's quake): when it started and how hard. */
   private shakeAt = -Infinity;
@@ -258,6 +260,14 @@ export class LeashView {
     const g = this.game, W = g.tuning.wildLegends, w = g.witch, dot = this.uv(0), treetops = w.lift > 0.5, near = treetops ? 420 : 110;
     for (const c of g.creatures) {
       if (!c.boss || c.leashed || Math.abs(c.x - w.x) > near || Math.abs(c.z - w.z) > near) continue;
+      // Asleep (or asleep for good), it's scenery: nothing marks it (Ed, 2026-10-04). Waking, a burst
+      // of soil as it heaves up; happy, a few hearts' worth of rosy motes rising.
+      if (c.legendState === "asleep" || c.legendState === "slept") { this.woke.delete(c.id); continue; }
+      if (c.legendState === "waking" && !this.woke.has(c.id)) { this.woke.add(c.id); for (let i = 0; i < 3; i++) this.fx.push({ kind: "puff", x: c.x + (i - 1) * 1.2, y: 0.4, z: c.z, at: time, life: 1.4, r: 0.5, g: 0.4, b: 0.28, seed: c.id * 13 + i }); }
+      if (c.legendState === "happy") {
+        for (let i = 0; i < 5; i++) { const ph = (time * 0.3 + hash2(c.id, i, 31)) % 1, a = hash2(c.id, i, 37) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 1.4, 0.8 + ph * 4, c.z + Math.sin(a) * 1, 0.3, dot, 1, 0.55, 0.75, 0.8 * Math.sin(ph * Math.PI)); }
+        continue;
+      }
       const asleep = dormant(g, c), b = bossBreath(time, c.id, W.breathEvery * (asleep ? 1.5 : 1)), k = (asleep ? 0.7 : 1) * W.glow;
       const sc = sigilColour(c.species), rgb = [0.5 * sc[0] / 255 + 0.45, 0.5 * sc[1] / 255 + 0.02, 0.5 * sc[2] / 255 + 0.08];
       if (treetops) {
@@ -315,6 +325,7 @@ export class LeashView {
       if (e.kind === "landed" && close(e.x, e.z, 150)) { const sh = c ? attackOf(c.species, c.level) : null; this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.5, r: 1, g: 0.5, b: 0.35, seed: 0, size: sh?.attack.radius ?? 1.8 }); this.fx.push({ kind: "puff", x: e.x, y: 0.4, z: e.z, at: time, life: 0.6, r: 0.9, g: 0.7, b: 0.6, seed: e.at * 17 }); }
       // A pulse (a screech, an upheaval) or a toad's slam: a ring out to its reach; burrowing or surfacing, a spray of earth.
       if ((e.kind === "pulse" || e.kind === "slammed") && c && close(e.x, e.z)) { const A = attackOf(c.species, c.level)?.attack, col = c.leashed ? neon(c.species) : { r: 1, g: 0.45, b: 0.4 }; this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.45, r: col.r, g: col.g, b: col.b, seed: 0, size: A?.radius ?? 2.5 }); }
+      if (e.kind === "slept" && close(e.x, e.z, 150)) for (let i = 0; i < 3; i++) this.fx.push({ kind: "puff", x: e.x + (i - 1) * 1.2, y: 0.4, z: e.z, at: time, life: 1.4, r: 0.5, g: 0.4, b: 0.28, seed: e.at * 7 + i });
       if ((e.kind === "burrowed" || e.kind === "surfaced" || e.kind === "slammed") && close(e.x, e.z)) this.fx.push({ kind: "puff", x: e.x, y: 0.3, z: e.z, at: time, life: 0.6, r: 0.55, g: 0.42, b: 0.3, seed: e.at * 41 + (e.id ?? 0) });
       if (e.kind === "sprung" && close(e.x, e.z)) this.fx.push({ kind: "spark", x: e.x, y: 0.8, z: e.z, at: time, life: 0.4, r: 1, g: 0.3, b: 0.3, seed: e.at * 23, size: 1.4 });
       if (e.kind === "charged" && close(e.x, e.z)) this.fx.push({ kind: "puff", x: e.x, y: 0.4, z: e.z, at: time, life: 0.7, r: 0.8, g: 0.7, b: 0.55, seed: e.at * 29 });

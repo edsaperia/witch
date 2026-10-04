@@ -115,7 +115,7 @@ export interface Shot {
 /** A beam burning (Stage 5): from its creature toward an angle, sweeping toward its target. */
 export interface Beam { /** A legend's spin (radians a second), and when each thing it swept was last hit. */ spin?: number; last?: Record<string, number>; id: number; from: number; angle: number; length: number; width: number; until: number; nextTick: number; tick: number; damage: number; side: "wild" | "party"; species: string; attack: string; target: Target }
 
-export type CombatEventKind = "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed";
+export type CombatEventKind = "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "slept" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed";
 export interface CombatEvent { kind: CombatEventKind; x: number; z: number; at: number; id?: number; key?: string; big?: boolean; /** A hit: strong against its target's traits (1), resisted (-1). */ counter?: number }
 
 /** A soundsystem's health (home: the dancefloor's ring). */
@@ -292,6 +292,13 @@ function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target,
   if (a.modifier === "slow") o.slowUntil = time + (a.slowTime ?? 2) * k.slow; // a new slow renews, never stacks
   // It turns on whoever hit it, if it isn't busy with another.
   if (from && o.fight && !o.fight.target) o.fight.target = { kind: "creature", id: from.id };
+  if (o.hp <= 0 && o.boss && !o.leashed) {
+    // An area legend beaten (Ed, 2026-10-04): it sinks back into the ground where it stands,
+    // asleep for good; its area's soundsystem is safe from it.
+    Object.assign(o, { legendState: "slept", stateAt: time, hp: undefined, fight: undefined, siege: undefined, enraged: false, charge: undefined, legend: undefined, slowUntil: undefined, stunUntil: undefined, kx: 0, kz: 0 });
+    s.events.push({ kind: "slept", x: o.x, z: o.z, at: time, id: o.id });
+    return;
+  }
   if (o.hp <= 0) {
     // Beaten (Ed, 2026-10-04: "it's sad when animals die"): it runs off the map, visibly, and is
     // gone for good. A party animal is lost for the run: off its leash as it goes.
@@ -517,6 +524,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
  *  phase at phase2.at of its health: a faster pattern with more in it. */
 function stepLegend(w: CombatWorld, s: CombatState, c: Creature, f: Fight, p: { x: number; z: number; r: number }, d: number, L: LegendSet, data: CombatData, grid: Grid): void {
   const { time, dt } = w, C = w.t.combat, st = (c.legend ??= { step: 0, phase: 1 }), max = maxHp(c.level, data);
+  // An area legend guards its own area (Ed, 2026-10-04): nothing beyond it (an arena's has none).
+  if (c.boss && !c.charge && !w.inArea(c, p.x, p.z)) { f.target = null; f.windupUntil = 0; f.move = undefined; return; }
   if (st.phase === 1 && (c.hp ?? max) <= max * L.phase2.at) {
     // The phase change: a roar (a burst and the screen shaking), and it starts its second pattern.
     st.phase = 2; st.step = 0; f.windupUntil = 0; f.move = undefined; c.charge = undefined; f.readyAt = time + 1.2; c.moving = false;
@@ -610,5 +619,5 @@ export function startSiege(s: CombatState, key: string, at: { x: number; z: numb
 
 /** After a soundsystem falls: the survivors march on to the next-nearest still standing. */
 export function marchOn(s: CombatState, key: string, creatures: Creature[]): void {
-  for (const c of creatures) if (c.siege === key && !c.gone) { c.siege = nearestSound(s, c.x, c.z) ?? undefined; if (c.fight) c.fight.target = null; }
+  for (const c of creatures) if (c.siege === key && !c.gone) { c.siege = c.boss ? undefined : nearestSound(s, c.x, c.z) ?? undefined; if (c.fight) c.fight.target = null; } // (a legend stays to guard its area)
 }

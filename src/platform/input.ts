@@ -15,7 +15,7 @@ export const KEYS = {
   zoomIn: ["KeyZ", "Equal", "NumpadAdd"], zoomOut: ["KeyX", "Minus", "NumpadSubtract"],
   debug: ["Backquote"],
   // Playtest and debug keys.
-  nextWave: ["KeyN"], pauseWaves: ["KeyP"], cycleSpeakers: ["KeyK"], inviteNearest: ["KeyI"], feedNearest: ["KeyB"],
+  nextWave: ["KeyN"], pauseWaves: ["KeyP"], cycleSpeakers: ["KeyK"], inviteNearest: ["KeyI"], feedNearest: ["KeyB"], happyNearest: ["KeyL"],
 } as const;
 
 /** The action bar's eight slots, in order, and what each holds (null: empty, for later spells,
@@ -72,7 +72,7 @@ export class Input {
     let zoom = (p(KEYS.zoomOut) ? 1 : 0) - (p(KEYS.zoomIn) ? 1 : 0);
     let debug = p(KEYS.debug);
     let sigil = p(KEYS.sigil), spell = p(KEYS.spell), cycle = p(KEYS.cycle), dash = p(KEYS.dash);
-    const inviteNearest = p(KEYS.inviteNearest), feedNearest = p(KEYS.feedNearest);
+    const inviteNearest = p(KEYS.inviteNearest), feedNearest = p(KEYS.feedNearest), happyNearest = p(KEYS.happyNearest);
     this.pressed.clear();
 
     // Gamepads: the first one connected with any input.
@@ -117,6 +117,6 @@ export class Input {
     if (len > 1) { moveX /= len; moveZ /= len; }
     const toggleAutoTalk = p(KEYS.autoTalk) || this.touch.autoTalk === true, talkHeld = k(KEYS.talk) > 0;
     this.touch.autoTalk = false;
-    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug, nextWave, pauseWaves, cycleSpeakers, sigil, inviteNearest, spell, cycle, feedNearest, dash, toggleAutoTalk, talkHeld };
+    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug, nextWave, pauseWaves, cycleSpeakers, sigil, inviteNearest, happyNearest, spell, cycle, feedNearest, dash, toggleAutoTalk, talkHeld };
   }
 }

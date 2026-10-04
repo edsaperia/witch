@@ -318,12 +318,12 @@ describe("sieges (Stage 4)", () => {
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
     const next = g.party.next[0]; // (the areas round home hold only babies, who don't attack: grow a few)
-    g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1]).forEach(c => { c.level = 1; });
+    g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1] && !c.boss).forEach(c => { c.level = 1; }); // (its legend wakes and guards it: sleeping.test.ts)
     stepGame(g, { ...idle, nextWave: true }, STEP);
     const [key, area] = [...g.party.areas].find(([, a]) => a.wave === 1)!;
     const sound = g.combat.sounds.get(key)!;
     expect(sound.hp).toBe(60);
-    const besiegers = g.creatures.filter(c => c.siege === key);
+    const besiegers = g.creatures.filter(c => c.siege === key && !c.boss);
     expect(besiegers.length).toBeGreaterThan(0);
     expect(besiegers.every(c => c.cell[0] === area.cell[0] && c.cell[1] === area.cell[1] && c.level > 0)).toBe(true);
     // March them close, then let the siege run.
