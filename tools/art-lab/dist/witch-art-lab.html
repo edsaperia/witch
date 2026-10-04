@@ -181,7 +181,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 
       <section style="display:grid;gap:10px">
         <h2>Witch</h2>
-        <p class="note">The witch in every pose, turned towards you (top) and away (bottom): three frames of her hover, the fast-flight lean, flying flat out over the treetops (three frames), braking hard (two frames), then rising to the treetops and descending to the ground, two frames each. Below, on foot (towards, then away), after her hover for scale: standing (three idle frames), landing and taking off (three each), talking (four gestures), placing and lifting a sigil (three each), and sitting on her terrace (two).</p>
+        <p class="note">The witch in every pose, turned towards you (top) and away (bottom): three frames of her hover, the fast-flight lean, flying flat out over the treetops (three frames), braking hard (two frames), then rising to the treetops and descending to the ground, two frames each. Then flying straight up the screen (seen from behind) and straight down it (at you): three hover frames, the lean, flat out (three) and braking (two). Below, on foot (towards, then away), after her hover for scale: standing (three idle frames), landing and taking off (three each), talking (four gestures), placing and lifting a sigil (three each), and sitting on her terrace (two).</p>
         <div class="sheet-wrap"><canvas id="witchSheet" width="420" height="160"></canvas></div>
       </section>
 
@@ -193,8 +193,19 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 
       <section style="display:grid;gap:10px">
         <h2>Soundsystems</h2>
-        <p class="note">What the party defends: a sound-system stack hewn from magic stone, with glowing crystal cones. Each of the three stacks is shown playing (three frames of the cones pumping), damaged (two frames of flicker) and destroyed, with the witch for scale.</p>
+        <p class="note">What the party defends: a sound-system stack hewn from magic stone, with glowing crystal cones. Each of the three stacks is shown playing (three frames of the cones pumping), damaged (two frames of flicker) and destroyed, with the witch for scale. Below them, the dancefloor speakers: one column each, twelve round the dancefloor, the far half facing in and the near half out so each shows us its front, drawn at three angles (15&deg;, 45&deg; and 75&deg; from facing us; mirrored for the other side), playing, damaged and destroyed.</p>
         <div class="sheet-wrap"><canvas id="soundsystems" width="420" height="200"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
+        <div class="row" style="justify-content:space-between"><h2>Dancefloor</h2><div class="row">
+          <label class="note" for="discoPick">Pattern</label><select id="discoPick"></select>
+          <label class="note" for="discoLevel">Party level</label><input id="discoLevel" type="range" min="1" max="4" step="1" value="2"><span class="note" id="discoLevelOut">2</span>
+          <button id="discoBoot" type="button">Switch on</button><button id="discoPlay" type="button">Pause</button><label class="note"><input id="discoClick" type="checkbox"> 120 bpm click</label>
+        </div></div>
+        <p class="note">The hero floor: 30 tiles across, each lit by the tile-lighting engine. Here it plays the pattern library to a 120 bpm beat: on "the set", patterns that suit the party level, each in through a transition (wipe, iris, dissolve, or a burst on a bar line); or one picked pattern on a loop. Click the floor to stand the witch there (her own glow is a layer on top); click her again to clear. "Switch on" plays the boot-up sequence.</p>
+        <div class="sheet-wrap"><canvas id="discoFloor" width="320" height="320" style="cursor:crosshair"></canvas></div>
+        <p class="note" id="discoNow"></p>
       </section>
 
       <section style="display:grid;gap:10px">
@@ -1437,6 +1448,7 @@ function fastModel(frame) {
   m.ell(brim, [.16, .014, .15], M.HAT, { dir: [1, .9, 0], group: 11 });
   m.chain([[...v3.add(brim, [-.02, .02, 0]), .08], [...v3.add(brim, [-.14, .13, 0]), .04], [...v3.add(brim, [-.3, .14 + j[2] * 2, 0]), .012]], M.HAT, { group: 11, paint: p => Math.hypot(p[0] - brim[0], p[1] - brim[1]) < .06 ? M.MAGIC : undefined });
   m.seg(v3.add(brim, [.08, -.02, .08]), v3.add(H, [.04, -.09, .08]), .008, .008, M.HAT, { group: 11 }); // the chin strap, pulled taut
+  m.anchors.hand = hands[1]; m.anchors.hatTip = v3.add(brim, [-.3, .14 + j[2] * 2, 0]);
   // speed: a few small streaks trailing from the bristles and from her
   for (const [x0, yy, z, len] of [[-.86, bx(-.8) + .05, .03, .22], [-.88, bx(-.8) - .04, -.04, .16], [-.7, y + .45, .05, .14], [-.2, y + .5, -.04, .12]]) {
     const o = (f * .05) % .1; m.seg([x0 - o, yy, z], [x0 - o - len, yy, z], .01, .004, M.MAGIC2, { group: 30, extra: true });
@@ -1598,6 +1610,7 @@ function witchModel({ frame = 0, lean = false, pose } = {}) {
     m.seg(sh, elbow, .04, .035, M.JACKET, { group: side > 0 ? 7 : 5 });
     m.seg(elbow, hand, .035, .03, M.JACKET, { group: side > 0 ? 7 : 5 });
     m.ell(hand, [.035, .03, .035], M.SKIN, { group: side > 0 ? 7 : 5 });
+    if (side > 0) m.anchors.hand = hand; // her near hand (in flight it holds the broom; a sigil can still hang from it)
   }
   // head, face and hair
   m.ell(H, [.11, .115, .1], M.SKIN, { group: 8, paint: p => (p[0] < H[0] - .01 || p[1] > H[1] + .075) ? M.HAIR : undefined });
@@ -1611,6 +1624,7 @@ function witchModel({ frame = 0, lean = false, pose } = {}) {
   // the hat: a wide brim and a tall crown, its tip bent back (pushed further back by the climb)
   const back = rise ? .1 : 0;
   m.ell(brim, [.16, .014, .15], M.HAT, { dir: brake ? [1, -.55, 0] : [1, .25 + back * 3, 0], group: 11 }); // braking, it tips forward over her eyes
+  m.anchors.hatTip = brake ? v3.add(brim, [.2, .22 + sway * .5, 0]) : v3.add(brim, [-.16 - Lh * 1.5 - back, .27 + sway * .5 - back * .5, 0]); // where the sigil stack hangs over her
   m.chain(brake ? [[...v3.add(brim, [0, .01, 0]), .085], [...v3.add(brim, [.06, .16, 0]), .045], [...v3.add(brim, [.2, .22 + sway * .5, 0]), .012]] : [[...v3.add(brim, [0, .01, 0]), .085], [...v3.add(brim, [-.05 - Lh - back * .5, .17 - back * .3, 0]), .045], [...v3.add(brim, [-.16 - Lh * 1.5 - back, .27 + sway * .5 - back * .5, 0]), .012]], M.HAT, { group: 11, paint: p => p[1] < brim[1] + .045 ? M.MAGIC : undefined }); // a glowing hatband
   if (posed) {
     // tilt the whole witch and broom about the broom's middle
@@ -1623,9 +1637,10 @@ function witchModel({ frame = 0, lean = false, pose } = {}) {
       if (q.paint) { const f = q.paint; q.paint = (p, part) => f(unrot(p), part); } // markings stay where they were painted
     }
     for (const f of m.flats) { f.c = rot(f.c); f.u = dir(f.u); f.v = dir(f.v); }
+    m.anchors.hand = rot(m.anchors.hand); m.anchors.hatTip = rot(m.anchors.hatTip);
     // lifted so her feet clear the ground as she tilts
     const low = Math.min(...m.parts.map(q => q.type === "ell" ? q.c[1] - Math.max(...q.r) : Math.min(q.a[1] - q.r1, q.b[1] - q.r2)));
-    if (low < .08) for (const q of m.parts) { const d = .08 - low; if (q.type === "ell") q.c = [q.c[0], q.c[1] + d, q.c[2]]; else { q.a = [q.a[0], q.a[1] + d, q.a[2]]; q.b = [q.b[0], q.b[1] + d, q.b[2]]; } }
+    if (low < .08) { for (const q of m.parts) { const d = .08 - low; if (q.type === "ell") q.c = [q.c[0], q.c[1] + d, q.c[2]]; else { q.a = [q.a[0], q.a[1] + d, q.a[2]]; q.b = [q.b[0], q.b[1] + d, q.b[2]]; } } for (const k of ["hand", "hatTip"]) m.anchors[k] = v3.add(m.anchors[k], [0, .08 - low, 0]); }
     // rising: sparks and a puff falling from the bristles
     // braking: a puff of dust and sparks kicked forward from the bristles
     if (brake) { const tail = rot([-.45, y - .24, 0]); for (let i = 0; i < 5; i++) { const k = i + frame * .5, r = .055 - i * .008; m.ell([tail[0] + .1 + k * .08, Math.max(.04, tail[1] - .02 + Math.sin(k * 1.9) * .04), Math.cos(k * 1.3) * .06], [r, r * .8, r], i < 2 ? M.BELLY : i % 2 ? M.MAGIC : M.MAGIC2, { group: 25 + i, extra: true }); } }
@@ -1643,9 +1658,16 @@ const scaleCache = new Map();
 const witchScale = h => { if (!scaleCache.has(h)) scaleCache.set(h, render(witchModel({ frame: 0 }), { height: h }).s); return scaleCache.get(h); };
 // pixels per model unit at her ordinary scale, for things built to her size (the treehouse)
 const witchPixelsPerUnit = (st = {}) => witchScale(witchHeight(st));
-function witchSprite(st = {}, { frame = 0, lean = false, facing = "towards", pose } = {}) {
-  const h = witchHeight(st);
-  const model = witchModel({ frame, lean, pose }), { sp, project } = pose ? render(model, { scale: witchScale(h), facing }) : render(model, { height: h, facing });
+// heading (Ed: "straight up" and "straight down" movement): "side" (the default, the broom across the screen, turned
+// towards or away by facing), "away" (flying straight up the screen, into it: seen from behind, the broom foreshortened
+// with its bristles towards us, her hair, jacket and hat tip streaming back at us) or "towards" (straight down the screen,
+// at us: the handle's tip nearest, her face over it). Any frame, lean or flight pose (fast, brake) can be turned so, at her
+// ordinary scale. Every flight frame carries anchors: her near hand and her hat tip (where the sigil stack hangs).
+const WITCH_HEADINGS = { away: -Math.PI / 2, towards: Math.PI / 2 };
+function witchSprite(st = {}, { frame = 0, lean = false, facing = "towards", pose, heading = "side" } = {}) {
+  const h = witchHeight(st), yaw = WITCH_HEADINGS[heading];
+  const model = witchModel({ frame, lean, pose }), { sp, project, s } = yaw !== undefined ? render(model, { scale: witchScale(h), yaw }) : pose ? render(model, { scale: witchScale(h), facing }) : render(model, { height: h, facing });
+  sp.scale = s; // pixels per model unit
   // on foot: where her free hand (a held sigil) and her hat tip are, in pixels from the top-left
   if (model.anchors.hand) sp.anchors = { hand: project(model.anchors.hand), hatTip: project(model.anchors.hatTip) };
   // she glows: a few motes of light round her
@@ -4242,6 +4264,393 @@ function lightProps(st, { makeCanvas = defaultCanvas } = {}) {
 
 
 
+// ---- inlined from art/dancefloor.js ----
+// The hero dancefloor (Ed: "a magic disco floor with colour-changing squares that change to draw a
+// variety of different magical shapes, changing to the music" ... "we should have a system to light
+// squares rather than just an art asset"). A round floor of square glass tiles, 32 x 32 with a circle
+// mask (30 tiles across), each about 0.9 m, inside a carved stone rim. This module is the data and the
+// looks the prototype's tile-lighting engine uses; the engine does the animating and the layering.
+//
+// Data:
+//   discoPatterns(): the pattern library. Each { id, name, kind, level, beats, fpb, palette, frames, key, area? }:
+//     kind: "shape" (a figure that holds and pulses), "loop" (motion that repeats), "fill" (texture for
+//       between shapes), "area" (an area's own shape, from its creature's sigil; area: the area's id),
+//       "boot" (the switch-on sequence at game start).
+//     level: 1 (simple, calm) to 4 (full rave), so the engine can suit patterns to the party's intensity.
+//     beats: its length in beats (whole); fpb: frames per beat (1, 2 or 4); frames.length = beats * fpb.
+//     palette: 2 to 4 names from the party's neon (NEON in sigils.js); frames: Uint8Array(32 * 32) each,
+//       row by row, 0 = off and k = palette[k - 1]. Cells outside the circle are always 0. key: its fullest frame.
+//   DISCO_TRANSITIONS: wipe, iris, dissolve and burst, each { id, beats, onBar, desc }; discoTransition(id, t)
+//     gives the 32 x 32 mask at progress t (0 = all the old pattern, 1 = all the new; 2 = the bright edge).
+//   discoCompose(...): a reference of how the layers combine (pattern, transition, the witch's glow, the
+//     party's intensity), used by the Art Lab and the previews; the prototype's engine is the real one.
+// Looks (sprites at 16 px per metre, ground space, seen from above): discoTileSprite("unlit" | "lit", { level })
+//   (lit at intensities 1 to 3, white glass the engine tints with a cell's neon), discoGroutSprite, the stone rim
+//   as a strip that repeats every DISCO_RIM.period px along the circumference (discoRimStrip), and the whole
+//   unlit floor (discoFloorBase) with tiles, grout and rim, for the engine to draw under the lit tiles.
+
+
+
+const DISCO_GRID = 32;
+const DISCO_RADIUS = 15;         // tiles from the centre: 30 across
+const DISCO_TILE_METRES = .9;
+const DC = DISCO_GRID / 2;
+const discoInside = (x, y) => (x + .5 - DC) ** 2 + (y + .5 - DC) ** 2 <= DISCO_RADIUS * DISCO_RADIUS;
+const DISCO_MASK = Uint8Array.from({ length: DISCO_GRID * DISCO_GRID }, (_, i) => discoInside(i % DISCO_GRID, (i / DISCO_GRID) | 0) ? 1 : 0);
+
+// ---- drawing on the grid: f(x, y) in tile units from the floor's centre (y down), returning a palette index ----
+function discoFrame(f) {
+  const fr = new Uint8Array(DISCO_GRID * DISCO_GRID);
+  for (let j = 0; j < DISCO_GRID; j++) for (let i = 0; i < DISCO_GRID; i++) if (DISCO_MASK[j * DISCO_GRID + i]) fr[j * DISCO_GRID + i] = f(i + .5 - DC, j + .5 - DC) || 0;
+  return fr;
+}
+const discoSeg = (x, y, a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], t = Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / (dx * dx + dy * dy || 1))); return Math.hypot(x - a[0] - dx * t, y - a[1] - dy * t); };
+const discoPoly = (x, y, P) => { let inside = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) if ((P[i][1] > y) !== (P[j][1] > y) && x < (P[j][0] - P[i][0]) * (y - P[i][1]) / (P[j][1] - P[i][1]) + P[i][0]) inside = !inside; return inside; };
+const discoAng = (x, y) => Math.atan2(y, x);
+const discoWrap = a => ((a % (Math.PI * 2)) + Math.PI * 3) % (Math.PI * 2) - Math.PI;
+const discoRot = (x, y, a) => [x * Math.cos(a) + y * Math.sin(a), -x * Math.sin(a) + y * Math.cos(a)];
+const discoStar = (n, ro, ri, a0 = -Math.PI / 2, cx = 0, cy = 0) => Array.from({ length: n * 2 }, (_, k) => { const r = k % 2 ? ri : ro, a = a0 + k * Math.PI / n; return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]; });
+
+// A pattern: frames from frameAt(k, n) (k the frame, n how many), each a function of (x, y).
+function discoPattern(id, name, kind, level, beats, fpb, palette, frameAt, extra = {}) {
+  const n = beats * fpb, frames = Array.from({ length: n }, (_, k) => discoFrame(frameAt(k, n))), lit = frames.map(f => f.reduce((a, v) => a + (v ? 1 : 0), 0));
+  return { id, name, kind, level, beats, fpb, palette, frames, key: lit.indexOf(Math.max(...lit)), ...extra }; // key: its fullest frame, for contact sheets
+}
+
+// ================= the shapes =================
+function discoPentagram() {
+  const P = Array.from({ length: 5 }, (_, k) => [Math.cos(-Math.PI / 2 + k * 4 * Math.PI / 5) * 12, Math.sin(-Math.PI / 2 + k * 4 * Math.PI / 5) * 12]);
+  return discoPattern("pentagram", "Pentagram", "shape", 2, 4, 2, ["violet", "magenta"], k => (x, y) => {
+    const drawn = Math.min(5, k + 1.5), r = Math.hypot(x, y); // drawn stroke by stroke, then the colours swap on the beat
+    for (let s = 0; s < 5; s++) if (s < drawn && discoSeg(x, y, P[s], P[(s + 1) % 5]) < .75) return k >= 4 && k % 2 ? 2 : 1;
+    if (k >= 3 && Math.abs(r - 13.4) < .7) return k >= 4 && k % 2 ? 1 : 2;
+  });
+}
+function discoMoon() { // a crescent waxing to full, a halo blinking on the beat
+  return discoPattern("moon", "Waxing moon", "shape", 1, 8, 1, ["lemon", "cyan"], k => (x, y) => {
+    const p = k / 7, r = Math.hypot(x, y), d = 21 * (1 - p) + .01;
+    if (r < 10 && (p >= 1 || Math.hypot(x + d, y) > 10)) return 1;
+    if (k % 2 === 0 && Math.abs(r - 12.5) < .6) return 2;
+  });
+}
+function discoEye() { // an eye opening, looking round, blinking
+  const open = [0, .25, .6, 1, 1, 1, 1, 1, 1, 1, .4, 0, .4, 1, 1, 1];
+  return discoPattern("eye", "Opening eye", "shape", 2, 4, 4, ["mint", "violet", "magenta"], k => (x, y) => {
+    const o = open[k], h = 7.5 * (1 - (x / 13.5) ** 2), look = Math.sin(k * .8) * 3;
+    if (Math.abs(x) > 13.5) return;
+    const edge = Math.abs(Math.abs(y) - o * h);
+    if (edge < .6 || (o < .05 && Math.abs(y) < .6)) return 1;
+    if (Math.abs(y) < o * h) { const d = Math.hypot(x - look, y); if (d < 2) return 3; if (d < 5) return 2; }
+  });
+}
+function discoSpiral() { // two arms turning
+  return discoPattern("spiral", "Turning spiral", "loop", 3, 4, 4, ["cyan", "pink"], (k, n) => (x, y) => {
+    const r = Math.hypot(x, y), s = ((discoAng(x, y) - r * .42 + k / n * Math.PI * 2) / Math.PI + 4) % 2;
+    if (r < 1.2) return; if (s < .42) return 1; if (s >= 1 && s < 1.42) return 2;
+  });
+}
+function discoRipples() { // rings rolling out from the centre on the beat
+  return discoPattern("ripples", "Ripples", "loop", 1, 4, 2, ["blue", "cyan", "mint"], (k, n) => (x, y) => {
+    const r = Math.hypot(x, y), ph = (k / 2) % 1 * 5, ring = Math.floor((r - ph) / 5 + 10);
+    if (((r - ph) % 5 + 5) % 5 < 1.25) return 1 + ring % 3;
+  });
+}
+function discoRuneBand() { // a band of runes turning round the edge, a small pulsing ring at the heart
+  return discoPattern("rune-band", "Rune band", "loop", 2, 8, 2, ["orange", "lemon"], (k, n) => (x, y) => {
+    const r = Math.hypot(x, y);
+    if (r > 10 && r < 14.5) { const s = ((discoAng(x, y) / (Math.PI * 2) + .5) * 9 + k / n * 9) % 9, u = s % 1, v = (r - 10.2) / 4.1; if (runeGlyph(u, v, Math.floor(s) + 5, .16)) return 1; }
+    if (Math.abs(r - 9.5) < .5 || Math.abs(r - 14.6) < .45) return 2;
+    if (Math.abs(r - (k % 2 ? 3 : 2)) < .6) return 2;
+  });
+}
+function discoSun() { // a sun with turning rays
+  return discoPattern("sun", "Sunburst", "shape", 3, 4, 2, ["lemon", "orange", "red"], (k, n) => (x, y) => {
+    const r = Math.hypot(x, y), a = discoAng(x, y) + k / n * Math.PI / 3, w = (a / (Math.PI * 2) * 12 % 1 + 1) % 1, ray = Math.floor((a / (Math.PI * 2) + 1) * 12) % 2;
+    if (r < 4.6) return 1;
+    if (r > 6 && r < 14.5 && Math.abs(w - .5) < .2 * (1 - (r - 6) / 12)) return ray ? 2 : 3;
+  });
+}
+function discoTriquetra() { // three interlaced arcs and a ring, the colours passed round
+  const C = [0, 1, 2].map(i => { const a = -Math.PI / 2 + i * Math.PI * 2 / 3; return [Math.cos(a) * 5.6, Math.sin(a) * 5.6]; });
+  return discoPattern("triquetra", "Triquetra", "shape", 2, 3, 1, ["acid", "cyan", "violet"], k => (x, y) => {
+    for (let i = 0; i < 3; i++) { const d = Math.hypot(x - C[i][0], y - C[i][1]); if (Math.abs(d - 9.4) < .75 && C.some((c, j) => j !== i && Math.hypot(x - c[0], y - c[1]) < 9.4)) return 1 + (i + k) % 3; }
+    if (Math.abs(Math.hypot(x, y) - 14.2) < .6) return 1 + (k + 1) % 3;
+  });
+}
+function discoMushrooms() { // a fairy ring of mushrooms, bobbing in turn
+  return discoPattern("mushroom-ring", "Mushroom ring", "shape", 1, 4, 2, ["red", "lemon", "acid"], k => (x, y) => {
+    for (let m = 0; m < 8; m++) {
+      const a = m * Math.PI / 4, cx = Math.cos(a) * 10, cy = Math.sin(a) * 10 - ((m + k) % 2 ? .8 : 0), dx = x - cx, dy = y - cy;
+      if (dy < 0 && dx * dx / 7 + dy * dy / 4 < 1) return (Math.abs(dx - .8) < .5 && Math.abs(dy + 1) < .5) ? 2 : 1; // the cap, spotted
+      if (dy >= 0 && dy < 2.3 && Math.abs(dx) < .7) return 2; // the stem
+    }
+    if (Math.hypot(x, y) < 1.2 && k % 2) return 3;
+  });
+}
+function discoPaws() { // paw prints walking across, the newest bright, the last few fading
+  const steps = Array.from({ length: 8 }, (_, s) => { const t = s / 7, side = s % 2 ? 1 : -1; return [-10.5 + t * 21 + side * 2.6, 9 - t * 18 + side * 2.6]; });
+  const paw = (x, y, c) => { const dx = (x - c[0]) / 1.5, dy = (y - c[1]) / 1.5; if ((dx * dx) / 2.6 + ((dy - .6) ** 2) / 2 < 1) return true; return [[-1.6, -1.3], [-.55, -2.2], [.55, -2.2], [1.6, -1.3]].some(([tx, ty]) => Math.hypot(dx - tx, dy - ty) < .62); };
+  return discoPattern("paws", "Paw prints", "loop", 2, 8, 1, ["acid", "mint"], k => (x, y) => {
+    for (let s = k; s >= Math.max(0, k - 1); s--) if (paw(x, y, steps[s])) return s === k ? 1 : 2;
+  });
+}
+function discoLightning() { // a bolt, flashing
+  const B = [[-3, -14], [2, -6], [-2, -4], [4, 5], [0, 6], [5, 14]], fork = [[2, -6], [8, -2], [10, 1]], flash = [1, 0, 1, 1, 0, 0, 1, 0];
+  return discoPattern("lightning", "Lightning", "shape", 4, 2, 4, ["lemon", "cyan"], k => (x, y) => {
+    if (!flash[k]) return 0;
+    for (let s = 0; s + 1 < B.length; s++) if (discoSeg(x, y, B[s], B[s + 1]) < (k === 0 ? 1.2 : .8)) return 1;
+    for (let s = 0; s + 1 < fork.length; s++) if (discoSeg(x, y, fork[s], fork[s + 1]) < .6) return 2;
+  });
+}
+function discoHeart() { // a heart beating twice a beat
+  return discoPattern("heart", "Heart", "shape", 1, 2, 2, ["red", "pink"], k => (x, y) => {
+    const sc = k % 2 ? 9.5 : 11.5, u = x / sc * 1.25, v = -(y + 1) / sc * 1.25, f = (u * u + v * v - 1) ** 3 - u * u * v ** 3;
+    if (f <= 0) { const inner = (q => (q * q + (v / .8) ** 2 - 1) ** 3 - q * q * (v / .8) ** 3)(u / .8); return inner <= 0 ? 2 : 1; }
+  });
+}
+function discoHand() { // an open hand, waving
+  return discoPattern("hand", "Hand", "shape", 2, 4, 1, ["magenta", "pink"], k => (x, y) => {
+    const [u, v] = discoRot(x, y, (k % 2 ? 1 : -1) * .15), F = [[-10, -5, -6, 1.5], [-5.6, -12, -4.2, -3], [-1.8, -13, -1.4, -3.5], [1.9, -12.5, 1.4, -3.5], [5.4, -10.5, 4.2, -3]];
+    const e = (u / 5.6) ** 2 + ((v - 3) / 6.2) ** 2;
+    if (e < 1) return Math.hypot(u, v - 3) < 2 ? 1 : e > .62 ? 1 : 2; // the palm, outlined, an eye in it
+    for (const [x0, y0, x1, y1] of F) if (discoSeg(u, v, [x0, y0], [x1, y1]) < 1.05) return 1;
+  });
+}
+function discoKey() { // a key, turning a quarter on each beat
+  return discoPattern("key", "Key", "shape", 1, 4, 1, ["lemon", "orange"], k => (x, y) => {
+    const [u, v] = discoRot(x, y, k * Math.PI / 2 * .25), d = Math.hypot(u + 6.5, v);
+    if (d < 4.6 && d > 2.4) return 1; if (d <= 1.2) return 2;
+    if (u > -2.2 && u < 10.5 && Math.abs(v) < .8) return 1;
+    if ((u > 6.6 && u < 7.8 && v > 0 && v < 3.2) || (u > 9 && u < 10.5 && v > 0 && v < 2.4)) return 2;
+  });
+}
+function discoHat() { // a witch's hat, its buckle twinkling
+  const cone = [[-5.5, 4], [5.5, 4], [1.5, -6], [5.5, -12], [-1.5, -7]];
+  return discoPattern("witch-hat", "Witch's hat", "shape", 1, 4, 1, ["violet", "acid", "lemon"], k => (x, y) => {
+    if (Math.abs(y - 3.2) < 1.2 && Math.abs(x) < 4.6 && Math.abs(x - (k % 2 ? 0 : .5)) < 1) return 3; // the buckle
+    if (Math.abs(y - 3.2) < 1.1 && Math.abs(x) < 5.2) return 2; // the band
+    if (discoPoly(x, y, cone)) return 1;
+    if ((x / 11) ** 2 + ((y - 5) / 2.2) ** 2 < 1) return 1; // the brim
+  });
+}
+function discoRosette() { // a six-petalled flower, its petals lighting round in turn
+  return discoPattern("rosette", "Rosette", "shape", 2, 4, 2, ["pink", "mint", "lemon"], (k, n) => (x, y) => {
+    const r = Math.hypot(x, y); if (r < 2.6) return 3;
+    for (let q = 0; q < 6; q++) { const a = q * Math.PI / 3 + k / n * Math.PI / 3, d = Math.hypot(x - Math.cos(a) * 8, y - Math.sin(a) * 8); if (d < 4.6) return d > 3.3 || q === k % 6 ? 1 : 2; }
+  });
+}
+function discoStars() { // five little stars twinkling in turn
+  const S = [[-7, -6], [6, -8], [8, 4], [-5, 8], [0, 0]];
+  return discoPattern("stars", "Twinkling stars", "fill", 2, 4, 2, ["lemon", "cyan", "pink"], k => (x, y) => {
+    for (let i = 0; i < S.length; i++) { if ((i + k) % 3 === 0) continue; const big = (i + k) % 2 ? 3.2 : 4.2; if (discoPoly(x, y, discoStar(5, big, big * .42, -Math.PI / 2, S[i][0], S[i][1]))) return 1 + i % 3; }
+  });
+}
+
+// ================= loops and fills =================
+const discoChecker = () => discoPattern("checker", "Checkerboard", "fill", 1, 2, 1, ["cyan", "magenta"], k => (x, y) => 1 + (Math.floor((x + 16) / 2) + Math.floor((y + 16) / 2) + k) % 2);
+const discoSparkle = () => discoPattern("sparkle", "Sparkle", "fill", 3, 4, 4, ["lemon", "cyan", "pink"], k => (x, y) => { const h = hash2(Math.floor(x + 16), Math.floor(y + 16), 400 + k); return h < .09 ? 1 + Math.floor(h / .03) : 0; });
+function discoSweep() { // a radar sweep, its trail fading
+  return discoPattern("sweep", "Radar sweep", "loop", 3, 4, 4, ["acid", "mint"], (k, n) => (x, y) => {
+    const behind = ((k / n * Math.PI * 2 - discoAng(x, y) - Math.PI / 2) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+    if (behind < .3) return 1; if (behind < 1.1) return 2;
+    if (Math.abs(Math.hypot(x, y) - 7) < .5) return 2;
+  });
+}
+const discoWaves = () => discoPattern("waves", "Waves", "loop", 2, 4, 2, ["blue", "cyan", "violet"], (k, n) => (x, y) => { const w = y + Math.sin(x * .42 + k / n * Math.PI * 2) * 2.4, b = Math.floor((w + 16) / 4); return ((w + 16) % 4 + 4) % 4 < 1.6 ? 1 + b % 3 : 0; });
+function discoKaleido() { // eightfold mirrored blobs, new on each beat
+  return discoPattern("kaleidoscope", "Kaleidoscope", "loop", 4, 4, 1, ["magenta", "lemon", "cyan", "acid"], k => (x, y) => {
+    let a = Math.abs(discoWrap(discoAng(x, y))) % (Math.PI / 4); if (a > Math.PI / 8) a = Math.PI / 4 - a;
+    const r = Math.hypot(x, y), u = Math.cos(a) * r, v = Math.sin(a) * r, h = hash2(Math.floor(u / 2.2), Math.floor(v / 2.2), 77 + k);
+    return h < .5 ? 1 + Math.floor(h * 8) % 4 : 0;
+  });
+}
+const discoStrobe = () => discoPattern("strobe", "Strobe rings", "fill", 4, 1, 4, ["pink", "cyan"], k => (x, y) => { const r = Math.hypot(x, y); return k % 2 ? (Math.floor(r / 3) % 2 ? 1 : 2) : (Math.floor(r / 3) % 2 ? 0 : 1); });
+function discoPulse() { // the whole floor breathing out from the centre in two colours
+  return discoPattern("pulse", "Pulse", "fill", 4, 2, 4, ["violet", "pink"], k => (x, y) => { const r = Math.hypot(x, y), front = (k % 4 + 1) * 3.8; return r < front ? (r > front - 3.8 ? 1 : 2) : 0; });
+}
+
+// ================= the switch-on sequence =================
+// At game start: a ring sweeps out from the centre, a radar arm checks each quadrant in its colour, a test grid
+// and checks blink, then the whole floor flashes on and settles to a sparkle. 8 beats, 4 frames a beat.
+function discoBoot() {
+  const Q = (x, y) => (x < 0 ? 0 : 1) + (y < 0 ? 0 : 2);
+  return discoPattern("switch-on", "Switch-on", "boot", 1, 8, 4, ["cyan", "pink", "lemon", "acid"], k => (x, y) => {
+    const r = Math.hypot(x, y);
+    if (k < 8) { const front = (k + 1) * 2; return r < front && r > front - 1.6 ? 1 : r < front - 1.6 && k > 5 ? 0 : 0; } // the sweep out
+    if (k < 16) { const arm = (k - 8) / 8 * Math.PI * 2 - Math.PI / 2, behind = ((arm - discoAng(x, y)) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2); return behind < (k - 8 + 1) / 8 * Math.PI * 2 ? 1 + Q(x, y) : 0; } // quadrant test
+    if (k < 20) return (Math.floor(x + 16) % 4 === 0 || Math.floor(y + 16) % 4 === 0) ? 1 + (k % 2) * 2 : 0; // test grid
+    if (k < 24) return (Math.floor(x + 16) + Math.floor(y + 16) + k) % 2 ? 2 : 0; // checks
+    if (k < 28) return k % 2 ? 1 : 3; // all on, flashing
+    return hash2(Math.floor(x + 16), Math.floor(y + 16), k) < .12 * (32 - k) ? 1 + Math.floor(hash2(Math.floor(x + 16), Math.floor(y + 16), 3) * 4) : 0; // settling
+  });
+}
+
+// ================= each area's own shape: its creature's sigil, drawn on stroke by stroke then pulsing =================
+const discoContrast = name => ({ lemon: "violet", acid: "magenta", mint: "pink", cyan: "orange", blue: "lemon" }[name] || "lemon");
+function discoAreaPattern(A) {
+  const neon = SIGIL_NEON[A.creature] || "cyan", G = 22, off = (DISCO_GRID - G) / 2;
+  const glyphs = Array.from({ length: 8 }, (_, k) => sigilGlyph(A.creature, G, { progress: (k + 1) / 8 })), full = glyphs[7];
+  const at = (g, x, y) => { const i = Math.floor(x + DC - off), j = Math.floor(y + DC - off); return i >= 0 && j >= 0 && i < G && j < G && g.m[j * G + i]; };
+  const halo = (x, y) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => at(full, x + dx, y + dy));
+  return discoPattern("area-" + A.id, A.name, "area", 2, 4, 4, [neon, discoContrast(neon)], k => (x, y) => {
+    if (k < 8) return at(glyphs[k], x, y) ? 1 : 0; // drawn on, stroke by stroke
+    if (at(full, x, y)) return 1;
+    if (k % 2 && halo(x, y)) return 2; // then pulsing, a halo on the off-beats
+    if (k % 4 === 0 && Math.abs(Math.hypot(x, y) - 14.3) < .55) return 2;
+  }, { area: A.id, creature: A.creature });
+}
+
+let discoLib = null;
+// The whole library, built once: the general patterns, the switch-on sequence, and one per area.
+function discoPatterns() {
+  if (discoLib) return discoLib;
+  const general = [discoPentagram, discoMoon, discoEye, discoSpiral, discoRipples, discoRuneBand, discoSun, discoTriquetra, discoMushrooms, discoPaws, discoLightning, discoHeart, discoHand, discoKey, discoHat, discoRosette, discoStars,
+    discoChecker, discoSparkle, discoSweep, discoWaves, discoKaleido, discoStrobe, discoPulse].map(f => f());
+  discoLib = [...general, discoBoot(), ...AREAS.map(discoAreaPattern)];
+  return discoLib;
+}
+const discoPatternById = id => discoPatterns().find(p => p.id === id);
+
+// ================= transitions =================
+const DISCO_TRANSITIONS = [
+  { id: "wipe", beats: 1, onBar: false, desc: "a straight edge sweeps across (angle in the options, default left to right), a bright line along it" },
+  { id: "iris", beats: 1, onBar: false, desc: "a circle opens from the centre (or closes: in), a bright ring at its edge" },
+  { id: "dissolve", beats: 2, onBar: false, desc: "tiles change over one by one in a fixed random order" },
+  { id: "burst", beats: 1, onBar: true, desc: "on a bar line: the whole floor flashes in the new colour and the new pattern bursts out from the centre" },
+];
+// The mask at progress t (0..1): 0 shows the old pattern, 1 the new, 2 the transition's bright edge (the new pattern's
+// first colour, at full). opts: { angle } for wipe (radians, 0 = left to right), { in: true } for an iris closing.
+function discoTransition(id, t, opts = {}) {
+  const out = new Uint8Array(DISCO_GRID * DISCO_GRID), R = DISCO_RADIUS + .8;
+  for (let j = 0; j < DISCO_GRID; j++) for (let i = 0; i < DISCO_GRID; i++) {
+    const n = j * DISCO_GRID + i; if (!DISCO_MASK[n]) continue;
+    const x = i + .5 - DC, y = j + .5 - DC;
+    if (t >= 1) { out[n] = 1; continue; } if (t <= 0) continue;
+    if (id === "wipe") { const a = opts.angle || 0, s = (x * Math.cos(a) + y * Math.sin(a)) / R, e = -1 + t * 2.2; out[n] = s < e - .1 ? 1 : s < e ? 2 : 0; }
+    else if (id === "iris") { const r = Math.hypot(x, y) / R, e = opts.in ? 1 - t * 1.1 : t * 1.1; out[n] = opts.in ? (r > e + .08 ? 1 : r > e ? 2 : 0) : (r < e - .08 ? 1 : r < e ? 2 : 0); }
+    else if (id === "dissolve") out[n] = hash2(i, j, 913) < t ? 1 : 0;
+    else if (id === "burst") { const r = Math.hypot(x, y) / R; out[n] = t < .15 ? 2 : r < (t - .15) / .85 * 1.1 - .1 ? 1 : r < (t - .15) / .85 * 1.1 ? 2 : 0; }
+  }
+  return out;
+}
+
+// ================= how the layers combine (a reference for the engine; the Art Lab and previews use it) =================
+// Returns per cell an RGB and an intensity 0..3 (0 off; 1 to 3 the lit tile's look). Layers, bottom to top:
+//   the pattern (and, mid-transition, the next one through the mask), dimmed at low party levels;
+//   the party's intensity: at level 1 lit cells sit at intensity 1, at 4 at 3, and a level-4 floor sparkles between;
+//   the witch: the tiles round where she stands light in her own colour, brightest under her.
+function discoCompose({ pattern, frame = 0, next = null, nextFrame = 0, transition = null, t = 0, level = 2, witch = null, witchColour = NEON.lemon, beat = 0 }) {
+  const cells = Array.from({ length: DISCO_GRID * DISCO_GRID }, () => null), mask = transition && next ? discoTransition(transition.id || transition, t, transition) : null;
+  const base = Math.max(1, Math.min(3, Math.round(level * .75))), colour = (p, v) => NEON[p.palette[v - 1]] || NEON.cyan;
+  for (let n = 0; n < cells.length; n++) {
+    if (!DISCO_MASK[n]) continue;
+    const m = mask ? mask[n] : 0, p = m ? next : pattern, f = m ? nextFrame : frame, v = p.frames[f % p.frames.length][n];
+    if (m === 2) cells[n] = { rgb: colour(next, 1), level: 3 };
+    else if (v) cells[n] = { rgb: colour(p, v), level: Math.min(3, base + (v === 1 && level >= 3 ? 1 : 0)) };
+    else if (level >= 4 && hash2(n, beat, 51) < .03) cells[n] = { rgb: colour(p, 1 + (n % p.palette.length)), level: 1 };
+  }
+  if (witch) for (let n = 0; n < cells.length; n++) { // the witch's own glow, on top
+    if (!DISCO_MASK[n]) continue; const d = Math.hypot((n % DISCO_GRID) - witch.x, ((n / DISCO_GRID) | 0) - witch.y);
+    if (d < 2.6) cells[n] = { rgb: witchColour, level: d < 1 ? 3 : d < 1.9 ? 2 : 1 };
+  }
+  return cells;
+}
+
+// ================= the looks =================
+const DISCO_PPM = 16;                            // px per metre, like the ground textures
+const DISCO_TILE_PX = 14, DISCO_PITCH = 15;      // a tile and its grout: 15 px = 0.94 m
+const DISCO_RIM = { width: 22, period: 64 };     // the rim strip: 22 px (1.4 m) wide, repeating every 64 px
+const DISCO_LOOK = { glass: [24, 20, 40], glassLit: [52, 46, 80], rune: [40, 33, 64], grout: [12, 10, 18], rim: [92, 90, 100], rimDark: [44, 42, 54], rimRune: [140, 120, 255], moss: [70, 104, 58] };
+// Colours for baking: the unlit glass (STONED, the faint inner rune LINE, the glint STONE), the lit glass in white
+// for the engine to tint (GLINT the hot spot, MAGIC2 the bright bevel, GLOW the body, MAGIC the shaded bevel; all
+// glowing), the grout (BARKD), and the rim's stone (BODY, BODY2 in discoRimColours), carved runes (RUNE, glowing faintly) and moss.
+function discoColours(level = 3) {
+  const k = [0, .5, .75, 1][level], w = v => [Math.round(v * k), Math.round(v * k), Math.round(v * k)];
+  return { [M.STONED]: DISCO_LOOK.glass, [M.LINE]: DISCO_LOOK.rune, [M.STONE]: DISCO_LOOK.glassLit, [M.BARKD]: DISCO_LOOK.grout,
+    [M.GLINT]: w(255), [M.MAGIC2]: w(235), [M.GLOW]: w(200), [M.MAGIC]: w(140), [M.RUNE]: DISCO_LOOK.rimRune, [M.MOSS]: DISCO_LOOK.moss };
+}
+const discoRimColours = () => ({ [M.BODY]: DISCO_LOOK.rim, [M.BODY2]: DISCO_LOOK.rimDark, [M.RUNE]: DISCO_LOOK.rimRune, [M.MOSS]: DISCO_LOOK.moss, [M.BARKD]: DISCO_LOOK.grout });
+
+const DISCO_UP = [0, 0, 1];
+// One tile, seen from above. "unlit": dark glass with a faint rune inside and a glint on its top-left edge.
+// "lit": white glass at intensity level 1 to 3 (the engine tints it with the cell's neon): a bright bevel top-left,
+// a shaded one bottom-right and a hot spot, so a lit square reads as a lit tile.
+function discoTileSprite(kind = "unlit", { level = 3, rune = 3 } = {}) {
+  const N = DISCO_TILE_PX, sp = new Sprite(N, N);
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const e = Math.min(x, y, N - 1 - x, N - 1 - y), tl = x + y < N - 1;
+    const nx = x === 0 ? -.5 : x === N - 1 ? .5 : 0, ny = y === 0 ? -.5 : y === N - 1 ? .5 : 0, n = [nx, ny, 1];
+    if (kind === "unlit") {
+      const u = (x - 2.5) / (N - 5), v = (y - 2.5) / (N - 5), r = u >= 0 && u <= 1 && v >= 0 && v <= 1 && runeGlyph(u, v, rune, .1);
+      sp.px(x, y, e === 0 && tl ? M.STONE : r ? M.LINE : M.STONED, ...n);
+    } else {
+      const hot = Math.hypot(x - N * .38, y - N * .38) < N * .16;
+      const m = e === 0 ? (tl ? M.MAGIC2 : M.MAGIC) : e === 1 && !tl ? M.MAGIC : hot && level >= 2 ? M.GLINT : M.GLOW;
+      sp.px(x, y, m, ...n);
+    }
+  }
+  return sp;
+}
+// The grout between tiles: one tile's pitch with the line along its top and left, so it repeats over the grid.
+function discoGroutSprite() {
+  const P = DISCO_PITCH, sp = new Sprite(P, P);
+  for (let i = 0; i < P; i++) { sp.px(i, 0, M.BARKD, ...DISCO_UP); sp.px(0, i, M.BARKD, ...DISCO_UP); }
+  return sp;
+}
+// The stone rim as a straight strip (x along the circumference, y outwards from the floor's edge, both in px),
+// repeating exactly every DISCO_RIM.period px: dressed blocks with dark joints, a carved rune on each block, moss in the joints.
+function discoRimStrip(len = DISCO_RIM.period * 2) {
+  const { width: W, period: P } = DISCO_RIM, sp = new Sprite(len, W), block = P / 2;
+  for (let y = 0; y < W; y++) for (let x = 0; x < len; x++) {
+    const xp = x % P, bx = xp % block, b = Math.floor(xp / block), joint = bx === 0 || y === 0 || y === W - 1 || y === Math.round(W * .2);
+    const u = (bx - block / 2 + 5.5) / 11, v = (y - W * .2 - 4) / (W * .8 - 8), carved = !joint && u >= 0 && u <= 1 && v >= 0 && v <= 1 && runeGlyph(u, v, 3 + b * 5, .11);
+    const n = y === 1 ? [0, -.6, .8] : y === W - 2 ? [0, .6, .8] : bx === 1 ? [-.6, 0, .8] : bx === block - 1 ? [.6, 0, .8] : DISCO_UP;
+    const mossy = joint && y > 0 && hash2(Math.floor(x / 2) % (P / 2), y, 7) < .35;
+    sp.px(x, y, carved ? M.RUNE : mossy ? M.MOSS : joint ? M.BODY2 : (hash2(xp, y, 3) < .06 ? M.BODY2 : M.BODY), ...n); // its own stone materials, apart from the glass's
+  }
+  return sp;
+}
+// The whole unlit floor from above (the engine draws lit tiles over it): tiles on the grid's pitch, each with its own
+// faint rune, cut by the circle at the edge (only those in DISCO_MASK light), grout between, and the rim wrapped round. { sp, size, centre, pitch, rimInner, rimOuter } in px.
+function discoFloorBase() {
+  const P = DISCO_PITCH, grid = DISCO_GRID * P, Wr = DISCO_RIM.width, R0 = (DISCO_RADIUS + .5) * P, size = Math.ceil((R0 + Wr) * 2) + 2, c = size / 2, sp = new Sprite(size, size);
+  const tiles = Array.from({ length: 8 }, (_, k) => discoTileSprite("unlit", { rune: 3 + k * 7 })), off = c - grid / 2, rim = discoRimStrip(DISCO_RIM.period), circ = 2 * Math.PI * (R0 + Wr / 2), reps = Math.round(circ / DISCO_RIM.period);
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    const dx = x + .5 - c, dy = y + .5 - c, r = Math.hypot(dx, dy);
+    if (r < R0) { // a tile or its grout
+      const gx = x - off, gy = y - off, i = Math.floor(gx / P), j = Math.floor(gy / P), tx = Math.floor(gx - i * P) - 1, ty = Math.floor(gy - j * P) - 1;
+      if (i < 0 || j < 0 || i >= DISCO_GRID || j >= DISCO_GRID || tx < 0 || ty < 0 || tx >= DISCO_TILE_PX || ty >= DISCO_TILE_PX || r > R0 - 1) { sp.px(x, y, M.BARKD, ...DISCO_UP); continue; }
+      const m = tiles[Math.floor(hash2(i, j, 17) * tiles.length)].get(tx, ty); sp.px(x, y, m, ...DISCO_UP); continue; // the tiles outside the mask are cut by the rim and never light
+    }
+    if (r < R0 + Wr) { // the rim, its strip wrapped round so its pattern repeats a whole number of times
+      const s = ((Math.atan2(dy, dx) / (Math.PI * 2) + 1) % 1) * reps * DISCO_RIM.period, ry = Math.min(Wr - 1, Math.floor(r - R0));
+      const m = rim.get(Math.floor(s) % DISCO_RIM.period, ry), i = (ry * rim.w + (Math.floor(s) % DISCO_RIM.period)) * 3, ca = dx / r, sa = dy / r, nu = rim.n[i], nv = rim.n[i + 1];
+      sp.px(x, y, m, nu * -sa + nv * ca, nu * ca + nv * sa, rim.n[i + 2]);
+    }
+  }
+  return { sp, size, centre: c, pitch: P, gridOrigin: off, rimInner: R0, rimOuter: R0 + Wr };
+}
+// A pattern's frame (or a composed set of cells) painted on a 2D canvas context from above, at `cell` px a tile:
+// the unlit floor, then each lit tile tinted by its colour with a bevel and glow. For the Art Lab and previews.
+function discoPaint(g, cells, { x = 0, y = 0, cell = 8, glow = true } = {}) {
+  const G = DISCO_GRID, s = cell, rgb = (c, k) => `rgb(${Math.round(c[0] * k)},${Math.round(c[1] * k)},${Math.round(c[2] * k)})`;
+  for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
+    const n = j * G + i; if (!DISCO_MASK[n]) continue;
+    const X = x + i * s, Y = y + j * s, c = cells[n];
+    if (!c) { g.fillStyle = rgb(DISCO_LOOK.glass, 1); g.fillRect(X, Y, s - 1, s - 1); g.fillStyle = rgb(DISCO_LOOK.glassLit, 1); g.fillRect(X, Y, s - 1, 1); continue; }
+    const k = [0, .55, .8, 1][c.level];
+    if (glow && c.level >= 2) { g.fillStyle = rgb(c.rgb, .25 * k); g.fillRect(X - 1, Y - 1, s + 1, s + 1); }
+    g.fillStyle = rgb(c.rgb, k * .82); g.fillRect(X, Y, s - 1, s - 1);
+    g.fillStyle = rgb([255, 255, 255].map((w, q) => (w + c.rgb[q]) / 2), k); g.fillRect(X, Y, s - 1, 1); g.fillRect(X, Y, 1, s - 1);
+    g.fillStyle = rgb(c.rgb, k * .5); g.fillRect(X + s - 2, Y + 1, 1, s - 2); g.fillRect(X + 1, Y + s - 2, s - 2, 1);
+    if (s >= 6 && c.level >= 2) { g.fillStyle = rgb([255, 255, 255].map((w, q) => (w * 2 + c.rgb[q]) / 3), k); g.fillRect(X + Math.floor(s * .3), Y + Math.floor(s * .3), Math.max(1, Math.floor(s * .2)), Math.max(1, Math.floor(s * .2))); }
+  }
+}
+// One frame of one pattern as cells (no transition, no witch): for contact sheets.
+const discoCells = (p, frame = 0, level = 3) => discoCompose({ pattern: p, frame, level });
+
+
+
 // ---- inlined from art/soundsystem.js ----
 // The soundsystem: the thing the party defends (Ed: "Our soundsystem looks like this, but maybe
 // we can make it also a bit like a magic fantasy rock"). A custom sound-system stack, a stepped
@@ -4405,6 +4814,117 @@ function soundsystems(st, bk) {
     const col = soundsystemColours(variant), b = o => bk(soundsystemSprite(st, { variant, ...o }), col);
     return { id: V.id, crystal: V.crystal, playing: [0, 1, 2].map(frame => b({ frame })), damaged: [0, 1].map(frame => b({ frame, state: "damaged" })), destroyed: b({ state: "destroyed" }) };
   });
+}
+
+// ================= the dancefloor speakers =================
+// Ed: "instead of a regular soundsystem, the stones around the dancefloor should be speakers (still a
+// stack but less wide, one column) ... 12 of them equally spaced ... 6 angles, so they face both
+// either directly towards the center of the dancefloor and away ... a 'destroyed' state as well."
+// One column of hewn stone, like a standing stone: a plinth with a glowing slot, two bass bins,
+// a horn, a mid and two floating tweeter stones. Its front (+z in the model) has the crystal cones
+// and horn mouths; its back is plain stone with a carved rune or two and moss running down it.
+// Every speaker shows its front to the camera (Ed: "the ones at the bottom half of the circle face
+// outwards, the ones at the top half face inwards"), so three yaws are drawn (degrees from facing the
+// camera) and mirrored for the other side:
+//   a speaker at ring angle a (degrees round the dancefloor from the side nearest the camera, its
+//   ground position centre + R (sin a, cos a) in x right and z towards the camera) faces the centre
+//   if it is in the far half (cos a < 0): yaw 180 - a; in the near half it faces away: yaw -a (each
+//   wrapped to -180..180). The sprite is the angle |yaw|, flipped if yaw < 0.
+// With a = 15 + 30 i every yaw is one of +-15, +-45, +-75. The back is modelled too, though unused.
+const DANCEFLOOR_SPEAKER_ANGLES = [15, 45, 75];
+const DANCEFLOOR_SPEAKER_STATES = { playing: 3, damaged: 2, destroyed: 1 };
+function dancefloorSpeakerFacing(ringDeg) {
+  const r = ringDeg * Math.PI / 180, outward = Math.cos(r) > 0;
+  let yaw = outward ? -ringDeg : 180 - ringDeg; yaw = ((yaw + 180) % 360 + 360) % 360 - 180;
+  const angle = DANCEFLOOR_SPEAKER_ANGLES.reduce((b, a) => Math.abs(a - Math.abs(yaw)) < Math.abs(b - Math.abs(yaw)) ? a : b);
+  return { yaw, angle, flip: yaw < 0, outward };
+}
+// A little shorter than the soundsystems (three times the witch): the ring shouldn't wall in the floor.
+const dancefloorSpeakerHeight = st => witchHeight(st) * 2.6;
+const dancefloorSpeakerColours = () => soundsystemColours(0); // the stacks' cyan crystal
+
+function dfSpeakerModel(frame, state) {
+  const m = new Model({ blend: .02 }), dmg = state === "damaged", pump = dmg ? 0 : [0, .5, 1][frame % 3];
+  const dark = i => dmg && hash2(i, frame, 37) < .5, BW = .2, BD = .2, fz = BD;
+  let y = 0, g = 1, cone = 0;
+  const crack = p => Math.abs(Math.sin(p[0] * 37 + p[1] * 23 + Math.sin(p[2] * 17) * 2)) < .07;
+  // the stone's surface: cracks when damaged, moss along the top edges and down the back, a rune carved on the back
+  const stone = (top, k, rune) => p => {
+    if (dmg && crack(p)) return M.STONED;
+    const back = p[2] < -BD + .025;
+    if (back && rune) { const S = rune.s, u = (p[0] - rune.x) / S + .5, v = (rune.y - p[1]) / S + .5; if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && runeGlyph(1 - u, v, rune.k, .12)) return dmg && hash2(rune.k, frame, 5) < .5 ? M.STONED : M.RUNE; }
+    if (p[1] > top - .02 && hash2(Math.floor(p[0] * 40), Math.floor(p[2] * 40), k + 1) < .55) return M.MOSS;
+    if (back) { const col = Math.floor(p[0] * 26); if (hash2(col, 0, k + 2) < .3 && Math.sin(p[1] * 7 + hash2(col, 1, k) * 6) > .1) return M.MOSS; } // moss in streaks down the shaded back
+    return undefined;
+  };
+  const disc = (cx, cy, r, i) => {
+    const off = dark(i), sw = 1 + pump * .08;
+    m.ell([cx, cy, fz], [r * 1.18, r * 1.18, .06], M.STONED, { group: g, cut: true });
+    m.ell([cx, cy, fz - .02], [r * sw, r * sw, .035 + pump * .025], M.CRYSTAL, { group: 900 + i, paint: p => {
+      const d = Math.hypot(p[0] - cx, p[1] - cy) / (r * sw);
+      if (off) return d < .3 ? M.GLOW : M.CRYSTAL;
+      return d < .2 + pump * .15 ? M.MAGIC2 : d < .5 ? M.GLOW : d < .78 ? M.CRYSTAL : M.GLOW;
+    } });
+  };
+  const lintel = () => { m.box([0, y + .012, fz - .015], [BW + .01, .012, .015], M.WOOD, { group: g++, round: .008 }); y += .024; };
+  // the plinth, with a glowing slot along its front
+  m.box([0, .055, 0], [BW + .06, .055, BD + .05], M.STONE, { group: g, round: .03, rough: .006, paint: stone(.11, 3) });
+  m.box([0, .05, fz + .05], [BW - .02, .025, .1], M.STONED, { group: g, cut: true, paint: p => p[2] < fz - .03 && !(dmg && hash2(frame, 1, 9) < .5) ? M.GLOW : undefined });
+  y = .11; g++;
+  // two bass bins, a big cone each
+  for (let i = 0; i < 2; i++) { const bh = .22, by = y + bh; m.box([0, by, 0], [BW, bh, BD], M.STONE, { group: g, round: .035, rough: .004, paint: stone(by + bh, g, i === 0 ? { x: 0, y: by, s: .3, k: 11 } : null) }); disc(0, by + .02, .15, cone++); y += bh * 2; g++; lintel(); }
+  // a horn: a flared mouth over a deep throat, a small cone beneath
+  { const bh = .2, by = y + bh, tilt = dmg ? [.08, 1, 0] : undefined; m.box([0, by, 0], [BW - .005, bh, BD], M.STONE, { group: g, round: .035, rough: .004, dir: tilt, paint: stone(by + bh, g, { x: 0, y: by + .03, s: .26, k: 17 }) });
+    const my = by + bh * .25; m.seg([0, my, fz - BD * 1.5], [0, my, fz + .03], .03, .15, M.STONED, { group: g, cut: true, paint: p => p[2] < fz - BD * .55 ? (dark(cone) ? M.STONED : M.GLOW) : undefined });
+    disc(0, by - bh * .62, .045, cone++); y += bh * 2; g++; lintel(); }
+  // a mid: a wide, shallow horn with a fin down the middle
+  { const bh = .12, by = y + bh; m.box([0, by, 0], [BW - .01, bh, BD], M.STONE, { group: g, round: .03, rough: .004, paint: stone(by + bh, g) });
+    m.ell([0, by, fz], [BW * .8, bh * .7, BD * .9], M.STONED, { group: g, cut: true, paint: p => p[2] < fz - BD * .45 ? (dark(cone) ? M.STONED : M.GLOW) : undefined });
+    m.box([0, by, fz - BD * .5], [.018, bh * .6, BD * .45], M.STONE, { group: g }); cone++; y += bh * 2; g++; }
+  // two tweeter stones floating over it, light in the gaps (damaged: the top one has fallen to the foot)
+  for (let i = 0; i < 2; i++) {
+    const float = .07, bh = .06, by = y + float + bh;
+    if (dmg && i === 1) { m.box([.34, .07, .3], [.15, bh, .12], M.STONE, { group: g++, dir: [.5, .85, .2], round: .03, rough: .006, paint: stone(1, 9) }); continue; }
+    if (!dmg) m.flat([0, y + float / 2, 0], [1, 0, 0], [0, 1, 0], BW * .7, float / 2, (s, t) => Math.abs(t) < .45 && Math.sin(s * 31) > -.4 ? M.GLOW : null, { group: g++, bend: 0 });
+    m.box([0, by, 0], [.15, bh, .13], M.STONE, { group: g, round: .03, rough: .004, dir: dmg ? [.12, 1, 0] : undefined, paint: stone(by + bh, g) });
+    for (const dx of [-.5, .5]) { const cx = dx * .15, z = .13; m.ell([cx, by, z], [.045, .045, .05], M.STONED, { group: g, cut: true }); m.ell([cx, by, z - .015], [.035 * (1 + pump * .08), .035 * (1 + pump * .08), .03], M.CRYSTAL, { group: 900 + cone, paint: p => dark(cone) ? M.CRYSTAL : Math.hypot(p[0] - cx, p[1] - by) < .015 + pump * .008 ? M.MAGIC2 : M.GLOW }); cone++; }
+    y = by + bh; g++;
+  }
+  // crystal shards at its foot
+  [[-.3, .2, .22, -.3], [.3, .16, .2, .35], [-.26, -.22, .18, -.35], [.27, -.18, .16, .3]].forEach(([x, z, len, lean], i) => {
+    if (dmg && i % 2) { m.seg([x, .03, z], [x + .1, .05, z + .04], .035, .018, M.CRYSTAL, { group: 700 + i }); return; }
+    m.seg([x, 0, z], [x + lean * len, len, z + .04], .04 + len * .05, .006, M.CRYSTAL, { group: 700 + i, paint: p => p[1] > len * (.65 - pump * .1) && !dmg ? M.GLOW : undefined });
+  });
+  if (!dmg) for (const [x, dy, z, r] of [[-.32, .06, .05, .025], [.3, .13, -.05, .02]]) m.ell([x, y + dy - .1, z], [r, r * .8, r], M.STONE, { group: 800 + Math.round(x * 100), extra: true, rough: .004 }); // floating chips
+  return m;
+}
+
+// Destroyed: the plinth and a broken stump of the lower bass bin, its blocks tumbled round it, a dying glow.
+function dfRubbleModel() {
+  const m = new Model({ blend: .02 }), r = (i, k) => hash2(i, k, 71);
+  m.box([0, .055, 0], [.26, .055, .25], M.STONE, { group: 1, round: .03, rough: .006 });
+  m.box([0, .2, 0], [.2, .1, .2], M.STONE, { group: 2, round: .03, rough: .01, dir: [.1, 1, .05], paint: p => p[1] > .26 && Math.sin(p[0] * 50 + p[2] * 30) > 0 ? M.STONED : undefined }); // the stump, its top broken
+  m.ell([.02, .3, .12], [.08, .05, .05], M.GLOW, { group: 3, paint: p => p[1] > .32 ? M.MAGIC2 : undefined }); // the core, still glowing
+  m.seg([-.05, .25, .05], [-.12, .52, .1], .05, .008, M.CRYSTAL, { group: 4, paint: p => p[1] > .42 ? M.GLOW : undefined }); // a cracked crystal standing out of it
+  for (let i = 0; i < 9; i++) {
+    const a = i * 2.3 + .4, rad = .3 + r(i, 1) * .3, x = Math.cos(a) * rad, z = Math.sin(a) * rad * .8, s = .06 + r(i, 2) * .07;
+    m.box([x, s * .9, z], [s * 1.3, s, s * 1.1], M.STONE, { group: 10 + i, dir: [Math.cos(a * 1.7), .4 + r(i, 3), Math.sin(a * 2.3)], round: .025, rough: .008, paint: p => Math.abs(Math.sin(p[0] * 41 + p[1] * 29)) < .08 ? M.STONED : r(i, 4) < .3 && p[1] > s * 1.4 ? M.MOSS : undefined });
+  }
+  for (let i = 0; i < 3; i++) { const a = i * 2.1 + 1, x = Math.cos(a) * .42, z = Math.sin(a) * .3; m.ell([x, .04, z], [.08, .07, .025], M.CRYSTAL, { group: 50 + i, dir: [Math.cos(a), .5, Math.sin(a)], paint: () => r(i, 5) < .4 ? M.GLOW : undefined }); } // fallen cones
+  return m;
+}
+
+const dfScales = new Map();
+// One dancefloor speaker: angle (one of DANCEFLOOR_SPEAKER_ANGLES, degrees of yaw from facing us; any yaw draws, 165 shows the back),
+// state "playing" (frame 0..2), "damaged" (0..1) or "destroyed". Every angle and state shares one
+// scale. Returns { sp, origin: { x, y } (its middle on the ground, in the sprite), angle }.
+function dancefloorSpeakerSprite(st = {}, { angle = 15, state = "playing", frame = 0 } = {}) {
+  const H = dancefloorSpeakerHeight(st);
+  if (!dfScales.has(H)) dfScales.set(H, render(dfSpeakerModel(0, "playing"), { height: H, yaw: 15 * Math.PI / 180 }).s);
+  const scale = dfScales.get(H), yaw = angle * Math.PI / 180;
+  const R = render(state === "destroyed" ? dfRubbleModel() : dfSpeakerModel(frame, state), { scale, yaw }), [ox, oy] = R.project([0, 0, 0]);
+  motes(R.sp, state === "destroyed" ? 2 : state === "damaged" ? 3 : 6 + frame * 2, angle + frame);
+  return { sp: R.sp, origin: { x: +ox.toFixed(1), y: +oy.toFixed(1) }, angle };
 }
 
 
@@ -4944,6 +5464,8 @@ function renderWitch() {
     const c = document.getElementById("witchSheet"); if (!c) return;
     const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 6, wc = witchColours(st), b = o => bake(witchSprite(st, o), wc, st, st.cOutline);
     const rows = ["towards", "away"].map(facing => [...[0, 1, 2].map(frame => b({ frame, facing })), b({ lean: true, facing }), ...[0, 1, 2].map(frame => b({ pose: "fast", frame, facing })), ...[0, 1].map(frame => b({ pose: "brake", frame, facing })), ...["rise", "descend"].flatMap(pose => [0, 1].map(frame => b({ pose, frame, facing })))]);
+    // heading straight up the screen (away) and straight down it (towards): hover x3, lean, fast x3, brake x2
+    for (const heading of ["away", "towards"]) rows.push([...[0, 1, 2].map(frame => b({ frame, heading })), b({ lean: true, heading }), ...[0, 1, 2].map(frame => b({ pose: "fast", frame, heading })), ...[0, 1].map(frame => b({ pose: "brake", frame, heading }))]);
     // on foot: stand, land, takeoff, talk, placeSigil, liftSigil, each turned towards and away, after her hover frame for scale
     for (const facing of ["towards", "away"]) rows.push([b({ facing }), ...Object.entries(WITCH_FOOT_POSES).flatMap(([pose, { frames }]) => [...Array(frames).keys()].map(frame => b({ pose, frame, facing })))]);
     const w = Math.max(...rows.map(r => r.reduce((a, x) => a + x.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(x => x.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
@@ -4964,6 +5486,7 @@ function renderSoundsystems() {
     const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 6;
     const wit = bake(witchSprite(st), witchColours(st), st, st.cOutline);
     const rows = SOUNDSYSTEMS.map((S, v) => { const col = soundsystemColours(v), b = o => bake(soundsystemSprite(st, { variant: v, ...o }), col, st, "none"); return [b({ frame: 0 }), b({ frame: 1 }), b({ frame: 2 }), b({ state: "damaged", frame: 0 }), b({ state: "damaged", frame: 1 }), b({ state: "destroyed" }), wit]; });
+    { const col = dancefloorSpeakerColours(); for (const angle of DANCEFLOOR_SPEAKER_ANGLES) { const b = o => bake(dancefloorSpeakerSprite(st, { angle, ...o }).sp, col, st, "none"); rows.push([b({ frame: 0 }), b({ frame: 1 }), b({ frame: 2 }), b({ state: "damaged", frame: 0 }), b({ state: "damaged", frame: 1 }), b({ state: "destroyed" }), wit]); } } // the dancefloor speakers, one row per angle
     const w = Math.max(...rows.map(r => r.reduce((a, s) => a + s.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(s => s.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
     tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
     let y = gap;
@@ -4971,6 +5494,45 @@ function renderSoundsystems() {
     c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
     c.style.width = w + "px"; c.style.maxWidth = "none";
   }, 600);
+}
+
+// ================= the dancefloor: the pattern library played to a 120 bpm beat, layered as the engine would =================
+const disco = { started: false, playing: true, t0: 0, witch: null, set: [], boot: false, audio: null, lastBeat: -1 };
+function buildDisco() {
+  const c = document.getElementById("discoFloor"); if (!c || disco.started) return; disco.started = true;
+  const L = discoPatterns(), pick = document.getElementById("discoPick"), lvl = document.getElementById("discoLevel"), out = document.getElementById("discoLevelOut"), now = document.getElementById("discoNow"), cell = 10;
+  pick.innerHTML = `<option value="">the set (suits the level)</option>` + L.map(p => `<option value="${p.id}">${p.kind}: ${p.name}</option>`).join("");
+  c.width = c.height = DISCO_GRID * cell; const g = c.getContext("2d");
+  const BPM = 120, beatAt = ms => (ms - disco.t0) / 60000 * BPM;
+  // the set: patterns at or under the level (the boot sequence aside, area shapes now and then), each played twice through, then a transition into the next
+  const nextSet = from => { const lv = +lvl.value, pool = L.filter(p => p.kind !== "boot" && p.level <= lv && (p.kind !== "area" || Math.random() < .15)), list = []; let b = from;
+    for (let i = 0; i < 12; i++) { const p = pool[Math.floor(Math.random() * pool.length)], len = p.beats * Math.max(1, Math.round(8 / p.beats)), tr = DISCO_TRANSITIONS[Math.floor(Math.random() * DISCO_TRANSITIONS.length)]; const start = tr.onBar ? Math.ceil(b / 4) * 4 : b; list.push({ p, start, len, tr }); b = start + len; } return list; };
+  const restart = () => { disco.t0 = performance.now(); disco.set = nextSet(0); disco.lastBeat = -1; };
+  const click = () => { if (!document.getElementById("discoClick").checked) return; try { const a = disco.audio || (disco.audio = new AudioContext()), o = a.createOscillator(), v = a.createGain(); o.frequency.value = 1500; v.gain.setValueAtTime(.12, a.currentTime); v.gain.exponentialRampToValueAtTime(.0001, a.currentTime + .05); o.connect(v).connect(a.destination); o.start(); o.stop(a.currentTime + .06); } catch (e) { /* no audio here */ } };
+  lvl.oninput = () => { out.textContent = lvl.value; disco.set = nextSet(Math.floor(beatAt(performance.now()))); };
+  pick.onchange = () => restart();
+  document.getElementById("discoBoot").onclick = () => { disco.boot = true; restart(); };
+  document.getElementById("discoPlay").onclick = e => { disco.playing = !disco.playing; e.target.textContent = disco.playing ? "Pause" : "Play"; if (disco.playing) disco.t0 = performance.now() - (disco.pausedAt || 0); else disco.pausedAt = performance.now() - disco.t0; };
+  c.onclick = e => { const r = c.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * DISCO_GRID), y = Math.floor((e.clientY - r.top) / r.height * DISCO_GRID); disco.witch = disco.witch && Math.hypot(disco.witch.x - x, disco.witch.y - y) < 2 ? null : { x, y }; };
+  restart(); disco.boot = true;
+  const tick = () => {
+    requestAnimationFrame(tick); if (!disco.playing || !document.getElementById("discoFloor").isConnected) return;
+    const beat = beatAt(performance.now()), whole = Math.floor(beat), lv = +lvl.value; if (whole !== disco.lastBeat) { disco.lastBeat = whole; click(); }
+    let opts, label;
+    if (disco.boot) { const p = L.find(q => q.kind === "boot"); if (beat >= p.beats) { disco.boot = false; restart(); return; } opts = { pattern: p, frame: Math.floor(beat * p.fpb), level: 1 + Math.floor(beat / p.beats * 3) }; label = p.name; }
+    else if (pick.value) { const p = L.find(q => q.id === pick.value); opts = { pattern: p, frame: Math.floor(beat * p.fpb) % p.frames.length, level: lv, beat: whole }; label = `${p.name} (${p.kind}, level ${p.level}, ${p.beats} beats)`; }
+    else {
+      if (beat > disco.set[disco.set.length - 2].start) disco.set = disco.set.concat(nextSet(disco.set[disco.set.length - 1].start + disco.set[disco.set.length - 1].len).slice(0, 6)) ;
+      const i = disco.set.findIndex((s2, k) => beat >= s2.start && (k + 1 >= disco.set.length || beat < disco.set[k + 1].start)), cur = disco.set[Math.max(0, i)], nx = disco.set[i + 1], fr = p => Math.floor((beat - (p === cur.p ? cur.start : nx.start)) * p.fpb);
+      const into = nx && beat > nx.start - nx.tr.beats ? (beat - (nx.start - nx.tr.beats)) / nx.tr.beats : 0;
+      opts = { pattern: cur.p, frame: Math.max(0, fr(cur.p)) % cur.p.frames.length, level: lv, beat: whole, ...(into > 0 ? { next: nx.p, nextFrame: 0, transition: { id: nx.tr.id, angle: (nx.start % 8) * .8 }, t: into } : {}) };
+      label = `${cur.p.name} (${cur.p.kind}, level ${cur.p.level})` + (into > 0 ? ` → ${nx.tr.id} → ${nx.p.name}` : "");
+    }
+    g.fillStyle = "#0e0c14"; g.fillRect(0, 0, c.width, c.height);
+    discoPaint(g, discoCompose({ ...opts, witch: disco.witch }), { cell });
+    now.textContent = `Beat ${whole + 1}: ${label}` + (disco.witch ? "; the witch's glow on top" : "");
+  };
+  requestAnimationFrame(tick);
 }
 
 // ================= sigils: every level flat and on the ground; the leash stack over the witch =================
@@ -5098,7 +5660,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderRelics(); renderSets(); renderWitch(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400);
+  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderRelics(); renderSets(); renderWitch(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }

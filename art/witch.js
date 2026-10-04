@@ -74,6 +74,7 @@ function fastModel(frame) {
   m.ell(brim, [.16, .014, .15], M.HAT, { dir: [1, .9, 0], group: 11 });
   m.chain([[...v3.add(brim, [-.02, .02, 0]), .08], [...v3.add(brim, [-.14, .13, 0]), .04], [...v3.add(brim, [-.3, .14 + j[2] * 2, 0]), .012]], M.HAT, { group: 11, paint: p => Math.hypot(p[0] - brim[0], p[1] - brim[1]) < .06 ? M.MAGIC : undefined });
   m.seg(v3.add(brim, [.08, -.02, .08]), v3.add(H, [.04, -.09, .08]), .008, .008, M.HAT, { group: 11 }); // the chin strap, pulled taut
+  m.anchors.hand = hands[1]; m.anchors.hatTip = v3.add(brim, [-.3, .14 + j[2] * 2, 0]);
   // speed: a few small streaks trailing from the bristles and from her
   for (const [x0, yy, z, len] of [[-.86, bx(-.8) + .05, .03, .22], [-.88, bx(-.8) - .04, -.04, .16], [-.7, y + .45, .05, .14], [-.2, y + .5, -.04, .12]]) {
     const o = (f * .05) % .1; m.seg([x0 - o, yy, z], [x0 - o - len, yy, z], .01, .004, M.MAGIC2, { group: 30, extra: true });
@@ -235,6 +236,7 @@ export function witchModel({ frame = 0, lean = false, pose } = {}) {
     m.seg(sh, elbow, .04, .035, M.JACKET, { group: side > 0 ? 7 : 5 });
     m.seg(elbow, hand, .035, .03, M.JACKET, { group: side > 0 ? 7 : 5 });
     m.ell(hand, [.035, .03, .035], M.SKIN, { group: side > 0 ? 7 : 5 });
+    if (side > 0) m.anchors.hand = hand; // her near hand (in flight it holds the broom; a sigil can still hang from it)
   }
   // head, face and hair
   m.ell(H, [.11, .115, .1], M.SKIN, { group: 8, paint: p => (p[0] < H[0] - .01 || p[1] > H[1] + .075) ? M.HAIR : undefined });
@@ -248,6 +250,7 @@ export function witchModel({ frame = 0, lean = false, pose } = {}) {
   // the hat: a wide brim and a tall crown, its tip bent back (pushed further back by the climb)
   const back = rise ? .1 : 0;
   m.ell(brim, [.16, .014, .15], M.HAT, { dir: brake ? [1, -.55, 0] : [1, .25 + back * 3, 0], group: 11 }); // braking, it tips forward over her eyes
+  m.anchors.hatTip = brake ? v3.add(brim, [.2, .22 + sway * .5, 0]) : v3.add(brim, [-.16 - Lh * 1.5 - back, .27 + sway * .5 - back * .5, 0]); // where the sigil stack hangs over her
   m.chain(brake ? [[...v3.add(brim, [0, .01, 0]), .085], [...v3.add(brim, [.06, .16, 0]), .045], [...v3.add(brim, [.2, .22 + sway * .5, 0]), .012]] : [[...v3.add(brim, [0, .01, 0]), .085], [...v3.add(brim, [-.05 - Lh - back * .5, .17 - back * .3, 0]), .045], [...v3.add(brim, [-.16 - Lh * 1.5 - back, .27 + sway * .5 - back * .5, 0]), .012]], M.HAT, { group: 11, paint: p => p[1] < brim[1] + .045 ? M.MAGIC : undefined }); // a glowing hatband
   if (posed) {
     // tilt the whole witch and broom about the broom's middle
@@ -260,9 +263,10 @@ export function witchModel({ frame = 0, lean = false, pose } = {}) {
       if (q.paint) { const f = q.paint; q.paint = (p, part) => f(unrot(p), part); } // markings stay where they were painted
     }
     for (const f of m.flats) { f.c = rot(f.c); f.u = dir(f.u); f.v = dir(f.v); }
+    m.anchors.hand = rot(m.anchors.hand); m.anchors.hatTip = rot(m.anchors.hatTip);
     // lifted so her feet clear the ground as she tilts
     const low = Math.min(...m.parts.map(q => q.type === "ell" ? q.c[1] - Math.max(...q.r) : Math.min(q.a[1] - q.r1, q.b[1] - q.r2)));
-    if (low < .08) for (const q of m.parts) { const d = .08 - low; if (q.type === "ell") q.c = [q.c[0], q.c[1] + d, q.c[2]]; else { q.a = [q.a[0], q.a[1] + d, q.a[2]]; q.b = [q.b[0], q.b[1] + d, q.b[2]]; } }
+    if (low < .08) { for (const q of m.parts) { const d = .08 - low; if (q.type === "ell") q.c = [q.c[0], q.c[1] + d, q.c[2]]; else { q.a = [q.a[0], q.a[1] + d, q.a[2]]; q.b = [q.b[0], q.b[1] + d, q.b[2]]; } } for (const k of ["hand", "hatTip"]) m.anchors[k] = v3.add(m.anchors[k], [0, .08 - low, 0]); }
     // rising: sparks and a puff falling from the bristles
     // braking: a puff of dust and sparks kicked forward from the bristles
     if (brake) { const tail = rot([-.45, y - .24, 0]); for (let i = 0; i < 5; i++) { const k = i + frame * .5, r = .055 - i * .008; m.ell([tail[0] + .1 + k * .08, Math.max(.04, tail[1] - .02 + Math.sin(k * 1.9) * .04), Math.cos(k * 1.3) * .06], [r, r * .8, r], i < 2 ? M.BELLY : i % 2 ? M.MAGIC : M.MAGIC2, { group: 25 + i, extra: true }); } }
@@ -280,9 +284,16 @@ const scaleCache = new Map();
 const witchScale = h => { if (!scaleCache.has(h)) scaleCache.set(h, render(witchModel({ frame: 0 }), { height: h }).s); return scaleCache.get(h); };
 // pixels per model unit at her ordinary scale, for things built to her size (the treehouse)
 export const witchPixelsPerUnit = (st = {}) => witchScale(witchHeight(st));
-export function witchSprite(st = {}, { frame = 0, lean = false, facing = "towards", pose } = {}) {
-  const h = witchHeight(st);
-  const model = witchModel({ frame, lean, pose }), { sp, project } = pose ? render(model, { scale: witchScale(h), facing }) : render(model, { height: h, facing });
+// heading (Ed: "straight up" and "straight down" movement): "side" (the default, the broom across the screen, turned
+// towards or away by facing), "away" (flying straight up the screen, into it: seen from behind, the broom foreshortened
+// with its bristles towards us, her hair, jacket and hat tip streaming back at us) or "towards" (straight down the screen,
+// at us: the handle's tip nearest, her face over it). Any frame, lean or flight pose (fast, brake) can be turned so, at her
+// ordinary scale. Every flight frame carries anchors: her near hand and her hat tip (where the sigil stack hangs).
+export const WITCH_HEADINGS = { away: -Math.PI / 2, towards: Math.PI / 2 };
+export function witchSprite(st = {}, { frame = 0, lean = false, facing = "towards", pose, heading = "side" } = {}) {
+  const h = witchHeight(st), yaw = WITCH_HEADINGS[heading];
+  const model = witchModel({ frame, lean, pose }), { sp, project, s } = yaw !== undefined ? render(model, { scale: witchScale(h), yaw }) : pose ? render(model, { scale: witchScale(h), facing }) : render(model, { height: h, facing });
+  sp.scale = s; // pixels per model unit
   // on foot: where her free hand (a held sigil) and her hat tip are, in pixels from the top-left
   if (model.anchors.hand) sp.anchors = { hand: project(model.anchors.hand), hatTip: project(model.anchors.hatTip) };
   // she glows: a few motes of light round her

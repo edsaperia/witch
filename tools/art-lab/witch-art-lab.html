@@ -181,7 +181,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 
       <section style="display:grid;gap:10px">
         <h2>Witch</h2>
-        <p class="note">The witch in every pose, turned towards you (top) and away (bottom): three frames of her hover, the fast-flight lean, flying flat out over the treetops (three frames), braking hard (two frames), then rising to the treetops and descending to the ground, two frames each. Below, on foot (towards, then away), after her hover for scale: standing (three idle frames), landing and taking off (three each), talking (four gestures), placing and lifting a sigil (three each), and sitting on her terrace (two).</p>
+        <p class="note">The witch in every pose, turned towards you (top) and away (bottom): three frames of her hover, the fast-flight lean, flying flat out over the treetops (three frames), braking hard (two frames), then rising to the treetops and descending to the ground, two frames each. Then flying straight up the screen (seen from behind) and straight down it (at you): three hover frames, the lean, flat out (three) and braking (two). Below, on foot (towards, then away), after her hover for scale: standing (three idle frames), landing and taking off (three each), talking (four gestures), placing and lifting a sigil (three each), and sitting on her terrace (two).</p>
         <div class="sheet-wrap"><canvas id="witchSheet" width="420" height="160"></canvas></div>
       </section>
 
@@ -193,8 +193,19 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 
       <section style="display:grid;gap:10px">
         <h2>Soundsystems</h2>
-        <p class="note">What the party defends: a sound-system stack hewn from magic stone, with glowing crystal cones. Each of the three stacks is shown playing (three frames of the cones pumping), damaged (two frames of flicker) and destroyed, with the witch for scale.</p>
+        <p class="note">What the party defends: a sound-system stack hewn from magic stone, with glowing crystal cones. Each of the three stacks is shown playing (three frames of the cones pumping), damaged (two frames of flicker) and destroyed, with the witch for scale. Below them, the dancefloor speakers: one column each, twelve round the dancefloor, the far half facing in and the near half out so each shows us its front, drawn at three angles (15&deg;, 45&deg; and 75&deg; from facing us; mirrored for the other side), playing, damaged and destroyed.</p>
         <div class="sheet-wrap"><canvas id="soundsystems" width="420" height="200"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
+        <div class="row" style="justify-content:space-between"><h2>Dancefloor</h2><div class="row">
+          <label class="note" for="discoPick">Pattern</label><select id="discoPick"></select>
+          <label class="note" for="discoLevel">Party level</label><input id="discoLevel" type="range" min="1" max="4" step="1" value="2"><span class="note" id="discoLevelOut">2</span>
+          <button id="discoBoot" type="button">Switch on</button><button id="discoPlay" type="button">Pause</button><label class="note"><input id="discoClick" type="checkbox"> 120 bpm click</label>
+        </div></div>
+        <p class="note">The hero floor: 30 tiles across, each lit by the tile-lighting engine. Here it plays the pattern library to a 120 bpm beat: on "the set", patterns that suit the party level, each in through a transition (wipe, iris, dissolve, or a burst on a bar line); or one picked pattern on a loop. Click the floor to stand the witch there (her own glow is a layer on top); click her again to clear. "Switch on" plays the boot-up sequence.</p>
+        <div class="sheet-wrap"><canvas id="discoFloor" width="320" height="320" style="cursor:crosshair"></canvas></div>
+        <p class="note" id="discoNow"></p>
       </section>
 
       <section style="display:grid;gap:10px">
@@ -224,7 +235,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, soundsystemColours, witchSprite, witchColours, areaTreeVariants, TREE_SPECIES, splitTree, treeColours, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
+import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, DISCO_GRID, DISCO_MASK, discoPatterns, DISCO_TRANSITIONS, discoCompose, discoPaint, DANCEFLOOR_SPEAKER_ANGLES, dancefloorSpeakerSprite, dancefloorSpeakerColours, soundsystemColours, witchSprite, witchColours, areaTreeVariants, TREE_SPECIES, splitTree, treeColours, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -594,6 +605,8 @@ function renderWitch() {
     const c = document.getElementById("witchSheet"); if (!c) return;
     const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 6, wc = witchColours(st), b = o => bake(witchSprite(st, o), wc, st, st.cOutline);
     const rows = ["towards", "away"].map(facing => [...[0, 1, 2].map(frame => b({ frame, facing })), b({ lean: true, facing }), ...[0, 1, 2].map(frame => b({ pose: "fast", frame, facing })), ...[0, 1].map(frame => b({ pose: "brake", frame, facing })), ...["rise", "descend"].flatMap(pose => [0, 1].map(frame => b({ pose, frame, facing })))]);
+    // heading straight up the screen (away) and straight down it (towards): hover x3, lean, fast x3, brake x2
+    for (const heading of ["away", "towards"]) rows.push([...[0, 1, 2].map(frame => b({ frame, heading })), b({ lean: true, heading }), ...[0, 1, 2].map(frame => b({ pose: "fast", frame, heading })), ...[0, 1].map(frame => b({ pose: "brake", frame, heading }))]);
     // on foot: stand, land, takeoff, talk, placeSigil, liftSigil, each turned towards and away, after her hover frame for scale
     for (const facing of ["towards", "away"]) rows.push([b({ facing }), ...Object.entries(WITCH_FOOT_POSES).flatMap(([pose, { frames }]) => [...Array(frames).keys()].map(frame => b({ pose, frame, facing })))]);
     const w = Math.max(...rows.map(r => r.reduce((a, x) => a + x.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(x => x.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
@@ -614,6 +627,7 @@ function renderSoundsystems() {
     const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 6;
     const wit = bake(witchSprite(st), witchColours(st), st, st.cOutline);
     const rows = SOUNDSYSTEMS.map((S, v) => { const col = soundsystemColours(v), b = o => bake(soundsystemSprite(st, { variant: v, ...o }), col, st, "none"); return [b({ frame: 0 }), b({ frame: 1 }), b({ frame: 2 }), b({ state: "damaged", frame: 0 }), b({ state: "damaged", frame: 1 }), b({ state: "destroyed" }), wit]; });
+    { const col = dancefloorSpeakerColours(); for (const angle of DANCEFLOOR_SPEAKER_ANGLES) { const b = o => bake(dancefloorSpeakerSprite(st, { angle, ...o }).sp, col, st, "none"); rows.push([b({ frame: 0 }), b({ frame: 1 }), b({ frame: 2 }), b({ state: "damaged", frame: 0 }), b({ state: "damaged", frame: 1 }), b({ state: "destroyed" }), wit]); } } // the dancefloor speakers, one row per angle
     const w = Math.max(...rows.map(r => r.reduce((a, s) => a + s.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(s => s.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
     tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
     let y = gap;
@@ -621,6 +635,45 @@ function renderSoundsystems() {
     c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
     c.style.width = w + "px"; c.style.maxWidth = "none";
   }, 600);
+}
+
+// ================= the dancefloor: the pattern library played to a 120 bpm beat, layered as the engine would =================
+const disco = { started: false, playing: true, t0: 0, witch: null, set: [], boot: false, audio: null, lastBeat: -1 };
+function buildDisco() {
+  const c = document.getElementById("discoFloor"); if (!c || disco.started) return; disco.started = true;
+  const L = discoPatterns(), pick = document.getElementById("discoPick"), lvl = document.getElementById("discoLevel"), out = document.getElementById("discoLevelOut"), now = document.getElementById("discoNow"), cell = 10;
+  pick.innerHTML = `<option value="">the set (suits the level)</option>` + L.map(p => `<option value="${p.id}">${p.kind}: ${p.name}</option>`).join("");
+  c.width = c.height = DISCO_GRID * cell; const g = c.getContext("2d");
+  const BPM = 120, beatAt = ms => (ms - disco.t0) / 60000 * BPM;
+  // the set: patterns at or under the level (the boot sequence aside, area shapes now and then), each played twice through, then a transition into the next
+  const nextSet = from => { const lv = +lvl.value, pool = L.filter(p => p.kind !== "boot" && p.level <= lv && (p.kind !== "area" || Math.random() < .15)), list = []; let b = from;
+    for (let i = 0; i < 12; i++) { const p = pool[Math.floor(Math.random() * pool.length)], len = p.beats * Math.max(1, Math.round(8 / p.beats)), tr = DISCO_TRANSITIONS[Math.floor(Math.random() * DISCO_TRANSITIONS.length)]; const start = tr.onBar ? Math.ceil(b / 4) * 4 : b; list.push({ p, start, len, tr }); b = start + len; } return list; };
+  const restart = () => { disco.t0 = performance.now(); disco.set = nextSet(0); disco.lastBeat = -1; };
+  const click = () => { if (!document.getElementById("discoClick").checked) return; try { const a = disco.audio || (disco.audio = new AudioContext()), o = a.createOscillator(), v = a.createGain(); o.frequency.value = 1500; v.gain.setValueAtTime(.12, a.currentTime); v.gain.exponentialRampToValueAtTime(.0001, a.currentTime + .05); o.connect(v).connect(a.destination); o.start(); o.stop(a.currentTime + .06); } catch (e) { /* no audio here */ } };
+  lvl.oninput = () => { out.textContent = lvl.value; disco.set = nextSet(Math.floor(beatAt(performance.now()))); };
+  pick.onchange = () => restart();
+  document.getElementById("discoBoot").onclick = () => { disco.boot = true; restart(); };
+  document.getElementById("discoPlay").onclick = e => { disco.playing = !disco.playing; e.target.textContent = disco.playing ? "Pause" : "Play"; if (disco.playing) disco.t0 = performance.now() - (disco.pausedAt || 0); else disco.pausedAt = performance.now() - disco.t0; };
+  c.onclick = e => { const r = c.getBoundingClientRect(), x = Math.floor((e.clientX - r.left) / r.width * DISCO_GRID), y = Math.floor((e.clientY - r.top) / r.height * DISCO_GRID); disco.witch = disco.witch && Math.hypot(disco.witch.x - x, disco.witch.y - y) < 2 ? null : { x, y }; };
+  restart(); disco.boot = true;
+  const tick = () => {
+    requestAnimationFrame(tick); if (!disco.playing || !document.getElementById("discoFloor").isConnected) return;
+    const beat = beatAt(performance.now()), whole = Math.floor(beat), lv = +lvl.value; if (whole !== disco.lastBeat) { disco.lastBeat = whole; click(); }
+    let opts, label;
+    if (disco.boot) { const p = L.find(q => q.kind === "boot"); if (beat >= p.beats) { disco.boot = false; restart(); return; } opts = { pattern: p, frame: Math.floor(beat * p.fpb), level: 1 + Math.floor(beat / p.beats * 3) }; label = p.name; }
+    else if (pick.value) { const p = L.find(q => q.id === pick.value); opts = { pattern: p, frame: Math.floor(beat * p.fpb) % p.frames.length, level: lv, beat: whole }; label = `${p.name} (${p.kind}, level ${p.level}, ${p.beats} beats)`; }
+    else {
+      if (beat > disco.set[disco.set.length - 2].start) disco.set = disco.set.concat(nextSet(disco.set[disco.set.length - 1].start + disco.set[disco.set.length - 1].len).slice(0, 6)) ;
+      const i = disco.set.findIndex((s2, k) => beat >= s2.start && (k + 1 >= disco.set.length || beat < disco.set[k + 1].start)), cur = disco.set[Math.max(0, i)], nx = disco.set[i + 1], fr = p => Math.floor((beat - (p === cur.p ? cur.start : nx.start)) * p.fpb);
+      const into = nx && beat > nx.start - nx.tr.beats ? (beat - (nx.start - nx.tr.beats)) / nx.tr.beats : 0;
+      opts = { pattern: cur.p, frame: Math.max(0, fr(cur.p)) % cur.p.frames.length, level: lv, beat: whole, ...(into > 0 ? { next: nx.p, nextFrame: 0, transition: { id: nx.tr.id, angle: (nx.start % 8) * .8 }, t: into } : {}) };
+      label = `${cur.p.name} (${cur.p.kind}, level ${cur.p.level})` + (into > 0 ? ` → ${nx.tr.id} → ${nx.p.name}` : "");
+    }
+    g.fillStyle = "#0e0c14"; g.fillRect(0, 0, c.width, c.height);
+    discoPaint(g, discoCompose({ ...opts, witch: disco.witch }), { cell });
+    now.textContent = `Beat ${whole + 1}: ${label}` + (disco.witch ? "; the witch's glow on top" : "");
+  };
+  requestAnimationFrame(tick);
 }
 
 // ================= sigils: every level flat and on the ground; the leash stack over the witch =================
@@ -748,7 +801,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderRelics(); renderSets(); renderWitch(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400);
+  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderRelics(); renderSets(); renderWitch(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
