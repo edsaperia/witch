@@ -38,7 +38,7 @@ export const SPRITE_UNIFORMS = {
    *  creatures' batches only: their light floor (a share of their unlit look), a rim from her
    *  glow, their eyeshine's strength (0 off) and the share of the time they blink; uEyeRgb its colour, uEyeRange its reach (m). */
   uFindLook: { value: new THREE.Vector4() },
-  uEyeRgb: { value: new THREE.Vector3(1, 0.9, 0.6) },
+  uEyeRgb: { value: new THREE.Vector3(1, 0.8, 0.35) },
   uEyeRange: { value: 40 },
   /** The wind (Ed, v171): sway at the top of a crown (metres), the gusts' speed (m/s) and size (m), and the time. */
   uWind: { value: new THREE.Vector4(0, 0, 1, 0) },
@@ -176,8 +176,9 @@ void shade() {
     // are glowing pixels, and stay red).
     float far = 1.0 - smoothstep(uEyeRange * 0.75, uEyeRange, length(vWorld.xz - uHazeCentre));
     float luma = dot(a.rgb, vec3(0.3, 0.55, 0.15));
-    vec3 eye = uEyeRgb * (0.55 + 0.45 * luma) * (1.0 + uFindLook.z);
-    gl_FragColor = vec4(mix(haze(a.rgb * 0.3, vWorld), min(vec3(1.0), eye), far), alpha); return;
+    vec3 eye = uEyeRgb * (0.7 + 0.3 * luma) * (1.0 + uFindLook.z * 0.4);
+    eye /= max(1.0, max(eye.r, max(eye.g, eye.b))); // brighter, but keeping its gold (not clipping to white)
+    gl_FragColor = vec4(mix(haze(a.rgb * 0.3, vWorld), eye, far), alpha); return;
   }
   if (a.a < 0.999 && !eyePx) { gl_FragColor = vec4(haze(a.rgb, vWorld), alpha); return; }
   vec4 n = texture2D(uNormal, vUv);

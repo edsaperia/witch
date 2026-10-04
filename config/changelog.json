@@ -11,7 +11,8 @@
         "Over the treetops the world curves away, so you see the night sky above the forest: stars, the moon, and slow clouds that glow in the party's colours over partying areas (?curve=0 for flat, ?curve=0.004 for more)",
         "No more Talk button: on the ground the witch chats with the nearest creature in range by herself, on the fly as you move, settling into her talk pose when you stop; move away or rise and the chat pauses, and coming back picks it up",
         "A legend gives you one unimpressed look as you pass, not over and over",
-        "Wild creatures are easier to find in the dark: they never sink fully into the shadows, catch a faint rim from your light, and their eyes catch the light now and then; the moonlight is a little cooler and more coloured (?find=0 to compare)"
+        "Wild creatures are easier to find in the dark: they never sink fully into the shadows, catch a faint rim from your light, and their eyes catch the light now and then; the moonlight is a little cooler and more coloured (?find=0 to compare)",
+        "The disco ball no longer shoots lasers; instead each of the 12 speakers round the dancefloor has its own laser, sweeping slowly on the beat to crown the floor in moving beams (damaged speakers flicker theirs, destroyed ones go dark)"
       ]
     },
     {

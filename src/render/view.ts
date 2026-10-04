@@ -28,7 +28,7 @@ import { MarkerArt, MarkerFx, MARKER_LEVELS, SymbolRings, type Beacon, type Lase
 import { spawnMarkers, speakersOn, symbolCount, waveCountdown, type SpawnMarker } from "../rules/party";
 import { StringLightsView } from "./strings";
 import { bossBreath, LeashView } from "./leash";
-import { Lasers } from "./lasers";
+import { Lasers, type RingSpeaker } from "./lasers";
 import { BorderView } from "./borders";
 import { MusicIndicator, StoneIndicator } from "./indicator";
 import { Minimap } from "./minimap";
@@ -848,6 +848,8 @@ export class View {
    *  sprite is the drawn angle nearest its yaw, flipped for the other side; a playing speaker's
    *  cones pump on the beat. Anchored by its ground point, like a path piece. */
   private speakerFlare: (number | undefined)[] = [];
+  /** Each ring speaker's top, state and power, for its laser (Ed: one each, none from the disco ball). */
+  private speakerTops: RingSpeaker[] = [];
   private rings = new SymbolRings();
   /** When each symbol round each stone appeared (for its flare), by marker. */
   private symbolSeen = new Map<string, number[]>();
@@ -876,6 +878,7 @@ export class View {
       const fi = A.frames[`${face.angle}:${state}:${frame}`];
       if (fi === undefined) return;
       const f = A.atlas.frames[fi], o = A.origin[face.angle], ox = face.flip ? f.w - o.x : o.x;
+      this.speakerTops[i] = { x: sp.x, y: o.y * mpp * 0.96, z: sp.z, state, powered }; // its laser's source (lasers.ts)
       const dx = (ox - f.w / 2) * mpp, below = Math.max(0, f.h - (f.pad ?? 0) - o.y) * mpp, d = (f.pad ?? 0) * mpp;
       const x = sp.x - R.x * dx, z = sp.z - R.z * dx + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch));
       if (!this.inView(x, z, f.w * mpp, f.h * mpp, 6)) return;
@@ -975,7 +978,7 @@ export class View {
     const party = this.partyView.update(g, time, (x, z, ww, hh) => this.inView(x, z, ww, hh, 4), () => false);
     this.soundBatch.set(party.items);
     this.ground.setSweeps(party.sweeps);
-    this.lasers.update(time, party.playing, w.x, w.z);
+    this.lasers.update(time, party.playing, w.x, w.z, this.speakerTops, g.map.dancefloor);
     // The canopy uplight over the nearest partified areas, fading in with each one's transition.
     {
       const U = SPRITE_UNIFORMS, P = t.party, list = [...g.party.areas.values()].map(a => ({ a, s: g.map.siteOf(a.cell[0], a.cell[1]) }))
