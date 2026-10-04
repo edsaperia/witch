@@ -1,5 +1,5 @@
 {
- "_": "Combat (Stage 4; DESIGN.md 'Combat, pacing and forecasting'). One system for wild and party creatures. levels: by level (baby, young, adult, legend): hp, the health it has; dps, its power budget (damage a second, the same for every attack of that level, so no species is stronger for its level: equal power budget). attacks: each is data. delivery: melee (a hit within range), shot (a projectile flying at speed m/s, dodgeable, hitting the first enemy within its radius), or quake (everything of the other side within radius round the attacker: the legends' slow, heavy signature move). windup: seconds it telegraphs before it lands or flies; cooldown: seconds from one to the next; damage is dps times cooldown; range: metres it attacks from; modifier: none, knockback (pushes the target knockback metres) or slow (the target moves at slowMult for slowTime seconds; slows don't stack: a new one only renews it). Babies don't attack; the young have one attack, adults a stronger one with a modifier, legends the signature. ranged: the species that shoot (the rest fight in melee). Melee attacks wind up and lunge lunge metres at where they aimed (step aside to dodge); shots fly at where they aimed (dodgeable). bySpecies: a species' own attacks by level, overriding byLevel. kite: species that keep their distance as part of their attack (Ed, 2026-10-04), holding between near and far of their attack's range from their target, backing off or closing in (the raven, with long-range shots). Babies are never attacked by anything, on either side (Ed, 2026-10-04).",
+ "_": "Combat (Stage 4; DESIGN.md 'Combat, pacing and forecasting'). One system for wild and party creatures. levels: by level (baby, young, adult, legend): hp, the health it has; dps, its power budget (damage a second, the same for every attack of that level, so no species is stronger for its level: equal power budget). attacks: each is data. delivery: melee (a hit within range), shot (a projectile flying at speed m/s, dodgeable, hitting the first enemy within its radius), or quake (everything of the other side within radius round the attacker: the legends' slow, heavy signature move). windup: seconds it telegraphs before it lands or flies; cooldown: seconds from one to the next; damage is dps times cooldown; range: metres it attacks from; modifier: none, knockback (pushes the target knockback metres) or slow (the target moves at slowMult for slowTime seconds; slows don't stack: a new one only renews it). Babies don't attack; the young have one attack, adults a stronger one with a modifier, legends the signature. ranged: the species that shoot (the rest fight in melee). Melee attacks wind up and lunge lunge metres at where they aimed (step aside to dodge); shots fly at where they aimed (dodgeable). bySpecies: a species' own attacks by level, overriding byLevel. kite: species that keep their distance as part of their attack (Ed, 2026-10-04), holding between near and far of their attack's range from their target, backing off or closing in (the raven, with long-range shots). Babies are never attacked by anything, on either side (Ed, 2026-10-04). temperament: how a species' babies take to the witch close by (tuning notice): curious ones come up to her, skittish ones keep off; the rest just turn to look.",
  "levels": {
   "hp": [
    30,
@@ -122,5 +122,41 @@
   ],
   "near": 0.55,
   "far": 0.9
+ },
+ "temperament": {
+  "curious": [
+   "squirrel",
+   "fox",
+   "otter",
+   "hedgehog",
+   "dormouse",
+   "badger",
+   "bear",
+   "beaver",
+   "mole",
+   "raven",
+   "wolf",
+   "boar"
+  ],
+  "skittish": [
+   "hare",
+   "stag",
+   "elk",
+   "owl",
+   "bat",
+   "moth",
+   "toad",
+   "salamander",
+   "lynx",
+   "marten",
+   "stoat",
+   "snake",
+   "spider",
+   "glowworm",
+   "woodlouse",
+   "beetle",
+   "snail",
+   "ram"
+  ]
  }
 }

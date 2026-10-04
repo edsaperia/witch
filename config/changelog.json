@@ -4,6 +4,11 @@
     {
       "version": null,
       "items": [
+        "Wild creatures go for you as soon as you land in their area (not just when you're close); they still give up when you rise, or once you've left their area and are well away",
+        "The creature you're chatting to won't attack you while you talk (its friends still will)",
+        "Creatures enraged by a wave (attacking a soundsystem) have angry red eyes and can't be invited",
+        "Beaten creatures no longer vanish: they run off, out of the forest, and are gone for good (yours too: a beaten party animal runs away off its leash)",
+        "Creatures notice you from further away: they turn to look at you, curious babies come up to you and shy ones keep their distance; fights pick up from further off too",
         "Auto-talk can be turned off: press 1 or T, or click its button on the action bar (remembered); with it off, hold Shift to talk",
         "A volume slider in the corner (remembered); all the way down mutes",
         "Home is decorated: a ring of lanterns, torches, balloons, fairy lights and candles just outside the dancefloor's clearing"
