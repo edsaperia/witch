@@ -13,6 +13,7 @@
 import * as THREE from "three";
 import { drawSigil, sigilColour } from "../../art/generator.js";
 import { dormant, type Game } from "../rules/game";
+import { attackOf, COMBAT, maxHp } from "../rules/combat";
 import { blocked, leashPoint, talkTime, talkTurn } from "../rules/leash";
 import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
@@ -22,6 +23,7 @@ import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, placed } from "./height";
 
 const SLOT = 32, SLOTS = 16; // the glyph atlas: 16 x 16 slots of 32 px; slot 0 is a soft dot
+const SQ = SLOTS * SLOTS - 1; // and the last a solid square
 
 const VERT = /* glsl */ `
 uniform vec3 uRight, uUp;
@@ -124,6 +126,16 @@ export class LeashView {
   private bubbleWitch = document.getElementById("bubble-witch");
   private bubbleCreature = document.getElementById("bubble-creature");
   private v = new THREE.Vector3();
+  /** Where each stacked sigil was last frame (a knockout's release splashes from there). */
+  private lastSlots = new Map<number, THREE.Vector3>();
+  /** Short-lived effects: hit sparks, puffs, splashes, released leashes, teleport sparkles, quake rings. */
+  private fx: { kind: string; x: number; y: number; z: number; at: number; life: number; r: number; g: number; b: number; seed: number; tx?: number; tz?: number; size?: number }[] = [];
+  /** The screen shake (a legend's quake): when it started and how hard. */
+  private shakeAt = -Infinity;
+  private shakeAmp = 0;
+  private pips: HTMLElement | null = null;
+  /** Each creature's height as drawn (the view sets it), so its health bar sits just over it. */
+  readonly tops = new Map<number, number>();
 
   constructor(scene: THREE.Scene, private game: Game) {
     this.canvas.width = this.canvas.height = SLOT * SLOTS;
@@ -131,6 +143,8 @@ export class LeashView {
     const dot = g.createRadialGradient(SLOT / 2, SLOT / 2, 0, SLOT / 2, SLOT / 2, SLOT / 2);
     dot.addColorStop(0, "rgba(255,255,255,1)"); dot.addColorStop(0.35, "rgba(255,255,255,.55)"); dot.addColorStop(1, "rgba(255,255,255,0)");
     g.fillStyle = dot; g.fillRect(0, 0, SLOT, SLOT);
+    // The last slot: a solid square (health bars).
+    g.fillStyle = "#ffffff"; g.fillRect((SQ % SLOTS) * SLOT + 4, Math.floor(SQ / SLOTS) * SLOT + 4, SLOT - 8, SLOT - 8);
     this.tex = new THREE.CanvasTexture(this.canvas);
     this.tex.magFilter = THREE.NearestFilter; this.tex.minFilter = THREE.NearestFilter; this.tex.generateMipmaps = false;
     const mat = (flat: number, depthTest = true) => new THREE.ShaderMaterial({
@@ -248,6 +262,131 @@ export class LeashView {
     }
   }
 
+  /** How far to shake the camera now (metres): a legend's quake nearby. */
+  shake(time: number): number {
+    const k = (time - this.shakeAt) / 0.5;
+    return k < 0 || k > 1 ? 0 : this.shakeAmp * (1 - k) * (1 - k);
+  }
+
+  /** Combat (rules/combat.ts) and knockouts (rules/knockout.ts): shots and their telegraphs, hits,
+   *  health bars (only when hurt), puffs as beaten creatures flee, the knockout's splashing sigils
+   *  and teleport, the marker on creatures walking home, and the witch's hit pips. */
+  private drawCombat(time: number, camera: THREE.Camera, width: number, height: number, hatTop: number): void {
+    const g = this.game, w = g.witch, W = g.witches[0], dot = this.uv(0), sq = this.uv(SQ), near = 90, t = g.tuning;
+    const close = (x: number, z: number, r = near) => Math.abs(x - w.x) < r && Math.abs(z - w.z) < r;
+    const neon = (sp: string) => this.colours.get(sp) ?? (this.slotOf(sp, 0), this.colours.get(sp)!);
+    // New happenings become effects.
+    for (const e of g.combat.events) {
+      const c = e.id !== undefined ? g.creatures[e.id] : null;
+      if (e.kind === "hit" && close(e.x, e.z)) this.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 0.35, r: 1, g: 0.95, b: 0.7, seed: e.at * 97 + (e.id ?? 0) });
+      if (e.kind === "witchHit") this.fx.push({ kind: "spark", x: e.x, y: 1.4, z: e.z, at: time, life: 0.5, r: 1, g: 0.25, b: 0.35, seed: e.at * 31, size: 1.6 });
+      if (e.kind === "fled" && close(e.x, e.z)) this.fx.push({ kind: "puff", x: e.x, y: 0.5, z: e.z, at: time, life: 0.8, r: 0.8, g: 0.75, b: 0.7, seed: e.at * 13 });
+      if (e.kind === "lost" && c) { const col = neon(c.species); this.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 1.2, r: col.r, g: col.g, b: col.b, seed: e.at * 7, size: 2.5 }); }
+      if (e.kind === "quake" && close(e.x, e.z, 150)) {
+        this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.7, r: 1, g: 0.55, b: 0.3, seed: 0, size: COMBAT.attacks.quake.radius ?? 5 });
+        const d = Math.hypot(e.x - w.x, e.z - w.z);
+        if (d < 60) { this.shakeAt = time; this.shakeAmp = t.combat.shake * (1 - d / 60); } // screen shake: legends only
+      }
+      if (e.kind === "soundHit" && close(e.x, e.z, 150) && (e.at * 10) % 3 < 1) this.fx.push({ kind: "spark", x: e.x, y: 2.5, z: e.z, at: time, life: 0.3, r: 1, g: 0.6, b: 0.3, seed: e.at * 3 });
+      if (e.kind === "soundDestroyed") this.fx.push({ kind: "spark", x: e.x, y: 3, z: e.z, at: time, life: 2, r: 1, g: 0.4, b: 0.6, seed: e.at, size: 6 });
+    }
+    for (const e of g.koEvents) {
+      if (e.kind === "released" && e.id !== undefined) {
+        const c = g.creatures[e.id], col = neon(c.species), from = this.lastSlots.get(e.id);
+        const fx = from ? from.x : w.x, fy = from ? from.y : hatTop + 1, fz = from ? from.z : w.z;
+        this.fx.push({ kind: "splash", x: fx, y: fy, z: fz, at: time, life: 1.1, r: col.r, g: col.g, b: col.b, seed: e.id * 17 + 3 });
+        this.fx.push({ kind: "snap", x: fx, y: fy, z: fz, at: time, life: 0.9, r: col.r, g: col.g, b: col.b, seed: e.id, tx: c.x, tz: c.z });
+        this.fx.push({ kind: "puff", x: c.x, y: 0.6, z: c.z, at: time, life: 0.8, r: col.r, g: col.g, b: col.b, seed: e.id * 5 });
+      }
+      if (e.kind === "sparkleOut" || e.kind === "sparkleIn") this.fx.push({ kind: "teleport", x: e.x, y: 0, z: e.z, at: time, life: t.knockout.teleport * 0.6, r: 0.75, g: 0.6, b: 1, seed: e.at });
+    }
+    this.fx = this.fx.filter(f => time - f.at < f.life);
+    for (const f of this.fx) {
+      const k = (time - f.at) / f.life, n = f.kind === "spark" ? 10 : f.kind === "splash" ? 22 : f.kind === "puff" ? 12 : f.kind === "teleport" ? 40 : f.kind === "ring" ? 36 : 14, sz = f.size ?? 1;
+      for (let i = 0; i < n; i++) {
+        const a = hash2(f.seed, i, 3) * Math.PI * 2, r1 = hash2(f.seed, i, 5), r2 = hash2(f.seed, i, 7);
+        if (f.kind === "spark") this.standing.add(f.x + Math.cos(a) * sz * k * (0.5 + r1), f.y + sz * k * r2, f.z + Math.sin(a) * sz * k * (0.5 + r1), 0.22 * Math.sqrt(sz), dot, f.r, f.g, f.b, 1 - k);
+        else if (f.kind === "puff") this.standing.add(f.x + Math.cos(a) * k * 1.2, f.y + k * r2 * 1.2, f.z + Math.sin(a) * k * 1.2, 0.5 + k, dot, f.r * 0.5, f.g * 0.5, f.b * 0.5, 0.6 * (1 - k));
+        else if (f.kind === "splash") this.standing.add(f.x + Math.cos(a) * (0.5 + r1 * 2) * k, f.y + (1 + r2 * 2) * k - 5 * k * k, f.z + Math.sin(a) * (0.5 + r1 * 2) * k, 0.3, dot, f.r * 1.4, f.g * 1.4, f.b * 1.4, 1 - k * k);
+        else if (f.kind === "snap") { const q = (i + 0.5) / n, cut = q > k; if (cut) this.standing.add(f.x + (f.tx! - f.x) * q, f.y + (0.6 - f.y) * q + Math.sin(q * Math.PI) * 1.2 - k * 2 * q, f.z + (f.tz! - f.z) * q, 0.24, dot, f.r, f.g, f.b, (1 - k) * 0.9); }
+        else if (f.kind === "teleport") this.standing.add(f.x + Math.cos(a + k * 6) * (0.4 + r1), r2 * 3 + k * 2, f.z + Math.sin(a + k * 6) * (0.4 + r1), 0.25, dot, f.r * 1.3, f.g * 1.3, f.b * 1.3, Math.sin(k * Math.PI));
+        else if (f.kind === "ring") { const aa = (i / n) * Math.PI * 2, R = sz * (0.3 + 0.7 * k); this.flat.add(f.x + Math.cos(aa) * R, 0, f.z + Math.sin(aa) * R * 0.8, 0.7, dot, f.r, f.g, f.b, 1 - k); }
+      }
+    }
+    // Shots in flight: a bright core and a halo, red for the wild, the party's in their neon.
+    for (const sh of g.combat.shots) {
+      if (!close(sh.x, sh.z, 150)) continue;
+      const col = sh.side === "wild" ? { r: 1, g: 0.25, b: 0.35 } : neon(sh.species);
+      this.standing.add(sh.x, 1, sh.z, 0.55, dot, 1, 1, 1, 0.9);
+      this.standing.add(sh.x, 1, sh.z, 1.6, dot, col.r, col.g, col.b, 0.7);
+      this.standing.add(sh.x - sh.vx * 0.05, 1, sh.z - sh.vz * 0.05, 1, dot, col.r, col.g, col.b, 0.3);
+    }
+    for (const c of g.creatures) {
+      if (c.gone || !close(c.x, c.z)) continue;
+      // Telegraphs: winding up, a ring tightens at its feet; a shot shows its line; the quake its reach.
+      const f = c.fight, atk = f && f.windupUntil > 0 ? attackOf(c.species, c.level) : null;
+      if (atk && f) {
+        const A = atk.attack, k = Math.max(0, Math.min(1, 1 - (f.windupUntil - time) / Math.max(0.05, A.windup))), wild = !c.leashed;
+        const [r, gg, b] = wild ? [1, 0.3, 0.3] : [neon(c.species).r, neon(c.species).g, neon(c.species).b];
+        if (A.delivery === "quake") {
+          const R = A.radius ?? 5;
+          for (let i = 0; i < 40; i++) { const a = (i / 40) * Math.PI * 2; this.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.5, dot, r, gg * 0.6, b * 0.6, 0.25 + 0.6 * k); }
+        } else {
+          const R = 1.8 - 0.9 * k;
+          for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; this.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.35, dot, r, gg, b, 0.4 + 0.5 * k); }
+          if (A.delivery === "shot" && wild) {
+            const dx = f.aimX - c.x, dz = f.aimZ - c.z, d = Math.hypot(dx, dz) || 1, L = Math.min(A.range, d + 2);
+            for (let s2 = 1.2; s2 < L; s2 += 0.9) this.flat.add(c.x + (dx / d) * s2, 0, c.z + (dz / d) * s2, 0.28, dot, 1, 0.3, 0.3, 0.12 + 0.3 * k);
+          }
+        }
+      }
+      // Health bars, only when hurt: ten squares over its head.
+      const max = maxHp(c.level), hp = c.hp ?? max;
+      if (hp < max && !c.fleeUntil) {
+        const y = (this.tops.get(c.id) ?? 1.6 + c.level * 0.7) + 0.5, share = Math.max(0, hp / max), R = SPRITE_UNIFORMS.uRight.value, wide = 1 + c.level * 0.25;
+        for (let i = 0; i < 10; i++) { // drawn over everything, so a big creature's own sprite doesn't hide it
+          const o = (i - 4.5) * 0.17 * wide, lit = (i + 0.5) / 10 <= share;
+          this.over.add(c.x + R.x * o, y, c.z + R.z * o, 0.2 * wide, sq, lit ? 1 - share * 0.7 : 0.3, lit ? 0.3 + share * 0.7 : 0.3, lit ? 0.3 : 0.35, lit ? 0.95 : 0.35);
+        }
+      }
+      // Let go on a knockout and walking home: a faint marker and its sigil, grey and flickering.
+      if (c.wanderTo) {
+        const col = neon(c.species), fl = 0.25 + 0.15 * Math.sin(time * 5 + c.id);
+        this.standing.add(c.x, 2 + c.level * 0.6 + Math.sin(time * 2 + c.id) * 0.1, c.z, 1.1, this.uv(this.slotOf(c.species, c.level)), col.r * 0.6 + 0.3, col.g * 0.6 + 0.3, col.b * 0.6 + 0.3, fl);
+        for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2 + time; if (i % 2) this.flat.add(c.x + Math.cos(a) * 1.4, 0, c.z + Math.sin(a) * 1.1, 0.25, dot, 0.8, 0.8, 0.9, 0.35); }
+      }
+    }
+    // Soundsystems under siege: a long bar over each, when hurt.
+    for (const [, h] of g.combat.sounds) {
+      if (h.hp >= h.max || h.hp <= 0 || !close(h.x, h.z, 200)) continue;
+      const share = h.hp / h.max, R = SPRITE_UNIFORMS.uRight.value, n = 20, y = h.radius > 5 ? 9 : 7;
+      for (let i = 0; i < n; i++) { const o = (i - (n - 1) / 2) * 0.35, lit = (i + 0.5) / n <= share; this.over.add(h.x + R.x * o, y, h.z + R.z * o, 0.32, sq, lit ? 1 : 0.3, lit ? 0.35 + 0.5 * share : 0.3, lit ? 0.55 : 0.35, lit ? 1 : 0.35); }
+    }
+    // Knocked out: dizzy stars over her while she's down.
+    if (W.ko && time < W.ko.teleportAt) for (let i = 0; i < 5; i++) { const a = time * 3 + (i / 5) * Math.PI * 2; this.standing.add(w.x + Math.cos(a) * 0.7, 1.6 + Math.sin(a * 2) * 0.1, w.z + Math.sin(a) * 0.5, 0.25, dot, 1, 0.95, 0.5, 0.9); }
+    this.drawPips(time, camera, width, height);
+  }
+
+  /** Her hits, as pips under her feet, only once she's been hit: the next to come back fills as it repairs. */
+  private drawPips(time: number, camera: THREE.Camera, width: number, height: number): void {
+    const g = this.game, W = g.witches[0], H = W.health, max = g.tuning.witchHealth.hits;
+    if (!this.pips) {
+      this.pips = document.createElement("div");
+      Object.assign(this.pips.style, { position: "fixed", transform: "translate(-50%, 8px)", display: "none", gap: "3px", pointerEvents: "none", zIndex: "2" });
+      document.body.append(this.pips);
+    }
+    const el = this.pips;
+    if (H.hp >= max || W.ko) { el.style.display = "none"; return; }
+    el.style.display = "flex";
+    while (el.children.length < max) { const p = document.createElement("div"); Object.assign(p.style, { width: "10px", height: "10px", border: "1px solid rgba(255,140,170,.9)", borderRadius: "50%", overflow: "hidden", position: "relative", background: "rgba(14,11,28,.6)" }); p.innerHTML = '<div style="position:absolute;left:0;right:0;bottom:0;background:#ff5d8f"></div>'; el.append(p); }
+    const fill = H.repairAt === Infinity ? 0 : 1 - Math.max(0, H.repairAt - time) / g.tuning.witchHealth.repairTime;
+    [...el.children].forEach((p, i) => { (p.firstChild as HTMLElement).style.height = `${i < H.hp ? 100 : i === H.hp ? fill * 100 : 0}%`; (p as HTMLElement).style.opacity = i === H.hp ? "0.85" : "1"; });
+    const w = g.witch;
+    placed(this.v.set(w.x, 0, w.z)).project(camera); // under her feet (the stack is over her hat)
+    el.style.left = `${((this.v.x + 1) / 2) * width}px`;
+    el.style.top = `${((1 - this.v.y) / 2) * height}px`;
+  }
+
   private uv(slot: number): number[] {
     const N = SLOT * SLOTS, x = (slot % SLOTS) * SLOT, y = Math.floor(slot / SLOTS) * SLOT;
     // u0, v0 (top), u1, v1 (bottom); the canvas texture is flipped in v.
@@ -260,6 +399,7 @@ export class LeashView {
     this.standing.begin(); this.flat.begin(); this.over.begin();
     this.drawBerries(time);
     this.drawBosses(time);
+    this.drawCombat(time, camera, width, height, hatTop);
     for (const e of s.events) {
       if (e.kind === "fizzled") this.fizzles.push({ x: e.x, z: e.z, at: time });
       if (e.kind === "invited") this.bursts.push({ x: e.x, z: e.z, at: time, seed: e.id });
@@ -313,8 +453,11 @@ export class LeashView {
       y += size / 2;
       slotPos.set(id, pos);
       const col = (this.slotOf(c.species, c.level), this.colours.get(c.species)!);
-      this.standing.add(pos.x, pos.y, pos.z, size, this.uv(this.slotOf(c.species, c.level)), col.r, col.g, col.b, 1);
+      // Down to her last hit, the leash frays: the stack flickers (Ed, 2026-10-04).
+      const fray = g.witches[0].health.hp === 1 && !g.witches[0].ko ? (Math.sin(time * 23 + j * 3.1) > 0.2 ? 1 : 0.25) : 1;
+      this.standing.add(pos.x, pos.y, pos.z, size, this.uv(this.slotOf(c.species, c.level)), col.r, col.g, col.b, fray);
     }
+    this.lastSlots = slotPos;
 
     // Placed sigils, written on the ground, a little brighter than they were so they read in the
     // grass (Ed, v233; the grass is trampled clear round them, grass.ts).

@@ -30,6 +30,14 @@ export interface Tuning {
   wind: { on: boolean; strength: number; speed: number; gustScale: number; treetop: number };
   /** Tufts on the ground round the witch, in ground mode: overall density (times each area's), within radius metres, at most cap; one chance every spacing metres, worked out cell metres at a time within budgetMs a frame; sway (share of a tuft's height) and part (how far they part round her). */
   /** Spells (Ed, 2026-10-04): the one equipped this run, and each spell's numbers. speed: her speed times mult for duration seconds, then cooldown seconds to recharge. */
+  /** Combat (Stage 4; the attacks are data in config/combat.json): see config/tuning.json's _combat. */
+  combat: { aggro: number; aggroWitch: number; engage: number; chaseMult: number; partyChaseMult: number; marchMult: number; fleeTime: number; fleeMult: number; soundsystemHealth: number; soundsystemRadius: number; homeHealth: number; homeRadius: number; shake: number };
+  /** The witch's health (Ed, 2026-10-04): hits she takes before she's knocked out; one comes back every repairTime seconds out of the fight. */
+  witchHealth: { hits: number; repairTime: number };
+  /** Knocked out (Ed, 2026-10-04): her stack lets go one sigil every releaseEach seconds (releaseMax caps the whole release, 0 no cap), then she sparkles out and back in at the treehouse over teleport seconds; legendsLoyal keeps leashed legends with her. */
+  knockout: { releaseEach: number; releaseMax: number; emptyBeat: number; teleport: number; legendsLoyal: boolean };
+  /** The dash (Ed, 2026-10-04): on the ground, distance metres over duration seconds, then cooldown seconds. */
+  dash: { distance: number; duration: number; cooldown: number };
   spells: { equipped: string; speed: { mult: number; duration: number; cooldown: number } };
   /** Forecasting (Ed, 2026-10-04): symbols round each stone (12 = next; the after-next stone fills afterNext[0]..[1] over the countdown; probable ones flicker 1..probableMax); probable: how many probable stones; radius (m), size (m) of each symbol, height above the canopy in treetop mode. */
   forecast: { symbols: number; probable: number; probableMax: number; afterNext: number[]; radius: number; size: number; flare: number };
@@ -143,7 +151,7 @@ export interface Tuning {
   stack: { offset: number; scale: number; gap: number; stiffness: number; damping: number; trail: number; idleSway: number };
   lasers: { on: boolean; maxCount: number; length: number; spread: number; maxTilt: number; sweep: number; sweepBeats: number; openBars: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };
   borders: { on: boolean; width: number; brightness: number; sparkle: number; step: number; /** 0 a gentle breathing, 1 star-like flashes and dropouts */ twinkle: number; /** colour swaps a second */ swapRate: number; /** the share of sparks that swap on the beat */ swapBeat: number };
-  invite: { talkRange: number; cancelDistance: number; snubTime: number; talkTime: number[]; turn: number[]; decayRate: number };
+  invite: { hitPenalty: number; talkRange: number; cancelDistance: number; snubTime: number; talkTime: number[]; turn: number[]; decayRate: number };
   /** pace: party animals following her move this much faster (a legend buff; 1 in the file). */
   leash: { length: number; runSpeed: number; pickRadius: number; spacing: number; pace?: number };
   bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number; /** The thread's upward bow: metres per metre of length, up to threadArcMax. */ threadArc: number; threadArcMax: number };

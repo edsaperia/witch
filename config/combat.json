@@ -1,0 +1,16 @@
+{
+  "_": "Combat (Stage 4; DESIGN.md 'Combat, pacing and forecasting'). One system for wild and party creatures. levels: by level (baby, young, adult, legend): hp, the health it has; dps, its power budget (damage a second, the same for every attack of that level, so no species is stronger for its level: equal power budget). attacks: each is data. delivery: melee (a hit within range), shot (a projectile flying at speed m/s, dodgeable, hitting the first enemy within its radius), or quake (everything of the other side within radius round the attacker: the legends' slow, heavy signature move). windup: seconds it telegraphs before it lands or flies; cooldown: seconds from one to the next; damage is dps times cooldown; range: metres it attacks from; modifier: none, knockback (pushes the target knockback metres) or slow (the target moves at slowMult for slowTime seconds; slows don't stack: a new one only renews it). Babies don't attack; the young have one attack, adults a stronger one with a modifier, legends the signature. ranged: the species that shoot (the rest fight in melee). evasive: species that keep their distance from the witch (a behaviour hook: Ed, 2026-10-04), at least evadeDistance metres, moving at evadeMult times their speed.",
+  "levels": { "hp": [30, 60, 120, 480], "dps": [0, 4, 7, 12] },
+  "attacks": {
+    "nip":   { "delivery": "melee", "range": 1.8, "windup": 0.35, "cooldown": 1.5, "modifier": "none" },
+    "maul":  { "delivery": "melee", "range": 2.2, "windup": 0.45, "cooldown": 2.0, "modifier": "knockback", "knockback": 2.5 },
+    "spit":  { "delivery": "shot", "range": 13, "speed": 9, "radius": 0.7, "windup": 0.7, "cooldown": 2.2, "modifier": "none" },
+    "barb":  { "delivery": "shot", "range": 15, "speed": 11, "radius": 0.8, "windup": 0.8, "cooldown": 2.6, "modifier": "slow", "slowMult": 0.5, "slowTime": 2.5 },
+    "quake": { "delivery": "quake", "range": 4.5, "radius": 5.5, "windup": 1.6, "cooldown": 6, "modifier": "knockback", "knockback": 4 }
+  },
+  "byLevel": { "melee": [null, "nip", "maul", "quake"], "ranged": [null, "spit", "barb", "quake"] },
+  "ranged": ["owl", "bat", "raven", "moth", "glowworm", "spider", "toad", "salamander", "snake", "woodlouse"],
+  "evasive": ["hare"],
+  "evadeDistance": 9,
+  "evadeMult": 3
+}

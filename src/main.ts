@@ -4,7 +4,7 @@ import { musicMix } from "./rules/music";
 import { musicCue, type MusicCue } from "./rules/musicPlan";
 import type { MusicStyle } from "./rules/musicScore";
 import musicStyleJson from "../config/music-style.json";
-import { areaUnderWitch, newGame, stepGame } from "./rules/game";
+import { areaUnderWitch, interpolated, newGame, STEP, stepGame } from "./rules/game";
 import { AREA_TYPES } from "./rules/map";
 import { waveCountdown } from "./rules/party";
 import { parseSeed } from "./rules/map";
@@ -217,6 +217,9 @@ let last = 0, fps = 60, frames = 0, fpsT = 0;
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
 let manual = false;
+let overShown = false;
+document.getElementById("again")?.addEventListener("click", () => location.reload());
+document.getElementById("fresh")?.addEventListener("click", () => { const u = new URL(location.href); u.searchParams.set("seed", String(Math.floor(Math.random() * 1e6))); location.href = u.toString(); });
 function frame(now: number): void {
   requestAnimationFrame(frame);
   if (manual) return;
@@ -228,6 +231,13 @@ function frame(now: number): void {
   if (c.debug) { debugOn = !debugOn; debugEl.classList.toggle("on", debugOn); debugButtons.classList.toggle("on", debugOn); }
   view.debugReadouts = debugOn;
   stepGame(game, c, dt);
+  // The run is over when every soundsystem has fallen (Stage 4): the end screen, and a restart.
+  if (game.over && !overShown) {
+    overShown = true;
+    game.clock.paused = true;
+    document.getElementById("over-stats")!.textContent = `You lasted ${Math.floor(game.clock.time / 60)} min ${Math.floor(game.clock.time % 60)} s and ${game.party.wave} waves.`;
+    document.getElementById("over")!.classList.add("on");
+  }
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
   musicCueNow = musicCue(game, musicCueNow);
   music?.update(musicMix(game, game.witch), musicCueNow, game.clock.time, tuning.beat.bpm, !game.clock.paused);
@@ -243,7 +253,8 @@ function frame(now: number): void {
   // art in the background instead (and so slow a frame doesn't count against the scenery budget).
   if (game.clock.paused && now - lastDraw < 300) return;
   lastDraw = now;
-  view.render(game.clock.time); // game time: party transitions, sigils and waves are stamped in it
+  // Drawn between the last two fixed steps (game time: party transitions, sigils and waves are stamped in it).
+  interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP)));
   if (debugOn) {
     const w = game.witch, s = view.stats;
     debugEl.textContent = [
