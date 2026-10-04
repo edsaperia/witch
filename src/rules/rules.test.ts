@@ -17,6 +17,7 @@ import { borderOf } from "./borders";
 import { newLeash, stepLeash, type LeashControls } from "./leash";
 import { newClock, tick, MAX_STEP } from "./clock";
 import { TUNING, withTuning } from "./tuning";
+import { floorClearing, speakerRadius, nextSpeakerState } from "./speakers";
 import { DECOR } from "../../art/decor.js";
 import { RELICS } from "../../art/relics.js";
 
@@ -176,8 +177,8 @@ describe("the map", () => {
     expect(a.openness).toBeLessThan(0.05);
     expect(map.treeWeight(d.x, d.z)).toBe(0);
     const th = map.treehouse, far = Math.hypot(th.x - d.x, th.z - d.z);
-    expect(far).toBeGreaterThan(d.radius + TUNING.dancefloor.clearing);
-    expect(far).toBeLessThan(d.radius + TUNING.dancefloor.clearing + 20);
+    expect(far).toBeGreaterThan(floorClearing(TUNING)); // outside the speakers and the clearing
+    expect(far).toBeLessThan(floorClearing(TUNING) + 20);
     expect(map.hardClear(th.x, th.z)).toBe(true);
     expect(Math.hypot(map.start.x - th.x, map.start.z - th.z)).toBeLessThan(3);
   });
@@ -1038,6 +1039,48 @@ describe("finds, each at most once per map (Ed, v160)", () => {
       const p = m.setPieceSpot(x, y);
       if (p) expect(m.paths.at(p.x, p.z)).toBeNull();
     }
+  });
+});
+
+describe("the dancefloor's speakers (Ed, v160)", () => {
+  const D = TUNING.dancefloor, S = D.speakers;
+  it("stand count of them evenly round the floor at radiusFactor times its radius, from start degrees", () => {
+    const sp = map.dancefloor.speakers;
+    expect(sp.length).toBe(S.count);
+    expect(speakerRadius(TUNING)).toBeCloseTo(D.radius * S.radiusFactor);
+    sp.forEach((p, i) => {
+      expect(Math.hypot(p.x - map.dancefloor.x, p.z - map.dancefloor.z)).toBeCloseTo(speakerRadius(TUNING), 5);
+      expect(p.ring).toBeCloseTo(S.start + (360 / S.count) * i);
+    });
+  });
+  it("are gameplay: reserved, with no trees, bushes or scenery on their feet", () => {
+    const f = new Forest(map);
+    for (const p of map.dancefloor.speakers) {
+      expect(map.reserved(p.x, p.z, 1)).toBe(true);
+      expect(map.hardClear(p.x, p.z)).toBe(true);
+      for (const t of f.treesNear(p.x, p.z, S.footprint + 2)) expect(Math.hypot(t.x - p.x, t.z - p.z)).toBeGreaterThan(S.footprint + 2);
+      for (const b of f.bushesNear(p.x, p.z, S.footprint + 1)) expect(Math.hypot(b.x - p.x, b.z - p.z)).toBeGreaterThan(S.footprint + 1);
+    }
+  });
+  it("keep the treehouse outside their ring and the floor's clearing, over seeds", () => {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      const m = generateMap(seed, TUNING), d = Math.hypot(m.treehouse.x - m.dancefloor.x, m.treehouse.z - m.dancefloor.z);
+      expect(d - TUNING.treehouse.clear).toBeGreaterThan(speakerRadius(TUNING) + S.footprint); // its footprint clear of the ring
+      expect(d).toBeGreaterThan(floorClearing(TUNING));
+      for (const p of m.dancefloor.speakers) expect(Math.hypot(m.treehouse.x - p.x, m.treehouse.z - p.z)).toBeGreaterThan(TUNING.treehouse.clear + S.footprint);
+    }
+    // More of them, further out: still outside.
+    const T2 = withTuning({ dancefloor: { ...D, speakers: { ...S, count: 20, radiusFactor: 3 } } }), m = generateMap(1, T2);
+    expect(Math.hypot(m.treehouse.x - m.dancefloor.x, m.treehouse.z - m.dancefloor.z) - T2.treehouse.clear).toBeGreaterThan(speakerRadius(T2) + S.footprint);
+  });
+  it("cycle playing, damaged, destroyed on the debug key", () => {
+    expect(nextSpeakerState("playing")).toBe("damaged");
+    expect(nextSpeakerState("damaged")).toBe("destroyed");
+    expect(nextSpeakerState("destroyed")).toBe("playing");
+    const g = newGame(5, TUNING);
+    expect(g.speakers.every(s => s === "playing")).toBe(true);
+    stepGame(g, { ...NO_INTENT, zoom: 0, cycleSpeakers: true }, 1 / 60);
+    expect(g.speakers.every(s => s === "damaged")).toBe(true);
   });
 });
 

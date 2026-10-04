@@ -74,7 +74,9 @@ export interface Tuning {
     uplight: { strength: number; pulse: number; edge: number }; interval: number; startDelay: number; maxPerWave: number; picker: string; noisy: { wobble: number; lobeSize: number; candidates: number; spreadFromLast: boolean }; transition: number; lightReach: number; lightStrength: number };
   dancefloor: {
     motes: { count: number; rise: number; speed: number; column: number };
-    radius: number; stones: number; clearing: number;
+    radius: number; clearing: number;
+    /** The ring of speakers: how many, the first's ring angle (degrees), their distance as a multiple of radius, and each one's footprint radius (metres). */
+    speakers: { count: number; start: number; radiusFactor: number; footprint: number };
     circleHue: number; circleHue2: number; pulse: number; runeSpeed: number;
     lightReach: number; lightStrength: number;
     discoHeight: number; discoSize: number; spin: number;

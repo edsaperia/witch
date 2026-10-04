@@ -29,7 +29,7 @@ export class Input {
   }
 
   private isGameKey(code: string): boolean {
-    return /^(Arrow|Space$|Key[WASDZXENPTIFR]$|Shift|Minus$|Equal$|NumpadAdd$|NumpadSubtract$|Backquote$)/.test(code);
+    return /^(Arrow|Space$|Key[WASDZXENPTIFRK]$|Shift|Minus$|Equal$|NumpadAdd$|NumpadSubtract$|Backquote$)/.test(code);
   }
 
   /** Forget presses not yet read (the press that started the game is not also a move). */
@@ -41,7 +41,7 @@ export class Input {
 
   /** This frame's controls; button presses are reported once. */
   read(): Controls & { debug: boolean } {
-    const nextWave = this.pressed.has("KeyN") || this.touch.nextWave, pauseWaves = this.pressed.has("KeyP") || this.touch.pauseWaves;
+    const nextWave = this.pressed.has("KeyN") || this.touch.nextWave, pauseWaves = this.pressed.has("KeyP") || this.touch.pauseWaves, cycleSpeakers = this.pressed.has("KeyK");
     this.touch.nextWave = false; this.touch.pauseWaves = false;
     const k = (c: string) => (this.keys.has(c) ? 1 : 0), p = (c: string) => this.pressed.has(c);
     let moveX = k("KeyD") + k("ArrowRight") - k("KeyA") - k("ArrowLeft");
@@ -88,6 +88,6 @@ export class Input {
 
     const len = Math.hypot(moveX, moveZ);
     if (len > 1) { moveX /= len; moveZ /= len; }
-    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug, nextWave, pauseWaves, talk, sigil, inviteNearest };
+    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug, nextWave, pauseWaves, cycleSpeakers, talk, sigil, inviteNearest };
   }
 }

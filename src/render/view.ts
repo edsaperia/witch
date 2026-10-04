@@ -2,6 +2,7 @@
 // (window size / pixel size) and stretched with nearest-neighbour by the browser, so every art
 // pixel stays a crisp square.
 import * as THREE from "three";
+import * as Art from "../../art/generator.js";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { poseOf } from "../rules/game";
@@ -66,7 +67,7 @@ export class View {
   /** 1 while she sits on the treehouse terrace, easing to 0 as she takes off. */
   private seatK = 1;
   private seatTime = 0;
-  private stoneBatch: SpriteBatch;
+  private speakerBatch: SpriteBatch | null = null;
   private shadow: THREE.Mesh;
   private mpp: number; // metres per art pixel
   private lastBuild = { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1 };
@@ -161,15 +162,8 @@ export class View {
     this.markerArt = new MarkerArt(style, t);
     this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true });
     this.scene.add(...this.markerBatch.meshes, this.markerFx.group);
-    this.stoneBatch = new SpriteBatch(this.assets.stones, this.mpp, { solid: true });
-    this.scene.add(...this.stoneBatch.meshes);
-    const d = game.map.dancefloor, stones: SpriteInstance[] = [];
-    const n = game.tuning.dancefloor.stones;
-    for (let i = 0; i < n; i++) {
-      const a = (i / n) * Math.PI * 2 + 0.3;
-      stones.push({ x: d.x + Math.cos(a) * d.radius, y: 0, z: d.z + Math.sin(a) * d.radius, frame: this.assets.stones.frames[i % 4], flip: i % 2 === 0 });
-    }
-    this.stoneBatch.set(stones);
+    // The dancefloor's speakers: their batch comes with their art (drawSpeakers).
+    this.assets.speakerArt();
     this.propBatch = new SpriteBatch(this.assets.props, this.mpp, { fade: true });
     this.scene.add(...this.propBatch.meshes);
     this.partyView = new PartyView(this.assets.soundsystems, this.mpp);
@@ -701,6 +695,36 @@ export class View {
     this.ghostLines.visible = pts.length > 0;
   }
 
+  /** The dancefloor's ring of speakers (Ed, v160): gameplay, always drawn and never see-through.
+   *  Each shows its front to the camera, the far half facing in and the near half out, so its
+   *  sprite is the drawn angle nearest its yaw, flipped for the other side; a playing speaker's
+   *  cones pump on the beat. Anchored by its ground point, like a path piece. */
+  private drawSpeakers(time: number, angle: number): void {
+    const A = this.assets.speakerArt(), g = this.game;
+    if (!A) return;
+    if (!this.speakerBatch) {
+      this.speakerBatch = new SpriteBatch(A.atlas, this.mpp, { solid: true });
+      this.scene.add(...this.speakerBatch.meshes);
+    }
+    const mpp = this.mpp, U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value;
+    const pitch = (angle * Math.PI) / 180, upOnScreen = U.dot(this.v3.set(0, Math.cos(pitch), -Math.sin(pitch)));
+    const beat = (time * g.tuning.beat.bpm) / 60, ph = beat - Math.floor(beat);
+    const list: SpriteInstance[] = [];
+    g.map.dancefloor.speakers.forEach((sp, i) => {
+      const face = Art.dancefloorSpeakerFacing(sp.ring) as { angle: number; flip: boolean }, state = g.speakers[i] ?? "playing";
+      // Playing: rest, then the cones thump out and settle, once a beat; damaged: a slow stutter.
+      const frame = state === "playing" ? (ph < 0.12 ? 2 : ph < 0.3 ? 1 : 0) : state === "damaged" ? Math.floor(time * 2.5 + i) % 2 : 0;
+      const fi = A.frames[`${face.angle}:${state}:${frame}`];
+      if (fi === undefined) return;
+      const f = A.atlas.frames[fi], o = A.origin[face.angle], ox = face.flip ? f.w - o.x : o.x;
+      const dx = (ox - f.w / 2) * mpp, below = Math.max(0, f.h - (f.pad ?? 0) - o.y) * mpp, d = (f.pad ?? 0) * mpp;
+      const x = sp.x - R.x * dx, z = sp.z - R.z * dx + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch));
+      if (!this.inView(x, z, f.w * mpp, f.h * mpp, 6)) return;
+      list.push({ x: x - U.x * d, y: -U.y * d, z: z - U.z * d, frame: f, flip: face.flip, fresh: this.mark("speaker", sp.x, sp.z, f.h * mpp) });
+    });
+    this.speakerBatch.set(list);
+  }
+
   /** Stand the treehouse with its trunk's foot (its base anchor) on its spot: like a set piece's
    *  origin, the roots drawn below the foot lie on the ground nearer the camera, its lowest drawn
    *  pixel on the ground. Returns where its sprite stands (the bottom middle of its box). */
@@ -796,6 +820,7 @@ export class View {
       ...onTreehouse(l.x, l.y), reach: t.treehouse.lightReach, rgb: new THREE.Vector3(l.rgb[0] / 255, l.rgb[1] / 255, l.rgb[2] / 255), strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3 + l.x)),
     }));
     const markerLights = this.drawMarkers(time);
+    this.drawSpeakers(time, pose.angle);
     this.setLights([this.dancefloor.update(time, this.ground), ...party.lights, ...thLights, ...markerLights, ...this.forestLights], w.x, w.z);
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);
@@ -888,7 +913,7 @@ export class View {
     this.post.render(this.scene, this.camera);
     // Anything set but not drawn (three.js capping a batch's instances) is a bug: count and log it.
     let dropped = 0;
-    for (const b of [...this.typeBatches.values(), ...this.creatureBatches.values(), this.propBatch, this.soundBatch]) dropped += b.dropped;
+    for (const b of [...this.typeBatches.values(), ...this.creatureBatches.values(), this.propBatch, this.soundBatch, ...(this.speakerBatch ? [this.speakerBatch] : [])]) dropped += b.dropped;
     if (dropped && !this.stats.dropped) console.warn(`view: ${dropped} sprite instances set but not drawn`);
     this.stats.dropped = dropped;
     this.stats.drawCalls = this.renderer.info.render.calls;

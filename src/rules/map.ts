@@ -6,6 +6,7 @@ import { AREAS } from "../../art/areas.js";
 import { makePartition, type Cell, type Partition } from "./partition";
 import { hash2, rng, smoothstep, vnoise } from "./random";
 import type { Tuning } from "./tuning";
+import { floorClearing, speakerRing, type Speaker } from "./speakers";
 import { PathNetwork } from "./paths";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
@@ -64,7 +65,7 @@ export interface ForestMap {
   readonly partition: Partition;
   /** The middle area, whose clearing holds the dancefloor. */
   readonly centreCell: Cell;
-  readonly dancefloor: { x: number; z: number; radius: number };
+  readonly dancefloor: { x: number; z: number; radius: number; /** the ring of speakers round it */ speakers: readonly Speaker[] };
   /** The witch's treehouse: its trunk's foot, just beyond the dancefloor's clearing. */
   readonly treehouse: { x: number; z: number };
   /** The old playgrounds and sports grounds: a handful per map, each in a clearing of its own off
@@ -213,7 +214,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     return pieceHome.get(t) === cellKey(cx, cy) ? AREA_TYPES[t].setPiece! : null;
   };
   // The dancefloor keeps a clearing of its own, however close a neighbouring area's centre.
-  const floorR = tuning.dancefloor.radius, floorClear = floorR + tuning.dancefloor.clearing;
+  const floorR = tuning.dancefloor.radius, floorClear = floorClearing(tuning); // out past the speakers
 
   // Gameplay is placed first: each area's soundsystem spot is reserved from the start (whether or
   // not the party has reached it yet), then scenery keeps clear of it and of the dancefloor.
@@ -310,7 +311,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const pad = A * 0.5;
   const map = {
     seed, tuning, n, margin, areaSize: A, partition, centreCell,
-    dancefloor: { x: centre.x, z: centre.z, radius: floorR },
+    dancefloor: { x: centre.x, z: centre.z, radius: floorR, speakers: speakerRing(centre, tuning) },
     treehouse, grounds,
     start: { x: treehouse.x, z: treehouse.z + 1 },
     bounds: { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad },

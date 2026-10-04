@@ -4,6 +4,13 @@
     {
       "version": null,
       "items": [
+        "The standing stones round the dancefloor are now twelve stone speakers, twice as far out, thumping on the beat: the ones beyond the floor face in, the near ones face out, so you always see their fronts (K cycles them through damaged and destroyed, for testing)",
+        "The dancefloor's clearing is wider, and the treehouse stands outside the speaker ring"
+      ]
+    },
+    {
+      "version": 171,
+      "items": [
         "The forest is dark again: the witch's light only reaches as far as the gap in the canopy round her, and the moonlight and twilight fill are lower",
         "Tree trunks fade out at the top in pixel steps where the crowns are hidden, instead of ending in a flat cut",
         "Paths, roads, tracks and streams fray out at their ends instead of stopping square",

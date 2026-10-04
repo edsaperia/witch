@@ -5,6 +5,7 @@
 // corridors with bushes along their edges. Seeded, so they never change; no drawing here.
 import { clamp, hash2, rng, vnoise } from "./random";
 import { AREA_TYPES, type ForestMap } from "./map";
+import { floorClearing } from "./speakers";
 
 export type PathKind = "path" | "road" | "rail" | "stream";
 export const PATH_KINDS: PathKind[] = ["path", "road", "rail", "stream"];
@@ -250,7 +251,7 @@ export class PathNetwork {
    *  into it but never run under its soundsystem, set piece or the dancefloor. */
   private clearOf(cx: number, cy: number): number {
     const m = this.map, home = cx === m.centreCell[0] && cy === m.centreCell[1];
-    return home ? m.dancefloor.radius + m.tuning.dancefloor.clearing + 2 : m.tuning.setPieceClear * m.tuning.setPieceScale + 2;
+    return home ? floorClearing(m.tuning) + 2 : m.tuning.setPieceClear * m.tuning.setPieceScale + 2;
   }
   private trim(a: { x: number; z: number }, b: { x: number; z: number }, ka: number, kb: number): [{ x: number; z: number } | null, { x: number; z: number }] {
     const dx = b.x - a.x, dz = b.z - a.z, len = Math.hypot(dx, dz);

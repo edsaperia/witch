@@ -6,6 +6,7 @@ import { hash2, smoothstep, vnoise } from "./random";
 import { wallFeatures, bedsInRows, type WallFeatures } from "./walls";
 import { AREA_TYPES, type AreaLayout, type ForestMap } from "./map";
 import { DECOR } from "../../art/decor.js";
+import { floorClearing } from "./speakers";
 import { RELICS } from "../../art/relics.js";
 
 export interface Plant {
@@ -115,7 +116,7 @@ function bushesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
     if (bedsInRows(map, type)) continue; // a formal garden's beds are laid in rows along its walls
     const sparse = 1 - Math.min(1, treeChance(map, x, z, type) / 0.8);
     if (hash2(i, j, s + 203) > (0.15 + 0.85 * sparse) * AREA_TYPES[type].layout.undergrowth * map.tuning.bushDensity * clump * along) continue;
-    if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + 2) continue; // the dancefloor stays clear
+    if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < floorClearing(map.tuning)) continue; // the dancefloor and its speakers stay clear
     if (map.hardClear(x, z)) continue; // and the treehouse's foot, the grounds, the set pieces' clearings
     out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 204) * BUSH_VARIANTS), flip: hash2(i, j, s + 205) < 0.5 });
   }
@@ -155,7 +156,7 @@ function decorCandidate(map: ForestMap, i: number, j: number): Cand<Decor> | nul
   if (roll >= total) return null;
   if (a.openness < D.clearing || map.hardClear(x, z) || map.paths.at(x, z, D.pathGap)) return null;
   if (map.reserved(x, z, D.footprint)) return null; // its whole footprint clear of the gameplay and set pieces
-  if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + map.tuning.dancefloor.clearing + 6) return null;
+  if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < floorClearing(map.tuning) + 6) return null;
   // Open ground keeps them all; dense canopy only some.
   const open = 1 - Math.min(1, treeChance(map, x, z, a.type) / 0.8);
   if (hash2(i, j, s + 504) > 0.35 + 0.65 * open) return null;
@@ -206,7 +207,7 @@ function relicCandidate(map: ForestMap, i: number, j: number): Cand<Relic> | nul
   if (roll >= odds * byRoad) return null;
   if (a.openness < map.tuning.decor.clearing || map.hardClear(x, z) || map.paths.at(x, z, 2) || map.paths.pieceAt(x, z)) return null;
   if (map.reserved(x, z, map.tuning.decor.footprint)) return null; // its footprint clear of the gameplay, set pieces and grounds
-  if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + map.tuning.dancefloor.clearing + 6) return null;
+  if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < floorClearing(map.tuning) + 6) return null;
   return { x, z, variant: Math.floor(hash2(i, j, s + 884) * 1e6), flip: hash2(i, j, s + 885) < 0.5, rank: hash2(i, j, s + 886), i, j };
 }
 
@@ -274,7 +275,7 @@ function lightsInChunk(map: ForestMap, ci: number, cj: number): LightSource[] {
   const i0 = Math.ceil((ci * CHUNK) / sp), i1 = Math.ceil(((ci + 1) * CHUNK) / sp);
   for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
     const x = (i + (hash2(i, j, s + 401) - 0.5) * 0.7) * sp, z = (j + (hash2(i, j, s + 402) - 0.5) * 0.7) * sp;
-    if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < map.dancefloor.radius + map.tuning.dancefloor.clearing + 4) continue;
+    if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < floorClearing(map.tuning) + 4) continue;
     const a = map.areaAt(x, z), where = a.openness < 0.35 || a.openness > 0.8 ? 1 : 0.25, roll = hash2(i, j, s + 403);
     const wet = WET.has(AREA_TYPES[a.type].id) || !!AREA_TYPES[a.type].layout.terrain?.includes("pools");
     const pond = (wet ? L.wetPond : L.pond) * where, fire = L.campfire * where, stone = L.magicStone * where;

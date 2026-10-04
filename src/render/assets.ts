@@ -3,9 +3,8 @@
 // Sets are asked for as the witch nears them and drawn by a few Web Workers in the background;
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
-import { rng } from "../rules/random";
 import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
-import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PathPieceArt, type RelicArt, type RelicLayouts, type TilePixels, type TypeLayout } from "./artBuild";
+import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PathPieceArt, type RelicArt, type RelicLayouts, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { ART_HASH, cacheGet, cachePut, hashText } from "./artCache";
 
@@ -25,6 +24,7 @@ export class AssetLibrary {
   private types = new Map<number, TypeArt>();
   private creatures = new Map<string, CreatureArt>();
   private decor: DecorArt | undefined;
+  private speakers: (SpeakerArt & { atlas: Atlas }) | undefined;
   private pieces: { atlas: Atlas; byId: Record<string, PathPieceArt> } | undefined;
   private relicSet: RelicSet | undefined;
   private queue: ArtJob[] = [];
@@ -36,7 +36,6 @@ export class AssetLibrary {
   readonly witchFoot: Record<string, { towards: number[]; away: number[]; fps: number }> = {};
   /** In the treetops: the fast and brake poses' frames, towards and away. */
   readonly witchFly: Record<string, { towards: number[]; away: number[]; fps: number }> = {};
-  readonly stones: Atlas;
   /** Light-source props from the art module: campfire (frames 0-2), then magic stones (cyan, violet, green). */
   readonly props: Atlas;
   /** Soundsystems: variant x 3 + frame (the cones pumping), playing. */
@@ -79,7 +78,6 @@ export class AssetLibrary {
       this.witchFly[pose] = entry;
     }
     this.witch = packAtlas(sprites, 2048);
-    this.stones = packAtlas([0, 1, 2, 3].map(i => this.stone(i)));
     const lp = Art.lightProps(style) as { campfire: Baked[]; stones: Record<string, Baked> };
     this.props = packAtlas([...lp.campfire, lp.stones.cyan, lp.stones.violet, lp.stones.green], 1024);
     const ss: Baked[] = [];
@@ -110,13 +108,6 @@ export class AssetLibrary {
         }
       } catch { this.useWorkers = false; }
     }
-  }
-
-  private stone(i: number): Baked {
-    const r = rng(this.seed * 3 + i), w = 5 + Math.floor(r() * 3), h = 7 + Math.floor(r() * 5), sp = new Art.Sprite(w + 2, h + 1);
-    sp.ellipse((w + 2) / 2, h / 2 + 1, w / 2, h / 2 + 0.5, Art.M.BODY, { round: this.style.round });
-    sp.ellipse((w + 2) / 2 - 1, h / 2, w / 3, h / 3, Art.M.BODY2, { round: this.style.round, onlyOn: new Set([Art.M.BODY]), density: 0.5, seed: i });
-    return Art.bake(sp, { [Art.M.BODY]: [178, 174, 162], [Art.M.BODY2]: [140, 138, 130] }, this.style, "dark") as Baked;
   }
 
   private key = (j: ArtJob) => j.kind + ":" + j.id;
@@ -162,6 +153,8 @@ export class AssetLibrary {
     if (r.job.kind === "relics") {
       const list = r.result.relics!;
       this.relicSet = { atlas, byId: Object.fromEntries(list.map(p => [p.id, p])), modern: list.filter(p => p.family === "modern"), layouts: r.result.layouts! };
+    } else if (r.job.kind === "speakers") {
+      this.speakers = { atlas, ...r.result.speakers! };
     } else if (r.job.kind === "pathPieces") {
       this.pieces = { atlas, byId: Object.fromEntries(r.result.pieces!.map(p => [p.id, p])) };
     } else if (r.job.kind === "decor") {
@@ -200,6 +193,11 @@ export class AssetLibrary {
   relicArt(): RelicSet | undefined {
     if (!this.relicSet) this.ask({ kind: "relics", id: "all", style: this.style });
     return this.relicSet;
+  }
+  /** The dancefloor's speakers, or undefined (and asked for, ahead of the scenery: they're gameplay). */
+  speakerArt(): (SpeakerArt & { atlas: Atlas }) | undefined {
+    if (!this.speakers) this.ask({ kind: "speakers", id: "all", style: this.style }, true);
+    return this.speakers;
   }
   /** The paths' 3D pieces, or undefined (and asked for). */
   pathPieceArt(): { atlas: Atlas; byId: Record<string, PathPieceArt> } | undefined {
