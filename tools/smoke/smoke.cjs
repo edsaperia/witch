@@ -99,7 +99,7 @@ async function main() {
     await shot(page, "04-treetop-flying.png");
     // Fly a fixed path through every zoom level in both modes; nothing of any kind may appear or
     // vanish in clear view on the way (trees, undergrowth, walls, set pieces, creatures, props).
-    await page.evaluate(() => { window.witch.view.pops = []; });
+    await page.evaluate(() => { window.witch.view.pops = []; window.witch.view.trackPops = true; });
     const steps = await page.evaluate(() => window.witch.game.tuning.camera.zoomSteps);
     const keys = ["ArrowLeft", "ArrowDown", "ArrowRight", "ArrowUp"];
     const path = async () => {
@@ -134,7 +134,7 @@ async function main() {
       const t0 = await page.evaluate(() => window.witch.game.clock.time);
       await page.waitForFunction(t => window.witch.game.clock.time - t >= 0.5, t0, { timeout: 120000, polling: 50 });
       await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 900000, polling: 500 });
-      await page.evaluate(() => { window.witch.view.pops = []; });
+      await page.evaluate(() => { window.witch.view.pops = []; window.witch.view.trackPops = true; });
       await path();
       await shot(page, "08-heath.png");
     }
@@ -352,6 +352,33 @@ async function main() {
     check(dist > 150 && r.p99 <= 16, `flying into new forest at full boost, building it costs at most 16 ms in 99% of frames (p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms)`);
   });
 
+  // Boosting over the treetops (Ed, v256: "framerate drops a bit during boost mode in treetop
+  // view"): the game is stepped frame by frame at a fixed 1/60 s (window.witch.frame), so the
+  // flight covers what a 60 fps player's does however slow the software renderer is, and each
+  // frame's own work (rules and view, not the software renderer's drawing) is timed: hovering,
+  // then 10 s north at full boost with the speed spell cast whenever it's ready. The limits are
+  // for a builder's cloud machine (v256 there: p99 35 ms, worst 49 ms; Ed's is several times faster).
+  await run("boost", { width: 1900, height: 1240 }, async page => {
+    await page.keyboard.press("Enter");
+    const r = await page.evaluate(async () => {
+      const w = window.witch, dt = 1 / 60, C = o => ({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }), yieldNow = () => new Promise(res => setTimeout(res, 0));
+      w.manual = true;
+      w.frame(C({ moveZ: -1 }), dt, false);
+      w.frame(C({ toggleMode: true }), dt, false);
+      for (let i = 0; i < 240 && w.game.witch.mode !== "treetop"; i++) w.frame(C({}), dt, false);
+      const cpu = f => f.step + f.render, hover = [], boost = [], x0 = w.game.witch.x, z0 = w.game.witch.z;
+      for (let i = 0; i < 180; i++) { const f = w.frame(C({}), dt, false); if (i >= 60) hover.push(cpu(f)); if (i % 30 === 0) await yieldNow(); }
+      let top = 0;
+      for (let i = 0; i < 600; i++) { const f = w.frame(C({ moveZ: -1, spell: true }), dt, false); boost.push(cpu(f)); top = Math.max(top, Math.hypot(w.game.witch.vx, w.game.witch.vz)); if (i % 30 === 0) await yieldNow(); }
+      w.manual = false;
+      const q = (a, k) => { const b = [...a].sort((x, y) => x - y); return b[Math.min(b.length - 1, Math.floor(k * (b.length - 1)))]; };
+      return { hover: q(hover, 0.5), median: q(boost, 0.5), p99: q(boost, 0.99), worst: q(boost, 1), top, dist: Math.hypot(w.game.witch.x - x0, w.game.witch.z - z0) };
+    });
+    results.push(`info boost: ${r.dist.toFixed(0)} m north in 10 s at up to ${r.top.toFixed(0)} m/s; frame work hovering ${r.hover.toFixed(1)} ms (median), boosting median ${r.median.toFixed(1)} ms, p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms`);
+    check(r.top > 100 && r.p99 <= 22, `boosting over the treetops at over 100 m/s, 99% of frames' own work is within 22 ms (p99 ${r.p99.toFixed(1)} ms)`);
+    check(r.worst <= 40, `boosting over the treetops, no frame's own work takes over 40 ms (worst ${r.worst.toFixed(1)} ms)`);
+  });
+
   // Nothing floats (Ed, v108: rocks in the cave mouth hovered over their shadows): every placed
   // sprite's (trees, plants, walls, set pieces, decor, the treehouse) lowest drawn pixel, read from the atlas itself, sits on the ground. Close-up in a
   // cave mouth, in ground mode, zoomed in.
@@ -432,7 +459,7 @@ async function main() {
   for (const [w, h, dpr] of [[1900, 1240, 1], [2000, 1076, 2]]) {
     await run(`vanish-${w}x${h}`, { width: w, height: h, dpr }, async page => {
       await page.keyboard.press("Enter");
-      await page.evaluate(() => { const v = window.witch.view; v.pops = []; window.maxDropped = 0; setInterval(() => { window.maxDropped = Math.max(window.maxDropped, v.stats.dropped); }, 50); });
+      await page.evaluate(() => { const v = window.witch.view; v.pops = []; v.trackPops = true; window.maxDropped = 0; setInterval(() => { window.maxDropped = Math.max(window.maxDropped, v.stats.dropped); }, 50); });
       await hold(page, "ArrowRight", 4, 600000);
       await shot(page, `vanish-${w}x${h}-ground.png`);
       await page.keyboard.press("Space");

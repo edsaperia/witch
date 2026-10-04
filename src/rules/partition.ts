@@ -15,6 +15,10 @@ export interface Partition {
   site(cx: number, cy: number): [number, number];
   /** The area a point belongs to. */
   partition(px: number, py: number): Cell;
+  /** The area a point belongs to, and how far (partition units) it can move in any direction and
+   *  surely stay in it: half the gap between its nearest and second-nearest deepest-layer sites
+   *  (moving d changes each distance by at most d, so the nearest stays nearest). */
+  partitionSafe(px: number, py: number): { cell: Cell; safe: number };
   /** 0 at the area's site, about 1 at its border (against the nearest other site). */
   centreness(px: number, py: number, rc: Cell): number;
   /** 0 at any layer-0 site, about 1 midway between two: centreness measured from the nearest
@@ -39,14 +43,25 @@ export function makePartition(seed: number, depth: number): Partition {
     }
     return s;
   };
-  const nearest = (layer: number, px: number, py: number): Cell => {
-    const c = Math.pow(2, -layer), gx = Math.floor(px / c), gy = Math.floor(py / c);
-    let bx = gx, by = gy, bd = Infinity;
-    for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) {
-      const s = site(layer, gx + dx, gy + dy), d = (s[0] - px) ** 2 + (s[1] - py) ** 2;
-      if (d < bd) { bd = d; bx = gx + dx; by = gy + dy; }
+  // The 5 x 5 sites round a grid cell, kept per layer for the last cell asked about: neighbouring
+  // lookups (a walker, a tile of texels) mostly fall in the same cell, so they read an array
+  // instead of 25 map lookups.
+  const rings: { gx: number; gy: number; xy: Float64Array }[] = [];
+  const ringOf = (layer: number, gx: number, gy: number): Float64Array => {
+    let r = rings[layer];
+    if (!r) rings[layer] = r = { gx: NaN, gy: NaN, xy: new Float64Array(50) };
+    if (r.gx !== gx || r.gy !== gy) {
+      let i = 0;
+      for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) { const q = site(layer, gx + dx, gy + dy); r.xy[i++] = q[0]; r.xy[i++] = q[1]; }
+      r.gx = gx; r.gy = gy;
     }
-    return [bx, by];
+    return r.xy;
+  };
+  const nearest = (layer: number, px: number, py: number): Cell => {
+    const c = Math.pow(2, -layer), gx = Math.floor(px / c), gy = Math.floor(py / c), xy = ringOf(layer, gx, gy);
+    let bi = 0, bd = Infinity;
+    for (let i = 0; i < 25; i++) { const d = (xy[2 * i] - px) ** 2 + (xy[2 * i + 1] - py) ** 2; if (d < bd) { bd = d; bi = i; } }
+    return [gx + Math.floor(bi / 5) - 2, gy + (bi % 5) - 2];
   };
   const root = (layer: number, cx: number, cy: number): Cell => {
     const k = key(layer, cx, cy);
@@ -65,6 +80,17 @@ export function makePartition(seed: number, depth: number): Partition {
     depth,
     site: (cx, cy) => site(0, cx, cy),
     partition(px, py) { const c = nearest(depth, px, py); return root(depth, c[0], c[1]); },
+    partitionSafe(px, py) {
+      const c = Math.pow(2, -depth), gx = Math.floor(px / c), gy = Math.floor(py / c), xy = ringOf(depth, gx, gy);
+      let bi = 0, d1 = Infinity, d2 = Infinity;
+      for (let i = 0; i < 25; i++) {
+        const d = (xy[2 * i] - px) ** 2 + (xy[2 * i + 1] - py) ** 2;
+        if (d < d1) { d2 = d1; d1 = d; bi = i; } else if (d < d2) d2 = d;
+      }
+      const bx = gx + Math.floor(bi / 5) - 2, by = gy + (bi % 5) - 2;
+      // The search window holds every site that could be nearest within c of the point, so the margin is capped there.
+      return { cell: root(depth, bx, by), safe: Math.min(c, (Math.sqrt(d2) - Math.sqrt(d1)) / 2) };
+    },
     centreness(px, py, rc) {
       const s = site(0, rc[0], rc[1]), d1 = Math.hypot(px - s[0], py - s[1]);
       let d2 = Infinity;
@@ -79,11 +105,12 @@ export function makePartition(seed: number, depth: number): Partition {
     },
     openness(px, py) {
       let d1 = Infinity, d2 = Infinity;
-      const gx = Math.floor(px), gy = Math.floor(py);
-      for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) {
-        const o = site(0, gx + dx, gy + dy), d = Math.hypot(px - o[0], py - o[1]);
+      const xy = ringOf(0, Math.floor(px), Math.floor(py));
+      for (let i = 0; i < 25; i++) {
+        const d = (xy[2 * i] - px) ** 2 + (xy[2 * i + 1] - py) ** 2;
         if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) d2 = d;
       }
+      d1 = Math.sqrt(d1); d2 = Math.sqrt(d2);
       return Math.min(1, (2 * d1) / (d1 + d2));
     },
   };

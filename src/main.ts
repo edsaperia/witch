@@ -201,8 +201,12 @@ document.addEventListener("visibilitychange", () => { if (document.hidden) last 
 
 let lastDraw = 0;
 let last = 0, fps = 60, frames = 0, fpsT = 0;
+/** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
+ *  window.witch.frame steps and draws one frame of a fixed length instead. */
+let manual = false;
 function frame(now: number): void {
   requestAnimationFrame(frame);
+  if (manual) return;
   const dt = last ? (now - last) / 1000 : 0;
   last = now;
   frames++; fpsT += dt;
@@ -244,4 +248,6 @@ function frame(now: number): void {
 requestAnimationFrame(frame);
 
 // For the smoke test and for poking at in the console.
-(window as unknown as { witch: unknown }).witch = { game, view, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, spriteUp: () => SPRITE_UNIFORMS.uUp.value, spriteRight: () => SPRITE_UNIFORMS.uRight.value, groundHeight, loadTimes, get ready() { return ready; } };
+(window as unknown as { witch: unknown }).witch = { game, view,
+  get manual() { return manual; }, set manual(on: boolean) { manual = on; },
+  frame: (c: Parameters<typeof stepGame>[1], dt: number, draw = true) => { const t0 = performance.now(); stepGame(game, c, dt); const t1 = performance.now(); view.render(game.clock.time, draw); return { step: t1 - t0, render: performance.now() - t1, ms: view.ms }; }, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, spriteUp: () => SPRITE_UNIFORMS.uUp.value, spriteRight: () => SPRITE_UNIFORMS.uRight.value, groundHeight, loadTimes, get ready() { return ready; } };

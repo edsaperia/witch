@@ -97,6 +97,23 @@ describe("fractal partition", () => {
 });
 
 describe("the map", () => {
+  it("says how far a point can move and surely stay in its area (cellSafe), and is right about it", () => {
+    let checked = 0, safeSum = 0;
+    for (let i = 0; i < 400; i++) {
+      const x = map.extent.minX + hash2(i, 1, 5) * (map.extent.maxX - map.extent.minX), z = map.extent.minZ + hash2(i, 2, 5) * (map.extent.maxZ - map.extent.minZ);
+      const r = map.cellSafe(x, z);
+      expect(r.cell).toEqual(map.areaAt(x, z).cell);
+      expect(r.safe).toBeGreaterThanOrEqual(0);
+      safeSum += r.safe;
+      for (let k = 0; k < 24; k++) { // points out to the edge of the disc
+        const a = (k / 24) * Math.PI * 2, d = r.safe * (k % 3 === 0 ? 0.999 : hash2(i, k, 9));
+        expect(map.areaAt(x + Math.cos(a) * d, z + Math.sin(a) * d).cell).toEqual(r.cell);
+        checked++;
+      }
+    }
+    expect(checked).toBe(400 * 24);
+    expect(safeSum / 400).toBeGreaterThan(0.3); // worth having: a creature asks about every so many metres
+  });
   it("is 20 x 20 areas with 30 area types", () => {
     expect(map.n).toBe(20);
     expect(AREA_TYPES.length).toBe(30);
