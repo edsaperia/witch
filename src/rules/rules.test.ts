@@ -879,6 +879,17 @@ describe("paths, roads and railways", () => {
     expect(edge / edgeN).toBeGreaterThan((open / openN) * 1.5);
     for (const w of forest.wallsNear(s.x, s.z, 600)) { const h = P.at(w.x, w.z); if (h) expect(h.kind === "rail" && P.railBroken(w.x, w.z)).toBe(true); }
   });
+  it("carry 3D pieces: railway landmarks and signals, bridges over streams, verge posts; trees keep clear of them", () => {
+    const ids = new Set(P.pieces.map(p => p.id));
+    for (const id of ["signal-post", "verge-post"]) expect(ids.has(id)).toBe(true);
+    expect(P.pieces.some(p => ["goods-wagon", "carriage", "platform", "signal-gantry"].includes(p.id))).toBe(true);
+    let bridges = 0;
+    for (let seed = 1; seed <= 6; seed++) bridges += generateMap(seed, TUNING).paths.pieces.filter(p => p.id.includes("bridge")).length;
+    expect(bridges).toBeGreaterThan(0);
+    for (const b of P.pieces.filter(p => p.id.includes("bridge"))) expect(P.at(b.x, b.z)?.kind).toBeDefined();
+    const forest = new Forest(map);
+    for (const p of P.pieces.slice(0, 60)) for (const t of forest.treesNear(p.x, p.z, p.r + 1)) expect(Math.hypot(t.x - p.x, t.z - p.z)).toBeGreaterThanOrEqual(p.r - 1e-6);
+  });
   it("stop at the edge of clearings, so they never run under the dancefloor or a set piece", () => {
     const d = map.dancefloor, clear = d.radius + TUNING.dancefloor.clearing;
     for (const l of P.lines) for (const p of l.pts) {

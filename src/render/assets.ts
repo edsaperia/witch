@@ -5,7 +5,7 @@
 import * as Art from "../../art/generator.js";
 import { rng } from "../rules/random";
 import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
-import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type TilePixels, type TypeLayout } from "./artBuild";
+import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PathPieceArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 
 export interface TypeArt { atlas: Atlas; layout: TypeLayout }
@@ -18,6 +18,7 @@ export class AssetLibrary {
   private types = new Map<number, TypeArt>();
   private creatures = new Map<string, CreatureArt>();
   private decor: DecorArt | undefined;
+  private pieces: { atlas: Atlas; byId: Record<string, PathPieceArt> } | undefined;
   private queue: ArtJob[] = [];
   private inFlight = new Set<string>();
   private workers: { w: Worker; busy: boolean; job?: ArtJob }[] = [];
@@ -127,7 +128,9 @@ export class AssetLibrary {
       return;
     }
     const atlas = atlasFromPixels(r.result.px);
-    if (r.job.kind === "decor") {
+    if (r.job.kind === "pathPieces") {
+      this.pieces = { atlas, byId: Object.fromEntries(r.result.pieces!.map(p => [p.id, p])) };
+    } else if (r.job.kind === "decor") {
       const pieces = r.result.decor!, families: Record<string, DecorPiece[]> = {};
       for (const p of pieces) (families[p.family] ??= []).push(p);
       this.decor = { atlas, pieces, families };
@@ -149,6 +152,11 @@ export class AssetLibrary {
   decorArt(): DecorArt | undefined {
     if (!this.decor) this.ask({ kind: "decor", id: "all", style: this.style });
     return this.decor;
+  }
+  /** The paths' 3D pieces, or undefined (and asked for). */
+  pathPieceArt(): { atlas: Atlas; byId: Record<string, PathPieceArt> } | undefined {
+    if (!this.pieces) this.ask({ kind: "pathPieces", id: "all", style: this.style });
+    return this.pieces;
   }
   creatureArt(species: string): CreatureArt | undefined {
     const a = this.creatures.get(species);

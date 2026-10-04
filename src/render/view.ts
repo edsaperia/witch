@@ -408,6 +408,23 @@ export class View {
       shadows.push({ x: d.x, z: d.z, w: frame.w * mpp * 0.8, d: frame.w * mpp * 0.3, scenery: true });
       nb++;
     }
+    // The paths' 3D pieces (bridges, stairs, railway landmarks, posts), as scenery, each with its
+    // middle on the ground over its spot.
+    const pa = this.assets.pathPieceArt();
+    if (pa) {
+      const pl: SpriteInstance[] = [], R = SPRITE_UNIFORMS.uRight.value;
+      for (const p of g.map.paths.pieces) {
+        if (Math.abs(p.x - cx) > half || Math.abs(p.z - cz) > half) continue;
+        const a = pa.byId[p.id];
+        if (!a) continue;
+        const frame = pa.atlas.frames[a.frame], dx = (a.originX - frame.w / 2) * mpp, x = p.x - R.x * dx, z = p.z - R.z * dx;
+        if (!this.inView(x, z, frame.w * mpp, frame.h * mpp, margin, reach)) continue;
+        pl.push({ x, y: 0, z, frame, flip: false, fresh: this.mark("pathpiece", p.x, p.z, frame.h * mpp) });
+        shadows.push({ x: p.x, z: p.z, w: frame.w * mpp * 0.7, d: frame.w * mpp * 0.25, scenery: true });
+        nb++;
+      }
+      this.batchFor(this.decorBatches, "pieces", () => new SpriteBatch(pa.atlas, mpp, { scenery: true, fade: true }))?.set(pl);
+    }
     if (decor) this.batchFor(this.decorBatches, "all", () => new SpriteBatch(decor.atlas, mpp, { scenery: true, fade: true }))?.set(dl);
     for (const [type, b] of this.typeBatches) if (!per.has(type)) b.set([]);
     for (const [type, list] of per) {
