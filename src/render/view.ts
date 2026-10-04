@@ -29,7 +29,8 @@ import { BuffHud } from "./buffhud";
 import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
 import { MarkerArt, MarkerFx, MARKER_LEVELS, SymbolRings, type Beacon, type Laser, type Mote, type RingSymbol } from "./markers";
-import { cellKey, spawnMarkers, speakersOn, symbolCount, waveCountdown, type SpawnMarker } from "../rules/party";
+import { cellKey, spawnMarkers, speakersOn, symbolCount, waveCountdown, wavePlan, type SpawnMarker } from "../rules/party";
+import { WaveNumbers, type WaveNumber } from "./waveNumbers";
 import { StringLightsView } from "./strings";
 import { bossBreath, LeashView } from "./leash";
 import { Lasers, type RingSpeaker } from "./lasers";
@@ -68,6 +69,8 @@ export interface ForestLight { x: number; y: number; z: number; reach: number; r
 /** A frame's CPU budget (ms) for the view, of which the work done ahead (the forest, the hills,
  *  ground tiles, art) gets whatever the frame's own work has left, each at least its floor. */
 const BACKGROUND_MS = 9;
+/** The wave numbers' colour over areas the party has reached (spent). */
+const SPENT = new THREE.Vector3(0.7, 0.7, 0.8);
 
 export interface ViewStats { berries: number; forestMs: number; forestMissing: number; sceneryRadius: number; fps: number; gameplay: number; scenery: number; dropped: number; trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number; lights: number; heightMoves?: number }
 
@@ -231,7 +234,7 @@ export class View {
     this.minimap = new Minimap(document.body, game.map);
     this.markerArt = new MarkerArt(style, t);
     this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true });
-    this.scene.add(...this.markerBatch.meshes, this.markerFx.group, this.rings.mesh);
+    this.scene.add(...this.markerBatch.meshes, this.markerFx.group, this.rings.mesh, this.waveNumbers.mesh);
     // The ground cover: tufts round the witch, in ground mode.
     this.grass = new GrassView(game.map, t, this.mpp, style, game.forest, (this.ground.mesh.material as THREE.ShaderMaterial).uniforms);
     this.scene.add(this.grass.mesh);
@@ -773,6 +776,27 @@ export class View {
     this.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes.concat(this.fireSparks), lasers);
     const up = canopyShown(w);
     this.rings.update(symbols, up * (t.treetopHeight - 2)); // above the canopy from the treetops
+    // Wave numbers over the stones (Ed, 2026-10-04, a design aid): above the stone on the ground,
+    // above the canopy from the treetops; the reached areas' dimmed.
+    const WN = t.waveNumbers, nums: WaveNumber[] = [];
+    if (WN.on) {
+      const P = g.party, pk = `${P.wave}:${P.areas.size}:${P.ruined?.size ?? 0}:${P.areasPerWave}:${P.next.map(cellKey).join(";")}`;
+      if (this.plan.key !== pk) this.plan = { key: pk, waves: wavePlan(P, g.map) };
+      const lift = (top: number) => top + WN.lift + up * (t.treetopHeight + WN.lift - top - WN.lift);
+      for (const m of mc.list) {
+        const wave = this.plan.waves.get(m.key);
+        if (wave === undefined || Math.hypot(m.x - w.x, m.z - w.z) > range) continue;
+        const species = AREA_TYPES[g.map.typeOf(m.cell[0], m.cell[1])].creature;
+        nums.push({ x: m.x, z: m.z, y: lift((this.markerArt.height.get(species) ?? 0) * this.mpp * scale), wave, colour: this.markerArt.colour.get(species)!, alpha: 1 });
+      }
+      for (const a of g.party.areas.values()) {
+        if (!a.wave) continue;
+        const s0 = g.map.soundsystemSpot(a.cell[0], a.cell[1]);
+        if (Math.hypot(s0.x - w.x, s0.z - w.z) > range) continue;
+        nums.push({ x: s0.x, z: s0.z, y: lift(4), wave: a.wave, colour: SPENT, alpha: WN.spent });
+      }
+    }
+    this.waveNumbers.update(nums, WN.size, this.width / this.height);
     return lights;
   }
 
@@ -975,6 +999,9 @@ export class View {
   /** Each ring speaker's top, state and power, for its laser (Ed: one each, none from the disco ball). */
   private speakerTops: RingSpeaker[] = [];
   private rings = new SymbolRings();
+  private waveNumbers = new WaveNumbers();
+  /** Each dormant area's wave (wavePlan), worked out again when the party changes. */
+  private plan = { key: "", waves: new Map<string, number>() };
   /** When each symbol round each stone appeared (for its flare), by marker. */
   private symbolSeen = new Map<string, number[]>();
   private drawSpeakers(time: number, angle: number): ForestLight[] {
