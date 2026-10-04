@@ -215,6 +215,11 @@ export class Forest {
   private lights = new Map<string, LightSource[]>();
   private decor = new Map<string, Decor[]>();
   private relics = new Map<string, Relic[]>();
+  /** Milliseconds spent making chunks since the view last read (and reset) it. */
+  buildMs = 0;
+  /** Chunks kept per kind before the farthest are dropped: well over a treetop view's ~700. */
+  static readonly KEEP = 2500;
+  private centre = { x: 0, z: 0 };
   constructor(readonly map: ForestMap) {}
 
   private chunks(x: number, z: number, radius: number): [number, number][] {
@@ -223,16 +228,47 @@ export class Forest {
       for (let ci = Math.floor((x - radius) / CHUNK); ci <= Math.floor((x + radius) / CHUNK); ci++) out.push([ci, cj]);
     return out;
   }
+  /** Over KEEP chunks, drop the farthest from where the forest was last asked about (never the
+   *  whole cache: clearing it made a treetop view rebuild every chunk at once, a second's stall). */
+  private evict<T>(cache: Map<string, T[]>): void {
+    if (cache.size <= Forest.KEEP) return;
+    const c = this.centre, far = [...cache.keys()].map(k => { const [i, j] = k.split(",").map(Number); return [k, ((i + 0.5) * CHUNK - c.x) ** 2 + ((j + 0.5) * CHUNK - c.z) ** 2] as const; });
+    far.sort((a, b) => b[1] - a[1]);
+    for (const [k] of far.slice(0, cache.size - Math.floor(Forest.KEEP * 0.8))) cache.delete(k);
+  }
+  private chunk<T>(cache: Map<string, T[]>, make: (ci: number, cj: number) => T[], ci: number, cj: number): T[] {
+    const k = ci + "," + cj;
+    let c = cache.get(k);
+    if (!c) { const t0 = performance.now(); c = make(ci, cj); this.buildMs += performance.now() - t0; cache.set(k, c); }
+    return c;
+  }
   private gather<T extends { x: number; z: number }>(cache: Map<string, T[]>, make: (ci: number, cj: number) => T[], x: number, z: number, radius: number): T[] {
-    if (cache.size > 600) cache.clear();
+    this.centre = { x, z };
+    this.evict(cache);
     const out: T[] = [];
-    for (const [ci, cj] of this.chunks(x, z, radius)) {
-      const k = ci + "," + cj;
-      let c = cache.get(k);
-      if (!c) { c = make(ci, cj); cache.set(k, c); }
-      for (const p of c) if (Math.abs(p.x - x) <= radius && Math.abs(p.z - z) <= radius) out.push(p);
-    }
+    for (const [ci, cj] of this.chunks(x, z, radius))
+      for (const p of this.chunk(cache, make, ci, cj)) if (Math.abs(p.x - x) <= radius && Math.abs(p.z - z) <= radius) out.push(p);
     return out;
+  }
+  private kinds(): [Map<string, { x: number; z: number }[]>, (ci: number, cj: number) => { x: number; z: number }[]][] {
+    const m = this.map;
+    return [[this.trees, (i, j) => treesInChunk(m, i, j)], [this.bushes, (i, j) => bushesInChunk(m, i, j)], [this.walls, (i, j) => wallsInChunk(m, i, j)],
+      [this.decor, (i, j) => decorInChunk(m, i, j)], [this.relics, (i, j) => relicsInChunk(m, i, j)], [this.lights, (i, j) => lightsInChunk(m, i, j)]];
+  }
+  /** Make chunks round (x, z) ahead of need, nearest first, for at most budgetMs (at least one
+   *  chunk if any is missing): so flying into new forest finds it already made, a little each
+   *  frame, instead of all at once. Returns how many chunks in that square are still missing. */
+  prefetch(x: number, z: number, radius: number, budgetMs: number): number {
+    const t0 = performance.now(), kinds = this.kinds();
+    const todo = this.chunks(x, z, radius).filter(([i, j]) => kinds.some(([c]) => !c.has(i + "," + j)));
+    todo.sort((a, b) => ((a[0] + 0.5) * CHUNK - x) ** 2 + ((a[1] + 0.5) * CHUNK - z) ** 2 - (((b[0] + 0.5) * CHUNK - x) ** 2 + ((b[1] + 0.5) * CHUNK - z) ** 2));
+    let done = 0;
+    for (const [i, j] of todo) {
+      if (done > 0 && performance.now() - t0 > budgetMs) break;
+      for (const [c, make] of kinds) this.chunk(c, make, i, j);
+      done++;
+    }
+    return todo.length - done;
   }
   /** Trees within a square of half-size `radius` round (x, z). */
   treesNear(x: number, z: number, radius: number): Plant[] {

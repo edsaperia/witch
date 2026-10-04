@@ -40,10 +40,15 @@ async function main() {
   const results = [];
   const check = (ok, what) => { results.push(`${ok ? "ok  " : "FAIL"} ${what}`); if (!ok) errors.push(what); };
 
+  let shared = null;
   async function run(name, viewport, steps, query) {
     if (process.env.ONLY && !process.env.ONLY.split(",").includes(name)) return; // ONLY=party,cull runs just those
     const { hasTouch, dpr, ...size } = viewport;
-    const page = await browser.newPage({ viewport: size, deviceScaleFactor: dpr || 1, hasTouch: !!hasTouch, isMobile: !!hasTouch });
+    // Desktop runs share one browser profile, so the art drawn by the first is kept (IndexedDB)
+    // for the rest, as a player's reload would; touch and high-DPI runs need their own.
+    let page;
+    if (!hasTouch && (dpr || 1) === 1) { shared ??= await browser.newContext({ viewport: size }); page = await shared.newPage(); await page.setViewportSize(size); }
+    else page = await browser.newPage({ viewport: size, deviceScaleFactor: dpr || 1, hasTouch: !!hasTouch, isMobile: !!hasTouch });
     page.on("pageerror", e => errors.push(`${name}: page error: ${e.message}`));
     page.on("console", m => { if (m.type() === "error") errors.push(`${name}: console error: ${m.text()}`); });
     await page.goto(`http://127.0.0.1:${port}/?seed=${seed}${query || "&debug"}`);
@@ -328,6 +333,25 @@ async function main() {
       }
     }
   }, "&debug=cull&tilt=before");
+
+  // No stutter flying into new forest: full treetop boost straight across fresh ground, timing the
+  // forest's chunk building each frame (view.stats.forestMs: the rebuilds' share plus the
+  // prefetch ahead of her), and the frames themselves.
+  await run("speed", { width: 1280, height: 800 }, async page => {
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Space");
+    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 300000 });
+    await page.evaluate(() => {
+      window.speedLog = { forest: [], frame: [], last: 0 };
+      const tick = now => { const L = window.speedLog; if (L.stop) return; L.forest.push(window.witch.view.stats.forestMs); if (L.last) L.frame.push(now - L.last); L.last = now; requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
+    });
+    const [s0, s1] = await hold(page, "KeyW", 12, 900000);
+    const r = await page.evaluate(() => { const L = window.speedLog; L.stop = true; const q = (a, k) => { const b = [...a].sort((x, y) => x - y); return b.length ? b[Math.min(b.length - 1, Math.floor(k * (b.length - 1)))] : 0; }; return { n: L.forest.length, worst: q(L.forest, 1), p99: q(L.forest, 0.99), median: q(L.forest, 0.5), frameMedian: q(L.frame, 0.5), frameWorst: q(L.frame, 1), missing: window.witch.view.stats.forestMissing }; });
+    const dist = Math.hypot(s1.x - s0.x, s1.z - s0.z), speed = dist / (s1.t - s0.t);
+    results.push(`info speed: ${dist.toFixed(0)} m of fresh forest at ${speed.toFixed(1)} m/s; forest building per frame: median ${r.median.toFixed(1)} ms, p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms over ${r.n} frames; frames here (software renderer): median ${r.frameMedian.toFixed(0)} ms, worst ${r.frameWorst.toFixed(0)} ms`);
+    check(dist > 150 && r.p99 <= 16, `flying into new forest at full boost, building it costs at most 16 ms in 99% of frames (p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms)`);
+  });
 
   // Nothing floats (Ed, v108: rocks in the cave mouth hovered over their shadows): every placed
   // sprite's (trees, plants, walls, set pieces, decor, the treehouse) lowest drawn pixel, read from the atlas itself, sits on the ground. Close-up in a
