@@ -185,7 +185,8 @@ export function decorSprite(id, st = {}, { variant = 0, ppm = 16 } = {}) {
   const crownY = d.split == null ? 0 : Math.max(0, Math.round(project([0, d.split, 0])[1]) - y0);
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y + y0) * sp.w + x + x0, mm = sp.m[i]; if (!mm) continue; const n = [sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]]; crop.put(x, y, mm, ...n); (y < crownY ? top : bot).put(x, y, mm, ...n); }
   const unit = s / ppm; // metres per model unit
-  return { whole: crop, top, bot, crownY, metres: { width: +(W / ppm).toFixed(1), height: +(H / ppm).toFixed(1), footprint: +(reach * unit).toFixed(1) } };
+  const [px, py] = project([0, 0, 0]); // origin: where its middle on the ground lands (a scene puts it at its spot)
+  return { whole: crop, top, bot, crownY, origin: { x: +(px - x0).toFixed(1), y: +(py - y0).toFixed(1) }, metres: { width: +(W / ppm).toFixed(1), height: +(H / ppm).toFixed(1), footprint: +(reach * unit).toFixed(1) } };
 }
 
 // ---------------- lakes ----------------
