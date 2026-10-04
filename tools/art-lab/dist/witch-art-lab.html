@@ -6208,9 +6208,10 @@ const LEGEND_FRAMES = { asleep: 2 };
 // ribbons: its magic is gone into it). lid: the closed eye's colour. wood: groups whose glow turns
 // to old wood (antlers and horns, like dead branches). over: what has grown over it, by count:
 // moss and lichen (shares of its surface), ferns, grass, mushrooms (brackets: on its flanks),
-// roots, stones, a sapling ("broad" or "pine"), a nest, moss hanging from its antlers. eyes: the groups its
+// roots, stones, a sapling ("broad" or "pine"), a nest, moss hanging from its antlers, wildflowers. eyes: the groups its
 // glowing legend eyes are in (1 unless given).
-// Batch 1 (the bug hunter's first slice): bat, marten, elk, stoat, owl, snail.
+// Batch 1 (the bug hunter's first slice): bat, marten, elk, stoat, owl, snail. Batch 2: wolf, fox,
+// badger, boar, stag, hare, bear.
 const LEGEND_POSES = {
   bat: { ground: .3, droop: 0, drop: [0, 10, 11], cloak: true, over: { moss: .3, lichen: .14, ferns: 1, grass: 2, mushrooms: 2, roots: 2, stones: 4 } },
   marten: { sink: .45, droop: 1, drop: [60, 61], over: { moss: .45, lichen: .05, ferns: 3, grass: 3, mushrooms: 3, roots: 3, stones: 1, sapling: "pine" } },
@@ -6218,6 +6219,13 @@ const LEGEND_POSES = {
   stoat: { sink: .4, droop: 1, drop: [60, 61, 90, 91, 92], over: { moss: .3, lichen: .16, ferns: 1, grass: 3, mushrooms: 0, roots: 2, stones: 5 } },
   owl: { ground: .58, droop: 0, drop: [40, 50, 95, 96, 97, 98, 99, 100, 101], lid: M.BELLY, over: { moss: .4, lichen: .06, ferns: 2, grass: 2, mushrooms: 3, brackets: 4, roots: 2, stones: 0, nest: true } },
   snail: { ground: .2, droop: 1, drop: [5], eyes: [5], over: { moss: .4, lichen: .08, ferns: 3, grass: 3, mushrooms: 4, roots: 1, stones: 1 } },
+  wolf: { sink: .45, droop: 1, drop: [40, 50, 60, 61], over: { moss: .45, lichen: .06, ferns: 2, grass: 5, mushrooms: 2, roots: 3, stones: 2, sapling: "broad" } },
+  fox: { sink: .42, droop: 1, drop: [70, 71], over: { moss: .35, lichen: .14, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 5 } },
+  badger: { sink: .5, droop: 1, drop: [], over: { moss: .55, lichen: .1, ferns: 1, grass: 6, mushrooms: 0, roots: 1, stones: 3 } },
+  boar: { sink: .45, droop: .8, drop: [], over: { moss: .4, lichen: .04, ferns: 6, grass: 2, mushrooms: 2, roots: 3, stones: 1 } },
+  stag: { sink: .42, droop: .9, drop: [], wood: [11, 12], over: { moss: .55, lichen: .06, ferns: 2, grass: 3, mushrooms: 3, roots: 5, stones: 2, beard: 6 } },
+  hare: { sink: .45, droop: 1, drop: [], over: { moss: .3, lichen: .04, ferns: 0, grass: 7, mushrooms: 1, roots: 1, stones: 1, flowers: 6 } },
+  bear: { sink: .48, droop: .9, drop: [89], over: { moss: .55, lichen: .05, ferns: 3, grass: 3, mushrooms: 4, roots: 3, stones: 2 } },
 };
 const LEGEND_IDS = Object.keys(LEGEND_POSES);
 const legendArea = id => AREAS.find(a => a.creature === id) || AREAS[0];
@@ -6255,6 +6263,10 @@ function lgAddMushrooms(m, p, size, r) {
 function lgAddBracket(m, p, out, size, r) { // shelf fungi on a flank
   const g = lgNext();
   for (let i = 0; i < 3; i++) { const q = v3.add(p, [0, -i * size * .35, 0]), w = size * (1 - i * .25); m.ell(v3.add(q, v3.mul(out, w * .3)), [w * .55, w * .14, w * .45], i % 2 ? M.CLOTH : M.FLOWER, { group: g, extra: true }); }
+}
+function lgAddFlowers(m, p, size, r) { // a few wildflowers: a stem and a head
+  const g = lgNext();
+  for (let i = 0; i < 3; i++) { const q = v3.add(p, [uni(r, -1, 1) * size * .4, 0, uni(r, -1, 1) * size * .4]), h = size * uni(r, .6, 1); m.seg(q, v3.add(q, [0, h, 0]), size * .03, size * .02, M.LEAF2, { group: g, extra: true }); m.ell(v3.add(q, [0, h, 0]), [size * .09, size * .07, size * .09], M.FLOWER, { group: g, extra: true }); }
 }
 function lgAddRoot(m, p, out, G, size, r) { // a root over its flank and into the ground
   const g = lgNext(), down = Math.max(.05, p[1] - G);
@@ -6347,6 +6359,7 @@ function lgForm(S, { breath }) {
       for (let i = 0; i < (over.mushrooms || 0); i++) lgAddMushrooms(m, i % 2 ? round(i + 7) : onBack(), unit * .14, r);
       for (let i = 0; i < (over.brackets || 0); i++) { const t = tops[tops.length - 1 - Math.floor(r() * Math.min(tops.length, 8))], out = v3.norm([t[0] - cx, 0, t[2] || .3]); lgAddBracket(m, v3.add(t, v3.mul(out, .02)), out, unit * .16, r); }
       for (let i = 0; i < (over.roots || 0); i++) { const t = onBack(), out = v3.norm([t[0] - cx, 0, t[2] + (i % 2 ? .3 : -.3)]); lgAddRoot(m, t, out, G, unit * .5, r); }
+      for (let i = 0; i < (over.flowers || 0); i++) lgAddFlowers(m, i % 2 ? onBack() : round(i + 11), unit * .3, r);
       if (over.sapling) lgAddSapling(m, onBack(), unit * .75, over.sapling, r);
     }
     if (over.beard) for (const q of m.parts.filter(q => pose.wood?.includes(q.group) && q.type === "cone").slice(0, over.beard * 3).filter((_, i) => i % 3 === 2)) { const p = q.b; m.chain([[...p, .025], [...v3.add(p, [.01, -.12, .01]), .02], [...v3.add(p, [-.01, -.22, 0]), .012]], M.MOSS, { group: lgNext(), extra: true }); }
@@ -6399,7 +6412,7 @@ function legendColours(id, st) {
     [M.TRUNK]: d[M.TRUNK], [M.BARKD]: d[M.BARKD], [M.BARKL]: d[M.BARKL], [M.STRAW]: d[M.STRAW], [M.CLOTH]: [222, 210, 186],
     [M.BARK2]: hsv2rgb(fh, Math.min(1, fs * .9), fv * .62), // the area's earth
     [M.WEB]: mix([196, 200, 150], floor, .2),               // lichen
-    [M.FLOWER]: hsv2rgb(.04 + (id.length % 3) * .03, .55, .72), // mushroom caps
+    [M.FLOWER]: LEGEND_POSES[id]?.over.flowers ? [238, 206, 96] : hsv2rgb(.04 + (id.length % 3) * .03, .55, .72), // mushroom caps (or, in a meadow, buttercups)
   });
   return c;
 }

@@ -7,7 +7,7 @@ import { AREA_TYPES, generateMap, parseSeed, sceneFootprint } from "./map";
 import { Forest, crownReach, treeChance } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
-import { population, spawnCreatures, wildLegendCells, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
+import { population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
 import { dormant, newGame, STEP, stepGame } from "./game";
 import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, symbolCount, wavePlan } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
@@ -479,8 +479,8 @@ describe("creatures", () => {
     expect(new Set(AREA_TYPES.map(t => t.creature)).size).toBe(30);
   });
 
-  it("start the same in every area (Ed, 2026-10-04): none at home, one baby and one adult elsewhere, and the wild legends where they live", () => {
-    expect(inCell(mx, my)).toEqual([]);
+  it("start the same in every area (Ed, 2026-10-04): none at home but its legend, one baby and one adult elsewhere, and one legend in each", () => {
+    expect(inCell(mx, my).filter(c => !c.boss)).toEqual([]);
     const S = TUNING.population.start;
     for (let cy = 0; cy < map.n; cy += 3) for (let cx = 0; cx < map.n; cx += 3) {
       if (cx === mx && cy === my) continue;
@@ -488,30 +488,26 @@ describe("creatures", () => {
       expect(here.filter(c => c.level === 0).length).toBe(S.babies);
       expect(here.filter(c => c.level === 1).length).toBe(S.young);
       expect(here.filter(c => c.level === 2).length).toBe(S.adults);
-      expect(here.every(c => c.level !== 3 || c.boss)).toBe(true);
+      expect(here.filter(c => c.level === 3 && c.boss).length).toBe(1);
     }
     expect(population(map)).toEqual(S);
   });
 
-  it("have a few wild legends a map, each a boss, only in remote areas, spaced apart, one an area (Ed, 2026-10-04)", () => {
-    const W = TUNING.wildLegends;
-    for (let seed = 1; seed <= 12; seed++) {
-      const m = generateMap(seed * 101, TUNING), legends = spawnCreatures(m).filter(c => c.level === 3);
-      expect(legends.length, `seed ${seed * 101}`).toBeGreaterThanOrEqual(W.perMap[0]);
-      expect(legends.length).toBeLessThanOrEqual(W.perMap[1]);
+  it("have one legend an area, each a boss: home's happy, the rest asleep, out of their clearings (Ed, 2026-10-04)", () => {
+    for (let seed = 1; seed <= 4; seed++) {
+      const m = generateMap(seed * 101, TUNING), legends = spawnCreatures(m).filter(c => c.level === 3), [hx, hy] = m.centreCell;
+      expect(legends.length, `seed ${seed * 101}`).toBe(m.n * m.n);
       expect(new Set(legends.map(c => c.cell.join())).size).toBe(legends.length);
       for (const c of legends) {
         expect(c.boss).toBe(true);
-        expect(m.remoteness(c.cell[0], c.cell[1])).toBeGreaterThanOrEqual(W.from);
+        expect(c.legendState).toBe(c.cell[0] === hx && c.cell[1] === hy ? "happy" : "asleep");
         expect(c.speed).toBeLessThanOrEqual(TUNING.legendSpeed * 1.3 + 1e-9);
-        for (const o of legends) if (o !== c) expect(Math.hypot(o.cell[0] - c.cell[0], o.cell[1] - c.cell[1])).toBeGreaterThanOrEqual(W.spacing);
       }
-      expect(legends.map(c => c.cell.join()).sort()).toEqual(wildLegendCells(m).map(c => c.join()).sort()); // the same seed, the same places
     }
   }, 60000);
 
-  it("sleep until the party reaches their area, then lumber about it", () => {
-    const g = newGame(123, TUNING), boss = g.creatures.find(c => c.boss)!;
+  it("sleep until the party reaches their area, then heave up (untouchable a while) and lumber about it", () => {
+    const g = newGame(123, TUNING), boss = g.creatures.find(c => c.boss && c.legendState === "asleep")!;
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, x: boss.x + 30, z: boss.z, mode: "treetop", lift: 1 }; // (on the ground in its area, it would go for her once awake)
     const at = [boss.x, boss.z];
@@ -519,18 +515,17 @@ describe("creatures", () => {
     for (let i = 0; i < 100; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20);
     expect([boss.x, boss.z]).toEqual(at);
     g.party.areas.set(boss.cell.join(), { cell: boss.cell, wave: 1, at: 0, from: null, soundsystem: null });
+    stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20);
+    expect(boss.legendState).toBe("waking");
+    expect(dormant(g, boss)).toBe(true); // (untouchable while it heaves up)
+    for (let i = 0; i < (TUNING.wildLegends.wake + 0.2) * 20; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20);
+    expect(boss.legendState).toBe("awake");
     expect(dormant(g, boss)).toBe(false);
     let moved = 0;
     for (let i = 0; i < 400; i++) { const x = boss.x, z = boss.z; stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20); moved += Math.hypot(boss.x - x, boss.z - z); }
     expect(moved).toBeGreaterThan(0.5);
     expect(moved / 20).toBeLessThanOrEqual(TUNING.legendSpeed * 1.3 + 1e-6); // no faster than a legend
   }, 60000);
-
-  it("keep a legend next to home only while legendNextToHome is on", () => {
-    const [hx, hy] = map.centreCell, at = (cs: { level: number; cell: [number, number] }[]) => cs.some(c => c.level === 3 && c.cell[0] === hx + 1 && c.cell[1] === hy);
-    expect(at(spawnCreatures(generateMap(123, withTuning({ legendNextToHome: true }))))).toBe(true);
-    expect(at(spawnCreatures(generateMap(123, withTuning({ legendNextToHome: false }))))).toBe(false);
-  });
 
   it("roam their whole area, slowly, and never leave it", () => {
     const sample = all.filter((_, i) => i % 97 === 0).slice(0, 5);
@@ -857,7 +852,8 @@ describe("inviting and leashing", () => {
   });
 
   it("can't invite legends", () => {
-    const all = fresh(), s = newLeash(), legend = all.find(k => k.level === 3)!;
+    const all = fresh(), s = newLeash(), legend = all.find(k => k.level === 3 && k.legendState === "asleep")!;
+    legend.legendState = "awake"; // (asleep, it's scenery: not even a look)
     for (const c of all) if (c !== legend) c.leashed = true; // only the legend is left near
     const w = { x: legend.x + 1, z: legend.z };
     stepLeash(s, all, none, w, true, 0, 0.1, TUNING);
