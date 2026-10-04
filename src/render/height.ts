@@ -19,7 +19,13 @@ import type { Forest } from "../rules/forest";
 import { floorClearing } from "../rules/speakers";
 import { smoothstep, vnoise } from "../rules/random";
 
-export interface HillsTuning { on: boolean; amplitude: number; scale: number; octaves: number }
+export interface HillsTuning { on: boolean; amplitude: number; scale: number; octaves: number; /** The steepest the ground may rise (tan of the camera's shallowest pitch): the hills are made at least broad enough for it (HeightField). */ maxSlope?: number }
+
+/** How broad hills of amplitude A must be (scale, m) so that, with their levelling, ground rising
+ *  away from the camera stays under its sightline to her (Ed, v289: "you never go behind a bump"):
+ *  measured over the map (height.test.ts), the raw noise's steepest is about 2.6 A / scale, and the
+ *  plateaus' and paths' ramps steepen it by about 1.65 times. */
+export const SLOPE_SCALE = 4.3;
 
 /** Metres a sample; samples across the window; the window moves in steps of this many samples. */
 export const RES = 2;
@@ -38,12 +44,27 @@ export function hillsAt(x: number, z: number, seed: number, H: HillsTuning): num
   return (s / norm) * H.amplitude;
 }
 
+/** h pulled toward several levels at once: `pulls` is flat (weight 0 to 1, level, the most odds
+ *  it can have). Each pulls by its odds w / (1 - w), so one alone is a plain mix by w, a level
+ *  core (w 1) always wins (where two cores meet, the one allowed more odds), and the result
+ *  doesn't depend on their order (which was a cliff where two crossed). */
+export function blend(h: number, pulls: number[]): number {
+  let num = h, den = 1;
+  for (let i = 0; i < pulls.length; i += 3) {
+    const w = pulls[i];
+    if (w <= 0) continue;
+    const o = Math.min(pulls[i + 2], w >= 1 ? Infinity : w / (1 - w));
+    num += o * pulls[i + 1]; den += o;
+  }
+  return num / den;
+}
+
 /** One sample as the texture holds it (half float). */
 const bucketKey = (bx: number, by: number) => (bx + 32768) * 65536 + (by + 32768);
 const sampleKey = (i: number, j: number) => (i + 1048576) * 2097152 + (j + 1048576);
 const quantise = (v: number) => THREE.DataUtils.fromHalfFloat(THREE.DataUtils.toHalfFloat(v));
 
-interface Circle { x: number; z: number; r: number; h: number }
+interface Circle { x: number; z: number; r: number; h: number; pond?: boolean }
 
 /** Shared by every material that stands things on the ground or bends the world. */
 export const HEIGHT_UNIFORMS = {
@@ -130,9 +151,14 @@ export class HeightField {
   private PATH_EDGE: number;
   private PLATEAU_FADE: number;
 
-  constructor(private map: ForestMap, private forest: Forest, readonly H: HillsTuning) {
-    this.PATH_EDGE = Math.max(6, H.amplitude * 0.4);
-    this.PLATEAU_FADE = Math.max(16, H.amplitude * 1.5);
+  readonly H: HillsTuning;
+
+  constructor(private map: ForestMap, private forest: Forest, hills: HillsTuning) {
+    // Broad enough that no slope rises past the camera's sightline (the shallowest pitch); taller
+    // hills come broader, not steeper.
+    const H = this.H = hills.maxSlope ? { ...hills, scale: Math.max(hills.scale, SLOPE_SCALE * hills.amplitude / hills.maxSlope) } : hills;
+    this.PATH_EDGE = Math.max(6, H.amplitude * 0.6);
+    this.PLATEAU_FADE = Math.max(16, H.amplitude * 2);
     amplitude = H.on ? H.amplitude : 0;
     this.seed = map.seed + 6113;
     this.texture = new THREE.DataTexture(this.half, N, N, THREE.RedFormat, THREE.HalfFloatType);
@@ -182,27 +208,54 @@ export class HeightField {
     this.pondBuckets.add(k);
     for (const l of this.forest.lightsNear((bx + 0.5) * BUCKET, (by + 0.5) * BUCKET, BUCKET * 0.75))
       if (l.kind === "pond" && Math.floor(l.x / BUCKET) === bx && Math.floor(l.z / BUCKET) === by) {
-        // A pond overlapping a plateau already placed joins it, at its height (as add() does).
-        const r = 3 * l.size + 1.5, near = (this.circles.get(bucketKey(bx, by)) ?? []).find(c => Math.hypot(c.x - l.x, c.z - l.z) < c.r + r);
-        this.addCircle({ x: l.x, z: l.z, r, h: near ? near.h : this.plateaued(l.x, l.z, false) });
+        // Its level: the lowest of its cluster's (every pond within 12 m of another, so close ponds
+        // share one level, not the slope between them crammed into the gap), each from the hills
+        // and the fixed plateaus only: never from what has been made so far, or the ground would
+        // depend on the order it was visited in (it left a pond 12 m above the lake it touched).
+        this.addCircle({ x: l.x, z: l.z, r: 3 * l.size + 1.5, h: this.pondLevel(l.x, l.z), pond: true });
       }
   }
 
-  /** The hills eased to the plateaus (ponds' buckets added first, unless asked not to). */
+  /** A pond's level: its cluster's lowest (found whole, so the same whichever pond asks first). */
+  private pondLevels = new Map<string, number>();
+  private pondLevel(x: number, z: number): number {
+    const key = (p: { x: number; z: number }) => `${p.x},${p.z}`, had = this.pondLevels.get(key({ x, z }));
+    if (had !== undefined) return had;
+    const GAP = 12, r = (p: { size: number }) => 3 * p.size + 1.5;
+    const first = this.forest.lightsNear(x, z, 8).find(p => p.kind === "pond" && p.x === x && p.z === z);
+    if (!first) return this.plateaued(x, z, false);
+    const cluster = [first], seen = new Set([key(first)]);
+    for (let i = 0; i < cluster.length && cluster.length < 100; i++) {
+      const p = cluster[i];
+      for (const o of this.forest.lightsNear(p.x, p.z, r(p) + GAP + 20))
+        if (o.kind === "pond" && !seen.has(key(o)) && Math.hypot(o.x - p.x, o.z - p.z) < r(p) + r(o) + GAP) { seen.add(key(o)); cluster.push(o); }
+    }
+    const h = Math.min(...cluster.map(p => this.plateaued(p.x, p.z, false)));
+    for (const p of cluster) this.pondLevels.set(key(p), h);
+    return h;
+  }
+
+  /** The hills eased to the plateaus (ponds' buckets added first; or, asked not to, the fixed plateaus alone). */
   private plateaued(x: number, z: number, ponds = true): number {
     let h = this.raw(x, z);
     const bx = Math.floor(x / BUCKET), by = Math.floor(z / BUCKET);
     const reach = Math.ceil((this.PLATEAU_FADE + 16) / BUCKET); // any pond whose plateau could reach here
     if (ponds) for (let dy = -reach; dy <= reach; dy++) for (let dx = -reach; dx <= reach; dx++) this.ponds(bx + dx, by + dy);
-    // Weakest first, so the strongest pull (a level core) always wins: with tall hills the easings
-    // are wide, and one plateau's would otherwise reach into a neighbour's level core.
-    const pulls: [number, number][] = [];
+    const pulls: number[] = [];
     for (const c of this.circles.get(bucketKey(bx, by)) ?? []) {
+      if (c.pond && !ponds) continue; // (a pond's own level: the fixed plateaus only)
       const d = Math.hypot(x - c.x, z - c.z);
-      if (d < c.r + this.PLATEAU_FADE) pulls.push([1 - smoothstep((d - c.r) / this.PLATEAU_FADE), c.h]);
+      if (d < c.r + this.PLATEAU_FADE) pulls.push(1 - smoothstep((d - c.r) / this.PLATEAU_FADE), c.h, 1e6);
     }
-    if (pulls.length > 1) pulls.sort((a, b) => a[0] - b[0]);
-    for (const [w, ch] of pulls) h += (ch - h) * w;
+    return blend(h, pulls);
+  }
+
+  /** A path's centreline point's height (the hills eased to the plateaus), kept. */
+  private centreH = new Map<number, number>();
+  private centre(line: number, i: number, p: [number, number]): number {
+    const k = line * 1e6 + i;
+    let h = this.centreH.get(k);
+    if (h === undefined) this.centreH.set(k, (h = this.plateaued(p[0], p[1])));
     return h;
   }
 
@@ -210,22 +263,28 @@ export class HeightField {
    *  height at the nearest point of the centreline), so a path is always level across. */
   sourceAt(x: number, z: number): number {
     if (!this.H.on) return 0;
-    let h = this.plateaued(x, z);
-    const P = this.map.paths, hit = P.at(x, z, this.PATH_EDGE);
-    if (hit) {
+    const h = this.plateaued(x, z);
+    const P = this.map.paths, hits = P.near(x, z, this.PATH_EDGE);
+    if (!hits.length) return h;
+    // Every path near pulls to its centreline's height, all at once (order free: where two meet
+    // the ground stays smooth). A path's level is the average along its nearby centreline, weighted
+    // to the nearest stretch: a single nearest point jumps across a bend's inside (a cliff).
+    const lines = new Map<number, [number, number, number]>(); // line: its pull, sum of weights × level, sum of weights
+    for (const hit of hits) {
       const l = P.lines[hit.line], a = l.pts[hit.seg], b = l.pts[hit.seg + 1];
-      const ex = b[0] - a[0], ez = b[1] - a[1], u = Math.min(1, Math.max(0, ((x - a[0]) * ex + (z - a[1]) * ez) / (ex * ex + ez * ez || 1)));
-      h += (this.plateaued(a[0] + ex * u, a[1] + ez * u) - h) * (1 - smoothstep((hit.d - l.half) / this.PATH_EDGE));
-      // A plateau's level core still wins over a path's easing (eased back over this.PATH_EDGE at its edge).
-      const pulls: [number, number][] = []; // (weakest first, as in plateaued)
-      for (const c of this.circles.get(bucketKey(Math.floor(x / BUCKET), Math.floor(z / BUCKET))) ?? []) {
-        const d = Math.hypot(x - c.x, z - c.z);
-        if (d < c.r + this.PATH_EDGE) pulls.push([1 - smoothstep((d - c.r) / this.PATH_EDGE), c.h]);
-      }
-      if (pulls.length > 1) pulls.sort((p, q) => p[0] - q[0]);
-      for (const [w, ch] of pulls) h += (ch - h) * w;
+      const w = 1 - smoothstep((hit.d - l.half) / this.PATH_EDGE), k = w * w * w * w + 1e-9;
+      const level = this.centre(hit.line, hit.seg, a) * (1 - hit.u) + this.centre(hit.line, hit.seg + 1, b) * hit.u;
+      const s = lines.get(hit.line);
+      if (s) { s[0] = Math.max(s[0], w); s[1] += k * level; s[2] += k; } else lines.set(hit.line, [w, k * level, k]);
     }
-    return h;
+    const pulls: number[] = [];
+    for (const [w, kl, k] of lines.values()) pulls.push(w, kl / k, 1e3);
+    // A plateau's level core still wins over a path's (eased back over PATH_EDGE at its edge).
+    for (const c of this.circles.get(bucketKey(Math.floor(x / BUCKET), Math.floor(z / BUCKET))) ?? []) {
+      const d = Math.hypot(x - c.x, z - c.z);
+      if (d < c.r + this.PATH_EDGE) pulls.push(1 - smoothstep((d - c.r) / this.PATH_EDGE), c.h, 1e6);
+    }
+    return blend(h, pulls);
   }
 
   private put(i: number, j: number): void {

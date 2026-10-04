@@ -4,15 +4,23 @@
     {
       "version": null,
       "items": [
+        "Flying fast over the hills is smooth: you and the camera glide over the bumps, rising early for a crest, instead of jerking up and down",
+        "No more streaky cliffs beside paths and ponds on the hills: the ground eases smoothly into them",
+        "Rising and landing no longer show a hard-edged circle in the canopy round you, and you're drawn as yourself under the see-through leaves, not as a flat silhouette"
+      ]
+    },
+    {
+      "version": 291,
+      "items": [
         "Real clouds over the treetops: a few soft, see-through clouds drifting high over the curve of the world, glowing in the colours of the party beneath them and pulsing on the beat; now and then one flickers with lightning, sometimes with a forked bolt",
-        "Big hills: the forest rolls over real hills and valleys up to 50 m high, the camera rising to keep you in view (?hills=6 gentle, ?hills=0 flat); the blotchy slope shading is gone",
+        "Big hills: the forest rolls over broad hills and valleys up to 40 m high, never steep enough to hide you behind a bump (?hills=6 gentle, ?hills=0 flat); the blotchy slope shading is gone",
         "Calmer stars: most barely twinkle, each in its own time",
         "String lights no longer show through the curved earth over the treetops",
         "The arrows at the screen's edge always point the right way, even to things past the curve of the world",
         "The rune stone markers stay on screen: once the stone is in view, the marker floats above it with its countdown, so it's easy to find in a busy forest",
         "Grass grows thicker round the feet of trees and rocks, reeds ring the ponds, and the tufts sit in the canopy's dappled shade like the ground under them",
         "Clouds over the party glow in its colours and pulse on the beat (from the start, over home)",
-        "Things stand on the hills properly: their feet follow the slope instead of one end floating",
+        "Things stand upright on the hills, planted at their lowest foot: creatures and the witch no longer shear with the slope, and shadows lie neatly on it",
         "?bare=1 shows just the ground, hills and bend under a low moon (?bare=2: grey ground with contour lines), to judge the terrain",
         "Tree trunks are back on the ground: they'd gone black on black in the canopy's shadow, and the big crowns' low boughs hid all but their stumps; trunks now stand clear up to their crowns and stay readable in the dark",
         "No more glowing party cubes",

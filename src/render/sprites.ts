@@ -53,6 +53,7 @@ uniform vec3 uRight, uUp;
 uniform vec2 uRes;
 uniform float uWitchDepth;
 uniform vec4 uOcc;
+uniform float uAbsolute; // its y is a world height, not a height over the ground
 attribute vec3 iPos;
 attribute vec2 iSize;
 attribute vec4 iUv;
@@ -73,8 +74,9 @@ void main() {
   // Every sprite stands upright on the rolling ground (height.ts), at the lowest ground under its
   // foot (up to two metres either side of its base): on a slope its uphill side is planted in the
   // hillside and nothing floats (Ed, v276: 50 m hills, too steep to skew sprites to).
+  // (Or, for her, at the height given: she rides a smoothed height over the hills, ride.ts.)
   float fw = min(iSize.x * 0.5, 2.0);
-  vec3 base = iPos + vec3(0.0, min(groundH(iPos.xz), min(groundH((iPos - uRight * fw).xz), groundH((iPos + uRight * fw).xz))), 0.0);
+  vec3 base = iPos + vec3(0.0, uAbsolute > 0.5 ? 0.0 : min(groundH(iPos.xz), min(groundH((iPos - uRight * fw).xz), groundH((iPos + uRight * fw).xz))), 0.0);
   // Tall and nearer the camera than the witch: it may stand in front of her.
   // Eased over a few metres of depth and of height, so nothing snaps into the fade as she moves.
   vFront = smoothstep(0.0, 3.0, uWitchDepth - 0.5 + (viewMatrix * vec4(base, 1.0)).z) * smoothstep(uOcc.z * 0.7, uOcc.z * 1.3, iSize.y);
@@ -175,16 +177,20 @@ void shade() {
   // centre, easing smoothly to opaque at the edge (uOcc.y: how far the edge reaches, a share of it).
   float e = length(gl_FragCoord.xy - uWitch.xy) / max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
   float occl = uFlat > 0.5 ? 0.0 : uOcc.w * vFront * (1.0 - smoothstep(0.3, 1.0 + uOcc.y, e));
-  if (uFadePass > 0.5 ? occl <= 0.001 : occl > 0.001) discard;
-  float alpha = uFadePass > 0.5 ? mix(1.0, uOcc.x, occl) : 1.0;
+  // Crowns: hidden in a hole round the witch, which closes as she rises; its edge a smooth fade
+  // (Ed: no dithering), or dithered steps with ?fx=pixel. Smooth, a crown partly shown in the hole
+  // is drawn see-through in the second pass where it's over her, after her, like whatever stands
+  // in front of her: in the opaque pass it hid her (Ed, v289: she showed only as her silhouette inside a crisp disc).
+  float shown = 1.0;
   if (vFlags.y > 0.5) {
-    // Crowns: hidden in a hole round the witch, which closes as she rises; its edge a smooth fade
-    // (Ed: no dithering), or dithered steps with ?fx=pixel.
     float d = length(gl_FragCoord.xy - uCutout.xy);
-    float shown = max(smoothstep(uCutout.z - uCutout.w, uCutout.z, d), uTopFade);
-    if (uSmooth > 0.5) { if (shown < 0.004) discard; alpha *= shown; }
-    else if (bayer(gl_FragCoord.xy) >= shown) discard;
+    shown = max(smoothstep(uCutout.z - uCutout.w, uCutout.z, d), uTopFade);
+    if (uSmooth < 0.5) { if (bayer(gl_FragCoord.xy) >= shown) discard; shown = 1.0; }
+    else if (shown < 0.004) discard;
   }
+  bool see = occl > 0.001 || (shown < 0.996 && e < 2.0); // (only over and round her: elsewhere it keeps its depth)
+  if (uFadePass > 0.5 ? !see : see) discard;
+  float alpha = (uFadePass > 0.5 ? mix(1.0, uOcc.x, occl) : 1.0) * shown;
   if (vFlags.y < -0.001 && uTrunkFade.x > 0.0) {
     // A trunk cut from its crown (Ed, v149: "fade out instead of just stop"): where the crowns are
     // hidden, its top fades out over uTrunkFade.x metres in an ordered dither on the art's own
@@ -281,7 +287,7 @@ export class SpriteBatch {
   count = 0;
 
   /** metresPerPixel: world size of one art pixel. */
-  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; /** Gameplay (creatures, soundsystems, markers...): never faded or cut away round the witch (Ed, v149). */ solid?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number }; /** The witch: lit by the world's lights but not her own glow (witchLight.ts). */ witchLight?: { lightFloor: number; lightTint: number; lightRim: number }; /** Wild creatures: eyeshine, a light floor and a rim, so they can be found in the dark (Ed, v244). */ find?: boolean } = {}) {
+  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; /** Gameplay (creatures, soundsystems, markers...): never faded or cut away round the witch (Ed, v149). */ solid?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number }; /** The witch: lit by the world's lights but not her own glow (witchLight.ts). */ witchLight?: { lightFloor: number; lightTint: number; lightRim: number }; /** Wild creatures: eyeshine, a light floor and a rim, so they can be found in the dark (Ed, v244). */ find?: boolean; /** Each instance's y is a world height, not a height over the ground (her: ride.ts). */ absolute?: boolean } = {}) {
     const quad = new THREE.PlaneGeometry(1, 1);
     quad.translate(0, 0.5, 0); // stand on the base
     this.geo = new THREE.InstancedBufferGeometry();
@@ -290,7 +296,7 @@ export class SpriteBatch {
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.pos = this.size = this.uvs = this.flags = this.glow = undefined as never;
     this.grow(64);
-    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, ...extra });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uAbsolute: { value: opts.absolute ? 1 : 0 }, ...extra });
     // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
     // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
     const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};

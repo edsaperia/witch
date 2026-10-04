@@ -16,6 +16,7 @@ import { hash2 } from "../rules/random";
 import { Ground } from "./ground";
 import { Sky } from "./sky";
 import { Clouds } from "./clouds";
+import { Ride } from "./ride";
 import { bendPoint, groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, placed, seenOverBend, useHeightField } from "./height";
 import { PathView } from "./paths";
 import { applyStyleLight, LIGHT_UNIFORMS, MAX_LIGHTS } from "./lighting";
@@ -88,6 +89,12 @@ export class View {
   private decorBatches = new Map<string, SpriteBatch>();
   private creatureBatches = new Map<string, SpriteBatch>();
   private witchBatch: SpriteBatch;
+  /** The smoothed heights she and the camera ride over the hills (ride.ts), and how far hers is
+   *  over the ground under her this frame (everything drawn at her adds it). */
+  private ride = new Ride();
+  private camRide = new Ride();
+  private rideOff = 0;
+  private rideTime = NaN;
   private treehouseBatch: SpriteBatch;
   private markerArt: MarkerArt;
   private markerBatch: SpriteBatch;
@@ -173,7 +180,11 @@ export class View {
     }
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize);
     this.assets.crownShare = t.trunkFade.crownShare;
-    this.heights = new HeightField(game.map, game.forest, t.ground.hills);
+    {
+      // The steepest the hills may be: the camera's shallowest pitch at any zoom, ground or treetop (Ed, v289).
+      const C = t.camera, pitch = Math.min(C.ground.angleIn, C.ground.angleOut, C.treetop.angleIn, C.treetop.angleOut);
+      this.heights = new HeightField(game.map, game.forest, { ...t.ground.hills, maxSlope: Math.tan((pitch * Math.PI) / 180) });
+    }
     useHeightField(this.heights);
     this.heights.follow(game.witch.x, game.witch.z);
     this.ground = new Ground(game.map, game.forest, style, this.mpp);
@@ -202,7 +213,7 @@ export class View {
     // The witch is depth-tested like everything else, drawn after it; where something still hides
     // her, a silhouette in her glow colour shows through, and tall things in front of her fade.
     const O = t.occlusion;
-    this.witchBatch = new SpriteBatch(this.assets.witch, this.mpp, { witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: O.silhouette } });
+    this.witchBatch = new SpriteBatch(this.assets.witch, this.mpp, { absolute: true, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: O.silhouette } });
     this.witchBatch.mesh.renderOrder = 10;
     this.scene.add(...this.witchBatch.meshes);
     SPRITE_UNIFORMS.uOcc.value.set(O.fadeOpacity, O.edge, O.minHeight, O.on ? 1 : 0);
@@ -255,7 +266,10 @@ export class View {
         vertexShader: SHADOW_VERT, uniforms: { ...HEIGHT_UNIFORMS },
         fragmentShader: "varying vec2 vUv; void main(){ vec2 p = vUv * 2.0 - 1.0; if (dot(p, p) > 1.0 || mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) > 0.5) discard; gl_FragColor = vec4(0.02, 0.02, 0.05, 1.0); }",
       });
-    this.shadow = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.7).rotateX(-Math.PI / 2), sm);
+    // Finely divided, each point laid on the rolling ground, and drawn a little toward the camera: one
+    // flat quad on a slope (Ed, v289) sank into the ground's coarser grid in places, a ragged blob.
+    sm.polygonOffset = true; sm.polygonOffsetFactor = -2; sm.polygonOffsetUnits = -4;
+    this.shadow = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.7, 6, 3).rotateX(-Math.PI / 2), sm);
     this.shadow.renderOrder = 1;
     this.scene.add(this.shadow);
   }
@@ -1030,7 +1044,15 @@ export class View {
     if (this.heights.follow(g.witch.x, g.witch.z)) this.stats.heightMoves = (this.stats.heightMoves ?? 0) + 1;
     this.time("heights");
     this.ground.follow(g.witch.x, g.witch.z);
-    const target = new THREE.Vector3(pose.tx, pose.ty + groundHeight(pose.tx, pose.tz), pose.tz);
+    // Riding the hills smoothly (Ed, v289): she and the camera follow damped heights, not the bumps.
+    {
+      const W = g.witch, rdt = Number.isNaN(this.rideTime) ? 0 : time - this.rideTime, full = W.mode === "ground" ? t.groundSpeed : t.treetopSpeed;
+      this.rideTime = time;
+      this.ride.update(rdt, W.x, W.z, W.vx, W.vz, full, groundHeight, t.witch, witchHeight(W, t));
+      this.camRide.update(rdt, pose.tx, pose.tz, W.vx, W.vz, full, groundHeight, t.witch, Infinity); // (no floor: just the smoothed ground)
+      this.rideOff = W.seated ? 0 : this.ride.h - groundHeight(W.x, W.z);
+    }
+    const target = new THREE.Vector3(pose.tx, pose.ty + this.camRide.h, pose.tz);
     // The world's bend: only over the treetops (Ed, 2026-10-04), eased in as she rises; from the
     // camera's focus, along its forward on the ground.
     {
@@ -1070,8 +1092,9 @@ export class View {
     // to nothing as she rises (and opens as she descends).
     const lifted = canopyShown(g.witch), cut = t.canopyCutout;
     this.camera.updateMatrixWorld();
-    const ws = placed(this.v3.set(g.witch.x, witchHeight(g.witch, t) * 0.5, g.witch.z)).project(this.camera);
-    SPRITE_UNIFORMS.uCutout.value.set((ws.x * 0.5 + 0.5) * this.width, (ws.y * 0.5 + 0.5) * this.height, 0.5 * cut.screenFraction * this.width * (1 - lifted), Math.max(1, cut.edge * this.width * (1 - lifted)));
+    const ws = placed(this.v3.set(g.witch.x, witchHeight(g.witch, t) * 0.5 + this.rideOff, g.witch.z)).project(this.camera);
+    // (The edge stays its full softness as the hole closes: shrunk with it, a small hole's edge was crisp, Ed v289.)
+    SPRITE_UNIFORMS.uCutout.value.set((ws.x * 0.5 + 0.5) * this.width, (ws.y * 0.5 + 0.5) * this.height, 0.5 * cut.screenFraction * this.width * (1 - lifted), Math.max(1, cut.edge * this.width));
     SPRITE_UNIFORMS.uTopFade.value = lifted;
     SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, this.mpp, t.trunkFade.share);
     SPRITE_UNIFORMS.uTrunkLook.value.set(t.trunkFade.lightFloor, t.trunkFade.rim);
@@ -1094,7 +1117,7 @@ export class View {
     SPRITE_UNIFORMS.uDebugCull.value = this.debugCull ? 1 : 0;
 
     const w = g.witch, h = witchHeight(w, t);
-    LIGHT_UNIFORMS.uGlowPos.value.set(w.x, groundHeight(w.x, w.z) + h + t.glowHeight, w.z);
+    LIGHT_UNIFORMS.uGlowPos.value.set(w.x, groundHeight(w.x, w.z) + this.rideOff + h + t.glowHeight, w.z);
     LIGHT_UNIFORMS.uHazeCentre.value.set(w.x, w.z);
     this.time("uniforms");
     this.updateSources(time);
@@ -1131,7 +1154,7 @@ export class View {
     }));
     const markerLights = this.drawMarkers(time);
     const speakerLights = this.drawSpeakers(time, pose.angle);
-    this.spellFx.update(g, time, witchHeight(w, t) + 0.6);
+    this.spellFx.update(g, time, witchHeight(w, t) + 0.6 + this.rideOff);
     this.buffHud.update(g, time);
     // Tufts part round her and the three nearest creatures.
     const parts = [{ x: w.x, z: w.z, r: 1.6 * (1 - canopyShown(w)) }, ...g.creatures.map(c => ({ x: c.x, z: c.z, r: 1.2, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(c => c.d < t.groundCover.radius).sort((a, b) => a.d - b.d).slice(0, 3)];
@@ -1199,19 +1222,21 @@ export class View {
       wx += (seat.x - fwd.x * 0.6 - wx) * k; wyy += (seat.y - fwd.y * 0.6 - wyy) * k; wz += (seat.z - fwd.z * 0.6 - wz) * k;
       if (w.seated) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
     }
+    // Over the ride's smoothed height (eased in off the treehouse seat).
+    wyy += this.rideOff * (1 - this.seatK * this.seatK * (3 - 2 * this.seatK));
     const wframe = this.assets.witch.frames[wf], hatTop = wyy + wframe.h * this.mpp;
     this.partyWitchView.update(g, time, (x, z, ww, hh) => this.inView(x, z, ww, hh, 4));
     // Idling into the party, she's drawn in her party pose there instead.
-    this.witchBatch.set(this.partyWitchView.herIdle ? [] : [{ x: wx, y: wyy, z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
+    this.witchBatch.set(this.partyWitchView.herIdle ? [] : [{ x: wx, y: wyy + groundHeight(wx, wz), z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
     // Where she is on screen (low-res pixels) and how far from the camera, for the occluder fade.
     {
       const px = (x: number, y: number, z: number) => { const p = placed(this.v3.set(x, y, z)).project(this.camera); return [(p.x + 1) / 2 * this.width, (p.y + 1) / 2 * this.height]; };
       const base = px(wx, wyy, wz), top = px(wx, hatTop, wz), side = px(wx + wframe.w * this.mpp / 2, wyy, wz);
       SPRITE_UNIFORMS.uWitch.value.set((base[0] + top[0]) / 2, (base[1] + top[1]) / 2, Math.abs(side[0] - base[0]) + 1, Math.abs(top[1] - base[1]) / 2 + 1);
-      SPRITE_UNIFORMS.uWitchDepth.value = -placed(this.v3.set(wx, this.seatK > 0 ? wyy : h, wz)).applyMatrix4(this.camera.matrixWorldInverse).z;
+      SPRITE_UNIFORMS.uWitchDepth.value = -placed(this.v3.set(wx, this.seatK > 0 ? wyy : h + this.rideOff, wz)).applyMatrix4(this.camera.matrixWorldInverse).z;
     }
     this.clouds.update(time, this.camera, SPRITE_UNIFORMS.uWitch.value, this.width, this.height);
-    this.shadow.position.set(wx, 0.03, wz);
+    this.shadow.position.set(wx, 0.08, wz);
     this.shadow.scale.setScalar((1 - 0.5 * canopyShown(w)) * (1 - this.seatK) + 1e-3); // none while she's up on the terrace
 
     this.time("witch");

@@ -6,12 +6,14 @@ import { generateMap } from "../rules/map";
 import { Forest } from "../rules/forest";
 import { TUNING } from "../rules/tuning";
 import { floorClearing } from "../rules/speakers";
-import { HeightField, hillsAt, N, RES } from "./height";
+import { HeightField, hillsAt, N, RES, SLOPE_SCALE } from "./height";
 
 const map = generateMap(123, TUNING), forest = new Forest(map);
 const H = { on: true, amplitude: 2, scale: 48, octaves: 3 };
 const field = new HeightField(map, forest, H);
 const df = map.dancefloor;
+/** The camera's shallowest pitch (its ground angleIn, 30°), as a slope. */
+const PITCH = Math.tan((Math.min(TUNING.camera.ground.angleIn, TUNING.camera.treetop.angleIn) * Math.PI) / 180);
 field.follow(df.x + 60, df.z + 40);
 
 /** What the GPU's linear filter reads at (x, z), from the texture's own half floats. */
@@ -65,8 +67,8 @@ describe("rolling ground", () => {
     flat.follow(df.x, df.z);
     expect(flat.heightAt(df.x + 50, df.z + 50)).toBe(0);
   });
-  it("at 50 m hills (Ed, v276) the dancefloor is still level and paths level across", () => {
-    const big = new HeightField(map, forest, { on: true, amplitude: 50, scale: 170, octaves: 2 });
+  it("at 40 m hills (Ed, v289) the dancefloor is still level and paths level across", () => {
+    const big = new HeightField(map, forest, { on: true, amplitude: 40, scale: 170, octaves: 2, maxSlope: PITCH });
     big.follow(df.x, df.z);
     const r = floorClearing(TUNING), h0 = big.heightAt(df.x, df.z);
     for (let a = 0; a < 12; a++) expect(Math.abs(big.heightAt(df.x + Math.cos(a) * r, df.z + Math.sin(a) * r) - h0)).toBeLessThan(0.1);
@@ -79,5 +81,29 @@ describe("rolling ground", () => {
     }
     expect(checked).toBeGreaterThan(20);
     expect(tilted / checked).toBeLessThan(0.08);
+  });
+  it("no ground rises past the camera's sightline to her (Ed, v289: \"you never go behind a bump\")", () => {
+    // From spots all round home, in every direction (the camera can be any way round the
+    // terrain), ground up to 80 m off may not rise above a line climbing at the camera's
+    // shallowest pitch from her feet: in 99% of spots not at all, and nowhere much past her own
+    // height (the camera rising to see her over a hill is only the safety net).
+    const f = new HeightField(map, forest, { on: true, amplitude: 40, scale: 170, octaves: 2, maxSlope: PITCH });
+    expect(f.H.scale).toBeCloseTo(SLOPE_SCALE * 40 / PITCH, 5); // broadened from 170 to suit the pitch
+    const over: number[] = [];
+    for (let k = 0; k < 600; k++) {
+      const x = df.x + ((k * 37.7) % 1200) - 600, z = df.z + ((k * 91.3) % 1200) - 600, g0 = f.sourceAt(x, z);
+      let worst = 0;
+      for (let a = 0; a < 8; a++) for (let s = 2; s <= 80; s += 3) worst = Math.max(worst, f.sourceAt(x + Math.cos(a * Math.PI / 4) * s, z + Math.sin(a * Math.PI / 4) * s) - g0 - s * PITCH);
+      over.push(worst);
+    }
+    over.sort((a, b) => a - b);
+    expect(over[Math.floor(over.length * 0.99)]).toBeLessThan(0.1);
+    expect(over[over.length - 1]).toBeLessThan(5);
+  });
+  it("is the same whichever way it was visited (ponds' levels don't depend on what was made first)", () => {
+    const Hb = { on: true, amplitude: 40, scale: 300, octaves: 2 }, a = new HeightField(map, forest, Hb), b = new HeightField(map, forest, Hb);
+    const pts = Array.from({ length: 300 }, (_, k) => [df.x + ((k * 53.1) % 900) - 450, df.z + ((k * 71.9) % 900) - 450]);
+    const ha = pts.map(([x, z]) => a.sourceAt(x, z)), hb = [...pts].reverse().map(([x, z]) => b.sourceAt(x, z)).reverse();
+    for (let i = 0; i < pts.length; i++) expect(Math.abs(ha[i] - hb[i])).toBeLessThan(1e-4); // (but rounding: the sums run in another order)
   });
 });
