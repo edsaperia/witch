@@ -3,9 +3,12 @@
 // visibly ends. World units are metres: x runs east, z runs south, one area cell is areaSize.
 import rawTypes from "../../config/area-types.json";
 import { AREAS } from "../../art/areas.js";
+import { SCENES as SCENES_RAW, SCENE_BY_ID as SCENE_BY_ID_RAW } from "../../art/scenes.js";
 import { makePartition, type Cell, type Partition } from "./partition";
 import { hash2, rng, smoothstep, vnoise } from "./random";
 import type { Tuning } from "./tuning";
+import { floorClearing, speakerRing, type Speaker } from "./speakers";
+import { PathNetwork } from "./paths";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
  *  the game's own numbers. Only plain data is read here. */
@@ -22,14 +25,30 @@ export interface AreaType {
   /** The floor's colour, [hue, saturation, value], for the ground before its tile is drawn. */
   floor: [number, number, number];
   treeDensity: number;
+  /** The tufts on its ground (config/area-types.json): density 0-1 and which kinds. */
+  groundCover: { density: number; kinds: string[] };
+  /** How its vegetation is arranged (art/areas.js AREA_LAYOUTS): pattern, density, clump, undergrowth... */
+  layout: AreaLayout;
 }
 
-interface ArtArea { id: string; name: string; creature: string; text: AreaType["text"]; floor: [string, number, number, number]; wall?: unknown[]; set?: unknown }
-const settings = (rawTypes as { types: Record<string, { treeDensity: number }> }).types;
+export interface AreaLayout {
+  pattern: string; along?: number | string; density: number; clump: number; undergrowth: number; lean?: { dir: number; amount: number };
+  /** Shares of its trees by height class. */
+  heightMix?: { sapling: number; mature: number; tall: number; giant: number } | null;
+  /** Its ground's features: stream, pools, rocky, mounds, paths, hollows, ridges. */
+  terrain?: string[];
+  /** How many decorations it has (rate, 0-1) and of which families. */
+  decor?: { rate: number; ruins: number; rocks: number; freak: number; lake: number; modern: number };
+}
+
+interface ArtArea { id: string; name: string; creature: string; text: AreaType["text"]; floor: [string, number, number, number]; wall?: unknown[]; set?: unknown; layout?: AreaLayout }
+const settings = (rawTypes as { types: Record<string, { treeDensity: number; groundCover?: { density: number; kinds: string[] } }> }).types;
 export const AREA_TYPES: readonly AreaType[] = (AREAS as unknown as ArtArea[]).map(a => ({
   id: a.id, name: a.name, creature: a.creature, text: a.text,
   setPiece: a.set ? a.text.set ?? "a set piece" : "", hasWalls: !!a.wall?.length,
   floor: [a.floor[1], a.floor[2], a.floor[3]], treeDensity: settings[a.id]?.treeDensity ?? 1,
+  groundCover: settings[a.id]?.groundCover ?? { density: 0.5, kinds: ["blades"] },
+  layout: a.layout ?? { pattern: "scatter", density: 0.6, clump: 0.3, undergrowth: 0.5 },
 }));
 
 export interface AreaSample {
@@ -50,8 +69,15 @@ export interface ForestMap {
   readonly partition: Partition;
   /** The middle area, whose clearing holds the dancefloor. */
   readonly centreCell: Cell;
-  readonly dancefloor: { x: number; z: number; radius: number };
-  /** Where the witch starts: the dancefloor. */
+  readonly dancefloor: { x: number; z: number; radius: number; /** the ring of speakers round it */ speakers: readonly Speaker[] };
+  /** The witch's treehouse: its trunk's foot, just beyond the dancefloor's clearing. */
+  readonly treehouse: { x: number; z: number };
+  /** The old playgrounds and sports grounds: a handful per map, each in a clearing of its own off
+   *  an area's centre; kind is the art's arrangement (playground, tennis, baseball, football, basketball). */
+  readonly grounds: readonly Ground[];
+  /** The scenes: each at most once per map, in an area it suits (Ed, 2026-10-04). */
+  readonly scenes: readonly Scene[];
+  /** Where the witch starts: at the treehouse (sitting on its terrace). */
   readonly start: { x: number; z: number };
   /** Where the witch may fly (metres). */
   readonly bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
@@ -63,15 +89,35 @@ export interface ForestMap {
   areaAt(x: number, z: number): AreaSample;
   /** The area's set piece, if this one has one (rare: setPieceChance of the types that have one). */
   setPieceOf(cx: number, cy: number): string | null;
+  /** Where an area's soundsystem stands when the party reaches it (reserved from the start). */
+  soundsystemSpot(cx: number, cy: number): { x: number; z: number };
+  /** Where an area's set piece stands: in its clearing, its footprint clear of every soundsystem
+   *  and the dancefloor; null if it has none, or there is no room for it. */
+  setPieceSpot(cx: number, cy: number): { x: number; z: number } | null;
+  /** Whether a footprint r metres round (x, z) comes within reserveMargin of anything placed for
+   *  gameplay (soundsystems, the dancefloor, the treehouse) or of a set piece: scenery keeps out. */
+  reserved(x: number, z: number, r: number): boolean;
   /** How far an area is from home: 0 at the middle area, 1 at the map's edge. */
   remoteness(cx: number, cy: number): number;
   /** An area's centre (its layer-0 site), in metres. */
   siteOf(cx: number, cy: number): { x: number; z: number };
   /** The chance a tree grows at a point: 0 in a clearing, rising smoothly to treeDensity. */
   treeWeight(x: number, z: number): number;
+  /** Ground that must stay clear of every tree: the dancefloor's clearing and set pieces'. */
+  hardClear(x: number, z: number): boolean;
   /** Pairs of areas that touch, as "cx,cy|cx,cy" keys, for tests and the debug view. */
   readonly neighbours: ReadonlyMap<string, ReadonlySet<string>>;
+  /** Paths, roads and railways, with the corridors they keep clear. */
+  readonly paths: PathNetwork;
 }
+
+/** flip: the whole arrangement mirrored left to right. */
+export interface Ground { kind: string; x: number; z: number; r: number; flip: boolean }
+/** A scene (art/scenes.js) on the map: its id, middle, footprint radius, and whether it's mirrored. */
+export interface Scene { id: string; x: number; z: number; r: number; mirror: boolean }
+
+type SceneDef = { id: string; size: string; suits?: string[]; pieces: [string, number, number, string?][] };
+const SCENES = SCENES_RAW as unknown as SceneDef[], SCENE_BY_ID = SCENE_BY_ID_RAW as unknown as Record<string, SceneDef>;
 
 const cellKey = (cx: number, cy: number) => cx + "," + cy;
 
@@ -159,27 +205,178 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     const [u, v] = toPart(x, z), cell = partition.partition(u, v);
     return { cell, type: typeOf(cell[0], cell[1]), openness: partition.openness(u, v) };
   };
+  // An area that rolls a set piece (setPieceChance of those whose type has one; not home).
+  const rollsSetPiece = (cx: number, cy: number) => {
+    const t = AREA_TYPES[typeOf(cx, cy)];
+    return !!t.setPiece && !(cx === centreCell[0] && cy === centreCell[1]) && hash2(cx, cy, seed + 61) < tuning.setPieceChance;
+  };
+  // Each set piece at most once per map (Ed, v160): in the area of its type nearest home that
+  // rolls one and has room for it; the type's other areas get none.
+  let pieceHome: Map<number, string> | null = null;
+  const setPieceOf = (cx: number, cy: number) => {
+    if (!pieceHome) {
+      pieceHome = new Map();
+      const cand: [number, number, number][] = [];
+      for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (rollsSetPiece(x, y)) cand.push([x, y, Math.hypot(x - centreCell[0], y - centreCell[1]) + hash2(x, y, seed + 63) * 0.5]);
+      cand.sort((a, b) => a[2] - b[2]);
+      for (const [x, y] of cand) { const t = typeOf(x, y); if (!pieceHome.has(t) && pieceSpotOf(x, y)) pieceHome.set(t, cellKey(x, y)); }
+    }
+    const t = typeOf(cx, cy);
+    return pieceHome.get(t) === cellKey(cx, cy) ? AREA_TYPES[t].setPiece! : null;
+  };
   // The dancefloor keeps a clearing of its own, however close a neighbouring area's centre.
-  const floorR = 4.5, floorClear = floorR * 2.2;
+  const floorR = tuning.dancefloor.radius, floorClear = floorClearing(tuning); // out past the speakers
+
+  // Gameplay is placed first: each area's soundsystem spot is reserved from the start (whether or
+  // not the party has reached it yet), then scenery keeps clear of it and of the dancefloor.
+  const inCell = (x: number, z: number, cx: number, cy: number) => { const c = areaAt(x, z).cell; return c[0] === cx && c[1] === cy; };
+  const soundSpots = new Map<string, { x: number; z: number }>();
+  const soundsystemSpot = (cx: number, cy: number) => {
+    const key = cellKey(cx, cy), had = soundSpots.get(key);
+    if (had) return had;
+    // Beside the area's centre, in its clearing, inside its own ground.
+    const s = siteOf(cx, cy), r = rng(seed * 17 + cx * 53 + cy * 911);
+    let [ax, az] = [s.x, s.z];
+    if (!inCell(s.x, s.z, cx, cy)) search: for (let d = 2; d < A * 0.75 * 1.5; d += 2) for (let k = 0; k < 16; k++) {
+      const a = (k / 16) * Math.PI * 2, x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
+      if (inCell(x, z, cx, cy)) { [ax, az] = [x, z]; break search; }
+    }
+    let spot = { x: ax, z: az };
+    for (let i = 0; i < 24; i++) {
+      const a = r() * Math.PI * 2, d = 3 + r() * 4, x = ax + Math.cos(a) * d, z = az + Math.sin(a) * d + 3;
+      if (inCell(x, z, cx, cy)) { spot = { x, z }; break; }
+    }
+    // Off any path, road, railway or stream's corridor (Ed, v160: paths run on unbroken), and never
+    // in the dancefloor's ring of speakers or its clearing (Ed, v183), the nearest clear spot round
+    // it if it fell on one.
+    const onPath = (x: number, z: number) => !!map.paths.at(x, z, tuning.soundsystemFootprint + 1) || Math.hypot(x - centre.x, z - centre.z) < floorClear + tuning.soundsystemFootprint;
+    if (onPath(spot.x, spot.z)) search: for (let d = 3; d < A * 0.3; d += 3) for (let k = 0; k < 16; k++) {
+      const a = (k / 16) * Math.PI * 2, x = spot.x + Math.cos(a) * d, z = spot.z + Math.sin(a) * d;
+      if (inCell(x, z, cx, cy) && !onPath(x, z)) { spot = { x, z }; break search; }
+    }
+    soundSpots.set(key, spot);
+    return spot;
+  };
+  const TH = tuning.treehouse, ta = (TH.angle * Math.PI) / 180;
+  const treehouse = { x: centre.x + Math.cos(ta) * (floorClear + TH.distance), z: centre.z + Math.sin(ta) * (floorClear + TH.distance) };
+  const pieceSpots = new Map<string, { x: number; z: number } | null>();
+  const setPieceSpot = (cx: number, cy: number) => (setPieceOf(cx, cy) ? pieceSpotOf(cx, cy) : null);
+  // Where a set piece would stand in an area that rolls one, or null if there's no room.
+  const pieceSpotOf = (cx: number, cy: number) => {
+    const key = cellKey(cx, cy);
+    if (pieceSpots.has(key)) return pieceSpots.get(key)!;
+    let spot: { x: number; z: number } | null = null;
+    if (rollsSetPiece(cx, cy)) {
+      const R = tuning.setPieceFootprint * tuning.setPieceScale, gap = tuning.reserveMargin;
+      const sounds = [cellKey(cx, cy), ...(neighbours.get(cellKey(cx, cy)) ?? [])].map(k => { const [x, y] = k.split(",").map(Number); return soundsystemSpot(x, y); });
+      const clear = (x: number, z: number) => inCell(x, z, cx, cy)
+        && sounds.every(p => Math.hypot(x - p.x, z - p.z) >= R + tuning.soundsystemFootprint + gap)
+        && Math.hypot(x - centre.x, z - centre.z) >= R + floorClear + gap
+        && Math.hypot(x - treehouse.x, z - treehouse.z) >= R + TH.clear + gap
+        && !map.paths.at(x, z, R);
+      // Its old place (a little north of the centre) if that is clear, else the nearest clear
+      // spot round it, out to the edge of the clearing.
+      const s = siteOf(cx, cy);
+      search: for (let d = 0; d <= A * 0.35; d += 3) for (let k = 0; k < (d ? 16 : 1); k++) {
+        const a = (k / 16) * Math.PI * 2, x = s.x + Math.cos(a) * d, z = s.z - 4 + Math.sin(a) * d;
+        if (clear(x, z)) { spot = { x, z }; break search; }
+      }
+    }
+    pieceSpots.set(key, spot);
+    return spot;
+  };
+  const grounds: Ground[] = [], scenes: Scene[] = [];
+  const reserved = (x: number, z: number, r: number) => {
+    const gap = tuning.reserveMargin, cell = areaAt(x, z).cell;
+    if (Math.hypot(x - centre.x, z - centre.z) < r + floorClear + gap) return true;
+    if (Math.hypot(x - treehouse.x, z - treehouse.z) < r + TH.clear + gap) return true;
+    for (const g of grounds) if (Math.hypot(x - g.x, z - g.z) < r + g.r + gap) return true;
+    for (const c of scenes) if (Math.hypot(x - c.x, z - c.z) < r + c.r + gap) return true;
+    for (const k of [cellKey(cell[0], cell[1]), ...(neighbours.get(cellKey(cell[0], cell[1])) ?? [])]) {
+      const [cx, cy] = k.split(",").map(Number);
+      if (!(cx === centreCell[0] && cy === centreCell[1])) { const q = soundsystemSpot(cx, cy); if (Math.hypot(x - q.x, z - q.z) < r + tuning.soundsystemFootprint + gap) return true; }
+      const p = setPieceSpot(cx, cy);
+      if (p && Math.hypot(x - p.x, z - p.z) < r + tuning.setPieceFootprint * tuning.setPieceScale + gap) return true;
+    }
+    return false;
+  };
+  const hardCell = (x: number, z: number, cell: Cell) => {
+    if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return true;
+    if (Math.hypot(x - treehouse.x, z - treehouse.z) < TH.clear) return true;
+    for (const g of grounds) if (Math.abs(x - g.x) < g.r && Math.abs(z - g.z) < g.r && Math.hypot(x - g.x, z - g.z) < g.r) return true;
+    for (const c of scenes) if (Math.abs(x - c.x) < c.r && Math.abs(z - c.z) < c.r && Math.hypot(x - c.x, z - c.z) < c.r * 0.85) return true; // a scene's ground is clear of trees
+    // A set piece keeps a clearing round it, sized with it; a soundsystem a little room.
+    const p = setPieceSpot(cell[0], cell[1]);
+    if (p && Math.hypot(x - p.x, z - p.z) < tuning.setPieceClear * tuning.setPieceScale) return true;
+    if (cell[0] === centreCell[0] && cell[1] === centreCell[1]) return false;
+    const q = soundsystemSpot(cell[0], cell[1]);
+    return Math.hypot(x - q.x, z - q.z) < tuning.soundsystemFootprint + tuning.treeMarginFromSoundsystem;
+  };
+  const hardClear = (x: number, z: number) => { const [u, v] = toPart(x, z); return hardCell(x, z, partition.partition(u, v)); };
   const treeWeight = (x: number, z: number) => {
-    if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return 0;
     const [u, v] = toPart(x, z);
-    // Trees thin gradually toward the centre: a long smooth falloff over clearingFalloff.
-    return smoothstep((partition.openness(u, v) - tuning.clearingSize) / Math.max(0.01, tuning.clearingFalloff)) * tuning.treeDensity;
+    if (hardCell(x, z, partition.partition(u, v))) return 0;
+    // Clearings round area centres and random glades, each with a soft edge (Ed: no hard rings).
+    const glade = 1 - smoothstep((vnoise(x / tuning.gladeScale, z / tuning.gladeScale, seed + 61) - (1 - tuning.gladeAmount)) / 0.12);
+    return smoothstep((partition.openness(u, v) - tuning.clearingSize) / Math.max(0.01, tuning.clearingFalloff)) * glade;
   };
 
-  const setPieceOf = (cx: number, cy: number) => {
-    const t = AREA_TYPES[typeOf(cx, cy)];
-    return t.setPiece && hash2(cx, cy, seed + 61) < tuning.setPieceChance ? t.setPiece : null;
-  };
   const remoteness = (cx: number, cy: number) => Math.min(1, Math.hypot(cx - centreCell[0], cy - centreCell[1]) / (n / 2));
   const pad = A * 0.5;
-  return {
+  const map = {
     seed, tuning, n, margin, areaSize: A, partition, centreCell,
-    dancefloor: { x: centre.x, z: centre.z, radius: floorR },
-    start: { x: centre.x, z: centre.z + 2 },
+    dancefloor: { x: centre.x, z: centre.z, radius: floorR, speakers: speakerRing(centre, tuning) },
+    treehouse, grounds, scenes,
+    start: { x: treehouse.x, z: treehouse.z + 1 },
     bounds: { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad },
     extent: { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A },
-    typeOf, areaAt, siteOf, treeWeight, neighbours, setPieceOf, remoteness,
+    typeOf, areaAt, siteOf, treeWeight, hardClear, neighbours, setPieceOf, soundsystemSpot, setPieceSpot, reserved, remoteness,
+    paths: null as unknown as PathNetwork,
   };
+  // The paths first (their lines need only the areas), so soundsystems, set pieces and the
+  // grounds can keep off them; then the grounds; then the paths' pieces, clear of all of those.
+  map.paths = new PathNetwork(map);
+  // The grounds: some areas (not home) have one, off to the side of the area's centre; its whole
+  // clearing keeps clear of everything placed before it (soundsystems, the dancefloor, the
+  // treehouse, set pieces, other grounds), turning round the centre to find room, or left out.
+  const G = tuning.grounds, usedGrounds = new Set<string>();
+  for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) {
+    if ((cx === centreCell[0] && cy === centreCell[1]) || hash2(cx, cy, seed + 871) >= G.chance) continue;
+    // Each kind at most once per map (Ed, v160): the kind it rolled, or the next one not yet used.
+    let ki = Math.floor(hash2(cx, cy, seed + 873) * G.kinds.length), tries = 0;
+    while (usedGrounds.has(G.kinds[ki]) && tries++ < G.kinds.length) ki = (ki + 1) % G.kinds.length;
+    if (usedGrounds.has(G.kinds[ki])) continue;
+    const kind = G.kinds[ki], r = G.radius[kind] ?? 8, a = hash2(cx, cy, seed + 875) * Math.PI * 2, site = siteOf(cx, cy);
+    search: for (const d of [r + 6, r + 14, r + 24]) for (let k = 0; k < 12; k++) {
+      const b = a + (k / 12) * Math.PI * 2, x = site.x + Math.cos(b) * d, z = site.z + Math.sin(b) * d;
+      if (inCell(x, z, cx, cy) && !reserved(x, z, r)) { grounds.push({ kind, x, z, r, flip: hash2(cx, cy, seed + 877) < 0.5 }); usedGrounds.add(kind); break search; }
+    }
+  }
+  // Scenes (Ed, 2026-10-04): small vignettes and large landmarks of a few pieces each, each at
+  // most once per map, in an area it suits; like a ground, off to the side of the area's centre,
+  // its whole footprint clear of everything placed before it and of the paths, mirrored at random.
+  const SC = tuning.scenes, usedScenes = new Set<string>();
+  const order: [number, number, number][] = [];
+  for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) if (!(cx === centreCell[0] && cy === centreCell[1])) order.push([cx, cy, hash2(cx, cy, seed + 881)]);
+  order.sort((a, b) => a[2] - b[2]);
+  for (const [cx, cy, roll] of order) {
+    if (roll >= SC.chance) continue;
+    const id = AREA_TYPES[typeOf(cx, cy)].id, fits = SCENES.filter(sc => !usedScenes.has(sc.id) && (sc.suits ?? []).includes(id));
+    if (!fits.length) continue;
+    const sc = fits[Math.floor(hash2(cx, cy, seed + 883) * fits.length)], r = sceneFootprint(sc.id, tuning), a = hash2(cx, cy, seed + 885) * Math.PI * 2, site = siteOf(cx, cy);
+    search: for (const d of [r + 8, r + 16, r + 26]) for (let k = 0; k < 12; k++) {
+      const b = a + (k / 12) * Math.PI * 2, x = site.x + Math.cos(b) * d, z = site.z + Math.sin(b) * d;
+      if (inCell(x, z, cx, cy) && !reserved(x, z, r) && !map.paths.at(x, z, r * 0.7)) { scenes.push({ id: sc.id, x, z, r, mirror: hash2(cx, cy, seed + 887) < 0.5 }); usedScenes.add(sc.id); break search; }
+    }
+  }
+  map.paths.placePieces();
+  return map;
+}
+
+/** A scene's footprint radius (metres), from its pieces' authored offsets: a little more than the
+ *  art's own (sceneLayout's footprint, which a test checks it covers), without drawing anything. */
+export function sceneFootprint(id: string, tuning: Tuning): number {
+  const sc = SCENE_BY_ID[id];
+  if (!sc) return 0;
+  return Math.max(...sc.pieces.map(([, x, z]) => Math.hypot(x, z))) * tuning.scenes.scale + tuning.scenes.pad;
 }

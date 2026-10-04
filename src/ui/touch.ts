@@ -1,5 +1,6 @@
 // Phone controls: a joystick wherever the left thumb lands, a rise/descend button on the right,
-// zoom buttons above it, and a three-finger tap for the debug overlay.
+// zoom buttons above it, Talk (held) and Sigil buttons beside it, and a three-finger tap for the
+// debug overlay.
 import type { TouchInput } from "../platform/input";
 
 export function setupTouch(root: HTMLElement, touch: TouchInput): void {
@@ -44,6 +45,10 @@ export function setupTouch(root: HTMLElement, touch: TouchInput): void {
   button("#rise", () => (touch.toggle = true));
   button("#zoom-in", () => (touch.zoom -= 1));
   button("#zoom-out", () => (touch.zoom += 1));
+  button("#sigil", () => (touch.sigil = true));
+  button("#spell", () => (touch.spell = true));
+  button("#cycle", () => (touch.cycle = true));
+  // Talk is held: on while the finger is down.
 
   window.addEventListener("touchstart", e => { show(); if (e.touches.length === 3) touch.debug = true; }, { passive: true });
 }

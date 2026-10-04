@@ -76,7 +76,7 @@ The trade is speed against information: treetop mode covers distance, ground mod
 - A leashed creature **roams within the length of its leash** around a **leash point**.
 - The witch can **pick up a leash point and put it down again** elsewhere.
 - The witch carries leashes as a **stack**: one button **picks up or places**, last in, first out. She can **carry many leashes at once**, and can "fight" by **leading a swarm around**.
-- **Inviting** (Ed, 2026-10-03): on the ground, **hold the Talk button** near a creature (a different button from placing and picking up sigils). In talking range, the witch and the creature take turns showing **speech bubbles with emoji** (🎉🎈💃🎊🥳😛🍉🍒🍷🍸🍹🥂🍺😁😆🫢😮🤭…) for a couple of seconds, like a conversation; then the creature is **invited, and so leashed**. Letting go early or moving away cancels it. **Babies, young and adults can be invited; legends can't.** The higher the level, the **longer the conversation** (babies 3 s, young 6 s, adults 12 s) and the **less enthusiastic** the creature's emoji: adults start bored and busy (😴🫩🥱💼) and warm up as the conversation goes on (Ed, 2026-10-03).
+- **Inviting** (Ed, 2026-10-03): on the ground, the witch **talks to a creature in range by herself**: there is no Talk button (Ed, v244: "I tend to just hold it down all the time"; it replaced the held Talk button of 2026-10-03, leaving that button free for later). She picks the nearest invitable creature in range and sticks with it while it stays near, chatting on the fly as she moves and settling into her talk pose when she stops; a legend in range gives her one unimpressed look per approach. In talking range, the witch and the creature take turns showing **speech bubbles with emoji** (🎉🎈💃🎊🥳😛🍉🍒🍷🍸🍹🥂🍺😁😆🫢😮🤭…) for a couple of seconds, like a conversation; then the creature is **invited, and so leashed**. Moving away or rising to the treetops cancels it; the chat drains slowly, so coming back resumes it. **Babies, young and adults can be invited; legends can't.** The higher the level, the **longer the conversation** (babies 3 s, young 6 s, adults 12 s) and the **less enthusiastic** the creature's emoji: adults start bored and busy (😴🫩🥱💼) and warm up as the conversation goes on (Ed, 2026-10-03).
 - **Party animals look different from wild ones** (Ed, 2026-10-03): once invited, a creature wears **party gear**: a **glowing collar** in its sigil's colour (always), and a mix of **party hats, sunglasses and fancy shoes**. Party animals **bob and dance** rather than stand still. Woken, hostile creatures will have **angry red glowing eyes**.
 - **The leash stack is shown as sigils above the witch's head** (Ed, 2026-10-03): each leashed creature's sigil floats and sways above her, **newest at the bottom** (nearest her head), oldest at the top. The stack **sways with her movement**: gently when she is still, and it **teeters and trails behind her when she moves fast** (Ed, 2026-10-03). Inviting a creature leashes it to her and adds its sigil at the bottom, pushing the others up. **Placing** puts the newest (bottom) sigil down as a glowing neon rune on the ground, leashing that creature there. **Picking it up** returns the sigil to the stack, and the creature follows her again. **A sigil can't be put down on top of another sigil**; a ghost shows where it would land, and a blocked spot fizzles (Ed, 2026-10-03).
 - **The bond between a creature and its sigil** (Ed, 2026-10-03; it must stay calm with many creatures on screen): (1) the creature carries a faint neon rim or glow at its feet in its sigil's colour; (2) every few seconds a single spark travels from the sigil to the creature, staggered so they never fire together; (3) a thin dotted neon thread appears only when the leash is under tension, brightening with the strain, and is invisible when relaxed.
@@ -133,6 +133,42 @@ One area type per creature, each a small definition in Ed's columns: **floor** t
 | Bluebell glade | bluebells | | ferns | beeches | | Glow-worm | draft |
 | Holly thicket | dead leaves | holly hedges | cobwebs | hollies | a web-hung dead tree | Spider | draft |
 | Honeysuckle tangle | grass and clover | bramble | honeysuckle | hazel coppice | | Dormouse | draft |
+
+## Combat, pacing and forecasting (Ed, 2026-10-04)
+
+Decided in a long design session with the coordinator; built in stages, with a playable release after each (quick, easy things first, the creature menagerie last).
+
+- **Core loop:** the forecast shows where the party spreads next. You head there, inviting, feeding and evolving creatures on the way. Arrive early and you can invite that area's young before the music wakes them. Arrive late and its woken creatures are attacking the new soundsystem, so you defend with what you brought or pre-placed. High-level play is pre-positioning evolved creatures and sigils so you can react, and keeping your creatures alive by using them well.
+- **Pace:** one new area per wave, at a fixed pace. Fights are **long**, and soundsystems take a long while to destroy, so you always have time to feed babies. Pressure builds because sieges outlast the wave gap and overlap, and survivors of a lost defence march on to the next-nearest soundsystem. (An "annoyance" raid system is parked as an optional setting.)
+- **Start:** the home speaker ring boots up first.
+- **Movement:** creatures move at their own pace and are never carried by the witch. She is much faster than almost all of them; fast creatures are rare and weaker; legends are very slow.
+- **Forecasting:** the next two waves are confirmed, plus a probable set. Rune stones grow a circle of up to 12 symbols, and the 12th means next. The beams grow with the countdown.
+- **Music:** one track; louder and clearer near playing soundsystems, muffled in the deep forest, distorted by damage nearby.
+- **Spells:** one chosen per run from a list unlocked across runs, used on a cooldown. The list includes spells, placed items (buff totem, knockback bomb), speed boots and instant evolve. The first is the speed boost.
+- **Legends,** while alive, each give the witch a unique buff.
+- **Controls:** talk, sigil, spell, cycle, plus rise/descend; more buttons only when needed. Feeding is automatic: party animals eat berries near them.
+- **Combat** (later stages):
+  - **Sides:** wild and party animals fight each other with one shared system. No friendly fire. The witch is never attacked.
+  - **Level-ups:** babies don't attack. Young have one attack; adults a stronger one plus a second ability or modifier; legends one slow, powerful signature move.
+  - **Defeat:** health bars show only when hurt. A defeated party animal is **lost for the run**; a defeated wild creature flees and vanishes.
+  - **Control:** leash position only.
+  - **Soundsystems** are passive and don't heal.
+  - **Dodging:** some species dodge, as a behaviour trait.
+  - **Status effects:** a brief immunity after a stun or ensnare; slows don't stack.
+  - **Cover:** nothing blocks attacks.
+  - **Wild legends** are rare, late mini-bosses.
+  - **Balance:** an equal power budget per level, spent differently.
+  - **Hit feel:** medium, with screen shake only for legends.
+  - **Content:** built from data-driven parts (movement, behaviour drives, attack delivery, effect and timing, skins). The first slice is **10 contrasting species**; balance tools are a dashboard page and an in-game arena mode.
+- **Mode roles:** treetop mode is the strategic map, ground mode is for micro.
+
+### Multiplayer (Ed, 2026-10-04)
+
+- **Online co-op** is a goal (not versus, not same-screen); networking comes later. Each player is a witch with her own leash stack, spell and camera; creatures, soundsystems, waves and the forecast are shared.
+- **Waves:** the clock stays the same; each wave wakes **one new area per witch** in the game at that moment, so witches can join and leave mid-game and it still works.
+- **Sigils:** each witch has her own stack, but a sigil placed on the ground belongs to no one: **any witch can pick it up**.
+- **Legend buffs apply to every witch** while that legend lives, whoever evolved it.
+- **For builders now:** no single-witch assumptions in new rules code (pass the acting witch explicitly); per-player state (camera, mode, music mix, HUD, edge cues) lives in `src/render/`; inputs go through one place that could later carry a player id; the picker and forecast take `areasPerWave` (1 for now). Later (Stage 4): `game.witch` becomes `game.witches[]`, with a fixed-timestep deterministic simulation driven only by inputs (for balance sims, off-screen fights and netcode).
 
 ## Run structure
 

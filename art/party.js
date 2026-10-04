@@ -152,7 +152,7 @@ const bobOf = (id, b) => b && { amplitude: b[0], period: b[1], phase: +((id.leng
 export const PARTY_OBJECTS = [...Object.entries(PARTY), ...Object.entries(BALLOONS).map(([id, d]) => [id, { cls: "balloon", ...d }]), ...Object.entries(CAMPFIRES)].map(([id, d]) => ({ id, size: SIZE[d.cls], split: null, glow: false, decal: false, light: null, frames: 1, ...d, bob: bobOf(id, d.bob) }));
 export const PARTY_BY_ID = Object.fromEntries(PARTY_OBJECTS.map(d => [d.id, d]));
 // The party neons (the sigils' neon palette) a neon piece can be baked in; warm light is candle gold.
-export const PARTY_NEONS = Object.keys(NEON);
+export const PARTY_LIGHT_NEONS = Object.keys(NEON);
 export const PARTY_WARM = [255, 186, 96];
 // Balloon palettes for the seven balloon colour slots: the party neons, pastels, metallics and foils, or a mix.
 export const BALLOON_PALETTES = {
@@ -205,6 +205,6 @@ export function partyPatch(seed, layout, { w = 420, h = 250, clusters = 5, loose
   const out = [], spots = [[.21, .28], [.71, .24], [.48, .6], [.17, .76], [.81, .76]].slice(0, clusters);
   spots.forEach(([fx, fy], i) => { const id = PARTY_CLUSTERS[(i * 3 + seed) % PARTY_CLUSTERS.length].id; for (const p of layout(id, { mirror: r() < .5 })) out.push({ ref: p.ref, x: fx * w + p.ox, y: fy * h + p.oy, flip: p.flip, depth: fy * h + p.oy }); });
   const pool = PARTY_OBJECTS.filter(d => d.cls === "litter" || d.cls === "small");
-  for (let i = 0; i < loose; i++) { const d = pool[Math.floor(r() * pool.length)], n = PARTY_NEONS[Math.floor(r() * PARTY_NEONS.length)], x = 10 + r() * (w - 20), y = 14 + r() * (h - 20); out.push({ ref: `party:${d.id}${d.light === "neon" ? "@" + n : ""}`, x, y, flip: r() < .5, depth: y }); }
+  for (let i = 0; i < loose; i++) { const d = pool[Math.floor(r() * pool.length)], n = PARTY_LIGHT_NEONS[Math.floor(r() * PARTY_LIGHT_NEONS.length)], x = 10 + r() * (w - 20), y = 14 + r() * (h - 20); out.push({ ref: `party:${d.id}${d.light === "neon" ? "@" + n : ""}`, x, y, flip: r() < .5, depth: y }); }
   return out;
 }
