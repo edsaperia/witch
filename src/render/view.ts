@@ -376,7 +376,7 @@ export class View {
     const d1 = B.x * ahead * ahead, d2 = this.bendTo * ahead * ahead;
     // Past the bent ground's horizon, only what stands tall enough to show over the bulge is seen:
     // everything else there is hidden behind the forest in front (and was the bend's cost).
-    if (ahead > 0 && !this.overHorizon(ahead, g + h + margin, B.x) && !this.overHorizon(ahead, g + h + margin, this.bendTo)) return false;
+    if (ahead > 0 && !this.overHorizon(ahead, g + h + 2, B.x) && !this.overHorizon(ahead, g + h + 2, this.bendTo)) return false; // (its own top, 2 m slack: not the view margin)
     this.box.min.set(x - w / 2 - margin, g - Math.max(d1, d2) - margin, z - h - margin);
     this.box.max.set(x + w / 2 + margin, g - Math.min(d1, d2) + h + margin, z + margin);
     return this.frustum.intersectsBox(this.box) || this.frustumTo.intersectsBox(this.box);
@@ -389,6 +389,7 @@ export class View {
     const cam = this.camera.position, B = HEIGHT_UNIFORMS.uBend.value, D = Math.max(1, cam.z - B.z), H = cam.y + 3; // (+3: the hills' rises)
     const dh = -D + Math.sqrt(D * D + H / k); // where the camera's line of sight grazes the bent ground
     if (ahead <= dh) return true;
+    if (ahead > dh + this.game.tuning.camera.curve.beyond) return false; // only a strip of distant treetops past it (the bend's cost)
     const m = (H + k * dh * dh) / (dh + D); // the grazing line's drop per metre
     return (H - top + k * ahead * ahead) / (ahead + D) <= m + 0.02;
   }

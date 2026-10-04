@@ -72,7 +72,7 @@ export interface Tuning {
   descendTime: number;
   groundHeight: number;
   treetopHeight: number;
-  camera: { fov: number; ground: CameraModeTuning; treetop: CameraModeTuning; zoomSteps: number; startZoom: number; /** The world's bend (render/height.ts): curve per metre ahead of the focus, on the ground and over the treetops (eased in with lift). */ curve: { ground: number; treetop: number }; follow: number; lookAhead: number; lookAheadMax: number; lookAheadEase: number; zoomEase: number; liftEase: number; /** The opening shot: distance (metres) and angle (degrees) close in on her seat, and how many seconds it takes to ease out. */ intro: { distance: number; angle: number; ease: number } };
+  camera: { fov: number; ground: CameraModeTuning; treetop: CameraModeTuning; zoomSteps: number; startZoom: number; /** The world's bend (render/height.ts): curve per metre ahead of the focus, on the ground and over the treetops (eased in with lift). */ curve: { ground: number; treetop: number; /** Metres past the bent ground's horizon that scenery is still drawn (the distant treetops over it). */ beyond: number }; follow: number; lookAhead: number; lookAheadMax: number; lookAheadEase: number; zoomEase: number; liftEase: number; /** The opening shot: distance (metres) and angle (degrees) close in on her seat, and how many seconds it takes to ease out. */ intro: { distance: number; angle: number; ease: number } };
   pixelSize: number;
   glowReach: number;
   glowFalloff: number;
