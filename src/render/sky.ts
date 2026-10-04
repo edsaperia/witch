@@ -13,7 +13,7 @@ import * as THREE from "three";
 import { LIGHT_UNIFORMS } from "./lighting";
 import { SPRITE_UNIFORMS } from "./sprites";
 
-export interface SkyTuning { stars: number; moon: number; clouds: { count: number; speed: number; partyGlow: number } }
+export interface SkyTuning { on: boolean; stars: number; moon: number; clouds: { count: number; speed: number; partyGlow: number } }
 
 const VERT = /* glsl */ `
 varying vec2 vNdc;
@@ -95,7 +95,10 @@ export class Sky {
   readonly mesh: THREE.Mesh;
   private u: Record<string, THREE.IUniform>;
 
+  private on: boolean;
+
   constructor(T: SkyTuning) {
+    this.on = T.on;
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3)); // one triangle over the screen
     this.u = {
@@ -113,7 +116,7 @@ export class Sky {
   /** bend: the world's bend now (none: no sky drawn); the camera's focus, how far ahead the top of
    *  the screen looks and how wide the view is there (metres), for the clouds' party glow. */
   update(bend: number, x: number, z: number, ahead: number, width: number): void {
-    this.mesh.visible = bend > 1e-6;
+    this.mesh.visible = this.on && bend > 1e-6;
     (this.u.uCam.value as THREE.Vector4).set(x, z, ahead, width);
   }
 }

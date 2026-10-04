@@ -25,7 +25,7 @@ export interface Tuning {
   /** relief: the fake bumps in the ground's shading; hills: the rolling ground, drawn only (render/height.ts): amplitude (m), scale (m across a swell), octaves. */
   ground: { relief: { strength: number; scale: number; shade: number }; hills: { on: boolean; amplitude: number; scale: number; octaves: number } };
   /** The night sky over the bend (treetop mode): stars, the moon, and clouds (count, speed m/s, how much the party lights their undersides). */
-  sky: { stars: number; moon: number; clouds: { count: number; speed: number; partyGlow: number } };
+  sky: { on: boolean; stars: number; moon: number; clouds: { count: number; speed: number; partyGlow: number } };
   /** Wind sway on leafy things: metres at the top of a crown, gusts' speed (m/s) and size (m), and a share for the treetop view. */
   wind: { on: boolean; strength: number; speed: number; gustScale: number; treetop: number };
   /** Tufts on the ground round the witch, in ground mode: overall density (times each area's), within radius metres, at most cap; one chance every spacing metres, worked out cell metres at a time within budgetMs a frame; sway (share of a tuft's height) and part (how far they part round her). */

@@ -70,6 +70,8 @@ if (reliefParam !== null && !isNaN(Number(reliefParam))) tuning.ground = { ...tu
 // ?hills=0: the ground flat again; ?hills=<amplitude>: the rolling ground's swells, in metres.
 const hillsParam = params.get("hills");
 if (hillsParam !== null && !isNaN(Number(hillsParam))) tuning.ground = { ...tuning.ground, hills: { ...tuning.ground.hills, on: Number(hillsParam) > 0, amplitude: Number(hillsParam) > 0 ? Number(hillsParam) : tuning.ground.hills.amplitude } };
+// ?sky=off: no night sky over the bend (the plain dark background), to compare and to measure.
+if (params.get("sky") === "off") tuning.sky = { ...tuning.sky, on: false };
 // ?curve=<treetop>: the world's bend over the treetops (0 off), to try values live.
 const curveParam = params.get("curve");
 if (curveParam !== null && !isNaN(Number(curveParam))) tuning.camera = { ...tuning.camera, curve: { ...tuning.camera.curve, treetop: Number(curveParam) } };
