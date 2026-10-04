@@ -98,12 +98,13 @@ export const PITCH = .52;                       // the camera looks down about 3
 
 // Renders a model to a Sprite `height` art pixels tall (measured over the parts not marked extra).
 // With `scale` (pixels per model unit) instead, several models share one scale.
-export function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12 } = {}) {
+// With `measure`, it only works out the scale (pixels per unit) `height` would give: { s }.
+export function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false } = {}) {
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), spp = Math.sin(pitch);
   const toWorld = p => [p[0] * cy - p[2] * sy, p[1], p[0] * sy + p[2] * cy];
   const toModel = p => [p[0] * cy + p[2] * sy, p[1], -p[0] * sy + p[2] * cy];
   const D = [0, -spp, -cp], U = [0, cp, -spp], R = [1, 0, 0], B = [0, spp, cp];
-  const k = model.blend;
+  const k = model.blend, clipY = model.clipY ?? -Infinity; // model.clipY: everything below it is under the ground, cut away (a sleeping legend, sunk)
   // parts in world space, each with a bounding sphere
   const parts = model.parts.map(q => {
     if (q.type === "ell") { const cw = toWorld(q.c), axes = q.axes.map(toWorld), rad = Math.max(...q.r); return { ...q, cw, axes, bc: cw, br: rad + (q.rough || 0) * 1.5 }; }
@@ -118,6 +119,7 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
   const body = all.filter(q => !q.extra && !q.cut);
   const u0b = Math.min(...body.map(q => q.u0 + (q.uw ? 0 : k))), u1b = Math.max(...body.map(q => q.u1 - (q.uw ? 0 : k)));
   const s = scale ?? height / Math.max(1e-6, u1b - u0b);
+  if (measure) return { s };
   const X0 = Math.min(...all.map(q => q.x0)), X1 = Math.max(...all.map(q => q.x1)), U0 = Math.min(...all.map(q => q.u0)), U1 = Math.max(...all.map(q => q.u1));
   const W = Math.ceil((X1 - X0) * s) + 4, H = Math.ceil((U1 - U0) * s) + 2, sp = new Sprite(W, H);
   const depth = new Float32Array(W * H).fill(Infinity), grp = new Int16Array(W * H).fill(-1);
@@ -148,7 +150,7 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
     if (vol.length) {
       // group the candidates; the field is a smooth union within a group, a hard union across
       const groups = new Map(); for (const q of vol) { let g = groups.get(q.group); if (!g) groups.set(q.group, g = []); g.push(q); }
-      const gfield = (qs, p) => { let d = Infinity; for (const q of qs) if (!q.cut) d = d === Infinity ? sdf(q, p) : smin(d, sdf(q, p)); for (const q of qs) if (q.cut) d = Math.max(d, -sdf(q, p)); return d; };
+      const gfield = (qs, p) => { let d = Infinity; for (const q of qs) if (!q.cut) d = d === Infinity ? sdf(q, p) : smin(d, sdf(q, p)); for (const q of qs) if (q.cut) d = Math.max(d, -sdf(q, p)); if (clipY > -Infinity) d = Math.max(d, clipY - p[1]); return d; };
       let t = Math.max(0, tmin);
       for (let step = 0; step < 96 && t < tmax; step++) {
         const p = v3.add(O, v3.mul(D, t));
@@ -169,6 +171,7 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
       const dn = dot(D, f.nw); if (Math.abs(dn) < 1e-4) continue;
       const t = dot(sub(f.cw, O), f.nw) / dn; if (t >= hitT) continue;
       const p = v3.add(O, v3.mul(D, t)), rel = sub(p, f.cw), sS = dot(rel, f.uw) / f.su, tT = dot(rel, f.vw) / f.sv;
+      if (p[1] < clipY) continue; // under the ground
       if (Math.abs(sS) > 1 || Math.abs(tT) > 1) continue;
       const m = f.mask(sS, tT); if (!m) continue;
       let n = dn > 0 ? v3.mul(f.nw, -1) : f.nw; n = norm(v3.add(n, v3.add(v3.mul(f.uw, sS * f.bend), v3.mul(f.vw, tT * f.bend * .5))));
