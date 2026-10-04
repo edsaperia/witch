@@ -177,8 +177,9 @@ export class LeashView {
       const tw = 0.85 + 0.15 * Math.sin(time * 2.3 + berry.id);
       if (treetops) this.over.add(p.x, 1, p.z + 0.25, 0.9, dot, r * 1.6 * tw, gg * 1.6, b * 1.6, 0.8 * glow);
       else {
-        this.standing.add(p.x, 0.8, p.z + 0.3, 1.5, dot, r * 0.9, gg * 0.9, b * 0.9, 0.6 * glow * tw); // the soft halo
-        this.standing.add(p.x - 0.07, 0.86, p.z + 0.32, 0.25, dot, 1, 0.9, 0.9, 0.7 * tw); // the shine
+        this.standing.add(p.x, 0.8, p.z + 0.3, 2.8, dot, r * 1.5, gg * 1.5, b * 1.5, 0.95 * glow * tw); // the soft halo, easy to spot
+        this.standing.add(p.x, 0.8, p.z + 0.31, 1.1, dot, r * 1.8, gg * 1.4, b * 1.4, 0.8 * glow); // its warm core
+        this.standing.add(p.x - 0.07, 0.86, p.z + 0.32, 0.3, dot, 1, 0.92, 0.92, 0.8 * tw); // the shine
       }
     }
     // How near each party animal is to evolving: always while she's within 20 m, and for a few
