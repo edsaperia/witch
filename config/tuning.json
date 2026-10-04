@@ -38,7 +38,7 @@
   "crownHeight": 11.25,
   "bushSpacing": 3.4,
 
-  "_witch": "Speeds per mode, and how long rising and descending take. acceleration: how quickly she reaches her speed or stops in the treetops (per second; higher is snappier); groundAcceleration: the same on the ground. leanAt: the share of the top speed above which she leans into her flight. facing: she (and every creature) faces the viewer unless clearly heading up the screen, within awayEnter degrees of straight up (and stays turned away until past awayLeave); sideways, down or stopped faces the viewer.",
+  "_witch": "Speeds per mode, and how long rising and descending take. acceleration: how quickly she reaches her speed or stops in the treetops (per second; higher is snappier); groundAcceleration: the same on the ground. leanAt: the share of the top speed above which she leans into her flight. facing: she (and every creature) faces the viewer unless clearly heading up the screen, within awayEnter degrees of straight up (and stays turned away until past awayLeave); sideways, down or stopped faces the viewer. Within headingEnter degrees of straight up or straight down the screen (until past headingLeave) she flies in her heading sprites: seen from behind going up, coming at us going down.",
   "groundSpeed": 19.25,
   "treetopSpeed": 32,
   "acceleration": 10,
@@ -46,7 +46,7 @@
   "treetop": { "boost": 1.7, "boostTime": 2, "boostAngle": 25, "turnRate": 150, "turnRateSlow": 720, "sharpTurnSpeed": 0.4, "brakeAt": 0.9, "glideTime": 1, "sharpTurnBleed": 3, "cameraPull": 0.06 },
   "groundAcceleration": 28,
   "leanAt": 0.7,
-  "facing": { "awayEnter": 55, "awayLeave": 65 },
+  "facing": { "awayEnter": 55, "awayLeave": 65, "headingEnter": 20, "headingLeave": 28 },
   "riseTime": 0.7,
   "descendTime": 0.55,
   "groundHeight": 1.4,

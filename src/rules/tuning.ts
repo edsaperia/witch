@@ -54,7 +54,7 @@ export interface Tuning {
   groundAcceleration: number;
   leanAt: number;
   /** The away cone round straight up the screen, degrees: enter under awayEnter, leave over awayLeave. */
-  facing: { awayEnter: number; awayLeave: number };
+  facing: { awayEnter: number; awayLeave: number; /** degrees from straight up or down the screen for her up/down heading sprites, entering and leaving */ headingEnter: number; headingLeave: number };
   riseTime: number;
   descendTime: number;
   groundHeight: number;

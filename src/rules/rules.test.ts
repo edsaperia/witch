@@ -5,7 +5,7 @@ import { makePartition } from "./partition";
 import { hash2 } from "./random";
 import { AREA_TYPES, generateMap, parseSeed } from "./map";
 import { Forest, crownReach, treeChance } from "./forest";
-import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway } from "./witch";
+import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
 import { legendChance, population, spawnCreatures, stepCreature, stepCreaturesNear } from "./creatures";
 import { newGame, stepGame } from "./game";
@@ -291,6 +291,19 @@ describe("the witch", () => {
     expect(Math.hypot(t.vx, t.vz)).toBeCloseTo(TUNING.treetopSpeed * TUNING.treetop.boost, 0); // held straight: full boost
   });
 
+  it("flies in her up and down heading sprites only near straight up or down the screen, with hysteresis", () => {
+    const F = TUNING.facing, at = (deg: number, up: boolean) => { const a = (deg * Math.PI) / 180; return [Math.sin(a) * 10, (up ? -1 : 1) * Math.cos(a) * 10] as const; };
+    expect(headingOf(...at(5, true), "side", 1, TUNING)).toBe("up");
+    expect(headingOf(...at(5, false), "side", 1, TUNING)).toBe("down");
+    expect(headingOf(...at(45, true), "side", 1, TUNING)).toBe("side");
+    const mid = (F.headingEnter + F.headingLeave) / 2;
+    expect(headingOf(...at(mid, true), "side", 1, TUNING)).toBe("side"); // not yet in
+    expect(headingOf(...at(mid, true), "up", 1, TUNING)).toBe("up"); // not yet out
+    expect(headingOf(0, -0.5, "up", 1, TUNING)).toBe("side"); // too slow
+    let w: ReturnType<typeof newWitch> = { ...newWitch(200, 200), lift: 1, mode: "treetop" };
+    for (let i = 0; i < 60; i++) w = stepWitch(w, { moveX: 0, moveZ: -1, toggleMode: false }, 1 / 60, TUNING, b);
+    expect(w.heading).toBe("up");
+  });
   describe("treetop momentum", () => {
     const T = TUNING.treetop, up = (): ReturnType<typeof newWitch> => ({ ...newWitch(200, 200), lift: 1, mode: "treetop" });
     const speed = (w: { vx: number; vz: number }) => Math.hypot(w.vx, w.vz);

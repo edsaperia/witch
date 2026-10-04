@@ -850,6 +850,9 @@ export class View {
       const Fl = this.assets.witchFly, sideF = w.away ? "away" : "towards";
       if (w.braking) wf = Fl.brake[sideF][Math.floor(time * Fl.brake.fps) % Fl.brake[sideF].length];
       else if ((w.boost ?? 0) > 0.7) wf = Fl.fast[sideF][Math.floor(time * Fl.fast.fps) % Fl.fast[sideF].length];
+      // Straight up or down the screen (#27): her heading frames, from behind or coming at us.
+      const Hd = w.heading && w.heading !== "side" ? this.assets.witchHeading[w.heading] : null;
+      if (Hd) wf = w.braking ? Hd.brake[Math.floor(time * Fl.brake.fps) % Hd.brake.length] : (w.boost ?? 0) > 0.7 ? Hd.fast[Math.floor(time * Fl.fast.fps) % Hd.fast.length] : w.lean ? Hd.lean : Hd.hover[Math.floor(time * 4) % Hd.hover.length];
     }
     // Talking or handling a sigil, she lands first (Ed, 2026-10-03): down to the ground, then the
     // talk, placeSigil or liftSigil pose, and back up into the air when she's done.
