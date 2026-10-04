@@ -13,6 +13,7 @@ import { borderSteps, type BorderPoint } from "../rules/borders";
 import type { Game } from "../rules/game";
 import { AREA_TYPES } from "../rules/map";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
+import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 
 const VERT = /* glsl */ `
 attribute vec3 aColour;
@@ -24,8 +25,10 @@ varying vec3 vColour;
 varying vec3 vWorld;
 varying float vB;
 float h1(float x) { return fract(sin(x * 91.3458) * 47453.5453); }
+${HEIGHT_VERT_GLSL}
 void main() {
-  vWorld = position;
+  vec3 w = onGround(position); // along the rolling ground
+  vWorld = w;
   float ph = aSpark.x;
   // Twinkle: a soft breathing, sharp brief flashes, and now and then a moment out altogether.
   float soft = 0.5 + 0.5 * sin(uTime * (2.0 + ph * 3.0) + ph * 40.0);
@@ -38,7 +41,7 @@ void main() {
   // Its colour: its own area's or the one across, flickering between them on its own phase; some snap on the beat.
   float swap = h1(ph * 7.0) < uTwinkle.z ? mod(floor(uBeat + ph * 4.0), 2.0) : step(0.5, fract(uTime * uTwinkle.y * (0.6 + ph * 0.8) + ph * 3.0));
   vColour = mix(aColour, aColour2, swap);
-  gl_Position = projectionMatrix * viewMatrix * vec4(position, 1.0);
+  gl_Position = clipOf(w);
   gl_PointSize = uTime >= aSpark.y ? uWidth : 0.0;
 }`;
 
@@ -63,7 +66,7 @@ export class BorderView {
     const B = game.tuning.borders;
     this.mesh = new THREE.Points(this.geo, new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
-      uniforms: { ...LIGHT_UNIFORMS, uWidth: { value: B.width }, uSparkle: { value: B.sparkle }, uBright: { value: B.brightness }, uBeat: { value: 0 }, uTwinkle: { value: new THREE.Vector3(B.twinkle, B.swapRate, B.swapBeat) } },
+      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uWidth: { value: B.width }, uSparkle: { value: B.sparkle }, uBright: { value: B.brightness }, uBeat: { value: 0 }, uTwinkle: { value: new THREE.Vector3(B.twinkle, B.swapRate, B.swapBeat) } },
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     }));
     this.mesh.frustumCulled = false;

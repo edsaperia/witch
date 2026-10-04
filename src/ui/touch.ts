@@ -49,9 +49,6 @@ export function setupTouch(root: HTMLElement, touch: TouchInput): void {
   button("#spell", () => (touch.spell = true));
   button("#cycle", () => (touch.cycle = true));
   // Talk is held: on while the finger is down.
-  const talk = root.querySelector<HTMLElement>("#talk")!;
-  talk.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); touch.talk = true; talk.classList.add("down"); });
-  for (const ev of ["pointerup", "pointerleave", "pointercancel"]) talk.addEventListener(ev, () => { touch.talk = false; talk.classList.remove("down"); });
 
   window.addEventListener("touchstart", e => { show(); if (e.touches.length === 3) touch.debug = true; }, { passive: true });
 }

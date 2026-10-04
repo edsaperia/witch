@@ -7,13 +7,15 @@ import * as THREE from "three";
 import type { Game } from "../rules/game";
 import { beatClock, laserShow } from "../rules/lasers";
 import type { Playing } from "./party";
+import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 
 const VERT = /* glsl */ `
 attribute vec4 aCol; // rgb, alpha
 attribute float aU;  // 0 at the source, 1 at the far end
 varying vec4 vCol;
 varying float vU;
-void main() { vCol = aCol; vU = aU; gl_Position = projectionMatrix * viewMatrix * vec4(position, 1.0); }`;
+${HEIGHT_VERT_GLSL}
+void main() { vCol = aCol; vU = aU; gl_Position = clipOf(onGround(position)); }`;
 const FRAG = /* glsl */ `
 varying vec4 vCol;
 varying float vU;
@@ -34,7 +36,7 @@ export class Lasers {
   readonly mesh: THREE.LineSegments;
 
   constructor(scene: THREE.Scene, private game: Game) {
-    this.mesh = new THREE.LineSegments(this.geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    this.mesh = new THREE.LineSegments(this.geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...HEIGHT_UNIFORMS }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
     this.mesh.frustumCulled = false;
     scene.add(this.mesh);
   }

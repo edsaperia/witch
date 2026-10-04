@@ -6,13 +6,15 @@
 // by the scene's depth), blurred a little and laid over the scaled-up picture (post.ts).
 import * as THREE from "three";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
+import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 
 const VERT = /* glsl */ `
 varying vec3 vWorld;
+${HEIGHT_VERT_GLSL}
 void main() {
-  vec4 w = modelMatrix * vec4(position, 1.0);
-  vWorld = w.xyz;
-  gl_Position = projectionMatrix * viewMatrix * w;
+  vec3 w = onGround((modelMatrix * vec4(position, 1.0)).xyz); // its height above the rolling ground
+  vWorld = w;
+  gl_Position = clipOf(w);
 }`;
 
 const FRAG = /* glsl */ `
@@ -54,10 +56,10 @@ export class Mist {
   constructor(strength: number, private height: number, wind: number, metresPerPixel: number, smooth: boolean, depth: THREE.Texture | null, low: THREE.Vector2) {
     this.mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
-      uniforms: { ...LIGHT_UNIFORMS, uStrength: { value: strength }, uWind: { value: wind }, uPixel: { value: metresPerPixel }, uDepth: { value: depth }, uLow: { value: low } },
+      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uStrength: { value: strength }, uWind: { value: wind }, uPixel: { value: metresPerPixel }, uDepth: { value: depth }, uLow: { value: low } },
       depthWrite: false, depthTest: !smooth, blending: smooth ? THREE.NoBlending : THREE.NormalBlending,
     });
-    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(700, 700).rotateX(-Math.PI / 2), this.mat);
+    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(700, 700, 70, 70).rotateX(-Math.PI / 2), this.mat);
     this.mesh.frustumCulled = false;
     this.mesh.renderOrder = 2;
   }

@@ -6,6 +6,7 @@
 // party comes, the stone flares and sinks into the ground as its soundsystem arrives.
 // The art (frames), the beacons and the motes; which stones to draw is the view's.
 import * as THREE from "three";
+import { groundPoints, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import * as Art from "../../art/generator.js";
 import { runeGlyph } from "../../art/core.js";
 import { AREA_TYPES } from "../rules/map";
@@ -69,10 +70,14 @@ const BEAM_VERT = /* glsl */ `
 attribute vec4 iBeam; // colour rgb, strength
 varying vec4 vBeam;
 varying float vY;
+${HEIGHT_VERT_GLSL}
 void main() {
   vBeam = iBeam;
   vY = position.y + 0.5;
-  gl_Position = projectionMatrix * viewMatrix * modelMatrix * instanceMatrix * vec4(position, 1.0);
+  // Rising from the rolling ground at its foot (height.ts).
+  vec3 w = (modelMatrix * instanceMatrix * vec4(position, 1.0)).xyz;
+  w.y += groundH((modelMatrix * instanceMatrix * vec4(0.0, -0.5, 0.0, 1.0)).xz);
+  gl_Position = clipOf(w);
 }
 `;
 const BEAM_FRAG = /* glsl */ `
@@ -108,14 +113,14 @@ export class MarkerFx {
     const geo = new THREE.CylinderGeometry(0.5, 0.5, 1, 8, 1, true);
     this.beamAttr = new THREE.InstancedBufferAttribute(new Float32Array(maxBeams * 4), 4);
     geo.setAttribute("iBeam", this.beamAttr);
-    this.beams = new THREE.InstancedMesh(geo, new THREE.ShaderMaterial({ vertexShader: BEAM_VERT, fragmentShader: BEAM_FRAG, uniforms: { uShown: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }), maxBeams);
+    this.beams = new THREE.InstancedMesh(geo, new THREE.ShaderMaterial({ vertexShader: BEAM_VERT, fragmentShader: BEAM_FRAG, uniforms: { ...HEIGHT_UNIFORMS, uShown: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }), maxBeams);
     this.beams.frustumCulled = false;
     this.beams.renderOrder = 9;
     // The lasers: the same shader on a thin cylinder, always shown (ground and treetop).
     const lg = new THREE.CylinderGeometry(0.5, 0.5, 1, 6, 1, true);
     this.laserAttr = new THREE.InstancedBufferAttribute(new Float32Array(maxBeams * 4), 4);
     lg.setAttribute("iBeam", this.laserAttr);
-    this.lasers = new THREE.InstancedMesh(lg, new THREE.ShaderMaterial({ vertexShader: BEAM_VERT, fragmentShader: BEAM_FRAG, uniforms: { uShown: { value: 1 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }), maxBeams);
+    this.lasers = new THREE.InstancedMesh(lg, new THREE.ShaderMaterial({ vertexShader: BEAM_VERT, fragmentShader: BEAM_FRAG, uniforms: { ...HEIGHT_UNIFORMS, uShown: { value: 1 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide }), maxBeams);
     this.lasers.frustumCulled = false;
     this.lasers.renderOrder = 9;
     this.mPos = new Float32Array(maxMotes * 3);
@@ -123,7 +128,7 @@ export class MarkerFx {
     const mg = new THREE.BufferGeometry();
     mg.setAttribute("position", new THREE.BufferAttribute(this.mPos, 3));
     mg.setAttribute("color", new THREE.BufferAttribute(this.mCol, 4));
-    this.motes = new THREE.Points(mg, new THREE.PointsMaterial({ size: 3, sizeAttenuation: false, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    this.motes = new THREE.Points(mg, groundPoints(3));
     this.motes.frustumCulled = false;
     this.group.add(this.beams, this.lasers, this.motes);
   }
@@ -175,11 +180,13 @@ attribute vec4 iCol;  // rgb, alpha
 uniform float uLift;
 varying vec2 vUv;
 varying vec4 vCol;
+${HEIGHT_VERT_GLSL}
 void main() {
   vUv = vec2((iRing.w + uv.x) / ${GLYPHS}.0, uv.y);
   vCol = iCol;
   vec3 p = vec3(iRing.x + position.x * iRing.z, 0.08 + uLift, iRing.y - position.y * iRing.z);
-  gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
+  p.y += groundH(p.xz); // lying on the rolling ground, corner by corner
+  gl_Position = clipOf(p);
 }`;
 const RING_FRAG = /* glsl */ `
 uniform sampler2D uGlyphs;
@@ -217,7 +224,7 @@ export class SymbolRings {
     this.col = new THREE.InstancedBufferAttribute(new Float32Array(max * 4), 4); this.col.setUsage(THREE.DynamicDrawUsage);
     this.geo.setAttribute("iRing", this.ring); this.geo.setAttribute("iCol", this.col);
     this.geo.instanceCount = 0;
-    this.mat = new THREE.ShaderMaterial({ vertexShader: RING_VERT, fragmentShader: RING_FRAG, uniforms: { uGlyphs: { value: tex }, uLift: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+    this.mat = new THREE.ShaderMaterial({ vertexShader: RING_VERT, fragmentShader: RING_FRAG, uniforms: { ...HEIGHT_UNIFORMS, uGlyphs: { value: tex }, uLift: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
     this.mesh = new THREE.Mesh(this.geo, this.mat);
     this.mesh.frustumCulled = false;
     this.mesh.renderOrder = 8;

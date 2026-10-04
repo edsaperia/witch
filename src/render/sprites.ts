@@ -6,6 +6,7 @@ import * as THREE from "three";
 import type { Atlas, Frame } from "./atlas";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { WITCH_LIGHT_GLSL, witchLightUniform } from "./witchLight";
+import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 
 /** Shared by every sprite batch: the camera's right and (tilted) up, and the canopy fade. */
 export const SPRITE_UNIFORMS = {
@@ -55,11 +56,14 @@ varying vec3 vFlags;
 varying float vFront;
 varying vec2 vLocal;
 varying float vSizeY;
+${HEIGHT_VERT_GLSL}
 void main() {
+  // Every sprite stands on the rolling ground (height.ts): its base lifted by the ground's height there.
+  vec3 base = onGround(iPos);
   // Tall and nearer the camera than the witch: it may stand in front of her.
   // Eased over a few metres of depth and of height, so nothing snaps into the fade as she moves.
-  vFront = smoothstep(0.0, 3.0, uWitchDepth - 0.5 + (viewMatrix * vec4(iPos, 1.0)).z) * smoothstep(uOcc.z * 0.7, uOcc.z * 1.3, iSize.y);
-  vec3 w = iPos + uRight * (position.x * iSize.x) + uUp * (position.y * iSize.y);
+  vFront = smoothstep(0.0, 3.0, uWitchDepth - 0.5 + (viewMatrix * vec4(base, 1.0)).z) * smoothstep(uOcc.z * 0.7, uOcc.z * 1.3, iSize.y);
+  vec3 w = base + uRight * (position.x * iSize.x) + uUp * (position.y * iSize.y);
   // Wind (Ed, v171): leafy things lean with gusts travelling across the forest, anchored at their
   // base (a crown at its foot, a trunk barely), so the trunks stay put and the foliage moves.
   if (iFlags.w > 0.0 && uWind.x > 0.0) {
@@ -78,10 +82,10 @@ void main() {
   vLocal = uv;
   vSizeY = iSize.y;
   vWorld = w;
-  gl_Position = projectionMatrix * viewMatrix * vec4(w, 1.0);
+  gl_Position = clipOf(w);
   // Snap the whole sprite by its base to the pixel grid, so it moves a whole pixel at a time and
   // its small bright details (flowers, eyes) don't shimmer in and out as the camera glides.
-  vec4 b = projectionMatrix * viewMatrix * vec4(iPos, 1.0);
+  vec4 b = clipOf(base);
   vec2 ndc = b.xy / b.w, snapped = (floor((ndc * 0.5 + 0.5) * uRes) + 0.5) / uRes * 2.0 - 1.0;
   gl_Position.xy += (snapped - ndc) * gl_Position.w;
 }
@@ -215,7 +219,7 @@ export class SpriteBatch {
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.pos = this.size = this.uvs = this.flags = this.glow = undefined as never;
     this.grow(64);
-    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), ...extra });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), ...extra });
     // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
     // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
     const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};

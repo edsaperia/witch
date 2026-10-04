@@ -270,7 +270,7 @@ async function main() {
     await shot(page, "57-party-four-waves.png");
   }, "&debug&tilt=before");
 
-  // Inviting and leashing: talk to a creature until it joins her, gather a few more, fly with the
+  // Inviting and leashing: stand by a creature while she talks it into joining her, gather a few more, fly with the
   // stack, put a sigil down and pick it up again.
   await run("leash", { width: 1900, height: 1240 }, async page => {
     await page.keyboard.press("Enter");
@@ -285,12 +285,11 @@ async function main() {
     await sleep(800);
     await shot(page, "69-leash-cue.png");
     const t0 = await page.evaluate(() => window.witch.game.clock.time);
-    await page.keyboard.down("KeyT");
+    // No Talk button (Ed, v244): standing by it, she talks to it by herself.
     await page.waitForFunction(t => window.witch.game.clock.time >= t, t0 + 1.6, { timeout: 400000, polling: 50 });
     await shot(page, "70-leash-talk.png");
     await page.waitForFunction(i => window.witch.game.creatures[i].leashed, id, { timeout: 400000, polling: 100 });
-    await page.keyboard.up("KeyT");
-    check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "holding Talk by a creature invites it onto her sigil stack");
+    check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "standing by a creature, she talks to it by herself and invites it onto her sigil stack");
     // One press a frame: wait for each invite to land before the next (the headless renderer is slow).
     for (let i = 0; i < 3; i++) {
       const before = await page.evaluate(() => window.witch.game.leash.stack.length);
@@ -402,6 +401,29 @@ async function main() {
       return out;
     });
     check(r.n > 50 && r.bad.length === 0, `nothing floats: every placed sprite's lowest drawn pixel is on the ground (${r.n} checked, worst ${r.worst.toFixed(1)} art px)${r.bad.length ? ": " + r.bad.join("; ") : ""}`);
+    // The rolling ground: a sprite stands upright on h at its base point, so across its foot (its
+    // lowest drawn row) the ground's rise or fall is how far one end floats or sinks; under 1 art px.
+    const hr = await page.evaluate(() => {
+      const v = window.witch.view, h = window.witch.groundHeight, R = window.witch.spriteRight(), out = { n: 0, worst: 0, bad: [], hilly: 0 };
+      for (const [type, b] of [...v.typeBatches, ...v.creatureBatches, ...[...v.decorBatches].filter(([k]) => k !== "decals"), ["treehouse", v.treehouseBatch]]) { // (she hovers)
+        const img = b.atlas.albedo.image, W = img.width, D = img.data;
+        for (const it of b.items) {
+          if (it.top) continue;
+          const f = it.frame, x0 = Math.round(f.uv[0] * W), y0 = Math.round(f.uv[1] * img.height);
+          let low = -1, left = 0, right = 0;
+          for (let row = f.h - 1; row >= 0 && low < 0; row--) for (let x = 0; x < f.w; x++) if (D[((y0 + row) * W + x0 + x) * 4 + 3] >= 128) { if (low < 0) { low = row; left = x; } right = x; }
+          if (low < 0) continue;
+          const m = b.metresPerPixel * (it.scale ?? 1), c = ((left + right) / 2 - f.w / 2) * m * (it.flip ? -1 : 1), half = ((right - left) / 2 + 0.5) * m;
+          const cx = it.x + R.x * c, cz = it.z + R.z * c, base = h(it.x, it.z);
+          const err = Math.max(Math.abs(h(cx - R.x * half, cz - R.z * half) - base), Math.abs(h(cx + R.x * half, cz + R.z * half) - base)) / b.metresPerPixel;
+          out.n++; if (Math.abs(base) > 0.3) out.hilly++;
+          if (err > out.worst) out.worst = err;
+          if (err > 1 && out.bad.length < 6) out.bad.push(`${typeof type === "number" ? window.witch.areaTypeId(type) : type} ${err.toFixed(1)} px`);
+        }
+      }
+      return out;
+    });
+    check(hr.n > 50 && hr.bad.length === 0, `on the rolling ground nothing floats or sinks past 1 art px at its foot's ends (${hr.n} checked, ${hr.hilly} off the flat, worst ${hr.worst.toFixed(2)} px)${hr.bad.length ? ": " + hr.bad.join("; ") : ""}`);
   });
 
   // Ed's windows (v53-v57: trees vanished flying the treetops): big, both pixel ratios, long
