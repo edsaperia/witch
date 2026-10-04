@@ -60,6 +60,23 @@ export function newParty(map: ForestMap): PartyState {
   return p;
 }
 
+/** Every area's cell, its soundsystem's distance from the dancefloor and its noisy picker's cost
+ *  (distance times a smooth seeded wobble: lobes, not a disc), worked out once per map. */
+const CELLS = new WeakMap<ForestMap, { key: string; cell: Cell; dist: number; cost: number }[]>();
+function cellsOf(map: ForestMap) {
+  let out = CELLS.get(map);
+  if (out) return out;
+  const d = map.dancefloor, N = map.tuning.party.noisy, L = N.lobeSize, s0 = map.seed + 911;
+  out = [];
+  for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
+    const s = map.soundsystemSpot(cx, cy), site = map.siteOf(cx, cy), dist = Math.hypot(s.x - d.x, s.z - d.z);
+    const n = 0.65 * vnoise(site.x / L, site.z / L, s0) + 0.35 * vnoise(site.x / (L / 2.3), site.z / (L / 2.3), s0 + 1);
+    out.push({ key: `${cx},${cy}`, cell: [cx, cy], dist, cost: dist * (1 + N.wobble * (n - 0.5) * 2) });
+  }
+  CELLS.set(map, out);
+  return out;
+}
+
 export type Picker = "noisy" | "near3" | "near3touch" | "nearest";
 
 /** Choose the area the next wave wakes, by the tuning's picker (?picker= in the URL):
@@ -69,29 +86,18 @@ export type Picker = "noisy" | "near3" | "near3touch" | "nearest";
  *  - near3: of all the dormant areas, the 3 nearest the dancefloor, one at random;
  *  - near3touch: the same among those bordering the party;
  *  - nearest: the nearest dormant area bordering the party. */
-export function pickNext(p: PartyState, map: ForestMap, picker: Picker = map.tuning.party.picker as Picker, candidates?: Cell[], salt = 0): Cell | null {
-  const d = map.dancefloor, N = map.tuning.party.noisy, r = rng(map.seed * 131 + p.wave * 7919 + 3 + salt * 104729);
-  const touching = new Set<string>();
-  for (const k of p.areas.keys()) for (const nk of map.neighbours.get(k) ?? []) if (!p.areas.has(nk)) touching.add(nk);
-  const dormant: { key: string; cell: Cell; dist: number }[] = [];
-  for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
-    const key = `${cx},${cy}`;
-    if (p.areas.has(key) || p.ruined?.has(key)) continue;
-    const s = map.soundsystemSpot(cx, cy);
-    dormant.push({ key, cell: [cx, cy], dist: Math.hypot(s.x - d.x, s.z - d.z) });
-  }
+export function pickNext(p: PartyState, map: ForestMap, picker: Picker = map.tuning.party.picker as Picker, candidates?: Cell[], salt = 0, border?: Set<string>): Cell | null {
+  const N = map.tuning.party.noisy, r = rng(map.seed * 131 + p.wave * 7919 + 3 + salt * 104729);
+  const touching = border ?? new Set<string>(); // (the dormant areas bordering the party: wavePlan keeps its own)
+  if (!border) for (const k of p.areas.keys()) for (const nk of map.neighbours.get(k) ?? []) if (!p.areas.has(nk)) touching.add(nk);
+  const dormant: { key: string; cell: Cell; dist: number; cost: number }[] = [];
+  for (const c of cellsOf(map)) if (!p.areas.has(c.key) && !p.ruined?.has(c.key)) dormant.push(c);
   const frontier = dormant.filter(c => touching.has(c.key));
   const pool = picker === "near3" ? dormant : frontier.length ? frontier : dormant;
   if (!pool.length) return null;
   if (picker === "nearest") { const c = [...pool].sort((a, b) => a.dist - b.dist)[0].cell; candidates?.push(c); return c; }
   if (picker === "noisy") {
-    const L = N.lobeSize, s0 = map.seed + 911;
-    const cost = (c: { cell: Cell; dist: number }) => {
-      const site = map.siteOf(c.cell[0], c.cell[1]);
-      const n = 0.65 * vnoise(site.x / L, site.z / L, s0) + 0.35 * vnoise(site.x / (L / 2.3), site.z / (L / 2.3), s0 + 1);
-      return c.dist * (1 + N.wobble * (n - 0.5) * 2);
-    };
-    let best = [...pool].sort((a, b) => cost(a) - cost(b)).slice(0, Math.max(1, N.candidates));
+    let best = [...pool].sort((a, b) => a.cost - b.cost).slice(0, Math.max(1, N.candidates));
     if (N.spreadFromLast && p.last) {
       const beside = map.neighbours.get(cellKey(p.last)) ?? new Set<string>();
       const away = best.filter(c => !beside.has(c.key));
@@ -136,6 +142,33 @@ export function planAhead(p: PartyState, map: ForestMap): void {
   const cands: Cell[] = [];
   const third = pickSet(woke(v1, p.afterNext, p.wave + 2), map, n, cands);
   p.probable = (p.seeAhead ?? 0) >= 1 && third.length ? third : cands.slice(0, Math.max(1, map.tuning.forecast.probable * n));
+}
+
+/** Every dormant area's wave number (Ed, 2026-10-04: "a big glowing number above the stones", a
+ *  design aid): the waves the seeded picker will choose, run forward from now exactly as spreadWave
+ *  and planAhead would (next, then the after-next, then on), by area key. */
+export function wavePlan(p: PartyState, map: ForestMap): Map<string, number> {
+  const out = new Map<string, number>(), areas = new Map(p.areas), frontier = new Set<string>();
+  // The same picks pickSet makes, but adding to one party and its frontier as it goes (copying
+  // them for every pick cost a frame or three, once a wave).
+  const add = (c: Cell) => {
+    const k = cellKey(c);
+    areas.set(k, dummyArea(c)); frontier.delete(k);
+    for (const nk of map.neighbours.get(k) ?? []) if (!areas.has(nk)) frontier.add(nk);
+  };
+  for (const k of areas.keys()) for (const nk of map.neighbours.get(k) ?? []) if (!areas.has(nk)) frontier.add(nk);
+  for (const c of p.next) { out.set(cellKey(c), p.wave + 1); add(c); }
+  let last = p.next[p.next.length - 1];
+  for (let wave = p.wave + 1; last; wave++) { // wave: the one just woken (in the plan)
+    let picked = false;
+    for (let k = 0; k < p.areasPerWave; k++) {
+      const c = pickNext({ ...p, areas, wave, last }, map, undefined, undefined, k, frontier);
+      if (!c) break;
+      out.set(cellKey(c), wave + 1); add(c); last = c; picked = true;
+    }
+    if (!picked) break;
+  }
+  return out;
 }
 
 /** Where an area's soundsystem stands: in its clearing, beside its centre, inside its own ground. */

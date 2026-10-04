@@ -39,6 +39,8 @@ const DIST = Array.from({ length: 2 * RAD + 1 }, (_, a) => Float32Array.from({ l
 const SM = N + 2 * (RAD + STEP);
 /** How far beyond its edge a path levels the ground, and the plateaus' easing (metres). */
 const BUCKET = 64;
+/** The path segments' index: cell size (m), and floats a segment. */
+const SEG_CELL = 24, SEG = 8;
 
 /** The hills' raw noise at (x, z): centred on 0, between -amplitude and +amplitude. */
 export function hillsAt(x: number, z: number, seed: number, H: HillsTuning): number {
@@ -148,6 +150,8 @@ export class HeightField {
   private seed: number;
   private circles = new Map<number, Circle[]>();
   private pondBuckets = new Set<number>();
+  /** The bucket whose ponds round it were last made sure of. */
+  private pondsAt = [NaN, NaN];
   /** Samples worked out ahead of the window (prepare), by sample: follow takes them as it moves. */
   private ahead = new Map<number, number>();
   /** h before the slope limit, at samples round the window (a ring like the window's, each slot
@@ -157,6 +161,17 @@ export class HeightField {
   private srcJ = new Int32Array(SM * SM);
   /** The steepest slope allowed (m per m), or none. */
   private limit = 0;
+  /** The paths' segments, for levelling across them: per segment its start x, z, its run x, z, the
+   *  run's length squared, the line's half-width, the line and the segment's index (SEG floats
+   *  each), filed by the 24 m cell they reach into (their edge plus PATH_EDGE): one lookup a sample. */
+  private segs = new Float64Array(0);
+  private segGrid = new Map<number, number[]>();
+  /** Each segment's ends' heights (the hills eased to the plateaus), made as they're first needed. */
+  private segH = new Float64Array(0);
+  private lnId = new Float64Array(16);
+  private lnW = new Float64Array(16);
+  private lnS = new Float64Array(16);
+  private lnK = new Float64Array(16);
   /** The window position and heading the strip ahead was last finished for. */
   private prepared = "";
 
@@ -191,6 +206,7 @@ export class HeightField {
       const c = { x, z, r, h: near ? near.h : this.plateaued(x, z, false) };
       placed.push(c); this.addCircle(c);
     };
+    this.indexPaths();
     add(df.x, df.z, floorClearing(T) + 2);
     add(th.x, th.z, T.treehouse.clear + 2);
     for (const g of m.grounds) add(g.x, g.z, g.r + 2);
@@ -255,7 +271,10 @@ export class HeightField {
     let h = this.raw(x, z);
     const bx = Math.floor(x / BUCKET), by = Math.floor(z / BUCKET);
     const reach = Math.ceil((this.PLATEAU_FADE + 16) / BUCKET); // any pond whose plateau could reach here
-    if (ponds) for (let dy = -reach; dy <= reach; dy++) for (let dx = -reach; dx <= reach; dx++) this.ponds(bx + dx, by + dy);
+    if (ponds && (bx !== this.pondsAt[0] || by !== this.pondsAt[1])) {
+      for (let dy = -reach; dy <= reach; dy++) for (let dx = -reach; dx <= reach; dx++) this.ponds(bx + dx, by + dy);
+      this.pondsAt[0] = bx; this.pondsAt[1] = by;
+    }
     const pulls: number[] = [];
     for (const c of this.circles.get(bucketKey(bx, by)) ?? []) {
       if (c.pond && !ponds) continue; // (a pond's own level: the fixed plateaus only)
@@ -265,13 +284,25 @@ export class HeightField {
     return blend(h, pulls);
   }
 
-  /** A path's centreline point's height (the hills eased to the plateaus), kept. */
-  private centreH = new Map<number, number>();
-  private centre(line: number, i: number, p: [number, number]): number {
-    const k = line * 1e6 + i;
-    let h = this.centreH.get(k);
-    if (h === undefined) this.centreH.set(k, (h = this.plateaued(p[0], p[1])));
-    return h;
+  private indexPaths(): void {
+    const lines = this.map.paths.lines, out: number[] = [];
+    lines.forEach((l, li) => {
+      // Chords of every 4th point (8 m; a curve's spline points are 2 m apart, and its chords keep
+      // within half a metre of it): a quarter of the segments to look at, levelled the same.
+      for (let i = 0; i < l.pts.length - 1; i += 4) {
+        const [a, b] = [l.pts[i], l.pts[Math.min(i + 4, l.pts.length - 1)]], ex = b[0] - a[0], ez = b[1] - a[1], id = out.length / SEG, pad = l.half + this.PATH_EDGE;
+        out.push(a[0], a[1], ex, ez, ex * ex + ez * ez || 1, l.half, li, i);
+        for (let cz = Math.floor((Math.min(a[1], b[1]) - pad) / SEG_CELL); cz <= Math.floor((Math.max(a[1], b[1]) + pad) / SEG_CELL); cz++)
+          for (let cx = Math.floor((Math.min(a[0], b[0]) - pad) / SEG_CELL); cx <= Math.floor((Math.max(a[0], b[0]) + pad) / SEG_CELL); cx++) {
+            const k = bucketKey(cx, cz);
+            let list = this.segGrid.get(k);
+            if (!list) this.segGrid.set(k, (list = []));
+            list.push(id);
+          }
+      }
+    });
+    this.segs = Float64Array.from(out);
+    this.segH = new Float64Array((out.length / SEG) * 2).fill(NaN);
   }
 
   /** h before it is stored: the hills eased to the plateaus, then levelled across paths (to the
@@ -279,21 +310,28 @@ export class HeightField {
   sourceAt(x: number, z: number): number {
     if (!this.H.on) return 0;
     const h = this.plateaued(x, z);
-    const P = this.map.paths, hits = P.near(x, z, this.PATH_EDGE);
-    if (!hits.length) return h;
+    const list = this.segGrid.get(bucketKey(Math.floor(x / SEG_CELL), Math.floor(z / SEG_CELL)));
+    if (!list) return h;
     // Every path near pulls to its centreline's height, all at once (order free: where two meet
     // the ground stays smooth). A path's level is the average along its nearby centreline, weighted
     // to the nearest stretch: a single nearest point jumps across a bend's inside (a cliff).
-    const lines = new Map<number, [number, number, number]>(); // line: its pull, sum of weights × level, sum of weights
-    for (const hit of hits) {
-      const l = P.lines[hit.line], a = l.pts[hit.seg], b = l.pts[hit.seg + 1];
-      const w = 1 - smoothstep((hit.d - l.half) / this.PATH_EDGE), k = w * w * w * w + 1e-9;
-      const level = this.centre(hit.line, hit.seg, a) * (1 - hit.u) + this.centre(hit.line, hit.seg + 1, b) * hit.u;
-      const s = lines.get(hit.line);
-      if (s) { s[0] = Math.max(s[0], w); s[1] += k * level; s[2] += k; } else lines.set(hit.line, [w, k * level, k]);
+    const S = this.segs, LI = this.lnId, LW = this.lnW, LS = this.lnS, LK = this.lnK; // per line near: its pull, sum of weights × level, sum of weights
+    let n = 0;
+    for (const id of list) {
+      const o = id * SEG, ax = S[o], az = S[o + 1], ex = S[o + 2], ez = S[o + 3], half = S[o + 5];
+      const u = Math.min(1, Math.max(0, ((x - ax) * ex + (z - az) * ez) / S[o + 4])), d = Math.hypot(x - ax - ex * u, z - az - ez * u);
+      if (d > half + this.PATH_EDGE) continue;
+      const line = S[o + 6], w = 1 - smoothstep((d - half) / this.PATH_EDGE), k = w * w * w * w + 1e-9;
+      if (Number.isNaN(this.segH[id * 2])) { this.segH[id * 2] = this.plateaued(ax, az); this.segH[id * 2 + 1] = this.plateaued(ax + ex, az + ez); }
+      const level = this.segH[id * 2] * (1 - u) + this.segH[id * 2 + 1] * u;
+      let m = 0;
+      while (m < n && LI[m] !== line) m++;
+      if (m === n) { if (n === LI.length) continue; LI[m] = line; LW[m] = 0; LS[m] = 0; LK[m] = 0; n++; }
+      LW[m] = Math.max(LW[m], w); LS[m] += k * level; LK[m] += k;
     }
+    if (!n) return h;
     const pulls: number[] = [];
-    for (const [w, kl, k] of lines.values()) pulls.push(w, kl / k, 1e3);
+    for (let m = 0; m < n; m++) pulls.push(LW[m], LS[m] / LK[m], 1e3);
     // A plateau's level core still wins over a path's (eased back over PATH_EDGE at its edge).
     for (const c of this.circles.get(bucketKey(Math.floor(x / BUCKET), Math.floor(z / BUCKET))) ?? []) {
       const d = Math.hypot(x - c.x, z - c.z);
@@ -316,11 +354,10 @@ export class HeightField {
    *  so neither is their average; a cliff becomes a slope of the limit, half cut, half filled,
    *  and ground already gentler (the bumps) is left exactly as it was. From the samples alone, so
    *  the same however the window came to be where it is. */
-  limited(i: number, j: number): number {
+  limited(i: number, j: number, ready = false): number {
     const h = this.src(i, j);
     if (!(this.limit > 0)) return h;
-    for (let dj = -RAD; dj <= RAD; dj++) for (let di = -RAD; di <= RAD; di++) this.src(i + di, j + dj); // (all there)
-    const V = this.srcV, col = this.cols, L = this.limit;
+    const V = this.srcV, TI = this.srcI, TJ = this.srcJ, col = this.cols, L = this.limit; // (ready: the block's source samples were all made first, ensure)
     for (let k = 0; k <= 2 * RAD; k++) col[k] = (((i + k - RAD) % SM) + SM) % SM;
     let lo = h, hi = h;
     for (let dj = -RAD; dj <= RAD; dj++) {
@@ -328,7 +365,8 @@ export class HeightField {
       for (let di = -RAD; di <= RAD; di++) {
         const d = D[di + RAD];
         if (d === 0) continue;
-        const v = V[row + col[di + RAD]], e = L * d;
+        const at = row + col[di + RAD], ii = i + di, jj = j + dj;
+        const v = ready || (TI[at] === ii && TJ[at] === jj) ? V[at] : this.src(ii, jj), e = L * d; // (made if not yet)
         if (v + e < lo) lo = v + e;
         if (v - e > hi) hi = v - e;
       }
@@ -337,10 +375,57 @@ export class HeightField {
   }
   private cols = new Int32Array(2 * RAD + 1);
 
+  /** Make sure every source sample a block of samples' limits read is there, once for the block
+   *  (asking per sample re-checked 289 neighbours each: the window's move cost 60 to 85 ms headless). */
+  private ensure(i0: number, i1: number, j0: number, j1: number): void {
+    if (!(this.limit > 0)) return;
+    for (let j = j0 - RAD; j < j1 + RAD; j++) for (let i = i0 - RAD; i < i1 + RAD; i++) this.src(i, j);
+  }
+
+  /** limited() for every sample of a block, handed to `put` (same values, much faster): each
+   *  sample's 17 x 17 neighbourhood's lowest and highest source heights come from two sliding
+   *  passes, and where they're closer than the limit allows between neighbours (gentle ground,
+   *  nearly everywhere) the limit can't change the sample, so the 289-neighbour loop only runs on
+   *  steep ground. */
+  private limitedBlock(i0: number, i1: number, j0: number, j1: number, put: (i: number, j: number, v: number) => void): void {
+    const w = i1 - i0, hgt = j1 - j0;
+    if (w <= 0 || hgt <= 0) return;
+    if (!(this.limit > 0)) { for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) put(i, j, this.src(i, j)); return; }
+    this.ensure(i0, i1, j0, j1);
+    const W = w + 2 * RAD, H = hgt + 2 * RAD, V = this.srcV, K = 2 * RAD + 1;
+    const A = new Float64Array(W * H);
+    for (let y = 0; y < H; y++) { const row = ((((j0 - RAD + y) % SM) + SM) % SM) * SM; for (let x = 0; x < W; x++) A[y * W + x] = V[row + ((((i0 - RAD + x) % SM) + SM) % SM)]; }
+    // Along rows, then down columns: each sample's square neighbourhood's lowest and highest.
+    const rmin = new Float64Array(H * w), rmax = new Float64Array(H * w);
+    for (let y = 0; y < H; y++) for (let x = 0; x < w; x++) {
+      let lo = Infinity, hi = -Infinity;
+      for (let k = 0; k < K; k++) { const v = A[y * W + x + k]; if (v < lo) lo = v; if (v > hi) hi = v; }
+      rmin[y * w + x] = lo; rmax[y * w + x] = hi;
+    }
+    const gentle = this.limit * RES * (1 - 1e-6); // the limit times the nearest neighbour's distance
+    for (let y = 0; y < hgt; y++) for (let x = 0; x < w; x++) {
+      let lo = Infinity, hi = -Infinity;
+      for (let k = 0; k < K; k++) { const a = rmin[(y + k) * w + x], b = rmax[(y + k) * w + x]; if (a < lo) lo = a; if (b > hi) hi = b; }
+      const i = i0 + x, j = j0 + y;
+      put(i, j, hi - lo < gentle ? A[(y + RAD) * W + x + RAD] : this.limited(i, j, true));
+    }
+  }
+
+  /** The blocks a window centred on (ci, cj) gains over one centred on (oci, ocj): a column strip
+   *  and a row strip (or the whole window, when it jumped). */
+  private gained(ci: number, cj: number, oci: number, ocj: number, had: boolean): [number, number, number, number][] {
+    const h = N / 2, i0 = ci - h, j0 = cj - h, oi0 = oci - h, oj0 = ocj - h;
+    if (!had || Math.abs(ci - oci) >= N || Math.abs(cj - ocj) >= N) return [[i0, i0 + N, j0, j0 + N]];
+    const out: [number, number, number, number][] = [];
+    if (ci > oci) out.push([oi0 + N, i0 + N, j0, j0 + N]); else if (ci < oci) out.push([i0, oi0, j0, j0 + N]);
+    if (cj > ocj) out.push([i0, i0 + N, oj0 + N, j0 + N]); else if (cj < ocj) out.push([i0, i0 + N, j0, oj0]);
+    return out;
+  }
+
   private put(i: number, j: number): void {
     const k = sampleKey(i, j), pre = this.ahead.get(k);
     if (pre !== undefined) this.ahead.delete(k);
-    const s = ((j % N) + N) % N * N + ((i % N) + N) % N, v = pre ?? this.limited(i, j);
+    const s = ((j % N) + N) % N * N + ((i % N) + N) % N, v = pre ?? this.limited(i, j, true);
     this.half[s] = THREE.DataUtils.toHalfFloat(v);
     this.data[s] = quantise(v);
   }
@@ -351,7 +436,16 @@ export class HeightField {
     if (this.filled && ci === this.ci && cj === this.cj) return false;
     const h = N / 2, i0 = ci - h, j0 = cj - h, oi0 = this.ci - h, oj0 = this.cj - h;
     const was = (i: number, j: number) => this.filled && i >= oi0 && i < oi0 + N && j >= oj0 && j < oj0 + N;
-    if (this.H.on) for (let j = j0; j < j0 + N; j++) for (let i = i0; i < i0 + N; i++) if (!was(i, j)) this.put(i, j);
+    if (this.H.on) {
+      // Samples worked out ahead (prepare) are taken as they are; the rest a block at a time.
+      for (const [a, b, c, d] of this.gained(ci, cj, this.ci, this.cj, this.filled)) {
+        const ahead = this.ahead;
+        let missing = false;
+        for (let j = c; j < d && !missing; j++) for (let i = a; i < b; i++) if (!ahead.has(sampleKey(i, j))) { missing = true; break; }
+        if (missing) this.limitedBlock(a, b, c, d, (i, j, v) => { if (!was(i, j) && !ahead.has(sampleKey(i, j))) ahead.set(sampleKey(i, j), v); });
+      }
+      for (let j = j0; j < j0 + N; j++) for (let i = i0; i < i0 + N; i++) if (!was(i, j)) this.put(i, j);
+    }
     this.ci = ci; this.cj = cj; this.filled = true;
     this.texture.needsUpdate = true;
     HEIGHT_UNIFORMS.uHeightWin.value.set(this.H.on ? RES : 0, N, ci * RES, cj * RES);
@@ -369,15 +463,15 @@ export class HeightField {
     if (!di && !dj) return true;
     const plan = `${this.ci},${this.cj},${di},${dj}`;
     if (plan === this.prepared) return true;
-    const h = N / 2, i0 = this.ci - h, j0 = this.cj - h, ni0 = i0 + di, nj0 = j0 + dj, t0 = performance.now();
-    for (let j = nj0; j < nj0 + N; j++) {
-      const rowNew = j < j0 || j >= j0 + N;
-      for (let i = ni0; i < ni0 + N; i++) {
-        if (!rowNew && i >= i0 && i < i0 + N) { i = i0 + N - 1; continue; } // inside the window now: skip to its far side
-        const k = sampleKey(i, j);
-        if (this.ahead.has(k)) continue;
+    // A few rows (or columns) of the strip at a time, until this frame's budget is spent.
+    const t0 = performance.now(), CH = 16, put = (i: number, j: number, v: number) => { const k = sampleKey(i, j); if (!this.ahead.has(k)) this.ahead.set(k, v); };
+    for (const [a, b, c, d] of this.gained(this.ci + di, this.cj + dj, this.ci, this.cj, true)) {
+      const tall = d - c >= b - a; // chunk along the strip's length
+      for (let s0 = tall ? c : a; s0 < (tall ? d : b); s0 += CH) {
+        const s1 = Math.min(s0 + CH, tall ? d : b), [ca, cb, cc, cd] = tall ? [a, b, s0, s1] : [s0, s1, c, d];
+        if (this.ahead.has(sampleKey(ca, cc)) && this.ahead.has(sampleKey(cb - 1, cd - 1))) continue; // done already
         if (performance.now() - t0 > budgetMs) return false;
-        this.ahead.set(k, this.limited(i, j));
+        this.limitedBlock(ca, cb, cc, cd, put);
       }
     }
     this.prepared = plan;

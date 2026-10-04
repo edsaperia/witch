@@ -98,6 +98,8 @@ export interface Tuning {
   glowFixed?: boolean;
   glowHeight: number;
   /** The witch lit by the world's lights (not her own glow): never darker than lightFloor times her unlit look; coloured lights tint her (lightTint) and rim her edge facing them (lightRim). */
+  /** The ley lines through the runestones in wave order (render/leylines.ts). */
+  leyLines: { on: boolean; links: number; fade: number; brightness: number; width: number[]; height: number[]; valley: number; flow: number[] };
   witch: { lightFloor: number; lightTint: number; lightRim: number; /** Riding the hills smoothly (render/ride.ts): seconds to settle at full speed, seconds looked ahead, metres kept over the ground. */ heightSmooth: number; heightLookAhead: number; heightClearance: number };
   spriteTilt: number;
   artPixelsPerMetre: number;
@@ -126,6 +128,8 @@ export interface Tuning {
     discoHeight: number; discoSize: number; spin: number;
     specks: number; speckBrightness: number; speckReach: number;
   };
+  /** Wave numbers over the rune stones (Ed, 2026-10-04, a design aid): on, a digit's height as a share of the screen's, metres above the stone (or the canopy), and how bright the reached areas' are (0-1). */
+  waveNumbers: { on: boolean; size: number; lift: number; spent: number };
   canopyCutout: { screenFraction: number; edge: number };
   shadows: { on: boolean; strength: number; trees: boolean };
   canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };

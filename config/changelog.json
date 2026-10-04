@@ -9,6 +9,17 @@
         "Creatures enraged by a wave (attacking a soundsystem) have angry red eyes and can't be invited",
         "Beaten creatures no longer vanish: they run off, out of the forest, and are gone for good (yours too: a beaten party animal runs away off its leash)",
         "Creatures notice you from further away: they turn to look at you, curious babies come up to you and shy ones keep their distance; fights pick up from further off too",
+        "Ley lines: a glowing chain runs through the runestones in the order the waves will wake them, from the last wave's stone on through the next few, each link fainter than the one before. They wander along the valleys between the stones, a shimmer flows along them toward the later stone, and over the treetops they rise above the canopy so you can steer by them (?ley=0 hides them)",
+        "Boosting over the hills is smooth again: no more hitches as new ground streams in ahead of you",
+        "Wide undergrowth and thickets no longer float at their downhill end on steep slopes",
+        "The music takes its mood from Ed's two favourite references: dreamy, ethereal choirs and sung notes over the forest, then harder, darker waves with distorted industrial drums, metal clanks, a gritty bass and string stabs, then breakbeats; the bubblegum and chiptune waves have made way (a flash of chiptune still sparkles in the frenzy)",
+        "The music sounds bigger and clearer: crisp 808-style hats, a punchier kick with a click, wide detuned supersaw leads, breathing pads, a darker, deeper reverb, and everything rebalanced so the drums, bass, chords and melodies each have their own space",
+        "A big glowing number over every rune stone: the wave that will wake it (dimmed once the party's there)"
+      ]
+    },
+    {
+      "version": 337,
+      "items": [
         "Flagstones round the dancefloor out past its speakers: rings of mossy old stone where there was bare grass"
       ]
     },
