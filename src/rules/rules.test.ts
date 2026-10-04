@@ -888,6 +888,7 @@ describe("paths, roads and railways", () => {
     expect(bridges).toBeGreaterThan(0);
     for (const b of P.pieces.filter(p => p.id.includes("bridge"))) expect(P.at(b.x, b.z)?.kind).toBeDefined();
     for (const a of P.pieces) for (const b of P.pieces) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(12); // never a row of them
+    for (const p of P.pieces) expect(map.reserved(p.x, p.z, p.r)).toBe(false); // clear of soundsystems, set pieces, grounds
     const forest = new Forest(map);
     for (const p of P.pieces.slice(0, 60)) for (const t of forest.treesNear(p.x, p.z, p.r + 1)) expect(Math.hypot(t.x - p.x, t.z - p.z)).toBeGreaterThanOrEqual(p.r - 1e-6);
   }, 20000); // six maps
