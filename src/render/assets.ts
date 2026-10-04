@@ -4,7 +4,7 @@
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
 import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
-import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PartyWitchArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
+import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { ART_HASH, cacheGet, cachePut, hashText } from "./artCache";
 
@@ -24,6 +24,7 @@ export class AssetLibrary {
   private types = new Map<number, TypeArt>();
   private creatures = new Map<string, CreatureArt>();
   private partyWitches = new Map<string, PartyWitchArt & { atlas: Atlas }>();
+  private party: (PartyArt & { atlas: Atlas }) | undefined;
   private decor: DecorArt | undefined;
   private speakers: (SpeakerArt & { atlas: Atlas }) | undefined;
   private scenes: (SceneArt & { atlas: Atlas }) | undefined;
@@ -171,6 +172,8 @@ export class AssetLibrary {
       this.speakers = { atlas, ...r.result.speakers! };
     } else if (r.job.kind === "pathPieces") {
       this.pieces = { atlas, byId: Object.fromEntries(r.result.pieces!.map(p => [p.id, p])) };
+    } else if (r.job.kind === "partyObjects") {
+      this.party = { atlas, ...r.result.party! };
     } else if (r.job.kind === "partyWitch") {
       this.partyWitches.set(r.job.id, { atlas, ...r.result.witch! });
     } else if (r.job.kind === "decor") {
@@ -235,6 +238,11 @@ export class AssetLibrary {
     const k = `party-${id}`, a = this.creatures.get(k);
     if (!a) this.ask({ kind: "party", id: k, species, seed: id, colour, style: this.style });
     return a;
+  }
+  /** The party objects' art (#38), or undefined (and asked for). */
+  partyObjectArt(): (PartyArt & { atlas: Atlas }) | undefined {
+    if (!this.party) this.ask({ kind: "partyObjects", id: "party", style: this.style });
+    return this.party;
   }
   /** A party witch's art (#37: her look from partyWitch(seed), or seed null for our witch's own),
    *  or undefined (and asked for). Looks repeat after a few, so there are only so many to draw. */

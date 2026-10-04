@@ -159,7 +159,12 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   /** Every scene's pieces (each drawn once) and each scene's layout, as authored and mirrored. */
   | { kind: "scenes"; id: string; style: Style }
   /** A party witch (#37): her look from partyWitch(seed) (or, seed null, our witch's own), in every party pose. */
-  | { kind: "partyWitch"; id: string; seed: number | null; style: Style };
+  | { kind: "partyWitch"; id: string; seed: number | null; style: Style }
+  /** Every party object (#38) in each neon and balloon palette a placement can pick (campfires in their three frames), and the clusters' layouts. */
+  | { kind: "partyObjects"; id: string; style: Style };
+
+/** The party objects in their atlas, by ref ("party:<id>[@<neon>][~<palette>]"): frames (more than one: animated), ground point, decal; and each cluster's layout. */
+export interface PartyArt { pieces: Record<string, { frames: number[]; originX: number; originY: number; decal: boolean }>; layouts: Record<string, { plain: ScenePlace[]; mirror: ScenePlace[] }> }
 
 /** A party witch's frames: each foot pose's frames facing us (the view mirrors them), her hover
  *  frames for flying (towards and away), and each frame's anchors in its sprite's pixels (pair, back, cup, hand, hatTip). */
@@ -185,7 +190,7 @@ export interface DecorPiece { id: string; family: string; bot: number; top: numb
 
 /** A floor tile's pixels: albedo and normal map, w x h. */
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
-export interface ArtResult { px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt }
+export interface ArtResult { px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt }
 
 function sceneSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; scenes: SceneArt } {
   const sprites: Baked[] = [], scenes: SceneArt = { pieces: {}, layouts: {} };
@@ -253,6 +258,30 @@ function decorSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; decor: Dec
   return { sprites, decor };
 }
 
+function partyObjectSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; party: PartyArt } {
+  const sprites: Baked[] = [], party: PartyArt = { pieces: {}, layouts: {} };
+  type Def = { id: string; cls: string; light: string | null; frames: number };
+  const refs = new Set<string>(), palettes = ["neon", "pastel", "metallic", "mixed"];
+  for (const d of Art.PARTY_OBJECTS as Def[]) {
+    const neons = d.light === "neon" ? (Art.PARTY_LIGHT_NEONS as string[]).map(n => "@" + n) : [""];
+    for (const n of neons) for (const p of d.cls === "balloon" ? palettes.map(q => "~" + q) : [""]) refs.add(`party:${d.id}${n}${p}`);
+  }
+  type Layout = { pieces: { sprite: string; dx: number; dz: number; facing?: string }[] };
+  for (const c of Art.PARTY_CLUSTERS as { id: string }[]) {
+    const lay = (mirror: boolean) => (Art.sceneLayout(c.id, st, { mirror }) as Layout).pieces.map(p => ({ ref: p.sprite, dx: p.dx, dz: p.dz, left: p.facing === "left" }));
+    party.layouts[c.id] = { plain: lay(false), mirror: lay(true) };
+    for (const p of party.layouts[c.id].plain) refs.add(p.ref);
+  }
+  for (const ref of refs) {
+    const piece = Art.scenePiece(ref, st) as { sprite: { whole: unknown; origin: { x: number; y: number } }; colours: unknown; decal: boolean; def?: { frames?: number } };
+    const id = ref.replace(/^party:/, "").split("~")[0].split("@")[0], n = (Art.PARTY_BY_ID as Record<string, { frames: number }>)[id]?.frames ?? 1;
+    const frames = [sprites.push(Art.bake(piece.sprite.whole, piece.colours, st, "none", mk) as Baked) - 1];
+    for (let f = 1; f < n; f++) frames.push(sprites.push(Art.bake((Art.partySprite(id, st, { frame: f }) as { whole: unknown }).whole, piece.colours, st, "none", mk) as Baked) - 1);
+    party.pieces[ref] = { frames, originX: piece.sprite.origin.x, originY: piece.sprite.origin.y, decal: piece.decal };
+  }
+  return { sprites, party };
+}
+
 function partyWitchSprites(st: Style, seed: number | null, mk: MakeCanvas): { sprites: Baked[]; witch: PartyWitchArt } {
   const pw = seed === null ? null : (Art.partyWitch(seed) as { look: unknown; colours: (st: Style) => unknown });
   const colours = pw ? pw.colours(st) : Art.witchColours(st), look = pw?.look;
@@ -273,6 +302,7 @@ function partyWitchSprites(st: Style, seed: number | null, mk: MakeCanvas): { sp
 }
 
 export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
+  if (job.kind === "partyObjects") { const { sprites, party } = partyObjectSprites(job.style, mk); return { px: packPixels(sprites, 2048), party }; }
   if (job.kind === "partyWitch") { const { sprites, witch } = partyWitchSprites(job.style, job.seed, mk); return { px: packPixels(sprites, 2048), witch }; }
   if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };
   if (job.kind === "relics") { const { sprites, relics, layouts } = relicSprites(job.style, mk); return { px: packPixels(sprites, 2048), relics, layouts }; }

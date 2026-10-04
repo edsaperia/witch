@@ -30,6 +30,7 @@ import { StringLightsView } from "./strings";
 import { bossBreath, LeashView } from "./leash";
 import { Lasers, type RingSpeaker } from "./lasers";
 import { PartyWitchView } from "./partyWitches";
+import { PartyObjectsView } from "./partyObjects";
 import { BorderView } from "./borders";
 import { MusicIndicator, StoneIndicator } from "./indicator";
 import { Minimap } from "./minimap";
@@ -105,6 +106,8 @@ export class View {
   private lasers: Lasers;
   /** The party witches on the dancefloor, and our witch when she idles into the party. */
   private partyWitchView: PartyWitchView;
+  /** The party objects strewn over partified areas (#38). */
+  private partyObjects: PartyObjectsView;
   private borders: BorderView;
   private music = new MusicIndicator(document.body);
   private nextStones: StoneIndicator[] = [];
@@ -208,6 +211,7 @@ export class View {
     this.strings = new StringLightsView(this.scene, game);
     this.leashView = new LeashView(this.scene, game);
     this.lasers = new Lasers(this.scene, game);
+    this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
     this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
     this.borders = new BorderView(this.scene, game);
     this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp, { solid: true });
@@ -1033,7 +1037,8 @@ export class View {
     // No tufts over a placed sigil's rune (Ed, v233): trampled out to groundCover.sigilClear, or the rune's own size.
     const clear = g.leash.placed.map(p => ({ x: p.x, z: p.z, r: Math.max(t.groundCover.sigilClear, (3 + g.creatures[p.id].level * 0.8) * 0.45) }));
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
-    this.setLights([this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...this.forestLights], w.x, w.z);
+    const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => this.inView(x, z, ww, hh, 4));
+    this.setLights([this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...this.forestLights], w.x, w.z);
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);
     const bob = Math.sin(time * 2.4) * 0.12;
