@@ -7,6 +7,9 @@ import { withGear, height3d, quad3d, owl3d, hedgehog3d, toad3d, raven3d, bat3d, 
 // quad3d, the others by a builder per body plan.
 const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad: toad3d, raven: raven3d, bat: bat3d, mole: mole3d, beetle: beetle3d, snail: snail3d, woodlouse: woodlouse3d, snake: snake3d, moth: moth3d, glowworm: glowworm3d, spider: spider3d })); // body plan -> 3D builder; four-legged species all use quad3d
 
+// Builds one creature's sprite (uncached): its body plan's builder.
+export const buildCreature = (S, level, frame, st, facing = "towards") => S.q ? quad3d(S, level, frame, st, facing) : MODELLED.get(S.plan)(S, level, frame, st, facing);
+
 // ================= the bestiary: 20 forest animals =================
 // plan: body plan. hue/sat/val: base colour. legend: what the legendary form grows.
 // Species with `q` are drawn with the quadruped builder below; q holds its proportions
@@ -110,7 +113,7 @@ export function critter(spId, level, frame, st, facing = "towards", gear = null)
   const key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken].join(",") : ""].join("|");
   let sp = cache.get(key);
   if (!sp) {
-    sp = withGear(g, () => S.q ? quad3d(S, level, frame, st, facing) : MODELLED.get(S.plan)(S, level, frame, st, facing));
+    sp = withGear(g, () => buildCreature(S, level, frame, st, facing));
     if (g?.woken) for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.EYE || sp.m[i] === M.IRIS || sp.m[i] === M.PUPIL) sp.m[i] = M.WOKEN; // angry glowing eyes
     if (cache.size > 600) cache.delete(cache.keys().next().value);
     cache.set(key, sp);

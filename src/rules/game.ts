@@ -2,7 +2,7 @@
 import { beatAt, newBeatClock, waveArrived, waveTempo, type BeatClock } from "./beat";
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState } from "./camera";
 import { MAX_STEP, newClock, type Clock } from "./clock";
-import { heldByCombat, spawnCreatures, stepCreaturesNear, wanderRange, type Creature } from "./creatures";
+import { heldByCombat, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature } from "./creatures";
 import { Forest } from "./forest";
 import { leashPoint, newLeash, stepLeash, type LeashControls, type LeashState } from "./leash";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
@@ -67,6 +67,8 @@ export interface Game {
   koEvents: KnockoutEvent[];
   /** The creatures by home area (rebuilt when one settles somewhere new). */
   byArea?: Map<string, Creature[]> | null;
+  /** The debug arena (?arena=, rules/arena.ts): its spec and the creatures it put down. */
+  arena?: { spec: string; ids: number[] };
   /** The run is over (every soundsystem destroyed): when. */
   over: { at: number } | null;
   /** One-shot presses (rise, sigil, spell...) waiting for the next step. */
@@ -225,6 +227,13 @@ function fixedStep(g: Game, controls: Controls): void {
   const B = g.berries, busy = (id: number) => B.feeding.has(id) || B.evolving.has(id);
   stepGrowth(g, wave);
   stepFights(g, t, dt, busy);
+  // Noticing her (before they step, so a curious baby sets off this step).
+  {
+    const near: Creature[] = [], byArea = (g.byArea ??= indexByArea(g.creatures)), seen = new Set<string>();
+    for (const w of g.witches) { if (w.body.mode !== "ground") continue; const k = cellKey(g.map.cellSafe(w.body.x, w.body.z).cell); for (const a of [k, ...(g.map.neighbours.get(k) ?? [])]) if (!seen.has(a)) { seen.add(a); near.push(...(byArea.get(a) ?? [])); } }
+    const T = COMBAT.temperament;
+    stepNotice(near, g.witches.map(w => ({ x: w.body.x, z: w.body.z, onGround: w.body.mode === "ground" && !w.body.seated && !w.ko })), sp => (T.curious.includes(sp) ? "curious" : T.skittish.includes(sp) ? "skittish" : null), t);
+  }
   stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map, c => dormant(g, c), g.tuning.haze.far + 20 + wanderRange(g.map) * 1.5);
   if (stepWanderers([...g.combat.busy].map(id => g.creatures[id]), g.map, dt)) g.byArea = null; // (those walking home are among combat's busy)
   // (A party animal in a fight is moved by combat, not its leash.)
@@ -281,6 +290,13 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     leashPoint: id => { for (const w of g.witches) { const p = leashPoint(w.leash, id, w.body.x, w.body.z); if (p) return p; } return null; },
     asleep: c => dormant(g, c),
     parked: id => g.witches.some(w => w.leash.placed.some(p => p.id === id)),
+    talkingTo: id => g.witches.findIndex(w => !!w.leash.talk && w.leash.talk.id === id && !w.leash.talk.refused),
+    exit: (x, z) => {
+      const b = g.map.bounds, edges = [[b.minX - 30, z, x - b.minX], [b.maxX + 30, z, b.maxX - x], [x, b.minZ - 30, z - b.minZ], [x, b.maxZ + 30, b.maxZ - z]];
+      const e = edges.reduce((m, q) => (q[2] < m[2] ? q : m));
+      return { x: e[0], z: e[1] };
+    },
+    unseen: (x, z) => g.witches.every(w => Math.hypot(w.body.x - x, w.body.z - z) > t.haze.far + 60),
     inArea: (c, x, z) => { const k = g.map.cellSafe(x, z).cell; return k[0] === c.cell[0] && k[1] === c.cell[1]; },
     hitWitch: (id, at) => {
       const w = g.witches[id];

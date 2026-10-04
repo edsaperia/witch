@@ -4,6 +4,7 @@ import { musicMix } from "./rules/music";
 import { musicCue, type MusicCue } from "./rules/musicPlan";
 import type { MusicStyle } from "./rules/musicScore";
 import musicStyleJson from "../config/music-style.json";
+import { setupArena } from "./rules/arena";
 import { areaUnderWitch, interpolated, newGame, STEP, stepGame } from "./rules/game";
 import { AREA_TYPES } from "./rules/map";
 import { waveCountdown } from "./rules/party";
@@ -91,6 +92,8 @@ if (reliefParam !== null && !isNaN(Number(reliefParam))) tuning.ground = { ...tu
 // ?hills=0: the ground flat again; ?hills=<amplitude>: the rolling ground's swells, in metres.
 const hillsParam = params.get("hills");
 if (hillsParam !== null && !isNaN(Number(hillsParam))) tuning.ground = { ...tuning.ground, hills: { ...tuning.ground.hills, on: Number(hillsParam) > 0, amplitude: Number(hillsParam) > 0 ? Number(hillsParam) : tuning.ground.hills.amplitude } };
+// ?ley=0: no ley lines through the runestones.
+if (params.get("ley") === "0") tuning.leyLines = { ...tuning.leyLines, on: false };
 // ?bare=1: the terrain on its own, to judge the hills, the bumps and the bend (Ed, 2026-10-04): no
 // trees, undergrowth, grass, decor, scenes, relics, path props, string lights, mist or shadows; no
 // point lights, glow or haze, and a low raking moonlight. ?bare=2: a flat grey ground with contour
@@ -116,6 +119,13 @@ const fx = params.get("fx");
 if (fx === "pixel" || fx === "smooth") tuning.fx = fx;
 
 const game = newGame(seed, tuning);
+// ?arena=wolf*4,beetle*3 (Stage 5, a debug arena): hers against the wild in the home clearing,
+// no waves; J sets it up again.
+const arenaParam = params.get("arena");
+if (arenaParam) {
+  setupArena(game, arenaParam);
+  window.addEventListener("keydown", e => { if (e.code === "KeyJ" && !e.repeat) setupArena(game, arenaParam); });
+}
 
 // How often the party spreads: the tuning file's interval (5 minutes), or ?wave=<seconds> (0 or
 // "off": no waves), or what this viewer last picked on the start screen.
@@ -130,6 +140,7 @@ let waveChoice = tuning.party.interval;
 try { const saved = localStorage.getItem("witch.wave"); if (saved !== null && WAVE_CHOICES.includes(+saved)) waveChoice = +saved; } catch { /* storage blocked */ }
 const waveParam = params.get("wave");
 if (waveParam !== null) waveChoice = waveParam === "off" ? 0 : Math.max(0, +waveParam || 0);
+if (arenaParam) waveChoice = 0;
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = loadStyle();

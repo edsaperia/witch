@@ -61,12 +61,29 @@ export interface Creature {
   kx?: number;
   kz?: number;
   slowUntil?: number;
+  /** Stunned until (an armoured creature knocked over: Stage 5 counters). */
+  stunUntil?: number;
+  /** Burrowed (the mole, Stage 5): under the ground until, untouchable. */
+  burrow?: { until: number };
+  /** Leaping (the toad, Stage 5): from, to, when it took off and lands, how high. */
+  leap?: { fx: number; fz: number; tx: number; tz: number; at: number; lands: number; height: number };
   fight?: Fight;
-  /** Beaten in a fight (wild): fleeing from (fleeX, fleeZ) until fleeUntil, then gone. */
+  /** Beaten in a fight: running for (fleeX, fleeZ), just off the map's edge (fleeUntil set), then gone. */
   fleeUntil?: number;
   fleeX?: number;
   fleeZ?: number;
-  /** Gone for the run: a party animal defeated, or a wild one that fled. */
+  /** Stage 5 movement (rules/movement.ts): its velocity in a fight, a charge under way, when its
+   *  signature move is ready again, and when an ambush was sprung. */
+  vx?: number;
+  vz?: number;
+  charge?: { dx: number; dz: number; speed: number; until: number; /** a legend's charge: whom it has trampled */ hit?: number[] };
+  /** A wild legend's move set (Stage 5): where it is in its pattern, and its phase. */
+  legend?: { step: number; phase: 1 | 2 };
+  moveReadyAt?: number;
+  sprung?: number;
+  /** Enraged by a wave (it's besieging or marching on a soundsystem): it can't be invited (Ed's playtest). */
+  enraged?: boolean;
+  /** Gone for the run: a beaten creature that ran off the map. */
   gone?: boolean;
   /** Marching on a soundsystem (its area's key, "home" for the dancefloor): a siege. */
   siege?: string;
@@ -239,3 +256,22 @@ export function stepCreaturesNear(all: Creature[], x: number, z: number, radius:
     stepCreature(c, slow ? dt * 4 : dt, map);
   }
 }
+
+/** Noticing the witch (Ed's playtest, 2026-10-04: a larger responsive area makes them feel alive):
+ *  wild creatures roaming within notice.radius of a witch on the ground turn to look at her when
+ *  they pause; babies of a curious kind come up to about notice.curious metres from her, skittish
+ *  ones keep about notice.skittish off (within their own area: their roam keeps them in it). */
+export function stepNotice(list: Iterable<Creature>, witches: { x: number; z: number; onGround: boolean }[], temper: (species: string) => "curious" | "skittish" | null, t: Tuning): void {
+  const N = t.notice;
+  for (const c of list) {
+    if (c.leashed || c.gone || heldByCombat(c)) continue;
+    let w: { x: number; z: number } | null = null, d = N.radius;
+    for (const v of witches) { if (!v.onGround) continue; const k = Math.hypot(v.x - c.x, v.z - c.z); if (k < d) { d = k; w = v; } }
+    if (!w) continue;
+    const kind = c.level === 0 ? temper(c.species) : null, ux = (w.x - c.x) / (d || 1), uz = (w.z - c.z) / (d || 1);
+    if (kind === "curious" && d > N.curious + 1) { c.tx = w.x - ux * N.curious; c.tz = w.z - uz * N.curious; c.rest = 0; }
+    else if (kind === "skittish" && d < N.skittish) { c.tx = c.x - ux * (N.skittish - d + 2); c.tz = c.z - uz * (N.skittish - d + 2); c.rest = 0; }
+    else if (c.rest > 0) { c.facing = w.x >= c.x ? 1 : -1; c.away = w.z < c.z - 1; }
+  }
+}
+

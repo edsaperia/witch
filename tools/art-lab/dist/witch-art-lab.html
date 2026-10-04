@@ -190,6 +190,12 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
+        <h2>Sleeping legends</h2>
+        <p class="note">Every area's legend asleep, centuries deep: sunk half into its area's earth, head down and eyes shut, its glow gone to stone and old wood, mossed, lichened and grown over, so it passes for a boulder, a log or a mound. Each row: asleep (two frames of a slow breath), the legend awake as it is, then the witch for scale.</p>
+        <div class="sheet-wrap"><canvas id="legendSheet" width="420" height="160"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
         <h2>Party objects</h2>
         <p class="note">The party objects scattered over partified areas, at night as in the game: litter, the light sources (neon pieces in a different neon each), furniture and set dressing, with the witch for scale. Then a sample patch of party ground: clusters and loose objects strewn as the prototype might. Last, balloons unlit and then beside a lantern: they don't glow, they catch the light.</p>
         <div class="sheet-wrap"><canvas id="partyObjectsSheet" width="420" height="160"></canvas></div>
@@ -1278,12 +1284,13 @@ const PITCH = .52;                       // the camera looks down about 30°
 
 // Renders a model to a Sprite `height` art pixels tall (measured over the parts not marked extra).
 // With `scale` (pixels per model unit) instead, several models share one scale.
-function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12 } = {}) {
+// With `measure`, it only works out the scale (pixels per unit) `height` would give: { s }.
+function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false } = {}) {
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), spp = Math.sin(pitch);
   const toWorld = p => [p[0] * cy - p[2] * sy, p[1], p[0] * sy + p[2] * cy];
   const toModel = p => [p[0] * cy + p[2] * sy, p[1], -p[0] * sy + p[2] * cy];
   const D = [0, -spp, -cp], U = [0, cp, -spp], R = [1, 0, 0], B = [0, spp, cp];
-  const k = model.blend;
+  const k = model.blend, clipY = model.clipY ?? -Infinity; // model.clipY: everything below it is under the ground, cut away (a sleeping legend, sunk)
   // parts in world space, each with a bounding sphere
   const parts = model.parts.map(q => {
     if (q.type === "ell") { const cw = toWorld(q.c), axes = q.axes.map(toWorld), rad = Math.max(...q.r); return { ...q, cw, axes, bc: cw, br: rad + (q.rough || 0) * 1.5 }; }
@@ -1298,6 +1305,7 @@ function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ??
   const body = all.filter(q => !q.extra && !q.cut);
   const u0b = Math.min(...body.map(q => q.u0 + (q.uw ? 0 : k))), u1b = Math.max(...body.map(q => q.u1 - (q.uw ? 0 : k)));
   const s = scale ?? height / Math.max(1e-6, u1b - u0b);
+  if (measure) return { s };
   const X0 = Math.min(...all.map(q => q.x0)), X1 = Math.max(...all.map(q => q.x1)), U0 = Math.min(...all.map(q => q.u0)), U1 = Math.max(...all.map(q => q.u1));
   const W = Math.ceil((X1 - X0) * s) + 4, H = Math.ceil((U1 - U0) * s) + 2, sp = new Sprite(W, H);
   const depth = new Float32Array(W * H).fill(Infinity), grp = new Int16Array(W * H).fill(-1);
@@ -1328,7 +1336,7 @@ function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ??
     if (vol.length) {
       // group the candidates; the field is a smooth union within a group, a hard union across
       const groups = new Map(); for (const q of vol) { let g = groups.get(q.group); if (!g) groups.set(q.group, g = []); g.push(q); }
-      const gfield = (qs, p) => { let d = Infinity; for (const q of qs) if (!q.cut) d = d === Infinity ? sdf(q, p) : smin(d, sdf(q, p)); for (const q of qs) if (q.cut) d = Math.max(d, -sdf(q, p)); return d; };
+      const gfield = (qs, p) => { let d = Infinity; for (const q of qs) if (!q.cut) d = d === Infinity ? sdf(q, p) : smin(d, sdf(q, p)); for (const q of qs) if (q.cut) d = Math.max(d, -sdf(q, p)); if (clipY > -Infinity) d = Math.max(d, clipY - p[1]); return d; };
       let t = Math.max(0, tmin);
       for (let step = 0; step < 96 && t < tmax; step++) {
         const p = v3.add(O, v3.mul(D, t));
@@ -1349,6 +1357,7 @@ function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ??
       const dn = dot(D, f.nw); if (Math.abs(dn) < 1e-4) continue;
       const t = dot(sub(f.cw, O), f.nw) / dn; if (t >= hitT) continue;
       const p = v3.add(O, v3.mul(D, t)), rel = sub(p, f.cw), sS = dot(rel, f.uw) / f.su, tT = dot(rel, f.vw) / f.sv;
+      if (p[1] < clipY) continue; // under the ground
       if (Math.abs(sS) > 1 || Math.abs(tT) > 1) continue;
       const m = f.mask(sS, tT); if (!m) continue;
       let n = dn > 0 ? v3.mul(f.nw, -1) : f.nw; n = norm(v3.add(n, v3.add(v3.mul(f.uw, sS * f.bend), v3.mul(f.vw, tT * f.bend * .5))));
@@ -2681,6 +2690,12 @@ const beef = (m, k) => { for (const q of m.parts) { if (q.type === "ell") q.r = 
 // sunglasses or fancy shoes (Ed). Each builder records anchors on its model (head, eyes, neck,
 // feet); gearUp adds the parts before it is drawn. The gear in force is set by critter.
 let GEAR = null;
+// A creature's form, if not its ordinary one: a hook that draws the finished model instead of
+// render (legends.js: the sleeping legends, sunk and overgrown, waking, and woken). It returns the
+// sprite; form.motes says whether the glowing motes still float round it.
+let FORM = null;
+function withForm(form, f) { const was = FORM; FORM = form; try { return f(); } finally { FORM = was; } }
+const drawForm = (m, o, S, level) => FORM ? FORM(m, o, S, level) : render(m, o).sp, formMotes = () => !FORM || FORM.motes;
 function withGear(gear, f) { const was = GEAR; GEAR = gear; try { return f(); } finally { GEAR = was; } }
 const star = (s, t) => { const a = Math.atan2(t, s), r = Math.hypot(s, t); return r < .55 + .4 * Math.pow(Math.abs(Math.cos(a * 2.5 + Math.PI / 2)), 3); };
 const heart = (s, t) => { const x = s * 1.2, y = -t * 1.2 + .25; return Math.pow(x * x + y * y - .6, 3) - x * x * y * y * y < 0; };
@@ -2816,8 +2831,8 @@ function quad3d(S, level, frame, st, facing = "towards") {
   }
   if (has("ribbons")) for (let i = 0; i < 3; i++) { const pts = []; for (let k = 0; k < 9; k++) { const t = k / 8; pts.push([len * (.5 - t * 2.2), top + .05 + i * .1 + t * (.25 + i * .12) + Math.sin(t * 6 + frame + i) * .07, (i - 1) * .18, .04 * (1 - t * .6)]); } m.chain(pts, i % 2 ? M.MAGIC2 : M.MAGIC, { group: 90 + i, extra: true }); }
   gearUp(m);
-  const { sp } = render(m, { height: drawHeight(level, st, q.hgt), facing });
-  if (legend) glowMotes(sp, S.id.length * 7919); else if (level === 2) glowMotes(sp, S.id.length * 7919, 3);
+  const sp = drawForm(m, { height: drawHeight(level, st, q.hgt), facing }, S, level);
+  if (formMotes()) { if (legend) glowMotes(sp, S.id.length * 7919); else if (level === 2) glowMotes(sp, S.id.length * 7919, 3); }
   return sp;
 }
 
@@ -2884,8 +2899,8 @@ function owl3d(S, level, frame, st, facing = "towards") {
   m.anchors.neck = { c: [0, hy - hr * .75, 0], r: hr * .85, dir: [0, 1, 0] };
   if (level >= 2) beef(m, 1.18);
   gearUp(m);
-  const { sp } = render(m, { height: drawHeight(level, st, .95), facing });
-  if (legend) glowMotes(sp, 31); else if (level === 2) glowMotes(sp, 31, 3);
+  const sp = drawForm(m, { height: drawHeight(level, st, .95), facing }, S, level);
+  if (formMotes()) { if (legend) glowMotes(sp, 31); else if (level === 2) glowMotes(sp, 31, 3); }
   return sp;
 }
 
@@ -2898,8 +2913,8 @@ const shadow = (m, x, w) => m.ell([x, .005, 0], [w, .005, w * .6], M.NOSE, { gro
 function finish(m, S, level, st, k, facing) {
   if (level >= 2) beef(m, 1.18); // the adult's and legend's heavier build
   gearUp(m);
-  const { sp } = render(m, { height: drawHeight(level, st, k), facing });
-  if (level === 3) glowMotes(sp, S.id.length * 131); else if (level === 2) glowMotes(sp, S.id.length * 131, 3);
+  const sp = drawForm(m, { height: drawHeight(level, st, k), facing }, S, level);
+  if (formMotes()) { if (level === 3) glowMotes(sp, S.id.length * 131); else if (level === 2) glowMotes(sp, S.id.length * 131, 3); }
   return sp;
 }
 const crown3d = (m, c, w) => { m.ell(c, [w, w * .35, w], M.MAGIC, { group: 95, extra: true, paint: p => p[1] > c[1] ? M.MAGIC2 : undefined }); for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; m.ell(v3.add(c, [Math.cos(a) * w * .8, w * .55, Math.sin(a) * w * .8]), [w * .38, w * .12, w * .12], M.MAGIC, { dir: [0, 1, 0], up: [1, 0, 0], group: 96, extra: true }); } };
@@ -3099,6 +3114,9 @@ function spider3d(S, level, frame, st, facing = "towards") {
 // quad3d, the others by a builder per body plan.
 const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad: toad3d, raven: raven3d, bat: bat3d, mole: mole3d, beetle: beetle3d, snail: snail3d, woodlouse: woodlouse3d, snake: snake3d, moth: moth3d, glowworm: glowworm3d, spider: spider3d })); // body plan -> 3D builder; four-legged species all use quad3d
 
+// Builds one creature's sprite (uncached): its body plan's builder.
+const buildCreature = (S, level, frame, st, facing = "towards") => S.q ? quad3d(S, level, frame, st, facing) : MODELLED.get(S.plan)(S, level, frame, st, facing);
+
 // ================= the bestiary: 20 forest animals =================
 // plan: body plan. hue/sat/val: base colour. legend: what the legendary form grows.
 // Species with `q` are drawn with the quadruped builder below; q holds its proportions
@@ -3202,7 +3220,7 @@ function critter(spId, level, frame, st, facing = "towards", gear = null) {
   const key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken].join(",") : ""].join("|");
   let sp = cache.get(key);
   if (!sp) {
-    sp = withGear(g, () => S.q ? quad3d(S, level, frame, st, facing) : MODELLED.get(S.plan)(S, level, frame, st, facing));
+    sp = withGear(g, () => buildCreature(S, level, frame, st, facing));
     if (g?.woken) for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.EYE || sp.m[i] === M.IRIS || sp.m[i] === M.PUPIL) sp.m[i] = M.WOKEN; // angry glowing eyes
     if (cache.size > 600) cache.delete(cache.keys().next().value);
     cache.set(key, sp);
@@ -5697,11 +5715,29 @@ const CAMPFIRES = {
   "bonfire-ashes": { cls: "furniture", cold: true, desc: "the ashes of a bonfire: a heap of charred ends in a wide grey ring", build(m) { m.ell([0, .03, 0], [.85, .05, .72], M.STONED, { group: 1, paint: p => ctCell(p, 14) < .25 ? M.STONE : ctCell(p, 9, 3) < .15 ? M.NOSE : undefined }); for (let i = 0; i < 6; i++) { const a = i * 1.1; ctBar(m, [Math.cos(a) * .6, .04, Math.sin(a) * .5], [Math.cos(a + .3) * .1, .18, Math.sin(a + .3) * .1], 2 + (i % 2), .05, M.BARKD, p => ctCell(p, 12) < .5 ? M.NOSE : undefined); } } },
 };
 
+
+// ---------------- the home stretch (Ed's playtest: decorate the home area between the dancefloor and the home soundsystem) ----------------
+// A small set, class "home", for the prototype to place along that stretch, never on the dancefloor itself: a path edge of stepping stones,
+// a glowing mushroom ring, warm lantern posts and little path lights, a speaker stack, a crate stack, flower pots, a signpost (blank arrows
+// and a glowing note, no words) and a fairy-lit branch arch to walk under. Same conventions as the rest: glow and light (neon or warm),
+// pointLight on the lantern posts.
+const HOME = {
+  "stepping-stones": { desc: "a curve of flat stepping stones set in the moss, to edge the path", build(m) { for (let i = 0; i < 5; i++) { const t = i / 4, x = -.9 + t * 1.8, z = Math.sin(t * Math.PI) * .25; m.ell([x, .02, z], [.16 + ctHash(i) * .04, .035, .13], M.STONE, { group: 1 + (i % 2), rough: .006, paint: p => ctCell(p, 12, i) < .2 ? M.MOSS : undefined }); } } },
+  "mushroom-ring": { desc: "a fairy ring of little mushrooms, their caps glowing softly", glow: true, light: "neon", build(m) { for (let i = 0; i < 11; i++) { const a = i / 11 * Math.PI * 2, x = Math.cos(a) * .45, z = Math.sin(a) * .36, h = .05 + ctHash(i, 2) * .05; m.seg([x, 0, z], [x, h, z], .012, .01, M.CLOTH, { group: 1 }); m.ell([x, h + .012, z], [.035, .018, .035], i % 3 ? M.MAGIC : M.MAGIC2, { group: 2 + (i % 2) }); } m.ell([0, .004, 0], [.42, .004, .33], M.LEAF3, { group: 9 }); } },
+  "lantern-post": { desc: "a wooden lantern post, an iron lantern on its arm glowing warm", glow: true, light: "warm", bob: [.02, 3.0], pointLight: { rgb: [255, 186, 96], radius: 4, height: 1.4 }, build(m) { m.box([0, .7, 0], [.05, .7, .05], M.WOOD, { round: .015, group: 1, paint: ctPlank(7, .2) }); m.box([.12, 1.36, 0], [.15, .025, .025], M.WOOD, { round: .01, group: 1 }); m.seg([.24, 1.33, 0], [.24, 1.26, 0], .004, .004, M.NOSE, { group: 2 }); m.box([.24, 1.16, 0], [.06, .09, .06], M.BODY3, { round: .01, group: 3, paint: p => Math.abs(p[0] - .24) < .045 && Math.abs(p[1] - 1.16) < .07 && Math.abs(p[2]) > .045 ? M.GLOW : undefined }); m.ell([.24, 1.16, 0], [.03, .05, .03], M.RUNE, { group: 4, extra: true }); m.seg([.24, 1.25, 0], [.24, 1.3, 0], .065, .01, M.BODY3, { group: 3 }); } },
+  "path-lights": { desc: "little garden stake lights along a path edge, glowing warm", glow: true, light: "warm", build(m) { for (let i = 0; i < 4; i++) { const x = -.75 + i * .5, z = (i % 2) * .08; ctBar(m, [x, 0, z], [x, .2, z], 1, .012, M.BODY3, undefined); m.ell([x, .24, z], [.035, .04, .035], M.GLOW, { group: 2 + i, paint: p => p[1] > .25 ? M.RUNE : undefined }); m.seg([x, .27, z], [x, .3, z], .045, .01, M.BODY3, { group: 6 }); } } },
+  "speaker-stack": { desc: "a small stack of speaker cabinets, their cone rims glowing in a neon", glow: true, light: "neon", build(m) { for (const [y, w, h, g] of [[.32, .28, .32, 1], [.84, .24, .2, 3]]) { m.box([0, y, 0], [w, h, .22], M.BODY3, { round: .025, group: g }); const cones = h > .25 ? [[0, y - .1, .14], [0, y + .14, .07]] : [[-.1, y, .06], [.1, y, .06]]; for (const [cx, cy, r] of cones) { m.ell([cx, cy, .23], [r, r, .045], M.NOSE, { group: g + 1, paint: p => Math.hypot(p[0] - cx, p[1] - cy) > r * .72 ? M.MAGIC : undefined }); } } } },
+  "crate-stack": { desc: "wooden crates stacked by the path, one full of records", build(m) { const crate = (c, g) => m.box(c, [.24, .17, .19], M.WOOD, { round: .015, group: g, paint: p => ((p[1] - c[1] + 1) * 9 % 1) < .2 && Math.abs(p[1] - c[1]) < .14 ? M.NOSE : ctPlank(7, .1)(p) }); crate([0, .17, 0], 1); crate([.46, .17, .05], 2); crate([.2, .51, .02], 3); for (let i = 0; i < 6; i++) m.box([.2 - .15 + i * .06, .72, .02], [.012, .1, .14], i % 2 ? M.BODY3 : M.TOP, { round: .004, group: 4 }); } },
+  "flower-pots": { desc: "terracotta pots of flowers clustered by the path", build(m) { [[0, 0, .14, M.BODY], [.3, .1, .1, M.POM], [-.25, .12, .11, M.TOP]].forEach(([x, z, r, fl], i) => { ctCyl(m, [x, 0, z], [x, r * 1.6, z], r, M.BODY2, 1 + i, { paint: p => p[1] > r * 1.45 ? M.STRAW : undefined, end: M.BARK2 }); for (let k = 0; k < 5; k++) { const a = k * 1.3 + i, d = r * .5; const c = [x + Math.cos(a) * d, r * 1.6 + .08 + ctHash(k, i) * .1, z + Math.sin(a) * d * .8]; m.seg([x + Math.cos(a) * d * .5, r * 1.6, z], c, .008, .006, M.LEAF2, { group: 10 + i }); m.ell(c, [.03, .025, .03], fl, { group: 14 + i }); } m.ell([x, r * 1.6 + .03, z], [r * .9, .05, r * .9], M.LEAF, { group: 18 + i }); }); } },
+  "signpost": { desc: "a wooden signpost, two blank arrow boards pointing the way, a glowing note painted on one (no words)", glow: true, light: "neon", build(m) { m.box([0, .7, 0], [.045, .7, .045], M.WOOD, { round: .015, group: 1, paint: ctPlank(7, .3) }); const arrow = (y, dir, g, note) => m.flat([dir * .3, y, .05], [1, 0, 0], [0, 1, 0], .36, .13, (s, t) => { const u = s * dir; if (u > .7 && Math.abs(t) > (1 - u) * 3.3) return null; if (u < -.95) return null; if (note && Math.hypot(u - .05, t + .2) < .22) return M.MAGIC; if (note && Math.abs(u - .22) < .06 && t > -.2 && t < .75) return M.MAGIC; return Math.abs(Math.sin(t * 9)) > .95 ? M.BARK2 : M.WOOD; }, { group: g, bend: .05 }); arrow(1.25, 1, 2, true); arrow(1.0, -1, 3, false); } },
+  "branch-arch": { desc: "an arch of bent branches over the path, fairy lights wound through it", glow: true, light: "warm", bob: [.015, 3.4], build(m) { const pts = []; for (let i = 0; i <= 10; i++) { const a = Math.PI * (1 - i / 10); pts.push([Math.cos(a) * .95, Math.sin(a) * 1.8, 0]); } m.chain(pts.map((p, i) => [...p, .06 - Math.abs(i - 5) * .006]), M.TRUNK, { group: 1, rough: .008 }); for (let i = 0; i < 6; i++) { const a = Math.PI * (.1 + i * .16); m.ell([Math.cos(a) * .95, Math.sin(a) * 1.8, .04], [.12, .07, .1], M.LEAF, { group: 2 + (i % 2), rough: .02 }); } pString(m, pts.map((p, i) => v3.add(p, [0, Math.sin(i * 1.9) * .05, .07])), 12, 5); } },
+};
+
 // ---------------- the table ----------------
-const SIZE = { litter: 1.5, balloon: 1.2, small: 1.2, furniture: 1, set: 1 }; // litter a touch larger than life, to read at all
-const PARTY_CLASSES = ["litter", "balloon", "small", "furniture", "set"];
+const SIZE = { litter: 1.5, balloon: 1.2, small: 1.2, furniture: 1, set: 1, home: 1 }; // litter a touch larger than life, to read at all
+const PARTY_CLASSES = ["litter", "balloon", "small", "furniture", "set", "home"];
 const bobOf = (id, b) => b && { amplitude: b[0], period: b[1], phase: +((id.length * .137 + id.charCodeAt(id.length - 1) * .071) % 1).toFixed(2) };
-const PARTY_OBJECTS = [...Object.entries(PARTY), ...Object.entries(BALLOONS).map(([id, d]) => [id, { cls: "balloon", ...d }]), ...Object.entries(CAMPFIRES)].map(([id, d]) => ({ id, size: SIZE[d.cls], split: null, glow: false, decal: false, light: null, frames: 1, ...d, bob: bobOf(id, d.bob) }));
+const PARTY_OBJECTS = [...Object.entries(PARTY), ...Object.entries(BALLOONS).map(([id, d]) => [id, { cls: "balloon", ...d }]), ...Object.entries(CAMPFIRES), ...Object.entries(HOME).map(([id, d]) => [id, { cls: "home", ...d }])].map(([id, d]) => ({ id, size: SIZE[d.cls], split: null, glow: false, decal: false, light: null, frames: 1, ...d, bob: bobOf(id, d.bob) }));
 const PARTY_BY_ID = Object.fromEntries(PARTY_OBJECTS.map(d => [d.id, d]));
 // The party neons (the sigils' neon palette) a neon piece can be baked in; warm light is candle gold.
 const PARTY_LIGHT_NEONS = Object.keys(NEON);
@@ -5743,6 +5779,8 @@ const CLUSTERS = {
   "dj-corner": { desc: "a little DJ booth with a neon star and glowsticks round it", pieces: [["dj-booth", 0, 0, undefined, "magenta"], ["neon-star", -1.3, -.3, undefined, "cyan"], ["glowsticks-strewn", .2, .9, undefined, "acid"], ["cups", -.6, .8], ["led-cube", 1.5, .7, undefined, "pink"]] },
   "campfire-circle": { desc: "a campfire with a kettle on, camping chairs and a hay seat round it", pieces: [["campfire-kettle", 0, 0], ["camping-chair", -.9, -.2], ["camping-chair", .9, -.3, "left"], ["hay-seat", 0, .9], ["cans", .6, .7], ["party-hat", -.5, .7]] },
   "balloon-spot": { desc: "balloons on a stake, a stray, a deflated one, confetti and a fallen party hat", pieces: [["confetti", 0, 0], ["balloons-stake", .1, -.2], ["balloon-single", .9, -.5], ["party-hat", -.3, .2], ["balloon-deflated", .4, .3], ["streamers", -.2, -.4]] },
+  "home-path": { desc: "a stretch of the home path's edge: stepping stones, path lights, flower pots, a lantern post", pieces: [["stepping-stones", 0, 0], ["path-lights", .3, .7], ["flower-pots", -1.4, .5], ["lantern-post", 1.5, -.4], ["mushroom-ring", -.6, -.8]] },
+  "home-corner": { desc: "a corner by the home soundsystem: a speaker stack on crates' side, a signpost, a fairy ring", pieces: [["speaker-stack", 0, 0, undefined, "cyan"], ["crate-stack", 1.0, .3], ["signpost", -1.1, .2, undefined, "pink"], ["mushroom-ring", .2, 1.1, undefined, "acid"]] },
   "fireside": { desc: "a campfire with log seats, camping chairs, cups, a rug, and balloons tied nearby", pieces: [["campfire-logs", 0, 0], ["camping-chair", 1.5, .9, "left"], ["picnic-rug", -1.4, .9], ["cups", .4, 1.4], ["balloons-post", -1.6, -1.1], ["balloon-half", .9, 1.6]] },
   "bonfire-night": { desc: "a bonfire with hay seats round it, cans, glowsticks and a bunch of balloons on a post", pieces: [["bonfire", 0, 0], ["hay-seat", -1.6, .6], ["hay-seat", 1.5, .8, "left"], ["cans", .3, 1.4], ["glowsticks-strewn", -.6, 1.5, undefined, "acid"], ["balloons-post", 2.0, -.9, "left"]] },
 };
@@ -5760,6 +5798,237 @@ function partyPatch(seed, layout, { w = 420, h = 250, clusters = 5, loose = 46 }
   for (let i = 0; i < loose; i++) { const d = pool[Math.floor(r() * pool.length)], n = PARTY_LIGHT_NEONS[Math.floor(r() * PARTY_LIGHT_NEONS.length)], x = 10 + r() * (w - 20), y = 14 + r() * (h - 20); out.push({ ref: `party:${d.id}${d.light === "neon" ? "@" + n : ""}`, x, y, flip: r() < .5, depth: y }); }
   return out;
 }
+
+
+// ---- inlined from art/legends.js ----
+// Witch sleeping legends (Ed, 2026-10-04): every area has a legend of its species asleep in it,
+// "ancient creatures, half sunken into the ground, they could almost be mistaken for scenery.
+// They have been sleeping for centuries." Each species' legend is drawn asleep from its own 3D
+// model (creatures3d.js) at the legend's scale, in 2 frames of a slow breath: sunk to its flanks
+// in a mound of its area's earth, head down, eyes shut, its glow gone to stone and wood, mossed,
+// lichened and grown over (ferns, grass, mushrooms, roots, a sapling or a nest), in its area's
+// colours: a boulder, a log or a mound until you know. No waking sequence or awake redraw yet
+// (Ed, 2026-10-04: "just the sleeping form"); awake it is the ordinary legend (critter level 3).
+// legendForm(id, st, { frame, facing }) -> { sp, colours }; legendSprites bakes the lot.
+
+
+
+
+
+
+const LEGEND_STATES = ["asleep"];
+const LEGEND_FRAMES = { asleep: 2 };
+
+// How each species sleeps. ground: the ground line in model units (y up from its feet; for the
+// four-legged, a share of the way up from its belly to its back, `sink`). droop: how far its head
+// comes down to rest on the ground. drop: groups not drawn while it sleeps (spirit wings, manes,
+// ribbons: its magic is gone into it). lid: the closed eye's colour. wood: groups whose glow turns
+// to old wood (antlers and horns, like dead branches). over: what has grown over it, by count:
+// moss and lichen (shares of its surface), ferns, grass, mushrooms (brackets: on its flanks),
+// roots, stones, a sapling ("broad" or "pine"), a nest, moss hanging from its antlers. eyes: the groups its
+// glowing legend eyes are in (1 unless given).
+// Batch 1 (the bug hunter's first slice): bat, marten, elk, stoat, owl, snail.
+const LEGEND_POSES = {
+  bat: { ground: .3, droop: 0, drop: [0, 10, 11], cloak: true, over: { moss: .3, lichen: .14, ferns: 1, grass: 2, mushrooms: 2, roots: 2, stones: 4 } },
+  marten: { sink: .45, droop: 1, drop: [60, 61], over: { moss: .45, lichen: .05, ferns: 3, grass: 3, mushrooms: 3, roots: 3, stones: 1, sapling: "pine" } },
+  elk: { sink: .42, droop: .9, drop: [89], wood: [11, 12], over: { moss: .6, lichen: .04, ferns: 3, grass: 6, mushrooms: 2, roots: 3, stones: 2, beard: 5 } },
+  stoat: { sink: .4, droop: 1, drop: [60, 61, 90, 91, 92], over: { moss: .3, lichen: .16, ferns: 1, grass: 3, mushrooms: 0, roots: 2, stones: 5 } },
+  owl: { ground: .58, droop: 0, drop: [40, 50, 95, 96, 97, 98, 99, 100, 101], lid: M.BELLY, over: { moss: .4, lichen: .06, ferns: 2, grass: 2, mushrooms: 3, brackets: 4, roots: 2, stones: 0, nest: true } },
+  snail: { ground: .2, droop: 1, drop: [5], eyes: [5], over: { moss: .4, lichen: .08, ferns: 3, grass: 3, mushrooms: 4, roots: 1, stones: 1 } },
+};
+const LEGEND_IDS = Object.keys(LEGEND_POSES);
+const legendArea = id => AREAS.find(a => a.creature === id) || AREAS[0];
+
+// ---- the overgrowth's parts (all `extra`, so they don't count in its height) ----
+let lgGroup = 200; // each piece its own group: drawn with an outline where it crosses the body
+const lgNext = () => lgGroup++;
+// a fern frond: s across, t from the base (-1) to the tip (1); leaflets in pairs, a pale rib
+const lgFern = (mat, mat2) => (s, t) => {
+  const u = (t + 1) / 2, half = .95 * Math.sin(Math.PI * Math.min(1, .08 + u * .95)) * (1 - .5 * u);
+  if (Math.abs(s) > half || u > .98) return null;
+  if (Math.abs(s) < .1) return mat2;
+  const leaf = (u * 11 + Math.abs(s) * 1.6) % 1;
+  return leaf < .62 ? (Math.abs(s) > half * .55 ? mat2 : mat) : null;
+};
+function lgAddFern(m, p, size, r) {
+  const n = 4 + Math.floor(r() * 3), a0 = r() * 6.28;
+  for (let i = 0; i < n; i++) {
+    const a = a0 + i / n * 6.28, out = [Math.cos(a), 0, Math.sin(a)], up = v3.norm(v3.add(v3.mul(out, .9), [0, 1.1 + r() * .4, 0])), across = v3.norm(v3.cross(up, out));
+    m.flat(v3.add(p, v3.mul(up, size * .5)), across, up, size * .22, size * .5, lgFern(i % 2 ? M.LEAF : M.LEAF2, M.LEAF2), { group: lgNext(), extra: true, bend: .5 });
+  }
+}
+function lgAddGrass(m, p, size, r) {
+  const g = lgNext();
+  for (let i = 0; i < 5; i++) { const a = r() * 6.28, h = size * uni(r, .6, 1), lean = uni(r, .1, .35); m.seg(p, v3.add(p, [Math.cos(a) * h * lean, h, Math.sin(a) * h * lean]), size * .05, size * .015, i % 3 ? M.LEAF2 : M.STRAW, { group: g, extra: true }); }
+}
+function lgAddMushrooms(m, p, size, r) {
+  const g = lgNext();
+  for (let i = 0; i < 2 + Math.floor(r() * 2); i++) {
+    const q = v3.add(p, [uni(r, -1, 1) * size * .5, 0, uni(r, -1, 1) * size * .5]), h = size * uni(r, .35, .7), cr = size * uni(r, .2, .32);
+    m.seg(v3.add(q, [0, -size * .1, 0]), v3.add(q, [0, h, 0]), cr * .3, cr * .25, M.CLOTH, { group: g, extra: true });
+    m.ell(v3.add(q, [0, h, 0]), [cr, cr * .5, cr], M.FLOWER, { group: g, extra: true, paint: p2 => spotty(p2, 60, .12) ? M.CLOTH : undefined });
+  }
+}
+function lgAddBracket(m, p, out, size, r) { // shelf fungi on a flank
+  const g = lgNext();
+  for (let i = 0; i < 3; i++) { const q = v3.add(p, [0, -i * size * .35, 0]), w = size * (1 - i * .25); m.ell(v3.add(q, v3.mul(out, w * .3)), [w * .55, w * .14, w * .45], i % 2 ? M.CLOTH : M.FLOWER, { group: g, extra: true }); }
+}
+function lgAddRoot(m, p, out, G, size, r) { // a root over its flank and into the ground
+  const g = lgNext(), down = Math.max(.05, p[1] - G);
+  const mid = v3.add(p, v3.add(v3.mul(out, size * .45), [0, -down * .45, 0])), end = v3.add(p, v3.add(v3.mul(out, size * 1.1), [0, -down - size * .3, 0]));
+  m.chain([[...p, size * .09], [...mid, size * .08], [...end, size * .06]], r() < .5 ? M.TRUNK : M.BARKD, { group: g, extra: true });
+}
+function lgAddStone(m, p, size, r) { m.ell(p, [size * uni(r, .8, 1.2), size * uni(r, .5, .8), size * uni(r, .7, 1)], M.STONE, { group: lgNext(), extra: true, rough: size * .08, dir: [Math.cos(r() * 6), uni(r, -.2, .2), Math.sin(r() * 6)], up: [0, 1, 0], paint: p2 => spotty(p2, 16, .25) ? M.MOSS : spotty(p2, 30, .1) ? M.STONED : undefined }); }
+function lgAddSapling(m, p, size, kind, r) {
+  const g = lgNext(), h = size, top = v3.add(p, [uni(r, -.1, .1) * h, h, uni(r, -.1, .1) * h]);
+  m.seg(v3.add(p, [0, -h * .1, 0]), top, h * .045, h * .02, M.TRUNK, { group: g, extra: true });
+  if (kind === "pine") for (let i = 0; i < 4; i++) { const y = .35 + i * .19, w = h * (.3 - i * .06); m.ell(v3.lerp(p, top, y), [w, h * .1, w], i % 2 ? M.LEAF3 : M.LEAF, { group: g + 1000, extra: true, rough: h * .02 }); }
+  else for (let i = 0; i < 3; i++) m.ell(v3.add(top, [Math.cos(i * 2.1) * h * .14, -h * .08 + i * h * .07, Math.sin(i * 2.1) * h * .14]), [h * .2, h * .16, h * .2], [M.LEAF, M.LEAF2, M.LEAF3][i], { group: g + 1000, extra: true, rough: h * .03 });
+}
+function lgAddNest(m, c, rad, size, r) {
+  const g = lgNext();
+  for (let i = 0; i < 18; i++) { const a = i / 18 * 6.28, b = a + uni(r, .5, .9), y = c[1] + uni(r, -.3, .3) * size, rr = rad * uni(r, .9, 1.1); m.seg([c[0] + Math.cos(a) * rr, y, c[2] + Math.sin(a) * rr], [c[0] + Math.cos(b) * rr, y + uni(r, -.3, .3) * size, c[2] + Math.sin(b) * rr], size * .35, size * .3, i % 3 ? M.TRUNK : i % 2 ? M.STRAW : M.BARKD, { group: g, extra: true }); }
+}
+
+// The highest point of the body over (x, z) above the ground line, or null.
+function lgSurface(m, x, z, y0, G) { for (let y = y0; y > G; y -= .015) if (m.field([x, y, z]) < 0) return y; return null; }
+
+// The body's bounds (its solid parts).
+function lgBounds(m) {
+  const b = { x0: Infinity, x1: -Infinity, y0: Infinity, y1: -Infinity, z0: Infinity, z1: -Infinity };
+  for (const q of m.parts) {
+    if (q.extra || q.cut) continue;
+    const pts = q.type === "cone" ? [[q.a, q.r1], [q.b, q.r2]] : [[q.c, Math.max(...(q.r || q.h))]];
+    for (const [c, rr] of pts) { b.x0 = Math.min(b.x0, c[0] - rr); b.x1 = Math.max(b.x1, c[0] + rr); b.y0 = Math.min(b.y0, c[1] - rr); b.y1 = Math.max(b.y1, c[1] + rr); b.z0 = Math.min(b.z0, c[2] - rr); b.z1 = Math.max(b.z1, c[2] + rr); }
+  }
+  return b;
+}
+
+// Moves every part by f(point, part) (each centre or end on its own).
+function lgMove(m, f) {
+  for (const q of m.parts) { if (q.type === "cone") { q.a = f(q.a, q); q.b = f(q.b, q); } else q.c = f(q.c, q); }
+  for (const fl of m.flats) fl.c = f(fl.c, fl);
+}
+
+// The form: redraws the finished model of species S's legend, asleep (breath: how far up this breath lifts it).
+function lgForm(S, { breath }) {
+  const pose = LEGEND_POSES[S.id], over = pose.over;
+  const form = (m, o) => {
+    const s = render(m, { ...o, measure: true }).s; // the awake legend's scale
+    const r = rng(S.id.length * 977 + 31);
+    lgGroup = 200;
+    // the ground line it sleeps sunk to
+    const b0 = lgBounds(m), torso = m.parts[0], belly = pose.ground ?? torso.c[1] - torso.r[1]; // the four-legged: their torso first
+    const G = pose.ground ?? belly + (1 - belly) * pose.sink;
+    // what it has given up while it sleeps
+    m.parts = m.parts.filter(q => !pose.drop.includes(q.group)); m.flats = m.flats.filter(f => !pose.drop.includes(f.group));
+    // its colours: glow to stone (antlers to old wood), eyes shut, moss over it
+    const eyeMats = [M.EYE, M.IRIS, M.PUPIL, M.GLINT], lid = pose.lid ?? M.BODY;
+    const remap = (mat, g) => {
+      if (eyeMats.includes(mat) || (mat === M.MAGIC2 && (pose.eyes || [1]).includes(g))) return mat === M.IRIS ? lid : M.BODY2; // shut: a lid
+      if (mat === M.MAGIC || mat === M.MAGIC2) return pose.wood?.includes(g) ? (mat === M.MAGIC ? M.TRUNK : M.BARKL) : (mat === M.MAGIC ? M.STONE : M.STONED);
+      return mat;
+    };
+    const moss = over.moss || 0, lichen = over.lichen || 0, top = b0.y1, seed = S.id.length * 7;
+    const mossy = p => {
+      if (p[1] < G + .035) return M.BARK2; // earth smeared along the ground line
+      const h = Math.max(0, Math.min(1, (p[1] - G) / Math.max(.1, top - G))), n = vnoise(p[0] * 5 + p[2] * 3.1, p[1] * 5 + p[2] * 2.3, seed);
+      if (n < moss * (.35 + .9 * h)) return n < moss * (.35 + .9 * h) * .45 ? M.LEAF3 : M.MOSS;
+      if (spotty(p, 26, lichen)) return M.WEB;
+      return undefined;
+    };
+    for (const q of m.parts) {
+      const base = q.paint, g = q.group, body = (!q.extra || [70, 85, 86, 87].includes(g)) && g !== 0; // (not a flyer's shadow)
+      q.mat = remap(q.mat, g);
+      q.paint = p => { const mm = body ? mossy(p) : undefined; if (mm) return mm; const v = base?.(p); return v == null ? v : remap(v, g); };
+    }
+    for (const f of m.flats) { const mask = f.mask, g = f.group; f.mask = (u, v) => { const mm = mask(u, v); return mm ? remap(mm, g) : mm; }; }
+    // head down to the ground; the whole a breath up or down
+    const H = m.anchors.head?.c;
+    if (H && pose.droop > 0) {
+      const nk = m.anchors.neck?.c || H, x0 = Math.min(H[0] - .05, H[0] - (H[0] - nk[0]) * 2.2), hr = m.anchors.head.r[1], dy = (G + hr * .55 - H[1]) * pose.droop;
+      if (dy < 0) lgMove(m, (p, q) => { const t = [11, 12, 13].includes(q.group) ? 1 : Math.max(0, Math.min(1, (p[0] - x0) / Math.max(.05, H[0] - x0))); return [p[0], p[1] + dy * t * t * (3 - 2 * t), p[2]]; });
+    }
+    if (breath) lgMove(m, p => [p[0], p[1] + breath, p[2]]);
+    // the bat asleep wraps its wings round itself: a hunched, cloaked stone with two ears
+    if (pose.cloak) { const c = [-.05, .38, 0]; m.ell(c, [.42, .46, .38], M.BODY2, { group: 1, paint: p => { const mm = mossy(p); if (mm) return mm; return Math.abs(Math.sin(Math.atan2(p[2], p[0] - c[0]) * 5)) > .85 ? M.BODY3 : undefined; } }); }
+    // what has grown over it, on its back and round it
+    const b = lgBounds(m), cx = (b.x0 + b.x1) / 2, rx = (b.x1 - b.x0) / 2, rz = (b.z1 - b.z0) / 2, unit = Math.max(.25, Math.min(rx, top - G + .2));
+    const tops = [];
+    for (let i = 0; i < 9; i++) for (let j = 0; j < 5; j++) { const x = b.x0 + (i + .5) / 9 * (b.x1 - b.x0), z = b.z0 + (j + .5) / 5 * (b.z1 - b.z0), y = lgSurface(m, x, z, b.y1 + .02, G); if (y != null && y > G + .04) tops.push([x, y, z]); }
+    tops.sort((a, c) => c[1] - a[1]);
+    const onBack = () => tops[Math.floor(r() * Math.min(tops.length, 12))], round = k => { const a = (k * 2.39 + r() * .6) % 6.28; return [cx + Math.cos(a) * rx * uni(r, .8, .95), G + unit * .03, Math.sin(a) * rz * uni(r, .9, 1.1)]; }; // round its foot, on the mound
+    if (tops.length) {
+      for (let i = 0; i < (over.ferns || 0); i++) lgAddFern(m, i % 2 ? onBack() : round(i), unit * uni(r, .35, .5), r);
+      for (let i = 0; i < (over.grass || 0); i++) lgAddGrass(m, i % 3 ? onBack() : round(i + 3), unit * uni(r, .15, .25), r);
+      for (let i = 0; i < (over.mushrooms || 0); i++) lgAddMushrooms(m, i % 2 ? round(i + 7) : onBack(), unit * .14, r);
+      for (let i = 0; i < (over.brackets || 0); i++) { const t = tops[tops.length - 1 - Math.floor(r() * Math.min(tops.length, 8))], out = v3.norm([t[0] - cx, 0, t[2] || .3]); lgAddBracket(m, v3.add(t, v3.mul(out, .02)), out, unit * .16, r); }
+      for (let i = 0; i < (over.roots || 0); i++) { const t = onBack(), out = v3.norm([t[0] - cx, 0, t[2] + (i % 2 ? .3 : -.3)]); lgAddRoot(m, t, out, G, unit * .5, r); }
+      if (over.sapling) lgAddSapling(m, onBack(), unit * .75, over.sapling, r);
+    }
+    if (over.beard) for (const q of m.parts.filter(q => pose.wood?.includes(q.group) && q.type === "cone").slice(0, over.beard * 3).filter((_, i) => i % 3 === 2)) { const p = q.b; m.chain([[...p, .025], [...v3.add(p, [.01, -.12, .01]), .02], [...v3.add(p, [-.01, -.22, 0]), .012]], M.MOSS, { group: lgNext(), extra: true }); }
+    // the mound of earth it sleeps in, stones half buried round it
+    m.ell([cx, G - unit * .3, 0], [rx * .95 + unit * .08, unit * .42, rz * 1.05 + unit * .08], M.BARK2, { group: 150, extra: true, rough: unit * .03, paint: p => { const k = vnoise(p[0] * 7, p[2] * 7, 3); return k < .3 + moss * .6 ? M.MOSS : k > .88 ? M.STONED : undefined; } }); // a lip of its earth, grown over
+    for (let i = 0; i < (over.stones || 0); i++) lgAddStone(m, v3.add(round(i * 3 + 1), [0, unit * .02, 0]), unit * uni(r, .1, .2), r);
+    if (over.nest) lgAddNest(m, [cx, G + unit * .08, 0], Math.max(rx, rz) * 1.05, unit * .08, r);
+    m.clipY = G;
+    const res = render(m, { scale: s, facing: o.facing });
+    res.sp.origin = res.project([cx, G, 0]); // the ground under its middle, on the sprite
+    res.sp.groundLine = G;
+    return res.sp;
+  };
+  form.motes = false;
+  return form;
+}
+
+// Cropped to what is drawn (what sank under the ground leaves empty room), its origin moved with it.
+function lgCrop(sp) {
+  let x0 = sp.w, x1 = -1, y0 = sp.h;
+  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
+  if (x1 < 0) return sp;
+  const W = x1 - x0 + 1, H = sp.h - y0, c = new Sprite(W, H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y + y0) * sp.w + x + x0, j = y * W + x; c.m[j] = sp.m[i]; c.g[j] = sp.g[i]; for (let k = 0; k < 3; k++) c.n[j * 3 + k] = sp.n[i * 3 + k]; }
+  c.bodyH = sp.bodyH; c.groundLine = sp.groundLine;
+  if (sp.origin) c.origin = [+(sp.origin[0] - x0).toFixed(1), +(sp.origin[1] - y0).toFixed(1)];
+  return c;
+}
+
+// One form of a species' legend: { sp, colours } (sp.origin: the ground under its middle). Only
+// asleep for now (Ed, 2026-10-04: "no waking sequence yet, just the sleeping form").
+function legendForm(id, st, { state = "asleep", frame = 0, facing = "towards" } = {}) {
+  const S = SPECIES_BY_ID[id], pose = LEGEND_POSES[id];
+  if (!S || !pose) throw new Error(`no sleeping legend for ${id}`);
+  if (!LEGEND_STATES.includes(state)) throw new Error(`no ${state} legend yet`);
+  const sp = lgCrop(withForm(lgForm(S, { breath: frame % 2 ? .025 : 0 }), () => buildCreature(S, 3, 0, st, facing)));
+  return { sp, colours: legendColours(id, st) };
+}
+
+// Its colours asleep: its own weathered toward its area's stone, and the area's moss, earth and leaves.
+function legendColours(id, st) {
+  const a = legendArea(id), [, fh, fs, fv] = a.floor, base = speciesColours(id, st), d = decorColours(st, rockTint(a));
+  const mix = (x, y, t) => x.map((v, i) => Math.round(v + (y[i] - v) * t));
+  const stoneT = .62, stone = d[M.STONE], dark = d[M.STONED];
+  const c = { ...base };
+  for (const [k, to] of [[M.BODY, stone], [M.BODY2, mix(stone, dark, .45)], [M.BODY3, dark], [M.BELLY, mix(stone, [220, 216, 200], .3)], [M.ACCENT, mix(stone, dark, .2)], [M.EAR, mix(stone, dark, .3)], [M.SKIN, mix(stone, [150, 120, 110], .3)], [M.NOSE, dark]]) if (c[k]) c[k] = mix(c[k], to, stoneT);
+  const floor = hsv2rgb(fh, fs, fv);
+  Object.assign(c, {
+    [M.STONE]: d[M.STONE], [M.STONED]: d[M.STONED], [M.MOSS]: mix(d[M.MOSS], floor, .3), [M.LEAF]: mix(d[M.LEAF], floor, .2), [M.LEAF2]: mix(d[M.LEAF2], floor, .15), [M.LEAF3]: d[M.LEAF3],
+    [M.TRUNK]: d[M.TRUNK], [M.BARKD]: d[M.BARKD], [M.BARKL]: d[M.BARKL], [M.STRAW]: d[M.STRAW], [M.CLOTH]: [222, 210, 186],
+    [M.BARK2]: hsv2rgb(fh, Math.min(1, fs * .9), fv * .62), // the area's earth
+    [M.WEB]: mix([196, 200, 150], floor, .2),               // lichen
+    [M.FLOWER]: hsv2rgb(.04 + (id.length % 3) * .03, .55, .72), // mushroom caps
+  });
+  return c;
+}
+
+// Every form of a species' legend, baked: { asleep: [canvas…] }, each canvas carrying origin (the
+// ground under its middle, in its pixels).
+function legendSprites(id, st, { facing = "towards", makeCanvas = defaultCanvas } = {}) {
+  const out = {};
+  for (const state of LEGEND_STATES) out[state] = Array.from({ length: LEGEND_FRAMES[state] }, (_, frame) => { const { sp, colours } = legendForm(id, st, { state, frame, facing }), cv = bake(sp, colours, st, "none", makeCanvas); cv.origin = sp.origin; return cv; });
+  return out;
+}
+
 
 
 // ---- inlined from art/scenes.js ----
@@ -7308,6 +7577,22 @@ function renderCountry() {
   }, 1100);
 }
 
+// ================= sleeping legends: asleep (2 breaths) beside the legend awake, a row per species =================
+let legendTimer;
+function renderLegends() {
+  clearTimeout(legendTimer);
+  legendTimer = setTimeout(() => {
+    const c = document.getElementById("legendSheet"); if (!c) return;
+    const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 8, wit = bake(witchSprite(st), witchColours(st), st, st.cOutline);
+    const rows = LEGEND_IDS.map(id => [...LEGEND_STATES.flatMap(state => [...Array(LEGEND_FRAMES[state]).keys()].map(frame => { const { sp, colours } = legendForm(id, st, { state, frame }); return bake(sp, colours, st, st.cOutline); })), bake(critter(id, 3, 0, st), speciesColours(id, st), st, st.cOutline), wit]);
+    const w = Math.max(...rows.map(r => r.reduce((a, x) => a + x.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(x => x.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
+    tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+    let y = gap;
+    rows.forEach((r, i) => { let x = gap; y += rh[i] - gap; for (const s2 of r) { tgt.a.drawImage(s2.A, x, y - s2.h); tgt.n.drawImage(s2.N, x, y - s2.h); x += s2.w + gap; } y += gap; });
+    c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
+  }, 1200);
+}
+
 // ================= party: the party objects at night, and a sample patch of party ground =================
 let partyObjectsTimer;
 function renderPartyObjects() {
@@ -7629,7 +7914,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderCountry(); renderPartyObjects(); renderRelics(); renderSets(); renderTall(); renderTufts(); renderWitch(); renderParty(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
+  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderCountry(); renderPartyObjects(); renderLegends(); renderRelics(); renderSets(); renderTall(); renderTufts(); renderWitch(); renderParty(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }

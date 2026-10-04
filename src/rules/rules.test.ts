@@ -513,8 +513,7 @@ describe("creatures", () => {
   it("sleep until the party reaches their area, then lumber about it", () => {
     const g = newGame(123, TUNING), boss = g.creatures.find(c => c.boss)!;
     g.clock.paused = false;
-    // (Over the treetops, out of reach of its neighbours' adults, so none knocks her out.)
-    g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1, x: boss.x + 30, z: boss.z };
+    g.witch = { ...g.witch, seated: false, x: boss.x + 30, z: boss.z, mode: "treetop", lift: 1 }; // (on the ground in its area, it would go for her once awake)
     const at = [boss.x, boss.z];
     expect(dormant(g, boss)).toBe(true);
     for (let i = 0; i < 100; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20);

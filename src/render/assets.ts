@@ -242,6 +242,12 @@ export class AssetLibrary {
     if (!a) this.ask({ kind: "creature", id: species, style: this.style });
     return a;
   }
+  /** A creature's enraged look (a wave woke its area: red eyes), or undefined (and asked for). */
+  wokenArt(species: string): CreatureArt | undefined {
+    const k = `woken-${species}`, a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "woken", id: k, species, style: this.style });
+    return a;
+  }
   /** An invited creature's party look (its gear seeded by its id), or undefined (and asked for). */
   partyArt(species: string, id: number, colour: number[]): CreatureArt | undefined {
     const k = `party-${id}`, a = this.creatures.get(k);
