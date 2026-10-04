@@ -395,7 +395,7 @@ describe("the camera", () => {
     expect(cameraPose(c, 0, TUNING).distance).toBeGreaterThan(mid);
   });
   it("uses each mode's angle and distance, and zoom moves between in and out", () => {
-    let c = { ...newCamera(withTuning({ camera: { ...TUNING.camera, startZoom: 0 } }), 0, 0, 0), intro: 0 }; // past the opening shot
+    let c: ReturnType<typeof newCamera> = { ...newCamera(withTuning({ camera: { ...TUNING.camera, startZoom: 0 } }), 0, 0, 0), intro: 0 }; // past the opening shot
     const g = TUNING.camera.ground, t = TUNING.camera.treetop;
     expect(cameraPose(c, 0, TUNING).angle).toBeCloseTo(g.angleIn);
     expect(cameraPose(c, 1, TUNING).angle).toBeCloseTo(t.angleIn);
