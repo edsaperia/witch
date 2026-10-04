@@ -167,6 +167,17 @@ window.addEventListener("keydown", e => {
   try { localStorage.setItem("witch.bar", barOn ? "on" : "off"); } catch { /* fine */ }
 });
 
+// Auto-talk (Ed's playtest, 2026-10-04: a new player wanted to turn it off): 1 or T, or a click
+// on its slot, turns it on or off (remembered on this browser); off, she talks while Shift is held.
+let autoTalk = true;
+try { if (localStorage.getItem("witch.autotalk") === "off") autoTalk = false; } catch { /* storage blocked: on */ }
+view.actionBar.autoTalk = autoTalk;
+view.actionBar.onAutoTalk = () => { input.touch.autoTalk = true; };
+const setAutoTalk = (on: boolean) => {
+  autoTalk = on; view.actionBar.autoTalk = on;
+  try { localStorage.setItem("witch.autotalk", on ? "on" : "off"); } catch { /* fine */ }
+};
+
 declare const __BUILD__: string;
 document.getElementById("version")!.textContent = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
 // What's new, on the start screen: the last three versions, newest first (config/changelog.json).
@@ -206,11 +217,32 @@ requestAnimationFrame(() => setTimeout(async () => {
   startEl.classList.remove("loading");
 }, 0));
 
+// The volume (Ed's playtest, 2026-10-04): a slider in the corner, 0 mutes; remembered on this browser.
+// (The music is the only sound for now; sound effects will follow the same level.)
+let level = 0.8;
+try { const v = localStorage.getItem("witch.volume"); if (v !== null && !isNaN(+v)) level = Math.min(1, Math.max(0, +v)); } catch { /* storage blocked */ }
+const volumeEl = document.createElement("label");
+volumeEl.id = "volume";
+volumeEl.title = "volume (0 mutes)";
+Object.assign(volumeEl.style, { position: "fixed", right: "10px", bottom: "12px", zIndex: "3", display: "flex", alignItems: "center", gap: "4px", padding: "2px 6px", borderRadius: "6px", background: "rgba(14,11,28,.55)", color: "#e8e2f4", font: "12px ui-monospace, Menlo, Consolas, monospace", pointerEvents: "auto" });
+const volumeIcon = document.createElement("span"), volumeRange = document.createElement("input");
+volumeRange.type = "range"; volumeRange.min = "0"; volumeRange.max = "100"; volumeRange.value = String(Math.round(level * 100));
+volumeRange.style.width = "80px";
+const showVolume = () => { volumeIcon.textContent = level === 0 ? "🔇" : level < 0.4 ? "🔈" : "🔊"; };
+volumeRange.addEventListener("input", () => {
+  level = +volumeRange.value / 100; showVolume();
+  if (music) music.volume = tuning.music.volume * level;
+  try { localStorage.setItem("witch.volume", String(level)); } catch { /* fine */ }
+});
+for (const ev of ["pointerdown", "keydown"]) volumeRange.addEventListener(ev, e => e.stopPropagation()); // its own presses and arrow keys don't fly her
+volumeEl.append(volumeIcon, volumeRange); showVolume();
+document.body.append(volumeEl);
+
 // Browsers keep sound off until the player presses something: the start screen is that press.
 let audio: AudioContext | null = null, music: Music | null = null;
 function start(): boolean {
   if (!ready || !game.clock.paused) return false;
-  try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume, musicStyle, seed!, tuning.music.src); } catch { /* no sound yet anyway */ }
+  try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume * level, musicStyle, seed!, tuning.music.src); } catch { /* no sound yet anyway */ }
   game.clock.paused = false;
   startEl.style.display = "none";
   input.clearPresses();
@@ -248,6 +280,8 @@ function frame(now: number): void {
   frames++; fpsT += dt;
   if (fpsT >= 0.5) { fps = frames / fpsT; frames = 0; fpsT = 0; }
   const c = input.read();
+  if (c.toggleAutoTalk) setAutoTalk(!autoTalk);
+  c.autoTalk = autoTalk;
   if (c.debug) { debugOn = !debugOn; debugEl.classList.toggle("on", debugOn); debugButtons.classList.toggle("on", debugOn); }
   view.debugReadouts = debugOn;
   stepGame(game, c, dt);

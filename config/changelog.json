@@ -4,6 +4,14 @@
     {
       "version": null,
       "items": [
+        "Auto-talk can be turned off: press 1 or T, or click its button on the action bar (remembered); with it off, hold Shift to talk",
+        "A volume slider in the corner (remembered); all the way down mutes",
+        "Home is decorated: a ring of lanterns, torches, balloons, fairy lights and candles just outside the dancefloor's clearing"
+      ]
+    },
+    {
+      "version": 332,
+      "items": [
         "Wild creatures notice you once you're within their attack range or 30 m, and give up when you rise to the treetops, or once you've left their area and are out of range and at least 30 m away; then they wander back home",
         "Melee attackers wind up and lunge at where you were: step aside. Ravens keep their distance and shoot from far off",
         "Party animals following you fight whatever attacks you or them; creatures parked at a sigil guard the ground round it",
@@ -13,7 +21,8 @@
         "Party witches twirl each other, and play broom limbo: two hold a broom as the bar while a third shuffles under it",
         "Party witches chatting show little emoji bubbles, taking turns",
         "Party witches fly in from just off-screen, so you see them arrive",
-        "Lanterns, jam jars, fairy lights and mirror balls hang from the trees in party areas"
+        "Lanterns, jam jars, fairy lights and mirror balls hang from the trees in party areas",
+        "Talk bubbles and markers sit over a creature's head however big it is, and the grass parts round big creatures as widely as they are"
       ]
     },
     {

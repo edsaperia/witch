@@ -84,6 +84,9 @@ export interface Game {
 }
 
 export interface Controls extends Intent, Partial<LeashControls> {
+  /** Auto-talk (the player's setting, on unless turned off), and Talk held (how she talks with it off). */
+  autoTalk?: boolean;
+  talkHeld?: boolean;
   /** +1 zoom out a step, -1 zoom in a step, 0 nothing, this frame. */
   zoom: number;
   /** Playtest keys: bring the next wave now; pause or resume the wave timer. */
@@ -218,7 +221,7 @@ function fixedStep(g: Game, controls: Controls): void {
   stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map, c => dormant(g, c));
   if (stepWanderers([...g.combat.busy].map(id => g.creatures[id]), g.map, dt)) g.byArea = null; // (those walking home are among combat's busy)
   // (A party animal in a fight is moved by combat, not its leash.)
-  stepLeash(g.leash, g.creatures, { sigil: !!c.sigil && !W.ko, inviteNearest: c.inviteNearest, cycle: !!c.cycle && !W.ko }, g.witch, g.witch.mode === "ground" && !W.ko, g.clock.time, dt, t, id => busy(id) || heldByCombat(g.creatures[id]));
+  stepLeash(g.leash, g.creatures, { sigil: !!c.sigil && !W.ko, inviteNearest: c.inviteNearest, cycle: !!c.cycle && !W.ko, talk: c.autoTalk !== false || !!c.talkHeld }, g.witch, g.witch.mode === "ground" && !W.ko, g.clock.time, dt, t, id => busy(id) || heldByCombat(g.creatures[id]));
   if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, t, g.beat);
   stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, t, g.beat);
   stepDancefloor(g, wave, seated);

@@ -16,6 +16,8 @@ export class PartyObjectsView {
   private upright: SpriteBatch | null = null;
   private flat: SpriteBatch | null = null;
   private dressings = new Map<string, Dressing>();
+  /** The tree each hanging piece hangs in (by area and piece), found once. */
+  private trees = new Map<string, { x: number; z: number } | null>();
   /** Instances drawn this frame (for the debug overlay). */
   count = 0;
 
@@ -87,8 +89,10 @@ export class PartyObjectsView {
       // Hanging things, and the caught balloon: from a branch point in the nearest tree's crown, their
       // hang (or tie) anchor at that height, a little out from the trunk towards us; none if no tree is near.
       [...d.hanging, ...(d.caught ? [d.caught] : [])].forEach((p, i) => {
-        const a = art.pieces[p.ref];
-        const tree = g.forest.treesNear(p.x, p.z, 10).sort((u, v) => Math.hypot(u.x - p.x, u.z - p.z) - Math.hypot(v.x - p.x, v.z - p.z))[0];
+        const a = art.pieces[p.ref], tk = `${key}:${i}`;
+        // Its tree, found once (asking the forest every frame cost a boosting flight its frame budget).
+        if (!this.trees.has(tk)) this.trees.set(tk, g.forest.treesNear(p.x, p.z, 10).sort((u, v) => Math.hypot(u.x - p.x, u.z - p.z) - Math.hypot(v.x - p.x, v.z - p.z))[0] ?? null);
+        const tree = this.trees.get(tk);
         if (!a || !tree) return;
         const k = hash2(Math.round(tree.x * 7) + i, Math.round(tree.z * 7), 5), side = k < 0.5 ? -1 : 1;
         const branch = 3 + hash2(i, Math.round(tree.x), 6) * 2.5, below = ((a.originY - (a.hang?.y ?? 0)) * mpp);

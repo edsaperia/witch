@@ -50,6 +50,9 @@ export interface LeashControls {
   inviteNearest?: boolean;
   /** The cycle button (Ed, 2026-10-04): the bottom sigil of her stack goes to the top, so the next one down is chosen. */
   cycle?: boolean;
+  /** Whether she may talk this frame: always with auto-talk on (the default); with it off, only
+   *  while Talk is held (Ed's playtest, 2026-10-04: auto-talk can be turned off). */
+  talk?: boolean;
 }
 
 export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, progress: new Map(), events: [], snubbed: new Set() });
@@ -110,7 +113,8 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   // invitable creature in range.
   for (const id of s.snubbed) if (away(byId(id)) > T.cancelDistance) s.snubbed.delete(id);
   const cur = s.talk ? byId(s.talk.id) : null;
-  let keep = !!cur && onGround && !cur.leashed && away(cur) <= T.cancelDistance;
+  const talking = onGround && c.talk !== false;
+  let keep = !!cur && talking && !cur.leashed && away(cur) <= T.cancelDistance;
   if (keep && s.talk!.refused && (s.talk!.t >= T.snubTime || nearest(creatures, witch.x, witch.z, T.talkRange))) {
     if (s.talk!.t >= T.snubTime) s.snubbed.add(s.talk!.id);
     keep = false;
@@ -125,7 +129,7 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     if (!s.talk!.refused && s.talk!.t >= s.talk!.total) { invite(s, cur!, cur!.x, cur!.z, time); s.progress.delete(cur!.id); s.talk = null; }
   } else {
     if (s.talk) { s.events.push({ kind: "cancelled", id: s.talk.id, x: witch.x, z: witch.z, at: time }); s.talk = null; }
-    const n = onGround ? talkTarget(creatures, witch.x, witch.z, t, s.snubbed) : null;
+    const n = talking ? talkTarget(creatures, witch.x, witch.z, t, s.snubbed) : null;
     if (n) s.talk = { id: n.id, refused: !invitable(n), t: invitable(n) ? s.progress.get(n.id) ?? 0 : 0, total: invitable(n) ? talkTime(n, t) : Infinity };
   }
 
