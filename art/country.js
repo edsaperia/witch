@@ -398,7 +398,7 @@ export function countryColours(st = {}) {
 // its middle on the ground lands (put it at its spot in a scene); footprint: its radius on the ground, in metres.
 export function countrySprite(id, st = {}, { ppm = 16 } = {}) { return pieceSprite(countryModel(id), COUNTRY_BY_ID[id], st, ppm); }
 // Renders a piece's model (d: its table entry, with size and split) at the witch's scale, cropped to what is drawn.
-export function pieceSprite(m, d, st = {}, ppm = 16) {
+export function pieceSprite(m, d, st = {}, ppm = 16, anchors = d.anchors) { // anchors: { name: model point } → pixels from the sprite's top-left
   m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // a common ground line
   const s = witchPixelsPerUnit(st) * d.size, { sp, project } = render(m, { scale: s });
   let x0 = sp.w, x1 = -1, y0 = sp.h; for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
@@ -407,7 +407,8 @@ export function pieceSprite(m, d, st = {}, ppm = 16) {
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y + y0) * sp.w + x + x0, mm = sp.m[i]; if (!mm) continue; const n = [sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]]; crop.put(x, y, mm, ...n); (y < crownY ? top : bot).put(x, y, mm, ...n); }
   crop.bodyH = sp.bodyH;
   const unit = s / ppm, [px, py] = project([0, 0, 0]);
-  return { whole: crop, top, bot, crownY, origin: { x: +(px - x0).toFixed(1), y: +(py - y0).toFixed(1) }, metres: { width: +(W / ppm).toFixed(1), height: +(H / ppm).toFixed(1), footprint: +(modelReach(m) * unit).toFixed(1) } };
+  const at = anchors && Object.fromEntries(Object.entries(anchors).map(([k, q]) => { const [ax, ay] = project(q); return [k, { x: +(ax - x0).toFixed(1), y: +(ay - y0).toFixed(1) }]; }));
+  return { whole: crop, top, bot, crownY, origin: { x: +(px - x0).toFixed(1), y: +(py - y0).toFixed(1) }, ...(at ? { anchors: at } : {}), metres: { width: +(W / ppm).toFixed(1), height: +(H / ppm).toFixed(1), footprint: +(modelReach(m) * unit).toFixed(1) } };
 }
 export function countryModel(id) { const d = COUNTRY_BY_ID[id]; if (!d) throw new Error(`no country piece "${id}"`); const m = new Model({ blend: .04 }); d.build(m); return m; }
 // How far a model reaches over the ground from its middle (model units): its solid parts near the ground.

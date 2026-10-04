@@ -29,6 +29,8 @@ import { cellKey, spawnMarkers, speakersOn, symbolCount, waveCountdown, type Spa
 import { StringLightsView } from "./strings";
 import { bossBreath, LeashView } from "./leash";
 import { Lasers, type RingSpeaker } from "./lasers";
+import { PartyWitchView } from "./partyWitches";
+import { PartyObjectsView } from "./partyObjects";
 import { BorderView } from "./borders";
 import { MusicIndicator, StoneIndicator } from "./indicator";
 import { Minimap } from "./minimap";
@@ -106,6 +108,10 @@ export class View {
   private strings: StringLightsView;
   private leashView: LeashView;
   private lasers: Lasers;
+  /** The party witches on the dancefloor, and our witch when she idles into the party. */
+  private partyWitchView: PartyWitchView;
+  /** The party objects strewn over partified areas (#38). */
+  private partyObjects: PartyObjectsView;
   private borders: BorderView;
   private music = new MusicIndicator(document.body);
   private nextStones: StoneIndicator[] = [];
@@ -194,7 +200,7 @@ export class View {
     this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true });
     this.scene.add(...this.markerBatch.meshes, this.markerFx.group, this.rings.mesh);
     // The ground cover: tufts round the witch, in ground mode.
-    this.grass = new GrassView(game.map, t, this.mpp);
+    this.grass = new GrassView(game.map, t, this.mpp, style);
     this.scene.add(this.grass.mesh);
     this.scene.add(this.spellFx.trail);
     // The dancefloor's speakers: their batch comes with their art (drawSpeakers).
@@ -209,6 +215,8 @@ export class View {
     this.strings = new StringLightsView(this.scene, game);
     this.leashView = new LeashView(this.scene, game);
     this.lasers = new Lasers(this.scene, game);
+    this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
+    this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
     this.borders = new BorderView(this.scene, game);
     this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp, { solid: true });
     this.scene.add(...this.soundBatch.meshes);
@@ -1073,7 +1081,8 @@ export class View {
     const clear = g.leash.placed.map(p => ({ x: p.x, z: p.z, r: Math.max(t.groundCover.sigilClear, (3 + g.creatures[p.id].level * 0.8) * 0.45) }));
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
-    this.setLights([this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...this.forestLights], w.x, w.z);
+    const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => this.inView(x, z, ww, hh, 4));
+    this.setLights([this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...this.forestLights], w.x, w.z);
     this.time("grass+lights");
     LIGHT_UNIFORMS.uTime.value = time;
     this.mist?.follow(pose.tx, pose.tz);
@@ -1133,7 +1142,9 @@ export class View {
       if (w.seated) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
     }
     const wframe = this.assets.witch.frames[wf], hatTop = wyy + wframe.h * this.mpp;
-    this.witchBatch.set([{ x: wx, y: wyy, z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
+    this.partyWitchView.update(g, time, (x, z, ww, hh) => this.inView(x, z, ww, hh, 4));
+    // Idling into the party, she's drawn in her party pose there instead.
+    this.witchBatch.set(this.partyWitchView.herIdle ? [] : [{ x: wx, y: wyy, z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
     // Where she is on screen (low-res pixels) and how far from the camera, for the occluder fade.
     {
       const px = (x: number, y: number, z: number) => { const p = placed(this.v3.set(x, y, z)).project(this.camera); return [(p.x + 1) / 2 * this.width, (p.y + 1) / 2 * this.height]; };

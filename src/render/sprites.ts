@@ -55,6 +55,8 @@ attribute vec4 iUv;
 attribute vec4 iFlags; // flip, top (or a trunk's cut, negative), fresh, sway
 attribute float iGlow; // glowing white, 0 to 1 (a party animal evolving); -1: a wild creature blinking (no eyeshine)
 varying float vGlow;
+varying float vSwayM; // metres its leafiest pixels move this frame (masked sprites)
+varying vec4 vFrame;  // its frame in the atlas (u0, v0, u1, v1), to keep the sway inside it
 uniform vec4 uWind;
 varying vec2 vUv;
 varying vec3 vWorld;
@@ -81,6 +83,18 @@ void main() {
     float flutter = sin(uWind.w * 1.7 + dot(iPos.xz, vec2(0.31, 0.17))) * 0.35;
     w += uRight * (uWind.x * iFlags.w * uv.y * uv.y * (gust * 0.9 + flutter)) * min(1.0, iSize.y / 8.0);
   }
+  // With a sway mask (#34; negative sway), the quad stays put and the fragment shader moves its leaves.
+  vSwayM = 0.0;
+  if (iFlags.w < 0.0 && uWind.x > 0.0) {
+    vec2 q = iPos.xz / uWind.z - vec2(0.8, 0.35) * uWind.w * uWind.y / uWind.z;
+    vec2 i = floor(q), f = fract(q), e = f * f * (3.0 - 2.0 * f);
+    float h00 = fract(sin(dot(i, vec2(127.1, 311.7))) * 43758.5453), h10 = fract(sin(dot(i + vec2(1, 0), vec2(127.1, 311.7))) * 43758.5453);
+    float h01 = fract(sin(dot(i + vec2(0, 1), vec2(127.1, 311.7))) * 43758.5453), h11 = fract(sin(dot(i + vec2(1, 1), vec2(127.1, 311.7))) * 43758.5453);
+    float gust = mix(mix(h00, h10, e.x), mix(h01, h11, e.x), e.y);
+    float flutter = sin(uWind.w * 1.7 + dot(iPos.xz, vec2(0.31, 0.17))) * 0.35;
+    vSwayM = uWind.x * -iFlags.w * (gust * 0.9 + flutter) * min(1.0, iSize.y / 8.0);
+  }
+  vFrame = vec4(min(iUv.x, iUv.z), min(iUv.y, iUv.w), max(iUv.x, iUv.z), max(iUv.y, iUv.w));
   float u = iFlags.x > 0.5 ? 1.0 - uv.x : uv.x;
   vUv = vec2(mix(iUv.x, iUv.z, u), mix(iUv.w, iUv.y, uv.y));
   vFlags = iFlags.xyz;
@@ -114,6 +128,8 @@ varying vec2 vUv;
 varying vec3 vWorld;
 varying vec3 vFlags;
 varying float vGlow;
+varying float vSwayM; // metres its leafiest pixels move this frame (masked sprites)
+varying vec4 vFrame;  // its frame in the atlas (u0, v0, u1, v1), to keep the sway inside it
 varying float vFront;
 varying vec2 vLocal;
 varying float vSizeY;
@@ -132,7 +148,15 @@ float bayer(vec2 p) {
   return (float(m[i]) + 0.5) / 16.0;
 }
 void shade() {
-  vec4 a = texture2D(uAlbedo, vUv);
+  // Swaying by its mask (#34): each pixel samples from where the wind has pushed the leaves; a
+  // second tap lets leaf edges move out over empty pixels. Trunks and rocks (mask 0) stay still.
+  vec2 uvS = vUv;
+  if (vSwayM != 0.0) {
+    float k = vSwayM / uTrunkFade.y / float(textureSize(uAlbedo, 0).x) * (vFlags.x > 0.5 ? -1.0 : 1.0);
+    float m0 = texture2D(uNormal, vUv).a, m1 = texture2D(uNormal, clamp(vUv - vec2(k * max(m0, 0.5), 0.0), vFrame.xy, vFrame.zw)).a;
+    uvS = clamp(vUv - vec2(k * max(m0, m1), 0.0), vFrame.xy, vFrame.zw);
+  }
+  vec4 a = texture2D(uAlbedo, uvS);
   if (a.a < 0.5) discard;
   // The witch's see-through silhouette: where she is hidden, a flat tint in her glow colour.
   if (uSilhouette.a > 0.0) { gl_FragColor = vec4(uSilhouette.rgb, uSilhouette.a); return; }
@@ -181,7 +205,7 @@ void shade() {
     gl_FragColor = vec4(mix(haze(a.rgb * 0.3, vWorld), eye, far), alpha); return;
   }
   if (a.a < 0.999 && !eyePx) { gl_FragColor = vec4(haze(a.rgb, vWorld), alpha); return; }
-  vec4 n = texture2D(uNormal, vUv);
+  vec4 n = texture2D(uNormal, uvS);
   float nx = (n.r * 255.0 - 128.0) / 127.0, ny = (n.g * 255.0 - 128.0) / 127.0, nz = n.b;
   if (vFlags.x > 0.5) nx = -nx;
   vec3 N = normalize(uRight * nx - uUp * ny + uFacing * nz);
@@ -307,7 +331,7 @@ export class SpriteBatch {
       const k = it.scale ?? 1;
       S[i * 2] = it.frame.w * this.metresPerPixel * k; S[i * 2 + 1] = it.frame.h * this.metresPerPixel * k;
       U.set(it.frame.uv, i * 4);
-      F[i * 4] = it.flip ? 1 : 0; F[i * 4 + 1] = it.top ? 1 : it.cut ? -it.cut : 0; F[i * 4 + 2] = it.fresh ? 1 : 0; F[i * 4 + 3] = it.sway ?? 0;
+      F[i * 4] = it.flip ? 1 : 0; F[i * 4 + 1] = it.top ? 1 : it.cut ? -it.cut : 0; F[i * 4 + 2] = it.fresh ? 1 : 0; F[i * 4 + 3] = (it.frame.masked ? -1 : 1) * (it.sway ?? 0);
       G[i] = it.glow ?? 0;
     });
     for (const a of [this.pos, this.size, this.uvs, this.flags, this.glow]) a.needsUpdate = true;

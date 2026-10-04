@@ -39,6 +39,8 @@ else if (tilt === "before" || tilt === "after") { tuning.tiltShift.on = true; tu
 else if (tilt && /^[\d.]+(,[\d.]+)?$/.test(tilt)) { const [st, bd] = tilt.split(",").map(Number); tuning.tiltShift.on = true; tuning.tiltShift.treetop.strength = st; if (bd > 0) tuning.tiltShift.treetop.band = bd; }
 if (params.get("bloom") === "off") tuning.bloom.on = false;
 if (params.get("moonbeams") === "on") tuning.moonbeams = 1;
+const witchesParam = Number(params.get("witches")); // debug: this many more party witches
+if (witchesParam > 0) tuning.partyWitches = { ...tuning.partyWitches, debugExtra: Math.min(48, Math.floor(witchesParam)) };
 if (params.get("find") === "0") tuning.find = { ...tuning.find, on: false }; // Ed, v244: compare without the find-in-the-dark looks
 // ?rune=beam|column|both: how an awake rune stone shows above it.
 const runeParam = params.get("rune");
