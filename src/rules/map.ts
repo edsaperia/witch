@@ -87,6 +87,9 @@ export interface ForestMap {
   typeOf(cx: number, cy: number): number;
   /** Which area a point is in, its type, and how open it is (0 at an area's centre). */
   areaAt(x: number, z: number): AreaSample;
+  /** Which area a point is in (cheaper than areaAt), and how far in metres it can move in any
+   *  direction and surely stay in that area, so a walker need not ask again until it has. */
+  cellSafe(x: number, z: number): { cell: Cell; safe: number };
   /** The area's set piece, if this one has one (rare: setPieceChance of the types that have one). */
   setPieceOf(cx: number, cy: number): string | null;
   /** Where an area's soundsystem stands when the party reaches it (reserved from the start). */
@@ -201,6 +204,10 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const siteOf = (cx: number, cy: number) => { const s = partition.site(cx, cy), w = toWorld(s[0], s[1]); return { x: w[0], z: w[1] }; };
   const centre = siteOf(centreCell[0], centreCell[1]);
 
+  // The warp's steepest slope (vnoise's gradient is at most 1.5 a component), so a step of d metres
+  // moves a point at most d * stretch / A in partition units.
+  const stretch = 1 + (2 * V / L) * 1.5 * 2;
+  const cellSafe = (x: number, z: number) => { const [u, v] = toPart(x, z), r = partition.partitionSafe(u, v); return { cell: r.cell, safe: (r.safe * A) / stretch }; };
   const areaAt = (x: number, z: number): AreaSample => {
     const [u, v] = toPart(x, z), cell = partition.partition(u, v);
     return { cell, type: typeOf(cell[0], cell[1]), openness: partition.openness(u, v) };
@@ -330,7 +337,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     start: { x: treehouse.x, z: treehouse.z + 1 },
     bounds: { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad },
     extent: { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A },
-    typeOf, areaAt, siteOf, treeWeight, hardClear, neighbours, setPieceOf, soundsystemSpot, setPieceSpot, reserved, remoteness,
+    typeOf, areaAt, cellSafe, siteOf, treeWeight, hardClear, neighbours, setPieceOf, soundsystemSpot, setPieceSpot, reserved, remoteness,
     paths: null as unknown as PathNetwork,
   };
   // The paths first (their lines need only the areas), so soundsystems, set pieces and the
