@@ -10,6 +10,7 @@ import type { ForestMap } from "../rules/map";
 import type { Forest } from "../rules/forest";
 import { AREA_TYPES } from "../rules/map";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
+import { HEIGHT_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import type { TilePixels } from "./artBuild";
 import type { Style } from "./style";
 
@@ -17,12 +18,18 @@ const TEXELS_PER_METRE = 2;
 const TILE = 32; // texels
 const FLOOR_COLS = 8;
 
+// The ground's grid: GRID metres a square, out to REACH metres round the witch (past the haze's
+// far edge), its outermost ring stretched out to SKIRT metres; it follows her, snapped to its squares.
+const GRID = 4, REACH = 400, SKIRT = 2000;
+
 const VERT = /* glsl */ `
 varying vec3 vWorld;
+${HEIGHT_VERT_GLSL}
 void main() {
   vec4 w = modelMatrix * vec4(position, 1.0);
+  w.y += groundH(w.xz); // the rolling ground (height.ts)
   vWorld = w.xyz;
-  gl_Position = projectionMatrix * viewMatrix * w;
+  gl_Position = clipOf(w.xyz);
 }
 `;
 
@@ -54,6 +61,7 @@ uniform float uDiscoRim;
 uniform vec3 uRelief; // the ground's relief: strength, scale (metres), shade
 varying vec3 vWorld;
 ${LIGHT_GLSL}
+${HEIGHT_GLSL}
 float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
 float vnoise(vec2 p) {
   vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f);
@@ -183,13 +191,15 @@ void main() {
   }
   // Fake relief (Ed, v171): two octaves of noise as a height; its slope tilts the ground's normal
   // so lights pick out rises and hollows, and the hollows are a little darker. Shading only.
-  vec3 N = vec3(0.0, 1.0, 0.0);
+  // The rolling ground's slope (height.ts), across 4 m so the 2 m samples read smooth.
+  vec2 hg = vec2(groundH(p + vec2(2.0, 0.0)) - groundH(p - vec2(2.0, 0.0)), groundH(p + vec2(0.0, 2.0)) - groundH(p - vec2(0.0, 2.0))) / 4.0;
+  vec3 N = normalize(vec3(-hg.x, 1.0, -hg.y));
   if (uRelief.x > 0.0) {
     float S = uRelief.y, e = S * 0.25;
     float h0 = vnoise(p / S) * 0.7 + vnoise(p / (S * 0.37) + 13.0) * 0.3;
     float hx = vnoise((p + vec2(e, 0.0)) / S) * 0.7 + vnoise((p + vec2(e, 0.0)) / (S * 0.37) + 13.0) * 0.3;
     float hz = vnoise((p + vec2(0.0, e)) / S) * 0.7 + vnoise((p + vec2(0.0, e)) / (S * 0.37) + 13.0) * 0.3;
-    N = normalize(vec3(-(hx - h0) / e * S * uRelief.x, 1.0, -(hz - h0) / e * S * uRelief.x));
+    N = normalize(vec3(-(hx - h0) / e * S * uRelief.x - hg.x, 1.0, -(hz - h0) / e * S * uRelief.x - hg.y));
     c *= 1.0 - uRelief.z * smoothstep(0.55, 0.2, h0);
   }
   vec3 light = nightLightShaded(N, vWorld, moonK);
@@ -224,7 +234,7 @@ export class Ground {
     const mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
       uniforms: {
-        ...LIGHT_UNIFORMS,
+        ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS,
         uAreas: { value: this.texture },
         uExtent: { value: new THREE.Vector4(e.minX, e.minZ, W / TEXELS_PER_METRE, H / TEXELS_PER_METRE) },
         uPixel: { value: metresPerPixel },
@@ -247,11 +257,20 @@ export class Ground {
         uBlend: { value: (B => (B.on ? new THREE.Vector4(B.warp, B.fine, B.band, B.dither ? 1 : 0) : new THREE.Vector4()))(map.tuning.groundBlend) },
       },
     });
-    const geo = new THREE.PlaneGeometry(w + 400, d + 400);
+    const geo = new THREE.PlaneGeometry(REACH * 2, REACH * 2, (REACH * 2) / GRID, (REACH * 2) / GRID);
     geo.rotateX(-Math.PI / 2);
+    const P = geo.getAttribute("position") as THREE.BufferAttribute;
+    for (let i = 0; i < P.count; i++) { // the outermost ring: out to the skirt, flat (the hills end inside it)
+      if (Math.abs(P.getX(i)) >= REACH - 0.01) P.setX(i, Math.sign(P.getX(i)) * SKIRT);
+      if (Math.abs(P.getZ(i)) >= REACH - 0.01) P.setZ(i, Math.sign(P.getZ(i)) * SKIRT);
+    }
     this.mesh = new THREE.Mesh(geo, mat);
-    this.mesh.position.set((e.minX + e.maxX) / 2, 0, (e.minZ + e.maxZ) / 2);
+    this.mesh.frustumCulled = false;
+    this.follow((e.minX + e.maxX) / 2, (e.minZ + e.maxZ) / 2);
   }
+
+  /** Keep the grid round (x, z), snapped to its squares so the hills don't swim. */
+  follow(x: number, z: number): void { this.mesh.position.set(Math.round(x / GRID) * GRID, 0, Math.round(z / GRID) * GRID); }
 
   /** This frame's dancefloor tiles: per tile r, g, b and intensity (0 to 3), row by row (rules/dancefloor.ts). */
   setFloorTiles(rgbi: Uint8Array): void {

@@ -4,6 +4,8 @@
     {
       "version": null,
       "items": [
+        "The ground rolls: gentle hills and hollows that everything stands on, with the dancefloor, the treehouse, ponds and every path kept level (?hills=0 for flat)",
+        "Over the treetops the world curves away, so you see the night sky above the forest: stars, the moon, and slow clouds that glow in the party's colours over partying areas (?curve=0 for flat, ?curve=0.004 for more)",
         "No more Talk button: on the ground the witch chats with the nearest creature in range by herself, on the fly as you move, settling into her talk pose when you stop; move away or rise and the chat pauses, and coming back picks it up",
         "A legend gives you one unimpressed look as you pass, not over and over"
       ]

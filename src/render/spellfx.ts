@@ -4,6 +4,7 @@
 import * as THREE from "three";
 import { spellActive, spellCharge } from "../rules/spells";
 import type { Game } from "../rules/game";
+import { groundPoints } from "./height";
 
 const N = 28, SCALE = 3, MAX = 240;
 
@@ -21,7 +22,7 @@ export class SpellFx {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(this.pos, 3));
     geo.setAttribute("color", new THREE.BufferAttribute(this.col, 4));
-    this.trail = new THREE.Points(geo, new THREE.PointsMaterial({ size: 5, sizeAttenuation: false, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    this.trail = new THREE.Points(geo, groundPoints(5)); // over the rolling ground, bent with the world
     this.trail.frustumCulled = false;
     this.canvas.width = this.canvas.height = N;
     Object.assign(this.canvas.style, { position: "fixed", left: "14px", bottom: "44px", width: `${N * SCALE}px`, height: `${N * SCALE}px`, imageRendering: "pixelated", pointerEvents: "none", zIndex: "2" });
