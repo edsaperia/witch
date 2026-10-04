@@ -6,7 +6,7 @@
 // headstone drawn once, placed twenty times), since baking costs by pixel area and drawing is cheap.
 //   { id, size: "small" | "large", desc, suits: [area ids], pieces: [{ sprite, dx, dz, facing? }], footprint }
 // sprite names a piece: a country piece's or a landmark piece's id (country.js, landmarks.js), "relic:<id>" (relics.js) or "decor:<id>[/<variant>]"
-// (decor.js) or "party:<id>[@<neon>]" (party.js, baked in that neon); dx, dz in metres from the scene's middle on the ground (x right, z towards the viewer, before
+// (decor.js) or "party:<id>[@<neon>][~<balloon palette>]" (party.js, baked in that neon and palette); dx, dz in metres from the scene's middle on the ground (x right, z towards the viewer, before
 // the camera's turn: put a piece's origin at groundOffset(dx, dz)); facing "left" draws it mirrored (its NF
 // normals); footprint, the scene's radius on the ground in metres. The pieces are turned towards the viewer,
 // so a scene can face two ways, as authored or mirrored (sceneLayout's `mirror`): the game picks one at random.
@@ -98,13 +98,13 @@ export function scenePiece(ref, st = {}) {
   if (ns === "country" && COUNTRY_BY_ID[rest]) { const d = COUNTRY_BY_ID[rest]; out = { def: d, sprite: countrySprite(rest, st), colours: countryColours(st) }; }
   else if (ns === "country" && LANDMARK_BY_ID[rest]) { const d = LANDMARK_BY_ID[rest]; out = { def: d, sprite: landmarkSprite(rest, st), colours: landmarkColours(st) }; }
   else if (ns === "relic" && RELIC_BY_ID[rest]) { const d = RELIC_BY_ID[rest]; out = { def: d, sprite: relicSprite(rest, st), colours: relicColours(st) }; }
-  else if (ns === "party") { const [id, neon] = rest.split("@"), d = PARTY_BY_ID[id]; if (d) out = { def: d, sprite: partySprite(id, st), colours: partyColours(st, neon || "pink"), neon: d.light === "neon" ? neon || "pink" : undefined }; }
+  else if (ns === "party") { const [idn, pal] = rest.split("~"), [id, neon] = idn.split("@"), d = PARTY_BY_ID[id]; if (d) out = { def: d, sprite: partySprite(id, st), colours: partyColours(st, neon || "pink", pal || "mixed"), neon: d.light === "neon" ? neon || "pink" : undefined }; }
   else if (ns === "decor") { const [id, v = "0"] = rest.split("/"), d = DECOR_BY_ID[id]; if (d) out = { def: d, sprite: decorSprite(id, st, { variant: +v }), colours: decorColours(st) }; }
   if (!out) throw new Error(`no scene piece "${ref}"`);
   out = { ref, ...out, glow: !!out.def.glow, decal: !!out.def.decal };
   c.set(ref, out); return out;
 }
-export const sceneRefExists = ref => { const [ns, rest] = ref.includes(":") ? ref.split(":") : ["country", ref]; return ns === "country" ? !!(COUNTRY_BY_ID[rest] || LANDMARK_BY_ID[rest]) : ns === "relic" ? !!RELIC_BY_ID[rest] : ns === "party" ? !!PARTY_BY_ID[rest.split("@")[0]] : ns === "decor" ? !!DECOR_BY_ID[rest.split("/")[0]] : false; };
+export const sceneRefExists = ref => { const [ns, rest] = ref.includes(":") ? ref.split(":") : ["country", ref]; return ns === "country" ? !!(COUNTRY_BY_ID[rest] || LANDMARK_BY_ID[rest]) : ns === "relic" ? !!RELIC_BY_ID[rest] : ns === "party" ? !!PARTY_BY_ID[rest.split("~")[0].split("@")[0]] : ns === "decor" ? !!DECOR_BY_ID[rest.split("/")[0]] : false; };
 
 // A scene in metres: { id, size, desc, suits, pieces: [{ sprite, dx, dz, facing? }], footprint }. mirror: the scene
 // turned the other way (reflected across the line up the screen through its middle, every piece mirrored).

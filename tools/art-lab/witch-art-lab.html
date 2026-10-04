@@ -191,7 +191,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 
       <section style="display:grid;gap:10px">
         <h2>Party</h2>
-        <p class="note">The party objects scattered over partified areas, at night as in the game: litter, the light sources (neon pieces in a different neon each), furniture and set dressing, with the witch for scale. Then a sample patch of party ground: clusters and loose objects strewn as the prototype might.</p>
+        <p class="note">The party objects scattered over partified areas, at night as in the game: litter, the light sources (neon pieces in a different neon each), furniture and set dressing, with the witch for scale. Then a sample patch of party ground: clusters and loose objects strewn as the prototype might. Last, balloons unlit and then beside a lantern: they don't glow, they catch the light.</p>
         <div class="sheet-wrap"><canvas id="partySheet" width="420" height="160"></canvas></div>
       </section>
 
@@ -673,13 +673,23 @@ function renderParty() {
     const draw = (ctx, img, p) => { const x = Math.round(p.x), y = Math.round(p.y); if (!p.flip) return ctx.drawImage(img, x, y); ctx.save(); ctx.translate(x + p.b.w, y); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0); ctx.restore(); };
     parts.sort((p, q) => (q.decal ? 1 : 0) - (p.decal ? 1 : 0) || p.depth - q.depth).forEach(p => { draw(A.getContext("2d"), p.b.A, p); draw(N.getContext("2d"), p.flip ? p.b.NF : p.b.N, p); });
     rows.push([{ A, N, w: PW, h: PH }]);
+    { // balloons, unlit and lit side by side: the same group twice, the second beside a lantern whose light (a point light in the lighting pass) they catch
+      const grp = withLantern => { const bits = [["balloons-stake~neon", 0, 0], ["balloon-foil-heart~metallic", 26, 6], ["balloons-chair~pastel", -30, 10], ["balloon-single~mixed", 44, -4], ...(withLantern ? [["jam-jar-lantern", 12, 16]] : [])].map(([ref, x, y]) => { const p = scenePiece("party:" + ref, st), b = bk(p); return { b, x: x - p.sprite.origin.x, y: y - p.sprite.origin.y, depth: y }; });
+        const x0 = Math.min(...bits.map(q => q.x)) - 6, y0 = Math.min(...bits.map(q => q.y)) - 6, w = Math.ceil(Math.max(...bits.map(q => q.x + q.b.w)) - x0 + 6), h = Math.ceil(Math.max(...bits.map(q => q.y + q.b.h)) - y0 + 6);
+        const A2 = document.createElement("canvas"), N2 = document.createElement("canvas"); A2.width = N2.width = w; A2.height = N2.height = h;
+        bits.sort((p, q) => p.depth - q.depth).forEach(q => { A2.getContext("2d").drawImage(q.b.A, Math.round(q.x - x0), Math.round(q.y - y0)); N2.getContext("2d").drawImage(q.b.N, Math.round(q.x - x0), Math.round(q.y - y0)); });
+        return { A: A2, N: N2, w, h, light: withLantern ? { dx: 12 - x0, dy: 6 - y0 } : null };
+      };
+      rows.push([grp(false), grp(true)]);
+    }
     // composed over a transparent albedo (so glowing pixels keep their alpha 254), lit at night, then the lit ground laid under
     const w = Math.max(...rows.map(r => r.reduce((a, x) => a + x.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(x => x.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
     tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
     let y = gap;
-    rows.forEach((r, i) => { let x = gap; y += rh[i] - gap; for (const s2 of r) { tgt.a.drawImage(s2.A, x, y - s2.h); tgt.n.drawImage(s2.N, x, y - s2.h); x += s2.w + gap; } y += gap; });
+    const lights = [];
+    rows.forEach((r, i) => { let x = gap; y += rh[i] - gap; for (const s2 of r) { tgt.a.drawImage(s2.A, x, y - s2.h); tgt.n.drawImage(s2.N, x, y - s2.h); if (s2.light) lights.push({ x: x + s2.light.dx, y: y - s2.h + s2.light.dy - 18, z: 22, R: 130, power: 3.2, rgb: [255, 186, 96] }); x += s2.w + gap; } y += gap; });
     const g = makeTarget(1, 1); g.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; g.a.fillRect(0, 0, 1, 1); g.n.fillStyle = "rgb(128,75,240)"; g.n.fillRect(0, 0, 1, 1); const gc = document.createElement("canvas"); gc.width = gc.height = 1; shade(g, gc, st, [], [0, 0, 1, 1]);
-    c.width = w; c.height = h; shade(tgt, c, st, [], [0, 0, w, h]);
+    c.width = w; c.height = h; shade(tgt, c, st, lights, [0, 0, w, h]);
     const ctx = c.getContext("2d"), img = ctx.getImageData(0, 0, w, h), al = tgt.a.getImageData(0, 0, w, h).data, gp = gc.getContext("2d").getImageData(0, 0, 1, 1).data;
     for (let i = 0; i < al.length; i += 4) if (!al[i + 3]) { img.data[i] = gp[0]; img.data[i + 1] = gp[1]; img.data[i + 2] = gp[2]; } // shade leaves empty pixels black: lay the lit ground there
     ctx.putImageData(img, 0, 0);

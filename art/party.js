@@ -13,7 +13,7 @@
 // piece is drawn once and baked in any neon (partyColours(style, neon)): the game picks the colour per placement.
 // Built in 3D (model3d.js) at the witch's scale, like the country pieces.
 import { M, hsv2rgb } from "./core.js";
-import { Model, v3 } from "./model3d.js";
+import { Model, v3, masks } from "./model3d.js";
 import { NEON } from "./sigils.js";
 import { ctHash, ctCell, ctWorn, ctPlank, ctBar, ctGlow, ctCyl, ctTufts, mark, place, pieceSprite } from "./country.js";
 
@@ -31,7 +31,7 @@ const pString = (m, pts, n, g, mat = M.GLOW) => { const seg = []; for (let i = 0
   m.chain(pts.map(p => [...p, .006]), M.NOSE, { group: g }); for (let k = 0; k < n; k++) { let d = (k + .5) / n * T, i = 0; while (i < L.length - 1 && d > L[i]) { d -= L[i]; i++; } const p = v3.lerp(seg[i][0], seg[i][1], d / L[i]); m.ell(v3.add(p, [0, -.03, 0]), [.035, .04, .035], k % 3 === 1 && mat === M.GLOW ? M.MAGIC : mat, { group: g + 1 }); } };
 // a sagging curve between two points
 const pSag = (a, b, sag, n = 10) => Array.from({ length: n + 1 }, (_, i) => { const t = i / n; return v3.add(v3.lerp(a, b, t), [0, -Math.sin(t * Math.PI) * sag, 0]); });
-const pChair = (m, c, g, { yaw = 0, mat = M.BELLY } = {}) => { const n = mark(m); m.box([0, .4, 0], [.2, .025, .2], mat, { round: .02, group: g }); m.box([-.19, .65, 0], [.025, .22, .2], mat, { round: .02, group: g, dir: [0, 1, 0], up: [1, .15, 0] }); for (const x of [-.17, .17]) for (const z of [-.17, .17]) m.seg([x, 0, z], [x * .95, .4, z * .95], .02, .02, mat, { group: g }); place(m, n, { yaw, at: c }); };
+const pChair = (m, c, g, { yaw = 0, mat = M.BELLY } = {}) => { const n = mark(m); m.box([0, .4, 0], [.2, .025, .2], mat, { round: .02, group: g }); m.box([-.19, .63, 0], [.025, .22, .2], mat, { round: .02, group: g }); for (const x of [-.17, .17]) for (const z of [-.17, .17]) m.seg([x, 0, z], [x * .95, .4, z * .95], .02, .02, mat, { group: g }); place(m, n, { yaw, at: c }); };
 const pNeon = shape => (s, t) => { const d = shape(s, t); return d < .06 ? M.MAGIC2 : d < .14 ? M.MAGIC : null; }; // a neon tube along an outline, as a distance
 
 const PARTY = {
@@ -46,8 +46,6 @@ const PARTY = {
   "party-hat": { cls: "litter", desc: "a striped party hat fallen in the grass, its pompom gold", build(m) { pHat(m, [0, .06, 0], 1, { roll: 1.2, yaw: .3 }); } },
   "party-hat-up": { cls: "litter", desc: "a party hat set upright on the ground", build(m) { pHat(m, [0, 0, 0], 1); } },
   "streamers": { cls: "litter", desc: "curls of party streamer across the ground", decal: true, build(m) { for (let k = 0; k < 3; k++) { const pts = []; for (let i = 0; i <= 14; i++) { const t = i / 14; pts.push([-.4 + t * .8, .012, (k - 1) * .12 + Math.sin(t * 9 + k) * .08, .012]); } m.chain(pts, [M.BODY, M.HAT1, M.POM][k], { group: 1 + k }); } } },
-  "balloons": { cls: "litter", desc: "three balloons tied to a stake, bobbing (pink, cyan, gold)", build(m) { ctBar(m, [0, 0, 0], [0, .25, 0], 1, .012, M.WOOD, undefined); [[M.BODY, -.12, .95, .02], [M.HAT1, .1, 1.05, -.04], [M.POM, .02, .82, .1]].forEach(([mat, x, y, z], i) => { m.chain([[0, .25, 0, .004], [x * .6, (y + .25) / 2, z * .6, .004], [x, y - .12, z, .004]], M.CLOTH, { group: 2 }); m.ell([x, y, z], [.1, .12, .1], mat, { group: 3 + i }); }); } },
-  "balloon-deflated": { cls: "litter", desc: "a deflated balloon, wrinkled on the ground", build(m) { m.ell([0, .02, 0], [.09, .02, .07], M.BODY, { group: 1, rough: .008 }); m.chain([[.08, .01, 0, .004], [.2, .01, .05, .004], [.3, .01, -.02, .004]], M.CLOTH, { group: 2 }); } },
   "confetti": { cls: "litter", desc: "a scatter of confetti over the ground", decal: true, build(m) { m.flat([0, .008, 0], [1, 0, 0], [0, 0, 1], .6, .45, (u, v) => { const p = [u * 3, 0, v * 3], r = Math.hypot(u, v), n = ctCell(p, 8, 1); if (r > .6 + ctCell(p, 2, 4) * .4 || n > .4) return null; return n < .1 ? M.BODY : n < .2 ? M.HAT1 : n < .28 ? M.POM : n < .34 ? M.TOP : M.BELLY; }, { group: 1, bend: 0 }); } },
   "glitter": { cls: "litter", desc: "spilt glitter catching the light, a faint sparkle on the ground", decal: true, glow: true, light: "neon", build(m) { m.flat([0, .008, 0], [1, 0, 0], [0, 0, 1], .45, .35, (u, v) => { const p = [u * 3, 0, v * 3], r = Math.hypot(u, v), n = ctCell(p, 9, 2); if (r > .55 + ctCell(p, 2, 6) * .45 || n > .45) return null; return n < .12 ? M.MAGIC2 : n < .3 ? M.MAGIC : M.FRAME; }, { group: 1, bend: 0 }); } },
   "glowstick-crushed": { cls: "litter", desc: "a glowstick snapped and crushed, its glow leaking into the grass", glow: true, light: "neon", build(m) { pStick(m, [-.1, .02, 0], [.02, .02, .03], 1); pStick(m, [.04, .02, .02], [.13, .02, -.05], 2); m.flat([0, .006, .01], [1, 0, 0], [0, 0, 1], .14, .1, (u, v) => Math.hypot(u, v) < .8 && ctCell([u * 3, 0, v * 3], 6) < .6 ? M.MAGIC : null, { group: 3, bend: 0 }); } },
@@ -74,7 +72,7 @@ const PARTY = {
   "folding-table": { cls: "furniture", desc: "a folding table left out, cups, cans and a bottle on it", build(m) { m.box([0, .55, 0], [.6, .02, .3], M.BELLY, { round: .02, group: 1, paint: p => ctCell(p, 14) < .1 ? M.STONED : undefined }); for (const x of [-.5, .5]) for (const s of [-1, 1]) ctBar(m, [x, 0, s * .25], [x, .54, -s * .2], 2, .015, M.FRAME, undefined); pCup(m, [-.3, .57, .1], 3); pCup(m, [-.15, .57, -.1], 4, M.CLOTH); pCan(m, [.1, .57, .05], 5, M.FRAME); pBottle(m, [.35, .57, -.05], 6); pCup(m, [.25, .6, .15], 7, M.ACCENT, 1.5); } },
   "plastic-chair": { cls: "furniture", desc: "a white plastic garden chair", build(m) { pChair(m, [0, 0, 0], 1); } },
   "plastic-chair-tipped": { cls: "furniture", desc: "a plastic chair tipped on its back", build(m) { const n = mark(m); pChair(m, [0, 0, 0], 1); place(m, n, { roll: 0, pitch: 1.3, at: [.3, .12, 0] }); } },
-  "camping-chair": { cls: "furniture", desc: "a folding camping chair in bright fabric, a can in its cup holder", build(m) { for (const s of [-1, 1]) { ctBar(m, [-.2, 0, s * .22], [.2, .42, s * .22], 1, .015, M.FRAME, undefined); ctBar(m, [.2, 0, s * .22], [-.2, .42, s * .22], 1, .015, M.FRAME, undefined); ctBar(m, [-.2, .42, s * .22], [-.28, .82, s * .22], 1, .015, M.FRAME, undefined); } m.box([0, .38, 0], [.21, .04, .22], M.TOP, { round: .03, group: 2 }); m.box([-.24, .62, 0], [.02, .2, .22], M.TOP, { dir: [0, 1, 0], up: [1, .2, 0], round: .01, group: 2 }); pCan(m, [.05, .4, .3], 3, M.HAT1); } },
+  "camping-chair": { cls: "furniture", desc: "a folding camping chair in bright fabric, a can in its cup holder", build(m) { for (const s of [-1, 1]) { ctBar(m, [-.2, 0, s * .22], [.2, .42, s * .22], 1, .015, M.FRAME, undefined); ctBar(m, [.2, 0, s * .22], [-.2, .42, s * .22], 1, .015, M.FRAME, undefined); ctBar(m, [-.2, .42, s * .22], [-.28, .82, s * .22], 1, .015, M.FRAME, undefined); } m.box([0, .38, 0], [.21, .04, .22], M.TOP, { round: .03, group: 2 }); m.box([-.25, .62, 0], [.02, .2, .22], M.TOP, { round: .01, group: 2 }); pCan(m, [.05, .4, .3], 3, M.HAT1); } },
   "deck-chair": { cls: "furniture", desc: "a striped deck chair", build(m) { for (const z of [-.25, .25]) { ctBar(m, [-.4, 0, z], [.2, .75, z], 1, .018, M.WOOD, undefined); ctBar(m, [.3, 0, z], [-.15, .35, z], 1, .018, M.WOOD, undefined); } m.box([-.08, .38, 0], [.42, .01, .24], M.BODY, { dir: [.8, .9, 0], up: [-.9, .8, 0], round: .005, group: 2, paint: p => Math.floor((p[2] + 1) * 12) % 2 ? M.BELLY : undefined }); } },
   "picnic-rug": { cls: "furniture", desc: "a bright picnic rug with crisps, cups and a birthday cake, its candle lit", glow: true, light: "warm", build(m) { m.box([0, .012, 0], [.55, .012, .42], M.BODY, { round: .006, group: 1, paint: p => (Math.floor((p[0] + 5) * 7) + Math.floor((p[2] + 5) * 7)) % 2 ? M.HAT1 : undefined }); pCup(m, [-.3, .02, .1], 2); pCup(m, [.25, .02, -.2], 3, M.CLOTH); m.box([.05, .04, .1], [.08, .02, .1], M.POM, { group: 4, dir: [1, 0, .4] }); ctCyl(m, [-.05, .02, -.15], [-.05, .1, -.15], .09, M.BELLY, 5, { end: M.BODY }); pCandle(m, [-.05, .1, -.15], .05, .01, 7); } },
   "cool-box": { cls: "furniture", desc: "a cool box, its lid open, cans inside", build(m) { m.box([0, .18, 0], [.3, .18, .2], M.HAT1, { round: .04, group: 1, paint: p => p[1] > .3 ? M.BELLY : undefined }); m.box([0, .32, 0], [.26, .1, .16], M.NOSE, { group: 1, cut: true }); const n = mark(m); m.box([0, 0, 0], [.3, .03, .2], M.BELLY, { round: .02, group: 2 }); place(m, n, { roll: -1.3, at: [0, .52, -.24] }); for (let i = 0; i < 3; i++) pCan(m, [-.12 + i * .12, .2, 0], 3 + i, i % 2 ? M.BODY2 : M.FRAME); } },
@@ -95,17 +93,79 @@ const PARTY = {
   "flag-poles": { cls: "set", desc: "festival flags on tall bending poles: plain bright colours and stripes", build(m) { [[-.4, 0, 2.1, M.BODY], [.1, -.15, 2.4, M.HAT1], [.5, .1, 1.9, M.POM]].forEach(([x, z, h, mat], i) => { m.chain([[x, 0, z, .025], [x, h * .6, z, .02], [x + .08, h, z, .012]], M.FRAME, { group: 1 + i }); m.flat([x + .22, h - .45, z + .01], [.2, 1, 0], [1, -.1, 0], .4, .14, (s, t) => { const w = .7 + .3 * (1 - (s + 1) / 2); return Math.abs(t) > w ? null : i === 1 && Math.abs(t) < .3 ? M.BELLY : mat; }, { group: 5 + i, bend: .2 }); }); } },
 };
 
+
+// ---------------- balloons (Ed: "they don't emit light but they reflect it well, and they come in many colours and in bunches") ----------------
+// Shiny, never glowing: saturated colour and a crisp highlight pixel or two, true normals, so they pop when a light is near and fall dark when
+// not. Seven colour slots (BALLOON), filled at bake by a palette (partyColours(style, neon, palette): neon, pastel, metallic or mixed); a bunch
+// cycles through them. Each balloon piece has a `bob` hint (amplitude in metres, period in seconds, phase 0 to 1) for the game to sway it, and a
+// `tie` anchor where its strings meet.
+const BALLOON = [M.SKIN, M.HAIR, M.IRIS, M.JACKET, M.JEANS, M.SHOES, M.PHONES], SHINE = M.WEB;
+const pShine = (c, dirH = [-.35, .55, .76], k = .95) => p => { const d = v3.norm(v3.sub(p, c)); return v3.dot(d, dirH) > k ? SHINE : undefined; };
+// one round balloon: a slightly tall sphere, its knot below; returns the knot
+const pBalloon = (m, c, r, mat, g, o = {}) => { m.ell(c, [r, r * 1.15, r * (o.flat ?? 1)], mat, { group: g, dir: o.dir, paint: pShine(c) }); const k = v3.add(c, [0, -r * 1.15, 0]); m.seg(v3.add(k, [0, r * .1, 0]), v3.add(k, [0, -r * .12, 0]), r * .14, r * .05, mat, { group: g }); return v3.add(k, [0, -r * .12, 0]); };
+// a bunch of n balloons on strings from `tie`, lifted `lift` above it, colours from slot `from`
+const pBunch = (m, tie, n, g, { lift = 1.0, spread = .32, from = 0, seed = 1, r = .13 } = {}) => {
+  for (let i = 0; i < n; i++) { const a = i * 2.4 + seed, d = spread * Math.sqrt((i + .5) / n), c = v3.add(tie, [Math.cos(a) * d, lift + (ctHash(i, seed) - .3) * .25 + (i % 2) * .12, Math.sin(a) * d * .8]); const knot = pBalloon(m, c, r * (.9 + ctHash(seed, i) * .2), BALLOON[(from + i) % 7], g + i); m.chain([[...tie, .006], [...v3.lerp(tie, knot, .5).map((v, j) => j === 0 ? v + (ctHash(i, 9) - .5) * .06 : v), .006], [...knot, .006]], M.CLOTH, { group: g + 10 }); }
+};
+const pStake = (m, top, g) => m.seg([top[0], 0, top[2]], top, .016, .012, M.WOOD, { group: g });
+const BALLOONS = {
+  "balloon-single": { desc: "a single balloon on its string, tied to a stake", bob: [.08, 3.2], anchors: { tie: [0, .3, 0] }, build(m) { pStake(m, [0, .3, 0], 1); pBunch(m, [0, .3, 0], 1, 2, { lift: .9, spread: 0, from: 2 }); } },
+  "balloons-stake": { desc: "a bunch of five balloons tied to a stake in the ground", bob: [.1, 3.6], anchors: { tie: [0, .35, 0] }, build(m) { pStake(m, [0, .35, 0], 1); pBunch(m, [0, .35, 0], 5, 2, { from: 0 }); } },
+  "balloons-bunch": { desc: "a bunch of seven balloons, their strings gathered to one knot, to tie to a branch, a fence or anything (its tie anchor)", bob: [.12, 4.0], anchors: { tie: [0, 0, 0] }, build(m) { pBunch(m, [0, 0, 0], 7, 1, { lift: 1.1, spread: .4, from: 3, seed: 2 }); } },
+  "balloons-table": { desc: "a folding table with four balloons tied to its leg", bob: [.09, 3.4], anchors: { tie: [.5, .55, .25] }, build(m) { PARTY["folding-table"].build(m); pBunch(m, [.5, .55, .25], 4, 20, { from: 1, seed: 3 }); } },
+  "balloons-chair": { desc: "a plastic chair with three balloons tied to its back", bob: [.08, 3.0], anchors: { tie: [-.2, .85, .15] }, build(m) { pChair(m, [0, 0, 0], 1); pBunch(m, [-.2, .85, .15], 3, 20, { lift: .85, from: 4, seed: 4 }); } },
+  "balloons-post": { desc: "a fence post with five balloons tied to its top", bob: [.1, 3.8], anchors: { tie: [0, .95, 0] }, build(m) { m.box([0, .48, 0], [.06, .48, .06], M.WOOD, { round: .02, group: 1, paint: ctPlank(7, .3) }); pBunch(m, [0, .95, 0], 5, 2, { lift: .95, from: 5, seed: 5 }); } },
+  "balloons-long": { desc: "long twisty balloons, three on a stake, one twisted into a spiral", bob: [.07, 3.3], anchors: { tie: [0, .3, 0] }, build(m) { pStake(m, [0, .3, 0], 1); [[-.15, 1.1, .02, -.25, 0], [.12, 1.2, -.04, .2, 1]].forEach(([x, y, z, lean, i]) => { const c = [x, y, z]; m.ell(c, [.06, .32, .06], BALLOON[i], { group: 2 + i, dir: [lean, 1, 0], up: [1, -lean, 0], paint: pShine(c, [-.5, .2, .84], .97) }); m.chain([[0, .3, 0, .006], [x * .6, .6, z, .006], [x - lean * .3, y - .32, z, .006]], M.CLOTH, { group: 9 }); }); const pts = []; for (let k = 0; k <= 10; k++) { const t = k / 10; pts.push([.02 + Math.cos(t * 12) * .06, .85 + t * .55, .15 + Math.sin(t * 12) * .06, .05]); } m.chain(pts, BALLOON[2], { group: 5, paint: pShine([.02, 1.1, .15], [-.4, .3, .86], .9) }); m.chain([[0, .3, 0, .006], [.02, .6, .1, .006], [.08, .85, .15, .006]], M.CLOTH, { group: 9 }); } },
+  "balloon-foil-star": { desc: "a foil star balloon on a string weighted to the ground", bob: [.09, 3.5], anchors: { tie: [0, .06, 0] }, build(m) { m.ell([0, .04, 0], [.06, .05, .06], M.BODY3, { group: 1 }); m.chain([[0, .06, 0, .006], [.04, .6, 0, .006], [0, 1.05, 0, .006]], M.CLOTH, { group: 2 }); m.flat([0, 1.3, 0], [1, 0, .2], [0, 1, 0], .25, .25, (s, t) => { const a = Math.atan2(t, s) + Math.PI / 2, r = Math.hypot(s, t), R = .5 + .45 * Math.abs(Math.cos(a * 2.5)); return r > R ? null : Math.hypot(s + .25, t - .3) < .12 ? SHINE : BALLOON[0]; }, { group: 3, bend: .5 }); } },
+  "balloon-foil-heart": { desc: "a foil heart balloon on a string weighted to the ground", bob: [.09, 3.1], anchors: { tie: [0, .06, 0] }, build(m) { m.ell([0, .04, 0], [.06, .05, .06], M.BODY3, { group: 1 }); m.chain([[0, .06, 0, .006], [-.04, .6, 0, .006], [0, 1.05, 0, .006]], M.CLOTH, { group: 2 }); m.flat([0, 1.3, 0], [1, 0, .2], [0, 1, 0], .25, .25, (s, t) => { const x = s * 1.15, y = t * 1.15 + .2, a = x * x + y * y - 1; return a * a * a - x * x * y * y * y > 0 ? null : Math.hypot(s + .3, t - .25) < .12 ? SHINE : BALLOON[1]; }, { group: 3, bend: .5 }); } },
+  "balloon-deflated": { desc: "a deflated balloon, wrinkled on the ground, its string trailing", build(m) { m.ell([0, .02, 0], [.11, .025, .08], BALLOON[0], { group: 1, rough: .012, paint: pShine([0, 0, 0], [-.3, .9, .3], .97) }); m.chain([[.1, .01, 0, .005], [.25, .01, .06, .005], [.38, .01, -.03, .005]], M.CLOTH, { group: 2 }); } },
+  "balloon-half": { desc: "a half-deflated balloon sagging on the ground at the end of its string", bob: [.02, 4.5], build(m) { pBalloon(m, [0, .12, 0], .13, BALLOON[5], 1, { dir: [.3, 1, .2], flat: .8 }); m.chain([[0, .0, .05, .005], [.2, .01, .1, .005], [.35, .01, 0, .005]], M.CLOTH, { group: 2 }); } },
+  "balloon-caught": { desc: "an escaped balloon caught high in a tree, its string hanging down; hangs from its `tie` (top) anchor in a crown", bob: [.05, 2.6], hang: true, anchors: { tie: [0, 1.0, 0] }, build(m) { pBalloon(m, [0, 1.12, 0], .13, BALLOON[6], 1); const pts = []; for (let k = 0; k <= 8; k++) { const t = k / 8; pts.push([Math.sin(t * 7) * .04, .97 - t * .97, 0, .005]); } m.chain(pts, M.CLOTH, { group: 2 }); } },
+};
+
+// ---------------- campfires (Ed: "Put campfires into the party objects library") ----------------
+// The world campfire's look (areas.js: grey ring stones, crossed logs, flame planes in its fire orange and gold), in three flickering frames
+// (`frames`), with embers and sparks rising. Lit ones are few and bright, so they carry `pointLight` { rgb, radius m, height m } for real lights.
+const FIRE = M.WOKEN, FIRE2 = M.COLLAR; // fire orange and its gold core (the world campfire's colours, in partyColours)
+const pFire = (m, c, k, frame, g) => {
+  const H = [[.42, .3, .34, .26], [.36, .4, .28, .32], [.46, .32, .38, .24]][frame % 3];
+  [[-.05, 0], [.08, .06], [-.02, -.08], [.05, -.03]].forEach(([x, z], i) => { const hh = H[i] * k; m.flat(v3.add(c, [x * k, hh * .5, z * k]), [1, 0, .3], [((frame + i) % 3 - 1) * .1, 1, 0], hh * .38, hh * .5, masks.flame(FIRE, FIRE2), { group: g + i, bend: .1 }); });
+  for (let i = 0; i < 5; i++) { const y = (.3 + ((i * .37 + frame * .21) % 1) * .9) * k; ctGlow(m, v3.add(c, [Math.sin(i * 2.3 + frame) * .12 * k, y + .2 * k, Math.cos(i * 1.7) * .08 * k]), .012 + .01 * (i % 2), g + 10 + i, i % 2 ? FIRE2 : FIRE); } // embers and sparks rising
+};
+const pRing = (m, c, R, g, n = 9) => { for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; m.ell(v3.add(c, [Math.cos(a) * R, .05 * R / .32, Math.sin(a) * R * .9]), [.09 * R / .32, .06 * R / .32, .08 * R / .32], i % 3 ? M.STONE : M.STONED, { dir: [-Math.sin(a), 0, Math.cos(a)], group: g + (i % 3), rough: .006 }); } };
+const pLogs = (m, c, k, g, cold = false) => { m.seg(v3.add(c, [-.22 * k, .06 * k, -.12 * k]), v3.add(c, [.22 * k, .1 * k, .12 * k]), .05 * k, .045 * k, M.TRUNK, { group: g, paint: p => p[0] > c[0] + .1 * k ? M.BARKD : cold && ctCell(p, 20) < .4 ? M.NOSE : undefined }); m.seg(v3.add(c, [-.2 * k, .1 * k, .14 * k]), v3.add(c, [.2 * k, .06 * k, -.14 * k]), .05 * k, .045 * k, M.TRUNK, { group: g + 1, paint: p => p[0] < c[0] - .1 * k ? M.BARKD : cold && ctCell(p, 20) < .4 ? M.NOSE : undefined }); };
+const pLogSeat = (m, c, yaw, g) => { const d = [Math.cos(yaw), 0, Math.sin(yaw)]; ctCyl(m, v3.add(c, v3.mul(d, -.45)), v3.add(c, v3.mul(d, .45)), .12, M.TRUNK, g, { paint: p => ctCell(p, 14) < .15 ? M.BARKD : ctCell(p, 6, 2) < .12 ? M.MOSS : undefined, end: p => (Math.hypot(...v3.sub(p, c).map((v, i) => i === 1 ? v : 0)) * 30) % 1 < .2 ? M.BARK2 : M.STRAW }); };
+const WARM_FIRE = [255, 150, 60];
+const CAMPFIRES = {
+  "campfire-small": { cls: "small", desc: "a small ring of stones round a little fire", glow: true, light: "warm", frames: 3, pointLight: { rgb: WARM_FIRE, radius: 6, height: .5 }, build(m, f = 0) { pRing(m, [0, 0, 0], .32, 1); pLogs(m, [0, 0, 0], 1, 5); pFire(m, [0, .1, 0], .9, f, 10); } },
+  "campfire-logs": { cls: "furniture", desc: "a campfire with log seats round it and toasting sticks leaning in", glow: true, light: "warm", frames: 3, pointLight: { rgb: WARM_FIRE, radius: 9, height: .6 }, build(m, f = 0) { pRing(m, [0, 0, 0], .4, 1, 10); pLogs(m, [0, 0, 0], 1.2, 5); pFire(m, [0, .12, 0], 1.15, f, 10); pLogSeat(m, [0, .12, -1.0], 0, 30); pLogSeat(m, [-1.0, .12, .2], 1.4, 31); pLogSeat(m, [1.0, .12, .3], -1.3, 32); for (const [x, z] of [[-.6, .6], [.5, .55]]) { ctBar(m, [x * 1.3, 0, z * 1.3], [x * .3, .45, z * .3], 33, .008, M.WOOD, undefined); m.ell([x * .3, .46, z * .3], [.03, .025, .03], M.BELLY, { group: 34 }); } } },
+  "campfire-kettle": { cls: "furniture", desc: "a campfire with a kettle hanging from a tripod over it, mugs on a stone", glow: true, light: "warm", frames: 3, pointLight: { rgb: WARM_FIRE, radius: 8, height: .6 }, build(m, f = 0) { pRing(m, [0, 0, 0], .36, 1); pLogs(m, [0, 0, 0], 1.05, 5); pFire(m, [0, .1, 0], .8, f, 10); for (let i = 0; i < 3; i++) { const a = i / 3 * 6.283 + .4; ctBar(m, [Math.cos(a) * .5, 0, Math.sin(a) * .45], [0, .95, 0], 30, .015, M.WOOD, undefined); } m.seg([0, .95, 0], [0, .62, 0], .004, .004, M.NOSE, { group: 31 }); m.ell([0, .52, 0], [.11, .1, .1], M.BODY3, { group: 32, paint: pShine([0, .52, 0], [-.35, .55, .76], .9) }); m.seg([.08, .55, 0], [.18, .62, 0], .02, .012, M.BODY3, { group: 32 }); m.ell([.75, .06, .3], [.18, .06, .14], M.STONE, { group: 33 }); for (const x of [.68, .82]) ctCyl(m, [x, .11, .3], [x, .19, .3], .035, x > .7 ? M.ACCENT : M.HAT1, 34, { end: M.NOSE }); } },
+  "bonfire": { cls: "set", desc: "a big bonfire: a tall cone of logs roaring, sparks flying high", glow: true, light: "warm", frames: 3, pointLight: { rgb: WARM_FIRE, radius: 16, height: 1.2 }, build(m, f = 0) { for (let i = 0; i < 9; i++) { const a = i / 9 * 6.283; ctBar(m, [Math.cos(a) * .7, 0, Math.sin(a) * .6], [Math.cos(a) * .08, 1.4, Math.sin(a) * .07], 1 + (i % 3), .06, M.TRUNK, p => p[1] < .5 && ctCell(p, 10) < .4 ? M.BARKD : ctCell(p, 16) < .2 ? M.NOSE : undefined); } pFire(m, [0, .05, 0], 3.0, f, 10); pFire(m, [.15, .4, .1], 1.6, (f + 1) % 3, 30); } },
+  "campfire-cold": { cls: "small", cold: true, desc: "a cold, burnt-out campfire: charred logs in grey ash inside its ring", build(m) { pRing(m, [0, 0, 0], .32, 1); m.ell([0, .02, 0], [.26, .025, .22], M.STONED, { group: 4, paint: p => ctCell(p, 18) < .3 ? M.STONE : undefined }); pLogs(m, [0, -.02, 0], .9, 5, true); } },
+  "bonfire-ashes": { cls: "furniture", cold: true, desc: "the ashes of a bonfire: a heap of charred ends in a wide grey ring", build(m) { m.ell([0, .03, 0], [.85, .05, .72], M.STONED, { group: 1, paint: p => ctCell(p, 14) < .25 ? M.STONE : ctCell(p, 9, 3) < .15 ? M.NOSE : undefined }); for (let i = 0; i < 6; i++) { const a = i * 1.1; ctBar(m, [Math.cos(a) * .6, .04, Math.sin(a) * .5], [Math.cos(a + .3) * .1, .18, Math.sin(a + .3) * .1], 2 + (i % 2), .05, M.BARKD, p => ctCell(p, 12) < .5 ? M.NOSE : undefined); } } },
+};
+
 // ---------------- the table ----------------
-const SIZE = { litter: 1.5, small: 1.2, furniture: 1, set: 1 }; // litter a touch larger than life, to read at all
-export const PARTY_CLASSES = ["litter", "small", "furniture", "set"];
-export const PARTY_OBJECTS = Object.entries(PARTY).map(([id, d]) => ({ id, size: SIZE[d.cls], split: null, glow: false, decal: false, light: null, ...d }));
+const SIZE = { litter: 1.5, balloon: 1.2, small: 1.2, furniture: 1, set: 1 }; // litter a touch larger than life, to read at all
+export const PARTY_CLASSES = ["litter", "balloon", "small", "furniture", "set"];
+const bobOf = (id, b) => b && { amplitude: b[0], period: b[1], phase: +((id.length * .137 + id.charCodeAt(id.length - 1) * .071) % 1).toFixed(2) };
+export const PARTY_OBJECTS = [...Object.entries(PARTY), ...Object.entries(BALLOONS).map(([id, d]) => [id, { cls: "balloon", ...d }]), ...Object.entries(CAMPFIRES)].map(([id, d]) => ({ id, size: SIZE[d.cls], split: null, glow: false, decal: false, light: null, frames: 1, ...d, bob: bobOf(id, d.bob) }));
 export const PARTY_BY_ID = Object.fromEntries(PARTY_OBJECTS.map(d => [d.id, d]));
 // The party neons (the sigils' neon palette) a neon piece can be baked in; warm light is candle gold.
 export const PARTY_NEONS = Object.keys(NEON);
 export const PARTY_WARM = [255, 186, 96];
-export function partyColours(st = {}, neon = "pink") {
-  const leaf = st.leafHue ?? .3, trunk = st.trunkHue ?? .07, n = NEON[neon] || NEON.pink, core = n.map(v => Math.round(v + (255 - v) * .7));
+// Balloon palettes for the seven balloon colour slots: the party neons, pastels, metallics and foils, or a mix.
+export const BALLOON_PALETTES = {
+  neon: [NEON.pink, NEON.cyan, NEON.acid, NEON.violet, NEON.orange, NEON.lemon, NEON.red],
+  pastel: [[255, 182, 214], [168, 218, 255], [196, 250, 190], [214, 192, 255], [255, 214, 168], [255, 248, 176], [255, 196, 196]],
+  metallic: [[232, 192, 84], [206, 210, 222], [226, 158, 148], [118, 158, 232], [232, 192, 84], [206, 210, 222], [206, 128, 78]], // gold, silver, rose gold, blue foil, copper
+  mixed: [NEON.pink, [232, 192, 84], [168, 218, 255], NEON.cyan, [206, 210, 222], NEON.lemon, [214, 192, 255]],
+};
+export function partyColours(st = {}, neon = "pink", balloons = "mixed") {
+  const leaf = st.leafHue ?? .3, trunk = st.trunkHue ?? .07, n = NEON[neon] || NEON.pink, core = n.map(v => Math.round(v + (255 - v) * .7)), bp = BALLOON_PALETTES[balloons] || BALLOON_PALETTES.mixed;
   return {
+    ...Object.fromEntries(BALLOON.map((mat, i) => [mat, bp[i]])), [SHINE]: [255, 255, 255], // balloon colours, their highlight
+    [FIRE]: [255, 130, 40], [FIRE2]: [255, 228, 120], // fire, as the world campfire's
     [M.MAGIC]: n, [M.MAGIC2]: core, [M.GLOW]: PARTY_WARM, [M.RUNE]: [255, 240, 200], // the neon and its white-hot core; candle gold and its core
     [M.ACCENT]: [214, 40, 50], [M.BODY]: [240, 90, 170], [M.HAT1]: [40, 190, 230], [M.POM]: [245, 200, 60], [M.TOP]: [150, 80, 230], [M.HAT2]: [44, 120, 70], [M.BODY2]: [235, 120, 40], // party red, hot pink, cyan, gold, violet, bottle green, orange
     [M.BELLY]: [236, 234, 228], [M.CLOTH]: [222, 210, 186], [M.FRAME]: [170, 174, 182], [M.BODY3]: [36, 34, 42], [M.NOSE]: [14, 12, 18], [M.SHADES]: [60, 70, 80], // white plastic, paper, metal, black kit, dark, glass
@@ -114,9 +174,10 @@ export function partyColours(st = {}, neon = "pink") {
     [M.LEAF]: hsv2rgb(leaf, .55, .45), [M.LEAF2]: hsv2rgb(leaf - .03, .5, .6), [M.LEAF3]: hsv2rgb(leaf + .03, .6, .28), [M.LINE]: [24, 22, 30],
   };
 }
-export function partyModel(id) { const d = PARTY_BY_ID[id]; if (!d) throw new Error(`no party object "${id}"`); const m = new Model({ blend: .03 }); d.build(m); return m; }
-// One party object, drawn: { whole, top, bot, crownY, origin, metres }, like the country pieces. Bake it with partyColours(style, neon).
-export function partySprite(id, st = {}, { ppm = 16 } = {}) { return pieceSprite(partyModel(id), PARTY_BY_ID[id], st, ppm); }
+export function partyModel(id, frame = 0) { const d = PARTY_BY_ID[id]; if (!d) throw new Error(`no party object "${id}"`); const m = new Model({ blend: .03 }); d.build(m, frame % d.frames); return m; }
+// One party object, drawn: { whole, top, bot, crownY, origin, anchors?, metres }, like the country pieces; `frame` for the animated ones
+// (frames > 1: the campfires). Bake it with partyColours(style, neon, balloonPalette).
+export function partySprite(id, st = {}, { ppm = 16, frame = 0 } = {}) { return pieceSprite(partyModel(id, frame), PARTY_BY_ID[id], st, ppm); }
 
 // ---------------- clusters ----------------
 // Small groupings of 3 to 8 objects, scattered many times over party ground (unlike scenes, not once per map). Each piece:
@@ -128,8 +189,10 @@ const CLUSTERS = {
   "chill-corner": { desc: "deck chairs and a cool box under a paper lantern", pieces: [["deck-chair", -.5, 0], ["deck-chair", .5, .1, "left"], ["cool-box", 0, .7], ["lantern-pole", -1.0, -.6, undefined, "cyan"], ["can", .3, 1.1]] },
   "bar-corner": { desc: "a crate bar between two tiki torches, cups and cans in front", pieces: [["crate-bar", 0, 0], ["tiki-torch", -1.2, .1], ["tiki-torch", 1.2, .1, "left"], ["cups", -.3, .8], ["cans", .4, .9], ["bottle-fallen", .9, .7]] },
   "dj-corner": { desc: "a little DJ booth with a neon star and glowsticks round it", pieces: [["dj-booth", 0, 0, undefined, "magenta"], ["neon-star", -1.3, -.3, undefined, "cyan"], ["glowsticks-strewn", .2, .9, undefined, "acid"], ["cups", -.6, .8], ["led-cube", 1.5, .7, undefined, "pink"]] },
-  "campfire-circle": { desc: "a lit fire pit, camping chairs and hay seats round it", pieces: [["fire-pit-lit", 0, 0], ["camping-chair", -.9, -.2], ["camping-chair", .9, -.3, "left"], ["hay-seat", 0, .9], ["cans", .6, .7], ["party-hat", -.5, .7]] },
-  "balloon-spot": { desc: "balloons on a stake, confetti and a fallen party hat", pieces: [["confetti", 0, 0], ["balloons", .1, -.2], ["party-hat", -.3, .2], ["balloon-deflated", .4, .3], ["streamers", -.2, -.4]] },
+  "campfire-circle": { desc: "a campfire with a kettle on, camping chairs and a hay seat round it", pieces: [["campfire-kettle", 0, 0], ["camping-chair", -.9, -.2], ["camping-chair", .9, -.3, "left"], ["hay-seat", 0, .9], ["cans", .6, .7], ["party-hat", -.5, .7]] },
+  "balloon-spot": { desc: "balloons on a stake, a stray, a deflated one, confetti and a fallen party hat", pieces: [["confetti", 0, 0], ["balloons-stake", .1, -.2], ["balloon-single", .9, -.5], ["party-hat", -.3, .2], ["balloon-deflated", .4, .3], ["streamers", -.2, -.4]] },
+  "fireside": { desc: "a campfire with log seats, camping chairs, cups, a rug, and balloons tied nearby", pieces: [["campfire-logs", 0, 0], ["camping-chair", 1.5, .9, "left"], ["picnic-rug", -1.4, .9], ["cups", .4, 1.4], ["balloons-post", -1.6, -1.1], ["balloon-half", .9, 1.6]] },
+  "bonfire-night": { desc: "a bonfire with hay seats round it, cans, glowsticks and a bunch of balloons on a post", pieces: [["bonfire", 0, 0], ["hay-seat", -1.6, .6], ["hay-seat", 1.5, .8, "left"], ["cans", .3, 1.4], ["glowsticks-strewn", -.6, 1.5, undefined, "acid"], ["balloons-post", 2.0, -.9, "left"]] },
 };
 export const PARTY_CLUSTERS = Object.entries(CLUSTERS).map(([id, d]) => ({ id, size: "party", ...d, pieces: d.pieces.map(([p, x, z, f, neon]) => [`party:${p}${neon ? "@" + neon : ""}`, x, z, f]) }));
 export const PARTY_CLUSTER_BY_ID = Object.fromEntries(PARTY_CLUSTERS.map(d => [d.id, d]));

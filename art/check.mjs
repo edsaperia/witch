@@ -326,12 +326,12 @@ const report = await b.page.evaluate(async () => {
   { // party objects: each standing, nothing NaN, small in pixel area for its class (litter, small, furniture, set: they're reused many times), decals flat;
     // only the flagged ones glow, each glowing one says its light (neon: its glow in the MAGIC materials, so it recolours by neon; warm: candle gold);
     // every light source glows, half of everything or more glows; a neon piece baked in two neons glows in two colours; clusters of 3 to 8 real objects, 1 to 6 m, mirroring true
-    const bad = [], EM = new Set([...G.EMISSIVE]), area = { litter: 1200, small: 4000, furniture: 7000, set: 7000 }; let glowing = 0;
+    const bad = [], EM = new Set([...G.EMISSIVE]), area = { litter: 1200, balloon: 4000, small: 4000, furniture: 7000, set: 7000 }; let glowing = 0;
     for (const d of G.PARTY_OBJECTS) {
       const R = G.partySprite(d.id, st), sp = R.whole, s2 = stats(sp), mats = new Set(sp.m), lit = [...mats].some(v => EM.has(v)), nan = [...sp.n].some(v => !Number.isFinite(v)); if (lit) glowing++;
-      const light = !d.glow ? d.light == null : d.light === "neon" ? mats.has(G.M.MAGIC) || mats.has(G.M.MAGIC2) : d.light === "warm" ? mats.has(G.M.GLOW) || mats.has(G.M.RUNE) : false;
+      const light = !d.glow ? d.light == null : d.light === "neon" ? mats.has(G.M.MAGIC) || mats.has(G.M.MAGIC2) : d.light === "warm" ? [G.M.GLOW, G.M.RUNE, G.M.WOKEN, G.M.COLLAR].some(v => mats.has(v)) : false; // warm: candle gold or fire
       const flat = !d.decal || R.metres.height < R.metres.width * .7, small = sp.w * sp.h <= area[d.cls];
-      if (!(s2.n > 8 && s2.bottom > 0 && !nan && lit === !!d.glow && light && flat && small && (d.cls !== "small" || d.glow))) bad.push(`${d.id} ${sp.w}x${sp.h}px${lit === !!d.glow ? "" : " glow"}${light ? "" : " light"}${flat ? "" : " not flat"}${small ? "" : " too big"}`);
+      if (!(s2.n > 8 && s2.bottom > 0 && !nan && lit === !!d.glow && light && flat && small && (d.cls !== "small" || d.glow || d.cold))) bad.push(`${d.id} ${sp.w}x${sp.h}px${lit === !!d.glow ? "" : " glow"}${light ? "" : " light"}${flat ? "" : " not flat"}${small ? "" : " too big"}`);
     }
     { const sp = G.partySprite("glowsticks-stuck", st).whole, col = n => { const c = G.partyColours(st, n); return c[G.M.MAGIC].join(); }; if (col("pink") === col("cyan") || !sp.m.includes(G.M.MAGIC)) bad.push("neon recolour"); }
     for (const C of G.PARTY_CLUSTERS) {
@@ -340,7 +340,20 @@ const report = await b.page.evaluate(async () => {
       if (!(real && L.pieces.length >= 3 && L.pieces.length <= 8 && L.footprint >= 1 && L.footprint <= 6 && mirrored)) bad.push(`cluster ${C.id}: ${L.pieces.length} pieces, ${L.footprint} m`);
     }
     const n = G.PARTY_OBJECTS.length, cls = G.PARTY_CLASSES.map(c => G.PARTY_OBJECTS.filter(d => d.cls === c).length);
-    res.push({ what: "party objects: 40+ over the four classes (litter, small, furniture, set); standing, small in pixel area for their class, decals flat; only the flagged ones glow, with their light (neon recolourable, or warm); every light source glows, half or more glow; 6+ clusters of 3 to 8, 1 to 6 m", good: !bad.length && n >= 40 && cls.every(k => k >= 6) && glowing * 2 >= n && G.PARTY_CLUSTERS.length >= 6, info: bad.join(", ") || `${n} objects (${cls.join("/")}), ${glowing} glowing, ${G.PARTY_CLUSTERS.length} clusters` });
+    { // balloons: never glowing, shiny (a highlight pixel), in every colour slot across a bunch, a bob hint, a tie anchor inside the sprite for the tied ones
+      const B = G.PARTY_OBJECTS.filter(d => d.cls === "balloon"), slots = new Set();
+      for (const d of B) { const R = G.partySprite(d.id, st), sp = R.whole, mats = new Set(sp.m); for (const v of mats) slots.add(v);
+        const tie = R.anchors?.tie, inside = !tie || (tie.x >= 0 && tie.x <= sp.w && tie.y >= 0 && tie.y <= sp.h);
+        if (d.glow || [...mats].some(v => EM.has(v)) || (!d.id.includes("deflated") && !mats.has(G.M.WEB)) || (d.bob && !(d.bob.amplitude > 0 && d.bob.period > 0)) || !inside) bad.push(`balloon ${d.id}`); }
+      if (B.length < 10 || B.filter(d => d.bob).length < 8 || ![G.M.SKIN, G.M.HAIR, G.M.IRIS, G.M.JACKET, G.M.JEANS, G.M.SHOES, G.M.PHONES].every(v => slots.has(v))) bad.push("balloons: too few, without bob, or colour slots unused");
+      const a = G.partyColours(st, "pink", "neon"), b = G.partyColours(st, "pink", "metallic"); if (a[G.M.SKIN].join() === b[G.M.SKIN].join()) bad.push("balloon palettes");
+    }
+    { // campfires: the lit ones animate (3 frames, each different), warm, with a point light; the cold ones don't glow
+      const F = G.PARTY_OBJECTS.filter(d => /fire|ashes/.test(d.id) && d.id !== "fire-pit-lit");
+      for (const d of F) { if (d.glow) { const fr = [0, 1, 2].map(f => G.partySprite(d.id, st, { frame: f }).whole), sig = fr.map(sp => sp.m.join("")); if (!(d.frames === 3 && d.light === "warm" && d.pointLight?.radius > 0 && new Set(sig).size === 3)) bad.push(`campfire ${d.id}`); } else if ([...G.partySprite(d.id, st).whole.m].some(v => EM.has(v))) bad.push(`cold ${d.id}`); }
+      if (F.filter(d => d.glow).length < 4 || F.filter(d => !d.glow).length < 1) bad.push("campfires: too few sizes or no cold one");
+    }
+    res.push({ what: "party objects: 40+ over the five classes (litter, balloon, small, furniture, set); balloons shiny not glowing, every colour slot, bob hints, tie anchors; campfires in 4+ sizes animated in 3 frames with point lights, a cold one; standing, small in pixel area for their class, decals flat; only the flagged ones glow, with their light (neon recolourable, or warm); every light source glows, half or more of the rest (balloons aside) glow; 6+ clusters of 3 to 8, 1 to 6 m", good: !bad.length && n >= 40 && cls.every(k => k >= 6) && glowing * 2 >= n - cls[1] && G.PARTY_CLUSTERS.length >= 6, info: bad.join(", ") || `${n} objects (${cls.join("/")}), ${glowing} glowing, ${G.PARTY_CLUSTERS.length} clusters` });
   }
   { // scenes: every piece names a real sprite; 3+ pieces; at most one glowing kind; footprints sane (small 3 to 12 m) and holding every piece; mirroring keeps every distance and the footprint
     const bad = [], sizes = [];
