@@ -957,7 +957,7 @@ export class View {
     const at = { x: x - U.x * d, y: -U.y * d, z: z - U.z * d };
     const items: SpriteInstance[] = [{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true }];
     // The studio's DJ table (v2) a little nearer the camera than her stool, so it stands in front of her.
-    if (T.hasFore) { const fwd = this.camera.getWorldDirection(this.v3b); items.push({ x: at.x - fwd.x * 1.2, y: at.y - fwd.y * 1.2, z: at.z - fwd.z * 1.2, frame: f[2], flip: false }); }
+    if (T.hasFore) { const fwd = this.camera.getWorldDirection(this.v3b); items.push({ x: at.x - fwd.x * 1.2, y: at.y - fwd.y * 1.2, z: at.z - fwd.z * 1.2, frame: f[2], flip: false, overlay: true }); }
     this.treehouseBatch.set(items);
     return at;
   }
