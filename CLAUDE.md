@@ -111,3 +111,5 @@ Literal, stable names for the parts of the game, as Ed and the builders agree th
 - **Area legend / sleeping legend**: the one legend of its kind in every area, asleep (sunk and mossed over, scenery) until its area's wave wakes it, angry, to guard its area; beaten, it sleeps for good (DESIGN.md, "Sleeping legends").
 - **Happy legend**: an area legend at peace, its buff on (for now only by the debug key L; quests later). Home's is happy from the start.
 - **Debug arena**: `?arena=wolf*4@2,beetle*3`, hers against the wild below the dancefloor; J sets it up again.
+- **Dream / quest**: a sleeping legend's thought bubble, the sigil (and level pips) of the creature it wants; put that sigil down in its area before its wave and it's happy (rules/quest.ts).
+- **Friendly area / guards**: an area whose legend's quest is done: its creatures leave her be while it's wild, and guard it as party animals once it's partified. An area whose quest isn't done wakes **angry**.

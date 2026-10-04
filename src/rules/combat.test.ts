@@ -410,3 +410,19 @@ describe("Ed's playtest (2026-10-04)", () => {
     expect(Math.hypot(shy.x - g.witch.x, shy.z - g.witch.z)).toBeGreaterThan(s0); // skittish
   }, 60000);
 });
+
+describe("the invitee truce (Ed, 2026-10-04)", () => {
+  it("has her party leave the creature she's inviting alone, and go for it once the chat's off", () => {
+    const g = quiet(), w = g.witch;
+    const fox = place(g, 0, "fox", 2, w.x + 3, w.z), wolf = place(g, 0, "wolf", 2, w.x - 1, w.z, true);
+    g.witches[0].health.hp = 1e6;
+    for (let i = 0; i < 6 / STEP; i++) stepGame(g, { ...idle, autoTalk: true }, STEP); // (an adult takes 12 s to invite)
+    expect(g.leash.talk?.id).toBe(fox.id);
+    expect(fox.hp).toBeUndefined(); // untouched while they chat
+    expect(wolf.fight?.target?.kind === "creature" && wolf.fight.target.id === fox.id).toBe(false);
+    // She rises: the chat's off, and it's fair game again.
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 };
+    for (let i = 0; i < 10 / STEP && fox.hp === undefined; i++) stepGame(g, idle, STEP);
+    expect(fox.hp).toBeDefined();
+  }, 60000);
+});

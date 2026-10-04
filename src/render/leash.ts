@@ -14,6 +14,7 @@ import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { drawSigil, sigilColour } from "../../art/generator.js";
 import { dormant, type Game } from "../rules/game";
+import type { Creature } from "../rules/creatures";
 import { attackOf, COMBAT, maxHp, traitsOf, type Trait } from "../rules/combat";
 
 /** Each trait's mark over a fighting creature (placeholders until the art lands): flier sky blue,
@@ -258,11 +259,16 @@ export class LeashView {
    *  over the canopy, so they read as special from above. Dimmer while they sleep. */
   private drawBosses(time: number): void {
     const g = this.game, W = g.tuning.wildLegends, w = g.witch, dot = this.uv(0), treetops = w.lift > 0.5, near = treetops ? 420 : 110;
+    this.dreams = [];
     for (const c of g.creatures) {
       if (!c.boss || c.leashed || Math.abs(c.x - w.x) > near || Math.abs(c.z - w.z) > near) continue;
       // Asleep (or asleep for good), it's scenery: nothing marks it (Ed, 2026-10-04). Waking, a burst
       // of soil as it heaves up; happy, a few hearts' worth of rosy motes rising.
-      if (c.legendState === "asleep" || c.legendState === "slept") { this.woke.delete(c.id); continue; }
+      if (c.legendState === "asleep" || c.legendState === "slept") {
+        this.woke.delete(c.id);
+        if (c.legendState === "asleep" && c.quest && c.quest.done === undefined) this.dreams.push(c);
+        continue;
+      }
       if (c.legendState === "waking" && !this.woke.has(c.id)) { this.woke.add(c.id); for (let i = 0; i < 3; i++) this.fx.push({ kind: "puff", x: c.x + (i - 1) * 1.2, y: 0.4, z: c.z, at: time, life: 1.4, r: 0.5, g: 0.4, b: 0.28, seed: c.id * 13 + i }); }
       if (c.legendState === "happy") {
         for (let i = 0; i < 5; i++) { const ph = (time * 0.3 + hash2(c.id, i, 31)) % 1, a = hash2(c.id, i, 37) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 1.4, 0.8 + ph * 4, c.z + Math.sin(a) * 1, 0.3, dot, 1, 0.55, 0.75, 0.8 * Math.sin(ph * Math.PI)); }
@@ -286,6 +292,51 @@ export class LeashView {
         this.standing.add(c.x + Math.cos(a) * r, ph * 4.5, c.z + Math.sin(a) * r * 0.8, 0.28, dot, rgb[0] * 1.5, rgb[1] * 1.5, rgb[2] * 1.5, 0.8 * k * Math.sin(ph * Math.PI));
       }
     }
+  }
+
+  /** Sleeping legends dreaming this frame (the first quest), drawn as thought bubbles by drawDreams. */
+  private dreams: Creature[] = [];
+  private dreamEls: HTMLElement[] = [];
+
+  /** A sleeping legend's dream (the first quest, Ed 2026-10-04): a thought bubble over it holding the
+   *  sigil of the creature it wants, in its colour, with its level as gold pips beneath (one for a
+   *  baby, two young, three adult). From the treetops the bubble floats high over it, so the
+   *  forest's dreams can be read from above. HTML, like the talk bubbles, so it reads at any zoom. */
+  private drawDreams(camera: THREE.Camera, width: number, height: number): void {
+    const host = this.bubbleWitch?.parentElement, w = this.game.witch, treetops = w.lift > 0.5;
+    if (!host) return;
+    const list = this.dreams.map(c => ({ c, d: Math.hypot(c.x - w.x, c.z - w.z) })).sort((p, q) => p.d - q.d).slice(0, 12);
+    let used = 0;
+    for (const { c } of list) {
+      const y = treetops ? 16 : Math.min(this.tops.get(c.id) ?? 2, 4.5) + 1.2;
+      placed(this.v.set(c.x, y, c.z)).project(camera);
+      if (this.v.z > 1 || Math.abs(this.v.x) > 1.1 || Math.abs(this.v.y) > 1.1) continue;
+      let el = this.dreamEls[used];
+      if (!el) { el = document.createElement("div"); el.className = "bubble dream on"; host.append(el); this.dreamEls.push(el); }
+      el.style.display = "";
+      const q = c.quest!, key = `${q.species}:${q.level}`;
+      if (el.dataset.e !== key) {
+        el.dataset.e = key;
+        const cv = document.createElement("canvas"), n = 36;
+        cv.width = cv.height = n;
+        const x = cv.getContext("2d");
+        if (x) {
+          drawSigil(x, q.species, { x: 1, y: 1, size: n - 2, level: q.level as unknown as null, colour: sigilColour(q.species), glow: false });
+          const d = x.getImageData(0, 0, n, n);
+          for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] > 90 ? 255 : 0;
+          x.putImageData(d, 0, 0);
+        }
+        const pips = document.createElement("div");
+        pips.className = "pips";
+        for (let i = 0; i <= q.level; i++) pips.append(document.createElement("i"));
+        el.replaceChildren(cv, pips);
+      }
+      el.style.left = `${((this.v.x + 1) / 2) * width}px`;
+      el.style.top = `${((1 - this.v.y) / 2) * height}px`;
+      el.style.transform = `translate(-50%, -100%) scale(${treetops ? 0.7 : 1})`;
+      used++;
+    }
+    for (let i = used; i < this.dreamEls.length; i++) this.dreamEls[i].style.display = "none";
   }
 
   /** How far to shake the camera now (metres): a legend's quake nearby. */
@@ -331,6 +382,14 @@ export class LeashView {
       if (e.kind === "charged" && close(e.x, e.z)) this.fx.push({ kind: "puff", x: e.x, y: 0.4, z: e.z, at: time, life: 0.7, r: 0.8, g: 0.7, b: 0.55, seed: e.at * 29 });
       if (e.kind === "soundHit" && close(e.x, e.z, 150) && (e.at * 10) % 3 < 1) this.fx.push({ kind: "spark", x: e.x, y: 2.5, z: e.z, at: time, life: 0.3, r: 1, g: 0.6, b: 0.3, seed: e.at * 3 });
       if (e.kind === "soundDestroyed") this.fx.push({ kind: "spark", x: e.x, y: 3, z: e.z, at: time, life: 2, r: 1, g: 0.4, b: 0.6, seed: e.at, size: 6 });
+    }
+    // A quest done: the dream bubble pops in sparkles, the creature brought joins its new area.
+    for (const e of g.questEvents) {
+      const L = g.creatures[e.id], top = Math.min(this.tops.get(e.id) ?? 2, 4.5) + 1.5;
+      this.fx.push({ kind: "spark", x: L.x, y: top, z: L.z, at: time, life: 1.2, r: 1, g: 0.75, b: 0.95, seed: e.at * 11 + e.id, size: 3 });
+      this.fx.push({ kind: "spark", x: L.x, y: top, z: L.z, at: time, life: 0.8, r: 1, g: 1, b: 1, seed: e.at * 13 + e.id, size: 1.6 });
+      this.fx.push({ kind: "ring", x: L.x, y: 0, z: L.z, at: time, life: 1, r: 1, g: 0.6, b: 0.85, seed: 0, size: 5 });
+      const j = g.creatures[e.joined]; if (j) this.fx.push({ kind: "puff", x: j.x, y: 0.5, z: j.z, at: time, life: 0.8, r: 1, g: 0.7, b: 0.9, seed: e.at * 17 });
     }
     for (const e of g.koEvents) {
       if (e.kind === "released" && e.id !== undefined) {
@@ -393,6 +452,9 @@ export class LeashView {
       // A wild legend in its second phase: a red aura pulsing round its feet.
       if (c.legend?.phase === 2 && !c.leashed) { const pk = 0.5 + 0.5 * Math.sin(time * 6 + c.id); for (let i = 0; i < 28; i++) { const a = (i / 28) * Math.PI * 2 + time * 0.5, R = 2.6 + pk * 0.4; this.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.45, dot, 1, 0.2, 0.25, 0.3 + 0.4 * pk); } }
       if (legendCharging(c, time)) for (let i = 0; i < 3; i++) this.standing.add(c.x + (hash2(c.id, Math.floor(time * 15) + i, 23) - 0.5) * 2, 0.4, c.z + (hash2(c.id, Math.floor(time * 15) + i, 29) - 0.5) * 1.2, 0.8, dot, 0.7, 0.6, 0.5, 0.4);
+      // A friendly area's creature (its legend's quest done): a rosy heart-mote over it now and then;
+      // a guard (that area partified): a steady mote in its sigil's colour.
+      if ((c.friendly || c.guard) && !c.leashed && c.level > 0) { const top = (this.tops.get(c.id) ?? 1.2 + c.level * 0.6) + 0.35, ph = (time * 0.5 + c.id * 0.37) % 1, col = c.guard ? neon(c.species) : { r: 1, g: 0.5, b: 0.75 }; this.standing.add(c.x, top + (c.guard ? 0 : ph * 0.6), c.z, 0.28, dot, col.r, col.g, col.b, c.guard ? 0.85 : Math.sin(ph * Math.PI) * 0.9); }
       // Charging (the boar): dust kicked up behind it.
       if (c.charge && time < c.charge.until) for (let i = 0; i < 4; i++) { const q = hash2(c.id, Math.floor(time * 20) + i, 17); this.standing.add(c.x - c.charge.dx * (0.8 + i * 0.5), 0.3 + q * 0.4, c.z - c.charge.dz * (0.8 + i * 0.5), 0.5 + i * 0.15, dot, 0.75, 0.65, 0.5, 0.5 - i * 0.1); }
       // Telegraphs: winding up, a ring tightens at its feet; a shot shows its line; the quake its reach.
@@ -619,6 +681,7 @@ export class LeashView {
     }
     this.standing.end(); this.flat.end(); this.over.end();
     this.bubbles(time, camera, width, height);
+    this.drawDreams(camera, width, height);
   }
 
   /** Show an emoji in a bubble as a pixel sprite: drawn small (bubbles.emojiPixels across), its
