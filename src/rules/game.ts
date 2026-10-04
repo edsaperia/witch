@@ -99,7 +99,7 @@ export interface Game {
 }
 
 export interface Controls extends Intent, Partial<LeashControls> {
-  /** Debug (L): the nearest area legend turns happy (how it will is a quest, undecided). */
+  /** Debug (O): the nearest area legend turns happy (as if its quest were done). */
   happyNearest?: boolean;
   /** Auto-talk (the player's setting, on unless turned off), and Talk held (how she talks with it off). */
   autoTalk?: boolean;

@@ -261,7 +261,7 @@ A counter is **shown**: a hit that's strong against its target flashes big and g
   - Its legend buff is on while it's happy.
   - **It fights incoming sieges** (Ed, 2026-10-04). It guards its area like a parked party animal with a large guard radius (`wildLegends.guard`, 40 m round its area's centre). It takes on wild attackers entering its area, especially sieges marching on its soundsystem or through its area to others, with its legend move set (slam, nova, charge; spin in phase 2).
   - Defaults until Ed rules otherwise: it heals `wildLegends.heal` hp a second while no enemy is near. If beaten, it sinks back to sleep for good and its buff ends, like a defeated legend.
-  - A legend becomes happy through its quest (The first quest, below); the debug key **L** also makes the nearest one happy.
+  - A legend becomes happy through its quest (The first quest, below); the debug key **O** also makes the nearest one happy.
   - **Home's legend is happy from the start**, already with the party. So its buff is on from the start (my call; easy to change).
 - **The state machine:** asleep → its area's wave → waking → awake (angry) → beaten → asleep for good; and asleep or awake → (later: mollified) → happy.
 - **Consequences.**
@@ -291,7 +291,7 @@ A counter is **shown**: a hit that's strong against its target flashes big and g
   - A friendly area still grows each wave, and the newcomers are friendly too.
   - Friendly creatures (and guards) can still be invited. Taking them weakens the area's future defence; that's the player's call.
   - The quest can't be done once the area's wave has come.
-  - The debug key **L** stays: it makes the nearest legend happy, as if its quest were done.
+  - The debug key **O** stays (L is the playtest log's download): it makes the nearest legend happy, as if its quest were done.
   - The balance simulator's legend options stay debug-only.
 - **Demo:** `?quest=1` starts her beside the nearest sleeping legend, with the creature it dreams of on her stack. Press E there.
 
