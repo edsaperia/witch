@@ -4,6 +4,15 @@
     {
       "version": null,
       "items": [
+        "At the start the speakers round the dancefloor boot up one by one, giving you about a minute before the countdown to the first wave begins",
+        "A spell: Q (gamepad B, touch 'spell') casts a speed boost: much faster for a few seconds, with a trail; the ring in the corner shows it recharging",
+        "Cycle: C (gamepad right-stick click, touch 'cycle') sends the bottom sigil of your stack to the top, so you choose which creature goes down next",
+        "A few creatures (hares, stoats, martens) are quick on their feet; legends are very slow; you're still much faster than any of them"
+      ]
+    },
+    {
+      "version": 194,
+      "items": [
         "No more 'land to talk' prompt",
         "The dancefloor's old soundsystem is gone; its ring of speakers carries the music",
         "The next-stone arrow now points the right way",

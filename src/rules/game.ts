@@ -9,6 +9,7 @@ import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { nextSpeakerState, type SpeakerState } from "./speakers";
 import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
 import { SIGIL_NEON } from "../../art/sigils.js";
+import { castSpell, newSpells, speedMultiplier, type SpellState } from "./spells";
 import type { Tuning } from "./tuning";
 import { newWitch, stepWitch, witchHeight, type Intent, type WitchState } from "./witch";
 
@@ -27,6 +28,8 @@ export interface Game {
   speakers: SpeakerState[];
   /** The dancefloor's tile lights (rules/dancefloor.ts). */
   floor: FloorState;
+  /** The equipped spell and its recharge (rules/spells.ts). */
+  spells: SpellState;
   /** Where the opening shot looks: her seat on the treehouse as drawn (the view sets it; the art knows where it is). */
   introFocus?: { x: number; y: number; z: number };
 }
@@ -39,6 +42,8 @@ export interface Controls extends Intent, Partial<LeashControls> {
   pauseWaves?: boolean;
   /** Debug: every dancefloor speaker on to its next state (playing, damaged, destroyed). */
   cycleSpeakers?: boolean;
+  /** The spell button: cast the equipped spell. */
+  spell?: boolean;
 }
 
 export function newGame(seed: number, tuning: Tuning): Game {
@@ -48,7 +53,7 @@ export function newGame(seed: number, tuning: Tuning): Game {
     seed, tuning, map, forest: new Forest(map), creatures: spawnCreatures(map), clock: newClock(),
     witch, camera: newCamera(tuning, witch.x, witchHeight(witch, tuning), witch.z), party: newParty(map), leash: newLeash(),
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
-    floor: newFloor(),
+    floor: newFloor(), spells: newSpells(tuning),
   };
 }
 
@@ -58,13 +63,16 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   const dt = tick(g.clock, realDt);
   if (dt === 0) return;
   const wave = g.party.wave, seated = g.witch.seated;
-  g.witch = stepWitch(g.witch, c, dt, g.tuning, g.map.bounds);
+  if (c.spell) castSpell(g.spells, g.clock.time, g.tuning);
+  // The speed boost: her speeds times its multiplier while it's on.
+  const boost = speedMultiplier(g.spells, g.clock.time, g.tuning);
+  g.witch = stepWitch(g.witch, c, dt, boost === 1 ? g.tuning : { ...g.tuning, groundSpeed: g.tuning.groundSpeed * boost, treetopSpeed: g.tuning.treetopSpeed * boost }, g.map.bounds);
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, dt, g.tuning, !!g.witch.seated, g.introFocus);
   if (c.pauseWaves) g.party.paused = !g.party.paused;
   if (c.nextWave) { spreadWave(g.party, g.map, g.clock.time); g.party.nextAt = g.clock.time + g.tuning.party.interval; }
   stepParty(g.party, g.map, g.clock.time, dt);
   stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map);
-  stepLeash(g.leash, g.creatures, { talk: !!c.talk, sigil: !!c.sigil, inviteNearest: c.inviteNearest }, g.witch, g.witch.mode === "ground", g.clock.time, dt, g.tuning);
+  stepLeash(g.leash, g.creatures, { talk: !!c.talk, sigil: !!c.sigil, inviteNearest: c.inviteNearest, cycle: !!c.cycle }, g.witch, g.witch.mode === "ground", g.clock.time, dt, g.tuning);
   stepDancefloor(g, wave, seated);
 }
 

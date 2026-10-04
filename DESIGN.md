@@ -134,6 +134,34 @@ One area type per creature, each a small definition in Ed's columns: **floor** t
 | Holly thicket | dead leaves | holly hedges | cobwebs | hollies | a web-hung dead tree | Spider | draft |
 | Honeysuckle tangle | grass and clover | bramble | honeysuckle | hazel coppice | | Dormouse | draft |
 
+## Combat, pacing and forecasting (Ed, 2026-10-04)
+
+Decided in a long design session with the coordinator; built in stages, with a playable release after each (quick, easy things first, the creature menagerie last).
+
+- **Core loop:** the forecast shows where the party spreads next. You head there, inviting, feeding and evolving creatures on the way. Arrive early and you can invite that area's young before the music wakes them. Arrive late and its woken creatures are attacking the new soundsystem, so you defend with what you brought or pre-placed. High-level play is pre-positioning evolved creatures and sigils so you can react, and keeping your creatures alive by using them well.
+- **Pace:** one new area per wave, at a fixed pace. Fights are **long**, and soundsystems take a long while to destroy, so you always have time to feed babies. Pressure builds because sieges outlast the wave gap and overlap, and survivors of a lost defence march on to the next-nearest soundsystem. (An "annoyance" raid system is parked as an optional setting.)
+- **Start:** the home speaker ring boots up first.
+- **Movement:** creatures move at their own pace and are never carried by the witch. She is much faster than almost all of them; fast creatures are rare and weaker; legends are very slow.
+- **Forecasting:** the next two waves are confirmed, plus a probable set. Rune stones grow a circle of up to 12 symbols, and the 12th means next. The beams grow with the countdown.
+- **Music:** one track; louder and clearer near playing soundsystems, muffled in the deep forest, distorted by damage nearby.
+- **Spells:** one chosen per run from a list unlocked across runs, used on a cooldown. The list includes spells, placed items (buff totem, knockback bomb), speed boots and instant evolve. The first is the speed boost.
+- **Legends,** while alive, each give the witch a unique buff.
+- **Controls:** talk, sigil, spell, cycle, plus rise/descend; more buttons only when needed. Feeding is automatic: party animals eat berries near them.
+- **Combat** (later stages):
+  - **Sides:** wild and party animals fight each other with one shared system. No friendly fire. The witch is never attacked.
+  - **Level-ups:** babies don't attack. Young have one attack; adults a stronger one plus a second ability or modifier; legends one slow, powerful signature move.
+  - **Defeat:** health bars show only when hurt. A defeated party animal is **lost for the run**; a defeated wild creature flees and vanishes.
+  - **Control:** leash position only.
+  - **Soundsystems** are passive and don't heal.
+  - **Dodging:** some species dodge, as a behaviour trait.
+  - **Status effects:** a brief immunity after a stun or ensnare; slows don't stack.
+  - **Cover:** nothing blocks attacks.
+  - **Wild legends** are rare, late mini-bosses.
+  - **Balance:** an equal power budget per level, spent differently.
+  - **Hit feel:** medium, with screen shake only for legends.
+  - **Content:** built from data-driven parts (movement, behaviour drives, attack delivery, effect and timing, skins). The first slice is **10 contrasting species**; balance tools are a dashboard page and an in-game arena mode.
+- **Mode roles:** treetop mode is the strategic map, ground mode is for micro.
+
 ## Run structure
 
 - A run is a sequence of **waves** (above) and ends when every soundsystem is destroyed.

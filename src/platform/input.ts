@@ -6,7 +6,7 @@
 // shoulders or triggers to zoom, Back/Select for debug. Touch: the joystick and buttons in ui/touch.ts write into `touch`.
 import type { Controls } from "../rules/game";
 
-export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean; nextWave?: boolean; pauseWaves?: boolean; talk?: boolean; sigil?: boolean }
+export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean; nextWave?: boolean; pauseWaves?: boolean; talk?: boolean; sigil?: boolean; spell?: boolean; cycle?: boolean }
 
 export class Input {
   private keys = new Set<string>();
@@ -29,7 +29,7 @@ export class Input {
   }
 
   private isGameKey(code: string): boolean {
-    return /^(Arrow|Space$|Key[WASDZXENPTIFRK]$|Shift|Minus$|Equal$|NumpadAdd$|NumpadSubtract$|Backquote$)/.test(code);
+    return /^(Arrow|Space$|Key[WASDZXENPTIFRKQC]$|Shift|Minus$|Equal$|NumpadAdd$|NumpadSubtract$|Backquote$)/.test(code);
   }
 
   /** Forget presses not yet read (the press that started the game is not also a move). */
@@ -51,6 +51,7 @@ export class Input {
     let debug = p("Backquote");
     let talk = k("KeyT") + k("KeyF") + k("ShiftLeft") + k("ShiftRight") > 0, sigil = p("KeyE") || p("KeyR");
     const inviteNearest = p("KeyI");
+    let spell = p("KeyQ"), cycle = p("KeyC");
     this.pressed.clear();
 
     // Gamepads: the first one connected with any input.
@@ -73,6 +74,8 @@ export class Input {
       if (edge(8)) debug = true;
       if (btn(0)) talk = true;
       if (edge(2)) sigil = true;
+      if (edge(1)) spell = true;
+      if (edge(11)) cycle = true;
       this.padPrev = pad.buttons.map(b => b.pressed);
       break;
     }
@@ -84,10 +87,12 @@ export class Input {
     if (t.debug) debug = true;
     if (t.talk) talk = true;
     if (t.sigil) sigil = true;
-    t.toggle = false; t.zoom = 0; t.debug = false; t.sigil = false;
+    if (t.spell) spell = true;
+    if (t.cycle) cycle = true;
+    t.toggle = false; t.zoom = 0; t.debug = false; t.sigil = false; t.spell = false; t.cycle = false;
 
     const len = Math.hypot(moveX, moveZ);
     if (len > 1) { moveX /= len; moveZ /= len; }
-    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug, nextWave, pauseWaves, cycleSpeakers, talk, sigil, inviteNearest };
+    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug, nextWave, pauseWaves, cycleSpeakers, talk, sigil, inviteNearest, spell, cycle };
   }
 }

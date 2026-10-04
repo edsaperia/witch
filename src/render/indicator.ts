@@ -113,7 +113,7 @@ export class StoneIndicator {
 
   /** Point at the next waking stone at (x, z), its area's creature `species` and neon (rgb 0-1);
    *  `fill`: how far the countdown to the next wave has run (0 just after one, 1 as it comes). null hides it. */
-  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string } | null, wx: number, wz: number, time: number, bpm: number, fill: number): void {
+  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
     const c = this.cue;
     // The party spread (the countdown went back to the start): a flash.
     if (fill < this.lastFill - 0.5) this.flashAt = time;
@@ -145,7 +145,7 @@ export class StoneIndicator {
     c.flush();
     // The distance on the far side of the ring from the arrow.
     c.label.style.display = "block";
-    c.label.textContent = `${Math.round(Math.hypot(at.x - wx, at.z - wz))} m`;
+    c.label.textContent = label ?? `${Math.round(Math.hypot(at.x - wx, at.z - wz))} m`;
     c.label.style.color = `rgb(${neon.map(Math.round).join(",")})`;
     const lx = e.sx - Math.cos(e.angle) * (R + 6) * SCALE, ly = e.sy - Math.sin(e.angle) * (R + 6) * SCALE;
     c.label.style.left = `${lx}px`;

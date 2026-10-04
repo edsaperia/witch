@@ -31,13 +31,16 @@ export interface PartyState {
   next: Cell | null;
   /** The area the last wave woke (the picker spreads away from it). */
   last: Cell | null;
+  /** Game time the home speaker ring finishes booting up (Ed, 2026-10-04): the first wave's countdown starts then. */
+  bootUntil: number;
 }
 
 export const cellKey = (c: Cell) => `${c[0]},${c[1]}`;
 
 export function newParty(map: ForestMap): PartyState {
   const home: Partified = { cell: map.centreCell, wave: 0, at: 0, from: null, soundsystem: null };
-  const p: PartyState = { areas: new Map([[cellKey(map.centreCell), home]]), wave: 0, nextAt: map.tuning.party.startDelay + map.tuning.party.interval, paused: false, next: null, last: null };
+  const boot = map.tuning.boot.time;
+  const p: PartyState = { areas: new Map([[cellKey(map.centreCell), home]]), wave: 0, nextAt: boot + map.tuning.party.startDelay + map.tuning.party.interval, paused: false, next: null, last: null, bootUntil: boot };
   p.next = pickNext(p, map);
   return p;
 }
@@ -126,16 +129,27 @@ export function spreadWave(p: PartyState, map: ForestMap, time: number): Partifi
 
 /** Advance the party's clock: a wave whenever its time comes (unless paused). */
 export function stepParty(p: PartyState, map: ForestMap, time: number, dt: number): Partified[] {
-  if (p.paused) { p.nextAt += dt; return []; }
+  if (p.paused) { p.nextAt += dt; if (time < p.bootUntil) p.bootUntil += dt; return []; }
   if (time < p.nextAt) return [];
   p.nextAt += map.tuning.party.interval;
   return spreadWave(p, map, time);
 }
 
-/** Seconds left until the next wave, and the share of the interval gone (0-1), for the bar. */
-export function waveCountdown(p: PartyState, map: ForestMap, time: number): { left: number; gone: number } {
-  const left = Math.max(0, p.nextAt - time), interval = map.tuning.party.interval;
-  return { left, gone: 1 - Math.min(1, left / interval) };
+/** Seconds left until the next wave, and the share of the interval gone (0-1), for the bar; while
+ *  the home speakers boot up (booting), how far the boot has got (0-1) and its seconds left. */
+export function waveCountdown(p: PartyState, map: ForestMap, time: number): { left: number; gone: number; booting: boolean; boot: number; bootLeft: number } {
+  const left = Math.max(0, p.nextAt - time), interval = map.tuning.party.interval, B = map.tuning.boot.time;
+  const bootLeft = Math.max(0, p.bootUntil - time);
+  return { left, gone: 1 - Math.min(1, left / interval), booting: bootLeft > 0, boot: B > 0 ? 1 - Math.min(1, bootLeft / B) : 1, bootLeft };
+}
+
+/** How many of the home ring's `count` speakers have powered on by `time`: one by one round the
+ *  ring over the boot (Ed, 2026-10-04), all of them once it's done. */
+export function speakersOn(p: PartyState, map: ForestMap, time: number, count: number): number {
+  const B = map.tuning.boot.time;
+  if (B <= 0 || time >= p.bootUntil) return count;
+  const k = 1 - (p.bootUntil - time) / B;
+  return Math.max(0, Math.min(count, Math.floor(k * (count + 1))));
 }
 
 /** A spawn marker (Ed, v147): a rune stone on the spot where an area's soundsystem will stand,
