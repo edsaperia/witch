@@ -7,8 +7,9 @@
 // Sigils can't be put down on top of one another. Leashes are elastic: creatures walk or run to
 // their leash point at their own pace and never teleport. Legends can't be invited (for now).
 // No drawing here.
-import { LEGEND, speedFactor, type Creature } from "./creatures";
+import { speedFactor, type Creature } from "./creatures";
 import type { Tuning } from "./tuning";
+import { befriend, invitableNow, stateOf } from "./creatureStates";
 import { facingAway } from "./witch";
 
 export interface PlacedSigil { id: number; x: number; z: number; /** game time it was put down */ at: number }
@@ -23,7 +24,7 @@ export interface Talk {
   total: number;
 }
 
-export type LeashEventKind = "invited" | "placed" | "picked" | "fizzled" | "cancelled" | "cycled";
+export type LeashEventKind = "invited" | "befriended" | "placed" | "picked" | "fizzled" | "cancelled" | "cycled";
 export interface LeashEvent { kind: LeashEventKind; id: number; x: number; z: number; at: number }
 
 export interface LeashState {
@@ -63,7 +64,7 @@ export const talkTurn = (c: Creature, t: Tuning): number => t.invite.turn[Math.m
 /** Whether she can invite it: wild, alive, not fleeing, not enraged by a wave (Ed's playtest:
  *  mid-siege, an invited one is set on by the rest); legends only when let go on a knockout and
  *  walking home (wild legends can't be invited). Inviting works while it attacks her (Ed, 2026-10-04). */
-export const invitable = (c: Creature) => !c.leashed && !c.gone && !c.fleeUntil && !c.enraged && (c.level !== LEGEND || !!c.wanderTo);
+export const invitable = (c: Creature) => invitableNow(c); // (#87: a wild one, dazed or not, or a happy one for its second step; never a legend or an enraged one)
 
 /** Where a leashed creature's leash is fixed: the witch, or its placed sigil. */
 export function leashPoint(s: LeashState, id: number, wx: number, wz: number): { x: number; z: number } | null {
@@ -90,9 +91,9 @@ function nearest(creatures: Creature[], x: number, z: number, within: number, le
   return best;
 }
 
-/** Invite it: leashed to her, its sigil on the bottom of the stack (also the 💌's stand-in: rules/invites.ts). */
+/** Invite it: leashed to her, for good (#87), its sigil on the bottom of the stack (the 💌's second step: rules/invites.ts). */
 export function inviteCreature(s: LeashState, c: Creature, x: number, z: number, time: number): void {
-  c.leashed = true;
+  c.leashed = true; c.state = "leashed"; c.affection = undefined; c.dazed = false; c.dazedUntil = undefined;
   c.rest = 0;
   c.wanderTo = undefined; c.siege = undefined; c.fight = undefined;
   c.friendly = undefined; c.guard = undefined; // (taking one from a friendly or guarded area weakens it: Ed's call)
@@ -129,7 +130,12 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     cur!.rest = Math.max(cur!.rest, 0.2); cur!.moving = false;
     cur!.facing = witch.x >= cur!.x ? 1 : -1;
     cur!.away = witch.z < cur!.z - 1;
-    if (!s.talk!.refused && s.talk!.t >= s.talk!.total) { inviteCreature(s, cur!, cur!.x, cur!.z, time); s.progress.delete(cur!.id); s.talk = null; }
+    // A chat done (#87, until the 💌s land): a wild one becomes happy and stays in its area; a happy one (asked again) is leashed.
+    if (!s.talk!.refused && s.talk!.t >= s.talk!.total) {
+      if (stateOf(cur!) === "wild") { befriend(cur!, time); s.events.push({ kind: "befriended", id: cur!.id, x: cur!.x, z: cur!.z, at: time }); }
+      else inviteCreature(s, cur!, cur!.x, cur!.z, time);
+      s.progress.delete(cur!.id); s.talk = null;
+    }
   } else {
     if (s.talk) { s.events.push({ kind: "cancelled", id: s.talk.id, x: witch.x, z: witch.z, at: time }); s.talk = null; }
     const n = talking ? talkTarget(creatures, witch.x, witch.z, t, s.snubbed) : null;

@@ -28,7 +28,13 @@ export interface Partition {
   openness(px: number, py: number): number;
 }
 
-export function makePartition(seed: number, depth: number): Partition {
+/** Home settled first (Ed, 2026-10-05: "Home area should be big enough that the whole circle,
+ *  centre the dancefloor, edge the treehouse, is within it"): every point within `radius` of
+ *  `cell`'s site belongs to it, and every other area's site stands at least `gap` beyond that
+ *  circle, so the areas round it are made round it (partition units). */
+export interface HomeCircle { cell: Cell; radius: number; gap: number }
+
+export function makePartition(seed: number, depth: number, home?: HomeCircle): Partition {
   const siteCache = new Map<number, [number, number]>();
   const rootCache = new Map<number, Cell>();
   // Integer keys: layers stay under 16 and cells within +-2^20, which a 20 x 20 map never nears.
@@ -39,6 +45,11 @@ export function makePartition(seed: number, depth: number): Partition {
     if (!s) {
       const c = Math.pow(2, -layer);
       s = [c * (cx + hash2(cx * 7 + layer, cy, seed)), c * (cy + hash2(cx, cy * 13 + layer, seed + 1))];
+      // Home's neighbours keep their sites out past its circle (pushed straight out from its site).
+      if (home && layer === 0 && !(cx === home.cell[0] && cy === home.cell[1])) {
+        const h = site(0, home.cell[0], home.cell[1]), dx = s[0] - h[0], dy = s[1] - h[1], d = Math.hypot(dx, dy), R = home.radius + home.gap;
+        if (d < R) { const a = d > 1e-9 ? Math.atan2(dy, dx) : hash2(cx, cy, seed + 7) * Math.PI * 2; s = [h[0] + Math.cos(a) * R, h[1] + Math.sin(a) * R]; }
+      }
       siteCache.set(k, s);
     }
     return s;
@@ -75,12 +86,19 @@ export function makePartition(seed: number, depth: number): Partition {
     rootCache.set(k, r);
     return r;
   };
+  // How far a point is from home's site (Infinity with no home circle).
+  const fromHome = (px: number, py: number) => { if (!home) return Infinity; const h = site(0, home.cell[0], home.cell[1]); return Math.hypot(px - h[0], py - h[1]); };
   return {
     seed,
     depth,
     site: (cx, cy) => site(0, cx, cy),
-    partition(px, py) { const c = nearest(depth, px, py); return root(depth, c[0], c[1]); },
+    partition(px, py) {
+      if (home && fromHome(px, py) < home.radius) return home.cell;
+      const c = nearest(depth, px, py); return root(depth, c[0], c[1]);
+    },
     partitionSafe(px, py) {
+      const dh = fromHome(px, py);
+      if (home && dh < home.radius) return { cell: home.cell, safe: Math.min(Math.pow(2, -depth), home.radius - dh) }; // (capped as below)
       const c = Math.pow(2, -depth), gx = Math.floor(px / c), gy = Math.floor(py / c), xy = ringOf(depth, gx, gy);
       let bi = 0, d1 = Infinity, d2 = Infinity;
       for (let i = 0; i < 25; i++) {
@@ -89,7 +107,7 @@ export function makePartition(seed: number, depth: number): Partition {
       }
       const bx = gx + Math.floor(bi / 5) - 2, by = gy + (bi % 5) - 2;
       // The search window holds every site that could be nearest within c of the point, so the margin is capped there.
-      return { cell: root(depth, bx, by), safe: Math.min(c, (Math.sqrt(d2) - Math.sqrt(d1)) / 2) };
+      return { cell: root(depth, bx, by), safe: Math.min(c, (Math.sqrt(d2) - Math.sqrt(d1)) / 2, dh - (home ? home.radius : 0)) };
     },
     centreness(px, py, rc) {
       const s = site(0, rc[0], rc[1]), d1 = Math.hypot(px - s[0], py - s[1]);

@@ -9,7 +9,7 @@ import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { dormant, poseOf, STEP } from "../rules/game";
 import { cameraPose } from "../rules/camera";
-import { AREA_TYPES } from "../rules/map";
+import { AREA_TYPES, HOME_LOOK } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
 import { AssetLibrary, type CreatureArt, type TypeArt } from "./assets";
 import type { Frame, Piece, RelicArt } from "./artBuild";
@@ -26,7 +26,7 @@ import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
 import { InviteView } from "./invites";
-import { dances, ENRAGED_TINT, lookOf, StateMarks } from "./looks";
+import { dances, ENRAGED_TINT, expression, lookOf, StateMarks } from "./looks";
 import { ActionBar } from "./actionbar";
 import { BuffHud } from "./buffhud";
 import { Dancefloor } from "./dancefloor";
@@ -216,6 +216,7 @@ export class View {
     this.clouds = new Clouds(t.sky.clouds, t.sky.lightning, game.seed);
     this.scene.add(this.clouds.mesh, this.clouds.bolt);
     this.assets.onFloor = (type, tile) => this.ground.setFloor(type, tile);
+    this.assets.prefetchType(HOME_LOOK); // home's meadow floor (no trees ask for it)
     const cs = t.canopyShadow;
     this.ground.setCanopyShadow(cs.on ? cs.strength : 0, cs.height, cs.cover, cs.wind);
     this.shadows = new ShadowBatch(t.shadows.strength, t.fx === "smooth");
@@ -269,7 +270,7 @@ export class View {
     this.leashView = new LeashView(this.scene, game);
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // ?rig=1: the live rig (#79)
     this.lasers = new Lasers(this.scene, game);
-    this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z));
+    this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z), game.map);
     this.scene.add(...this.ley.meshes);
     this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
     this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
@@ -911,7 +912,9 @@ export class View {
       // with no find-in-the-dark look. Waking, it heaves up out of the ground.
       const W = g.tuning.wildLegends, st = c.boss && !c.leashed ? c.legendState : undefined;
       const sleeping = st === "asleep" || st === "slept", rising = st === "waking" || (st === "happy" && (c.stateAt ?? 0) > 0) ? Math.min(1, (time - (c.stateAt ?? 0)) / Math.max(0.1, W.wake * 0.5)) : 1; // (made happy, it stirs and rises contentedly)
-      const art = party ?? woken ?? this.assets.creatureArt(c.species), key = party ? `${look === "happy" ? "happy" : "party"}-${c.id}` : sleeping ? `sleep-${c.species}` : woken ? `woken-${c.species}` : c.species;
+      // Its expression, part of its face (art/genome/expressions.js; render/looks.ts expression): the party looks are happy and the woken one angry already.
+      const face = sleeping ? "neutral" : expression(c, time), faced = !party && !woken && face !== "neutral" ? this.assets.faceArt(c.species, face) : undefined;
+      const art = party ?? woken ?? faced ?? this.assets.creatureArt(c.species), key = party ? `${look === "happy" ? "happy" : "party"}-${c.id}` : sleeping ? `sleep-${c.species}` : woken ? `woken-${c.species}` : faced ? `face-${face}-${c.species}` : c.species;
       if (!art) continue;
       arts.set(key, art);
       const frame = art.atlas.frames[art.frame(c.level, c.moving ? Math.floor(c.walk) % 2 : 0, c.away)];
@@ -948,7 +951,7 @@ export class View {
       if (sleeping) glow = -2 - W.moss; else if (rising < 1) glow = -2 - W.moss * (1 - rising);
       // Restless in its sleep (#87): it tosses in bursts, and turns over when it's bad.
       const toss = st === "asleep" ? restlessness(c) : 0, fit = toss ? toss * Math.max(0, Math.sin(time * 1.3 + c.id)) ** 2 : 0;
-      if (!(this.rig && !party && !sleeping && rising >= 1 && this.rig.add(c, { y: dance + hop + sunk, scale, glow, fresh, h: frame.h - (frame.pad ?? 0) }))) // the rig draws it, if it can
+      if (!(this.rig && !party && !sleeping && rising >= 1 && this.rig.add(c, { y: dance + hop + sunk, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face }))) // the rig draws it, if it can
         l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id), y: dance + hop + sunk, z: c.z, frame, flip: (c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1), fresh, glow, scale });
       this.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * this.mpp * scale + dance + hop + sunk); // its health bar goes over it
       creatureShadows.push({ x: c.x, z: c.z, w: frame.w * this.mpp * 0.7, d: frame.w * this.mpp * 0.25 });
