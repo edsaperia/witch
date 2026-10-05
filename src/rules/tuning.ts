@@ -8,7 +8,7 @@ export interface Tuning {
   areaSize: number;
   areaScale: number;
   /** Each area's fighting arena: mostly open within radius metres of its centre and soundsystem, the woods thickening smoothly over a band band metres wide (both times fight.scale), its edge wobbled by noise (a share of the band); bushes and tufts: the share of the undergrowth and ground cover left in its open middle. */
-  arena?: { radius: number; band: number; noise: number; bushes: number; tufts: number };
+  arena?: { radius: number; band: number; noise: number; bushes: number; tufts: number; /** how the woods thicken across the band: linear (default: from right past the middle) or smooth (a slow start) */ curve?: "linear" | "smooth" };
   areaSizeVariance: number;
   borderLayers: number;
   treeDensity: number;

@@ -185,9 +185,9 @@ describe("the map", () => {
       if (w > 0.95) dense++; else if (w < 0.05) open++; else between++;
     }
     // (Ed, 2026-10-05, at v473: the woods thin gradually across most of an area towards its runestone,
-    // so plenty lies between: but the woods still the largest part, and real open ground.)
-    expect(dense / n).toBeGreaterThan(0.4);
-    expect(dense / n).toBeGreaterThan(between / n);
+    // so as much lies on that gradient as in full woods; and there's real open ground.)
+    expect(dense / n).toBeGreaterThan(0.35);
+    expect(between / n).toBeGreaterThan(0.25); // a long, soft gradient, not a step
     expect(open / n).toBeGreaterThan(0.03);
   });
 
@@ -929,6 +929,7 @@ describe("inviting and leashing", () => {
     stepLeash(s, all, { sigil: true }, { x: 700, z: 700 }, false, 104, 0.1, TUNING);
     expect(s.stack).toEqual([a.c.id, c.c.id]);
     expect(s.events.map(e => e.kind)).toEqual(["mustLand"]);
+    expect(s.mustLandAt).toBe(104); // (kept for the view's hint)
     stepLeash(s, all, { sigil: true }, { x: 520, z: 500 }, false, 105, 0.1, TUNING); // over b's placed sigil, in the air
     expect(s.placed.map(p => p.id)).toEqual([b.c.id]);
     expect(s.events.map(e => e.kind)).toEqual(["mustLand"]);

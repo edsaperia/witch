@@ -31,6 +31,8 @@ export interface LeashState {
   stack: number[];
   /** Sigils on the ground. */
   placed: PlacedSigil[];
+  /** When the sigil button was last pressed in the air (game time), for the view's "land to place" hint: kept, unlike the step's events, which a slow frame's later steps clear. */
+  mustLandAt?: number;
   talk: Talk | null;
   /** Talk progress per creature (seconds): it fills while she talks to that creature and, once
    *  she stops, drains at invite.decayRate of the fill rate until it's gone (Ed, 2026-10-03), so
@@ -156,7 +158,7 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     s.events.push({ kind: "cycled", id, x: witch.x, z: witch.z, at: time });
   }
   // Sigils go down and come up only on the ground (Ed, 2026-10-05: "You have to land to place sigils"): in the air the button just says so.
-  if (c.sigil && !onGround && (s.stack.length || s.placed.length)) s.events.push({ kind: "mustLand", id: s.stack[s.stack.length - 1] ?? -1, x: witch.x, z: witch.z, at: time });
+  if (c.sigil && !onGround && (s.stack.length || s.placed.length)) { s.events.push({ kind: "mustLand", id: s.stack[s.stack.length - 1] ?? -1, x: witch.x, z: witch.z, at: time }); s.mustLandAt = time; }
   if (c.sigil && onGround) {
     let pick = -1, pd = L.pickRadius;
     s.placed.forEach((p, i) => { const d = Math.hypot(p.x - witch.x, p.z - witch.z); if (d <= pd) { pd = d; pick = i; } });
