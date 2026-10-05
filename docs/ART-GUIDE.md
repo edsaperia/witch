@@ -122,6 +122,7 @@ At ground level a young creature is about 45 px tall and the witch about 50 px. 
   Ask what the marking looks like to someone who doesn't know the species.
 - **Thin flat planes fail face-on.** A bat seen from the front is a stick, and from behind its wings are rectangles (#97). Wing-like parts need thickness or a per-facing pose.
 - **Fans of identical parts read as hands.** The many-tailed fox, a crest of spikes and a back of crystals all read as a fan of fingers (#112 fox legend; #97 crystal stag). Vary length and curve, and leave gaps between parts.
+- **Rounded tips read as fingertips.** Tails, flames, spikes and fronds that end in round blobs read as a gloved hand, even when bundled (#112 v3 kitsune). Taper them to points that flick, and put any glow on the point.
 - **Parts from one root read as spokes.** Separated but evenly splayed from a single point, the kitsune's tails read as a starburst or an octopus (#112 v2). Spread the roots along the body and sweep the parts in one shared direction, overlapping, with uneven lengths.
 - **From the treetops only crowns and glows show.** Each area's canopy must differ from its neighbours' by shape and value, not only hue (`crownStats` in `art/trees.js`). Glowing parts are the main thing seen at night from above, so place them deliberately (#97: the cave-mouth glowcaps were the most legible thing in the treetop shot).
 
@@ -156,6 +157,7 @@ At ground level a young creature is about 45 px tall and the witch about 50 px. 
 - **Ferns are knee- to waist-high on the witch, with no trunk.** Tall ferns read as palm trees (#112 fern forest).
 - **Tall set pieces and decor must be grey or brown stone and wood, not the grass colour.** The stone shrine and cairns in khaki read as pine cones or vanished (#112).
 - **One prop repeated in lines reads as something manufactured.** Identical broken stumps in rows read as a battery of little cannons (#112 v2 muddy forest). Vary height, angle and mirroring, break up the spacing, and mix in a second kind.
+- **Vary a prop's shape, not only where it stands.** One pool sprite three times, or one stump with a stick laid beside it, still reads as stamped (#112 v3). A prop generator should give each instance its own outline, and join parts that belong together (a broken branch to its stump).
 - **Stacked regular rings read as haystacks or beehives.** Cairns drawn as even rings in straw colour (#112 v2 moor) need irregular grey stones and a leaning slab.
 - **Water edges are round and irregular.** Pointed lenses with hard edges read as boats or leaves (#112 v2 moor pools).
 - **Every area gets its own tuft mix and value.** The same bright lime grass tuft in every area makes them all one place, and reads as neon on a dark floor (#112).
