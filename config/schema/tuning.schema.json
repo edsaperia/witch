@@ -4458,6 +4458,32 @@
         "legend"
       ],
       "additionalProperties": false
+    },
+    "rig": {
+      "type": "object",
+      "properties": {
+        "minPx": {
+          "type": "number",
+          "minimum": 0
+        },
+        "alwaysLevels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "baby",
+              "young",
+              "adult",
+              "legend"
+            ]
+          }
+        }
+      },
+      "required": [
+        "minPx",
+        "alwaysLevels"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [
@@ -4534,6 +4560,7 @@
     "moonbeams",
     "treehouse",
     "home",
+    "rig",
     "looks",
     "bubbles",
     "scenes",

@@ -7,14 +7,18 @@ import { SpriteBatch, SPRITE_UNIFORMS, type SpriteInstance } from "../sprites";
 import type { AssetLibrary, RigArt } from "../assets";
 import { RigBody, RigOut, type RigDrive } from "./rig";
 import type { Creature } from "../../rules/creatures";
-import type { RigFace, RigMeta } from "./rigBuild";
+import type { RigFace, RigGear, RigMeta } from "./rigBuild";
+import type { Tuning } from "../../rules/tuning";
+import { ENRAGED_TINT } from "../looks";
 
-/** ?rig=1 turns the live rig on (Ed: desktop first; it costs more instances per creature). */
-export const rigOn = (): boolean => typeof location !== "undefined" && new URLSearchParams(location.search).get("rig") === "1";
+/** The live rig is on (Ed, 2026-10-05: "let's put what we have live"); ?rig=0 turns it off, for comparison. */
+export const rigOn = (): boolean => typeof location === "undefined" || new URLSearchParams(location.search).get("rig") !== "0";
 
 /** Creatures drawn smaller than this (art pixels high) keep their baked frames: at that size the rig's
- *  motion can't be seen, and they're the many (#79: a baked cycle for swarms and tiny creatures). */
+ *  motion can't be seen, and they're the many (#79: a baked cycle for swarms and tiny creatures).
+ *  The tuning's rig.minPx overrides it; its rig.alwaysLevels are rigged at any size (legends). */
 export const RIG_MIN_PX = 40;
+const RIG_LEVELS = ["baby", "young", "adult", "legend"];
 
 /** A meta with its head piece in an expression (made once per meta and face, so a frame allocates nothing). */
 const faceMetas = new WeakMap<RigMeta, Partial<Record<RigFace, RigMeta>>>();
@@ -24,7 +28,7 @@ export function withFace(meta: RigMeta, face: RigFace | undefined): RigMeta {
   let by = faceMetas.get(meta); if (!by) faceMetas.set(meta, (by = {}));
   return (by[face!] ??= { ...meta, head });
 }
-export interface RigLook { /** extra height (a dance, a hop, sinking) in metres */ y: number; scale: number; glow: number; fresh: boolean; /** its ordinary frame's height in art pixels */ h: number; /** its expression (render/looks.ts expression(c), #89): the head piece with that face */ face?: RigFace }
+export interface RigLook { /** extra height (a dance, a hop, sinking) in metres */ y: number; scale: number; glow: number; fresh: boolean; /** its ordinary frame's height in art pixels */ h: number; /** its expression (render/looks.ts expression(c), #89): the head piece with that face */ face?: RigFace; /** a party animal's gear (render/artBuild.ts partyGearOf): its rig page wears it */ gear?: RigGear }
 
 export class RigView {
   private bodies = new Map<number, RigBody>();
@@ -39,8 +43,11 @@ export class RigView {
 
   constructor(private scene: THREE.Scene, private assets: AssetLibrary, private mpp: number) {}
 
-  private time = 0; private dt = 0;
-  begin(time: number): void {
+  private time = 0; private dt = 0; private minPx = RIG_MIN_PX; private always = [3]; private ground = true;
+  /** ground: she's on the ground (Ed, 2026-10-05: rigged on the ground, baked frames in the treetops, legends always). */
+  begin(time: number, tuning?: Tuning["rig"], ground = true): void {
+    this.ground = ground;
+    this.minPx = tuning?.minPx ?? RIG_MIN_PX; this.always = (tuning?.alwaysLevels ?? ["legend"]).map(l => RIG_LEVELS.indexOf(l)).filter(i => i >= 0);
     this.dt = this.time ? Math.min(0.1, Math.max(0, time - this.time)) : 0; this.time = time;
     for (const k of this.used.keys()) this.used.set(k, 0);
     this.seen.clear();
@@ -50,8 +57,8 @@ export class RigView {
 
   /** Lays out a creature with the rig, if its template has one and its parts are baked: true when drawn. */
   add(c: Creature, look: RigLook): boolean {
-    if (look.h * look.scale < RIG_MIN_PX) return false;
-    const t0 = performance.now(), art = this.assets.rigArt(c.species, c.level);
+    if ((!this.ground || look.h * look.scale < this.minPx) && !this.always.includes(c.level)) return false; // (legends always: Ed, 2026-10-05)
+    const t0 = performance.now(), art = this.assets.rigArt(c.species, c.level, look.gear);
     if (!art) return false;
     let body = this.bodies.get(c.id);
     if (!body) this.bodies.set(c.id, (body = new RigBody()));
@@ -83,7 +90,7 @@ export class RigView {
     let pool = this.pool.get(key);
     if (!pool) { this.pool.set(key, (pool = [])); this.used.set(key, 0); }
     let n = this.used.get(key)!;
-    if (!this.batches.has(key)) { const b = new SpriteBatch(art.atlas, this.mpp, { solid: true, find: !c.leashed && !c.enraged }); this.batches.set(key, b); this.scene.add(...b.meshes); }
+    if (!this.batches.has(key)) { const b = new SpriteBatch(art.atlas, this.mpp, { solid: true, find: !look.gear, tint: look.gear?.woken ? ENRAGED_TINT : undefined }); this.batches.set(key, b); this.scene.add(...b.meshes); }
     const m = this.mpp * look.scale, R = this.R, U = this.U, F = this.F;
     for (let k = 0; k < this.out.n; k++) {
       const it = this.out.items[k], f = art.atlas.frames[it.piece.frame];
