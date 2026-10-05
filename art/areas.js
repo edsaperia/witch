@@ -298,10 +298,11 @@ function prop(kind, o, def, st, r, s) {
     sp.mark([[cx - w, gy - h * .45], [cx + w, gy - h * .45], [cx + w, gy], [cx - w, gy]], o.moss ? M.LEAF3 : M.BARKD, [o.moss ? M.LEAF : M.TRUNK]);
     colours = { ...leafCol, ...wood, [M.TRUNK]: hsv2rgb(.07, .45, o.brown ? .35 : .3) };
   } else if (kind === "stump") {
-    const w = 6 * s;
-    sp.limb([[cx, gy, w * 2.2], [cx, gy - 8 * s, w * 1.6]], M.TRUNK, { group: 5, round: st.round, cap: 0, capEnd: 0 });
-    sp.shape([[cx - w * .8, gy - 8 * s], [cx, gy - 10 * s - (o.gnawed ? 4 * s : 0)], [cx + w * .8, gy - 8 * s], [cx, gy - 7 * s]], M.BELLY, { group: 6, round: st.round });
-    if (o.snag) sp.limb([[cx + w * .4, gy - 8 * s, 2.5 * s], [cx + w * 1.6, gy - 15 * s, 1.5 * s]], M.TRUNK, { group: 7, round: st.round });
+    // tall: the broken trunk's height (times), branch: its broken branch's reach (times; minus: the other way)
+    const w = 6 * s, th = 8 * s * (o.tall || 1), bk = o.branch ?? 1;
+    sp.limb([[cx, gy, w * 2.2], [cx, gy - th, w * 1.6]], M.TRUNK, { group: 5, round: st.round, cap: 0, capEnd: 0 });
+    sp.shape([[cx - w * .8, gy - th], [cx, gy - th - 2 * s - (o.gnawed ? 4 * s : 0)], [cx + w * .8, gy - th], [cx, gy - th + s]], M.BELLY, { group: 6, round: st.round });
+    if (o.snag) sp.limb([[cx + w * .4 * Math.sign(bk), gy - th * (o.tall ? .7 : 1), 2.5 * s], [cx + w * .4 * Math.sign(bk) + w * 1.2 * bk, gy - th * (o.tall ? .7 : 1) - 7 * s * Math.abs(bk) ** .5, 1.5 * s]], M.TRUNK, { group: 7, round: st.round });
     if (o.grass) for (let k = 0; k < 20; k++) { const x0 = cx + uni(r, -14, 14) * s, h = uni(r, 6, 13) * s; for (let j = 0; j < h; j++) sp.px(x0, gy - 1 - j, j > h * .6 ? M.LEAF2 : M.LEAF, 0, -.3, .9); }
     colours = { ...leafCol, ...wood };
   } else if (kind === "log") { // fallen branches, rotting logs, a fallen giant
@@ -319,7 +320,8 @@ function prop(kind, o, def, st, r, s) {
     colours = wood;
   } else if (kind === "water") { // a puddle, pond, bog pool or stream, flat on the ground
     const w = 22 * s * (o.w || 1), h = 6 * s * (o.d || 1); // d: its depth on the screen (a round pool, not a sliver)
-    sp.shape([[cx - w, gy - h], [cx - w * .3, gy - h * 1.5], [cx + w * .6, gy - h * 1.2], [cx + w, gy - h * .5], [cx + w * .4, gy], [cx - w * .7, gy - h * .2]], M.MAGIC, { group: 5, round: .2 });
+    if (o.round) { const pts = [], cy = gy - h * .8; for (let k = 0; k < 14; k++) { const a = k / 14 * Math.PI * 2, j = .82 + .3 * hash2(k, Math.round(w), 7); pts.push([cx + Math.cos(a) * w * j, cy + Math.sin(a) * h * .8 * j]); } sp.shape(pts, M.MAGIC, { group: 5, round: .5 }); } // a round pool, its shore irregular
+    else sp.shape([[cx - w, gy - h], [cx - w * .3, gy - h * 1.5], [cx + w * .6, gy - h * 1.2], [cx + w, gy - h * .5], [cx + w * .4, gy], [cx - w * .7, gy - h * .2]], M.MAGIC, { group: 5, round: .2 });
     for (let k = 0; k < 6; k++) { const x = cx + uni(r, -w * .6, w * .6), y = gy - h * uni(r, .4, 1.1); for (let j = 0; j < 3 * s; j++) sp.recolour(x + j, y, M.MAGIC2); }
     colours = o.bog ? { [M.MAGIC]: [60, 70, 50], [M.MAGIC2]: [120, 130, 90] } : water;
     // water reflects rather than glows: bake marks MAGIC as glowing, so use plain materials
@@ -328,7 +330,8 @@ function prop(kind, o, def, st, r, s) {
   } else if (kind === "bramble" || kind === "hedge") {
     const w = 22 * s, h = (kind === "hedge" ? 18 : 12) * s;
     for (let k = 0; k < (kind === "hedge" ? 6 : 4); k++) { const x = cx + uni(r, -w * .8, w * .8), y = gy - h * uni(r, .4, .7); sp.ellipse(x, y, uni(r, 6, 9) * s, h * .45, kind === "hedge" ? M.LEAF3 : M.LEAF, { round: st.round, density: o.bare ? .5 : .95, noise: .5, seed: k }); }
-    for (let k = 0; k < 8; k++) { const x0 = cx + uni(r, -w, w); let x = x0, y = gy; for (let j = 0; j < h * 1.2; j++) { x += Math.sin(j * .3 + k) * .8; y -= .8; sp.px(x, y, M.TRUNK, 0, -.3, .9); } }
+    const big = (o.scale || 1) > 2; // a big tangle (an art set's): more and thicker strands, arching over and back down
+    for (let k = 0; k < (big ? 16 : 8); k++) { const x0 = cx + uni(r, -w, w); let x = x0, y = gy; for (let j = 0; j < h * 1.2; j++) { x += Math.sin(j * .3 + k) * .8 * (big ? 1.6 : 1); y -= big && j > h * .8 ? -.5 : .8; sp.px(x, y, M.TRUNK, 0, -.3, .9); if (big) sp.px(x + 1, y, M.BARKD, 0, -.3, .9); } }
     if (kind === "hedge" || o.berries || kind === "bramble") for (let i = 0; i < sp.m.length; i++) if (sp.m[i] && sp.m[i] !== M.TRUNK && hash2(i, 5, 9) < .05) sp.m[i] = M.FLOWER;
     colours = { ...leafCol, ...wood, [M.FLOWER]: kind === "hedge" ? [210, 30, 40] : [70, 30, 70] };
   } else if (kind === "wall") { // an ornate stone wall: coped, with a ball on a pier

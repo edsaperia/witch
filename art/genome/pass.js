@@ -14,6 +14,9 @@ export const PASS_ITERATIONS = {
         sleep: { over: { moss: .3, lichen: .06, ferns: 0, grass: 4, mushrooms: 0, roots: 0, stones: 7 }, colours: { WEB: [.3, .1, .6], BARK2: [.07, .45, .18], MOSS: [.2, .4, .3], LEAF: [.22, .35, .32], LEAF2: [.22, .3, .42] } } } },
       areas: { moor: { tone: { sat: .7, val: .75 }, tufts: { mix: [["heather", .35], ["moss", .35], ["longgrass", .2], ["rushes", .1]], sat: .7, val: .7, flower: [.85, .4, .55] },
         wall: [["water", { w: 3.2, d: 5 }]], big: [["mound", { moss: true }], ["cairn", { sparse: .12, squat: true }], ["standingstone", { sparse: .12 }]] } } },
+    { note: "the art director's notes: the badger's face two black bands from nose to ears with true white between and below them; irregular grey cairns with a leaning slab or two; round pools with irregular shores",
+      genomes: { badger: { head: { face: "badgerBands", blaze: .2 }, palette: { over: { BELLY: [.6, .02, 1] } } } },
+      areas: { moor: { wall: [["water", { w: 2.4, d: 3.4, round: true }]], big: [["mound", { moss: true }], ["cairn", { sparse: .12, rough: true, grey: true }], ["standingstone", { sparse: .12 }]] } } },
   ],
   // ---- Fern forest (Ed): "pine needles, ferns, pine trees"; the boar ----
   "fern-forest": [
@@ -25,6 +28,9 @@ export const PASS_ITERATIONS = {
       plants: { fir: { colour: { variety: .3 } } },
       areas: { "fern-forest": { small: [["fern", { h: 1.2 }]], tone: { sat: .75, val: .75 }, tufts: { mix: [["needles", .45], ["fern", .35], ["moss", .15], ["mushrooms", .05]], sat: .75, val: .7 },
         flora: { species: [["fir", .45], ["pine", .3, { colour: { hue: .06, upper: [.06, .45, .42], variety: .3 } }], ["larch", .25, { colour: { hue: .04, val: .9, variety: .3 } }]], palette: { sat: .9, val: .88 } } } } },
+    { note: "the art director's notes: the boar lifted off the dark needles by value, its bristle ridge a paler grizzle; no piglet stripes (too small to read); the ferns low and dark, not lime",
+      genomes: { boar: { palette: { sat: .34, val: .52, over: { BELLY: [.1, .16, .78] } }, coat: { ridgeMat: "BELLY", stripes: null } } },
+      areas: { "fern-forest": { small: [["fern", { h: 1 }]], tone: { sat: .55, val: .55 } } } },
   ],
   // ---- Muddy forest (Ed): "mud and leaves, short trunks with broken branches, trees with many trunks and branches"; the snail ----
   "muddy-forest": [
@@ -36,6 +42,8 @@ export const PASS_ITERATIONS = {
       plants: { sycamore: { colour: { variety: .3 } } },
       areas: { "muddy-forest": { small: [["stump", { snag: true, scale: 2.2 }]], tufts: { mix: [["litter", .45], ["rushes", .2], ["moss", .2], ["grass", .15]], sat: .7, val: .75 },
         flora: { species: [["sycamore", .55, { trunks: 3 }], ["alder", .2, { trunks: 2 }], ["elm", .15], ["crabApple", .1]], palette: { sat: .8, val: .82 } } } } },
+    { note: "the art director's notes: the broken trunks varied (heights, branch angles, either way, unevenly spaced) with fallen logs among them",
+      areas: { "muddy-forest": { small: [["stump", { snag: true, scale: 2.2 }], ["stump", { snag: true, scale: 1.8, tall: 1.6, branch: -.7 }], ["stump", { snag: true, scale: 2.6, tall: .7, branch: 1.5 }], ["stump", { scale: 1.6, tall: 1.3 }], ["log", { scale: 1.3 }], ["log", { branch: true, scale: 1.6 }]] } } },
   ],
   // ---- Stone shrine (Ed): "grassy, stony; mossy henges; little stones; big stones; a shrine"; the fox ----
   "stone-shrine": [
@@ -47,6 +55,8 @@ export const PASS_ITERATIONS = {
         sleep: { over: { moss: .15, lichen: .35, ferns: 0, grass: 2, mushrooms: 0, stones: 7 }, colours: { MOSS: [.2, .25, .45], BARK2: [.1, .12, .35], WEB: [.2, .12, .78], BODY: [.1, .08, .58], BODY2: [.1, .08, .44], BODY3: [.1, .08, .3], BELLY: [.1, .06, .7], EAR: [.1, .08, .44] } } } },
       areas: { "stone-shrine": { set: ["shrine", { scale: 1.8 }], wall: [["henge", { scale: 1.6 }]], small: [["stones", { scale: 1.4 }]], tufts: { mix: [["pebbles", .4], ["grass", .3], ["moss", .25], ["flowers", .05]], sat: .6, val: .85 },
         big: [["boulder", { scale: 1.6 }], ["pillar", { sparse: .1 }], ["pillar", { sparse: .08, broken: true, lean: .14 }], ["cairn", { sparse: .08, tall: true }]] } } },
+    { note: "the art director's notes: the kitsune's tails rooted along its rump and swept up and back together like flames, overlapping, of different lengths, the outer ones lower; the pale fox-fire tips kept",
+      genomes: { fox: { coat: { kitsune: { n: 7, flame: true, width: .75, thick: .12, len: 1.15 } } } } },
   ],
   // ---- Tangly forest (Ed): "nettles and earth, tangled branches, fairly short tangly trees"; the ram ----
   "tangly-forest": [
@@ -59,6 +69,8 @@ export const PASS_ITERATIONS = {
         sleep: { over: { moss: .25, roots: 7, grass: 6, ferns: 0, mushrooms: 0, flowers: 0 }, colours: { LEAF: [.28, .55, .3], LEAF2: [.3, .5, .4], MOSS: [.27, .45, .3], TRUNK: [.02, .45, .3] } } } },
       plants: { hawthorn: { colour: { variety: .3 } } },
       areas: { "tangly-forest": { small: [["bramble", { bare: true, scale: 1.6 }]], tone: { sat: .9, val: .8 }, tufts: { mix: [["longgrass", .45], ["grass", .25], ["litter", .25], ["flowers", .05]], sat: .85, val: .75 } } } },
+    { note: "the art director's notes: the tangled branches doubled in size and count, in clumps against the hawthorns",
+      areas: { "tangly-forest": { small: [["bramble", { bare: true, scale: 3.2 }], ["bramble", { bare: true, scale: 2.6 }], ["bramble", { scale: 3 }], ["bramble", { bare: true, scale: 3.6 }]] } } },
   ],
   // ---- Wispy forest (Ed): "dry leaves, tall thin wispy trees, thick trees with several trunks"; the woodlouse ----
   "wispy-forest": [
@@ -69,5 +81,7 @@ export const PASS_ITERATIONS = {
       genomes: { woodlouse: { form: { mottle: .06 }, palette: { over: { MAGIC: [.55, .12, 1], MAGIC2: [.58, .25, 1] } } } },
       plants: { lime: { colour: { variety: .3 } }, birch: { colour: { hueAbs: .22, variety: .3, trunk: [.1, .04, .9] } } },
       areas: { "wispy-forest": { leaf: .21, tufts: { mix: [["litter", .55], ["grass", .2], ["moss", .15], ["mushrooms", .05], ["fern", .05]], sat: .9, val: .9 } } } },
+    { note: "the art director's notes: the limes muted towards old gold (saturation 0.6 of v2's, value a step down), so their crowns don't read as glowing",
+      areas: { "wispy-forest": { flora: { species: [["lime", .4, { colour: { sat: .66, val: .98, variety: .3 } }], ["birch", .25], ["aspen", .2], ["whitebeam", .15]], palette: { sat: .85, val: 1.05 } } } } },
   ],
 };

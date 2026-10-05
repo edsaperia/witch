@@ -114,7 +114,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     if (q.belly && p[1] < bellyY && p[0] > -len * .5) return M.BELLY;
     if (q.saddle && p[1] > top - .18 && p[0] < len * .55) return M.BODY2;
     if (q.spots && p[1] > chest + .1 && spotty(p, 10, .22)) return q.spotMat === "belly" || (q.spots === "young" && (q.spotsAt ? q.spotsAt.includes(level) : juv)) ? M.BELLY : q.spots === "young" ? undefined : M.BODY3;
-    if (q.ridge && p[1] > top - .08 + hump * .5) return M.BODY3;
+    if (q.ridge && p[1] > top - .08 + hump * .5) return q.ridgeMat ? M[q.ridgeMat] : M.BODY3;
     if (q.stripes && q.stripes.at.includes(level) && p[1] > chest + .04 && Math.abs(Math.sin(Math.atan2(p[2], p[1] - chest) * (q.stripes.n || 6))) > .72) return M[q.stripes.mat || "BELLY"]; // a piglet's lengthwise stripes, round its back
     return undefined;
   };
@@ -122,7 +122,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   m.ell([len * .48, (top + chest) / 2 + hump * .5, 0], [len * .62, (top - chest) / 2 + hump * .5, bw], M.BODY, { paint: paintBody });
   m.ell([-len * .5, (top + tuck) / 2 + arch * .6, 0], [len * .58, (top - tuck) / 2 + arch * .6, bw * .93], M.BODY, { paint: paintBody });
   m.ell([0, (top + (chest + tuck) / 2) / 2 + .02, 0], [len * .6, (top - (chest + tuck) / 2) / 2, bw * .9], M.BODY, { paint: paintBody });
-  if (q.ridge) for (let i = 0; i < (legend ? 16 : 10); i++) { const x = -len * .8 + i * len * 1.75 / (legend ? 15 : 9), h = (.07 + (legend ? .04 : 0)) * (1 + .5 * Math.max(0, x / len)); m.ell([x, top + .02 + hump * Math.max(0, 1 - Math.abs(x / len - .5) * 2) + h * .5, 0], [h, .03, bw * .25], M.BODY3, { dir: [-.3, 1, 0], up: [1, 0, 0] }); }
+  if (q.ridge) for (let i = 0; i < (legend ? 16 : 10); i++) { const x = -len * .8 + i * len * 1.75 / (legend ? 15 : 9), h = (.07 + (legend ? .04 : 0)) * (1 + .5 * Math.max(0, x / len)); m.ell([x, top + .02 + hump * Math.max(0, 1 - Math.abs(x / len - .5) * 2) + h * .5, 0], [h, .03, bw * .25], q.ridgeMat ? M[q.ridgeMat] : M.BODY3, { dir: [-.3, 1, 0], up: [1, 0, 0] }); }
   if (q.wool) { if (q.woolCurls) { const c = [0, (top + chest) / 2 + .02, 0], R = [len * 1.02, (top - chest) / 2 + .04, bw * 1.02]; for (let i = 0; i < q.woolCurls; i++) { const u = (i + .5) / q.woolCurls, phi = i * 2.39996, y = .15 + .85 * u, rr = Math.sqrt(1 - y * y), d = [Math.cos(phi) * rr, y, Math.sin(phi) * rr]; m.ell([c[0] + R[0] * d[0], c[1] + R[1] * d[1], c[2] + R[2] * d[2]], [.11 * (q.woolSize || 1), .1 * (q.woolSize || 1), .1 * (q.woolSize || 1)], i % 3 === 0 ? M.BELLY : M.BODY); } } // woolCurls: curls over the fleece's surface (woolSize), every third lighter
     else for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; m.ell([len * Math.cos(a) * .7, (top + chest) / 2 + Math.sin(a) * .2, bw * (i % 2 ? .5 : -.5)], [.16, .14, .14], M.BODY); } }
   // ---- legs: shoulder/hip, knee, ankle, foot; near legs lighter, far legs in shade ----
@@ -148,6 +148,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   const nb = [len * .82, top - .12, 0], H = [nb[0] + Math.cos(q.neckAng) * q.neck * .9, nb[1] + Math.sin(q.neckAng) * q.neck * .9 + sz("headLift"), 0];
   m.seg(nb, H, q.neckW * .55 * sz("neckBase"), q.neckW * .42 * sz("neckTop"), M.BODY, { paint: p => q.belly && p[1] < (nb[1] + H[1]) / 2 - .05 ? M.BELLY : q.face === "dark" ? M.BODY2 : undefined });
   const headPaint = p => {
+    if (q.face === "badgerBands") return p[1] > H[1] - hr * .4 && Math.abs(p[2]) > hr * (q.blaze ?? .22) && Math.abs(p[2]) < hr * .62 ? M.BODY3 : M.BELLY; // a badger's two black bands from the nose through the eyes to the ears, white between them and below
     if (q.face === "badger") return Math.abs(p[2]) < hr * (q.blaze ?? .22) + (p[0] - H[0]) * .1 || p[1] < H[1] - hr * .1 ? M.BELLY : M.BODY3;
     if (q.face === "dark") return M.BODY2;
     if ((q.belly || q.muzzle) && p[1] < H[1] - hr * .35) return M.BELLY;
@@ -195,8 +196,13 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [len * .2, top, side * bw * .5], side, 1.15, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("mane") || has("flames")) for (let i = 0; i < 7; i++) { const t = i / 6, b = v3.lerp(v3.add(H, [-hr * .5, hr * .3, 0]), backAt(.55), t), h = [.4, .3, .45, .28, .38, .25, .3][i], up = v3.norm([-.35 - (frame ? .1 : 0), 1, 0]); m.flat(v3.add(b, v3.mul(up, h * .5)), [1, 0, 0], up, h * .32, h * .55, masks.flame(i % 2 ? M.MAGIC : M.MAGIC2, M.MAGIC2), { group: 60 + i % 2, extra: true }); }
   if (has("tails") && q.kitsune) { const K = q.kitsune, n = K.n || 7; for (let i = 0; i < n; i++) { m.part = "tail"; // kitsune: n tails fanned apart with gaps, each curving, burning at its tip
-    const u = i / (n - 1) - .5, a = Math.PI * (.62 + u * (K.spread || 1.1)), z = u * (K.width || 1.2), len = K.len || 1, e = v3.add(tb, [Math.cos(a) * .95 * len, Math.sin(a) * .9 * len, z]), mid = v3.add(v3.lerp(tb, e, .55), [-.12 * (K.curl ?? 1), .12 * (K.curl ?? 1), z * .15]), th = K.thick || .12;
-    m.chain([[...tb, th * .7], [...v3.lerp(tb, mid, .5), th], [...mid, th * 1.1], [...v3.lerp(mid, e, .5), th * .9], [...e, th * .55]], i % 2 ? M.BODY2 : M.BODY, { group: 70, extra: true, paint: p => Math.hypot(...v3.sub(p, e)) < th * 1.6 ? M.BELLY : undefined });
+    const u = i / (n - 1) - .5, th = K.thick || .12; let root = tb, e, mid, a;
+    if (K.flame) { // rooted along the rump, swept up and back together like flames: one shared curve, overlapping, the outer ones lower and shorter
+      const out = Math.abs(u) * 2, L = (K.len || 1) * (1 - .3 * out) * (.9 + .2 * Math.abs(Math.sin(i * 2.7))); a = Math.PI * (.6 + .16 * out);
+      root = v3.add(tb, [.12 + .14 * (1 - out), .02 - .04 * out, u * (K.width || .7) * .5]);
+      e = v3.add(root, [Math.cos(a) * .95 * L, Math.sin(a) * .95 * L, u * (K.width || .7)]); mid = v3.add(v3.lerp(root, e, .5), [-.16 * L, .02 * L, u * .1]); e = v3.add(e, [.1 * L, .06 * L, 0]); // the tip flicks forward
+    } else { a = Math.PI * (.62 + u * (K.spread || 1.1)); const z = u * (K.width || 1.2), len = K.len || 1; e = v3.add(tb, [Math.cos(a) * .95 * len, Math.sin(a) * .9 * len, z]); mid = v3.add(v3.lerp(tb, e, .55), [-.12 * (K.curl ?? 1), .12 * (K.curl ?? 1), z * .15]); }
+    m.chain([[...root, th * .7], [...v3.lerp(root, mid, .5), th], [...mid, th * 1.1], [...v3.lerp(mid, e, .5), th * .9], [...e, th * .55]], i % 2 ? M.BODY2 : M.BODY, { group: 70, extra: true, paint: p => Math.hypot(...v3.sub(p, e)) < th * 1.6 ? M.BELLY : undefined });
     m.ell(v3.add(e, [0, th * .4, 0]), [th * .7, th * 1.1, th * .7], M.MAGIC2, { group: 71, extra: true, dir: [Math.cos(a), Math.sin(a), 0], paint: p => p[1] > e[1] + th * .6 ? M.MAGIC : undefined }); } }
   else if (has("tails")) for (let i = 0; i < 7; i++) { m.part = "tail"; const a = Math.PI * (.55 + i * .08), z = (i - 3) * .1, e = v3.add(tb, [Math.cos(a) * .9, Math.sin(a) * .85, z]); m.chain([[...tb, .1], [...v3.lerp(tb, e, .5), .17], [...e, .08]], i % 2 ? M.BODY2 : M.BODY, { group: 70, extra: true }); m.ell(e, [.09, .09, .09], M.MAGIC2, { group: 71, extra: true }); }
   m.part = "body";

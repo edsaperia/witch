@@ -3095,6 +3095,9 @@ const PASS_ITERATIONS = {
         sleep: { over: { moss: .3, lichen: .06, ferns: 0, grass: 4, mushrooms: 0, roots: 0, stones: 7 }, colours: { WEB: [.3, .1, .6], BARK2: [.07, .45, .18], MOSS: [.2, .4, .3], LEAF: [.22, .35, .32], LEAF2: [.22, .3, .42] } } } },
       areas: { moor: { tone: { sat: .7, val: .75 }, tufts: { mix: [["heather", .35], ["moss", .35], ["longgrass", .2], ["rushes", .1]], sat: .7, val: .7, flower: [.85, .4, .55] },
         wall: [["water", { w: 3.2, d: 5 }]], big: [["mound", { moss: true }], ["cairn", { sparse: .12, squat: true }], ["standingstone", { sparse: .12 }]] } } },
+    { note: "the art director's notes: the badger's face two black bands from nose to ears with true white between and below them; irregular grey cairns with a leaning slab or two; round pools with irregular shores",
+      genomes: { badger: { head: { face: "badgerBands", blaze: .2 }, palette: { over: { BELLY: [.6, .02, 1] } } } },
+      areas: { moor: { wall: [["water", { w: 2.4, d: 3.4, round: true }]], big: [["mound", { moss: true }], ["cairn", { sparse: .12, rough: true, grey: true }], ["standingstone", { sparse: .12 }]] } } },
   ],
   // ---- Fern forest (Ed): "pine needles, ferns, pine trees"; the boar ----
   "fern-forest": [
@@ -3106,6 +3109,9 @@ const PASS_ITERATIONS = {
       plants: { fir: { colour: { variety: .3 } } },
       areas: { "fern-forest": { small: [["fern", { h: 1.2 }]], tone: { sat: .75, val: .75 }, tufts: { mix: [["needles", .45], ["fern", .35], ["moss", .15], ["mushrooms", .05]], sat: .75, val: .7 },
         flora: { species: [["fir", .45], ["pine", .3, { colour: { hue: .06, upper: [.06, .45, .42], variety: .3 } }], ["larch", .25, { colour: { hue: .04, val: .9, variety: .3 } }]], palette: { sat: .9, val: .88 } } } } },
+    { note: "the art director's notes: the boar lifted off the dark needles by value, its bristle ridge a paler grizzle; no piglet stripes (too small to read); the ferns low and dark, not lime",
+      genomes: { boar: { palette: { sat: .34, val: .52, over: { BELLY: [.1, .16, .78] } }, coat: { ridgeMat: "BELLY", stripes: null } } },
+      areas: { "fern-forest": { small: [["fern", { h: 1 }]], tone: { sat: .55, val: .55 } } } },
   ],
   // ---- Muddy forest (Ed): "mud and leaves, short trunks with broken branches, trees with many trunks and branches"; the snail ----
   "muddy-forest": [
@@ -3117,6 +3123,8 @@ const PASS_ITERATIONS = {
       plants: { sycamore: { colour: { variety: .3 } } },
       areas: { "muddy-forest": { small: [["stump", { snag: true, scale: 2.2 }]], tufts: { mix: [["litter", .45], ["rushes", .2], ["moss", .2], ["grass", .15]], sat: .7, val: .75 },
         flora: { species: [["sycamore", .55, { trunks: 3 }], ["alder", .2, { trunks: 2 }], ["elm", .15], ["crabApple", .1]], palette: { sat: .8, val: .82 } } } } },
+    { note: "the art director's notes: the broken trunks varied (heights, branch angles, either way, unevenly spaced) with fallen logs among them",
+      areas: { "muddy-forest": { small: [["stump", { snag: true, scale: 2.2 }], ["stump", { snag: true, scale: 1.8, tall: 1.6, branch: -.7 }], ["stump", { snag: true, scale: 2.6, tall: .7, branch: 1.5 }], ["stump", { scale: 1.6, tall: 1.3 }], ["log", { scale: 1.3 }], ["log", { branch: true, scale: 1.6 }]] } } },
   ],
   // ---- Stone shrine (Ed): "grassy, stony; mossy henges; little stones; big stones; a shrine"; the fox ----
   "stone-shrine": [
@@ -3128,6 +3136,8 @@ const PASS_ITERATIONS = {
         sleep: { over: { moss: .15, lichen: .35, ferns: 0, grass: 2, mushrooms: 0, stones: 7 }, colours: { MOSS: [.2, .25, .45], BARK2: [.1, .12, .35], WEB: [.2, .12, .78], BODY: [.1, .08, .58], BODY2: [.1, .08, .44], BODY3: [.1, .08, .3], BELLY: [.1, .06, .7], EAR: [.1, .08, .44] } } } },
       areas: { "stone-shrine": { set: ["shrine", { scale: 1.8 }], wall: [["henge", { scale: 1.6 }]], small: [["stones", { scale: 1.4 }]], tufts: { mix: [["pebbles", .4], ["grass", .3], ["moss", .25], ["flowers", .05]], sat: .6, val: .85 },
         big: [["boulder", { scale: 1.6 }], ["pillar", { sparse: .1 }], ["pillar", { sparse: .08, broken: true, lean: .14 }], ["cairn", { sparse: .08, tall: true }]] } } },
+    { note: "the art director's notes: the kitsune's tails rooted along its rump and swept up and back together like flames, overlapping, of different lengths, the outer ones lower; the pale fox-fire tips kept",
+      genomes: { fox: { coat: { kitsune: { n: 7, flame: true, width: .75, thick: .12, len: 1.15 } } } } },
   ],
   // ---- Tangly forest (Ed): "nettles and earth, tangled branches, fairly short tangly trees"; the ram ----
   "tangly-forest": [
@@ -3140,6 +3150,8 @@ const PASS_ITERATIONS = {
         sleep: { over: { moss: .25, roots: 7, grass: 6, ferns: 0, mushrooms: 0, flowers: 0 }, colours: { LEAF: [.28, .55, .3], LEAF2: [.3, .5, .4], MOSS: [.27, .45, .3], TRUNK: [.02, .45, .3] } } } },
       plants: { hawthorn: { colour: { variety: .3 } } },
       areas: { "tangly-forest": { small: [["bramble", { bare: true, scale: 1.6 }]], tone: { sat: .9, val: .8 }, tufts: { mix: [["longgrass", .45], ["grass", .25], ["litter", .25], ["flowers", .05]], sat: .85, val: .75 } } } },
+    { note: "the art director's notes: the tangled branches doubled in size and count, in clumps against the hawthorns",
+      areas: { "tangly-forest": { small: [["bramble", { bare: true, scale: 3.2 }], ["bramble", { bare: true, scale: 2.6 }], ["bramble", { scale: 3 }], ["bramble", { bare: true, scale: 3.6 }]] } } },
   ],
   // ---- Wispy forest (Ed): "dry leaves, tall thin wispy trees, thick trees with several trunks"; the woodlouse ----
   "wispy-forest": [
@@ -3150,6 +3162,8 @@ const PASS_ITERATIONS = {
       genomes: { woodlouse: { form: { mottle: .06 }, palette: { over: { MAGIC: [.55, .12, 1], MAGIC2: [.58, .25, 1] } } } },
       plants: { lime: { colour: { variety: .3 } }, birch: { colour: { hueAbs: .22, variety: .3, trunk: [.1, .04, .9] } } },
       areas: { "wispy-forest": { leaf: .21, tufts: { mix: [["litter", .55], ["grass", .2], ["moss", .15], ["mushrooms", .05], ["fern", .05]], sat: .9, val: .9 } } } },
+    { note: "the art director's notes: the limes muted towards old gold (saturation 0.6 of v2's, value a step down), so their crowns don't read as glowing",
+      areas: { "wispy-forest": { flora: { species: [["lime", .4, { colour: { sat: .66, val: .98, variety: .3 } }], ["birch", .25], ["aspen", .2], ["whitebeam", .15]], palette: { sat: .85, val: 1.05 } } } } },
   ],
 };
 
@@ -3322,7 +3336,7 @@ function quad3d(S, level, frame, st, facing = "towards") {
     if (q.belly && p[1] < bellyY && p[0] > -len * .5) return M.BELLY;
     if (q.saddle && p[1] > top - .18 && p[0] < len * .55) return M.BODY2;
     if (q.spots && p[1] > chest + .1 && spotty(p, 10, .22)) return q.spotMat === "belly" || (q.spots === "young" && (q.spotsAt ? q.spotsAt.includes(level) : juv)) ? M.BELLY : q.spots === "young" ? undefined : M.BODY3;
-    if (q.ridge && p[1] > top - .08 + hump * .5) return M.BODY3;
+    if (q.ridge && p[1] > top - .08 + hump * .5) return q.ridgeMat ? M[q.ridgeMat] : M.BODY3;
     if (q.stripes && q.stripes.at.includes(level) && p[1] > chest + .04 && Math.abs(Math.sin(Math.atan2(p[2], p[1] - chest) * (q.stripes.n || 6))) > .72) return M[q.stripes.mat || "BELLY"]; // a piglet's lengthwise stripes, round its back
     return undefined;
   };
@@ -3330,7 +3344,7 @@ function quad3d(S, level, frame, st, facing = "towards") {
   m.ell([len * .48, (top + chest) / 2 + hump * .5, 0], [len * .62, (top - chest) / 2 + hump * .5, bw], M.BODY, { paint: paintBody });
   m.ell([-len * .5, (top + tuck) / 2 + arch * .6, 0], [len * .58, (top - tuck) / 2 + arch * .6, bw * .93], M.BODY, { paint: paintBody });
   m.ell([0, (top + (chest + tuck) / 2) / 2 + .02, 0], [len * .6, (top - (chest + tuck) / 2) / 2, bw * .9], M.BODY, { paint: paintBody });
-  if (q.ridge) for (let i = 0; i < (legend ? 16 : 10); i++) { const x = -len * .8 + i * len * 1.75 / (legend ? 15 : 9), h = (.07 + (legend ? .04 : 0)) * (1 + .5 * Math.max(0, x / len)); m.ell([x, top + .02 + hump * Math.max(0, 1 - Math.abs(x / len - .5) * 2) + h * .5, 0], [h, .03, bw * .25], M.BODY3, { dir: [-.3, 1, 0], up: [1, 0, 0] }); }
+  if (q.ridge) for (let i = 0; i < (legend ? 16 : 10); i++) { const x = -len * .8 + i * len * 1.75 / (legend ? 15 : 9), h = (.07 + (legend ? .04 : 0)) * (1 + .5 * Math.max(0, x / len)); m.ell([x, top + .02 + hump * Math.max(0, 1 - Math.abs(x / len - .5) * 2) + h * .5, 0], [h, .03, bw * .25], q.ridgeMat ? M[q.ridgeMat] : M.BODY3, { dir: [-.3, 1, 0], up: [1, 0, 0] }); }
   if (q.wool) { if (q.woolCurls) { const c = [0, (top + chest) / 2 + .02, 0], R = [len * 1.02, (top - chest) / 2 + .04, bw * 1.02]; for (let i = 0; i < q.woolCurls; i++) { const u = (i + .5) / q.woolCurls, phi = i * 2.39996, y = .15 + .85 * u, rr = Math.sqrt(1 - y * y), d = [Math.cos(phi) * rr, y, Math.sin(phi) * rr]; m.ell([c[0] + R[0] * d[0], c[1] + R[1] * d[1], c[2] + R[2] * d[2]], [.11 * (q.woolSize || 1), .1 * (q.woolSize || 1), .1 * (q.woolSize || 1)], i % 3 === 0 ? M.BELLY : M.BODY); } } // woolCurls: curls over the fleece's surface (woolSize), every third lighter
     else for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; m.ell([len * Math.cos(a) * .7, (top + chest) / 2 + Math.sin(a) * .2, bw * (i % 2 ? .5 : -.5)], [.16, .14, .14], M.BODY); } }
   // ---- legs: shoulder/hip, knee, ankle, foot; near legs lighter, far legs in shade ----
@@ -3356,6 +3370,7 @@ function quad3d(S, level, frame, st, facing = "towards") {
   const nb = [len * .82, top - .12, 0], H = [nb[0] + Math.cos(q.neckAng) * q.neck * .9, nb[1] + Math.sin(q.neckAng) * q.neck * .9 + sz("headLift"), 0];
   m.seg(nb, H, q.neckW * .55 * sz("neckBase"), q.neckW * .42 * sz("neckTop"), M.BODY, { paint: p => q.belly && p[1] < (nb[1] + H[1]) / 2 - .05 ? M.BELLY : q.face === "dark" ? M.BODY2 : undefined });
   const headPaint = p => {
+    if (q.face === "badgerBands") return p[1] > H[1] - hr * .4 && Math.abs(p[2]) > hr * (q.blaze ?? .22) && Math.abs(p[2]) < hr * .62 ? M.BODY3 : M.BELLY; // a badger's two black bands from the nose through the eyes to the ears, white between them and below
     if (q.face === "badger") return Math.abs(p[2]) < hr * (q.blaze ?? .22) + (p[0] - H[0]) * .1 || p[1] < H[1] - hr * .1 ? M.BELLY : M.BODY3;
     if (q.face === "dark") return M.BODY2;
     if ((q.belly || q.muzzle) && p[1] < H[1] - hr * .35) return M.BELLY;
@@ -3403,8 +3418,13 @@ function quad3d(S, level, frame, st, facing = "towards") {
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [len * .2, top, side * bw * .5], side, 1.15, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("mane") || has("flames")) for (let i = 0; i < 7; i++) { const t = i / 6, b = v3.lerp(v3.add(H, [-hr * .5, hr * .3, 0]), backAt(.55), t), h = [.4, .3, .45, .28, .38, .25, .3][i], up = v3.norm([-.35 - (frame ? .1 : 0), 1, 0]); m.flat(v3.add(b, v3.mul(up, h * .5)), [1, 0, 0], up, h * .32, h * .55, masks.flame(i % 2 ? M.MAGIC : M.MAGIC2, M.MAGIC2), { group: 60 + i % 2, extra: true }); }
   if (has("tails") && q.kitsune) { const K = q.kitsune, n = K.n || 7; for (let i = 0; i < n; i++) { m.part = "tail"; // kitsune: n tails fanned apart with gaps, each curving, burning at its tip
-    const u = i / (n - 1) - .5, a = Math.PI * (.62 + u * (K.spread || 1.1)), z = u * (K.width || 1.2), len = K.len || 1, e = v3.add(tb, [Math.cos(a) * .95 * len, Math.sin(a) * .9 * len, z]), mid = v3.add(v3.lerp(tb, e, .55), [-.12 * (K.curl ?? 1), .12 * (K.curl ?? 1), z * .15]), th = K.thick || .12;
-    m.chain([[...tb, th * .7], [...v3.lerp(tb, mid, .5), th], [...mid, th * 1.1], [...v3.lerp(mid, e, .5), th * .9], [...e, th * .55]], i % 2 ? M.BODY2 : M.BODY, { group: 70, extra: true, paint: p => Math.hypot(...v3.sub(p, e)) < th * 1.6 ? M.BELLY : undefined });
+    const u = i / (n - 1) - .5, th = K.thick || .12; let root = tb, e, mid, a;
+    if (K.flame) { // rooted along the rump, swept up and back together like flames: one shared curve, overlapping, the outer ones lower and shorter
+      const out = Math.abs(u) * 2, L = (K.len || 1) * (1 - .3 * out) * (.9 + .2 * Math.abs(Math.sin(i * 2.7))); a = Math.PI * (.6 + .16 * out);
+      root = v3.add(tb, [.12 + .14 * (1 - out), .02 - .04 * out, u * (K.width || .7) * .5]);
+      e = v3.add(root, [Math.cos(a) * .95 * L, Math.sin(a) * .95 * L, u * (K.width || .7)]); mid = v3.add(v3.lerp(root, e, .5), [-.16 * L, .02 * L, u * .1]); e = v3.add(e, [.1 * L, .06 * L, 0]); // the tip flicks forward
+    } else { a = Math.PI * (.62 + u * (K.spread || 1.1)); const z = u * (K.width || 1.2), len = K.len || 1; e = v3.add(tb, [Math.cos(a) * .95 * len, Math.sin(a) * .9 * len, z]); mid = v3.add(v3.lerp(tb, e, .55), [-.12 * (K.curl ?? 1), .12 * (K.curl ?? 1), z * .15]); }
+    m.chain([[...root, th * .7], [...v3.lerp(root, mid, .5), th], [...mid, th * 1.1], [...v3.lerp(mid, e, .5), th * .9], [...e, th * .55]], i % 2 ? M.BODY2 : M.BODY, { group: 70, extra: true, paint: p => Math.hypot(...v3.sub(p, e)) < th * 1.6 ? M.BELLY : undefined });
     m.ell(v3.add(e, [0, th * .4, 0]), [th * .7, th * 1.1, th * .7], M.MAGIC2, { group: 71, extra: true, dir: [Math.cos(a), Math.sin(a), 0], paint: p => p[1] > e[1] + th * .6 ? M.MAGIC : undefined }); } }
   else if (has("tails")) for (let i = 0; i < 7; i++) { m.part = "tail"; const a = Math.PI * (.55 + i * .08), z = (i - 3) * .1, e = v3.add(tb, [Math.cos(a) * .9, Math.sin(a) * .85, z]); m.chain([[...tb, .1], [...v3.lerp(tb, e, .5), .17], [...e, .08]], i % 2 ? M.BODY2 : M.BODY, { group: 70, extra: true }); m.ell(e, [.09, .09, .09], M.MAGIC2, { group: 71, extra: true }); }
   m.part = "body";
@@ -4813,6 +4833,14 @@ function tlSnag(m, r, o) {
   for (let k = 0; k < 4; k++) m.ell([Math.cos(k * 1.7) * .35, .06, Math.sin(k * 1.7) * .35], [.2, .07, .16], M.MOSS, { group: 4 }); // moss at its foot
 }
 function tlCairn(m, r, o) {
+  if (o.rough) { // a moor's cairn: irregular stones heaped low and wide, grey, a slab or two leaning on it
+    let y = 0; const n = 5 + Math.floor(r() * 3);
+    for (let k = 0; k < n; k++) { const t = k / (n - 1), rr = (1 - .55 * t) * (.55 + r() * .35), hh = .12 + r() * .1, c = [(r() - .5) * .45 * (1 - t), y + hh * .8, (r() - .5) * .45 * (1 - t)];
+      m.ell(c, [rr * (.8 + r() * .5), hh, rr * (.7 + r() * .4)], M.STONE, { group: 1 + (k % 4), rough: .05, dir: [1, (r() - .5) * .5, (r() - .5) * .4] }); y += hh * 1.25; }
+    for (let k = 0; k < 1 + Math.floor(r() * 2); k++) { const a = r() * 6.28; m.box([Math.cos(a) * .7, .45, Math.sin(a) * .5], [.07, .5, .26], M.STONE, { round: .03, rough: .02, group: 6 + k, dir: [-Math.cos(a) * .45, 1, -Math.sin(a) * .3], up: [Math.sin(a), 0, -Math.cos(a)] }); } // leaning slabs
+    for (let k = 0; k < 6; k++) { const a = k * 1.1 + r(); m.ell([Math.cos(a) * (.8 + r() * .3), .06, Math.sin(a) * .7], [.1 + r() * .08, .07, .09], M.STONE, { group: 8, rough: .02 }); }
+    return;
+  }
   const n = o.tall ? 10 : o.squat ? 4 : 8; let y = 0; // squat: a low, wide pile (a moor's)
   for (let k = 0; k < n; k++) { const t = k / (n - 1), rr = o.squat ? 1 - .5 * t : .55 - .38 * t, hh = .16 + r() * .06, c = [(r() - .5) * .06, y + hh, (r() - .5) * .06]; m.ell(c, [rr * (1 + r() * .15), hh, rr * (.9 + r() * .2)], M.STONE, { group: 1 + (k % 3), rough: .03, dir: [1, (r() - .5) * .3, (r() - .5) * .3], paint: p => tlHash(p[0] * 3, p[1] * 5, k) < (t < .4 ? .3 : .1) ? M.MOSS : tlHash(p[0] * 7, p[2] * 7, k) < .12 ? M.BELLY : undefined }); y += hh * 1.75; }
   if (!o.squat) m.box([0, y + .32, 0], [.09, .36, .06], M.STONE, { round: .03, rough: .015, group: 5, dir: [.2, 1, 0], up: [0, 0, 1] }); // a standing stone on top
@@ -4860,6 +4888,7 @@ function tallPiece(kind, o, def, st, r, ppm = 16) {
   const colours = { [M.STONE]: hsv2rgb(.09, .07, .58), [M.STONED]: hsv2rgb(.62, .1, .34), [M.BELLY]: hsv2rgb(.14, .15, .78), [M.MOSS]: hsv2rgb(leaf, .5, .4), [M.LEAF]: hsv2rgb(leaf, .55, .45), [M.LEAF2]: hsv2rgb(leaf - .03, .5, .6),
     [M.TRUNK]: hsv2rgb(.07, .2, .36), [M.BARKD]: hsv2rgb(.06, .25, .18), [M.BARKL]: hsv2rgb(.08, .15, .52), [M.FLOWER]: [196, 150, 96], [M.BODY2]: [52, 70, 86], [M.NOSE]: [20, 16, 24], [M.LINE]: [24, 22, 30] };
   if (kind === "snag") colours[M.BELLY] = [214, 196, 160]; // its pale splintered wood and the fungi's rims
+  if (o.grey) { colours[M.STONE] = hsv2rgb(.6, .05, .56); colours[M.STONED] = hsv2rgb(.62, .08, .3); } // grey stone, not the warm default
   return { sp, colours, metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1) } };
 }
 
@@ -5143,10 +5172,11 @@ function prop(kind, o, def, st, r, s) {
     sp.mark([[cx - w, gy - h * .45], [cx + w, gy - h * .45], [cx + w, gy], [cx - w, gy]], o.moss ? M.LEAF3 : M.BARKD, [o.moss ? M.LEAF : M.TRUNK]);
     colours = { ...leafCol, ...wood, [M.TRUNK]: hsv2rgb(.07, .45, o.brown ? .35 : .3) };
   } else if (kind === "stump") {
-    const w = 6 * s;
-    sp.limb([[cx, gy, w * 2.2], [cx, gy - 8 * s, w * 1.6]], M.TRUNK, { group: 5, round: st.round, cap: 0, capEnd: 0 });
-    sp.shape([[cx - w * .8, gy - 8 * s], [cx, gy - 10 * s - (o.gnawed ? 4 * s : 0)], [cx + w * .8, gy - 8 * s], [cx, gy - 7 * s]], M.BELLY, { group: 6, round: st.round });
-    if (o.snag) sp.limb([[cx + w * .4, gy - 8 * s, 2.5 * s], [cx + w * 1.6, gy - 15 * s, 1.5 * s]], M.TRUNK, { group: 7, round: st.round });
+    // tall: the broken trunk's height (times), branch: its broken branch's reach (times; minus: the other way)
+    const w = 6 * s, th = 8 * s * (o.tall || 1), bk = o.branch ?? 1;
+    sp.limb([[cx, gy, w * 2.2], [cx, gy - th, w * 1.6]], M.TRUNK, { group: 5, round: st.round, cap: 0, capEnd: 0 });
+    sp.shape([[cx - w * .8, gy - th], [cx, gy - th - 2 * s - (o.gnawed ? 4 * s : 0)], [cx + w * .8, gy - th], [cx, gy - th + s]], M.BELLY, { group: 6, round: st.round });
+    if (o.snag) sp.limb([[cx + w * .4 * Math.sign(bk), gy - th * (o.tall ? .7 : 1), 2.5 * s], [cx + w * .4 * Math.sign(bk) + w * 1.2 * bk, gy - th * (o.tall ? .7 : 1) - 7 * s * Math.abs(bk) ** .5, 1.5 * s]], M.TRUNK, { group: 7, round: st.round });
     if (o.grass) for (let k = 0; k < 20; k++) { const x0 = cx + uni(r, -14, 14) * s, h = uni(r, 6, 13) * s; for (let j = 0; j < h; j++) sp.px(x0, gy - 1 - j, j > h * .6 ? M.LEAF2 : M.LEAF, 0, -.3, .9); }
     colours = { ...leafCol, ...wood };
   } else if (kind === "log") { // fallen branches, rotting logs, a fallen giant
@@ -5164,7 +5194,8 @@ function prop(kind, o, def, st, r, s) {
     colours = wood;
   } else if (kind === "water") { // a puddle, pond, bog pool or stream, flat on the ground
     const w = 22 * s * (o.w || 1), h = 6 * s * (o.d || 1); // d: its depth on the screen (a round pool, not a sliver)
-    sp.shape([[cx - w, gy - h], [cx - w * .3, gy - h * 1.5], [cx + w * .6, gy - h * 1.2], [cx + w, gy - h * .5], [cx + w * .4, gy], [cx - w * .7, gy - h * .2]], M.MAGIC, { group: 5, round: .2 });
+    if (o.round) { const pts = [], cy = gy - h * .8; for (let k = 0; k < 14; k++) { const a = k / 14 * Math.PI * 2, j = .82 + .3 * hash2(k, Math.round(w), 7); pts.push([cx + Math.cos(a) * w * j, cy + Math.sin(a) * h * .8 * j]); } sp.shape(pts, M.MAGIC, { group: 5, round: .5 }); } // a round pool, its shore irregular
+    else sp.shape([[cx - w, gy - h], [cx - w * .3, gy - h * 1.5], [cx + w * .6, gy - h * 1.2], [cx + w, gy - h * .5], [cx + w * .4, gy], [cx - w * .7, gy - h * .2]], M.MAGIC, { group: 5, round: .2 });
     for (let k = 0; k < 6; k++) { const x = cx + uni(r, -w * .6, w * .6), y = gy - h * uni(r, .4, 1.1); for (let j = 0; j < 3 * s; j++) sp.recolour(x + j, y, M.MAGIC2); }
     colours = o.bog ? { [M.MAGIC]: [60, 70, 50], [M.MAGIC2]: [120, 130, 90] } : water;
     // water reflects rather than glows: bake marks MAGIC as glowing, so use plain materials
@@ -5173,7 +5204,8 @@ function prop(kind, o, def, st, r, s) {
   } else if (kind === "bramble" || kind === "hedge") {
     const w = 22 * s, h = (kind === "hedge" ? 18 : 12) * s;
     for (let k = 0; k < (kind === "hedge" ? 6 : 4); k++) { const x = cx + uni(r, -w * .8, w * .8), y = gy - h * uni(r, .4, .7); sp.ellipse(x, y, uni(r, 6, 9) * s, h * .45, kind === "hedge" ? M.LEAF3 : M.LEAF, { round: st.round, density: o.bare ? .5 : .95, noise: .5, seed: k }); }
-    for (let k = 0; k < 8; k++) { const x0 = cx + uni(r, -w, w); let x = x0, y = gy; for (let j = 0; j < h * 1.2; j++) { x += Math.sin(j * .3 + k) * .8; y -= .8; sp.px(x, y, M.TRUNK, 0, -.3, .9); } }
+    const big = (o.scale || 1) > 2; // a big tangle (an art set's): more and thicker strands, arching over and back down
+    for (let k = 0; k < (big ? 16 : 8); k++) { const x0 = cx + uni(r, -w, w); let x = x0, y = gy; for (let j = 0; j < h * 1.2; j++) { x += Math.sin(j * .3 + k) * .8 * (big ? 1.6 : 1); y -= big && j > h * .8 ? -.5 : .8; sp.px(x, y, M.TRUNK, 0, -.3, .9); if (big) sp.px(x + 1, y, M.BARKD, 0, -.3, .9); } }
     if (kind === "hedge" || o.berries || kind === "bramble") for (let i = 0; i < sp.m.length; i++) if (sp.m[i] && sp.m[i] !== M.TRUNK && hash2(i, 5, 9) < .05) sp.m[i] = M.FLOWER;
     colours = { ...leafCol, ...wood, [M.FLOWER]: kind === "hedge" ? [210, 30, 40] : [70, 30, 70] };
   } else if (kind === "wall") { // an ornate stone wall: coped, with a ball on a pier

@@ -35,6 +35,14 @@ function tlSnag(m, r, o) {
   for (let k = 0; k < 4; k++) m.ell([Math.cos(k * 1.7) * .35, .06, Math.sin(k * 1.7) * .35], [.2, .07, .16], M.MOSS, { group: 4 }); // moss at its foot
 }
 function tlCairn(m, r, o) {
+  if (o.rough) { // a moor's cairn: irregular stones heaped low and wide, grey, a slab or two leaning on it
+    let y = 0; const n = 5 + Math.floor(r() * 3);
+    for (let k = 0; k < n; k++) { const t = k / (n - 1), rr = (1 - .55 * t) * (.55 + r() * .35), hh = .12 + r() * .1, c = [(r() - .5) * .45 * (1 - t), y + hh * .8, (r() - .5) * .45 * (1 - t)];
+      m.ell(c, [rr * (.8 + r() * .5), hh, rr * (.7 + r() * .4)], M.STONE, { group: 1 + (k % 4), rough: .05, dir: [1, (r() - .5) * .5, (r() - .5) * .4] }); y += hh * 1.25; }
+    for (let k = 0; k < 1 + Math.floor(r() * 2); k++) { const a = r() * 6.28; m.box([Math.cos(a) * .7, .45, Math.sin(a) * .5], [.07, .5, .26], M.STONE, { round: .03, rough: .02, group: 6 + k, dir: [-Math.cos(a) * .45, 1, -Math.sin(a) * .3], up: [Math.sin(a), 0, -Math.cos(a)] }); } // leaning slabs
+    for (let k = 0; k < 6; k++) { const a = k * 1.1 + r(); m.ell([Math.cos(a) * (.8 + r() * .3), .06, Math.sin(a) * .7], [.1 + r() * .08, .07, .09], M.STONE, { group: 8, rough: .02 }); }
+    return;
+  }
   const n = o.tall ? 10 : o.squat ? 4 : 8; let y = 0; // squat: a low, wide pile (a moor's)
   for (let k = 0; k < n; k++) { const t = k / (n - 1), rr = o.squat ? 1 - .5 * t : .55 - .38 * t, hh = .16 + r() * .06, c = [(r() - .5) * .06, y + hh, (r() - .5) * .06]; m.ell(c, [rr * (1 + r() * .15), hh, rr * (.9 + r() * .2)], M.STONE, { group: 1 + (k % 3), rough: .03, dir: [1, (r() - .5) * .3, (r() - .5) * .3], paint: p => tlHash(p[0] * 3, p[1] * 5, k) < (t < .4 ? .3 : .1) ? M.MOSS : tlHash(p[0] * 7, p[2] * 7, k) < .12 ? M.BELLY : undefined }); y += hh * 1.75; }
   if (!o.squat) m.box([0, y + .32, 0], [.09, .36, .06], M.STONE, { round: .03, rough: .015, group: 5, dir: [.2, 1, 0], up: [0, 0, 1] }); // a standing stone on top
@@ -82,5 +90,6 @@ export function tallPiece(kind, o, def, st, r, ppm = 16) {
   const colours = { [M.STONE]: hsv2rgb(.09, .07, .58), [M.STONED]: hsv2rgb(.62, .1, .34), [M.BELLY]: hsv2rgb(.14, .15, .78), [M.MOSS]: hsv2rgb(leaf, .5, .4), [M.LEAF]: hsv2rgb(leaf, .55, .45), [M.LEAF2]: hsv2rgb(leaf - .03, .5, .6),
     [M.TRUNK]: hsv2rgb(.07, .2, .36), [M.BARKD]: hsv2rgb(.06, .25, .18), [M.BARKL]: hsv2rgb(.08, .15, .52), [M.FLOWER]: [196, 150, 96], [M.BODY2]: [52, 70, 86], [M.NOSE]: [20, 16, 24], [M.LINE]: [24, 22, 30] };
   if (kind === "snag") colours[M.BELLY] = [214, 196, 160]; // its pale splintered wood and the fungi's rims
+  if (o.grey) { colours[M.STONE] = hsv2rgb(.6, .05, .56); colours[M.STONED] = hsv2rgb(.62, .08, .3); } // grey stone, not the warm default
   return { sp, colours, metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1) } };
 }

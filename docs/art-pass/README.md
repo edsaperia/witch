@@ -84,3 +84,15 @@ Per area:
 - **Wispy forest (woodlouse)**: half the flecks; moonstone legend crystals (pale blue-white); the birches green-yellow with white trunks (`hueAbs`); the limes one colour, a little greener than v1's gold.
 
 `tools/genome/compare.mjs` against `claude/prototype`: 1560 creature sprites, 0 differ; `art/check.mjs`'s flora baseline still matches, so every new number is opt-in.
+
+## Batch 1, iteration 3 (the art director's notes on iteration 2; the last creature round before creature texture)
+
+- **Kitsune (stone shrine)**: the tails rooted along the rump and swept up and back together like flames, overlapping, of different lengths, the outer ones lower and shorter, each tip flicking forward, the fox-fire kept (`coat.kitsune.flame`).
+- **Badger (moor)**: a new face, `head.face: "badgerBands"`: two black bands from the nose through the eyes to the ears, true white between and below them (`BELLY` near white).
+- **Moor**: cairns as irregular grey stones heaped low with a leaning slab or two (`cairn` `rough`, `grey`); round pools with irregular shores (`water` `round`).
+- **Muddy forest**: six kinds of broken trunk and log in its small objects: heights, branch reach either way (`stump` `tall`, `branch`), a plain stump, a log and a fallen branch.
+- **Wispy forest**: the limes muted towards old gold (an area's own colour for its main species).
+- **Fern forest**: the boar lifted off the needles by value, its bristle ridge a paler grizzle (`coat.ridgeMat`); no piglet stripes (at about 10 px they can't read); the ferns low and dark.
+- **Tangly forest**: the brambles doubled in size and count, a big tangle's strands thicker and arching (bramble `scale` over 2).
+
+Creatures pause here for the creature generator's surface texture (art builder 2); the plants, tufts, clumps and set pieces carry on.
