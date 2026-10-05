@@ -81,14 +81,14 @@
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
     .bubble .bar i { display: block; height: 100%; background: #ff7fd0; }
   </style>
-  <script type="module" crossorigin src="./assets/index-DEtE4TdT.js"></script>
+  <script type="module" crossorigin src="./assets/index-BWhq0HoY.js"></script>
 </head>
 <body>
   <canvas id="game"></canvas>
   <div id="seed"></div>
   <div id="version"></div>
   <div id="debug"></div>
-  <div id="fight-knobs"><span>fight scale [ ]</span><input type="range" name="scale" min="0.25" max="3" step="0.05"><span class="scale"></span><span>fight speed ; '</span><input type="range" name="speed" min="0.25" max="3" step="0.05"><span class="speed"></span><button type="button">reset fight scale and speed</button></div>
+  <div id="fight-knobs"><span>fight scale [ ]</span><input type="range" name="scale" min="0.25" max="3" step="0.05"><span class="scale"></span><span>fight speed ; '</span><input type="range" name="speed" min="0.25" max="3" step="0.05"><span class="speed"></span><span>momentum , .</span><input type="range" name="momentum" min="0.25" max="3" step="0.05"><span class="momentum"></span><button type="button">reset fight scale, speed and momentum</button></div>
   <div id="debug-buttons"><button id="next-wave" type="button">next wave (N)</button><button id="pause-waves" type="button">pause waves (P)</button><button id="rulers" type="button">rulers (G)</button></div>
   <div id="wave"><div class="fill"></div><div class="label"></div></div>
   <div id="bubbles"><div class="bubble" id="bubble-witch"></div><div class="bubble" id="bubble-creature"><span></span><div class="bar"><i></i></div></div></div>
@@ -113,7 +113,7 @@
       <div id="waves"></div>
       <div id="news"></div>
       <div class="keys">
-        <b>Keyboard</b> arrow keys fly · space rises or descends · Q spell (speed boost) · W dash (on the ground) · E puts down / picks up a sigil · R cycles the stack (the bottom sigil to the top) · 1–4 empty slots for now · Z/X or +/− zoom · on the ground she talks to (invites) any creature in range by herself (1 or T turns auto-talk off: then hold Shift to talk) · H hides the action bar · ~ debug · N next wave · P pause waves · I invite nearest (debug) · [ ] fight scale, ; ' fight speed (debug: in the ~ panel too)<br>
+        <b>Keyboard</b> arrow keys fly · space rises or descends · Q spell (speed boost) · W dash (on the ground) · E puts down / picks up a sigil · R cycles the stack (the bottom sigil to the top) · 1–4 empty slots for now · Z/X or +/− zoom · on the ground she talks to (invites) any creature in range by herself (1 or T turns auto-talk off: then hold Shift to talk) · H hides the action bar · ~ debug · N next wave · P pause waves · I invite nearest (debug) · [ ] fight scale, ; ' fight speed, , . fight momentum (debug: in the ~ panel too)<br>
         <b>Gamepad</b> left stick flies · A dash · B spell · X sigil · right stick click cycles · Y rises or descends · shoulders zoom<br>
         <b>Phone</b> drag on the left to fly · the round button rises or descends · go near a creature to talk · sigil puts down or picks up · cycle, spell and dash · three-finger tap for debug
       </div>
