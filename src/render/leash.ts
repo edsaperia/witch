@@ -10,8 +10,9 @@
 // - the talk: emoji speech bubbles taking turns over the witch and the creature (HTML, over the
 //   canvas), with a bar for how far the conversation has got.
 // The sigils are the art builder's (art/sigils.js), drawn per species and level into an atlas.
-import { drawAreaMemory, drawDreamDirection, type AddSprite } from "./areaMemory";
-import { nearestSeen, restlessness } from "../rules/memory";
+import { drawAreaMemory, type AddSprite } from "./areaMemory";
+import { restlessness } from "../rules/memory";
+import { dreamStone } from "../rules/dream";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { drawSigil, sigilColour } from "../../art/generator.js";
@@ -310,8 +311,7 @@ export class LeashView {
     }
   }
 
-  /** From the treetops: the areas she remembers (render/areaMemory.ts), and each dream's direction,
-   *  toward the nearest area where she's seen what it dreams of (rules/memory.ts). */
+  /** From the treetops: the areas she remembers (render/areaMemory.ts; rules/memory.ts). */
   private drawMemory(time: number): void {
     const g = this.game, t = g.tuning, w = g.witch, mem = g.witches[0].memory, up = w.lift * w.lift * (3 - 2 * w.lift);
     if (up < 0.02 || !mem) return;
@@ -320,32 +320,25 @@ export class LeashView {
     const sigil: AddSprite = (x, y, z, size, sp, level, r, gg, b, a) => this.standing.add(x, y, z, size, sp ? this.uv(this.slotOf(sp, level)) : dot, r, gg, b, a);
     const mote: AddSprite = (x, y, z, size, _sp, _l, r, gg, b, a) => this.standing.add(x, y, z, size, dot, r, gg, b, a);
     drawAreaMemory(mem, g.map, w.x, w.z, canopy, up, time, colour, sigil, mote);
-    this.dreamDirs.clear();
-    for (const c of this.dreams) {
-      const target = nearestSeen(mem, c.quest!.species, c.x, c.z, g.map, `${c.cell[0]},${c.cell[1]}`);
-      if (!target) continue;
-      this.dreamDirs.set(c.id, target);
-      drawDreamDirection(c.x, c.z, target.x, target.z, canopy, up, time, c.id, colour(c.quest!.species), mote);
-    }
   }
-  /** Each dreaming legend's direction this frame: where she's seen what it dreams of. */
-  private dreamDirs = new Map<number, { x: number; z: number }>();
+  /** Each dreaming legend's runestone to point at (rules/dream.ts), by legend: the map never changes. */
+  private dreamStones = new Map<number, { x: number; z: number } | null>();
 
   /** Sleeping legends dreaming this frame (the first quest), drawn as thought bubbles by drawDreams. */
   private dreams: Creature[] = [];
   private dreamEls: HTMLElement[] = [];
 
-  /** A sleeping legend's dream (the first quest, Ed 2026-10-04): a thought bubble over it holding the
+  /** A sleeping legend's dream (the first quest, Ed 2026-10-04): a bubble over it holding the
    *  sigil of the creature it wants, in its colour, drawn in that level's variant (Ed, 2026-10-05:
-   *  the sigil's own level look, no pips). From the treetops the bubble floats high over it, so the
-   *  forest's dreams can be read from above. HTML, like the talk bubbles, so it reads at any zoom. */
+   *  the sigil's own level look, no pips). Only to a witch on the ground near it (dreams.range;
+   *  Ed, 2026-10-05: never from the treetops). HTML, like the talk bubbles, so it reads at any zoom. */
   private drawDreams(camera: THREE.Camera, width: number, height: number): void {
-    const host = this.bubbleWitch?.parentElement, w = this.game.witch, treetops = w.lift > 0.5;
+    const host = this.bubbleWitch?.parentElement, g = this.game, w = g.witch, range = g.tuning.dreams.range;
     if (!host) return;
-    const list = this.dreams.map(c => ({ c, d: Math.hypot(c.x - w.x, c.z - w.z) })).sort((p, q) => p.d - q.d).slice(0, 12);
+    const list = w.mode !== "ground" || w.lift > 0.5 ? [] : this.dreams.map(c => ({ c, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(p => p.d <= range).sort((p, q) => p.d - q.d).slice(0, 4);
     let used = 0;
     for (const { c } of list) {
-      const y = treetops ? 16 : Math.min(this.tops.get(c.id) ?? 2, 4.5) + 1.2;
+      const y = Math.min(this.tops.get(c.id) ?? 2, 4.5) + 1.2;
       placed(this.v.set(c.x, y, c.z)).project(camera);
       if (this.v.z > 1 || Math.abs(this.v.x) > 1.1 || Math.abs(this.v.y) > 1.1) continue;
       let el = this.dreamEls[used];
@@ -379,16 +372,17 @@ export class LeashView {
       const bx = ((this.v.x + 1) / 2) * width, by = ((1 - this.v.y) / 2) * height;
       el.style.left = `${bx}px`;
       el.style.top = `${by}px`;
-      // (From the treetops a dream reads a little smaller; a nightmare stays full size, a warning from afar, and shakes.)
-      const shake = faces ? r * 2.5 * Math.sin(performance.now() * 0.05 + c.id) : 0;
-      el.style.transform = `translate(calc(-50% + ${shake.toFixed(1)}px), -100%) scale(${treetops && !faces ? 0.8 : 1})`;
-      // Its direction (rules/memory.ts): a soft glow on the side of the bubble facing the nearest
-      // area where she's seen what it dreams of; none if she's seen it nowhere.
-      const to = this.dreamDirs.get(c.id);
+      const shake = faces ? r * 2.5 * Math.sin(performance.now() * 0.05 + c.id) : 0; // (a nightmare shakes)
+      el.style.transform = `translate(calc(-50% + ${shake.toFixed(1)}px), -100%)`;
+      // Its direction (rules/dream.ts): a soft glow on the side of the bubble facing the runestone
+      // of the nearest area of the kind it dreams of, explored or not.
+      if (!this.dreamStones.has(c.id)) this.dreamStones.set(c.id, dreamStone(g.map, q.species, c.x, c.z));
+      const to = this.dreamStones.get(c.id);
       let dir = el.querySelector<HTMLElement>(".dream-dir");
       if (to) {
-        placed(this.v.set(to.x, y, to.z)).project(camera);
-        const ang = Math.atan2(((1 - this.v.y) / 2) * height - by, ((this.v.x + 1) / 2) * width - bx), col = this.colours.get(q.species);
+        const d = Math.hypot(to.x - c.x, to.z - c.z) || 1; // (a step its way, not the stone itself: that may be behind the camera)
+        placed(this.v.set(c.x + ((to.x - c.x) / d) * 8, y, c.z + ((to.z - c.z) / d) * 8)).project(camera);
+        const ang = Math.atan2(((1 - this.v.y) / 2) * height - by, ((this.v.x + 1) / 2) * width - bx), col = this.colours.get(q.species) ?? (this.slotOf(q.species, 0), this.colours.get(q.species));
         if (!dir) {
           dir = document.createElement("div");
           dir.className = "dream-dir";
@@ -403,6 +397,9 @@ export class LeashView {
         const rgb = col ? `${Math.round(col.r * 255)},${Math.round(col.g * 255)},${Math.round(col.b * 255)}` : "225,215,255";
         (dir.firstChild as HTMLElement).style.background = `radial-gradient(ellipse at 20% 50%, rgba(${rgb},.9), rgba(${rgb},0) 72%)`;
         dir.style.transform = `rotate(${ang}rad)`;
+        // (from the bubble's edge that way, however big it is)
+        const hw = el.offsetWidth / 2, hh = el.offsetHeight / 2, edge = Math.min(hw / Math.max(1e-3, Math.abs(Math.cos(ang))), hh / Math.max(1e-3, Math.abs(Math.sin(ang))));
+        (dir.firstChild as HTMLElement).style.left = `${Math.round(edge - 6)}px`;
         dir.style.display = "";
       } else if (dir) dir.style.display = "none";
       used++;

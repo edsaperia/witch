@@ -3,9 +3,7 @@
 // small, upright and low, just over its canopy near its heart; bigger for more of them, with a few motes
 // for a crowd; tinted by their mood when she was last there (their own colour while wild, rosy
 // when happy, smouldering red when enraged). No numbers, no outlines. Areas she hasn't landed in
-// show nothing: the forest stays dark. And a dream's direction (drawDreamDirection): from a
-// sleeping legend, a thin drift of motes over the canopy toward the nearest area where she's
-// seen the creature it dreams of.
+// show nothing: the forest stays dark.
 import { hash2 } from "../rules/random";
 import type { ForestMap } from "../rules/map";
 import type { MemoryState } from "../rules/memory";
@@ -40,17 +38,5 @@ export function drawAreaMemory(mem: MemoryState, map: ForestMap, wx: number, wz:
         dot(x + Math.cos(ma) * 6, y - 2 + ph * 5, z + Math.sin(ma) * 4.5, 0.9, null, 0, r, g, b, 0.4 * fade * Math.sin(ph * Math.PI));
       }
     });
-  }
-}
-
-/** A dream's direction: motes drifting from a sleeping legend at (lx, lz) toward (tx, tz) just
- *  over the canopy, fading out after `reach` metres: a direction, not a path to the door. */
-export function drawDreamDirection(lx: number, lz: number, tx: number, tz: number, canopy: number, up: number, time: number, seed: number, rgb: { r: number; g: number; b: number }, dot: AddSprite, reach = 70): void {
-  const d = Math.hypot(tx - lx, tz - lz);
-  if (d < 1 || up < 0.02) return;
-  const ux = (tx - lx) / d, uz = (tz - lz) / d, len = Math.min(reach, d * 0.6);
-  for (let k = 0; k < 9; k++) {
-    const ph = (time * 0.12 + k / 9 + hash2(seed, k, 839) * 0.05) % 1, s = 6 + ph * len, wob = Math.sin(time * 1.3 + k * 1.7) * 2;
-    dot(lx + ux * s - uz * wob, canopy + 2.4 + Math.sin(ph * Math.PI) * 2, lz + uz * s + ux * wob, 2, null, 0, rgb.r, rgb.g, rgb.b, 0.6 * up * Math.sin(ph * Math.PI));
   }
 }

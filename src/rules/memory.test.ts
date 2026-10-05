@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { moodOf, nearestSeen, newMemory, restlessness, stepMemory } from "./memory";
+import { moodOf, newMemory, restlessness, stepMemory } from "./memory";
 import type { Creature } from "./creatures";
 import type { ForestMap } from "./map";
 
@@ -33,17 +33,6 @@ describe("area memory", () => {
     stepMemory(m, false, 50, 50, map, inArea, 20);
     expect(m.areas.get("0,0")!.seen[0]).toEqual({ species: "fox", wild: 1, happy: 0, enraged: 1 });
     foxes[0].enraged = false;
-  });
-
-  it("points a dream only at areas where she's seen that species, the nearest first", () => {
-    const m = newMemory();
-    expect(nearestSeen(m, "owl", 0, 0, map)).toBeNull();
-    stepMemory(m, true, 50, 50, map, inArea, 10);
-    stepMemory(m, true, 350, 50, map, inArea, 12);
-    expect(nearestSeen(m, "owl", 400, 50, map)).toEqual({ key: "3,0", x: 350, z: 50 });
-    expect(nearestSeen(m, "owl", 0, 0, map)).toEqual({ key: "0,0", x: 50, z: 50 });
-    expect(nearestSeen(m, "badger", 0, 0, map)).toBeNull();
-    expect(nearestSeen(m, "owl", 0, 0, map, "0,0")?.key).toBe("3,0");
   });
 
   it("snapshots at most once a second", () => {
