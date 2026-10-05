@@ -8,7 +8,8 @@ import { Forest, crownReach, treeChance } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
 import { population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
-import { dormant, newGame, simRadius, STEP, stepGame } from "./game";
+import { dormant, hitWitch, newGame, simRadius, STEP, stepGame } from "./game";
+import { dashing, newDash, startDash } from "./dash";
 import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, symbolCount, wavePlan } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
@@ -184,9 +185,11 @@ describe("the map", () => {
       n++;
       if (w > 0.95) dense++; else if (w < 0.05) open++; else between++;
     }
-    expect(dense / n).toBeGreaterThan(0.5);
-    expect(open / n).toBeGreaterThan(0.05);
-    expect(between / n).toBeLessThan(0.3);
+    // (Ed, 2026-10-05, at v473: the woods thin gradually across most of an area towards its runestone,
+    // so as much lies on that gradient as in full woods; and there's real open ground.)
+    expect(dense / n).toBeGreaterThan(0.35);
+    expect(between / n).toBeGreaterThan(0.25); // a long, soft gradient, not a step
+    expect(open / n).toBeGreaterThan(0.03);
   });
 
   it("uses many area types", () => {
@@ -435,7 +438,11 @@ describe("the camera", () => {
     const g = TUNING.camera.ground, t = TUNING.camera.treetop;
     expect(cameraPose(c, 0, TUNING).angle).toBeCloseTo(g.angleIn);
     expect(cameraPose(c, 1, TUNING).angle).toBeCloseTo(t.angleIn);
-    expect(cameraPose(c, 1, TUNING).distance).toBeCloseTo(t.distanceIn);
+    // Over the treetops it sits out by (treetopSpeed / speedZoom.base)^power (Ed, 2026-10-05: faster flight, more ground on screen).
+    const SZ = TUNING.camera.speedZoom!, fast = Math.pow(TUNING.treetopSpeed / SZ.base, SZ.power);
+    expect(cameraPose(c, 1, TUNING).distance).toBeCloseTo(t.distanceIn * fast);
+    expect(cameraPose(c, 1, { ...TUNING, treetopSpeed: SZ.base * 2 }).distance).toBeCloseTo(t.distanceIn * Math.pow(2, SZ.power));
+    expect(cameraPose(c, 0, { ...TUNING, treetopSpeed: SZ.base * 2 }).distance).toBeCloseTo(g.distanceIn); // (the ground camera is left alone)
     const still = { x: 0, z: 0 };
     for (let i = 0; i < 10; i++) c = stepCamera(c, 1, { x: 0, y: 0, z: 0 }, still, 0, 1 / 60, TUNING);
     for (let i = 0; i < 300; i++) c = stepCamera(c, 0, { x: 0, y: 0, z: 0 }, still, 0, 1 / 60, TUNING);
@@ -919,9 +926,14 @@ describe("inviting and leashing", () => {
     stepLeash(s, all, { sigil: true }, { x: 520 + gap, z: 500 }, true, 103, 0.1, TUNING);
     expect(s.events.map(e => e.kind)).toEqual(["fizzled"]);
     expect(s.stack).toEqual([a.c.id, c.c.id]);
-    // No placing from the treetops.
+    // No placing from the treetops, and no picking up (Ed, 2026-10-05: "You have to land to place sigils"): there the button cycles the stack instead.
     stepLeash(s, all, { sigil: true }, { x: 700, z: 700 }, false, 104, 0.1, TUNING);
+    expect(s.stack).toEqual([c.c.id, a.c.id]);
+    expect(s.events.map(e => e.kind)).toEqual(["cycled"]);
+    stepLeash(s, all, { sigil: true }, { x: 520, z: 500 }, false, 105, 0.1, TUNING); // over b's placed sigil, in the air
+    expect(s.placed.map(p => p.id)).toEqual([b.c.id]);
     expect(s.stack).toEqual([a.c.id, c.c.id]);
+    expect(s.events.map(e => e.kind)).toEqual(["cycled"]);
   });
 
   it("is elastic: a creature walks to its new leash point, never jumps, then stays within the leash", () => {
@@ -1463,16 +1475,27 @@ describe("creature speeds (Ed, 2026-10-04: she is much faster than almost all of
   });
 });
 
-describe("the cycle button (Ed, 2026-10-04)", () => {
-  it("sends the bottom sigil of the stack to the top", () => {
+describe("E cycles the sigils in the treetops (Ed, 2026-10-05)", () => {
+  it("in the air sends the bottom sigil of the stack to the top, and never places or lifts", () => {
     const s = newLeash(), none: LeashControls = { sigil: false }, cs = spawnCreatures(map);
     s.stack.push(1, 2, 3); // 3 is the bottom (next down)
     for (const id of s.stack) cs[id].leashed = true;
-    stepLeash(s, cs, { ...none, cycle: true }, { x: 0, z: 0 }, false, 1, 1 / 60, TUNING);
+    stepLeash(s, cs, { sigil: true }, { x: 0, z: 0 }, false, 1, 1 / 60, TUNING);
     expect(s.stack).toEqual([3, 1, 2]);
-    expect(s.events.some(e => e.kind === "cycled" && e.id === 3)).toBe(true);
+    expect(s.placed).toEqual([]);
+    expect(s.events.map(e => e.kind)).toEqual(["cycled"]);
+    expect(s.events[0].id).toBe(3);
     stepLeash(s, cs, none, { x: 0, z: 0 }, false, 1, 1 / 60, TUNING);
     expect(s.stack).toEqual([3, 1, 2]);
+  });
+  it("on the ground never cycles: it puts the bottom sigil down", () => {
+    const s = newLeash(), cs = spawnCreatures(map);
+    s.stack.push(1, 2, 3);
+    for (const id of s.stack) cs[id].leashed = true;
+    stepLeash(s, cs, { sigil: true }, { x: 0, z: 0 }, true, 1, 1 / 60, TUNING);
+    expect(s.events.some(e => e.kind === "cycled")).toBe(false);
+    expect(s.placed.map(p => p.id)).toEqual([3]);
+    expect(s.stack).toEqual([1, 2]);
   });
 });
 
@@ -1596,16 +1619,55 @@ describe("the dash (Ed, 2026-10-04)", () => {
   const ready = () => { const g = newGame(321, TUNING); g.clock.paused = false; g.witch = { ...g.witch, seated: false }; return g; };
   const run = (g: ReturnType<typeof newGame>, n: number, c: Partial<Parameters<typeof stepGame>[1]> = {}) => { for (let i = 0; i < n; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c }, STEP); };
 
-  it("bursts dash.distance metres the way she steers, on the ground, then waits out its cooldown", () => {
+  it("blinks dash.distance metres the way she steers in one step, gone for a moment, then waits out its cooldown", () => {
     const g = ready(), x0 = g.witch.x, z0 = g.witch.z;
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
-    run(g, Math.ceil(TUNING.dash.duration / STEP) + 1);
+    // One step: there already, no travel between.
     expect(z0 - g.witch.z).toBeGreaterThan(TUNING.dash.distance * 0.8);
     expect(Math.abs(g.witch.x - x0)).toBeLessThan(0.5);
+    expect(dashing(g.witches[0].dash, g.clock.time)).toBe(true); // gone: not drawn, not hit
+    run(g, Math.ceil(TUNING.dash.gone / STEP) + 1);
+    expect(dashing(g.witches[0].dash, g.clock.time)).toBe(false);
     const z1 = g.witch.z;
-    run(g, 1, { dash: true, moveX: 0, moveZ: -1 }); // still cooling down: no burst
+    run(g, 1, { dash: true, moveX: 0, moveZ: -1 }); // still cooling down: no blink
     run(g, 10);
     expect(z1 - g.witch.z).toBeLessThan(TUNING.dash.distance * 0.5);
+  });
+
+  it("goes the way she faces when she's still, and stops short of anything in the way", () => {
+    const w = { ...newWitch(0, 0), facing: -1 as const }, d = newDash(), B = { minX: -100, maxX: 100, minZ: -100, maxZ: 100 };
+    expect(startDash(d, w, 0, 0, 1, TUNING, B)).toBe(true);
+    expect(d.toX).toBeCloseTo(-TUNING.dash.distance); expect(d.toZ).toBeCloseTo(0);
+    const d2 = newDash();
+    startDash(d2, w, 1, 0, 1, TUNING, B, x => x < 6); // blocked from 6 m on
+    expect(d2.toX).toBeLessThan(6); expect(d2.toX).toBeGreaterThan(5);
+  });
+
+  it("never lands in a tree trunk", () => {
+    const g = ready();
+    const trees = g.forest.treesNear(g.witch.x + 60, g.witch.z + 60, 40);
+    expect(trees.length).toBeGreaterThan(0);
+    let tried = 0;
+    for (const tr of trees.slice(0, 12)) {
+      const W = g.witches[0];
+      W.dash = newDash();
+      g.witch = { ...g.witch, x: tr.x - TUNING.dash.distance, z: tr.z, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false };
+      run(g, 1, { dash: true, moveX: 1, moveZ: 0 });
+      for (const p of g.forest.treesNear(g.witch.x, g.witch.z, 3)) expect(Math.hypot(p.x - g.witch.x, p.z - g.witch.z)).toBeGreaterThanOrEqual(TUNING.dash.clear.tree - 1e-6);
+      tried++;
+    }
+    expect(tried).toBeGreaterThan(0);
+  });
+
+  it("can't be hit while she's gone", () => {
+    const g = ready(), W = g.witches[0], hp = () => JSON.stringify(W.health);
+    run(g, 1, { dash: true, moveX: 1, moveZ: 0 });
+    const before = hp();
+    hitWitch(g, 0, g.clock.time);
+    expect(hp()).toBe(before);
+    run(g, Math.ceil(TUNING.dash.gone / STEP) + 1);
+    hitWitch(g, 0, g.clock.time + 0.01); // back: hittable as ever
+    expect(hp()).not.toBe(before);
   });
 
   it("does nothing over the treetops or while she sits", () => {

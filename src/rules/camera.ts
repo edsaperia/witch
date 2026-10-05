@@ -82,7 +82,9 @@ export function stepCamera(c: CameraState, zoomDelta: number, target: { x: numbe
 export function cameraPose(c: CameraState, lift: number, t: Tuning): CameraPose {
   const g = t.camera.ground, tt = t.camera.treetop, m = smoothstep(lift);
   let angle = lerp(lerp(g.angleIn, g.angleOut, c.zoom), lerp(tt.angleIn, tt.angleOut, c.zoom), m);
-  let distance = lerp(lerp(g.distanceIn, g.distanceOut, c.zoom), lerp(tt.distanceIn, tt.distanceOut, c.zoom), m) * (1 + (c.pull ?? 0));
+  // Over the treetops it zooms out with her speed (camera.speedZoom): faster flight, more ground on screen.
+  const SZ = t.camera.speedZoom, fast = SZ && SZ.power > 0 ? Math.pow(Math.max(0.25, t.treetopSpeed / SZ.base), SZ.power) : 1;
+  let distance = lerp(lerp(g.distanceIn, g.distanceOut, c.zoom), lerp(tt.distanceIn, tt.distanceOut, c.zoom) * fast, m) * (1 + (c.pull ?? 0));
   // The opening shot: closer and lower, easing out to the normal view as she leaves her seat.
   const k = smoothstep(c.intro ?? 0), I = t.camera.intro;
   angle = lerp(angle, I.angle, k); distance = lerp(distance, I.distance, k);
