@@ -49,13 +49,13 @@ export function speciesColours(sp, st, gear = null) {
 }
 function baseColours(s, st) {
   const v = st.cVal / .85, sat = st.cSat / .6;
-  const body = hsv2rgb(s.hue, s.sat * sat * st.sat, s.val * v);
+  const body = hsv2rgb(s.hue, s.sat * sat * st.sat, s.val * v), hs = st.hueShift || 0; // hs: hue-shifted ramps (lights warmer, shadows redder; the stylisation ladder)
   const belly = s.belly === "yellow" ? [240, 196, 40] : s.belly === "white" || s.q?.face === "badger" ? [236, 232, 222] : hsv2rgb(s.hue + .03, s.sat * .5 * sat, Math.min(1, s.val * v * 1.3 + .08));
   const magic = hsv2rgb(st.magicHue + s.hue * .3, .6, 1), magic2 = hsv2rgb(st.magicHue + s.hue * .3, .18, 1);
   const pale = ["boar", "stag", "elk", "ram"].includes(s.id);
   return {
-    [M.BODY]: body, [M.BODY2]: hsv2rgb(s.hue + .02, Math.min(1, s.sat * sat * 1.2 + .05), s.val * v * .66), [M.BODY3]: hsv2rgb(s.hue + .03, Math.min(1, s.sat * sat * 1.3 + .1), s.val * v * .4),
-    [M.BODYL]: hsv2rgb(s.hue - .01, s.sat * sat * st.sat * .85, Math.min(1, s.val * v * 1.22 + .05)), // the coat's lifted top tone (genome/texture.js)
+    [M.BODY]: body, [M.BODY2]: hsv2rgb(s.hue + .02 - hs * .04, Math.min(1, s.sat * sat * 1.2 + .05 + hs * .1), s.val * v * .66), [M.BODY3]: hsv2rgb(s.hue + .03 - hs * .07, Math.min(1, s.sat * sat * 1.3 + .1 + hs * .15), s.val * v * .4),
+    [M.BODYL]: hsv2rgb(s.hue - .01 + hs * .04, s.sat * sat * st.sat * (.85 - hs * .25), Math.min(1, s.val * v * 1.22 + .05 + hs * .08)), // the coat's lifted top tone (genome/texture.js)
     [M.BELLY]: belly, [M.ACCENT]: pale ? [236, 226, 200] : hsv2rgb(s.hue + .05, s.sat * .6, Math.min(1, s.val * v * .5 + .25)),
     [M.MAGIC]: magic, [M.MAGIC2]: magic2, [M.LEAF]: hsv2rgb(.3, .55, .55), [M.LEAF2]: hsv2rgb(.25, .5, .75), [M.LEAF3]: hsv2rgb(.33, .6, .35), [M.TRUNK]: hsv2rgb(.07, .45, .32),
     [M.BROW]: body[0] * .3 + body[1] * .55 + body[2] * .15 < 95 ? [226, 218, 204] : [30, 20, 28], // its brows: ink on a light coat, pale on a dark one

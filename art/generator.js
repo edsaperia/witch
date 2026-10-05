@@ -120,6 +120,8 @@ export const KNOBS = [
   { k: "magicHue", g: "Creatures", label: "Magic glow hue", min: 0, max: 1, step: 0.01, v: 0.5, hue: true },
   { k: "fur", g: "Creatures", label: "Stripes and spots", min: 0, max: 1, step: 0.05, v: 0.5 },
   { k: "texture", g: "Creatures", label: "Fur, feathers and scales (genome/texture.js; 0 off)", min: 0, max: 1, step: 1, v: 1 },
+  { k: "texDetail", g: "Creatures", label: "Texture detail (0 cel shapes, 1 fine strokes)", min: 0, max: 1, step: 0.05, v: 1 },
+  { k: "hueShift", g: "Creatures", label: "Hue-shifted ramps (warm lights, red-brown shadows)", min: 0, max: 1, step: 0.05, v: 0 },
   { k: "cloakHue", g: "Witch", label: "Jacket hue", min: 0, max: 1, step: 0.01, v: 0.72, hue: true },
   { k: "hairHue", g: "Witch", label: "Hair hue", min: 0, max: 1, step: 0.01, v: 0.01, hue: true },
   { k: "hatHue", g: "Witch", label: "Hat hue", min: 0, max: 1, step: 0.01, v: 0.74, hue: true },

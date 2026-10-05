@@ -59,7 +59,9 @@ export function textureSprite(sp, S, level, st, seed = 1) {
   if (!textureOn(st)) return sp;
   const T = textureOf(S), { w, h } = sp;
   if (T.kind === "smooth" && !T.contrast) return sp;
-  const L = TEXTURE_LEVEL, c = Math.max(1.5, T.size * L.size[level]), contrast = T.contrast * L.contrast[level], seam = T.seam * L.seam[level];
+  // the style's detail (0: cel shapes, tones by the form with hard edges, no seams; 1: fine strokes and seams): the stylisation ladder's knob
+  const D = Math.max(0, Math.min(1, st?.texDetail ?? 1));
+  const L = TEXTURE_LEVEL, c = Math.max(1.5, T.size * L.size[level] * (1 + (1 - D) * 2)), contrast = T.contrast * L.contrast[level] * D, seam = T.seam * L.seam[level] * D;
   const lf = [-.35, -.75, .55], ll = Math.hypot(...lf); // the form light: above, in front, a little left (as the moon)
   const on = new Uint8Array(w * h);
   let cx = 0, cy = 0, n = 0;
@@ -107,10 +109,15 @@ export function textureSprite(sp, S, level, st, seed = 1) {
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const i = y * w + x, k = cell[i];
     if (k < 0) continue;
-    const s = sum.get(k), f = T.flatten;
+    const s = sum.get(k), f = T.flatten * D;
     let ax = sp.n[i * 3] * (1 - f) + s[0] * f, ay = sp.n[i * 3 + 1] * (1 - f) + s[1] * f, az = sp.n[i * 3 + 2] * (1 - f) + s[2] * f;
     const al = Math.hypot(ax, ay, az) || 1; sp.n[i * 3] = ax / al; sp.n[i * 3 + 1] = ay / al; sp.n[i * 3 + 2] = az / al;
     let t = tone.get(k);
+    if (D < 1) { // cel: the tone by the pixel's own form, as far as the detail is low (big hard-edged shapes of light and shadow)
+      const lit = (sp.n[i * 3] * lf[0] + sp.n[i * 3 + 1] * lf[1] + sp.n[i * 3 + 2] * lf[2]) / ll, steps = T.tones >= 4 ? [.78, .38, .02] : [.72, .2];
+      const tp = lit > steps[0] ? -1 : lit > steps[1] ? 0 : steps.length > 2 && lit > steps[2] ? 1 : steps.length > 2 ? 2 : 1;
+      if (texHash(i, k, seed) > D) t = tp;
+    }
     // seams: the cell's lower (feathers, scales) or trailing (plates, shell) edge, or a parting between strokes (fur, bristles)
     const below = y + 1 < h ? cell[i + w] : -1, ahead = x + 1 < w ? cell[i + 1] : -1, lower = below >= 0 && below !== k, trailing = ahead >= 0 && ahead !== k;
     const other = T.kind === "plates" ? trailing : T.kind === "shell" || T.kind === "bristles" ? lower || trailing : lower; // fur's partings, a feather's or scale's lower edge, a plate's seam
