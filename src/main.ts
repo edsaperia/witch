@@ -194,6 +194,7 @@ view.quick = params.get("quick") === "1";
 const sceneryAt = Number(params.get("scenery"));
 if (params.has("scenery") && sceneryAt > 0) view.sceneryFixed = sceneryAt;
 const input = new Input();
+input.aimFrom = (x, y) => view.aimAt(x, y);
 document.getElementById("next-wave")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.nextWave = true; });
 document.getElementById("pause-waves")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.pauseWaves = true; });
 setupTouch(document.body, input.touch);

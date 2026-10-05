@@ -48,6 +48,12 @@ export function setupTouch(root: HTMLElement, touch: TouchInput): void {
   button("#sigil", () => (touch.sigil = true));
   button("#spell", () => (touch.spell = true));
   button("#dash", () => (touch.dash = true));
+  // The 💌 fires while it's held, the way she's going.
+  const inv = root.querySelector<HTMLElement>("#invite");
+  if (inv) {
+    inv.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); touch.invite = true; inv.classList.add("down"); });
+    for (const ev of ["pointerup", "pointerleave", "pointercancel"]) inv.addEventListener(ev, () => { touch.invite = false; inv.classList.remove("down"); });
+  }
   // Talk is held: on while the finger is down.
 
   window.addEventListener("touchstart", e => { show(); if (e.touches.length === 3) touch.debug = true; }, { passive: true });

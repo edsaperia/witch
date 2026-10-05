@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { attackOf, COMBAT, maxHp } from "./combat";
 import { LEGEND, type Creature, type Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
-import { TUNING, type Tuning } from "./tuning";
+import { TUNING, withTuning, type Tuning } from "./tuning";
 import { AREA_TYPES } from "./map";
 import { canEat, feed } from "./berries";
 import { invitable } from "./leash";
@@ -11,6 +11,9 @@ import { hurt, knockOut, newHealth, repair } from "./knockout";
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const run = (g: Game, secs: number, c = idle) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, c, STEP); };
 /** A game with the witch off her seat, on the ground, somewhere quiet (no creature within 60 m). */
+/** The proximity chat, as before the 💌s (invites.on false). */
+const CHAT = withTuning({ invites: { ...TUNING.invites, on: false } });
+
 function quiet(t: Tuning = TUNING): Game {
   const g = newGame(77, t);
   g.clock.paused = false;
@@ -366,7 +369,7 @@ describe("Ed's playtest (2026-10-04)", () => {
   }, 60000);
 
   it("holds the fire of the one she's chatting with (its friends still shoot)", () => {
-    const g = quiet(), w = g.witch;
+    const g = quiet(CHAT), w = g.witch;
     const owl = place(g, 0, "owl", 2, w.x + 6, w.z);
     run(g, 6);
     expect(g.leash.talk?.id).toBe(owl.id);
@@ -419,7 +422,7 @@ describe("Ed's playtest (2026-10-04)", () => {
 
 describe("the invitee truce (Ed, 2026-10-04)", () => {
   it("has her party leave the creature she's inviting alone, and go for it once the chat's off", () => {
-    const g = quiet(), w = g.witch;
+    const g = quiet(CHAT), w = g.witch;
     // (a beetle: it walks straight in; a fox flanks round her wolf)
     const fox = place(g, 0, "beetle", 2, w.x + 3, w.z), wolf = place(g, 0, "wolf", 2, w.x - 1, w.z, true);
     g.witches[0].health.hp = 1e6;

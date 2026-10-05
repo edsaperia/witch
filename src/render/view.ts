@@ -25,6 +25,8 @@ import { applyStyleLight, LIGHT_UNIFORMS, MAX_LIGHTS } from "./lighting";
 import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
+import { InviteView } from "./invites";
+import { dances, ENRAGED_TINT, lookOf, StateMarks } from "./looks";
 import { ActionBar } from "./actionbar";
 import { BuffHud } from "./buffhud";
 import { Dancefloor } from "./dancefloor";
@@ -139,6 +141,10 @@ export class View {
   private ley: LeyLines;
   /** The party witches on the dancefloor, and our witch when she idles into the party. */
   private partyWitchView: PartyWitchView;
+  /** The 💌s, their bubbles and meters (render/invites.ts). */
+  private inviteView: InviteView;
+  /** Angry brows and daze stars over the creatures (render/looks.ts). */
+  private stateMarks: StateMarks;
   /** The smoke test sets this to draw trunks flat magenta for a frame, to count them on screen. */
   debugTrunks = false;
   /** The party objects strewn over partified areas (#38). */
@@ -267,6 +273,8 @@ export class View {
     this.scene.add(...this.ley.meshes);
     this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
     this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
+    this.inviteView = new InviteView(game);
+    this.stateMarks = new StateMarks(this.scene, this.mpp);
     this.borders = new BorderView(this.scene, game);
     this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp, { solid: true });
     this.scene.add(...this.soundBatch.meshes);
@@ -894,7 +902,8 @@ export class View {
       if (c.gone || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
       if (c.burrow) continue; // under the ground (Stage 5: the mole), a mound shows where (leash view)
       // Invited creatures are party animals: their party gear once it's drawn (the wild look till then).
-      const party = c.leashed ? this.assets.partyArt(c.species, c.id, sigilColour(c.species)) : undefined;
+      // Happy ones (issue #87) in party clothes without the collar; legends never dressed up (render/looks.ts).
+      const look = lookOf(c), party = look === "leashed" && !c.boss ? this.assets.partyArt(c.species, c.id, sigilColour(c.species)) : look === "happy" ? this.assets.happyArt(c.species, c.id) : undefined;
       // Enraged by a wave (besieging, marching on): angry red eyes, and it can't be invited (Ed's playtest).
       const woken = !party && c.enraged ? this.assets.wokenArt(c.species) : undefined;
       // A sleeping area legend (Ed, 2026-10-04: "ancient creatures, half sunken into the ground,
@@ -902,7 +911,7 @@ export class View {
       // with no find-in-the-dark look. Waking, it heaves up out of the ground.
       const W = g.tuning.wildLegends, st = c.boss && !c.leashed ? c.legendState : undefined;
       const sleeping = st === "asleep" || st === "slept", rising = st === "waking" || (st === "happy" && (c.stateAt ?? 0) > 0) ? Math.min(1, (time - (c.stateAt ?? 0)) / Math.max(0.1, W.wake * 0.5)) : 1; // (made happy, it stirs and rises contentedly)
-      const art = party ?? woken ?? this.assets.creatureArt(c.species), key = party ? `party-${c.id}` : sleeping ? `sleep-${c.species}` : woken ? `woken-${c.species}` : c.species;
+      const art = party ?? woken ?? this.assets.creatureArt(c.species), key = party ? `${look === "happy" ? "happy" : "party"}-${c.id}` : sleeping ? `sleep-${c.species}` : woken ? `woken-${c.species}` : c.species;
       if (!art) continue;
       arts.set(key, art);
       const frame = art.atlas.frames[art.frame(c.level, c.moving ? Math.floor(c.walk) % 2 : 0, c.away)];
@@ -916,7 +925,7 @@ export class View {
       // Party animals never stand still: a bounce and a sway on the beat when idle, a little
       // bounce as they go. (Wild ones roam, graze and pause.)
       const ph = (bt / beat + (c.id % 4) * 0.25) * Math.PI;
-      const dance = c.leashed ? Math.abs(Math.sin(ph)) * (c.moving ? 0.15 : 0.4) : 0, sway = c.leashed && !c.moving ? Math.sin(ph * 0.5) * 0.12 : 0;
+      const party2 = dances(g, c), dance = party2 ? Math.abs(Math.sin(ph)) * (c.moving ? 0.15 : 0.4) : 0, sway = party2 && !c.moving ? Math.sin(ph * 0.5) * 0.12 : 0;
       // Evolving: glowing white, pulsing on the beat, brighter toward the bar line; then the flash
       // as it becomes its next level, and a pop from 1.3 times its size back to its own.
       const ev = g.berries.evolving.get(c.id), done = this.evolvedAt.get(c.id);
@@ -948,7 +957,7 @@ export class View {
     this.rig?.end();
     for (const [s, b] of this.creatureBatches) if (!per.has(s)) b.set([]);
     for (const [s, list] of per) {
-      const b = this.batchFor(this.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, this.mpp, { solid: true, find: !s.startsWith("party-") && !s.startsWith("woken-") && !s.startsWith("sleep-") }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
+      const b = this.batchFor(this.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, this.mpp, { solid: true, find: !s.startsWith("party-") && !s.startsWith("happy-") && !s.startsWith("woken-") && !s.startsWith("sleep-"), tint: s.startsWith("woken-") ? ENRAGED_TINT : undefined }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
       b?.set(list);
     }
     this.stats.creatures = n;
@@ -1128,6 +1137,16 @@ export class View {
   /** Whether the hills' next strip was all worked out last frame. */
   private heightsReady = true;
   private time(part: string): void { const now = performance.now(); this.ms[part] = (this.ms[part] ?? 0) + now - this.lap; this.lap = now; }
+
+  /** The 💌's aim (issue #87): the world direction from the witch to the ground under a point on the page. */
+  aimAt(clientX: number, clientY: number): { x: number; z: number } | null {
+    const r = this.canvas.getBoundingClientRect(), w = this.game.witch;
+    if (!r.width || !r.height) return null;
+    this.aimRay.setFromCamera(new THREE.Vector2(((clientX - r.left) / r.width) * 2 - 1, 1 - ((clientY - r.top) / r.height) * 2), this.camera);
+    const at = this.aimRay.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), -(groundHeight(w.x, w.z) + 1)), this.v3);
+    return at ? { x: at.x - w.x, z: at.z - w.z } : null;
+  }
+  private aimRay = new THREE.Raycaster();
 
   render(time: number, draw = true): void {
     this.ms = {}; this.lap = this.frameStart = performance.now();
@@ -1355,6 +1374,8 @@ export class View {
     const wframe = this.assets.witch.frames[wf], hatTop = wyy + wframe.h * this.mpp;
     this.partyWitchView.update(g, time, (x, z, ww, hh) => this.inView(x, z, ww, hh, 4));
     this.partyWitchView.bubbles(g, time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
+    this.stateMarks.update(g, time, this.leashView.tops);
+    this.inviteView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, this.leashView.tops);
     // Idling into the party, she's drawn in her party pose there instead.
     this.witchBatch.set(this.partyWitchView.herIdle || hidden ? [] : [{ x: wx, y: wyy + groundHeight(wx, wz), z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
     // Where she is on screen (low-res pixels) and how far from the camera, for the occluder fade.
