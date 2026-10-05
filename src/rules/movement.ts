@@ -7,13 +7,18 @@ import raw from "../../config/movement.json";
 import type { Creature } from "./creatures";
 import { hash2 } from "./random";
 
-export type BehaviourKind = "arrive" | "keepRange" | "orbit" | "strafe" | "slot" | "separation" | "cohesion" | "wander" | "dodge";
+export type BehaviourKind = "arrive" | "keepRange" | "orbit" | "strafe" | "slot" | "separation" | "cohesion" | "wander" | "dodge" | "light";
 export interface Behaviour { kind: BehaviourKind; w: number; near?: number; far?: number; radius?: number; swap?: number }
-export type TacticKind = "surround" | "pincer" | "hitAndRun" | "volley" | "swarm" | "none";
-export interface Move { kind: "charge" | "ambush" | "burrow" | "leap"; cooldown: number; /** A charge: seconds it lowers its head first (its lane telegraphed); how fast it builds speed and brakes (m/s each second), how fast it turns braking (degrees a second), and how far it runs on past its target before braking (m). */ windup?: number; accel?: number; brake?: number; turn?: number; overshoot?: number; from?: number; to?: number; speed?: number; time?: number; trigger?: number; height?: number }
+export type TacticKind = "surround" | "pincer" | "hitAndRun" | "volley" | "swarm" | "flank" | "none";
+export interface Move { kind: "charge" | "ambush" | "burrow" | "leap" | "dig" | "block" | "trail" | "flash"; cooldown: number;
+  /** A charge: backs off at this speed (m/s) while it lowers its head (the ram's run-up); its pack mates charge with it (the stags' pair); curled up while it rolls, taking this times the damage (the hedgehog's, the woodlouse's). */ backup?: number; pair?: boolean; curl?: number;
+  /** A leap that lands a blow on its target (the lynx's pounce), not a slam round it; an ambush that strikes the moment it springs (the snake's). */ strike?: boolean;
+  /** Dig in, block, trail, flash: seconds it lasts (time), the damage it takes meanwhile times armour, a slow's speed times slow, a trail's drop every seconds, a radius. */ armour?: number; slow?: number; every?: number; radius?: number; /** A charge: seconds it lowers its head first (its lane telegraphed); how fast it builds speed and brakes (m/s each second), how fast it turns braking (degrees a second), and how far it runs on past its target before braking (m). */ windup?: number; accel?: number; brake?: number; turn?: number; overshoot?: number; from?: number; to?: number; speed?: number; time?: number; trigger?: number; height?: number }
 export interface Profile {
   /** Its speed in a fight (m/s, times tuning fight.speed; the usual is combat.fightRun). */
   speed?: number;
+  /** Its sprint closing in from afar (m/s; else combat.pursuitRun): slow kinds (a snail) don't sprint. */
+  pursuit?: number;
   /** How quickly it changes velocity (m/s per second): heavy creatures turn slowly. */
   accel: number;
   fight: Behaviour[];
@@ -80,6 +85,10 @@ export interface SteerContext {
   /** Shots and lobs in flight (for dodging). */
   threats: { x: number; z: number; vx: number; vz: number; side: string; radius?: number; lob?: { tx: number; tz: number } }[];
   side: string;
+  /** Which way the target is heading (a unit vector), or none if it's standing still (flanking goes round to its back). */
+  heading?: { x: number; z: number } | null;
+  /** Lights near it (glow-worms, soundsystems): moths are drawn to them. */
+  lights?: { x: number; z: number }[];
   /** Its attack is ready (hit and run goes in only then). */
   ready: boolean;
   /** Seconds a beat lasts (the volley fires on it). */
@@ -113,6 +122,16 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
       may = may && beatPhase < 0.2;
       break;
     }
+    case "flank": {
+      // Round to its back (Ed's species pass: the fox, the marten pack): slots behind the way it's
+      // heading, fanned a little apart; standing still, a ring round it (as surround).
+      const h = x.heading, R = Math.max(x.want * 0.9, 1);
+      const a = h ? Math.atan2(-h.z, -h.x) + (i - (n - 1) / 2) * 0.7 : base + (i / n) * Math.PI * 2;
+      slot = { x: x.px + Math.cos(a) * R, z: x.pz + Math.sin(a) * R };
+      // (it strikes only from behind her: within 70 degrees of her back)
+      if (h && may) { const bx = c.x - x.px, bz = c.z - x.pz, bd = Math.hypot(bx, bz) || 1; may = (bx * -h.x + bz * -h.z) / bd > 0.35 || d < x.want * 0.6; }
+      break;
+    }
     default: break;
   }
   for (const b of P.fight) {
@@ -133,6 +152,13 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
       case "separation": { const R = (b.radius ?? 7) * S; for (const o of x.neighbours) { if (o === c) continue; const ox = c.x - o.x, oz = c.z - o.z, od = Math.hypot(ox, oz); if (od < R && od > 1e-4) add(ox / od, oz / od, b.w * (1 - od / R)); } break; }
       case "cohesion": { if (pack && n > 1) { const cx = pack.cx - c.x, cz = pack.cz - c.z, cd = Math.hypot(cx, cz); if (cd > (b.radius ?? 14) * S) add(cx / cd, cz / cd, b.w); } break; }
       case "wander": { const a = hash2(c.id, Math.floor(x.time * 2), 13) * Math.PI * 2; add(Math.cos(a), Math.sin(a), b.w); break; }
+      case "light": {
+        // Drawn to the nearest light (a moth): toward it, fluttering round it once there.
+        let best: { x: number; z: number } | null = null, bd = (b.radius ?? 30) * S;
+        for (const l of x.lights ?? []) { const ld = Math.hypot(l.x - c.x, l.z - c.z); if (ld < bd) { bd = ld; best = l; } }
+        if (best) { const lx = best.x - c.x, lz = best.z - c.z, ld = Math.max(bd, 1e-3); if (ld > 3 * S) add(lx / ld, lz / ld, b.w); else add(-lz / ld, lx / ld, b.w); }
+        break;
+      }
       case "dodge": {
         // Step sideways out of a shot coming its way (not its own side's).
         const R = (b.radius ?? 20) * S;
@@ -182,8 +208,15 @@ export function stepCharge(c: Creature, mv: Move, px: number, pz: number, reach:
   if (ch) {
     let vx = c.vx ?? 0, vz = c.vz ?? 0, v = Math.hypot(vx, vz);
     if (ch.from !== undefined && time < ch.from) {
-      // Lowering its head: easing to a stop, facing down its lane.
-      const nv = Math.max(0, v - brake * dt); if (v > 1e-6) { vx *= nv / v; vz *= nv / v; } v = nv;
+      if (mv.backup) {
+        // Backing off for a run at it (the ram): easing back up its lane, facing down it.
+        const bx = -ch.dx * mv.backup * V - vx, bz = -ch.dz * mv.backup * V - vz, bm = Math.hypot(bx, bz), k = bm > brake * dt ? (brake * dt) / bm : 1;
+        vx += bx * k; vz += bz * k; v = Math.hypot(vx, vz);
+        c.walk += dt * (2 + v);
+      } else {
+        // Lowering its head: easing to a stop, facing down its lane.
+        const nv = Math.max(0, v - brake * dt); if (v > 1e-6) { vx *= nv / v; vz *= nv / v; } v = nv;
+      }
       c.vx = vx; c.vz = vz; c.x += vx * dt; c.z += vz * dt; c.moving = v > 0.3; c.facing = ch.dx >= 0 ? 1 : -1;
       return "charging";
     }
@@ -209,13 +242,15 @@ export function stepCharge(c: Creature, mv: Move, px: number, pz: number, reach:
     return "charging";
   }
   const d = Math.hypot(px - c.x, pz - c.z);
-  if (time >= (c.moveReadyAt ?? 0) && d >= (mv.from ?? 10) * FIGHT.scale && d <= (mv.to ?? 40) * FIGHT.scale) {
-    const s = (mv.speed ?? 28) * V, wind = mv.windup ?? 0.5;
-    c.charge = { dx: (px - c.x) / d, dz: (pz - c.z) / d, speed: s, from: time + wind, until: time + wind + (mv.time ?? 1.6) };
-    c.moveReadyAt = time + mv.cooldown;
-    return "charging";
-  }
+  if (time >= (c.moveReadyAt ?? 0) && d >= (mv.from ?? 10) * FIGHT.scale && d <= (mv.to ?? 40) * FIGHT.scale) { startCharge(c, mv, px, pz, time); return "charging"; }
   return "none";
+}
+
+/** Start a charge at (px, pz) now: its head goes down (its lane locked), then it runs. */
+export function startCharge(c: Creature, mv: Move, px: number, pz: number, time: number): void {
+  const d = Math.hypot(px - c.x, pz - c.z) || 1e-6, s = (mv.speed ?? 28) * FIGHT.speed, wind = mv.windup ?? 0.5;
+  c.charge = { dx: (px - c.x) / d, dz: (pz - c.z) / d, speed: s, from: time + wind, until: time + wind + (mv.time ?? 1.6), ...(mv.curl ? { curl: mv.curl } : {}) };
+  c.moveReadyAt = time + mv.cooldown;
 }
 
 /** The burrow (Stage 5: the mole): from `from` metres off it goes under (untouchable: a mound

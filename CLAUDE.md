@@ -16,7 +16,12 @@ Pages must be switched on once in the repository's settings (Source: *Deploy fro
 
 ## What's new
 
-The start screen shows a **What's new** panel: the last three entries of `config/changelog.json`, newest first. Every push that changes something Ed can see adds its bullets to the top entry, in plain player-facing words ("Trees no longer pop in and out"), not commit-speak. The top entry's `version` is `null` until its build has a number (it shows as the build being played); on the next push, write in that number from the playable-link comment and start a new `null` entry above it.
+The start screen shows a **What's new** panel: the last three entries of the changelog, newest first. The changelog is **one small file per change** in `config/changelog/` (Ed, 2026-10-05: so builders working in parallel don't conflict), collected at build time by `src/changelog.ts`:
+
+- Every push that changes something Ed can see **adds a new fragment file**, `config/changelog/<yyyy-mm-dd>-<slug>.json` (e.g. `2026-10-05-bigger-areas.json`), holding `{ "version": null, "items": ["…"] }`: its bullets in plain player-facing words ("Trees no longer pop in and out"), not commit-speak. Several pushes of one piece of work may add to that same fragment.
+- Once its build has a number (the playable-link comment), **write that number into your own fragment's `version`** on your next push. Never edit anyone else's fragment.
+- `config/changelog/archive.json` holds everything up to round 9 and is frozen: never edit it. There is no shared list to edit.
+- Fragments with the same version make one entry (the newest file's items first); the current build's (`version: null`) shows as the build being played. `src/changelog.test.ts` checks every file's shape.
 
 ## Testing
 
