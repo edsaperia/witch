@@ -19,9 +19,10 @@ import { groundHeight } from "./render/height";
 import { SPRITE_UNIFORMS } from "./render/sprites";
 import { loadStyle } from "./render/style";
 import { setupTouch } from "./ui/touch";
-import changelog from "../config/changelog.json";
+import { CHANGELOG } from "./changelog";
 import { PlaytestLog } from "./platform/playtestLog";
 import { powerReport } from "./rules/power";
+import { Freeze } from "./platform/freeze";
 
 const params = new URLSearchParams(location.search);
 let seed = parseSeed(params.get("seed"));
@@ -241,11 +242,11 @@ const setAutoTalk = (on: boolean) => {
 
 declare const __BUILD__: string;
 document.getElementById("version")!.textContent = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
-// What's new, on the start screen: the last three versions, newest first (config/changelog.json).
+// What's new, on the start screen: the last three versions, newest first (config/changelog/, collected by changelog.ts).
 const newsEl = document.getElementById("news")!;
 const buildName = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev";
 const esc = (s: string) => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!);
-newsEl.innerHTML = "<b>What's new</b>" + changelog.entries.filter(e => e.items.length).slice(0, 3).map(e =>
+newsEl.innerHTML = "<b>What's new</b>" + CHANGELOG.filter(e => e.items.length).slice(0, 3).map(e =>
   `<div>${e.version === null ? `${buildName} (this version)` : "v" + e.version}</div><ul>${e.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>`).join("");
 const seedEl = document.getElementById("seed")!;
 seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;
@@ -298,11 +299,14 @@ volumeRange.addEventListener("input", () => {
 for (const ev of ["pointerdown", "keydown"]) volumeRange.addEventListener(ev, e => e.stopPropagation()); // its own presses and arrow keys don't fly her
 volumeEl.append(volumeIcon, volumeRange); showVolume();
 document.body.append(volumeEl);
+// The freeze (Esc, gamepad Start, the ❚❚ button): a true still for screenshots, . steps (platform/freeze.ts).
+const freeze = new Freeze(game, seed!, typeof __BUILD__ === "string" ? __BUILD__ : "dev");
+freeze.started = () => startEl.style.display === "none";
 
 // Browsers keep sound off until the player presses something: the start screen is that press.
 let audio: AudioContext | null = null, music: Music | null = null;
 function start(): boolean {
-  if (!ready || !game.clock.paused) return false;
+  if (!ready || !game.clock.paused || freeze.frozen) return false;
   try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume * level, musicStyle, seed!, tuning.music.src); } catch { /* no sound yet anyway */ }
   game.clock.paused = false;
   startEl.style.display = "none";
@@ -310,6 +314,7 @@ function start(): boolean {
   return true;
 }
 input.onAny = start;
+freeze.onToggle = on => { try { void (on ? audio?.suspend() : audio?.resume()); } catch { /* no sound */ } };
 startEl.addEventListener("pointerdown", e => { e.preventDefault(); start(); });
 // The wave selector on the start screen: picking one doesn't start the game.
 const wavesEl = document.getElementById("waves")!;
@@ -340,6 +345,7 @@ function frame(now: number): void {
   last = now;
   frames++; fpsT += dt;
   if (fpsT >= 0.5) { fps = frames / fpsT; frames = 0; fpsT = 0; }
+  freeze.pollPad();
   const c = input.read();
   if (c.toggleAutoTalk) setAutoTalk(!autoTalk);
   c.autoTalk = autoTalk;
@@ -367,10 +373,11 @@ function frame(now: number): void {
   waveEl.classList.toggle("paused", game.party.paused);
   // Behind the start screen, a frame every 0.3 s is plenty: the CPU goes to drawing the forest's
   // art in the background instead (and so slow a frame doesn't count against the scenery budget).
-  if (game.clock.paused && now - lastDraw < 300) return;
+  if (game.clock.paused && !freeze.frozen && now - lastDraw < 300) return;
   lastDraw = now;
   // Drawn between the last two fixed steps (game time: party transitions, sigils and waves are stamped in it).
   interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP)));
+  freeze.update();
   if (debugOn) {
     const w = game.witch, s = view.stats;
     debugEl.textContent = [
