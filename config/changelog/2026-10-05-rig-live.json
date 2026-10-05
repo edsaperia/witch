@@ -1,5 +1,5 @@
 {
-  "version": null,
+  "version": 616,
   "items": [
     "Creatures on the ground now move with live animation: legs stepping on the ground, bodies leaning into turns and charges, crouching before a leap (add ?rig=0 to the address to see the old frames)",
     "Legends always animate, even seen from the treetops",
