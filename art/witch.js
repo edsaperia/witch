@@ -137,8 +137,9 @@ const NEW_HATS = {
     const rib = p => Math.floor((Math.atan2(p[2] - brim[2], p[0] - brim[0]) + 4) * 4) % 2 ? M.HAT2 : undefined; // woven ribs
     m.ell(hatAt(brim, up, h * .25), [.21 * bk, h * .3, .2 * bk], M.HAT, { dir: [1, 0, 0], up, group: 11, paint: rib }); // a wide, shallow cone: a flat disc
     m.seg(hatAt(brim, up, h * .3), hatAt(brim, up, h), .1 * Math.min(1.3, bk), .012, M.HAT, { group: 11, paint: rib }); // rising to its point
-    m.ell(hatAt(brim, up, h + .01), [.016, .016, .016], M.MAGIC, { group: 11 });
-    return hatAt(brim, up, h + .025);
+    const br = .016 * Math.sqrt(Math.max(1, L.hatHeight ?? 1, bk)); // (a bigger bead on a bigger hat, so it still shows)
+    m.ell(hatAt(brim, up, h + .01), [br, br, br], M.MAGIC, { group: 11 });
+    return hatAt(brim, up, h + .01 + br * .95);
   },
   boppers(m, L, brim, dir, up) { // deely boppers: a headband, two springs, two glowing balls
     const h = .17 * (L.hatHeight ?? 1);
