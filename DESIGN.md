@@ -226,7 +226,42 @@ Each delivery has a factor so its expected damage a second (allowing for misses 
 | toad | leaps in arcs, landing near its target | none | slam on landing: a small pulse (ring where it lands) | — |
 | beetle | plods straight in, slow to turn | none | melee shove with knockback | armoured |
 
-The other species keep today's straight approach until they get a profile. Babies never fight. Party animals use the same profiles against wild ones, inside their leash. Everything is deterministic (seeded, fixed steps).
+**All 30 species (Ed's species pass, 2026-10-05: "Yes, give all 19 a profile").** Every species now has a profile, the other 19 with new signature moves where they called for one (a ram's run-up, the stags' paired charge, a badger digging in, a beaver's block, a lynx's pounce, a fox's flank, a snake's strike, a moth's pull to light, rolling hedgehogs and woodlice, a snail's slime, a glow-worm's flash). Speeds are a fight's (times tuning `fight.speed`); every one closes from afar at its sprint (`combat.pursuitRun`, 20 m/s, unless it has its own). Each new move has a debug arena preset (`?arena=` swipe, wide, pair, ram, dig, block, flank, pounce, weave, packflank, otter, squirrel, dart, roll, slime, woodlouse, strike, moth, flash).
+
+| Species | Speed (m/s) | Accel (m/s²) | Behaviours | Pack tactic | Signature move | Trait |
+|---|---|---|---|---|---|---|
+| wolf | 17 | 70 | arrive, slot, separation, cohesion | surround, pincer | — | — |
+| boar | 14 | 25 | arrive, separation | — | charge (lowers its head 0.5 s, builds to 30 m/s, overshoots, brakes in an arc) | heavy |
+| hare | 20 | 150 | arrive, slot, strafe, dodge, separation | hit and run | — | nimble |
+| raven | 19 | 80 | keep range, strafe, slot, separation | volley line, (alone) | — | flier |
+| bat | 19 | 110 | orbit, wander, separation, dodge | swarm | — | flier, swarm |
+| owl | 16 | 40 | orbit, keep range, slot, separation | volley line, (alone) | — | flier |
+| salamander | 12 | 30 | keep range, separation | — | — | — |
+| spider | 15 | 90 | keep range, strafe, separation | — | ambush: still till she's within 20 m, then a burst | — |
+| mole | 13 | 50 | arrive, separation | — | burrow: under from 10 m, surfacing under her | burrower |
+| toad | 12 | 40 | keep range, separation | — | leap: an arc 6 m high, slamming down round it | — |
+| beetle | 12 | 15 | arrive, separation | — | — | armoured |
+| bear (new) | 13 | 20 | arrive, separation | — | heavy swipe: a wide, hard blow with a short lunge (5 to 6 m) | heavy |
+| elk (new) | 15 | 18 | arrive, separation | — | charge, heavy: slow to build, a wide braking arc (60°/s), runs on 16 m | heavy |
+| stag (new) | 16 | 30 | arrive, slot, separation | pincer | charge in a pair: its pack mate sets off with it | heavy |
+| ram (new) | 14 | 35 | arrive, separation | — | backs off 7 m/s while it lowers its head, then rams (fast to build) | — |
+| badger (new) | 12 | 40 | arrive, separation | — | digs in when she's within 6 m: rooted 3 s, half damage, no knockback, bites without a lunge | — |
+| beaver (new) | 12 | 40 | arrive, separation | — | braces behind its tail when a shot comes at it or its target winds up: rooted 1 s, shots ×0.15, blows ×0.5; then slaps back at once | — |
+| fox (new) | 18 | 90 | arrive, slot, strafe, separation | flank, surround | — | — |
+| lynx (new) | 16 | 70 | arrive, strafe, separation | — | pounce: a low, quick leap (2 m high, 0.45 s), landing its blow on her | — |
+| stoat (new) | 19 | 160 | arrive, slot, strafe, dodge, separation | hit and run | — | nimble |
+| marten (new) | 17 | 100 | arrive, slot, separation, cohesion | flank, pincer | — | — |
+| otter (new) | 17 | 130 | arrive, strafe, dodge, separation | — | — | nimble |
+| squirrel (new) | 18 | 170 | arrive, slot, dodge, separation | hit and run | — | nimble |
+| dormouse (new) | 13 | 180 | arrive, slot, wander, strafe, dodge, separation | hit and run | — | nimble |
+| hedgehog (new) | 10 (sprint 14) | 30 | arrive, separation | — | rolls curled up (charge): spikes whirling, taking ×0.3 | armoured |
+| snail (new) | 6 (sprint 8) | 10 | arrive, separation | — | slime trail: a patch every 0.4 s, drying after 7 s, slowing her to half | armoured |
+| woodlouse (new) | 9 (sprint 12) | 25 | keep range, separation | — | rolls curled up (charge), taking ×0.3 | armoured |
+| snake (new) | 14 | 80 | keep range, strafe, separation | — | ambush strike: still till she's within 16 m, then springs and strikes at once | — |
+| moth (new) | 15 | 90 | orbit, wander, light, dodge, separation | swarm | drawn to light: glow-worms and soundsystems within 40 m | flier, swarm |
+| glowworm (new) | 9 (sprint 10) | 30 | keep range, separation | — | flash: within 9 m, a burst of light slowing the other side 1.5 s (her to 0.6) | — |
+
+New pieces for them: a **flank** tactic (slots at the target's back, the way it's heading, striking only from behind); a **light** behaviour (drawn to the nearest glow-worm or soundsystem); the charge's **backup**, **pair** and **curl**; the leap's **strike** (a pounce lands a blow on its target, not a slam round it); the ambush's **strike**; and four new moves, **dig**, **block**, **trail** and **flash**. Slime and the flash slow the witch too (her speed times the move's `slow`, a moment). The bear gets its own attacks (`swipe`, `bigswipe`); otters, squirrels and dormice join the nimble. Babies never fight. Party animals use the same profiles against wild ones, inside their leash. Everything is deterministic (seeded, fixed steps).
 
 **Traits and counters** (data: `combat.json` `traits` and `counters`). The raw numbers stay on the **equal power budget** for the level (same health, same damage a second). The difference is in behaviour and in a few multipliers anyone can read:
 - **Flier**: melee hits it for half (it flits up out of reach). Ranged attackers beat fliers' melee enemies; fliers beat melee.

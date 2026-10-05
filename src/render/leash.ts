@@ -33,6 +33,7 @@ const TRAIT_MARKS: Record<Trait, { r: number; g: number; b: number; size: number
 import { blocked, leashPoint, talkTime, talkTurn } from "../rules/leash";
 import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
+import { FIGHT, profileOf } from "../rules/movement";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
@@ -376,6 +377,10 @@ export class LeashView {
       if (e.kind === "slept" && close(e.x, e.z, 150)) for (let i = 0; i < 3; i++) this.fx.push({ kind: "puff", x: e.x + (i - 1) * 1.2, y: 0.4, z: e.z, at: time, life: 1.4, r: 0.5, g: 0.4, b: 0.28, seed: e.at * 7 + i });
       if ((e.kind === "burrowed" || e.kind === "surfaced" || e.kind === "slammed") && close(e.x, e.z)) this.fx.push({ kind: "puff", x: e.x, y: 0.3, z: e.z, at: time, life: 0.6, r: 0.55, g: 0.42, b: 0.3, seed: e.at * 41 + (e.id ?? 0) });
       if (e.kind === "sprung" && close(e.x, e.z)) this.fx.push({ kind: "spark", x: e.x, y: 0.8, z: e.z, at: time, life: 0.4, r: 1, g: 0.3, b: 0.3, seed: e.at * 23, size: 1.4 });
+      // Ed's species pass: a glow-worm's flash (a burst of its light), a block (a white glint), digging in (earth thrown up).
+      if (e.kind === "flash" && c && close(e.x, e.z)) { const col = neon(c.species), R = (profileOf(c.species)?.move?.radius ?? 9) * FIGHT.scale; this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.6, r: col.r, g: col.g, b: col.b, seed: 0, size: R }); this.fx.push({ kind: "spark", x: e.x, y: 0.8, z: e.z, at: time, life: 0.5, r: col.r * 0.5 + 0.5, g: col.g * 0.5 + 0.5, b: col.b * 0.5 + 0.5, seed: e.at * 37, size: 3 }); }
+      if (e.kind === "blocked" && close(e.x, e.z)) this.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 0.3, r: 0.85, g: 0.95, b: 1, seed: e.at * 43, size: 1.1 });
+      if (e.kind === "dug" && close(e.x, e.z)) this.fx.push({ kind: "puff", x: e.x, y: 0.3, z: e.z, at: time, life: 0.8, r: 0.5, g: 0.38, b: 0.26, seed: e.at * 47 });
       if (e.kind === "charged" && close(e.x, e.z)) this.fx.push({ kind: "puff", x: e.x, y: 0.4, z: e.z, at: time, life: 0.7, r: 0.8, g: 0.7, b: 0.55, seed: e.at * 29 });
       if (e.kind === "soundHit" && close(e.x, e.z, 150) && (e.at * 10) % 3 < 1) this.fx.push({ kind: "spark", x: e.x, y: 2.5, z: e.z, at: time, life: 0.3, r: 1, g: 0.6, b: 0.3, seed: e.at * 3 });
       if (e.kind === "soundDestroyed") this.fx.push({ kind: "spark", x: e.x, y: 3, z: e.z, at: time, life: 2, r: 1, g: 0.4, b: 0.6, seed: e.at, size: 6 });
@@ -440,8 +445,20 @@ export class LeashView {
         this.standing.add(c.x + ex * s2, 0.7, c.z + ez * s2, 0.3, dot, 1, 1, 1, 0.8 * fl);
       }
     }
+    // A snail's slime: glistening patches on the ground, fading as they dry.
+    for (const tr of g.combat.trails) {
+      if (!close(tr.x, tr.z)) continue;
+      const left = Math.min(1, (tr.until - time) / 2), wild = tr.side === "wild";
+      for (let i = 0; i < 7; i++) { const a = hash2(tr.from, Math.round(tr.until * 10) + i, 31) * Math.PI * 2, q = hash2(tr.from, Math.round(tr.until * 10) + i, 37) * tr.r * 0.7; this.flat.add(tr.x + Math.cos(a) * q, 0, tr.z + Math.sin(a) * q * 0.8, tr.r * 0.55, dot, wild ? 0.55 : 0.5, wild ? 0.7 : 0.85, wild ? 0.5 : 0.75, 0.22 * left); }
+    }
     for (const c of g.creatures) {
       if (c.gone || !close(c.x, c.z)) continue;
+      // Dug in (the badger): a ring of thrown-up earth round its feet.
+      if (c.dug !== undefined && time < c.dug) for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 0.9, 0.12 + hash2(c.id, i, 41) * 0.1, c.z + Math.sin(a) * 0.6, 0.35, dot, 0.45, 0.33, 0.22, 0.9); }
+      // Braced (the beaver): its tail up as a shield, an arc on the side it faces.
+      if (c.brace !== undefined && time < c.brace) for (let i = -3; i <= 3; i++) { const a = (c.facing > 0 ? 0 : Math.PI) + i * 0.3; this.standing.add(c.x + Math.cos(a) * 1.1, 0.5 + Math.abs(i) * -0.05 + 0.3, c.z + Math.sin(a) * 0.8, 0.3, dot, 0.8, 0.92, 1, 0.75); }
+      // Rolling curled up (a hedgehog, a woodlouse): spikes whirling round it.
+      if (c.charge?.curl && (c.charge.from === undefined || time >= c.charge.from)) for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2 + time * 14; this.standing.add(c.x + Math.cos(a) * 0.7, 0.5 + Math.sin(a) * 0.4, c.z + 0.05, 0.22, dot, 0.85, 0.8, 0.7, 0.85); }
       // Burrowed (the mole): a mound of earth moving over the ground, flecks thrown up.
       if (c.burrow) for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2, q = hash2(c.id, Math.floor(time * 12) + i, 19); this.standing.add(c.x + Math.cos(a) * 0.45, 0.1 + (i === 0 ? 0.25 : 0) + q * 0.12, c.z + Math.sin(a) * 0.3, 0.45, dot, 0.42, 0.3, 0.2, 0.9); }
       // Leaping (the toad): a ring tightening where it'll land.
