@@ -49,7 +49,7 @@ export interface StatesOptions {
   relicTime?: number;
   /** Seconds a legend stays restless (its area without its kind) before it turns angry (60). */
   restlessTime?: number;
-  /** A legend's reach (m): angry, at her posse and her; happy, at the enraged (1.2 areas: into the next areas). */
+  /** A legend's reach (m): angry, at her posse and her; happy, at the enraged (Ed, 2026-10-05: 2–3 areas; 420). */
   legendRange?: number;
   /** How many a legend's blast hits at once (3). */
   legendAoe?: number;
@@ -63,8 +63,13 @@ export interface StatesOptions {
   berriesPerArea?: number;
   /** A new soundsystem's health (the tuning's combat.soundsystemHealth). */
   soundHealth?: number;
-  /** A happy legend's health and damage, times (1). */
+  /** A happy legend's health, times its level's (1). Enraged animals in reach wear it down; beaten,
+   *  it goes back to sleep (Ed, 2026-10-05; she keeps its buff). */
   legendDefence?: number;
+  /** A legend's shot (happy or angry, Ed 2026-10-05: slow, far-reaching, less damage): legendShot
+   *  damage to up to legendAoe targets every legendEvery seconds. */
+  legendShot?: number;
+  legendEvery?: number;
   /** Creatures never attack their own kind, whatever their states (Ed, 2026-10-05): a happy defender
    *  leaves its own area's enraged kin be, so a fresh soundsystem falls to other species to defend
    *  (true; false lets kin fight, as before). */
@@ -136,7 +141,7 @@ export interface StatesResult {
   /** Legends: how many turned angry (and where: woken areas or wild), happy by a relic, relics used,
    *  her seconds inviting in an angry one's reach, and her army lost to their blasts. */
   trace?: StatesTrace[];
-  legends: { angry: number; angryAreas: { wave: number; key: string; woken: boolean }[]; happy: number; relicsUsed: number; hazardTime: number; armyLost: number };
+  legends: { angry: number; angryAreas: { wave: number; key: string; woken: boolean }[]; happy: number; relicsUsed: number; hazardTime: number; armyLost: number; /** Happy legends worn down, back to sleep. */ beaten: number };
 }
 
 type State = "wild" | "happy" | "leashed" | "enraged" | "dazed" | "gone";
@@ -155,7 +160,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
   const size = t.areaSize * t.areaScale, land = t.descendTime + t.riseTime, cross = (0.5 * size) / t.groundSpeed;
   const talk = t.invite.talkTime;
   const relicCount = o.relics ?? (hash2(map.seed, 7, 1313) < 0.5 ? 3 : 4), relicEvery = o.relicEvery ?? 4, relicTime = o.relicTime ?? 5;
-  const restlessTime = o.restlessTime ?? 60, LR = o.legendRange ?? 1.2 * size, AOE = o.legendAoe ?? 3, hazard = o.angryHazard ?? 2;
+  const restlessTime = o.restlessTime ?? 60, LR = o.legendRange ?? 420, SHOT = o.legendShot ?? 30, EVERY = o.legendEvery ?? 5, AOE = o.legendAoe ?? 3, hazard = o.angryHazard ?? 2;
 
   // Every creature: the map's own (legends asleep, home's happy), then what grows wave by wave.
   const units: Unit[] = [], byCell = new Map<string, Unit[]>();
@@ -169,7 +174,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
   for (const c of spawnCreatures(map)) {
     const u = make(c.id, c.species, cellKey(c.cell), c.x, c.z, c.level);
     u.speed = c.speed * C.marchMult; // (its own, as combat.ts marches it)
-    if (u.legend) { u.state = c.legendState === "happy" ? "happy" : "wild"; u.mood = "asleep"; if (u.state === "happy") { u.hp *= LD; u.dps *= LD; } }
+    if (u.legend) { u.state = c.legendState === "happy" ? "happy" : "wild"; u.mood = "asleep"; if (u.state === "happy") u.hp *= LD; }
     add(u);
   }
   let nextId = 1e6;
@@ -178,7 +183,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
   sounds.set("home", { key: "home", x: d.x, z: d.z, hp: C.homeHealth, radius: C.homeRadius, wave: 0, at: 0 });
   const soundOf = (key: string) => (key === homeKey ? sounds.get("home") : sounds.get(key));
   const ruined = new Set<string>(), worked = new Set<string>(), fed = new Set<string>();
-  const legends = units.filter(u => u.legend), legendStats = { angry: 0, angryAreas: [] as { wave: number; key: string; woken: boolean }[], happy: 0, relicsUsed: 0, hazardTime: 0, armyLost: 0 };
+  const legends = units.filter(u => u.legend), legendStats = { angry: 0, angryAreas: [] as { wave: number; key: string; woken: boolean }[], happy: 0, relicsUsed: 0, hazardTime: 0, armyLost: 0, beaten: 0 };
   let relicsFound = 0, relicsHeld = 0;
   const waves: StatesWave[] = [], local: LocalFight[] = [], targets = { own: 0, other: 0 }, damage = { own: 0, other: 0 }, invited = { happy: 0, leashed: 0 };
   const openLocal = new Map<string, LocalFight>(), deciding = new Set<LocalFight>();
@@ -353,7 +358,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
           if (leashIt(u)) leashQueue.push(u);
         }
       } else if (k.kind === "leash") { if (k.u.state === "happy") { k.u.state = "leashed"; invited.leashed++; invited.happy--; } }
-      else if (k.kind === "relic") { const L = legends.find(u => u.cell === k.key); if (L && L.state === "wild") { L.state = "happy"; L.mood = undefined; L.hp *= LD; L.dps *= LD; relicsHeld--; legendStats.relicsUsed++; legendStats.happy++; } }
+      else if (k.kind === "relic") { const L = legends.find(u => u.cell === k.key); if (L && L.state === "wild") { L.state = "happy"; L.mood = undefined; L.hp = fullHp(LEGEND, 1) * LD; relicsHeld--; legendStats.relicsUsed++; legendStats.happy++; } }
       else if (k.kind === "defend") { witch.x = k.x; witch.z = k.z; defending = { x: k.x, z: k.z }; here = null; }
     }
     if (!task) {
@@ -405,6 +410,15 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
         zones.push({ x: c.x, z: c.z, side });
         for (const u of side) { u.x = c.x; u.z = c.z; }
       }
+      // Happy legends: the enraged that come within guardRadius wear them down (their shots are above).
+      for (const H of legends) {
+        if (H.state !== "happy") continue;
+        const foes = enraged.filter(u => !held.has(u) && u.species !== H.species && Math.abs(u.x - H.x) < GR && Math.abs(u.z - H.z) < GR && Math.hypot(u.x - H.x, u.z - H.z) < GR);
+        if (!foes.length) { H.hp = Math.min(fullHp(LEGEND, 1) * LD, H.hp + ((fullHp(LEGEND, 1) * LD) / 120) * dt); continue; } // (healing over 2 minutes with none near)
+        for (const f of foes) held.add(f);
+        H.hp -= foes.reduce((a, u) => a + u.dps, 0) * dt;
+        if (H.hp <= 0) { H.state = "wild"; H.mood = "asleep"; H.hp = fullHp(LEGEND, 1); legendStats.beaten++; } // back to sleep (her buff stays)
+      }
       const L = leashed();
       if (L.length && task?.kind !== "defend") zones.push({ x: army.x, z: army.z, side: L }); // (not while walking to a siege)
       for (const zn of zones) {
@@ -451,17 +465,22 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
         else if (L.mood === "restless" && time - (L.since ?? time) >= restlessTime) { L.mood = "angry"; legendStats.angry++; legendStats.angryAreas.push({ wave: party.wave, key: L.cell, woken: sounds.has(L.cell) }); }
       }
     }
-    // Their blasts: slow, long-range, up to legendAoe at once, never their own kind. Angry ones at her
-    // posse (and her: the model has her dodge, slowing her invites), happy ones at the enraged in reach.
+    // Their shots: slow, far-reaching, up to legendAoe at once, never their own kind. Angry ones at
+    // her posse (and her: the model has her dodge, slowing her invites), happy ones at the enraged in reach.
     for (const L of legends) {
-      if (L.state === "wild" && L.mood === "angry") {
-        if (Math.hypot(army.x - L.x, army.z - L.z) >= LR) continue;
-        let n = 0;
-        for (const u of units) { if (n >= AOE) break; if (u.state !== "leashed" || u.species === L.species) continue; u.hp -= L.dps * dt; n++; if (u.hp <= 0) { u.state = "gone"; legendStats.armyLost++; } }
-      } else if (L.state === "happy") {
-        let n = 0;
-        for (const u of units) { if (n >= AOE) break; if (u.state !== "enraged" || u.species === L.species || Math.abs(u.x - L.x) > LR || Math.abs(u.z - L.z) > LR || Math.hypot(u.x - L.x, u.z - L.z) > LR) continue; u.hp -= L.dps * dt; n++; if (u.hp <= 0) u.state = "gone"; }
+      if (!(L.state === "happy" || (L.state === "wild" && L.mood === "angry"))) continue;
+      if (time < (L.until ?? 0)) continue;
+      const near = (u: Unit) => Math.abs(u.x - L.x) <= LR && Math.abs(u.z - L.z) <= LR && Math.hypot(u.x - L.x, u.z - L.z) <= LR;
+      const want: State = L.state === "happy" ? "enraged" : "leashed";
+      if (want === "leashed" && Math.hypot(army.x - L.x, army.z - L.z) > LR) continue;
+      let n = 0;
+      for (const u of units) {
+        if (n >= AOE) break;
+        if (u.state !== want || u.species === L.species || !near(u)) continue;
+        u.hp -= SHOT; n++;
+        if (u.hp <= 0) { u.state = "gone"; if (want === "leashed") legendStats.armyLost++; }
       }
+      if (n) L.until = time + EVERY;
     }
     // The rest march on their soundsystems and hit them.
     for (const u of enraged) {

@@ -1,6 +1,6 @@
 // The creature-state model's report (issue #87): src/rules/states.ts on the real maps.
 //   node tools/balance/states.mjs [--seeds 6] [--gap 60] [--skills 0.5,1,2,4] [--policies defend,third,leash,babies,relay] [--cap 40]
-//     [--health 4000] [--dazed 0] [--relics 3|4] [--relic-every 4] [--restless 60] [--legend-range 202] [--aoe 3] [--hazard 2] [--legend 1] [--approach 3] [--leash 2] [--berries 12.5] [--dt 0.5] [--kin-fight] [--quick]
+//     [--health 4000] [--dazed 0] [--relics 3|4] [--relic-every 4] [--restless 60] [--legend-range 202] [--aoe 3] [--hazard 2] [--legend-shot 30] [--legend-every 5] [--legend 1] [--approach 3] [--leash 2] [--berries 12.5] [--dt 0.5] [--kin-fight] [--quick]
 import { createServer } from "vite";
 
 const arg = (name, def) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : def; };
@@ -8,7 +8,7 @@ const list = s => String(s).split(",");
 const QUICK = process.argv.includes("--quick");
 const SEEDS = +arg("seeds", QUICK ? 2 : 6), GAP = +arg("gap", 60), SKILLS = list(arg("skills", "0.5,1,2,4")).map(Number), POLICIES = list(arg("policies", "defend,third,leash,babies"));
 const CAP = +arg("cap", 40);
-const knobs = { soundHealth: arg("health") ? +arg("health") : undefined, dazedTime: +arg("dazed", 0), relics: arg("relics") !== undefined ? +arg("relics") : undefined, relicEvery: arg("relic-every") ? +arg("relic-every") : undefined, restlessTime: arg("restless") ? +arg("restless") : undefined, legendRange: arg("legend-range") ? +arg("legend-range") : undefined, legendAoe: arg("aoe") ? +arg("aoe") : undefined, angryHazard: arg("hazard") ? +arg("hazard") : undefined, legendDefence: +arg("legend", 1), approach: +arg("approach", 3), leashTime: +arg("leash", 2), berriesPerArea: arg("berries") ? +arg("berries") : undefined, dt: arg("dt") ? +arg("dt") : undefined, ownKind: !process.argv.includes("--kin-fight") };
+const knobs = { soundHealth: arg("health") ? +arg("health") : undefined, dazedTime: +arg("dazed", 0), relics: arg("relics") !== undefined ? +arg("relics") : undefined, relicEvery: arg("relic-every") ? +arg("relic-every") : undefined, restlessTime: arg("restless") ? +arg("restless") : undefined, legendRange: arg("legend-range") ? +arg("legend-range") : undefined, legendAoe: arg("aoe") ? +arg("aoe") : undefined, angryHazard: arg("hazard") ? +arg("hazard") : undefined, legendShot: arg("legend-shot") ? +arg("legend-shot") : undefined, legendEvery: arg("legend-every") ? +arg("legend-every") : undefined, legendDefence: +arg("legend", 1), approach: +arg("approach", 3), leashTime: +arg("leash", 2), berriesPerArea: arg("berries") ? +arg("berries") : undefined, dt: arg("dt") ? +arg("dt") : undefined, ownKind: !process.argv.includes("--kin-fight") };
 
 const server = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: "custom", logLevel: "error", optimizeDeps: { noDiscovery: true, include: [] } });
 const load = p => server.ssrLoadModule(p);
@@ -28,7 +28,7 @@ for (const p of POLICIES) for (const k of SKILLS) {
 }
 const idle = maps.map(m => simulateStates(m, { interval: GAP, maxWaves: CAP, policy: "defend", skill: 1e-9, ...knobs }));
 const surv = rs => (rs.every(r => !r.lost) ? `${CAP}+` : mean(rs.map(r => r.survived)).toFixed(1));
-say(`States model (issue #87): ${SEEDS} seeds, ${TUNING.mapAreas}² areas of ${TUNING.areaSize * TUNING.areaScale} m, treetop ${TUNING.treetopSpeed} m/s, waves every ${GAP} s, soundsystems ${knobs.soundHealth ?? TUNING.combat.soundsystemHealth} hp; skill = invite rate × the game's talk times (${TUNING.invite.talkTime.slice(0, 3).join("/")} s), plus ${knobs.approach} s to reach each and ${knobs.leashTime} s to leash; dazed ${knobs.dazedTime} s, ${knobs.ownKind ? "never their own kind" : "kin fight kin"}, relics ${knobs.relics ?? "3–4"} (one found every ${knobs.relicEvery ?? 4} waves), legends restless ${knobs.restlessTime ?? 60} s before angry, reach ${knobs.legendRange ?? "1.2 areas"}, blasts hit ${knobs.legendAoe ?? 3}, happy legend ×${knobs.legendDefence}. Idle (no invites): ${surv(idle)} waves.\n`);
+say(`States model (issue #87): ${SEEDS} seeds, ${TUNING.mapAreas}² areas of ${TUNING.areaSize * TUNING.areaScale} m, treetop ${TUNING.treetopSpeed} m/s, waves every ${GAP} s, soundsystems ${knobs.soundHealth ?? TUNING.combat.soundsystemHealth} hp; skill = invite rate × the game's talk times (${TUNING.invite.talkTime.slice(0, 3).join("/")} s), plus ${knobs.approach} s to reach each and ${knobs.leashTime} s to leash; dazed ${knobs.dazedTime} s, ${knobs.ownKind ? "never their own kind" : "kin fight kin"}, relics ${knobs.relics ?? "3–4"} (one found every ${knobs.relicEvery ?? 4} waves), legends restless ${knobs.restlessTime ?? 60} s before angry, reach ${knobs.legendRange ?? 420} m, shots of ${knobs.legendShot ?? 30} every ${knobs.legendEvery ?? 5} s hitting ${knobs.legendAoe ?? 3}, happy legend hp ×${knobs.legendDefence}. Idle (no invites): ${surv(idle)} waves.\n`);
 const table = (title, f) => {
   say(`**${title}**\n`);
   say("| policy \\ skill | " + SKILLS.map(k => `×${k}`).join(" | ") + " |");
@@ -69,7 +69,7 @@ for (const [a, b] of [[0, 0.001], [0.001, 0.5], [0.5, 1], [1, 2], [2, 1e9]]) {
 }
 say("");
 table("Legends turned angry a run (their area emptied of its kind): mean, the share in woken areas, the mean wave of the first; [relics used]", rs => { const a = rs.flatMap(r => r.legends.angryAreas); return `${mean(rs.map(r => r.legends.angry)).toFixed(1)}, ${pct(mean(a.map(x => (x.woken ? 1 : 0))))} woken, w${a.length ? mean(rs.filter(r => r.legends.angryAreas.length).map(r => r.legends.angryAreas[0].wave)).toFixed(0) : "–"} [${mean(rs.map(r => r.legends.relicsUsed)).toFixed(1)}]`; });
-table("Angry legends' cost: her minutes inviting in their reach a run, and her army lost to their blasts", rs => `${(mean(rs.map(r => r.legends.hazardTime)) / 60).toFixed(1)} min, ${Math.round(mean(rs.map(r => r.legends.armyLost)))} lost`);
+table("Angry legends' cost: her minutes inviting in their reach a run, and her army lost to their shots; [happy legends worn down, back to sleep]", rs => `${(mean(rs.map(r => r.legends.hazardTime)) / 60).toFixed(1)} min, ${Math.round(mean(rs.map(r => r.legends.armyLost)))} lost [${mean(rs.map(r => r.legends.beaten)).toFixed(1)}]`);
 table("Siege targets: enraged whose nearest soundsystem was another area's (share); soundsystem damage by other areas' creatures in brackets", rs => { const o = mean(rs.map(r => r.targets.other / Math.max(1, r.targets.own + r.targets.other))), dmg = mean(rs.map(r => r.damage.other / Math.max(1, r.damage.own + r.damage.other))); return `${pct(o)} (${pct(dmg)})`; });
 say(`(${((Date.now() - t0) / 1000).toFixed(0)} s)`);
 await server.close();
