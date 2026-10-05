@@ -2,6 +2,7 @@
 // (window size / pixel size) and stretched with nearest-neighbour by the browser, so every art
 // pixel stays a crisp square.
 import { RigView, rigOn } from "./rig/rigView";
+import { expressionOf } from "./expressions";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import * as Art from "../../art/generator.js";
@@ -902,7 +903,9 @@ export class View {
       // with no find-in-the-dark look. Waking, it heaves up out of the ground.
       const W = g.tuning.wildLegends, st = c.boss && !c.leashed ? c.legendState : undefined;
       const sleeping = st === "asleep" || st === "slept", rising = st === "waking" || (st === "happy" && (c.stateAt ?? 0) > 0) ? Math.min(1, (time - (c.stateAt ?? 0)) / Math.max(0.1, W.wake * 0.5)) : 1; // (made happy, it stirs and rises contentedly)
-      const art = party ?? woken ?? this.assets.creatureArt(c.species), key = party ? `party-${c.id}` : sleeping ? `sleep-${c.species}` : woken ? `woken-${c.species}` : c.species;
+      // Its expression, part of its face (art/genome/expressions.js): the party look is happy and the woken one angry already.
+      const face = sleeping ? "neutral" : expressionOf(c, time), faced = !party && !woken && face !== "neutral" ? this.assets.faceArt(c.species, face) : undefined;
+      const art = party ?? woken ?? faced ?? this.assets.creatureArt(c.species), key = party ? `party-${c.id}` : sleeping ? `sleep-${c.species}` : woken ? `woken-${c.species}` : faced ? `face-${face}-${c.species}` : c.species;
       if (!art) continue;
       arts.set(key, art);
       const frame = art.atlas.frames[art.frame(c.level, c.moving ? Math.floor(c.walk) % 2 : 0, c.away)];
@@ -939,7 +942,7 @@ export class View {
       if (sleeping) glow = -2 - W.moss; else if (rising < 1) glow = -2 - W.moss * (1 - rising);
       // Restless in its sleep (#87): it tosses in bursts, and turns over when it's bad.
       const toss = st === "asleep" ? restlessness(c) : 0, fit = toss ? toss * Math.max(0, Math.sin(time * 1.3 + c.id)) ** 2 : 0;
-      if (!(this.rig && !party && !sleeping && rising >= 1 && this.rig.add(c, { y: dance + hop + sunk, scale, glow, fresh, h: frame.h - (frame.pad ?? 0) }))) // the rig draws it, if it can
+      if (!(this.rig && !party && !sleeping && rising >= 1 && this.rig.add(c, { y: dance + hop + sunk, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face }))) // the rig draws it, if it can
         l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id), y: dance + hop + sunk, z: c.z, frame, flip: (c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1), fresh, glow, scale });
       this.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * this.mpp * scale + dance + hop + sunk); // its health bar goes over it
       creatureShadows.push({ x: c.x, z: c.z, w: frame.w * this.mpp * 0.7, d: frame.w * this.mpp * 0.25 });

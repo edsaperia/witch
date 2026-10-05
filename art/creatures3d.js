@@ -2,6 +2,7 @@
 // Units: the shoulder is about 1 high; x forward, y up, z towards the near side.
 import { M, rng, uni } from "./core.js";
 import { Model, render, v3, spotty, masks } from "./model3d.js";
+import { faceUp } from "./genome/expressions.js";
 
 // Levels (Ed): 0 baby, 1 young, 2 adult, 3 legend.
 // Height on screen in art pixels: babies about 30; young about 45 at the default style, about the
@@ -56,6 +57,7 @@ const star = (s, t) => { const a = Math.atan2(t, s), r = Math.hypot(s, t); retur
 const heart = (s, t) => { const x = s * 1.2, y = -t * 1.2 + .25; return Math.pow(x * x + y * y - .6, 3) - x * x * y * y * y < 0; };
 function gearUp(m) {
   const g = GEAR, A = m.anchors; if (!g) return;
+  faceUp(m, g.face, g.faceStyle); // its expression, part of its face (genome/expressions.js)
   const head = A.head, hr = head ? Math.max(...head.r) : .2;
   // the collar: a glowing ring round the neck (or the body's front)
   if (g.collar && (A.neck || head)) {

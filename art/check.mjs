@@ -48,19 +48,41 @@ const report = await b.page.evaluate(async () => {
     res.push({ what: `genomes: every one of the ${G.SPECIES.length} species a record on one of the ${G.TEMPLATE_IDS.length} templates, its parts in its sockets, no clashes, every hash different`, good: G.GENOMES.length === G.SPECIES.length && G.SPECIES.every(s => G.GENOME_BY_ID[s.id]) && !probs.length && hashes.size === G.GENOMES.length, info: probs.join("; ") || `${G.GENOMES.length} records` });
     // masks and palettes (stage 2): a sprite's material mask painted with its palette row is its bake, pixel for pixel, in every outline mode
     const bad = [];
-    for (const S of G.SPECIES) for (const level of [0, 1, 2, 3]) for (const facing of ["towards", "away"]) for (const gear of [null, { woken: true }]) {
+    for (const S of G.SPECIES) for (const level of [0, 1, 2, 3]) for (const facing of ["towards", "away"]) for (const gear of [null, { woken: true }, { woken: true, face: "angry" }, { face: "happy" }, { face: "dazed" }]) {
       const sp = G.critter(S.id, level, 0, st, facing, gear), col = G.speciesColours(S.id, st, gear);
       for (const mode of level === 1 && !gear && facing === "towards" ? [st.cOutline, "none", "dark", "tint"] : [st.cOutline]) {
         const want = G.bake(sp, col, st, mode).A.getContext("2d").getImageData(0, 0, sp.w, sp.h).data, got = G.paintPixels(G.bakeMask(sp, mode), G.paletteRow(col, mode));
         let d = 0; for (let i = 0; i < want.length; i++) if (want[i] !== got[i]) d++;
-        if (d) bad.push(`${S.id} ${level} ${facing}${gear ? " woken" : ""} ${mode}: ${d}`);
+        if (d) bad.push(`${S.id} ${level} ${facing}${gear?.woken ? " woken" : ""}${gear?.face ? " " + gear.face : ""} ${mode}: ${d}`);
       }
     }
-    res.push({ what: "palettes: every creature's material mask painted with its palette row is its bake exactly (all levels, both facings, woken, every outline mode)", good: !bad.length, info: bad.slice(0, 5).join(", ") || "identical" });
+    res.push({ what: "palettes: every creature's material mask painted with its palette row is its bake exactly (all levels, both facings, woken, every expression, every outline mode)", good: !bad.length, info: bad.slice(0, 5).join(", ") || "identical" });
     // variants: every curated variant colours every species (no magenta, no missing material), each different from its own
     const vb = [];
     for (const S of G.SPECIES) { const own = JSON.stringify(G.speciesColours(S.id, st)); for (const v of Object.keys(G.PALETTE_VARIANTS)) { const c = G.variantColours(S.id, st, v), row = G.paletteRow(c), m = G.bakeMask(G.critter(S.id, 1, 0, st), st.cOutline); if (JSON.stringify(c) === own) vb.push(`${S.id} ${v} same`); for (let i = 0; i < m.mat.length; i++) if (m.kind[i] === 1 && row[m.mat[i] * 4] === 255 && row[m.mat[i] * 4 + 1] === 0 && row[m.mat[i] * 4 + 2] === 255) { vb.push(`${S.id} ${v} magenta`); break; } } }
     res.push({ what: `palette variants: all ${Object.keys(G.PALETTE_VARIANTS).length} curated coats colour every species, no material uncoloured, each its own`, good: !vb.length, info: vb.slice(0, 5).join(", ") || "ok" });
+  }
+  { // expressions (Ed, 2026-10-05: "the eyebrows should be with the creature generator"): every species at every level, angry, happy and dazed
+    // drawn as part of its face: each different from its neutral face, its brows showing (and standing out from its coat), no bigger than
+    // neutral by more than 2 px, nothing NaN; and the away view drawn
+    const bad = [], lum = c => c[0] * .3 + c[1] * .55 + c[2] * .15;
+    for (const S of G.SPECIES) for (const level of [0, 1, 2, 3]) {
+      const plain = G.critter(S.id, level, 0, st), col = G.speciesColours(S.id, st);
+      if (Math.abs(lum(col[G.M.BROW]) - lum(col[G.M.BODY])) < 60) bad.push(`${S.id} brows don't stand out`);
+      for (const face of G.EXPRESSIONS.filter(f => f !== "neutral")) for (const facing of ["towards", "away"]) {
+        const sp = G.critter(S.id, level, 0, st, facing, { face }), base = facing === "towards" ? plain : G.critter(S.id, level, 0, st, facing), id = `${S.id} ${level} ${face} ${facing}`;
+        if (sp.w > base.w + 2 || sp.h > base.h + 2) bad.push(`${id} grew ${sp.w - base.w}x${sp.h - base.h}`);
+        if (![...sp.n].every(Number.isFinite)) bad.push(`${id} NaN`);
+        if (![...sp.m].some(v => v)) bad.push(`${id} empty`);
+        if (facing !== "towards") continue;
+        let d = sp.w === base.w && sp.h === base.h ? 0 : 99, brow = 0;
+        if (d === 0) for (let i = 0; i < sp.m.length; i++) if (sp.m[i] !== base.m[i]) d++;
+        for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === G.M.BROW) brow++;
+        if (d < 2) bad.push(`${id} same as neutral`);
+        if (!brow) bad.push(`${id} no brows`);
+      }
+    }
+    res.push({ what: `expressions: every species at every level angry, happy and dazed as part of its face (different from neutral, its brows showing and standing out from its coat, no bigger, nothing NaN; from behind, its plain face)`, good: !bad.length, info: bad.slice(0, 8).join(", ") || "ok" });
   }
   { // silhouettes (#79 stage 3): at game size (each young and adult shrunk to 24 px), no two species' shapes alike: they differ by 0.15 or more
     // (1 - their overlap over their union, whichever way each faces)
@@ -78,8 +100,9 @@ const report = await b.page.evaluate(async () => {
       if (need.some(k => (P.pieces[k] || []).length !== 5)) bad.push(`${S.id} ${level} not five headings`);
       if (P.template === "quadruped" && (P.joints.legs.length !== 4 || P.joints.legs.some(l => !l.hip || !l.knee || !l.foot))) bad.push(`${S.id} ${level} legs`);
       if (!Object.values(P.discs).some(d => Object.keys(d).length)) bad.push(`${S.id} ${level} no discs`);
+      for (const face of ["angry", "happy", "dazed"]) { const f = P.faces?.[face]; if (!f || f.length !== 5 || f.some(p => !p)) bad.push(`${S.id} ${level} no ${face} head`); else if (P.pieces.head[2] && f[2].sp.m.join() === P.pieces.head[2].sp.m.join()) bad.push(`${S.id} ${level} ${face} head as neutral`); } // its head in each expression
     }
-    res.push({ what: "rig parts: every four-legged species and the snake, at every level, baked as torso and head pieces (the snake its head) at the five headings with their pivots near them, four two-bone legs, discs to string bones and bodies", good: !bad.length, info: bad.slice(0, 6).join(", ") || "ok" });
+    res.push({ what: "rig parts: every four-legged species and the snake, at every level, baked as torso and head pieces (the snake its head) at the five headings with their pivots near them, four two-bone legs, discs to string bones and bodies, and the head in every expression", good: !bad.length, info: bad.slice(0, 6).join(", ") || "ok" });
   }
   { // sleeping legends (Ed, 2026-10-04: just the sleeping form for now): asleep in 2 breathing frames, both facings, each drawn, standing on its bottom
     // row, its origin on the sprite and every material coloured; sunk (its ground line above its feet), no taller than the legend awake, nothing glowing,

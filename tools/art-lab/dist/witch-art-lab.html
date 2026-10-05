@@ -367,6 +367,7 @@ const M = {
   SHOE: 48, SOLE: 49,          // fancy shoes
   WOKEN: 50,   // a woken creature's angry glowing eyes
   WEB: 51,     // pale silk and cotton: spider webs, cotton grass (lit, not glowing)
+  BROW: 52,    // a creature's expression's brows: dark ink on a light coat, pale on a dark one (genome/expressions.js)
 };
 // These glow: drawn at full colour by the lighting pass, whatever the light.
 // The rune glyphs: one carved-rune language for the magic stones and the soundsystem. Simple,
@@ -1593,6 +1594,8 @@ const PITCH = .52;                       // the camera looks down about 30°
 // With `measure`, it only works out the scale (pixels per unit) `height` would give: { s }.
 function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false } = {}) {
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), spp = Math.sin(pitch);
+  // model.atScale(pxPerUnit): parts that must be sized in pixels (an expression's face: genome/expressions.js), added once the scale is known
+  if (model.atScale && !measure) { const f = model.atScale; model.atScale = null; f(scale ?? render(model, { height, facing, yaw, pitch, lineGap, measure: true }).s); }
   const toWorld = p => [p[0] * cy - p[2] * sy, p[1], p[0] * sy + p[2] * cy];
   const toModel = p => [p[0] * cy + p[2] * sy, p[1], -p[0] * sy + p[2] * cy];
   const D = [0, -spp, -cp], U = [0, cp, -spp], R = [1, 0, 0], B = [0, spp, cp];
@@ -3051,7 +3054,8 @@ const GENOMES = [
 // names the builders that draw it (art/creatures3d.js), its sockets (where parts go) and the part
 // tags each socket allows, which tags exclude each other, how it moves (the live rig's gait, #79
 // stage 5) and, for the four-legged, its size curves: how its proportions change with level, so a
-// baby is chunky and a legend grand without scaling it uniformly.
+// baby is chunky and a legend grand without scaling it uniformly; and its face style, the shapes of
+// its expressions' brows and eyes (expressions.js), which a species' genome can override (`face`).
 // A size curve is four numbers, baby, young, adult and legend, each a multiplier on the species'
 // own proportion (or, for antlers, horns and tusks, their size outright).
 
@@ -3069,6 +3073,7 @@ const TEMPLATES = {
       horns: ["horn.curl"], antlers: ["antler.branch", "antler.palm"], tusks: ["tusk"],
     },
     exclude: [["horn.*", "antler.*"], ["tusk", "antler.*"]],
+    face: { brow: "bar", happy: "arc", dazed: "x" }, // its expressions' shapes (expressions.js)
     gait: { offsets: [0, .5, .5, 0], dutyWalk: .65, dutyRun: .35 }, // front left, front right, back left, back right: a trot
     sizes: {
       head: [1.75, 1, 1.12, 1],         // head radius: a baby's big head, a legend's smaller for its size (grand, not cute)
@@ -3088,13 +3093,94 @@ const TEMPLATES = {
       motes: [0, 0, 3, 9],              // glowing motes round adults and legends
     },
   },
-  avian: { name: "Bird", builders: ["owl", "raven"], sizes: { head: [.48, .36, .36, .36], headY: [.95, 1.08, 1.08, 1.08], build: [1, 1, 1.18, 1.18], motes: [0, 0, 3, 9] }, sockets: { wings: ["wing.folded", "wing.spirit"], head: ["head.round", "head.beak"] }, exclude: [], gait: { offsets: [0, .5], dutyWalk: .6, dutyRun: .4 } },
-  flyer: { sizes: TEMPLATE_SMALL_SIZES, name: "Flyer", builders: ["bat", "moth"], sockets: { wings: ["wing.membrane", "wing.scaled"] }, exclude: [], gait: { offsets: [], dutyWalk: 0, dutyRun: 0 } },
-  serpent: { sizes: TEMPLATE_SMALL_SIZES, name: "Serpent or worm", builders: ["snake", "glowworm"], sockets: { head: ["head.snake", "head.worm"], tailTip: ["tail.lantern"] }, exclude: [], gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
-  insectoid: { sizes: TEMPLATE_SMALL_SIZES, name: "Many-legged", builders: ["beetle", "spider", "woodlouse"], sockets: { head: ["jaw.stag", "eyes.cluster", "antenna"] }, exclude: [], gait: { offsets: [0, .5, 0, .5, 0, .5], dutyWalk: .6, dutyRun: .5 } }, // alternating tripods
-  squat: { sizes: TEMPLATE_SMALL_SIZES, name: "Squat", builders: ["toad", "hedgehog", "mole", "snail"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], gait: { offsets: [0, .5, .5, 0], dutyWalk: .7, dutyRun: .5 } },
+  avian: { name: "Bird", builders: ["owl", "raven"], sizes: { head: [.48, .36, .36, .36], headY: [.95, 1.08, 1.08, 1.08], build: [1, 1, 1.18, 1.18], motes: [0, 0, 3, 9] }, sockets: { wings: ["wing.folded", "wing.spirit"], head: ["head.round", "head.beak"] }, exclude: [], face: { brow: "tuft", happy: "arc", dazed: "wobble" }, gait: { offsets: [0, .5], dutyWalk: .6, dutyRun: .4 } },
+  flyer: { sizes: TEMPLATE_SMALL_SIZES, name: "Flyer", builders: ["bat", "moth"], sockets: { wings: ["wing.membrane", "wing.scaled"] }, exclude: [], face: { brow: "tuft", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 0, dutyRun: 0 } },
+  serpent: { sizes: TEMPLATE_SMALL_SIZES, name: "Serpent or worm", builders: ["snake", "glowworm"], sockets: { head: ["head.snake", "head.worm"], tailTip: ["tail.lantern"] }, exclude: [], face: { brow: "ridge", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
+  insectoid: { sizes: TEMPLATE_SMALL_SIZES, name: "Many-legged", builders: ["beetle", "spider", "woodlouse"], sockets: { head: ["jaw.stag", "eyes.cluster", "antenna"] }, exclude: [], face: { brow: "ridge", happy: "arc", dazed: "wobble" }, gait: { offsets: [0, .5, 0, .5, 0, .5], dutyWalk: .6, dutyRun: .5 } }, // alternating tripods
+  squat: { sizes: TEMPLATE_SMALL_SIZES, name: "Squat", builders: ["toad", "hedgehog", "mole", "snail"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], face: { brow: "bar", happy: "squint", dazed: "x" }, gait: { offsets: [0, .5, .5, 0], dutyWalk: .7, dutyRun: .5 } },
 };
 const TEMPLATE_IDS = Object.keys(TEMPLATES);
+
+
+// ---- inlined from art/genome/expressions.js ----
+// Witch creature expressions (Ed, 2026-10-05: "the eyebrows should be with the creature generator"):
+// a creature's face as part of its model, not marks drawn over it. Four expressions, every species
+// at every level:
+//   neutral: as it is (nothing added; the sprite is the plain one, pixel for pixel);
+//   angry:   brows down to the middle over narrowed eyes (with the woken look's red eyes, enraged);
+//   happy:   eyes closed up into smiling arcs, brows lifted;
+//   dazed:   crossed-out or odd eyes, brows up in a worried tilt.
+// The shapes vary by family: each template has a face style (templates.js: brow, happy, dazed) a
+// species' genome can override (its `face`). Everything is built from the anchors every builder
+// records (the head and the eyes), so a new species gets its expressions for nothing.
+
+
+const EXPRESSIONS = ["neutral", "angry", "happy", "dazed"];
+// brow: a thick straight bar; a feather tuft, thin at the middle and flaring out; a wide arched
+// ridge (a snake's or a beetle's brow scales). happy: smiling arcs ("arc") or squeezed shut ("squint").
+// dazed: crossed out ("x") or one eye big and one small ("wobble").
+const FACE_KINDS = { brow: ["bar", "tuft", "ridge"], happy: ["arc", "squint"], dazed: ["x", "wobble"] };
+const FACE_DEFAULT = { brow: "bar", happy: "arc", dazed: "x" };
+
+const faceEyeMats = new Set([M.EYE, M.IRIS, M.PUPIL, M.GLINT, M.MAGIC2]);
+const faceUnit = v => { const l = Math.hypot(...v) || 1; return v.map(x => x / l); };
+
+// Out of the head along dir until the point is no deeper than `keep` inside the model.
+function faceSurface(m, p, dir, keep) {
+  for (let i = 0; i < 80 && m.field(p) < -keep; i++) p = v3.add(p, v3.mul(dir, keep * .25 + .002));
+  return p;
+}
+
+// Add an expression's face to a finished model (its anchors set), before it's drawn. style: the
+// species' face style ({ brow, happy, dazed }). The strokes are sized in pixels as well as by the
+// eyes (render calls back with its scale), so a beetle's face reads as well as an elk's.
+function faceUp(m, face, style = FACE_DEFAULT) {
+  const A = m.anchors, head = A.head, eyes = A.eyes;
+  if (!face || face === "neutral" || !head || !eyes || eyes.pts.length < 1) return;
+  m.atScale = P => faceDraw(m, face, { ...FACE_DEFAULT, ...style }, 1 / P);
+}
+
+function faceDraw(m, face, st, u) { // u: one pixel, in model units
+  const A = m.anchors, head = A.head, eyes = A.eyes, E = Math.max(eyes.size, u * 1.6); // the eye's radius, never under a pixel and a half
+  const mid = eyes.pts.reduce((a, e) => v3.add(a, v3.mul(e, 1 / eyes.pts.length)), [0, 0, 0]);
+  const fwd = faceUnit(v3.sub(mid, head.c)), up = faceUnit(v3.sub([0, 1, 0], v3.mul(fwd, v3.dot([0, 1, 0], fwd) * .6)));
+  // the eyes' own parts: the ellipsoids sitting on each anchor
+  const near = (q, e) => q.type === "ell" && faceEyeMats.has(q.mat) && Math.hypot(...v3.sub(q.c, e)) < Math.max(eyes.size * 1.6, u);
+  const eyeMat = e => m.parts.find(q => near(q, e) && (q.mat === M.EYE || q.mat === M.MAGIC2))?.mat ?? M.EYE;
+  const drop = e => { m.parts = m.parts.filter(q => !near(q, e)); };
+  const o = { group: 63, extra: true, part: "head" }, line = Math.max(E * .3, u * .6); // a stroke: a pixel wide at least
+  const across = e => eyes.pts.length > 1 ? faceUnit(v3.sub(e, mid)) : faceUnit(v3.cross(fwd, up)); // out to the side, away from the middle
+  for (const e of eyes.pts) {
+    const out = faceUnit(v3.sub(e, head.c)), a = across(e), mat = eyeMat(e);
+    const at = (x, y, keep = line * .5) => faceSurface(m, v3.add(v3.add(e, v3.mul(a, x * E)), v3.mul(up, y * E)), out, keep);
+    // ---- the eyes ----
+    if (face === "angry") for (const q of m.parts) if (near(q, e)) q.r = [q.r[0], q.r[1] * .62, q.r[2]]; // narrowed
+    if (face === "happy") {
+      drop(e);
+      if (st.happy === "squint") m.seg(at(-1, .25), at(1, -.25), line, line, mat, o); // squeezed shut
+      else m.chain([[...at(-1.1, -.45), line], [...at(0, .45), line], [...at(1.1, -.45), line]], mat, o); // an upturned arc
+    }
+    if (face === "dazed") {
+      if (st.dazed === "wobble") { const k = e === eyes.pts[0] ? 1.5 : .65; for (const q of m.parts) if (near(q, e)) q.r = q.r.map(v => v * k); }
+      else { drop(e); m.seg(at(-.9, .9), at(.9, -.9), line, line, mat, o); m.seg(at(-.9, -.9), at(.9, .9), line, line, mat, o); } // crossed out
+    }
+    // ---- the brows: down to the middle when angry, up in the middle when dazed, lifted when happy ----
+    // (sunk in to most of their thickness, so the far eye's brow never pokes out past the head's outline)
+    const lift = st.brow === "ridge" ? .65 : 1; // (a ridge hugs the eye, as a snake's brow scales do)
+    const [inY, outY] = (face === "angry" ? [.75, 1.85] : face === "dazed" ? [2, 1.2] : [1.75, 1.75]).map(y => y * lift);
+    const w = st.brow === "ridge" ? 1.5 : 1.2, bm = M.BROW, b = Math.max(line, E * .36), bt = (x, y, r) => [...at(x, y, r * .75), r];
+    if (st.brow === "ridge") m.chain([bt(-w, inY, b), bt(0, (inY + outY) / 2 + .2, b * 1.15), bt(w, outY, b)], bm, o);
+    else if (st.brow === "tuft") m.chain([bt(-w * .8, inY, line), bt(w * 1.2, outY + .4, b * 1.4)], bm, o);
+    else m.chain([bt(-w, inY, b), bt(w, outY, b)], bm, o);
+  }
+}
+
+// What's wrong with a face style, if anything.
+function faceProblems(id, style) {
+  const out = [];
+  for (const [k, v] of Object.entries(style || {})) if (!FACE_KINDS[k]) out.push(`${id}: no face part ${k}`); else if (!FACE_KINDS[k].includes(v)) out.push(`${id}: face ${k} ${v} isn't one of ${FACE_KINDS[k].join(", ")}`);
+  return out;
+}
 
 
 
@@ -3114,6 +3200,7 @@ function speciesOf(g) {
     S.q = q;
   }
   S.sizes = { ...TEMPLATES[g.template].sizes, ...g.sizes };
+  S.face = { ...TEMPLATES[g.template].face, ...g.face }; // its expressions' shapes (expressions.js)
   return S;
 }
 
@@ -3137,6 +3224,7 @@ function genomeProblems(g) {
   if (!T) return [`${g.id}: no template ${g.template}`];
   if (!T.builders.includes(g.builder)) out.push(`${g.id}: ${g.template} has no builder ${g.builder}`);
   const allowed = Object.values(T.sockets).flat(), tags = genomeTags(g);
+  out.push(...faceProblems(g.id, { ...T.face, ...g.face }));
   for (const t of tags) if (!allowed.includes(t)) out.push(`${g.id}: ${t} isn't one of ${g.template}'s parts`);
   for (const [a, b] of T.exclude) if (tags.some(t => genomeTagMatch(a, t)) && tags.some(t => genomeTagMatch(b, t))) out.push(`${g.id}: ${a} and ${b} together`);
   for (const k of ["hue", "sat", "val"]) if (!(g.palette[k] >= 0 && g.palette[k] <= 1)) out.push(`${g.id}: palette ${k} ${g.palette[k]}`);
@@ -3157,6 +3245,7 @@ function genomeHash(g) {
 // ---- inlined from art/creatures3d.js ----
 // Witch creatures built in 3D (see model3d.js), so they stand in true three-quarter view.
 // Units: the shoulder is about 1 high; x forward, y up, z towards the near side.
+
 
 
 // Levels (Ed): 0 baby, 1 young, 2 adult, 3 legend.
@@ -3212,6 +3301,7 @@ const star = (s, t) => { const a = Math.atan2(t, s), r = Math.hypot(s, t); retur
 const heart = (s, t) => { const x = s * 1.2, y = -t * 1.2 + .25; return Math.pow(x * x + y * y - .6, 3) - x * x * y * y * y < 0; };
 function gearUp(m) {
   const g = GEAR, A = m.anchors; if (!g) return;
+  faceUp(m, g.face, g.faceStyle); // its expression, part of its face (genome/expressions.js)
   const head = A.head, hr = head ? Math.max(...head.r) : .2;
   // the collar: a glowing ring round the neck (or the body's front)
   if (g.collar && (A.neck || head)) {
@@ -3686,6 +3776,7 @@ function baseColours(s, st) {
     [M.BODY]: body, [M.BODY2]: hsv2rgb(s.hue + .02, Math.min(1, s.sat * sat * 1.2 + .05), s.val * v * .66), [M.BODY3]: hsv2rgb(s.hue + .03, Math.min(1, s.sat * sat * 1.3 + .1), s.val * v * .4),
     [M.BELLY]: belly, [M.ACCENT]: pale ? [236, 226, 200] : hsv2rgb(s.hue + .05, s.sat * .6, Math.min(1, s.val * v * .5 + .25)),
     [M.MAGIC]: magic, [M.MAGIC2]: magic2, [M.LEAF]: hsv2rgb(.3, .55, .55), [M.LEAF2]: hsv2rgb(.25, .5, .75), [M.LEAF3]: hsv2rgb(.33, .6, .35), [M.TRUNK]: hsv2rgb(.07, .45, .32),
+    [M.BROW]: body[0] * .3 + body[1] * .55 + body[2] * .15 < 95 ? [226, 218, 204] : [30, 20, 28], // its brows: ink on a light coat, pale on a dark one
     [M.EYE]: [24, 18, 30], [M.PUPIL]: [70, 40, 90], [M.GLINT]: [255, 255, 245], [M.NOSE]: [38, 28, 36], [M.EAR]: hsv2rgb(s.hue + .97, Math.min(1, s.sat * .6 + .2), Math.min(1, s.val * v * .55 + .2)),
     [M.IRIS]: s.plan === "owl" ? [255, 176, 40] : hsv2rgb(.12, .7, .85), [M.SKIN]: [238, 158, 192],
   };
@@ -3701,13 +3792,15 @@ const levelHeight = (level, st) => height3d(level, st);
 // Shapes don't depend on colours, so a creature is drawn once per shape-changing knob setting
 // (a lab session changes lighting and colour knobs far more often than these).
 const SHAPE_KNOBS = ["size", "growth", "pixel", "head", "eye", "legs", "long", "fur"], cache = new Map();
-// gear (optional): party gear and the woken look, { collar, hat, glasses, shoes, woken }:
+// gear (optional): party gear, the woken look and the expression, { collar, hat, glasses, shoes, woken, face }:
 //   collar: a colour [r, g, b] (the creature's sigil neon) or true; hat: a colourway 0..2;
-//   glasses: "bar" | "star" | "heart"; shoes: "sneakers" | "glitter" | "platform"; woken: true.
+//   glasses: "bar" | "star" | "heart"; shoes: "sneakers" | "glitter" | "platform"; woken: true;
+//   face: "neutral" | "angry" | "happy" | "dazed" (genome/expressions.js, drawn as part of the face).
 // Give the same gear to speciesColours for its colours. Shapes are cached per gear combination.
 function critter(spId, level, frame, st, facing = "towards", gear = null) {
-  const S = SPECIES_BY_ID[spId] || SPECIES[0], g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken) ? gear : null;
-  const key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken].join(",") : ""].join("|");
+  if (facing === "away" && gear?.face) gear = { ...gear, face: null }; // (its face can't be seen from behind)
+  const S = SPECIES_BY_ID[spId] || SPECIES[0], g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken || (gear.face && gear.face !== "neutral")) ? { ...gear, faceStyle: S.face } : null;
+  const key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken, g.face && g.face !== "neutral" ? g.face : ""].join(",") : ""].join("|");
   let sp = cache.get(key);
   if (!sp) {
     sp = withGear(g, () => buildCreature(S, level, frame, st, facing));
@@ -6837,6 +6930,7 @@ function variantColours(id, st, variant, gear = null) {
 
 
 
+
 // ---- inlined from art/genome/parts.js ----
 // Witch creature parts (#79, stage 4): a creature baked as pieces rather than whole frames, so a
 // live rig (src/render/rig/) can put it together each frame from how it moves. Its torso, head and
@@ -6845,6 +6939,7 @@ function variantColours(id, st, variant, gear = null) {
 // between its joints. Each piece keeps its pivot: the pixel where the joint it hangs from lands.
 // Headings: 0 walking right, a quarter turn walking down the screen (towards us), minus a quarter up
 // it (away); RIG_HEADINGS are the baked ones, and heading h > a quarter turn is the mirror of pi - h.
+
 
 
 
@@ -6866,12 +6961,21 @@ function rigProject(p, h, s) {
 }
 
 // The model the builder makes for a species at a level (not drawn), and the scale it would be drawn at.
-function rigCapture(id, level, st) {
+// face: an expression (genome/expressions.js), put on its face at that scale.
+function rigCapture(id, level, st, face = null) {
   const S = SPECIES_BY_ID[id]; let got = null;
   const form = (m, o) => { got = { m, height: o.height }; return new Sprite(1, 1); };
   form.motes = false;
-  withForm(form, () => buildCreature(S, level, 0, st, "towards"));
-  return { m: got.m, s: render(got.m, { height: got.height, measure: true }).s };
+  withGear(face ? { face, faceStyle: S.face } : null, () => withForm(form, () => buildCreature(S, level, 0, st, "towards")));
+  const s = render(got.m, { height: got.height, measure: true }).s, f = got.m.atScale;
+  if (f) { got.m.atScale = null; f(s); }
+  return { m: got.m, s };
+}
+// Its head piece in each expression but neutral (the head piece itself): { angry, happy, dazed }.
+function rigFaces(id, level, st, pivot, s) {
+  const out = {};
+  for (const face of EXPRESSIONS) if (face !== "neutral") out[face] = rigPiece(rigCapture(id, level, st, face).m, ["head"], pivot, s);
+  return out;
 }
 // A model of only the primitives labelled with one of `labels`.
 function rigPick(m, labels) {
@@ -6903,7 +7007,7 @@ function rigDisc(r, mat, s, paint) {
 }
 
 // Everything the rig needs for one species at one level: { template, s (pixels per model unit),
-// pieces: { torso, head, tail: [per heading] }, discs: { material: [by radius in pixels] }, joints }.
+// pieces: { torso, head, tail: [per heading] }, faces: { angry, happy, dazed: its head piece in each }, discs: { material: [by radius in pixels] }, joints }.
 // joints are in model units: legs [{ name, fore, side, hip, knee, foot, r: [hip, knee, foot] }],
 // head { nb, H }, tail (its base) for the four-legged; spine [[x, y, z, r]...] and head for a serpent.
 function rigParts(id, level, st) {
@@ -6917,11 +7021,11 @@ function rigParts(id, level, st) {
     for (const l of R.legs) discSet(l.mat, legR);
     const hoof = R.legs.find(l => l.hoof); if (hoof) discSet(M.NOSE, radii(R.legs.map(l => l.fl * .9)));
     else discSet(R.legs[0].mat, radii(R.legs.map(l => l.fl * .9)));
-    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { torso: rigPiece(m, ["body"], [0, 0, 0], s), head: rigPiece(m, ["head"], R.head.nb, s), tail: rigPiece(m, ["tail"], R.tail, s) } };
+    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { torso: rigPiece(m, ["body"], [0, 0, 0], s), head: rigPiece(m, ["head"], R.head.nb, s), tail: rigPiece(m, ["tail"], R.tail, s) }, faces: rigFaces(id, level, st, R.head.nb, s) };
   }
   // a serpent: its head baked, its body discs (speckled like its coat) by the spine's radii
   discSet(M.BODY, radii(R.spine.map(p => p[3])), p => spotty([p[0] * 1.5, p[1], p[2]], 14, .3) ? M.BODY3 : undefined);
-  return { id, level, template: tpl, s, joints: { spine: R.spine, head: R.head, hr: R.hr }, discs, pieces: { head: rigPiece(m, ["head"], R.head, s), wings: rigPiece(m, ["body"].filter(() => m.parts.some(q => q.part === "body" && q.extra)), [0, .2, 0], s) } };
+  return { id, level, template: tpl, s, joints: { spine: R.spine, head: R.head, hr: R.hr }, discs, pieces: { head: rigPiece(m, ["head"], R.head, s), wings: rigPiece(m, ["body"].filter(() => m.parts.some(q => q.part === "body" && q.extra)), [0, .2, 0], s) }, faces: rigFaces(id, level, st, R.head, s) };
 }
 
 

@@ -12,6 +12,7 @@ for (const s of O.SPECIES) for (let level = 0; level < 4; level++) for (const fr
   const same = a.w === b.w && a.h === b.h && a.m.every((v, i) => v === b.m[i]) && a.n.every((v, i) => v === b.n[i]) && a.g.every((v, i) => v === b.g[i]);
   if (!same) { bad++; let d = 0; if (a.w === b.w && a.h === b.h) for (let i = 0; i < a.m.length; i++) if (a.m[i] !== b.m[i]) d++; console.log("DIFF", s.id, level, frame, facing, gear ? Object.keys(gear).join("+") : "", `${a.w}x${a.h} vs ${b.w}x${b.h}`, d, "px"); }
   const ca = O.speciesColours(s.id, st, gear), cb = N.speciesColours(s.id, st, gear);
+  for (const k of Object.keys(cb)) if (!(k in ca) && !Object.values(O.M).includes(+k)) delete cb[k]; // (a material the old art hadn't yet: its colour adds, it changes nothing)
   if (JSON.stringify(ca) !== JSON.stringify(cb)) { bad++; console.log("COLOURS", s.id); }
 }
 for (const id of O.LEGEND_IDS) for (const frame of [0, 1]) for (const facing of ["towards", "away"]) {
