@@ -374,10 +374,17 @@ const report = await b.page.evaluate(async () => {
       if (!((hidden || (count(sp, G.M.COLLAR) > 0 && hats > 0)) && stats(sp).bottom > 0 && Math.abs(sp.bodyH - plain.bodyH) <= 1)) bad.push(`${S.id} ${level} ${facing}`);
       if (S.q && level > 0 && facing === "towards" && count(sp, G.M.SHOE) === 0) bad.push(`${S.id} ${level} shoes`);
     }
+    // every party shoe style on each fitting (a hoof, a paw, a claw) shows, the body no bigger; on the rig, a shoe piece at every heading
+    for (const [id, fit] of [["boar", "hoof"], ["fox", "paw"], ["owl", "claw"]]) for (const shoes of Object.keys(G.SHOE_STYLES)) {
+      const gear = { collar: G.sigilColour(id), shoes }, sp = G.critter(id, 2, 0, st, "towards", gear), plain = G.critter(id, 2, 0, st, "towards");
+      if (count(sp, G.M.SHOE) === 0 || (shoes === "lightup" && count(sp, G.M.COLLAR) <= count(G.critter(id, 2, 0, st, "towards", { collar: gear.collar }), G.M.COLLAR)) || Math.abs(sp.bodyH - plain.bodyH) > 1) bad.push(`${id} ${shoes} (${fit})`);
+      if (fit !== "claw") { const R = G.rigParts(id, 2, st, gear); if (!R?.pieces.shoe || R.pieces.shoe.some(p => !p)) bad.push(`${id} ${shoes} rig shoe`); }
+    }
+    if (G.rigParts("fox", 2, st, { collar: [1, 2, 3] })?.pieces.shoe) bad.push("fox barefoot rig has a shoe");
     const woke = G.SPECIES.filter(S => count(G.critter(S.id, 1, 0, st, "towards", { woken: true }), G.M.WOKEN) === 0).map(S => S.id);
     const mixes = Array.from({ length: 40 }, (_, i) => JSON.stringify(G.partyGear(i, [1, 2, 3]))), same = JSON.stringify(G.partyGear(5, [1, 2, 3])) === mixes[5];
     const varied = new Set(mixes).size > 10 && mixes.some(m => m.includes('"hat":null')) && mixes.some(m => !m.includes("null"));
-    res.push({ what: "party gear on all 30 at three levels, both views (collar, hat; shoes on four-legged feet; same body size); woken eyes; partyGear seeded and varied", good: !bad.length && !woke.length && same && varied, info: [...bad, ...woke.map(w => w + " not woken")].slice(0, 60).join(", ") || "ok" });
+    res.push({ what: "party gear on all 30 at three levels, both views (collar, hat; shoes on four-legged feet; same body size); every party shoe style on a hoof, a paw and a claw, and on the rig; woken eyes; partyGear seeded and varied", good: !bad.length && !woke.length && same && varied, info: [...bad, ...woke.map(w => w + " not woken")].slice(0, 60).join(", ") || "ok" });
   }
   { // only magical things glow (Ed's playtest: glowing gorse flowers floated over the night's dark bushes)
     const magic = new Set([G.M.GLINT, G.M.MAGIC, G.M.MAGIC2, G.M.RUNE, G.M.GLOW, G.M.COLLAR, G.M.WOKEN]), extra = [...G.EMISSIVE].filter(m => !magic.has(m));

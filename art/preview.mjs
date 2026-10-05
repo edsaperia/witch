@@ -264,6 +264,9 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
       items.push({ A, N, w: n * K, h: n * K }, G.bake(sp, G.speciesColours(S.id, st), st, st.cOutline));
     }
     for (let i = 0; i < items.length; i += 12) rows.push(items.slice(i, i + 12));
+  } else if (what === "shoes") { // per species: barefoot, then in each party shoe style (creatures3d.js shoe3d), at its adult (or LEVELS), with its collar
+    const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(",");
+    for (const id of ids) for (const l of window.LEVELS || [2]) rows.push([null, ...Object.keys(G.SHOE_STYLES)].map(shoes => { const gear = { collar: G.sigilColour(id), shoes, face: "happy" }; return G.bake(G.critter(id, l, 0, st, "towards", gear), G.speciesColours(id, st, gear), st, st.cOutline); }));
   } else if (what === "faces") { // per species: its four expressions (neutral, angry, happy, dazed) at adult, young and baby, then angry with the woken look's red eyes (enraged)
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(",");
     for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push([...(window.LEVELS || [2, 1, 0]).flatMap(l => G.EXPRESSIONS.map(face => G.bake(G.critter(id, l, 0, st, facing, { face }), G.speciesColours(id, st), st, st.cOutline))), G.bake(G.critter(id, 1, 0, st, facing, { face: "angry", woken: true }), G.speciesColours(id, st, { woken: true }), st, st.cOutline)]);
