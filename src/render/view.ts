@@ -1252,7 +1252,6 @@ export class View {
     // to nothing as she rises (and opens as she descends).
     const lifted = canopyShown(g.witch), cut = t.canopyCutout;
     this.camera.updateMatrixWorld();
-    this.sky.horizon(this.camera); // (the sky hung on the bent ground's horizon, as this camera sees it)
     const ws = placed(this.v3.set(g.witch.x, witchHeight(g.witch, t) * 0.5 + this.rideOff, g.witch.z)).project(this.camera);
     // (The edge stays its full softness as the hole closes: shrunk with it, a small hole's edge was crisp, Ed v289.)
     SPRITE_UNIFORMS.uCutout.value.set((ws.x * 0.5 + 0.5) * this.width, (ws.y * 0.5 + 0.5) * this.height, 0.5 * cut.screenFraction * this.width * (1 - lifted), Math.max(1, cut.edge * this.width));
