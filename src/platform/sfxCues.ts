@@ -62,7 +62,12 @@ export class SfxCues {
   private primed = false;
   private flourished = new Map<number, number>();
 
-  constructor(private sfx: Sfx) {}
+  /** Her hits left last frame (a drop is a hit that landed), and whether she was down. */
+  private hp = -1;
+  private down = false;
+
+  /** `duck`: dip the music (by, seconds) under her "ouch!". */
+  constructor(private sfx: Sfx, private duck: (by: number, seconds: number) => void = () => {}) {}
 
   update(g: Game, time: number): void {
     const t = g.tuning.sfx, w = g.witch, hear = Math.max(1, t.hear);
@@ -132,6 +137,15 @@ export class SfxCues {
     // then the clock jumping on; heard anywhere (rules/game.ts's soundsystemLost; home's aside:
     // that's the run over), more urgent when the wave comes at once (left 0)
     for (const e of g.waveEvents) if (e.kind === "soundsystemLost" && e.key !== "home" && this.lost !== e.at) { this.lost = e.at; S.lost(e.left <= 0); }
+    // hurt (Ed, 2026-10-05: "ouch!"): combat's witchHit, as it lands (a hit on her mid-blink costs
+    // nothing, so it's her hits dropping that says so); knocked down (knockout's "down"): "whoa-oh"
+    const me = g.witches[0], O = t.ouch;
+    if (me) {
+      const hp = me.health.hp, down = !!me.ko;
+      if (down && !this.down && this.primed) { S.knockdown(); this.duck(O.duck, O.duckTime * 2); }
+      else if (this.primed && hp < this.hp && !down) { S.ouch(1 - Math.max(0, hp - 1) / Math.max(1, g.tuning.witchHealth.hits - 1)); this.duck(O.duck, O.duckTime); }
+      this.hp = hp; this.down = down;
+    }
     this.primed = true;
   }
 

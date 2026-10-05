@@ -291,6 +291,50 @@ export class Sfx {
     this.osc("triangle", f, at + 0.06, 0.3, g2);
   }
 
+  /** The witch hurt (Ed, 2026-10-05: "witch saying 'ouch!'"): a quick cry in her own babble voice,
+   *  "ouch!" (a sharp rise, then a falling clipped "ch"), or now and then "oof!" or "eek!", over a
+   *  soft thump. `strain` 0-1: how near she is to being knocked down, higher, harsher and louder. */
+  ouch(strain = 0, pan = 0): void {
+    const V = this.T.voice.witch, O = this.T.ouch, c = this.ctx, at = c.currentTime + 0.005, out = this.voice(pan);
+    const p = V.pitch * (1.1 + 0.3 * strain) * (0.96 + 0.08 * Math.random()), vol = O.volume * (0.85 + 0.35 * strain), grit = 0.25 * strain;
+    const base = { formants: V.timbre * (1 + 0.08 * strain), wave: "sawtooth" as OscillatorType, grit, pan, consonant: false };
+    const pick = Math.random();
+    if (pick < 0.6) {
+      // "ow-ch": up sharply into the "ow", then down and clipped with a "ch" of breath
+      this.syllable(at, { ...base, pitch: p, end: p * 1.4, vowel: 0, dur: 0.08, gain: vol }, out);
+      this.syllable(at + 0.075, { ...base, pitch: p * 1.35, end: p * 0.85, vowel: 4, dur: 0.09, gain: vol * 0.85 }, out);
+      const hp = c.createBiquadFilter(), ng = c.createGain();
+      hp.type = "highpass"; hp.frequency.value = 3200; ng.connect(out); this.env(ng, at + 0.16, vol * 0.4, 0.003, 0.05);
+      hp.connect(ng); this.noiseBurst(at + 0.16, 0.06, hp, Math.random());
+    } else if (pick < 0.8) {
+      // "oof!": one falling breath of a syllable
+      this.syllable(at, { ...base, pitch: p * 0.85, end: p * 0.6, vowel: 4, dur: 0.14, gain: vol, noise: 0.35 }, out);
+    } else {
+      // "eek!": a high, squeezed rise
+      this.syllable(at, { ...base, pitch: p * 1.5, end: p * 1.9, vowel: 2, dur: 0.12, gain: vol * 0.9 }, out);
+    }
+    this.thump(at, O.volume * (0.6 + 0.4 * strain), pan);
+  }
+
+  /** Knocked down: a longer "whoa-oh" as she's sent home, falling away, over a heavier thump. */
+  knockdown(pan = 0): void {
+    const V = this.T.voice.witch, O = this.T.ouch, at = this.ctx.currentTime + 0.005, out = this.voice(pan), p = V.pitch * 1.2, vol = O.volume;
+    const base = { formants: V.timbre, wave: "sawtooth" as OscillatorType, grit: 0.15, pan, consonant: false, trill: [6, 35] };
+    this.syllable(at, { ...base, pitch: p, end: p * 1.45, vowel: 3, dur: 0.3, gain: vol }, out);
+    this.syllable(at + 0.28, { ...base, pitch: p * 1.4, end: p * 0.55, vowel: 3, dur: 0.6, gain: vol * 0.9 }, out);
+    this.thump(at, vol * 1.3, pan);
+  }
+
+  /** A soft body thump: a low sine falling, and a puff of low noise. */
+  private thump(at: number, vol: number, pan = 0): void {
+    const c = this.ctx, out = this.voice(pan), g = c.createGain();
+    g.connect(out); this.env(g, at, vol, 0.002, 0.14);
+    const o = this.osc("sine", 110, at, 0.16, g); o.frequency.exponentialRampToValueAtTime(42, at + 0.14);
+    const lp = c.createBiquadFilter(), ng = c.createGain();
+    lp.type = "lowpass"; lp.frequency.value = 500; ng.connect(out); this.env(ng, at, vol * 0.5, 0.002, 0.08);
+    lp.connect(ng); this.noiseBurst(at, 0.1, lp, 0.6);
+  }
+
   /** A soundsystem lost (the next wave coming sooner): a sad sting, a party gone quiet rather than
    *  a death. A record scratch, the party's chord running down like a tape stopping, then a little
    *  clock ticking faster as the countdown jumps forward, and a soft chime. Heard anywhere.
