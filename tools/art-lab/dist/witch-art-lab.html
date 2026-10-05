@@ -2772,14 +2772,23 @@ const WITCH_GENOME = {
   hair: "long", top: "jacket", cloak: "none",
   broom: { kind: "classic", length: 1, bend: 0, bristles: 1 },
   accessories: { phones: true, shades: false, glowsticks: false, scarf: false, satchel: false, pendant: false, earrings: false },
+  scarfLength: 1, bagSize: 1, backpack: "none", // the creator's (round 2): the scarf's length and the satchel's size (times hers), a backpack (none, then sizes)
   palette: null, // null: hers (DEFAULT_OUTFIT, the style's hues on top)
 };
-// The axes and their limits, for the generator, the lab and the check.
+// The axes and their limits, for the creator, the lab and the check (Ed, 2026-10-05: "the sliders in the character creation
+// screen should go further"; "the option to have no hat, and some different hats"): wide, so the extremes are fun. The hats
+// past the pointed ones (none first) are drawn by witch.js; a shape it doesn't know yet draws as hers.
 const WITCH_AXES = {
-  hatShape: ["classic", "crooked", "floppy", "small", "flowers"], // pointed ones only (the bucket hat with cat ears is a party look, not a witch's)
-  hatHeight: [.75, 1.6], hatBrim: [.75, 1.45], hatTilt: [-.25, .35], hatBand: [1, 2.4],
+  hatShape: ["none", "classic", "crooked", "floppy", "small", "flowers", "top", "cowboy", "conical", "boppers", "party", "musketeer"],
+  hatHeight: [.3, 3], hatBrim: [.3, 2.6], hatTilt: [-.9, 1], hatBand: [0, 4],
   hair: ["long", "bob", "buns", "mohawk"], top: ["jacket", "sequins", "mesh", "poncho", "cape"], cloak: ["none", "short", "long", "hooded"],
-  broom: ["classic", "fan", "twig", "round"], broomLength: [.85, 1.3], broomBend: [-.3, .6], bristles: [.8, 1.4],
+  broom: ["classic", "fan", "twig", "round"], broomLength: [.4, 2.4], broomBend: [-1.2, 1.5], bristles: [.3, 3],
+  scarfLength: [.3, 3], bagSize: [.4, 2.6], backpack: ["none", "small", "medium", "big", "huge"],
+};
+// The generator's own limits (narrower: a new witch is a witch, a pointed hat with its glowing band; as before round 2, so a seed draws as it did).
+const WITCH_RANDOM = {
+  hatShape: ["classic", "crooked", "floppy", "small", "flowers"],
+  hatHeight: [.75, 1.6], hatBrim: [.75, 1.45], hatTilt: [-.25, .35], broomLength: [.85, 1.3], broomBend: [-.3, .6], bristles: [.8, 1.4],
 };
 const SKINS = [[.07, .25, .96], [.07, .32, .9], [.07, .42, .78], [.06, .5, .62], [.05, .55, .47], [.05, .5, .34]];
 const HAIRS = [[.07, .4, .14], [.07, .6, .33], [.04, .7, .5], [.11, .45, .88], [.02, .75, .7], [.6, .04, .86], [.85, .5, .8], [.5, .5, .7]]; // black, brown, auburn, blonde, red, silver, pink, teal
@@ -2798,25 +2807,33 @@ function witchGenome(seed = 0) {
     hair: pick(HAIRS), skin: pick(SKINS), broom: [uni([.05, .1]), uni([.4, .65]), uni([.35, .6])], bristles: [uni([.1, .14]), uni([.4, .65]), uni([.75, .95])],
   };
   return {
-    hat: { shape: pick(WITCH_AXES.hatShape), height: uni(WITCH_AXES.hatHeight), brim: uni(WITCH_AXES.hatBrim), tilt: uni(WITCH_AXES.hatTilt), band: uni([1.7, 2.4]) }, // a broad band, so it always shows
+    hat: { shape: pick(WITCH_RANDOM.hatShape), height: uni(WITCH_RANDOM.hatHeight), brim: uni(WITCH_RANDOM.hatBrim), tilt: uni(WITCH_RANDOM.hatTilt), band: uni([1.7, 2.4]) }, // a broad band, so it always shows
     hair: pick(WITCH_AXES.hair), top: pick(WITCH_AXES.top), cloak: pick(WITCH_AXES.cloak),
-    broom: { kind: pick(WITCH_AXES.broom), length: uni(WITCH_AXES.broomLength), bend: uni(WITCH_AXES.broomBend), bristles: uni(WITCH_AXES.bristles) },
+    broom: { kind: pick(WITCH_AXES.broom), length: uni(WITCH_RANDOM.broomLength), bend: uni(WITCH_RANDOM.broomBend), bristles: uni(WITCH_RANDOM.bristles) },
     accessories: { phones: chance(.55), shades: chance(.25), glowsticks: chance(.2), scarf: chance(.35), satchel: chance(.35), pendant: chance(.3), earrings: chance(.4) },
+    scarfLength: 1, bagSize: 1, backpack: "none",
     palette,
   };
+}
+// A genome saved before round 2 (or missing anything since): every field it lacks taken from hers, so old saves still load.
+function upgradeGenome(g) {
+  const W = WITCH_GENOME, o = g && typeof g === "object" ? g : {};
+  return { ...W, ...o, hat: { ...W.hat, ...o.hat }, broom: { ...W.broom, ...o.broom }, accessories: { ...W.accessories, ...o.accessories }, palette: o.palette ?? null };
 }
 // The look and outfit witch.js draws a genome with.
 function genomeLook(g = WITCH_GENOME) {
   const look = { ...DEFAULT_LOOK, hat: g.hat.shape, hatHeight: g.hat.height, hatBrim: g.hat.brim, hatTilt: g.hat.tilt, hatBand: g.hat.band ?? 1, hair: g.hair, top: g.top, cloak: g.cloak,
-    broom: g.broom.kind, broomLength: g.broom.length, broomBend: g.broom.bend, bristles: g.broom.bristles, ...g.accessories };
+    broom: g.broom.kind, broomLength: g.broom.length, broomBend: g.broom.bend, bristles: g.broom.bristles, ...g.accessories,
+    scarfLength: g.scarfLength ?? 1, bagSize: g.bagSize ?? 1, backpack: g.backpack ?? "none" };
   return { look, outfit: g.palette ? { ...DEFAULT_OUTFIT, ...g.palette } : null };
 }
 // What is wrong with a genome, if anything: an unknown kind, or a number outside its limits (hers always passes).
 function witchGenomeProblems(g) {
   const out = [], A = WITCH_AXES, inR = (v, [a, b]) => v >= a - 1e-9 && v <= b + 1e-9;
   if (!A.hatShape.includes(g.hat.shape)) out.push("hat " + g.hat.shape);
-  for (const [k, v, lim] of [["hatHeight", g.hat.height, A.hatHeight], ["hatBrim", g.hat.brim, A.hatBrim], ["hatTilt", g.hat.tilt, A.hatTilt], ["hatBand", g.hat.band ?? 1, A.hatBand], ["broomLength", g.broom.length, A.broomLength], ["broomBend", g.broom.bend, A.broomBend], ["bristles", g.broom.bristles, A.bristles]]) if (!inR(v, lim)) out.push(`${k} ${v}`);
+  for (const [k, v, lim] of [["hatHeight", g.hat.height, A.hatHeight], ["hatBrim", g.hat.brim, A.hatBrim], ["hatTilt", g.hat.tilt, A.hatTilt], ["hatBand", g.hat.band ?? 1, A.hatBand], ["broomLength", g.broom.length, A.broomLength], ["broomBend", g.broom.bend, A.broomBend], ["bristles", g.broom.bristles, A.bristles], ["scarfLength", g.scarfLength ?? 1, A.scarfLength], ["bagSize", g.bagSize ?? 1, A.bagSize]]) if (!inR(v, lim)) out.push(`${k} ${v}`);
   if (!A.hair.includes(g.hair)) out.push("hair " + g.hair); if (!A.top.includes(g.top)) out.push("top " + g.top); if (!A.cloak.includes(g.cloak)) out.push("cloak " + g.cloak); if (!A.broom.includes(g.broom.kind)) out.push("broom " + g.broom.kind);
+  if (!A.backpack.includes(g.backpack ?? "none")) out.push("backpack " + g.backpack);
   if (g.palette) for (const [k, c] of Object.entries(g.palette)) if (!(Array.isArray(c) && c.length === 3 && c.every(v => v >= 0 && v <= 1))) out.push("palette " + k);
   return out;
 }
