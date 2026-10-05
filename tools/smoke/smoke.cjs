@@ -151,7 +151,7 @@ async function main() {
     await page.keyboard.press("KeyQ");
     await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 60000 }).catch(() => {});
     s = await state(page);
-    check(s.mode === "ground", `space descends to ground mode (${s.mode})`);
+    check(s.mode === "ground", `Q descends to ground mode (${s.mode})`);
     await shot(page, "06-ground-zoomed-out.png");
     await page.keyboard.press(ZOOM_IN); await page.keyboard.press(ZOOM_IN); await page.keyboard.press(ZOOM_IN);
     await sleep(800);
