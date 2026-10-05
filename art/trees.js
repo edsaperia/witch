@@ -7,7 +7,7 @@
 // ground mode), everything else its top half (the canopy seen from the treetops).
 import { M, Sprite, uni, pick, hash2, vnoise, hsv2rgb, tufts, rot, lerp2, add } from "./core.js";
 import { PLANT_GENOMES, BUSH_KINDS, BUSH_GENOMES, genomeStyle } from "./flora/genomes.js";
-import { blobTree } from "./flora/blob.js";
+import { blobTree, blobBush } from "./flora/blob.js";
 
 const WOOD = new Set([M.TRUNK, M.BARK2, M.BARKD, M.BARKL, M.BELLY]); // BELLY: a pine's orange or a yew's red trunk
 
@@ -285,7 +285,7 @@ export function chooseType(r, st) {
   for (const [k, f] of TREE_TYPES) { x -= st[k]; if (x <= 0) return f; }
   return broadTree;
 }
-export function treeColours(r, st, type) {
+export function treeColours(r, st, type, blob = false) {
   const S = SPECIES_BY_FN.get(type), sa = S?.sat || 1, va = (S?.val || 1) * (st.leafVal ?? 1); // leafVal: an area's palette, brighter or darker leaves
   // a species shifts the area's leaf hue a little; towards yellow it shifts less where the area's leaves are already yellow, so no species turns an area autumnal
   const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = (S?.hueAbs ?? st.leafHue) + (r() - .5) * st.leafVariety * .7 + sh; // hueAbs: a hue of its own, whatever the area's
@@ -293,7 +293,7 @@ export function treeColours(r, st, type) {
     [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212],
     [M.LEAF]: hsv2rgb(h, Math.min(1, .62 * st.sat * sa), Math.min(1, .58 * va)), [M.LEAF2]: hsv2rgb(h - .05, Math.min(1, .55 * st.sat * sa), Math.min(1, .8 * va)), [M.LEAF3]: hsv2rgb(h + .03, Math.min(1, .66 * st.sat * sa), .38 * va), [M.WEB]: [225, 225, 232],
   };
-  if (st.artStyle && S?.blob) { // the pixel-art ramp (the blob generator's trees; bake's post-pass does the rest) (docs/ART-GUIDE.md section 0): 3 hue-shifted tones per material, the shadow deeper, more saturated and
+  if (st.artStyle && (S?.blob || blob)) { // the pixel-art ramp (the blob generator's trees; bake's post-pass does the rest) (docs/ART-GUIDE.md section 0): 3 hue-shifted tones per material, the shadow deeper, more saturated and
     // towards blue-violet, the light pale and towards cream; "ref" (Ed's reference, rung 6) keeps one tone family, "bold" (rung 3/4) shifts further
     const ref = st.artStyle === "ref", ls = Math.min(1, .62 * st.sat * sa), lv = Math.min(1, .58 * va);
     c[M.LEAF3] = hsv2rgb(h + (ref ? .035 : .07), Math.min(1, ls * 1.25), lv * .52);
@@ -324,20 +324,8 @@ export function splitTree(t) { // bottom = wood below the crown line and the lif
 
 // ================= undergrowth =================
 // Bushes: round leafy mounds (some flowering), ferns, grass tufts and shrubs, grown from their genomes (BUSH_GENOMES).
-export function bush(r, st) {
-  const s = st.bushSize, kind = pick(r, BUSH_KINDS), g = BUSH_GENOMES[kind], P = g.params;
-  const W = Math.round(P.w * s), H = Math.round(P.h * s), sp = new Sprite(W, H);
-  if (g.generator === "mound") {
-    for (let i = 0; i < P.clumps; i++) clump(sp, [W / 2 + uni(r, -9, 9) * s, H - 8 * s + uni(r, -4, 2) * s], uni(r, 7, 10) * s, uni(r, 5, 8) * s, st, r);
-    if (P.flowering || r() < st.flowers) for (let i = 0; i < 18 * st.flowers + 3; i++) { const x = W / 2 + uni(r, -12, 12) * s, y = H - uni(r, 5, 17) * s; if (sp.get(x, y)) sp.recolour(x, y, M.FLOWER); }
-  } else if (g.generator === "fern") {
-    for (let k = 0; k < P.fronds; k++) {
-      const a = -Math.PI / 2 + (k / (P.fronds - 1) - .5) * 2.4; let x = W / 2, y = H - 1;
-      for (let j = 0; j < P.len * s; j++) { x += Math.cos(a) * .9; y += Math.sin(a) * .9 + j * .06; sp.put(x, y, k % 2 ? M.LEAF3 : M.LEAF, Math.cos(a) * .4, -.2, .9); if (j % 2) { sp.put(x, y - 1, M.LEAF2, 0, -.5, .85); sp.put(x + Math.sign(Math.cos(a)), y + 1, M.LEAF, 0, .3, .9); } }
-    }
-  } else {
-    for (let k = 0; k < P.blades * s; k++) { const x0 = W / 2 + uni(r, -13, 13) * s, h = uni(r, 5, 15) * s, lean = uni(r, -3, 3); for (let j = 0; j < h; j++) sp.put(x0 + lean * j / h * (j / h), H - 1 - j, j > h * .65 ? M.LEAF2 : j < h * .3 ? M.LEAF3 : M.LEAF, lean * .1, -.3, .9); }
-  }
-  const c = treeColours(r, st, null); c[M.FLOWER] = hsv2rgb(r(), .55, .95);
+export function bush(r, st, kind = pick(r, BUSH_KINDS)) { // (kind: one of BUSH_GENOMES, for the sheets)
+  const s = st.bushSize, g = BUSH_GENOMES[kind];
+  const sp = blobBush(r, st, s, g.params), c = treeColours(r, st, null, true); c[M.FLOWER] = hsv2rgb(r(), .55, .95);
   return { sp, colours: c };
 }
