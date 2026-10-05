@@ -37,11 +37,12 @@ describe("sleeping legends (Ed, 2026-10-04)", () => {
     expect(g.buffs.active.map(b => b.id)).toContain(L.id);
   }, 60000);
 
-  it("start home's legend happy, with the party", () => {
+  it("leave home without a legend, so she starts with no buff (Ed, 2026-10-05)", () => {
     const g = newGame(123, TUNING), [hx, hy] = g.map.centreCell;
-    const home = g.creatures.find(c => c.boss && c.cell[0] === hx && c.cell[1] === hy)!;
-    expect(home.legendState).toBe("happy");
-  });
+    expect(g.creatures.some(c => c.boss && c.cell[0] === hx && c.cell[1] === hy)).toBe(false);
+    stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 60);
+    expect(g.buffs.active).toEqual([]);
+  }, 60000);
 
   it("are the only legends: party animals evolve no further than adult", () => {
     expect(toEvolve(0, TUNING)).toBe(2);

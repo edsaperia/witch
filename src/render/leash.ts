@@ -36,6 +36,7 @@ import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
 import { FIGHT, profileOf } from "../rules/movement";
 import { huntsWitch } from "../rules/creatureStates";
+import { relicGlints } from "../rules/legends";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
@@ -761,13 +762,17 @@ export class LeashView {
       this.flat.add(f.x, 0, f.z, 3 * (1 + (1 - k) * 0.6), dot, 1, 0.15, 0.1, k);
     }
 
-    // Relics (#87; placeholder till the art builder's party relics are drawn): a gold mound with a
-    // glint where one lies, and a gold glint over her hat for each she carries.
+    // Relics (#87; placeholder till the art builder's party relics are drawn): a gold mound where
+    // one lies, and its glint, only through a gap in the canopy from the treetops (Ed, 2026-10-05:
+    // "a rare find"), drawn among the scenery, never over the canopy; no markers. A gold glint
+    // over her hat for each she carries.
+    const aloft = w.lift > 0.5;
     for (const r of g.relics) {
       if (r.state !== "lying" || Math.abs(r.x - w.x) > 400 || Math.abs(r.z - w.z) > 400) continue;
       for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; this.standing.add(r.x + Math.cos(a) * 2.5, 0.4 + (i % 3) * 0.5, r.z + Math.sin(a) * 1.8, 1.2, dot, 1, 0.78, 0.3, 0.8); }
+      if (!relicGlints(g.forest, g.map, r, aloft)) continue;
       const tw = Math.max(0, Math.sin(time * 2.5 + r.id * 1.7)) ** 6;
-      this.over.add(r.x, 3.5, r.z, 2 + tw * 4, dot, 1, 0.95, 0.7, 0.4 + 0.6 * tw);
+      this.standing.add(r.x, 3.5, r.z, 2 + tw * 4, dot, 1, 0.95, 0.7, 0.4 + 0.6 * tw);
     }
     s.relics.forEach((id, i) => { const tw = 0.6 + 0.4 * Math.sin(time * 4 + id); this.over.add(w.x + (i - (s.relics.length - 1) / 2) * 0.6, hatTop + 2.2, w.z, 0.5, dot, 1, 0.85, 0.4, tw); });
 

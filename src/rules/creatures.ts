@@ -223,13 +223,14 @@ export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" |
 
 export function spawnCreatures(map: ForestMap): Creature[] {
   const out: Creature[] = [], pop = population(map);
-  // The home area holds no ordinary creatures (Ed, 2026-10-03). Every area, home too, has its
-  // legend (Ed, 2026-10-04): sleeping, out of its clearing; home's is already happy, with the party.
+  // The home area holds no creatures (Ed, 2026-10-03) and no legend (Ed, 2026-10-05: "Home area
+  // shouldn't have a legend": so no buff at the start). Every other area has its legend, sleeping, out of its clearing.
   const [hx, hy] = map.centreCell;
   for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
     const home = cx === hx && cy === hy;
     const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), cell: [number, number] = [cx, cy], make = (level: Level) => out.push(makeCreature(map, cell, level, out.length, r));
-    if (!home) {
+    if (home) continue;
+    {
       // Weaker species come in larger numbers, stronger fewer (Ed, 2026-10-05): 1 / their strength times as many.
       const k = countScale(AREA_TYPES[map.typeOf(cx, cy)].creature);
       for (let i = 0; i < startCount(pop.babies, k); i++) make(0);
@@ -237,8 +238,8 @@ export function spawnCreatures(map: ForestMap): Creature[] {
       for (let i = 0; i < startCount(pop.adults, k); i++) make(2);
     }
     const L = makeCreature(map, cell, LEGEND, out.length, r, legendSpot(map, cell, r));
-    L.legendState = home ? "happy" : "asleep"; L.stateAt = 0;
-    if (!home) L.quest = questFor(map, cell, L.species);
+    L.legendState = "asleep"; L.stateAt = 0;
+    L.quest = questFor(map, cell, L.species);
     out.push(L);
   }
   return out;

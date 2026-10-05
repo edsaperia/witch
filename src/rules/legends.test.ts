@@ -3,7 +3,7 @@ import type { Creature, Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { LEGEND_BUFFS } from "./buffs";
-import { LEGENDS } from "./legends";
+import { LEGENDS, canopyOver, relicGlints } from "./legends";
 import { cellKey } from "./party";
 import { setupQuestDemo } from "./quest";
 import { stateOf } from "./creatureStates";
@@ -177,5 +177,22 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     g.party.areas.set(cellKey(M.cell), { cell: M.cell, wave: 1, at: g.clock.time, from: null, soundsystem: null });
     run(g, 0.2);
     expect(M.questOpen).toBe(false);
+  }, 60000);
+
+  it("glint only through a gap in the canopy from the treetops, always on the ground; lie out in the woods, some under gaps, some under closed canopy (Ed, 2026-10-05)", () => {
+    for (const seed of [123, 7, 4242]) {
+      const g = newGame(seed, TUNING), covered = g.relics.map(r => canopyOver(g.forest, g.map, r.x, r.z));
+      expect(covered.some(c => c), `seed ${seed}: one under closed canopy`).toBe(true);
+      expect(covered.some(c => !c), `seed ${seed}: one under a gap`).toBe(true);
+      for (const r of g.relics) {
+        expect(g.map.hardClear(r.x, r.z)).toBe(false); // (not in a clearing)
+        expect(relicGlints(g.forest, g.map, r, false)).toBe(true);
+        expect(relicGlints(g.forest, g.map, r, true)).toBe(!canopyOver(g.forest, g.map, r.x, r.z));
+      }
+      // The same relic moved under a crown (a tree's crown hangs crownReach north of its trunk): hidden from above.
+      const r = { ...g.relics[0] }, tree = g.forest.treesNear(r.x, r.z, 60)[0];
+      Object.assign(r, { x: tree.x, z: tree.z - TUNING.crownHeight / Math.sin((TUNING.camera.treetop.angleIn * Math.PI) / 180) });
+      expect(relicGlints(g.forest, g.map, r, true)).toBe(false);
+    }
   }, 60000);
 });

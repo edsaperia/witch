@@ -148,9 +148,9 @@ export function newWitchPlayer(id: number, x: number, z: number, t: Tuning): Wit
 export function newGame(seed: number, tuning: Tuning, players = 1): Game {
   const map = generateMap(seed, tuning);
   const witches = Array.from({ length: Math.max(1, players) }, (_, i) => newWitchPlayer(i, map.start.x + i * 2, map.start.z, tuning));
-  const body = witches[0].body, creatures = spawnCreatures(map);
+  const body = witches[0].body, creatures = spawnCreatures(map), forest = new Forest(map);
   const g = {
-    seed, tuning, map, forest: new Forest(map), creatures, clock: newClock(), witches,
+    seed, tuning, map, forest, creatures, clock: newClock(), witches,
     get witch() { return this.witches[0].body; }, set witch(w: WitchState) { this.witches[0].body = w; },
     get leash() { return this.witches[0].leash; }, set leash(l: LeashState) { this.witches[0].leash = l; },
     get spells() { return this.witches[0].spells; }, set spells(s: SpellState) { this.witches[0].spells = s; },
@@ -158,7 +158,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
     beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)),
     floor: newFloor(), buffs: newBuffs(tuning), partyWitches: newPartyWitches(seed),
-    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), questEvents: [] as QuestEvent[], waveEvents: [] as WaveEvent[], relics: placeRelics(map), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), over: null as { at: number } | null,
+    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), questEvents: [] as QuestEvent[], waveEvents: [] as WaveEvent[], relics: placeRelics(map, forest), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), over: null as { at: number } | null,
     acc: 0, alpha: 1, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
   };
   const d = map.dancefloor, C = tuning.combat;
