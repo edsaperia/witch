@@ -18,6 +18,8 @@ import { PARTY_RELICS, PARTY_RELIC_BY_ID, PARTY_RELIC_IDS, PARTY_RELIC_SIGIL, PA
 export { PARTY_RELICS, PARTY_RELIC_BY_ID, PARTY_RELIC_IDS, PARTY_RELIC_SIGIL, PARTY_RELIC_SIGIL_STROKES, PARTY_RELIC_GLINT_FRAMES, partyRelicSprite, partyRelicColours, partyRelicGlint, partyRelicSigilId, partyRelicLight, PARTY_RELIC_FRAMES };
 import { swayMask, bakeSway, swayCode, swayRegions, windShift, SWAY_CELL } from "./sway.js";
 import { tuftSprites, bakeTufts } from "./tufts.js";
+import { GROUND_GENOMES, groundGenome, groundTile, groundColours } from "./ground.js";
+export { GROUND_GENOMES, groundGenome, groundTile, groundColours };
 export { swayMask, bakeSway, swayCode, swayRegions, windShift, SWAY_CELL, tuftSprites, bakeTufts };
 import { TALL_KINDS, tallPiece } from "./tall.js";
 export { TALL_KINDS, tallPiece };

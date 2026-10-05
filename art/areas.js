@@ -17,6 +17,7 @@ import { AREA_FLORA, floraSlots } from "./flora/areas.js";
 // the props that sway in the wind: they get a sway mask (sway.js) beside their albedo and normals
 export const SWAYING_PROPS = new Set(["tree", "shrub", "grass", "reeds", "fern", "flowers", "flowerbed", "bramble", "hedge"]);
 import { TALL_KINDS, tallPiece } from "./tall.js";
+import { groundTile } from "./ground.js";
 
 // [kind, params] shorthands for the prop library below
 const tree = (type, o = {}) => ["tree", { type, ...o }];
@@ -213,36 +214,8 @@ export const WALLS_BLOCK = false;
 export const SET_PIECE_CHANCE = .25;
 
 // ---------------- the floor: a tile of the area's ground ----------------
-// Materials: BODY ground, BODY2 dark, BELLY light, ACCENT stones, FLOWER flowers, LEAF/LEAF2 green bits.
-function floorTile(def, st, W = 64, H = 48) {
-  const [kind, hue, sat, val] = def.floor, sp = new Sprite(W, H), seed = def.id.length * 131;
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    // noise that wraps at the tile's edges, so tiles repeat without a seam
-    const n = (vnoise(x / 7, y / 5, seed) * (W - x) * (H - y) + vnoise((x - W) / 7, y / 5, seed) * x * (H - y) + vnoise(x / 7, (y - H) / 5, seed) * (W - x) * y + vnoise((x - W) / 7, (y - H) / 5, seed) * x * y) / (W * H);
-    const m = n < .38 ? M.BODY2 : n > .64 ? M.BELLY : M.BODY;
-    sp.px(x, y, m, 0, -.42, .91);
-  }
-  const r = rng(seed), dot = (x, y, m) => sp.px(((x % W) + W) % W, ((y % H) + H) % H, m, 0, -.42, .91);
-  const n = { moss: 0, needles: 70, mud: 25, stony: 30, nettles: 60, leaves: 80, grass: 70, lawn: 30, plants: 60, roots: 30, slate: 40, tallgrass: 90, flowers: 70, pebbles: 60, scree: 70, earth: 15, stone: 40, heather: 90, bluebells: 90, clover: 60 }[kind] ?? 40;
-  for (let i = 0; i < n; i++) {
-    const x = Math.floor(r() * W), y = Math.floor(r() * H);
-    if (kind === "needles") { const d = r() < .5 ? 1 : -1; for (let k = 0; k < 3; k++) dot(x + k * d, y + (k >> 1), r() < .5 ? M.BODY2 : M.ACCENT); }
-    else if (["grass", "lawn", "tallgrass", "plants", "nettles", "clover", "flowers", "bluebells", "heather"].includes(kind)) {
-      const h = kind === "tallgrass" ? 4 : kind === "lawn" ? 1 : 2;
-      for (let k = 0; k < h; k++) dot(x, y - k, k === h - 1 ? M.LEAF2 : M.LEAF);
-      if ((kind === "flowers" || kind === "bluebells" || kind === "heather" || kind === "clover") && r() < .5) dot(x + 1, y - h, M.FLOWER);
-    }
-    else if (["stony", "pebbles", "scree", "slate", "stone", "roots"].includes(kind)) { dot(x, y, M.ACCENT); if (r() < .6) dot(x + 1, y, M.ACCENT); if (r() < .4) dot(x, y + 1, M.BODY2); if (kind === "roots" && r() < .5) for (let k = 0; k < 5; k++) dot(x + k, y + (k > 2 ? 1 : 0), M.TRUNK); }
-    else if (kind === "leaves") { dot(x, y, M.FLOWER); dot(x + 1, y, M.FLOWER); if (r() < .5) dot(x, y + 1, M.ACCENT); }
-    else if (kind === "mud" || kind === "earth") { for (let k = 0; k < 3; k++) dot(x + k, y, M.BODY2); }
-  }
-  const flower = { flowers: hsv2rgb(.13, .6, .95), bluebells: [90, 110, 230], heather: [180, 90, 170], clover: [240, 235, 240], leaves: hsv2rgb(hue + .02, .65, .6) }[kind] || hsv2rgb(hue, .3, .6);
-  const colours = {
-    [M.BODY]: hsv2rgb(hue, sat * st.sat, val), [M.BODY2]: hsv2rgb(hue + .02, sat * st.sat * 1.1, val * .78), [M.BELLY]: hsv2rgb(hue - .02, sat * st.sat * .9, Math.min(1, val * 1.15)),
-    [M.ACCENT]: kind === "needles" ? hsv2rgb(.07, .5, .5) : hsv2rgb(.1, .08, .62), [M.FLOWER]: flower, [M.LEAF]: hsv2rgb(def.leaf, .55 * st.sat, .45), [M.LEAF2]: hsv2rgb(def.leaf - .03, .5 * st.sat, .62), [M.TRUNK]: hsv2rgb(st.trunkHue, .4, .3),
-  };
-  return { sp, colours };
-}
+// Grown from the area's ground genome (art/ground.js, #119): its floor kind's, with the area's own `ground` over it.
+function floorTile(def, st) { return groundTile(def, st, 0); }
 
 // ---------------- the prop library ----------------
 const stoneCol = (moss) => ({ [M.ACCENT]: hsv2rgb(.1, .06, .6), [M.BODY2]: hsv2rgb(.62, .08, .4), [M.BELLY]: hsv2rgb(.1, .05, .78), [M.LEAF]: hsv2rgb(.27, .5, .45), [M.LEAF2]: hsv2rgb(.25, .45, .62), [M.NOSE]: [20, 16, 24], ...(moss ? {} : {}) });
