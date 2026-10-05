@@ -2,41 +2,71 @@
 // character creator at the start of the game where she is in her house and you can tweak the sliders
 // to change her outfit!"). She stands in her treehouse room, big, hovering and standing, redrawn live
 // as you change her genome (art/witchGenome.js): a picker or a slider for every axis in WITCH_AXES,
-// grouped (hat, hair, outfit, broom, and anything new the art builders add), a toggle per accessory,
-// and a row of swatches per colour part. Randomise, the classic witch, Start. Her look is kept on this
-// browser (localStorage witch.genome) for next time. The generator's limits keep her a witch: only
+// grouped (hat, hair, outfit, broom, and anything new the art builders add), a toggle per accessory
+// (and a slider for each accessory's size), and a 256-step rainbow and a shade per colour part (Ed,
+// round 11: "the colours should have 256 rainbow colour pickers"). Randomise, the classic witch, Start.
+// Her look is kept on this browser (localStorage witch.genome, version 2) for next time; an older save
+// loads over the classic witch, its missing fields hers and anything past the limits brought inside. The generator's limits keep her a witch: only
 // pointed hats with their glowing band, always a broom, dark hats so the band shows.
 import * as Art from "../../art/generator.js";
 import type { Style } from "../render/style";
 
-type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean>; palette: Record<string, number[]> | null; [k: string]: unknown };
+type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | number>; palette: Record<string, number[]> | null; [k: string]: unknown };
 
 const AXES = Art.WITCH_AXES as Record<string, unknown[] | [number, number]>;
 const CLASSIC = Art.WITCH_GENOME as unknown as Genome;
 const KEY = "witch.genome";
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
 
-/** Her saved look, if any and still a witch by the generator's rules. */
+/** The save's version: 2 since round 11 (wider limits, new hats and accessories). */
+export const SAVE_VERSION = 2;
+
+/** A saved look of any version made a genome of today's: laid over the classic witch (so a field it
+ *  lacks is hers), every axis kept to its limits (a kind it doesn't know is hers, a number past its
+ *  range brought inside it), the palette's parts kept where they're colours. Null if it's no genome. */
+export function migrateGenome(raw: unknown): Genome | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const o = raw as Record<string, unknown>, g = clone(CLASSIC);
+  const part = (k: string) => (o[k] && typeof o[k] === "object" ? o[k] as Record<string, unknown> : {});
+  for (const k of ["hat", "broom", "accessories"]) Object.assign(g[k] as object, Object.fromEntries(Object.entries(part(k)).filter(([, v]) => ["string", "number", "boolean"].includes(typeof v))));
+  for (const k of ["hair", "top", "cloak"]) if (typeof o[k] === "string") g[k] = o[k];
+  for (const [axis, lim] of Object.entries(AXES)) {
+    const [p, key] = slot(axis), host = (p ? g[p] : g) as Record<string, unknown>, def = (p ? (CLASSIC[p] as Record<string, unknown>) : CLASSIC)[key];
+    if (typeof lim[0] === "string") { if (!(lim as unknown[]).includes(host[key])) host[key] = def ?? lim[0]; }
+    else {
+      const [a, z] = lim as [number, number], v = host[key];
+      host[key] = typeof v === "number" && Number.isFinite(v) ? Math.min(z, Math.max(a, v)) : def ?? a;
+    }
+  }
+  const pal = o.palette && typeof o.palette === "object" ? Object.entries(o.palette as Record<string, unknown>).filter(([, c]) => Array.isArray(c) && c.length === 3 && c.every(v => typeof v === "number" && v >= 0 && v <= 1)) : [];
+  g.palette = pal.length ? Object.fromEntries(pal) as Record<string, number[]> : null;
+  return (Art.witchGenomeProblems as (g: unknown) => string[])(g).length ? null : g;
+}
+
+/** Her saved look, if any (any version: see migrateGenome). */
 export function loadGenome(): Genome | null {
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return null;
-    const g = JSON.parse(raw) as Genome;
-    return (Art.witchGenomeProblems as (g: unknown) => string[])(g).length ? null : g;
+    return raw ? migrateGenome(JSON.parse(raw)) : null;
   } catch { return null; }
 }
-export function saveGenome(g: Genome): void { try { localStorage.setItem(KEY, JSON.stringify(g)); } catch { /* storage blocked: this run only */ } }
+export function saveGenome(g: Genome): void { try { localStorage.setItem(KEY, JSON.stringify({ ...g, v: SAVE_VERSION })); } catch { /* storage blocked: this run only */ } }
 
 /** Where an axis lives in the genome: hatHeight is hat.height, broom is broom.kind, broomLength is
  *  broom.length, bristles is broom.bristles, hair is hair; a new axis follows the same pattern. */
 export function slot(axis: string): [string | null, string] {
   if (axis === "hatShape") return ["hat", "shape"];
+  if (ACCESSORY_AXES.has(axis)) return ["accessories", axis];
   if (axis === "broom") return ["broom", "kind"];
   if (axis === "bristles") return ["broom", "bristles"];
   for (const part of ["hat", "broom"]) if (axis.startsWith(part) && axis.length > part.length) return [part, axis[part.length].toLowerCase() + axis.slice(part.length + 1)];
   return [null, axis];
 }
-const groupOf = (axis: string) => axis.startsWith("hat") ? "Hat" : axis === "hair" ? "Hair" : axis === "top" || axis === "cloak" ? "Outfit" : axis.startsWith("broom") || axis === "bristles" ? "Broom" : "More";
+/** The accessories' sizes (round 11): sliders kept in genome.accessories beside its toggles. */
+const ACCESSORY_AXES = new Set(["scarfLength", "bagSize", "backpack"]);
+/** Sliders whose bottom is "none" (the backpack): a value in the lowest share of the range snaps to 0. */
+const NONE_AT_BOTTOM = new Set(["backpack"]);
+const groupOf = (axis: string) => ACCESSORY_AXES.has(axis) ? "Accessories" : axis.startsWith("hat") ? "Hat" : axis === "hair" ? "Hair" : axis === "top" || axis === "cloak" ? "Outfit" : axis.startsWith("broom") || axis === "bristles" ? "Broom" : "More";
 const label = (s: string) => s.replace(/([A-Z])/g, " $1").replace(/^hat |^broom /i, "").toLowerCase();
 
 /** The colours the classic witch shows (the style's hues over her default outfit), as a palette to start editing from. */
@@ -45,17 +75,19 @@ function classicPalette(st: Style): Record<string, number[]> {
   const hue: Record<string, number | undefined> = { hair: S.hairHue, jacket: S.cloakHue, hat: S.hatHue, top: S.topHue, jeans: S.jeansHue, sneakers: S.shoeHue, headphones: S.phonesHue };
   return Object.fromEntries(Object.entries(D).map(([k, [h, s, v]]) => [k, [hue[k] ?? h, s, v]]));
 }
-/** The parts a player colours, and each one's swatches (hue, saturation, value). */
-const PARTS = ["hat", "jacket", "cloak", "top", "hair", "skin", "jeans", "sneakers", "headphones", "scarf", "satchel", "broom", "bristles"];
-const HUES = [0, .04, .09, .14, .3, .45, .55, .62, .7, .78, .86, .93];
-function swatches(part: string): number[][] {
-  if (part === "skin") return [[.07, .25, .96], [.07, .32, .9], [.07, .42, .78], [.06, .5, .62], [.05, .55, .47], [.05, .5, .34]];
-  if (part === "hair") return [[.07, .4, .14], [.07, .6, .33], [.04, .7, .5], [.11, .45, .88], [.02, .75, .7], [.6, .04, .86], [.85, .5, .8], [.5, .5, .7], [.75, .5, .7], [.3, .5, .6]];
-  if (part === "hat") return HUES.map(h => [h, .55, .42]); // dark, so the glowing band shows
-  if (part === "broom" || part === "bristles") return [[.07, .6, .45], [.08, .5, .6], [.1, .45, .8], [.12, .55, .9], [.05, .3, .3], [0, 0, .85]];
-  return [...HUES.map(h => [h, .6, .85]), [0, 0, .95], [0, 0, .2]];
-}
+/** The parts a player colours (the palette's, and any new part the art adds to it). */
+const PARTS = ["hat", "jacket", "cloak", "top", "hair", "skin", "jeans", "sneakers", "headphones", "scarf", "satchel", "backpack", "broom", "bristles"];
+/** The hue strip's steps (Ed, round 11: "256 rainbow colour pickers"); baking still keeps to the art's tones. */
+export const HUE_STEPS = 256;
 const css = ([h, s, v]: number[]) => { const [r, g, b] = (Art.hsv2rgb as (h: number, s: number, v: number) => number[])(h, s, v); return `rgb(${r | 0},${g | 0},${b | 0})`; };
+/** A shade, 0 black to 1 white through the colour itself at 0.5, as saturation and value over a
+ *  colour's own saturation `sat`; and back. */
+export function shadeToSV(shade: number, sat: number): [number, number] {
+  return shade <= .5 ? [sat, Math.max(0, shade * 2)] : [sat * Math.max(0, 2 - shade * 2), 1];
+}
+export function svToShade(s: number, v: number, sat: number): number {
+  return v < 1 - 1e-6 || sat <= 1e-6 ? v / 2 : 1 - s / sat / 2;
+}
 
 /** Her treehouse room, painted small and shown big: plank walls, a round window on the night with the
  *  moon, a shelf of jars, a rug and a warm lantern. Plain for now; the art builders can dress it. */
@@ -200,7 +232,8 @@ export class Creator {
         const [a, z] = lim as [number, number], s = document.createElement("input");
         s.type = "range"; s.min = String(a); s.max = String(z); s.step = String((z - a) / 100); s.value = String(get(axis) ?? a);
         s.style.flex = "1";
-        s.addEventListener("input", () => set(axis, +s.value));
+        // (the backpack's bottom is none: the lowest share of the slider snaps to 0)
+        s.addEventListener("input", () => set(axis, NONE_AT_BOTTOM.has(axis) && +s.value < a + (z - a) * .12 ? Math.min(a, 0) : +s.value));
         r.append(s);
       }
     }
@@ -208,6 +241,7 @@ export class Creator {
     const acc = group("Accessories"), ar = row(acc, "");
     ar.firstElementChild?.remove();
     for (const k of Object.keys({ ...CLASSIC.accessories, ...g.accessories })) {
+      if (ACCESSORY_AXES.has(k) || typeof (g.accessories[k] ?? CLASSIC.accessories[k]) !== "boolean") continue; // (sizes have sliders)
       const l = document.createElement("label"), c = document.createElement("input");
       c.type = "checkbox"; c.checked = !!g.accessories[k];
       c.addEventListener("change", () => { g.accessories[k] = c.checked; this.dirty = true; });
@@ -215,17 +249,33 @@ export class Creator {
       l.append(c, document.createTextNode(label(k)));
       ar.append(l);
     }
-    // Colours: a row of swatches per part (her classic colours until one is picked).
-    const col = group("Colours");
+    // Colours: per part a rainbow of HUE_STEPS hues and a shade (black, the colour, white), her
+    // classic colours until one is moved.
+    const col = group("Colours"), classicPal = classicPalette(this.style), rainbow = Array.from({ length: 13 }, (_, i) => css([i / 12, .85, 1])).join(",");
     for (const part of PARTS) {
-      const r = row(col, label(part));
-      for (const sw of swatches(part)) {
-        const b = document.createElement("button");
-        b.type = "button"; b.title = `${part}`;
-        Object.assign(b.style, { width: "16px", height: "16px", padding: "0", border: "1px solid rgba(0,0,0,.6)", borderRadius: "3px", background: css(sw), cursor: "pointer" });
-        b.addEventListener("click", () => { g.palette = { ...(g.palette ?? classicPalette(this.style)), [part]: sw }; this.dirty = true; });
-        r.append(b);
-      }
+      const start = (g.palette ?? classicPal)[part] ?? classicPal[part];
+      if (!start) continue; // (a part the art doesn't colour yet)
+      const r = row(col, label(part)), chip = document.createElement("span");
+      const sat = Math.max(.35, start[1]); // the shade slider's full colour
+      Object.assign(chip.style, { width: "14px", height: "14px", borderRadius: "3px", border: "1px solid rgba(0,0,0,.6)", background: css(start) });
+      const hue = document.createElement("input"), shade = document.createElement("input");
+      hue.type = shade.type = "range";
+      hue.min = "0"; hue.max = String(HUE_STEPS - 1); hue.step = "1"; hue.value = String(Math.round(start[0] * HUE_STEPS) % HUE_STEPS);
+      shade.min = "0"; shade.max = "1"; shade.step = String(1 / 100); shade.value = String(svToShade(start[1], start[2], sat));
+      hue.title = `${part}: hue`; shade.title = `${part}: shade`;
+      hue.dataset.part = shade.dataset.part = part;
+      Object.assign(hue.style, { flex: "2", minWidth: "90px", height: "10px", appearance: "none", background: `linear-gradient(90deg,${rainbow})`, borderRadius: "5px" });
+      Object.assign(shade.style, { flex: "1", minWidth: "50px", height: "10px", appearance: "none", borderRadius: "5px" });
+      const paint = () => {
+        const h = +hue.value / HUE_STEPS, [s, v] = shadeToSV(+shade.value, sat), c = [h, s, v];
+        shade.style.background = `linear-gradient(90deg,#000,${css([h, sat, 1])},#fff)`;
+        chip.style.background = css(c);
+        return c;
+      };
+      const pick = () => { g.palette = { ...(g.palette ?? classicPal), [part]: paint() }; this.dirty = true; };
+      paint();
+      hue.addEventListener("input", pick); shade.addEventListener("input", pick);
+      r.append(chip, hue, shade);
     }
     // The buttons.
     const bar = document.createElement("div");
