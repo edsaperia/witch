@@ -18,6 +18,8 @@ export interface LegendsData {
   relics: { count: number; kinds: string[]; minRemoteness: number; spacing: number; pickRadius: number };
   attack: { range: number; interval: number; windup: number; damage: number; targets: number; wornReach: number; lobFlight: number; lobRadius: number; beamWidth: number; beamTime: number; beam: string[] };
   healTime: number;
+  charge: { species: string[]; windup: number; laneShown: number; speed: number; accel: number; turn: number; brake: number; arc: number; laneWidth: number; damage: number; knockback: number; returnSpeed: number; rest: number };
+  closeMoves: boolean;
 }
 export const LEGENDS = raw as unknown as LegendsData;
 
@@ -121,7 +123,7 @@ export function cheer(c: Creature, time: number): void {
 
 /** Worn down (its health gone): back to sleep, its buff (if earned) kept. */
 export function lull(c: Creature, time: number): void {
-  Object.assign(c, { legendState: "asleep", stateAt: time, enraged: false, state: undefined, hp: undefined, fight: undefined, siege: undefined, restlessness: 0, charge: undefined, legend: undefined, slowUntil: undefined, stunUntil: undefined, kx: 0, kz: 0 });
+  Object.assign(c, { legendState: "asleep", stateAt: time, enraged: false, state: undefined, hp: undefined, fight: undefined, siege: undefined, restlessness: 0, charge: undefined, run: undefined, legend: undefined, slowUntil: undefined, stunUntil: undefined, kx: 0, kz: 0 });
 }
 
 /** Whether a legend gives its buff: its quest done, or made happy by a relic (for good either way). */
