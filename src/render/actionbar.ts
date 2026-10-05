@@ -10,9 +10,11 @@ const LOOK: Record<string, { icon: string; name: string }> = {
   spell: { icon: "⚡", name: "spell: speed boost" },
   dash: { icon: "»", name: "dash (on the ground)" },
   sigil: { icon: "◈", name: "put down / pick up a sigil" },
-  cycle: { icon: "↻", name: "cycle the sigil stack" },
   autoTalk: { icon: "💬", name: "auto-talk on or off (also T); off, hold Shift to talk" },
 };
+
+/** The sigil slot in the treetops, where E cycles the stack. */
+const CYCLE = { icon: "↻", name: "cycle the sigils (the bottom one to the top)" };
 
 export class ActionBar {
   private root = document.createElement("div");
@@ -50,6 +52,13 @@ export class ActionBar {
     ACTION_BAR.forEach((s, i) => {
       const shade = this.shades[i], el = this.slots[i];
       if (s.action === "autoTalk") { el.style.borderColor = this.autoTalk ? "rgba(111,230,255,.9)" : "rgba(232,226,244,.35)"; el.style.opacity = this.autoTalk ? "1" : "0.55"; el.title = `1 / T: auto-talk ${this.autoTalk ? "on" : "off (hold Shift to talk)"}`; return; }
+      // The sigil slot shows what E does now (Ed, 2026-10-05): cycle in the treetops, put down / pick up on the ground.
+      if (s.action === "sigil") {
+        const ground = W.body.mode === "ground", icon = el.firstElementChild as HTMLElement;
+        const look = ground ? LOOK.sigil : CYCLE;
+        if (icon.textContent !== look.icon) { icon.textContent = look.icon; el.title = `${s.key}: ${look.name}`; }
+        return;
+      }
       if (!shade) return;
       const charge = s.action === "spell" ? spellCharge(W.spells, time) : dashCharge(W.dash, time);
       const on = s.action === "spell" ? spellActive(W.spells, time) : dashing(W.dash, time);

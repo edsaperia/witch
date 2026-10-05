@@ -27,7 +27,9 @@ describe("ground cover extras", () => {
     expect(reeds).toBeGreaterThan(5);
   });
   it("keeps clear of trunks and grows thicker round their feet", () => {
-    const d = map.dancefloor, x = d.x + 120, z = d.z + 90, trees = forest.treesNear(x, z, 30);
+    // Somewhere wooded near home (not in an area's open arena).
+    const d = map.dancefloor, spots = Array.from({ length: 64 }, (_, i) => [d.x + 120 + (i % 8) * 25, d.z + 90 + Math.floor(i / 8) * 25]);
+    const [x, z] = spots.find(([sx, sz]) => forest.treesNear(sx, sz, 30).length > 12)!, trees = forest.treesNear(x, z, 30);
     expect(trees.length).toBeGreaterThan(5);
     const withF = cells(x, z, 30, forest), without = cells(x, z, 30);
     for (const t of withF) for (const p of trees) expect(Math.hypot(t.x - p.x, t.z - p.z)).toBeGreaterThanOrEqual(0.35 - 1e-6);

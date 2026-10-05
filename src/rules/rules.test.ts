@@ -8,7 +8,7 @@ import { Forest, crownReach, treeChance } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
 import { population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
-import { dormant, newGame, STEP, stepGame } from "./game";
+import { dormant, newGame, simRadius, STEP, stepGame } from "./game";
 import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, symbolCount, wavePlan } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
@@ -114,10 +114,10 @@ describe("the map", () => {
     expect(checked).toBe(400 * 24);
     expect(safeSum / 400).toBeGreaterThan(0.3); // worth having: a creature asks about every so many metres
   });
-  it("is 20 x 20 areas with 30 area types", () => {
-    expect(map.n).toBe(20);
+  it("is mapAreas x mapAreas areas with 30 area types", () => {
+    expect(map.n).toBe(TUNING.mapAreas);
     expect(AREA_TYPES.length).toBe(30);
-    expect(map.bounds.maxX - map.bounds.minX).toBeCloseTo(19 * map.areaSize);
+    expect(map.bounds.maxX - map.bounds.minX).toBeCloseTo((map.n - 1) * map.areaSize);
   });
 
   it("never gives two touching areas the same type", () => {
@@ -137,7 +137,7 @@ describe("the map", () => {
   });
 
   it("finds no touching same-type areas even when sampled more finely than it was built", () => {
-    for (let j = 0; j < 400; j++) for (let i = 0; i < 400; i++) {
+    for (let j = 0; j < map.n * 20; j++) for (let i = 0; i < map.n * 20; i++) { // (over the map: 20 samples an area)
       const x = (i / 20) * map.areaSize, z = (j / 20) * map.areaSize;
       const a = map.areaAt(x, z), b = map.areaAt(x + map.areaSize / 20, z), c = map.areaAt(x, z + map.areaSize / 20);
       if (a.cell.join() !== b.cell.join()) expect(a.type).not.toBe(b.type);
@@ -176,7 +176,7 @@ describe("the map", () => {
     expect(varied.areas).toBeLessThan(470);
   });
 
-  it("is a forest with clearings: mostly dense woods, open ground in distinct clearings with crisp-ish edges", () => {
+  it("is a forest with clearings: mostly dense woods, open ground in distinct clearings (their edges softened round each area's arena: Ed, 2026-10-05)", () => {
     let dense = 0, open = 0, between = 0, n = 0;
     for (let i = 0; i < 4000; i++) {
       const x = map.bounds.minX + hash2(i, 1, 9) * (map.bounds.maxX - map.bounds.minX), z = map.bounds.minZ + hash2(i, 2, 9) * (map.bounds.maxZ - map.bounds.minZ);
@@ -184,9 +184,11 @@ describe("the map", () => {
       n++;
       if (w > 0.95) dense++; else if (w < 0.05) open++; else between++;
     }
-    expect(dense / n).toBeGreaterThan(0.6);
-    expect(open / n).toBeGreaterThan(0.05);
-    expect(between / n).toBeLessThan(0.2);
+    // (Ed, 2026-10-05, at v473: the woods thin gradually across most of an area towards its runestone,
+    // so as much lies on that gradient as in full woods; and there's real open ground.)
+    expect(dense / n).toBeGreaterThan(0.35);
+    expect(between / n).toBeGreaterThan(0.25); // a long, soft gradient, not a step
+    expect(open / n).toBeGreaterThan(0.03);
   });
 
   it("uses many area types", () => {
@@ -198,7 +200,7 @@ describe("the map", () => {
   it("puts the dancefloor in the clearing of the middle area, the treehouse by it, where the witch starts", () => {
     const d = map.dancefloor, a = map.areaAt(d.x, d.z);
     expect(a.cell).toEqual(map.centreCell);
-    expect(Math.abs(map.centreCell[0] - 10) + Math.abs(map.centreCell[1] - 10)).toBeLessThanOrEqual(2);
+    expect(Math.abs(map.centreCell[0] - map.n / 2) + Math.abs(map.centreCell[1] - map.n / 2)).toBeLessThanOrEqual(2);
     expect(a.openness).toBeLessThan(0.05);
     expect(map.treeWeight(d.x, d.z)).toBe(0);
     const th = map.treehouse, far = Math.hypot(th.x - d.x, th.z - d.z);
@@ -435,7 +437,11 @@ describe("the camera", () => {
     const g = TUNING.camera.ground, t = TUNING.camera.treetop;
     expect(cameraPose(c, 0, TUNING).angle).toBeCloseTo(g.angleIn);
     expect(cameraPose(c, 1, TUNING).angle).toBeCloseTo(t.angleIn);
-    expect(cameraPose(c, 1, TUNING).distance).toBeCloseTo(t.distanceIn);
+    // Over the treetops it sits out by (treetopSpeed / speedZoom.base)^power (Ed, 2026-10-05: faster flight, more ground on screen).
+    const SZ = TUNING.camera.speedZoom!, fast = Math.pow(TUNING.treetopSpeed / SZ.base, SZ.power);
+    expect(cameraPose(c, 1, TUNING).distance).toBeCloseTo(t.distanceIn * fast);
+    expect(cameraPose(c, 1, { ...TUNING, treetopSpeed: SZ.base * 2 }).distance).toBeCloseTo(t.distanceIn * Math.pow(2, SZ.power));
+    expect(cameraPose(c, 0, { ...TUNING, treetopSpeed: SZ.base * 2 }).distance).toBeCloseTo(g.distanceIn); // (the ground camera is left alone)
     const still = { x: 0, z: 0 };
     for (let i = 0; i < 10; i++) c = stepCamera(c, 1, { x: 0, y: 0, z: 0 }, still, 0, 1 / 60, TUNING);
     for (let i = 0; i < 300; i++) c = stepCamera(c, 0, { x: 0, y: 0, z: 0 }, still, 0, 1 / 60, TUNING);
@@ -531,30 +537,31 @@ describe("creatures", () => {
     const sample = all.filter((_, i) => i % 97 === 0).slice(0, 5);
     for (const c of sample) {
       const visited = new Set<string>(), start = [c.x, c.z];
-      for (let i = 0; i < 10 * 60 * 40; i++) { // forty minutes, in tenths of a second
+      const k = map.areaSize / 112, minutes = 40 * k * k, sq = 8 * k; // forty minutes in an area 112 m across, longer in bigger ones by its area (they walk no faster)
+      for (let i = 0; i < 10 * 60 * minutes; i++) { // in tenths of a second
         const px = c.x, pz = c.z;
         stepCreature(c, 1 / 10, map);
         expect(Math.hypot(c.x - px, c.z - pz)).toBeLessThanOrEqual(c.speed / 10 + 1e-9);
         if (i % 5 === 0) {
           expect(map.areaAt(c.x, c.z).cell, `creature ${c.id}`).toEqual(c.cell);
-          visited.add(`${Math.floor(c.x / 8)},${Math.floor(c.z / 8)}`);
+          visited.add(`${Math.floor(c.x / sq)},${Math.floor(c.z / sq)}`);
         }
       }
-      // How much of its area (in 8 m squares) it has been to.
+      // How much of its area (in squares 8 m across in an area 112 m across, bigger in bigger ones) it has been to.
       let squares = 0;
-      for (let x = c.homeX - c.range; x < c.homeX + c.range; x += 8) for (let z = c.homeZ - c.range; z < c.homeZ + c.range; z += 8) {
-        const a = map.areaAt(Math.floor(x / 8) * 8 + 4, Math.floor(z / 8) * 8 + 4).cell;
+      for (let x = c.homeX - c.range; x < c.homeX + c.range; x += sq) for (let z = c.homeZ - c.range; z < c.homeZ + c.range; z += sq) {
+        const a = map.areaAt(Math.floor(x / sq) * sq + sq / 2, Math.floor(z / sq) * sq + sq / 2).cell;
         if (a[0] === c.cell[0] && a[1] === c.cell[1]) squares++;
       }
       expect(visited.size / squares, `creature ${c.id}`).toBeGreaterThan(0.4);
       expect([c.x, c.z]).not.toEqual(start);
     }
-  }, 60000);
+  }, 180000);
 
   it("only move near the witch, and pick up plausibly when she comes back", () => {
     const g = newGame(123, TUNING);
     g.clock.paused = false;
-    const far = g.creatures.filter(c => Math.abs(c.homeX - g.witch.x) > TUNING.creatureSimRadius + 10);
+    const far = g.creatures.filter(c => Math.abs(c.homeX - g.witch.x) > simRadius(g) + 10); // (the radius grows with the areas)
     const before = far.map(c => [c.x, c.z, c.rest]);
     for (let i = 0; i < 300; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 30);
     expect(far.map(c => [c.x, c.z, c.rest])).toEqual(before);
@@ -569,11 +576,11 @@ describe("creatures", () => {
 });
 
 describe("light sources", () => {
-  const forest = new Forest(map), all = forest.lightsNear(280, 280, 280);
+  const forest = new Forest(map), all = forest.lightsNear((map.bounds.minX + map.bounds.maxX) / 2, (map.bounds.minZ + map.bounds.maxZ) / 2, (map.bounds.maxX - map.bounds.minX) / 2); // (most of the map: the areas are big)
   it("come as campfires and ponds (rune stones now only mark soundsystem spots), the same from the same seed, and keep off the dancefloor", () => {
     const kinds = new Set(all.map(l => l.kind));
     expect([...kinds].sort()).toEqual(["campfire", "pond"]);
-    expect(new Forest(map).lightsNear(280, 280, 280).map(l => l.x.toFixed(2)).join()).toBe(all.map(l => l.x.toFixed(2)).join());
+    expect(new Forest(map).lightsNear((map.bounds.minX + map.bounds.maxX) / 2, (map.bounds.minZ + map.bounds.maxZ) / 2, (map.bounds.maxX - map.bounds.minX) / 2).map(l => l.x.toFixed(2)).join()).toBe(all.map(l => l.x.toFixed(2)).join());
     const d = map.dancefloor;
     for (const l of all) expect(Math.hypot(l.x - d.x, l.z - d.z)).toBeGreaterThan(d.radius + TUNING.dancefloor.clearing);
   });
@@ -918,9 +925,14 @@ describe("inviting and leashing", () => {
     stepLeash(s, all, { sigil: true }, { x: 520 + gap, z: 500 }, true, 103, 0.1, TUNING);
     expect(s.events.map(e => e.kind)).toEqual(["fizzled"]);
     expect(s.stack).toEqual([a.c.id, c.c.id]);
-    // No placing from the treetops.
+    // No placing from the treetops, and no picking up (Ed, 2026-10-05: "You have to land to place sigils"): there the button cycles the stack instead.
     stepLeash(s, all, { sigil: true }, { x: 700, z: 700 }, false, 104, 0.1, TUNING);
+    expect(s.stack).toEqual([c.c.id, a.c.id]);
+    expect(s.events.map(e => e.kind)).toEqual(["cycled"]);
+    stepLeash(s, all, { sigil: true }, { x: 520, z: 500 }, false, 105, 0.1, TUNING); // over b's placed sigil, in the air
+    expect(s.placed.map(p => p.id)).toEqual([b.c.id]);
     expect(s.stack).toEqual([a.c.id, c.c.id]);
+    expect(s.events.map(e => e.kind)).toEqual(["cycled"]);
   });
 
   it("is elastic: a creature walks to its new leash point, never jumps, then stays within the leash", () => {
@@ -1015,7 +1027,7 @@ describe("the density field", () => {
     const chances: number[] = [];
     for (let i = 0; i < 3000; i++) {
       const x = map.bounds.minX + hash2(i, 5, 9) * (map.bounds.maxX - map.bounds.minX), z = map.bounds.minZ + hash2(i, 6, 9) * (map.bounds.maxZ - map.bounds.minZ);
-      if (map.hardClear(x, z) || map.paths.at(x, z) || map.paths.pieceAt(x, z)) continue; // corridors and path pieces are kept clear (tested with the paths)
+      if (map.hardClear(x, z) || map.paths.at(x, z) || map.paths.pieceAt(x, z) || map.arenaOpen(x, z) < 1) continue; // corridors, path pieces and arenas are kept clear (tested with them)
       chances.push(treeChance(map, x, z, map.areaAt(x, z).type));
     }
     const share = (lo: number, hi: number) => chances.filter(c => c >= lo && c < hi).length / chances.length;
@@ -1023,6 +1035,43 @@ describe("the density field", () => {
     expect(share(0.6, 9)).toBeGreaterThan(0.08);   // dense woods
     expect(share(0, 0.15)).toBeGreaterThan(0.15);  // open and sparse ground
     expect(share(0.15, 0.6)).toBeGreaterThan(0.2); // and plenty in between
+  });
+  it("keeps every area's fighting arena open, its edge soft (Ed, 2026-10-05): no tree in its middle, the woods thickening gradually through its band, and back beyond it", () => {
+    const R = TUNING.arena!, k = TUNING.fight.scale, open = (R.radius - R.noise * R.band) * k, full = (R.radius + R.band * (1 + R.noise)) * k + 4;
+    let inside = 0;
+    const rings = [0, 0, 0], ringN = [0, 0, 0], lone = [0, 0, 0];
+    let beyond = 0, outsideTrees = 0;
+    for (let cy = 1; cy < map.n - 1; cy++) for (let cx = 1; cx < map.n - 1; cx++) {
+      if (cx === map.centreCell[0] && cy === map.centreCell[1]) continue;
+      const s = map.siteOf(cx, cy), mine = (x: number, z: number) => map.areaAt(x, z).cell.join() === `${cx},${cy}`;
+      for (let i = 0; i < 24; i++) {
+        const a = (i / 24) * Math.PI * 2, d = open * hash2(cx * 31 + i, cy, 7), x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
+        if (!mine(x, z)) continue;
+        inside++;
+        expect(treeChance(map, x, z, map.areaAt(x, z).type), `${cx},${cy} at ${d.toFixed(0)} m`).toBe(0);
+      }
+      // Through the band, in thirds: the odds of a tree rise gradually (no wall at a radius).
+      for (let i = 0; i < 48; i++) {
+        const third = i % 3, a = (i / 48) * Math.PI * 2, d = (R.radius + R.band * (third + 0.5) / 3) * k, x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
+        if (!mine(x, z) || map.hardClear(x, z) || map.paths.at(x, z)) continue;
+        const c = treeChance(map, x, z, map.areaAt(x, z).type);
+        rings[third] += c; ringN[third]++; if (c > 0 && c <= TUNING.density.lone) lone[third]++;
+      }
+      for (let i = 0; i < 24; i++) {
+        const a = (i / 24) * Math.PI * 2, x = s.x + Math.cos(a) * full, z = s.z + Math.sin(a) * full;
+        if (!mine(x, z) || map.hardClear(x, z) || map.paths.at(x, z)) continue;
+        beyond++;
+        if (treeChance(map, x, z, map.areaAt(x, z).type) >= TUNING.density.lone) outsideTrees++;
+      }
+    }
+    expect(inside).toBeGreaterThan(500);
+    const mean = rings.map((r, i) => r / ringN[i]);
+    expect(mean[0]).toBeGreaterThan(0); // trees start within the band's first third...
+    expect(mean[1]).toBeGreaterThan(mean[0] * 1.5); // ...and thicken through it
+    expect(mean[2]).toBeGreaterThan(mean[1] * 1.2);
+    expect(mean[0]).toBeLessThan(mean[2] * 0.5); // gradually: no jump at its inner edge
+    expect(lone[0]).toBeGreaterThan(0); // scattered lone trees out in the clearing
+    expect(outsideTrees / beyond).toBeGreaterThan(0.9); // the woods are back past its band
   });
   it("keeps the dancefloor clear of every tree", () => {
     const d = map.dancefloor;
@@ -1086,7 +1135,7 @@ describe("paths, roads and railways", () => {
     }
     expect(edge / edgeN).toBeGreaterThan((open / openN) * 1.5);
     for (const w of forest.wallsNear(s.x, s.z, 600)) { const h = P.at(w.x, w.z); if (h) expect(h.kind === "rail" && P.railBroken(w.x, w.z)).toBe(true); }
-  });
+  }, 60000); // (it builds the forest for 600 m round home)
   it("carry 3D pieces: railway landmarks and signals, bridges over streams, verge posts; trees keep clear of them", () => {
     const ids = new Set(P.pieces.map(p => p.id));
     for (const id of ["signal-post", "verge-post"]) expect(ids.has(id)).toBe(true);
@@ -1425,16 +1474,27 @@ describe("creature speeds (Ed, 2026-10-04: she is much faster than almost all of
   });
 });
 
-describe("the cycle button (Ed, 2026-10-04)", () => {
-  it("sends the bottom sigil of the stack to the top", () => {
+describe("E cycles the sigils in the treetops (Ed, 2026-10-05)", () => {
+  it("in the air sends the bottom sigil of the stack to the top, and never places or lifts", () => {
     const s = newLeash(), none: LeashControls = { sigil: false }, cs = spawnCreatures(map);
     s.stack.push(1, 2, 3); // 3 is the bottom (next down)
     for (const id of s.stack) cs[id].leashed = true;
-    stepLeash(s, cs, { ...none, cycle: true }, { x: 0, z: 0 }, false, 1, 1 / 60, TUNING);
+    stepLeash(s, cs, { sigil: true }, { x: 0, z: 0 }, false, 1, 1 / 60, TUNING);
     expect(s.stack).toEqual([3, 1, 2]);
-    expect(s.events.some(e => e.kind === "cycled" && e.id === 3)).toBe(true);
+    expect(s.placed).toEqual([]);
+    expect(s.events.map(e => e.kind)).toEqual(["cycled"]);
+    expect(s.events[0].id).toBe(3);
     stepLeash(s, cs, none, { x: 0, z: 0 }, false, 1, 1 / 60, TUNING);
     expect(s.stack).toEqual([3, 1, 2]);
+  });
+  it("on the ground never cycles: it puts the bottom sigil down", () => {
+    const s = newLeash(), cs = spawnCreatures(map);
+    s.stack.push(1, 2, 3);
+    for (const id of s.stack) cs[id].leashed = true;
+    stepLeash(s, cs, { sigil: true }, { x: 0, z: 0 }, true, 1, 1 / 60, TUNING);
+    expect(s.events.some(e => e.kind === "cycled")).toBe(false);
+    expect(s.placed.map(p => p.id)).toEqual([3]);
+    expect(s.stack).toEqual([1, 2]);
   });
 });
 

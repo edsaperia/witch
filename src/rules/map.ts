@@ -108,6 +108,8 @@ export interface ForestMap {
   treeWeight(x: number, z: number): number;
   /** Ground that must stay clear of every tree: the dancefloor's clearing and set pieces'. */
   hardClear(x: number, z: number): boolean;
+  /** How far (x, z) is out of its area's fighting arena: 0 in its open middle, rising smoothly over its band to 1 (tuning arena); `cell` if known. */
+  arenaOpen(x: number, z: number, cell?: Cell): number;
   /** Pairs of areas that touch, as "cx,cy|cx,cy" keys, for tests and the debug view. */
   readonly neighbours: ReadonlyMap<string, ReadonlySet<string>>;
   /** Paths, roads and railways, with the corridors they keep clear. */
@@ -320,12 +322,27 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     return Math.hypot(x - q.x, z - q.z) < tuning.soundsystemFootprint + tuning.treeMarginFromSoundsystem;
   };
   const hardClear = (x: number, z: number) => { const [u, v] = toPart(x, z); return hardCell(x, z, partition.partition(u, v)); };
+  // Every area's fighting arena (Ed, 2026-10-05: "each is effectively a fighting arena... not much
+  // room to fight in each area"; then "softer edges, the falloff between dense forest and clearing
+  // smoother"): mostly open within arena.radius metres of its centre and its soundsystem, the woods
+  // thickening along a smooth curve over a band arena.band metres wide beyond, its distance
+  // wobbled by noise (arena.noise of the band) so the edge is no ring; both times the fight's scale.
+  const arenaIn = (x: number, z: number, cell: Cell) => {
+    const R = tuning.arena;
+    if (!R || R.radius <= 0) return 1;
+    const k = tuning.fight?.scale ?? 1, s = siteOf(cell[0], cell[1]), q = soundsystemSpot(cell[0], cell[1]);
+    const d = Math.min(Math.hypot(x - s.x, z - s.z), Math.hypot(x - q.x, z - q.z)), band = R.band * k;
+    const wob = (vnoise(x / 14, z / 14, seed + 71) - 0.5) * 2 * R.noise * band;
+    const f = Math.min(1, Math.max(0, (d + wob - R.radius * k) / Math.max(0.01, band)));
+    return R.curve === "smooth" ? smoothstep(f) : f; // (linear: the woods start thinning in right past the open middle, Ed at v473)
+  };
+  const arenaOpen = (x: number, z: number, cell?: Cell) => arenaIn(x, z, cell ?? areaAt(x, z).cell);
   const treeWeight = (x: number, z: number) => {
-    const [u, v] = toPart(x, z);
-    if (hardCell(x, z, partition.partition(u, v))) return 0;
+    const [u, v] = toPart(x, z), cell = partition.partition(u, v);
+    if (hardCell(x, z, cell)) return 0;
     // Clearings round area centres and random glades, each with a soft edge (Ed: no hard rings).
     const glade = 1 - smoothstep((vnoise(x / tuning.gladeScale, z / tuning.gladeScale, seed + 61) - (1 - tuning.gladeAmount)) / 0.12);
-    return smoothstep((partition.openness(u, v) - tuning.clearingSize) / Math.max(0.01, tuning.clearingFalloff)) * glade;
+    return smoothstep((partition.openness(u, v) - tuning.clearingSize) / Math.max(0.01, tuning.clearingFalloff)) * glade * arenaIn(x, z, cell);
   };
 
   const remoteness = (cx: number, cy: number) => Math.min(1, Math.hypot(cx - centreCell[0], cy - centreCell[1]) / (n / 2));
@@ -337,7 +354,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     start: { x: treehouse.x, z: treehouse.z + 1 },
     bounds: { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad },
     extent: { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A },
-    typeOf, areaAt, cellSafe, siteOf, treeWeight, hardClear, neighbours, setPieceOf, soundsystemSpot, setPieceSpot, reserved, remoteness,
+    typeOf, areaAt, cellSafe, siteOf, treeWeight, arenaOpen, hardClear, neighbours, setPieceOf, soundsystemSpot, setPieceSpot, reserved, remoteness,
     paths: null as unknown as PathNetwork,
   };
   // The paths first (their lines need only the areas), so soundsystems, set pieces and the

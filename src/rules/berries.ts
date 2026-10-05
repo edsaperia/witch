@@ -5,10 +5,10 @@
 // or their sigil) or of their sigil, never beyond their leash; they nip over, eat it, and carry on.
 // Bushes grow in patches (berries.patch), so a sigil set in the middle of one is a feeding spot.
 // An eaten berry grows again at once on a free berry bush somewhere else on the map, so the number
-// of berries never changes. A party animal that has eaten enough evolves: babies after 1, young
-// after 3 (berries.toEvolve); evolving stops at adult (Ed, 2026-10-04: legends are the areas'
+// of berries never changes. A party animal that has eaten enough evolves: the berries its next
+// level's strength costs (toEvolve: 1 for a baby, 3 for a young of most species); evolving stops at adult (Ed, 2026-10-04: legends are the areas'
 // own, never grown). It evolves on the next bar line of the music, so the view can make a show of it. No drawing here.
-import { maxHp } from "./combat";
+import { COMBAT, creatureMaxHp, strengthOf } from "./combat";
 import { beatAt, timeAt, type BeatClock } from "./beat";
 import { LEGEND, type Creature, type Level } from "./creatures";
 import { gaitRate, leashSpeed } from "./leash";
@@ -52,19 +52,43 @@ export interface BerryState {
 
 /** The highest level a party animal evolves to: adult (Ed, 2026-10-04). */
 export const TOP_LEVEL: Level = 2;
-/** Berries needed to go up from a level (babies, young); adults and legends don't evolve. */
-export const toEvolve = (level: Level, t: Tuning): number => (level >= TOP_LEVEL ? Infinity : t.berries.toEvolve[Math.min(level, t.berries.toEvolve.length - 1)]);
+/** How much stronger a creature of `species` is at `level + 1` than at `level`, by berries.cost.by:
+ *  "power", health × damage a second (the square of its fighting value), or "value", its fighting
+ *  value √(hp × dps) (rules/power.ts); its species' strength included. */
+export function strengthGain(level: Level, species: string | undefined, t: Tuning): number {
+  const L = COMBAT.levels, m = species ? strengthOf(species, level) : 1;
+  const at = (l: number) => { const p = L.hp[l] * m * L.dps[l] * m; return t.berries.cost.by === "value" ? Math.sqrt(p) : p; };
+  return at(level + 1) - at(level);
+}
+
+/** Berries needed to go up from a level (Ed, 2026-10-05: "tie the cost to strength"): the strength
+ *  it gains, at berries.cost.per a berry, rounded, at least one (times cost.scale, the legends'
+ *  evolve-faster buff). With every species alike that's 1 for a baby and 3 for a young. Adults and
+ *  legends don't evolve. */
+export const toEvolve = (level: Level, t: Tuning, species?: string): number => {
+  if (level >= TOP_LEVEL) return Infinity;
+  const C = t.berries.cost;
+  return Math.max(1, Math.round((strengthGain(level, species, t) / C.per) * (C.scale ?? 1)));
+};
 /** Who may eat berries: party animals that aren't legends (and aren't already evolving). */
 /** Whether a party animal goes for berries: not mid-fight or evolving; still able to evolve
  *  (below adult), or hurt (a berry heals it to full, Ed 2026-10-04: so a hurt one wants one whatever its level). */
 export const canEat = (c: Creature, s: BerryState): boolean => c.leashed && !s.evolving.has(c.id) && !c.fight?.target && (c.level < TOP_LEVEL || hurtNow(c));
-const hurtNow = (c: Creature) => c.hp !== undefined && c.hp < maxHp(c.level);
+const hurtNow = (c: Creature) => c.hp !== undefined && c.hp < creatureMaxHp(c);
 
 /** The berry bushes and the berries on them, from the seed: in every area of the playable map,
  *  berries.bushesPerArea bushes at spots a bush may grow (in its own area, not on a path or in a
  *  kept clearing), and berries.perArea (a seeded number in that range) berries on distinct ones. */
+/** The berries' tuning with its per-area counts for this map's areas: they're for an area 112 m
+ *  across, and a bigger one has more, by its ground (Ed, 2026-10-05: bigger areas), so the berries
+ *  are as thick on the ground as before. */
+export function berryCounts(map: ForestMap, t: Tuning): Tuning["berries"] {
+  const k = (map.areaSize / 112) ** 2, B = t.berries;
+  return { ...B, bushesPerArea: Math.round(B.bushesPerArea * k), perArea: B.perArea.map(v => Math.round(v * k)) };
+}
+
 export function newBerries(map: ForestMap, t: Tuning): BerryState {
-  const B = t.berries, r = rng(map.seed * 6151 + 29), bushes: BerryBush[] = [], berries: Berry[] = [];
+  const B = berryCounts(map, t), r = rng(map.seed * 6151 + 29), bushes: BerryBush[] = [], berries: Berry[] = [];
   const P = B.patch;
   for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
     if (cx === map.centreCell[0] && cy === map.centreCell[1]) continue; // home: the dancefloor's clearing
@@ -149,7 +173,7 @@ export function feed(s: BerryState, c: Creature, time: number, t: Tuning, clock?
   if (c.level >= TOP_LEVEL || s.evolving.has(c.id)) return;
   const n = (s.fed.get(c.id) ?? 0) + 1;
   s.ateAt.set(c.id, time);
-  if (n >= toEvolve(c.level, t)) {
+  if (n >= toEvolve(c.level, t, c.species)) {
     s.fed.set(c.id, 0);
     // a whole bar of build-up, then the bar line (on the beat clock when there is one)
     const at = clock ? timeAt(clock, (Math.floor(beatAt(clock, time) / 4) + 2) * 4) : (Math.floor(time / ((60 / t.beat.bpm) * 4)) + 2) * ((60 / t.beat.bpm) * 4);

@@ -1,8 +1,8 @@
 {
-  "_": "What's new, shown on the start screen (newest first; the last 3 entries). Every push that changes something Ed can see adds its bullets to the top entry, in plain player-facing words. The top entry's version is null until its build has a number: it then shows as the build you're playing. When you push again, write that number in (from the playable-link comment) and start a new null entry above it.",
+  "_": "The changelog up to round 9, frozen (2026-10-05): never edit this file. New changes each add their own fragment beside it (config/changelog/<yyyy-mm-dd>-<slug>.json); see src/changelog.ts and CLAUDE.md.",
   "entries": [
     {
-      "version": null,
+      "version": 439,
       "items": [
         "Every area now starts with two adults (and a baby) instead of one: the first sieges hit harder, and survival grows more steadily with how well you build your army",
         "Sleeping legends dream: a thought bubble over each shows the sigil of the creature it wants, drawn as that creature's level (a baby's, young's or adult's sigil)",

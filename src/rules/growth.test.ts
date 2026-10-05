@@ -68,7 +68,7 @@ describe("wild areas grow (Ed, 2026-10-04: a creature a wave while wild)", () =>
       stepGame(g, { ...still, nextWave: true }, 1 / 60);
       stepGame(g, still, 1 / 60);
     }
-    expect(g.growth.grown).toBeGreaterThan(300 * 3);
+    expect(g.growth.grown).toBeGreaterThan((g.map.n * g.map.n - 10) * 3); // (every wild area, a creature a wave)
     expect(g.creatures.length - start).toBeLessThan(g.growth.grown); // most still counts
     const mine = g.creatures.filter(c => cellKey(c.cell) === woke);
     expect(mine.length).toBe(TUNING.population.start.babies + TUNING.population.start.adults + 3 + (mine.some(c => c.boss) ? 1 : 0));
