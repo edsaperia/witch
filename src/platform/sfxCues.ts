@@ -129,9 +129,9 @@ export class SfxCues {
       S.speak(voiceOf(c, g.tuning), speechMood(c), pan(e.x), k, k + (c.boss ? 0.5 : 0));
     }
     // a soundsystem lost (Ed, 2026-10-05: the next wave comes sooner): the party grinding to a halt,
-    // then the clock jumping on; heard anywhere (the prototype's soundsystemLost, else combat's
-    // soundDestroyed, home's aside: that's the run over)
-    for (const e of g.combat.events as { kind: string; key?: string }[]) if ((e.kind === "soundsystemLost" || e.kind === "soundDestroyed") && e.key !== "home" && this.lost !== time) { this.lost = time; S.lost(); }
+    // then the clock jumping on; heard anywhere (rules/game.ts's soundsystemLost; home's aside:
+    // that's the run over), more urgent when the wave comes at once (left 0)
+    for (const e of g.waveEvents) if (e.kind === "soundsystemLost" && e.key !== "home" && this.lost !== e.at) { this.lost = e.at; S.lost(e.left <= 0); }
     this.primed = true;
   }
 

@@ -293,8 +293,9 @@ export class Sfx {
 
   /** A soundsystem lost (the next wave coming sooner): a sad sting, a party gone quiet rather than
    *  a death. A record scratch, the party's chord running down like a tape stopping, then a little
-   *  clock ticking faster as the countdown jumps forward, and a soft chime. Heard anywhere. */
-  lost(): void {
+   *  clock ticking faster as the countdown jumps forward, and a soft chime. Heard anywhere.
+   *  `urgent` (the wave comes at once): the clock runs quicker and longer, the chime a step higher. */
+  lost(urgent = false): void {
     const c = this.ctx, at = c.currentTime + 0.01, vol = this.T.lost.volume, out = this.voice(0);
     // the scratch: band-passed noise swept fast down and up
     const bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 2.5;
@@ -312,14 +313,14 @@ export class Sfx {
     }
     // the clock: ticks quickening (tick, tock), then a soft chime as it lands
     let t = t0 + run + 0.15;
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0, n = urgent ? 10 : 7; i < n; i++) {
       const k = c.createBiquadFilter(), kg = c.createGain();
       k.type = "bandpass"; k.frequency.value = i % 2 ? 1500 : 2100; k.Q.value = 12;
       kg.connect(out); this.env(kg, t, vol * 0.9, 0.001, 0.035);
       k.connect(kg); this.noiseBurst(t, 0.04, k, i * 0.1);
-      t += 0.2 * Math.pow(0.82, i);
+      t += (urgent ? 0.13 : 0.2) * Math.pow(urgent ? 0.86 : 0.82, i);
     }
-    const f = mtof(degree(this.root + 24, 2));
+    const f = mtof(degree(this.root + 24, urgent ? 4 : 2));
     for (const [r, l] of [[1, 1], [2.76, 0.35]]) { const g = c.createGain(); g.connect(out); this.env(g, t + 0.05, vol * 0.4 * l, 0.003, 0.6); this.osc("sine", f * r, t + 0.05, 0.7, g); }
   }
 
