@@ -46,6 +46,17 @@ describe("the creature-state model (rules/states.ts, tools/balance/states.mjs)",
     expect(r.legends.relicsUsed).toBe(2); // one found every 4 waves
   }, 60000);
 
+  it("masses her army at the next soundsystem to be attacked, traces the run, and can hurry a lost one", () => {
+    const o = { interval: 120, maxWaves: 10, policy: "mass" as const, skill: 1, dt: 1, trace: 10 };
+    const a = simulateStates(map, o);
+    expect(a.invited.leashed).toBeGreaterThan(0);
+    expect(a.trace!.length).toBeGreaterThan(50);
+    expect(a.trace![a.trace!.length - 1].peak).toBeGreaterThanOrEqual(a.trace![a.trace!.length - 1].standing);
+    const idle = { interval: 120, maxWaves: 40, policy: "defend" as const, skill: 1e-9, dt: 1, relics: 0 };
+    const h = simulateStates(map, { ...idle, hurryAt: 0.5, hurryFactor: 3 }), plain = simulateStates(map, idle);
+    if (plain.lost && h.lost) expect(h.lost.time).toBeLessThanOrEqual(plain.lost.time);
+  }, 60000);
+
   it("lasts longer when she invites than when she doesn't", () => {
     const idle = simulateStates(map, { interval: 60, maxWaves: 40, policy: "defend", skill: 1e-9 });
     const play = simulateStates(map, { interval: 60, maxWaves: 40, policy: "defend", skill: 4 });

@@ -23,8 +23,11 @@ import { hash2 } from "./random";
 /** How she splits her invites (issue #87): every one a defender; every third leashed; every one
  *  leashed; the babies leashed (they grow) and the young and adults left as defenders; or (relay,
  *  for the own-kind rule) happy in the area the next wave wakes and leashed everywhere else, so her
- *  army is of other kinds than the area it will defend. */
-export type Policy = "defend" | "third" | "leash" | "babies" | "relay";
+ *  army is of other kinds than the area it will defend; or mass (Ed, 2026-10-05: during a siege
+ *  she either fetches new animals or masses defences at the next soundsystem to be attacked):
+ *  leashed as relay, but her army doesn't follow her: it waits at the next soundsystem to be
+ *  attacked (where a siege's besiegers go once theirs falls; with none on, the next wave's area). */
+export type Policy = "defend" | "third" | "leash" | "babies" | "relay" | "mass";
 
 export interface StatesOptions {
   /** Seconds between waves, and the waves to stop at. */
@@ -72,7 +75,16 @@ export interface StatesOptions {
   /** She defends (takes her army to a siege) when it is worth at most this share of her army's F (0.9). */
   margin?: number;
   dt?: number;
+  /** Record the run every this many seconds (for the point of no return; off). */
+  trace?: number;
+  /** Once the soundsystems standing fall to this share of their peak, the enraged march and hit
+   *  hurryFactor times as fast (a way to shorten a lost run; off). */
+  hurryAt?: number;
+  hurryFactor?: number;
 }
+
+/** A moment of a traced run. */
+export interface StatesTrace { time: number; wave: number; standing: number; peak: number; enragedF: number; /** Her army's, the happy creatures' and the happy legends' F. */ defenceF: number; homeHp: number; /** Enraged within 60 m of home, and the F there that can fight them (other kinds). */ homeSiegeF: number; homeDefF: number }
 
 /** One wave, sampled just before the next. */
 export interface StatesWave {
@@ -118,6 +130,7 @@ export interface StatesResult {
   falls: number;
   /** Legends: how many turned angry (and where: woken areas or wild), happy by a relic, relics used,
    *  her seconds inviting in an angry one's reach, and her army lost to their blasts. */
+  trace?: StatesTrace[];
   legends: { angry: number; angryAreas: { wave: number; key: string; woken: boolean }[]; happy: number; relicsUsed: number; hazardTime: number; armyLost: number };
 }
 
@@ -209,7 +222,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
     if (o.policy === "leash") return true;
     if (o.policy === "babies") return u.level === 0;
     if (o.policy === "third") return ++count % 3 === 0;
-    if (o.policy === "relay") return !party.next.some(c => cellKey(c) === u.cell);
+    if (o.policy === "relay" || o.policy === "mass") return !party.next.some(c => cellKey(c) === u.cell);
     return false;
   };
   const fly = (to: string, x: number, z: number, time: number): Task => ({ kind: "fly", to, x, z, until: time + Math.hypot(x - witch.x, z - witch.z) / witchSpeed + land + cross });
@@ -235,6 +248,27 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
     return best;
   };
 
+  // Mass: the next soundsystem to be attacked.
+  let massGoal = { x: d.x, z: d.z };
+  const massAt = () => {
+    const g = new Map<string, number>();
+    for (const u of units) if (u.state === "enraged" && u.target) g.set(u.target, (g.get(u.target) ?? 0) + valueOf(u));
+    let big: string | null = null, bv = 0;
+    for (const [k, v] of g) if (v > bv) { bv = v; big = k; }
+    if (big) {
+      const s0 = sounds.get(big)!;
+      let best: Sound | null = null, bd = Infinity;
+      for (const s1 of sounds.values()) { if (s1.hp <= 0 || s1.key === big) continue; const k = Math.hypot(s1.x - s0.x, s1.z - s0.z); if (k < bd) { bd = k; best = s1; } }
+      // (While this one still has most of its health, stand by it.)
+      if (best && s0.hp < (s0.key === "home" ? C.homeHealth : o.soundHealth ?? C.soundsystemHealth) * 0.5) return { x: best.x, z: best.z };
+      return { x: s0.x, z: s0.z };
+    }
+    const c = party.next[0];
+    return c ? soundsystemFor(map, c) : { x: d.x, z: d.z };
+  };
+  const trace: StatesTrace[] = [];
+  let peak = 1;
+  let hurry = 1;
   let time = 0, nextAt = t.boot.time + t.party.startDelay + o.interval;
   const sample = () => {
     let pool = 0, poolF = 0, happy = 0, lea = 0, aF = 0, en = 0, eF = 0;
@@ -315,7 +349,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
       else if (defending && units.some(u => u.state === "enraged" && Math.hypot(u.x - defending!.x, u.z - defending!.z) < GR) && armyF() > 0) { /* still fighting there */ }
       else {
         defending = null;
-        const s = chooseSiege();
+        const s = o.policy === "mass" ? null : chooseSiege();
         if (s) {
           const S = sounds.get(s)!, tw = Math.hypot(S.x - witch.x, S.z - witch.z) / witchSpeed + land, ta = Math.hypot(S.x - army.x, S.z - army.z) / posseSpeed;
           task = { kind: "defend", key: s, x: S.x, z: S.z, until: time + Math.max(tw, ta) };
@@ -336,7 +370,8 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
       }
     }
     // Her army follows her (or makes for the siege she's taking it to), eating the berries of each area it reaches.
-    const goal = task?.kind === "defend" ? { x: task.x, z: task.z } : defending ?? witch, gd = Math.hypot(goal.x - army.x, goal.z - army.z);
+    if (o.policy === "mass" && Math.floor(time / 2) !== Math.floor((time - dt) / 2)) massGoal = massAt();
+    const goal = o.policy === "mass" ? massGoal : task?.kind === "defend" ? { x: task.x, z: task.z } : defending ?? witch, gd = Math.hypot(goal.x - army.x, goal.z - army.z);
     if (gd > 1) { const step = Math.min(gd, posseSpeed * dt); army.x += ((goal.x - army.x) / gd) * step; army.z += ((goal.z - army.z) / gd) * step; }
     if (here && gd < 20 && !fed.has(here) && leashed().length) { fed.add(here); berries += berriesPerArea; }
     if (berries > 0) evolve();
@@ -419,8 +454,8 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
       const s = sounds.get(u.target);
       if (!s || s.hp <= 0) { if (u.legend) u.state = "gone"; else u.target = nearestSound(u.x, u.z); continue; }
       const dx = s.x - u.x, dz = s.z - u.z, dist = Math.hypot(dx, dz), want = u.reach + s.radius;
-      if (dist > want) { const step = Math.min(dist - want, u.speed * dt); u.x += (dx / dist) * step; u.z += (dz / dist) * step; }
-      else { const k = u.dps * dt; s.hp -= k; if (u.cell === s.key) damage.own += k; else damage.other += k; }
+      if (dist > want) { const step = Math.min(dist - want, u.speed * hurry * dt); u.x += (dx / dist) * step; u.z += (dz / dist) * step; }
+      else { const k = u.dps * hurry * dt; s.hp -= k; if (u.cell === s.key) damage.own += k; else damage.other += k; }
     }
     for (const s of sounds.values()) {
       if (s.hp > 0 || ruined.has(s.key)) continue;
@@ -431,9 +466,23 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
       // Its besiegers march on to the next-nearest; its own legend goes back to sleep, for good (Ed, 2026-10-05).
       for (const u of units) if (u.state === "enraged" && u.target === s.key) { if (u.legend) u.state = "gone"; else u.target = nearestSound(u.x, u.z); }
     }
+    const standing = [...sounds.values()].filter(s => s.hp > 0).length;
+    peak = Math.max(peak, standing);
+    if (o.hurryAt !== undefined && hurry === 1 && party.wave >= 3 && standing <= o.hurryAt * peak) hurry = o.hurryFactor ?? 2;
+    if (o.trace && Math.floor(time / o.trace) !== Math.floor((time - dt) / o.trace)) {
+      let eF = 0, dF = 0, hs = 0, hd = 0;
+      const H = sounds.get("home")!;
+      const nearHome: Unit[] = [];
+      for (const u of units) {
+        if (u.state === "enraged") { const v = valueOf(u); eF += v; if (Math.hypot(u.x - H.x, u.z - H.z) < 60) { hs += v; nearHome.push(u); } }
+        else if (u.state === "happy" || u.state === "leashed") dF += valueOf(u);
+      }
+      for (const u of units) if ((u.state === "happy" || u.state === "leashed") && nearHome.some(f => f.species !== u.species) && Math.hypot(u.x - H.x, u.z - H.z) < (u.legend ? LR : 60)) hd += valueOf(u);
+      trace.push({ time, wave: party.wave, standing, peak, enragedF: eF, defenceF: dF, homeHp: Math.max(0, H.hp), homeSiegeF: hs, homeDefF: hd });
+    }
     if ([...sounds.values()].every(s => s.hp <= 0)) lost = { wave: party.wave, time };
     time += dt;
   }
   if (lost) sample();
-  return { seed: map.seed, survived: lost ? lost.wave - 1 : party.wave, lost, waves, local, targets, damage, starve, invited, falls, legends: legendStats };
+  return { seed: map.seed, survived: lost ? lost.wave - 1 : party.wave, lost, waves, local, targets, damage, starve, invited, falls, legends: legendStats, ...(o.trace ? { trace } : {}) };
 }
