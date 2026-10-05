@@ -7,23 +7,33 @@ import { TUNING } from "./tuning";
 const map = generateMap(123, TUNING), t = TUNING, P = t.partyObjects;
 
 describe("party objects (Ed, 2026-10-04)", () => {
-  it("home (the dancefloor's area) is dressed too, but nothing lands on the floor, its rim, its speakers, the treehouse or her seat (Ed)", () => {
-    const d = dressingOf(map, map.centreCell, t), D = map.dancefloor;
-    expect(d.loose.length + d.clusters.length).toBeGreaterThan(5);
-    // The lit ring round the floor's clearing (Ed's playtest): many pieces just outside it.
-    const ring = d.loose.filter(p => Math.abs(Math.hypot(p.x - D.x, p.z - D.z) - (floorClearing(t) + t.partyObjects.laneWidth)) < 0.5);
-    expect(ring.length).toBeGreaterThan(20);
-    // Of the home set (#53): the ring's pieces, an arch over any path it crosses, and the home clusters by the treehouse.
-    for (const p of ring) expect(partyDef(p.ref)?.cls).toBe("home");
-    const arches = ring.filter(p => p.ref.includes(P.arch));
+  it("home is strewn all over with party decorations instead of trees (Ed, 2026-10-05), none on the floor, its clearing, the paths, the treehouse or her seat", () => {
+    const d = dressingOf(map, map.centreCell, t), D = map.dancefloor, H = P.home;
+    expect(d.loose.length).toBeGreaterThanOrEqual(H.loose[0] * 0.8);
+    expect(d.clusters.length).toBeGreaterThanOrEqual(H.clusters[0] - 1);
+    expect(d.clusters.filter(c => c.id.startsWith("home-")).length).toBeGreaterThanOrEqual(2);
+    expect(d.hanging).toEqual([]);
+    expect(d.caught).toBeNull();
+    // Every class, all over the area: in every quarter round the floor, near and far.
+    const classes = new Set(d.loose.map(p => partyDef(p.ref)?.cls));
+    for (const c of ["home", "small", "balloon", "litter", "furniture"]) expect(classes.has(c), c).toBe(true);
+    const quarter = (p: { x: number; z: number }) => (Math.floor(((Math.atan2(p.z - D.z, p.x - D.x) + Math.PI) / (Math.PI / 2))) % 4);
+    expect(new Set(d.loose.map(quarter)).size).toBe(4);
+    const far = d.loose.filter(p => Math.hypot(p.x - D.x, p.z - D.z) > map.homeRadius).length;
+    expect(far).toBeGreaterThan(5);
+    const arches = d.loose.filter(p => p.ref.includes(P.arch));
     for (const a of arches) expect(map.paths.at(a.x, a.z, 1)).toBeTruthy();
-    expect(ring.filter(p => !p.ref.includes(P.arch)).every(p => !map.paths.at(p.x, p.z, 1))).toBe(true);
-    expect(d.clusters.filter(c => c.id.startsWith("home-")).length).toBe(P.homeClusters.length);
-    for (const p of [...d.loose, ...d.clusters, ...(d.caught ? [d.caught] : [])]) {
+    for (const p of [...d.loose.filter(p => !p.ref.includes(P.arch)), ...d.clusters]) {
       expect(Math.hypot(p.x - D.x, p.z - D.z)).toBeGreaterThan(floorClearing(t));
       expect(Math.hypot(p.x - map.treehouse.x, p.z - map.treehouse.z)).toBeGreaterThan(t.treehouse.clear);
       expect(Math.hypot(p.x - map.start.x, p.z - map.start.z)).toBeGreaterThan(3);
+      expect(map.paths.at(p.x, p.z, 1)).toBeNull();
+      expect(map.areaAt(p.x, p.z).cell).toEqual(map.centreCell);
     }
+    // Scattered, not a carpet: kept apart.
+    for (let i = 0; i < d.loose.length; i++) for (let j = i + 1; j < d.loose.length; j++) expect(Math.hypot(d.loose[i].x - d.loose[j].x, d.loose[i].z - d.loose[j].z)).toBeGreaterThan(1.5);
+    expect(d.lights.length).toBeLessThanOrEqual(H.lights);
+    expect(dressingOf(map, map.centreCell, t)).toEqual(d);
   });
 
   it("each area gets 2-4 clusters, 20-40 loose pieces (a set piece at most), lights capped, nothing on paths or the dancefloor; the same each time", () => {

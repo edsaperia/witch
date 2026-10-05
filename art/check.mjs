@@ -556,6 +556,34 @@ const report = await b.page.evaluate(async () => {
 });
 for (const r of report) if (!r.good) ok(false, `${r.what} (${r.info})`);
 ok(report.every(r => r.good), `${report.length} sprite checks`);
+// party relics (art/partyRelics.js, #87): 6+ giant bottles, each half-buried and legend-sized (7 to 16 m across and 6 to 17 m tall),
+// sitting in its mound (the bottom row earth); its liquid glows (200+ px of MAGIC; nothing glows but the liquid, its surface and the
+// motes); the glass is see-through (a rim in its colour and a half-clear dither of empty glass); it carries a light; its 3 frames
+// differ (the motes rise); its origin and glint inside the sprite, the glint on the glass; the glint's 4 frames differ, only GLINT,
+// the treetop ones bigger; their one sigil is in the sigil system, its strokes in the box, drawn as SVG, its id clashing with no creature's
+{
+  const P = await import("./partyRelics.js"), S = await import("./sigils.js"), { defaultStyle } = await import("./generator.js"), { M, EMISSIVE } = await import("./core.js");
+  const st = defaultStyle(), bad = [], EARTH = new Set([M.TRUNK, M.BARKD, M.STONE, M.MOSS, M.LEAF, M.LEAF2, M.LEAF3]), GLOWS = new Set([M.MAGIC, M.MAGIC2, M.GLOW]);
+  if (P.PARTY_RELIC_IDS.length < 6) bad.push(`${P.PARTY_RELIC_IDS.length} relics`);
+  for (const id of P.PARTY_RELIC_IDS) {
+    const R = P.partyRelicSprite(id, st), { w, h, m } = R.sp, { width, height } = R.metres, count = k => m.filter(v => v === k).length;
+    if (!(width >= 7 && width <= 16 && height >= 6 && height <= 17)) bad.push(`${id} ${width} x ${height} m`);
+    let earth = 0, bottom = 0; for (let x = 0; x < w; x++) { const v = m[(h - 1) * w + x]; if (v) { bottom++; if (EARTH.has(v)) earth++; } } if (!bottom || earth < bottom * .8) bad.push(`${id} not sitting in its mound`);
+    const glowing = new Set(); for (const v of m) if (EMISSIVE.has(v)) glowing.add(v); if (count(M.MAGIC) < 200 || [...glowing].some(v => !GLOWS.has(v))) bad.push(`${id} glows ${[...glowing]} (${count(M.MAGIC)} liquid)`);
+    let holes = 0; for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) if (!m[y * w + x] && m[y * w + x - 1] === M.HAT2 && m[y * w + x + 1] === M.HAT2) holes++;
+    if (count(M.HAT1) < 50 || holes < 50) bad.push(`${id} glass not see-through (rim ${count(M.HAT1)}, clear ${holes})`);
+    if (!(R.light?.radius > 0 && R.light.rgb?.length === 3)) bad.push(`${id} gives no light`);
+    if (new Set([0, 1, 2].map(f => P.partyRelicSprite(id, st, { frame: f }).sp.m.join(""))).size < 3) bad.push(`${id} frames repeat`);
+    const inside = p => p.x >= 0 && p.y >= 0 && p.x < w && p.y < h; if (!inside(R.origin) || !inside(R.glint)) bad.push(`${id} origin or glint outside`); else if (![M.CRYSTAL, M.HAT1].includes(m[Math.round(R.glint.y) * w + Math.round(R.glint.x)])) bad.push(`${id} glint not on the glass`);
+    if (P.partyRelicSigilId(id) !== P.PARTY_RELIC_SIGIL) bad.push(`${id} has its own sigil`);
+  }
+  { const sid = P.PARTY_RELIC_SIGIL, strokes = S.sigilStrokes(sid); if (!strokes.length || strokes.some(t => t.pts.some(([x, y]) => x < 0 || y < 0 || x > 1 || y > 1)) || !S.sigilSVG(sid).includes("<polyline")) bad.push("the relic sigil"); if (S.SIGIL_IDS.includes(sid)) bad.push(`${sid} clashes with a creature's sigil`); }
+  const frames = [0, 1, 2, 3].map(f => P.partyRelicGlint(f)), tops = [0, 1, 2, 3].map(f => P.partyRelicGlint(f, { zoom: "treetop" })), key = g => g.sp.w + ":" + g.sp.m.join("");
+  if (new Set(frames.map(key)).size < 4) bad.push("glint frames repeat");
+  for (const g of [...frames, ...tops]) if (g.sp.m.some(v => v && v !== M.GLINT)) bad.push("glint not all GLINT");
+  if (tops.some((g, i) => g.sp.m.filter(Boolean).length <= frames[i].sp.m.filter(Boolean).length)) bad.push("treetop glint not bigger");
+  ok(!bad.length, `party relics: ${P.PARTY_RELIC_IDS.length} giant bottles, half-buried, legend-sized, see-through glass, glowing liquid that lights the ground, motes rising over 3 frames, a glint on each (bigger from the treetops), one sigil for all${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
+}
 // the trees and bushes grown from their genomes (art/flora/genomes.js) draw exactly as before: every species over seeds, sizes and
 // area options, and the bushes, against art/flora/baseline.json (when a change to them is meant, rewrite it: node art/flora/fingerprint.mjs)
 {
@@ -585,6 +613,27 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
     }
   }
   ok(!bad.length, `pixel wind: ${Object.keys(T.TREE_SPECIES).length} species' trees sway by whole regions and whole pixels (at most 2), feet still, blobs out of step, still in calm air, whole in a gust${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
+}
+// the witch generator (art/witchGenome.js): her own genome draws her exactly (flight, lean, rise, fast, standing, both facings,
+// each heading); 20 generated witches pass their limits, draw in every flight pose and some on foot with their hand and hat-tip
+// anchors inside, their hatband glowing, 0.8 to 1.7 times her height hovering, and no two alike
+{
+  const W = await import("./witch.js"), Gn = await import("./witchGenome.js"), { defaultStyle } = await import("./generator.js"), { M } = await import("./core.js");
+  const st = defaultStyle(), bad = [], key = sp => sp.w + "x" + sp.h + ":" + Array.from(sp.m).join("") + ":" + JSON.stringify(sp.anchors || {});
+  const ours = Gn.genomeLook(Gn.WITCH_GENOME);
+  if (ours.outfit || Gn.witchGenomeProblems(Gn.WITCH_GENOME).length) bad.push("her genome");
+  for (const o of [{ frame: 0 }, { frame: 2, facing: "away" }, { pose: "lean", frame: 1 }, { pose: "rise", frame: 0 }, { pose: "fast", frame: 1 }, { pose: "brake", frame: 0, heading: "towards" }, { pose: "stand", frame: 0 }, { pose: "talk", frame: 2, facing: "away" }])
+    if (key(W.witchSprite(st, o)) !== key(W.witchSprite(st, { ...o, look: ours.look }))) bad.push("her genome draws " + JSON.stringify(o) + " differently");
+  const herH = W.witchSprite(st).h, seen = new Set();
+  for (let seed = 0; seed < 20; seed++) {
+    const g = Gn.witchGenome(seed), pr = Gn.witchGenomeProblems(g), { look } = Gn.genomeLook(g); if (pr.length) bad.push(`seed ${seed}: ${pr.join(", ")}`);
+    for (const o of [{ frame: 0 }, { pose: "lean", frame: 2 }, { pose: "rise", frame: 0 }, { pose: "descend", frame: 1 }, { pose: "brake", frame: 0 }, { pose: "fast", frame: 0 }, { pose: "stand", frame: 1 }, { pose: "takeoff", frame: 0 }, { pose: "twoStep", frame: 2 }]) {
+      const sp = W.witchSprite(st, { ...o, look }), n = sp.m.filter(Boolean).length, a = sp.anchors || {}, inside = p => p && p[0] >= 0 && p[1] >= 0 && p[0] < sp.w && p[1] < sp.h;
+      if (n < 200 || !inside(a.hand) || !inside(a.hatTip)) bad.push(`seed ${seed} ${o.pose || "hover"}: ${n} px, anchors ${JSON.stringify(a)}`);
+      if (!o.pose) { if (!sp.m.some(v => v === M.MAGIC)) bad.push(`seed ${seed}: no glowing hatband`); if (sp.h < herH * .8 || sp.h > herH * 1.7) bad.push(`seed ${seed}: ${sp.h} px tall (hers ${herH})`); const k = key(sp); if (seen.has(k)) bad.push(`seed ${seed} looks like another`); seen.add(k); }
+    }
+  }
+  ok(!bad.length, `witch generator: her genome draws her exactly; 20 generated witches within limits, drawn in flight and on foot, anchors inside, hatband glowing, 0.8 to 1.7 times her height, none alike${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
 }
 // area flora (art/flora/areas.js): every wooded area lists 3 to 6 real species, shares adding to 1, its main kind first (as its big
 // names it), a palette within reason (sat and val 0.6 to 1.3); the open areas list none; fantasy species are never an area's main kind
