@@ -6,13 +6,12 @@
 // Headings: 0 walking right, a quarter turn walking down the screen (towards us), minus a quarter up
 // it (away); RIG_HEADINGS are the baked ones, and heading h > a quarter turn is the mirror of pi - h.
 import { M, Sprite } from "../core.js";
-import { Model, render, v3, spotty } from "../model3d.js";
+import { Model, render, spotty, PITCH } from "../model3d.js";
 import { withForm } from "../creatures3d.js";
 import { SPECIES_BY_ID, buildCreature } from "../creatures.js";
 
 export const RIG_HEADINGS = [-Math.PI / 2, -Math.PI / 4, 0, Math.PI / 4, Math.PI / 2];
 export const RIG_TEMPLATES = { quadruped: "quad", serpent: "snake" }; // the templates the pilot rigs (and their builder)
-export const PITCH = .52; // the camera's (model3d.js)
 
 // The heading (radians, any) as a baked heading's index and whether to mirror it.
 export function rigDirection(h) {
@@ -28,7 +27,7 @@ export function rigProject(p, h, s) {
 }
 
 // The model the builder makes for a species at a level (not drawn), and the scale it would be drawn at.
-function capture(id, level, st) {
+function rigCapture(id, level, st) {
   const S = SPECIES_BY_ID[id]; let got = null;
   const form = (m, o) => { got = { m, height: o.height }; return new Sprite(1, 1); };
   form.motes = false;
@@ -36,13 +35,13 @@ function capture(id, level, st) {
   return { m: got.m, s: render(got.m, { height: got.height, measure: true }).s };
 }
 // A model of only the primitives labelled with one of `labels`.
-function pick(m, labels) {
+function rigPick(m, labels) {
   const out = new Model({ blend: m.blend });
   out.parts = m.parts.filter(q => labels.includes(q.part)); out.flats = m.flats.filter(f => labels.includes(f.part));
   return out;
 }
 // Cropped to what's drawn, its pivot moved with it: { sp, px, py } (py from the top).
-function cropped(sp, px, py) {
+function rigCropped(sp, px, py) {
   let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
   for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
   if (x1 < 0) return null;
@@ -52,16 +51,16 @@ function cropped(sp, px, py) {
   return { sp: c, px: +(px - x0).toFixed(2), py: +(py - y0).toFixed(2) };
 }
 // One labelled piece at each baked heading, pivoted on `pivot` (a model-space point).
-function piece(m, labels, pivot, s) {
-  const sub = pick(m, labels);
+function rigPiece(m, labels, pivot, s) {
+  const sub = rigPick(m, labels);
   if (!sub.parts.length && !sub.flats.length) return null;
-  return RIG_HEADINGS.map(h => { const r = render(sub, { scale: s, yaw: h }), [px, py] = r.project(pivot); return cropped(r.sp, px, py); });
+  return RIG_HEADINGS.map(h => { const r = render(sub, { scale: s, yaw: h }), [px, py] = r.project(pivot); return rigCropped(r.sp, px, py); });
 }
 // A disc: a ball of a material, r pixels across its radius, lit as a sphere (legs, a serpent's body).
-function disc(r, mat, s, paint) {
+function rigDisc(r, mat, s, paint) {
   const m = new Model(); m.ell([0, 0, 0], [r / s, r / s, r / s], mat, { paint });
   const res = render(m, { scale: s }), [px, py] = res.project([0, 0, 0]);
-  return cropped(res.sp, px, py);
+  return rigCropped(res.sp, px, py);
 }
 
 // Everything the rig needs for one species at one level: { template, s (pixels per model unit),
@@ -71,17 +70,17 @@ function disc(r, mat, s, paint) {
 export function rigParts(id, level, st) {
   const S = SPECIES_BY_ID[id], tpl = S.q ? "quadruped" : S.plan === "snake" ? "serpent" : null;
   if (!tpl) return null;
-  const { m, s } = capture(id, level, st), R = m.rig, discs = {};
+  const { m, s } = rigCapture(id, level, st), R = m.rig, discs = {};
   const radii = list => [...new Set(list.map(r => Math.max(1, Math.round(r * s))))].sort((a, b) => a - b);
-  const discSet = (mat, rs, paint) => { discs[mat] = discs[mat] || {}; for (const r of rs) if (!discs[mat][r]) discs[mat][r] = disc(r, mat, s, paint); };
+  const discSet = (mat, rs, paint) => { discs[mat] = discs[mat] || {}; for (const r of rs) if (!discs[mat][r]) discs[mat][r] = rigDisc(r, mat, s, paint); };
   if (tpl === "quadruped") {
     const legR = radii(R.legs.flatMap(l => [l.r[0] * .8, l.r[1], l.r[2], (l.r[0] + l.r[1]) / 2, (l.r[1] + l.r[2]) / 2]));
     for (const l of R.legs) discSet(l.mat, legR);
     const hoof = R.legs.find(l => l.hoof); if (hoof) discSet(M.NOSE, radii(R.legs.map(l => l.fl * .9)));
     else discSet(R.legs[0].mat, radii(R.legs.map(l => l.fl * .9)));
-    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { torso: piece(m, ["body"], [0, 0, 0], s), head: piece(m, ["head"], R.head.nb, s), tail: piece(m, ["tail"], R.tail, s) } };
+    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { torso: rigPiece(m, ["body"], [0, 0, 0], s), head: rigPiece(m, ["head"], R.head.nb, s), tail: rigPiece(m, ["tail"], R.tail, s) } };
   }
   // a serpent: its head baked, its body discs (speckled like its coat) by the spine's radii
   discSet(M.BODY, radii(R.spine.map(p => p[3])), p => spotty([p[0] * 1.5, p[1], p[2]], 14, .3) ? M.BODY3 : undefined);
-  return { id, level, template: tpl, s, joints: { spine: R.spine, head: R.head, hr: R.hr }, discs, pieces: { head: piece(m, ["head"], R.head, s), wings: piece(m, ["body"].filter(() => m.parts.some(q => q.part === "body" && q.extra)), [0, .2, 0], s) } };
+  return { id, level, template: tpl, s, joints: { spine: R.spine, head: R.head, hr: R.hr }, discs, pieces: { head: rigPiece(m, ["head"], R.head, s), wings: rigPiece(m, ["body"].filter(() => m.parts.some(q => q.part === "body" && q.extra)), [0, .2, 0], s) } };
 }
