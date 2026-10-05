@@ -61,7 +61,7 @@ export function textureSprite(sp, S, level, st, seed = 1) {
   if (T.kind === "smooth" && !T.contrast) return sp;
   // the style's detail (0: cel shapes, tones by the form with hard edges, no seams; 1: fine strokes and seams): the stylisation ladder's knob
   const D = Math.max(0, Math.min(1, st?.texDetail ?? 1));
-  const styled = !!st?.render && st.render !== "plain";
+  const styled = st?.artStyle === "bold" || st?.artStyle === "ref"; // the art director's stylised bake (?style=, art/stylise.js) lays the tones
   const L = TEXTURE_LEVEL, c = Math.max(1.5, T.size * L.size[level] * (1 + (1 - D) * 2)), contrast = T.contrast * L.contrast[level] * D, seam = T.seam * L.seam[level] * D;
   const lf = [-.35, -.75, .55], ll = Math.hypot(...lf); // the form light: above, in front, a little left (as the moon)
   const on = new Uint8Array(w * h);

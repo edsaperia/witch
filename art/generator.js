@@ -34,8 +34,6 @@ import { EXPRESSIONS, FACE_KINDS, FACE_DEFAULT, faceUp, faceProblems } from "./g
 export { EXPRESSIONS, FACE_KINDS, FACE_DEFAULT, faceUp, faceProblems };
 import { TEXTURE_KINDS, TEXTURE_DEFAULT, textureOf, textureSprite, textureLumps, textureProblems } from "./genome/texture.js";
 export { TEXTURE_KINDS, TEXTURE_DEFAULT, textureOf, textureSprite, textureLumps, textureProblems };
-import { RENDERINGS, stylise } from "./stylise.js";
-export { RENDERINGS, stylise };
 import { RIG_HEADINGS, RIG_TEMPLATES, rigParts, rigDirection, rigProject } from "./genome/parts.js";
 export { RIG_HEADINGS, RIG_TEMPLATES, rigParts, rigDirection, rigProject };
 import { SILHOUETTE_SIZE, silhouette, silhouetteDistance, silhouetteMirror, silhouetteDistanceEitherWay, silhouettePairs } from "./genome/silhouette.js";

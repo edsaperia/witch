@@ -44,7 +44,6 @@ const tuning = {
   shadows: { ...TUNING.shadows }, canopyShadow: { ...TUNING.canopyShadow }, mist: { ...TUNING.mist },
   party: { ...TUNING.party }, fight: { ...TUNING.fight }, // (the fight's scale and speed change live: its own copy)
 };
-{ const px = Number(params.get("px")); if (px >= 2 && px <= 8) tuning.pixelSize = Math.round(px); } // ?px=4|5: the art pixel, everything baked at it (Ed, 2026-10-05: "4 or 5, we will decide in playtesting")
 if (params.get("shadows") === "off") tuning.shadows.on = false;
 if (params.get("canopy") === "off") tuning.canopyShadow.on = false;
 if (params.get("mist") === "off") tuning.mist.on = false;
@@ -181,7 +180,6 @@ if (arenaParam) waveChoice = 0;
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = loadStyle();
-{ const r = params.get("style"); style.render = r === "ref" || r === "plain" ? r : r === "bold" ? "bold" : style.render ?? "bold"; } // ?style=bold|ref|plain: creatures' stylised rendering (art/stylise.js; Ed picked bold, the default, and ref)
 if (params.get("texture") === "0") style.texture = 0; // ?texture=0: creatures as before their fur, feathers and scales (art/genome/texture.js), to compare
 if (params.get("flora")) style.flora = params.get("flora"); // ?flora=new|fantasy|all|<ids>: every wooded area grows these tree species (art/flora), carried to the art worker in the style
 /** Load timings (ms since the page started): the view built (the page's own sprites drawn), ready to play. */
