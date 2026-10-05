@@ -242,6 +242,29 @@ A counter is **shown**: a hit that's strong against its target flashes big and g
 
 **Debug arena** (Ed, to see and judge patterns): `?arena=wolf*4,beetle*3` spawns, in the home clearing, your side (parked by sigils: the first group) against the wild side (the second); `wolf*4@2` sets the level (default young, 1). Hers at `@3` are happy area legends guarding the arena; `home` is home's own happy legend; a wild group ending `!` besieges home's soundsystem. So `?arena=home,wolf*6@2!` shows a happy legend defending home against a siege. It's set below the dancefloor; she stands behind her side (the wild go for the nearest, so hers first). `J` sets the arena up again.
 
+### Motion scale (Ed, 2026-10-04, after playing v386)
+
+Ed: "the animals don't move around enough when attacking and defending … I don't really perceive [the new attack patterns]". At the ground camera's 80 to 140 m, the old speeds (2.6 to 4.5 m/s), lunges (1.2 to 1.8 m) and strafes were a few pixels. So fights now play at the camera's scale:
+
+- **Speed.** In a fight, animals move at about the witch's speed (she's 19.25 m/s on the ground): 12 to 20 m/s by species (`movement.json` `speed`; others `combat.fightRun` 14), with high acceleration. Closing in from over 30 m off, they sprint at `combat.pursuitRun` (20 m/s). Roaming and idle speeds are unchanged.
+- **Patterns about 50 m across.** Surround and pincer slots sit at the attackers' reach (about 15 m for melee). Hit-and-run falls back to a ring at least 25 m out. Kiting holds 20 to 36 m. Volley lines stand 32 m off and 6 m apart. Charges run up from 10 to 45 m. Separation and flocking radii are about 3.5 times what they were, so packs spread rather than clump.
+- **Pursuit.** Party animals on her leash chase up to `combat.pursuit` (40 m) from her before giving up; parked ones up to `guard.radius` (40 m) from their sigil. Normal following is unchanged (`leash.length`). Wild ones go for party animals within `combat.aggro` (30 m).
+- **Fast aggro** (Ed: "When I go into an area, the creatures in it should be onto me in a few seconds"). The moment she's on the ground in a wild area, every hostile creature in it notices her. After a `combat.reaction` beat (0.3 s) it comes at the pursuit speed, so even from the far side (about 112 m) it's on her in about 5 s. Babies and friendly areas are excepted. The area's creatures are already made and running whenever she's within `creatureSimRadius` (600 m), and fighting creatures are stepped every step, so nothing delays them.
+- **Melee lunges are 12 to 16 m:** a dash-strike at 60 m/s. The windup shows its line on the ground.
+  - At the witch the lunge keeps that line, so she can sidestep it.
+  - At a creature it homes in, since creatures can't read a telegraph. Fliers are the exception: they flit up out of its way, the flier counter made visible.
+- **Knock-ons:**
+  - Shots fly at 22 to 32 m/s over 20 to 40 m. Lobs land in 4 to 5 m rings. Beams are 20 to 24 m long and 2 to 2.8 m wide. Pulses reach 5 to 7 m, quakes 11 to 12 m.
+  - Knockback throws 7 to 12 m.
+  - Windups are unchanged, and the boar now lowers its head for 0.5 s with its lane shown before it charges, so everything stays dodgeable.
+  - Damage a second is unchanged: the equal power budget doesn't depend on speed.
+- **The witch:** her dash (5 m in 0.18 s, every second) still dodges a lunge (its windup is 0.45 to 0.55 s and she needs about 3 m), and rising still ends a fight. But with creatures as fast as she is on the ground, she can't simply outrun a pack. Flag for Ed: if that feels unfair, a longer dash (8 to 10 m) is the knob.
+- **Live knobs.** `tuning.fight.scale` multiplies every fight length (ranges, lunges, radii, knockback, pattern sizes, pursuit, aggro). `fight.speed` multiplies every fight speed (running, charging, lunging, shots).
+  - `?fightScale=` and `?fightSpeed=` set them at the start.
+  - In the debug overlay (~): sliders and a reset, or [ and ] for scale and ; and ' for speed, live mid-fight.
+  - They're remembered on the browser, and every change goes in the playtest log.
+- **Arena presets at the new scale:** `?arena=surround`, `pincer`, `hitandrun`, `charge`, `volley`, `kite`, `swarm`, `lob`, `beam`, `ambush`, `burrow`, `leap`, `armour`, `legend`, `siege`.
+
 ### Sleeping legends (Ed, 2026-10-04)
 
 **Every area has a legend of its kind, sleeping** (Ed: "The first major change, I think, is that every area has a sleeping legend in it"). They replace the rare wild legends: no legend comes from anywhere else. Party animals evolve no further than adult, and nothing else makes a legend.

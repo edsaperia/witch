@@ -396,6 +396,9 @@ async function main() {
       const g = window.witch.game, w = g.witch;
       let best = null, bd = Infinity;
       for (const c of g.creatures) { if (c.level !== 0) continue; const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c; } } // a baby
+      // (every area has an adult now, onto her in seconds: send the grown-ups round it away, so she can talk)
+      for (const c of g.creatures) if (c.level > 0 && !c.boss && Math.hypot(c.x - best.x, c.z - best.z) < 150) c.gone = true;
+      g.byArea = null;
       g.witch = { ...w, x: best.x + 2, z: best.z + 1 };
       g.camera = { ...g.camera, tx: best.x + 2, tz: best.z + 1 };
       return best.id;

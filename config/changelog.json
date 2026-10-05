@@ -9,6 +9,10 @@
         "When a friendly area's wave comes, its creatures and its legend guard it for you; an area whose legend's wish wasn't granted wakes angry, and its creatures go for your nearest animals or soundsystem",
         "Try it: add ?quest=1 to the link to start beside a legend with what it wants on your stack (press E there)",
         "Your animals leave alone the creature you're inviting while you chat with it (their shots and blasts pass it by); once the chat stops it's fair game again",
+        "Fights happen at the camera's scale: creatures in a fight move about as fast as you (12 to 20 m/s), lunge 12 to 16 m in a dash-strike (a line on the ground shows where), and their packs spread out over about 50 m",
+        "Land in a wild area and its creatures are onto you within a few seconds, from all sides",
+        "Your animals chase attackers up to about 40 m before coming back; shots fly much faster and further; knockback throws creatures well clear; the boar lowers its head (its lane shown) before it charges",
+        "Fight scale and speed can be changed live: in the debug panel (~), or [ ] and ; ' (remembered; ?fightScale= and ?fightSpeed= in the link); try the patterns with ?arena=surround, charge, volley, swarm, lob, beam, ambush, burrow, leap, legend, siege...",
         "The ley line now points to your next objective: one softly glowing line from the last runestone you reached to the next, along the valleys, fading from the first area's colour to the next one's. It stays on the ground even from the treetops (glowing through the leaves), and when you reach the next stone the old line drains into it and a new one draws out to the stone after",
         "The hole in the canopy round you on the ground has no hard edge any more: the trees thin out gradually and raggedly, each at its own distance, and rising or landing no longer shows a circle round you",
         "Smooth-barked trees (beech, rowan, hazel) look like trees again: no more grey columns on brown stumps; their trunks are shaded round and marked with the eyes of fallen branches"

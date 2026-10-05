@@ -10,10 +10,10 @@ import { hash2 } from "./random";
 export type BehaviourKind = "arrive" | "keepRange" | "orbit" | "strafe" | "slot" | "separation" | "cohesion" | "wander" | "dodge";
 export interface Behaviour { kind: BehaviourKind; w: number; near?: number; far?: number; radius?: number; swap?: number }
 export type TacticKind = "surround" | "pincer" | "hitAndRun" | "volley" | "swarm" | "none";
-export interface Move { kind: "charge" | "ambush" | "burrow" | "leap"; cooldown: number; from?: number; to?: number; speed?: number; time?: number; trigger?: number; height?: number }
+export interface Move { kind: "charge" | "ambush" | "burrow" | "leap"; cooldown: number; /** A charge: seconds it lowers its head first (its lane telegraphed) */ windup?: number; from?: number; to?: number; speed?: number; time?: number; trigger?: number; height?: number }
 export interface Profile {
-  /** Its speed in a fight, times its own (the usual is combat.chaseMult). */
-  run?: number;
+  /** Its speed in a fight (m/s, times tuning fight.speed; the usual is combat.fightRun). */
+  speed?: number;
   /** How quickly it changes velocity (m/s per second): heavy creatures turn slowly. */
   accel: number;
   fight: Behaviour[];
@@ -24,6 +24,12 @@ export interface Profile {
 export interface LegendSet { pattern: string[]; phase2: { at: number; pattern: string[]; speed: number; cooldown: number } }
 export interface MovementData { repick: number; packRadius: number; profiles: Record<string, Profile>; legends: LegendSet & { bySpecies: Record<string, LegendSet> } }
 export const MOVEMENT = raw as unknown as MovementData;
+
+/** The fight's scale and speed (Ed's motion scale pass, 2026-10-04; tuning fight, ?fightScale= and
+ *  ?fightSpeed=, and live in the debug overlay): every length in a fight (attack ranges, lunges,
+ *  radii, knockback, pattern sizes, pursuit) times scale; every fight speed (running, charging,
+ *  shots) times speed. Set from the tuning at each combat step. */
+export const FIGHT = { scale: 1, speed: 1 };
 
 export const profileOf = (species: string, data: MovementData = MOVEMENT): Profile | null => data.profiles[species] ?? null;
 export const legendSetOf = (species: string, data: MovementData = MOVEMENT): LegendSet => data.legends.bySpecies[species] ?? data.legends;
@@ -81,8 +87,8 @@ export interface SteerContext {
 
 /** Steer a fighting creature by its profile for one step. Returns whether it may start an attack now. */
 export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
-  const dx = x.px - c.x, dz = x.pz - c.z, d = Math.hypot(dx, dz) || 1e-6, ux = dx / d, uz = dz / d;
-  let vx = 0, vz = 0, may = d <= x.want + 0.6;
+  const dx = x.px - c.x, dz = x.pz - c.z, d = Math.hypot(dx, dz) || 1e-6, ux = dx / d, uz = dz / d, S = FIGHT.scale;
+  let vx = 0, vz = 0, may = d <= Math.max(x.want + 1.5 * S, x.range * 0.95); // (a shooter may strike from anywhere in its range)
   const add = (ax: number, az: number, w: number) => { vx += ax * w; vz += az * w; };
   const pack = x.pack, n = pack ? pack.members.length : 1, i = pack ? Math.max(0, pack.members.indexOf(c)) : 0;
   // The slot its pack's tactic gives it (if any), and whether the tactic lets it strike now.
@@ -94,12 +100,12 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
     case "hitAndRun": {
       // In when its strike is ready; otherwise back out to a ring round the target, spread round it.
       // (Out the way it came, members fanned a little apart, so it doesn't run through its target.)
-      if (!x.ready) { const a = Math.atan2(-dz, -dx) + (i - (n - 1) / 2) * 0.6, R = Math.max(7, x.want + 5); slot = { x: x.px + Math.cos(a) * R, z: x.pz + Math.sin(a) * R }; may = false; }
+      if (!x.ready) { const a = Math.atan2(-dz, -dx) + (i - (n - 1) / 2) * 0.6, R = Math.max(25 * S, x.want + 12 * S); slot = { x: x.px + Math.cos(a) * R, z: x.pz + Math.sin(a) * R }; may = false; }
       break;
     }
     case "volley": {
       // A line across the way to the target, at range, a few metres between members; it fires on the beat.
-      const from = Math.atan2(pack.cz - x.pz, pack.cx - x.px), R = x.range * 0.8, off = (i - (n - 1) / 2) * 3;
+      const from = Math.atan2(pack.cz - x.pz, pack.cx - x.px), R = x.range * 0.8, off = (i - (n - 1) / 2) * 6 * S;
       const lx = x.px + Math.cos(from) * R, lz = x.pz + Math.sin(from) * R;
       slot = { x: lx - Math.sin(from) * off, z: lz + Math.cos(from) * off };
       const beatPhase = (x.time / x.beat) % 1;
@@ -110,7 +116,7 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
   }
   for (const b of P.fight) {
     switch (b.kind) {
-      case "arrive": { const k = Math.max(-0.4, Math.min(1, (d - x.want) / 2)); if (!slot) add(ux, uz, b.w * k); break; }
+      case "arrive": { const k = Math.max(-0.4, Math.min(1, (d - x.want) / (4 * S))); if (!slot) add(ux, uz, b.w * k); break; }
       case "keepRange": { const near = x.range * (b.near ?? 0.5), far = x.range * (b.far ?? 0.9); if (d < near) add(-ux, -uz, b.w); else if (d > far) add(ux, uz, b.w); break; }
       case "orbit": { const dir = hash2(c.id, 5, 7) < 0.5 ? 1 : -1, R = x.range * (b.radius ?? 0.7); add(-uz * dir, ux * dir, b.w); add(ux * (d - R) / Math.max(1, R), uz * (d - R) / Math.max(1, R), b.w * 0.6); break; }
       case "strafe": { const dir = hash2(c.id, Math.floor(x.time / (b.swap ?? 2)), 11) < 0.5 ? 1 : -1; add(-uz * dir, ux * dir, b.w); break; }
@@ -119,26 +125,26 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
         const ac = Math.atan2(c.z - x.pz, c.x - x.px), as = Math.atan2(slot.z - x.pz, slot.x - x.px), da = ((as - ac + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
         const sd = Math.hypot(slot.x - c.x, slot.z - c.z);
         let gx = slot.x, gz = slot.z;
-        if (Math.abs(da) > 0.9) { const a = ac + Math.sign(da) * 0.9, R = Math.max(x.want + 1.5, Math.min(d, x.want + 4)); gx = x.px + Math.cos(a) * R; gz = x.pz + Math.sin(a) * R; }
-        const sx = gx - c.x, sz = gz - c.z, gd = Math.hypot(sx, sz) || 1e-6; if (sd > 0.3) add(sx / gd, sz / gd, b.w * Math.min(1, sd / 2));
+        if (Math.abs(da) > 0.9) { const a = ac + Math.sign(da) * 0.9, R = Math.max(x.want + 3 * S, Math.min(d, x.want + 10 * S)); gx = x.px + Math.cos(a) * R; gz = x.pz + Math.sin(a) * R; }
+        const sx = gx - c.x, sz = gz - c.z, gd = Math.hypot(sx, sz) || 1e-6; if (sd > 0.6 * S) add(sx / gd, sz / gd, b.w * Math.min(1, sd / (4 * S)));
         // Surrounding or pincering, it takes its place before it strikes.
-        if ((pack?.tactic === "surround" || pack?.tactic === "pincer") && sd > 1.5) may = false; } break; }
-      case "separation": { const R = b.radius ?? 2; for (const o of x.neighbours) { if (o === c) continue; const ox = c.x - o.x, oz = c.z - o.z, od = Math.hypot(ox, oz); if (od < R && od > 1e-4) add(ox / od, oz / od, b.w * (1 - od / R)); } break; }
-      case "cohesion": { if (pack && n > 1) { const cx = pack.cx - c.x, cz = pack.cz - c.z, cd = Math.hypot(cx, cz); if (cd > (b.radius ?? 4)) add(cx / cd, cz / cd, b.w); } break; }
+        if ((pack?.tactic === "surround" || pack?.tactic === "pincer") && sd > 3 * S) may = false; } break; }
+      case "separation": { const R = (b.radius ?? 7) * S; for (const o of x.neighbours) { if (o === c) continue; const ox = c.x - o.x, oz = c.z - o.z, od = Math.hypot(ox, oz); if (od < R && od > 1e-4) add(ox / od, oz / od, b.w * (1 - od / R)); } break; }
+      case "cohesion": { if (pack && n > 1) { const cx = pack.cx - c.x, cz = pack.cz - c.z, cd = Math.hypot(cx, cz); if (cd > (b.radius ?? 14) * S) add(cx / cd, cz / cd, b.w); } break; }
       case "wander": { const a = hash2(c.id, Math.floor(x.time * 2), 13) * Math.PI * 2; add(Math.cos(a), Math.sin(a), b.w); break; }
       case "dodge": {
         // Step sideways out of a shot coming its way (not its own side's).
-        const R = b.radius ?? 5;
+        const R = (b.radius ?? 20) * S;
         for (const s of x.threats) {
           if (s.side === x.side) continue;
           // A lob coming down on it: out of its ring, away from where it lands.
-          if (s.lob) { const lx = c.x - s.lob.tx, lz = c.z - s.lob.tz, ld = Math.hypot(lx, lz), lr = (s.radius ?? 1.8) + 1; if (ld < lr) add(ld > 1e-3 ? lx / ld : 1, ld > 1e-3 ? lz / ld : 0, b.w * 1.5); continue; }
+          if (s.lob) { const lx = c.x - s.lob.tx, lz = c.z - s.lob.tz, ld = Math.hypot(lx, lz), lr = (s.radius ?? 4) + 2 * S; if (ld < lr) add(ld > 1e-3 ? lx / ld : 1, ld > 1e-3 ? lz / ld : 0, b.w * 1.5); continue; }
           const rx = c.x - s.x, rz = c.z - s.z, rd = Math.hypot(rx, rz), sv = Math.hypot(s.vx, s.vz) || 1;
           if (rd > R) continue;
           const along = (rx * s.vx + rz * s.vz) / sv; // ahead of the shot
           if (along <= 0) continue;
           const lat = (rx * -s.vz + rz * s.vx) / sv; // which side of its line
-          if (Math.abs(lat) < 1.5) { const sgn = lat >= 0 ? 1 : -1; add((-s.vz / sv) * sgn, (s.vx / sv) * sgn, b.w); }
+          if (Math.abs(lat) < 2.5 * S) { const sgn = lat >= 0 ? 1 : -1; add((-s.vz / sv) * sgn, (s.vx / sv) * sgn, b.w); }
         }
         break;
       }
@@ -153,9 +159,9 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
   c.x += c.vx * x.dt; c.z += c.vz * x.dt;
   const sp = Math.hypot(c.vx, c.vz);
   c.moving = sp > 0.15;
-  if (c.moving) c.walk += x.dt * (2 + sp * 1.5);
+  if (c.moving) c.walk += x.dt * (2 + Math.min(sp, 8) * 1.5);
   // It faces its target while it fights (or the way it runs, when it's running fast away).
-  c.facing = (sp > 2 && Math.abs(c.vx) > 0.3 ? c.vx : dx) >= 0 ? 1 : -1;
+  c.facing = (sp > 6 && Math.abs(c.vx) > 1 ? c.vx : dx) >= 0 ? 1 : -1;
   c.away = dz < -Math.abs(dx);
   return may;
 }
@@ -163,18 +169,20 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
 /** The charge (Stage 5: the boar): a burst in a straight line at its target, locked once it starts;
  *  it ends after `time` seconds or once it reaches the target (the hit, for the caller), then the
  *  move cools down. Returns "hit" when it reached the target this step. */
-export function stepCharge(c: Creature, mv: Move, px: number, pz: number, reach: number, base: number, time: number, dt: number): "none" | "charging" | "hit" {
+export function stepCharge(c: Creature, mv: Move, px: number, pz: number, reach: number, time: number, dt: number): "none" | "charging" | "hit" {
   const ch = c.charge;
+  // Lowering its head: it stands, its lane showing, then goes (fixed now: step out of the lane).
+  if (ch && ch.from !== undefined && time < ch.from) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = ch.dx >= 0 ? 1 : -1; return "charging"; }
   if (ch && time < ch.until) {
     c.x += ch.dx * ch.speed * dt; c.z += ch.dz * ch.speed * dt; c.vx = ch.dx * ch.speed; c.vz = ch.dz * ch.speed;
-    c.moving = true; c.walk += dt * 10; c.facing = ch.dx >= 0 ? 1 : -1;
+    c.moving = true; c.walk += dt * 12; c.facing = ch.dx >= 0 ? 1 : -1;
     if (Math.hypot(px - c.x, pz - c.z) <= reach) { c.charge = { ...ch, until: time }; return "hit"; }
     return "charging";
   }
   const d = Math.hypot(px - c.x, pz - c.z);
-  if (time >= (c.moveReadyAt ?? 0) && d >= (mv.from ?? 4) && d <= (mv.to ?? 14)) {
-    const s = base * (mv.speed ?? 3.5);
-    c.charge = { dx: (px - c.x) / d, dz: (pz - c.z) / d, speed: s, until: time + (mv.time ?? 1.2) };
+  if (time >= (c.moveReadyAt ?? 0) && d >= (mv.from ?? 10) * FIGHT.scale && d <= (mv.to ?? 40) * FIGHT.scale) {
+    const s = (mv.speed ?? 28) * FIGHT.speed, wind = mv.windup ?? 0.5;
+    c.charge = { dx: (px - c.x) / d, dz: (pz - c.z) / d, speed: s, from: time + wind, until: time + wind + (mv.time ?? 1.2) };
     c.moveReadyAt = time + mv.cooldown;
     return "charging";
   }
@@ -190,10 +198,10 @@ export function stepBurrow(c: Creature, mv: Move, px: number, pz: number, base: 
     const step = Math.min(d, base * (mv.speed ?? 1.5) * dt);
     if (d > 1e-3) { c.x += (dx / d) * step; c.z += (dz / d) * step; c.facing = dx >= 0 ? 1 : -1; }
     c.moving = true; c.walk += dt * 6; c.vx = 0; c.vz = 0;
-    if (d < 1.2 || time >= c.burrow.until) { c.burrow = undefined; c.moveReadyAt = time + mv.cooldown; return "surfaced"; }
+    if (d < 1.5 * FIGHT.scale || time >= c.burrow.until) { c.burrow = undefined; c.moveReadyAt = time + mv.cooldown; return "surfaced"; }
     return "under";
   }
-  if (time >= (c.moveReadyAt ?? 0) && d >= (mv.from ?? 4)) { c.burrow = { until: time + (mv.time ?? 4) }; c.moving = false; return "burrowed"; }
+  if (time >= (c.moveReadyAt ?? 0) && d >= (mv.from ?? 10) * FIGHT.scale) { c.burrow = { until: time + (mv.time ?? 4) }; c.moving = false; return "burrowed"; }
   return "none";
 }
 
@@ -209,9 +217,9 @@ export function stepLeap(c: Creature, mv: Move, px: number, pz: number, ready: b
     return "air";
   }
   const dx = px - c.x, dz = pz - c.z, d = Math.hypot(dx, dz);
-  if (ready && time >= (c.moveReadyAt ?? 0) && d >= (mv.from ?? 3) && d <= (mv.to ?? 10)) {
-    const stop = Math.min(d, 0.8);
-    c.leap = { fx: c.x, fz: c.z, tx: px - (dx / d) * stop, tz: pz - (dz / d) * stop, at: time, lands: time + (mv.time ?? 0.8), height: mv.height ?? 2.5 };
+  if (ready && time >= (c.moveReadyAt ?? 0) && d >= (mv.from ?? 8) * FIGHT.scale && d <= (mv.to ?? 30) * FIGHT.scale) {
+    const stop = Math.min(d, 1.5 * FIGHT.scale);
+    c.leap = { fx: c.x, fz: c.z, tx: px - (dx / d) * stop, tz: pz - (dz / d) * stop, at: time, lands: time + (mv.time ?? 0.9) / FIGHT.speed, height: (mv.height ?? 6) * FIGHT.scale };
     c.moveReadyAt = time + mv.cooldown; c.facing = dx >= 0 ? 1 : -1;
     return "leapt";
   }
