@@ -204,6 +204,17 @@ async function main() {
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
     await sleep(1500);
     await shot(page, "41-dancefloor-treetop.png");
+    // The wave numbers follow the bend (Ed, 2026-10-05: "the glowing numbers can be seen past the
+    // bend"): over the treetops, none shows for a stone hidden behind the bent horizon.
+    const t0 = await page.evaluate(() => window.witch.game.clock.time);
+    await page.waitForFunction(t => window.witch.game.clock.time - t >= 1.5, t0, { timeout: 240000, polling: 50 }); // (their fade settles)
+    const nb = await page.evaluate(() => {
+      const v = window.witch.view, list = v.waveNumbers.last;
+      let hidden = 0, shownPast = 0;
+      for (const n of list) { const k = v.overBulge(n.x, n.z, n.top ?? 0); if (k === 0) { hidden++; if ((n.show ?? 1) > 0.1) shownPast++; } }
+      return { drawn: list.length, hidden, shownPast };
+    });
+    check(nb.shownPast === 0 && nb.drawn > 0, `over the treetops, no wave number shows for a stone past the bent horizon (${nb.drawn} drawn, ${nb.hidden} past the horizon, ${nb.shownPast} still showing)`);
     // Behind the home soundsystem (up the screen from it), on the ground: she must still read.
     await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 60000 });
