@@ -255,7 +255,7 @@ export class View {
     this.strings = new StringLightsView(this.scene, game);
     this.leashView = new LeashView(this.scene, game);
     this.lasers = new Lasers(this.scene, game);
-    this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z), t.treetopHeight);
+    this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z));
     this.scene.add(...this.ley.meshes);
     this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
     this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
@@ -1194,7 +1194,8 @@ export class View {
     this.lasers.update(time, party.playing, w.x, w.z, this.speakerTops, g.map.dancefloor);
     {
       // The ley lines: each stone in its area's sigil colour (home's a pale violet).
-      const P = g.party, M = g.map, home = new THREE.Vector3(0.8, 0.7, 1);
+      // (advance "wave": it moves on only when the next area's wave arrives, not when its quest is done)
+      const P = t.leyLines.advance === "wave" ? { ...g.party, leyDone: undefined } : g.party, M = g.map, home = new THREE.Vector3(0.8, 0.7, 1);
       this.ley.update(leyKey(P), () => leyChain(P, M, t.leyLines.links + 1), s => {
         if (s.cell[0] === M.centreCell[0] && s.cell[1] === M.centreCell[1]) return home;
         return this.markerArt.colour.get(AREA_TYPES[M.typeOf(s.cell[0], s.cell[1])].creature) ?? home;
