@@ -278,6 +278,23 @@ A counter is **shown**: a hit that's strong against its target flashes big and g
 
 **Debug arena** (Ed, to see and judge patterns): `?arena=wolf*4,beetle*3` spawns, in the home clearing, your side (parked by sigils: the first group) against the wild side (the second); `wolf*4@2` sets the level (default young, 1). Hers at `@3` are happy area legends guarding the arena; `home` is home's own happy legend; a wild group ending `!` besieges home's soundsystem. So `?arena=home,wolf*6@2!` shows a happy legend defending home against a siege. It's set below the dancefloor; she stands behind her side (the wild go for the nearest, so hers first). `J` sets the arena up again.
 
+### Creature states (Ed, 2026-10-05; issue #87)
+
+"Nobody is being killed in this game; we are throwing a party, we're inviting everyone, some people don't get invites and so are offended." Four states (`src/rules/states.ts`, knobs in `config/states.json`):
+
+| | Wild | Happy | Leashed | Enraged |
+|---|---|---|---|---|
+| **Attacks** | the witch in or near its area; leashed animals not travelling | only the enraged (defends its own area) | the wild and the enraged | the witch, the happy and the leashed; besieges the nearest soundsystem |
+| **Invitable** | yes (the 💌 meter; the chat until the 💌s land) | its second step, to leashed (`leash`: `again`, a second meter; or `hold`) | no (for good) | no; it stops 💌s, as legends do |
+| **Knocked down** | dazed for `daze` seconds (nothing attacks it, it can still be invited), then runs off | runs off | runs off | runs off |
+| **Berries** | no | no | in her posse only | no |
+
+- Wild and happy ignore each other; wild and enraged too. Nobody ever attacks its own kind, whatever the states: an enraged animal with no foe of another kind besieges on.
+- A wave's soundsystem enrages its area's wild creatures (part-invited ones too: their meters are lost); happy ones, leashed ones and babies never are. Areas with a soundsystem grow no new creatures.
+- Happy ones stay in their own area; once it has a soundsystem they dance round it, breaking off to fight a siege.
+- Knocked down, the witch is sent home and her carried sigils are put down where their animals stand: they stay hers, a parked group.
+- **The 💌 meter** (`src/rules/affection.ts`, the interface agreed with the rendering builder on #87): `hit(g, c, amount, time)` adds to a creature's affection; a full meter takes `affection.hits` hits at its level (baby, young, adult); at most one 💌 counts on a creature every `affection.gap` seconds; it drains at `affection.drain` of a full meter a second, `drainDelay` seconds after its last hit. Full, a wild one becomes happy; a happy one (with `leash` `again`) is leashed. `invitable(c)`, `blocksLetters(c)` and `affection(g, c)` (0..1 or null) are what the 💌s and the view read; `c.state`, `c.dazed`, `c.dazedUntil` and `c.dancing` are the creature's.
+
 ### Travelling and posse (Ed, 2026-10-05)
 
 Ed: "when you have leashed creatures and are flying far in treetop mode, or you plant a sigil for a creature far away from where it is, those creatures have to walk a long way ... We probably don't want party animals getting into fights while they're just traversing the world when you're not looking." Approved design (knobs in `config/travel.json`):

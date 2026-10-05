@@ -10,6 +10,7 @@ import { heldByCombat, spawnCreatures, stepCreaturesNear, stepNotice, wanderRang
 import { Forest } from "./forest";
 import { leashPoint, newLeash, stepLeash, type LeashControls, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
+import { danceAt } from "./states";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
 import { cellKey, newParty, planAhead, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
@@ -239,7 +240,6 @@ function fixedStep(g: Game, controls: Controls): void {
   if (W.ko) {
     const r = stepKnockout(W.ko, W.body, W.leash, g.creatures, g.map, g.clock.time, k => g.party.areas.has(k), g.koEvents);
     W.body = r.body;
-    for (const e of g.koEvents) if (e.kind === "released" && e.id !== undefined) g.combat.busy.add(e.id); // walking home from wherever it is
     if (r.done) { W.ko = null; W.health.hp = t.witchHealth.hits; W.health.repairAt = Infinity; }
   }
   repair(W.health, g.clock.time, t);
@@ -275,7 +275,9 @@ function fixedStep(g: Game, controls: Controls): void {
   }
   if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, t, g.beat);
   stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, t, g.beat);
-  for (const e of g.leash.events) if (e.kind === "invited") g.tally.invites++;
+  for (const e of g.leash.events) if (e.kind === "invited" || e.kind === "befriended") g.tally.invites++;
+  // Made happy in an area that already has its soundsystem: it joins the dancing there (#87).
+  for (const e of g.leash.events) if (e.kind === "befriended") { const c = g.creatures[e.id], a = g.party.areas.get(cellKey(c.cell)); if (a?.soundsystem && g.combat.sounds.has(cellKey(c.cell))) danceAt(c, a.soundsystem); }
   for (const e of B.events) if (e.kind === "ate") g.tally.berries++; else if (e.kind === "evolved") g.tally.evolved++;
   stepDancefloor(g, wave, seated);
   stepWitchParty(g, c, dt);
@@ -322,6 +324,8 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
   for (const [key, a] of g.party.areas) if (a.soundsystem && !S.sounds.has(key) && !S.ruined.has(key)) {
     const friendly = g.friendly.has(key);
     startSiege(S, key, a.soundsystem, a.cell, g.creatures, t, !friendly);
+    // Its happy ones (#87) come and dance round it.
+    for (const c of g.creatures) if (!c.gone && !c.leashed && c.state === "happy" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) danceAt(c, a.soundsystem);
     if (friendly) { guardArea(g.creatures, a.cell); g.byArea = null; }
   }
   // Only creatures with something to fight near them take part: wild ones in or next to the area
@@ -362,7 +366,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
       g.creatures[id].leashed = false;
     },
   }, COMBAT);
-  for (const c of active) if (!c.gone && !c.leashed && (c.siege || c.fleeUntil || c.fight?.target || c.wanderTo)) S.busy.add(c.id); // carried on wherever she is
+  for (const c of active) if (!c.gone && !c.leashed && (c.siege || c.fleeUntil || c.fight?.target || c.wanderTo || c.dazed)) S.busy.add(c.id); // carried on wherever she is
   for (const e of S.events) if (e.kind === "soundDestroyed" && e.key && e.at === time) {
     if (e.key === "home") g.speakers = g.speakers.map(() => "destroyed" as SpeakerState);
     else { g.party.areas.delete(e.key); S.ruined.add(e.key); (g.party.ruined ??= new Set()).add(e.key); }

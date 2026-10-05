@@ -1,3 +1,4 @@
+import { stateOf } from "./states";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { hash2 as labHash2, SPECIES_BY_ID } from "../../art/generator.js";
@@ -804,14 +805,17 @@ describe("inviting and leashing", () => {
     return { c, w, t };
   };
 
-  it("invites after talking for the creature's talk time (babies 3 s, young 6 s, adults 12 s), not before", () => {
+  it("invites after talking for the creature's talk time (babies 3 s, young 6 s, adults 12 s), not before: happy first, then (asked again) leashed (#87)", () => {
     for (const level of [0, 1, 2] as const) {
       const all = fresh(), s = newLeash(), c = all.find(k => k.level === level)!, w = { x: c.x + 1, z: c.z };
       const need = TUNING.invite.talkTime[level];
       let t = 0;
       for (; t < need - 0.25; t += 0.1) stepLeash(s, all, none, w, true, t, 0.1, TUNING);
-      expect(c.leashed).toBe(false);
+      expect(stateOf(c)).toBe("wild");
       for (let i = 0; i < 6; i++, t += 0.1) stepLeash(s, all, none, w, true, t, 0.1, TUNING);
+      expect(stateOf(c)).toBe("happy"); // happy, in its own area, not on her stack
+      expect(s.stack).toEqual([]);
+      for (let i = 0; i < Math.round(need / 0.1) + 6; i++, t += 0.1) stepLeash(s, all, none, w, true, t, 0.1, TUNING);
       expect(c.leashed).toBe(true);
       expect(s.stack).toEqual([c.id]);
     }
@@ -847,10 +851,10 @@ describe("inviting and leashing", () => {
     expect(left).toBeCloseTo(talked - 2 * TUNING.invite.decayRate, 5); // 2 s off drains 1 s
     // Resume: done after total - 1 s more.
     let n = 0;
-    while (!c.leashed && n < 400) { stepLeash(s, all, none, near, true, t, 0.1, TUNING); t += 0.1; n++; }
+    while (stateOf(c) === "wild" && n < 400) { stepLeash(s, all, none, near, true, t, 0.1, TUNING); t += 0.1; n++; }
     expect(Math.abs(n * 0.1 - (total - left))).toBeLessThanOrEqual(0.25);
     // Switching creatures: the first keeps draining while the second fills.
-    const s2 = newLeash(), d = all.filter(k => k.level === 1 && !k.leashed)[1], e = other;
+    const s2 = newLeash(), d = all.filter(k => k.level === 1 && stateOf(k) === "wild")[1], e = other;
     for (let i = 0; i < 20; i++) stepLeash(s2, all, none, { x: d.x + 1, z: d.z }, true, i * 0.1, 0.1, TUNING);
     const before = s2.progress.get(d.id)!;
     for (let i = 0; i < 10; i++) stepLeash(s2, all, none, { x: e.x + 1, z: e.z }, true, 2 + i * 0.1, 0.1, TUNING);

@@ -84,6 +84,19 @@ export interface Creature {
   /** A party animal travelling (rules/travel.ts: far from her on the ground or its sigil, quiet both
    *  ways), its route along area borders, and until when it stays in her posse after a fight. */
   travelling?: boolean;
+  /** Its state (rules/states.ts, issue #87): set when it's invited to happy, or enraged; read it with stateOf. */
+  state?: "wild" | "happy" | "leashed" | "enraged";
+  /** Knocked down while wild: dazed (nothing attacks it, it can still be invited) until then, then it runs off. */
+  dazed?: boolean;
+  /** Happy, in an area with a soundsystem: it keeps round it, dancing (rules/states.ts danceAt). */
+  dancing?: boolean;
+  dazedUntil?: number;
+  /** Its 💌 invite meter (0..1 at its last hit) and when that was (rules/affection.ts). */
+  affection?: number;
+  affectionAt?: number;
+  /** The invite button held on it (states.leash "hold"): for how long, till when. */
+  holdT?: number;
+  holdAt?: number;
   route?: import("./travel").Route;
   engagedUntil?: number;
   brace?: number;

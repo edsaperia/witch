@@ -155,29 +155,27 @@ describe("knocked out (Ed, 2026-10-04)", () => {
     return { g, a, b, l, parked };
   }
 
-  it("lets her stack go from the bottom up, a second each; parked ones stay hers; then she's back at the treehouse, whole", () => {
+  it("puts her carried sigils down where their animals stand, bottom first, a second each (#87: leashed is for good); then she's back at the treehouse, whole", () => {
     const { g, a, b, l, parked } = setUp(), W = g.witches[0];
     expect(W.ko).not.toBeNull();
     const down = g.clock.time, bottomFirst = [l.id, b.id, a.id]; // stack order a, b, l: l is the bottom
-    const freed = new Map<number, number>();
+    const put = new Map<number, number>();
     for (let i = 0; i < 10 / STEP && W.ko; i++) {
       stepGame(g, { moveX: 1, moveZ: 0, toggleMode: true, zoom: 0, dash: true }, STEP); // input is ignored meanwhile
-      for (const c of [a, b, l]) if (!c.leashed && !freed.has(c.id)) freed.set(c.id, g.clock.time - down);
+      for (const c of [a, b, l]) if (!g.leash.stack.includes(c.id) && !put.has(c.id)) put.set(c.id, g.clock.time - down);
     }
-    expect([...freed.keys()]).toEqual(bottomFirst);
-    const times = bottomFirst.map(id => freed.get(id)!);
-    times.forEach((s, i) => expect(s).toBeCloseTo((i + 1) * TUNING.knockout.releaseEach, 1));
-    expect(parked.leashed).toBe(true);
+    expect([...put.keys()]).toEqual(bottomFirst);
+    bottomFirst.map(id => put.get(id)!).forEach((s, i) => expect(s).toBeCloseTo((i + 1) * TUNING.knockout.releaseEach, 1));
+    for (const c of [a, b, l]) {
+      expect(c.leashed).toBe(true); // still hers
+      const p = g.leash.placed.find(q => q.id === c.id)!;
+      expect(p).toBeDefined();
+      expect(c.wanderTo).toBeUndefined();
+    }
     expect(g.leash.placed.map(p => p.id)).toContain(parked.id);
     expect(W.ko).toBeNull();
     expect(Math.hypot(g.witch.x - g.map.start.x, g.witch.z - g.map.start.z)).toBeLessThan(0.5);
     expect(W.health.hp).toBe(TUNING.witchHealth.hits);
-    // Each let go walks off, neutral, toward an area of its own kind (still invitable on the way).
-    for (const c of [a, b, l]) {
-      expect(c.wanderTo).toBeDefined();
-      expect(AREA_TYPES[g.map.typeOf(c.wanderTo!.cell[0], c.wanderTo!.cell[1])].creature).toBe(c.species);
-      expect(c.fight?.target ?? null).toBeNull();
-    }
   }, 120000);
 
   it("keeps her legends if knockout.legendsLoyal: they come home with her", () => {
@@ -187,16 +185,16 @@ describe("knocked out (Ed, 2026-10-04)", () => {
     expect(Math.hypot(l.x - g.map.start.x, l.z - g.map.start.z)).toBeLessThan(8);
   }, 120000);
 
-  it("turns those let go into wild creatures of their kind's area when they get there, keeping their level", () => {
-    const { g, b } = setUp(), W = g.witches[0];
+  it("leaves her carried animals as a parked group where they stood, near their own sigils, hers (#87)", () => {
+    const { g, a, b } = setUp(), W = g.witches[0], at = new Map([a, b].map(c => [c.id, { x: c.x, z: c.z }]));
     for (let i = 0; i < 30 / STEP && (W.ko || g.clock.time < 1); i++) stepGame(g, idle, STEP);
-    const to = b.wanderTo!;
-    b.x = to.x + 5; b.z = to.z; // nearly there
-    run(g, 10);
-    expect(b.wanderTo).toBeUndefined();
-    expect(b.cell).toEqual(to.cell);
-    expect(b.level).toBe(2);
-    expect(b.leashed).toBe(false);
+    run(g, 5);
+    for (const c of [a, b]) {
+      const p = g.leash.placed.find(q => q.id === c.id)!, was = at.get(c.id)!;
+      expect(Math.hypot(p.x - was.x, p.z - was.z)).toBeLessThan(TUNING.leash.spacing * 3); // put down about where it stood
+      expect(Math.hypot(c.x - p.x, c.z - p.z)).toBeLessThan(TUNING.leash.length * 2 + 5); // and it keeps to it
+      expect(c.leashed).toBe(true);
+    }
   }, 120000);
 });
 
