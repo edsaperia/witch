@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { generateMap } from "./map";
 import { TUNING } from "./tuning";
 import { newParty, spreadWave, cellKey } from "./party";
-import { departureRoute, leyChain, leyKey, onAreaDone } from "./leylines";
+import { departureClear, departureRoute, leyChain, leyKey, onAreaDone } from "./leylines";
 
 const map = generateMap(123, TUNING);
 const keys = (c: { cell: readonly [number, number] }[]) => c.map(s => cellKey(s.cell));
@@ -64,8 +64,8 @@ describe("the first ley line leaves the treehouse's front, due south (Ed, 2026-1
       // Due south first, for a stretch you can see (several metres before the floor stops it).
       let south = 0;
       for (let i = 1; i < pts.length && pts[i][0] === a.x && pts[i][1] > pts[i - 1][1]; i++) south = pts[i][1] - a.z;
-      expect(south).toBeGreaterThanOrEqual(8);
-      for (const q of pts) expect(Math.hypot(q[0] - d.x, q[1] - d.z)).toBeGreaterThanOrEqual(d.radius + D.avoid - 1e-6);
+      expect(south).toBeGreaterThanOrEqual(4);
+      for (const q of pts) expect(Math.hypot(q[0] - d.x, q[1] - d.z)).toBeGreaterThanOrEqual(departureClear(m, D.avoid) - 1e-6); // off the dancefloor and its ring of speakers
       // Smooth: no sharp corners.
       for (let i = 2; i < pts.length; i++) {
         const u = [pts[i - 1][0] - pts[i - 2][0], pts[i - 1][1] - pts[i - 2][1]], v = [pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]];

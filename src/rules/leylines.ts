@@ -7,6 +7,7 @@
 // them are what the same seeded picker will choose once those have woken, so the line shows what
 // will happen, not a guess. Drawing them is render/leylines.ts.
 import type { ForestMap } from "./map";
+import { speakerRadius } from "./speakers";
 import type { Cell } from "./partition";
 import { cellKey, pickSet, type PartyState, type Partified } from "./party";
 
@@ -64,11 +65,11 @@ export function leyKey(p: PartyState): string {
 }
 
 /** The first line's way out from home (Ed, 2026-10-05): from the treehouse's front due south, toward
- *  the camera, for `run` metres (short of the dancefloor: never within `avoid` metres of its floor),
- *  then a smooth curve round to the first objective, kept off the floor all the way. Points every
- *  `step` metres, from the front to `to`. */
+ *  the camera, for `run` metres (short of the dancefloor: never within `avoid` metres of its ring of
+ *  speakers), then a smooth curve round to the first objective, kept off the dancefloor all the way.
+ *  Points every `step` metres, from the front to `to`. */
 export function departureRoute(map: ForestMap, to: { x: number; z: number }, run: number, avoid: number, step: number): [number, number][] {
-  const d = map.dancefloor, R = d.radius + avoid, f = map.treehouseFront;
+  const d = map.dancefloor, R = departureClear(map, avoid), f = map.treehouseFront;
   const off = (x: number, z: number) => Math.hypot(x - d.x, z - d.z) >= R;
   // The straight run south, as far as it keeps off the floor.
   let len = 0;
@@ -96,3 +97,6 @@ export function departureRoute(map: ForestMap, to: { x: number; z: number }, run
   curve.forEach(push);
   return [...pts, ...curve];
 }
+
+/** How far the first line keeps from the dancefloor's middle: out past its ring of speakers by `avoid` metres. */
+export const departureClear = (map: ForestMap, avoid: number) => speakerRadius(map.tuning) + map.tuning.dancefloor.speakers.footprint + avoid;
