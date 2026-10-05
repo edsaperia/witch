@@ -5,13 +5,14 @@
 // game over, in minutes and waves; then tries a way to shorten the tail (sieges hurrying once the
 // soundsystems standing fall to a share of their peak) and what it costs the comebacks.
 //
-//   node tools/balance/endgame.mjs [--seeds 4] [--gaps 300,120] [--skills 0.1,0.25,0.5,1] [--policies defend,leash,relay,mass] [--cap 60] [--hurry 0.5,3]
+//   node tools/balance/endgame.mjs [--seeds 4] [--gaps 300,120] [--skills 0.1,0.25,0.5,1] [--policies defend,leash,relay,mass] [--cap 60] [--hurry 0.5,3] [--relics 0]
 import { createServer } from "vite";
 
 const arg = (name, def) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : def; };
 const list = s => String(s).split(",");
 const SEEDS = +arg("seeds", 4), GAPS = list(arg("gaps", "300,120")).map(Number), SKILLS = list(arg("skills", "0.1,0.25,0.5,1")).map(Number);
 const POLICIES = list(arg("policies", "defend,leash,relay,mass")), CAP = +arg("cap", 60), [HURRY_AT, HURRY_X] = list(arg("hurry", "0.5,3")).map(Number);
+const RELICS = arg("relics") !== undefined ? +arg("relics") : undefined;
 
 const server = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: "custom", logLevel: "error", optimizeDeps: { noDiscovery: true, include: [] } });
 const load = p => server.ssrLoadModule(p);
@@ -40,13 +41,13 @@ const SIGNALS = {
 
 const all = [];
 for (const gap of GAPS) for (const p of POLICIES) for (const k of SKILLS) for (const m of maps) {
-  const r = simulateStates(m, { interval: gap, maxWaves: CAP, policy: p, skill: k, dt: gap >= 120 ? 1 : 0.5, trace: 10 });
-  const h = simulateStates(m, { interval: gap, maxWaves: CAP, policy: p, skill: k, dt: gap >= 120 ? 1 : 0.5, hurryAt: HURRY_AT, hurryFactor: HURRY_X });
+  const r = simulateStates(m, { interval: gap, maxWaves: CAP, policy: p, skill: k, dt: gap >= 120 ? 1 : 0.5, trace: 10, relics: RELICS });
+  const h = simulateStates(m, { interval: gap, maxWaves: CAP, policy: p, skill: k, dt: gap >= 120 ? 1 : 0.5, hurryAt: HURRY_AT, hurryFactor: HURRY_X, relics: RELICS });
   all.push({ gap, p, k, seed: m.seed, r, h });
   process.stderr.write(`${gap} ${p} ×${k} ${m.seed}: ${r.lost ? `lost w${r.lost.wave}` : "cap"} / hurried ${h.lost ? `w${h.lost.wave}` : "cap"}\n`);
 }
 
-say(`Point of no return (Ed, 2026-10-05): ${SEEDS} seeds × policies ${POLICIES.join(", ")} × skills ${SKILLS.map(k => `×${k}`).join(", ")}, gaps ${GAPS.join(" and ")} s, cap ${CAP} waves; the current legend rules (relics 3–4). ${all.filter(x => x.r.lost).length} of ${all.length} runs lost.\n`);
+say(`Point of no return (Ed, 2026-10-05): ${SEEDS} seeds × policies ${POLICIES.join(", ")} × skills ${SKILLS.map(k => `×${k}`).join(", ")}, gaps ${GAPS.join(" and ")} s, cap ${CAP} waves; the current legend rules (relics ${RELICS ?? "3–4"}). ${all.filter(x => x.r.lost).length} of ${all.length} runs lost.\n`);
 for (const gap of GAPS) {
   const runs = all.filter(x => x.gap === gap), lost = runs.filter(x => x.r.lost);
   say(`**${gap} s waves: ${lost.length} of ${runs.length} runs lost. Each signal: in how many lost runs it fired first (recall), its false alarms (fired in runs that then reached the cap), and the tail from it to game over (median, mean; minutes and waves)**\n`);
