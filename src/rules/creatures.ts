@@ -4,6 +4,7 @@
 // reaches late are the dangerous ones. The home area holds none. Wild legends are rare, late threats (Ed,
 // 2026-10-04): a few a map, only in remote areas, each a boss, asleep until the party reaches it. Idle creatures roam their whole area, never leaving it.
 // Only those near the witch are simulated; the rest pick up where they would plausibly be.
+import { questFor, type Quest } from "./quest";
 import { rng } from "./random";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { facingAway } from "./witch";
@@ -76,7 +77,7 @@ export interface Creature {
    *  signature move is ready again, and when an ambush was sprung. */
   vx?: number;
   vz?: number;
-  charge?: { dx: number; dz: number; speed: number; until: number; /** a legend's charge: whom it has trampled */ hit?: number[] };
+  charge?: { dx: number; dz: number; speed: number; until: number; /** when it sets off (it lowers its head till then) */ from?: number; /** a legend's charge: whom it has trampled */ hit?: number[] };
   /** A wild legend's move set (Stage 5): where it is in its pattern, and its phase. */
   legend?: { step: number; phase: 1 | 2 };
   moveReadyAt?: number;
@@ -100,6 +101,12 @@ export interface Creature {
    *  buff on, at home in its area). And when it last changed. */
   legendState?: LegendState;
   stateAt?: number;
+  /** A legend's quest (rules/quest.ts): the creature it dreams of, and whether it was brought. */
+  quest?: Quest;
+  /** Of an area whose legend's quest is done, still wild: it leaves her and her party be. */
+  friendly?: boolean;
+  /** Of a friendly area the party has reached: a party animal guarding its area (not on her leash). */
+  guard?: boolean;
   /** A disc (centre, radius in metres) found to lie wholly in its own area: see inOwnArea. */
   safeX?: number;
   safeZ?: number;
@@ -200,6 +207,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
     }
     const L = makeCreature(map, cell, LEGEND, out.length, r, legendSpot(map, cell, r));
     L.legendState = home ? "happy" : "asleep"; L.stateAt = 0;
+    if (!home) L.quest = questFor(map, cell, L.species);
     out.push(L);
   }
   return out;

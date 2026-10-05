@@ -54,6 +54,9 @@ uniform vec2 uRes;
 uniform float uWitchDepth;
 uniform vec4 uOcc;
 uniform float uAbsolute; // its y is a world height, not a height over the ground
+uniform vec4 uCutout, uWitch;
+varying float vHole;   // crowns and cut trunks: the radius of the hole round her (pixels) for this tree
+varying float vOverHer; // over her on screen and nearer the camera: it could hide her
 attribute vec3 iPos;
 attribute vec2 iSize;
 attribute vec4 iUv;
@@ -118,6 +121,21 @@ void main() {
   vec4 b = clipOf(base);
   vec2 ndc = b.xy / b.w, snapped = (floor((ndc * 0.5 + 0.5) * uRes) + 0.5) / uRes * 2.0 - 1.0;
   gl_Position.xy += (snapped - ndc) * gl_Position.w;
+  // The hole cut in the canopy round her (Ed, round 7: "the crown-hiding circle still has a very
+  // sharp edge"): each tree's crown (and its cut trunk with it) has its own radius for it, a little
+  // nearer or further than the next, so no line runs across the canopy, and fades over a wide band.
+  vHole = 1.0; vOverHer = 0.0;
+  if (abs(iFlags.y) > 0.001) {
+    vec4 c0 = clipOf(base), c1 = clipOf(base + uUp * iSize.y);
+    vec2 s0 = (c0.xy / c0.w * 0.5 + 0.5) * uRes, s1 = (c1.xy / c1.w * 0.5 + 0.5) * uRes;
+    // Its own radius for the hole (vHole here: in pixels), each tree a little nearer or further.
+    float j = fract(sin(dot(floor(iPos.xz * 2.0), vec2(12.9898, 78.233))) * 43758.5453);
+    vHole = uCutout.z * (0.8 + 0.4 * j);
+    // Whether it could hide her: over her sprite on screen and nearer the camera than her.
+    float hh = abs(s1.y - s0.y) * 0.5 + 1.0, hw = hh * iSize.x / max(iSize.y, 0.01);
+    vec2 cc = (s0 + s1) * 0.5;
+    vOverHer = abs(cc.x - uWitch.x) < hw + uWitch.z && abs(cc.y - uWitch.y) < hh + uWitch.w && uWitchDepth + (viewMatrix * vec4(base, 1.0)).z > 0.0 ? 1.0 : 0.0;
+  }
 }
 `;
 
@@ -141,6 +159,7 @@ varying float vGlow;
 varying float vSwayM; // metres its leafiest pixels move this frame (masked sprites)
 varying vec4 vFrame;  // its frame in the atlas (u0, v0, u1, v1), to keep the sway inside it
 varying float vFront;
+varying float vHole, vOverHer;
 varying vec2 vLocal;
 varying float vSizeY;
 uniform float uFind; // this batch: 1 for wild creatures (eyeshine, light floor, rim)
@@ -182,14 +201,15 @@ void shade() {
   // (Ed: no dithering), or dithered steps with ?fx=pixel. Smooth, a crown partly shown in the hole
   // is drawn see-through in the second pass where it's over her, after her, like whatever stands
   // in front of her: in the opaque pass it hid her (Ed, v289: she showed only as her silhouette inside a crisp disc).
+  // The hole: a wide soft band at this tree's own radius (vHole); the pass by the whole crown (vOverHer).
+  float hole = smoothstep(vHole - uCutout.w, vHole + uCutout.w * 0.35, length(gl_FragCoord.xy - uCutout.xy));
   float shown = 1.0;
   if (vFlags.y > 0.5) {
-    float d = length(gl_FragCoord.xy - uCutout.xy);
-    shown = max(smoothstep(uCutout.z - uCutout.w, uCutout.z, d), uTopFade);
+    shown = max(hole, uTopFade);
     if (uSmooth < 0.5) { if (bayer(gl_FragCoord.xy) >= shown) discard; shown = 1.0; }
     else if (shown < 0.004) discard;
   }
-  bool see = occl > 0.001 || (shown < 0.996 && e < 2.0); // (only over and round her: elsewhere it keeps its depth)
+  bool see = occl > 0.001 || (shown < 0.996 && vOverHer > 0.5); // (only crowns that could hide her: the rest keep their depth)
   if (uFadePass > 0.5 ? !see : see) discard;
   float alpha = (uFadePass > 0.5 ? mix(1.0, uOcc.x, occl) : 1.0) * shown;
   if (vFlags.y < -0.001 && uTrunkFade.x > 0.0) {
@@ -198,8 +218,7 @@ void shade() {
     // pixel grid; where the crowns show, it stays whole under them. The fade covers at most
     // uTrunkFade.z of the trunk's visible height (Ed, v233: short tangly trees kept no trunk at
     // all), so every trunk keeps a solid base.
-    float d = length(gl_FragCoord.xy - uCutout.xy);
-    float crown = max(smoothstep(uCutout.z - uCutout.w, uCutout.z, d), uTopFade);
+    float crown = max(hole, uTopFade);
     float topY = 1.0 + vFlags.y, band = min(uTrunkFade.x / max(vSizeY, 0.01), topY * uTrunkFade.z);
     float t = clamp((topY - vLocal.y) / band, 0.0, 1.0);
     vec2 artPx = vec2(floor(vUv.x * float(textureSize(uAlbedo, 0).x)), floor(vLocal.y * vSizeY / uTrunkFade.y));

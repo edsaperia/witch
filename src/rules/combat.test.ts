@@ -261,7 +261,7 @@ describe("Ed's Stage 4 rulings", () => {
   it("has party animals following her take on only what attacks her or them; parked ones guard round their sigil", () => {
     const g = quiet(), w = g.witch;
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // nothing attacks her up there
-    const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true), idler = place(g, 0, "boar", 1, w.x + 22, w.z); // beyond its aggro of the wolf
+    const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true), idler = place(g, 0, "boar", 1, w.x + 60, w.z); // beyond its aggro of the wolf
     idler.rest = 100;
     run(g, 3);
     expect(mine.fight?.target ?? null).toBeNull(); // the boar isn't attacking anyone: leave it
@@ -408,5 +408,56 @@ describe("Ed's playtest (2026-10-04)", () => {
     run(g, 6, { ...idle, autoTalk: false });
     expect(Math.hypot(pup.x - g.witch.x, pup.z - g.witch.z)).toBeLessThan(d0 - 2); // curious
     expect(Math.hypot(shy.x - g.witch.x, shy.z - g.witch.z)).toBeGreaterThan(s0); // skittish
+  }, 60000);
+});
+
+describe("the invitee truce (Ed, 2026-10-04)", () => {
+  it("has her party leave the creature she's inviting alone, and go for it once the chat's off", () => {
+    const g = quiet(), w = g.witch;
+    const fox = place(g, 0, "fox", 2, w.x + 3, w.z), wolf = place(g, 0, "wolf", 2, w.x - 1, w.z, true);
+    g.witches[0].health.hp = 1e6;
+    for (let i = 0; i < 6 / STEP; i++) stepGame(g, { ...idle, autoTalk: true }, STEP); // (an adult takes 12 s to invite)
+    expect(g.leash.talk?.id).toBe(fox.id);
+    expect(fox.hp).toBeUndefined(); // untouched while they chat
+    expect(wolf.fight?.target?.kind === "creature" && wolf.fight.target.id === fox.id).toBe(false);
+    // She rises: the chat's off, and it's fair game again.
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 };
+    for (let i = 0; i < 10 / STEP && fox.hp === undefined; i++) stepGame(g, idle, STEP);
+    expect(fox.hp).toBeDefined();
+  }, 60000);
+});
+
+describe("the motion scale pass (Ed, 2026-10-04)", () => {
+  it("has an area's creatures onto her within a few seconds of her landing in it, from across the area", () => {
+    const g = quiet(), W = g.witches[0];
+    W.health.hp = 1e6;
+    // An adult wolf at its area's far side, and her landing at the other.
+    const site = g.map.siteOf(g.map.centreCell[0] + 2, g.map.centreCell[1]), cell: [number, number] = [g.map.centreCell[0] + 2, g.map.centreCell[1]];
+    const wolf = place(g, 0, "wolf", 2, site.x, site.z);
+    wolf.cell = cell;
+    let spot: { x: number; z: number } | null = null;
+    for (let r = 70; r > 20 && !spot; r -= 5) for (let k = 0; k < 24 && !spot; k++) { const a = (k / 24) * Math.PI * 2, x = site.x + Math.cos(a) * r, z = site.z + Math.sin(a) * r, c = g.map.cellSafe(x, z).cell; if (c[0] === cell[0] && c[1] === cell[1]) spot = { x, z }; }
+    g.witch = { ...g.witch, x: spot!.x, z: spot!.z, mode: "ground", lift: 0, seated: false };
+    const d0 = Math.hypot(wolf.x - g.witch.x, wolf.z - g.witch.z);
+    let t = 0;
+    for (; t < 10 && Math.hypot(wolf.x - g.witch.x, wolf.z - g.witch.z) > 18; t += STEP) stepGame(g, { ...idle, autoTalk: false }, STEP);
+    expect(d0).toBeGreaterThan(20);
+    expect(t).toBeLessThan(0.5 + d0 / 15); // (a moment's reaction, then about 20 m/s)
+  }, 60000);
+
+  it("scales a fight live: lengths with fight.scale, speeds with fight.speed", () => {
+    const g = quiet();
+    const wolf = place(g, 0, "wolf", 2, g.witch.x + 30, g.witch.z);
+    g.witches[0].health.hp = 1e6;
+    g.tuning.fight.speed = 0.5;
+    let top = 0, px = wolf.x, pz = wolf.z;
+    for (let i = 0; i < 3 / STEP; i++) { stepGame(g, { ...idle, autoTalk: false }, STEP); top = Math.max(top, Math.hypot(wolf.x - px, wolf.z - pz) / STEP); px = wolf.x; pz = wolf.z; }
+    g.tuning.fight.speed = 1;
+    expect(top).toBeLessThan(60 * 0.5 + 1); // (its fastest, a lunge, at half speed)
+    expect(top).toBeGreaterThan(TUNING.combat.pursuitRun * 0.5 - 1);
+    g.tuning.fight.scale = 2;
+    stepGame(g, idle, STEP);
+    expect(attackOf("wolf", 2)!.attack.lunge).toBeCloseTo(COMBAT.attacks.maul.lunge! * 2);
+    g.tuning.fight.scale = 1;
   }, 60000);
 });

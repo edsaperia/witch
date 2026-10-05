@@ -32,7 +32,7 @@ describe("creature movement (Stage 5)", () => {
   });
 
   it("has wolves surround her rather than all come at her from one side", () => {
-    const g = quiet(), wolves = [0, 1, 2, 3].map(i => pick(g, "wolf", 1, 7 + i, 2 * i));
+    const g = quiet(), wolves = [0, 1, 2, 3].map(i => pick(g, "wolf", 1, 22 + i * 3, 6 * i));
     run(g, 12);
     const a = wolves.map(c => Math.atan2(c.z - g.witch.z, c.x - g.witch.x)).sort((p, q) => p - q);
     const gaps = a.map((v, i) => (i ? v - a[i - 1] : v + Math.PI * 2 - a[a.length - 1]));
@@ -40,32 +40,32 @@ describe("creature movement (Stage 5)", () => {
   }, 60000);
 
   it("has a hare dart in and back out (hit and run)", () => {
-    const g = quiet(), hare = pick(g, "hare", 1, 12, 0);
+    const g = quiet(), hare = pick(g, "hare", 1, 35, 0);
     let near = Infinity, farAfter = 0, wasNear = false;
-    run(g, 10, () => { const d = Math.hypot(hare.x - g.witch.x, hare.z - g.witch.z); if (d < 3) { wasNear = true; near = Math.min(near, d); } if (wasNear) farAfter = Math.max(farAfter, d); });
-    expect(near).toBeLessThan(3);
-    expect(farAfter).toBeGreaterThan(5);
+    run(g, 10, () => { const d = Math.hypot(hare.x - g.witch.x, hare.z - g.witch.z); if (d < 5) { wasNear = true; near = Math.min(near, d); } if (wasNear) farAfter = Math.max(farAfter, d); });
+    expect(near).toBeLessThan(5);
+    expect(farAfter).toBeGreaterThan(15); // (out to a ring about 25 m round her)
   }, 60000);
 
   it("has a boar charge: a fast straight burst", () => {
-    const g = quiet(), boar = pick(g, "boar", 1, 12, 0);
+    const g = quiet(), boar = pick(g, "boar", 1, 30, 0);
     let top = 0, px = boar.x, pz = boar.z;
     run(g, 4, () => { top = Math.max(top, Math.hypot(boar.x - px, boar.z - pz) / STEP); px = boar.x; pz = boar.z; });
-    expect(top).toBeGreaterThan(boar.speed * MOVEMENT.profiles.boar.run! * 2.5);
+    expect(top).toBeGreaterThan(MOVEMENT.profiles.boar.speed! * 1.5); // (its charge, well over its run)
   }, 60000);
 
   it("has bats swarm without piling on one another", () => {
-    const g = quiet(), bats = [0, 1, 2, 3].map(i => pick(g, "bat", 1, 8 + i * 0.3, i * 0.3));
+    const g = quiet(), bats = [0, 1, 2, 3].map(i => pick(g, "bat", 1, 20 + i, i));
     run(g, 5);
     let closest = Infinity;
     for (const a of bats) for (const b of bats) if (a !== b) closest = Math.min(closest, Math.hypot(a.x - b.x, a.z - b.z));
-    expect(closest).toBeGreaterThan(1);
+    expect(closest).toBeGreaterThan(2.5);
   }, 60000);
 
   it("has a raven volley fire on the beat", () => {
     const saved = MOVEMENT.profiles.raven.tactics;
     MOVEMENT.profiles.raven.tactics = [{ kind: "volley", w: 1 }]; // (it also sometimes shoots freely)
-    const g = quiet(), ravens = [0, 1, 2].map(i => pick(g, "raven", 1, 16, i * 3 - 3)), ids = new Set(ravens.map(r => r.id)), beat = 60 / TUNING.beat.bpm;
+    const g = quiet(), ravens = [0, 1, 2].map(i => pick(g, "raven", 1, 40, i * 6 - 6)), ids = new Set(ravens.map(r => r.id)), beat = 60 / TUNING.beat.bpm;
     const phases: number[] = [];
     run(g, 12, () => { for (const e of g.combat.events) if (e.kind === "windup" && ids.has(e.id!) && e.at === g.clock.time) phases.push((e.at / beat) % 1); });
     MOVEMENT.profiles.raven.tactics = saved;
@@ -74,28 +74,28 @@ describe("creature movement (Stage 5)", () => {
   }, 60000);
 
   it("has an owl's lob land where she was: standing still she's hit, stepping away she isn't", () => {
-    const g = quiet(), owl = pick(g, "owl", 1, 12, 0), W = g.witches[0], hp0 = W.health.hp;
+    const g = quiet(), owl = pick(g, "owl", 1, 30, 0), W = g.witches[0], hp0 = W.health.hp;
     run(g, 6);
     expect(W.health.hp).toBeLessThan(hp0);
     // Now step away each time a lob is in the air.
     const hp1 = W.health.hp;
-    run(g, 8, () => { if (g.combat.shots.some(s => s.lob && s.from === owl.id)) { const s = g.combat.shots.find(q => q.lob)!; if (Math.hypot(g.witch.x - s.lob!.tx, g.witch.z - s.lob!.tz) < 4) g.witch = { ...g.witch, z: g.witch.z + (g.witch.z > owl.z ? 6 : -6) }; } });
+    run(g, 8, () => { if (g.combat.shots.some(s => s.lob && s.from === owl.id)) { const s = g.combat.shots.find(q => q.lob)!; if (Math.hypot(g.witch.x - s.lob!.tx, g.witch.z - s.lob!.tz) < 8) g.witch = { ...g.witch, z: g.witch.z + (g.witch.z > owl.z ? 12 : -12) }; } });
     expect(W.health.hp).toBe(hp1);
   }, 60000);
 
   it("has a salamander's beam burn along its line", () => {
     const g = quiet(), W = g.witches[0], hp0 = W.health.hp;
-    pick(g, "salamander", 1, 7, 0);
+    pick(g, "salamander", 1, 15, 0);
     run(g, 6);
     expect(g.combat.events.length + 1).toBeGreaterThan(0);
     expect(W.health.hp).toBeLessThan(hp0);
   }, 60000);
 
   it("has a spider lie in wait until she comes close, then spring", () => {
-    const g = quiet(), sp = pick(g, "spider", 1, 14, 0), x0 = sp.x, z0 = sp.z;
+    const g = quiet(), sp = pick(g, "spider", 1, 40, 0), x0 = sp.x, z0 = sp.z;
     run(g, 3);
     expect(Math.hypot(sp.x - x0, sp.z - z0)).toBeLessThan(0.01); // still
-    g.witch = { ...g.witch, x: sp.x - 6, z: sp.z };
+    g.witch = { ...g.witch, x: sp.x - 15, z: sp.z };
     let struck = false;
     run(g, 2, () => { if (g.combat.events.some(e => e.id === sp.id && (e.kind === "windup" || e.kind === "beam"))) struck = true; });
     expect(sp.sprung).toBeDefined();
@@ -103,7 +103,7 @@ describe("creature movement (Stage 5)", () => {
   }, 60000);
 
   it("has a mole burrow (untouchable) to her and surface under her, striking", () => {
-    const g = quiet(), W = g.witches[0], hp0 = W.health.hp, mole = pick(g, "mole", 1, 10, 0), seen = new Set<string>();
+    const g = quiet(), W = g.witches[0], hp0 = W.health.hp, mole = pick(g, "mole", 1, 30, 0), seen = new Set<string>();
     let under = false;
     run(g, 8, () => { if (mole.burrow) under = true; for (const e of g.combat.events) if (e.id === mole.id) seen.add(e.kind); });
     expect(under).toBe(true);
@@ -112,7 +112,7 @@ describe("creature movement (Stage 5)", () => {
   }, 60000);
 
   it("has a toad leap at her and slam down where it lands", () => {
-    const g = quiet(), W = g.witches[0], hp0 = W.health.hp, toad = pick(g, "toad", 1, 7, 0);
+    const g = quiet(), W = g.witches[0], hp0 = W.health.hp, toad = pick(g, "toad", 1, 20, 0);
     let flew = false, slammed = false;
     run(g, 6, () => { if (toad.leap) flew = true; if (g.combat.events.some(e => e.id === toad.id && e.kind === "slammed")) slammed = true; });
     expect(flew).toBe(true);
@@ -121,7 +121,7 @@ describe("creature movement (Stage 5)", () => {
   }, 60000);
 
   it("has a bat screech: a pulse all round it", () => {
-    const g = quiet(), bat = pick(g, "bat", 1, 6, 0);
+    const g = quiet(), bat = pick(g, "bat", 1, 10, 0);
     let pulsed = false;
     run(g, 6, () => { if (g.combat.events.some(e => e.id === bat.id && e.kind === "pulse")) pulsed = true; });
     expect(pulsed).toBe(true);
