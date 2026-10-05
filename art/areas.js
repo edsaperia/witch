@@ -250,7 +250,10 @@ function rock(sp, c, rx, ry, st, r, moss) { // a lumpy stone, lit above, mossy o
 // Each returns { sp, colours }; s scales to the pixel size.
 function prop(kind, o, def, st, r, s) {
   if (TALL_KINDS.includes(kind)) return tallPiece(kind, o, def, st, r); // the tall pieces (tall.js): 3D, at the witch's scale
-  const leafCol = { [M.LEAF]: hsv2rgb(def.leaf, .6 * st.sat, .55), [M.LEAF2]: hsv2rgb(def.leaf - .05, .55 * st.sat, .78), [M.LEAF3]: hsv2rgb(def.leaf + .03, .66 * st.sat, .36) };
+  if (kind !== "tree" && o.scale) s *= o.scale; // a prop's own size (an art set's)
+  // an art set's area tone: its props' leaves' saturation and value (times), so each area's greens are its own
+  const ts0 = def.tone?.sat ?? 1, tv0 = def.tone?.val ?? 1;
+  const leafCol = { [M.LEAF]: hsv2rgb(def.leaf, Math.min(1, .6 * st.sat * ts0), .55 * tv0), [M.LEAF2]: hsv2rgb(def.leaf - .05, Math.min(1, .55 * st.sat * ts0), .78 * tv0), [M.LEAF3]: hsv2rgb(def.leaf + .03, Math.min(1, .66 * st.sat * ts0), .36 * tv0) };
   const wood = { [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BELLY]: hsv2rgb(st.trunkHue + .02, .3, .7) };
   const water = { [M.MAGIC]: [60, 110, 150], [M.MAGIC2]: [150, 200, 220], [M.BODY2]: [35, 70, 100] };
   if (kind === "tree") {
@@ -315,7 +318,7 @@ function prop(kind, o, def, st, r, s) {
     for (let k = 0; k < 6; k++) { const x = cx + uni(r, -14, 14) * s, y = gy - 2 * s; sp.ellipse(x, y, (o.acorn ? 1.6 : 2) * s, (o.acorn ? 2 : 2.8) * s, M.TRUNK, { round: st.round }); if (o.acorn) sp.ellipse(x, y - 1.6 * s, 1.8 * s, 1 * s, M.BARKD, { round: st.round }); else sp.px(x, y - 1, M.BARKL); }
     colours = wood;
   } else if (kind === "water") { // a puddle, pond, bog pool or stream, flat on the ground
-    const w = 22 * s * (o.w || 1), h = 6 * s;
+    const w = 22 * s * (o.w || 1), h = 6 * s * (o.d || 1); // d: its depth on the screen (a round pool, not a sliver)
     sp.shape([[cx - w, gy - h], [cx - w * .3, gy - h * 1.5], [cx + w * .6, gy - h * 1.2], [cx + w, gy - h * .5], [cx + w * .4, gy], [cx - w * .7, gy - h * .2]], M.MAGIC, { group: 5, round: .2 });
     for (let k = 0; k < 6; k++) { const x = cx + uni(r, -w * .6, w * .6), y = gy - h * uni(r, .4, 1.1); for (let j = 0; j < 3 * s; j++) sp.recolour(x + j, y, M.MAGIC2); }
     colours = o.bog ? { [M.MAGIC]: [60, 70, 50], [M.MAGIC2]: [120, 130, 90] } : water;
@@ -355,6 +358,7 @@ function prop(kind, o, def, st, r, s) {
 function setPiece(kind, o, def, st, r, s) {
   if (o.three) return setPiece3d(kind, def, st);
   if (kind === "tree" || kind === "log") return prop(kind, o, def, st, r, s);
+  if (o.scale) s *= o.scale; // its own size (an art set's)
   const W = Math.round(90 * s), H = Math.round(70 * s), sp = new Sprite(W, H), cx = W / 2, gy = H;
   let colours = { ...stoneCol(), [M.LEAF]: hsv2rgb(def.leaf, .55, .5), [M.LEAF2]: hsv2rgb(def.leaf - .04, .5, .7), [M.TRUNK]: hsv2rgb(st.trunkHue, .45, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5, .17), [M.MAGIC]: hsv2rgb(st.magicHue, .6, 1), [M.MAGIC2]: hsv2rgb(st.magicHue, .2, 1) };
   if (kind === "shrine") { // a stone plinth with a little roofed niche and a glowing offering
@@ -455,7 +459,7 @@ export function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas =
     const g = S.grow, willow = g === "willow", narrow = g === "narrow" || o.bare, wide = g === "wide", small = g === "small";
     const scale = willow ? 1 + (h - 1) * .45 : small ? 1 + (h - 1) * .5 : wide ? 1 + (h - 1) * .75 : h;
     const width = (sapling ? .78 : 1) * (willow ? 1 + Math.max(0, h - 1) * .55 : wide ? 1 + Math.max(0, h - 1) * .45 : narrow && big ? (o.bare ? .6 : .85) : big ? 1.06 : 1);
-    const ts = { ...st, crownWidth: (st.crownWidth || 3) * width, leafHue: def.leaf + (o.dark ? .05 : 0), sat: st.sat * (pal?.sat ?? 1), leafVal: pal?.val ?? 1, /* the area's palette */ gnarl: Math.min(1, (o.gnarl ?? st.gnarl) + (cls.id === "giant" ? .2 : 0)),
+    const ts = { ...st, crownWidth: (st.crownWidth || 3) * width, leafHue: def.leaf + (o.dark ? .05 : 0), ...(o.colour ? { speciesColour: o.colour } : {}), sat: st.sat * (pal?.sat ?? 1), leafVal: pal?.val ?? 1, /* the area's palette */ gnarl: Math.min(1, (o.gnarl ?? st.gnarl) + (cls.id === "giant" ? .2 : 0)),
       treeBare: o.bare, treeTrunks: sapling ? 1 : o.trunks, treeLean: o.lean, treeThick: sapling ? undefined : big && o.thick ? o.thick * 1.1 : o.thick, treeThin: sapling || o.thin, treeHollow: big && o.hollow, treeWebs: o.webs };
     const t = f(r, ts, st.treeSize * K * (o.scale || 1) * scale * uni(r, .95, 1.05));
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }

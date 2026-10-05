@@ -14,7 +14,8 @@ export function speciesOf(g) {
   const S = { id: g.id, name: g.name, plan: g.builder, hue: g.palette.hue, sat: g.palette.sat, val: g.palette.val, legend: g.legend || [] };
   if (g.palette.belly) S.belly = g.palette.belly;
   if (g.palette.over) S.over = g.palette.over; // a material's own colour (an art set's), over the ramp
-  if (g.form) S.form = g.form; // the builder's own shape numbers (art/creatures3d.js, formOf)
+  if (g.form) S.form = g.form;
+  if (g.sleep) S.sleep = g.sleep; // its sleeping legend's pose and colours, over its own (art/legends.js; an art set's) // the builder's own shape numbers (art/creatures3d.js, formOf)
   if (g.template === "quadruped") {
     const q = { ...g.body, ...g.head, ...g.coat }, p = g.parts || {};
     if (q.legMat) q.legMat = M[q.legMat];

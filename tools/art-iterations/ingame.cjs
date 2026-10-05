@@ -53,6 +53,8 @@ function serve() {
       return best;
     }, area);
     if (!spot) throw new Error(`no ${area} area near the start`);
+    // she can't be knocked out while posing (a knockout sends her home, and the shots would show the treehouse)
+    await page.evaluate(() => setInterval(() => { for (const w of window.witch.game.witches || []) { w.health.hp = Math.max(w.health.hp, 99); w.ko = null; } }, 50));
     log(`in ${area} at`, spot);
     const wait = s => page.evaluate(s => new Promise(ok => { const t = window.witch.game.clock.time + s; const f = () => window.witch.game.clock.time >= t ? ok() : setTimeout(f, 100); f(); }), s);
     // a moment to draw the new place's art and let its creatures out; a nudge so the camera settles behind her

@@ -139,8 +139,10 @@ function lgMove(m, f) {
 }
 
 // The form: redraws the finished model of species S's legend, asleep (breath: how far up this breath lifts it).
+// A species' sleeping pose, with its art set's changes (its genome's `sleep`: the pose's numbers, `over` merged), if any.
+const lgPose = S => S.sleep ? { ...LEGEND_POSES[S.id], ...S.sleep, over: { ...LEGEND_POSES[S.id].over, ...S.sleep.over } } : LEGEND_POSES[S.id];
 function lgForm(S, { breath }) {
-  const pose = LEGEND_POSES[S.id], over = pose.over;
+  const pose = lgPose(S), over = pose.over;
   const form = (m, o) => {
     const s = render(m, { ...o, measure: true }).s; // the awake legend's scale
     const r = rng(S.id.length * 977 + 31);
@@ -160,6 +162,7 @@ function lgForm(S, { breath }) {
     const moss = over.moss || 0, lichen = over.lichen || 0, top = b0.y1, seed = S.id.length * 7;
     const mossy = p => {
       if (p[1] < G + .035) return M.BARK2; // earth smeared along the ground line
+      if (over.mud && p[1] < G + over.mud * Math.max(.1, top - G) * (.7 + .6 * vnoise(p[0] * 4, p[2] * 4, 5))) return M.BARK2; // mud: caked up its flanks to a share of its height
       const h = Math.max(0, Math.min(1, (p[1] - G) / Math.max(.1, top - G))), n = vnoise(p[0] * 5 + p[2] * 3.1, p[1] * 5 + p[2] * 2.3, seed);
       if (n < moss * (.35 + .9 * h)) return n < moss * (.35 + .9 * h) * .45 ? M.LEAF3 : M.MOSS;
       if (spotty(p, 26, lichen)) return M.WEB;
@@ -247,6 +250,8 @@ export function legendColours(id, st) {
     [M.WEB]: mix([196, 200, 150], floor, .2),               // lichen
     [M.FLOWER]: LEGEND_POSES[id]?.over.flowers ? [238, 206, 96] : hsv2rgb(.04 + (id.length % 3) * .03, .55, .72), // mushroom caps (or, in a meadow, buttercups)
   });
+  const sl = speciesIn(id, st)?.sleep; // an art set's own colours for it asleep: { material: [h, s, v] }
+  if (sl?.colours) for (const [k, v] of Object.entries(sl.colours)) c[M[k]] = hsv2rgb(...v);
   return c;
 }
 

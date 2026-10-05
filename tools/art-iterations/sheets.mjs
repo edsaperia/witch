@@ -78,11 +78,13 @@ const sheets = await b.page.evaluate(async ({ what, artSet, scale }) => {
   a.fillStyle = a.createPattern(floorTile.A, "repeat"); a.fillRect(0, 0, W, H); n.fillStyle = n.createPattern(floorTile.N, "repeat"); n.fillRect(0, 0, W, H);
   const put = (s, x, y) => items.push({ s, x: Math.round(x - s.w / 2), y: Math.round(y - s.h), z: y });
   const place = (n2, f) => { for (let i = 0; i < n2; i++) f(G.uni(r, 20, W - 20), G.uni(r, 30, H - 4), i); };
-  if (vs.length) { place(7, (x, y, i) => { if (Math.abs(x - W / 2) < 90 && y > 110) return; put(vs[(i * 3) % vs.length].whole, x, y); }); }
+  // in clumps of 3 to 5, as the area grows them (the art director's note: singles hide the brief's thickets), the clearing left open
+  const clumps = (n, f) => { let k = 0; for (let c = 0; c < n; c++) { const cx = G.uni(r, 30, W - 30), cy = G.uni(r, 40, H - 10), m2 = 3 + Math.floor(r() * 3); for (let j = 0; j < m2; j++) f(cx + G.uni(r, -26, 26), cy + G.uni(r, -14, 14), k++); } };
+  if (vs.length) clumps(3, (x, y, i) => { if (Math.abs(x - W / 2) < 90 && y > 110) return; put(vs[(i * 3) % vs.length].whole, x, y); });
   const big = A.big.map(p => p.sp), small = A.small.map(p => p.sp), walls = A.walls.map(p => p.sp);
   if (!vs.length && big.length) place(6, (x, y, i) => { if (Math.abs(x - W / 2) < 90 && y > 110) return; put(big[i % big.length], x, y); });
-  if (small.length) place(14, (x, y, i) => put(small[i % small.length], x, y));
-  if (walls.length) for (let i = 0; i < 3; i++) put(walls[i % walls.length], 40 + i * 150, 40);
+  if (small.length) clumps(4, (x, y, i) => put(small[i % small.length], x, y));
+  if (walls.length) for (let i = 0; i < 3; i++) put(walls[i % walls.length], 40 + i * 150, Math.max(40, walls[i % walls.length].h + 6));
   if (A.setPiece) put(A.setPiece.sp, W * .78, H * .55);
   const id = A.def.creature, col = G.speciesColours(id, st);
   [2, 1, 0].forEach((l, i) => put(bk(G.critter(id, l, 0, st, i % 2 ? "away" : "towards"), col), W * .32 + i * 60, H * .8 + (i % 2) * 14)); // the awake legend is too big for the patch: the creatures sheet shows it

@@ -65,3 +65,22 @@ To redraw: `node tools/art-iterations/sheets.mjs <area> <dir> pass@<n> 2`; `npm 
 - Wool is fourteen even ellipsoids round the body, so a fleece reads smooth, not curly.
 - Small objects (grass, ferns, stones, brambles) and the moor's mounds are props with a few options, not genomes, so they can only be resized and recoloured.
 - The flora palette scales each species' own colour, so an autumn-gold larch stays gold in a blue-green conifer forest; the forest's colour comes from which species lead.
+
+## Batch 1, iteration 2 (the art director's notes on #112)
+
+Across the batch:
+- **One leaf colour per area**: each area's main species has `colour.variety` 0.3 (fir, sycamore, hawthorn, lime), and an area's flora can now give one of its species its own colour (`flora.species[i][2].colour`), so the fern forest's pines and larches stay its dark green rather than turning yellow.
+- **The sleeping legends wear their own area**: a genome's `sleep` changes its sleeping pose's overgrowth (`over`, with a new `mud`: earth caked up its flanks) and its colours. The moor's badger is dark peat and standing stones; the shrine's fox grey stone and lichen; the tangly ram brambles and nettles; the muddy snail caked in mud. (The fern forest's was already right.)
+- **Each area's own tufts**: an area's `tufts` (its mix, saturation, value, flower colour) and `tone` (its props' leaves): dark heather and moss on the moor, needles and fern in the fern forest, pebbles on the shrine, litter in the muddy and wispy forests, long grass in the tangle.
+- **Clumps**: the set sheet now puts the small objects and trees in clumps of 3 to 5.
+- **Big legends' contour lines** are left alone this pass (a stage-4 item).
+
+Per area:
+- **Moor (badger)**: a wide, high-contrast white blaze (`head.blaze`) with near-black eye bands; its legend's crystals are grey standing stones with a moonlit rune on each face (`coat.crystalStone`); low, wide cairns (`cairn` `squat`); one real pool (`water` `d`, its depth).
+- **Fern forest (boar)**: three bold pale stripes on the piglet only; short, hooked legend tusks (`head.tuskHook`, `tuskLegend`); ferns lower. (The "palm trees with trunks" in the set are Ed's set piece, the ring of giant tree ferns round a stone basin.)
+- **Muddy forest (snail)**: the broken trunks about the witch's height (props now take `scale`); the many-trunked sycamore leads (55%, three trunks), alders two-trunked.
+- **Stone shrine (fox)**: the kitsune's seven tails fanned apart with gaps, each curving, pale at the tip with fox-fire over it (`coat.kitsune`); the legend's ears 1.45 times; the shrine 1.8 times, the henges 1.6, the boulders 1.6, the little stones 1.4.
+- **Tangly forest (ram)**: a white fleece of curls (`coat.woolCurls`), near-black face and legs, horns that spiral out from the head (`hornTurns`, `hornOut`, `hornThick`, `hornRidges`) in their own dark horn colour and show from the young up (its `horns` size curve); bronze legend horns; the tangled branches 1.6 times.
+- **Wispy forest (woodlouse)**: half the flecks; moonstone legend crystals (pale blue-white); the birches green-yellow with white trunks (`hueAbs`); the limes one colour, a little greener than v1's gold.
+
+`tools/genome/compare.mjs` against `claude/prototype`: 1560 creature sprites, 0 differ; `art/check.mjs`'s flora baseline still matches, so every new number is opt-in.

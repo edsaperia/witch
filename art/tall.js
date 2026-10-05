@@ -35,9 +35,9 @@ function tlSnag(m, r, o) {
   for (let k = 0; k < 4; k++) m.ell([Math.cos(k * 1.7) * .35, .06, Math.sin(k * 1.7) * .35], [.2, .07, .16], M.MOSS, { group: 4 }); // moss at its foot
 }
 function tlCairn(m, r, o) {
-  const n = o.tall ? 10 : 8; let y = 0;
-  for (let k = 0; k < n; k++) { const t = k / (n - 1), rr = .55 - .38 * t, hh = .16 + r() * .06, c = [(r() - .5) * .06, y + hh, (r() - .5) * .06]; m.ell(c, [rr * (1 + r() * .15), hh, rr * (.9 + r() * .2)], M.STONE, { group: 1 + (k % 3), rough: .03, dir: [1, (r() - .5) * .3, (r() - .5) * .3], paint: p => tlHash(p[0] * 3, p[1] * 5, k) < (t < .4 ? .3 : .1) ? M.MOSS : tlHash(p[0] * 7, p[2] * 7, k) < .12 ? M.BELLY : undefined }); y += hh * 1.75; }
-  m.box([0, y + .32, 0], [.09, .36, .06], M.STONE, { round: .03, rough: .015, group: 5, dir: [.2, 1, 0], up: [0, 0, 1] }); // a standing stone on top
+  const n = o.tall ? 10 : o.squat ? 4 : 8; let y = 0; // squat: a low, wide pile (a moor's)
+  for (let k = 0; k < n; k++) { const t = k / (n - 1), rr = o.squat ? 1 - .5 * t : .55 - .38 * t, hh = .16 + r() * .06, c = [(r() - .5) * .06, y + hh, (r() - .5) * .06]; m.ell(c, [rr * (1 + r() * .15), hh, rr * (.9 + r() * .2)], M.STONE, { group: 1 + (k % 3), rough: .03, dir: [1, (r() - .5) * .3, (r() - .5) * .3], paint: p => tlHash(p[0] * 3, p[1] * 5, k) < (t < .4 ? .3 : .1) ? M.MOSS : tlHash(p[0] * 7, p[2] * 7, k) < .12 ? M.BELLY : undefined }); y += hh * 1.75; }
+  if (!o.squat) m.box([0, y + .32, 0], [.09, .36, .06], M.STONE, { round: .03, rough: .015, group: 5, dir: [.2, 1, 0], up: [0, 0, 1] }); // a standing stone on top
   for (let k = 0; k < 5; k++) { const a = k * 1.3; m.ell([Math.cos(a) * .7, .07, Math.sin(a) * .65], [.13, .09, .11], M.STONE, { group: 6, rough: .02 }); } // stones round its foot
 }
 function tlStanding(m, r, o) {

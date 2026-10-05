@@ -11,6 +11,7 @@
 //   alpha where the sprite has a pixel), the same size as the sprite's albedo, for a parallel texture or atlas channel.
 import { M, Sprite, hsv2rgb, hash2, rng, bake, defaultCanvas } from "./core.js";
 import { AREA_BY_ID } from "./areas.js";
+import { setArea } from "./genome/next.js";
 import { bakeSway } from "./sway.js";
 
 // ---- the tufts ----
@@ -55,10 +56,12 @@ const TF_MIX = {
 };
 // The area's tufts: [{ kind, weight, sp, colours }].
 export function tuftSprites(id, st = {}) {
-  const A = AREA_BY_ID[id]; if (!A) throw new Error(`no area type "${id}"`);
-  const mix = TF_MIX[A.floor[0]] || TF_MIX.grass, leaf = A.leaf, r = rng(id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 3) >>> 0);
+  const A = setArea(AREA_BY_ID[id], st); if (!A) throw new Error(`no area type "${id}"`); // with its art set's changes, if any
+  // an art set's area may give its own tufts: mix ([kind, weight]), sat and val (times the leaves'), flower ([h, s, v])
+  const T = A.tufts || {}, ks = T.sat ?? 1, kv = T.val ?? 1;
+  const mix = T.mix || TF_MIX[A.floor[0]] || TF_MIX.grass, leaf = A.leaf, r = rng(id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 3) >>> 0);
   const flower = { heather: hsv2rgb(.85, .5, .7), bluebells: hsv2rgb(.68, .55, .8) }[A.floor[0]] || hsv2rgb([.95, .13, .55, .0, .8][Math.floor(leaf * 100) % 5], .55, .9);
-  const colours = { [M.LEAF]: hsv2rgb(leaf, .55, .5), [M.LEAF2]: hsv2rgb(leaf - .03, .5, .66), [M.LEAF3]: hsv2rgb(leaf + .03, .6, .32), [M.FLOWER]: flower, [M.TRUNK]: hsv2rgb(.07, .45, .36), [M.BARKL]: hsv2rgb(.08, .4, .55),
+  const colours = { [M.LEAF]: hsv2rgb(leaf, Math.min(1, .55 * ks), .5 * kv), [M.LEAF2]: hsv2rgb(leaf - .03, Math.min(1, .5 * ks), .66 * kv), [M.LEAF3]: hsv2rgb(leaf + .03, Math.min(1, .6 * ks), .32 * kv), [M.FLOWER]: T.flower ? hsv2rgb(...T.flower) : flower, [M.TRUNK]: hsv2rgb(.07, .45, .36), [M.BARKL]: hsv2rgb(.08, .4, .55),
     [M.STONE]: hsv2rgb(.08, .4, .55), [M.STONED]: hsv2rgb(.62, .08, .4), [M.BELLY]: [226, 216, 196] };
   if (A.floor[0] === "slate" || A.floor[0] === "scree" || A.floor[0] === "stony" || A.floor[0] === "pebbles" || A.floor[0] === "stone" || A.floor[0] === "earth") colours[M.STONE] = hsv2rgb(.1, .06, .58); // stones are grey; elsewhere STONE is a mushroom's cap
   return mix.map(([kind, weight]) => { const [w, h] = TF_SIZE[kind], sp = new Sprite(w, h); TF_DRAW[kind](sp, r); return { kind, weight, sp, colours: kind === "mushrooms" ? { ...colours, [M.STONE]: hsv2rgb(.04, .6, .6) } : colours }; });
