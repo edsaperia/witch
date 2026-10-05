@@ -8,8 +8,8 @@ export { GENOMES, TEMPLATES, TEMPLATE_IDS };
 export const GENOME_BY_ID = Object.fromEntries(GENOMES.map(g => [g.id, g]));
 
 // The builder's species object, as art/creatures.js always had it: id, name, plan, hue, sat, val,
-// belly, legend, and for the four-legged q (their proportions and parts in one bag) and sizes
-// (their template's size curves, any of the species' own over them).
+// belly, legend, sizes (its template's size curves, any of the species' own over them), and for
+// the four-legged q (their proportions and parts in one bag).
 export function speciesOf(g) {
   const S = { id: g.id, name: g.name, plan: g.builder, hue: g.palette.hue, sat: g.palette.sat, val: g.palette.val, legend: g.legend || [] };
   if (g.palette.belly) S.belly = g.palette.belly;
@@ -19,8 +19,8 @@ export function speciesOf(g) {
     if (p.ears) { q.ear = p.ears.kind; if (p.ears.size !== undefined) q.earS = p.ears.size; }
     for (const [k, to] of [["tail", "tail"], ["feet", "paw"], ["horns", "horns"], ["antlers", "antlers"], ["tusks", "tusks"]]) if (p[k] !== undefined) q[to] = p[k];
     S.q = q;
-    S.sizes = { ...TEMPLATES.quadruped.sizes, ...g.sizes };
   }
+  S.sizes = { ...TEMPLATES[g.template].sizes, ...g.sizes };
   return S;
 }
 
