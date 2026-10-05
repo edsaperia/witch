@@ -1,4 +1,5 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
+import { onAreaDone } from "./leylines";
 import { guardArea, questPlaced, type QuestEvent } from "./quest";
 import { beatAt, newBeatClock, waveArrived, waveTempo, type BeatClock } from "./beat";
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState } from "./camera";
@@ -256,7 +257,11 @@ function fixedStep(g: Game, controls: Controls): void {
   for (const e of g.leash.events.slice(placedBefore)) if (e.kind === "placed" && e.at === g.clock.time) {
     const L = questPlaced(g.map, g.creatures, (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id)), g.friendly, k => g.party.areas.has(k), e.id, e.x, e.z, g.clock.time,
       id => { for (const w of g.witches) { w.leash.stack = w.leash.stack.filter(i => i !== id); w.leash.placed = w.leash.placed.filter(p => p.id !== id); } });
-    if (L) { g.questEvents.push({ kind: "done", id: L.id, joined: e.id, cell: [L.cell[0], L.cell[1]], key: cellKey(L.cell), x: L.x, z: L.z, at: g.clock.time }); g.byArea = null; }
+    if (L) {
+      g.questEvents.push({ kind: "done", id: L.id, joined: e.id, cell: [L.cell[0], L.cell[1]], key: cellKey(L.cell), x: L.x, z: L.z, at: g.clock.time });
+      onAreaDone(g.party, L.cell, g.clock.time); // (the ley line moves on: its quest done before its wave)
+      g.byArea = null;
+    }
   }
   if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, t, g.beat);
   stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, t, g.beat);
@@ -419,7 +424,7 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
       Object.assign(best, { legendState: "happy", stateAt: time, enraged: false, siege: undefined, fight: undefined, charge: undefined, legend: undefined, hp: undefined });
       // As if its quest were done: its area friendly while still wild.
       const key = cellKey(best.cell);
-      if (!g.party.areas.has(key)) { g.friendly.add(key); for (const o of g.creatures) if (!o.leashed && !o.gone && !o.boss && cellKey(o.cell) === key) o.friendly = true; }
+      if (!g.party.areas.has(key)) { g.friendly.add(key); onAreaDone(g.party, best.cell, time); for (const o of g.creatures) if (!o.leashed && !o.gone && !o.boss && cellKey(o.cell) === key) o.friendly = true; }
       else guardArea(g.creatures, best.cell);
     }
   }

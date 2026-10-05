@@ -9,7 +9,7 @@
 import raw from "../../config/combat.json";
 import { LEGEND, type Creature, type Level } from "./creatures";
 import type { Cell } from "./partition";
-import { legendSetOf, packsOf, profileOf, steer, stepBurrow, stepCharge, stepLeap, type LegendSet } from "./movement";
+import { FIGHT, legendSetOf, packsOf, profileOf, steer, stepBurrow, stepCharge, stepLeap, type LegendSet } from "./movement";
 import type { Tuning } from "./tuning";
 
 export type Delivery = "melee" | "shot" | "quake" | "lob" | "beam" | "pulse";
@@ -91,6 +91,9 @@ export interface Fight {
   aimZ: number;
   /** A wild legend's move being wound up (Stage 5), for the view's telegraph. */
   move?: string;
+  /** When it noticed its target (it reacts combat.reaction seconds later), and a melee lunge under way: its way, and the metres left. */
+  seenAt?: number;
+  lunge?: { dx: number; dz: number; left: number };
 }
 
 /** A projectile in flight: dodgeable (it flies at a point, not after its target). */
@@ -140,9 +143,26 @@ export const newCombat = (): CombatState => ({ shots: [], nextShot: 0, sounds: n
 export function attackOf(species: string, level: Level, data: CombatData = COMBAT): { name: string; attack: Attack; damage: number } | null {
   const list = data.bySpecies[species] ?? (data.ranged.includes(species) ? data.byLevel.ranged : data.byLevel.melee), name = list[level];
   if (!name) return null;
-  const attack = data.attacks[name];
+  const attack = scaled(name, attackNamed(name, data));
   return { name, attack, damage: data.levels.dps[level] * attack.cooldown * (attack.factor ?? 1) };
 }
+
+/** An attack at the fight's scale and speed (FIGHT): its lengths times scale, its shot's speed times speed. */
+const SCALED = new Map<string, Attack>();
+export function scaled(name: string, A: Attack): Attack {
+  if (!A) return A;
+  const key = `${name}|${FIGHT.scale}|${FIGHT.speed}`;
+  let out = SCALED.get(key);
+  if (!out) {
+    const L = FIGHT.scale, V = FIGHT.speed, m = (x: number | undefined, k: number) => (x === undefined ? undefined : x * k);
+    out = { ...A, range: A.range * L, lunge: m(A.lunge, L), radius: m(A.radius, L), width: m(A.width, L), knockback: m(A.knockback, L), speed: m(A.speed, V) };
+    if (SCALED.size > 2000) SCALED.clear();
+    SCALED.set(key, out);
+  }
+  return out;
+}
+/** An attack by its name, at the fight's scale (for the view, and data lookups). */
+export const attackNamed = (name: string, data: CombatData = COMBAT): Attack => scaled(name, data.attacks[name]);
 
 export const maxHp = (level: Level, data: CombatData = COMBAT) => data.levels.hp[Math.min(level, data.levels.hp.length - 1)];
 
@@ -320,6 +340,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   // (Events gather over a frame's steps: stepGame clears them once a frame, for the view.)
   const { time, dt, t } = w, C = t.combat;
   D = data;
+  FIGHT.scale = t.fight.scale; FIGHT.speed = t.fight.speed;
   // Shots fly; each hits the first enemy (not its own kind) it reaches, or fizzles at its range.
   const grid = new Grid(w.active.filter(c => fighting(c)));
   s.shots = s.shots.filter(sh => {
@@ -328,14 +349,14 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       const L = sh.lob, k = Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at));
       sh.x = L.fx + (L.tx - L.fx) * k; sh.z = L.fz + (L.tz - L.fz) * k;
       if (time < L.lands) return true;
-      const from = w.creatures[sh.from] ?? null, a = data.attacks[sh.attack];
+      const from = w.creatures[sh.from] ?? null, a = attackNamed(sh.attack, data);
       s.events.push({ kind: "landed", x: L.tx, z: L.tz, at: time, id: sh.from });
       area(w, s, from, sh.side, sh.species, L.tx, L.tz, sh.radius, sh.damage, a, grid);
       return false;
     }
     sh.x += sh.vx * dt; sh.z += sh.vz * dt;
     if (time >= sh.until) return false;
-    const from = w.creatures[sh.from], a = data.attacks[sh.attack];
+    const from = w.creatures[sh.from], a = attackNamed(sh.attack, data);
     for (const o of grid.near(sh.x, sh.z, sh.radius + 2)) {
       if (!targetable(o) || sideOf(o) === sh.side || o.species === sh.species || w.asleep(o)) continue;
       if (Math.hypot(o.x - sh.x, o.z - sh.z) <= sh.radius + 0.4 + o.level * 0.2) { land(w, s, from ?? null, { kind: "creature", id: o.id }, sh.damage, a, sh.x - sh.vx, sh.z - sh.vz); return false; }
@@ -354,7 +375,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (!c || c.gone || c.fleeUntil || time >= b.until) return false;
     if (b.spin) {
       // A legend's spin: the beam goes all the way round; whatever it sweeps over is hit, once a pass.
-      const prev = b.angle, a = data.attacks[b.attack], turn = b.spin * dt, last = (b.last ??= {}), again = (Math.PI * 2 / b.spin) * 0.8;
+      const prev = b.angle, a = attackNamed(b.attack, data), turn = b.spin * dt, last = (b.last ??= {}), again = (Math.PI * 2 / b.spin) * 0.8;
       b.angle += turn;
       const swept = (x: number, z: number, r: number) => { const rx = x - c.x, rz = z - c.z, dd = Math.hypot(rx, rz); if (dd > b.length + r || dd < 0.3) return false; const da = (((Math.atan2(rz, rx) - prev) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2); return da <= turn + (b.width / 2 + r) / dd; };
       const once = (key: string) => { if (last[key] !== undefined && time - last[key] < again) return false; last[key] = time; return true; };
@@ -369,13 +390,13 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (p) {
       const want = Math.atan2(p.z - c.z, p.x - c.x);
       let da = ((want - b.angle + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-      const step = ((data.attacks[b.attack].sweep ?? 0) * Math.PI / 180) * dt;
+      const step = ((attackNamed(b.attack, data).sweep ?? 0) * Math.PI / 180) * dt;
       da = Math.max(-step, Math.min(step, da));
       b.angle += da;
     }
     if (time >= b.nextTick) {
       b.nextTick += b.tick;
-      const ex = Math.cos(b.angle), ez = Math.sin(b.angle), a = data.attacks[b.attack];
+      const ex = Math.cos(b.angle), ez = Math.sin(b.angle), a = attackNamed(b.attack, data);
       const hit = (x: number, z: number, r: number) => { const rx = x - c.x, rz = z - c.z, along = rx * ex + rz * ez; return along >= 0 && along <= b.length && Math.abs(-rx * ez + rz * ex) <= b.width / 2 + r; };
       for (const o of grid.near(c.x + ex * b.length / 2, c.z + ez * b.length / 2, b.length / 2 + 2)) if (o !== c && targetable(o) && sideOf(o) !== b.side && o.species !== b.species && !w.asleep(o) && hit(o.x, o.z, 0.4 + o.level * 0.2)) land(w, s, c, { kind: "creature", id: o.id }, b.damage, a, c.x, c.z);
       if (b.side === "wild") {
@@ -415,8 +436,10 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     const lp = c.leashed ? w.leashPoint(c.id) : happy ? { x: c.x, z: c.z } : null, guarding = (!!lp && w.parked(c.id)) || happy;
     // Party animals fight only near their leash point (a parked one within guard.radius of its
     // sigil); wild ones within aggro of where they are.
-    const reachX = lp ? lp.x : c.x, reachZ = lp ? lp.z : c.z, reach = lp ? (happy ? t.wildLegends.guard : guarding ? t.guard.radius : t.leash.length + C.engage) : C.aggro;
+    // (Ed's motion scale pass: party animals chase about 40 m from her or their sigil before giving up)
+    const S = FIGHT.scale, reachX = lp ? lp.x : c.x, reachZ = lp ? lp.z : c.z, reach = (lp ? (happy ? t.wildLegends.guard : guarding ? t.guard.radius : C.pursuit) : C.aggro) * S;
     if (f.target && !valid(w, s, c, f.target)) f.target = null;
+    const had = !!f.target;
     if (f.target && lp) { const p = targetPos(w, s, f.target); if (!p || Math.hypot(p.x - lp.x, p.z - lp.z) > reach + atk.attack.range || (happy && !w.inArea(c, p.x, p.z))) f.target = null; }
     if (!f.target || f.windupUntil === 0) {
       const near = acquire(w, c, reachX, reachZ, reach, atk.attack.range, grid, guarding, happy ? o => w.inArea(c, o.x, o.z) : undefined);
@@ -433,8 +456,10 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         }
       }
     }
+    if (f.target && !had) f.seenAt = time; // (it reacts in a moment: combat.reaction)
     if (!f.target) {
       if (f.windupUntil) f.windupUntil = 0;
+      f.lunge = undefined;
       c.sprung = undefined; // (an ambusher lies in wait again)
       if (c.burrow) c.burrow = undefined; // (a burrower comes up)
       if (c.leap) { c.x = c.leap.tx; c.z = c.leap.tz; c.leap = undefined; } // (a leaper comes down)
@@ -443,17 +468,32 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     const p = targetPos(w, s, f.target);
     if (!p) { f.target = null; f.windupUntil = 0; continue; } // (it fell this very step)
     const d = Math.hypot(p.x - c.x, p.z - c.z), A = atk.attack, K = data.kite, kites = A.delivery === "shot" && K.species.includes(c.species);
-    const want = A.delivery === "shot" || A.delivery === "lob" || A.delivery === "beam" ? A.range * (kites ? K.far : 0.8) : A.delivery === "pulse" ? Math.max(0.8, (A.radius ?? 2) * 0.6) : A.range + p.r + (A.lunge ?? 0) - 0.3;
-    const speed = c.speed * (c.leashed ? C.partyChaseMult : C.chaseMult) * (c.slowUntil && time < c.slowUntil ? A.slowMult ?? 0.5 : 1) * (c.level === LEGEND ? 0.6 : 1);
+    const want = A.delivery === "shot" || A.delivery === "lob" || A.delivery === "beam" ? A.range * (kites ? K.far : 0.8) : A.delivery === "pulse" ? Math.max(0.8, (A.radius ?? 2) * 0.6) : A.range + p.r + (A.lunge ?? 0) * 0.85 - 0.3;
+    // Its lunge under way: a dash-strike down the line it wound up on; at its end the blow lands, if it's still there.
+    if (f.lunge) {
+      // (At a creature it homes in: creatures can't read a telegraph; but not at a flier, which flits up out of its way.
+      // At the witch it keeps its line, so she can sidestep it.)
+      const L = f.lunge, step = Math.min(L.left, 60 * FIGHT.speed * dt);
+      if (f.target.kind === "creature" && !traitsOf(w.creatures[f.target.id]?.species ?? "", data).includes("flier")) { const hx = p.x - c.x, hz = p.z - c.z, hd = Math.hypot(hx, hz); if (hd > 1e-3) { L.dx = hx / hd; L.dz = hz / hd; L.left = Math.min(L.left, Math.max(0, hd - A.range * 0.5)); } }
+      c.x += L.dx * step; c.z += L.dz * step; L.left -= step; c.moving = true; c.walk += dt * 12; c.facing = L.dx >= 0 ? 1 : -1;
+      if (L.left <= 1e-6) { f.lunge = undefined; if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range + p.r) land(w, s, c, f.target, atk.damage, A, c.x, c.z); }
+      continue;
+    }
+    // Just noticed: it turns to look a moment before it goes (combat.reaction).
+    if (f.windupUntil === 0 && time - (f.seenAt ?? -1e9) < C.reaction) { c.moving = false; c.facing = p.x >= c.x ? 1 : -1; continue; }
+    // Its speed in a fight (Ed's motion scale pass: about the witch's): its profile's, else combat.fightRun; slowed, or a legend's.
+    // Closing in from afar (Ed: "the creatures in it should be onto me in a few seconds"), it sprints at combat.pursuitRun.
+    const slow = c.slowUntil && time < c.slowUntil ? A.slowMult ?? 0.5 : 1, own = c.level === LEGEND ? C.legendRun : profileOf(c.species)?.speed ?? C.fightRun;
+    const speed = (c.level !== LEGEND && d > 30 * S ? Math.max(own, C.pursuitRun) : own) * FIGHT.speed * slow;
     // A wild legend fights by its move set (Stage 5): long, telegraphed moves in a pattern, and a second phase.
-    if (c.level === LEGEND && !c.leashed && !(f.target.kind === "sound" && d > 25)) { stepLegend(w, s, c, f, p, d, legendSetOf(c.species), data, grid); continue; }
-    const P = profileOf(c.species), marching = (f.target.kind === "sound" || (!!c.siege && !c.leashed)) && d > 25; // (a besieger far off marches)
+    if (c.level === LEGEND && !c.leashed && !(f.target.kind === "sound" && d > 40 * S)) { stepLegend(w, s, c, f, p, d, legendSetOf(c.species), data, grid); continue; }
+    const P = profileOf(c.species), marching = (f.target.kind === "sound" || (!!c.siege && !c.leashed)) && d > 40 * S; // (a besieger far off marches)
     if (f.windupUntil === 0 && P && !marching) {
       // A movement profile (Stage 5): its signature move, then its behaviours and its pack's tactic.
-      const run = c.speed * (P.run ?? (c.leashed ? C.partyChaseMult : C.chaseMult)) * (c.slowUntil && time < c.slowUntil ? A.slowMult ?? 0.5 : 1) * (c.level === LEGEND ? 0.6 : 1);
+      const run = speed;
       if (P.move?.kind === "charge") {
-        const r = stepCharge(c, P.move, p.x, p.z, A.range + p.r + 0.3, run, time, dt);
-        if (r === "hit") { land(w, s, c, f.target, atk.damage, { ...A, modifier: "knockback", knockback: 3 }, c.x, c.z); f.readyAt = time + A.cooldown; s.events.push({ kind: "charged", x: c.x, z: c.z, at: time, id: c.id }); continue; }
+        const r = stepCharge(c, P.move, p.x, p.z, A.range + p.r + 0.3, time, dt);
+        if (r === "hit") { land(w, s, c, f.target, atk.damage, { ...A, modifier: "knockback", knockback: 15 * S }, c.x, c.z); f.readyAt = time + A.cooldown; s.events.push({ kind: "charged", x: c.x, z: c.z, at: time, id: c.id }); continue; }
         if (r === "charging") continue;
       }
       if (P.move?.kind === "burrow") {
@@ -480,10 +520,10 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (r !== "none") continue;
       }
       if (P.move?.kind === "ambush" && !c.leashed) {
-        if (c.sprung === undefined) { if (d > (P.move.trigger ?? 8)) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; continue; } c.sprung = time; s.events.push({ kind: "sprung", x: c.x, z: c.z, at: time, id: c.id }); }
+        if (c.sprung === undefined) { if (d > (P.move.trigger ?? 20) * S) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; continue; } c.sprung = time; s.events.push({ kind: "sprung", x: c.x, z: c.z, at: time, id: c.id }); }
       }
       const burst = c.sprung !== undefined && time - c.sprung < (P.move?.time ?? 0) ? P.move?.speed ?? 1 : 1;
-      const may = steer(c, P, { px: p.x, pz: p.z, pr: p.r, want, range: A.range, speed: run * burst, time, dt, pack: packs.get(c.id) ?? null, neighbours: [...grid.near(c.x, c.z, 4)], threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm });
+      const may = steer(c, P, { px: p.x, pz: p.z, pr: p.r, want, range: A.range, speed: run * burst, time, dt, pack: packs.get(c.id) ?? null, neighbours: [...grid.near(c.x, c.z, 12 * S)], threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm });
       if (may && time >= f.readyAt) {
         f.windupUntil = time + A.windup; f.aimX = p.x; f.aimZ = p.z;
         c.vx = 0; c.vz = 0;
@@ -492,7 +532,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       continue;
     }
     if (f.windupUntil === 0) {
-      if (d > want) { moveToward(c, p.x, p.z, want, f.target.kind === "sound" ? c.speed * C.marchMult : speed, dt); continue; }
+      if (d > want) { moveToward(c, p.x, p.z, want, marching ? c.speed * C.marchMult : speed, dt); continue; }
       // A kiter backs off when its target comes too close, keeping its distance while it shoots.
       if (kites && d < A.range * K.near && d > 0.01) { c.x -= ((p.x - c.x) / d) * speed * dt; c.z -= ((p.z - c.z) / d) * speed * dt; c.moving = true; c.walk += dt * 6; c.facing = p.x >= c.x ? 1 : -1; if (time < f.readyAt) continue; }
       c.moving = false; c.facing = p.x >= c.x ? 1 : -1;
@@ -508,10 +548,11 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     f.windupUntil = 0; f.readyAt = time + A.cooldown;
     const dmg = atk.damage;
     if (A.delivery === "melee") {
-      // The lunge: at where it aimed when it wound up, so stepping aside dodges it.
-      const ax = f.aimX - c.x, az = f.aimZ - c.z, ad = Math.hypot(ax, az), L = Math.min(A.lunge ?? 0, Math.max(0, ad - 0.5));
-      if (ad > 0.01 && L > 0) { c.x += (ax / ad) * L; c.z += (az / ad) * L; }
-      if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range + p.r) land(w, s, c, f.target, dmg, A, c.x, c.z);
+      // The lunge (Ed's motion scale pass: 12 to 16 m, a dash-strike): down the line to where it aimed
+      // when it wound up, so stepping aside dodges it; the blow lands at its end (above).
+      const ax = f.aimX - c.x, az = f.aimZ - c.z, ad = Math.hypot(ax, az), L = Math.min(A.lunge ?? 0, Math.max(0, ad - A.range * 0.5));
+      if (ad > 0.01 && L > 0.05) f.lunge = { dx: ax / ad, dz: az / ad, left: L };
+      else if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range + p.r) land(w, s, c, f.target, dmg, A, c.x, c.z);
     }
     else if (A.delivery === "shot") {
       const ax = f.aimX - c.x, az = f.aimZ - c.z, ad = Math.hypot(ax, az) || 1, v = A.speed ?? 9;
@@ -552,7 +593,7 @@ function stepLegend(w: CombatWorld, s: CombatState, c: Creature, f: Fight, p: { 
     s.events.push({ kind: "phase", x: c.x, z: c.z, at: time, id: c.id, big: true });
     return;
   }
-  const two = st.phase === 2, pat = two ? L.phase2.pattern : L.pattern, name = pat[st.step % pat.length], A = data.attacks[name];
+  const two = st.phase === 2, pat = two ? L.phase2.pattern : L.pattern, name = pat[st.step % pat.length], A = attackNamed(name, data);
   if (!A) { st.step++; return; }
   const fast = two ? L.phase2.speed : 1, cool = two ? L.phase2.cooldown : 1, dmg = data.levels.dps[LEGEND] * A.cooldown * (A.factor ?? 1);
   // Charging: a straight run, trampling everything of the other side it meets, once each.
@@ -595,10 +636,10 @@ function stepLegend(w: CombatWorld, s: CombatState, c: Creature, f: Fight, p: { 
   const reach = A.delivery === "quake" ? (A.radius ?? 5) * 0.7 : A.delivery === "shot" ? A.range * 0.6 : A.delivery === "beam" ? A.range * 0.7 : 14;
   if (A.delivery === "melee" && d < 6 && !(time >= f.readyAt && d >= 4)) {
     // Too close to charge: it backs off first, heavily, to get a run at its target.
-    if (d > 1e-3) { c.x -= ((p.x - c.x) / d) * 2.5 * dt; c.z -= ((p.z - c.z) / d) * 2.5 * dt; c.moving = true; c.walk += dt * 3; c.facing = p.x >= c.x ? 1 : -1; }
+    if (d > 1e-3) { c.x -= ((p.x - c.x) / d) * C.legendRun * FIGHT.speed * 0.6 * dt; c.z -= ((p.z - c.z) / d) * C.legendRun * FIGHT.speed * 0.6 * dt; c.moving = true; c.walk += dt * 3; c.facing = p.x >= c.x ? 1 : -1; }
     return;
   }
-  if (d > reach) { moveToward(c, p.x, p.z, reach * 0.9, c.speed * C.chaseMult * 0.6 * fast, dt); return; }
+  if (d > reach) { moveToward(c, p.x, p.z, reach * 0.9, C.legendRun * FIGHT.speed * fast, dt); return; }
   c.moving = false; c.facing = p.x >= c.x ? 1 : -1;
   if (time >= f.readyAt) {
     f.windupUntil = time + A.windup; f.aimX = p.x; f.aimZ = p.z; f.move = name;

@@ -26,7 +26,7 @@ function serve() {
 
 // Zoom keys (rise and descend are Space; E is the sigil button).
 const ZOOM_IN = "KeyZ", ZOOM_OUT = "KeyX";
-const TRUNK_SPREAD = 1.6; // a lit trunk's brightest tenth over its darkest: a flat slab is near 1
+const TRUNK_ROUND = 1.3; // across a trunk, its lit side over its shaded one (median): the bluebell glade's flat beeches measured 1.21, shaded ones 1.40
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -376,15 +376,30 @@ async function main() {
         const load = src => new Promise(res => { const i = new Image(); i.onload = () => { const c = document.createElement("canvas"); c.width = i.width; c.height = i.height; const x = c.getContext("2d"); x.drawImage(i, 0, 0); res(x.getImageData(0, 0, i.width, i.height).data); }; i.src = "data:image/png;base64," + src; });
         const A = await load(a), M = await load(m);
         let n = 0, readable = 0;
-        const lumas = [];
-        for (let i = 0; i < M.length; i += 4) if (M[i] > 200 && M[i + 1] < 60 && M[i + 2] > 200) { n++; const l = 0.3 * A[i] + 0.55 * A[i + 1] + 0.15 * A[i + 2]; if (l > 25) { readable++; lumas.push(l); } }
-        lumas.sort((p, q) => p - q);
-        const pc = k => lumas[Math.floor(k * (lumas.length - 1))] ?? 0;
-        return { share: n / (M.length / 4), readable: n ? readable / n : 0, spread: lumas.length ? pc(0.9) / Math.max(1, pc(0.1)) : 0 };
+        const W = Math.round(Math.sqrt((M.length / 4) * 16 / 9)), H = M.length / 4 / W, ratios = []; // (the leg's 960 x 540)
+        for (let i = 0; i < M.length; i += 4) if (M[i] > 200 && M[i + 1] < 60 && M[i + 2] > 200) { n++; if (0.3 * A[i] + 0.55 * A[i + 1] + 0.15 * A[i + 2] > 25) readable++; }
+        // Across each trunk: every run of trunk pixels 4+ wide, its left third's brightness against
+        // its right third's; their median is near 1 for flat trunks (a lit one is round).
+        const luma = j => 0.3 * A[j] + 0.55 * A[j + 1] + 0.15 * A[j + 2], isTrunk = j => M[j] > 200 && M[j + 1] < 60 && M[j + 2] > 200;
+        for (let y = 0; y < H; y += 2) for (let x = 0, x0 = -1; x <= W; x++) {
+          const on = x < W && isTrunk((y * W + x) * 4);
+          if (on && x0 < 0) x0 = x;
+          if (on || x0 < 0) continue;
+          const w = x - x0, t = Math.floor(w / 3);
+          if (w >= 4) {
+            let L = 0, R = 0;
+            for (let k = 0; k < t; k++) { L += luma((y * W + x0 + k) * 4); R += luma((y * W + x - 1 - k) * 4); }
+            L /= t; R /= t;
+            if (Math.max(L, R) > 25) ratios.push(Math.max(L, R) / Math.max(1, Math.min(L, R)));
+          }
+          x0 = -1;
+        }
+        ratios.sort((p, q) => p - q);
+        return { share: n / (M.length / 4), readable: n ? readable / n : 0, across: ratios.length ? ratios[Math.floor(ratios.length / 2)] : 0 };
       }, [lit.toString("base64"), mask.toString("base64")]);
       check(r.share > 0.02, `trunks are drawn on the ground in the ${id} (${(r.share * 100).toFixed(1)}% of the screen)`);
       check(r.readable > 0.15, `the ${id}'s trunks are readable, not black on black (${(r.readable * 100).toFixed(0)}% of their pixels)`);
-      check(r.spread > TRUNK_SPREAD, `the ${id}'s trunks are shaded, not flat slabs: their brightest tenth over their darkest ${r.spread.toFixed(2)}x (over ${TRUNK_SPREAD}x)`);
+      check(r.across > TRUNK_ROUND, `the ${id}'s trunks are shaded round, not flat slabs: one side over the other ${r.across.toFixed(2)}x (over ${TRUNK_ROUND}x)`);
     }
   }, "&tilt=before");
 
@@ -396,6 +411,9 @@ async function main() {
       const g = window.witch.game, w = g.witch;
       let best = null, bd = Infinity;
       for (const c of g.creatures) { if (c.level !== 0) continue; const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c; } } // a baby
+      // (every area has an adult now, onto her in seconds: send the grown-ups round it away, so she can talk)
+      for (const c of g.creatures) if (c.level > 0 && !c.boss && Math.hypot(c.x - best.x, c.z - best.z) < 150) c.gone = true;
+      g.byArea = null;
       g.witch = { ...w, x: best.x + 2, z: best.z + 1 };
       g.camera = { ...g.camera, tx: best.x + 2, tz: best.z + 1 };
       return best.id;
