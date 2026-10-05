@@ -412,9 +412,11 @@ async function main() {
     const id = await page.evaluate(() => {
       const g = window.witch.game, w = g.witch;
       let best = null, bd = Infinity;
-      for (const c of g.creatures) { if (c.level !== 0) continue; const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c; } } // a baby
-      // (every area has an adult now, onto her in seconds: send the grown-ups round it away, so she can invite it)
-      for (const c of g.creatures) if (c.level > 0 && !c.boss && Math.hypot(c.x - best.x, c.z - best.z) < 150) c.gone = true;
+      // The nearest of the youngest (areas start with no babies now: a young one then).
+      const lv = Math.min(...g.creatures.filter(c => !c.boss && c.level < 3).map(c => c.level));
+      for (const c of g.creatures) { if (c.boss || c.level !== lv) continue; const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c; } }
+      // (every area has an adult now, onto her in seconds: send the others round it away, so she can invite it)
+      for (const c of g.creatures) if (c !== best && !c.boss && Math.hypot(c.x - best.x, c.z - best.z) < 150) c.gone = true;
       g.byArea = null;
       // 5 m west of it, facing it (with no cursor, 1 throws the way she faces).
       g.witch = { ...w, x: best.x - 5, z: best.z, vx: 0, vz: 0, facing: 1, seated: false, mode: "ground", lift: 0 };
