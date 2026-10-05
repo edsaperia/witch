@@ -115,6 +115,8 @@ export interface Tuning {
   pixelSize: number;
   glowReach: number;
   glowFalloff: number;
+  /** The share of the glow's reach where it has fallen to dark (Ed, round 11: "it should fall off closer"); 1 out to the reach. */
+  glowNear: number;
   /** The glow reaches the canopy hole's edge times this (Ed, v149); off when ?glow= fixes the reach. */
   glowToCutout: number;
   /** Set by ?glow=: use glowReach as it is. */

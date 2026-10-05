@@ -4458,6 +4458,10 @@
         "legend"
       ],
       "additionalProperties": false
+    },
+    "glowNear": {
+      "type": "number",
+      "minimum": 0
     }
   },
   "required": [
@@ -4504,6 +4508,7 @@
     "pixelSize",
     "glowReach",
     "glowFalloff",
+    "glowNear",
     "glowToCutout",
     "glowHeight",
     "spriteTilt",
