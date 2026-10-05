@@ -136,7 +136,7 @@ export class StateMarks {
   update(g: Game, time: number, tops: Map<number, number>, R = 70): void {
     this.used = 0;
     setTint(g.tuning);
-    const A = g.tuning.looks?.anger ?? { on: true, size: 1 }, P = g.tuning.looks?.partyGlow ?? { on: true, sparkles: 3, rate: 0.7, size: 1, strength: 0.8 };
+    const A = g.tuning.looks?.anger ?? { on: true, size: 1 }, P = g.tuning.looks?.partyGlow ?? { on: true, sparkles: 4, rate: 0.9, size: 1.4, strength: 1 };
     const w = g.witch, px = 2; // (each mark pixel two game pixels: readable at a glance)
     for (const c of g.creatures) {
       if (c.gone || Math.abs(c.x - w.x) > R || Math.abs(c.z - w.z) > R) continue;
@@ -147,8 +147,8 @@ export class StateMarks {
       // twinkling pixels round them, each lit for a moment in turn (looks.partyGlow).
       if (P.on && (look === "happy" || (look === "leashed" && !c.boss))) {
         for (let i = 0; i < P.sparkles; i++) {
-          const ph = (time * P.rate + hash01(c.id, i)) % 1, lit = Math.sin(Math.min(1, ph / 0.35) * Math.PI);
-          if (ph > 0.35) continue;
+          const ph = (time * P.rate + hash01(c.id, i)) % 1, lit = Math.sin(Math.min(1, ph / 0.5) * Math.PI);
+          if (ph > 0.5) continue;
           const a = hash01(c.id, i + 7) * Math.PI * 2, r = 0.35 + top * 0.45, h = 0.15 + hash01(c.id, i + 13) * top;
           this.put(this.sparkle, c.x + Math.cos(a) * r, h, c.z + Math.sin(a) * r * 0.4, 3 * px * P.size * (0.6 + 0.4 * lit), 3 * px * P.size * (0.6 + 0.4 * lit), lit * P.strength);
         }
