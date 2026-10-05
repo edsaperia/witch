@@ -1,8 +1,8 @@
 // Drawing the sprite sets with art/generator.js and packing them into atlas pixels. No Three.js
 // and no page needed, so it runs in a Web Worker (with OffscreenCanvas) as well as on the page.
 import * as Art from "../../art/generator.js";
-import { AREA_TYPES } from "../rules/map";
-import { AREAS, areaAssets } from "../../art/areas.js";
+import { LOOKS } from "../rules/map";
+import { AREA_BY_ID, areaAssets } from "../../art/areas.js";
 import { rng } from "../rules/random";
 import type { Style } from "./style";
 import { rigSprites, type RigGear, type RigMeta } from "./rig/rigBuild";
@@ -52,7 +52,7 @@ function areaTree(def: ArtDef, o: TreeOpts, st: Style, r: () => number, K: numbe
 /** Everything an area type needs, from art/areas.js: its big objects (trees in several
  *  variants, split into halves), small objects, wall objects, set piece, and floor tile. */
 export function typeSprites(st: Style, seed: number, t: number, K: number, mk: MakeCanvas): { sprites: Baked[]; layout: TypeLayout; floor: Baked } {
-  const id = AREA_TYPES[t].id, def = (AREAS as unknown as ArtDef[]).find(a => a.id === id)!;
+  const id = LOOKS[t].id, def = (AREA_BY_ID as unknown as Record<string, ArtDef>)[id]; // (LOOKS: the area types and home's meadow)
   const assets = areaAssets(id, st, { K, makeCanvas: mk }) as { floor: { sp: Baked }; walls: { sp: Baked }[]; small: { sp: Baked }[]; big: { sp: Baked }[]; setPiece: { sp: Baked; origin?: { x: number; y: number } } | null };
   const sprites: Baked[] = [], add = (b: Baked) => sprites.push(b) - 1;
   const layout: TypeLayout = { big: [], bigWeight: [], small: [], walls: [], set: null };
@@ -69,7 +69,7 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   // Each height class gets the area's own share of its trees (its layout's heightMix), split among
   // that class's variants; without one, the art's default weights.
   const variants = (Art.areaTreeVariants as (id: string, st: Style, o: object) => unknown)(id, st, { K, makeCanvas: mk, flora: (Art.floraPick as (q: unknown) => string[])(st.flora) }) as { top: Baked; bot: Baked; weight: number; heightClass: "sapling" | "mature" | "tall" | "giant"; sway?: { top: unknown; bot: unknown } }[]; // flora: ?flora= (main.ts), these species instead of the area's own
-  const mix = AREA_TYPES[t].layout.heightMix, perClass = (c: string) => variants.filter(v => v.heightClass === c).length || 1;
+  const mix = LOOKS[t].layout.heightMix, perClass = (c: string) => variants.filter(v => v.heightClass === c).length || 1;
   // Each carries its sway mask (#34), so only its leaves move in the wind.
   const withSway = (b: Baked, S?: unknown) => (S ? { ...b, S: S as Baked["A"] } : b);
   for (const v of variants) { layout.big.push({ bot: add(withSway(v.bot, v.sway?.bot)), top: add(withSway(v.top, v.sway?.top)) }); layout.bigWeight.push(mix ? mix[v.heightClass] / perClass(v.heightClass) : v.weight); }

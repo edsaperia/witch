@@ -43,8 +43,10 @@ export class RigView {
 
   constructor(private scene: THREE.Scene, private assets: AssetLibrary, private mpp: number) {}
 
-  private time = 0; private dt = 0; private minPx = RIG_MIN_PX; private always = [3];
-  begin(time: number, tuning?: Tuning["rig"]): void {
+  private time = 0; private dt = 0; private minPx = RIG_MIN_PX; private always = [3]; private ground = true;
+  /** ground: she's on the ground (Ed, 2026-10-05: rigged on the ground, baked frames in the treetops, legends always). */
+  begin(time: number, tuning?: Tuning["rig"], ground = true): void {
+    this.ground = ground;
     this.minPx = tuning?.minPx ?? RIG_MIN_PX; this.always = (tuning?.alwaysLevels ?? ["legend"]).map(l => RIG_LEVELS.indexOf(l)).filter(i => i >= 0);
     this.dt = this.time ? Math.min(0.1, Math.max(0, time - this.time)) : 0; this.time = time;
     for (const k of this.used.keys()) this.used.set(k, 0);
@@ -55,7 +57,7 @@ export class RigView {
 
   /** Lays out a creature with the rig, if its template has one and its parts are baked: true when drawn. */
   add(c: Creature, look: RigLook): boolean {
-    if (look.h * look.scale < this.minPx && !this.always.includes(c.level)) return false; // (legends always: Ed, 2026-10-05)
+    if ((!this.ground || look.h * look.scale < this.minPx) && !this.always.includes(c.level)) return false; // (legends always: Ed, 2026-10-05)
     const t0 = performance.now(), art = this.assets.rigArt(c.species, c.level, look.gear);
     if (!art) return false;
     let body = this.bodies.get(c.id);

@@ -34,7 +34,7 @@ describe("species strength (Ed, 2026-10-05: weaker ones more of them, stronger o
     expect(countScale("boar")).toBe(1.25);
     const P = TUNING.population.start;
     expect(startCount(P.adults, 3)).toBe(P.adults * 3);
-    expect(startCount(P.babies, 0.5)).toBe(1); // never none, if any
+    expect(startCount(1, 0.5)).toBe(1); // never none, if any
     expect(startCount(0, 3)).toBe(0);
     // Fractions carry from wave to wave: a strength-2 area grows one every other wave; 0.8, five every four.
     expect([1, 2, 3, 4, 5, 6].map(w => grownAt(w, 1, 0.5))).toEqual([0, 1, 0, 1, 0, 1]);
