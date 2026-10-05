@@ -465,10 +465,17 @@ function genomeTree(id, g) {
   return (r, st, s) => gen(r, genomeStyle(st, g.style), s, P);
 }
 export const TREE_SPECIES = {};
+const SPECIES_BY_FN = new Map();
+// A species from its genome: its trees with their life below the crown (fn), without it (bare), and its look.
+export function plantSpecies(id, g) {
+  const bare = genomeTree(id, g);
+  const S = { fn: (r, st, s) => lowLife(bare(r, st, s), r, st, s, g.low || {}), bare, name: g.name, grow: g.grow, ...g.colour }; // every species' trees carry their life below the crown; bare draws without it
+  for (const f of [S.fn, S.bare]) SPECIES_BY_FN.set(f, { id, ...S }); // known by its function too (treeColours), an art set's (art/genome/next.js) as well
+  return S;
+}
 for (const [id, g] of Object.entries(PLANT_GENOMES)) {
   if (g.species === false) continue; // only a TREE_TYPES kind (the tree fern), never an area's species
-  const bare = genomeTree(id, g);
-  TREE_SPECIES[id] = { fn: (r, st, s) => lowLife(bare(r, st, s), r, st, s, g.low || {}), bare, name: g.name, grow: g.grow, ...g.colour }; // every species' trees carry their life below the crown; bare draws without it
+  TREE_SPECIES[id] = plantSpecies(id, g);
 }
 // The species a flora preview names (the game's ?flora=, the lab): "new" the genome generator's species, "fantasy" its fantasy
 // ones, "all" every species, or a comma list of ids; unknown ids are left out.
@@ -481,7 +488,6 @@ export function floraPick(q) {
   return q.split(",").map(x => x.trim()).filter(x => TREE_SPECIES[x]);
 }
 export const oakTree = TREE_SPECIES.oak.bare, beechTree = TREE_SPECIES.beech.bare, ashTree = TREE_SPECIES.ash.bare, limeTree = TREE_SPECIES.lime.bare, sycamoreTree = TREE_SPECIES.sycamore.bare, chestnutTree = TREE_SPECIES.chestnut.bare, rowanTree = TREE_SPECIES.rowan.bare, hawthornTree = TREE_SPECIES.hawthorn.bare, hazelTree = TREE_SPECIES.hazel.bare;
-const SPECIES_BY_FN = new Map(Object.entries(TREE_SPECIES).flatMap(([id, S]) => [[S.fn, { id, ...S }], [S.bare, { id, ...S }]]));
 export const treeSpecies = type => TREE_SPECIES[type] || TREE_SPECIES.broad;
 // What a species' canopy looks like from the treetops, as numbers: its crown (the top half of a mature
 // tree, averaged over a few seeds): fill (how much of the crown's box is leaves), dark and light (the shares
@@ -511,7 +517,7 @@ export function chooseType(r, st) {
 export function treeColours(r, st, type) {
   const S = SPECIES_BY_FN.get(type), sa = S?.sat || 1, va = (S?.val || 1) * (st.leafVal ?? 1); // leafVal: an area's palette, brighter or darker leaves
   // a species shifts the area's leaf hue a little; towards yellow it shifts less where the area's leaves are already yellow, so no species turns an area autumnal
-  const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = (S?.hueAbs ?? st.leafHue) + (r() - .5) * st.leafVariety * .7 + sh; // hueAbs: a hue of its own, whatever the area's
+  const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = (S?.hueAbs ?? st.leafHue) + (r() - .5) * st.leafVariety * .7 * (S?.variety ?? 1) + sh; // variety: how far a species' trees wander in hue from tree to tree (1 the style's) // hueAbs: a hue of its own, whatever the area's
   const c = {
     [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212],
     [M.LEAF]: hsv2rgb(h, Math.min(1, .62 * st.sat * sa), Math.min(1, .58 * va)), [M.LEAF2]: hsv2rgb(h - .05, Math.min(1, .55 * st.sat * sa), Math.min(1, .8 * va)), [M.LEAF3]: hsv2rgb(h + .03, Math.min(1, .66 * st.sat * sa), .38 * va), [M.WEB]: [225, 225, 232],

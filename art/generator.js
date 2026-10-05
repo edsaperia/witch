@@ -41,7 +41,7 @@ export { LEGEND_STATES, LEGEND_FRAMES, LEGEND_POSES, LEGEND_IDS, legendForm, leg
 import { SCENES, SCENE_BY_ID, scenePiece, sceneLayout, scenePlacements, sceneRefExists } from "./scenes.js";
 import { PATH_KINDS, PATH_IDS, PATH_PPM, pathTextures, sweepPath, railPoints, railBrokenEnd, railCrossing, PATH_PIECES, PATH_PIECE_BY_ID, pathColours, pathPieceSprite, areaPathKinds } from "./paths.js";
 import { AREAS, AREA_BY_ID, SWAYING_PROPS, areaAssets, WALLS_BLOCK, SET_PIECE_CHANCE, lightProps, runeStone, areaTreeVariants, TREE_HEIGHT_CLASSES, ART_PIXELS_PER_METRE, AREA_LAYOUTS, layoutProblems, LAYOUT_PATTERNS, LAYOUT_TERRAIN, LAYOUT_DECOR } from "./areas.js";
-import { SPECIES, SPECIES_BY_ID, FEATURE_NAMES, LEVELS, speciesColours, critter, levelHeight, partyGear, HAT_COLOURWAYS, SHOE_STYLES, GLASSES_STYLES } from "./creatures.js";
+import { SPECIES, SPECIES_BY_ID, speciesIn, FEATURE_NAMES, LEVELS, speciesColours, critter, levelHeight, partyGear, HAT_COLOURWAYS, SHOE_STYLES, GLASSES_STYLES } from "./creatures.js";
 export { LIMBO_BAR, WITCH_FLIGHT_POSES, WITCH_PAIRS, WITCH_LOOKS, DEFAULT_LOOK, PARTY_OUTFITS, PARTY_OUTFIT_BY_ID, partyWitch, cleanFlecks };
 export { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, WITCH_HEADINGS, treehouseSprite, treehouseColours, TREEHOUSE_STOREYS };
 export { NEW_SET_PIECES, SET_PIECE_KINDS };
@@ -60,7 +60,7 @@ export { DISCO_GRID, DISCO_RADIUS, DISCO_TILE_METRES, DISCO_MASK, discoPatterns,
 import { SOUNDSYSTEMS, soundsystemColours, soundsystemSprite, soundsystemHeight, soundsystems, DANCEFLOOR_SPEAKER_ANGLES, DANCEFLOOR_SPEAKER_STATES, dancefloorSpeakerFacing, dancefloorSpeakerHeight, dancefloorSpeakerColours, dancefloorSpeakerSprite } from "./soundsystem.js";
 export { SOUNDSYSTEMS, soundsystemColours, soundsystemSprite, soundsystemHeight, DANCEFLOOR_SPEAKER_ANGLES, DANCEFLOOR_SPEAKER_STATES, dancefloorSpeakerFacing, dancefloorSpeakerHeight, dancefloorSpeakerColours, dancefloorSpeakerSprite };
 export { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree, TREE_SPECIES, treeSpecies, crownStats, floraPick };
-export { defaultCanvas, rng, uni, pick, gauss, hash2, vnoise, hsv2rgb, M, EMISSIVE, Sprite, spline, band, tufts, polyMask, edgeVectors, rot, lerp2, bake, SPECIES, SPECIES_BY_ID, FEATURE_NAMES, LEVELS, speciesColours, critter, levelHeight, partyGear, HAT_COLOURWAYS, SHOE_STYLES, GLASSES_STYLES };
+export { defaultCanvas, rng, uni, pick, gauss, hash2, vnoise, hsv2rgb, M, EMISSIVE, Sprite, spline, band, tufts, polyMask, edgeVectors, rot, lerp2, bake, SPECIES, SPECIES_BY_ID, speciesIn, FEATURE_NAMES, LEVELS, speciesColours, critter, levelHeight, partyGear, HAT_COLOURWAYS, SHOE_STYLES, GLASSES_STYLES };
 
 // ================= the style genome =================
 export const KNOBS = [

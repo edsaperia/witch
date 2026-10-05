@@ -3,6 +3,7 @@
 // three-quarter view from above; it faces right and the game mirrors it.
 import { M, hsv2rgb, rng } from "./core.js";
 import { GENOMES, speciesOf } from "./genome/index.js";
+import { setSpecies } from "./genome/next.js";
 import { withGear, height3d, quad3d, owl3d, hedgehog3d, toad3d, raven3d, bat3d, mole3d, beetle3d, snail3d, woodlouse3d, snake3d, moth3d, glowworm3d, spider3d } from "./creatures3d.js";
 // Every species is built in 3D (true three-quarter view, Ed 2026-10-03): four-legged ones by
 // quad3d, the others by a builder per body plan.
@@ -17,6 +18,8 @@ export const buildCreature = (S, level, frame, st, facing = "towards") => S.q ? 
 // and for the four-legged q, their proportions, and sizes, their template's size curves).
 export const SPECIES = GENOMES.map(speciesOf);
 export const SPECIES_BY_ID = Object.fromEntries(SPECIES.map(s => [s.id, s]));
+// A species in a style: its art set's (art/genome/next.js, st.artSet) if it has one, else the bestiary's.
+export const speciesIn = (id, st) => setSpecies(id, st) || SPECIES_BY_ID[id];
 export const FEATURE_NAMES = { wings: "spirit wings", mane: "a glowing mane", tails: "many tails", crystals: "crystals", tusksBig: "great tusks", antlersGlow: "glowing antlers", jackalope: "antlers", eyesRing: "a ring of eyes", moss: "a little forest on its back", starTail: "a starry tail", crown: "a crown", ribbons: "light ribbons", wingsBig: "huge glowing wings", horn: "a glowing horn", glowShell: "a glowing shell", hornsGlow: "glowing golden horns", flames: "a crest of flame", lantern: "a great lantern" };
 
 // Party gear's colourways (gear in critter).
@@ -36,7 +39,7 @@ export function partyGear(seed, collarColour = true) {
 }
 // sp: a species id, or a species object (a palette variant's: art/genome/palette.js).
 export function speciesColours(sp, st, gear = null) {
-  const c = baseColours(typeof sp === "string" ? SPECIES_BY_ID[sp] : sp, st);
+  const c = baseColours(typeof sp === "string" ? speciesIn(sp, st) : sp, st);
   if (!gear) return c;
   if (gear.collar) c[M.COLLAR] = Array.isArray(gear.collar) ? gear.collar : c[M.MAGIC];
   if (gear.hat != null) { const [a, b, pom] = HAT_COLOURWAYS[gear.hat % HAT_COLOURWAYS.length]; c[M.HAT1] = a; c[M.HAT2] = b; c[M.POM] = pom; }
@@ -57,6 +60,7 @@ function baseColours(s, st) {
     [M.MAGIC]: magic, [M.MAGIC2]: magic2, [M.LEAF]: hsv2rgb(.3, .55, .55), [M.LEAF2]: hsv2rgb(.25, .5, .75), [M.LEAF3]: hsv2rgb(.33, .6, .35), [M.TRUNK]: hsv2rgb(.07, .45, .32),
     [M.EYE]: [24, 18, 30], [M.PUPIL]: [70, 40, 90], [M.GLINT]: [255, 255, 245], [M.NOSE]: [38, 28, 36], [M.EAR]: hsv2rgb(s.hue + .97, Math.min(1, s.sat * .6 + .2), Math.min(1, s.val * v * .55 + .2)),
     [M.IRIS]: s.plan === "owl" ? [255, 176, 40] : hsv2rgb(.12, .7, .85), [M.SKIN]: [238, 158, 192],
+    ...(s.over ? Object.fromEntries(Object.entries(s.over).map(([k, [h, sa2, va]]) => [M[k], hsv2rgb(h, Math.min(1, sa2 * sat * st.sat), Math.min(1, va * v))])) : {}), // a genome's own colours for some materials: { BELLY: [h, s, v] }
   };
 }
 
@@ -75,8 +79,8 @@ const SHAPE_KNOBS = ["size", "growth", "pixel", "head", "eye", "legs", "long", "
 //   glasses: "bar" | "star" | "heart"; shoes: "sneakers" | "glitter" | "platform"; woken: true.
 // Give the same gear to speciesColours for its colours. Shapes are cached per gear combination.
 export function critter(spId, level, frame, st, facing = "towards", gear = null) {
-  const S = SPECIES_BY_ID[spId] || SPECIES[0], g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken) ? gear : null;
-  const key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken].join(",") : ""].join("|");
+  const S = speciesIn(spId, st) || SPECIES[0], g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken) ? gear : null;
+  const key = [S.id, st.artSet || "", level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken].join(",") : ""].join("|");
   let sp = cache.get(key);
   if (!sp) {
     sp = withGear(g, () => buildCreature(S, level, frame, st, facing));
