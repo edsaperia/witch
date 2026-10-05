@@ -181,6 +181,7 @@ const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = loadStyle();
 if (params.get("flora")) style.flora = params.get("flora"); // ?flora=new|fantasy|all|<ids>: every wooded area grows these tree species (art/flora), carried to the art worker in the style
+if (params.get("style") === "bold" || params.get("style") === "ref") style.stylise = params.get("style"); // ?style=bold|ref: the pixel-art stylisation (docs/ART-GUIDE.md section 0; bold: hue-shifted 3-tone ramps, ref: Ed's reference look), so far in the trees: carried to the art worker in the style
 /** Load timings (ms since the page started): the view built (the page's own sprites drawn), ready to play. */
 const loadTimes = { viewStart: performance.now(), view: 0, ready: 0 };
 const view = new View(canvas, game, {

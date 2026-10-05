@@ -5,35 +5,35 @@
 // across the height classes (grow), and a few words on its crown (crown: envelope and clump size, for reading; the generator's params
 // are what draw it). The trees in art/trees.js are grown from these records and nothing else, so a new species is a new record.
 //
-// Generators: broadleaf (a trunk forking `depth` times into limbs, clumps at the tips; most broadleaves), and the bespoke ones that
-// predate the records, each reading its own params: broad (the gnarled broadleaf), fir (tiered skirts), willow (arching limbs and a
-// curtain of strands), birch (a banded white trunk and airy clumps), palm (a tree fern), flat (flat layered maple), alder (a stem with
-// short side branches), pine (a bare trunk and flat needle plates), yew (a fluted squat trunk and a dark dome), holly (a dark cone),
-// weepingBirch (a birch hung with curtains) and larch (tufted tiers); and blob (art/flora/blob.js), the genome generator, which grows
-// any tree from levels of branches and a crown of lit blobs, and draws the ten newer species, three of them fantasy (fantasy: true).
+// Generators: broadleaf (a trunk forking `depth` times into limbs, clumps at the tips; most broadleaves), and blob (art/flora/blob.js),
+// the genome generator, which grows any tree from levels of branches and a crown of lit blobs: at the branch tips, or through an
+// envelope (crown.fill: tiers, cone, column, dome), with curtains (a willow's or weeping birch's strands), trunk bands (a birch's),
+// an orange upper trunk (a pine's) or frond scars, or fronds instead of blobs (a tree fern). The twelve bespoke generators that
+// predated the records (broad, fir, willow, birch, palm, flat, alder, pine, yew, holly, weepingBirch, larch) are grown by it now
+// (#119); three of its species are fantasy (fantasy: true).
 // Colours: hue shifts the area's leaf hue, hueAbs sets it outright (a violet mushroom anywhere); glow and glint colour the glowing
 // parts. Bushes: round, shrub, fern and grass.
 
 export const PLANT_GENOMES = {
   // ---- the original six kinds ----
-  broad: { name: "gnarled broadleaf", form: "tree", generator: "broad", grow: "normal", crown: { envelope: "sphere", clumps: [14, 21] },
-    params: { w: 220, wPad: 60, h: 140, tw: 12, leanGnarl: .5, fork: .35, splay: [.5, .85], splay3: 1.4, trunk: .36, trunkVar: [.75, 1.15], trunkBend: 1.4, limbSpread: [.55, .95], limb: .22, leader: .7, leaderLen: .18, clumpR: [14, 21], clumpRy: [10, 14], darkBack: .35, extra: .75, extraR: [10, 15], extraRy: [7, 10] },
+  broad: { name: "gnarled broadleaf", form: "tree", generator: "blob", grow: "normal", crown: { envelope: "sphere", clumps: [14, 21] },
+    params: { w: 220, wPad: 60, h: 140, trunk: { w: 12, len: .36, taper: .65, bend: 1.4, lean: .5, roots: 1.2 }, levels: [{ n: [2, 3], at: [.8, 1], len: [.45, .6], angle: [.5, .9], up: .1, bend: 1.4, w: .6 }, { n: [2, 3], at: [.4, 1], len: [.35, .5], angle: [.4, .8], up: .2, bend: 1.3 }], crown: { blobs: [7, 10], r: [15, 22], flat: .58, stamp: "leaf", stampSize: 3, back: .4, backDark: .45, holes: .1 } },
     low: { ivy: .4, moss: .6, sprigs: .5, boughs: .3 }, colour: {} },
-  fir: { name: "spruce", form: "tree", generator: "fir", grow: "narrow", crown: { envelope: "cone", clumps: "tiers" },
-    params: { w: 90, h: 160, tw: 6, tw1: 4, tiers: [9, 12], half: [5, 36], droop: [5, 13], reach: .7, crownLine: .82 },
+  fir: { name: "spruce", form: "tree", generator: "blob", grow: "narrow", crown: { envelope: "cone", clumps: "tiers" },
+    params: { w: 90, wPad: 10, h: 165, narrow: 1, trunk: { w: 6, len: .92, taper: .35, bend: .3, lean: .1, roots: .6 }, levels: [], crown: { blobs: [1, 1], r: [8, 12], fill: { shape: "tiers", tiers: [9, 12], top: 4, bottom: 34, droop: 6, base: .12, per: 1.4 }, crownLine: .82, under: .7, flat: .38, stamp: "needle", stampSize: 2.5, back: .25, tones: [.05, .5], lift: 2 } },
     low: { moss: .3, skirt: 1 }, colour: { hue: .06 } },
-  willow: { name: "willow", form: "tree", generator: "willow", grow: "willow", crown: { envelope: "weeping", clumps: [20, 28] },
-    params: { w: 200, wPad: 50, h: 130, tw: 13, trunk: .3, limbs: 5, limbSpread: [.55, 1.25], limbLen: [.3, .42], clumpR: [20, 28], clumpRy: [9, 12], strand: [.5, .9] },
+  willow: { name: "willow", form: "tree", generator: "blob", grow: "willow", crown: { envelope: "weeping", clumps: [20, 28] },
+    params: { w: 200, wPad: 50, h: 130, trunk: { w: 13, len: .3, taper: .8, bend: 1.6, lean: .3 }, levels: [{ n: [4, 6], at: [.85, 1], len: [.3, .42], angle: [.55, 1.25], up: .1, bend: 1.2, w: .55 }], crown: { blobs: [5, 7], r: [20, 28], flat: .5, lift: 4, stamp: "leaf", stampSize: 2.5, back: .3, curtains: { len: [22, 55], share: .65, gap: 4, width: .9 } } },
     low: { moss: .5, sprigs: .3 }, colour: { hue: -.02, val: 1.05 } },
-  birch: { name: "silver birch", form: "tree", generator: "birch", grow: "narrow", crown: { envelope: "column", clumps: [9, 13] },
-    params: { w: 110, h: 155, trunk: .85, tw: 5, tw1: 2, branches: 7, branchAt: [.35, .9], branchSpread: [.5, 1], branchLen: [.12, .2], clumpR: [9, 13], clumpRy: [7, 10], crownLine: .55 },
+  birch: { name: "silver birch", form: "tree", generator: "blob", grow: "narrow", crown: { envelope: "column", clumps: [9, 13] },
+    params: { w: 110, h: 155, narrow: 1, trunk: { w: 5, len: .88, taper: .4, bend: .4, lean: .25, mat: "BARK2", limbMat: "BARKD", bands: .12, roots: .5 }, levels: [{ n: [6, 8], at: [.35, .95], len: [.12, .2], angle: [.5, 1], up: .2, w: .4, tips: true }], crown: { blobs: [6, 8], r: [9, 13], flat: .75, stamp: "leaf", stampSize: 2, back: .3, holes: .15 } },
     low: { sprigs: .3, boughs: .2 }, colour: { hue: -.02, val: 1.08 } },
-  palm: { name: "tree fern", form: "fern", generator: "palm", grow: "normal", species: false, // only one of the original TREE_TYPES kinds
+  palm: { name: "tree fern", form: "fern", generator: "blob", grow: "normal", species: false, // only one of the original TREE_TYPES kinds
     crown: { envelope: "umbrella", clumps: "fronds" },
-    params: { w: 150, h: 140, top: .3, bend: 14, fronds: [9, 12], frondLen: [36, 50], leaflet: 6 },
+    params: { w: 150, wPad: 0, h: 140, trunk: { w: 7, len: .7, taper: .7, bend: .6, lean: .25, scars: 3, roots: .5 }, levels: [], crown: { blobs: [1, 1], r: [1, 1], fronds: { n: [9, 12], len: [36, 50], leaflet: 5, droop: 1.3 } } },
     low: {}, colour: {} },
-  flat: { name: "field maple", form: "tree", generator: "flat", grow: "normal", crown: { envelope: "umbrella", clumps: "layers" },
-    params: { w: 220, wPad: 50, h: 120, tw: 10, trunk: .4, limbSpread: [.7, 1.15], limbLen: [.3, .42], layers: [2, 3], layerW: 95, layerShrink: 12 },
+  flat: { name: "field maple", form: "tree", generator: "blob", grow: "normal", crown: { envelope: "umbrella", clumps: "layers" },
+    params: { w: 220, wPad: 50, h: 120, trunk: { w: 10, len: .4, taper: .7, bend: 1, lean: .3 }, levels: [{ n: [3, 4], at: [.85, 1], len: [.3, .42], angle: [.7, 1.15], up: .05, bend: 1.2, w: .55 }], crown: { blobs: [7, 9], r: [18, 24], flat: .35, lift: 2, stamp: "leaf", stampSize: 3, back: .3 } },
     low: { ivy: .3, sprigs: .4, boughs: .3 }, colour: { hue: .01 } },
   // ---- the UK species ----
   oak: { name: "oak", form: "tree", generator: "broadleaf", grow: "wide", style: { gnarl: { min: .8 } }, crown: { envelope: "sphere", clumps: [10, 15] },
@@ -57,29 +57,29 @@ export const PLANT_GENOMES = {
   rowan: { name: "rowan", form: "tree", generator: "broadleaf", grow: "small", style: { gnarl: { mul: .7 } }, crown: { envelope: "sphere", clumps: [8, 11] },
     params: { trunk: .45, tw: 7, limbs: 3, spreadA: .55, limb: .2, depth: 2, clumpR: [8, 11], flat: .7, extra: .5, ragged: 1.7, wide: .6, tall: 120, smooth: 1, trunkMat: "BARK2", limbMat: "BARK2", darkBack: .1, tex: { grain: 1.1, holes: .26, flecks: .22, dots: .05 } },
     low: { sprigs: .3, boughs: .3 }, colour: { hue: -.01, val: 1.05, trunk: [.08, .12, .52], dot: [210, 40, 34] } },
-  alder: { name: "alder", form: "tree", generator: "alder", grow: "narrow", crown: { envelope: "column", clumps: [7, 14] },
-    params: { w: 110, h: 165, trunk: .92, tw: 6, branches: 16, branchAt: [.3, .97], branchLen: .12 },
+  alder: { name: "alder", form: "tree", generator: "blob", grow: "narrow", crown: { envelope: "column", clumps: [7, 14] },
+    params: { w: 110, h: 165, narrow: 1, trunk: { w: 6, len: .95, taper: .4, bend: .4, lean: .15 }, levels: [{ n: [6, 9], at: [.3, .95], len: [.1, .16], angle: [.9, 1.3], up: .1, w: .4 }], crown: { blobs: [8, 11], r: [9, 12], fill: { shape: "column", width: 26, base: .2 }, flat: .8, stamp: "leaf", stampSize: 2.5, back: .4, backDark: .4 } },
     low: { moss: .6, sprigs: .4 }, colour: { hue: .04, sat: .9, val: .72 } },
-  pine: { name: "Scots pine", form: "tree", generator: "pine", grow: "narrow", crown: { envelope: "umbrella", clumps: [13, 19] },
-    params: { w: 150, h: 175, trunk: .78, tw: 8, tw1: 3, pads: 6, padAt: [.55, 1], padLen: [.12, .22], padR: [13, 19], padRy: [4, 6], orange: .55 },
+  pine: { name: "Scots pine", form: "tree", generator: "blob", grow: "narrow", crown: { envelope: "umbrella", clumps: [13, 19] },
+    params: { w: 150, h: 175, narrow: 1, trunk: { w: 8, len: .8, taper: .4, bend: .7, lean: .25, upper: .55, roots: .7 }, levels: [{ n: [4, 6], at: [.55, 1], len: [.12, .22], angle: [.6, 1.3], up: .3, w: .4, tips: true }], crown: { blobs: [5, 7], r: [13, 19], flat: .32, lift: 2, stamp: "needle", stampSize: 2.5, back: .2, holes: .2 } },
     low: { ivy: .3, moss: .3, boughs: .15 }, colour: { hue: .1, sat: .7, val: .78, upper: [.06, .6, .72] } },
-  yew: { name: "yew", form: "tree", generator: "yew", grow: "wide", crown: { envelope: "sphere", clumps: [16, 26] },
-    params: { w: 200, wPad: 50, h: 120, trunks: 3, tw: 9, thick: 1.2, trunk: .3, ring: 9, ringR: [16, 22], fill: 7, fillR: [20, 26], topR: 26 },
+  yew: { name: "yew", form: "tree", generator: "blob", grow: "wide", crown: { envelope: "sphere", clumps: [16, 26] },
+    params: { w: 200, wPad: 50, h: 120, trunk: { w: 9, len: .32, taper: .7, bend: 1.2, lean: .2, stems: 3, fan: .9, upper: 1 }, levels: [], crown: { blobs: [12, 16], r: [16, 22], fill: { shape: "dome", width: 85, base: .25 }, crownLine: .88, flat: .7, stamp: "needle", stampSize: 2, back: .4, backDark: .4 } },
     low: { moss: .4, skirt: 1 }, colour: { hue: .07, sat: .8, val: .55, upper: [.02, .55, .45] } },
   hawthorn: { name: "hawthorn", form: "tree", generator: "broadleaf", grow: "small", style: { gnarl: { set: 1 } }, crown: { envelope: "sphere", clumps: [7, 10] },
     params: { trunk: .3, tw: 8, limbs: 3, spreadA: .9, limb: .3, depth: 3, fork: .6, bend: 2, lean: .45, clumpR: [7, 10], flat: .65, extra: .8, wide: .7, tall: 90, ragged: 1.4, darkBack: .3, tex: { grain: 1, holes: .1, flecks: .14, dots: .035 } },
     low: { moss: .5, sprigs: .6, boughs: .5 }, colour: { hue: .025, val: .8, dot: [176, 30, 40] } },
-  holly: { name: "holly", form: "tree", generator: "holly", grow: "narrow", crown: { envelope: "cone", clumps: [6, 11] },
-    params: { w: 110, h: 130, tiers: 10, cone: .72, halfTop: 5, halfBottom: 28, crownLine: .85 },
+  holly: { name: "holly", form: "tree", generator: "blob", grow: "narrow", crown: { envelope: "cone", clumps: [6, 11] },
+    params: { w: 110, h: 130, narrow: 1, trunk: { w: 6, len: .5, taper: .5, bend: .3, lean: .1, mat: "BARK2", roots: .5 }, levels: [], crown: { blobs: [20, 26], r: [8, 11], fill: { shape: "cone", width: 42, top: .12, base: .08 }, crownLine: .82, flat: .9, stamp: "leaf", stampSize: 2.5, back: .35, dots: { mat: "FLOWER", share: .03, size: 2 } } },
     low: { skirt: .7 }, colour: { hue: .06, sat: .85, val: .6, trunk: [.1, .08, .55], dot: [214, 28, 36] } },
   hazel: { name: "hazel coppice", form: "shrub", generator: "broadleaf", grow: "small", style: { gnarl: { mul: .5 }, treeTrunks: { default: 6 } }, crown: { envelope: "sphere", clumps: [11, 15] },
     params: { trunk: .5, tw: 9, limbs: 1, spreadA: .5, limb: .18, depth: 1, fan: 1.3, trunkBend: .8, clumpR: [11, 15], flat: .8, extra: 1, wide: .8, tall: 110, noRoots: false, rootK: .4, smooth: 1, trunkMat: "BARK2", limbMat: "BARK2", darkBack: .2, tex: { grain: 3.6, holes: .14, flecks: .2 } },
     low: { moss: .4, sprigs: .8 }, colour: { hue: .0, val: .94, trunk: [.07, .3, .45] } },
-  weepingBirch: { name: "weeping birch", form: "tree", generator: "weepingBirch", grow: "narrow", crown: { envelope: "weeping", clumps: [9, 13] },
-    params: { curtain: [.25, .5], gaps: .35 },
+  weepingBirch: { name: "weeping birch", form: "tree", generator: "blob", grow: "narrow", crown: { envelope: "weeping", clumps: [9, 13] },
+    params: { w: 120, wPad: 30, h: 160, narrow: 1, trunk: { w: 5, len: .9, taper: .4, bend: .5, lean: .25, mat: "BARK2", limbMat: "BARKD", bands: .12, roots: .5 }, levels: [{ n: [5, 7], at: [.4, .95], len: [.16, .26], angle: [.9, 1.4], up: -.1, w: .4, tips: true }], crown: { blobs: [4, 6], r: [10, 14], flat: .5, stamp: "leaf", stampSize: 2, back: .3, curtains: { len: [18, 40], share: .6, gap: 4 } } },
     low: { sprigs: .3 }, colour: { hue: -.04, val: 1.12 } },
-  larch: { name: "larch", form: "tree", generator: "larch", grow: "narrow", crown: { envelope: "cone", clumps: "tufts" },
-    params: { w: 100, h: 170, tiers: 14, cone: .68, halfTop: 4, halfBottom: 30, crownLine: .8 },
+  larch: { name: "larch", form: "tree", generator: "blob", grow: "narrow", crown: { envelope: "cone", clumps: "tufts" },
+    params: { w: 100, h: 175, narrow: 1, trunk: { w: 6, len: .93, taper: .35, bend: .3, lean: .1, roots: .6 }, levels: [], crown: { blobs: [1, 1], r: [5, 8], fill: { shape: "tiers", tiers: [12, 15], top: 3, bottom: 30, droop: 7, base: .14, per: 1.8 }, crownLine: .8, under: .55, flat: .5, stamp: "needle", stampSize: 2, back: .2, holes: .2, lift: 2 } },
     low: { skirt: .5, boughs: .2 }, colour: { hue: -.07, sat: .8, val: 1.15 } },
   // ---- grown by the genome generator (art/flora/blob.js): levels of branches under a crown of lit blobs of leaf stamps ----
   cherry: { name: "wild cherry", form: "tree", generator: "blob", grow: "normal", crown: { envelope: "sphere", clumps: "5-7 blobs, blossom" },
