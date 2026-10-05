@@ -10,14 +10,16 @@
 //     wall and a root up through the floor, fairy lights along the walls' tops, the banner's string with "PARTY" on
 //     one wall and "TONIGHT" on the other (anchors `letters`: its pennants and their letters are drawn upright over
 //     the room in BANNER_FONT, so they read at any art pixel);
-//   - the mess: a bed in the corner (rumpled duvet, pillows, the laptop open on it, its screen glowing, headphones by
-//     it), clothes everywhere (jackets, jeans, tops, socks, sneakers, a scarf, and her other hats: a top hat, a cowboy
-//     hat, a party hat, a pointed witch's hat), open books with glowing runes on the floor, the bed and the desk, piles
-//     of shut ones; a guitar against the wall, a synth on its stand, a drum; the DJ decks on a table with a speaker;
-//     a shelf of potions and crystals, candles, a broom against the wall, a rug and a standing mirror.
+//   - the heroes and the mess (the art director's review: "fewer, bigger, grouped", piles and clear floor between): the bed,
+//     the biggest thing, the laptop open on it its screen the brightest glow, headphones by it; the DJ decks on their desk
+//     under a shelf of potions, crystals and candles; the instruments in one corner (a guitar against the wall, a drum,
+//     a synth on its stand) under a lantern; clothes and her other hats (a top hat, a cowboy hat, a party hat, a pointed
+//     witch's hat) heaped at the bed's foot and over a chair; books stacked by the bed, one open with glowing runes, and
+//     one more by the window; the rug in the clear middle, where she stands.
 // BEDROOM_PROPS are the pieces, each `(m, at, o)` adding its parts to a model at a point on the floor (x, z; y up),
 // to reuse anywhere. bedroomModel builds the room; bedroomSprite renders it and returns its anchors in pixels: the
-// spot where the witch stands, the mirror's glass, and the glowing things (for the light and the animated glows).
+// spot where the witch stands and the glowing things (for the light and the animated glows). A mirror and a broom are
+// among the pieces, not placed.
 import { M, hsv2rgb, runeGlyph, hash2 } from "./core.js";
 import { Model, render } from "./model3d.js";
 import { witchPixelsPerUnit } from "./witch.js";
@@ -77,7 +79,7 @@ export const BEDROOM_PROPS = {
     }
     m.anchors.runes = [...(m.anchors.runes || []), bOff(c, [0, .02, 0])];
   },
-  // a pile of shut books, n high
+  // a pile of shut books, n high; returns its top's height
   bookPile(m, at, o = {}) {
     const n = o.n || 3, k = o.k || 0, covers = [M.BODY, M.BODY3, M.IRIS, M.CLOTH, M.EAR];
     let y = 0;
@@ -86,10 +88,11 @@ export const BEDROOM_PROPS = {
       m.box([at[0], y + h, at[1]], [.11, h, .075], c, { dir: bRotY(bX, a), group: 70 + ((i + k) % 8), round: .008, paint: p => Math.abs(p[1] - y - h) < h * .5 && hash2(Math.floor(p[0] * 40), Math.floor(p[2] * 40), 9) > .4 ? c : M.BELLY });
       y += h * 2;
     }
+    return y; // its top
   },
   // a bed: a low wooden frame, a mattress, a rumpled duvet, two pillows; the head at -z (o.turn turns it)
   bed(m, at, o = {}) {
-    const [x, z] = at, L = .62, W = .42, a = o.turn || 0, c = [x, 0, z], d = (p) => bOff(c, p, a);
+    const [x, z] = at, L = o.L || .62, W = o.W || .42, a = o.turn || 0, c = [x, 0, z], d = (p) => bOff(c, p, a);
     m.box(d([0, .09, 0]), [W, .07, L], M.WOOD, { axes: [bRotY(bX, a), bUP, bRotY(bZ, a)], group: 80, round: .02 });
     m.box(d([0, .38, -L - .03]), [W + .02, .3, .035], M.WOOD, { axes: [bRotY(bX, a), bUP, bRotY(bZ, a)], group: 80, round: .03 }); // the headboard
     for (const sx of [-1, 1]) m.seg(d([sx * (W + .01), 0, -L - .03]), d([sx * (W + .01), .72, -L - .03]), .035, .03, M.BARKL, { group: 80 });
@@ -185,7 +188,8 @@ export const BEDROOM_PROPS = {
     m.box(bOff(c, [0, y + .055, 0], a), [.08, .03, .14], M.SHADES, { axes: [u, bUP, w], group: 174, round: .01 });
     m.flat(bOff(c, [0, y + .087, 0], a), u, w, .07, .12, (s, t) => { const col = Math.floor((s + 1) * 2.5), row = Math.floor((t + 1) * 6); return row % 2 && (col % 2 === 0) ? (row < 6 ? M.MAGIC2 : M.COLLAR) : M.LINE; }, { group: 175, bend: 0 });
     m.anchors.decks = bOff(c, [0, y + .12, 0], a);
-    // the speaker on the floor beside it
+    if (!o.speaker) return;
+    // the speaker on the floor beside it (o.speaker)
     const sp = bOff(c, [.68, 0, 0], a);
     m.box(bOff(sp, [0, .32, 0]), [.14, .32, .14], M.SHADES, { axes: [u, bUP, w], group: 176, round: .02 });
     for (const [yy, r] of [[.42, .085], [.17, .055]]) m.flat(bOff(sp, [0, yy, .145], a), u, bUP, r, r, (s, t) => { const d = Math.hypot(s, t); return d > 1 ? undefined : d < .35 ? M.FRAME : d > .82 ? M.LINE : M.STONE; }, { group: 177, bend: .6 });
@@ -236,6 +240,14 @@ export const BEDROOM_PROPS = {
     m.ell(bOff(gc, [0, .52, 0]), [.025, .025, .025], M.FLOWER, { group: 220 }); // a carved star on top
     m.anchors.mirror = { c: gc, u, ru: .27 * .86, rv: .5 * .86 };
   },
+  // a wooden chair (o.turn turns it; its back at -z)
+  chair(m, at, o = {}) {
+    const c = bP3(at), a = o.turn || 0, r = p => bOff(c, p, a), axes = [bRotY(bX, a), bUP, bRotY(bZ, a)];
+    for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) m.seg(r([sx * .15, 0, sz * .15]), r([sx * .15, .3, sz * .15]), .02, .02, M.BARKL, { group: 240 });
+    m.box(r([0, .32, 0]), [.19, .022, .19], M.WOOD, { axes, group: 240, round: .015 });
+    for (const sx of [-1, 1]) m.seg(r([sx * .15, .32, -.16]), r([sx * .15, .72, -.17]), .02, .018, M.BARKL, { group: 240 });
+    m.box(r([0, .62, -.17]), [.17, .07, .018], M.WOOD, { axes, group: 240, round: .012 });
+  },
   // a rug, patterned
   rug(m, at, o = {}) {
     const c = bP3(at, .016), r = o.r || .7;
@@ -281,41 +293,42 @@ export function bedroomModel() {
   flags("PARTY", [.06, 0, 2.15], [0, 0, -1], 1.95, 5);
   flags("TONIGHT", [.45, 0, .06], bX, 2.5, 7);
 
-  // the bed in the corner, the laptop on it, the headphones beside; clothes over it
-  B.bed(m, [.5, .78], { turn: 0 });
-  B.laptop(m, [.5, .33, .9], { turn: .25 });
-  B.headphones(m, [.22, .33, 1.05], { turn: .6 });
-  B.clothes(m, [.75, .34, .45], { kind: "jacket", turn: 1.2, k: 1, mat: M.JACKET });
-  B.openBook(m, [.25, .32, .62], { turn: -.3, k: 1, cover: M.BODY3 });
-  // the decks against the right wall with a speaker; the potion shelf over them; the lantern
-  B.decks(m, [1.6, .3], { turn: 0 });
-  B.potionShelf(m, [1.7, .1], { y: .9 });
-  B.lantern(m, [2.75, .1], { y: 1.12 });
-  // the guitar against the right wall, the drum and the synth along the left
-  B.guitar(m, [2.55, .18], { lean: [0, 0, -1], across: [1, 0, 0] });
-  B.drum(m, [3.05, .95]);
-  B.synth(m, [.36, 2.0], { turn: Math.PI / 2 });
-  B.broom(m, [.14, 3.15], { lean: [-1, 0, 0] });
-  // the rug, the mirror beside where she stands
-  B.rug(m, [2.15, 2.2], { r: .8 });
-  B.mirror(m, [3.2, .32]);
-  // the mess: books open and shut, clothes, shoes, hats, more candles
-  B.openBook(m, [2.55, 2.55], { turn: -.8, k: 3, cover: M.IRIS }); B.openBook(m, [1.05, 2.75], { turn: 1.1, k: 4, cover: M.CLOTH });
-  B.openBook(m, [3.05, 1.2], { turn: .2, k: 5, cover: M.BODY3 }); B.openBook(m, [1.55, .78], { turn: -.2, k: 6 }); B.openBook(m, [2.2, 3.05], { turn: .9, k: 7, cover: M.EAR });
-  B.openBook(m, [1.6, .3, .62], { turn: .1, k: 8, cover: M.IRIS }); // one on the decks' table
-  B.bookPile(m, [1.15, 1.25], { n: 4, k: 1 }); B.bookPile(m, [2.35, .55], { n: 3, k: 2 }); B.bookPile(m, [.6, 2.45], { n: 5, k: 3 });
-  B.clothes(m, [.85, 1.95], { kind: "jeans", turn: .7, k: 2 }); B.clothes(m, [2.6, 3.0], { kind: "top", turn: -.4, k: 3, mat: M.TOP }); B.clothes(m, [.85, 3.0], { kind: "jacket", turn: 2.2, k: 4, mat: M.EYE });
-  B.clothes(m, [3.0, 2.15], { kind: "scarf", turn: 1.4, k: 5 }); B.clothes(m, [1.25, 2.3], { kind: "sock", turn: 2.5, k: 7, mat: M.POM });
-  B.clothes(m, [2.85, .95], { kind: "top", turn: 2.8, k: 8, mat: M.JEANS });
-  B.sneaker(m, [1.55, 2.95], { turn: .5, k: 1 }); B.sneaker(m, [1.75, 3.05], { turn: 1.8, k: 2 }); B.sneaker(m, [2.95, 2.75], { turn: -.6, k: 3, mat: M.JACKET });
-  B.hat(m, [2.2, 2.75], { kind: "top", k: 1 }); B.hat(m, [1.0, 2.2], { kind: "cowboy", turn: .5, k: 2 }); B.hat(m, [2.1, .75], { kind: "party", k: 3 }); B.hat(m, [3.05, 3.05], { kind: "witch", turn: -1, k: 4 });
-  B.candle(m, [3.1, 2.4], { h: .12, k: 4 }); B.candle(m, [3.18, 2.46], { h: .08, k: 5 }); B.candle(m, [.95, .2], { h: .1, k: 6 });
-  m.anchors.stand = [2.15 * K, 0, 2.2 * K];
+  // the heroes (art director: "fewer, bigger, grouped"): the bed, the biggest thing in the room, its laptop the brightest glow;
+  // the DJ decks on their desk; the guitar against the wall; the banner. Then the mess in piles, with clear floor between:
+  // clothes heaped at the bed's foot and over a chair, books stacked by the bed (one open, glowing), the instruments in one
+  // corner. A ring of floor round where she stands is kept clear, the rug under her.
+  B.bed(m, [.62, 1.02], { W: .52, L: .82 });
+  B.laptop(m, [.66, .34, 1.0], { turn: .3 });
+  B.headphones(m, [.3, .34, 1.15], { turn: .6 });
+  // books by the bed's head: a tall stack, one open on it glowing, a shut one leaning
+  const pileTop = B.bookPile(m, [1.3, .3], { n: 6, k: 1 }); B.openBook(m, [1.3, pileTop + .005, .3], { turn: .3, k: 2, cover: M.BODY3 });
+  B.bookPile(m, [1.42, .62], { n: 2, k: 4 });
+  // clothes heaped at the bed's foot and spilling off a chair
+  B.chair(m, [1.35, 2.25], { turn: -.5 });
+  B.clothes(m, [1.35, .36, 2.25], { kind: "jacket", turn: 2.4, k: 1, mat: M.JACKET });
+  B.clothes(m, [1.15, 2.6], { kind: "scarf", turn: 1.0, k: 5 });
+  B.clothes(m, [.55, 2.15], { kind: "jeans", turn: .4, k: 2 }); B.clothes(m, [.75, .03, 2.25], { kind: "top", turn: -.6, k: 3, mat: M.TOP });
+  B.clothes(m, [.4, .05, 2.35], { kind: "jacket", turn: 1.7, k: 4, mat: M.EYE }); B.clothes(m, [.95, 2.05], { kind: "sock", turn: .5, k: 6, mat: M.POM });
+  B.hat(m, [.55, .07, 2.3], { kind: "witch", turn: -.8, k: 1 }); B.hat(m, [.9, 2.5], { kind: "party", k: 2 }); B.hat(m, [.3, 2.65], { kind: "top", k: 3 }); B.hat(m, [.75, .06, 2.0], { kind: "cowboy", turn: .5, k: 4 });
+  B.sneaker(m, [.95, 2.75], { turn: .5, k: 1 }); B.sneaker(m, [1.1, 2.85], { turn: 1.8, k: 2 });
+  // the decks on their desk against the right wall, the potion shelf and candles over them
+  B.decks(m, [2.05, .3]);
+  B.potionShelf(m, [2.1, .1], { y: .92 });
+  B.candle(m, [2.62, .55, .2], { h: .08, k: 4 }); B.candle(m, [2.56, .55, .14], { h: .12, k: 5 });
+  // the instruments in the far right corner: the guitar against the wall, the drum, the synth on its stand; the lantern over them
+  B.guitar(m, [2.95, .2], { lean: [0, 0, -1], across: [1, 0, 0] });
+  B.drum(m, [3.1, .62]);
+  B.synth(m, [2.95, 1.05], { turn: Math.PI / 2 });
+  B.lantern(m, [2.85, .1], { y: 1.1 });
+  // a second open book, glowing, by the window's candles; the rug under her
+  B.openBook(m, [.25, .03, 1.95], { turn: 1.2, k: 7, cover: M.IRIS });
+  B.rug(m, [2.55, 2.1], { r: .8 });
+  m.anchors.stand = [2.55 * K, 0, 2.1 * K];
   return m;
 }
 
 // The room rendered at the witch's own art pixel: its sprite and its anchors, in pixels from the top-left: stand (where
-// her feet go), mirror ({ x, y, rx, ry }, the glass), and the glowing things (runes, flames, fairy, screen, lantern,
+// her feet go), letters (the banner's), mirror ({ x, y, rx, ry }, its glass, if one is placed), and the glowing things (runes, flames, fairy, screen, lantern,
 // potions, decks), for the room's lights and its animated glows.
 export function bedroomSprite(st = {}) {
   const m = bedroomModel(), { sp, project, s } = render(m, { scale: witchPixelsPerUnit(st), yaw: ROOM_VIEW.yaw, pitch: ROOM_VIEW.pitch, lineGap: .12 });
@@ -323,8 +336,7 @@ export function bedroomSprite(st = {}) {
   for (const k of ["runes", "flames", "fairy"]) anchors[k] = A[k].map(pt);
   for (const k of ["screen", "lantern", "potions", "decks", "stand"]) anchors[k] = pt(A[k]);
   anchors.letters = A.letters.map(([ch, p, dir]) => { const a = pt(p), b = pt([p[0] + dir[0] * .1, p[1], p[2] + dir[2] * .1]); return [ch, a, (b[1] - a[1]) / (b[0] - a[0] || 1)]; }); // each letter, where its pennant hangs and the wall's slope on screen
-  const mr = A.mirror, c = pt(mr.c), e = pt([mr.c[0] + mr.u[0] * mr.ru, mr.c[1] + mr.rv, mr.c[2] + mr.u[2] * mr.ru]);
-  anchors.mirror = { x: c[0], y: c[1], rx: Math.abs(e[0] - c[0]), ry: Math.abs(e[1] - c[1]) };
+  if (A.mirror) { const mr = A.mirror, c = pt(mr.c), e = pt([mr.c[0] + mr.u[0] * mr.ru, mr.c[1] + mr.rv, mr.c[2] + mr.u[2] * mr.ru]); anchors.mirror = { x: c[0], y: c[1], rx: Math.abs(e[0] - c[0]), ry: Math.abs(e[1] - c[1]) }; }
   sp.anchors = anchors; sp.scale = s;
   return sp;
 }

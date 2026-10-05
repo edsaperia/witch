@@ -327,7 +327,7 @@ export function bake(sp, colours, st, outlineMode = st.outline, makeCanvas = def
     n.data.set([nx * 127 + 128, ny * 127 + 128, nz * 255, 255], o);
     nf.data.set([-nx * 127 + 128, ny * 127 + 128, nz * 255, 255], o);
   }
-  if (artStyle === "bold" || artStyle === "ref") stylisePixels(a.data, n.data, nf.data, w, h, artStyle);
+  if (artStyle === "bold" || artStyle === "ref") stylisePixels(a.data, n.data, nf.data, w, h, artStyle, { interior: st.styleInterior !== false }); // (st.styleInterior false: ref without its interior lines)
   A.getContext("2d").putImageData(a, 0, 0); N.getContext("2d").putImageData(n, 0, 0); NF.getContext("2d").putImageData(nf, 0, 0);
   return { A, N, NF, w, h };
 }

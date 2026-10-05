@@ -100,7 +100,7 @@ export class Creator {
   private night = document.createElement("canvas");
   private st: Style;
   /** The room, lit once: its picture, each glowing material's pixels alone (to pulse), and its anchors. */
-  private room: { lit: HTMLCanvasElement; glows: { mat: number; c: HTMLCanvasElement }[]; a: RoomAnchors; lights: Light[] } | null = null;
+  private room: Room | null = null;
   /** Her pose in the room: standing on the rug, or hovering over it on her broom. */
   private flying = false;
   private panel = document.createElement("div");
@@ -129,7 +129,7 @@ export class Creator {
     Object.assign(this.root.style, { position: "fixed", inset: "0", zIndex: "20", display: "none", font: "13px ui-monospace, Menlo, Consolas, monospace", color: "#efe6ff" });
     Object.assign(this.night.style, { position: "absolute", inset: "0", width: "100%", height: "100%", imageRendering: "pixelated" });
     Object.assign(this.preview.style, { position: "absolute", imageRendering: "pixelated", cursor: "pointer" });
-    this.preview.title = "click her to fly or stand";
+    this.preview.title = "click to fly or stand";
     this.preview.addEventListener("click", () => { this.flying = !this.flying; });
     Object.assign(this.panel.style, { position: "absolute", right: "2%", top: "4%", bottom: "4%", width: "min(400px, 40%)", overflowY: "auto", background: "rgba(14,11,28,.82)", border: "1px solid rgba(232,226,244,.3)", borderRadius: "8px", padding: "10px 12px" });
     this.root.append(this.night, this.preview, this.panel);
@@ -360,22 +360,16 @@ export class Creator {
     x.clearRect(0, 0, W, H);
     x.drawImage(room.lit, 0, 0);
     drawGlows(x, room, t);
-    // her: standing on the rug, or hovering over it, bobbing; and her reflection in the mirror (her top half shows in the glass)
+    x.drawImage(room.banner, 0, 0);
+    // her: on the rug in a pool of light (the art director: "she's the brightest figure and the rug frames her"), standing,
+    // or hovering over it, bobbing
     const fr = this.flying ? this.frames.hover[Math.floor(t * 6) % 3] : this.frames.stand[Math.floor(t * 2) % Math.max(1, this.frames.stand.length)];
     if (!fr) return;
     const [sx, sy] = room.a.stand, bob = this.flying ? Math.round(Math.sin(t * 2) * 1.5) - 6 : 0;
+    pool(x, sx, sy, fr.width);
     const fx = Math.round(sx - fr.width / 2), fy = Math.round(sy - fr.height + bob);
     if (this.flying) { x.fillStyle = "rgba(0,0,0,.35)"; x.fillRect(Math.round(sx - fr.width * .25), Math.round(sy) - 1, Math.round(fr.width * .5), 2); }
     x.drawImage(fr, fx, fy);
-    const mi = room.a.mirror, st = this.frames.stand[0];
-    if (st) {
-      x.save();
-      x.beginPath(); x.ellipse(Math.round(mi.x), Math.round(mi.y), Math.round(mi.rx), Math.round(mi.ry), 0, 0, Math.PI * 2); x.clip();
-      x.globalAlpha = .85;
-      x.translate(Math.round(mi.x + st.width / 2), Math.round(mi.y - mi.ry * .55)); x.scale(-1, 1);
-      x.drawImage(st, 0, 0);
-      x.restore();
-    }
   };
 
   /** The room, as big as fits beside the panel at a whole number of screen pixels to its art pixel; the night behind. */
@@ -391,7 +385,7 @@ export class Creator {
   }
 }
 
-type RoomAnchors = { letters: [string, [number, number], number][]; stand: [number, number]; mirror: { x: number; y: number; rx: number; ry: number }; runes: [number, number][]; flames: [number, number][]; fairy: [number, number][]; screen: [number, number]; lantern: [number, number]; potions: [number, number]; decks: [number, number] };
+type RoomAnchors = { letters: [string, [number, number], number][]; stand: [number, number]; runes: [number, number][]; flames: [number, number][]; fairy: [number, number][]; screen: [number, number]; lantern: [number, number]; potions: [number, number]; decks: [number, number] };
 type Light = { x: number; y: number; z: number; R: number; rgb: number[]; power: number };
 /** The room's own light: a cool, dim night through the window and the warm things in it (the style's bands kept). */
 const roomLight = (st: Style): Style => ({ ...st, ambient: .62, ambientHue: .09, moon: .3, shafts: 0, dither: 0 } as Style);
@@ -399,43 +393,44 @@ const roomLight = (st: Style): Style => ({ ...st, ambient: .62, ambientHue: .09,
 const herLight = (st: Style): Style => ({ ...st, ambient: .85, ambientHue: .1, moon: .4, shafts: 0, dither: 0 } as Style);
 /** The glowing materials that pulse, each with its own beat. */
 const GLOWS: { mat: number; pulse: (t: number) => number }[] = [
-  { mat: Art.M.RUNE, pulse: t => .35 + .35 * Math.sin(t * 2.2) },                                        // the books' runes, breathing
-  { mat: Art.M.GLINT, pulse: t => .25 + .1 * Math.sin(t * 9) + (Math.sin(t * 1.3) > .96 ? .3 : 0) },     // the laptop's screen, scrolling
+  { mat: Art.M.RUNE, pulse: t => .2 + .2 * Math.sin(t * 2.2) },                                        // the books' runes, breathing
+  { mat: Art.M.GLINT, pulse: t => .45 + .1 * Math.sin(t * 9) + (Math.sin(t * 1.3) > .96 ? .3 : 0) },     // the laptop's screen, scrolling
   { mat: Art.M.WOKEN, pulse: t => .3 + .25 * Math.abs(Math.sin(t * 7.3) * Math.sin(t * 3.1)) },          // candle flames
   { mat: Art.M.MAGIC, pulse: t => .3 + .3 * Math.sin(t * 1.1) },                                         // potions
   { mat: Art.M.COLLAR, pulse: t => Math.sin(t * 4) > 0 ? .45 : .1 },                                     // fairy lights, blinking
   { mat: Art.M.MAGIC2, pulse: t => Math.sin(t * 4) > 0 ? .1 : .4 },                                      // and their other half
 ];
 /** Bakes and lights the room once: its picture, a layer per glowing material, its anchors and its lights. */
-function buildRoom(st: Style): { lit: HTMLCanvasElement; glows: { mat: number; c: HTMLCanvasElement }[]; a: RoomAnchors; lights: Light[] } {
+type Room = { lit: HTMLCanvasElement; banner: HTMLCanvasElement; glows: { mat: number; c: HTMLCanvasElement }[]; a: RoomAnchors; lights: Light[] };
+function buildRoom(st: Style): Room {
   const sp = (Art.bedroomSprite as unknown as (st: Style) => { w: number; h: number; m: Uint8Array; anchors: RoomAnchors })(st);
   const colours = (Art.bedroomColours as (st: Style) => Record<number, number[]>)(st);
-  const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown) => { A: HTMLCanvasElement; N: HTMLCanvasElement; w: number; h: number })(sp, colours, st, (st as unknown as { cOutline: unknown }).cOutline);
+  const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown) => { A: HTMLCanvasElement; N: HTMLCanvasElement; w: number; h: number })(sp, colours, { ...st, styleInterior: false } as unknown as Style, (st as unknown as { cOutline: unknown }).cOutline); // (ref: its outline, not its interior lines, which turn the clutter to noise)
   const a = sp.anchors, warm = [255, 176, 92], light = (p: [number, number], R: number, rgb: number[], power: number, z = 10): Light => ({ x: p[0], y: p[1], z, R, rgb, power });
-  const lights: Light[] = [light(a.lantern, 70, warm, 1.1, 14), light(a.screen, 34, [140, 210, 255], 1.1), light(a.decks, 30, [255, 110, 210], .9), light(a.potions, 34, [196, 120, 255], .9),
-    ...a.flames.map(f => light(f, 26, warm, 1)), ...a.runes.map(r => light(r, 16, [110, 255, 196], .7, 6))];
+  const lights: Light[] = [light(a.lantern, 70, warm, 1.1, 14), light(a.screen, 56, [150, 214, 255], 1.6, 12), light(a.decks, 30, [255, 110, 210], .9), light(a.potions, 34, [196, 120, 255], .9),
+    ...a.flames.map(f => light(f, 26, warm, 1)), ...a.runes.map(r => light(r, 14, [110, 255, 196], .5, 6))];
   const lit = document.createElement("canvas");
   lit.width = b.w; lit.height = b.h;
   shade({ a: b.A.getContext("2d")!, n: b.N.getContext("2d")!, w: b.w, h: b.h }, lit, roomLight(st), lights, null);
   const l2 = lit.getContext("2d")!; l2.globalCompositeOperation = "destination-in"; l2.drawImage(b.A, 0, 0); // clear round the room
-  // the banner (Ed: "PARTY TONIGHT"): a pennant a letter hanging from its string, its top along the wall, its letter upright in a pixel font
-  l2.globalCompositeOperation = "source-over";
+  // the banner (Ed: "PARTY TONIGHT"): a pennant a letter hanging from its string, its top along the wall, its letter upright in a
+  // pixel font; on its own layer, drawn over the glows (so no fairy light shines through a letter) after any stylising
+  const banner = document.createElement("canvas"); banner.width = b.w; banner.height = b.h;
+  const bn = banner.getContext("2d")!;
   const F = Art.BANNER_FONT as Record<string, string[]>, flag = ["#ff6fbf", "#ffd65a", "#7ff0b0", "#8fd4ff", "#ffb36b", "#c49bff", "#ff7a7a"];
-  a.letters.forEach(([ch, [px, py], slope], i) => {
+  // in three passes, so a close neighbour's pennant never cuts a letter (at ?px=5 they're 4 pixels apart): every outline, every fill,
+  // then every letter
+  const pennants = a.letters.map(([ch, [px, py], slope], i) => {
     // as wide as the gap to its neighbour allows (a letter is 3 wide: at least 5), as long as fits under the string
     const nb = a.letters[i + 1]?.[1] ?? a.letters[i - 1]?.[1], gap = nb ? Math.abs(nb[0] - px) : 9, half = Math.max(2, Math.min(4, Math.floor((gap - 1) / 2)));
-    const cx = Math.round(px), cy = Math.round(py), long = half * 2 + 4;
-    for (let dx = -half - 1; dx <= half + 1; dx++) {
-      const top = cy - 3 + Math.round(dx * slope), len = long + 1 - Math.round(Math.abs(dx) * long / (half + 2) * .55);
-      l2.fillStyle = "#2a1620"; l2.fillRect(cx + dx, top - 1, 1, len + 2); // its outline
-    }
-    for (let dx = -half; dx <= half; dx++) {
-      const top = cy - 3 + Math.round(dx * slope), len = long - Math.round(Math.abs(dx) * long / (half + 2) * .55);
-      l2.fillStyle = flag[i % flag.length]; l2.fillRect(cx + dx, top, 1, len);
-    }
-    l2.fillStyle = "#24101c";
-    F[ch]?.forEach((row, y) => [...row].forEach((on, x) => { if (on === "1") l2.fillRect(cx - 1 + x, cy - 1 + y, 1, 1); }));
+    const cx = Math.round(px), cy = Math.round(py), long = half * 2 + 5, topAt = (dx: number) => cy - 3 + Math.round(dx * slope);
+    return { ch, i, cx, half, long, topAt };
   });
+  for (const { cx, half, long, topAt } of pennants) for (let dx = -half - 1; dx <= half + 1; dx++) { const len = long + 1 - Math.round(Math.abs(dx) * long / (half + 2) * .5); bn.fillStyle = "#2a1620"; bn.fillRect(cx + dx, topAt(dx) - 1, 1, len + 2); }
+  for (const { i, cx, half, long, topAt } of pennants) for (let dx = -half; dx <= half; dx++) { const len = long - Math.round(Math.abs(dx) * long / (half + 2) * .5); bn.fillStyle = flag[i % flag.length]; bn.fillRect(cx + dx, topAt(dx), 1, len); }
+  // the letters: dark on the pale pennants, below the lowest of their columns' tops (so the slope never cuts one)
+  bn.fillStyle = "#24101c";
+  for (const { ch, cx, topAt } of pennants) { const ly = Math.max(topAt(-1), topAt(0), topAt(1)) + 1; F[ch]?.forEach((row, y) => [...row].forEach((on, x) => { if (on === "1") bn.fillRect(cx - 1 + x, ly + y, 1, 1); })); }
   const A = b.A.getContext("2d")!.getImageData(0, 0, b.w, b.h).data;
   const glows = GLOWS.map(({ mat }) => {
     const c = document.createElement("canvas"); c.width = b.w; c.height = b.h;
@@ -444,7 +439,18 @@ function buildRoom(st: Style): { lit: HTMLCanvasElement; glows: { mat: number; c
     x.putImageData(img, 0, 0);
     return { mat, c };
   });
-  return { lit, glows, a, lights };
+  return { lit, banner, glows, a, lights };
+}
+/** The pool of light on the rug where she stands: two hard-edged steps of warm light, an ellipse as the floor is seen. */
+function pool(x: CanvasRenderingContext2D, cx: number, cy: number, w: number): void {
+  x.save();
+  x.globalCompositeOperation = "lighter";
+  for (const [k, al] of [[1, .12], [.62, .14]]) {
+    const rx = Math.round(w * .95 * k), ry = Math.max(2, Math.round(rx * .5));
+    x.fillStyle = `rgba(255,214,150,${al})`;
+    for (let dy = -ry; dy <= ry; dy++) { const hw = Math.floor(rx * Math.sqrt(1 - (dy / ry) ** 2)); x.fillRect(Math.round(cx) - hw, Math.round(cy) - 1 + dy, hw * 2 + 1, 1); }
+  }
+  x.restore();
 }
 /** A glow in hard-edged steps round a point (pixel art: no soft gradients), added on. */
 function halo(x: CanvasRenderingContext2D, p: [number, number], r: number, rgb: number[], alpha: number): void {
@@ -455,16 +461,16 @@ function halo(x: CanvasRenderingContext2D, p: [number, number], r: number, rgb: 
   }
 }
 /** The room's glows this moment: each glowing material's pixels brightened by its pulse, and stepped halos round the lights. */
-function drawGlows(x: CanvasRenderingContext2D, room: { glows: { mat: number; c: HTMLCanvasElement }[]; a: RoomAnchors }, t: number): void {
+function drawGlows(x: CanvasRenderingContext2D, room: Room, t: number): void {
   x.save();
   x.globalCompositeOperation = "lighter";
   room.glows.forEach((g, i) => { x.globalAlpha = Math.max(0, Math.min(1, GLOWS[i].pulse(t))); x.drawImage(g.c, 0, 0); });
   x.globalAlpha = 1;
   const a = room.a;
-  a.runes.forEach((r, i) => halo(x, [r[0], r[1] - 1], 4, [110, 255, 196], .12 + .1 * Math.sin(t * 2.2 + i * 1.7)));
+  a.runes.forEach((r, i) => halo(x, [r[0], r[1] - 1], 4, [110, 255, 196], .08 + .06 * Math.sin(t * 2.2 + i * 1.7)));
   a.flames.forEach((f, i) => halo(x, f, 4, [255, 190, 100], .12 + .06 * Math.sin(t * 9 + i * 2.1)));
   halo(x, a.lantern, 9, [255, 176, 92], .1 + .03 * Math.sin(t * 5));
-  halo(x, a.screen, 6, [140, 210, 255], .1 + .04 * Math.sin(t * 3));
+  halo(x, a.screen, 10, [150, 214, 255], .16 + .04 * Math.sin(t * 3));
   halo(x, a.potions, 6, [196, 120, 255], .08 + .05 * Math.sin(t * 1.1));
   x.restore();
 }
