@@ -7,8 +7,8 @@
 //  - babble.ts: speech without words (the witch's 💌s and cries, the creatures' speech);
 //  - whale.ts: the legends' whale song (moods, sleep and nightmares, a wind-up's swell);
 //  - chimes.ts: the 💌 chime, tick and flourish, the state turns, the stings, a stun's twinkle;
-//  - ambience.ts: a knockback, a legend's charge, home's meadow.
-import { Charge, Meadow, knock } from "./ambience";
+//  - ambience.ts: a knockback, a lob landing, a legend's charge, home's meadow.
+import { Charge, Meadow, impact, knock } from "./ambience";
 import { Babble } from "./babble";
 import * as chimes from "./chimes";
 import { SfxKit, type SfxTuning } from "./sfxKit";
@@ -60,6 +60,8 @@ export class Sfx {
   bellow(pan = 0, near = 1): void { this.charging.bellow(pan, near); }
   hoof(pan = 0, near = 1, light = false): void { this.charging.hoof(pan, near, light); }
   charge(rumble: number, skid: number, pan = 0): void { this.charging.update(rumble, skid, pan); }
+  /** A lobbed shot landing; `big`, a legend's. */
+  impact(big: boolean, pan = 0, near = 1): void { impact(this.k, big, pan, near); }
 
   // ——— stings and places ———
   lost(urgent = false): void { chimes.lost(this.k, urgent); }

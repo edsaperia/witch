@@ -40,6 +40,7 @@ const SOUNDS: [string, number, Play][] = [
   ["enraged", 0.8, s => s.enraged(0)],
   ["enraged-crowd", 0.8, s => s.enraged(0, 1, 6)],
   ["happy", 0.6, s => s.happy(0)],
+  ["lob-landing", 2.8, () => {}],
   ["legend-sleep", 5, s => s.legends(1, 1, 0)],
   ["legend-nightmare", 5, s => s.legends(1, 0.5, 1)],
 ];
@@ -56,6 +57,10 @@ async function render(name: string, seconds: number, play: Play) {
     const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
     at(0, () => s.knock(1)); at(1.2, () => s.knock(4)); at(2.6, () => s.knock(9));
     for (let i = 0; i < 14; i++) at(2.75 + i * 0.13, () => s.twinkle(i));
+  } else if (name === "lob-landing") {
+    // a creature's lob coming down, then a legend's
+    void oc.suspend(0).then(() => { s.impact(false); return oc.resume(); });
+    void oc.suspend(Math.round(0.8 * rate) / rate).then(() => { s.impact(true); return oc.resume(); });
   } else if (name === "legend-charge") {
     // windup bellow; the run building to its speed, rumbling; the braking arc's skid; the trot home
     const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
