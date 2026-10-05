@@ -412,14 +412,17 @@ async function main() {
     const id = await page.evaluate(() => {
       const g = window.witch.game, w = g.witch;
       let best = null, bd = Infinity;
-      for (const c of g.creatures) { if (c.level !== 0) continue; const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c; } } // a baby
+      // The youngest nearest: a baby, or a young one now that areas start without babies (wave-1 youth).
+      const low = Math.min(...g.creatures.filter(c => !c.gone && !c.boss && !c.leashed).map(c => c.level));
+      for (const c of g.creatures) { if (c.level !== low || c.boss || c.gone || c.leashed) continue; const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c; } }
       // (every area has an adult now, onto her in seconds: send the grown-ups round it away, so she can invite it)
-      for (const c of g.creatures) if (c.level > 0 && !c.boss && Math.hypot(c.x - best.x, c.z - best.z) < 150) c.gone = true;
+      for (const c of g.creatures) if (c !== best && c.level > 0 && !c.boss && Math.hypot(c.x - best.x, c.z - best.z) < 150) c.gone = true;
       g.byArea = null;
       // 5 m west of it, facing it (with no cursor, 1 throws the way she faces).
       g.witch = { ...w, x: best.x - 5, z: best.z, vx: 0, vz: 0, facing: 1, seated: false, mode: "ground", lift: 0 };
       g.camera = { ...g.camera, tx: best.x - 5, tz: best.z };
       Object.assign(best, { rest: 99, tx: best.x, tz: best.z });
+      g.witches[0].health.hp = 1e6; // (a young one may swipe at her while she invites it)
       return best.id;
     });
     await sleep(800);
@@ -429,7 +432,8 @@ async function main() {
     await page.keyboard.down("Digit1");
     await page.waitForFunction(t => window.witch.game.clock.time >= t, t0 + 0.5, { timeout: 400000, polling: 50 });
     await shot(page, "70-leash-talk.png");
-    await page.waitForFunction(i => { const g = window.witch.game; g.witch = { ...g.witch, facing: 1 }; return g.creatures[i].leashed; }, id, { timeout: 400000, polling: 100 });
+    // (#87: a full meter makes a wild one happy, and it would wander off to dance; a second fill leashes it: it's held in front of her.)
+    await page.waitForFunction(i => { const g = window.witch.game, c = g.creatures[i]; g.witch = { ...g.witch, facing: 1 }; Object.assign(c, { x: g.witch.x + 5, z: g.witch.z, tx: g.witch.x + 5, tz: g.witch.z, anchorX: g.witch.x + 5, anchorZ: g.witch.z, dancing: false }); return c.leashed; }, id, { timeout: 400000, polling: 100 });
     await page.keyboard.up("Digit1");
     check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "her 💌s at a creature fill its meter and invite it onto her sigil stack");
     // One press a frame: wait for each invite to land before the next (the headless renderer is slow).

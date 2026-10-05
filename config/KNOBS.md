@@ -277,12 +277,11 @@ Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bus
 
 ## `leyLines`
 
-depart (Ed, 2026-10-05: "The start of the first leyline should go from the front of the treehouse"; "the treehouse should be 5m due north of the dance floor ... The ley line leads from it south across the dancefloor and then towards the first speaker"): until the first stone is reached the line starts at the treehouse's front and runs due south straight across the dancefloor and through its ring of speakers, on past metres beyond the ring (avoid metres outside it), then curves smoothly to the first objective's soundsystem, that stretch kept outside the ring. The ley lines (Ed, 2026-10-04; 2026-10-05: "you just follow them from objective to objective"): a glowing line from the last runestone reached to the next objective, the next area in the order the waves wake them; links of them (1: just to the next; more: a short chain on to the ones after, each fade times as bright as the one before). brightness: how bright, a share of their first look (Ed, 2026-10-05: "about 30% as bright", 0.3), the glow through the crowns too. Each fades from the colour of the area it starts in to that of the area it ends in (the colour partified areas and soundsystems use). advance: "first" moves it on when the next area's quest is done or its wave arrives, whichever comes first; "wave" only when its wave arrives. The old line drains into the stone reached and the new one draws out from it. Each wanders along the low ground between its stones, straying up to valley of its length (80 m at most) to follow the hills' valleys, and a shimmer flows along it toward the next stone at flow[0] m/s, flow[1] m apart. It stays on the ground in both modes (Ed): width metres across on the ground and over the treetops (wider there, with a faint glow through the crowns), height metres over the ground in each. ?ley=0 turns them off.
+depart (Ed, 2026-10-05: "The start of the first leyline should go from the front of the treehouse"; "the treehouse should be 5m due north of the dance floor ... The ley line leads from it south across the dancefloor and then towards the first speaker"): until the first stone is reached the line starts at the treehouse's front and runs due south straight across the dancefloor and through its ring of speakers, on past metres beyond the ring (avoid metres outside it), then curves smoothly to the first objective's soundsystem, that stretch kept outside the ring. The ley lines (Ed, 2026-10-04; 2026-10-05: "you just follow them from objective to objective"): a glowing line from the last runestone reached to the next objective, the next area in the order the waves wake them, and on (Ed, 2026-10-05: "six sections long, showing the next three and the past three runestones"): ahead sections on from the last stone reached to the next ones, each fade times as bright as the one before, and behind sections back through the stones reached before it, the one just left behindBright times as bright as the next and each before it fade times that. brightness: how bright, a share of their first look (Ed, 2026-10-05: "about 30% as bright", 0.3), the glow through the crowns too. Each fades from the colour of the area it starts in to that of the area it ends in (the colour partified areas and soundsystems use). advance: "first" moves it on when the next area's quest is done or its wave arrives, whichever comes first; "wave" only when its wave arrives. The old line drains into the stone reached and the new one draws out from it. Each wanders along the low ground between its stones, straying up to valley of its length (80 m at most) to follow the hills' valleys, and a shimmer flows along it toward the next stone at flow[0] m/s, flow[1] m apart. It stays on the ground in both modes (Ed): width metres across on the ground and over the treetops (wider there, with a faint glow through the crowns), height metres over the ground in each. ?ley=0 turns them off.
 
 | knob | type | range |
 |---|---|---|
 | `leyLines.on` | boolean |  |
-| `leyLines.links` | number | 0 to … |
 | `leyLines.advance` | string |  |
 | `leyLines.fade` | number | 0 to … |
 | `leyLines.brightness` | number | 0 to … |
@@ -290,12 +289,15 @@ depart (Ed, 2026-10-05: "The start of the first leyline should go from the front
 | `leyLines.height` | array of number |  |
 | `leyLines.valley` | number | 0 to … |
 | `leyLines.flow` | array of number |  |
-| `leyLines.depart.run` | number | 0 to … |
 | `leyLines.depart.avoid` | number | 0 to … |
+| `leyLines.depart.past` | number | 0 to … |
+| `leyLines.ahead` | number | 0 to … |
+| `leyLines.behind` | number | 0 to … |
+| `leyLines.behindBright` | number | 0 to … |
 
 ## `witch`
 
-The witch is lit by the world's lights like everything else (Ed: "I can go near a coloured light source and not change colour"), but not by her own glow: never darker than lightFloor times her old unlit look, so she reads in the dark; coloured lights (soundsystems, campfires, rune stones, the dancefloor) tint her by lightTint and rim the edge of her facing them by lightRim. Over the hills (Ed, v289: "when you're moving quickly, you jerk up and down with the roll of hills") she and the camera ride a smoothed height, not the ground under her: the ground averaged over heightLookAhead seconds of her flight behind and ahead of her (so the hills' bumps smooth out and she rises early for a crest), eased by heightSmooth seconds at full speed (a damped spring; less as she slows, none standing still; 0 off), and her feet always at least heightClearance metres over the ground under her and a stride ahead.
+The witch knocked back and staggered by a blow (Ed, 2026-10-05: "add a knockback and stun on the witch; make it large on chasing/ramming creatures"; rules/knock.ts): thrown straight away from the blow, base metres for any blow (bites, swipes, shots) plus scale times the attack's own knockback (combat.json; so a maul, quake or slam sits in between), at least charge metres when it rams her (a charge, or a leap landing on her), at most max; eased off at ease a second (like a creature's knockback), straight through scenery (Ed: "don't make it stop at scenery"), nudged to the nearest clear spot at the end if she'd rest inside a trunk, rock, speaker, soundsystem or the treehouse (the blink's clearances). Staggered (no moving, blinking or 💌s, a wobble and stars) stunBase seconds plus stunScale a metre thrown past base, at most stunMax; then not staggered again for immune seconds (the blows still count), so a pack can't stun-lock her. A blink dodges it all; the blow that knocks her out throws nothing. on false, or ?knock=0, turns it off.
 
 | knob | type | range |
 |---|---|---|
@@ -305,6 +307,16 @@ The witch is lit by the world's lights like everything else (Ed: "I can go near 
 | `witch.heightSmooth` | number | 0 to … |
 | `witch.heightLookAhead` | number | 0 to … |
 | `witch.heightClearance` | number | 0 to … |
+| `witch.knock.on` | boolean |  |
+| `witch.knock.base` | number | 0 to … |
+| `witch.knock.scale` | number | 0 to … |
+| `witch.knock.charge` | number | 0 to … |
+| `witch.knock.max` | number | 0 to … |
+| `witch.knock.ease` | number | 0 to … |
+| `witch.knock.stunBase` | number | 0 to … |
+| `witch.knock.stunScale` | number | 0 to … |
+| `witch.knock.stunMax` | number | 0 to … |
+| `witch.knock.immune` | number | 0 to … |
 
 ## `sigilProjection`, `occlusion`
 
@@ -475,11 +487,11 @@ The witch's treehouse, home (Ed, 2026-10-05: "The treehouse should be 5m due nor
 
 | knob | type | range |
 |---|---|---|
-| `treehouse.distance` | number | 0 to … |
 | `treehouse.angle` | number |  |
 | `treehouse.clear` | number | 0 to … |
 | `treehouse.lightReach` | number | 0 to … |
 | `treehouse.lightStrength` | number | 0 to … |
+| `treehouse.gap` | number | 0 to … |
 
 ## `home`
 
@@ -490,12 +502,14 @@ Home's area (Ed, 2026-10-05: "Home area should be big enough that the whole circ
 | `home.margin` | number | 0 to … |
 | `home.gap` | number | 0 to … |
 
-## `looks`
+## `rig`, `looks`
 
-The creature states' looks (Ed, issue #87; render/looks.ts). enragedTint (Ed, 2026-10-05: "Enraged creatures should have a red tint so that they're easy to tell apart from the other states"): an enraged creature's whole sprite goes toward colour by amount (0 none, 1 all), by each pixel's lightness so its shading and shape still read; its angry brows and red eyes stay. No other state is tinted. anger (Ed, "or a 💢"): a pixel 💢 beside an enraged creature's head on the side it faces, popping on a pulse, size times its level's bubble size (bubbles.levelScale). Tint and 💢 each on its own (amount 0 or on false turns one off); both for now (Ed: "the red tint can be less strong": 0.38, with a floor so it never goes near-black). The angry brows are a stopgap for an expression the creature generator will draw (render/looks.ts expression()). partyGlow (Ed, 2026-10-05: "party animals could sparkle or glow a little"): every happy and leashed animal has sparkles twinkling pixels round it, each lit for a moment about rate times a second, size times three game pixels, at strength brightness (additive); leashed ones keep their collar on top.
+The live rig (Ed, 2026-10-05): on by default, ?rig=0 turns it off. Creatures keep their baked frames in the treetops, and on the ground when drawn smaller than minPx art pixels, except the levels in alwaysLevels: legends are always rigged.
 
 | knob | type | range |
 |---|---|---|
+| `rig.minPx` | number | 0 to … |
+| `rig.alwaysLevels` | array of string |  |
 | `looks.enragedTint.colour` | string |  |
 | `looks.enragedTint.amount` | number | 0 to … |
 | `looks.anger.on` | boolean |  |
@@ -726,6 +740,7 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `sfx.ouch.volume` | number | 0 to … |
 | `sfx.ouch.duck` | number | 0 to … |
 | `sfx.ouch.duckTime` | number | 0 to … |
+| `sfx.ouch.knockdown` | number | 0 to … |
 | `sfx.knock.volume` | number | 0 to … |
 | `sfx.knock.whoosh` | number | 0 to … |
 | `sfx.knock.twinkle` | number | 0 to … |
@@ -746,7 +761,6 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `sfx.meadow.bees` | number | 0 to … |
 | `sfx.meadow.birds` | number | 0 to … |
 | `sfx.meadow.birdEvery` | number | 0 to … |
-| `sfx.meadow.radius` | number | 0 to … |
 | `sfx.meadow.fade` | number | 0 to … |
 | `sfx.whale.volume` | number | 0 to … |
 | `sfx.whale.speed` | number | 0 to … |
