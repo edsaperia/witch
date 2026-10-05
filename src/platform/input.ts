@@ -1,15 +1,16 @@
 // Gathers the player's input from keyboard, gamepad and touch into one set of controls per frame.
-// The bindings are all in KEYS and PAD below (Ed, 2026-10-04: MOBA style, movement on the arrow
-// keys and actions on 1 2 3 4 Q W E R). Touch: the joystick and buttons in ui/touch.ts write into
+// The bindings are all in KEYS and PAD below (Ed, 2026-10-05: WASD and the mouse; right click
+// dodges, Q goes up or down, E puts down a sigil or cycles them; the arrow keys move too). Touch: the joystick and buttons in ui/touch.ts write into
 // `touch`. The 💌 (issue #87) is aimed twin-stick: the cursor (a click fires) or the right stick (a
 // trigger fires); 1 fires toward the cursor; on touch, its button fires the way she's going.
 import type { Controls } from "../rules/game";
 
 /** Keyboard bindings: each action and the keys (KeyboardEvent.code) that do it. */
 export const KEYS = {
-  left: ["ArrowLeft"], right: ["ArrowRight"], up: ["ArrowUp"], down: ["ArrowDown"],
-  rise: ["Space"],
-  spell: ["KeyQ"], dash: ["KeyW"], sigil: ["KeyE"],
+  left: ["KeyA", "ArrowLeft"], right: ["KeyD", "ArrowRight"], up: ["KeyW", "ArrowUp"], down: ["KeyS", "ArrowDown"],
+  rise: ["KeyQ"],
+  // The dash is the right mouse button; Space does it too, for a trackpad.
+  spell: ["KeyR"], dash: ["Space"], sigil: ["KeyE"],
   // Auto-talk on or off (Ed's playtest, 2026-10-04); with it off, she talks while Talk is held.
   autoTalk: ["KeyT"], talk: ["ShiftLeft", "ShiftRight"],
   invite: ["Digit1"],
@@ -22,9 +23,9 @@ export const KEYS = {
 
 /** The action bar's eight slots, in order, and what each holds (null: empty, for later spells,
  *  items and totems). */
-export const ACTION_BAR: { key: string; code: string; action: "spell" | "dash" | "sigil" | "autoTalk" | "invite" | null }[] = [
+export const ACTION_BAR: { key: string; code: string; action: "spell" | "dash" | "sigil" | "rise" | "autoTalk" | "invite" | null }[] = [
   { key: "1", code: "Digit1", action: "invite" }, { key: "2", code: "Digit2", action: null }, { key: "3", code: "Digit3", action: null }, { key: "4", code: "Digit4", action: null },
-  { key: "Q", code: "KeyQ", action: "spell" }, { key: "W", code: "KeyW", action: "dash" }, { key: "E", code: "KeyE", action: "sigil" }, { key: "R", code: "KeyR", action: null },
+  { key: "Q", code: "KeyQ", action: "rise" }, { key: "E", code: "KeyE", action: "sigil" }, { key: "R", code: "KeyR", action: "spell" }, { key: "RMB", code: "Space", action: "dash" },
 ];
 
 /** Gamepad bindings (standard mapping button numbers): left stick or d-pad moves. */
@@ -47,6 +48,7 @@ export class Input {
   private pointer: { x: number; y: number } | null = null;
   private mouseDown = false;
   private mouseClicked = false;
+  private rightClicked = false;
 
   constructor(target: Window = window) {
     target.addEventListener("keydown", e => {
@@ -66,6 +68,16 @@ export class Input {
       this.mouseDown = true; this.mouseClicked = true;
     });
     target.addEventListener("pointerup", e => { if (e.pointerType === "mouse" && e.button === 0) this.mouseDown = false; });
+    // The right button dodges (the dash), over the game only, without its menu. A mousedown, not a
+    // pointerdown, so it still counts while the left button is held (a chorded press fires no pointerdown).
+    const onCanvas = (e: Event) => (e.target as HTMLElement | null)?.tagName === "CANVAS";
+    target.addEventListener("mousedown", e => {
+      if (e.button !== 2 || !onCanvas(e)) return;
+      e.preventDefault();
+      if (this.onAny?.()) return;
+      this.rightClicked = true;
+    });
+    target.addEventListener("contextmenu", e => { if (onCanvas(e)) e.preventDefault(); });
   }
 
   private isGameKey(code: string): boolean { return GAME_KEYS.has(code); }
@@ -73,6 +85,7 @@ export class Input {
   /** Forget presses not yet read (the press that started the game is not also a move). */
   clearPresses(): void {
     this.pressed.clear();
+    this.rightClicked = false;
     const t = this.touch;
     t.toggle = false; t.zoom = 0; t.debug = false;
   }
@@ -87,7 +100,8 @@ export class Input {
     let toggleMode = p(KEYS.rise);
     let zoom = (p(KEYS.zoomOut) ? 1 : 0) - (p(KEYS.zoomIn) ? 1 : 0);
     let debug = p(KEYS.debug);
-    let sigil = p(KEYS.sigil), spell = p(KEYS.spell), dash = p(KEYS.dash);
+    let sigil = p(KEYS.sigil), spell = p(KEYS.spell), dash = p(KEYS.dash) || this.rightClicked;
+    this.rightClicked = false;
     const inviteNearest = p(KEYS.inviteNearest), feedNearest = p(KEYS.feedNearest), happyNearest = p(KEYS.happyNearest);
     // The 💌: fire with the mouse button or 1 (held, or a click since the last read); aim at the cursor.
     let fire = this.mouseDown || this.mouseClicked || k(KEYS.invite) > 0 || p(KEYS.invite);
