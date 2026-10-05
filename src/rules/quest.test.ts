@@ -3,6 +3,7 @@ import { spawnCreatures } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { AREA_TYPES, generateMap } from "./map";
 import { cellKey } from "./party";
+import { leyChain } from "./leylines";
 import { areaDone, setupQuestDemo } from "./quest";
 import { TUNING } from "./tuning";
 
@@ -38,7 +39,10 @@ describe("the first quest (Ed, 2026-10-04)", () => {
     expect(L.legendState).toBe("happy");
     expect(L.quest!.done).toBeDefined();
     expect(g.friendly.has(key)).toBe(true);
-    expect(areaDone(g, key)).toBe(true); // (the ley lines move on)
+    expect(areaDone(g, key)).toBe(true);
+    // The ley line moves on (Ed, 2026-10-05): it now starts from this area's stone.
+    expect(g.party.leyDone?.has(key)).toBe(true);
+    expect(cellKey(leyChain(g.party, g.map, 3)[0].cell)).toBe(key);
     expect(gift.leashed).toBe(false);
     expect(g.leash.stack).not.toContain(gift.id);
     expect(g.leash.placed.map(p => p.id)).not.toContain(gift.id);
