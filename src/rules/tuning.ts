@@ -69,6 +69,10 @@ export interface Tuning {
     snore: { volume: number; range: number }; nightmare: { volume: number }; windup: { volume: number; length: number };
     lost: { volume: number };
     ouch: { volume: number; duck: number; duckTime: number };
+    knock: { volume: number; whoosh: number; twinkle: number; twinkleEvery: number };
+    charge: { volume: number; bellow: number; hooves: number; rumble: number; skid: number; trot: number; range: number };
+    relic: { volume: number; spot: number; spotTreetop: number; reach: number };
+    meadow: { volume: number; breeze: number; bees: number; birds: number; birdEvery: number; radius: number; fade: number };
     whale: { volume: number; speed: number; depth: number; reverb: number; sleepEvery: number };
   };
   music: { on: boolean; volume: number; nearDist: number; farDist: number; floor: number; muffle: number; clear: number; distort: number; src: string };
