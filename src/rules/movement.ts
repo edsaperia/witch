@@ -200,7 +200,7 @@ export function stepCharge(c: Creature, mv: Move, px: number, pz: number, reach:
       const want = Math.atan2(tz, tx), da = ((want - h + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
       h += Math.max(-turn * dt, Math.min(turn * dt, da));
       vx = Math.cos(h) * nv; vz = Math.sin(h) * nv; v = nv;
-      if (v <= Math.max(run, 1)) { c.vx = vx; c.vz = vz; c.charge = undefined; return "charging"; } // (its run takes over, with its velocity)
+      if (v <= Math.max(run, 1)) { c.vx = vx; c.vz = vz; c.x += vx * dt; c.z += vz * dt; c.charge = undefined; return "charging"; } // (its run takes over, with its velocity)
     }
     c.vx = vx; c.vz = vz; c.x += vx * dt; c.z += vz * dt;
     c.moving = true; c.walk += dt * (4 + Math.min(v, 30) * 0.3);

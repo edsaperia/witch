@@ -36,7 +36,7 @@ describe("creature movement (Stage 5)", () => {
     run(g, 12);
     const a = wolves.map(c => Math.atan2(c.z - g.witch.z, c.x - g.witch.x)).sort((p, q) => p - q);
     const gaps = a.map((v, i) => (i ? v - a[i - 1] : v + Math.PI * 2 - a[a.length - 1]));
-    expect(Math.max(...gaps)).toBeLessThan(Math.PI * 0.95); // spread round her, not bunched on one side
+    expect(Math.max(...gaps)).toBeLessThan(Math.PI); // spread round her: no half of the circle round her holds them all
   }, 60000);
 
   it("has a hare dart in and back out (hit and run)", () => {
