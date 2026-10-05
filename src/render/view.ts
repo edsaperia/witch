@@ -25,7 +25,7 @@ import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
 import { InviteView } from "./invites";
-import { dances, enragedTint, lookOf, StateMarks } from "./looks";
+import { dances, ENRAGED_TINT, lookOf, StateMarks } from "./looks";
 import { ActionBar } from "./actionbar";
 import { BuffHud } from "./buffhud";
 import { Dancefloor } from "./dancefloor";
@@ -947,7 +947,7 @@ export class View {
     }
     for (const [s, b] of this.creatureBatches) if (!per.has(s)) b.set([]);
     for (const [s, list] of per) {
-      const b = this.batchFor(this.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, this.mpp, { solid: true, find: !s.startsWith("party-") && !s.startsWith("happy-") && !s.startsWith("woken-") && !s.startsWith("sleep-"), tint: s.startsWith("woken-") ? enragedTint(g.tuning) : undefined }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
+      const b = this.batchFor(this.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, this.mpp, { solid: true, find: !s.startsWith("party-") && !s.startsWith("happy-") && !s.startsWith("woken-") && !s.startsWith("sleep-"), tint: s.startsWith("woken-") ? ENRAGED_TINT : undefined }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
       b?.set(list);
     }
     this.stats.creatures = n;

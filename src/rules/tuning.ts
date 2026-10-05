@@ -156,7 +156,7 @@ export interface Tuning {
   treeCap: { from: number; keep: number };
   treetop: { boost: number; boostTime: number; boostAngle: number; turnRate: number; turnRateSlow: number; sharpTurnSpeed: number; brakeAt: number; glideTime: number; sharpTurnBleed: number; cameraPull: number };
   /** The creature states' looks (render/looks.ts): enraged ones tinted toward colour by amount (0 none, 1 all). */
-  looks?: { enragedTint: { colour: string; amount: number } };
+  looks?: { enragedTint: { colour: string; amount: number }; /** the 💢 beside an enraged creature's head: on, and its size (times its level's bubble size) */ anger: { on: boolean; size: number } };
   bubbles: { emojiPixels: number; scale: number; /** a creature's bubble size by level (baby, young, adult, legend) */ levelScale: number[] };
   treehouse: { distance: number; angle: number; clear: number; lightReach: number; lightStrength: number };
   decor: { spacing: number; ruins: number; rocks: number; freak: number; minGap: number; clearing: number; pathGap: number; /** A decoration's footprint radius (metres): kept clear of the gameplay (map.reserved). */ footprint: number };

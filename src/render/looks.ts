@@ -11,6 +11,7 @@ import { LEGEND } from "../rules/creatures";
 import { cellKey } from "../rules/party";
 import { placed } from "./height";
 import type { Tuning } from "../rules/tuning";
+import { bubbleScale } from "./bubbles";
 
 export type Look = "wild" | "happy" | "leashed" | "enraged" | "legend";
 
@@ -31,10 +32,12 @@ export function lookOf(c: Creature): Look {
   return isHappy(c) ? "happy" : "wild";
 }
 
-/** Enraged creatures' red tint (Ed, 2026-10-05: "a red tint so that they're easy to tell apart"): tuning looks.enragedTint. */
-export function enragedTint(t: Tuning): [number, number, number, number] {
+/** Enraged creatures' red tint (Ed, 2026-10-05: "a red tint so that they're easy to tell apart"):
+ *  one uniform shared by every enraged batch, set from tuning looks.enragedTint each frame (amount 0: off). */
+export const ENRAGED_TINT = { value: new THREE.Vector4(1, 0.16, 0.16, 0) };
+function setTint(t: Tuning): void {
   const T = t.looks?.enragedTint ?? { colour: "#ff2a2a", amount: 0.55 }, h = T.colour.replace("#", "");
-  return [parseInt(h.slice(0, 2), 16) / 255, parseInt(h.slice(2, 4), 16) / 255, parseInt(h.slice(4, 6), 16) / 255, T.amount];
+  ENRAGED_TINT.value.set(parseInt(h.slice(0, 2), 16) / 255, parseInt(h.slice(2, 4), 16) / 255, parseInt(h.slice(4, 6), 16) / 255, T.amount);
 }
 
 export const isDazed = (c: Creature, time: number) => ((c as WithState).dazedUntil ?? -Infinity) > time;
@@ -71,9 +74,21 @@ const STAR = (): THREE.CanvasTexture => pixels(5, 5, x => {
   x.fillStyle = "#ffffff"; x.fillRect(2, 2, 1, 1);
 });
 
+/** The anger mark 💢, a pixel emoji (hard-edged). */
+function angerMark(n: number): THREE.CanvasTexture {
+  return pixels(n, n, x => {
+    x.font = `${n - 1}px sans-serif`; x.textAlign = "center"; x.textBaseline = "middle";
+    x.fillText("💢", n / 2, n / 2 + 0.5);
+    const d = x.getImageData(0, 0, n, n);
+    for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] < 110 ? 0 : 255;
+    x.putImageData(d, 0, 0);
+  });
+}
+
 export class StateMarks {
   private brows: THREE.SpriteMaterial;
   private star: THREE.SpriteMaterial;
+  private anger: THREE.SpriteMaterial;
   private pool: THREE.Sprite[] = [];
   private used = 0;
   private v = new THREE.Vector3();
@@ -81,7 +96,7 @@ export class StateMarks {
 
   constructor(scene: THREE.Scene, private mpp: number) {
     const mat = (map: THREE.Texture) => new THREE.SpriteMaterial({ map, transparent: true, depthTest: false, depthWrite: false });
-    this.brows = mat(BROWS()); this.star = mat(STAR());
+    this.brows = mat(BROWS()); this.star = mat(STAR()); this.anger = mat(angerMark(11));
     this.group.renderOrder = 12;
     scene.add(this.group);
   }
@@ -98,14 +113,21 @@ export class StateMarks {
   /** Brows over the enraged, stars round the dazed: those within `R` metres of her. `tops`: each creature's drawn height. */
   update(g: Game, time: number, tops: Map<number, number>, R = 70): void {
     this.used = 0;
+    setTint(g.tuning);
+    const A = g.tuning.looks?.anger ?? { on: true, size: 1 };
     const w = g.witch, px = 2; // (each mark pixel two game pixels: readable at a glance)
-    if (w.lift < 0.5) for (const c of g.creatures) {
+    for (const c of g.creatures) {
       if (c.gone || Math.abs(c.x - w.x) > R || Math.abs(c.z - w.z) > R) continue;
       const top = tops.get(c.id);
       if (top === undefined) continue;
       if (lookOf(c) === "enraged" && !c.boss) {
         const bob = Math.abs(Math.sin(time * 6 + c.id)) * 0.08;
         this.put(this.brows, c.x, top + 0.35 + bob, c.z, 13 * px, 6 * px);
+        // 💢 (Ed, 2026-10-05: "or a 💢"): beside its head on the side it faces, popping on a pulse, sized by level like its bubbles.
+        if (A.on) {
+          const pulse = (time * 1.6 + c.id * 0.31) % 1, pop = pulse < 0.15 ? 1 + 0.5 * (1 - pulse / 0.15) : 1, k = bubbleScale(g.tuning, c.level) * A.size * pop;
+          this.put(this.anger, c.x + c.facing * (0.35 + top * 0.25), top + 0.1, c.z, 11 * px * k, 11 * px * k);
+        }
       }
       if (isDazed(c, time)) {
         for (let i = 0; i < 3; i++) {
