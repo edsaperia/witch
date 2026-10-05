@@ -153,7 +153,7 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
         sounds.set(key, { key, x: at.x, z: at.z, hp: C.soundsystemHealth, radius: C.soundsystemRadius, wave: party.wave, at: time });
         for (const f of by.get(key) ?? []) if (!f.gone && (!o.areaLegends || f.level < 3)) { f.siege = key; live.push(f); }
         // What it grew while wild (rules/growth.ts): waves 1 to this one, as many as the game grows
-        // (its count scale: swarms more, loners fewer) at the game's own levels, at its strength.
+        // (its count scale: 1 / its strength) at the game's own levels, at its strength.
         const G = t.population.growth, site = map.siteOf(a.cell[0], a.cell[1]), species = AREA_TYPES[map.typeOf(a.cell[0], a.cell[1])].creature;
         const m = strengthOf(species), k = countScale(species);
         if (G.on) for (let w = 1; w <= party.wave; w++) for (let n = 0; n < grownAt(w, G.perWave, k); n++) {

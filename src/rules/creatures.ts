@@ -202,7 +202,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
     const home = cx === hx && cy === hy;
     const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), cell: [number, number] = [cx, cy], make = (level: Level) => out.push(makeCreature(map, cell, level, out.length, r));
     if (!home) {
-      // Swarms come in larger numbers, loners fewer (Ed, 2026-10-05): 1 / their strength times as many.
+      // Weaker species come in larger numbers, stronger fewer (Ed, 2026-10-05): 1 / their strength times as many.
       const k = countScale(AREA_TYPES[map.typeOf(cx, cy)].creature);
       for (let i = 0; i < startCount(pop.babies, k); i++) make(0);
       for (let i = 0; i < startCount(pop.young, k); i++) make(1);

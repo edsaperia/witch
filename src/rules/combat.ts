@@ -58,9 +58,9 @@ export interface CombatData {
   /** What each trait does to a blow: its damage times counters[trait][delivery]; and knockback
    *  (its distance times this), stun (seconds a knockback stuns it), slow (a slow's time times this). */
   counters: Record<Trait, Partial<Record<Delivery | "knockback" | "stun" | "slow", number>>>;
-  /** Species strength (Ed, 2026-10-05): each class's multiplier on health and damage, and each
-   *  species' class (normal when not listed). */
-  strength?: { classes: Record<string, number>; species: Record<string, string> };
+  /** Species strength (Ed, 2026-10-05: "just a number that goes up and down"): each species'
+   *  multiplier on health and damage, 1 when not listed. */
+  strength?: { species: Record<string, number> };
 }
 
 export type Trait = "flier" | "armoured" | "swarm" | "heavy" | "nimble" | "burrower";
@@ -143,11 +143,11 @@ export interface CombatState {
 export const newCombat = (): CombatState => ({ shots: [], nextShot: 0, sounds: new Map(), ruined: new Set(), events: [], busy: new Set(), beams: [] });
 
 /** The attack a creature has: none for babies; by its level and whether its kind shoots. */
-/** A species' strength (Ed, 2026-10-05): the multiplier on its health and damage, by its class
- *  (swarm about a third, normal 1, loner 2); legends are never scaled. */
+/** A species' strength (Ed, 2026-10-05): the multiplier on its health and damage, 1 normal,
+ *  below 1 weaker (a swarm), above 1 stronger (a loner); legends are never scaled. */
 export function strengthOf(species: string, level: Level = 0, data: CombatData = COMBAT): number {
-  if (level === LEGEND || !data.strength) return 1;
-  return data.strength.classes[data.strength.species[species] ?? "normal"] ?? 1;
+  if (level === LEGEND) return 1;
+  return data.strength?.species[species] ?? 1;
 }
 
 export function attackOf(species: string, level: Level, data: CombatData = COMBAT): { name: string; attack: Attack; damage: number } | null {
