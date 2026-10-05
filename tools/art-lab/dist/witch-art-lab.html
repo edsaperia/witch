@@ -3181,6 +3181,7 @@ const heart = (s, t) => { const x = s * 1.2, y = -t * 1.2 + .25; return Math.pow
 function gearUp(m) {
   const g = GEAR, A = m.anchors; if (!g) return;
   faceUp(m, g.face, g.faceStyle); // its expression, part of its face (genome/expressions.js)
+  const was = m.part; m.part = "head"; // the collar, hat and glasses ride on the head (the live rig's head piece: genome/parts.js)
   const head = A.head, hr = head ? Math.max(...head.r) : .2;
   // the collar: a glowing ring round the neck (or the body's front)
   if (g.collar && (A.neck || head)) {
@@ -3216,6 +3217,7 @@ function gearUp(m) {
       m.seg(out(e1), out(e2), s * .18, s * .18, M.FRAME, { group: 62, extra: true });
     }
   }
+  m.part = was;
   // fancy shoes on each foot (or, for the snake, one tiny shoe on its tail tip)
   if (g.shoes) for (const f of A.feet) {
     const plat = g.shoes === "platform", r = f.r, c = v3.add(f.c, [r * .25, r * (plat ? .35 : .15), 0]);
@@ -7120,6 +7122,11 @@ const BALLOONS = {
   "balloon-foil-heart": { desc: "a foil heart balloon on a string weighted to the ground", bob: [.09, 3.1], anchors: { tie: [0, .06, 0] }, build(m) { m.ell([0, .04, 0], [.06, .05, .06], M.BODY3, { group: 1 }); m.chain([[0, .06, 0, .006], [-.04, .6, 0, .006], [0, 1.05, 0, .006]], M.CLOTH, { group: 2 }); m.flat([0, 1.3, 0], [1, 0, .2], [0, 1, 0], .25, .25, (s, t) => { const x = s * 1.15, y = t * 1.15 + .2, a = x * x + y * y - 1; return a * a * a - x * x * y * y * y > 0 ? null : Math.hypot(s + .3, t - .25) < .12 ? SHINE : BALLOON[1]; }, { group: 3, bend: .5 }); } },
   "balloon-deflated": { desc: "a deflated balloon, wrinkled on the ground, its string trailing", build(m) { m.ell([0, .02, 0], [.11, .025, .08], BALLOON[0], { group: 1, rough: .012, paint: pShine([0, 0, 0], [-.3, .9, .3], .97) }); m.chain([[.1, .01, 0, .005], [.25, .01, .06, .005], [.38, .01, -.03, .005]], M.CLOTH, { group: 2 }); } },
   "balloon-half": { desc: "a half-deflated balloon sagging on the ground at the end of its string", bob: [.02, 4.5], build(m) { pBalloon(m, [0, .12, 0], .13, BALLOON[5], 1, { dir: [.3, 1, .2], flat: .8 }); m.chain([[0, .0, .05, .005], [.2, .01, .1, .005], [.35, .01, 0, .005]], M.CLOTH, { group: 2 }); } },
+  // tall ones (Ed, round 11: "taller balloon variants, with single balloons as well as bunches"): long strings, the balloons up high
+  "balloon-tall": { desc: "a single balloon high on a long string, tied to a stake", bob: [.14, 3.9], anchors: { tie: [0, .3, 0] }, build(m) { pStake(m, [0, .3, 0], 1); pBunch(m, [0, .3, 0], 1, 2, { lift: 2.3, spread: 0, from: 6 }); } },
+  "balloon-tall-weight": { desc: "a single balloon very high on its string, held down by a little weight", bob: [.16, 4.3], anchors: { tie: [0, .06, 0] }, build(m) { m.ell([0, .04, 0], [.06, .05, .06], M.BODY3, { group: 1 }); pBunch(m, [0, .06, 0], 1, 2, { lift: 2.7, spread: 0, from: 3, r: .15 }); } },
+  "balloons-tall-three": { desc: "three balloons high on long strings from one stake", bob: [.13, 4.1], anchors: { tie: [0, .3, 0] }, build(m) { pStake(m, [0, .3, 0], 1); pBunch(m, [0, .3, 0], 3, 2, { lift: 2.1, spread: .3, from: 1, seed: 6 }); } },
+  "balloons-tall-big": { desc: "a big bunch of nine balloons high on long strings from one stake", bob: [.15, 4.6], anchors: { tie: [0, .35, 0] }, build(m) { pStake(m, [0, .35, 0], 1); pBunch(m, [0, .35, 0], 9, 2, { lift: 2.0, spread: .55, from: 4, seed: 7 }); } },
   "balloon-caught": { desc: "an escaped balloon caught high in a tree, its string hanging down; hangs from its `tie` (top) anchor in a crown", bob: [.05, 2.6], hang: true, anchors: { tie: [0, 1.0, 0], hang: [0, 1.0, 0] }, build(m) { pBalloon(m, [0, 1.12, 0], .13, BALLOON[6], 1); const pts = []; for (let k = 0; k <= 8; k++) { const t = k / 8; pts.push([Math.sin(t * 7) * .04, .97 - t * .97, 0, .005]); } m.chain(pts, M.CLOTH, { group: 2 }); } },
 };
 
@@ -7163,11 +7170,58 @@ const HOME = {
   "branch-arch": { desc: "an arch of bent branches over the path, fairy lights wound through it", glow: true, light: "warm", bob: [.015, 3.4], build(m) { const pts = []; for (let i = 0; i <= 10; i++) { const a = Math.PI * (1 - i / 10); pts.push([Math.cos(a) * .95, Math.sin(a) * 1.8, 0]); } m.chain(pts.map((p, i) => [...p, .06 - Math.abs(i - 5) * .006]), M.TRUNK, { group: 1, rough: .008 }); for (let i = 0; i < 6; i++) { const a = Math.PI * (.1 + i * .16); m.ell([Math.cos(a) * .95, Math.sin(a) * 1.8, .04], [.12, .07, .1], M.LEAF, { group: 2 + (i % 2), rough: .02 }); } pString(m, pts.map((p, i) => v3.add(p, [0, Math.sin(i * 1.9) * .05, .07])), 12, 5); } },
 };
 
+// ---------------- picnics (Ed, round 11: "there should be picnic blankets, and also picnic tables with chairs") ----------------
+// Made by two small generators, so they vary: a blanket by its pattern, colours and what's on it; a table by its length, what's
+// round it (chairs or benches) and whether it has a cloth.
+// a cloth pattern's paint at a point: gingham (two stripe sets, the crossings deeper), stripes, tartan (two scales), or a border
+const pCloth = (kind, a, b, k = 7) => p => { const u = Math.floor((p[0] + 5) * k), v = Math.floor((p[2] + 5) * k);
+  if (kind === "gingham") return u % 2 && v % 2 ? b : u % 2 || v % 2 ? M.BELLY : a;
+  if (kind === "stripes") return u % 2 ? b : a;
+  if (kind === "tartan") { const U = Math.floor((p[0] + 5) * k * .5), V = Math.floor((p[2] + 5) * k * .5); return (U + V) % 2 ? (u % 3 === 0 || v % 3 === 0 ? M.BELLY : b) : a; }
+  return undefined; };
+const pBasket = (m, c, g) => { m.box(v3.add(c, [0, .08, 0]), [.13, .08, .09], M.STRAW, { round: .02, group: g, paint: p => Math.floor((p[0] + p[1]) * 40) % 2 ? M.WOOD : undefined }); m.chain([[c[0] - .1, c[1] + .16, c[2], .01], [c[0], c[1] + .3, c[2], .01], [c[0] + .1, c[1] + .16, c[2], .01]], M.WOOD, { group: g + 1 }); };
+const pPlate = (m, c, g) => ctCyl(m, c, v3.add(c, [0, .012, 0]), .07, M.BELLY, g, { end: M.BELLY });
+const pCake = (m, c, g) => { ctCyl(m, c, v3.add(c, [0, .09, 0]), .09, M.BELLY, g, { end: M.BODY }); pCandle(m, v3.add(c, [0, .09, 0]), .05, .01, g + 2); };
+const pFruit = (m, c, g) => { [[0, 0, M.ACCENT], [.05, .03, M.HAT2], [-.04, .04, M.POM]].forEach(([dx, dz, mat], i) => m.ell(v3.add(c, [dx, .03, dz]), [.03, .03, .03], mat, { group: g + i })); };
+// a blanket: { pattern, a, b (its two colours), w, d (half sizes, m), on: what's on it, as [thing, x, z] }
+function pBlanket(m, { pattern, a, b, w = .6, d = .45, on = [] }) {
+  m.box([0, .012, 0], [w, .012, d], a, { round: .006, group: 1, paint: pCloth(pattern, a, b) });
+  on.forEach(([what, x, z], i) => { const c = [x, .024, z], g = 10 + i * 4; if (what === "basket") pBasket(m, c, g); else if (what === "cup") pCup(m, c, g); else if (what === "plate") pPlate(m, c, g); else if (what === "cake") pCake(m, c, g); else if (what === "fruit") pFruit(m, c, g); else if (what === "bottle") pBottle(m, c, g); });
+}
+// a picnic table: { len (half length, m), seats: "benches" or a number of chairs, cloth: a pattern and its colours or null, on: what's on it }
+function pPicnicTable(m, { len = .7, seats = 4, cloth = null, on = [] }) {
+  const top = .72, wd = .38;
+  m.box([0, top, 0], [len, .03, wd], M.WOOD, { round: .01, group: 1, paint: ctPlank(9, .15) });
+  if (cloth) m.box([0, top + .035, 0], [len * .96, .006, wd * 1.1], cloth.a, { group: 2, paint: pCloth(cloth.pattern, cloth.a, cloth.b, 9) });
+  for (const x of [-len * .8, len * .8]) for (const sz of [-1, 1]) m.seg([x, top, sz * wd * .6], [x + (sz > 0 ? 0 : 0), 0, sz * wd * 1.25], .03, .03, M.WOOD, { group: 3 }); // A-frame legs
+  if (seats === "benches") for (const sz of [-1, 1]) { m.box([0, .42, sz * wd * 1.55], [len, .025, .12], M.WOOD, { round: .01, group: 4 + (sz > 0 ? 1 : 0), paint: ctPlank(9, .15) }); }
+  else for (let i = 0; i < seats; i++) { const side = i % 2 ? 1 : -1, k = Math.floor(i / 2), n = Math.ceil(seats / 2), x = n > 1 ? -len * .6 + k * (len * 1.2 / (n - 1)) : 0; pChair(m, [x, 0, side * (wd + .42)], 20 + i * 3, { yaw: side > 0 ? Math.PI / 2 : -Math.PI / 2, mat: i % 3 === 2 ? M.HAT1 : M.BELLY }); }
+  on.forEach(([what, x, z], i) => { const c = [x, top + .04, z], g = 50 + i * 4; if (what === "basket") pBasket(m, c, g); else if (what === "cup") pCup(m, c, g); else if (what === "plate") pPlate(m, c, g); else if (what === "cake") pCake(m, c, g); else if (what === "fruit") pFruit(m, c, g); else if (what === "bottle") pBottle(m, c, g); });
+}
+const PICNIC_BLANKETS = [
+  ["picnic-gingham-red", "a red gingham picnic blanket, a wicker basket and two cups on it", { pattern: "gingham", a: M.ACCENT, b: M.ACCENT, on: [["basket", -.25, -.1], ["cup", .3, .15], ["cup", .2, -.2]] }],
+  ["picnic-gingham-blue", "a blue gingham picnic blanket, spread out empty", { pattern: "gingham", a: M.HAT1, b: M.HAT1 }],
+  ["picnic-stripes", "a striped picnic blanket with a cake, its candle lit, and plates", { pattern: "stripes", a: M.POM, b: M.TOP, w: .55, on: [["cake", 0, 0], ["plate", -.3, .15], ["plate", .3, -.15]] }],
+  ["picnic-tartan", "a tartan picnic blanket with a basket, a bottle and fruit", { pattern: "tartan", a: M.HAT2, b: M.ACCENT, w: .65, d: .5, on: [["basket", .25, .1], ["bottle", -.2, -.15], ["fruit", -.3, .2]] }],
+  ["picnic-gingham-pink", "a pink gingham picnic blanket laid for tea: cups, plates and a cake", { pattern: "gingham", a: M.BODY, b: M.BODY, on: [["cake", .15, -.05], ["cup", -.3, .15], ["cup", -.2, -.2], ["plate", .35, .2]] }],
+  ["picnic-border", "a plain orange picnic blanket, a basket at one corner", { pattern: "plain", a: M.BODY2, b: M.BODY2, w: .5, d: .4, on: [["basket", .3, .2]] }],
+];
+const PICNIC_TABLES = [
+  ["picnic-table-benches", "a wooden picnic table with its benches, a basket on top", { len: .75, seats: "benches", on: [["basket", .3, 0]] }],
+  ["picnic-table-four", "a picnic table with a red gingham cloth and four chairs round it, cups and a cake", { len: .7, seats: 4, cloth: { pattern: "gingham", a: M.ACCENT, b: M.ACCENT }, on: [["cake", 0, 0], ["cup", -.4, .15], ["cup", .4, -.15]] }],
+  ["picnic-table-two", "a small picnic table with two chairs, a bottle and two cups", { len: .45, seats: 2, on: [["bottle", 0, 0], ["cup", -.2, .1], ["cup", .2, -.1]] }],
+  ["picnic-table-long", "a long picnic table with a blue gingham cloth and six chairs, laid with plates and fruit", { len: 1.1, seats: 6, cloth: { pattern: "gingham", a: M.HAT1, b: M.HAT1 }, on: [["plate", -.6, .15], ["plate", 0, -.15], ["plate", .6, .15], ["fruit", -.2, .05], ["fruit", .35, 0]] }],
+];
+const PICNIC = Object.fromEntries([
+  ...PICNIC_BLANKETS.map(([id, desc, o]) => [id, { desc, decal: !o.on?.length, ...(o.on?.some(([w]) => w === "cake") ? { glow: true, light: "warm" } : {}), build(m) { pBlanket(m, o); } }]),
+  ...PICNIC_TABLES.map(([id, desc, o]) => [id, { desc, ...(o.on?.some(([w]) => w === "cake") ? { glow: true, light: "warm" } : {}), build(m) { pPicnicTable(m, o); } }]),
+]);
+
 // ---------------- the table ----------------
-const SIZE = { litter: 1.5, balloon: 1.2, small: 1.2, furniture: 1, set: 1, home: 1 }; // litter a touch larger than life, to read at all
-const PARTY_CLASSES = ["litter", "balloon", "small", "furniture", "set", "home"];
+const SIZE = { litter: 1.5, balloon: 1.2, small: 1.2, furniture: 1, set: 1, home: 1, picnic: 1 }; // litter a touch larger than life, to read at all
+const PARTY_CLASSES = ["litter", "balloon", "small", "furniture", "set", "home", "picnic"];
 const bobOf = (id, b) => b && { amplitude: b[0], period: b[1], phase: +((id.length * .137 + id.charCodeAt(id.length - 1) * .071) % 1).toFixed(2) };
-const PARTY_OBJECTS = [...Object.entries(PARTY), ...Object.entries(BALLOONS).map(([id, d]) => [id, { cls: "balloon", ...d }]), ...Object.entries(CAMPFIRES), ...Object.entries(HOME).map(([id, d]) => [id, { cls: "home", ...d }])].map(([id, d]) => ({ id, size: SIZE[d.cls], split: null, glow: false, decal: false, light: null, frames: 1, ...d, bob: bobOf(id, d.bob) }));
+const PARTY_OBJECTS = [...Object.entries(PARTY), ...Object.entries(BALLOONS).map(([id, d]) => [id, { cls: "balloon", ...d }]), ...Object.entries(CAMPFIRES), ...Object.entries(HOME).map(([id, d]) => [id, { cls: "home", ...d }]), ...Object.entries(PICNIC).map(([id, d]) => [id, { cls: "picnic", ...d }])].map(([id, d]) => ({ id, size: SIZE[d.cls], split: null, glow: false, decal: false, light: null, frames: 1, ...d, bob: bobOf(id, d.bob) }));
 const PARTY_BY_ID = Object.fromEntries(PARTY_OBJECTS.map(d => [d.id, d]));
 // The party neons (the sigils' neon palette) a neon piece can be baked in; warm light is candle gold.
 const PARTY_LIGHT_NEONS = Object.keys(NEON);
@@ -7365,20 +7419,24 @@ function rigProject(p, h, s) {
 }
 
 // The model the builder makes for a species at a level (not drawn), and the scale it would be drawn at.
-// face: an expression (genome/expressions.js), put on its face at that scale.
-function rigCapture(id, level, st, face = null) {
+// face: an expression (genome/expressions.js), put on its face at that scale; gear: party gear
+// (collar, hat, glasses: they ride on the head piece; shoes aren't drawn, the legs being discs), or
+// { woken: true }, the enraged look's red eyes.
+function rigCapture(id, level, st, face = null, gear = null) {
   const S = SPECIES_BY_ID[id]; let got = null;
   const form = (m, o) => { got = { m, height: o.height }; return new Sprite(1, 1); };
   form.motes = false;
-  withGear(face ? { face, faceStyle: S.face } : null, () => withForm(form, () => buildCreature(S, level, 0, st, "towards")));
+  const g = face || gear ? { ...gear, shoes: null, face, faceStyle: S.face } : null;
+  withGear(g, () => withForm(form, () => buildCreature(S, level, 0, st, "towards")));
   const s = render(got.m, { height: got.height, measure: true }).s, f = got.m.atScale;
   if (f) { got.m.atScale = null; f(s); }
+  if (gear?.woken) for (const q of got.m.parts) if (q.mat === M.EYE || q.mat === M.IRIS || q.mat === M.PUPIL) q.mat = M.WOKEN; // enraged: angry glowing eyes (as critter's woken look)
   return { m: got.m, s };
 }
 // Its head piece in each expression but neutral (the head piece itself): { angry, happy, dazed }.
-function rigFaces(id, level, st, pivot, s) {
+function rigFaces(id, level, st, pivot, s, gear) {
   const out = {};
-  for (const face of EXPRESSIONS) if (face !== "neutral") out[face] = rigPiece(rigCapture(id, level, st, face).m, ["head"], pivot, s);
+  for (const face of EXPRESSIONS) if (face !== "neutral") out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s);
   return out;
 }
 // A model of only the primitives labelled with one of `labels`.
@@ -7403,10 +7461,13 @@ function rigPiece(m, labels, pivot, s) {
   if (!sub.parts.length && !sub.flats.length) return null;
   return RIG_HEADINGS.map(h => { const r = render(sub, { scale: s, yaw: h }), [px, py] = r.project(pivot); return rigCropped(r.sp, px, py); });
 }
-// A disc: a ball of a material, r pixels across its radius, lit as a sphere (legs, a serpent's body).
-function rigDisc(r, mat, s, paint) {
+// A disc: a ball of a material, r pixels across its radius, lit as a sphere (a serpent's body) or,
+// rod, as a slice of an upright limb: its normals tilted neither up nor down, so discs strung down a
+// leg shade as one smooth limb rather than a string of beads (Ed, 2026-10-05: "the legs do look segmented").
+function rigDisc(r, mat, s, paint, rod = false) {
   const m = new Model(); m.ell([0, 0, 0], [r / s, r / s, r / s], mat, { paint });
   const res = render(m, { scale: s }), [px, py] = res.project([0, 0, 0]);
+  if (rod) { const n = res.sp.n; for (let i = 0; i < n.length; i += 3) { const x = n[i], z = n[i + 2], l = Math.hypot(x, z); if (l > 1e-6) { n[i] = x / l; n[i + 1] = 0; n[i + 2] = z / l; } } }
   return rigCropped(res.sp, px, py);
 }
 
@@ -7414,22 +7475,23 @@ function rigDisc(r, mat, s, paint) {
 // pieces: { torso, head, tail: [per heading] }, faces: { angry, happy, dazed: its head piece in each }, discs: { material: [by radius in pixels] }, joints }.
 // joints are in model units: legs [{ name, fore, side, hip, knee, foot, r: [hip, knee, foot] }],
 // head { nb, H }, tail (its base) for the four-legged; spine [[x, y, z, r]...] and head for a serpent.
-function rigParts(id, level, st) {
+// gear (optional): a party animal's (art/creatures.js partyGear: collar, hat, glasses), baked on.
+function rigParts(id, level, st, gear = null) {
   const S = SPECIES_BY_ID[id], tpl = S.q ? "quadruped" : S.plan === "snake" ? "serpent" : null;
   if (!tpl) return null;
-  const { m, s } = rigCapture(id, level, st), R = m.rig, discs = {};
+  const { m, s } = rigCapture(id, level, st, null, gear), R = m.rig, discs = {};
   const radii = list => [...new Set(list.map(r => Math.max(1, Math.round(r * s))))].sort((a, b) => a - b);
-  const discSet = (mat, rs, paint) => { discs[mat] = discs[mat] || {}; for (const r of rs) if (!discs[mat][r]) discs[mat][r] = rigDisc(r, mat, s, paint); };
+  const discSet = (mat, rs, paint, rod = tpl === "quadruped") => { discs[mat] = discs[mat] || {}; for (const r of rs) if (!discs[mat][r]) discs[mat][r] = rigDisc(r, mat, s, paint, rod); };
   if (tpl === "quadruped") {
     const legR = radii(R.legs.flatMap(l => [l.r[0] * .8, l.r[1], l.r[2], (l.r[0] + l.r[1]) / 2, (l.r[1] + l.r[2]) / 2]));
     for (const l of R.legs) discSet(l.mat, legR);
     const hoof = R.legs.find(l => l.hoof); if (hoof) discSet(M.NOSE, radii(R.legs.map(l => l.fl * .9)));
     else discSet(R.legs[0].mat, radii(R.legs.map(l => l.fl * .9)));
-    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { torso: rigPiece(m, ["body"], [0, 0, 0], s), head: rigPiece(m, ["head"], R.head.nb, s), tail: rigPiece(m, ["tail"], R.tail, s) }, faces: rigFaces(id, level, st, R.head.nb, s) };
+    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { torso: rigPiece(m, ["body"], [0, 0, 0], s), head: rigPiece(m, ["head"], R.head.nb, s), tail: rigPiece(m, ["tail"], R.tail, s) }, faces: rigFaces(id, level, st, R.head.nb, s, gear) };
   }
   // a serpent: its head baked, its body discs (speckled like its coat) by the spine's radii
   discSet(M.BODY, radii(R.spine.map(p => p[3])), p => spotty([p[0] * 1.5, p[1], p[2]], 14, .3) ? M.BODY3 : undefined);
-  return { id, level, template: tpl, s, joints: { spine: R.spine, head: R.head, hr: R.hr }, discs, pieces: { head: rigPiece(m, ["head"], R.head, s), wings: rigPiece(m, ["body"].filter(() => m.parts.some(q => q.part === "body" && q.extra)), [0, .2, 0], s) }, faces: rigFaces(id, level, st, R.head, s) };
+  return { id, level, template: tpl, s, joints: { spine: R.spine, head: R.head, hr: R.hr }, discs, pieces: { head: rigPiece(m, ["head"], R.head, s), wings: rigPiece(m, ["body"].filter(() => m.parts.some(q => q.part === "body" && q.extra)), [0, .2, 0], s) }, faces: rigFaces(id, level, st, R.head, s, gear) };
 }
 
 

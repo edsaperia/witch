@@ -990,10 +990,6 @@
         "on": {
           "type": "boolean"
         },
-        "links": {
-          "type": "number",
-          "minimum": 0
-        },
         "advance": {
           "type": "string"
         },
@@ -1047,11 +1043,25 @@
             "avoid"
           ],
           "additionalProperties": false
+        },
+        "ahead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "behind": {
+          "type": "number",
+          "minimum": 0
+        },
+        "behindBright": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "on",
-        "links",
+        "ahead",
+        "behind",
+        "behindBright",
         "advance",
         "fade",
         "brightness",
@@ -4459,6 +4469,32 @@
       ],
       "additionalProperties": false
     },
+    "rig": {
+      "type": "object",
+      "properties": {
+        "minPx": {
+          "type": "number",
+          "minimum": 0
+        },
+        "alwaysLevels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "baby",
+              "young",
+              "adult",
+              "legend"
+            ]
+          }
+        }
+      },
+      "required": [
+        "minPx",
+        "alwaysLevels"
+      ],
+      "additionalProperties": false
+    },
     "glowNear": {
       "type": "number",
       "minimum": 0
@@ -4539,6 +4575,7 @@
     "moonbeams",
     "treehouse",
     "home",
+    "rig",
     "looks",
     "bubbles",
     "scenes",

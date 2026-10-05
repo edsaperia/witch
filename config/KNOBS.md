@@ -278,12 +278,11 @@ Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bus
 
 ## `leyLines`
 
-depart (Ed, 2026-10-05: "The start of the first leyline should go from the front of the treehouse"; "the treehouse should be 5m due north of the dance floor ... The ley line leads from it south across the dancefloor and then towards the first speaker"): until the first stone is reached the line starts at the treehouse's front and runs due south straight across the dancefloor and through its ring of speakers, on past metres beyond the ring (avoid metres outside it), then curves smoothly to the first objective's soundsystem, that stretch kept outside the ring. The ley lines (Ed, 2026-10-04; 2026-10-05: "you just follow them from objective to objective"): a glowing line from the last runestone reached to the next objective, the next area in the order the waves wake them; links of them (1: just to the next; more: a short chain on to the ones after, each fade times as bright as the one before). brightness: how bright, a share of their first look (Ed, 2026-10-05: "about 30% as bright", 0.3), the glow through the crowns too. Each fades from the colour of the area it starts in to that of the area it ends in (the colour partified areas and soundsystems use). advance: "first" moves it on when the next area's quest is done or its wave arrives, whichever comes first; "wave" only when its wave arrives. The old line drains into the stone reached and the new one draws out from it. Each wanders along the low ground between its stones, straying up to valley of its length (80 m at most) to follow the hills' valleys, and a shimmer flows along it toward the next stone at flow[0] m/s, flow[1] m apart. It stays on the ground in both modes (Ed): width metres across on the ground and over the treetops (wider there, with a faint glow through the crowns), height metres over the ground in each. ?ley=0 turns them off.
+depart (Ed, 2026-10-05: "The start of the first leyline should go from the front of the treehouse"; "the treehouse should be 5m due north of the dance floor ... The ley line leads from it south across the dancefloor and then towards the first speaker"): until the first stone is reached the line starts at the treehouse's front and runs due south straight across the dancefloor and through its ring of speakers, on past metres beyond the ring (avoid metres outside it), then curves smoothly to the first objective's soundsystem, that stretch kept outside the ring. The ley lines (Ed, 2026-10-04; 2026-10-05: "you just follow them from objective to objective"): a glowing line from the last runestone reached to the next objective, the next area in the order the waves wake them, and on (Ed, 2026-10-05: "six sections long, showing the next three and the past three runestones"): ahead sections on from the last stone reached to the next ones, each fade times as bright as the one before, and behind sections back through the stones reached before it, the one just left behindBright times as bright as the next and each before it fade times that. brightness: how bright, a share of their first look (Ed, 2026-10-05: "about 30% as bright", 0.3), the glow through the crowns too. Each fades from the colour of the area it starts in to that of the area it ends in (the colour partified areas and soundsystems use). advance: "first" moves it on when the next area's quest is done or its wave arrives, whichever comes first; "wave" only when its wave arrives. The old line drains into the stone reached and the new one draws out from it. Each wanders along the low ground between its stones, straying up to valley of its length (80 m at most) to follow the hills' valleys, and a shimmer flows along it toward the next stone at flow[0] m/s, flow[1] m apart. It stays on the ground in both modes (Ed): width metres across on the ground and over the treetops (wider there, with a faint glow through the crowns), height metres over the ground in each. ?ley=0 turns them off.
 
 | knob | type | range |
 |---|---|---|
 | `leyLines.on` | boolean |  |
-| `leyLines.links` | number | 0 to … |
 | `leyLines.advance` | string |  |
 | `leyLines.fade` | number | 0 to … |
 | `leyLines.brightness` | number | 0 to … |
@@ -293,6 +292,9 @@ depart (Ed, 2026-10-05: "The start of the first leyline should go from the front
 | `leyLines.flow` | array of number |  |
 | `leyLines.depart.avoid` | number | 0 to … |
 | `leyLines.depart.past` | number | 0 to … |
+| `leyLines.ahead` | number | 0 to … |
+| `leyLines.behind` | number | 0 to … |
+| `leyLines.behindBright` | number | 0 to … |
 
 ## `witch`
 
@@ -501,12 +503,14 @@ Home's area (Ed, 2026-10-05: "Home area should be big enough that the whole circ
 | `home.margin` | number | 0 to … |
 | `home.gap` | number | 0 to … |
 
-## `looks`
+## `rig`, `looks`
 
-The creature states' looks (Ed, issue #87; render/looks.ts). enragedTint (Ed, 2026-10-05: "Enraged creatures should have a red tint so that they're easy to tell apart from the other states"): an enraged creature's whole sprite goes toward colour by amount (0 none, 1 all), by each pixel's lightness so its shading and shape still read; its angry brows and red eyes stay. No other state is tinted. anger (Ed, "or a 💢"): a pixel 💢 beside an enraged creature's head on the side it faces, popping on a pulse, size times its level's bubble size (bubbles.levelScale). Tint and 💢 each on its own (amount 0 or on false turns one off); both for now (Ed: "the red tint can be less strong": 0.38, with a floor so it never goes near-black). The angry brows are a stopgap for an expression the creature generator will draw (render/looks.ts expression()). partyGlow (Ed, 2026-10-05: "party animals could sparkle or glow a little"): every happy and leashed animal has sparkles twinkling pixels round it, each lit for a moment about rate times a second, size times three game pixels, at strength brightness (additive); leashed ones keep their collar on top.
+The live rig (Ed, 2026-10-05): on by default, ?rig=0 turns it off. Creatures keep their baked frames in the treetops, and on the ground when drawn smaller than minPx art pixels, except the levels in alwaysLevels: legends are always rigged.
 
 | knob | type | range |
 |---|---|---|
+| `rig.minPx` | number | 0 to … |
+| `rig.alwaysLevels` | array of string |  |
 | `looks.enragedTint.colour` | string |  |
 | `looks.enragedTint.amount` | number | 0 to … |
 | `looks.anger.on` | boolean |  |
