@@ -1,5 +1,5 @@
 {
-  "version": null,
+  "version": 486,
   "items": [
     "Treetop flight is half as fast again (48 m/s, from 32), and the treetop camera sits further out to match: Ed's pick from the playtest presets (168 m areas with 48 m/s)",
     "Try bigger areas and faster treetop flight: add ?areaSize=280&treetopSpeed=96 to the link (remembered on this browser); treetop speed also has a slider in the debug panel (~), with a reset",
