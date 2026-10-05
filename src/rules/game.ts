@@ -8,8 +8,9 @@ import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState } 
 import { MAX_STEP, newClock, type Clock } from "./clock";
 import { heldByCombat, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature } from "./creatures";
 import { Forest } from "./forest";
-import { leashPoint, newLeash, stepLeash, type LeashControls, type LeashState } from "./leash";
+import { inviteCreature, leashPoint, newLeash, stepLeash, type LeashControls, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
+import { danceAt, invitableNow, stateOf, STATES } from "./creatureStates";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
 import { cellKey, hurryWave, newParty, planAhead, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
@@ -19,7 +20,8 @@ import { SIGIL_NEON } from "../../art/sigils.js";
 import { newBuffs, stepBuffs, type BuffState } from "./buffs";
 import { COMBAT, marchOn, maxHp, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
 import { hurt, knockOut, newHealth, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
-import { newInvites, standInAffection, stepInvites, type Affection, type InviteControls, type Invites } from "./invites";
+import { newInvites, stepInvites, type Affection, type InviteControls, type Invites } from "./invites";
+import { affection, blocksLetters, hit as hitAffection } from "./affection";
 import { applyDash, dashing, newDash, startDash, type DashState } from "./dash";
 import { castSpell, newSpells, speedMultiplier, type SpellState } from "./spells";
 import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWitches";
@@ -189,8 +191,23 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   g.alpha = Math.max(0, Math.min(1, g.acc / STEP));
 }
 
-/** The affection rules the 💌s and the view use (issue #87): the stand-in until the state machine lands. */
-export const affectionOf = (g: Game): Affection => standInAffection(g.witches[0].invites, g.leash, g.buffs?.tuning ?? g.tuning);
+/** The affection rules the 💌s and the view use (issue #87): the state machine's meter
+ *  (rules/affection.ts). A full meter makes a wild one happy; filled again (states.leash "again"),
+ *  a happy one is leashed. How many letters fill it is the tuning's invites.hits (buffs change it);
+ *  the per-animal hit gap is rules/invites.ts's (invites.perAnimalHitGap). */
+export const affectionOf = (g: Game): Affection => {
+  const t = g.buffs?.tuning ?? g.tuning, s = g.witches[0].invites, data = { ...STATES, affection: { ...STATES.affection, hits: t.invites.hits, gap: 0 } };
+  return {
+    invitable: c => invitableNow(c, data),
+    blocksLetters: c => blocksLetters(c),
+    hit(c, amount, time) {
+      const was = stateOf(c);
+      hitAffection({ time, leash: k => inviteCreature(g.leash, k, k.x, k.z, time) }, c, amount, time, data);
+      if (stateOf(c) !== was) s.events.push({ kind: "happy", x: c.x, z: c.z, at: time, id: c.id }); // (happy, or leashed)
+    },
+    affection: c => affection({ time: g.clock.time }, c, data),
+  };
+};
 
 /** A hit on witch `id` at game time `at`: it costs her a hit unless she's mid-blink (nowhere). */
 export function hitWitch(g: Game, id: number, at: number, t: Tuning = g.tuning): void {
@@ -271,7 +288,6 @@ function fixedStep(g: Game, controls: Controls): void {
   if (W.ko) {
     const r = stepKnockout(W.ko, W.body, W.leash, g.creatures, g.map, g.clock.time, k => g.party.areas.has(k), g.koEvents);
     W.body = r.body;
-    for (const e of g.koEvents) if (e.kind === "released" && e.id !== undefined) g.combat.busy.add(e.id); // walking home from wherever it is
     if (r.done) { W.ko = null; W.health.hp = t.witchHealth.hits; W.health.repairAt = Infinity; }
   }
   repair(W.health, g.clock.time, t);
@@ -309,7 +325,9 @@ function fixedStep(g: Game, controls: Controls): void {
   }
   if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, t, g.beat);
   stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, t, g.beat);
-  for (const e of g.leash.events) if (e.kind === "invited") g.tally.invites++;
+  for (const e of g.leash.events) if (e.kind === "invited" || e.kind === "befriended") g.tally.invites++;
+  // Made happy in an area that already has its soundsystem: it joins the dancing there (#87).
+  for (const e of g.leash.events) if (e.kind === "befriended") { const c = g.creatures[e.id], a = g.party.areas.get(cellKey(c.cell)); if (a?.soundsystem && g.combat.sounds.has(cellKey(c.cell))) danceAt(c, a.soundsystem); }
   for (const e of B.events) if (e.kind === "ate") g.tally.berries++; else if (e.kind === "evolved") g.tally.evolved++;
   stepDancefloor(g, wave, seated);
   stepWitchParty(g, c, dt);
@@ -356,6 +374,8 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
   for (const [key, a] of g.party.areas) if (a.soundsystem && !S.sounds.has(key) && !S.ruined.has(key)) {
     const friendly = g.friendly.has(key);
     startSiege(S, key, a.soundsystem, a.cell, g.creatures, t, !friendly);
+    // Its happy ones (#87) come and dance round it.
+    for (const c of g.creatures) if (!c.gone && !c.leashed && c.state === "happy" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) danceAt(c, a.soundsystem);
     if (friendly) { guardArea(g.creatures, a.cell); g.byArea = null; }
   }
   // Only creatures with something to fight near them take part: wild ones in or next to the area
@@ -392,7 +412,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
       g.creatures[id].leashed = false;
     },
   }, COMBAT);
-  for (const c of active) if (!c.gone && !c.leashed && (c.siege || c.fleeUntil || c.fight?.target || c.wanderTo)) S.busy.add(c.id); // carried on wherever she is
+  for (const c of active) if (!c.gone && !c.leashed && (c.siege || c.fleeUntil || c.fight?.target || c.wanderTo || c.dazed)) S.busy.add(c.id); // carried on wherever she is
   for (const e of S.events) if (e.kind === "soundDestroyed" && e.key && e.at === time) loseSoundsystem(g, e.key, e.x, e.z, t);
   // The home ring shows its damage speaker by speaker.
   const home = S.sounds.get("home");

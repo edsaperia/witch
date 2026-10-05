@@ -35,6 +35,7 @@ import { blocked, leashPoint, talkTime, talkTurn } from "../rules/leash";
 import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
 import { FIGHT, profileOf } from "../rules/movement";
+import { huntsWitch } from "../rules/creatureStates";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
@@ -495,7 +496,7 @@ export class LeashView {
     // Shots in flight: a bright core and a halo, red for the wild, the party's in their neon.
     for (const sh of g.combat.shots) {
       if (!close(sh.x, sh.z, 150)) continue;
-      const col = sh.side === "wild" ? { r: 1, g: 0.25, b: 0.35 } : neon(sh.species);
+      const col = huntsWitch(sh.side) ? { r: 1, g: 0.25, b: 0.35 } : neon(sh.species);
       if (sh.lob) {
         // A lob: high over everything, and a ring tightening where it'll land (get out of it).
         const L = sh.lob, k = Math.max(0, Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at))), y = 1 + Math.sin(k * Math.PI) * 5;
@@ -513,7 +514,7 @@ export class LeashView {
     for (const b of g.combat.beams) {
       const c = g.creatures[b.from];
       if (!c || !close(c.x, c.z, 150)) continue;
-      const col = b.side === "wild" ? { r: 1, g: 0.3, b: 0.3 } : neon(b.species), ex = Math.cos(b.angle), ez = Math.sin(b.angle), fl = 0.75 + 0.25 * Math.sin(time * 40 + b.id);
+      const col = huntsWitch(b.side) ? { r: 1, g: 0.3, b: 0.3 } : neon(b.species), ex = Math.cos(b.angle), ez = Math.sin(b.angle), fl = 0.75 + 0.25 * Math.sin(time * 40 + b.id);
       for (let s2 = 0.6; s2 < b.length; s2 += 0.45) {
         this.standing.add(c.x + ex * s2, 0.7, c.z + ez * s2, Math.max(0.5, b.width * 0.9), dot, col.r, col.g, col.b, 0.45 * fl);
         this.standing.add(c.x + ex * s2, 0.7, c.z + ez * s2, 0.3, dot, 1, 1, 1, 0.8 * fl);
@@ -522,7 +523,7 @@ export class LeashView {
     // A snail's slime: glistening patches on the ground, fading as they dry.
     for (const tr of g.combat.trails) {
       if (!close(tr.x, tr.z)) continue;
-      const left = Math.min(1, (tr.until - time) / 2), wild = tr.side === "wild";
+      const left = Math.min(1, (tr.until - time) / 2), wild = huntsWitch(tr.side);
       // A glossy patch (bigger and brighter: Ed, 2026-10-05), a rim round it, and glints that wink.
       const sd = Math.round(tr.until * 10), [sr, sg, sb] = wild ? [0.6, 1, 0.35] : [0.45, 1, 0.85];
       for (let i = 0; i < 7; i++) { const a = hash2(tr.from, sd + i, 31) * Math.PI * 2, q = hash2(tr.from, sd + i, 37) * tr.r * 0.6; this.flat.add(tr.x + Math.cos(a) * q, 0, tr.z + Math.sin(a) * q * 0.8, tr.r * 0.75, dot, sr, sg, sb, 0.45 * left); }
@@ -671,7 +672,7 @@ export class LeashView {
     this.drawCombat(time, camera, width, height, hatTop);
     for (const e of s.events) {
       if (e.kind === "fizzled") this.fizzles.push({ x: e.x, z: e.z, at: time });
-      if (e.kind === "invited") this.bursts.push({ x: e.x, z: e.z, at: time, seed: e.id });
+      if (e.kind === "invited" || e.kind === "befriended") this.bursts.push({ x: e.x, z: e.z, at: time, seed: e.id });
     }
     this.fizzles = this.fizzles.filter(f => time - f.at < 0.7);
     this.bursts = this.bursts.filter(b => time - b.at < 0.9);
