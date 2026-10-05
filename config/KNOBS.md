@@ -277,7 +277,7 @@ Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bus
 
 ## `leyLines`
 
-depart (Ed, 2026-10-05: "The start of the first leyline should go from the front of the treehouse"; "always go south, so that you can see it in front of the treehouse"): until the first stone is reached the line starts at the treehouse's front and runs run metres due south (stopping short of avoid metres outside the dancefloor's ring of speakers), then curves smoothly round to the first objective, kept outside that ring. The ley lines (Ed, 2026-10-04; 2026-10-05: "you just follow them from objective to objective"): a glowing line from the last runestone reached to the next objective, the next area in the order the waves wake them; links of them (1: just to the next; more: a short chain on to the ones after, each fade times as bright as the one before). brightness: how bright, a share of their first look (Ed, 2026-10-05: "about 30% as bright", 0.3), the glow through the crowns too. Each fades from the colour of the area it starts in to that of the area it ends in (the colour partified areas and soundsystems use). advance: "first" moves it on when the next area's quest is done or its wave arrives, whichever comes first; "wave" only when its wave arrives. The old line drains into the stone reached and the new one draws out from it. Each wanders along the low ground between its stones, straying up to valley of its length (80 m at most) to follow the hills' valleys, and a shimmer flows along it toward the next stone at flow[0] m/s, flow[1] m apart. It stays on the ground in both modes (Ed): width metres across on the ground and over the treetops (wider there, with a faint glow through the crowns), height metres over the ground in each. ?ley=0 turns them off.
+depart (Ed, 2026-10-05: "The start of the first leyline should go from the front of the treehouse"; "the treehouse should be 5m due north of the dance floor ... The ley line leads from it south across the dancefloor and then towards the first speaker"): until the first stone is reached the line starts at the treehouse's front and runs due south straight across the dancefloor and through its ring of speakers, on past metres beyond the ring (avoid metres outside it), then curves smoothly to the first objective's soundsystem, that stretch kept outside the ring. The ley lines (Ed, 2026-10-04; 2026-10-05: "you just follow them from objective to objective"): a glowing line from the last runestone reached to the next objective, the next area in the order the waves wake them; links of them (1: just to the next; more: a short chain on to the ones after, each fade times as bright as the one before). brightness: how bright, a share of their first look (Ed, 2026-10-05: "about 30% as bright", 0.3), the glow through the crowns too. Each fades from the colour of the area it starts in to that of the area it ends in (the colour partified areas and soundsystems use). advance: "first" moves it on when the next area's quest is done or its wave arrives, whichever comes first; "wave" only when its wave arrives. The old line drains into the stone reached and the new one draws out from it. Each wanders along the low ground between its stones, straying up to valley of its length (80 m at most) to follow the hills' valleys, and a shimmer flows along it toward the next stone at flow[0] m/s, flow[1] m apart. It stays on the ground in both modes (Ed): width metres across on the ground and over the treetops (wider there, with a faint glow through the crowns), height metres over the ground in each. ?ley=0 turns them off.
 
 | knob | type | range |
 |---|---|---|
@@ -290,12 +290,12 @@ depart (Ed, 2026-10-05: "The start of the first leyline should go from the front
 | `leyLines.height` | array of number |  |
 | `leyLines.valley` | number | 0 to … |
 | `leyLines.flow` | array of number |  |
-| `leyLines.depart.run` | number | 0 to … |
 | `leyLines.depart.avoid` | number | 0 to … |
+| `leyLines.depart.past` | number | 0 to … |
 
 ## `witch`
 
-The witch is lit by the world's lights like everything else (Ed: "I can go near a coloured light source and not change colour"), but not by her own glow: never darker than lightFloor times her old unlit look, so she reads in the dark; coloured lights (soundsystems, campfires, rune stones, the dancefloor) tint her by lightTint and rim the edge of her facing them by lightRim. Over the hills (Ed, v289: "when you're moving quickly, you jerk up and down with the roll of hills") she and the camera ride a smoothed height, not the ground under her: the ground averaged over heightLookAhead seconds of her flight behind and ahead of her (so the hills' bumps smooth out and she rises early for a crest), eased by heightSmooth seconds at full speed (a damped spring; less as she slows, none standing still; 0 off), and her feet always at least heightClearance metres over the ground under her and a stride ahead.
+The witch knocked back and staggered by a blow (Ed, 2026-10-05: "add a knockback and stun on the witch; make it large on chasing/ramming creatures"; rules/knock.ts): thrown straight away from the blow, base metres for any blow (bites, swipes, shots) plus scale times the attack's own knockback (combat.json; so a maul, quake or slam sits in between), at least charge metres when it rams her (a charge, or a leap landing on her), at most max; eased off at ease a second (like a creature's knockback), straight through scenery (Ed: "don't make it stop at scenery"), nudged to the nearest clear spot at the end if she'd rest inside a trunk, rock, speaker, soundsystem or the treehouse (the blink's clearances). Staggered (no moving, blinking or 💌s, a wobble and stars) stunBase seconds plus stunScale a metre thrown past base, at most stunMax; then not staggered again for immune seconds (the blows still count), so a pack can't stun-lock her. A blink dodges it all; the blow that knocks her out throws nothing. on false, or ?knock=0, turns it off.
 
 | knob | type | range |
 |---|---|---|
@@ -305,6 +305,16 @@ The witch is lit by the world's lights like everything else (Ed: "I can go near 
 | `witch.heightSmooth` | number | 0 to … |
 | `witch.heightLookAhead` | number | 0 to … |
 | `witch.heightClearance` | number | 0 to … |
+| `witch.knock.on` | boolean |  |
+| `witch.knock.base` | number | 0 to … |
+| `witch.knock.scale` | number | 0 to … |
+| `witch.knock.charge` | number | 0 to … |
+| `witch.knock.max` | number | 0 to … |
+| `witch.knock.ease` | number | 0 to … |
+| `witch.knock.stunBase` | number | 0 to … |
+| `witch.knock.stunScale` | number | 0 to … |
+| `witch.knock.stunMax` | number | 0 to … |
+| `witch.knock.immune` | number | 0 to … |
 
 ## `sigilProjection`, `occlusion`
 
@@ -471,15 +481,15 @@ How strong the diagonal moonbeam bands are, times the style's Moonbeams knob: 0 
 
 ## `treehouse`
 
-The witch's treehouse, home (Ed): it stands distance metres beyond the dancefloor's clearing (which reaches past the speaker ring, so however many speakers or how far out, the treehouse stays outside them), at angle degrees (-90 is straight up the screen), and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength. The game starts with her sitting on its terrace; the first move or rise takes her off.
+The witch's treehouse, home (Ed, 2026-10-05: "The treehouse should be 5m due north of the dance floor, outside the speaker ring"): its footprint's nearest edge (clear metres round its foot) stands gap metres beyond the dancefloor's ring of speakers (so however many speakers or how far out, it stays outside them), at angle degrees (-90: due north, straight up the screen), always facing south, to the floor and the camera; and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength. The game starts with her sitting on its terrace; the first move or rise takes her off.
 
 | knob | type | range |
 |---|---|---|
-| `treehouse.distance` | number | 0 to … |
 | `treehouse.angle` | number |  |
 | `treehouse.clear` | number | 0 to … |
 | `treehouse.lightReach` | number | 0 to … |
 | `treehouse.lightStrength` | number | 0 to … |
+| `treehouse.gap` | number | 0 to … |
 
 ## `home`
 
@@ -490,12 +500,14 @@ Home's area (Ed, 2026-10-05: "Home area should be big enough that the whole circ
 | `home.margin` | number | 0 to … |
 | `home.gap` | number | 0 to … |
 
-## `looks`
+## `rig`, `looks`
 
-The creature states' looks (Ed, issue #87; render/looks.ts). enragedTint (Ed, 2026-10-05: "Enraged creatures should have a red tint so that they're easy to tell apart from the other states"): an enraged creature's whole sprite goes toward colour by amount (0 none, 1 all), by each pixel's lightness so its shading and shape still read; its angry brows and red eyes stay. No other state is tinted. anger (Ed, "or a 💢"): a pixel 💢 beside an enraged creature's head on the side it faces, popping on a pulse, size times its level's bubble size (bubbles.levelScale). Tint and 💢 each on its own (amount 0 or on false turns one off); both for now (Ed: "the red tint can be less strong": 0.38, with a floor so it never goes near-black). The angry brows are a stopgap for an expression the creature generator will draw (render/looks.ts expression()). partyGlow (Ed, 2026-10-05: "party animals could sparkle or glow a little"): every happy and leashed animal has sparkles twinkling pixels round it, each lit for a moment about rate times a second, size times three game pixels, at strength brightness (additive); leashed ones keep their collar on top.
+The live rig (Ed, 2026-10-05): on by default, ?rig=0 turns it off. Creatures keep their baked frames in the treetops, and on the ground when drawn smaller than minPx art pixels, except the levels in alwaysLevels: legends are always rigged.
 
 | knob | type | range |
 |---|---|---|
+| `rig.minPx` | number | 0 to … |
+| `rig.alwaysLevels` | array of string |  |
 | `looks.enragedTint.colour` | string |  |
 | `looks.enragedTint.amount` | number | 0 to … |
 | `looks.anger.on` | boolean |  |
@@ -687,7 +699,7 @@ The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when o
 
 ## `sfx`, `music`
 
-The sound effects, all synthesised in the music's key (2026-10-05): volume over the music's, hear metres (a sound fades to nothing that far from her). voice: the babble (Ed, 2026-10-05: 💌s are her speech, attacks the animals'). witch: each 💌 a syllable in her voice (pitch Hz, range: how far her phrases rise and fall, pace: a syllable's seconds, timbre: her formants over an adult's, phraseGap: a pause this long starts a new phrase); animals: an attack a burst of babble in the creature's own voice (pitch Hz for a normal-sized young, lower by level and size; maxVoices at once, the farthest giving way, duck: how much the others quieten; syllables per burst; gap: a creature speaks at most every gap seconds; reply: a 💌 hit's answering syllable, its volume share). hit: a 💌 landing (a spent one a faint tick); fill: the affection tick, climbing octaves as the meter fills; invited: the flourish (fuller by level); enraged: the growl when one turns (gap: at most one every gap seconds, a crowd turning at once one heavier growl); happy: the pop; snore: a sleeping legend within range metres moaning softly in its dreams (volume); nightmare: its moans when restless (volume); windup: an attack winding up, length seconds before it fires; lost: a soundsystem lost, the sting heard anywhere (volume); knock: the witch knocked back (#108), a thump and a whoosh by how far (volume, whoosh), and stunned, a soft dizzy twinkle every twinkleEvery seconds (twinkle); charge: a legend's long charge, its windup's bellow, heavy hoofbeats by its speed, the ground's rumble along its lane, the skid of its braking arc, a lighter trot home, heard within range metres; relic: a relic bottle found (a rare chime), spotted within spot metres on the ground or spotTreetop from the treetops, or reached within reach; meadow: home's ambience (breeze, bees, birds, a bird's song about every birdEvery seconds), in home's circle (radius metres round the dancefloor, or the map's homeRadius) fading out over its last fade metres; ouch: the witch hurt, her cry and a thump (volume), the music dipped by duck for duckTime seconds (twice that knocked down); whale: the legends' voice (Ed, 2026-10-05: "whale song; deep and slow"): volume, speed (1: moans of 2 to 3 s; 2: twice as fast), depth (Hz of its lowest moan), reverb (how big its space), sleepEvery (seconds between a sleeper's moans, sooner when restless).
+The sound effects, all synthesised in the music's key (2026-10-05): volume over the music's, hear metres (a sound fades to nothing that far from her). voice: the babble (Ed, 2026-10-05: 💌s are her speech, attacks the animals'). witch: each 💌 a syllable in her voice (pitch Hz, range: how far her phrases rise and fall, pace: a syllable's seconds, timbre: her formants over an adult's, phraseGap: a pause this long starts a new phrase); animals: an attack a burst of babble in the creature's own voice (pitch Hz for a normal-sized young, lower by level and size; maxVoices at once, the farthest giving way, duck: how much the others quieten; syllables per burst; gap: a creature speaks at most every gap seconds; reply: a 💌 hit's answering syllable, its volume share). hit: a 💌 landing (a spent one a faint tick); fill: the affection tick, climbing octaves as the meter fills; invited: the flourish (fuller by level); enraged: the growl when one turns (gap: at most one every gap seconds, a crowd turning at once one heavier growl); happy: the pop; snore: a sleeping legend within range metres moaning softly in its dreams (volume); nightmare: its moans when restless (volume); windup: a legend's attack winding up, its whale song swelling for length seconds before it fires; lost: a soundsystem lost, the sting heard anywhere (volume); knock: the witch knocked back (#108), a thump and a whoosh by how far (volume, whoosh), and stunned, a soft dizzy twinkle every twinkleEvery seconds (twinkle); charge: a legend's long charge, its windup's bellow, heavy hoofbeats by its speed, the ground's rumble along its lane, the skid of its braking arc, a lighter trot home, heard within range metres; relic: a relic bottle found (a rare chime), spotted within spot metres on the ground or spotTreetop from the treetops, or reached within reach; meadow: home's ambience (breeze, bees, birds, a bird's song about every birdEvery seconds), in home's circle (the map's homeRadius round the dancefloor) fading out over its last fade metres; ouch: the witch hurt, her cry and a thump (volume; knocked down, her "whoa-oh" at knockdown times that), the music dipped by duck for duckTime seconds (twice that knocked down); whale: the legends' voice (Ed, 2026-10-05: "whale song; deep and slow"): volume, speed (1: moans of 2 to 3 s; 2: twice as fast), depth (Hz of its lowest moan), reverb (how big its space), sleepEvery (seconds between a sleeper's moans, sooner when restless).
 
 | knob | type | range |
 |---|---|---|
@@ -725,6 +737,7 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `sfx.ouch.volume` | number | 0 to … |
 | `sfx.ouch.duck` | number | 0 to … |
 | `sfx.ouch.duckTime` | number | 0 to … |
+| `sfx.ouch.knockdown` | number | 0 to … |
 | `sfx.knock.volume` | number | 0 to … |
 | `sfx.knock.whoosh` | number | 0 to … |
 | `sfx.knock.twinkle` | number | 0 to … |
@@ -745,7 +758,6 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `sfx.meadow.bees` | number | 0 to … |
 | `sfx.meadow.birds` | number | 0 to … |
 | `sfx.meadow.birdEvery` | number | 0 to … |
-| `sfx.meadow.radius` | number | 0 to … |
 | `sfx.meadow.fade` | number | 0 to … |
 | `sfx.whale.volume` | number | 0 to … |
 | `sfx.whale.speed` | number | 0 to … |

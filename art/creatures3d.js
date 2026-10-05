@@ -58,6 +58,7 @@ const heart = (s, t) => { const x = s * 1.2, y = -t * 1.2 + .25; return Math.pow
 function gearUp(m) {
   const g = GEAR, A = m.anchors; if (!g) return;
   faceUp(m, g.face, g.faceStyle); // its expression, part of its face (genome/expressions.js)
+  const was = m.part; m.part = "head"; // the collar, hat and glasses ride on the head (the live rig's head piece: genome/parts.js)
   const head = A.head, hr = head ? Math.max(...head.r) : .2;
   // the collar: a glowing ring round the neck (or the body's front)
   if (g.collar && (A.neck || head)) {
@@ -93,6 +94,7 @@ function gearUp(m) {
       m.seg(out(e1), out(e2), s * .18, s * .18, M.FRAME, { group: 62, extra: true });
     }
   }
+  m.part = was;
   // fancy shoes on each foot (or, for the snake, one tiny shoe on its tail tip)
   if (g.shoes) for (const f of A.feet) {
     const plat = g.shoes === "platform", r = f.r, c = v3.add(f.c, [r * .25, r * (plat ? .35 : .15), 0]);

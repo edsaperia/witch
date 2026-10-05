@@ -224,14 +224,12 @@ export interface CombatWorld {
   t: Tuning;
   /** A party animal is busy (eating, evolving): it doesn't fight. */
   busy: (id: number) => boolean;
-  /** A witch is hit (one point, whatever hits her). */
-  hitWitch: (id: number, time: number) => void;
+  /** A witch is hit (one point, whatever hits her), and thrown by the blow (rules/knock.ts). */
+  hitWitch: (id: number, time: number, blow?: { x: number; z: number; knockback: number; rams: boolean }) => void;
   /** A party animal is lost for the run. */
   loseParty: (id: number) => void;
   /** A witch is slowed (a snail's slime, a glow-worm's flash): her speed times mult until then. */
   slowWitch?: (id: number, until: number, mult: number) => void;
-  /** A witch is knocked aside (a legend's long charge): dx, dz metres, eased over a moment, through scenery. */
-  pushWitch?: (id: number, dx: number, dz: number) => void;
 }
 
 /** How much of a blow a creature takes for how it's holding itself (Ed's species pass): curled up
@@ -355,7 +353,13 @@ function moveToward(c: Creature, x: number, z: number, stopAt: number, speed: nu
  *  soundsystem's health for a siege. */
 function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target, damage: number, a: Attack, fx: number, fz: number): void {
   const time = w.time;
-  if (tg.kind === "witch") { w.hitWitch(tg.id, time); const v = w.witches[tg.id]; s.events.push({ kind: "witchHit", x: v.x, z: v.z, at: time, id: tg.id }); return; }
+  if (tg.kind === "witch") {
+    // Thrown from the attacker (or where its shot or area hit landed); harder by the attack's
+    // knockback, and hard if it rams her (charging, or landing a leap on her).
+    const ox = from && a.delivery !== "shot" && a.delivery !== "lob" ? from.x : fx, oz = from && a.delivery !== "shot" && a.delivery !== "lob" ? from.z : fz;
+    w.hitWitch(tg.id, time, { x: ox, z: oz, knockback: a.modifier === "knockback" ? a.knockback ?? 0 : 0, rams: !!from && (!!from.charge || !!from.leap || !!from.run) }); // (a legend's long charge rams too)
+    const v = w.witches[tg.id]; s.events.push({ kind: "witchHit", x: v.x, z: v.z, at: time, id: tg.id }); return;
+  }
   if (tg.kind === "sound") {
     const h = s.sounds.get(tg.key);
     if (!h || h.hp <= 0) return;
@@ -827,10 +831,10 @@ function stepLongCharge(w: CombatWorld, s: CombatState, c: Creature, f: Fight, g
       if (angry) for (const v of w.witches) {
         if (!v.onGround || v.down || run.hit.includes(-1 - v.id) || Math.hypot(v.x - c.x, v.z - c.z) > half + 0.4) continue;
         run.hit.push(-1 - v.id);
-        land(w, s, c, { kind: "witch", id: v.id }, K.damage, blow, c.x, c.z);
+        // Thrown aside and staggered (rules/knock.ts, #108: a ram throws her witch.knock.charge metres), away from its line.
         const side = Math.sign((v.x - c.x) * -Math.sin(run.angle) + (v.z - c.z) * Math.cos(run.angle)) || 1;
-        w.pushWitch?.(v.id, -Math.sin(run.angle) * side * kb + Math.cos(run.angle) * kb * 0.4 * share, Math.cos(run.angle) * side * kb + Math.sin(run.angle) * kb * 0.4 * share);
-        w.slowWitch?.(v.id, time + K.stun * Math.max(0.3, share), 0);
+        w.hitWitch(v.id, time, { x: v.x + Math.sin(run.angle) * side * 2, z: v.z - Math.cos(run.angle) * side * 2, knockback: 0, rams: true });
+        s.events.push({ kind: "witchHit", x: v.x, z: v.z, at: time, id: v.id });
       }
     }
     return;
