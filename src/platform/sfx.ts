@@ -21,7 +21,9 @@ const INVITE = [0.12, -0.04, 0.42, 0.05, -0.02, 0.5];
 /** A voice's mood: happy rises and bounces, enraged falls clipped and gritty, grumpy sits low and flat. */
 export type Mood = "happy" | "grumpy" | "enraged";
 /** One creature's voice: its pitch (Hz), how far its formants sit above an adult's (small: higher), its source. */
-export interface CreatureVoice { pitch: number; formants: number; wave: OscillatorType }
+export interface CreatureVoice { pitch: number; formants: number; wave: OscillatorType; /** a legend: whale song, not babble */ legend?: boolean }
+/** What a legend's whale song says: its mood, asleep (dreaming or a nightmare), or an attack's swell. */
+export type WhaleKind = Mood | "sleep" | "nightmare" | "swell";
 
 /** The minor pentatonic's steps (semitones above the root). */
 const PENTA = [0, 3, 5, 7, 10];
@@ -35,12 +37,9 @@ export class Sfx {
   /** The voices speaking now (the cap: voice.animals.maxVoices), each with its gain to duck and how much it matters. */
   private speaking: { g: GainNode; end: number; prio: number }[] = [];
   private lastAt = new Map<string, number>();
-  // the lasting voices
-  private snoreGain: GainNode | null = null;
-  private snoreBand: BiquadFilterNode | null = null;
-  private dreamGain: GainNode | null = null;
-  private nightGain: GainNode | null = null;
-  private nightTrem: GainNode | null = null;
+  /** The legends' big space (a long generated reverb), built when one first sings; and when the sleeper next moans. */
+  private ocean: GainNode | null = null;
+  private nextMoan = 0;
 
   constructor(private ctx: AudioContext | OfflineAudioContext, public volume: number, private T: SfxTuning, private root = 57, dest?: AudioNode) {
     const c = ctx;
@@ -146,6 +145,7 @@ export class Sfx {
    *  in its own voice, delivered by mood. `prio` (nearness) decides who's heard when too many speak
    *  at once: the quietest gives way. `long`: a legend's drawn-out wind-up (seconds). */
   speak(v: CreatureVoice, mood: Mood, pan = 0, near = 1, prio = near, long = 0): void {
+    if (v.legend) { this.whale(long ? "swell" : mood, pan, near, long); return; } // (Ed: legends sound like whale song)
     const A = this.T.voice.animals, c = this.ctx, now = c.currentTime;
     this.speaking = this.speaking.filter(s => s.end > now);
     if (this.speaking.length >= A.maxVoices) {
@@ -257,7 +257,8 @@ export class Sfx {
   windup(pan = 0, near = 1, voice?: CreatureVoice): void {
     const W = this.T.windup;
     if (!this.ready("windup", 0.25)) return;
-    // the legend's own deep, drawn-out speech over it (Ed: its wind-up spoken, as the telegraph)
+    // a legend's: one long building swell of its whale song, the telegraph (Ed, 2026-10-05)
+    if (voice?.legend) { this.whale("swell", pan, Math.max(0.6, near), Math.max(0.3, W.length), W.volume * 0.5); return; }
     if (voice) this.speak(voice, "enraged", pan, Math.max(0.6, near), 9, Math.max(0.3, W.length));
     const c = this.ctx, at = c.currentTime + 0.005, len = Math.max(0.3, W.length), out = this.voice(pan), vol = W.volume * near * (voice ? 0.45 : 1);
     const g = c.createGain(); g.connect(out);
@@ -275,37 +276,91 @@ export class Sfx {
     this.osc("sine", mtof(this.root), at, len + 0.2, sub);
   }
 
-  /** The lasting legend voices, each frame: a sleeping legend's snore and dream tone (`sleep`, 0-1
-   *  by how near; `breath` 0 out to 1 in) and a nightmare's unease (`unease`, 0-1: restlessness by nearness). */
+  /** The nearest sleeping legend, each frame (`sleep` 0-1 by how near, `unease` its restlessness by
+   *  nearness): now and then a slow, soft moan of whale song as it dreams; restless, the moans come
+   *  more often, wavering, a nightmare. (`breath` kept for the dream's timing.) */
   legends(sleep: number, breath: number, unease: number, pan = 0): void {
-    const c = this.ctx, now = c.currentTime, S = this.T.snore, N = this.T.nightmare;
-    if (!this.snoreGain && sleep <= 0.001 && unease <= 0.001) return;
-    if (!this.snoreGain) this.buildLegendVoices();
-    const calm = sleep * (1 - 0.7 * unease);
-    this.snoreGain!.gain.setTargetAtTime(S.volume * calm * (0.15 + 0.85 * breath * breath), now, 0.08);
-    this.snoreBand!.frequency.setTargetAtTime(260 + 380 * breath, now, 0.1);
-    this.dreamGain!.gain.setTargetAtTime(S.volume * 0.35 * calm * (0.6 + 0.4 * Math.sin(now * 0.7)), now, 0.2);
-    this.nightGain!.gain.setTargetAtTime(N.volume * Math.pow(unease, 1.4), now, 0.25);
-    this.nightTrem!.gain.setTargetAtTime(0.6 + 0.4 * Math.sin(now * (2 + 5 * unease)), now, 0.03);
-    (this.snoreGain as GainNode & { pan?: StereoPannerNode }).pan!.pan.setTargetAtTime(Math.max(-1, Math.min(1, pan)), now, 0.1);
+    const now = this.ctx.currentTime, Wh = this.T.whale;
+    if (sleep <= 0.01) { this.nextMoan = Math.min(this.nextMoan, now + 1.5); return; }
+    if (now < this.nextMoan) return;
+    const bad = unease > 0.25;
+    this.nextMoan = now + Wh.sleepEvery * (1 - 0.55 * unease) * (0.75 + 0.5 * Math.random()) / Math.max(0.3, Wh.speed);
+    this.whale(bad ? "nightmare" : "sleep", pan, sleep * (bad ? this.T.nightmare.volume / Math.max(0.01, this.T.snore.volume) * (0.6 + 0.4 * unease) : 1) * (0.9 + 0.2 * breath), 0, this.T.snore.volume);
   }
 
-  private buildLegendVoices(): void {
-    const c = this.ctx, at = c.currentTime;
-    const pan = c.createStereoPanner(); pan.connect(this.out);
-    // the snore: breathy band-passed noise, swelling on each breath in
-    this.snoreGain = c.createGain(); this.snoreGain.gain.value = 0; this.snoreGain.connect(pan);
-    (this.snoreGain as GainNode & { pan?: StereoPannerNode }).pan = pan;
-    this.snoreBand = c.createBiquadFilter(); this.snoreBand.type = "bandpass"; this.snoreBand.Q.value = 2.5; this.snoreBand.connect(this.snoreGain);
-    const ns = c.createBufferSource(); ns.buffer = this.noise; ns.loop = true; ns.connect(this.snoreBand); ns.start(at);
-    // the dream tone: a soft fifth, slowly shimmering
-    this.dreamGain = c.createGain(); this.dreamGain.gain.value = 0; this.dreamGain.connect(pan);
-    for (const [m, det] of [[this.root + 36, -4], [this.root + 43, 5]] as const) { const o = c.createOscillator(); o.type = "sine"; o.frequency.value = mtof(m); o.detune.value = det; o.connect(this.dreamGain); o.start(at); }
-    // the nightmare's unease: a low minor second and a tritone, beating, under a trembling gain
-    this.nightGain = c.createGain(); this.nightGain.gain.value = 0;
-    this.nightTrem = c.createGain(); this.nightTrem.gain.value = 1; this.nightTrem.connect(this.nightGain); this.nightGain.connect(pan);
-    const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 700; lp.Q.value = 1.5; lp.connect(this.nightTrem);
-    for (const m of [this.root + 12, this.root + 13, this.root + 18]) { const o = c.createOscillator(); o.type = "triangle"; o.frequency.value = mtof(m); o.connect(lp); o.start(at); }
+  /** A legend sings (Ed, 2026-10-05: "the legends should sound like whale song; deep and slow"): a
+   *  long, slow, deep moan gliding over seconds, its overtones through a resonant throat, a slow
+   *  vibrato, low clicks, in a big space. Happy rises, melodic and calm; enraged groans lower and
+   *  longer, falling, with grit; a nightmare wavers; an attack's swell builds for `length` seconds. */
+  whale(kind: WhaleKind, pan = 0, near = 1, length = 0, volume = this.T.whale.volume): void {
+    const Wh = this.T.whale, c = this.ctx, sp = Math.max(0.3, Wh.speed);
+    if (kind !== "swell" && kind !== "sleep" && kind !== "nightmare" && !this.ready("whale", 1.2 / sp)) return;
+    const at = c.currentTime + 0.01, base = Wh.depth * (kind === "enraged" ? 0.8 : kind === "happy" ? 1.15 : 1);
+    // its contour: [share of the moan, semitones]
+    const SHAPES: Record<WhaleKind, [number, number][]> = {
+      happy: [[0, 0], [0.3, 5], [0.5, 3], [0.8, 8], [1, 10]],
+      grumpy: [[0, 2], [0.6, 0], [1, -3]],
+      enraged: [[0, 3], [0.25, 1], [1, -10]],
+      sleep: [[0, 0], [0.45, 4], [1, -2]],
+      nightmare: [[0, 0], [0.2, 3], [0.4, -2], [0.6, 4], [0.8, -3], [1, 1]],
+      swell: [[0, -7], [0.7, 2], [1, 7]],
+    };
+    const dur = kind === "swell" ? Math.max(0.3, length) : ({ happy: 2.4, grumpy: 2, enraged: 3.2, sleep: 3, nightmare: 2.6 } as Record<string, number>)[kind] / sp;
+    const vol = volume * near, pts = SHAPES[kind];
+    const out = this.voice(pan), g = c.createGain();
+    g.connect(out); g.connect(this.space());
+    // swell: builds to the end; the rest breathe in and out slowly
+    g.gain.setValueAtTime(0.0001, at);
+    if (kind === "swell") { g.gain.exponentialRampToValueAtTime(vol * 0.15, at + dur * 0.3); g.gain.exponentialRampToValueAtTime(vol, at + dur); g.gain.exponentialRampToValueAtTime(0.0001, at + dur + 0.5); }
+    else { g.gain.exponentialRampToValueAtTime(vol, at + dur * 0.3); g.gain.setValueAtTime(vol, at + dur * 0.65); g.gain.exponentialRampToValueAtTime(0.0001, at + dur); }
+    // the throat: a resonant low-pass riding with the pitch
+    const throat = c.createBiquadFilter(); throat.type = "lowpass"; throat.Q.value = 7;
+    let into: AudioNode = throat;
+    if (kind === "enraged") { const sh = c.createWaveShaper(); sh.curve = grit(); const pre = c.createGain(); pre.gain.value = 1.6; pre.connect(sh); sh.connect(throat); into = pre; }
+    throat.connect(g);
+    const lfo = c.createOscillator(), depth = c.createGain();
+    lfo.frequency.value = kind === "nightmare" ? 3.1 + Math.random() : 4.5;
+    depth.gain.value = kind === "nightmare" ? 45 : kind === "swell" ? 20 : 9; // (cents)
+    lfo.connect(depth); lfo.start(at); lfo.stop(at + dur + 0.6);
+    for (const [ratio, lvl, type] of [[1, 1, "sine"], [2, 0.35, "triangle"], [3, 0.14, "sine"]] as [number, number, OscillatorType][]) {
+      const o = c.createOscillator(), og = c.createGain();
+      o.type = type; og.gain.value = lvl;
+      o.frequency.setValueAtTime(base * ratio * Math.pow(2, pts[0][1] / 12), at);
+      for (const [x, st] of pts.slice(1)) o.frequency.exponentialRampToValueAtTime(base * ratio * Math.pow(2, st / 12), at + x * dur);
+      depth.connect(o.detune);
+      o.connect(og); og.connect(into); o.start(at); o.stop(at + dur + 0.6);
+    }
+    throat.frequency.setValueAtTime(base * 3, at);
+    for (const [x, st] of pts.slice(1)) throat.frequency.exponentialRampToValueAtTime(base * (kind === "swell" ? 3 + 5 * x : 4) * Math.pow(2, st / 12), at + x * dur);
+    // a soft upsweep near the end of a happy song
+    if (kind === "happy" || kind === "sleep") {
+      const t0 = at + dur * 0.7, ug = c.createGain(); ug.connect(g);
+      ug.gain.setValueAtTime(0.0001, t0); ug.gain.exponentialRampToValueAtTime(0.12, t0 + 0.25); ug.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.6);
+      const u = this.osc("sine", base * 4, t0, 0.65, ug); u.frequency.exponentialRampToValueAtTime(base * 7, t0 + 0.55);
+    }
+    // low clicks and groans now and then (not in the swell: it stays one clear sound)
+    if (kind !== "swell") for (let k = 0, n = 1 + Math.floor(Math.random() * 3); k < n; k++) {
+      const t0 = at + dur * (0.15 + 0.7 * Math.random()), bp = c.createBiquadFilter(), cg = c.createGain();
+      bp.type = "bandpass"; bp.frequency.value = 250 + Math.random() * 350; bp.Q.value = 3;
+      cg.connect(out); cg.connect(this.space()); this.env(cg, t0, vol * 0.5, 0.001, 0.025);
+      bp.connect(cg); this.noiseBurst(t0, 0.03, bp, Math.random());
+    }
+  }
+
+  /** The legends' space: a long, dark generated reverb (built once). */
+  private space(): GainNode {
+    if (this.ocean) return this.ocean;
+    const c = this.ctx, len = Math.floor(c.sampleRate * 4.5), ir = c.createBuffer(2, len, c.sampleRate);
+    let r = 4242;
+    for (let ch = 0; ch < 2; ch++) {
+      const d = ir.getChannelData(ch);
+      for (let i = 0; i < len; i++) { r = (Math.imul(r, 1103515245) + 12345) >>> 0; const t = i / c.sampleRate; d[i] = ((r / 4294967296) * 2 - 1) * Math.exp(-t * 1.3) * (t < 0.03 ? t / 0.03 : 1); }
+    }
+    const conv = c.createConvolver(), dark = c.createBiquadFilter(), wet = c.createGain();
+    conv.buffer = ir; dark.type = "lowpass"; dark.frequency.value = 1800; wet.gain.value = this.T.whale.reverb;
+    this.ocean = c.createGain();
+    this.ocean.connect(conv); conv.connect(dark); dark.connect(wet); wet.connect(this.out);
+    return this.ocean;
   }
 }
 

@@ -66,6 +66,7 @@ export interface Tuning {
     hit: { volume: number; gap: number }; fill: { volume: number; octaves: number }; invited: { volume: number };
     enraged: { volume: number; gap: number }; happy: { volume: number; gap: number };
     snore: { volume: number; range: number }; nightmare: { volume: number }; windup: { volume: number; length: number };
+    whale: { volume: number; speed: number; depth: number; reverb: number; sleepEvery: number };
   };
   music: { on: boolean; volume: number; nearDist: number; farDist: number; floor: number; muffle: number; clear: number; distort: number; src: string };
   /** The home speaker ring's boot-up at the start (Ed, 2026-10-04): seconds before the first wave's countdown begins. */

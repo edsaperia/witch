@@ -35,5 +35,5 @@ for (const r of results) {
   h.write("data", 36); h.writeUInt32LE(pcm.length, 40);
   writeFileSync(resolve(root, `previews/sfx/${r.name}.wav`), Buffer.concat([h, pcm]));
 }
-ok(results.length >= 22, `${results.length} effects rendered (previews/sfx/*.wav)`);
+ok(results.length >= 24, `${results.length} effects rendered (previews/sfx/*.wav)`);
 process.exit(failed ? 1 : 0);

@@ -34,6 +34,7 @@ export function voiceOf(c: Creature, t: Tuning): CreatureVoice {
     pitch: t.sfx.voice.animals.pitch * Math.pow(2, -0.65 * (c.level - 1)) * size * (0.85 + 0.3 * a),
     formants: (1.3 - 0.13 * c.level) * (k < 1 ? 1.12 : k > 1 ? 0.9 : 1) * (0.92 + 0.16 * b),
     wave: a < 0.5 ? "sawtooth" : a < 0.8 ? "square" : "triangle",
+    legend: !!c.boss,
   };
 }
 

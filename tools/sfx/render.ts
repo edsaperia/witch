@@ -6,7 +6,7 @@ import style from "../../config/music-style.json";
 import { voiceOf } from "../../src/platform/sfxCues";
 import type { Creature } from "../../src/rules/creatures";
 
-const v = (species: string, level: number) => voiceOf({ species, level } as unknown as Creature, TUNING);
+const v = (species: string, level: number) => voiceOf({ species, level, boss: level === 3 } as unknown as Creature, TUNING);
 
 type Play = (s: Sfx) => void;
 const SOUNDS: [string, number, Play][] = [
@@ -16,8 +16,9 @@ const SOUNDS: [string, number, Play][] = [
   ["speak-young-grumpy", 0.9, s => s.speak(v("fox", 1), "grumpy")],
   ["speak-adult-enraged", 0.9, s => s.speak(v("wolf", 2), "enraged")],
   ["speak-swarm-enraged", 0.9, s => s.speak(v("woodlouse", 1), "enraged")],
-  ["speak-legend-enraged", 1.2, s => s.speak(v("bear", 3), "enraged")],
-  ["legend-windup", 1.6, s => s.windup(0, 1, v("bear", 3))],
+  ["speak-legend-enraged", 5, s => s.speak(v("bear", 3), "enraged")],
+  ["legend-happy", 4.5, s => s.speak(v("bear", 3), "happy")],
+  ["legend-windup", 3, s => s.windup(0, 1, v("bear", 3))],
   ["fight-crowd", 1.4, s => { const sp = ["wolf", "fox", "boar", "hare", "owl", "stoat", "badger", "toad"]; sp.forEach((x, i) => s.speak(v(x, (i % 3) as number), i % 2 ? "enraged" : "happy", (i % 5) / 2 - 1, 1 - i * 0.1)); }],
   ["hit", 0.8, s => s.hit(0)],
   ["hit-spent", 0.5, s => s.hit(0, 1, true)],
@@ -31,8 +32,8 @@ const SOUNDS: [string, number, Play][] = [
   ["enraged-crowd", 0.8, s => s.enraged(0, 1, 6)],
   ["happy", 0.6, s => s.happy(0)],
   ["windup", 1.6, s => s.windup(0)],
-  ["snore", 3, s => s.legends(1, 1, 0)],
-  ["nightmare", 3, s => s.legends(1, 0.5, 1)],
+  ["legend-sleep", 5, s => s.legends(1, 1, 0)],
+  ["legend-nightmare", 5, s => s.legends(1, 0.5, 1)],
 ];
 
 async function render(name: string, seconds: number, play: Play) {
