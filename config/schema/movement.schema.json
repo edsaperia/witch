@@ -1,0 +1,331 @@
+{
+  "type": "object",
+  "properties": {
+    "repick": {
+      "type": "number",
+      "minimum": 0
+    },
+    "packRadius": {
+      "type": "number",
+      "minimum": 0
+    },
+    "profiles": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "speed": {
+            "type": "number",
+            "minimum": 0
+          },
+          "accel": {
+            "type": "number",
+            "minimum": 0
+          },
+          "fight": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "arrive",
+                    "keepRange",
+                    "orbit",
+                    "strafe",
+                    "slot",
+                    "separation",
+                    "cohesion",
+                    "wander",
+                    "dodge",
+                    "light"
+                  ]
+                },
+                "w": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "radius": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "swap": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "near": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "far": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "kind",
+                "w"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "tactics": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "surround",
+                    "pincer",
+                    "hitAndRun",
+                    "volley",
+                    "swarm",
+                    "flank",
+                    "none"
+                  ]
+                },
+                "w": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "kind",
+                "w"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "move": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "charge",
+                  "ambush",
+                  "burrow",
+                  "leap",
+                  "dig",
+                  "block",
+                  "trail",
+                  "flash"
+                ]
+              },
+              "cooldown": {
+                "type": "number",
+                "minimum": 0
+              },
+              "from": {
+                "type": "number",
+                "minimum": 0
+              },
+              "to": {
+                "type": "number",
+                "minimum": 0
+              },
+              "speed": {
+                "type": "number",
+                "minimum": 0
+              },
+              "time": {
+                "type": "number",
+                "minimum": 0
+              },
+              "windup": {
+                "type": "number",
+                "minimum": 0
+              },
+              "accel": {
+                "type": "number",
+                "minimum": 0
+              },
+              "brake": {
+                "type": "number",
+                "minimum": 0
+              },
+              "turn": {
+                "type": "number",
+                "minimum": 0
+              },
+              "overshoot": {
+                "type": "number",
+                "minimum": 0
+              },
+              "trigger": {
+                "type": "number",
+                "minimum": 0
+              },
+              "height": {
+                "type": "number",
+                "minimum": 0
+              },
+              "pair": {
+                "type": "boolean"
+              },
+              "backup": {
+                "type": "number",
+                "minimum": 0
+              },
+              "armour": {
+                "type": "number",
+                "minimum": 0
+              },
+              "radius": {
+                "type": "number",
+                "minimum": 0
+              },
+              "strike": {
+                "type": "boolean"
+              },
+              "curl": {
+                "type": "number",
+                "minimum": 0
+              },
+              "every": {
+                "type": "number",
+                "minimum": 0
+              },
+              "slow": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "kind",
+              "cooldown",
+              "time"
+            ],
+            "additionalProperties": false
+          },
+          "pursuit": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "speed",
+          "accel",
+          "fight"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "legends": {
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "phase2": {
+          "type": "object",
+          "properties": {
+            "at": {
+              "type": "number",
+              "minimum": 0
+            },
+            "pattern": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "cooldown": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "at",
+            "pattern",
+            "speed",
+            "cooldown"
+          ],
+          "additionalProperties": false
+        },
+        "bySpecies": {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      },
+      "required": [
+        "pattern",
+        "phase2",
+        "bySpecies"
+      ],
+      "additionalProperties": false
+    },
+    "bodies": {
+      "type": "object",
+      "properties": {
+        "radius": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "level": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "factor": {
+          "type": "number",
+          "minimum": 0
+        },
+        "margin": {
+          "type": "number",
+          "minimum": 0
+        },
+        "push": {
+          "type": "number",
+          "minimum": 0
+        },
+        "neighbours": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cell": {
+          "type": "number",
+          "minimum": 0
+        },
+        "range": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "radius",
+        "level",
+        "factor",
+        "margin",
+        "push",
+        "neighbours",
+        "cell",
+        "range"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "repick",
+    "packRadius",
+    "profiles",
+    "legends",
+    "bodies"
+  ],
+  "additionalProperties": false
+}

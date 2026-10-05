@@ -5,7 +5,7 @@ import { LOOKS } from "../rules/map";
 import { AREA_BY_ID, areaAssets } from "../../art/areas.js";
 import { rng } from "../rules/random";
 import type { Style } from "./style";
-import { rigSprites, type RigMeta } from "./rig/rigBuild";
+import { rigSprites, type RigGear, type RigMeta } from "./rig/rigBuild";
 
 type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
 export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** A wild creature's eye pixels (1), for eyeshine (Ed, v244). */ eyes?: Uint8Array; /** Its sway mask (#34: grey, 0 rigid to 255 the leafy tips), packed into the normal map's alpha. */ S?: AnyCanvas }
@@ -146,7 +146,7 @@ export function packPixels(sprites: Baked[], width = 2048): AtlasPixels {
   return { albedo, normal, width: W, height: H, frames };
 }
 
-export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: number } | { kind: "creature"; id: string; style: Style } | { kind: "rig"; id: string; species: string; level: number; style: Style }
+export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: number } | { kind: "creature"; id: string; style: Style } | { kind: "rig"; id: string; species: string; level: number; style: Style; /** a party animal's gear, baked on */ gear?: RigGear }
   /** A creature enraged by a wave (Stage 4 playtest): angry glowing red eyes and a darker tint. */
   | { kind: "woken"; id: string; species: string; style: Style }
   | { kind: "face"; id: string; species: string; face: string; style: Style }
@@ -330,11 +330,19 @@ function partyWitchSprites(st: Style, seed: number | null, mk: MakeCanvas, genom
   return { sprites, witch };
 }
 
+/** A party animal's gear (seeded by its id). Leashed: its seeded gear and the glowing collar in
+ *  `colour`. Happy (colour null): the gear without the collar, always at least a hat so it reads as
+ *  dressed up. The party bake and the live rig's party pages (shoes aside) both wear it. */
+export function partyGearOf(seed: number, colour: number[] | null): RigGear & { shoes: string | null } {
+  const g = Art.partyGear(seed) as { hat: number | null; glasses: string | null; shoes: string | null };
+  return { collar: colour ?? null, hat: !colour && g.hat === null ? seed % 3 : g.hat, glasses: g.glasses, shoes: g.shoes };
+}
+
 export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "partyObjects") { const { sprites, party } = partyObjectSprites(job.style, mk); return { px: packPixels(sprites, 2048), party }; }
   if (job.kind === "partyWitch") { const { sprites, witch } = partyWitchSprites(job.style, job.seed, mk, job.genome ?? null); return { px: packPixels(sprites, 2048), witch }; }
   if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };
-  if (job.kind === "rig") { const r = rigSprites(job.style, job.species, job.level, mk); return r ? { px: r.px, rig: r.meta } : { px: packPixels([], 16) }; }
+  if (job.kind === "rig") { const r = rigSprites(job.style, job.species, job.level, mk, job.gear ?? null); return r ? { px: r.px, rig: r.meta } : { px: packPixels([], 16) }; }
   if (job.kind === "relics") { const { sprites, relics, layouts } = relicSprites(job.style, mk); return { px: packPixels(sprites, 2048), relics, layouts }; }
   if (job.kind === "pathPieces") { const { sprites, pieces } = pathPieceSprites(job.style, mk); return { px: packPixels(sprites, 2048), pieces }; }
   if (job.kind === "scenes") { const { sprites, scenes } = sceneSprites(job.style, mk); return { px: packPixels(sprites, 2048), scenes }; }
@@ -344,10 +352,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "woken") return { px: packPixels(creatureSprites(job.style, job.species, mk, { woken: true, face: "angry" }), 2048) };
   if (job.kind === "face") return { px: packPixels(creatureSprites(job.style, job.species, mk, { face: job.face }), 2048) };
   if (job.kind === "party") {
-    // Leashed: its seeded gear and the glowing collar. Happy (no colour): the gear without the collar,
-    // always at least a hat so it reads as dressed up. Both smiling.
-    const gear = { ...Art.partyGear(job.seed), collar: job.colour ?? null, face: "happy" };
-    if (!job.colour && gear.hat === null) gear.hat = job.seed % 3;
+    const gear = { ...partyGearOf(job.seed, job.colour), face: "happy" }; // (both smiling)
     return { px: packPixels(creatureSprites(job.style, job.species, mk, gear), 2048) };
   }
   const { sprites, layout, floor } = typeSprites(job.style, job.seed, job.id, job.K, mk);

@@ -990,7 +990,15 @@
         "on": {
           "type": "boolean"
         },
-        "links": {
+        "ahead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "behind": {
+          "type": "number",
+          "minimum": 0
+        },
+        "behindBright": {
           "type": "number",
           "minimum": 0
         },
@@ -1033,11 +1041,11 @@
         "depart": {
           "type": "object",
           "properties": {
-            "avoid": {
+            "past": {
               "type": "number",
               "minimum": 0
             },
-            "past": {
+            "avoid": {
               "type": "number",
               "minimum": 0
             }
@@ -1051,7 +1059,9 @@
       },
       "required": [
         "on",
-        "links",
+        "ahead",
+        "behind",
+        "behindBright",
         "advance",
         "fade",
         "brightness",
@@ -1066,30 +1076,6 @@
     "witch": {
       "type": "object",
       "properties": {
-        "lightFloor": {
-          "type": "number",
-          "minimum": 0
-        },
-        "lightTint": {
-          "type": "number",
-          "minimum": 0
-        },
-        "lightRim": {
-          "type": "number",
-          "minimum": 0
-        },
-        "heightSmooth": {
-          "type": "number",
-          "minimum": 0
-        },
-        "heightLookAhead": {
-          "type": "number",
-          "minimum": 0
-        },
-        "heightClearance": {
-          "type": "number",
-          "minimum": 0
-        },
         "knock": {
           "type": "object",
           "properties": {
@@ -1146,6 +1132,30 @@
             "immune"
           ],
           "additionalProperties": false
+        },
+        "lightFloor": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lightTint": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lightRim": {
+          "type": "number",
+          "minimum": 0
+        },
+        "heightSmooth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "heightLookAhead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "heightClearance": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -1831,6 +1841,10 @@
     "treehouse": {
       "type": "object",
       "properties": {
+        "gap": {
+          "type": "number",
+          "minimum": 0
+        },
         "angle": {
           "type": "number"
         },
@@ -1843,10 +1857,6 @@
           "minimum": 0
         },
         "lightStrength": {
-          "type": "number",
-          "minimum": 0
-        },
-        "gap": {
           "type": "number",
           "minimum": 0
         }
@@ -1875,6 +1885,32 @@
       "required": [
         "margin",
         "gap"
+      ],
+      "additionalProperties": false
+    },
+    "rig": {
+      "type": "object",
+      "properties": {
+        "minPx": {
+          "type": "number",
+          "minimum": 0
+        },
+        "alwaysLevels": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "baby",
+              "young",
+              "adult",
+              "legend"
+            ]
+          }
+        }
+      },
+      "required": [
+        "minPx",
+        "alwaysLevels"
       ],
       "additionalProperties": false
     },
@@ -2562,6 +2598,11 @@
         "perAnimalHitGap": {
           "type": "number",
           "minimum": 0
+        },
+        "fireSlow": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
         }
       },
       "required": [
@@ -2953,15 +2994,15 @@
               "type": "number",
               "minimum": 0
             },
+            "knockdown": {
+              "type": "number",
+              "minimum": 0
+            },
             "duck": {
               "type": "number",
               "minimum": 0
             },
             "duckTime": {
-              "type": "number",
-              "minimum": 0
-            },
-            "knockdown": {
               "type": "number",
               "minimum": 0
             }
@@ -2971,6 +3012,55 @@
             "knockdown",
             "duck",
             "duckTime"
+          ],
+          "additionalProperties": false
+        },
+        "impact": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "small": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "small"
+          ],
+          "additionalProperties": false
+        },
+        "land": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "gap"
+          ],
+          "additionalProperties": false
+        },
+        "stir": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume"
           ],
           "additionalProperties": false
         },
@@ -3099,6 +3189,26 @@
             "fade": {
               "type": "number",
               "minimum": 0
+            },
+            "murmur": {
+              "type": "number",
+              "minimum": 0
+            },
+            "clinks": {
+              "type": "number",
+              "minimum": 0
+            },
+            "clinkEvery": {
+              "type": "number",
+              "minimum": 0
+            },
+            "balloons": {
+              "type": "number",
+              "minimum": 0
+            },
+            "squeakEvery": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -3107,7 +3217,12 @@
             "bees",
             "birds",
             "birdEvery",
-            "fade"
+            "fade",
+            "murmur",
+            "clinks",
+            "clinkEvery",
+            "balloons",
+            "squeakEvery"
           ],
           "additionalProperties": false
         },
@@ -3160,6 +3275,9 @@
         "windup",
         "lost",
         "ouch",
+        "impact",
+        "land",
+        "stir",
         "knock",
         "charge",
         "relic",
@@ -3204,6 +3322,10 @@
         },
         "src": {
           "type": "string"
+        },
+        "audible": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -3213,6 +3335,7 @@
         "farDist",
         "floor",
         "muffle",
+        "audible",
         "clear",
         "distort",
         "src"
@@ -4534,6 +4657,7 @@
     "moonbeams",
     "treehouse",
     "home",
+    "rig",
     "looks",
     "bubbles",
     "scenes",

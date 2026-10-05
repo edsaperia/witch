@@ -2,6 +2,7 @@
 // shadow every frame, and the berries growing back and nibbled.
 import type { CreatureArt } from "../assets";
 import { ENRAGED_TINT, dances, expression, lookOf } from "../looks";
+import type { RigGear } from "../rig/rigBuild";
 import type { ShadowInstance } from "../shadows";
 import { SpriteBatch, type SpriteInstance } from "../sprites";
 import { beatTime } from "../../rules/beat";
@@ -13,6 +14,8 @@ import { sigilColour } from "../../../art/generator.js";
 import type { View } from "../view";
 import { inView } from "./culling";
 import { mark } from "./pops";
+
+const WOKEN_GEAR: RigGear = { woken: true };
 
 export function drawBerries(v: View, time: number): void {
   const g = v.game, B = g.berries, w = g.witch, R = g.tuning.haze.far, f = v.berryBatch.atlas.frames[0], items: SpriteInstance[] = [];
@@ -48,7 +51,7 @@ export function drawCreatures(v: View, time = 0): void {
   const per = new Map<string, SpriteInstance[]>(), arts = new Map<string, CreatureArt>(), creatureShadows: ShadowInstance[] = [];
   const beat = 60 / g.tuning.beat.bpm, bt = beatTime(g.beat, time); // beat-time, on the beat clock
   let n = 0;
-  v.rig?.begin(time);
+  v.rig?.begin(time, g.tuning.rig, g.witch.mode !== "rising" && g.witch.mode !== "treetop");
   for (const c of g.creatures) {
     if (c.gone || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
     if (c.burrow) continue; // under the ground (Stage 5: the mole), a mound shows where (leash view)
@@ -101,7 +104,7 @@ export function drawCreatures(v: View, time = 0): void {
     if (sleeping) glow = -2 - W.moss; else if (rising < 1) glow = -2 - W.moss * (1 - rising);
     // Restless in its sleep (#87): it tosses in bursts, and turns over when it's bad.
     const toss = st === "asleep" ? restlessness(c) : 0, fit = toss ? toss * Math.max(0, Math.sin(time * 1.3 + c.id)) ** 2 : 0;
-    if (!(v.rig && !party && !sleeping && rising >= 1 && v.rig.add(c, { y: dance + hop + sunk, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face }))) // the rig draws it, if it can
+    if (!(v.rig && !sleeping && rising >= 1 && v.rig.add(c, { y: dance + hop + sunk, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined }))) // the rig draws it, if it can
       l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id), y: dance + hop + sunk, z: c.z, frame, flip: (c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1), fresh, glow, scale });
     v.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * v.mpp * scale + dance + hop + sunk); // its health bar goes over it
     creatureShadows.push({ x: c.x, z: c.z, w: frame.w * v.mpp * 0.7, d: frame.w * v.mpp * 0.25 });

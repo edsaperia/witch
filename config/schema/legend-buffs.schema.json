@@ -1,0 +1,79 @@
+{
+  "type": "object",
+  "properties": {
+    "how": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "species": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "shot",
+              "move"
+            ]
+          },
+          "label": {
+            "type": "string"
+          },
+          "scale": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "add": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "mods": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "required": [
+          "name",
+          "kind",
+          "label"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "how",
+    "limits",
+    "species"
+  ],
+  "additionalProperties": false
+}

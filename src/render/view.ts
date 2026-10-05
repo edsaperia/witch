@@ -2,6 +2,9 @@
 // (window size / pixel size) and stretched with nearest-neighbour by the browser, so every art
 // pixel stays a crisp square.
 import { RigView, rigOn } from "./rig/rigView";
+import type { RigGear } from "./rig/rigBuild";
+import type { Creature } from "../rules/creatures";
+import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { sigilColour } from "../../art/generator.js";
@@ -49,6 +52,7 @@ import { LeyLines } from "./leylines";
 import { leyChain, leyKey } from "../rules/leylines";
 import { SPRITE_UNIFORMS, SpriteBatch } from "./sprites";
 import type { Style } from "./style";
+
 // The view's parts, each in its own module under view/ (issue #122), as functions of the View:
 // what the camera can see, the pop check, the scenery rebuild, creatures and berries, home's
 // pieces (markers, speakers, treehouse), and the lights. Its fields they share aren't private.
@@ -145,7 +149,6 @@ export class View {
   private borders: BorderView;
   private music = new MusicIndicator(document.body);
   private nextStones: StoneIndicator[] = [];
-  private afterNextStones: StoneIndicator[] = []; // smaller and dimmer (Ed, 2026-10-04)
   readonly minimap: Minimap;
   /** Metre rulers and a ground grid (G). */
   readonly rulers = new Rulers(document.body);
@@ -158,6 +161,8 @@ export class View {
   shadows: ShadowBatch;
   /** The live rig (#79 stage 5, ?rig=1): creatures put together from parts each frame. */
   readonly rig: RigView | null;
+  /** The camera's snap this frame, in the picture's pixels (x right, y down): what main.ts shifts the canvas by. */
+  readonly subpixel = { x: 0, y: 0 };
   shadowList: ShadowInstance[] = [];
   private mist: Mist | null = null;
   width = 1;
@@ -259,7 +264,7 @@ export class View {
     this.partyView = new PartyView(this.assets.soundsystems, this.mpp);
     this.strings = new StringLightsView(this.scene, game);
     this.leashView = new LeashView(this.scene, game);
-    this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // ?rig=1: the live rig (#79)
+    this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // the live rig (#79): on unless ?rig=0
     this.lasers = new Lasers(this.scene, game);
     this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z), game.map);
     this.scene.add(...this.ley.meshes);
@@ -400,6 +405,14 @@ export class View {
   nibbles: { x: number; z: number; at: number }[] = [];
   /** When each party animal evolved (game time): the flash, the pop and the sparkles. */
   readonly evolvedAt = new Map<number, number>();
+  /** A party animal's gear for its rig page (as its party bake wears it), kept per creature and look. */
+  private rigGears = new Map<string, RigGear>();
+  rigGear(c: Creature, leashed: boolean): RigGear {
+    const k = `${c.id}|${leashed ? 1 : 0}`;
+    let g = this.rigGears.get(k);
+    if (!g) { if (this.rigGears.size > 2000) this.rigGears.clear(); this.rigGears.set(k, (g = partyGearOf(c.id, leashed ? sigilColour(c.species) : null))); }
+    return g;
+  }
   // Campfires flicker, magic stones pulse; their props are drawn (ponds are in the ground).
   fire = new THREE.Vector3(1, 0.5, 0.16);
   runeCyan = new THREE.Vector3(0.3, 0.9, 1);
@@ -507,9 +520,13 @@ export class View {
       this.sky.update(k, pose.tx, pose.tz, far, 2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (this.width / this.height));
     }
     this.time("sky");
-    const u = target.dot(up), r = target.x;
-    target.addScaledVector(up, Math.round(u / wpp) * wpp - u);
-    target.x += Math.round(r / wpp) * wpp - r;
+    const u = target.dot(up), r = target.x, eu = Math.round(u / wpp) * wpp - u, er = Math.round(r / wpp) * wpp - r;
+    target.addScaledVector(up, eu);
+    target.x += er;
+    // What the snap took off (in the picture's pixels): main.ts moves the canvas back by it, in whole
+    // screen pixels, so the art stays on its grid but the view glides (Ed, 2026-10-05: whole art-pixel
+    // steps of the camera felt like a low framerate). Moved right, the picture moves left; up, down.
+    this.subpixel.x = er / wpp; this.subpixel.y = -eu / wpp;
     const back = new THREE.Vector3(0, Math.sin(a), Math.cos(a)).multiplyScalar(pose.distance);
     this.camera.position.copy(target).add(back);
     // Over tall hills a rise between the camera and her could hide her: lift the camera (eased)
@@ -558,7 +575,7 @@ export class View {
       const wx = g.witch.x, wz = g.witch.z, R = SPRITE_UNIFORMS.uRight.value;
       const a = placed(this.v3.set(wx, 0, wz)).project(this.camera).x, b = placed(this.v3.set(wx + R.x * 10, 0, wz + R.z * 10)).project(this.camera).x;
       const pxPerM = Math.max(1e-3, (Math.abs(b - a) * 0.5 * this.width) / 10);
-      LIGHT_UNIFORMS.uGlowR.value = ((0.5 * cut.screenFraction + cut.edge) * this.width / pxPerM) * t.glowToCutout * g.buffs.totals.glowReach; // a glow-reach legend buff widens it
+      LIGHT_UNIFORMS.uGlowR.value = ((0.5 * cut.screenFraction + cut.edge) * this.width / pxPerM) * t.glowToCutout;
     }
     SPRITE_UNIFORMS.uDebugCull.value = this.debugCull ? 1 : 0;
 
@@ -578,7 +595,7 @@ export class View {
       // in (Ed, 2026-10-05), the colour partified areas and soundsystems use: its creature's sigil's.
       // (advance "wave": it moves on only when the next area's wave arrives, not when its quest is done)
       const P = t.leyLines.advance === "wave" ? { ...g.party, leyDone: undefined } : g.party, M = g.map, home = new THREE.Vector3(0.8, 0.7, 1);
-      this.ley.update(leyKey(P), () => leyChain(P, M, t.leyLines.links + 1), s => {
+      this.ley.update(leyKey(P), () => leyChain(P, M, t.leyLines.ahead, t.leyLines.behind), s => {
         return this.markerArt.colour.get(AREA_TYPES[M.typeOf(s.cell[0], s.cell[1])].creature) ?? home;
       }, time, canopyShown(w));
     }
@@ -722,8 +739,8 @@ export class View {
     const df = g.map.dancefloor;
     this.music.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, df.x, df.z, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, this.debugReadouts);
     this.minimap.update(g.party, w.x, w.z);
-    // The next waking stones (one per witch each wave: Ed, 2026-10-04), when they're off screen,
-    // and smaller, dimmer cues for the ones after.
+    // The next waking stones (one per witch each wave: Ed, 2026-10-04), when they're off screen; only
+    // those (Ed, 2026-10-05: "We only need the UI indicator for the next one, not the next two").
     {
       const cw = this.canvas.clientWidth || window.innerWidth, ch = this.canvas.clientHeight || window.innerHeight, cd = waveCountdown(g.party, g.map, time);
       const cue = (list: StoneIndicator[], cells: readonly (readonly [number, number])[], make: () => StoneIndicator, fill: number, label?: string) => {
@@ -736,8 +753,7 @@ export class View {
         });
       };
       // Pausing holds the countdown; while home boots up, the next ring fills with the boot.
-      cue(this.nextStones, g.party.next, () => new StoneIndicator(document.body), cd.booting ? cd.boot : cd.gone, cd.booting ? `booting ${Math.ceil(cd.bootLeft)} s` : undefined);
-      cue(this.afterNextStones, g.party.afterNext, () => new StoneIndicator(document.body, 2.5, 0.6), cd.booting ? 0 : cd.gone * 0.5);
+      cue(this.nextStones, g.party.next, () => new StoneIndicator(document.body), cd.booting ? cd.boot : cd.gone, cd.booting ? `booting ${mmss(cd.bootLeft)}` : undefined);
     }
     this.time("hud");
     this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
@@ -784,3 +800,6 @@ export class View {
     this.stats.gameplay = this.stats.creatures + this.propBatch.count + this.soundBatch.count;
   }
 }
+
+/** Seconds as "4:59" from a minute up, "42 s" under. */
+function mmss(s: number): string { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; }
