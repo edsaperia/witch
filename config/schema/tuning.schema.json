@@ -3317,6 +3317,10 @@
         },
         "src": {
           "type": "string"
+        },
+        "audible": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -3326,6 +3330,7 @@
         "farDist",
         "floor",
         "muffle",
+        "audible",
         "clear",
         "distort",
         "src"

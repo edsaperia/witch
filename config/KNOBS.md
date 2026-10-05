@@ -785,6 +785,7 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.clear` | number | 0 to … |
 | `music.distort` | number | 0 to … |
 | `music.src` | string |  |
+| `music.audible` | number | 0 to … |
 
 ## `forecast`
 
