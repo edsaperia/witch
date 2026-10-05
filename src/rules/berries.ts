@@ -73,7 +73,7 @@ export const toEvolve = (level: Level, t: Tuning, species?: string): number => {
 /** Who may eat berries: party animals that aren't legends (and aren't already evolving). */
 /** Whether a party animal goes for berries: not mid-fight or evolving; still able to evolve
  *  (below adult), or hurt (a berry heals it to full, Ed 2026-10-04: so a hurt one wants one whatever its level). */
-export const canEat = (c: Creature, s: BerryState): boolean => c.leashed && !s.evolving.has(c.id) && !c.fight?.target && (c.level < TOP_LEVEL || hurtNow(c));
+export const canEat = (c: Creature, s: BerryState): boolean => c.leashed && !c.travelling && !s.evolving.has(c.id) && !c.fight?.target && (c.level < TOP_LEVEL || hurtNow(c));
 const hurtNow = (c: Creature) => c.hp !== undefined && c.hp < creatureMaxHp(c);
 
 /** The berry bushes and the berries on them, from the seed: in every area of the playable map,

@@ -149,6 +149,8 @@ export class LeashView {
   /** Short-lived effects: hit sparks, puffs, splashes, released leashes, teleport sparkles, quake rings. */
   /** Legends seen waking (their burst of soil shown once). */
   private woke = new Set<number>();
+  /** Whether each party animal was travelling last frame (to pop as it joins her posse again). */
+  private travelling = new Map<number, boolean>();
   private fx: { kind: string; x: number; y: number; z: number; at: number; life: number; r: number; g: number; b: number; seed: number; tx?: number; tz?: number; size?: number; /** a ring's dots (else 36) and their size (else 0.7) */ n?: number; dot?: number }[] = [];
   /** The screen shake (a legend's quake): when it started and how hard. */
   private shakeAt = -Infinity;
@@ -713,6 +715,23 @@ export class LeashView {
           const k = 1 - ph / 0.7;
           this.standing.add(from.x + (c.x - from.x) * k, from.y + (0.6 - from.y) * k + Math.sin(k * Math.PI) * 1.2, from.z + (c.z - from.z) * k, 0.35, dot, col.r, col.g, col.b, 1);
         }
+      }
+      // Travelling (rules/travel.ts; Ed, 2026-10-05: "the 'leash' graphic could become their travel
+      // path"): the leash runs along its route to her or its sigil, a dotted line on the ground
+      // flowing that way, shortening as it walks; joining her posse again, a pop and back to the thread.
+      const was = this.travelling.get(id) ?? false;
+      if (was && !c.travelling) { this.fx.push({ kind: "ring", x: c.x, y: 0, z: c.z, at: time, life: 0.5, r: col.r, g: col.g, b: col.b, seed: 0, size: 2.4, n: 18, dot: 0.6 }); this.fx.push({ kind: "spark", x: c.x, y: 1, z: c.z, at: time, life: 0.5, r: col.r, g: col.g, b: col.b, seed: id * 7 + time, size: 2 }); }
+      this.travelling.set(id, !!c.travelling);
+      if (c.travelling && c.route) {
+        const R = c.route, way = [{ x: c.x, z: c.z }, ...R.points.slice(Math.min(R.next, R.points.length - 1), -1), { x: lp.x, z: lp.z }], gap = 2.2, flow = (time * 3) % gap;
+        let carry = gap - flow;
+        for (let i = 1; i < way.length; i++) {
+          const a = way[i - 1], b = way[i], seg = Math.hypot(b.x - a.x, b.z - a.z);
+          let u = carry;
+          for (; u < seg; u += gap) { const k = u / seg; this.flat.add(a.x + (b.x - a.x) * k, 0, a.z + (b.z - a.z) * k, 0.45, dot, col.r, col.g, col.b, 0.8); }
+          carry = u - seg; // (the spacing carries on round the corner)
+        }
+        continue;
       }
       const d = Math.hypot(c.x - lp.x, c.z - lp.z);
       if (B.thread && d > L.length * 0.85) {

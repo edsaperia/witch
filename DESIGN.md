@@ -278,6 +278,15 @@ A counter is **shown**: a hit that's strong against its target flashes big and g
 
 **Debug arena** (Ed, to see and judge patterns): `?arena=wolf*4,beetle*3` spawns, in the home clearing, your side (parked by sigils: the first group) against the wild side (the second); `wolf*4@2` sets the level (default young, 1). Hers at `@3` are happy area legends guarding the arena; `home` is home's own happy legend; a wild group ending `!` besieges home's soundsystem. So `?arena=home,wolf*6@2!` shows a happy legend defending home against a siege. It's set below the dancefloor; she stands behind her side (the wild go for the nearest, so hers first). `J` sets the arena up again.
 
+### Travelling and posse (Ed, 2026-10-05)
+
+Ed: "when you have leashed creatures and are flying far in treetop mode, or you plant a sigil for a creature far away from where it is, those creatures have to walk a long way ... We probably don't want party animals getting into fights while they're just traversing the world when you're not looking." Approved design (knobs in `config/travel.json`):
+
+- **Posse:** a party animal within about 60 m of the witch while she's on the ground, or, at a placed sigil, inside the sigil's area or within that distance of it. It fights, is noticed and defends as ever. The radius is set by the fight's spread (lunges, the hit-and-run ring, pursuit, charges' overshoot) and scales with `fight.scale`. It leaves the posse only at 1.4 times that (no flickering at a fight's edge), and never while it's engaged: while it has a target, or for 4 s after it last had one or was hit.
+- **Travelling:** everything else, including following her through the treetops. Quiet both ways: wild creatures (besiegers too) don't notice or target a traveller, it engages nothing, and area hits pass it by. It eats no berries ("Only leashed creatures eat berries, and only when not in travel mode").
+- **Border routes:** a traveller's route is planned when it sets off and again when its target moves on: the straight line, its points pushed out of every area's middle (at least 50 m from the centre, except near its start and its target), smoothed. It travels at 1.4 times its leash pace, since border routes are longer.
+- **The leash shows the route** (Ed's addition): while travelling, the leash is drawn as a dotted line on the ground along the route to her or the sigil, flowing that way and shortening as it walks; joining the posse again, it pops back to the taut thread.
+
 ### Motion scale (Ed, 2026-10-04, after playing v386)
 
 Ed: "the animals don't move around enough when attacking and defending … I don't really perceive [the new attack patterns]". At the ground camera's 80 to 140 m, the old speeds (2.6 to 4.5 m/s), lunges (1.2 to 1.8 m) and strafes were a few pixels. So fights now play at the camera's scale:

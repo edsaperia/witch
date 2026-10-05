@@ -120,3 +120,4 @@ Literal, stable names for the parts of the game, as Ed and the builders agree th
 - **Debug arena**: `?arena=wolf*4@2,beetle*3`, hers against the wild below the dancefloor; J sets it up again.
 - **Dream / quest**: a sleeping legend's thought bubble, the sigil (in its level's variant) of the creature it wants; put that sigil down in its area before its wave and it's happy (rules/quest.ts).
 - **Friendly area / guards**: an area whose legend's quest is done: its creatures leave her be while it's wild, and guard it as party animals once it's partified. An area whose quest isn't done wakes **angry**.
+- **Posse / travelling**: a party animal near the witch on the ground (about 60 m, `config/travel.json`) or at its sigil is her posse and fights; anywhere else it travels: quiet both ways, along area borders, its leash drawn as its route.

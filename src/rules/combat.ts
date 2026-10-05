@@ -183,7 +183,7 @@ export const maxHp = (level: Level, data: CombatData = COMBAT) => data.levels.hp
 export const creatureMaxHp = (c: { species: string; level: Level }, data: CombatData = COMBAT) => maxHp(c.level, data) * strengthOf(c.species, c.level, data);
 
 /** Whether a creature takes part in fights now: alive, not wandering home neutral, not asleep. */
-export const fighting = (c: Creature) => !c.gone && !c.fleeUntil && !c.wanderTo;
+export const fighting = (c: Creature) => !c.gone && !c.fleeUntil && !c.wanderTo && !(c.leashed && c.travelling); // (a travelling party animal is quiet both ways: rules/travel.ts)
 
 /** Whether anything may attack it: fighting, and not a baby (Ed, 2026-10-04: "No animals should
  *  attack babies"; shots and quakes pass them by, and they can't be beaten in a fight). */
