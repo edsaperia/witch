@@ -34,6 +34,12 @@ export const ARENA_PRESETS: Record<string, string> = {
   volley: "wolf*4@2,raven*4@2", kite: "wolf*3@2,raven*2@2", swarm: "wolf*3@2,bat*6@2", lob: "wolf*3@2,owl*3@2",
   beam: "wolf*3@2,salamander*3@2", ambush: "wolf*3@2,spider*3@2", burrow: "wolf*3@2,mole*3@2", leap: "wolf*3@2,toad*3@2",
   armour: "wolf*3@2,beetle*3@2", legend: "wolf*5@2,bear@3", siege: "home,wolf*6@2!",
+  // Ed's species pass (2026-10-05): one for each new move.
+  swipe: "wolf*4@2,bear*2@2", wide: "wolf*3@2,elk*2@2", pair: "wolf*3@2,stag*2@2", ram: "wolf*3@2,ram*2@2",
+  dig: "wolf*4@2,badger*2@2", block: "raven*3@2,beaver*3@2", flank: "wolf*3@2,fox*3@2", pounce: "wolf*3@2,lynx*2@2",
+  weave: "raven*3@2,stoat*3@2", packflank: "wolf*3@2,marten*4@2", otter: "raven*3@2,otter*3@2", squirrel: "beetle*2@2,squirrel*4@2",
+  dart: "beetle*2@2,dormouse*5@2", roll: "wolf*3@2,hedgehog*3@2", slime: "wolf*3@2,snail*3@2", woodlouse: "wolf*3@2,woodlouse*3@2",
+  strike: "wolf*3@2,snake*3@2", moth: "glowworm*2@2,moth*6@2", flash: "wolf*4@2,glowworm*3@2",
 };
 
 export function setupArena(g: Game, spec: string): void {
