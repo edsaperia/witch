@@ -45,9 +45,16 @@ function prStanding(m, v) {
   if (cutW > .01) for (const s0 of [-1, 1]) { const k = s0 > 0 ? 1 : .6 + r() * .4; m.box(at(H * .95, s0 * (w + cutW * .2)), [H * .45, cutW * k * 1.2, d * 2], M.STONE, { dir: v3.norm(v3.add(up, v3.mul(side, -s0 * cutW * k * 2 / H))), up: side, cut: true, group: 1 }); }
   const top = at(H, 0);
   const s1 = r() < .5 ? -1 : 1;
-  if (v.top === "slant") { const k = w * 2 * (.33 + r() * .12); m.box(at(H, s1 * (w - k * .5)), [w * 1.2, w * 2, d * 2], M.STONE, { dir: v3.norm(v3.add(up, v3.mul(side, -s1 * .9))), up: side, cut: true, group: 1 }); } // a cut through a third of its width or more
+  if (v.top === "slant") { // cut by a plane through a third of its width or more, dropping toward one edge (one box, its inner face the plane, reaching past that edge)
+    const k = w * 2 * (.33 + r() * .12), th = .5, A = at(H, s1 * (w - k)), n = v3.norm(v3.add(v3.mul(up, Math.cos(th)), v3.mul(side, s1 * Math.sin(th)))), T = w * 2;
+    m.box(v3.add(A, v3.mul(n, T)), [T, w * 3, d * 2], M.STONE, { dir: n, up: v3.norm(v3.sub(v3.mul(side, s1 * Math.cos(th)), v3.mul(up, Math.sin(th)))), round: .004, cut: true, group: 1 });
+  }
   if (v.top === "round") m.ell(top, [w * .9 * v.taper, d * .95, w * .55], M.STONE, { dir: side, up: [0, 0, 1], rough: v.rough, group: 1, paint });
-  if (v.top === "notch") { const c = at(H, w * .2 * s1); for (const s0 of [-1, 1]) m.box(c, [w * .45, w * .12, d * 2], M.STONE, { dir: v3.norm(v3.add(up, v3.mul(side, s0 * .75))), up: [0, 0, 1], cut: true, group: 1 }); } // a deep V
+  if (v.top === "notch") { // a V in its top quarter at most (deeper read as a stone split in two: the art director, #142): a square cut turned 45°, its lower corner the V's bottom
+    const D = Math.min(H * .22, w * .55), h2 = D / Math.SQRT2 * 1.4, x0 = w * .2 * s1, bottom = at(H - D, x0);
+    m.box(v3.add(bottom, v3.mul(up, h2 * Math.SQRT2)), [h2, h2, d * 2], M.STONE, { dir: v3.norm(v3.add(up, side)), up: v3.norm(v3.sub(up, side)), round: .004, cut: true, group: 1 });
+  }
+
 
   if (broken) { // snapped off: a jagged top, and the piece lying beside it
     for (let i = 0; i < 3; i++) m.box(v3.add(top, at(.02, w * (i - 1) * .6)), [w * .35, w * .35, d * 1.6], M.STONE, { dir: v3.norm(v3.add(up, v3.mul(side, (i - 1) * .8 + .3))), up: [0, 0, 1], cut: true, group: 1 });
