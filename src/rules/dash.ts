@@ -23,9 +23,30 @@ export interface DashState {
   toZ: number;
   /** Set when it starts, until the step that puts her there. */
   pending?: boolean;
+  /** Blinks ready (Hare's Dash bursts: more than one, recharging one at a time, dash.cooldown
+   *  each), and when the next comes back (Infinity when full). */
+  charges: number;
+  chargeAt: number;
 }
 
-export const newDash = (): DashState => ({ at: -Infinity, until: -Infinity, readyAt: 0, dx: 1, dz: 0, fromX: 0, fromZ: 0, toX: 0, toZ: 0 });
+export const newDash = (): DashState => ({ at: -Infinity, until: -Infinity, readyAt: 0, dx: 1, dz: 0, fromX: 0, fromZ: 0, toX: 0, toZ: 0, charges: 1, chargeAt: Infinity });
+
+/** Charges back, one every dash.cooldown seconds, up to `max`. */
+export function rechargeDash(d: DashState, time: number, max: number, cooldown: number): void {
+  if (d.charges > max) d.charges = max;
+  while (d.charges < max && time >= d.chargeAt) { d.charges++; d.chargeAt += cooldown; }
+  if (d.charges >= max) d.chargeAt = Infinity;
+  else if (d.chargeAt === Infinity) d.chargeAt = time + cooldown;
+  if (d.charges < 1) d.readyAt = Math.max(d.readyAt, d.chargeAt);
+}
+
+/** A charge given back (Stoat's Frenzy: an animal won over). */
+export function refundDash(d: DashState, time: number, max: number): void {
+  if (d.charges >= max) return;
+  d.charges++;
+  if (d.charges >= max) d.chargeAt = Infinity;
+  d.readyAt = Math.min(d.readyAt, time);
+}
 
 /** Mid-blink: she's gone (not drawn, can't be hit). */
 export const dashing = (d: DashState, time: number) => time >= d.at && time < d.until;
@@ -41,13 +62,17 @@ type Bounds = { minX: number; maxX: number; minZ: number; maxZ: number };
 
 /** The dash button: blink if she's on the ground, off her seat and it's ready. `clear(x, z)` says
  *  whether she can stand there. Returns whether she did. */
-export function startDash(d: DashState, w: WitchState, moveX: number, moveZ: number, time: number, t: Tuning, bounds: Bounds, clear: (x: number, z: number) => boolean = () => true): boolean {
-  if (time < d.readyAt || w.mode !== "ground" || w.seated) return false;
+export function startDash(d: DashState, w: WitchState, moveX: number, moveZ: number, time: number, t: Tuning, bounds: Bounds, clear: (x: number, z: number) => boolean = () => true, max = 1, chain = 0): boolean {
+  rechargeDash(d, time, max, t.dash.cooldown);
+  if (time < d.readyAt || d.charges < 1 || w.mode !== "ground" || w.seated) return false;
   let dx = moveX, dz = moveZ, len = Math.hypot(dx, dz);
   if (len < 0.1) { dx = w.vx; dz = w.vz; len = Math.hypot(dx, dz); }
   if (len < 0.1) { dx = w.facing; dz = 0; len = 1; }
   const D = t.dash;
-  d.dx = dx / len; d.dz = dz / len; d.at = time; d.until = time + D.gone; d.readyAt = time + D.cooldown;
+  d.dx = dx / len; d.dz = dz / len; d.at = time; d.until = time + D.gone;
+  if (d.charges >= max) d.chargeAt = time + D.cooldown;
+  d.charges--;
+  d.readyAt = d.charges >= 1 ? time + chain : d.chargeAt;
   d.fromX = w.x; d.fromZ = w.z;
   // The furthest clear spot along the line, in half-metre steps back from the full distance.
   const inside = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));

@@ -16,8 +16,8 @@ describe("fighting value (rules/power.ts)", () => {
   });
 
   it("reads the party and the sieges off a game", () => {
-    const g = newGame(123, TUNING), adults = g.creatures.filter(c => c.level === 2), young = adults[0], adult = adults[1];
-    young.level = 1; young.leashed = true; g.leash.stack.push(young.id);
+    const g = newGame(123, TUNING), two = g.creatures.filter(c => !c.boss && !c.leashed), young = two[0], adult = two[1];
+    young.level = 1; adult.level = 2; young.leashed = true; g.leash.stack.push(young.id);
     adult.siege = "home";
     const p = powerReport(g.creatures, g.witches, g.combat.sounds);
     expect(p.leashed).toBeCloseTo(levelValue(1), 9);
@@ -35,7 +35,7 @@ describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () =
     const t0 = Date.now(), a = simulate(map, { interval: 60, maxWaves: 12 });
     expect(Date.now() - t0).toBeLessThan(5000);
     expect(a.waves.length).toBeGreaterThanOrEqual(Math.min(12, a.survived));
-    expect(a.waves[0].largest).toBeGreaterThan(0); // every area has an adult (Ed, 2026-10-04)
+    expect(a.waves[0].largest).toBeGreaterThan(0); // (the first wave wakes a siege)
     expect(a.waves[a.waves.length - 1].marching).toBeGreaterThan(a.waves[0].marching);
     expect(simulate(map, { interval: 60, maxWaves: 12 })).toEqual(a); // deterministic, and the cached fighters reset
   }, 30000);

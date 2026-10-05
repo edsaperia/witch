@@ -1,4 +1,5 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
+import { LEGEND_BUFFS } from "./rules/buffs";
 import { FrameStats } from "./platform/frameStats";
 import { Shake } from "./render/shake";
 import { Music } from "./platform/audio/music";
@@ -158,6 +159,10 @@ const world = { ...WORLD_DEFAULT };
 }
 
 const game = newGame(seed, tuning);
+// ?buffs=fox,toad,stag (debug): these legends' buffs on from the start, whatever the legends do (a
+// species twice stacks it). ?buffs=all: every one.
+const buffsParam = params.get("buffs");
+if (buffsParam) game.buffs.forced = buffsParam === "all" ? Object.keys(LEGEND_BUFFS.species) : buffsParam.split(",").map(s => s.trim().toLowerCase().replace(/[^a-z]/g, "")).filter(Boolean);
 // ?quest=1 (the first quest, a demo): beside the nearest sleeping legend, with the creature it
 // dreams of on her stack; put its sigil down there (E) to make it happy.
 if (params.get("quest")) setupQuestDemo(game, (x, z) => {
@@ -316,11 +321,21 @@ const waveEl = document.getElementById("wave")!, waveFill = waveEl.querySelector
 function waveHud(): void {
   const cd = waveCountdown(game.party, game.map, game.clock.time);
   waveFill.style.height = `${(1 - cd.gone) * 100}%`;
-  const clock = (s: number) => (s >= 60 ? `${Math.floor(s / 60)}:${String(Math.ceil(s) % 60).padStart(2, "0")}` : `${Math.ceil(s)} s`);
+  const clock = (s: number) => { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; };
   const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : cd.left >= 60 ? `${Math.floor(cd.left / 60)}:${String(Math.ceil(cd.left) % 60).padStart(2, "0")}` : `${Math.ceil(cd.left)} s`;
   waveLabel.textContent = `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}`;
   waveEl.classList.toggle("paused", game.party.paused);
+  // The boot-up over (Ed, 2026-10-05: five quiet minutes from her first step): a quiet word by the bar.
+  if (!bootShown && !cd.booting && game.party.bootUntil > 0 && game.clock.time >= game.party.bootUntil && tuning.party.interval < 1e9) {
+    bootShown = true;
+    const pop = document.createElement("div");
+    pop.className = "boot-pop";
+    pop.textContent = `speakers up · wave 1 in ${clock(cd.left)}`;
+    waveEl.append(pop);
+    setTimeout(() => pop.remove(), 4000);
+  }
 }
+let bootShown = false;
 // A soundsystem lost (Ed, 2026-10-05): the next wave comes sooner, and the countdown shows it: the
 // bar shrinks with a flash, and the seconds taken off pop out beside it ("−60 s", "wave now!").
 let lossShown = -1;
