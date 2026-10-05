@@ -2598,6 +2598,11 @@
         "perAnimalHitGap": {
           "type": "number",
           "minimum": 0
+        },
+        "fireSlow": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
         }
       },
       "required": [

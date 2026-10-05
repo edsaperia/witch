@@ -5,7 +5,7 @@ import { validate, type Schema } from "./schema";
 import { AREA_TYPES } from "./map";
 
 // The other config files (housekeeping, issue #122): each against its schema, and the names in them
-// pointing at real things (species, attacks, area types, buff kinds).
+// pointing at real things (species, attacks, area types, buffed knobs).
 const load = (f: string) => JSON.parse(readFileSync(f, "utf8"));
 const data = Object.fromEntries(CONFIGS.map(c => [c.name, load(c.file)]));
 const SPECIES = new Set(AREA_TYPES.map(t => t.creature)), AREAS = new Set(AREA_TYPES.map(t => t.id));
@@ -38,13 +38,17 @@ describe("the names the config files use", () => {
     expect(unknown(Object.keys(data["area-types"].types), AREAS)).toEqual([]);
   });
 
-  it("legend-buffs.json: every species real, every kind one with limits, every value within them", () => {
+  it("legend-buffs.json: every species real; every tuning number and behaviour a buff changes has limits, and its own value is within them", () => {
     const B = data["legend-buffs"], bad: string[] = [];
     expect(unknown(Object.keys(B.species), SPECIES)).toEqual([]);
-    for (const [sp, b] of Object.entries(B.species as Record<string, { kind: string; value: number }>)) {
-      const lim = B.limits[b.kind] as [number, number] | undefined;
-      if (!lim) bad.push(`${sp}: kind ${b.kind} has no limits`);
-      else if (b.value < lim[0] || b.value > lim[1]) bad.push(`${sp}: ${b.kind} ${b.value} outside ${lim[0]}–${lim[1]}`);
+    type Def = { scale?: Record<string, number>; add?: Record<string, number>; mods?: Record<string, number> };
+    for (const [sp, b] of Object.entries(B.species as Record<string, Def>)) {
+      for (const p of [...Object.keys(b.scale ?? {}), ...Object.keys(b.add ?? {})]) if (!B.limits[p]) bad.push(`${sp}: ${p} has no limits`);
+      for (const [k, v] of Object.entries(b.mods ?? {})) {
+        const lim = B.limits[`mods.${k}`] as [number, number] | undefined;
+        if (!lim) bad.push(`${sp}: mods.${k} has no limits`);
+        else if (v < lim[0] || v > lim[1]) bad.push(`${sp}: mods.${k} ${v} outside ${lim[0]}–${lim[1]}`);
+      }
     }
     expect(bad).toEqual([]);
   });

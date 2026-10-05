@@ -157,7 +157,7 @@ Decided in a long design session with the coordinator; built in stages, with a p
 - **Forecasting:** the next two waves are confirmed, plus a probable set. Rune stones grow a circle of up to 12 symbols, and the 12th means next. The beams grow with the countdown.
 - **Music:** one track; louder and clearer near playing soundsystems, muffled in the deep forest, distorted by damage nearby.
 - **Spells:** one chosen per run from a list unlocked across runs, used on a cooldown. The list includes spells, placed items (buff totem, knockback bomb), speed boots and instant evolve. The first is the speed boost.
-- **Legends,** while happy, each give the witch a unique buff.
+- **Legends,** while happy, each give the witch a unique buff (see Legend buffs, redesigned).
 - **Controls** (Ed, 2026-10-04: MOBA style; remapped 2026-10-05: "WASD and mouse. right click is dodge, q is up/down, e is place sigil/cycle"): **WASD** moves (the arrow keys too), the **mouse** aims and left click throws 💌s, **right click** dodges (the dash; Space too), **Q** rises or lands, **E** puts down a sigil or cycles them, **R** the spell, 1–4 for later spells, items and totems, shown on an action bar with their recharge. Talking is automatic (Ed, v244). Feeding is automatic: party animals eat berries near them.
 - **Combat** (later stages):
   - **Sides:** wild and party animals fight each other with one shared system. No friendly fire. Wild creatures attack the witch on the ground (Ed, 2026-10-04: see The witch). **Same kind never fights same kind**, whichever side, always (Ed, 2026-10-04: even at a soundsystem): inviting doesn't start fights inside a group, and your wolves can't defend against wild wolves. Mixed defences are the puzzle.
@@ -422,6 +422,23 @@ This replaces the legend rules in "Sleeping legends" and "The first quest" below
 - **Demo:** `?quest=1` starts her beside the nearest sleeping legend, with the creature it dreams of on her stack. Press E there.
 
 **Planned direction, not built yet (Ed, 2026-10-04):** each area will have a **legendary animal that can be flipped between asleep, happy and angry**, by things that aren't only fighting (quests, mostly exploring the forest). So legends need **distinctive, readable move sets of their own**; the move sets above are written as data per legend so each can get its own later.
+
+### Legend buffs, redesigned (Ed, 2026-10-05; issue #87)
+
+- **What a buff touches:** only the witch's 💌 invites and her own movement, never animals. All 30 are different.
+- **Never a stronger 💌:** buffs give more 💌s, or make them behave differently, the way projectiles do in other games. 💌s are never stopped by scenery, with or without a buff.
+- **Stacking:** buffs stack (two of one kind count twice), each total held inside limits in `config/legend-buffs.json`.
+- **The hit gap:** each animal takes affection from at most one 💌 every `invites.perAnimalHitGap` seconds (0.5), so extra 💌s help against crowds but never invite one animal faster.
+- **Balance** comes from the enemies in later fights, not from weaker buffs.
+- **One projectile model** (`rules/invites.ts`), its modifiers composing:
+  - **Pattern:** Fan (beetle), Rear guard (woodlouse), Howl's ring every 5th burst (wolf), Echo (owl), Wind-up's charged volley (bear), Flutter's extra volley (moth).
+  - **Flight:** Charm's hard homing (fox), Spiral's boomerang (snail), Strike's speed (snake), Long thread's range (spider), Big heart's hitbox (badger), Quick fire's shorter cooldown (salamander).
+  - **On landing:** Pierce (stag), Skimming stone's ricochet (otter), Spawn's split into 3 (toad), Slip past the enraged (elk).
+  - **Lying about:** Lanterns' trail (glow-worm), Cache (squirrel), Lullaby orbit (dormouse).
+- **Movement:** Dash bursts, 3 blink charges (hare); Flit, a longer blink (bat); Curl, untouchable longer (hedgehog); Momentum after a blink (boar); Frenzy, a blink back for each animal won over (stoat); Decoy, a waiting 💌 left where she blinked from (beaver); Scamper on the ground (marten); Poise, sharper turns and quicker starts (lynx); Steady, no slowing while firing (ram); Wings in the treetops (raven); Burrow, quicker rising and landing (mole).
+- **Firing slows her** to `invites.fireSlow` (0.8) of her ground speed, so Steady has something to take away (the builder's call; easy to set to 1).
+- **Removed:** the posse, berry, evolve, wave-countdown, forecast, glow, spell and talk-time buffs.
+- **Debug:** `?buffs=fox,toad,stag` puts those buffs on from the start (`?buffs=all` all of them).
 
 ### Multiplayer (Ed, 2026-10-04)
 

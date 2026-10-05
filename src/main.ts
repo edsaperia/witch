@@ -1,4 +1,5 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
+import { LEGEND_BUFFS } from "./rules/buffs";
 import { FrameStats } from "./platform/frameStats";
 import { Shake } from "./render/shake";
 import { Music } from "./platform/audio/music";
@@ -157,6 +158,10 @@ const world = { ...WORLD_DEFAULT };
 }
 
 const game = newGame(seed, tuning);
+// ?buffs=fox,toad,stag (debug): these legends' buffs on from the start, whatever the legends do (a
+// species twice stacks it). ?buffs=all: every one.
+const buffsParam = params.get("buffs");
+if (buffsParam) game.buffs.forced = buffsParam === "all" ? Object.keys(LEGEND_BUFFS.species) : buffsParam.split(",").map(s => s.trim().toLowerCase().replace(/[^a-z]/g, "")).filter(Boolean);
 // ?quest=1 (the first quest, a demo): beside the nearest sleeping legend, with the creature it
 // dreams of on her stack; put its sigil down there (E) to make it happy.
 if (params.get("quest")) setupQuestDemo(game, (x, z) => {
