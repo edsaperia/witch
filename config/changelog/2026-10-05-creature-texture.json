@@ -1,7 +1,9 @@
 {
   "version": null,
   "items": [
-    "Creatures have fur, feathers, scales, plates, shells and bristles: big bodies no longer look smooth with contour lines, and the light breaks into tufts and strokes",
-    "Babies are soft and simple, legends shaggy and richly textured (add ?texture=0 to the address to compare with before)"
+    "Creatures are drawn in bolder pixel-art style: a few flat tones per colour, clean clusters and a selective outline (add ?style=ref for the strong-outline reference look, ?style=plain for the old look)",
+    "Pixels are chunkier: the art pixel is now 4 (add ?px=5 to try 5)",
+    "The boar evolves: a striped piglet, a heavy-fronted adult with a shoulder hump, a mane and curving tusks, and a massive legend with huge curling tusks, flame wisps and a shaggy mane",
+    "Creatures have fur, feathers, scales, plates, shells and bristles shaping their light (add ?texture=0 to compare)"
   ]
 }
