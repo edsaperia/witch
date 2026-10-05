@@ -256,7 +256,10 @@ void shade() {
     // Wild creatures never drop below a share of their unlit look, and catch a faint rim from her
     // glow on the edge facing her, so they read against the dark ground (Ed, v244).
     vec2 look = uFind > 0.5 ? uFindLook.xy : uTrunkLook;
-    col = max(col, a.rgb * look.x);
+    // A trunk's floor keeps its roundness: lit from the moon's side (the upper left), shaded on
+    // the other, so a smooth pale beech doesn't flatten into a featureless slab (Ed, 2026-10-04).
+    float side = trunk && uFind < 0.5 ? 0.5 + 0.5 * clamp(dot(N, normalize(-uRight * 0.75 + uFacing * 0.65)), 0.0, 1.0) : 1.0;
+    col = max(col, a.rgb * look.x * side);
     vec3 lv = uGlowPos - vWorld;
     float d = length(lv), k = 1.0 - smoothstep(uGlowR * 0.5, uGlowR * 1.8, d);
     float edge = 1.0 - clamp(dot(N, uFacing), 0.0, 1.0);
