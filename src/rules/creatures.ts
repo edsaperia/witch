@@ -110,6 +110,8 @@ export interface Creature {
    *  buff on, at home in its area). And when it last changed. */
   legendState?: LegendState;
   stateAt?: number;
+  /** A legend whose buff is hers for good (its quest done, or made happy: rules/buffs.ts). */
+  buffed?: boolean;
   /** A legend's quest (rules/quest.ts): the creature it dreams of, and whether it was brought. */
   quest?: Quest;
   /** Of an area whose legend's quest is done, still wild: it leaves her and her party be. */

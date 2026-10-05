@@ -1626,7 +1626,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
     expect(z0 - g.witch.z).toBeGreaterThan(TUNING.dash.distance * 0.8);
     expect(Math.abs(g.witch.x - x0)).toBeLessThan(0.5);
     expect(dashing(g.witches[0].dash, g.clock.time)).toBe(true); // gone: not drawn, not hit
-    run(g, Math.ceil(TUNING.dash.gone / STEP) + 1);
+    run(g, Math.ceil(g.buffs.tuning.dash.gone / STEP) + 1); // (the home legend's buff may be Curl)
     expect(dashing(g.witches[0].dash, g.clock.time)).toBe(false);
     const z1 = g.witch.z;
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 }); // still cooling down: no blink
@@ -1665,7 +1665,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
     const before = hp();
     hitWitch(g, 0, g.clock.time);
     expect(hp()).toBe(before);
-    run(g, Math.ceil(TUNING.dash.gone / STEP) + 1);
+    run(g, Math.ceil(g.buffs.tuning.dash.gone / STEP) + 1); // (the home legend's buff may be Curl)
     hitWitch(g, 0, g.clock.time + 0.01); // back: hittable as ever
     expect(hp()).not.toBe(before);
   });
