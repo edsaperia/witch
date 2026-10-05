@@ -329,16 +329,19 @@ export class LeashView {
       const y = Math.min(this.tops.get(c.id) ?? 2, 4.5) + 1.2;
       placed(this.v.set(c.x, y, c.z)).project(camera);
       if (this.v.z > 1 || Math.abs(this.v.x) > 1.1 || Math.abs(this.v.y) > 1.1) continue;
-      // Restless (#87: its area has none of its kind), the dream turns to a nightmare: angry faces
-      // crowd in round the sigil it wants as it worsens, redder, the sigil fading (bring one back).
-      // Once its quest has closed (its area's soundsystem on: Ed, 2026-10-05) the dream is gone, but
-      // not a nightmare: just the faces then.
-      const q = c.quest!, r = restlessness(c), faces = r <= 0.05 ? 0 : r < 0.4 ? 1 : r < 0.75 ? 2 : 3, fury = r >= 0.75 ? 2 : r >= 0.4 ? 1 : 0, open = questOpen(g.party, c);
+      // Restless (#87: its area has none of its kind), the dream turns to a nightmare (Ed, 2026-10-05):
+      // one face by the sigil it wants, slightly sad at first, sadder, upset, then angry
+      // (dreams.nightmare), the sigil fading (bring one back). Once its quest has closed (its
+      // area's soundsystem on) the dream is gone, but not a nightmare: just the face then.
+      const q = c.quest!, r = restlessness(c), N = g.tuning.dreams.nightmare, open = questOpen(g.party, c);
+      let step = -1;
+      for (let k = 0; k < N.at.length; k++) if (r >= N.at[k]) step = k;
+      const faces = step >= 0 ? 1 : 0, ire = r * r; // (the reddening and the shake gentle while it's only sad)
       if (!open && !faces) continue;
       let el = this.dreamEls[used];
       if (!el) { el = document.createElement("div"); el.className = "bubble dream on"; host.append(el); this.dreamEls.push(el); }
       el.style.display = "";
-      const key = `${q.species}:${q.level}:${faces}:${fury}:${open}`;
+      const key = `${q.species}:${q.level}:${step}:${open}`;
       if (el.dataset.e !== key) {
         el.dataset.e = key;
         const cv = document.createElement("canvas"), n = 44;
@@ -351,19 +354,20 @@ export class LeashView {
           for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] > 90 ? 255 : 0;
           x.putImageData(d, 0, 0);
         }
-        // (its faces in finer pixels than a chat face: their brows must read)
-        const face = (i: number) => { const f = this.pixelEmoji(fury === 2 && i !== 1 ? "😡" : "😠", 0.8, 18); f.classList.add("face"); return f; };
-        el.replaceChildren(...(faces >= 2 ? [face(0)] : []), ...(open ? [cv] : []), ...(faces >= 1 ? [face(1)] : []), ...(faces >= 3 ? [face(2)] : []));
+        // (its face in finer pixels than a chat face: its brows must read)
+        const face = step >= 0 ? this.pixelEmoji(N.faces[step] ?? "😠", 0.9, 18) : null;
+        face?.classList.add("face");
+        el.replaceChildren(...(open ? [cv] : []), ...(face ? [face] : []));
         el.classList.toggle("nightmare", faces > 0);
       }
       el.style.setProperty("--px", `${bubblePx(c.level)}px`);
       (el.querySelector("canvas:not(.face)") as HTMLElement | null)?.style.setProperty("opacity", `${1 - 0.75 * r}`);
-      if (faces) el.style.setProperty("--ink", `rgba(${Math.round(225 + 30 * r)}, ${Math.round(215 - 160 * r)}, ${Math.round(255 - 190 * r)}, ${(0.85 + 0.15 * r).toFixed(2)})`);
+      if (faces) el.style.setProperty("--ink", `rgba(${Math.round(225 + 30 * ire)}, ${Math.round(215 - 160 * ire)}, ${Math.round(255 - 190 * ire)}, ${(0.85 + 0.15 * ire).toFixed(2)})`);
       else el.style.removeProperty("--ink");
       const bx = ((this.v.x + 1) / 2) * width, by = ((1 - this.v.y) / 2) * height;
       el.style.left = `${bx}px`;
       el.style.top = `${by}px`;
-      const shake = faces ? r * 2.5 * Math.sin(performance.now() * 0.05 + c.id) : 0; // (a nightmare shakes)
+      const shake = faces ? ire * 2.5 * Math.sin(performance.now() * 0.05 + c.id) : 0; // (a nightmare shakes)
       el.style.transform = `translate(calc(-50% + ${shake.toFixed(1)}px), -100%)`;
       // Its direction (rules/dream.ts): a soft glow on the side of the bubble facing the runestone
       // of the nearest area of the kind it dreams of, explored or not.
