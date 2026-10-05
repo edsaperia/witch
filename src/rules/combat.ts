@@ -115,7 +115,7 @@ export interface Shot {
 /** A beam burning (Stage 5): from its creature toward an angle, sweeping toward its target. */
 export interface Beam { /** A legend's spin (radians a second), and when each thing it swept was last hit. */ spin?: number; last?: Record<string, number>; id: number; from: number; angle: number; length: number; width: number; until: number; nextTick: number; tick: number; damage: number; side: "wild" | "party"; species: string; attack: string; target: Target }
 
-export type CombatEventKind = "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed";
+export type CombatEventKind = "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "slept" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed";
 export interface CombatEvent { kind: CombatEventKind; x: number; z: number; at: number; id?: number; key?: string; big?: boolean; /** A hit: strong against its target's traits (1), resisted (-1). */ counter?: number }
 
 /** A soundsystem's health (home: the dancefloor's ring). */
@@ -153,7 +153,8 @@ export const fighting = (c: Creature) => !c.gone && !c.fleeUntil && !c.wanderTo;
  *  attack babies"; shots and quakes pass them by, and they can't be beaten in a fight). */
 export const targetable = (c: Creature) => fighting(c) && c.level > 0 && !c.burrow; // (a burrower underground can't be hit)
 
-const sideOf = (c: Creature): "wild" | "party" => (c.leashed ? "party" : "wild");
+/** Whose side: hers (on her leash, at a sigil, or a happy area legend: Ed, 2026-10-04) or the wild's. */
+const sideOf = (c: Creature): "wild" | "party" => (c.leashed || c.guard || c.legendState === "happy" ? "party" : "wild");
 
 /** Same kind never fights same kind (Ed, 2026-10-04), on any side. */
 export const truce = (a: Creature, b: Creature) => a.species === b.species;
@@ -197,10 +198,13 @@ function targetPos(w: CombatWorld, s: CombatState, tg: Target): { x: number; z: 
 }
 
 /** Whether a target is still worth fighting for this creature. */
+/** The creature she's inviting (Ed, 2026-10-04): her party leaves it be while they chat. */
+const inviting = (w: CombatWorld, c: Creature, o: Creature) => sideOf(c) === "party" && w.talkingTo(o.id) >= 0;
+
 function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): boolean {
   if (tg.kind === "creature") {
     const o = w.creatures[tg.id];
-    return !!o && targetable(o) && sideOf(o) !== sideOf(c) && !truce(c, o) && !w.asleep(o);
+    return !!o && targetable(o) && sideOf(o) !== sideOf(c) && !truce(c, o) && !w.asleep(o) && !inviting(w, c, o);
   }
   if (tg.kind === "witch") {
     // A wild one loses her when she rises, or once she's out of its area, out of its attack range
@@ -218,10 +222,10 @@ function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): boolean
  *  attack range or she's on the ground in its area (Ed's playtest, 2026-10-04). A party animal following her takes on only
  *  what attacks her or her party (Ed: they engage anything that attacks the witch or them); a
  *  parked one, anything within guard.radius of its sigil. */
-function acquire(w: CombatWorld, c: Creature, x: number, z: number, range: number, attackRange: number, grid: Grid, guarding: boolean): Target | null {
+function acquire(w: CombatWorld, c: Creature, x: number, z: number, range: number, attackRange: number, grid: Grid, guarding: boolean, keep?: (o: Creature) => boolean): Target | null {
   let best: Target | null = null, bd = range;
   for (const o of grid.near(x, z, range)) {
-    if (o === c || !targetable(o) || sideOf(o) === sideOf(c) || truce(c, o) || w.asleep(o)) continue;
+    if (o === c || !targetable(o) || sideOf(o) === sideOf(c) || truce(c, o) || w.asleep(o) || inviting(w, c, o) || (keep && !keep(o))) continue;
     if (c.leashed && !guarding) {
       const tg = o.fight?.target;
       if (!tg || (tg.kind !== "witch" && !(tg.kind === "creature" && w.creatures[tg.id]?.leashed))) continue;
@@ -279,6 +283,7 @@ function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target,
   }
   const o = w.creatures[tg.id];
   if (!o || o.gone || o.level === 0) return; // babies can't be hurt
+  if (from && inviting(w, from, o)) return; // (her party's shots and area hits pass the one she's inviting by)
   // Its traits against this kind of blow (Stage 5): shown as strong or resisted.
   const k = counterOf(o.species, a.delivery, D);
   o.hp = (o.hp ?? maxHp(o.level)) - damage * k.damage;
@@ -292,6 +297,13 @@ function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target,
   if (a.modifier === "slow") o.slowUntil = time + (a.slowTime ?? 2) * k.slow; // a new slow renews, never stacks
   // It turns on whoever hit it, if it isn't busy with another.
   if (from && o.fight && !o.fight.target) o.fight.target = { kind: "creature", id: from.id };
+  if (o.hp <= 0 && o.boss && !o.leashed) {
+    // An area legend beaten (Ed, 2026-10-04): it sinks back into the ground where it stands,
+    // asleep for good; its area's soundsystem is safe from it.
+    Object.assign(o, { legendState: "slept", stateAt: time, hp: undefined, fight: undefined, siege: undefined, enraged: false, charge: undefined, legend: undefined, slowUntil: undefined, stunUntil: undefined, kx: 0, kz: 0 });
+    s.events.push({ kind: "slept", x: o.x, z: o.z, at: time, id: o.id });
+    return;
+  }
   if (o.hp <= 0) {
     // Beaten (Ed, 2026-10-04: "it's sad when animals die"): it runs off the map, visibly, and is
     // gone for good. A party animal is lost for the run: off its leash as it goes.
@@ -374,6 +386,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     return true;
   });
 
+  // Her party (for angry besiegers looking for the nearest of it or a soundsystem).
+  const partyList = w.active.filter(o => sideOf(o) === "party" && targetable(o) && !w.asleep(o));
   // Packs (Stage 5): creatures of a kind going for the same target, and their tactic.
   const packs = packsOf(w.active.filter(c => c.fight?.target && fighting(c)).map(c => ({ c, target: JSON.stringify(c.fight!.target) })), time);
 
@@ -395,16 +409,29 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     const atk = attackOf(c.species, c.level, data);
     if (!atk) { c.fight = undefined; continue; } // babies don't attack
     const f = (c.fight ??= { target: null, readyAt: time + atk.attack.cooldown * 0.5 * (c.rand() + 0.5), windupUntil: 0, aimX: 0, aimZ: 0 });
-    const lp = c.leashed ? w.leashPoint(c.id) : null, guarding = !!lp && w.parked(c.id);
+    // A happy area legend guards its area like a parked party animal with a far bigger reach, round its home (Ed, 2026-10-04).
+    const happy = !c.leashed && (c.legendState === "happy" || !!c.guard); // (and a friendly area's guards, once partified: rules/quest.ts)
+    // (a guard looks round where it stands, for anything in its own area: area-wide, as it roams it)
+    const lp = c.leashed ? w.leashPoint(c.id) : happy ? { x: c.x, z: c.z } : null, guarding = (!!lp && w.parked(c.id)) || happy;
     // Party animals fight only near their leash point (a parked one within guard.radius of its
     // sigil); wild ones within aggro of where they are.
-    const reachX = lp ? lp.x : c.x, reachZ = lp ? lp.z : c.z, reach = lp ? (guarding ? t.guard.radius : t.leash.length + C.engage) : C.aggro;
+    const reachX = lp ? lp.x : c.x, reachZ = lp ? lp.z : c.z, reach = lp ? (happy ? t.wildLegends.guard : guarding ? t.guard.radius : t.leash.length + C.engage) : C.aggro;
     if (f.target && !valid(w, s, c, f.target)) f.target = null;
-    if (f.target && lp) { const p = targetPos(w, s, f.target); if (!p || Math.hypot(p.x - lp.x, p.z - lp.z) > reach + atk.attack.range) f.target = null; }
+    if (f.target && lp) { const p = targetPos(w, s, f.target); if (!p || Math.hypot(p.x - lp.x, p.z - lp.z) > reach + atk.attack.range || (happy && !w.inArea(c, p.x, p.z))) f.target = null; }
     if (!f.target || f.windupUntil === 0) {
-      const near = acquire(w, c, reachX, reachZ, reach, atk.attack.range, grid, guarding);
+      const near = acquire(w, c, reachX, reachZ, reach, atk.attack.range, grid, guarding, happy ? o => w.inArea(c, o.x, o.z) : undefined);
       if (near) f.target = near;
-      else if (!f.target && c.siege && !c.leashed) f.target = { kind: "sound", key: c.siege };
+      else if (!f.target && c.siege && !c.leashed) {
+        // An angry area's creatures (its quest undone, Ed 2026-10-04) go for the nearest party animal or
+        // soundsystem; a legend keeps to its own area's soundsystem.
+        f.target = { kind: "sound", key: c.siege };
+        if (!c.boss) {
+          const sk = nearestSound(s, c.x, c.z), sh = sk ? s.sounds.get(sk)! : null, sd = sh ? Math.hypot(sh.x - c.x, sh.z - c.z) : Infinity;
+          let best: Creature | null = null, bd = sd;
+          for (const o of partyList) { const dd = Math.hypot(o.x - c.x, o.z - c.z); if (dd < bd && !truce(c, o)) { bd = dd; best = o; } }
+          f.target = best ? { kind: "creature", id: best.id } : sk ? { kind: "sound", key: sk } : f.target;
+        }
+      }
     }
     if (!f.target) {
       if (f.windupUntil) f.windupUntil = 0;
@@ -420,7 +447,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     const speed = c.speed * (c.leashed ? C.partyChaseMult : C.chaseMult) * (c.slowUntil && time < c.slowUntil ? A.slowMult ?? 0.5 : 1) * (c.level === LEGEND ? 0.6 : 1);
     // A wild legend fights by its move set (Stage 5): long, telegraphed moves in a pattern, and a second phase.
     if (c.level === LEGEND && !c.leashed && !(f.target.kind === "sound" && d > 25)) { stepLegend(w, s, c, f, p, d, legendSetOf(c.species), data, grid); continue; }
-    const P = profileOf(c.species), marching = f.target.kind === "sound" && d > 25;
+    const P = profileOf(c.species), marching = (f.target.kind === "sound" || (!!c.siege && !c.leashed)) && d > 25; // (a besieger far off marches)
     if (f.windupUntil === 0 && P && !marching) {
       // A movement profile (Stage 5): its signature move, then its behaviours and its pack's tactic.
       const run = c.speed * (P.run ?? (c.leashed ? C.partyChaseMult : C.chaseMult)) * (c.slowUntil && time < c.slowUntil ? A.slowMult ?? 0.5 : 1) * (c.level === LEGEND ? 0.6 : 1);
@@ -517,6 +544,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
  *  phase at phase2.at of its health: a faster pattern with more in it. */
 function stepLegend(w: CombatWorld, s: CombatState, c: Creature, f: Fight, p: { x: number; z: number; r: number }, d: number, L: LegendSet, data: CombatData, grid: Grid): void {
   const { time, dt } = w, C = w.t.combat, st = (c.legend ??= { step: 0, phase: 1 }), max = maxHp(c.level, data);
+  // An area legend guards its own area (Ed, 2026-10-04): nothing beyond it (an arena's has none).
+  if (c.boss && !c.charge && !w.inArea(c, p.x, p.z)) { f.target = null; f.windupUntil = 0; f.move = undefined; return; }
   if (st.phase === 1 && (c.hp ?? max) <= max * L.phase2.at) {
     // The phase change: a roar (a burst and the screen shaking), and it starts its second pattern.
     st.phase = 2; st.step = 0; f.windupUntil = 0; f.move = undefined; c.charge = undefined; f.readyAt = time + 1.2; c.moving = false;
@@ -603,12 +632,12 @@ export function nearestSound(s: CombatState, x: number, z: number): string | nul
 }
 
 /** A soundsystem rises (a wave woke its area): its health, and the wild creatures of the area march on it. */
-export function startSiege(s: CombatState, key: string, at: { x: number; z: number }, cell: Cell, creatures: Creature[], t: Tuning): void {
+export function startSiege(s: CombatState, key: string, at: { x: number; z: number }, cell: Cell, creatures: Creature[], t: Tuning, besiege = true): void {
   s.sounds.set(key, { hp: t.combat.soundsystemHealth, max: t.combat.soundsystemHealth, x: at.x, z: at.z, radius: t.combat.soundsystemRadius });
-  for (const c of creatures) if (!c.gone && !c.leashed && !c.wanderTo && c.cell[0] === cell[0] && c.cell[1] === cell[1] && c.level > 0) { c.siege = key; c.enraged = true; }
+  if (besiege) for (const c of creatures) if (!c.gone && !c.leashed && !c.wanderTo && c.cell[0] === cell[0] && c.cell[1] === cell[1] && c.level > 0) { c.siege = key; c.enraged = true; }
 }
 
 /** After a soundsystem falls: the survivors march on to the next-nearest still standing. */
 export function marchOn(s: CombatState, key: string, creatures: Creature[]): void {
-  for (const c of creatures) if (c.siege === key && !c.gone) { c.siege = nearestSound(s, c.x, c.z) ?? undefined; if (c.fight) c.fight.target = null; }
+  for (const c of creatures) if (c.siege === key && !c.gone) { c.siege = c.boss ? undefined : nearestSound(s, c.x, c.z) ?? undefined; if (c.fight) c.fight.target = null; } // (a legend stays to guard its area)
 }

@@ -1,4 +1,5 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
+import { guardArea, questPlaced, type QuestEvent } from "./quest";
 import { beatAt, newBeatClock, waveArrived, waveTempo, type BeatClock } from "./beat";
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState } from "./camera";
 import { MAX_STEP, newClock, type Clock } from "./clock";
@@ -12,7 +13,7 @@ import { nextSpeakerState, type SpeakerState } from "./speakers";
 import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
 import { SIGIL_NEON } from "../../art/sigils.js";
 import { newBuffs, stepBuffs, type BuffState } from "./buffs";
-import { COMBAT, marchOn, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
+import { COMBAT, marchOn, maxHp, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
 import { hurt, knockOut, newHealth, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
 import { applyDash, newDash, startDash, type DashState } from "./dash";
 import { castSpell, newSpells, speedMultiplier, type SpellState } from "./spells";
@@ -65,8 +66,14 @@ export interface Game {
   combat: CombatState;
   /** What knockouts did in this frame's steps (for the view). */
   koEvents: KnockoutEvent[];
+  /** Areas whose legend's quest is done (rules/quest.ts): friendly while wild, guarded once partified. */
+  friendly: Set<string>;
+  /** Quests done in this frame's steps (for the view). */
+  questEvents: QuestEvent[];
   /** The creatures by home area (rebuilt when one settles somewhere new). */
   byArea?: Map<string, Creature[]> | null;
+  /** The areas' legends, by id (rules/creatures.ts: one an area), found once. */
+  legendIds?: number[];
   /** The debug arena (?arena=, rules/arena.ts): its spec and the creatures it put down. */
   arena?: { spec: string; ids: number[] };
   /** The run is over (every soundsystem destroyed): when. */
@@ -92,6 +99,8 @@ export interface Game {
 }
 
 export interface Controls extends Intent, Partial<LeashControls> {
+  /** Debug (O): the nearest area legend turns happy (as if its quest were done). */
+  happyNearest?: boolean;
   /** Auto-talk (the player's setting, on unless turned off), and Talk held (how she talks with it off). */
   autoTalk?: boolean;
   talkHeld?: boolean;
@@ -127,7 +136,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
     beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)),
     floor: newFloor(), buffs: newBuffs(tuning), partyWitches: newPartyWitches(seed),
-    combat: newCombat(), koEvents: [] as KnockoutEvent[], tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), over: null as { at: number } | null,
+    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), questEvents: [] as QuestEvent[], tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), over: null as { at: number } | null,
     acc: 0, alpha: 1, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
   };
   const d = map.dancefloor, C = tuning.combat;
@@ -136,7 +145,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
 }
 
 /** The presses that happen once (not held): kept for the next step if a frame runs none. */
-const ONE_SHOT = ["toggleMode", "sigil", "spell", "cycle", "dash", "nextWave", "pauseWaves", "feedNearest", "inviteNearest"] as const;
+const ONE_SHOT = ["toggleMode", "sigil", "spell", "cycle", "dash", "nextWave", "pauseWaves", "feedNearest", "inviteNearest", "happyNearest"] as const;
 
 /** Advance the game by one real frame of `realDt` seconds: as many fixed STEPs as that makes up
  *  (at most a few, so a hitch doesn't run away), with the held controls each step and each
@@ -148,7 +157,7 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   if (c.zoom) P.zoom = c.zoom;
   if (g.clock.paused || !(realDt > 0)) return;
   // This frame's combat and knockout events (several steps' worth, or none), for the view.
-  g.combat.events = []; g.koEvents = [];
+  g.combat.events = []; g.koEvents = []; g.questEvents = [];
   g.acc = Math.min(g.acc + Math.min(realDt, MAX_STEP), MAX_STEP + STEP);
   while (g.acc >= STEP - 1e-9) {
     g.acc -= STEP;
@@ -195,8 +204,9 @@ function fixedStep(g: Game, controls: Controls): void {
   const dt = STEP;
   g.clock.time += dt;
   const wave = g.party.wave, seated = g.witch.seated;
-  // Legend buffs: the party legends alive now change the numbers the rest of the step plays by.
-  stepBuffs(g.buffs, g.creatures, [...g.leash.stack, ...g.leash.placed.map(p => p.id)], g.tuning);
+  // Legend buffs: the happy legends (and any party legend) change the numbers the rest of the step plays by.
+  const legends = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id));
+  stepBuffs(g.buffs, g.creatures, [...g.leash.stack, ...g.leash.placed.map(p => p.id), ...legends.filter(id => g.creatures[id].legendState === "happy")], g.tuning);
   const t = g.buffs.tuning;
   if ((g.party.seeAhead ?? 0) !== g.buffs.totals.forecastAhead) { g.party.seeAhead = g.buffs.totals.forecastAhead; planAhead(g.party, g.map); }
   if (c.spell) castSpell(g.spells, g.clock.time, t);
@@ -217,6 +227,7 @@ function fixedStep(g: Game, controls: Controls): void {
   if (g.party.wave > before) g.party.nextAt += t.party.interval - g.tuning.party.interval;
   // Each wave brings its tempo, eased in from the block line its music lands on.
   if (g.party.wave !== g.beat.wave) waveArrived(g.beat, g.tuning, g.party.wave, g.clock.time);
+  stepLegends(g, legends, !!c.happyNearest);
   if (W.ko) {
     const r = stepKnockout(W.ko, W.body, W.leash, g.creatures, g.map, g.clock.time, k => g.party.areas.has(k), g.koEvents);
     W.body = r.body;
@@ -225,7 +236,9 @@ function fixedStep(g: Game, controls: Controls): void {
   }
   repair(W.health, g.clock.time, t);
   const B = g.berries, busy = (id: number) => B.feeding.has(id) || B.evolving.has(id);
+  const grown = g.creatures.length;
   stepGrowth(g, wave);
+  for (let i = grown; i < g.creatures.length; i++) { const c = g.creatures[i]; if (g.friendly.has(cellKey(c.cell)) && !g.party.areas.has(cellKey(c.cell))) c.friendly = true; } // (a friendly area's newcomers are friendly too)
   stepFights(g, t, dt, busy);
   // Noticing her (before they step, so a curious baby sets off this step).
   {
@@ -237,7 +250,14 @@ function fixedStep(g: Game, controls: Controls): void {
   stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map, c => dormant(g, c), g.tuning.haze.far + 20 + wanderRange(g.map) * 1.5);
   if (stepWanderers([...g.combat.busy].map(id => g.creatures[id]), g.map, dt)) g.byArea = null; // (those walking home are among combat's busy)
   // (A party animal in a fight is moved by combat, not its leash.)
+  const placedBefore = g.leash.events.length;
   stepLeash(g.leash, g.creatures, { sigil: !!c.sigil && !W.ko, inviteNearest: c.inviteNearest, cycle: !!c.cycle && !W.ko, talk: c.autoTalk !== false || !!c.talkHeld }, g.witch, g.witch.mode === "ground" && !W.ko, g.clock.time, dt, t, id => busy(id) || heldByCombat(g.creatures[id]));
+  // A sigil put down in a wild area whose legend dreams of that creature: the quest is done.
+  for (const e of g.leash.events.slice(placedBefore)) if (e.kind === "placed" && e.at === g.clock.time) {
+    const L = questPlaced(g.map, g.creatures, (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id)), g.friendly, k => g.party.areas.has(k), e.id, e.x, e.z, g.clock.time,
+      id => { for (const w of g.witches) { w.leash.stack = w.leash.stack.filter(i => i !== id); w.leash.placed = w.leash.placed.filter(p => p.id !== id); } });
+    if (L) { g.questEvents.push({ kind: "done", id: L.id, joined: e.id, cell: [L.cell[0], L.cell[1]], key: cellKey(L.cell), x: L.x, z: L.z, at: g.clock.time }); g.byArea = null; }
+  }
   if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, t, g.beat);
   stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, t, g.beat);
   for (const e of g.leash.events) if (e.kind === "invited") g.tally.invites++;
@@ -270,7 +290,12 @@ function indexByArea(creatures: Creature[]): Map<string, Creature[]> {
  *  soundsystem ends its party and its besiegers march on; the run ends when none stands. */
 function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolean): void {
   const S = g.combat, time = g.clock.time;
-  for (const [key, a] of g.party.areas) if (a.soundsystem && !S.sounds.has(key) && !S.ruined.has(key)) startSiege(S, key, a.soundsystem, a.cell, g.creatures, t);
+  // A new soundsystem: a friendly area's creatures guard it (the quest was done); an angry one's march.
+  for (const [key, a] of g.party.areas) if (a.soundsystem && !S.sounds.has(key) && !S.ruined.has(key)) {
+    const friendly = g.friendly.has(key);
+    startSiege(S, key, a.soundsystem, a.cell, g.creatures, t, !friendly);
+    if (friendly) { guardArea(g.creatures, a.cell); g.byArea = null; }
+  }
   // Only creatures with something to fight near them take part: wild ones in or next to the area
   // of a witch or a party animal (wild never fights wild, and only besiegers go for soundsystems;
   // areas are far wider than any reach), and every party animal, besieger, and one fleeing or
@@ -288,7 +313,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     creatures: g.creatures, active, time, dt, t, busy,
     witches: g.witches.map((w, i) => ({ id: i, x: w.body.x, z: w.body.z, onGround: w.body.mode === "ground" && !w.body.seated, down: !!w.ko })),
     leashPoint: id => { for (const w of g.witches) { const p = leashPoint(w.leash, id, w.body.x, w.body.z); if (p) return p; } return null; },
-    asleep: c => dormant(g, c),
+    asleep: c => dormant(g, c) || (!!c.friendly && !c.leashed), // (a friendly area's creatures leave her party be, and are left be)
     parked: id => g.witches.some(w => w.leash.placed.some(p => p.id === id)),
     talkingTo: id => g.witches.findIndex(w => !!w.leash.talk && w.leash.talk.id === id && !w.leash.talk.refused),
     exit: (x, z) => {
@@ -365,8 +390,40 @@ function stepDancefloor(g: Game, waveBefore: number, wasSeated: boolean | undefi
   stepFloor(f, floorInputs(g), g.tuning);
 }
 
-/** A wild legend still asleep: it wakes when the party reaches its area (Ed, 2026-10-04). */
-export const dormant = (g: Game, c: Creature): boolean => !!c.boss && !c.leashed && !g.party.areas.has(cellKey(c.cell));
+/** An area legend that isn't up and about (asleep, waking, or asleep for good): no roaming, no
+ *  fighting, nothing to invite (DESIGN.md, "Sleeping legends"). */
+export const dormant = (_g: Game, c: Creature): boolean => !!c.boss && !c.leashed && (c.legendState === "asleep" || c.legendState === "waking" || c.legendState === "slept");
+
+/** The legends' states (Ed, 2026-10-04): asleep ones wake when the party reaches their area,
+ *  heaving out of the ground for wildLegends.wake seconds (untouchable), then awake and angry,
+ *  guarding their area (combat: stepLegend). Beaten, combat puts them to sleep for good. Debug: the
+ *  nearest not asleep for good turns happy; a happy one guards its area for her (combat) and heals
+ *  while no enemy is near. */
+function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
+  const time = g.clock.time, W = g.tuning.wildLegends;
+  for (const id of ids) {
+    const c = g.creatures[id];
+    if (c.legendState === "asleep" && g.party.areas.has(cellKey(c.cell))) { c.legendState = "waking"; c.stateAt = time; }
+    else if (c.legendState === "waking" && time - (c.stateAt ?? 0) >= W.wake) {
+      c.legendState = "awake"; c.stateAt = time; c.enraged = true; // (it guards its area: combat keeps it there)
+      const key = cellKey(c.cell);
+      if (g.combat.sounds.has(key)) c.siege = key; // its area's soundsystem, never another's
+    }
+  }
+  // A happy legend heals while no enemy is near (Ed's default, 2026-10-04).
+  for (const id of ids) { const c = g.creatures[id]; if (c.legendState === "happy" && c.hp !== undefined && !c.fight?.target) { c.hp += W.heal * STEP; if (c.hp >= maxHp(c.level)) c.hp = undefined; } }
+  if (happyNearest) {
+    let best: Creature | null = null, bd = Infinity;
+    for (const id of ids) { const c = g.creatures[id], d = Math.hypot(c.x - g.witch.x, c.z - g.witch.z); if (c.legendState !== "slept" && c.legendState !== "happy" && d < bd) { bd = d; best = c; } }
+    if (best) {
+      Object.assign(best, { legendState: "happy", stateAt: time, enraged: false, siege: undefined, fight: undefined, charge: undefined, legend: undefined, hp: undefined });
+      // As if its quest were done: its area friendly while still wild.
+      const key = cellKey(best.cell);
+      if (!g.party.areas.has(key)) { g.friendly.add(key); for (const o of g.creatures) if (!o.leashed && !o.gone && !o.boss && cellKey(o.cell) === key) o.friendly = true; }
+      else guardArea(g.creatures, best.cell);
+    }
+  }
+}
 
 /** How far from the witch creatures are simulated (by their home): at least far enough that one
  *  resuming anywhere in its area does so beyond the draw distance (the haze), so none ever jumps

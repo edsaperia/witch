@@ -7,7 +7,7 @@ const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTal
 
 describe("the debug arena (Stage 5)", () => {
   it("reads groups, counts and levels", () => {
-    expect(parseArena("wolf*4@2, beetle*3,bad!,owl")).toEqual([{ species: "wolf", count: 4, level: 2 }, { species: "beetle", count: 3, level: 1 }, { species: "owl", count: 3, level: 1 }]);
+    expect(parseArena("wolf*4@2, beetle*3,bad?,owl")).toEqual([{ species: "wolf", count: 4, level: 2 }, { species: "beetle", count: 3, level: 1 }, { species: "owl", count: 3, level: 1 }]);
   });
 
   it("puts hers, parked, against the wild in the home clearing, and they fight", () => {

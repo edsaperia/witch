@@ -84,6 +84,7 @@ function nearest(creatures: Creature[], x: number, z: number, within: number, le
   for (const c of creatures) {
     if (Math.abs(c.x - x) > bd || Math.abs(c.z - z) > bd) continue; // (cheap: thousands of creatures, every step)
     if (c.leashed || c.gone || c.fleeUntil || (!legends && !invitable(c)) || skip?.has(c.id)) continue;
+    if (c.legendState && c.legendState !== "awake") continue; // (a sleeping legend is scenery; a happy one's at peace)
     const d = Math.hypot(c.x - x, c.z - z);
     if (d <= bd) { bd = d; best = c; }
   }
@@ -94,6 +95,7 @@ function invite(s: LeashState, c: Creature, x: number, z: number, time: number):
   c.leashed = true;
   c.rest = 0;
   c.wanderTo = undefined; c.siege = undefined; c.fight = undefined;
+  c.friendly = undefined; c.guard = undefined; // (taking one from a friendly or guarded area weakens it: Ed's call)
   // Invited, it's whole again (Ed, 2026-10-04), with a heal pop if it was hurt.
   if (c.hp !== undefined) { c.hp = undefined; c.healedAt = time; }
   s.stack.push(c.id);

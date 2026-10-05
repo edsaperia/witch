@@ -4,7 +4,33 @@
     {
       "version": null,
       "items": [
-        "Wild areas grow: every area starts with one baby and two adults, and each wave every area the party hasn't reached gains another creature, a baby, young or adult. So the longer an area stays wild, the bigger the army that marches when its wave comes, and old wild areas get dangerous to cross on foot. Newcomers turn up out of sight, never popping in",
+        "Every area now starts with two adults (and a baby) instead of one: the first sieges hit harder, and survival grows more steadily with how well you build your army",
+        "Sleeping legends dream: a thought bubble over each shows the sigil of the creature it wants, drawn as that creature's level (a baby's, young's or adult's sigil)",
+        "Bring it: put that creature's sigil down anywhere in the legend's area before its wave comes, and the legend wakes happy (its buff on), the area turns friendly, and the creature you brought joins it",
+        "When a friendly area's wave comes, its creatures and its legend guard it for you; an area whose legend's wish wasn't granted wakes angry, and its creatures go for your nearest animals or soundsystem",
+        "Try it: add ?quest=1 to the link to start beside a legend with what it wants on your stack (press E there)",
+        "Your animals leave alone the creature you're inviting while you chat with it (their shots and blasts pass it by); once the chat stops it's fair game again",
+        "The ley line now points to your next objective: one softly glowing line from the last runestone you reached to the next, along the valleys, fading from the first area's colour to the next one's. It stays on the ground even from the treetops (glowing through the leaves), and when you reach the next stone the old line drains into it and a new one draws out to the stone after",
+        "The hole in the canopy round you on the ground has no hard edge any more: the trees thin out gradually and raggedly, each at its own distance, and rising or landing no longer shows a circle round you",
+        "Smooth-barked trees (beech, rowan, hazel) look like trees again: no more grey columns on brown stumps; their trunks are shaded round and marked with the eyes of fallen branches"
+      ]
+    },
+    {
+      "version": 402,
+      "items": [
+        "The glowing wave numbers no longer float in the sky past the curve of the world: they fade out as their stone goes over the horizon"
+      ]
+    },
+    {
+      "version": 383,
+      "items": [
+        "Home is dressed with its own set: lantern posts, path lights, flower pots, mushroom rings and stepping stones round the dancefloor's clearing, a fairy-lit branch arch over each path, and a speaker stack, crates and a signpost by the treehouse"
+      ]
+    },
+    {
+      "version": 374,
+      "items": [
+        "Wild areas grow: every area starts with one baby and one adult, and each wave every area the party hasn't reached gains another creature, a baby, young or adult. So the longer an area stays wild, the bigger the army that marches when its wave comes, and old wild areas get dangerous to cross on foot. Newcomers turn up out of sight, never popping in",
         "Debug overlay (~): a power meter, your party's fighting strength (on your leash and parked) against each siege's and all the marchers together",
         "A playtest log: every 10 s of play it notes your party, the waves and the sieges on this browser; press L (or open the game with ?playtest=download) to save it as a file to send",
         "Wild creatures go for you as soon as you land in their area (not just when you're close); they still give up when you rise, or once you've left their area and are well away",
@@ -27,7 +53,12 @@
         "Wide undergrowth and thickets no longer float at their downhill end on steep slopes",
         "The music takes its mood from Ed's two favourite references: dreamy, ethereal choirs and sung notes over the forest, then harder, darker waves with distorted industrial drums, metal clanks, a gritty bass and string stabs, then breakbeats; the bubblegum and chiptune waves have made way (a flash of chiptune still sparkles in the frenzy)",
         "The music sounds bigger and clearer: crisp 808-style hats, a punchier kick with a click, wide detuned supersaw leads, breathing pads, a darker, deeper reverb, and everything rebalanced so the drums, bass, chords and melodies each have their own space",
-        "A big glowing number over every rune stone: the wave that will wake it (dimmed once the party's there)"
+        "A big glowing number over every rune stone: the wave that will wake it (dimmed once the party's there)",
+        "Every area now has its own legend, asleep for centuries: half sunk into the ground and grown over with moss, easy to mistake for a mound. Walking by won't wake it",
+        "When the party reaches its area, the legend heaves up out of the ground, angry, and guards its area: it goes for you, your animals and that area's soundsystem, but never leaves its area",
+        "Beat a legend and it sinks back to sleep for good. Home's legend is happy and on your side from the start; press O to make the nearest legend happy (a stand-in until quests): its buff turns on",
+        "Party animals now evolve only up to adult: legends are the areas' own",
+        "A happy legend guards its area for you: it takes on sieges marching through or on its soundsystem with its big moves, heals between fights, and if it's beaten it sinks back to sleep (its buff gone). See it in the arena: ?arena=home,wolf*6@2!"
       ]
     },
     {

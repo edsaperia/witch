@@ -54,6 +54,9 @@ uniform vec2 uRes;
 uniform float uWitchDepth;
 uniform vec4 uOcc;
 uniform float uAbsolute; // its y is a world height, not a height over the ground
+uniform vec4 uCutout, uWitch;
+varying float vHole;   // crowns and cut trunks: the radius of the hole round her (pixels) for this tree
+varying float vOverHer; // over her on screen and nearer the camera: it could hide her
 attribute vec3 iPos;
 attribute vec2 iSize;
 attribute vec4 iUv;
@@ -118,6 +121,21 @@ void main() {
   vec4 b = clipOf(base);
   vec2 ndc = b.xy / b.w, snapped = (floor((ndc * 0.5 + 0.5) * uRes) + 0.5) / uRes * 2.0 - 1.0;
   gl_Position.xy += (snapped - ndc) * gl_Position.w;
+  // The hole cut in the canopy round her (Ed, round 7: "the crown-hiding circle still has a very
+  // sharp edge"): each tree's crown (and its cut trunk with it) has its own radius for it, a little
+  // nearer or further than the next, so no line runs across the canopy, and fades over a wide band.
+  vHole = 1.0; vOverHer = 0.0;
+  if (abs(iFlags.y) > 0.001) {
+    vec4 c0 = clipOf(base), c1 = clipOf(base + uUp * iSize.y);
+    vec2 s0 = (c0.xy / c0.w * 0.5 + 0.5) * uRes, s1 = (c1.xy / c1.w * 0.5 + 0.5) * uRes;
+    // Its own radius for the hole (vHole here: in pixels), each tree a little nearer or further.
+    float j = fract(sin(dot(floor(iPos.xz * 2.0), vec2(12.9898, 78.233))) * 43758.5453);
+    vHole = uCutout.z * (0.8 + 0.4 * j);
+    // Whether it could hide her: over her sprite on screen and nearer the camera than her.
+    float hh = abs(s1.y - s0.y) * 0.5 + 1.0, hw = hh * iSize.x / max(iSize.y, 0.01);
+    vec2 cc = (s0 + s1) * 0.5;
+    vOverHer = abs(cc.x - uWitch.x) < hw + uWitch.z && abs(cc.y - uWitch.y) < hh + uWitch.w && uWitchDepth + (viewMatrix * vec4(base, 1.0)).z > 0.0 ? 1.0 : 0.0;
+  }
 }
 `;
 
@@ -141,6 +159,7 @@ varying float vGlow;
 varying float vSwayM; // metres its leafiest pixels move this frame (masked sprites)
 varying vec4 vFrame;  // its frame in the atlas (u0, v0, u1, v1), to keep the sway inside it
 varying float vFront;
+varying float vHole, vOverHer;
 varying vec2 vLocal;
 varying float vSizeY;
 uniform float uFind; // this batch: 1 for wild creatures (eyeshine, light floor, rim)
@@ -182,14 +201,15 @@ void shade() {
   // (Ed: no dithering), or dithered steps with ?fx=pixel. Smooth, a crown partly shown in the hole
   // is drawn see-through in the second pass where it's over her, after her, like whatever stands
   // in front of her: in the opaque pass it hid her (Ed, v289: she showed only as her silhouette inside a crisp disc).
+  // The hole: a wide soft band at this tree's own radius (vHole); the pass by the whole crown (vOverHer).
+  float hole = smoothstep(vHole - uCutout.w, vHole + uCutout.w * 0.35, length(gl_FragCoord.xy - uCutout.xy));
   float shown = 1.0;
   if (vFlags.y > 0.5) {
-    float d = length(gl_FragCoord.xy - uCutout.xy);
-    shown = max(smoothstep(uCutout.z - uCutout.w, uCutout.z, d), uTopFade);
+    shown = max(hole, uTopFade);
     if (uSmooth < 0.5) { if (bayer(gl_FragCoord.xy) >= shown) discard; shown = 1.0; }
     else if (shown < 0.004) discard;
   }
-  bool see = occl > 0.001 || (shown < 0.996 && e < 2.0); // (only over and round her: elsewhere it keeps its depth)
+  bool see = occl > 0.001 || (shown < 0.996 && vOverHer > 0.5); // (only crowns that could hide her: the rest keep their depth)
   if (uFadePass > 0.5 ? !see : see) discard;
   float alpha = (uFadePass > 0.5 ? mix(1.0, uOcc.x, occl) : 1.0) * shown;
   if (vFlags.y < -0.001 && uTrunkFade.x > 0.0) {
@@ -198,8 +218,7 @@ void shade() {
     // pixel grid; where the crowns show, it stays whole under them. The fade covers at most
     // uTrunkFade.z of the trunk's visible height (Ed, v233: short tangly trees kept no trunk at
     // all), so every trunk keeps a solid base.
-    float d = length(gl_FragCoord.xy - uCutout.xy);
-    float crown = max(smoothstep(uCutout.z - uCutout.w, uCutout.z, d), uTopFade);
+    float crown = max(hole, uTopFade);
     float topY = 1.0 + vFlags.y, band = min(uTrunkFade.x / max(vSizeY, 0.01), topY * uTrunkFade.z);
     float t = clamp((topY - vLocal.y) / band, 0.0, 1.0);
     vec2 artPx = vec2(floor(vUv.x * float(textureSize(uAlbedo, 0).x)), floor(vLocal.y * vSizeY / uTrunkFade.y));
@@ -237,7 +256,10 @@ void shade() {
     // Wild creatures never drop below a share of their unlit look, and catch a faint rim from her
     // glow on the edge facing her, so they read against the dark ground (Ed, v244).
     vec2 look = uFind > 0.5 ? uFindLook.xy : uTrunkLook;
-    col = max(col, a.rgb * look.x);
+    // A trunk's floor keeps its roundness: lit from the moon's side (the upper left), shaded on
+    // the other, so a smooth pale beech doesn't flatten into a featureless slab (Ed, 2026-10-04).
+    float side = trunk && uFind < 0.5 ? 0.5 + 0.5 * clamp(dot(N, normalize(-uRight * 0.75 + uFacing * 0.65)), 0.0, 1.0) : 1.0;
+    col = max(col, a.rgb * look.x * side);
     vec3 lv = uGlowPos - vWorld;
     float d = length(lv), k = 1.0 - smoothstep(uGlowR * 0.5, uGlowR * 1.8, d);
     float edge = 1.0 - clamp(dot(N, uFacing), 0.0, 1.0);
@@ -262,6 +284,12 @@ void main() {
   shade();
   // Glowing white (a party animal evolving).
   if (vGlow > 0.0 && uSilhouette.a <= 0.0) gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0), vGlow);
+  // A sleeping legend (glow -2 - moss): grown over, its colours gone toward moss and earth, so it
+  // reads as a mound of the ground (no eyeshine: below -0.5).
+  if (vGlow < -1.5) {
+    float m = clamp(-(vGlow + 2.0), 0.0, 1.0), l = dot(gl_FragColor.rgb, vec3(0.3, 0.55, 0.15));
+    gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.2, 0.26, 0.14) * (0.45 + 1.1 * l), m);
+  }
   // Scenery past the budget's radius fades out smoothly (alpha), from the far edge inward.
   if (uIsScenery > 0.5) {
     float k = sceneryFade(vWorld) * uAppear; // and a set just drawn fades in
@@ -271,7 +299,7 @@ void main() {
 }
 `;
 
-export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number; /** How much it sways in the wind (0 still, 1 a crown): leafy things only. */ sway?: number; /** Glowing white, 0 to 1 (an evolving party animal); -1, a wild creature blinking (its eyeshine off). */ glow?: number; /** Part of another sprite drawn over it (the treehouse's DJ table), not standing on the ground itself (the smoke's floating checks skip it). */ overlay?: boolean }
+export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number; /** How much it sways in the wind (0 still, 1 a crown): leafy things only. */ sway?: number; /** Glowing white, 0 to 1 (an evolving party animal); -1, a wild creature blinking (its eyeshine off); -2 - m, a sleeping legend gone m of the way to moss. */ glow?: number; /** Part of another sprite drawn over it (the treehouse's DJ table), not standing on the ground itself (the smoke's floating checks skip it). */ overlay?: boolean }
 
 export class SpriteBatch {
   readonly mesh: THREE.Mesh;

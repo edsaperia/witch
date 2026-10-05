@@ -21,7 +21,7 @@ function quiet(t: Tuning = TUNING): Game {
 }
 /** Put a creature at (x, z) as a given kind and level, wild or in the witch's party. */
 function place(g: Game, i: number, species: string, level: Level, x: number, z: number, party = false): Creature {
-  const c = g.creatures.find(k => !k.gone && !k.leashed && k.id >= i && Math.hypot(k.x - g.witch.x, k.z - g.witch.z) > 80)!;
+  const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && k.id >= i && Math.hypot(k.x - g.witch.x, k.z - g.witch.z) > 80)!;
   Object.assign(c, { species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, rest: 0 });
   c.cell = g.map.cellSafe(x, z).cell as [number, number];
   if (party) { c.leashed = true; g.leash.stack.push(c.id); }
@@ -318,12 +318,12 @@ describe("sieges (Stage 4)", () => {
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
     const next = g.party.next[0]; // (the areas round home hold only babies, who don't attack: grow a few)
-    g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1]).forEach(c => { c.level = 1; });
+    g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1] && !c.boss).forEach(c => { c.level = 1; }); // (its legend wakes and guards it: sleeping.test.ts)
     stepGame(g, { ...idle, nextWave: true }, STEP);
     const [key, area] = [...g.party.areas].find(([, a]) => a.wave === 1)!;
     const sound = g.combat.sounds.get(key)!;
     expect(sound.hp).toBe(60);
-    const besiegers = g.creatures.filter(c => c.siege === key);
+    const besiegers = g.creatures.filter(c => c.siege === key && !c.boss);
     expect(besiegers.length).toBeGreaterThan(0);
     expect(besiegers.every(c => c.cell[0] === area.cell[0] && c.cell[1] === area.cell[1] && c.level > 0)).toBe(true);
     // March them close, then let the siege run.
@@ -408,5 +408,21 @@ describe("Ed's playtest (2026-10-04)", () => {
     run(g, 6, { ...idle, autoTalk: false });
     expect(Math.hypot(pup.x - g.witch.x, pup.z - g.witch.z)).toBeLessThan(d0 - 2); // curious
     expect(Math.hypot(shy.x - g.witch.x, shy.z - g.witch.z)).toBeGreaterThan(s0); // skittish
+  }, 60000);
+});
+
+describe("the invitee truce (Ed, 2026-10-04)", () => {
+  it("has her party leave the creature she's inviting alone, and go for it once the chat's off", () => {
+    const g = quiet(), w = g.witch;
+    const fox = place(g, 0, "fox", 2, w.x + 3, w.z), wolf = place(g, 0, "wolf", 2, w.x - 1, w.z, true);
+    g.witches[0].health.hp = 1e6;
+    for (let i = 0; i < 6 / STEP; i++) stepGame(g, { ...idle, autoTalk: true }, STEP); // (an adult takes 12 s to invite)
+    expect(g.leash.talk?.id).toBe(fox.id);
+    expect(fox.hp).toBeUndefined(); // untouched while they chat
+    expect(wolf.fight?.target?.kind === "creature" && wolf.fight.target.id === fox.id).toBe(false);
+    // She rises: the chat's off, and it's fair game again.
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 };
+    for (let i = 0; i < 10 / STEP && fox.hp === undefined; i++) stepGame(g, idle, STEP);
+    expect(fox.hp).toBeDefined();
   }, 60000);
 });
