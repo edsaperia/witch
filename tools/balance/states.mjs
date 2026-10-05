@@ -1,6 +1,6 @@
 // The creature-state model's report (issue #87): src/rules/states.ts on the real maps.
 //   node tools/balance/states.mjs [--seeds 6] [--gap 60] [--skills 0.5,1,2,4] [--policies defend,third,leash,babies] [--cap 40]
-//     [--health 4000] [--dazed 0] [--quest 0] [--legend 1] [--approach 3] [--leash 2] [--berries 12.5] [--quick]
+//     [--health 4000] [--dazed 0] [--quest 0] [--legend 1] [--approach 3] [--leash 2] [--berries 12.5] [--dt 0.5] [--quick]
 import { createServer } from "vite";
 
 const arg = (name, def) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : def; };
@@ -8,7 +8,7 @@ const list = s => String(s).split(",");
 const QUICK = process.argv.includes("--quick");
 const SEEDS = +arg("seeds", QUICK ? 2 : 6), GAP = +arg("gap", 60), SKILLS = list(arg("skills", "0.5,1,2,4")).map(Number), POLICIES = list(arg("policies", "defend,third,leash,babies"));
 const CAP = +arg("cap", 40);
-const knobs = { soundHealth: arg("health") ? +arg("health") : undefined, dazedTime: +arg("dazed", 0), questShare: +arg("quest", 0), legendDefence: +arg("legend", 1), approach: +arg("approach", 3), leashTime: +arg("leash", 2), berriesPerArea: arg("berries") ? +arg("berries") : undefined };
+const knobs = { soundHealth: arg("health") ? +arg("health") : undefined, dazedTime: +arg("dazed", 0), questShare: +arg("quest", 0), legendDefence: +arg("legend", 1), approach: +arg("approach", 3), leashTime: +arg("leash", 2), berriesPerArea: arg("berries") ? +arg("berries") : undefined, dt: arg("dt") ? +arg("dt") : undefined };
 
 const server = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: "custom", logLevel: "error", optimizeDeps: { noDiscovery: true, include: [] } });
 const load = p => server.ssrLoadModule(p);
