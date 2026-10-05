@@ -10,6 +10,8 @@
 // - the talk: emoji speech bubbles taking turns over the witch and the creature (HTML, over the
 //   canvas), with a bar for how far the conversation has got.
 // The sigils are the art builder's (art/sigils.js), drawn per species and level into an atlas.
+import { drawAreaMemory, drawDreamDirection, type AddSprite } from "./areaMemory";
+import { nearestSeen } from "../rules/memory";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { drawSigil, sigilColour } from "../../art/generator.js";
@@ -302,6 +304,27 @@ export class LeashView {
     }
   }
 
+  /** From the treetops: the areas she remembers (render/areaMemory.ts), and each dream's direction,
+   *  toward the nearest area where she's seen what it dreams of (rules/memory.ts). */
+  private drawMemory(time: number): void {
+    const g = this.game, t = g.tuning, w = g.witch, mem = g.witches[0].memory, up = w.lift * w.lift * (3 - 2 * w.lift);
+    if (up < 0.02 || !mem) return;
+    const canopy = t.treetopHeight - 4 + t.sigilProjection.height, dot = this.uv(0);
+    const colour = (sp: string) => this.colours.get(sp) ?? (this.slotOf(sp, 0), this.colours.get(sp)!);
+    const sigil: AddSprite = (x, y, z, size, sp, level, r, gg, b, a) => this.standing.add(x, y, z, size, sp ? this.uv(this.slotOf(sp, level)) : dot, r, gg, b, a);
+    const mote: AddSprite = (x, y, z, size, _sp, _l, r, gg, b, a) => this.standing.add(x, y, z, size, dot, r, gg, b, a);
+    drawAreaMemory(mem, g.map, w.x, w.z, canopy, up, time, colour, sigil, mote);
+    this.dreamDirs.clear();
+    for (const c of this.dreams) {
+      const target = nearestSeen(mem, c.quest!.species, c.x, c.z, g.map, `${c.cell[0]},${c.cell[1]}`);
+      if (!target) continue;
+      this.dreamDirs.set(c.id, target);
+      drawDreamDirection(c.x, c.z, target.x, target.z, canopy, up, time, c.id, colour(c.quest!.species), mote);
+    }
+  }
+  /** Each dreaming legend's direction this frame: where she's seen what it dreams of. */
+  private dreamDirs = new Map<number, { x: number; z: number }>();
+
   /** Sleeping legends dreaming this frame (the first quest), drawn as thought bubbles by drawDreams. */
   private dreams: Creature[] = [];
   private dreamEls: HTMLElement[] = [];
@@ -336,9 +359,33 @@ export class LeashView {
         }
         el.replaceChildren(cv);
       }
-      el.style.left = `${((this.v.x + 1) / 2) * width}px`;
-      el.style.top = `${((1 - this.v.y) / 2) * height}px`;
+      const bx = ((this.v.x + 1) / 2) * width, by = ((1 - this.v.y) / 2) * height;
+      el.style.left = `${bx}px`;
+      el.style.top = `${by}px`;
       el.style.transform = `translate(-50%, -100%) scale(${treetops ? 0.7 : 1})`;
+      // Its direction (rules/memory.ts): a soft glow on the side of the bubble facing the nearest
+      // area where she's seen what it dreams of; none if she's seen it nowhere.
+      const to = this.dreamDirs.get(c.id);
+      let dir = el.querySelector<HTMLElement>(".dream-dir");
+      if (to) {
+        placed(this.v.set(to.x, y, to.z)).project(camera);
+        const ang = Math.atan2(((1 - this.v.y) / 2) * height - by, ((this.v.x + 1) / 2) * width - bx), col = this.colours.get(q.species);
+        if (!dir) {
+          dir = document.createElement("div");
+          dir.className = "dream-dir";
+          dir.style.cssText = "position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none";
+          const glow = document.createElement("i");
+          glow.style.cssText = "position:absolute;left:30px;top:-8px;width:44px;height:16px;border-radius:50%;filter:blur(1px)";
+          dir.append(glow);
+          // drifting outward and fading, over and over: which way, not how far
+          glow.animate?.([{ transform: "translateX(0)", opacity: 0.95 }, { transform: "translateX(14px)", opacity: 0 }], { duration: 2200, iterations: Infinity, easing: "ease-out" });
+          el.append(dir);
+        }
+        const rgb = col ? `${Math.round(col.r * 255)},${Math.round(col.g * 255)},${Math.round(col.b * 255)}` : "225,215,255";
+        (dir.firstChild as HTMLElement).style.background = `radial-gradient(ellipse at 20% 50%, rgba(${rgb},.9), rgba(${rgb},0) 72%)`;
+        dir.style.transform = `rotate(${ang}rad)`;
+        dir.style.display = "";
+      } else if (dir) dir.style.display = "none";
       used++;
     }
     for (let i = used; i < this.dreamEls.length; i++) this.dreamEls[i].style.display = "none";
@@ -607,6 +654,7 @@ export class LeashView {
     this.standing.begin(); this.flat.begin(); this.over.begin();
     this.drawBerries(time);
     this.drawBosses(time);
+    this.drawMemory(time);
     this.drawCombat(time, camera, width, height, hatTop);
     for (const e of s.events) {
       if (e.kind === "fizzled") this.fizzles.push({ x: e.x, z: e.z, at: time });

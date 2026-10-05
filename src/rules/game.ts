@@ -1,4 +1,5 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
+import { newMemory, stepMemory, type MemoryState } from "./memory";
 import { MOVEMENT } from "./movement";
 import { spaceOut } from "./spacing";
 import { onAreaDone } from "./leylines";
@@ -39,6 +40,8 @@ export interface Witch {
   /** Slowed (a snail's slime, a glow-worm's flash) until then: her speeds times slowMult. */
   slowUntil?: number;
   slowMult?: number;
+  /** The areas she's landed in and what she saw there (rules/memory.ts). */
+  memory: MemoryState;
 }
 
 /** The simulation's fixed step (seconds): the rules advance only in these, driven only by the
@@ -126,7 +129,7 @@ export interface Controls extends Intent, Partial<LeashControls> {
 }
 
 export function newWitchPlayer(id: number, x: number, z: number, t: Tuning): Witch {
-  return { id, body: { ...newWitch(x, z), seated: true }, leash: newLeash(), spells: newSpells(t), dash: newDash(), health: newHealth(t), ko: null };
+  return { id, body: { ...newWitch(x, z), seated: true }, leash: newLeash(), spells: newSpells(t), dash: newDash(), health: newHealth(t), ko: null, memory: newMemory() };
 }
 
 export function newGame(seed: number, tuning: Tuning, players = 1): Game {
@@ -275,6 +278,8 @@ function fixedStep(g: Game, controls: Controls): void {
   for (const e of B.events) if (e.kind === "ate") g.tally.berries++; else if (e.kind === "evolved") g.tally.evolved++;
   stepDancefloor(g, wave, seated);
   stepWitchParty(g, c, dt);
+  // Area memory: what each witch sees on the ground, remembered for the treetops.
+  for (const w of g.witches) stepMemory(w.memory, w.body.mode === "ground" && !w.body.seated, w.body.x, w.body.z, g.map, k => (g.byArea ??= indexByArea(g.creatures)).get(k) ?? [], g.clock.time);
   // Last, everyone in view eases apart from anyone closer than their sizes like (Ed, 2026-10-05).
   stepSpacing(g, dt);
 }
