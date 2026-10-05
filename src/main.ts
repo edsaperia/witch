@@ -19,7 +19,9 @@ import { groundHeight } from "./render/height";
 import { SPRITE_UNIFORMS } from "./render/sprites";
 import { loadStyle } from "./render/style";
 import { setupTouch } from "./ui/touch";
-import { CHANGELOG } from "./changelog";
+import { CHANGELOG_VERSIONS } from "./changelog";
+import { setupStartScreen, startOnGesture } from "./ui/startScreen";
+import { UPCOMING } from "./ui/upcoming";
 import { PlaytestLog } from "./platform/playtestLog";
 import { powerReport } from "./rules/power";
 import { Freeze } from "./platform/freeze";
@@ -175,6 +177,7 @@ if (arenaParam) waveChoice = 0;
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = loadStyle();
+if (params.get("flora")) style.flora = params.get("flora"); // ?flora=new|fantasy|all|<ids>: every wooded area grows these tree species (art/flora), carried to the art worker in the style
 /** Load timings (ms since the page started): the view built (the page's own sprites drawn), ready to play. */
 const loadTimes = { viewStart: performance.now(), view: 0, ready: 0 };
 const view = new View(canvas, game, {
@@ -279,12 +282,13 @@ const setAutoTalk = (on: boolean) => {
 
 declare const __BUILD__: string;
 document.getElementById("version")!.textContent = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
-// What's new, on the start screen: the last three versions, newest first (config/changelog/, collected by changelog.ts).
-const newsEl = document.getElementById("news")!;
-const buildName = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev";
-const esc = (s: string) => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!);
-newsEl.innerHTML = "<b>What's new</b>" + CHANGELOG.filter(e => e.items.length).slice(0, 3).map(e =>
-  `<div>${e.version === null ? `${buildName} (this version)` : "v" + e.version}</div><ul>${e.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>`).join("");
+// The start screen, full screen: What's new in this build (config/changelog/) and what's coming up
+// (the open pull requests, listed at deploy time), the controls below (src/ui/startScreen.ts).
+declare const __BUILD_DATE__: string;
+setupStartScreen({
+  el: document.getElementById("start")!, build: typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev",
+  builtOn: typeof __BUILD_DATE__ === "string" ? __BUILD_DATE__ : new Date().toISOString().slice(0, 10), versions: CHANGELOG_VERSIONS, upcoming: UPCOMING,
+});
 const seedEl = document.getElementById("seed")!;
 seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;
 const debugEl = document.getElementById("debug")!, startEl = document.getElementById("start")!;
@@ -352,7 +356,7 @@ function start(): boolean {
 }
 input.onAny = start;
 freeze.onToggle = on => { try { void (on ? audio?.suspend() : audio?.resume()); } catch { /* no sound */ } };
-startEl.addEventListener("pointerdown", e => { e.preventDefault(); start(); });
+startOnGesture(startEl, start); // a click or a tap starts; a touch that drags scrolls the text
 // The wave selector on the start screen: picking one doesn't start the game.
 const wavesEl = document.getElementById("waves")!;
 wavesEl.innerHTML = "waves every " + WAVE_CHOICES.map(s => `<button type="button" data-s="${s}">${s === 0 ? "off" : s < 60 ? s + " s" : s / 60 + " min"}</button>`).join("");

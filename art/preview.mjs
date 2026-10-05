@@ -31,6 +31,7 @@
 //   node art/preview.mjs soundsystems all art/previews/soundsystems.png [scale]
 //   node art/preview.mjs tufts all|<areas> art/previews/tufts.png [scale]   (each area's ground-cover tufts on its floor, then their sway masks in grey; weights under them)
 //   node art/preview.mjs partyrelics all|<ids> art/previews/party-relics.png [scale]   (the party relics, half-buried, with the witch; their glint's frames, ground then treetop; their sigils bare and as a legend's)
+//   node art/preview.mjs wind <species> art/previews/wind.png [scale]   (each species' mature tree in the pixel wind: 6 moments of a strong gust, each region (a blob) moving whole, by whole pixels; then the same with the smooth sway; CHANGES=1 colours each pixel by how far it moved)
 //   node art/preview.mjs sway <areas> art/previews/sway.png [scale]   (each area's trees and leafy props beside their sway masks: black is rigid, white sways most)
 //   node art/preview.mjs disco all|<ids> art/previews/dancefloor-patterns.png [scale]   (every dancefloor pattern's key frame from above, named, grouped by kind; PER=n to a row)
 //   node art/preview.mjs discolooks all art/previews/dancefloor-looks.png [scale]   (the floor's looks: the unlit tile, the lit tile at intensities 1 to 3 tinted in four neons, the grout, the rim strip, and the whole unlit floor)
@@ -66,6 +67,7 @@ if (process.env.LEVELS) await b.page.addInitScript(l => { window.LEVELS = l; }, 
 if (process.env.POSES) await b.page.addInitScript(l => { window.POSES = l; }, process.env.POSES.split(","));
 if (process.env.STUDIO) await b.page.addInitScript(() => { window.STUDIO = true; });
 if (process.env.ANCHORS) await b.page.addInitScript(() => { window.ANCHORS = true; });
+if (process.env.CHANGES) await b.page.addInitScript(() => { window.CHANGES = true; });
 await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
 const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) => {
   const G = await import(gen), { shade } = await import(lighting);
@@ -88,6 +90,21 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
       for (const t of R.items) { g.fillStyle = `rgb(${fl})`; g.fillRect(x - 2, y - 2, t.w * K + 4, R.h + 4); g.drawImage(t.A, x, y + R.h - t.h * K, t.w * K, t.h * K); g.fillStyle = "#000"; g.fillRect(x + t.w * K + gap - 2, y - 2, t.w * K + 4, R.h + 4); g.drawImage(t.S, x + t.w * K + gap, y + R.h - t.h * K, t.w * K, t.h * K); if (t.label) { g.fillStyle = "#9a92b4"; g.fillText(t.label, x, y + R.h + 3); } x += t.w * K * 2 + gap * 2; }
       y += R.h + gap + lab;
     }
+    const big = document.createElement("canvas"); big.width = W * scale; big.height = H * scale; const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, W * scale, H * scale);
+    return big.toDataURL("image/png");
+  }
+  if (what === "wind") { // the pixel wind on each species' mature tree: 6 moments of a gust (whole regions, whole pixels), then the smooth sway's
+    const ids = list === "all" ? Object.keys(G.TREE_SPECIES) : list.split(","), K = 2 / (st.pixel || 2), gap = 6, rowsW = [];
+    for (const id of ids) {
+      const S = G.TREE_SPECIES[id], t = S.fn(G.rng(17), { ...st, leafHue: .27 }, st.treeSize * K), col = G.treeColours(G.rng(3), { ...st, leafHue: .27 }, S.fn), b = G.bake(t.sp, col, st, "none");
+      const rgba = b.A.getContext("2d").getImageData(0, 0, b.w, b.h).data, code = G.swayCode(t.sp), frames = [];
+      for (const smooth of [false, true]) for (let i = 0; i < 6; i++) { const o = document.createElement("canvas"); o.width = b.w; o.height = b.h; const px = G.windShift(rgba, code, b.w, b.h, 2.4, i * .45, { smooth }), d = new ImageData(px, b.w, b.h); o.getContext("2d").putImageData(d, 0, 0); frames.push({ c: o, sep: smooth && i === 0, px }); }
+      if (window.CHANGES) frames.forEach((f, k) => { const mv = new Int8Array(b.w * b.h); G.windShift(rgba, code, b.w, b.h, 2.4, (k % 6) * .45, { smooth: k >= 6, moved: mv }); const px = new Uint8ClampedArray(b.w * b.h * 4), pal = { "-2": [40, 90, 255], "-1": [80, 200, 255], 0: [70, 70, 78], 1: [255, 170, 60], 2: [255, 50, 60] }; for (let p = 0; p < mv.length; p++) if (mv[p] !== -128) px.set([...(pal[mv[p]] || [255, 255, 255]), 255], p * 4); const o = document.createElement("canvas"); o.width = b.w; o.height = b.h; o.getContext("2d").putImageData(new ImageData(px, b.w, b.h), 0, 0); f.c = o; }); // CHANGES=1: each pixel by how far it moved: 2 left blue, 1 left cyan, still grey, 1 right orange, 2 right red
+      rowsW.push({ id, frames, h: b.h });
+    }
+    const W = Math.max(...rowsW.map(r => r.frames.reduce((a, f) => a + f.c.width + gap + (f.sep ? 24 : 0), 110))), H = rowsW.reduce((a, r) => a + r.h + gap, gap);
+    const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"); g.fillStyle = "#2a3a22"; g.fillRect(0, 0, W, H); g.font = "11px monospace"; g.fillStyle = "#e8e0c8";
+    let y = gap; for (const r of rowsW) { g.fillText(r.id, 6, y + r.h / 2); let x = 110; for (const f of r.frames) { if (f.sep) x += 24; g.drawImage(f.c, x, y + r.h - f.c.height); x += f.c.width + gap; } y += r.h + gap; }
     const big = document.createElement("canvas"); big.width = W * scale; big.height = H * scale; const bg = big.getContext("2d"); bg.imageSmoothingEnabled = false; bg.drawImage(c, 0, 0, W * scale, H * scale);
     return big.toDataURL("image/png");
   }

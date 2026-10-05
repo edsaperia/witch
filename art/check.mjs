@@ -541,6 +541,36 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
   if (tops.some((g, i) => g.sp.m.filter(Boolean).length <= frames[i].sp.m.filter(Boolean).length)) bad.push("treetop glint not bigger");
   ok(!bad.length, `party relics: ${P.PARTY_RELIC_IDS.length} half-buried, legend-sized, only magic glowing, glint on each, 4 glint frames (bigger from the treetops), a sigil each${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
 }
+// the trees and bushes grown from their genomes (art/flora/genomes.js) draw exactly as before: every species over seeds, sizes and
+// area options, and the bushes, against art/flora/baseline.json (when a change to them is meant, rewrite it: node art/flora/fingerprint.mjs)
+{
+  const { fingerprints } = await import("./flora/fingerprint.mjs"), { readFileSync } = await import("node:fs");
+  const base = JSON.parse(readFileSync(new URL("./flora/baseline.json", import.meta.url))), now = fingerprints();
+  const keys = Object.keys(base), diff = keys.filter(k => base[k] !== now[k]), extra = Object.keys(now).filter(k => !(k in base));
+  ok(!diff.length && !extra.length, `flora genomes: ${keys.length - diff.length} of ${keys.length} trees and bushes as the baseline${diff.length ? " — differ: " + diff.slice(0, 8).join(", ") : ""}${extra.length ? " — not in it: " + extra.slice(0, 8).join(", ") : ""}`);
+}
+// pixel wind (art/sway.js): every species' sway code keeps the trunk's foot still; the genome generator's trees sway by their
+// blobs (3+ regions, 3+ phases among them); with no wind a tree draws exactly as baked; in a strong gust every region moves whole,
+// by whole pixels (at most 2), and keeps most of itself in view
+{
+  const T = await import("./trees.js"), W = await import("./sway.js"), { defaultStyle } = await import("./generator.js"), { rng, M } = await import("./core.js");
+  const st = defaultStyle(), bad = [], WOODS = new Set([M.TRUNK, M.BARK2, M.BARKD, M.BARKL, M.BELLY]);
+  for (const [id, S] of Object.entries(T.TREE_SPECIES)) {
+    const t = S.fn(rng(9), { ...st }, st.treeSize), sp = t.sp, code = W.swayCode(sp), reg = W.swayRegions(sp), { w, h } = sp;
+    for (let y = h - 3; y < h; y++) for (let x = 0; x < w; x++) if (WOODS.has(sp.m[y * w + x]) && code[y * w + x]) { bad.push(id + " foot sways"); y = h; break; }
+    if (sp.blob) { const ph = new Map(); for (let i = 0; i < code.length; i++) if (code[i] && sp.blob[i] && sp.blob[i] < 100) ph.set(sp.blob[i], code[i] >> 5); if (ph.size < 3 || new Set(ph.values()).size < 3) bad.push(`${id} ${ph.size} blob regions, ${new Set(ph.values()).size} phases`); }
+    const rgba = new Uint8ClampedArray(w * h * 4); for (let i = 0; i < w * h; i++) if (sp.m[i]) rgba.set([reg[i] & 255, reg[i] >> 8, sp.m[i], 255], i * 4);
+    const still = W.windShift(rgba, code, w, h, 0, 0); if (still.some((v, i) => v !== rgba[i])) bad.push(id + " moves with no wind");
+    const drawn = sp.m.filter(Boolean).length;
+    for (const tt of [0, .7, 1.4, 2.1]) { // the whole tree keeps 90%+ of its pixels; no region of 40+ px is overdrawn by its neighbours past 70%
+      const out = W.windShift(rgba, code, w, h, 2.4, tt), seen = new Map(), all = new Map(); let n0 = 0;
+      for (let i = 0; i < w * h; i++) { if (code[i]) all.set(reg[i], (all.get(reg[i]) || 0) + 1); if (out[i * 4 + 3]) { n0++; const r2 = out[i * 4] | (out[i * 4 + 1] << 8); seen.set(r2, (seen.get(r2) || 0) + 1); } }
+      if (n0 < drawn * .9) { bad.push(`${id} keeps ${(n0 / drawn).toFixed(2)} of its pixels at t ${tt}`); break; }
+      const lost = [...all].find(([r2, k]) => k >= 40 && (seen.get(r2) || 0) < k * .3); if (lost) { bad.push(`${id} region ${lost[0]} hidden at t ${tt}`); break; }
+    }
+  }
+  ok(!bad.length, `pixel wind: ${Object.keys(T.TREE_SPECIES).length} species' trees sway by whole regions and whole pixels (at most 2), feet still, blobs out of step, still in calm air, whole in a gust${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
+}
 await b.close();
 console.log(failed ? `${failed} check(s) failed` : "all checks passed");
 process.exit(failed ? 1 : 0);
