@@ -48,11 +48,12 @@ export function newBuffs(t: Tuning): BuffState {
   return { active: [], totals: noBuffs(), tuning: t, events: [], base: t };
 }
 
-/** The legends giving their buffs now: happy area legends (Ed, 2026-10-04), and any legend in
+/** The legends giving their buffs now: happy area legends (Ed, 2026-10-04), any whose buff she's
+ *  earned (its quest done, or a relic: kept for good, #87), and any legend in
  *  the party (following her or at a sigil: none since legends stopped evolving, kept for later). */
 export function partyLegends(creatures: readonly Creature[], partyIds: Iterable<number>): Creature[] {
   const out: Creature[] = [];
-  for (const id of partyIds) { const c = creatures[id]; if (c && c.level >= LEGEND && (c.leashed || c.legendState === "happy")) out.push(c); }
+  for (const id of partyIds) { const c = creatures[id]; if (c && c.level >= LEGEND && (c.leashed || c.legendState === "happy" || c.buffed)) out.push(c); } // (#87: a buff once earned, by its quest or a relic, is kept)
   return out;
 }
 

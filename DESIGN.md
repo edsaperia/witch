@@ -283,7 +283,7 @@ A counter is **shown**: a hit that's strong against its target flashes big and g
 
 **Wild legends get move sets** (`movement.json` `legends`): a looping **pattern** of big, telegraphed moves (a **slam** pulse; a **nova** ring of shots; a **spin** beam sweeping all round; a **charge**, backing off first to get a run), with long wind-ups you can read and dodge (a reach ring, spokes, the circle a spin will sweep, the lane a charge will run down), and a **phase change** at half health: a roar and a burst, a red aura, it speeds up and its pattern gains the spin. Try one in the arena: `?arena=wolf*4@2,bear*1@3`. This is a step toward the legend states below.
 
-**Debug arena** (Ed, to see and judge patterns): `?arena=wolf*4,beetle*3` spawns, in the home clearing, your side (parked by sigils: the first group) against the wild side (the second); `wolf*4@2` sets the level (default young, 1). Hers at `@3` are happy area legends guarding the arena; `home` is home's own happy legend; a wild group ending `!` besieges home's soundsystem. So `?arena=home,wolf*6@2!` shows a happy legend defending home against a siege. It's set below the dancefloor; she stands behind her side (the wild go for the nearest, so hers first). `J` sets the arena up again.
+**Debug arena** (Ed, to see and judge patterns): `?arena=wolf*4,beetle*3` spawns, in the home clearing, your side (parked by sigils: the first group) against the wild side (the second); `wolf*4@2` sets the level (default young, 1). Hers at `@3` are happy area legends guarding the arena; a wild group ending `!` besieges home's soundsystem. So `?arena=boar@3,wolf*6@2!` shows a happy legend defending home against a siege. It's set below the dancefloor; she stands behind her side (the wild go for the nearest, so hers first). `J` sets the arena up again.
 
 ### Creature states (Ed, 2026-10-05; issue #87)
 
@@ -341,7 +341,24 @@ Ed: "the animals don't move around enough when attacking and defending … I don
   - They're remembered on the browser, and every change goes in the playtest log.
 - **Arena presets at the new scale:** `?arena=surround`, `pincer`, `hitandrun`, `charge`, `volley`, `kite`, `swarm`, `lob`, `beam`, `ambush`, `burrow`, `leap`, `armour`, `legend`, `siege`.
 
-### Sleeping legends (Ed, 2026-10-04)
+### Legends, redesigned (Ed, 2026-10-05; issue #87)
+
+This replaces the legend rules in "Sleeping legends" and "The first quest" below (kept for the record). `src/rules/legends.ts`, knobs in `config/legends.json`.
+
+| State | How | Effect |
+|---|---|---|
+| **Asleep** | the default; soundsystems no longer wake them | it dreams of a creature (its quest) |
+| **Asleep + buff** | its quest done: that creature's sigil put down in its area while the quest is open (till the area's soundsystem switches on) | its buff is hers for good; it sleeps on; the creature stays hers, parked there |
+| **Restless** | its area has none of its own kind (any state, leashed ones parked there and babies too) | its dream turns to a nightmare (`c.restlessness` 0 to 1 over `angryAfter`, 60 s); it calms back to sleep as soon as one of its kind is there again |
+| **Angry** | restlessness run its course | it shoots the witch and her posse from afar (never soundsystems, never happy creatures) |
+| **Happy** | a relic put down next to it (within `placeRadius`) while it sleeps or is restless | its buff is hers for good, and it shoots the enraged from afar |
+
+- **Relics:** `relics.count` (4) giant half-buried party objects per map (the art builder's party relics), in areas at least `minRemoteness` from home and `spacing` areas apart. On the ground, the sigil button by one picks it up (it's a relic sigil in her stack, `leash.relics`); carrying one, the sigil button by a sleeping legend puts it down there.
+- **Attacks** (angry and happy alike; Ed: long range, slow, less damage): a legend never leaves its area, standing where it lay, but reaches `attack.range` (420 m, 2 to 3 areas). Every `interval` (15 s) it winds up for `windup` (2.2 s), then lobs a bomb (landing after `lobFlight` 3 s, `lobRadius` 8 m) or fires a beam (`beamWidth` 3 m, `beamTime` 1.6 s), by species (`beam` lists the beamers), at up to `targets` (3) of the nearest, `damage` (10) a hit. Its health is 480; a happy one heals to whole over `healTime` (2 min) when nothing's near. (The balance builder's values, #80: legend damage is the game's most sensitive knob.) Angry legends' shots are the wild's (her, her posse), happy ones' the happy's (the enraged).
+- **Worn down** (its health gone, angry or happy): it goes back to sleep; a buff she has from it is kept ("losing buffs feels bad": buffs once earned are never taken away). Enraged animals within `attack.wornReach` (40 m) go for a happy legend.
+- **For the view:** `c.legendState` (asleep, restless, angry, happy), `c.restlessness`, `c.questOpen` (its dream shows while true), `c.buffed`, `g.relics` (`state`: lying, carried, used; `kind`: the art's party relic id), `g.leash.relics`; leash events `relicPicked` and `relicPlaced`.
+
+### Sleeping legends (Ed, 2026-10-04; superseded by "Legends, redesigned" above)
 
 **Every area has a legend of its kind, sleeping** (Ed: "The first major change, I think, is that every area has a sleeping legend in it"). They replace the rare wild legends: no legend comes from anywhere else. Party animals evolve no further than adult, and nothing else makes a legend.
 
@@ -361,7 +378,7 @@ Ed: "the animals don't move around enough when attacking and defending … I don
   - **It fights incoming sieges** (Ed, 2026-10-04). It guards its area like a parked party animal with a large guard radius (`wildLegends.guard`, 40 m round its area's centre). It takes on wild attackers entering its area, especially sieges marching on its soundsystem or through its area to others, with its legend move set (slam, nova, charge; spin in phase 2).
   - Defaults until Ed rules otherwise: it heals `wildLegends.heal` hp a second while no enemy is near. If beaten, it sinks back to sleep for good and its buff ends, like a defeated legend.
   - A legend becomes happy through its quest (The first quest, below); the debug key **O** also makes the nearest one happy.
-  - **Home's legend is happy from the start**, already with the party. So its buff is on from the start (my call; easy to change).
+  - **Home has no legend** (Ed, 2026-10-05: "Home area shouldn't have a legend"; "no home starting buff"): she starts every run with no buff.
 - **The state machine:** asleep → its area's wave → waking → awake (angry) → beaten → asleep for good; and asleep or awake → (later: mollified) → happy.
 - **Consequences.**
   - Legend buffs now come from happy legends (`rules/buffs.ts`). The party-legend path stays in the code, dormant, for mollified legends joining her later.
@@ -369,7 +386,7 @@ Ed: "the animals don't move around enough when attacking and defending … I don
   - The legend moves' power budget is unchanged: 480 hp, 12 dps.
   - Early pressure: from the first wave on, every woken area has a legend to beat or avoid next to its soundsystem. That's much more pressure than before, when legends were rare and remote. The balance builder's simulator can model it.
 
-### The first quest (Ed, 2026-10-04)
+### The first quest (Ed, 2026-10-04; superseded by "Legends, redesigned" above)
 
 **Each sleeping legend dreams of a creature.** A thought bubble over it holds that creature's sigil, drawn in its level's variant (Ed, 2026-10-05: the sigil's own level look, no pips).
 - The creature is a species found on the map, never the legend's own, at a random level. It's chosen from the seed when the map is made.
