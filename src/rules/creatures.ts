@@ -81,6 +81,11 @@ export interface Creature {
   charge?: { dx: number; dz: number; speed: number; until: number; /** when it sets off (it lowers its head till then) */ from?: number; /** it has struck (once a charge), it's braking */ struck?: boolean; braking?: boolean; /** a legend's charge: whom it has trampled */ hit?: number[]; /** rolling curled up (a hedgehog, a woodlouse): the damage it takes times this */ curl?: number };
   /** Dug in (a badger) or braced behind its tail (a beaver) until then: rooted, taking less. */
   dug?: number;
+  /** A party animal travelling (rules/travel.ts: far from her on the ground or its sigil, quiet both
+   *  ways), its route along area borders, and until when it stays in her posse after a fight. */
+  travelling?: boolean;
+  route?: import("./travel").Route;
+  engagedUntil?: number;
   brace?: number;
   /** A wild legend's move set (Stage 5): where it is in its pattern, and its phase. */
   legend?: { step: number; phase: 1 | 2 };
