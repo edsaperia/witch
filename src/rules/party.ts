@@ -39,6 +39,8 @@ export interface PartyState {
   afterNext: Cell[];
   /** Areas whose soundsystem was destroyed (rules/combat.ts): the party there is over; no wave wakes them again. */
   ruined?: Set<string>;
+  /** Areas whose quest is done before their wave (rules/leylines.ts onAreaDone): key → game time. The ley line moves on from them. */
+  leyDone?: Map<string, number>;
   probable: Cell[];
   /** Waves further the forecast sees (a legend buff, rules/buffs.ts): 1 or more and the wave after
    *  the after-next is confirmed too, so `probable` holds just the areas it will wake. */

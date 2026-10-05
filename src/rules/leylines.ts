@@ -1,8 +1,11 @@
-// The ley lines (Ed, 2026-10-04): a chain through the runestones in the order the waves wake them,
-// from the previous wave's stone, through the current one, to the next and on. The order is the
-// party's own (party.ts): the next and after-next waves are already planned there, and the waves
-// after them are what the same seeded picker will choose once those have woken, so the chain
-// shows what will happen, not a guess. Drawing them is render/leylines.ts.
+// The ley lines (Ed, 2026-10-04; 2026-10-05: "they essentially make a 2d game into a 1d game; you
+// just follow them from objective to objective"): a line from the last runestone reached to the
+// next objective, the next area in the order the waves wake them (and, if asked for, a few after).
+// A stone is reached when its area's wave arrives or its quest is done (onAreaDone), whichever
+// comes first, and the line moves on to the next one not yet reached. The order is the party's
+// own (party.ts): the next and after-next waves are already planned there, and the waves after
+// them are what the same seeded picker will choose once those have woken, so the line shows what
+// will happen, not a guess. Drawing them is render/leylines.ts.
 import type { ForestMap } from "./map";
 import type { Cell } from "./partition";
 import { cellKey, pickSet, type PartyState, type Partified } from "./party";
@@ -16,12 +19,24 @@ function stoneOf(map: ForestMap, cell: Cell, wave: number): LeyStone {
   return { cell, x: s.x, z: s.z, wave };
 }
 
-/** The stones in wave order, `count` of them (count - 1 links): the previous wave's, the current
- *  one's (home before the first wave), then the waves to come. Fewer if the map runs out. */
+/** An area's quest is done (the hook for rules/quest.ts): its stone is reached, so the line moves
+ *  on from it to the next objective, without waiting for its wave. */
+export function onAreaDone(p: PartyState, cell: Cell, time: number): void {
+  const k = cellKey(cell);
+  if (p.areas.has(k)) return; // its wave came first
+  (p.leyDone ??= new Map()).set(k, time);
+}
+
+/** The stones in wave order, `count` of them (count - 1 links): the last one reached (home before
+ *  anything else), then the next ones not yet reached. Fewer if the map runs out. */
 export function leyChain(p: PartyState, map: ForestMap, count: number): LeyStone[] {
-  const out: LeyStone[] = [];
-  const woken = (w: number) => [...p.areas.values()].filter(a => a.wave === w).sort((a, b) => a.at - b.at);
-  for (const w of [p.wave - 1, p.wave]) if (w >= 0) for (const a of woken(w)) out.push(stoneOf(map, a.cell, w));
+  const done = p.leyDone ?? new Map<string, number>();
+  const reached = (k: string) => p.areas.has(k) || done.has(k);
+  // The last reached: the latest woken (by its wave) or done (by its quest).
+  let last: LeyStone = stoneOf(map, map.centreCell, 0), at = -Infinity;
+  for (const a of p.areas.values()) if (a.at > at || (a.at === at && a.wave > last.wave)) { at = a.at; last = stoneOf(map, a.cell, a.wave); }
+  for (const [k, t] of done) if (t > at) { at = t; const [x, y] = k.split(",").map(Number); last = stoneOf(map, [x, y], p.wave + 1); }
+  const out: LeyStone[] = [last], seen = new Set([cellKey(last.cell)]);
   // The waves to come: next and after-next as planned, then the picker run on from there.
   let v: PartyState = p, wave = p.wave;
   const wake = (set: Cell[]): PartyState => {
@@ -29,17 +44,19 @@ export function leyChain(p: PartyState, map: ForestMap, count: number): LeyStone
     for (const c of set) areas.set(cellKey(c), { cell: c, wave: wave + 1, at: 0, from: null, soundsystem: null });
     return { ...v, areas, wave: wave + 1, last: set[set.length - 1] };
   };
-  for (let k = 0; out.length < count + 8 && k < count; k++) {
+  for (let k = 0; out.length < count && k < count + 8; k++) {
     const set = k === 0 ? p.next : k === 1 && p.afterNext.length ? p.afterNext : pickSet(v, map, p.areasPerWave);
     if (!set.length) break;
-    for (const c of set) out.push(stoneOf(map, c, wave + 1));
+    for (const c of set) {
+      const key = cellKey(c);
+      if (!reached(key) && !seen.has(key)) { seen.add(key); out.push(stoneOf(map, c, wave + 1)); }
+    }
     v = wake(set); wave++;
   }
-  // Start at the previous wave's stone, or as far back as there is.
   return out.slice(0, count);
 }
 
-/** A key that changes whenever the chain would (a wave, the plan): to know when to redraw it. */
+/** A key that changes whenever the chain would (a wave, the plan, a quest done): to know when to redraw it. */
 export function leyKey(p: PartyState): string {
-  return `${p.wave}|${p.next.map(cellKey).join(";")}|${p.afterNext.map(cellKey).join(";")}|${p.areasPerWave}|${p.ruined?.size ?? 0}`;
+  return `${p.wave}|${p.next.map(cellKey).join(";")}|${p.afterNext.map(cellKey).join(";")}|${p.areasPerWave}|${p.ruined?.size ?? 0}|${[...(p.leyDone?.keys() ?? [])].join(";")}`;
 }
