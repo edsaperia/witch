@@ -91,7 +91,8 @@ function nearest(creatures: Creature[], x: number, z: number, within: number, le
   return best;
 }
 
-function invite(s: LeashState, c: Creature, x: number, z: number, time: number): void {
+/** Invite it: leashed to her, its sigil on the bottom of the stack (also the 💌's stand-in: rules/invites.ts). */
+export function inviteCreature(s: LeashState, c: Creature, x: number, z: number, time: number): void {
   c.leashed = true;
   c.rest = 0;
   c.wanderTo = undefined; c.siege = undefined; c.fight = undefined;
@@ -129,7 +130,7 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     cur!.rest = Math.max(cur!.rest, 0.2); cur!.moving = false;
     cur!.facing = witch.x >= cur!.x ? 1 : -1;
     cur!.away = witch.z < cur!.z - 1;
-    if (!s.talk!.refused && s.talk!.t >= s.talk!.total) { invite(s, cur!, cur!.x, cur!.z, time); s.progress.delete(cur!.id); s.talk = null; }
+    if (!s.talk!.refused && s.talk!.t >= s.talk!.total) { inviteCreature(s, cur!, cur!.x, cur!.z, time); s.progress.delete(cur!.id); s.talk = null; }
   } else {
     if (s.talk) { s.events.push({ kind: "cancelled", id: s.talk.id, x: witch.x, z: witch.z, at: time }); s.talk = null; }
     const n = talking ? talkTarget(creatures, witch.x, witch.z, t, s.snubbed) : null;
@@ -145,7 +146,7 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
 
   if (c.inviteNearest) {
     const n = nearest(creatures, witch.x, witch.z, Infinity);
-    if (n) invite(s, n, n.x, n.z, time);
+    if (n) inviteCreature(s, n, n.x, n.z, time);
   }
 
   // The sigil button: pick up a placed sigil she's over, else put the bottom one down.

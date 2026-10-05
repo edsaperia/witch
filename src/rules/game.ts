@@ -18,6 +18,7 @@ import { SIGIL_NEON } from "../../art/sigils.js";
 import { newBuffs, stepBuffs, type BuffState } from "./buffs";
 import { COMBAT, marchOn, maxHp, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
 import { hurt, knockOut, newHealth, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
+import { newInvites, standInAffection, stepInvites, type Affection, type InviteControls, type Invites } from "./invites";
 import { applyDash, newDash, startDash, type DashState } from "./dash";
 import { castSpell, newSpells, speedMultiplier, type SpellState } from "./spells";
 import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWitches";
@@ -33,6 +34,8 @@ export interface Witch {
   leash: LeashState;
   spells: SpellState;
   dash: DashState;
+  /** Her 💌s (rules/invites.ts). */
+  invites: Invites;
   /** Her hits left and repair (rules/knockout.ts), and her knockout while it plays out. */
   health: Health;
   ko: Knockout | null;
@@ -104,7 +107,7 @@ export interface Game {
   introFocus?: { x: number; y: number; z: number };
 }
 
-export interface Controls extends Intent, Partial<LeashControls> {
+export interface Controls extends Intent, Partial<LeashControls>, InviteControls {
   /** Debug (O): the nearest area legend turns happy (as if its quest were done). */
   happyNearest?: boolean;
   /** Auto-talk (the player's setting, on unless turned off), and Talk held (how she talks with it off). */
@@ -126,7 +129,7 @@ export interface Controls extends Intent, Partial<LeashControls> {
 }
 
 export function newWitchPlayer(id: number, x: number, z: number, t: Tuning): Witch {
-  return { id, body: { ...newWitch(x, z), seated: true }, leash: newLeash(), spells: newSpells(t), dash: newDash(), health: newHealth(t), ko: null };
+  return { id, body: { ...newWitch(x, z), seated: true }, leash: newLeash(), spells: newSpells(t), dash: newDash(), invites: newInvites(), health: newHealth(t), ko: null };
 }
 
 export function newGame(seed: number, tuning: Tuning, players = 1): Game {
@@ -164,6 +167,7 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   if (g.clock.paused || !(realDt > 0)) return;
   // This frame's combat and knockout events (several steps' worth, or none), for the view.
   g.combat.events = []; g.koEvents = []; g.questEvents = [];
+  for (const w of g.witches) w.invites.events = [];
   g.acc = Math.min(g.acc + Math.min(realDt, MAX_STEP), MAX_STEP + STEP);
   while (g.acc >= STEP - 1e-9) {
     g.acc -= STEP;
@@ -176,6 +180,9 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   }
   g.alpha = Math.max(0, Math.min(1, g.acc / STEP));
 }
+
+/** The affection rules the 💌s and the view use (issue #87): the stand-in until the state machine lands. */
+export const affectionOf = (g: Game): Affection => standInAffection(g.witches[0].invites, g.leash, g.buffs?.tuning ?? g.tuning);
 
 /** Note where everything was before a step, for drawing between steps. */
 function remember(g: Game): void {
@@ -258,7 +265,9 @@ function fixedStep(g: Game, controls: Controls): void {
   if (stepWanderers([...g.combat.busy].map(id => g.creatures[id]), g.map, dt)) g.byArea = null; // (those walking home are among combat's busy)
   // (A party animal in a fight is moved by combat, not its leash.)
   const placedBefore = g.leash.events.length;
-  stepLeash(g.leash, g.creatures, { sigil: !!c.sigil && !W.ko, inviteNearest: c.inviteNearest, cycle: !!c.cycle && !W.ko, talk: c.autoTalk !== false || !!c.talkHeld }, g.witch, g.witch.mode === "ground" && !W.ko, g.clock.time, dt, t, id => busy(id) || heldByCombat(g.creatures[id]));
+  stepLeash(g.leash, g.creatures, { sigil: !!c.sigil && !W.ko, inviteNearest: c.inviteNearest, cycle: !!c.cycle && !W.ko, talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, g.clock.time, dt, t, id => busy(id) || heldByCombat(g.creatures[id]));
+  // The 💌s (issue #87): on the ground, off her seat, not knocked out.
+  stepInvites(W.invites, W.ko ? {} : c, { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), g.clock.time, dt, t);
   // A sigil put down in a wild area whose legend dreams of that creature: the quest is done.
   for (const e of g.leash.events.slice(placedBefore)) if (e.kind === "placed" && e.at === g.clock.time) {
     const L = questPlaced(g.map, g.creatures, (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id)), g.friendly, k => g.party.areas.has(k), e.id, e.x, e.z, g.clock.time,
