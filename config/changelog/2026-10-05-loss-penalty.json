@@ -1,5 +1,5 @@
 {
-  "version": null,
+  "version": 571,
   "items": [
     "Losing a soundsystem brings the next wave a minute sooner (at once if less than a minute is left); each loss counts, and the waves after it keep their usual gap. The wave bar shrinks with a red flash and shows \"−60 s\""
   ]
