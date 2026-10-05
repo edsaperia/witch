@@ -46,6 +46,9 @@ export const SPRITE_UNIFORMS = {
   uDebugTrunks: { value: 0 },
   /** The wind (Ed, v171): sway at the top of a crown (metres), the gusts' speed (m/s) and size (m), and the time. */
   uWind: { value: new THREE.Vector4(0, 0, 1, 0) },
+  /** Pixel wind (stage 8 of #79): 1, a masked sprite's regions (a crown's blobs) each move whole, a whole art pixel at a time, with
+   *  their own phase and stiffness; 0 (?wind=smooth), every pixel slides by its own sway, as before. */
+  uPixelWind: { value: typeof location !== "undefined" && new URLSearchParams(location.search).get("wind") === "smooth" ? 0 : 1 },
 };
 
 const VERT = /* glsl */ `
@@ -169,6 +172,8 @@ uniform float uDebugTrunks; // smoke: trunks drawn flat magenta
 uniform vec3 uEyeRgb;
 uniform float uEyeRange;
 uniform vec3 uTrunkFade; // metres of trunk the fade covers at most, metres per art pixel, its most share of the visible trunk
+uniform vec4 uWind;      // the wind: its time (w) sets the regions' flutter
+uniform float uPixelWind; // 1: pixel wind (regions move whole, by whole pixels); 0: the smooth sway
 ${LIGHT_GLSL}
 ${WITCH_LIGHT_GLSL}
 // 4x4 ordered dither, for fading the canopy in pixel-art style.
@@ -181,11 +186,28 @@ float bayer(vec2 p) {
 void shade() {
   // Swaying by its mask (#34): each pixel samples from where the wind has pushed the leaves; a
   // second tap lets leaf edges move out over empty pixels. Trunks and rocks (mask 0) stay still.
+  // The mask is the art's pixel-wind code (art/sway.js swayCode): 0 rigid, else a region's phase (top 3 bits) and how far it moves
+  // (low 5 bits, of 31). Pixel wind: each region moves whole, a whole art pixel at a time, out of step with the others; a pixel
+  // shows whichever region's shift lands on it (moving ones first), or nothing where its own region has moved away.
   vec2 uvS = vUv;
   if (vSwayM != 0.0) {
-    float k = vSwayM / uTrunkFade.y / float(textureSize(uAlbedo, 0).x) * (vFlags.x > 0.5 ? -1.0 : 1.0);
-    float m0 = texture2D(uNormal, vUv).a, m1 = texture2D(uNormal, clamp(vUv - vec2(k * max(m0, 0.5), 0.0), vFrame.xy, vFrame.zw)).a;
-    uvS = clamp(vUv - vec2(k * max(m0, m1), 0.0), vFrame.xy, vFrame.zw);
+    float tw = float(textureSize(uAlbedo, 0).x), dir = vFlags.x > 0.5 ? -1.0 : 1.0, px = vSwayM / uTrunkFade.y;
+    if (uPixelWind > 0.5) {
+      bool hit = false;
+      for (int i = 1; i <= 5; i++) {
+        float d = i == 5 ? 0.0 : (i == 1 ? 1.0 : i == 2 ? -1.0 : i == 3 ? 2.0 : -2.0);
+        vec2 q = vUv - vec2(d * dir / tw, 0.0);
+        if (q.x < vFrame.x || q.x > vFrame.z) continue;
+        float c = floor(texture2D(uNormal, q).a * 255.0 + 0.5);
+        float off = c < 0.5 ? 0.0 : clamp(floor((mod(c, 32.0) / 31.0) * px * (0.8 + 0.35 * sin(uWind.w * 2.3 + floor(c / 32.0) * 0.785)) + 0.5), -2.0, 2.0);
+        if (off == d) { uvS = q; hit = true; break; }
+      }
+      if (!hit) discard;
+    } else {
+      float k = px / tw * dir, m0 = mod(floor(texture2D(uNormal, vUv).a * 255.0 + 0.5), 32.0) / 31.0;
+      float m1 = mod(floor(texture2D(uNormal, clamp(vUv - vec2(k * max(m0, 0.5), 0.0), vFrame.xy, vFrame.zw)).a * 255.0 + 0.5), 32.0) / 31.0;
+      uvS = clamp(vUv - vec2(k * max(m0, m1), 0.0), vFrame.xy, vFrame.zw);
+    }
   }
   vec4 a = texture2D(uAlbedo, uvS);
   if (a.a < 0.5) discard;

@@ -71,7 +71,8 @@ export function blobTree(r, st, s, P) {
   if (C.twigs) byAng.forEach((t, j) => { if (!used.has(j) && t !== top) { const rx = C.r[0] * s * C.twigs; list.push({ c: add(t, [0, -s]), rx, ry: rx * (C.flat ?? .8), back: true }); } });
   list.sort((a, b) => (a.back !== b.back ? (a.back ? -1 : 1) : a.c[1] - b.c[1])); // the back blobs first, then top down: the lower ones in front
   const ss = Math.max(1.5, (C.stampSize || 3) * s), kind = C.stamp || "leaf", [t1, t2] = C.tones || [.12, .55], mats = (C.mats || ["LEAF3", "LEAF", "LEAF2"]).map(matOf);
-  const seed = (r() * 1e4) | 0, cap = !!C.cap;
+  const seed = (r() * 1e4) | 0, cap = !!C.cap, blobOf = sp.blob = new Uint8Array(W * H); // which blob each pixel is part of (the pixel wind moves each whole)
+  const put = (x, y, mat, nx, ny, nz, b) => { x = Math.floor(x); y = Math.floor(y); if (!sp.inb(x, y)) return; sp.px(x, y, mat, nx, ny, nz); blobOf[y * W + x] = b; };
   for (const [bi, B] of list.entries()) {
     const { c, rx, ry, back } = B, step = ss * (C.packing || 1.15), pts = [];
     for (let y = -ry - ss; y <= ry + ss; y += step) for (let x = -rx - ss; x <= rx + ss; x += step) {
@@ -87,15 +88,15 @@ export function blobTree(r, st, s, P) {
       const base = lit + (r() - .5) * (C.jitter ?? .16) - (back ? (C.backDark ?? .32) : 0) - Math.max(0, v) * .12, sx = Math.round(c[0] + jx), sy = Math.round(c[1] + jy), sd = seed + ((sx * 7 + sy * 13) & 7);
       for (const [dx, dy, sh] of stampPixels(kind, ss, sd)) {
         const t = base + sh * (C.stampShade ?? .28), mat = t > t2 ? mats[2] : t > t1 ? mats[1] : mats[0];
-        sp.px(sx + dx, sy + dy, mat, nrm[0] + dx / ss * .25, nrm[1] + dy / ss * .25, nrm[2]);
+        put(sx + dx, sy + dy, mat, nrm[0] + dx / ss * .25, nrm[1] + dy / ss * .25, nrm[2], bi + 1);
       }
     }
     if (cap) { // the underside: gills fanning from the stem, glowing between dark ribs, and a lit rim
       const y0 = Math.round(c[1] + ry * .2), gm = matOf(C.cap.gill || "GLOW"), rib = matOf(C.cap.rib || "LEAF3");
       for (let x = Math.round(c[0] - rx); x <= Math.round(c[0] + rx); x++) {
         const u = (x - c[0]) / rx, depth = Math.max(1, Math.round(ry * (C.cap.depth ?? .35) * Math.sqrt(Math.max(0, 1 - u * u))));
-        for (let y = y0; y < y0 + depth; y++) sp.px(x, y, (Math.round(x - c[0] + (y - y0) * u * 1.5) % 3 === 0) ? rib : gm, u * .3, .8, .5);
-        sp.px(x, y0 - 1, mats[1], 0, .2, .9);
+        for (let y = y0; y < y0 + depth; y++) put(x, y, (Math.round(x - c[0] + (y - y0) * u * 1.5) % 3 === 0) ? rib : gm, u * .3, .8, .5, bi + 1);
+        put(x, y0 - 1, mats[1], 0, .2, .9, bi + 1);
       }
     }
   }
@@ -110,16 +111,18 @@ export function blobTree(r, st, s, P) {
   // vines: strands hanging from the blobs' undersides, leafy, with glowing buds
   if (C.vines) {
     const V = C.vines, bud = matOf(V.bud || "GLOW");
+    let vine = 0;
     for (const { c, rx, ry } of list) for (let x = Math.round(c[0] - rx * .85); x <= c[0] + rx * .85; x += Math.max(2, Math.round(2 * s))) {
       if (r() > V.share) continue;
+      const vb = 100 + (vine++ % 120); // each vine sways on its own
       let y = Math.round(c[1] + ry + ss); while (y > c[1] && !LEAFY.includes(sp.get(x, y))) y--;
       if (y <= c[1]) continue;
       const len = uni(r, ...V.len) * s, ph = r() * 6;
       for (let j = 1; j < len && y + j < gy - 3 * s; j++) {
         const xx = x + Math.round(Math.sin(j * .15 + ph) * .8);
-        sp.px(xx, y + j, j % 5 === 0 ? M.LEAF2 : M.LEAF3, 0, 0, 1);
-        if (j % 3 === 1) sp.px(xx + (j % 6 === 1 ? 1 : -1), y + j, M.LEAF, j % 6 === 1 ? .5 : -.5, -.3, .8);
-        if (V.budEvery && j % V.budEvery === V.budEvery - 1) sp.px(xx, y + j, bud, 0, 0, 1);
+        put(xx, y + j, j % 5 === 0 ? M.LEAF2 : M.LEAF3, 0, 0, 1, vb);
+        if (j % 3 === 1) put(xx + (j % 6 === 1 ? 1 : -1), y + j, M.LEAF, j % 6 === 1 ? .5 : -.5, -.3, .8, vb);
+        if (V.budEvery && j % V.budEvery === V.budEvery - 1) put(xx, y + j, bud, 0, 0, 1, vb);
       }
     }
   }

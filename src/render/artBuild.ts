@@ -129,7 +129,7 @@ export function packPixels(sprites: Baked[], width = 2048): AtlasPixels {
   const albedo = new Uint8Array(W * H * 4), normal = new Uint8Array(W * H * 4);
   const frames: Frame[] = sprites.map((s, i) => {
     const p = place[i], pa = pixels(s.A, s.w, s.h), pn = pixels(s.N, s.w, s.h);
-    const sd = s.S ? pixels(s.S, s.w, s.h) : null, sway = sd ? Array.from({ length: s.h }, (_, row) => Array.from({ length: s.w }, (_, x) => sd[(row * s.w + x) * 4])) : null;
+    const sd = s.S ? pixels(s.S, s.w, s.h) : null, sway = sd ? Array.from({ length: s.h }, (_, row) => Array.from({ length: s.w }, (_, x) => sd[(row * s.w + x) * 4 + 1])) : null; // G: the pixel-wind code (art/sway.js swayCode)
     for (let row = 0; row < s.h; row++) {
       const src = row * s.w * 4, dst = ((p.y + row) * W + p.x) * 4;
       albedo.set(pa.subarray(src, src + s.w * 4), dst);

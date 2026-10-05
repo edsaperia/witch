@@ -97,6 +97,7 @@ export function trim(sp, bx, crownY) {
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const i = (y + ny0) * sp.w + x + nx0, j = y * w + x;
     out.m[j] = sp.m[i]; out.g[j] = sp.g[i]; out.n[j * 3] = sp.n[i * 3]; out.n[j * 3 + 1] = sp.n[i * 3 + 1]; out.n[j * 3 + 2] = sp.n[i * 3 + 2];
+    if (sp.blob) (out.blob || (out.blob = new Uint8Array(w * h)))[j] = sp.blob[i]; // the genome generator's blobs, for the pixel wind
   }
   return { sp: out, crownY: crownY - ny0 };
 }
@@ -530,6 +531,7 @@ export function splitTree(t) { // bottom = wood below the crown line and the lif
     const i = y * sp.w + x, m = sp.m[i]; if (!m) continue;
     const dst = (WOOD.has(m) && y >= crownY) || sp.low?.[i] ? bot : top; // low: the foliage lowLife put below the crown
     dst.put(x, y, m, sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]);
+    if (sp.blob?.[i]) (dst.blob || (dst.blob = new Uint8Array(sp.w * sp.h)))[i] = sp.blob[i];
   }
   return { top, bot };
 }
