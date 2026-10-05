@@ -158,7 +158,7 @@ Decided in a long design session with the coordinator; built in stages, with a p
 - **Music:** one track; louder and clearer near playing soundsystems, muffled in the deep forest, distorted by damage nearby.
 - **Spells:** one chosen per run from a list unlocked across runs, used on a cooldown. The list includes spells, placed items (buff totem, knockback bomb), speed boots and instant evolve. The first is the speed boost.
 - **Legends,** while happy, each give the witch a unique buff.
-- **Controls** (Ed, 2026-10-04: MOBA style): movement on the arrow keys, actions on **1 2 3 4 Q W E R**: Q spell, W dash, E sigil, R cycle, 1–4 for later spells, items and totems, shown on an action bar with their recharge; space rises or descends. Talking is automatic (Ed, v244). Feeding is automatic: party animals eat berries near them.
+- **Controls** (Ed, 2026-10-04: MOBA style; remapped 2026-10-05: "WASD and mouse. right click is dodge, q is up/down, e is place sigil/cycle"): **WASD** moves (the arrow keys too), the **mouse** aims and left click throws 💌s, **right click** dodges (the dash; Space too), **Q** rises or lands, **E** puts down a sigil or cycles them, **R** the spell, 1–4 for later spells, items and totems, shown on an action bar with their recharge. Talking is automatic (Ed, v244). Feeding is automatic: party animals eat berries near them.
 - **Combat** (later stages):
   - **Sides:** wild and party animals fight each other with one shared system. No friendly fire. Wild creatures attack the witch on the ground (Ed, 2026-10-04: see The witch). **Same kind never fights same kind**, whichever side, always (Ed, 2026-10-04: even at a soundsystem): inviting doesn't start fights inside a group, and your wolves can't defend against wild wolves. Mixed defences are the puzzle.
   - **Level-ups:** babies don't attack. Young have one attack; adults a stronger one plus a second ability or modifier; legends one slow, powerful signature move.
@@ -430,7 +430,7 @@ This replaces the legend rules in "Sleeping legends" and "The first quest" below
 ## Camera and controls
 
 - **Fixed camera angle**. Zooming in and out may change the angle, and ground mode and treetop mode may have different angles.
-- **Gamepad** is the model. Everything should work with **the arrow keys and a few action buttons** (MOBA style, Ed 2026-10-04: actions on 1 2 3 4 Q W E R), and so also with a **touch joystick and buttons** on phones.
+- **Gamepad** is the model. Everything should work with **WASD, the mouse and a few action keys** (MOBA style, Ed 2026-10-04; remapped 2026-10-05: right click dodge, Q up/down, E sigil, R spell), and so also with a **touch joystick and buttons** on phones.
 
 ## Look
 
