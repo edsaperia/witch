@@ -2,7 +2,7 @@
 // must land on a field of her genome, so a new axis the art builders add works without code here.
 import { describe, expect, it } from "vitest";
 import * as Art from "../../art/generator.js";
-import { slot } from "./creator";
+import { fromPicker, slot, STEPS, toPicker, upgrade } from "./creator";
 
 describe("the character creator", () => {
   it("maps every axis of the witch generator onto her genome", () => {
@@ -14,5 +14,31 @@ describe("the character creator", () => {
   });
   it("keeps every randomised witch a witch (a pointed hat with its band, a broom)", () => {
     for (let s = 1; s < 40; s++) expect((Art.witchGenomeProblems as (g: unknown) => string[])((Art.witchGenome as (s: number) => unknown)(s))).toEqual([]);
+  });
+  it("loads a save from before round 2, filling the new fields with hers", () => {
+    const old = { hat: { shape: "crooked", height: 1.4, brim: .9, tilt: .1, band: 2 }, hair: "bob", top: "mesh", cloak: "long", broom: { kind: "fan", length: 1.1, bend: .2, bristles: 1.2 }, accessories: { phones: false, shades: true, glowsticks: false, scarf: true, satchel: false, pendant: false, earrings: true }, palette: null };
+    const g = upgrade(JSON.parse(JSON.stringify(old)));
+    expect((Art.witchGenomeProblems as (g: unknown) => string[])(g)).toEqual([]);
+    expect(g.hat.shape).toBe("crooked");
+    expect([g.scarfLength, g.bagSize, g.backpack]).toEqual([1, 1, "none"]);
+    expect(upgrade({}).hat.shape).toBe("classic");
+  });
+  it("offers no hat first, and the wide sliders' ends are still a valid witch", () => {
+    const A = Art.WITCH_AXES as unknown as Record<string, unknown[]>;
+    expect(A.hatShape[0]).toBe("none");
+    for (const end of [0, 1]) {
+      const g = upgrade({}) as unknown as Record<string, unknown>;
+      for (const [axis, lim] of Object.entries(A)) { const [part, key] = slot(axis), v = typeof lim[0] === "number" ? lim[end] : lim[end ? lim.length - 1 : 0]; if (part) (g[part] as Record<string, unknown>)[key] = v; else g[key] = v; }
+      expect((Art.witchGenomeProblems as (g: unknown) => string[])(g)).toEqual([]);
+    }
+  });
+  it("picks colours in 256 steps that come back to the same steps", () => {
+    for (let i = 0; i < STEPS; i += 17) for (const [sh, gr] of [[0, 0], [80, 0], [153, 0], [200, 0], [255, 0], [100, 128], [60, 255]]) {
+      const c = fromPicker(i, sh, gr);
+      expect(c.every(v => v >= 0 && v <= 1)).toBe(true);
+      const [h, s2, g2] = toPicker(c);
+      expect(h).toBe(i);
+      if (c[2] < .995) { expect(Math.abs(s2 - sh)).toBeLessThanOrEqual(1); expect(Math.abs(g2 - gr)).toBeLessThanOrEqual(1); }
+    }
   });
 });
