@@ -54,7 +54,7 @@ export class ActionBar {
       if (s.action === "autoTalk") { el.style.borderColor = this.autoTalk ? "rgba(111,230,255,.9)" : "rgba(232,226,244,.35)"; el.style.opacity = this.autoTalk ? "1" : "0.55"; el.title = `1 / T: auto-talk ${this.autoTalk ? "on" : "off (hold Shift to talk)"}`; return; }
       // The sigil slot shows what E does now (Ed, 2026-10-05): cycle in the treetops, put down / pick up on the ground.
       if (s.action === "sigil") {
-        const ground = W.body.mode === "ground" && !W.body.seated, icon = el.firstElementChild as HTMLElement;
+        const ground = W.body.mode === "ground", icon = el.firstElementChild as HTMLElement;
         const look = ground ? LOOK.sigil : CYCLE;
         if (icon.textContent !== look.icon) { icon.textContent = look.icon; el.title = `${s.key}: ${look.name}`; }
         return;
