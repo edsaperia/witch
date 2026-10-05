@@ -3,6 +3,7 @@
 import { M, rng, uni } from "./core.js";
 import { Model, render, v3, spotty, masks } from "./model3d.js";
 import { faceUp } from "./genome/expressions.js";
+import { textureLumps } from "./genome/texture.js";
 
 // Levels (Ed): 0 baby, 1 young, 2 adult, 3 legend.
 // Height on screen in art pixels: babies about 30; young about 45 at the default style, about the
@@ -46,6 +47,9 @@ const beef = (m, k) => { for (const q of m.parts) { if (q.type === "ell") q.r = 
 // sunglasses or fancy shoes (Ed). Each builder records anchors on its model (head, eyes, neck,
 // feet); gearUp adds the parts before it is drawn. The gear in force is set by critter.
 let GEAR = null;
+// The texture in force while a creature is built (critter: genome/texture.js): its lumps go on its volumes.
+let TEX = null;
+export function withTexture(tex, f) { const was = TEX; TEX = tex; try { return f(); } finally { TEX = was; } }
 // A creature's form, if not its ordinary one: a hook that draws the finished model instead of
 // render (legends.js: the sleeping legends, sunk and overgrown, waking, and woken). It returns the
 // sprite; form.motes says whether the glowing motes still float round it.
@@ -56,6 +60,7 @@ export function withGear(gear, f) { const was = GEAR; GEAR = gear; try { return 
 const star = (s, t) => { const a = Math.atan2(t, s), r = Math.hypot(s, t); return r < .55 + .4 * Math.pow(Math.abs(Math.cos(a * 2.5 + Math.PI / 2)), 3); };
 const heart = (s, t) => { const x = s * 1.2, y = -t * 1.2 + .25; return Math.pow(x * x + y * y - .6, 3) - x * x * y * y * y < 0; };
 function gearUp(m) {
+  if (TEX) textureLumps(m, TEX.S, TEX.level, TEX.st); // its body's lumps (before anything's added to it)
   const g = GEAR, A = m.anchors; if (!g) return;
   faceUp(m, g.face, g.faceStyle); // its expression, part of its face (genome/expressions.js)
   const was = m.part; m.part = "head"; // the collar, hat and glasses ride on the head (the live rig's head piece: genome/parts.js)
@@ -102,16 +107,62 @@ function gearUp(m) {
   }
 }
 
+// ================= the evolution kit =================
+// A level's own features (genome levels[n].features), each from the model's landmarks. Every one's
+// parts are tapered and curved, so a row of them reads as a mane or a crest, never a hand of fingers.
+//   mane: { from, to (along the back, 0 rump to 1 head), height, count, lean, mat, belly (along the underside instead) }
+//   eyeglint: { size }: its eyes' glint brought out to the surface, where its body hides its face.
+//   wisps: { at: "tusks" | "horns" | "mane", size, mat, (mane: count, from, to) }: flames off its tusks' or horns' tips, or rising along its spine (glowing).
+export const EVOLVE_KINDS = ["mane", "wisps", "eyeglint"];
+function evolve3d(m, feats, c) {
+  for (const f of feats) {
+    if (f.kind === "mane") {
+      m.part = "body";
+      const n = f.count ?? 12, mat = M[f.mat || "BODY3"], h0 = f.height ?? .2, lean = f.lean ?? .5;
+      for (let i = 0; i < n; i++) {
+        const t = (f.from ?? .2) + ((f.to ?? .95) - (f.from ?? .2)) * (i + .5) / n, wob = .75 + .5 * Math.abs(Math.sin(i * 2.7 + 1.3)), h = h0 * wob * (1 - .35 * Math.abs(t - .7));
+        let b, dir;
+        if (f.belly) { const x = -c.len * .9 + t * c.len * 1.65; b = [x, c.chest - .02 + (c.tuck - c.chest) * (1 - t), 0]; dir = v3.norm([-lean, -1, 0]); }
+        else { b = c.backAt(t); b = [b[0], b[1] - .03, b[2]]; dir = v3.norm([-lean, 1, 0]); }
+        const z = ((i % 3) - 1) * c.bw * .25, tip = v3.add(b, v3.mul(dir, h)), mid = v3.add(v3.lerp(b, tip, .5), [-h * lean * .25, 0, 0]);
+        m.chain([[b[0], b[1], z, h * .2], [mid[0], mid[1], z, h * .11], [tip[0], tip[1], z, h * .02]], mat, { group: 70 + (i % 2), extra: true });
+      }
+    }
+    if (f.kind === "eyeglint" && m.anchors.eyes) { // its eyes' glint, pushed out to the surface where the body hides the head (a charging legend's under its hump)
+      m.part = "head";
+      const r = f.size ?? .035, H = m.anchors.head?.c ?? [0, 0, 0];
+      for (const e of m.anchors.eyes.pts) { // out along the camera's line (model3d's view, facing us) past the last surface in the way, so it shows where the eye would
+        const d = v3.norm([.49, .5, .72]); let last = e, inside = true;
+        for (let k = 1; k <= 300; k++) { const q = v3.add(e, v3.mul(d, k * .01)), now = m.field(q) < 0; if (inside && !now) last = q; inside = now; }
+        m.ell(last, [r, r * .8, r], M.MAGIC2, { group: 120, extra: true }); m.ell(v3.add(last, v3.mul(d, r * .6)), [r * .55, r * .45, r * .55], M.MAGIC, { group: 121, extra: true }); } // a bright core in its glowing rim
+    }
+    if (f.kind === "wisps" && f.at === "mane") { // flames rising off the spine, over the hump
+      m.part = "body";
+      const n = f.count ?? 5, s = f.size ?? .22;
+      for (let i = 0; i < n; i++) { const t = (f.from ?? .35) + ((f.to ?? .85) - (f.from ?? .35)) * (i + .5) / n, b = c.backAt(t), up = v3.norm([-.35 - (c.frame ? .1 : 0), 1, 0]), k = s * (.75 + .5 * Math.abs(Math.sin(i * 2.1 + .7)));
+        m.flat(v3.add([b[0], b[1] + s * .4, b[2]], v3.mul(up, k * .55)), [1, 0, 0], up, k * .3, k * .6, masks.flame(M[f.mat || "MAGIC2"], M.MAGIC), { group: 110 + i, extra: true }); }
+    }
+    if (f.kind === "wisps" && (f.at === "tusks" || f.at === "horns")) {
+      m.part = "head";
+      const s = f.size ?? .18;
+      (f.at === "horns" ? c.hornTips : c.tuskTips).forEach((p, i) => { const up = v3.norm([-.3 - (c.frame ? .1 : 0), 1, 0]); m.flat(v3.add(p, v3.mul(up, s * .55)), [1, 0, 0], up, s * .3, s * .6, masks.flame(M[f.mat || "MAGIC2"], M.MAGIC), { group: 96 + i, extra: true }); });
+    }
+  }
+  m.part = "body";
+}
+
 // ================= four-legged animals =================
 export function quad3d(S, level, frame, st, facing = "towards") {
-  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q, ...(S.levelQ?.[level] || {}) }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => (legend && S.legend.includes(f)) || (q.features || []).includes(f); // features: a level's own (an evolution can grow them before the legend)
+  // its evolution at this level (genome levels: its own proportions and parts, not a rescale; q.features: legend features it grows early)
+  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q, ...(S.levelQ?.[level] || {}) }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => (legend && S.legend.includes(f)) || (q.features || []).includes(f);
+  const feats = S.levelFeatures?.[level];
   const sz = k => S.sizes[k][level]; // its template's size curves (art/genome/templates.js): baby, young, adult, legend
   const m = new Model();
   const hr = q.hr * sz("head") * (st.head / .44) ** .5, len = q.len * sz("len") * st.long;
   const legK = sz("legK");
   const bob = frame ? -.04 : 0, top = 1 + bob, chest = q.chest * sz("chestDeep") * sz("chestBig") / legK + bob, tuck = q.tuck * sz("tuck") / legK + bob; // a big one's deeper chest and belly
   const bw = q.bw * sz("body") * (q.legW > 1.2 ? 1.15 : 1), lw = .06 * q.legW * sz("limbA") * sz("limbB");
-  const hump = q.back === "hump" ? (q.hump ?? .1) : 0, arch = q.back === "arch" ? .1 : 0;
+  const hump = q.back === "hump" ? q.hump ?? .1 * (q.humpK ?? 1) : 0, arch = q.back === "arch" ? .1 : 0, front = q.front ?? 1; // front: a heavier front (an adult boar's)
   // ---- markings, painted by where a point is on the body ----
   const bellyY = chest + .12;
   const paintBody = p => {
@@ -119,10 +170,11 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     if (q.saddle && p[1] > top - .18 && p[0] < len * .55) return M.BODY2;
     if (q.spots && p[1] > chest + .1 && spotty(p, 10, .22)) return q.spotMat === "belly" || (q.spots === "young" && juv) ? M.BELLY : q.spots === "young" ? undefined : M.BODY3;
     if (q.ridge && p[1] > top - .08 + hump * .5) return M.BODY3;
+    if (q.bands && p[1] > chest && p[0] > -len * 1.1 && Math.floor((p[1] - chest) / Math.max(.01, top + hump - chest) * q.bands.n * 2 + .5) % 2) return M[q.bands.mat || "BELLY"]; // a piglet's stripes, running its length
     return undefined;
   };
   // ---- torso: a deep chest, a tucked waist, a rump ----
-  m.ell([len * .48, (top + chest) / 2 + hump * .5, 0], [len * .62, (top - chest) / 2 + hump * .5, bw], M.BODY, { paint: paintBody });
+  m.ell([len * .48, (top + chest) / 2 + hump * .5, 0], [len * .62, (top - chest) / 2 * front + hump * .5, bw * front], M.BODY, { paint: paintBody });
   m.ell([-len * .5, (top + tuck) / 2 + arch * .6, 0], [len * .58, (top - tuck) / 2 + arch * .6, bw * .93], M.BODY, { paint: paintBody });
   m.ell([0, (top + (chest + tuck) / 2) / 2 + .02, 0], [len * .6, (top - (chest + tuck) / 2) / 2, bw * .9], M.BODY, { paint: paintBody });
   if (q.ridge) for (let i = 0; i < (legend ? 16 : 10); i++) { const x = -len * .8 + i * len * 1.75 / (legend ? 15 : 9), h = (.07 + (legend ? .04 : 0)) * (1 + .5 * Math.max(0, x / len)); m.ell([x, top + .02 + hump * Math.max(0, 1 - Math.abs(x / len - .5) * 2) + h * .5, 0], [h, .03, bw * .25], M.BODY3, { dir: [-.3, 1, 0], up: [1, 0, 0] }); }
@@ -161,7 +213,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   const tip = [sn[0] + L * .62 + hr * .1, sn[1] - .02, 0];
   m.ell(tip, [hr * (q.disc ? .1 : .12), hr * (q.disc ? .2 : .12), hr * (q.disc ? .2 : .15)], M.NOSE, { group: 1 });
   // eyes: both show; legends' glow
-  for (const side of [-1, 1]) { const e = Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62])); m.ell(e, [hr * .13, hr * .16, hr * .13].map(v => v * (q.eyeK || 1) * sz("eye")), legend && !q.tusks ? M.MAGIC2 : M.EYE, { group: 1 }); }
+  for (const side of [-1, 1]) { const e = Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62])); m.ell(e, [hr * .13, hr * .16, hr * .13].map(v => v * (q.eyeK || 1) * sz("eye")), (legend && !q.tusks) || q.eyeGlow ? M.MAGIC2 : M.EYE, { group: 1 }); } // (eyeGlow: an evolved level's eye catching the light, the legend boar's under its hump)
   m.anchors.head = { c: H, r: [hr * 1.05, hr * .92, hr * .88], top: [H[0] - hr * .1, H[1] + hr * .82, 0] };
   m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62]))), size: hr * .16 * (q.eyeK || 1) * sz("eye") };
   m.anchors.neck = { c: v3.lerp(nb, H, sz("neckAnchor")), r: q.neckW * .5 * sz("neckR"), dir: v3.norm(v3.sub(H, nb)), tag: sz("tag") }; // lower on the neck when the head is big
@@ -181,13 +233,24 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   if (!has("tails")) tail3d(m, has("starTail") ? "star" : q.tail, tb, len, top, tw);
   m.part = "head";
   // ---- horns, antlers, tusks ----
-  if (q.horns) for (const side of [-1, 1]) { const k = has("hornsGlow") ? 1.5 : sz("horns"), pts = []; for (let i = 0; i <= 8; i++) { const a = .3 - i / 8 * Math.PI * 1.6, r = hr * .65 * k * (1 - .45 * i / 8); pts.push([H[0] - hr * .1 + Math.cos(a) * r, H[1] + hr * .45 + Math.sin(a) * r, side * (hr * .6 + i * .015)]); pts[i].push(hr * .2 * k * (1 - .6 * i / 8)); } m.chain(pts, has("hornsGlow") ? M.MAGIC : M.ACCENT, { group: 13 }); }
+  const hornTips = [];
+  if (q.horns === "twist") for (const side of [-1, 1]) hornTips.push(horn3d(m, [H[0] - hr * .05, H[1] + hr * .6, side * hr * .45], side, { ...q.horn, length: (q.horn?.length ?? 2) * hr, r: (q.horn?.r ?? .3) * hr }));
+  else if (q.horns) for (const side of [-1, 1]) { const k = has("hornsGlow") ? 1.5 : sz("horns"), pts = []; for (let i = 0; i <= 8; i++) { const a = .3 - i / 8 * Math.PI * 1.6, r = hr * .65 * k * (1 - .45 * i / 8); pts.push([H[0] - hr * .1 + Math.cos(a) * r, H[1] + hr * .45 + Math.sin(a) * r, side * (hr * .6 + i * .015)]); pts[i].push(hr * .2 * k * (1 - .6 * i / 8)); } m.chain(pts, has("hornsGlow") ? M.MAGIC : M.ACCENT, { group: 13 }); }
   if (q.antlers || has("jackalope")) for (const side of [-1, 1]) antlers3d(m, q, [H[0] - hr * .05, H[1] + hr * .75, side * hr * .4], side, sz("antlers"), has);
-  if (q.tusks) for (const side of [-1, 1]) { const k = has("tusksBig") ? 1.4 : sz("tusks"); if (!k) continue; const b = [sn[0] + L * .25, sn[1] - Dm * .4, side * Dm * .8]; m.chain([[...b, .045 * k], [...v3.add(b, [.1 * k, .1 * k, side * .03]), .04 * k], [...v3.add(b, [.06 * k, .24 * k, side * .05]), .02 * k]], M.ACCENT, { group: 8 }); }
+  const tuskTips = [];
+  if (q.tusks) for (const side of [-1, 1]) {
+    const k = has("tusksBig") ? 1.4 : q.tuskSize ?? sz("tusks"); if (!k) continue; const b = [sn[0] + L * .25, sn[1] - Dm * .4, side * Dm * .8];
+    if (q.tuskCurl === undefined) { m.chain([[...b, .045 * k], [...v3.add(b, [.1 * k, .1 * k, side * .03]), .04 * k], [...v3.add(b, [.06 * k, .24 * k, side * .05]), .02 * k]], M.ACCENT, { group: 8 }); tuskTips.push(v3.add(b, [.06 * k, .24 * k, side * .05])); continue; }
+    // an evolved tusk (genome levels): a tapering curve out, up and back round by tuskCurl (half turns), its tip fine
+    const pts = [], n = 9, R = .13 * k;
+    for (let i = 0; i <= n; i++) { const t = i / n, a = t * q.tuskCurl * Math.PI, r = R * (1 - t * .35); pts.push([b[0] + Math.sin(a) * r * 1.2, b[1] + (1 - Math.cos(a)) * r, b[2] + side * t * .07 * k, .034 * k * (1 - t * .8)]); }
+    m.chain(pts, M.ACCENT, { group: 8 }); tuskTips.push(pts[n].slice(0, 3));
+  }
   if (q.teeth && !baby) m.ell([tip[0] - hr * .1, tip[1] - hr * .25, 0], [hr * .08, hr * .14, hr * .12], M.ACCENT, { group: 1 });
   // ---- legendary features ----
   m.part = "body";
   const backAt = t => [-len * .9 + t * len * 1.65, top + hump * Math.max(0, 1 - Math.abs(t - .8) * 3) + arch * (1 - Math.abs(t - .4) * 2), 0];
+  if (feats?.length) evolve3d(m, feats, { H, hr, sn, L, Dm, tuskTips, hornTips, backAt, len, top, chest, tuck, bw, frame });
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [len * .2, top, side * bw * .5], side, 1.15, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("mane") || has("flames")) for (let i = 0; i < 7; i++) { const t = i / 6, b = v3.lerp(v3.add(H, [-hr * .5, hr * .3, 0]), backAt(.55), t), h = [.4, .3, .45, .28, .38, .25, .3][i], up = v3.norm([-.35 - (frame ? .1 : 0), 1, 0]); m.flat(v3.add(b, v3.mul(up, h * .5)), [1, 0, 0], up, h * .32, h * .55, masks.flame(i % 2 ? M.MAGIC : M.MAGIC2, M.MAGIC2), { group: 60 + i % 2, extra: true }); }
   if (has("tails")) for (let i = 0; i < 7; i++) { m.part = "tail"; const a = Math.PI * (.55 + i * .08), z = (i - 3) * .1, e = v3.add(tb, [Math.cos(a) * .9, Math.sin(a) * .85, z]); m.chain([[...tb, .1], [...v3.lerp(tb, e, .5), .17], [...e, .08]], i % 2 ? M.BODY2 : M.BODY, { group: 70, extra: true }); m.ell(e, [.09, .09, .09], M.MAGIC2, { group: 71, extra: true }); }
@@ -203,6 +266,25 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   const sp = drawForm(m, { height: drawHeight(level, st, q.hgt), facing }, S, level);
   if (formMotes() && sz("motes")) glowMotes(sp, S.id.length * 7919, sz("motes"));
   return sp;
+}
+
+// A twisted horn (the parts kit's "horn that sweeps and curls"; genome parts horns: "twist", its shape in head.horn): from
+// `base` it rises up and out, then sweeps back by `curl` (half turns), two strands spiralling round each other `twist` times
+// along it (so it reads as twisted at game size), ridged every `ridges`th step (the second strand in `mat2`, if given, so the twist shows as a spiral band), tapering to a fine point; `tip` (a material
+// name) glows its last fifth. length and r in model units. Returns its tip.
+export function horn3d(m, base, side, { length = .5, r = .08, curl = .6, twist = 2, ridges = 3, segs = 18, out = .45, tip, mat = "ACCENT", mat2, group = 14 } = {}) {
+  const n = Math.max(4, segs), ds = length / n, A = [[], []];
+  let p = base;
+  for (let i = 0; i <= n; i++) {
+    const t = i / n, a = -.15 + Math.pow(t, 1.5) * curl * Math.PI, o = out * (1 - t * .7); // straight up first, then sweeping back
+    const dir = v3.norm([-Math.sin(a), Math.cos(a), side * o]), u = v3.norm(v3.cross(dir, [0, 0, 1])), w = v3.norm(v3.cross(u, dir));
+    const rr = r * (1 - t * .88) * (ridges && i % ridges === 0 && i < n ? 1.14 : 1), ph = t * twist * Math.PI * 2 * side;
+    for (const k of [0, 1]) { const f = ph + k * Math.PI, off = v3.add(v3.mul(u, Math.cos(f) * rr * .5), v3.mul(w, Math.sin(f) * rr * .5)); A[k].push([...v3.add(p, off), rr * .58]); }
+    if (i < n) p = v3.add(p, v3.mul(dir, ds));
+  }
+  const cut = Math.round(n * .8);
+  for (const [k, s] of A.entries()) { m.chain(s.slice(0, tip ? cut + 1 : n + 1), M[k && mat2 ? mat2 : mat] ?? M.ACCENT, { group, extra: true }); if (tip) m.chain(s.slice(cut), M[tip] ?? M.MAGIC2, { group: group + 1, extra: true }); }
+  return p;
 }
 
 function tail3d(m, kind, tb, len, top, tw) {

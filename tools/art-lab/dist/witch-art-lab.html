@@ -480,7 +480,9 @@ const M = {
   SHOE: 48, SOLE: 49,          // fancy shoes
   WOKEN: 50,   // a woken creature's angry glowing eyes
   WEB: 51,     // pale silk and cotton: spider webs, cotton grass (lit, not glowing)
-  BROW: 52,    // a creature's expression's brows: dark ink on a light coat, pale on a dark one (genome/expressions.js)
+  BROW: 52,
+  BODYL: 53,   // the lifted top tone of a creature's coat (genome/texture.js)
+    // a creature's expression's brows: dark ink on a light coat, pale on a dark one (genome/expressions.js)
 };
 // These glow: drawn at full colour by the lighting pass, whatever the light.
 // The rune glyphs: one carved-rune language for the magic stones and the soundsystem. Simple,
@@ -2954,31 +2956,47 @@ const GENOMES = [
   { id: "wolf", name: "Wolf", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .24, val: .56 }, body: { len: .64, chest: .42, tuck: .6, neck: .32, neckAng: .7, neckW: .42, hr: .26, legW: 1.25 }, head: { snout: .82, snoutD: .7 }, parts: { ears: { kind: "point", size: .82 }, tail: "brush", feet: "paw" }, coat: { belly: true, saddle: true }, legend: ["wings", "mane"] },
   { id: "fox", name: "Fox", template: "quadruped", builder: "quad", palette: { hue: .06, sat: .8, val: .9, belly: "white" }, body: { hgt: .8, len: .62, chest: .4, tuck: .5, neck: .3, neckAng: .7, neckW: .32, hr: .24, legW: .9 }, head: { snout: 1.05, snoutD: .5, snoutTaper: .6 }, parts: { ears: { kind: "point", size: 1.35 }, tail: "bushy", feet: "paw" }, coat: { belly: true, socks: .3 }, legend: ["tails"] },
   { id: "badger", name: "Badger", template: "quadruped", builder: "quad", palette: { hue: .65, sat: .08, val: .45 }, body: { hgt: .62, len: .78, chest: .2, tuck: .22, neck: .18, neckAng: .1, neckW: .5, hr: .26, legW: 1.35 }, head: { snout: 1, snoutD: .55, snoutTaper: .55, face: "badger" }, parts: { ears: { kind: "round", size: .7 }, tail: "stub", feet: "paw" }, coat: { shaggy: true, legMat: "BODY3" }, legend: ["crystals"] },
-  { id: "boar", name: "Boar", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .62, val: .5 }, body: { len: .72, chest: .34, tuck: .42, neck: .2, neckAng: -.15, neckW: .55, hr: .27, legW: 1.15, back: "hump" }, head: { snout: 1.25, snoutD: .62, snoutTaper: .55, disc: true }, parts: { ears: { kind: "small", size: .8 }, tail: "thin", feet: "hoof", tusks: true }, coat: { ridge: true }, legend: ["tusksBig"] },
+  { id: "boar", name: "Boar", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .62, val: .5 }, body: { len: .72, chest: .34, tuck: .42, neck: .2, neckAng: -.15, neckW: .55, hr: .27, legW: 1.15, back: "hump" }, head: { snout: 1.25, snoutD: .62, snoutTaper: .55, disc: true }, parts: { ears: { kind: "small", size: .8 }, tail: "thin", feet: "hoof", tusks: true }, coat: { ridge: true }, texture: { kind: "bristles" },
+    // its evolution (the pilot of the evolution kit): a round, stubby, banded piglet; the young as it is; a heavy-fronted adult with a
+    // shoulder hump, its head low and its tusks curving; a massive, top-heavy legend charging head-down with huge curling tusks, pale
+    // flames off their tips and a dark shaggy mane along its spine and belly
+    levels: [
+      { body: { len: .6, chest: .3, tuck: .34, back: "arch" }, coat: { ridge: false, bands: { n: 2, mat: "BELLY" } } },
+      null,
+      { body: { humpK: 2.2, neckAng: -.42, front: 1.18, legW: 1.3 }, head: { tuskSize: 1.15, tuskCurl: .75, horn: { length: .75, r: .3, curl: .12, twist: .5, ridges: 2, segs: 6, out: .3, mat2: "NOSE" } }, parts: { horns: "twist" }, coat: { ridge: false }, features: [{ kind: "mane", from: .45, to: .98, height: .14, count: 10, lean: .45 }] },
+      { body: { humpK: 2.8, neckAng: -.45, front: 1.36, legW: 1.45, chest: .3 }, head: { tuskSize: 1.7, tuskCurl: 1.25, eyeGlow: true, horn: { length: 5.2, r: .46, curl: .9, twist: 2.5, ridges: 3, segs: 24, out: .3, tip: "MAGIC2", mat2: "NOSE" } }, parts: { horns: "twist" }, coat: { ridge: false }, features: [ // (Ed, 2026-10-05: head down to charge, a battering ram; its eye glints under the hump, flames rise over it)
+        { kind: "mane", from: .15, to: 1, height: .3, count: 18, lean: .55 },
+        { kind: "mane", belly: true, from: .3, to: .95, height: .16, count: 10, lean: .4 },
+        { kind: "wisps", at: "tusks", size: .3 },
+        { kind: "wisps", at: "horns", size: .32 },
+        { kind: "wisps", at: "mane", size: .26, count: 5, from: .4, to: .9 },
+        { kind: "eyeglint", size: .06 },
+      ] },
+    ] },
   { id: "stag", name: "Stag", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .5, val: .7 }, body: { hgt: 1.3, len: .6, chest: .6, tuck: .7, neck: .55, neckAng: .95, neckW: .32, hr: .2, legW: .75 }, head: { snout: 1.15, snoutD: .6, snoutTaper: .65 }, parts: { ears: { kind: "point", size: 1.1 }, tail: "deer", feet: "hoof", antlers: "branch" }, coat: { belly: true, spots: "young", rump: true }, legend: ["antlersGlow"] },
   { id: "hare", name: "Hare", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .4, val: .72 }, body: { hgt: .72, len: .5, chest: .4, tuck: .45, neck: .2, neckAng: .9, neckW: .35, hr: .27, legW: .85, haunch: 1.35, hindFoot: 1.6, back: "arch" }, head: { snout: .65, snoutD: .7, whiskers: true }, parts: { ears: { kind: "long", size: 2.4 }, tail: "puff", feet: "paw" }, coat: { belly: true }, legend: ["jackalope"] },
   { id: "owl", name: "Owl", template: "avian", builder: "owl", palette: { hue: .08, sat: .5, val: .55 }, legend: ["eyesRing", "wings"] },
   { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .42 }, body: { hgt: 1.15, len: .72, chest: .38, tuck: .4, neck: .25, neckAng: .3, neckW: .55, hr: .28, legW: 1.55, back: "hump" }, head: { snout: .7, snoutD: .62, snoutTaper: .7, muzzle: true }, parts: { ears: { kind: "round", size: .8 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"] },
-  { id: "hedgehog", name: "Hedgehog", template: "squat", builder: "hedgehog", palette: { hue: .08, sat: .4, val: .5 }, legend: ["crystals"] },
+  { id: "hedgehog", name: "Hedgehog", template: "squat", builder: "hedgehog", palette: { hue: .08, sat: .4, val: .5 }, legend: ["crystals"] , texture: { kind: "bristles" } },
   { id: "squirrel", name: "Squirrel", template: "quadruped", builder: "quad", palette: { hue: .03, sat: .75, val: .75, belly: "white" }, body: { hgt: .55, len: .45, chest: .35, tuck: .4, neck: .2, neckAng: .9, neckW: .35, hr: .3, legW: .8, haunch: 1.3, back: "arch" }, head: { snout: .55, snoutD: .65, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.1 }, tail: "squirrel", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
   { id: "toad", name: "Toad", template: "squat", builder: "toad", palette: { hue: .2, sat: .5, val: .55 }, legend: ["crown"] },
   { id: "otter", name: "Otter", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .45, belly: "white" }, body: { hgt: .55, len: 1, chest: .25, tuck: .25, neck: .3, neckAng: .35, neckW: .5, hr: .27, legW: 1.1 }, head: { snout: .6, snoutD: .7, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: .5 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"] },
   { id: "lynx", name: "Lynx", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .45, val: .75 }, body: { hgt: .9, len: .55, chest: .5, tuck: .55, neck: .25, neckAng: .8, neckW: .4, hr: .27, legW: 1.2 }, head: { snout: .5, snoutD: .75, snoutTaper: .8, cheeks: true, whiskers: true }, parts: { ears: { kind: "tuft", size: 1 }, tail: "bob", feet: "paw" }, coat: { belly: true, spots: true }, legend: ["mane"] },
   { id: "elk", name: "Elk", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .38 }, body: { hgt: 1.4, len: .68, chest: .6, tuck: .66, neck: .45, neckAng: .75, neckW: .42, hr: .24, legW: .9, back: "hump" }, head: { snout: 1.6, snoutD: .9, snoutTaper: .85 }, parts: { ears: { kind: "point", size: .9 }, tail: "stub", feet: "hoof", antlers: "palm" }, coat: { shaggy: true }, legend: ["antlersGlow", "moss"] },
   { id: "raven", name: "Raven", template: "avian", builder: "raven", palette: { hue: .68, sat: .35, val: .3 }, legend: ["wings", "eyesRing"] },
-  { id: "bat", name: "Bat", template: "flyer", builder: "bat", palette: { hue: .78, sat: .25, val: .45 }, legend: ["wingsBig"] },
-  { id: "mole", name: "Mole", template: "squat", builder: "mole", palette: { hue: .7, sat: .15, val: .32 }, legend: ["crown"] },
+  { id: "bat", name: "Bat", template: "flyer", builder: "bat", palette: { hue: .78, sat: .25, val: .45 }, legend: ["wingsBig"] , texture: { kind: "fur", size: 3 } },
+  { id: "mole", name: "Mole", template: "squat", builder: "mole", palette: { hue: .7, sat: .15, val: .32 }, legend: ["crown"] , texture: { kind: "fur", size: 3 } },
   { id: "beaver", name: "Beaver", template: "quadruped", builder: "quad", palette: { hue: .06, sat: .6, val: .45 }, body: { hgt: .6, len: .65, chest: .2, tuck: .22, neck: .2, neckAng: .4, neckW: .55, hr: .28, legW: 1.2, back: "arch" }, head: { snout: .6, snoutD: .75, whiskers: true, teeth: true }, parts: { ears: { kind: "round", size: .45 }, tail: "flat", feet: "paw" }, legend: ["moss"] },
   { id: "stoat", name: "Stoat", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .25, val: .92 }, body: { hgt: .5, len: 1, chest: .3, tuck: .33, neck: .35, neckAng: .6, neckW: .32, hr: .25, legW: .8, back: "arch" }, head: { snout: .6, snoutD: .6, whiskers: true }, parts: { ears: { kind: "round", size: .6 }, tail: "stoat", feet: "paw" }, coat: { belly: true }, legend: ["ribbons", "mane"] },
-  { id: "snail", name: "Snail", template: "squat", builder: "snail", palette: { hue: .08, sat: .45, val: .55 }, legend: ["glowShell"] },
-  { id: "ram", name: "Ram", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .12, val: .88 }, body: { hgt: .95, len: .6, chest: .48, tuck: .52, neck: .22, neckAng: .45, neckW: .48, hr: .25, legW: .9 }, head: { snout: .85, snoutD: .75, snoutTaper: .8, face: "dark" }, parts: { ears: { kind: "small", size: .7 }, tail: "stub", feet: "hoof", horns: "curl" }, coat: { wool: true }, legend: ["hornsGlow"] },
+  { id: "snail", name: "Snail", template: "squat", builder: "snail", palette: { hue: .08, sat: .45, val: .55 }, legend: ["glowShell"] , texture: { kind: "shell" } },
+  { id: "ram", name: "Ram", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .12, val: .88 }, body: { hgt: .95, len: .6, chest: .48, tuck: .52, neck: .22, neckAng: .45, neckW: .48, hr: .25, legW: .9 }, head: { snout: .85, snoutD: .75, snoutTaper: .8, face: "dark" }, parts: { ears: { kind: "small", size: .7 }, tail: "stub", feet: "hoof", horns: "curl" }, coat: { wool: true }, legend: ["hornsGlow"] , texture: { kind: "fur", stretch: 1.2, size: 3 } },
   { id: "woodlouse", name: "Woodlouse", template: "insectoid", builder: "woodlouse", palette: { hue: .65, sat: .12, val: .45 }, legend: ["crystals"] },
   { id: "snake", name: "Snake", template: "serpent", builder: "snake", palette: { hue: .25, sat: .45, val: .45 }, legend: ["wings"] },
-  { id: "moth", name: "Moth", template: "flyer", builder: "moth", palette: { hue: .1, sat: .3, val: .7 }, legend: ["wingsBig"] },
+  { id: "moth", name: "Moth", template: "flyer", builder: "moth", palette: { hue: .1, sat: .3, val: .7 }, legend: ["wingsBig"] , texture: { kind: "fur", size: 3, stretch: 1.6 } },
   { id: "marten", name: "Pine marten", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .6, val: .45 }, body: { hgt: .55, len: .78, chest: .35, tuck: .38, neck: .3, neckAng: .55, neckW: .35, hr: .25, legW: .85, back: "arch" }, head: { snout: .65, snoutD: .6 }, parts: { ears: { kind: "round", size: .9 }, tail: "bushy", feet: "paw" }, coat: { belly: true }, legend: ["mane"] },
-  { id: "salamander", name: "Salamander", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .1, val: .22, belly: "yellow" }, body: { hgt: .42, len: .9, chest: .14, tuck: .14, neck: .12, neckAng: .05, neckW: .5, hr: .27, legW: 1 }, head: { snout: .55, snoutD: .55 }, parts: { ears: { kind: "none" }, tail: "otter", feet: "paw" }, coat: { spots: true, spotMat: "belly" }, legend: ["flames"] },
-  { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] },
-  { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] },
+  { id: "salamander", name: "Salamander", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .1, val: .22, belly: "yellow" }, body: { hgt: .42, len: .9, chest: .14, tuck: .14, neck: .12, neckAng: .05, neckW: .5, hr: .27, legW: 1 }, head: { snout: .55, snoutD: .55 }, parts: { ears: { kind: "none" }, tail: "otter", feet: "paw" }, coat: { spots: true, spotMat: "belly" }, legend: ["flames"] , texture: { kind: "smooth" } },
+  { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
+  { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
   { id: "beetle", name: "Stag beetle", template: "insectoid", builder: "beetle", palette: { hue: .78, sat: .5, val: .35 }, legend: ["horn", "crystals"] },
 ];
@@ -3005,10 +3023,11 @@ const TEMPLATES = {
       ears: ["ear.point", "ear.round", "ear.long", "ear.tuft", "ear.small", "ear.big", "ear.none"],
       tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse"],
       feet: ["foot.paw", "foot.hoof"],
-      horns: ["horn.curl"], antlers: ["antler.branch", "antler.palm"], tusks: ["tusk"],
+      horns: ["horn.curl", "horn.twist"], antlers: ["antler.branch", "antler.palm"], tusks: ["tusk"],
     },
     exclude: [["horn.*", "antler.*"], ["tusk", "antler.*"]],
     face: { brow: "bar", happy: "arc", dazed: "x" }, // its expressions' shapes (expressions.js)
+    texture: { kind: "fur" }, // its surface (texture.js)
     gait: { offsets: [0, .5, .5, 0], dutyWalk: .65, dutyRun: .35 }, // front left, front right, back left, back right: a trot
     sizes: {
       head: [1.75, 1, 1.12, 1],         // head radius: a baby's big head, a legend's smaller for its size (grand, not cute)
@@ -3028,11 +3047,11 @@ const TEMPLATES = {
       motes: [0, 0, 3, 9],              // glowing motes round adults and legends
     },
   },
-  avian: { name: "Bird", builders: ["owl", "raven"], sizes: { head: [.48, .36, .36, .36], headY: [.95, 1.08, 1.08, 1.08], build: [1, 1, 1.18, 1.18], motes: [0, 0, 3, 9] }, sockets: { wings: ["wing.folded", "wing.spirit"], head: ["head.round", "head.beak"] }, exclude: [], face: { brow: "tuft", happy: "arc", dazed: "wobble" }, gait: { offsets: [0, .5], dutyWalk: .6, dutyRun: .4 } },
-  flyer: { sizes: TEMPLATE_SMALL_SIZES, name: "Flyer", builders: ["bat", "moth"], sockets: { wings: ["wing.membrane", "wing.scaled"] }, exclude: [], face: { brow: "tuft", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 0, dutyRun: 0 } },
-  serpent: { sizes: TEMPLATE_SMALL_SIZES, name: "Serpent or worm", builders: ["snake", "glowworm"], sockets: { head: ["head.snake", "head.worm"], tailTip: ["tail.lantern"] }, exclude: [], face: { brow: "ridge", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
-  insectoid: { sizes: TEMPLATE_SMALL_SIZES, name: "Many-legged", builders: ["beetle", "spider", "woodlouse"], sockets: { head: ["jaw.stag", "eyes.cluster", "antenna"] }, exclude: [], face: { brow: "ridge", happy: "arc", dazed: "wobble" }, gait: { offsets: [0, .5, 0, .5, 0, .5], dutyWalk: .6, dutyRun: .5 } }, // alternating tripods
-  squat: { sizes: TEMPLATE_SMALL_SIZES, name: "Squat", builders: ["toad", "hedgehog", "mole", "snail"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], face: { brow: "bar", happy: "squint", dazed: "x" }, gait: { offsets: [0, .5, .5, 0], dutyWalk: .7, dutyRun: .5 } },
+  avian: { name: "Bird", builders: ["owl", "raven"], sizes: { head: [.48, .36, .36, .36], headY: [.95, 1.08, 1.08, 1.08], build: [1, 1, 1.18, 1.18], motes: [0, 0, 3, 9] }, sockets: { wings: ["wing.folded", "wing.spirit"], head: ["head.round", "head.beak"] }, exclude: [], texture: { kind: "feathers" }, face: { brow: "tuft", happy: "arc", dazed: "wobble" }, gait: { offsets: [0, .5], dutyWalk: .6, dutyRun: .4 } },
+  flyer: { sizes: TEMPLATE_SMALL_SIZES, name: "Flyer", builders: ["bat", "moth"], sockets: { wings: ["wing.membrane", "wing.scaled"] }, exclude: [], texture: { kind: "fur" }, face: { brow: "tuft", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 0, dutyRun: 0 } },
+  serpent: { sizes: TEMPLATE_SMALL_SIZES, name: "Serpent or worm", builders: ["snake", "glowworm"], sockets: { head: ["head.snake", "head.worm"], tailTip: ["tail.lantern"] }, exclude: [], texture: { kind: "scales" }, face: { brow: "ridge", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
+  insectoid: { sizes: TEMPLATE_SMALL_SIZES, name: "Many-legged", builders: ["beetle", "spider", "woodlouse"], sockets: { head: ["jaw.stag", "eyes.cluster", "antenna"] }, exclude: [], texture: { kind: "plates" }, face: { brow: "ridge", happy: "arc", dazed: "wobble" }, gait: { offsets: [0, .5, 0, .5, 0, .5], dutyWalk: .6, dutyRun: .5 } }, // alternating tripods
+  squat: { sizes: TEMPLATE_SMALL_SIZES, name: "Squat", builders: ["toad", "hedgehog", "mole", "snail"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], texture: { kind: "smooth" }, face: { brow: "bar", happy: "squint", dazed: "x" }, gait: { offsets: [0, .5, .5, 0], dutyWalk: .7, dutyRun: .5 } },
 };
 const TEMPLATE_IDS = Object.keys(TEMPLATES);
 
@@ -3118,6 +3137,150 @@ function faceProblems(id, style) {
 }
 
 
+// ---- inlined from art/genome/texture.js ----
+// Witch creature surface texture (Ed, 2026-10-05: "best artwork over speed"; issue #119): so a big
+// body stops reading as a smooth ball with contour lines round it. Three things, all genome data
+// (a species' `texture`, its template's by default) the art pass can tune:
+//   - stamps: the body's pixels gathered into small cells shaped by its kind (fur: strokes running
+//     back and down the body; feathers: scallops; scales: a diamond lattice; plates: segments across
+//     the body; shell: bands round its whorl; bristles: long thin spines), each cell sharing one
+//     normal, so the game's stepped light breaks along tufts and strokes, not smooth contours;
+//   - tones: three or four chosen tones by a fixed light from above and in front (a lifted top, the
+//     body, a dark core shadow), decided cell by cell so their edges break up in clusters, never a
+//     dither; and seams, dark lines where cells meet (a feather's lower edge, a scale's, a plate's);
+//   - lumps: small displacements on the body's volumes (shoulders, haunches, ruffs), shaggier with age.
+// Detail grows with level: a baby's cells are big and soft and its seams gone; a legend's small, many
+// and contrasting. A style with texture 0 (?texture=0) draws every creature as before.
+
+const TEXTURE_KINDS = ["fur", "feathers", "scales", "plates", "shell", "bristles", "smooth"];
+// size: a cell's size in art pixels at young; stretch: how long a cell runs along the grain to across
+// it; flatten: how far a cell's pixels share its normal (0 none, 1 all); contrast: how far cells' tones
+// stray from the light's; seam: how much of a cell's lower edge is drawn dark; lumps: the body's
+// bumpiness (model units, at young); tones: 3 or 4 (a lifted top, the body, its shade, a core shadow).
+const TEXTURE_DEFAULT = { kind: "fur", size: 4, stretch: 2.6, flatten: .75, contrast: .2, seam: .45, lumps: .004, tones: 4 };
+const TEXTURE_KIND_DEFAULTS = {
+  fur: {}, // strokes back and down the body, a few dark partings between them
+  feathers: { size: 4, stretch: 1.1, seam: .8, lumps: .002 },
+  scales: { size: 3, stretch: 1, seam: .7, lumps: .001, flatten: .8 },
+  plates: { size: 4, stretch: 1, seam: .9, lumps: 0, flatten: .85, contrast: .2 },
+  shell: { size: 3, stretch: 1, seam: .7, lumps: 0, flatten: .8 },
+  bristles: { size: 2.5, stretch: 4, seam: .6, contrast: .4, lumps: .003 },
+  smooth: { size: 6, stretch: 1, seam: 0, contrast: .1, lumps: .001, flatten: .5 },
+};
+// By level (baby, young, adult, legend): cell size, contrast and seams, and lumps.
+const TEXTURE_LEVEL = { size: [1.8, 1, 1.15, 1.45], contrast: [.45, 1, 1.15, 1.3], seam: [0, .8, 1, 1.15], lumps: [.5, 1, 1.3, 1.6] };
+
+// The materials a texture works on (fur, feathers, scales: the body and its markings) and their tone
+// steps, lightest first: a pixel moves along its own row.
+const TEX_ROWS = [[M.BODYL, M.BODY, M.BODY2, M.BODY3], [M.BELLY, M.BELLY, M.ACCENT, M.ACCENT]];
+const texStep = new Map(); TEX_ROWS.forEach(row => row.forEach((m, i) => { if (!texStep.has(m)) texStep.set(m, { row, i }); }));
+const TEX_MATS = new Set([M.BODY, M.BODY2, M.BODY3, M.BELLY]);
+
+// A species' texture: its kind's defaults under its template's (or its genome's own) settings.
+function textureOf(S) {
+  const t = { ...TEXTURE_DEFAULT, ...(S.texture || {}) };
+  return { ...TEXTURE_DEFAULT, ...TEXTURE_KIND_DEFAULTS[t.kind], ...(S.texture || {}) };
+}
+const textureOn = st => !st || st.texture !== 0;
+
+// The lumps: every body volume a little bumpy (model3d's rough), more with age. m: a built model.
+function textureLumps(m, S, level, st) {
+  if (!textureOn(st)) return;
+  const T = textureOf(S), a = T.lumps * TEXTURE_LEVEL.lumps[level];
+  if (!a) return;
+  for (const q of m.parts) if (!q.extra && !q.rough && TEX_MATS.has(q.mat)) q.rough = a;
+}
+
+const texHash = (a, b, s) => { let h = (a * 374761393 + b * 668265263 + s * 2246822519) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+
+// The stamps, tones and seams on a drawn sprite (in place). seed: the species' (so a rig's pieces match).
+function textureSprite(sp, S, level, st, seed = 1) {
+  if (!textureOn(st)) return sp;
+  const T = textureOf(S), { w, h } = sp;
+  if (T.kind === "smooth" && !T.contrast) return sp;
+  // the style's detail (0: cel shapes, tones by the form with hard edges, no seams; 1: fine strokes and seams): the stylisation ladder's knob
+  const D = Math.max(0, Math.min(1, st?.texDetail ?? 1));
+  const styled = st?.artStyle === "bold" || st?.artStyle === "ref"; // the art director's stylised bake (?style=, art/stylise.js) lays the tones
+  const L = TEXTURE_LEVEL, c = Math.max(1.5, T.size * L.size[level] * (1 + (1 - D) * 2)), contrast = T.contrast * L.contrast[level] * D, seam = T.seam * L.seam[level] * D;
+  const lf = [-.35, -.75, .55], ll = Math.hypot(...lf); // the form light: above, in front, a little left (as the moon)
+  const on = new Uint8Array(w * h);
+  let cx = 0, cy = 0, n = 0;
+  for (let i = 0; i < w * h; i++) if (TEX_MATS.has(sp.m[i])) { on[i] = 1; cx += i % w; cy += (i / w) | 0; n++; }
+  if (n < 6) return sp;
+  cx /= n; cy /= n;
+  // ---- cells: each pixel to its nearest seed, by the kind's metric ----
+  const G = Math.max(1, Math.round(c)), gw = Math.ceil(w / G) + 2, gh = Math.ceil(h / G) + 2;
+  const seedAt = (gx, gy) => [gx * G + (texHash(gx, gy, seed) - .5) * G * .9, gy * G + (texHash(gy, gx, seed + 7) - .5) * G * .9 + (T.kind === "feathers" || T.kind === "scales" ? (gx & 1) * G * .5 : 0)];
+  const cell = new Int32Array(w * h).fill(-1);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x;
+    if (!on[i]) continue;
+    // the grain: back and down the body (fur, bristles: by the surface's slope); others: none
+    const nx = sp.n[i * 3], ny = sp.n[i * 3 + 1];
+    let dx = -.85, dy = .35;
+    if (T.kind === "fur" || T.kind === "bristles") { const tx = -nx * ny, ty = 1 - ny * ny; dx = dx * .55 + tx * .45; dy = dy * .55 + ty * .45; }
+    const dl = Math.hypot(dx, dy) || 1; dx /= dl; dy /= dl;
+    if (T.kind === "plates") { cell[i] = Math.floor((x - cx) / c + 1000) ; continue; } // segments across the body
+    if (T.kind === "shell") { const r = Math.hypot(x - cx, (y - cy) * 1.2), a = Math.atan2(y - cy, x - cx); cell[i] = Math.floor((r + a / (Math.PI * 2) * c) / c + 1000); continue; } // bands round its whorl
+    const gx0 = Math.floor(x / G), gy0 = Math.floor(y / G), R = T.stretch > 1.5 ? 2 : 1;
+    let best = 1e9, bi = -1;
+    for (let gy = gy0 - R; gy <= gy0 + R; gy++) for (let gx = gx0 - R; gx <= gx0 + R; gx++) {
+      const [sx, sy] = seedAt(gx, gy), ox = x - sx, oy = y - sy;
+      let d;
+      if (T.kind === "scales") d = Math.abs(ox) + Math.abs(oy) * 1.3; // a diamond lattice
+      else { const along = ox * dx + oy * dy, across = -ox * dy + oy * dx; d = (along / T.stretch) ** 2 + across * across; }
+      if (T.kind === "feathers" && oy < 0) d *= .8; // a scallop: rounder below, overlapping the one above
+      if (d < best) { best = d; bi = (gy + 4) * (gw + 8) + gx + 4; }
+    }
+    cell[i] = bi;
+  }
+  // ---- each cell's mean normal, and its tone ----
+  const sum = new Map();
+  for (let i = 0; i < w * h; i++) if (cell[i] >= 0) { let s = sum.get(cell[i]); if (!s) sum.set(cell[i], (s = [0, 0, 0, 0])); s[0] += sp.n[i * 3]; s[1] += sp.n[i * 3 + 1]; s[2] += sp.n[i * 3 + 2]; s[3]++; }
+  const tone = new Map(), r = rng(seed * 31 + level);
+  for (const [k, s] of sum) {
+    const l = Math.hypot(s[0], s[1], s[2]) || 1; s[0] /= l; s[1] /= l; s[2] /= l;
+    const lit = (s[0] * lf[0] + s[1] * lf[1] + s[2] * lf[2]) / ll, jit = (r() - .5) * 2 * contrast * .5;
+    const v = lit + jit, steps = T.tones >= 4 ? [.78, .38, .02] : [.72, .2]; // lifted top, body, shade, core shadow
+    tone.set(k, v > steps[0] ? -1 : v > steps[1] ? 0 : steps.length > 2 && v > steps[2] ? 1 : steps.length > 2 ? 2 : 1);
+  }
+  // ---- write: the cell's normal (flattened), its tone, and its seams ----
+  const out = sp.m.slice();
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x, k = cell[i];
+    if (k < 0) continue;
+    const s = sum.get(k), f = T.flatten * D;
+    let ax = sp.n[i * 3] * (1 - f) + s[0] * f, ay = sp.n[i * 3 + 1] * (1 - f) + s[1] * f, az = sp.n[i * 3 + 2] * (1 - f) + s[2] * f;
+    const al = Math.hypot(ax, ay, az) || 1; sp.n[i * 3] = ax / al; sp.n[i * 3 + 1] = ay / al; sp.n[i * 3 + 2] = az / al;
+    let t = styled ? 0 : tone.get(k); // (stylised, art/stylise.js lays the tones from these normals: the stamps shape them, seams aside)
+    if (D < 1 && !styled && level > 0) { // cel (a baby keeps its big soft cells): the tone by the pixel's own form, as far as the detail is low (big hard-edged shapes of light and shadow)
+      const lit = (sp.n[i * 3] * lf[0] + sp.n[i * 3 + 1] * lf[1] + sp.n[i * 3 + 2] * lf[2]) / ll, steps = T.tones >= 4 ? [.78, .38, .02] : [.72, .2];
+      const tp = lit > steps[0] ? -1 : lit > steps[1] ? 0 : steps.length > 2 && lit > steps[2] ? 1 : steps.length > 2 ? 2 : 1;
+      if (texHash(i, k, seed) > D) t = tp;
+    }
+    // seams: the cell's lower (feathers, scales) or trailing (plates, shell) edge, or a parting between strokes (fur, bristles)
+    const below = y + 1 < h ? cell[i + w] : -1, ahead = x + 1 < w ? cell[i + 1] : -1, lower = below >= 0 && below !== k, trailing = ahead >= 0 && ahead !== k;
+    const other = T.kind === "plates" ? trailing : T.kind === "shell" || T.kind === "bristles" ? lower || trailing : lower; // fur's partings, a feather's or scale's lower edge, a plate's seam
+    if (seam > 0 && other && texHash(k, k >> 7, seed + 3) < seam) t = Math.max(t, 0) + 1; // (a whole edge or none: a line, never speckle)
+    const st0 = texStep.get(sp.m[i]);
+    if (!st0 || !t) continue;
+    if (t < 0 && sp.m[i] !== M.BODY) continue; // (only the body lifts: markings and the belly only darken)
+    out[i] = st0.row[Math.max(0, Math.min(st0.row.length - 1, st0.i + t))];
+  }
+  sp.m.set(out);
+  return sp;
+}
+
+// What's wrong with a texture setting, if anything.
+function textureProblems(id, t) {
+  const out = [];
+  if (!t) return out;
+  if (t.kind && !TEXTURE_KINDS.includes(t.kind)) out.push(`${id}: texture ${t.kind} isn't one of ${TEXTURE_KINDS.join(", ")}`);
+  for (const k of Object.keys(t)) if (!(k in TEXTURE_DEFAULT)) out.push(`${id}: no texture setting ${k}`);
+  return out;
+}
+
+
 
 const GENOME_BY_ID = Object.fromEntries(GENOMES.map(g => [g.id, g]));
 
@@ -3133,13 +3296,30 @@ function speciesOf(g) {
     if (p.ears) { q.ear = p.ears.kind; if (p.ears.size !== undefined) q.earS = p.ears.size; }
     for (const [k, to] of [["tail", "tail"], ["feet", "paw"], ["horns", "horns"], ["antlers", "antlers"], ["tusks", "tusks"]]) if (p[k] !== undefined) q[to] = p[k];
     S.q = q;
-    // levels: { 0..3: { body, head, coat, parts, legend } } — what changes at a level beyond its size curves: its evolution
-    // (docs/art-guide/EVOLUTIONS.md). Each is merged over the species' own for that level only.
-    if (g.levels) S.levelQ = Object.fromEntries(Object.entries(g.levels).map(([lv, L]) => { const o = { ...(L.body || {}), ...(L.head || {}), ...(L.coat || {}) }, lp = L.parts || {}; if (lp.ears) { o.ear = lp.ears.kind; if (lp.ears.size !== undefined) o.earS = lp.ears.size; } for (const [k, to] of [["tail", "tail"], ["feet", "paw"], ["horns", "horns"], ["antlers", "antlers"], ["tusks", "tusks"]]) if (lp[k] !== undefined) o[to] = lp[k]; return [lv, o]; }));
   }
   S.sizes = { ...TEMPLATES[g.template].sizes, ...g.sizes };
   S.face = { ...TEMPLATES[g.template].face, ...g.face }; // its expressions' shapes (expressions.js)
+  S.texture = { ...TEMPLATES[g.template].texture, ...g.texture }; // its surface: fur, feathers, scales... (texture.js)
+  // its evolution (the evolution kit): each level's own proportions, parts and features, over its own
+  // levels: { 0..3: { body, head, coat, parts, features } } (or an array of four, any null) — what changes at a level beyond its
+  // size curves (docs/art-guide/EVOLUTIONS.md, #121's convention): merged over the species' own for that level only (S.levelQ),
+  // and its own parts (S.levelFeatures: evolve3d's manes, wisps...).
+  if (g.levels) {
+    const L = Object.entries(g.levels).filter(([, l]) => l);
+    S.levelQ = Object.fromEntries(L.map(([lv, l]) => [lv, levelQ(l)]));
+    S.levelFeatures = Object.fromEntries(L.map(([lv, l]) => [lv, (l.features || []).filter(f => typeof f === "object")]));
+  }
   return S;
+}
+
+// The evolution kit's features (creatures3d.js evolve3d).
+const GENOME_FEATURE_KINDS = ["mane", "wisps", "eyeglint"];
+// A level's overrides, in the builders' bag (as speciesOf makes q).
+function levelQ(l) {
+  const q = { ...l.body, ...l.head, ...l.coat }, p = l.parts || {};
+  if (p.ears) { q.ear = p.ears.kind; if (p.ears.size !== undefined) q.earS = p.ears.size; }
+  for (const [k, to] of [["tail", "tail"], ["feet", "paw"], ["horns", "horns"], ["antlers", "antlers"], ["tusks", "tusks"]]) if (p[k] !== undefined) q[to] = p[k];
+  return q;
 }
 
 // The tags a record's parts carry ("ear.point", "tail.brush", "foot.hoof", "antler.palm"...).
@@ -3162,8 +3342,10 @@ function genomeProblems(g) {
   if (!T) return [`${g.id}: no template ${g.template}`];
   if (!T.builders.includes(g.builder)) out.push(`${g.id}: ${g.template} has no builder ${g.builder}`);
   const allowed = Object.values(T.sockets).flat(), tags = genomeTags(g);
-  out.push(...faceProblems(g.id, { ...T.face, ...g.face }));
+  out.push(...faceProblems(g.id, { ...T.face, ...g.face }), ...textureProblems(g.id, { ...T.texture, ...g.texture }));
+  if (g.levels) { if (Object.keys(g.levels).some(k => !["0", "1", "2", "3"].includes(k))) out.push(`${g.id}: levels are 0 to 3 (baby, young, adult, legend)`); for (const l of Object.values(g.levels)) for (const f of l?.features || []) if (typeof f === "object" && !GENOME_FEATURE_KINDS.includes(f.kind)) out.push(`${g.id}: no evolution feature ${f.kind}`); }
   for (const t of tags) if (!allowed.includes(t)) out.push(`${g.id}: ${t} isn't one of ${g.template}'s parts`);
+  for (const [lv, l] of Object.entries(g.levels || {})) for (const t of l?.parts ? genomeTags({ parts: l.parts }) : []) if (!allowed.includes(t)) out.push(`${g.id}: level ${lv}'s ${t} isn't one of ${g.template}'s parts`);
   for (const [a, b] of T.exclude) if (tags.some(t => genomeTagMatch(a, t)) && tags.some(t => genomeTagMatch(b, t))) out.push(`${g.id}: ${a} and ${b} together`);
   for (const k of ["hue", "sat", "val"]) if (!(g.palette[k] >= 0 && g.palette[k] <= 1)) out.push(`${g.id}: palette ${k} ${g.palette[k]}`);
   return out;
@@ -3180,9 +3362,12 @@ function genomeHash(g) {
 }
 
 
+
+const textureSeed = id => [...id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) & 0xffff;
 // ---- inlined from art/creatures3d.js ----
 // Witch creatures built in 3D (see model3d.js), so they stand in true three-quarter view.
 // Units: the shoulder is about 1 high; x forward, y up, z towards the near side.
+
 
 
 
@@ -3228,6 +3413,9 @@ const beef = (m, k) => { for (const q of m.parts) { if (q.type === "ell") q.r = 
 // sunglasses or fancy shoes (Ed). Each builder records anchors on its model (head, eyes, neck,
 // feet); gearUp adds the parts before it is drawn. The gear in force is set by critter.
 let GEAR = null;
+// The texture in force while a creature is built (critter: genome/texture.js): its lumps go on its volumes.
+let TEX = null;
+function withTexture(tex, f) { const was = TEX; TEX = tex; try { return f(); } finally { TEX = was; } }
 // A creature's form, if not its ordinary one: a hook that draws the finished model instead of
 // render (legends.js: the sleeping legends, sunk and overgrown, waking, and woken). It returns the
 // sprite; form.motes says whether the glowing motes still float round it.
@@ -3238,6 +3426,7 @@ function withGear(gear, f) { const was = GEAR; GEAR = gear; try { return f(); } 
 const star = (s, t) => { const a = Math.atan2(t, s), r = Math.hypot(s, t); return r < .55 + .4 * Math.pow(Math.abs(Math.cos(a * 2.5 + Math.PI / 2)), 3); };
 const heart = (s, t) => { const x = s * 1.2, y = -t * 1.2 + .25; return Math.pow(x * x + y * y - .6, 3) - x * x * y * y * y < 0; };
 function gearUp(m) {
+  if (TEX) textureLumps(m, TEX.S, TEX.level, TEX.st); // its body's lumps (before anything's added to it)
   const g = GEAR, A = m.anchors; if (!g) return;
   faceUp(m, g.face, g.faceStyle); // its expression, part of its face (genome/expressions.js)
   const was = m.part; m.part = "head"; // the collar, hat and glasses ride on the head (the live rig's head piece: genome/parts.js)
@@ -3284,16 +3473,62 @@ function gearUp(m) {
   }
 }
 
+// ================= the evolution kit =================
+// A level's own features (genome levels[n].features), each from the model's landmarks. Every one's
+// parts are tapered and curved, so a row of them reads as a mane or a crest, never a hand of fingers.
+//   mane: { from, to (along the back, 0 rump to 1 head), height, count, lean, mat, belly (along the underside instead) }
+//   eyeglint: { size }: its eyes' glint brought out to the surface, where its body hides its face.
+//   wisps: { at: "tusks" | "horns" | "mane", size, mat, (mane: count, from, to) }: flames off its tusks' or horns' tips, or rising along its spine (glowing).
+const EVOLVE_KINDS = ["mane", "wisps", "eyeglint"];
+function evolve3d(m, feats, c) {
+  for (const f of feats) {
+    if (f.kind === "mane") {
+      m.part = "body";
+      const n = f.count ?? 12, mat = M[f.mat || "BODY3"], h0 = f.height ?? .2, lean = f.lean ?? .5;
+      for (let i = 0; i < n; i++) {
+        const t = (f.from ?? .2) + ((f.to ?? .95) - (f.from ?? .2)) * (i + .5) / n, wob = .75 + .5 * Math.abs(Math.sin(i * 2.7 + 1.3)), h = h0 * wob * (1 - .35 * Math.abs(t - .7));
+        let b, dir;
+        if (f.belly) { const x = -c.len * .9 + t * c.len * 1.65; b = [x, c.chest - .02 + (c.tuck - c.chest) * (1 - t), 0]; dir = v3.norm([-lean, -1, 0]); }
+        else { b = c.backAt(t); b = [b[0], b[1] - .03, b[2]]; dir = v3.norm([-lean, 1, 0]); }
+        const z = ((i % 3) - 1) * c.bw * .25, tip = v3.add(b, v3.mul(dir, h)), mid = v3.add(v3.lerp(b, tip, .5), [-h * lean * .25, 0, 0]);
+        m.chain([[b[0], b[1], z, h * .2], [mid[0], mid[1], z, h * .11], [tip[0], tip[1], z, h * .02]], mat, { group: 70 + (i % 2), extra: true });
+      }
+    }
+    if (f.kind === "eyeglint" && m.anchors.eyes) { // its eyes' glint, pushed out to the surface where the body hides the head (a charging legend's under its hump)
+      m.part = "head";
+      const r = f.size ?? .035, H = m.anchors.head?.c ?? [0, 0, 0];
+      for (const e of m.anchors.eyes.pts) { // out along the camera's line (model3d's view, facing us) past the last surface in the way, so it shows where the eye would
+        const d = v3.norm([.49, .5, .72]); let last = e, inside = true;
+        for (let k = 1; k <= 300; k++) { const q = v3.add(e, v3.mul(d, k * .01)), now = m.field(q) < 0; if (inside && !now) last = q; inside = now; }
+        m.ell(last, [r, r * .8, r], M.MAGIC2, { group: 120, extra: true }); m.ell(v3.add(last, v3.mul(d, r * .6)), [r * .55, r * .45, r * .55], M.MAGIC, { group: 121, extra: true }); } // a bright core in its glowing rim
+    }
+    if (f.kind === "wisps" && f.at === "mane") { // flames rising off the spine, over the hump
+      m.part = "body";
+      const n = f.count ?? 5, s = f.size ?? .22;
+      for (let i = 0; i < n; i++) { const t = (f.from ?? .35) + ((f.to ?? .85) - (f.from ?? .35)) * (i + .5) / n, b = c.backAt(t), up = v3.norm([-.35 - (c.frame ? .1 : 0), 1, 0]), k = s * (.75 + .5 * Math.abs(Math.sin(i * 2.1 + .7)));
+        m.flat(v3.add([b[0], b[1] + s * .4, b[2]], v3.mul(up, k * .55)), [1, 0, 0], up, k * .3, k * .6, masks.flame(M[f.mat || "MAGIC2"], M.MAGIC), { group: 110 + i, extra: true }); }
+    }
+    if (f.kind === "wisps" && (f.at === "tusks" || f.at === "horns")) {
+      m.part = "head";
+      const s = f.size ?? .18;
+      (f.at === "horns" ? c.hornTips : c.tuskTips).forEach((p, i) => { const up = v3.norm([-.3 - (c.frame ? .1 : 0), 1, 0]); m.flat(v3.add(p, v3.mul(up, s * .55)), [1, 0, 0], up, s * .3, s * .6, masks.flame(M[f.mat || "MAGIC2"], M.MAGIC), { group: 96 + i, extra: true }); });
+    }
+  }
+  m.part = "body";
+}
+
 // ================= four-legged animals =================
 function quad3d(S, level, frame, st, facing = "towards") {
-  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q, ...(S.levelQ?.[level] || {}) }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => (legend && S.legend.includes(f)) || (q.features || []).includes(f); // features: a level's own (an evolution can grow them before the legend)
+  // its evolution at this level (genome levels: its own proportions and parts, not a rescale; q.features: legend features it grows early)
+  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q, ...(S.levelQ?.[level] || {}) }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => (legend && S.legend.includes(f)) || (q.features || []).includes(f);
+  const feats = S.levelFeatures?.[level];
   const sz = k => S.sizes[k][level]; // its template's size curves (art/genome/templates.js): baby, young, adult, legend
   const m = new Model();
   const hr = q.hr * sz("head") * (st.head / .44) ** .5, len = q.len * sz("len") * st.long;
   const legK = sz("legK");
   const bob = frame ? -.04 : 0, top = 1 + bob, chest = q.chest * sz("chestDeep") * sz("chestBig") / legK + bob, tuck = q.tuck * sz("tuck") / legK + bob; // a big one's deeper chest and belly
   const bw = q.bw * sz("body") * (q.legW > 1.2 ? 1.15 : 1), lw = .06 * q.legW * sz("limbA") * sz("limbB");
-  const hump = q.back === "hump" ? (q.hump ?? .1) : 0, arch = q.back === "arch" ? .1 : 0;
+  const hump = q.back === "hump" ? q.hump ?? .1 * (q.humpK ?? 1) : 0, arch = q.back === "arch" ? .1 : 0, front = q.front ?? 1; // front: a heavier front (an adult boar's)
   // ---- markings, painted by where a point is on the body ----
   const bellyY = chest + .12;
   const paintBody = p => {
@@ -3301,10 +3536,11 @@ function quad3d(S, level, frame, st, facing = "towards") {
     if (q.saddle && p[1] > top - .18 && p[0] < len * .55) return M.BODY2;
     if (q.spots && p[1] > chest + .1 && spotty(p, 10, .22)) return q.spotMat === "belly" || (q.spots === "young" && juv) ? M.BELLY : q.spots === "young" ? undefined : M.BODY3;
     if (q.ridge && p[1] > top - .08 + hump * .5) return M.BODY3;
+    if (q.bands && p[1] > chest && p[0] > -len * 1.1 && Math.floor((p[1] - chest) / Math.max(.01, top + hump - chest) * q.bands.n * 2 + .5) % 2) return M[q.bands.mat || "BELLY"]; // a piglet's stripes, running its length
     return undefined;
   };
   // ---- torso: a deep chest, a tucked waist, a rump ----
-  m.ell([len * .48, (top + chest) / 2 + hump * .5, 0], [len * .62, (top - chest) / 2 + hump * .5, bw], M.BODY, { paint: paintBody });
+  m.ell([len * .48, (top + chest) / 2 + hump * .5, 0], [len * .62, (top - chest) / 2 * front + hump * .5, bw * front], M.BODY, { paint: paintBody });
   m.ell([-len * .5, (top + tuck) / 2 + arch * .6, 0], [len * .58, (top - tuck) / 2 + arch * .6, bw * .93], M.BODY, { paint: paintBody });
   m.ell([0, (top + (chest + tuck) / 2) / 2 + .02, 0], [len * .6, (top - (chest + tuck) / 2) / 2, bw * .9], M.BODY, { paint: paintBody });
   if (q.ridge) for (let i = 0; i < (legend ? 16 : 10); i++) { const x = -len * .8 + i * len * 1.75 / (legend ? 15 : 9), h = (.07 + (legend ? .04 : 0)) * (1 + .5 * Math.max(0, x / len)); m.ell([x, top + .02 + hump * Math.max(0, 1 - Math.abs(x / len - .5) * 2) + h * .5, 0], [h, .03, bw * .25], M.BODY3, { dir: [-.3, 1, 0], up: [1, 0, 0] }); }
@@ -3343,7 +3579,7 @@ function quad3d(S, level, frame, st, facing = "towards") {
   const tip = [sn[0] + L * .62 + hr * .1, sn[1] - .02, 0];
   m.ell(tip, [hr * (q.disc ? .1 : .12), hr * (q.disc ? .2 : .12), hr * (q.disc ? .2 : .15)], M.NOSE, { group: 1 });
   // eyes: both show; legends' glow
-  for (const side of [-1, 1]) { const e = Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62])); m.ell(e, [hr * .13, hr * .16, hr * .13].map(v => v * (q.eyeK || 1) * sz("eye")), legend && !q.tusks ? M.MAGIC2 : M.EYE, { group: 1 }); }
+  for (const side of [-1, 1]) { const e = Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62])); m.ell(e, [hr * .13, hr * .16, hr * .13].map(v => v * (q.eyeK || 1) * sz("eye")), (legend && !q.tusks) || q.eyeGlow ? M.MAGIC2 : M.EYE, { group: 1 }); } // (eyeGlow: an evolved level's eye catching the light, the legend boar's under its hump)
   m.anchors.head = { c: H, r: [hr * 1.05, hr * .92, hr * .88], top: [H[0] - hr * .1, H[1] + hr * .82, 0] };
   m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62]))), size: hr * .16 * (q.eyeK || 1) * sz("eye") };
   m.anchors.neck = { c: v3.lerp(nb, H, sz("neckAnchor")), r: q.neckW * .5 * sz("neckR"), dir: v3.norm(v3.sub(H, nb)), tag: sz("tag") }; // lower on the neck when the head is big
@@ -3363,13 +3599,24 @@ function quad3d(S, level, frame, st, facing = "towards") {
   if (!has("tails")) tail3d(m, has("starTail") ? "star" : q.tail, tb, len, top, tw);
   m.part = "head";
   // ---- horns, antlers, tusks ----
-  if (q.horns) for (const side of [-1, 1]) { const k = has("hornsGlow") ? 1.5 : sz("horns"), pts = []; for (let i = 0; i <= 8; i++) { const a = .3 - i / 8 * Math.PI * 1.6, r = hr * .65 * k * (1 - .45 * i / 8); pts.push([H[0] - hr * .1 + Math.cos(a) * r, H[1] + hr * .45 + Math.sin(a) * r, side * (hr * .6 + i * .015)]); pts[i].push(hr * .2 * k * (1 - .6 * i / 8)); } m.chain(pts, has("hornsGlow") ? M.MAGIC : M.ACCENT, { group: 13 }); }
+  const hornTips = [];
+  if (q.horns === "twist") for (const side of [-1, 1]) hornTips.push(horn3d(m, [H[0] - hr * .05, H[1] + hr * .6, side * hr * .45], side, { ...q.horn, length: (q.horn?.length ?? 2) * hr, r: (q.horn?.r ?? .3) * hr }));
+  else if (q.horns) for (const side of [-1, 1]) { const k = has("hornsGlow") ? 1.5 : sz("horns"), pts = []; for (let i = 0; i <= 8; i++) { const a = .3 - i / 8 * Math.PI * 1.6, r = hr * .65 * k * (1 - .45 * i / 8); pts.push([H[0] - hr * .1 + Math.cos(a) * r, H[1] + hr * .45 + Math.sin(a) * r, side * (hr * .6 + i * .015)]); pts[i].push(hr * .2 * k * (1 - .6 * i / 8)); } m.chain(pts, has("hornsGlow") ? M.MAGIC : M.ACCENT, { group: 13 }); }
   if (q.antlers || has("jackalope")) for (const side of [-1, 1]) antlers3d(m, q, [H[0] - hr * .05, H[1] + hr * .75, side * hr * .4], side, sz("antlers"), has);
-  if (q.tusks) for (const side of [-1, 1]) { const k = has("tusksBig") ? 1.4 : sz("tusks"); if (!k) continue; const b = [sn[0] + L * .25, sn[1] - Dm * .4, side * Dm * .8]; m.chain([[...b, .045 * k], [...v3.add(b, [.1 * k, .1 * k, side * .03]), .04 * k], [...v3.add(b, [.06 * k, .24 * k, side * .05]), .02 * k]], M.ACCENT, { group: 8 }); }
+  const tuskTips = [];
+  if (q.tusks) for (const side of [-1, 1]) {
+    const k = has("tusksBig") ? 1.4 : q.tuskSize ?? sz("tusks"); if (!k) continue; const b = [sn[0] + L * .25, sn[1] - Dm * .4, side * Dm * .8];
+    if (q.tuskCurl === undefined) { m.chain([[...b, .045 * k], [...v3.add(b, [.1 * k, .1 * k, side * .03]), .04 * k], [...v3.add(b, [.06 * k, .24 * k, side * .05]), .02 * k]], M.ACCENT, { group: 8 }); tuskTips.push(v3.add(b, [.06 * k, .24 * k, side * .05])); continue; }
+    // an evolved tusk (genome levels): a tapering curve out, up and back round by tuskCurl (half turns), its tip fine
+    const pts = [], n = 9, R = .13 * k;
+    for (let i = 0; i <= n; i++) { const t = i / n, a = t * q.tuskCurl * Math.PI, r = R * (1 - t * .35); pts.push([b[0] + Math.sin(a) * r * 1.2, b[1] + (1 - Math.cos(a)) * r, b[2] + side * t * .07 * k, .034 * k * (1 - t * .8)]); }
+    m.chain(pts, M.ACCENT, { group: 8 }); tuskTips.push(pts[n].slice(0, 3));
+  }
   if (q.teeth && !baby) m.ell([tip[0] - hr * .1, tip[1] - hr * .25, 0], [hr * .08, hr * .14, hr * .12], M.ACCENT, { group: 1 });
   // ---- legendary features ----
   m.part = "body";
   const backAt = t => [-len * .9 + t * len * 1.65, top + hump * Math.max(0, 1 - Math.abs(t - .8) * 3) + arch * (1 - Math.abs(t - .4) * 2), 0];
+  if (feats?.length) evolve3d(m, feats, { H, hr, sn, L, Dm, tuskTips, hornTips, backAt, len, top, chest, tuck, bw, frame });
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [len * .2, top, side * bw * .5], side, 1.15, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("mane") || has("flames")) for (let i = 0; i < 7; i++) { const t = i / 6, b = v3.lerp(v3.add(H, [-hr * .5, hr * .3, 0]), backAt(.55), t), h = [.4, .3, .45, .28, .38, .25, .3][i], up = v3.norm([-.35 - (frame ? .1 : 0), 1, 0]); m.flat(v3.add(b, v3.mul(up, h * .5)), [1, 0, 0], up, h * .32, h * .55, masks.flame(i % 2 ? M.MAGIC : M.MAGIC2, M.MAGIC2), { group: 60 + i % 2, extra: true }); }
   if (has("tails")) for (let i = 0; i < 7; i++) { m.part = "tail"; const a = Math.PI * (.55 + i * .08), z = (i - 3) * .1, e = v3.add(tb, [Math.cos(a) * .9, Math.sin(a) * .85, z]); m.chain([[...tb, .1], [...v3.lerp(tb, e, .5), .17], [...e, .08]], i % 2 ? M.BODY2 : M.BODY, { group: 70, extra: true }); m.ell(e, [.09, .09, .09], M.MAGIC2, { group: 71, extra: true }); }
@@ -3385,6 +3632,25 @@ function quad3d(S, level, frame, st, facing = "towards") {
   const sp = drawForm(m, { height: drawHeight(level, st, q.hgt), facing }, S, level);
   if (formMotes() && sz("motes")) glowMotes(sp, S.id.length * 7919, sz("motes"));
   return sp;
+}
+
+// A twisted horn (the parts kit's "horn that sweeps and curls"; genome parts horns: "twist", its shape in head.horn): from
+// `base` it rises up and out, then sweeps back by `curl` (half turns), two strands spiralling round each other `twist` times
+// along it (so it reads as twisted at game size), ridged every `ridges`th step (the second strand in `mat2`, if given, so the twist shows as a spiral band), tapering to a fine point; `tip` (a material
+// name) glows its last fifth. length and r in model units. Returns its tip.
+function horn3d(m, base, side, { length = .5, r = .08, curl = .6, twist = 2, ridges = 3, segs = 18, out = .45, tip, mat = "ACCENT", mat2, group = 14 } = {}) {
+  const n = Math.max(4, segs), ds = length / n, A = [[], []];
+  let p = base;
+  for (let i = 0; i <= n; i++) {
+    const t = i / n, a = -.15 + Math.pow(t, 1.5) * curl * Math.PI, o = out * (1 - t * .7); // straight up first, then sweeping back
+    const dir = v3.norm([-Math.sin(a), Math.cos(a), side * o]), u = v3.norm(v3.cross(dir, [0, 0, 1])), w = v3.norm(v3.cross(u, dir));
+    const rr = r * (1 - t * .88) * (ridges && i % ridges === 0 && i < n ? 1.14 : 1), ph = t * twist * Math.PI * 2 * side;
+    for (const k of [0, 1]) { const f = ph + k * Math.PI, off = v3.add(v3.mul(u, Math.cos(f) * rr * .5), v3.mul(w, Math.sin(f) * rr * .5)); A[k].push([...v3.add(p, off), rr * .58]); }
+    if (i < n) p = v3.add(p, v3.mul(dir, ds));
+  }
+  const cut = Math.round(n * .8);
+  for (const [k, s] of A.entries()) { m.chain(s.slice(0, tip ? cut + 1 : n + 1), M[k && mat2 ? mat2 : mat] ?? M.ACCENT, { group, extra: true }); if (tip) m.chain(s.slice(cut), M[tip] ?? M.MAGIC2, { group: group + 1, extra: true }); }
+  return p;
 }
 
 function tail3d(m, kind, tb, len, top, tw) {
@@ -3703,17 +3969,18 @@ function speciesColours(sp, st, gear = null) {
   if (gear.hat != null) { const [a, b, pom] = HAT_COLOURWAYS[gear.hat % HAT_COLOURWAYS.length]; c[M.HAT1] = a; c[M.HAT2] = b; c[M.POM] = pom; }
   if (gear.glasses) { c[M.SHADES] = [22, 18, 32]; c[M.FRAME] = gear.glasses === "heart" ? [255, 60, 110] : [255, 90, 210]; }
   if (gear.shoes) { const [shoe, sole] = SHOE_STYLES[gear.shoes] || SHOE_STYLES.sneakers; c[M.SHOE] = shoe; c[M.SOLE] = sole; }
-  if (gear.woken) { c[M.WOKEN] = [255, 40, 36]; for (const k of [M.BODY, M.BODY2, M.BODY3, M.BELLY, M.ACCENT, M.EAR]) if (c[k]) c[k] = c[k].map((v, j) => Math.round(v * .72 + [30, 8, 12][j] * .1)); } // darker, a little redder
+  if (gear.woken) { c[M.WOKEN] = [255, 40, 36]; for (const k of [M.BODY, M.BODYL, M.BODY2, M.BODY3, M.BELLY, M.ACCENT, M.EAR]) if (c[k]) c[k] = c[k].map((v, j) => Math.round(v * .72 + [30, 8, 12][j] * .1)); } // darker, a little redder
   return c;
 }
 function baseColours(s, st) {
   const v = st.cVal / .85, sat = st.cSat / .6;
-  const body = hsv2rgb(s.hue, s.sat * sat * st.sat, s.val * v);
+  const body = hsv2rgb(s.hue, s.sat * sat * st.sat, s.val * v), hs = st.hueShift || 0; // hs: hue-shifted ramps (lights warmer, shadows redder; the stylisation ladder)
   const belly = s.belly === "yellow" ? [240, 196, 40] : s.belly === "white" || s.q?.face === "badger" ? [236, 232, 222] : hsv2rgb(s.hue + .03, s.sat * .5 * sat, Math.min(1, s.val * v * 1.3 + .08));
   const magic = hsv2rgb(st.magicHue + s.hue * .3, .6, 1), magic2 = hsv2rgb(st.magicHue + s.hue * .3, .18, 1);
   const pale = ["boar", "stag", "elk", "ram"].includes(s.id);
   return {
-    [M.BODY]: body, [M.BODY2]: hsv2rgb(s.hue + .02, Math.min(1, s.sat * sat * 1.2 + .05), s.val * v * .66), [M.BODY3]: hsv2rgb(s.hue + .03, Math.min(1, s.sat * sat * 1.3 + .1), s.val * v * .4),
+    [M.BODY]: body, [M.BODY2]: hsv2rgb(s.hue + .02 - hs * .04, Math.min(1, s.sat * sat * 1.2 + .05 + hs * .1), s.val * v * .66), [M.BODY3]: hsv2rgb(s.hue + .03 - hs * .07, Math.min(1, s.sat * sat * 1.3 + .1 + hs * .15), s.val * v * .4),
+    [M.BODYL]: hsv2rgb(s.hue - .01 + hs * .04, s.sat * sat * st.sat * (.85 - hs * .25), Math.min(1, s.val * v * 1.22 + .05 + hs * .08)), // the coat's lifted top tone (genome/texture.js)
     [M.BELLY]: belly, [M.ACCENT]: pale ? [236, 226, 200] : hsv2rgb(s.hue + .05, s.sat * .6, Math.min(1, s.val * v * .5 + .25)),
     [M.MAGIC]: magic, [M.MAGIC2]: magic2, [M.LEAF]: hsv2rgb(.3, .55, .55), [M.LEAF2]: hsv2rgb(.25, .5, .75), [M.LEAF3]: hsv2rgb(.33, .6, .35), [M.TRUNK]: hsv2rgb(.07, .45, .32),
     [M.BROW]: body[0] * .3 + body[1] * .55 + body[2] * .15 < 95 ? [226, 218, 204] : [30, 20, 28], // its brows: ink on a light coat, pale on a dark one
@@ -3731,7 +3998,7 @@ const levelHeight = (level, st) => height3d(level, st);
 // facing: "towards" (head turned to the viewer) or "away" (we see the rump and back of the head).
 // Shapes don't depend on colours, so a creature is drawn once per shape-changing knob setting
 // (a lab session changes lighting and colour knobs far more often than these).
-const SHAPE_KNOBS = ["size", "growth", "pixel", "head", "eye", "legs", "long", "fur"], cache = new Map();
+const SHAPE_KNOBS = ["size", "growth", "pixel", "head", "eye", "legs", "long", "fur", "texture"], cache = new Map();
 // gear (optional): party gear, the woken look and the expression, { collar, hat, glasses, shoes, woken, face }:
 //   collar: a colour [r, g, b] (the creature's sigil neon) or true; hat: a colourway 0..2;
 //   glasses: "bar" | "star" | "heart"; shoes: "sneakers" | "glitter" | "platform"; woken: true;
@@ -3743,7 +4010,8 @@ function critter(spId, level, frame, st, facing = "towards", gear = null) {
   const key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken, g.face && g.face !== "neutral" ? g.face : ""].join(",") : ""].join("|");
   let sp = cache.get(key);
   if (!sp) {
-    sp = withGear(g, () => buildCreature(S, level, frame, st, facing));
+    sp = withTexture({ S, level, st }, () => withGear(g, () => buildCreature(S, level, frame, st, facing)));
+    textureSprite(sp, S, level, st, textureSeed(S.id)); // its fur, feathers or scales (genome/texture.js)
     if (g?.woken) for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.EYE || sp.m[i] === M.IRIS || sp.m[i] === M.PUPIL) sp.m[i] = M.WOKEN; // angry glowing eyes
     if (cache.size > 600) cache.delete(cache.keys().next().value);
     cache.set(key, sp);
@@ -7455,6 +7723,7 @@ function variantColours(id, st, variant, gear = null) {
 
 
 
+
 // ---- inlined from art/genome/parts.js ----
 // Witch creature parts (#79, stage 4): a creature baked as pieces rather than whole frames, so a
 // live rig (src/render/rig/) can put it together each frame from how it moves. Its torso, head and
@@ -7463,6 +7732,7 @@ function variantColours(id, st, variant, gear = null) {
 // between its joints. Each piece keeps its pivot: the pixel where the joint it hangs from lands.
 // Headings: 0 walking right, a quarter turn walking down the screen (towards us), minus a quarter up
 // it (away); RIG_HEADINGS are the baked ones, and heading h > a quarter turn is the mirror of pi - h.
+
 
 
 
@@ -7493,7 +7763,7 @@ function rigCapture(id, level, st, face = null, gear = null) {
   const form = (m, o) => { got = { m, height: o.height }; return new Sprite(1, 1); };
   form.motes = false;
   const g = face || gear ? { ...gear, shoes: null, face, faceStyle: S.face } : null;
-  withGear(g, () => withForm(form, () => buildCreature(S, level, 0, st, "towards")));
+  withTexture({ S, level, st }, () => withGear(g, () => withForm(form, () => buildCreature(S, level, 0, st, "towards"))));
   const s = render(got.m, { height: got.height, measure: true }).s, f = got.m.atScale;
   if (f) { got.m.atScale = null; f(s); }
   if (gear?.woken) for (const q of got.m.parts) if (q.mat === M.EYE || q.mat === M.IRIS || q.mat === M.PUPIL) q.mat = M.WOKEN; // enraged: angry glowing eyes (as critter's woken look)
@@ -7502,7 +7772,7 @@ function rigCapture(id, level, st, face = null, gear = null) {
 // Its head piece in each expression but neutral (the head piece itself): { angry, happy, dazed }.
 function rigFaces(id, level, st, pivot, s, gear) {
   const out = {};
-  for (const face of EXPRESSIONS) if (face !== "neutral") out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s);
+  for (const face of EXPRESSIONS) if (face !== "neutral") out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S: SPECIES_BY_ID[id], level, st });
   return out;
 }
 // A model of only the primitives labelled with one of `labels`.
@@ -7522,10 +7792,11 @@ function rigCropped(sp, px, py) {
   return { sp: c, px: +(px - x0).toFixed(2), py: +(py - y0).toFixed(2) };
 }
 // One labelled piece at each baked heading, pivoted on `pivot` (a model-space point).
-function rigPiece(m, labels, pivot, s) {
+// tex: { S, level, st }, its surface (genome/texture.js) on each, as on its whole sprite.
+function rigPiece(m, labels, pivot, s, tex = null) {
   const sub = rigPick(m, labels);
   if (!sub.parts.length && !sub.flats.length) return null;
-  return RIG_HEADINGS.map(h => { const r = render(sub, { scale: s, yaw: h }), [px, py] = r.project(pivot); return rigCropped(r.sp, px, py); });
+  return RIG_HEADINGS.map(h => { const r = render(sub, { scale: s, yaw: h }), [px, py] = r.project(pivot); if (tex) textureSprite(r.sp, tex.S, tex.level, tex.st, textureSeed(tex.S.id)); return rigCropped(r.sp, px, py); });
 }
 // A disc: a ball of a material, r pixels across its radius, lit as a sphere (a serpent's body) or,
 // rod, as a slice of an upright limb: its normals tilted neither up nor down, so discs strung down a
@@ -7553,11 +7824,11 @@ function rigParts(id, level, st, gear = null) {
     for (const l of R.legs) discSet(l.mat, legR);
     const hoof = R.legs.find(l => l.hoof); if (hoof) discSet(M.NOSE, radii(R.legs.map(l => l.fl * .9)));
     else discSet(R.legs[0].mat, radii(R.legs.map(l => l.fl * .9)));
-    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { torso: rigPiece(m, ["body"], [0, 0, 0], s), head: rigPiece(m, ["head"], R.head.nb, s), tail: rigPiece(m, ["tail"], R.tail, s) }, faces: rigFaces(id, level, st, R.head.nb, s, gear) };
+    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { torso: rigPiece(m, ["body"], [0, 0, 0], s, { S: SPECIES_BY_ID[id], level, st }), head: rigPiece(m, ["head"], R.head.nb, s, { S: SPECIES_BY_ID[id], level, st }), tail: rigPiece(m, ["tail"], R.tail, s, { S: SPECIES_BY_ID[id], level, st }) }, faces: rigFaces(id, level, st, R.head.nb, s, gear) };
   }
   // a serpent: its head baked, its body discs (speckled like its coat) by the spine's radii
   discSet(M.BODY, radii(R.spine.map(p => p[3])), p => spotty([p[0] * 1.5, p[1], p[2]], 14, .3) ? M.BODY3 : undefined);
-  return { id, level, template: tpl, s, joints: { spine: R.spine, head: R.head, hr: R.hr }, discs, pieces: { head: rigPiece(m, ["head"], R.head, s), wings: rigPiece(m, ["body"].filter(() => m.parts.some(q => q.part === "body" && q.extra)), [0, .2, 0], s) }, faces: rigFaces(id, level, st, R.head, s, gear) };
+  return { id, level, template: tpl, s, joints: { spine: R.spine, head: R.head, hr: R.hr }, discs, pieces: { head: rigPiece(m, ["head"], R.head, s, { S: SPECIES_BY_ID[id], level, st }), wings: rigPiece(m, ["body"].filter(() => m.parts.some(q => q.part === "body" && q.extra)), [0, .2, 0], s, { S: SPECIES_BY_ID[id], level, st }) }, faces: rigFaces(id, level, st, R.head, s, gear) };
 }
 
 
@@ -8910,6 +9181,9 @@ const KNOBS = [
   { k: "growth", g: "Creatures", label: "Legend vs baby height", min: 5, max: 25, step: 1, v: 20 },
   { k: "magicHue", g: "Creatures", label: "Magic glow hue", min: 0, max: 1, step: 0.01, v: 0.5, hue: true },
   { k: "fur", g: "Creatures", label: "Stripes and spots", min: 0, max: 1, step: 0.05, v: 0.5 },
+  { k: "texture", g: "Creatures", label: "Fur, feathers and scales (genome/texture.js; 0 off)", min: 0, max: 1, step: 1, v: 1 },
+  { k: "texDetail", g: "Creatures", label: "Texture detail (0 cel shapes, 1 fine strokes)", min: 0, max: 1, step: 0.05, v: 0.3 },
+  { k: "hueShift", g: "Creatures", label: "Hue-shifted ramps (warm lights, red-brown shadows)", min: 0, max: 1, step: 0.05, v: 0 },
   { k: "cloakHue", g: "Witch", label: "Jacket hue", min: 0, max: 1, step: 0.01, v: 0.72, hue: true },
   { k: "hairHue", g: "Witch", label: "Hair hue", min: 0, max: 1, step: 0.01, v: 0.01, hue: true },
   { k: "hatHue", g: "Witch", label: "Hat hue", min: 0, max: 1, step: 0.01, v: 0.74, hue: true },

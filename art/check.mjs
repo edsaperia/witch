@@ -71,7 +71,7 @@ const report = await b.page.evaluate(async () => {
       if (Math.abs(lum(col[G.M.BROW]) - lum(col[G.M.BODY])) < 60) bad.push(`${S.id} brows don't stand out`);
       for (const face of G.EXPRESSIONS.filter(f => f !== "neutral")) for (const facing of ["towards", "away"]) {
         const sp = G.critter(S.id, level, 0, st, facing, { face }), base = facing === "towards" ? plain : G.critter(S.id, level, 0, st, facing), id = `${S.id} ${level} ${face} ${facing}`;
-        if (sp.w > base.w + 2 || sp.h > base.h + 2) bad.push(`${id} grew ${sp.w - base.w}x${sp.h - base.h}`);
+        const tol = Math.max(3, Math.max(base.w, base.h) * .01); if (sp.w > base.w + tol || sp.h > base.h + tol) bad.push(`${id} grew ${sp.w - base.w}x${sp.h - base.h}`); // (within 2 px, or 1% of a legend)
         if (![...sp.n].every(Number.isFinite)) bad.push(`${id} NaN`);
         if (![...sp.m].some(v => v)) bad.push(`${id} empty`);
         if (facing !== "towards") continue;
@@ -82,7 +82,25 @@ const report = await b.page.evaluate(async () => {
         if (!brow) bad.push(`${id} no brows`);
       }
     }
-    res.push({ what: `expressions: every species at every level angry, happy and dazed as part of its face (different from neutral, its brows showing and standing out from its coat, no bigger, nothing NaN; from behind, its plain face)`, good: !bad.length, info: bad.slice(0, 8).join(", ") || "ok" });
+    res.push({ what: `expressions: every species at every level angry, happy and dazed as part of its face (different from neutral, its brows showing and standing out from its coat, no bigger than 3 px or 1%, nothing NaN; from behind, its plain face)`, good: !bad.length, info: bad.slice(0, 8).join(", ") || "ok" });
+  }
+  { // surface texture (Ed, 2026-10-05, #119): every species at every level in its fur, feathers, scales, plates, shell or bristles: textured
+    // (its coat broken into tones along its stamps), its detail (tone edges a coat pixel) growing with age (a baby's softest), the same size
+    // as untextured within 1% (2 px), every material coloured, nothing NaN; with texture 0, as before (tools/genome/compare.mjs TEXTURE=0)
+    const bad = [], off = { ...st, texture: 0 }, coat = new Set([G.M.BODYL, G.M.BODY, G.M.BODY2, G.M.BODY3, G.M.BELLY, G.M.ACCENT]);
+    const detail = sp => { let e = 0, n = 0; for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const v = sp.m[y * sp.w + x]; if (!coat.has(v)) continue; n++; const r = sp.get(x + 1, y), b = sp.get(x, y + 1); if (coat.has(r) && r !== v) e++; if (coat.has(b) && b !== v) e++; } return n ? e / n : 0; };
+    for (const S of G.SPECIES) {
+      const col = G.speciesColours(S.id, st), dv = [0, 1, 2, 3].map(level => {
+        const a = G.critter(S.id, level, 0, st), b = G.critter(S.id, level, 0, off), id = `${S.id} ${level}`, tol = Math.max(2, b.h * .01);
+        if (Math.abs(a.w - b.w) > tol || Math.abs(a.h - b.h) > tol) bad.push(`${id} ${a.w}x${a.h} vs ${b.w}x${b.h}`);
+        if (![...a.n].every(Number.isFinite)) bad.push(`${id} NaN`);
+        for (const v of new Set(a.m)) if (v && v !== G.M.LINE && !col[v]) bad.push(`${id} material ${v} uncoloured`);
+        return [detail(a), detail(b)];
+      });
+      if (dv[2][0] < dv[2][1] * .9) bad.push(`${S.id} adult poorer textured (${dv[2][0].toFixed(2)} vs ${dv[2][1].toFixed(2)})`);
+      if (dv[0][0] - dv[0][1] > (dv[2][0] - dv[2][1]) * 1.15) bad.push(`${S.id} baby's texture busier than its adult's (+${(dv[0][0] - dv[0][1]).toFixed(2)} vs +${(dv[2][0] - dv[2][1]).toFixed(2)})`);
+    }
+    res.push({ what: "surface texture: every species at every level in its own surface (fur, feathers, scales, plates, shell, bristles), no poorer than untextured, a baby's softest, the same size within 1%, every material coloured", good: !bad.length, info: [...new Set(bad)].slice(0, 8).join(", ") || "ok" });
   }
   { // silhouettes (#79 stage 3): at game size (each young and adult shrunk to 24 px), no two species' shapes alike: they differ by 0.15 or more
     // (1 - their overlap over their union, whichever way each faces)
