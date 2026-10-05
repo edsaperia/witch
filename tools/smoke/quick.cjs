@@ -79,7 +79,7 @@ async function main() {
     log(`screenshot ${shotPath}`);
     await page.keyboard.press("KeyQ");
     await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 120000, polling: 100 }).catch(() => {});
-    check((await state()).mode === "ground", "space descends to the ground");
+    check((await state()).mode === "ground", "Q descends to the ground");
   } catch (e) {
     errors.push(`stopped: ${e.message}`);
     try { fs.mkdirSync(path.dirname(shotPath), { recursive: true }); await page.screenshot({ path: shotPath }); } catch { /* none */ }
