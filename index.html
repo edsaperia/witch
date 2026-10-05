@@ -28,8 +28,8 @@
     /* A soundsystem lost: the bar shrinks to its new countdown with a red flash, and the seconds taken off pop out beside it. */
     #wave.lost { animation: wave-lost .9s ease-out; }
     #wave.lost .fill { transition: height .45s cubic-bezier(.3, 1.6, .5, 1); animation: wave-lost-fill .9s ease-out; }
-    @keyframes wave-lost { 0% { transform: scaleX(2.2); border-color: #ff4060; box-shadow: 0 0 14px #ff4060; } 100% { transform: none; } }
-    @keyframes wave-lost-fill { 0%, 30% { background: #ff4060; filter: brightness(1.8); } 100% { filter: none; } }
+    @keyframes wave-lost { 0%, 30% { border-color: #ff4060; box-shadow: 0 0 14px #ff4060; } }
+    @keyframes wave-lost-fill { 0%, 30% { left: -4px; right: -4px; background: #ff4060; filter: brightness(1.8); } 100% { filter: none; } }
     #wave .loss-pop { position: absolute; right: 16px; transform: translateY(50%); white-space: nowrap; color: #ff5a78; font-weight: bold; font-size: 15px; text-shadow: 0 0 6px #ff2050, 0 1px 0 #000; animation: loss-pop 1.8s ease-out forwards; }
     @keyframes loss-pop { 0% { opacity: 0; transform: translateY(50%) scale(1.8); } 12% { opacity: 1; transform: translateY(50%) scale(1); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-120%); } }
     .touch #wave { top: 12%; height: 30%; }

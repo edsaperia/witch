@@ -296,12 +296,22 @@ seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;
 const debugEl = document.getElementById("debug")!, startEl = document.getElementById("start")!;
 const debugButtons = document.getElementById("debug-buttons")!;
 const waveEl = document.getElementById("wave")!, waveFill = waveEl.querySelector<HTMLElement>(".fill")!, waveLabel = waveEl.querySelector<HTMLElement>(".label")!;
+/** The wave countdown bar: empties toward the next wave. */
+function waveHud(): void {
+  const cd = waveCountdown(game.party, game.map, game.clock.time);
+  waveFill.style.height = `${(1 - cd.gone) * 100}%`;
+  const clock = (s: number) => (s >= 60 ? `${Math.floor(s / 60)}:${String(Math.ceil(s) % 60).padStart(2, "0")}` : `${Math.ceil(s)} s`);
+  const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : cd.left >= 60 ? `${Math.floor(cd.left / 60)}:${String(Math.ceil(cd.left) % 60).padStart(2, "0")}` : `${Math.ceil(cd.left)} s`;
+  waveLabel.textContent = `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}`;
+  waveEl.classList.toggle("paused", game.party.paused);
+}
 // A soundsystem lost (Ed, 2026-10-05): the next wave comes sooner, and the countdown shows it: the
 // bar shrinks with a flash, and the seconds taken off pop out beside it ("−60 s", "wave now!").
 let lossShown = -1;
 function showLoss(e: WaveEvent): void {
   lossShown = e.at;
   waveEl.classList.remove("lost"); void waveEl.offsetWidth; waveEl.classList.add("lost"); // (restart the animation)
+  waveHud(); // (the bar eases down to its new countdown)
   const pop = document.createElement("div");
   pop.className = "loss-pop";
   pop.textContent = e.left <= 0 ? "wave now!" : `\u2212${Math.round(e.cut)} s`;
@@ -423,14 +433,8 @@ function frame(now: number): void {
   music?.update(musicMix(game, game.witch), musicCueNow, game.clock.time, game.beat, !game.clock.paused);
   if (!game.clock.paused) sfxCues?.update(game, game.clock.time);
   if (!ready) return;
-  // The wave countdown bar: empties toward the next wave.
-  const cd = waveCountdown(game.party, game.map, game.clock.time);
-  waveFill.style.height = `${(1 - cd.gone) * 100}%`;
-  const clock = (s: number) => (s >= 60 ? `${Math.floor(s / 60)}:${String(Math.ceil(s) % 60).padStart(2, "0")}` : `${Math.ceil(s)} s`);
-  const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : cd.left >= 60 ? `${Math.floor(cd.left / 60)}:${String(Math.ceil(cd.left) % 60).padStart(2, "0")}` : `${Math.ceil(cd.left)} s`;
-  waveLabel.textContent = `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}`;
-  waveEl.classList.toggle("paused", game.party.paused);
   for (const e of game.waveEvents) if (e.at > lossShown) showLoss(e);
+  waveHud();
   // Behind the start screen, a frame every 0.3 s is plenty: the CPU goes to drawing the forest's
   // art in the background instead (and so slow a frame doesn't count against the scenery budget).
   if (game.clock.paused && !freeze.frozen && now - lastDraw < 300) return;
