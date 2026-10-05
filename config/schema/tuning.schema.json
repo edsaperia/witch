@@ -990,10 +990,6 @@
         "on": {
           "type": "boolean"
         },
-        "links": {
-          "type": "number",
-          "minimum": 0
-        },
         "advance": {
           "type": "string"
         },
@@ -1047,11 +1043,25 @@
             "avoid"
           ],
           "additionalProperties": false
+        },
+        "ahead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "behind": {
+          "type": "number",
+          "minimum": 0
+        },
+        "behindBright": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "on",
-        "links",
+        "ahead",
+        "behind",
+        "behindBright",
         "advance",
         "fade",
         "brightness",
