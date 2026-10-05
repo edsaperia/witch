@@ -107,6 +107,7 @@
   "knockout": "knockout",
   "fill": {"part": "snare", "pattern": "........x.x.xxXX", "mute": ["kick", "softkick", "boom", "bass", "sub", "darkbass", "chipbass"]},
   "siege": {"tension": {"p": "pulse", "level": 0.8}},
+  "party": {"ohat": {"p": "off", "level": 0.55}, "shaker": {"p": "sixteen", "level": 0.5}, "pluck": {"p": "flow", "level": 0.55}, "clap": {"p": "back", "level": 0.45}},
   "arc": [
     {"name": "Forest", "bpm": 120, "energy": 0.2, "scale": "dorian", "progression": "forest", "arrive": [["forest", 16]], "loop": [["forest", 16], ["forestBeat", 16], ["whisper", 8], ["forestBeat", 16]], "build": "rise"},
     {"name": "Clearing", "bpm": 122, "energy": 0.3, "scale": "dorian", "arrive": [["deep", 16]], "loop": [["deep", 16], ["breakdown", 8], ["deep", 16], ["forestBeat", 8]], "build": "rise"},

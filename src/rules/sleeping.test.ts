@@ -82,8 +82,8 @@ describe("sleeping legends (Ed, 2026-10-04)", () => {
   });
 
   it("are the only legends: party animals evolve no further than adult", () => {
-    expect(toEvolve(0, TUNING)).toBe(TUNING.berries.toEvolve[0]);
-    expect(toEvolve(1, TUNING)).toBe(TUNING.berries.toEvolve[1]);
+    expect(toEvolve(0, TUNING)).toBe(2);
+    expect(toEvolve(1, TUNING)).toBe(2);
     expect(toEvolve(2, TUNING)).toBe(Infinity);
   });
 });
