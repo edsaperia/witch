@@ -13,6 +13,7 @@
 //   node art/preview.mjs partypatch 1 art/previews/party-patch.png [scale]   (a sample patch of party ground: clusters and loose objects, seeded; NIGHT=1)
 //   node art/preview.mjs lineup all|<species> art/previews/lineup.png [scale]   (each species' baby, young, adult and legend side by side, the witch for scale; PER=n species to a row)
 //   node art/preview.mjs legends all|<species> art/previews/legends.png [scale]   (each sleeping legend asleep, its 2 breathing frames, then the legend awake as it is, then the witch for scale; FACINGS=away for the other view)
+//   node art/preview.mjs genome wolf,fox,...|all art/previews/genome-palettes.png [scale]   (each species' sprite baked once as a material mask, then painted with its own palette and every curated variant: no rebake)
 //   node art/preview.mjs grounds playground,tennis,baseball,football,basketball|all art/previews/grounds.png [scale]   (each arrangement composed; NIGHT=1)
 //   node art/preview.mjs decor ruins|rocks|freak|<ids> art/previews/ruins.png [scale]   (VARIANTS=1: ruins weathered and overgrown)
 //   node art/preview.mjs lake 0 art/previews/lake.png [scale]   (a sample lake composed from the kit; NIGHT=1)
@@ -233,6 +234,12 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   } else if (what === "legends") { // per species: its sleeping legend asleep (2 breathing frames), the legend awake as it is, then the witch for scale
     const ids = list === "all" ? G.LEGEND_IDS : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
     for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push([...G.LEGEND_STATES.flatMap(state => [...Array(G.LEGEND_FRAMES[state]).keys()].map(frame => { const { sp, colours } = G.legendForm(id, st, { state, frame, facing }); return G.bake(sp, colours, st, st.cOutline); })), G.bake(G.critter(id, 3, 0, st, facing), G.speciesColours(id, st), st, st.cOutline), wit]);
+  } else if (what === "genome") { // per species: its adult baked once, then its material mask painted with each curated palette variant (#79 stage 2)
+    const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), mk = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+    for (const id of ids) for (const facing of window.FACINGS || ["towards"]) {
+      const sp = G.critter(id, 2, 0, st, facing), base = G.bake(sp, G.speciesColours(id, st), st, st.cOutline), mask = G.bakeMask(sp, st.cOutline);
+      rows.push([base, ...Object.keys(G.PALETTE_VARIANTS).map(v => ({ A: G.paintMask(mask, G.paletteRow(G.variantColours(id, st, v), st.cOutline), mk), N: base.N, w: sp.w, h: sp.h }))]);
+    }
   } else if (what === "animals") {
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(",");
     for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push((window.LEVELS || [3, 2, 1, 0]).flatMap(l => [0, 1].map(f => G.bake(G.critter(id, l, f, st, facing), G.speciesColours(id, st), st, st.cOutline))));

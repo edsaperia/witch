@@ -190,6 +190,14 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
+        <h2>Genomes</h2>
+        <p class="note">Every species is now a genome record: its template (body plan), palette, proportions and parts as data. Below, ten species' adults each baked once as a material mask and coloured on the GPU at draw time from a palette row; pick a coat to recolour them all without rebaking. Click a creature to see its record.</p>
+        <div id="genomeCoats" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        <div class="sheet-wrap"><canvas id="genomeSheet" width="420" height="160" style="image-rendering:pixelated"></canvas></div>
+        <pre id="genomeRecord" class="note" style="white-space:pre-wrap;max-height:220px;overflow:auto"></pre>
+      </section>
+
+      <section style="display:grid;gap:10px">
         <h2>Sleeping legends</h2>
         <p class="note">Every area's legend asleep, centuries deep: sunk half into its area's earth, head down and eyes shut, its glow gone to stone and old wood, mossed, lichened and grown over, so it passes for a boulder, a log or a mound. Each row: asleep (two frames of a slow breath), the legend awake as it is, then the witch for scale.</p>
         <div class="sheet-wrap"><canvas id="legendSheet" width="420" height="160"></canvas></div>
@@ -2666,6 +2674,164 @@ function setPiece3d(kind, def, st, ppm = 16) {
 // call that draws one. Each is built in 3D (creatures3d.js, model3d.js) and seen in
 // three-quarter view from above; it faces right and the game mirrors it.
 
+// ---- inlined from art/genome/index.js ----
+// Witch creature genomes (#79): the species records (species.js) and their templates
+// (templates.js), turned into what the builders draw from (speciesOf), checked (genomeProblems),
+// and hashed for the bake cache (genomeHash).
+
+// ---- inlined from art/genome/species.js ----
+// Witch creature genomes (#79, stage 1): every species as data, not code. A record names its
+// template (the body plan: which skeleton and which sockets it has), its builder (the 3D model
+// code that draws that template, art/creatures3d.js), its palette, its proportions and its parts;
+// its size levels come from its template's curves (templates.js). creatures.js reads SPECIES from
+// these records (speciesOf in index.js), so editing a record changes the creature.
+//   palette: hue, sat, val (its coat), belly ("white", "yellow" or its own lighter coat).
+//   body (four-legged): hgt (height on screen, 1 = ordinary), len (body length, shoulder = 1),
+//     chest and tuck (belly heights at the shoulder and the waist), neck, neckAng, neckW, hr (head
+//     radius), bw (body width), legW (leg thickness), haunch, hindFoot, back ("hump" or "arch").
+//   head: snout, snoutD (its depth), snoutTaper, face ("badger", "dark"), muzzle, cheeks, whiskers,
+//     teeth, disc (a pig's nose), eyeK (eye size).
+//   parts: the sockets' choices: ears { kind, size }, tail, feet, horns, antlers, tusks.
+//   coat: markings: belly, saddle, spots, spotMat, socks, shaggy, wool, ridge, rump, legMat.
+//   legend: what the legendary form grows (FEATURE_NAMES in creatures.js).
+const GENOMES = [
+  { id: "wolf", name: "Wolf", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .24, val: .56 }, body: { len: .64, chest: .42, tuck: .6, neck: .32, neckAng: .7, neckW: .42, hr: .26, legW: 1.25 }, head: { snout: .82, snoutD: .7 }, parts: { ears: { kind: "point", size: .82 }, tail: "brush", feet: "paw" }, coat: { belly: true, saddle: true }, legend: ["wings", "mane"] },
+  { id: "fox", name: "Fox", template: "quadruped", builder: "quad", palette: { hue: .06, sat: .8, val: .9, belly: "white" }, body: { hgt: .8, len: .62, chest: .4, tuck: .5, neck: .3, neckAng: .7, neckW: .32, hr: .24, legW: .9 }, head: { snout: 1.05, snoutD: .5, snoutTaper: .6 }, parts: { ears: { kind: "point", size: 1.35 }, tail: "bushy", feet: "paw" }, coat: { belly: true, socks: .3 }, legend: ["tails"] },
+  { id: "badger", name: "Badger", template: "quadruped", builder: "quad", palette: { hue: .65, sat: .08, val: .45 }, body: { hgt: .62, len: .78, chest: .2, tuck: .22, neck: .18, neckAng: .1, neckW: .5, hr: .26, legW: 1.35 }, head: { snout: 1, snoutD: .55, snoutTaper: .55, face: "badger" }, parts: { ears: { kind: "round", size: .7 }, tail: "stub", feet: "paw" }, coat: { shaggy: true, legMat: "BODY3" }, legend: ["crystals"] },
+  { id: "boar", name: "Boar", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .62, val: .5 }, body: { len: .72, chest: .34, tuck: .42, neck: .2, neckAng: -.15, neckW: .55, hr: .27, legW: 1.15, back: "hump" }, head: { snout: 1.25, snoutD: .62, snoutTaper: .55, disc: true }, parts: { ears: { kind: "small", size: .8 }, tail: "thin", feet: "hoof", tusks: true }, coat: { ridge: true }, legend: ["tusksBig"] },
+  { id: "stag", name: "Stag", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .5, val: .7 }, body: { hgt: 1.3, len: .6, chest: .6, tuck: .7, neck: .55, neckAng: .95, neckW: .32, hr: .2, legW: .75 }, head: { snout: 1.15, snoutD: .6, snoutTaper: .65 }, parts: { ears: { kind: "point", size: 1.1 }, tail: "deer", feet: "hoof", antlers: "branch" }, coat: { belly: true, spots: "young", rump: true }, legend: ["antlersGlow"] },
+  { id: "hare", name: "Hare", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .4, val: .72 }, body: { hgt: .72, len: .5, chest: .4, tuck: .45, neck: .2, neckAng: .9, neckW: .35, hr: .27, legW: .85, haunch: 1.35, hindFoot: 1.6, back: "arch" }, head: { snout: .65, snoutD: .7, whiskers: true }, parts: { ears: { kind: "long", size: 2.4 }, tail: "puff", feet: "paw" }, coat: { belly: true }, legend: ["jackalope"] },
+  { id: "owl", name: "Owl", template: "avian", builder: "owl", palette: { hue: .08, sat: .5, val: .55 }, legend: ["eyesRing", "wings"] },
+  { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .42 }, body: { hgt: 1.15, len: .72, chest: .38, tuck: .4, neck: .25, neckAng: .3, neckW: .55, hr: .28, legW: 1.55, back: "hump" }, head: { snout: .7, snoutD: .62, snoutTaper: .7, muzzle: true }, parts: { ears: { kind: "round", size: .8 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"] },
+  { id: "hedgehog", name: "Hedgehog", template: "squat", builder: "hedgehog", palette: { hue: .08, sat: .4, val: .5 }, legend: ["crystals"] },
+  { id: "squirrel", name: "Squirrel", template: "quadruped", builder: "quad", palette: { hue: .03, sat: .75, val: .75, belly: "white" }, body: { hgt: .55, len: .45, chest: .35, tuck: .4, neck: .2, neckAng: .9, neckW: .35, hr: .3, legW: .8, haunch: 1.3, back: "arch" }, head: { snout: .55, snoutD: .65, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.1 }, tail: "squirrel", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
+  { id: "toad", name: "Toad", template: "squat", builder: "toad", palette: { hue: .2, sat: .5, val: .55 }, legend: ["crown"] },
+  { id: "otter", name: "Otter", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .45, belly: "white" }, body: { hgt: .55, len: 1, chest: .25, tuck: .25, neck: .3, neckAng: .35, neckW: .5, hr: .27, legW: 1.1 }, head: { snout: .6, snoutD: .7, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: .5 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"] },
+  { id: "lynx", name: "Lynx", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .45, val: .75 }, body: { hgt: .9, len: .55, chest: .5, tuck: .55, neck: .25, neckAng: .8, neckW: .4, hr: .27, legW: 1.2 }, head: { snout: .5, snoutD: .75, snoutTaper: .8, cheeks: true, whiskers: true }, parts: { ears: { kind: "tuft", size: 1 }, tail: "bob", feet: "paw" }, coat: { belly: true, spots: true }, legend: ["mane"] },
+  { id: "elk", name: "Elk", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .38 }, body: { hgt: 1.4, len: .68, chest: .6, tuck: .66, neck: .45, neckAng: .75, neckW: .42, hr: .24, legW: .9, back: "hump" }, head: { snout: 1.6, snoutD: .9, snoutTaper: .85 }, parts: { ears: { kind: "point", size: .9 }, tail: "stub", feet: "hoof", antlers: "palm" }, coat: { shaggy: true }, legend: ["antlersGlow", "moss"] },
+  { id: "raven", name: "Raven", template: "avian", builder: "raven", palette: { hue: .68, sat: .35, val: .3 }, legend: ["wings", "eyesRing"] },
+  { id: "bat", name: "Bat", template: "flyer", builder: "bat", palette: { hue: .78, sat: .25, val: .45 }, legend: ["wingsBig"] },
+  { id: "mole", name: "Mole", template: "squat", builder: "mole", palette: { hue: .7, sat: .15, val: .32 }, legend: ["crown"] },
+  { id: "beaver", name: "Beaver", template: "quadruped", builder: "quad", palette: { hue: .06, sat: .6, val: .45 }, body: { hgt: .6, len: .65, chest: .2, tuck: .22, neck: .2, neckAng: .4, neckW: .55, hr: .28, legW: 1.2, back: "arch" }, head: { snout: .6, snoutD: .75, whiskers: true, teeth: true }, parts: { ears: { kind: "round", size: .45 }, tail: "flat", feet: "paw" }, legend: ["moss"] },
+  { id: "stoat", name: "Stoat", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .25, val: .92 }, body: { hgt: .5, len: 1, chest: .3, tuck: .33, neck: .35, neckAng: .6, neckW: .32, hr: .25, legW: .8, back: "arch" }, head: { snout: .6, snoutD: .6, whiskers: true }, parts: { ears: { kind: "round", size: .6 }, tail: "stoat", feet: "paw" }, coat: { belly: true }, legend: ["ribbons", "mane"] },
+  { id: "snail", name: "Snail", template: "squat", builder: "snail", palette: { hue: .08, sat: .45, val: .55 }, legend: ["glowShell"] },
+  { id: "ram", name: "Ram", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .12, val: .88 }, body: { hgt: .95, len: .6, chest: .48, tuck: .52, neck: .22, neckAng: .45, neckW: .48, hr: .25, legW: .9 }, head: { snout: .85, snoutD: .75, snoutTaper: .8, face: "dark" }, parts: { ears: { kind: "small", size: .7 }, tail: "stub", feet: "hoof", horns: "curl" }, coat: { wool: true }, legend: ["hornsGlow"] },
+  { id: "woodlouse", name: "Woodlouse", template: "insectoid", builder: "woodlouse", palette: { hue: .65, sat: .12, val: .45 }, legend: ["crystals"] },
+  { id: "snake", name: "Snake", template: "serpent", builder: "snake", palette: { hue: .25, sat: .45, val: .45 }, legend: ["wings"] },
+  { id: "moth", name: "Moth", template: "flyer", builder: "moth", palette: { hue: .1, sat: .3, val: .7 }, legend: ["wingsBig"] },
+  { id: "marten", name: "Pine marten", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .6, val: .45 }, body: { hgt: .55, len: .78, chest: .35, tuck: .38, neck: .3, neckAng: .55, neckW: .35, hr: .25, legW: .85, back: "arch" }, head: { snout: .65, snoutD: .6 }, parts: { ears: { kind: "round", size: .9 }, tail: "bushy", feet: "paw" }, coat: { belly: true }, legend: ["mane"] },
+  { id: "salamander", name: "Salamander", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .1, val: .22, belly: "yellow" }, body: { hgt: .42, len: .9, chest: .14, tuck: .14, neck: .12, neckAng: .05, neckW: .5, hr: .27, legW: 1 }, head: { snout: .55, snoutD: .55 }, parts: { ears: { kind: "none" }, tail: "otter", feet: "paw" }, coat: { spots: true, spotMat: "belly" }, legend: ["flames"] },
+  { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] },
+  { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] },
+  { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "squirrel", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
+  { id: "beetle", name: "Stag beetle", template: "insectoid", builder: "beetle", palette: { hue: .78, sat: .5, val: .35 }, legend: ["horn", "crystals"] },
+];
+
+
+// ---- inlined from art/genome/templates.js ----
+// Witch creature templates (#79, stage 1): the few body plans every species is built on. Each
+// names the builders that draw it (art/creatures3d.js), its sockets (where parts go) and the part
+// tags each socket allows, which tags exclude each other, how it moves (the live rig's gait, #79
+// stage 5) and, for the four-legged, its size curves: how its proportions change with level, so a
+// baby is chunky and a legend grand without scaling it uniformly.
+// A size curve is four numbers, baby, young, adult and legend, each a multiplier on the species'
+// own proportion (or, for antlers, horns and tusks, their size outright).
+
+const TEMPLATES = {
+  quadruped: {
+    name: "Four-legged", builders: ["quad"],
+    sockets: {
+      ears: ["ear.point", "ear.round", "ear.long", "ear.tuft", "ear.small", "ear.big", "ear.none"],
+      tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat"],
+      feet: ["foot.paw", "foot.hoof"],
+      horns: ["horn.curl"], antlers: ["antler.branch", "antler.palm"], tusks: ["tusk"],
+    },
+    exclude: [["horn.*", "antler.*"], ["tusk", "antler.*"]],
+    gait: { offsets: [0, .5, .5, 0], dutyWalk: .65, dutyRun: .35 }, // front left, front right, back left, back right: a trot
+    sizes: {
+      head: [1.75, 1, 1.12, 1.12],      // head radius: a baby's big head
+      len: [.8, 1.02, 1.06, 1.06],      // body length
+      legK: [.55, 1.04, 1.04, 1.04],    // leg length (a baby's short legs)
+      chestDeep: [1, 1, 1, 1.06],       // a legend's deeper chest...
+      chestBig: [1, 1, .9, .9],         // ...and a big one's lower belly line
+      tuck: [1, 1, .92, .92],
+      body: [1.15, 1, 1.28, 1.28],      // body width
+      limbA: [1.7, 1, 1, 1.1],          // leg thickness: a baby's stubby legs, a legend's thicker ones
+      limbB: [1, 1, 1.3, 1.3],          // and the heavier build of adults and legends
+      neckBase: [1, 1, 1.25, 1.25], neckTop: [1, 1, 1.2, 1.2],
+      headLift: [.1, 0, 0, 0],          // a baby holds its head higher
+      snout: [.55, 1, 1, 1], eye: [1.5, 1, 1, 1], ear: [1.2, 1, 1, 1],
+      neckAnchor: [.05, .42, .42, .42], neckR: [1.3, 1, 1, 1], tag: [1.8, 1, 1, 1], // where the collar sits
+      horns: [.35, 1, 1.3, 1.3], tusks: [0, .75, 1.05, 1.05], antlers: [0, .95, 1.25, 1.25],
+      motes: [0, 0, 3, 9],              // glowing motes round adults and legends
+    },
+  },
+  avian: { name: "Bird", builders: ["owl", "raven"], sockets: { wings: ["wing.folded", "wing.spirit"], head: ["head.round", "head.beak"] }, exclude: [], gait: { offsets: [0, .5], dutyWalk: .6, dutyRun: .4 } },
+  flyer: { name: "Flyer", builders: ["bat", "moth"], sockets: { wings: ["wing.membrane", "wing.scaled"] }, exclude: [], gait: { offsets: [], dutyWalk: 0, dutyRun: 0 } },
+  serpent: { name: "Serpent or worm", builders: ["snake", "glowworm"], sockets: { head: ["head.snake", "head.worm"], tailTip: ["tail.lantern"] }, exclude: [], gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
+  insectoid: { name: "Many-legged", builders: ["beetle", "spider", "woodlouse"], sockets: { head: ["jaw.stag", "eyes.cluster", "antenna"] }, exclude: [], gait: { offsets: [0, .5, 0, .5, 0, .5], dutyWalk: .6, dutyRun: .5 } }, // alternating tripods
+  squat: { name: "Squat", builders: ["toad", "hedgehog", "mole", "snail"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], gait: { offsets: [0, .5, .5, 0], dutyWalk: .7, dutyRun: .5 } },
+};
+const TEMPLATE_IDS = Object.keys(TEMPLATES);
+
+
+
+const GENOME_BY_ID = Object.fromEntries(GENOMES.map(g => [g.id, g]));
+
+// The builder's species object, as art/creatures.js always had it: id, name, plan, hue, sat, val,
+// belly, legend, and for the four-legged q (their proportions and parts in one bag) and sizes
+// (their template's size curves, any of the species' own over them).
+function speciesOf(g) {
+  const S = { id: g.id, name: g.name, plan: g.builder, hue: g.palette.hue, sat: g.palette.sat, val: g.palette.val, legend: g.legend || [] };
+  if (g.palette.belly) S.belly = g.palette.belly;
+  if (g.template === "quadruped") {
+    const q = { ...g.body, ...g.head, ...g.coat }, p = g.parts || {};
+    if (q.legMat) q.legMat = M[q.legMat];
+    if (p.ears) { q.ear = p.ears.kind; if (p.ears.size !== undefined) q.earS = p.ears.size; }
+    for (const [k, to] of [["tail", "tail"], ["feet", "paw"], ["horns", "horns"], ["antlers", "antlers"], ["tusks", "tusks"]]) if (p[k] !== undefined) q[to] = p[k];
+    S.q = q;
+    S.sizes = { ...TEMPLATES.quadruped.sizes, ...g.sizes };
+  }
+  return S;
+}
+
+// The tags a record's parts carry ("ear.point", "tail.brush", "foot.hoof", "antler.palm"...).
+function genomeTags(g) {
+  const p = g.parts || {}, t = [];
+  if (p.ears) t.push("ear." + p.ears.kind);
+  if (p.tail) t.push("tail." + p.tail);
+  if (p.feet) t.push("foot." + p.feet);
+  if (p.horns) t.push("horn." + p.horns);
+  if (p.antlers) t.push("antler." + p.antlers);
+  if (p.tusks) t.push("tusk");
+  return t;
+}
+const genomeTagMatch = (pat, tag) => pat.endsWith(".*") ? tag.startsWith(pat.slice(0, -1)) : pat === tag;
+
+// What's wrong with a record, if anything: an unknown template or builder, a part its template's
+// sockets don't allow, two parts that exclude each other, a palette out of range.
+function genomeProblems(g) {
+  const out = [], T = TEMPLATES[g.template];
+  if (!T) return [`${g.id}: no template ${g.template}`];
+  if (!T.builders.includes(g.builder)) out.push(`${g.id}: ${g.template} has no builder ${g.builder}`);
+  const allowed = Object.values(T.sockets).flat(), tags = genomeTags(g);
+  for (const t of tags) if (!allowed.includes(t)) out.push(`${g.id}: ${t} isn't one of ${g.template}'s parts`);
+  for (const [a, b] of T.exclude) if (tags.some(t => genomeTagMatch(a, t)) && tags.some(t => genomeTagMatch(b, t))) out.push(`${g.id}: ${a} and ${b} together`);
+  for (const k of ["hue", "sat", "val"]) if (!(g.palette[k] >= 0 && g.palette[k] <= 1)) out.push(`${g.id}: palette ${k} ${g.palette[k]}`);
+  return out;
+}
+
+// A record's hash (FNV-1a over its canonical JSON, keys sorted): the bake cache's key (#79 stage 4),
+// with the style's own version beside it.
+const genomeCanon = v => Array.isArray(v) ? "[" + v.map(genomeCanon).join(",") + "]" : v && typeof v === "object" ? "{" + Object.keys(v).sort().filter(k => v[k] !== undefined).map(k => JSON.stringify(k) + ":" + genomeCanon(v[k])).join(",") + "}" : JSON.stringify(v);
+function genomeHash(g) {
+  let h = 0x811c9dc5;
+  const s = genomeCanon(g);
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  return (h >>> 0).toString(16).padStart(8, "0");
+}
+
+
 // ---- inlined from art/creatures3d.js ----
 // Witch creatures built in 3D (see model3d.js), so they stand in true three-quarter view.
 // Units: the shoulder is about 1 high; x forward, y up, z towards the near side.
@@ -2768,12 +2934,13 @@ function gearUp(m) {
 
 // ================= four-legged animals =================
 function quad3d(S, level, frame, st, facing = "towards") {
-  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q }, legend = level === 3, young = false, juv = level === 1, big = level >= 2, baby = level === 0, has = f => legend && S.legend.includes(f); // young: what was the adult model (young = false keeps its shape); big: the heavier adult and legend build
+  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => legend && S.legend.includes(f);
+  const sz = k => S.sizes[k][level]; // its template's size curves (art/genome/templates.js): baby, young, adult, legend
   const m = new Model();
-  const hr = q.hr * (baby ? 1.75 : young ? 1.25 : big ? 1.12 : 1) * (st.head / .44) ** .5, len = q.len * (baby ? .8 : young ? .9 : big ? 1.06 : 1.02) * st.long;
-  const legK = baby ? .55 : young ? .9 : 1.04;
-  const bob = frame ? -.04 : 0, top = 1 + bob, chest = q.chest * (legend ? 1.06 : 1) * (big ? .9 : 1) / legK + bob, tuck = q.tuck * (big ? .92 : 1) / legK + bob; // a big one's deeper chest and belly
-  const bw = q.bw * (baby ? 1.15 : big ? 1.28 : 1) * (q.legW > 1.2 ? 1.15 : 1), lw = .06 * q.legW * (legend ? 1.1 : baby ? 1.7 : 1) * (big ? 1.3 : 1);
+  const hr = q.hr * sz("head") * (st.head / .44) ** .5, len = q.len * sz("len") * st.long;
+  const legK = sz("legK");
+  const bob = frame ? -.04 : 0, top = 1 + bob, chest = q.chest * sz("chestDeep") * sz("chestBig") / legK + bob, tuck = q.tuck * sz("tuck") / legK + bob; // a big one's deeper chest and belly
+  const bw = q.bw * sz("body") * (q.legW > 1.2 ? 1.15 : 1), lw = .06 * q.legW * sz("limbA") * sz("limbB");
   const hump = q.back === "hump" ? .1 : 0, arch = q.back === "arch" ? .1 : 0;
   // ---- markings, painted by where a point is on the body ----
   const bellyY = chest + .12;
@@ -2805,8 +2972,8 @@ function quad3d(S, level, frame, st, facing = "towards") {
   };
   for (const side of [-1, 1]) { leg(true, side); leg(false, side); }
   // ---- neck and head, turned towards us ----
-  const nb = [len * .82, top - .12, 0], H = [nb[0] + Math.cos(q.neckAng) * q.neck * .9, nb[1] + Math.sin(q.neckAng) * q.neck * .9 + (baby ? .1 : 0), 0];
-  m.seg(nb, H, q.neckW * .55 * (big ? 1.25 : 1), q.neckW * .42 * (big ? 1.2 : 1), M.BODY, { paint: p => q.belly && p[1] < (nb[1] + H[1]) / 2 - .05 ? M.BELLY : q.face === "dark" ? M.BODY2 : undefined });
+  const nb = [len * .82, top - .12, 0], H = [nb[0] + Math.cos(q.neckAng) * q.neck * .9, nb[1] + Math.sin(q.neckAng) * q.neck * .9 + sz("headLift"), 0];
+  m.seg(nb, H, q.neckW * .55 * sz("neckBase"), q.neckW * .42 * sz("neckTop"), M.BODY, { paint: p => q.belly && p[1] < (nb[1] + H[1]) / 2 - .05 ? M.BELLY : q.face === "dark" ? M.BODY2 : undefined });
   const headPaint = p => {
     if (q.face === "badger") return Math.abs(p[2]) < hr * .22 + (p[0] - H[0]) * .1 || p[1] < H[1] - hr * .1 ? M.BELLY : M.BODY3;
     if (q.face === "dark") return M.BODY2;
@@ -2814,18 +2981,18 @@ function quad3d(S, level, frame, st, facing = "towards") {
     return undefined;
   };
   m.ell(H, [hr * 1.05, hr * .92, hr * .88], M.BODY, { paint: headPaint });
-  const L = hr * q.snout * (baby ? .55 : young ? .78 : 1), Dm = hr * q.snoutD * .55, sn = [H[0] + hr * .65 + L * .5, H[1] - hr * .28, 0];
+  const L = hr * q.snout * sz("snout"), Dm = hr * q.snoutD * .55, sn = [H[0] + hr * .65 + L * .5, H[1] - hr * .28, 0];
   m.ell(sn, [L * .62 + hr * .2, Dm, Dm * .95], M.BODY, { dir: [1, -.25, 0], paint: p => (q.muzzle || q.belly) && p[1] < sn[1] - Dm * .1 ? M.BELLY : headPaint(p) });
   const tip = [sn[0] + L * .62 + hr * .1, sn[1] - .02, 0];
   m.ell(tip, [hr * (q.disc ? .1 : .12), hr * (q.disc ? .2 : .12), hr * (q.disc ? .2 : .15)], M.NOSE, { group: 1 });
   // eyes: both show; legends' glow
-  for (const side of [-1, 1]) { const e = Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62])); m.ell(e, [hr * .13, hr * .16, hr * .13].map(v => v * (q.eyeK || 1) * (baby ? 1.5 : young ? 1.2 : 1)), legend && !q.tusks ? M.MAGIC2 : M.EYE, { group: 1 }); }
+  for (const side of [-1, 1]) { const e = Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62])); m.ell(e, [hr * .13, hr * .16, hr * .13].map(v => v * (q.eyeK || 1) * sz("eye")), legend && !q.tusks ? M.MAGIC2 : M.EYE, { group: 1 }); }
   m.anchors.head = { c: H, r: [hr * 1.05, hr * .92, hr * .88], top: [H[0] - hr * .1, H[1] + hr * .82, 0] };
-  m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62]))), size: hr * .16 * (q.eyeK || 1) * (baby ? 1.5 : young ? 1.2 : 1) };
-  m.anchors.neck = { c: v3.lerp(nb, H, baby ? .05 : young ? .25 : .42), r: q.neckW * .5 * (baby ? 1.3 : young ? 1.12 : 1), dir: v3.norm(v3.sub(H, nb)), tag: baby ? 1.8 : young ? 1.3 : 1 }; // lower on the neck when the head is big
+  m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62]))), size: hr * .16 * (q.eyeK || 1) * sz("eye") };
+  m.anchors.neck = { c: v3.lerp(nb, H, sz("neckAnchor")), r: q.neckW * .5 * sz("neckR"), dir: v3.norm(v3.sub(H, nb)), tag: sz("tag") }; // lower on the neck when the head is big
   // ears
   for (const side of [-1, 1]) {
-    const E = q.ear, base = [H[0] - hr * .15, H[1] + hr * .7, side * hr * .5], k = q.earS * (baby ? 1.2 : 1) * (q.ear === "long" ? .62 : 1);
+    const E = q.ear, base = [H[0] - hr * .15, H[1] + hr * .7, side * hr * .5], k = q.earS * sz("ear") * (q.ear === "long" ? .62 : 1);
     if (E === "none") continue;
     if (E === "round") { m.ell(base, [hr * .22, hr * .25 * k, hr * .1], M.BODY, { group: 1, paint: p => p[0] > base[0] + hr * .02 ? M.EAR : undefined }); continue; }
     const long = E === "long", droop = E === "small" ? -.6 : 0, eh = hr * .55 * k * (E === "big" ? 1.35 : long ? 2.2 : 1), ew = hr * .3 * (E === "big" ? 1.2 : long ? 1.35 : 1);
@@ -2837,9 +3004,9 @@ function quad3d(S, level, frame, st, facing = "towards") {
   const tb = [-len * 1.05, top - .1 + arch * .5, 0], tw = frame ? .04 : -.02;
   if (!has("tails")) tail3d(m, has("starTail") ? "star" : q.tail, tb, len, top, tw);
   // ---- horns, antlers, tusks ----
-  if (q.horns) for (const side of [-1, 1]) { const k = young ? .6 : baby ? .35 : has("hornsGlow") ? 1.5 : big ? 1.3 : 1, pts = []; for (let i = 0; i <= 8; i++) { const a = .3 - i / 8 * Math.PI * 1.6, r = hr * .65 * k * (1 - .45 * i / 8); pts.push([H[0] - hr * .1 + Math.cos(a) * r, H[1] + hr * .45 + Math.sin(a) * r, side * (hr * .6 + i * .015)]); pts[i].push(hr * .2 * k * (1 - .6 * i / 8)); } m.chain(pts, has("hornsGlow") ? M.MAGIC : M.ACCENT, { group: 13 }); }
-  if (q.antlers || has("jackalope")) for (const side of [-1, 1]) antlers3d(m, q, [H[0] - hr * .05, H[1] + hr * .75, side * hr * .4], side, level, has);
-  if (q.tusks) for (const side of [-1, 1]) { const k = young ? .4 : baby ? 0 : has("tusksBig") ? 1.4 : big ? 1.05 : .75; if (!k) continue; const b = [sn[0] + L * .25, sn[1] - Dm * .4, side * Dm * .8]; m.chain([[...b, .045 * k], [...v3.add(b, [.1 * k, .1 * k, side * .03]), .04 * k], [...v3.add(b, [.06 * k, .24 * k, side * .05]), .02 * k]], M.ACCENT, { group: 8 }); }
+  if (q.horns) for (const side of [-1, 1]) { const k = has("hornsGlow") ? 1.5 : sz("horns"), pts = []; for (let i = 0; i <= 8; i++) { const a = .3 - i / 8 * Math.PI * 1.6, r = hr * .65 * k * (1 - .45 * i / 8); pts.push([H[0] - hr * .1 + Math.cos(a) * r, H[1] + hr * .45 + Math.sin(a) * r, side * (hr * .6 + i * .015)]); pts[i].push(hr * .2 * k * (1 - .6 * i / 8)); } m.chain(pts, has("hornsGlow") ? M.MAGIC : M.ACCENT, { group: 13 }); }
+  if (q.antlers || has("jackalope")) for (const side of [-1, 1]) antlers3d(m, q, [H[0] - hr * .05, H[1] + hr * .75, side * hr * .4], side, sz("antlers"), has);
+  if (q.tusks) for (const side of [-1, 1]) { const k = has("tusksBig") ? 1.4 : sz("tusks"); if (!k) continue; const b = [sn[0] + L * .25, sn[1] - Dm * .4, side * Dm * .8]; m.chain([[...b, .045 * k], [...v3.add(b, [.1 * k, .1 * k, side * .03]), .04 * k], [...v3.add(b, [.06 * k, .24 * k, side * .05]), .02 * k]], M.ACCENT, { group: 8 }); }
   if (q.teeth && !baby) m.ell([tip[0] - hr * .1, tip[1] - hr * .25, 0], [hr * .08, hr * .14, hr * .12], M.ACCENT, { group: 1 });
   // ---- legendary features ----
   const backAt = t => [-len * .9 + t * len * 1.65, top + hump * Math.max(0, 1 - Math.abs(t - .8) * 3) + arch * (1 - Math.abs(t - .4) * 2), 0];
@@ -2855,7 +3022,7 @@ function quad3d(S, level, frame, st, facing = "towards") {
   if (has("ribbons")) for (let i = 0; i < 3; i++) { const pts = []; for (let k = 0; k < 9; k++) { const t = k / 8; pts.push([len * (.5 - t * 2.2), top + .05 + i * .1 + t * (.25 + i * .12) + Math.sin(t * 6 + frame + i) * .07, (i - 1) * .18, .04 * (1 - t * .6)]); } m.chain(pts, i % 2 ? M.MAGIC2 : M.MAGIC, { group: 90 + i, extra: true }); }
   gearUp(m);
   const sp = drawForm(m, { height: drawHeight(level, st, q.hgt), facing }, S, level);
-  if (formMotes()) { if (legend) glowMotes(sp, S.id.length * 7919); else if (level === 2) glowMotes(sp, S.id.length * 7919, 3); }
+  if (formMotes() && sz("motes")) glowMotes(sp, S.id.length * 7919, sz("motes"));
   return sp;
 }
 
@@ -2872,8 +3039,8 @@ function tail3d(m, kind, tb, len, top, tw) {
   else if (kind === "thin") { m.chain([[...tb, .04], [X(1.1), top - .3, 0, .03], [X(1.12) + tw, top - .55, 0, .025]], M.BODY, o); m.ell([X(1.12) + tw, top - .62, 0], [.04, .07, .04], M.BODY3, o); }
 }
 
-function antlers3d(m, q, b, side, level, has) {
-  const jack = !q.antlers, A = jack ? .45 : [0, .95, 1.25, 1.25][level] * (has("antlersGlow") ? 1.15 : 1), mat = has("antlersGlow") ? (side > 0 ? M.MAGIC2 : M.MAGIC) : M.ACCENT, o = { group: 11 + (side > 0 ? 1 : 0), extra: true };
+function antlers3d(m, q, b, side, size, has) { // size: its antler size curve at this level (the template's)
+  const jack = !q.antlers, A = jack ? .45 : size * (has("antlersGlow") ? 1.15 : 1), mat = has("antlersGlow") ? (side > 0 ? M.MAGIC2 : M.MAGIC) : M.ACCENT, o = { group: 11 + (side > 0 ? 1 : 0), extra: true };
   if (!A) return;
   const w = .045 * Math.max(.8, A), out = side * .35 * A;
   if (q.antlers === "palm") { // a short beam, then broad fingers fanning back and out from one root
@@ -3140,47 +3307,11 @@ const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad
 // Builds one creature's sprite (uncached): its body plan's builder.
 const buildCreature = (S, level, frame, st, facing = "towards") => S.q ? quad3d(S, level, frame, st, facing) : MODELLED.get(S.plan)(S, level, frame, st, facing);
 
-// ================= the bestiary: 20 forest animals =================
-// plan: body plan. hue/sat/val: base colour. legend: what the legendary form grows.
-// Species with `q` are drawn with the quadruped builder below; q holds its proportions
-// in units of its height at the shoulder (see quad()). The rest of the old fields serve
-// species still drawn the old way.
-const SPECIES = [
-  { id: "wolf", name: "Wolf", plan: "quad", hue: .08, sat: .24, val: .56, legend: ["wings", "mane"],
-    q: { len: .64, chest: .42, tuck: .6, neck: .32, neckAng: .7, neckW: .42, hr: .26, snout: .82, snoutD: .7, ear: "point", earS: .82, tail: "brush", paw: "paw", legW: 1.25, saddle: true, belly: true },
-    tail: "up" },
-  { id: "fox", name: "Fox", plan: "quad", q: { hgt: .8, len: .62, chest: .4, tuck: .5, neck: .3, neckAng: .7, neckW: .32, hr: .24, snout: 1.05, snoutD: .5, snoutTaper: .6, ear: "point", earS: 1.35, tail: "bushy", paw: "paw", legW: .9, belly: true, socks: .3 }, hue: .06, sat: .8, val: .9, belly: "white", legend: ["tails"] },
-  { id: "badger", name: "Badger", plan: "quad", q: { hgt: .62, len: .78, chest: .2, tuck: .22, neck: .18, neckAng: .1, neckW: .5, hr: .26, snout: 1.0, snoutD: .55, snoutTaper: .55, ear: "round", earS: .7, tail: "stub", paw: "paw", legW: 1.35, legMat: M.BODY3, face: "badger", shaggy: true }, hue: .65, sat: .08, val: .45, legend: ["crystals"] },
-  { id: "boar", name: "Boar", plan: "quad", hue: .07, sat: .62, val: .5, legend: ["tusksBig"],
-    q: { len: .72, chest: .34, tuck: .42, neck: .2, neckAng: -.15, neckW: .55, hr: .27, snout: 1.25, snoutD: .62, snoutTaper: .55, ear: "small", earS: .8, tail: "thin", paw: "hoof", legW: 1.15, ridge: true, tusks: true, back: "hump", disc: true },
-    ridge: true },
-  { id: "stag", name: "Stag", plan: "quad", q: { hgt: 1.3, len: .6, chest: .6, tuck: .7, neck: .55, neckAng: .95, neckW: .32, hr: .2, snout: 1.15, snoutD: .6, snoutTaper: .65, ear: "point", earS: 1.1, tail: "deer", paw: "hoof", legW: .75, antlers: "branch", rump: true, spots: "young", belly: true }, hue: .08, sat: .5, val: .7, legend: ["antlersGlow"] },
-  { id: "hare", name: "Hare", plan: "quad", q: { hgt: .72, len: .5, chest: .4, tuck: .45, neck: .2, neckAng: .9, neckW: .35, hr: .27, snout: .65, snoutD: .7, ear: "long", earS: 2.4, tail: "puff", paw: "paw", legW: .85, haunch: 1.35, hindFoot: 1.6, back: "arch", belly: true, whiskers: true }, hue: .08, sat: .4, val: .72, legend: ["jackalope"] },
-  { id: "owl", name: "Owl", plan: "owl", hue: .08, sat: .5, val: .55, legend: ["eyesRing", "wings"] },
-  { id: "bear", name: "Bear", plan: "quad", q: { hgt: 1.15, len: .72, chest: .38, tuck: .4, neck: .25, neckAng: .3, neckW: .55, hr: .28, snout: .7, snoutD: .62, snoutTaper: .7, ear: "round", earS: .8, tail: "stub", paw: "paw", legW: 1.55, back: "hump", muzzle: true, shaggy: true }, hue: .07, sat: .55, val: .42, legend: ["moss"] },
-  { id: "hedgehog", name: "Hedgehog", plan: "hedgehog", hue: .08, sat: .4, val: .5, legend: ["crystals"] },
-  { id: "squirrel", name: "Squirrel", plan: "quad", q: { hgt: .55, len: .45, chest: .35, tuck: .4, neck: .2, neckAng: .9, neckW: .35, hr: .3, snout: .55, snoutD: .65, ear: "tuft", earS: 1.1, tail: "squirrel", paw: "paw", legW: .8, haunch: 1.3, back: "arch", belly: true, whiskers: true }, hue: .03, sat: .75, val: .75, belly: "white", legend: ["starTail"] },
-  { id: "toad", name: "Toad", plan: "toad", hue: .2, sat: .5, val: .55, legend: ["crown"] },
-  { id: "otter", name: "Otter", plan: "quad", q: { hgt: .55, len: 1.0, chest: .25, tuck: .25, neck: .3, neckAng: .35, neckW: .5, hr: .27, snout: .6, snoutD: .7, ear: "round", earS: .5, tail: "otter", paw: "paw", legW: 1.1, muzzle: true, belly: true, whiskers: true }, hue: .07, sat: .55, val: .45, belly: "white", legend: ["ribbons"] },
-  { id: "lynx", name: "Lynx", plan: "quad", q: { hgt: .9, len: .55, chest: .5, tuck: .55, neck: .25, neckAng: .8, neckW: .4, hr: .27, snout: .5, snoutD: .75, snoutTaper: .8, ear: "tuft", earS: 1.0, tail: "bob", paw: "paw", legW: 1.2, cheeks: true, spots: true, belly: true, whiskers: true }, hue: .09, sat: .45, val: .75, legend: ["mane"] },
-  { id: "elk", name: "Elk", plan: "quad", q: { hgt: 1.4, len: .68, chest: .6, tuck: .66, neck: .45, neckAng: .75, neckW: .42, hr: .24, snout: 1.6, snoutD: .9, snoutTaper: .85, ear: "point", earS: .9, tail: "stub", paw: "hoof", legW: .9, back: "hump", antlers: "palm", shaggy: true }, hue: .07, sat: .55, val: .38, legend: ["antlersGlow", "moss"] },
-  { id: "raven", name: "Raven", plan: "raven", hue: .68, sat: .35, val: .3, legend: ["wings", "eyesRing"] },
-  { id: "bat", name: "Bat", plan: "bat", hue: .78, sat: .25, val: .45, legend: ["wingsBig"] },
-  { id: "mole", name: "Mole", plan: "mole", hue: .7, sat: .15, val: .32, legend: ["crown"] },
-  { id: "beaver", name: "Beaver", plan: "quad", q: { hgt: .6, len: .65, chest: .2, tuck: .22, neck: .2, neckAng: .4, neckW: .55, hr: .28, snout: .6, snoutD: .75, ear: "round", earS: .45, tail: "flat", paw: "paw", legW: 1.2, back: "arch", teeth: true, whiskers: true }, hue: .06, sat: .6, val: .45, legend: ["moss"] },
-  { id: "stoat", name: "Stoat", plan: "quad", q: { hgt: .5, len: 1.0, chest: .3, tuck: .33, neck: .35, neckAng: .6, neckW: .32, hr: .25, snout: .6, snoutD: .6, ear: "round", earS: .6, tail: "stoat", paw: "paw", legW: .8, belly: true, back: "arch", whiskers: true }, hue: .1, sat: .25, val: .92, legend: ["ribbons", "mane"] },
-  { id: "snail", name: "Snail", plan: "snail", hue: .08, sat: .45, val: .55, legend: ["glowShell"] },
-  { id: "ram", name: "Ram", plan: "quad", q: { hgt: .95, len: .6, chest: .48, tuck: .52, neck: .22, neckAng: .45, neckW: .48, hr: .25, snout: .85, snoutD: .75, snoutTaper: .8, ear: "small", earS: .7, tail: "stub", paw: "hoof", legW: .9, wool: true, horns: "curl", face: "dark" }, hue: .1, sat: .12, val: .88, legend: ["hornsGlow"] },
-  { id: "woodlouse", name: "Woodlouse", plan: "woodlouse", hue: .65, sat: .12, val: .45, legend: ["crystals"] },
-  { id: "snake", name: "Snake", plan: "snake", hue: .25, sat: .45, val: .45, legend: ["wings"] },
-  { id: "moth", name: "Moth", plan: "moth", hue: .1, sat: .3, val: .7, legend: ["wingsBig"] },
-  { id: "marten", name: "Pine marten", plan: "quad", q: { hgt: .55, len: .78, chest: .35, tuck: .38, neck: .3, neckAng: .55, neckW: .35, hr: .25, snout: .65, snoutD: .6, ear: "round", earS: .9, tail: "bushy", paw: "paw", legW: .85, belly: true, back: "arch" }, hue: .07, sat: .6, val: .45, legend: ["mane"] },
-  { id: "salamander", name: "Salamander", plan: "quad", q: { hgt: .42, len: .9, chest: .14, tuck: .14, neck: .12, neckAng: .05, neckW: .5, hr: .27, snout: .55, snoutD: .55, ear: "none", tail: "otter", paw: "paw", legW: 1.0, spots: true, spotMat: "belly" }, hue: .1, sat: .1, val: .22, belly: "yellow", legend: ["flames"] },
-  { id: "glowworm", name: "Glow-worm", plan: "glowworm", hue: .12, sat: .4, val: .35, legend: ["lantern"] },
-  { id: "spider", name: "Spider", plan: "spider", hue: .07, sat: .45, val: .4, legend: ["eyesRing"] },
-  { id: "dormouse", name: "Dormouse", plan: "quad", q: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, snout: .45, snoutD: .7, ear: "round", earS: .85, tail: "squirrel", paw: "paw", legW: .8, back: "arch", belly: true, whiskers: true, eyeK: 1.6 }, hue: .09, sat: .6, val: .75, belly: "white", legend: ["starTail"] },
-  { id: "beetle", name: "Stag beetle", plan: "beetle", hue: .78, sat: .5, val: .35, legend: ["horn", "crystals"] },
-];
+// ================= the bestiary: 30 species, each a genome record (art/genome/species.js) =================
+// The records hold each species' template, palette, proportions and parts as data (#79 stage 1);
+// speciesOf turns one into the object the builders draw from (plan, hue/sat/val, belly, legend,
+// and for the four-legged q, their proportions, and sizes, their template's size curves).
+const SPECIES = GENOMES.map(speciesOf);
 const SPECIES_BY_ID = Object.fromEntries(SPECIES.map(s => [s.id, s]));
 const FEATURE_NAMES = { wings: "spirit wings", mane: "a glowing mane", tails: "many tails", crystals: "crystals", tusksBig: "great tusks", antlersGlow: "glowing antlers", jackalope: "antlers", eyesRing: "a ring of eyes", moss: "a little forest on its back", starTail: "a starry tail", crown: "a crown", ribbons: "light ribbons", wingsBig: "huge glowing wings", horn: "a glowing horn", glowShell: "a glowing shell", hornsGlow: "glowing golden horns", flames: "a crest of flame", lantern: "a great lantern" };
 
@@ -3199,8 +3330,9 @@ function partyGear(seed, collarColour = true) {
     shoes: all || r() < .4 ? Object.keys(SHOE_STYLES)[Math.floor(r() * 3)] : null,
   };
 }
+// sp: a species id, or a species object (a palette variant's: art/genome/palette.js).
 function speciesColours(sp, st, gear = null) {
-  const c = baseColours(sp, st);
+  const c = baseColours(typeof sp === "string" ? SPECIES_BY_ID[sp] : sp, st);
   if (!gear) return c;
   if (gear.collar) c[M.COLLAR] = Array.isArray(gear.collar) ? gear.collar : c[M.MAGIC];
   if (gear.hat != null) { const [a, b, pom] = HAT_COLOURWAYS[gear.hat % HAT_COLOURWAYS.length]; c[M.HAT1] = a; c[M.HAT2] = b; c[M.POM] = pom; }
@@ -3209,8 +3341,8 @@ function speciesColours(sp, st, gear = null) {
   if (gear.woken) { c[M.WOKEN] = [255, 40, 36]; for (const k of [M.BODY, M.BODY2, M.BODY3, M.BELLY, M.ACCENT, M.EAR]) if (c[k]) c[k] = c[k].map((v, j) => Math.round(v * .72 + [30, 8, 12][j] * .1)); } // darker, a little redder
   return c;
 }
-function baseColours(sp, st) {
-  const s = SPECIES_BY_ID[sp], v = st.cVal / .85, sat = st.cSat / .6;
+function baseColours(s, st) {
+  const v = st.cVal / .85, sat = st.cSat / .6;
   const body = hsv2rgb(s.hue, s.sat * sat * st.sat, s.val * v);
   const belly = s.belly === "yellow" ? [240, 196, 40] : s.belly === "white" || s.q?.face === "badger" ? [236, 232, 222] : hsv2rgb(s.hue + .03, s.sat * .5 * sat, Math.min(1, s.val * v * 1.3 + .08));
   const magic = hsv2rgb(st.magicHue + s.hue * .3, .6, 1), magic2 = hsv2rgb(st.magicHue + s.hue * .3, .18, 1);
@@ -6200,6 +6332,110 @@ function partyPatch(seed, layout, { w = 420, h = 250, clusters = 5, loose = 46 }
 }
 
 
+
+// ---- inlined from art/genome/palette.js ----
+// Witch creature palettes (#79, stage 2): colour moves out of the bake. A sprite is baked once into
+// a material mask (which material each pixel is, and whether it's an outline), and its colours come
+// from a palette row at draw time: one RGBA per material (the alpha 254 for the glowing ones, as the
+// lighting pass expects), then one per material for an outline pixel beside it (a third of it). So a colour variant costs a palette row, not a rebake.
+// paintMask does on the CPU exactly what the sprite shader does (PALETTE_GLSL): paintMask(mask,
+// paletteRow(colours)) is pixel for pixel bake(sp, colours).A.
+// A species' palette is a ramp of five shades of its coat (BODY3 darkest, BODY2, BODY, BELLY, and
+// ACCENT for horns and hooves) worked out from one colour, plus its fixed eyes, nose and magic; a
+// variant swaps the coat for one of the curated PALETTE_VARIANTS (or any hue, sat, val).
+
+
+const PALETTE_SIZE = 64, PALETTE_ROW = PALETTE_SIZE * 2; // materials 0..63 (M goes to 51); a row is their colours, then their outline colours
+const OUTLINE_DARK = [22, 18, 30];
+
+// A sprite's material mask: mat (its material, or for an outline pixel the material it outlines)
+// and kind (0 empty, 1 drawn, 2 an outline tinted from its material, 3 the fixed dark outline), as
+// bake would draw it with that outline mode.
+function bakeMask(sp, outlineMode = "tint") {
+  const { w, h } = sp, mat = new Uint8Array(w * h), kind = new Uint8Array(w * h), outline = outlineMode === "none" ? null : outlineMode === "dark" ? "dark" : "tint";
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x, m = sp.m[i];
+    if (m) { mat[i] = m; kind[i] = 1; continue; }
+    if (!outline) continue;
+    const nb = [sp.get(x + 1, y), sp.get(x - 1, y), sp.get(x, y + 1), sp.get(x, y - 1)].find(v => v);
+    if (!nb) continue;
+    mat[i] = nb; kind[i] = outline === "dark" ? 3 : 2;
+  }
+  return { w, h, mat, kind, outline: outlineMode };
+}
+
+// A palette row, from a colours table (material -> [r, g, b]) as bake reads it: RGBA per material (a
+// missing colour magenta; LINE, if it has none, BODY2 darkened, as bake falls back to), then the
+// outline colour beside each (a third of its colour, black for one without).
+function paletteRow(colours, outlineMode = "tint") {
+  const row = new Uint8Array(PALETTE_ROW * 4);
+  for (let m = 1; m < PALETTE_SIZE; m++) {
+    let c = colours[m];
+    if (m === M.LINE && !c) c = outlineMode === "dark" ? OUTLINE_DARK : (colours[M.BODY2] || [0, 0, 0]).map(v => v * .55 | 0);
+    c = c || [255, 0, 255];
+    row.set([c[0], c[1], c[2], EMISSIVE.has(m) ? 254 : 255], m * 4);
+    const o = (colours[m] || [0, 0, 0]).map(v => v * .35 | 0);
+    row.set([o[0], o[1], o[2], 255], (PALETTE_SIZE + m) * 4);
+  }
+  return row;
+}
+
+// The albedo a mask makes with a palette row, as an RGBA array (what the shader draws).
+function paintPixels(mask, row) {
+  const { w, h, mat, kind } = mask, out = new Uint8ClampedArray(w * h * 4);
+  for (let i = 0; i < w * h; i++) {
+    const k = kind[i]; if (!k) continue;
+    const o = i * 4, p = (k === 2 ? PALETTE_SIZE + mat[i] : mat[i]) * 4;
+    if (k < 3) { out[o] = row[p]; out[o + 1] = row[p + 1]; out[o + 2] = row[p + 2]; out[o + 3] = row[p + 3]; }
+    else { out[o] = OUTLINE_DARK[0]; out[o + 1] = OUTLINE_DARK[1]; out[o + 2] = OUTLINE_DARK[2]; out[o + 3] = 255; }
+  }
+  return out;
+}
+// ... onto a canvas.
+function paintMask(mask, row, makeCanvas) {
+  const c = makeCanvas(mask.w, mask.h), g = c.getContext("2d"), img = g.createImageData(mask.w, mask.h);
+  img.data.set(paintPixels(mask, row)); g.putImageData(img, 0, 0);
+  return c;
+}
+// The mask as an image for the GPU: red the material, green the kind, alpha where drawn.
+function maskPixels(mask) {
+  const out = new Uint8ClampedArray(mask.w * mask.h * 4);
+  for (let i = 0; i < mask.w * mask.h; i++) if (mask.kind[i]) { out[i * 4] = mask.mat[i]; out[i * 4 + 1] = mask.kind[i]; out[i * 4 + 3] = 255; }
+  return out;
+}
+
+// The sprite shader's lookup: the mask's texel names a material and a kind; the palette texture
+// (PALETTE_ROW wide, a row per palette) gives the colour, an outline's from the row's second half.
+const PALETTE_GLSL = `
+uniform sampler2D uMask, uPalette; uniform float uRow, uRows;
+vec4 paletteColour(vec2 uv) {
+  vec4 k = texture2D(uMask, uv);
+  if (k.a < .5) return vec4(0.);
+  float kind = floor(k.g * 255. + .5);
+  if (kind > 2.5) return vec4(22., 18., 30., 255.) / 255.;
+  float m = floor(k.r * 255. + .5) + (kind > 1.5 ? ${PALETTE_SIZE}. : 0.);
+  return texture2D(uPalette, vec2((m + .5) / ${PALETTE_ROW}., (uRow + .5) / uRows));
+}`;
+
+// Curated coat colours for variants (no free hue noise: each a hand-picked colour whose ramp reads).
+const PALETTE_VARIANTS = {
+  frost: { name: "Frost", hue: .58, sat: .16, val: .95, belly: "white" },
+  ember: { name: "Ember", hue: .02, sat: .85, val: .72 },
+  shadow: { name: "Shadow", hue: .74, sat: .28, val: .24 },
+  gold: { name: "Gold", hue: .12, sat: .72, val: .88 },
+  moss: { name: "Moss", hue: .27, sat: .5, val: .46 },
+  rose: { name: "Rose", hue: .93, sat: .42, val: .82 },
+  ash: { name: "Ash", hue: .6, sat: .04, val: .55 },
+};
+// A species' colours in a variant (a PALETTE_VARIANTS key or { hue, sat, val, belly }), gear as speciesColours.
+function variantColours(id, st, variant, gear = null) {
+  const S = SPECIES_BY_ID[id], v = typeof variant === "string" ? PALETTE_VARIANTS[variant] : variant;
+  if (!v) return speciesColours(id, st, gear);
+  return speciesColours({ ...S, hue: v.hue, sat: v.sat, val: v.val, belly: v.belly ?? S.belly }, st, gear);
+}
+
+
+
 // ---- inlined from art/legends.js ----
 // Witch sleeping legends (Ed, 2026-10-04): every area has a legend of its species asleep in it,
 // "ancient creatures, half sunken into the ground, they could almost be mistaken for scenery.
@@ -8009,6 +8245,48 @@ function renderCountry() {
 }
 
 // ================= sleeping legends: asleep (2 breaths) beside the legend awake, a row per species =================
+// ================= genomes: ten species' masks coloured on the GPU from palette rows (#79 stage 2) =================
+let genomeTimer, genomeCoat = 0;
+const GENOME_DEMO = ["wolf", "fox", "badger", "boar", "stag", "hare", "owl", "toad", "snake", "beetle"];
+function renderGenome() {
+  clearTimeout(genomeTimer);
+  genomeTimer = setTimeout(() => {
+    const c = document.getElementById("genomeSheet"); if (!c) return;
+    const st = current, coats = ["own", ...Object.keys(PALETTE_VARIANTS)], gap = 6, S = 2;
+    const masks = GENOME_DEMO.map(id => bakeMask(critter(id, 2, 0, st), st.cOutline));
+    const W = masks.reduce((a, m) => a + m.w + gap, gap), H = Math.max(...masks.map(m => m.h)) + gap * 2;
+    c.width = W * S; c.height = H * S;
+    const gl = c.getContext("webgl", { premultipliedAlpha: false }); if (!gl) return;
+    const sh = (type, src) => { const o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o); return o; }, prog = gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, "attribute vec2 p; attribute vec2 t; varying vec2 vt; void main() { vt = t; gl_Position = vec4(p, 0., 1.); }"));
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, "precision mediump float; varying vec2 vt;" + PALETTE_GLSL + " void main() { vec4 c = paletteColour(vt); if (c.a < .5) discard; gl_FragColor = vec4(c.rgb, 1.); }"));
+    gl.linkProgram(prog); gl.useProgram(prog);
+    // the palette texture: a row per species per coat
+    const rows = new Uint8Array(PALETTE_ROW * 4 * GENOME_DEMO.length * coats.length);
+    GENOME_DEMO.forEach((id, i) => coats.forEach((v, j) => rows.set(paletteRow(v === "own" ? speciesColours(id, st) : variantColours(id, st, v), st.cOutline), (i * coats.length + j) * PALETTE_ROW * 4)));
+    const tex = (unit, w, h, data) => { const t = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t); for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, data); };
+    tex(1, PALETTE_ROW, GENOME_DEMO.length * coats.length, rows);
+    gl.uniform1i(gl.getUniformLocation(prog, "uMask"), 0); gl.uniform1i(gl.getUniformLocation(prog, "uPalette"), 1); gl.uniform1f(gl.getUniformLocation(prog, "uRows"), GENOME_DEMO.length * coats.length);
+    const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    const ap = gl.getAttribLocation(prog, "p"), at = gl.getAttribLocation(prog, "t");
+    gl.enableVertexAttribArray(ap); gl.enableVertexAttribArray(at); gl.vertexAttribPointer(ap, 2, gl.FLOAT, false, 16, 0); gl.vertexAttribPointer(at, 2, gl.FLOAT, false, 16, 8);
+    gl.viewport(0, 0, c.width, c.height); gl.clearColor(.2, .27, .16, 1); gl.clear(gl.COLOR_BUFFER_BIT);
+    const boxes = [];
+    let x = gap;
+    masks.forEach((m, i) => {
+      tex(0, m.w, m.h, new Uint8Array(maskPixels(m).buffer)); // the mask, baked once; only the palette row changes
+      gl.uniform1f(gl.getUniformLocation(prog, "uRow"), i * coats.length + genomeCoat);
+      const y = H - gap - m.h, X = v => v / W * 2 - 1, Y = v => 1 - v / H * 2;
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([X(x), Y(y), 0, 0, X(x + m.w), Y(y), 1, 0, X(x), Y(y + m.h), 0, 1, X(x + m.w), Y(y + m.h), 1, 1]), gl.STATIC_DRAW);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      boxes.push([x * S, (x + m.w) * S, GENOME_DEMO[i]]); x += m.w + gap;
+    });
+    const bar = document.getElementById("genomeCoats");
+    if (bar && !bar.children.length) coats.forEach((v, j) => { const b = document.createElement("button"); b.textContent = v === "own" ? "Own colours" : PALETTE_VARIANTS[v].name; b.addEventListener("click", () => { genomeCoat = j; renderGenome(); }); bar.appendChild(b); });
+    c.onclick = e => { const r = c.getBoundingClientRect(), px = (e.clientX - r.left) * c.width / r.width, hit = boxes.find(([a, b]) => px >= a && px <= b); if (hit) document.getElementById("genomeRecord").textContent = `${hit[2]} (hash ${genomeHash(GENOME_BY_ID[hit[2]])})\n` + JSON.stringify(GENOME_BY_ID[hit[2]], null, 1); };
+  }, 1300);
+}
+
 let legendTimer;
 function renderLegends() {
   clearTimeout(legendTimer);
@@ -8369,7 +8647,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderCountry(); renderPartyObjects(); renderLegends(); renderRelics(); renderSets(); renderTall(); renderTufts(); renderWitch(); renderParty(); renderEffects(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
+  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderCountry(); renderPartyObjects(); renderLegends(); renderGenome(); renderRelics(); renderSets(); renderTall(); renderTufts(); renderWitch(); renderParty(); renderEffects(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }
