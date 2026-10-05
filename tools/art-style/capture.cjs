@@ -45,7 +45,7 @@ function serve() {
       await page.keyboard.down("ArrowDown"); await page.keyboard.down("ArrowRight");
       for (let i = 0; i < 4; i++) { await wait(1.6); await page.waitForTimeout(1500); await shot(`ground${i}`); }
       await page.keyboard.up("ArrowDown"); await page.keyboard.up("ArrowRight");
-      await page.keyboard.press("Space");
+      await page.keyboard.press("KeyQ");
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 120000, polling: 100 }).catch(() => {});
       await page.keyboard.down("ArrowRight");
       for (let i = 0; i < 2; i++) { await wait(1.5); await page.waitForTimeout(2500); await shot(`treetops${i}`); }
