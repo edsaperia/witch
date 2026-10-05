@@ -41,7 +41,7 @@ const series = (at: number, n: number, every: number, g: string, play: (s: Sfx, 
 const SCENES: Scene[] = [
   {
     // home at the start: the forest music at the dancefloor, the meadow, inviting a hare and a fox
-    name: "home", seconds: 16, section: "forest", wave: 1, distance: 10,
+    name: "home", seconds: 19, section: "forest", wave: 1, distance: 10,
     frame: (s, t) => s.meadow(Math.min(1, t / 1.5)), frameG: "home's meadow",
     cues: [
       ...chatter(2, 4),
@@ -51,6 +51,8 @@ const SCENES: Scene[] = [
       { at: 8.5, g: "relic found", play: s => s.relic(0.3) },
       ...chatter(11, 3, "💌 chatter 2", "💌 hits 2"),
       { at: 13, g: "invited (adult)", play: s => s.invited(2, 0.2) },
+      ...series(9.8, 3, 0.35, "💌s landing on the ground", (s, i) => s.land(i - 1, 0.9)),
+      { at: 14.5, g: "the boot-up over (stirring)", play: s => s.stir() },
     ],
     sounds: [
       { g: "home's meadow", kind: "ambience", at: 2, len: 12 },
@@ -61,6 +63,8 @@ const SCENES: Scene[] = [
       { g: "happy speech", kind: "voice", at: 6, len: 0.8 },
       { g: "relic found", kind: "sting", at: 8.5, len: 1.6 },
       { g: "invited (adult)", kind: "sting", at: 13, len: 1 },
+      { g: "💌s landing on the ground", kind: "feedback", at: 9.8, len: 1 },
+      { g: "the boot-up over (stirring)", kind: "sting", at: 14.5, len: 1.5 },
     ],
   },
   {

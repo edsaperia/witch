@@ -1,5 +1,6 @@
 // The sounds of bodies and places: the witch knocked back (#108); a legend's long charge (its
-// bellow, hoofbeats, the lane's rumble and the braking skid); home's meadow (a breeze, bees, birds).
+// bellow, hoofbeats, the lane's rumble and the braking skid); home's meadow (a breeze, bees, birds,
+// its balloons squeaking and a picnic's clinks and murmur).
 // The lasting ones (the rumble and skid, the breeze and bees) are built once and only turned up and down.
 import type { SfxKit } from "./sfxKit";
 import { grit } from "./dsp";
@@ -89,11 +90,16 @@ export class Meadow {
   private beeGain: GainNode | null = null;
   private beePan: StereoPannerNode | null = null;
   private nextBird = 0;
+  private murmurGain: GainNode | null = null;
+  private nextClink = 0;
+  private nextSqueak = 0;
 
   constructor(private k: SfxKit) {}
 
   /** Each frame (`level` 0-1: in home's circle, fading out to its edge): a breeze breathing in the
-   *  grass, bees drifting past, and now and then a bird's little song. */
+   *  grass, bees drifting past, now and then a bird's little song; and the party things strewn over
+   *  it: a balloon squeaking as it rubs on its neighbour in the breeze, a picnic's cups clinking and
+   *  the far murmur of party-goers. */
   update(level: number): void {
     const K = this.k, M = K.T.meadow, c = K.ctx, now = c.currentTime;
     if (!this.breezeGain && level <= 0.001) return;
@@ -105,6 +111,11 @@ export class Meadow {
       this.beeGain = c.createGain(); this.beeGain.gain.value = 0; this.beeGain.connect(this.beePan);
       const bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 600; bp.Q.value = 1.5; bp.connect(this.beeGain);
       for (const [f, d] of [[196, 0], [203, 7]]) { const o = c.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; o.detune.value = d; o.connect(bp); o.start(now); }
+      // the picnic's murmur: far-off voices, breath through a talker's two formant bands, rising and falling
+      const ms = c.createBufferSource(); ms.buffer = K.noise; ms.loop = true; ms.playbackRate.value = 0.83;
+      this.murmurGain = c.createGain(); this.murmurGain.gain.value = 0; this.murmurGain.connect(K.voice(-0.3));
+      for (const [f, q] of [[480, 3], [1350, 4]]) { const b = c.createBiquadFilter(); b.type = "bandpass"; b.frequency.value = f; b.Q.value = q; ms.connect(b); b.connect(this.murmurGain); }
+      ms.start(now);
     }
     const L = Math.max(0, Math.min(1, level));
     this.breezeGain.gain.setTargetAtTime(M.volume * M.breeze * L * (0.6 + 0.4 * Math.sin(now * 0.31) * Math.sin(now * 0.17 + 1)), now, 0.4);
@@ -117,6 +128,36 @@ export class Meadow {
       this.nextBird = now + M.birdEvery * (0.5 + Math.random());
       this.bird(M.volume * M.birds * L, Math.random() * 1.6 - 0.8);
     }
+    this.murmurGain!.gain.setTargetAtTime(M.volume * M.murmur * L * (0.55 + 0.45 * Math.sin(now * 1.7) * Math.sin(now * 0.43 + 2)), now, 0.25);
+    if (L > 0.05 && now >= this.nextClink) {
+      this.nextClink = now + M.clinkEvery * (0.5 + Math.random());
+      this.clink(M.volume * M.clinks * L, Math.random() * 1.2 - 0.6);
+    }
+    if (L > 0.05 && now >= this.nextSqueak) {
+      this.nextSqueak = now + M.squeakEvery * (0.5 + Math.random());
+      this.squeak(M.volume * M.balloons * L, Math.random() * 1.6 - 0.8);
+    }
+  }
+
+  /** Two cups touching at the picnic: glass partials, the second a hair later and a little lower. */
+  private clink(vol: number, pan: number): void {
+    const K = this.k, c = K.ctx, out = K.voice(pan), at = c.currentTime + 0.01, f = 2200 + Math.random() * 900;
+    for (const [dt, k] of [[0, 1], [0.045 + Math.random() * 0.03, 0.93]]) for (const [r, l, d] of [[1, 1, 0.25], [2.4, 0.45, 0.12], [4.1, 0.2, 0.06]]) {
+      const g = c.createGain(); g.connect(out); K.env(g, at + dt, vol * l * (dt ? 0.7 : 1), 0.001, d);
+      K.osc("sine", f * k * r, at + dt, d + 0.05, g);
+    }
+  }
+
+  /** A balloon squeaking as it rubs on another: a rubbery tone wobbling up and down, quick and thin. */
+  private squeak(vol: number, pan: number): void {
+    const K = this.k, c = K.ctx, out = K.voice(pan), at = c.currentTime + 0.01, dur = 0.12 + Math.random() * 0.18, f = 650 + Math.random() * 500;
+    const bp = c.createBiquadFilter(), g = c.createGain(); bp.type = "bandpass"; bp.frequency.value = f * 2; bp.Q.value = 2;
+    g.connect(out); g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + 0.02); g.gain.setValueAtTime(vol * 0.8, at + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+    bp.connect(g);
+    const o = c.createOscillator(), wob = c.createOscillator(), wd = c.createGain();
+    o.type = "sawtooth"; o.frequency.setValueAtTime(f, at); o.frequency.linearRampToValueAtTime(f * (1.2 + 0.3 * Math.random()), at + dur);
+    wob.frequency.value = 28 + Math.random() * 20; wd.gain.value = f * 0.06; wob.connect(wd); wd.connect(o.frequency);
+    o.connect(bp); o.start(at); o.stop(at + dur + 0.05); wob.start(at); wob.stop(at + dur + 0.05);
   }
 
   /** A little birdsong phrase: three to six quick whistled chirps gliding up or down. */

@@ -70,10 +70,12 @@ export interface Tuning {
     lost: { volume: number };
     ouch: { volume: number; knockdown: number; duck: number; duckTime: number };
     impact: { volume: number; small: number };
+    land: { volume: number; gap: number };
+    stir: { volume: number };
     knock: { volume: number; whoosh: number; twinkle: number; twinkleEvery: number };
     charge: { volume: number; bellow: number; hooves: number; rumble: number; skid: number; trot: number; range: number };
     relic: { volume: number; spot: number; spotTreetop: number; reach: number };
-    meadow: { volume: number; breeze: number; bees: number; birds: number; birdEvery: number; fade: number };
+    meadow: { volume: number; breeze: number; bees: number; birds: number; birdEvery: number; fade: number; murmur: number; clinks: number; clinkEvery: number; balloons: number; squeakEvery: number };
     whale: { volume: number; speed: number; depth: number; reverb: number; sleepEvery: number };
   };
   music: { on: boolean; volume: number; nearDist: number; farDist: number; floor: number; muffle: number; clear: number; distort: number; src: string };
