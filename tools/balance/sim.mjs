@@ -12,7 +12,7 @@
 //   node tools/balance/sim.mjs [--seeds 12] [--gaps 60,300] [--skills 10,30,50,70,100] [--cap 60]
 //     [--growth 30,50,70] [--starts 0,3,6,9,12,15,20] [--waves 30] [--fight 30]
 //     [--attrition 0.5] [--director base,perWave,power] [--by-wave] [--happy 0.1,0.2,...] [--expected 50] [--alphas 0,0.3,0.6]
-//     [--weights 1,1,1] [--per-wave 1] [--health 4000] [--home 8000] [--quick] [--json out.json]
+//     [--start babies,young,adults] [--weights 1,1,1] [--per-wave 1] [--health 4000] [--home 8000] [--quick] [--json out.json]
 // --weights (the grown creatures' baby, young, adult shares), --per-wave (how many a wave), --health
 // and --home (soundsystems' and home's health) try numbers without editing the tuning file;
 // --quick leaves out the catch-up check; --by-wave sets
@@ -29,7 +29,7 @@ const list = s => String(s).split(",").map(Number);
 const SEEDS = +arg("seeds", 12), GAPS = list(arg("gaps", "60,300")), GROWTH = list(arg("growth", "30,50,70")), SKILLS = list(arg("skills", "10,30,50,70,100"));
 const WAVES = +arg("waves", 30), CAP = +arg("cap", 60), IDLE_CAP = +arg("idle-cap", 80), FIGHT = +arg("fight", 30), STARTS = list(arg("starts", "0,3,6,9,12,15,20"));
 const ATTRITION = +arg("attrition", 0.5), [DBASE, DPER, DPOW = 1] = list(arg("director", "0,4,1.5")), EXPECTED = +arg("expected", 50), ALPHAS = list(arg("alphas", "0,0.3,0.6"));
-const OUT = arg("json", null), HEALTH = arg("health", null), HOME = arg("home", null), WEIGHTS = arg("weights", null), PER_WAVE = arg("per-wave", null);
+const START = arg("start", null), OUT = arg("json", null), HEALTH = arg("health", null), HOME = arg("home", null), WEIGHTS = arg("weights", null), PER_WAVE = arg("per-wave", null);
 
 const server = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: "custom", logLevel: "error", optimizeDeps: { noDiscovery: true, include: [] } });
 const load = p => server.ssrLoadModule(p);
@@ -37,7 +37,8 @@ const { generateMap } = await load("/src/rules/map.ts");
 const { TUNING } = await load("/src/rules/tuning.ts");
 const { simulate } = await load("/src/rules/balance.ts");
 const G0 = TUNING.population.growth, growth = { ...G0, ...(WEIGHTS ? { weights: list(WEIGHTS) } : {}), ...(PER_WAVE ? { perWave: +PER_WAVE } : {}) };
-const tuning = { ...TUNING, population: { ...TUNING.population, growth }, combat: { ...TUNING.combat, ...(HEALTH ? { soundsystemHealth: +HEALTH } : {}), ...(HOME ? { homeHealth: +HOME } : {}) } };
+const start = START ? (([babies, young, adults]) => ({ babies, young, adults }))(list(START)) : TUNING.population.start;
+const tuning = { ...TUNING, population: { ...TUNING.population, start, growth }, combat: { ...TUNING.combat, ...(HEALTH ? { soundsystemHealth: +HEALTH } : {}), ...(HOME ? { homeHealth: +HOME } : {}) } };
 
 const mean = a => a.reduce((x, y) => x + y, 0) / Math.max(1, a.length);
 const f0 = x => (x === null || x === undefined || Number.isNaN(x) ? "–" : Math.round(x).toString());
