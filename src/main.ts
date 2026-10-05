@@ -513,7 +513,10 @@ function frame(now: number): void {
   frameStats.work(performance.now() - work0);
   applyShake();
   freeze.update();
-  if (debugOn) {
+  // The overlay, four times a second (a new text every frame was a page layout every frame), with
+  // its buttons kept just below it however many lines it has.
+  if (debugOn && now - lastDebug > 250) {
+    lastDebug = now;
     const w = game.witch, s = view.stats;
     debugEl.textContent = [
       ...frameStats.lines(),
@@ -524,10 +527,13 @@ function frame(now: number): void {
       `trees  ${s.trees}  bushes ${s.bushes}  creatures ${s.creatures}`,
       `budget scenery to ${s.sceneryRadius.toFixed(0)} m (${s.scenery})  gameplay ${s.gameplay}  dropped ${s.dropped}`,
       `draws  ${s.drawCalls}  art queued ${s.pendingArt}  ground tiles ${s.pendingGround}`,
+      ...(game.lod ? [`sim    full ${game.lod.full}  coarse ${game.lod.coarse}  frozen ${game.lod.frozen}   marching full ${game.lod.marchFull}  coarse ${game.lod.marchCoarse}`] : []),
       ...powerLines(),
     ].join("\n");
+    debugButtons.style.top = `${debugEl.offsetTop + debugEl.offsetHeight + 6}px`;
   }
 }
+let lastDebug = -Infinity;
 requestAnimationFrame(frame);
 
 /** The power meter (Ed, 2026-10-04): fighting value, Σ √(hp × dps) (rules/power.ts), of the party
