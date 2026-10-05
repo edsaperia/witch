@@ -272,7 +272,7 @@ A counter is **shown**: a hit that's strong against its target flashes big and g
 
 ### The first quest (Ed, 2026-10-04)
 
-**Each sleeping legend dreams of a creature.** A thought bubble over it holds that creature's sigil, with its level as gold pips beneath: one for a baby, two for young, three for an adult.
+**Each sleeping legend dreams of a creature.** A thought bubble over it holds that creature's sigil, drawn in its level's variant (Ed, 2026-10-05: the sigil's own level look, no pips).
 - The creature is a species found on the map, never the legend's own, at a random level. It's chosen from the seed when the map is made.
 - The bubble reads on the ground. From the treetops a smaller one floats high over the legend.
 - **Fulfilling it:** put that sigil down anywhere in the legend's area while the area is still wild. That means a creature of that species and level from her stack, placed with the usual sigil action. Then:
