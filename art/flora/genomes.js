@@ -9,7 +9,10 @@
 // predate the records, each reading its own params: broad (the gnarled broadleaf), fir (tiered skirts), willow (arching limbs and a
 // curtain of strands), birch (a banded white trunk and airy clumps), palm (a tree fern), flat (flat layered maple), alder (a stem with
 // short side branches), pine (a bare trunk and flat needle plates), yew (a fluted squat trunk and a dark dome), holly (a dark cone),
-// weepingBirch (a birch hung with curtains) and larch (tufted tiers). Bushes: round, shrub, fern and grass.
+// weepingBirch (a birch hung with curtains) and larch (tufted tiers); and blob (art/flora/blob.js), the genome generator, which grows
+// any tree from levels of branches and a crown of lit blobs, and draws the ten newer species, three of them fantasy (fantasy: true).
+// Colours: hue shifts the area's leaf hue, hueAbs sets it outright (a violet mushroom anywhere); glow and glint colour the glowing
+// parts. Bushes: round, shrub, fern and grass.
 
 export const PLANT_GENOMES = {
   // ---- the original six kinds ----
@@ -78,6 +81,47 @@ export const PLANT_GENOMES = {
   larch: { name: "larch", form: "tree", generator: "larch", grow: "narrow", crown: { envelope: "cone", clumps: "tufts" },
     params: { w: 100, h: 170, tiers: 14, cone: .68, halfTop: 4, halfBottom: 30, crownLine: .8 },
     low: { skirt: .5, boughs: .2 }, colour: { hue: -.07, sat: .8, val: 1.15 } },
+  // ---- grown by the genome generator (art/flora/blob.js): levels of branches under a crown of lit blobs of leaf stamps ----
+  cherry: { name: "wild cherry", form: "tree", generator: "blob", grow: "normal", crown: { envelope: "sphere", clumps: "5-7 blobs, blossom" },
+    params: { w: 170, h: 145, trunk: { w: 10, len: .45, taper: .6, bend: .8, smooth: 1, mat: "BARK2" }, levels: [{ n: [3, 4], at: [.55, 1], len: [.45, .6], angle: [.5, .9], up: .25, shape: "sphere" }, { n: [2, 3], at: [.4, 1], len: [.45, .6], angle: [.3, .6], up: .2 }],
+      crown: { blobs: [5, 7], r: [14, 19], flat: .75, stamp: "leaf", stampSize: 3, back: .3, holes: .08, dots: { mat: "FLOWER", share: .2, size: 2 } } },
+    low: { moss: .3, sprigs: .5, boughs: .2 }, colour: { hue: -.02, sat: .9, val: 1.02, trunk: [.98, .45, .42], dot: [248, 196, 214] } },
+  crabApple: { name: "crab apple", form: "tree", generator: "blob", grow: "small", crown: { envelope: "sphere", clumps: "3-5 round blobs, fruit" },
+    params: { w: 160, h: 95, trunk: { w: 9, len: .38, taper: .65, bend: 2, lean: .9 }, levels: [{ n: [3, 4], at: [.6, 1], len: [.5, .7], angle: [.7, 1.1], up: .1, bend: 1.8, shape: "even" }, { n: [2, 2], at: [.5, 1], len: [.4, .55], angle: [.4, .7], bend: 1.6 }],
+      crown: { blobs: [3, 5], r: [13, 17], flat: .8, stamp: "round", stampSize: 2.5, back: .25, holes: .05, dots: { mat: "FLOWER", share: .035, size: 2 } } },
+    low: { moss: .5, sprigs: .6, boughs: .4 }, colour: { hue: .02, val: .9, dot: [226, 182, 52] } },
+  elder: { name: "elder", form: "shrub", generator: "blob", grow: "small", crown: { envelope: "umbrella", clumps: "flat blobs, flower plates" },
+    params: { w: 150, h: 105, trunk: { w: 6, len: .55, taper: .55, bend: 1.4, stems: 4, fan: 1.1, top: true, roots: .5 }, levels: [{ n: [2, 3], at: [.6, 1], len: [.35, .5], angle: [.6, 1], up: .15 }],
+      crown: { blobs: [5, 7], r: [16, 21], flat: .55, stamp: "leaf", stampSize: 3, back: .35, holes: .08, twigs: .5, dots: { mat: "FLOWER", share: .012, size: 3 } } },
+    low: { moss: .3, sprigs: .8, boughs: .3 }, colour: { hue: .015, sat: .95, val: .82, dot: [240, 236, 206] } },
+  aspen: { name: "aspen", form: "tree", generator: "blob", grow: "narrow", crown: { envelope: "column", clumps: "7-9 small pale blobs" },
+    params: { w: 95, h: 165, narrow: 1, trunk: { w: 6, len: .88, taper: .35, bend: .4, smooth: 1, mat: "BARK2" }, levels: [{ n: [6, 8], at: [.35, .95], len: [.12, .2], angle: [.6, 1], up: .35, shape: "flame" }],
+      crown: { blobs: [7, 9], r: [8, 11], flat: .9, stamp: "round", stampSize: 2, tones: [.05, .4], back: .2, holes: .15 } },
+    low: { sprigs: .9, boughs: .2 }, colour: { hue: -.06, sat: .75, val: 1.18, trunk: [.2, .1, .8] } },
+  whitebeam: { name: "whitebeam", form: "tree", generator: "blob", grow: "normal", crown: { envelope: "sphere", clumps: "4-6 silvery blobs" },
+    params: { w: 150, h: 140, trunk: { w: 10, len: .42, taper: .6, bend: 1 }, levels: [{ n: [3, 4], at: [.5, 1], len: [.45, .6], angle: [.4, .75], up: .35, shape: "flame" }, { n: [2, 2], at: [.5, 1], len: [.4, .5], angle: [.3, .5], up: .2 }],
+      crown: { blobs: [4, 6], r: [16, 21], flat: .85, stamp: "leaf", stampSize: 3.5, tones: [0, .3], back: .3, stampShade: .4 } },
+    low: { ivy: .3, moss: .3, sprigs: .4 }, colour: { hue: -.04, sat: .45, val: 1.2 } },
+  elm: { name: "field elm", form: "tree", generator: "blob", grow: "narrow", crown: { envelope: "column", clumps: "tall stack of blobs" },
+    params: { w: 125, h: 180, narrow: 1, trunk: { w: 11, len: .7, taper: .45, bend: .6 }, levels: [{ n: [5, 7], at: [.3, 1], len: [.22, .32], angle: [.3, .55], up: .4, shape: "flame" }, { n: [1, 2], at: [.6, 1], len: [.4, .6], angle: [.2, .4], up: .3 }],
+      crown: { blobs: [6, 8], r: [13, 17], flat: .7, stamp: "leaf", stampSize: 2.5, back: .4, backDark: .45, holes: .06 } },
+    low: { ivy: .7, sprigs: 1, boughs: .2 }, colour: { hue: .02, sat: 1.05, val: .78 } },
+  cedar: { name: "cedar", form: "tree", generator: "blob", grow: "wide", crown: { envelope: "tiers", clumps: "flat plates in tiers" },
+    params: { w: 200, h: 150, trunk: { w: 12, len: .82, taper: .4, bend: .7 }, levels: [{ n: [5, 6], at: [.3, .95], len: [.3, .45], angle: [1.25, 1.45], up: -.05, shape: "cone", tips: true }],
+      crown: { blobs: [7, 9], r: [16, 22], flat: .28, stamp: "needle", stampSize: 3, back: .2, lift: 1, tones: [.05, .5] } },
+    low: { moss: .3, skirt: .6 }, colour: { hue: .09, sat: .65, val: .7 } },
+  glowcap: { name: "glowcap", form: "fungus", generator: "blob", grow: "normal", fantasy: true, crown: { envelope: "caps", clumps: "mushroom caps, glowing gills and spots" },
+    params: { w: 150, h: 130, trunk: { w: 15, len: .62, taper: .85, bend: .7, smooth: 1, mat: "BARK2", roots: .6 }, levels: [{ n: [2, 3], at: [.3, .65], len: [.32, .42], angle: [.8, 1.1], up: .5, w: .5, tips: true }],
+      crown: { blobs: [3, 4], r: [17, 21], topBig: 1.7, flat: .5, stamp: "round", stampSize: 3, back: 0, lift: -2, cap: { gill: "GLOW", depth: .4 }, spreadK: false, dots: { mat: "GLOW", share: .03, size: 2, on: ["LEAF2", "LEAF"] } } },
+    low: { moss: .7 }, colour: { hueAbs: .72, sat: 1.1, val: .95, trunk: [.12, .12, .82], glow: [120, 255, 214] } },
+  crystal: { name: "crystal-leaf tree", form: "tree", generator: "blob", grow: "narrow", fantasy: true, crown: { envelope: "sphere", clumps: "faceted crystal blobs, glints" },
+    params: { w: 140, h: 150, trunk: { w: 8, len: .5, taper: .5, bend: 1.3, mat: "BARKD", limbMat: "BARKD" }, levels: [{ n: [3, 4], at: [.5, 1], len: [.45, .6], angle: [.45, .8], up: .3, shape: "sphere" }, { n: [2, 2], at: [.5, 1], len: [.4, .55], angle: [.35, .6], up: .2 }],
+      crown: { blobs: [5, 7], r: [12, 16], flat: .95, stamp: "crystal", stampSize: 3.5, packing: 1.5, back: .35, backDark: .4, stampShade: .5, holes: .1, glints: { mat: "GLINT", share: .012, on: ["LEAF2"] } } },
+    low: { moss: .3, sprigs: .4 }, colour: { hueAbs: .5, sat: 1.25, val: 1.05, glint: [230, 255, 255] } },
+  vinewood: { name: "vinewood", form: "tree", generator: "blob", grow: "wide", fantasy: true, crown: { envelope: "weeping", clumps: "broad blobs, hanging vines with glowing buds" },
+    params: { w: 210, h: 135, trunk: { w: 14, len: .4, taper: .6, bend: 1.6, lean: .6 }, levels: [{ n: [3, 4], at: [.6, 1], len: [.5, .65], angle: [.8, 1.2], up: .05, bend: 1.4, shape: "even" }, { n: [2, 2], at: [.5, 1], len: [.4, .5], angle: [.3, .6], up: .15 }],
+      crown: { blobs: [4, 6], r: [17, 22], flat: .6, stamp: "leaf", stampSize: 3, back: .35, vines: { share: .55, len: [28, 60], budEvery: 9, bud: "GLOW" } } },
+    low: { ivy: .8, moss: .5 }, colour: { hue: .04, sat: 1.05, val: .7, glow: [255, 196, 92] } },
 };
 // The bushes a kind is picked from (round twice as often), and each kind's numbers.
 export const BUSH_KINDS = ["round", "round", "fern", "grass", "shrub"];

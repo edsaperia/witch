@@ -7,6 +7,7 @@
 // ground mode), everything else its top half (the canopy seen from the treetops).
 import { M, Sprite, uni, pick, hash2, vnoise, hsv2rgb, tufts, rot, lerp2, add } from "./core.js";
 import { PLANT_GENOMES, BUSH_KINDS, BUSH_GENOMES, genomeStyle } from "./flora/genomes.js";
+import { blobTree } from "./flora/blob.js";
 
 const WOOD = new Set([M.TRUNK, M.BARK2, M.BARKD, M.BARKL, M.BELLY]); // BELLY: a pine's orange or a yew's red trunk
 
@@ -34,7 +35,7 @@ function clump(sp, c, rx, ry, st, r, { mat = M.LEAF, group = 30, ragged = 1 } = 
 }
 
 // A wooden limb along a wobbling path from p, heading `ang` (0 = right, -PI/2 = up).
-function bough(sp, p, ang, len, w0, w1, st, r, { mat = M.TRUNK, bend = 1, group = 10, line = false } = {}) {
+export function bough(sp, p, ang, len, w0, w1, st, r, { mat = M.TRUNK, bend = 1, group = 10, line = false } = {}) {
   const pts = [p], n = 4;
   let a = ang, q = p;
   for (let i = 1; i <= n; i++) {
@@ -47,7 +48,7 @@ function bough(sp, p, ang, len, w0, w1, st, r, { mat = M.TRUNK, bend = 1, group 
 }
 
 // The base: a flared trunk foot and roots that snake out over the ground.
-function roots(sp, bx, gy, w, st, r, s, mat = M.TRUNK) {
+export function roots(sp, bx, gy, w, st, r, s, mat = M.TRUNK) {
   // the foot of the trunk flares out where it meets the ground, in the trunk's own bark (a smooth
   // grey beech's foot was brown, a sawn-off stump under a grey column: Ed, 2026-10-04)
   sp.shape([[bx - w * 1.05, gy], [bx - w * .62, gy - w * .5], [bx - w * .45, gy - w * 1.4], [bx + w * .45, gy - w * 1.4], [bx + w * .62, gy - w * .5], [bx + w * 1.05, gy]], mat, { group: 10, round: st.round });
@@ -61,7 +62,7 @@ function roots(sp, bx, gy, w, st, r, s, mat = M.TRUNK) {
 }
 
 // Bark: dark crevices running along the wood, with lit ridges beside them.
-function bark(sp, st, vertical = true) {
+export function bark(sp, st, vertical = true) {
   if (st.bark <= 0) return;
   for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) {
     const i = y * sp.w + x; if (sp.m[i] !== M.TRUNK) continue;
@@ -73,7 +74,7 @@ function bark(sp, st, vertical = true) {
 
 // Smooth bark (beech, rowan, hazel): plain, but for a few dark "eyes", short dark arcs across
 // the trunk where old branches fell away, so it reads as bark and not a flat pale slab.
-function smoothBark(sp, r, s) {
+export function smoothBark(sp, r, s) {
   const pts = [];
   for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x] === M.BARK2) pts.push([x, y]);
   const n = Math.round(pts.length / (260 * s * s));
@@ -87,7 +88,7 @@ function smoothBark(sp, r, s) {
 }
 
 // Trims empty margins, keeping the ground row at the bottom and the base at the centre.
-function trim(sp, bx, crownY) {
+export function trim(sp, bx, crownY) {
   let x0 = sp.w, x1 = -1, y0 = sp.h;
   for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
   if (x1 < 0) return { sp, crownY };
@@ -99,7 +100,7 @@ function trim(sp, bx, crownY) {
   }
   return { sp: out, crownY: crownY - ny0 };
 }
-const spread = st => (st.crownWidth || 3) / 3;
+export const spread = st => (st.crownWidth || 3) / 3;
 
 // Gnarled broadleaf: a twisting trunk forking low into heavy limbs, a wide crown of clumps
 // with the branches showing between them.
@@ -450,7 +451,7 @@ function lowLife(t, r, st, s, P) {
 // it bends, its life below the crown and its look: hue (added to the area's leaf hue), saturation and value of the
 // leaves, the trunk's colour, how it grows across the height classes (wide, narrow, small, willow, normal), and what
 // it is. The first six are the original kinds.
-const TREE_GENERATORS = { broadleaf, broad: broadTree, fir: firTree, willow: willowTree, birch: birchTree, palm: palmTree, flat: flatTree, alder: alderTree, pine: pineTree, yew: yewTree, holly: hollyTree, weepingBirch: weepingBirchTree, larch: larchTree };
+const TREE_GENERATORS = { broadleaf, broad: broadTree, fir: firTree, willow: willowTree, birch: birchTree, palm: palmTree, flat: flatTree, alder: alderTree, pine: pineTree, yew: yewTree, holly: hollyTree, weepingBirch: weepingBirchTree, larch: larchTree, blob: blobTree };
 const MAT_PARAMS = ["trunkMat", "limbMat"]; // material names in a genome, as M's numbers
 function genomeParams(P) { const out = { ...P }; for (const k of MAT_PARAMS) if (typeof P[k] === "string") out[k] = M[P[k]]; return out; }
 // A genome's tree, without its life below the crown. A bespoke generator's own record, with no style rules, is the
@@ -467,6 +468,16 @@ for (const [id, g] of Object.entries(PLANT_GENOMES)) {
   if (g.species === false) continue; // only a TREE_TYPES kind (the tree fern), never an area's species
   const bare = genomeTree(id, g);
   TREE_SPECIES[id] = { fn: (r, st, s) => lowLife(bare(r, st, s), r, st, s, g.low || {}), bare, name: g.name, grow: g.grow, ...g.colour }; // every species' trees carry their life below the crown; bare draws without it
+}
+// The species a flora preview names (the game's ?flora=, the lab): "new" the genome generator's species, "fantasy" its fantasy
+// ones, "all" every species, or a comma list of ids; unknown ids are left out.
+export function floraPick(q) {
+  if (!q) return [];
+  const ids = Object.keys(TREE_SPECIES), blob = ids.filter(id => PLANT_GENOMES[id]?.generator === "blob");
+  if (q === "new") return blob;
+  if (q === "fantasy") return blob.filter(id => PLANT_GENOMES[id].fantasy);
+  if (q === "all") return ids;
+  return q.split(",").map(x => x.trim()).filter(x => TREE_SPECIES[x]);
 }
 export const oakTree = TREE_SPECIES.oak.bare, beechTree = TREE_SPECIES.beech.bare, ashTree = TREE_SPECIES.ash.bare, limeTree = TREE_SPECIES.lime.bare, sycamoreTree = TREE_SPECIES.sycamore.bare, chestnutTree = TREE_SPECIES.chestnut.bare, rowanTree = TREE_SPECIES.rowan.bare, hawthornTree = TREE_SPECIES.hawthorn.bare, hazelTree = TREE_SPECIES.hazel.bare;
 const SPECIES_BY_FN = new Map(Object.entries(TREE_SPECIES).flatMap(([id, S]) => [[S.fn, { id, ...S }], [S.bare, { id, ...S }]]));
@@ -499,7 +510,7 @@ export function chooseType(r, st) {
 export function treeColours(r, st, type) {
   const S = SPECIES_BY_FN.get(type), sa = S?.sat || 1, va = S?.val || 1;
   // a species shifts the area's leaf hue a little; towards yellow it shifts less where the area's leaves are already yellow, so no species turns an area autumnal
-  const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = st.leafHue + (r() - .5) * st.leafVariety * .7 + sh;
+  const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = (S?.hueAbs ?? st.leafHue) + (r() - .5) * st.leafVariety * .7 + sh; // hueAbs: a hue of its own, whatever the area's
   const c = {
     [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212],
     [M.LEAF]: hsv2rgb(h, Math.min(1, .62 * st.sat * sa), Math.min(1, .58 * va)), [M.LEAF2]: hsv2rgb(h - .05, Math.min(1, .55 * st.sat * sa), Math.min(1, .8 * va)), [M.LEAF3]: hsv2rgb(h + .03, Math.min(1, .66 * st.sat * sa), .38 * va), [M.WEB]: [225, 225, 232],
@@ -507,6 +518,8 @@ export function treeColours(r, st, type) {
   if (S?.trunk) c[M.BARK2] = hsv2rgb(...S.trunk); // smooth grey or brown bark (beech, rowan, holly, hazel)
   if (S?.upper) c[M.BELLY] = hsv2rgb(...S.upper); // a pine's orange upper trunk, a yew's red
   if (S?.dot) c[M.FLOWER] = S.dot; // berries, candles
+  if (S?.glow) c[M.GLOW] = S.glow; // glowing gills and spots, buds on vines
+  if (S?.glint) c[M.GLINT] = S.glint; // a crystal's glints
   return c;
 }
 // The trunk was drawn with its roots and bark; this stays for callers of the old API.
