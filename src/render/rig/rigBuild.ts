@@ -28,10 +28,14 @@ export interface RigMeta {
 type Part = { sp: unknown; px: number; py: number } | null;
 type Parts = { template: "quadruped" | "serpent"; s: number; pieces: Record<string, Part[] | null>; faces?: Record<string, Part[] | null>; discs: Record<number, Record<number, Part>>; joints: { legs?: RigLeg[]; head?: { nb: V3; H: V3 } | V3; tail?: V3; top?: number; len?: number; spine?: [number, number, number, number][] } };
 
-export function rigSprites(st: Style, species: string, level: number, mk: MakeCanvas): { px: AtlasPixels; meta: RigMeta } | null {
-  const P = rigParts(species, level, st) as Parts | null;
+/** A party animal's gear on its rig (artBuild.ts partyGearOf): its collar's colour (null: none), hat and glasses. */
+export interface RigGear { collar?: number[] | null; hat?: number | null; glasses?: string | null; /** enraged: red eyes, a darker coat */ woken?: boolean }
+export const rigGearKey = (g: RigGear): string => g.woken ? "woken" : `${g.collar ? g.collar.join(".") : "-"}|${g.hat ?? "-"}|${g.glasses ?? "-"}`;
+
+export function rigSprites(st: Style, species: string, level: number, mk: MakeCanvas, gear: RigGear | null = null): { px: AtlasPixels; meta: RigMeta } | null {
+  const P = (rigParts as (id: string, level: number, st: Style, gear: RigGear | null) => unknown)(species, level, st, gear) as Parts | null;
   if (!P) return null;
-  const colours = Art.speciesColours(species, st), sprites: Baked[] = [];
+  const colours = Art.speciesColours(species, st, gear as null), sprites: Baked[] = [];
   const add = (p: Part, outline = st.cOutline): RigPiece | null => p ? { frame: sprites.push(Art.bake(p.sp, colours, st, outline, mk) as Baked) - 1, px: p.px, py: p.py } : null;
   const all = (k: string) => (P.pieces[k] ?? [null, null, null, null, null]).map(p => add(p));
   const discs: RigMeta["discs"] = {};

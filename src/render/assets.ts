@@ -7,7 +7,7 @@ import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
 import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { ART_HASH, cacheGet, cachePut, hashText } from "./artCache";
-import type { RigMeta } from "./rig/rigBuild";
+import { rigGearKey, type RigGear, type RigMeta } from "./rig/rigBuild";
 
 export interface TypeArt {
   atlas: Atlas; layout: TypeLayout;
@@ -248,12 +248,12 @@ export class AssetLibrary {
   }
   /** A species' live-rig parts at a level (#79 stage 4: one atlas page each, keyed by its genome's
    *  hash so a changed record bakes afresh), or undefined (and asked for). */
-  rigArt(species: string, level: number): RigArt | undefined {
+  rigArt(species: string, level: number, gear?: RigGear): RigArt | undefined { // gear: a party animal's, baked on (a page per species, level and gear)
     const g = (Art.GENOME_BY_ID as Record<string, unknown>)[species];
     if (!g) return undefined;
-    const k = `rig-${species}-${level}-${Art.genomeHash(g)}`, a = this.rigs.get(k);
+    const k = `rig-${species}-${level}-${Art.genomeHash(g)}${gear ? "-" + rigGearKey(gear) : ""}`, a = this.rigs.get(k);
     if (a) { a.used = performance.now(); return a; }
-    this.ask({ kind: "rig", id: k, species, level, style: this.style }, true); // gameplay: ahead of the scenery
+    this.ask({ kind: "rig", id: k, species, level, style: this.style, ...(gear ? { gear } : {}) }, true); // gameplay: ahead of the scenery
     return undefined;
   }
   /** Least recently used rig pages are let go past RIG_PAGES, their textures freed. */
