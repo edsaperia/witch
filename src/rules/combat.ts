@@ -93,7 +93,7 @@ export interface Fight {
   move?: string;
   /** When it noticed its target (it reacts combat.reaction seconds later), and a melee lunge under way: its way, and the metres left. */
   seenAt?: number;
-  lunge?: { dx: number; dz: number; left: number };
+  lunge?: { dx: number; dz: number; left: number; /** its speed now */ v?: number };
 }
 
 /** A projectile in flight: dodgeable (it flies at a point, not after its target). */
@@ -218,6 +218,14 @@ function targetPos(w: CombatWorld, s: CombatState, tg: Target): { x: number; z: 
 }
 
 /** Whether a target is still worth fighting for this creature. */
+/** Whether (x, z) is more than combat.leaveArea metres past the creature's area's edge (Ed,
+ *  2026-10-05): outside its area, and still outside it that far back toward its home. */
+function pastEdge(w: CombatWorld, c: Creature, x: number, z: number): boolean {
+  if (w.inArea(c, x, z)) return false;
+  const hx = c.anchorX - x, hz = c.anchorZ - z, hd = Math.hypot(hx, hz) || 1, L = Math.min(hd, w.t.combat.leaveArea * FIGHT.scale);
+  return !w.inArea(c, x + (hx / hd) * L, z + (hz / hd) * L);
+}
+
 /** The creature she's inviting (Ed, 2026-10-04): her party leaves it be while they chat. */
 const inviting = (w: CombatWorld, c: Creature, o: Creature) => sideOf(c) === "party" && w.talkingTo(o.id) >= 0;
 
@@ -227,12 +235,15 @@ function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): boolean
     return !!o && targetable(o) && sideOf(o) !== sideOf(c) && !truce(c, o) && !w.asleep(o) && !inviting(w, c, o);
   }
   if (tg.kind === "witch") {
-    // A wild one loses her when she rises, or once she's out of its area, out of its attack range
-    // and at least combat.witchLose away (Ed, 2026-10-04); then it walks back to its spot.
+    // A wild one loses her when she rises, or (Ed, 2026-10-05: "wild creatures shouldn't pursue you
+    // very far outside of their area") once she's combat.leaveArea metres past its area's edge;
+    // then it turns back and walks home. A besieger keeps the old rule: out of its area, out of its
+    // attack range and at least combat.witchLose away. (Only wild ones go for her at all.)
     const v = w.witches[tg.id];
-    if (c.leashed || !v || !v.onGround || v.down || w.talkingTo(c.id) === tg.id) return false;
+    if (sideOf(c) !== "wild" || !v || !v.onGround || v.down || w.talkingTo(c.id) === tg.id) return false;
+    if (!c.siege) return !pastEdge(w, c, v.x, v.z);
     const d = Math.hypot(v.x - c.x, v.z - c.z), range = attackOf(c.species, c.level)?.attack.range ?? 0;
-    return !(d > range && d >= w.t.combat.witchLose && !w.inArea(c, v.x, v.z));
+    return !(d > range && d >= w.t.combat.witchLose * FIGHT.scale && !w.inArea(c, v.x, v.z));
   }
   return !c.leashed && (s.sounds.get(tg.key)?.hp ?? 0) > 0;
 }
@@ -253,10 +264,10 @@ function acquire(w: CombatWorld, c: Creature, x: number, z: number, range: numbe
     const d = Math.hypot(o.x - x, o.z - z);
     if (d < bd) { bd = d; best = { kind: "creature", id: o.id }; }
   }
-  if (!c.leashed) for (const v of w.witches) {
+  if (sideOf(c) === "wild") for (const v of w.witches) {
     if (!v.onGround || v.down || w.talkingTo(c.id) === v.id) continue; // (the one she's inviting holds its fire on her)
     const d = Math.hypot(v.x - c.x, v.z - c.z);
-    if ((d < attackRange || w.inArea(c, v.x, v.z)) && (!best || d < bd)) { bd = d; best = { kind: "witch", id: v.id }; }
+    if ((w.inArea(c, v.x, v.z) || (d < attackRange && (c.siege || !pastEdge(w, c, v.x, v.z)))) && (!best || d < bd)) { bd = d; best = { kind: "witch", id: v.id }; }
   }
   return best;
 }
@@ -340,7 +351,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   // (Events gather over a frame's steps: stepGame clears them once a frame, for the view.)
   const { time, dt, t } = w, C = t.combat;
   D = data;
-  FIGHT.scale = t.fight.scale; FIGHT.speed = t.fight.speed;
+  FIGHT.scale = t.fight.scale; FIGHT.speed = t.fight.speed; FIGHT.momentum = t.fight.momentum ?? 1;
   // Shots fly; each hits the first enemy (not its own kind) it reaches, or fizzles at its range.
   const grid = new Grid(w.active.filter(c => fighting(c)));
   s.shots = s.shots.filter(sh => {
@@ -473,9 +484,13 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (f.lunge) {
       // (At a creature it homes in: creatures can't read a telegraph; but not at a flier, which flits up out of its way.
       // At the witch it keeps its line, so she can sidestep it.)
-      const L = f.lunge, step = Math.min(L.left, 60 * FIGHT.speed * dt);
+      // (with momentum, Ed 2026-10-05: it builds up to 60 m/s and eases out at the end, carrying some speed on)
+      const L = f.lunge, a = (300 * FIGHT.speed) / FIGHT.momentum, top = 60 * FIGHT.speed, v0 = L.v ?? 0;
+      const v = Math.min(top, v0 + a * dt, Math.sqrt(Math.max(0, 2 * a * L.left + (12 * FIGHT.speed) ** 2))), step = Math.min(L.left, v * dt);
+      L.v = v;
       if (f.target.kind === "creature" && !traitsOf(w.creatures[f.target.id]?.species ?? "", data).includes("flier")) { const hx = p.x - c.x, hz = p.z - c.z, hd = Math.hypot(hx, hz); if (hd > 1e-3) { L.dx = hx / hd; L.dz = hz / hd; L.left = Math.min(L.left, Math.max(0, hd - A.range * 0.5)); } }
       c.x += L.dx * step; c.z += L.dz * step; L.left -= step; c.moving = true; c.walk += dt * 12; c.facing = L.dx >= 0 ? 1 : -1;
+      c.vx = L.dx * v; c.vz = L.dz * v;
       if (L.left <= 1e-6) { f.lunge = undefined; if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range + p.r) land(w, s, c, f.target, atk.damage, A, c.x, c.z); }
       continue;
     }
@@ -492,7 +507,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       // A movement profile (Stage 5): its signature move, then its behaviours and its pack's tactic.
       const run = speed;
       if (P.move?.kind === "charge") {
-        const r = stepCharge(c, P.move, p.x, p.z, A.range + p.r + 0.3, time, dt);
+        const r = stepCharge(c, P.move, p.x, p.z, A.range + p.r + 0.3, time, dt, run);
         if (r === "hit") { land(w, s, c, f.target, atk.damage, { ...A, modifier: "knockback", knockback: 15 * S }, c.x, c.z); f.readyAt = time + A.cooldown; s.events.push({ kind: "charged", x: c.x, z: c.z, at: time, id: c.id }); continue; }
         if (r === "charging") continue;
       }
@@ -525,8 +540,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       const burst = c.sprung !== undefined && time - c.sprung < (P.move?.time ?? 0) ? P.move?.speed ?? 1 : 1;
       const may = steer(c, P, { px: p.x, pz: p.z, pr: p.r, want, range: A.range, speed: run * burst, time, dt, pack: packs.get(c.id) ?? null, neighbours: [...grid.near(c.x, c.z, 12 * S)], threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm });
       if (may && time >= f.readyAt) {
-        f.windupUntil = time + A.windup; f.aimX = p.x; f.aimZ = p.z;
-        c.vx = 0; c.vz = 0;
+        f.windupUntil = time + A.windup; f.aimX = p.x; f.aimZ = p.z; // (it glides to a stop as it winds up: below)
         s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id });
       }
       continue;
@@ -542,8 +556,10 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       }
       continue;
     }
-    // Winding up: it stands and telegraphs, then the blow lands, the shot flies, or the ground quakes.
-    c.moving = false;
+    // Winding up: it telegraphs (gliding to a stop, with momentum), then the blow lands, the shot flies, or the ground quakes.
+    { const vx = c.vx ?? 0, vz = c.vz ?? 0, v = Math.hypot(vx, vz);
+      if (v > 0.05) { const nv = Math.max(0, v - ((40 * FIGHT.speed) / FIGHT.momentum) * dt); c.vx = (vx / v) * nv; c.vz = (vz / v) * nv; c.x += c.vx * dt; c.z += c.vz * dt; } else { c.vx = 0; c.vz = 0; }
+      c.moving = v > 1; }
     if (time < f.windupUntil) continue;
     f.windupUntil = 0; f.readyAt = time + A.cooldown;
     const dmg = atk.damage;
@@ -551,7 +567,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       // The lunge (Ed's motion scale pass: 12 to 16 m, a dash-strike): down the line to where it aimed
       // when it wound up, so stepping aside dodges it; the blow lands at its end (above).
       const ax = f.aimX - c.x, az = f.aimZ - c.z, ad = Math.hypot(ax, az), L = Math.min(A.lunge ?? 0, Math.max(0, ad - A.range * 0.5));
-      if (ad > 0.01 && L > 0.05) f.lunge = { dx: ax / ad, dz: az / ad, left: L };
+      if (ad > 0.01 && L > 0.05) f.lunge = { dx: ax / ad, dz: az / ad, left: L, v: Math.hypot(c.vx ?? 0, c.vz ?? 0) };
       else if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range + p.r) land(w, s, c, f.target, dmg, A, c.x, c.z);
     }
     else if (A.delivery === "shot") {

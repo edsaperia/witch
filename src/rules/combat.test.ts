@@ -460,4 +460,26 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
     expect(attackOf("wolf", 2)!.attack.lunge).toBeCloseTo(COMBAT.attacks.maul.lunge! * 2);
     g.tuning.fight.scale = 1;
   }, 60000);
+
+  it("has a wild creature chasing her give up soon after she leaves its area, and go home (Ed, 2026-10-05)", () => {
+    const g = quiet(), W = g.witches[0];
+    W.health.hp = 1e6;
+    const cell: [number, number] = [g.map.centreCell[0] + 2, g.map.centreCell[1]], site = g.map.siteOf(cell[0], cell[1]);
+    const wolf = place(g, 0, "wolf", 2, site.x, site.z);
+    wolf.cell = cell;
+    g.witch = { ...g.witch, x: site.x + 8, z: site.z, mode: "ground", lift: 0, seated: false };
+    for (let i = 0; i < 2 / STEP; i++) stepGame(g, { ...idle, autoTalk: false }, STEP);
+    expect(wolf.fight?.target?.kind).toBe("witch");
+    // She runs out of its area, far east, and keeps going.
+    let maxOut = 0;
+    for (let i = 0; i < 12 / STEP; i++) {
+      stepGame(g, { ...idle, autoTalk: false, moveX: 1 }, STEP);
+      const k = g.map.cellSafe(wolf.x, wolf.z).cell;
+      if (k[0] !== cell[0] || k[1] !== cell[1]) maxOut++;
+    }
+    expect(wolf.fight?.target?.kind ?? null).not.toBe("witch");
+    expect(maxOut * STEP).toBeLessThan(4); // out of its area only briefly
+    for (let i = 0; i < 15 / STEP; i++) stepGame(g, idle, STEP);
+    expect(g.map.cellSafe(wolf.x, wolf.z).cell).toEqual(cell); // back home
+  }, 60000);
 });
