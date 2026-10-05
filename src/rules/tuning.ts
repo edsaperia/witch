@@ -68,7 +68,7 @@ export interface Tuning {
     enraged: { volume: number; gap: number }; happy: { volume: number; gap: number };
     snore: { volume: number; range: number }; nightmare: { volume: number }; windup: { volume: number; length: number };
     lost: { volume: number };
-    ouch: { volume: number; duck: number; duckTime: number };
+    ouch: { volume: number; knockdown: number; duck: number; duckTime: number };
     knock: { volume: number; whoosh: number; twinkle: number; twinkleEvery: number };
     charge: { volume: number; bellow: number; hooves: number; rumble: number; skid: number; trot: number; range: number };
     relic: { volume: number; spot: number; spotTreetop: number; reach: number };
