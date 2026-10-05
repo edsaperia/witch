@@ -13,6 +13,7 @@ import { Model, render, masks, v3 } from "./model3d.js";
 import { sigilHit } from "./sigils.js";
 import { treeSpecies, treeColours, splitTree, bush } from "./trees.js";
 import { bakeSway } from "./sway.js";
+import { setArea, setPlant } from "./genome/next.js";
 // the props that sway in the wind: they get a sway mask (sway.js) beside their albedo and normals
 export const SWAYING_PROPS = new Set(["tree", "shrub", "grass", "reeds", "fern", "flowers", "flowerbed", "bramble", "hedge"]);
 import { TALL_KINDS, tallPiece } from "./tall.js";
@@ -252,7 +253,7 @@ function prop(kind, o, def, st, r, s) {
   const wood = { [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BELLY]: hsv2rgb(st.trunkHue + .02, .3, .7) };
   const water = { [M.MAGIC]: [60, 110, 150], [M.MAGIC2]: [150, 200, 220], [M.BODY2]: [35, 70, 100] };
   if (kind === "tree") {
-    const f = treeSpecies(o.type).fn;
+    const f = (setPlant(o.type, st) || treeSpecies(o.type)).fn;
     const ts = { ...st, leafHue: def.leaf + (o.dark ? .05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs };
     const t = f(r, ts, st.treeSize * s * (o.scale || 1) * uni(r, .9, 1.1));
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
@@ -393,7 +394,7 @@ function setPiece(kind, o, def, st, r, s) {
 
 // Bakes everything one area type needs, at the style's pixel size.
 export function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanvas } = {}) {
-  const def = AREA_BY_ID[id]; if (!def) throw new Error(`no area type "${id}"`);
+  const def = setArea(AREA_BY_ID[id], st); if (!def) throw new Error(`no area type "${id}"`); // with its art set's changes (art/genome/next.js), if any
   const r = rng(id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 7) >>> 0);
   const bk = (p, kind, text) => ({ sp: bake(p.sp, p.colours, st, "none", makeCanvas), kind, text });
   const ft = floorTile(def, st);
@@ -423,7 +424,7 @@ export const ART_PIXELS_PER_METRE = 16; // the prototype's (config/tuning.json, 
 // metres: { height, crownBase, crownHeight, crownRadius } }]. Empty when its big objects are not
 // trees (mounds, boulders). ppm: art pixels per metre, for the metres.
 export function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanvas, ppm = ART_PIXELS_PER_METRE, flora = null } = {}) {
-  const def = AREA_BY_ID[id]; if (!def) throw new Error(`no area type "${id}"`);
+  const def = setArea(AREA_BY_ID[id], st); if (!def) throw new Error(`no area type "${id}"`); // with its art set's changes (art/genome/next.js), if any
   const recipes = (def.big || []).filter(([kind]) => kind === "tree").map(([, o]) => o);
   let mains = recipes.filter(o => !o.minor), minors = recipes.filter(o => o.minor);
   if (flora?.length && recipes.length) { mains = flora.map(type => ({ type })); minors = []; } // a flora preview (?flora=): these species instead of the area's own
@@ -431,7 +432,7 @@ export function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas =
   const seed = id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0, out = [];
   let n = 0;
   for (const cls of TREE_HEIGHT_CLASSES) for (let i = 0; i < cls.count; i++, n++) {
-    const o = minors.length && (n === 2 || n === 6) ? minors[(n === 6 ? 1 : 0) % minors.length] : mains[n % mains.length], /* a minor species: one sapling and one mature tree of the ten */ S = treeSpecies(o.type), f = S.fn, r = rng(seed * 7 + n * 131 + 3);
+    const o = minors.length && (n === 2 || n === 6) ? minors[(n === 6 ? 1 : 0) % minors.length] : mains[n % mains.length], /* a minor species: one sapling and one mature tree of the ten */ S = setPlant(o.type, st) || treeSpecies(o.type), f = S.fn, r = rng(seed * 7 + n * 131 + 3);
     const h = cls.count > 1 ? cls.range[0] + (cls.range[1] - cls.range[0]) * i / (cls.count - 1) : (cls.range[0] + cls.range[1]) / 2;
     const sapling = cls.id === "sapling", big = cls.id === "tall" || cls.id === "giant";
     // its character (the species' grow): willows widen rather than grow; narrow kinds (firs, pines, birches, alders,

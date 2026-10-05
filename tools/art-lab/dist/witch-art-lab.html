@@ -1386,10 +1386,17 @@ function genomeTree(id, g) {
   return (r, st, s) => gen(r, genomeStyle(st, g.style), s, P);
 }
 const TREE_SPECIES = {};
+const SPECIES_BY_FN = new Map();
+// A species from its genome: its trees with their life below the crown (fn), without it (bare), and its look.
+function plantSpecies(id, g) {
+  const bare = genomeTree(id, g);
+  const S = { fn: (r, st, s) => lowLife(bare(r, st, s), r, st, s, g.low || {}), bare, name: g.name, grow: g.grow, ...g.colour }; // every species' trees carry their life below the crown; bare draws without it
+  for (const f of [S.fn, S.bare]) SPECIES_BY_FN.set(f, { id, ...S }); // known by its function too (treeColours), an art set's (art/genome/next.js) as well
+  return S;
+}
 for (const [id, g] of Object.entries(PLANT_GENOMES)) {
   if (g.species === false) continue; // only a TREE_TYPES kind (the tree fern), never an area's species
-  const bare = genomeTree(id, g);
-  TREE_SPECIES[id] = { fn: (r, st, s) => lowLife(bare(r, st, s), r, st, s, g.low || {}), bare, name: g.name, grow: g.grow, ...g.colour }; // every species' trees carry their life below the crown; bare draws without it
+  TREE_SPECIES[id] = plantSpecies(id, g);
 }
 // The species a flora preview names (the game's ?flora=, the lab): "new" the genome generator's species, "fantasy" its fantasy
 // ones, "all" every species, or a comma list of ids; unknown ids are left out.
@@ -1402,7 +1409,6 @@ function floraPick(q) {
   return q.split(",").map(x => x.trim()).filter(x => TREE_SPECIES[x]);
 }
 const oakTree = TREE_SPECIES.oak.bare, beechTree = TREE_SPECIES.beech.bare, ashTree = TREE_SPECIES.ash.bare, limeTree = TREE_SPECIES.lime.bare, sycamoreTree = TREE_SPECIES.sycamore.bare, chestnutTree = TREE_SPECIES.chestnut.bare, rowanTree = TREE_SPECIES.rowan.bare, hawthornTree = TREE_SPECIES.hawthorn.bare, hazelTree = TREE_SPECIES.hazel.bare;
-const SPECIES_BY_FN = new Map(Object.entries(TREE_SPECIES).flatMap(([id, S]) => [[S.fn, { id, ...S }], [S.bare, { id, ...S }]]));
 const treeSpecies = type => TREE_SPECIES[type] || TREE_SPECIES.broad;
 // What a species' canopy looks like from the treetops, as numbers: its crown (the top half of a mature
 // tree, averaged over a few seeds): fill (how much of the crown's box is leaves), dark and light (the shares
@@ -1432,7 +1438,7 @@ function chooseType(r, st) {
 function treeColours(r, st, type) {
   const S = SPECIES_BY_FN.get(type), sa = S?.sat || 1, va = S?.val || 1;
   // a species shifts the area's leaf hue a little; towards yellow it shifts less where the area's leaves are already yellow, so no species turns an area autumnal
-  const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = (S?.hueAbs ?? st.leafHue) + (r() - .5) * st.leafVariety * .7 + sh; // hueAbs: a hue of its own, whatever the area's
+  const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = (S?.hueAbs ?? st.leafHue) + (r() - .5) * st.leafVariety * .7 * (S?.variety ?? 1) + sh; // variety: how far a species' trees wander in hue from tree to tree (1 the style's) // hueAbs: a hue of its own, whatever the area's
   const c = {
     [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212],
     [M.LEAF]: hsv2rgb(h, Math.min(1, .62 * st.sat * sa), Math.min(1, .58 * va)), [M.LEAF2]: hsv2rgb(h - .05, Math.min(1, .55 * st.sat * sa), Math.min(1, .8 * va)), [M.LEAF3]: hsv2rgb(h + .03, Math.min(1, .66 * st.sat * sa), .38 * va), [M.WEB]: [225, 225, 232],
@@ -3104,6 +3110,8 @@ const GENOME_BY_ID = Object.fromEntries(GENOMES.map(g => [g.id, g]));
 function speciesOf(g) {
   const S = { id: g.id, name: g.name, plan: g.builder, hue: g.palette.hue, sat: g.palette.sat, val: g.palette.val, legend: g.legend || [] };
   if (g.palette.belly) S.belly = g.palette.belly;
+  if (g.palette.over) S.over = g.palette.over; // a material's own colour (an art set's), over the ramp
+  if (g.form) S.form = g.form; // the builder's own shape numbers (art/creatures3d.js, formOf)
   if (g.template === "quadruped") {
     const q = { ...g.body, ...g.head, ...g.coat }, p = g.parts || {};
     if (q.legMat) q.legMat = M[q.legMat];
@@ -3150,6 +3158,194 @@ function genomeHash(g) {
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
   return (h >>> 0).toString(16).padStart(8, "0");
 }
+
+
+// ---- inlined from art/genome/next.js ----
+// Art sets: the art iterations (docs/art-iterations/, ahead of the art pass of issue #92), as data on top of the
+// genomes. An iteration changes creature genome records, adds plant genomes and changes what an area grows; it
+// never changes the default art. A style's artSet picks one: "<area>@<n>" an area's set at its nth iteration (each
+// iteration a patch on the one before), "new@<n>" the new creatures' nth, or "next" every area's chosen iteration
+// together (the game's ?art=next, for Ed to compare). Without artSet everything draws as it always has.
+//   genomes: { id: patch } a patch on that species' record (objects merged, arrays and values replaced, null removes);
+//            a patch whose id is not a species makes a new one (it must then be a whole record).
+//   plants:  { id: plant genome } new tree species (art/flora/genomes.js's schema), or patches on existing ones.
+//   areas:   { id: patch } a patch on the area type's def (art/areas.js): its big and small objects, leaf hue, floor.
+
+
+
+// ---- inlined from art/genome/iterations.js ----
+// The art iterations (see next.js): per group (an area type's id, or "new" for new creatures), its iterations in
+// order, each a patch on the one before: { note, genomes, plants, areas }. Pictures of each are in
+// docs/art-iterations/<group>/v<n>/, and what each tried is in docs/art-iterations/README.md.
+const ART_ITERATIONS = {
+  // ---- Ancient: Ed's "mossy roots over rocks, sorrel, giant gnarly slanted trees"; the stag ----
+  ancient: [
+    { note: "a red deer's coat (deeper, redder, a cream belly and rump) instead of the flat orange; giant slanted oaks grown by the blob generator, mossy at the foot; greener leaves",
+      genomes: { stag: { palette: { hue: .045, sat: .58, val: .58 }, coat: { belly: true, rump: true, spots: "young", spotsAt: [0] }, legend: ["antlersGlow", "moss"] } },
+      plants: {
+        ancientOak: { name: "ancient oak", form: "tree", generator: "blob", grow: "wide", crown: { envelope: "sphere", clumps: "6-8 broad blobs on slanting limbs" },
+          params: { w: 230, h: 150, trunk: { w: 18, len: .42, taper: .55, bend: 1.8, lean: .9, roots: 1.4 }, levels: [{ n: [3, 4], at: [.55, 1], len: [.5, .7], angle: [.8, 1.25], up: .1, bend: 1.6, shape: "even" }, { n: [2, 3], at: [.4, 1], len: [.4, .55], angle: [.35, .7], up: .2, bend: 1.4 }],
+            crown: { blobs: [6, 8], r: [16, 22], flat: .65, stamp: "leaf", stampSize: 3, back: .35, backDark: .4, holes: .1 } },
+          low: { ivy: .7, moss: 1, sprigs: .6, boughs: .5 }, colour: { hue: .0, sat: .95, val: .82 } },
+      },
+      areas: { ancient: { leaf: .3, big: [["tree", { type: "ancientOak", scale: 1.35, gnarl: 1, lean: .35 }], ["tree", { type: "yew", minor: true, scale: 1.2, gnarl: 1 }]] } } },
+  ],
+  // ---- Wetland: "wet mud, puddles and reeds, reeds and rushes, willows"; the toad ----
+  wetland: [
+    { note: "a common toad's olive-brown, warty, pale-throated, with bigger eyes; willows a cooler green (the area's leaf hue was autumn yellow)",
+      genomes: { toad: { palette: { hue: .13, sat: .45, val: .52 }, form: { warts: .3, throat: true, eyes: 1.2 } } },
+      plants: { marshWillow: { ...{ name: "marsh willow", form: "tree", generator: "willow", grow: "willow", crown: { envelope: "weeping", clumps: [20, 28] } },
+        params: { w: 200, wPad: 50, h: 130, tw: 13, trunk: .3, limbs: 5, limbSpread: [.55, 1.25], limbLen: [.3, .42], clumpR: [20, 28], clumpRy: [9, 12], strand: [.5, .9] },
+        low: { moss: .7, sprigs: .3 }, colour: { hue: .02, sat: .85, val: .95 } } },
+      areas: { wetland: { leaf: .27, big: [["tree", { type: "marshWillow" }], ["tree", { type: "alder", minor: true, scale: .9 }]] } } },
+  ],
+  // ---- Cave mouth: "stone and roots, rock walls, stalagmite stubs, dead trees, a cave mouth"; the bat ----
+  "cave-mouth": [
+    { note: "a long-eared bat: bigger ears and head, a darker plum membrane and pink ears; the dead trees twisted snags from the blob generator (no crown), glowcaps instead of the green yew",
+      genomes: { bat: { palette: { hue: .06, sat: .35, val: .42, over: { BODY2: [.9, .35, .3], EAR: [.97, .35, .75] } }, form: { ear: 1.5, head: 1.15, body: 1.1 } } },
+      plants: { caveSnag: { name: "cave snag", form: "tree", generator: "blob", grow: "narrow", crown: { envelope: "none", clumps: "bare" },
+        params: { w: 140, h: 150, trunk: { w: 11, len: .55, taper: .45, bend: 2.6, lean: .8, roots: 1.2 }, levels: [{ n: [3, 4], at: [.45, 1], len: [.35, .55], angle: [.5, 1], up: .15, bend: 2.2, w: .5 }, { n: [2, 3], at: [.4, 1], len: [.3, .45], angle: [.4, .8], up: .1, bend: 2 }],
+          crown: { blobs: [1, 1], r: [1, 1] } },
+        low: { moss: .5, ivy: .3 }, colour: { val: .8 } } },
+      areas: { "cave-mouth": { big: [["tree", { type: "caveSnag", bare: true, gnarl: 1 }], ["tree", { type: "glowcap", minor: true, scale: .55 }]] } } },
+  ],
+  // ---- Holly thicket: "dead leaves, holly hedges, cobwebs, hollies, a web-hung dead tree"; the spider ----
+  "holly-thicket": [
+    { note: "a garden spider: chestnut with a cream cross, longer hairy legs held high; hollies darker and glossier, fewer berries",
+      genomes: { spider: { palette: { hue: .07, sat: .55, val: .45, over: { BELLY: [.12, .25, .95] } }, form: { legs: 1.15, knees: 1.2, hairy: true } } },
+      plants: { darkHolly: { name: "dark holly", form: "tree", generator: "holly", grow: "narrow", crown: { envelope: "cone", clumps: [6, 11] },
+        params: { w: 110, h: 130, tiers: 10, cone: .72, halfTop: 5, halfBottom: 28, crownLine: .85 },
+        low: { skirt: .8 }, colour: { hue: .08, sat: .9, val: .48, trunk: [.1, .08, .5], dot: [196, 26, 34] } } },
+      areas: { "holly-thicket": { big: [["tree", { type: "darkHolly", scale: .9 }], ["tree", { type: "yew", minor: true, scale: .7 }]] } } },
+  ],
+  // ---- Bluebell glade: "bluebells, ferns, beeches"; the glow-worm ----
+  "bluebell-glade": [
+    { note: "a glow-worm as the real larva: dark, banded, three glowing tail segments, a lower back; the beeches fresh spring green rather than autumn yellow",
+      genomes: { glowworm: { palette: { hue: .08, sat: .3, val: .3, over: { BODY2: [.1, .25, .55] } }, form: { segments: 11, glow: 3, arch: .6 } } },
+      plants: { gladeBeech: { name: "glade beech", form: "tree", generator: "broadleaf", grow: "normal", style: { gnarl: { mul: .4 } }, crown: { envelope: "sphere", clumps: [15, 21] },
+        params: { trunk: .4, tw: 11, limbs: 2, leader: 1.3, spreadA: .6, limb: .22, depth: 3, clumpR: [15, 21], flat: .5, extra: 1, dome: 7, smooth: 1, layers: 3.5, trunkMat: "BARK2", limbMat: "BARK2", tall: 155, tex: { grain: 3.5, holes: 0, flecks: .1 } },
+        low: { moss: .4, boughs: .3 }, colour: { hue: .05, sat: 1.1, val: 1.0, trunk: [.6, .06, .6] } } },
+      areas: { "bluebell-glade": { leaf: .28, big: [["tree", { type: "gladeBeech", gnarl: .2, scale: 1.1 }], ["tree", { type: "holly", minor: true, scale: .7 }]] } } },
+  ],
+  // ---- New creatures (Ed plans about 80, fantasy and coloured or shaped variants among them) ----
+  new: [
+    { note: "three new species from the existing templates: a crystal stag (a shaped and coloured variant), a hearth drake (a fantasy four-legged), a puffball toad (a squat variant)",
+      genomes: {
+        crystalStag: { id: "crystalStag", name: "Crystal stag", template: "quadruped", builder: "quad", palette: { hue: .58, sat: .16, val: .92, belly: "white", over: { ACCENT: [.5, .55, 1] } }, body: { hgt: 1.25, len: .6, chest: .6, tuck: .7, neck: .6, neckAng: 1, neckW: .3, hr: .19, legW: .7 }, head: { snout: 1.1, snoutD: .55, snoutTaper: .65 }, parts: { ears: { kind: "point", size: 1.1 }, tail: "deer", feet: "hoof", antlers: "palm" }, coat: { belly: true, rump: true }, legend: ["antlersGlow", "crystals"] },
+        hearthDrake: { id: "hearthDrake", name: "Hearth drake", template: "quadruped", builder: "quad", palette: { hue: .02, sat: .75, val: .6, belly: "yellow" }, body: { hgt: .6, len: .95, chest: .2, tuck: .22, neck: .4, neckAng: .45, neckW: .42, hr: .25, legW: 1.2 }, head: { snout: 1, snoutD: .55, snoutTaper: .6 }, parts: { ears: { kind: "none" }, tail: "otter", feet: "paw", horns: "curl" }, coat: { belly: true, ridge: true }, legend: ["wings", "flames"] },
+        puffballToad: { id: "puffballToad", name: "Puffball toad", template: "squat", builder: "toad", palette: { hue: .1, sat: .2, val: .85, over: { ACCENT: [.06, .55, .75], BELLY: [.12, .15, 1] } }, form: { body: [.9, 1.25, .95], warts: .12, eyes: .9, cap: [.22, .3, .34, .38] }, legend: ["crown"] },
+      } },
+  ],
+};
+// ---- round 2 ----
+ART_ITERATIONS.ancient.push({ note: "a grander stag (longer legs and neck, a smaller head, bigger antlers by level) whose legend carries only the forest on its back, bone antlers; the oaks taller and twice as gnarled, their leaves one green from tree to tree",
+  genomes: { stag: { body: { hgt: 1.35, neck: .62, neckAng: 1, legW: .7, hr: .19 }, sizes: { antlers: [0, 1, 1.35, 1.5] }, legend: ["moss"] } },
+  plants: { ancientOak: { params: { h: 175, trunk: { w: 20, bend: 2.2 } }, colour: { variety: .3 } }, yew: { colour: { variety: .3 } } },
+  areas: { ancient: { big: [["tree", { type: "ancientOak", scale: 1.7, gnarl: 1, lean: .35, thick: 1.2 }], ["tree", { type: "yew", minor: true, scale: 1.3, gnarl: 1 }]] } } });
+ART_ITERATIONS.wetland.push({ note: "a natterjack: flatter and wider, a pale stripe down its back, greener, thicker legs, big-eyed babies; an alder carr (several dark stems) beside the willows",
+  genomes: { toad: { palette: { hue: .2, sat: .42, val: .5, over: { BELLY: [.14, .2, .92] } }, form: { body: [1.15, .85, 1.1], legs: 1.2, stripe: true, eyes: [1.6, 1.3, 1.1, 1] } } },
+  plants: { marshWillow: { colour: { variety: .3 } },
+    alderCarr: { name: "alder carr", form: "tree", generator: "blob", grow: "narrow", crown: { envelope: "column", clumps: "dark blobs on several stems" },
+      params: { w: 130, h: 160, narrow: 1, trunk: { w: 6, len: .7, taper: .5, bend: 1.2, stems: 3, fan: .7, roots: 1.2 }, levels: [{ n: [4, 6], at: [.35, 1], len: [.2, .3], angle: [.5, .9], up: .3, shape: "flame" }],
+        crown: { blobs: [6, 8], r: [10, 14], flat: .8, stamp: "leaf", stampSize: 2.5, back: .4, backDark: .45, holes: .1 } },
+      low: { moss: .8, sprigs: .5 }, colour: { hue: .04, sat: .9, val: .62, variety: .3 } } },
+  areas: { wetland: { big: [["tree", { type: "marshWillow" }], ["tree", { type: "alderCarr", minor: true }]] } } });
+ART_ITERATIONS["cave-mouth"].push({ note: "a bigger-winged bat with four fingers and drooping tips, a tawny ruff, big-headed, big-eared babies; taller hollow snags, bigger glowcaps, a cold blue-grey stone floor",
+  genomes: { bat: { palette: { over: { BELLY: [.09, .5, .72] } }, form: { span: 1.2, fingers: 4, droop: .1, ruff: true, head: [1.45, 1.2, 1.15, 1.1], ear: [1.3, 1.5, 1.5, 1.6] } } },
+  plants: { caveSnag: { params: { h: 175 } } },
+  areas: { "cave-mouth": { floor: ["stone", .62, .12, .3], big: [["tree", { type: "caveSnag", bare: true, gnarl: 1, hollow: true, scale: 1.15 }], ["tree", { type: "glowcap", minor: true, scale: .75 }]] } } });
+ART_ITERATIONS["holly-thicket"].push({ note: "a rounder, darker spider: banded abdomen (a big round one on the babies), thicker baby legs; hollies grown by the blob generator as glossy cones with red berries",
+  genomes: { spider: { palette: { hue: .08, sat: .6, val: .38 }, form: { abdomen: [1.3, 1.1, 1.15, 1.25], legW: [1.35, 1, 1.05, 1.15], mark: "bands" } } },
+  plants: { blobHolly: { name: "blob holly", form: "tree", generator: "blob", grow: "narrow", crown: { envelope: "cone", clumps: "a stack of glossy blobs" },
+    params: { w: 110, h: 140, narrow: 1, trunk: { w: 7, len: .85, taper: .5, bend: .5, smooth: 1, mat: "BARK2" }, levels: [{ n: [6, 8], at: [.15, .95], len: [.15, .3], angle: [1.1, 1.4], up: .1, shape: "cone", tips: true }],
+      crown: { blobs: [7, 9], r: [11, 15], flat: .8, stamp: "round", stampSize: 2, back: .3, backDark: .45, tones: [.2, .62], stampShade: .5, dots: { mat: "FLOWER", share: .02, size: 2 } } },
+    low: { skirt: .8 }, colour: { hue: .08, sat: .9, val: .5, trunk: [.1, .08, .5], dot: [196, 26, 34], variety: .3 } } },
+  areas: { "holly-thicket": { big: [["tree", { type: "blobHolly" }], ["tree", { type: "darkHolly", minor: true, scale: .8 }]] } } });
+ART_ITERATIONS["bluebell-glade"].push({ note: "the glow-worm's light grows with it (one glowing segment on a baby to four on a legend) in its own yellow-green; the beeches all one spring green; bluebells and ferns underfoot",
+  genomes: { glowworm: { palette: { over: { MAGIC: [.2, .85, 1], MAGIC2: [.22, .45, 1] } }, form: { glow: [1, 2, 3, 4], width: [1.15, 1, 1.05, 1.1] } } },
+  plants: { gladeBeech: { colour: { variety: .25 } } },
+  areas: { "bluebell-glade": { small: [["fern", {}], ["flowers", { hue: .68, leafy: true }]] } } });
+ART_ITERATIONS.new.push({ note: "the puffball becomes a toadstool toad (a domed red cap with white spots); the crystal stag cooler and greyer, its legend crystal antlers only; the drake's glow in fire colours, a longer snout",
+  genomes: {
+    puffballToad: { name: "Toadstool toad", palette: { hue: .12, sat: .3, val: .7, over: { ACCENT: [.99, .8, .8], BELLY: [.1, .08, 1] } }, form: { capH: .7, cap: [.24, .32, .36, .4] } },
+    crystalStag: { palette: { hue: .6, sat: .25, val: .8 }, legend: ["antlersGlow"] },
+    hearthDrake: { palette: { over: { MAGIC: [.05, .9, 1], MAGIC2: [.12, .5, 1] } }, head: { snout: 1.3 } },
+  } });
+
+// ---- round 3 ----
+ART_ITERATIONS.ancient.push({ note: "the legend's glow in old gold and lichen green (antlers and the forest on its back glowing together, not mint and violet); the oaks holier, more blobs; ferns and sorrel underfoot",
+  genomes: { stag: { palette: { over: { MAGIC: [.2, .7, .95], MAGIC2: [.15, .35, 1] } }, legend: ["antlersGlow", "moss"] } },
+  plants: { ancientOak: { params: { crown: { blobs: [7, 9], holes: .15 } } } },
+  areas: { ancient: { leaf: .29, small: [["flowers", { hue: .98, leafy: true }], ["fern", {}]] } } });
+ART_ITERATIONS.wetland.push({ note: "the legend wears a lily pad (the toadstool cap, flat and green, by level: only the legend); the alder carr thicker, two stems; longer willow curtains",
+  genomes: { toad: { palette: { over: { ACCENT: [.3, .6, .5] } }, form: { cap: [0, 0, 0, .42], capH: .18 } } },
+  plants: { marshWillow: { params: { strand: [.8, 1.25] } }, alderCarr: { params: { trunk: { w: 9, stems: 2 }, crown: { r: [12, 16] } } } } });
+ART_ITERATIONS["cave-mouth"].push({ note: "a darker bat that reads against the stone at night, its wings growing faster than its body by level; dark-barked snags; the glowcaps a cold cave cyan instead of violet",
+  genomes: { bat: { palette: { val: .32 }, form: { span: [.9, 1.05, 1.2, 1.3] } } },
+  plants: { caveSnag: { params: { trunk: { mat: "BARKD" } } }, glowcap: { colour: { hueAbs: .5, glow: [140, 255, 236] } } },
+  areas: { "cave-mouth": { big: [["tree", { type: "caveSnag", bare: true, gnarl: 1, scale: 1.15 }], ["tree", { type: "glowcap", minor: true, scale: .75 }]] } } }); // no hollow: on a bare tree its knothole lands in the top half and floats in the canopy (see the notes)
+ART_ITERATIONS["holly-thicket"].push({ note: "back to the bespoke holly for the main tree (the blob generator can't fill a cone; see the notes), the blob holly a minor sapling; the garden cross back on a dark spider with near-black hairy legs",
+  genomes: { spider: { palette: { over: { BODY3: [.05, .4, .14] } }, form: { mark: "cross", hairy: true } } },
+  plants: { blobHolly: { params: { crown: { dots: { share: .008 } } } } },
+  areas: { "holly-thicket": { big: [["tree", { type: "darkHolly", scale: .95 }], ["tree", { type: "blobHolly", minor: true, scale: .75 }]] } } });
+ART_ITERATIONS["bluebell-glade"].push({ note: "taller beeches over a hazel understorey (instead of holly), a bluer floor",
+  plants: {},
+  areas: { "bluebell-glade": { floor: ["bluebells", .32, .42, .38], big: [["tree", { type: "gladeBeech", gnarl: .2, scale: 1.25 }], ["tree", { type: "hazel", minor: true, scale: .8 }]] } } });
+ART_ITERATIONS.new.push({ note: "the crystal stag's glow its own ice cyan, crystals back on its legend; the drake's legend a flame mane rather than green wings",
+  genomes: {
+    crystalStag: { palette: { over: { MAGIC: [.5, .6, 1], MAGIC2: [.52, .22, 1] } }, legend: ["antlersGlow", "crystals"] },
+    hearthDrake: { legend: ["flames", "crystals"] },
+  } });
+
+// Which iteration of each group the "next" art set (?art=next) uses.
+const NEXT_CHOICE = { ancient: 3, wetland: 2, "cave-mouth": 3, "holly-thicket": 3, "bluebell-glade": 3, new: 3 };
+
+
+
+const isObj = v => v && typeof v === "object" && !Array.isArray(v);
+function mergePatch(base, patch) {
+  if (!isObj(base) || !isObj(patch)) return patch === undefined ? base : patch;
+  const out = { ...base };
+  for (const [k, v] of Object.entries(patch)) { if (v === null) delete out[k]; else out[k] = isObj(v) && isObj(base[k]) ? mergePatch(base[k], v) : v; }
+  return out;
+}
+
+// The iterations an art set is made of, in order: [{ genomes, plants, areas }, ...].
+function steps(name) {
+  if (name === "next") return Object.entries(NEXT_CHOICE).flatMap(([group, n]) => (ART_ITERATIONS[group] || []).slice(0, n));
+  const m = /^([a-z-]+)@(\d+)$/.exec(name || "");
+  if (!m || !ART_ITERATIONS[m[1]]) return [];
+  return ART_ITERATIONS[m[1]].slice(0, +m[2]);
+}
+
+const SETS = new Map();
+// An art set, resolved: { species: { id: the builders' species object }, genomes: { id: record }, plants: { id: tree species }, plantGenomes, areas: { id: patch } }.
+function artSet(name) {
+  if (!name) return null;
+  let set = SETS.get(name);
+  if (set) return set;
+  const genomes = {}, plantGenomes = {}, areas = {};
+  for (const s of steps(name)) {
+    for (const [id, p] of Object.entries(s.genomes || {})) genomes[id] = mergePatch(genomes[id] || GENOME_BY_ID[id] || {}, { id, ...p });
+    for (const [id, p] of Object.entries(s.plants || {})) plantGenomes[id] = mergePatch(plantGenomes[id] || PLANT_GENOMES[id] || {}, p);
+    for (const [id, p] of Object.entries(s.areas || {})) areas[id] = mergePatch(areas[id] || {}, p);
+  }
+  const problems = Object.values(genomes).flatMap(genomeProblems);
+  if (problems.length) throw new Error(`art set ${name}: ${problems.join("; ")}`);
+  const species = Object.fromEntries(Object.values(genomes).map(g => [g.id, speciesOf(g)]));
+  const plants = Object.fromEntries(Object.entries(plantGenomes).map(([id, g]) => [id, plantSpecies(id, g)]));
+  set = { name, genomes, species, plantGenomes, plants, areas };
+  SETS.set(name, set);
+  return set;
+}
+// Every art set name the iterations make: each group's iterations, and "next".
+const ART_SET_NAMES = [...Object.entries(ART_ITERATIONS).flatMap(([g, list]) => list.map((_, i) => `${g}@${i + 1}`)), "next"];
+// The species object for an id in a style's art set, or null (then the default).
+const setSpecies = (id, st) => (st?.artSet && artSet(st.artSet)?.species[id]) || null;
+// A tree species by name in a style's art set, or null.
+const setPlant = (type, st) => (st?.artSet && artSet(st.artSet)?.plants[type]) || null;
+// An area type's def with its art set's patch, or the def itself.
+const setArea = (def, st) => { const p = st?.artSet && def && artSet(st.artSet)?.areas[def.id]; return p ? mergePatch(def, p) : def; };
 
 
 // ---- inlined from art/creatures3d.js ----
@@ -3267,7 +3463,7 @@ function quad3d(S, level, frame, st, facing = "towards") {
   const paintBody = p => {
     if (q.belly && p[1] < bellyY && p[0] > -len * .5) return M.BELLY;
     if (q.saddle && p[1] > top - .18 && p[0] < len * .55) return M.BODY2;
-    if (q.spots && p[1] > chest + .1 && spotty(p, 10, .22)) return q.spotMat === "belly" || (q.spots === "young" && juv) ? M.BELLY : q.spots === "young" ? undefined : M.BODY3;
+    if (q.spots && p[1] > chest + .1 && spotty(p, 10, .22)) return q.spotMat === "belly" || (q.spots === "young" && (q.spotsAt ? q.spotsAt.includes(level) : juv)) ? M.BELLY : q.spots === "young" ? undefined : M.BODY3;
     if (q.ridge && p[1] > top - .08 + hump * .5) return M.BODY3;
     return undefined;
   };
@@ -3420,6 +3616,9 @@ const eyesOn = (m, c, r, dirs, size, mat, group = 1) => {
   for (const d of dirs) m.ell(Model.surface(c, r, v3.norm(d)), [size, size * 1.2, size], mat, { group });
   m.anchors.head ||= { c, r }; m.anchors.eyes ||= { pts: dirs.map(d => Model.surface(c, r, v3.norm(d))), size };
 };
+// A builder's own shape numbers (#79: a species' genome "form"): its defaults, any the species sets over them; a value
+// of four numbers is per level (baby, young, adult, legend), so a template without size curves can still grow its parts.
+const formOf = (S, level, defaults) => { const F = { ...defaults, ...(S.form || {}) }; for (const k in F) if (Array.isArray(F[k]) && F[k].length === 4 && typeof F[k][0] === "number") F[k] = F[k][level]; return F; };
 const shadow = (m, x, w) => m.ell([x, .005, 0], [w, .005, w * .6], M.NOSE, { group: 0 }); // a flyer's shadow on the ground
 function finish(m, S, level, st, k, facing) {
   if (S.sizes.build[level] !== 1) beef(m, S.sizes.build[level]); // the adult's and legend's heavier build (its template's size curve)
@@ -3446,20 +3645,25 @@ function hedgehog3d(S, level, frame, st, facing = "towards") {
 }
 
 function toad3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 3, m = new Model(), hop = frame ? .05 : 0;
+  // form: body ([length, height, width] multipliers), eyes (their bulge), warts (the share of the back in dark warts), legs (thickness),
+  // throat (a pale throat), stripe (a pale line down the back), cap (a mushroom cap on its back: its radius; 0 none) and capH (its height for its radius)
+  const F = formOf(S, level, { body: [1, 1, 1], eyes: 1, warts: .22, legs: 1, throat: false, stripe: false, cap: 0, capH: .45 });
+  const legend = level === 3, m = new Model(), hop = frame ? .05 : 0, L = F.legs, [bx, by, bz] = F.body;
   for (const side of [-1, 1]) { // folded hind legs, thin front legs
-    m.ell([-.22, .16, side * .36], [.24, .13, .12], side > 0 ? M.BODY : M.BODY2, { dir: [1, .3, 0], group: side > 0 ? 6 : 2, paint: p => spotty(p, 14, .15) ? M.BODY3 : undefined });
-    m.ell([.05, .04, side * .4], [.16, .04, .08], side > 0 ? M.BODY : M.BODY2, { group: side > 0 ? 6 : 2 });
-    m.seg([.35, .2 + hop, side * .24], [.42, .03, side * .3], .05, .04, side > 0 ? M.BODY : M.BODY2, { group: side > 0 ? 7 : 2 });
-    m.anchors.feet.push({ c: [.45, .03, side * .3], r: .06, group: side > 0 ? 7 : 2 }, { c: [.12, .04, side * .4], r: .08, group: side > 0 ? 6 : 2 });
+    m.ell([-.22 * bx, .16, side * .36 * bz], [.24, .13 * L, .12 * L], side > 0 ? M.BODY : M.BODY2, { dir: [1, .3, 0], group: side > 0 ? 6 : 2, paint: p => spotty(p, 14, .15) ? M.BODY3 : undefined });
+    m.ell([.05, .04, side * .4 * bz], [.16, .04, .08 * L], side > 0 ? M.BODY : M.BODY2, { group: side > 0 ? 6 : 2 });
+    m.seg([.35 * bx, .2 + hop, side * .24 * bz], [.42 * bx, .03, side * .3 * bz], .05 * L, .04 * L, side > 0 ? M.BODY : M.BODY2, { group: side > 0 ? 7 : 2 });
+    m.anchors.feet.push({ c: [.45 * bx, .03, side * .3 * bz], r: .06, group: side > 0 ? 7 : 2 }, { c: [.12, .04, side * .4 * bz], r: .08, group: side > 0 ? 6 : 2 });
   }
-  const c = [0, .3 + hop, 0], r = [.5, .28, .4];
-  m.ell(c, r, M.BODY, { paint: p => p[1] < c[1] - .12 ? M.BELLY : p[0] > .38 && Math.abs(p[1] - (c[1] - .02)) < .018 ? M.LINE : spotty(p, 14, .22) ? M.BODY3 : undefined });
-  for (const side of [-1, 1]) { const e = [.3, .55 + hop, side * .17]; m.ell(e, [.1, .09, .1], M.BODY, { group: 1 }); m.ell(Model.surface(e, [.1, .09, .1], v3.norm([.6, .5, side * .5])), [.05, .05, .05], legend ? M.MAGIC2 : M.IRIS, { group: 1 }); m.ell(Model.surface(e, [.11, .1, .11], v3.norm([.65, .45, side * .5])), [.03, .015, .03], M.EYE, { group: 1 }); }
-  m.anchors.head = { c: [.22, .45 + hop, 0], r: [.3, .2, .3], top: [.18, .62 + hop, 0] };
-  m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface([.3, .55 + hop, side * .17], [.1, .09, .1], v3.norm([.6, .5, side * .5]))), size: .05 };
-  m.anchors.neck = { c: [.32, .3 + hop, 0], r: .25, dir: [1, .3, 0] };
-  if (legend) crown3d(m, [.15, .66 + hop, 0], .16);
+  const c = [0, .3 * by + hop, 0], r = [.5 * bx, .28 * by, .4 * bz];
+  m.ell(c, r, M.BODY, { paint: p => p[1] < c[1] - .12 * by ? M.BELLY : F.throat && p[0] > .25 * bx && p[1] < c[1] ? M.BELLY : p[0] > .38 * bx && Math.abs(p[1] - (c[1] - .02)) < .018 ? M.LINE : F.stripe && Math.abs(p[2]) < .035 && p[1] > c[1] ? M.BELLY : spotty(p, 14, F.warts) ? M.BODY3 : undefined });
+  const E = F.eyes, ey = .55 * by + hop - (by - 1) * .05;
+  for (const side of [-1, 1]) { const e = [.3 * bx, ey, side * .17 * bz], er = [.1 * E, .09 * E, .1 * E]; m.ell(e, er, M.BODY, { group: 1 }); m.ell(Model.surface(e, er, v3.norm([.6, .5, side * .5])), [.05 * E, .05 * E, .05 * E], legend ? M.MAGIC2 : M.IRIS, { group: 1 }); m.ell(Model.surface(e, [.11 * E, .1 * E, .11 * E], v3.norm([.65, .45, side * .5])), [.03 * E, .015 * E, .03 * E], M.EYE, { group: 1 }); }
+  m.anchors.head = { c: [.22 * bx, .45 * by + hop, 0], r: [.3, .2, .3], top: [.18 * bx, .62 * by + hop, 0] };
+  m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface([.3 * bx, ey, side * .17 * bz], [.1 * E, .09 * E, .1 * E], v3.norm([.6, .5, side * .5]))), size: .05 * E };
+  m.anchors.neck = { c: [.32 * bx, .3 * by + hop, 0], r: .25, dir: [1, .3, 0] };
+  if (F.cap) { const cc = [-.12 * bx, c[1] + r[1] * .8, 0]; m.ell(cc, [F.cap, F.cap * F.capH, F.cap], M.ACCENT, { group: 30, paint: p => p[1] < cc[1] - F.cap * .1 ? M.BELLY : spotty(p, 9, .25) ? M.BELLY : undefined }); }
+  if (legend) crown3d(m, [.15 * bx, .66 * by + hop + (F.cap ? F.cap * .4 : 0), 0], .16);
   return finish(m, S, level, st, .55, facing);
 }
 
@@ -3479,23 +3683,26 @@ function raven3d(S, level, frame, st, facing = "towards") {
 }
 
 function bat3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, span = has("wingsBig") ? 1.5 : 1;
+  // form: span (wings), ear (length), body and head (size), droop (the wingtips lower), membrane and bone (their materials), ruff (a pale fur collar), fingers (3)
+  const F = formOf(S, level, { span: 1, ear: 1, body: 1, head: 1, droop: 0, membrane: "BODY2", bone: "BODY3", ruff: false, fingers: 3 });
+  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, span = (has("wingsBig") ? 1.5 : 1) * F.span;
   shadow(m, 0, .3 * span);
   for (const side of [-1, 1]) { // membranes between finger bones, flapping
-    const sh = [0, y + .05, side * .1], wr = [.05, y + (up ? .35 : -.05), side * .45 * span];
-    const tips = [[-.05, y + (up ? .45 : -.15), side * .85 * span], [-.25, y + (up ? .2 : -.25), side * .75 * span], [-.3, y + (up ? 0 : -.25), side * .4 * span]];
-    const mem = has("wingsBig") ? M.MAGIC : M.BODY2, bone = has("wingsBig") ? M.MAGIC2 : M.BODY3;
+    const sh = [0, y + .05, side * .1], wr = [.05, y + (up ? .35 : -.05) - F.droop * .5, side * .45 * span];
+    const tips = [[-.05, y + (up ? .45 : -.15) - F.droop, side * .85 * span], [-.25, y + (up ? .2 : -.25) - F.droop, side * .75 * span], [-.3, y + (up ? 0 : -.25) - F.droop * .5, side * .4 * span]];
+    if (F.fingers > 3) tips.splice(1, 0, [-.15, y + (up ? .33 : -.2) - F.droop, side * .82 * span]);
+    const mem = has("wingsBig") ? M.MAGIC : M[F.membrane], bone = has("wingsBig") ? M.MAGIC2 : M[F.bone];
     m.seg(sh, wr, .03, .025, bone, { group: 11 });
     for (const t of tips) m.seg(wr, t, .02, .012, bone, { group: 11 });
-    const span3 = v3.sub(tips[0], sh), u = v3.norm(span3), back = v3.norm(v3.sub(tips[2], wr)), v = v3.norm(v3.sub(back, v3.mul(u, v3.dot(back, u))));
+    const last = tips[tips.length - 1], span3 = v3.sub(tips[0], sh), u = v3.norm(span3), back = v3.norm(v3.sub(last, wr)), v = v3.norm(v3.sub(back, v3.mul(u, v3.dot(back, u))));
     m.flat(v3.add(v3.lerp(sh, tips[0], .5), v3.mul(v, .12 * span)), u, v, Math.hypot(...span3) * .55, .3 * span, masks.membrane(mem), { group: 10 + (side > 0 ? 1 : 0), bend: .2 });
   }
-  m.ell([0, y, 0], [.13, .16, .12], M.BODY, { group: 1 });
-  const hc = [.08, y + .2, 0];
-  m.ell(hc, [.12, .11, .11], M.BODY, { group: 1 });
-  for (const side of [-1, 1]) m.ell(v3.add(hc, [-.02, .15, side * .07]), [.12, .045, .02], M.BODY, { dir: [.1, 1, side * .3], up: [1, 0, 0], group: 1, paint: p => p[0] > hc[0] - .01 ? M.EAR : undefined });
-  eyesOn(m, hc, [.12, .11, .11], [[.7, .2, .5], [.7, .2, -.5]], .025, legend ? M.MAGIC2 : M.EYE);
-  m.ell(Model.surface(hc, [.12, .11, .11], [1, -.2, 0]), [.025, .02, .03], M.NOSE, { group: 1 });
+  m.ell([0, y, 0], [.13 * F.body, .16 * F.body, .12 * F.body], M.BODY, { group: 1, paint: F.ruff ? p => p[1] > y + .06 ? M.BELLY : undefined : undefined });
+  const hc = [.08, y + .2 * (F.body * .5 + .5), 0], hr = [.12 * F.head, .11 * F.head, .11 * F.head];
+  m.ell(hc, hr, M.BODY, { group: 1 });
+  for (const side of [-1, 1]) m.ell(v3.add(hc, [-.02, .15 * F.ear * (F.head * .5 + .5), side * .07]), [.12 * F.ear, .045, .02], M.BODY, { dir: [.1, 1, side * .3], up: [1, 0, 0], group: 1, paint: p => p[0] > hc[0] - .01 ? M.EAR : undefined });
+  eyesOn(m, hc, hr, [[.7, .2, .5], [.7, .2, -.5]], .025 * F.head, legend ? M.MAGIC2 : M.EYE);
+  m.ell(Model.surface(hc, hr, [1, -.2, 0]), [.025, .02, .03], M.NOSE, { group: 1 });
   return finish(m, S, level, st, .55, facing);
 }
 
@@ -3592,24 +3799,32 @@ function moth3d(S, level, frame, st, facing = "towards") {
 }
 
 function glowworm3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), ph = frame ? .05 : 0;
-  for (let i = 0; i < 9; i++) { const t = i / 8, x = -.6 + t * 1.15; m.ell([x, .12 + Math.sin(t * Math.PI) * (.06 + ph), 0], [.08, .1 - t * .02, .12 - t * .03], i < 2 ? M.MAGIC2 : i % 2 ? M.BODY2 : M.BODY, { group: 1 }); }
-  if (has("lantern")) m.ell([-.75, .3, 0], [.22, .22, .22], M.MAGIC2, { group: 3, paint: p => p[1] < .2 ? M.MAGIC : undefined });
-  for (let i = 0; i < 6; i++) m.seg([-.2 + i * .12, .05, .08], [-.2 + i * .12 + (i % 2 ? .02 : -.02) * (frame ? -1 : 1), 0, .12], .015, .01, M.BODY3, { group: 7 });
-  m.ell([.6, .14, 0], [.06, .06, .08], M.BODY3, { group: 1 });
-  eyesOn(m, [.6, .14, 0], [.06, .06, .08], [[.6, .3, .7], [.6, .3, -.7]], .015, legend ? M.MAGIC2 : M.EYE);
+  // form: segments (9), glow (how many tail segments glow, 2), width (girth), length, legs (6), arch (how high its back humps), bands (alternate the coat's two shades)
+  const F = formOf(S, level, { segments: 9, glow: 2, width: 1, length: 1, legs: 6, arch: 1, bands: true });
+  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), ph = frame ? .05 : 0, n = F.segments, W = F.width, Lk = F.length;
+  for (let i = 0; i < n; i++) { const t = i / (n - 1), x = (-.6 + t * 1.15) * Lk; m.ell([x, .12 * W + Math.sin(t * Math.PI) * (.06 * F.arch + ph), 0], [.08 * Lk * 9 / n, (.1 - t * .02) * W, (.12 - t * .03) * W], i < F.glow ? M.MAGIC2 : F.bands && i % 2 ? M.BODY2 : M.BODY, { group: 1 }); }
+  if (has("lantern")) m.ell([-.75 * Lk, .3, 0], [.22, .22, .22], M.MAGIC2, { group: 3, paint: p => p[1] < .2 ? M.MAGIC : undefined });
+  for (let i = 0; i < F.legs; i++) m.seg([(-.2 + i * .12) * Lk, .05, .08 * W], [(-.2 + i * .12) * Lk + (i % 2 ? .02 : -.02) * (frame ? -1 : 1), 0, .12 * W], .015, .01, M.BODY3, { group: 7 });
+  const hc = [.6 * Lk, .14 * W, 0], hr = [.06 * W, .06 * W, .08 * W];
+  m.ell(hc, hr, M.BODY3, { group: 1 });
+  eyesOn(m, hc, hr, [[.6, .3, .7], [.6, .3, -.7]], .015, legend ? M.MAGIC2 : M.EYE);
   return finish(m, S, level, st, .4, facing);
 }
 
 function spider3d(S, level, frame, st, facing = "towards") {
+  // form: legs (length), legW (thickness), abdomen (size), mark ("cross" the garden spider's, "bands", "none"), knees (how high), hairy (dark bristles on the legs)
+  const F = formOf(S, level, { legs: 1, legW: 1, abdomen: 1, mark: "cross", knees: 1, hairy: false });
   const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model();
-  const ce = [.15, .28, 0];
+  const ce = [.15, .28, 0], K = F.legs;
   for (const side of [-1, 1]) for (let i = 0; i < 4; i++) { // eight legs, knees high
     const a = (-.6 + i * .4), ph = (i + (side > 0 ? 0 : 1) + frame) % 2 ? .05 : -.05, base = v3.add(ce, [.05 - i * .04, 0, side * .1]);
-    const knee = v3.add(base, [Math.cos(a) * .3 * (i < 2 ? 1 : -.6) + ph, .3, side * .3]), foot = v3.add(base, [Math.cos(a) * .55 * (i < 2 ? 1 : -.8) + ph * 1.5, -.28, side * .55]);
-    m.chain([[...base, .03], [...knee, .028], [...foot, .015]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2 });
+    const knee = v3.add(base, [Math.cos(a) * .3 * K * (i < 2 ? 1 : -.6) + ph, .3 * K * F.knees, side * .3 * K]), foot = v3.add(base, [Math.cos(a) * .55 * K * (i < 2 ? 1 : -.8) + ph * 1.5, -.28, side * .55 * K]);
+    m.chain([[...base, .03 * F.legW], [...knee, .028 * F.legW], [...foot, .015 * F.legW]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2, paint: F.hairy ? p => spotty(p, 30, .3) ? M.BODY3 : undefined : undefined });
   }
-  m.ell([-.28, .38, 0], [.34, .28, .3], M.BODY, { paint: p => (Math.abs(p[2]) < .03 || Math.abs(p[0] + .28) < .03) && p[1] > .45 ? M.BELLY : undefined });
+  const A = F.abdomen, ac = [-.28 - (A - 1) * .2, .38 + (A - 1) * .12, 0], ar = [.34 * A, .28 * A, .3 * A];
+  const markOf = F.mark === "cross" ? p => (Math.abs(p[2]) < .03 || Math.abs(p[0] - ac[0]) < .03) && p[1] > ac[1] + .07 ? M.BELLY : undefined
+    : F.mark === "bands" ? p => p[1] > ac[1] && Math.abs(((p[0] - ac[0]) / ar[0] * 3.5 + 10) % 1 - .5) < .14 ? M.BELLY : undefined : undefined;
+  m.ell(ac, ar, M.BODY, { paint: markOf });
   m.ell(ce, [.18, .13, .17], M.BODY2, { group: 1 });
   m.anchors.head = { c: ce, r: [.18, .13, .17] };
   m.anchors.eyes = { pts: [[.05, .05], [.05, -.05]].map(([dy, dz]) => Model.surface(ce, [.18, .13, .17], v3.norm([.9, dy * 6, dz * 4]))), size: .03 };
@@ -3634,6 +3849,8 @@ const buildCreature = (S, level, frame, st, facing = "towards") => S.q ? quad3d(
 // and for the four-legged q, their proportions, and sizes, their template's size curves).
 const SPECIES = GENOMES.map(speciesOf);
 const SPECIES_BY_ID = Object.fromEntries(SPECIES.map(s => [s.id, s]));
+// A species in a style: its art set's (art/genome/next.js, st.artSet) if it has one, else the bestiary's.
+const speciesIn = (id, st) => setSpecies(id, st) || SPECIES_BY_ID[id];
 const FEATURE_NAMES = { wings: "spirit wings", mane: "a glowing mane", tails: "many tails", crystals: "crystals", tusksBig: "great tusks", antlersGlow: "glowing antlers", jackalope: "antlers", eyesRing: "a ring of eyes", moss: "a little forest on its back", starTail: "a starry tail", crown: "a crown", ribbons: "light ribbons", wingsBig: "huge glowing wings", horn: "a glowing horn", glowShell: "a glowing shell", hornsGlow: "glowing golden horns", flames: "a crest of flame", lantern: "a great lantern" };
 
 // Party gear's colourways (gear in critter).
@@ -3653,7 +3870,7 @@ function partyGear(seed, collarColour = true) {
 }
 // sp: a species id, or a species object (a palette variant's: art/genome/palette.js).
 function speciesColours(sp, st, gear = null) {
-  const c = baseColours(typeof sp === "string" ? SPECIES_BY_ID[sp] : sp, st);
+  const c = baseColours(typeof sp === "string" ? speciesIn(sp, st) : sp, st);
   if (!gear) return c;
   if (gear.collar) c[M.COLLAR] = Array.isArray(gear.collar) ? gear.collar : c[M.MAGIC];
   if (gear.hat != null) { const [a, b, pom] = HAT_COLOURWAYS[gear.hat % HAT_COLOURWAYS.length]; c[M.HAT1] = a; c[M.HAT2] = b; c[M.POM] = pom; }
@@ -3674,6 +3891,7 @@ function baseColours(s, st) {
     [M.MAGIC]: magic, [M.MAGIC2]: magic2, [M.LEAF]: hsv2rgb(.3, .55, .55), [M.LEAF2]: hsv2rgb(.25, .5, .75), [M.LEAF3]: hsv2rgb(.33, .6, .35), [M.TRUNK]: hsv2rgb(.07, .45, .32),
     [M.EYE]: [24, 18, 30], [M.PUPIL]: [70, 40, 90], [M.GLINT]: [255, 255, 245], [M.NOSE]: [38, 28, 36], [M.EAR]: hsv2rgb(s.hue + .97, Math.min(1, s.sat * .6 + .2), Math.min(1, s.val * v * .55 + .2)),
     [M.IRIS]: s.plan === "owl" ? [255, 176, 40] : hsv2rgb(.12, .7, .85), [M.SKIN]: [238, 158, 192],
+    ...(s.over ? Object.fromEntries(Object.entries(s.over).map(([k, [h, sa2, va]]) => [M[k], hsv2rgb(h, Math.min(1, sa2 * sat * st.sat), Math.min(1, va * v))])) : {}), // a genome's own colours for some materials: { BELLY: [h, s, v] }
   };
 }
 
@@ -3692,8 +3910,8 @@ const SHAPE_KNOBS = ["size", "growth", "pixel", "head", "eye", "legs", "long", "
 //   glasses: "bar" | "star" | "heart"; shoes: "sneakers" | "glitter" | "platform"; woken: true.
 // Give the same gear to speciesColours for its colours. Shapes are cached per gear combination.
 function critter(spId, level, frame, st, facing = "towards", gear = null) {
-  const S = SPECIES_BY_ID[spId] || SPECIES[0], g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken) ? gear : null;
-  const key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken].join(",") : ""].join("|");
+  const S = speciesIn(spId, st) || SPECIES[0], g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken) ? gear : null;
+  const key = [S.id, st.artSet || "", level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken].join(",") : ""].join("|");
   let sp = cache.get(key);
   if (!sp) {
     sp = withGear(g, () => buildCreature(S, level, frame, st, facing));
@@ -4087,6 +4305,7 @@ const SIGIL_IDS = SPECIES.map(s => s.id);
 
 
 
+
 // the props that sway in the wind: they get a sway mask (sway.js) beside their albedo and normals
 const SWAYING_PROPS = new Set(["tree", "shrub", "grass", "reeds", "fern", "flowers", "flowerbed", "bramble", "hedge"]);
 // ---- inlined from art/tall.js ----
@@ -4412,7 +4631,7 @@ function prop(kind, o, def, st, r, s) {
   const wood = { [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BELLY]: hsv2rgb(st.trunkHue + .02, .3, .7) };
   const water = { [M.MAGIC]: [60, 110, 150], [M.MAGIC2]: [150, 200, 220], [M.BODY2]: [35, 70, 100] };
   if (kind === "tree") {
-    const f = treeSpecies(o.type).fn;
+    const f = (setPlant(o.type, st) || treeSpecies(o.type)).fn;
     const ts = { ...st, leafHue: def.leaf + (o.dark ? .05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs };
     const t = f(r, ts, st.treeSize * s * (o.scale || 1) * uni(r, .9, 1.1));
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
@@ -4553,7 +4772,7 @@ function setPiece(kind, o, def, st, r, s) {
 
 // Bakes everything one area type needs, at the style's pixel size.
 function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanvas } = {}) {
-  const def = AREA_BY_ID[id]; if (!def) throw new Error(`no area type "${id}"`);
+  const def = setArea(AREA_BY_ID[id], st); if (!def) throw new Error(`no area type "${id}"`); // with its art set's changes (art/genome/next.js), if any
   const r = rng(id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 7) >>> 0);
   const bk = (p, kind, text) => ({ sp: bake(p.sp, p.colours, st, "none", makeCanvas), kind, text });
   const ft = floorTile(def, st);
@@ -4583,7 +4802,7 @@ const ART_PIXELS_PER_METRE = 16; // the prototype's (config/tuning.json, artPixe
 // metres: { height, crownBase, crownHeight, crownRadius } }]. Empty when its big objects are not
 // trees (mounds, boulders). ppm: art pixels per metre, for the metres.
 function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanvas, ppm = ART_PIXELS_PER_METRE, flora = null } = {}) {
-  const def = AREA_BY_ID[id]; if (!def) throw new Error(`no area type "${id}"`);
+  const def = setArea(AREA_BY_ID[id], st); if (!def) throw new Error(`no area type "${id}"`); // with its art set's changes (art/genome/next.js), if any
   const recipes = (def.big || []).filter(([kind]) => kind === "tree").map(([, o]) => o);
   let mains = recipes.filter(o => !o.minor), minors = recipes.filter(o => o.minor);
   if (flora?.length && recipes.length) { mains = flora.map(type => ({ type })); minors = []; } // a flora preview (?flora=): these species instead of the area's own
@@ -4591,7 +4810,7 @@ function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaul
   const seed = id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0, out = [];
   let n = 0;
   for (const cls of TREE_HEIGHT_CLASSES) for (let i = 0; i < cls.count; i++, n++) {
-    const o = minors.length && (n === 2 || n === 6) ? minors[(n === 6 ? 1 : 0) % minors.length] : mains[n % mains.length], /* a minor species: one sapling and one mature tree of the ten */ S = treeSpecies(o.type), f = S.fn, r = rng(seed * 7 + n * 131 + 3);
+    const o = minors.length && (n === 2 || n === 6) ? minors[(n === 6 ? 1 : 0) % minors.length] : mains[n % mains.length], /* a minor species: one sapling and one mature tree of the ten */ S = setPlant(o.type, st) || treeSpecies(o.type), f = S.fn, r = rng(seed * 7 + n * 131 + 3);
     const h = cls.count > 1 ? cls.range[0] + (cls.range[1] - cls.range[0]) * i / (cls.count - 1) : (cls.range[0] + cls.range[1]) / 2;
     const sapling = cls.id === "sapling", big = cls.id === "tall" || cls.id === "giant";
     // its character (the species' grow): willows widen rather than grow; narrow kinds (firs, pines, birches, alders,
@@ -7037,7 +7256,7 @@ function lgCrop(sp) {
 // One form of a species' legend: { sp, colours } (sp.origin: the ground under its middle). Only
 // asleep for now (Ed, 2026-10-04: "no waking sequence yet, just the sleeping form").
 function legendForm(id, st, { state = "asleep", frame = 0, facing = "towards" } = {}) {
-  const S = SPECIES_BY_ID[id], pose = LEGEND_POSES[id];
+  const S = speciesIn(id, st), pose = LEGEND_POSES[id];
   if (!S || !pose) throw new Error(`no sleeping legend for ${id}`);
   if (!LEGEND_STATES.includes(state)) throw new Error(`no ${state} legend yet`);
   const sp = lgCrop(withForm(lgForm(S, { breath: frame % 2 ? .025 : 0 }), () => buildCreature(S, 3, 0, st, facing)));
