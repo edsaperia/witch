@@ -6,6 +6,44 @@ Ed's direction (2026-10-05): everything will eventually come from generators, ai
 
 Sources: #97 (art iterations; `docs/art-iterations/README.md` on its branch), #112 (art pass batch 1: iteration 1 and 2 notes), and later reviews as they come.
 
+## 0. Pixel-art style (Ed, 2026-10-05: "everything should look a bit more pixel-art stylised")
+
+Ed's main art feedback at this stage. Earlier, about the legends, he said "the more pixellated version is better". This section turns that into rules a generator can enforce. They apply to everything: creatures, plants, witches, props, ground and set pieces.
+
+**The ladder.** `tools/art-iterations/ladder.mjs <area> <dir>` draws one area's set at the current look and at each rung below, at the game's screen scale and at night. The examples are in `docs/art-guide/ladder/`. Ed picks the rung. Until he does, the rules below are a proposal and are marked (proposed).
+
+| Rung | What changes |
+|---|---|
+| 0 Now | The light in the style's 3 value bands, with a checker dither where bands meet; the dark outline |
+| 1 Clean | The same bands, no dither, lone pixels merged into their neighbours |
+| 2 Stylised | 3 hue-shifted tones per material and a selective outline |
+| 3 Bold | Rung 2 with clusters: light bands follow a 3 × 3 majority, so tones form clusters and not noise |
+| 4 Chunky | Rung 3 at art pixel 4 (now 3): fewer, bigger pixels |
+| 5 Chunkier | Rung 3 at art pixel 5 |
+
+The art director recommends **rung 4** (Bold at pixel 4), with rung 3 as the fallback. At pixel 5 the witch's face, thin antler tines and the leash sigils start to break up.
+
+### The rules (proposed until Ed picks)
+1. **One art-pixel size for everything.** Every asset is drawn at the same art pixel (style `pixel`; the tuning's `pixelSize`) and displayed at a whole multiple, never resampled. Nothing is drawn at half resolution or scaled by a fraction. Mixed resolutions are the clearest sign of "not pixel art". Check: every sprite is baked at the style's `pixel`, and the renderer draws sprites at whole-pixel scale.
+2. **3 tones per material, hue-shifted.** A material's ramp has 3 tones:
+   - **shadow:** cooler (hue towards blue-violet), more saturated, about half the base value;
+   - **base:** the material's colour;
+   - **light:** warmer (hue towards yellow), a little less saturated, about 1.15 times the value.
+
+   Not a darker and lighter version of one hue. Glowing materials keep their own flat colour. Check: each material in a baked sprite uses 3 colours at most (outline excluded), and the shadow tone's hue is cooler than the light tone's.
+3. **No soft edges.** No smooth gradients, no anti-aliasing and no partial alpha. Light comes in whole bands. Check: every sprite pixel's alpha is 0, 254 (glow) or 255, and no material shows more than its 3 tones.
+4. **Clusters, not noise.** Every tone sits in a cluster of 2 or more pixels. No lone pixel differs from all four neighbours (the witch already has a fleck check; extend it). Leaf stamps, fur and bark are drawn as clusters of 2 × 2 or more at the game's scale. Check: the share of lone pixels per sprite is under about 1%, extending the fleck check to every asset.
+5. **A selective outline.** Each part is outlined in its own colour's darkest tone (cooler and more saturated), not one black. The outline breaks (is left out) where the shape's lit tone meets it on the upper left. Interior lines only where parts overlap: a near leg over the body, a head over the neck. Check: outline pixels are darker than the fill beside them, and the upper-left edge has gaps.
+6. **Shape first, detail second.** Simplify forms and exaggerate the one key feature (the antlers, the blaze, the tusks, the shell); see section 2. At pixel 4 there is less room, so simplify again: fewer tines, a bolder blaze, fewer and bigger leaf clumps.
+7. **One light.** Light comes from the upper left and a little in front, as the bake does now (`[-0.45, -0.75, 0.5]`). Highlights are crisp clusters on the upper-left of each form, not speckles. The game's lights (fire, neon, the moon) add on top, but the baked tones always assume that one direction.
+8. **Dither only on purpose.** No automatic checker at band edges. Dither is allowed only as a texture a material asks for (moss, gravel), in a fixed pattern.
+
+### What it takes in the generators
+- **Creatures (art builder 2's texture work):** a cel pass in the bake (3 hue-shifted tones per material from the palette row), a cluster pass, and a selective outline. The palette row grows from one colour per material to 3 tones per material. `art/genome/palette.js` holds it and the sprite shader reads it, so the hue shift is data and not code.
+- **Plants (art builder 1):** bigger leaf stamps (at least 2 × 2 at the game's scale), blobs lit in 3 hue-shifted tones, and no per-pixel jitter in the leaf shading. The cluster pass can't merge stamp noise, because the stamps use three leaf materials. The stamps themselves must be bigger and fewer.
+- **Props, ground and set pieces:** the same bake pass, and flat ground tiles in 3 tones with deliberate texture clusters.
+- **The game's shader:** today it bands the light with a checker dither. Under rung 2 and above, the bands come from the baked tones and the shader only adds coloured light, without re-banding.
+
 ## 1. Review an area as a set
 
 - **Judge an area as one picture.** Look at its creature at every level, its trees and props, its sleeping legend and the witch together. Use the set sheet (`tools/art-iterations/sheets.mjs`) and both in-game views (ground and treetops). A creature that looks good alone can still clash with its trees, and a tree can read well in isolation but turn neon in a clump.
@@ -106,6 +144,8 @@ At ground level a young creature is about 45 px tall and the witch about 50 px. 
 | In-game shots too dark | #97, #112 | Night lighting at ground level | Judge colour on sheets; a lit review mode is proposed |
 
 ## 8. Checks that a machine could do (proposals for art/check.mjs)
+
+The pixel-art style's checks are listed with its rules in section 0.
 
 These follow from the rules above. Each needs the art set (`artSet`) given to the check, so it runs on the default art and on every art set under review.
 
