@@ -8,7 +8,8 @@
 // pops in on screen. A woken area's own come at once (they march on its new soundsystem): at the
 // spot in the area furthest from the witches, from its edge if she's in it. No drawing here.
 import { makeCreature, type Creature, type Level } from "./creatures";
-import type { ForestMap } from "./map";
+import { AREA_TYPES, type ForestMap } from "./map";
+import { strengthOf } from "./combat";
 import { hash2, rng } from "./random";
 
 export interface Pending { level: Level; wave: number; n: number }
@@ -38,6 +39,19 @@ export function growthLevel(seed: number, cell: readonly [number, number], wave:
 }
 
 /** A wave came: each still-wild area (`wild` by key) gains its creatures, as counts. */
+/** How many times as many creatures an area of `species` holds (Ed, 2026-10-05): 1 / its strength,
+ *  so swarms come about three times as many and loners half as many, and an area's fighting value
+ *  stays about the same (to two places, so a third's strength makes exactly three times). */
+export const countScale = (species: string) => Math.round(100 / strengthOf(species)) / 100;
+
+/** An area's starting number of a level: `base` times its count scale, rounded, never fewer than
+ *  one if there's any to start with. */
+export const startCount = (base: number, scale: number) => (base > 0 ? Math.max(1, Math.round(base * scale)) : 0);
+
+/** How many an area grows at `wave`: perWave times its count scale, the fractions carried from
+ *  wave to wave (a loner's half a creature a wave is one every other wave). */
+export const grownAt = (wave: number, perWave: number, scale: number) => { const k = perWave * scale; return Math.floor(wave * k + 1e-9) - Math.floor((wave - 1) * k + 1e-9); };
+
 export function growWave(s: GrowthState, map: ForestMap, wave: number, wild: (key: string, cell: [number, number]) => boolean): void {
   const G = map.tuning.population.growth;
   if (wave <= s.wave) return;
@@ -50,7 +64,8 @@ export function growWave(s: GrowthState, map: ForestMap, wave: number, wild: (ke
     if (!wild(key, cell)) continue;
     let l = s.pending.get(key);
     if (!l) s.pending.set(key, (l = []));
-    for (let n = 0; n < G.perWave; n++) { l.push({ level: growthLevel(map.seed, cell, wave, n, G.weights), wave, n }); s.grown++; }
+    const n = grownAt(wave, G.perWave, countScale(AREA_TYPES[map.typeOf(cx, cy)].creature));
+    for (let i = 0; i < n; i++) { l.push({ level: growthLevel(map.seed, cell, wave, i, G.weights), wave, n: i }); s.grown++; }
   }
 }
 

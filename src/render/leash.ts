@@ -15,7 +15,7 @@ import * as THREE from "three";
 import { drawSigil, sigilColour } from "../../art/generator.js";
 import { dormant, type Game } from "../rules/game";
 import type { Creature } from "../rules/creatures";
-import { attackNamed, attackOf, maxHp, traitsOf, type Trait } from "../rules/combat";
+import { attackNamed, attackOf, creatureMaxHp, traitsOf, type Trait } from "../rules/combat";
 
 /** Each trait's mark over a fighting creature (placeholders until the art lands): flier sky blue,
  *  armoured a steel square, swarm violet, heavy a brown square, nimble green, burrower earth. */
@@ -224,7 +224,7 @@ export class LeashView {
     // seconds after it eats.
     for (const c of g.creatures) {
       if (!c.leashed || B.evolving.has(c.id)) continue;
-      const need = toEvolve(c.level, t), ate = B.ateAt.get(c.id);
+      const need = toEvolve(c.level, t, c.species), ate = B.ateAt.get(c.id);
       if (!Number.isFinite(need)) continue;
       if (Math.hypot(c.x - w.x, c.z - w.z) > 20 && !(ate !== undefined && time - ate < 3)) continue;
       const fed = B.fed.get(c.id) ?? 0, n = 28;
@@ -496,7 +496,7 @@ export class LeashView {
       const healed = c.healedAt !== undefined && time - c.healedAt < 0.8;
       if (healed) for (let i = 0; i < 10; i++) { const k = (time - c.healedAt!) / 0.8, a = hash2(c.id, i, 11) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 0.9 * (0.4 + k), 0.4 + k * 2 + hash2(c.id, i, 13), c.z + Math.sin(a) * 0.6 * (0.4 + k), 0.3, dot, 0.4, 1, 0.5, 1 - k); }
       // Health bars, only when hurt: ten squares over its head.
-      const max = maxHp(c.level), hp = c.hp ?? max;
+      const max = creatureMaxHp(c), hp = c.hp ?? max;
       // Stunned (an armoured one knocked over): stars round its head.
       if (c.stunUntil !== undefined && time < c.stunUntil) { const y = (this.tops.get(c.id) ?? 1.4) + 0.2; for (let i = 0; i < 3; i++) { const a = time * 5 + (i / 3) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 0.6, y + Math.sin(a * 2) * 0.08, c.z + Math.sin(a) * 0.4, 0.22, dot, 1, 0.95, 0.5, 0.9); } }
       // Its traits' marks (Stage 5, readable counters), left of its health bar, while it fights or is hurt.
