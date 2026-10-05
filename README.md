@@ -6,7 +6,7 @@ A videogame by Ed Saperia: a witch throws a rave in a magical forest. The design
 
 Fly the witch round a generated forest at night, on a laptop or a phone. Add `?seed=123` to the link to play a given map (the seed shows bottom left). Add `&tilt=before`, `&tilt=after` or `&tilt=off` to compare the tilt-shift variants, `&bloom=off` to drop the glow, `&debug` to open the debug overlay.
 
-- **Keyboard**: WASD or arrows fly · space rises to the treetops or descends · Q/E or −/+ zoom · `~` debug overlay
+- **Keyboard and mouse**: WASD or arrows fly · the mouse aims, left click throws 💌 invites · right click (or Space) dodges · Q rises to the treetops or lands · E puts down a sigil or cycles them · R spell · Z/X or −/+ zoom · `~` debug overlay
 - **Gamepad**: left stick flies · A rises or descends · shoulders zoom
 - **Phone**: drag on the left half to fly · the round button rises or descends · +/− zoom · three-finger tap for debug
 
