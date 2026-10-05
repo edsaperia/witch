@@ -157,7 +157,6 @@ export class View {
   private borders: BorderView;
   private music = new MusicIndicator(document.body);
   private nextStones: StoneIndicator[] = [];
-  private afterNextStones: StoneIndicator[] = []; // smaller and dimmer (Ed, 2026-10-04)
   readonly minimap: Minimap;
   /** Metre rulers and a ground grid (G). */
   readonly rulers = new Rulers(document.body);
@@ -1287,7 +1286,7 @@ export class View {
       // in (Ed, 2026-10-05), the colour partified areas and soundsystems use: its creature's sigil's.
       // (advance "wave": it moves on only when the next area's wave arrives, not when its quest is done)
       const P = t.leyLines.advance === "wave" ? { ...g.party, leyDone: undefined } : g.party, M = g.map, home = new THREE.Vector3(0.8, 0.7, 1);
-      this.ley.update(leyKey(P), () => leyChain(P, M, t.leyLines.links + 1), s => {
+      this.ley.update(leyKey(P), () => leyChain(P, M, t.leyLines.ahead, t.leyLines.behind), s => {
         return this.markerArt.colour.get(AREA_TYPES[M.typeOf(s.cell[0], s.cell[1])].creature) ?? home;
       }, time, canopyShown(w));
     }
@@ -1431,8 +1430,8 @@ export class View {
     const df = g.map.dancefloor;
     this.music.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, df.x, df.z, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, this.debugReadouts);
     this.minimap.update(g.party, w.x, w.z);
-    // The next waking stones (one per witch each wave: Ed, 2026-10-04), when they're off screen,
-    // and smaller, dimmer cues for the ones after.
+    // The next waking stones (one per witch each wave: Ed, 2026-10-04), when they're off screen; only
+    // those (Ed, 2026-10-05: "We only need the UI indicator for the next one, not the next two").
     {
       const cw = this.canvas.clientWidth || window.innerWidth, ch = this.canvas.clientHeight || window.innerHeight, cd = waveCountdown(g.party, g.map, time);
       const cue = (list: StoneIndicator[], cells: readonly (readonly [number, number])[], make: () => StoneIndicator, fill: number, label?: string) => {
@@ -1446,7 +1445,6 @@ export class View {
       };
       // Pausing holds the countdown; while home boots up, the next ring fills with the boot.
       cue(this.nextStones, g.party.next, () => new StoneIndicator(document.body), cd.booting ? cd.boot : cd.gone, cd.booting ? `booting ${mmss(cd.bootLeft)}` : undefined);
-      cue(this.afterNextStones, g.party.afterNext, () => new StoneIndicator(document.body, 2.5, 0.6), cd.booting ? 0 : cd.gone * 0.5);
     }
     this.time("hud");
     this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);

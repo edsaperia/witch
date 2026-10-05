@@ -41,7 +41,7 @@ const series = (at: number, n: number, every: number, g: string, play: (s: Sfx, 
 const SCENES: Scene[] = [
   {
     // home at the start: the forest music at the dancefloor, the meadow, inviting a hare and a fox
-    name: "home", seconds: 16, section: "forest", wave: 1, distance: 10,
+    name: "home", seconds: 19, section: "forest", wave: 1, distance: 10,
     frame: (s, t) => s.meadow(Math.min(1, t / 1.5)), frameG: "home's meadow",
     cues: [
       ...chatter(2, 4),
@@ -51,6 +51,8 @@ const SCENES: Scene[] = [
       { at: 8.5, g: "relic found", play: s => s.relic(0.3) },
       ...chatter(11, 3, "💌 chatter 2", "💌 hits 2"),
       { at: 13, g: "invited (adult)", play: s => s.invited(2, 0.2) },
+      ...series(9.8, 3, 0.35, "💌s landing on the ground", (s, i) => s.land(i - 1, 0.9)),
+      { at: 14.5, g: "the boot-up over (stirring)", play: s => s.stir() },
     ],
     sounds: [
       { g: "home's meadow", kind: "ambience", at: 2, len: 12 },
@@ -61,6 +63,8 @@ const SCENES: Scene[] = [
       { g: "happy speech", kind: "voice", at: 6, len: 0.8 },
       { g: "relic found", kind: "sting", at: 8.5, len: 1.6 },
       { g: "invited (adult)", kind: "sting", at: 13, len: 1 },
+      { g: "💌s landing on the ground", kind: "feedback", at: 9.8, len: 1 },
+      { g: "the boot-up over (stirring)", kind: "sting", at: 14.5, len: 1.5 },
     ],
   },
   {
@@ -77,6 +81,7 @@ const SCENES: Scene[] = [
       { at: 7.4, g: "ouch (near knocked out)", play: (s, duck) => { s.ouch(0.85); duck(ouch.duck, ouch.duckTime); } },
       { at: 10, g: "knocked down (whoa-oh)", play: (s, duck) => { s.knockdown(); duck(ouch.duck, ouch.duckTime * 2); } },
       { at: 13.5, g: "soundsystem lost", play: s => s.lost(false) },
+      { at: 16.2, g: "a lob landing nearby", play: s => s.impact(false, 0.3, 0.8) },
       { at: 17, g: "one turns enraged, 20 m off", play: s => { s.enraged(-0.4, 0.7); s.speak(v("boar", 2), "enraged", -0.4, 0.7, 1); } },
     ],
     sounds: [
@@ -91,6 +96,7 @@ const SCENES: Scene[] = [
       { g: "ouch (near knocked out)", kind: "hurt", at: 7.4, len: 0.5 },
       { g: "knocked down (whoa-oh)", kind: "hurt", at: 10, len: 1.2 },
       { g: "soundsystem lost", kind: "sting", at: 13.5, len: 3 },
+      { g: "a lob landing nearby", kind: "body", at: 16.2, len: 0.4 },
       { g: "one turns enraged, 20 m off", kind: "state", at: 17, len: 0.8 },
     ],
   },
@@ -102,6 +108,7 @@ const SCENES: Scene[] = [
     cues: [
       { at: 11.5, g: "a legend's wind-up swell", play: s => s.windup(0.2, 1) },
       { at: 13, g: "an enraged legend's song", play: s => s.speak(v("bear", 3), "enraged", 0.2, 1) },
+      { at: 14.2, g: "a legend's lob landing", play: s => s.impact(true, -0.3, 0.8) },
       { at: 16.5, g: "a charge's bellow", play: s => s.bellow(0.3, 1) },
       ...series(17.8, 12, 0.22, "the charge's hooves", s => s.hoof(0, 1)),
       ...series(17.8, 12, 0.22, "the charge's rumble", (s, i) => s.charge(Math.min(1, (i + 2) / 10), 0, 0)),
@@ -112,6 +119,7 @@ const SCENES: Scene[] = [
       { g: "legend moans", kind: "ambience", at: 6.5, len: 3.5 },
       { g: "a legend's wind-up swell", kind: "telegraph", at: 11.5, len: 1.3 },
       { g: "an enraged legend's song", kind: "voice", at: 13, len: 3.3 },
+      { g: "a legend's lob landing", kind: "telegraph", at: 14.2, len: 1.2 },
       { g: "a charge's bellow", kind: "telegraph", at: 16.5, len: 1.1 },
       { g: "the charge's hooves", kind: "body", at: 17.8, len: 2.6 },
       { g: "the charge's rumble", kind: "body", at: 17.8, len: 2.6 },

@@ -990,7 +990,15 @@
         "on": {
           "type": "boolean"
         },
-        "links": {
+        "ahead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "behind": {
+          "type": "number",
+          "minimum": 0
+        },
+        "behindBright": {
           "type": "number",
           "minimum": 0
         },
@@ -1051,7 +1059,9 @@
       },
       "required": [
         "on",
-        "links",
+        "ahead",
+        "behind",
+        "behindBright",
         "advance",
         "fade",
         "brightness",
@@ -3000,6 +3010,55 @@
           ],
           "additionalProperties": false
         },
+        "impact": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "small": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "small"
+          ],
+          "additionalProperties": false
+        },
+        "land": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "gap"
+          ],
+          "additionalProperties": false
+        },
+        "stir": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume"
+          ],
+          "additionalProperties": false
+        },
         "knock": {
           "type": "object",
           "properties": {
@@ -3125,6 +3184,26 @@
             "fade": {
               "type": "number",
               "minimum": 0
+            },
+            "murmur": {
+              "type": "number",
+              "minimum": 0
+            },
+            "clinks": {
+              "type": "number",
+              "minimum": 0
+            },
+            "clinkEvery": {
+              "type": "number",
+              "minimum": 0
+            },
+            "balloons": {
+              "type": "number",
+              "minimum": 0
+            },
+            "squeakEvery": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -3133,7 +3212,12 @@
             "bees",
             "birds",
             "birdEvery",
-            "fade"
+            "fade",
+            "murmur",
+            "clinks",
+            "clinkEvery",
+            "balloons",
+            "squeakEvery"
           ],
           "additionalProperties": false
         },
@@ -3186,6 +3270,9 @@
         "windup",
         "lost",
         "ouch",
+        "impact",
+        "land",
+        "stir",
         "knock",
         "charge",
         "relic",
