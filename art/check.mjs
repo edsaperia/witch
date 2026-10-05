@@ -42,6 +42,26 @@ const report = await b.page.evaluate(async () => {
       res.push({ what: `${S.id}: baby < young < adult < legend, in clear steps (young 1.3+ times the baby, adult 1.55+ times the young, legend 2.1+ times the adult)`, good: hs[3] > hs[2] && hs[2] > hs[1] && hs[1] > hs[0] && r[0] >= 1.3 && r[1] >= 1.55 && r[2] >= 2.1, info: bh.join(" < ") + " (" + r.map(x => x.toFixed(2)).join(", ") + ")" }); }
     if (["wolf", "boar", "stag", "bear", "elk", "lynx"].includes(S.id)) { const w = G.witchSprite(st).bodyH, k = G.critter(S.id, 2, 0, st).bodyH / w, hi = ["elk", "stag"].includes(S.id) ? 2.5 : 2.1; res.push({ what: `${S.id}: an adult clearly bigger than the witch (1.45 to ${hi} times, body without antlers; the elk and stag stand taller)`, good: k >= 1.45 && k <= hi, info: k.toFixed(2) }); }
   }
+  { // creature genomes (#79 stage 1): every species a record on a known template, its parts allowed by its sockets, none clashing,
+    // its hash its own; the builders' species are the records' (speciesOf)
+    const probs = G.GENOMES.flatMap(g => G.genomeProblems(g)), hashes = new Set(G.GENOMES.map(g => G.genomeHash(g)));
+    res.push({ what: `genomes: every one of the ${G.SPECIES.length} species a record on one of the ${G.TEMPLATE_IDS.length} templates, its parts in its sockets, no clashes, every hash different`, good: G.GENOMES.length === G.SPECIES.length && G.SPECIES.every(s => G.GENOME_BY_ID[s.id]) && !probs.length && hashes.size === G.GENOMES.length, info: probs.join("; ") || `${G.GENOMES.length} records` });
+    // masks and palettes (stage 2): a sprite's material mask painted with its palette row is its bake, pixel for pixel, in every outline mode
+    const bad = [];
+    for (const S of G.SPECIES) for (const level of [0, 1, 2, 3]) for (const facing of ["towards", "away"]) for (const gear of [null, { woken: true }]) {
+      const sp = G.critter(S.id, level, 0, st, facing, gear), col = G.speciesColours(S.id, st, gear);
+      for (const mode of level === 1 && !gear && facing === "towards" ? [st.cOutline, "none", "dark", "tint"] : [st.cOutline]) {
+        const want = G.bake(sp, col, st, mode).A.getContext("2d").getImageData(0, 0, sp.w, sp.h).data, got = G.paintPixels(G.bakeMask(sp, mode), G.paletteRow(col, mode));
+        let d = 0; for (let i = 0; i < want.length; i++) if (want[i] !== got[i]) d++;
+        if (d) bad.push(`${S.id} ${level} ${facing}${gear ? " woken" : ""} ${mode}: ${d}`);
+      }
+    }
+    res.push({ what: "palettes: every creature's material mask painted with its palette row is its bake exactly (all levels, both facings, woken, every outline mode)", good: !bad.length, info: bad.slice(0, 5).join(", ") || "identical" });
+    // variants: every curated variant colours every species (no magenta, no missing material), each different from its own
+    const vb = [];
+    for (const S of G.SPECIES) { const own = JSON.stringify(G.speciesColours(S.id, st)); for (const v of Object.keys(G.PALETTE_VARIANTS)) { const c = G.variantColours(S.id, st, v), row = G.paletteRow(c), m = G.bakeMask(G.critter(S.id, 1, 0, st), st.cOutline); if (JSON.stringify(c) === own) vb.push(`${S.id} ${v} same`); for (let i = 0; i < m.mat.length; i++) if (m.kind[i] === 1 && row[m.mat[i] * 4] === 255 && row[m.mat[i] * 4 + 1] === 0 && row[m.mat[i] * 4 + 2] === 255) { vb.push(`${S.id} ${v} magenta`); break; } } }
+    res.push({ what: `palette variants: all ${Object.keys(G.PALETTE_VARIANTS).length} curated coats colour every species, no material uncoloured, each its own`, good: !vb.length, info: vb.slice(0, 5).join(", ") || "ok" });
+  }
   { // sleeping legends (Ed, 2026-10-04: just the sleeping form for now): asleep in 2 breathing frames, both facings, each drawn, standing on its bottom
     // row, its origin on the sprite and every material coloured; sunk (its ground line above its feet), no taller than the legend awake, nothing glowing,
     // eyes shut, its two breaths different

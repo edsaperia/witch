@@ -100,12 +100,13 @@ function gearUp(m) {
 
 // ================= four-legged animals =================
 export function quad3d(S, level, frame, st, facing = "towards") {
-  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q }, legend = level === 3, young = false, juv = level === 1, big = level >= 2, baby = level === 0, has = f => legend && S.legend.includes(f); // young: what was the adult model (young = false keeps its shape); big: the heavier adult and legend build
+  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => legend && S.legend.includes(f);
+  const sz = k => S.sizes[k][level]; // its template's size curves (art/genome/templates.js): baby, young, adult, legend
   const m = new Model();
-  const hr = q.hr * (baby ? 1.75 : young ? 1.25 : big ? 1.12 : 1) * (st.head / .44) ** .5, len = q.len * (baby ? .8 : young ? .9 : big ? 1.06 : 1.02) * st.long;
-  const legK = baby ? .55 : young ? .9 : 1.04;
-  const bob = frame ? -.04 : 0, top = 1 + bob, chest = q.chest * (legend ? 1.06 : 1) * (big ? .9 : 1) / legK + bob, tuck = q.tuck * (big ? .92 : 1) / legK + bob; // a big one's deeper chest and belly
-  const bw = q.bw * (baby ? 1.15 : big ? 1.28 : 1) * (q.legW > 1.2 ? 1.15 : 1), lw = .06 * q.legW * (legend ? 1.1 : baby ? 1.7 : 1) * (big ? 1.3 : 1);
+  const hr = q.hr * sz("head") * (st.head / .44) ** .5, len = q.len * sz("len") * st.long;
+  const legK = sz("legK");
+  const bob = frame ? -.04 : 0, top = 1 + bob, chest = q.chest * sz("chestDeep") * sz("chestBig") / legK + bob, tuck = q.tuck * sz("tuck") / legK + bob; // a big one's deeper chest and belly
+  const bw = q.bw * sz("body") * (q.legW > 1.2 ? 1.15 : 1), lw = .06 * q.legW * sz("limbA") * sz("limbB");
   const hump = q.back === "hump" ? .1 : 0, arch = q.back === "arch" ? .1 : 0;
   // ---- markings, painted by where a point is on the body ----
   const bellyY = chest + .12;
@@ -137,8 +138,8 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   };
   for (const side of [-1, 1]) { leg(true, side); leg(false, side); }
   // ---- neck and head, turned towards us ----
-  const nb = [len * .82, top - .12, 0], H = [nb[0] + Math.cos(q.neckAng) * q.neck * .9, nb[1] + Math.sin(q.neckAng) * q.neck * .9 + (baby ? .1 : 0), 0];
-  m.seg(nb, H, q.neckW * .55 * (big ? 1.25 : 1), q.neckW * .42 * (big ? 1.2 : 1), M.BODY, { paint: p => q.belly && p[1] < (nb[1] + H[1]) / 2 - .05 ? M.BELLY : q.face === "dark" ? M.BODY2 : undefined });
+  const nb = [len * .82, top - .12, 0], H = [nb[0] + Math.cos(q.neckAng) * q.neck * .9, nb[1] + Math.sin(q.neckAng) * q.neck * .9 + sz("headLift"), 0];
+  m.seg(nb, H, q.neckW * .55 * sz("neckBase"), q.neckW * .42 * sz("neckTop"), M.BODY, { paint: p => q.belly && p[1] < (nb[1] + H[1]) / 2 - .05 ? M.BELLY : q.face === "dark" ? M.BODY2 : undefined });
   const headPaint = p => {
     if (q.face === "badger") return Math.abs(p[2]) < hr * .22 + (p[0] - H[0]) * .1 || p[1] < H[1] - hr * .1 ? M.BELLY : M.BODY3;
     if (q.face === "dark") return M.BODY2;
@@ -146,18 +147,18 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     return undefined;
   };
   m.ell(H, [hr * 1.05, hr * .92, hr * .88], M.BODY, { paint: headPaint });
-  const L = hr * q.snout * (baby ? .55 : young ? .78 : 1), Dm = hr * q.snoutD * .55, sn = [H[0] + hr * .65 + L * .5, H[1] - hr * .28, 0];
+  const L = hr * q.snout * sz("snout"), Dm = hr * q.snoutD * .55, sn = [H[0] + hr * .65 + L * .5, H[1] - hr * .28, 0];
   m.ell(sn, [L * .62 + hr * .2, Dm, Dm * .95], M.BODY, { dir: [1, -.25, 0], paint: p => (q.muzzle || q.belly) && p[1] < sn[1] - Dm * .1 ? M.BELLY : headPaint(p) });
   const tip = [sn[0] + L * .62 + hr * .1, sn[1] - .02, 0];
   m.ell(tip, [hr * (q.disc ? .1 : .12), hr * (q.disc ? .2 : .12), hr * (q.disc ? .2 : .15)], M.NOSE, { group: 1 });
   // eyes: both show; legends' glow
-  for (const side of [-1, 1]) { const e = Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62])); m.ell(e, [hr * .13, hr * .16, hr * .13].map(v => v * (q.eyeK || 1) * (baby ? 1.5 : young ? 1.2 : 1)), legend && !q.tusks ? M.MAGIC2 : M.EYE, { group: 1 }); }
+  for (const side of [-1, 1]) { const e = Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62])); m.ell(e, [hr * .13, hr * .16, hr * .13].map(v => v * (q.eyeK || 1) * sz("eye")), legend && !q.tusks ? M.MAGIC2 : M.EYE, { group: 1 }); }
   m.anchors.head = { c: H, r: [hr * 1.05, hr * .92, hr * .88], top: [H[0] - hr * .1, H[1] + hr * .82, 0] };
-  m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62]))), size: hr * .16 * (q.eyeK || 1) * (baby ? 1.5 : young ? 1.2 : 1) };
-  m.anchors.neck = { c: v3.lerp(nb, H, baby ? .05 : young ? .25 : .42), r: q.neckW * .5 * (baby ? 1.3 : young ? 1.12 : 1), dir: v3.norm(v3.sub(H, nb)), tag: baby ? 1.8 : young ? 1.3 : 1 }; // lower on the neck when the head is big
+  m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62]))), size: hr * .16 * (q.eyeK || 1) * sz("eye") };
+  m.anchors.neck = { c: v3.lerp(nb, H, sz("neckAnchor")), r: q.neckW * .5 * sz("neckR"), dir: v3.norm(v3.sub(H, nb)), tag: sz("tag") }; // lower on the neck when the head is big
   // ears
   for (const side of [-1, 1]) {
-    const E = q.ear, base = [H[0] - hr * .15, H[1] + hr * .7, side * hr * .5], k = q.earS * (baby ? 1.2 : 1) * (q.ear === "long" ? .62 : 1);
+    const E = q.ear, base = [H[0] - hr * .15, H[1] + hr * .7, side * hr * .5], k = q.earS * sz("ear") * (q.ear === "long" ? .62 : 1);
     if (E === "none") continue;
     if (E === "round") { m.ell(base, [hr * .22, hr * .25 * k, hr * .1], M.BODY, { group: 1, paint: p => p[0] > base[0] + hr * .02 ? M.EAR : undefined }); continue; }
     const long = E === "long", droop = E === "small" ? -.6 : 0, eh = hr * .55 * k * (E === "big" ? 1.35 : long ? 2.2 : 1), ew = hr * .3 * (E === "big" ? 1.2 : long ? 1.35 : 1);
@@ -169,9 +170,9 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   const tb = [-len * 1.05, top - .1 + arch * .5, 0], tw = frame ? .04 : -.02;
   if (!has("tails")) tail3d(m, has("starTail") ? "star" : q.tail, tb, len, top, tw);
   // ---- horns, antlers, tusks ----
-  if (q.horns) for (const side of [-1, 1]) { const k = young ? .6 : baby ? .35 : has("hornsGlow") ? 1.5 : big ? 1.3 : 1, pts = []; for (let i = 0; i <= 8; i++) { const a = .3 - i / 8 * Math.PI * 1.6, r = hr * .65 * k * (1 - .45 * i / 8); pts.push([H[0] - hr * .1 + Math.cos(a) * r, H[1] + hr * .45 + Math.sin(a) * r, side * (hr * .6 + i * .015)]); pts[i].push(hr * .2 * k * (1 - .6 * i / 8)); } m.chain(pts, has("hornsGlow") ? M.MAGIC : M.ACCENT, { group: 13 }); }
-  if (q.antlers || has("jackalope")) for (const side of [-1, 1]) antlers3d(m, q, [H[0] - hr * .05, H[1] + hr * .75, side * hr * .4], side, level, has);
-  if (q.tusks) for (const side of [-1, 1]) { const k = young ? .4 : baby ? 0 : has("tusksBig") ? 1.4 : big ? 1.05 : .75; if (!k) continue; const b = [sn[0] + L * .25, sn[1] - Dm * .4, side * Dm * .8]; m.chain([[...b, .045 * k], [...v3.add(b, [.1 * k, .1 * k, side * .03]), .04 * k], [...v3.add(b, [.06 * k, .24 * k, side * .05]), .02 * k]], M.ACCENT, { group: 8 }); }
+  if (q.horns) for (const side of [-1, 1]) { const k = has("hornsGlow") ? 1.5 : sz("horns"), pts = []; for (let i = 0; i <= 8; i++) { const a = .3 - i / 8 * Math.PI * 1.6, r = hr * .65 * k * (1 - .45 * i / 8); pts.push([H[0] - hr * .1 + Math.cos(a) * r, H[1] + hr * .45 + Math.sin(a) * r, side * (hr * .6 + i * .015)]); pts[i].push(hr * .2 * k * (1 - .6 * i / 8)); } m.chain(pts, has("hornsGlow") ? M.MAGIC : M.ACCENT, { group: 13 }); }
+  if (q.antlers || has("jackalope")) for (const side of [-1, 1]) antlers3d(m, q, [H[0] - hr * .05, H[1] + hr * .75, side * hr * .4], side, sz("antlers"), has);
+  if (q.tusks) for (const side of [-1, 1]) { const k = has("tusksBig") ? 1.4 : sz("tusks"); if (!k) continue; const b = [sn[0] + L * .25, sn[1] - Dm * .4, side * Dm * .8]; m.chain([[...b, .045 * k], [...v3.add(b, [.1 * k, .1 * k, side * .03]), .04 * k], [...v3.add(b, [.06 * k, .24 * k, side * .05]), .02 * k]], M.ACCENT, { group: 8 }); }
   if (q.teeth && !baby) m.ell([tip[0] - hr * .1, tip[1] - hr * .25, 0], [hr * .08, hr * .14, hr * .12], M.ACCENT, { group: 1 });
   // ---- legendary features ----
   const backAt = t => [-len * .9 + t * len * 1.65, top + hump * Math.max(0, 1 - Math.abs(t - .8) * 3) + arch * (1 - Math.abs(t - .4) * 2), 0];
@@ -187,7 +188,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   if (has("ribbons")) for (let i = 0; i < 3; i++) { const pts = []; for (let k = 0; k < 9; k++) { const t = k / 8; pts.push([len * (.5 - t * 2.2), top + .05 + i * .1 + t * (.25 + i * .12) + Math.sin(t * 6 + frame + i) * .07, (i - 1) * .18, .04 * (1 - t * .6)]); } m.chain(pts, i % 2 ? M.MAGIC2 : M.MAGIC, { group: 90 + i, extra: true }); }
   gearUp(m);
   const sp = drawForm(m, { height: drawHeight(level, st, q.hgt), facing }, S, level);
-  if (formMotes()) { if (legend) glowMotes(sp, S.id.length * 7919); else if (level === 2) glowMotes(sp, S.id.length * 7919, 3); }
+  if (formMotes() && sz("motes")) glowMotes(sp, S.id.length * 7919, sz("motes"));
   return sp;
 }
 
@@ -204,8 +205,8 @@ function tail3d(m, kind, tb, len, top, tw) {
   else if (kind === "thin") { m.chain([[...tb, .04], [X(1.1), top - .3, 0, .03], [X(1.12) + tw, top - .55, 0, .025]], M.BODY, o); m.ell([X(1.12) + tw, top - .62, 0], [.04, .07, .04], M.BODY3, o); }
 }
 
-function antlers3d(m, q, b, side, level, has) {
-  const jack = !q.antlers, A = jack ? .45 : [0, .95, 1.25, 1.25][level] * (has("antlersGlow") ? 1.15 : 1), mat = has("antlersGlow") ? (side > 0 ? M.MAGIC2 : M.MAGIC) : M.ACCENT, o = { group: 11 + (side > 0 ? 1 : 0), extra: true };
+function antlers3d(m, q, b, side, size, has) { // size: its antler size curve at this level (the template's)
+  const jack = !q.antlers, A = jack ? .45 : size * (has("antlersGlow") ? 1.15 : 1), mat = has("antlersGlow") ? (side > 0 ? M.MAGIC2 : M.MAGIC) : M.ACCENT, o = { group: 11 + (side > 0 ? 1 : 0), extra: true };
   if (!A) return;
   const w = .045 * Math.max(.8, A), out = side * .35 * A;
   if (q.antlers === "palm") { // a short beam, then broad fingers fanning back and out from one root

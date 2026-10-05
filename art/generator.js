@@ -25,6 +25,9 @@ import { DECOR, DECOR_BY_ID, decorSprite, decorColours, lakeKit, rockTint } from
 import { COUNTRY, COUNTRY_BY_ID, countrySprite, countryColours } from "./country.js";
 import { LANDMARKS, LANDMARK_BY_ID, LANDMARK_BUILDINGS, landmarkSprite, landmarkColours } from "./landmarks.js";
 import { PARTY_OBJECTS, PARTY_BY_ID, PARTY_CLASSES, PARTY_LIGHT_NEONS, PARTY_WARM, PARTY_CLUSTERS, PARTY_CLUSTER_BY_ID, partySprite, partyColours, partyPatch, BALLOON_PALETTES } from "./party.js";
+import { GENOMES, GENOME_BY_ID, TEMPLATES, TEMPLATE_IDS, speciesOf, genomeTags, genomeProblems, genomeHash } from "./genome/index.js";
+import { PALETTE_SIZE, PALETTE_ROW, PALETTE_VARIANTS, PALETTE_GLSL, bakeMask, paletteRow, paintPixels, paintMask, maskPixels, variantColours } from "./genome/palette.js";
+export { GENOMES, GENOME_BY_ID, TEMPLATES, TEMPLATE_IDS, speciesOf, genomeTags, genomeProblems, genomeHash, PALETTE_SIZE, PALETTE_ROW, PALETTE_VARIANTS, PALETTE_GLSL, bakeMask, paletteRow, paintPixels, paintMask, maskPixels, variantColours };
 import { LEGEND_STATES, LEGEND_FRAMES, LEGEND_POSES, LEGEND_IDS, legendForm, legendColours, legendSprites } from "./legends.js";
 export { LEGEND_STATES, LEGEND_FRAMES, LEGEND_POSES, LEGEND_IDS, legendForm, legendColours, legendSprites };
 import { SCENES, SCENE_BY_ID, scenePiece, sceneLayout, scenePlacements, sceneRefExists } from "./scenes.js";
