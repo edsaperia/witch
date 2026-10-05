@@ -1,11 +1,11 @@
-// The Witch Music Lab: plays the game's music engine (src/platform/musicEngine.ts) through the
-// game's own mix (src/platform/music.ts) from a style (config/music-style.json), with a pretend run
+// The Witch Music Lab: plays the game's music engine (src/platform/audio/musicEngine.ts) through the
+// game's own mix (src/platform/audio/music.ts) from a style (config/music-style.json), with a pretend run
 // (the boot, waves every so often, jump to any wave), any one section on a loop, the proximity mix,
 // damage and the hooks (knocked out, siege), and knobs for the style. Built into one page by
 // tools/music-lab/build.mjs; window.musicLabCheck() renders every section offline (tools/music-lab/check.mjs).
 import styleJson from "../../config/music-style.json";
-import { Music } from "../../src/platform/music";
-import { MusicEngine } from "../../src/platform/musicEngine";
+import { Music } from "../../src/platform/audio/music";
+import { MusicEngine } from "../../src/platform/audio/musicEngine";
 import { mixAt, nearness } from "../../src/rules/music";
 import { beatAt, bpmAt, newBeatClock, rampTo, timeAt, waveArrived, waveTempo, type BeatClock } from "../../src/rules/beat";
 import { barAt, barSeconds, planBlock, type MusicCue } from "../../src/rules/musicPlan";

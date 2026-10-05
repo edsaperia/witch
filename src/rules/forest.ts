@@ -4,7 +4,7 @@
 // can be produced on its own, near the camera, in any order, and always comes out the same.
 import { hash2, smoothstep, vnoise } from "./random";
 import { wallFeatures, bedsInRows, type WallFeatures } from "./walls";
-import { AREA_TYPES, type AreaLayout, type ForestMap } from "./map";
+import { AREA_TYPES, HOME_LOOK, type AreaLayout, type ForestMap } from "./map";
 import { DECOR } from "../../art/decor.js";
 import { floorClearing } from "./speakers";
 import { RELICS } from "../../art/relics.js";
@@ -35,11 +35,21 @@ export function crownReach(map: ForestMap): number {
  *  creatures roam, partifying, the party border, which area you're in) uses the exact partition. */
 export function plantType(map: ForestMap, x: number, z: number, i: number, j: number, salt: number): number {
   const E = map.tuning.areaEdgeBlend, s = map.seed;
-  if (E.width <= 0) return map.areaAt(x, z).type;
+  if (E.width <= 0) return map.areaAt(x, z).look;
   const nx = (vnoise(x / E.scale, z / E.scale, s + 81) - 0.5) * 2 * E.width + (hash2(i, j, salt + 1) - 0.5) * E.width * E.stray;
   const nz = (vnoise(x / E.scale, z / E.scale, s + 82) - 0.5) * 2 * E.width + (hash2(i, j, salt + 2) - 0.5) * E.width * E.stray;
-  return map.areaAt(x + nx, z + nz).type;
+  return map.areaAt(x + nx, z + nz).look;
 }
+
+/** Home's ground (Ed, 2026-10-05: a meadow with "party decorations instead of trees"): no trees,
+ *  bushes or scenery, by its look or, within its circle, wherever a neighbour's would stray in. */
+const homeGround = (map: ForestMap, x: number, z: number, look: number) => {
+  if (look === HOME_LOOK) return true;
+  const d = Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z);
+  if (d < map.homeRadius) return true;
+  if (d > map.homeRadius + 2 * map.areaSize) return false; // (far off: no lookup)
+  const c = map.areaAt(x, z).cell; return c[0] === map.centreCell[0] && c[1] === map.centreCell[1];
+};
 
 /** The chance of a tree at (x, z) whose look is area type `type` (Ed, 2026-10-03: "density can be
  *  more varied"): the type's own density (blended across borders, as the types are), times a
@@ -47,6 +57,7 @@ export function plantType(map: ForestMap, x: number, z: number, i: number, j: nu
  *  pattern (groves, stands, rings, rows, thicket, edges only...), times the clearings; with a few
  *  lone trees almost everywhere, so open ground is never empty. */
 export function treeChance(map: ForestMap, x: number, z: number, type: number): number {
+  if (homeGround(map, x, z, type)) return 0;
   const t = map.tuning, D = t.density, L = AREA_TYPES[type].layout, s = map.seed;
   if (map.hardClear(x, z)) return 0;
   const along = map.paths.clearance(x, z).trees;
@@ -114,6 +125,7 @@ function bushesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
     const along = map.paths.clearance(x, z).bushes;
     if (along === 0) continue;
     const type = plantType(map, x, z, i, j, s + 206);
+    if (homeGround(map, x, z, type)) continue;
     if (bedsInRows(map, type)) continue; // a formal garden's beds are laid in rows along its walls
     const sparse = 1 - Math.min(1, treeChance(map, x, z, type) / 0.8);
     const roll = hash2(i, j, s + 203), odds = (0.15 + 0.85 * sparse) * AREA_TYPES[type].layout.undergrowth * map.tuning.bushDensity * clump * along;
@@ -155,6 +167,7 @@ function decorCandidate(map: ForestMap, i: number, j: number): Cand<Decor> | nul
   const roll = hash2(i, j, s + 503);
   if (roll >= decorOddsMax(map)) return null; // out of the running in any area: skip the lookups
   const x = (i + (hash2(i, j, s + 501) - 0.5) * 0.8) * sp, z = (j + (hash2(i, j, s + 502) - 0.5) * 0.8) * sp, a = map.areaAt(x, z);
+  if (homeGround(map, x, z, a.look)) return null;
   const L = AREA_TYPES[a.type].layout, ad = L.decor, rate = ad ? ad.rate / 0.3 : 1, rocky = L.terrain?.includes("rocky") ? 2 : 1;
   const w = ad ? [ad.ruins, ad.rocks * rocky, ad.freak] : [D.ruins, D.rocks * rocky, D.freak], sum = w[0] + w[1] + w[2] || 1;
   const total = (D.ruins + D.rocks + D.freak) * rate * (ad ? (ad.ruins + ad.rocks + ad.freak) / Math.max(0.01, ad.ruins + ad.rocks + ad.freak + ad.lake + ad.modern) : 1) * (rocky > 1 ? 1.5 : 1);
@@ -205,6 +218,7 @@ function relicCandidate(map: ForestMap, i: number, j: number): Cand<Relic> | nul
   const R = map.tuning.relics, sp = R.spacing, s = map.seed;
   if (hash2(i, j, s + 883) >= R.chance * 5.5 * Math.max(1, R.nearRoad)) return null; // out of the running anywhere
   const x = (i + (hash2(i, j, s + 881) - 0.5) * 0.8) * sp, z = (j + (hash2(i, j, s + 882) - 0.5) * 0.8) * sp, a = map.areaAt(x, z);
+  if (homeGround(map, x, z, a.look)) return null;
   const ad = AREA_TYPES[a.type].layout.decor, share = ad ? ad.modern / Math.max(0.01, ad.ruins + ad.rocks + ad.freak + ad.lake + ad.modern) : 0.1;
   const roll = hash2(i, j, s + 883), odds = R.chance * (0.5 + 5 * share);
   if (roll >= odds * Math.max(1, R.nearRoad)) return null; // out of the running even by a road: skip the path lookup
@@ -283,6 +297,7 @@ function lightsInChunk(map: ForestMap, ci: number, cj: number): LightSource[] {
     const x = (i + (hash2(i, j, s + 401) - 0.5) * 0.7) * sp, z = (j + (hash2(i, j, s + 402) - 0.5) * 0.7) * sp;
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < floorClearing(map.tuning) + 4) continue;
     const a = map.areaAt(x, z), where = a.openness < 0.35 || a.openness > 0.8 ? 1 : 0.25, roll = hash2(i, j, s + 403);
+    if (homeGround(map, x, z, a.look)) continue; // (home's lights are its party decorations)
     const wet = WET.has(AREA_TYPES[a.type].id) || !!AREA_TYPES[a.type].layout.terrain?.includes("pools");
     const pond = (wet ? L.wetPond : L.pond) * where, fire = L.campfire * where, stone = L.magicStone * where;
     const kind: LightKind | null = roll < pond ? "pond" : roll < pond + fire ? "campfire" : roll < pond + fire + stone ? "stone" : null;

@@ -1,0 +1,45 @@
+{
+  "_": "Legends, redesigned (Ed, 2026-10-05; issue #87). Asleep by default (soundsystems no longer wake them), dreaming of a creature (the quest): bring that creature's sigil into its area while its quest is open (until the area's soundsystem switches on) and you get its buff; it sleeps on. Restless while its area has none of its own kind (any state: wild, happy, leashed ones parked there, babies), its dream a nightmare (restlessness 0 to 1 over angryAfter seconds; checked every check seconds), calming back to sleep as soon as one of its kind is there again; at 1 it's angry. Happy once a relic is put down within placeRadius metres of it while it sleeps (or is restless): you get its buff, and it defends. Buffs, once earned, are never taken away. relics: count giant half-buried party objects per map (kinds from the art), in areas at least minRemoteness from home, at least spacing areas apart; walk up to one (within pickRadius metres) on the ground and press the sigil button: it's a relic sigil in your stack. attack (angry and happy alike; Ed 2026-10-05: long range, slow, less damage): a legend never leaves its area (it stands at home) but reaches range metres (about 2 to 3 areas); every interval seconds it winds up for windup seconds (telegraphed), then lobs (a bomb landing after lobFlight seconds, hitting everything within lobRadius) or beams (a line range long, beamWidth wide, burning for beamTime seconds), chosen per species (beam lists them); each volley hits up to targets of them (one lob or beam at each), damage a hit (the witch: one point, as ever); enraged animals within wornReach metres go for a happy one (it wears down). A happy one heals to whole over healTime seconds when nothing's near. (Balance builder's values, #80: legend damage is the game's most sensitive knob.) Angry: the witch and her posse only, never soundsystems or happy creatures. Happy: enraged ones only. Worn down (its health gone), a happy one goes back to sleep (its buff kept), an angry one too.",
+  "angryAfter": 60,
+  "check": 0.5,
+  "placeRadius": 14,
+  "relics": {
+    "count": 4,
+    "kinds": [
+      "wine",
+      "partyHat",
+      "discoBall",
+      "gramophone",
+      "present",
+      "mask"
+    ],
+    "minRemoteness": 0.3,
+    "spacing": 3,
+    "pickRadius": 6
+  },
+  "attack": {
+    "range": 420,
+    "interval": 15,
+    "windup": 2.2,
+    "damage": 10,
+    "lobFlight": 3,
+    "lobRadius": 8,
+    "beamWidth": 3,
+    "beamTime": 1.6,
+    "beam": [
+      "owl",
+      "salamander",
+      "spider",
+      "raven",
+      "bat",
+      "glowworm",
+      "moth",
+      "snake",
+      "toad",
+      "woodlouse"
+    ],
+    "targets": 3,
+    "wornReach": 40
+  },
+  "healTime": 120
+}

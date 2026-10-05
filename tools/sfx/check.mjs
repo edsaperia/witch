@@ -1,8 +1,9 @@
 // The sound effects' check (before every push that touches them):
 //   node tools/sfx/check.mjs
-// Bundles tools/sfx/render.ts (the game's own src/platform/sfx.ts and tuning), renders every effect
+// Bundles tools/sfx/render.ts (the game's own src/platform/audio/sfx.ts and tuning), renders every effect
 // offline in headless Chromium, and fails on a script error, silence, NaN or clipping; writes each
-// as a WAV to previews/sfx/ to listen to.
+// as a WAV to previews/sfx/ to listen to. Math.random is seeded, so each render is the same every
+// run (a change to the sound shows as a changed WAV, nothing else does).
 import { build } from "esbuild";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -21,7 +22,9 @@ const browser = await playwright.chromium.launch({ args: ["--autoplay-policy=no-
 const page = await browser.newPage(), errors = [];
 page.on("pageerror", e => errors.push(String(e)));
 await page.setContent("<!doctype html><meta charset=utf-8><body></body>");
-await page.addScriptTag({ content: code });
+// (a seeded Math.random: the same renders every run)
+const seed = "{ let r = 12345; Math.random = () => ((r = (Math.imul(r, 1664525) + 1013904223) >>> 0) / 4294967296); }";
+await page.addScriptTag({ content: seed + "\n" + code });
 const results = await page.evaluate(() => window.sfxRender());
 await browser.close();
 ok(errors.length === 0, `renders with no script errors${errors.length ? ": " + errors.join(" | ") : ""}`);
@@ -35,5 +38,5 @@ for (const r of results) {
   h.write("data", 36); h.writeUInt32LE(pcm.length, 40);
   writeFileSync(resolve(root, `previews/sfx/${r.name}.wav`), Buffer.concat([h, pcm]));
 }
-ok(results.length >= 27, `${results.length} effects rendered (previews/sfx/*.wav)`);
+ok(results.length >= 32, `${results.length} effects rendered (previews/sfx/*.wav)`);
 process.exit(failed ? 1 : 0);

@@ -4,7 +4,7 @@
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
 import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
-import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
+import { creatureFrame, runJob, witchLookOf, type ArtJob, type ArtResult, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { ART_HASH, cacheGet, cachePut, hashText } from "./artCache";
 import type { RigMeta } from "./rig/rigBuild";
@@ -40,7 +40,10 @@ export class AssetLibrary {
   private inFlight = new Set<string>();
   private workers: { w: Worker; busy: boolean; job?: ArtJob }[] = [];
   private useWorkers: boolean;
-  readonly witch: Atlas;
+  /** Her frames (bakeWitch: from her genome, re-baked when the character creator changes her). */
+  witch!: Atlas;
+  /** Her genome (art/witchGenome.js; null: the classic witch). */
+  witchGenome: unknown = null;
   /** On foot (from frame 16): each pose's frames, towards and away. */
   readonly witchFoot: Record<string, { towards: number[]; away: number[]; fps: number }> = {};
   /** In the treetops: the fast and brake poses' frames, towards and away. */
@@ -72,33 +75,10 @@ export class AssetLibrary {
   /** The share of a crown's pixels above its cut (tuning trunkFade.crownShare; the view sets it). */
   crownShare = 0.85;
 
-  constructor(readonly style: Style, readonly seed: number, pixelSize: number) {
+  constructor(readonly style: Style, readonly seed: number, pixelSize: number, witchGenome: unknown = null) {
     this.K = 2 / pixelSize;
     this.styleHash = hashText(JSON.stringify(style));
-    // The witch: hover frames 0-2 towards, 3-5 away, then leaning towards (6) and away (7); then
-    // rising (8-9 towards, 10-11 away) and descending (12-13 towards, 14-15 away), two frames each.
-    const wc = Art.witchColours(style), wb = (o: object) => Art.bake(Art.witchSprite(style, o), wc, style, style.cOutline) as Baked;
-    const sprites = [0, 1, 2].map(frame => wb({ frame })).concat([0, 1, 2].map(frame => wb({ frame, facing: "away" })), [wb({ lean: true }), wb({ lean: true, facing: "away" })],
-      ...["rise", "descend"].flatMap(pose => ["towards", "away"].flatMap(facing => [0, 1].map(frame => wb({ pose, frame, facing })))));
-    // On foot, from 16: standing, landing, taking off, talking, putting a sigil down, lifting one.
-    const FOOT = Art.WITCH_FOOT_POSES as Record<string, { frames: number; fps: number }>;
-    for (const pose of ["stand", "land", "takeoff", "talk", "placeSigil", "liftSigil", "sit"]) {
-      const n = FOOT[pose].frames, entry = { towards: [] as number[], away: [] as number[], fps: FOOT[pose].fps };
-      for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < n; frame++) { entry[facing].push(sprites.length); sprites.push(wb({ pose, frame, facing })); }
-      this.witchFoot[pose] = entry;
-    }
-    // Treetop flight: fast (at boost: three frames) and brake (a skid: two frames), towards and away.
-    for (const [pose, n] of [["fast", 3], ["brake", 2]] as const) {
-      const entry = { towards: [] as number[], away: [] as number[], fps: pose === "fast" ? 10 : 8 };
-      for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < n; frame++) { entry[facing].push(sprites.length); sprites.push(wb({ pose, frame, facing })); }
-      this.witchFly[pose] = entry;
-    }
-    for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < 4; frame++) { this.witchLean[facing].push(sprites.length); sprites.push(wb({ pose: "lean", frame, facing })); }
-    for (const [h, heading] of [["up", "away"], ["down", "towards"]] as const) {
-      const at = (o: object) => sprites.push(wb({ ...o, heading })) - 1;
-      this.witchHeading[h] = { hover: [0, 1, 2].map(frame => at({ frame })), lean: at({ lean: true }), leanCycle: [0, 1, 2, 3].map(frame => at({ pose: "lean", frame })), fast: [0, 1, 2].map(frame => at({ pose: "fast", frame })), brake: [0, 1].map(frame => at({ pose: "brake", frame })) };
-    }
-    this.witch = packAtlas(sprites, 2048);
+    this.witch = this.bakeWitch(witchGenome);
     const lp = Art.lightProps(style) as { campfire: Baked[]; stones: Record<string, Baked> };
     this.props = packAtlas([...lp.campfire, lp.stones.cyan, lp.stones.violet, lp.stones.green], 1024);
     const ss: Baked[] = [];
@@ -282,6 +262,12 @@ export class AssetLibrary {
     if (!a) this.ask({ kind: "woken", id: k, species, style: this.style });
     return a;
   }
+  /** A creature in an expression (art/genome/expressions.js: happy, dazed...), or undefined (and asked for). */
+  faceArt(species: string, face: string): CreatureArt | undefined {
+    const k = `face-${face}-${species}`, a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "face", id: k, species, face, style: this.style });
+    return a;
+  }
   /** An invited creature's party look (its gear seeded by its id), or undefined (and asked for). */
   partyArt(species: string, id: number, colour: number[]): CreatureArt | undefined {
     const k = `party-${id}`, a = this.creatures.get(k);
@@ -299,11 +285,47 @@ export class AssetLibrary {
     if (!this.party) this.ask({ kind: "partyObjects", id: "party", style: this.style });
     return this.party;
   }
+  /** Her frames from her genome (null: the classic witch): flight, on foot, headings. Called again by
+   *  rebakeWitch when the character creator changes her look. */
+  private bakeWitch(genome: unknown): Atlas {
+    // The witch: hover frames 0-2 towards, 3-5 away, then leaning towards (6) and away (7); then
+    // rising (8-9 towards, 10-11 away) and descending (12-13 towards, 14-15 away), two frames each.
+    const style = this.style, mine = witchLookOf(style, genome), wc = mine.colours, wb = (o: object) => Art.bake((Art.witchSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite>)(style, { ...o, look: mine.look }), wc, style, style.cOutline) as Baked;
+    for (const k of Object.keys(this.witchFoot)) delete this.witchFoot[k];
+    for (const k of Object.keys(this.witchFly)) delete this.witchFly[k];
+    this.witchLean.towards.length = 0; this.witchLean.away.length = 0;
+    const sprites = [0, 1, 2].map(frame => wb({ frame })).concat([0, 1, 2].map(frame => wb({ frame, facing: "away" })), [wb({ lean: true }), wb({ lean: true, facing: "away" })],
+      ...["rise", "descend"].flatMap(pose => ["towards", "away"].flatMap(facing => [0, 1].map(frame => wb({ pose, frame, facing })))));
+    // On foot, from 16: standing, landing, taking off, talking, putting a sigil down, lifting one.
+    const FOOT = Art.WITCH_FOOT_POSES as Record<string, { frames: number; fps: number }>;
+    for (const pose of ["stand", "land", "takeoff", "talk", "placeSigil", "liftSigil", "sit"]) {
+      const n = FOOT[pose].frames, entry = { towards: [] as number[], away: [] as number[], fps: FOOT[pose].fps };
+      for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < n; frame++) { entry[facing].push(sprites.length); sprites.push(wb({ pose, frame, facing })); }
+      this.witchFoot[pose] = entry;
+    }
+    // Treetop flight: fast (at boost: three frames) and brake (a skid: two frames), towards and away.
+    for (const [pose, n] of [["fast", 3], ["brake", 2]] as const) {
+      const entry = { towards: [] as number[], away: [] as number[], fps: pose === "fast" ? 10 : 8 };
+      for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < n; frame++) { entry[facing].push(sprites.length); sprites.push(wb({ pose, frame, facing })); }
+      this.witchFly[pose] = entry;
+    }
+    for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < 4; frame++) { this.witchLean[facing].push(sprites.length); sprites.push(wb({ pose: "lean", frame, facing })); }
+    for (const [h, heading] of [["up", "away"], ["down", "towards"]] as const) {
+      const at = (o: object) => sprites.push(wb({ ...o, heading })) - 1;
+      this.witchHeading[h] = { hover: [0, 1, 2].map(frame => at({ frame })), lean: at({ lean: true }), leanCycle: [0, 1, 2, 3].map(frame => at({ pose: "lean", frame })), fast: [0, 1, 2].map(frame => at({ pose: "fast", frame })), brake: [0, 1].map(frame => at({ pose: "brake", frame })) };
+    }
+    this.witchGenome = genome;
+    return packAtlas(sprites, 2048);
+  }
+  /** The character creator changed her look: her frames again (the view swaps its batch). */
+  rebakeWitch(genome: unknown): void { this.witch = this.bakeWitch(genome); this.version++; }
+
   /** A party witch's art (#37: her look from partyWitch(seed), or seed null for our witch's own),
    *  or undefined (and asked for). Looks repeat after a few, so there are only so many to draw. */
   partyWitchArt(seed: number | null): (PartyWitchArt & { atlas: Atlas }) | undefined {
-    const id = seed === null ? "her" : `pw-${seed}`, a = this.partyWitches.get(id);
-    if (!a) this.ask({ kind: "partyWitch", id, seed, style: this.style });
+    // (hers keyed by her genome, so a new look is drawn afresh, never a cached old one)
+    const id = seed === null ? `her-${hashText(JSON.stringify(this.witchGenome))}` : `pw-${seed}`, a = this.partyWitches.get(id);
+    if (!a) this.ask({ kind: "partyWitch", id, seed, style: this.style, genome: seed === null ? this.witchGenome : undefined });
     return a;
   }
   /** Ask for a set ahead of need, without using it. */

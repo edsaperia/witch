@@ -9,7 +9,7 @@ import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { dormant, poseOf, STEP } from "../rules/game";
 import { cameraPose } from "../rules/camera";
-import { AREA_TYPES } from "../rules/map";
+import { AREA_TYPES, HOME_LOOK } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
 import { AssetLibrary, type CreatureArt, type TypeArt } from "./assets";
 import type { Frame, Piece, RelicArt } from "./artBuild";
@@ -26,7 +26,8 @@ import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
 import { InviteView } from "./invites";
-import { dances, ENRAGED_TINT, lookOf, StateMarks } from "./looks";
+import { stunned } from "../rules/knock";
+import { dances, ENRAGED_TINT, expression, lookOf, StateMarks } from "./looks";
 import { ActionBar } from "./actionbar";
 import { BuffHud } from "./buffhud";
 import { Dancefloor } from "./dancefloor";
@@ -179,7 +180,7 @@ export class View {
   private now = 0;
   stats: ViewStats = { berries: 0, forestMs: 0, forestMissing: 0, sceneryRadius: 0, fps: 0, gameplay: 0, scenery: 0, dropped: 0, trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0, lights: 0 };
 
-  constructor(readonly canvas: HTMLCanvasElement, readonly game: Game, readonly style: Style) {
+  constructor(readonly canvas: HTMLCanvasElement, readonly game: Game, readonly style: Style, witchGenome: unknown = null) {
     const t = game.tuning;
     this.budget = newBudget(t);
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance", preserveDrawingBuffer: true });
@@ -201,7 +202,7 @@ export class View {
       LIGHT_UNIFORMS.uAmb.value.multiplyScalar(2);
       LIGHT_UNIFORMS.uGlowPower.value = 0;
     }
-    this.assets = new AssetLibrary(style, game.seed, t.pixelSize);
+    this.assets = new AssetLibrary(style, game.seed, t.pixelSize, witchGenome);
     this.assets.crownShare = t.trunkFade.crownShare;
     {
       // The steepest the hills may be: the camera's shallowest pitch at any zoom, ground or treetop (Ed, v289).
@@ -216,6 +217,7 @@ export class View {
     this.clouds = new Clouds(t.sky.clouds, t.sky.lightning, game.seed);
     this.scene.add(this.clouds.mesh, this.clouds.bolt);
     this.assets.onFloor = (type, tile) => this.ground.setFloor(type, tile);
+    this.assets.prefetchType(HOME_LOOK); // home's meadow floor (no trees ask for it)
     const cs = t.canopyShadow;
     this.ground.setCanopyShadow(cs.on ? cs.strength : 0, cs.height, cs.cover, cs.wind);
     this.shadows = new ShadowBatch(t.shadows.strength, t.fx === "smooth");
@@ -236,9 +238,7 @@ export class View {
     // The witch is depth-tested like everything else, drawn after it; where something still hides
     // her, a silhouette in her glow colour shows through, and tall things in front of her fade.
     const O = t.occlusion;
-    this.witchBatch = new SpriteBatch(this.assets.witch, this.mpp, { absolute: true, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: O.silhouette } });
-    this.witchBatch.mesh.renderOrder = 10;
-    this.scene.add(...this.witchBatch.meshes);
+    this.witchBatch = this.makeWitchBatch();
     SPRITE_UNIFORMS.uOcc.value.set(O.fadeOpacity, O.edge, O.minHeight, O.on ? 1 : 0);
     // The treehouse, home: its base and its crown (the crown only from the treetops), its trunk's
     // foot on its spot. It fades like other tall things when she's behind it.
@@ -269,7 +269,7 @@ export class View {
     this.leashView = new LeashView(this.scene, game);
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // ?rig=1: the live rig (#79)
     this.lasers = new Lasers(this.scene, game);
-    this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z));
+    this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z), game.map);
     this.scene.add(...this.ley.meshes);
     this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
     this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
@@ -910,8 +910,10 @@ export class View {
       // they could almost be mistaken for scenery"): sunk and mossed over, in a batch of its own
       // with no find-in-the-dark look. Waking, it heaves up out of the ground.
       const W = g.tuning.wildLegends, st = c.boss && !c.leashed ? c.legendState : undefined;
-      const sleeping = st === "asleep" || st === "slept", rising = st === "waking" || (st === "happy" && (c.stateAt ?? 0) > 0) ? Math.min(1, (time - (c.stateAt ?? 0)) / Math.max(0.1, W.wake * 0.5)) : 1; // (made happy, it stirs and rises contentedly)
-      const art = party ?? woken ?? this.assets.creatureArt(c.species), key = party ? `${look === "happy" ? "happy" : "party"}-${c.id}` : sleeping ? `sleep-${c.species}` : woken ? `woken-${c.species}` : c.species;
+      const sleeping = st === "asleep" || st === "restless" || st === "slept", rising = st === "waking" || (st === "happy" && (c.stateAt ?? 0) > 0) ? Math.min(1, (time - (c.stateAt ?? 0)) / Math.max(0.1, W.wake * 0.5)) : 1; // (made happy, it stirs and rises contentedly)
+      // Its expression, part of its face (art/genome/expressions.js; render/looks.ts expression): the party looks are happy and the woken one angry already.
+      const face = sleeping ? "neutral" : expression(c, time), faced = !party && !woken && face !== "neutral" ? this.assets.faceArt(c.species, face) : undefined;
+      const art = party ?? woken ?? faced ?? this.assets.creatureArt(c.species), key = party ? `${look === "happy" ? "happy" : "party"}-${c.id}` : sleeping ? `sleep-${c.species}` : woken ? `woken-${c.species}` : faced ? `face-${face}-${c.species}` : c.species;
       if (!art) continue;
       arts.set(key, art);
       const frame = art.atlas.frames[art.frame(c.level, c.moving ? Math.floor(c.walk) % 2 : 0, c.away)];
@@ -948,7 +950,7 @@ export class View {
       if (sleeping) glow = -2 - W.moss; else if (rising < 1) glow = -2 - W.moss * (1 - rising);
       // Restless in its sleep (#87): it tosses in bursts, and turns over when it's bad.
       const toss = st === "asleep" ? restlessness(c) : 0, fit = toss ? toss * Math.max(0, Math.sin(time * 1.3 + c.id)) ** 2 : 0;
-      if (!(this.rig && !party && !sleeping && rising >= 1 && this.rig.add(c, { y: dance + hop + sunk, scale, glow, fresh, h: frame.h - (frame.pad ?? 0) }))) // the rig draws it, if it can
+      if (!(this.rig && !party && !sleeping && rising >= 1 && this.rig.add(c, { y: dance + hop + sunk, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face }))) // the rig draws it, if it can
         l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id), y: dance + hop + sunk, z: c.z, frame, flip: (c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1), fresh, glow, scale });
       this.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * this.mpp * scale + dance + hop + sunk); // its health bar goes over it
       creatureShadows.push({ x: c.x, z: c.z, w: frame.w * this.mpp * 0.7, d: frame.w * this.mpp * 0.25 });
@@ -1137,6 +1139,20 @@ export class View {
   /** Whether the hills' next strip was all worked out last frame. */
   private heightsReady = true;
   private time(part: string): void { const now = performance.now(); this.ms[part] = (this.ms[part] ?? 0) + now - this.lap; this.lap = now; }
+
+  /** Her sprite batch, from the assets' witch frames. */
+  private makeWitchBatch(): SpriteBatch {
+    const t = this.game.tuning, b = new SpriteBatch(this.assets.witch, this.mpp, { absolute: true, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: t.occlusion.silhouette } });
+    b.mesh.renderOrder = 10;
+    this.scene.add(...b.meshes);
+    return b;
+  }
+  /** The character creator changed her look (her genome, art/witchGenome.js): her frames re-baked and her batch swapped. */
+  setWitch(genome: unknown): void {
+    this.assets.rebakeWitch(genome);
+    this.scene.remove(...this.witchBatch.meshes);
+    this.witchBatch = this.makeWitchBatch();
+  }
 
   /** The 💌's aim (issue #87): the world direction from the witch to the ground under a point on the page. */
   aimAt(clientX: number, clientY: number): { x: number; z: number } | null {
@@ -1351,6 +1367,8 @@ export class View {
     this.seatTime = time;
     this.seatK = w.seated ? 1 : Math.max(0, this.seatK - sdt / 1.0); // down from the studio (some 7 m up) over a second
     let wx = w.x, wz = w.z, wyy = wy;
+    // Staggered by a blow (rules/knock.ts): a wobble side to side, fading as it wears off.
+    { const K = g.witches[0].knock; if (stunned(K, time)) { const left = (K!.stunUntil - time) / Math.max(0.1, K!.stunUntil - K!.at); wx += Math.sin(time * 34) * 0.18 * Math.min(1, left * 2); } }
     if (this.seatK > 0) {
       const seat = onTreehouse(T.seat.x, T.seat.y), k = this.seatK * this.seatK * (3 - 2 * this.seatK);
       const cam = onTreehouse(T.camera.x, T.camera.y);

@@ -249,6 +249,13 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
+        <div class="row" style="justify-content:space-between"><h2>Witch generator</h2><div class="row"><button id="witchGenReroll">Reroll</button></div></div>
+        <p class="note">Witches grown from genome data (art/witchGenome.js): the hat (shape, crown height, brim, lean), hair, top, cloak (none, short, long, hooded), broom (classic, fan, twig or round bristles; the handle's length and bend; the bristles' length), accessories (headphones, sunglasses, glow sticks, a scarf, a satchel, a glowing pendant, earrings) and a palette from one base hue. The first is ours, drawn from her own genome exactly as she always is; the rest are generated (Reroll for others). Each hovers, leans and stands. Click one to see its genome, to copy.</p>
+        <div class="sheet-wrap"><canvas id="witchGenSheet" width="420" height="160"></canvas></div>
+        <pre id="witchGenJson" class="note" style="white-space:pre-wrap;max-height:220px;overflow:auto"></pre>
+      </section>
+
+      <section style="display:grid;gap:10px">
         <div class="row" style="justify-content:space-between"><h2>Attack effects</h2><div class="row"><label class="note" for="fxTint">Tint</label><select id="fxTint"><option value="255,70,90">wild (red)</option><option value="70,240,255">party (cyan)</option><option value="255,90,220">party (pink)</option><option value="150,255,80">party (green)</option><option value="255,220,70">party (yellow)</option></select></div></div>
         <p class="note">What a fight looks like (Stage 5): projectiles (spit, a barb, a seed and a stone lobbed with their shadow, a feather dart, a glowing mote), short and long beams (start, the loop that repeats along the beam, end), the quake's ring and a spore cloud, the telegraphs (a target circle where a lob will land, a line along a beam or a charge with its start and arrowhead, the wind-up flash, the quake's reach), hit sparks, and the slow and knockback marks. Each row: its frames light (for the dark forest) on night ground, then dark (for bright ground) on a lit floor, then how the treetop camera shows it, the ground drawing and then the treetop one; ground decals also laid flat as the camera sees them. Tinted by the attack's side.</p>
         <div class="sheet-wrap"><canvas id="fxSheet" width="420" height="160"></canvas></div>
@@ -317,6 +324,106 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 // Witch art core: random numbers, noise, colour, the Sprite (a material and a normal per
 // pixel), the shape toolkit the animals and trees are drawn with, and bake (sprite ->
 // albedo + normal canvases). No page or DOM dependencies beyond making canvases.
+// ---- inlined from art/stylise.js ----
+// The pixel-art styles (docs/ART-GUIDE.md section 0), applied to a sprite as it is baked: "bold" (3 hue-shifted tones per
+// material, cool saturated shadows and warm lights, clusters rather than noise, a selective outline in each part's own dark
+// colour, broken on the lit upper left) and "ref" (Ed's boar reference: one tone family per material, cream light as a big
+// shape over the top, a deeper red-brown or blue-violet shadow, a strong near-black outline with interior lines where parts
+// overlap). The light is baked into the albedo from the sprite's own normals (one light, from the upper left and in front),
+// and the normals come out flat, so the game's lighting tints the sprite without banding it again. The sprite keeps its
+// size: the outline goes only where there is room. "now" (or nothing) leaves the bake as it was.
+// The game's ?style=now|bold|ref (and ?px=3|4|5 for the art pixel) choose one per load; the stylisation ladder
+// (tools/art-iterations/ladder.mjs) shows the same treatments side by side.
+
+const ART_STYLES = ["now", "bold", "ref"];
+const STYLE_LIGHT = (() => { const l = [-.45, -.75, .5], n = Math.hypot(...l); return l.map(v => v / n); })();
+const styleHsv = (r, g, b) => { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0; if (d) h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return [(h / 6 + 1) % 1, mx ? d / mx : 0, mx]; };
+const styleToward = (h, target, k) => { let d = target - h; if (d > .5) d -= 1; if (d < -.5) d += 1; return (h + d * k + 1) % 1; };
+
+// A material's tone t (0 shadow, .5 base, 1 light) in a style.
+function styleTone(r, g, b, t, mode) {
+  let [h, s, v] = styleHsv(r, g, b);
+  if (mode === "ref") {
+    const warm = h < .2 || h > .85;
+    if (t < .34) { h = styleToward(h, warm ? .99 : .7, .35); s = Math.min(1, s * 1.35 + .12); v *= .58; }
+    else if (t > .66) { h = styleToward(h, .12, .25); s *= .55; v = Math.min(1, v * 1.22 + .08); }
+    return hsv2rgb(h, s, v);
+  }
+  const k = Math.abs(t - .5) * 2;
+  v = Math.min(1, v * (.52 + .62 * t));
+  h = t < .5 ? styleToward(h, .72, .16 * k) : styleToward(h, .13, .12 * k);
+  s = Math.min(1, s * (t < .5 ? 1 + .45 * k : 1 - .25 * k) + (t < .5 ? .08 * k : 0));
+  return hsv2rgb(h, s, v);
+}
+
+// Stylise a baked sprite's pixels in place: a (RGBA albedo, alpha 254 = glowing), n and nf (RGBA normal maps, as bake writes
+// them), w x h. The sprite must have been baked without an outline (this draws its own).
+function stylisePixels(a, n, nf, w, h, mode) {
+  if (mode !== "bold" && mode !== "ref") return;
+  const T = 3, N = w * h, band = new Int8Array(N).fill(-1), key = new Int32Array(N).fill(-1), glow = new Uint8Array(N), nrm = new Float32Array(N * 3);
+  const keyOf = o => (a[o] << 16) | (a[o + 1] << 8) | a[o + 2];
+  for (let i = 0; i < N; i++) {
+    const o = i * 4; if (!a[o + 3]) continue;
+    key[i] = keyOf(o);
+    if (a[o + 3] === 254) { glow[i] = 1; band[i] = T - 1; continue; }
+    const nx = (n[o] - 128) / 127, ny = (n[o + 1] - 128) / 127, nz = n[o + 2] / 255;
+    nrm[i * 3] = nx; nrm[i * 3 + 1] = ny; nrm[i * 3 + 2] = nz;
+    const d = Math.max(0, nx * STYLE_LIGHT[0] + ny * STYLE_LIGHT[1] + nz * STYLE_LIGHT[2]), v = mode === "ref" ? Math.min(1, .22 + .95 * d) : .3 + .7 * d;
+    band[i] = Math.min(T - 1, Math.floor(v * T));
+  }
+  // clusters: each lit pixel takes the band most of its 3 x 3 neighbourhood of the same material has
+  const nb2 = Int8Array.from(band);
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    const i = y * w + x; if (key[i] < 0 || glow[i]) continue;
+    const cnt = [0, 0, 0];
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const j = i + dy * w + dx; if (key[j] === key[i] && !glow[j]) cnt[band[j]] += dx || dy ? 1 : 1.5; }
+    nb2[i] = cnt[0] >= cnt[1] && cnt[0] >= cnt[2] ? 0 : cnt[1] >= cnt[2] ? 1 : 2;
+  }
+  // the tones, from each pixel's own albedo; remember each pixel's colour for the lone-pixel and outline passes
+  const out = new Uint8ClampedArray(a.length);
+  for (let i = 0; i < N; i++) {
+    const o = i * 4; if (key[i] < 0) continue;
+    if (glow[i]) { out[o] = a[o]; out[o + 1] = a[o + 1]; out[o + 2] = a[o + 2]; out[o + 3] = 254; continue; }
+    band[i] = nb2[i];
+    const c = styleTone(a[o], a[o + 1], a[o + 2], band[i] / (T - 1), mode);
+    out[o] = c[0]; out[o + 1] = c[1]; out[o + 2] = c[2]; out[o + 3] = 255;
+  }
+  // lone pixels: a pixel unlike all four neighbours, two or more of which agree, takes their colour
+  const ck = i => (out[i * 4] << 16) | (out[i * 4 + 1] << 8) | out[i * 4 + 2];
+  for (let pass = 0; pass < 2; pass++) for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    const i = y * w + x; if (key[i] < 0 || glow[i]) continue;
+    const me = ck(i), nb = [i - 1, i + 1, i - w, i + w].filter(j => key[j] >= 0);
+    if (nb.some(j => ck(j) === me)) continue;
+    let best = -1, bc = 1; for (const j of nb) { const kj = ck(j), c = nb.filter(q => ck(q) === kj).length; if (c > bc) { bc = c; best = j; } }
+    if (best < 0) continue;
+    out.set(out.subarray(best * 4, best * 4 + 4), i * 4); band[i] = band[best];
+  }
+  // the outline, in the empty pixels round the shape
+  const strong = mode === "ref";
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x; if (key[i] >= 0) continue;
+    const nb = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => x + dx >= 0 && x + dx < w && y + dy >= 0 && y + dy < h && key[i + dy * w + dx] >= 0).map(([dx, dy]) => [dx, dy, i + dy * w + dx]);
+    if (!nb.length) continue;
+    const o = i * 4;
+    if (strong) { out[o] = 20; out[o + 1] = 12; out[o + 2] = 14; out[o + 3] = 255; continue; }
+    if (nb.every(([dx, dy, j]) => (dx > 0 || dy > 0) && band[j] === T - 1)) continue; // broken on the lit upper left
+    const j = nb[0][2], [hh, ss, vv] = styleHsv(out[j * 4], out[j * 4 + 1], out[j * 4 + 2]), c = hsv2rgb(styleToward(hh, .72, .15), Math.min(1, ss * 1.2 + .15), Math.max(.06, vv * .35));
+    out[o] = c[0]; out[o + 1] = c[1]; out[o + 2] = c[2]; out[o + 3] = 255;
+  }
+  // interior lines (ref): where the surface turns sharply, the darker side gets a line
+  if (strong) for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x; if (key[i] < 0 || glow[i]) continue;
+    for (const j of [x + 1 < w ? i + 1 : -1, y + 1 < h ? i + w : -1]) {
+      if (j < 0 || key[j] < 0 || glow[j]) continue;
+      if (nrm[i * 3] * nrm[j * 3] + nrm[i * 3 + 1] * nrm[j * 3 + 1] + nrm[i * 3 + 2] * nrm[j * 3 + 2] > .55) continue;
+      const k = band[i] <= band[j] ? i : j; out[k * 4] = 20; out[k * 4 + 1] = 12; out[k * 4 + 2] = 14;
+    }
+  }
+  a.set(out);
+  // flat normals: the light is in the albedo now; the game's light tints without banding again
+  for (let i = 0; i < N; i++) { const o = i * 4; if (!a[o + 3]) continue; n[o] = 128; n[o + 1] = 128; n[o + 2] = 255; n[o + 3] = 255; nf[o] = 128; nf[o + 1] = 128; nf[o + 2] = 255; nf[o + 3] = 255; }
+}
+
 
 function defaultCanvas(w, h) {
   if (typeof document !== "undefined") { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
@@ -373,6 +480,7 @@ const M = {
   SHOE: 48, SOLE: 49,          // fancy shoes
   WOKEN: 50,   // a woken creature's angry glowing eyes
   WEB: 51,     // pale silk and cotton: spider webs, cotton grass (lit, not glowing)
+  BROW: 52,    // a creature's expression's brows: dark ink on a light coat, pale on a dark one (genome/expressions.js)
 };
 // These glow: drawn at full colour by the lighting pass, whatever the light.
 // The rune glyphs: one carved-rune language for the magic stones and the soundsystem. Simple,
@@ -619,7 +727,8 @@ class Sprite {
 // Albedo alpha 254 marks a glowing pixel for the lighting pass. N is the normal map,
 // NF the same for the sprite mirrored (facing left).
 function bake(sp, colours, st, outlineMode = st.outline, makeCanvas = defaultCanvas) {
-  const { w, h } = sp, mk = () => makeCanvas(w, h);
+  const { w, h } = sp, mk = () => makeCanvas(w, h), artStyle = st?.artStyle; // artStyle: a pixel-art style (art/stylise.js: the game's ?style=), drawing its own outline
+  if (artStyle === "bold" || artStyle === "ref") outlineMode = "none";
   const A = mk(), N = mk(), NF = mk(), a = A.getContext("2d").createImageData(w, h), n = N.getContext("2d").createImageData(w, h), nf = NF.getContext("2d").createImageData(w, h);
   const outline = outlineMode === "none" ? null : outlineMode === "dark" ? [22, 18, 30] : "tint";
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
@@ -640,6 +749,7 @@ function bake(sp, colours, st, outlineMode = st.outline, makeCanvas = defaultCan
     n.data.set([nx * 127 + 128, ny * 127 + 128, nz * 255, 255], o);
     nf.data.set([-nx * 127 + 128, ny * 127 + 128, nz * 255, 255], o);
   }
+  if (artStyle === "bold" || artStyle === "ref") stylisePixels(a.data, n.data, nf.data, w, h, artStyle);
   A.getContext("2d").putImageData(a, 0, 0); N.getContext("2d").putImageData(n, 0, 0); NF.getContext("2d").putImageData(nf, 0, 0);
   return { A, N, NF, w, h };
 }
@@ -1599,6 +1709,8 @@ const PITCH = .52;                       // the camera looks down about 30°
 // With `measure`, it only works out the scale (pixels per unit) `height` would give: { s }.
 function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false } = {}) {
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), spp = Math.sin(pitch);
+  // model.atScale(pxPerUnit): parts that must be sized in pixels (an expression's face: genome/expressions.js), added once the scale is known
+  if (model.atScale && !measure) { const f = model.atScale; model.atScale = null; f(scale ?? render(model, { height, facing, yaw, pitch, lineGap, measure: true }).s); }
   const toWorld = p => [p[0] * cy - p[2] * sy, p[1], p[0] * sy + p[2] * cy];
   const toModel = p => [p[0] * cy + p[2] * sy, p[1], -p[0] * sy + p[2] * cy];
   const D = [0, -spp, -cp], U = [0, cp, -spp], R = [1, 0, 0], B = [0, spp, cp];
@@ -1741,12 +1853,14 @@ const masks = {
 // Her parts and the material each is drawn in. The last few are a party outfit's: its pattern and trim (sequins, a mesh,
 // a poncho's stripes), the flowers on a hat, a party cup, two glow-stick neons, sunglasses' lenses and frames.
 const WITCH_PARTS = { hair: M.HAIR, hat: M.HAT, headphones: M.PHONES, top: M.TOP, jacket: M.JACKET, jeans: M.JEANS, sneakers: M.SHOES, broom: M.BROOM, bristles: M.STRAW, skin: M.SKIN,
-  pattern: M.HAT2, trim: M.HAT1, flower: M.FLOWER, flower2: M.POM, cup: M.ACCENT, glow: M.COLLAR, glow2: M.GLOW, shades: M.SHADES, frame: M.FRAME };
+  pattern: M.HAT2, trim: M.HAT1, flower: M.FLOWER, flower2: M.POM, cup: M.ACCENT, glow: M.COLLAR, glow2: M.GLOW, shades: M.SHADES, frame: M.FRAME,
+  cloak: M.CLOTH, scarf: M.BODY, satchel: M.WOOD }; // the witch generator's: a cloak, a scarf, a satchel (art/witchGenome.js)
 // The default outfit: a hue, saturation and value per part. Style knobs override the hues.
 const DEFAULT_OUTFIT = {
   hair: [.01, .7, .85], hat: [.74, .45, .45], headphones: [.92, .55, .9], top: [.13, .15, .95], jacket: [.72, .45, .7],
   jeans: [.6, .5, .7], sneakers: [.0, .0, .95], broom: [.08, .55, .55], bristles: [.12, .55, .9], skin: [.07, .3, .94],
   pattern: [.13, .1, 1], trim: [.0, .6, .8], flower: [.95, .45, .98], flower2: [.15, .6, 1], cup: [.99, .75, .85], glow: [.88, .75, 1], glow2: [.33, .8, 1], shades: [.7, .4, .14], frame: [.13, .6, .9],
+  cloak: [.74, .5, .4], scarf: [.98, .6, .85], satchel: [.07, .55, .5],
 };
 // styleHues false: the outfit's own hues, whatever the style's (a party witch's colours are her own)
 function witchColours(st, outfit = DEFAULT_OUTFIT, { styleHues = true } = {}) {
@@ -1765,10 +1879,35 @@ function witchColours(st, outfit = DEFAULT_OUTFIT, { styleHues = true } = {}) {
 //   phones (her headphones), shades (sunglasses), glowsticks (glow-stick bracelets)
 // Every hat keeps the glowing hatband, so every look is still a witch.
 const WITCH_LOOKS = { hat: ["classic", "crooked", "floppy", "small", "flowers", "bucket"], hair: ["long", "bob", "buns", "mohawk"], top: ["jacket", "sequins", "mesh", "poncho", "cape"] };
-const DEFAULT_LOOK = { hat: "classic", hair: "long", top: "jacket", phones: true, shades: false, glowsticks: false };
+const DEFAULT_LOOK = { hat: "classic", hair: "long", top: "jacket", phones: true, shades: false, glowsticks: false,
+  // the witch generator's axes (art/witchGenome.js), each as hers by default: the hat's crown height (times hers), brim (times
+  // hers), lean (radians, + back) and band (its glowing band's height, times hers); the broom's kind (classic, fan, twig, round), handle length (times hers) and bend (+ up),
+  // the bristles' length (times hers); a cloak (none, short, long, hooded); a scarf, a satchel, a pendant and earrings
+  hatHeight: 1, hatBrim: 1, hatTilt: 0, hatBand: 1, broom: "classic", broomLength: 1, broomBend: 0, bristles: 1, cloak: "none", scarf: false, satchel: false, pendant: false, earrings: false };
+// The hat's shape from the look: a crown point p scaled from the brim by hatHeight and leaned back by hatTilt; a brim's radii by hatBrim.
+const hatPt = (L, brim, p) => { const k = L.hatHeight ?? 1, a = L.hatTilt || 0; if (k === 1 && !a) return p; let d = v3.mul(v3.sub(p, brim), k); if (a) { const c = Math.cos(a), s = Math.sin(a); d = [d[0] * c - d[1] * s, d[0] * s + d[1] * c, d[2]]; } return v3.add(brim, d); };
+const brimR = (L, r) => (L.hatBrim ?? 1) === 1 ? r : [r[0] * L.hatBrim, r[1], r[2] * L.hatBrim];
+// The broom from the look: its handle from the binding a towards b (longer by broomLength, bowed up by broomBend), and its
+// bristles centred at c along o.dir (classic as hers; fan: wide and flat; twig: a long thin bundle with stray twigs; round: a puff),
+// longer by `bristles`, kept bound at the same point.
+function broomHandle(m, L, a, b, r1 = .022, r2 = .018) {
+  const k = L.broomLength ?? 1, bend = L.broomBend || 0;
+  if (k === 1 && !bend) return m.seg(a, b, r1, r2, M.BROOM, { group: 2 });
+  const e = v3.add(a, v3.mul(v3.sub(b, a), k)), mid = v3.add(v3.lerp(a, e, .55), [0, bend * .12, 0]);
+  return m.chain([[...a, r1], [...mid, (r1 + r2) / 2], [...e, r2]], M.BROOM, { group: 2 });
+}
+function broomBristles(m, L, c, r, o) {
+  const kind = L.broom || "classic", k = L.bristles ?? 1;
+  if (kind === "classic" && k === 1) return m.ell(c, r, M.STRAW, o);
+  const d = v3.norm(o.dir), R = kind === "fan" ? [r[0] * k, r[1] * 1.6, r[2] * .5] : kind === "twig" ? [r[0] * 1.4 * k, r[1] * .7, r[2] * .7] : kind === "round" ? [r[0] * .85 * k, r[1] * 1.35, r[2] * 1.35] : [r[0] * k, r[1], r[2]];
+  const cc = v3.sub(c, v3.mul(d, R[0] - r[0])); // still bound where hers is
+  m.ell(cc, R, M.STRAW, o);
+  if (kind === "twig") for (let i = 0; i < 5; i++) { const s = (i / 4 - .5) * 2, from = v3.sub(cc, v3.mul(d, R[0] * .4)), to = v3.add(v3.sub(cc, v3.mul(d, R[0] * (1.15 + .1 * (i % 2)))), [0, s * R[1] * 1.1, (i % 3 - 1) * R[2] * .9]); m.seg(from, to, .012, .006, M.STRAW, { group: 3, paint: o.paint }); }
+}
 // The hat: its brim at `brim` (tipped along dir), its crown through mid to tip (as hers would be). Returns the tip (the hatTip anchor).
 function drawHat(m, L, brim, dir, mid, tip) {
-  const band = p => p[1] < brim[1] + (L.hat === "classic" ? .045 : .065) ? M.MAGIC : undefined, from = (p, k, d = [0, 0, 0]) => v3.add(v3.add(brim, v3.mul(v3.sub(p, brim), k)), d);
+  mid = hatPt(L, brim, mid); tip = hatPt(L, brim, tip);
+  const band = p => p[1] < brim[1] + (L.hat === "classic" ? .045 : .065) * (L.hatBand ?? 1) ? M.MAGIC : undefined, from = (p, k, d = [0, 0, 0]) => v3.add(v3.add(brim, v3.mul(v3.sub(p, brim), k)), d);
   if (L.hat === "bucket") { // a soft bucket hat with cat ears, a glowing band round it
     const c = v3.add(brim, [-.01, .05, 0]);
     m.ell(brim, [.15, .016, .145], M.HAT, { dir, group: 11 });
@@ -1783,21 +1922,21 @@ function drawHat(m, L, brim, dir, mid, tip) {
     return t;
   }
   if (L.hat === "floppy") { // a wide brim drooping all round, a short crown
-    m.ell(brim, [.22, .016, .2], M.HAT, { dir, group: 11 });
-    m.chain([...Array(13).keys()].map(k => { const a = k / 12 * Math.PI * 2; return [...v3.add(brim, [Math.cos(a) * .2, -.02 - .015 * Math.cos(a), Math.sin(a) * .185]), .024]; }), M.HAT, { group: 11 });
+    m.ell(brim, brimR(L, [.22, .016, .2]), M.HAT, { dir, group: 11 });
+    const bk = L.hatBrim ?? 1; m.chain([...Array(13).keys()].map(k => { const a = k / 12 * Math.PI * 2; return [...v3.add(brim, [Math.cos(a) * .2 * bk, -.02 - .015 * Math.cos(a), Math.sin(a) * .185 * bk]), .024]; }), M.HAT, { group: 11 });
     const t = from(tip, .72, [-.02, -.01, 0]);
     m.chain([[...v3.add(brim, [0, .01, 0]), .095], [...from(mid, .8), .055], [...t, .015]], M.HAT, { group: 11, paint: band });
     return t;
   }
   if (L.hat === "crooked") { // tall and crooked: the crown kinked, its tip flopping over
     const k1 = from(mid, 1.3, [0, 0, .025]), k2 = from(tip, 1.45, [-.02, .03, .05]), t = v3.add(k2, [.1, -.06, .03]);
-    m.ell(brim, [.16, .014, .15], M.HAT, { dir, group: 11 });
+    m.ell(brim, brimR(L, [.16, .014, .15]), M.HAT, { dir, group: 11 });
     m.chain([[...v3.add(brim, [0, .01, 0]), .085], [...k1, .05], [...k2, .027], [...t, .012]], M.HAT, { group: 11, paint: band });
     return t;
   }
-  m.ell(brim, [.16, .014, .15], M.HAT, { dir, group: 11 }); // hers: a wide brim and a tall crown, its tip bent back
+  m.ell(brim, brimR(L, [.16, .014, .15]), M.HAT, { dir, group: 11 }); // hers: a wide brim and a tall crown, its tip bent back
   m.chain([[...v3.add(brim, [0, .01, 0]), .085], [...mid, .045], [...tip, .012]], M.HAT, { group: 11, paint: band }); // a glowing hatband
-  if (L.hat === "flowers") for (let k = 0; k < 7; k++) { const a = k / 7 * Math.PI * 2 + .3; m.ell(v3.add(brim, [Math.cos(a) * .135, .018, Math.sin(a) * .13]), [.032, .026, .032], k % 2 ? M.POM : M.FLOWER, { group: 11 }); }
+  if (L.hat === "flowers") for (let k = 0; k < 7; k++) { const a = k / 7 * Math.PI * 2 + .3, bk = L.hatBrim ?? 1; m.ell(v3.add(brim, [Math.cos(a) * .135 * bk, .018, Math.sin(a) * .13 * bk]), [.032, .026, .032], k % 2 ? M.POM : M.FLOWER, { group: 11 }); }
   return tip;
 }
 // Her hair: the long hair's tail through `tail` ([x, y, z, radius] points); the other styles round her head H.
@@ -1809,6 +1948,7 @@ function drawHair(m, L, H, tail) {
 }
 // Her eyes (or sunglasses), looking up by `look`, her head tilted by `tilt`; `shut` (laughing, hugging): closed.
 function drawEyes(m, L, H, look = 0, tilt = 0, shut = false) {
+  if (L.earrings) for (const s of [-1, 1]) m.ell(v3.add(H, [-.005, -.075, s * .1]), [.016, .022, .016], M.FRAME, { group: 10 }); // the witch generator's earrings
   const R = [.11, .115, .1], at = d => Model.surface(H, R, v3.norm(d));
   if (L.shades) {
     const p = [-1, 1].map(s => at([.85, .08 + look, s * .42 + tilt * .1])), mid = v3.add(at([1, .08 + look, tilt * .1]), [.01, 0, 0]);
@@ -1847,6 +1987,31 @@ function drawWrap(m, L, chest, fwd, spine, flying) {
     if (flying) m.ell(v3.add(chest, [-.24, -.02, 0]), [.3, .035, .16], M.JACKET, { dir: [1, -.2, 0], up: [0, 1, 0], group: 12 });
     else m.ell(v3.add(chest, v3.add(v3.mul(fwd, -.11), v3.mul(spine, -.12))), [.3, .035, .16], M.JACKET, { dir: v3.add(spine, v3.mul(fwd, .12)), up: fwd, group: 12 });
   }
+  drawExtras(m, L, chest, fwd, spine, flying);
+}
+// The witch generator's extras: a cloak from her shoulders (short, long, or long with a hood), streaming out behind in flight or
+// hanging down her back; a scarf round her neck, its end flying; a satchel on her near hip on a strap across her; a glowing pendant.
+function drawExtras(m, L, chest, fwd, spine, flying) {
+  const back = v3.mul(fwd, -1), side = [0, 0, 1], neck = v3.add(chest, v3.mul(spine, .14));
+  if (L.cloak && L.cloak !== "none") {
+    const len = L.cloak === "short" ? .22 : .42, sh = v3.add(chest, v3.add(v3.mul(spine, .1), v3.mul(back, .07)));
+    const dir = flying ? v3.norm(v3.add(back, v3.mul(spine, -.15))) : v3.norm(v3.add(v3.mul(spine, -1), v3.mul(back, .18)));
+    const mid = v3.add(sh, v3.mul(dir, len * .5)), end = v3.add(sh, v3.mul(dir, len));
+    m.ell(mid, [len * .55, .03, .15 + len * .12], M.CLOTH, { dir, up: flying ? [0, 1, 0] : back, group: 14 });
+    m.ell(end, [.05, .025, .17 + len * .15], M.CLOTH, { dir, up: flying ? [0, 1, 0] : back, group: 14 });
+    if (L.cloak === "hooded") m.ell(v3.add(neck, v3.add(v3.mul(back, .09), v3.mul(spine, .03))), [.08, .06, .1], M.CLOTH, { dir: back, up: spine, group: 14 });
+  }
+  if (L.scarf) {
+    m.ell(neck, [.085, .035, .09], M.BODY, { dir: fwd, up: spine, group: 15 });
+    const t0 = v3.add(neck, v3.mul(back, .06)), t1 = v3.add(t0, flying ? [-.14, .02, .04] : v3.add(v3.mul(spine, -.12), v3.mul(back, .05))), t2 = v3.add(t1, flying ? [-.12, -.03, .03] : v3.mul(spine, -.1));
+    m.chain([[...t0, .03], [...t1, .025], [...t2, .02]], M.BODY, { group: 15, paint: p => ((Math.floor((p[0] + p[1]) * 30) % 2) + 2) % 2 ? M.HAT1 : undefined });
+  }
+  if (L.satchel) {
+    const hip = v3.add(chest, v3.add(v3.mul(spine, -.17), v3.add(v3.mul(side, .12), v3.mul(back, .02))));
+    m.ell(hip, [.065, .058, .028], M.WOOD, { dir: fwd, up: spine, group: 16 }); // (an ellipsoid: the posed flight turns only ellipsoids and limbs)
+    m.chain([[...v3.add(chest, v3.add(v3.mul(spine, .12), v3.mul(side, -.08))), .012], [...v3.add(chest, v3.add(v3.mul(fwd, .1), [0, 0, .02])), .012], [...hip, .012]], M.WOOD, { group: 16 });
+  }
+  if (L.pendant) m.ell(v3.add(chest, v3.add(v3.mul(fwd, .105), v3.mul(spine, .05))), [.022, .028, .018], M.MAGIC, { group: 17 });
 }
 // Every part (those `only` picks), flat and anchor of m turned by angle a about the vertical ("y") or the side-to-side ("z") axis through P.
 function turnModel(m, axis, a, P, only = () => true) {
@@ -1884,13 +2049,13 @@ const WITCH_POSES = { rise: .78, descend: -.66, brake: .44 }; // the broom's til
 // length with her body streaming out behind, nearly flat, one knee bent and one leg kicking;
 // her hat blown up off her head on its chin strap, hair straight back, jacket tail whipping;
 // eyes wide, teeth gritted; a few small speed streaks. Three frames flap her (frame 0..2).
-function fastModel(frame) {
+function fastModel(frame, L = DEFAULT_LOOK) {
   const m = new Model({ blend: .03 }), f = frame % 3, y = .5, dip = .05; // the broom's height; it dips a little at the nose
   const j = [[0, .02, -.01], [.02, -.01, .02], [-.01, .015, .01]][f]; // the frame's jiggle
   const bx = x => y - dip * (x / .62); // the handle's height along it
   // the broom, shooting forward; bristles flared out behind
-  m.seg([-.5, bx(-.5), 0], [.62, bx(.62), 0], .022, .018, M.BROOM, { group: 2 });
-  m.ell([-.64, bx(-.64) + .005, 0], [.2, .1, .11], M.STRAW, { dir: [1, dip * 1.6, 0], group: 3, paint: p => p[0] < -.76 ? M.MAGIC2 : p[0] > -.5 ? M.BROOM : undefined });
+  broomHandle(m, L, [-.5, bx(-.5), 0], [.62, bx(.62), 0]);
+  broomBristles(m, L, [-.64, bx(-.64) + .005, 0], [.2, .1, .11], { dir: [1, dip * 1.6, 0], group: 3, paint: p => p[0] < -.76 ? M.MAGIC2 : p[0] > -.5 ? M.BROOM : undefined });
   // her hands on the very front of the handle, arms straight back to her shoulders
   const hands = [-1, 1].map(side => [.5, bx(.5) + .03, side * .045]), sh = [-1, 1].map(side => [.2, y + .24 + j[1], side * .1]);
   for (const k of [0, 1]) { const side = k ? 1 : -1, g = side > 0 ? 7 : 5; m.seg(sh[k], hands[k], .04, .03, M.JACKET, { group: g }); m.ell(hands[k], [.035, .03, .035], M.SKIN, { group: g }); }
@@ -1918,8 +2083,8 @@ function fastModel(frame) {
   m.chain([[...v3.add(H, [-.005, .03, -.095]), .015], [...v3.add(H, [-.02, .12, 0]), .015], [...v3.add(H, [-.005, .03, .095]), .015]], M.PHONES, { group: 10 });
   // the hat, nearly blown off: lifted up and tipped back, held by its chin strap
   const brim = v3.add(H, [-.1 + j[0], .2 + j[1] * 2, 0]);
-  m.ell(brim, [.16, .014, .15], M.HAT, { dir: [1, .9, 0], group: 11 });
-  m.chain([[...v3.add(brim, [-.02, .02, 0]), .08], [...v3.add(brim, [-.14, .13, 0]), .04], [...v3.add(brim, [-.3, .14 + j[2] * 2, 0]), .012]], M.HAT, { group: 11, paint: p => Math.hypot(p[0] - brim[0], p[1] - brim[1]) < .06 ? M.MAGIC : undefined });
+  m.ell(brim, brimR(L, [.16, .014, .15]), M.HAT, { dir: [1, .9, 0], group: 11 });
+  m.chain([[...v3.add(brim, [-.02, .02, 0]), .08], [...hatPt(L, brim, v3.add(brim, [-.14, .13, 0])), .04], [...hatPt(L, brim, v3.add(brim, [-.3, .14 + j[2] * 2, 0])), .012]], M.HAT, { group: 11, paint: p => Math.hypot(p[0] - brim[0], p[1] - brim[1]) < .06 * (L.hatBand ?? 1) ? M.MAGIC : undefined });
   m.seg(v3.add(brim, [.08, -.02, .08]), v3.add(H, [.04, -.09, .08]), .008, .008, M.HAT, { group: 11 }); // the chin strap, pulled taut
   m.anchors.hand = hands[1]; m.anchors.hatTip = v3.add(brim, [-.3, .14 + j[2] * 2, 0]);
   // speed: a few small streaks trailing from the bristles and from her
@@ -2102,8 +2267,8 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
   const bdir = !B || astride ? [1, 0, 0] : v3.norm(B.dir), bind = astride ? [-.36, yb, 0] : !B ? null : B.held !== undefined ? v3.sub(K.far, v3.mul(bdir, B.held)) : B.binding;
   const along = t => v3.add(bind, v3.mul(bdir, t));
   if (B) {
-    m.seg(along(0), along(astride ? .98 : 1.1), .022, .018, M.BROOM, { group: 2 });
-    m.ell(along(-.13), [.17, .07, .08], M.STRAW, { dir: bdir, group: 3, paint: p => { const t = v3.dot(v3.sub(p, bind), bdir); return t < -.22 ? M.MAGIC2 : t > -.01 ? M.BROOM : undefined; } });
+    broomHandle(m, L, along(0), along(astride ? .98 : 1.1));
+    broomBristles(m, L, along(-.13), [.17, .07, .08], { dir: bdir, group: 3, paint: p => { const t = v3.dot(v3.sub(p, bind), bdir); return t < -.22 ? M.MAGIC2 : t > -.01 ? M.BROOM : undefined; } });
   }
   // legs: jeans to the knee, then down to sneakers; one swung up over the broom; on her toes pushing off; or each foot placed
   for (const side of [-1, 1]) {
@@ -2181,7 +2346,7 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
 const WITCH_FLIGHT_POSES = { hover: { frames: 3, fps: 3 }, lean: { frames: 4, fps: 8 }, rise: { frames: 2, fps: 6 }, descend: { frames: 2, fps: 6 }, fast: { frames: 3, fps: 12 }, brake: { frames: 2, fps: 8 } };
 function witchModel({ frame = 0, lean = false, pose, look = DEFAULT_LOOK } = {}) {
   const LK = { ...DEFAULT_LOOK, ...look };
-  if (pose === "fast") return fastModel(frame);
+  if (pose === "fast") return fastModel(frame, LK);
   if (WITCH_FOOT_POSES[pose]) return footModel(pose, frame, LK);
   const cyc = pose === "lean" ? frame % 4 : -1; if (cyc >= 0) { lean = true; pose = undefined; } // the lean cycle
   const rise = pose === "rise", desc = pose === "descend", brake = pose === "brake", posed = rise || desc || brake;
@@ -2192,9 +2357,9 @@ function witchModel({ frame = 0, lean = false, pose, look = DEFAULT_LOOK } = {})
   const Lh = Math.min(.1, Math.max(0, L)); // how far her hair and hat stream back with the lean (never more than the fast-flight lean)
   const sway = posed ? [.02, .06][frame % 2] : cyc >= 0 ? [.01, .04, .06, .03][cyc] : [0, .03, .05][frame % 3], flow = desc ? 1 : rise ? -.6 : 0; // hair and jacket: up when dropping, down when climbing (in the broom's frame)
   // the broom: a long handle, bristles bound at the back, glowing at their tips
-  m.seg([-.5, y - tilt * 2, 0], [.62, y + tilt * 3, 0], .022, .018, M.BROOM, { group: 2 });
-  if (brake) m.ell([-.56, y - .08, 0], [.17, .07, .09], M.STRAW, { dir: [.55, 1, 0], group: 3, paint: p => p[1] < y - .18 ? M.MAGIC2 : p[1] > y - .01 ? M.BROOM : undefined }); // skidding: the bristles swing forward and down under her, like reins hauled in
-  else { const fl = cyc >= 0 ? [0, .035, -.015, .05][cyc] : 0; m.ell([-.62, y - tilt * 2 - .01, 0], [.17, .07, .08], M.STRAW, { dir: [1, tilt, 0], group: 3, paint: p => p[0] < -.72 + fl ? M.MAGIC2 : cyc >= 0 && p[0] < -.66 + fl ? M.MAGIC : p[0] > -.5 ? M.BROOM : undefined }); } // leaning along, the bristles' glow flickers
+  broomHandle(m, LK, [-.5, y - tilt * 2, 0], [.62, y + tilt * 3, 0]);
+  if (brake) broomBristles(m, LK, [-.56, y - .08, 0], [.17, .07, .09], { dir: [.55, 1, 0], group: 3, paint: p => p[1] < y - .18 ? M.MAGIC2 : p[1] > y - .01 ? M.BROOM : undefined }); // skidding: the bristles swing forward and down under her, like reins hauled in
+  else { const fl = cyc >= 0 ? [0, .035, -.015, .05][cyc] : 0; broomBristles(m, LK, [-.62, y - tilt * 2 - .01, 0], [.17, .07, .08], { dir: [1, tilt, 0], group: 3, paint: p => p[0] < -.72 + fl ? M.MAGIC2 : cyc >= 0 && p[0] < -.66 + fl ? M.MAGIC : p[0] > -.5 ? M.BROOM : undefined }); } // leaning along, the bristles' glow flickers
   // legs astride: jeans to the knee, then down to sneakers (reaching down and forward to land)
   for (const side of [-1, 1]) {
     const kick = cyc >= 0 ? [[0, 0], [.07, .04], [.01, .015], [-.06, -.015]][(cyc + (side > 0 ? 0 : 2)) % 4] : [0, 0]; // leaning along, her legs kick in turn
@@ -2363,10 +2528,11 @@ const WITCH_HAIRS = [[.07, .4, .14], [.07, .6, .33], [.04, .7, .5], [.11, .45, .
 // A party witch: seed picks her outfit (or o.outfit, an id), jitters its colours, and picks her skin, her hair (unless the
 // outfit dyes it) and her glow sticks' neons. { id, seed, name, look, outfit, colours(st) }: draw her with
 // witchSprite(st, { look, pose, frame, ... }) and bake with colours(st).
+const GENOME_PARTS = new Set(["cloak", "scarf", "satchel"]); // the generator's parts: a party witch keeps their defaults (so her draws stay as they were)
 function partyWitch(seed = 0, o = {}) {
   const r = rng((seed * 2654435761 + 97) >>> 0), P = o.outfit ? PARTY_OUTFIT_BY_ID[o.outfit] : PARTY_OUTFITS[Math.floor(r() * PARTY_OUTFITS.length)];
   const pick = a => a[Math.floor(r() * a.length)], j = ([h, s, v], k = .035) => [((h + (r() - .5) * 2 * k) % 1 + 1) % 1, Math.min(1, Math.max(0, s + (r() - .5) * .1)), Math.min(1, Math.max(0, v + (r() - .5) * .08))];
-  const outfit = { ...Object.fromEntries(Object.entries({ ...DEFAULT_OUTFIT, ...P.outfit }).map(([k, c]) => [k, k === "skin" || k === "broom" || k === "bristles" ? c : j(c)])) };
+  const outfit = { ...Object.fromEntries(Object.entries({ ...DEFAULT_OUTFIT, ...P.outfit }).map(([k, c]) => [k, k === "skin" || k === "broom" || k === "bristles" || GENOME_PARTS.has(k) ? c : j(c)])) };
   outfit.skin = pick(WITCH_SKINS); outfit.hair = P.hair ? j(P.hair, .02) : pick(WITCH_HAIRS);
   const g1 = Math.floor(r() * PARTY_NEONS.length); outfit.glow = PARTY_NEONS[g1]; outfit.glow2 = PARTY_NEONS[(g1 + 1 + Math.floor(r() * (PARTY_NEONS.length - 1))) % PARTY_NEONS.length];
   outfit.broom = j(DEFAULT_OUTFIT.broom, .02);
@@ -2589,6 +2755,74 @@ function treehouseSprite(st = {}, { facing = "towards", ppm = 16 } = {}) {
 }
 
 
+// ---- inlined from art/witchGenome.js ----
+// The witch generator (Ed, logged on #79: "different hat sizes, broom, cloak and accessories"): a witch as genome data, like the
+// creatures and the plants. A genome names her hat (shape, crown height, brim, lean), hair, top, cloak, broom (kind, handle length
+// and bend, bristles' length), accessories (headphones, sunglasses, glow sticks, a scarf, a satchel, a pendant, earrings) and her
+// palette (a hue, saturation and value per part, the parts in WITCH_PARTS). genomeLook turns one into the look and outfit witch.js
+// draws (her parts baked, her motion animated as ever, her colours a palette over the parts' materials). WITCH_GENOME is our witch,
+// and draws exactly as she always has; witchGenome(seed) is a new one, every axis varied within limits that keep her a witch: a
+// pointed hat with its glowing band, a broom, a face that reads, a palette that holds together (a dark hat so the band shines,
+// the hat and cloak in neighbouring hues, the jacket against them).
+
+
+// Ours: every axis as she is.
+const WITCH_GENOME = {
+  hat: { shape: "classic", height: 1, brim: 1, tilt: 0, band: 1 },
+  hair: "long", top: "jacket", cloak: "none",
+  broom: { kind: "classic", length: 1, bend: 0, bristles: 1 },
+  accessories: { phones: true, shades: false, glowsticks: false, scarf: false, satchel: false, pendant: false, earrings: false },
+  palette: null, // null: hers (DEFAULT_OUTFIT, the style's hues on top)
+};
+// The axes and their limits, for the generator, the lab and the check.
+const WITCH_AXES = {
+  hatShape: ["classic", "crooked", "floppy", "small", "flowers"], // pointed ones only (the bucket hat with cat ears is a party look, not a witch's)
+  hatHeight: [.75, 1.6], hatBrim: [.75, 1.45], hatTilt: [-.25, .35], hatBand: [1, 2.4],
+  hair: ["long", "bob", "buns", "mohawk"], top: ["jacket", "sequins", "mesh", "poncho", "cape"], cloak: ["none", "short", "long", "hooded"],
+  broom: ["classic", "fan", "twig", "round"], broomLength: [.85, 1.3], broomBend: [-.3, .6], bristles: [.8, 1.4],
+};
+const SKINS = [[.07, .25, .96], [.07, .32, .9], [.07, .42, .78], [.06, .5, .62], [.05, .55, .47], [.05, .5, .34]];
+const HAIRS = [[.07, .4, .14], [.07, .6, .33], [.04, .7, .5], [.11, .45, .88], [.02, .75, .7], [.6, .04, .86], [.85, .5, .8], [.5, .5, .7]]; // black, brown, auburn, blonde, red, silver, pink, teal
+
+// (her hat's glowing band: hers is narrow; a generated witch's broader, so it shows whatever her hat)
+// A new witch from a seed: every axis picked within its limits, her palette from one base hue.
+function witchGenome(seed = 0) {
+  const r = rng((seed * 2246822519 + 31) >>> 0), uni = ([a, b]) => a + (b - a) * r(), pick = a => a[Math.floor(r() * a.length)], chance = p => r() < p;
+  const h0 = r(), near = k => ((h0 + (r() - .5) * k) % 1 + 1) % 1, opp = ((h0 + .45 + r() * .1) % 1 + 1) % 1, cool = r() < .5;
+  const palette = {
+    hat: [near(.08), uni([.4, .7]), uni([.3, .55])],   // dark, so the glowing band reads
+    jacket: [opp, uni([.5, .85]), uni([.65, .95])],         // against the hat
+    cloak: [near(.12), uni([.45, .75]), uni([.35, .6])],  // the hat's family, a shade off
+    top: [cool ? .55 : .12, uni([.05, .3]), uni([.85, 1])], jeans: [cool ? .62 : .08, uni([.2, .5]), uni([.3, .65])], sneakers: [r(), uni([0, .6]), uni([.7, 1])],
+    headphones: [r(), uni([.4, .7]), uni([.75, 1])], scarf: [(near(.3) + .5) % 1, uni([.5, .8]), uni([.7, .95])], satchel: [uni([.04, .1]), uni([.4, .65]), uni([.35, .55])],
+    hair: pick(HAIRS), skin: pick(SKINS), broom: [uni([.05, .1]), uni([.4, .65]), uni([.35, .6])], bristles: [uni([.1, .14]), uni([.4, .65]), uni([.75, .95])],
+  };
+  return {
+    hat: { shape: pick(WITCH_AXES.hatShape), height: uni(WITCH_AXES.hatHeight), brim: uni(WITCH_AXES.hatBrim), tilt: uni(WITCH_AXES.hatTilt), band: uni([1.7, 2.4]) }, // a broad band, so it always shows
+    hair: pick(WITCH_AXES.hair), top: pick(WITCH_AXES.top), cloak: pick(WITCH_AXES.cloak),
+    broom: { kind: pick(WITCH_AXES.broom), length: uni(WITCH_AXES.broomLength), bend: uni(WITCH_AXES.broomBend), bristles: uni(WITCH_AXES.bristles) },
+    accessories: { phones: chance(.55), shades: chance(.25), glowsticks: chance(.2), scarf: chance(.35), satchel: chance(.35), pendant: chance(.3), earrings: chance(.4) },
+    palette,
+  };
+}
+// The look and outfit witch.js draws a genome with.
+function genomeLook(g = WITCH_GENOME) {
+  const look = { ...DEFAULT_LOOK, hat: g.hat.shape, hatHeight: g.hat.height, hatBrim: g.hat.brim, hatTilt: g.hat.tilt, hatBand: g.hat.band ?? 1, hair: g.hair, top: g.top, cloak: g.cloak,
+    broom: g.broom.kind, broomLength: g.broom.length, broomBend: g.broom.bend, bristles: g.broom.bristles, ...g.accessories };
+  return { look, outfit: g.palette ? { ...DEFAULT_OUTFIT, ...g.palette } : null };
+}
+// What is wrong with a genome, if anything: an unknown kind, or a number outside its limits (hers always passes).
+function witchGenomeProblems(g) {
+  const out = [], A = WITCH_AXES, inR = (v, [a, b]) => v >= a - 1e-9 && v <= b + 1e-9;
+  if (!A.hatShape.includes(g.hat.shape)) out.push("hat " + g.hat.shape);
+  for (const [k, v, lim] of [["hatHeight", g.hat.height, A.hatHeight], ["hatBrim", g.hat.brim, A.hatBrim], ["hatTilt", g.hat.tilt, A.hatTilt], ["hatBand", g.hat.band ?? 1, A.hatBand], ["broomLength", g.broom.length, A.broomLength], ["broomBend", g.broom.bend, A.broomBend], ["bristles", g.broom.bristles, A.bristles]]) if (!inR(v, lim)) out.push(`${k} ${v}`);
+  if (!A.hair.includes(g.hair)) out.push("hair " + g.hair); if (!A.top.includes(g.top)) out.push("top " + g.top); if (!A.cloak.includes(g.cloak)) out.push("cloak " + g.cloak); if (!A.broom.includes(g.broom.kind)) out.push("broom " + g.broom.kind);
+  if (g.palette) for (const [k, c] of Object.entries(g.palette)) if (!(Array.isArray(c) && c.length === 3 && c.every(v => v >= 0 && v <= 1))) out.push("palette " + k);
+  return out;
+}
+
+
+
 // ---- inlined from art/partyRelics.js ----
 // Party relics (Ed, #87, 2026-10-05): giant, legend-sized bottles half-buried in the forest floor, 3 or 4 to a map, waiting to be
 // found. The witch digs one up; it becomes a sigil in her stack, and placed by a sleeping legend it wakes the legend happy. Ed: "The
@@ -2696,7 +2930,8 @@ const GENOMES = [
 // names the builders that draw it (art/creatures3d.js), its sockets (where parts go) and the part
 // tags each socket allows, which tags exclude each other, how it moves (the live rig's gait, #79
 // stage 5) and, for the four-legged, its size curves: how its proportions change with level, so a
-// baby is chunky and a legend grand without scaling it uniformly.
+// baby is chunky and a legend grand without scaling it uniformly; and its face style, the shapes of
+// its expressions' brows and eyes (expressions.js), which a species' genome can override (`face`).
 // A size curve is four numbers, baby, young, adult and legend, each a multiplier on the species'
 // own proportion (or, for antlers, horns and tusks, their size outright).
 
@@ -2714,6 +2949,7 @@ const TEMPLATES = {
       horns: ["horn.curl"], antlers: ["antler.branch", "antler.palm"], tusks: ["tusk"],
     },
     exclude: [["horn.*", "antler.*"], ["tusk", "antler.*"]],
+    face: { brow: "bar", happy: "arc", dazed: "x" }, // its expressions' shapes (expressions.js)
     gait: { offsets: [0, .5, .5, 0], dutyWalk: .65, dutyRun: .35 }, // front left, front right, back left, back right: a trot
     sizes: {
       head: [1.75, 1, 1.12, 1],         // head radius: a baby's big head, a legend's smaller for its size (grand, not cute)
@@ -2733,13 +2969,94 @@ const TEMPLATES = {
       motes: [0, 0, 3, 9],              // glowing motes round adults and legends
     },
   },
-  avian: { name: "Bird", builders: ["owl", "raven"], sizes: { head: [.48, .36, .36, .36], headY: [.95, 1.08, 1.08, 1.08], build: [1, 1, 1.18, 1.18], motes: [0, 0, 3, 9] }, sockets: { wings: ["wing.folded", "wing.spirit"], head: ["head.round", "head.beak"] }, exclude: [], gait: { offsets: [0, .5], dutyWalk: .6, dutyRun: .4 } },
-  flyer: { sizes: TEMPLATE_SMALL_SIZES, name: "Flyer", builders: ["bat", "moth"], sockets: { wings: ["wing.membrane", "wing.scaled"] }, exclude: [], gait: { offsets: [], dutyWalk: 0, dutyRun: 0 } },
-  serpent: { sizes: TEMPLATE_SMALL_SIZES, name: "Serpent or worm", builders: ["snake", "glowworm"], sockets: { head: ["head.snake", "head.worm"], tailTip: ["tail.lantern"] }, exclude: [], gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
-  insectoid: { sizes: TEMPLATE_SMALL_SIZES, name: "Many-legged", builders: ["beetle", "spider", "woodlouse"], sockets: { head: ["jaw.stag", "eyes.cluster", "antenna"] }, exclude: [], gait: { offsets: [0, .5, 0, .5, 0, .5], dutyWalk: .6, dutyRun: .5 } }, // alternating tripods
-  squat: { sizes: TEMPLATE_SMALL_SIZES, name: "Squat", builders: ["toad", "hedgehog", "mole", "snail"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], gait: { offsets: [0, .5, .5, 0], dutyWalk: .7, dutyRun: .5 } },
+  avian: { name: "Bird", builders: ["owl", "raven"], sizes: { head: [.48, .36, .36, .36], headY: [.95, 1.08, 1.08, 1.08], build: [1, 1, 1.18, 1.18], motes: [0, 0, 3, 9] }, sockets: { wings: ["wing.folded", "wing.spirit"], head: ["head.round", "head.beak"] }, exclude: [], face: { brow: "tuft", happy: "arc", dazed: "wobble" }, gait: { offsets: [0, .5], dutyWalk: .6, dutyRun: .4 } },
+  flyer: { sizes: TEMPLATE_SMALL_SIZES, name: "Flyer", builders: ["bat", "moth"], sockets: { wings: ["wing.membrane", "wing.scaled"] }, exclude: [], face: { brow: "tuft", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 0, dutyRun: 0 } },
+  serpent: { sizes: TEMPLATE_SMALL_SIZES, name: "Serpent or worm", builders: ["snake", "glowworm"], sockets: { head: ["head.snake", "head.worm"], tailTip: ["tail.lantern"] }, exclude: [], face: { brow: "ridge", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
+  insectoid: { sizes: TEMPLATE_SMALL_SIZES, name: "Many-legged", builders: ["beetle", "spider", "woodlouse"], sockets: { head: ["jaw.stag", "eyes.cluster", "antenna"] }, exclude: [], face: { brow: "ridge", happy: "arc", dazed: "wobble" }, gait: { offsets: [0, .5, 0, .5, 0, .5], dutyWalk: .6, dutyRun: .5 } }, // alternating tripods
+  squat: { sizes: TEMPLATE_SMALL_SIZES, name: "Squat", builders: ["toad", "hedgehog", "mole", "snail"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], face: { brow: "bar", happy: "squint", dazed: "x" }, gait: { offsets: [0, .5, .5, 0], dutyWalk: .7, dutyRun: .5 } },
 };
 const TEMPLATE_IDS = Object.keys(TEMPLATES);
+
+
+// ---- inlined from art/genome/expressions.js ----
+// Witch creature expressions (Ed, 2026-10-05: "the eyebrows should be with the creature generator"):
+// a creature's face as part of its model, not marks drawn over it. Four expressions, every species
+// at every level:
+//   neutral: as it is (nothing added; the sprite is the plain one, pixel for pixel);
+//   angry:   brows down to the middle over narrowed eyes (with the woken look's red eyes, enraged);
+//   happy:   eyes closed up into smiling arcs, brows lifted;
+//   dazed:   crossed-out or odd eyes, brows up in a worried tilt.
+// The shapes vary by family: each template has a face style (templates.js: brow, happy, dazed) a
+// species' genome can override (its `face`). Everything is built from the anchors every builder
+// records (the head and the eyes), so a new species gets its expressions for nothing.
+
+
+const EXPRESSIONS = ["neutral", "angry", "happy", "dazed"];
+// brow: a thick straight bar; a feather tuft, thin at the middle and flaring out; a wide arched
+// ridge (a snake's or a beetle's brow scales). happy: smiling arcs ("arc") or squeezed shut ("squint").
+// dazed: crossed out ("x") or one eye big and one small ("wobble").
+const FACE_KINDS = { brow: ["bar", "tuft", "ridge"], happy: ["arc", "squint"], dazed: ["x", "wobble"] };
+const FACE_DEFAULT = { brow: "bar", happy: "arc", dazed: "x" };
+
+const faceEyeMats = new Set([M.EYE, M.IRIS, M.PUPIL, M.GLINT, M.MAGIC2]);
+const faceUnit = v => { const l = Math.hypot(...v) || 1; return v.map(x => x / l); };
+
+// Out of the head along dir until the point is no deeper than `keep` inside the model.
+function faceSurface(m, p, dir, keep) {
+  for (let i = 0; i < 80 && m.field(p) < -keep; i++) p = v3.add(p, v3.mul(dir, keep * .25 + .002));
+  return p;
+}
+
+// Add an expression's face to a finished model (its anchors set), before it's drawn. style: the
+// species' face style ({ brow, happy, dazed }). The strokes are sized in pixels as well as by the
+// eyes (render calls back with its scale), so a beetle's face reads as well as an elk's.
+function faceUp(m, face, style = FACE_DEFAULT) {
+  const A = m.anchors, head = A.head, eyes = A.eyes;
+  if (!face || face === "neutral" || !head || !eyes || eyes.pts.length < 1) return;
+  m.atScale = P => faceDraw(m, face, { ...FACE_DEFAULT, ...style }, 1 / P);
+}
+
+function faceDraw(m, face, st, u) { // u: one pixel, in model units
+  const A = m.anchors, head = A.head, eyes = A.eyes, E = Math.max(eyes.size, u * 1.6); // the eye's radius, never under a pixel and a half
+  const mid = eyes.pts.reduce((a, e) => v3.add(a, v3.mul(e, 1 / eyes.pts.length)), [0, 0, 0]);
+  const fwd = faceUnit(v3.sub(mid, head.c)), up = faceUnit(v3.sub([0, 1, 0], v3.mul(fwd, v3.dot([0, 1, 0], fwd) * .6)));
+  // the eyes' own parts: the ellipsoids sitting on each anchor
+  const near = (q, e) => q.type === "ell" && faceEyeMats.has(q.mat) && Math.hypot(...v3.sub(q.c, e)) < Math.max(eyes.size * 1.6, u);
+  const eyeMat = e => m.parts.find(q => near(q, e) && (q.mat === M.EYE || q.mat === M.MAGIC2))?.mat ?? M.EYE;
+  const drop = e => { m.parts = m.parts.filter(q => !near(q, e)); };
+  const o = { group: 63, extra: true, part: "head" }, line = Math.max(E * .3, u * .6); // a stroke: a pixel wide at least
+  const across = e => eyes.pts.length > 1 ? faceUnit(v3.sub(e, mid)) : faceUnit(v3.cross(fwd, up)); // out to the side, away from the middle
+  for (const e of eyes.pts) {
+    const out = faceUnit(v3.sub(e, head.c)), a = across(e), mat = eyeMat(e);
+    const at = (x, y, keep = line * .5) => faceSurface(m, v3.add(v3.add(e, v3.mul(a, x * E)), v3.mul(up, y * E)), out, keep);
+    // ---- the eyes ----
+    if (face === "angry") for (const q of m.parts) if (near(q, e)) q.r = [q.r[0], q.r[1] * .62, q.r[2]]; // narrowed
+    if (face === "happy") {
+      drop(e);
+      if (st.happy === "squint") m.seg(at(-1, .25), at(1, -.25), line, line, mat, o); // squeezed shut
+      else m.chain([[...at(-1.1, -.45), line], [...at(0, .45), line], [...at(1.1, -.45), line]], mat, o); // an upturned arc
+    }
+    if (face === "dazed") {
+      if (st.dazed === "wobble") { const k = e === eyes.pts[0] ? 1.5 : .65; for (const q of m.parts) if (near(q, e)) q.r = q.r.map(v => v * k); }
+      else { drop(e); m.seg(at(-.9, .9), at(.9, -.9), line, line, mat, o); m.seg(at(-.9, -.9), at(.9, .9), line, line, mat, o); } // crossed out
+    }
+    // ---- the brows: down to the middle when angry, up in the middle when dazed, lifted when happy ----
+    // (sunk in to most of their thickness, so the far eye's brow never pokes out past the head's outline)
+    const lift = st.brow === "ridge" ? .65 : 1; // (a ridge hugs the eye, as a snake's brow scales do)
+    const [inY, outY] = (face === "angry" ? [.75, 1.85] : face === "dazed" ? [2, 1.2] : [1.75, 1.75]).map(y => y * lift);
+    const w = st.brow === "ridge" ? 1.5 : 1.2, bm = M.BROW, b = Math.max(line, E * .36), bt = (x, y, r) => [...at(x, y, r * .75), r];
+    if (st.brow === "ridge") m.chain([bt(-w, inY, b), bt(0, (inY + outY) / 2 + .2, b * 1.15), bt(w, outY, b)], bm, o);
+    else if (st.brow === "tuft") m.chain([bt(-w * .8, inY, line), bt(w * 1.2, outY + .4, b * 1.4)], bm, o);
+    else m.chain([bt(-w, inY, b), bt(w, outY, b)], bm, o);
+  }
+}
+
+// What's wrong with a face style, if anything.
+function faceProblems(id, style) {
+  const out = [];
+  for (const [k, v] of Object.entries(style || {})) if (!FACE_KINDS[k]) out.push(`${id}: no face part ${k}`); else if (!FACE_KINDS[k].includes(v)) out.push(`${id}: face ${k} ${v} isn't one of ${FACE_KINDS[k].join(", ")}`);
+  return out;
+}
 
 
 
@@ -2757,8 +3074,12 @@ function speciesOf(g) {
     if (p.ears) { q.ear = p.ears.kind; if (p.ears.size !== undefined) q.earS = p.ears.size; }
     for (const [k, to] of [["tail", "tail"], ["feet", "paw"], ["horns", "horns"], ["antlers", "antlers"], ["tusks", "tusks"]]) if (p[k] !== undefined) q[to] = p[k];
     S.q = q;
+    // levels: { 0..3: { body, head, coat, parts, legend } } — what changes at a level beyond its size curves: its evolution
+    // (docs/art-guide/EVOLUTIONS.md). Each is merged over the species' own for that level only.
+    if (g.levels) S.levelQ = Object.fromEntries(Object.entries(g.levels).map(([lv, L]) => { const o = { ...(L.body || {}), ...(L.head || {}), ...(L.coat || {}) }, lp = L.parts || {}; if (lp.ears) { o.ear = lp.ears.kind; if (lp.ears.size !== undefined) o.earS = lp.ears.size; } for (const [k, to] of [["tail", "tail"], ["feet", "paw"], ["horns", "horns"], ["antlers", "antlers"], ["tusks", "tusks"]]) if (lp[k] !== undefined) o[to] = lp[k]; return [lv, o]; }));
   }
   S.sizes = { ...TEMPLATES[g.template].sizes, ...g.sizes };
+  S.face = { ...TEMPLATES[g.template].face, ...g.face }; // its expressions' shapes (expressions.js)
   return S;
 }
 
@@ -2782,6 +3103,7 @@ function genomeProblems(g) {
   if (!T) return [`${g.id}: no template ${g.template}`];
   if (!T.builders.includes(g.builder)) out.push(`${g.id}: ${g.template} has no builder ${g.builder}`);
   const allowed = Object.values(T.sockets).flat(), tags = genomeTags(g);
+  out.push(...faceProblems(g.id, { ...T.face, ...g.face }));
   for (const t of tags) if (!allowed.includes(t)) out.push(`${g.id}: ${t} isn't one of ${g.template}'s parts`);
   for (const [a, b] of T.exclude) if (tags.some(t => genomeTagMatch(a, t)) && tags.some(t => genomeTagMatch(b, t))) out.push(`${g.id}: ${a} and ${b} together`);
   for (const k of ["hue", "sat", "val"]) if (!(g.palette[k] >= 0 && g.palette[k] <= 1)) out.push(`${g.id}: palette ${k} ${g.palette[k]}`);
@@ -2802,6 +3124,7 @@ function genomeHash(g) {
 // ---- inlined from art/creatures3d.js ----
 // Witch creatures built in 3D (see model3d.js), so they stand in true three-quarter view.
 // Units: the shoulder is about 1 high; x forward, y up, z towards the near side.
+
 
 
 // Levels (Ed): 0 baby, 1 young, 2 adult, 3 legend.
@@ -2857,6 +3180,7 @@ const star = (s, t) => { const a = Math.atan2(t, s), r = Math.hypot(s, t); retur
 const heart = (s, t) => { const x = s * 1.2, y = -t * 1.2 + .25; return Math.pow(x * x + y * y - .6, 3) - x * x * y * y * y < 0; };
 function gearUp(m) {
   const g = GEAR, A = m.anchors; if (!g) return;
+  faceUp(m, g.face, g.faceStyle); // its expression, part of its face (genome/expressions.js)
   const head = A.head, hr = head ? Math.max(...head.r) : .2;
   // the collar: a glowing ring round the neck (or the body's front)
   if (g.collar && (A.neck || head)) {
@@ -2901,14 +3225,14 @@ function gearUp(m) {
 
 // ================= four-legged animals =================
 function quad3d(S, level, frame, st, facing = "towards") {
-  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => legend && S.legend.includes(f);
+  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q, ...(S.levelQ?.[level] || {}) }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => (legend && S.legend.includes(f)) || (q.features || []).includes(f); // features: a level's own (an evolution can grow them before the legend)
   const sz = k => S.sizes[k][level]; // its template's size curves (art/genome/templates.js): baby, young, adult, legend
   const m = new Model();
   const hr = q.hr * sz("head") * (st.head / .44) ** .5, len = q.len * sz("len") * st.long;
   const legK = sz("legK");
   const bob = frame ? -.04 : 0, top = 1 + bob, chest = q.chest * sz("chestDeep") * sz("chestBig") / legK + bob, tuck = q.tuck * sz("tuck") / legK + bob; // a big one's deeper chest and belly
   const bw = q.bw * sz("body") * (q.legW > 1.2 ? 1.15 : 1), lw = .06 * q.legW * sz("limbA") * sz("limbB");
-  const hump = q.back === "hump" ? .1 : 0, arch = q.back === "arch" ? .1 : 0;
+  const hump = q.back === "hump" ? (q.hump ?? .1) : 0, arch = q.back === "arch" ? .1 : 0;
   // ---- markings, painted by where a point is on the body ----
   const bellyY = chest + .12;
   const paintBody = p => {
@@ -3331,6 +3655,7 @@ function baseColours(s, st) {
     [M.BODY]: body, [M.BODY2]: hsv2rgb(s.hue + .02, Math.min(1, s.sat * sat * 1.2 + .05), s.val * v * .66), [M.BODY3]: hsv2rgb(s.hue + .03, Math.min(1, s.sat * sat * 1.3 + .1), s.val * v * .4),
     [M.BELLY]: belly, [M.ACCENT]: pale ? [236, 226, 200] : hsv2rgb(s.hue + .05, s.sat * .6, Math.min(1, s.val * v * .5 + .25)),
     [M.MAGIC]: magic, [M.MAGIC2]: magic2, [M.LEAF]: hsv2rgb(.3, .55, .55), [M.LEAF2]: hsv2rgb(.25, .5, .75), [M.LEAF3]: hsv2rgb(.33, .6, .35), [M.TRUNK]: hsv2rgb(.07, .45, .32),
+    [M.BROW]: body[0] * .3 + body[1] * .55 + body[2] * .15 < 95 ? [226, 218, 204] : [30, 20, 28], // its brows: ink on a light coat, pale on a dark one
     [M.EYE]: [24, 18, 30], [M.PUPIL]: [70, 40, 90], [M.GLINT]: [255, 255, 245], [M.NOSE]: [38, 28, 36], [M.EAR]: hsv2rgb(s.hue + .97, Math.min(1, s.sat * .6 + .2), Math.min(1, s.val * v * .55 + .2)),
     [M.IRIS]: s.plan === "owl" ? [255, 176, 40] : hsv2rgb(.12, .7, .85), [M.SKIN]: [238, 158, 192],
   };
@@ -3346,13 +3671,15 @@ const levelHeight = (level, st) => height3d(level, st);
 // Shapes don't depend on colours, so a creature is drawn once per shape-changing knob setting
 // (a lab session changes lighting and colour knobs far more often than these).
 const SHAPE_KNOBS = ["size", "growth", "pixel", "head", "eye", "legs", "long", "fur"], cache = new Map();
-// gear (optional): party gear and the woken look, { collar, hat, glasses, shoes, woken }:
+// gear (optional): party gear, the woken look and the expression, { collar, hat, glasses, shoes, woken, face }:
 //   collar: a colour [r, g, b] (the creature's sigil neon) or true; hat: a colourway 0..2;
-//   glasses: "bar" | "star" | "heart"; shoes: "sneakers" | "glitter" | "platform"; woken: true.
+//   glasses: "bar" | "star" | "heart"; shoes: "sneakers" | "glitter" | "platform"; woken: true;
+//   face: "neutral" | "angry" | "happy" | "dazed" (genome/expressions.js, drawn as part of the face).
 // Give the same gear to speciesColours for its colours. Shapes are cached per gear combination.
 function critter(spId, level, frame, st, facing = "towards", gear = null) {
-  const S = SPECIES_BY_ID[spId] || SPECIES[0], g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken) ? gear : null;
-  const key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken].join(",") : ""].join("|");
+  if (facing === "away" && gear?.face) gear = { ...gear, face: null }; // (its face can't be seen from behind)
+  const S = SPECIES_BY_ID[spId] || SPECIES[0], g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken || (gear.face && gear.face !== "neutral")) ? { ...gear, faceStyle: S.face } : null;
+  const key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken, g.face && g.face !== "neutral" ? g.face : ""].join(",") : ""].join("|");
   let sp = cache.get(key);
   if (!sp) {
     sp = withGear(g, () => buildCreature(S, level, frame, st, facing));
@@ -4475,6 +4802,13 @@ const AREAS = [
 // Set pieces for the areas that had none (Ed: "Make set pieces for the other areas too"), built in 3D: setpieces.js
 for (const [id, [kind, text]] of Object.entries(NEW_SET_PIECES)) { const A = AREAS.find(x => x.id === id); if (A && !A.set) { A.set = P(kind, { three: true }); A.text = { ...A.text, set: text }; } }
 const AREA_BY_ID = Object.fromEntries(AREAS.map(a => [a.id, a]));
+// Home's own look (Ed, 2026-10-05: "It should also have its own custom floor; a pleasant green meadow with flowers"; "It has party
+// decorations instead of trees"): not one of the creature area types (not in AREAS, so never rolled, no creature, no trees, no set
+// piece), only its fresh green floor and its wildflowers; the prototype scatters party decorations over it in place of trees.
+const HOME_AREA = { id: "home", name: "Home meadow", creature: null, by: "Ed", leaf: .29, floor: ["flowers", .28, .55, .56],
+  text: { floor: "a pleasant green meadow with flowers", small: "wildflowers", big: "party decorations instead of trees" },
+  small: [P("flowers")], big: [], home: true };
+AREA_BY_ID.home = HOME_AREA;
 
 // ---------------- layout: how each area's vegetation is arranged (data only) ----------------
 // Ed (2026-10-03, via the coordinator): every forest should feel different; much of that comes
@@ -7000,6 +7334,7 @@ function variantColours(id, st, variant, gear = null) {
 
 
 
+
 // ---- inlined from art/genome/parts.js ----
 // Witch creature parts (#79, stage 4): a creature baked as pieces rather than whole frames, so a
 // live rig (src/render/rig/) can put it together each frame from how it moves. Its torso, head and
@@ -7008,6 +7343,7 @@ function variantColours(id, st, variant, gear = null) {
 // between its joints. Each piece keeps its pivot: the pixel where the joint it hangs from lands.
 // Headings: 0 walking right, a quarter turn walking down the screen (towards us), minus a quarter up
 // it (away); RIG_HEADINGS are the baked ones, and heading h > a quarter turn is the mirror of pi - h.
+
 
 
 
@@ -7029,12 +7365,21 @@ function rigProject(p, h, s) {
 }
 
 // The model the builder makes for a species at a level (not drawn), and the scale it would be drawn at.
-function rigCapture(id, level, st) {
+// face: an expression (genome/expressions.js), put on its face at that scale.
+function rigCapture(id, level, st, face = null) {
   const S = SPECIES_BY_ID[id]; let got = null;
   const form = (m, o) => { got = { m, height: o.height }; return new Sprite(1, 1); };
   form.motes = false;
-  withForm(form, () => buildCreature(S, level, 0, st, "towards"));
-  return { m: got.m, s: render(got.m, { height: got.height, measure: true }).s };
+  withGear(face ? { face, faceStyle: S.face } : null, () => withForm(form, () => buildCreature(S, level, 0, st, "towards")));
+  const s = render(got.m, { height: got.height, measure: true }).s, f = got.m.atScale;
+  if (f) { got.m.atScale = null; f(s); }
+  return { m: got.m, s };
+}
+// Its head piece in each expression but neutral (the head piece itself): { angry, happy, dazed }.
+function rigFaces(id, level, st, pivot, s) {
+  const out = {};
+  for (const face of EXPRESSIONS) if (face !== "neutral") out[face] = rigPiece(rigCapture(id, level, st, face).m, ["head"], pivot, s);
+  return out;
 }
 // A model of only the primitives labelled with one of `labels`.
 function rigPick(m, labels) {
@@ -7066,7 +7411,7 @@ function rigDisc(r, mat, s, paint) {
 }
 
 // Everything the rig needs for one species at one level: { template, s (pixels per model unit),
-// pieces: { torso, head, tail: [per heading] }, discs: { material: [by radius in pixels] }, joints }.
+// pieces: { torso, head, tail: [per heading] }, faces: { angry, happy, dazed: its head piece in each }, discs: { material: [by radius in pixels] }, joints }.
 // joints are in model units: legs [{ name, fore, side, hip, knee, foot, r: [hip, knee, foot] }],
 // head { nb, H }, tail (its base) for the four-legged; spine [[x, y, z, r]...] and head for a serpent.
 function rigParts(id, level, st) {
@@ -7080,11 +7425,11 @@ function rigParts(id, level, st) {
     for (const l of R.legs) discSet(l.mat, legR);
     const hoof = R.legs.find(l => l.hoof); if (hoof) discSet(M.NOSE, radii(R.legs.map(l => l.fl * .9)));
     else discSet(R.legs[0].mat, radii(R.legs.map(l => l.fl * .9)));
-    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { torso: rigPiece(m, ["body"], [0, 0, 0], s), head: rigPiece(m, ["head"], R.head.nb, s), tail: rigPiece(m, ["tail"], R.tail, s) } };
+    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { torso: rigPiece(m, ["body"], [0, 0, 0], s), head: rigPiece(m, ["head"], R.head.nb, s), tail: rigPiece(m, ["tail"], R.tail, s) }, faces: rigFaces(id, level, st, R.head.nb, s) };
   }
   // a serpent: its head baked, its body discs (speckled like its coat) by the spine's radii
   discSet(M.BODY, radii(R.spine.map(p => p[3])), p => spotty([p[0] * 1.5, p[1], p[2]], 14, .3) ? M.BODY3 : undefined);
-  return { id, level, template: tpl, s, joints: { spine: R.spine, head: R.head, hr: R.hr }, discs, pieces: { head: rigPiece(m, ["head"], R.head, s), wings: rigPiece(m, ["body"].filter(() => m.parts.some(q => q.part === "body" && q.extra)), [0, .2, 0], s) } };
+  return { id, level, template: tpl, s, joints: { spine: R.spine, head: R.head, hr: R.hr }, discs, pieces: { head: rigPiece(m, ["head"], R.head, s), wings: rigPiece(m, ["body"].filter(() => m.parts.some(q => q.part === "body" && q.extra)), [0, .2, 0], s) }, faces: rigFaces(id, level, st, R.head, s) };
 }
 
 
@@ -9188,6 +9533,26 @@ function renderFlora() {
     rows.forEach((r, i) => { y += rh[i] - gap; g.fillText(r.label, 6, y); y += gap; });
     c.style.width = w * 2 + "px"; c.style.maxWidth = "none"; c.style.imageRendering = "pixelated";
   }, 650);
+}
+
+// ================= the witch generator: ours from her genome, then generated witches, each hovering, leaning and standing =================
+let witchGenTimer, witchGenBase = 0;
+function renderWitchGen() {
+  clearTimeout(witchGenTimer);
+  witchGenTimer = setTimeout(() => {
+    const c = document.getElementById("witchGenSheet"); if (!c) return;
+    document.getElementById("witchGenReroll").onclick = () => { witchGenBase += 15; renderWitchGen(); };
+    const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 6, per = 4;
+    const genomes = [WITCH_GENOME, ...[...Array(15).keys()].map(i => witchGenome(witchGenBase + i))];
+    const cells = genomes.map(g => { const { look, outfit } = genomeLook(g), col = outfit ? witchColours(st, outfit, { styleHues: false }) : witchColours(st), b = o => bake(witchSprite(st, { ...o, look }), col, st, st.cOutline); return { g, sp: [b({ frame: 0 }), b({ pose: "lean", frame: 1 }), b({ pose: "stand", frame: 0 })] }; });
+    const cw = Math.max(...cells.map(k => k.sp.reduce((a, b) => a + b.w + gap, 0))), ch = Math.max(...cells.flatMap(k => k.sp.map(b => b.h))) + gap;
+    const w = per * cw + gap, h = Math.ceil(cells.length / per) * ch + gap, tgt = makeTarget(w, h);
+    tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+    cells.forEach((k, i) => { let x = gap + (i % per) * cw; const y = gap + Math.floor(i / per) * ch; for (const b of k.sp) { tgt.a.drawImage(b.A, x, y + ch - gap - b.h); tgt.n.drawImage(b.N, x, y + ch - gap - b.h); x += b.w + gap; } });
+    c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
+    c.style.width = w * 2 + "px"; c.style.maxWidth = "none"; c.style.imageRendering = "pixelated";
+    c.onclick = e => { const r = c.getBoundingClientRect(), x = (e.clientX - r.left) / 2, y = (e.clientY - r.top) / 2, i = Math.floor((y - gap) / ch) * per + Math.floor((x - gap) / cw); if (genomes[i]) document.getElementById("witchGenJson").textContent = (i ? "seed " + (witchGenBase + i - 1) + "\n" : "ours\n") + JSON.stringify(genomes[i], null, 1); };
+  }, 750);
 }
 
 // ================= attack effects: every effect's frames, light and dark, ground and treetop =================
