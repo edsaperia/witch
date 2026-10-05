@@ -3,14 +3,15 @@
 // sum over its fighters of √(hp × dps): a young is worth 15.5, an adult 29, a legend 76, a baby 0.
 // The side with more wins, with about √(big² − small²) left. Read by the debug overlay's power
 // meter, the playtest log and the balance simulator (tools/balance). No drawing here.
-import { COMBAT, type CombatData } from "./combat";
+import { COMBAT, strengthOf, type CombatData } from "./combat";
 import type { Creature, Level } from "./creatures";
 
-/** One fighter's value at full health: √(hp × dps) for its level. */
-export const levelValue = (level: Level, data: CombatData = COMBAT) => Math.sqrt(data.levels.hp[level] * data.levels.dps[level]);
+/** One fighter's value at full health: √(hp × dps) for its level (times its species' strength,
+ *  which scales both: Ed, 2026-10-05). */
+export const levelValue = (level: Level, data: CombatData = COMBAT, species?: string) => Math.sqrt(data.levels.hp[level] * data.levels.dps[level]) * (species ? strengthOf(species, level, data) : 1);
 
 /** One fighter's value now: √(hp left × dps), so a hurt one counts for less. */
-export const creatureValue = (c: Creature, data: CombatData = COMBAT) => Math.sqrt(Math.max(0, c.hp ?? data.levels.hp[c.level]) * data.levels.dps[c.level]);
+export const creatureValue = (c: Creature, data: CombatData = COMBAT) => { const m = strengthOf(c.species, c.level, data); return Math.sqrt(Math.max(0, c.hp ?? data.levels.hp[c.level] * m) * data.levels.dps[c.level] * m); };
 
 /** A side's value: the sum of its fighters'. */
 export const sideValue = (list: Iterable<Creature>, data: CombatData = COMBAT) => { let f = 0; for (const c of list) if (!c.gone) f += creatureValue(c, data); return f; };

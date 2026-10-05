@@ -7,13 +7,18 @@ import raw from "../../config/movement.json";
 import type { Creature } from "./creatures";
 import { hash2 } from "./random";
 
-export type BehaviourKind = "arrive" | "keepRange" | "orbit" | "strafe" | "slot" | "separation" | "cohesion" | "wander" | "dodge";
+export type BehaviourKind = "arrive" | "keepRange" | "orbit" | "strafe" | "slot" | "separation" | "cohesion" | "wander" | "dodge" | "light";
 export interface Behaviour { kind: BehaviourKind; w: number; near?: number; far?: number; radius?: number; swap?: number }
-export type TacticKind = "surround" | "pincer" | "hitAndRun" | "volley" | "swarm" | "none";
-export interface Move { kind: "charge" | "ambush" | "burrow" | "leap"; cooldown: number; /** A charge: seconds it lowers its head first (its lane telegraphed) */ windup?: number; from?: number; to?: number; speed?: number; time?: number; trigger?: number; height?: number }
+export type TacticKind = "surround" | "pincer" | "hitAndRun" | "volley" | "swarm" | "flank" | "none";
+export interface Move { kind: "charge" | "ambush" | "burrow" | "leap" | "dig" | "block" | "trail" | "flash"; cooldown: number;
+  /** A charge: backs off at this speed (m/s) while it lowers its head (the ram's run-up); its pack mates charge with it (the stags' pair); curled up while it rolls, taking this times the damage (the hedgehog's, the woodlouse's). */ backup?: number; pair?: boolean; curl?: number;
+  /** A leap that lands a blow on its target (the lynx's pounce), not a slam round it; an ambush that strikes the moment it springs (the snake's). */ strike?: boolean;
+  /** Dig in, block, trail, flash: seconds it lasts (time), the damage it takes meanwhile times armour, a slow's speed times slow, a trail's drop every seconds, a radius. */ armour?: number; slow?: number; every?: number; radius?: number; /** A charge: seconds it lowers its head first (its lane telegraphed); how fast it builds speed and brakes (m/s each second), how fast it turns braking (degrees a second), and how far it runs on past its target before braking (m). */ windup?: number; accel?: number; brake?: number; turn?: number; overshoot?: number; from?: number; to?: number; speed?: number; time?: number; trigger?: number; height?: number }
 export interface Profile {
   /** Its speed in a fight (m/s, times tuning fight.speed; the usual is combat.fightRun). */
   speed?: number;
+  /** Its sprint closing in from afar (m/s; else combat.pursuitRun): slow kinds (a snail) don't sprint. */
+  pursuit?: number;
   /** How quickly it changes velocity (m/s per second): heavy creatures turn slowly. */
   accel: number;
   fight: Behaviour[];
@@ -22,14 +27,15 @@ export interface Profile {
 }
 /** A wild legend's move set (Stage 5): moves (combat.json attacks) in a loop, and its second phase. */
 export interface LegendSet { pattern: string[]; phase2: { at: number; pattern: string[]; speed: number; cooldown: number } }
-export interface MovementData { repick: number; packRadius: number; profiles: Record<string, Profile>; legends: LegendSet & { bySpecies: Record<string, LegendSet> } }
+export interface MovementData { repick: number; packRadius: number; profiles: Record<string, Profile>; legends: LegendSet & { bySpecies: Record<string, LegendSet> }; /** Body sizes, for spacing (rules/spacing.ts). */ bodies: import("./spacing").Bodies }
 export const MOVEMENT = raw as unknown as MovementData;
 
 /** The fight's scale and speed (Ed's motion scale pass, 2026-10-04; tuning fight, ?fightScale= and
  *  ?fightSpeed=, and live in the debug overlay): every length in a fight (attack ranges, lunges,
  *  radii, knockback, pattern sizes, pursuit) times scale; every fight speed (running, charging,
- *  shots) times speed. Set from the tuning at each combat step. */
-export const FIGHT = { scale: 1, speed: 1 };
+ *  shots) times speed; momentum: how heavily creatures in a fight change speed and turn (their
+ *  accelerations and turn rates divided by it). Set from the tuning at each combat step. */
+export const FIGHT = { scale: 1, speed: 1, momentum: 1 };
 
 export const profileOf = (species: string, data: MovementData = MOVEMENT): Profile | null => data.profiles[species] ?? null;
 export const legendSetOf = (species: string, data: MovementData = MOVEMENT): LegendSet => data.legends.bySpecies[species] ?? data.legends;
@@ -79,6 +85,10 @@ export interface SteerContext {
   /** Shots and lobs in flight (for dodging). */
   threats: { x: number; z: number; vx: number; vz: number; side: string; radius?: number; lob?: { tx: number; tz: number } }[];
   side: string;
+  /** Which way the target is heading (a unit vector), or none if it's standing still (flanking goes round to its back). */
+  heading?: { x: number; z: number } | null;
+  /** Lights near it (glow-worms, soundsystems): moths are drawn to them. */
+  lights?: { x: number; z: number }[];
   /** Its attack is ready (hit and run goes in only then). */
   ready: boolean;
   /** Seconds a beat lasts (the volley fires on it). */
@@ -112,6 +122,16 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
       may = may && beatPhase < 0.2;
       break;
     }
+    case "flank": {
+      // Round to its back (Ed's species pass: the fox, the marten pack): slots behind the way it's
+      // heading, fanned a little apart; standing still, a ring round it (as surround).
+      const h = x.heading, R = Math.max(x.want * 0.9, 1);
+      const a = h ? Math.atan2(-h.z, -h.x) + (i - (n - 1) / 2) * 0.7 : base + (i / n) * Math.PI * 2;
+      slot = { x: x.px + Math.cos(a) * R, z: x.pz + Math.sin(a) * R };
+      // (it strikes only from behind her: within 70 degrees of her back)
+      if (h && may) { const bx = c.x - x.px, bz = c.z - x.pz, bd = Math.hypot(bx, bz) || 1; may = (bx * -h.x + bz * -h.z) / bd > 0.35 || d < x.want * 0.6; }
+      break;
+    }
     default: break;
   }
   for (const b of P.fight) {
@@ -132,6 +152,13 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
       case "separation": { const R = (b.radius ?? 7) * S; for (const o of x.neighbours) { if (o === c) continue; const ox = c.x - o.x, oz = c.z - o.z, od = Math.hypot(ox, oz); if (od < R && od > 1e-4) add(ox / od, oz / od, b.w * (1 - od / R)); } break; }
       case "cohesion": { if (pack && n > 1) { const cx = pack.cx - c.x, cz = pack.cz - c.z, cd = Math.hypot(cx, cz); if (cd > (b.radius ?? 14) * S) add(cx / cd, cz / cd, b.w); } break; }
       case "wander": { const a = hash2(c.id, Math.floor(x.time * 2), 13) * Math.PI * 2; add(Math.cos(a), Math.sin(a), b.w); break; }
+      case "light": {
+        // Drawn to the nearest light (a moth): toward it, fluttering round it once there.
+        let best: { x: number; z: number } | null = null, bd = (b.radius ?? 30) * S;
+        for (const l of x.lights ?? []) { const ld = Math.hypot(l.x - c.x, l.z - c.z); if (ld < bd) { bd = ld; best = l; } }
+        if (best) { const lx = best.x - c.x, lz = best.z - c.z, ld = Math.max(bd, 1e-3); if (ld > 3 * S) add(lx / ld, lz / ld, b.w); else add(-lz / ld, lx / ld, b.w); }
+        break;
+      }
       case "dodge": {
         // Step sideways out of a shot coming its way (not its own side's).
         const R = (b.radius ?? 20) * S;
@@ -153,7 +180,7 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
   // A behaviour asking for more than full speed is held to it; then ease toward it at its acceleration.
   const m = Math.hypot(vx, vz);
   if (m > 1) { vx /= m; vz /= m; }
-  const tx = vx * x.speed, tz = vz * x.speed, ax = tx - (c.vx ?? 0), az = tz - (c.vz ?? 0), am = Math.hypot(ax, az), step = P.accel * x.dt;
+  const tx = vx * x.speed, tz = vz * x.speed, ax = tx - (c.vx ?? 0), az = tz - (c.vz ?? 0), am = Math.hypot(ax, az), step = (P.accel * x.dt * FIGHT.speed) / FIGHT.momentum;
   const k = am > step ? step / am : 1;
   c.vx = (c.vx ?? 0) + ax * k; c.vz = (c.vz ?? 0) + az * k;
   c.x += c.vx * x.dt; c.z += c.vz * x.dt;
@@ -161,32 +188,69 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
   c.moving = sp > 0.15;
   if (c.moving) c.walk += x.dt * (2 + Math.min(sp, 8) * 1.5);
   // It faces its target while it fights (or the way it runs, when it's running fast away).
-  c.facing = (sp > 6 && Math.abs(c.vx) > 1 ? c.vx : dx) >= 0 ? 1 : -1;
+  // (with a margin either way, so it doesn't flicker left and right as it passes straight up or down the screen)
+  const fx = sp > 6 ? c.vx : dx;
+  if (Math.abs(fx) > (sp > 6 ? 1.5 : 1)) c.facing = fx > 0 ? 1 : -1;
   c.away = dz < -Math.abs(dx);
   return may;
 }
 
-/** The charge (Stage 5: the boar): a burst in a straight line at its target, locked once it starts;
- *  it ends after `time` seconds or once it reaches the target (the hit, for the caller), then the
- *  move cools down. Returns "hit" when it reached the target this step. */
-export function stepCharge(c: Creature, mv: Move, px: number, pz: number, reach: number, time: number, dt: number): "none" | "charging" | "hit" {
-  const ch = c.charge;
-  // Lowering its head: it stands, its lane showing, then goes (fixed now: step out of the lane).
-  if (ch && ch.from !== undefined && time < ch.from) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = ch.dx >= 0 ? 1 : -1; return "charging"; }
-  if (ch && time < ch.until) {
-    c.x += ch.dx * ch.speed * dt; c.z += ch.dz * ch.speed * dt; c.vx = ch.dx * ch.speed; c.vz = ch.dz * ch.speed;
-    c.moving = true; c.walk += dt * 12; c.facing = ch.dx >= 0 ? 1 : -1;
-    if (Math.hypot(px - c.x, pz - c.z) <= reach) { c.charge = { ...ch, until: time }; return "hit"; }
+/** The charge (Stage 5: the boar; with momentum, Ed 2026-10-05: "they should have more momentum").
+ *  It lowers its head (windup seconds, easing to a stop, its lane shown), then builds speed down
+ *  that locked lane at `accel` up to `speed`, hits whatever it reaches once and carries on through,
+ *  until it's `overshoot` metres past its target or `time` seconds have gone; then it brakes at
+ *  `brake`, turning in an arc toward its target at `turn` degrees a second, and once it's down to its
+ *  run its own steering takes over (with its velocity). Then the move cools down. Returns "hit" on
+ *  the step it reaches the target. */
+export function stepCharge(c: Creature, mv: Move, px: number, pz: number, reach: number, time: number, dt: number, run = 0): "none" | "charging" | "hit" {
+  const ch = c.charge, M = FIGHT.momentum, V = FIGHT.speed;
+  const accel = ((mv.accel ?? 40) * V) / M, brake = ((mv.brake ?? 30) * V) / M, turn = (((mv.turn ?? 140) * Math.PI) / 180) * V / M;
+  if (ch) {
+    let vx = c.vx ?? 0, vz = c.vz ?? 0, v = Math.hypot(vx, vz);
+    if (ch.from !== undefined && time < ch.from) {
+      if (mv.backup) {
+        // Backing off for a run at it (the ram): easing back up its lane, facing down it.
+        const bx = -ch.dx * mv.backup * V - vx, bz = -ch.dz * mv.backup * V - vz, bm = Math.hypot(bx, bz), k = bm > brake * dt ? (brake * dt) / bm : 1;
+        vx += bx * k; vz += bz * k; v = Math.hypot(vx, vz);
+        c.walk += dt * (2 + v);
+      } else {
+        // Lowering its head: easing to a stop, facing down its lane.
+        const nv = Math.max(0, v - brake * dt); if (v > 1e-6) { vx *= nv / v; vz *= nv / v; } v = nv;
+      }
+      c.vx = vx; c.vz = vz; c.x += vx * dt; c.z += vz * dt; c.moving = v > 0.3; c.facing = ch.dx >= 0 ? 1 : -1;
+      return "charging";
+    }
+    const tx = px - c.x, tz = pz - c.z, along = tx * ch.dx + tz * ch.dz;
+    if (!ch.braking && (time >= ch.until || along < -(mv.overshoot ?? 8) * FIGHT.scale)) ch.braking = true;
+    if (!ch.braking) {
+      // Building speed down its lane (its velocity swings onto the lane, no snapping).
+      const nv = Math.min(ch.speed, Math.max(v, 0) + accel * dt);
+      vx = ch.dx * nv; vz = ch.dz * nv; v = nv;
+    } else {
+      // Braking in an arc: slowing, its heading turning toward its target at its turn rate.
+      const nv = Math.max(0, v - brake * dt);
+      let h = Math.atan2(vz, vx);
+      const want = Math.atan2(tz, tx), da = ((want - h + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+      h += Math.max(-turn * dt, Math.min(turn * dt, da));
+      vx = Math.cos(h) * nv; vz = Math.sin(h) * nv; v = nv;
+      if (v <= Math.max(run, 1)) { c.vx = vx; c.vz = vz; c.x += vx * dt; c.z += vz * dt; c.charge = undefined; return "charging"; } // (its run takes over, with its velocity)
+    }
+    c.vx = vx; c.vz = vz; c.x += vx * dt; c.z += vz * dt;
+    c.moving = true; c.walk += dt * (4 + Math.min(v, 30) * 0.3);
+    if (Math.abs(vx) > 1.5) c.facing = vx > 0 ? 1 : -1;
+    if (!ch.struck && !ch.braking && Math.hypot(tx, tz) <= reach) { ch.struck = true; return "hit"; } // (and it carries on through)
     return "charging";
   }
   const d = Math.hypot(px - c.x, pz - c.z);
-  if (time >= (c.moveReadyAt ?? 0) && d >= (mv.from ?? 10) * FIGHT.scale && d <= (mv.to ?? 40) * FIGHT.scale) {
-    const s = (mv.speed ?? 28) * FIGHT.speed, wind = mv.windup ?? 0.5;
-    c.charge = { dx: (px - c.x) / d, dz: (pz - c.z) / d, speed: s, from: time + wind, until: time + wind + (mv.time ?? 1.2) };
-    c.moveReadyAt = time + mv.cooldown;
-    return "charging";
-  }
+  if (time >= (c.moveReadyAt ?? 0) && d >= (mv.from ?? 10) * FIGHT.scale && d <= (mv.to ?? 40) * FIGHT.scale) { startCharge(c, mv, px, pz, time); return "charging"; }
   return "none";
+}
+
+/** Start a charge at (px, pz) now: its head goes down (its lane locked), then it runs. */
+export function startCharge(c: Creature, mv: Move, px: number, pz: number, time: number): void {
+  const d = Math.hypot(px - c.x, pz - c.z) || 1e-6, s = (mv.speed ?? 28) * FIGHT.speed, wind = mv.windup ?? 0.5;
+  c.charge = { dx: (px - c.x) / d, dz: (pz - c.z) / d, speed: s, from: time + wind, until: time + wind + (mv.time ?? 1.6), ...(mv.curl ? { curl: mv.curl } : {}) };
+  c.moveReadyAt = time + mv.cooldown;
 }
 
 /** The burrow (Stage 5: the mole): from `from` metres off it goes under (untouchable: a mound
