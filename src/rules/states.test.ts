@@ -31,6 +31,13 @@ describe("the creature-state model (rules/states.ts, tools/balance/states.mjs)",
     expect(a.waves[a.waves.length - 1].pool).toBeGreaterThan(a.waves[1].pool);
   }, 30000);
 
+  it("never lets kin fight kin (Ed, 2026-10-05): her happy defenders don't beat their own area's enraged", () => {
+    const o = { interval: 300, maxWaves: 8, policy: "defend" as const, skill: 1, dt: 1 };
+    const kin = simulateStates(map, o), sep = simulateStates(map, { ...o, ownKind: false });
+    for (const l of kin.local) if (l.otherF === 0) expect(l.won).not.toBe(true);
+    expect(sep.local.some(l => l.won === true)).toBe(true);
+  }, 60000);
+
   it("lasts longer when she invites than when she doesn't", () => {
     const idle = simulateStates(map, { interval: 60, maxWaves: 40, policy: "defend", skill: 1e-9 });
     const play = simulateStates(map, { interval: 60, maxWaves: 40, policy: "defend", skill: 4 });

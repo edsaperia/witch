@@ -46,6 +46,10 @@ export interface StatesOptions {
   soundHealth?: number;
   /** A happy legend's health and damage, times (1). */
   legendDefence?: number;
+  /** Creatures never attack their own kind, whatever their states (Ed, 2026-10-05): a happy defender
+   *  leaves its own area's enraged kin be, so a fresh soundsystem falls to other species to defend
+   *  (true; false lets kin fight, as before). */
+  ownKind?: boolean;
   /** Treetop speed (m/s; the tuning's), a posse's walk (m/s; leash run × 1.4) and its routes' length over the straight line (1.3). */
   witchSpeed?: number;
   posseSpeed?: number;
@@ -79,7 +83,7 @@ export interface StatesWave {
 
 /** One area's own fight when it woke: the share of its young and up (by F) she had invited
  *  before (happy or leashed), the defenders' F and the enraged's, and how it went. */
-export interface LocalFight { wave: number; key: string; invited: number; defendersF: number; enragedF: number; /** Its soundsystem was standing at the next wave. */ held: boolean; /** Seconds after waking it fell, if it did. */ fellAfter?: number; /** Its defenders beat its own enraged (null: no fight). */ won: boolean | null }
+export interface LocalFight { wave: number; key: string; invited: number; defendersF: number; enragedF: number; /** Of the defenders there (its happy and her army, if near), those of other kinds than the area's own (F): the ones that can fight its kin. */ otherF: number; /** Its soundsystem was standing at the next wave. */ held: boolean; /** Seconds after waking it fell, if it did. */ fellAfter?: number; /** Its own enraged were all beaten while its soundsystem stood, with some of its defenders left (null: no fight). */ won: boolean | null }
 
 export interface StatesResult {
   seed: number;
@@ -108,7 +112,7 @@ const fullHp = (level: Level, m: number) => COMBAT.levels.hp[level] * m;
 export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
   const t = map.tuning, C = t.combat, dt = o.dt ?? 0.5, d = map.dancefloor;
   const approach = o.approach ?? 3, leashTime = o.leashTime ?? 2, questTime = o.questTime ?? 20, GR = o.guardRadius ?? 40, dazed = o.dazedTime ?? 0, margin = o.margin ?? 0.9;
-  const witchSpeed = o.witchSpeed ?? t.treetopSpeed, posseSpeed = (o.posseSpeed ?? t.leash.runSpeed * 1.4) / (o.route ?? 1.3), LD = o.legendDefence ?? 1;
+  const ownKind = o.ownKind ?? true, witchSpeed = o.witchSpeed ?? t.treetopSpeed, posseSpeed = (o.posseSpeed ?? t.leash.runSpeed * 1.4) / (o.route ?? 1.3), LD = o.legendDefence ?? 1;
   const berriesPerArea = o.berriesPerArea ?? (t.berries.perArea[0] + t.berries.perArea[1]) / 2;
   const size = t.areaSize * t.areaScale, land = t.descendTime + t.riseTime, cross = (0.5 * size) / t.groundSpeed;
   const talk = t.invite.talkTime;
@@ -249,6 +253,10 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
           if (u.state === "happy") defF += v;
           if (!u.legend) { all += v; if (u.state === "happy" || u.state === "leashed" || u.state === "gone") inv += v; }
         }
+        const kind = AREA_TYPES[map.typeOf(a.cell[0], a.cell[1])].creature;
+        let otherF = 0;
+        for (const u of l) if (u.state === "happy" && u.species !== kind) otherF += valueOf(u);
+        if (Math.hypot(army.x - at.x, army.z - at.z) < GR * 1.5) for (const u of leashed()) if (u.species !== kind) otherF += valueOf(u);
         let enF = 0;
         for (const u of l) {
           if (u.state !== "wild" || u.level === 0) continue; // babies never
@@ -258,7 +266,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
           if (!u.legend) { if (u.target === key) targets.own++; else targets.other++; }
           enF += valueOf(u);
         }
-        const lf: LocalFight = { wave: party.wave, key, invited: all > 0 ? inv / all : 0, defendersF: defF, enragedF: enF, held: true, won: null };
+        const lf: LocalFight = { wave: party.wave, key, invited: all > 0 ? inv / all : 0, defendersF: defF, enragedF: enF, otherF, held: true, won: null };
         local.push(lf); openLocal.set(key, lf); if (enF > 0 && defF > 0) deciding.add(lf);
       }
     }
@@ -324,12 +332,18 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
       const L = leashed();
       if (L.length && task?.kind !== "defend") zones.push({ x: army.x, z: army.z, side: L }); // (not while walking to a siege)
       for (const zn of zones) {
-        const foes = enraged.filter(u => !held.has(u) && Math.abs(u.x - zn.x) < GR && Math.abs(u.z - zn.z) < GR && Math.hypot(u.x - zn.x, u.z - zn.z) < GR);
+        // (With the own-kind rule, only foes some defender here can fight, and only them.)
+        const foes = enraged.filter(u => !held.has(u) && Math.abs(u.x - zn.x) < GR && Math.abs(u.z - zn.z) < GR && Math.hypot(u.x - zn.x, u.z - zn.z) < GR && (!ownKind || zn.side.some(v => v.species !== u.species && v.hp > 0)));
         if (!foes.length) continue;
         for (const f of foes) held.add(f);
+        // Focus fire, kind by kind: each species' damage goes to the first foes not of its kind.
         const hit = (from: Unit[], to: Unit[]) => {
-          let dmg = from.reduce((a, u) => a + (u.hp > 0 ? u.dps : 0), 0) * dt;
-          for (const u of to) { if (dmg <= 0) break; if (u.hp <= 0) continue; const k = Math.min(dmg, u.hp); u.hp -= k; dmg -= k; }
+          const by = new Map<string, number>();
+          for (const u of from) if (u.hp > 0) by.set(ownKind ? u.species : "", (by.get(ownKind ? u.species : "") ?? 0) + u.dps * dt);
+          for (const [sp, d0] of by) {
+            let dmg = d0;
+            for (const u of to) { if (dmg <= 0) break; if (u.hp <= 0 || (ownKind && u.species === sp)) continue; const k = Math.min(dmg, u.hp); u.hp -= k; dmg -= k; }
+          }
         };
         hit(zn.side, foes); hit(foes, zn.side);
         for (const u of [...foes, ...zn.side]) if (u.hp <= 0 && u.state !== "gone" && u.state !== "dazed") {
@@ -342,7 +356,8 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
     // An area's own fight is decided once one side of it is gone.
     for (const lf of deciding) {
       const own = byCell.get(lf.key) ?? [];
-      if (!own.some(u => u.state === "enraged")) lf.won = true;
+      if ((sounds.get(lf.key)?.hp ?? 0) <= 0) lf.won = false; // (its soundsystem fell first)
+      else if (!own.some(u => u.state === "enraged")) lf.won = true;
       else if (!own.some(u => u.state === "happy" && u.level > 0)) lf.won = false;
       if (lf.won !== null) deciding.delete(lf);
     }
@@ -350,7 +365,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
     for (const u of enraged) {
       if (u.state !== "enraged" || held.has(u) || !u.target) continue;
       const s = sounds.get(u.target);
-      if (!s || s.hp <= 0) { u.target = u.legend ? null : nearestSound(u.x, u.z); continue; }
+      if (!s || s.hp <= 0) { if (u.legend) u.state = "gone"; else u.target = nearestSound(u.x, u.z); continue; }
       const dx = s.x - u.x, dz = s.z - u.z, dist = Math.hypot(dx, dz), want = u.reach + s.radius;
       if (dist > want) { const step = Math.min(dist - want, u.speed * dt); u.x += (dx / dist) * step; u.z += (dz / dist) * step; }
       else { const k = u.dps * dt; s.hp -= k; if (u.cell === s.key) damage.own += k; else damage.other += k; }
@@ -361,7 +376,8 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
       const lf = local.find(l => l.key === s.key);
       if (lf) lf.fellAfter = time - s.at;
       if (s.key !== "home") { party.areas.delete(s.key); (party.ruined ??= new Set()).add(s.key); }
-      for (const u of units) if (u.state === "enraged" && u.target === s.key) u.target = u.legend ? null : nearestSound(u.x, u.z);
+      // Its besiegers march on to the next-nearest; its own legend goes back to sleep, for good (Ed, 2026-10-05).
+      for (const u of units) if (u.state === "enraged" && u.target === s.key) { if (u.legend) u.state = "gone"; else u.target = nearestSound(u.x, u.z); }
     }
     if ([...sounds.values()].every(s => s.hp <= 0)) lost = { wave: party.wave, time };
     time += dt;
