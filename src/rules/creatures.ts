@@ -302,7 +302,7 @@ export function stepCreaturesNear(all: Creature[], x: number, z: number, radius:
     if (heldByCombat(c)) { c.seen = time; continue; } // fighting, fleeing, marching or walking home: moved by combat and knockout
     const full = inFull(c, Math.max(Math.abs(c.x - x), Math.abs(c.z - z)), lod.full, lod.band);
     if (counts) { if (full) counts.full++; else counts.coarse++; }
-    if (!full && !coarseTurn(tick, c.id, lod.every) && time - c.seen <= 3) { c.seen = time; continue; }
+    if (!full && !coarseTurn(tick, c.id, lod.every) && time - c.seen <= 3) continue; // (its turn comes well within 3 s: `seen` is kept fresh by it)
     if (dormant(c)) { c.seen = time; c.moving = false; c.away = false; continue; }
     if (time - c.seen > 3) {
       const r = rng(c.id * 7919 + Math.floor(time / 20) * 131 + 5);

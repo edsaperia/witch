@@ -1,5 +1,5 @@
 {
-  "version": null,
+  "version": 779,
   "items": [
     "Creatures far from you and from any fight are simulated less often (frozen far away), so late runs with hundreds of creatures cost less each frame",
     "The debug overlay updates four times a second, its trees/bushes/creatures line no longer hidden under the buttons, and a new sim line counts creatures in full, coarse and frozen"
