@@ -3077,6 +3077,52 @@ ART_ITERATIONS.new.push({ note: "the crystal stag's glow its own ice cyan, cryst
 const NEXT_CHOICE = { ancient: 3, wetland: 2, "cave-mouth": 3, "holly-thicket": 3, "bluebell-glade": 3, new: 3 };
 
 
+// ---- inlined from art/genome/pass.js ----
+// The art pass (#92): every area type's set (its creature at every level, its plants, its props) developed afresh from Ed's
+// briefs (art/areas.js's text, DESIGN.md's table) within the generators' limits, in iterations reviewed as a set. Each area's
+// iterations are patches in order, as the art iterations' (next.js): { note, genomes, plants, areas }, and an area patch may
+// carry its own `flora` (art/flora/areas.js's shape). Drawn only under an art set: "pass" (every area at its latest),
+// "pass@<n>", "pass:<area>@<n>". Pictures and notes: docs/art-pass/.
+const PASS_ITERATIONS = {
+  // ---- Moor (Ed): "moss; puddles, a lake; long grass; moss mounds; the sleeping giant"; the badger ----
+  moor: [
+    { note: "a European badger: a cool slate-grey back, black legs, the striped face; its legend carries a ridge of the moor's standing stones, glowing a pale moonlit green; the moor a deep olive moss with taller grass",
+      genomes: { badger: { palette: { hue: .62, sat: .1, val: .48, over: { MAGIC: [.32, .2, .95], MAGIC2: [.36, .45, .8] } }, coat: { legMat: "BODY3" } } },
+      areas: { moor: { leaf: .22, floor: ["moss", .22, .5, .36], small: [["grass", { h: 1.8 }]] } } },
+  ],
+  // ---- Fern forest (Ed): "pine needles, ferns, pine trees"; the boar ----
+  "fern-forest": [
+    { note: "a wild boar: darker, grey-brown and bristly, its piglets striped like humbugs; its legend's great tusks old ivory; a dark blue-green conifer forest (fir, Scots pine and larch, no broadleaves) over rusty needles, its ferns taller",
+      genomes: { boar: { palette: { hue: .07, sat: .42, val: .4, over: { ACCENT: [.12, .2, .95] } }, coat: { ridge: true, stripes: { at: [0], n: 5, mat: "BELLY" } } } },
+      areas: { "fern-forest": { leaf: .36, floor: ["needles", .06, .55, .3], small: [["fern", { h: 1.8 }]], flora: { species: [["fir", .45], ["pine", .3], ["larch", .25]], palette: { sat: .9, val: .88 } } } } },
+  ],
+  // ---- Muddy forest (Ed): "mud and leaves, short trunks with broken branches, trees with many trunks and branches"; the snail ----
+  "muddy-forest": [
+    { note: "a garden snail: a bigger amber shell with tight dark bands, a grey-brown body and longer stalks; its legend's shell glowing amber; the trees an ochre, muddy olive over wet dark mud",
+      genomes: { snail: { palette: { hue: .08, sat: .6, val: .6, over: { SKIN: [.08, .28, .5], MAGIC: [.1, .8, 1], MAGIC2: [.05, .9, .7] } }, form: { shell: 1.15, whorl: .22, stripe: .07, stalks: 1.2, mantle: true } } },
+      areas: { "muddy-forest": { leaf: .15, floor: ["mud", .07, .45, .24], flora: { species: [["sycamore", .4], ["alder", .25], ["elm", .2], ["crabApple", .15]], palette: { sat: .8, val: .82 } } } } },
+  ],
+  // ---- Stone shrine (Ed): "grassy, stony; mossy henges; little stones; big stones; a shrine"; the fox ----
+  "stone-shrine": [
+    { note: "a red fox, deeper red with dark socks; its legend a kitsune whose many tails burn with pale fox-fire; the shrine's grass greyer, like old stone",
+      genomes: { fox: { palette: { hue: .045, sat: .85, val: .85, over: { MAGIC: [.12, .3, 1], MAGIC2: [.08, .65, 1] } }, coat: { belly: true, socks: .38 } } },
+      areas: { "stone-shrine": { floor: ["stony", .22, .25, .48] } } },
+  ],
+  // ---- Tangly forest (Ed): "nettles and earth, tangled branches, fairly short tangly trees"; the ram ----
+  "tangly-forest": [
+    { note: "a ram with a thick cream fleece and a dark face; its legend's horns glowing gold, not the style's mint; the hawthorn tangle a deep red-green",
+      genomes: { ram: { palette: { hue: .11, sat: .16, val: .9, over: { MAGIC: [.13, .75, 1], MAGIC2: [.1, .85, .9], ACCENT: [.1, .3, .75] } } } },
+      areas: { "tangly-forest": { leaf: .3, flora: { species: [["hawthorn", .45], ["elder", .25], ["crabApple", .2], ["hazel", .1]], palette: { sat: 1.1, val: .85 } } } } },
+  ],
+  // ---- Wispy forest (Ed): "dry leaves, tall thin wispy trees, thick trees with several trunks"; the woodlouse ----
+  "wispy-forest": [
+    { note: "a common woodlouse: slate grey with pale flecks and pale plate edges, ten plates, longer feelers; its legend's crystals moonstone; the wispy forest pale gold",
+      genomes: { woodlouse: { palette: { hue: .62, sat: .1, val: .5, over: { MAGIC: [.7, .18, 1], MAGIC2: [.55, .35, 1] } }, form: { plates: 10, rim: true, mottle: .12, antennae: 1.3 } } },
+      areas: { "wispy-forest": { leaf: .17 } } },
+  ],
+};
+
+
 
 const isObj = v => v && typeof v === "object" && !Array.isArray(v);
 function mergePatch(base, patch) {
@@ -3089,6 +3135,10 @@ function mergePatch(base, patch) {
 // The iterations an art set is made of, in order: [{ genomes, plants, areas }, ...].
 function steps(name) {
   if (name === "next") return Object.entries(NEXT_CHOICE).flatMap(([group, n]) => (ART_ITERATIONS[group] || []).slice(0, n));
+  // the art pass (#92, art/genome/pass.js): "pass" every area at its latest iteration, "pass@<n>" every area at its nth (or its
+  // latest, if it has fewer), "pass:<area>@<n>" one area at its nth
+  const p = /^pass(?::([a-z-]+))?(?:@(\d+))?$/.exec(name || "");
+  if (p) return Object.entries(PASS_ITERATIONS).filter(([group]) => !p[1] || group === p[1]).flatMap(([, list]) => list.slice(0, p[2] ? +p[2] : list.length));
   const m = /^([a-z-]+)@(\d+)$/.exec(name || "");
   if (!m || !ART_ITERATIONS[m[1]]) return [];
   return ART_ITERATIONS[m[1]].slice(0, +m[2]);
@@ -3115,7 +3165,8 @@ function artSet(name) {
   return set;
 }
 // Every art set name the iterations make: each group's iterations, and "next".
-const ART_SET_NAMES = [...Object.entries(ART_ITERATIONS).flatMap(([g, list]) => list.map((_, i) => `${g}@${i + 1}`)), "next"];
+const ART_SET_NAMES = [...Object.entries(ART_ITERATIONS).flatMap(([g, list]) => list.map((_, i) => `${g}@${i + 1}`)), "next", "pass",
+  ...Object.entries(PASS_ITERATIONS).flatMap(([g, list]) => list.map((_, i) => `pass:${g}@${i + 1}`))];
 // The species object for an id in a style's art set, or null (then the default).
 const setSpecies = (id, st) => (st?.artSet && artSet(st.artSet)?.species[id]) || null;
 // A tree species by name in a style's art set, or null.
@@ -3241,6 +3292,7 @@ function quad3d(S, level, frame, st, facing = "towards") {
     if (q.saddle && p[1] > top - .18 && p[0] < len * .55) return M.BODY2;
     if (q.spots && p[1] > chest + .1 && spotty(p, 10, .22)) return q.spotMat === "belly" || (q.spots === "young" && (q.spotsAt ? q.spotsAt.includes(level) : juv)) ? M.BELLY : q.spots === "young" ? undefined : M.BODY3;
     if (q.ridge && p[1] > top - .08 + hump * .5) return M.BODY3;
+    if (q.stripes && q.stripes.at.includes(level) && p[1] > chest + .04 && Math.abs(Math.sin(Math.atan2(p[2], p[1] - chest) * (q.stripes.n || 6))) > .72) return M[q.stripes.mat || "BELLY"]; // a piglet's lengthwise stripes, round its back
     return undefined;
   };
   // ---- torso: a deep chest, a tucked waist, a rump ----
@@ -3530,25 +3582,39 @@ function beetle3d(S, level, frame, st, facing = "towards") {
 }
 
 function snail3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 3, m = new Model(), g = frame ? .04 : 0;
-  m.ell([0, .07, 0], [.6 + g, .07, .17], M.SKIN, { group: 1 });
-  m.chain([[.45 + g, .08, 0, .1], [.6 + g, .25, 0, .09], [.68 + g, .28, 0, .08]], M.SKIN, { group: 1 });
-  for (const side of [-1, 1]) { m.seg([.7 + g, .32, side * .04], [.78 + g, .55, side * .1], .018, .014, M.SKIN, { group: 5 }); m.ell([.78 + g, .57, side * .1], [.03, .03, .03], legend ? M.MAGIC2 : M.EYE, { group: 5 }); }
-  m.anchors.head = { c: [.68 + g, .3, 0], r: [.09, .08, .09], top: [.66 + g, .38, 0] };
-  m.anchors.eyes = { pts: [-1, 1].map(side => [.78 + g, .57, side * .1]), size: .03 };
-  m.anchors.neck = { c: [.55 + g, .17, 0], r: .1, dir: [1, 1.2, 0] };
-  const c = [-.12, .4, 0], shell = legend ? M.MAGIC : M.BODY;
-  m.ell(c, [.32, .32, .22], shell, { group: 3, paint: p => { const a = Math.atan2(p[1] - c[1], p[0] - c[0]), rr = Math.hypot(p[0] - c[0], p[1] - c[1]) / .32, k = ((rr - a / (Math.PI * 2) * .3) % .3 + .3) % .3; return k < .06 ? (legend ? M.MAGIC2 : M.BODY3) : undefined; } });
+  // form: shell (its size), shellH (its height), whorl (the spiral's spacing), stripe (the dark spiral line's width), foot (its
+  // length), stalks (the eye stalks' length), skin, shellMat, bandMat (materials; a legend's glow unless set), mantle (a pale rim
+  // where the shell meets the body)
+  const F = formOf(S, level, { shell: 1, shellH: 1, whorl: .3, stripe: .06, foot: 1, stalks: 1, skin: "SKIN", shellMat: null, bandMat: null, mantle: false });
+  const legend = level === 3, m = new Model(), g = frame ? .04 : 0, sk = M[F.skin], fl = F.foot, sl = F.stalks;
+  m.ell([0, .07, 0], [.6 * fl + g, .07, .17], sk, { group: 1 });
+  m.chain([[.45 * fl + g, .08, 0, .1], [.6 * fl + g, .25, 0, .09], [.68 * fl + g, .28, 0, .08]], sk, { group: 1 });
+  const hx = .68 * fl + g, ex = hx + .1 * sl, ey = .28 + .29 * sl;
+  for (const side of [-1, 1]) { m.seg([hx + .02, .32, side * .04], [ex, ey - .02, side * .1], .018, .014, sk, { group: 5 }); m.ell([ex, ey, side * .1], [.03, .03, .03], legend ? M.MAGIC2 : M.EYE, { group: 5 }); }
+  m.anchors.head = { c: [hx, .3, 0], r: [.09, .08, .09], top: [hx - .02, .38, 0] };
+  m.anchors.eyes = { pts: [-1, 1].map(side => [ex, ey, side * .1]), size: .03 };
+  m.anchors.neck = { c: [.55 * fl + g, .17, 0], r: .1, dir: [1, 1.2, 0] };
+  const R = .32 * F.shell, c = [-.12, .08 + R, 0], shell = F.shellMat ? M[F.shellMat] : legend ? M.MAGIC : M.BODY, band = F.bandMat ? M[F.bandMat] : legend ? M.MAGIC2 : M.BODY3;
+  if (F.mantle) m.ell([c[0] + .02, .12, 0], [R * .85, .05, .2], M.BELLY, { group: 1 });
+  m.ell(c, [R, R * F.shellH, .22 * F.shell], shell, { group: 3, paint: p => { const a = Math.atan2(p[1] - c[1], p[0] - c[0]), rr = Math.hypot(p[0] - c[0], p[1] - c[1]) / R, w = F.whorl, k = ((rr - a / (Math.PI * 2) * w) % w + w) % w; return k < F.stripe ? band : undefined; } });
   return finish(m, S, level, st, .45, facing);
 }
 
 function woodlouse3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 3, m = new Model();
-  for (const side of [-1, 1]) for (let i = 0; i < 7; i++) { const x = -.45 + i * .15, ph = (i + frame) % 2 ? .03 : -.03; m.seg([x, .1, side * .22], [x + ph, .01, side * .33], .025, .015, M.BODY3, { group: side > 0 ? 7 : 2 }); }
-  for (const side of [-1, 1]) m.chain([[.5, .15, side * .08, .02], [.7, .3, side * .2, .015], [.82, .22, side * .26, .012]], M.BODY3, { group: 9, extra: true });
-  m.ell([0, .18, 0], [.58, .2, .3], M.BODY, { paint: p => ((Math.floor((p[0] + .6) * 9) % 2) && p[1] > .2 ? M.BODY2 : undefined) || (Math.abs(((p[0] + .6) * 9) % 1) < .12 ? M.LINE : undefined) });
-  eyesOn(m, [0, .18, 0], [.58, .2, .3], [[.92, .3, .25], [.92, .3, -.25]], .02, legend ? M.MAGIC2 : M.EYE);
-  if (legend) crystals3d(m, [[[-.3, .32, .05], .3], [[0, .37, -.05], .45], [[.25, .32, .05], .32]]);
+  // form: plates (how many bands across its back, 9), length, width, dome (its height), legs (pairs, 7), antennae (their
+  // length), rim (a pale edge along each side's plates), mottle (pale flecks on the plates, a common woodlouse's)
+  const F = formOf(S, level, { plates: 9, length: 1, width: 1, dome: 1, legs: 7, antennae: 1, rim: false, mottle: 0 });
+  const legend = level === 3, m = new Model(), L = F.length, W = F.width, D = F.dome, nl = F.legs;
+  for (const side of [-1, 1]) for (let i = 0; i < nl; i++) { const x = (-.45 + i * .9 / (nl - 1)) * L, ph = (i + frame) % 2 ? .03 : -.03; m.seg([x, .1, side * .22 * W], [x + ph, .01, side * .33 * W], .025, .015, M.BODY3, { group: side > 0 ? 7 : 2 }); }
+  const ax = .5 * L, A = F.antennae;
+  for (const side of [-1, 1]) m.chain([[ax, .15, side * .08, .02], [ax + .2 * A, .15 + .15 * A, side * (.08 + .12 * A), .015], [ax + .32 * A, .15 + .07 * A, side * (.08 + .18 * A), .012]], M.BODY3, { group: 9, extra: true });
+  const n = F.plates, R = [.58 * L, .2 * D, .3 * W];
+  m.ell([0, .18, 0], R, M.BODY, { paint: p => { const u = (p[0] + .6 * L) * n / L;
+    if (F.rim && Math.abs(p[2]) > R[2] * .78 && p[1] < .22) return M.BELLY;
+    if (F.mottle && p[1] > .2 && spotty(p, 14, F.mottle)) return M.BELLY;
+    return ((Math.floor(u) % 2) && p[1] > .2 ? M.BODY2 : undefined) || (Math.abs(u % 1) < .12 ? M.LINE : undefined); } });
+  eyesOn(m, [0, .18, 0], R, [[.92, .3, .25], [.92, .3, -.25]], .02, legend ? M.MAGIC2 : M.EYE);
+  if (legend) crystals3d(m, [[[-.3 * L, .32 * D, .05], .3], [[0, .37 * D, -.05], .45], [[.25 * L, .32 * D, .05], .32]]);
   return finish(m, S, level, st, .4, facing);
 }
 
@@ -4650,8 +4716,9 @@ const AREA_FLORA = {
 
 // An area's ten (or n) tree slots as species, by their shares: each species gets its share of the slots (at least one, largest
 // remainders first), dealt out round the list so each kind turns up across the height classes, not bunched in one.
+// `id` an area type's id, or a flora record of AREA_FLORA's shape (an art set's own).
 function floraSlots(id, n) {
-  const F = AREA_FLORA[id]; if (!F) return null;
+  const F = typeof id === "string" ? AREA_FLORA[id] : id; if (!F) return null;
   const sp = F.species, raw = sp.map(([, w]) => w * n), cnt = raw.map(x => Math.max(1, Math.floor(x)));
   let left = n - cnt.reduce((a, b) => a + b, 0);
   const order = raw.map((x, i) => [x - Math.floor(x), i]).sort((a, b) => b[0] - a[0]);
@@ -5003,7 +5070,7 @@ function prop(kind, o, def, st, r, s) {
   const W = Math.round(48 * s * (o.w || 1)), H = Math.round(32 * s), sp = new Sprite(W, H), cx = W / 2, gy = H;
   let colours = {};
   if (kind === "grass" || kind === "reeds" || kind === "fern" || kind === "flowers" || kind === "flowerbed") {
-    const n = kind === "flowerbed" ? 40 : 24, hgt = (kind === "reeds" ? (o.tall ? 26 : 20) : kind === "fern" ? 14 : 10 * (o.h || 1)) * s;
+    const n = kind === "flowerbed" ? 40 : 24, hgt = (kind === "reeds" ? (o.tall ? 26 : 20) : kind === "fern" ? 14 * (o.h || 1) : 10 * (o.h || 1)) * s;
     if (kind === "flowerbed") sp.shape([[cx - 20 * s, gy - 2], [cx - 18 * s, gy - 6 * s], [cx + 18 * s, gy - 6 * s], [cx + 20 * s, gy - 2], [cx + 20 * s, gy], [cx - 20 * s, gy]], M.ACCENT, { group: 2, line: true });
     for (let k = 0; k < n; k++) {
       const x0 = cx + uni(r, -16, 16) * s, h = hgt * uni(r, .5, 1), lean = kind === "fern" ? uni(r, -6, 6) * s : uni(r, -2, 2) * s, y0 = gy - 1 - (kind === "flowerbed" ? 5 * s : 0);
@@ -5160,7 +5227,7 @@ const ART_PIXELS_PER_METRE = 16; // the prototype's (config/tuning.json, artPixe
 // trees (mounds, boulders). ppm: art pixels per metre, for the metres.
 // How tall a species grows as a mature tree (px at the style's tree size), measured once per species and tree size.
 const statureCache = new Map();
-function speciesStature(type, st) { const key = type + ":" + st.treeSize; if (!statureCache.has(key)) statureCache.set(key, treeSpecies(type).bare(rng(5), { ...st }, st.treeSize).sp.h); return statureCache.get(key); }
+function speciesStature(type, st) { const key = type + ":" + st.treeSize + ":" + (st.artSet || ""); if (!statureCache.has(key)) statureCache.set(key, (setPlant(type, st) || treeSpecies(type)).bare(rng(5), { ...st }, st.treeSize).sp.h); return statureCache.get(key); }
 function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanvas, ppm = ART_PIXELS_PER_METRE, flora = null } = {}) {
   const def = setArea(AREA_BY_ID[id], st); if (!def) throw new Error(`no area type "${id}"`); // with its art set's changes (art/genome/next.js), if any
   const recipes = (def.big || []).filter(([kind]) => kind === "tree").map(([, o]) => o);
@@ -5168,10 +5235,13 @@ function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaul
   if (flora?.length && recipes.length) { mains = flora.map(type => ({ type })); minors = []; } // a flora preview (?flora=): these species instead of the area's own
   // the area's flora (art/flora/areas.js): its species dealt into its tree slots by their shares, each with the area's own tree
   // character (its main recipe's trunks, lean, thickness, gnarl, scale) and the recipe the area gives that species, if any
-  const total = TREE_HEIGHT_CLASSES.reduce((a, c) => a + c.count, 0), pal = AREA_FLORA[id]?.palette, main0 = AREA_FLORA[id]?.species[0][0];
+  // an art set (art/genome/next.js) may give the area its own flora; one that changes only its big objects (the iterations before
+  // the area flora) grows those instead
+  const base = AREA_BY_ID[id], FL = def.flora || (def !== base && def.big !== base.big ? null : AREA_FLORA[id]);
+  const total = TREE_HEIGHT_CLASSES.reduce((a, c) => a + c.count, 0), pal = FL?.palette, main0 = FL?.species[0][0];
   // dealt by stature, so the classes still rise: each kind's height as a mature tree, the shortest kinds in the low classes, the tallest in the top ones
   const stature = o => speciesStature(o.type, st) + (o.type === main0 ? .01 : 0);
-  const slots = flora?.length ? null : floraSlots(id, total)?.map((o, i) => [o, i]).sort((a, b) => stature(a[0]) - stature(b[0]) || a[1] - b[1]).map(([o]) => o);
+  const slots = flora?.length ? null : floraSlots(FL, total)?.map((o, i) => [o, i]).sort((a, b) => stature(a[0]) - stature(b[0]) || a[1] - b[1]).map(([o]) => o);
   const character = (({ type, minor, bare, dark, ...rest }) => rest)(mains[0] || {}), own = type => recipes.find(o => o.type === type);
   if (!recipes.length) return [];
   const seed = id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0, out = [];

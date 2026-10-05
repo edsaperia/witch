@@ -36,8 +36,9 @@ export const AREA_FLORA = {
 
 // An area's ten (or n) tree slots as species, by their shares: each species gets its share of the slots (at least one, largest
 // remainders first), dealt out round the list so each kind turns up across the height classes, not bunched in one.
+// `id` an area type's id, or a flora record of AREA_FLORA's shape (an art set's own).
 export function floraSlots(id, n) {
-  const F = AREA_FLORA[id]; if (!F) return null;
+  const F = typeof id === "string" ? AREA_FLORA[id] : id; if (!F) return null;
   const sp = F.species, raw = sp.map(([, w]) => w * n), cnt = raw.map(x => Math.max(1, Math.floor(x)));
   let left = n - cnt.reduce((a, b) => a + b, 0);
   const order = raw.map((x, i) => [x - Math.floor(x), i]).sort((a, b) => b[0] - a[0]);

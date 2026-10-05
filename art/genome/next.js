@@ -11,7 +11,8 @@ import { GENOME_BY_ID, speciesOf, genomeProblems } from "./index.js";
 import { PLANT_GENOMES } from "../flora/genomes.js";
 import { plantSpecies } from "../trees.js";
 import { ART_ITERATIONS, NEXT_CHOICE } from "./iterations.js";
-export { ART_ITERATIONS, NEXT_CHOICE };
+import { PASS_ITERATIONS } from "./pass.js";
+export { ART_ITERATIONS, NEXT_CHOICE, PASS_ITERATIONS };
 
 const isObj = v => v && typeof v === "object" && !Array.isArray(v);
 export function mergePatch(base, patch) {
@@ -24,6 +25,10 @@ export function mergePatch(base, patch) {
 // The iterations an art set is made of, in order: [{ genomes, plants, areas }, ...].
 function steps(name) {
   if (name === "next") return Object.entries(NEXT_CHOICE).flatMap(([group, n]) => (ART_ITERATIONS[group] || []).slice(0, n));
+  // the art pass (#92, art/genome/pass.js): "pass" every area at its latest iteration, "pass@<n>" every area at its nth (or its
+  // latest, if it has fewer), "pass:<area>@<n>" one area at its nth
+  const p = /^pass(?::([a-z-]+))?(?:@(\d+))?$/.exec(name || "");
+  if (p) return Object.entries(PASS_ITERATIONS).filter(([group]) => !p[1] || group === p[1]).flatMap(([, list]) => list.slice(0, p[2] ? +p[2] : list.length));
   const m = /^([a-z-]+)@(\d+)$/.exec(name || "");
   if (!m || !ART_ITERATIONS[m[1]]) return [];
   return ART_ITERATIONS[m[1]].slice(0, +m[2]);
@@ -50,7 +55,8 @@ export function artSet(name) {
   return set;
 }
 // Every art set name the iterations make: each group's iterations, and "next".
-export const ART_SET_NAMES = [...Object.entries(ART_ITERATIONS).flatMap(([g, list]) => list.map((_, i) => `${g}@${i + 1}`)), "next"];
+export const ART_SET_NAMES = [...Object.entries(ART_ITERATIONS).flatMap(([g, list]) => list.map((_, i) => `${g}@${i + 1}`)), "next", "pass",
+  ...Object.entries(PASS_ITERATIONS).flatMap(([g, list]) => list.map((_, i) => `pass:${g}@${i + 1}`))];
 // The species object for an id in a style's art set, or null (then the default).
 export const setSpecies = (id, st) => (st?.artSet && artSet(st.artSet)?.species[id]) || null;
 // A tree species by name in a style's art set, or null.

@@ -115,6 +115,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     if (q.saddle && p[1] > top - .18 && p[0] < len * .55) return M.BODY2;
     if (q.spots && p[1] > chest + .1 && spotty(p, 10, .22)) return q.spotMat === "belly" || (q.spots === "young" && (q.spotsAt ? q.spotsAt.includes(level) : juv)) ? M.BELLY : q.spots === "young" ? undefined : M.BODY3;
     if (q.ridge && p[1] > top - .08 + hump * .5) return M.BODY3;
+    if (q.stripes && q.stripes.at.includes(level) && p[1] > chest + .04 && Math.abs(Math.sin(Math.atan2(p[2], p[1] - chest) * (q.stripes.n || 6))) > .72) return M[q.stripes.mat || "BELLY"]; // a piglet's lengthwise stripes, round its back
     return undefined;
   };
   // ---- torso: a deep chest, a tucked waist, a rump ----
@@ -404,25 +405,39 @@ export function beetle3d(S, level, frame, st, facing = "towards") {
 }
 
 export function snail3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 3, m = new Model(), g = frame ? .04 : 0;
-  m.ell([0, .07, 0], [.6 + g, .07, .17], M.SKIN, { group: 1 });
-  m.chain([[.45 + g, .08, 0, .1], [.6 + g, .25, 0, .09], [.68 + g, .28, 0, .08]], M.SKIN, { group: 1 });
-  for (const side of [-1, 1]) { m.seg([.7 + g, .32, side * .04], [.78 + g, .55, side * .1], .018, .014, M.SKIN, { group: 5 }); m.ell([.78 + g, .57, side * .1], [.03, .03, .03], legend ? M.MAGIC2 : M.EYE, { group: 5 }); }
-  m.anchors.head = { c: [.68 + g, .3, 0], r: [.09, .08, .09], top: [.66 + g, .38, 0] };
-  m.anchors.eyes = { pts: [-1, 1].map(side => [.78 + g, .57, side * .1]), size: .03 };
-  m.anchors.neck = { c: [.55 + g, .17, 0], r: .1, dir: [1, 1.2, 0] };
-  const c = [-.12, .4, 0], shell = legend ? M.MAGIC : M.BODY;
-  m.ell(c, [.32, .32, .22], shell, { group: 3, paint: p => { const a = Math.atan2(p[1] - c[1], p[0] - c[0]), rr = Math.hypot(p[0] - c[0], p[1] - c[1]) / .32, k = ((rr - a / (Math.PI * 2) * .3) % .3 + .3) % .3; return k < .06 ? (legend ? M.MAGIC2 : M.BODY3) : undefined; } });
+  // form: shell (its size), shellH (its height), whorl (the spiral's spacing), stripe (the dark spiral line's width), foot (its
+  // length), stalks (the eye stalks' length), skin, shellMat, bandMat (materials; a legend's glow unless set), mantle (a pale rim
+  // where the shell meets the body)
+  const F = formOf(S, level, { shell: 1, shellH: 1, whorl: .3, stripe: .06, foot: 1, stalks: 1, skin: "SKIN", shellMat: null, bandMat: null, mantle: false });
+  const legend = level === 3, m = new Model(), g = frame ? .04 : 0, sk = M[F.skin], fl = F.foot, sl = F.stalks;
+  m.ell([0, .07, 0], [.6 * fl + g, .07, .17], sk, { group: 1 });
+  m.chain([[.45 * fl + g, .08, 0, .1], [.6 * fl + g, .25, 0, .09], [.68 * fl + g, .28, 0, .08]], sk, { group: 1 });
+  const hx = .68 * fl + g, ex = hx + .1 * sl, ey = .28 + .29 * sl;
+  for (const side of [-1, 1]) { m.seg([hx + .02, .32, side * .04], [ex, ey - .02, side * .1], .018, .014, sk, { group: 5 }); m.ell([ex, ey, side * .1], [.03, .03, .03], legend ? M.MAGIC2 : M.EYE, { group: 5 }); }
+  m.anchors.head = { c: [hx, .3, 0], r: [.09, .08, .09], top: [hx - .02, .38, 0] };
+  m.anchors.eyes = { pts: [-1, 1].map(side => [ex, ey, side * .1]), size: .03 };
+  m.anchors.neck = { c: [.55 * fl + g, .17, 0], r: .1, dir: [1, 1.2, 0] };
+  const R = .32 * F.shell, c = [-.12, .08 + R, 0], shell = F.shellMat ? M[F.shellMat] : legend ? M.MAGIC : M.BODY, band = F.bandMat ? M[F.bandMat] : legend ? M.MAGIC2 : M.BODY3;
+  if (F.mantle) m.ell([c[0] + .02, .12, 0], [R * .85, .05, .2], M.BELLY, { group: 1 });
+  m.ell(c, [R, R * F.shellH, .22 * F.shell], shell, { group: 3, paint: p => { const a = Math.atan2(p[1] - c[1], p[0] - c[0]), rr = Math.hypot(p[0] - c[0], p[1] - c[1]) / R, w = F.whorl, k = ((rr - a / (Math.PI * 2) * w) % w + w) % w; return k < F.stripe ? band : undefined; } });
   return finish(m, S, level, st, .45, facing);
 }
 
 export function woodlouse3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 3, m = new Model();
-  for (const side of [-1, 1]) for (let i = 0; i < 7; i++) { const x = -.45 + i * .15, ph = (i + frame) % 2 ? .03 : -.03; m.seg([x, .1, side * .22], [x + ph, .01, side * .33], .025, .015, M.BODY3, { group: side > 0 ? 7 : 2 }); }
-  for (const side of [-1, 1]) m.chain([[.5, .15, side * .08, .02], [.7, .3, side * .2, .015], [.82, .22, side * .26, .012]], M.BODY3, { group: 9, extra: true });
-  m.ell([0, .18, 0], [.58, .2, .3], M.BODY, { paint: p => ((Math.floor((p[0] + .6) * 9) % 2) && p[1] > .2 ? M.BODY2 : undefined) || (Math.abs(((p[0] + .6) * 9) % 1) < .12 ? M.LINE : undefined) });
-  eyesOn(m, [0, .18, 0], [.58, .2, .3], [[.92, .3, .25], [.92, .3, -.25]], .02, legend ? M.MAGIC2 : M.EYE);
-  if (legend) crystals3d(m, [[[-.3, .32, .05], .3], [[0, .37, -.05], .45], [[.25, .32, .05], .32]]);
+  // form: plates (how many bands across its back, 9), length, width, dome (its height), legs (pairs, 7), antennae (their
+  // length), rim (a pale edge along each side's plates), mottle (pale flecks on the plates, a common woodlouse's)
+  const F = formOf(S, level, { plates: 9, length: 1, width: 1, dome: 1, legs: 7, antennae: 1, rim: false, mottle: 0 });
+  const legend = level === 3, m = new Model(), L = F.length, W = F.width, D = F.dome, nl = F.legs;
+  for (const side of [-1, 1]) for (let i = 0; i < nl; i++) { const x = (-.45 + i * .9 / (nl - 1)) * L, ph = (i + frame) % 2 ? .03 : -.03; m.seg([x, .1, side * .22 * W], [x + ph, .01, side * .33 * W], .025, .015, M.BODY3, { group: side > 0 ? 7 : 2 }); }
+  const ax = .5 * L, A = F.antennae;
+  for (const side of [-1, 1]) m.chain([[ax, .15, side * .08, .02], [ax + .2 * A, .15 + .15 * A, side * (.08 + .12 * A), .015], [ax + .32 * A, .15 + .07 * A, side * (.08 + .18 * A), .012]], M.BODY3, { group: 9, extra: true });
+  const n = F.plates, R = [.58 * L, .2 * D, .3 * W];
+  m.ell([0, .18, 0], R, M.BODY, { paint: p => { const u = (p[0] + .6 * L) * n / L;
+    if (F.rim && Math.abs(p[2]) > R[2] * .78 && p[1] < .22) return M.BELLY;
+    if (F.mottle && p[1] > .2 && spotty(p, 14, F.mottle)) return M.BELLY;
+    return ((Math.floor(u) % 2) && p[1] > .2 ? M.BODY2 : undefined) || (Math.abs(u % 1) < .12 ? M.LINE : undefined); } });
+  eyesOn(m, [0, .18, 0], R, [[.92, .3, .25], [.92, .3, -.25]], .02, legend ? M.MAGIC2 : M.EYE);
+  if (legend) crystals3d(m, [[[-.3 * L, .32 * D, .05], .3], [[0, .37 * D, -.05], .45], [[.25 * L, .32 * D, .05], .32]]);
   return finish(m, S, level, st, .4, facing);
 }
 
