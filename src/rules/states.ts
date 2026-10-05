@@ -96,6 +96,14 @@ export interface StatesOptions {
    *  from `interval` to `rampTo` by wave `rampBy`, or by rampPct a wave down to rampTo. */
   /** Stop at this game time (s) too, lost or not (to compare runs whose waves come at different rates). */
   maxTime?: number;
+  /** A fallen soundsystem costs wave time (Ed, 2026-10-05: "there's not much penalty for losing a
+   *  soundsystem. Maybe it penalises you wave time?"): the next wave comes fallAdvance seconds
+   *  sooner (or fallShare of the gap then), and every later gap is times (1 − fallShrink), down to
+   *  fallFloor seconds (60). */
+  fallAdvance?: number;
+  fallShare?: number;
+  fallShrink?: number;
+  fallFloor?: number;
   rushAt?: number;
   rushFactor?: number;
   rushNow?: boolean;
@@ -150,6 +158,8 @@ export interface StatesResult {
   starve: number | null;
   invited: { happy: number; leashed: number };
   falls: number;
+  /** The wave whose soundsystem fell first (not home), or null. */
+  firstFall: number | null;
   /** Legends: how many turned angry (and where: woken areas or wild), happy by a relic, relics used,
    *  her seconds inviting in an angry one's reach, and her army lost to their blasts. */
   trace?: StatesTrace[];
@@ -298,12 +308,13 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
   };
   const trace: StatesTrace[] = [];
   let peak = 1;
-  let hurry = 1, rushing = false;
+  let hurry = 1, rushing = false, shrunk = 1, firstFall: number | null = null;
   // The gap before wave w (Ed's faster waves: a ramp over the run, and a rush once it's lost).
   const gapNow = (w: number) => {
     let g = o.interval;
     if (o.rampTo !== undefined && o.rampBy) g = Math.max(o.rampTo, o.interval - ((o.interval - o.rampTo) * w) / o.rampBy);
     else if (o.rampTo !== undefined && o.rampPct) g = Math.max(o.rampTo, o.interval * Math.pow(1 - o.rampPct, w));
+    g = Math.max(Math.min(g, o.fallFloor ?? 60), g * shrunk);
     return rushing ? g * (o.rushFactor ?? 0.5) : g;
   };
   let time = 0, nextAt = t.boot.time + t.party.startDelay + o.interval;
@@ -514,6 +525,13 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
     for (const s of sounds.values()) {
       if (s.hp > 0 || ruined.has(s.key)) continue;
       ruined.add(s.key); falls++;
+      if (s.key !== "home") {
+        firstFall ??= party.wave;
+        // The wave time it costs: the next wave sooner, and every later gap shorter.
+        const left = nextAt - time, cut = o.fallAdvance ?? (o.fallShare !== undefined ? o.fallShare * gapNow(party.wave + 1) : 0);
+        if (cut > 0) nextAt = time + Math.max(0, left - cut);
+        if (o.fallShrink) shrunk *= 1 - o.fallShrink;
+      }
       const lf = local.find(l => l.key === s.key);
       if (lf) lf.fellAfter = time - s.at;
       if (s.key !== "home") { party.areas.delete(s.key); (party.ruined ??= new Set()).add(s.key); }
@@ -543,5 +561,5 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
     time += dt;
   }
   if (lost) sample();
-  return { seed: map.seed, survived: lost ? lost.wave - 1 : party.wave, lost, waves, local, targets, damage, starve, invited, falls, legends: legendStats, ...(o.trace ? { trace } : {}) };
+  return { seed: map.seed, survived: lost ? lost.wave - 1 : party.wave, lost, waves, local, targets, damage, starve, invited, falls, firstFall, legends: legendStats, ...(o.trace ? { trace } : {}) };
 }
