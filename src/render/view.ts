@@ -1,6 +1,7 @@
 // The Three.js view: reads the game state each frame and draws it. Rendered into a canvas of
 // (window size / pixel size) and stretched with nearest-neighbour by the browser, so every art
 // pixel stays a crisp square.
+import { RigView, rigOn } from "./rig/rigView";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import * as Art from "../../art/generator.js";
@@ -156,6 +157,8 @@ export class View {
   /** Lights in the forest besides the witch's glow, from the light sources (set by the view). */
   private forestLights: ForestLight[] = [];
   private shadows: ShadowBatch;
+  /** The live rig (#79 stage 5, ?rig=1): creatures put together from parts each frame. */
+  readonly rig: RigView | null;
   private shadowList: ShadowInstance[] = [];
   private mist: Mist | null = null;
   private width = 1;
@@ -258,6 +261,7 @@ export class View {
     this.partyView = new PartyView(this.assets.soundsystems, this.mpp);
     this.strings = new StringLightsView(this.scene, game);
     this.leashView = new LeashView(this.scene, game);
+    this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // ?rig=1: the live rig (#79)
     this.lasers = new Lasers(this.scene, game);
     this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z));
     this.scene.add(...this.ley.meshes);
@@ -885,6 +889,7 @@ export class View {
     const per = new Map<string, SpriteInstance[]>(), arts = new Map<string, CreatureArt>(), creatureShadows: ShadowInstance[] = [];
     const beat = 60 / g.tuning.beat.bpm, bt = beatTime(g.beat, time); // beat-time, on the beat clock
     let n = 0;
+    this.rig?.begin(time);
     for (const c of g.creatures) {
       if (c.gone || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
       if (c.burrow) continue; // under the ground (Stage 5: the mole), a mound shows where (leash view)
@@ -934,11 +939,13 @@ export class View {
       if (sleeping) glow = -2 - W.moss; else if (rising < 1) glow = -2 - W.moss * (1 - rising);
       // Restless in its sleep (#87): it tosses in bursts, and turns over when it's bad.
       const toss = st === "asleep" ? restlessness(c) : 0, fit = toss ? toss * Math.max(0, Math.sin(time * 1.3 + c.id)) ** 2 : 0;
-      l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id), y: dance + hop + sunk, z: c.z, frame, flip: (c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1), fresh, glow, scale });
+      if (!(this.rig && !party && !sleeping && rising >= 1 && this.rig.add(c, { y: dance + hop + sunk, scale, glow, fresh, h: frame.h - (frame.pad ?? 0) }))) // the rig draws it, if it can
+        l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id), y: dance + hop + sunk, z: c.z, frame, flip: (c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1), fresh, glow, scale });
       this.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * this.mpp * scale + dance + hop + sunk); // its health bar goes over it
       creatureShadows.push({ x: c.x, z: c.z, w: frame.w * this.mpp * 0.7, d: frame.w * this.mpp * 0.25 });
       n++;
     }
+    this.rig?.end();
     for (const [s, b] of this.creatureBatches) if (!per.has(s)) b.set([]);
     for (const [s, list] of per) {
       const b = this.batchFor(this.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, this.mpp, { solid: true, find: !s.startsWith("party-") && !s.startsWith("woken-") && !s.startsWith("sleep-") }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)

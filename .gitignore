@@ -4,4 +4,5 @@ node_modules/
 tools/smoke/out/
 art/out/
 tools/music-lab/out/
+tools/rig/.out/
 upcoming.generated.json

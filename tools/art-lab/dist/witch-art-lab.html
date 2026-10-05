@@ -1540,7 +1540,9 @@ const sdf0 = (q, p) => q.type === "ell" ? sdEllipsoid(sub(p, q.cw), q) : q.type 
 const sdf = (q, p) => q.rough ? sdf0(q, p) + rough(p, q.rough) : sdf0(q, p);
 
 class Model {
-  constructor({ blend = .07 } = {}) { this.parts = []; this.flats = []; this.blend = blend; this.anchors = { feet: [] }; }
+  // part: the label each primitive added from now on carries ("body", "head", a leg, "tail"...), so
+  // the live rig (art/genome/parts.js) can bake a creature's pieces apart; rendering ignores it.
+  constructor({ blend = .07 } = {}) { this.parts = []; this.flats = []; this.blend = blend; this.anchors = { feet: [] }; this.part = "body"; }
   // Every volume also takes o.rough (a hewn, bumpy surface, as a distance) and o.cut: a cut
   // part carves a hollow out of its group instead of adding to it (a horn mouth, a socket);
   // the hollow's walls are drawn in the cut part's material.
@@ -1548,23 +1550,23 @@ class Model {
   // along `up`), r[2] across. o: { group, extra (not counted in the height), paint(p) -> material }
   ell(c, r, mat, o = {}) {
     const axes = o.axes || (o.dir ? frameAlong(o.dir, o.up) : [[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
-    this.parts.push({ type: "ell", c, r, axes, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint, rough: o.rough, cut: !!o.cut });
+    this.parts.push({ type: "ell", c, r, axes, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint, rough: o.rough, cut: !!o.cut, part: o.part ?? this.part });
     return this;
   }
   // A box centred at c with half-sizes h, its edges rounded by o.round. With `dir`, h[0] runs
   // along dir, h[1] roughly up (or along `up`), h[2] across.
   box(c, h, mat, o = {}) {
     const axes = o.axes || (o.dir ? frameAlong(o.dir, o.up) : [[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
-    this.parts.push({ type: "box", c, h, round: Math.min(o.round ?? .02, ...h), axes, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint, rough: o.rough, cut: !!o.cut });
+    this.parts.push({ type: "box", c, h, round: Math.min(o.round ?? .02, ...h), axes, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint, rough: o.rough, cut: !!o.cut, part: o.part ?? this.part });
     return this;
   }
   // A tapered limb from a (radius ra) to b (radius rb): a rounded cone, smooth along its length.
-  seg(a, b, ra, rb, mat, o = {}) { this.parts.push({ type: "cone", a, b, r1: ra, r2: rb, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint, rough: o.rough, cut: !!o.cut }); return this; }
+  seg(a, b, ra, rb, mat, o = {}) { this.parts.push({ type: "cone", a, b, r1: ra, r2: rb, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint, rough: o.rough, cut: !!o.cut, part: o.part ?? this.part }); return this; }
   // A limb through several points, each [x, y, z, radius].
   chain(pts, mat, o = {}) { for (let i = 0; i + 1 < pts.length; i++) this.seg(pts[i].slice(0, 3), pts[i + 1].slice(0, 3), pts[i][3], pts[i + 1][3], mat, o); return this; }
   // A shaped flat plane centred at c, spanning ±su along u and ±sv along v; mask(s, t) with
   // s, t in [-1, 1] returns a material (or nothing for a hole). o: { group, extra, bend }
-  flat(c, u, v, su, sv, mask, o = {}) { this.flats.push({ c, u: norm(u), v: norm(v), su, sv, mask, group: o.group ?? 30, extra: !!o.extra, bend: o.bend ?? .35 }); return this; }
+  flat(c, u, v, su, sv, mask, o = {}) { this.flats.push({ c, u: norm(u), v: norm(v), su, sv, mask, group: o.group ?? 30, extra: !!o.extra, bend: o.bend ?? .35, part: o.part ?? this.part }); return this; }
   // The signed distance to the model's surface at a model-space point (its solid parts, not those
   // marked extra or cut): for fitting things to the body, such as a collar.
   field(p) {
@@ -3279,7 +3281,9 @@ function quad3d(S, level, frame, st, facing = "towards") {
   if (q.wool) for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; m.ell([len * Math.cos(a) * .7, (top + chest) / 2 + Math.sin(a) * .2, bw * (i % 2 ? .5 : -.5)], [.16, .14, .14], M.BODY); }
   // ---- legs: shoulder/hip, knee, ankle, foot; near legs lighter, far legs in shade ----
   const sw = [.32, -.32][frame];
+  m.rig = { legs: [], len, bw, top, chest, tuck }; // the live rig's joints (art/genome/parts.js), in model units
   const leg = (fore, side) => {
+    m.part = `leg${fore ? "F" : "H"}${side > 0 ? "N" : "F"}`; // fore or hind, near or far
     const z = side * bw * .62, x = fore ? len * .62 : -len * .62, a = (fore ? 1 : -1) * side * sw, topY = fore ? chest + .1 : tuck + .15;
     const lift = (fore ? side : -side) * (frame ? 1 : -1) > 0 ? .06 : 0;  // the leg swinging forward is lifted
     const knee = [x + Math.sin(a) * .2 + (fore ? .02 : .1), Math.max(.3, topY * .55), z], foot = [x + Math.sin(a) * .42, .05 + lift, z];
@@ -3289,9 +3293,12 @@ function quad3d(S, level, frame, st, facing = "towards") {
     const fl = (q.paw === "hoof" ? .07 : .09) * (q.legW ** .5) * (!fore ? (q.hindFoot || 1) : 1);
     m.ell(v3.add(foot, [fl * .5, -.01, 0]), [fl, lw * .9, lw * 1.1], q.paw === "hoof" ? M.NOSE : mat, { group: side > 0 ? 6 + (fore ? 1 : 0) : 2 });
     m.anchors.feet.push({ c: v3.add(foot, [fl * .5, -.01, 0]), r: Math.max(fl, lw * 1.1), group: side > 0 ? 6 + (fore ? 1 : 0) : 2 });
+    m.rig.legs.push({ name: m.part, fore, side, hip: hipTop, knee: fore ? knee : v3.add(knee, [-.12, .06, 0]), foot, r: [pts[0][3], pts[1][3], lw * .9], fl, mat, hoof: q.paw === "hoof" });
+    m.part = "body";
   };
   for (const side of [-1, 1]) { leg(true, side); leg(false, side); }
   // ---- neck and head, turned towards us ----
+  m.part = "head"; // the neck, head, ears, eyes, horns, antlers and tusks: one piece, hung from the neck's base
   const nb = [len * .82, top - .12, 0], H = [nb[0] + Math.cos(q.neckAng) * q.neck * .9, nb[1] + Math.sin(q.neckAng) * q.neck * .9 + sz("headLift"), 0];
   m.seg(nb, H, q.neckW * .55 * sz("neckBase"), q.neckW * .42 * sz("neckTop"), M.BODY, { paint: p => q.belly && p[1] < (nb[1] + H[1]) / 2 - .05 ? M.BELLY : q.face === "dark" ? M.BODY2 : undefined });
   const headPaint = p => {
@@ -3322,17 +3329,21 @@ function quad3d(S, level, frame, st, facing = "towards") {
   }
   // ---- tail ----
   const tb = [-len * 1.05, top - .1 + arch * .5, 0], tw = frame ? .04 : -.02;
+  m.part = "tail"; m.rig.head = { nb, H, hr }; m.rig.tail = tb;
   if (!has("tails")) tail3d(m, has("starTail") ? "star" : q.tail, tb, len, top, tw);
+  m.part = "head";
   // ---- horns, antlers, tusks ----
   if (q.horns) for (const side of [-1, 1]) { const k = has("hornsGlow") ? 1.5 : sz("horns"), pts = []; for (let i = 0; i <= 8; i++) { const a = .3 - i / 8 * Math.PI * 1.6, r = hr * .65 * k * (1 - .45 * i / 8); pts.push([H[0] - hr * .1 + Math.cos(a) * r, H[1] + hr * .45 + Math.sin(a) * r, side * (hr * .6 + i * .015)]); pts[i].push(hr * .2 * k * (1 - .6 * i / 8)); } m.chain(pts, has("hornsGlow") ? M.MAGIC : M.ACCENT, { group: 13 }); }
   if (q.antlers || has("jackalope")) for (const side of [-1, 1]) antlers3d(m, q, [H[0] - hr * .05, H[1] + hr * .75, side * hr * .4], side, sz("antlers"), has);
   if (q.tusks) for (const side of [-1, 1]) { const k = has("tusksBig") ? 1.4 : sz("tusks"); if (!k) continue; const b = [sn[0] + L * .25, sn[1] - Dm * .4, side * Dm * .8]; m.chain([[...b, .045 * k], [...v3.add(b, [.1 * k, .1 * k, side * .03]), .04 * k], [...v3.add(b, [.06 * k, .24 * k, side * .05]), .02 * k]], M.ACCENT, { group: 8 }); }
   if (q.teeth && !baby) m.ell([tip[0] - hr * .1, tip[1] - hr * .25, 0], [hr * .08, hr * .14, hr * .12], M.ACCENT, { group: 1 });
   // ---- legendary features ----
+  m.part = "body";
   const backAt = t => [-len * .9 + t * len * 1.65, top + hump * Math.max(0, 1 - Math.abs(t - .8) * 3) + arch * (1 - Math.abs(t - .4) * 2), 0];
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [len * .2, top, side * bw * .5], side, 1.15, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("mane") || has("flames")) for (let i = 0; i < 7; i++) { const t = i / 6, b = v3.lerp(v3.add(H, [-hr * .5, hr * .3, 0]), backAt(.55), t), h = [.4, .3, .45, .28, .38, .25, .3][i], up = v3.norm([-.35 - (frame ? .1 : 0), 1, 0]); m.flat(v3.add(b, v3.mul(up, h * .5)), [1, 0, 0], up, h * .32, h * .55, masks.flame(i % 2 ? M.MAGIC : M.MAGIC2, M.MAGIC2), { group: 60 + i % 2, extra: true }); }
-  if (has("tails")) for (let i = 0; i < 7; i++) { const a = Math.PI * (.55 + i * .08), z = (i - 3) * .1, e = v3.add(tb, [Math.cos(a) * .9, Math.sin(a) * .85, z]); m.chain([[...tb, .1], [...v3.lerp(tb, e, .5), .17], [...e, .08]], i % 2 ? M.BODY2 : M.BODY, { group: 70, extra: true }); m.ell(e, [.09, .09, .09], M.MAGIC2, { group: 71, extra: true }); }
+  if (has("tails")) for (let i = 0; i < 7; i++) { m.part = "tail"; const a = Math.PI * (.55 + i * .08), z = (i - 3) * .1, e = v3.add(tb, [Math.cos(a) * .9, Math.sin(a) * .85, z]); m.chain([[...tb, .1], [...v3.lerp(tb, e, .5), .17], [...e, .08]], i % 2 ? M.BODY2 : M.BODY, { group: 70, extra: true }); m.ell(e, [.09, .09, .09], M.MAGIC2, { group: 71, extra: true }); }
+  m.part = "body";
   if (has("crystals")) [.15, .3, .45, .6, .75].forEach((t, i) => { const b = backAt(t), h = [.3, .5, .4, .6, .35][i]; m.ell(v3.add(b, [0, h * .45, (i % 2 - .5) * .1]), [h * .55, .08, .08], M.MAGIC, { dir: [(i - 2) * .12, 1, 0], group: 80 + i % 2, extra: true, paint: p => p[2] > 0 ? M.MAGIC2 : undefined }); });
   if (has("moss")) {
     for (let i = 0; i < 6; i++) m.ell(backAt(.08 + i * .15), [len * .22, .07, bw * .85], M.LEAF, { group: 85, extra: true });
@@ -3566,11 +3577,14 @@ function snake3d(S, level, frame, st, facing = "towards") {
   pts.push([.38, .25, pts[12][2], .07], [.42, .45, pts[12][2] * .8, .065]);
   m.chain(pts, M.BODY, { paint: p => p[1] < .05 && p[0] < .35 ? M.BELLY : spotty([p[0] * 1.5, p[1], p[2]], 14, .3) ? M.BODY3 : undefined });
   const hc = [.5, .5, pts[13][2] * .8], hr = young ? .11 : .09;
+  m.rig = { spine: pts.map(p => p.slice()), head: hc, hr }; // the live rig's spine (tail to head, each [x, y, z, radius]) and head, in model units
+  m.part = "head";
   m.ell(hc, [hr * 1.5, hr * .75, hr], M.BODY, { dir: [1, -.15, 0], group: 1 });
   eyesOn(m, hc, [hr * 1.5, hr * .75, hr], [[.5, .5, .7], [.5, .5, -.7]], hr * .22, legend ? M.MAGIC2 : M.EYE);
   if (!frame) m.seg(v3.add(hc, [hr * 1.4, -hr * .2, 0]), v3.add(hc, [hr * 2.3, -hr * .3, 0]), .01, .008, M.SKIN, { group: 1 });
   m.anchors.feet.push({ c: v3.add(pts[0].slice(0, 3), [-.02, -.01, 0]), r: .06, group: 3, tail: true }); // no feet: a tiny shoe on the tail tip
   m.anchors.neck = { c: [.42, .36, pts[12][2] * .9], r: .075, dir: [.2, 1, 0] };
+  m.part = "body";
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [0, .2, side * .05], side, .9, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   return finish(m, S, level, st, .45, facing);
 }
@@ -6819,6 +6833,95 @@ function variantColours(id, st, variant, gear = null) {
   const S = SPECIES_BY_ID[id], v = typeof variant === "string" ? PALETTE_VARIANTS[variant] : variant;
   if (!v) return speciesColours(id, st, gear);
   return speciesColours({ ...S, hue: v.hue, sat: v.sat, val: v.val, belly: v.belly ?? S.belly }, st, gear);
+}
+
+
+
+// ---- inlined from art/genome/parts.js ----
+// Witch creature parts (#79, stage 4): a creature baked as pieces rather than whole frames, so a
+// live rig (src/render/rig/) can put it together each frame from how it moves. Its torso, head and
+// tail (four-legged) or head (serpent) are baked at five headings, the other three drawn mirrored;
+// its legs and a serpent's body are chains of discs, baked once per radius, that the rig strings
+// between its joints. Each piece keeps its pivot: the pixel where the joint it hangs from lands.
+// Headings: 0 walking right, a quarter turn walking down the screen (towards us), minus a quarter up
+// it (away); RIG_HEADINGS are the baked ones, and heading h > a quarter turn is the mirror of pi - h.
+
+
+
+
+const RIG_HEADINGS = [-Math.PI / 2, -Math.PI / 4, 0, Math.PI / 4, Math.PI / 2];
+const RIG_TEMPLATES = { quadruped: "quad", serpent: "snake" }; // the templates the pilot rigs (and their builder)
+
+// The heading (radians, any) as a baked heading's index and whether to mirror it.
+function rigDirection(h) {
+  let a = Math.atan2(Math.sin(h), Math.cos(h)), flip = false; // -pi..pi
+  if (Math.abs(a) > Math.PI / 2) { a = Math.sign(a) * Math.PI - a; flip = true; } // the left half: the right half mirrored
+  const i = Math.round((a + Math.PI / 2) / (Math.PI / 4));
+  return { i: Math.max(0, Math.min(4, i)), flip };
+}
+// Where a model-space point lands on the screen for a heading, in pixels at scale s (x right, y up).
+function rigProject(p, h, s) {
+  const c = Math.cos(h), sn = Math.sin(h), wx = p[0] * c - p[2] * sn, wy = p[1], wz = p[0] * sn + p[2] * c;
+  return [wx * s, (wy * Math.cos(PITCH) - wz * Math.sin(PITCH)) * s];
+}
+
+// The model the builder makes for a species at a level (not drawn), and the scale it would be drawn at.
+function rigCapture(id, level, st) {
+  const S = SPECIES_BY_ID[id]; let got = null;
+  const form = (m, o) => { got = { m, height: o.height }; return new Sprite(1, 1); };
+  form.motes = false;
+  withForm(form, () => buildCreature(S, level, 0, st, "towards"));
+  return { m: got.m, s: render(got.m, { height: got.height, measure: true }).s };
+}
+// A model of only the primitives labelled with one of `labels`.
+function rigPick(m, labels) {
+  const out = new Model({ blend: m.blend });
+  out.parts = m.parts.filter(q => labels.includes(q.part)); out.flats = m.flats.filter(f => labels.includes(f.part));
+  return out;
+}
+// Cropped to what's drawn, its pivot moved with it: { sp, px, py } (py from the top).
+function rigCropped(sp, px, py) {
+  let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
+  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  if (x1 < 0) return null;
+  x0--; y0--; x1++; y1++; // a pixel's margin all round, for the outline
+  const W = x1 - x0 + 1, H = y1 - y0 + 1, c = new Sprite(W, H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const X = x + x0, Y = y + y0; if (X < 0 || Y < 0 || X >= sp.w || Y >= sp.h) continue; const i = Y * sp.w + X, j = y * W + x; c.m[j] = sp.m[i]; c.g[j] = sp.g[i]; for (let k = 0; k < 3; k++) c.n[j * 3 + k] = sp.n[i * 3 + k]; }
+  return { sp: c, px: +(px - x0).toFixed(2), py: +(py - y0).toFixed(2) };
+}
+// One labelled piece at each baked heading, pivoted on `pivot` (a model-space point).
+function rigPiece(m, labels, pivot, s) {
+  const sub = rigPick(m, labels);
+  if (!sub.parts.length && !sub.flats.length) return null;
+  return RIG_HEADINGS.map(h => { const r = render(sub, { scale: s, yaw: h }), [px, py] = r.project(pivot); return rigCropped(r.sp, px, py); });
+}
+// A disc: a ball of a material, r pixels across its radius, lit as a sphere (legs, a serpent's body).
+function rigDisc(r, mat, s, paint) {
+  const m = new Model(); m.ell([0, 0, 0], [r / s, r / s, r / s], mat, { paint });
+  const res = render(m, { scale: s }), [px, py] = res.project([0, 0, 0]);
+  return rigCropped(res.sp, px, py);
+}
+
+// Everything the rig needs for one species at one level: { template, s (pixels per model unit),
+// pieces: { torso, head, tail: [per heading] }, discs: { material: [by radius in pixels] }, joints }.
+// joints are in model units: legs [{ name, fore, side, hip, knee, foot, r: [hip, knee, foot] }],
+// head { nb, H }, tail (its base) for the four-legged; spine [[x, y, z, r]...] and head for a serpent.
+function rigParts(id, level, st) {
+  const S = SPECIES_BY_ID[id], tpl = S.q ? "quadruped" : S.plan === "snake" ? "serpent" : null;
+  if (!tpl) return null;
+  const { m, s } = rigCapture(id, level, st), R = m.rig, discs = {};
+  const radii = list => [...new Set(list.map(r => Math.max(1, Math.round(r * s))))].sort((a, b) => a - b);
+  const discSet = (mat, rs, paint) => { discs[mat] = discs[mat] || {}; for (const r of rs) if (!discs[mat][r]) discs[mat][r] = rigDisc(r, mat, s, paint); };
+  if (tpl === "quadruped") {
+    const legR = radii(R.legs.flatMap(l => [l.r[0] * .8, l.r[1], l.r[2], (l.r[0] + l.r[1]) / 2, (l.r[1] + l.r[2]) / 2]));
+    for (const l of R.legs) discSet(l.mat, legR);
+    const hoof = R.legs.find(l => l.hoof); if (hoof) discSet(M.NOSE, radii(R.legs.map(l => l.fl * .9)));
+    else discSet(R.legs[0].mat, radii(R.legs.map(l => l.fl * .9)));
+    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { torso: rigPiece(m, ["body"], [0, 0, 0], s), head: rigPiece(m, ["head"], R.head.nb, s), tail: rigPiece(m, ["tail"], R.tail, s) } };
+  }
+  // a serpent: its head baked, its body discs (speckled like its coat) by the spine's radii
+  discSet(M.BODY, radii(R.spine.map(p => p[3])), p => spotty([p[0] * 1.5, p[1], p[2]], 14, .3) ? M.BODY3 : undefined);
+  return { id, level, template: tpl, s, joints: { spine: R.spine, head: R.head, hr: R.hr }, discs, pieces: { head: rigPiece(m, ["head"], R.head, s), wings: rigPiece(m, ["body"].filter(() => m.parts.some(q => q.part === "body" && q.extra)), [0, .2, 0], s) } };
 }
 
 
