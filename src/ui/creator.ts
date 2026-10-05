@@ -79,10 +79,33 @@ function paintRoom(c: HTMLCanvasElement): void {
   x.fillStyle = "#5a3820"; x.fillRect(20, 50, 52, 3);
   [["#7ef0c0", 24], ["#ff8fd0", 34], ["#ffd36b", 44], ["#9fb4ff", 56], ["#c08bff", 64]].forEach(([col, jx]) => { x.fillStyle = col as string; x.fillRect(jx as number, 42, 6, 8); x.fillStyle = "#e9e2d0"; x.fillRect(jx as number, 41, 6, 1); });
   // the lantern's warm glow
-  const g = x.createRadialGradient(40, 82, 2, 40, 82, 60);
+  const g = x.createRadialGradient(16, 82, 2, 16, 82, 60);
   g.addColorStop(0, "rgba(255,190,110,.55)"); g.addColorStop(1, "rgba(255,190,110,0)");
-  x.fillStyle = g; x.fillRect(0, 20, 110, 115);
-  x.fillStyle = "#2a1a0e"; x.fillRect(38, 70, 4, 6); x.fillStyle = "#ffcf7a"; x.fillRect(37, 76, 6, 7);
+  x.fillStyle = g; x.fillRect(0, 20, 90, 115);
+  x.fillStyle = "#2a1a0e"; x.fillRect(14, 70, 4, 6); x.fillStyle = "#ffcf7a"; x.fillRect(13, 76, 6, 7);
+  // her mirror, beside where she stands (just a drawing: it doesn't reflect): a tall oval in a carved frame on feet
+  x.fillStyle = "#6b4426"; x.beginPath(); x.ellipse(128, 70, 12, 24, 0, 0, Math.PI * 2); x.fill();
+  x.fillStyle = "#8a5a32"; x.beginPath(); x.ellipse(128, 70, 11, 23, 0, 0, Math.PI * 2); x.fill();
+  const glass = x.createLinearGradient(118, 50, 138, 90);
+  glass.addColorStop(0, "#b8c6e8"); glass.addColorStop(.5, "#6d7aa8"); glass.addColorStop(1, "#3a3f66");
+  x.fillStyle = glass; x.beginPath(); x.ellipse(128, 70, 9, 21, 0, 0, Math.PI * 2); x.fill();
+  x.fillStyle = "rgba(255,255,255,.55)"; x.fillRect(123, 56, 1, 10); x.fillRect(125, 54, 1, 5); // a glint
+  x.fillStyle = "#6b4426"; x.fillRect(127, 94, 2, 10); x.fillRect(121, 103, 14, 2); // its stand
+  x.fillStyle = "#ffcf7a"; x.fillRect(127, 46, 2, 2); // a little carved star on top
+  // the banner (Ed: "a banner that says PARTY TONIGHT"): hand-made bunting across the room, a letter on each flag in party neon
+  const text = "PARTY TONIGHT", n = text.length, x0 = 30, x1 = 210, neon = ["#ff5fb4", "#4ff0ff", "#ffe14f", "#b388ff", "#7dff8a"];
+  const sag = (u: number) => 8 + Math.sin(u * Math.PI) * 9;
+  x.strokeStyle = "#d9c9a8"; x.lineWidth = 1; x.beginPath();
+  for (let i = 0; i <= 40; i++) { const u = i / 40, px = x0 + (x1 - x0) * u; if (i) x.lineTo(px, sag(u)); else x.moveTo(px, sag(u)); }
+  x.stroke();
+  x.font = "bold 8px monospace"; x.textAlign = "center"; x.textBaseline = "middle";
+  for (let i = 0; i < n; i++) {
+    if (text[i] === " ") continue;
+    const u = (i + .5) / n, px = x0 + (x1 - x0) * u, py = sag(u);
+    x.fillStyle = neon[i % neon.length];
+    x.beginPath(); x.moveTo(px - 6, py); x.lineTo(px + 6, py); x.lineTo(px, py + 15); x.closePath(); x.fill();
+    x.fillStyle = "#1a0b20"; x.fillText(text[i], px, py + 5);
+  }
 }
 
 export class Creator {
@@ -93,8 +116,16 @@ export class Creator {
   private frames: { hover: HTMLCanvasElement[]; stand: HTMLCanvasElement[] } = { hover: [], stand: [] };
   private dirty = true;
   private raf = 0;
-  /** Called with her look when Start is pressed. */
+  /** Called with her look when Start is pressed and the world is ready. */
   onStart: (g: Genome) => void = () => {};
+  /** Called on the Start click itself (a gesture: the sound can start). */
+  onGesture: () => void = () => {};
+  /** The world building behind it (Ed: "the character creator also serves as a loading screen"):
+   *  sets done of total, and whether play can start. */
+  progress: () => { done: number; total: number; ready: boolean } = () => ({ done: 1, total: 1, ready: true });
+  private waiting = false;
+  private startBtn: HTMLButtonElement | null = null;
+  private bar: HTMLElement | null = null;
   get open(): boolean { return this.root.style.display !== "none"; }
 
   constructor(private style: Style, start: Genome | null) {
@@ -122,7 +153,19 @@ export class Creator {
   hide(): void { this.root.style.display = "none"; cancelAnimationFrame(this.raf); }
   genome(): Genome { return clone(this.g); }
 
-  private start(): void { this.hide(); saveGenome(this.g); this.onStart(this.genome()); }
+  /** Start: straight into play if the world is ready, else "getting ready" on this scene until it is. */
+  private start(): void {
+    saveGenome(this.g);
+    this.onGesture();
+    this.waiting = true;
+    this.tryStart();
+  }
+  private tryStart(): void {
+    if (!this.waiting || !this.progress().ready) return;
+    this.waiting = false;
+    this.hide();
+    this.onStart(this.genome());
+  }
   private randomise(): void { this.g = clone((Art.witchGenome as (s: number) => Genome)(Math.floor(Math.random() * 1e9))); this.build(); this.dirty = true; }
   private classic(): void { this.g = clone(CLASSIC); this.build(); this.dirty = true; }
 
@@ -131,7 +174,7 @@ export class Creator {
     const P = this.panel, g = this.g;
     P.innerHTML = "";
     const h = document.createElement("div");
-    h.innerHTML = `<div style="font-size:18px;margin-bottom:2px">✨ Your witch</div><div style="opacity:.7;margin-bottom:8px">Dress her up in her treehouse, then fly. (Enter starts, R randomises.)</div>`;
+    h.innerHTML = `<div style="font-size:18px;margin-bottom:2px">✨ Your witch</div><div style="opacity:.7;margin-bottom:8px">The party's tonight! Dress her up while the forest grows, then fly. (Enter starts, R randomises.)</div>`;
     P.append(h);
     const groups = new Map<string, HTMLElement>();
     const group = (name: string) => {
@@ -187,10 +230,18 @@ export class Creator {
     // The buttons.
     const bar = document.createElement("div");
     Object.assign(bar.style, { display: "flex", gap: "8px", marginTop: "10px", position: "sticky", bottom: "0", background: "rgba(14,11,28,.95)", padding: "6px 0" });
+    bar.style.position = "sticky";
     const btn = (text: string, f: () => void, main = false) => { const b = document.createElement("button"); b.type = "button"; b.textContent = text; Object.assign(b.style, { font: "inherit", fontSize: "14px", color: main ? "#1a0b14" : "inherit", background: main ? "#ff5fb4" : "rgba(255,255,255,.1)", border: "1px solid rgba(232,226,244,.4)", borderRadius: "6px", padding: "6px 12px", cursor: "pointer", flex: main ? "1" : "0 0 auto" }); b.addEventListener("click", f); bar.append(b); return b; };
     btn("🎲 Randomise", () => this.randomise());
     btn("Classic", () => this.classic());
-    btn("Start ▶", () => this.start(), true).id = "creator-start";
+    this.startBtn = btn("Start ▶", () => this.start(), true);
+    this.startBtn.id = "creator-start";
+    // The forest growing behind the scene: a thin bar under the buttons.
+    const track = document.createElement("div");
+    Object.assign(track.style, { position: "absolute", left: "0", right: "0", bottom: "-2px", height: "3px", background: "rgba(255,255,255,.12)", borderRadius: "2px", overflow: "hidden" });
+    this.bar = document.createElement("div");
+    Object.assign(this.bar.style, { height: "100%", width: "0%", background: "linear-gradient(90deg,#ff5fb4,#4ff0ff)" });
+    track.append(this.bar); bar.append(track);
     P.append(bar);
   }
 
@@ -207,6 +258,14 @@ export class Creator {
     if (!this.open) return;
     this.raf = requestAnimationFrame(this.loop);
     if (this.dirty) { this.dirty = false; this.redraw(); }
+    // The world building behind: its progress on the bar and the Start button; once ready, a waiting Start goes.
+    const pr = this.progress(), built = pr.total ? pr.done / pr.total : 1;
+    if (this.bar) this.bar.style.width = `${Math.round((pr.ready ? 1 : Math.min(.97, built)) * 100)}%`;
+    if (this.startBtn) {
+      const want = this.waiting && !pr.ready ? `getting ready… ${Math.round(built * 100)}%` : pr.ready ? "Start ▶" : `Start ▶ · the forest ${Math.round(built * 100)}%`;
+      if (this.startBtn.textContent !== want) this.startBtn.textContent = want;
+    }
+    this.tryStart();
     const c = this.preview, r = c.getBoundingClientRect();
     if (!r.width) return;
     const W = Math.max(1, Math.round(r.width / 4)), H = Math.max(1, Math.round(r.height / 4));
