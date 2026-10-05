@@ -36,8 +36,18 @@ export function lookOf(c: Creature): Look {
  *  one uniform shared by every enraged batch, set from tuning looks.enragedTint each frame (amount 0: off). */
 export const ENRAGED_TINT = { value: new THREE.Vector4(1, 0.16, 0.16, 0) };
 function setTint(t: Tuning): void {
-  const T = t.looks?.enragedTint ?? { colour: "#ff2a2a", amount: 0.65 }, h = T.colour.replace("#", "");
+  const T = t.looks?.enragedTint ?? { colour: "#ff2a2a", amount: 0.38 }, h = T.colour.replace("#", "");
   ENRAGED_TINT.value.set(parseInt(h.slice(0, 2), 16) / 255, parseInt(h.slice(2, 4), 16) / 255, parseInt(h.slice(4, 6), 16) / 255, T.amount);
+}
+
+/** A creature's expression (Ed, 2026-10-05: "the eyebrows should be with the creature generator"):
+ *  the one hook the procedural creature generator is to take over, drawing it as part of the face.
+ *  Until then, StateMarks draws "angry" as brows over the head and "dazed" as stars round it. */
+export type Expression = "neutral" | "angry" | "happy" | "dazed";
+export function expression(c: Creature, time: number): Expression {
+  if (isDazed(c, time)) return "dazed";
+  const l = lookOf(c);
+  return l === "enraged" ? "angry" : l === "happy" || l === "leashed" ? "happy" : "neutral";
 }
 
 export const isDazed = (c: Creature, time: number) => ((c as WithState).dazedUntil ?? -Infinity) > time;
@@ -68,6 +78,13 @@ const BROWS = (): THREE.CanvasTexture => pixels(13, 6, x => {
   stroke(grow(left), rim); stroke(grow(right), rim);
   stroke(left.flatMap(([a, b]) => [[a, b], [a, b + 1]]), ink); stroke(right.flatMap(([a, b]) => [[a, b], [a, b + 1]]), ink);
 });
+/** A party sparkle: a tiny white-and-pink twinkle, three pixels across. */
+const SPARKLE = (): THREE.CanvasTexture => pixels(3, 3, x => {
+  x.fillStyle = "#ffb3e6"; x.fillRect(1, 0, 1, 3); x.fillRect(0, 1, 3, 1);
+  x.fillStyle = "#ffffff"; x.fillRect(1, 1, 1, 1);
+});
+const hash01 = (a: number, b: number) => { const s = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return s - Math.floor(s); };
+
 /** A daze star: a little yellow four-point star with a white heart. */
 const STAR = (): THREE.CanvasTexture => pixels(5, 5, x => {
   x.fillStyle = "#ffd84a"; x.fillRect(2, 0, 1, 5); x.fillRect(0, 2, 5, 1); x.fillRect(1, 1, 3, 3);
@@ -89,6 +106,7 @@ export class StateMarks {
   private brows: THREE.SpriteMaterial;
   private star: THREE.SpriteMaterial;
   private anger: THREE.SpriteMaterial;
+  private sparkle: THREE.SpriteMaterial;
   private pool: THREE.Sprite[] = [];
   private used = 0;
   private v = new THREE.Vector3();
@@ -97,15 +115,19 @@ export class StateMarks {
   constructor(scene: THREE.Scene, private mpp: number) {
     const mat = (map: THREE.Texture) => new THREE.SpriteMaterial({ map, transparent: true, depthTest: false, depthWrite: false });
     this.brows = mat(BROWS()); this.star = mat(STAR()); this.anger = mat(angerMark(11));
+    this.sparkle = new THREE.SpriteMaterial({ map: SPARKLE(), transparent: true, depthTest: true, depthWrite: false, blending: THREE.AdditiveBlending });
     this.group.renderOrder = 12;
     scene.add(this.group);
   }
 
-  private put(m: THREE.SpriteMaterial, x: number, y: number, z: number, wpx: number, hpx: number): void {
+  private put(m: THREE.SpriteMaterial, x: number, y: number, z: number, wpx: number, hpx: number, opacity = 1): void {
     let s = this.pool[this.used];
-    if (!s) { s = new THREE.Sprite(m); s.renderOrder = 12; this.pool.push(s); this.group.add(s); }
+    if (!s) { s = new THREE.Sprite(m.clone()); s.renderOrder = 12; this.pool.push(s); this.group.add(s); }
     this.used++;
-    s.material = m; s.visible = true;
+    // (each sprite its own material copy, so its opacity is its own)
+    const own = s.material as THREE.SpriteMaterial;
+    if (own.map !== m.map || own.blending !== m.blending || own.depthTest !== m.depthTest) { own.map = m.map; own.blending = m.blending; own.depthTest = m.depthTest; own.needsUpdate = true; }
+    own.opacity = opacity; s.visible = true;
     s.position.copy(placed(this.v.set(x, y, z)));
     s.scale.set(wpx * this.mpp, hpx * this.mpp, 1);
   }
@@ -114,13 +136,24 @@ export class StateMarks {
   update(g: Game, time: number, tops: Map<number, number>, R = 70): void {
     this.used = 0;
     setTint(g.tuning);
-    const A = g.tuning.looks?.anger ?? { on: true, size: 1 };
+    const A = g.tuning.looks?.anger ?? { on: true, size: 1 }, P = g.tuning.looks?.partyGlow ?? { on: true, sparkles: 3, rate: 0.7, size: 1, strength: 0.8 };
     const w = g.witch, px = 2; // (each mark pixel two game pixels: readable at a glance)
     for (const c of g.creatures) {
       if (c.gone || Math.abs(c.x - w.x) > R || Math.abs(c.z - w.z) > R) continue;
       const top = tops.get(c.id);
       if (top === undefined) continue;
-      if (lookOf(c) === "enraged" && !c.boss) {
+      const ex = expression(c, time), look = lookOf(c);
+      // Party animals (happy and leashed, Ed 2026-10-05: "could sparkle or glow a little"): a few
+      // twinkling pixels round them, each lit for a moment in turn (looks.partyGlow).
+      if (P.on && (look === "happy" || (look === "leashed" && !c.boss))) {
+        for (let i = 0; i < P.sparkles; i++) {
+          const ph = (time * P.rate + hash01(c.id, i)) % 1, lit = Math.sin(Math.min(1, ph / 0.35) * Math.PI);
+          if (ph > 0.35) continue;
+          const a = hash01(c.id, i + 7) * Math.PI * 2, r = 0.35 + top * 0.45, h = 0.15 + hash01(c.id, i + 13) * top;
+          this.put(this.sparkle, c.x + Math.cos(a) * r, h, c.z + Math.sin(a) * r * 0.4, 3 * px * P.size * (0.6 + 0.4 * lit), 3 * px * P.size * (0.6 + 0.4 * lit), lit * P.strength);
+        }
+      }
+      if (ex === "angry" && !c.boss) {
         const bob = Math.abs(Math.sin(time * 6 + c.id)) * 0.08;
         this.put(this.brows, c.x, top + 0.35 + bob, c.z, 13 * px, 6 * px);
         // 💢 (Ed, 2026-10-05: "or a 💢"): beside its head on the side it faces, popping on a pulse, sized by level like its bubbles.
@@ -129,7 +162,7 @@ export class StateMarks {
           this.put(this.anger, c.x + c.facing * (0.35 + top * 0.25), top + 0.1, c.z, 11 * px * k, 11 * px * k);
         }
       }
-      if (isDazed(c, time)) {
+      if (ex === "dazed") {
         for (let i = 0; i < 3; i++) {
           const a = time * 5 + (i / 3) * Math.PI * 2, r = 0.45 + top * 0.12;
           this.put(this.star, c.x + Math.cos(a) * r, top + 0.25 + Math.sin(a) * 0.12, c.z + Math.sin(a) * r * 0.5, 5 * px, 5 * px);
