@@ -81,6 +81,11 @@ export interface Creature {
   charge?: { dx: number; dz: number; speed: number; until: number; /** when it sets off (it lowers its head till then) */ from?: number; /** it has struck (once a charge), it's braking */ struck?: boolean; braking?: boolean; /** a legend's charge: whom it has trampled */ hit?: number[]; /** rolling curled up (a hedgehog, a woodlouse): the damage it takes times this */ curl?: number };
   /** Dug in (a badger) or braced behind its tail (a beaver) until then: rooted, taking less. */
   dug?: number;
+  /** A party animal travelling (rules/travel.ts: far from her on the ground or its sigil, quiet both
+   *  ways), its route along area borders, and until when it stays in her posse after a fight. */
+  travelling?: boolean;
+  route?: import("./travel").Route;
+  engagedUntil?: number;
   brace?: number;
   /** A wild legend's move set (Stage 5): where it is in its pattern, and its phase. */
   legend?: { step: number; phase: 1 | 2 };
@@ -205,7 +210,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
     const home = cx === hx && cy === hy;
     const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), cell: [number, number] = [cx, cy], make = (level: Level) => out.push(makeCreature(map, cell, level, out.length, r));
     if (!home) {
-      // Swarms come in larger numbers, loners fewer (Ed, 2026-10-05): 1 / their strength times as many.
+      // Weaker species come in larger numbers, stronger fewer (Ed, 2026-10-05): 1 / their strength times as many.
       const k = countScale(AREA_TYPES[map.typeOf(cx, cy)].creature);
       for (let i = 0; i < startCount(pop.babies, k); i++) make(0);
       for (let i = 0; i < startCount(pop.young, k); i++) make(1);

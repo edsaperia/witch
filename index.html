@@ -25,6 +25,13 @@
     #wave .fill { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(#ff7fd0, #6fe6ff); border-radius: 3px; }
     #wave .label { position: absolute; right: 14px; bottom: 0; white-space: nowrap; color: var(--dim); font-size: 11px; text-align: right; text-shadow: 0 1px 0 #000; }
     #wave.paused .fill { opacity: .4; }
+    /* A soundsystem lost: the bar shrinks to its new countdown with a red flash, and the seconds taken off pop out beside it. */
+    #wave.lost { animation: wave-lost .9s ease-out; }
+    #wave.lost .fill { transition: height .45s cubic-bezier(.3, 1.6, .5, 1); animation: wave-lost-fill .9s ease-out; }
+    @keyframes wave-lost { 0%, 30% { border-color: #ff4060; box-shadow: 0 0 14px #ff4060; } }
+    @keyframes wave-lost-fill { 0%, 30% { left: -4px; right: -4px; background: #ff4060; filter: brightness(1.8); } 100% { filter: none; } }
+    #wave .loss-pop { position: absolute; right: 16px; transform: translateY(50%); white-space: nowrap; color: #ff5a78; font-weight: bold; font-size: 15px; text-shadow: 0 0 6px #ff2050, 0 1px 0 #000; animation: loss-pop 1.8s ease-out forwards; }
+    @keyframes loss-pop { 0% { opacity: 0; transform: translateY(50%) scale(1.8); } 12% { opacity: 1; transform: translateY(50%) scale(1); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-120%); } }
     .touch #wave { top: 12%; height: 30%; }
     #over { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(8, 6, 18, .78); z-index: 6; }
     #over.on { display: flex; }
@@ -37,6 +44,9 @@
     #waves { margin: 0 0 14px; color: var(--dim); font-size: 12px; }
     #waves button { font: inherit; margin: 2px 3px; padding: 3px 8px; color: var(--ink); background: transparent; border: 1px solid #3a2f5c; border-radius: 6px; cursor: pointer; }
     #waves button.on { background: #3a2f5c; color: #fff; }
+    #shake-opt { margin: 0 0 14px; color: var(--dim); font-size: 12px; }
+    #shake-opt button { font: inherit; margin: 2px 3px; padding: 3px 8px; color: var(--ink); background: transparent; border: 1px solid #3a2f5c; border-radius: 6px; cursor: pointer; }
+    #shake-opt button.on { background: #3a2f5c; color: #fff; }
     #news { margin: 0 0 14px; color: var(--dim); font-size: 12px; text-align: left; max-height: 12em; overflow-y: auto; }
     #news b { color: var(--ink); font-weight: normal; }
     #news ul { margin: 2px 0 6px; padding-left: 1.3em; }
@@ -58,7 +68,8 @@
     #zoom-in, #zoom-out { width: 46px; height: 46px; font-size: 22px; right: 42px; }
     #zoom-in { bottom: 186px; }
     #zoom-out { bottom: 128px; }
-    #sigil, #spell, #dash { width: 62px; height: 62px; font-size: 12px; }
+    #sigil, #spell, #dash, #invite { width: 62px; height: 62px; font-size: 12px; }
+    #invite { right: 274px; bottom: 30px; font-size: 24px; }
     #dash { right: 126px; bottom: 104px; }
     .touch #actionbar { display: none !important; }
     #sigil { right: 126px; bottom: 30px; }
@@ -100,6 +111,7 @@
     <div class="tbtn" id="sigil">sigil</div>
     <div class="tbtn" id="spell">spell</div>
     <div class="tbtn" id="dash">dash</div>
+    <div class="tbtn" id="invite">💌</div>
   </div>
   <div id="over"><div class="card"><h1>THE PARTY'S OVER</h1><div>Every soundsystem has fallen.</div><div id="over-stats"></div><button id="again">Play again</button> <button id="fresh">A new forest</button></div></div>
   <div id="start" class="loading">
@@ -109,11 +121,12 @@
       <div class="go">Tap, click or press any key to start</div>
       <div id="progress"><div class="fill"></div><span class="label"></span></div>
       <div id="waves"></div>
+      <div id="shake-opt"></div>
       <div id="news"></div>
       <div class="keys">
-        <b>Keyboard</b> arrow keys fly · space rises or descends · Q spell (speed boost) · W dash (on the ground) · E on the ground puts down / picks up a sigil, in the treetops cycles the stack (the bottom sigil to the top) · 1–4 empty slots for now · Z/X or +/− zoom · on the ground she talks to (invites) any creature in range by herself (1 or T turns auto-talk off: then hold Shift to talk) · H hides the action bar · Esc pauses everything (a still for screenshots, with a stamp of where you are; while paused . steps a frame, Shift+. ten; ❚❚ by the volume on touch) · ~ debug · N next wave · P pause waves · I invite nearest (debug) · [ ] fight scale, ; ' fight speed, , . fight momentum (debug: in the ~ panel too)<br>
-        <b>Gamepad</b> left stick flies · A dash · B spell · X sigil (on the ground) or cycle (in the treetops) · Y rises or descends · shoulders zoom · Start pauses<br>
-        <b>Phone</b> drag on the left to fly · the round button rises or descends · go near a creature to talk · sigil puts down or picks up (on the ground) or cycles (in the treetops) · spell and dash · three-finger tap for debug
+        <b>Keyboard</b> arrow keys fly · space rises or descends · Q spell (speed boost) · W blink 10 m (on the ground) · E on the ground puts down / picks up a sigil, in the treetops cycles the stack (the bottom sigil to the top) · on the ground, click (or hold 1) to throw 💌 invites at the cursor: enough of them win a creature over (enraged ones and legends block them) · 2–4 empty slots for now · Z/X or +/− zoom · H hides the action bar · Esc pauses everything (a still for screenshots, with a stamp of where you are; while paused . steps a frame, Shift+. ten; ❚❚ by the volume on touch) · ~ debug · N next wave · P pause waves · I invite nearest (debug) · [ ] fight scale, ; ' fight speed, , . fight momentum (debug: in the ~ panel too)<br>
+        <b>Gamepad</b> left stick flies · right stick aims and a trigger throws 💌s · A dash · B spell · X sigil (on the ground) or cycle (in the treetops) · Y rises or descends · shoulder buttons zoom · Start pauses<br>
+        <b>Phone</b> drag on the left to fly · the round button rises or descends · the 💌 button throws invites the way you're going · sigil puts down or picks up (on the ground) or cycles (in the treetops) · spell and dash · three-finger tap for debug
       </div>
     </div>
   </div>

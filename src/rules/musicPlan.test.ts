@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import styleJson from "../../config/music-style.json";
-import { Conductor, barSeconds, planBlock, type MusicCue } from "./musicPlan";
+import { Conductor, barSeconds, partyNear, planBlock, type MusicCue } from "./musicPlan";
+import { newGame } from "./game";
+import { TUNING } from "./tuning";
 import { checkStyle, notesAt, type BlockPlan, type MusicStyle } from "./musicScore";
 
 const style = styleJson as unknown as MusicStyle;
@@ -156,5 +158,32 @@ describe("music score", () => {
     const plan: BlockPlan = { section: "deep", start: 0, bars: 16, wave: 1, arc: 1 };
     const parts = (siege: number) => new Set(Array.from({ length: 16 }, (_, s) => notesAt(style, plan, null, s, { seed: 1, siege })).flat().map(e => e.part));
     for (const p of Object.keys(style.siege)) { expect(parts(0).has(p)).toBe(false); expect(parts(1).has(p)).toBe(true); }
+  });
+
+  it("adds the party's parts near a woken area that has joined the party, never doubling the section's own", () => {
+    const plan: BlockPlan = { section: "whisper", start: 0, bars: 8, wave: 1, arc: 1 };
+    const notes = (party: number) => Array.from({ length: 16 }, (_, s) => notesAt(style, plan, null, s, { seed: 1, siege: 0, party })).flat();
+    const own = new Set(notes(0).map(e => e.part)), added = new Set(notes(1).map(e => e.part));
+    for (const p of Object.keys(style.party ?? {})) if (!own.has(p)) expect(added.has(p)).toBe(true);
+    for (const p of own) expect(notes(1).filter(e => e.part === p).length).toBe(notes(0).filter(e => e.part === p).length);
+    // quieter the further it is
+    const vel = (party: number) => notes(party).filter(e => !own.has(e.part)).reduce((a, e) => a + e.vel, 0);
+    expect(vel(0.3)).toBeLessThan(vel(1));
+  });
+});
+
+describe("a woken area joining the party (partyNear)", () => {
+  it("is heard near a standing soundsystem with happy animals by it, not near home's, a ruined one or one with none", () => {
+    const g = newGame(123, TUNING), c = g.creatures.find(c => !c.boss && c.cell.join(",") !== g.map.centreCell.join(","))!, key = c.cell.join(",");
+    g.combat.sounds.set(key, { hp: 100, max: 100, x: c.x, z: c.z, radius: 8 });
+    g.witch.x = c.x + 10; g.witch.z = c.z;
+    expect(partyNear(g, g.witch)).toBe(0); // nobody dancing yet
+    c.guard = true;
+    expect(partyNear(g, g.witch)).toBe(1);
+    g.witch.x = c.x + (TUNING.music.nearDist + TUNING.music.farDist) / 2;
+    expect(partyNear(g, g.witch)).toBeGreaterThan(0.2);
+    expect(partyNear(g, g.witch)).toBeLessThan(0.8);
+    g.combat.ruined.add(key);
+    expect(partyNear(g, g.witch)).toBe(0);
   });
 });

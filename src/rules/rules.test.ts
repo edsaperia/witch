@@ -8,7 +8,8 @@ import { Forest, crownReach, treeChance } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
 import { population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
-import { dormant, newGame, simRadius, STEP, stepGame } from "./game";
+import { dormant, hitWitch, newGame, simRadius, STEP, stepGame } from "./game";
+import { dashing, newDash, startDash } from "./dash";
 import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, symbolCount, wavePlan } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
@@ -1618,16 +1619,55 @@ describe("the dash (Ed, 2026-10-04)", () => {
   const ready = () => { const g = newGame(321, TUNING); g.clock.paused = false; g.witch = { ...g.witch, seated: false }; return g; };
   const run = (g: ReturnType<typeof newGame>, n: number, c: Partial<Parameters<typeof stepGame>[1]> = {}) => { for (let i = 0; i < n; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c }, STEP); };
 
-  it("bursts dash.distance metres the way she steers, on the ground, then waits out its cooldown", () => {
+  it("blinks dash.distance metres the way she steers in one step, gone for a moment, then waits out its cooldown", () => {
     const g = ready(), x0 = g.witch.x, z0 = g.witch.z;
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
-    run(g, Math.ceil(TUNING.dash.duration / STEP) + 1);
+    // One step: there already, no travel between.
     expect(z0 - g.witch.z).toBeGreaterThan(TUNING.dash.distance * 0.8);
     expect(Math.abs(g.witch.x - x0)).toBeLessThan(0.5);
+    expect(dashing(g.witches[0].dash, g.clock.time)).toBe(true); // gone: not drawn, not hit
+    run(g, Math.ceil(TUNING.dash.gone / STEP) + 1);
+    expect(dashing(g.witches[0].dash, g.clock.time)).toBe(false);
     const z1 = g.witch.z;
-    run(g, 1, { dash: true, moveX: 0, moveZ: -1 }); // still cooling down: no burst
+    run(g, 1, { dash: true, moveX: 0, moveZ: -1 }); // still cooling down: no blink
     run(g, 10);
     expect(z1 - g.witch.z).toBeLessThan(TUNING.dash.distance * 0.5);
+  });
+
+  it("goes the way she faces when she's still, and stops short of anything in the way", () => {
+    const w = { ...newWitch(0, 0), facing: -1 as const }, d = newDash(), B = { minX: -100, maxX: 100, minZ: -100, maxZ: 100 };
+    expect(startDash(d, w, 0, 0, 1, TUNING, B)).toBe(true);
+    expect(d.toX).toBeCloseTo(-TUNING.dash.distance); expect(d.toZ).toBeCloseTo(0);
+    const d2 = newDash();
+    startDash(d2, w, 1, 0, 1, TUNING, B, x => x < 6); // blocked from 6 m on
+    expect(d2.toX).toBeLessThan(6); expect(d2.toX).toBeGreaterThan(5);
+  });
+
+  it("never lands in a tree trunk", () => {
+    const g = ready();
+    const trees = g.forest.treesNear(g.witch.x + 60, g.witch.z + 60, 40);
+    expect(trees.length).toBeGreaterThan(0);
+    let tried = 0;
+    for (const tr of trees.slice(0, 12)) {
+      const W = g.witches[0];
+      W.dash = newDash();
+      g.witch = { ...g.witch, x: tr.x - TUNING.dash.distance, z: tr.z, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false };
+      run(g, 1, { dash: true, moveX: 1, moveZ: 0 });
+      for (const p of g.forest.treesNear(g.witch.x, g.witch.z, 3)) expect(Math.hypot(p.x - g.witch.x, p.z - g.witch.z)).toBeGreaterThanOrEqual(TUNING.dash.clear.tree - 1e-6);
+      tried++;
+    }
+    expect(tried).toBeGreaterThan(0);
+  });
+
+  it("can't be hit while she's gone", () => {
+    const g = ready(), W = g.witches[0], hp = () => JSON.stringify(W.health);
+    run(g, 1, { dash: true, moveX: 1, moveZ: 0 });
+    const before = hp();
+    hitWitch(g, 0, g.clock.time);
+    expect(hp()).toBe(before);
+    run(g, Math.ceil(TUNING.dash.gone / STEP) + 1);
+    hitWitch(g, 0, g.clock.time + 0.01); // back: hittable as ever
+    expect(hp()).not.toBe(before);
   });
 
   it("does nothing over the treetops or while she sits", () => {

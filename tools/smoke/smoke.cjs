@@ -405,7 +405,7 @@ async function main() {
     }
   }, "&tilt=before");
 
-  // Inviting and leashing: stand by a creature while she talks it into joining her, gather a few more, fly with the
+  // Inviting and leashing: 💌s at a creature until it joins her (issue #87), gather a few more, fly with the
   // stack, put a sigil down and pick it up again.
   await run("leash", { width: 1900, height: 1240 }, async page => {
     await page.keyboard.press("Enter");
@@ -413,21 +413,25 @@ async function main() {
       const g = window.witch.game, w = g.witch;
       let best = null, bd = Infinity;
       for (const c of g.creatures) { if (c.level !== 0) continue; const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c; } } // a baby
-      // (every area has an adult now, onto her in seconds: send the grown-ups round it away, so she can talk)
+      // (every area has an adult now, onto her in seconds: send the grown-ups round it away, so she can invite it)
       for (const c of g.creatures) if (c.level > 0 && !c.boss && Math.hypot(c.x - best.x, c.z - best.z) < 150) c.gone = true;
       g.byArea = null;
-      g.witch = { ...w, x: best.x + 2, z: best.z + 1 };
-      g.camera = { ...g.camera, tx: best.x + 2, tz: best.z + 1 };
+      // 5 m west of it, facing it (with no cursor, 1 throws the way she faces).
+      g.witch = { ...w, x: best.x - 5, z: best.z, vx: 0, vz: 0, facing: 1, seated: false, mode: "ground", lift: 0 };
+      g.camera = { ...g.camera, tx: best.x - 5, tz: best.z };
+      Object.assign(best, { rest: 99, tx: best.x, tz: best.z });
       return best.id;
     });
     await sleep(800);
     await shot(page, "69-leash-cue.png");
     const t0 = await page.evaluate(() => window.witch.game.clock.time);
-    // No Talk button (Ed, v244): standing by it, she talks to it by herself.
-    await page.waitForFunction(t => window.witch.game.clock.time >= t, t0 + 1.6, { timeout: 400000, polling: 50 });
+    // The 💌 (issue #87): hold 1 and her letters fly at it until its meter fills.
+    await page.keyboard.down("Digit1");
+    await page.waitForFunction(t => window.witch.game.clock.time >= t, t0 + 0.5, { timeout: 400000, polling: 50 });
     await shot(page, "70-leash-talk.png");
-    await page.waitForFunction(i => window.witch.game.creatures[i].leashed, id, { timeout: 400000, polling: 100 });
-    check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "standing by a creature, she talks to it by herself and invites it onto her sigil stack");
+    await page.waitForFunction(i => { const g = window.witch.game; g.witch = { ...g.witch, facing: 1 }; return g.creatures[i].leashed; }, id, { timeout: 400000, polling: 100 });
+    await page.keyboard.up("Digit1");
+    check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "her 💌s at a creature fill its meter and invite it onto her sigil stack");
     // One press a frame: wait for each invite to land before the next (the headless renderer is slow).
     for (let i = 0; i < 3; i++) {
       const before = await page.evaluate(() => window.witch.game.leash.stack.length);
@@ -568,7 +572,7 @@ async function main() {
       for (const c of besiegers) { c.x = sound.x + (c.rand() - 0.5) * 8; c.z = sound.z + 5 + c.rand() * 3; }
       let hit = false;
       for (let i = 0; i < 120 * 60 && sound.hp > 0; i++) { w.frame(idle, dt, false); hit ||= sound.hp < sound.max; if (i % 120 === 0) await yieldNow(); }
-      const fell = sound.hp === 0, ended = !g.party.areas.has(key), marched = besiegers.filter(c => !c.gone).every(c => c.siege === "home");
+      const fell = sound.hp === 0, ended = !g.party.areas.has(key), marched = besiegers.filter(c => !c.gone && !c.boss).every(c => c.siege === "home"); // (the area's legend stays to guard its own area, by design)
       const home = g.combat.sounds.get("home"); home.hp = 0.001;
       for (const c of besiegers) if (!c.gone) { c.x = g.map.dancefloor.x + 6; c.z = g.map.dancefloor.z + 6; }
       for (let i = 0; i < 60 * 60 && !g.over; i++) { w.frame(idle, dt, false); if (i % 120 === 0) await yieldNow(); }
