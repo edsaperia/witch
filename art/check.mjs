@@ -517,6 +517,30 @@ const report = await b.page.evaluate(async () => {
 });
 for (const r of report) if (!r.good) ok(false, `${r.what} (${r.info})`);
 ok(report.every(r => r.good), `${report.length} sprite checks`);
+// party relics (art/partyRelics.js, #87): 6+, each drawn half-buried and legend-sized (7 to 16 m across and 6 to 15 m tall), sitting in
+// its mound (the bottom row earth), only MAGIC glowing (20+ px of it), its origin and glint inside the sprite, the glint on the relic
+// itself; the glint's 4 frames differ, only GLINT, the treetop ones bigger; each relic's sigil is in the sigil system, its strokes in
+// the box, drawn as SVG, and no sigil id clashes with a creature's
+{
+  const P = await import("./partyRelics.js"), S = await import("./sigils.js"), { defaultStyle } = await import("./generator.js"), { M, EMISSIVE } = await import("./core.js");
+  const st = defaultStyle(), bad = [], EARTH = new Set([M.TRUNK, M.BARKD, M.STONE, M.MOSS, M.LEAF, M.LEAF2, M.LEAF3]);
+  if (P.PARTY_RELIC_IDS.length < 6) bad.push(`${P.PARTY_RELIC_IDS.length} relics`);
+  for (const id of P.PARTY_RELIC_IDS) {
+    const R = P.partyRelicSprite(id, st), { w, h, m } = R.sp, { width, height } = R.metres;
+    if (!(width >= 7 && width <= 16 && height >= 6 && height <= 15)) bad.push(`${id} ${width} x ${height} m`);
+    let earth = 0, bottom = 0; for (let x = 0; x < w; x++) { const v = m[(h - 1) * w + x]; if (v) { bottom++; if (EARTH.has(v)) earth++; } } if (!bottom || earth < bottom * .8) bad.push(`${id} not sitting in its mound`);
+    const glowing = new Set(), magic = m.filter(v => v === M.MAGIC).length; for (const v of m) if (EMISSIVE.has(v)) glowing.add(v); if (magic < 20 || [...glowing].some(v => v !== M.MAGIC)) bad.push(`${id} glows ${[...glowing]} (${magic} magic)`);
+    const inside = p => p.x >= 0 && p.y >= 0 && p.x < w && p.y < h; if (!inside(R.origin) || !inside(R.glint)) bad.push(`${id} origin or glint outside`); else if (EARTH.has(m[Math.round(R.glint.y) * w + Math.round(R.glint.x)]) || !m[Math.round(R.glint.y) * w + Math.round(R.glint.x)]) bad.push(`${id} glint not on the relic`);
+    const sid = P.partyRelicSigilId(id), strokes = S.sigilStrokes(sid);
+    if (!strokes.length || strokes.some(t => t.pts.some(([x, y]) => x < 0 || y < 0 || x > 1 || y > 1)) || !S.sigilSVG(sid).includes("<polyline")) bad.push(`${id} sigil`);
+    if (S.SIGIL_IDS.includes(sid)) bad.push(`${sid} clashes with a creature's sigil`);
+  }
+  const frames = [0, 1, 2, 3].map(f => P.partyRelicGlint(f)), tops = [0, 1, 2, 3].map(f => P.partyRelicGlint(f, { zoom: "treetop" })), key = g => g.sp.w + ":" + g.sp.m.join("");
+  if (new Set(frames.map(key)).size < 4) bad.push("glint frames repeat");
+  for (const g of [...frames, ...tops]) if (g.sp.m.some(v => v && v !== M.GLINT)) bad.push("glint not all GLINT");
+  if (tops.some((g, i) => g.sp.m.filter(Boolean).length <= frames[i].sp.m.filter(Boolean).length)) bad.push("treetop glint not bigger");
+  ok(!bad.length, `party relics: ${P.PARTY_RELIC_IDS.length} half-buried, legend-sized, only magic glowing, glint on each, 4 glint frames (bigger from the treetops), a sigil each${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
+}
 await b.close();
 console.log(failed ? `${failed} check(s) failed` : "all checks passed");
 process.exit(failed ? 1 : 0);

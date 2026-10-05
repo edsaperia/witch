@@ -228,6 +228,12 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
+        <h2>Party relics</h2>
+        <p class="note">Giant party objects, legend-sized and half-buried in the forest floor, 3 or 4 to a map, for the witch to find and dig up (#87): a bottle of wine, a party hat, a disco ball, a gramophone horn, a wrapped present and a carnival mask, each with one glowing magical touch. Each is lit at night with its glint (a four-point star that comes and goes, so it can be spotted from the treetops) at its glint point; then the glint's frames, at the ground and treetop zooms; then each relic's sigil, bare and in a legend's frame, as it shows in the stack.</p>
+        <div class="sheet-wrap"><canvas id="partyRelicSheet" width="420" height="160"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
         <div class="row" style="justify-content:space-between"><h2>Attack effects</h2><div class="row"><label class="note" for="fxTint">Tint</label><select id="fxTint"><option value="255,70,90">wild (red)</option><option value="70,240,255">party (cyan)</option><option value="255,90,220">party (pink)</option><option value="150,255,80">party (green)</option><option value="255,220,70">party (yellow)</option></select></div></div>
         <p class="note">What a fight looks like (Stage 5): projectiles (spit, a barb, a seed and a stone lobbed with their shadow, a feather dart, a glowing mote), short and long beams (start, the loop that repeats along the beam, end), the quake's ring and a spore cloud, the telegraphs (a target circle where a lob will land, a line along a beam or a charge with its start and arrowhead, the wind-up flash, the quake's reach), hit sparks, and the slow and knockback marks. Each row: its frames light (for the dark forest) on night ground, then dark (for bright ground) on a lit floor, then how the treetop camera shows it, the ground drawing and then the treetop one; ground decals also laid flat as the camera sees them. Tinted by the attack's side.</p>
         <div class="sheet-wrap"><canvas id="fxSheet" width="420" height="160"></canvas></div>
@@ -283,7 +289,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, bakeTufts, DISCO_GRID, DISCO_MASK, discoPatterns, DISCO_TRANSITIONS, discoCompose, discoPaint, DANCEFLOOR_SPEAKER_ANGLES, dancefloorSpeakerSprite, dancefloorSpeakerColours, soundsystemColours, witchSprite, witchColours, areaTreeVariants, TREE_SPECIES, splitTree, treeColours, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS, COUNTRY, countrySprite, countryColours, SCENES, scenePlacements, LANDMARKS, landmarkSprite, landmarkColours, WITCH_PAIRS, PARTY_OUTFITS, partyWitch, PARTY_OBJECTS, PARTY_CLASSES, PARTY_LIGHT_NEONS, partySprite, partyColours, partyPatch, scenePiece, LEGEND_IDS, LEGEND_STATES, LEGEND_FRAMES, legendForm, EFFECTS, EFFECT_BY_ID, effectSprite, effectColours, EFFECT_TREETOP_SHRINK } from "../../art/generator.js";
+import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, bakeTufts, DISCO_GRID, DISCO_MASK, discoPatterns, DISCO_TRANSITIONS, discoCompose, discoPaint, DANCEFLOOR_SPEAKER_ANGLES, dancefloorSpeakerSprite, dancefloorSpeakerColours, soundsystemColours, witchSprite, witchColours, areaTreeVariants, TREE_SPECIES, splitTree, treeColours, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS, COUNTRY, countrySprite, countryColours, SCENES, scenePlacements, LANDMARKS, landmarkSprite, landmarkColours, WITCH_PAIRS, PARTY_OUTFITS, partyWitch, PARTY_OBJECTS, PARTY_CLASSES, PARTY_LIGHT_NEONS, partySprite, partyColours, partyPatch, scenePiece, LEGEND_IDS, LEGEND_STATES, LEGEND_FRAMES, legendForm, EFFECTS, EFFECT_BY_ID, effectSprite, effectColours, EFFECT_TREETOP_SHRINK, PARTY_RELIC_IDS, PARTY_RELIC_GLINT_FRAMES, partyRelicSprite, partyRelicColours, partyRelicGlint, partyRelicSigilId } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -832,6 +838,29 @@ function renderParty() {
   }, 650);
 }
 
+// ================= party relics: the six, lit at night with their glints; the glint's frames; their sigils =================
+let partyRelicTimer;
+function renderPartyRelics() {
+  clearTimeout(partyRelicTimer);
+  partyRelicTimer = setTimeout(() => {
+    const c = document.getElementById("partyRelicSheet"); if (!c) return;
+    const st = current, night = { ...st, ambient: .45, ambientHue: .65, moon: .8, moonHue: .6, shafts: 0 }, gap = 10;
+    const relics = PARTY_RELIC_IDS.map(id => { const R = partyRelicSprite(id, st); return { R, b: bake(R.sp, partyRelicColours(id, st), st, "none") }; });
+    const glints = [...Array(PARTY_RELIC_GLINT_FRAMES).keys()].flatMap(f => [bake(partyRelicGlint(f).sp, partyRelicColours("wine", st), st, "none")]).concat([...Array(PARTY_RELIC_GLINT_FRAMES).keys()].map(f => bake(partyRelicGlint(f, { zoom: "treetop" }).sp, partyRelicColours("wine", st), st, "none")));
+    const big = bake(partyRelicGlint(2).sp, partyRelicColours("wine", st), st, "none");
+    const h1 = Math.max(...relics.map(r => r.b.h)) + gap, w1 = relics.reduce((a, r) => a + r.b.w + gap, gap), h2 = Math.max(...glints.map(g => g.h)) + gap, w2 = glints.reduce((a, g) => a + g.w + gap, gap);
+    const w = Math.max(w1, w2), h = h1 + h2 + gap, tgt = makeTarget(w, h);
+    tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+    let x = gap; for (const { R, b } of relics) { const y = h1 - b.h; tgt.a.drawImage(b.A, x, y); tgt.n.drawImage(b.N, x, y); tgt.a.drawImage(big.A, Math.round(x + R.glint.x - big.w / 2), Math.round(y + R.glint.y - big.h / 2)); tgt.n.drawImage(big.N, Math.round(x + R.glint.x - big.w / 2), Math.round(y + R.glint.y - big.h / 2)); x += b.w + gap; }
+    x = gap; for (const g of glints) { const y = h1 + gap + (h2 - g.h) / 2; tgt.a.drawImage(g.A, x, y); tgt.n.drawImage(g.N, x, y); x += g.w + gap; }
+    const lit = document.createElement("canvas"); lit.width = w; lit.height = h; shade(tgt, lit, night, [], [0, 0, w, h]);
+    const S = 72, rows = Math.ceil(PARTY_RELIC_IDS.length * 2 * (S + gap) / Math.max(w, 1)), sh = rows * (S + gap) + gap;
+    c.width = w; c.height = h + sh; const g = c.getContext("2d"); g.fillStyle = "#0e0c14"; g.fillRect(0, 0, c.width, c.height); g.drawImage(lit, 0, 0);
+    let sx = gap, sy = h + gap; for (const id of PARTY_RELIC_IDS) for (const level of [null, 3]) { if (sx + S > w) { sx = gap; sy += S + gap; } drawSigil(g, partyRelicSigilId(id), { x: sx, y: sy, size: S, level }); sx += S + gap; }
+    c.style.width = w + "px"; c.style.maxWidth = "none";
+  }, 700);
+}
+
 // ================= attack effects: every effect's frames, light and dark, ground and treetop =================
 let fxTimer;
 function renderEffects() {
@@ -1039,7 +1068,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderCountry(); renderPartyObjects(); renderLegends(); renderRelics(); renderSets(); renderTall(); renderTufts(); renderWitch(); renderParty(); renderEffects(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
+  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderCountry(); renderPartyObjects(); renderLegends(); renderRelics(); renderSets(); renderTall(); renderTufts(); renderWitch(); renderParty(); renderPartyRelics(); renderEffects(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }

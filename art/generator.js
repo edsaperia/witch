@@ -10,6 +10,8 @@ import { defaultCanvas, rng, uni, pick, gauss, hash2, vnoise, hsv2rgb, M, EMISSI
 import { TREE_TYPES, chooseType, treeColours, finishTree, splitTree, bush, broadTree, firTree, willowTree, birchTree, palmTree, flatTree, TREE_SPECIES, treeSpecies, crownStats } from "./trees.js";
 import { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, WITCH_HEADINGS, witchPixelsPerUnit , WITCH_FLIGHT_POSES, WITCH_PAIRS, WITCH_LOOKS, DEFAULT_LOOK, PARTY_OUTFITS, PARTY_OUTFIT_BY_ID, partyWitch, cleanFlecks, LIMBO_BAR } from "./witch.js";
 import { treehouseSprite, treehouseColours, TREEHOUSE_STOREYS } from "./treehouse.js";
+import { PARTY_RELICS, PARTY_RELIC_BY_ID, PARTY_RELIC_IDS, PARTY_RELIC_SIGILS, PARTY_RELIC_GLINT_FRAMES, partyRelicSprite, partyRelicColours, partyRelicGlint, partyRelicSigilId } from "./partyRelics.js";
+export { PARTY_RELICS, PARTY_RELIC_BY_ID, PARTY_RELIC_IDS, PARTY_RELIC_SIGILS, PARTY_RELIC_GLINT_FRAMES, partyRelicSprite, partyRelicColours, partyRelicGlint, partyRelicSigilId };
 import { swayMask, bakeSway } from "./sway.js";
 import { tuftSprites, bakeTufts } from "./tufts.js";
 export { swayMask, bakeSway, tuftSprites, bakeTufts };
