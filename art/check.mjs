@@ -521,7 +521,7 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
 // sitting in its mound (the bottom row earth); its liquid glows (200+ px of MAGIC; nothing glows but the liquid, its surface and the
 // motes); the glass is see-through (a rim in its colour and a half-clear dither of empty glass); it carries a light; its 3 frames
 // differ (the motes rise); its origin and glint inside the sprite, the glint on the glass; the glint's 4 frames differ, only GLINT,
-// the treetop ones bigger; each bottle's sigil is in the sigil system, its strokes in the box, drawn as SVG, no id clashing with a creature's
+// the treetop ones bigger; their one sigil is in the sigil system, its strokes in the box, drawn as SVG, its id clashing with no creature's
 {
   const P = await import("./partyRelics.js"), S = await import("./sigils.js"), { defaultStyle } = await import("./generator.js"), { M, EMISSIVE } = await import("./core.js");
   const st = defaultStyle(), bad = [], EARTH = new Set([M.TRUNK, M.BARKD, M.STONE, M.MOSS, M.LEAF, M.LEAF2, M.LEAF3]), GLOWS = new Set([M.MAGIC, M.MAGIC2, M.GLOW]);
@@ -536,15 +536,14 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
     if (!(R.light?.radius > 0 && R.light.rgb?.length === 3)) bad.push(`${id} gives no light`);
     if (new Set([0, 1, 2].map(f => P.partyRelicSprite(id, st, { frame: f }).sp.m.join(""))).size < 3) bad.push(`${id} frames repeat`);
     const inside = p => p.x >= 0 && p.y >= 0 && p.x < w && p.y < h; if (!inside(R.origin) || !inside(R.glint)) bad.push(`${id} origin or glint outside`); else if (![M.CRYSTAL, M.HAT1].includes(m[Math.round(R.glint.y) * w + Math.round(R.glint.x)])) bad.push(`${id} glint not on the glass`);
-    const sid = P.partyRelicSigilId(id), strokes = S.sigilStrokes(sid);
-    if (!strokes.length || strokes.some(t => t.pts.some(([x, y]) => x < 0 || y < 0 || x > 1 || y > 1)) || !S.sigilSVG(sid).includes("<polyline")) bad.push(`${id} sigil`);
-    if (S.SIGIL_IDS.includes(sid)) bad.push(`${sid} clashes with a creature's sigil`);
+    if (P.partyRelicSigilId(id) !== P.PARTY_RELIC_SIGIL) bad.push(`${id} has its own sigil`);
   }
+  { const sid = P.PARTY_RELIC_SIGIL, strokes = S.sigilStrokes(sid); if (!strokes.length || strokes.some(t => t.pts.some(([x, y]) => x < 0 || y < 0 || x > 1 || y > 1)) || !S.sigilSVG(sid).includes("<polyline")) bad.push("the relic sigil"); if (S.SIGIL_IDS.includes(sid)) bad.push(`${sid} clashes with a creature's sigil`); }
   const frames = [0, 1, 2, 3].map(f => P.partyRelicGlint(f)), tops = [0, 1, 2, 3].map(f => P.partyRelicGlint(f, { zoom: "treetop" })), key = g => g.sp.w + ":" + g.sp.m.join("");
   if (new Set(frames.map(key)).size < 4) bad.push("glint frames repeat");
   for (const g of [...frames, ...tops]) if (g.sp.m.some(v => v && v !== M.GLINT)) bad.push("glint not all GLINT");
   if (tops.some((g, i) => g.sp.m.filter(Boolean).length <= frames[i].sp.m.filter(Boolean).length)) bad.push("treetop glint not bigger");
-  ok(!bad.length, `party relics: ${P.PARTY_RELIC_IDS.length} giant bottles, half-buried, legend-sized, see-through glass, glowing liquid that lights the ground, motes rising over 3 frames, a glint on each (bigger from the treetops), a sigil each${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
+  ok(!bad.length, `party relics: ${P.PARTY_RELIC_IDS.length} giant bottles, half-buried, legend-sized, see-through glass, glowing liquid that lights the ground, motes rising over 3 frames, a glint on each (bigger from the treetops), one sigil for all${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
 }
 // the trees and bushes grown from their genomes (art/flora/genomes.js) draw exactly as before: every species over seeds, sizes and
 // area options, and the bushes, against art/flora/baseline.json (when a change to them is meant, rewrite it: node art/flora/fingerprint.mjs)

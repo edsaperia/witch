@@ -229,7 +229,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 
       <section style="display:grid;gap:10px">
         <h2>Party relics</h2>
-        <p class="note">Giant bottles, legend-sized and half-buried in the forest floor, 3 or 4 to a map, for the witch to find and dig up (#87). Each is its own shape and glass: a tall wine bottle (amethyst), a round flask (ruby), a square decanter (emerald), a hexagonal bottle (sapphire), a squat gourd (amber) and a teardrop potion (rose). The glass is see-through (its rim, a highlight, and a half-clear dither the ground shows through), and the liquid inside glows in its own colour, motes rising from the neck; in the game each lights the ground round it. Each is lit at night with its glint (a four-point star that comes and goes, so it can be spotted from the treetops) at its glint point; then the glint's frames, at the ground and treetop zooms; then each bottle's sigil, bare and in a legend's frame, as it shows in the stack.</p>
+        <p class="note">Giant bottles, legend-sized and half-buried in the forest floor, 3 or 4 to a map, for the witch to find and dig up (#87). Each is its own shape and glass: a tall wine bottle (amethyst), a round flask (ruby), a square decanter (emerald), a tapering hexagonal bottle (sapphire), a spiral-fluted bottle (amber) and a teardrop potion (rose). The glass is see-through (its rim, a highlight, and a half-clear dither the ground shows through), and the liquid inside glows in its own colour, motes rising from the neck; in the game each lights the ground round it. Each is lit at night with its glint (a four-point star that comes and goes, so it can be spotted from the treetops) at its glint point; then the glint's frames, at the ground and treetop zooms; then their one sigil (the flask's silhouette: they all do the same in the game), bare and in each level's frame.</p>
         <div class="sheet-wrap"><canvas id="partyRelicSheet" width="420" height="160"></canvas></div>
       </section>
 
@@ -861,9 +861,9 @@ function renderPartyRelics() {
     let x = gap; for (const { R, b } of relics) { const y = h1 - b.h; tgt.a.drawImage(b.A, x, y); tgt.n.drawImage(b.N, x, y); tgt.a.drawImage(big.A, Math.round(x + R.glint.x - big.w / 2), Math.round(y + R.glint.y - big.h / 2)); tgt.n.drawImage(big.N, Math.round(x + R.glint.x - big.w / 2), Math.round(y + R.glint.y - big.h / 2)); x += b.w + gap; }
     x = gap; for (const g of glints) { const y = h1 + gap + (h2 - g.h) / 2; tgt.a.drawImage(g.A, x, y); tgt.n.drawImage(g.N, x, y); x += g.w + gap; }
     const lit = document.createElement("canvas"); lit.width = w; lit.height = h; shade(tgt, lit, night, [], [0, 0, w, h]);
-    const S = 72, rows = Math.ceil(PARTY_RELIC_IDS.length * 2 * (S + gap) / Math.max(w, 1)), sh = rows * (S + gap) + gap;
+    const S = 72, sh = S + 2 * gap;
     c.width = w; c.height = h + sh; const g = c.getContext("2d"); g.fillStyle = "#0e0c14"; g.fillRect(0, 0, c.width, c.height); g.drawImage(lit, 0, 0);
-    let sx = gap, sy = h + gap; for (const id of PARTY_RELIC_IDS) for (const level of [null, 3]) { if (sx + S > w) { sx = gap; sy += S + gap; } drawSigil(g, partyRelicSigilId(id), { x: sx, y: sy, size: S, level }); sx += S + gap; }
+    let sx = gap, sy = h + gap; for (const level of [null, 0, 1, 2, 3]) { drawSigil(g, partyRelicSigilId(), { x: sx, y: sy, size: S, level }); sx += S + gap; }
     c.style.width = w + "px"; c.style.maxWidth = "none";
   }, 700);
 }
