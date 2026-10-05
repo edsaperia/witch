@@ -1264,6 +1264,7 @@ export class View {
     this.spellFx.update(g, time, witchHeight(w, t) + 0.6 + this.rideOff);
     this.actionBar.update(g, time);
     this.buffHud.update(g, time);
+    if (g.leash.events.some(e => e.kind === "mustLand")) this.buffHud.say("Land to place a sigil", "#d8d0e8", time); // (E in the air)
     // Tufts part round her and the three nearest creatures.
     const parts = [{ x: w.x, z: w.z, r: 1.6 * (1 - canopyShown(w)) }, ...g.creatures.map(c => ({ x: c.x, z: c.z, r: Math.max(0.8, (this.leashView.tops.get(c.id) ?? 1.6) * 0.75), d: Math.hypot(c.x - w.x, c.z - w.z) })) /* parting by its drawn size (#47) */.filter(c => c.d < t.groundCover.radius).sort((a, b) => a.d - b.d).slice(0, 3)];
     // No tufts over a placed sigil's rune (Ed, v233): trampled out to groundCover.sigilClear, or the rune's own size.

@@ -34,7 +34,7 @@ export class BuffHud {
     return c;
   }
 
-  private say(text: string, colour: string, time: number): void {
+  say(text: string, colour: string, time: number): void {
     this.line.textContent = text;
     this.line.style.color = colour;
     this.line.style.opacity = "1";

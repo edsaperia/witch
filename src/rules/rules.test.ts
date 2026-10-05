@@ -184,9 +184,11 @@ describe("the map", () => {
       n++;
       if (w > 0.95) dense++; else if (w < 0.05) open++; else between++;
     }
-    expect(dense / n).toBeGreaterThan(0.5);
-    expect(open / n).toBeGreaterThan(0.05);
-    expect(between / n).toBeLessThan(0.3);
+    // (Ed, 2026-10-05, at v473: the woods thin gradually across most of an area towards its runestone,
+    // so plenty lies between: but the woods still the largest part, and real open ground.)
+    expect(dense / n).toBeGreaterThan(0.4);
+    expect(dense / n).toBeGreaterThan(between / n);
+    expect(open / n).toBeGreaterThan(0.03);
   });
 
   it("uses many area types", () => {
@@ -919,9 +921,13 @@ describe("inviting and leashing", () => {
     stepLeash(s, all, { sigil: true }, { x: 520 + gap, z: 500 }, true, 103, 0.1, TUNING);
     expect(s.events.map(e => e.kind)).toEqual(["fizzled"]);
     expect(s.stack).toEqual([a.c.id, c.c.id]);
-    // No placing from the treetops.
+    // No placing from the treetops, and no picking up (Ed, 2026-10-05: "You have to land to place sigils"): the button just says so.
     stepLeash(s, all, { sigil: true }, { x: 700, z: 700 }, false, 104, 0.1, TUNING);
     expect(s.stack).toEqual([a.c.id, c.c.id]);
+    expect(s.events.map(e => e.kind)).toEqual(["mustLand"]);
+    stepLeash(s, all, { sigil: true }, { x: 520, z: 500 }, false, 105, 0.1, TUNING); // over b's placed sigil, in the air
+    expect(s.placed.map(p => p.id)).toEqual([b.c.id]);
+    expect(s.events.map(e => e.kind)).toEqual(["mustLand"]);
   });
 
   it("is elastic: a creature walks to its new leash point, never jumps, then stays within the leash", () => {

@@ -23,7 +23,7 @@ export interface Talk {
   total: number;
 }
 
-export type LeashEventKind = "invited" | "placed" | "picked" | "fizzled" | "cancelled" | "cycled";
+export type LeashEventKind = "invited" | "placed" | "picked" | "fizzled" | "cancelled" | "cycled" | "mustLand";
 export interface LeashEvent { kind: LeashEventKind; id: number; x: number; z: number; at: number }
 
 export interface LeashState {
@@ -155,6 +155,8 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     s.stack.unshift(id);
     s.events.push({ kind: "cycled", id, x: witch.x, z: witch.z, at: time });
   }
+  // Sigils go down and come up only on the ground (Ed, 2026-10-05: "You have to land to place sigils"): in the air the button just says so.
+  if (c.sigil && !onGround && (s.stack.length || s.placed.length)) s.events.push({ kind: "mustLand", id: s.stack[s.stack.length - 1] ?? -1, x: witch.x, z: witch.z, at: time });
   if (c.sigil && onGround) {
     let pick = -1, pd = L.pickRadius;
     s.placed.forEach((p, i) => { const d = Math.hypot(p.x - witch.x, p.z - witch.z); if (d <= pd) { pd = d; pick = i; } });
