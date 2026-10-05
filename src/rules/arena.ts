@@ -54,6 +54,7 @@ export function setupArena(g: Game, spec: string): void {
   // Beside the dancefloor, where the home area has the most room round it (fights now sweep about 50 m).
   const S = g.tuning.fight.scale, d = g.map.dancefloor, home = g.map.centreCell;
   let cx = d.x, cz = d.z + d.radius + 18, room = -1;
+  { const at = g.map.cellSafe(cx, cz); if (at.cell[0] === home[0] && at.cell[1] === home[1]) room = at.safe; } // (kept unless somewhere has more)
   for (let r = d.radius + 12; r <= d.radius + 60; r += 6) for (let k = 0; k < 16; k++) {
     const a = (k / 16) * Math.PI * 2, x = d.x + Math.cos(a) * r, z = d.z + Math.sin(a) * r, at = g.map.cellSafe(x, z);
     if (at.cell[0] === home[0] && at.cell[1] === home[1] && at.safe > room) { room = at.safe; cx = x; cz = z; }

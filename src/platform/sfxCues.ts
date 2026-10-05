@@ -3,7 +3,8 @@
 // the first witch, fading to nothing `sfx.hear` metres off and panned by where it is on screen.
 // The rules know nothing of it.
 //  - 💌s (the invites, #89): its letters' events, read as they come (shot: her syllable; hit: the
-//    chime, the creature's small reply, the affection meter's tick; happy: the flourish); until #89 lands there are none, and the talk's invites still flourish.
+//    chime, the creature's small reply, the affection meter's tick; happy: the flourish); the
+//    talk's invites (with 💌s off) still flourish.
 //  - States: a creature turning enraged (a growl and the nearest's angry speech; a crowd turning at
 //    once, one heavier growl) or happy (a pop and its happy speech): its area's guards, a friendly
 //    area's creatures, a legend at peace.
@@ -11,6 +12,8 @@
 //    a legend's slow long-range attack (its own event when it lands) a deep, drawn-out spoken wind-up.
 //  - Legends: the nearest sleeping one snores and dreams; restless (#87), a nightmare's unease
 //    grows under it.
+//  - Coming features, each behind its own cue (read loosely until they land): the witch knocked
+//    back and stunned (#108), a legend's long charge, a relic bottle found, home's meadow (#107).
 import type { Game } from "../rules/game";
 import type { Creature } from "../rules/creatures";
 import { restlessness } from "../rules/dream";
@@ -50,10 +53,6 @@ export function voiceOf(c: Creature, t: Tuning): CreatureVoice {
 /** How it speaks: happy (on her side, guarding, at peace), enraged, or a wild one's grumble. */
 export const speechMood = (c: Creature): Mood => (c.leashed || c.guard || c.friendly || c.legendState === "happy" ? "happy" : c.enraged || c.siege ? "enraged" : "grumpy");
 
-/** The 💌 events as #89 has them (read loosely, so this builds before it lands). */
-interface LetterEvent { kind: string; x: number; z: number; id?: number; spent?: boolean }
-interface LetterState { events?: LetterEvent[]; meter?: Map<number, number> }
-
 const happyNow = (c: Creature) => !c.leashed && !c.gone && (!!c.guard || !!c.friendly || (!!c.boss && c.legendState === "happy"));
 
 export class SfxCues {
@@ -62,7 +61,12 @@ export class SfxCues {
   private primed = false;
   private flourished = new Map<number, number>();
 
-  constructor(private sfx: Sfx) {}
+  /** Her hits left last frame (a drop is a hit that landed), and whether she was down. */
+  private hp = -1;
+  private down = false;
+
+  /** `duck`: dip the music (by, seconds) under her "ouch!". */
+  constructor(private sfx: Sfx, private duck: (by: number, seconds: number) => void = () => {}) {}
 
   update(g: Game, time: number): void {
     const t = g.tuning.sfx, w = g.witch, hear = Math.max(1, t.hear);
@@ -71,7 +75,7 @@ export class SfxCues {
     const S = this.sfx;
 
     // 💌 (#89): its own events
-    const inv = (g.witches[0] as unknown as { invites?: LetterState }).invites;
+    const inv = g.witches[0]?.invites;
     for (const e of inv?.events ?? []) {
       const k = near(e.x, e.z);
       if (k <= 0) continue;
@@ -129,14 +133,69 @@ export class SfxCues {
       S.speak(voiceOf(c, g.tuning), speechMood(c), pan(e.x), k, k + (c.boss ? 0.5 : 0));
     }
     // a soundsystem lost (Ed, 2026-10-05: the next wave comes sooner): the party grinding to a halt,
-    // then the clock jumping on; heard anywhere (the prototype's soundsystemLost, else combat's
-    // soundDestroyed, home's aside: that's the run over)
-    for (const e of g.combat.events as { kind: string; key?: string }[]) if ((e.kind === "soundsystemLost" || e.kind === "soundDestroyed") && e.key !== "home" && this.lost !== time) { this.lost = time; S.lost(); }
+    // then the clock jumping on; heard anywhere (rules/game.ts's soundsystemLost; home's aside:
+    // that's the run over), more urgent when the wave comes at once (left 0)
+    for (const e of g.waveEvents) if (e.kind === "soundsystemLost" && e.key !== "home" && this.lost !== e.at) { this.lost = e.at; S.lost(e.left <= 0); }
+    // hurt (Ed, 2026-10-05: "ouch!"): combat's witchHit, as it lands (a hit on her mid-blink costs
+    // nothing, so it's her hits dropping that says so); knocked down (knockout's "down"): "whoa-oh"
+    const me = g.witches[0], O = t.ouch;
+    if (me) {
+      const hp = me.health.hp, down = !!me.ko;
+      if (down && !this.down && this.primed) { S.knockdown(); this.duck(O.duck, O.duckTime * 2); }
+      else if (this.primed && hp < this.hp && !down) { S.ouch(1 - Math.max(0, hp - 1) / Math.max(1, g.tuning.witchHealth.hits - 1)); this.duck(O.duck, O.duckTime); }
+      this.hp = hp; this.down = down;
+    }
+    // knocked back and stunned (#108): her knock as it begins (a thump and a whoosh by how far it
+    // throws her), then a soft dizzy twinkle round and round while she's staggered; read loosely
+    // until #108 lands (knock: kx, kz m/s easing off at witch.knock.ease; at; stunUntil)
+    const kn = (me as unknown as { knock?: { kx: number; kz: number; at: number; stunUntil: number } } | undefined)?.knock;
+    if (kn && Number.isFinite(kn.at) && kn.at !== this.knockAt) {
+      this.knockAt = kn.at;
+      const ease = (g.tuning as unknown as { witch?: { knock?: { ease?: number } } }).witch?.knock?.ease ?? 6;
+      if (this.primed) S.knock(Math.hypot(kn.kx, kn.kz) / Math.max(0.1, ease));
+    }
+    if (kn && time < kn.stunUntil && time >= this.nextTwinkle) { this.nextTwinkle = time + t.knock.twinkleEvery; S.twinkle(this.twinkles++); }
+    // a legend's long charge (the bug hunter's charge: c.run's phase windup, run, brake, home):
+    // the nearest charger within range: its windup's bellow, hoofbeats by its speed, the lane's
+    // rumble, the braking arc's skid, a lighter trot home
+    let ch: (Creature & { run?: { phase: string; speed: number } }) | null = null, cd = Infinity;
+    for (const c of g.creatures) { const run = (c as Creature & { run?: { phase: string } }).run; if (c.boss && run) { const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < cd) { cd = d; ch = c; } } }
+    const C = t.charge, ck = ch ? Math.max(0, 1 - cd / Math.max(1, C.range)) : 0;
+    if (ch?.run && ck > 0) {
+      const { phase, speed } = ch.run, p = pan(ch.x);
+      if (phase === "windup" && this.chargePhase.get(ch.id) !== "windup" && this.primed) S.bellow(p, Math.max(0.5, ck));
+      this.chargePhase.set(ch.id, phase);
+      const running = phase === "run" || phase === "brake", trotting = phase === "home" && ch.moving;
+      if ((running && speed > 0.5) || trotting) {
+        const every = running ? Math.max(0.16, Math.min(0.5, 2.4 / Math.max(1, speed))) : 0.34;
+        if (time >= this.nextHoof) { this.nextHoof = time + every; S.hoof(p, ck, !running); }
+      }
+      S.charge(phase === "run" ? Math.min(1, speed / 12) * ck : 0, phase === "brake" ? Math.min(1, speed / 10) * ck : 0, p);
+    } else S.charge(0, 0);
+    // a relic bottle found: the first time she spots one lying (on the ground within relic.spot, from
+    // the treetops only near overhead, as its glint shows through a gap) or reaches it; read loosely
+    // until the bug hunter's relics land (g.relics: id, x, z, state)
+    const R = t.relic, treetop = w.mode !== "ground" || w.lift > 0.5;
+    for (const r of (g as unknown as { relics?: { id: number; x: number; z: number; state: string }[] }).relics ?? []) {
+      if (r.state !== "lying" || this.relicsFound.has(r.id)) continue;
+      const d = Math.hypot(r.x - w.x, r.z - w.z);
+      if (d <= R.reach || d <= (treetop ? R.spotTreetop : R.spot)) { this.relicsFound.add(r.id); if (this.primed) S.relic(pan(r.x)); }
+    }
+    // home's meadow: birdsong, bees and a breeze in home's circle round the dancefloor, fading out at
+    // its edge (the map's homeRadius with #107, else meadow.radius)
+    const M = t.meadow, home = g.map.dancefloor, hr = (g.map as unknown as { homeRadius?: number }).homeRadius ?? M.radius;
+    S.meadow(Math.max(0, Math.min(1, (hr - Math.hypot(w.x - home.x, w.z - home.z)) / Math.max(1, M.fade))));
     this.primed = true;
   }
 
   private spoke = new Map<number, number>();
   private lost = -1;
+  private knockAt = -Infinity;
+  private nextTwinkle = 0;
+  private twinkles = 0;
+  private chargePhase = new Map<number, string>();
+  private nextHoof = 0;
+  private relicsFound = new Set<number>();
   /** Whether creature `id` may speak again (at most once every `gap` seconds). */
   private ready(id: number, time: number, gap: number): boolean {
     if ((this.spoke.get(id) ?? -Infinity) > time - gap) return false;

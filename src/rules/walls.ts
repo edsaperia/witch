@@ -21,7 +21,7 @@ export interface WallFeatures { walls: Plant[]; beds: Plant[] }
 export function wallFeatures(map: ForestMap, cx: number, cy: number): WallFeatures {
   const type = map.typeOf(cx, cy), def = AREA_TYPES[type], W = map.tuning.walls, out: WallFeatures = { walls: [], beds: [] };
   const kind = WALL_KIND.get(def.id);
-  if (!kind?.wall) return out;
+  if (!kind?.wall || (cx === map.centreCell[0] && cy === map.centreCell[1])) return out; // (home's a meadow: no walls)
   const shape = SHAPE[kind.wall] ?? "clump", r = rng(map.seed * 97 + cx * 7919 + cy * 104729 + 17), site = map.siteOf(cx, cy), A = map.areaSize;
   let n = 0;
   const own = (x: number, z: number) => { const c = map.areaAt(x, z).cell; return c[0] === cx && c[1] === cy; };
