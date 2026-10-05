@@ -7,7 +7,7 @@
 // whose wave comes first wakes angry: its creatures go for the nearest party animal or soundsystem,
 // and its legend guards it against her. No drawing here.
 import { AREA_TYPES, type ForestMap } from "./map";
-import { anchorOf, wanderRange, type Creature, type Level } from "./creatures";
+import type { Creature, Level } from "./creatures";
 import { cellKey } from "./party";
 import { rng } from "./random";
 
@@ -33,23 +33,19 @@ export const legendOf = (creatures: Creature[], ids: number[], key: string): Cre
   return null;
 };
 
-/** A sigil was put down at (x, z): if its creature is what the legend of that (still wild) area
- *  dreams of, the quest is done. Returns the legend made happy, or null. `release` takes the
- *  creature off every witch's leash and stack. */
-export function questPlaced(map: ForestMap, creatures: Creature[], legendIds: number[], friendly: Set<string>, partified: (key: string) => boolean, id: number, x: number, z: number, time: number, release: (id: number) => void): Creature | null {
+/** A sigil was put down at (x, z): if its creature is what the legend of that area dreams of, and
+ *  its quest is still open (its soundsystem not yet on: Ed, 2026-10-05), the quest is done: she
+ *  gets the legend's buff, for good, and it sleeps on (#87). The creature stays hers, parked there.
+ *  `done` (the set of areas whose quest is done) moves the ley lines on. Returns the legend, or null. */
+export function questPlaced(map: ForestMap, creatures: Creature[], legendIds: number[], done: Set<string>, partified: (key: string) => boolean, id: number, x: number, z: number, time: number): Creature | null {
   const c = creatures[id], cell = map.cellSafe(x, z).cell as [number, number], key = cellKey(cell);
-  if (!c || partified(key) || friendly.has(key)) return null;
+  if (!c || partified(key)) return null;
   const L = legendOf(creatures, legendIds, key), q = L?.quest;
-  if (!L || !q || q.done !== undefined || L.legendState !== "asleep") return null;
+  if (!L || !q || q.done !== undefined || (L.legendState !== "asleep" && L.legendState !== "restless")) return null;
   if (c.species !== q.species || c.level !== q.level) return null;
   q.done = time;
-  Object.assign(L, { legendState: "happy", stateAt: time });
-  friendly.add(key);
-  // The creature placed joins the area: off her leash, one of its creatures now.
-  release(id);
-  const site = map.siteOf(cell[0], cell[1]), range = wanderRange(map), [anchorX, anchorZ] = anchorOf(map, cell, site.x, site.z, range);
-  Object.assign(c, { leashed: false, cell, homeX: site.x, homeZ: site.z, range, anchorX, anchorZ, tx: c.x, tz: c.z, rest: 2, fight: undefined, siege: undefined, enraged: false, safeR: undefined, friendly: true });
-  for (const o of creatures) if (!o.leashed && !o.gone && !o.boss && o.cell[0] === cell[0] && o.cell[1] === cell[1]) o.friendly = true;
+  L.buffed = true; L.questOpen = false;
+  done.add(key);
   return L;
 }
 

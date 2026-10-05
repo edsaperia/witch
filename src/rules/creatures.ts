@@ -90,6 +90,11 @@ export interface Creature {
   dazed?: boolean;
   /** Happy, in an area with a soundsystem: it keeps round it, dancing (rules/states.ts danceAt). */
   dancing?: boolean;
+  /** A legend (rules/legends.ts): its restlessness 0..1 (no kin in its area: a nightmare), whether its
+   *  dream quest can still be done (its dream shows), and whether it gives its buff (for good). */
+  restlessness?: number;
+  questOpen?: boolean;
+  buffed?: boolean;
   dazedUntil?: number;
   /** Its 💌 invite meter (0..1 at its last hit) and when that was (rules/affection.ts). */
   affection?: number;
@@ -136,7 +141,7 @@ export interface Creature {
   rand: () => number;
 }
 
-export type LegendState = "asleep" | "waking" | "awake" | "slept" | "happy";
+export type LegendState = "asleep" | "restless" | "angry" | "happy" | /** (older states, read as asleep) */ "waking" | "awake" | "slept";
 
 export interface AreaPopulation { babies: number; young: number; adults: number }
 

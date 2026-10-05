@@ -282,9 +282,10 @@ export class LeashView {
       if (!c.boss || c.leashed || Math.abs(c.x - w.x) > near || Math.abs(c.z - w.z) > near) continue;
       // Asleep (or asleep for good), it's scenery: nothing marks it (Ed, 2026-10-04). Waking, a burst
       // of soil as it heaves up; happy, a few hearts' worth of rosy motes rising.
-      if (c.legendState === "asleep" || c.legendState === "slept") {
+      if (c.legendState === "asleep" || c.legendState === "restless" || c.legendState === "slept") {
         this.woke.delete(c.id);
-        if (c.legendState === "asleep" && c.quest && c.quest.done === undefined) this.dreams.push(c);
+        // Its dream shows while its quest can still be done (#87: rules/legends.ts sets c.questOpen); restless, it's a nightmare (the music builder's).
+        if (c.questOpen ?? (c.legendState === "asleep" && c.quest && c.quest.done === undefined)) this.dreams.push(c);
         continue;
       }
       if (c.legendState === "waking" && !this.woke.has(c.id)) { this.woke.add(c.id); for (let i = 0; i < 3; i++) this.fx.push({ kind: "puff", x: c.x + (i - 1) * 1.2, y: 0.4, z: c.z, at: time, life: 1.4, r: 0.5, g: 0.4, b: 0.28, seed: c.id * 13 + i }); }
@@ -759,6 +760,16 @@ export class LeashView {
       const k = 1 - (time - f.at) / 0.7;
       this.flat.add(f.x, 0, f.z, 3 * (1 + (1 - k) * 0.6), dot, 1, 0.15, 0.1, k);
     }
+
+    // Relics (#87; placeholder till the art builder's party relics are drawn): a gold mound with a
+    // glint where one lies, and a gold glint over her hat for each she carries.
+    for (const r of g.relics) {
+      if (r.state !== "lying" || Math.abs(r.x - w.x) > 400 || Math.abs(r.z - w.z) > 400) continue;
+      for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; this.standing.add(r.x + Math.cos(a) * 2.5, 0.4 + (i % 3) * 0.5, r.z + Math.sin(a) * 1.8, 1.2, dot, 1, 0.78, 0.3, 0.8); }
+      const tw = Math.max(0, Math.sin(time * 2.5 + r.id * 1.7)) ** 6;
+      this.over.add(r.x, 3.5, r.z, 2 + tw * 4, dot, 1, 0.95, 0.7, 0.4 + 0.6 * tw);
+    }
+    s.relics.forEach((id, i) => { const tw = 0.6 + 0.4 * Math.sin(time * 4 + id); this.over.add(w.x + (i - (s.relics.length - 1) / 2) * 0.6, hatTop + 2.2, w.z, 0.5, dot, 1, 0.85, 0.4, tw); });
 
     // The bond.
     const leashed = [...s.stack, ...s.placed.map(p => p.id)];
