@@ -1,7 +1,8 @@
 // The ley lines (Ed, 2026-10-04; 2026-10-05: "they essentially make a 2d game into a 1d game; you
 // just follow them from objective to objective"): a glowing line from the last runestone reached
-// to the next objective (rules/leylines.ts), or a short chain on to the ones after (leyLines.links),
-// each link fainter than the one before. Wispy and magical, never ruler-straight: each link wanders
+// on to the next objectives (rules/leylines.ts; leyLines.ahead, 3), each section fainter than the
+// one before, and back through the stones reached before it (leyLines.behind, 3), dimmer again
+// (Ed, 2026-10-05: "six sections long, showing the next three and the past three runestones"). Wispy and magical, never ruler-straight: each link wanders
 // along the low ground between its stones (the hills' valleys), and a shimmer flows along it toward
 // the next stone, so the way reads at a glance. It stays on the ground in both modes (Ed: grounded):
 // from the treetops it shows between the crowns, and a wide faint glow shows through them (never
@@ -18,9 +19,12 @@ import type { ForestMap } from "../rules/map";
 
 export interface LeyTuning {
   on: boolean;
-  /** Links in the chain (stones − 1). */
-  links: number;
-  /** Each link's brightness as a share of the one before. */
+  /** Sections on from the last stone reached, and back through the ones reached before it. */
+  ahead: number;
+  behind: number;
+  /** The section just left behind's brightness as a share of the next one's (each before it fade times that). */
+  behindBright: number;
+  /** Each section's brightness as a share of the one before (nearer the last stone reached). */
   fade: number;
   /** The first link's brightness: a share of the first look (Ed: 0.3 of it). */
   brightness: number;
@@ -45,7 +49,7 @@ attribute vec2 aDir;     // the route's direction on the ground here
 attribute float aSide;   // -1, +1: the ribbon's two edges
 attribute float aS;      // metres along its link from the earlier stone
 attribute float aT;      // 0 to 1 along its link
-attribute float aLink;   // which link (0 the first: the brightest)
+attribute float aLink;   // which link (0 the first, the oldest)
 attribute vec3 aCol;
 uniform vec2 uLeyWidth, uLeyHeight;
 uniform float uLift, uTime, uGlowPass;
@@ -65,7 +69,7 @@ void main() {
 }`;
 
 const FRAG = /* glsl */ `
-uniform float uTime, uGlowPass, uBright, uFade, uShift, uLift;
+uniform float uTime, uGlowPass, uBright, uFade, uBehind, uShift, uLift, uCurrent, uOnlyFirst;
 uniform vec2 uFlow;
 uniform vec4 uReveal; // x: the first link gone before this far along (draining into its stone); y: link z shown only this far (drawing out); w: the whole line's strength
 varying float vSide, vS, vT, vLink, vSeen;
@@ -74,6 +78,7 @@ float lh(float p) { return fract(sin(p * 127.1) * 43758.5453); }
 float ln(float p) { float i = floor(p), f = fract(p); return mix(lh(i), lh(i + 1.0), f * f * (3.0 - 2.0 * f)); }
 void main() {
   if (vSeen < 0.5) discard;
+  if (uOnlyFirst > 0.5 && vLink > 0.5) discard;
   if (vLink < 0.5 && vT < uReveal.x) discard;
   bool drawing = abs(vLink - uReveal.z) < 0.5 && uReveal.y < 1.0;
   if (drawing && vT > uReveal.y) discard;
@@ -84,7 +89,11 @@ void main() {
   float wisp = 0.35 + 0.65 * ln(vS * 0.09 - uTime * 0.8 + vLink * 13.0) * ln(vS * 0.023 + uTime * 0.31 + vLink * 5.0 + vSide * 0.7);
   // Into each stone softly; each link fainter than the one before (easing to its new place after a wave).
   float ends = smoothstep(0.0, 0.05, vT) * smoothstep(1.0, 0.95, vT);
-  float link = uBright * pow(uFade, max(0.0, vLink + uShift)) * mix(1.0, 0.8, uLift);
+  // Its rank: 0 the section on from the last stone reached, 1 the one after, -1 the one just left
+  // behind (easing to its new rank as she moves on).
+  float r = vLink - uCurrent + uShift;
+  float rank = r >= 0.0 ? pow(uFade, r) : mix(1.0, uBehind, min(1.0, -r)) * pow(uFade, max(0.0, -r - 1.0));
+  float link = uBright * rank * mix(1.0, 0.8, uLift);
   // From the treetops the line is on the ground under the crowns: a wide faint glow shows through them.
   float a = uGlowPass > 0.5 ? 0.4 * halo * wisp * uLift : (core * (0.6 + 1.6 * pulse) + halo * (0.18 + 0.5 * pulse)) * wisp;
   // Drawing out toward the next stone: a bright tip leads it.
@@ -92,7 +101,7 @@ void main() {
   gl_FragColor = vec4(vCol * a * link * ends * uReveal.w, 1.0);
 }`;
 
-interface LeySet { geo: THREE.BufferGeometry; meshes: THREE.Mesh[]; reveal: THREE.Vector4 }
+interface LeySet { geo: THREE.BufferGeometry; meshes: THREE.Mesh[]; reveal: THREE.Vector4; current: { value: number }; onlyFirst: { value: number } }
 
 export class LeyLines {
   readonly meshes: THREE.Mesh[];
@@ -102,16 +111,19 @@ export class LeyLines {
   private old: LeySet;
   private key = "";
   private chain: LeyStone[] = [];
+  private current = 0;
   /** The routes being worked out for a new chain (a link a frame), then swapped in whole. */
-  private pending: { key: string; chain: LeyStone[]; colours: THREE.Vector3[]; routes: [number, number][][] } | null = null;
+  private pending: { key: string; chain: LeyStone[]; current: number; colours: THREE.Vector3[]; routes: [number, number][][] } | null = null;
   private shiftFrom = -Infinity;
   private advancedAt = -Infinity;
+  /** On the last move on, whether the old line's oldest section dropped off the back (and so drains away). */
+  private dropped = false;
 
   constructor(private T: LeyTuning, private ground: (x: number, z: number) => number, private map?: ForestMap) {
     this.u = {
       ...HEIGHT_UNIFORMS, uTime: LIGHT_UNIFORMS.uTime,
       uLeyWidth: { value: new THREE.Vector2(T.width[0], T.width[1]) }, uLeyHeight: { value: new THREE.Vector2(T.height[0], T.height[1]) },
-      uLift: { value: 0 }, uBright: { value: T.brightness * BRIGHT }, uFade: { value: T.fade },
+      uLift: { value: 0 }, uBright: { value: T.brightness * BRIGHT }, uFade: { value: T.fade }, uBehind: { value: T.behindBright },
       uShift: { value: 0 }, uFlow: { value: new THREE.Vector2(T.flow[0], T.flow[1]) },
     };
     this.cur = this.makeSet(); this.old = this.makeSet();
@@ -119,45 +131,51 @@ export class LeyLines {
   }
 
   private makeSet(): LeySet {
-    const geo = new THREE.BufferGeometry(), reveal = new THREE.Vector4(0, 1, -1, 1);
+    const geo = new THREE.BufferGeometry(), reveal = new THREE.Vector4(0, 1, -1, 1), current = { value: 0 }, onlyFirst = { value: 0 };
     const make = (glow: boolean, order: number) => {
       const m = new THREE.Mesh(geo, new THREE.ShaderMaterial({
-        vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...this.u, uGlowPass: { value: glow ? 1 : 0 }, uReveal: { value: reveal } },
+        vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...this.u, uGlowPass: { value: glow ? 1 : 0 }, uReveal: { value: reveal }, uCurrent: current, uOnlyFirst: onlyFirst },
         transparent: true, depthWrite: false, depthTest: !glow, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
       }));
       m.frustumCulled = false; m.renderOrder = order; m.visible = false;
       return m;
     };
-    return { geo, meshes: [make(false, 13), make(true, 14)], reveal };
+    return { geo, meshes: [make(false, 13), make(true, 14)], reveal, current, onlyFirst };
   }
 
-  /** chain: the stones, the last reached first; key: changes when it does; colourOf: a stone's glow
-   *  colour; lift: 0 on the ground to 1 over the treetops. */
-  update(key: string, chain: () => LeyStone[], colourOf: (s: LeyStone) => THREE.Vector3, time: number, lift: number): void {
+  /** chain: the stones in wave order and which is the last reached (rules/leylines.ts leyChain);
+   *  key: changes when it does; colourOf: a stone's glow colour; lift: 0 on the ground to 1 over the treetops. */
+  update(key: string, chain: () => { stones: LeyStone[]; current: number }, colourOf: (s: LeyStone) => THREE.Vector3, time: number, lift: number): void {
     if (this.T.on && key !== this.key && this.pending?.key !== key) {
       const c = chain();
-      this.pending = { key, chain: c, colours: c.map(colourOf), routes: [] };
+      this.pending = { key, chain: c.stones, current: c.current, colours: c.stones.map(colourOf), routes: [] };
     }
     // Route one link a frame; when all are, swap the new line in.
     if (this.pending) {
       const P = this.pending;
       if (P.routes.length < P.chain.length - 1) { const k = P.routes.length; P.routes.push(this.route(P.chain[k], P.chain[k + 1], k)); }
       if (P.routes.length >= P.chain.length - 1) {
-        // Moved on (its first stone the old line's second): the old line drains into that stone
-        // and the new one draws out from it; anything else (a new plan) just swaps.
-        const advanced = this.chain.length > 1 && P.chain.length > 1 && P.chain[0].cell.join() === this.chain[1].cell.join();
-        if (advanced) { const t = this.old; this.old = this.cur; this.cur = t; this.advancedAt = this.shiftFrom = time; }
-        else this.advancedAt = -Infinity;
+        // Moved on (the last stone reached now the one the old line led to next): the new line's
+        // newest section draws out toward its far stone, and the old line's oldest section, if it
+        // has dropped off the back, drains into the stone after it; anything else (a new plan) just swaps.
+        const key0 = (s: LeyStone) => s.cell.join(), was = this.chain[this.current + 1];
+        const advanced = !!was && P.chain.length > 1 && key0(P.chain[P.current]) === key0(was);
+        if (advanced) {
+          const t = this.old; this.old = this.cur; this.cur = t; this.advancedAt = this.shiftFrom = time;
+          this.old.onlyFirst.value = 1;
+          this.dropped = this.chain.length > 1 && !P.chain.some(s => key0(s) === key0(this.chain[0]));
+        } else this.advancedAt = -Infinity;
         this.build(this.cur.geo, P.colours, P.routes);
-        this.key = P.key; this.chain = P.chain; this.pending = null;
+        this.cur.current.value = P.current; this.cur.onlyFirst.value = 0;
+        this.key = P.key; this.chain = P.chain; this.current = P.current; this.pending = null;
       }
     }
     // The move on: the old line drains into its stone over a second; the new one draws out from
     // it toward the next stone, starting a moment later.
     const k = time - this.advancedAt, ease = (x: number) => { const c = Math.min(1, Math.max(0, x)); return c * c * (3 - 2 * c); };
-    const draining = k < 1.6, links = Math.max(0, this.chain.length - 2);
+    const draining = k < 1.6 && this.dropped, links = Math.max(0, this.chain.length - 2), ahead = this.chain.length - 1 > this.current;
     this.old.reveal.set(ease(k / 1.1), 1, -1, 1 - ease((k - 0.9) / 0.7));
-    this.cur.reveal.set(0, k < 0 || !Number.isFinite(k) ? 1 : ease((k - 0.35) / 1.3), links, 1);
+    this.cur.reveal.set(0, k < 0 || !Number.isFinite(k) || !ahead ? 1 : ease((k - 0.35) / 1.3), links, 1);
     const on = this.T.on && this.chain.length > 1;
     for (const m of this.cur.meshes) m.visible = on;
     for (const m of this.old.meshes) m.visible = on && draining;

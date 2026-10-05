@@ -9,10 +9,12 @@ import { departureClear, departureRoute, leyChain, leyKey, onAreaDone } from "./
 
 const map = generateMap(123, TUNING);
 const keys = (c: { cell: readonly [number, number] }[]) => c.map(s => cellKey(s.cell));
+/** The last stone reached and `count - 1` after it (no stones behind). */
+const ahead = (p: Parameters<typeof leyChain>[0], m: typeof map, count: number) => leyChain(p, m, count - 1).stones;
 
 describe("ley lines", () => {
   it("start at home, pointing to the next wave's stone, then the ones after in the order they will wake", () => {
-    const p = newParty(map), one = leyChain(p, map, 2), chain = leyChain(p, map, 7);
+    const p = newParty(map), one = ahead(p, map, 2), chain = ahead(p, map, 7);
     expect(keys(one)).toEqual([cellKey(map.centreCell), cellKey(p.next[0])]);
     expect(one[0]).toMatchObject({ x: map.treehouseFront.x, z: map.treehouseFront.z, wave: 0, depart: true }); // (home's: the treehouse's front, Ed 2026-10-05)
     expect(keys(chain).slice(0, 3)).toEqual([map.centreCell, ...p.next, ...p.afterNext].map(cellKey).slice(0, 3));
@@ -22,32 +24,70 @@ describe("ley lines", () => {
     const p = newParty(map);
     let time = 100;
     for (let w = 0; w < 5; w++) {
-      const before = leyChain(p, map, 4), key = leyKey(p);
+      const before = ahead(p, map, 4), key = leyKey(p);
       const woke = spreadWave(p, map, (time += 100));
       expect(leyKey(p)).not.toBe(key);
       expect(cellKey(woke[0].cell)).toBe(keys(before)[1]); // the line pointed to the stone the wave woke
-      expect(keys(leyChain(p, map, 3))).toEqual(keys(before).slice(1, 4)); // and now runs on from it
+      expect(keys(ahead(p, map, 3))).toEqual(keys(before).slice(1, 4)); // and now runs on from it
     }
   });
   it("move on when the next area's quest is done, before its wave, and stay put when that wave comes", () => {
     const p = newParty(map);
     spreadWave(p, map, 100);
-    const before = leyChain(p, map, 3), next = before[1].cell, key = leyKey(p);
+    const before = ahead(p, map, 3), next = before[1].cell, key = leyKey(p);
     onAreaDone(p, next, 120);
     expect(leyKey(p)).not.toBe(key);
-    const after = leyChain(p, map, 2);
+    const after = ahead(p, map, 2);
     expect(keys(after)).toEqual(keys(before).slice(1, 3)); // from the quest's stone to the one after
     // Its wave arrives: the line already moved on, so it keeps pointing to the same next stone.
     const woke = spreadWave(p, map, 200);
     expect(cellKey(woke[0].cell)).toBe(cellKey(next));
-    expect(keys(leyChain(p, map, 2))).toEqual(keys(after));
+    expect(keys(ahead(p, map, 2))).toEqual(keys(after));
+  });
+});
+
+describe("six sections: the next three runestones and the past three (Ed, 2026-10-05)", () => {
+  const L = TUNING.leyLines;
+  it("are knobs, 3 and 3", () => {
+    expect([L.ahead, L.behind]).toEqual([3, 3]);
+  });
+  it("at the start runs from home on to the next three, with nothing behind", () => {
+    const p = newParty(map), c = leyChain(p, map, 3, 3);
+    expect(c.current).toBe(0);
+    expect(c.stones.length).toBe(4);
+    expect(c.stones[0].depart).toBe(true); // (still leaving the treehouse's front)
+    expect(keys(c.stones)).toEqual(keys(ahead(p, map, 4)));
+  });
+  it("then grows behind as the waves come, to three sections back and three on: the stones in the order they were reached and will be", () => {
+    const p = newParty(map), woken: string[] = [cellKey(map.centreCell)];
+    let time = 100;
+    for (let w = 0; w < 6; w++) {
+      const before = leyChain(p, map, 3, 3);
+      for (const a of spreadWave(p, map, (time += 100))) woken.push(cellKey(a.cell));
+      const c = leyChain(p, map, 3, 3), n = Math.min(3, woken.length - 1);
+      expect(c.current).toBe(n);
+      expect(c.stones.length).toBe(n + 4); // (six sections once three stones are behind)
+      expect(keys(c.stones.slice(0, n + 1))).toEqual(woken.slice(-n - 1)); // the past three and the last reached, oldest first
+      expect(keys(c.stones.slice(n, n + 3))).toEqual(keys(before.stones.slice(before.current + 1, before.current + 4))); // moved on along the line it showed
+      expect(new Set(keys(c.stones)).size).toBe(c.stones.length);
+    }
+    expect(leyChain(p, map, 3, 3).stones[0].depart).toBeFalsy(); // (home has dropped off the back)
+  });
+  it("counts a stone reached by its quest behind it too", () => {
+    const p = newParty(map);
+    spreadWave(p, map, 100);
+    const next = leyChain(p, map, 3, 3).stones[2].cell;
+    onAreaDone(p, next, 120);
+    const c = leyChain(p, map, 3, 3);
+    expect(cellKey(c.stones[c.current].cell)).toBe(cellKey(next));
+    expect(c.current).toBe(2); // home, the first wave's, then the quest's
   });
 });
 
 describe("the first ley line leaves the treehouse's front, due south (Ed, 2026-10-05)", () => {
   const D = TUNING.leyLines.depart;
   it("starts at the treehouse's front at the start of a run", () => {
-    const m = generateMap(123, TUNING), p = newParty(m), first = leyChain(p, m, 2)[0];
+    const m = generateMap(123, TUNING), p = newParty(m), first = ahead(p, m, 2)[0];
     expect(first.depart).toBe(true);
     expect([first.x, first.z]).toEqual([m.treehouseFront.x, m.treehouseFront.z]);
     expect(m.treehouseFront.z).toBeGreaterThan(m.treehouse.z); // (south: towards the camera)
@@ -64,7 +104,7 @@ describe("the first ley line leaves the treehouse's front, due south (Ed, 2026-1
   it("runs due south straight across the dancefloor, then curves smoothly to the first objective outside the ring, wherever that lies", () => {
     let north = 0;
     for (const seed of [123, 293912, 7, 1000, 42, 31337, 5, 99]) {
-      const m = generateMap(seed, TUNING), p = newParty(m), [a, b] = leyChain(p, m, 2), d = m.dancefloor;
+      const m = generateMap(seed, TUNING), p = newParty(m), [a, b] = ahead(p, m, 2), d = m.dancefloor;
       if (b.z < a.z) north++;
       const pts = departureRoute(m, b, D.past, D.avoid, 4), R = departureClear(m, D.avoid);
       expect(pts[0]).toEqual([a.x, a.z]);
