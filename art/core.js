@@ -1,6 +1,7 @@
 // Witch art core: random numbers, noise, colour, the Sprite (a material and a normal per
 // pixel), the shape toolkit the animals and trees are drawn with, and bake (sprite ->
 // albedo + normal canvases). No page or DOM dependencies beyond making canvases.
+import { stylisePixels } from "./stylise.js";
 
 export function defaultCanvas(w, h) {
   if (typeof document !== "undefined") { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
@@ -306,7 +307,8 @@ export class Sprite {
 // Albedo alpha 254 marks a glowing pixel for the lighting pass. N is the normal map,
 // NF the same for the sprite mirrored (facing left).
 export function bake(sp, colours, st, outlineMode = st.outline, makeCanvas = defaultCanvas) {
-  const { w, h } = sp, mk = () => makeCanvas(w, h);
+  const { w, h } = sp, mk = () => makeCanvas(w, h), artStyle = st?.artStyle; // artStyle: a pixel-art style (art/stylise.js: the game's ?style=), drawing its own outline
+  if (artStyle === "bold" || artStyle === "ref") outlineMode = "none";
   const A = mk(), N = mk(), NF = mk(), a = A.getContext("2d").createImageData(w, h), n = N.getContext("2d").createImageData(w, h), nf = NF.getContext("2d").createImageData(w, h);
   const outline = outlineMode === "none" ? null : outlineMode === "dark" ? [22, 18, 30] : "tint";
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
@@ -327,6 +329,7 @@ export function bake(sp, colours, st, outlineMode = st.outline, makeCanvas = def
     n.data.set([nx * 127 + 128, ny * 127 + 128, nz * 255, 255], o);
     nf.data.set([-nx * 127 + 128, ny * 127 + 128, nz * 255, 255], o);
   }
+  if (artStyle === "bold" || artStyle === "ref") stylisePixels(a.data, n.data, nf.data, w, h, artStyle);
   A.getContext("2d").putImageData(a, 0, 0); N.getContext("2d").putImageData(n, 0, 0); NF.getContext("2d").putImageData(nf, 0, 0);
   return { A, N, NF, w, h };
 }

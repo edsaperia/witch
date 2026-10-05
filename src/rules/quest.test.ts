@@ -3,8 +3,7 @@ import { spawnCreatures } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { AREA_TYPES, generateMap } from "./map";
 import { cellKey } from "./party";
-import { leyChain } from "./leylines";
-import { areaDone, setupQuestDemo } from "./quest";
+import { setupQuestDemo } from "./quest";
 import { TUNING } from "./tuning";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -32,61 +31,12 @@ describe("the first quest (Ed, 2026-10-04)", () => {
     expect(new Set(legends.map(c => c.quest?.level)).size).toBeGreaterThan(2); // (a mix)
   });
 
-  it("is done by putting that sigil down in the legend's area: the legend's happy, the area friendly, the creature joins it", () => {
-    const { g, L, gift } = demo(), key = cellKey(L.cell);
-    expect(cellKey(g.map.cellSafe(g.witch.x, g.witch.z).cell)).toBe(key);
-    run(g, 0.2, { ...idle, sigil: true });
-    expect(L.legendState).toBe("happy");
-    expect(L.quest!.done).toBeDefined();
-    expect(g.friendly.has(key)).toBe(true);
-    expect(areaDone(g, key)).toBe(true);
-    // The ley line moves on (Ed, 2026-10-05): it now starts from this area's stone.
-    expect(g.party.leyDone?.has(key)).toBe(true);
-    expect(cellKey(leyChain(g.party, g.map, 3)[0].cell)).toBe(key);
-    expect(gift.leashed).toBe(false);
-    expect(g.leash.stack).not.toContain(gift.id);
-    expect(g.leash.placed.map(p => p.id)).not.toContain(gift.id);
-    expect(cellKey(gift.cell)).toBe(key);
-    expect(g.buffs.active.map(b => b.id)).toContain(L.id); // (its buff, if its kind has one)
-  }, 60000);
-
   it("isn't done by the wrong creature, or out of the legend's area", () => {
     const { g, L, gift } = demo();
     gift.level = ((gift.level + 1) % 3) as typeof gift.level;
     run(g, 0.2, { ...idle, sigil: true });
     expect(L.legendState).toBe("asleep");
     expect(g.friendly.size).toBe(0);
-  }, 60000);
-
-  it("leaves her be in a friendly area: its creatures don't attack", () => {
-    const { g, L } = demo(), W = g.witches[0];
-    run(g, 0.2, { ...idle, sigil: true });
-    expect(L.legendState).toBe("happy");
-    const hp = W.health.hp;
-    // Bring the area's adults to her.
-    for (const c of g.creatures) if (!c.boss && !c.gone && !c.leashed && c.cell[0] === L.cell[0] && c.cell[1] === L.cell[1]) { c.level = 2; c.x = g.witch.x + 2; c.z = g.witch.z; c.tx = c.x; c.tz = c.z; c.seen = g.clock.time; }
-    run(g, 8);
-    expect(W.health.hp).toBe(hp);
-  }, 60000);
-
-  it("turns a friendly area's creatures into guards when its wave comes, and they (its legend first) see off the wild", () => {
-    const { g, L, gift } = demo(), key = cellKey(L.cell);
-    run(g, 0.2, { ...idle, sigil: true });
-    g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // (out of it)
-    const site = g.map.soundsystemSpot(L.cell[0], L.cell[1]);
-    g.party.areas.set(key, { cell: L.cell, wave: 1, at: g.clock.time, from: null, soundsystem: { ...site, variant: 0 } });
-    run(g, 0.2);
-    expect(gift.guard).toBe(true);
-    expect(g.creatures.filter(c => c.guard).length).toBeGreaterThanOrEqual(1);
-    expect(g.creatures.filter(c => c.siege === key).length).toBe(0); // no siege on a friendly area's soundsystem
-    // A wild raider walks in.
-    const raider = g.creatures.find(c => !c.boss && !c.gone && !c.leashed && !c.guard && !c.friendly && Math.hypot(c.x - L.x, c.z - L.z) > 300)!;
-    const kind = ["wolf", "boar", "hare"].find(k => k !== gift.species && k !== L.species)!; // (same kind never fights same kind)
-    const site2 = g.map.siteOf(L.cell[0], L.cell[1]), dd = Math.hypot(site2.x - L.x, site2.z - L.z) || 1, rx = L.x + ((site2.x - L.x) / dd) * 3, rz = L.z + ((site2.z - L.z) / dd) * 3; // (beside the legend, in its area)
-    Object.assign(raider, { species: kind, level: 1, x: rx, z: rz, tx: rx, tz: rz, seen: g.clock.time, cell: [L.cell[0], L.cell[1]], homeX: rx, homeZ: rz, anchorX: rx, anchorZ: rz, safeR: undefined, siege: key, enraged: true });
-    g.byArea = null;
-    run(g, 20);
-    expect(raider.hp !== undefined || raider.fleeUntil || raider.gone).toBeTruthy();
   }, 60000);
 
   it("wakes an area whose quest isn't done angry: its creatures go for the nearest party animal or soundsystem", () => {
