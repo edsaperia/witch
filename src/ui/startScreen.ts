@@ -40,7 +40,7 @@ export function setupStartScreen(o: StartScreenOptions): void {
   if (!card) return;
   el.classList.add("full");
   const pick = (sel: string) => card.querySelector<HTMLElement>(sel);
-  const title = pick("h1"), tagline = title?.nextElementSibling as HTMLElement | null, go = pick(".go"), progress = pick("#progress"), waves = pick("#waves"), news = pick("#news"), keys = pick(".keys");
+  const title = pick("h1"), tagline = title?.nextElementSibling as HTMLElement | null, go = pick(".go"), progress = pick("#progress"), waves = pick("#waves"), shake = pick("#shake-opt"), news = pick("#news"), keys = pick(".keys");
 
   const head = document.createElement("header");
   head.className = "ss-head";
@@ -53,7 +53,7 @@ export function setupStartScreen(o: StartScreenOptions): void {
 
   const start = document.createElement("div");
   start.className = "ss-go";
-  for (const n of [go, progress, waves]) if (n) start.append(n);
+  for (const n of [go, progress, waves, shake]) if (n) start.append(n);
 
   // New in this build: the current build's changes (version null), or else the latest version's.
   const [now, ...rest] = o.versions.filter(v => v.changes.some(c => c.items.length));

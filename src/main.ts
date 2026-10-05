@@ -401,10 +401,10 @@ setWaveInterval(waveChoice);
 // For comfort it can be turned off: ?shake=0, or the start screen's toggle (remembered here).
 let shakeOn = params.get("shake") !== "0";
 try { if (params.get("shake") === null && localStorage.getItem("witch.shake") === "0") shakeOn = false; } catch { /* fine */ }
-const shake = new Shake(tuning.camera.shake, shakeOn), shakeEl = document.getElementById("shake-opt")!;
-const showShakeOpt = () => { shakeEl.innerHTML = `screen shake <button type="button" data-v="1" class="${shake.on ? "on" : ""}">on</button><button type="button" data-v="0" class="${shake.on ? "" : "on"}">off</button>`; };
+const shake = new Shake(tuning.camera.shake, shakeOn), shakeEl = document.getElementById("shake-opt");
+const showShakeOpt = () => { if (shakeEl) shakeEl.innerHTML = `screen shake <button type="button" data-v="1" class="${shake.on ? "on" : ""}">on</button><button type="button" data-v="0" class="${shake.on ? "" : "on"}">off</button>`; };
 showShakeOpt();
-shakeEl.addEventListener("pointerdown", e => {
+shakeEl?.addEventListener("pointerdown", e => {
   e.stopPropagation();
   const b = (e.target as HTMLElement).closest("button");
   if (!b) return;
