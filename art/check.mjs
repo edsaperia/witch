@@ -614,6 +614,27 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
   }
   ok(!bad.length, `pixel wind: ${Object.keys(T.TREE_SPECIES).length} species' trees sway by whole regions and whole pixels (at most 2), feet still, blobs out of step, still in calm air, whole in a gust${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
 }
+// the witch generator (art/witchGenome.js): her own genome draws her exactly (flight, lean, rise, fast, standing, both facings,
+// each heading); 20 generated witches pass their limits, draw in every flight pose and some on foot with their hand and hat-tip
+// anchors inside, their hatband glowing, 0.8 to 1.7 times her height hovering, and no two alike
+{
+  const W = await import("./witch.js"), Gn = await import("./witchGenome.js"), { defaultStyle } = await import("./generator.js"), { M } = await import("./core.js");
+  const st = defaultStyle(), bad = [], key = sp => sp.w + "x" + sp.h + ":" + Array.from(sp.m).join("") + ":" + JSON.stringify(sp.anchors || {});
+  const ours = Gn.genomeLook(Gn.WITCH_GENOME);
+  if (ours.outfit || Gn.witchGenomeProblems(Gn.WITCH_GENOME).length) bad.push("her genome");
+  for (const o of [{ frame: 0 }, { frame: 2, facing: "away" }, { pose: "lean", frame: 1 }, { pose: "rise", frame: 0 }, { pose: "fast", frame: 1 }, { pose: "brake", frame: 0, heading: "towards" }, { pose: "stand", frame: 0 }, { pose: "talk", frame: 2, facing: "away" }])
+    if (key(W.witchSprite(st, o)) !== key(W.witchSprite(st, { ...o, look: ours.look }))) bad.push("her genome draws " + JSON.stringify(o) + " differently");
+  const herH = W.witchSprite(st).h, seen = new Set();
+  for (let seed = 0; seed < 20; seed++) {
+    const g = Gn.witchGenome(seed), pr = Gn.witchGenomeProblems(g), { look } = Gn.genomeLook(g); if (pr.length) bad.push(`seed ${seed}: ${pr.join(", ")}`);
+    for (const o of [{ frame: 0 }, { pose: "lean", frame: 2 }, { pose: "rise", frame: 0 }, { pose: "descend", frame: 1 }, { pose: "brake", frame: 0 }, { pose: "fast", frame: 0 }, { pose: "stand", frame: 1 }, { pose: "takeoff", frame: 0 }, { pose: "twoStep", frame: 2 }]) {
+      const sp = W.witchSprite(st, { ...o, look }), n = sp.m.filter(Boolean).length, a = sp.anchors || {}, inside = p => p && p[0] >= 0 && p[1] >= 0 && p[0] < sp.w && p[1] < sp.h;
+      if (n < 200 || !inside(a.hand) || !inside(a.hatTip)) bad.push(`seed ${seed} ${o.pose || "hover"}: ${n} px, anchors ${JSON.stringify(a)}`);
+      if (!o.pose) { if (!sp.m.some(v => v === M.MAGIC)) bad.push(`seed ${seed}: no glowing hatband`); if (sp.h < herH * .8 || sp.h > herH * 1.7) bad.push(`seed ${seed}: ${sp.h} px tall (hers ${herH})`); const k = key(sp); if (seen.has(k)) bad.push(`seed ${seed} looks like another`); seen.add(k); }
+    }
+  }
+  ok(!bad.length, `witch generator: her genome draws her exactly; 20 generated witches within limits, drawn in flight and on foot, anchors inside, hatband glowing, 0.8 to 1.7 times her height, none alike${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
+}
 // area flora (art/flora/areas.js): every wooded area lists 3 to 6 real species, shares adding to 1, its main kind first (as its big
 // names it), a palette within reason (sat and val 0.6 to 1.3); the open areas list none; fantasy species are never an area's main kind
 {
