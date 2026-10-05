@@ -8,7 +8,7 @@ import * as THREE from "three";
 import * as Art from "../../art/generator.js";
 import type { ForestMap } from "../rules/map";
 import type { Forest } from "../rules/forest";
-import { AREA_TYPES } from "../rules/map";
+import { LOOKS } from "../rules/map";
 import { speakerRadius } from "../rules/speakers";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
@@ -273,7 +273,7 @@ export class Ground {
     this.texture = nearest(new THREE.DataTexture(new Uint8Array(W * H * 4), W, H));
     nearest(this.tile);
     this.floors = nearest(new THREE.DataTexture(new Uint8Array(64 * FLOOR_COLS * 48 * 4 * 4), 64 * FLOOR_COLS, 48 * 4));
-    const floors = Array.from({ length: 32 }, (_, i) => new THREE.Vector3(...(AREA_TYPES[i]?.floor ?? [0.25, 0.45, 0.4])));
+    const floors = Array.from({ length: 32 }, (_, i) => new THREE.Vector3(...(LOOKS[i]?.floor ?? [0.25, 0.45, 0.4])));
     const disco = discoLooks(st, map.dancefloor.radius);
     const mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
@@ -284,7 +284,7 @@ export class Ground {
         uPixel: { value: metresPerPixel },
         uTypeFloor: { value: floors },
         uFloorReady: { value: this.floorReady },
-        uTerrain: { value: Array.from({ length: 32 }, (_, i) => { const tr = AREA_TYPES[i]?.layout.terrain ?? []; return new THREE.Vector3(+tr.includes("mounds"), +tr.includes("hollows"), +tr.includes("ridges")); }) },
+        uTerrain: { value: Array.from({ length: 32 }, (_, i) => { const tr = LOOKS[i]?.layout.terrain ?? []; return new THREE.Vector3(+tr.includes("mounds"), +tr.includes("hollows"), +tr.includes("ridges")); }) },
         uFloors: { value: this.floors },
         uTile: { value: new THREE.Vector2(64, 48) },
         uFloorsSize: { value: new THREE.Vector2(64 * FLOOR_COLS, 48 * 4) },
@@ -390,7 +390,7 @@ export class Ground {
       const a = this.map.areaAt(wx, wz), o = (y * TILE + x) * 4;
       let pond = 0;
       for (const p of ponds) if (Math.hypot(wx - p.x, wz - p.z) < 3 * p.size) pond = 255;
-      data[o] = a.type; data[o + 1] = Math.round(a.openness * 255); data[o + 2] = pond; data[o + 3] = 255;
+      data[o] = a.look; data[o + 1] = Math.round(a.openness * 255); data[o + 2] = pond; data[o + 3] = 255;
     }
     this.tile.needsUpdate = true;
     renderer.copyTextureToTexture(this.tile, this.texture, null, new THREE.Vector2(i * TILE, j * TILE));
