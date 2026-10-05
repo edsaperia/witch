@@ -6,6 +6,7 @@
 // Only those near the witch are simulated; the rest pick up where they would plausibly be.
 import { questFor, type Quest } from "./quest";
 import { rng } from "./random";
+import { countScale, startCount } from "./growth";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { facingAway } from "./witch";
 import type { Tuning } from "./tuning";
@@ -77,7 +78,7 @@ export interface Creature {
    *  signature move is ready again, and when an ambush was sprung. */
   vx?: number;
   vz?: number;
-  charge?: { dx: number; dz: number; speed: number; until: number; /** when it sets off (it lowers its head till then) */ from?: number; /** a legend's charge: whom it has trampled */ hit?: number[] };
+  charge?: { dx: number; dz: number; speed: number; until: number; /** when it sets off (it lowers its head till then) */ from?: number; /** it has struck (once a charge), it's braking */ struck?: boolean; braking?: boolean; /** a legend's charge: whom it has trampled */ hit?: number[] };
   /** A wild legend's move set (Stage 5): where it is in its pattern, and its phase. */
   legend?: { step: number; phase: 1 | 2 };
   moveReadyAt?: number;
@@ -201,9 +202,11 @@ export function spawnCreatures(map: ForestMap): Creature[] {
     const home = cx === hx && cy === hy;
     const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), cell: [number, number] = [cx, cy], make = (level: Level) => out.push(makeCreature(map, cell, level, out.length, r));
     if (!home) {
-      for (let i = 0; i < pop.babies; i++) make(0);
-      for (let i = 0; i < pop.young; i++) make(1);
-      for (let i = 0; i < pop.adults; i++) make(2);
+      // Swarms come in larger numbers, loners fewer (Ed, 2026-10-05): 1 / their strength times as many.
+      const k = countScale(AREA_TYPES[map.typeOf(cx, cy)].creature);
+      for (let i = 0; i < startCount(pop.babies, k); i++) make(0);
+      for (let i = 0; i < startCount(pop.young, k); i++) make(1);
+      for (let i = 0; i < startCount(pop.adults, k); i++) make(2);
     }
     const L = makeCreature(map, cell, LEGEND, out.length, r, legendSpot(map, cell, r));
     L.legendState = home ? "happy" : "asleep"; L.stateAt = 0;

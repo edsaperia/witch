@@ -176,7 +176,7 @@ describe("the map", () => {
     expect(varied.areas).toBeLessThan(470);
   });
 
-  it("is a forest with clearings: mostly dense woods, open ground in distinct clearings with crisp-ish edges", () => {
+  it("is a forest with clearings: mostly dense woods, open ground in distinct clearings (their edges softened round each area's arena: Ed, 2026-10-05)", () => {
     let dense = 0, open = 0, between = 0, n = 0;
     for (let i = 0; i < 4000; i++) {
       const x = map.bounds.minX + hash2(i, 1, 9) * (map.bounds.maxX - map.bounds.minX), z = map.bounds.minZ + hash2(i, 2, 9) * (map.bounds.maxZ - map.bounds.minZ);
@@ -184,9 +184,9 @@ describe("the map", () => {
       n++;
       if (w > 0.95) dense++; else if (w < 0.05) open++; else between++;
     }
-    expect(dense / n).toBeGreaterThan(0.6);
+    expect(dense / n).toBeGreaterThan(0.5);
     expect(open / n).toBeGreaterThan(0.05);
-    expect(between / n).toBeLessThan(0.2);
+    expect(between / n).toBeLessThan(0.3);
   });
 
   it("uses many area types", () => {
@@ -1025,27 +1025,42 @@ describe("the density field", () => {
     expect(share(0, 0.15)).toBeGreaterThan(0.15);  // open and sparse ground
     expect(share(0.15, 0.6)).toBeGreaterThan(0.2); // and plenty in between
   });
-  it("keeps every area's fighting arena open (Ed, 2026-10-05): no tree within arena.radius of its centre or soundsystem, trees again beyond its edge", () => {
-    const R = TUNING.arena!, k = TUNING.fight.scale;
-    let inside = 0, beyond = 0, outsideTrees = 0;
+  it("keeps every area's fighting arena open, its edge soft (Ed, 2026-10-05): no tree in its middle, the woods thickening gradually through its band, and back beyond it", () => {
+    const R = TUNING.arena!, k = TUNING.fight.scale, open = (R.radius - R.noise * R.band) * k, full = (R.radius + R.band * (1 + R.noise)) * k + 4;
+    let inside = 0;
+    const rings = [0, 0, 0], ringN = [0, 0, 0], lone = [0, 0, 0];
+    let beyond = 0, outsideTrees = 0;
     for (let cy = 1; cy < map.n - 1; cy++) for (let cx = 1; cx < map.n - 1; cx++) {
       if (cx === map.centreCell[0] && cy === map.centreCell[1]) continue;
-      const s = map.siteOf(cx, cy), t = map.areaAt(s.x, s.z).type;
+      const s = map.siteOf(cx, cy), mine = (x: number, z: number) => map.areaAt(x, z).cell.join() === `${cx},${cy}`;
       for (let i = 0; i < 24; i++) {
-        const a = (i / 24) * Math.PI * 2, d = R.radius * k * hash2(cx * 31 + i, cy, 7), x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
-        if (map.areaAt(x, z).cell.join() !== `${cx},${cy}`) continue;
+        const a = (i / 24) * Math.PI * 2, d = open * hash2(cx * 31 + i, cy, 7), x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
+        if (!mine(x, z)) continue;
         inside++;
-        expect(treeChance(map, x, z, t), `${cx},${cy} at ${d.toFixed(0)} m`).toBe(0);
+        expect(treeChance(map, x, z, map.areaAt(x, z).type), `${cx},${cy} at ${d.toFixed(0)} m`).toBe(0);
+      }
+      // Through the band, in thirds: the odds of a tree rise gradually (no wall at a radius).
+      for (let i = 0; i < 48; i++) {
+        const third = i % 3, a = (i / 48) * Math.PI * 2, d = (R.radius + R.band * (third + 0.5) / 3) * k, x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
+        if (!mine(x, z) || map.hardClear(x, z) || map.paths.at(x, z)) continue;
+        const c = treeChance(map, x, z, map.areaAt(x, z).type);
+        rings[third] += c; ringN[third]++; if (c > 0 && c <= TUNING.density.lone) lone[third]++;
       }
       for (let i = 0; i < 24; i++) {
-        const a = (i / 24) * Math.PI * 2, d = (R.radius + R.edge) * k + 6, x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
-        if (map.areaAt(x, z).cell.join() !== `${cx},${cy}` || map.hardClear(x, z) || map.paths.at(x, z)) continue;
+        const a = (i / 24) * Math.PI * 2, x = s.x + Math.cos(a) * full, z = s.z + Math.sin(a) * full;
+        if (!mine(x, z) || map.hardClear(x, z) || map.paths.at(x, z)) continue;
         beyond++;
-        if (treeChance(map, x, z, map.areaAt(x, z).type) > 0) outsideTrees++;
+        if (treeChance(map, x, z, map.areaAt(x, z).type) >= TUNING.density.lone) outsideTrees++;
       }
     }
     expect(inside).toBeGreaterThan(500);
-    expect(outsideTrees / beyond).toBeGreaterThan(0.9); // the woods come back past its edge
+    const mean = rings.map((r, i) => r / ringN[i]);
+    expect(mean[0]).toBeGreaterThan(0); // trees start within the band's first third...
+    expect(mean[1]).toBeGreaterThan(mean[0] * 1.5); // ...and thicken through it
+    expect(mean[2]).toBeGreaterThan(mean[1] * 1.2);
+    expect(mean[0]).toBeLessThan(mean[2] * 0.5); // gradually: no jump at its inner edge
+    expect(lone[0]).toBeGreaterThan(0); // scattered lone trees out in the clearing
+    expect(outsideTrees / beyond).toBeGreaterThan(0.9); // the woods are back past its band
   });
   it("keeps the dancefloor clear of every tree", () => {
     const d = map.dancefloor;
@@ -1109,7 +1124,7 @@ describe("paths, roads and railways", () => {
     }
     expect(edge / edgeN).toBeGreaterThan((open / openN) * 1.5);
     for (const w of forest.wallsNear(s.x, s.z, 600)) { const h = P.at(w.x, w.z); if (h) expect(h.kind === "rail" && P.railBroken(w.x, w.z)).toBe(true); }
-  });
+  }, 60000); // (it builds the forest for 600 m round home)
   it("carry 3D pieces: railway landmarks and signals, bridges over streams, verge posts; trees keep clear of them", () => {
     const ids = new Set(P.pieces.map(p => p.id));
     for (const id of ["signal-post", "verge-post"]) expect(ids.has(id)).toBe(true);

@@ -47,6 +47,9 @@ export function tuftsInCell(map: ForestMap, ci: number, cj: number, cell: number
     if (onPath) continue;
     if (map.paths.at(x, z, 2.5)) k *= 1.8; // thick along the edges
     if (roll >= k) continue;
+    // An area's arena: a little thinner in its open middle, following its falloff (asked only of the tufts that would grow).
+    const A = map.tuning.arena;
+    if (A && roll >= k * (A.tufts + (1 - A.tufts) * map.arenaOpen(x, z, a.cell))) continue;
     const kinds = G.kinds.map(name => TUFT_KINDS.indexOf(name as (typeof TUFT_KINDS)[number])).filter(v => v >= 0);
     out.push({ x, z, open: a.openness, type: a.type, kind: reed && REEDS >= 0 ? REEDS : kinds.length ? kinds[Math.floor(hash2(gi, gj, s + 1104) * kinds.length)] : 0, size: 0.7 + hash2(gi, gj, s + 1105) * 0.6, flip: hash2(gi, gj, s + 1106) < 0.5 });
   }

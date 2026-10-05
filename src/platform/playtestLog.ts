@@ -25,7 +25,7 @@ export interface PlaytestSample {
   hits: number;
 }
 
-export interface PlaytestRun { seed: number; build: string; started: string; interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number }[] }
+export interface PlaytestRun { seed: number; build: string; started: string; interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[] }
 
 const KEY = "witch.playtest", KEEP = 8, EVERY = 10;
 const round = (x: number) => Math.round(x * 10) / 10;
@@ -64,8 +64,8 @@ export class PlaytestLog {
     } catch { /* storage full or blocked: the log is a convenience */ }
   }
   /** The fight's scale or speed changed (the debug overlay's knobs): noted, with the game time. */
-  fight(scale: number, speed: number): void {
-    (this.run.fight ??= []).push({ t: Math.round(this.game.clock.time * 10) / 10, scale, speed });
+  fight(scale: number, speed: number, momentum = 1): void {
+    (this.run.fight ??= []).push({ t: Math.round(this.game.clock.time * 10) / 10, scale, speed, momentum });
     this.save();
   }
   /** Every run kept on this browser (this one included), as a JSON file to save. */

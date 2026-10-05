@@ -10,7 +10,7 @@ import { hash2 } from "./random";
 export type BehaviourKind = "arrive" | "keepRange" | "orbit" | "strafe" | "slot" | "separation" | "cohesion" | "wander" | "dodge";
 export interface Behaviour { kind: BehaviourKind; w: number; near?: number; far?: number; radius?: number; swap?: number }
 export type TacticKind = "surround" | "pincer" | "hitAndRun" | "volley" | "swarm" | "none";
-export interface Move { kind: "charge" | "ambush" | "burrow" | "leap"; cooldown: number; /** A charge: seconds it lowers its head first (its lane telegraphed) */ windup?: number; from?: number; to?: number; speed?: number; time?: number; trigger?: number; height?: number }
+export interface Move { kind: "charge" | "ambush" | "burrow" | "leap"; cooldown: number; /** A charge: seconds it lowers its head first (its lane telegraphed); how fast it builds speed and brakes (m/s each second), how fast it turns braking (degrees a second), and how far it runs on past its target before braking (m). */ windup?: number; accel?: number; brake?: number; turn?: number; overshoot?: number; from?: number; to?: number; speed?: number; time?: number; trigger?: number; height?: number }
 export interface Profile {
   /** Its speed in a fight (m/s, times tuning fight.speed; the usual is combat.fightRun). */
   speed?: number;
@@ -22,14 +22,15 @@ export interface Profile {
 }
 /** A wild legend's move set (Stage 5): moves (combat.json attacks) in a loop, and its second phase. */
 export interface LegendSet { pattern: string[]; phase2: { at: number; pattern: string[]; speed: number; cooldown: number } }
-export interface MovementData { repick: number; packRadius: number; profiles: Record<string, Profile>; legends: LegendSet & { bySpecies: Record<string, LegendSet> } }
+export interface MovementData { repick: number; packRadius: number; profiles: Record<string, Profile>; legends: LegendSet & { bySpecies: Record<string, LegendSet> }; /** Body sizes, for spacing (rules/spacing.ts). */ bodies: import("./spacing").Bodies }
 export const MOVEMENT = raw as unknown as MovementData;
 
 /** The fight's scale and speed (Ed's motion scale pass, 2026-10-04; tuning fight, ?fightScale= and
  *  ?fightSpeed=, and live in the debug overlay): every length in a fight (attack ranges, lunges,
  *  radii, knockback, pattern sizes, pursuit) times scale; every fight speed (running, charging,
- *  shots) times speed. Set from the tuning at each combat step. */
-export const FIGHT = { scale: 1, speed: 1 };
+ *  shots) times speed; momentum: how heavily creatures in a fight change speed and turn (their
+ *  accelerations and turn rates divided by it). Set from the tuning at each combat step. */
+export const FIGHT = { scale: 1, speed: 1, momentum: 1 };
 
 export const profileOf = (species: string, data: MovementData = MOVEMENT): Profile | null => data.profiles[species] ?? null;
 export const legendSetOf = (species: string, data: MovementData = MOVEMENT): LegendSet => data.legends.bySpecies[species] ?? data.legends;
@@ -153,7 +154,7 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
   // A behaviour asking for more than full speed is held to it; then ease toward it at its acceleration.
   const m = Math.hypot(vx, vz);
   if (m > 1) { vx /= m; vz /= m; }
-  const tx = vx * x.speed, tz = vz * x.speed, ax = tx - (c.vx ?? 0), az = tz - (c.vz ?? 0), am = Math.hypot(ax, az), step = P.accel * x.dt;
+  const tx = vx * x.speed, tz = vz * x.speed, ax = tx - (c.vx ?? 0), az = tz - (c.vz ?? 0), am = Math.hypot(ax, az), step = (P.accel * x.dt * FIGHT.speed) / FIGHT.momentum;
   const k = am > step ? step / am : 1;
   c.vx = (c.vx ?? 0) + ax * k; c.vz = (c.vz ?? 0) + az * k;
   c.x += c.vx * x.dt; c.z += c.vz * x.dt;
@@ -161,28 +162,56 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
   c.moving = sp > 0.15;
   if (c.moving) c.walk += x.dt * (2 + Math.min(sp, 8) * 1.5);
   // It faces its target while it fights (or the way it runs, when it's running fast away).
-  c.facing = (sp > 6 && Math.abs(c.vx) > 1 ? c.vx : dx) >= 0 ? 1 : -1;
+  // (with a margin either way, so it doesn't flicker left and right as it passes straight up or down the screen)
+  const fx = sp > 6 ? c.vx : dx;
+  if (Math.abs(fx) > (sp > 6 ? 1.5 : 1)) c.facing = fx > 0 ? 1 : -1;
   c.away = dz < -Math.abs(dx);
   return may;
 }
 
-/** The charge (Stage 5: the boar): a burst in a straight line at its target, locked once it starts;
- *  it ends after `time` seconds or once it reaches the target (the hit, for the caller), then the
- *  move cools down. Returns "hit" when it reached the target this step. */
-export function stepCharge(c: Creature, mv: Move, px: number, pz: number, reach: number, time: number, dt: number): "none" | "charging" | "hit" {
-  const ch = c.charge;
-  // Lowering its head: it stands, its lane showing, then goes (fixed now: step out of the lane).
-  if (ch && ch.from !== undefined && time < ch.from) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = ch.dx >= 0 ? 1 : -1; return "charging"; }
-  if (ch && time < ch.until) {
-    c.x += ch.dx * ch.speed * dt; c.z += ch.dz * ch.speed * dt; c.vx = ch.dx * ch.speed; c.vz = ch.dz * ch.speed;
-    c.moving = true; c.walk += dt * 12; c.facing = ch.dx >= 0 ? 1 : -1;
-    if (Math.hypot(px - c.x, pz - c.z) <= reach) { c.charge = { ...ch, until: time }; return "hit"; }
+/** The charge (Stage 5: the boar; with momentum, Ed 2026-10-05: "they should have more momentum").
+ *  It lowers its head (windup seconds, easing to a stop, its lane shown), then builds speed down
+ *  that locked lane at `accel` up to `speed`, hits whatever it reaches once and carries on through,
+ *  until it's `overshoot` metres past its target or `time` seconds have gone; then it brakes at
+ *  `brake`, turning in an arc toward its target at `turn` degrees a second, and once it's down to its
+ *  run its own steering takes over (with its velocity). Then the move cools down. Returns "hit" on
+ *  the step it reaches the target. */
+export function stepCharge(c: Creature, mv: Move, px: number, pz: number, reach: number, time: number, dt: number, run = 0): "none" | "charging" | "hit" {
+  const ch = c.charge, M = FIGHT.momentum, V = FIGHT.speed;
+  const accel = ((mv.accel ?? 40) * V) / M, brake = ((mv.brake ?? 30) * V) / M, turn = (((mv.turn ?? 140) * Math.PI) / 180) * V / M;
+  if (ch) {
+    let vx = c.vx ?? 0, vz = c.vz ?? 0, v = Math.hypot(vx, vz);
+    if (ch.from !== undefined && time < ch.from) {
+      // Lowering its head: easing to a stop, facing down its lane.
+      const nv = Math.max(0, v - brake * dt); if (v > 1e-6) { vx *= nv / v; vz *= nv / v; } v = nv;
+      c.vx = vx; c.vz = vz; c.x += vx * dt; c.z += vz * dt; c.moving = v > 0.3; c.facing = ch.dx >= 0 ? 1 : -1;
+      return "charging";
+    }
+    const tx = px - c.x, tz = pz - c.z, along = tx * ch.dx + tz * ch.dz;
+    if (!ch.braking && (time >= ch.until || along < -(mv.overshoot ?? 8) * FIGHT.scale)) ch.braking = true;
+    if (!ch.braking) {
+      // Building speed down its lane (its velocity swings onto the lane, no snapping).
+      const nv = Math.min(ch.speed, Math.max(v, 0) + accel * dt);
+      vx = ch.dx * nv; vz = ch.dz * nv; v = nv;
+    } else {
+      // Braking in an arc: slowing, its heading turning toward its target at its turn rate.
+      const nv = Math.max(0, v - brake * dt);
+      let h = Math.atan2(vz, vx);
+      const want = Math.atan2(tz, tx), da = ((want - h + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+      h += Math.max(-turn * dt, Math.min(turn * dt, da));
+      vx = Math.cos(h) * nv; vz = Math.sin(h) * nv; v = nv;
+      if (v <= Math.max(run, 1)) { c.vx = vx; c.vz = vz; c.x += vx * dt; c.z += vz * dt; c.charge = undefined; return "charging"; } // (its run takes over, with its velocity)
+    }
+    c.vx = vx; c.vz = vz; c.x += vx * dt; c.z += vz * dt;
+    c.moving = true; c.walk += dt * (4 + Math.min(v, 30) * 0.3);
+    if (Math.abs(vx) > 1.5) c.facing = vx > 0 ? 1 : -1;
+    if (!ch.struck && !ch.braking && Math.hypot(tx, tz) <= reach) { ch.struck = true; return "hit"; } // (and it carries on through)
     return "charging";
   }
   const d = Math.hypot(px - c.x, pz - c.z);
   if (time >= (c.moveReadyAt ?? 0) && d >= (mv.from ?? 10) * FIGHT.scale && d <= (mv.to ?? 40) * FIGHT.scale) {
-    const s = (mv.speed ?? 28) * FIGHT.speed, wind = mv.windup ?? 0.5;
-    c.charge = { dx: (px - c.x) / d, dz: (pz - c.z) / d, speed: s, from: time + wind, until: time + wind + (mv.time ?? 1.2) };
+    const s = (mv.speed ?? 28) * V, wind = mv.windup ?? 0.5;
+    c.charge = { dx: (px - c.x) / d, dz: (pz - c.z) / d, speed: s, from: time + wind, until: time + wind + (mv.time ?? 1.6) };
     c.moveReadyAt = time + mv.cooldown;
     return "charging";
   }
