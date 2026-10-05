@@ -1,5 +1,7 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { Music } from "./platform/music";
+import { Sfx } from "./platform/sfx";
+import { SfxCues } from "./platform/sfxCues";
 import { musicMix } from "./rules/music";
 import { musicCue, type MusicCue } from "./rules/musicPlan";
 import type { MusicStyle } from "./rules/musicScore";
@@ -19,7 +21,9 @@ import { groundHeight } from "./render/height";
 import { SPRITE_UNIFORMS } from "./render/sprites";
 import { loadStyle } from "./render/style";
 import { setupTouch } from "./ui/touch";
-import { CHANGELOG } from "./changelog";
+import { CHANGELOG_VERSIONS } from "./changelog";
+import { setupStartScreen, startOnGesture } from "./ui/startScreen";
+import { UPCOMING } from "./ui/upcoming";
 import { PlaytestLog } from "./platform/playtestLog";
 import { powerReport } from "./rules/power";
 import { Freeze } from "./platform/freeze";
@@ -175,6 +179,7 @@ if (arenaParam) waveChoice = 0;
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = loadStyle();
+if (params.get("flora")) style.flora = params.get("flora"); // ?flora=new|fantasy|all|<ids>: every wooded area grows these tree species (art/flora), carried to the art worker in the style
 /** Load timings (ms since the page started): the view built (the page's own sprites drawn), ready to play. */
 const loadTimes = { viewStart: performance.now(), view: 0, ready: 0 };
 const view = new View(canvas, game, {
@@ -279,12 +284,13 @@ const setAutoTalk = (on: boolean) => {
 
 declare const __BUILD__: string;
 document.getElementById("version")!.textContent = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
-// What's new, on the start screen: the last three versions, newest first (config/changelog/, collected by changelog.ts).
-const newsEl = document.getElementById("news")!;
-const buildName = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev";
-const esc = (s: string) => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!);
-newsEl.innerHTML = "<b>What's new</b>" + CHANGELOG.filter(e => e.items.length).slice(0, 3).map(e =>
-  `<div>${e.version === null ? `${buildName} (this version)` : "v" + e.version}</div><ul>${e.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>`).join("");
+// The start screen, full screen: What's new in this build (config/changelog/) and what's coming up
+// (the open pull requests, listed at deploy time), the controls below (src/ui/startScreen.ts).
+declare const __BUILD_DATE__: string;
+setupStartScreen({
+  el: document.getElementById("start")!, build: typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev",
+  builtOn: typeof __BUILD_DATE__ === "string" ? __BUILD_DATE__ : new Date().toISOString().slice(0, 10), versions: CHANGELOG_VERSIONS, upcoming: UPCOMING,
+});
 const seedEl = document.getElementById("seed")!;
 seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;
 const debugEl = document.getElementById("debug")!, startEl = document.getElementById("start")!;
@@ -331,6 +337,7 @@ const showVolume = () => { volumeIcon.textContent = level === 0 ? "🔇" : level
 volumeRange.addEventListener("input", () => {
   level = +volumeRange.value / 100; showVolume();
   if (music) music.volume = tuning.music.volume * level;
+  sfx?.setVolume(tuning.music.volume * level);
   try { localStorage.setItem("witch.volume", String(level)); } catch { /* fine */ }
 });
 for (const ev of ["pointerdown", "keydown"]) volumeRange.addEventListener(ev, e => e.stopPropagation()); // its own presses and arrow keys don't fly her
@@ -341,10 +348,10 @@ const freeze = new Freeze(game, seed!, typeof __BUILD__ === "string" ? __BUILD__
 freeze.started = () => startEl.style.display === "none";
 
 // Browsers keep sound off until the player presses something: the start screen is that press.
-let audio: AudioContext | null = null, music: Music | null = null;
+let audio: AudioContext | null = null, music: Music | null = null, sfx: Sfx | null = null, sfxCues: SfxCues | null = null;
 function start(): boolean {
   if (!ready || !game.clock.paused || freeze.frozen) return false;
-  try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume * level, musicStyle, seed!, tuning.music.src); } catch { /* no sound yet anyway */ }
+  try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume * level, musicStyle, seed!, tuning.music.src); if (!sfx && tuning.sfx.on) { sfx = new Sfx(audio, tuning.music.volume * level, tuning.sfx, musicStyle.root + 24); sfxCues = new SfxCues(sfx); } } catch { /* no sound yet anyway */ }
   game.clock.paused = false;
   startEl.style.display = "none";
   input.clearPresses();
@@ -352,7 +359,7 @@ function start(): boolean {
 }
 input.onAny = start;
 freeze.onToggle = on => { try { void (on ? audio?.suspend() : audio?.resume()); } catch { /* no sound */ } };
-startEl.addEventListener("pointerdown", e => { e.preventDefault(); start(); });
+startOnGesture(startEl, start); // a click or a tap starts; a touch that drags scrolls the text
 // The wave selector on the start screen: picking one doesn't start the game.
 const wavesEl = document.getElementById("waves")!;
 wavesEl.innerHTML = "waves every " + WAVE_CHOICES.map(s => `<button type="button" data-s="${s}">${s === 0 ? "off" : s < 60 ? s + " s" : s / 60 + " min"}</button>`).join("");
@@ -400,6 +407,7 @@ function frame(now: number): void {
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
   musicCueNow = musicCue(game, musicCueNow);
   music?.update(musicMix(game, game.witch), musicCueNow, game.clock.time, game.beat, !game.clock.paused);
+  if (!game.clock.paused) sfxCues?.update(game, game.clock.time);
   if (!ready) return;
   // The wave countdown bar: empties toward the next wave.
   const cd = waveCountdown(game.party, game.map, game.clock.time);

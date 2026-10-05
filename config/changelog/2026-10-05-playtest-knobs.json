@@ -1,10 +1,10 @@
 {
-  "version": null,
+  "version": 486,
   "items": [
     "Treetop flight is half as fast again (48 m/s, from 32), and the treetop camera sits further out to match: Ed's pick from the playtest presets (168 m areas with 48 m/s)",
     "Try bigger areas and faster treetop flight: add ?areaSize=280&treetopSpeed=96 to the link (remembered on this browser); treetop speed also has a slider in the debug panel (~), with a reset",
     "Over the treetops the camera zooms out as treetop speed goes up, so the screen shows about the same few seconds of flight",
     "The clearing round each runestone is smaller and its edge much softer: the woods thin gradually all the way from the area's edge towards the stone, and small things (ferns, flowers, grass) still grow in the middle",
-    "Sigils only go down and come up on the ground: in the treetops the E button does nothing"
+    "Sigils only go down and come up on the ground. In the treetops E (X on a gamepad, the sigil button on a phone) cycles them instead, the bottom one to the top, and its slot on the bar shows ↻; the separate cycle button (R) is gone"
   ]
 }
