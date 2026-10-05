@@ -1,5 +1,5 @@
-// The action bar (Ed, 2026-10-04: MOBA style): eight slots along the bottom of the screen, 1 2 3 4
-// Q W E R, each with its key and what it does; the spell's and the dash's recharge sweep over
+// The action bar (Ed, 2026-10-04: MOBA style; keys remapped 2026-10-05): eight slots along the bottom
+// of the screen, 1 2 3 4 Q E R and the right mouse button, each with its key and what it does; the spell's and the dash's recharge sweep over
 // theirs, bright when ready. Empty slots wait for more spells, items and totems.
 import type { Game } from "../rules/game";
 import { ACTION_BAR } from "../platform/input";
@@ -9,8 +9,9 @@ import { inviteCharge } from "../rules/invites";
 
 const LOOK: Record<string, { icon: string; name: string }> = {
   spell: { icon: "⚡", name: "spell: speed boost" },
-  dash: { icon: "»", name: "blink (on the ground)" },
-  invite: { icon: "💌", name: "invite: shoot 💌s at the cursor (click, or hold 1; gamepad: right stick aims, a trigger fires), on the ground" },
+  dash: { icon: "»", name: "dodge: blink (right click or Space, on the ground)" },
+  rise: { icon: "↕", name: "rise to the treetops or land" },
+  invite: { icon: "💌", name: "invite: shoot 💌s at the cursor (left click, or hold 1; gamepad: right stick aims, a trigger fires), on the ground" },
   sigil: { icon: "◈", name: "put down / pick up a sigil" },
   autoTalk: { icon: "💬", name: "auto-talk on or off (also T); off, hold Shift to talk" },
 };
@@ -58,6 +59,13 @@ export class ActionBar {
       if (s.action === "sigil") {
         const ground = W.body.mode === "ground", icon = el.firstElementChild as HTMLElement;
         const look = ground ? LOOK.sigil : CYCLE;
+        if (icon.textContent !== look.icon) { icon.textContent = look.icon; el.title = `${s.key}: ${look.name}`; }
+        return;
+      }
+      // The up/down slot shows which way Q takes her now.
+      if (s.action === "rise") {
+        const ground = W.body.mode === "ground", icon = el.firstElementChild as HTMLElement;
+        const look = ground ? { icon: "↑", name: "rise to the treetops" } : { icon: "↓", name: "land" };
         if (icon.textContent !== look.icon) { icon.textContent = look.icon; el.title = `${s.key}: ${look.name}`; }
         return;
       }

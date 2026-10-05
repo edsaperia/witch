@@ -990,10 +990,6 @@
         "on": {
           "type": "boolean"
         },
-        "links": {
-          "type": "number",
-          "minimum": 0
-        },
         "advance": {
           "type": "string"
         },
@@ -1047,11 +1043,25 @@
             "avoid"
           ],
           "additionalProperties": false
+        },
+        "ahead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "behind": {
+          "type": "number",
+          "minimum": 0
+        },
+        "behindBright": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "on",
-        "links",
+        "ahead",
+        "behind",
+        "behindBright",
         "advance",
         "fade",
         "brightness",
@@ -3104,6 +3114,26 @@
             "fade": {
               "type": "number",
               "minimum": 0
+            },
+            "murmur": {
+              "type": "number",
+              "minimum": 0
+            },
+            "clinks": {
+              "type": "number",
+              "minimum": 0
+            },
+            "clinkEvery": {
+              "type": "number",
+              "minimum": 0
+            },
+            "balloons": {
+              "type": "number",
+              "minimum": 0
+            },
+            "squeakEvery": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -3112,7 +3142,12 @@
             "bees",
             "birds",
             "birdEvery",
-            "fade"
+            "fade",
+            "murmur",
+            "clinks",
+            "clinkEvery",
+            "balloons",
+            "squeakEvery"
           ],
           "additionalProperties": false
         },
@@ -3148,6 +3183,55 @@
             "sleepEvery"
           ],
           "additionalProperties": false
+        },
+        "impact": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "small": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "small"
+          ],
+          "additionalProperties": false
+        },
+        "land": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "gap"
+          ],
+          "additionalProperties": false
+        },
+        "stir": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -3165,6 +3249,9 @@
         "windup",
         "lost",
         "ouch",
+        "impact",
+        "land",
+        "stir",
         "knock",
         "charge",
         "relic",
