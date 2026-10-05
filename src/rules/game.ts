@@ -10,7 +10,7 @@ import { heldByCombat, spawnCreatures, stepCreaturesNear, stepNotice, wanderRang
 import { Forest } from "./forest";
 import { leashPoint, newLeash, stepLeash, type LeashControls, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
-import { danceAt } from "./states";
+import { danceAt } from "./creatureStates";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
 import { cellKey, newParty, planAhead, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";

@@ -35,7 +35,7 @@ import { blocked, leashPoint, talkTime, talkTurn } from "../rules/leash";
 import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
 import { FIGHT, profileOf } from "../rules/movement";
-import { huntsWitch } from "../rules/states";
+import { huntsWitch } from "../rules/creatureStates";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";

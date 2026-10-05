@@ -84,11 +84,11 @@ export interface Creature {
   /** A party animal travelling (rules/travel.ts: far from her on the ground or its sigil, quiet both
    *  ways), its route along area borders, and until when it stays in her posse after a fight. */
   travelling?: boolean;
-  /** Its state (rules/states.ts, issue #87): set when it's invited to happy, or enraged; read it with stateOf. */
+  /** Its state (rules/creatureStates.ts, issue #87): set when it's invited to happy, or enraged; read it with stateOf. */
   state?: "wild" | "happy" | "leashed" | "enraged";
   /** Knocked down while wild: dazed (nothing attacks it, it can still be invited) until then, then it runs off. */
   dazed?: boolean;
-  /** Happy, in an area with a soundsystem: it keeps round it, dancing (rules/states.ts danceAt). */
+  /** Happy, in an area with a soundsystem: it keeps round it, dancing (rules/creatureStates.ts danceAt). */
   dancing?: boolean;
   dazedUntil?: number;
   /** Its 💌 invite meter (0..1 at its last hit) and when that was (rules/affection.ts). */
@@ -223,7 +223,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
     const home = cx === hx && cy === hy;
     const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), cell: [number, number] = [cx, cy], make = (level: Level) => out.push(makeCreature(map, cell, level, out.length, r));
     if (!home) {
-      // Swarms come in larger numbers, loners fewer (Ed, 2026-10-05): 1 / their strength times as many.
+      // Weaker species come in larger numbers, stronger fewer (Ed, 2026-10-05): 1 / their strength times as many.
       const k = countScale(AREA_TYPES[map.typeOf(cx, cy)].creature);
       for (let i = 0; i < startCount(pop.babies, k); i++) make(0);
       for (let i = 0; i < startCount(pop.young, k); i++) make(1);

@@ -9,7 +9,7 @@
 // No drawing here.
 import { speedFactor, type Creature } from "./creatures";
 import type { Tuning } from "./tuning";
-import { befriend, invitableNow, stateOf } from "./states";
+import { befriend, invitableNow, stateOf } from "./creatureStates";
 import { facingAway } from "./witch";
 
 export interface PlacedSigil { id: number; x: number; z: number; /** game time it was put down */ at: number }
