@@ -20,7 +20,8 @@
         "On the ground, only nearby rune stones keep their wave number at the top of the screen, so far ones no longer pile up there; over the treetops none is held there",
         "Charging boars have weight: they lower their head, build up speed, thunder on past you, then skid round in a wide arc before coming again",
         "Creatures in a fight speed up, slow down and turn smoothly, without jerking or flickering left and right; a momentum knob joins fight scale and speed in the debug panel (, and .)",
-        "Wild creatures give up the chase soon after you leave their area (about 10 m past its edge) and head back home"
+        "Wild creatures give up the chase soon after you leave their area (about 10 m past its edge) and head back home",
+        "Animals don't bunch up any more: walking, following you, marching or fighting, each keeps some room round it, more for big ones (a bear keeps much more space than a dormouse)"
       ]
     },
     {

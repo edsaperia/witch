@@ -1,4 +1,6 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
+import { MOVEMENT } from "./movement";
+import { spaceOut } from "./spacing";
 import { onAreaDone } from "./leylines";
 import { guardArea, questPlaced, type QuestEvent } from "./quest";
 import { beatAt, newBeatClock, waveArrived, waveTempo, type BeatClock } from "./beat";
@@ -270,6 +272,19 @@ function fixedStep(g: Game, controls: Controls): void {
   for (const e of B.events) if (e.kind === "ate") g.tally.berries++; else if (e.kind === "evolved") g.tally.evolved++;
   stepDancefloor(g, wave, seated);
   stepWitchParty(g, c, dt);
+  // Last, everyone in view eases apart from anyone closer than their sizes like (Ed, 2026-10-05).
+  stepSpacing(g, dt);
+}
+
+/** Spacing (rules/spacing.ts) for the creatures within movement.json bodies.range of a witch (about the view on the ground): every kind of movement at
+ *  once, after it's done. A sleeping legend (and one waking) holds its ground; one burrowed or in the air is out of it. */
+function stepSpacing(g: Game, dt: number): void {
+  const R = MOVEMENT.bodies.range, ws = g.witches.map(w => w.body), list: Creature[] = [];
+  for (const c of g.creatures) {
+    if (c.gone || c.burrow || c.leap) continue;
+    for (const w of ws) if (Math.abs(c.x - w.x) < R && Math.abs(c.z - w.z) < R) { list.push(c); break; }
+  }
+  spaceOut(list, dt, c => dormant(g, c) || (c.stunUntil !== undefined && g.clock.time < c.stunUntil));
 }
 
 /** Wild areas grow (Ed, 2026-10-04): every wave each area still wild (and each one this wave
