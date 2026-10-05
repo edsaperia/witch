@@ -33,7 +33,7 @@ export interface LeyTuning {
   /** The shimmer's speed (m/s) and spacing (m) along the line. */
   flow: number[];
   /** The first line's way out from the treehouse (rules/leylines.ts departureRoute). */
-  depart: { run: number; avoid: number };
+  depart: { past: number; avoid: number };
 }
 
 const STEP = 8; // metres between route points
@@ -168,7 +168,7 @@ export class LeyLines {
   /** A link's route from stone a to b: a gently wandering line along the low ground between them. */
   private route(a: LeyStone, b: LeyStone, k: number): [number, number][] {
     // From the treehouse at the start: due south out of its front, then round to the first objective.
-    if (a.depart && this.map) return departureRoute(this.map, b, this.T.depart.run, this.T.depart.avoid, STEP / 2);
+    if (a.depart && this.map) return departureRoute(this.map, b, this.T.depart.past, this.T.depart.avoid, STEP / 2);
     const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, px = -uz, pz = ux;
     const n = Math.max(2, Math.ceil(L / STEP)), W = Math.min(80, L * this.T.valley), off = new Float64Array(n + 1);
     for (let i = 1; i < n; i++) {

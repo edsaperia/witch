@@ -52,20 +52,32 @@ describe("the first ley line leaves the treehouse's front, due south (Ed, 2026-1
     expect([first.x, first.z]).toEqual([m.treehouseFront.x, m.treehouseFront.z]);
     expect(m.treehouseFront.z).toBeGreaterThan(m.treehouse.z); // (south: towards the camera)
   });
-  it("sets off due south, then curves smoothly to the first objective, never over the dancefloor, wherever that lies", () => {
+  it("stands due north of the dancefloor, its footprint gap metres outside the ring of speakers (Ed, 2026-10-05)", () => {
+    for (const seed of [123, 293912, 31337]) {
+      const m = generateMap(seed, TUNING), d = m.dancefloor, th = m.treehouse, S = TUNING.dancefloor.speakers;
+      expect(th.x).toBeCloseTo(d.x, 6);
+      expect(th.z).toBeLessThan(d.z); // (north: up the screen)
+      const edge = Math.hypot(th.x - d.x, th.z - d.z) - TUNING.treehouse.clear, ring = TUNING.dancefloor.radius * S.radiusFactor + S.footprint;
+      expect(edge - ring).toBeCloseTo(TUNING.treehouse.gap, 6);
+    }
+  });
+  it("runs due south straight across the dancefloor, then curves smoothly to the first objective outside the ring, wherever that lies", () => {
     let north = 0;
     for (const seed of [123, 293912, 7, 1000, 42, 31337, 5, 99]) {
       const m = generateMap(seed, TUNING), p = newParty(m), [a, b] = leyChain(p, m, 2), d = m.dancefloor;
       if (b.z < a.z) north++;
-      const pts = departureRoute(m, b, D.run, D.avoid, 4);
+      const pts = departureRoute(m, b, D.past, D.avoid, 4), R = departureClear(m, D.avoid);
       expect(pts[0]).toEqual([a.x, a.z]);
       const last = pts[pts.length - 1];
       expect(Math.hypot(last[0] - b.x, last[1] - b.z)).toBeLessThan(1);
-      // Due south first, for a stretch you can see (several metres before the floor stops it).
-      let south = 0;
-      for (let i = 1; i < pts.length && pts[i][0] === a.x && pts[i][1] > pts[i - 1][1]; i++) south = pts[i][1] - a.z;
-      expect(south).toBeGreaterThanOrEqual(4);
-      for (const q of pts) expect(Math.hypot(q[0] - d.x, q[1] - d.z)).toBeGreaterThanOrEqual(departureClear(m, D.avoid) - 1e-6); // off the dancefloor and its ring of speakers
+      // Due south first, straight across the floor (over its middle) and out past the ring.
+      let i = 1;
+      for (; i < pts.length && pts[i][0] === a.x && pts[i][1] > pts[i - 1][1]; i++);
+      const crossed = pts[i - 1];
+      expect(crossed[1]).toBeGreaterThanOrEqual(d.z + R + D.past - 1e-6);
+      expect(Math.abs(a.x - d.x)).toBeLessThan(1); // (through the middle of the floor)
+      // After the crossing, kept outside the ring.
+      for (const q of pts.slice(i)) expect(Math.hypot(q[0] - d.x, q[1] - d.z)).toBeGreaterThanOrEqual(R - 1e-6);
       // Smooth: no sharp corners.
       for (let i = 2; i < pts.length; i++) {
         const u = [pts[i - 1][0] - pts[i - 2][0], pts[i - 1][1] - pts[i - 2][1]], v = [pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]];
