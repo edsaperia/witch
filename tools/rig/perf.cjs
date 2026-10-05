@@ -36,13 +36,15 @@ const pct = (a, p) => { const s = [...a].sort((x, y) => x - y); return s[Math.mi
         const src = wild[i % wild.length], a = (i * 2.399) % (Math.PI * 2), r = 4 + (i % 25) * 1.1;
         const c = { ...src, id: g.creatures.length, species: i % 2 ? "snake" : "wolf", x: w.x + Math.cos(a) * r, z: w.z + Math.sin(a) * r * 0.6, rest: 0, fight: undefined, charge: undefined };
         c.tx = c.x + Math.cos(a + 1.5) * 6; c.tz = c.z + Math.sin(a + 1.5) * 6; c.homeX = c.x; c.homeZ = c.z; c.anchorX = c.x; c.anchorZ = c.z;
-        g.creatures.push(c);
+        g.creatures.push(c); (window.__crowd ??= []).push({ c, dx: c.x - w.x, dz: c.z - w.z });
       }
       for (const c of wild) c.gone = true;
     }, COUNT);
     // let the parts and sprites arrive (the rig's come from the art workers)
     await page.waitForFunction(r => r === "0" || (window.witch.view.rig && window.witch.view.rig.stats.creatures >= window.witch.view.stats.creatures * 0.95), rig, { timeout: 600000, polling: 1000 }).catch(() => {});
     await page.waitForTimeout(3000);
+    // (they wandered while the parts baked: put them back round her, just before the timing)
+    await page.evaluate(() => { const g = window.witch.game; for (const { c, dx, dz } of window.__crowd) { c.gone = false; c.x = g.witch.x + dx; c.z = g.witch.z + dz; c.tx = c.x + dz * 0.3; c.tz = c.z - dx * 0.3; c.rest = 0; } });
     const r = await page.evaluate(async frames => {
       const w = window.witch, idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, dt = 1 / 60, out = { view: [], creatures: [], step: [], rigMs: [], drawn: 0, rigged: 0, instances: 0 };
       w.manual = true;
