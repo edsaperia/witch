@@ -486,7 +486,7 @@ describe("creatures", () => {
     expect(new Set(AREA_TYPES.map(t => t.creature)).size).toBe(30);
   });
 
-  it("start the same in every area (Ed, 2026-10-04): none at home but its legend, one baby and two adults elsewhere (Ed, 2026-10-05), and one legend in each", () => {
+  it("start the same in every area (Ed, 2026-10-04): none at home but its legend, one young and one adult elsewhere (Ed, 2026-10-05), and one legend in each", () => {
     expect(inCell(mx, my).filter(c => !c.boss)).toEqual([]);
     const S = TUNING.population.start;
     for (let cy = 0; cy < map.n; cy += 3) for (let cx = 0; cx < map.n; cx += 3) {
@@ -792,7 +792,7 @@ describe("the game clock and a whole step", () => {
 });
 
 describe("inviting and leashing", () => {
-  // (Every level to talk to: areas start with a baby and two adults, so a young is added to each.)
+  // (Every level to talk to: a baby, a young and an adult in each area.)
   const creatures = spawnCreatures(generateMap(123, withTuning({ population: { ...TUNING.population, start: { babies: 1, young: 1, adults: 1 } } })));
   const fresh = () => creatures.map(c => ({ ...c, rand: (() => { let k = c.id * 7 + 1; return () => (k = (k * 16807) % 2147483647) / 2147483647; })() }));
   const none: LeashControls = { sigil: false };
