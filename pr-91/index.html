@@ -72,15 +72,16 @@
     .bubble::after { content: ""; position: absolute; left: 50%; top: 100%; width: var(--px); height: var(--px); background: var(--ink); box-shadow: 0 var(--px) 0 var(--ink), calc(var(--px) * -1) calc(var(--px) * 2) 0 var(--ink); }
     .bubble canvas { display: block; image-rendering: pixelated; }
     .bubble.on { display: block; }
-    /* A sleeping legend's dream (the first quest): a rounder thought bubble, the sigil it wants in its level's variant. */
-    .bubble.dream { --ink: rgba(225, 215, 255, .85); padding: 4px 6px; transform-origin: 50% 100%; background: rgba(14, 10, 30, .72); border-radius: 12px; }
-    .bubble.dream::before { border-radius: 12px; border-width: 2px; }
-    .bubble.dream::after { width: 5px; height: 5px; border-radius: 50%; box-shadow: -5px 7px 0 -1px var(--ink); }
-    .bubble.dream canvas { width: 44px; height: 44px; margin: 0 auto; }
+    /* A sleeping legend's dream (the first quest): the same pixel bubble, a legend's size (--px by level:
+       bubblePx in src/render/leash.ts), darkly filled, holding the sigil it wants in its level's variant.
+       A nightmare (restless: #87) shows its one face (sad to angry) below the sigil, its ink reddening. */
+    .bubble.dream { --ink: rgba(225, 215, 255, .85); transform-origin: 50% 100%; display: flex; flex-direction: column; align-items: center; gap: var(--px); }
+    .bubble.dream::before { background: rgba(14, 10, 30, .62); z-index: -1; }
+    .bubble.dream.nightmare::before { background: rgba(40, 6, 12, .7); }
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
     .bubble .bar i { display: block; height: 100%; background: #ff7fd0; }
   </style>
-  <script type="module" crossorigin src="./assets/index-CJS6yCFh.js"></script>
+  <script type="module" crossorigin src="./assets/index-BAH6TVaM.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-jTHfrA97.css">
 </head>
 <body>
