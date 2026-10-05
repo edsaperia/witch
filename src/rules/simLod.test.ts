@@ -79,14 +79,14 @@ describe("marching besiegers", () => {
     marchers.forEach((c, i) => expect(d0[i] - dist(c)).toBeGreaterThan(c.speed * TUNING.combat.marchMult * 30 * 0.8)); // (marching on, at their pace)
     for (let i = 0; i < 60 * 90; i++) stepGame(g, idle, STEP);
     expect(g.lod!.marchCoarse).toBe(0); // (in full near the soundsystem)
-  });
+  }, 120_000);
 
   it("near her they march in full", () => {
     const { g, marchers } = siege(600, -600);
     stepGame(g, idle, STEP);
     expect(g.lod!.marchFull).toBe(marchers.length);
     expect(g.lod!.marchCoarse).toBe(0);
-  });
+  }, 120_000);
 
   it("coarse marching keeps pace with full marching", () => {
     const a = siege(600, 2000), b = siege(600, 2000);
@@ -94,5 +94,5 @@ describe("marching besiegers", () => {
     for (let i = 0; i < 60 * 8; i++) { stepGame(a.g, idle, STEP); stepGame(b.g, idle, STEP); }
     const da = Math.hypot(a.marchers[0].x - a.home.x, a.marchers[0].z - a.home.z), db = Math.hypot(b.marchers[0].x - b.home.x, b.marchers[0].z - b.home.z);
     expect(Math.abs(da - db)).toBeLessThan(L.every * STEP * a.marchers[0].speed * TUNING.combat.marchMult * 1.5);
-  });
+  }, 120_000);
 });

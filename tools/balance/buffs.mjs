@@ -3,15 +3,12 @@
 // gap (invites.perAnimalHitGap, 0.5 s) and other limits; then waves survived in the creature-state
 // model (src/rules/states.ts) with each build.
 //   node tools/balance/buffs.mjs [--seeds 4] [--gap 120] [--cap 60] [--skills 0.5,1] [--policies defend,leash] [--relics 0] [--no-sim]
-import { createServer } from "vite";
+import { openRules, arg, list, mean } from "./lib.mjs";
 
-const arg = (name, def) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : def; };
-const list = s => String(s).split(",");
 const SEEDS = +arg("seeds", 4), GAP = +arg("gap", 120), CAP = +arg("cap", 60), SKILLS = list(arg("skills", "0.5,1")).map(Number), POLICIES = list(arg("policies", "defend,leash"));
 const RELICS = arg("relics") !== undefined ? +arg("relics") : undefined;
 
-const server = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: "custom", logLevel: "error", optimizeDeps: { noDiscovery: true, include: [] } });
-const load = p => server.ssrLoadModule(p);
+const { load, close } = await openRules();
 const { throughput, crowdTime, INVITE_FIRE } = await load("/src/rules/throughput.ts");
 const say = s => console.log(s), t0 = Date.now();
 
@@ -60,8 +57,7 @@ if (!process.argv.includes("--no-sim")) {
   const { generateMap } = await load("/src/rules/map.ts");
   const { TUNING } = await load("/src/rules/tuning.ts");
   const { simulateStates } = await load("/src/rules/states.ts");
-  const mean = a => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN);
-  const maps = Array.from({ length: SEEDS }, (_, i) => generateMap(1000 + i * 7919, TUNING));
+    const maps = Array.from({ length: SEEDS }, (_, i) => generateMap(1000 + i * 7919, TUNING));
   const SIM = { "talk times (before 💌s)": null, "💌, no buffs": { buffs: [] }, "💌, Echo + Pierce + Big heart + Scamper": { buffs: BUILDS["Echo + Pierce + Big heart + Scamper"] }, "💌, worst stack": { buffs: WORST }, "💌, worst stack, at most 3 at once": { buffs: WORST, limits: { maxTargets: 3 } } };
   say(`**Waves survived in the state model: ${GAP} s waves, ${SEEDS} seeds, cap ${CAP}${RELICS !== undefined ? `, ${RELICS} relics` : ""}; her invites a run in brackets. Skill: her aim (talk times: her talk speed)**\n`);
   say("| build | " + POLICIES.flatMap(p => SKILLS.map(k => `${p} ×${k}`)).join(" | ") + " |");
@@ -77,4 +73,4 @@ if (!process.argv.includes("--no-sim")) {
   say("");
 }
 say(`(${((Date.now() - t0) / 1000).toFixed(0)} s)`);
-await server.close();
+await close();
