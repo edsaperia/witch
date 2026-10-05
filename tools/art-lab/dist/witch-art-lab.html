@@ -4475,6 +4475,13 @@ const AREAS = [
 // Set pieces for the areas that had none (Ed: "Make set pieces for the other areas too"), built in 3D: setpieces.js
 for (const [id, [kind, text]] of Object.entries(NEW_SET_PIECES)) { const A = AREAS.find(x => x.id === id); if (A && !A.set) { A.set = P(kind, { three: true }); A.text = { ...A.text, set: text }; } }
 const AREA_BY_ID = Object.fromEntries(AREAS.map(a => [a.id, a]));
+// Home's own look (Ed, 2026-10-05: "It should also have its own custom floor; a pleasant green meadow with flowers"; "It has party
+// decorations instead of trees"): not one of the creature area types (not in AREAS, so never rolled, no creature, no trees, no set
+// piece), only its fresh green floor and its wildflowers; the prototype scatters party decorations over it in place of trees.
+const HOME_AREA = { id: "home", name: "Home meadow", creature: null, by: "Ed", leaf: .29, floor: ["flowers", .28, .55, .56],
+  text: { floor: "a pleasant green meadow with flowers", small: "wildflowers", big: "party decorations instead of trees" },
+  small: [P("flowers")], big: [], home: true };
+AREA_BY_ID.home = HOME_AREA;
 
 // ---------------- layout: how each area's vegetation is arranged (data only) ----------------
 // Ed (2026-10-03, via the coordinator): every forest should feel different; much of that comes
