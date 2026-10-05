@@ -50,12 +50,6 @@ export class ActionBar {
     ACTION_BAR.forEach((s, i) => {
       const shade = this.shades[i], el = this.slots[i];
       if (s.action === "autoTalk") { el.style.borderColor = this.autoTalk ? "rgba(111,230,255,.9)" : "rgba(232,226,244,.35)"; el.style.opacity = this.autoTalk ? "1" : "0.55"; el.title = `1 / T: auto-talk ${this.autoTalk ? "on" : "off (hold Shift to talk)"}`; return; }
-      if (s.action === "sigil") { // (only on the ground: dimmed in the air)
-        const ok = W.body.mode === "ground" && !W.body.seated;
-        el.style.opacity = ok ? "1" : "0.5";
-        el.title = ok ? "E: put down / pick up a sigil" : "E: land to place a sigil";
-        return;
-      }
       if (!shade) return;
       const charge = s.action === "spell" ? spellCharge(W.spells, time) : dashCharge(W.dash, time);
       const on = s.action === "spell" ? spellActive(W.spells, time) : dashing(W.dash, time);

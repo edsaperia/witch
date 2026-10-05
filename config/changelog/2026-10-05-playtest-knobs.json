@@ -5,6 +5,6 @@
     "Try bigger areas and faster treetop flight: add ?areaSize=280&treetopSpeed=96 to the link (remembered on this browser); treetop speed also has a slider in the debug panel (~), with a reset",
     "Over the treetops the camera zooms out as treetop speed goes up, so the screen shows about the same few seconds of flight",
     "The clearing round each runestone is smaller and its edge much softer: the woods thin gradually all the way from the area's edge towards the stone, and small things (ferns, flowers, grass) still grow in the middle",
-    "Sigils only go down and come up on the ground: in the treetops the E button is greyed out, and pressing it says \"Land to place a sigil\""
+    "Sigils only go down and come up on the ground: in the treetops the E button does nothing"
   ]
 }

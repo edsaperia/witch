@@ -925,14 +925,13 @@ describe("inviting and leashing", () => {
     stepLeash(s, all, { sigil: true }, { x: 520 + gap, z: 500 }, true, 103, 0.1, TUNING);
     expect(s.events.map(e => e.kind)).toEqual(["fizzled"]);
     expect(s.stack).toEqual([a.c.id, c.c.id]);
-    // No placing from the treetops, and no picking up (Ed, 2026-10-05: "You have to land to place sigils"): the button just says so.
+    // No placing from the treetops, and no picking up (Ed, 2026-10-05: "You have to land to place sigils"): the button does nothing there.
     stepLeash(s, all, { sigil: true }, { x: 700, z: 700 }, false, 104, 0.1, TUNING);
     expect(s.stack).toEqual([a.c.id, c.c.id]);
-    expect(s.events.map(e => e.kind)).toEqual(["mustLand"]);
-    expect(s.mustLandAt).toBe(104); // (kept for the view's hint)
+    expect(s.events).toEqual([]);
     stepLeash(s, all, { sigil: true }, { x: 520, z: 500 }, false, 105, 0.1, TUNING); // over b's placed sigil, in the air
     expect(s.placed.map(p => p.id)).toEqual([b.c.id]);
-    expect(s.events.map(e => e.kind)).toEqual(["mustLand"]);
+    expect(s.stack).toEqual([a.c.id, c.c.id]);
   });
 
   it("is elastic: a creature walks to its new leash point, never jumps, then stays within the leash", () => {
