@@ -6,6 +6,10 @@
 // A size curve is four numbers, baby, young, adult and legend, each a multiplier on the species'
 // own proportion (or, for antlers, horns and tusks, their size outright).
 
+// The size curves the templates without their own share: an adult's and legend's heavier build
+// (every part thicker across) and the glowing motes round them.
+const TEMPLATE_SMALL_SIZES = { build: [1, 1, 1.18, 1.18], motes: [0, 0, 3, 9] };
+
 export const TEMPLATES = {
   quadruped: {
     name: "Four-legged", builders: ["quad"],
@@ -35,10 +39,10 @@ export const TEMPLATES = {
       motes: [0, 0, 3, 9],              // glowing motes round adults and legends
     },
   },
-  avian: { name: "Bird", builders: ["owl", "raven"], sockets: { wings: ["wing.folded", "wing.spirit"], head: ["head.round", "head.beak"] }, exclude: [], gait: { offsets: [0, .5], dutyWalk: .6, dutyRun: .4 } },
-  flyer: { name: "Flyer", builders: ["bat", "moth"], sockets: { wings: ["wing.membrane", "wing.scaled"] }, exclude: [], gait: { offsets: [], dutyWalk: 0, dutyRun: 0 } },
-  serpent: { name: "Serpent or worm", builders: ["snake", "glowworm"], sockets: { head: ["head.snake", "head.worm"], tailTip: ["tail.lantern"] }, exclude: [], gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
-  insectoid: { name: "Many-legged", builders: ["beetle", "spider", "woodlouse"], sockets: { head: ["jaw.stag", "eyes.cluster", "antenna"] }, exclude: [], gait: { offsets: [0, .5, 0, .5, 0, .5], dutyWalk: .6, dutyRun: .5 } }, // alternating tripods
-  squat: { name: "Squat", builders: ["toad", "hedgehog", "mole", "snail"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], gait: { offsets: [0, .5, .5, 0], dutyWalk: .7, dutyRun: .5 } },
+  avian: { name: "Bird", builders: ["owl", "raven"], sizes: { head: [.48, .36, .36, .36], headY: [.95, 1.08, 1.08, 1.08], build: [1, 1, 1.18, 1.18], motes: [0, 0, 3, 9] }, sockets: { wings: ["wing.folded", "wing.spirit"], head: ["head.round", "head.beak"] }, exclude: [], gait: { offsets: [0, .5], dutyWalk: .6, dutyRun: .4 } },
+  flyer: { sizes: TEMPLATE_SMALL_SIZES, name: "Flyer", builders: ["bat", "moth"], sockets: { wings: ["wing.membrane", "wing.scaled"] }, exclude: [], gait: { offsets: [], dutyWalk: 0, dutyRun: 0 } },
+  serpent: { sizes: TEMPLATE_SMALL_SIZES, name: "Serpent or worm", builders: ["snake", "glowworm"], sockets: { head: ["head.snake", "head.worm"], tailTip: ["tail.lantern"] }, exclude: [], gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
+  insectoid: { sizes: TEMPLATE_SMALL_SIZES, name: "Many-legged", builders: ["beetle", "spider", "woodlouse"], sockets: { head: ["jaw.stag", "eyes.cluster", "antenna"] }, exclude: [], gait: { offsets: [0, .5, 0, .5, 0, .5], dutyWalk: .6, dutyRun: .5 } }, // alternating tripods
+  squat: { sizes: TEMPLATE_SMALL_SIZES, name: "Squat", builders: ["toad", "hedgehog", "mole", "snail"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], gait: { offsets: [0, .5, .5, 0], dutyWalk: .7, dutyRun: .5 } },
 };
 export const TEMPLATE_IDS = Object.keys(TEMPLATES);

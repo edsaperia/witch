@@ -226,7 +226,7 @@ function antlers3d(m, q, b, side, size, has) { // size: its antler size curve at
 // ================= owl =================
 export function owl3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, young = false, baby = level === 0, has = f => legend && S.legend.includes(f), m = new Model();
-  const bob = frame ? .03 : 0, hr = baby ? .48 : young ? .42 : .36, hy = (baby ? .95 : 1.08) + bob;
+  const bob = frame ? .03 : 0, hr = S.sizes.head[level], hy = S.sizes.headY[level] + bob; // its template's size curves (art/genome/templates.js)
   // feet and a short tail
   for (const side of [-1, 1]) { const f = frame && side > 0 ? .04 : 0; m.seg([.05, .2, side * .14], [.08, .05 + f, side * .15], .07, .06, M.BODY2, { group: 2 }); for (const dz of [-.04, 0, .04]) m.ell([.16, .03 + f, side * .15 + dz], [.06, .025, .02], M.ACCENT, { group: 2 }); m.anchors.feet.push({ c: [.13, .04 + f, side * .15], r: .08, group: side > 0 ? 6 : 2 }); }
   m.ell([-.32, .32, 0], [.22, .06, .14], M.BODY2, { dir: [-1, -.6, 0], group: 3 });
@@ -253,10 +253,10 @@ export function owl3d(S, level, frame, st, facing = "towards") {
   if (has("eyesRing")) for (let i = 0; i < 7; i++) { const a = Math.PI * (.15 + i / 6 * .7); m.ell([Math.cos(a) * .2 - .1, hy + .1 + Math.sin(a) * .6, (i - 3) * .15], [.07, .07, .07], M.MAGIC2, { group: 95 + i, extra: true }); m.ell([Math.cos(a) * .2 - .05, hy + .1 + Math.sin(a) * .6, (i - 3) * .15], [.035, .035, .035], M.EYE, { group: 95 + i, extra: true }); }
   m.anchors.head = { c: [0, hy, 0], r: [hr, hr * .9, hr] };
   m.anchors.neck = { c: [0, hy - hr * .75, 0], r: hr * .85, dir: [0, 1, 0] };
-  if (level >= 2) beef(m, 1.18);
+  if (S.sizes.build[level] !== 1) beef(m, S.sizes.build[level]);
   gearUp(m);
   const sp = drawForm(m, { height: drawHeight(level, st, .95), facing }, S, level);
-  if (formMotes()) { if (legend) glowMotes(sp, 31); else if (level === 2) glowMotes(sp, 31, 3); }
+  if (formMotes() && S.sizes.motes[level]) glowMotes(sp, 31, S.sizes.motes[level]);
   return sp;
 }
 
@@ -267,10 +267,10 @@ const eyesOn = (m, c, r, dirs, size, mat, group = 1) => {
 };
 const shadow = (m, x, w) => m.ell([x, .005, 0], [w, .005, w * .6], M.NOSE, { group: 0 }); // a flyer's shadow on the ground
 function finish(m, S, level, st, k, facing) {
-  if (level >= 2) beef(m, 1.18); // the adult's and legend's heavier build
+  if (S.sizes.build[level] !== 1) beef(m, S.sizes.build[level]); // the adult's and legend's heavier build (its template's size curve)
   gearUp(m);
   const sp = drawForm(m, { height: drawHeight(level, st, k), facing }, S, level);
-  if (formMotes()) { if (level === 3) glowMotes(sp, S.id.length * 131); else if (level === 2) glowMotes(sp, S.id.length * 131, 3); }
+  if (formMotes() && S.sizes.motes[level]) glowMotes(sp, S.id.length * 131, S.sizes.motes[level]);
   return sp;
 }
 const crown3d = (m, c, w) => { m.ell(c, [w, w * .35, w], M.MAGIC, { group: 95, extra: true, paint: p => p[1] > c[1] ? M.MAGIC2 : undefined }); for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; m.ell(v3.add(c, [Math.cos(a) * w * .8, w * .55, Math.sin(a) * w * .8]), [w * .38, w * .12, w * .12], M.MAGIC, { dir: [0, 1, 0], up: [1, 0, 0], group: 96, extra: true }); } };
