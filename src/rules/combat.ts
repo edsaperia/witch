@@ -329,10 +329,13 @@ class Grid {
     for (const c of list) { const k = this.key(Math.floor(c.x / size), Math.floor(c.z / size)); let l = this.cells.get(k); if (!l) this.cells.set(k, (l = [])); l.push(c); }
   }
   private key(i: number, j: number) { return (i + 65536) * 131072 + (j + 65536); }
-  *near(x: number, z: number, r: number): Generator<Creature> {
-    const s = this.size;
+  /** Those in the cells round (x, z), in the same order as ever. (An array, not a generator: yielding
+   *  each one made an object for every creature looked at, a third of the rules' garbage late in a run.) */
+  near(x: number, z: number, r: number): Creature[] {
+    const s = this.size, out: Creature[] = [];
     for (let j = Math.floor((z - r) / s); j <= Math.floor((z + r) / s); j++)
-      for (let i = Math.floor((x - r) / s); i <= Math.floor((x + r) / s); i++) yield* this.cells.get(this.key(i, j)) ?? [];
+      for (let i = Math.floor((x - r) / s); i <= Math.floor((x + r) / s); i++) { const l = this.cells.get(this.key(i, j)); if (l) for (let k = 0; k < l.length; k++) out.push(l[k]); }
+    return out;
   }
 }
 
@@ -666,7 +669,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       }
       const burst = c.sprung !== undefined && time - c.sprung < (P.move?.time ?? 0) ? P.move?.speed ?? 1 : 1;
       const heading = headingOf(w, f.target), lights = P.fight.some(b => b.kind === "light") ? lightsNear(w, s, c, 40 * S) : undefined;
-      const may = steer(c, P, { px: p.x, pz: p.z, pr: p.r, want, range: A.range, speed: run * burst, time, dt, pack: packs.get(c.id) ?? null, neighbours: [...grid.near(c.x, c.z, 12 * S)], threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights });
+      const may = steer(c, P, { px: p.x, pz: p.z, pr: p.r, want, range: A.range, speed: run * burst, time, dt, pack: packs.get(c.id) ?? null, neighbours: grid.near(c.x, c.z, 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights });
       if (may && time >= f.readyAt) {
         f.windupUntil = time + A.windup; f.aimX = p.x; f.aimZ = p.z; // (it glides to a stop as it winds up: below)
         s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id });

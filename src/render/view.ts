@@ -77,9 +77,11 @@ void main(){ vUv = uv; gl_Position = clipOf(onGround((modelMatrix * vec4(positio
 
 export interface ForestLight { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number }
 
-/** A frame's CPU budget (ms) for the view, of which the work done ahead (the forest, the hills,
- *  ground tiles, art) gets whatever the frame's own work has left, each at least its floor. */
-const BACKGROUND_MS = 9;
+/** A frame's CPU budget (ms) for the view, drawing included, of which the work done ahead (the
+ *  forest, the hills, ground tiles, art) gets whatever the frame's own work and its drawing (as
+ *  the last frames' took) leave, each at least its floor. (It was 9 ms before the drawing: with
+ *  the drawing's few ms on top, a frame with work ahead ran long. Ed, 2026-10-05: spiky late in a run.) */
+const FRAME_MS = 11;
 /** The wave numbers' colour over areas the party has reached (spent). */
 const SPENT = new THREE.Vector3(0.7, 0.7, 0.8);
 
@@ -886,9 +888,10 @@ export class View {
       }
     }
     for (const [id, at] of this.evolvedAt) if (time - at > 1.2) this.evolvedAt.delete(id);
+    const V = this.lastView, VH = V ? V.half + 4 : Infinity; // (the scenery's square first: much cheaper than inView)
     for (const b of B.berries) {
       const p = B.bushes[b.bush];
-      if (Math.abs(p.x - w.x) > R || Math.abs(p.z - w.z) > R || !this.inView(p.x, p.z, 0.5, 1.2, 2)) continue;
+      if (Math.abs(p.x - w.x) > R || Math.abs(p.z - w.z) > R || (V && (Math.abs(p.x - V.x) > VH || Math.abs(p.z - V.z) > VH)) || !this.inView(p.x, p.z, 0.5, 1.2, 2)) continue;
       const at = this.regrewAt.get(b.id), grow = at === undefined ? 1 : Math.min(1, (time - at) / 0.5);
       if (grow <= 0.05) continue;
       items.push({ x: p.x, y: 0.75, z: p.z + 0.25, frame: f, flip: false, scale: grow });
@@ -1176,6 +1179,8 @@ export class View {
     return at ? { x: at.x - w.x, z: at.z - w.z } : null;
   }
   private aimRay = new THREE.Raycaster();
+  /** The drawing's CPU time (ms), eased over the last frames: the work ahead leaves room for it. */
+  private drawEst = 0;
 
   render(time: number, draw = true): void {
     this.ms = {}; this.lap = this.frameStart = performance.now();
@@ -1327,12 +1332,20 @@ export class View {
     this.actionBar.update(g, time);
     this.buffHud.update(g, time);
     // Tufts part round her and the three nearest creatures.
-    const parts = [{ x: w.x, z: w.z, r: 1.6 * (1 - canopyShown(w)) }, ...g.creatures.map(c => ({ x: c.x, z: c.z, r: Math.max(0.8, (this.leashView.tops.get(c.id) ?? 1.6) * 0.75), d: Math.hypot(c.x - w.x, c.z - w.z) })) /* parting by its drawn size (#47) */.filter(c => c.d < t.groundCover.radius).sort((a, b) => a.d - b.d).slice(0, 3)];
+    // (only those within reach made into objects: mapping every creature, a thousand late in a run, every frame was much of the frame's garbage)
+    const near: { x: number; z: number; r: number; d: number }[] = [], GR = t.groundCover.radius;
+    for (const c of g.creatures) {
+      const dx = c.x - w.x, dz = c.z - w.z;
+      if (Math.abs(dx) >= GR || Math.abs(dz) >= GR) continue;
+      const d = Math.sqrt(dx * dx + dz * dz);
+      if (d < GR) near.push({ x: c.x, z: c.z, r: Math.max(0.8, (this.leashView.tops.get(c.id) ?? 1.6) * 0.75), d }); // parting by its drawn size (#47)
+    }
+    const parts = [{ x: w.x, z: w.z, r: 1.6 * (1 - canopyShown(w)) }, ...near.sort((a, b) => a.d - b.d).slice(0, 3)];
     // No tufts over a placed sigil's rune (Ed, v233): trampled out to groundCover.sigilClear, or the rune's own size.
     const clear = g.leash.placed.map(p => ({ x: p.x, z: p.z, r: Math.max(t.groundCover.sigilClear, (3 + g.creatures[p.id].level * 0.8) * 0.45) }));
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
-    const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => this.inView(x, z, ww, hh, 4), this.worldFires);
+    const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => this.inView(x, z, ww, hh, 4), this.worldFires, this.lastView);
     if (t.bare) { this.dancefloor.update(time, this.ground, g); this.setLights([], w.x, w.z); } else this.setLights([this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...this.forestLights], w.x, w.z);
     this.time("grass+lights");
     LIGHT_UNIFORMS.uTime.value = time;
@@ -1458,7 +1471,7 @@ export class View {
     // Work done ahead, a little each frame, out of what's left of the frame's budget (Ed, v256:
     // boosting over the treetops dropped frames when a rebuild, the hills' window moving and
     // these all fell in one frame). Each gets at least its floor, so all keep up at full boost.
-    let spare = BACKGROUND_MS - (performance.now() - this.frameStart);
+    let spare = FRAME_MS - (performance.now() - this.frameStart) - this.drawEst;
     const give = (most: number, floor: number) => Math.max(floor, Math.min(most, spare));
     const took = (from: number) => { spare -= performance.now() - from; };
     let t0 = performance.now();
@@ -1485,6 +1498,7 @@ export class View {
     if (t.bare) this.hideForBare();
     this.post.render(this.scene, this.camera);
     this.time("draw");
+    this.drawEst += (Math.min(8, this.ms.draw) - this.drawEst) * 0.1; // (eased; a stalled frame counts for at most 8 ms)
     // Anything set but not drawn (three.js capping a batch's instances) is a bug: count and log it.
     let dropped = 0;
     for (const b of [...this.typeBatches.values(), ...this.creatureBatches.values(), this.propBatch, this.soundBatch, ...(this.speakerBatch ? [this.speakerBatch] : [])]) dropped += b.dropped;

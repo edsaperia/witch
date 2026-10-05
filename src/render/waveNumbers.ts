@@ -107,7 +107,7 @@ export class WaveNumbers {
     }
     this.geo.instanceCount = n;
     this.mesh.visible = n > 0;
-    this.at.needsUpdate = this.col.needsUpdate = this.off.needsUpdate = true;
+    for (const a of [this.at, this.col, this.off]) { a.clearUpdateRanges(); a.addUpdateRange(0, n * a.itemSize); a.needsUpdate = true; } // (only those in use)
     this.mat.uniforms.uSize.value = size;
     this.mat.uniforms.uAspect.value = aspect;
   }

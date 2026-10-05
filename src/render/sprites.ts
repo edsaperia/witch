@@ -410,7 +410,9 @@ export class SpriteBatch {
       F[i * 4] = it.flip ? 1 : 0; F[i * 4 + 1] = it.top ? 1 : it.cut ? -it.cut : 0; F[i * 4 + 2] = it.fresh ? 1 : 0; F[i * 4 + 3] = (it.frame.masked ? -1 : 1) * (it.sway ?? 0);
       G[i] = it.glow ?? 0;
     });
-    for (const a of [this.pos, this.size, this.uvs, this.flags, this.glow]) a.needsUpdate = true;
+    // Only the instances in use go to the GPU (the buffers keep their largest size, often twice
+    // what's drawn: a whole one every frame was much of the frame's uploading). Nothing set, nothing sent.
+    if (items.length) for (const a of [this.pos, this.size, this.uvs, this.flags, this.glow]) { a.clearUpdateRanges(); a.addUpdateRange(0, items.length * a.itemSize); a.needsUpdate = true; }
     this.count = items.length;
     this.geo.instanceCount = items.length;
     for (const m of this.meshes) m.visible = items.length > 0;
