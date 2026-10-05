@@ -11,7 +11,7 @@
 import * as Art from "../../art/generator.js";
 import type { Style } from "../render/style";
 
-type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpackSize?: number; [k: string]: unknown };
+type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpackSize?: number; [k: string]: unknown };
 
 const AXES = Art.WITCH_AXES as Record<string, unknown[] | [number, number]>;
 const CLASSIC = Art.WITCH_GENOME as unknown as Genome;

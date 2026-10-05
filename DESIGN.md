@@ -158,7 +158,7 @@ Decided in a long design session with the coordinator; built in stages, with a p
 - **Music:** one track; louder and clearer near playing soundsystems, muffled in the deep forest, distorted by damage nearby.
 - **Spells:** one chosen per run from a list unlocked across runs, used on a cooldown. The list includes spells, placed items (buff totem, knockback bomb), speed boots and instant evolve. The first is the speed boost.
 - **Legends,** while happy, each give the witch a unique buff.
-- **Controls** (Ed, 2026-10-04: MOBA style): movement on the arrow keys, actions on **1 2 3 4 Q W E R**: Q spell, W dash, E sigil, R cycle, 1–4 for later spells, items and totems, shown on an action bar with their recharge; space rises or descends. Talking is automatic (Ed, v244). Feeding is automatic: party animals eat berries near them.
+- **Controls** (Ed, 2026-10-04: MOBA style; remapped 2026-10-05: "WASD and mouse. right click is dodge, q is up/down, e is place sigil/cycle"): **WASD** moves (the arrow keys too), the **mouse** aims and left click throws 💌s, **right click** dodges (the dash; Space too), **Q** rises or lands, **E** puts down a sigil or cycles them, **R** the spell, 1–4 for later spells, items and totems, shown on an action bar with their recharge. Talking is automatic (Ed, v244). Feeding is automatic: party animals eat berries near them.
 - **Combat** (later stages):
   - **Sides:** wild and party animals fight each other with one shared system. No friendly fire. Wild creatures attack the witch on the ground (Ed, 2026-10-04: see The witch). **Same kind never fights same kind**, whichever side, always (Ed, 2026-10-04: even at a soundsystem): inviting doesn't start fights inside a group, and your wolves can't defend against wild wolves. Mixed defences are the puzzle.
   - **Level-ups:** babies don't attack. Young have one attack; adults a stronger one plus a second ability or modifier; legends one slow, powerful signature move.
@@ -356,6 +356,15 @@ This replaces the legend rules in "Sleeping legends" and "The first quest" below
 
 - **Relics:** `relics.count` (4) giant half-buried party objects per map (the art builder's party relics), in areas at least `minRemoteness` from home and `spacing` areas apart. On the ground, the sigil button by one picks it up (it's a relic sigil in her stack, `leash.relics`); carrying one, the sigil button by a sleeping legend puts it down there.
 - **Attacks** (angry and happy alike; Ed: long range, slow, less damage): a legend never leaves its area, standing where it lay, but reaches `attack.range` (420 m, 2 to 3 areas). Every `interval` (15 s) it winds up for `windup` (2.2 s), then lobs a bomb (landing after `lobFlight` 3 s, `lobRadius` 8 m) or fires a beam (`beamWidth` 3 m, `beamTime` 1.6 s), by species (`beam` lists the beamers), at up to `targets` (3) of the nearest, `damage` (10) a hit. Its health is 480; a happy one heals to whole over `healTime` (2 min) when nothing's near. (The balance builder's values, #80: legend damage is the game's most sensitive knob.) Angry legends' shots are the wild's (her, her posse), happy ones' the happy's (the enraged).
+- **The long charge** (Ed, 2026-10-05: "charging legends do long distance charges knocking away everything in the way... but they'd have to go back to their area after each one"; "medium speed (they're huge, and heavy), and they have a big slowdown arc afterwards. They can curve somewhat as they charge to hit their target"). The charging legends (`charge.species`: boar, elk, stag, ram, hedgehog, woodlouse, those whose fight move is a charge; Ed to confirm) charge instead of lobbing or beaming, in `config/legends.json` `charge`:
+  - **Telegraph:** head down for `windup` (2.5 s), its first lane shown on the ground (`laneShown` 60 m, `laneWidth` 6 m), brightening.
+  - **The run:** building speed (`accel` 9 m/s²) to a medium top `speed` (24 m/s, a little above her run), curving toward its target at up to `turn` (24°/s): a sharp sidestep or a blink beats it, drifting doesn't. It runs straight through scenery, till it's past its target or out of `attack.range`.
+  - **The slowdown:** it doesn't stop dead. It brakes over `brake` (30 m), turning wide at `arc` (55°/s), overshooting.
+  - **What it hits:** everything in its lane but its own side and its own kind, once each, run or slowdown: `damage` (10), knocked aside `knockback` (9 m, less as it slows); the witch loses her one point and is thrown aside and staggered as by any ram (`witch.knock`, #108). Angry, that's her, her posse and the wild alike; happy, it charges at besiegers and tramples only what isn't hers or happy.
+  - **Then home:** it walks back to where it lay at `returnSpeed` (6 m/s, its fight run), and only there, after `rest` (2 s), may it charge again: the trip home is its real cooldown. Out of its area meanwhile, it's worn down by the normal rule (Ed: "same as anywhere else").
+  - Legends are too huge and heavy to be knocked about themselves.
+  - Ruts of churned ground show where it ran, fading over 12 s.
+- **Long range only** (Ed, 2026-10-05: "close up move set - stick with the long range one for now, we can see in playtesting"): legends fight only with their long-range attack (or the long charge), near or far, on its normal timing. The close-up move sets (slam, nova, charge; spin in phase 2) stay in the code and data, off by `closeMoves: false`.
 - **Worn down** (its health gone, angry or happy): it goes back to sleep; a buff she has from it is kept ("losing buffs feels bad": buffs once earned are never taken away). Enraged animals within `attack.wornReach` (40 m) go for a happy legend.
 - **For the view:** `c.legendState` (asleep, restless, angry, happy), `c.restlessness`, `c.questOpen` (its dream shows while true), `c.buffed`, `g.relics` (`state`: lying, carried, used; `kind`: the art's party relic id), `g.leash.relics`; leash events `relicPicked` and `relicPlaced`.
 
@@ -376,7 +385,7 @@ This replaces the legend rules in "Sleeping legends" and "The first quest" below
 - **Happy, it joins the party in its area and gives its buff.**
   - It stays in its own area: not on her leash or her stack.
   - Its legend buff is on while it's happy.
-  - **It fights incoming sieges** (Ed, 2026-10-04). It guards its area like a parked party animal with a large guard radius (`wildLegends.guard`, 40 m round its area's centre). It takes on wild attackers entering its area, especially sieges marching on its soundsystem or through its area to others, with its legend move set (slam, nova, charge; spin in phase 2).
+  - **It fights incoming sieges** (Ed, 2026-10-04). It guards its area like a parked party animal with a large guard radius (`wildLegends.guard`, 40 m round its area's centre). It takes on wild attackers entering its area, especially sieges marching on its soundsystem or through its area to others, with its legend move set (slam, nova, charge; spin in phase 2). (Since Ed, 2026-10-05: with its long-range attack instead, `legends.closeMoves` off.)
   - Defaults until Ed rules otherwise: it heals `wildLegends.heal` hp a second while no enemy is near. If beaten, it sinks back to sleep for good and its buff ends, like a defeated legend.
   - A legend becomes happy through its quest (The first quest, below); the debug key **O** also makes the nearest one happy.
   - **Home has no legend** (Ed, 2026-10-05: "Home area shouldn't have a legend"; "no home starting buff"): she starts every run with no buff.
@@ -430,7 +439,7 @@ This replaces the legend rules in "Sleeping legends" and "The first quest" below
 ## Camera and controls
 
 - **Fixed camera angle**. Zooming in and out may change the angle, and ground mode and treetop mode may have different angles.
-- **Gamepad** is the model. Everything should work with **the arrow keys and a few action buttons** (MOBA style, Ed 2026-10-04: actions on 1 2 3 4 Q W E R), and so also with a **touch joystick and buttons** on phones.
+- **Gamepad** is the model. Everything should work with **WASD, the mouse and a few action keys** (MOBA style, Ed 2026-10-04; remapped 2026-10-05: right click dodge, Q up/down, E sigil, R spell), and so also with a **touch joystick and buttons** on phones.
 
 ## Look
 

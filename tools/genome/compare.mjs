@@ -3,7 +3,7 @@
 // node tools/genome/compare.mjs <dir of a checkout of the old art> : every creature sprite the old art and this draw, compared.
 const BEFORE = process.argv[2]; if (!BEFORE) { console.log("usage: node tools/genome/compare.mjs <old checkout dir>"); process.exit(2); }
 const [O, N] = await Promise.all([import(BEFORE.replace(/\/$/, "") + "/art/generator.js"), import(new URL("../../art/generator.js", import.meta.url))]);
-const st = N.defaultStyle();
+const st = N.defaultStyle(); if (process.env.TEXTURE === "0") st.texture = 0; // TEXTURE=0: the new art with its surface texture off (genome/texture.js)
 let n = 0, bad = 0;
 const gears = [null, { collar: [255, 0, 200], hat: 1, glasses: "star", shoes: "glitter" }, { woken: true }];
 for (const s of O.SPECIES) for (let level = 0; level < 4; level++) for (const frame of [0, 1]) for (const facing of ["towards", "away"]) for (const gear of gears) {
