@@ -19,11 +19,11 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { openBrowser } from "../../art/headless.mjs";
 
-const [area = "ancient", outDir = "docs/art-guide/ladder", artSet = ""] = process.argv.slice(2);
+const [area = "ancient", outDir = "docs/art-guide/ladder", artSet = "", evolve = ""] = process.argv.slice(2); // evolve: species ids from evolutions.js to show evolved, beside today's
 mkdirSync(outDir, { recursive: true });
 const b = await openBrowser();
 await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
-const pngs = await b.page.evaluate(async ({ area, artSet }) => {
+const pngs = await b.page.evaluate(async ({ area, artSet, evolve }) => {
   const G = await import("/art/generator.js"), { shade } = await import("/art/lighting.js");
   const base = { ...G.defaultStyle(), ...(artSet ? { artSet } : {}) };
   const mk = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
@@ -136,6 +136,19 @@ const pngs = await b.page.evaluate(async ({ area, artSet }) => {
   const S = 3, gap = 10, lab = 22; // each rung draws at its own pixel size: screen px per art px, as in the game
   const legendRow = { d: { label: "The legend at rungs 0, 4 and 6" }, k: 1, row: [0, 4, 6].map(i => ({ ...drawn[i].creatures[3], scale: drawn[i].pixel })) };
   const bands = drawn.map(d => { const k = d.pixel, row = [...d.creatures.slice(0, 3), d.witch, null, ...d.trees, null, ...d.props]; const w = row.reduce((a, s) => a + (s ? s.w * k : 30) + gap, gap); const h = Math.max(...row.filter(Boolean).map(s => s.h * k)) + lab + gap * 2; return { d, k, row, w, h }; });
+  // evolved designs (tools/art-iterations/evolutions.js): today's species and its evolved design, both at rung 6, every level
+  if (evolve) {
+    const { EVOLVED } = await import("/tools/art-iterations/evolutions.js");
+    for (const id of evolve.split(",")) {
+      const rec = EVOLVED[id]; if (!rec) continue;
+      G.SPECIES_BY_ID[rec.id] = G.speciesOf(rec);
+      const st6 = { ...base, pixel: 4 }, fin = bk => stylise(bk, { tones: 3, shift: "ref", strong: true, interior: true, clusters: true });
+      for (const [label, sid] of [[`Today's ${id}, rung 6: baby, young, adult, legend`, id], [`${rec.name}, rung 6: each level its own design`, rec.id]]) {
+        const row = [0, 1, 2, 3].map(l => ({ ...fin(G.bake(G.critter(sid, l, 0, st6), G.speciesColours(sid, st6), st6, "none")), scale: 4 }));
+        bands.push({ d: { label }, k: 4, row, w: row.reduce((a, s2) => a + s2.w * 4 + gap, gap), h: Math.max(...row.map(s2 => s2.h * 4)) + lab + gap * 2 });
+      }
+    }
+  }
   { const row = legendRow.row; legendRow.w = row.reduce((a, s) => a + s.w * s.scale + gap, gap); legendRow.h = Math.max(...row.map(s => s.h * s.scale)) + lab + gap * 2; bands.push(legendRow); }
   const W = Math.max(...bands.map(x => x.w)), H = bands.reduce((a, x) => a + x.h, 0), sheet = mk(W, H), g = sheet.getContext("2d");
   g.imageSmoothingEnabled = false;
@@ -161,7 +174,7 @@ const pngs = await b.page.evaluate(async ({ area, artSet }) => {
     n.fillStyle = "#c8c0e0"; n.font = "15px monospace"; n.textBaseline = "top"; n.fillText(d.label + " (night)", ox, oy + 2);
   });
   return { ladder: sheet.toDataURL("image/png"), night: night.toDataURL("image/png") };
-}, { area, artSet });
+}, { area, artSet, evolve });
 for (const [k, url] of Object.entries(pngs)) {
   const f = `${outDir}/${area}-${k}.png`;
   writeFileSync(f, Buffer.from(url.split(",")[1], "base64"));

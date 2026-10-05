@@ -72,6 +72,25 @@ The ladder's rung 6 shows only the rendering half: palette, cel, outline and clu
 - **Props, ground and set pieces:** the same bake pass, and flat ground tiles in 3 tones with deliberate texture clusters.
 - **The game's shader:** today it bands the light with a checker dither. Under rung 2 and above, the bands come from the baked tones and the shader only adds coloured light, without re-banding.
 
+## 0b. Each level is an evolution, not a scaled copy (Ed, 2026-10-05)
+
+"I would emphasise the exaggerated silhouettes and the evolved design per stage (not just being larger) - the creatures, especially adult and legendary, can be quite fantastic with lots of details; not just 'large versions of the creature'."
+
+- **Every level gains new features and pushes its silhouette.** For example:
+  - the baby is round and simple;
+  - the young is lean;
+  - the adult is heavy, with its key feature pushed hard (a hump, horns, a mane);
+  - the legend is fantastic: extra or reshaped horns and tusks, manes, crests, armour, spines, glowing markings, tail flourishes, and elemental wisps of its area.
+- **The species stays readable at every level**, and the legend carries its area's story.
+- **The briefs** for the batch 1 species, plus wolf and owl, are in `docs/art-guide/EVOLUTIONS.md`.
+- **What the generator must support:**
+  - per-level genome changes (a `levels` patch and per-level `features`; a first opt-in version is in `quad3d`);
+  - a parts kit by socket with size curves by level;
+  - area-tied flourishes as parts;
+  - posture per level that keeps the face readable;
+  - markings per level as parts.
+- **Check:** at each level step, a species' silhouette should differ from the previous level scaled to the same height, by a minimum distance (the silhouette check, applied within a species).
+
 ## 1. Review an area as a set
 
 - **Judge an area as one picture.** Look at its creature at every level, its trees and props, its sleeping legend and the witch together. Use the set sheet (`tools/art-iterations/sheets.mjs`) and both in-game views (ground and treetops). A creature that looks good alone can still clash with its trees, and a tree can read well in isolation but turn neon in a clump.
