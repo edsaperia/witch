@@ -227,10 +227,16 @@ export class LeashView {
       const need = toEvolve(c.level, t), ate = B.ateAt.get(c.id);
       if (!Number.isFinite(need)) continue;
       if (Math.hypot(c.x - w.x, c.z - w.z) > 20 && !(ate !== undefined && time - ate < 3)) continue;
-      const fed = B.fed.get(c.id) ?? 0, n = 28;
-      for (let i = 0; i < n; i++) {
-        const a = Math.PI / 2 - (i / n) * Math.PI * 2, lit = i / n < fed / need;
-        this.flat.add(c.x + Math.cos(a) * 1.5, 0, c.z + Math.sin(a) * 1.1, 0.35, dot, lit ? 1 : 0.9, lit ? 0.25 : 0.9, lit ? 0.3 : 1, lit ? 0.9 : 0.15);
+      // One segment for each berry it needs (Ed, 2026-10-05: "segment the ring"), small gaps
+      // between, clockwise from the top; each berry eaten lights one (the newest flashes).
+      const fed = B.fed.get(c.id) ?? 0, segs = Math.max(1, Math.ceil(need)), per = Math.max(2, Math.round(28 / segs)), gap = segs > 1 ? Math.min(0.35, 0.9 / segs) : 0;
+      const flash = ate !== undefined && time - ate < 0.6 ? 1 - (time - ate) / 0.6 : 0;
+      for (let s = 0; s < segs; s++) {
+        const lit = s < fed, newest = lit && s === Math.ceil(fed) - 1;
+        for (let i = 0; i < per; i++) {
+          const f = (s + gap / 2 + (1 - gap) * (per > 1 ? i / (per - 1) : 0.5)) / segs, a = Math.PI / 2 - f * Math.PI * 2, b = newest ? flash : 0;
+          this.flat.add(c.x + Math.cos(a) * 1.5, 0, c.z + Math.sin(a) * 1.1, 0.35 + b * 0.2, dot, lit ? 1 : 0.9, lit ? 0.25 + b * 0.6 : 0.9, lit ? 0.3 + b * 0.5 : 1, lit ? 0.9 : 0.15);
+        }
       }
     }
     // Evolving: motes spiralling up round it through the bar, quicker and tighter toward the line.

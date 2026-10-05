@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { feed, newBerries, stepBerries, toEvolve, type BerryState } from "./berries";
+import { feed, newBerries, stepBerries, toEvolve, type BerryState, berryCounts } from "./berries";
 import { LEGEND, spawnCreatures, type Creature, type Level } from "./creatures";
 import { invitable, leashSpeed, newLeash } from "./leash";
 import { generateMap } from "./map";
@@ -25,7 +25,7 @@ const run = (s: BerryState, cs: Creature[], points: Map<number, { x: number; z: 
 
 describe("berries and evolving", () => {
   it("every area has perArea berries, one per bush, and the same seed gives the same berries", () => {
-    const s = newBerries(map, t), [lo, hi] = t.berries.perArea;
+    const s = newBerries(map, t), [lo, hi] = berryCounts(map, t).perArea; // (scaled to the areas' size)
     bushesOk(s);
     const per = new Map<string, number>();
     for (const b of s.berries) { const c = map.areaAt(s.bushes[b.bush].x, s.bushes[b.bush].z).cell.join(","); per.set(c, (per.get(c) ?? 0) + 1); }

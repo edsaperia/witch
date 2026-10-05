@@ -7,6 +7,8 @@ export interface Tuning {
   mapAreas: number;
   areaSize: number;
   areaScale: number;
+  /** Each area's fighting arena: open ground radius metres round its centre and soundsystem, trees thickening over edge metres beyond (both times fight.scale); bushes: the share of the undergrowth left inside it. */
+  arena?: { radius: number; edge: number; bushes: number };
   areaSizeVariance: number;
   borderLayers: number;
   treeDensity: number;
