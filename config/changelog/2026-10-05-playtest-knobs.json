@@ -1,0 +1,7 @@
+{
+  "version": null,
+  "items": [
+    "Try bigger areas and faster treetop flight: add ?areaSize=280&treetopSpeed=96 to the link (remembered on this browser); treetop speed also has a slider in the debug panel (~), with a reset",
+    "Over the treetops the camera zooms out as treetop speed goes up, so the screen shows about the same few seconds of flight"
+  ]
+}
