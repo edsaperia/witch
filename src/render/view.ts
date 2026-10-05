@@ -1445,7 +1445,7 @@ export class View {
         });
       };
       // Pausing holds the countdown; while home boots up, the next ring fills with the boot.
-      cue(this.nextStones, g.party.next, () => new StoneIndicator(document.body), cd.booting ? cd.boot : cd.gone, cd.booting ? `booting ${Math.ceil(cd.bootLeft)} s` : undefined);
+      cue(this.nextStones, g.party.next, () => new StoneIndicator(document.body), cd.booting ? cd.boot : cd.gone, cd.booting ? `booting ${mmss(cd.bootLeft)}` : undefined);
       cue(this.afterNextStones, g.party.afterNext, () => new StoneIndicator(document.body, 2.5, 0.6), cd.booting ? 0 : cd.gone * 0.5);
     }
     this.time("hud");
@@ -1493,3 +1493,6 @@ export class View {
     this.stats.gameplay = this.stats.creatures + this.propBatch.count + this.soundBatch.count;
   }
 }
+
+/** Seconds as "4:59" from a minute up, "42 s" under. */
+function mmss(s: number): string { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; }
