@@ -93,7 +93,8 @@ function nearest(creatures: Creature[], x: number, z: number, within: number, le
   return best;
 }
 
-export function invite(s: LeashState, c: Creature, x: number, z: number, time: number): void {
+/** Invite it: leashed to her, for good (#87), its sigil on the bottom of the stack (the 💌's second step: rules/invites.ts). */
+export function inviteCreature(s: LeashState, c: Creature, x: number, z: number, time: number): void {
   c.leashed = true; c.state = "leashed"; c.affection = undefined; c.dazed = false; c.dazedUntil = undefined;
   c.rest = 0;
   c.wanderTo = undefined; c.siege = undefined; c.fight = undefined;
@@ -134,7 +135,7 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     // A chat done (#87, until the 💌s land): a wild one becomes happy and stays in its area; a happy one (asked again) is leashed.
     if (!s.talk!.refused && s.talk!.t >= s.talk!.total) {
       if (stateOf(cur!) === "wild") { befriend(cur!, time); s.events.push({ kind: "befriended", id: cur!.id, x: cur!.x, z: cur!.z, at: time }); }
-      else invite(s, cur!, cur!.x, cur!.z, time);
+      else inviteCreature(s, cur!, cur!.x, cur!.z, time);
       s.progress.delete(cur!.id); s.talk = null;
     }
   } else {
@@ -152,7 +153,7 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
 
   if (c.inviteNearest) {
     const n = nearest(creatures, witch.x, witch.z, Infinity);
-    if (n) invite(s, n, n.x, n.z, time);
+    if (n) inviteCreature(s, n, n.x, n.z, time);
   }
 
   // The sigil button (Ed, 2026-10-05: "pressing E in treetop mode cycles your sigils... and then you

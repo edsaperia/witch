@@ -1,7 +1,8 @@
 // Gathers the player's input from keyboard, gamepad and touch into one set of controls per frame.
 // The bindings are all in KEYS and PAD below (Ed, 2026-10-04: MOBA style, movement on the arrow
 // keys and actions on 1 2 3 4 Q W E R). Touch: the joystick and buttons in ui/touch.ts write into
-// `touch`. (No Talk button: she talks to creatures in range by herself, Ed v244.)
+// `touch`. The 💌 (issue #87) is aimed twin-stick: the cursor (a click fires) or the right stick (a
+// trigger fires); 1 fires toward the cursor; on touch, its button fires the way she's going.
 import type { Controls } from "../rules/game";
 
 /** Keyboard bindings: each action and the keys (KeyboardEvent.code) that do it. */
@@ -10,7 +11,8 @@ export const KEYS = {
   rise: ["Space"],
   spell: ["KeyQ"], dash: ["KeyW"], sigil: ["KeyE"],
   // Auto-talk on or off (Ed's playtest, 2026-10-04); with it off, she talks while Talk is held.
-  autoTalk: ["KeyT", "Digit1"], talk: ["ShiftLeft", "ShiftRight"],
+  autoTalk: ["KeyT"], talk: ["ShiftLeft", "ShiftRight"],
+  invite: ["Digit1"],
   slot1: ["Digit1"], slot2: ["Digit2"], slot3: ["Digit3"], slot4: ["Digit4"],
   zoomIn: ["KeyZ", "Equal", "NumpadAdd"], zoomOut: ["KeyX", "Minus", "NumpadSubtract"],
   debug: ["Backquote"],
@@ -20,17 +22,17 @@ export const KEYS = {
 
 /** The action bar's eight slots, in order, and what each holds (null: empty, for later spells,
  *  items and totems). */
-export const ACTION_BAR: { key: string; code: string; action: "spell" | "dash" | "sigil" | "autoTalk" | null }[] = [
-  { key: "1", code: "Digit1", action: "autoTalk" }, { key: "2", code: "Digit2", action: null }, { key: "3", code: "Digit3", action: null }, { key: "4", code: "Digit4", action: null },
+export const ACTION_BAR: { key: string; code: string; action: "spell" | "dash" | "sigil" | "autoTalk" | "invite" | null }[] = [
+  { key: "1", code: "Digit1", action: "invite" }, { key: "2", code: "Digit2", action: null }, { key: "3", code: "Digit3", action: null }, { key: "4", code: "Digit4", action: null },
   { key: "Q", code: "KeyQ", action: "spell" }, { key: "W", code: "KeyW", action: "dash" }, { key: "E", code: "KeyE", action: "sigil" }, { key: "R", code: "KeyR", action: null },
 ];
 
 /** Gamepad bindings (standard mapping button numbers): left stick or d-pad moves. */
-export const PAD = { rise: [3], dash: [0], spell: [1], sigil: [2], zoomOut: [4, 6], zoomIn: [5, 7], debug: [8] } as const;
+export const PAD = { rise: [3], dash: [0], spell: [1], sigil: [2], zoomOut: [4], zoomIn: [5], invite: [6, 7], debug: [8] } as const;
 
 const GAME_KEYS = new Set<string>(Object.values(KEYS).flat());
 
-export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean; nextWave?: boolean; pauseWaves?: boolean; sigil?: boolean; spell?: boolean; dash?: boolean; /** The action bar's auto-talk slot was clicked. */ autoTalk?: boolean }
+export interface TouchInput { x: number; y: number; toggle: boolean; zoom: number; debug: boolean; nextWave?: boolean; pauseWaves?: boolean; sigil?: boolean; spell?: boolean; dash?: boolean; /** The action bar's auto-talk slot was clicked. */ autoTalk?: boolean; /** The 💌 button is down. */ invite?: boolean }
 
 export class Input {
   private keys = new Set<string>();
@@ -40,6 +42,11 @@ export class Input {
   /** Any key, click, touch or button: used by the start screen, which returns true when the
    *  press started the game, so that press does nothing else. */
   onAny: (() => boolean) | null = null;
+  /** The 💌's aim from the cursor: the world direction from her to the ground under (clientX, clientY). */
+  aimFrom: ((clientX: number, clientY: number) => { x: number; z: number } | null) | null = null;
+  private pointer: { x: number; y: number } | null = null;
+  private mouseDown = false;
+  private mouseClicked = false;
 
   constructor(target: Window = window) {
     target.addEventListener("keydown", e => {
@@ -49,7 +56,16 @@ export class Input {
       if (!this.onAny?.()) this.pressed.add(e.code);
     });
     target.addEventListener("keyup", e => this.keys.delete(e.code));
-    target.addEventListener("blur", () => this.keys.clear());
+    target.addEventListener("blur", () => { this.keys.clear(); this.mouseDown = false; });
+    // The mouse: where the cursor is, and the left button over the game (not its panels and buttons).
+    target.addEventListener("pointermove", e => { if (e.pointerType === "mouse") this.pointer = { x: e.clientX, y: e.clientY }; });
+    target.addEventListener("pointerdown", e => {
+      if (e.pointerType !== "mouse" || e.button !== 0 || (e.target as HTMLElement | null)?.tagName !== "CANVAS") return;
+      this.pointer = { x: e.clientX, y: e.clientY };
+      if (this.onAny?.()) return;
+      this.mouseDown = true; this.mouseClicked = true;
+    });
+    target.addEventListener("pointerup", e => { if (e.pointerType === "mouse" && e.button === 0) this.mouseDown = false; });
   }
 
   private isGameKey(code: string): boolean { return GAME_KEYS.has(code); }
@@ -73,6 +89,11 @@ export class Input {
     let debug = p(KEYS.debug);
     let sigil = p(KEYS.sigil), spell = p(KEYS.spell), dash = p(KEYS.dash);
     const inviteNearest = p(KEYS.inviteNearest), feedNearest = p(KEYS.feedNearest), happyNearest = p(KEYS.happyNearest);
+    // The 💌: fire with the mouse button or 1 (held, or a click since the last read); aim at the cursor.
+    let fire = this.mouseDown || this.mouseClicked || k(KEYS.invite) > 0 || p(KEYS.invite);
+    this.mouseClicked = false;
+    const cursorAim = this.pointer && this.aimFrom ? this.aimFrom(this.pointer.x, this.pointer.y) : null;
+    let aimX = cursorAim?.x ?? 0, aimZ = cursorAim?.z ?? 0;
     this.pressed.clear();
 
     // Gamepads: the first one connected with any input.
@@ -97,6 +118,10 @@ export class Input {
       if (any(PAD.sigil)) sigil = true;
       if (any(PAD.spell)) spell = true;
       if (any(PAD.dash)) dash = true;
+      // Twin-stick: the right stick aims (screen right is east, down is south), a trigger fires.
+      const rx = pad.axes[2] ?? 0, ry = pad.axes[3] ?? 0;
+      if (Math.hypot(rx, ry) > 0.3) { aimX = rx; aimZ = ry; }
+      if (PAD.invite.some(btn)) fire = true;
       this.padPrev = pad.buttons.map(b => b.pressed);
       break;
     }
@@ -109,12 +134,13 @@ export class Input {
     if (t.sigil) sigil = true;
     if (t.spell) spell = true;
     if (t.dash) dash = true;
+    if (t.invite) { fire = true; if (!cursorAim) { aimX = 0; aimZ = 0; } }
     t.toggle = false; t.zoom = 0; t.debug = false; t.sigil = false; t.spell = false; t.dash = false;
 
     const len = Math.hypot(moveX, moveZ);
     if (len > 1) { moveX /= len; moveZ /= len; }
     const toggleAutoTalk = p(KEYS.autoTalk) || this.touch.autoTalk === true, talkHeld = k(KEYS.talk) > 0;
     this.touch.autoTalk = false;
-    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug, nextWave, pauseWaves, cycleSpeakers, sigil, inviteNearest, happyNearest, spell, feedNearest, dash, toggleAutoTalk, talkHeld };
+    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), debug, nextWave, pauseWaves, cycleSpeakers, sigil, inviteNearest, happyNearest, spell, feedNearest, dash, toggleAutoTalk, talkHeld, fire, aimX, aimZ };
   }
 }

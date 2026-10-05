@@ -50,7 +50,9 @@ const sdf0 = (q, p) => q.type === "ell" ? sdEllipsoid(sub(p, q.cw), q) : q.type 
 const sdf = (q, p) => q.rough ? sdf0(q, p) + rough(p, q.rough) : sdf0(q, p);
 
 export class Model {
-  constructor({ blend = .07 } = {}) { this.parts = []; this.flats = []; this.blend = blend; this.anchors = { feet: [] }; }
+  // part: the label each primitive added from now on carries ("body", "head", a leg, "tail"...), so
+  // the live rig (art/genome/parts.js) can bake a creature's pieces apart; rendering ignores it.
+  constructor({ blend = .07 } = {}) { this.parts = []; this.flats = []; this.blend = blend; this.anchors = { feet: [] }; this.part = "body"; }
   // Every volume also takes o.rough (a hewn, bumpy surface, as a distance) and o.cut: a cut
   // part carves a hollow out of its group instead of adding to it (a horn mouth, a socket);
   // the hollow's walls are drawn in the cut part's material.
@@ -58,23 +60,23 @@ export class Model {
   // along `up`), r[2] across. o: { group, extra (not counted in the height), paint(p) -> material }
   ell(c, r, mat, o = {}) {
     const axes = o.axes || (o.dir ? frameAlong(o.dir, o.up) : [[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
-    this.parts.push({ type: "ell", c, r, axes, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint, rough: o.rough, cut: !!o.cut });
+    this.parts.push({ type: "ell", c, r, axes, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint, rough: o.rough, cut: !!o.cut, part: o.part ?? this.part });
     return this;
   }
   // A box centred at c with half-sizes h, its edges rounded by o.round. With `dir`, h[0] runs
   // along dir, h[1] roughly up (or along `up`), h[2] across.
   box(c, h, mat, o = {}) {
     const axes = o.axes || (o.dir ? frameAlong(o.dir, o.up) : [[1, 0, 0], [0, 1, 0], [0, 0, 1]]);
-    this.parts.push({ type: "box", c, h, round: Math.min(o.round ?? .02, ...h), axes, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint, rough: o.rough, cut: !!o.cut });
+    this.parts.push({ type: "box", c, h, round: Math.min(o.round ?? .02, ...h), axes, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint, rough: o.rough, cut: !!o.cut, part: o.part ?? this.part });
     return this;
   }
   // A tapered limb from a (radius ra) to b (radius rb): a rounded cone, smooth along its length.
-  seg(a, b, ra, rb, mat, o = {}) { this.parts.push({ type: "cone", a, b, r1: ra, r2: rb, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint, rough: o.rough, cut: !!o.cut }); return this; }
+  seg(a, b, ra, rb, mat, o = {}) { this.parts.push({ type: "cone", a, b, r1: ra, r2: rb, mat, group: o.group ?? 1, extra: !!o.extra, paint: o.paint, rough: o.rough, cut: !!o.cut, part: o.part ?? this.part }); return this; }
   // A limb through several points, each [x, y, z, radius].
   chain(pts, mat, o = {}) { for (let i = 0; i + 1 < pts.length; i++) this.seg(pts[i].slice(0, 3), pts[i + 1].slice(0, 3), pts[i][3], pts[i + 1][3], mat, o); return this; }
   // A shaped flat plane centred at c, spanning ±su along u and ±sv along v; mask(s, t) with
   // s, t in [-1, 1] returns a material (or nothing for a hole). o: { group, extra, bend }
-  flat(c, u, v, su, sv, mask, o = {}) { this.flats.push({ c, u: norm(u), v: norm(v), su, sv, mask, group: o.group ?? 30, extra: !!o.extra, bend: o.bend ?? .35 }); return this; }
+  flat(c, u, v, su, sv, mask, o = {}) { this.flats.push({ c, u: norm(u), v: norm(v), su, sv, mask, group: o.group ?? 30, extra: !!o.extra, bend: o.bend ?? .35, part: o.part ?? this.part }); return this; }
   // The signed distance to the model's surface at a model-space point (its solid parts, not those
   // marked extra or cut): for fitting things to the body, such as a collar.
   field(p) {

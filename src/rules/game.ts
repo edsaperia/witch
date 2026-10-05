@@ -8,12 +8,12 @@ import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState } 
 import { MAX_STEP, newClock, type Clock } from "./clock";
 import { heldByCombat, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature } from "./creatures";
 import { Forest } from "./forest";
-import { leashPoint, newLeash, stepLeash, type LeashControls, type LeashState } from "./leash";
+import { inviteCreature, leashPoint, newLeash, stepLeash, type LeashControls, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
 import { buffing, cheer, LEGENDS, placeRelics, relicButton, stepLegendStates, type Relic } from "./legends";
-import { danceAt } from "./creatureStates";
+import { danceAt, invitableNow, stateOf, STATES } from "./creatureStates";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
-import { cellKey, newParty, planAhead, spreadWave, stepParty, type PartyState } from "./party";
+import { cellKey, hurryWave, newParty, planAhead, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { nextSpeakerState, type SpeakerState } from "./speakers";
 import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
@@ -21,6 +21,8 @@ import { SIGIL_NEON } from "../../art/sigils.js";
 import { newBuffs, stepBuffs, type BuffState } from "./buffs";
 import { COMBAT, marchOn, maxHp, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
 import { hurt, knockOut, newHealth, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
+import { newInvites, stepInvites, type Affection, type InviteControls, type Invites } from "./invites";
+import { affection, blocksLetters, hit as hitAffection } from "./affection";
 import { applyDash, dashing, newDash, startDash, type DashState } from "./dash";
 import { castSpell, newSpells, speedMultiplier, type SpellState } from "./spells";
 import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWitches";
@@ -36,6 +38,8 @@ export interface Witch {
   leash: LeashState;
   spells: SpellState;
   dash: DashState;
+  /** Her 💌s (rules/invites.ts). */
+  invites: Invites;
   /** Her hits left and repair (rules/knockout.ts), and her knockout while it plays out. */
   health: Health;
   ko: Knockout | null;
@@ -81,6 +85,9 @@ export interface Game {
   questEvents: QuestEvent[];
   /** The map's relics (rules/legends.ts): lying half buried, carried, or put down by a legend. */
   relics: Relic[];
+  /** This frame's wave events (several steps' worth, or none): a soundsystem lost brings the next
+   *  wave sooner (Ed, 2026-10-05), with the countdown it leaves, for the HUD and the music. */
+  waveEvents: WaveEvent[];
   /** The creatures by home area (rebuilt when one settles somewhere new). */
   byArea?: Map<string, Creature[]> | null;
   /** The areas' legends, by id (rules/creatures.ts: one an area), found once. */
@@ -109,7 +116,11 @@ export interface Game {
   introFocus?: { x: number; y: number; z: number };
 }
 
-export interface Controls extends Intent, Partial<LeashControls> {
+/** A soundsystem destroyed ("home" for the dancefloor's ring): the next wave `cut` seconds sooner,
+ *  `left` seconds away now (0: it comes at once). */
+export interface WaveEvent { kind: "soundsystemLost"; key: string; x: number; z: number; at: number; cut: number; left: number }
+
+export interface Controls extends Intent, Partial<LeashControls>, InviteControls {
   /** Debug (O): the nearest area legend turns happy (as if its quest were done). */
   happyNearest?: boolean;
   /** Auto-talk (the player's setting, on unless turned off), and Talk held (how she talks with it off). */
@@ -131,7 +142,7 @@ export interface Controls extends Intent, Partial<LeashControls> {
 }
 
 export function newWitchPlayer(id: number, x: number, z: number, t: Tuning): Witch {
-  return { id, body: { ...newWitch(x, z), seated: true }, leash: newLeash(), spells: newSpells(t), dash: newDash(), health: newHealth(t), ko: null };
+  return { id, body: { ...newWitch(x, z), seated: true }, leash: newLeash(), spells: newSpells(t), dash: newDash(), invites: newInvites(), health: newHealth(t), ko: null };
 }
 
 export function newGame(seed: number, tuning: Tuning, players = 1): Game {
@@ -147,7 +158,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
     beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)),
     floor: newFloor(), buffs: newBuffs(tuning), partyWitches: newPartyWitches(seed),
-    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), questEvents: [] as QuestEvent[], relics: placeRelics(map), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), over: null as { at: number } | null,
+    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), questEvents: [] as QuestEvent[], waveEvents: [] as WaveEvent[], relics: placeRelics(map), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), over: null as { at: number } | null,
     acc: 0, alpha: 1, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
   };
   const d = map.dancefloor, C = tuning.combat;
@@ -168,7 +179,8 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   if (c.zoom) P.zoom = c.zoom;
   if (g.clock.paused || !(realDt > 0)) return;
   // This frame's combat and knockout events (several steps' worth, or none), for the view.
-  g.combat.events = []; g.koEvents = []; g.questEvents = [];
+  g.combat.events = []; g.koEvents = []; g.questEvents = []; g.waveEvents = [];
+  for (const w of g.witches) w.invites.events = [];
   g.acc = Math.min(g.acc + Math.min(realDt, MAX_STEP), MAX_STEP + STEP);
   while (g.acc >= STEP - 1e-9) {
     g.acc -= STEP;
@@ -181,6 +193,24 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   }
   g.alpha = Math.max(0, Math.min(1, g.acc / STEP));
 }
+
+/** The affection rules the 💌s and the view use (issue #87): the state machine's meter
+ *  (rules/affection.ts). A full meter makes a wild one happy; filled again (states.leash "again"),
+ *  a happy one is leashed. How many letters fill it is the tuning's invites.hits (buffs change it);
+ *  the per-animal hit gap is rules/invites.ts's (invites.perAnimalHitGap). */
+export const affectionOf = (g: Game): Affection => {
+  const t = g.buffs?.tuning ?? g.tuning, s = g.witches[0].invites, data = { ...STATES, affection: { ...STATES.affection, hits: t.invites.hits, gap: 0 } };
+  return {
+    invitable: c => invitableNow(c, data),
+    blocksLetters: c => blocksLetters(c),
+    hit(c, amount, time) {
+      const was = stateOf(c);
+      hitAffection({ time, leash: k => inviteCreature(g.leash, k, k.x, k.z, time) }, c, amount, time, data);
+      if (stateOf(c) !== was) s.events.push({ kind: "happy", x: c.x, z: c.z, at: time, id: c.id }); // (happy, or leashed)
+    },
+    affection: c => affection({ time: g.clock.time }, c, data),
+  };
+};
 
 /** A hit on witch `id` at game time `at`: it costs her a hit unless she's mid-blink (nowhere). */
 export function hitWitch(g: Game, id: number, at: number, t: Tuning = g.tuning): void {
@@ -293,7 +323,9 @@ function fixedStep(g: Game, controls: Controls): void {
       else g.leash.events.push({ kind: "relicPlaced", id: r.placed.id, x: r.legend.x, z: r.legend.z, at: g.clock.time });
     }
   }
-  stepLeash(g.leash, g.creatures, { sigil, inviteNearest: c.inviteNearest, talk: c.autoTalk !== false || !!c.talkHeld }, g.witch, g.witch.mode === "ground" && !W.ko, g.clock.time, dt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
+  stepLeash(g.leash, g.creatures, { sigil, inviteNearest: c.inviteNearest, talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, g.clock.time, dt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
+  // The 💌s (issue #87): on the ground, off her seat, not knocked out.
+  stepInvites(W.invites, W.ko ? {} : c, { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), g.clock.time, dt, t);
   // A sigil put down in a wild area whose legend dreams of that creature: the quest is done.
   for (const e of g.leash.events.slice(placedBefore)) if (e.kind === "placed" && e.at === g.clock.time) {
     const L = questPlaced(g.map, g.creatures, (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id)), g.friendly, k => g.party.areas.has(k), e.id, e.x, e.z, g.clock.time);
@@ -393,15 +425,23 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     },
   }, COMBAT);
   for (const c of active) if (!c.gone && !c.leashed && (c.siege || c.fleeUntil || c.fight?.target || c.wanderTo || c.dazed)) S.busy.add(c.id); // carried on wherever she is
-  for (const e of S.events) if (e.kind === "soundDestroyed" && e.key && e.at === time) {
-    if (e.key === "home") g.speakers = g.speakers.map(() => "destroyed" as SpeakerState);
-    else { g.party.areas.delete(e.key); S.ruined.add(e.key); (g.party.ruined ??= new Set()).add(e.key); }
-    marchOn(S, e.key, g.creatures);
-  }
+  for (const e of S.events) if (e.kind === "soundDestroyed" && e.key && e.at === time) loseSoundsystem(g, e.key, e.x, e.z, t);
   // The home ring shows its damage speaker by speaker.
   const home = S.sounds.get("home");
   if (home && home.hp < home.max) { const f = 1 - home.hp / home.max, n = g.speakers.length; g.speakers = g.speakers.map((_, i) => (f >= (i + 1) / n ? "destroyed" : f >= (i + 0.5) / n ? "damaged" : "playing")); }
   if (!g.over && [...S.sounds.values()].every(h => h.hp <= 0)) g.over = { at: time };
+}
+
+/** A soundsystem destroyed: its party over (the home ring's speakers all destroyed), its besiegers
+ *  marching on, and the next wave sooner (Ed, 2026-10-05: a loss takes party.lossPenalty seconds
+ *  off the countdown, "all waves sooner is the wrong kind of penalty"). */
+export function loseSoundsystem(g: Game, key: string, x: number, z: number, t: Tuning = g.tuning): void {
+  const S = g.combat, time = g.clock.time;
+  if (key === "home") g.speakers = g.speakers.map(() => "destroyed" as SpeakerState);
+  else { g.party.areas.delete(key); S.ruined.add(key); (g.party.ruined ??= new Set()).add(key); }
+  marchOn(S, key, g.creatures);
+  const cut = hurryWave(g.party, time, t.party.lossPenalty ?? 0);
+  g.waveEvents.push({ kind: "soundsystemLost", key, x, z, at: time, cut, left: Math.max(0, g.party.nextAt - time) });
 }
 
 /** The party witches: one for each soundsystem playing (oldest first), and the player idling in. */

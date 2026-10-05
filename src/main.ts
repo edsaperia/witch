@@ -10,7 +10,7 @@ import { setupArena } from "./rules/arena";
 import { newCamera } from "./rules/camera";
 import { setupQuestDemo } from "./rules/quest";
 import { witchHeight } from "./rules/witch";
-import { areaUnderWitch, interpolated, newGame, STEP, stepGame } from "./rules/game";
+import { areaUnderWitch, interpolated, loseSoundsystem, newGame, STEP, stepGame, type WaveEvent } from "./rules/game";
 import { AREA_TYPES } from "./rules/map";
 import { waveCountdown } from "./rules/party";
 import { parseSeed } from "./rules/map";
@@ -194,6 +194,7 @@ view.quick = params.get("quick") === "1";
 const sceneryAt = Number(params.get("scenery"));
 if (params.has("scenery") && sceneryAt > 0) view.sceneryFixed = sceneryAt;
 const input = new Input();
+input.aimFrom = (x, y) => view.aimAt(x, y);
 document.getElementById("next-wave")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.nextWave = true; });
 document.getElementById("pause-waves")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.pauseWaves = true; });
 setupTouch(document.body, input.touch);
@@ -296,6 +297,30 @@ seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;
 const debugEl = document.getElementById("debug")!, startEl = document.getElementById("start")!;
 const debugButtons = document.getElementById("debug-buttons")!;
 const waveEl = document.getElementById("wave")!, waveFill = waveEl.querySelector<HTMLElement>(".fill")!, waveLabel = waveEl.querySelector<HTMLElement>(".label")!;
+/** The wave countdown bar: empties toward the next wave. */
+function waveHud(): void {
+  const cd = waveCountdown(game.party, game.map, game.clock.time);
+  waveFill.style.height = `${(1 - cd.gone) * 100}%`;
+  const clock = (s: number) => (s >= 60 ? `${Math.floor(s / 60)}:${String(Math.ceil(s) % 60).padStart(2, "0")}` : `${Math.ceil(s)} s`);
+  const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : cd.left >= 60 ? `${Math.floor(cd.left / 60)}:${String(Math.ceil(cd.left) % 60).padStart(2, "0")}` : `${Math.ceil(cd.left)} s`;
+  waveLabel.textContent = `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}`;
+  waveEl.classList.toggle("paused", game.party.paused);
+}
+// A soundsystem lost (Ed, 2026-10-05): the next wave comes sooner, and the countdown shows it: the
+// bar shrinks with a flash, and the seconds taken off pop out beside it ("−60 s", "wave now!").
+let lossShown = -1;
+function showLoss(e: WaveEvent): void {
+  lossShown = e.at;
+  waveEl.classList.remove("lost"); void waveEl.offsetWidth; waveEl.classList.add("lost"); // (restart the animation)
+  waveHud(); // (the bar eases down to its new countdown)
+  const pop = document.createElement("div");
+  pop.className = "loss-pop";
+  pop.textContent = e.left <= 0 ? "wave now!" : `\u2212${Math.round(e.cut)} s`;
+  pop.style.bottom = `${Math.min(100, (e.left / tuning.party.interval) * 100)}%`;
+  waveEl.append(pop);
+  setTimeout(() => pop.remove(), 1800);
+  setTimeout(() => { if (lossShown === e.at) waveEl.classList.remove("lost"); }, 900);
+}
 let debugOn = params.has("debug");
 debugEl.classList.toggle("on", debugOn);
 debugButtons.classList.toggle("on", debugOn); knobs.classList.toggle("on", debugOn);
@@ -409,13 +434,8 @@ function frame(now: number): void {
   music?.update(musicMix(game, game.witch), musicCueNow, game.clock.time, game.beat, !game.clock.paused);
   if (!game.clock.paused) sfxCues?.update(game, game.clock.time);
   if (!ready) return;
-  // The wave countdown bar: empties toward the next wave.
-  const cd = waveCountdown(game.party, game.map, game.clock.time);
-  waveFill.style.height = `${(1 - cd.gone) * 100}%`;
-  const clock = (s: number) => (s >= 60 ? `${Math.floor(s / 60)}:${String(Math.ceil(s) % 60).padStart(2, "0")}` : `${Math.ceil(s)} s`);
-  const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : cd.left >= 60 ? `${Math.floor(cd.left / 60)}:${String(Math.ceil(cd.left) % 60).padStart(2, "0")}` : `${Math.ceil(cd.left)} s`;
-  waveLabel.textContent = `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}`;
-  waveEl.classList.toggle("paused", game.party.paused);
+  for (const e of game.waveEvents) if (e.at > lossShown) showLoss(e);
+  waveHud();
   // Behind the start screen, a frame every 0.3 s is plenty: the CPU goes to drawing the forest's
   // art in the background instead (and so slow a frame doesn't count against the scenery budget).
   if (game.clock.paused && !freeze.frozen && now - lastDraw < 300) return;
@@ -454,5 +474,7 @@ function powerLines(): string[] {
 
 // For the smoke test and for poking at in the console.
 (window as unknown as { witch: unknown }).witch = { game, view, arena: (spec: string) => setupArena(game, spec), // (a debug hook: another arena without reloading)
+  /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's ring), as if destroyed. */
+  lose: (key = "home") => { const s = game.combat.sounds.get(key); if (s) s.hp = 0; loseSoundsystem(game, key, s?.x ?? 0, s?.z ?? 0); const e = game.waveEvents[game.waveEvents.length - 1]; if (e) showLoss(e); return e; },
   get manual() { return manual; }, set manual(on: boolean) { manual = on; },
   frame: (c: Parameters<typeof stepGame>[1], dt: number, draw = true) => { const t0 = performance.now(); stepGame(game, c, dt); const t1 = performance.now(); view.render(game.clock.time, draw); return { step: t1 - t0, render: performance.now() - t1, ms: view.ms }; }, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, spriteUp: () => SPRITE_UNIFORMS.uUp.value, spriteRight: () => SPRITE_UNIFORMS.uRight.value, groundHeight, loadTimes, get ready() { return ready; } };
