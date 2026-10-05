@@ -1,5 +1,5 @@
 // The witch knocked back and staggered (Ed, 2026-10-05): straight away from the blow, small for a
-// bite, big for a charge, never through a blink, never a stun-lock, stopping at trunks.
+// bite, big for a charge, never through a blink, never a stun-lock, through scenery and left clear of it.
 import { describe, expect, it } from "vitest";
 import { knockOf, knockWitch, newKnock, stepWitchKnock, stunned } from "./knock";
 import { newWitch } from "./witch";
@@ -49,19 +49,24 @@ describe("the witch knocked back and staggered (Ed, 2026-10-05)", () => {
     expect(k.stunUntil).toBeGreaterThan(later);
   });
 
-  it("stops her at a trunk", () => {
+  it("carries her straight through a tree, and leaves her clear of it (Ed: \"don't make it stop at scenery\")", () => {
     const g = newGame(77, TUNING), d = g.map.dancefloor, tree = g.forest.treesNear(d.x + 120, d.z + 120, 60)[0];
     expect(tree).toBeDefined();
     g.clock.paused = false;
     const W = g.witches[0];
     g.witch = { ...g.witch, seated: false, mode: "ground", lift: 0, x: tree.x - 4, z: tree.z, vx: 0, vz: 0 };
     W.health.hp = 1e6;
-    hitWitch(g, 0, g.clock.time, TUNING, { x: tree.x - 6, z: tree.z, knockback: 0, rams: true }); // thrown east, at the tree
+    hitWitch(g, 0, g.clock.time, TUNING, { x: tree.x - 6, z: tree.z, knockback: 0, rams: true }); // thrown east, through the tree
     for (let i = 0; i < 2 / STEP; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, STEP);
-    const gap = Math.hypot(g.witch.x - tree.x, g.witch.z - tree.z);
-    expect(g.witch.x).toBeLessThan(tree.x); // never through it
-    expect(gap).toBeGreaterThanOrEqual(TUNING.dash.clear.tree - 1e-6);
-    expect(g.witch.x).toBeGreaterThan(tree.x - 4 + 0.5); // (but it did throw her)
+    expect(g.witch.x).toBeGreaterThan(tree.x + 2); // through it and well past
+    for (const p of g.forest.treesNear(g.witch.x, g.witch.z, 4)) expect(Math.hypot(p.x - g.witch.x, p.z - g.witch.z)).toBeGreaterThanOrEqual(TUNING.dash.clear.tree - 1e-6);
+  });
+
+  it("nudges her to the nearest clear spot if the throw would leave her inside something", () => {
+    const solid = (x: number, z: number) => Math.hypot(x - 2.5, z) >= 1.2; // a trunk just where a bite throws her
+    const { body } = thrown(-1, 0, 0, false, solid);
+    expect(solid(body.x, body.z)).toBe(true);
+    expect(Math.hypot(body.x - 2.5, body.z)).toBeLessThan(1.6); // and only just out of it
   });
 
   it("does nothing to her mid-blink, and nothing on the blow that knocks her out", () => {

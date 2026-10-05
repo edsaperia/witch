@@ -1,7 +1,8 @@
 // The witch knocked back and stunned (Ed, 2026-10-05: "add a knockback and stun on the witch; make it
 // large on chasing/ramming creatures"). A blow that lands on her throws her straight away from where
-// it came from, easing off like a creature's knockback (combat.ts stepKnock), and stops her dead
-// against a trunk, rock, speaker or the treehouse (the blink's clearances); and staggers her for a
+// it came from, easing off like a creature's knockback (combat.ts stepKnock), straight through
+// scenery (Ed), nudged clear at the end if she'd rest inside a trunk, rock, speaker or the treehouse
+// (the blink's clearances); and staggers her for a
 // moment: no moving, blinking or throwing 💌s. Ordinary blows (bites, swipes, shots) are small; a
 // blow with the knockback modifier is bigger by its own knockback value; a charge (or a leap landing
 // on her) is big. Fair: a blink still dodges everything (hitWitch never gets here), she can't be
@@ -53,15 +54,29 @@ export function knockWitch(k: Knock, body: { x: number; z: number }, b: Blow, ti
   if (time >= k.immuneUntil) { k.stunUntil = time + stun; k.immuneUntil = k.stunUntil + t.witch.knock.immune; }
 }
 
-/** One step of her knockback: she moves with it, easing off, unless the next spot isn't clear (a
- *  trunk, a rock, a speaker, the treehouse): there it stops. Kept inside the map. */
+/** One step of her knockback: she moves with it, easing off, straight through scenery (Ed,
+ *  2026-10-05: "don't make it stop at scenery", as 💌s pass through it); when it has run out, if she'd
+ *  rest inside something solid (`clear` false: a trunk, a rock, a speaker, the treehouse, a
+ *  soundsystem), she's nudged to the nearest clear spot. Kept inside the map. */
 export function stepWitchKnock(k: Knock, body: WitchState, dt: number, t: Tuning, bounds: { minX: number; maxX: number; minZ: number; maxZ: number }, clear: (x: number, z: number) => boolean): WitchState {
   if (!k.kx && !k.kz) return body;
   // (the exact distance an easing velocity covers in dt, so the whole throw is its metres, whatever the step)
   const ease = t.witch.knock.ease, decay = Math.exp(-dt * ease), go = (1 - decay) / ease;
-  const x = Math.min(bounds.maxX, Math.max(bounds.minX, body.x + k.kx * go)), z = Math.min(bounds.maxZ, Math.max(bounds.minZ, body.z + k.kz * go));
-  if (!clear(x, z)) { k.kx = 0; k.kz = 0; return body; }
+  const inside = (x: number, z: number) => ({ x: Math.min(bounds.maxX, Math.max(bounds.minX, x)), z: Math.min(bounds.maxZ, Math.max(bounds.minZ, z)) });
+  let p = inside(body.x + k.kx * go, body.z + k.kz * go);
   k.kx *= decay; k.kz *= decay;
-  if (Math.hypot(k.kx, k.kz) < 0.05) { k.kx = 0; k.kz = 0; }
-  return { ...body, x, z };
+  if (Math.hypot(k.kx, k.kz) < 0.05) {
+    k.kx = 0; k.kz = 0;
+    if (!clear(p.x, p.z)) p = nearestClear(p.x, p.z, clear, inside);
+  }
+  return { ...body, x: p.x, z: p.z };
+}
+
+/** The nearest clear spot to (x, z): rings of 16 out to 8 m, every 0.25 m. */
+export function nearestClear(x: number, z: number, clear: (x: number, z: number) => boolean, inside: (x: number, z: number) => { x: number; z: number } = (a, b) => ({ x: a, z: b })): { x: number; z: number } {
+  for (let r = 0.25; r <= 8; r += 0.25) for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2, p = inside(x + Math.cos(a) * r, z + Math.sin(a) * r);
+    if (clear(p.x, p.z)) return p;
+  }
+  return { x, z };
 }
