@@ -4,7 +4,7 @@
 // once hits stop it drains slowly. Full, a wild one becomes happy; a happy one (states.leash
 // "again") is leashed to her. Enraged ones and legends stop 💌s dead. No drawing here.
 import { LEGEND, type Creature } from "./creatures";
-import { befriend, invitableNow, stateOf, STATES, type StatesData } from "./states";
+import { befriend, invitableNow, stateOf, STATES, type StatesData } from "./creatureStates";
 
 /** What the meter needs of the game: the time, and leashing a happy creature to her. */
 export interface AffectionWorld { time: number; leash: (c: Creature) => void }

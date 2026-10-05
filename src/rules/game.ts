@@ -11,7 +11,7 @@ import { Forest } from "./forest";
 import { leashPoint, newLeash, stepLeash, type LeashControls, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
 import { buffing, cheer, LEGENDS, placeRelics, relicButton, stepLegendStates, type Relic } from "./legends";
-import { danceAt } from "./states";
+import { danceAt } from "./creatureStates";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
 import { cellKey, newParty, planAhead, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";

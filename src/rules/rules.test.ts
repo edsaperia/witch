@@ -1,4 +1,4 @@
-import { stateOf } from "./states";
+import { stateOf } from "./creatureStates";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { hash2 as labHash2, SPECIES_BY_ID } from "../../art/generator.js";

@@ -14,15 +14,8 @@
    12
   ]
  },
- "_strength": "Species strength (Ed, 2026-10-05: some species are weaker or stronger per creature than others; weaker ones spawn in larger numbers, a swarm, stronger loners fewer). strength.classes: each class's multiplier on a creature's health and damage a second (so its fighting value, √(hp × dps), goes by the same factor): swarm about a third, normal 1, loner 2. An area of that kind starts with, and grows by, 1 / multiplier as many (population in the tuning file), so its total fighting value stays about the same, and its berries to evolve follow its strength (berries.cost). strength.species: a species' class (normal if not listed). Legends are never scaled.",
- "strength": {
-  "classes": {
-   "swarm": 0.333,
-   "normal": 1,
-   "loner": 2
-  },
-  "species": {}
- },
+ "_strength": "Species strength (Ed, 2026-10-05: \"just a number that goes up and down\"): strength.species gives a species' multiplier on its health and damage a second, 1 normal (none listed: every species 1 so far); below 1 weaker (0.3 a swarm), above 1 stronger (2 a loner). Its fighting value, √(hp × dps), goes by the same factor; its areas start with and grow by 1 / strength as many (fractions carried from wave to wave), so an area's total fighting value stays about the same; and its berries to evolve follow its strength (berries.cost). Legends are never scaled.",
+ "strength": { "species": {} },
  "attacks": {
   "nip": {
    "delivery": "melee",

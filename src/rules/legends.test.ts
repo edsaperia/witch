@@ -6,7 +6,7 @@ import { LEGEND_BUFFS } from "./buffs";
 import { LEGENDS } from "./legends";
 import { cellKey } from "./party";
 import { setupQuestDemo } from "./quest";
-import { stateOf } from "./states";
+import { stateOf } from "./creatureStates";
 
 // Legends, redesigned (Ed, 2026-10-05; issue #87).
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };

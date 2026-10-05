@@ -9,7 +9,7 @@
 import raw from "../../config/combat.json";
 import { LEGEND, type Creature, type Level } from "./creatures";
 import type { Cell } from "./partition";
-import { enrage, foes, huntsWitch, stateOf, STATES, type State } from "./states";
+import { enrage, foes, huntsWitch, stateOf, STATES, type State } from "./creatureStates";
 import { LEGENDS, lull } from "./legends";
 import { bodyRadius } from "./spacing";
 import { FIGHT, legendSetOf, packsOf, profileOf, startCharge, steer, stepBurrow, stepCharge, stepLeap, type LegendSet } from "./movement";
@@ -61,9 +61,9 @@ export interface CombatData {
   /** What each trait does to a blow: its damage times counters[trait][delivery]; and knockback
    *  (its distance times this), stun (seconds a knockback stuns it), slow (a slow's time times this). */
   counters: Record<Trait, Partial<Record<Delivery | "knockback" | "stun" | "slow", number>>>;
-  /** Species strength (Ed, 2026-10-05): each class's multiplier on health and damage, and each
-   *  species' class (normal when not listed). */
-  strength?: { classes: Record<string, number>; species: Record<string, string> };
+  /** Species strength (Ed, 2026-10-05: "just a number that goes up and down"): each species'
+   *  multiplier on health and damage, 1 when not listed. */
+  strength?: { species: Record<string, number> };
 }
 
 export type Trait = "flier" | "armoured" | "swarm" | "heavy" | "nimble" | "burrower";
@@ -112,7 +112,7 @@ export interface Shot {
   /** Game time it fizzles out (after range / speed). */
   until: number;
   from: number;
-  /** The shooter's state (rules/states.ts): whom it can hit is foes(). */
+  /** The shooter's state (rules/creatureStates.ts): whom it can hit is foes(). */
   side: State;
   species: string;
   damage: number;
@@ -150,11 +150,11 @@ export interface Trail { x: number; z: number; r: number; until: number; side: S
 export const newCombat = (): CombatState => ({ shots: [], nextShot: 0, sounds: new Map(), ruined: new Set(), events: [], busy: new Set(), beams: [], trails: [] });
 
 /** The attack a creature has: none for babies; by its level and whether its kind shoots. */
-/** A species' strength (Ed, 2026-10-05): the multiplier on its health and damage, by its class
- *  (swarm about a third, normal 1, loner 2); legends are never scaled. */
+/** A species' strength (Ed, 2026-10-05): the multiplier on its health and damage, 1 normal,
+ *  below 1 weaker (a swarm), above 1 stronger (a loner); legends are never scaled. */
 export function strengthOf(species: string, level: Level = 0, data: CombatData = COMBAT): number {
-  if (level === LEGEND || !data.strength) return 1;
-  return data.strength.classes[data.strength.species[species] ?? "normal"] ?? 1;
+  if (level === LEGEND) return 1;
+  return data.strength?.species[species] ?? 1;
 }
 
 export function attackOf(species: string, level: Level, data: CombatData = COMBAT): { name: string; attack: Attack; damage: number } | null {
@@ -187,14 +187,14 @@ export const maxHp = (level: Level, data: CombatData = COMBAT) => data.levels.hp
 export const creatureMaxHp = (c: { species: string; level: Level }, data: CombatData = COMBAT) => maxHp(c.level, data) * strengthOf(c.species, c.level, data);
 
 /** Whether a creature takes part in fights now: alive, not wandering home neutral, not asleep. */
-export const fighting = (c: Creature) => !c.gone && !c.fleeUntil && !c.wanderTo && !c.dazed && !(c.leashed && c.travelling); // (a dazed one lies still: rules/states.ts) // (a travelling party animal is quiet both ways: rules/travel.ts)
+export const fighting = (c: Creature) => !c.gone && !c.fleeUntil && !c.wanderTo && !c.dazed && !(c.leashed && c.travelling); // (a dazed one lies still: rules/creatureStates.ts) // (a travelling party animal is quiet both ways: rules/travel.ts)
 
 /** Whether anything may attack it: fighting, and not a baby (Ed, 2026-10-04: "No animals should
  *  attack babies"; shots and quakes pass them by, and they can't be beaten in a fight). */
 export const targetable = (c: Creature) => fighting(c) && c.level > 0 && !c.burrow; // (a burrower underground can't be hit)
 
 /** Whose side: hers (on her leash, at a sigil, or a happy area legend: Ed, 2026-10-04) or the wild's. */
-const sideOf = (c: Creature): State => stateOf(c); // (its state: who fights whom is foes(), rules/states.ts)
+const sideOf = (c: Creature): State => stateOf(c); // (its state: who fights whom is foes(), rules/creatureStates.ts)
 
 /** Same kind never fights same kind (Ed, 2026-10-04), on any side. */
 export const truce = (a: Creature, b: Creature) => a.species === b.species;

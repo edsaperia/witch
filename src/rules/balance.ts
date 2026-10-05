@@ -25,6 +25,24 @@ import { lanchester, levelValue } from "./power";
  *  the fight, regrouping). */
 export interface SimPlayer { growth: number; fromWave: number; fightTime: number }
 
+/** Logistics (Ed, 2026-10-05: ground mode is for fighting and exploring, treetop mode for travel
+ *  and choosing where to go; balanced by area size, treetop speed and ground speed, never the
+ *  animals' own walk). The witch flies between objectives at witchSpeed (treetop) and spends
+ *  groundTime at each (fighting, inviting, placing a sigil); her party animals walk at posseSpeed
+ *  (their leash run times the travel boost) along routes `route` times the straight line. With a
+ *  player, a fight starts only once both are there. Each wave also records whether a defence that
+ *  set off from the last wave's soundsystem when this one was announced (the wave before) got
+ *  there before its first blow. */
+export interface SimLogistics {
+  witchSpeed: number; groundTime: number; posseSpeed: number; route: number;
+  /** A sigil placed (Ed, 2026-10-05: "You have to land to place sigils"): her descent, the placing and her rise (s), on every trip that directs her posse. */
+  sigilTime?: number;
+}
+
+/** One wave's defence: when the area was announced, its soundsystem's first blow, when the witch
+ *  and the posse could be there, and the posse's walk from home (s). */
+export interface SimDefence { wave: number; announced: number; firstHit: number | null; /** When it fell, if it did. */ fellAt?: number; witchAt: number; posseAt: number; fromHome: number }
+
 /** The director (a pacing variant, Ed 2026-10-04: "have areas spawn creatures over time in
  *  response to the player's progress"; not in the game yet): at each wave the dormant areas the
  *  next wave will wake get reinforcements (adults) worth budget = (base + perWave × wave^power) × max(0,
@@ -57,6 +75,7 @@ export interface SimOptions {
   /** The model's step (seconds). */
   dt?: number;
   player?: SimPlayer;
+  logistics?: SimLogistics;
 }
 
 export interface WaveSample {
@@ -87,10 +106,12 @@ export interface SimResult {
   waves: WaveSample[];
   /** Each fallen soundsystem (not home): the wave that woke it and how long it stood (s). */
   falls: { wave: number; after: number }[];
+  /** With logistics: each wave's defence. */
+  defences: SimDefence[];
 }
 
 interface Fighter { id: number; level: Level; cell: string; x: number; z: number; x0: number; z0: number; speed: number; dps: number; reach: number; value: number; /** Its species' strength (Ed, 2026-10-05): health and dps are its level's times this. */ m: number; /** Health left (a happy legend wears it down). */ hp?: number; siege: string | null; gone: boolean; /** Stays in its own area: never marches on (an area's legend). */ stay?: boolean }
-interface Sound { key: string; x: number; z: number; hp: number; radius: number; wave?: number; at?: number }
+interface Sound { key: string; x: number; z: number; hp: number; radius: number; wave?: number; at?: number; firstHit?: number; fellAt?: number }
 
 /** A map's fighters (young and up), by area, worth working out once per map. */
 const FIGHTERS = new WeakMap<ForestMap, Map<string, Fighter[]>>();
@@ -126,6 +147,8 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
   const P = o.player, ruined = new Set<string>(), D = o.director, share = o.marchOn ?? 1, adult = levelValue(2);
   let reinforced = 0, owed = 0, nextId = -1;
   const guards: { key: string; x: number; z: number; hp: number; asleep: boolean }[] = [], GR = o.guardRadius ?? 30, LHP = COMBAT.levels.hp[3], LDPS = COMBAT.levels.dps[3];
+  const LG = o.logistics, defences: SimDefence[] = [];
+  let posse = { x: d.x, z: d.z }, witch = { x: d.x, z: d.z }, pending: { key: string; at: number } | null = null, lastSound = { x: d.x, z: d.z, at: 0 };
   let time = 0, nextAt = t.boot.time + t.party.startDelay + o.interval, playerF = 0, busyUntil = 0, lost: SimResult["lost"] = null;
   const nearest = (x: number, z: number) => {
     let best: string | null = null, bd = Infinity;
@@ -151,9 +174,15 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
       for (const a of spreadWave(party, map, time)) {
         const key = cellKey(a.cell), at = soundsystemFor(map, a.cell);
         sounds.set(key, { key, x: at.x, z: at.z, hp: C.soundsystemHealth, radius: C.soundsystemRadius, wave: party.wave, at: time });
+        if (LG) {
+          // Announced (confirmed next) when the wave before came; a defence leaves the last one's soundsystem then.
+          const dist = Math.hypot(at.x - lastSound.x, at.z - lastSound.z), announced = lastSound.at;
+          defences.push({ wave: party.wave, announced, firstHit: null, witchAt: announced + dist / LG.witchSpeed + LG.groundTime + (LG.sigilTime ?? 0), posseAt: announced + (LG.route * dist) / LG.posseSpeed, fromHome: (LG.route * Math.hypot(at.x - d.x, at.z - d.z)) / LG.posseSpeed });
+          lastSound = { x: at.x, z: at.z, at: time };
+        }
         for (const f of by.get(key) ?? []) if (!f.gone && (!o.areaLegends || f.level < 3)) { f.siege = key; live.push(f); }
         // What it grew while wild (rules/growth.ts): waves 1 to this one, as many as the game grows
-        // (its count scale: swarms more, loners fewer) at the game's own levels, at its strength.
+        // (its count scale: 1 / its strength) at the game's own levels, at its strength.
         const G = t.population.growth, site = map.siteOf(a.cell[0], a.cell[1]), species = AREA_TYPES[map.typeOf(a.cell[0], a.cell[1])].creature;
         const m = strengthOf(species), k = countScale(species);
         if (G.on) for (let w = 1; w <= party.wave; w++) for (let n = 0; n < grownAt(w, G.perWave, k); n++) {
@@ -185,13 +214,23 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
         }
       }
     }
-    // The player grows and fights the biggest siege they can beat.
+    // The player grows and fights the biggest siege they can beat (with logistics, once the witch
+    // has flown there and done her ground time and her posse has walked there).
     if (P && party.wave >= P.fromWave) {
       playerF += (P.growth / 60) * dt;
-      if (time >= busyUntil) {
+      if (pending && time >= pending.at) {
+        const v = groups().get(pending.key) ?? 0, s = sounds.get(pending.key);
+        if (v > 0 && v < playerF) { playerF = lanchester(playerF, v); for (const f of live) if (f.siege === pending.key) f.gone = true; }
+        if (s) { posse = { x: s.x, z: s.z }; witch = { x: s.x, z: s.z }; }
+        busyUntil = time + P.fightTime; pending = null;
+      }
+      if (time >= busyUntil && !pending) {
         let best: string | null = null, bv = 0;
         for (const [k, v] of groups()) if (v < playerF && v > bv) { bv = v; best = k; }
-        if (best) {
+        if (best && LG) {
+          const s = sounds.get(best)!, tw = Math.hypot(s.x - witch.x, s.z - witch.z) / LG.witchSpeed + LG.groundTime + (LG.sigilTime ?? 0), tp = (LG.route * Math.hypot(s.x - posse.x, s.z - posse.z)) / LG.posseSpeed;
+          pending = { key: best, at: time + Math.max(tw, tp) };
+        } else if (best) {
           playerF = lanchester(playerF, bv);
           for (const f of live) if (f.siege === best) f.gone = true;
           busyUntil = time + P.fightTime;
@@ -221,11 +260,12 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
       const s = sounds.get(f.siege)!;
       const dx = s.x - f.x, dz = s.z - f.z, dist = Math.hypot(dx, dz), want = f.reach + s.radius;
       if (dist > want) { const step = Math.min(dist - want, f.speed * dt); f.x += (dx / dist) * step; f.z += (dz / dist) * step; }
-      else s.hp -= f.dps * dt;
+      else { s.hp -= f.dps * dt; s.firstHit ??= time; }
     }
     for (const s of sounds.values()) {
       if (s.hp > 0 || ruined.has(s.key)) continue;
       ruined.add(s.key);
+      s.fellAt = time;
       if (s.wave !== undefined) falls.push({ wave: s.wave, after: time - s.at! });
       if (s.key !== "home") { party.areas.delete(s.key); (party.ruined ??= new Set()).add(s.key); }
       // Survivors march on to the next-nearest (with attrition, only a share of them; the rest scatter).
@@ -235,7 +275,8 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
     time += dt;
   }
   if (lost) sample();
-  return { seed: map.seed, interval: o.interval, lost, survived: lost ? lost.wave - 1 : party.wave, waves, falls };
+  for (const df of defences) { const s = [...sounds.values()].find(h => h.wave === df.wave); df.firstHit = s?.firstHit ?? null; df.fellAt = s?.fellAt; }
+  return { seed: map.seed, interval: o.interval, lost, survived: lost ? lost.wave - 1 : party.wave, waves, falls, defences };
 }
 
 const frac = (x: number) => x - Math.floor(x);
