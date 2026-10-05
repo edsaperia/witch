@@ -3,10 +3,22 @@
 import { Sfx } from "../../src/platform/sfx";
 import { TUNING } from "../../src/rules/tuning";
 import style from "../../config/music-style.json";
+import { voiceOf } from "../../src/platform/sfxCues";
+import type { Creature } from "../../src/rules/creatures";
+
+const v = (species: string, level: number) => voiceOf({ species, level } as unknown as Creature, TUNING);
 
 type Play = (s: Sfx) => void;
 const SOUNDS: [string, number, Play][] = [
-  ["letter-hose", 1.2, s => { for (let i = 0; i < 12; i++) setTimeout(() => s.letter((i % 3) - 1), 0); }],
+  ["witch-chatter", 2.4, () => {}],
+  ["reply-baby", 0.4, s => s.reply(v("hare", 0), 0.5)],
+  ["speak-baby-happy", 0.8, s => s.speak(v("hare", 0), "happy")],
+  ["speak-young-grumpy", 0.9, s => s.speak(v("fox", 1), "grumpy")],
+  ["speak-adult-enraged", 0.9, s => s.speak(v("wolf", 2), "enraged")],
+  ["speak-swarm-enraged", 0.9, s => s.speak(v("woodlouse", 1), "enraged")],
+  ["speak-legend-enraged", 1.2, s => s.speak(v("bear", 3), "enraged")],
+  ["legend-windup", 1.6, s => s.windup(0, 1, v("bear", 3))],
+  ["fight-crowd", 1.4, s => { const sp = ["wolf", "fox", "boar", "hare", "owl", "stoat", "badger", "toad"]; sp.forEach((x, i) => s.speak(v(x, (i % 3) as number), i % 2 ? "enraged" : "happy", (i % 5) / 2 - 1, 1 - i * 0.1)); }],
   ["hit", 0.8, s => s.hit(0)],
   ["hit-spent", 0.5, s => s.hit(0, 1, true)],
   ["fill-0", 0.3, s => s.fill(0)],
@@ -27,8 +39,9 @@ async function render(name: string, seconds: number, play: Play) {
   const rate = 22050, oc = new OfflineAudioContext(2, Math.ceil(seconds * rate), rate);
   // (the letter hose: one rendering, letters spaced in time by suspending the context)
   const s = new Sfx(oc, 1, TUNING.sfx, (style as { root: number }).root + 24);
-  if (name === "letter-hose") {
-    for (let i = 0; i < 12; i++) { const at = i * 0.07; void oc.suspend(Math.round(at * rate) / rate).then(() => { s.letter(((i * 7) % 5) / 2 - 1); return oc.resume(); }); }
+  if (name === "witch-chatter") {
+    // her 💌 hose as #89 fires it: bursts of 3 letters 0.12 s apart, a burst every 0.6 s
+    for (let b = 0; b < 4; b++) for (let i = 0; i < 3; i++) { const at = b * 0.6 + i * 0.12; void oc.suspend(Math.round(at * rate) / rate).then(() => { s.letter(0); return oc.resume(); }); }
   } else play(s);
   const buf = await oc.startRendering(), L = buf.getChannelData(0), R = buf.getChannelData(1);
   let sum = 0, peak = 0, nan = false;

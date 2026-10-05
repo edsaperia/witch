@@ -8,6 +8,21 @@ import type { Tuning } from "../rules/tuning";
 export type SfxTuning = Tuning["sfx"];
 
 const mtof = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
+/** Vowels for the babble: three formants each (Hz, for an adult-ish voice) and their levels. */
+const VOWELS: [number, number][][] = [
+  [[800, 1], [1150, 0.55], [2900, 0.2]], // ah
+  [[530, 1], [1840, 0.5], [2480, 0.25]], // eh
+  [[300, 1], [2250, 0.45], [3000, 0.3]], // ee
+  [[480, 1], [820, 0.5], [2800, 0.15]], // oh
+  [[340, 1], [720, 0.35], [2500, 0.1]], // oo
+];
+/** A phrase's pitch shape, syllable by syllable (times the voice's range): an invitation lifting at the end. */
+const INVITE = [0.12, -0.04, 0.42, 0.05, -0.02, 0.5];
+/** A voice's mood: happy rises and bounces, enraged falls clipped and gritty, grumpy sits low and flat. */
+export type Mood = "happy" | "grumpy" | "enraged";
+/** One creature's voice: its pitch (Hz), how far its formants sit above an adult's (small: higher), its source. */
+export interface CreatureVoice { pitch: number; formants: number; wave: OscillatorType }
+
 /** The minor pentatonic's steps (semitones above the root). */
 const PENTA = [0, 3, 5, 7, 10];
 /** Scale degree `k` (0 the root, 5 the octave above) as a MIDI note above `root`. */
@@ -16,7 +31,9 @@ const degree = (root: number, k: number) => root + 12 * Math.floor(k / 5) + PENT
 export class Sfx {
   private out: GainNode;
   private noise: AudioBuffer;
-  private lastLetter = -1;
+  private phrase = { at: -Infinity, n: 0, vowel: 0 };
+  /** The voices speaking now (the cap: voice.animals.maxVoices), each with its gain to duck and how much it matters. */
+  private speaking: { g: GainNode; end: number; prio: number }[] = [];
   private lastAt = new Map<string, number>();
   // the lasting voices
   private snoreGain: GainNode | null = null;
@@ -73,23 +90,96 @@ export class Sfx {
 
   // ——— 💌 ———
 
-  /** A 💌 sent: a soft breathy "fwip" sliding down onto a note of the key, never the same note
-   *  twice running, so a hose of them sparkles rather than grates. */
+  /** A 💌 sent: the witch says a syllable (Ed, 2026-10-05: "rapid fire sounds like talking: you are
+   *  inviting"). Babble in her own voice, its vowels varied, each burst a little phrase lifting at
+   *  the end like an invitation, so a hose of them is her chattering away. */
   letter(pan = 0, near = 1): void {
-    const L = this.T.letter;
-    if (!this.ready("letter", L.gap)) return;
-    const c = this.ctx, at = c.currentTime + 0.005, spread = Math.max(2, L.spread | 0);
-    let k = Math.floor(Math.random() * spread);
-    if (k === this.lastLetter) k = (k + 1 + Math.floor(Math.random() * (spread - 1))) % spread;
-    this.lastLetter = k;
-    const f = mtof(degree(this.root + 12, k + 5)), out = this.voice(pan);
-    const g = c.createGain(); g.connect(out); this.env(g, at, L.volume * near, 0.006, 0.11);
-    const o = this.osc("triangle", f * 1.5, at, 0.14, g);
-    o.frequency.exponentialRampToValueAtTime(f, at + 0.06);
-    // the breath: a whisper of band-passed noise
-    const bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 2400 + k * 180; bp.Q.value = 1.4;
-    const ng = c.createGain(); ng.connect(out); this.env(ng, at, L.volume * 0.35 * near, 0.004, 0.06);
-    bp.connect(ng); this.noiseBurst(at, 0.08, bp, Math.random());
+    const V = this.T.voice.witch, c = this.ctx, now = c.currentTime;
+    if (now - this.phrase.at > V.phraseGap) this.phrase.n = 0;
+    const k = this.phrase.n++ % INVITE.length;
+    this.phrase.at = now;
+    let v = Math.floor(Math.random() * VOWELS.length);
+    if (v === this.phrase.vowel) v = (v + 1 + Math.floor(Math.random() * (VOWELS.length - 1))) % VOWELS.length;
+    this.phrase.vowel = v;
+    const f = V.pitch * (1 + V.range * (INVITE[k] + (Math.random() - 0.5) * 0.12));
+    this.syllable(now + 0.005, { pitch: f, end: f * (k === 2 || k === 5 ? 1 + V.range * 0.35 : 0.97), vowel: v, dur: V.pace, formants: V.timbre, wave: "sawtooth", gain: V.volume * near, grit: 0, pan, consonant: Math.random() < 0.7 });
+  }
+
+  /** One spoken syllable: a voiced source (gliding from `pitch` to `end`) through a vowel's three
+   *  formants, a breath of consonant before it, gritted for anger. Returns its output gain. */
+  private syllable(at: number, o: { pitch: number; end: number; vowel: number; dur: number; formants: number; wave: OscillatorType; gain: number; grit: number; pan: number; consonant: boolean }, out?: GainNode): GainNode {
+    const c = this.ctx, dest = out ?? this.voice(o.pan), g = c.createGain();
+    g.connect(dest);
+    g.gain.setValueAtTime(0.0001, at);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, o.gain), at + 0.012);
+    g.gain.setValueAtTime(Math.max(0.0002, o.gain * 0.8), at + o.dur * 0.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, at + o.dur);
+    const src = c.createOscillator();
+    src.type = o.wave;
+    src.frequency.setValueAtTime(o.pitch, at);
+    src.frequency.exponentialRampToValueAtTime(Math.max(30, o.end), at + o.dur);
+    // a little vibrato-free wobble of the voice: a few cents of jitter
+    src.detune.setValueAtTime((Math.random() - 0.5) * 30, at);
+    let feed: AudioNode = src;
+    if (o.grit > 0) { const sh = c.createWaveShaper(); sh.curve = grit(); const pre = c.createGain(); pre.gain.value = 1 + o.grit * 3; src.connect(pre); pre.connect(sh); feed = sh; }
+    for (const [i, [f, lvl]] of VOWELS[o.vowel].entries()) {
+      const bp = c.createBiquadFilter(), fg = c.createGain();
+      bp.type = "bandpass"; bp.Q.value = i === 0 ? 6 : 9;
+      // the mouth opening: from a closed shape into the vowel over the first 25 ms
+      bp.frequency.setValueAtTime(f * o.formants * (i === 0 ? 0.6 : 0.9), at);
+      bp.frequency.linearRampToValueAtTime(f * o.formants, at + 0.025);
+      fg.gain.value = lvl * 2.2;
+      feed.connect(bp); bp.connect(fg); fg.connect(g);
+    }
+    src.start(at); src.stop(at + o.dur + 0.03);
+    if (o.consonant) {
+      const hp = c.createBiquadFilter(), ng = c.createGain();
+      hp.type = "highpass"; hp.frequency.value = 2500 + Math.random() * 3000;
+      ng.connect(dest); this.env(ng, at - 0.012 > 0 ? at - 0.012 : at, o.gain * 0.25, 0.003, 0.02);
+      hp.connect(ng); this.noiseBurst(at - 0.012 > 0 ? at - 0.012 : at, 0.03, hp, Math.random());
+    }
+    return g;
+  }
+
+  /** A creature speaks (Ed, 2026-10-05: its attacks are speech, "higher pitched for smaller animals /
+   *  levels; happy speech from happy animals, angry speech from enraged animals"): a burst of babble
+   *  in its own voice, delivered by mood. `prio` (nearness) decides who's heard when too many speak
+   *  at once: the quietest gives way. `long`: a legend's drawn-out wind-up (seconds). */
+  speak(v: CreatureVoice, mood: Mood, pan = 0, near = 1, prio = near, long = 0): void {
+    const A = this.T.voice.animals, c = this.ctx, now = c.currentTime;
+    this.speaking = this.speaking.filter(s => s.end > now);
+    if (this.speaking.length >= A.maxVoices) {
+      let low = 0;
+      for (let i = 1; i < this.speaking.length; i++) if (this.speaking[i].prio < this.speaking[low].prio) low = i;
+      if (this.speaking[low].prio >= prio) return; // (it's the least of them: unheard)
+      const quiet = this.speaking.splice(low, 1)[0];
+      quiet.g.gain.cancelScheduledValues(now); quiet.g.gain.setTargetAtTime(0, now, 0.03);
+    }
+    // the rest give it room: each voice a little quieter the more are talking
+    const crowd = 1 / Math.sqrt(1 + this.speaking.length * A.duck);
+    const out = this.voice(pan), n = long ? Math.max(3, Math.round(long / 0.22)) : A.syllables[0] + Math.floor(Math.random() * (A.syllables[1] - A.syllables[0] + 1));
+    let t = now + 0.005, v0 = Math.floor(Math.random() * VOWELS.length);
+    const vol = A.volume * near * crowd * Math.min(1.8, Math.max(1, Math.pow(A.pitch / v.pitch, 0.4))); // (low voices carry less: lifted)
+    for (let i = 0; i < n; i++) {
+      const x = n > 1 ? i / (n - 1) : 0;
+      // the contour: happy lifts and bounces, enraged starts high and falls hard, grumpy mutters flat and low
+      const shape = mood === "happy" ? 0.1 + 0.35 * x + (i % 2 ? 0.12 : 0) : mood === "enraged" ? 0.35 - 0.55 * x : -0.1 + 0.08 * Math.sin(i * 2.3);
+      const f = v.pitch * (1 + 0.5 * shape) * (long ? 0.9 + 0.25 * x : 1);
+      const dur = long ? (long / n) * 0.92 : mood === "enraged" ? 0.07 : mood === "happy" ? 0.1 : 0.11;
+      v0 = (v0 + 1 + Math.floor(Math.random() * 3)) % VOWELS.length;
+      this.syllable(t, {
+        pitch: f, end: f * (mood === "enraged" ? 0.82 : mood === "happy" ? 1.12 : 0.95), vowel: long ? (i % 2 ? 0 : 3) : v0, dur, formants: v.formants, wave: v.wave,
+        gain: vol * (long ? 0.6 + 0.4 * x : 1) * (mood === "enraged" && i === 0 ? 1.15 : 1), grit: mood === "enraged" ? 0.6 : mood === "grumpy" ? 0.15 : long ? 0.3 : 0, pan, consonant: !long && Math.random() < 0.6,
+      }, out);
+      t += dur + (long ? 0.01 : mood === "enraged" ? 0.015 : mood === "happy" ? 0.04 + (i % 2) * 0.03 : 0.05);
+    }
+    this.speaking.push({ g: out, end: t, prio });
+  }
+
+  /** A creature's answer to a 💌 that lands (optional, Ed): one small syllable in its own voice, lifting as its affection fills. */
+  reply(v: CreatureVoice, amount: number, pan = 0, near = 1): void {
+    const A = this.T.voice.animals, at = this.ctx.currentTime + 0.06, f = v.pitch * (1 + 0.4 * Math.max(0, Math.min(1, amount)));
+    this.syllable(at, { pitch: f, end: f * 1.15, vowel: Math.floor(Math.random() * VOWELS.length), dur: 0.08, formants: v.formants, wave: v.wave, gain: A.volume * A.reply * near, grit: 0, pan, consonant: false });
   }
 
   /** A 💌 landing: a small glassy chime (a bell's partials); a spent one (inside the creature's
@@ -164,10 +254,12 @@ export class Sfx {
 
   /** A legend's slow attack winding up: a rising, quickening pulse and a swelling hum that land
    *  `length` seconds on, when it fires (well telegraphed: hear it, then move). */
-  windup(pan = 0, near = 1): void {
+  windup(pan = 0, near = 1, voice?: CreatureVoice): void {
     const W = this.T.windup;
     if (!this.ready("windup", 0.25)) return;
-    const c = this.ctx, at = c.currentTime + 0.005, len = Math.max(0.3, W.length), out = this.voice(pan), vol = W.volume * near;
+    // the legend's own deep, drawn-out speech over it (Ed: its wind-up spoken, as the telegraph)
+    if (voice) this.speak(voice, "enraged", pan, Math.max(0.6, near), 9, Math.max(0.3, W.length));
+    const c = this.ctx, at = c.currentTime + 0.005, len = Math.max(0.3, W.length), out = this.voice(pan), vol = W.volume * near * (voice ? 0.45 : 1);
     const g = c.createGain(); g.connect(out);
     g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + len * 0.95); g.gain.exponentialRampToValueAtTime(0.0001, at + len + 0.12);
     const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.Q.value = 6;

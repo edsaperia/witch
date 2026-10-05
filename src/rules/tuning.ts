@@ -59,7 +59,11 @@ export interface Tuning {
   /** The sound effects (platform/sfx.ts, platform/sfxCues.ts): their volumes and rates. */
   sfx: {
     on: boolean; volume: number; hear: number;
-    letter: { volume: number; spread: number; gap: number }; hit: { volume: number; gap: number }; fill: { volume: number; octaves: number }; invited: { volume: number };
+    voice: {
+      witch: { volume: number; pitch: number; range: number; pace: number; timbre: number; phraseGap: number };
+      animals: { volume: number; pitch: number; maxVoices: number; duck: number; syllables: number[]; gap: number; reply: number };
+    };
+    hit: { volume: number; gap: number }; fill: { volume: number; octaves: number }; invited: { volume: number };
     enraged: { volume: number; gap: number }; happy: { volume: number; gap: number };
     snore: { volume: number; range: number }; nightmare: { volume: number }; windup: { volume: number; length: number };
   };
