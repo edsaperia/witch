@@ -11,6 +11,7 @@ import { affectionOf } from "../rules/game";
 import { witchHeight } from "../rules/witch";
 import { hash2 } from "../rules/random";
 import { placed } from "./height";
+import { sizeBubble } from "./bubbles";
 
 const HERS = ["💌", "🎉", "🥳", "💃", "🎈", "😘", "🎶", "✨"];
 // Replies by how full its meter is: unsure, warming, nearly, won over; and stung (blocked).
@@ -68,10 +69,10 @@ export class InviteView {
     return { el, img, until: -Infinity, x: 0, y: 0, z: 0, id };
   }
 
-  private show(b: Bubble, e: string, x: number, y: number, z: number, until: number): void {
-    const T = this.game.tuning.bubbles, n = T.emojiPixels, k = this.game.tuning.pixelSize * T.scale;
-    b.img.src = pixelEmoji(e, n);
-    b.img.style.width = b.img.style.height = `${n * k}px`;
+  /** Show emoji `e` in bubble b until then: sized for its speaker (a creature by its level, the witch at 1). */
+  private show(b: Bubble, e: string, x: number, y: number, z: number, until: number, level?: number): void {
+    b.img.src = pixelEmoji(e, this.game.tuning.bubbles.emojiPixels);
+    sizeBubble(b.el, b.img, this.game.tuning, level);
     b.x = x; b.y = y; b.z = z; b.until = until;
     b.el.classList.add("on");
   }
@@ -104,7 +105,7 @@ export class InviteView {
         if (e.kind !== "happy" && b.until > time + 0.4) continue; // (still showing its last)
         const c = g.creatures[e.id], m = A.affection(c) ?? 0;
         const face = e.kind === "blocked" ? pick(BLOCKED, e.id, e.n ?? 0) : e.kind === "happy" ? pick(REPLIES[3], e.id, 3) : pick(REPLIES[Math.min(2, Math.floor(m * 3))], e.id, e.n ?? 0);
-        this.show(b, face, 0, 0, 0, time + (e.kind === "happy" ? 1.6 : 0.9));
+        this.show(b, face, 0, 0, 0, time + (e.kind === "happy" ? 1.6 : 0.9), c.boss ? 3 : c.level);
       }
     }
     if (this.seen.size > 400) this.seen = new Set([...this.seen].slice(-200));
