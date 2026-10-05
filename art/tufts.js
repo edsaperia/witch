@@ -29,6 +29,25 @@ const TF_DRAW = {
   flowers(sp, r) { for (let k = 0; k < 3; k++) { const x = 2 + k * 2.8 + r(), h = 4 + r() * 3; for (let j = 0; j < h; j++) sp.px(x, sp.h - 1 - j, M.LEAF, 0, -.3, .9); sp.px(x, sp.h - 1 - h, M.FLOWER, 0, -.5, .85); sp.px(x + 1, sp.h - 1 - h, M.FLOWER, 0, -.5, .85); sp.px(x, sp.h - h, M.FLOWER, 0, -.5, .85); } },
   mushrooms(sp, r) { for (let k = 0; k < 2; k++) { const x = 2 + k * 4 + r(), h = 2 + Math.floor(r() * 2); for (let j = 0; j < h; j++) sp.px(x, sp.h - 1 - j, M.BELLY, 0, 0, 1); for (let dx = -1; dx <= 1; dx++) sp.px(x + dx, sp.h - 1 - h, M.STONE, dx * .5, -.5, .8); sp.px(x, sp.h - 2 - h, M.STONE, 0, -.7, .7); } },
 };
+// Stylised (st.artStyle bold or ref, the game's ?style=; docs/ART-GUIDE.md section 0), in the trees' and bushes' stamp language:
+// fewer, bigger shapes, each lit from the upper left in three tones (light on the left, shadow on the right and at the foot), no lone
+// pixels. A blade is two pixels wide at its foot, one at its tip; a blob is a little lit dome.
+const tfBlade = (sp, x, h, lean, tip = M.LEAF2) => { for (let j = 0; j < h; j++) { const t = j / h, xx = x + lean * t * t, y = sp.h - 1 - j; sp.px(xx, y, t > .55 ? tip : M.LEAF, lean * .1, -.3, .9); if (t < .5) sp.px(xx + 1, y, M.LEAF3, .4, -.2, .9); } };
+const tfDome = (sp, cx, rx, ry, lit = M.LEAF2, mid = M.LEAF, dark = M.LEAF3) => { for (let y = Math.floor(sp.h - 2 * ry); y < sp.h; y++) for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) { const u = (x + .5 - cx) / rx, v = (y + .5 - (sp.h - ry)) / ry; if (u * u + v * v > 1) continue; sp.px(x, y, u + v < -.55 ? lit : u + v > .45 || v > .55 ? dark : mid, u * .5, v * .5, .8); } };
+const TF_STYL = {
+  grass(sp, r) { for (let k = 0; k < 4; k++) tfBlade(sp, 1 + k * 2.2 + r(), 3.5 + r() * 2.5, (r() - .5) * 2); },
+  longgrass(sp, r) { for (let k = 0; k < 4; k++) tfBlade(sp, 1 + k * 2.2 + r(), 7 + r() * 4, (r() - .5) * 4); },
+  rushes(sp, r) { for (let k = 0; k < 3; k++) { const x = 1.5 + k * 2.8 + r(), h = 9 + r() * 3, lean = (r() - .5) * 1.5; tfBlade(sp, x, h, lean, M.LEAF); if (k !== 1) for (let j = 0; j < 2; j++) { sp.px(x + lean, sp.h - 1 - h - j, M.TRUNK, 0, -.5, .85); sp.px(x + lean + 1, sp.h - 1 - h - j, M.TRUNK, .3, -.5, .85); } } },
+  fern(sp, r) { for (const side of [-1, 1]) { const x0 = sp.w / 2 + side * .5, L = 8 + r() * 2; for (let j = 0; j < L; j++) { const t = j / L, x = x0 + side * t * t * 4, y = sp.h - 1 - j * .85, lit = side < 0; sp.px(x, y, lit ? M.LEAF : M.LEAF3, side * .2, -.3, .9); if (j % 3 === 1 && j > 1) { sp.px(x + side, y + 1, lit ? M.LEAF2 : M.LEAF, side * .4, -.2, .9); sp.px(x + side * 2, y + 1, lit ? M.LEAF2 : M.LEAF, side * .4, -.2, .9); } } } },
+  heather(sp, r) { for (let k = 0; k < 2; k++) { const cx = 2.6 + k * 4.6 + r() * .6; tfDome(sp, cx, 2.6, 3, M.LEAF, M.LEAF3, M.LEAF3); for (let dx = -1; dx <= 1; dx++) for (let dy = 0; dy < 2; dy++) if (hash2(k, dx * 3 + dy, 5) < .7) sp.px(cx + dx - .5, sp.h - 6 + dy, M.FLOWER, 0, -.4, .85); } },
+  moss(sp, r) { tfDome(sp, 3 + r(), 2.8, 1.9); tfDome(sp, 6.8 + r(), 2.4, 1.5); },
+  clover(sp, r) { for (let k = 0; k < 3; k++) { const cx = 1.5 + k * 3 + r(), cy = sp.h - 2; for (const [dx, dy, m] of [[0, -1, M.LEAF2], [-1, 0, M.LEAF2], [1, 0, M.LEAF], [0, 0, M.LEAF], [1, -1, M.LEAF]]) sp.px(cx + dx, cy + dy, m, dx * .4, dy * .4, .9); sp.px(cx, cy + 1, M.LEAF3, 0, 0, 1); } if (r() < .5) { sp.px(5, sp.h - 4, M.FLOWER, 0, -.5, .85); sp.px(6, sp.h - 4, M.FLOWER, 0, -.5, .85); } },
+  needles(sp, r) { for (let k = 0; k < 4; k++) { const x = (k % 2) * 4 + r() * 2, y = sp.h - 1 - (k < 2 ? 0 : 1.6) - r() * .4; for (let j = 0; j < 4; j++) sp.px(x + j, y - (k % 2 ? j * .4 : 0), j < 2 ? M.BARKL : M.TRUNK, 0, -.5, .85); } },
+  litter(sp, r) { for (let k = 0; k < 3; k++) { const x = 1 + k * 3 + r(), y = sp.h - 2 - r(), m = [M.LEAF3, M.TRUNK, M.BARKL][k % 3]; sp.px(x, y, m, 0, -.6, .8); sp.px(x + 1, y, m, 0, -.6, .8); sp.px(x, y + 1, M.TRUNK, 0, -.3, .9); sp.px(x + 1, y + 1, m === M.BARKL ? M.TRUNK : m, 0, -.3, .9); } },
+  pebbles(sp, r) { for (let k = 0; k < 2; k++) { const cx = 2.6 + k * 4.6 + r() * .6, rx = 2 + r() * .5; tfDome(sp, cx, rx, 1.5, M.STONE, M.STONE, M.STONED); } },
+  flowers(sp, r) { for (let k = 0; k < 2; k++) { const x = 2.5 + k * 4 + r(), h = 4 + r() * 3; for (let j = 0; j < h; j++) sp.px(x, sp.h - 1 - j, j < 2 ? M.LEAF3 : M.LEAF, 0, -.3, .9); for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1], [-1, 0]]) sp.px(x + dx, sp.h - 2 - h + dy, M.FLOWER, dx * .4, -.5, .85); } },
+  mushrooms(sp, r) { for (let k = 0; k < 2; k++) { const x = 2.5 + k * 4 + r(), h = 2 + Math.floor(r() * 2); for (let j = 0; j < h; j++) sp.px(x, sp.h - 1 - j, M.BELLY, 0, 0, 1); for (let dx = -1; dx <= 2; dx++) sp.px(x + dx, sp.h - 1 - h, dx > 0 ? M.STONED : M.STONE, dx * .5, -.5, .8); sp.px(x, sp.h - 2 - h, M.STONE, 0, -.7, .7); sp.px(x + 1, sp.h - 2 - h, M.STONE, .3, -.7, .7); } },
+};
 const TF_SIZE = { grass: [10, 7], longgrass: [10, 12], fern: [11, 9], heather: [10, 7], rushes: [9, 13], moss: [10, 4], clover: [10, 5], needles: [10, 3], litter: [10, 4], pebbles: [10, 3], flowers: [10, 9], mushrooms: [9, 5] };
 // Each floor's mix: [kind, weight]. The rare ones (flowers, mushrooms) are a few in a hundred.
 const TF_MIX = {
@@ -61,7 +80,11 @@ export function tuftSprites(id, st = {}) {
   const colours = { [M.LEAF]: hsv2rgb(leaf, .55, .5), [M.LEAF2]: hsv2rgb(leaf - .03, .5, .66), [M.LEAF3]: hsv2rgb(leaf + .03, .6, .32), [M.FLOWER]: flower, [M.TRUNK]: hsv2rgb(.07, .45, .36), [M.BARKL]: hsv2rgb(.08, .4, .55),
     [M.STONE]: hsv2rgb(.08, .4, .55), [M.STONED]: hsv2rgb(.62, .08, .4), [M.BELLY]: [226, 216, 196] };
   if (A.floor[0] === "slate" || A.floor[0] === "scree" || A.floor[0] === "stony" || A.floor[0] === "pebbles" || A.floor[0] === "stone" || A.floor[0] === "earth") colours[M.STONE] = hsv2rgb(.1, .06, .58); // stones are grey; elsewhere STONE is a mushroom's cap
-  return mix.map(([kind, weight]) => { const [w, h] = TF_SIZE[kind], sp = new Sprite(w, h); TF_DRAW[kind](sp, r); return { kind, weight, sp, colours: kind === "mushrooms" ? { ...colours, [M.STONE]: hsv2rgb(.04, .6, .6) } : colours }; });
+  const sty = st.artStyle === "bold" || st.artStyle === "ref";
+  if (sty) { // the pixel-art ramp, as the trees': the shadow deeper and towards blue-violet, the light paler and towards cream ("ref" keeps one tone family)
+    const ref = st.artStyle === "ref"; colours[M.LEAF3] = hsv2rgb(leaf + (ref ? .035 : .07), .72, .26); colours[M.LEAF2] = hsv2rgb(leaf - (ref ? .045 : .08), ref ? .3 : .36, .82);
+  }
+  return mix.map(([kind, weight]) => { const [w, h] = TF_SIZE[kind], sp = new Sprite(w, h); (sty ? TF_STYL : TF_DRAW)[kind](sp, r); if (sty) sp.stylised = st.artStyle; return { kind, weight, sp, colours: kind === "mushrooms" ? { ...colours, [M.STONE]: hsv2rgb(.04, .6, .6) } : colours }; });
 }
 // Baked: [{ kind, weight, A, N, S (its sway mask), w, h }].
 export function bakeTufts(id, st = {}, makeCanvas = defaultCanvas) {
