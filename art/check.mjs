@@ -427,7 +427,7 @@ const report = await b.page.evaluate(async () => {
     res.push({ what: "ground cover and wind: every area has 3+ tufts (8 to 13 px), weights adding to 1; trees' feet still and leaves swaying (tops most), rocks still, leafy props masked", good: !bad.length, info: bad.slice(0, 6).join("; ") || `${G.AREAS.reduce((a, A) => a + G.tuftSprites(A.id, st).length, 0)} tufts over ${G.AREAS.length} areas` });
   }
   { // the prop generator (art/props/, #119): every kind's 12 seeded variants draw, stand on their bottom row, nothing NaN, no two alike;
-    // standing stones grey slabs 2 to 6 m tall (broken ones shortest), plain (lichen and moss under a third of them) and wider than deep in the picture;
+    // standing stones grey slabs 3 to 6 m tall (squat and broken ones from 1.4 m), plain (lichen and moss under a third of them) and wider than deep in the picture;
     // cairns low (under 2.2 m) and wider than tall; pools wider than tall, mostly water, 1.5 to 5 m across (at the tall pieces' 16 px a metre); a broken trunk's wood all
     // one piece (its branch joined to it, never a stick laid beside it); and under ?props=gen the moor and the muddy forest get
     // 3 shapes of each stood-in prop
@@ -440,7 +440,7 @@ const report = await b.page.evaluate(async () => {
         let bottom = 0; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++; if (!bottom) bad.push(`${kind} ${seed} floats`);
         if (seen.has(key)) bad.push(`${kind} ${seed} repeats another`); seen.add(key);
         const share = mats => sp.m.filter(m => mats.includes(m)).length / n, { height, width } = p.metres;
-        if (kind === "standingStone") { const [r, g, b] = p.colours[G.M.STONE], mx = Math.max(r, g, b), sat = mx ? (mx - Math.min(r, g, b)) / mx : 0; if (sat > .16 || height < 2 || height > 6 || share([G.M.BELLY, G.M.MOSS]) > .33) bad.push(`stone ${seed}: sat ${sat.toFixed(2)}, ${height} m, marks ${share([G.M.BELLY, G.M.MOSS]).toFixed(2)}`); }
+        if (kind === "standingStone") { const [r, g, b] = p.colours[G.M.STONE], mx = Math.max(r, g, b), sat = mx ? (mx - Math.min(r, g, b)) / mx : 0; if (sat > .16 || height < (p.variant.shape === "squat" || p.variant.top === "broken" ? 1.4 : 3) || height > 6 || share([G.M.BELLY, G.M.MOSS]) > .33) bad.push(`stone ${seed}: sat ${sat.toFixed(2)}, ${height} m, marks ${share([G.M.BELLY, G.M.MOSS]).toFixed(2)}`); }
         if (kind === "cairn" && (height > 2.2 || width < height)) bad.push(`cairn ${seed}: ${width} x ${height} m`);
         if (kind === "pool" && (width < 1.5 || width > 5 || sp.h >= sp.w || share([G.M.WATER, G.M.BODY2, G.M.BELLY]) < .5)) bad.push(`pool ${seed}: ${width} x ${height} m, water ${share([G.M.WATER, G.M.BODY2, G.M.BELLY]).toFixed(2)}`);
         if (kind === "brokenTrunk") { // the wood's pieces, by 4-neighbour flood fill (splinters and fungi on it touch it)

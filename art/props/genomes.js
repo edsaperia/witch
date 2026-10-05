@@ -10,17 +10,18 @@ export const PROP_GENOMES = {
   standingStone: {
     height: [3.4, 5], width: [.9, 1.4], depth: [.35, .55], taper: [.55, .85], // its top's width, times its foot's
     lean: [-.2, .2], tilt: [-.08, .08], // radians: sideways (in the picture) and towards us
-    top: [["slant", 3], ["round", 2], ["notch", 1], ["broken", 2]], // its top: cut on a slant, rounded, notched, or snapped off (a piece lying beside it)
+    top: [["slant", 3], ["round", 1], ["notch", 2], ["flat", 2], ["broken", 2]], // its top: cut on a slant (a third of its width or more), rounded, a deep V notch, flat (a square slab), or snapped off (a piece lying beside it)
+    shape: [["tall", 3], ["squat", 1]], // a squat slab: about .7 as tall, 1.45 times as wide (up to about 1.8 m wide at 3 m tall), so a ring of them has rhythm
     lichen: [0, 3], lichenSize: [.1, .2], moss: [.06, .16], // big lichen patches, not speckle; moss up its foot (a share of its height)
     rough: 0, // smooth faces: Ed's notes said "much less textured"
-    colour: { stone: [.6, .07, .6], dark: [.64, .1, .38], lichen: [[.22, .14, .74, 4], [.1, .4, .7, 1]], moss: [.24, .45, .38], spread: .06 },
+    colour: { stone: [.6, .12, .66], dark: [.65, .14, .4], lichen: [[.22, .14, .76, 4], [.1, .4, .7, 1]], moss: [.24, .45, .38], spread: .06 },
   },
   cairn: {
-    stones: [6, 10], spread: [1.4, 2.2], height: [.6, 1.1], size: [.32, .5], flat: [.45, .7], // stone radius (m), how flat each is (height over width)
+    stones: [7, 11], spread: [1.2, 1.7], height: [.85, 1.3], size: [.3, .44], flat: [.5, .7], // stacked as a cone (spread under twice its height); stone radius (m), how flat each is
     slab: [["none", 2], ["one", 3], ["two", 1]], // leaning slabs against it
     rubble: [3, 7], moss: [.15, .4], // loose stones round its foot; the share of stones mossed on top
     rough: .03,
-    colour: { stone: [.6, .07, .58], dark: [.64, .1, .36], lichen: [[.22, .14, .74, 1]], moss: [.24, .45, .38], spread: .07 },
+    colour: { stone: [.6, .12, .64], dark: [.65, .14, .4], lichen: [[.22, .14, .76, 1]], moss: [.24, .45, .38], spread: .07 },
   },
   pool: {
     radius: [.7, 1.35], aspect: [.5, .85], // across (m); how deep it reaches into the picture, times across
@@ -28,7 +29,7 @@ export const PROP_GENOMES = {
     rim: [.12, .3], rimKind: [["mud", 2], ["moss", 2]], // its shore's band (m) and what it is
     reeds: [0, 3], reedsPer: [3, 7], reedHeight: [.45, .95], cattails: [0, 1], // reed clumps on its shore, cattail heads (a share)
     stones: [0, 4], pads: [0, 0], // shore stones; lily pads
-    colour: { water: [.56, .4, .44], deep: [.58, .48, .28], glint: [.55, .18, .8], mud: [.08, .35, .26], moss: [.24, .45, .36], reed: [.22, .45, .45], reed2: [.18, .4, .62], cattail: [.06, .55, .3], stone: [.6, .05, .55], pad: [.3, .5, .45], spread: .04 },
+    colour: { water: [.6, .45, .38], deep: [.62, .55, .16], glint: [.55, .2, .95], mud: [.08, .35, .3], moss: [.24, .4, .52], reed: [.22, .45, .45], reed2: [.18, .4, .62], cattail: [.06, .55, .3], stone: [.6, .05, .55], pad: [.3, .5, .45], spread: .04 },
     bog: { water: [.17, .35, .26], deep: [.2, .4, .18], glint: [.18, .25, .5] }, // a bog's brown-green water
   },
   brokenTrunk: {
@@ -36,7 +37,7 @@ export const PROP_GENOMES = {
     branch: [["up", 3], ["out", 2], ["hanging", 2], ["none", 1]], // its snapped branch: rising, reaching out level, hanging down to the ground still attached, or none
     branchAt: [.45, .8], branchLen: [.8, 1.6], branchSide: [-1, 1], // where up the trunk (a share), how long (m), which way (sign)
     splinters: [4, 7], roots: [3, 5], moss: [0, .5], fungi: [0, 3], // jagged pale wood at the break; root flares; moss up its shady side; bracket fungi
-    colour: { wood: [.07, .4, .32], dark: [.06, .45, .17], light: [.08, .3, .48], pale: [.1, .28, .74], moss: [.24, .45, .36], fungus: [.08, .45, .62], spread: .04 },
+    colour: { wood: [.07, .4, .32], dark: [.06, .45, .17], light: [.08, .3, .48], pale: [.1, .18, .68], moss: [.24, .45, .36], fungus: [.08, .45, .62], spread: .04 },
   },
 };
 export const PROP_KINDS = Object.keys(PROP_GENOMES);

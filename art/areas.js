@@ -409,7 +409,7 @@ export function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defau
   const ft = floorTile(def, st);
   // ?props=gen (st.propGen): each hand-made prop the prop generator stands in for (propFor) becomes `variants` of it (3; a sparse one's
   // share split among them), each its own shape from its own seed, so a pool or a stone isn't one sprite placed again and again
-  const gen = list => !st.propGen ? list : (list || []).flatMap(([kind, o], i) => { const g = propFor(kind, o); if (!g) return [[kind, o]]; const n = o.variants || 3; return [...Array(n).keys()].map(k => [kind, { ...o, ...(o.sparse ? { sparse: o.sparse / n } : {}), gen: [g[0], g[1], (r() * 1e6 | 0) + i * 7 + k] }]); });
+  const gen = list => !st.propGen ? list : (list || []).flatMap(([kind, o], i) => { const g = propFor(kind, o); if (!g) return [[kind, o]]; const n = o.variants || 3; return [...Array(n).keys()].map(k => [kind, { ...o, ...(o.sparse ? { sparse: o.sparse / n } : {}), gen: [g[0], { ...g[1], lead: k === 0 }, (r() * 1e6 | 0) + i * 7 + k] }]); });
   const col = list => (gen(list) || []).map(([kind, o]) => { const p = prop(kind, o, def, st, r, K), b = bk(p, kind, ""); if (SWAYING_PROPS.has(kind)) b.sway = bakeSway(p.sp, makeCanvas); if (p.metres) b.metres = p.metres; if (o.sparse) b.sparse = o.sparse; return b; }); // leafy props carry their sway mask; tall pieces their size and how sparse they stand
   const out = { def, floor: { sp: bake(ft.sp, ft.colours, st, "none", makeCanvas), kind: def.floor[0], text: def.text.floor }, walls: col(def.wall), small: col(def.small), big: col(def.big), setPiece: null };
   out.walls.forEach(a => a.text = def.text.wall); out.small.forEach(a => a.text = def.text.small); out.big.forEach(a => a.text = def.text.big);
