@@ -158,6 +158,8 @@ At ground level a young creature is about 45 px tall and the witch about 50 px. 
 - **Tall set pieces and decor must be grey or brown stone and wood, not the grass colour.** The stone shrine and cairns in khaki read as pine cones or vanished (#112).
 - **One prop repeated in lines reads as something manufactured.** Identical broken stumps in rows read as a battery of little cannons (#112 v2 muddy forest). Vary height, angle and mirroring, break up the spacing, and mix in a second kind.
 - **Vary a prop's shape, not only where it stands.** One pool sprite three times, or one stump with a stick laid beside it, still reads as stamped (#112 v3). A prop generator should give each instance its own outline, and join parts that belong together (a broken branch to its stump).
+- **Water keeps its value apart from its rim, in every style.** Under bold and ref, a pool's teal water shifts green and takes one band, so it merges with a moss rim and reads as a lawn (#142). Keep the water darker than its shore, and its glints glowing, so the stylisation leaves them alone.
+- **Near-neutral greys drift warm under the key light.** A stone at 7% saturation looks blue-grey on the night sheet but khaki beside the grass by day (#142). Give a grey that must read as grey a little cool saturation, and judge it in play, not only on a sheet.
 - **Stacked regular rings read as haystacks or beehives.** Cairns drawn as even rings in straw colour (#112 v2 moor) need irregular grey stones and a leaning slab.
 - **Water edges are round and irregular.** Pointed lenses with hard edges read as boats or leaves (#112 v2 moor pools).
 - **Every area gets its own tuft mix and value.** The same bright lime grass tuft in every area makes them all one place, and reads as neon on a dark floor (#112).
@@ -193,6 +195,7 @@ At ground level a young creature is about 45 px tall and the witch about 50 px. 
 | Boar invisible in game | #112 v2 fern forest | Coat the same value as the floor | Lift the value, or a paler ridge |
 | Ram, v2 (a success) | #112 v2 tangly | White fleece, black face and legs, dark horns: three values that never merge | The model for a strong creature read |
 | Contour banding on big legends | #112 | The 3D bake's shading terraces at large size | Waits for the generator's next stage (Ed) |
+| Pools as lawns, khaki stones | #142 bold/ref, day | Water's tone matched its moss rim; a low-saturation grey took the warm light | Water darker than its rim, glints glowing; cooler, lighter stone |
 | In-game shots too dark | #97, #112 | Night lighting at ground level | Judge colour on sheets; a lit review mode is proposed |
 
 ## 8. Checks that a machine could do (proposals for art/check.mjs)
