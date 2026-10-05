@@ -3,10 +3,10 @@
 // (a waveshaper's crunch, a wobbling tremolo, crackle and drop-outs). The track is generative
 // (platform/musicEngine.ts, from config/music-style.json), its sections following the waves
 // (rules/musicPlan.ts), on the game's beat; a recorded track (music.src) can stand in for it.
-import type { MusicMix } from "../rules/music";
-import type { BeatClock } from "../rules/beat";
-import type { MusicCue } from "../rules/musicPlan";
-import type { MusicStyle } from "../rules/musicScore";
+import type { MusicMix } from "../../rules/music";
+import type { BeatClock } from "../../rules/beat";
+import type { MusicCue } from "../../rules/musicPlan";
+import type { MusicStyle } from "../../rules/musicScore";
 import { MusicEngine } from "./musicEngine";
 
 export class Music {
