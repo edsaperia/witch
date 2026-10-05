@@ -29,3 +29,32 @@ export function collectChangelog(files: Record<string, ChangelogFile>): Changelo
 
 /** The game's changelog: every file in config/changelog, bundled at build time. */
 export const CHANGELOG: ChangelogEntry[] = collectChangelog(import.meta.glob<ChangelogFile>("../config/changelog/*.json", { eager: true, import: "default" }));
+
+/** One change (one fragment file): its title (the fragment's own, or its name's slug as words), its date (from its name) and its bullets. */
+export interface ChangelogChange { title: string | null; date: string | null; items: string[] }
+/** A version's changes, newest first, and its date (its newest change's). */
+export interface ChangelogVersion { version: number | null; date: string | null; changes: ChangelogChange[] }
+interface ChangelogFileTitled extends ChangelogFile { title?: string }
+
+const FRAGMENT = /(\d{4}-\d{2}-\d{2})-([a-z0-9-]+)\.json$/;
+
+/** The changelog grouped by version and, within a version, by change (for the start screen):
+ *  the same order as collectChangelog; the archive's versions are one untitled, undated change each. */
+export function groupChangelog(files: Record<string, ChangelogFileTitled>): ChangelogVersion[] {
+  const byVersion = new Map<number | null, ChangelogChange[]>(), archive: ChangelogEntry[] = [];
+  for (const name of Object.keys(files).sort().reverse()) {
+    const f = files[name];
+    if (f.entries) { archive.push(...f.entries); continue; }
+    const m = FRAGMENT.exec(name), slug = m?.[2] ?? "", v = f.version ?? null;
+    const title = f.title ?? (slug ? slug[0].toUpperCase() + slug.slice(1).replace(/-/g, " ") : null);
+    if (!f.items?.length) continue;
+    byVersion.set(v, [...(byVersion.get(v) ?? []), { title, date: m?.[1] ?? null, items: f.items }]);
+  }
+  for (const e of archive) byVersion.set(e.version, [...(byVersion.get(e.version) ?? []), { title: null, date: null, items: e.items }]);
+  return [...byVersion.entries()]
+    .sort(([a], [b]) => (a === null ? -1 : b === null ? 1 : b - a))
+    .map(([version, changes]) => ({ version, date: changes.map(c => c.date).filter((d): d is string => !!d).sort().pop() ?? null, changes }));
+}
+
+/** The game's changelog by version and change. */
+export const CHANGELOG_VERSIONS: ChangelogVersion[] = groupChangelog(import.meta.glob<ChangelogFileTitled>("../config/changelog/*.json", { eager: true, import: "default" }));
