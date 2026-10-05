@@ -20,7 +20,7 @@ describe("the character creator", () => {
     const g = upgrade(JSON.parse(JSON.stringify(old)));
     expect((Art.witchGenomeProblems as (g: unknown) => string[])(g)).toEqual([]);
     expect(g.hat.shape).toBe("crooked");
-    expect([g.scarfLength, g.bagSize, g.backpack]).toEqual([1, 1, "none"]);
+    expect([g.scarfLength, g.bagSize, g.backpackSize]).toEqual([1, 1, 0]);
     expect(upgrade({}).hat.shape).toBe("classic");
   });
   it("offers no hat first, and the wide sliders' ends are still a valid witch", () => {

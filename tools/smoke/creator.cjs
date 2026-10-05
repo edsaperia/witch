@@ -5,8 +5,8 @@ let playwright; try { playwright = require("playwright"); } catch { playwright =
 const root = path.join(__dirname, "../.."), out = path.join(root, "previews/creator2");
 const base = { hat: { shape: "classic", height: 1, brim: 1, tilt: 0, band: 1 }, hair: "long", top: "jacket", cloak: "none", broom: { kind: "classic", length: 1, bend: 0, bristles: 1 }, accessories: { phones: true, shades: false, glowsticks: false, scarf: true, satchel: true, pendant: false, earrings: false }, palette: null };
 const looks = {
-  "high": { ...base, hat: { shape: "crooked", height: 3, brim: 2.6, tilt: .35, band: 4 }, cloak: "long", broom: { kind: "fan", length: 2.4, bend: 1.5, bristles: 3 }, scarfLength: 3, bagSize: 2.6, backpack: "huge", palette: { hat: [.0, .9, .5], jacket: [.5, .9, 1], hair: [.83, .8, 1] } },
-  "low": { ...base, hat: { shape: "small", height: .3, brim: .3, tilt: -.9, band: 0 }, hair: "mohawk", broom: { kind: "round", length: .4, bend: -1.2, bristles: .3 }, scarfLength: .3, bagSize: .4, backpack: "small", palette: { hat: [.33, .9, .3], jacket: [.12, .9, 1], hair: [.6, .9, 1] } },
+  "high": { ...base, hat: { shape: "crooked", height: 3, brim: 2.6, tilt: .35, band: 4 }, cloak: "long", broom: { kind: "fan", length: 2.4, bend: 1.5, bristles: 3 }, scarfLength: 3, bagSize: 2.6, backpackSize: 2.5, palette: { hat: [.0, .9, .5], jacket: [.5, .9, 1], hair: [.83, .8, 1] } },
+  "low": { ...base, hat: { shape: "small", height: .3, brim: .3, tilt: -.9, band: 0 }, hair: "mohawk", broom: { kind: "round", length: .4, bend: -1.2, bristles: .3 }, scarfLength: .3, bagSize: .4, backpackSize: .5, palette: { hat: [.33, .9, .3], jacket: [.12, .9, 1], hair: [.6, .9, 1] } },
   "old-save": { ...base, hat: { shape: "floppy", height: 1.3, brim: 1.2, tilt: .1, band: 2 } },
 };
 (async () => {

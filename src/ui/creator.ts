@@ -11,7 +11,7 @@
 import * as Art from "../../art/generator.js";
 import type { Style } from "../render/style";
 
-type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpack?: string; [k: string]: unknown };
+type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpackSize?: number; [k: string]: unknown };
 
 const AXES = Art.WITCH_AXES as Record<string, unknown[] | [number, number]>;
 const CLASSIC = Art.WITCH_GENOME as unknown as Genome;
@@ -37,16 +37,19 @@ export function slot(axis: string): [string | null, string] {
   if (axis === "hatShape") return ["hat", "shape"];
   if (axis === "broom") return ["broom", "kind"];
   if (axis === "bristles") return ["broom", "bristles"];
+  if (axis in (Art.WITCH_GENOME as { accessories: object }).accessories) return ["accessories", axis]; // an accessory with a choice (the familiar)
   for (const part of ["hat", "broom"]) if (axis.startsWith(part) && axis.length > part.length) return [part, axis[part.length].toLowerCase() + axis.slice(part.length + 1)];
   return [null, axis];
 }
-const groupOf = (axis: string) => axis.startsWith("hat") ? "Hat" : axis === "hair" ? "Hair" : axis === "top" || axis === "cloak" ? "Outfit" : axis.startsWith("broom") || axis === "bristles" ? "Broom" : axis === "scarfLength" || axis === "bagSize" || axis === "backpack" ? "Scarf and bags" : "More";
+const groupOf = (axis: string) => axis.startsWith("hat") ? "Hat" : axis === "hair" ? "Hair" : axis === "top" || axis === "cloak" ? "Outfit" : axis.startsWith("broom") || axis === "bristles" ? "Broom" : axis === "scarfLength" || axis === "bagSize" || axis === "backpackSize" ? "Scarf and bags" : "More";
 const label = (s: string) => s.replace(/([A-Z])/g, " $1").replace(/^hat |^broom /i, "").toLowerCase();
 /** What a choice is called on its button (its genome name otherwise). */
-const NAMES: Record<string, string> = { none: "none", conical: "farmer's", boppers: "deely boppers", top: "top hat", party: "party hat", cowboy: "cowboy", musketeer: "musketeer" };
+const NAMES: Record<string, string> = { conical: "farmer's", boppers: "deely boppers", top: "top hat", party: "party hat", traffic: "traffic cone" };
 const optName = (axis: string, opt: string) => axis === "hatShape" ? (opt === "none" ? "no hat" : NAMES[opt] ?? opt) : opt;
 /** The accessory a slider belongs to: moving it puts that on. */
 const WEARS: Record<string, string> = { scarfLength: "scarf", bagSize: "satchel" };
+/** A slider's labels at its ends, where 0 means none. */
+const NONE_AT_ZERO = new Set(["scarfLength", "backpackSize"]);
 
 /** The rainbow pickers: 256 steps each. A colour is a hue (the rainbow), a shade (dark, through the full colour, to pale) and a
  *  greyness (full colour to grey); fromPicker turns the three into the genome's hue, saturation and value, toPicker back. */
@@ -68,7 +71,7 @@ function classicPalette(st: Style): Record<string, number[]> {
   return Object.fromEntries(Object.entries(D).map(([k, [h, s, v]]) => [k, [hue[k] ?? h, s, v]]));
 }
 /** The parts a player colours, and each one's swatches (hue, saturation, value). */
-const PARTS = ["hat", "jacket", "cloak", "top", "hair", "skin", "jeans", "sneakers", "headphones", "scarf", "satchel", "backpack", "broom", "bristles"].filter(k => k in (Art.DEFAULT_OUTFIT as object) || k === "backpack");
+const PARTS = ["hat", "plume", "jacket", "cloak", "top", "hair", "skin", "jeans", "sneakers", "headphones", "scarf", "satchel", "backpack", "broom", "bristles"].filter(k => k in (Art.DEFAULT_OUTFIT as object) || k === "backpack" || k === "plume");
 /** A few quick picks under the strips: skins, and the hair colours that aren't in a rainbow. */
 function swatches(part: string): number[][] {
   if (part === "skin") return [[.07, .25, .96], [.07, .32, .9], [.07, .42, .78], [.06, .5, .62], [.05, .55, .47], [.05, .5, .34]];
@@ -237,14 +240,19 @@ export class Creator {
         s.type = "range"; s.min = String(a); s.max = String(z); s.step = String((z - a) / 200); s.value = String(get(axis) ?? a);
         s.style.flex = "1"; s.dataset.axis = axis;
         const wear = WEARS[axis];
-        s.addEventListener("input", () => { set(axis, +s.value); if (wear && !g.accessories[wear]) { g.accessories[wear] = true; const c = P.querySelector<HTMLInputElement>(`input[data-wear="${wear}"]`); if (c) c.checked = true; } });
-        r.append(s);
+        const out = document.createElement("span");
+        Object.assign(out.style, { width: "38px", textAlign: "right", opacity: ".7" });
+        const show = () => { const v = +s.value; out.textContent = NONE_AT_ZERO.has(axis) && v === 0 ? "none" : axis === "hatTilt" || axis === "broomBend" ? (v > 0 ? "+" : "") + v.toFixed(2) : "×" + v.toFixed(2); };
+        show();
+        s.addEventListener("input", () => { show(); set(axis, +s.value); if (wear && !g.accessories[wear]) { g.accessories[wear] = true; const c = P.querySelector<HTMLInputElement>(`input[data-wear="${wear}"]`); if (c) c.checked = true; } });
+        r.append(s, out);
       }
     }
     // Accessories: a toggle each.
     const acc = group("Accessories"), ar = row(acc, "");
     ar.firstElementChild?.remove();
     for (const k of Object.keys({ ...CLASSIC.accessories, ...g.accessories })) {
+      if (k in AXES) continue; // a choice, not a toggle: its row is above
       const l = document.createElement("label"), c = document.createElement("input");
       c.type = "checkbox"; c.checked = !!g.accessories[k]; c.dataset.wear = k;
       c.addEventListener("change", () => { g.accessories[k] = c.checked; this.dirty = true; });
