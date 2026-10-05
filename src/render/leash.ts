@@ -299,8 +299,8 @@ export class LeashView {
   private dreamEls: HTMLElement[] = [];
 
   /** A sleeping legend's dream (the first quest, Ed 2026-10-04): a thought bubble over it holding the
-   *  sigil of the creature it wants, in its colour, with its level as gold pips beneath (one for a
-   *  baby, two young, three adult). From the treetops the bubble floats high over it, so the
+   *  sigil of the creature it wants, in its colour, drawn in that level's variant (Ed, 2026-10-05:
+   *  the sigil's own level look, no pips). From the treetops the bubble floats high over it, so the
    *  forest's dreams can be read from above. HTML, like the talk bubbles, so it reads at any zoom. */
   private drawDreams(camera: THREE.Camera, width: number, height: number): void {
     const host = this.bubbleWitch?.parentElement, w = this.game.witch, treetops = w.lift > 0.5;
@@ -317,7 +317,7 @@ export class LeashView {
       const q = c.quest!, key = `${q.species}:${q.level}`;
       if (el.dataset.e !== key) {
         el.dataset.e = key;
-        const cv = document.createElement("canvas"), n = 36;
+        const cv = document.createElement("canvas"), n = 44;
         cv.width = cv.height = n;
         const x = cv.getContext("2d");
         if (x) {
@@ -326,10 +326,7 @@ export class LeashView {
           for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] > 90 ? 255 : 0;
           x.putImageData(d, 0, 0);
         }
-        const pips = document.createElement("div");
-        pips.className = "pips";
-        for (let i = 0; i <= q.level; i++) pips.append(document.createElement("i"));
-        el.replaceChildren(cv, pips);
+        el.replaceChildren(cv);
       }
       el.style.left = `${((this.v.x + 1) / 2) * width}px`;
       el.style.top = `${((1 - this.v.y) / 2) * height}px`;
