@@ -218,6 +218,14 @@ function targetPos(w: CombatWorld, s: CombatState, tg: Target): { x: number; z: 
 }
 
 /** Whether a target is still worth fighting for this creature. */
+/** Whether (x, z) is more than combat.leaveArea metres past the creature's area's edge (Ed,
+ *  2026-10-05): outside its area, and still outside it that far back toward its home. */
+function pastEdge(w: CombatWorld, c: Creature, x: number, z: number): boolean {
+  if (w.inArea(c, x, z)) return false;
+  const hx = c.anchorX - x, hz = c.anchorZ - z, hd = Math.hypot(hx, hz) || 1, L = Math.min(hd, w.t.combat.leaveArea * FIGHT.scale);
+  return !w.inArea(c, x + (hx / hd) * L, z + (hz / hd) * L);
+}
+
 /** The creature she's inviting (Ed, 2026-10-04): her party leaves it be while they chat. */
 const inviting = (w: CombatWorld, c: Creature, o: Creature) => sideOf(c) === "party" && w.talkingTo(o.id) >= 0;
 
@@ -227,12 +235,15 @@ function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): boolean
     return !!o && targetable(o) && sideOf(o) !== sideOf(c) && !truce(c, o) && !w.asleep(o) && !inviting(w, c, o);
   }
   if (tg.kind === "witch") {
-    // A wild one loses her when she rises, or once she's out of its area, out of its attack range
-    // and at least combat.witchLose away (Ed, 2026-10-04); then it walks back to its spot.
+    // A wild one loses her when she rises, or (Ed, 2026-10-05: "wild creatures shouldn't pursue you
+    // very far outside of their area") once she's combat.leaveArea metres past its area's edge;
+    // then it turns back and walks home. A besieger keeps the old rule: out of its area, out of its
+    // attack range and at least combat.witchLose away. (Only wild ones go for her at all.)
     const v = w.witches[tg.id];
-    if (c.leashed || !v || !v.onGround || v.down || w.talkingTo(c.id) === tg.id) return false;
+    if (sideOf(c) !== "wild" || !v || !v.onGround || v.down || w.talkingTo(c.id) === tg.id) return false;
+    if (!c.siege) return !pastEdge(w, c, v.x, v.z);
     const d = Math.hypot(v.x - c.x, v.z - c.z), range = attackOf(c.species, c.level)?.attack.range ?? 0;
-    return !(d > range && d >= w.t.combat.witchLose && !w.inArea(c, v.x, v.z));
+    return !(d > range && d >= w.t.combat.witchLose * FIGHT.scale && !w.inArea(c, v.x, v.z));
   }
   return !c.leashed && (s.sounds.get(tg.key)?.hp ?? 0) > 0;
 }
@@ -253,10 +264,10 @@ function acquire(w: CombatWorld, c: Creature, x: number, z: number, range: numbe
     const d = Math.hypot(o.x - x, o.z - z);
     if (d < bd) { bd = d; best = { kind: "creature", id: o.id }; }
   }
-  if (!c.leashed) for (const v of w.witches) {
+  if (sideOf(c) === "wild") for (const v of w.witches) {
     if (!v.onGround || v.down || w.talkingTo(c.id) === v.id) continue; // (the one she's inviting holds its fire on her)
     const d = Math.hypot(v.x - c.x, v.z - c.z);
-    if ((d < attackRange || w.inArea(c, v.x, v.z)) && (!best || d < bd)) { bd = d; best = { kind: "witch", id: v.id }; }
+    if ((w.inArea(c, v.x, v.z) || (d < attackRange && (c.siege || !pastEdge(w, c, v.x, v.z)))) && (!best || d < bd)) { bd = d; best = { kind: "witch", id: v.id }; }
   }
   return best;
 }
@@ -340,7 +351,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   // (Events gather over a frame's steps: stepGame clears them once a frame, for the view.)
   const { time, dt, t } = w, C = t.combat;
   D = data;
-  FIGHT.scale = t.fight.scale; FIGHT.speed = t.fight.speed;
+  FIGHT.scale = t.fight.scale; FIGHT.speed = t.fight.speed; FIGHT.momentum = t.fight.momentum ?? 1;
   // Shots fly; each hits the first enemy (not its own kind) it reaches, or fizzles at its range.
   const grid = new Grid(w.active.filter(c => fighting(c)));
   s.shots = s.shots.filter(sh => {
@@ -492,7 +503,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       // A movement profile (Stage 5): its signature move, then its behaviours and its pack's tactic.
       const run = speed;
       if (P.move?.kind === "charge") {
-        const r = stepCharge(c, P.move, p.x, p.z, A.range + p.r + 0.3, time, dt);
+        const r = stepCharge(c, P.move, p.x, p.z, A.range + p.r + 0.3, time, dt, run);
         if (r === "hit") { land(w, s, c, f.target, atk.damage, { ...A, modifier: "knockback", knockback: 15 * S }, c.x, c.z); f.readyAt = time + A.cooldown; s.events.push({ kind: "charged", x: c.x, z: c.z, at: time, id: c.id }); continue; }
         if (r === "charging") continue;
       }

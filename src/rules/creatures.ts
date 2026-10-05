@@ -77,7 +77,7 @@ export interface Creature {
    *  signature move is ready again, and when an ambush was sprung. */
   vx?: number;
   vz?: number;
-  charge?: { dx: number; dz: number; speed: number; until: number; /** when it sets off (it lowers its head till then) */ from?: number; /** a legend's charge: whom it has trampled */ hit?: number[] };
+  charge?: { dx: number; dz: number; speed: number; until: number; /** when it sets off (it lowers its head till then) */ from?: number; /** it has struck (once a charge), it's braking */ struck?: boolean; braking?: boolean; /** a legend's charge: whom it has trampled */ hit?: number[] };
   /** A wild legend's move set (Stage 5): where it is in its pattern, and its phase. */
   legend?: { step: number; phase: 1 | 2 };
   moveReadyAt?: number;

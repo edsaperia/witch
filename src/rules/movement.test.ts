@@ -126,4 +126,27 @@ describe("creature movement (Stage 5)", () => {
     run(g, 6, () => { if (g.combat.events.some(e => e.id === bat.id && e.kind === "pulse")) pulsed = true; });
     expect(pulsed).toBe(true);
   }, 60000);
+
+  it("gives a boar's charge momentum: it builds speed, carries on past her, brakes and comes round in an arc (Ed, 2026-10-05)", () => {
+    const g = quiet(), boar = pick(g, "boar", 1, 30, 0), M = MOVEMENT.profiles.boar.move!;
+    let px = boar.x, pz = boar.z, pv = 0, ph = NaN, worstAccel = 0, worstTurn = 0, top = 0, past = 0, flips = 0, face = boar.facing, braked = false;
+    run(g, 6, () => {
+      const vx = (boar.x - px) / STEP, vz = (boar.z - pz) / STEP, v = Math.hypot(vx, vz), h = Math.atan2(vz, vx);
+      if (boar.charge && (boar.charge.from === undefined || g.clock.time >= boar.charge.from + STEP)) {
+        worstAccel = Math.max(worstAccel, Math.abs(v - pv) / STEP);
+        if (boar.charge.braking) { braked = true; if (!isNaN(ph) && v > 2) worstTurn = Math.max(worstTurn, Math.abs(((h - ph + Math.PI * 3) % (Math.PI * 2)) - Math.PI) / STEP); }
+        top = Math.max(top, v);
+        const ch = boar.charge, along = (g.witch.x - boar.x) * ch.dx + (g.witch.z - boar.z) * ch.dz;
+        past = Math.max(past, -along);
+      }
+      if (boar.facing !== face) { flips++; face = boar.facing; }
+      px = boar.x; pz = boar.z; pv = v; ph = h;
+    });
+    expect(top).toBeGreaterThan(M.speed! * 0.9); // up to its charging speed
+    expect(worstAccel).toBeLessThan(Math.max(M.accel!, M.brake!) * 1.3 + 5); // no snapping to a new speed
+    expect(past).toBeGreaterThan(4); // carried on past her
+    expect(braked).toBe(true);
+    expect(worstTurn).toBeLessThan((M.turn! * Math.PI) / 180 * 1.2 + 0.5); // turning in an arc, not on the spot
+    expect(flips).toBeLessThan(6); // (no flickering left-right)
+  }, 60000);
 });

@@ -17,7 +17,10 @@
         "The ley line now points to your next objective: one softly glowing line from the last runestone you reached to the next, along the valleys, fading from the first area's colour to the next one's. It stays on the ground even from the treetops (glowing through the leaves), and when you reach the next stone the old line drains into it and a new one draws out to the stone after",
         "The hole in the canopy round you on the ground has no hard edge any more: the trees thin out gradually and raggedly, each at its own distance, and rising or landing no longer shows a circle round you",
         "Smooth-barked trees (beech, rowan, hazel) look like trees again: no more grey columns on brown stumps; their trunks are shaded round and marked with the eyes of fallen branches",
-        "On the ground, only nearby rune stones keep their wave number at the top of the screen, so far ones no longer pile up there; over the treetops none is held there"
+        "On the ground, only nearby rune stones keep their wave number at the top of the screen, so far ones no longer pile up there; over the treetops none is held there",
+        "Charging boars have weight: they lower their head, build up speed, thunder on past you, then skid round in a wide arc before coming again",
+        "Creatures in a fight speed up, slow down and turn smoothly, without jerking or flickering left and right; a momentum knob joins fight scale and speed in the debug panel (, and .)",
+        "Wild creatures give up the chase soon after you leave their area (about 10 m past its edge) and head back home"
       ]
     },
     {
