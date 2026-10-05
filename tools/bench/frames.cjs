@@ -47,17 +47,29 @@ async function frames(page, n, c, timed = false) {
 
 // Draw the same moment again (no step) until two screenshots running are the same: the view's
 // background work (ground tiles, heights ahead, art) and its fades come in over frames and time.
+// A few things on screen move by the wall clock, not game time (a nightmare's shaking bubble), so
+// while it settles the page's clock (performance.now) is the bench's: stepped on in fixed steps
+// from the same start until the work and fades are done, then held, so both runs take the same
+// moment. (Held, the view's time-budgeted work runs to the end of its queues: slower, but sure.)
 async function settle(page, file) {
-  let prev = null, same = 0;
-  for (let i = 0; i < 60; i++) {
-    await page.evaluate(async () => { for (let k = 0; k < 10; k++) { window.witch.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 0); await new Promise(r => setTimeout(r, 30)); } });
+  await page.evaluate(async () => {
+    let t = 1e7;
+    for (let k = 0; k < 80; k++) { window.__benchClock(t += 100); window.witch.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 0); if (k % 10 === 9) await new Promise(r => setTimeout(r, 30)); }
+  });
+  let prev = null, same = 0, out = { settled: false, tries: 30 };
+  for (let i = 0; i < 30; i++) {
+    await page.evaluate(async () => { for (let k = 0; k < 4; k++) { window.witch.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 0); await new Promise(r => setTimeout(r, 30)); } });
     const buf = await page.screenshot({ timeout: 300000 });
-    if (prev && buf.equals(prev)) { if (++same >= 2) { fs.writeFileSync(file, buf); return { settled: true, tries: i + 1 }; } } else same = 0;
+    if (prev && buf.equals(prev)) { if (++same >= 2) { out = { settled: true, tries: i + 1 }; break; } } else same = 0;
     prev = buf;
   }
   fs.writeFileSync(file, prev);
-  return { settled: false, tries: 60 };
+  await page.evaluate(() => window.__benchClock(null));
+  return out;
 }
+
+// The page's clock, which the bench can hold (settle): performance.now as ever until it's set.
+const CLOCK = `(() => { const real = performance.now.bind(performance); let held = null; performance.now = () => (held === null ? real() : held); window.__benchClock = v => { held = v; }; })();`;
 
 const pct = (xs, p) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.min(s.length - 1, Math.floor(p * s.length))] : 0; };
 function summarise(times) {
@@ -93,6 +105,7 @@ async function main() {
   for (const s of SCENES) {
     if (only && !only.includes(s.name)) continue;
     const page = await context.newPage();
+    await page.addInitScript(CLOCK);
     page.on("pageerror", e => errors.push(`${s.name}: ${e.message}`));
     const t0 = Date.now();
     await page.goto(`http://127.0.0.1:${port}/?seed=${seed}`);
