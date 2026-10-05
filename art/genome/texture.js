@@ -114,7 +114,7 @@ export function textureSprite(sp, S, level, st, seed = 1) {
     let ax = sp.n[i * 3] * (1 - f) + s[0] * f, ay = sp.n[i * 3 + 1] * (1 - f) + s[1] * f, az = sp.n[i * 3 + 2] * (1 - f) + s[2] * f;
     const al = Math.hypot(ax, ay, az) || 1; sp.n[i * 3] = ax / al; sp.n[i * 3 + 1] = ay / al; sp.n[i * 3 + 2] = az / al;
     let t = styled ? 0 : tone.get(k); // (stylised, art/stylise.js lays the tones from these normals: the stamps shape them, seams aside)
-    if (D < 1 && !styled) { // cel: the tone by the pixel's own form, as far as the detail is low (big hard-edged shapes of light and shadow)
+    if (D < 1 && !styled && level > 0) { // cel (a baby keeps its big soft cells): the tone by the pixel's own form, as far as the detail is low (big hard-edged shapes of light and shadow)
       const lit = (sp.n[i * 3] * lf[0] + sp.n[i * 3 + 1] * lf[1] + sp.n[i * 3 + 2] * lf[2]) / ll, steps = T.tones >= 4 ? [.78, .38, .02] : [.72, .2];
       const tp = lit > steps[0] ? -1 : lit > steps[1] ? 0 : steps.length > 2 && lit > steps[2] ? 1 : steps.length > 2 ? 2 : 1;
       if (texHash(i, k, seed) > D) t = tp;
