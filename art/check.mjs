@@ -42,6 +42,45 @@ const report = await b.page.evaluate(async () => {
       res.push({ what: `${S.id}: baby < young < adult < legend, in clear steps (young 1.3+ times the baby, adult 1.55+ times the young, legend 2.1+ times the adult)`, good: hs[3] > hs[2] && hs[2] > hs[1] && hs[1] > hs[0] && r[0] >= 1.3 && r[1] >= 1.55 && r[2] >= 2.1, info: bh.join(" < ") + " (" + r.map(x => x.toFixed(2)).join(", ") + ")" }); }
     if (["wolf", "boar", "stag", "bear", "elk", "lynx"].includes(S.id)) { const w = G.witchSprite(st).bodyH, k = G.critter(S.id, 2, 0, st).bodyH / w, hi = ["elk", "stag"].includes(S.id) ? 2.5 : 2.1; res.push({ what: `${S.id}: an adult clearly bigger than the witch (1.45 to ${hi} times, body without antlers; the elk and stag stand taller)`, good: k >= 1.45 && k <= hi, info: k.toFixed(2) }); }
   }
+  { // creature genomes (#79 stage 1): every species a record on a known template, its parts allowed by its sockets, none clashing,
+    // its hash its own; the builders' species are the records' (speciesOf)
+    const probs = G.GENOMES.flatMap(g => G.genomeProblems(g)), hashes = new Set(G.GENOMES.map(g => G.genomeHash(g)));
+    res.push({ what: `genomes: every one of the ${G.SPECIES.length} species a record on one of the ${G.TEMPLATE_IDS.length} templates, its parts in its sockets, no clashes, every hash different`, good: G.GENOMES.length === G.SPECIES.length && G.SPECIES.every(s => G.GENOME_BY_ID[s.id]) && !probs.length && hashes.size === G.GENOMES.length, info: probs.join("; ") || `${G.GENOMES.length} records` });
+    // masks and palettes (stage 2): a sprite's material mask painted with its palette row is its bake, pixel for pixel, in every outline mode
+    const bad = [];
+    for (const S of G.SPECIES) for (const level of [0, 1, 2, 3]) for (const facing of ["towards", "away"]) for (const gear of [null, { woken: true }]) {
+      const sp = G.critter(S.id, level, 0, st, facing, gear), col = G.speciesColours(S.id, st, gear);
+      for (const mode of level === 1 && !gear && facing === "towards" ? [st.cOutline, "none", "dark", "tint"] : [st.cOutline]) {
+        const want = G.bake(sp, col, st, mode).A.getContext("2d").getImageData(0, 0, sp.w, sp.h).data, got = G.paintPixels(G.bakeMask(sp, mode), G.paletteRow(col, mode));
+        let d = 0; for (let i = 0; i < want.length; i++) if (want[i] !== got[i]) d++;
+        if (d) bad.push(`${S.id} ${level} ${facing}${gear ? " woken" : ""} ${mode}: ${d}`);
+      }
+    }
+    res.push({ what: "palettes: every creature's material mask painted with its palette row is its bake exactly (all levels, both facings, woken, every outline mode)", good: !bad.length, info: bad.slice(0, 5).join(", ") || "identical" });
+    // variants: every curated variant colours every species (no magenta, no missing material), each different from its own
+    const vb = [];
+    for (const S of G.SPECIES) { const own = JSON.stringify(G.speciesColours(S.id, st)); for (const v of Object.keys(G.PALETTE_VARIANTS)) { const c = G.variantColours(S.id, st, v), row = G.paletteRow(c), m = G.bakeMask(G.critter(S.id, 1, 0, st), st.cOutline); if (JSON.stringify(c) === own) vb.push(`${S.id} ${v} same`); for (let i = 0; i < m.mat.length; i++) if (m.kind[i] === 1 && row[m.mat[i] * 4] === 255 && row[m.mat[i] * 4 + 1] === 0 && row[m.mat[i] * 4 + 2] === 255) { vb.push(`${S.id} ${v} magenta`); break; } } }
+    res.push({ what: `palette variants: all ${Object.keys(G.PALETTE_VARIANTS).length} curated coats colour every species, no material uncoloured, each its own`, good: !vb.length, info: vb.slice(0, 5).join(", ") || "ok" });
+  }
+  { // silhouettes (#79 stage 3): at game size (each young and adult shrunk to 24 px), no two species' shapes alike: they differ by 0.15 or more
+    // (1 - their overlap over their union, whichever way each faces)
+    for (const level of [1, 2]) {
+      const sh = Object.fromEntries(G.SPECIES.map(S => [S.id, G.silhouette(G.critter(S.id, level, 0, st))])), pairs = G.silhouettePairs(sh), close = pairs.filter(p => p.d < .15);
+      res.push({ what: `silhouettes: no two species alike at ${G.SILHOUETTE_SIZE} px (${["", "young", "adult"][level]}s, every pair 0.15 apart or more)`, good: !close.length, info: (close.length ? close : pairs.slice(0, 3)).map(p => `${p.a}/${p.b} ${p.d.toFixed(2)}`).join(", ") });
+    }
+  }
+  { // the live rig's parts (#79 stage 4): every four-legged species and the snake, at each level, baked as pieces at the five headings (torso, head:
+    // the four-legged, and their tails where they have one; the serpent's head), each with its pivot near it, four legs with two bones each, discs to string them
+    const bad = [];
+    for (const S of G.SPECIES.filter(S => S.q || S.plan === "snake")) for (const level of [0, 1, 2, 3]) {
+      const P = G.rigParts(S.id, level, st), need = P.template === "quadruped" ? ["torso", "head"] : ["head"];
+      for (const k of need) (P.pieces[k] || []).forEach((p, i) => { if (!p) bad.push(`${S.id} ${level} ${k} ${i} missing`); else if (p.px < -p.sp.w || p.py < -p.sp.h || p.px > 2 * p.sp.w || p.py > 4 * p.sp.h + 8) bad.push(`${S.id} ${level} ${k} ${i} pivot off`); }); // near it: the torso's is the ground under it, below its leg-less sprite
+      if (need.some(k => (P.pieces[k] || []).length !== 5)) bad.push(`${S.id} ${level} not five headings`);
+      if (P.template === "quadruped" && (P.joints.legs.length !== 4 || P.joints.legs.some(l => !l.hip || !l.knee || !l.foot))) bad.push(`${S.id} ${level} legs`);
+      if (!Object.values(P.discs).some(d => Object.keys(d).length)) bad.push(`${S.id} ${level} no discs`);
+    }
+    res.push({ what: "rig parts: every four-legged species and the snake, at every level, baked as torso and head pieces (the snake its head) at the five headings with their pivots near them, four two-bone legs, discs to string bones and bodies", good: !bad.length, info: bad.slice(0, 6).join(", ") || "ok" });
+  }
   { // sleeping legends (Ed, 2026-10-04: just the sleeping form for now): asleep in 2 breathing frames, both facings, each drawn, standing on its bottom
     // row, its origin on the sprite and every material coloured; sunk (its ground line above its feet), no taller than the legend awake, nothing glowing,
     // eyes shut, its two breaths different
@@ -517,6 +556,34 @@ const report = await b.page.evaluate(async () => {
 });
 for (const r of report) if (!r.good) ok(false, `${r.what} (${r.info})`);
 ok(report.every(r => r.good), `${report.length} sprite checks`);
+// party relics (art/partyRelics.js, #87): 6+ giant bottles, each half-buried and legend-sized (7 to 16 m across and 6 to 17 m tall),
+// sitting in its mound (the bottom row earth); its liquid glows (200+ px of MAGIC; nothing glows but the liquid, its surface and the
+// motes); the glass is see-through (a rim in its colour and a half-clear dither of empty glass); it carries a light; its 3 frames
+// differ (the motes rise); its origin and glint inside the sprite, the glint on the glass; the glint's 4 frames differ, only GLINT,
+// the treetop ones bigger; their one sigil is in the sigil system, its strokes in the box, drawn as SVG, its id clashing with no creature's
+{
+  const P = await import("./partyRelics.js"), S = await import("./sigils.js"), { defaultStyle } = await import("./generator.js"), { M, EMISSIVE } = await import("./core.js");
+  const st = defaultStyle(), bad = [], EARTH = new Set([M.TRUNK, M.BARKD, M.STONE, M.MOSS, M.LEAF, M.LEAF2, M.LEAF3]), GLOWS = new Set([M.MAGIC, M.MAGIC2, M.GLOW]);
+  if (P.PARTY_RELIC_IDS.length < 6) bad.push(`${P.PARTY_RELIC_IDS.length} relics`);
+  for (const id of P.PARTY_RELIC_IDS) {
+    const R = P.partyRelicSprite(id, st), { w, h, m } = R.sp, { width, height } = R.metres, count = k => m.filter(v => v === k).length;
+    if (!(width >= 7 && width <= 16 && height >= 6 && height <= 17)) bad.push(`${id} ${width} x ${height} m`);
+    let earth = 0, bottom = 0; for (let x = 0; x < w; x++) { const v = m[(h - 1) * w + x]; if (v) { bottom++; if (EARTH.has(v)) earth++; } } if (!bottom || earth < bottom * .8) bad.push(`${id} not sitting in its mound`);
+    const glowing = new Set(); for (const v of m) if (EMISSIVE.has(v)) glowing.add(v); if (count(M.MAGIC) < 200 || [...glowing].some(v => !GLOWS.has(v))) bad.push(`${id} glows ${[...glowing]} (${count(M.MAGIC)} liquid)`);
+    let holes = 0; for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) if (!m[y * w + x] && m[y * w + x - 1] === M.HAT2 && m[y * w + x + 1] === M.HAT2) holes++;
+    if (count(M.HAT1) < 50 || holes < 50) bad.push(`${id} glass not see-through (rim ${count(M.HAT1)}, clear ${holes})`);
+    if (!(R.light?.radius > 0 && R.light.rgb?.length === 3)) bad.push(`${id} gives no light`);
+    if (new Set([0, 1, 2].map(f => P.partyRelicSprite(id, st, { frame: f }).sp.m.join(""))).size < 3) bad.push(`${id} frames repeat`);
+    const inside = p => p.x >= 0 && p.y >= 0 && p.x < w && p.y < h; if (!inside(R.origin) || !inside(R.glint)) bad.push(`${id} origin or glint outside`); else if (![M.CRYSTAL, M.HAT1].includes(m[Math.round(R.glint.y) * w + Math.round(R.glint.x)])) bad.push(`${id} glint not on the glass`);
+    if (P.partyRelicSigilId(id) !== P.PARTY_RELIC_SIGIL) bad.push(`${id} has its own sigil`);
+  }
+  { const sid = P.PARTY_RELIC_SIGIL, strokes = S.sigilStrokes(sid); if (!strokes.length || strokes.some(t => t.pts.some(([x, y]) => x < 0 || y < 0 || x > 1 || y > 1)) || !S.sigilSVG(sid).includes("<polyline")) bad.push("the relic sigil"); if (S.SIGIL_IDS.includes(sid)) bad.push(`${sid} clashes with a creature's sigil`); }
+  const frames = [0, 1, 2, 3].map(f => P.partyRelicGlint(f)), tops = [0, 1, 2, 3].map(f => P.partyRelicGlint(f, { zoom: "treetop" })), key = g => g.sp.w + ":" + g.sp.m.join("");
+  if (new Set(frames.map(key)).size < 4) bad.push("glint frames repeat");
+  for (const g of [...frames, ...tops]) if (g.sp.m.some(v => v && v !== M.GLINT)) bad.push("glint not all GLINT");
+  if (tops.some((g, i) => g.sp.m.filter(Boolean).length <= frames[i].sp.m.filter(Boolean).length)) bad.push("treetop glint not bigger");
+  ok(!bad.length, `party relics: ${P.PARTY_RELIC_IDS.length} giant bottles, half-buried, legend-sized, see-through glass, glowing liquid that lights the ground, motes rising over 3 frames, a glint on each (bigger from the treetops), one sigil for all${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
+}
 // the trees and bushes grown from their genomes (art/flora/genomes.js) draw exactly as before: every species over seeds, sizes and
 // area options, and the bushes, against art/flora/baseline.json (when a change to them is meant, rewrite it: node art/flora/fingerprint.mjs)
 {
@@ -567,6 +634,26 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
     }
   }
   ok(!bad.length, `witch generator: her genome draws her exactly; 20 generated witches within limits, drawn in flight and on foot, anchors inside, hatband glowing, 0.8 to 1.7 times her height, none alike${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
+}
+// area flora (art/flora/areas.js): every wooded area lists 3 to 6 real species, shares adding to 1, its main kind first (as its big
+// names it), a palette within reason (sat and val 0.6 to 1.3); the open areas list none; fantasy species are never an area's main kind
+{
+  const { AREAS } = await import("./areas.js"), { AREA_FLORA, floraSlots } = await import("./flora/areas.js"), { TREE_SPECIES } = await import("./trees.js"), { PLANT_GENOMES } = await import("./flora/genomes.js"), bad = [];
+  let wooded = 0;
+  for (const A of AREAS) {
+    const trees = (A.big || []).filter(([k]) => k === "tree"), F = AREA_FLORA[A.id];
+    if (!trees.length) { if (F) bad.push(A.id + " is open but lists flora"); continue; }
+    wooded++;
+    if (!F) { bad.push(A.id + " lists no flora"); continue; }
+    const sp = F.species, sum = sp.reduce((a, [, w]) => a + w, 0), main = trees.find(([, o]) => !o.minor)?.[1].type;
+    if (sp.length < 3 || sp.length > 6 || Math.abs(sum - 1) > 1e-6) bad.push(`${A.id} ${sp.length} species, shares ${sum}`);
+    if (sp[0][0] !== main) bad.push(`${A.id} main ${sp[0][0]}, its big names ${main}`);
+    for (const [id] of sp) if (!TREE_SPECIES[id]) bad.push(`${A.id} names no species ${id}`);
+    if (PLANT_GENOMES[sp[0][0]]?.fantasy) bad.push(`${A.id} has a fantasy main kind`);
+    const p = F.palette || {}; if (!(p.sat >= .6 && p.sat <= 1.3 && p.val >= .6 && p.val <= 1.3)) bad.push(`${A.id} palette ${JSON.stringify(p)}`);
+    const slots = floraSlots(A.id, 10); for (const [id] of sp) if (!slots.some(o => o.type === id)) bad.push(`${A.id} deals no ${id}`);
+  }
+  ok(!bad.length, `area flora: ${wooded} wooded areas each grow 3 to 6 species in their own palette, main kind first, fantasy only as a minority${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
 }
 await b.close();
 console.log(failed ? `${failed} check(s) failed` : "all checks passed");

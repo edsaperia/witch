@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { attackOf, COMBAT, maxHp } from "./combat";
 import { LEGEND, type Creature, type Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
-import { TUNING, type Tuning } from "./tuning";
+import { TUNING, withTuning, type Tuning } from "./tuning";
 import { AREA_TYPES } from "./map";
 import { canEat, feed } from "./berries";
 import { invitable } from "./leash";
@@ -11,6 +11,9 @@ import { hurt, knockOut, newHealth, repair } from "./knockout";
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const run = (g: Game, secs: number, c = idle) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, c, STEP); };
 /** A game with the witch off her seat, on the ground, somewhere quiet (no creature within 60 m). */
+/** The proximity chat, as before the 💌s (invites.on false). */
+const CHAT = withTuning({ invites: { ...TUNING.invites, on: false } });
+
 function quiet(t: Tuning = TUNING): Game {
   const g = newGame(77, t);
   g.clock.paused = false;
@@ -19,6 +22,9 @@ function quiet(t: Tuning = TUNING): Game {
   for (const c of g.creatures) if (Math.hypot(c.x - g.witch.x, c.z - g.witch.z) < 60) c.gone = true; // out of the way
   return g;
 }
+/** A party animal put down on a sigil where it stands (in its posse there with her in the treetops:
+ *  following her up there, it would be travelling, rules/travel.ts). */
+function park(g: Game, c: Creature): void { g.leash.stack = g.leash.stack.filter(i => i !== c.id); g.leash.placed.push({ id: c.id, x: c.x, z: c.z, at: g.clock.time }); }
 /** Put a creature at (x, z) as a given kind and level, wild or in the witch's party. */
 function place(g: Game, i: number, species: string, level: Level, x: number, z: number, party = false): Creature {
   const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && k.id >= i && Math.hypot(k.x - g.witch.x, k.z - g.witch.z) > 80)!;
@@ -57,6 +63,7 @@ describe("combat (Stage 4)", () => {
   it("party animals and wild ones of other kinds fight until one side is beaten: the wild one runs off the map", () => {
     const g = quiet(), w = g.witch;
     const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true), wild = place(g, 0, "boar", 1, w.x + 4, w.z);
+    park(g, mine);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // (on the ground she'd chat the boar into her party)
     run(g, 40);
     expect(mine.hp).toBeLessThan(maxHp(2)); // it was hit too
@@ -65,18 +72,19 @@ describe("combat (Stage 4)", () => {
     expect(Math.hypot(wild.x - x0, wild.z - z0)).toBeGreaterThan(5);
     expect(wild.fight).toBeUndefined();
     expect(mine.gone).toBeFalsy();
-    expect(g.leash.stack).toContain(mine.id);
+    expect(g.leash.placed.map(p => p.id)).toContain(mine.id);
   }, 60000);
 
   it("loses a beaten party animal for the run: it runs off the map, off its leash", () => {
     const g = quiet(), w = g.witch;
     const mine = place(g, 0, "hedgehog", 1, w.x + 2, w.z, true);
+    park(g, mine);
     place(g, 0, "bear", 2, w.x + 4, w.z); place(g, 0, "bear", 2, w.x + 3, w.z + 2);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // out of reach herself
     run(g, 60);
     expect(mine.fleeUntil).toBeTruthy();
     expect(mine.leashed).toBe(false);
-    expect(g.leash.stack).not.toContain(mine.id);
+    expect(g.leash.placed.map(p => p.id)).not.toContain(mine.id);
   }, 60000);
 
   it("keeps a truce between creatures of the same kind, whatever side", () => {
@@ -361,7 +369,7 @@ describe("Ed's playtest (2026-10-04)", () => {
   }, 60000);
 
   it("holds the fire of the one she's chatting with (its friends still shoot)", () => {
-    const g = quiet(), w = g.witch;
+    const g = quiet(CHAT), w = g.witch;
     const owl = place(g, 0, "owl", 2, w.x + 6, w.z);
     run(g, 6);
     expect(g.leash.talk?.id).toBe(owl.id);
@@ -391,6 +399,7 @@ describe("Ed's playtest (2026-10-04)", () => {
     const wild = place(g, 0, "boar", 1, w.x + 4, w.z);
     wild.hp = 1;
     const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true);
+    park(g, mine);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 };
     for (let i = 0; i < 20 / STEP && !wild.fleeUntil; i++) stepGame(g, idle, STEP);
     expect(wild.fleeUntil).toBeTruthy();
@@ -413,7 +422,7 @@ describe("Ed's playtest (2026-10-04)", () => {
 
 describe("the invitee truce (Ed, 2026-10-04)", () => {
   it("has her party leave the creature she's inviting alone, and go for it once the chat's off", () => {
-    const g = quiet(), w = g.witch;
+    const g = quiet(CHAT), w = g.witch;
     // (a beetle: it walks straight in; a fox flanks round her wolf)
     const fox = place(g, 0, "beetle", 2, w.x + 3, w.z), wolf = place(g, 0, "wolf", 2, w.x - 1, w.z, true);
     g.witches[0].health.hp = 1e6;
