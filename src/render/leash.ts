@@ -15,7 +15,7 @@ import * as THREE from "three";
 import { drawSigil, sigilColour } from "../../art/generator.js";
 import { dormant, type Game } from "../rules/game";
 import type { Creature } from "../rules/creatures";
-import { attackNamed, attackOf, maxHp, traitsOf, type Trait } from "../rules/combat";
+import { attackNamed, attackOf, creatureMaxHp, traitsOf, type Trait } from "../rules/combat";
 
 /** Each trait's mark over a fighting creature (placeholders until the art lands): flier sky blue,
  *  armoured a steel square, swarm violet, heavy a brown square, nimble green, burrower earth. */
@@ -33,6 +33,7 @@ const TRAIT_MARKS: Record<Trait, { r: number; g: number; b: number; size: number
 import { blocked, leashPoint, talkTime, talkTurn } from "../rules/leash";
 import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
+import { FIGHT, profileOf } from "../rules/movement";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
@@ -148,7 +149,7 @@ export class LeashView {
   /** Short-lived effects: hit sparks, puffs, splashes, released leashes, teleport sparkles, quake rings. */
   /** Legends seen waking (their burst of soil shown once). */
   private woke = new Set<number>();
-  private fx: { kind: string; x: number; y: number; z: number; at: number; life: number; r: number; g: number; b: number; seed: number; tx?: number; tz?: number; size?: number }[] = [];
+  private fx: { kind: string; x: number; y: number; z: number; at: number; life: number; r: number; g: number; b: number; seed: number; tx?: number; tz?: number; size?: number; /** a ring's dots (else 36) and their size (else 0.7) */ n?: number; dot?: number }[] = [];
   /** The screen shake (a legend's quake): when it started and how hard. */
   private shakeAt = -Infinity;
   private shakeAmp = 0;
@@ -224,7 +225,7 @@ export class LeashView {
     // seconds after it eats.
     for (const c of g.creatures) {
       if (!c.leashed || B.evolving.has(c.id)) continue;
-      const need = toEvolve(c.level, t), ate = B.ateAt.get(c.id);
+      const need = toEvolve(c.level, t, c.species), ate = B.ateAt.get(c.id);
       if (!Number.isFinite(need)) continue;
       if (Math.hypot(c.x - w.x, c.z - w.z) > 20 && !(ate !== undefined && time - ate < 3)) continue;
       // One segment for each berry it needs (Ed, 2026-10-05: "segment the ring"), small gaps
@@ -383,6 +384,16 @@ export class LeashView {
       if (e.kind === "slept" && close(e.x, e.z, 150)) for (let i = 0; i < 3; i++) this.fx.push({ kind: "puff", x: e.x + (i - 1) * 1.2, y: 0.4, z: e.z, at: time, life: 1.4, r: 0.5, g: 0.4, b: 0.28, seed: e.at * 7 + i });
       if ((e.kind === "burrowed" || e.kind === "surfaced" || e.kind === "slammed") && close(e.x, e.z)) this.fx.push({ kind: "puff", x: e.x, y: 0.3, z: e.z, at: time, life: 0.6, r: 0.55, g: 0.42, b: 0.3, seed: e.at * 41 + (e.id ?? 0) });
       if (e.kind === "sprung" && close(e.x, e.z)) this.fx.push({ kind: "spark", x: e.x, y: 0.8, z: e.z, at: time, life: 0.4, r: 1, g: 0.3, b: 0.3, seed: e.at * 23, size: 1.4 });
+      // Ed's species pass: a glow-worm's flash (a burst of its light), a block (a white glint), digging in (earth thrown up).
+      // (Ed, 2026-10-05: the new moves' feedback bigger and brighter, to read at normal zoom on dark ground)
+      if (e.kind === "flash" && c && close(e.x, e.z)) {
+        const col = neon(c.species), R = (profileOf(c.species)?.move?.radius ?? 9) * FIGHT.scale, hot = { r: col.r * 0.4 + 0.6, g: col.g * 0.4 + 0.6, b: col.b * 0.4 + 0.6 };
+        this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.9, ...hot, seed: 0, size: R, n: Math.round(R * 9), dot: 1.1 });
+        this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.7, ...col, seed: 0, size: R * 0.6, n: Math.round(R * 6), dot: 0.9 });
+        this.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 0.7, ...hot, seed: e.at * 37, size: 7 });
+      }
+      if (e.kind === "blocked" && close(e.x, e.z)) { this.fx.push({ kind: "spark", x: e.x, y: 1.1, z: e.z, at: time, life: 0.5, r: 0.9, g: 0.97, b: 1, seed: e.at * 43, size: 3 }); this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.4, r: 0.7, g: 0.85, b: 1, seed: 0, size: 2.2, n: 20, dot: 0.6 }); }
+      if (e.kind === "dug" && close(e.x, e.z)) { this.fx.push({ kind: "puff", x: e.x, y: 0.4, z: e.z, at: time, life: 1, r: 0.95, g: 0.7, b: 0.4, seed: e.at * 47, size: 2 }); this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.5, r: 1, g: 0.65, b: 0.3, seed: 0, size: 2.6, n: 24, dot: 0.7 }); }
       if (e.kind === "charged" && close(e.x, e.z)) this.fx.push({ kind: "puff", x: e.x, y: 0.4, z: e.z, at: time, life: 0.7, r: 0.8, g: 0.7, b: 0.55, seed: e.at * 29 });
       if (e.kind === "soundHit" && close(e.x, e.z, 150) && (e.at * 10) % 3 < 1) this.fx.push({ kind: "spark", x: e.x, y: 2.5, z: e.z, at: time, life: 0.3, r: 1, g: 0.6, b: 0.3, seed: e.at * 3 });
       if (e.kind === "soundDestroyed") this.fx.push({ kind: "spark", x: e.x, y: 3, z: e.z, at: time, life: 2, r: 1, g: 0.4, b: 0.6, seed: e.at, size: 6 });
@@ -407,17 +418,17 @@ export class LeashView {
     }
     this.fx = this.fx.filter(f => time - f.at < f.life);
     for (const f of this.fx) {
-      const k = (time - f.at) / f.life, n = f.kind === "spark" ? 10 : f.kind === "splash" ? 22 : f.kind === "puff" ? 12 : f.kind === "teleport" ? 40 : f.kind === "ring" ? 36 : 14, sz = f.size ?? 1;
+      const k = (time - f.at) / f.life, n = f.kind === "spark" ? 10 : f.kind === "splash" ? 22 : f.kind === "puff" ? 12 : f.kind === "teleport" ? 40 : f.kind === "ring" ? f.n ?? 36 : 14, sz = f.size ?? 1;
       for (let i = 0; i < n; i++) {
         const a = hash2(f.seed, i, 3) * Math.PI * 2, r1 = hash2(f.seed, i, 5), r2 = hash2(f.seed, i, 7);
         if (f.kind === "spark") this.standing.add(f.x + Math.cos(a) * sz * k * (0.5 + r1), f.y + sz * k * r2, f.z + Math.sin(a) * sz * k * (0.5 + r1), 0.22 * Math.sqrt(sz), dot, f.r, f.g, f.b, 1 - k);
-        else if (f.kind === "puff") this.standing.add(f.x + Math.cos(a) * k * 1.2, f.y + k * r2 * 1.2, f.z + Math.sin(a) * k * 1.2, 0.5 + k, dot, f.r * 0.5, f.g * 0.5, f.b * 0.5, 0.6 * (1 - k));
+        else if (f.kind === "puff") this.standing.add(f.x + Math.cos(a) * k * 1.2 * sz, f.y + k * r2 * 1.2 * sz, f.z + Math.sin(a) * k * 1.2 * sz, (0.5 + k) * sz, dot, f.r * 0.5, f.g * 0.5, f.b * 0.5, 0.6 * (1 - k));
         else if (f.kind === "splash") this.standing.add(f.x + Math.cos(a) * (0.5 + r1 * 2) * k, f.y + (1 + r2 * 2) * k - 5 * k * k, f.z + Math.sin(a) * (0.5 + r1 * 2) * k, 0.3, dot, f.r * 1.4, f.g * 1.4, f.b * 1.4, 1 - k * k);
         else if (f.kind === "snap") { const q = (i + 0.5) / n, cut = q > k; if (cut) this.standing.add(f.x + (f.tx! - f.x) * q, f.y + (0.6 - f.y) * q + Math.sin(q * Math.PI) * 1.2 - k * 2 * q, f.z + (f.tz! - f.z) * q, 0.24, dot, f.r, f.g, f.b, (1 - k) * 0.9); }
         else if (f.kind === "teleport") this.standing.add(f.x + Math.cos(a + k * 6) * (0.4 + r1), r2 * 3 + k * 2, f.z + Math.sin(a + k * 6) * (0.4 + r1), 0.25, dot, f.r * 1.3, f.g * 1.3, f.b * 1.3, Math.sin(k * Math.PI));
         else if (f.kind === "bang") { if (i < 8) { const col = i < 4 ? -1 : 1, row = i % 4, R = SPRITE_UNIFORMS.uRight.value; if (row !== 2) this.over.add(f.x + R.x * col * 0.22, f.y + k * 0.6 + (3 - row) * 0.17, f.z + R.z * col * 0.22, 0.2, sq, f.r, f.g, f.b, 1 - k * k); } }
         else if (f.kind === "tink") { const aa = (i / n) * Math.PI * 2, R = sz * (0.4 + 0.6 * k); this.standing.add(f.x + Math.cos(aa) * R, f.y + Math.sin(aa) * R * 0.6, f.z, 0.16, dot, f.r, f.g, f.b, 1 - k); }
-        else if (f.kind === "ring") { const aa = (i / n) * Math.PI * 2, R = sz * (0.3 + 0.7 * k); this.flat.add(f.x + Math.cos(aa) * R, 0, f.z + Math.sin(aa) * R * 0.8, 0.7, dot, f.r, f.g, f.b, 1 - k); }
+        else if (f.kind === "ring") { const aa = (i / n) * Math.PI * 2, R = sz * (0.3 + 0.7 * k); this.flat.add(f.x + Math.cos(aa) * R, 0, f.z + Math.sin(aa) * R * 0.8, f.dot ?? 0.7, dot, f.r, f.g, f.b, 1 - k); }
       }
     }
     // Shots in flight: a bright core and a halo, red for the wild, the party's in their neon.
@@ -447,8 +458,33 @@ export class LeashView {
         this.standing.add(c.x + ex * s2, 0.7, c.z + ez * s2, 0.3, dot, 1, 1, 1, 0.8 * fl);
       }
     }
+    // A snail's slime: glistening patches on the ground, fading as they dry.
+    for (const tr of g.combat.trails) {
+      if (!close(tr.x, tr.z)) continue;
+      const left = Math.min(1, (tr.until - time) / 2), wild = tr.side === "wild";
+      // A glossy patch (bigger and brighter: Ed, 2026-10-05), a rim round it, and glints that wink.
+      const sd = Math.round(tr.until * 10), [sr, sg, sb] = wild ? [0.6, 1, 0.35] : [0.45, 1, 0.85];
+      for (let i = 0; i < 7; i++) { const a = hash2(tr.from, sd + i, 31) * Math.PI * 2, q = hash2(tr.from, sd + i, 37) * tr.r * 0.6; this.flat.add(tr.x + Math.cos(a) * q, 0, tr.z + Math.sin(a) * q * 0.8, tr.r * 0.75, dot, sr, sg, sb, 0.45 * left); }
+      for (let i = 0; i < 14; i++) { const a = (i / 14) * Math.PI * 2; this.flat.add(tr.x + Math.cos(a) * tr.r, 0, tr.z + Math.sin(a) * tr.r * 0.8, 0.45, dot, sr, sg, sb, 0.7 * left); }
+      for (let i = 0; i < 3; i++) { const tw = 0.5 + 0.5 * Math.sin(time * 5 + i * 2.1 + tr.from), a = hash2(tr.from, sd + i, 43) * Math.PI * 2, q = hash2(tr.from, sd + i, 47) * tr.r * 0.7; this.standing.add(tr.x + Math.cos(a) * q, 0.12, tr.z + Math.sin(a) * q * 0.8, 0.35, dot, 1, 1, 0.9, tw * left); }
+    }
     for (const c of g.creatures) {
       if (c.gone || !close(c.x, c.z)) continue;
+      // Dug in (the badger): a ring of thrown-up earth round its feet.
+      if (c.dug !== undefined && time < c.dug) { // (bigger and brighter: Ed, 2026-10-05)
+        for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 1.4, 0.15 + hash2(c.id, i, 41) * 0.25, c.z + Math.sin(a) * 0.95, 0.6, dot, 0.95, 0.62, 0.32, 0.95); }
+        const pk = 0.6 + 0.4 * Math.sin(time * 6 + c.id);
+        for (let i = 0; i < 24; i++) { const a = (i / 24) * Math.PI * 2; this.flat.add(c.x + Math.cos(a) * 1.9, 0, c.z + Math.sin(a) * 1.5, 0.5, dot, 1, 0.6, 0.25, 0.7 * pk); }
+      }
+      // Braced (the beaver): its tail up as a shield, an arc on the side it faces.
+      if (c.brace !== undefined && time < c.brace) for (let i = -5; i <= 5; i++) for (let row = 0; row < 3; row++) { // (a shield: bigger and brighter, Ed 2026-10-05)
+        const a = (c.facing > 0 ? 0 : Math.PI) + i * 0.2; this.standing.add(c.x + Math.cos(a) * 1.5, 0.35 + row * 0.45 - Math.abs(i) * 0.04, c.z + Math.sin(a) * 1.1, 0.5, dot, 0.75, 0.9, 1, row === 1 ? 1 : 0.8);
+      }
+      // Rolling curled up (a hedgehog, a woodlouse): spikes whirling round it.
+      if (c.charge?.curl && (c.charge.from === undefined || time >= c.charge.from)) for (let i = 0; i < 14; i++) { // (bigger and brighter: Ed, 2026-10-05)
+        const a = (i / 14) * Math.PI * 2 + time * 14, R = i % 2 ? 1.35 : 0.95; this.standing.add(c.x + Math.cos(a) * R, 0.7 + Math.sin(a) * R * 0.7, c.z + 0.3, i % 2 ? 0.6 : 0.45, dot, 0.85, 0.95, 1, 1); // (white-blue: it shows against its own brown spines)
+      }
+      if (c.charge?.curl && (c.charge.from === undefined || time >= c.charge.from)) for (let i = 0; i < 20; i++) { const a = (i / 20) * Math.PI * 2 - time * 10; this.flat.add(c.x + Math.cos(a) * 1.6, 0, c.z + Math.sin(a) * 1.25, 0.45, dot, 0.7, 0.85, 1, i % 4 === 0 ? 0.95 : 0.4); } // (a whirling ring on the ground under it)
       // Burrowed (the mole): a mound of earth moving over the ground, flecks thrown up.
       if (c.burrow) for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2, q = hash2(c.id, Math.floor(time * 12) + i, 19); this.standing.add(c.x + Math.cos(a) * 0.45, 0.1 + (i === 0 ? 0.25 : 0) + q * 0.12, c.z + Math.sin(a) * 0.3, 0.45, dot, 0.42, 0.3, 0.2, 0.9); }
       // Leaping (the toad): a ring tightening where it'll land.
@@ -462,7 +498,7 @@ export class LeashView {
       // About to charge (the boar lowering its head): the lane it will run down, brightening.
       if (c.charge?.from !== undefined && time < c.charge.from) { const ch = c.charge, k = 1 - Math.max(0, ch.from! - time) / 0.5, L = ch.speed * (ch.until - ch.from!), col = c.leashed ? neon(c.species) : { r: 1, g: 0.3, b: 0.3 }; for (let s2 = 1.5; s2 < L; s2 += 1.2) for (const side of [-1, 1]) this.flat.add(c.x + ch.dx * s2 - ch.dz * side * 1.6, 0, c.z + ch.dz * s2 + ch.dx * side * 1.6, 0.35, dot, col.r, col.g, col.b, 0.15 + 0.55 * k); }
       // Charging (the boar): dust kicked up behind it.
-      if (c.charge && time < c.charge.until && (c.charge.from === undefined || time >= c.charge.from)) for (let i = 0; i < 4; i++) { const q = hash2(c.id, Math.floor(time * 20) + i, 17); this.standing.add(c.x - c.charge.dx * (0.8 + i * 0.5), 0.3 + q * 0.4, c.z - c.charge.dz * (0.8 + i * 0.5), 0.5 + i * 0.15, dot, 0.75, 0.65, 0.5, 0.5 - i * 0.1); }
+      if (c.charge && (c.charge.from === undefined || time >= c.charge.from)) for (let i = 0; i < (c.charge.braking ? 6 : 4); i++) { const q = hash2(c.id, Math.floor(time * 20) + i, 17); this.standing.add(c.x - c.charge.dx * (0.8 + i * 0.5), 0.3 + q * 0.4, c.z - c.charge.dz * (0.8 + i * 0.5), 0.5 + i * 0.15, dot, 0.75, 0.65, 0.5, 0.5 - i * 0.1); }
       // Telegraphs: winding up, a ring tightens at its feet; a shot shows its line; the quake its reach.
       const f = c.fight, atk = f && f.windupUntil > 0 ? attackOf(c.species, c.level) : null;
       if (atk && f) {
@@ -503,7 +539,7 @@ export class LeashView {
       const healed = c.healedAt !== undefined && time - c.healedAt < 0.8;
       if (healed) for (let i = 0; i < 10; i++) { const k = (time - c.healedAt!) / 0.8, a = hash2(c.id, i, 11) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 0.9 * (0.4 + k), 0.4 + k * 2 + hash2(c.id, i, 13), c.z + Math.sin(a) * 0.6 * (0.4 + k), 0.3, dot, 0.4, 1, 0.5, 1 - k); }
       // Health bars, only when hurt: ten squares over its head.
-      const max = maxHp(c.level), hp = c.hp ?? max;
+      const max = creatureMaxHp(c), hp = c.hp ?? max;
       // Stunned (an armoured one knocked over): stars round its head.
       if (c.stunUntil !== undefined && time < c.stunUntil) { const y = (this.tops.get(c.id) ?? 1.4) + 0.2; for (let i = 0; i < 3; i++) { const a = time * 5 + (i / 3) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 0.6, y + Math.sin(a * 2) * 0.08, c.z + Math.sin(a) * 0.4, 0.22, dot, 1, 0.95, 0.5, 0.9); } }
       // Its traits' marks (Stage 5, readable counters), left of its health bar, while it fights or is hurt.

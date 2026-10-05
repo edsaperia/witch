@@ -178,6 +178,7 @@ Decided in a long design session with the coordinator; built in stages, with a p
 - **Skill should matter** (Ed, 2026-10-04: "A worry is that all games last about the same time, and the difference between a good player and a bad player is small (because the enemies grow exponentially). You just go along and then suddenly get steamrolled. We might need to adjust as we go along to keep pressure on players but not suddenly overwhelm them. The obvious way to do this is have areas spawn creatures over time in response to the player's progress."). The key measure is the **skill spread**: how long a player lasts by how fast they grow; roughly twice the skill should give twice the survival, never a common cliff. Spawning over time relaxes the earlier "wild creatures don't grow over time"; it stays behind a tuning flag, and reinforcements must arrive visibly (from the map's edge or deeper areas, never popping in) and only out of the witch's view. The population growth above is built; the other pacing variants (attrition on the march, a director) stay in the simulator until Ed picks one.
 - **Direction** (Ed, 2026-10-04, via the coordinator): the game stays mostly about the hero (the witch), her army and defence. The wave clock stays for now, though its meaning will probably change later. Not to build yet: each area's legend flipping between asleep, happy and angry through quests.
 - **Every area has a sleeping legend** (Ed, 2026-10-04, via the coordinator): it wakes angry when its area's wave arrives and stays in its own area as a mini-boss (480 hp, 12 dps), attacking the witch, her creatures and that area's soundsystem; it doesn't march (alone it topples a 4000 hp soundsystem in about 5.6 minutes). **Evolution stops at adult**, so players can't make legends, and **no other legends spawn**. Modelled in the balance simulator (`areaLegends`); not built in the game yet.
+- **Species strength and berry costs** (Ed, 2026-10-05): some species are weaker or stronger per creature than others. Weaker ones spawn in larger numbers (a swarm, like bees), stronger loners fewer. Their levels cost different numbers of berries. Ed worried varied counts make the rule less legible, and ruled: "We should definitely segment the ring, and tie the cost to strength" (the ring under a party animal shows one segment per berry). Built: each species has a strength class (`combat.json` `strength`: swarm about ⅓, normal 1, loner 2) multiplying its health and damage, so its fighting value goes by the same factor; its areas start with and grow by 1 / that many, so an area's fighting value stays about the same; and a level costs the strength it gains, at `berries.cost.per` a berry, rounded, at least one. No species has a class yet.
 - **Tools:** the debug overlay's power meter (the party's F, leashed and parked, against each siege's and every marcher's together); a **playtest log** (every 10 s: time, wave, party F, creatures by level, berries, invites, each siege's F; L downloads it) so Ed's playtests give the real growth rate; and a headless **balance simulator** (`node tools/balance/sim.mjs`) that plays the real map and wave order with only the sieges, in seconds, for the idle loss, the enemy's F wave by wave, and whether players growing at 30, 50 or 70 F a minute, starting late, can catch up.
 
 ### Creature movement (Stage 5; proposed by the builder, 2026-10-04; Ed's direction added the same day)
@@ -226,7 +227,42 @@ Each delivery has a factor so its expected damage a second (allowing for misses 
 | toad | leaps in arcs, landing near its target | none | slam on landing: a small pulse (ring where it lands) | — |
 | beetle | plods straight in, slow to turn | none | melee shove with knockback | armoured |
 
-The other species keep today's straight approach until they get a profile. Babies never fight. Party animals use the same profiles against wild ones, inside their leash. Everything is deterministic (seeded, fixed steps).
+**All 30 species (Ed's species pass, 2026-10-05: "Yes, give all 19 a profile").** Every species now has a profile, the other 19 with new signature moves where they called for one (a ram's run-up, the stags' paired charge, a badger digging in, a beaver's block, a lynx's pounce, a fox's flank, a snake's strike, a moth's pull to light, rolling hedgehogs and woodlice, a snail's slime, a glow-worm's flash). Speeds are a fight's (times tuning `fight.speed`); every one closes from afar at its sprint (`combat.pursuitRun`, 20 m/s, unless it has its own). Each new move has a debug arena preset (`?arena=` swipe, wide, pair, ram, dig, block, flank, pounce, weave, packflank, otter, squirrel, dart, roll, slime, woodlouse, strike, moth, flash).
+
+| Species | Speed (m/s) | Accel (m/s²) | Behaviours | Pack tactic | Signature move | Trait |
+|---|---|---|---|---|---|---|
+| wolf | 17 | 70 | arrive, slot, separation, cohesion | surround, pincer | — | — |
+| boar | 14 | 25 | arrive, separation | — | charge (lowers its head 0.5 s, builds to 30 m/s, overshoots, brakes in an arc) | heavy |
+| hare | 20 | 150 | arrive, slot, strafe, dodge, separation | hit and run | — | nimble |
+| raven | 19 | 80 | keep range, strafe, slot, separation | volley line, (alone) | — | flier |
+| bat | 19 | 110 | orbit, wander, separation, dodge | swarm | — | flier, swarm |
+| owl | 16 | 40 | orbit, keep range, slot, separation | volley line, (alone) | — | flier |
+| salamander | 12 | 30 | keep range, separation | — | — | — |
+| spider | 15 | 90 | keep range, strafe, separation | — | ambush: still till she's within 20 m, then a burst | — |
+| mole | 13 | 50 | arrive, separation | — | burrow: under from 10 m, surfacing under her | burrower |
+| toad | 12 | 40 | keep range, separation | — | leap: an arc 6 m high, slamming down round it | — |
+| beetle | 12 | 15 | arrive, separation | — | — | armoured |
+| bear (new) | 13 | 20 | arrive, separation | — | heavy swipe: a wide, hard blow with a short lunge (5 to 6 m) | heavy |
+| elk (new) | 15 | 18 | arrive, separation | — | charge, heavy: slow to build, a wide braking arc (60°/s), runs on 16 m | heavy |
+| stag (new) | 16 | 30 | arrive, slot, separation | pincer | charge in a pair: its pack mate sets off with it | heavy |
+| ram (new) | 14 | 35 | arrive, separation | — | backs off 7 m/s while it lowers its head, then rams (fast to build) | — |
+| badger (new) | 12 | 40 | arrive, separation | — | digs in when she's within 6 m: rooted 3 s, half damage, no knockback, bites without a lunge | — |
+| beaver (new) | 12 | 40 | arrive, separation | — | braces behind its tail when a shot comes at it or its target winds up: rooted 1 s, shots ×0.15, blows ×0.5; then slaps back at once | — |
+| fox (new) | 18 | 90 | arrive, slot, strafe, separation | flank, surround | — | — |
+| lynx (new) | 16 | 70 | arrive, strafe, separation | — | pounce: a low, quick leap (2 m high, 0.45 s), landing its blow on her | — |
+| stoat (new) | 19 | 160 | arrive, slot, strafe, dodge, separation | hit and run | — | nimble |
+| marten (new) | 17 | 100 | arrive, slot, separation, cohesion | flank, pincer | — | — |
+| otter (new) | 17 | 130 | arrive, strafe, dodge, separation | — | — | nimble |
+| squirrel (new) | 18 | 170 | arrive, slot, dodge, separation | hit and run | — | nimble |
+| dormouse (new) | 13 | 180 | arrive, slot, wander, strafe, dodge, separation | hit and run | — | nimble |
+| hedgehog (new) | 10 (sprint 14) | 30 | arrive, separation | — | rolls curled up (charge): spikes whirling, taking ×0.3 | armoured |
+| snail (new) | 6 (sprint 8) | 10 | arrive, separation | — | slime trail: a patch every 0.4 s, drying after 7 s, slowing her to half | armoured |
+| woodlouse (new) | 9 (sprint 12) | 25 | keep range, separation | — | rolls curled up (charge), taking ×0.3 | armoured |
+| snake (new) | 14 | 80 | keep range, strafe, separation | — | ambush strike: still till she's within 16 m, then springs and strikes at once | — |
+| moth (new) | 15 | 90 | orbit, wander, light, dodge, separation | swarm | drawn to light: glow-worms and soundsystems within 40 m | flier, swarm |
+| glowworm (new) | 9 (sprint 10) | 30 | keep range, separation | — | flash: within 9 m, a burst of light slowing the other side 1.5 s (her to 0.6) | — |
+
+New pieces for them: a **flank** tactic (slots at the target's back, the way it's heading, striking only from behind); a **light** behaviour (drawn to the nearest glow-worm or soundsystem); the charge's **backup**, **pair** and **curl**; the leap's **strike** (a pounce lands a blow on its target, not a slam round it); the ambush's **strike**; and four new moves, **dig**, **block**, **trail** and **flash**. Slime and the flash slow the witch too (her speed times the move's `slow`, a moment). The bear gets its own attacks (`swipe`, `bigswipe`); otters, squirrels and dormice join the nimble. Babies never fight. Party animals use the same profiles against wild ones, inside their leash. Everything is deterministic (seeded, fixed steps).
 
 **Traits and counters** (data: `combat.json` `traits` and `counters`). The raw numbers stay on the **equal power budget** for the level (same health, same damage a second). The difference is in behaviour and in a few multipliers anyone can read:
 - **Flier**: melee hits it for half (it flits up out of reach). Ranged attackers beat fliers' melee enemies; fliers beat melee.
@@ -259,9 +295,16 @@ Ed: "the animals don't move around enough when attacking and defending … I don
   - Windups are unchanged, and the boar now lowers its head for 0.5 s with its lane shown before it charges, so everything stays dodgeable.
   - Damage a second is unchanged: the equal power budget doesn't depend on speed.
 - **The witch:** her dash (5 m in 0.18 s, every second) still dodges a lunge (its windup is 0.45 to 0.55 s and she needs about 3 m), and rising still ends a fight. But with creatures as fast as she is on the ground, she can't simply outrun a pack. Flag for Ed: if that feels unfair, a longer dash (8 to 10 m) is the knob.
+- **Momentum** (Ed, 2026-10-05, after v439: "the charging animals move a jerkily - they should have more momentum").
+  - A charge now has phases. The boar lowers its head (0.5 s, easing to a stop, its lane shown), then builds speed at `accel` (40 m/s²) up to 30 m/s down the locked lane. It hits once and carries on through, `overshoot` (8 m) past its target. Then it brakes at `brake` (30 m/s²), turning in an arc toward its target at `turn` (140°/s), until it's down to its run and steers again. These are the boar's `move` in `movement.json`.
+  - All fight steering accelerates at most at the profile's `accel`. The new `tuning.fight.momentum` divides every fight acceleration, braking and turn rate, so 2 is twice as heavy.
+  - Facing has a margin, so it doesn't flicker as a creature passes straight up or down the screen.
+  - The view blends creatures between rule steps up to 20 m a frame (5 m before), so a fast charge at a low frame rate is still smoothed.
+- **Spacing** (Ed, 2026-10-05: "animals attempted not to bunch up while moving; the distance they want to keep can depend on their size"). Every creature has a body radius: its kind's, from `movement.json` `bodies` (a dormouse 0.3 m, a bear 1.4 m), times its level's scale (a baby 0.5, a legend 3.2). Two creatures keep (r1 + r2) × 1.3 + 0.5 m apart. Once a step, after all movement (roaming, following her, marching, fleeing, going home, fighting), creatures within 150 m of a witch ease apart from anyone closer, at up to 6 m/s. It's soft: a pack still closes on its target, and a fight profile's own separation still applies on top. A sleeping legend holds its ground and pushes others off. It's cheap: a grid, and at most 8 neighbours each (about +0.4 ms a step at wave 30, 5,000 creatures).
+- **Wild pursuit is short** (Ed, 2026-10-05: "wild creatures shouldn't pursue you very far outside of their area"). A wild creature chasing the witch gives up once she's `combat.leaveArea` (10 m) past its area's edge, then turns back and walks home. It won't take her up again from outside unless she comes back. Besiegers keep their old rule, and party animals are unchanged. (Fixed on the way: happy legends and an area's guards are on her side, so they never go for her.)
 - **Live knobs.** `tuning.fight.scale` multiplies every fight length (ranges, lunges, radii, knockback, pattern sizes, pursuit, aggro). `fight.speed` multiplies every fight speed (running, charging, lunging, shots).
   - `?fightScale=` and `?fightSpeed=` set them at the start.
-  - In the debug overlay (~): sliders and a reset, or [ and ] for scale and ; and ' for speed, live mid-fight.
+  - In the debug overlay (~): sliders and a reset, or [ and ] for scale, ; and ' for speed and , and . for momentum, live mid-fight (and `?fightMomentum=`).
   - They're remembered on the browser, and every change goes in the playtest log.
 - **Arena presets at the new scale:** `?arena=surround`, `pincer`, `hitandrun`, `charge`, `volley`, `kite`, `swarm`, `lob`, `beam`, `ambush`, `burrow`, `leap`, `armour`, `legend`, `siege`.
 

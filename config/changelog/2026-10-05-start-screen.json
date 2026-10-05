@@ -1,0 +1,10 @@
+{
+  "version": null,
+  "title": "A full-screen start screen",
+  "items": [
+    "The start screen fills the window with big, easy-to-read text over the dimmed forest",
+    "\"New in\" this version lists each change with its own heading and bullets, dated, with the two versions before it underneath",
+    "\"Coming up\" lists the work in progress, straight from what the builders have open, so it's always current",
+    "On a phone, drag to scroll the text; a tap still starts"
+  ]
+}

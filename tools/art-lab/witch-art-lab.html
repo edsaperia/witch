@@ -236,6 +236,13 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
+        <div class="row" style="justify-content:space-between"><h2>Flora</h2><div class="row"><label class="note" for="floraShow">Show</label><select id="floraShow"><option value="new">the new species</option><option value="fantasy">fantasy only</option><option value="all">every species</option></select><label class="note" for="floraGenome">Genome</label><select id="floraGenome"></select></div></div>
+        <p class="note">Trees grown from their plant genomes (art/flora/genomes.js). The new species come from the genome generator (art/flora/blob.js): levels of branches under a crown of 3 to 9 lit blobs filled with leaf stamps. They are wild cherry, crab apple, elder, aspen, whitebeam, field elm and cedar, and three fantasy trees: the glowcap (a mushroom tree with glowing gills), the crystal-leaf tree and the vinewood (hung with vines and glowing buds). Each row shows a sapling, young, mature and tall tree, lit at dusk; then its crown as the treetops show it, and its trunk as the ground shows it. Below is the chosen species' genome, to copy. In the game, ?flora=new (or fantasy, all, or a list of ids) grows them in every wooded area.</p>
+        <div class="sheet-wrap"><canvas id="floraSheet" width="420" height="160"></canvas></div>
+        <pre id="floraJson" class="note" style="white-space:pre-wrap;max-height:220px;overflow:auto"></pre>
+      </section>
+
+      <section style="display:grid;gap:10px">
         <div class="row" style="justify-content:space-between"><h2>Attack effects</h2><div class="row"><label class="note" for="fxTint">Tint</label><select id="fxTint"><option value="255,70,90">wild (red)</option><option value="70,240,255">party (cyan)</option><option value="255,90,220">party (pink)</option><option value="150,255,80">party (green)</option><option value="255,220,70">party (yellow)</option></select></div></div>
         <p class="note">What a fight looks like (Stage 5): projectiles (spit, a barb, a seed and a stone lobbed with their shadow, a feather dart, a glowing mote), short and long beams (start, the loop that repeats along the beam, end), the quake's ring and a spore cloud, the telegraphs (a target circle where a lob will land, a line along a beam or a charge with its start and arrowhead, the wind-up flash, the quake's reach), hit sparks, and the slow and knockback marks. Each row: its frames light (for the dark forest) on night ground, then dark (for bright ground) on a lit floor, then how the treetop camera shows it, the ground drawing and then the treetop one; ground decals also laid flat as the camera sees them. Tinted by the attack's side.</p>
         <div class="sheet-wrap"><canvas id="fxSheet" width="420" height="160"></canvas></div>
@@ -291,7 +298,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, bakeTufts, DISCO_GRID, DISCO_MASK, discoPatterns, DISCO_TRANSITIONS, discoCompose, discoPaint, DANCEFLOOR_SPEAKER_ANGLES, dancefloorSpeakerSprite, dancefloorSpeakerColours, soundsystemColours, witchSprite, witchColours, areaTreeVariants, TREE_SPECIES, splitTree, treeColours, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS, COUNTRY, countrySprite, countryColours, SCENES, scenePlacements, LANDMARKS, landmarkSprite, landmarkColours, WITCH_PAIRS, PARTY_OUTFITS, partyWitch, PARTY_OBJECTS, PARTY_CLASSES, PARTY_LIGHT_NEONS, partySprite, partyColours, partyPatch, scenePiece, LEGEND_IDS, LEGEND_STATES, LEGEND_FRAMES, legendForm, EFFECTS, EFFECT_BY_ID, effectSprite, effectColours, EFFECT_TREETOP_SHRINK, PALETTE_SIZE, PALETTE_ROW, PALETTE_VARIANTS, PALETTE_GLSL, bakeMask, paletteRow, maskPixels, variantColours, GENOME_BY_ID, genomeHash } from "../../art/generator.js";
+import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, bakeTufts, DISCO_GRID, DISCO_MASK, discoPatterns, DISCO_TRANSITIONS, discoCompose, discoPaint, DANCEFLOOR_SPEAKER_ANGLES, dancefloorSpeakerSprite, dancefloorSpeakerColours, soundsystemColours, witchSprite, witchColours, areaTreeVariants, TREE_SPECIES, splitTree, treeColours, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS, COUNTRY, countrySprite, countryColours, SCENES, scenePlacements, LANDMARKS, landmarkSprite, landmarkColours, WITCH_PAIRS, PARTY_OUTFITS, partyWitch, PARTY_OBJECTS, PARTY_CLASSES, PARTY_LIGHT_NEONS, partySprite, partyColours, partyPatch, scenePiece, LEGEND_IDS, LEGEND_STATES, LEGEND_FRAMES, legendForm, EFFECTS, EFFECT_BY_ID, effectSprite, effectColours, EFFECT_TREETOP_SHRINK, PALETTE_SIZE, PALETTE_ROW, PALETTE_VARIANTS, PALETTE_GLSL, bakeMask, paletteRow, maskPixels, variantColours, GENOME_BY_ID, genomeHash, PLANT_GENOMES, floraPick } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -882,6 +889,32 @@ function renderParty() {
   }, 650);
 }
 
+// ================= flora: the plant genomes' trees at four sizes, lit, with their crowns and trunks =================
+let floraTimer;
+function renderFlora() {
+  clearTimeout(floraTimer);
+  floraTimer = setTimeout(() => {
+    const c = document.getElementById("floraSheet"), show = document.getElementById("floraShow"), gsel = document.getElementById("floraGenome"); if (!c) return;
+    show.onchange = renderFlora;
+    if (!gsel.options.length) { for (const [id, g] of Object.entries(PLANT_GENOMES)) gsel.add(new Option(g.name, id)); gsel.value = floraPick("new")[0] || "oak"; gsel.onchange = () => { document.getElementById("floraJson").textContent = JSON.stringify(PLANT_GENOMES[gsel.value], null, 1); }; }
+    document.getElementById("floraJson").textContent = JSON.stringify(PLANT_GENOMES[gsel.value], null, 1);
+    const st = current, K = 2 / (st.pixel || 2), dusk = { ...st, ambient: .5, ambientHue: .62, moon: .8, moonHue: .6, shafts: 0 }, gap = 8, lab = 110;
+    const rows = floraPick(show.value).map(id => {
+      const S = TREE_SPECIES[id], ts = { ...st, leafHue: .27 }, cells = [];
+      [.45, .7, 1, 1.35].forEach((k2, i) => { const t = S.fn(rng(17 + i * 31), ts, st.treeSize * K * k2), col = treeColours(rng(3 + i), ts, S.fn); col[M.NOSE] = [20, 16, 24]; cells.push(bake(t.sp, col, st, "none")); if (i === 2) { const p = splitTree(t); cells.push({ ...bake(p.top, col, st, "none"), sep: true }, bake(p.bot, col, st, "none")); } });
+      return { id, label: S.name + (PLANT_GENOMES[id]?.fantasy ? " (fantasy)" : ""), cells };
+    });
+    const rh = rows.map(r => Math.max(...r.cells.map(b => b.h)) + gap), w = Math.max(...rows.map(r => r.cells.reduce((a, b) => a + b.w + gap + (b.sep ? 12 : 0), lab))), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
+    tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+    let y = gap;
+    rows.forEach((r, i) => { let x = lab; y += rh[i] - gap; for (const b of r.cells) { if (b.sep) x += 12; tgt.a.drawImage(b.A, x, y - b.h); tgt.n.drawImage(b.N, x, y - b.h); x += b.w + gap; } y += gap; });
+    c.width = w; c.height = h; shade(tgt, c, dusk, [], [0, 0, w, h]);
+    const g = c.getContext("2d"); g.font = "10px monospace"; g.textBaseline = "bottom"; g.fillStyle = "#f0ead8"; y = gap;
+    rows.forEach((r, i) => { y += rh[i] - gap; g.fillText(r.label, 6, y); y += gap; });
+    c.style.width = w * 2 + "px"; c.style.maxWidth = "none"; c.style.imageRendering = "pixelated";
+  }, 650);
+}
+
 // ================= attack effects: every effect's frames, light and dark, ground and treetop =================
 let fxTimer;
 function renderEffects() {
@@ -1089,7 +1122,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderCountry(); renderPartyObjects(); renderLegends(); renderGenome(); renderRelics(); renderSets(); renderTall(); renderTufts(); renderWitch(); renderParty(); renderEffects(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
+  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderCountry(); renderPartyObjects(); renderLegends(); renderGenome(); renderRelics(); renderSets(); renderTall(); renderTufts(); renderWitch(); renderParty(); renderFlora(); renderEffects(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }

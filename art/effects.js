@@ -113,6 +113,9 @@ export const ATTACK_EFFECTS = {
   legendSlam: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "quakeRing", hit: "hitSparkBig", status: ["knockback", "dust"] },
   legendNova: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "mote", hit: "hitSparkBig" },
   legendSpin: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], beam: ["beamLongStart", "beamLongLoop", "beamLongEnd"], hit: "hitSparkBig" },
+  // the bear's swipes (Ed's species pass, 2026-10-05): a heavy melee blow with a short lunge, as the maul
+  swipe: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], hit: "hitSparkBig", status: ["knockback", "dust"] },
+  bigswipe: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], hit: "hitSparkBig", status: ["knockback", "dust"] },
   legendCharge: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], hit: "hitSparkBig", status: ["knockback", "dust"] },
 };
 // Effects for what creatures do and are, beyond their attacks (Stage 5): a burrower's moving mound, a charge's dust, a stunned creature's

@@ -422,9 +422,11 @@ export const ART_PIXELS_PER_METRE = 16; // the prototype's (config/tuning.json, 
 // whole, top, bot (the crown and the trunk below it, for the cut-out), crownY (px from the top),
 // metres: { height, crownBase, crownHeight, crownRadius } }]. Empty when its big objects are not
 // trees (mounds, boulders). ppm: art pixels per metre, for the metres.
-export function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanvas, ppm = ART_PIXELS_PER_METRE } = {}) {
+export function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanvas, ppm = ART_PIXELS_PER_METRE, flora = null } = {}) {
   const def = AREA_BY_ID[id]; if (!def) throw new Error(`no area type "${id}"`);
-  const recipes = (def.big || []).filter(([kind]) => kind === "tree").map(([, o]) => o), mains = recipes.filter(o => !o.minor), minors = recipes.filter(o => o.minor);
+  const recipes = (def.big || []).filter(([kind]) => kind === "tree").map(([, o]) => o);
+  let mains = recipes.filter(o => !o.minor), minors = recipes.filter(o => o.minor);
+  if (flora?.length && recipes.length) { mains = flora.map(type => ({ type })); minors = []; } // a flora preview (?flora=): these species instead of the area's own
   if (!recipes.length) return [];
   const seed = id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0, out = [];
   let n = 0;

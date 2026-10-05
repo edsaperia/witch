@@ -4,6 +4,7 @@ import { LEGEND, spawnCreatures } from "./creatures";
 import { AREA_TYPES, generateMap } from "./map";
 import { newGame, stepGame } from "./game";
 import { TUNING } from "./tuning";
+import { toEvolve } from "./berries";
 
 const t = TUNING, B = LEGEND_BUFFS;
 
@@ -40,7 +41,8 @@ describe("legend buffs", () => {
     expect(b.groundSpeed).toBeCloseTo(t.groundSpeed * B.species.hare.value);
     expect(b.treetopSpeed).toBeCloseTo(t.treetopSpeed * B.species.hare.value);
     expect(b.invite.talkTime[2]).toBeCloseTo(t.invite.talkTime[2] * B.species.fox.value);
-    expect(b.berries.toEvolve[1]).toBe(Math.max(1, Math.round(t.berries.toEvolve[1] * B.species.bear.value)));
+    expect(b.berries.cost.scale).toBeCloseTo((t.berries.cost.scale ?? 1) * B.species.bear.value); // fewer berries to evolve
+    expect(toEvolve(1, b)).toBe(Math.max(1, Math.round(2.5 * B.species.bear.value)));
     expect(b.party.interval).toBeCloseTo(t.party.interval * B.species.snail.value);
     expect(b.leash).toEqual({ ...t.leash, pace: 1 });
   });
