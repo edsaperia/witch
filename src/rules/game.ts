@@ -18,7 +18,7 @@ import { SIGIL_NEON } from "../../art/sigils.js";
 import { newBuffs, stepBuffs, type BuffState } from "./buffs";
 import { COMBAT, marchOn, maxHp, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
 import { hurt, knockOut, newHealth, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
-import { applyDash, newDash, startDash, type DashState } from "./dash";
+import { applyDash, dashing, newDash, startDash, type DashState } from "./dash";
 import { castSpell, newSpells, speedMultiplier, type SpellState } from "./spells";
 import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWitches";
 import { growWave, materialize, newGrowth, type GrowthState } from "./growth";
@@ -174,6 +174,24 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   g.alpha = Math.max(0, Math.min(1, g.acc / STEP));
 }
 
+/** A hit on witch `id` at game time `at`: it costs her a hit unless she's mid-blink (nowhere). */
+export function hitWitch(g: Game, id: number, at: number, t: Tuning = g.tuning): void {
+  const w = g.witches[id];
+  if (!w || w.ko || dashing(w.dash, at)) return;
+  if (hurt(w.health, at, t)) { w.ko = knockOut(w.leash, g.creatures, at, t); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z }); }
+}
+
+/** Where a blink may land: not in a tree's trunk, a rock or ruin, a soundsystem, a dancefloor
+ *  speaker or the treehouse's tree (tuning dash.clear: each one's clearance in metres). */
+export function blinkClear(g: Game, x: number, z: number): boolean {
+  const C = g.tuning.dash.clear, near = (px: number, pz: number, r: number) => (px - x) ** 2 + (pz - z) ** 2 < r * r;
+  if (g.forest.treesNear(x, z, C.tree).some(p => near(p.x, p.z, C.tree))) return false;
+  if (g.forest.decorNear(x, z, C.decor).some(p => near(p.x, p.z, C.decor))) return false;
+  for (const [k, s] of g.combat.sounds) if (k !== "home" && near(s.x, s.z, C.sound)) return false;
+  if (g.map.dancefloor.speakers.some(p => near(p.x, p.z, C.speaker))) return false;
+  return !near(g.map.treehouse.x, g.map.treehouse.z, C.treehouse);
+}
+
 /** Note where everything was before a step, for drawing between steps. */
 function remember(g: Game): void {
   g.prev.witches = g.witches.map(w => ({ x: w.body.x, z: w.body.z, lift: w.body.lift }));
@@ -220,8 +238,8 @@ function fixedStep(g: Game, controls: Controls): void {
   // Knocked out: no input but the camera's zoom while it plays out.
   if (W.ko) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   const was = W.body;
-  if (c.dash) startDash(W.dash, was, c.moveX, c.moveZ, g.clock.time, t);
-  W.body = applyDash(W.dash, was, stepWitch(was, c, dt, boost === 1 ? t : { ...t, groundSpeed: t.groundSpeed * boost, treetopSpeed: t.treetopSpeed * boost }, g.map.bounds), g.clock.time, dt, t, g.map.bounds);
+  if (c.dash) startDash(W.dash, was, c.moveX, c.moveZ, g.clock.time, t, g.map.bounds, (x, z) => blinkClear(g, x, z));
+  W.body = applyDash(W.dash, stepWitch(was, c, dt, boost === 1 ? t : { ...t, groundSpeed: t.groundSpeed * boost, treetopSpeed: t.treetopSpeed * boost }, g.map.bounds));
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, dt, g.tuning, !!g.witch.seated, g.introFocus);
   if (c.pauseWaves) g.party.paused = !g.party.paused;
   if (c.nextWave) { spreadWave(g.party, g.map, g.clock.time); g.party.nextAt = g.clock.time + t.party.interval; }
@@ -344,11 +362,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     },
     unseen: (x, z) => g.witches.every(w => Math.hypot(w.body.x - x, w.body.z - z) > t.haze.far + 60),
     inArea: (c, x, z) => { const k = g.map.cellSafe(x, z).cell; return k[0] === c.cell[0] && k[1] === c.cell[1]; },
-    hitWitch: (id, at) => {
-      const w = g.witches[id];
-      if (!w || w.ko) return;
-      if (hurt(w.health, at, t)) { w.ko = knockOut(w.leash, g.creatures, at, t); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z }); }
-    },
+    hitWitch: (id, at) => hitWitch(g, id, at, t),
     loseParty: id => {
       for (const w of g.witches) { w.leash.stack = w.leash.stack.filter(i => i !== id); w.leash.placed = w.leash.placed.filter(p => p.id !== id); }
       g.creatures[id].leashed = false;

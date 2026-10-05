@@ -6,7 +6,7 @@ import * as THREE from "three";
 import * as Art from "../../art/generator.js";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
-import { dormant, poseOf } from "../rules/game";
+import { dormant, poseOf, STEP } from "../rules/game";
 import { cameraPose } from "../rules/camera";
 import { AREA_TYPES } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
@@ -1333,7 +1333,9 @@ export class View {
     // Knocked out (Ed, 2026-10-04): she sits slumped on the ground while her stack lets go, then
     // vanishes in a sparkle and comes back in one at the treehouse.
     const KO = g.witches[0].ko;
-    let hidden = false;
+    // Mid-blink she's nowhere (from the step it starts, so she never slides between its two points).
+    const D = g.witches[0].dash;
+    let hidden = time >= D.at - STEP && time < D.until;
     if (KO) {
       if (time < KO.teleportAt) { wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length]; wyy = 0; }
       else hidden = time < KO.backAt - (KO.backAt - KO.teleportAt) * 0.25;
