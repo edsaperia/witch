@@ -110,6 +110,8 @@ export class InviteView {
       if (e.kind === "shot" && time - this.lastHers > 0.7) {
         this.lastHers = time;
         this.show(this.hers, pick(HERS, e.n ?? 0, 1), 0, 0, 0, time + 0.8);
+      } else if (e.kind === "fizzled") {
+        this.pop("💨", e.x, 0.15, e.z, time); // (landed on the ground at its range: a puff)
       } else if ((e.kind === "hit" || e.kind === "blocked" || e.kind === "happy") && e.id !== undefined) {
         // Every letter that lands pops; one inside the creature's gap (spent) adds nothing, and gets no reply.
         if (e.kind !== "happy") this.pop(e.kind === "blocked" ? "💢" : e.spent ? "✨" : "💖", e.x, head(e.id) * 0.6, e.z, time);
@@ -152,10 +154,11 @@ export class InviteView {
       const L = I.letters[i];
       if (!L) { im.style.display = "none"; return; }
       im.style.display = "block";
-      place(im, L.x, groundLift(L.flown), L.z);
-      // End over end: squashed by the spin's cosine, flipped on the far side (snapped to a few steps, pixel-like).
-      const spin = Math.round(((time - L.at) * 3.2 + L.n * 0.37) * 8) / 8, cx = Math.cos(spin * Math.PI * 2);
-      im.style.transform = `scaleX(${(Math.sign(cx || 1) * Math.max(0.5, Math.abs(cx))).toFixed(2)})`; // (never thinner than half: it reads as a letter)
+      place(im, L.x, lobHeight(L.flown, t.invites.range, t.invites.arc ?? 0), L.z);
+      // End over end (Ed, round 11: "rotate by pitching instead of yawing"): squashed top to bottom by
+      // the spin's cosine, upside down on the far side (snapped to a few steps, pixel-like).
+      const spin = Math.round(((time - L.at) * 3.2 + L.n * 0.37) * 8) / 8, cy = Math.cos(spin * Math.PI * 2);
+      im.style.transform = `scaleY(${(Math.sign(cy || 1) * Math.max(0.35, Math.abs(cy))).toFixed(2)})`; // (never thinner than a third: it reads as a letter)
     });
 
     // The meters: a pill of hearts over each creature with some affection.
@@ -186,5 +189,12 @@ export class InviteView {
   }
 }
 
-/** A letter's height (m): thrown up from her hand and falling a little as it flies. */
-const groundLift = (flown: number) => 1.3 + Math.min(0.4, flown * 0.08) - flown * 0.02;
+/** Her hand's height (m), where a 💌 leaves from. */
+const HAND = 1.3;
+/** A letter's height (m) `flown` metres out (Ed, round 11: "they should arc a little and disappear when
+ *  they hit the ground"): a gentle lob from her hand, rising `arc` over the straight line down to the
+ *  ground at `range`, where the rules end it (fizzled) and it lands with a puff. */
+export const lobHeight = (flown: number, range: number, arc: number) => {
+  const f = Math.max(0, Math.min(1, flown / Math.max(1e-3, range)));
+  return HAND * (1 - f) + 4 * arc * f * (1 - f);
+};

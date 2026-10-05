@@ -2562,6 +2562,10 @@
         "perAnimalHitGap": {
           "type": "number",
           "minimum": 0
+        },
+        "arc": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -2571,6 +2575,7 @@
         "cooldown",
         "range",
         "speed",
+        "arc",
         "homing",
         "homingCone",
         "homingRange",
