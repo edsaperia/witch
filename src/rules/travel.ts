@@ -55,16 +55,11 @@ export function updateMode(c: Creature, a: Anchor, map: ForestMap, time: number,
 
 const sameArea = (map: ForestMap, x1: number, z1: number, x2: number, z2: number) => { const a = map.cellSafe(x1, z1).cell, b = map.cellSafe(x2, z2).cell; return a[0] === b[0] && a[1] === b[1]; };
 
-/** The nearest area centre to (x, z): its own area's and its neighbours'. */
-function nearestSite(map: ForestMap, x: number, z: number): { x: number; z: number } {
-  const [cx, cy] = map.cellSafe(x, z).cell;
-  let best = map.siteOf(cx, cy), bd = Math.hypot(best.x - x, best.z - z);
-  for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) {
-    if (!i && !j) continue;
-    const s = map.siteOf(cx + i, cy + j), d = Math.hypot(s.x - x, s.z - z);
-    if (d < bd) { bd = d; best = s; }
-  }
-  return best;
+/** The area centres round (x, z), its own area's and its neighbours', nearest first. */
+function sitesNear(map: ForestMap, x: number, z: number): { x: number; z: number }[] {
+  const [cx, cy] = map.cellSafe(x, z).cell, out: { x: number; z: number; d: number }[] = [];
+  for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) { const s = map.siteOf(cx + i, cy + j); out.push({ ...s, d: Math.hypot(s.x - x, s.z - z) }); }
+  return out.sort((a, b) => a.d - b.d);
 }
 
 /** A route from (sx, sz) to (tx, tz) along area borders: the straight line, its points pushed out to
@@ -80,11 +75,15 @@ export function planRoute(map: ForestMap, sx: number, sz: number, tx: number, tz
     for (let i = 1; i < pts.length - 1; i++) {
       const p = pts[i];
       if (free(p)) continue;
-      const s = nearestSite(map, p.x, p.z), dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz);
-      if (d >= clear) continue;
-      // Out to the clear ring, away from the centre (dead on it: to the line's left).
-      const ux = d > 1e-3 ? dx / d : -(tz - sz) / (L || 1), uz = d > 1e-3 ? dz / d : (tx - sx) / (L || 1);
-      p.x = s.x + ux * clear; p.z = s.z + uz * clear;
+      // Out of every centre's clear ring it's in, nearest first, twice over (two centres close
+      // together: as far from both as it can get).
+      for (let pass = 0; pass < 2; pass++) for (const c of sitesNear(map, p.x, p.z)) {
+        const dx = p.x - c.x, dz = p.z - c.z, d = Math.hypot(dx, dz);
+        if (d >= clear) continue;
+        // Out to the clear ring, away from the centre (dead on it: to the line's left).
+        const ux = d > 1e-3 ? dx / d : -(tz - sz) / (L || 1), uz = d > 1e-3 ? dz / d : (tx - sx) / (L || 1);
+        p.x = c.x + ux * clear; p.z = c.z + uz * clear;
+      }
     }
   };
   const smooth = () => { pts = pts.map((p, i) => (i === 0 || i === pts.length - 1 ? p : { x: p.x * 0.5 + (pts[i - 1].x + pts[i + 1].x) * 0.25, z: p.z * 0.5 + (pts[i - 1].z + pts[i + 1].z) * 0.25 })); };
