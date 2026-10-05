@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { moodOf, nearestSeen, newMemory, stepMemory } from "./memory";
+import { moodOf, nearestSeen, newMemory, restlessness, stepMemory } from "./memory";
 import type { Creature } from "./creatures";
 import type { ForestMap } from "./map";
 
@@ -51,5 +51,12 @@ describe("area memory", () => {
     stepMemory(m, true, 50, 50, map, inArea, 10);
     stepMemory(m, true, 350, 50, map, inArea, 10.5);
     expect(m.areas.has("3,0")).toBe(false);
+  });
+
+  it("reads a legend's restlessness clamped to 0..1, calm when nothing has set it", () => {
+    const c = {} as Creature;
+    expect(restlessness(c)).toBe(0);
+    expect(restlessness({ restlessness: 0.4 } as unknown as Creature)).toBe(0.4);
+    expect(restlessness({ restlessness: 3 } as unknown as Creature)).toBe(1);
   });
 });

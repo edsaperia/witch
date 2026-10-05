@@ -11,7 +11,7 @@
 //   canvas), with a bar for how far the conversation has got.
 // The sigils are the art builder's (art/sigils.js), drawn per species and level into an atlas.
 import { drawAreaMemory, drawDreamDirection, type AddSprite } from "./areaMemory";
-import { nearestSeen } from "../rules/memory";
+import { nearestSeen, restlessness } from "../rules/memory";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { drawSigil, sigilColour } from "../../art/generator.js";
@@ -120,6 +120,12 @@ class Instances {
     for (const k of ["iPos", "iSize", "iUv", "iCol", "iDraw"]) (this.geo.getAttribute(k) as THREE.InstancedBufferAttribute).needsUpdate = true;
   }
 }
+
+/** Bubbles grow with who's talking (Ed, 2026-10-05): the pixel bubble's game pixel (its --px, in
+ *  screen px) by level, babies smallest, legends (dreams and nightmares) largest. One style for
+ *  every bubble: index.html's .bubble. */
+export const BUBBLE_PX = 3;
+export const bubblePx = (level: number): number => BUBBLE_PX + Math.max(0, Math.min(3, level));
 
 const PARTY = ["🎉", "🎈", "💃", "🎊", "🥳", "😛", "🍉", "🍒", "🍷", "🍸", "🍹", "🥂", "🍺", "😁", "😆"];
 // A creature's moods, bored to delighted: adults start at the first, young at the middle, babies
@@ -345,11 +351,15 @@ export class LeashView {
       let el = this.dreamEls[used];
       if (!el) { el = document.createElement("div"); el.className = "bubble dream on"; host.append(el); this.dreamEls.push(el); }
       el.style.display = "";
-      const q = c.quest!, key = `${q.species}:${q.level}`;
+      // Restless (#87: its area has none of its kind), the dream turns to a nightmare: angry faces
+      // crowd in round the sigil it wants as it worsens, redder, the sigil fading (bring one back).
+      const q = c.quest!, r = restlessness(c), faces = r <= 0.05 ? 0 : r < 0.4 ? 1 : r < 0.75 ? 2 : 3, fury = r >= 0.75 ? 2 : r >= 0.4 ? 1 : 0;
+      const key = `${q.species}:${q.level}:${faces}:${fury}`;
       if (el.dataset.e !== key) {
         el.dataset.e = key;
         const cv = document.createElement("canvas"), n = 44;
         cv.width = cv.height = n;
+        cv.style.width = cv.style.height = `calc(var(--px) * ${(n / BUBBLE_PX).toFixed(2)})`;
         const x = cv.getContext("2d");
         if (x) {
           drawSigil(x, q.species, { x: 1, y: 1, size: n - 2, level: q.level as unknown as null, colour: sigilColour(q.species), glow: false });
@@ -357,12 +367,21 @@ export class LeashView {
           for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] > 90 ? 255 : 0;
           x.putImageData(d, 0, 0);
         }
-        el.replaceChildren(cv);
+        // (its faces in finer pixels than a chat face: their brows must read)
+        const face = (i: number) => { const f = this.pixelEmoji(fury === 2 && i !== 1 ? "😡" : "😠", 0.8, 18); f.classList.add("face"); return f; };
+        el.replaceChildren(...(faces >= 2 ? [face(0)] : []), cv, ...(faces >= 1 ? [face(1)] : []), ...(faces >= 3 ? [face(2)] : []));
+        el.classList.toggle("nightmare", faces > 0);
       }
+      el.style.setProperty("--px", `${bubblePx(c.level)}px`);
+      (el.querySelector("canvas:not(.face)") as HTMLElement | null)?.style.setProperty("opacity", `${1 - 0.75 * r}`);
+      if (faces) el.style.setProperty("--ink", `rgba(${Math.round(225 + 30 * r)}, ${Math.round(215 - 160 * r)}, ${Math.round(255 - 190 * r)}, ${(0.85 + 0.15 * r).toFixed(2)})`);
+      else el.style.removeProperty("--ink");
       const bx = ((this.v.x + 1) / 2) * width, by = ((1 - this.v.y) / 2) * height;
       el.style.left = `${bx}px`;
       el.style.top = `${by}px`;
-      el.style.transform = `translate(-50%, -100%) scale(${treetops ? 0.7 : 1})`;
+      // (From the treetops a dream reads a little smaller; a nightmare stays full size, a warning from afar, and shakes.)
+      const shake = faces ? r * 2.5 * Math.sin(performance.now() * 0.05 + c.id) : 0;
+      el.style.transform = `translate(calc(-50% + ${shake.toFixed(1)}px), -100%) scale(${treetops && !faces ? 0.8 : 1})`;
       // Its direction (rules/memory.ts): a soft glow on the side of the bubble facing the nearest
       // area where she's seen what it dreams of; none if she's seen it nowhere.
       const to = this.dreamDirs.get(c.id);
@@ -785,10 +804,14 @@ export class LeashView {
   private emoji(el: HTMLElement, e: string): void {
     if (el.dataset.e === e) return;
     el.dataset.e = e;
-    const B = this.game.tuning.bubbles, n = B.emojiPixels, k = this.game.tuning.pixelSize * B.scale;
+    el.replaceChildren(this.pixelEmoji(e));
+  }
+  /** An emoji as a pixel sprite, sized with its bubble (its --px: bubblePx). */
+  private pixelEmoji(e: string, k = 1, n = this.game.tuning.bubbles.emojiPixels): HTMLCanvasElement {
+    const B = this.game.tuning.bubbles, size = (B.emojiPixels * this.game.tuning.pixelSize * B.scale * k) / BUBBLE_PX;
     const c = document.createElement("canvas");
     c.width = c.height = n;
-    c.style.width = c.style.height = `${n * k}px`;
+    c.style.width = c.style.height = `calc(var(--px) * ${size})`;
     const x = c.getContext("2d");
     if (x) {
       x.font = `${n - 1}px sans-serif`; x.textAlign = "center"; x.textBaseline = "middle";
@@ -797,7 +820,7 @@ export class LeashView {
       for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] < 110 ? 0 : 255;
       x.putImageData(d, 0, 0);
     }
-    el.replaceChildren(c);
+    return c;
   }
   private say(el: HTMLElement, text: string): void { if (el.dataset.e !== text) { el.dataset.e = text; el.textContent = text; } }
 
@@ -819,6 +842,7 @@ export class LeashView {
       return;
     }
     const c = g.creatures[talk.id];
+    bc.style.setProperty("--px", `${bubblePx(c.level)}px`);
     place(bw, w.x - 1.2, witchHeight(w, g.tuning) + 2.2, w.z);
     place(bc, c.x, (this.tops.get(c.id) ?? 1.2 + c.level * 0.8) + 0.3, c.z); // over its head, however big it is drawn (#47)
     if (talk.refused) {

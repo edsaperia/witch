@@ -50,6 +50,7 @@ import { LeyLines } from "./leylines";
 import { leyChain, leyKey } from "../rules/leylines";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
 import type { Style } from "./style";
+import { restlessness } from "../rules/memory";
 
 /** A point light: where, how far it reaches, its colour and strength. */
 /** An index by weight, from a seeded integer (its last six digits as a share). */
@@ -931,7 +932,9 @@ export class View {
       const hop = c.leap ? Math.sin(Math.min(1, Math.max(0, (time - c.leap.at) / Math.max(0.01, c.leap.lands - c.leap.at))) * Math.PI) * c.leap.height : 0;
       const sink = sleeping ? W.sink : W.sink * (1 - rising), sunk = -sink * (frame.h - (frame.pad ?? 0)) * this.mpp * scale;
       if (sleeping) glow = -2 - W.moss; else if (rising < 1) glow = -2 - W.moss * (1 - rising);
-      l.push({ x: c.x + sway, y: dance + hop + sunk, z: c.z, frame, flip: c.facing < 0, fresh, glow, scale });
+      // Restless in its sleep (#87): it tosses in bursts, and turns over when it's bad.
+      const toss = st === "asleep" ? restlessness(c) : 0, fit = toss ? toss * Math.max(0, Math.sin(time * 1.3 + c.id)) ** 2 : 0;
+      l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id), y: dance + hop + sunk, z: c.z, frame, flip: (c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1), fresh, glow, scale });
       this.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * this.mpp * scale + dance + hop + sunk); // its health bar goes over it
       creatureShadows.push({ x: c.x, z: c.z, w: frame.w * this.mpp * 0.7, d: frame.w * this.mpp * 0.25 });
       n++;
