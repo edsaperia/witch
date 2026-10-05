@@ -3,7 +3,8 @@
 // from the first witch, fading to nothing `sfx.hear` metres off and panned by where it is on screen.
 // The rules know nothing of it. Each kind of cue is its own step of `update`, in this order:
 //  - 💌s (the invites, #89): its letters' events, read as they come (shot: her syllable; hit: the
-//    chime, the creature's small reply, the affection meter's tick; happy: the flourish); the
+//    chime, the creature's small reply, the affection meter's tick; happy: the flourish; fizzled,
+//    thrown its full range: a puff as it lands on the ground); the
 //    talk's invites (with 💌s off) still flourish.
 //  - States: a creature turning enraged (a growl and the nearest's angry speech; a crowd turning at
 //    once, one heavier growl) or happy (a pop and its happy speech): its area's guards, a friendly
@@ -11,7 +12,7 @@
 //  - Legends: the nearest sleeping one moans now and then as it dreams; restless (#87), nightmares.
 //  - Attacks are speech (Ed, 2026-10-05): an attacker's burst of babble in its own voice, by mood;
 //    a legend winding up, one long building swell of its whale song; a lob landing, a thud (a legend's, a boom).
-//  - A soundsystem lost; the witch hurt and knocked down.
+//  - A soundsystem lost; the boot-up over (things stirring); the witch hurt and knocked down.
 //  - Features still open, each read loosely until it lands: the witch knocked back and stunned
 //    (#108), a legend's long charge (#114), a relic bottle found (#99).
 //  - Home's meadow.
@@ -39,6 +40,7 @@ export class SfxCues {
   private flourished = new Map<number, number>();
   private spoke = new Map<number, number>();
   private lost = -1;
+  private boot = false;
   /** Her hits left last frame (a drop is a hit that landed), and whether she was down. */
   private hp = -1;
   private down = false;
@@ -60,6 +62,7 @@ export class SfxCues {
     this.legends(h);
     this.attacks(h, hear);
     this.soundsystems(h);
+    this.booted(h);
     this.hurt(h);
     this.knocked(h);
     this.charges(h);
@@ -82,6 +85,7 @@ export class SfxCues {
         const c = e.id !== undefined ? g.creatures[e.id] : undefined;
         if (c && !e.spent && this.ready(c.id, time, 0.3)) S.reply(voiceOf(c, g.tuning), m ?? 0, pan(e.x), k);
       } else if (e.kind === "happy" && e.id !== undefined) this.flourish(g, e.id, time, k, pan(e.x));
+      else if (e.kind === "fizzled") S.land(pan(e.x), k); // (thrown its full range: down on the ground)
     }
     for (const e of g.leash.events) if (e.kind === "invited") this.flourish(g, e.id, time, Math.max(0.6, near(e.x, e.z)), pan(e.x));
   }
@@ -144,6 +148,15 @@ export class SfxCues {
    *  that's the run over), more urgent when the wave comes at once (left 0). */
   private soundsystems({ g }: Here): void {
     for (const e of g.waveEvents) if (e.kind === "soundsystemLost" && e.key !== "home" && this.lost !== e.at) { this.lost = e.at; this.sfx.lost(e.left <= 0); }
+  }
+
+  /** The boot-up over (party.bootUntil passed: home's speakers all on, the first wave's countdown
+   *  begun): things stirring, once a run (not with waves off, nor in a game joined after it). */
+  private booted({ g }: Here): void {
+    if (this.boot) return;
+    const over = g.party.bootUntil > 0 && g.clock.time >= g.party.bootUntil;
+    if (over && this.primed && g.tuning.party.interval < 1e9) this.sfx.stir();
+    if (over) this.boot = true;
   }
 
   /** Hurt (Ed, 2026-10-05: "ouch!"): her hits dropping (a hit on her mid-blink costs nothing);

@@ -6,8 +6,9 @@
 //  - sfxKit.ts: the output bus, the builders every sound is made of, the legends' big space;
 //  - babble.ts: speech without words (the witch's 💌s and cries, the creatures' speech);
 //  - whale.ts: the legends' whale song (moods, sleep and nightmares, a wind-up's swell);
-//  - chimes.ts: the 💌 chime, tick and flourish, the state turns, the stings, a stun's twinkle;
-//  - ambience.ts: a knockback, a lob landing, a legend's charge, home's meadow.
+//  - chimes.ts: the 💌 chime, tick, flourish and landing puff, the state turns, the stings (a
+//    soundsystem lost, a relic found, the boot-up over), a stun's twinkle;
+//  - ambience.ts: a knockback, a lob landing, a legend's charge, home's meadow (and its balloons and picnic).
 import { Charge, Meadow, impact, knock } from "./ambience";
 import { Babble } from "./babble";
 import * as chimes from "./chimes";
@@ -40,6 +41,8 @@ export class Sfx {
   hit(pan = 0, near = 1, spent = false): void { chimes.hit(this.k, pan, near, spent); }
   fill(amount: number, pan = 0, near = 1): void { chimes.fill(this.k, amount, pan, near); }
   invited(level: number, pan = 0, near = 1): void { chimes.invited(this.k, level, pan, near); }
+  /** A 💌 coming down on the ground, having met no one. */
+  land(pan = 0, near = 1): void { chimes.land(this.k, pan, near); }
   reply(v: CreatureVoice, amount: number, pan = 0, near = 1): void { this.babble.reply(v, amount, pan, near); }
 
   // ——— creatures ———
@@ -66,5 +69,7 @@ export class Sfx {
   // ——— stings and places ———
   lost(urgent = false): void { chimes.lost(this.k, urgent); }
   relic(pan = 0): void { chimes.relic(this.k, pan); }
+  /** The boot-up over: things stirring. */
+  stir(): void { chimes.stir(this.k); }
   meadow(level: number): void { this.home.update(level); }
 }
