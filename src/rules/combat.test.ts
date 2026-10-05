@@ -414,9 +414,11 @@ describe("Ed's playtest (2026-10-04)", () => {
 describe("the invitee truce (Ed, 2026-10-04)", () => {
   it("has her party leave the creature she's inviting alone, and go for it once the chat's off", () => {
     const g = quiet(), w = g.witch;
-    const fox = place(g, 0, "fox", 2, w.x + 3, w.z), wolf = place(g, 0, "wolf", 2, w.x - 1, w.z, true);
+    // (a beetle: it walks straight in; a fox flanks round her wolf)
+    const fox = place(g, 0, "beetle", 2, w.x + 3, w.z), wolf = place(g, 0, "wolf", 2, w.x - 1, w.z, true);
     g.witches[0].health.hp = 1e6;
-    for (let i = 0; i < 6 / STEP; i++) stepGame(g, { ...idle, autoTalk: true }, STEP); // (an adult takes 12 s to invite)
+    // (she keeps beside it, as a player would: its blows knock her wolf about and it follows)
+    for (let i = 0; i < 6 / STEP; i++) { stepGame(g, { ...idle, autoTalk: true }, STEP); g.witch = { ...g.witch, x: fox.x - 3, z: fox.z }; } // (an adult takes 12 s to invite)
     expect(g.leash.talk?.id).toBe(fox.id);
     expect(fox.hp).toBeUndefined(); // untouched while they chat
     expect(wolf.fight?.target?.kind === "creature" && wolf.fight.target.id === fox.id).toBe(false);
