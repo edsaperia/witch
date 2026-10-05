@@ -229,13 +229,14 @@ export class LeashView {
       if (Math.hypot(c.x - w.x, c.z - w.z) > 20 && !(ate !== undefined && time - ate < 3)) continue;
       // One segment for each berry it needs (Ed, 2026-10-05: "segment the ring"), small gaps
       // between, clockwise from the top; each berry eaten lights one (the newest flashes).
-      const fed = B.fed.get(c.id) ?? 0, segs = Math.max(1, Math.ceil(need)), per = Math.max(2, Math.round(28 / segs)), gap = segs > 1 ? Math.min(0.35, 0.9 / segs) : 0;
+      const fed = B.fed.get(c.id) ?? 0, segs = Math.max(1, Math.ceil(need)), per = Math.max(2, Math.round(28 / segs)), gap = segs > 1 ? Math.min(0.4, 1.2 / segs) : 0;
       const flash = ate !== undefined && time - ate < 0.6 ? 1 - (time - ate) / 0.6 : 0;
       for (let s = 0; s < segs; s++) {
         const lit = s < fed, newest = lit && s === Math.ceil(fed) - 1;
         for (let i = 0; i < per; i++) {
           const f = (s + gap / 2 + (1 - gap) * (per > 1 ? i / (per - 1) : 0.5)) / segs, a = Math.PI / 2 - f * Math.PI * 2, b = newest ? flash : 0;
-          this.flat.add(c.x + Math.cos(a) * 1.5, 0, c.z + Math.sin(a) * 1.1, 0.35 + b * 0.2, dot, lit ? 1 : 0.9, lit ? 0.25 + b * 0.6 : 0.9, lit ? 0.3 + b * 0.5 : 1, lit ? 0.9 : 0.15);
+          // (the berries still to eat show as pale segments, so how many it needs reads at a glance)
+          this.flat.add(c.x + Math.cos(a) * 1.5, 0, c.z + Math.sin(a) * 1.1, 0.4 + b * 0.2, dot, lit ? 1 : 0.85, lit ? 0.25 + b * 0.6 : 0.85, lit ? 0.3 + b * 0.5 : 0.95, lit ? 0.95 : 0.55);
         }
       }
     }
