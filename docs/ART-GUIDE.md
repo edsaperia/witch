@@ -20,20 +20,48 @@ Ed's main art feedback at this stage. Earlier, about the legends, he said "the m
 | 3 Bold | Rung 2 with clusters: light bands follow a 3 × 3 majority, so tones form clusters and not noise |
 | 4 Chunky | Rung 3 at art pixel 4 (now 3): fewer, bigger pixels |
 | 5 Chunkier | Rung 3 at art pixel 5 |
+| 6 Reference | Ed's reference look (below): one tone family, cream light falling as a big shape over the top, red-brown shadow, a strong near-black outline, interior lines where parts overlap, clean clusters, pixel 4 |
 
-The art director recommends **rung 4** (Bold at pixel 4), with rung 3 as the fallback. At pixel 5 the witch's face, thin antler tines and the leash sigils start to break up.
+The art director recommends **rung 6, Ed's reference look**, with rung 4 (Bold at pixel 4) as the fallback. Rung 6 matches what Ed pointed at. At pixel 5 the witch's face, thin antler tines and the leash sigils start to break up.
+
+### Ed's reference: "three evolutions of a boar" (2026-10-05)
+The reference is someone else's work, so it's described in words only and never committed or fetched. **This is the target look.**
+- **Baby:** a small, round, stubby piglet. Almost a ball with short legs, a tiny tail and small ears, and a few darker bands on its back.
+- **Adult:** a stocky boar with a big shoulder hump and a heavy front. Short legs, dark hooves, its head low, a pale snout, two big curved white tusks, a small upright ear, a tufted tail curling up, and dark bristles along the spine.
+- **Legend:** massive and top-heavy, head down as if about to charge, with enormous white tusks sweeping up and curling round past its head. Pale flame-like wisps rise from the tusk tips. A dark shaggy bristle mane runs along the spine and under the belly. It looms, far bigger than the adult.
+
+**What it teaches** (these are the style's principles):
+1. **A strictly limited palette.** Each sprite uses about 4–5 tones of one colour family:
+   - a pale cream highlight;
+   - a mid tone;
+   - a deeper tone;
+   - a red-brown (for cool colours, blue-violet) shadow;
+   - plus near-black for the outline and hooves, and white for tusks, horns and teeth.
+2. **Flat cel shading in big shapes.** The light falls as a big pale shape across the top of the back and shoulders, and the shadow is a bold, deliberate shape underneath. Each tone change is a hard edge, with no gradients and no dither.
+3. **A strong dark outline all round,** and interior lines picking out the legs, jaw, ear and tusks where one part sits in front of another. (This is stronger than the selective outline of rung 2. The reference wins.)
+4. **Surface texture is tone shapes, not noise.** The light on the back, the jagged dark edge of a bristle mane, a few bands on a piglet. Never fine fur speckle spread over the body.
+5. **Exaggerate the silhouette.** The shoulder hump, the tusks and a head-down posture are pushed hard so the sprite reads instantly at small size. Each species' key feature (section 2) is drawn bigger than life.
+6. **Each level is a different design, not a scaled copy:**
+   - the baby is round and simple;
+   - the adult is heavy-fronted;
+   - the legend is a hulking, monstrous version with a magical flourish (flame wisps).
+
+   Ed has said awake legend redesigns come later, but this is the bar they're measured against.
+7. **The overall feel** is a classic handheld-monster-game sprite: chunky, bold, readable.
+
+The ladder's rung 6 shows only the rendering half: palette, cel, outline and clusters. Exaggerated shapes and the redesigned stages need generator work: the creature genome's proportions and size curves, the texture work, and later the legend redesign.
 
 ### The rules (proposed until Ed picks)
 1. **One art-pixel size for everything.** Every asset is drawn at the same art pixel (style `pixel`; the tuning's `pixelSize`) and displayed at a whole multiple, never resampled. Nothing is drawn at half resolution or scaled by a fraction. Mixed resolutions are the clearest sign of "not pixel art". Check: every sprite is baked at the style's `pixel`, and the renderer draws sprites at whole-pixel scale.
 2. **3 tones per material, hue-shifted.** A material's ramp has 3 tones:
-   - **shadow:** cooler (hue towards blue-violet), more saturated, about half the base value;
+   - **shadow:** a deeper, more saturated tone, leaning red-brown for warm materials and blue-violet for cool ones, about half the base value;
    - **base:** the material's colour;
-   - **light:** warmer (hue towards yellow), a little less saturated, about 1.15 times the value.
+   - **light:** a pale cream (hue towards yellow, much less saturated, brighter), falling as a big shape over the top of each form.
 
    Not a darker and lighter version of one hue. Glowing materials keep their own flat colour. Check: each material in a baked sprite uses 3 colours at most (outline excluded), and the shadow tone's hue is cooler than the light tone's.
 3. **No soft edges.** No smooth gradients, no anti-aliasing and no partial alpha. Light comes in whole bands. Check: every sprite pixel's alpha is 0, 254 (glow) or 255, and no material shows more than its 3 tones.
 4. **Clusters, not noise.** Every tone sits in a cluster of 2 or more pixels. No lone pixel differs from all four neighbours (the witch already has a fleck check; extend it). Leaf stamps, fur and bark are drawn as clusters of 2 × 2 or more at the game's scale. Check: the share of lone pixels per sprite is under about 1%, extending the fleck check to every asset.
-5. **A selective outline.** Each part is outlined in its own colour's darkest tone (cooler and more saturated), not one black. The outline breaks (is left out) where the shape's lit tone meets it on the upper left. Interior lines only where parts overlap: a near leg over the body, a head over the neck. Check: outline pixels are darker than the fill beside them, and the upper-left edge has gaps.
+5. **A strong outline with interior lines** (from Ed's reference). The whole shape gets a near-black outline, and interior lines run where one part sits in front of another: a near leg over the body, the jaw, an ear, the tusks. Not on markings. (A selective outline in each part's own dark tone, broken on the lit side, is rung 2's softer alternative.) Check: the outline is darker than every fill beside it, and interior lines sit only on surface turns, not colour changes.
 6. **Shape first, detail second.** Simplify forms and exaggerate the one key feature (the antlers, the blaze, the tusks, the shell); see section 2. At pixel 4 there is less room, so simplify again: fewer tines, a bolder blaze, fewer and bigger leaf clumps.
 7. **One light.** Light comes from the upper left and a little in front, as the bake does now (`[-0.45, -0.75, 0.5]`). Highlights are crisp clusters on the upper-left of each form, not speckles. The game's lights (fire, neon, the moon) add on top, but the baked tones always assume that one direction.
 8. **Dither only on purpose.** No automatic checker at band edges. Dither is allowed only as a texture a material asks for (moss, gravel), in a fixed pattern.
