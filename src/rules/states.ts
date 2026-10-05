@@ -97,9 +97,9 @@ export interface StatesOptions {
   /** Stop at this game time (s) too, lost or not (to compare runs whose waves come at different rates). */
   maxTime?: number;
   /** A fallen soundsystem costs wave time (Ed, 2026-10-05: "there's not much penalty for losing a
-   *  soundsystem. Maybe it penalises you wave time?"): the next wave comes fallAdvance seconds
-   *  sooner (or fallShare of the gap then), and every later gap is times (1 − fallShrink), down to
-   *  fallFloor seconds (60). */
+   *  soundsystem. Maybe it penalises you wave time?"; he picked 60 s): the next wave comes
+   *  fallAdvance seconds sooner (60; at once if less is left; 0 off), or fallShare of the gap
+   *  then; fallShrink (every later gap times 1 − it, down to fallFloor) was tried and dropped. */
   fallAdvance?: number;
   fallShare?: number;
   fallShrink?: number;
@@ -528,7 +528,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
       if (s.key !== "home") {
         firstFall ??= party.wave;
         // The wave time it costs: the next wave sooner, and every later gap shorter.
-        const left = nextAt - time, cut = o.fallAdvance ?? (o.fallShare !== undefined ? o.fallShare * gapNow(party.wave + 1) : 0);
+        const left = nextAt - time, cut = o.fallShare !== undefined ? o.fallShare * gapNow(party.wave + 1) : o.fallAdvance ?? 60;
         if (cut > 0) nextAt = time + Math.max(0, left - cut);
         if (o.fallShrink) shrunk *= 1 - o.fallShrink;
       }
