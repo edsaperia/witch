@@ -1875,7 +1875,7 @@ const WITCH_GENOME = {
 const WITCH_AXES = {
   hatShape: ["classic", "crooked", "floppy", "small", "flowers"], // pointed ones only (the bucket hat with cat ears is a party look, not a witch's)
   hatHeight: [.75, 1.6], hatBrim: [.75, 1.9], hatTilt: [-.25, .35], hatBand: [1, 2.4], // (Ed, on #98: "Bigger brims. Longer cloaks.")
-  cloakLength: [1, 1.75], familiar: ["none", "cat", "crow", "toad", "bat"], shades: [false, true, "round"],
+  cloakLength: [1, 1.75], familiar: ["none", "cat", "crow", "toad", "bat"], // (the familiar, an accessory with a choice: accessories.familiar)
   hair: ["long", "bob", "buns", "mohawk"], top: ["jacket", "sequins", "mesh", "poncho", "cape"], cloak: ["none", "short", "long", "hooded"],
   broom: ["classic", "fan", "twig", "round"], broomLength: [.85, 1.3], broomBend: [-.3, .6], bristles: [.8, 1.4],
 };
@@ -1920,7 +1920,7 @@ function witchGenomeProblems(g) {
   if (!A.hatShape.includes(g.hat.shape)) out.push("hat " + g.hat.shape);
   for (const [k, v, lim] of [["hatHeight", g.hat.height, A.hatHeight], ["hatBrim", g.hat.brim, A.hatBrim], ["hatTilt", g.hat.tilt, A.hatTilt], ["hatBand", g.hat.band ?? 1, A.hatBand], ["broomLength", g.broom.length, A.broomLength], ["broomBend", g.broom.bend, A.broomBend], ["bristles", g.broom.bristles, A.bristles], ["cloakLength", g.cloakLength ?? 1, A.cloakLength]]) if (!inR(v, lim)) out.push(`${k} ${v}`);
   if (g.accessories && !A.familiar.includes(g.accessories.familiar ?? "none")) out.push("familiar " + g.accessories.familiar);
-  if (g.accessories && !A.shades.includes(g.accessories.shades ?? false)) out.push("shades " + g.accessories.shades);
+  if (g.accessories && ![false, true, "round"].includes(g.accessories.shades ?? false)) out.push("shades " + g.accessories.shades); // sunglasses: none, plain or round
   if (!A.hair.includes(g.hair)) out.push("hair " + g.hair); if (!A.top.includes(g.top)) out.push("top " + g.top); if (!A.cloak.includes(g.cloak)) out.push("cloak " + g.cloak); if (!A.broom.includes(g.broom.kind)) out.push("broom " + g.broom.kind);
   if (g.palette) for (const [k, c] of Object.entries(g.palette)) if (!(Array.isArray(c) && c.length === 3 && c.every(v => v >= 0 && v <= 1))) out.push("palette " + k);
   return out;
@@ -5488,6 +5488,9 @@ const ATTACK_EFFECTS = {
   // a lunging swipe that knocks back (the claws' melee), the big one harder
   swipe: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], hit: "hitSpark", status: ["knockback"] },
   bigswipe: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], hit: "hitSparkBig", status: ["knockback", "dust"] },
+  // a woken legend's ranged attacks: a great lob onto a target circle, a long sweeping beam
+  legendLob: { windup: "windupFlash", telegraph: ["targetCircle"], projectile: "lobSeed", shadow: "lobShadow", hit: "hitSparkBig" },
+  legendBeam: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], beam: ["beamLongStart", "beamLongLoop", "beamLongEnd"], hit: "hitSpark" },
   spit: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "spit", hit: "hitSpark" },
   longspit: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "feather", hit: "hitSpark" },
   barb: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "barb", hit: "hitSpark", status: ["slowRing", "slowMark"] },

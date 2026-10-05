@@ -9,7 +9,7 @@
 import * as Art from "../../art/generator.js";
 import type { Style } from "../render/style";
 
-type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean>; palette: Record<string, number[]> | null; [k: string]: unknown };
+type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; [k: string]: unknown };
 
 const AXES = Art.WITCH_AXES as Record<string, unknown[] | [number, number]>;
 const CLASSIC = Art.WITCH_GENOME as unknown as Genome;
@@ -31,6 +31,7 @@ export function saveGenome(g: Genome): void { try { localStorage.setItem(KEY, JS
  *  broom.length, bristles is broom.bristles, hair is hair; a new axis follows the same pattern. */
 export function slot(axis: string): [string | null, string] {
   if (axis === "hatShape") return ["hat", "shape"];
+  if (axis === "familiar") return ["accessories", "familiar"]; // an accessory with a choice, not a toggle
   if (axis === "broom") return ["broom", "kind"];
   if (axis === "bristles") return ["broom", "bristles"];
   for (const part of ["hat", "broom"]) if (axis.startsWith(part) && axis.length > part.length) return [part, axis[part.length].toLowerCase() + axis.slice(part.length + 1)];
@@ -208,6 +209,7 @@ export class Creator {
     const acc = group("Accessories"), ar = row(acc, "");
     ar.firstElementChild?.remove();
     for (const k of Object.keys({ ...CLASSIC.accessories, ...g.accessories })) {
+      if (typeof CLASSIC.accessories[k] === "string") continue; // a choice (the familiar): a picker above, not a toggle
       const l = document.createElement("label"), c = document.createElement("input");
       c.type = "checkbox"; c.checked = !!g.accessories[k];
       c.addEventListener("change", () => { g.accessories[k] = c.checked; this.dirty = true; });
