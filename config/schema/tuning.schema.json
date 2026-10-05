@@ -1033,7 +1033,7 @@
         "depart": {
           "type": "object",
           "properties": {
-            "run": {
+            "past": {
               "type": "number",
               "minimum": 0
             },
@@ -1043,7 +1043,7 @@
             }
           },
           "required": [
-            "run",
+            "past",
             "avoid"
           ],
           "additionalProperties": false
@@ -1773,7 +1773,7 @@
     "treehouse": {
       "type": "object",
       "properties": {
-        "distance": {
+        "gap": {
           "type": "number",
           "minimum": 0
         },
@@ -1794,7 +1794,7 @@
         }
       },
       "required": [
-        "distance",
+        "gap",
         "angle",
         "clear",
         "lightReach",
@@ -2895,6 +2895,10 @@
               "type": "number",
               "minimum": 0
             },
+            "knockdown": {
+              "type": "number",
+              "minimum": 0
+            },
             "duck": {
               "type": "number",
               "minimum": 0
@@ -2906,6 +2910,7 @@
           },
           "required": [
             "volume",
+            "knockdown",
             "duck",
             "duckTime"
           ],
@@ -3033,10 +3038,6 @@
               "type": "number",
               "minimum": 0
             },
-            "radius": {
-              "type": "number",
-              "minimum": 0
-            },
             "fade": {
               "type": "number",
               "minimum": 0
@@ -3048,7 +3049,6 @@
             "bees",
             "birds",
             "birdEvery",
-            "radius",
             "fade"
           ],
           "additionalProperties": false

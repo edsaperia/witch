@@ -4,7 +4,7 @@
 //   node tools/config/schema.mjs --check     validate the config files against their schemas
 //   node tools/config/schema.mjs --docs      rewrite config/KNOBS.md from the schema and the notes
 //   node tools/config/schema.mjs --init      (re)infer every schema from its file as it stands, with TUNING_OVER and CONFIGS' records and choices
-//   node tools/config/schema.mjs --add       add any knobs the file has and the schema lacks (inferred), keeping the rest
+//   node tools/config/schema.mjs --add       add the knobs the file has and the schema lacks (inferred), drop the ones it no longer has, keep the rest
 // After adding a knob to config/tuning.json: --add (or edit the schema), then --docs.
 import { createServer } from "vite";
 import { readFileSync, writeFileSync } from "node:fs";
@@ -23,8 +23,9 @@ if (has("init")) {
   for (const c of CONFIGS) write(c.schema, inferSchema(JSON.parse(readFileSync(c.file, "utf8")), c.over, "", new Set(c.records)));
 }
 if (has("add")) {
-  // New keys (inferred) join each schema; what's there, hand edits included, stays.
-  const merge = (a, b) => { if (a?.properties && b?.properties) { for (const k of Object.keys(b.properties)) a.properties[k] = a.properties[k] ? merge(a.properties[k], b.properties[k]) : b.properties[k]; a.required = b.required; } return a; };
+  // New keys (inferred) join each schema; what's there, hand edits included, stays, for the keys the file still has.
+  // (Knobs the file no longer has leave the schema.)
+  const merge = (a, b) => { if (a?.properties && b?.properties) { const props = {}; for (const k of Object.keys(b.properties)) props[k] = a.properties[k] ? merge(a.properties[k], b.properties[k]) : b.properties[k]; a.properties = props; a.required = b.required; } return a; };
   write(SCHEMA, merge(JSON.parse(readFileSync(SCHEMA, "utf8")), inferSchema(tuning, TUNING_OVER)));
   for (const c of CONFIGS) write(c.schema, merge(JSON.parse(readFileSync(c.schema, "utf8")), inferSchema(JSON.parse(readFileSync(c.file, "utf8")), c.over, "", new Set(c.records))));
 }
