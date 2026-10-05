@@ -910,7 +910,7 @@ export class View {
     const per = new Map<string, SpriteInstance[]>(), arts = new Map<string, CreatureArt>(), creatureShadows: ShadowInstance[] = [];
     const beat = 60 / g.tuning.beat.bpm, bt = beatTime(g.beat, time); // beat-time, on the beat clock
     let n = 0;
-    this.rig?.begin(time, g.tuning.rig);
+    this.rig?.begin(time, g.tuning.rig, g.witch.mode !== "rising" && g.witch.mode !== "treetop");
     for (const c of g.creatures) {
       if (c.gone || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
       if (c.burrow) continue; // under the ground (Stage 5: the mole), a mound shows where (leash view)
