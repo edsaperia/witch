@@ -50,7 +50,7 @@ import { LeyLines } from "./leylines";
 import { leyChain, leyKey } from "../rules/leylines";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
 import type { Style } from "./style";
-import { restlessness } from "../rules/memory";
+import { restlessness } from "../rules/dream";
 
 /** A point light: where, how far it reaches, its colour and strength. */
 /** An index by weight, from a seeded integer (its last six digits as a share). */

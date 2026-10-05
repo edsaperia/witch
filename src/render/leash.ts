@@ -10,9 +10,7 @@
 // - the talk: emoji speech bubbles taking turns over the witch and the creature (HTML, over the
 //   canvas), with a bar for how far the conversation has got.
 // The sigils are the art builder's (art/sigils.js), drawn per species and level into an atlas.
-import { drawAreaMemory, type AddSprite } from "./areaMemory";
-import { restlessness } from "../rules/memory";
-import { dreamStone } from "../rules/dream";
+import { dreamStone, questOpen, restlessness } from "../rules/dream";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { drawSigil, sigilColour } from "../../art/generator.js";
@@ -311,16 +309,6 @@ export class LeashView {
     }
   }
 
-  /** From the treetops: the areas she remembers (render/areaMemory.ts; rules/memory.ts). */
-  private drawMemory(time: number): void {
-    const g = this.game, t = g.tuning, w = g.witch, mem = g.witches[0].memory, up = w.lift * w.lift * (3 - 2 * w.lift);
-    if (up < 0.02 || !mem) return;
-    const canopy = t.treetopHeight - 4 + t.sigilProjection.height, dot = this.uv(0);
-    const colour = (sp: string) => this.colours.get(sp) ?? (this.slotOf(sp, 0), this.colours.get(sp)!);
-    const sigil: AddSprite = (x, y, z, size, sp, level, r, gg, b, a) => this.standing.add(x, y, z, size, sp ? this.uv(this.slotOf(sp, level)) : dot, r, gg, b, a);
-    const mote: AddSprite = (x, y, z, size, _sp, _l, r, gg, b, a) => this.standing.add(x, y, z, size, dot, r, gg, b, a);
-    drawAreaMemory(mem, g.map, w.x, w.z, canopy, up, time, colour, sigil, mote);
-  }
   /** Each dreaming legend's runestone to point at (rules/dream.ts), by legend: the map never changes. */
   private dreamStones = new Map<number, { x: number; z: number } | null>();
 
@@ -341,13 +329,16 @@ export class LeashView {
       const y = Math.min(this.tops.get(c.id) ?? 2, 4.5) + 1.2;
       placed(this.v.set(c.x, y, c.z)).project(camera);
       if (this.v.z > 1 || Math.abs(this.v.x) > 1.1 || Math.abs(this.v.y) > 1.1) continue;
+      // Restless (#87: its area has none of its kind), the dream turns to a nightmare: angry faces
+      // crowd in round the sigil it wants as it worsens, redder, the sigil fading (bring one back).
+      // Once its quest has closed (its area's soundsystem on: Ed, 2026-10-05) the dream is gone, but
+      // not a nightmare: just the faces then.
+      const q = c.quest!, r = restlessness(c), faces = r <= 0.05 ? 0 : r < 0.4 ? 1 : r < 0.75 ? 2 : 3, fury = r >= 0.75 ? 2 : r >= 0.4 ? 1 : 0, open = questOpen(g.party, c);
+      if (!open && !faces) continue;
       let el = this.dreamEls[used];
       if (!el) { el = document.createElement("div"); el.className = "bubble dream on"; host.append(el); this.dreamEls.push(el); }
       el.style.display = "";
-      // Restless (#87: its area has none of its kind), the dream turns to a nightmare: angry faces
-      // crowd in round the sigil it wants as it worsens, redder, the sigil fading (bring one back).
-      const q = c.quest!, r = restlessness(c), faces = r <= 0.05 ? 0 : r < 0.4 ? 1 : r < 0.75 ? 2 : 3, fury = r >= 0.75 ? 2 : r >= 0.4 ? 1 : 0;
-      const key = `${q.species}:${q.level}:${faces}:${fury}`;
+      const key = `${q.species}:${q.level}:${faces}:${fury}:${open}`;
       if (el.dataset.e !== key) {
         el.dataset.e = key;
         const cv = document.createElement("canvas"), n = 44;
@@ -362,7 +353,7 @@ export class LeashView {
         }
         // (its faces in finer pixels than a chat face: their brows must read)
         const face = (i: number) => { const f = this.pixelEmoji(fury === 2 && i !== 1 ? "😡" : "😠", 0.8, 18); f.classList.add("face"); return f; };
-        el.replaceChildren(...(faces >= 2 ? [face(0)] : []), cv, ...(faces >= 1 ? [face(1)] : []), ...(faces >= 3 ? [face(2)] : []));
+        el.replaceChildren(...(faces >= 2 ? [face(0)] : []), ...(open ? [cv] : []), ...(faces >= 1 ? [face(1)] : []), ...(faces >= 3 ? [face(2)] : []));
         el.classList.toggle("nightmare", faces > 0);
       }
       el.style.setProperty("--px", `${bubblePx(c.level)}px`);
@@ -377,7 +368,7 @@ export class LeashView {
       // Its direction (rules/dream.ts): a soft glow on the side of the bubble facing the runestone
       // of the nearest area of the kind it dreams of, explored or not.
       if (!this.dreamStones.has(c.id)) this.dreamStones.set(c.id, dreamStone(g.map, q.species, c.x, c.z));
-      const to = this.dreamStones.get(c.id);
+      const to = open ? this.dreamStones.get(c.id) : null;
       let dir = el.querySelector<HTMLElement>(".dream-dir");
       if (to) {
         const d = Math.hypot(to.x - c.x, to.z - c.z) || 1; // (a step its way, not the stone itself: that may be behind the camera)
@@ -670,7 +661,6 @@ export class LeashView {
     this.standing.begin(); this.flat.begin(); this.over.begin();
     this.drawBerries(time);
     this.drawBosses(time);
-    this.drawMemory(time);
     this.drawCombat(time, camera, width, height, hatTop);
     for (const e of s.events) {
       if (e.kind === "fizzled") this.fizzles.push({ x: e.x, z: e.z, at: time });
