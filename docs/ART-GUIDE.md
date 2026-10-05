@@ -4,7 +4,7 @@ A living style guide for everything the generators make: creatures, plants, witc
 
 Ed's direction (2026-10-05): everything will eventually come from generators, aiming at 100+ area types, so "we should make good and flexible tools now, and learn as much as we can about what looks good." There is no hurry; the best artwork wins. The roadmap is #119.
 
-Sources: #97 (art iterations; `docs/art-iterations/README.md` on its branch), #112 (art pass batch 1 notes), and later reviews as they come.
+Sources: #97 (art iterations; `docs/art-iterations/README.md` on its branch), #112 (art pass batch 1: iteration 1 and 2 notes), and later reviews as they come.
 
 ## 1. Review an area as a set
 
@@ -34,6 +34,7 @@ At ground level a young creature is about 45 px tall and the witch about 50 px. 
   Ask what the marking looks like to someone who doesn't know the species.
 - **Thin flat planes fail face-on.** A bat seen from the front is a stick, and from behind its wings are rectangles (#97). Wing-like parts need thickness or a per-facing pose.
 - **Fans of identical parts read as hands.** The many-tailed fox, a crest of spikes and a back of crystals all read as a fan of fingers (#112 fox legend; #97 crystal stag). Vary length and curve, and leave gaps between parts.
+- **Parts from one root read as spokes.** Separated but evenly splayed from a single point, the kitsune's tails read as a starburst or an octopus (#112 v2). Spread the roots along the body and sweep the parts in one shared direction, overlapping, with uneven lengths.
 - **From the treetops only crowns and glows show.** Each area's canopy must differ from its neighbours' by shape and value, not only hue (`crownStats` in `art/trees.js`). Glowing parts are the main thing seen at night from above, so place them deliberately (#97: the cave-mouth glowcaps were the most legible thing in the treetop shot).
 
 ## 3. Palette rules
@@ -42,7 +43,9 @@ At ground level a young creature is about 45 px tall and the witch about 50 px. 
 - **An area's leaf hue sits between about .24 and .34** unless the brief asks for autumn or dead leaves. Area leaf hues near .20 came out yellow-autumnal (#97 wetland). Minor species must not inherit an area's dry-leaf hue: #112's birch saplings turned orange on the wispy forest's dry-leaf floor. Give them their own `hueAbs` or hue shift.
 - **Legends glow in their species' colour, not the style's.** The style's shared magic hue made every legend's glow mint and violet whatever the animal (#97). Set `palette.over.MAGIC` and `MAGIC2` per species. The glow should come from the area's story: lichen gold for the ancient stag, moonstone for the woodlouse, fox-fire for the kitsune, cold cyan in a cave.
 - **The glow must contrast with the body by value and hue.** Gold horns on a cream ram vanished (#112). On a pale body, use a darker or more saturated glow (bronze, dark gold); on a dark body, use a pale glow.
-- **Coats: value first, then hue.** The game is played at night, so a creature must separate from its floor by value. Dark creatures (bat, spider, mole) go darker than their floor; pale ones (ram, stoat) go paler. A creature that is the floor's value and hue disappears in the game, even if the sheet looks fine.
+- **Coats: value first, then hue.** The game is played at night, so a creature must separate from its floor by value. Dark creatures (bat, spider, mole) go darker than their floor; pale ones (ram, stoat) go paler. A creature that is the floor's value and hue disappears in the game, even if the sheet looks fine. This was confirmed in game: #112 v2's dark brown boars on dark needles showed only their tusks. If the coat must stay dark, give it a paler ridge, back or blaze.
+- **Whites must be white.** A blaze, a fleece or a rump patch in the cream belly colour reads as yellow at game size (#112 badger, ram v1). Use `palette.over` to set near-white.
+- **Saturated yellow-green crowns read as glowing.** An autumn or dry-leaf area wants old gold at moderate saturation, not lime (#112 v2 wispy forest limes).
 - **Natural colours come from the real animal, but saturation stays moderate.** For example: a red deer's coat, a natterjack's green with its pale stripe, a garden spider's chestnut with a cream cross. Fully saturated oranges and yellows read as toys (#97 "before" stag; #112 ram).
 - **Colour per material, not one ramp.** A species' whole ramp derives from one hue. Use `palette.over` for parts that differ in nature: membranes, dark legs, horns, caps and the glow.
 
@@ -64,6 +67,9 @@ At ground level a young creature is about 45 px tall and the witch about 50 px. 
 - **Small objects must be big enough to matter.** "Short trunks with broken branches" drawn as matchsticks don't read (#112 muddy forest). A small object is about knee- to witch-height. Tufts are for anything smaller.
 - **Ferns are knee- to waist-high on the witch, with no trunk.** Tall ferns read as palm trees (#112 fern forest).
 - **Tall set pieces and decor must be grey or brown stone and wood, not the grass colour.** The stone shrine and cairns in khaki read as pine cones or vanished (#112).
+- **One prop repeated in lines reads as something manufactured.** Identical broken stumps in rows read as a battery of little cannons (#112 v2 muddy forest). Vary height, angle and mirroring, break up the spacing, and mix in a second kind.
+- **Stacked regular rings read as haystacks or beehives.** Cairns drawn as even rings in straw colour (#112 v2 moor) need irregular grey stones and a leaning slab.
+- **Water edges are round and irregular.** Pointed lenses with hard edges read as boats or leaves (#112 v2 moor pools).
 - **Every area gets its own tuft mix and value.** The same bright lime grass tuft in every area makes them all one place, and reads as neon on a dark floor (#112).
 
 ## 6. An area's materials carry into its creature and legend
@@ -91,6 +97,11 @@ At ground level a young creature is about 45 px tall and the witch about 50 px. 
 | Kitsune tails as a fan | #112 fox | Identical parts in a fan read as fingers | Separate curved tails with gaps (Ed approved the kitsune) |
 | Cream ram | #112 tangly | Same value as the gold glow, and reads as a lamb or pig | White fleece, dark face, legs and horns; bronze legend horns (Ed) |
 | Lime tuft everywhere | #112 | One tuft for every area flattens them | Per-area tuft mix and value |
+| Kitsune tails as spokes | #112 v2 fox | Evenly splayed from one root | Roots along the rump, swept together, uneven lengths |
+| Broken stumps as cannons | #112 v2 muddy | One sprite repeated in rows | Vary size, angle and mirror; irregular spacing; mix kinds |
+| Cairns as haystacks | #112 v2 moor | Even stacked rings in straw colour | Irregular grey stones, a leaning slab |
+| Boar invisible in game | #112 v2 fern forest | Coat the same value as the floor | Lift the value, or a paler ridge |
+| Ram, v2 (a success) | #112 v2 tangly | White fleece, black face and legs, dark horns: three values that never merge | The model for a strong creature read |
 | Contour banding on big legends | #112 | The 3D bake's shading terraces at large size | Waits for the generator's next stage (Ed) |
 | In-game shots too dark | #97, #112 | Night lighting at ground level | Judge colour on sheets; a lit review mode is proposed |
 
