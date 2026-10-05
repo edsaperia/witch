@@ -25,7 +25,18 @@ export function speciesOf(g) {
   S.sizes = { ...TEMPLATES[g.template].sizes, ...g.sizes };
   S.face = { ...TEMPLATES[g.template].face, ...g.face }; // its expressions' shapes (expressions.js)
   S.texture = { ...TEMPLATES[g.template].texture, ...g.texture }; // its surface: fur, feathers, scales... (texture.js)
+  // its evolution (the evolution kit): each level's own proportions, parts and features, over its own
+  if (g.levels) S.levels = g.levels.map(l => l && { q: levelQ(l), features: l.features || [], ...(l.legend ? { legend: l.legend } : {}) });
   return S;
+}
+
+// The evolution kit's features (creatures3d.js evolve3d).
+export const GENOME_FEATURE_KINDS = ["mane", "wisps"];
+// A level's overrides, in the builders' bag (as speciesOf makes q).
+function levelQ(l) {
+  const q = { ...l.body, ...l.head, ...l.coat }, p = l.parts || {};
+  for (const [k, to] of [["tail", "tail"], ["feet", "paw"], ["horns", "horns"], ["antlers", "antlers"], ["tusks", "tusks"]]) if (p[k] !== undefined) q[to] = p[k];
+  return q;
 }
 
 // The tags a record's parts carry ("ear.point", "tail.brush", "foot.hoof", "antler.palm"...).
@@ -49,6 +60,7 @@ export function genomeProblems(g) {
   if (!T.builders.includes(g.builder)) out.push(`${g.id}: ${g.template} has no builder ${g.builder}`);
   const allowed = Object.values(T.sockets).flat(), tags = genomeTags(g);
   out.push(...faceProblems(g.id, { ...T.face, ...g.face }), ...textureProblems(g.id, { ...T.texture, ...g.texture }));
+  if (g.levels) { if (g.levels.length !== 4) out.push(`${g.id}: levels must be four (baby, young, adult, legend)`); for (const l of g.levels) for (const f of l?.features || []) if (!GENOME_FEATURE_KINDS.includes(f.kind)) out.push(`${g.id}: no evolution feature ${f.kind}`); }
   for (const t of tags) if (!allowed.includes(t)) out.push(`${g.id}: ${t} isn't one of ${g.template}'s parts`);
   for (const [a, b] of T.exclude) if (tags.some(t => genomeTagMatch(a, t)) && tags.some(t => genomeTagMatch(b, t))) out.push(`${g.id}: ${a} and ${b} together`);
   for (const k of ["hue", "sat", "val"]) if (!(g.palette[k] >= 0 && g.palette[k] <= 1)) out.push(`${g.id}: palette ${k} ${g.palette[k]}`);

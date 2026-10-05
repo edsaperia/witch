@@ -107,16 +107,46 @@ function gearUp(m) {
   }
 }
 
+// ================= the evolution kit =================
+// A level's own features (genome levels[n].features), each from the model's landmarks. Every one's
+// parts are tapered and curved, so a row of them reads as a mane or a crest, never a hand of fingers.
+//   mane: { from, to (along the back, 0 rump to 1 head), height, count, lean, mat, belly (along the underside instead) }
+//   wisps: { at: "tusks", size, mat }: flames off its tusks' tips (glowing).
+export const EVOLVE_KINDS = ["mane", "wisps"];
+function evolve3d(m, feats, c) {
+  for (const f of feats) {
+    if (f.kind === "mane") {
+      m.part = "body";
+      const n = f.count ?? 12, mat = M[f.mat || "BODY3"], h0 = f.height ?? .2, lean = f.lean ?? .5;
+      for (let i = 0; i < n; i++) {
+        const t = (f.from ?? .2) + ((f.to ?? .95) - (f.from ?? .2)) * (i + .5) / n, wob = .75 + .5 * Math.abs(Math.sin(i * 2.7 + 1.3)), h = h0 * wob * (1 - .35 * Math.abs(t - .7));
+        let b, dir;
+        if (f.belly) { const x = -c.len * .9 + t * c.len * 1.65; b = [x, c.chest - .02 + (c.tuck - c.chest) * (1 - t), 0]; dir = v3.norm([-lean, -1, 0]); }
+        else { b = c.backAt(t); b = [b[0], b[1] - .03, b[2]]; dir = v3.norm([-lean, 1, 0]); }
+        const z = ((i % 3) - 1) * c.bw * .25, tip = v3.add(b, v3.mul(dir, h)), mid = v3.add(v3.lerp(b, tip, .5), [-h * lean * .25, 0, 0]);
+        m.chain([[b[0], b[1], z, h * .2], [mid[0], mid[1], z, h * .11], [tip[0], tip[1], z, h * .02]], mat, { group: 70 + (i % 2), extra: true });
+      }
+    }
+    if (f.kind === "wisps" && f.at === "tusks") {
+      m.part = "head";
+      const s = f.size ?? .18;
+      c.tuskTips.forEach((p, i) => { const up = v3.norm([-.3 - (c.frame ? .1 : 0), 1, 0]); m.flat(v3.add(p, v3.mul(up, s * .55)), [1, 0, 0], up, s * .3, s * .6, masks.flame(M[f.mat || "MAGIC2"], M.MAGIC), { group: 96 + i, extra: true }); });
+    }
+  }
+  m.part = "body";
+}
+
 // ================= four-legged animals =================
 export function quad3d(S, level, frame, st, facing = "towards") {
-  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => legend && S.legend.includes(f);
+  const lv = S.levels?.[level]; // its evolution at this level (genome levels: its own proportions and features, not a rescale)
+  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q, ...lv?.q }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => legend && (lv?.legend ?? S.legend).includes(f);
   const sz = k => S.sizes[k][level]; // its template's size curves (art/genome/templates.js): baby, young, adult, legend
   const m = new Model();
   const hr = q.hr * sz("head") * (st.head / .44) ** .5, len = q.len * sz("len") * st.long;
   const legK = sz("legK");
   const bob = frame ? -.04 : 0, top = 1 + bob, chest = q.chest * sz("chestDeep") * sz("chestBig") / legK + bob, tuck = q.tuck * sz("tuck") / legK + bob; // a big one's deeper chest and belly
   const bw = q.bw * sz("body") * (q.legW > 1.2 ? 1.15 : 1), lw = .06 * q.legW * sz("limbA") * sz("limbB");
-  const hump = q.back === "hump" ? .1 : 0, arch = q.back === "arch" ? .1 : 0;
+  const hump = q.back === "hump" ? .1 * (q.humpK ?? 1) : 0, arch = q.back === "arch" ? .1 : 0, front = q.front ?? 1; // front: a heavier front (an adult boar's)
   // ---- markings, painted by where a point is on the body ----
   const bellyY = chest + .12;
   const paintBody = p => {
@@ -124,10 +154,11 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     if (q.saddle && p[1] > top - .18 && p[0] < len * .55) return M.BODY2;
     if (q.spots && p[1] > chest + .1 && spotty(p, 10, .22)) return q.spotMat === "belly" || (q.spots === "young" && juv) ? M.BELLY : q.spots === "young" ? undefined : M.BODY3;
     if (q.ridge && p[1] > top - .08 + hump * .5) return M.BODY3;
+    if (q.bands && p[1] > chest && p[0] > -len * 1.1 && Math.floor((p[1] - chest) / Math.max(.01, top + hump - chest) * q.bands.n * 2 + .5) % 2) return M[q.bands.mat || "BELLY"]; // a piglet's stripes, running its length
     return undefined;
   };
   // ---- torso: a deep chest, a tucked waist, a rump ----
-  m.ell([len * .48, (top + chest) / 2 + hump * .5, 0], [len * .62, (top - chest) / 2 + hump * .5, bw], M.BODY, { paint: paintBody });
+  m.ell([len * .48, (top + chest) / 2 + hump * .5, 0], [len * .62, (top - chest) / 2 * front + hump * .5, bw * front], M.BODY, { paint: paintBody });
   m.ell([-len * .5, (top + tuck) / 2 + arch * .6, 0], [len * .58, (top - tuck) / 2 + arch * .6, bw * .93], M.BODY, { paint: paintBody });
   m.ell([0, (top + (chest + tuck) / 2) / 2 + .02, 0], [len * .6, (top - (chest + tuck) / 2) / 2, bw * .9], M.BODY, { paint: paintBody });
   if (q.ridge) for (let i = 0; i < (legend ? 16 : 10); i++) { const x = -len * .8 + i * len * 1.75 / (legend ? 15 : 9), h = (.07 + (legend ? .04 : 0)) * (1 + .5 * Math.max(0, x / len)); m.ell([x, top + .02 + hump * Math.max(0, 1 - Math.abs(x / len - .5) * 2) + h * .5, 0], [h, .03, bw * .25], M.BODY3, { dir: [-.3, 1, 0], up: [1, 0, 0] }); }
@@ -188,11 +219,20 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   // ---- horns, antlers, tusks ----
   if (q.horns) for (const side of [-1, 1]) { const k = has("hornsGlow") ? 1.5 : sz("horns"), pts = []; for (let i = 0; i <= 8; i++) { const a = .3 - i / 8 * Math.PI * 1.6, r = hr * .65 * k * (1 - .45 * i / 8); pts.push([H[0] - hr * .1 + Math.cos(a) * r, H[1] + hr * .45 + Math.sin(a) * r, side * (hr * .6 + i * .015)]); pts[i].push(hr * .2 * k * (1 - .6 * i / 8)); } m.chain(pts, has("hornsGlow") ? M.MAGIC : M.ACCENT, { group: 13 }); }
   if (q.antlers || has("jackalope")) for (const side of [-1, 1]) antlers3d(m, q, [H[0] - hr * .05, H[1] + hr * .75, side * hr * .4], side, sz("antlers"), has);
-  if (q.tusks) for (const side of [-1, 1]) { const k = has("tusksBig") ? 1.4 : sz("tusks"); if (!k) continue; const b = [sn[0] + L * .25, sn[1] - Dm * .4, side * Dm * .8]; m.chain([[...b, .045 * k], [...v3.add(b, [.1 * k, .1 * k, side * .03]), .04 * k], [...v3.add(b, [.06 * k, .24 * k, side * .05]), .02 * k]], M.ACCENT, { group: 8 }); }
+  const tuskTips = [];
+  if (q.tusks) for (const side of [-1, 1]) {
+    const k = has("tusksBig") ? 1.4 : q.tuskSize ?? sz("tusks"); if (!k) continue; const b = [sn[0] + L * .25, sn[1] - Dm * .4, side * Dm * .8];
+    if (q.tuskCurl === undefined) { m.chain([[...b, .045 * k], [...v3.add(b, [.1 * k, .1 * k, side * .03]), .04 * k], [...v3.add(b, [.06 * k, .24 * k, side * .05]), .02 * k]], M.ACCENT, { group: 8 }); tuskTips.push(v3.add(b, [.06 * k, .24 * k, side * .05])); continue; }
+    // an evolved tusk (genome levels): a tapering curve out, up and back round by tuskCurl (half turns), its tip fine
+    const pts = [], n = 9, R = .13 * k;
+    for (let i = 0; i <= n; i++) { const t = i / n, a = t * q.tuskCurl * Math.PI, r = R * (1 - t * .35); pts.push([b[0] + Math.sin(a) * r * 1.2, b[1] + (1 - Math.cos(a)) * r, b[2] + side * t * .07 * k, .034 * k * (1 - t * .8)]); }
+    m.chain(pts, M.ACCENT, { group: 8 }); tuskTips.push(pts[n].slice(0, 3));
+  }
   if (q.teeth && !baby) m.ell([tip[0] - hr * .1, tip[1] - hr * .25, 0], [hr * .08, hr * .14, hr * .12], M.ACCENT, { group: 1 });
   // ---- legendary features ----
   m.part = "body";
   const backAt = t => [-len * .9 + t * len * 1.65, top + hump * Math.max(0, 1 - Math.abs(t - .8) * 3) + arch * (1 - Math.abs(t - .4) * 2), 0];
+  if (lv?.features) evolve3d(m, lv.features, { H, hr, sn, L, Dm, tuskTips, backAt, len, top, chest, tuck, bw, frame });
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [len * .2, top, side * bw * .5], side, 1.15, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("mane") || has("flames")) for (let i = 0; i < 7; i++) { const t = i / 6, b = v3.lerp(v3.add(H, [-hr * .5, hr * .3, 0]), backAt(.55), t), h = [.4, .3, .45, .28, .38, .25, .3][i], up = v3.norm([-.35 - (frame ? .1 : 0), 1, 0]); m.flat(v3.add(b, v3.mul(up, h * .5)), [1, 0, 0], up, h * .32, h * .55, masks.flame(i % 2 ? M.MAGIC : M.MAGIC2, M.MAGIC2), { group: 60 + i % 2, extra: true }); }
   if (has("tails")) for (let i = 0; i < 7; i++) { m.part = "tail"; const a = Math.PI * (.55 + i * .08), z = (i - 3) * .1, e = v3.add(tb, [Math.cos(a) * .9, Math.sin(a) * .85, z]); m.chain([[...tb, .1], [...v3.lerp(tb, e, .5), .17], [...e, .08]], i % 2 ? M.BODY2 : M.BODY, { group: 70, extra: true }); m.ell(e, [.09, .09, .09], M.MAGIC2, { group: 71, extra: true }); }
