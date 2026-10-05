@@ -9,7 +9,7 @@ import { Forest, crownReach, treeChance } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
 import { population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
-import { dormant, hitWitch, newGame, simRadius, STEP, stepGame } from "./game";
+import { hitWitch, newGame, simRadius, STEP, stepGame } from "./game";
 import { dashing, newDash, startDash } from "./dash";
 import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, symbolCount, wavePlan } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
@@ -501,38 +501,18 @@ describe("creatures", () => {
     expect(population(map)).toEqual(S);
   });
 
-  it("have one legend an area, each a boss: home's happy, the rest asleep, out of their clearings (Ed, 2026-10-04)", () => {
+  it("have one legend an area but home (Ed, 2026-10-05), each a boss, asleep, out of their clearings (Ed, 2026-10-04)", () => {
     for (let seed = 1; seed <= 4; seed++) {
       const m = generateMap(seed * 101, TUNING), legends = spawnCreatures(m).filter(c => c.level === 3), [hx, hy] = m.centreCell;
-      expect(legends.length, `seed ${seed * 101}`).toBe(m.n * m.n);
+      expect(legends.length, `seed ${seed * 101}`).toBe(m.n * m.n - 1);
+      expect(legends.some(c => c.cell[0] === hx && c.cell[1] === hy)).toBe(false);
       expect(new Set(legends.map(c => c.cell.join())).size).toBe(legends.length);
       for (const c of legends) {
         expect(c.boss).toBe(true);
-        expect(c.legendState).toBe(c.cell[0] === hx && c.cell[1] === hy ? "happy" : "asleep");
+        expect(c.legendState).toBe("asleep");
         expect(c.speed).toBeLessThanOrEqual(TUNING.legendSpeed * 1.3 + 1e-9);
       }
     }
-  }, 60000);
-
-  it("sleep until the party reaches their area, then heave up (untouchable a while) and lumber about it", () => {
-    const g = newGame(123, TUNING), boss = g.creatures.find(c => c.boss && c.legendState === "asleep")!;
-    g.clock.paused = false;
-    g.witch = { ...g.witch, seated: false, x: boss.x + 30, z: boss.z, mode: "treetop", lift: 1 }; // (on the ground in its area, it would go for her once awake)
-    const at = [boss.x, boss.z];
-    expect(dormant(g, boss)).toBe(true);
-    for (let i = 0; i < 100; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20);
-    expect([boss.x, boss.z]).toEqual(at);
-    g.party.areas.set(boss.cell.join(), { cell: boss.cell, wave: 1, at: 0, from: null, soundsystem: null });
-    stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20);
-    expect(boss.legendState).toBe("waking");
-    expect(dormant(g, boss)).toBe(true); // (untouchable while it heaves up)
-    for (let i = 0; i < (TUNING.wildLegends.wake + 0.2) * 20; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20);
-    expect(boss.legendState).toBe("awake");
-    expect(dormant(g, boss)).toBe(false);
-    let moved = 0;
-    for (let i = 0; i < 400; i++) { const x = boss.x, z = boss.z; stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20); moved += Math.hypot(boss.x - x, boss.z - z); }
-    expect(moved).toBeGreaterThan(0.5);
-    expect(moved / 20).toBeLessThanOrEqual(TUNING.legendSpeed * 1.3 + 1e-6); // no faster than a legend
   }, 60000);
 
   it("roam their whole area, slowly, and never leave it", () => {

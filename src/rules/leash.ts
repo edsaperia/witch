@@ -24,7 +24,7 @@ export interface Talk {
   total: number;
 }
 
-export type LeashEventKind = "invited" | "befriended" | "placed" | "picked" | "fizzled" | "cancelled" | "cycled";
+export type LeashEventKind = "invited" | "befriended" | "placed" | "picked" | "fizzled" | "cancelled" | "cycled" | /** a relic picked up, or put down by a legend (id: the relic) */ "relicPicked" | "relicPlaced";
 export interface LeashEvent { kind: LeashEventKind; id: number; x: number; z: number; at: number }
 
 export interface LeashState {
@@ -42,6 +42,8 @@ export interface LeashState {
   /** Legends that have given her their unimpressed look this approach: not again until she's
    *  been beyond invite.cancelDistance of them. */
   snubbed: Set<number>;
+  /** Relic sigils she carries (rules/legends.ts: ids into the game's relics), newest last. */
+  relics: number[];
 }
 
 export interface LeashControls {
@@ -55,7 +57,7 @@ export interface LeashControls {
   talk?: boolean;
 }
 
-export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, progress: new Map(), events: [], snubbed: new Set() });
+export const newLeash = (): LeashState => ({ stack: [], placed: [], talk: null, progress: new Map(), events: [], snubbed: new Set(), relics: [] });
 
 /** Seconds of talk a creature needs: babies 3, young 6, adults 12; legends can't be invited. */
 export const talkTime = (c: Creature, t: Tuning): number => t.invite.talkTime[Math.min(c.level, t.invite.talkTime.length - 1)];

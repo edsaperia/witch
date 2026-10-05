@@ -268,6 +268,26 @@
    "modifier": "knockback",
    "knockback": 16,
    "lunge": 6
+  },
+  "legendLob": {
+   "delivery": "lob",
+   "range": 420,
+   "radius": 8,
+   "flight": 3,
+   "windup": 2.2,
+   "cooldown": 7,
+   "modifier": "none"
+  },
+  "legendBeam": {
+   "delivery": "beam",
+   "range": 420,
+   "width": 3,
+   "duration": 1.6,
+   "tick": 0.25,
+   "sweep": 8,
+   "windup": 2.2,
+   "cooldown": 7,
+   "modifier": "none"
   }
  },
  "byLevel": {

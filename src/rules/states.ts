@@ -184,7 +184,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
   const relicCount = o.relics ?? (hash2(map.seed, 7, 1313) < 0.5 ? 3 : 4), relicEvery = o.relicEvery ?? 4, relicTime = o.relicTime ?? 5;
   const restlessTime = o.restlessTime ?? 60, LR = o.legendRange ?? 420, SHOT = o.legendShot ?? 10, EVERY = o.legendEvery ?? 15, AOE = o.legendAoe ?? 3, hazard = o.angryHazard ?? 2;
 
-  // Every creature: the map's own (legends asleep, home's happy), then what grows wave by wave.
+  // Every creature: the map's own (legends asleep, none at home), then what grows wave by wave.
   const units: Unit[] = [], byCell = new Map<string, Unit[]>();
   const add = (u: Unit) => { units.push(u); let l = byCell.get(u.cell); if (!l) byCell.set(u.cell, (l = [])); l.push(u); };
   const make = (id: number, species: string, cell: string, x: number, z: number, level: Level): Unit => {
