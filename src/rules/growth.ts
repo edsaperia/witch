@@ -41,7 +41,7 @@ export function growthLevel(seed: number, cell: readonly [number, number], wave:
 /** A wave came: each still-wild area (`wild` by key) gains its creatures, as counts. */
 /** How many times as many creatures an area of `species` holds (Ed, 2026-10-05): 1 / its strength,
  *  so swarms come about three times as many and loners half as many, and an area's fighting value
- *  stays about the same (to two places, so a third's strength makes exactly three times). */
+ *  stays about the same (to two places, so a strength of a third makes exactly three times). */
 export const countScale = (species: string) => Math.round(100 / strengthOf(species)) / 100;
 
 /** An area's starting number of a level: `base` times its count scale, rounded, never fewer than

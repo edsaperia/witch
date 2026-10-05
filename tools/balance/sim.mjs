@@ -12,7 +12,7 @@
 //   node tools/balance/sim.mjs [--seeds 12] [--gaps 60,300] [--skills 10,30,50,70,100] [--cap 60]
 //     [--growth 30,50,70] [--starts 0,3,6,9,12,15,20] [--waves 30] [--fight 30]
 //     [--attrition 0.5] [--director base,perWave,power] [--by-wave] [--happy 0.1,0.2,...] [--expected 50] [--alphas 0,0.3,0.6]
-//     [--mix swarm,loner] [--areas 20] [--area-scale 4] [--start babies,young,adults] [--weights 1,1,1] [--per-wave 1] [--health 4000] [--home 8000] [--quick] [--json out.json]
+//     [--spread lo,hi] [--areas 20] [--area-scale 4] [--start babies,young,adults] [--weights 1,1,1] [--per-wave 1] [--health 4000] [--home 8000] [--quick] [--json out.json]
 // --weights (the grown creatures' baby, young, adult shares), --per-wave (how many a wave), --health
 // and --home (soundsystems' and home's health) try numbers without editing the tuning file;
 // --quick leaves out the catch-up check; --by-wave sets
@@ -29,7 +29,7 @@ const list = s => String(s).split(",").map(Number);
 const SEEDS = +arg("seeds", 12), GAPS = list(arg("gaps", "60,300")), GROWTH = list(arg("growth", "30,50,70")), SKILLS = list(arg("skills", "10,30,50,70,100"));
 const WAVES = +arg("waves", 30), CAP = +arg("cap", 60), IDLE_CAP = +arg("idle-cap", 80), FIGHT = +arg("fight", 30), STARTS = list(arg("starts", "0,3,6,9,12,15,20"));
 const ATTRITION = +arg("attrition", 0.5), [DBASE, DPER, DPOW = 1] = list(arg("director", "0,4,1.5")), EXPECTED = +arg("expected", 50), ALPHAS = list(arg("alphas", "0,0.3,0.6"));
-const MIX = arg("mix", null), AREAS = arg("areas", null), AREA_SCALE = arg("area-scale", null), START = arg("start", null), OUT = arg("json", null), HEALTH = arg("health", null), HOME = arg("home", null), WEIGHTS = arg("weights", null), PER_WAVE = arg("per-wave", null);
+const SPREAD = arg("spread", null), AREAS = arg("areas", null), AREA_SCALE = arg("area-scale", null), START = arg("start", null), OUT = arg("json", null), HEALTH = arg("health", null), HOME = arg("home", null), WEIGHTS = arg("weights", null), PER_WAVE = arg("per-wave", null);
 
 const server = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: "custom", logLevel: "error", optimizeDeps: { noDiscovery: true, include: [] } });
 const load = p => server.ssrLoadModule(p);
@@ -38,16 +38,14 @@ const { TUNING } = await load("/src/rules/tuning.ts");
 const { simulate } = await load("/src/rules/balance.ts");
 const { COMBAT } = await load("/src/rules/combat.ts");
 const { AREA_TYPES } = await load("/src/rules/map.ts");
-// --mix swarm,loner: give those shares of the species (every species in turn, by area type) the
-// swarm and loner strength classes (Ed, 2026-10-05), the rest normal; e.g. --mix 0.167,0.167.
+// --spread lo,hi: give the species strengths spread evenly from lo to hi (Ed, 2026-10-05: a number
+// per species), in a seeded shuffled order; e.g. --spread 0.4,2.
 let mixNote = "every species of normal strength";
-if (MIX) {
-  const [sw, lo] = list(MIX), kinds = [...new Set(AREA_TYPES.map(a => a.creature))], n = kinds.length;
-  const swarms = kinds.filter((_, i) => i % Math.round(1 / sw) === 0).slice(0, Math.round(sw * n));
-  const loners = kinds.filter((k, i) => i % Math.round(1 / lo) === Math.floor(Math.round(1 / lo) / 2) && !swarms.includes(k)).slice(0, Math.round(lo * n));
-  for (const k of swarms) COMBAT.strength.species[k] = "swarm";
-  for (const k of loners) COMBAT.strength.species[k] = "loner";
-  mixNote = `swarms (strength ${COMBAT.strength.classes.swarm}): ${swarms.join(", ")}; loners (${COMBAT.strength.classes.loner}): ${loners.join(", ")}; the rest normal`;
+if (SPREAD) {
+  const [lo, hi] = list(SPREAD), kinds = [...new Set(AREA_TYPES.map(a => a.creature))].sort();
+  for (let i = kinds.length - 1; i > 0; i--) { const j = (i * 7919 + 13) % (i + 1); [kinds[i], kinds[j]] = [kinds[j], kinds[i]]; }
+  kinds.forEach((k, i) => { COMBAT.strength.species[k] = Math.round((lo + ((hi - lo) * i) / Math.max(1, kinds.length - 1)) * 100) / 100; });
+  mixNote = `species strengths spread evenly ${lo} to ${hi} (${kinds.map(k => `${k} ${COMBAT.strength.species[k]}`).join(", ")})`;
 }
 const G0 = TUNING.population.growth, growth = { ...G0, ...(WEIGHTS ? { weights: list(WEIGHTS) } : {}), ...(PER_WAVE ? { perWave: +PER_WAVE } : {}) };
 const start = START ? (([babies, young, adults]) => ({ babies, young, adults }))(list(START)) : TUNING.population.start;
