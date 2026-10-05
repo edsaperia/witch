@@ -95,6 +95,7 @@ function invite(s: LeashState, c: Creature, x: number, z: number, time: number):
   c.leashed = true;
   c.rest = 0;
   c.wanderTo = undefined; c.siege = undefined; c.fight = undefined;
+  c.friendly = undefined; c.guard = undefined; // (taking one from a friendly or guarded area weakens it: Ed's call)
   // Invited, it's whole again (Ed, 2026-10-04), with a heal pop if it was hurt.
   if (c.hp !== undefined) { c.hp = undefined; c.healedAt = time; }
   s.stack.push(c.id);

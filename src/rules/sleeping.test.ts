@@ -68,7 +68,7 @@ describe("sleeping legends (Ed, 2026-10-04)", () => {
     expect(maxHp(3)).toBeGreaterThan(0);
   }, 60000);
 
-  it("turn happy (debug L, for now): at peace, and their buff is on", () => {
+  it("turn happy (debug O, for now): at peace, and their buff is on", () => {
     const { g, L } = beside();
     run(g, 0.2, { ...idle, happyNearest: true });
     expect(L.legendState).toBe("happy");

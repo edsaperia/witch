@@ -5,6 +5,9 @@ import { musicCue, type MusicCue } from "./rules/musicPlan";
 import type { MusicStyle } from "./rules/musicScore";
 import musicStyleJson from "../config/music-style.json";
 import { setupArena } from "./rules/arena";
+import { newCamera } from "./rules/camera";
+import { setupQuestDemo } from "./rules/quest";
+import { witchHeight } from "./rules/witch";
 import { areaUnderWitch, interpolated, newGame, STEP, stepGame } from "./rules/game";
 import { AREA_TYPES } from "./rules/map";
 import { waveCountdown } from "./rules/party";
@@ -119,6 +122,13 @@ const fx = params.get("fx");
 if (fx === "pixel" || fx === "smooth") tuning.fx = fx;
 
 const game = newGame(seed, tuning);
+// ?quest=1 (the first quest, a demo): beside the nearest sleeping legend, with the creature it
+// dreams of on her stack; put its sigil down there (E) to make it happy.
+if (params.get("quest")) setupQuestDemo(game, (x, z) => {
+  game.witch = { ...game.witch, x, z, mode: "ground", lift: 0, seated: false, vx: 0, vz: 0 };
+  game.camera = newCamera(tuning, x, witchHeight(game.witch, tuning), z);
+  game.introFocus = undefined;
+});
 // ?arena=wolf*4,beetle*3 (Stage 5, a debug arena): hers against the wild in the home clearing,
 // no waves; J sets it up again.
 const arenaParam = params.get("arena");

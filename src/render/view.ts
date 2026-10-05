@@ -891,7 +891,7 @@ export class View {
       // they could almost be mistaken for scenery"): sunk and mossed over, in a batch of its own
       // with no find-in-the-dark look. Waking, it heaves up out of the ground.
       const W = g.tuning.wildLegends, st = c.boss && !c.leashed ? c.legendState : undefined;
-      const sleeping = st === "asleep" || st === "slept", rising = st === "waking" ? Math.min(1, (time - (c.stateAt ?? 0)) / Math.max(0.1, W.wake * 0.5)) : 1;
+      const sleeping = st === "asleep" || st === "slept", rising = st === "waking" || (st === "happy" && (c.stateAt ?? 0) > 0) ? Math.min(1, (time - (c.stateAt ?? 0)) / Math.max(0.1, W.wake * 0.5)) : 1; // (made happy, it stirs and rises contentedly)
       const art = party ?? woken ?? this.assets.creatureArt(c.species), key = party ? `party-${c.id}` : sleeping ? `sleep-${c.species}` : woken ? `woken-${c.species}` : c.species;
       if (!art) continue;
       arts.set(key, art);

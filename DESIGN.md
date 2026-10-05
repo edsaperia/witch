@@ -46,7 +46,7 @@ So the party's growth is both the goal and the source of the danger.
 - The player is a **witch flying on a broomstick**.
 - She **does not fight**. She is not safe from attack: **wild creatures attack her on the ground** (Ed, 2026-10-04, after a playtest: inviting was too cheap, flying into the next wave's area and inviting everything before it woke). Wild young and up shoot at her or strike her in ground mode within range, with telegraphed, dodgeable attacks; she's safe over the treetops. **She can still invite them while they attack**, so inviting means dodging while staying near them: a main part of the game loop. Big, strong groups are hard to invite without getting hit; babies are the easiest (they don't attack and are quick to convince). A hit doesn't set an invite back: losing a hit is the cost (Ed, 2026-10-04).
 - **Aggro on the witch** (Ed, 2026-10-04): a wild creature goes for her as soon as she's on the ground **in its area** (Ed's playtest, 2026-10-04; it replaced "within its attack range or 30 m"), or within its attack range; it lets her go when she rises to the treetops, or once she's out of its area **and** out of its range **and** at least 30 m away, and then walks back to its spot. Attacks are mixed by species: some shoot slow, telegraphed shots; melee ones wind up and lunge. Both can be dodged. Some kinds **kite**: long-range attackers that hold a distance as part of their attack, backing off when she closes in and closing in when she's too far (Ed: "some creatures try and keep a certain distance as part of their attack pattern, rather than they run away per se").
-- **Inviting under fire** (Ed's playtest, 2026-10-04): **the creature she's inviting doesn't attack her** while the chat runs (its friends still do). **A creature enraged by a wave (besieging or marching on a soundsystem) can't be invited**: repelling a big mixed attack shouldn't turn into inviting one and watching the rest set on it. Enraged creatures show angry red eyes. A creature that's only going for the witch (above) isn't enraged and stays invitable.
+- **Inviting under fire** (Ed's playtest, 2026-10-04): **the creature she's inviting doesn't attack her** while the chat runs (its friends still do), **and her party leaves it be** (Ed, 2026-10-04): her leashed and parked animals don't go for it, and their shots and area hits pass it by; other wild creatures are fair game, and once the chat's off it is too. **A creature enraged by a wave (besieging or marching on a soundsystem) can't be invited**: repelling a big mixed attack shouldn't turn into inviting one and watching the rest set on it. Enraged creatures show angry red eyes. A creature that's only going for the witch (above) isn't enraged and stays invitable.
 - **A larger responsive area** (Ed's playtest: "this will make them feel much more alive and responsive"): creatures notice and react from further off (to each other, the party and her: `combat.aggro`, `combat.engage`, `guard.radius`, `notice` in the tuning file). Wild ones roaming near her on the ground turn to look at her when they pause; babies of a curious kind come up to her, skittish ones keep their distance.
 - **Her health** (Ed, 2026-10-04): she takes **three hits** (one point each, whatever hits her). One comes back every **20 s**, the timer starting over whenever she's hit, so to recover she has to get right out of the fight. Pips under her show her hits once she's been hit.
 - **Knocked out** (Ed, 2026-10-04): at no hits left she collapses where she is (no more hits, no input). **Her sigil stack lets go from the bottom up, about a second each**, each sigil splashing away and its leash dissolving; as each goes, **its creature is no longer hers**: it turns **neutral** (it attacks no one) and walks at its own pace to the **nearest area of its own kind** (else the nearest area the party hasn't reached), where it becomes an ordinary wild creature of that area, keeping its level (and wakes with that area's wave). On the way it can be invited again, at the normal time. **Creatures at sigils on the ground aren't on her leash, so they stay hers: park your army before you scout** (Ed: "leashed creatures going wild when you're knocked out might be the best design idea so far, and might be the thing that makes the whole game work"). **Legends aren't loyal either: they go back to the wild ("they're too old for this")**, a home-made boss; their buff ends then. Then she sparkles out and back in at the treehouse. A big stack takes a long time to let go: "dramatic, and it probably means you just lost the game".
@@ -261,7 +261,7 @@ A counter is **shown**: a hit that's strong against its target flashes big and g
   - Its legend buff is on while it's happy.
   - **It fights incoming sieges** (Ed, 2026-10-04). It guards its area like a parked party animal with a large guard radius (`wildLegends.guard`, 40 m round its area's centre). It takes on wild attackers entering its area, especially sieges marching on its soundsystem or through its area to others, with its legend move set (slam, nova, charge; spin in phase 2).
   - Defaults until Ed rules otherwise: it heals `wildLegends.heal` hp a second while no enemy is near. If beaten, it sinks back to sleep for good and its buff ends, like a defeated legend.
-  - **How a legend becomes happy is undecided** (quests later). For now it's a debug key: **L** makes the nearest legend happy.
+  - A legend becomes happy through its quest (The first quest, below); the debug key **O** also makes the nearest one happy.
   - **Home's legend is happy from the start**, already with the party. So its buff is on from the start (my call; easy to change).
 - **The state machine:** asleep → its area's wave → waking → awake (angry) → beaten → asleep for good; and asleep or awake → (later: mollified) → happy.
 - **Consequences.**
@@ -269,6 +269,31 @@ A counter is **shown**: a hit that's strong against its target flashes big and g
   - The knockout rule "legends aren't loyal" is moot, since no legend is ever on her leash; it's left in place.
   - The legend moves' power budget is unchanged: 480 hp, 12 dps.
   - Early pressure: from the first wave on, every woken area has a legend to beat or avoid next to its soundsystem. That's much more pressure than before, when legends were rare and remote. The balance builder's simulator can model it.
+
+### The first quest (Ed, 2026-10-04)
+
+**Each sleeping legend dreams of a creature.** A thought bubble over it holds that creature's sigil, drawn in its level's variant (Ed, 2026-10-05: the sigil's own level look, no pips).
+- The creature is a species found on the map, never the legend's own, at a random level. It's chosen from the seed when the map is made.
+- The bubble reads on the ground. From the treetops a smaller one floats high over the legend.
+- **Fulfilling it:** put that sigil down anywhere in the legend's area while the area is still wild. That means a creature of that species and level from her stack, placed with the usual sigil action. Then:
+  - the legend becomes **happy**: the bubble pops in sparkles, and the legend stirs and rises contentedly;
+  - **all the area's creatures become friendly**: they don't attack her or her party, and her party leaves them be;
+  - **the creature she placed joins the area**: it leaves her leash and stack and becomes one of the area's creatures.
+- **When a happy area's wave comes**, all its creatures (the legend, the one placed and the area's own) become **party animals that stay in the area and defend it**.
+  - They guard it like parked party animals with an area-wide radius: anything hostile in the area, within `wildLegends.guard` metres of where each one stands.
+  - They aren't on her leash or stack.
+  - The legend's buff is on, and it fights with its move set.
+  - No siege comes from that area.
+- **If the quest isn't done before the area's wave**, the area wakes **angry**.
+  - Its creatures go for the **nearest party animal or soundsystem**, whichever is nearer.
+  - Its legend wakes hostile but **stays in its area**: it guards it against her, her creatures and its soundsystem there. Beaten, it sleeps for good.
+- **Defaults, for Ed to overrule:**
+  - A friendly area still grows each wave, and the newcomers are friendly too.
+  - Friendly creatures (and guards) can still be invited. Taking them weakens the area's future defence; that's the player's call.
+  - The quest can't be done once the area's wave has come.
+  - The debug key **O** stays (L is the playtest log's download): it makes the nearest legend happy, as if its quest were done.
+  - The balance simulator's legend options stay debug-only.
+- **Demo:** `?quest=1` starts her beside the nearest sleeping legend, with the creature it dreams of on her stack. Press E there.
 
 **Planned direction, not built yet (Ed, 2026-10-04):** each area will have a **legendary animal that can be flipped between asleep, happy and angry**, by things that aren't only fighting (quests, mostly exploring the forest). So legends need **distinctive, readable move sets of their own**; the move sets above are written as data per legend so each can get its own later.
 
