@@ -3,7 +3,8 @@
 // the first witch, fading to nothing `sfx.hear` metres off and panned by where it is on screen.
 // The rules know nothing of it.
 //  - 💌s (the invites, #89): its letters' events, read as they come (shot: her syllable; hit: the
-//    chime, the creature's small reply, the affection meter's tick; happy: the flourish); until #89 lands there are none, and the talk's invites still flourish.
+//    chime, the creature's small reply, the affection meter's tick; happy: the flourish); the
+//    talk's invites (with 💌s off) still flourish.
 //  - States: a creature turning enraged (a growl and the nearest's angry speech; a crowd turning at
 //    once, one heavier growl) or happy (a pop and its happy speech): its area's guards, a friendly
 //    area's creatures, a legend at peace.
@@ -50,10 +51,6 @@ export function voiceOf(c: Creature, t: Tuning): CreatureVoice {
 /** How it speaks: happy (on her side, guarding, at peace), enraged, or a wild one's grumble. */
 export const speechMood = (c: Creature): Mood => (c.leashed || c.guard || c.friendly || c.legendState === "happy" ? "happy" : c.enraged || c.siege ? "enraged" : "grumpy");
 
-/** The 💌 events as #89 has them (read loosely, so this builds before it lands). */
-interface LetterEvent { kind: string; x: number; z: number; id?: number; spent?: boolean }
-interface LetterState { events?: LetterEvent[]; meter?: Map<number, number> }
-
 const happyNow = (c: Creature) => !c.leashed && !c.gone && (!!c.guard || !!c.friendly || (!!c.boss && c.legendState === "happy"));
 
 export class SfxCues {
@@ -62,7 +59,12 @@ export class SfxCues {
   private primed = false;
   private flourished = new Map<number, number>();
 
-  constructor(private sfx: Sfx) {}
+  /** Her hits left last frame (a drop is a hit that landed), and whether she was down. */
+  private hp = -1;
+  private down = false;
+
+  /** `duck`: dip the music (by, seconds) under her "ouch!". */
+  constructor(private sfx: Sfx, private duck: (by: number, seconds: number) => void = () => {}) {}
 
   update(g: Game, time: number): void {
     const t = g.tuning.sfx, w = g.witch, hear = Math.max(1, t.hear);
@@ -71,7 +73,7 @@ export class SfxCues {
     const S = this.sfx;
 
     // 💌 (#89): its own events
-    const inv = (g.witches[0] as unknown as { invites?: LetterState }).invites;
+    const inv = g.witches[0]?.invites;
     for (const e of inv?.events ?? []) {
       const k = near(e.x, e.z);
       if (k <= 0) continue;
@@ -129,9 +131,18 @@ export class SfxCues {
       S.speak(voiceOf(c, g.tuning), speechMood(c), pan(e.x), k, k + (c.boss ? 0.5 : 0));
     }
     // a soundsystem lost (Ed, 2026-10-05: the next wave comes sooner): the party grinding to a halt,
-    // then the clock jumping on; heard anywhere (the prototype's soundsystemLost, else combat's
-    // soundDestroyed, home's aside: that's the run over)
-    for (const e of g.combat.events as { kind: string; key?: string }[]) if ((e.kind === "soundsystemLost" || e.kind === "soundDestroyed") && e.key !== "home" && this.lost !== time) { this.lost = time; S.lost(); }
+    // then the clock jumping on; heard anywhere (rules/game.ts's soundsystemLost; home's aside:
+    // that's the run over), more urgent when the wave comes at once (left 0)
+    for (const e of g.waveEvents) if (e.kind === "soundsystemLost" && e.key !== "home" && this.lost !== e.at) { this.lost = e.at; S.lost(e.left <= 0); }
+    // hurt (Ed, 2026-10-05: "ouch!"): combat's witchHit, as it lands (a hit on her mid-blink costs
+    // nothing, so it's her hits dropping that says so); knocked down (knockout's "down"): "whoa-oh"
+    const me = g.witches[0], O = t.ouch;
+    if (me) {
+      const hp = me.health.hp, down = !!me.ko;
+      if (down && !this.down && this.primed) { S.knockdown(); this.duck(O.duck, O.duckTime * 2); }
+      else if (this.primed && hp < this.hp && !down) { S.ouch(1 - Math.max(0, hp - 1) / Math.max(1, g.tuning.witchHealth.hits - 1)); this.duck(O.duck, O.duckTime); }
+      this.hp = hp; this.down = down;
+    }
     this.primed = true;
   }
 
