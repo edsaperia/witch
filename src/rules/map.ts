@@ -108,8 +108,8 @@ export interface ForestMap {
   treeWeight(x: number, z: number): number;
   /** Ground that must stay clear of every tree: the dancefloor's clearing and set pieces'. */
   hardClear(x: number, z: number): boolean;
-  /** How far (x, z) is out of its area's fighting arena: 0 inside it, rising over its edge to 1 (tuning arena). */
-  arenaOpen(x: number, z: number): number;
+  /** How far (x, z) is out of its area's fighting arena: 0 in its open middle, rising smoothly over its band to 1 (tuning arena); `cell` if known. */
+  arenaOpen(x: number, z: number, cell?: Cell): number;
   /** Pairs of areas that touch, as "cx,cy|cx,cy" keys, for tests and the debug view. */
   readonly neighbours: ReadonlyMap<string, ReadonlySet<string>>;
   /** Paths, roads and railways, with the corridors they keep clear. */
@@ -323,16 +323,19 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   };
   const hardClear = (x: number, z: number) => { const [u, v] = toPart(x, z); return hardCell(x, z, partition.partition(u, v)); };
   // Every area's fighting arena (Ed, 2026-10-05: "each is effectively a fighting arena... not much
-  // room to fight in each area"): open ground arena.radius metres round its centre and its
-  // soundsystem, trees thickening over arena.edge metres beyond; both times the fight's scale.
+  // room to fight in each area"; then "softer edges, the falloff between dense forest and clearing
+  // smoother"): mostly open within arena.radius metres of its centre and its soundsystem, the woods
+  // thickening along a smooth curve over a band arena.band metres wide beyond, its distance
+  // wobbled by noise (arena.noise of the band) so the edge is no ring; both times the fight's scale.
   const arenaIn = (x: number, z: number, cell: Cell) => {
     const R = tuning.arena;
     if (!R || R.radius <= 0) return 1;
     const k = tuning.fight?.scale ?? 1, s = siteOf(cell[0], cell[1]), q = soundsystemSpot(cell[0], cell[1]);
-    const d = Math.min(Math.hypot(x - s.x, z - s.z), Math.hypot(x - q.x, z - q.z));
-    return smoothstep((d - R.radius * k) / Math.max(0.01, R.edge * k));
+    const d = Math.min(Math.hypot(x - s.x, z - s.z), Math.hypot(x - q.x, z - q.z)), band = R.band * k;
+    const wob = (vnoise(x / 14, z / 14, seed + 71) - 0.5) * 2 * R.noise * band;
+    return smoothstep((d + wob - R.radius * k) / Math.max(0.01, band));
   };
-  const arenaOpen = (x: number, z: number) => arenaIn(x, z, areaAt(x, z).cell);
+  const arenaOpen = (x: number, z: number, cell?: Cell) => arenaIn(x, z, cell ?? areaAt(x, z).cell);
   const treeWeight = (x: number, z: number) => {
     const [u, v] = toPart(x, z), cell = partition.partition(u, v);
     if (hardCell(x, z, cell)) return 0;

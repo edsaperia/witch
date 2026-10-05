@@ -7,8 +7,8 @@ export interface Tuning {
   mapAreas: number;
   areaSize: number;
   areaScale: number;
-  /** Each area's fighting arena: open ground radius metres round its centre and soundsystem, trees thickening over edge metres beyond (both times fight.scale); bushes: the share of the undergrowth left inside it. */
-  arena?: { radius: number; edge: number; bushes: number };
+  /** Each area's fighting arena: mostly open within radius metres of its centre and soundsystem, the woods thickening smoothly over a band band metres wide (both times fight.scale), its edge wobbled by noise (a share of the band); bushes and tufts: the share of the undergrowth and ground cover left in its open middle. */
+  arena?: { radius: number; band: number; noise: number; bushes: number; tufts: number };
   areaSizeVariance: number;
   borderLayers: number;
   treeDensity: number;
