@@ -69,6 +69,18 @@ const report = await b.page.evaluate(async () => {
       res.push({ what: `silhouettes: no two species alike at ${G.SILHOUETTE_SIZE} px (${["", "young", "adult"][level]}s, every pair 0.15 apart or more)`, good: !close.length, info: (close.length ? close : pairs.slice(0, 3)).map(p => `${p.a}/${p.b} ${p.d.toFixed(2)}`).join(", ") });
     }
   }
+  { // the live rig's parts (#79 stage 4): every four-legged species and the snake, at each level, baked as pieces at the five headings (torso, head:
+    // the four-legged, and their tails where they have one; the serpent's head), each drawn with its pivot on (or by) its sprite, four legs with two bones each, discs to string them
+    const bad = [];
+    for (const S of G.SPECIES.filter(S => S.q || S.plan === "snake")) for (const level of [0, 1, 2, 3]) {
+      const P = G.rigParts(S.id, level, st), need = P.template === "quadruped" ? ["torso", "head"] : ["head"];
+      for (const k of need) (P.pieces[k] || []).forEach((p, i) => { if (!p) bad.push(`${S.id} ${level} ${k} ${i} missing`); else if (p.px < -2 || p.py < -2 || p.px > p.sp.w + 2 || p.py > p.sp.h + 2) bad.push(`${S.id} ${level} ${k} ${i} pivot off`); });
+      if (need.some(k => (P.pieces[k] || []).length !== 5)) bad.push(`${S.id} ${level} not five headings`);
+      if (P.template === "quadruped" && (P.joints.legs.length !== 4 || P.joints.legs.some(l => !l.hip || !l.knee || !l.foot))) bad.push(`${S.id} ${level} legs`);
+      if (!Object.values(P.discs).some(d => Object.keys(d).length)) bad.push(`${S.id} ${level} no discs`);
+    }
+    res.push({ what: "rig parts: every four-legged species and the snake, at every level, baked as torso and head pieces (the snake its head) at the five headings with their pivots on them, four two-bone legs, discs to string bones and bodies", good: !bad.length, info: bad.slice(0, 6).join(", ") || "ok" });
+  }
   { // sleeping legends (Ed, 2026-10-04: just the sleeping form for now): asleep in 2 breathing frames, both facings, each drawn, standing on its bottom
     // row, its origin on the sprite and every material coloured; sunk (its ground line above its feet), no taller than the legend awake, nothing glowing,
     // eyes shut, its two breaths different

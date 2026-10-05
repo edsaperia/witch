@@ -26,6 +26,8 @@ import { PARTY_OBJECTS, PARTY_BY_ID, PARTY_CLASSES, PARTY_LIGHT_NEONS, PARTY_WAR
 import { GENOMES, GENOME_BY_ID, TEMPLATES, TEMPLATE_IDS, speciesOf, genomeTags, genomeProblems, genomeHash } from "./genome/index.js";
 import { PALETTE_SIZE, PALETTE_ROW, PALETTE_VARIANTS, PALETTE_GLSL, bakeMask, paletteRow, paintPixels, paintMask, maskPixels, variantColours } from "./genome/palette.js";
 export { GENOMES, GENOME_BY_ID, TEMPLATES, TEMPLATE_IDS, speciesOf, genomeTags, genomeProblems, genomeHash, PALETTE_SIZE, PALETTE_ROW, PALETTE_VARIANTS, PALETTE_GLSL, bakeMask, paletteRow, paintPixels, paintMask, maskPixels, variantColours };
+import { RIG_HEADINGS, RIG_TEMPLATES, rigParts, rigDirection, rigProject } from "./genome/parts.js";
+export { RIG_HEADINGS, RIG_TEMPLATES, rigParts, rigDirection, rigProject };
 import { SILHOUETTE_SIZE, silhouette, silhouetteDistance, silhouetteMirror, silhouetteDistanceEitherWay, silhouettePairs } from "./genome/silhouette.js";
 export { SILHOUETTE_SIZE, silhouette, silhouetteDistance, silhouetteMirror, silhouetteDistanceEitherWay, silhouettePairs };
 import { LEGEND_STATES, LEGEND_FRAMES, LEGEND_POSES, LEGEND_IDS, legendForm, legendColours, legendSprites } from "./legends.js";
