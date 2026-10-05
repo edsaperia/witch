@@ -21,7 +21,7 @@ export interface LeyTuning {
   links: number;
   /** Each link's brightness as a share of the one before. */
   fade: number;
-  /** The first link's brightness. */
+  /** The first link's brightness: a share of the first look (Ed: 0.3 of it). */
   brightness: number;
   /** Ribbon width (m) on the ground and over the treetops. */
   width: number[];
@@ -34,6 +34,8 @@ export interface LeyTuning {
 }
 
 const STEP = 8; // metres between route points
+/** leyLines.brightness 1: the first look (v395); Ed, 2026-10-05: "about 30% as bright" (0.3). */
+const BRIGHT = 4;
 
 const VERT = /* glsl */ `
 attribute vec2 aDir;     // the route's direction on the ground here
@@ -106,7 +108,7 @@ export class LeyLines {
     this.u = {
       ...HEIGHT_UNIFORMS, uTime: LIGHT_UNIFORMS.uTime,
       uLeyWidth: { value: new THREE.Vector2(T.width[0], T.width[1]) }, uLeyHeight: { value: new THREE.Vector2(T.height[0], T.height[1]) },
-      uLift: { value: 0 }, uBright: { value: T.brightness }, uFade: { value: T.fade },
+      uLift: { value: 0 }, uBright: { value: T.brightness * BRIGHT }, uFade: { value: T.fade },
       uShift: { value: 0 }, uFlow: { value: new THREE.Vector2(T.flow[0], T.flow[1]) },
     };
     this.cur = this.makeSet(); this.old = this.makeSet();
