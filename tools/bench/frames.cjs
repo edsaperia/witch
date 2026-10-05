@@ -47,7 +47,9 @@ async function frames(page, n, c, timed = false) {
 
 // Draw the same moment again (no step) until two screenshots running are the same: the view's
 // background work (ground tiles, heights ahead, art) and its fades come in over frames and time.
-// A few things on screen move by the wall clock, not game time (a nightmare's shaking bubble), so
+// A few things on screen move by the wall clock, not game time (a nightmare's shaking bubble; the
+// page's own animations, like a dream bubble's drifting glow, which are cancelled to their resting
+// look while it settles), so
 // while it settles the page's clock (performance.now) is the bench's: stepped on in fixed steps
 // from the same start until the work and fades are done, then held, so both runs take the same
 // moment. (Held, the view's time-budgeted work runs to the end of its queues: slower, but sure.)
@@ -58,7 +60,7 @@ async function settle(page, file) {
   });
   let prev = null, same = 0, out = { settled: false, tries: 30 };
   for (let i = 0; i < 30; i++) {
-    await page.evaluate(async () => { for (let k = 0; k < 4; k++) { window.witch.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 0); await new Promise(r => setTimeout(r, 30)); } });
+    await page.evaluate(async () => { for (let k = 0; k < 4; k++) { window.witch.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 0); document.getAnimations().forEach(a => a.cancel()); await new Promise(r => setTimeout(r, 30)); } });
     const buf = await page.screenshot({ timeout: 300000 });
     if (process.env.BENCH_DEBUG) fs.writeFileSync(file.replace(/\.png$/, `-try${i}.png`), buf);
     if (prev && buf.equals(prev)) { if (++same >= 2) { out = { settled: true, tries: i + 1 }; break; } } else same = 0;
