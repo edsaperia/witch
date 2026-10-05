@@ -90,6 +90,18 @@ export interface StatesOptions {
   /** Once the soundsystems standing fall to this share of their peak, the enraged march and hit
    *  hurryFactor times as fast (a way to shorten a lost run; off). */
   hurryAt?: number;
+  /** Faster waves (Ed, 2026-10-05: "How about increasing wave speed?"). Once the soundsystems
+   *  standing fall to rushAt of their peak, the gap between waves is times rushFactor (and with
+   *  rushNow the next wave comes at once); a ramp shortens the gap over the whole run, linearly
+   *  from `interval` to `rampTo` by wave `rampBy`, or by rampPct a wave down to rampTo. */
+  /** Stop at this game time (s) too, lost or not (to compare runs whose waves come at different rates). */
+  maxTime?: number;
+  rushAt?: number;
+  rushFactor?: number;
+  rushNow?: boolean;
+  rampTo?: number;
+  rampBy?: number;
+  rampPct?: number;
   hurryFactor?: number;
 }
 
@@ -286,7 +298,14 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
   };
   const trace: StatesTrace[] = [];
   let peak = 1;
-  let hurry = 1;
+  let hurry = 1, rushing = false;
+  // The gap before wave w (Ed's faster waves: a ramp over the run, and a rush once it's lost).
+  const gapNow = (w: number) => {
+    let g = o.interval;
+    if (o.rampTo !== undefined && o.rampBy) g = Math.max(o.rampTo, o.interval - ((o.interval - o.rampTo) * w) / o.rampBy);
+    else if (o.rampTo !== undefined && o.rampPct) g = Math.max(o.rampTo, o.interval * Math.pow(1 - o.rampPct, w));
+    return rushing ? g * (o.rushFactor ?? 0.5) : g;
+  };
   let time = 0, nextAt = t.boot.time + t.party.startDelay + o.interval;
   const sample = () => {
     let pool = 0, poolF = 0, happy = 0, lea = 0, aF = 0, en = 0, eF = 0;
@@ -305,12 +324,13 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
   };
 
   while (!lost) {
+    if (o.maxTime !== undefined && time >= o.maxTime) break;
     if (time >= nextAt) {
       sample();
       for (const lf of openLocal.values()) { lf.held = (sounds.get(lf.key)?.hp ?? 0) > 0; }
       openLocal.clear();
       if (party.wave >= o.maxWaves) break;
-      nextAt += o.interval;
+      nextAt += gapNow(party.wave + 1);
       const wave = party.wave + 1;
       if (wave % relicEvery === 0 && relicsFound < relicCount) { relicsFound++; relicsHeld++; } // (she finds one on her travels)
       // What grows while wild (never in an area with a soundsystem).
@@ -503,6 +523,11 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
     const standing = [...sounds.values()].filter(s => s.hp > 0).length;
     peak = Math.max(peak, standing);
     if (o.hurryAt !== undefined && hurry === 1 && party.wave >= 3 && standing <= o.hurryAt * peak) hurry = o.hurryFactor ?? 2;
+    if (o.rushAt !== undefined && !rushing && party.wave >= 3 && standing <= o.rushAt * peak) {
+      rushing = true;
+      const left = nextAt - time;
+      nextAt = o.rushNow ? time : time + left * (o.rushFactor ?? 0.5);
+    }
     if (o.trace && Math.floor(time / o.trace) !== Math.floor((time - dt) / o.trace)) {
       let eF = 0, dF = 0, hs = 0, hd = 0;
       const H = sounds.get("home")!;
