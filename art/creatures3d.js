@@ -138,15 +138,16 @@ function evolve3d(m, feats, c) {
 
 // ================= four-legged animals =================
 export function quad3d(S, level, frame, st, facing = "towards") {
-  const lv = S.levels?.[level]; // its evolution at this level (genome levels: its own proportions and features, not a rescale)
-  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q, ...lv?.q }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => legend && (lv?.legend ?? S.legend).includes(f);
+  // its evolution at this level (genome levels: its own proportions and parts, not a rescale; q.features: legend features it grows early)
+  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q, ...(S.levelQ?.[level] || {}) }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => (legend && S.legend.includes(f)) || (q.features || []).includes(f);
+  const feats = S.levelFeatures?.[level];
   const sz = k => S.sizes[k][level]; // its template's size curves (art/genome/templates.js): baby, young, adult, legend
   const m = new Model();
   const hr = q.hr * sz("head") * (st.head / .44) ** .5, len = q.len * sz("len") * st.long;
   const legK = sz("legK");
   const bob = frame ? -.04 : 0, top = 1 + bob, chest = q.chest * sz("chestDeep") * sz("chestBig") / legK + bob, tuck = q.tuck * sz("tuck") / legK + bob; // a big one's deeper chest and belly
   const bw = q.bw * sz("body") * (q.legW > 1.2 ? 1.15 : 1), lw = .06 * q.legW * sz("limbA") * sz("limbB");
-  const hump = q.back === "hump" ? .1 * (q.humpK ?? 1) : 0, arch = q.back === "arch" ? .1 : 0, front = q.front ?? 1; // front: a heavier front (an adult boar's)
+  const hump = q.back === "hump" ? q.hump ?? .1 * (q.humpK ?? 1) : 0, arch = q.back === "arch" ? .1 : 0, front = q.front ?? 1; // front: a heavier front (an adult boar's)
   // ---- markings, painted by where a point is on the body ----
   const bellyY = chest + .12;
   const paintBody = p => {
@@ -232,7 +233,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   // ---- legendary features ----
   m.part = "body";
   const backAt = t => [-len * .9 + t * len * 1.65, top + hump * Math.max(0, 1 - Math.abs(t - .8) * 3) + arch * (1 - Math.abs(t - .4) * 2), 0];
-  if (lv?.features) evolve3d(m, lv.features, { H, hr, sn, L, Dm, tuskTips, backAt, len, top, chest, tuck, bw, frame });
+  if (feats?.length) evolve3d(m, feats, { H, hr, sn, L, Dm, tuskTips, backAt, len, top, chest, tuck, bw, frame });
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [len * .2, top, side * bw * .5], side, 1.15, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("mane") || has("flames")) for (let i = 0; i < 7; i++) { const t = i / 6, b = v3.lerp(v3.add(H, [-hr * .5, hr * .3, 0]), backAt(.55), t), h = [.4, .3, .45, .28, .38, .25, .3][i], up = v3.norm([-.35 - (frame ? .1 : 0), 1, 0]); m.flat(v3.add(b, v3.mul(up, h * .5)), [1, 0, 0], up, h * .32, h * .55, masks.flame(i % 2 ? M.MAGIC : M.MAGIC2, M.MAGIC2), { group: 60 + i % 2, extra: true }); }
   if (has("tails")) for (let i = 0; i < 7; i++) { m.part = "tail"; const a = Math.PI * (.55 + i * .08), z = (i - 3) * .1, e = v3.add(tb, [Math.cos(a) * .9, Math.sin(a) * .85, z]); m.chain([[...tb, .1], [...v3.lerp(tb, e, .5), .17], [...e, .08]], i % 2 ? M.BODY2 : M.BODY, { group: 70, extra: true }); m.ell(e, [.09, .09, .09], M.MAGIC2, { group: 71, extra: true }); }
