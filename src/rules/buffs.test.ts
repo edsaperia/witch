@@ -42,7 +42,7 @@ describe("legend buffs", () => {
     expect(b.treetopSpeed).toBeCloseTo(t.treetopSpeed * B.species.hare.value);
     expect(b.invite.talkTime[2]).toBeCloseTo(t.invite.talkTime[2] * B.species.fox.value);
     expect(b.berries.cost.scale).toBeCloseTo((t.berries.cost.scale ?? 1) * B.species.bear.value); // fewer berries to evolve
-    expect(toEvolve(1, b)).toBe(Math.max(1, Math.round(2.5 * B.species.bear.value)));
+    expect(toEvolve(1, b)).toBe(Math.max(1, Math.round((13.5 / 7.25) * B.species.bear.value))); // a young's gain in fighting value, per berry
     expect(b.party.interval).toBeCloseTo(t.party.interval * B.species.snail.value);
     expect(b.leash).toEqual({ ...t.leash, pace: 1 });
   });

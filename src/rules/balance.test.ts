@@ -63,6 +63,19 @@ describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () =
     expect(simulate(map, { interval: 60, maxWaves: 40, areaLegends: true, happyChance: 1 })).toEqual(happy); // the same every time
   }, 30000);
 
+  it("waits for the witch and her posse to get there before a fight, and records each wave's defence (logistics)", () => {
+    const lg = { witchSpeed: 32, groundTime: 20, posseSpeed: 5.6, route: 1.3 };
+    const near = simulate(map, { interval: 60, maxWaves: 20, areaLegends: true, logistics: lg, player: { growth: 50, fromWave: 0, fightTime: 30 } });
+    const slow = simulate(map, { interval: 60, maxWaves: 20, areaLegends: true, logistics: { ...lg, posseSpeed: 1 }, player: { growth: 50, fromWave: 0, fightTime: 30 } });
+    expect(slow.survived).toBeLessThanOrEqual(near.survived); // a slow posse can't save as much
+    expect(near.defences.length).toBeGreaterThan(5);
+    for (const d of near.defences) {
+      expect(d.posseAt).toBeGreaterThanOrEqual(d.announced);
+      expect(d.witchAt).toBeLessThanOrEqual(d.posseAt + lg.groundTime + 1e-9); // she flies far faster than they walk
+    }
+    expect(simulate(map, { interval: 60, maxWaves: 20, areaLegends: true }).defences).toEqual([]); // only with logistics
+  }, 30000);
+
   it("models the pacing variants: attrition on the march and the director's reinforcements", () => {
     const base = simulate(map, { interval: 300, maxWaves: 30 });
     const scatter = simulate(map, { interval: 300, maxWaves: 30, marchOn: 0 });
