@@ -58,12 +58,11 @@
     #zoom-in, #zoom-out { width: 46px; height: 46px; font-size: 22px; right: 42px; }
     #zoom-in { bottom: 186px; }
     #zoom-out { bottom: 128px; }
-    #sigil, #spell, #cycle, #dash { width: 62px; height: 62px; font-size: 12px; }
+    #sigil, #spell, #dash { width: 62px; height: 62px; font-size: 12px; }
     #dash { right: 126px; bottom: 104px; }
     .touch #actionbar { display: none !important; }
     #sigil { right: 126px; bottom: 30px; }
     #spell { right: 200px; bottom: 30px; }
-    #cycle { right: 200px; bottom: 104px; }
     #bubbles { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
     /* Pixel speech bubbles: an outline only (no fill), one game pixel thick (--px), its corners
        notched, a stepped tail; the emoji in it are pixel sprites (see src/render/leash.ts). */
@@ -73,11 +72,12 @@
     .bubble::after { content: ""; position: absolute; left: 50%; top: 100%; width: var(--px); height: var(--px); background: var(--ink); box-shadow: 0 var(--px) 0 var(--ink), calc(var(--px) * -1) calc(var(--px) * 2) 0 var(--ink); }
     .bubble canvas { display: block; image-rendering: pixelated; }
     .bubble.on { display: block; }
-    /* A sleeping legend's dream (the first quest): a rounder thought bubble, the sigil it wants in its level's variant. */
-    .bubble.dream { --ink: rgba(225, 215, 255, .85); padding: 4px 6px; transform-origin: 50% 100%; background: rgba(14, 10, 30, .72); border-radius: 12px; }
-    .bubble.dream::before { border-radius: 12px; border-width: 2px; }
-    .bubble.dream::after { width: 5px; height: 5px; border-radius: 50%; box-shadow: -5px 7px 0 -1px var(--ink); }
-    .bubble.dream canvas { width: 44px; height: 44px; margin: 0 auto; }
+    /* A sleeping legend's dream (the first quest): the same pixel bubble, a legend's size (--px by level:
+       bubblePx in src/render/leash.ts), darkly filled, holding the sigil it wants in its level's variant.
+       A nightmare (restless: #87) shows its one face (sad to angry) below the sigil, its ink reddening. */
+    .bubble.dream { --ink: rgba(225, 215, 255, .85); transform-origin: 50% 100%; display: flex; flex-direction: column; align-items: center; gap: var(--px); }
+    .bubble.dream::before { background: rgba(14, 10, 30, .62); z-index: -1; }
+    .bubble.dream.nightmare::before { background: rgba(40, 6, 12, .7); }
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
     .bubble .bar i { display: block; height: 100%; background: #ff7fd0; }
   </style>
@@ -87,7 +87,7 @@
   <div id="seed"></div>
   <div id="version"></div>
   <div id="debug"></div>
-  <div id="fight-knobs"><span>fight scale [ ]</span><input type="range" name="scale" min="0.25" max="3" step="0.05"><span class="scale"></span><span>fight speed ; '</span><input type="range" name="speed" min="0.25" max="3" step="0.05"><span class="speed"></span><span>momentum , .</span><input type="range" name="momentum" min="0.25" max="3" step="0.05"><span class="momentum"></span><button type="button">reset fight scale, speed and momentum</button></div>
+  <div id="fight-knobs"><span>fight scale [ ]</span><input type="range" name="scale" min="0.25" max="3" step="0.05"><span class="scale"></span><span>fight speed ; '</span><input type="range" name="speed" min="0.25" max="3" step="0.05"><span class="speed"></span><span>momentum , .</span><input type="range" name="momentum" min="0.25" max="3" step="0.05"><span class="momentum"></span><button type="button" class="fight-reset">reset fight scale, speed and momentum</button><span>treetop speed m/s</span><input type="range" name="treetop" min="16" max="160" step="2"><span class="treetop"></span><span>area (?areaSize=)</span><span class="area" style="grid-column: 2 / -1"></span><button type="button" class="world-reset">reset area size and treetop speed (new map)</button></div>
   <div id="debug-buttons"><button id="next-wave" type="button">next wave (N)</button><button id="pause-waves" type="button">pause waves (P)</button><button id="rulers" type="button">rulers (G)</button></div>
   <div id="wave"><div class="fill"></div><div class="label"></div></div>
   <div id="bubbles"><div class="bubble" id="bubble-witch"></div><div class="bubble" id="bubble-creature"><span></span><div class="bar"><i></i></div></div></div>
@@ -99,7 +99,6 @@
     <div class="tbtn" id="zoom-out">−</div>
     <div class="tbtn" id="sigil">sigil</div>
     <div class="tbtn" id="spell">spell</div>
-    <div class="tbtn" id="cycle">cycle</div>
     <div class="tbtn" id="dash">dash</div>
   </div>
   <div id="over"><div class="card"><h1>THE PARTY'S OVER</h1><div>Every soundsystem has fallen.</div><div id="over-stats"></div><button id="again">Play again</button> <button id="fresh">A new forest</button></div></div>
@@ -112,9 +111,9 @@
       <div id="waves"></div>
       <div id="news"></div>
       <div class="keys">
-        <b>Keyboard</b> arrow keys fly · space rises or descends · Q spell (speed boost) · W dash (on the ground) · E puts down / picks up a sigil · R cycles the stack (the bottom sigil to the top) · 1–4 empty slots for now · Z/X or +/− zoom · on the ground she talks to (invites) any creature in range by herself (1 or T turns auto-talk off: then hold Shift to talk) · H hides the action bar · Esc pauses everything (a still for screenshots, with a stamp of where you are; while paused . steps a frame, Shift+. ten; ❚❚ by the volume on touch) · ~ debug · N next wave · P pause waves · I invite nearest (debug) · [ ] fight scale, ; ' fight speed, , . fight momentum (debug: in the ~ panel too)<br>
-        <b>Gamepad</b> left stick flies · A dash · B spell · X sigil · right stick click cycles · Y rises or descends · shoulders zoom · Start pauses<br>
-        <b>Phone</b> drag on the left to fly · the round button rises or descends · go near a creature to talk · sigil puts down or picks up · cycle, spell and dash · three-finger tap for debug
+        <b>Keyboard</b> arrow keys fly · space rises or descends · Q spell (speed boost) · W blink 10 m (on the ground) · E on the ground puts down / picks up a sigil, in the treetops cycles the stack (the bottom sigil to the top) · 1–4 empty slots for now · Z/X or +/− zoom · on the ground she talks to (invites) any creature in range by herself (1 or T turns auto-talk off: then hold Shift to talk) · H hides the action bar · Esc pauses everything (a still for screenshots, with a stamp of where you are; while paused . steps a frame, Shift+. ten; ❚❚ by the volume on touch) · ~ debug · N next wave · P pause waves · I invite nearest (debug) · [ ] fight scale, ; ' fight speed, , . fight momentum (debug: in the ~ panel too)<br>
+        <b>Gamepad</b> left stick flies · A dash · B spell · X sigil (on the ground) or cycle (in the treetops) · Y rises or descends · shoulders zoom · Start pauses<br>
+        <b>Phone</b> drag on the left to fly · the round button rises or descends · go near a creature to talk · sigil puts down or picks up (on the ground) or cycles (in the treetops) · spell and dash · three-finger tap for debug
       </div>
     </div>
   </div>
