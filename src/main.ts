@@ -1,5 +1,7 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { Music } from "./platform/music";
+import { Sfx } from "./platform/sfx";
+import { SfxCues } from "./platform/sfxCues";
 import { musicMix } from "./rules/music";
 import { musicCue, type MusicCue } from "./rules/musicPlan";
 import type { MusicStyle } from "./rules/musicScore";
@@ -335,6 +337,7 @@ const showVolume = () => { volumeIcon.textContent = level === 0 ? "🔇" : level
 volumeRange.addEventListener("input", () => {
   level = +volumeRange.value / 100; showVolume();
   if (music) music.volume = tuning.music.volume * level;
+  sfx?.setVolume(tuning.music.volume * level);
   try { localStorage.setItem("witch.volume", String(level)); } catch { /* fine */ }
 });
 for (const ev of ["pointerdown", "keydown"]) volumeRange.addEventListener(ev, e => e.stopPropagation()); // its own presses and arrow keys don't fly her
@@ -345,10 +348,10 @@ const freeze = new Freeze(game, seed!, typeof __BUILD__ === "string" ? __BUILD__
 freeze.started = () => startEl.style.display === "none";
 
 // Browsers keep sound off until the player presses something: the start screen is that press.
-let audio: AudioContext | null = null, music: Music | null = null;
+let audio: AudioContext | null = null, music: Music | null = null, sfx: Sfx | null = null, sfxCues: SfxCues | null = null;
 function start(): boolean {
   if (!ready || !game.clock.paused || freeze.frozen) return false;
-  try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume * level, musicStyle, seed!, tuning.music.src); } catch { /* no sound yet anyway */ }
+  try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume * level, musicStyle, seed!, tuning.music.src); if (!sfx && tuning.sfx.on) { sfx = new Sfx(audio, tuning.music.volume * level, tuning.sfx, musicStyle.root + 24); sfxCues = new SfxCues(sfx); } } catch { /* no sound yet anyway */ }
   game.clock.paused = false;
   startEl.style.display = "none";
   input.clearPresses();
@@ -404,6 +407,7 @@ function frame(now: number): void {
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
   musicCueNow = musicCue(game, musicCueNow);
   music?.update(musicMix(game, game.witch), musicCueNow, game.clock.time, game.beat, !game.clock.paused);
+  if (!game.clock.paused) sfxCues?.update(game, game.clock.time);
   if (!ready) return;
   // The wave countdown bar: empties toward the next wave.
   const cd = waveCountdown(game.party, game.map, game.clock.time);
