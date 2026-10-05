@@ -124,7 +124,7 @@ export class StoneIndicator {
   private glyphs = new Map<string, { w: number; m: Uint8Array }>();
   private lastFill = 0;
   private flashAt = -Infinity;
-  /** A smaller, dimmer one (`scale`, `opacity`) points at the after-next stone. */
+  /** `scale`, `opacity`: its size and strength (only the next stone has one: Ed, 2026-10-05). */
   constructor(parent: HTMLElement, scale = SCALE, opacity = 1) { this.cue = new PixelCue(parent, scale, opacity); }
 
   /** Point at the next waking stone at (x, z), its area's creature `species` and neon (rgb 0-1);
