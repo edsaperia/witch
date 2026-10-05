@@ -9,12 +9,9 @@
 // 3-way spread, Quick fire half the cooldown, Echo a second burst, Long thread more range, Big heart
 // bigger letters, Charm stronger homing), since the rules don't apply buffs to 💌s yet.
 //   node tools/balance/fightbot.mjs [--seeds 2] [--areas 3] [--waves 1,5,10,20,30] [--builds 0,2,4,7] [--bots circle20,circle35,circle50,kiter,greedy,skilled] [--kite 9] [--blink 5] [--limit 240] [--start babies,young,adults] [--json out.json] | --report a.json,b.json
-import { createServer } from "vite";
+import { openRules, arg, list, mean } from "./lib.mjs";
 import { readFileSync, writeFileSync } from "node:fs";
 
-const arg = (name, def) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : def; };
-const list = s => String(s).split(",");
-const mean = a => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN);
 const say = s => console.log(s);
 
 // Builds: buff count → the invites tuning (each step adds to the last).
@@ -30,8 +27,7 @@ if (arg("report")) rows = list(arg("report")).flatMap(f => JSON.parse(readFileSy
 else {
   const KITE = +arg("kite", 9), BLINK = +arg("blink", 5), START = arg("start") ? (([babies, young, adults]) => ({ babies, young, adults }))(list(arg("start")).map(Number)) : null;
   const SEEDS = +arg("seeds", 2), AREAS = +arg("areas", 3), WAVES = list(arg("waves", "1,5,10,20,30")).map(Number), BUILDS_ON = list(arg("builds", "0,2,4,7")).map(Number), BOTS = list(arg("bots", "circle20,circle35,circle50,greedy")), LIMIT = +arg("limit", 240);
-  const server = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: "custom", logLevel: "error", optimizeDeps: { noDiscovery: true, include: [] } });
-  const load = p => server.ssrLoadModule(p);
+  const { load, close } = await openRules();
   const { TUNING, withTuning } = await load("/src/rules/tuning.ts");
   const { newGame, stepGame } = await load("/src/rules/game.ts");
   const { speedFactor, wanderRange } = await load("/src/rules/creatures.ts");
@@ -150,7 +146,7 @@ else {
     rows.push(r);
     process.stderr.write(`${bot} ${b} buffs w${wv} ${s}/${a} ${r.species}×${r.crowd}: ${r.hits} hits${r.ko ? " KO" : ""}, ${r.time.toFixed(0)} s, ${r.invited} invited\n`);
   }
-  await server.close();
+  await close();
   if (arg("json")) { writeFileSync(arg("json"), JSON.stringify(rows)); process.exit(0); }
 }
 
