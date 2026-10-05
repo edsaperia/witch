@@ -415,7 +415,7 @@ async function main() {
       for (const c of g.creatures) if (c.level > 0 && !c.boss && Math.hypot(c.x - best.x, c.z - best.z) < 150) c.gone = true;
       g.byArea = null;
       // 5 m west of it, facing it (with no cursor, 1 throws the way she faces).
-      g.witch = { ...w, x: best.x - 5, z: best.z, vx: 0, vz: 0, facing: 1 };
+      g.witch = { ...w, x: best.x - 5, z: best.z, vx: 0, vz: 0, facing: 1, seated: false, mode: "ground", lift: 0 };
       g.camera = { ...g.camera, tx: best.x - 5, tz: best.z };
       Object.assign(best, { rest: 99, tx: best.x, tz: best.z });
       return best.id;
