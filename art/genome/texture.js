@@ -61,6 +61,7 @@ export function textureSprite(sp, S, level, st, seed = 1) {
   if (T.kind === "smooth" && !T.contrast) return sp;
   // the style's detail (0: cel shapes, tones by the form with hard edges, no seams; 1: fine strokes and seams): the stylisation ladder's knob
   const D = Math.max(0, Math.min(1, st?.texDetail ?? 1));
+  const styled = !!st?.render && st.render !== "plain";
   const L = TEXTURE_LEVEL, c = Math.max(1.5, T.size * L.size[level] * (1 + (1 - D) * 2)), contrast = T.contrast * L.contrast[level] * D, seam = T.seam * L.seam[level] * D;
   const lf = [-.35, -.75, .55], ll = Math.hypot(...lf); // the form light: above, in front, a little left (as the moon)
   const on = new Uint8Array(w * h);
@@ -112,8 +113,8 @@ export function textureSprite(sp, S, level, st, seed = 1) {
     const s = sum.get(k), f = T.flatten * D;
     let ax = sp.n[i * 3] * (1 - f) + s[0] * f, ay = sp.n[i * 3 + 1] * (1 - f) + s[1] * f, az = sp.n[i * 3 + 2] * (1 - f) + s[2] * f;
     const al = Math.hypot(ax, ay, az) || 1; sp.n[i * 3] = ax / al; sp.n[i * 3 + 1] = ay / al; sp.n[i * 3 + 2] = az / al;
-    let t = tone.get(k);
-    if (D < 1) { // cel: the tone by the pixel's own form, as far as the detail is low (big hard-edged shapes of light and shadow)
+    let t = styled ? 0 : tone.get(k); // (stylised, art/stylise.js lays the tones from these normals: the stamps shape them, seams aside)
+    if (D < 1 && !styled) { // cel: the tone by the pixel's own form, as far as the detail is low (big hard-edged shapes of light and shadow)
       const lit = (sp.n[i * 3] * lf[0] + sp.n[i * 3 + 1] * lf[1] + sp.n[i * 3 + 2] * lf[2]) / ll, steps = T.tones >= 4 ? [.78, .38, .02] : [.72, .2];
       const tp = lit > steps[0] ? -1 : lit > steps[1] ? 0 : steps.length > 2 && lit > steps[2] ? 1 : steps.length > 2 ? 2 : 1;
       if (texHash(i, k, seed) > D) t = tp;

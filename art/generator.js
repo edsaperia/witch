@@ -34,6 +34,8 @@ import { EXPRESSIONS, FACE_KINDS, FACE_DEFAULT, faceUp, faceProblems } from "./g
 export { EXPRESSIONS, FACE_KINDS, FACE_DEFAULT, faceUp, faceProblems };
 import { TEXTURE_KINDS, TEXTURE_DEFAULT, textureOf, textureSprite, textureLumps, textureProblems } from "./genome/texture.js";
 export { TEXTURE_KINDS, TEXTURE_DEFAULT, textureOf, textureSprite, textureLumps, textureProblems };
+import { RENDERINGS, stylise } from "./stylise.js";
+export { RENDERINGS, stylise };
 import { RIG_HEADINGS, RIG_TEMPLATES, rigParts, rigDirection, rigProject } from "./genome/parts.js";
 export { RIG_HEADINGS, RIG_TEMPLATES, rigParts, rigDirection, rigProject };
 import { SILHOUETTE_SIZE, silhouette, silhouetteDistance, silhouetteMirror, silhouetteDistanceEitherWay, silhouettePairs } from "./genome/silhouette.js";
@@ -120,7 +122,7 @@ export const KNOBS = [
   { k: "magicHue", g: "Creatures", label: "Magic glow hue", min: 0, max: 1, step: 0.01, v: 0.5, hue: true },
   { k: "fur", g: "Creatures", label: "Stripes and spots", min: 0, max: 1, step: 0.05, v: 0.5 },
   { k: "texture", g: "Creatures", label: "Fur, feathers and scales (genome/texture.js; 0 off)", min: 0, max: 1, step: 1, v: 1 },
-  { k: "texDetail", g: "Creatures", label: "Texture detail (0 cel shapes, 1 fine strokes)", min: 0, max: 1, step: 0.05, v: 1 },
+  { k: "texDetail", g: "Creatures", label: "Texture detail (0 cel shapes, 1 fine strokes)", min: 0, max: 1, step: 0.05, v: 0.3 },
   { k: "hueShift", g: "Creatures", label: "Hue-shifted ramps (warm lights, red-brown shadows)", min: 0, max: 1, step: 0.05, v: 0 },
   { k: "cloakHue", g: "Witch", label: "Jacket hue", min: 0, max: 1, step: 0.01, v: 0.72, hue: true },
   { k: "hairHue", g: "Witch", label: "Hair hue", min: 0, max: 1, step: 0.01, v: 0.01, hue: true },

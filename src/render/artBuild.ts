@@ -93,7 +93,8 @@ export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear
   const out: Baked[] = [];
   for (const facing of ["towards", "away"]) for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++) {
     const sp = Art.critter(species, level, f, st, facing, gear as null) as { m: ArrayLike<number> };
-    const b = Art.bake(sp, Art.speciesColours(species, st, gear as null), st, st.cOutline, mk) as Baked;
+    const col = Art.speciesColours(species, st, gear as null), r = st.render ?? "bold"; // its rendering: stylised (art/stylise.js: bold or ref) or plain
+    const b = (r === "plain" ? Art.bake(sp, col, st, st.cOutline, mk) : Art.stylise(Art.bake(sp, col, st, "none", mk), r, { makeCanvas: mk })) as Baked;
     if (!gear || Object.keys(gear).every(k => k === "face")) b.eyes = eyeMask(sp.m); // (an expression alone keeps the find-in-the-dark eyes)
     out.push(b);
   }
