@@ -177,7 +177,25 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     for (let i = 0; i < 30; i++) { const [pu, pv] = toPart(x, z); x += (u - pu) * A; z += (v - pv) * A; }
     return [x, z];
   };
-  const partition = makePartition(seed, tuning.borderLayers);
+  // Home first (Ed, 2026-10-05: "Home area should be big enough that the whole circle, centre the
+  // dancefloor, edge the treehouse, is within it - should fix this before generating the rest of
+  // the areas"). Its cell: the one nearest the middle whose centre lies inside its own area, so the
+  // dancefloor stands on its own area's ground. Then its circle: out past the treehouse's footprint
+  // and home.margin more, measured through the warp (its edge mapped into partition space), so
+  // every point of it is home's; the areas round it are cut round it, their centres kept
+  // home.gap of an area beyond it.
+  const mid = Math.floor(n / 2), plain = makePartition(seed, tuning.borderLayers);
+  const ownsSite = (cx: number, cy: number) => { const s = plain.site(cx, cy), c = plain.partition(s[0], s[1]); return c[0] === cx && c[1] === cy; };
+  let centreCell: Cell = [mid, mid];
+  for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) if (ownsSite(mid + dx, mid + dy)) { centreCell = [mid + dx, mid + dy]; break; }
+  const H = tuning.home, homeSite = plain.site(centreCell[0], centreCell[1]), homeWorld = toWorld(homeSite[0], homeSite[1]);
+  const homeRadius = floorClearing(tuning) + tuning.treehouse.distance + tuning.treehouse.clear + H.margin; // metres
+  let homeR = 0;
+  for (let k = 0; k < 96; k++) {
+    const a = (k / 96) * Math.PI * 2, [u, v] = toPart(homeWorld[0] + Math.cos(a) * homeRadius, homeWorld[1] + Math.sin(a) * homeRadius);
+    homeR = Math.max(homeR, Math.hypot(u - homeSite[0], v - homeSite[1]));
+  }
+  const partition = makePartition(seed, tuning.borderLayers, { cell: centreCell, radius: homeR * 1.03, gap: H.gap });
   const lo = -margin, hi = n + margin;
   const neighbours = findNeighbours(partition, lo, hi, 6);
 
@@ -197,12 +215,6 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   }
   const typeOf = (cx: number, cy: number) => types.get(cellKey(cx, cy)) ?? Math.floor(hash2(cx, cy, seed + 17) * typeCount);
 
-  // The middle area: the cell nearest the middle whose centre lies inside its own area, so the
-  // dancefloor stands on its own area's ground.
-  const mid = Math.floor(n / 2);
-  const ownsSite = (cx: number, cy: number) => { const s = partition.site(cx, cy), c = partition.partition(s[0], s[1]); return c[0] === cx && c[1] === cy; };
-  let centreCell: Cell = [mid, mid];
-  for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) if (ownsSite(mid + dx, mid + dy)) { centreCell = [mid + dx, mid + dy]; break; }
   const siteOf = (cx: number, cy: number) => { const s = partition.site(cx, cy), w = toWorld(s[0], s[1]); return { x: w[0], z: w[1] }; };
   const centre = siteOf(centreCell[0], centreCell[1]);
 
