@@ -31,6 +31,8 @@
     @keyframes wave-lost { 0%, 30% { border-color: #ff4060; box-shadow: 0 0 14px #ff4060; } }
     @keyframes wave-lost-fill { 0%, 30% { left: -4px; right: -4px; background: #ff4060; filter: brightness(1.8); } 100% { filter: none; } }
     #wave .loss-pop { position: absolute; right: 16px; transform: translateY(50%); white-space: nowrap; color: #ff5a78; font-weight: bold; font-size: 15px; text-shadow: 0 0 6px #ff2050, 0 1px 0 #000; animation: loss-pop 1.8s ease-out forwards; }
+    #wave .boot-pop { position: absolute; right: 16px; top: 0; white-space: nowrap; color: #8ff0ff; font-size: 13px; text-shadow: 0 0 6px #2bc8ff, 0 1px 0 #000; animation: boot-pop 4s ease-out forwards; }
+    @keyframes boot-pop { 0% { opacity: 0; } 10%, 75% { opacity: 1; } 100% { opacity: 0; } }
     @keyframes loss-pop { 0% { opacity: 0; transform: translateY(50%) scale(1.8); } 12% { opacity: 1; transform: translateY(50%) scale(1); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-120%); } }
     .touch #wave { top: 12%; height: 30%; }
     #over { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(8, 6, 18, .78); z-index: 6; }
@@ -92,7 +94,7 @@
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
     .bubble .bar i { display: block; height: 100%; background: #ff7fd0; }
   </style>
-  <script type="module" crossorigin src="./assets/index-Bs6Gyn7t.js"></script>
+  <script type="module" crossorigin src="./assets/index-TkjJfTWW.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-jTHfrA97.css">
 </head>
 <body>
