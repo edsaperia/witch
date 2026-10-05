@@ -2,7 +2,7 @@
 // type that no neighbour shares, plus a margin of areas round the edge so the forest never
 // visibly ends. World units are metres: x runs east, z runs south, one area cell is areaSize.
 import rawTypes from "../../config/area-types.json";
-import { AREAS } from "../../art/areas.js";
+import { AREAS, HOME_AREA } from "../../art/areas.js";
 import { SCENES as SCENES_RAW, SCENE_BY_ID as SCENE_BY_ID_RAW } from "../../art/scenes.js";
 import { makePartition, type Cell, type Partition } from "./partition";
 import { hash2, rng, smoothstep, vnoise } from "./random";
@@ -50,10 +50,24 @@ export const AREA_TYPES: readonly AreaType[] = (AREAS as unknown as ArtArea[]).m
   groundCover: settings[a.id]?.groundCover ?? { density: 0.5, kinds: ["blades"] },
   layout: a.layout ?? { pattern: "scatter", density: 0.6, clump: 0.3, undergrowth: 0.5 },
 }));
+/** Home's look (Ed, 2026-10-05: "its own custom floor; a pleasant green meadow with flowers"; party
+ *  decorations instead of trees): its ground and flora are its own (art/areas.js HOME_AREA), not one
+ *  of the creature area types; home keeps the type it rolls for the rest (its colour, its sigil). */
+export const HOME_LOOK = AREA_TYPES.length;
+const H_ = HOME_AREA as unknown as ArtArea;
+/** How the ground looks, by an area sample's `look`: the area types, then home's meadow. */
+export const LOOKS: readonly AreaType[] = [...AREA_TYPES, {
+  id: H_.id, name: H_.name, creature: AREA_TYPES[0].creature, text: H_.text, setPiece: "", hasWalls: false,
+  floor: [H_.floor[1], H_.floor[2], H_.floor[3]], treeDensity: 0,
+  groundCover: settings.home?.groundCover ?? { density: 0.9, kinds: ["blades", "clover"] },
+  layout: { pattern: "scatter", density: 0, clump: 0.3, undergrowth: 0 },
+}];
 
 export interface AreaSample {
   cell: Cell;
   type: number;
+  /** How its ground looks (LOOKS): its type, or HOME_LOOK in home's area. */
+  look: number;
   /** 0 at the nearest area centre, about 1 midway between centres: what clears the trees. */
   openness: number;
 }
@@ -69,9 +83,13 @@ export interface ForestMap {
   readonly partition: Partition;
   /** The middle area, whose clearing holds the dancefloor. */
   readonly centreCell: Cell;
+  /** Home's circle (metres round the dancefloor), all home's ground: out past the treehouse. */
+  readonly homeRadius: number;
   readonly dancefloor: { x: number; z: number; radius: number; /** the ring of speakers round it */ speakers: readonly Speaker[] };
   /** The witch's treehouse: its trunk's foot, just beyond the dancefloor's clearing. */
   readonly treehouse: { x: number; z: number };
+  /** The treehouse's front (Ed, 2026-10-05): the foot of its door's side, south (towards the camera), just outside its footprint. */
+  readonly treehouseFront: { x: number; z: number };
   /** The old playgrounds and sports grounds: a handful per map, each in a clearing of its own off
    *  an area's centre; kind is the art's arrangement (playground, tennis, baseball, football, basketball). */
   readonly grounds: readonly Ground[];
@@ -177,7 +195,25 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     for (let i = 0; i < 30; i++) { const [pu, pv] = toPart(x, z); x += (u - pu) * A; z += (v - pv) * A; }
     return [x, z];
   };
-  const partition = makePartition(seed, tuning.borderLayers);
+  // Home first (Ed, 2026-10-05: "Home area should be big enough that the whole circle, centre the
+  // dancefloor, edge the treehouse, is within it - should fix this before generating the rest of
+  // the areas"). Its cell: the one nearest the middle whose centre lies inside its own area, so the
+  // dancefloor stands on its own area's ground. Then its circle: out past the treehouse's footprint
+  // and home.margin more, measured through the warp (its edge mapped into partition space), so
+  // every point of it is home's; the areas round it are cut round it, their centres kept
+  // home.gap of an area beyond it.
+  const mid = Math.floor(n / 2), plain = makePartition(seed, tuning.borderLayers);
+  const ownsSite = (cx: number, cy: number) => { const s = plain.site(cx, cy), c = plain.partition(s[0], s[1]); return c[0] === cx && c[1] === cy; };
+  let centreCell: Cell = [mid, mid];
+  for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) if (ownsSite(mid + dx, mid + dy)) { centreCell = [mid + dx, mid + dy]; break; }
+  const H = tuning.home, homeSite = plain.site(centreCell[0], centreCell[1]), homeWorld = toWorld(homeSite[0], homeSite[1]);
+  const homeRadius = floorClearing(tuning) + tuning.treehouse.distance + tuning.treehouse.clear + H.margin; // metres
+  let homeR = 0;
+  for (let k = 0; k < 96; k++) {
+    const a = (k / 96) * Math.PI * 2, [u, v] = toPart(homeWorld[0] + Math.cos(a) * homeRadius, homeWorld[1] + Math.sin(a) * homeRadius);
+    homeR = Math.max(homeR, Math.hypot(u - homeSite[0], v - homeSite[1]));
+  }
+  const partition = makePartition(seed, tuning.borderLayers, { cell: centreCell, radius: homeR * 1.03, gap: H.gap });
   const lo = -margin, hi = n + margin;
   const neighbours = findNeighbours(partition, lo, hi, 6);
 
@@ -185,24 +221,19 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const types = new Map<string, number>();
   const r = rng(seed * 5 + 1);
   for (let cy = lo; cy < hi; cy++) for (let cx = lo; cx < hi; cx++) {
-    const near = new Set<number>();
+    const near = new Set<number>(), homeKey = cellKey(centreCell[0], centreCell[1]);
     for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+      if (cellKey(cx + dx, cy + dy) === homeKey) continue; // (home looks like none of them: a meadow of its own)
       const t = types.get(cellKey(cx + dx, cy + dy));
       if (t !== undefined) near.add(t);
     }
-    for (const k of neighbours.get(cellKey(cx, cy)) ?? []) { const t = types.get(k); if (t !== undefined) near.add(t); }
+    for (const k of neighbours.get(cellKey(cx, cy)) ?? []) { if (k === homeKey) continue; const t = types.get(k); if (t !== undefined) near.add(t); }
     const free = [...Array(typeCount).keys()].filter(t => !near.has(t));
     const pool = free.length ? free : [...Array(typeCount).keys()];
     types.set(cellKey(cx, cy), pool[Math.floor(r() * pool.length)]);
   }
   const typeOf = (cx: number, cy: number) => types.get(cellKey(cx, cy)) ?? Math.floor(hash2(cx, cy, seed + 17) * typeCount);
 
-  // The middle area: the cell nearest the middle whose centre lies inside its own area, so the
-  // dancefloor stands on its own area's ground.
-  const mid = Math.floor(n / 2);
-  const ownsSite = (cx: number, cy: number) => { const s = partition.site(cx, cy), c = partition.partition(s[0], s[1]); return c[0] === cx && c[1] === cy; };
-  let centreCell: Cell = [mid, mid];
-  for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) if (ownsSite(mid + dx, mid + dy)) { centreCell = [mid + dx, mid + dy]; break; }
   const siteOf = (cx: number, cy: number) => { const s = partition.site(cx, cy), w = toWorld(s[0], s[1]); return { x: w[0], z: w[1] }; };
   const centre = siteOf(centreCell[0], centreCell[1]);
 
@@ -212,7 +243,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const cellSafe = (x: number, z: number) => { const [u, v] = toPart(x, z), r = partition.partitionSafe(u, v); return { cell: r.cell, safe: (r.safe * A) / stretch }; };
   const areaAt = (x: number, z: number): AreaSample => {
     const [u, v] = toPart(x, z), cell = partition.partition(u, v);
-    return { cell, type: typeOf(cell[0], cell[1]), openness: partition.openness(u, v) };
+    return { cell, type: typeOf(cell[0], cell[1]), look: cell[0] === centreCell[0] && cell[1] === centreCell[1] ? HOME_LOOK : typeOf(cell[0], cell[1]), openness: partition.openness(u, v) };
   };
   // An area that rolls a set piece (setPieceChance of those whose type has one; not home).
   const rollsSetPiece = (cx: number, cy: number) => {
@@ -348,9 +379,9 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const remoteness = (cx: number, cy: number) => Math.min(1, Math.hypot(cx - centreCell[0], cy - centreCell[1]) / (n / 2));
   const pad = A * 0.5;
   const map = {
-    seed, tuning, n, margin, areaSize: A, partition, centreCell,
+    seed, tuning, n, margin, areaSize: A, partition, centreCell, homeRadius,
     dancefloor: { x: centre.x, z: centre.z, radius: floorR, speakers: speakerRing(centre, tuning) },
-    treehouse, grounds, scenes,
+    treehouse, treehouseFront: { x: treehouse.x, z: treehouse.z + tuning.treehouse.clear }, grounds, scenes,
     start: { x: treehouse.x, z: treehouse.z + 1 },
     bounds: { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad },
     extent: { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A },

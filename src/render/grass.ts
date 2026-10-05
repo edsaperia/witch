@@ -7,7 +7,7 @@
 // sways by its sway mask (rigid pebbles, litter and mushrooms stay still).
 import * as THREE from "three";
 import * as Art from "../../art/generator.js";
-import { AREA_TYPES } from "../rules/map";
+import { LOOKS } from "../rules/map";
 import type { ForestMap } from "../rules/map";
 import type { Forest } from "../rules/forest";
 import type { Tuning } from "../rules/tuning";
@@ -129,7 +129,7 @@ export class GrassView {
     const cap = t.groundCover.cap, sprites: Baked[] = [];
     // The art's tufts for every area type (#34), with how much each sways: the mean of its sway
     // mask over its drawn pixels (0 for pebbles and litter, most for long grass and rushes).
-    for (const type of AREA_TYPES) {
+    for (const type of LOOKS) { // (the area types and home's meadow)
       const list = Art.bakeTufts(type.id, style) as { kind: string; weight: number; A: Baked["A"]; N: Baked["N"]; S: Baked["A"]; w: number; h: number }[];
       let upTo = 0;
       this.kinds.push(list.map(b => {
@@ -144,7 +144,7 @@ export class GrassView {
       }));
     }
     const anyRushes = this.rushes.find(r => r);
-    for (let i = 0; i < AREA_TYPES.length; i++) this.rushes[i] ??= anyRushes;
+    for (let i = 0; i < LOOKS.length; i++) this.rushes[i] ??= anyRushes;
     this.atlas = packAtlas(sprites, 512);
     this.geo = new THREE.InstancedBufferGeometry();
     const quad = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
