@@ -482,8 +482,9 @@ export class LeashView {
       }
       // Rolling curled up (a hedgehog, a woodlouse): spikes whirling round it.
       if (c.charge?.curl && (c.charge.from === undefined || time >= c.charge.from)) for (let i = 0; i < 14; i++) { // (bigger and brighter: Ed, 2026-10-05)
-        const a = (i / 14) * Math.PI * 2 + time * 14, R = i % 2 ? 1.25 : 0.85; this.standing.add(c.x + Math.cos(a) * R, 0.7 + Math.sin(a) * R * 0.7, c.z + 0.05, i % 2 ? 0.45 : 0.35, dot, 1, 0.9, 0.65, 0.95);
+        const a = (i / 14) * Math.PI * 2 + time * 14, R = i % 2 ? 1.35 : 0.95; this.standing.add(c.x + Math.cos(a) * R, 0.7 + Math.sin(a) * R * 0.7, c.z + 0.3, i % 2 ? 0.6 : 0.45, dot, 0.85, 0.95, 1, 1); // (white-blue: it shows against its own brown spines)
       }
+      if (c.charge?.curl && (c.charge.from === undefined || time >= c.charge.from)) for (let i = 0; i < 20; i++) { const a = (i / 20) * Math.PI * 2 - time * 10; this.flat.add(c.x + Math.cos(a) * 1.6, 0, c.z + Math.sin(a) * 1.25, 0.45, dot, 0.7, 0.85, 1, i % 4 === 0 ? 0.95 : 0.4); } // (a whirling ring on the ground under it)
       // Burrowed (the mole): a mound of earth moving over the ground, flecks thrown up.
       if (c.burrow) for (let i = 0; i < 7; i++) { const a = (i / 7) * Math.PI * 2, q = hash2(c.id, Math.floor(time * 12) + i, 19); this.standing.add(c.x + Math.cos(a) * 0.45, 0.1 + (i === 0 ? 0.25 : 0) + q * 0.12, c.z + Math.sin(a) * 0.3, 0.45, dot, 0.42, 0.3, 0.2, 0.9); }
       // Leaping (the toad): a ring tightening where it'll land.
