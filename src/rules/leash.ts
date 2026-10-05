@@ -44,12 +44,11 @@ export interface LeashState {
 }
 
 export interface LeashControls {
-  /** The sigil button was pressed this frame: place the bottom sigil, or pick one up. */
+  /** The sigil button was pressed this frame: on the ground, place the bottom sigil or pick one up;
+   *  in the treetops, cycle the stack (Ed, 2026-10-05: no cycle button of its own). */
   sigil: boolean;
   /** Debug: invite the nearest invitable creature, however far. */
   inviteNearest?: boolean;
-  /** The cycle button (Ed, 2026-10-04): the bottom sigil of her stack goes to the top, so the next one down is chosen. */
-  cycle?: boolean;
   /** Whether she may talk this frame: always with auto-talk on (the default); with it off, only
    *  while Talk is held (Ed's playtest, 2026-10-04: auto-talk can be turned off). */
   talk?: boolean;
@@ -148,14 +147,15 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     if (n) invite(s, n, n.x, n.z, time);
   }
 
-  // The sigil button: pick up a placed sigil she's over, else put the bottom one down.
-  // Cycle: the bottom sigil (the one the sigil button puts down next) goes to the top, in the air or on the ground.
-  if (c.cycle && s.stack.length > 1) {
+  // The sigil button (Ed, 2026-10-05: "pressing E in treetop mode cycles your sigils... and then you
+  // can't cycle in ground mode"): in the treetops it cycles the stack, the bottom sigil (the one it
+  // puts down next) to the top; on the ground it picks up a placed sigil she's over, else puts the
+  // bottom one down. Sigils go down and come up only on the ground.
+  if (c.sigil && !onGround && s.stack.length > 1) {
     const id = s.stack.pop()!;
     s.stack.unshift(id);
     s.events.push({ kind: "cycled", id, x: witch.x, z: witch.z, at: time });
   }
-  // Sigils go down and come up only on the ground (Ed, 2026-10-05: "You have to land to place sigils"; in the air the button does nothing, no hint).
   if (c.sigil && onGround) {
     let pick = -1, pd = L.pickRadius;
     s.placed.forEach((p, i) => { const d = Math.hypot(p.x - witch.x, p.z - witch.z); if (d <= pd) { pd = d; pick = i; } });
