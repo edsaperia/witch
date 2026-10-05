@@ -95,6 +95,8 @@ export interface Creature {
   restlessness?: number;
   questOpen?: boolean;
   buffed?: boolean;
+  /** A legend winding up a volley: where each shot is aimed, and at whom. */
+  aims?: { x: number; z: number; target: import("./combat").Target }[];
   dazedUntil?: number;
   /** Its 💌 invite meter (0..1 at its last hit) and when that was (rules/affection.ts). */
   affection?: number;

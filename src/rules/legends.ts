@@ -15,7 +15,8 @@ import { hash2 } from "./random";
 export interface LegendsData {
   angryAfter: number; check: number; placeRadius: number;
   relics: { count: number; kinds: string[]; minRemoteness: number; spacing: number; pickRadius: number };
-  attack: { range: number; interval: number; windup: number; damage: number; lobFlight: number; lobRadius: number; beamWidth: number; beamTime: number; beam: string[] };
+  attack: { range: number; interval: number; windup: number; damage: number; targets: number; wornReach: number; lobFlight: number; lobRadius: number; beamWidth: number; beamTime: number; beam: string[] };
+  healTime: number;
 }
 export const LEGENDS = raw as unknown as LegendsData;
 

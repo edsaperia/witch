@@ -10,7 +10,7 @@ import { heldByCombat, spawnCreatures, stepCreaturesNear, stepNotice, wanderRang
 import { Forest } from "./forest";
 import { leashPoint, newLeash, stepLeash, type LeashControls, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
-import { buffing, cheer, placeRelics, relicButton, stepLegendStates, type Relic } from "./legends";
+import { buffing, cheer, LEGENDS, placeRelics, relicButton, stepLegendStates, type Relic } from "./legends";
 import { danceAt } from "./states";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
 import { cellKey, newParty, planAhead, spreadWave, stepParty, type PartyState } from "./party";
@@ -458,14 +458,14 @@ export const dormant = (_g: Game, c: Creature): boolean => !!c.boss && !c.leashe
  *  happy ones shoot from afar (combat: stepLegendAttack); worn down, they go back to sleep. Debug
  *  (O): the nearest made happy. A happy one heals while no enemy is near. */
 function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
-  const time = g.clock.time, W = g.tuning.wildLegends;
+  const time = g.clock.time;
   // Asleep, restless (no kin in its area), angry; happy by a relic (rules/legends.ts, #87).
   stepLegendStates({
     creatures: g.creatures, map: g.map, time, dt: STEP, partified: k => g.party.areas.has(k),
     areaOf: c => { if (c.leashed) { const p = g.leash.placed.find(q => q.id === c.id); return p ? cellKey(g.map.cellSafe(p.x, p.z).cell) : ""; } return cellKey(c.cell); },
   }, ids);
-  // A happy legend heals while no enemy is near (Ed's default, 2026-10-04).
-  for (const id of ids) { const c = g.creatures[id]; if (c.legendState === "happy" && c.hp !== undefined && !c.fight?.target) { c.hp += W.heal * STEP; if (c.hp >= maxHp(c.level)) c.hp = undefined; } }
+  // A happy legend heals to whole over legends.healTime while no enemy is near (balance builder, #80).
+  for (const id of ids) { const c = g.creatures[id]; if (c.legendState === "happy" && c.hp !== undefined && !c.fight?.target) { c.hp += (maxHp(c.level) / LEGENDS.healTime) * STEP; if (c.hp >= maxHp(c.level)) c.hp = undefined; } }
   if (happyNearest) {
     // Debug (O): the nearest sleeping legend made happy, as if a relic were put down by it.
     let best: Creature | null = null, bd = Infinity;

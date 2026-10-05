@@ -301,9 +301,12 @@ function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): boolean
  *  what attacks her or her party (Ed: they engage anything that attacks the witch or them); a
  *  parked one, anything within guard.radius of its sigil. */
 function acquire(w: CombatWorld, c: Creature, x: number, z: number, range: number, attackRange: number, grid: Grid, guarding: boolean, keep?: (o: Creature) => boolean): Target | null {
-  let best: Target | null = null, bd = range;
-  for (const o of grid.near(x, z, range)) {
+  // (an enraged one goes for a happy legend within legends.attack.wornReach: it wears it down)
+  const legReach = sideOf(c) === "enraged" ? LEGENDS.attack.wornReach * FIGHT.scale : 0;
+  let best: Target | null = null, bd = Math.max(range, legReach);
+  for (const o of grid.near(x, z, Math.max(range, legReach))) {
     if (o === c || !targetable(o) || !foes(sideOf(o), sideOf(c)) || truce(c, o) || w.asleep(o) || inviting(w, c, o) || (keep && !keep(o))) continue;
+    if (Math.hypot(o.x - x, o.z - z) > range && !(o.boss && o.legendState === "happy")) continue;
     if (c.leashed && !guarding) {
       const tg = o.fight?.target;
       if (!tg || (tg.kind !== "witch" && !(tg.kind === "creature" && w.creatures[tg.id]?.leashed))) continue;
@@ -720,38 +723,40 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
  *  happy creatures; happy: the enraged), winds up for windup seconds, then lobs (a bomb landing after
  *  lobFlight seconds) or beams (by its species), each hit attack.damage times its level's power for
  *  interval seconds. (Its shots are the wild's when angry, the happy's when happy: foes() does the rest.) */
-function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, data: CombatData, grid: Grid): void {
+function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, _data: CombatData, grid: Grid): void {
   const A = LEGENDS.attack, time = w.time, S = FIGHT.scale, R = A.range * S, angry = c.legendState === "angry", side: State = angry ? "wild" : "happy";
   const f = (c.fight ??= { target: null, readyAt: time + A.interval * 0.5, windupUntil: 0, aimX: 0, aimZ: 0 });
   c.moving = false; c.vx = 0; c.vz = 0; // (it stands where it lay, in its area)
   if (f.windupUntil > 0) {
     if (time < f.windupUntil) return;
     f.windupUntil = 0; f.readyAt = time + A.interval;
-    const damage = data.levels.dps[c.level] * A.interval * A.damage, beam = A.beam.includes(c.species);
-    if (beam) {
-      const ticks = Math.max(1, Math.round(A.beamTime / 0.25));
-      s.beams.push({ id: s.nextShot++, from: c.id, angle: Math.atan2(f.aimZ - c.z, f.aimX - c.x), length: R, width: A.beamWidth * S, until: time + A.beamTime, nextTick: time, tick: 0.25, damage: damage / ticks, side, species: c.species, attack: "legendBeam", target: f.target ?? { kind: "witch", id: 0 } });
-      s.events.push({ kind: "beam", x: c.x, z: c.z, at: time, id: c.id });
-    } else {
-      s.shots.push({ id: s.nextShot++, x: c.x, z: c.z, vx: 0, vz: 0, until: time + A.lobFlight + 1, from: c.id, side, species: c.species, damage, radius: A.lobRadius * S, attack: "legendLob", lob: { fx: c.x, fz: c.z, tx: f.aimX, tz: f.aimZ, at: time, lands: time + A.lobFlight } });
-      s.events.push({ kind: "shot", x: c.x, z: c.z, at: time, id: c.id });
+    const beam = A.beam.includes(c.species);
+    for (const a of c.aims ?? []) {
+      if (beam) {
+        const ticks = Math.max(1, Math.round(A.beamTime / 0.25));
+        s.beams.push({ id: s.nextShot++, from: c.id, angle: Math.atan2(a.z - c.z, a.x - c.x), length: R, width: A.beamWidth * S, until: time + A.beamTime, nextTick: time, tick: 0.25, damage: A.damage / ticks, side, species: c.species, attack: "legendBeam", target: a.target });
+      } else s.shots.push({ id: s.nextShot++, x: c.x, z: c.z, vx: 0, vz: 0, until: time + A.lobFlight + 1, from: c.id, side, species: c.species, damage: A.damage, radius: A.lobRadius * S, attack: "legendLob", lob: { fx: c.x, fz: c.z, tx: a.x, tz: a.z, at: time, lands: time + A.lobFlight } });
     }
+    if (c.aims?.length) s.events.push({ kind: beam ? "beam" : "shot", x: c.x, z: c.z, at: time, id: c.id });
+    c.aims = undefined;
     return;
   }
   if (time < f.readyAt) return;
-  // The nearest it may shoot.
-  let best: Target | null = null, bd = R, bx = 0, bz = 0;
-  if (angry) for (const v of w.witches) { if (!v.onGround || v.down) continue; const d = Math.hypot(v.x - c.x, v.z - c.z); if (d < bd) { bd = d; best = { kind: "witch", id: v.id }; bx = v.x; bz = v.z; } }
+  // The nearest it may shoot, up to attack.targets of them.
+  const found: { d: number; x: number; z: number; target: Target }[] = [];
+  if (angry) for (const v of w.witches) { if (!v.onGround || v.down) continue; const d = Math.hypot(v.x - c.x, v.z - c.z); if (d <= R) found.push({ d, x: v.x, z: v.z, target: { kind: "witch", id: v.id } }); }
   for (const o of grid.near(c.x, c.z, R)) {
     if (o === c || !targetable(o) || truce(c, o) || w.asleep(o)) continue;
     const st = stateOf(o);
     if (angry ? st !== "leashed" : st !== "enraged") continue;
     const d = Math.hypot(o.x - c.x, o.z - c.z);
-    if (d < bd) { bd = d; best = { kind: "creature", id: o.id }; bx = o.x; bz = o.z; }
+    if (d <= R) found.push({ d, x: o.x, z: o.z, target: { kind: "creature", id: o.id } });
   }
-  if (!best) { f.target = null; return; }
-  f.target = best; f.aimX = bx; f.aimZ = bz; f.windupUntil = time + A.windup;
-  c.facing = bx >= c.x ? 1 : -1;
+  if (!found.length) { f.target = null; return; }
+  found.sort((a, b) => a.d - b.d);
+  c.aims = found.slice(0, A.targets).map(({ x, z, target }) => ({ x, z, target }));
+  f.target = c.aims[0].target; f.aimX = c.aims[0].x; f.aimZ = c.aims[0].z; f.windupUntil = time + A.windup;
+  c.facing = f.aimX >= c.x ? 1 : -1;
   s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id });
 }
 

@@ -91,6 +91,20 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(cellKey(g.map.cellSafe(L.x, L.z).cell)).toBe(cellKey(L.cell));
   }), 60000);
 
+  it("fire each volley at up to attack.targets of the nearest (balance builder's values: 10 a hit, every 15 s)", () => withAngryAfter(0.5, () => {
+    const { g, L, mate } = beside();
+    mate!.gone = true;
+    run(g, 1.2);
+    expect(L.legendState).toBe("angry");
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // (her posse only)
+    const posse = [0, 1, 2, 3, 4].map(i => { const k = put(g, L.species === "wolf" ? "boar" : "wolf", 2, L.x + 60 + i * 12, L.z + 30); k.leashed = true; g.leash.placed.push({ id: k.id, x: k.x, z: k.z, at: 0 }); return k; });
+    let volley = 0;
+    run(g, LEGENDS.attack.interval + LEGENDS.attack.windup + 1, idle, () => { if (!volley && g.combat.events.some(e => e.id === L.id && e.at === g.clock.time && (e.kind === "shot" || e.kind === "beam"))) volley = g.combat.shots.filter(q => q.from === L.id).length + g.combat.beams.filter(q => q.from === L.id).length; });
+    expect(volley).toBeGreaterThanOrEqual(2);
+    expect(volley).toBeLessThanOrEqual(LEGENDS.attack.targets);
+    void posse;
+  }), 60000);
+
   it("worn down, go back to sleep (angry or happy), keeping a buff she has from them", () => withAngryAfter(0.5, () => {
     const { g, L, mate } = beside();
     mate!.gone = true;
