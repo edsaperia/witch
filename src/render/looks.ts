@@ -1,5 +1,5 @@
 // The creature states' looks (Ed, issue #87): wild as it is; happy in party clothes but NO glowing
-// collar; leashed in party clothes AND the glowing collar; enraged red-eyed with angry brows over its
+// collar; leashed in party clothes AND the glowing collar; enraged tinted red all over (looks.enragedTint) and red-eyed with angry brows over its
 // head; dazed with stars spinning round its head; legends never in party clothes. Happy animals in an
 // area with a soundsystem dance on the beat (the party bounce). The clothes are baked into the sprite
 // (assets: partyArt with or without the collar); the brows and stars are marks drawn over today's
@@ -10,6 +10,7 @@ import type { Creature } from "../rules/creatures";
 import { LEGEND } from "../rules/creatures";
 import { cellKey } from "../rules/party";
 import { placed } from "./height";
+import type { Tuning } from "../rules/tuning";
 
 export type Look = "wild" | "happy" | "leashed" | "enraged" | "legend";
 
@@ -28,6 +29,12 @@ export function lookOf(c: Creature): Look {
   if (s === "leashed" || c.leashed) return "leashed";
   if (s === "enraged" || c.enraged) return "enraged";
   return isHappy(c) ? "happy" : "wild";
+}
+
+/** Enraged creatures' red tint (Ed, 2026-10-05: "a red tint so that they're easy to tell apart"): tuning looks.enragedTint. */
+export function enragedTint(t: Tuning): [number, number, number, number] {
+  const T = t.looks?.enragedTint ?? { colour: "#ff2a2a", amount: 0.55 }, h = T.colour.replace("#", "");
+  return [parseInt(h.slice(0, 2), 16) / 255, parseInt(h.slice(2, 4), 16) / 255, parseInt(h.slice(4, 6), 16) / 255, T.amount];
 }
 
 export const isDazed = (c: Creature, time: number) => ((c as WithState).dazedUntil ?? -Infinity) > time;
