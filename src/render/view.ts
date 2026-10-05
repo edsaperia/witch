@@ -85,6 +85,9 @@ export class View {
   private heights: HeightField;
   /** The bend the view is easing to (the treetops' when she's rising or up there), for culling. */
   private bendTo = 0;
+  /** How much each wave number shows over the bent horizon (eased), by its area, and when it was last eased. */
+  private numberSeen = new Map<string, number>();
+  private numbersAt = 0;
   /** How far the camera is lifted to see her over a hill in between (metres, eased). */
   private camLift = 0;
   /** The night sky that shows over the bend, in treetop mode. */
@@ -255,7 +258,7 @@ export class View {
     this.strings = new StringLightsView(this.scene, game);
     this.leashView = new LeashView(this.scene, game);
     this.lasers = new Lasers(this.scene, game);
-    this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z), t.treetopHeight);
+    this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z));
     this.scene.add(...this.ley.meshes);
     this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
     this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
@@ -437,6 +440,18 @@ export class View {
     this.box.min.set(x - w / 2 - margin, g - Math.max(d1, d2) - margin, z - h - margin);
     this.box.max.set(x + w / 2 + margin, g - Math.min(d1, d2) + h + margin, z + margin);
     return this.frustum.intersectsBox(this.box) || this.frustumTo.intersectsBox(this.box);
+  }
+
+  /** How much of a thing standing at (x, z), `top` metres tall, shows over the bent ground's
+   *  horizon, 0 to 1: its whole height (1) down to none of it, its top hidden (0); by the same
+   *  test as the culling (overHorizon). */
+  overBulge(x: number, z: number, top: number): number {
+    const B = HEIGHT_UNIFORMS.uBend.value, ahead = Math.max(0, -(z - B.z));
+    if (ahead <= 0 || B.x <= 0) return 1;
+    const g = groundHeight(x, z);
+    let n = 0;
+    for (let i = 0; i < 4; i++) if (this.overHorizon(ahead, g + top * (1 - i / 4), B.x)) n++;
+    return n / 4;
   }
 
   /** Whether something `ahead` metres ahead of the bend's focus, its top `top` metres up, shows
@@ -793,18 +808,36 @@ export class View {
       const P = g.party, pk = `${P.wave}:${P.areas.size}:${P.ruined?.size ?? 0}:${P.areasPerWave}:${P.next.map(cellKey).join(";")}`;
       if (this.plan.key !== pk) this.plan = { key: pk, waves: wavePlan(P, g.map) };
       const lift = (top: number) => top + WN.lift + up * (t.treetopHeight + WN.lift - top - WN.lift);
+      // Past the bent horizon (Ed, 2026-10-05: "the glowing numbers can be seen past the bend"): a
+      // number shows as much as its stone does over the bulge, by the culling's own test, eased so
+      // it fades out as the stone sinks behind the horizon and in as it rises, never popping.
+      const dt = Math.min(0.1, Math.max(0, time - this.numbersAt)), seen = new Map<string, number>();
+      this.numbersAt = time;
+      const shown = (key: string, x: number, z: number, top: number) => {
+        const target = this.overBulge(x, z, top), was = this.numberSeen.get(key) ?? target;
+        const k = was + (target - was) * Math.min(1, dt * 4);
+        seen.set(key, k);
+        return k;
+      };
+      // On the ground the camera looks steeply down and a near stone's top is often above the
+      // picture: its number is held inside the top of the screen. Only near ones, and never over
+      // the treetops (where it put far stones' numbers in the sky, and on the ground piled far ones up).
+      const pin = (x: number, z: number) => up < 0.5 && Math.hypot(x - w.x, z - w.z) < WN.pinRange;
       for (const m of mc.list) {
         const wave = this.plan.waves.get(m.key);
         if (wave === undefined || Math.hypot(m.x - w.x, m.z - w.z) > range) continue;
-        const species = AREA_TYPES[g.map.typeOf(m.cell[0], m.cell[1])].creature;
-        nums.push({ x: m.x, z: m.z, y: lift((this.markerArt.height.get(species) ?? 0) * this.mpp * scale), wave, colour: this.markerArt.colour.get(species)!, alpha: 1 });
+        const species = AREA_TYPES[g.map.typeOf(m.cell[0], m.cell[1])].creature, top = (this.markerArt.height.get(species) ?? 0) * this.mpp * scale;
+        const k = shown(m.key, m.x, m.z, top);
+        if (k > 0.02) nums.push({ x: m.x, z: m.z, y: lift(top), wave, colour: this.markerArt.colour.get(species)!, alpha: 1, show: k, top, pin: pin(m.x, m.z) });
       }
       for (const a of g.party.areas.values()) {
         if (!a.wave) continue;
-        const s0 = g.map.soundsystemSpot(a.cell[0], a.cell[1]);
+        const s0 = g.map.soundsystemSpot(a.cell[0], a.cell[1]), key = cellKey(a.cell);
         if (Math.hypot(s0.x - w.x, s0.z - w.z) > range) continue;
-        nums.push({ x: s0.x, z: s0.z, y: lift(4), wave: a.wave, colour: SPENT, alpha: WN.spent });
+        const k = shown(key, s0.x, s0.z, 4);
+        if (k > 0.02) nums.push({ x: s0.x, z: s0.z, y: lift(4), wave: a.wave, colour: SPENT, alpha: WN.spent, show: k, top: 4, pin: pin(s0.x, s0.z) });
       }
+      this.numberSeen = seen;
     }
     this.waveNumbers.update(nums, WN.size, this.width / this.height);
     return lights;
@@ -862,7 +895,7 @@ export class View {
       // they could almost be mistaken for scenery"): sunk and mossed over, in a batch of its own
       // with no find-in-the-dark look. Waking, it heaves up out of the ground.
       const W = g.tuning.wildLegends, st = c.boss && !c.leashed ? c.legendState : undefined;
-      const sleeping = st === "asleep" || st === "slept", rising = st === "waking" ? Math.min(1, (time - (c.stateAt ?? 0)) / Math.max(0.1, W.wake * 0.5)) : 1;
+      const sleeping = st === "asleep" || st === "slept", rising = st === "waking" || (st === "happy" && (c.stateAt ?? 0) > 0) ? Math.min(1, (time - (c.stateAt ?? 0)) / Math.max(0.1, W.wake * 0.5)) : 1; // (made happy, it stirs and rises contentedly)
       const art = party ?? woken ?? this.assets.creatureArt(c.species), key = party ? `party-${c.id}` : sleeping ? `sleep-${c.species}` : woken ? `woken-${c.species}` : c.species;
       if (!art) continue;
       arts.set(key, art);
@@ -1021,7 +1054,7 @@ export class View {
   /** Each ring speaker's top, state and power, for its laser (Ed: one each, none from the disco ball). */
   private speakerTops: RingSpeaker[] = [];
   private rings = new SymbolRings();
-  private waveNumbers = new WaveNumbers();
+  readonly waveNumbers = new WaveNumbers();
   /** Each dormant area's wave (wavePlan), worked out again when the party changes. */
   private plan = { key: "", waves: new Map<string, number>() };
   /** When each symbol round each stone appeared (for its flare), by marker. */
@@ -1193,10 +1226,11 @@ export class View {
     this.ground.setSweeps(party.sweeps);
     this.lasers.update(time, party.playing, w.x, w.z, this.speakerTops, g.map.dancefloor);
     {
-      // The ley lines: each stone in its area's sigil colour (home's a pale violet).
-      const P = g.party, M = g.map, home = new THREE.Vector3(0.8, 0.7, 1);
+      // The ley lines: fading from the colour of the area each starts in to that of the area it ends
+      // in (Ed, 2026-10-05), the colour partified areas and soundsystems use: its creature's sigil's.
+      // (advance "wave": it moves on only when the next area's wave arrives, not when its quest is done)
+      const P = t.leyLines.advance === "wave" ? { ...g.party, leyDone: undefined } : g.party, M = g.map, home = new THREE.Vector3(0.8, 0.7, 1);
       this.ley.update(leyKey(P), () => leyChain(P, M, t.leyLines.links + 1), s => {
-        if (s.cell[0] === M.centreCell[0] && s.cell[1] === M.centreCell[1]) return home;
         return this.markerArt.colour.get(AREA_TYPES[M.typeOf(s.cell[0], s.cell[1])].creature) ?? home;
       }, time, canopyShown(w));
     }

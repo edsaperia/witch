@@ -672,15 +672,16 @@ function bough(sp, p, ang, len, w0, w1, st, r, { mat = M.TRUNK, bend = 1, group 
 }
 
 // The base: a flared trunk foot and roots that snake out over the ground.
-function roots(sp, bx, gy, w, st, r, s) {
-  // the foot of the trunk flares out where it meets the ground
-  sp.shape([[bx - w * 1.05, gy], [bx - w * .62, gy - w * .5], [bx - w * .45, gy - w * 1.4], [bx + w * .45, gy - w * 1.4], [bx + w * .62, gy - w * .5], [bx + w * 1.05, gy]], M.TRUNK, { group: 10, round: st.round });
+function roots(sp, bx, gy, w, st, r, s, mat = M.TRUNK) {
+  // the foot of the trunk flares out where it meets the ground, in the trunk's own bark (a smooth
+  // grey beech's foot was brown, a sawn-off stump under a grey column: Ed, 2026-10-04)
+  sp.shape([[bx - w * 1.05, gy], [bx - w * .62, gy - w * .5], [bx - w * .45, gy - w * 1.4], [bx + w * .45, gy - w * 1.4], [bx + w * .62, gy - w * .5], [bx + w * 1.05, gy]], mat, { group: 10, round: st.round });
   if (st.roots <= 0) return;
   const n = Math.round(2 + st.roots * 4);
   for (let i = 0; i < n; i++) {
     const side = i % 2 ? 1 : -1, L = (8 + r() * 16) * s * (.4 + st.roots), lift = (2 + r() * 3) * s;
     const a = [bx + side * w * .2, gy - w * .5], b = [bx + side * (w * .55 + L * .4), gy - lift], c = [bx + side * (w * .5 + L), gy - .5];
-    sp.limb([[...a, w * .55], [...b, w * .28], [...c, 1.2]], M.TRUNK, { group: 11, round: st.round, cap: .5, capEnd: .6 });
+    sp.limb([[...a, w * .55], [...b, w * .28], [...c, 1.2]], mat, { group: 11, round: st.round, cap: .5, capEnd: .6 });
   }
 }
 
@@ -692,6 +693,21 @@ function bark(sp, st, vertical = true) {
     const v = vertical ? vnoise(x / 1.3, y / 6, 21) : vnoise(x / 6, y / 1.3, 21);
     if (v > 1 - st.bark * .42 || hash2(x, y, 4) < st.bark * .05) sp.m[i] = M.BARKD;
     else if (v > 1 - st.bark * .62 && sp.n[i * 3] < -.1) sp.m[i] = M.BARKL;
+  }
+}
+
+// Smooth bark (beech, rowan, hazel): plain, but for a few dark "eyes", short dark arcs across
+// the trunk where old branches fell away, so it reads as bark and not a flat pale slab.
+function smoothBark(sp, r, s) {
+  const pts = [];
+  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x] === M.BARK2) pts.push([x, y]);
+  const n = Math.round(pts.length / (260 * s * s));
+  for (let k = 0; k < n; k++) {
+    const [x, y] = pts[Math.floor(r() * pts.length)], half = Math.max(1, Math.round((1 + r() * 1.5) * s));
+    for (let dx = -half; dx <= half; dx++) {
+      const yy = y + (Math.abs(dx) === half ? -1 : 0), i = yy * sp.w + x + dx; // a little arc: its ends turned up
+      if (yy >= 0 && x + dx >= 0 && x + dx < sp.w && sp.m[i] === M.BARK2) sp.m[i] = M.BARKD;
+    }
   }
 }
 
@@ -908,8 +924,9 @@ function broadleaf(r, st, s, P) {
     if (P.leader) grow(trunk.end, -Math.PI / 2 + (r() - .5) * .2, H * (P.limb || .22) * P.leader, tw * .55, 2);
     if (t === 0 && st.treeHollow) { const h = lerp2(base, trunk.end, .38); sp.ellipse(h[0], h[1], tw * .28, tw * .5, M.NOSE, { round: .3 }); }
   }
-  if (!P.noRoots) roots(sp, bx, gy, tw * Math.sqrt(n), st, r, s * (P.rootK || 1));
-  if (!P.smooth) bark(sp, st); // smooth-barked kinds (beech, rowan, hazel) keep their trunks plain
+  if (!P.noRoots) roots(sp, bx, gy, tw * Math.sqrt(n), st, r, s * (P.rootK || 1), P.trunkMat || M.TRUNK);
+  if (!P.smooth) bark(sp, st); // smooth-barked kinds (beech, rowan, hazel) keep their trunks plain,
+  else smoothBark(sp, r, s); //  marked only with a few dark "eyes" where old branches fell away
   if (st.treeBare) return trim(sp, bx, crownY + 4 * s);
   tips.sort((a, b) => a[1] - b[1]);
   const [ra, rb] = P.clumpR || [12, 18], flat = P.flat || .7, drawn = [];
@@ -4350,6 +4367,23 @@ const EFFECTS = [
   { id: "slowMark", family: "status", plane: "standing", frames: 2, fps: 3, loop: true, metres: [.6, .6], attacks: ["barb", "longbarb", "biglob", "widebeam"] },
   { id: "knockback", family: "status", plane: "standing", frames: 3, fps: 12, loop: false, metres: [1.6, 1], attacks: ["maul", "quake"] },
   { id: "dust", family: "status", plane: "standing", frames: 4, fps: 10, loop: false, metres: [1.2, .7], attacks: ["maul", "quake"] },
+  // Stage 5's pulses, web, moves, states and traits (the bug hunter's list, #58)
+  { id: "screechRing", family: "pulse", plane: "ground", frames: 5, fps: 12, loop: false, metres: [5.6, 5.6], radius: 2.6, attacks: [] },
+  { id: "upheavalRing", family: "pulse", plane: "ground", frames: 5, fps: 10, loop: false, metres: [6, 6], radius: 2.8, attacks: [] },
+  { id: "slamRing", family: "pulse", plane: "ground", frames: 5, fps: 10, loop: false, metres: [5.2, 5.2], radius: 2.4, attacks: [] },
+  { id: "webGlob", family: "projectile", plane: "standing", frames: 2, fps: 10, loop: true, metres: [.9, .6], attacks: [] },
+  { id: "webSplat", family: "hit", plane: "ground", frames: 1, fps: 1, loop: true, metres: [1.6, 1.6], attacks: [] },
+  { id: "moleMound", family: "move", plane: "standing", frames: 4, fps: 10, loop: true, metres: [1.2, .8], attacks: [] },
+  { id: "chargeDust", family: "move", plane: "standing", frames: 4, fps: 12, loop: true, metres: [2, 1], attacks: [] },
+  { id: "stunStars", family: "status", plane: "standing", frames: 4, fps: 8, loop: true, metres: [1.2, .6], attacks: [] },
+  { id: "hitStrong", family: "hit", plane: "standing", frames: 3, fps: 10, loop: false, metres: [1.4, 1.4], attacks: [] },
+  { id: "hitResisted", family: "hit", plane: "standing", frames: 3, fps: 12, loop: false, metres: [.8, .8], attacks: [] },
+  { id: "traitFlier", family: "trait", plane: "standing", frames: 1, fps: 1, loop: true, metres: [.75, .75], attacks: [] },
+  { id: "traitArmoured", family: "trait", plane: "standing", frames: 1, fps: 1, loop: true, metres: [.75, .75], attacks: [] },
+  { id: "traitSwarm", family: "trait", plane: "standing", frames: 1, fps: 1, loop: true, metres: [.75, .75], attacks: [] },
+  { id: "traitHeavy", family: "trait", plane: "standing", frames: 1, fps: 1, loop: true, metres: [.75, .75], attacks: [] },
+  { id: "traitNimble", family: "trait", plane: "standing", frames: 1, fps: 1, loop: true, metres: [.75, .75], attacks: [] },
+  { id: "traitBurrower", family: "trait", plane: "standing", frames: 1, fps: 1, loop: true, metres: [.75, .75], attacks: [] },
 ];
 const EFFECT_BY_ID = Object.fromEntries(EFFECTS.map(e => [e.id, e]));
 // Which effects each attack uses: what flies (or the beam's parts), its telegraph, where it lands, and what it leaves on the target.
@@ -4365,21 +4399,27 @@ const ATTACK_EFFECTS = {
   beam: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], beam: ["beamShortStart", "beamShortLoop", "beamShortEnd"], hit: "hitSpark" },
   widebeam: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], beam: ["beamLongStart", "beamLongLoop", "beamLongEnd"], hit: "hitSparkBig", status: ["slowRing", "slowMark"] },
   quake: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "quakeRing", hit: "hitSparkBig", status: ["knockback", "dust"] },
-  // Stage 5's pulses, webs and the legends' moves: stand-ins from the art above until their own (a follow-up: screech waves, an upheaval,
-  // a slam, web globs, a nova, a spin, a charge's dust, stun stars, "!!" and "tink" marks, trait marks)
-  screech: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "quakeRing", hit: "hitSpark" },
-  bigscreech: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "quakeRing", hit: "hitSpark", status: ["slowRing", "slowMark"] },
-  upheaval: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "quakeRing", hit: "hitSpark", status: ["dust"] },
-  bigupheaval: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "quakeRing", hit: "hitSparkBig", status: ["knockback", "dust"] },
-  slam: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "quakeRing", hit: "hitSparkBig", status: ["dust"] },
-  bigslam: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "quakeRing", hit: "hitSparkBig", status: ["knockback", "dust"] },
-  web: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "spit", hit: "hitSpark" },
-  bigweb: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "spit", hit: "hitSpark", status: ["slowRing", "slowMark"] },
+  // Stage 5's pulses (the bat's screech, the mole's upheaval, the toad's slam: smaller rings, their reach shown by quakeReach scaled to the
+  // radius), webs, and the legends' moves (from the art above)
+  screech: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "screechRing", hit: "hitSpark" },
+  bigscreech: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "screechRing", hit: "hitSpark", status: ["slowRing", "slowMark"] },
+  upheaval: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "upheavalRing", hit: "hitSpark", status: ["dust"] },
+  bigupheaval: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "upheavalRing", hit: "hitSparkBig", status: ["knockback", "dust"] },
+  slam: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "slamRing", hit: "hitSparkBig", status: ["dust"] },
+  bigslam: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "slamRing", hit: "hitSparkBig", status: ["knockback", "dust"] },
+  web: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "webGlob", hit: "webSplat" },
+  bigweb: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "webGlob", hit: "webSplat", status: ["slowRing", "slowMark"] },
   legendSlam: { windup: "windupFlash", telegraph: ["quakeReach"], pulse: "quakeRing", hit: "hitSparkBig", status: ["knockback", "dust"] },
   legendNova: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "mote", hit: "hitSparkBig" },
   legendSpin: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], beam: ["beamLongStart", "beamLongLoop", "beamLongEnd"], hit: "hitSparkBig" },
   legendCharge: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], hit: "hitSparkBig", status: ["knockback", "dust"] },
 };
+// Effects for what creatures do and are, beyond their attacks (Stage 5): a burrower's moving mound, a charge's dust, a stunned creature's
+// stars, a strong hit ("!!", gold) and a resisted one ("tink", a grey glance), and each trait's mark (about 12 px, shown by the health bar).
+const STATE_EFFECTS = { burrow: "moleMound", charge: "chargeDust", stun: "stunStars", strongHit: "hitStrong", resisted: "hitResisted",
+  traits: { flier: "traitFlier", armoured: "traitArmoured", swarm: "traitSwarm", heavy: "traitHeavy", nimble: "traitNimble", burrower: "traitBurrower" } };
+// the tint each trait's mark is drawn in (its pixels in the tint mask), and the strong hit's gold
+const TRAIT_TINTS = { flier: [150, 210, 255], armoured: [190, 190, 205], swarm: [255, 150, 70], heavy: [205, 150, 95], nimble: [140, 255, 140], burrower: [215, 175, 110], strongHit: [255, 205, 60], resisted: [170, 170, 180] };
 // each effect's attacks, kept in step with ATTACK_EFFECTS
 for (const [atk, fx] of Object.entries(ATTACK_EFFECTS)) for (const id of Object.values(fx).flat()) if (!EFFECT_BY_ID[id].attacks.includes(atk)) EFFECT_BY_ID[id].attacks.push(atk);
 // Species whose shots aren't the plain glob: the glowing ones throw motes, the raven feathers (its long shots, by level).
@@ -4389,7 +4429,7 @@ const SPECIES_PROJECTILE = { moth: "mote", glowworm: "mote", bat: "mote", raven:
 function effectColours(tint) {
   const t = tint ? tint.map(v => v / 255) : [1, 1, 1], mix = (k, w) => t.map(v => Math.round(255 * Math.min(1, k * (v * (1 - w) + w))));
   return { [CORE]: mix(1, .75), [BODY]: mix(1, .2), [EDGE]: mix(.78, 0), [HALO]: mix(.5, 0), [RIM]: mix(.16, 0),
-    [M.STONE]: [150, 146, 140], [M.STONED]: [92, 88, 86], [M.TRUNK]: [104, 70, 44], [M.BARKL]: [150, 108, 66], [M.BELLY]: [232, 228, 214], [M.NOSE]: [12, 10, 16], [M.LEAF]: [92, 138, 70] };
+    [M.STONE]: [150, 146, 140], [M.STONED]: [92, 88, 86], [M.TRUNK]: [104, 70, 44], [M.BARKL]: [150, 108, 66], [M.BELLY]: [232, 228, 214], [M.NOSE]: [12, 10, 16], [M.LEAF]: [92, 138, 70], [M.WEB]: [222, 226, 236] };
 }
 
 // ---- drawing ----
@@ -4533,6 +4573,76 @@ const DRAW = {
     for (let j = 0; j < 2; j++) c.line(c.w * .7 * k + c.w * .1, cy + (j ? 1 : -1) * c.h * .3, c.w * .85 * k + c.w * .1, cy, Math.max(1, 1.5 * S), BODY); // a chevron pointing on
     return { impact: [c.w * .16, cy] };
   },
+  screechRing(c, f, S) { // the bat's screech: sound ripples running out, three thin rings, broken into arcs
+    const cx = c.w / 2, cy = c.h / 2, R0 = c.w / 2 - 2, k = (f + 1) / 5;
+    for (let j = 0; j < 3; j++) { const R = R0 * (k - j * .18); if (R < R0 * .12) continue; c.ring(cx, cy, R, Math.max(1, S), j === 0 ? CORE : j === 1 ? BODY : EDGE, { keep: a => Math.floor(((a + Math.PI) / (Math.PI * 2)) * 12 + j * .5 + f * .3) % 3 !== 2 }); }
+    return { radiusPx: R0 };
+  },
+  upheavalRing(c, f, S) { // the mole's upheaval: earth heaving out in a ring of clods, cracks under it
+    const cx = c.w / 2, cy = c.h / 2, R0 = c.w / 2 - 2, k = (f + 1) / 5, R = R0 * (.25 + .75 * k);
+    c.ring(cx, cy, R, 2 * S, f < 4 ? BODY : EDGE);
+    for (let j = 0; j < 14; j++) { const a = (j / 14) * Math.PI * 2 + hash2(j, 3, 5) * .4, r = R * (.85 + .25 * hash2(j, f, 7)); c.disc(cx + Math.cos(a) * r, cy + Math.sin(a) * r, Math.max(1, (1.4 + hash2(j, 2, 9)) * S * (1 - k * .4)), j % 2 ? M.STONED : M.TRUNK, { ball: true, tint: false }); }
+    for (let j = 0; j < 5; j++) { const a = (j / 5) * Math.PI * 2 + 1, r2 = R * .8; c.line(cx + Math.cos(a) * R0 * .08, cy + Math.sin(a) * R0 * .08, cx + Math.cos(a + .2) * r2, cy + Math.sin(a + .2) * r2, Math.max(1, S), EDGE); }
+    return { radiusPx: R0 };
+  },
+  slamRing(c, f, S) { // the toad's slam: a hard ring and a flash at the middle, short cracks
+    const cx = c.w / 2, cy = c.h / 2, R0 = c.w / 2 - 2, k = (f + 1) / 5, R = R0 * (.2 + .8 * k);
+    if (f < 2) glow(c, cx, cy, R0 * (.22 - f * .06));
+    c.ring(cx, cy, R, (3.5 - k * 2) * S, f < 4 ? CORE : BODY); c.ring(cx, cy, R - 3 * S, Math.max(1, S), EDGE);
+    for (let j = 0; j < 8; j++) { const a = (j / 8) * Math.PI * 2 + .2; c.line(cx + Math.cos(a) * R * .35, cy + Math.sin(a) * R * .35, cx + Math.cos(a) * R * .7, cy + Math.sin(a) * R * .7, Math.max(1, S), BODY); }
+    return { radiusPx: R0 };
+  },
+  webGlob(c, f, S) { // a ball of silk (pale, its own colour) wound round a glowing core, strands trailing
+    const cx = c.w * .62, cy = c.h / 2, r = c.h * .36;
+    glow(c, cx, cy, r * .55);
+    for (let j = 0; j < 5; j++) { const a = j * 1.3 + f * .4; c.line(cx + Math.cos(a) * r, cy + Math.sin(a) * r, cx - Math.cos(a) * r, cy - Math.sin(a) * r, S, M.WEB, { tint: false }); }
+    c.ring(cx, cy, r, S, M.WEB);
+    for (let j = 0; j < 3; j++) c.line(cx - r, cy + (j - 1) * r * .5, 0, cy + (j - 1) * r * (.8 + .3 * f), S, j === 1 ? EDGE : M.WEB, { tint: j === 1 });
+    return { tail: [0, cy] };
+  },
+  webSplat(c, f, S) { // a splat of web on the ground where it hit: spokes and a spiral, glowing faintly
+    const cx = c.w / 2, cy = c.h / 2, R = c.w / 2 - 2 - S;
+    for (let j = 0; j < 8; j++) { const a = j * Math.PI / 4 + .2; c.line(cx, cy, cx + Math.cos(a) * R, cy + Math.sin(a) * R, Math.max(1, S), EDGE); }
+    for (const k of [.35, .65, .92]) c.ring(cx, cy, R * k, Math.max(1, S), k > .9 ? BODY : EDGE);
+    glow(c, cx, cy, Math.max(1.5, R * .15));
+    return { radiusPx: R };
+  },
+  moleMound(c, f) { // a mound of earth racing over the ground, clods flying off it (earth's own colours: it doesn't glow)
+    const cx = c.w / 2, by = c.h - 1, rx = c.w * .36, ry = c.h * .48;
+    for (let y = 0; y < c.h; y++) for (let x = 0; x < c.w; x++) { const u = (x + .5 - cx) / rx, v = (by - y - .5) / ry; if (v < 0 || u * u + v * v > 1) continue; const lump = hash2(Math.floor((x + f * 2) / 3), Math.floor(y / 3), 6); c.put(x, y, lump < .35 ? M.STONED : lump < .7 ? M.TRUNK : M.BARKL, [u * .7, -v * .7, .6], false); }
+    for (let j = 0; j < 4; j++) { const t = ((f + j * 1.3) % 4) / 4, x = cx - rx * (.6 + .5 * t) * (j % 2 ? 1 : -1) * (j < 2 ? 1 : .6), y = by - ry * (1.1 + Math.sin(t * Math.PI) * .6); c.disc(x, y, 1.2, j % 2 ? M.TRUNK : M.STONED, { ball: true, tint: false }); }
+    c.ring(cx, by + 1, Math.min(rx, ry * 2) * .95, 1, EDGE, { sy: ry / rx, keep: a => a < -.3 && a > -Math.PI + .3 });
+    return { base: [cx, by] };
+  },
+  chargeDust(c, f) { // the dust a charge kicks up, streaming out behind (left; mirror for a charge to the left)
+    for (let k = 0; k < 7; k++) { const t = ((k + f * .5) % 7) / 7, x = c.w * (.85 - t * .8), y = c.h - 2 - t * c.h * .35 - Math.sin(k * 2.1) * 2, r = c.h * (.14 + .22 * t); c.disc(x, y, r, M.STONE, { ball: true, tint: false, mat: (u, v) => v < -.25 ? M.BELLY : M.STONE }); }
+    return { base: [c.w * .9, c.h - 1] };
+  },
+  stunStars(c, f, S) { // three little stars circling over its head
+    const cx = c.w / 2, cy = c.h / 2, rx = c.w * .36, ry = c.h * .26;
+    for (let j = 0; j < 3; j++) { const a = f * Math.PI / 6 + j * Math.PI * 2 / 3, x = cx + Math.cos(a) * rx, y = cy + Math.sin(a) * ry, s = (Math.sin(a) > 0 ? 2.2 : 1.6) * (S > 1 ? S * 1.4 : 1); c.disc(x, y, Math.max(.5, S * .6), CORE); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) c.line(x, y, x + dx * s, y + dy * s, Math.max(1, S * .8), BODY, { taper: .5 }); }
+    return { base: [cx, c.h - 1] };
+  },
+  hitStrong(c, f, S) { // a strong hit: a gold burst and "!!" over it
+    const cx = c.w / 2, cy = c.h * .58, R = c.w * .42 * [.6, 1, .9][f];
+    for (let j = 0; j < 8; j++) { const a = (j / 8) * Math.PI * 2 + .2; c.line(cx + Math.cos(a) * R * .4, cy + Math.sin(a) * R * .4, cx + Math.cos(a) * R, cy + Math.sin(a) * R, Math.max(1, 1.5 * S), f < 2 ? BODY : EDGE); }
+    const h = c.h * .34, w = Math.max(2, c.w * .08), top = c.h * .1 + (f === 0 ? 2 : 0);
+    for (const dx of [-1, 1]) { const x = cx + dx * w * 1.4; c.line(x, top, x, top + h, w, CORE); c.disc(x, top + h + w * 2.4, w * .6, CORE); }
+    return {};
+  },
+  hitResisted(c, f, S) { // a resisted hit: "tink", a small grey glance, a chip flying off
+    const cx = c.w * .45, cy = c.h * .55, k = [.4, .8, 1][f];
+    c.line(cx - c.w * .3 * k, cy, cx + c.w * .3 * k, cy, Math.max(1, S), f < 2 ? BODY : EDGE); c.line(cx, cy - c.h * .3 * k, cx, cy + c.h * .3 * k, Math.max(1, S), f < 2 ? BODY : EDGE);
+    c.disc(cx, cy, Math.max(.5, S * .6), CORE);
+    c.disc(cx + c.w * (.18 + .25 * k), cy - c.h * (.15 + .25 * k), Math.max(1, S * .7), EDGE); // the chip
+    return {};
+  },
+  traitFlier(c, f, S) { const cx = c.w / 2, cy = c.h * .55; for (const s of [-1, 1]) { c.line(cx, cy, cx + s * c.w * .42, cy - c.h * .3, Math.max(1, S * 1.2), BODY); c.line(cx + s * c.w * .1, cy + 1, cx + s * c.w * .4, cy - c.h * .05, Math.max(1, S), EDGE); } c.put(cx, cy, CORE); return {}; }, // a pair of wings
+  traitArmoured(c, f, S) { const cx = c.w / 2; for (let y = 1; y < c.h - 1; y++) { const t = (y - 1) / (c.h - 3), hw = c.w * .4 * (t < .5 ? 1 : 1 - (t - .5) * 1.6); for (let x = Math.ceil(cx - hw); x < cx + hw; x++) c.put(x, y, Math.abs(x + .5 - cx) > hw - 1.5 * S || y < 1 + S ? BODY : EDGE); } c.line(cx, 2, cx, c.h - 3, 1, CORE); return {}; }, // a shield
+  traitSwarm(c, f, S) { for (const [u, v] of [[.3, .35], [.7, .3], [.5, .72]]) glow(c, c.w * u, c.h * v, Math.max(1.2, c.w * (S > 1 ? .17 : .13))); return {}; }, // three dots
+  traitHeavy(c, f, S) { const cx = c.w / 2; c.ring(cx, c.h * .22, c.w * .12, Math.max(1, S), BODY); for (let y = Math.floor(c.h * .35); y < c.h - 1; y++) { const t = (y - c.h * .35) / (c.h * .62), hw = c.w * (.22 + .2 * t); for (let x = Math.ceil(cx - hw); x < cx + hw; x++) c.put(x, y, y > c.h - 2 - S || Math.abs(x + .5 - cx) > hw - S ? BODY : EDGE); } return {}; }, // a weight
+  traitNimble(c, f, S) { const pts = [[.62, .05], [.32, .52], [.55, .52], [.38, .95]]; for (let j = 0; j + 1 < pts.length; j++) c.line(c.w * pts[j][0], c.h * pts[j][1], c.w * pts[j + 1][0], c.h * pts[j + 1][1], Math.max(1, S * 1.4), j === 1 ? CORE : BODY); return {}; }, // a lightning bolt
+  traitBurrower(c, f, S) { const cx = c.w / 2, by = c.h - 2; for (let y = Math.floor(c.h * .55); y <= by; y++) { const t = (by - y) / (by - c.h * .55), hw = c.w * .42 * Math.sqrt(1 - t * t); for (let x = Math.ceil(cx - hw); x < cx + hw; x++) c.put(x, y, EDGE); } c.line(cx, 1, cx, c.h * .5, Math.max(1, S), BODY); for (const s of [-1, 1]) c.line(cx, c.h * .5, cx + s * c.w * .18, c.h * .32, Math.max(1, S), BODY); return {}; }, // a mound, an arrow down into it
   dust(c, f) { // a puff of dust at its feet (lit, not glowing; drawn in stone greys)
     for (let k = 0; k < 6; k++) { const a = Math.PI * (.05 + .9 * k / 5), r = c.w * (.12 + .3 * (f + 1) / 4), x = c.w / 2 + Math.cos(a) * r, y = c.h - 2 - Math.sin(a) * r * .5, rr = c.h * (.22 - f * .03); if (rr > .5) c.disc(x, y, rr, M.STONE, { ball: true, tint: false, mat: (u, v) => v < -.2 ? M.BELLY : M.STONE }); }
     return { base: [c.w / 2, c.h - 1] };
@@ -6118,9 +6228,10 @@ const LEGEND_FRAMES = { asleep: 2 };
 // roots, stones, a sapling ("broad" or "pine"), a nest, moss hanging from its antlers, wildflowers. eyes: the groups its
 // glowing legend eyes are in (1 unless given).
 // Batch 1 (the bug hunter's first slice): bat, marten, elk, stoat, owl, snail. Batch 2: wolf, fox,
-// badger, boar, stag, hare, bear.
+// badger, boar, stag, hare, bear. Batch 3: lynx, otter, beaver, ram, squirrel, dormouse, salamander.
+// Batch 4: toad, raven, mole, hedgehog, woodlouse. Batch 5: snake, moth, glow-worm, spider, stag beetle.
 const LEGEND_POSES = {
-  bat: { ground: .3, droop: 0, drop: [0, 10, 11], cloak: true, over: { moss: .3, lichen: .14, ferns: 1, grass: 2, mushrooms: 2, roots: 2, stones: 4 } },
+  bat: { ground: .3, droop: 0, drop: [0, 10, 11], cloak: { c: [-.05, .38, 0], r: [.42, .46, .38] }, over: { moss: .3, lichen: .14, ferns: 1, grass: 2, mushrooms: 2, roots: 2, stones: 4 } },
   marten: { sink: .45, droop: 1, drop: [60, 61], over: { moss: .45, lichen: .05, ferns: 3, grass: 3, mushrooms: 3, roots: 3, stones: 1, sapling: "pine" } },
   elk: { sink: .42, droop: .9, drop: [89], wood: [11, 12], over: { moss: .6, lichen: .04, ferns: 3, grass: 6, mushrooms: 2, roots: 3, stones: 2, beard: 5 } },
   stoat: { sink: .4, droop: 1, drop: [60, 61, 90, 91, 92], over: { moss: .3, lichen: .16, ferns: 1, grass: 3, mushrooms: 0, roots: 2, stones: 5 } },
@@ -6133,6 +6244,23 @@ const LEGEND_POSES = {
   stag: { sink: .42, droop: .9, drop: [], wood: [11, 12], over: { moss: .55, lichen: .06, ferns: 2, grass: 3, mushrooms: 3, roots: 5, stones: 2, beard: 6 } },
   hare: { sink: .45, droop: 1, drop: [], over: { moss: .3, lichen: .04, ferns: 0, grass: 7, mushrooms: 1, roots: 1, stones: 1, flowers: 6 } },
   bear: { sink: .48, droop: .9, drop: [89], over: { moss: .55, lichen: .05, ferns: 3, grass: 3, mushrooms: 4, roots: 3, stones: 2 } },
+  lynx: { sink: .45, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .18, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 6 } },
+  otter: { sink: .5, droop: 1, drop: [90, 91, 92], over: { moss: .5, lichen: .08, ferns: 2, grass: 5, mushrooms: 1, roots: 2, stones: 5 } },
+  beaver: { sink: .5, droop: 1, drop: [89], over: { moss: .45, lichen: .04, ferns: 1, grass: 4, mushrooms: 2, roots: 4, stones: 0 } },
+  ram: { sink: .42, droop: .9, drop: [], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 4, stones: 2, flowers: 0 } },
+  squirrel: { sink: .45, droop: 1, drop: [], over: { moss: .3, lichen: .06, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 1, flowers: 6 } },
+  dormouse: { sink: .45, droop: 1, drop: [], over: { moss: .4, lichen: .04, ferns: 1, grass: 3, mushrooms: 2, roots: 2, stones: 0, flowers: 5 } },
+  salamander: { sink: .55, droop: 1, drop: [60, 61], over: { moss: .35, lichen: .14, ferns: 2, grass: 1, mushrooms: 2, roots: 1, stones: 5 } },
+  toad: { ground: .2, droop: .5, drop: [], over: { moss: .55, lichen: .06, ferns: 1, grass: 5, mushrooms: 2, roots: 1, stones: 3 } },
+  raven: { ground: .42, droop: .6, drop: [40, 50, 95, 96, 97, 98, 99, 100], over: { moss: .35, lichen: .1, ferns: 1, grass: 2, mushrooms: 3, roots: 3, stones: 1, nest: true } },
+  mole: { ground: .2, droop: .4, drop: [], over: { moss: .4, lichen: .04, ferns: 0, grass: 7, mushrooms: 1, roots: 2, stones: 1, flowers: 0 } },
+  hedgehog: { ground: .18, droop: .5, drop: [], over: { moss: .45, lichen: .05, ferns: 1, grass: 4, mushrooms: 3, roots: 1, stones: 1 } },
+  woodlouse: { ground: .09, droop: 0, drop: [9], over: { moss: .5, lichen: .1, ferns: 1, grass: 2, mushrooms: 4, roots: 2, stones: 0 } },
+  snake: { ground: .04, droop: 1, drop: [40, 50], over: { moss: .45, lichen: .06, ferns: 2, grass: 6, mushrooms: 2, roots: 2, stones: 1 } },
+  moth: { ground: .4, droop: 0, drop: [0, 10, 11, 12, 13], cloak: { c: [-.1, .42, 0], r: [.6, .3, .45] }, over: { moss: .35, lichen: .16, ferns: 0, grass: 4, mushrooms: 1, roots: 1, stones: 2, flowers: 4 } },
+  glowworm: { ground: .14, droop: 0, drop: [], over: { moss: .45, lichen: .06, ferns: 2, grass: 3, mushrooms: 3, roots: 1, stones: 0, flowers: 5 } },
+  spider: { ground: .3, droop: .5, drop: [95, 96, 97, 98, 99], over: { moss: .4, lichen: .1, ferns: 3, grass: 2, mushrooms: 3, roots: 2, stones: 1 } },
+  beetle: { ground: .2, droop: .4, drop: [], wood: [8], over: { moss: .45, lichen: .08, ferns: 1, grass: 2, mushrooms: 4, brackets: 3, roots: 2, stones: 0 } },
 };
 const LEGEND_IDS = Object.keys(LEGEND_POSES);
 const legendArea = id => AREAS.find(a => a.creature === id) || AREAS[0];
@@ -6252,8 +6380,8 @@ function lgForm(S, { breath }) {
       if (dy < 0) lgMove(m, (p, q) => { const t = [11, 12, 13].includes(q.group) ? 1 : Math.max(0, Math.min(1, (p[0] - x0) / Math.max(.05, H[0] - x0))); return [p[0], p[1] + dy * t * t * (3 - 2 * t), p[2]]; });
     }
     if (breath) lgMove(m, p => [p[0], p[1] + breath, p[2]]);
-    // the bat asleep wraps its wings round itself: a hunched, cloaked stone with two ears
-    if (pose.cloak) { const c = [-.05, .38, 0]; m.ell(c, [.42, .46, .38], M.BODY2, { group: 1, paint: p => { const mm = mossy(p); if (mm) return mm; return Math.abs(Math.sin(Math.atan2(p[2], p[0] - c[0]) * 5)) > .85 ? M.BODY3 : undefined; } }); }
+    // a flyer asleep wraps its wings round itself (cloak: their centre and radii): a hunched, cloaked stone
+    if (pose.cloak) { const c = pose.cloak.c; m.ell(c, pose.cloak.r, M.BODY2, { group: 1, paint: p => { const mm = mossy(p); if (mm) return mm; return Math.abs(Math.sin(Math.atan2(p[2], p[0] - c[0]) * 5)) > .85 ? M.BODY3 : undefined; } }); }
     // what has grown over it, on its back and round it
     const b = lgBounds(m), cx = (b.x0 + b.x1) / 2, rx = (b.x1 - b.x0) / 2, rz = (b.z1 - b.z0) / 2, unit = Math.max(.25, Math.min(rx, top - G + .2));
     const tops = [];
@@ -6273,7 +6401,7 @@ function lgForm(S, { breath }) {
     // the mound of earth it sleeps in, stones half buried round it
     m.ell([cx, G - unit * .3, 0], [rx * .95 + unit * .08, unit * .42, rz * 1.05 + unit * .08], M.BARK2, { group: 150, extra: true, rough: unit * .03, paint: p => { const k = vnoise(p[0] * 7, p[2] * 7, 3); return k < .3 + moss * .6 ? M.MOSS : k > .88 ? M.STONED : undefined; } }); // a lip of its earth, grown over
     for (let i = 0; i < (over.stones || 0); i++) lgAddStone(m, v3.add(round(i * 3 + 1), [0, unit * .02, 0]), unit * uni(r, .1, .2), r);
-    if (over.nest) lgAddNest(m, [cx, G + unit * .08, 0], Math.max(rx, rz) * 1.05, unit * .08, r);
+    if (over.nest) lgAddNest(m, [cx, G + unit * .08, 0], Math.max(rz, rx * .6) * 1.05, unit * .08, r);
     m.clipY = G;
     const res = render(m, { scale: s, facing: o.facing });
     res.sp.origin = res.project([cx, G, 0]); // the ground under its middle, on the sprite

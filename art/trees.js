@@ -46,15 +46,16 @@ function bough(sp, p, ang, len, w0, w1, st, r, { mat = M.TRUNK, bend = 1, group 
 }
 
 // The base: a flared trunk foot and roots that snake out over the ground.
-function roots(sp, bx, gy, w, st, r, s) {
-  // the foot of the trunk flares out where it meets the ground
-  sp.shape([[bx - w * 1.05, gy], [bx - w * .62, gy - w * .5], [bx - w * .45, gy - w * 1.4], [bx + w * .45, gy - w * 1.4], [bx + w * .62, gy - w * .5], [bx + w * 1.05, gy]], M.TRUNK, { group: 10, round: st.round });
+function roots(sp, bx, gy, w, st, r, s, mat = M.TRUNK) {
+  // the foot of the trunk flares out where it meets the ground, in the trunk's own bark (a smooth
+  // grey beech's foot was brown, a sawn-off stump under a grey column: Ed, 2026-10-04)
+  sp.shape([[bx - w * 1.05, gy], [bx - w * .62, gy - w * .5], [bx - w * .45, gy - w * 1.4], [bx + w * .45, gy - w * 1.4], [bx + w * .62, gy - w * .5], [bx + w * 1.05, gy]], mat, { group: 10, round: st.round });
   if (st.roots <= 0) return;
   const n = Math.round(2 + st.roots * 4);
   for (let i = 0; i < n; i++) {
     const side = i % 2 ? 1 : -1, L = (8 + r() * 16) * s * (.4 + st.roots), lift = (2 + r() * 3) * s;
     const a = [bx + side * w * .2, gy - w * .5], b = [bx + side * (w * .55 + L * .4), gy - lift], c = [bx + side * (w * .5 + L), gy - .5];
-    sp.limb([[...a, w * .55], [...b, w * .28], [...c, 1.2]], M.TRUNK, { group: 11, round: st.round, cap: .5, capEnd: .6 });
+    sp.limb([[...a, w * .55], [...b, w * .28], [...c, 1.2]], mat, { group: 11, round: st.round, cap: .5, capEnd: .6 });
   }
 }
 
@@ -66,6 +67,21 @@ function bark(sp, st, vertical = true) {
     const v = vertical ? vnoise(x / 1.3, y / 6, 21) : vnoise(x / 6, y / 1.3, 21);
     if (v > 1 - st.bark * .42 || hash2(x, y, 4) < st.bark * .05) sp.m[i] = M.BARKD;
     else if (v > 1 - st.bark * .62 && sp.n[i * 3] < -.1) sp.m[i] = M.BARKL;
+  }
+}
+
+// Smooth bark (beech, rowan, hazel): plain, but for a few dark "eyes", short dark arcs across
+// the trunk where old branches fell away, so it reads as bark and not a flat pale slab.
+function smoothBark(sp, r, s) {
+  const pts = [];
+  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x] === M.BARK2) pts.push([x, y]);
+  const n = Math.round(pts.length / (260 * s * s));
+  for (let k = 0; k < n; k++) {
+    const [x, y] = pts[Math.floor(r() * pts.length)], half = Math.max(1, Math.round((1 + r() * 1.5) * s));
+    for (let dx = -half; dx <= half; dx++) {
+      const yy = y + (Math.abs(dx) === half ? -1 : 0), i = yy * sp.w + x + dx; // a little arc: its ends turned up
+      if (yy >= 0 && x + dx >= 0 && x + dx < sp.w && sp.m[i] === M.BARK2) sp.m[i] = M.BARKD;
+    }
   }
 }
 
@@ -282,8 +298,9 @@ function broadleaf(r, st, s, P) {
     if (P.leader) grow(trunk.end, -Math.PI / 2 + (r() - .5) * .2, H * (P.limb || .22) * P.leader, tw * .55, 2);
     if (t === 0 && st.treeHollow) { const h = lerp2(base, trunk.end, .38); sp.ellipse(h[0], h[1], tw * .28, tw * .5, M.NOSE, { round: .3 }); }
   }
-  if (!P.noRoots) roots(sp, bx, gy, tw * Math.sqrt(n), st, r, s * (P.rootK || 1));
-  if (!P.smooth) bark(sp, st); // smooth-barked kinds (beech, rowan, hazel) keep their trunks plain
+  if (!P.noRoots) roots(sp, bx, gy, tw * Math.sqrt(n), st, r, s * (P.rootK || 1), P.trunkMat || M.TRUNK);
+  if (!P.smooth) bark(sp, st); // smooth-barked kinds (beech, rowan, hazel) keep their trunks plain,
+  else smoothBark(sp, r, s); //  marked only with a few dark "eyes" where old branches fell away
   if (st.treeBare) return trim(sp, bx, crownY + 4 * s);
   tips.sort((a, b) => a[1] - b[1]);
   const [ra, rb] = P.clumpR || [12, 18], flat = P.flat || .7, drawn = [];

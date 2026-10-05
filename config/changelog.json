@@ -4,6 +4,31 @@
     {
       "version": null,
       "items": [
+        "Every area now starts with two adults (and a baby) instead of one: the first sieges hit harder, and survival grows more steadily with how well you build your army",
+        "Sleeping legends dream: a thought bubble over each shows the sigil of the creature it wants, drawn as that creature's level (a baby's, young's or adult's sigil)",
+        "Bring it: put that creature's sigil down anywhere in the legend's area before its wave comes, and the legend wakes happy (its buff on), the area turns friendly, and the creature you brought joins it",
+        "When a friendly area's wave comes, its creatures and its legend guard it for you; an area whose legend's wish wasn't granted wakes angry, and its creatures go for your nearest animals or soundsystem",
+        "Try it: add ?quest=1 to the link to start beside a legend with what it wants on your stack (press E there)",
+        "Your animals leave alone the creature you're inviting while you chat with it (their shots and blasts pass it by); once the chat stops it's fair game again",
+        "Fights happen at the camera's scale: creatures in a fight move about as fast as you (12 to 20 m/s), lunge 12 to 16 m in a dash-strike (a line on the ground shows where), and their packs spread out over about 50 m",
+        "Land in a wild area and its creatures are onto you within a few seconds, from all sides",
+        "Your animals chase attackers up to about 40 m before coming back; shots fly much faster and further; knockback throws creatures well clear; the boar lowers its head (its lane shown) before it charges",
+        "Fight scale and speed can be changed live: in the debug panel (~), or [ ] and ; ' (remembered; ?fightScale= and ?fightSpeed= in the link); try the patterns with ?arena=surround, charge, volley, swarm, lob, beam, ambush, burrow, leap, legend, siege...",
+        "The ley line now points to your next objective: one softly glowing line from the last runestone you reached to the next, along the valleys, fading from the first area's colour to the next one's. It stays on the ground even from the treetops (glowing through the leaves), and when you reach the next stone the old line drains into it and a new one draws out to the stone after",
+        "The hole in the canopy round you on the ground has no hard edge any more: the trees thin out gradually and raggedly, each at its own distance, and rising or landing no longer shows a circle round you",
+        "Smooth-barked trees (beech, rowan, hazel) look like trees again: no more grey columns on brown stumps; their trunks are shaded round and marked with the eyes of fallen branches",
+        "On the ground, only nearby rune stones keep their wave number at the top of the screen, so far ones no longer pile up there; over the treetops none is held there"
+      ]
+    },
+    {
+      "version": 402,
+      "items": [
+        "The glowing wave numbers no longer float in the sky past the curve of the world: they fade out as their stone goes over the horizon"
+      ]
+    },
+    {
+      "version": 383,
+      "items": [
         "Home is dressed with its own set: lantern posts, path lights, flower pots, mushroom rings and stepping stones round the dancefloor's clearing, a fairy-lit branch arch over each path, and a speaker stack, crates and a signpost by the treehouse"
       ]
     },
@@ -36,7 +61,7 @@
         "A big glowing number over every rune stone: the wave that will wake it (dimmed once the party's there)",
         "Every area now has its own legend, asleep for centuries: half sunk into the ground and grown over with moss, easy to mistake for a mound. Walking by won't wake it",
         "When the party reaches its area, the legend heaves up out of the ground, angry, and guards its area: it goes for you, your animals and that area's soundsystem, but never leaves its area",
-        "Beat a legend and it sinks back to sleep for good. Home's legend is happy and on your side from the start; press L to make the nearest legend happy (a stand-in until quests): its buff turns on",
+        "Beat a legend and it sinks back to sleep for good. Home's legend is happy and on your side from the start; press O to make the nearest legend happy (a stand-in until quests): its buff turns on",
         "Party animals now evolve only up to adult: legends are the areas' own",
         "A happy legend guards its area for you: it takes on sieges marching through or on its soundsystem with its big moves, heals between fights, and if it's beaten it sinks back to sleep (its buff gone). See it in the arena: ?arena=home,wolf*6@2!"
       ]

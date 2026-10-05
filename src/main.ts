@@ -5,6 +5,9 @@ import { musicCue, type MusicCue } from "./rules/musicPlan";
 import type { MusicStyle } from "./rules/musicScore";
 import musicStyleJson from "../config/music-style.json";
 import { setupArena } from "./rules/arena";
+import { newCamera } from "./rules/camera";
+import { setupQuestDemo } from "./rules/quest";
+import { witchHeight } from "./rules/witch";
 import { areaUnderWitch, interpolated, newGame, STEP, stepGame } from "./rules/game";
 import { AREA_TYPES } from "./rules/map";
 import { waveCountdown } from "./rules/party";
@@ -33,7 +36,7 @@ if (seed === null) {
 const tuning = {
   ...TUNING, bloom: { ...TUNING.bloom }, tiltShift: { ...TUNING.tiltShift, treetop: { ...TUNING.tiltShift.treetop } },
   shadows: { ...TUNING.shadows }, canopyShadow: { ...TUNING.canopyShadow }, mist: { ...TUNING.mist },
-  party: { ...TUNING.party },
+  party: { ...TUNING.party }, fight: { ...TUNING.fight }, // (the fight's scale and speed change live: its own copy)
 };
 if (params.get("shadows") === "off") tuning.shadows.on = false;
 if (params.get("canopy") === "off") tuning.canopyShadow.on = false;
@@ -119,6 +122,13 @@ const fx = params.get("fx");
 if (fx === "pixel" || fx === "smooth") tuning.fx = fx;
 
 const game = newGame(seed, tuning);
+// ?quest=1 (the first quest, a demo): beside the nearest sleeping legend, with the creature it
+// dreams of on her stack; put its sigil down there (E) to make it happy.
+if (params.get("quest")) setupQuestDemo(game, (x, z) => {
+  game.witch = { ...game.witch, x, z, mode: "ground", lift: 0, seated: false, vx: 0, vz: 0 };
+  game.camera = newCamera(tuning, x, witchHeight(game.witch, tuning), z);
+  game.introFocus = undefined;
+});
 // ?arena=wolf*4,beetle*3 (Stage 5, a debug arena): hers against the wild in the home clearing,
 // no waves; J sets it up again.
 const arenaParam = params.get("arena");
@@ -175,6 +185,37 @@ const playtest = new PlaytestLog(game, typeof __BUILD__ === "string" ? __BUILD__
 window.addEventListener("keydown", e => { if (e.code === "KeyL" && !e.repeat) playtest.download(); });
 if (params.get("playtest") === "download") setTimeout(() => playtest.download(), 500);
 
+// The fight's scale and speed (Ed's motion scale pass): live in the debug overlay (~), [ and ] for
+// scale, ; and ' for speed, with sliders and a reset; remembered on this browser; ?fightScale= and
+// ?fightSpeed= set where they start. Every change goes in the playtest log.
+const FIGHT_DEFAULT = { ...TUNING.fight };
+const knobs = document.getElementById("fight-knobs")!;
+const setFight = (scale: number, speed: number, log = true) => {
+  const clamp = (x: number) => Math.round(Math.min(3, Math.max(0.25, x)) * 100) / 100;
+  tuning.fight.scale = clamp(scale); tuning.fight.speed = clamp(speed); // (shared with the buffed tuning: live mid-fight)
+  try { localStorage.setItem("witch.fight", JSON.stringify(tuning.fight)); } catch { /* fine */ }
+  for (const [k, v] of [["scale", tuning.fight.scale], ["speed", tuning.fight.speed]] as const) {
+    (knobs.querySelector(`input[name=${k}]`) as HTMLInputElement).value = String(v);
+    knobs.querySelector(`.${k}`)!.textContent = v.toFixed(2);
+  }
+  if (log) playtest.fight(tuning.fight.scale, tuning.fight.speed);
+};
+{
+  let start = { ...FIGHT_DEFAULT };
+  try { const v = localStorage.getItem("witch.fight"); if (v) start = { ...start, ...JSON.parse(v) }; } catch { /* storage blocked */ }
+  const fs = Number(params.get("fightScale")), fv = Number(params.get("fightSpeed"));
+  if (fs > 0) start.scale = fs;
+  if (fv > 0) start.speed = fv;
+  setFight(start.scale, start.speed, start.scale !== FIGHT_DEFAULT.scale || start.speed !== FIGHT_DEFAULT.speed);
+}
+knobs.addEventListener("input", e => { const el = e.target as HTMLInputElement; setFight(el.name === "scale" ? +el.value : tuning.fight.scale, el.name === "speed" ? +el.value : tuning.fight.speed); });
+knobs.querySelector("button")!.addEventListener("click", () => setFight(FIGHT_DEFAULT.scale, FIGHT_DEFAULT.speed));
+for (const ev of ["pointerdown", "keydown"]) knobs.addEventListener(ev, e => e.stopPropagation()); // (its own presses don't fly her)
+window.addEventListener("keydown", e => {
+  const k = { BracketLeft: [1 / 1.1, 1], BracketRight: [1.1, 1], Semicolon: [1, 1 / 1.1], Quote: [1, 1.1] }[e.code];
+  if (k) setFight(tuning.fight.scale * k[0], tuning.fight.speed * k[1]);
+});
+
 // The action bar (1 2 3 4 Q W E R, its keys and recharge) replaces the old line of controls (Ed,
 // 2026-10-04); H shows or hides it (remembered on this browser).
 let barOn = true;
@@ -211,7 +252,7 @@ const debugButtons = document.getElementById("debug-buttons")!;
 const waveEl = document.getElementById("wave")!, waveFill = waveEl.querySelector<HTMLElement>(".fill")!, waveLabel = waveEl.querySelector<HTMLElement>(".label")!;
 let debugOn = params.has("debug");
 debugEl.classList.toggle("on", debugOn);
-debugButtons.classList.toggle("on", debugOn);
+debugButtons.classList.toggle("on", debugOn); knobs.classList.toggle("on", debugOn);
 
 const fit = () => view.resize(window.innerWidth, window.innerHeight);
 window.addEventListener("resize", fit);
@@ -300,7 +341,7 @@ function frame(now: number): void {
   const c = input.read();
   if (c.toggleAutoTalk) setAutoTalk(!autoTalk);
   c.autoTalk = autoTalk;
-  if (c.debug) { debugOn = !debugOn; debugEl.classList.toggle("on", debugOn); debugButtons.classList.toggle("on", debugOn); }
+  if (c.debug) { debugOn = !debugOn; debugEl.classList.toggle("on", debugOn); debugButtons.classList.toggle("on", debugOn); knobs.classList.toggle("on", debugOn); }
   view.debugReadouts = debugOn;
   stepGame(game, c, dt);
   // The run is over when every soundsystem has fallen (Stage 4): the end screen, and a restart.
