@@ -96,4 +96,25 @@ describe("the 💌 invite (issue #87)", () => {
     expect(W.invites.letters.length).toBeGreaterThan(0);
     expect(g.leash.talk).toBeNull();
   });
+
+  it("flies straight through trees and scenery: only animals stop a 💌 (Ed, 2026-10-05)", () => {
+    const g = newGame(77, TUNING);
+    g.clock.paused = false;
+    const d = g.map.dancefloor, tree = g.forest.treesNear(d.x + 120, d.z + 120, 60)[0];
+    expect(tree).toBeDefined();
+    const W = g.witches[0];
+    g.witch = { ...g.witch, seated: false, mode: "ground", lift: 0, x: tree.x - 6, z: tree.z, vx: 0, vz: 0 };
+    W.health.hp = 1e6;
+    const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && !k.enraged && k.level < 3)!;
+    Object.assign(c, { level: 0, x: tree.x + 6, z: tree.z, tx: tree.x + 6, tz: tree.z, anchorX: tree.x + 6, anchorZ: tree.z, homeX: tree.x + 6, homeZ: tree.z, rest: 99, fight: undefined });
+    c.cell = g.map.cellSafe(c.x, c.z).cell as [number, number];
+    g.byArea = null;
+    let hits = 0;
+    for (let i = 0; i < 0.8 / STEP; i++) {
+      stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, fire: i === 0, aimX: 1, aimZ: 0 }, STEP);
+      hits += W.invites.events.filter(e => e.kind === "hit" && e.id === c.id).length;
+      Object.assign(c, { x: tree.x + 6, z: tree.z }); // (it stays put behind the tree)
+    }
+    expect(hits).toBeGreaterThan(0);
+  });
 });
