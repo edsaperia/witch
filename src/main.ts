@@ -121,6 +121,26 @@ if (curveParam !== null && !isNaN(Number(curveParam))) tuning.camera = { ...tuni
 const fx = params.get("fx");
 if (fx === "pixel" || fx === "smooth") tuning.fx = fx;
 
+// Area size and treetop speed, to play with (Ed, 2026-10-05: "compared to now, areas should be
+// fairly large, and treetop mode should be much faster than ground mode"): ?areaSize=<metres> (or
+// ?areaScale=), ?treetopSpeed=<m/s> and ?mapAreas=<n>, remembered on this browser till changed or
+// reset (in the debug overlay, ~, where treetop speed also has a live slider). Area size makes the
+// map, so it's set by the link alone. Every change goes in the playtest log.
+const WORLD_DEFAULT = { areaSize: TUNING.areaSize * TUNING.areaScale, treetopSpeed: TUNING.treetopSpeed, mapAreas: TUNING.mapAreas };
+const world = { ...WORLD_DEFAULT };
+{
+  try { const v = localStorage.getItem("witch.world"); if (v) Object.assign(world, JSON.parse(v)); } catch { /* storage blocked */ }
+  const size = Number(params.get("areaSize")), scale = Number(params.get("areaScale")), speed = Number(params.get("treetopSpeed")), n = Number(params.get("mapAreas"));
+  if (size > 0) world.areaSize = size; else if (scale > 0) world.areaSize = TUNING.areaSize * scale;
+  if (speed > 0) world.treetopSpeed = speed;
+  if (n > 0) world.mapAreas = n;
+  world.areaSize = Math.round(Math.min(560, Math.max(56, world.areaSize)));
+  world.treetopSpeed = Math.round(Math.min(300, Math.max(8, world.treetopSpeed)));
+  world.mapAreas = Math.round(Math.min(30, Math.max(6, world.mapAreas)));
+  tuning.areaScale = world.areaSize / tuning.areaSize; tuning.treetopSpeed = world.treetopSpeed; tuning.mapAreas = world.mapAreas;
+  try { localStorage.setItem("witch.world", JSON.stringify(world)); } catch { /* fine */ }
+}
+
 const game = newGame(seed, tuning);
 // ?quest=1 (the first quest, a demo): beside the nearest sleeping legend, with the creature it
 // dreams of on her stack; put its sigil down there (E) to make it happy.
@@ -210,8 +230,25 @@ const setFight = (scale: number, speed: number, log = true, momentum = tuning.fi
   if (fm > 0) start.momentum = fm;
   setFight(start.scale, start.speed, start.scale !== FIGHT_DEFAULT.scale || start.speed !== FIGHT_DEFAULT.speed || start.momentum !== FIGHT_DEFAULT.momentum, start.momentum ?? FIGHT_DEFAULT.momentum);
 }
-knobs.addEventListener("input", e => { const el = e.target as HTMLInputElement; setFight(el.name === "scale" ? +el.value : tuning.fight.scale, el.name === "speed" ? +el.value : tuning.fight.speed, true, el.name === "momentum" ? +el.value : tuning.fight.momentum); });
-knobs.querySelector("button")!.addEventListener("click", () => setFight(FIGHT_DEFAULT.scale, FIGHT_DEFAULT.speed, true, FIGHT_DEFAULT.momentum));
+// Treetop speed, live (the world's knobs: see WORLD_DEFAULT above); area size and the map's are the link's.
+const setTreetop = (speed: number, log = true) => {
+  world.treetopSpeed = Math.round(Math.min(300, Math.max(8, speed)));
+  tuning.treetopSpeed = world.treetopSpeed;
+  (game.buffs as { base?: unknown }).base = undefined; // (a legend's buffed copy is made afresh with it)
+  try { localStorage.setItem("witch.world", JSON.stringify(world)); } catch { /* fine */ }
+  (knobs.querySelector("input[name=treetop]") as HTMLInputElement).value = String(world.treetopSpeed);
+  knobs.querySelector(".treetop")!.textContent = String(world.treetopSpeed);
+  knobs.querySelector(".area")!.textContent = `${world.areaSize} m, ${world.mapAreas} x ${world.mapAreas}`;
+  if (log) playtest.world(world.areaSize, world.treetopSpeed, world.mapAreas);
+};
+setTreetop(world.treetopSpeed, world.areaSize !== WORLD_DEFAULT.areaSize || world.treetopSpeed !== WORLD_DEFAULT.treetopSpeed || world.mapAreas !== WORLD_DEFAULT.mapAreas);
+knobs.querySelector(".world-reset")!.addEventListener("click", () => {
+  try { localStorage.removeItem("witch.world"); } catch { /* fine */ }
+  for (const k of ["areaSize", "areaScale", "treetopSpeed", "mapAreas"]) params.delete(k);
+  location.search = params.toString(); // (a new map: area size and the map's are made with it)
+});
+knobs.addEventListener("input", e => { const el = e.target as HTMLInputElement; if (el.name === "treetop") { setTreetop(+el.value); return; } setFight(el.name === "scale" ? +el.value : tuning.fight.scale, el.name === "speed" ? +el.value : tuning.fight.speed, true, el.name === "momentum" ? +el.value : tuning.fight.momentum); });
+knobs.querySelector(".fight-reset")!.addEventListener("click", () => setFight(FIGHT_DEFAULT.scale, FIGHT_DEFAULT.speed, true, FIGHT_DEFAULT.momentum));
 for (const ev of ["pointerdown", "keydown"]) knobs.addEventListener(ev, e => e.stopPropagation()); // (its own presses don't fly her)
 window.addEventListener("keydown", e => {
   const k = { BracketLeft: [1 / 1.1, 1, 1], BracketRight: [1.1, 1, 1], Semicolon: [1, 1 / 1.1, 1], Quote: [1, 1.1, 1], Comma: [1, 1, 1 / 1.1], Period: [1, 1, 1.1] }[e.code];
