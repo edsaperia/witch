@@ -500,12 +500,14 @@ Home's area (Ed, 2026-10-05: "Home area should be big enough that the whole circ
 | `home.margin` | number | 0 to … |
 | `home.gap` | number | 0 to … |
 
-## `looks`
+## `rig`, `looks`
 
-The creature states' looks (Ed, issue #87; render/looks.ts). enragedTint (Ed, 2026-10-05: "Enraged creatures should have a red tint so that they're easy to tell apart from the other states"): an enraged creature's whole sprite goes toward colour by amount (0 none, 1 all), by each pixel's lightness so its shading and shape still read; its angry brows and red eyes stay. No other state is tinted. anger (Ed, "or a 💢"): a pixel 💢 beside an enraged creature's head on the side it faces, popping on a pulse, size times its level's bubble size (bubbles.levelScale). Tint and 💢 each on its own (amount 0 or on false turns one off); both for now (Ed: "the red tint can be less strong": 0.38, with a floor so it never goes near-black). The angry brows are a stopgap for an expression the creature generator will draw (render/looks.ts expression()). partyGlow (Ed, 2026-10-05: "party animals could sparkle or glow a little"): every happy and leashed animal has sparkles twinkling pixels round it, each lit for a moment about rate times a second, size times three game pixels, at strength brightness (additive); leashed ones keep their collar on top.
+The live rig (Ed, 2026-10-05): on by default, ?rig=0 turns it off. Creatures keep their baked frames in the treetops, and on the ground when drawn smaller than minPx art pixels, except the levels in alwaysLevels: legends are always rigged.
 
 | knob | type | range |
 |---|---|---|
+| `rig.minPx` | number | 0 to … |
+| `rig.alwaysLevels` | array of string |  |
 | `looks.enragedTint.colour` | string |  |
 | `looks.enragedTint.amount` | number | 0 to … |
 | `looks.anger.on` | boolean |  |
