@@ -50,8 +50,9 @@ export interface Tuning {
   witchHealth: { hits: number; repairTime: number };
   /** Knocked out (Ed, 2026-10-04): her stack lets go one sigil every releaseEach seconds (releaseMax caps the whole release, 0 no cap), then she sparkles out and back in at the treehouse over teleport seconds; legendsLoyal keeps leashed legends with her. */
   knockout: { releaseEach: number; releaseMax: number; emptyBeat: number; teleport: number; legendsLoyal: boolean };
-  /** The dash (Ed, 2026-10-04): on the ground, distance metres over duration seconds, then cooldown seconds. */
-  dash: { distance: number; duration: number; cooldown: number };
+  /** The dash, a blink (Ed, 2026-10-05): on the ground, gone and distance metres on at once, not
+   *  drawn or hittable for gone seconds, then cooldown seconds; it lands clear of each obstacle by its `clear` metres. */
+  dash: { distance: number; gone: number; cooldown: number; clear: { tree: number; decor: number; sound: number; speaker: number; treehouse: number } };
   spells: { equipped: string; speed: { mult: number; duration: number; cooldown: number } };
   /** Forecasting (Ed, 2026-10-04): symbols round each stone (12 = next; the after-next stone fills afterNext[0]..[1] over the countdown; probable ones flicker 1..probableMax); probable: how many probable stones; radius (m), size (m) of each symbol, height above the canopy in treetop mode. */
   forecast: { symbols: number; probable: number; probableMax: number; afterNext: number[]; radius: number; size: number; flare: number };

@@ -8,7 +8,7 @@ import { dashCharge, dashing } from "../rules/dash";
 
 const LOOK: Record<string, { icon: string; name: string }> = {
   spell: { icon: "⚡", name: "spell: speed boost" },
-  dash: { icon: "»", name: "dash (on the ground)" },
+  dash: { icon: "»", name: "blink (on the ground)" },
   sigil: { icon: "◈", name: "put down / pick up a sigil" },
   autoTalk: { icon: "💬", name: "auto-talk on or off (also T); off, hold Shift to talk" },
 };
