@@ -32,6 +32,7 @@
 //   node art/preview.mjs witch headings art/previews/witch-headings.png [scale]   (her side view, then heading straight up the screen (away) and straight down it (towards): hover x3, lean, fast x3, brake x2; ANCHORS=1 marks her hand and hat tip)
 //   node art/preview.mjs soundsystems all art/previews/soundsystems.png [scale]
 //   node art/preview.mjs tufts all|<areas> art/previews/tufts.png [scale]   (each area's ground-cover tufts on its floor, then their sway masks in grey; weights under them)
+//   node art/preview.mjs partyrelics all|<ids> art/previews/party-relics.png [scale]   (the party relics, half-buried, with the witch; their glint's frames, ground then treetop; their one sigil, bare and in each level's frame)
 //   node art/preview.mjs wind <species> art/previews/wind.png [scale]   (each species' mature tree in the pixel wind: 6 moments of a strong gust, each region (a blob) moving whole, by whole pixels; then the same with the smooth sway; CHANGES=1 colours each pixel by how far it moved)
 //   node art/preview.mjs sway <areas> art/previews/sway.png [scale]   (each area's trees and leafy props beside their sway masks: black is rigid, white sways most)
 //   node art/preview.mjs disco all|<ids> art/previews/dancefloor-patterns.png [scale]   (every dancefloor pattern's key frame from above, named, grouped by kind; PER=n to a row)
@@ -352,6 +353,12 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
       parts.sort((p, q) => (q.decal ? 1 : 0) - (p.decal ? 1 : 0) || p.depth - q.depth).forEach(p => { a.drawImage(p.b.A, Math.round(p.x - x0), Math.round(p.y - y0)); n.drawImage(p.b.N, Math.round(p.x - x0), Math.round(p.y - y0)); });
       rows.push([{ A, N, w: A.width, h: A.height }]);
     }
+  } else if (what === "partyrelics") { // the party relics (all or listed ids), the witch closing the row; then their glint's frames at the ground and treetop zooms; then their sigils (bare, then as a legend's)
+    const ids = list === "all" ? G.PARTY_RELIC_IDS : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
+    rows.push([...ids.map(id => G.bake(G.partyRelicSprite(id, st).sp, G.partyRelicColours(id, st), st, "none")), wit]);
+    const gc = G.partyRelicColours("wine", st), flat = (w, h, f) => { const A = document.createElement("canvas"), N = document.createElement("canvas"); A.width = N.width = w; A.height = N.height = h; f(A.getContext("2d")); const n = N.getContext("2d"); n.fillStyle = "rgb(128,128,255)"; n.fillRect(0, 0, w, h); return { A, N, w, h }; };
+    rows.push([...[0, 1, 2, 3].map(f => G.bake(G.partyRelicGlint(f).sp, gc, st, "none")), ...[0, 1, 2, 3].map(f => G.bake(G.partyRelicGlint(f, { zoom: "treetop" }).sp, gc, st, "none"))]);
+    rows.push([null, 0, 1, 2, 3].map(level => flat(64, 64, g => G.drawSigil(g, G.PARTY_RELIC_SIGIL, { size: 64, level })))); // their one sigil, bare and in each level's frame
   } else if (what === "relics") { // a family's relics (modern, playground, sports) or listed ids, PER to a row (default 6), the witch closing each row
     const ids = ["modern", "playground", "sports"].includes(list) ? G.RELICS.filter(d => d.family === list).map(d => d.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), col = G.relicColours(st), per = window.PER || 6;
     const items = ids.map(id => G.bake(G.relicSprite(id, st).whole, col, st, "none"));
