@@ -93,8 +93,8 @@ function paintRoom(c: HTMLCanvasElement): void {
   x.fillStyle = "#6b4426"; x.fillRect(127, 94, 2, 10); x.fillRect(121, 103, 14, 2); // its stand
   x.fillStyle = "#ffcf7a"; x.fillRect(127, 46, 2, 2); // a little carved star on top
   // the banner (Ed: "a banner that says PARTY TONIGHT"): hand-made bunting across the room, a letter on each flag in party neon
-  const text = "PARTY TONIGHT", n = text.length, x0 = 30, x1 = 210, neon = ["#ff5fb4", "#4ff0ff", "#ffe14f", "#b388ff", "#7dff8a"];
-  const sag = (u: number) => 8 + Math.sin(u * Math.PI) * 9;
+  const text = "PARTY TONIGHT", n = text.length, x0 = 6, x1 = 134, neon = ["#ff5fb4", "#4ff0ff", "#ffe14f", "#b388ff", "#7dff8a"];
+  const sag = (u: number) => 6 + Math.sin(u * Math.PI) * 7;
   x.strokeStyle = "#d9c9a8"; x.lineWidth = 1; x.beginPath();
   for (let i = 0; i <= 40; i++) { const u = i / 40, px = x0 + (x1 - x0) * u; if (i) x.lineTo(px, sag(u)); else x.moveTo(px, sag(u)); }
   x.stroke();
@@ -103,8 +103,8 @@ function paintRoom(c: HTMLCanvasElement): void {
     if (text[i] === " ") continue;
     const u = (i + .5) / n, px = x0 + (x1 - x0) * u, py = sag(u);
     x.fillStyle = neon[i % neon.length];
-    x.beginPath(); x.moveTo(px - 6, py); x.lineTo(px + 6, py); x.lineTo(px, py + 15); x.closePath(); x.fill();
-    x.fillStyle = "#1a0b20"; x.fillText(text[i], px, py + 5);
+    x.beginPath(); x.moveTo(px - 5, py); x.lineTo(px + 5, py); x.lineTo(px, py + 14); x.closePath(); x.fill();
+    x.fillStyle = "#1a0b20"; x.fillText(text[i], px, py + 4.5);
   }
 }
 
