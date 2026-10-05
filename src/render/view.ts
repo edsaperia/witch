@@ -26,6 +26,7 @@ import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
 import { InviteView } from "./invites";
+import { stunned } from "../rules/knock";
 import { dances, ENRAGED_TINT, lookOf, StateMarks } from "./looks";
 import { ActionBar } from "./actionbar";
 import { BuffHud } from "./buffhud";
@@ -1351,6 +1352,8 @@ export class View {
     this.seatTime = time;
     this.seatK = w.seated ? 1 : Math.max(0, this.seatK - sdt / 1.0); // down from the studio (some 7 m up) over a second
     let wx = w.x, wz = w.z, wyy = wy;
+    // Staggered by a blow (rules/knock.ts): a wobble side to side, fading as it wears off.
+    { const K = g.witches[0].knock; if (stunned(K, time)) { const left = (K!.stunUntil - time) / Math.max(0.1, K!.stunUntil - K!.at); wx += Math.sin(time * 34) * 0.18 * Math.min(1, left * 2); } }
     if (this.seatK > 0) {
       const seat = onTreehouse(T.seat.x, T.seat.y), k = this.seatK * this.seatK * (3 - 2 * this.seatK);
       const cam = onTreehouse(T.camera.x, T.camera.y);

@@ -220,8 +220,8 @@ export interface CombatWorld {
   t: Tuning;
   /** A party animal is busy (eating, evolving): it doesn't fight. */
   busy: (id: number) => boolean;
-  /** A witch is hit (one point, whatever hits her). */
-  hitWitch: (id: number, time: number) => void;
+  /** A witch is hit (one point, whatever hits her), and thrown by the blow (rules/knock.ts). */
+  hitWitch: (id: number, time: number, blow?: { x: number; z: number; knockback: number; rams: boolean }) => void;
   /** A party animal is lost for the run. */
   loseParty: (id: number) => void;
   /** A witch is slowed (a snail's slime, a glow-worm's flash): her speed times mult until then. */
@@ -346,7 +346,13 @@ function moveToward(c: Creature, x: number, z: number, stopAt: number, speed: nu
  *  soundsystem's health for a siege. */
 function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target, damage: number, a: Attack, fx: number, fz: number): void {
   const time = w.time;
-  if (tg.kind === "witch") { w.hitWitch(tg.id, time); const v = w.witches[tg.id]; s.events.push({ kind: "witchHit", x: v.x, z: v.z, at: time, id: tg.id }); return; }
+  if (tg.kind === "witch") {
+    // Thrown from the attacker (or where its shot or area hit landed); harder by the attack's
+    // knockback, and hard if it rams her (charging, or landing a leap on her).
+    const ox = from && a.delivery !== "shot" && a.delivery !== "lob" ? from.x : fx, oz = from && a.delivery !== "shot" && a.delivery !== "lob" ? from.z : fz;
+    w.hitWitch(tg.id, time, { x: ox, z: oz, knockback: a.modifier === "knockback" ? a.knockback ?? 0 : 0, rams: !!from && (!!from.charge || !!from.leap) });
+    const v = w.witches[tg.id]; s.events.push({ kind: "witchHit", x: v.x, z: v.z, at: time, id: tg.id }); return;
+  }
   if (tg.kind === "sound") {
     const h = s.sounds.get(tg.key);
     if (!h || h.hp <= 0) return;

@@ -10,6 +10,8 @@ import type { Creature } from "../rules/creatures";
 import { LEGEND } from "../rules/creatures";
 import { cellKey } from "../rules/party";
 import { placed } from "./height";
+import { stunned } from "../rules/knock";
+import { witchHeight } from "../rules/witch";
 import type { Tuning } from "../rules/tuning";
 import { bubbleScale } from "./bubbles";
 
@@ -168,6 +170,11 @@ export class StateMarks {
           this.put(this.star, c.x + Math.cos(a) * r, top + 0.25 + Math.sin(a) * 0.12, c.z + Math.sin(a) * r * 0.5, 5 * px, 5 * px);
         }
       }
+    }
+    // Her too, staggered by a blow (rules/knock.ts): the daze stars round her hat.
+    if (stunned(g.witches[0].knock, time)) {
+      const top = witchHeight(w, g.tuning) + 2.1;
+      for (let i = 0; i < 3; i++) { const a = time * 6 + (i / 3) * Math.PI * 2; this.put(this.star, w.x + Math.cos(a) * 0.6, top + Math.sin(a) * 0.12, w.z + Math.sin(a) * 0.3, 5 * px, 5 * px); }
     }
     for (let i = this.used; i < this.pool.length; i++) this.pool[i].visible = false;
   }
