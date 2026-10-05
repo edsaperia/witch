@@ -10,7 +10,7 @@
 //    area's creatures, a legend at peace.
 //  - Legends: the nearest sleeping one moans now and then as it dreams; restless (#87), nightmares.
 //  - Attacks are speech (Ed, 2026-10-05): an attacker's burst of babble in its own voice, by mood;
-//    a legend winding up, one long building swell of its whale song.
+//    a legend winding up, one long building swell of its whale song; a lob landing, a thud (a legend's, a boom).
 //  - A soundsystem lost; the witch hurt and knocked down.
 //  - Features still open, each read loosely until it lands: the witch knocked back and stunned
 //    (#108), a legend's long charge (#114), a relic bottle found (#99).
@@ -129,6 +129,8 @@ export class SfxCues {
     const w = g.witch;
     for (const e of g.combat.events) {
       const c = e.id !== undefined ? g.creatures[e.id] : undefined;
+      // a lob coming down where it was aimed: a thud; a legend's (its slow long-range lob), a boom heard twice as far
+      if (e.kind === "landed" && c) { const k = Math.max(0, 1 - Math.hypot(e.x - w.x, e.z - w.z) / ((c.boss ? 2 : 1) * hear)); if (k > 0) this.sfx.impact(!!c.boss, pan(e.x), k); continue; }
       if (!c || !ATTACKS.has(e.kind)) continue;
       if (e.kind === "windup" && c.boss) { const k = Math.max(0, 1 - Math.hypot(e.x - w.x, e.z - w.z) / (2 * hear)); if (k > 0) this.sfx.windup(pan(e.x), Math.max(0.5, k)); continue; }
       const k = near(e.x, e.z);

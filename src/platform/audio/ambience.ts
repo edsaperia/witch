@@ -17,6 +17,19 @@ export function knock(K: SfxKit, metres: number, pan = 0): void {
   bp.connect(g); K.noiseBurst(at, dur + 0.02, bp, Math.random());
 }
 
+/** A lobbed shot landing (combat's "landed"): a soft thud and a spray of dirt; a legend's (`big`),
+ *  a deep boom rolling out in the legends' big space, the ground shaking under it. */
+export function impact(K: SfxKit, big: boolean, pan = 0, near = 1): void {
+  const I = K.T.impact, c = K.ctx, at = c.currentTime + 0.005, vol = I.volume * near * (big ? 1 : I.small);
+  if (!K.ready(big ? "impactBig" : "impact", big ? 0.3 : 0.08)) return;
+  K.thump(at, vol, pan);
+  const out = K.voice(pan), lp = c.createBiquadFilter(), g = c.createGain(), dur = big ? 1.4 : 0.25;
+  lp.type = "lowpass"; lp.frequency.setValueAtTime(big ? 900 : 1600, at); lp.frequency.exponentialRampToValueAtTime(big ? 120 : 400, at + dur);
+  g.connect(out); if (big) g.connect(K.space()); K.env(g, at, vol * (big ? 0.8 : 0.5), 0.004, dur);
+  lp.connect(g); K.noiseBurst(at, dur + 0.05, lp, Math.random());
+  if (big) { const sub = c.createGain(); sub.connect(out); K.env(sub, at, vol * 0.9, 0.01, 1.1); const o = K.osc("sine", 55, at, 1.2, sub); o.frequency.exponentialRampToValueAtTime(28, at + 1.1); }
+}
+
 /** A legend's long charge (the bug hunter's charge). */
 export class Charge {
   private rumbleGain: GainNode | null = null;
