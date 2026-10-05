@@ -4,12 +4,24 @@
     {
       "version": null,
       "items": [
-        "Home is dressed with its own set: lantern posts, path lights, flower pots, mushroom rings and stepping stones round the dancefloor's clearing, a fairy-lit branch arch over each path, and a speaker stack, crates and a signpost by the treehouse",
         "Sleeping legends dream: a thought bubble over each shows the sigil of the creature it wants, with its level as gold pips (one baby, two young, three adult)",
         "Bring it: put that creature's sigil down anywhere in the legend's area before its wave comes, and the legend wakes happy (its buff on), the area turns friendly, and the creature you brought joins it",
         "When a friendly area's wave comes, its creatures and its legend guard it for you; an area whose legend's wish wasn't granted wakes angry, and its creatures go for your nearest animals or soundsystem",
         "Try it: add ?quest=1 to the link to start beside a legend with what it wants on your stack (press E there)",
-        "Your animals leave alone the creature you're inviting while you chat with it (their shots and blasts pass it by); once the chat stops it's fair game again"
+        "Your animals leave alone the creature you're inviting while you chat with it (their shots and blasts pass it by); once the chat stops it's fair game again",
+        "Smooth-barked trees (beech, rowan, hazel) look like trees again: no more grey columns on brown stumps; their trunks are shaded round and marked with the eyes of fallen branches"
+      ]
+    },
+    {
+      "version": 402,
+      "items": [
+        "The glowing wave numbers no longer float in the sky past the curve of the world: they fade out as their stone goes over the horizon"
+      ]
+    },
+    {
+      "version": 383,
+      "items": [
+        "Home is dressed with its own set: lantern posts, path lights, flower pots, mushroom rings and stepping stones round the dancefloor's clearing, a fairy-lit branch arch over each path, and a speaker stack, crates and a signpost by the treehouse"
       ]
     },
     {
