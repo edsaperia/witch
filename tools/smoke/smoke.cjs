@@ -541,13 +541,15 @@ async function main() {
       const w = window.witch, g = w.game, dt = 1 / 60, idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, yieldNow = () => new Promise(res => setTimeout(res, 0));
       w.manual = true;
       g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
+      // (home's happy legend guards home and the besiegers go for the nearest of hers: send it off, so this tests the siege itself)
+      for (const c of g.creatures) if (c.boss && c.legendState === "happy") c.gone = true;
       const next = g.party.next[0];
-      g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1]).forEach(c => { c.level = 1; });
+      g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1] && !c.boss).forEach(c => { c.level = 1; });
       w.frame({ ...idle, nextWave: true }, dt, false);
       const key = `${next[0]},${next[1]}`, sound = g.combat.sounds.get(key);
       if (!sound) return { error: "no siege began" };
       sound.hp = sound.max = 150;
-      const besiegers = g.creatures.filter(c => c.siege === key);
+      const besiegers = g.creatures.filter(c => c.siege === key && !c.boss); // (its legend guards its own area: it never marches on)
       for (const c of besiegers) { c.x = sound.x + (c.rand() - 0.5) * 8; c.z = sound.z + 5 + c.rand() * 3; }
       let hit = false;
       for (let i = 0; i < 120 * 60 && sound.hp > 0; i++) { w.frame(idle, dt, false); hit ||= sound.hp < sound.max; if (i % 120 === 0) await yieldNow(); }
