@@ -67,6 +67,7 @@ export interface Tuning {
     hit: { volume: number; gap: number }; fill: { volume: number; octaves: number }; invited: { volume: number };
     enraged: { volume: number; gap: number }; happy: { volume: number; gap: number };
     snore: { volume: number; range: number }; nightmare: { volume: number }; windup: { volume: number; length: number };
+    lost: { volume: number };
     whale: { volume: number; speed: number; depth: number; reverb: number; sleepEvery: number };
   };
   music: { on: boolean; volume: number; nearDist: number; farDist: number; floor: number; muffle: number; clear: number; distort: number; src: string };
