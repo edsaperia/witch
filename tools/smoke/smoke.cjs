@@ -52,7 +52,7 @@ async function main() {
     else page = await browser.newPage({ viewport: size, deviceScaleFactor: dpr || 1, hasTouch: !!hasTouch, isMobile: !!hasTouch });
     page.on("pageerror", e => errors.push(`${name}: page error: ${e.message}`));
     page.on("console", m => { if (m.type() === "error") errors.push(`${name}: console error: ${m.text()}`); });
-    await page.goto(`http://127.0.0.1:${port}/?${/(^|&)seed=/.test(query || "") ? (query || "").replace(/^&/, "") : `seed=${seed}${query || "&debug"}`}`); // (a run may ask for its own seed)
+    await page.goto(`http://127.0.0.1:${port}/?creator=0&${/(^|&)seed=/.test(query || "") ? (query || "").replace(/^&/, "") : `seed=${seed}${query || "&debug"}`}`); // (a run may ask for its own seed)
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 120000 });
     // All the art is drawn in the background after start; the software renderer here starves the
     // workers of CPU (minutes at big window sizes), so wait for it before flying, so the shots show the forest as players do.
@@ -710,7 +710,7 @@ async function main() {
   if (process.env.RECORD) {
     const ctx = await browser.newContext({ viewport: { width: 960, height: 540 }, recordVideo: { dir: out, size: { width: 960, height: 540 } } });
     const page = await ctx.newPage();
-    await page.goto(`http://127.0.0.1:${port}/?seed=${seed}`);
+    await page.goto(`http://127.0.0.1:${port}/?creator=0&seed=${seed}`);
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 120000 });
     await page.keyboard.press("Enter");
     await page.keyboard.down("ArrowRight"); await sleep(2500); await page.keyboard.up("ArrowRight");
