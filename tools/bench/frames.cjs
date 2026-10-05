@@ -60,6 +60,7 @@ async function settle(page, file) {
   for (let i = 0; i < 30; i++) {
     await page.evaluate(async () => { for (let k = 0; k < 4; k++) { window.witch.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 0); await new Promise(r => setTimeout(r, 30)); } });
     const buf = await page.screenshot({ timeout: 300000 });
+    if (process.env.BENCH_DEBUG) fs.writeFileSync(file.replace(/\.png$/, `-try${i}.png`), buf);
     if (prev && buf.equals(prev)) { if (++same >= 2) { out = { settled: true, tries: i + 1 }; break; } } else same = 0;
     prev = buf;
   }
