@@ -26,7 +26,7 @@ export const LEGEND_FRAMES = { asleep: 2 };
 // roots, stones, a sapling ("broad" or "pine"), a nest, moss hanging from its antlers, wildflowers. eyes: the groups its
 // glowing legend eyes are in (1 unless given).
 // Batch 1 (the bug hunter's first slice): bat, marten, elk, stoat, owl, snail. Batch 2: wolf, fox,
-// badger, boar, stag, hare, bear.
+// badger, boar, stag, hare, bear. Batch 3: lynx, otter, beaver, ram, squirrel, dormouse, salamander.
 export const LEGEND_POSES = {
   bat: { ground: .3, droop: 0, drop: [0, 10, 11], cloak: true, over: { moss: .3, lichen: .14, ferns: 1, grass: 2, mushrooms: 2, roots: 2, stones: 4 } },
   marten: { sink: .45, droop: 1, drop: [60, 61], over: { moss: .45, lichen: .05, ferns: 3, grass: 3, mushrooms: 3, roots: 3, stones: 1, sapling: "pine" } },
@@ -41,6 +41,13 @@ export const LEGEND_POSES = {
   stag: { sink: .42, droop: .9, drop: [], wood: [11, 12], over: { moss: .55, lichen: .06, ferns: 2, grass: 3, mushrooms: 3, roots: 5, stones: 2, beard: 6 } },
   hare: { sink: .45, droop: 1, drop: [], over: { moss: .3, lichen: .04, ferns: 0, grass: 7, mushrooms: 1, roots: 1, stones: 1, flowers: 6 } },
   bear: { sink: .48, droop: .9, drop: [89], over: { moss: .55, lichen: .05, ferns: 3, grass: 3, mushrooms: 4, roots: 3, stones: 2 } },
+  lynx: { sink: .45, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .18, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 6 } },
+  otter: { sink: .5, droop: 1, drop: [90, 91, 92], over: { moss: .5, lichen: .08, ferns: 2, grass: 5, mushrooms: 1, roots: 2, stones: 5 } },
+  beaver: { sink: .5, droop: 1, drop: [89], over: { moss: .45, lichen: .04, ferns: 1, grass: 4, mushrooms: 2, roots: 4, stones: 0 } },
+  ram: { sink: .42, droop: .9, drop: [], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 4, stones: 2, flowers: 0 } },
+  squirrel: { sink: .45, droop: 1, drop: [], over: { moss: .3, lichen: .06, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 1, flowers: 6 } },
+  dormouse: { sink: .45, droop: 1, drop: [], over: { moss: .4, lichen: .04, ferns: 1, grass: 3, mushrooms: 2, roots: 2, stones: 0, flowers: 5 } },
+  salamander: { sink: .55, droop: 1, drop: [60, 61], over: { moss: .35, lichen: .14, ferns: 2, grass: 1, mushrooms: 2, roots: 1, stones: 5 } },
 };
 export const LEGEND_IDS = Object.keys(LEGEND_POSES);
 const legendArea = id => AREAS.find(a => a.creature === id) || AREAS[0];
