@@ -41,5 +41,30 @@
     "targets": 3,
     "wornReach": 40
   },
-  "healTime": 120
+  "healTime": 120,
+  "_charge": "The long charge (Ed, 2026-10-05: \"charging legends do long distance charges knocking away everything in the way... but they'd have to go back to their area after each one\"; \"medium speed (they're huge, and heavy), and they have a big slowdown arc afterwards. They can curve somewhat as they charge to hit their target\"). species: the legends that charge instead of lobbing or beaming (those whose fight move is a charge). Every attack.interval seconds at home it picks its target as ever (attack.range), lowers its head for windup seconds (its first lane shown on the ground, laneShown metres of it), then runs: building speed at accel m/s a second to speed m/s (about her run), turning toward its target at up to turn degrees a second (a sharp sidestep or a blink beats it; drifting doesn't), until it's past its target or has run attack.range metres; then it brakes over brake metres, turning wide at arc degrees a second as it slows. Everything in its lane (laneWidth metres wide) but its own side and its own kind is hit once: damage, knocked aside knockback metres (less as it slows), the witch stunned stun seconds (her one point, as ever). It runs straight through scenery. Then it walks home at returnSpeed m/s to where it lay (rest seconds there before it may charge again): the trip home is its real cooldown. closeMoves: false (Ed, 2026-10-05: \"stick with the long range one for now\"): legends use only their long-range attack, near or far; true brings back their close-up move sets (slam, nova, charge; spin in phase 2) for wild legends.",
+  "charge": {
+    "species": [
+      "boar",
+      "elk",
+      "stag",
+      "ram",
+      "hedgehog",
+      "woodlouse"
+    ],
+    "windup": 2.5,
+    "laneShown": 60,
+    "speed": 24,
+    "accel": 9,
+    "turn": 24,
+    "brake": 30,
+    "arc": 55,
+    "laneWidth": 6,
+    "damage": 10,
+    "knockback": 9,
+    "stun": 1.2,
+    "returnSpeed": 6,
+    "rest": 2
+  },
+  "closeMoves": false
 }

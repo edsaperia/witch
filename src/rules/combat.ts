@@ -230,6 +230,8 @@ export interface CombatWorld {
   loseParty: (id: number) => void;
   /** A witch is slowed (a snail's slime, a glow-worm's flash): her speed times mult until then. */
   slowWitch?: (id: number, until: number, mult: number) => void;
+  /** A witch is knocked aside (a legend's long charge): dx, dz metres, eased over a moment, through scenery. */
+  pushWitch?: (id: number, dx: number, dz: number) => void;
 }
 
 /** How much of a blow a creature takes for how it's holding itself (Ed's species pass): curled up
@@ -371,7 +373,7 @@ function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target,
   o.hurtAt = time;
   s.events.push({ kind: "hit", x: o.x, z: o.z, at: time, id: o.id, big: from?.level === LEGEND, counter: mult > 1 ? 1 : mult < 1 ? -1 : 0 });
   if (gd.damage < 1 && !o.charge?.curl) s.events.push({ kind: "blocked", x: o.x, z: o.z, at: time, id: o.id });
-  if (a.modifier === "knockback" && a.knockback && k.knockback > 0 && !gd.rooted) {
+  if (a.modifier === "knockback" && a.knockback && k.knockback > 0 && !gd.rooted && !o.boss) { // (an area legend is too huge and heavy to knock about)
     const dx = o.x - fx, dz = o.z - fz, d = Math.hypot(dx, dz) || 1, kb = a.knockback * k.knockback;
     o.kx = (dx / d) * kb * 6; o.kz = (dz / d) * kb * 6; // eased off over a moment (stepKnock)
     if (k.stun > 0) { o.stunUntil = time + k.stun; if (o.fight) o.fight.windupUntil = 0; s.events.push({ kind: "stunned", x: o.x, z: o.z, at: time, id: o.id }); }
@@ -509,7 +511,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       continue;
     }
     // An angry or happy legend (#87): it stands in its area and shoots from afar (stepLegendAttack).
-    if (c.boss && !c.leashed && (c.legendState === "angry" || c.legendState === "happy") && fighting(c)) { stepLegendAttack(w, s, c, data, grid); continue; }
+    // (Ed, 2026-10-05: "stick with the long range one for now": with legends.closeMoves off, a wild legend that isn't an area's uses it too.)
+    if (c.level === LEGEND && !c.leashed && (c.boss ? c.legendState === "angry" || c.legendState === "happy" : !LEGENDS.closeMoves) && fighting(c)) { stepLegendAttack(w, s, c, data, grid); continue; }
     if (!fighting(c) || w.asleep(c) || (c.leashed && w.busy(c.id))) { c.fight = undefined; continue; }
     // Stunned (an armoured one knocked over): it does nothing for a moment.
     if (c.stunUntil !== undefined && time < c.stunUntil) { c.moving = false; c.vx = 0; c.vz = 0; continue; }
@@ -724,8 +727,11 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
  *  lobFlight seconds) or beams (by its species), each hit attack.damage times its level's power for
  *  interval seconds. (Its shots are the wild's when angry, the happy's when happy: foes() does the rest.) */
 function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, _data: CombatData, grid: Grid): void {
-  const A = LEGENDS.attack, time = w.time, S = FIGHT.scale, R = A.range * S, angry = c.legendState === "angry", side: State = angry ? "wild" : "happy";
+  const A = LEGENDS.attack, time = w.time, S = FIGHT.scale, R = A.range * S, angry = c.legendState !== "happy", side: State = angry ? "wild" : "happy";
   const f = (c.fight ??= { target: null, readyAt: time + A.interval * 0.5, windupUntil: 0, aimX: 0, aimZ: 0 });
+  if (c.lairX === undefined) { c.lairX = c.x; c.lairZ = c.z; }
+  const charger = LEGENDS.charge.species.includes(c.species);
+  if (charger && (c.run || Math.hypot(c.x - c.lairX, c.z - c.lairZ!) > 2)) { stepLongCharge(w, s, c, f, grid, angry); return; } // (out on a charge, or away from its lair: home first)
   c.moving = false; c.vx = 0; c.vz = 0; // (it stands where it lay, in its area)
   if (f.windupUntil > 0) {
     if (time < f.windupUntil) return;
@@ -754,10 +760,87 @@ function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, _data: Co
   }
   if (!found.length) { f.target = null; return; }
   found.sort((a, b) => a.d - b.d);
+  if (charger) {
+    // A charging legend: one long charge at the nearest, its head lowered windup seconds first.
+    const t0 = found[0], a = Math.atan2(t0.z - c.z, t0.x - c.x);
+    c.run = { phase: "windup", at: time, angle: a, speed: 0, turn: 1, target: t0.target, tx: t0.x, tz: t0.z, ran: 0, hit: [], fromX: c.x, fromZ: c.z };
+    f.target = t0.target; f.aimX = t0.x; f.aimZ = t0.z; c.facing = t0.x >= c.x ? 1 : -1;
+    s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id, big: true });
+    return;
+  }
   c.aims = found.slice(0, A.targets).map(({ x, z, target }) => ({ x, z, target }));
   f.target = c.aims[0].target; f.aimX = c.aims[0].x; f.aimZ = c.aims[0].z; f.windupUntil = time + A.windup;
   c.facing = f.aimX >= c.x ? 1 : -1;
   s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id });
+}
+
+/** A charging legend's long charge (Ed, 2026-10-05; legends.json charge): head down windup
+ *  seconds; then a heavy run, building to a medium top speed and curving toward its target at a
+ *  limited turn rate, through scenery, trampling everything in its lane but its own side and kind
+ *  (once each, knocked aside, the witch stunned), till it's past its target or out of reach; then a
+ *  big braking arc (still trampling, softer as it slows); then the walk home, its real cooldown. */
+function stepLongCharge(w: CombatWorld, s: CombatState, c: Creature, f: Fight, grid: Grid, angry: boolean): void {
+  const K = LEGENDS.charge, time = w.time, dt = w.dt, S = FIGHT.scale, R = LEGENDS.attack.range * S;
+  const run = (c.run ??= { phase: "home", at: time, angle: 0, speed: 0, turn: 1, target: null, tx: c.x, tz: c.z, ran: 0, hit: [], fromX: c.x, fromZ: c.z });
+  const posOf = (tg: Target | null) => (tg ? targetPos(w, s, tg) : null);
+  if (run.phase === "windup") {
+    c.moving = false; c.vx = 0; c.vz = 0;
+    if (time - run.at < K.windup) return;
+    run.phase = "run"; run.at = time;
+    s.events.push({ kind: "charged", x: c.x, z: c.z, at: time, id: c.id, big: true });
+  }
+  if (run.phase === "run" || run.phase === "brake") {
+    if (run.phase === "run") {
+      // Building speed, and curving toward its target at no more than turn degrees a second.
+      run.speed = Math.min(K.speed * FIGHT.speed, run.speed + K.accel * FIGHT.speed * dt);
+      const p = posOf(run.target);
+      if (p) { run.tx = p.x; run.tz = p.z; }
+      const want = Math.atan2(run.tz - c.z, run.tx - c.x);
+      let d = Math.atan2(Math.sin(want - run.angle), Math.cos(want - run.angle));
+      const past = Math.cos(d) < 0 && Math.hypot(run.tx - c.x, run.tz - c.z) < 30 * S; // (it has gone by)
+      if (!past) { const lim = ((K.turn * Math.PI) / 180) * dt; if (Math.abs(d) > 1e-4) run.turn = d > 0 ? 1 : -1; d = Math.max(-lim, Math.min(lim, d)); run.angle += d; }
+      if (past || run.ran >= R || !p) { run.phase = "brake"; run.at = time; run.decel = (run.speed * run.speed) / (2 * Math.max(1, K.brake * S)); }
+    } else {
+      // The braking arc: slowing over brake metres, turning wide the way it was turning.
+      run.speed = Math.max(0, run.speed - (run.decel ?? 10) * dt);
+      run.angle += run.turn * ((K.arc * Math.PI) / 180) * dt;
+      if (run.speed < 0.5) { run.phase = "home"; run.at = time; c.moving = false; }
+    }
+    const vx = Math.cos(run.angle) * run.speed, vz = Math.sin(run.angle) * run.speed;
+    c.x += vx * dt; c.z += vz * dt; c.vx = vx; c.vz = vz; run.ran += run.speed * dt;
+    c.moving = true; c.walk += dt * (2 + run.speed * 0.4); c.facing = vx >= 0 ? 1 : -1;
+    // Its lane: everything within laneWidth / 2 of it but its own side and kind, once each.
+    const share = run.speed / Math.max(1e-6, K.speed * FIGHT.speed), half = (K.laneWidth * S) / 2, kb = K.knockback * S * share;
+    const blow = { name: "legendCharge", delivery: "melee", modifier: "knockback", knockback: kb / 6, cooldown: 0, windup: 0, range: half } as unknown as Attack;
+    if (run.speed > 0.5) {
+      for (const o of grid.near(c.x, c.z, half + 4)) {
+        if (o === c || run.hit.includes(o.id) || !targetable(o) || truce(c, o) || o.boss || w.asleep(o)) continue;
+        const st = stateOf(o);
+        if (angry ? false : st === "happy" || st === "leashed") continue; // (happy: its side's and hers pass)
+        if (Math.hypot(o.x - c.x, o.z - c.z) > half + bodyRadius(o)) continue;
+        run.hit.push(o.id);
+        land(w, s, c, { kind: "creature", id: o.id }, K.damage, blow, c.x, c.z);
+        // Knocked aside: off the lane, away from its line.
+        const side = Math.sign((o.x - c.x) * -Math.sin(run.angle) + (o.z - c.z) * Math.cos(run.angle)) || 1;
+        o.kx = -Math.sin(run.angle) * side * kb * 6 + vx * 0.3 * share; o.kz = Math.cos(run.angle) * side * kb * 6 + vz * 0.3 * share;
+      }
+      if (angry) for (const v of w.witches) {
+        if (!v.onGround || v.down || run.hit.includes(-1 - v.id) || Math.hypot(v.x - c.x, v.z - c.z) > half + 0.4) continue;
+        run.hit.push(-1 - v.id);
+        land(w, s, c, { kind: "witch", id: v.id }, K.damage, blow, c.x, c.z);
+        const side = Math.sign((v.x - c.x) * -Math.sin(run.angle) + (v.z - c.z) * Math.cos(run.angle)) || 1;
+        w.pushWitch?.(v.id, -Math.sin(run.angle) * side * kb + Math.cos(run.angle) * kb * 0.4 * share, Math.cos(run.angle) * side * kb + Math.sin(run.angle) * kb * 0.4 * share);
+        w.slowWitch?.(v.id, time + K.stun * Math.max(0.3, share), 0);
+      }
+    }
+    return;
+  }
+  // Home: back to where it lay at returnSpeed, then rest seconds before it may charge again.
+  const dx = (c.lairX ?? c.x) - c.x, dz = (c.lairZ ?? c.z) - c.z, d = Math.hypot(dx, dz);
+  if (d < 1) { c.run = undefined; c.moving = false; c.vx = 0; c.vz = 0; f.readyAt = Math.max(f.readyAt, time + K.rest); f.target = null; return; }
+  const v = Math.min(d, K.returnSpeed * FIGHT.speed * dt);
+  c.x += (dx / d) * v; c.z += (dz / d) * v; c.vx = (dx / d) * K.returnSpeed; c.vz = (dz / d) * K.returnSpeed;
+  c.moving = true; c.walk += dt * 3; c.facing = dx >= 0 ? 1 : -1;
 }
 
 /** A wild legend's turn (Stage 5): it works through its pattern of big moves, approaching each one's

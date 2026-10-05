@@ -46,6 +46,9 @@ export interface Witch {
   /** Slowed (a snail's slime, a glow-worm's flash) until then: her speeds times slowMult. */
   slowUntil?: number;
   slowMult?: number;
+  /** Knocked aside (a legend's long charge): her push velocity (m/s), easing off; scenery doesn't stop it. */
+  knockX?: number;
+  knockZ?: number;
 }
 
 /** The simulation's fixed step (seconds): the rules advance only in these, driven only by the
@@ -258,6 +261,9 @@ export function interpolated<T>(g: Game, draw: () => T): T {
   }
 }
 
+/** How fast a knock on her eases off (a second): a push of d metres starts at d times this m/s. */
+const KNOCK_EASE = 6;
+
 /** One fixed step of the whole game. */
 function fixedStep(g: Game, controls: Controls): void {
   let c = controls;
@@ -278,6 +284,13 @@ function fixedStep(g: Game, controls: Controls): void {
   const was = W.body;
   if (c.dash) startDash(W.dash, was, c.moveX, c.moveZ, g.clock.time, t, g.map.bounds, (x, z) => blinkClear(g, x, z));
   W.body = applyDash(W.dash, stepWitch(was, c, dt, boost === 1 ? t : { ...t, groundSpeed: t.groundSpeed * boost, treetopSpeed: t.treetopSpeed * boost }, g.map.bounds));
+  // Knocked aside (a legend's long charge): pushed on, easing off, through scenery, inside the map.
+  if (W.knockX || W.knockZ) {
+    const b = g.map.bounds, k = Math.exp(-KNOCK_EASE * dt);
+    W.body = { ...W.body, x: Math.min(b.maxX, Math.max(b.minX, W.body.x + (W.knockX ?? 0) * dt)), z: Math.min(b.maxZ, Math.max(b.minZ, W.body.z + (W.knockZ ?? 0) * dt)) };
+    W.knockX = (W.knockX ?? 0) * k; W.knockZ = (W.knockZ ?? 0) * k;
+    if (Math.hypot(W.knockX, W.knockZ) < 0.05) { W.knockX = 0; W.knockZ = 0; }
+  }
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, dt, g.tuning, !!g.witch.seated, g.introFocus);
   if (c.pauseWaves) g.party.paused = !g.party.paused;
   if (c.nextWave) { spreadWave(g.party, g.map, g.clock.time); g.party.nextAt = g.clock.time + t.party.interval; }
@@ -419,6 +432,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     inArea: (c, x, z) => { const k = g.map.cellSafe(x, z).cell; return k[0] === c.cell[0] && k[1] === c.cell[1]; },
     slowWitch: (id, until, mult) => { const w = g.witches[id]; if (w) { w.slowUntil = Math.max(w.slowUntil ?? 0, until); w.slowMult = Math.min(mult, w.slowUntil > until ? w.slowMult ?? 1 : 1); } },
     hitWitch: (id, at) => hitWitch(g, id, at, t),
+    pushWitch: (id, dx, dz) => { const w = g.witches[id]; if (w) { w.knockX = (w.knockX ?? 0) + dx * KNOCK_EASE; w.knockZ = (w.knockZ ?? 0) + dz * KNOCK_EASE; } },
     loseParty: id => {
       for (const w of g.witches) { w.leash.stack = w.leash.stack.filter(i => i !== id); w.leash.placed = w.leash.placed.filter(p => p.id !== id); }
       g.creatures[id].leashed = false;
