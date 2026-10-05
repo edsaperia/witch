@@ -9,7 +9,7 @@ import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { dormant, poseOf, STEP } from "../rules/game";
 import { cameraPose } from "../rules/camera";
-import { AREA_TYPES } from "../rules/map";
+import { AREA_TYPES, HOME_LOOK } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
 import { AssetLibrary, type CreatureArt, type TypeArt } from "./assets";
 import type { Frame, Piece, RelicArt } from "./artBuild";
@@ -216,6 +216,7 @@ export class View {
     this.clouds = new Clouds(t.sky.clouds, t.sky.lightning, game.seed);
     this.scene.add(this.clouds.mesh, this.clouds.bolt);
     this.assets.onFloor = (type, tile) => this.ground.setFloor(type, tile);
+    this.assets.prefetchType(HOME_LOOK); // home's meadow floor (no trees ask for it)
     const cs = t.canopyShadow;
     this.ground.setCanopyShadow(cs.on ? cs.strength : 0, cs.height, cs.cover, cs.wind);
     this.shadows = new ShadowBatch(t.shadows.strength, t.fx === "smooth");
@@ -269,7 +270,7 @@ export class View {
     this.leashView = new LeashView(this.scene, game);
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // ?rig=1: the live rig (#79)
     this.lasers = new Lasers(this.scene, game);
-    this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z));
+    this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z), game.map);
     this.scene.add(...this.ley.meshes);
     this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
     this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);

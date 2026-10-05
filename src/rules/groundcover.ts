@@ -6,7 +6,7 @@
 // along path edges, and (given the forest) round the feet of trunks and rocks, with a ring of
 // reeds round every pond. No drawing here.
 import { hash2 } from "./random";
-import { AREA_TYPES, type ForestMap } from "./map";
+import { LOOKS, type ForestMap } from "./map";
 import { floorClearing } from "./speakers";
 import type { Forest } from "./forest";
 
@@ -29,7 +29,7 @@ export function tuftsInCell(map: ForestMap, ci: number, cj: number, cell: number
     const gi = ci * n + i, gj = cj * n + j, roll = hash2(gi, gj, s + 1101);
     if (roll >= density * 3) continue; // out of the running even at a path's edge by a trunk's foot: skip the lookups
     const x = (gi + 0.15 + hash2(gi, gj, s + 1102) * 0.7) * spacing, z = (gj + 0.15 + hash2(gi, gj, s + 1103) * 0.7) * spacing;
-    const a = map.areaAt(x, z), G = AREA_TYPES[a.type].groundCover;
+    const a = map.areaAt(x, z), G = LOOKS[a.look].groundCover;
     let k = density * G.density, reed = false;
     for (const [px, pz, pr] of ponds) {
       const pd = Math.hypot(x - px, z - pz);
@@ -51,7 +51,7 @@ export function tuftsInCell(map: ForestMap, ci: number, cj: number, cell: number
     const A = map.tuning.arena;
     if (A && roll >= k * (A.tufts + (1 - A.tufts) * map.arenaOpen(x, z, a.cell))) continue;
     const kinds = G.kinds.map(name => TUFT_KINDS.indexOf(name as (typeof TUFT_KINDS)[number])).filter(v => v >= 0);
-    out.push({ x, z, open: a.openness, type: a.type, kind: reed && REEDS >= 0 ? REEDS : kinds.length ? kinds[Math.floor(hash2(gi, gj, s + 1104) * kinds.length)] : 0, size: 0.7 + hash2(gi, gj, s + 1105) * 0.6, flip: hash2(gi, gj, s + 1106) < 0.5 });
+    out.push({ x, z, open: a.openness, type: a.look, kind: reed && REEDS >= 0 ? REEDS : kinds.length ? kinds[Math.floor(hash2(gi, gj, s + 1104) * kinds.length)] : 0, size: 0.7 + hash2(gi, gj, s + 1105) * 0.6, flip: hash2(gi, gj, s + 1106) < 0.5 });
   }
   return out;
 }

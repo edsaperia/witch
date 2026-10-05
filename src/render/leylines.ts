@@ -13,7 +13,8 @@
 import * as THREE from "three";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { LIGHT_UNIFORMS } from "./lighting";
-import type { LeyStone } from "../rules/leylines";
+import { departureRoute, type LeyStone } from "../rules/leylines";
+import type { ForestMap } from "../rules/map";
 
 export interface LeyTuning {
   on: boolean;
@@ -31,6 +32,8 @@ export interface LeyTuning {
   valley: number;
   /** The shimmer's speed (m/s) and spacing (m) along the line. */
   flow: number[];
+  /** The first line's way out from the treehouse (rules/leylines.ts departureRoute). */
+  depart: { run: number; avoid: number };
 }
 
 const STEP = 8; // metres between route points
@@ -104,7 +107,7 @@ export class LeyLines {
   private shiftFrom = -Infinity;
   private advancedAt = -Infinity;
 
-  constructor(private T: LeyTuning, private ground: (x: number, z: number) => number) {
+  constructor(private T: LeyTuning, private ground: (x: number, z: number) => number, private map?: ForestMap) {
     this.u = {
       ...HEIGHT_UNIFORMS, uTime: LIGHT_UNIFORMS.uTime,
       uLeyWidth: { value: new THREE.Vector2(T.width[0], T.width[1]) }, uLeyHeight: { value: new THREE.Vector2(T.height[0], T.height[1]) },
@@ -164,6 +167,8 @@ export class LeyLines {
 
   /** A link's route from stone a to b: a gently wandering line along the low ground between them. */
   private route(a: LeyStone, b: LeyStone, k: number): [number, number][] {
+    // From the treehouse at the start: due south out of its front, then round to the first objective.
+    if (a.depart && this.map) return departureRoute(this.map, b, this.T.depart.run, this.T.depart.avoid, STEP / 2);
     const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, px = -uz, pz = ux;
     const n = Math.max(2, Math.ceil(L / STEP)), W = Math.min(80, L * this.T.valley), off = new Float64Array(n + 1);
     for (let i = 1; i < n; i++) {
