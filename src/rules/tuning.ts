@@ -7,6 +7,8 @@ export interface Tuning {
   mapAreas: number;
   areaSize: number;
   areaScale: number;
+  /** Each area's fighting arena: mostly open within radius metres of its centre and soundsystem, the woods thickening smoothly over a band band metres wide (both times fight.scale), its edge wobbled by noise (a share of the band); bushes and tufts: the share of the undergrowth and ground cover left in its open middle. */
+  arena?: { radius: number; band: number; noise: number; bushes: number; tufts: number };
   areaSizeVariance: number;
   borderLayers: number;
   treeDensity: number;
@@ -37,7 +39,9 @@ export interface Tuning {
   /** Tufts on the ground round the witch, in ground mode: overall density (times each area's), within radius metres, at most cap; one chance every spacing metres, worked out cell metres at a time within budgetMs a frame; sway (share of a tuft's height) and part (how far they part round her). */
   /** Spells (Ed, 2026-10-04): the one equipped this run, and each spell's numbers. speed: her speed times mult for duration seconds, then cooldown seconds to recharge. */
   /** Combat (Stage 4; the attacks are data in config/combat.json): see config/tuning.json's _combat. */
-  combat: { aggro: number; witchLose: number; engage: number; chaseMult: number; partyChaseMult: number; marchMult: number; fleeMult: number; soundsystemHealth: number; soundsystemRadius: number; homeHealth: number; homeRadius: number; shake: number };
+  /** The fight's scale and speed (Ed's motion scale pass): lengths and speeds in a fight times these. */
+  fight: { scale: number; speed: number };
+  combat: { aggro: number; witchLose: number; engage: number; pursuit: number; pursuitRun: number; fightRun: number; legendRun: number; reaction: number; chaseMult: number; partyChaseMult: number; marchMult: number; fleeMult: number; soundsystemHealth: number; soundsystemRadius: number; homeHealth: number; homeRadius: number; shake: number };
   /** Parked party animals (at a sigil) guard within radius metres of it (Ed, 2026-10-04). */
   guard: { radius: number };
   /** Creatures noticing the witch on the ground (Ed's playtest): within radius metres resting ones look at her; curious babies come to about curious metres, skittish ones keep skittish off. */
@@ -129,7 +133,7 @@ export interface Tuning {
     specks: number; speckBrightness: number; speckReach: number;
   };
   /** Wave numbers over the rune stones (Ed, 2026-10-04, a design aid): on, a digit's height as a share of the screen's, metres above the stone (or the canopy), and how bright the reached areas' are (0-1). */
-  waveNumbers: { on: boolean; size: number; lift: number; spent: number };
+  waveNumbers: { on: boolean; size: number; lift: number; spent: number; pinRange: number };
   canopyCutout: { screenFraction: number; edge: number };
   shadows: { on: boolean; strength: number; trees: boolean };
   canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };

@@ -63,8 +63,16 @@ const hurtNow = (c: Creature) => c.hp !== undefined && c.hp < maxHp(c.level);
 /** The berry bushes and the berries on them, from the seed: in every area of the playable map,
  *  berries.bushesPerArea bushes at spots a bush may grow (in its own area, not on a path or in a
  *  kept clearing), and berries.perArea (a seeded number in that range) berries on distinct ones. */
+/** The berries' tuning with its per-area counts for this map's areas: they're for an area 112 m
+ *  across, and a bigger one has more, by its ground (Ed, 2026-10-05: bigger areas), so the berries
+ *  are as thick on the ground as before. */
+export function berryCounts(map: ForestMap, t: Tuning): Tuning["berries"] {
+  const k = (map.areaSize / 112) ** 2, B = t.berries;
+  return { ...B, bushesPerArea: Math.round(B.bushesPerArea * k), perArea: B.perArea.map(v => Math.round(v * k)) };
+}
+
 export function newBerries(map: ForestMap, t: Tuning): BerryState {
-  const B = t.berries, r = rng(map.seed * 6151 + 29), bushes: BerryBush[] = [], berries: Berry[] = [];
+  const B = berryCounts(map, t), r = rng(map.seed * 6151 + 29), bushes: BerryBush[] = [], berries: Berry[] = [];
   const P = B.patch;
   for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
     if (cx === map.centreCell[0] && cy === map.centreCell[1]) continue; // home: the dancefloor's clearing

@@ -68,7 +68,7 @@ describe("sleeping legends (Ed, 2026-10-04)", () => {
     expect(maxHp(3)).toBeGreaterThan(0);
   }, 60000);
 
-  it("turn happy (debug L, for now): at peace, and their buff is on", () => {
+  it("turn happy (debug O, for now): at peace, and their buff is on", () => {
     const { g, L } = beside();
     run(g, 0.2, { ...idle, happyNearest: true });
     expect(L.legendState).toBe("happy");
@@ -92,7 +92,7 @@ describe("happy legends defend (Ed, 2026-10-04)", () => {
   it("guards its area against a siege with its move set, heals when it's over, and sleeps for good if beaten", () => {
     const g = newGame(5, TUNING);
     g.clock.paused = false; g.party.paused = true;
-    setupArena(g, "home,wolf*4@2!");
+    setupArena(g, "home,wolf*2@1!"); // (a small siege: an adult pack would beat it, at the fight's scale)
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // (out of it)
     const ids = g.arena!.ids, L = g.creatures[ids[0]], wolves = ids.slice(1).map(id => g.creatures[id]);
     expect(L.legendState).toBe("happy");

@@ -819,19 +819,23 @@ export class View {
         seen.set(key, k);
         return k;
       };
+      // On the ground the camera looks steeply down and a near stone's top is often above the
+      // picture: its number is held inside the top of the screen. Only near ones, and never over
+      // the treetops (where it put far stones' numbers in the sky, and on the ground piled far ones up).
+      const pin = (x: number, z: number) => up < 0.5 && Math.hypot(x - w.x, z - w.z) < WN.pinRange;
       for (const m of mc.list) {
         const wave = this.plan.waves.get(m.key);
         if (wave === undefined || Math.hypot(m.x - w.x, m.z - w.z) > range) continue;
         const species = AREA_TYPES[g.map.typeOf(m.cell[0], m.cell[1])].creature, top = (this.markerArt.height.get(species) ?? 0) * this.mpp * scale;
         const k = shown(m.key, m.x, m.z, top);
-        if (k > 0.02) nums.push({ x: m.x, z: m.z, y: lift(top), wave, colour: this.markerArt.colour.get(species)!, alpha: 1, show: k, top });
+        if (k > 0.02) nums.push({ x: m.x, z: m.z, y: lift(top), wave, colour: this.markerArt.colour.get(species)!, alpha: 1, show: k, top, pin: pin(m.x, m.z) });
       }
       for (const a of g.party.areas.values()) {
         if (!a.wave) continue;
         const s0 = g.map.soundsystemSpot(a.cell[0], a.cell[1]), key = cellKey(a.cell);
         if (Math.hypot(s0.x - w.x, s0.z - w.z) > range) continue;
         const k = shown(key, s0.x, s0.z, 4);
-        if (k > 0.02) nums.push({ x: s0.x, z: s0.z, y: lift(4), wave: a.wave, colour: SPENT, alpha: WN.spent, show: k, top: 4 });
+        if (k > 0.02) nums.push({ x: s0.x, z: s0.z, y: lift(4), wave: a.wave, colour: SPENT, alpha: WN.spent, show: k, top: 4, pin: pin(s0.x, s0.z) });
       }
       this.numberSeen = seen;
     }
@@ -891,7 +895,7 @@ export class View {
       // they could almost be mistaken for scenery"): sunk and mossed over, in a batch of its own
       // with no find-in-the-dark look. Waking, it heaves up out of the ground.
       const W = g.tuning.wildLegends, st = c.boss && !c.leashed ? c.legendState : undefined;
-      const sleeping = st === "asleep" || st === "slept", rising = st === "waking" ? Math.min(1, (time - (c.stateAt ?? 0)) / Math.max(0.1, W.wake * 0.5)) : 1;
+      const sleeping = st === "asleep" || st === "slept", rising = st === "waking" || (st === "happy" && (c.stateAt ?? 0) > 0) ? Math.min(1, (time - (c.stateAt ?? 0)) / Math.max(0.1, W.wake * 0.5)) : 1; // (made happy, it stirs and rises contentedly)
       const art = party ?? woken ?? this.assets.creatureArt(c.species), key = party ? `party-${c.id}` : sleeping ? `sleep-${c.species}` : woken ? `woken-${c.species}` : c.species;
       if (!art) continue;
       arts.set(key, art);

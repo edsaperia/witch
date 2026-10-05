@@ -15,7 +15,7 @@ export const KEYS = {
   zoomIn: ["KeyZ", "Equal", "NumpadAdd"], zoomOut: ["KeyX", "Minus", "NumpadSubtract"],
   debug: ["Backquote"],
   // Playtest and debug keys.
-  nextWave: ["KeyN"], pauseWaves: ["KeyP"], cycleSpeakers: ["KeyK"], inviteNearest: ["KeyI"], feedNearest: ["KeyB"], happyNearest: ["KeyL"],
+  nextWave: ["KeyN"], pauseWaves: ["KeyP"], cycleSpeakers: ["KeyK"], inviteNearest: ["KeyI"], feedNearest: ["KeyB"], happyNearest: ["KeyO"],
 } as const;
 
 /** The action bar's eight slots, in order, and what each holds (null: empty, for later spells,

@@ -54,7 +54,7 @@ export function treeChance(map: ForestMap, x: number, z: number, type: number): 
   const n = vnoise(x / D.patchScale, z / D.patchScale, s + 91);
   const patch = D.patchMin + (D.patchMax - D.patchMin) * smoothstep((n - 0.25) / 0.5);
   const w = map.treeWeight(x, z) * L.density * patch * patternMask(map, x, z, L) * t.treeDensity;
-  return Math.max(w, D.lone) * along;
+  return (w >= D.lone ? w : Math.max(w, D.lone * map.arenaOpen(x, z))) * along; // (no lone trees in an area's arena)
 }
 
 /** How a type's pattern shapes its trees, around 1 on average. */
@@ -116,7 +116,11 @@ function bushesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
     const type = plantType(map, x, z, i, j, s + 206);
     if (bedsInRows(map, type)) continue; // a formal garden's beds are laid in rows along its walls
     const sparse = 1 - Math.min(1, treeChance(map, x, z, type) / 0.8);
-    if (hash2(i, j, s + 203) > (0.15 + 0.85 * sparse) * AREA_TYPES[type].layout.undergrowth * map.tuning.bushDensity * clump * along) continue;
+    const roll = hash2(i, j, s + 203), odds = (0.15 + 0.85 * sparse) * AREA_TYPES[type].layout.undergrowth * map.tuning.bushDensity * clump * along;
+    if (roll > odds) continue;
+    // An area's arena stays mostly open (asked only of the bushes that would grow).
+    const A = map.tuning.arena;
+    if (A && roll > odds * (A.bushes + (1 - A.bushes) * map.arenaOpen(x, z))) continue;
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < floorClearing(map.tuning)) continue; // the dancefloor and its speakers stay clear
     if (map.hardClear(x, z)) continue; // and the treehouse's foot, the grounds, the set pieces' clearings
     out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 204) * BUSH_VARIANTS), flip: hash2(i, j, s + 205) < 0.5 });
