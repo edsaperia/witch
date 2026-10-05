@@ -723,12 +723,14 @@ export class LeashView {
       if (was && !c.travelling) { this.fx.push({ kind: "ring", x: c.x, y: 0, z: c.z, at: time, life: 0.5, r: col.r, g: col.g, b: col.b, seed: 0, size: 2.4, n: 18, dot: 0.6 }); this.fx.push({ kind: "spark", x: c.x, y: 1, z: c.z, at: time, life: 0.5, r: col.r, g: col.g, b: col.b, seed: id * 7 + time, size: 2 }); }
       this.travelling.set(id, !!c.travelling);
       if (c.travelling && c.route) {
-        const R = c.route, way = [{ x: c.x, z: c.z }, ...R.points.slice(Math.min(R.next, R.points.length - 1), -1), { x: lp.x, z: lp.z }], gap = 2.2, flow = (time * 3) % gap;
+        // (bigger from the treetops, where the camera is far off and the routes run far)
+        const up = w.mode === "treetop", rd = up ? 1.8 : 0.45, gap = up ? 5 : 2.2, hi = up ? 0.35 : 0; // (and lighter, to show over dark crowns)
+        const R = c.route, way = [{ x: c.x, z: c.z }, ...R.points.slice(Math.min(R.next, R.points.length - 1), -1), { x: lp.x, z: lp.z }], flow = (time * 3) % gap;
         let carry = gap - flow;
         for (let i = 1; i < way.length; i++) {
           const a = way[i - 1], b = way[i], seg = Math.hypot(b.x - a.x, b.z - a.z);
           let u = carry;
-          for (; u < seg; u += gap) { const k = u / seg; this.flat.add(a.x + (b.x - a.x) * k, 0, a.z + (b.z - a.z) * k, 0.45, dot, col.r, col.g, col.b, 0.8); }
+          for (; u < seg; u += gap) { const k = u / seg; const px = a.x + (b.x - a.x) * k, pz = a.z + (b.z - a.z) * k; this.flat.add(px, 0, pz, rd, dot, col.r, col.g, col.b, 0.85); if (up) this.over.add(px, 0.3, pz, rd * 0.8, dot, col.r + (1 - col.r) * hi, col.g + (1 - col.g) * hi, col.b + (1 - col.b) * hi, 0.9); } // (from the treetops it shows through the crowns, as the ley lines do)
           carry = u - seg; // (the spacing carries on round the corner)
         }
         continue;
