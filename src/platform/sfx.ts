@@ -21,7 +21,16 @@ const INVITE = [0.12, -0.04, 0.42, 0.05, -0.02, 0.5];
 /** A voice's mood: happy rises and bounces, enraged falls clipped and gritty, grumpy sits low and flat. */
 export type Mood = "happy" | "grumpy" | "enraged";
 /** One creature's voice: its pitch (Hz), how far its formants sit above an adult's (small: higher), its source. */
-export interface CreatureVoice { pitch: number; formants: number; wave: OscillatorType; /** a legend: whale song, not babble */ legend?: boolean }
+/** A creature's call blended into its babble (config/creature-voices.json: a family's, a species' tweaks):
+ *  `pitch` and `formants` are already in its voice; the rest shape each syllable. */
+export interface CallStyle {
+  pitch: number; formants: number; wave?: OscillatorType; pure?: boolean; glide: number;
+  trill?: number[]; am?: number[]; noise?: number; dur: number; gap: number; extra?: number; consonant?: number; vowel?: number; turn?: string; volume?: number;
+}
+export interface CreatureVoice { pitch: number; formants: number; wave: OscillatorType; /** a legend: whale song, not babble */ legend?: boolean; call?: CallStyle }
+/** A syllable's sound: its pitch gliding to `end`, a vowel through formants (or `pure`, a whistled
+ *  tone), a trill ([Hz, cents]), a buzz or rattle (`am`: [Hz, depth]), breath or hiss (`noise` 0-1). */
+interface SyllableSpec { pitch: number; end: number; vowel: number; dur: number; formants: number; wave: OscillatorType; gain: number; grit: number; pan: number; consonant: boolean; pure?: boolean; trill?: number[]; am?: number[]; noise?: number }
 /** What a legend's whale song says: its mood, asleep (dreaming or a nightmare), or an attack's swell. */
 export type WhaleKind = Mood | "sleep" | "nightmare" | "swell";
 
@@ -106,29 +115,50 @@ export class Sfx {
 
   /** One spoken syllable: a voiced source (gliding from `pitch` to `end`) through a vowel's three
    *  formants, a breath of consonant before it, gritted for anger. Returns its output gain. */
-  private syllable(at: number, o: { pitch: number; end: number; vowel: number; dur: number; formants: number; wave: OscillatorType; gain: number; grit: number; pan: number; consonant: boolean }, out?: GainNode): GainNode {
+  private syllable(at: number, o: SyllableSpec, out?: GainNode): GainNode {
     const c = this.ctx, dest = out ?? this.voice(o.pan), g = c.createGain();
     g.connect(dest);
     g.gain.setValueAtTime(0.0001, at);
     g.gain.exponentialRampToValueAtTime(Math.max(0.0002, o.gain), at + 0.012);
     g.gain.setValueAtTime(Math.max(0.0002, o.gain * 0.8), at + o.dur * 0.6);
     g.gain.exponentialRampToValueAtTime(0.0001, at + o.dur);
-    const src = c.createOscillator();
+    // a buzz or a croak's rattle: the syllable's level shaken fast
+    let body: AudioNode = g;
+    if (o.am && o.am[0] > 0 && o.am[1] > 0) {
+      const amg = c.createGain(), lfo = c.createOscillator(), d = c.createGain();
+      amg.gain.value = 1 - o.am[1] / 2; d.gain.value = o.am[1] / 2;
+      lfo.type = "square"; lfo.frequency.value = o.am[0];
+      lfo.connect(d); d.connect(amg.gain); amg.connect(g); lfo.start(at); lfo.stop(at + o.dur + 0.03);
+      body = amg;
+    }
+    const voiced = 1 - Math.min(0.95, o.noise ?? 0);
+    const src = c.createOscillator(), sg = c.createGain();
+    sg.gain.value = voiced;
     src.type = o.wave;
     src.frequency.setValueAtTime(o.pitch, at);
     src.frequency.exponentialRampToValueAtTime(Math.max(30, o.end), at + o.dur);
-    // a little vibrato-free wobble of the voice: a few cents of jitter
+    // a little wobble of the voice: a few cents of jitter; a trill, if it has one
     src.detune.setValueAtTime((Math.random() - 0.5) * 30, at);
-    let feed: AudioNode = src;
-    if (o.grit > 0) { const sh = c.createWaveShaper(); sh.curve = grit(); const pre = c.createGain(); pre.gain.value = 1 + o.grit * 3; src.connect(pre); pre.connect(sh); feed = sh; }
-    for (const [i, [f, lvl]] of VOWELS[o.vowel].entries()) {
+    if (o.trill && o.trill[0] > 0 && o.trill[1] > 0) { const lfo = c.createOscillator(), d = c.createGain(); lfo.frequency.value = o.trill[0]; d.gain.value = o.trill[1]; lfo.connect(d); d.connect(src.detune); lfo.start(at); lfo.stop(at + o.dur + 0.03); }
+    src.connect(sg);
+    let feed: AudioNode = sg;
+    if (o.grit > 0) { const sh = c.createWaveShaper(); sh.curve = grit(); const pre = c.createGain(); pre.gain.value = 1 + o.grit * 3; sg.connect(pre); pre.connect(sh); feed = sh; }
+    // breath or a hiss through the same mouth
+    let breath: AudioNode | null = null;
+    if ((o.noise ?? 0) > 0.01) { const ng = c.createGain(); ng.gain.value = (o.noise ?? 0) * 1.6; this.noiseBurst(at, o.dur + 0.02, ng, Math.random()); breath = ng; }
+    if (o.pure) {
+      // whistled: the tone itself, softened (no vowels)
+      const lp = c.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = Math.min(16000, o.pitch * 3); lp.Q.value = 0.8;
+      const pg = c.createGain(); pg.gain.value = 0.55;
+      feed.connect(lp); breath?.connect(lp); lp.connect(pg); pg.connect(body);
+    } else for (const [i, [f, lvl]] of VOWELS[o.vowel].entries()) {
       const bp = c.createBiquadFilter(), fg = c.createGain();
       bp.type = "bandpass"; bp.Q.value = i === 0 ? 6 : 9;
       // the mouth opening: from a closed shape into the vowel over the first 25 ms
       bp.frequency.setValueAtTime(f * o.formants * (i === 0 ? 0.6 : 0.9), at);
       bp.frequency.linearRampToValueAtTime(f * o.formants, at + 0.025);
       fg.gain.value = lvl * 2.2;
-      feed.connect(bp); bp.connect(fg); fg.connect(g);
+      feed.connect(bp); breath?.connect(bp); bp.connect(fg); fg.connect(body);
     }
     src.start(at); src.stop(at + o.dur + 0.03);
     if (o.consonant) {
@@ -157,29 +187,40 @@ export class Sfx {
     }
     // the rest give it room: each voice a little quieter the more are talking
     const crowd = 1 / Math.sqrt(1 + this.speaking.length * A.duck);
-    const out = this.voice(pan), n = long ? Math.max(3, Math.round(long / 0.22)) : A.syllables[0] + Math.floor(Math.random() * (A.syllables[1] - A.syllables[0] + 1));
+    const K = v.call, out = this.voice(pan), n = long ? Math.max(3, Math.round(long / 0.22)) : A.syllables[0] + Math.floor(Math.random() * (A.syllables[1] - A.syllables[0] + 1)) + (K?.extra ?? 0);
     let t = now + 0.005, v0 = Math.floor(Math.random() * VOWELS.length);
-    const vol = A.volume * near * crowd * Math.min(1.8, Math.max(1, Math.pow(A.pitch / v.pitch, 0.4))); // (low voices carry less: lifted)
+    const vol = A.volume * near * crowd * Math.min(1.8, Math.max(1, Math.pow(A.pitch / v.pitch, 0.4))) * (v.call?.volume ?? 1); // (low voices carry less: lifted)
     for (let i = 0; i < n; i++) {
       const x = n > 1 ? i / (n - 1) : 0;
       // the contour: happy lifts and bounces, enraged starts high and falls hard, grumpy mutters flat and low
       const shape = mood === "happy" ? 0.1 + 0.35 * x + (i % 2 ? 0.12 : 0) : mood === "enraged" ? 0.35 - 0.55 * x : -0.1 + 0.08 * Math.sin(i * 2.3);
       const f = v.pitch * (1 + 0.5 * shape) * (long ? 0.9 + 0.25 * x : 1);
-      const dur = long ? (long / n) * 0.92 : mood === "enraged" ? 0.07 : mood === "happy" ? 0.1 : 0.11;
+      const dur = (long ? (long / n) * 0.92 : mood === "enraged" ? 0.07 : mood === "happy" ? 0.1 : 0.11) * (K?.dur ?? 1);
       v0 = (v0 + 1 + Math.floor(Math.random() * 3)) % VOWELS.length;
+      // its call (the family's, the species' tweaks) shaping the mood's delivery
       this.syllable(t, {
-        pitch: f, end: f * (mood === "enraged" ? 0.82 : mood === "happy" ? 1.12 : 0.95), vowel: long ? (i % 2 ? 0 : 3) : v0, dur, formants: v.formants, wave: v.wave,
-        gain: vol * (long ? 0.6 + 0.4 * x : 1) * (mood === "enraged" && i === 0 ? 1.15 : 1), grit: mood === "enraged" ? 0.6 : mood === "grumpy" ? 0.15 : long ? 0.3 : 0, pan, consonant: !long && Math.random() < 0.6,
+        pitch: f, end: f * (mood === "enraged" ? 0.82 : mood === "happy" ? 1.12 : 0.95) * (K?.glide ?? 1), vowel: K?.vowel ?? (long ? (i % 2 ? 0 : 3) : v0), dur, formants: v.formants, wave: v.wave,
+        gain: vol * (long ? 0.6 + 0.4 * x : 1) * (mood === "enraged" && i === 0 ? 1.15 : 1), grit: mood === "enraged" ? 0.6 : mood === "grumpy" ? 0.15 : long ? 0.3 : 0, pan,
+        consonant: !long && Math.random() < (K?.consonant ?? 0.6), pure: K?.pure, trill: K?.trill, am: K?.am, noise: K?.noise,
       }, out);
-      t += dur + (long ? 0.01 : mood === "enraged" ? 0.015 : mood === "happy" ? 0.04 + (i % 2) * 0.03 : 0.05);
+      t += dur + (long ? 0.01 : mood === "enraged" ? 0.015 : mood === "happy" ? 0.04 + (i % 2) * 0.03 : 0.05) * (K?.gap ?? 1);
     }
     this.speaking.push({ g: out, end: t, prio });
+  }
+
+  /** A canid turning enraged: a short howl, rising and falling (its family's `turn`). */
+  howl(v: CreatureVoice, pan = 0, near = 1): void {
+    const A = this.T.voice.animals, at = this.ctx.currentTime + 0.01, p = v.pitch * 1.4, out = this.voice(pan), vol = A.volume * near;
+    const base = { formants: v.formants, wave: v.wave, grit: 0.1, pan, consonant: false, trill: [5, 25] };
+    this.syllable(at, { ...base, pitch: p, end: p * 1.5, vowel: 4, dur: 0.4, gain: vol * 0.8 }, out);
+    this.syllable(at + 0.36, { ...base, pitch: p * 1.5, end: p * 1.05, vowel: 0, dur: 0.75, gain: vol }, out);
   }
 
   /** A creature's answer to a 💌 that lands (optional, Ed): one small syllable in its own voice, lifting as its affection fills. */
   reply(v: CreatureVoice, amount: number, pan = 0, near = 1): void {
     const A = this.T.voice.animals, at = this.ctx.currentTime + 0.06, f = v.pitch * (1 + 0.4 * Math.max(0, Math.min(1, amount)));
-    this.syllable(at, { pitch: f, end: f * 1.15, vowel: Math.floor(Math.random() * VOWELS.length), dur: 0.08, formants: v.formants, wave: v.wave, gain: A.volume * A.reply * near, grit: 0, pan, consonant: false });
+    const K = v.call;
+    this.syllable(at, { pitch: f, end: f * 1.15 * (K?.glide ?? 1), vowel: K?.vowel ?? Math.floor(Math.random() * VOWELS.length), dur: 0.08 * (K?.dur ?? 1), formants: v.formants, wave: v.wave, gain: A.volume * A.reply * near, grit: 0, pan, consonant: false, pure: K?.pure, trill: K?.trill, am: K?.am, noise: K?.noise });
   }
 
   /** A 💌 landing: a small glassy chime (a bell's partials); a spent one (inside the creature's

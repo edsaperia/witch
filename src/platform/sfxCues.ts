@@ -19,7 +19,15 @@ import { strengthOf } from "../rules/combat";
 import { hash2 } from "../rules/random";
 import type { CombatEventKind } from "../rules/combat";
 import type { Tuning } from "../rules/tuning";
-import type { CreatureVoice, Mood, Sfx } from "./sfx";
+import type { CallStyle, CreatureVoice, Mood, Sfx } from "./sfx";
+import voices from "../../config/creature-voices.json";
+
+const VOICES = voices as unknown as { families: Record<string, Partial<CallStyle>>; species: Record<string, Partial<CallStyle> & { family?: string }> };
+/** A species' call: its family's style with its own tweaks over it (config/creature-voices.json). */
+export function callOf(species: string): CallStyle {
+  const sp = VOICES.species[species] ?? {}, fam = VOICES.families[sp.family ?? ""] ?? {};
+  return { glide: 1, dur: 1, gap: 1, ...fam, ...sp, pitch: (fam.pitch ?? 1) * (sp.pitch ?? 1), formants: (fam.formants ?? 1) * (sp.formants ?? 1) } as CallStyle; // (pitch and formants multiply; the rest the species overrides)
+}
 
 /** The combat events that are a creature attacking (its id the attacker): each a burst of its speech. */
 const ATTACKS = new Set<CombatEventKind | "legendWindup">(["windup", "shot", "beam", "pulse", "quake", "phase", "nova", "rush", "charged", "leapt", "slammed", "sprung", "flash", "legendWindup"]);
@@ -30,11 +38,12 @@ export function voiceOf(c: Creature, t: Tuning): CreatureVoice {
   let h = 0;
   for (let i = 0; i < c.species.length; i++) h = (h * 31 + c.species.charCodeAt(i)) >>> 0;
   const a = hash2(h, 1, 851), b = hash2(h, 2, 853), k = strengthOf(c.species, c.level as 0 | 1 | 2 | 3), size = k < 1 ? 1.35 : k > 1 ? 0.78 : 1;
+  const call = callOf(c.species);
   return {
-    pitch: t.sfx.voice.animals.pitch * Math.pow(2, -0.65 * (c.level - 1)) * size * (0.85 + 0.3 * a),
-    formants: (1.3 - 0.13 * c.level) * (k < 1 ? 1.12 : k > 1 ? 0.9 : 1) * (0.92 + 0.16 * b),
-    wave: a < 0.5 ? "sawtooth" : a < 0.8 ? "square" : "triangle",
-    legend: !!c.boss,
+    pitch: t.sfx.voice.animals.pitch * Math.pow(2, -0.65 * (c.level - 1)) * size * (0.92 + 0.16 * a) * call.pitch,
+    formants: (1.3 - 0.13 * c.level) * (k < 1 ? 1.12 : k > 1 ? 0.9 : 1) * (0.95 + 0.1 * b) * call.formants,
+    wave: call.wave ?? (a < 0.5 ? "sawtooth" : a < 0.8 ? "square" : "triangle"),
+    legend: !!c.boss, call,
   };
 }
 
@@ -95,7 +104,10 @@ export class SfxCues {
     this.enraged = nowEnraged; this.happy = nowHappy;
     // turning, they say so (Ed: "angry speech from enraged animals", happy from happy): the nearest
     // one's voice over the growl or the pop
-    if (mad) { S.enraged(pan(mad.x), ak, angry); if (this.ready(mad.id, time, t.voice.animals.gap)) S.speak(voiceOf(mad, g.tuning), "enraged", pan(mad.x), ak, ak + 0.3); }
+    if (mad) {
+      S.enraged(pan(mad.x), ak, angry);
+      if (this.ready(mad.id, time, t.voice.animals.gap)) { const v = voiceOf(mad, g.tuning); if (v.call?.turn === "howl" && !v.legend) S.howl(v, pan(mad.x), ak); else S.speak(v, "enraged", pan(mad.x), ak, ak + 0.3); }
+    }
     if (glad) { S.happy(pan(glad.x), gk); if (this.ready(glad.id, time, t.voice.animals.gap)) S.speak(voiceOf(glad, g.tuning), "happy", pan(glad.x), gk, gk + 0.3); }
 
     // legends: the nearest sleeping one's snore and dream, and a nightmare's unease

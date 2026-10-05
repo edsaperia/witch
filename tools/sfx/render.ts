@@ -11,6 +11,7 @@ const v = (species: string, level: number) => voiceOf({ species, level, boss: le
 type Play = (s: Sfx) => void;
 const SOUNDS: [string, number, Play][] = [
   ["witch-chatter", 2.4, () => {}],
+  ["species-calls", 21, () => {}],
   ["reply-baby", 0.4, s => s.reply(v("hare", 0), 0.5)],
   ["speak-baby-happy", 0.8, s => s.speak(v("hare", 0), "happy")],
   ["speak-young-grumpy", 0.9, s => s.speak(v("fox", 1), "grumpy")],
@@ -19,6 +20,7 @@ const SOUNDS: [string, number, Play][] = [
   ["speak-legend-enraged", 5, s => s.speak(v("bear", 3), "enraged")],
   ["legend-happy", 4.5, s => s.speak(v("bear", 3), "happy")],
   ["legend-windup", 3, s => s.windup(0, 1, v("bear", 3))],
+  ["howl", 1.4, s => s.howl(v("wolf", 2))],
   ["fight-crowd", 1.4, s => { const sp = ["wolf", "fox", "boar", "hare", "owl", "stoat", "badger", "toad"]; sp.forEach((x, i) => s.speak(v(x, (i % 3) as number), i % 2 ? "enraged" : "happy", (i % 5) / 2 - 1, 1 - i * 0.1)); }],
   ["hit", 0.8, s => s.hit(0)],
   ["hit-spent", 0.5, s => s.hit(0, 1, true)],
@@ -43,6 +45,14 @@ async function render(name: string, seconds: number, play: Play) {
   if (name === "witch-chatter") {
     // her 💌 hose as #89 fires it: bursts of 3 letters 0.12 s apart, a burst every 0.6 s
     for (let b = 0; b < 4; b++) for (let i = 0; i < 3; i++) { const at = b * 0.6 + i * 0.12; void oc.suspend(Math.round(at * rate) / rate).then(() => { s.letter(0); return oc.resume(); }); }
+  } else if (name === "species-calls") {
+    // one line per family (and the owl's hoot, the raven's croak, the canids' howl), each a young one's grumble then a happy reply
+    const lines: [string, number][] = [["owl", 1], ["raven", 1], ["wolf", 2], ["fox", 1], ["bear", 2], ["boar", 1], ["elk", 2], ["hare", 0], ["squirrel", 1], ["beetle", 1], ["moth", 1], ["snake", 1], ["toad", 1], ["bat", 1], ["otter", 1], ["lynx", 1]];
+    lines.forEach(([sp, lv], i) => {
+      const at = i * 1.3;
+      void oc.suspend(Math.round(at * rate) / rate).then(() => { s.speak(v(sp, lv), i % 2 ? "happy" : "grumpy"); return oc.resume(); });
+    });
+    void oc.suspend(Math.round(20 * rate) / rate).then(() => { s.howl(v("wolf", 2)); return oc.resume(); });
   } else play(s);
   const buf = await oc.startRendering(), L = buf.getChannelData(0), R = buf.getChannelData(1);
   let sum = 0, peak = 0, nan = false;
