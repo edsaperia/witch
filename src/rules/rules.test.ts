@@ -627,6 +627,16 @@ describe("the party", () => {
     // Pausing during the boot holds it too.
     p.paused = true; stepParty(p, map, B / 2, 5); expect(p.bootUntil).toBe(B + 5);
   });
+  it("waits for her to get up from the decks: five minutes from her first step (Ed, 2026-10-05)", () => {
+    expect(TUNING.boot.time).toBe(300);
+    const p = newParty(map), B = TUNING.boot.time, due = p.nextAt;
+    for (let s = 0; s < 40; s++) stepParty(p, map, s, 1, true); // (40 s sitting behind the decks)
+    expect(p.bootUntil).toBe(B + 40); expect(p.nextAt).toBe(due + 40);
+    stepParty(p, map, 40, 1, false); // (up: the boot runs from here)
+    expect(p.bootUntil).toBe(B + 40);
+    stepParty(p, map, B + 41, 1, true); // (sitting again once it's done holds nothing)
+    expect(p.nextAt).toBe(due + 40);
+  });
   it("forecasts two waves ahead, confirmed, and a probable set that holds the wave after (Ed, 2026-10-04)", () => {
     const p = newParty(map);
     expect(p.next.length).toBe(1); expect(p.afterNext.length).toBe(1);
@@ -1611,7 +1621,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
     expect(z0 - g.witch.z).toBeGreaterThan(TUNING.dash.distance * 0.8);
     expect(Math.abs(g.witch.x - x0)).toBeLessThan(0.5);
     expect(dashing(g.witches[0].dash, g.clock.time)).toBe(true); // gone: not drawn, not hit
-    run(g, Math.ceil(TUNING.dash.gone / STEP) + 1);
+    run(g, Math.ceil(g.buffs.tuning.dash.gone / STEP) + 1); // (the home legend's buff may be Curl)
     expect(dashing(g.witches[0].dash, g.clock.time)).toBe(false);
     const z1 = g.witch.z;
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 }); // still cooling down: no blink
@@ -1650,7 +1660,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
     const before = hp();
     hitWitch(g, 0, g.clock.time);
     expect(hp()).toBe(before);
-    run(g, Math.ceil(TUNING.dash.gone / STEP) + 1);
+    run(g, Math.ceil(g.buffs.tuning.dash.gone / STEP) + 1); // (the home legend's buff may be Curl)
     hitWitch(g, 0, g.clock.time + 0.01); // back: hittable as ever
     expect(hp()).not.toBe(before);
   });
