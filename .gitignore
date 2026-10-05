@@ -5,3 +5,4 @@ tools/smoke/out/
 art/out/
 tools/music-lab/out/
 upcoming.generated.json
+node_modules

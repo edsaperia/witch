@@ -6,7 +6,7 @@
 // Bushes grow in patches (berries.patch), so a sigil set in the middle of one is a feeding spot.
 // An eaten berry grows again at once on a free berry bush somewhere else on the map, so the number
 // of berries never changes. A party animal that has eaten enough evolves: the berries its next
-// level's strength costs (toEvolve: 1 for a baby, 3 for a young of most species); evolving stops at adult (Ed, 2026-10-04: legends are the areas'
+// level's strength costs (toEvolve: 2 and 2 for a species of normal strength); evolving stops at adult (Ed, 2026-10-04: legends are the areas'
 // own, never grown). It evolves on the next bar line of the music, so the view can make a show of it. No drawing here.
 import { COMBAT, creatureMaxHp, strengthOf } from "./combat";
 import { beatAt, timeAt, type BeatClock } from "./beat";
@@ -63,7 +63,7 @@ export function strengthGain(level: Level, species: string | undefined, t: Tunin
 
 /** Berries needed to go up from a level (Ed, 2026-10-05: "tie the cost to strength"): the strength
  *  it gains, at berries.cost.per a berry, rounded, at least one (times cost.scale, the legends'
- *  evolve-faster buff). With every species alike that's 1 for a baby and 3 for a young. Adults and
+ *  evolve-faster buff). By fighting value (cost.by "value") a species of normal strength pays 2 and 2. Adults and
  *  legends don't evolve. */
 export const toEvolve = (level: Level, t: Tuning, species?: string): number => {
   if (level >= TOP_LEVEL) return Infinity;
@@ -73,7 +73,7 @@ export const toEvolve = (level: Level, t: Tuning, species?: string): number => {
 /** Who may eat berries: party animals that aren't legends (and aren't already evolving). */
 /** Whether a party animal goes for berries: not mid-fight or evolving; still able to evolve
  *  (below adult), or hurt (a berry heals it to full, Ed 2026-10-04: so a hurt one wants one whatever its level). */
-export const canEat = (c: Creature, s: BerryState): boolean => c.leashed && !s.evolving.has(c.id) && !c.fight?.target && (c.level < TOP_LEVEL || hurtNow(c));
+export const canEat = (c: Creature, s: BerryState): boolean => c.leashed && !c.travelling && !s.evolving.has(c.id) && !c.fight?.target && (c.level < TOP_LEVEL || hurtNow(c));
 const hurtNow = (c: Creature) => c.hp !== undefined && c.hp < creatureMaxHp(c);
 
 /** The berry bushes and the berries on them, from the seed: in every area of the playable map,

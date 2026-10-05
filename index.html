@@ -25,6 +25,13 @@
     #wave .fill { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(#ff7fd0, #6fe6ff); border-radius: 3px; }
     #wave .label { position: absolute; right: 14px; bottom: 0; white-space: nowrap; color: var(--dim); font-size: 11px; text-align: right; text-shadow: 0 1px 0 #000; }
     #wave.paused .fill { opacity: .4; }
+    /* A soundsystem lost: the bar shrinks to its new countdown with a red flash, and the seconds taken off pop out beside it. */
+    #wave.lost { animation: wave-lost .9s ease-out; }
+    #wave.lost .fill { transition: height .45s cubic-bezier(.3, 1.6, .5, 1); animation: wave-lost-fill .9s ease-out; }
+    @keyframes wave-lost { 0%, 30% { border-color: #ff4060; box-shadow: 0 0 14px #ff4060; } }
+    @keyframes wave-lost-fill { 0%, 30% { left: -4px; right: -4px; background: #ff4060; filter: brightness(1.8); } 100% { filter: none; } }
+    #wave .loss-pop { position: absolute; right: 16px; transform: translateY(50%); white-space: nowrap; color: #ff5a78; font-weight: bold; font-size: 15px; text-shadow: 0 0 6px #ff2050, 0 1px 0 #000; animation: loss-pop 1.8s ease-out forwards; }
+    @keyframes loss-pop { 0% { opacity: 0; transform: translateY(50%) scale(1.8); } 12% { opacity: 1; transform: translateY(50%) scale(1); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-120%); } }
     .touch #wave { top: 12%; height: 30%; }
     #over { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(8, 6, 18, .78); z-index: 6; }
     #over.on { display: flex; }
@@ -73,11 +80,12 @@
     .bubble::after { content: ""; position: absolute; left: 50%; top: 100%; width: var(--px); height: var(--px); background: var(--ink); box-shadow: 0 var(--px) 0 var(--ink), calc(var(--px) * -1) calc(var(--px) * 2) 0 var(--ink); }
     .bubble canvas { display: block; image-rendering: pixelated; }
     .bubble.on { display: block; }
-    /* A sleeping legend's dream (the first quest): a rounder thought bubble, the sigil it wants in its level's variant. */
-    .bubble.dream { --ink: rgba(225, 215, 255, .85); padding: 4px 6px; transform-origin: 50% 100%; background: rgba(14, 10, 30, .72); border-radius: 12px; }
-    .bubble.dream::before { border-radius: 12px; border-width: 2px; }
-    .bubble.dream::after { width: 5px; height: 5px; border-radius: 50%; box-shadow: -5px 7px 0 -1px var(--ink); }
-    .bubble.dream canvas { width: 44px; height: 44px; margin: 0 auto; }
+    /* A sleeping legend's dream (the first quest): the same pixel bubble, a legend's size (--px by level:
+       bubblePx in src/render/leash.ts), darkly filled, holding the sigil it wants in its level's variant.
+       A nightmare (restless: #87) shows its one face (sad to angry) below the sigil, its ink reddening. */
+    .bubble.dream { --ink: rgba(225, 215, 255, .85); transform-origin: 50% 100%; display: flex; flex-direction: column; align-items: center; gap: var(--px); }
+    .bubble.dream::before { background: rgba(14, 10, 30, .62); z-index: -1; }
+    .bubble.dream.nightmare::before { background: rgba(40, 6, 12, .7); }
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
     .bubble .bar i { display: block; height: 100%; background: #ff7fd0; }
   </style>
@@ -112,7 +120,7 @@
       <div id="waves"></div>
       <div id="news"></div>
       <div class="keys">
-        <b>Keyboard</b> arrow keys fly · space rises or descends · Q spell (speed boost) · W dash (on the ground) · E on the ground puts down / picks up a sigil, in the treetops cycles the stack (the bottom sigil to the top) · on the ground, click (or hold 1) to throw 💌 invites at the cursor: enough of them win a creature over (enraged ones and legends block them) · 2–4 empty slots for now · Z/X or +/− zoom · H hides the action bar · Esc pauses everything (a still for screenshots, with a stamp of where you are; while paused . steps a frame, Shift+. ten; ❚❚ by the volume on touch) · ~ debug · N next wave · P pause waves · I invite nearest (debug) · [ ] fight scale, ; ' fight speed, , . fight momentum (debug: in the ~ panel too)<br>
+        <b>Keyboard</b> arrow keys fly · space rises or descends · Q spell (speed boost) · W blink 10 m (on the ground) · E on the ground puts down / picks up a sigil, in the treetops cycles the stack (the bottom sigil to the top) · on the ground, click (or hold 1) to throw 💌 invites at the cursor: enough of them win a creature over (enraged ones and legends block them) · 2–4 empty slots for now · Z/X or +/− zoom · H hides the action bar · Esc pauses everything (a still for screenshots, with a stamp of where you are; while paused . steps a frame, Shift+. ten; ❚❚ by the volume on touch) · ~ debug · N next wave · P pause waves · I invite nearest (debug) · [ ] fight scale, ; ' fight speed, , . fight momentum (debug: in the ~ panel too)<br>
         <b>Gamepad</b> left stick flies · right stick aims and a trigger throws 💌s · A dash · B spell · X sigil (on the ground) or cycle (in the treetops) · Y rises or descends · shoulder buttons zoom · Start pauses<br>
         <b>Phone</b> drag on the left to fly · the round button rises or descends · the 💌 button throws invites the way you're going · sigil puts down or picks up (on the ground) or cycles (in the treetops) · spell and dash · three-finger tap for debug
       </div>

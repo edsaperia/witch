@@ -6,7 +6,7 @@ import * as THREE from "three";
 import * as Art from "../../art/generator.js";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
-import { dormant, poseOf } from "../rules/game";
+import { dormant, poseOf, STEP } from "../rules/game";
 import { cameraPose } from "../rules/camera";
 import { AREA_TYPES } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
@@ -52,6 +52,7 @@ import { LeyLines } from "./leylines";
 import { leyChain, leyKey } from "../rules/leylines";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
 import type { Style } from "./style";
+import { restlessness } from "../rules/dream";
 
 /** A point light: where, how far it reaches, its colour and strength. */
 /** An index by weight, from a seeded integer (its last six digits as a share). */
@@ -940,7 +941,9 @@ export class View {
       const hop = c.leap ? Math.sin(Math.min(1, Math.max(0, (time - c.leap.at) / Math.max(0.01, c.leap.lands - c.leap.at))) * Math.PI) * c.leap.height : 0;
       const sink = sleeping ? W.sink : W.sink * (1 - rising), sunk = -sink * (frame.h - (frame.pad ?? 0)) * this.mpp * scale;
       if (sleeping) glow = -2 - W.moss; else if (rising < 1) glow = -2 - W.moss * (1 - rising);
-      l.push({ x: c.x + sway, y: dance + hop + sunk, z: c.z, frame, flip: c.facing < 0, fresh, glow, scale });
+      // Restless in its sleep (#87): it tosses in bursts, and turns over when it's bad.
+      const toss = st === "asleep" ? restlessness(c) : 0, fit = toss ? toss * Math.max(0, Math.sin(time * 1.3 + c.id)) ** 2 : 0;
+      l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id), y: dance + hop + sunk, z: c.z, frame, flip: (c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1), fresh, glow, scale });
       this.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * this.mpp * scale + dance + hop + sunk); // its health bar goes over it
       creatureShadows.push({ x: c.x, z: c.z, w: frame.w * this.mpp * 0.7, d: frame.w * this.mpp * 0.25 });
       n++;
@@ -1352,7 +1355,9 @@ export class View {
     // Knocked out (Ed, 2026-10-04): she sits slumped on the ground while her stack lets go, then
     // vanishes in a sparkle and comes back in one at the treehouse.
     const KO = g.witches[0].ko;
-    let hidden = false;
+    // Mid-blink she's nowhere (from the step it starts, so she never slides between its two points).
+    const D = g.witches[0].dash;
+    let hidden = time >= D.at - STEP && time < D.until;
     if (KO) {
       if (time < KO.teleportAt) { wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length]; wyy = 0; }
       else hidden = time < KO.backAt - (KO.backAt - KO.teleportAt) * 0.25;

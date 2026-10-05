@@ -91,6 +91,9 @@ export const EFFECT_BY_ID = Object.fromEntries(EFFECTS.map(e => [e.id, e]));
 export const ATTACK_EFFECTS = {
   nip: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], hit: "hitSpark" },
   maul: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], hit: "hitSparkBig", status: ["knockback", "dust"] },
+  // a lunging swipe that knocks back (the claws' melee), the big one harder
+  swipe: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], hit: "hitSpark", status: ["knockback"] },
+  bigswipe: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], hit: "hitSparkBig", status: ["knockback", "dust"] },
   spit: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "spit", hit: "hitSpark" },
   longspit: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "feather", hit: "hitSpark" },
   barb: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "barb", hit: "hitSpark", status: ["slowRing", "slowMark"] },

@@ -547,6 +547,26 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
   }
   ok(!bad.length, `pixel wind: ${Object.keys(T.TREE_SPECIES).length} species' trees sway by whole regions and whole pixels (at most 2), feet still, blobs out of step, still in calm air, whole in a gust${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
 }
+// area flora (art/flora/areas.js): every wooded area lists 3 to 6 real species, shares adding to 1, its main kind first (as its big
+// names it), a palette within reason (sat and val 0.6 to 1.3); the open areas list none; fantasy species are never an area's main kind
+{
+  const { AREAS } = await import("./areas.js"), { AREA_FLORA, floraSlots } = await import("./flora/areas.js"), { TREE_SPECIES } = await import("./trees.js"), { PLANT_GENOMES } = await import("./flora/genomes.js"), bad = [];
+  let wooded = 0;
+  for (const A of AREAS) {
+    const trees = (A.big || []).filter(([k]) => k === "tree"), F = AREA_FLORA[A.id];
+    if (!trees.length) { if (F) bad.push(A.id + " is open but lists flora"); continue; }
+    wooded++;
+    if (!F) { bad.push(A.id + " lists no flora"); continue; }
+    const sp = F.species, sum = sp.reduce((a, [, w]) => a + w, 0), main = trees.find(([, o]) => !o.minor)?.[1].type;
+    if (sp.length < 3 || sp.length > 6 || Math.abs(sum - 1) > 1e-6) bad.push(`${A.id} ${sp.length} species, shares ${sum}`);
+    if (sp[0][0] !== main) bad.push(`${A.id} main ${sp[0][0]}, its big names ${main}`);
+    for (const [id] of sp) if (!TREE_SPECIES[id]) bad.push(`${A.id} names no species ${id}`);
+    if (PLANT_GENOMES[sp[0][0]]?.fantasy) bad.push(`${A.id} has a fantasy main kind`);
+    const p = F.palette || {}; if (!(p.sat >= .6 && p.sat <= 1.3 && p.val >= .6 && p.val <= 1.3)) bad.push(`${A.id} palette ${JSON.stringify(p)}`);
+    const slots = floraSlots(A.id, 10); for (const [id] of sp) if (!slots.some(o => o.type === id)) bad.push(`${A.id} deals no ${id}`);
+  }
+  ok(!bad.length, `area flora: ${wooded} wooded areas each grow 3 to 6 species in their own palette, main kind first, fantasy only as a minority${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
+}
 await b.close();
 console.log(failed ? `${failed} check(s) failed` : "all checks passed");
 process.exit(failed ? 1 : 0);

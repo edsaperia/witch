@@ -22,6 +22,9 @@ function quiet(t: Tuning = TUNING): Game {
   for (const c of g.creatures) if (Math.hypot(c.x - g.witch.x, c.z - g.witch.z) < 60) c.gone = true; // out of the way
   return g;
 }
+/** A party animal put down on a sigil where it stands (in its posse there with her in the treetops:
+ *  following her up there, it would be travelling, rules/travel.ts). */
+function park(g: Game, c: Creature): void { g.leash.stack = g.leash.stack.filter(i => i !== c.id); g.leash.placed.push({ id: c.id, x: c.x, z: c.z, at: g.clock.time }); }
 /** Put a creature at (x, z) as a given kind and level, wild or in the witch's party. */
 function place(g: Game, i: number, species: string, level: Level, x: number, z: number, party = false): Creature {
   const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && k.id >= i && Math.hypot(k.x - g.witch.x, k.z - g.witch.z) > 80)!;
@@ -60,6 +63,7 @@ describe("combat (Stage 4)", () => {
   it("party animals and wild ones of other kinds fight until one side is beaten: the wild one runs off the map", () => {
     const g = quiet(), w = g.witch;
     const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true), wild = place(g, 0, "boar", 1, w.x + 4, w.z);
+    park(g, mine);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // (on the ground she'd chat the boar into her party)
     run(g, 40);
     expect(mine.hp).toBeLessThan(maxHp(2)); // it was hit too
@@ -68,18 +72,19 @@ describe("combat (Stage 4)", () => {
     expect(Math.hypot(wild.x - x0, wild.z - z0)).toBeGreaterThan(5);
     expect(wild.fight).toBeUndefined();
     expect(mine.gone).toBeFalsy();
-    expect(g.leash.stack).toContain(mine.id);
+    expect(g.leash.placed.map(p => p.id)).toContain(mine.id);
   }, 60000);
 
   it("loses a beaten party animal for the run: it runs off the map, off its leash", () => {
     const g = quiet(), w = g.witch;
     const mine = place(g, 0, "hedgehog", 1, w.x + 2, w.z, true);
+    park(g, mine);
     place(g, 0, "bear", 2, w.x + 4, w.z); place(g, 0, "bear", 2, w.x + 3, w.z + 2);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // out of reach herself
     run(g, 60);
     expect(mine.fleeUntil).toBeTruthy();
     expect(mine.leashed).toBe(false);
-    expect(g.leash.stack).not.toContain(mine.id);
+    expect(g.leash.placed.map(p => p.id)).not.toContain(mine.id);
   }, 60000);
 
   it("keeps a truce between creatures of the same kind, whatever side", () => {
@@ -394,6 +399,7 @@ describe("Ed's playtest (2026-10-04)", () => {
     const wild = place(g, 0, "boar", 1, w.x + 4, w.z);
     wild.hp = 1;
     const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true);
+    park(g, mine);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 };
     for (let i = 0; i < 20 / STEP && !wild.fleeUntil; i++) stepGame(g, idle, STEP);
     expect(wild.fleeUntil).toBeTruthy();
