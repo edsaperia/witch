@@ -68,7 +68,7 @@
     "liftEase": 8,
     "curve": { "ground": 0, "treetop": 0.0015, "beyond": 60 }, "zoomSteps": 4, "speedZoom": { "base": 32, "power": 1 },
     "startZoom": 1,
-    "shake": { "base": 0.4, "perMissingHit": 0.25, "knockdown": 1, "decay": 2, "maxOffsetPx": 14, "maxRotDeg": 1.5, "speed": 24 },
+    "shake": { "base": 0.5, "perMissingHit": 0.25, "knockdown": 1, "decay": 2, "maxOffsetPx": 18, "maxRotDeg": 1.5, "speed": 24 },
     "follow": 8,
     "intro": { "distance": 34, "angle": 22, "ease": 1.3 }
   },
