@@ -74,8 +74,8 @@
     .bubble.on { display: block; }
     /* A sleeping legend's dream (the first quest): the same pixel bubble, a legend's size (--px by level:
        bubblePx in src/render/leash.ts), darkly filled, holding the sigil it wants in its level's variant.
-       A nightmare (restless: #87) crowds angry faces round it, its ink reddening. */
-    .bubble.dream { --ink: rgba(225, 215, 255, .85); transform-origin: 50% 100%; display: flex; align-items: center; gap: var(--px); }
+       A nightmare (restless: #87) shows its one face (sad to angry) below the sigil, its ink reddening. */
+    .bubble.dream { --ink: rgba(225, 215, 255, .85); transform-origin: 50% 100%; display: flex; flex-direction: column; align-items: center; gap: var(--px); }
     .bubble.dream::before { background: rgba(14, 10, 30, .62); z-index: -1; }
     .bubble.dream.nightmare::before { background: rgba(40, 6, 12, .7); }
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }

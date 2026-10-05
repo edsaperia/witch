@@ -364,7 +364,7 @@ export class LeashView {
       (el.querySelector("canvas:not(.face)") as HTMLElement | null)?.style.setProperty("opacity", `${1 - 0.75 * r}`);
       if (faces) el.style.setProperty("--ink", `rgba(${Math.round(225 + 30 * ire)}, ${Math.round(215 - 160 * ire)}, ${Math.round(255 - 190 * ire)}, ${(0.85 + 0.15 * ire).toFixed(2)})`);
       else el.style.removeProperty("--ink");
-      const bx = ((this.v.x + 1) / 2) * width, by = ((1 - this.v.y) / 2) * height;
+      const bx = ((this.v.x + 1) / 2) * width, ly = ((1 - this.v.y) / 2) * height, by = Math.max(ly, el.offsetHeight + 56); // (kept on screen when she's close, below the top edge's cues)
       el.style.left = `${bx}px`;
       el.style.top = `${by}px`;
       const shake = faces ? ire * 2.5 * Math.sin(performance.now() * 0.05 + c.id) : 0; // (a nightmare shakes)
@@ -377,7 +377,8 @@ export class LeashView {
       if (to) {
         const d = Math.hypot(to.x - c.x, to.z - c.z) || 1; // (a step its way, not the stone itself: that may be behind the camera)
         placed(this.v.set(c.x + ((to.x - c.x) / d) * 8, y, c.z + ((to.z - c.z) / d) * 8)).project(camera);
-        const ang = Math.atan2(((1 - this.v.y) / 2) * height - by, ((this.v.x + 1) / 2) * width - bx), col = this.colours.get(q.species) ?? (this.slotOf(q.species, 0), this.colours.get(q.species));
+        const ang = Math.atan2(((1 - this.v.y) / 2) * height - ly, // (from the legend's own spot, not where the bubble's kept)
+           ((this.v.x + 1) / 2) * width - bx), col = this.colours.get(q.species) ?? (this.slotOf(q.species, 0), this.colours.get(q.species));
         if (!dir) {
           dir = document.createElement("div");
           dir.className = "dream-dir";
