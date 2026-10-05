@@ -437,7 +437,11 @@ describe("the camera", () => {
     const g = TUNING.camera.ground, t = TUNING.camera.treetop;
     expect(cameraPose(c, 0, TUNING).angle).toBeCloseTo(g.angleIn);
     expect(cameraPose(c, 1, TUNING).angle).toBeCloseTo(t.angleIn);
-    expect(cameraPose(c, 1, TUNING).distance).toBeCloseTo(t.distanceIn);
+    // Over the treetops it sits out by (treetopSpeed / speedZoom.base)^power (Ed, 2026-10-05: faster flight, more ground on screen).
+    const SZ = TUNING.camera.speedZoom!, fast = Math.pow(TUNING.treetopSpeed / SZ.base, SZ.power);
+    expect(cameraPose(c, 1, TUNING).distance).toBeCloseTo(t.distanceIn * fast);
+    expect(cameraPose(c, 1, { ...TUNING, treetopSpeed: SZ.base * 2 }).distance).toBeCloseTo(t.distanceIn * Math.pow(2, SZ.power));
+    expect(cameraPose(c, 0, { ...TUNING, treetopSpeed: SZ.base * 2 }).distance).toBeCloseTo(g.distanceIn); // (the ground camera is left alone)
     const still = { x: 0, z: 0 };
     for (let i = 0; i < 10; i++) c = stepCamera(c, 1, { x: 0, y: 0, z: 0 }, still, 0, 1 / 60, TUNING);
     for (let i = 0; i < 300; i++) c = stepCamera(c, 0, { x: 0, y: 0, z: 0 }, still, 0, 1 / 60, TUNING);

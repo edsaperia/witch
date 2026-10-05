@@ -44,7 +44,7 @@
 
   "_witch": "Speeds per mode, and how long rising and descending take. acceleration: how quickly she reaches her speed or stops in the treetops (per second; higher is snappier); groundAcceleration: the same on the ground. leanAt: the share of the top speed above which she leans into her flight. facing: she (and every creature) faces the viewer unless clearly heading up the screen, within awayEnter degrees of straight up (and stays turned away until past awayLeave); sideways, down or stopped faces the viewer. Within headingEnter degrees of straight up or straight down the screen (until past headingLeave) she flies in her heading sprites: seen from behind going up, coming at us going down.",
   "groundSpeed": 19.25,
-  "treetopSpeed": 32,
+  "treetopSpeed": 48,
   "acceleration": 10,
   "_treetop": "Treetop flight (Ed: a high top speed and momentum; the ground stays snappy): pressing a direction reaches treetopSpeed in about 0.3 s (acceleration); holding it within boostAngle degrees builds boost over boostTime seconds, up to boost times treetopSpeed; her heading turns toward the input at turnRateSlow degrees a second below sharpTurnSpeed of cruise, falling to turnRate at cruise (half that at full boost), so the size of her swoop grows with her speed (Ed); a turn of 90 degrees or more bleeds boost sharpTurnBleed times a second, and above brakeAt of cruise she skids in the brake pose; letting go, she glides to a stop over about glideTime seconds. cameraPull: how far the camera draws back at full boost (a share of its distance).",
   "treetop": { "boost": 1.7, "boostTime": 2, "boostAngle": 25, "turnRate": 150, "turnRateSlow": 720, "sharpTurnSpeed": 0.4, "brakeAt": 0.9, "glideTime": 1, "sharpTurnBleed": 3, "cameraPull": 0.06 },
