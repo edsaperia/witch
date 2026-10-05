@@ -1,6 +1,6 @@
 // The creature-state model's report (issue #87): src/rules/states.ts on the real maps.
 //   node tools/balance/states.mjs [--seeds 6] [--gap 60] [--skills 0.5,1,2,4] [--policies defend,third,leash,babies,relay] [--cap 40]
-//     [--health 4000] [--dazed 0] [--relics 3|4] [--relic-every 4] [--restless 60] [--legend-range 202] [--aoe 3] [--hazard 2] [--legend-shot 30] [--legend-every 5] [--legend 1] [--approach 3] [--leash 2] [--berries 12.5] [--dt 0.5] [--kin-fight] [--quick]
+//     [--health 4000] [--dazed 0] [--relics 3|4] [--relic-every 4] [--restless 60] [--legend-range 202] [--aoe 3] [--hazard 2] [--legend-shot 10] [--legend-every 15] [--legend 1] [--approach 3] [--leash 2] [--berries 12.5] [--dt 0.5] [--kin-fight] [--quick]
 import { createServer } from "vite";
 
 const arg = (name, def) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : def; };
@@ -28,7 +28,7 @@ for (const p of POLICIES) for (const k of SKILLS) {
 }
 const idle = maps.map(m => simulateStates(m, { interval: GAP, maxWaves: CAP, policy: "defend", skill: 1e-9, ...knobs }));
 const surv = rs => (rs.every(r => !r.lost) ? `${CAP}+` : mean(rs.map(r => r.survived)).toFixed(1));
-say(`States model (issue #87): ${SEEDS} seeds, ${TUNING.mapAreas}² areas of ${TUNING.areaSize * TUNING.areaScale} m, treetop ${TUNING.treetopSpeed} m/s, waves every ${GAP} s, soundsystems ${knobs.soundHealth ?? TUNING.combat.soundsystemHealth} hp; skill = invite rate × the game's talk times (${TUNING.invite.talkTime.slice(0, 3).join("/")} s), plus ${knobs.approach} s to reach each and ${knobs.leashTime} s to leash; dazed ${knobs.dazedTime} s, ${knobs.ownKind ? "never their own kind" : "kin fight kin"}, relics ${knobs.relics ?? "3–4"} (one found every ${knobs.relicEvery ?? 4} waves), legends restless ${knobs.restlessTime ?? 60} s before angry, reach ${knobs.legendRange ?? 420} m, shots of ${knobs.legendShot ?? 30} every ${knobs.legendEvery ?? 5} s hitting ${knobs.legendAoe ?? 3}, happy legend hp ×${knobs.legendDefence}. Idle (no invites): ${surv(idle)} waves.\n`);
+say(`States model (issue #87): ${SEEDS} seeds, ${TUNING.mapAreas}² areas of ${TUNING.areaSize * TUNING.areaScale} m, treetop ${TUNING.treetopSpeed} m/s, waves every ${GAP} s, soundsystems ${knobs.soundHealth ?? TUNING.combat.soundsystemHealth} hp; skill = invite rate × the game's talk times (${TUNING.invite.talkTime.slice(0, 3).join("/")} s), plus ${knobs.approach} s to reach each and ${knobs.leashTime} s to leash; dazed ${knobs.dazedTime} s, ${knobs.ownKind ? "never their own kind" : "kin fight kin"}, relics ${knobs.relics ?? "3–4"} (one found every ${knobs.relicEvery ?? 4} waves), legends restless ${knobs.restlessTime ?? 60} s before angry, reach ${knobs.legendRange ?? 420} m, shots of ${knobs.legendShot ?? 10} every ${knobs.legendEvery ?? 15} s hitting ${knobs.legendAoe ?? 3}, happy legend hp ×${knobs.legendDefence}. Idle (no invites): ${surv(idle)} waves.\n`);
 const table = (title, f) => {
   say(`**${title}**\n`);
   say("| policy \\ skill | " + SKILLS.map(k => `×${k}`).join(" | ") + " |");

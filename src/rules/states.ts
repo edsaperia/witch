@@ -67,7 +67,7 @@ export interface StatesOptions {
    *  it goes back to sleep (Ed, 2026-10-05; she keeps its buff). */
   legendDefence?: number;
   /** A legend's shot (happy or angry, Ed 2026-10-05: slow, far-reaching, less damage): legendShot
-   *  damage to up to legendAoe targets every legendEvery seconds. */
+   *  damage to up to legendAoe targets every legendEvery seconds (10 every 15 s: tuned so relics help, REPORT 2026-10-05). */
   legendShot?: number;
   legendEvery?: number;
   /** Creatures never attack their own kind, whatever their states (Ed, 2026-10-05): a happy defender
@@ -160,7 +160,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
   const size = t.areaSize * t.areaScale, land = t.descendTime + t.riseTime, cross = (0.5 * size) / t.groundSpeed;
   const talk = t.invite.talkTime;
   const relicCount = o.relics ?? (hash2(map.seed, 7, 1313) < 0.5 ? 3 : 4), relicEvery = o.relicEvery ?? 4, relicTime = o.relicTime ?? 5;
-  const restlessTime = o.restlessTime ?? 60, LR = o.legendRange ?? 420, SHOT = o.legendShot ?? 30, EVERY = o.legendEvery ?? 5, AOE = o.legendAoe ?? 3, hazard = o.angryHazard ?? 2;
+  const restlessTime = o.restlessTime ?? 60, LR = o.legendRange ?? 420, SHOT = o.legendShot ?? 10, EVERY = o.legendEvery ?? 15, AOE = o.legendAoe ?? 3, hazard = o.angryHazard ?? 2;
 
   // Every creature: the map's own (legends asleep, home's happy), then what grows wave by wave.
   const units: Unit[] = [], byCell = new Map<string, Unit[]>();
