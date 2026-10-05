@@ -20,6 +20,9 @@ export function speciesOf(g) {
     if (p.ears) { q.ear = p.ears.kind; if (p.ears.size !== undefined) q.earS = p.ears.size; }
     for (const [k, to] of [["tail", "tail"], ["feet", "paw"], ["horns", "horns"], ["antlers", "antlers"], ["tusks", "tusks"]]) if (p[k] !== undefined) q[to] = p[k];
     S.q = q;
+    // levels: { 0..3: { body, head, coat, parts, legend } } — what changes at a level beyond its size curves: its evolution
+    // (docs/art-guide/EVOLUTIONS.md). Each is merged over the species' own for that level only.
+    if (g.levels) S.levelQ = Object.fromEntries(Object.entries(g.levels).map(([lv, L]) => { const o = { ...(L.body || {}), ...(L.head || {}), ...(L.coat || {}) }, lp = L.parts || {}; if (lp.ears) { o.ear = lp.ears.kind; if (lp.ears.size !== undefined) o.earS = lp.ears.size; } for (const [k, to] of [["tail", "tail"], ["feet", "paw"], ["horns", "horns"], ["antlers", "antlers"], ["tusks", "tusks"]]) if (lp[k] !== undefined) o[to] = lp[k]; return [lv, o]; }));
   }
   S.sizes = { ...TEMPLATES[g.template].sizes, ...g.sizes };
   S.face = { ...TEMPLATES[g.template].face, ...g.face }; // its expressions' shapes (expressions.js)
