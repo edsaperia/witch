@@ -21,7 +21,11 @@ export function questFor(map: ForestMap, cell: [number, number], own: string): Q
   return { species: kinds[Math.floor(r() * kinds.length)], level: Math.floor(r() * 3) as Level };
 }
 
-export interface QuestEvent { kind: "done"; id: number; joined: number; x: number; z: number; at: number }
+export interface QuestEvent { kind: "done"; id: number; joined: number; /** the area's cell and key */ cell: [number, number]; key: string; x: number; z: number; at: number }
+
+/** Whether an area is done (Ed, 2026-10-05: the ley lines move on to the next area when this
+ *  one's quest is done or its wave comes, whichever is first): partified, or friendly. */
+export const areaDone = (g: { party: { areas: Map<string, unknown> }; friendly: Set<string> }, key: string): boolean => g.party.areas.has(key) || g.friendly.has(key);
 
 /** The legend of an area (by its key), if it has one. */
 export const legendOf = (creatures: Creature[], ids: number[], key: string): Creature | null => {

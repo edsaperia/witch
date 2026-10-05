@@ -3,7 +3,7 @@ import { spawnCreatures } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { AREA_TYPES, generateMap } from "./map";
 import { cellKey } from "./party";
-import { setupQuestDemo } from "./quest";
+import { areaDone, setupQuestDemo } from "./quest";
 import { TUNING } from "./tuning";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -38,6 +38,7 @@ describe("the first quest (Ed, 2026-10-04)", () => {
     expect(L.legendState).toBe("happy");
     expect(L.quest!.done).toBeDefined();
     expect(g.friendly.has(key)).toBe(true);
+    expect(areaDone(g, key)).toBe(true); // (the ley lines move on)
     expect(gift.leashed).toBe(false);
     expect(g.leash.stack).not.toContain(gift.id);
     expect(g.leash.placed.map(p => p.id)).not.toContain(gift.id);
