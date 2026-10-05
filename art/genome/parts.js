@@ -7,7 +7,8 @@
 // it (away); RIG_HEADINGS are the baked ones, and heading h > a quarter turn is the mirror of pi - h.
 import { M, Sprite } from "../core.js";
 import { Model, render, spotty, PITCH } from "../model3d.js";
-import { withForm } from "../creatures3d.js";
+import { withForm, withGear } from "../creatures3d.js";
+import { EXPRESSIONS } from "./expressions.js";
 import { SPECIES_BY_ID, buildCreature } from "../creatures.js";
 
 export const RIG_HEADINGS = [-Math.PI / 2, -Math.PI / 4, 0, Math.PI / 4, Math.PI / 2];
@@ -27,12 +28,21 @@ export function rigProject(p, h, s) {
 }
 
 // The model the builder makes for a species at a level (not drawn), and the scale it would be drawn at.
-function rigCapture(id, level, st) {
+// face: an expression (genome/expressions.js), put on its face at that scale.
+function rigCapture(id, level, st, face = null) {
   const S = SPECIES_BY_ID[id]; let got = null;
   const form = (m, o) => { got = { m, height: o.height }; return new Sprite(1, 1); };
   form.motes = false;
-  withForm(form, () => buildCreature(S, level, 0, st, "towards"));
-  return { m: got.m, s: render(got.m, { height: got.height, measure: true }).s };
+  withGear(face ? { face, faceStyle: S.face } : null, () => withForm(form, () => buildCreature(S, level, 0, st, "towards")));
+  const s = render(got.m, { height: got.height, measure: true }).s, f = got.m.atScale;
+  if (f) { got.m.atScale = null; f(s); }
+  return { m: got.m, s };
+}
+// Its head piece in each expression but neutral (the head piece itself): { angry, happy, dazed }.
+function rigFaces(id, level, st, pivot, s) {
+  const out = {};
+  for (const face of EXPRESSIONS) if (face !== "neutral") out[face] = rigPiece(rigCapture(id, level, st, face).m, ["head"], pivot, s);
+  return out;
 }
 // A model of only the primitives labelled with one of `labels`.
 function rigPick(m, labels) {
@@ -64,7 +74,7 @@ function rigDisc(r, mat, s, paint) {
 }
 
 // Everything the rig needs for one species at one level: { template, s (pixels per model unit),
-// pieces: { torso, head, tail: [per heading] }, discs: { material: [by radius in pixels] }, joints }.
+// pieces: { torso, head, tail: [per heading] }, faces: { angry, happy, dazed: its head piece in each }, discs: { material: [by radius in pixels] }, joints }.
 // joints are in model units: legs [{ name, fore, side, hip, knee, foot, r: [hip, knee, foot] }],
 // head { nb, H }, tail (its base) for the four-legged; spine [[x, y, z, r]...] and head for a serpent.
 export function rigParts(id, level, st) {
@@ -78,9 +88,9 @@ export function rigParts(id, level, st) {
     for (const l of R.legs) discSet(l.mat, legR);
     const hoof = R.legs.find(l => l.hoof); if (hoof) discSet(M.NOSE, radii(R.legs.map(l => l.fl * .9)));
     else discSet(R.legs[0].mat, radii(R.legs.map(l => l.fl * .9)));
-    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { torso: rigPiece(m, ["body"], [0, 0, 0], s), head: rigPiece(m, ["head"], R.head.nb, s), tail: rigPiece(m, ["tail"], R.tail, s) } };
+    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { torso: rigPiece(m, ["body"], [0, 0, 0], s), head: rigPiece(m, ["head"], R.head.nb, s), tail: rigPiece(m, ["tail"], R.tail, s) }, faces: rigFaces(id, level, st, R.head.nb, s) };
   }
   // a serpent: its head baked, its body discs (speckled like its coat) by the spine's radii
   discSet(M.BODY, radii(R.spine.map(p => p[3])), p => spotty([p[0] * 1.5, p[1], p[2]], 14, .3) ? M.BODY3 : undefined);
-  return { id, level, template: tpl, s, joints: { spine: R.spine, head: R.head, hr: R.hr }, discs, pieces: { head: rigPiece(m, ["head"], R.head, s), wings: rigPiece(m, ["body"].filter(() => m.parts.some(q => q.part === "body" && q.extra)), [0, .2, 0], s) } };
+  return { id, level, template: tpl, s, joints: { spine: R.spine, head: R.head, hr: R.hr }, discs, pieces: { head: rigPiece(m, ["head"], R.head, s), wings: rigPiece(m, ["body"].filter(() => m.parts.some(q => q.part === "body" && q.extra)), [0, .2, 0], s) }, faces: rigFaces(id, level, st, R.head, s) };
 }
