@@ -1,8 +1,8 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { Shake } from "./render/shake";
-import { Music } from "./platform/music";
-import { Sfx } from "./platform/sfx";
-import { SfxCues } from "./platform/sfxCues";
+import { Music } from "./platform/audio/music";
+import { Sfx } from "./platform/audio/sfx";
+import { SfxCues } from "./platform/audio/sfxCues";
 import { musicMix } from "./rules/music";
 import { musicCue, type MusicCue } from "./rules/musicPlan";
 import type { MusicStyle } from "./rules/musicScore";
@@ -28,6 +28,7 @@ import { UPCOMING } from "./ui/upcoming";
 import { PlaytestLog } from "./platform/playtestLog";
 import { powerReport } from "./rules/power";
 import { Freeze } from "./platform/freeze";
+import { Creator, loadGenome } from "./ui/creator";
 
 const params = new URLSearchParams(location.search);
 let seed = parseSeed(params.get("seed"));
@@ -44,6 +45,9 @@ const tuning = {
   shadows: { ...TUNING.shadows }, canopyShadow: { ...TUNING.canopyShadow }, mist: { ...TUNING.mist },
   party: { ...TUNING.party }, fight: { ...TUNING.fight }, // (the fight's scale and speed change live: its own copy)
 };
+// ?px=3|4|5: the art pixel (screen pixels per art pixel; the tuning's pixelSize), per load, to compare the pixel-art
+// styles in play (docs/ART-GUIDE.md section 0: Ed picks between bold and ref at 4 or 5 in playtesting).
+{ const px = Number(params.get("px")); if ([2, 3, 4, 5, 6].includes(px)) tuning.pixelSize = px; }
 if (params.get("shadows") === "off") tuning.shadows.on = false;
 if (params.get("canopy") === "off") tuning.canopyShadow.on = false;
 if (params.get("mist") === "off") tuning.mist.on = false;
@@ -181,14 +185,17 @@ if (arenaParam) waveChoice = 0;
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = loadStyle();
+{ const artStyle = params.get("style"); if (artStyle === "bold" || artStyle === "ref") style.artStyle = artStyle; } // ?style=now|bold|ref: a pixel-art style (art/stylise.js) baked into every sprite, carried to the art worker in the style
 if (params.get("flora")) style.flora = params.get("flora"); // ?flora=new|fantasy|all|<ids>: every wooded area grows these tree species (art/flora), carried to the art worker in the style
 /** Load timings (ms since the page started): the view built (the page's own sprites drawn), ready to play. */
 const loadTimes = { viewStart: performance.now(), view: 0, ready: 0 };
+// Her look (the character creator's, kept on this browser; else the classic witch).
+const savedLook = loadGenome();
 const view = new View(canvas, game, {
   ...style, pixel: tuning.pixelSize,
   // Trees taller by treeHeight; crowns wider by crownWidth in all (treeHeight widens them too).
   treeSize: style.treeSize * tuning.treeHeight, crownWidth: style.crownWidth * tuning.crownWidth / tuning.treeHeight,
-});
+}, savedLook);
 loadTimes.view = performance.now();
 view.debugCull = params.get("debug") === "cull";
 view.quick = params.get("quick") === "1";
@@ -376,8 +383,24 @@ freeze.started = () => startEl.style.display === "none";
 
 // Browsers keep sound off until the player presses something: the start screen is that press.
 let audio: AudioContext | null = null, music: Music | null = null, sfx: Sfx | null = null, sfxCues: SfxCues | null = null;
+// The character creator (Ed, 2026-10-05): at every load (and from the start screen's button);
+// ?creator=0 skips it (tests, the smoke run), and loading is the start screen's as before.
+// It's also the loading screen (Ed, 2026-10-05): it opens at once and the forest grows behind it;
+// Start waits ("getting ready") until play can begin.
+const creator = new Creator(style, savedLook);
+let lookNow = JSON.stringify(savedLook);
+creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready }; };
+creator.onGesture = () => { try { audio ??= new AudioContext(); void audio.resume(); } catch { /* no sound yet */ } };
+creator.onStart = g => { if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); } start(); };
+if (params.get("creator") !== "0") creator.show();
+const lookBtn = document.getElementById("look-btn");
+if (lookBtn) {
+  for (const ev of ["pointerdown", "pointerup", "click", "touchstart"]) lookBtn.addEventListener(ev, e => e.stopPropagation()); // (not a start)
+  lookBtn.addEventListener("click", () => { if (ready && game.clock.paused) creator.show(); });
+}
 function start(): boolean {
   if (!ready || !game.clock.paused || freeze.frozen) return false;
+  if (creator.open) return true;
   try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume * level, musicStyle, seed!, tuning.music.src); if (!sfx && tuning.sfx.on) { sfx = new Sfx(audio, tuning.music.volume * level, tuning.sfx, musicStyle.root + 24); sfxCues = new SfxCues(sfx, (by, sec) => music?.duck(by, sec)); } } catch { /* no sound yet anyway */ }
   game.clock.paused = false;
   startEl.style.display = "none";

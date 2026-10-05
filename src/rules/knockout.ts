@@ -1,12 +1,9 @@
 // The witch's health and knockout (Ed, 2026-10-04). She takes knockout hits (one point each,
 // whatever hits her); one comes back every repairTime seconds, the timer starting over at every
 // hit. At none she's knocked out: she collapses where she is (no more hits, no input), her sigil
-// stack lets go from the bottom up, one every releaseEach seconds, each creature turning neutral
-// as its sigil goes and walking to the nearest area of its own kind (else the nearest dormant
-// one), where it turns wild again, keeping its level; then she sparkles out and back in at the
-// treehouse. Creatures at sigils on the ground aren't on her leash, so they stay hers: park your
-// army before you scout. Leashed legends go back to the wild too ("they're too old for this"),
-// unless knockout.legendsLoyal. No drawing here.
+// stack comes down from the bottom up, one every releaseEach seconds, each sigil put down where
+// its animal stands (#87, Ed 2026-10-05: leashed is for good, so they stay hers as a parked
+// group); then she sparkles out and back in at the treehouse. No drawing here.
 import { AREA_TYPES, type ForestMap } from "./map";
 import { anchorOf, LEGEND, wanderRange, type Creature } from "./creatures";
 import type { LeashState } from "./leash";
@@ -83,11 +80,20 @@ export function letGo(c: Creature, leash: LeashState, map: ForestMap, partified:
   c.wanderTo = kindHome(map, c.species, c.x, c.z, partified) ?? undefined;
 }
 
-/** One step of a knockout: sigils let go on time, then the teleport. Returns true once she's back. */
-export function stepKnockout(k: Knockout, body: WitchState, leash: LeashState, creatures: Creature[], map: ForestMap, time: number, partified: (key: string) => boolean, events: KnockoutEvent[]): { body: WitchState; done: boolean } {
+/** Put a carried sigil down where its animal stands (a little aside if another sigil is there): it stays hers, parked. */
+export function parkWhere(c: Creature, leash: LeashState, time: number, spacing = 4): void {
+  leash.stack = leash.stack.filter(id => id !== c.id);
+  let x = c.x, z = c.z;
+  for (let k = 0; k < 24 && leash.placed.some(p => Math.hypot(p.x - x, p.z - z) < spacing); k++) { const a = k * 2.4, r = spacing * (1 + k / 8); x = c.x + Math.cos(a) * r; z = c.z + Math.sin(a) * r; }
+  leash.placed.push({ id: c.id, x, z, at: time });
+}
+
+/** One step of a knockout: sigils put down on time, then the teleport. Returns true once she's back. */
+export function stepKnockout(k: Knockout, body: WitchState, leash: LeashState, creatures: Creature[], map: ForestMap, time: number, _partified: (key: string) => boolean, events: KnockoutEvent[]): { body: WitchState; done: boolean } {
   while (k.released < k.order.length && time >= k.times[k.released]) {
     const c = creatures[k.order[k.released++]];
-    if (c && c.leashed && leash.stack.includes(c.id)) { letGo(c, leash, map, partified); events.push({ kind: "released", at: time, x: c.x, z: c.z, id: c.id }); }
+    // (#87: leashed is for good; each carried sigil is put down where its animal stands, so they stay a parked group)
+    if (c && c.leashed && leash.stack.includes(c.id)) { parkWhere(c, leash, time); events.push({ kind: "released", at: time, x: c.x, z: c.z, id: c.id }); }
   }
   if (time >= k.teleportAt && !k.out) { k.out = true; events.push({ kind: "sparkleOut", at: time, x: body.x, z: body.z }); }
   const mid = (k.teleportAt + k.backAt) / 2;

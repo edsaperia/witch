@@ -1,6 +1,6 @@
 // The music's score (Ed, 2026-10-04: generative music, in code, like the art): what each part
 // plays on each sixteenth, from the style file (config/music-style.json) and the section the
-// conductor (rules/musicPlan.ts) has chosen. Numbers only, no sound: src/platform/musicEngine.ts
+// conductor (rules/musicPlan.ts) has chosen. Numbers only, no sound: src/platform/audio/musicEngine.ts
 // plays the notes. The same seed and section always give the same notes.
 import { hash2 } from "./random";
 
