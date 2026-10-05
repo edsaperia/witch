@@ -15,11 +15,12 @@ const run = (g: Game, secs: number, first: Controls = idle, each?: () => void) =
 function beside(kin = true): { g: Game; L: Creature; mate: Creature | null } {
   const g = newGame(123, TUNING);
   g.clock.paused = false; g.party.paused = true;
-  const L = g.creatures.find(c => c.boss && c.legendState === "asleep" && LEGEND_BUFFS.species[c.species])!;
+  const L = g.creatures.find(c => c.boss && c.legendState === "asleep" && LEGEND_BUFFS.species[c.species] && !LEGENDS.charge.species.includes(c.species))!; // (one that lobs or beams: chargers below)
   const site = g.map.siteOf(L.cell[0], L.cell[1]), d = Math.hypot(site.x - L.x, site.z - L.z) || 1;
   g.witch = { ...g.witch, seated: false, x: L.x + ((site.x - L.x) / d) * 4, z: L.z + ((site.z - L.z) / d) * 4, mode: "ground", lift: 0 };
   for (const c of g.creatures) if (!c.boss && cellKey(c.cell) === cellKey(L.cell)) c.gone = true;
   for (const c of g.creatures) if (!c.boss && Math.hypot(c.x - L.x, c.z - L.z) < 120) c.gone = true;
+  for (const c of g.creatures) if (c.boss && c !== L && Math.hypot(c.x - L.x, c.z - L.z) < 700) c.gone = true; // (no neighbouring legend turning angry too, and charging in)
   let mate: Creature | null = null;
   if (kin) mate = put(g, L.species, 1, site.x, site.z, L.cell);
   g.byArea = null;
@@ -195,4 +196,64 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
       expect(relicGlints(g.forest, g.map, r, true)).toBe(false);
     }
   }, 60000);
+});
+
+describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", () => {
+  /** An angry boar legend, its target (one of her posse) charge.far metres east, things in its lane. */
+  function angryBoar(far = 90) {
+    const { g, L, mate } = beside();
+    L.species = "boar"; mate!.gone = true;
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // (out of its sights, at first)
+    withAngryAfter(0.3, () => run(g, 0.8));
+    expect(L.legendState).toBe("angry");
+    const other = L.species === "wolf" ? "fox" : "wolf";
+    const target = put(g, other, 2, L.x + far, L.z); target.leashed = true; g.leash.placed.push({ id: target.id, x: target.x, z: target.z, at: 0 });
+    const inLane = [put(g, "beetle", 1, L.x + 30, L.z + 1), put(g, "otter", 2, L.x + 50, L.z - 1.5)];
+    // (wild ones: it charges only her and her posse, but tramples whatever's in its way)
+    return { g, L, target, inLane };
+  }
+  it("tramples everything in its lane once each (her, the wild alike), knocking them aside, through scenery", () => {
+    const { g, L, target, inLane } = angryBoar();
+    g.witch = { ...g.witch, mode: "ground", lift: 0, x: L.x + 60, z: L.z }; // (its target: nearer than her posse's wolf)
+    const pins = inLane.map(c => [c, c.x] as const);
+    const hits = new Map<number, number>(); let witchHits = 0, x0 = 0, z0 = 0, ran = false, done = false;
+    run(g, 30, idle, () => {
+      if (L.run?.phase === "home" && !done) { done = true; witchHits = L.run.hit.filter(h => h === -1).length; } // (its first charge over; her as -1 in whom it hit)
+      for (const [c, x] of pins) if (!hits.has(c.id)) Object.assign(c, { x, z: c.anchorZ, fight: undefined }); // (they stand in its lane, not fighting it, till they're hit)
+      if (!done) for (const e of g.combat.events) if (e.at === g.clock.time) {
+        if (e.kind === "hit" && e.id !== undefined) hits.set(e.id, (hits.get(e.id) ?? 0) + 1);
+        if (e.kind === "witchHit" && L.run?.hit.includes(-1) && !x0) { x0 = g.witch.x; z0 = g.witch.z; }
+      }
+      if (L.run?.phase === "run") ran = true;
+      if (L.run?.phase === "windup") g.witch = { ...g.witch, x: L.x + 60, z: L.z }; // (she stands in its lane till it sets off)
+    });
+    expect(ran).toBe(true);
+    for (const c of inLane) expect(hits.get(c.id), c.species).toBe(1);
+    expect(hits.get(target.id) ?? 0).toBeLessThanOrEqual(1);
+    expect(witchHits).toBe(1);
+    expect(Math.abs(g.witch.z - z0)).toBeGreaterThan(LEGENDS.charge.knockback * 0.3); // (knocked aside, off its lane)
+  }, 120000);
+  it("curves toward its target, brakes in a wide arc past it, walks home, and charges again only once it's back", () => {
+    const { g, L, target } = angryBoar(70);
+    const lair = { x: L.x, z: L.z };
+    target.z += 12; target.anchorZ = target.z; // (a little off its first lane: it curves)
+    let windups = 0, maxAway = 0, bentBy = 0, a0: number | null = null, braking = false, home = false;
+    run(g, 60, idle, () => {
+      const r = L.run;
+      if (r?.phase === "windup") { if (g.clock.time - r.at < 1e-6) { windups++; expect(Math.hypot(L.x - L.lairX!, L.z - L.lairZ!)).toBeLessThan(3); } a0 = r.angle; }
+      if (r && a0 !== null && r.phase !== "windup") bentBy = Math.max(bentBy, Math.abs(Math.atan2(Math.sin(r.angle - a0), Math.cos(r.angle - a0))));
+      if (r?.phase === "brake") braking = true;
+      if (r?.phase === "home") home = true;
+      maxAway = Math.max(maxAway, Math.hypot(L.x - lair.x, L.z - lair.z));
+    });
+    expect(windups).toBeGreaterThanOrEqual(1);
+    expect(braking && home).toBe(true);
+    expect(maxAway).toBeGreaterThan(70); // (on past its target, braking)
+    expect(bentBy).toBeGreaterThan(0.1); // (it curved, then turned in its arc)
+    // Home again: in its own area, where it lay.
+    run(g, 40);
+    expect(L.run === undefined || L.run.phase === "windup").toBe(true);
+    expect(Math.hypot(L.x - L.lairX!, L.z - L.lairZ!)).toBeLessThan(3);
+    expect(cellKey(g.map.cellSafe(L.x, L.z).cell)).toBe(cellKey(L.cell));
+  }, 120000);
 });
