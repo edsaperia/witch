@@ -1,8 +1,8 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { Shake } from "./render/shake";
-import { Music } from "./platform/music";
-import { Sfx } from "./platform/sfx";
-import { SfxCues } from "./platform/sfxCues";
+import { Music } from "./platform/audio/music";
+import { Sfx } from "./platform/audio/sfx";
+import { SfxCues } from "./platform/audio/sfxCues";
 import { musicMix } from "./rules/music";
 import { musicCue, type MusicCue } from "./rules/musicPlan";
 import type { MusicStyle } from "./rules/musicScore";

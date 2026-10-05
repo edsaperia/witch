@@ -57,7 +57,7 @@ export interface Tuning {
   /** Forecasting (Ed, 2026-10-04): symbols round each stone (12 = next; the after-next stone fills afterNext[0]..[1] over the countdown; probable ones flicker 1..probableMax); probable: how many probable stones; radius (m), size (m) of each symbol, height above the canopy in treetop mode. */
   forecast: { symbols: number; probable: number; probableMax: number; afterNext: number[]; radius: number; size: number; flare: number };
   /** Music by proximity (Ed, 2026-10-04): full and clear within nearDist metres of a playing soundsystem, down to floor volume and a muffle Hz low-pass by farDist; clear: the cutoff when near; distort: how much a damaged one nearby is heard; volume: the master; src: an audio file to play, or empty for the built-in loop. */
-  /** The sound effects (platform/sfx.ts, platform/sfxCues.ts): their volumes and rates. */
+  /** The sound effects (platform/audio/sfx.ts, platform/audio/sfxCues.ts): their volumes and rates. */
   sfx: {
     on: boolean; volume: number; hear: number;
     voice: {
@@ -72,7 +72,7 @@ export interface Tuning {
     knock: { volume: number; whoosh: number; twinkle: number; twinkleEvery: number };
     charge: { volume: number; bellow: number; hooves: number; rumble: number; skid: number; trot: number; range: number };
     relic: { volume: number; spot: number; spotTreetop: number; reach: number };
-    meadow: { volume: number; breeze: number; bees: number; birds: number; birdEvery: number; radius: number; fade: number };
+    meadow: { volume: number; breeze: number; bees: number; birds: number; birdEvery: number; fade: number };
     whale: { volume: number; speed: number; depth: number; reverb: number; sleepEvery: number };
   };
   music: { on: boolean; volume: number; nearDist: number; farDist: number; floor: number; muffle: number; clear: number; distort: number; src: string };
