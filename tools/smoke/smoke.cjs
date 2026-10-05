@@ -312,7 +312,7 @@ async function main() {
     check(r.through.length === 0, `nothing drawn without a depth test shows through the bent earth${r.through.length ? ": " + r.through.join("; ") : ""}`);
   });
 
-  // The ley lines (Ed, 2026-10-04): six links through the runestones in wave order, drawn on the
+  // The ley lines (Ed, 2026-10-04): the tuning's links (leyLines.links, 1 since 2026-10-05) through the runestones in wave order, drawn on the
   // ground and over the treetops; a wave moves the chain on a link (the stone after the current
   // one is the one the wave wakes). Shots of both.
   await run("ley", { width: 960, height: 600 }, async page => {
@@ -320,14 +320,16 @@ async function main() {
     const drawn = () => page.evaluate(() => { const L = window.witch.view.ley; return { visible: L.meshes[0].visible, links: L.chain.length - 1, tris: (L.meshes[0].geometry.index?.count ?? 0) / 3, first: L.chain[0]?.cell.join(","), second: L.chain[1]?.cell.join(","), third: L.chain[2]?.cell.join(",") }; });
     await page.waitForFunction(() => window.witch.view.ley.chain.length > 1, null, { timeout: 120000, polling: 200 });
     const a = await drawn();
-    check(a.visible && a.links === 6 && a.tris > 100, `the ley lines are drawn: ${a.links} links (${a.tris} triangles)`);
+    const LINKS = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "../../config/tuning.json"), "utf8")).leyLines.links;
+    check(a.visible && a.links === LINKS && a.tris > 20 * LINKS, `the ley lines are drawn: ${a.links} links of the tuning's ${LINKS} (${a.tris} triangles)`);
     await page.evaluate(() => { const g = window.witch.game; g.witch = { ...g.witch, seated: false }; });
     await sleep(2500);
     await shot(page, "62-ley-ground.png");
     for (let i = 0; i < 2; i++) { await page.keyboard.press("KeyN"); await sleep(600); }
     await page.waitForFunction(k => window.witch.view.ley.chain[0]?.cell.join(",") !== k, a.first, { timeout: 120000, polling: 200 }).catch(() => {});
     const b = await drawn();
-    check(b.first === a.second && b.second === a.third, `two waves on, the chain has moved on a link (${a.first} → ${a.second} → ${a.third}, now ${b.first} → ${b.second})`);
+    // Two waves wake one or two stones, so the chain's start moves on past one link or two.
+    check(b.first !== a.first && (b.first === a.second || b.first === a.third || a.third === undefined) && b.links === LINKS, `two waves on, the chain has moved on (${a.first} → ${a.second} → ${a.third}, now ${b.first} → ${b.second})`);
     await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 300000 });
     await page.keyboard.press(ZOOM_OUT); await page.keyboard.press(ZOOM_OUT);
