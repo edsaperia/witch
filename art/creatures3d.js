@@ -112,7 +112,7 @@ function gearUp(m) {
 // parts are tapered and curved, so a row of them reads as a mane or a crest, never a hand of fingers.
 //   mane: { from, to (along the back, 0 rump to 1 head), height, count, lean, mat, belly (along the underside instead) }
 //   eyeglint: { size }: its eyes' glint brought out to the surface, where its body hides its face.
-//   wisps: { at: "tusks" | "mane", size, mat, (mane: count, from, to) }: flames off its tusks' tips, or rising along its spine (glowing).
+//   wisps: { at: "tusks" | "horns" | "mane", size, mat, (mane: count, from, to) }: flames off its tusks' or horns' tips, or rising along its spine (glowing).
 export const EVOLVE_KINDS = ["mane", "wisps", "eyeglint"];
 function evolve3d(m, feats, c) {
   for (const f of feats) {
@@ -142,10 +142,10 @@ function evolve3d(m, feats, c) {
       for (let i = 0; i < n; i++) { const t = (f.from ?? .35) + ((f.to ?? .85) - (f.from ?? .35)) * (i + .5) / n, b = c.backAt(t), up = v3.norm([-.35 - (c.frame ? .1 : 0), 1, 0]), k = s * (.75 + .5 * Math.abs(Math.sin(i * 2.1 + .7)));
         m.flat(v3.add([b[0], b[1] + s * .4, b[2]], v3.mul(up, k * .55)), [1, 0, 0], up, k * .3, k * .6, masks.flame(M[f.mat || "MAGIC2"], M.MAGIC), { group: 110 + i, extra: true }); }
     }
-    if (f.kind === "wisps" && f.at === "tusks") {
+    if (f.kind === "wisps" && (f.at === "tusks" || f.at === "horns")) {
       m.part = "head";
       const s = f.size ?? .18;
-      c.tuskTips.forEach((p, i) => { const up = v3.norm([-.3 - (c.frame ? .1 : 0), 1, 0]); m.flat(v3.add(p, v3.mul(up, s * .55)), [1, 0, 0], up, s * .3, s * .6, masks.flame(M[f.mat || "MAGIC2"], M.MAGIC), { group: 96 + i, extra: true }); });
+      (f.at === "horns" ? c.hornTips : c.tuskTips).forEach((p, i) => { const up = v3.norm([-.3 - (c.frame ? .1 : 0), 1, 0]); m.flat(v3.add(p, v3.mul(up, s * .55)), [1, 0, 0], up, s * .3, s * .6, masks.flame(M[f.mat || "MAGIC2"], M.MAGIC), { group: 96 + i, extra: true }); });
     }
   }
   m.part = "body";
@@ -233,7 +233,9 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   if (!has("tails")) tail3d(m, has("starTail") ? "star" : q.tail, tb, len, top, tw);
   m.part = "head";
   // ---- horns, antlers, tusks ----
-  if (q.horns) for (const side of [-1, 1]) { const k = has("hornsGlow") ? 1.5 : sz("horns"), pts = []; for (let i = 0; i <= 8; i++) { const a = .3 - i / 8 * Math.PI * 1.6, r = hr * .65 * k * (1 - .45 * i / 8); pts.push([H[0] - hr * .1 + Math.cos(a) * r, H[1] + hr * .45 + Math.sin(a) * r, side * (hr * .6 + i * .015)]); pts[i].push(hr * .2 * k * (1 - .6 * i / 8)); } m.chain(pts, has("hornsGlow") ? M.MAGIC : M.ACCENT, { group: 13 }); }
+  const hornTips = [];
+  if (q.horns === "twist") for (const side of [-1, 1]) hornTips.push(horn3d(m, [H[0] - hr * .05, H[1] + hr * .6, side * hr * .45], side, { ...q.horn, length: (q.horn?.length ?? 2) * hr, r: (q.horn?.r ?? .3) * hr }));
+  else if (q.horns) for (const side of [-1, 1]) { const k = has("hornsGlow") ? 1.5 : sz("horns"), pts = []; for (let i = 0; i <= 8; i++) { const a = .3 - i / 8 * Math.PI * 1.6, r = hr * .65 * k * (1 - .45 * i / 8); pts.push([H[0] - hr * .1 + Math.cos(a) * r, H[1] + hr * .45 + Math.sin(a) * r, side * (hr * .6 + i * .015)]); pts[i].push(hr * .2 * k * (1 - .6 * i / 8)); } m.chain(pts, has("hornsGlow") ? M.MAGIC : M.ACCENT, { group: 13 }); }
   if (q.antlers || has("jackalope")) for (const side of [-1, 1]) antlers3d(m, q, [H[0] - hr * .05, H[1] + hr * .75, side * hr * .4], side, sz("antlers"), has);
   const tuskTips = [];
   if (q.tusks) for (const side of [-1, 1]) {
@@ -248,7 +250,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   // ---- legendary features ----
   m.part = "body";
   const backAt = t => [-len * .9 + t * len * 1.65, top + hump * Math.max(0, 1 - Math.abs(t - .8) * 3) + arch * (1 - Math.abs(t - .4) * 2), 0];
-  if (feats?.length) evolve3d(m, feats, { H, hr, sn, L, Dm, tuskTips, backAt, len, top, chest, tuck, bw, frame });
+  if (feats?.length) evolve3d(m, feats, { H, hr, sn, L, Dm, tuskTips, hornTips, backAt, len, top, chest, tuck, bw, frame });
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [len * .2, top, side * bw * .5], side, 1.15, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("mane") || has("flames")) for (let i = 0; i < 7; i++) { const t = i / 6, b = v3.lerp(v3.add(H, [-hr * .5, hr * .3, 0]), backAt(.55), t), h = [.4, .3, .45, .28, .38, .25, .3][i], up = v3.norm([-.35 - (frame ? .1 : 0), 1, 0]); m.flat(v3.add(b, v3.mul(up, h * .5)), [1, 0, 0], up, h * .32, h * .55, masks.flame(i % 2 ? M.MAGIC : M.MAGIC2, M.MAGIC2), { group: 60 + i % 2, extra: true }); }
   if (has("tails")) for (let i = 0; i < 7; i++) { m.part = "tail"; const a = Math.PI * (.55 + i * .08), z = (i - 3) * .1, e = v3.add(tb, [Math.cos(a) * .9, Math.sin(a) * .85, z]); m.chain([[...tb, .1], [...v3.lerp(tb, e, .5), .17], [...e, .08]], i % 2 ? M.BODY2 : M.BODY, { group: 70, extra: true }); m.ell(e, [.09, .09, .09], M.MAGIC2, { group: 71, extra: true }); }
@@ -264,6 +266,25 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   const sp = drawForm(m, { height: drawHeight(level, st, q.hgt), facing }, S, level);
   if (formMotes() && sz("motes")) glowMotes(sp, S.id.length * 7919, sz("motes"));
   return sp;
+}
+
+// A twisted horn (the parts kit's "horn that sweeps and curls"; genome parts horns: "twist", its shape in head.horn): from
+// `base` it rises up and out, then sweeps back by `curl` (half turns), two strands spiralling round each other `twist` times
+// along it (so it reads as twisted at game size), ridged every `ridges`th step (the second strand in `mat2`, if given, so the twist shows as a spiral band), tapering to a fine point; `tip` (a material
+// name) glows its last fifth. length and r in model units. Returns its tip.
+export function horn3d(m, base, side, { length = .5, r = .08, curl = .6, twist = 2, ridges = 3, segs = 18, out = .45, tip, mat = "ACCENT", mat2, group = 14 } = {}) {
+  const n = Math.max(4, segs), ds = length / n, A = [[], []];
+  let p = base;
+  for (let i = 0; i <= n; i++) {
+    const t = i / n, a = -.15 + Math.pow(t, 1.5) * curl * Math.PI, o = out * (1 - t * .7); // straight up first, then sweeping back
+    const dir = v3.norm([-Math.sin(a), Math.cos(a), side * o]), u = v3.norm(v3.cross(dir, [0, 0, 1])), w = v3.norm(v3.cross(u, dir));
+    const rr = r * (1 - t * .88) * (ridges && i % ridges === 0 && i < n ? 1.14 : 1), ph = t * twist * Math.PI * 2 * side;
+    for (const k of [0, 1]) { const f = ph + k * Math.PI, off = v3.add(v3.mul(u, Math.cos(f) * rr * .5), v3.mul(w, Math.sin(f) * rr * .5)); A[k].push([...v3.add(p, off), rr * .58]); }
+    if (i < n) p = v3.add(p, v3.mul(dir, ds));
+  }
+  const cut = Math.round(n * .8);
+  for (const [k, s] of A.entries()) { m.chain(s.slice(0, tip ? cut + 1 : n + 1), M[k && mat2 ? mat2 : mat] ?? M.ACCENT, { group, extra: true }); if (tip) m.chain(s.slice(cut), M[tip] ?? M.MAGIC2, { group: group + 1, extra: true }); }
+  return p;
 }
 
 function tail3d(m, kind, tb, len, top, tw) {

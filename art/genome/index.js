@@ -70,6 +70,7 @@ export function genomeProblems(g) {
   out.push(...faceProblems(g.id, { ...T.face, ...g.face }), ...textureProblems(g.id, { ...T.texture, ...g.texture }));
   if (g.levels) { if (Object.keys(g.levels).some(k => !["0", "1", "2", "3"].includes(k))) out.push(`${g.id}: levels are 0 to 3 (baby, young, adult, legend)`); for (const l of Object.values(g.levels)) for (const f of l?.features || []) if (typeof f === "object" && !GENOME_FEATURE_KINDS.includes(f.kind)) out.push(`${g.id}: no evolution feature ${f.kind}`); }
   for (const t of tags) if (!allowed.includes(t)) out.push(`${g.id}: ${t} isn't one of ${g.template}'s parts`);
+  for (const [lv, l] of Object.entries(g.levels || {})) for (const t of l?.parts ? genomeTags({ parts: l.parts }) : []) if (!allowed.includes(t)) out.push(`${g.id}: level ${lv}'s ${t} isn't one of ${g.template}'s parts`);
   for (const [a, b] of T.exclude) if (tags.some(t => genomeTagMatch(a, t)) && tags.some(t => genomeTagMatch(b, t))) out.push(`${g.id}: ${a} and ${b} together`);
   for (const k of ["hue", "sat", "val"]) if (!(g.palette[k] >= 0 && g.palette[k] <= 1)) out.push(`${g.id}: palette ${k} ${g.palette[k]}`);
   return out;

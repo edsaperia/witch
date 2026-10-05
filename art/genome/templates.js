@@ -18,7 +18,7 @@ export const TEMPLATES = {
       ears: ["ear.point", "ear.round", "ear.long", "ear.tuft", "ear.small", "ear.big", "ear.none"],
       tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse"],
       feet: ["foot.paw", "foot.hoof"],
-      horns: ["horn.curl"], antlers: ["antler.branch", "antler.palm"], tusks: ["tusk"],
+      horns: ["horn.curl", "horn.twist"], antlers: ["antler.branch", "antler.palm"], tusks: ["tusk"],
     },
     exclude: [["horn.*", "antler.*"], ["tusk", "antler.*"]],
     face: { brow: "bar", happy: "arc", dazed: "x" }, // its expressions' shapes (expressions.js)
