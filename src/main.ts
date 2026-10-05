@@ -28,6 +28,7 @@ import { UPCOMING } from "./ui/upcoming";
 import { PlaytestLog } from "./platform/playtestLog";
 import { powerReport } from "./rules/power";
 import { Freeze } from "./platform/freeze";
+import { Creator, loadGenome } from "./ui/creator";
 
 const params = new URLSearchParams(location.search);
 let seed = parseSeed(params.get("seed"));
@@ -187,11 +188,13 @@ const style = loadStyle();
 if (params.get("flora")) style.flora = params.get("flora"); // ?flora=new|fantasy|all|<ids>: every wooded area grows these tree species (art/flora), carried to the art worker in the style
 /** Load timings (ms since the page started): the view built (the page's own sprites drawn), ready to play. */
 const loadTimes = { viewStart: performance.now(), view: 0, ready: 0 };
+// Her look (the character creator's, kept on this browser; else the classic witch).
+const savedLook = loadGenome();
 const view = new View(canvas, game, {
   ...style, pixel: tuning.pixelSize,
   // Trees taller by treeHeight; crowns wider by crownWidth in all (treeHeight widens them too).
   treeSize: style.treeSize * tuning.treeHeight, crownWidth: style.crownWidth * tuning.crownWidth / tuning.treeHeight,
-});
+}, savedLook);
 loadTimes.view = performance.now();
 view.debugCull = params.get("debug") === "cull";
 view.quick = params.get("quick") === "1";
@@ -379,8 +382,24 @@ freeze.started = () => startEl.style.display === "none";
 
 // Browsers keep sound off until the player presses something: the start screen is that press.
 let audio: AudioContext | null = null, music: Music | null = null, sfx: Sfx | null = null, sfxCues: SfxCues | null = null;
+// The character creator (Ed, 2026-10-05): at every load (and from the start screen's button);
+// ?creator=0 skips it (tests, the smoke run), and loading is the start screen's as before.
+// It's also the loading screen (Ed, 2026-10-05): it opens at once and the forest grows behind it;
+// Start waits ("getting ready") until play can begin.
+const creator = new Creator(style, savedLook);
+let lookNow = JSON.stringify(savedLook);
+creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready }; };
+creator.onGesture = () => { try { audio ??= new AudioContext(); void audio.resume(); } catch { /* no sound yet */ } };
+creator.onStart = g => { if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); } start(); };
+if (params.get("creator") !== "0") creator.show();
+const lookBtn = document.getElementById("look-btn");
+if (lookBtn) {
+  for (const ev of ["pointerdown", "pointerup", "click", "touchstart"]) lookBtn.addEventListener(ev, e => e.stopPropagation()); // (not a start)
+  lookBtn.addEventListener("click", () => { if (ready && game.clock.paused) creator.show(); });
+}
 function start(): boolean {
   if (!ready || !game.clock.paused || freeze.frozen) return false;
+  if (creator.open) return true;
   try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume * level, musicStyle, seed!, tuning.music.src); if (!sfx && tuning.sfx.on) { sfx = new Sfx(audio, tuning.music.volume * level, tuning.sfx, musicStyle.root + 24); sfxCues = new SfxCues(sfx, (by, sec) => music?.duck(by, sec)); } } catch { /* no sound yet anyway */ }
   game.clock.paused = false;
   startEl.style.display = "none";
