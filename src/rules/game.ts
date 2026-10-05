@@ -23,6 +23,7 @@ import { COMBAT, marchOn, maxHp, newCombat, startSiege, stepCombat, type CombatS
 import { hurt, knockOut, newHealth, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
 import { newInvites, stepInvites, type Affection, type InviteControls, type Invites } from "./invites";
 import { affection, blocksLetters, hit as hitAffection } from "./affection";
+import { knockWitch, newKnock, stepWitchKnock, stunned, type Blow, type Knock } from "./knock";
 import { applyDash, dashing, newDash, startDash, type DashState } from "./dash";
 import { castSpell, newSpells, speedMultiplier, type SpellState } from "./spells";
 import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWitches";
@@ -40,6 +41,8 @@ export interface Witch {
   dash: DashState;
   /** Her 💌s (rules/invites.ts). */
   invites: Invites;
+  /** Thrown and staggered by a blow (rules/knock.ts). */
+  knock?: Knock;
   /** Her hits left and repair (rules/knockout.ts), and her knockout while it plays out. */
   health: Health;
   ko: Knockout | null;
@@ -213,10 +216,12 @@ export const affectionOf = (g: Game): Affection => {
 };
 
 /** A hit on witch `id` at game time `at`: it costs her a hit unless she's mid-blink (nowhere). */
-export function hitWitch(g: Game, id: number, at: number, t: Tuning = g.tuning): void {
+export function hitWitch(g: Game, id: number, at: number, t: Tuning = g.tuning, blow?: Blow): void {
   const w = g.witches[id];
   if (!w || w.ko || dashing(w.dash, at)) return;
-  if (hurt(w.health, at, t)) { w.ko = knockOut(w.leash, g.creatures, at, t); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z }); }
+  if (hurt(w.health, at, t)) { w.ko = knockOut(w.leash, g.creatures, at, t); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z }); return; }
+  // Thrown and staggered by it (rules/knock.ts); not by the blow that knocks her out.
+  if (blow) knockWitch((w.knock ??= newKnock()), w.body, blow, at, t);
 }
 
 /** Where a blink may land: not in a tree's trunk, a rock or ruin, a soundsystem, a dancefloor
@@ -275,9 +280,12 @@ function fixedStep(g: Game, controls: Controls): void {
   const boost = speedMultiplier(g.spells, g.clock.time, t) * (W.slowUntil !== undefined && g.clock.time < W.slowUntil ? W.slowMult ?? 1 : 1);
   // Knocked out: no input but the camera's zoom while it plays out.
   if (W.ko) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
+  // Staggered by a blow (rules/knock.ts): no moving, rising, blinking or 💌s for a moment.
+  else if (stunned(W.knock, g.clock.time)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom, sigil: c.sigil };
   const was = W.body;
   if (c.dash) startDash(W.dash, was, c.moveX, c.moveZ, g.clock.time, t, g.map.bounds, (x, z) => blinkClear(g, x, z));
   W.body = applyDash(W.dash, stepWitch(was, c, dt, boost === 1 ? t : { ...t, groundSpeed: t.groundSpeed * boost, treetopSpeed: t.treetopSpeed * boost }, g.map.bounds));
+  if (W.knock) W.body = stepWitchKnock(W.knock, W.body, dt, t, g.map.bounds, (x, z) => blinkClear(g, x, z));
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, dt, g.tuning, !!g.witch.seated, g.introFocus);
   if (c.pauseWaves) g.party.paused = !g.party.paused;
   if (c.nextWave) { spreadWave(g.party, g.map, g.clock.time); g.party.nextAt = g.clock.time + t.party.interval; }
@@ -418,7 +426,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     unseen: (x, z) => g.witches.every(w => Math.hypot(w.body.x - x, w.body.z - z) > t.haze.far + 60),
     inArea: (c, x, z) => { const k = g.map.cellSafe(x, z).cell; return k[0] === c.cell[0] && k[1] === c.cell[1]; },
     slowWitch: (id, until, mult) => { const w = g.witches[id]; if (w) { w.slowUntil = Math.max(w.slowUntil ?? 0, until); w.slowMult = Math.min(mult, w.slowUntil > until ? w.slowMult ?? 1 : 1); } },
-    hitWitch: (id, at) => hitWitch(g, id, at, t),
+    hitWitch: (id, at, blow) => hitWitch(g, id, at, t, blow),
     loseParty: id => {
       for (const w of g.witches) { w.leash.stack = w.leash.stack.filter(i => i !== id); w.leash.placed = w.leash.placed.filter(p => p.id !== id); }
       g.creatures[id].leashed = false;

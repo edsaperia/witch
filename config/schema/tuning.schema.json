@@ -1033,17 +1033,17 @@
         "depart": {
           "type": "object",
           "properties": {
-            "run": {
+            "avoid": {
               "type": "number",
               "minimum": 0
             },
-            "avoid": {
+            "past": {
               "type": "number",
               "minimum": 0
             }
           },
           "required": [
-            "run",
+            "past",
             "avoid"
           ],
           "additionalProperties": false
@@ -1089,9 +1089,67 @@
         "heightClearance": {
           "type": "number",
           "minimum": 0
+        },
+        "knock": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "base": {
+              "type": "number",
+              "minimum": 0
+            },
+            "scale": {
+              "type": "number",
+              "minimum": 0
+            },
+            "charge": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ease": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stunBase": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stunScale": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stunMax": {
+              "type": "number",
+              "minimum": 0
+            },
+            "immune": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "base",
+            "scale",
+            "charge",
+            "max",
+            "ease",
+            "stunBase",
+            "stunScale",
+            "stunMax",
+            "immune"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
+        "knock",
         "lightFloor",
         "lightTint",
         "lightRim",
@@ -1773,10 +1831,6 @@
     "treehouse": {
       "type": "object",
       "properties": {
-        "distance": {
-          "type": "number",
-          "minimum": 0
-        },
         "angle": {
           "type": "number"
         },
@@ -1791,10 +1845,14 @@
         "lightStrength": {
           "type": "number",
           "minimum": 0
+        },
+        "gap": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
-        "distance",
+        "gap",
         "angle",
         "clear",
         "lightReach",
@@ -2902,10 +2960,15 @@
             "duckTime": {
               "type": "number",
               "minimum": 0
+            },
+            "knockdown": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
             "volume",
+            "knockdown",
             "duck",
             "duckTime"
           ],
@@ -3033,10 +3096,6 @@
               "type": "number",
               "minimum": 0
             },
-            "radius": {
-              "type": "number",
-              "minimum": 0
-            },
             "fade": {
               "type": "number",
               "minimum": 0
@@ -3048,7 +3107,6 @@
             "bees",
             "birds",
             "birdEvery",
-            "radius",
             "fade"
           ],
           "additionalProperties": false
