@@ -315,11 +315,21 @@ const waveEl = document.getElementById("wave")!, waveFill = waveEl.querySelector
 function waveHud(): void {
   const cd = waveCountdown(game.party, game.map, game.clock.time);
   waveFill.style.height = `${(1 - cd.gone) * 100}%`;
-  const clock = (s: number) => (s >= 60 ? `${Math.floor(s / 60)}:${String(Math.ceil(s) % 60).padStart(2, "0")}` : `${Math.ceil(s)} s`);
+  const clock = (s: number) => { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; };
   const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : cd.left >= 60 ? `${Math.floor(cd.left / 60)}:${String(Math.ceil(cd.left) % 60).padStart(2, "0")}` : `${Math.ceil(cd.left)} s`;
   waveLabel.textContent = `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}`;
   waveEl.classList.toggle("paused", game.party.paused);
+  // The boot-up over (Ed, 2026-10-05: five quiet minutes from her first step): a quiet word by the bar.
+  if (!bootShown && !cd.booting && game.party.bootUntil > 0 && game.clock.time >= game.party.bootUntil && tuning.party.interval < 1e9) {
+    bootShown = true;
+    const pop = document.createElement("div");
+    pop.className = "boot-pop";
+    pop.textContent = `speakers up · wave 1 in ${clock(cd.left)}`;
+    waveEl.append(pop);
+    setTimeout(() => pop.remove(), 4000);
+  }
 }
+let bootShown = false;
 // A soundsystem lost (Ed, 2026-10-05): the next wave comes sooner, and the countdown shows it: the
 // bar shrinks with a flash, and the seconds taken off pop out beside it ("−60 s", "wave now!").
 let lossShown = -1;

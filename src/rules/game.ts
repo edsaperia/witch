@@ -290,7 +290,7 @@ function fixedStep(g: Game, controls: Controls): void {
   if (c.pauseWaves) g.party.paused = !g.party.paused;
   if (c.nextWave) { spreadWave(g.party, g.map, g.clock.time); g.party.nextAt = g.clock.time + t.party.interval; }
   const before = g.party.wave;
-  stepParty(g.party, g.map, g.clock.time, dt);
+  stepParty(g.party, g.map, g.clock.time, dt, !!g.witch.seated);
   // A wave-countdown buff: each new countdown runs longer by its share of the interval.
   if (g.party.wave > before) g.party.nextAt += t.party.interval - g.tuning.party.interval;
   // Each wave brings its tempo, eased in from the block line its music lands on.

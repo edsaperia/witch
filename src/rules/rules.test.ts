@@ -627,6 +627,16 @@ describe("the party", () => {
     // Pausing during the boot holds it too.
     p.paused = true; stepParty(p, map, B / 2, 5); expect(p.bootUntil).toBe(B + 5);
   });
+  it("waits for her to get up from the decks: five minutes from her first step (Ed, 2026-10-05)", () => {
+    expect(TUNING.boot.time).toBe(300);
+    const p = newParty(map), B = TUNING.boot.time, due = p.nextAt;
+    for (let s = 0; s < 40; s++) stepParty(p, map, s, 1, true); // (40 s sitting behind the decks)
+    expect(p.bootUntil).toBe(B + 40); expect(p.nextAt).toBe(due + 40);
+    stepParty(p, map, 40, 1, false); // (up: the boot runs from here)
+    expect(p.bootUntil).toBe(B + 40);
+    stepParty(p, map, B + 41, 1, true); // (sitting again once it's done holds nothing)
+    expect(p.nextAt).toBe(due + 40);
+  });
   it("forecasts two waves ahead, confirmed, and a probable set that holds the wave after (Ed, 2026-10-04)", () => {
     const p = newParty(map);
     expect(p.next.length).toBe(1); expect(p.afterNext.length).toBe(1);
