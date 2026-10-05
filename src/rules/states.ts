@@ -18,8 +18,10 @@ import { cellKey, newParty, soundsystemFor, spreadWave } from "./party";
 import { hash2 } from "./random";
 
 /** How she splits her invites (issue #87): every one a defender; every third leashed; every one
- *  leashed; or the babies leashed (they grow) and the young and adults left as defenders. */
-export type Policy = "defend" | "third" | "leash" | "babies";
+ *  leashed; the babies leashed (they grow) and the young and adults left as defenders; or (relay,
+ *  for the own-kind rule) happy in the area the next wave wakes and leashed everywhere else, so her
+ *  army is of other kinds than the area it will defend. */
+export type Policy = "defend" | "third" | "leash" | "babies" | "relay";
 
 export interface StatesOptions {
   /** Seconds between waves, and the waves to stop at. */
@@ -185,6 +187,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
     if (o.policy === "leash") return true;
     if (o.policy === "babies") return u.level === 0;
     if (o.policy === "third") return ++count % 3 === 0;
+    if (o.policy === "relay") return !party.next.some(c => cellKey(c) === u.cell);
     return false;
   };
   const fly = (to: string, x: number, z: number, time: number): Task => ({ kind: "fly", to, x, z, until: time + Math.hypot(x - witch.x, z - witch.z) / witchSpeed + land + cross });

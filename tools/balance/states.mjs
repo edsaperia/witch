@@ -1,5 +1,5 @@
 // The creature-state model's report (issue #87): src/rules/states.ts on the real maps.
-//   node tools/balance/states.mjs [--seeds 6] [--gap 60] [--skills 0.5,1,2,4] [--policies defend,third,leash,babies] [--cap 40]
+//   node tools/balance/states.mjs [--seeds 6] [--gap 60] [--skills 0.5,1,2,4] [--policies defend,third,leash,babies,relay] [--cap 40]
 //     [--health 4000] [--dazed 0] [--quest 0] [--legend 1] [--approach 3] [--leash 2] [--berries 12.5] [--dt 0.5] [--kin-fight] [--quick]
 import { createServer } from "vite";
 
