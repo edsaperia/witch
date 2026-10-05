@@ -1,11 +1,9 @@
 {
-  "_": "What's new, shown on the start screen (newest first; the last 3 entries). Every push that changes something Ed can see adds its bullets to the top entry, in plain player-facing words. The top entry's version is null until its build has a number: it then shows as the build you're playing. When you push again, write that number in (from the playable-link comment) and start a new null entry above it.",
+  "_": "The changelog up to round 9, frozen (2026-10-05): never edit this file. New changes each add their own fragment beside it (config/changelog/<yyyy-mm-dd>-<slug>.json); see src/changelog.ts and CLAUDE.md.",
   "entries": [
     {
-      "version": null,
+      "version": 439,
       "items": [
-        "Every animal now fights its own way: rams back off and ram, stags charge in pairs, elk swing wide, bears swipe hard and short, badgers dig in, beavers block with their tails, lynxes pounce, foxes and martens go round to your back, snakes strike from hiding, moths flock to light, hedgehogs and woodlice roll up, snails leave slowing slime, glow-worms flash to slow you, and stoats, otters, squirrels and dormice dart and weave.",
-        "Try each new move in the arena: ?arena=ram, pair, wide, swipe, dig, block, flank, packflank, pounce, strike, moth, roll, woodlouse, slime, flash, weave, otter, squirrel, dart.",
         "Every area now starts with two adults (and a baby) instead of one: the first sieges hit harder, and survival grows more steadily with how well you build your army",
         "Sleeping legends dream: a thought bubble over each shows the sigil of the creature it wants, drawn as that creature's level (a baby's, young's or adult's sigil)",
         "Bring it: put that creature's sigil down anywhere in the legend's area before its wave comes, and the legend wakes happy (its buff on), the area turns friendly, and the creature you brought joins it",
@@ -19,11 +17,7 @@
         "The ley line now points to your next objective: one softly glowing line from the last runestone you reached to the next, along the valleys, fading from the first area's colour to the next one's. It stays on the ground even from the treetops (glowing through the leaves), and when you reach the next stone the old line drains into it and a new one draws out to the stone after",
         "The hole in the canopy round you on the ground has no hard edge any more: the trees thin out gradually and raggedly, each at its own distance, and rising or landing no longer shows a circle round you",
         "Smooth-barked trees (beech, rowan, hazel) look like trees again: no more grey columns on brown stumps; their trunks are shaded round and marked with the eyes of fallen branches",
-        "On the ground, only nearby rune stones keep their wave number at the top of the screen, so far ones no longer pile up there; over the treetops none is held there",
-        "Charging boars have weight: they lower their head, build up speed, thunder on past you, then skid round in a wide arc before coming again",
-        "Creatures in a fight speed up, slow down and turn smoothly, without jerking or flickering left and right; a momentum knob joins fight scale and speed in the debug panel (, and .)",
-        "Wild creatures give up the chase soon after you leave their area (about 10 m past its edge) and head back home",
-        "Animals don't bunch up any more: walking, following you, marching or fighting, each keeps some room round it, more for big ones (a bear keeps much more space than a dormouse)"
+        "On the ground, only nearby rune stones keep their wave number at the top of the screen, so far ones no longer pile up there; over the treetops none is held there"
       ]
     },
     {

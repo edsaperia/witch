@@ -76,7 +76,7 @@ export function buffedTuning(t: Tuning, T: BuffTotals): Tuning {
     treetopSpeed: t.treetopSpeed * T.flightSpeed,
     spells: { ...t.spells, speed: { ...S, cooldown: S.cooldown * T.spellCooldown, duration: S.duration * T.spellDuration } },
     leash: { ...t.leash, length: t.leash.length * T.leashLength, runSpeed: t.leash.runSpeed * T.leashRun, pace: (t.leash.pace ?? 1) * T.partyPace },
-    berries: { ...t.berries, seekRadius: t.berries.seekRadius * T.berrySeek, toEvolve: t.berries.toEvolve.map(n => Math.max(1, Math.round(n * T.evolveFaster))) },
+    berries: { ...t.berries, seekRadius: t.berries.seekRadius * T.berrySeek, cost: T.evolveFaster === 1 ? t.berries.cost : { ...t.berries.cost, scale: (t.berries.cost.scale ?? 1) * T.evolveFaster } },
     invite: { ...t.invite, talkTime: t.invite.talkTime.map(s => s * T.talkTime) },
     party: { ...t.party, interval: t.party.interval * T.waveCountdown },
     glowToCutout: t.glowToCutout * T.glowReach,
