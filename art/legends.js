@@ -27,6 +27,7 @@ export const LEGEND_FRAMES = { asleep: 2 };
 // glowing legend eyes are in (1 unless given).
 // Batch 1 (the bug hunter's first slice): bat, marten, elk, stoat, owl, snail. Batch 2: wolf, fox,
 // badger, boar, stag, hare, bear. Batch 3: lynx, otter, beaver, ram, squirrel, dormouse, salamander.
+// Batch 4: toad, raven, mole, hedgehog, woodlouse.
 export const LEGEND_POSES = {
   bat: { ground: .3, droop: 0, drop: [0, 10, 11], cloak: true, over: { moss: .3, lichen: .14, ferns: 1, grass: 2, mushrooms: 2, roots: 2, stones: 4 } },
   marten: { sink: .45, droop: 1, drop: [60, 61], over: { moss: .45, lichen: .05, ferns: 3, grass: 3, mushrooms: 3, roots: 3, stones: 1, sapling: "pine" } },
@@ -48,6 +49,11 @@ export const LEGEND_POSES = {
   squirrel: { sink: .45, droop: 1, drop: [], over: { moss: .3, lichen: .06, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 1, flowers: 6 } },
   dormouse: { sink: .45, droop: 1, drop: [], over: { moss: .4, lichen: .04, ferns: 1, grass: 3, mushrooms: 2, roots: 2, stones: 0, flowers: 5 } },
   salamander: { sink: .55, droop: 1, drop: [60, 61], over: { moss: .35, lichen: .14, ferns: 2, grass: 1, mushrooms: 2, roots: 1, stones: 5 } },
+  toad: { ground: .2, droop: .5, drop: [], over: { moss: .55, lichen: .06, ferns: 1, grass: 5, mushrooms: 2, roots: 1, stones: 3 } },
+  raven: { ground: .42, droop: .6, drop: [40, 50, 95, 96, 97, 98, 99, 100], over: { moss: .35, lichen: .1, ferns: 1, grass: 2, mushrooms: 3, roots: 3, stones: 1, nest: true } },
+  mole: { ground: .2, droop: .4, drop: [], over: { moss: .4, lichen: .04, ferns: 0, grass: 7, mushrooms: 1, roots: 2, stones: 1, flowers: 0 } },
+  hedgehog: { ground: .18, droop: .5, drop: [], over: { moss: .45, lichen: .05, ferns: 1, grass: 4, mushrooms: 3, roots: 1, stones: 1 } },
+  woodlouse: { ground: .09, droop: 0, drop: [9], over: { moss: .5, lichen: .1, ferns: 1, grass: 2, mushrooms: 4, roots: 2, stones: 0 } },
 };
 export const LEGEND_IDS = Object.keys(LEGEND_POSES);
 const legendArea = id => AREAS.find(a => a.creature === id) || AREAS[0];
@@ -188,7 +194,7 @@ function lgForm(S, { breath }) {
     // the mound of earth it sleeps in, stones half buried round it
     m.ell([cx, G - unit * .3, 0], [rx * .95 + unit * .08, unit * .42, rz * 1.05 + unit * .08], M.BARK2, { group: 150, extra: true, rough: unit * .03, paint: p => { const k = vnoise(p[0] * 7, p[2] * 7, 3); return k < .3 + moss * .6 ? M.MOSS : k > .88 ? M.STONED : undefined; } }); // a lip of its earth, grown over
     for (let i = 0; i < (over.stones || 0); i++) lgAddStone(m, v3.add(round(i * 3 + 1), [0, unit * .02, 0]), unit * uni(r, .1, .2), r);
-    if (over.nest) lgAddNest(m, [cx, G + unit * .08, 0], Math.max(rx, rz) * 1.05, unit * .08, r);
+    if (over.nest) lgAddNest(m, [cx, G + unit * .08, 0], Math.max(rz, rx * .6) * 1.05, unit * .08, r);
     m.clipY = G;
     const res = render(m, { scale: s, facing: o.facing });
     res.sp.origin = res.project([cx, G, 0]); // the ground under its middle, on the sprite
