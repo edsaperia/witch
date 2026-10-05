@@ -181,7 +181,7 @@ export class Babble {
 
   /** Knocked down: a longer "whoa-oh" as she's sent home, falling away, over a heavier thump. */
   knockdown(pan = 0): void {
-    const K = this.k, V = K.T.voice.witch, O = K.T.ouch, at = K.ctx.currentTime + 0.005, out = K.voice(pan), p = V.pitch * 1.2, vol = O.volume;
+    const K = this.k, V = K.T.voice.witch, O = K.T.ouch, at = K.ctx.currentTime + 0.005, out = K.voice(pan), p = V.pitch * 1.2, vol = O.volume * O.knockdown;
     const base = { formants: V.timbre, wave: "sawtooth" as OscillatorType, grit: 0.15, pan, consonant: false, trill: [6, 35] };
     this.syllable(at, { ...base, pitch: p, end: p * 1.45, vowel: 3, dur: 0.3, gain: vol }, out);
     this.syllable(at + 0.28, { ...base, pitch: p * 1.4, end: p * 0.55, vowel: 3, dur: 0.6, gain: vol * 0.9 }, out);
