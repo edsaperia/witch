@@ -11,7 +11,7 @@ import { Forest } from "./forest";
 import { leashPoint, newLeash, stepLeash, type LeashControls, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
-import { cellKey, newParty, planAhead, spreadWave, stepParty, type PartyState } from "./party";
+import { cellKey, hurryWave, newParty, planAhead, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { nextSpeakerState, type SpeakerState } from "./speakers";
 import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
@@ -77,6 +77,9 @@ export interface Game {
   friendly: Set<string>;
   /** Quests done in this frame's steps (for the view). */
   questEvents: QuestEvent[];
+  /** This frame's wave events (several steps' worth, or none): a soundsystem lost brings the next
+   *  wave sooner (Ed, 2026-10-05), with the countdown it leaves, for the HUD and the music. */
+  waveEvents: WaveEvent[];
   /** The creatures by home area (rebuilt when one settles somewhere new). */
   byArea?: Map<string, Creature[]> | null;
   /** The areas' legends, by id (rules/creatures.ts: one an area), found once. */
@@ -104,6 +107,10 @@ export interface Game {
   /** Where the opening shot looks: her seat on the treehouse as drawn (the view sets it; the art knows where it is). */
   introFocus?: { x: number; y: number; z: number };
 }
+
+/** A soundsystem destroyed ("home" for the dancefloor's ring): the next wave `cut` seconds sooner,
+ *  `left` seconds away now (0: it comes at once). */
+export interface WaveEvent { kind: "soundsystemLost"; key: string; x: number; z: number; at: number; cut: number; left: number }
 
 export interface Controls extends Intent, Partial<LeashControls> {
   /** Debug (O): the nearest area legend turns happy (as if its quest were done). */
@@ -143,7 +150,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
     beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)),
     floor: newFloor(), buffs: newBuffs(tuning), partyWitches: newPartyWitches(seed),
-    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), questEvents: [] as QuestEvent[], tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), over: null as { at: number } | null,
+    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), questEvents: [] as QuestEvent[], waveEvents: [] as WaveEvent[], tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), over: null as { at: number } | null,
     acc: 0, alpha: 1, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
   };
   const d = map.dancefloor, C = tuning.combat;
@@ -164,7 +171,7 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   if (c.zoom) P.zoom = c.zoom;
   if (g.clock.paused || !(realDt > 0)) return;
   // This frame's combat and knockout events (several steps' worth, or none), for the view.
-  g.combat.events = []; g.koEvents = []; g.questEvents = [];
+  g.combat.events = []; g.koEvents = []; g.questEvents = []; g.waveEvents = [];
   g.acc = Math.min(g.acc + Math.min(realDt, MAX_STEP), MAX_STEP + STEP);
   while (g.acc >= STEP - 1e-9) {
     g.acc -= STEP;
@@ -377,15 +384,23 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     },
   }, COMBAT);
   for (const c of active) if (!c.gone && !c.leashed && (c.siege || c.fleeUntil || c.fight?.target || c.wanderTo)) S.busy.add(c.id); // carried on wherever she is
-  for (const e of S.events) if (e.kind === "soundDestroyed" && e.key && e.at === time) {
-    if (e.key === "home") g.speakers = g.speakers.map(() => "destroyed" as SpeakerState);
-    else { g.party.areas.delete(e.key); S.ruined.add(e.key); (g.party.ruined ??= new Set()).add(e.key); }
-    marchOn(S, e.key, g.creatures);
-  }
+  for (const e of S.events) if (e.kind === "soundDestroyed" && e.key && e.at === time) loseSoundsystem(g, e.key, e.x, e.z, t);
   // The home ring shows its damage speaker by speaker.
   const home = S.sounds.get("home");
   if (home && home.hp < home.max) { const f = 1 - home.hp / home.max, n = g.speakers.length; g.speakers = g.speakers.map((_, i) => (f >= (i + 1) / n ? "destroyed" : f >= (i + 0.5) / n ? "damaged" : "playing")); }
   if (!g.over && [...S.sounds.values()].every(h => h.hp <= 0)) g.over = { at: time };
+}
+
+/** A soundsystem destroyed: its party over (the home ring's speakers all destroyed), its besiegers
+ *  marching on, and the next wave sooner (Ed, 2026-10-05: a loss takes party.lossPenalty seconds
+ *  off the countdown, "all waves sooner is the wrong kind of penalty"). */
+export function loseSoundsystem(g: Game, key: string, x: number, z: number, t: Tuning = g.tuning): void {
+  const S = g.combat, time = g.clock.time;
+  if (key === "home") g.speakers = g.speakers.map(() => "destroyed" as SpeakerState);
+  else { g.party.areas.delete(key); S.ruined.add(key); (g.party.ruined ??= new Set()).add(key); }
+  marchOn(S, key, g.creatures);
+  const cut = hurryWave(g.party, time, t.party.lossPenalty ?? 0);
+  g.waveEvents.push({ kind: "soundsystemLost", key, x, z, at: time, cut, left: Math.max(0, g.party.nextAt - time) });
 }
 
 /** The party witches: one for each soundsystem playing (oldest first), and the player idling in. */
