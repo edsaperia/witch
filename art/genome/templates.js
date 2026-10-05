@@ -15,20 +15,20 @@ export const TEMPLATES = {
     name: "Four-legged", builders: ["quad"],
     sockets: {
       ears: ["ear.point", "ear.round", "ear.long", "ear.tuft", "ear.small", "ear.big", "ear.none"],
-      tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat"],
+      tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse"],
       feet: ["foot.paw", "foot.hoof"],
       horns: ["horn.curl"], antlers: ["antler.branch", "antler.palm"], tusks: ["tusk"],
     },
     exclude: [["horn.*", "antler.*"], ["tusk", "antler.*"]],
     gait: { offsets: [0, .5, .5, 0], dutyWalk: .65, dutyRun: .35 }, // front left, front right, back left, back right: a trot
     sizes: {
-      head: [1.75, 1, 1.12, 1.12],      // head radius: a baby's big head
-      len: [.8, 1.02, 1.06, 1.06],      // body length
-      legK: [.55, 1.04, 1.04, 1.04],    // leg length (a baby's short legs)
+      head: [1.75, 1, 1.12, 1],         // head radius: a baby's big head, a legend's smaller for its size (grand, not cute)
+      len: [.8, 1.02, 1.06, 1.14],      // body length: a legend's long
+      legK: [.55, 1.04, 1.04, 1.14],    // leg length: a baby's short legs, a legend's long ones
       chestDeep: [1, 1, 1, 1.06],       // a legend's deeper chest...
       chestBig: [1, 1, .9, .9],         // ...and a big one's lower belly line
       tuck: [1, 1, .92, .92],
-      body: [1.15, 1, 1.28, 1.28],      // body width
+      body: [1.3, 1, 1.28, 1.28],       // body width: a chunky baby
       limbA: [1.7, 1, 1, 1.1],          // leg thickness: a baby's stubby legs, a legend's thicker ones
       limbB: [1, 1, 1.3, 1.3],          // and the heavier build of adults and legends
       neckBase: [1, 1, 1.25, 1.25], neckTop: [1, 1, 1.2, 1.2],

@@ -2723,7 +2723,7 @@ const GENOMES = [
   { id: "salamander", name: "Salamander", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .1, val: .22, belly: "yellow" }, body: { hgt: .42, len: .9, chest: .14, tuck: .14, neck: .12, neckAng: .05, neckW: .5, hr: .27, legW: 1 }, head: { snout: .55, snoutD: .55 }, parts: { ears: { kind: "none" }, tail: "otter", feet: "paw" }, coat: { spots: true, spotMat: "belly" }, legend: ["flames"] },
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] },
   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] },
-  { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "squirrel", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
+  { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
   { id: "beetle", name: "Stag beetle", template: "insectoid", builder: "beetle", palette: { hue: .78, sat: .5, val: .35 }, legend: ["horn", "crystals"] },
 ];
 
@@ -2737,25 +2737,29 @@ const GENOMES = [
 // A size curve is four numbers, baby, young, adult and legend, each a multiplier on the species'
 // own proportion (or, for antlers, horns and tusks, their size outright).
 
+// The size curves the templates without their own share: an adult's and legend's heavier build
+// (every part thicker across) and the glowing motes round them.
+const TEMPLATE_SMALL_SIZES = { build: [1, 1, 1.18, 1.18], motes: [0, 0, 3, 9] };
+
 const TEMPLATES = {
   quadruped: {
     name: "Four-legged", builders: ["quad"],
     sockets: {
       ears: ["ear.point", "ear.round", "ear.long", "ear.tuft", "ear.small", "ear.big", "ear.none"],
-      tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat"],
+      tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse"],
       feet: ["foot.paw", "foot.hoof"],
       horns: ["horn.curl"], antlers: ["antler.branch", "antler.palm"], tusks: ["tusk"],
     },
     exclude: [["horn.*", "antler.*"], ["tusk", "antler.*"]],
     gait: { offsets: [0, .5, .5, 0], dutyWalk: .65, dutyRun: .35 }, // front left, front right, back left, back right: a trot
     sizes: {
-      head: [1.75, 1, 1.12, 1.12],      // head radius: a baby's big head
-      len: [.8, 1.02, 1.06, 1.06],      // body length
-      legK: [.55, 1.04, 1.04, 1.04],    // leg length (a baby's short legs)
+      head: [1.75, 1, 1.12, 1],         // head radius: a baby's big head, a legend's smaller for its size (grand, not cute)
+      len: [.8, 1.02, 1.06, 1.14],      // body length: a legend's long
+      legK: [.55, 1.04, 1.04, 1.14],    // leg length: a baby's short legs, a legend's long ones
       chestDeep: [1, 1, 1, 1.06],       // a legend's deeper chest...
       chestBig: [1, 1, .9, .9],         // ...and a big one's lower belly line
       tuck: [1, 1, .92, .92],
-      body: [1.15, 1, 1.28, 1.28],      // body width
+      body: [1.3, 1, 1.28, 1.28],       // body width: a chunky baby
       limbA: [1.7, 1, 1, 1.1],          // leg thickness: a baby's stubby legs, a legend's thicker ones
       limbB: [1, 1, 1.3, 1.3],          // and the heavier build of adults and legends
       neckBase: [1, 1, 1.25, 1.25], neckTop: [1, 1, 1.2, 1.2],
@@ -2766,11 +2770,11 @@ const TEMPLATES = {
       motes: [0, 0, 3, 9],              // glowing motes round adults and legends
     },
   },
-  avian: { name: "Bird", builders: ["owl", "raven"], sockets: { wings: ["wing.folded", "wing.spirit"], head: ["head.round", "head.beak"] }, exclude: [], gait: { offsets: [0, .5], dutyWalk: .6, dutyRun: .4 } },
-  flyer: { name: "Flyer", builders: ["bat", "moth"], sockets: { wings: ["wing.membrane", "wing.scaled"] }, exclude: [], gait: { offsets: [], dutyWalk: 0, dutyRun: 0 } },
-  serpent: { name: "Serpent or worm", builders: ["snake", "glowworm"], sockets: { head: ["head.snake", "head.worm"], tailTip: ["tail.lantern"] }, exclude: [], gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
-  insectoid: { name: "Many-legged", builders: ["beetle", "spider", "woodlouse"], sockets: { head: ["jaw.stag", "eyes.cluster", "antenna"] }, exclude: [], gait: { offsets: [0, .5, 0, .5, 0, .5], dutyWalk: .6, dutyRun: .5 } }, // alternating tripods
-  squat: { name: "Squat", builders: ["toad", "hedgehog", "mole", "snail"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], gait: { offsets: [0, .5, .5, 0], dutyWalk: .7, dutyRun: .5 } },
+  avian: { name: "Bird", builders: ["owl", "raven"], sizes: { head: [.48, .36, .36, .36], headY: [.95, 1.08, 1.08, 1.08], build: [1, 1, 1.18, 1.18], motes: [0, 0, 3, 9] }, sockets: { wings: ["wing.folded", "wing.spirit"], head: ["head.round", "head.beak"] }, exclude: [], gait: { offsets: [0, .5], dutyWalk: .6, dutyRun: .4 } },
+  flyer: { sizes: TEMPLATE_SMALL_SIZES, name: "Flyer", builders: ["bat", "moth"], sockets: { wings: ["wing.membrane", "wing.scaled"] }, exclude: [], gait: { offsets: [], dutyWalk: 0, dutyRun: 0 } },
+  serpent: { sizes: TEMPLATE_SMALL_SIZES, name: "Serpent or worm", builders: ["snake", "glowworm"], sockets: { head: ["head.snake", "head.worm"], tailTip: ["tail.lantern"] }, exclude: [], gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
+  insectoid: { sizes: TEMPLATE_SMALL_SIZES, name: "Many-legged", builders: ["beetle", "spider", "woodlouse"], sockets: { head: ["jaw.stag", "eyes.cluster", "antenna"] }, exclude: [], gait: { offsets: [0, .5, 0, .5, 0, .5], dutyWalk: .6, dutyRun: .5 } }, // alternating tripods
+  squat: { sizes: TEMPLATE_SMALL_SIZES, name: "Squat", builders: ["toad", "hedgehog", "mole", "snail"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], gait: { offsets: [0, .5, .5, 0], dutyWalk: .7, dutyRun: .5 } },
 };
 const TEMPLATE_IDS = Object.keys(TEMPLATES);
 
@@ -2779,8 +2783,8 @@ const TEMPLATE_IDS = Object.keys(TEMPLATES);
 const GENOME_BY_ID = Object.fromEntries(GENOMES.map(g => [g.id, g]));
 
 // The builder's species object, as art/creatures.js always had it: id, name, plan, hue, sat, val,
-// belly, legend, and for the four-legged q (their proportions and parts in one bag) and sizes
-// (their template's size curves, any of the species' own over them).
+// belly, legend, sizes (its template's size curves, any of the species' own over them), and for
+// the four-legged q (their proportions and parts in one bag).
 function speciesOf(g) {
   const S = { id: g.id, name: g.name, plan: g.builder, hue: g.palette.hue, sat: g.palette.sat, val: g.palette.val, legend: g.legend || [] };
   if (g.palette.belly) S.belly = g.palette.belly;
@@ -2790,8 +2794,8 @@ function speciesOf(g) {
     if (p.ears) { q.ear = p.ears.kind; if (p.ears.size !== undefined) q.earS = p.ears.size; }
     for (const [k, to] of [["tail", "tail"], ["feet", "paw"], ["horns", "horns"], ["antlers", "antlers"], ["tusks", "tusks"]]) if (p[k] !== undefined) q[to] = p[k];
     S.q = q;
-    S.sizes = { ...TEMPLATES.quadruped.sizes, ...g.sizes };
   }
+  S.sizes = { ...TEMPLATES[g.template].sizes, ...g.sizes };
   return S;
 }
 
@@ -3032,6 +3036,7 @@ function tail3d(m, kind, tb, len, top, tw) {
   else if (kind === "bushy") m.chain([[...tb, .1], [X(1.05) - .35, top - .05 + tw, 0, .17], [X(1.05) - .75, top - .2 + tw, 0, .18], [X(1.05) - 1.0, top - .35 + tw, 0, .1]], M.BODY, { ...o, paint: p => p[0] < X(1.05) - .82 ? M.BELLY : undefined });
   else if (kind === "stub" || kind === "deer" || kind === "bob") m.ell(v3.add(tb, [-.06, .02 + tw, 0]), [.1, .08, .07], kind === "deer" ? M.BELLY : M.BODY, { ...o, paint: kind === "bob" ? p => p[0] < tb[0] - .08 ? M.BODY3 : undefined : undefined });
   else if (kind === "puff") m.ell(v3.add(tb, [-.04, .02, 0]), [.11, .11, .1], M.BELLY, o);
+  else if (kind === "dormouse") m.chain([[...tb, .1], [X(1.3), top - .2 + tw, 0, .12], [X(1.7), top - .42, 0, .13], [X(2.05), top - .3 + tw, 0, .12], [X(2.2), top - .08, 0, .08]], M.BODY, { ...o, extra: true, paint: p => p[0] < X(2.0) ? M.BODY2 : undefined }); // long, low and furry, curling up at its tip (the silhouette check: it read as a squirrel's)
   else if (kind === "squirrel" || kind === "star") m.chain([[...tb, .12], [X(1.3), top + .05 + tw, 0, .25], [X(1.3), top + .6 + tw, 0, .3], [X(1.0), top + .95 + tw, 0, .27], [X(.65), top + .9 + tw, 0, .16]], kind === "star" ? M.MAGIC : M.BODY, { ...o, extra: true, paint: kind === "star" ? p => spotty(p, 14, .12) ? M.GLINT : undefined : undefined });
   else if (kind === "otter") m.chain([[...tb, .17], [X(1.3), top - .45 + tw, 0, .12], [X(1.6), .1, 0, .07], [X(1.85), .06 + tw, 0, .03]], M.BODY, o);
   else if (kind === "stoat") m.chain([[...tb, .08], [X(1.3), top - .12 + tw, 0, .07], [X(1.6), top - .05 + tw, 0, .06]], M.BODY, { ...o, paint: p => p[0] < X(1.45) ? M.BODY3 : undefined });
@@ -3060,7 +3065,7 @@ function antlers3d(m, q, b, side, size, has) { // size: its antler size curve at
 // ================= owl =================
 function owl3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, young = false, baby = level === 0, has = f => legend && S.legend.includes(f), m = new Model();
-  const bob = frame ? .03 : 0, hr = baby ? .48 : young ? .42 : .36, hy = (baby ? .95 : 1.08) + bob;
+  const bob = frame ? .03 : 0, hr = S.sizes.head[level], hy = S.sizes.headY[level] + bob; // its template's size curves (art/genome/templates.js)
   // feet and a short tail
   for (const side of [-1, 1]) { const f = frame && side > 0 ? .04 : 0; m.seg([.05, .2, side * .14], [.08, .05 + f, side * .15], .07, .06, M.BODY2, { group: 2 }); for (const dz of [-.04, 0, .04]) m.ell([.16, .03 + f, side * .15 + dz], [.06, .025, .02], M.ACCENT, { group: 2 }); m.anchors.feet.push({ c: [.13, .04 + f, side * .15], r: .08, group: side > 0 ? 6 : 2 }); }
   m.ell([-.32, .32, 0], [.22, .06, .14], M.BODY2, { dir: [-1, -.6, 0], group: 3 });
@@ -3087,10 +3092,10 @@ function owl3d(S, level, frame, st, facing = "towards") {
   if (has("eyesRing")) for (let i = 0; i < 7; i++) { const a = Math.PI * (.15 + i / 6 * .7); m.ell([Math.cos(a) * .2 - .1, hy + .1 + Math.sin(a) * .6, (i - 3) * .15], [.07, .07, .07], M.MAGIC2, { group: 95 + i, extra: true }); m.ell([Math.cos(a) * .2 - .05, hy + .1 + Math.sin(a) * .6, (i - 3) * .15], [.035, .035, .035], M.EYE, { group: 95 + i, extra: true }); }
   m.anchors.head = { c: [0, hy, 0], r: [hr, hr * .9, hr] };
   m.anchors.neck = { c: [0, hy - hr * .75, 0], r: hr * .85, dir: [0, 1, 0] };
-  if (level >= 2) beef(m, 1.18);
+  if (S.sizes.build[level] !== 1) beef(m, S.sizes.build[level]);
   gearUp(m);
   const sp = drawForm(m, { height: drawHeight(level, st, .95), facing }, S, level);
-  if (formMotes()) { if (legend) glowMotes(sp, 31); else if (level === 2) glowMotes(sp, 31, 3); }
+  if (formMotes() && S.sizes.motes[level]) glowMotes(sp, 31, S.sizes.motes[level]);
   return sp;
 }
 
@@ -3101,10 +3106,10 @@ const eyesOn = (m, c, r, dirs, size, mat, group = 1) => {
 };
 const shadow = (m, x, w) => m.ell([x, .005, 0], [w, .005, w * .6], M.NOSE, { group: 0 }); // a flyer's shadow on the ground
 function finish(m, S, level, st, k, facing) {
-  if (level >= 2) beef(m, 1.18); // the adult's and legend's heavier build
+  if (S.sizes.build[level] !== 1) beef(m, S.sizes.build[level]); // the adult's and legend's heavier build (its template's size curve)
   gearUp(m);
   const sp = drawForm(m, { height: drawHeight(level, st, k), facing }, S, level);
-  if (formMotes()) { if (level === 3) glowMotes(sp, S.id.length * 131); else if (level === 2) glowMotes(sp, S.id.length * 131, 3); }
+  if (formMotes() && S.sizes.motes[level]) glowMotes(sp, S.id.length * 131, S.sizes.motes[level]);
   return sp;
 }
 const crown3d = (m, c, w) => { m.ell(c, [w, w * .35, w], M.MAGIC, { group: 95, extra: true, paint: p => p[1] > c[1] ? M.MAGIC2 : undefined }); for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; m.ell(v3.add(c, [Math.cos(a) * w * .8, w * .55, Math.sin(a) * w * .8]), [w * .38, w * .12, w * .12], M.MAGIC, { dir: [0, 1, 0], up: [1, 0, 0], group: 96, extra: true }); } };
@@ -6432,6 +6437,54 @@ function variantColours(id, st, variant, gear = null) {
   const S = SPECIES_BY_ID[id], v = typeof variant === "string" ? PALETTE_VARIANTS[variant] : variant;
   if (!v) return speciesColours(id, st, gear);
   return speciesColours({ ...S, hue: v.hue, sat: v.sat, val: v.val, belly: v.belly ?? S.belly }, st, gear);
+}
+
+
+
+// ---- inlined from art/genome/silhouette.js ----
+// Witch silhouette check (#79, stage 3): can you tell the species apart by shape alone, at the size
+// they're seen? Each sprite's shape (what's drawn, outline and all) is shrunk to fit a small square
+// (SILHOUETTE_SIZE px, standing on its bottom row, centred), and two shapes differ by how little
+// they overlap (1 - intersection over union). Species too alike are flagged; so is a species whose
+// own forms (frames, facings) drift too far from each other.
+
+const SILHOUETTE_SIZE = 24;
+
+// A sprite's silhouette: a size x size grid of coverage (0 to 1), the sprite fitted inside keeping
+// its proportions, its feet on the bottom row, centred across.
+function silhouette(sp, size = SILHOUETTE_SIZE) {
+  let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
+  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  const out = new Float32Array(size * size);
+  if (x1 < 0) return out;
+  const w = x1 - x0 + 1, h = y1 - y0 + 1, k = size / Math.max(w, h), ox = (size - w * k) / 2, oy = size - h * k;
+  // area sampling: each source pixel adds its share to the cells it covers
+  const cnt = new Float32Array(size * size);
+  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+    const cx = Math.min(size - 1, Math.floor(ox + (x - x0 + .5) * k)), cy = Math.min(size - 1, Math.floor(oy + (y - y0 + .5) * k));
+    cnt[cy * size + cx]++; if (sp.m[y * sp.w + x]) out[cy * size + cx]++;
+  }
+  for (let i = 0; i < out.length; i++) out[i] = cnt[i] ? out[i] / cnt[i] : 0;
+  return out;
+}
+
+// How different two silhouettes are: 0 the same shape, 1 not overlapping at all (1 - soft IoU).
+function silhouetteDistance(a, b) {
+  let inter = 0, union = 0;
+  for (let i = 0; i < a.length; i++) { inter += Math.min(a[i], b[i]); union += Math.max(a[i], b[i]); }
+  return union ? 1 - inter / union : 0;
+}
+
+// The same, mirrored left to right (a creature seen walking the other way).
+function silhouetteMirror(a, size = SILHOUETTE_SIZE) { const out = new Float32Array(a.length); for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) out[y * size + x] = a[y * size + size - 1 - x]; return out; }
+// The distance between two forms whichever way each faces.
+const silhouetteDistanceEitherWay = (a, b) => Math.min(silhouetteDistance(a, b), silhouetteDistance(a, silhouetteMirror(b)));
+
+// Every pair of species by distance, closest first: [{ a, b, d }].
+function silhouettePairs(shapes) {
+  const ids = Object.keys(shapes), out = [];
+  for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) out.push({ a: ids[i], b: ids[j], d: silhouetteDistanceEitherWay(shapes[ids[i]], shapes[ids[j]]) });
+  return out.sort((p, q) => p.d - q.d);
 }
 
 
