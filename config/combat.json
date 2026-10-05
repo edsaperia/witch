@@ -1,5 +1,5 @@
 {
- "_": "Combat (Stage 4; DESIGN.md 'Combat, pacing and forecasting'). One system for wild and party creatures. levels: by level (baby, young, adult, legend): hp, the health it has; dps, its power budget (damage a second, the same for every attack of that level, so no species is stronger for its level: equal power budget). attacks: each is data. delivery: melee (a hit within range), shot (a projectile flying at speed m/s, dodgeable, hitting the first enemy within its radius), or quake (everything of the other side within radius round the attacker: the legends' slow, heavy signature move). windup: seconds it telegraphs before it lands or flies; cooldown: seconds from one to the next; damage is dps times cooldown; range: metres it attacks from; modifier: none, knockback (pushes the target knockback metres) or slow (the target moves at slowMult for slowTime seconds; slows don't stack: a new one only renews it). Babies don't attack; the young have one attack, adults a stronger one with a modifier, legends the signature. ranged: the species that shoot (the rest fight in melee). Melee attacks wind up and lunge lunge metres at where they aimed (step aside to dodge); shots fly at where they aimed (dodgeable). bySpecies: a species' own attacks by level, overriding byLevel. kite: species that keep their distance as part of their attack (Ed, 2026-10-04), holding between near and far of their attack's range from their target, backing off or closing in (the raven, with long-range shots). Babies are never attacked by anything, on either side (Ed, 2026-10-04). temperament: how a species' babies take to the witch close by (tuning notice): curious ones come up to her, skittish ones keep off; the rest just turn to look. Stage 5 deliveries: lob (an arcing shot at the point it aimed at, landing after flight seconds and hitting everything of the other side within radius there: step out of the ring), beam (a line range metres long and width wide from the attacker toward its aim, burning for duration seconds in ticks every tick seconds, sweeping toward its target at sweep degrees a second: step out of the line). factor: a delivery's damage times this, so its expected damage a second (allowing for misses and area hits) matches the level's budget. traits (Stage 5, readable counters): the species with each trait. counters: what a trait does to a blow, by its delivery: its damage times this (flier: melee 0.5, it flits out of reach; armoured: shots, lobs and beams 0.35; swarm: area hits 2); knockback: its distance times this (heavy 0: it won't budge; armoured 2), stun: seconds a knockback stuns it (armoured: knocked on its back), slow: a slow's time times this (heavy 0.5). Nimble creatures sidestep telegraphs (their movement profile's dodge); burrowers can't be hit while burrowed. The raw numbers stay on the level's budget: counters are the difference between kinds. pulse (Stage 5): everything of the other side within radius round the attacker, at once (a bat's screech, a mole's upheaval as it surfaces, a toad's slam as it lands): a small quake that any level may have; factor below 1 as it can hit several. Wild legends' moves (Stage 5; their patterns in movement.json legends): legendSlam (a quake round it), legendNova (shots shots in a ring outward, each factor of the move's damage), legendSpin (a beam spinning all the way round at spin degrees a second for duration seconds: each pass hits once, for factor of the damage), legendCharge (a straight run at speed m/s for up to duration seconds, trampling everything of the other side it meets, once each, with knockback). Damage is the legend budget times the move's cooldown, as for any attack. Motion scale (Ed, 2026-10-04): lengths here are at the fight's scale (tuning fight.scale) and shot speeds at its speed (fight.speed): melee strikes lunge 12 to 16 m (a dash-strike, the windup showing its line), shots fly at 22 to 32 m/s over 20 to 40 m, area attacks reach 4 to 12 m, knockback throws 7 to 12 m.",
+ "_": "Combat (Stage 4; DESIGN.md 'Combat, pacing and forecasting'). One system for wild and party creatures. levels: by level (baby, young, adult, legend): hp, the health it has; dps, its power budget (damage a second, the same for every attack of that level, so no species is stronger for its level: equal power budget). attacks: each is data. delivery: melee (a hit within range), shot (a projectile flying at speed m/s, dodgeable, hitting the first enemy within its radius), or quake (everything of the other side within radius round the attacker: the legends' slow, heavy signature move). windup: seconds it telegraphs before it lands or flies; cooldown: seconds from one to the next; damage is dps times cooldown; range: metres it attacks from; modifier: none, knockback (pushes the target knockback metres) or slow (the target moves at slowMult for slowTime seconds; slows don't stack: a new one only renews it). Babies don't attack; the young have one attack, adults a stronger one with a modifier, legends the signature. ranged: the species that shoot (the rest fight in melee). Melee attacks wind up and lunge lunge metres at where they aimed (step aside to dodge); shots fly at where they aimed (dodgeable). bySpecies: a species' own attacks by level, overriding byLevel. kite: species that keep their distance as part of their attack (Ed, 2026-10-04), holding between near and far of their attack's range from their target, backing off or closing in (the raven, with long-range shots). Babies are never attacked by anything, on either side (Ed, 2026-10-04). temperament: how a species' babies take to the witch close by (tuning notice): curious ones come up to her, skittish ones keep off; the rest just turn to look. Stage 5 deliveries: lob (an arcing shot at the point it aimed at, landing after flight seconds and hitting everything of the other side within radius there: step out of the ring), beam (a line range metres long and width wide from the attacker toward its aim, burning for duration seconds in ticks every tick seconds, sweeping toward its target at sweep degrees a second: step out of the line). factor: a delivery's damage times this, so its expected damage a second (allowing for misses and area hits) matches the level's budget. traits (Stage 5, readable counters): the species with each trait. counters: what a trait does to a blow, by its delivery: its damage times this (flier: melee 0.5, it flits out of reach; armoured: shots, lobs and beams 0.35; swarm: area hits 2); knockback: its distance times this (heavy 0: it won't budge; armoured 2), stun: seconds a knockback stuns it (armoured: knocked on its back), slow: a slow's time times this (heavy 0.5). Nimble creatures sidestep telegraphs (their movement profile's dodge); burrowers can't be hit while burrowed. The raw numbers stay on the level's budget: counters are the difference between kinds. pulse (Stage 5): everything of the other side within radius round the attacker, at once (a bat's screech, a mole's upheaval as it surfaces, a toad's slam as it lands): a small quake that any level may have; factor below 1 as it can hit several. Wild legends' moves (Stage 5; their patterns in movement.json legends): legendSlam (a quake round it), legendNova (shots shots in a ring outward, each factor of the move's damage), legendSpin (a beam spinning all the way round at spin degrees a second for duration seconds: each pass hits once, for factor of the damage), legendCharge (a straight run at speed m/s for up to duration seconds, trampling everything of the other side it meets, once each, with knockback). Damage is the legend budget times the move's cooldown, as for any attack. Motion scale (Ed, 2026-10-04): lengths here are at the fight's scale (tuning fight.scale) and shot speeds at its speed (fight.speed): melee strikes lunge 12 to 16 m (a dash-strike, the windup showing its line), shots fly at 22 to 32 m/s over 20 to 40 m, area attacks reach 4 to 12 m, knockback throws 7 to 12 m. Ed’s species pass (2026-10-05): the bear swipes (swipe, bigswipe: a wide, heavy blow with a short lunge); otters, squirrels and dormice are nimble too.",
  "levels": {
   "hp": [
    30,
@@ -29,7 +29,7 @@
    "delivery": "melee",
    "range": 2.5,
    "windup": 0.55,
-   "cooldown": 2.0,
+   "cooldown": 2,
    "modifier": "knockback",
    "knockback": 12,
    "lunge": 16
@@ -77,7 +77,7 @@
    "range": 40,
    "speed": 32,
    "radius": 0.8,
-   "windup": 1.0,
+   "windup": 1,
    "cooldown": 2.8,
    "modifier": "slow",
    "slowMult": 0.5,
@@ -99,7 +99,7 @@
    "radius": 5,
    "flight": 1.3,
    "windup": 0.9,
-   "cooldown": 3.0,
+   "cooldown": 3,
    "modifier": "slow",
    "slowMult": 0.5,
    "slowTime": 2,
@@ -112,8 +112,8 @@
    "duration": 0.8,
    "tick": 0.2,
    "sweep": 25,
-   "windup": 1.0,
-   "cooldown": 3.0,
+   "windup": 1,
+   "cooldown": 3,
    "modifier": "none",
    "factor": 1
   },
@@ -121,7 +121,7 @@
    "delivery": "beam",
    "range": 24,
    "width": 2.8,
-   "duration": 1.0,
+   "duration": 1,
    "tick": 0.2,
    "sweep": 30,
    "windup": 1.1,
@@ -246,10 +246,28 @@
    "range": 4,
    "speed": 26,
    "duration": 2,
-   "windup": 1.0,
+   "windup": 1,
    "cooldown": 4,
    "modifier": "knockback",
    "knockback": 20
+  },
+  "swipe": {
+   "delivery": "melee",
+   "range": 3.2,
+   "windup": 0.6,
+   "cooldown": 1.8,
+   "modifier": "knockback",
+   "knockback": 8,
+   "lunge": 5
+  },
+  "bigswipe": {
+   "delivery": "melee",
+   "range": 3.6,
+   "windup": 0.7,
+   "cooldown": 2.2,
+   "modifier": "knockback",
+   "knockback": 16,
+   "lunge": 6
   }
  },
  "byLevel": {
@@ -319,6 +337,12 @@
    null,
    "slam",
    "bigslam",
+   "quake"
+  ],
+  "bear": [
+   null,
+   "swipe",
+   "bigswipe",
    "quake"
   ]
  },
@@ -390,7 +414,10 @@
   ],
   "nimble": [
    "hare",
-   "stoat"
+   "stoat",
+   "otter",
+   "squirrel",
+   "dormouse"
   ],
   "burrower": [
    "mole"

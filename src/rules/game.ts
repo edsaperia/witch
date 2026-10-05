@@ -36,6 +36,9 @@ export interface Witch {
   /** Her hits left and repair (rules/knockout.ts), and her knockout while it plays out. */
   health: Health;
   ko: Knockout | null;
+  /** Slowed (a snail's slime, a glow-worm's flash) until then: her speeds times slowMult. */
+  slowUntil?: number;
+  slowMult?: number;
 }
 
 /** The simulation's fixed step (seconds): the rules advance only in these, driven only by the
@@ -215,8 +218,8 @@ function fixedStep(g: Game, controls: Controls): void {
   if ((g.party.seeAhead ?? 0) !== g.buffs.totals.forecastAhead) { g.party.seeAhead = g.buffs.totals.forecastAhead; planAhead(g.party, g.map); }
   if (c.spell) castSpell(g.spells, g.clock.time, t);
   // The speed boost: her speeds times its multiplier while it's on.
-  const boost = speedMultiplier(g.spells, g.clock.time, t);
   const W = g.witches[0];
+  const boost = speedMultiplier(g.spells, g.clock.time, t) * (W.slowUntil !== undefined && g.clock.time < W.slowUntil ? W.slowMult ?? 1 : 1);
   // Knocked out: no input but the camera's zoom while it plays out.
   if (W.ko) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   const was = W.body;
@@ -332,7 +335,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
   S.busy = new Set();
   stepCombat(S, {
     creatures: g.creatures, active, time, dt, t, busy,
-    witches: g.witches.map((w, i) => ({ id: i, x: w.body.x, z: w.body.z, onGround: w.body.mode === "ground" && !w.body.seated, down: !!w.ko })),
+    witches: g.witches.map((w, i) => ({ id: i, x: w.body.x, z: w.body.z, onGround: w.body.mode === "ground" && !w.body.seated, down: !!w.ko, vx: w.body.vx, vz: w.body.vz })),
     leashPoint: id => { for (const w of g.witches) { const p = leashPoint(w.leash, id, w.body.x, w.body.z); if (p) return p; } return null; },
     asleep: c => dormant(g, c) || (!!c.friendly && !c.leashed), // (a friendly area's creatures leave her party be, and are left be)
     parked: id => g.witches.some(w => w.leash.placed.some(p => p.id === id)),
@@ -344,6 +347,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     },
     unseen: (x, z) => g.witches.every(w => Math.hypot(w.body.x - x, w.body.z - z) > t.haze.far + 60),
     inArea: (c, x, z) => { const k = g.map.cellSafe(x, z).cell; return k[0] === c.cell[0] && k[1] === c.cell[1]; },
+    slowWitch: (id, until, mult) => { const w = g.witches[id]; if (w) { w.slowUntil = Math.max(w.slowUntil ?? 0, until); w.slowMult = Math.min(mult, w.slowUntil > until ? w.slowMult ?? 1 : 1); } },
     hitWitch: (id, at) => {
       const w = g.witches[id];
       if (!w || w.ko) return;

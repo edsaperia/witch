@@ -19,9 +19,10 @@ import { groundHeight } from "./render/height";
 import { SPRITE_UNIFORMS } from "./render/sprites";
 import { loadStyle } from "./render/style";
 import { setupTouch } from "./ui/touch";
-import changelog from "../config/changelog.json";
+import { CHANGELOG } from "./changelog";
 import { PlaytestLog } from "./platform/playtestLog";
 import { powerReport } from "./rules/power";
+import { Freeze } from "./platform/freeze";
 
 const params = new URLSearchParams(location.search);
 let seed = parseSeed(params.get("seed"));
@@ -121,6 +122,26 @@ if (curveParam !== null && !isNaN(Number(curveParam))) tuning.camera = { ...tuni
 const fx = params.get("fx");
 if (fx === "pixel" || fx === "smooth") tuning.fx = fx;
 
+// Area size and treetop speed, to play with (Ed, 2026-10-05: "compared to now, areas should be
+// fairly large, and treetop mode should be much faster than ground mode"): ?areaSize=<metres> (or
+// ?areaScale=), ?treetopSpeed=<m/s> and ?mapAreas=<n>, remembered on this browser till changed or
+// reset (in the debug overlay, ~, where treetop speed also has a live slider). Area size makes the
+// map, so it's set by the link alone. Every change goes in the playtest log.
+const WORLD_DEFAULT = { areaSize: TUNING.areaSize * TUNING.areaScale, treetopSpeed: TUNING.treetopSpeed, mapAreas: TUNING.mapAreas };
+const world = { ...WORLD_DEFAULT };
+{
+  try { const v = localStorage.getItem("witch.world"); if (v) Object.assign(world, JSON.parse(v)); } catch { /* storage blocked */ }
+  const size = Number(params.get("areaSize")), scale = Number(params.get("areaScale")), speed = Number(params.get("treetopSpeed")), n = Number(params.get("mapAreas"));
+  if (size > 0) world.areaSize = size; else if (scale > 0) world.areaSize = TUNING.areaSize * scale;
+  if (speed > 0) world.treetopSpeed = speed;
+  if (n > 0) world.mapAreas = n;
+  world.areaSize = Math.round(Math.min(560, Math.max(56, world.areaSize)));
+  world.treetopSpeed = Math.round(Math.min(300, Math.max(8, world.treetopSpeed)));
+  world.mapAreas = Math.round(Math.min(30, Math.max(6, world.mapAreas)));
+  tuning.areaScale = world.areaSize / tuning.areaSize; tuning.treetopSpeed = world.treetopSpeed; tuning.mapAreas = world.mapAreas;
+  try { localStorage.setItem("witch.world", JSON.stringify(world)); } catch { /* fine */ }
+}
+
 const game = newGame(seed, tuning);
 // ?quest=1 (the first quest, a demo): beside the nearest sleeping legend, with the creature it
 // dreams of on her stack; put its sigil down there (E) to make it happy.
@@ -210,8 +231,25 @@ const setFight = (scale: number, speed: number, log = true, momentum = tuning.fi
   if (fm > 0) start.momentum = fm;
   setFight(start.scale, start.speed, start.scale !== FIGHT_DEFAULT.scale || start.speed !== FIGHT_DEFAULT.speed || start.momentum !== FIGHT_DEFAULT.momentum, start.momentum ?? FIGHT_DEFAULT.momentum);
 }
-knobs.addEventListener("input", e => { const el = e.target as HTMLInputElement; setFight(el.name === "scale" ? +el.value : tuning.fight.scale, el.name === "speed" ? +el.value : tuning.fight.speed, true, el.name === "momentum" ? +el.value : tuning.fight.momentum); });
-knobs.querySelector("button")!.addEventListener("click", () => setFight(FIGHT_DEFAULT.scale, FIGHT_DEFAULT.speed, true, FIGHT_DEFAULT.momentum));
+// Treetop speed, live (the world's knobs: see WORLD_DEFAULT above); area size and the map's are the link's.
+const setTreetop = (speed: number, log = true) => {
+  world.treetopSpeed = Math.round(Math.min(300, Math.max(8, speed)));
+  tuning.treetopSpeed = world.treetopSpeed;
+  (game.buffs as { base?: unknown }).base = undefined; // (a legend's buffed copy is made afresh with it)
+  try { localStorage.setItem("witch.world", JSON.stringify(world)); } catch { /* fine */ }
+  (knobs.querySelector("input[name=treetop]") as HTMLInputElement).value = String(world.treetopSpeed);
+  knobs.querySelector(".treetop")!.textContent = String(world.treetopSpeed);
+  knobs.querySelector(".area")!.textContent = `${world.areaSize} m, ${world.mapAreas} x ${world.mapAreas}`;
+  if (log) playtest.world(world.areaSize, world.treetopSpeed, world.mapAreas);
+};
+setTreetop(world.treetopSpeed, world.areaSize !== WORLD_DEFAULT.areaSize || world.treetopSpeed !== WORLD_DEFAULT.treetopSpeed || world.mapAreas !== WORLD_DEFAULT.mapAreas);
+knobs.querySelector(".world-reset")!.addEventListener("click", () => {
+  try { localStorage.removeItem("witch.world"); } catch { /* fine */ }
+  for (const k of ["areaSize", "areaScale", "treetopSpeed", "mapAreas"]) params.delete(k);
+  location.search = params.toString(); // (a new map: area size and the map's are made with it)
+});
+knobs.addEventListener("input", e => { const el = e.target as HTMLInputElement; if (el.name === "treetop") { setTreetop(+el.value); return; } setFight(el.name === "scale" ? +el.value : tuning.fight.scale, el.name === "speed" ? +el.value : tuning.fight.speed, true, el.name === "momentum" ? +el.value : tuning.fight.momentum); });
+knobs.querySelector(".fight-reset")!.addEventListener("click", () => setFight(FIGHT_DEFAULT.scale, FIGHT_DEFAULT.speed, true, FIGHT_DEFAULT.momentum));
 for (const ev of ["pointerdown", "keydown"]) knobs.addEventListener(ev, e => e.stopPropagation()); // (its own presses don't fly her)
 window.addEventListener("keydown", e => {
   const k = { BracketLeft: [1 / 1.1, 1, 1], BracketRight: [1.1, 1, 1], Semicolon: [1, 1 / 1.1, 1], Quote: [1, 1.1, 1], Comma: [1, 1, 1 / 1.1], Period: [1, 1, 1.1] }[e.code];
@@ -241,11 +279,11 @@ const setAutoTalk = (on: boolean) => {
 
 declare const __BUILD__: string;
 document.getElementById("version")!.textContent = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
-// What's new, on the start screen: the last three versions, newest first (config/changelog.json).
+// What's new, on the start screen: the last three versions, newest first (config/changelog/, collected by changelog.ts).
 const newsEl = document.getElementById("news")!;
 const buildName = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev";
 const esc = (s: string) => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!);
-newsEl.innerHTML = "<b>What's new</b>" + changelog.entries.filter(e => e.items.length).slice(0, 3).map(e =>
+newsEl.innerHTML = "<b>What's new</b>" + CHANGELOG.filter(e => e.items.length).slice(0, 3).map(e =>
   `<div>${e.version === null ? `${buildName} (this version)` : "v" + e.version}</div><ul>${e.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>`).join("");
 const seedEl = document.getElementById("seed")!;
 seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;
@@ -298,11 +336,14 @@ volumeRange.addEventListener("input", () => {
 for (const ev of ["pointerdown", "keydown"]) volumeRange.addEventListener(ev, e => e.stopPropagation()); // its own presses and arrow keys don't fly her
 volumeEl.append(volumeIcon, volumeRange); showVolume();
 document.body.append(volumeEl);
+// The freeze (Esc, gamepad Start, the ❚❚ button): a true still for screenshots, . steps (platform/freeze.ts).
+const freeze = new Freeze(game, seed!, typeof __BUILD__ === "string" ? __BUILD__ : "dev");
+freeze.started = () => startEl.style.display === "none";
 
 // Browsers keep sound off until the player presses something: the start screen is that press.
 let audio: AudioContext | null = null, music: Music | null = null;
 function start(): boolean {
-  if (!ready || !game.clock.paused) return false;
+  if (!ready || !game.clock.paused || freeze.frozen) return false;
   try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume * level, musicStyle, seed!, tuning.music.src); } catch { /* no sound yet anyway */ }
   game.clock.paused = false;
   startEl.style.display = "none";
@@ -310,6 +351,7 @@ function start(): boolean {
   return true;
 }
 input.onAny = start;
+freeze.onToggle = on => { try { void (on ? audio?.suspend() : audio?.resume()); } catch { /* no sound */ } };
 startEl.addEventListener("pointerdown", e => { e.preventDefault(); start(); });
 // The wave selector on the start screen: picking one doesn't start the game.
 const wavesEl = document.getElementById("waves")!;
@@ -340,6 +382,7 @@ function frame(now: number): void {
   last = now;
   frames++; fpsT += dt;
   if (fpsT >= 0.5) { fps = frames / fpsT; frames = 0; fpsT = 0; }
+  freeze.pollPad();
   const c = input.read();
   if (c.toggleAutoTalk) setAutoTalk(!autoTalk);
   c.autoTalk = autoTalk;
@@ -367,10 +410,11 @@ function frame(now: number): void {
   waveEl.classList.toggle("paused", game.party.paused);
   // Behind the start screen, a frame every 0.3 s is plenty: the CPU goes to drawing the forest's
   // art in the background instead (and so slow a frame doesn't count against the scenery budget).
-  if (game.clock.paused && now - lastDraw < 300) return;
+  if (game.clock.paused && !freeze.frozen && now - lastDraw < 300) return;
   lastDraw = now;
   // Drawn between the last two fixed steps (game time: party transitions, sigils and waves are stamped in it).
   interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP)));
+  freeze.update();
   if (debugOn) {
     const w = game.witch, s = view.stats;
     debugEl.textContent = [
@@ -401,6 +445,6 @@ function powerLines(): string[] {
 }
 
 // For the smoke test and for poking at in the console.
-(window as unknown as { witch: unknown }).witch = { game, view,
+(window as unknown as { witch: unknown }).witch = { game, view, arena: (spec: string) => setupArena(game, spec), // (a debug hook: another arena without reloading)
   get manual() { return manual; }, set manual(on: boolean) { manual = on; },
   frame: (c: Parameters<typeof stepGame>[1], dt: number, draw = true) => { const t0 = performance.now(); stepGame(game, c, dt); const t1 = performance.now(); view.render(game.clock.time, draw); return { step: t1 - t0, render: performance.now() - t1, ms: view.ms }; }, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, spriteUp: () => SPRITE_UNIFORMS.uUp.value, spriteRight: () => SPRITE_UNIFORMS.uRight.value, groundHeight, loadTimes, get ready() { return ready; } };

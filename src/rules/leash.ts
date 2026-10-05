@@ -155,6 +155,7 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     s.stack.unshift(id);
     s.events.push({ kind: "cycled", id, x: witch.x, z: witch.z, at: time });
   }
+  // Sigils go down and come up only on the ground (Ed, 2026-10-05: "You have to land to place sigils"; in the air the button does nothing, no hint).
   if (c.sigil && onGround) {
     let pick = -1, pd = L.pickRadius;
     s.placed.forEach((p, i) => { const d = Math.hypot(p.x - witch.x, p.z - witch.z); if (d <= pd) { pd = d; pick = i; } });

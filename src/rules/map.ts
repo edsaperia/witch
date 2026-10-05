@@ -333,7 +333,8 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     const k = tuning.fight?.scale ?? 1, s = siteOf(cell[0], cell[1]), q = soundsystemSpot(cell[0], cell[1]);
     const d = Math.min(Math.hypot(x - s.x, z - s.z), Math.hypot(x - q.x, z - q.z)), band = R.band * k;
     const wob = (vnoise(x / 14, z / 14, seed + 71) - 0.5) * 2 * R.noise * band;
-    return smoothstep((d + wob - R.radius * k) / Math.max(0.01, band));
+    const f = Math.min(1, Math.max(0, (d + wob - R.radius * k) / Math.max(0.01, band)));
+    return R.curve === "smooth" ? smoothstep(f) : f; // (linear: the woods start thinning in right past the open middle, Ed at v473)
   };
   const arenaOpen = (x: number, z: number, cell?: Cell) => arenaIn(x, z, cell ?? areaAt(x, z).cell);
   const treeWeight = (x: number, z: number) => {

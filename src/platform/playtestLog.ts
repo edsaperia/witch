@@ -25,7 +25,7 @@ export interface PlaytestSample {
   hits: number;
 }
 
-export interface PlaytestRun { seed: number; build: string; started: string; interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[] }
+export interface PlaytestRun { seed: number; build: string; started: string; interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[] }
 
 const KEY = "witch.playtest", KEEP = 8, EVERY = 10;
 const round = (x: number) => Math.round(x * 10) / 10;
@@ -66,6 +66,11 @@ export class PlaytestLog {
   /** The fight's scale or speed changed (the debug overlay's knobs): noted, with the game time. */
   fight(scale: number, speed: number, momentum = 1): void {
     (this.run.fight ??= []).push({ t: Math.round(this.game.clock.time * 10) / 10, scale, speed, momentum });
+    this.save();
+  }
+  /** Area size, treetop speed or the map's size set (the link, or the debug overlay's slider): noted, with the game time. */
+  world(areaSize: number, treetopSpeed: number, mapAreas: number): void {
+    (this.run.world ??= []).push({ t: Math.round(this.game.clock.time * 10) / 10, areaSize, treetopSpeed, mapAreas });
     this.save();
   }
   /** Every run kept on this browser (this one included), as a JSON file to save. */

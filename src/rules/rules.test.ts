@@ -184,9 +184,11 @@ describe("the map", () => {
       n++;
       if (w > 0.95) dense++; else if (w < 0.05) open++; else between++;
     }
-    expect(dense / n).toBeGreaterThan(0.5);
-    expect(open / n).toBeGreaterThan(0.05);
-    expect(between / n).toBeLessThan(0.3);
+    // (Ed, 2026-10-05, at v473: the woods thin gradually across most of an area towards its runestone,
+    // so as much lies on that gradient as in full woods; and there's real open ground.)
+    expect(dense / n).toBeGreaterThan(0.35);
+    expect(between / n).toBeGreaterThan(0.25); // a long, soft gradient, not a step
+    expect(open / n).toBeGreaterThan(0.03);
   });
 
   it("uses many area types", () => {
@@ -435,7 +437,11 @@ describe("the camera", () => {
     const g = TUNING.camera.ground, t = TUNING.camera.treetop;
     expect(cameraPose(c, 0, TUNING).angle).toBeCloseTo(g.angleIn);
     expect(cameraPose(c, 1, TUNING).angle).toBeCloseTo(t.angleIn);
-    expect(cameraPose(c, 1, TUNING).distance).toBeCloseTo(t.distanceIn);
+    // Over the treetops it sits out by (treetopSpeed / speedZoom.base)^power (Ed, 2026-10-05: faster flight, more ground on screen).
+    const SZ = TUNING.camera.speedZoom!, fast = Math.pow(TUNING.treetopSpeed / SZ.base, SZ.power);
+    expect(cameraPose(c, 1, TUNING).distance).toBeCloseTo(t.distanceIn * fast);
+    expect(cameraPose(c, 1, { ...TUNING, treetopSpeed: SZ.base * 2 }).distance).toBeCloseTo(t.distanceIn * Math.pow(2, SZ.power));
+    expect(cameraPose(c, 0, { ...TUNING, treetopSpeed: SZ.base * 2 }).distance).toBeCloseTo(g.distanceIn); // (the ground camera is left alone)
     const still = { x: 0, z: 0 };
     for (let i = 0; i < 10; i++) c = stepCamera(c, 1, { x: 0, y: 0, z: 0 }, still, 0, 1 / 60, TUNING);
     for (let i = 0; i < 300; i++) c = stepCamera(c, 0, { x: 0, y: 0, z: 0 }, still, 0, 1 / 60, TUNING);
@@ -919,8 +925,12 @@ describe("inviting and leashing", () => {
     stepLeash(s, all, { sigil: true }, { x: 520 + gap, z: 500 }, true, 103, 0.1, TUNING);
     expect(s.events.map(e => e.kind)).toEqual(["fizzled"]);
     expect(s.stack).toEqual([a.c.id, c.c.id]);
-    // No placing from the treetops.
+    // No placing from the treetops, and no picking up (Ed, 2026-10-05: "You have to land to place sigils"): the button does nothing there.
     stepLeash(s, all, { sigil: true }, { x: 700, z: 700 }, false, 104, 0.1, TUNING);
+    expect(s.stack).toEqual([a.c.id, c.c.id]);
+    expect(s.events).toEqual([]);
+    stepLeash(s, all, { sigil: true }, { x: 520, z: 500 }, false, 105, 0.1, TUNING); // over b's placed sigil, in the air
+    expect(s.placed.map(p => p.id)).toEqual([b.c.id]);
     expect(s.stack).toEqual([a.c.id, c.c.id]);
   });
 

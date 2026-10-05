@@ -9,7 +9,7 @@
 import raw from "../../config/combat.json";
 import { LEGEND, type Creature, type Level } from "./creatures";
 import type { Cell } from "./partition";
-import { FIGHT, legendSetOf, packsOf, profileOf, steer, stepBurrow, stepCharge, stepLeap, type LegendSet } from "./movement";
+import { FIGHT, legendSetOf, packsOf, profileOf, startCharge, steer, stepBurrow, stepCharge, stepLeap, type LegendSet } from "./movement";
 import type { Tuning } from "./tuning";
 
 export type Delivery = "melee" | "shot" | "quake" | "lob" | "beam" | "pulse";
@@ -121,7 +121,7 @@ export interface Shot {
 /** A beam burning (Stage 5): from its creature toward an angle, sweeping toward its target. */
 export interface Beam { /** A legend's spin (radians a second), and when each thing it swept was last hit. */ spin?: number; last?: Record<string, number>; id: number; from: number; angle: number; length: number; width: number; until: number; nextTick: number; tick: number; damage: number; side: "wild" | "party"; species: string; attack: string; target: Target }
 
-export type CombatEventKind = "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "slept" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed";
+export type CombatEventKind = "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "slept" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed" | "dug" | "braced" | "blocked" | "flash";
 export interface CombatEvent { kind: CombatEventKind; x: number; z: number; at: number; id?: number; key?: string; big?: boolean; /** A hit: strong against its target's traits (1), resisted (-1). */ counter?: number }
 
 /** A soundsystem's health (home: the dancefloor's ring). */
@@ -138,9 +138,12 @@ export interface CombatState {
   /** Creatures besieging, fleeing, mid-fight or walking home: stepped wherever the witches are. */
   busy: Set<number>;
   beams: Beam[];
+  /** A snail's slime (Ed's species pass): a patch of ground slowing whatever of the other side crosses it, till it dries. */
+  trails: Trail[];
 }
+export interface Trail { x: number; z: number; r: number; until: number; side: "wild" | "party"; slow: number; from: number }
 
-export const newCombat = (): CombatState => ({ shots: [], nextShot: 0, sounds: new Map(), ruined: new Set(), events: [], busy: new Set(), beams: [] });
+export const newCombat = (): CombatState => ({ shots: [], nextShot: 0, sounds: new Map(), ruined: new Set(), events: [], busy: new Set(), beams: [], trails: [] });
 
 /** The attack a creature has: none for babies; by its level and whether its kind shoots. */
 /** A species' strength (Ed, 2026-10-05): the multiplier on its health and damage, 1 normal,
@@ -197,7 +200,7 @@ export interface CombatWorld {
   creatures: Creature[];
   /** The creatures to step this time (near a witch, or busy with a siege). */
   active: Creature[];
-  witches: { id: number; x: number; z: number; onGround: boolean; down: boolean }[];
+  witches: { id: number; x: number; z: number; onGround: boolean; down: boolean; /** her velocity (flankers go round to her back) */ vx?: number; vz?: number }[];
   /** Where a party animal's leash is fixed. */
   leashPoint: (id: number) => { x: number; z: number } | null;
   /** Whether a party animal is parked (at a sigil on the ground): it guards round it. */
@@ -221,6 +224,18 @@ export interface CombatWorld {
   hitWitch: (id: number, time: number) => void;
   /** A party animal is lost for the run. */
   loseParty: (id: number) => void;
+  /** A witch is slowed (a snail's slime, a glow-worm's flash): her speed times mult until then. */
+  slowWitch?: (id: number, until: number, mult: number) => void;
+}
+
+/** How much of a blow a creature takes for how it's holding itself (Ed's species pass): curled up
+ *  rolling, dug in or braced behind its tail; and whether it's rooted (no knockback). */
+export function guardOf(o: Creature, delivery: Delivery, time: number): { damage: number; rooted: boolean } {
+  if (o.charge?.curl) return { damage: o.charge.curl, rooted: false };
+  const P = profileOf(o.species)?.move;
+  if (o.dug !== undefined && time < o.dug) return { damage: P?.armour ?? 0.5, rooted: true };
+  if (o.brace !== undefined && time < o.brace) return { damage: delivery === "melee" ? 0.5 : P?.armour ?? 0.15, rooted: true };
+  return { damage: 1, rooted: false };
 }
 
 function targetPos(w: CombatWorld, s: CombatState, tg: Target): { x: number; z: number; r: number } | null {
@@ -228,6 +243,21 @@ function targetPos(w: CombatWorld, s: CombatState, tg: Target): { x: number; z: 
   if (tg.kind === "witch") { const v = w.witches[tg.id]; return v && v.onGround && !v.down ? { x: v.x, z: v.z, r: 0.5 } : null; }
   const h = s.sounds.get(tg.key);
   return h && h.hp > 0 ? { x: h.x, z: h.z, r: h.radius } : null;
+}
+
+/** Which way a target is heading (a unit vector), or null if it's about still. */
+function headingOf(w: CombatWorld, tg: Target): { x: number; z: number } | null {
+  const v = tg.kind === "witch" ? w.witches[tg.id] : tg.kind === "creature" ? w.creatures[tg.id] : null;
+  const vx = v?.vx ?? 0, vz = v?.vz ?? 0, m = Math.hypot(vx, vz);
+  return m > 1.5 ? { x: vx / m, z: vz / m } : null;
+}
+
+/** Lights within R of a creature: glow-worms and soundsystems (moths are drawn to them). */
+function lightsNear(w: CombatWorld, s: CombatState, c: Creature, R: number): { x: number; z: number }[] {
+  const out: { x: number; z: number }[] = [];
+  for (const o of w.active) if (o !== c && o.species === "glowworm" && !o.gone && Math.abs(o.x - c.x) < R && Math.abs(o.z - c.z) < R) out.push(o);
+  for (const h of s.sounds.values()) if (h.hp > 0 && Math.hypot(h.x - c.x, h.z - c.z) < R) out.push(h);
+  return out;
 }
 
 /** Whether a target is still worth fighting for this creature. */
@@ -329,11 +359,12 @@ function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target,
   if (!o || o.gone || o.level === 0) return; // babies can't be hurt
   if (from && inviting(w, from, o)) return; // (her party's shots and area hits pass the one she's inviting by)
   // Its traits against this kind of blow (Stage 5): shown as strong or resisted.
-  const k = counterOf(o.species, a.delivery, D);
-  o.hp = (o.hp ?? creatureMaxHp(o)) - damage * k.damage;
+  const k = counterOf(o.species, a.delivery, D), gd = guardOf(o, a.delivery, time), mult = k.damage * gd.damage;
+  o.hp = (o.hp ?? creatureMaxHp(o)) - damage * mult;
   o.hurtAt = time;
-  s.events.push({ kind: "hit", x: o.x, z: o.z, at: time, id: o.id, big: from?.level === LEGEND, counter: k.damage > 1 ? 1 : k.damage < 1 ? -1 : 0 });
-  if (a.modifier === "knockback" && a.knockback && k.knockback > 0) {
+  s.events.push({ kind: "hit", x: o.x, z: o.z, at: time, id: o.id, big: from?.level === LEGEND, counter: mult > 1 ? 1 : mult < 1 ? -1 : 0 });
+  if (gd.damage < 1 && !o.charge?.curl) s.events.push({ kind: "blocked", x: o.x, z: o.z, at: time, id: o.id });
+  if (a.modifier === "knockback" && a.knockback && k.knockback > 0 && !gd.rooted) {
     const dx = o.x - fx, dz = o.z - fz, d = Math.hypot(dx, dz) || 1, kb = a.knockback * k.knockback;
     o.kx = (dx / d) * kb * 6; o.kz = (dz / d) * kb * 6; // eased off over a moment (stepKnock)
     if (k.stun > 0) { o.stunUntil = time + k.stun; if (o.fight) o.fight.windupUntil = 0; s.events.push({ kind: "stunned", x: o.x, z: o.z, at: time, id: o.id }); }
@@ -431,6 +462,14 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     return true;
   });
 
+  // Slime (a snail's trail) dries; anything of the other side on it is slowed.
+  if (s.trails.length) {
+    s.trails = s.trails.filter(tr => time < tr.until);
+    for (const tr of s.trails) {
+      for (const o of grid.near(tr.x, tr.z, tr.r + 1)) if (sideOf(o) !== tr.side && o.species !== "snail" && Math.hypot(o.x - tr.x, o.z - tr.z) <= tr.r) o.slowUntil = Math.max(o.slowUntil ?? 0, time + 0.25);
+      if (tr.side === "wild") for (const v of w.witches) if (v.onGround && !v.down && Math.hypot(v.x - tr.x, v.z - tr.z) <= tr.r) w.slowWitch?.(v.id, time + 0.25, tr.slow);
+    }
+  }
   // Her party (for angry besiegers looking for the nearest of it or a soundsystem).
   const partyList = w.active.filter(o => sideOf(o) === "party" && targetable(o) && !w.asleep(o));
   // Packs (Stage 5): creatures of a kind going for the same target, and their tactic.
@@ -487,6 +526,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       c.sprung = undefined; // (an ambusher lies in wait again)
       if (c.burrow) c.burrow = undefined; // (a burrower comes up)
       if (c.leap) { c.x = c.leap.tx; c.z = c.leap.tz; c.leap = undefined; } // (a leaper comes down)
+      c.dug = undefined; c.brace = undefined; // (a digger comes up, a blocker lowers its tail)
       continue;
     }
     const p = targetPos(w, s, f.target);
@@ -512,7 +552,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     // Its speed in a fight (Ed's motion scale pass: about the witch's): its profile's, else combat.fightRun; slowed, or a legend's.
     // Closing in from afar (Ed: "the creatures in it should be onto me in a few seconds"), it sprints at combat.pursuitRun.
     const slow = c.slowUntil && time < c.slowUntil ? A.slowMult ?? 0.5 : 1, own = c.level === LEGEND ? C.legendRun : profileOf(c.species)?.speed ?? C.fightRun;
-    const speed = (c.level !== LEGEND && d > 30 * S ? Math.max(own, C.pursuitRun) : own) * FIGHT.speed * slow;
+    const speed = (c.level !== LEGEND && d > 30 * S ? Math.max(own, profileOf(c.species)?.pursuit ?? C.pursuitRun) : own) * FIGHT.speed * slow;
     // A wild legend fights by its move set (Stage 5): long, telegraphed moves in a pattern, and a second phase.
     if (c.level === LEGEND && !c.leashed && !(f.target.kind === "sound" && d > 40 * S)) { stepLegend(w, s, c, f, p, d, legendSetOf(c.species), data, grid); continue; }
     const P = profileOf(c.species), marching = (f.target.kind === "sound" || (!!c.siege && !c.leashed)) && d > 40 * S; // (a besieger far off marches)
@@ -520,7 +560,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       // A movement profile (Stage 5): its signature move, then its behaviours and its pack's tactic.
       const run = speed;
       if (P.move?.kind === "charge") {
-        const r = stepCharge(c, P.move, p.x, p.z, A.range + p.r + 0.3, time, dt, run);
+        const was = c.charge, r = stepCharge(c, P.move, p.x, p.z, A.range + p.r + 0.3, time, dt, run);
+        // A pair (the stags): its pack mates whose charge is ready set off with it, side by side.
+        if (P.move.pair && !was && c.charge) for (const m of packs.get(c.id)?.members ?? []) if (m !== c && !m.charge && time >= (m.moveReadyAt ?? 0) && m.fight?.windupUntil === 0 && !m.fight.lunge) startCharge(m, P.move, p.x, p.z, time);
         if (r === "hit") { land(w, s, c, f.target, atk.damage, { ...A, modifier: "knockback", knockback: 15 * S }, c.x, c.z); f.readyAt = time + A.cooldown; s.events.push({ kind: "charged", x: c.x, z: c.z, at: time, id: c.id }); continue; }
         if (r === "charging") continue;
       }
@@ -542,16 +584,59 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (r === "landed") {
           f.readyAt = time + A.cooldown;
           s.events.push({ kind: "slammed", x: c.x, z: c.z, at: time, id: c.id });
-          area(w, s, c, sideOf(c), c.species, c.x, c.z, A.radius ?? 2.4, atk.damage, A, grid);
+          // A pounce (the lynx) lands its blow on its target, if it's still there; a slam (the toad) hits all round.
+          if (P.move.strike) { if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range + p.r + 1 * S) land(w, s, c, f.target, atk.damage, A, c.x, c.z); }
+          else area(w, s, c, sideOf(c), c.species, c.x, c.z, A.radius ?? 2.4, atk.damage, A, grid);
           continue;
         }
         if (r !== "none") continue;
       }
       if (P.move?.kind === "ambush" && !c.leashed) {
-        if (c.sprung === undefined) { if (d > (P.move.trigger ?? 20) * S) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; continue; } c.sprung = time; s.events.push({ kind: "sprung", x: c.x, z: c.z, at: time, id: c.id }); }
+        if (c.sprung === undefined) {
+          if (d > (P.move.trigger ?? 20) * S) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; continue; }
+          c.sprung = time; s.events.push({ kind: "sprung", x: c.x, z: c.z, at: time, id: c.id });
+          if (P.move.strike) f.readyAt = Math.min(f.readyAt, time); // (the snake: it strikes as it springs)
+        }
+      }
+      if (P.move?.kind === "dig") {
+        // The badger digs in when its target comes close: rooted, taking armour times the damage, biting
+        // without a lunge at whatever's in reach; then it comes up and the move cools down.
+        if (c.dug !== undefined && time < c.dug) {
+          c.vx = 0; c.vz = 0; c.moving = false; c.facing = p.x >= c.x ? 1 : -1;
+          if (time >= f.readyAt && d <= A.range + p.r + 1.5 * S) { f.windupUntil = time + A.windup * 0.7; f.aimX = p.x; f.aimZ = p.z; s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); }
+          continue;
+        }
+        if (c.dug !== undefined) { c.dug = undefined; c.moveReadyAt = time + P.move.cooldown; }
+        else if (time >= (c.moveReadyAt ?? 0) && d <= (P.move.trigger ?? 6) * S) { c.dug = time + (P.move.time ?? 3); s.events.push({ kind: "dug", x: c.x, z: c.z, at: time, id: c.id }); continue; }
+      }
+      if (P.move?.kind === "block") {
+        // The beaver braces behind its tail when a shot's coming at it or its target winds up: rooted,
+        // shots all but stopped, blows halved; then it slaps back at once.
+        if (c.brace !== undefined && time < c.brace) { c.vx = 0; c.vz = 0; c.moving = false; c.facing = p.x >= c.x ? 1 : -1; continue; }
+        if (c.brace !== undefined) { c.brace = undefined; c.moveReadyAt = time + P.move.cooldown; f.readyAt = Math.min(f.readyAt, time); }
+        else if (time >= (c.moveReadyAt ?? 0)) {
+          const R = (P.move.radius ?? 12) * S, side = sideOf(c);
+          let threat = s.shots.some(sh => { if (sh.side === side || sh.lob) return false; const rx = c.x - sh.x, rz = c.z - sh.z, sv = Math.hypot(sh.vx, sh.vz) || 1; return Math.hypot(rx, rz) < R && (rx * sh.vx + rz * sh.vz) / sv > 0 && Math.abs((rx * -sh.vz + rz * sh.vx) / sv) < 2 * S; });
+          if (!threat && f.target.kind === "creature") { const o = w.creatures[f.target.id]; threat = !!o?.fight && o.fight.windupUntil > time && o.fight.target?.kind === "creature" && o.fight.target.id === c.id; }
+          if (threat) { c.brace = time + (P.move.time ?? 1.2); s.events.push({ kind: "braced", x: c.x, z: c.z, at: time, id: c.id }); continue; }
+        }
+      }
+      if (P.move?.kind === "trail" && c.moving && time >= (c.moveReadyAt ?? 0)) {
+        // The snail leaves slime as it goes: a patch every `every` seconds, slowing the other side, drying after `time`.
+        s.trails.push({ x: c.x, z: c.z, r: (P.move.radius ?? 2.5) * S, until: time + (P.move.time ?? 6), side: sideOf(c), slow: P.move.slow ?? 0.5, from: c.id });
+        c.moveReadyAt = time + (P.move.every ?? 0.5);
+      }
+      if (P.move?.kind === "flash" && time >= (c.moveReadyAt ?? 0) && d <= (P.move.radius ?? 10) * S) {
+        // The glow-worm's flash: a pulse of light dazzling the other side round it (slowed a moment).
+        const R = (P.move.radius ?? 10) * S, until = time + (P.move.time ?? 1.5), side = sideOf(c);
+        for (const o of grid.near(c.x, c.z, R)) if (o !== c && targetable(o) && sideOf(o) !== side && !truce(c, o) && Math.hypot(o.x - c.x, o.z - c.z) <= R) o.slowUntil = Math.max(o.slowUntil ?? 0, until);
+        if (side === "wild") for (const v of w.witches) if (v.onGround && !v.down && Math.hypot(v.x - c.x, v.z - c.z) <= R) w.slowWitch?.(v.id, until, P.move.slow ?? 0.6);
+        s.events.push({ kind: "flash", x: c.x, z: c.z, at: time, id: c.id });
+        c.moveReadyAt = time + P.move.cooldown;
       }
       const burst = c.sprung !== undefined && time - c.sprung < (P.move?.time ?? 0) ? P.move?.speed ?? 1 : 1;
-      const may = steer(c, P, { px: p.x, pz: p.z, pr: p.r, want, range: A.range, speed: run * burst, time, dt, pack: packs.get(c.id) ?? null, neighbours: [...grid.near(c.x, c.z, 12 * S)], threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm });
+      const heading = headingOf(w, f.target), lights = P.fight.some(b => b.kind === "light") ? lightsNear(w, s, c, 40 * S) : undefined;
+      const may = steer(c, P, { px: p.x, pz: p.z, pr: p.r, want, range: A.range, speed: run * burst, time, dt, pack: packs.get(c.id) ?? null, neighbours: [...grid.near(c.x, c.z, 12 * S)], threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights });
       if (may && time >= f.readyAt) {
         f.windupUntil = time + A.windup; f.aimX = p.x; f.aimZ = p.z; // (it glides to a stop as it winds up: below)
         s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id });
@@ -579,7 +664,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (A.delivery === "melee") {
       // The lunge (Ed's motion scale pass: 12 to 16 m, a dash-strike): down the line to where it aimed
       // when it wound up, so stepping aside dodges it; the blow lands at its end (above).
-      const ax = f.aimX - c.x, az = f.aimZ - c.z, ad = Math.hypot(ax, az), L = Math.min(A.lunge ?? 0, Math.max(0, ad - A.range * 0.5));
+      const ax = f.aimX - c.x, az = f.aimZ - c.z, ad = Math.hypot(ax, az), L = c.dug !== undefined && time < c.dug ? 0 : Math.min(A.lunge ?? 0, Math.max(0, ad - A.range * 0.5)); // (dug in: no lunge)
       if (ad > 0.01 && L > 0.05) f.lunge = { dx: ax / ad, dz: az / ad, left: L, v: Math.hypot(c.vx ?? 0, c.vz ?? 0) };
       else if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range + p.r) land(w, s, c, f.target, dmg, A, c.x, c.z);
     }
