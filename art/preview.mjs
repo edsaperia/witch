@@ -265,6 +265,9 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   } else if (what === "faces") { // per species: its four expressions (neutral, angry, happy, dazed) at adult, young and baby, then angry with the woken look's red eyes (enraged)
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(",");
     for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push([...(window.LEVELS || [2, 1, 0]).flatMap(l => G.EXPRESSIONS.map(face => G.bake(G.critter(id, l, 0, st, facing, { face }), G.speciesColours(id, st), st, st.cOutline))), G.bake(G.critter(id, 1, 0, st, facing, { face: "angry", woken: true }), G.speciesColours(id, st, { woken: true }), st, st.cOutline)]);
+  } else if (what === "textures") { // per species: its legend, adult, young and baby untextured (texture 0), then a row textured (genome/texture.js)
+    const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), off = { ...st, texture: 0 }, on = { ...st, texture: 1 };
+    for (const id of ids) for (const s2 of [off, on]) rows.push((window.LEVELS || [3, 2, 1, 0]).map(l => G.bake(G.critter(id, l, 0, s2), G.speciesColours(id, s2), s2, s2.cOutline)));
   } else if (what === "genome") { // per species: its adult baked once, then its material mask painted with each curated palette variant (#79 stage 2)
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), mk = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
     for (const id of ids) for (const facing of window.FACINGS || ["towards"]) {

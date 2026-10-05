@@ -32,6 +32,8 @@ import { PALETTE_SIZE, PALETTE_ROW, PALETTE_VARIANTS, PALETTE_GLSL, bakeMask, pa
 export { GENOMES, GENOME_BY_ID, TEMPLATES, TEMPLATE_IDS, speciesOf, genomeTags, genomeProblems, genomeHash, PALETTE_SIZE, PALETTE_ROW, PALETTE_VARIANTS, PALETTE_GLSL, bakeMask, paletteRow, paintPixels, paintMask, maskPixels, variantColours };
 import { EXPRESSIONS, FACE_KINDS, FACE_DEFAULT, faceUp, faceProblems } from "./genome/expressions.js";
 export { EXPRESSIONS, FACE_KINDS, FACE_DEFAULT, faceUp, faceProblems };
+import { TEXTURE_KINDS, TEXTURE_DEFAULT, textureOf, textureSprite, textureLumps, textureProblems } from "./genome/texture.js";
+export { TEXTURE_KINDS, TEXTURE_DEFAULT, textureOf, textureSprite, textureLumps, textureProblems };
 import { RIG_HEADINGS, RIG_TEMPLATES, rigParts, rigDirection, rigProject } from "./genome/parts.js";
 export { RIG_HEADINGS, RIG_TEMPLATES, rigParts, rigDirection, rigProject };
 import { SILHOUETTE_SIZE, silhouette, silhouetteDistance, silhouetteMirror, silhouetteDistanceEitherWay, silhouettePairs } from "./genome/silhouette.js";
@@ -117,6 +119,7 @@ export const KNOBS = [
   { k: "growth", g: "Creatures", label: "Legend vs baby height", min: 5, max: 25, step: 1, v: 20 },
   { k: "magicHue", g: "Creatures", label: "Magic glow hue", min: 0, max: 1, step: 0.01, v: 0.5, hue: true },
   { k: "fur", g: "Creatures", label: "Stripes and spots", min: 0, max: 1, step: 0.05, v: 0.5 },
+  { k: "texture", g: "Creatures", label: "Fur, feathers and scales (genome/texture.js; 0 off)", min: 0, max: 1, step: 1, v: 1 },
   { k: "cloakHue", g: "Witch", label: "Jacket hue", min: 0, max: 1, step: 0.01, v: 0.72, hue: true },
   { k: "hairHue", g: "Witch", label: "Hair hue", min: 0, max: 1, step: 0.01, v: 0.01, hue: true },
   { k: "hatHue", g: "Witch", label: "Hat hue", min: 0, max: 1, step: 0.01, v: 0.74, hue: true },
