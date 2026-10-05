@@ -3,7 +3,8 @@
 // the first witch, fading to nothing `sfx.hear` metres off and panned by where it is on screen.
 // The rules know nothing of it.
 //  - 💌s (the invites, #89): its letters' events, read as they come (shot: her syllable; hit: the
-//    chime, the creature's small reply, the affection meter's tick; happy: the flourish); until #89 lands there are none, and the talk's invites still flourish.
+//    chime, the creature's small reply, the affection meter's tick; happy: the flourish); the
+//    talk's invites (with 💌s off) still flourish.
 //  - States: a creature turning enraged (a growl and the nearest's angry speech; a crowd turning at
 //    once, one heavier growl) or happy (a pop and its happy speech): its area's guards, a friendly
 //    area's creatures, a legend at peace.
@@ -50,10 +51,6 @@ export function voiceOf(c: Creature, t: Tuning): CreatureVoice {
 /** How it speaks: happy (on her side, guarding, at peace), enraged, or a wild one's grumble. */
 export const speechMood = (c: Creature): Mood => (c.leashed || c.guard || c.friendly || c.legendState === "happy" ? "happy" : c.enraged || c.siege ? "enraged" : "grumpy");
 
-/** The 💌 events as #89 has them (read loosely, so this builds before it lands). */
-interface LetterEvent { kind: string; x: number; z: number; id?: number; spent?: boolean }
-interface LetterState { events?: LetterEvent[]; meter?: Map<number, number> }
-
 const happyNow = (c: Creature) => !c.leashed && !c.gone && (!!c.guard || !!c.friendly || (!!c.boss && c.legendState === "happy"));
 
 export class SfxCues {
@@ -76,7 +73,7 @@ export class SfxCues {
     const S = this.sfx;
 
     // 💌 (#89): its own events
-    const inv = (g.witches[0] as unknown as { invites?: LetterState }).invites;
+    const inv = g.witches[0]?.invites;
     for (const e of inv?.events ?? []) {
       const k = near(e.x, e.z);
       if (k <= 0) continue;
