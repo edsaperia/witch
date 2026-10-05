@@ -7,7 +7,11 @@ import { SCENES as SCENES_RAW, SCENE_BY_ID as SCENE_BY_ID_RAW } from "../../art/
 import { makePartition, type Cell, type Partition } from "./partition";
 import { hash2, rng, smoothstep, vnoise } from "./random";
 import type { Tuning } from "./tuning";
-import { floorClearing, speakerRing, type Speaker } from "./speakers";
+import { floorClearing, speakerRadius, speakerRing, type Speaker } from "./speakers";
+
+/** How far the treehouse's foot stands from the dancefloor's middle (Ed, 2026-10-05: "5m due north of
+ *  the dance floor, outside the speaker ring"): past the ring's outer edge by gap, plus its footprint. */
+export const treehouseDistance = (t: Tuning) => speakerRadius(t) + t.dancefloor.speakers.footprint + t.treehouse.gap + t.treehouse.clear;
 import { PathNetwork } from "./paths";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
@@ -207,7 +211,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   let centreCell: Cell = [mid, mid];
   for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) if (ownsSite(mid + dx, mid + dy)) { centreCell = [mid + dx, mid + dy]; break; }
   const H = tuning.home, homeSite = plain.site(centreCell[0], centreCell[1]), homeWorld = toWorld(homeSite[0], homeSite[1]);
-  const homeRadius = floorClearing(tuning) + tuning.treehouse.distance + tuning.treehouse.clear + H.margin; // metres
+  const homeRadius = treehouseDistance(tuning) + tuning.treehouse.clear + H.margin; // metres
   let homeR = 0;
   for (let k = 0; k < 96; k++) {
     const a = (k / 96) * Math.PI * 2, [u, v] = toPart(homeWorld[0] + Math.cos(a) * homeRadius, homeWorld[1] + Math.sin(a) * homeRadius);
@@ -298,7 +302,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     return spot;
   };
   const TH = tuning.treehouse, ta = (TH.angle * Math.PI) / 180;
-  const treehouse = { x: centre.x + Math.cos(ta) * (floorClear + TH.distance), z: centre.z + Math.sin(ta) * (floorClear + TH.distance) };
+  const treehouse = { x: centre.x + Math.cos(ta) * treehouseDistance(tuning), z: centre.z + Math.sin(ta) * treehouseDistance(tuning) };
   const pieceSpots = new Map<string, { x: number; z: number } | null>();
   const setPieceSpot = (cx: number, cy: number) => (setPieceOf(cx, cy) ? pieceSpotOf(cx, cy) : null);
   // Where a set piece would stand in an area that rolls one, or null if there's no room.
