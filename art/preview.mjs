@@ -292,6 +292,10 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     const party = Object.entries(G.WITCH_FOOT_POSES).filter(([pose, P]) => P.party && (!window.POSES || window.POSES.includes(pose)));
     if (list === "poses") for (const facing of window.FACINGS || ["towards", "away"]) rows.push(party.flatMap(([pose, { frames }]) => [...Array(frames).keys()].map(frame => one({ facing, pose, frame }))));
     else if (list === "lean") { for (const facing of ["towards", "away"]) rows.push([one({ facing, lean: true }), ...[0, 1, 2, 3].map(frame => one({ facing, pose: "lean", frame }))]); for (const heading of ["away", "towards"]) rows.push([one({ heading, lean: true }), ...[0, 1, 2, 3].map(frame => one({ heading, pose: "lean", frame }))]); }
+    else if (list === "hats") { // every hat (WITCH_AXES.hatShape) on our witch: hovering towards, away, standing and leaning (HATCOL=1: each in its own colours)
+      const base = G.genomeLook(G.WITCH_GENOME).look, hues = [.0, .08, .14, .3, .5, .6, .75, .9];
+      rows.push(...[0, 1].map(half => G.WITCH_AXES.hatShape.filter((_, i) => i % 2 === half).flatMap((hat, i) => { const look = { ...base, hat }, col = window.HATCOL ? G.witchColours(st, { ...G.DEFAULT_OUTFIT, hat: [hues[(i * 2 + half) % hues.length], .65, .55] }, { styleHues: false }) : G.witchColours(st); return [one({ look, frame: 0 }, col), one({ look, frame: 0, facing: "away" }, col), one({ look, pose: "stand", frame: 0 }, col)]; })));
+    }
     else if (list === "generated") { // the generated party witches (partyWitch(seed)), four to a row: each hovering, standing and dancing (two-step, spin); SEEDS=3,7,... picks them
       const seeds = window.SEEDS || [...Array(16).keys()];
       for (let row = 0; row < Math.ceil(seeds.length / 4); row++) rows.push(seeds.slice(row * 4, row * 4 + 4).flatMap(seed => { const w = G.partyWitch(seed), col = w.colours(st); return [one({ look: w.look, frame: 0 }, col), one({ look: w.look, pose: "stand", frame: 0 }, col), one({ look: w.look, pose: "twoStep", frame: 1 }, col), one({ look: w.look, pose: "spin", frame: 2 }, col)]; }));
