@@ -10,22 +10,22 @@
 import { hsv2rgb } from "./core.js";
 
 export const ART_STYLES = ["now", "bold", "ref"];
-const LIGHT = (() => { const l = [-.45, -.75, .5], n = Math.hypot(...l); return l.map(v => v / n); })();
-const rgb2hsv = (r, g, b) => { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0; if (d) h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return [(h / 6 + 1) % 1, mx ? d / mx : 0, mx]; };
-const toward = (h, target, k) => { let d = target - h; if (d > .5) d -= 1; if (d < -.5) d += 1; return (h + d * k + 1) % 1; };
+const STYLE_LIGHT = (() => { const l = [-.45, -.75, .5], n = Math.hypot(...l); return l.map(v => v / n); })();
+const styleHsv = (r, g, b) => { r /= 255; g /= 255; b /= 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; let h = 0; if (d) h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return [(h / 6 + 1) % 1, mx ? d / mx : 0, mx]; };
+const styleToward = (h, target, k) => { let d = target - h; if (d > .5) d -= 1; if (d < -.5) d += 1; return (h + d * k + 1) % 1; };
 
 // A material's tone t (0 shadow, .5 base, 1 light) in a style.
-function tone(r, g, b, t, mode) {
-  let [h, s, v] = rgb2hsv(r, g, b);
+function styleTone(r, g, b, t, mode) {
+  let [h, s, v] = styleHsv(r, g, b);
   if (mode === "ref") {
     const warm = h < .2 || h > .85;
-    if (t < .34) { h = toward(h, warm ? .99 : .7, .35); s = Math.min(1, s * 1.35 + .12); v *= .58; }
-    else if (t > .66) { h = toward(h, .12, .25); s *= .55; v = Math.min(1, v * 1.22 + .08); }
+    if (t < .34) { h = styleToward(h, warm ? .99 : .7, .35); s = Math.min(1, s * 1.35 + .12); v *= .58; }
+    else if (t > .66) { h = styleToward(h, .12, .25); s *= .55; v = Math.min(1, v * 1.22 + .08); }
     return hsv2rgb(h, s, v);
   }
   const k = Math.abs(t - .5) * 2;
   v = Math.min(1, v * (.52 + .62 * t));
-  h = t < .5 ? toward(h, .72, .16 * k) : toward(h, .13, .12 * k);
+  h = t < .5 ? styleToward(h, .72, .16 * k) : styleToward(h, .13, .12 * k);
   s = Math.min(1, s * (t < .5 ? 1 + .45 * k : 1 - .25 * k) + (t < .5 ? .08 * k : 0));
   return hsv2rgb(h, s, v);
 }
@@ -42,7 +42,7 @@ export function stylisePixels(a, n, nf, w, h, mode) {
     if (a[o + 3] === 254) { glow[i] = 1; band[i] = T - 1; continue; }
     const nx = (n[o] - 128) / 127, ny = (n[o + 1] - 128) / 127, nz = n[o + 2] / 255;
     nrm[i * 3] = nx; nrm[i * 3 + 1] = ny; nrm[i * 3 + 2] = nz;
-    const d = Math.max(0, nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2]), v = mode === "ref" ? Math.min(1, .22 + .95 * d) : .3 + .7 * d;
+    const d = Math.max(0, nx * STYLE_LIGHT[0] + ny * STYLE_LIGHT[1] + nz * STYLE_LIGHT[2]), v = mode === "ref" ? Math.min(1, .22 + .95 * d) : .3 + .7 * d;
     band[i] = Math.min(T - 1, Math.floor(v * T));
   }
   // clusters: each lit pixel takes the band most of its 3 x 3 neighbourhood of the same material has
@@ -59,7 +59,7 @@ export function stylisePixels(a, n, nf, w, h, mode) {
     const o = i * 4; if (key[i] < 0) continue;
     if (glow[i]) { out[o] = a[o]; out[o + 1] = a[o + 1]; out[o + 2] = a[o + 2]; out[o + 3] = 254; continue; }
     band[i] = nb2[i];
-    const c = tone(a[o], a[o + 1], a[o + 2], band[i] / (T - 1), mode);
+    const c = styleTone(a[o], a[o + 1], a[o + 2], band[i] / (T - 1), mode);
     out[o] = c[0]; out[o + 1] = c[1]; out[o + 2] = c[2]; out[o + 3] = 255;
   }
   // lone pixels: a pixel unlike all four neighbours, two or more of which agree, takes their colour
@@ -81,7 +81,7 @@ export function stylisePixels(a, n, nf, w, h, mode) {
     const o = i * 4;
     if (strong) { out[o] = 20; out[o + 1] = 12; out[o + 2] = 14; out[o + 3] = 255; continue; }
     if (nb.every(([dx, dy, j]) => (dx > 0 || dy > 0) && band[j] === T - 1)) continue; // broken on the lit upper left
-    const j = nb[0][2], [hh, ss, vv] = rgb2hsv(out[j * 4], out[j * 4 + 1], out[j * 4 + 2]), c = hsv2rgb(toward(hh, .72, .15), Math.min(1, ss * 1.2 + .15), Math.max(.06, vv * .35));
+    const j = nb[0][2], [hh, ss, vv] = styleHsv(out[j * 4], out[j * 4 + 1], out[j * 4 + 2]), c = hsv2rgb(styleToward(hh, .72, .15), Math.min(1, ss * 1.2 + .15), Math.max(.06, vv * .35));
     out[o] = c[0]; out[o + 1] = c[1]; out[o + 2] = c[2]; out[o + 3] = 255;
   }
   // interior lines (ref): where the surface turns sharply, the darker side gets a line
