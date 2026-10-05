@@ -7,24 +7,20 @@
 // minute (her hits set high, so she isn't knocked out mid-measure). Then, with rules/throughput.ts,
 // the hits she'd take filling that crowd with each build, against her 3 hits.
 //   node tools/balance/fight.mjs [--seeds 2] [--sizes 2,4,8,12] [--mixes wolf,boar,raven,bat,mixed] [--levels 1,2] [--time 60] [--radius 16] [--moves 0,0.3,0.6] [--set fight.speed=1.25;combat.reaction=0.15]
-import { createServer } from "vite";
+import { openRules, arg, list, mean } from "./lib.mjs";
 
-const arg = (name, def) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : def; };
-const list = s => String(s).split(",");
 const SEEDS = +arg("seeds", 2), SIZES = list(arg("sizes", "2,4,8,12")).map(Number), MIXES = list(arg("mixes", "wolf,boar,raven,bat,mixed")), LEVELS = list(arg("levels", "1,2")).map(Number);
 const TIME = +arg("time", 60), RADIUS = +arg("radius", 16), MOVES = list(arg("moves", "0,0.3,0.6")).map(Number);
 // Tuning overrides to try enemy-side knobs: --set "fight.speed=1.25;combat.reaction=0.15".
 const SETS = String(arg("set", "")).split(";").filter(Boolean).map(kv => { const [k, v] = kv.split("="); return [k.trim().split("."), Number(v)]; });
 const MIX = { wolf: ["wolf"], boar: ["boar"], raven: ["raven"], bat: ["bat"], fox: ["fox"], mixed: ["wolf", "boar", "raven", "fox"] };
 
-const server = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: "custom", logLevel: "error", optimizeDeps: { noDiscovery: true, include: [] } });
-const load = p => server.ssrLoadModule(p);
+const { load, close } = await openRules();
 const { TUNING, withTuning } = await load("/src/rules/tuning.ts");
 const { newGame, stepGame } = await load("/src/rules/game.ts");
 const { speedFactor, wanderRange } = await load("/src/rules/creatures.ts");
 const { throughput, crowdTime, INVITE_FIRE } = await load("/src/rules/throughput.ts");
 const say = s => console.log(s), t0 = Date.now();
-const mean = a => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN);
 
 /** One measure: hits a minute among n of `mix` at `level`. */
 function measure(seed, mix, n, level, move) {
@@ -88,4 +84,4 @@ for (const mv of MOVES) for (const lvl of LEVELS) {
   say("");
 }
 say(`(${((Date.now() - t0) / 1000).toFixed(0)} s)`);
-await server.close();
+await close();

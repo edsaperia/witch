@@ -44,6 +44,7 @@ interface Bubble { el: HTMLElement; img: HTMLImageElement; until: number; x: num
 export class InviteView {
   private root = document.createElement("div");
   private letters: HTMLImageElement[] = [];
+  private lanterns: HTMLElement[] = [];
   private meters = new Map<number, HTMLElement>();
   private hers: Bubble;
   private replies = new Map<number, Bubble>();
@@ -154,11 +155,27 @@ export class InviteView {
       const L = I.letters[i];
       if (!L) { im.style.display = "none"; return; }
       im.style.display = "block";
-      place(im, L.x, lobHeight(L.flown, t.invites.range, t.invites.arc ?? 0), L.z);
-      // End over end (Ed, round 11: "rotate by pitching instead of yawing"): squashed top to bottom by
-      // the spin's cosine, upside down on the far side (snapped to a few steps, pixel-like).
-      const spin = Math.round(((time - L.at) * 3.2 + L.n * 0.37) * 8) / 8, cy = Math.cos(spin * Math.PI * 2);
-      im.style.transform = `scaleY(${(Math.sign(cy || 1) * Math.max(0.35, Math.abs(cy))).toFixed(2)})`; // (never thinner than a third: it reads as a letter)
+      // A cache waits on the ground, bobbing; an orbiting one circles at her hand; the rest fly.
+      const y = L.kind === "cache" ? 0.35 + 0.12 * Math.sin((time - L.at) * 4 + L.n) : L.kind === "orbit" ? 1.3 : lobHeight(L.flown, L.range ?? this.game.tuning.invites.range, this.game.tuning.invites.arc ?? 0);
+      place(im, L.x, y, L.z);
+      // End over end (Ed, round 11: "rotate by pitching instead of yawing"): squashed top to bottom by the
+      // spin's cosine, upside down on the far side (snapped to a few steps, pixel-like); a small one (Spawn) smaller; a cache still.
+      const spin = L.kind === "cache" ? 0 : Math.round(((time - L.at) * 3.2 + L.n * 0.37) * 8) / 8, cy = Math.cos(spin * Math.PI * 2), sz = L.small ? 0.6 : 1;
+      im.style.transform = `scale(${sz}, ${(Math.sign(cy || 1) * Math.max(0.35, Math.abs(cy)) * sz).toFixed(2)})`; // (never thinner than a third: it reads as a letter)
+    });
+    // Lanterns (Glow-worm): little glowing hearts where the letters flew, fading out.
+    while (this.lanterns.length < I.lanterns.length) {
+      const d = document.createElement("div");
+      Object.assign(d.style, { position: "absolute", width: `${k * 2}px`, height: `${k * 2}px`, marginLeft: `${-k}px`, marginTop: `${-k}px`, background: "#ffd2f0", boxShadow: "0 0 6px 2px rgba(255,110,200,.85)" });
+      this.root.append(d);
+      this.lanterns.push(d);
+    }
+    this.lanterns.forEach((d, i) => {
+      const p = I.lanterns[i];
+      if (!p) { d.style.display = "none"; return; }
+      d.style.display = "block";
+      place(d, p.x, 1.1, p.z);
+      d.style.opacity = Math.max(0, Math.min(1, (p.until - time) / 0.3)).toFixed(2);
     });
 
     // The meters: a pill of hearts over each creature with some affection.
