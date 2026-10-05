@@ -1,7 +1,7 @@
 // Before-and-after sheets for the tree migration onto the blob generator (#119): each species a row, a sapling, a mature and a
 // tall tree in each column group, lit under the previews' studio light at the game's screen scale.
 //   node tools/flora/species-sheet.mjs <out.png> <species,...|all> <column,...> [scale]
-// A column is "<artSet or ->/<stylise or ->", e.g. "-/-" today's art, "-/bold" today's stylised, "trees/bold" the blob version stylised.
+// A column is "<artSet or ->/<artStyle or ->", e.g. "-/-" today's art, "-/bold" or "-/ref" stylised (the game's ?style=).
 import { writeFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { openBrowser } from "../../art/headless.mjs";
@@ -13,9 +13,9 @@ await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
 const url = await b.page.evaluate(async ({ list, cols, scale }) => {
   const G = await import("/art/generator.js"), { shade } = await import("/art/lighting.js");
   const base = G.defaultStyle(), ids = list === "all" ? Object.keys(G.TREE_SPECIES) : list.split(",");
-  const columns = cols.split(",").map(c => { const [set, sty] = c.split("/"); return { label: c, st: { ...base, ...(set !== "-" ? { artSet: set } : {}), ...(sty !== "-" ? { stylise: sty } : {}) } }; });
+  const columns = cols.split(",").map(c => { const [set, sty] = c.split("/"); return { label: c, st: { ...base, ...(set !== "-" ? { artSet: set } : {}), ...(sty !== "-" ? { artStyle: sty } : {}) } }; });
   const mk = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
-  const grow = (id, st, k, seed) => { const S = id === "palm" ? { fn: G.palmTree } : G.setPlant?.(id, st) || G.TREE_SPECIES[id], r = G.rng(seed), sp = S.fn(r, { ...st, leafHue: .3 }, st.treeSize * k), col = G.treeColours(G.rng(seed + 1), { ...st, leafHue: .3 }, S.fn); return G.bake(sp.sp || sp, col, st, st.stylise === "ref" ? "dark" : st.cOutline); };
+  const grow = (id, st, k, seed) => { const S = id === "palm" ? { fn: G.palmTree } : G.setPlant?.(id, st) || G.TREE_SPECIES[id], r = G.rng(seed), sp = S.fn(r, { ...st, leafHue: .3 }, st.treeSize * k), col = G.treeColours(G.rng(seed + 1), { ...st, leafHue: .3 }, S.fn); return G.bake(sp.sp || sp, col, st, st.artStyle === "ref" ? "dark" : st.cOutline); };
   const rows = ids.map(id => ({ id, groups: columns.map(c => [.6, 1, 1.4].map((k, i) => grow(id, c.st, k, 11 + i * 7))) }));
   const gap = 10, lab = 16, gw = columns.map((_, ci) => Math.max(...rows.map(r => r.groups[ci].reduce((a, s) => a + s.w + 4, 0)))), W = gw.reduce((a, v) => a + v + gap * 2, 90), rh = rows.map(r => Math.max(...r.groups.flat().map(s => s.h)) + gap), H = rh.reduce((a, v) => a + v, lab + gap);
   const Ac = mk(W, H), Nc = mk(W, H), a = Ac.getContext("2d"), n = Nc.getContext("2d");

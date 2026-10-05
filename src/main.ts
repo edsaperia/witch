@@ -185,7 +185,6 @@ const canvas = document.getElementById("game") as HTMLCanvasElement;
 const style = loadStyle();
 { const artStyle = params.get("style"); if (artStyle === "bold" || artStyle === "ref") style.artStyle = artStyle; } // ?style=now|bold|ref: a pixel-art style (art/stylise.js) baked into every sprite, carried to the art worker in the style
 if (params.get("flora")) style.flora = params.get("flora"); // ?flora=new|fantasy|all|<ids>: every wooded area grows these tree species (art/flora), carried to the art worker in the style
-if (params.get("style") === "bold" || params.get("style") === "ref") style.stylise = params.get("style"); // ?style=bold|ref: the pixel-art stylisation (docs/ART-GUIDE.md section 0; bold: hue-shifted 3-tone ramps, ref: Ed's reference look), so far in the trees: carried to the art worker in the style
 /** Load timings (ms since the page started): the view built (the page's own sprites drawn), ready to play. */
 const loadTimes = { viewStart: performance.now(), view: 0, ready: 0 };
 const view = new View(canvas, game, {
