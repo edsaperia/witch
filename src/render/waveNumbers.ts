@@ -1,7 +1,7 @@
 // Wave numbers over the rune stones (Ed, 2026-10-04: "for design purposes, let's just put a big
 // glowing number above the stones"): each dormant stone shows the wave that will wake it
 // (rules/party.ts wavePlan), in its area's neon, big and glowing, the same size on screen at any
-// zoom (held inside the top of the screen when its stone's top is above it); drawn last and without a depth test, so it reads over the canopy and the clouds from the
+// zoom (on the ground, a near stone's held inside the top of the screen when its top is above it); drawn last and without a depth test, so it reads over the canopy and the clouds from the
 // treetops as well as on the ground. Areas the party has reached keep theirs, dimmed (spent).
 // A design aid: tuning waveNumbers.on turns it off, and this file is all there is to remove.
 import * as THREE from "three";
@@ -32,7 +32,7 @@ function digitAtlas(): THREE.DataTexture {
 const VERT = /* glsl */ `
 attribute vec4 iAt;   // x, height above the ground, z, digit
 attribute vec4 iCol;  // rgb, alpha
-attribute vec2 iOff;  // the digit's place, in digit widths from the number's middle; how much it shows (0-1, past the bend)
+attribute vec3 iOff;  // the digit's place, in digit widths from the number's middle; how much it shows (0-1, past the bend); 1 to hold it inside the top of the screen
 uniform float uSize, uAspect;
 varying vec2 vUv;
 varying vec4 vCol;
@@ -48,7 +48,7 @@ void main() {
   // Over its stone, but held inside the top of the screen (on the ground the camera looks down
   // steeply, and a stone's top is often above the picture while its foot is in it).
   vec2 n = c.xy / max(c.w, 1e-4);
-  n.y = min(n.y, 0.96 - uSize * 2.0);
+  if (iOff.z > 0.5) n.y = min(n.y, 0.96 - uSize * 2.0);
   n += vec2((position.x + iOff.x) * ${(CW / CH).toFixed(3)} / uAspect, position.y + 0.5) * uSize * 2.0;
   gl_Position = vec4(n * c.w, c.z, c.w);
 }`;
@@ -64,7 +64,7 @@ void main() {
   gl_FragColor = d.r > 0.5 ? vec4(vCol.rgb * (0.5 + 1.3 * vCol.a), vShow) : vec4(vec3(0.02, 0.01, 0.04), vShow);
 }`;
 
-export interface WaveNumber { x: number; z: number; /** metres above the ground */ y: number; wave: number; colour: THREE.Vector3; alpha: number; /** how much it shows (0-1): it fades past the bent horizon */ show?: number; /** its stone's height (metres), for the checks */ top?: number }
+export interface WaveNumber { x: number; z: number; /** metres above the ground */ y: number; wave: number; colour: THREE.Vector3; alpha: number; /** how much it shows (0-1): it fades past the bent horizon */ show?: number; /** its stone's height (metres), for the checks */ top?: number; /** held inside the top of the screen (near stones, on the ground) */ pin?: boolean }
 
 export class WaveNumbers {
   readonly mesh: THREE.Mesh;
@@ -79,7 +79,7 @@ export class WaveNumbers {
     this.geo.index = quad.index; this.geo.setAttribute("position", quad.getAttribute("position")); this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.at = new THREE.InstancedBufferAttribute(new Float32Array(max * 4), 4); this.at.setUsage(THREE.DynamicDrawUsage);
     this.col = new THREE.InstancedBufferAttribute(new Float32Array(max * 4), 4); this.col.setUsage(THREE.DynamicDrawUsage);
-    this.off = new THREE.InstancedBufferAttribute(new Float32Array(max * 2), 2); this.off.setUsage(THREE.DynamicDrawUsage);
+    this.off = new THREE.InstancedBufferAttribute(new Float32Array(max * 3), 3); this.off.setUsage(THREE.DynamicDrawUsage);
     this.geo.setAttribute("iAt", this.at); this.geo.setAttribute("iCol", this.col); this.geo.setAttribute("iOff", this.off);
     this.geo.instanceCount = 0;
     this.mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...HEIGHT_UNIFORMS, uDigits: { value: digitAtlas() }, uSize: { value: 0.05 }, uAspect: { value: 1 } }, depthTest: false, depthWrite: false, transparent: true });
@@ -102,7 +102,7 @@ export class WaveNumbers {
       for (let i = 0; i < s.length; i++, n++) {
         A.set([w.x, w.y, w.z, +s[i]], n * 4);
         C.set([w.colour.x, w.colour.y, w.colour.z, w.alpha], n * 4);
-        O[n * 2] = i - (s.length - 1) / 2; O[n * 2 + 1] = w.show ?? 1;
+        O[n * 3] = i - (s.length - 1) / 2; O[n * 3 + 1] = w.show ?? 1; O[n * 3 + 2] = w.pin ? 1 : 0;
       }
     }
     this.geo.instanceCount = n;
