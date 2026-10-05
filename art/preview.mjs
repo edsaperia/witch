@@ -14,6 +14,7 @@
 //   node art/preview.mjs lineup all|<species> art/previews/lineup.png [scale]   (each species' baby, young, adult and legend side by side, the witch for scale; PER=n species to a row)
 //   node art/preview.mjs legends all|<species> art/previews/legends.png [scale]   (each sleeping legend asleep, its 2 breathing frames, then the legend awake as it is, then the witch for scale; FACINGS=away for the other view)
 //   node art/preview.mjs genome wolf,fox,...|all art/previews/genome-palettes.png [scale]   (each species' sprite baked once as a material mask, then painted with its own palette and every curated variant: no rebake)
+//   node art/preview.mjs silhouettes young|adult art/previews/silhouettes.png [scale]   (every species' shape at game size, 24 px, as the silhouette check sees it, then its sprite; the closest pairs listed in the log)
 //   node art/preview.mjs grounds playground,tennis,baseball,football,basketball|all art/previews/grounds.png [scale]   (each arrangement composed; NIGHT=1)
 //   node art/preview.mjs decor ruins|rocks|freak|<ids> art/previews/ruins.png [scale]   (VARIANTS=1: ruins weathered and overgrown)
 //   node art/preview.mjs lake 0 art/previews/lake.png [scale]   (a sample lake composed from the kit; NIGHT=1)
@@ -252,6 +253,15 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   } else if (what === "legends") { // per species: its sleeping legend asleep (2 breathing frames), the legend awake as it is, then the witch for scale
     const ids = list === "all" ? G.LEGEND_IDS : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
     for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push([...G.LEGEND_STATES.flatMap(state => [...Array(G.LEGEND_FRAMES[state]).keys()].map(frame => { const { sp, colours } = G.legendForm(id, st, { state, frame, facing }); return G.bake(sp, colours, st, st.cOutline); })), G.bake(G.critter(id, 3, 0, st, facing), G.speciesColours(id, st), st, st.cOutline), wit]);
+  } else if (what === "silhouettes") { // every species' shape shrunk to 24 px (white on black, as the silhouette check compares them), beside its sprite, six to a row
+    const level = list === "adult" ? 2 : 1, n = G.SILHOUETTE_SIZE, K = 3, items = [];
+    for (const S of G.SPECIES) {
+      const sp = G.critter(S.id, level, 0, st), sh = G.silhouette(sp), A = document.createElement("canvas"), N = document.createElement("canvas"); A.width = N.width = n * K; A.height = N.height = n * K;
+      const a = A.getContext("2d"), b = N.getContext("2d"); b.fillStyle = "rgb(128,128,255)"; b.fillRect(0, 0, n * K, n * K);
+      for (let i = 0; i < n * n; i++) { const v = Math.round(sh[i] * 255); a.fillStyle = `rgb(${v},${v},${v})`; a.fillRect((i % n) * K, Math.floor(i / n) * K, K, K); }
+      items.push({ A, N, w: n * K, h: n * K }, G.bake(sp, G.speciesColours(S.id, st), st, st.cOutline));
+    }
+    for (let i = 0; i < items.length; i += 12) rows.push(items.slice(i, i + 12));
   } else if (what === "genome") { // per species: its adult baked once, then its material mask painted with each curated palette variant (#79 stage 2)
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), mk = (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
     for (const id of ids) for (const facing of window.FACINGS || ["towards"]) {

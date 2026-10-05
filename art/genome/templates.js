@@ -6,25 +6,29 @@
 // A size curve is four numbers, baby, young, adult and legend, each a multiplier on the species'
 // own proportion (or, for antlers, horns and tusks, their size outright).
 
+// The size curves the templates without their own share: an adult's and legend's heavier build
+// (every part thicker across) and the glowing motes round them.
+const TEMPLATE_SMALL_SIZES = { build: [1, 1, 1.18, 1.18], motes: [0, 0, 3, 9] };
+
 export const TEMPLATES = {
   quadruped: {
     name: "Four-legged", builders: ["quad"],
     sockets: {
       ears: ["ear.point", "ear.round", "ear.long", "ear.tuft", "ear.small", "ear.big", "ear.none"],
-      tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat"],
+      tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse"],
       feet: ["foot.paw", "foot.hoof"],
       horns: ["horn.curl"], antlers: ["antler.branch", "antler.palm"], tusks: ["tusk"],
     },
     exclude: [["horn.*", "antler.*"], ["tusk", "antler.*"]],
     gait: { offsets: [0, .5, .5, 0], dutyWalk: .65, dutyRun: .35 }, // front left, front right, back left, back right: a trot
     sizes: {
-      head: [1.75, 1, 1.12, 1.12],      // head radius: a baby's big head
-      len: [.8, 1.02, 1.06, 1.06],      // body length
-      legK: [.55, 1.04, 1.04, 1.04],    // leg length (a baby's short legs)
+      head: [1.75, 1, 1.12, 1],         // head radius: a baby's big head, a legend's smaller for its size (grand, not cute)
+      len: [.8, 1.02, 1.06, 1.14],      // body length: a legend's long
+      legK: [.55, 1.04, 1.04, 1.14],    // leg length: a baby's short legs, a legend's long ones
       chestDeep: [1, 1, 1, 1.06],       // a legend's deeper chest...
       chestBig: [1, 1, .9, .9],         // ...and a big one's lower belly line
       tuck: [1, 1, .92, .92],
-      body: [1.15, 1, 1.28, 1.28],      // body width
+      body: [1.3, 1, 1.28, 1.28],       // body width: a chunky baby
       limbA: [1.7, 1, 1, 1.1],          // leg thickness: a baby's stubby legs, a legend's thicker ones
       limbB: [1, 1, 1.3, 1.3],          // and the heavier build of adults and legends
       neckBase: [1, 1, 1.25, 1.25], neckTop: [1, 1, 1.2, 1.2],
@@ -35,10 +39,10 @@ export const TEMPLATES = {
       motes: [0, 0, 3, 9],              // glowing motes round adults and legends
     },
   },
-  avian: { name: "Bird", builders: ["owl", "raven"], sockets: { wings: ["wing.folded", "wing.spirit"], head: ["head.round", "head.beak"] }, exclude: [], gait: { offsets: [0, .5], dutyWalk: .6, dutyRun: .4 } },
-  flyer: { name: "Flyer", builders: ["bat", "moth"], sockets: { wings: ["wing.membrane", "wing.scaled"] }, exclude: [], gait: { offsets: [], dutyWalk: 0, dutyRun: 0 } },
-  serpent: { name: "Serpent or worm", builders: ["snake", "glowworm"], sockets: { head: ["head.snake", "head.worm"], tailTip: ["tail.lantern"] }, exclude: [], gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
-  insectoid: { name: "Many-legged", builders: ["beetle", "spider", "woodlouse"], sockets: { head: ["jaw.stag", "eyes.cluster", "antenna"] }, exclude: [], gait: { offsets: [0, .5, 0, .5, 0, .5], dutyWalk: .6, dutyRun: .5 } }, // alternating tripods
-  squat: { name: "Squat", builders: ["toad", "hedgehog", "mole", "snail"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], gait: { offsets: [0, .5, .5, 0], dutyWalk: .7, dutyRun: .5 } },
+  avian: { name: "Bird", builders: ["owl", "raven"], sizes: { head: [.48, .36, .36, .36], headY: [.95, 1.08, 1.08, 1.08], build: [1, 1, 1.18, 1.18], motes: [0, 0, 3, 9] }, sockets: { wings: ["wing.folded", "wing.spirit"], head: ["head.round", "head.beak"] }, exclude: [], gait: { offsets: [0, .5], dutyWalk: .6, dutyRun: .4 } },
+  flyer: { sizes: TEMPLATE_SMALL_SIZES, name: "Flyer", builders: ["bat", "moth"], sockets: { wings: ["wing.membrane", "wing.scaled"] }, exclude: [], gait: { offsets: [], dutyWalk: 0, dutyRun: 0 } },
+  serpent: { sizes: TEMPLATE_SMALL_SIZES, name: "Serpent or worm", builders: ["snake", "glowworm"], sockets: { head: ["head.snake", "head.worm"], tailTip: ["tail.lantern"] }, exclude: [], gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
+  insectoid: { sizes: TEMPLATE_SMALL_SIZES, name: "Many-legged", builders: ["beetle", "spider", "woodlouse"], sockets: { head: ["jaw.stag", "eyes.cluster", "antenna"] }, exclude: [], gait: { offsets: [0, .5, 0, .5, 0, .5], dutyWalk: .6, dutyRun: .5 } }, // alternating tripods
+  squat: { sizes: TEMPLATE_SMALL_SIZES, name: "Squat", builders: ["toad", "hedgehog", "mole", "snail"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], gait: { offsets: [0, .5, .5, 0], dutyWalk: .7, dutyRun: .5 } },
 };
 export const TEMPLATE_IDS = Object.keys(TEMPLATES);
