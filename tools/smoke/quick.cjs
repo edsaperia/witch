@@ -36,7 +36,7 @@ async function main() {
   page.on("pageerror", e => errors.push(`page error: ${e.message}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console error: ${m.text()}`); });
   try {
-    await page.goto(`http://127.0.0.1:${port}/?seed=123&quick=1&debug`);
+    await page.goto(`http://127.0.0.1:${port}/?creator=0&seed=123&quick=1&debug`);
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 240000, polling: 500 });
     log("start screen ready");
     const state = () => page.evaluate(() => { const g = window.witch.game; return { t: g.clock.time, x: g.witch.x, z: g.witch.z, mode: g.witch.mode, paused: g.clock.paused, trees: window.witch.view.stats.trees }; });

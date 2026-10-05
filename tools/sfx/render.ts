@@ -1,9 +1,9 @@
-// Renders every sound effect (src/platform/sfx.ts) offline, for tools/sfx/check.mjs: each in its
+// Renders every sound effect (src/platform/audio/sfx.ts) offline, for tools/sfx/check.mjs: each in its
 // own OfflineAudioContext, measured (rms, peak, NaN) and returned as 16-bit mono samples.
-import { Sfx } from "../../src/platform/sfx";
+import { Sfx } from "../../src/platform/audio/sfx";
 import { TUNING } from "../../src/rules/tuning";
 import style from "../../config/music-style.json";
-import { voiceOf } from "../../src/platform/sfxCues";
+import { voiceOf } from "../../src/platform/audio/voices";
 import type { Creature } from "../../src/rules/creatures";
 
 const v = (species: string, level: number) => voiceOf({ species, level, boss: level === 3 } as unknown as Creature, TUNING);
@@ -19,7 +19,7 @@ const SOUNDS: [string, number, Play][] = [
   ["speak-swarm-enraged", 0.9, s => s.speak(v("woodlouse", 1), "enraged")],
   ["speak-legend-enraged", 5, s => s.speak(v("bear", 3), "enraged")],
   ["legend-happy", 4.5, s => s.speak(v("bear", 3), "happy")],
-  ["legend-windup", 3, s => s.windup(0, 1, v("bear", 3))],
+  ["legend-windup", 3, s => s.windup(0, 1)],
   ["howl", 1.4, s => s.howl(v("wolf", 2))],
   ["fight-crowd", 1.4, s => { const sp = ["wolf", "fox", "boar", "hare", "owl", "stoat", "badger", "toad"]; sp.forEach((x, i) => s.speak(v(x, (i % 3) as number), i % 2 ? "enraged" : "happy", (i % 5) / 2 - 1, 1 - i * 0.1)); }],
   ["witch-ouch", 7, () => {}],
@@ -40,7 +40,6 @@ const SOUNDS: [string, number, Play][] = [
   ["enraged", 0.8, s => s.enraged(0)],
   ["enraged-crowd", 0.8, s => s.enraged(0, 1, 6)],
   ["happy", 0.6, s => s.happy(0)],
-  ["windup", 1.6, s => s.windup(0)],
   ["legend-sleep", 5, s => s.legends(1, 1, 0)],
   ["legend-nightmare", 5, s => s.legends(1, 0.5, 1)],
 ];

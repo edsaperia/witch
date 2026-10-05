@@ -8,3 +8,4 @@ tools/music-lab/out/
 tools/rig/.out/
 upcoming.generated.json
 node_modules
+previews/sfx/mix/*.wav

@@ -2,6 +2,7 @@
 // Units: the shoulder is about 1 high; x forward, y up, z towards the near side.
 import { M, rng, uni } from "./core.js";
 import { Model, render, v3, spotty, masks } from "./model3d.js";
+import { faceUp } from "./genome/expressions.js";
 
 // Levels (Ed): 0 baby, 1 young, 2 adult, 3 legend.
 // Height on screen in art pixels: babies about 30; young about 45 at the default style, about the
@@ -56,6 +57,7 @@ const star = (s, t) => { const a = Math.atan2(t, s), r = Math.hypot(s, t); retur
 const heart = (s, t) => { const x = s * 1.2, y = -t * 1.2 + .25; return Math.pow(x * x + y * y - .6, 3) - x * x * y * y * y < 0; };
 function gearUp(m) {
   const g = GEAR, A = m.anchors; if (!g) return;
+  faceUp(m, g.face, g.faceStyle); // its expression, part of its face (genome/expressions.js)
   const head = A.head, hr = head ? Math.max(...head.r) : .2;
   // the collar: a glowing ring round the neck (or the body's front)
   if (g.collar && (A.neck || head)) {
@@ -100,14 +102,14 @@ function gearUp(m) {
 
 // ================= four-legged animals =================
 export function quad3d(S, level, frame, st, facing = "towards") {
-  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => legend && S.legend.includes(f);
+  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q, ...(S.levelQ?.[level] || {}) }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => (legend && S.legend.includes(f)) || (q.features || []).includes(f); // features: a level's own (an evolution can grow them before the legend)
   const sz = k => S.sizes[k][level]; // its template's size curves (art/genome/templates.js): baby, young, adult, legend
   const m = new Model();
   const hr = q.hr * sz("head") * (st.head / .44) ** .5, len = q.len * sz("len") * st.long;
   const legK = sz("legK");
   const bob = frame ? -.04 : 0, top = 1 + bob, chest = q.chest * sz("chestDeep") * sz("chestBig") / legK + bob, tuck = q.tuck * sz("tuck") / legK + bob; // a big one's deeper chest and belly
   const bw = q.bw * sz("body") * (q.legW > 1.2 ? 1.15 : 1), lw = .06 * q.legW * sz("limbA") * sz("limbB");
-  const hump = q.back === "hump" ? .1 : 0, arch = q.back === "arch" ? .1 : 0;
+  const hump = q.back === "hump" ? (q.hump ?? .1) : 0, arch = q.back === "arch" ? .1 : 0;
   // ---- markings, painted by where a point is on the body ----
   const bellyY = chest + .12;
   const paintBody = p => {

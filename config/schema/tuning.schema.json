@@ -1,0 +1,4531 @@
+{
+  "type": "object",
+  "properties": {
+    "mapAreas": {
+      "type": "number",
+      "minimum": 0
+    },
+    "areaSize": {
+      "type": "number",
+      "minimum": 0
+    },
+    "areaScale": {
+      "type": "number",
+      "minimum": 0
+    },
+    "arena": {
+      "type": "object",
+      "properties": {
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "band": {
+          "type": "number",
+          "minimum": 0
+        },
+        "noise": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bushes": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tufts": {
+          "type": "number",
+          "minimum": 0
+        },
+        "curve": {
+          "type": "string",
+          "enum": [
+            "linear",
+            "smooth"
+          ]
+        }
+      },
+      "required": [
+        "radius",
+        "band",
+        "noise",
+        "bushes",
+        "tufts",
+        "curve"
+      ],
+      "additionalProperties": false
+    },
+    "areaSizeVariance": {
+      "type": "number",
+      "minimum": 0
+    },
+    "borderLayers": {
+      "type": "number",
+      "minimum": 0
+    },
+    "treeDensity": {
+      "type": "number",
+      "minimum": 0
+    },
+    "clearingSize": {
+      "type": "number",
+      "minimum": 0
+    },
+    "clearingFalloff": {
+      "type": "number",
+      "minimum": 0
+    },
+    "gladeAmount": {
+      "type": "number",
+      "minimum": 0
+    },
+    "gladeScale": {
+      "type": "number",
+      "minimum": 0
+    },
+    "areaEdgeBlend": {
+      "type": "object",
+      "properties": {
+        "width": {
+          "type": "number",
+          "minimum": 0
+        },
+        "scale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stray": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "width",
+        "scale",
+        "stray"
+      ],
+      "additionalProperties": false
+    },
+    "groundBlend": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "warp": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fine": {
+          "type": "number",
+          "minimum": 0
+        },
+        "band": {
+          "type": "number",
+          "minimum": 0
+        },
+        "dither": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "on",
+        "warp",
+        "fine",
+        "band",
+        "dither"
+      ],
+      "additionalProperties": false
+    },
+    "ground": {
+      "type": "object",
+      "properties": {
+        "relief": {
+          "type": "object",
+          "properties": {
+            "strength": {
+              "type": "number",
+              "minimum": 0
+            },
+            "scale": {
+              "type": "number",
+              "minimum": 0
+            },
+            "shade": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "strength",
+            "scale",
+            "shade"
+          ],
+          "additionalProperties": false
+        },
+        "hills": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "amplitude": {
+              "type": "number",
+              "minimum": 0
+            },
+            "scale": {
+              "type": "number",
+              "minimum": 0
+            },
+            "octaves": {
+              "type": "number",
+              "minimum": 0
+            },
+            "shade": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "amplitude",
+            "scale",
+            "octaves",
+            "shade"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "relief",
+        "hills"
+      ],
+      "additionalProperties": false
+    },
+    "sky": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "stars": {
+          "type": "number",
+          "minimum": 0
+        },
+        "moon": {
+          "type": "number",
+          "minimum": 0
+        },
+        "clouds": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "number",
+              "minimum": 0
+            },
+            "altitude": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "opacity": {
+              "type": "number",
+              "minimum": 0
+            },
+            "partyGlow": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "count",
+            "altitude",
+            "speed",
+            "opacity",
+            "partyGlow"
+          ],
+          "additionalProperties": false
+        },
+        "lightning": {
+          "type": "object",
+          "properties": {
+            "every": {
+              "type": "number",
+              "minimum": 0
+            },
+            "flashes": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ground": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "every",
+            "flashes",
+            "ground"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "on",
+        "stars",
+        "moon",
+        "clouds",
+        "lightning"
+      ],
+      "additionalProperties": false
+    },
+    "wind": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "strength": {
+          "type": "number",
+          "minimum": 0
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gustScale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treetop": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "strength",
+        "speed",
+        "gustScale",
+        "treetop"
+      ],
+      "additionalProperties": false
+    },
+    "groundCover": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "density": {
+          "type": "number",
+          "minimum": 0
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "spacing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cell": {
+          "type": "number",
+          "minimum": 0
+        },
+        "budgetMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sway": {
+          "type": "number",
+          "minimum": 0
+        },
+        "part": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sigilClear": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "density",
+        "radius",
+        "cap",
+        "spacing",
+        "cell",
+        "budgetMs",
+        "sway",
+        "part",
+        "sigilClear"
+      ],
+      "additionalProperties": false
+    },
+    "density": {
+      "type": "object",
+      "properties": {
+        "patchScale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "patchMin": {
+          "type": "number",
+          "minimum": 0
+        },
+        "patchMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lone": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "patchScale",
+        "patchMin",
+        "patchMax",
+        "lone"
+      ],
+      "additionalProperties": false
+    },
+    "bushDensity": {
+      "type": "number",
+      "minimum": 0
+    },
+    "bushClump": {
+      "type": "number",
+      "minimum": 0
+    },
+    "treeHeight": {
+      "type": "number",
+      "minimum": 0
+    },
+    "treeCap": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "number",
+          "minimum": 0
+        },
+        "keep": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "from",
+        "keep"
+      ],
+      "additionalProperties": false
+    },
+    "crownWidth": {
+      "type": "number",
+      "minimum": 0
+    },
+    "treeSpacingX": {
+      "type": "number",
+      "minimum": 0
+    },
+    "treeSpacingZ": {
+      "type": "number",
+      "minimum": 0
+    },
+    "crownHalfWidth": {
+      "type": "number",
+      "minimum": 0
+    },
+    "crownHeight": {
+      "type": "number",
+      "minimum": 0
+    },
+    "bushSpacing": {
+      "type": "number",
+      "minimum": 0
+    },
+    "groundSpeed": {
+      "type": "number",
+      "minimum": 0
+    },
+    "treetopSpeed": {
+      "type": "number",
+      "minimum": 0
+    },
+    "acceleration": {
+      "type": "number",
+      "minimum": 0
+    },
+    "treetop": {
+      "type": "object",
+      "properties": {
+        "boost": {
+          "type": "number",
+          "minimum": 0
+        },
+        "boostTime": {
+          "type": "number",
+          "minimum": 0
+        },
+        "boostAngle": {
+          "type": "number",
+          "minimum": 0
+        },
+        "turnRate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "turnRateSlow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sharpTurnSpeed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "brakeAt": {
+          "type": "number",
+          "minimum": 0
+        },
+        "glideTime": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sharpTurnBleed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cameraPull": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "boost",
+        "boostTime",
+        "boostAngle",
+        "turnRate",
+        "turnRateSlow",
+        "sharpTurnSpeed",
+        "brakeAt",
+        "glideTime",
+        "sharpTurnBleed",
+        "cameraPull"
+      ],
+      "additionalProperties": false
+    },
+    "groundAcceleration": {
+      "type": "number",
+      "minimum": 0
+    },
+    "leanAt": {
+      "type": "number",
+      "minimum": 0
+    },
+    "facing": {
+      "type": "object",
+      "properties": {
+        "awayEnter": {
+          "type": "number",
+          "minimum": 0
+        },
+        "awayLeave": {
+          "type": "number",
+          "minimum": 0
+        },
+        "headingEnter": {
+          "type": "number",
+          "minimum": 0
+        },
+        "headingLeave": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "awayEnter",
+        "awayLeave",
+        "headingEnter",
+        "headingLeave"
+      ],
+      "additionalProperties": false
+    },
+    "riseTime": {
+      "type": "number",
+      "minimum": 0
+    },
+    "descendTime": {
+      "type": "number",
+      "minimum": 0
+    },
+    "groundHeight": {
+      "type": "number",
+      "minimum": 0
+    },
+    "treetopHeight": {
+      "type": "number",
+      "minimum": 0
+    },
+    "camera": {
+      "type": "object",
+      "properties": {
+        "fov": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ground": {
+          "type": "object",
+          "properties": {
+            "angleIn": {
+              "type": "number",
+              "minimum": 0
+            },
+            "angleOut": {
+              "type": "number",
+              "minimum": 0
+            },
+            "distanceIn": {
+              "type": "number",
+              "minimum": 0
+            },
+            "distanceOut": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "angleIn",
+            "angleOut",
+            "distanceIn",
+            "distanceOut"
+          ],
+          "additionalProperties": false
+        },
+        "treetop": {
+          "type": "object",
+          "properties": {
+            "angleIn": {
+              "type": "number",
+              "minimum": 0
+            },
+            "angleOut": {
+              "type": "number",
+              "minimum": 0
+            },
+            "distanceIn": {
+              "type": "number",
+              "minimum": 0
+            },
+            "distanceOut": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "angleIn",
+            "angleOut",
+            "distanceIn",
+            "distanceOut"
+          ],
+          "additionalProperties": false
+        },
+        "lookAhead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lookAheadMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lookAheadEase": {
+          "type": "number",
+          "minimum": 0
+        },
+        "zoomEase": {
+          "type": "number",
+          "minimum": 0
+        },
+        "liftEase": {
+          "type": "number",
+          "minimum": 0
+        },
+        "curve": {
+          "type": "object",
+          "properties": {
+            "ground": {
+              "type": "number",
+              "minimum": 0
+            },
+            "treetop": {
+              "type": "number",
+              "minimum": 0
+            },
+            "beyond": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "ground",
+            "treetop",
+            "beyond"
+          ],
+          "additionalProperties": false
+        },
+        "zoomSteps": {
+          "type": "number",
+          "minimum": 0
+        },
+        "speedZoom": {
+          "type": "object",
+          "properties": {
+            "base": {
+              "type": "number",
+              "minimum": 0
+            },
+            "power": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "base",
+            "power"
+          ],
+          "additionalProperties": false
+        },
+        "startZoom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "shake": {
+          "type": "object",
+          "properties": {
+            "base": {
+              "type": "number",
+              "minimum": 0
+            },
+            "perMissingHit": {
+              "type": "number",
+              "minimum": 0
+            },
+            "knockdown": {
+              "type": "number",
+              "minimum": 0
+            },
+            "decay": {
+              "type": "number",
+              "minimum": 0
+            },
+            "maxOffsetPx": {
+              "type": "number",
+              "minimum": 0
+            },
+            "maxRotDeg": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "base",
+            "perMissingHit",
+            "knockdown",
+            "decay",
+            "maxOffsetPx",
+            "maxRotDeg",
+            "speed"
+          ],
+          "additionalProperties": false
+        },
+        "follow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "intro": {
+          "type": "object",
+          "properties": {
+            "distance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "angle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ease": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "distance",
+            "angle",
+            "ease"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "fov",
+        "ground",
+        "treetop",
+        "lookAhead",
+        "lookAheadMax",
+        "lookAheadEase",
+        "zoomEase",
+        "liftEase",
+        "curve",
+        "zoomSteps",
+        "speedZoom",
+        "startZoom",
+        "shake",
+        "follow",
+        "intro"
+      ],
+      "additionalProperties": false
+    },
+    "pixelSize": {
+      "type": "number",
+      "minimum": 0
+    },
+    "glowReach": {
+      "type": "number",
+      "minimum": 0
+    },
+    "glowFalloff": {
+      "type": "number",
+      "minimum": 0
+    },
+    "glowToCutout": {
+      "type": "number",
+      "minimum": 0
+    },
+    "glowHeight": {
+      "type": "number",
+      "minimum": 0
+    },
+    "spriteTilt": {
+      "type": "number",
+      "minimum": 0
+    },
+    "artPixelsPerMetre": {
+      "type": "number",
+      "minimum": 0
+    },
+    "viewMargin": {
+      "type": "number",
+      "minimum": 0
+    },
+    "lightBudget": {
+      "type": "number",
+      "minimum": 0
+    },
+    "lights": {
+      "type": "object",
+      "properties": {
+        "campfire": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "strength": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "reach",
+            "strength"
+          ],
+          "additionalProperties": false
+        },
+        "stone": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "strength": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "reach",
+            "strength"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "campfire",
+        "stone"
+      ],
+      "additionalProperties": false
+    },
+    "glowPower": {
+      "type": "number",
+      "minimum": 0
+    },
+    "beat": {
+      "type": "object",
+      "properties": {
+        "bpm": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "bpm"
+      ],
+      "additionalProperties": false
+    },
+    "berries": {
+      "type": "object",
+      "properties": {
+        "perArea": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "bushesPerArea": {
+          "type": "number",
+          "minimum": 0
+        },
+        "patch": {
+          "type": "object",
+          "properties": {
+            "bushes": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "bushes",
+            "radius"
+          ],
+          "additionalProperties": false
+        },
+        "detour": {
+          "type": "number",
+          "minimum": 0
+        },
+        "seekRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "eatTime": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cost": {
+          "type": "object",
+          "properties": {
+            "by": {
+              "type": "string",
+              "enum": [
+                "power",
+                "value"
+              ]
+            },
+            "per": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "by",
+            "per"
+          ],
+          "additionalProperties": false
+        },
+        "colour": {
+          "type": "string"
+        },
+        "glow": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "perArea",
+        "bushesPerArea",
+        "patch",
+        "detour",
+        "seekRadius",
+        "eatTime",
+        "cost",
+        "colour",
+        "glow"
+      ],
+      "additionalProperties": false
+    },
+    "leyLines": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "links": {
+          "type": "number",
+          "minimum": 0
+        },
+        "advance": {
+          "type": "string"
+        },
+        "fade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "brightness": {
+          "type": "number",
+          "minimum": 0
+        },
+        "width": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "height": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "valley": {
+          "type": "number",
+          "minimum": 0
+        },
+        "flow": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "depart": {
+          "type": "object",
+          "properties": {
+            "run": {
+              "type": "number",
+              "minimum": 0
+            },
+            "avoid": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "run",
+            "avoid"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "on",
+        "links",
+        "advance",
+        "fade",
+        "brightness",
+        "width",
+        "height",
+        "valley",
+        "flow",
+        "depart"
+      ],
+      "additionalProperties": false
+    },
+    "witch": {
+      "type": "object",
+      "properties": {
+        "lightFloor": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lightTint": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lightRim": {
+          "type": "number",
+          "minimum": 0
+        },
+        "heightSmooth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "heightLookAhead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "heightClearance": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "lightFloor",
+        "lightTint",
+        "lightRim",
+        "heightSmooth",
+        "heightLookAhead",
+        "heightClearance"
+      ],
+      "additionalProperties": false
+    },
+    "sigilProjection": {
+      "type": "object",
+      "properties": {
+        "height": {
+          "type": "number",
+          "minimum": 0
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0
+        },
+        "beam": {
+          "type": "number",
+          "minimum": 0
+        },
+        "size": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "height",
+        "opacity",
+        "beam",
+        "size"
+      ],
+      "additionalProperties": false
+    },
+    "occlusion": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "fadeOpacity": {
+          "type": "number",
+          "minimum": 0
+        },
+        "edge": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minHeight": {
+          "type": "number",
+          "minimum": 0
+        },
+        "silhouette": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "fadeOpacity",
+        "edge",
+        "minHeight",
+        "silhouette"
+      ],
+      "additionalProperties": false
+    },
+    "stack": {
+      "type": "object",
+      "properties": {
+        "offset": {
+          "type": "number",
+          "minimum": 0
+        },
+        "scale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stiffness": {
+          "type": "number",
+          "minimum": 0
+        },
+        "damping": {
+          "type": "number",
+          "minimum": 0
+        },
+        "trail": {
+          "type": "number",
+          "minimum": 0
+        },
+        "idleSway": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "offset",
+        "scale",
+        "gap",
+        "stiffness",
+        "damping",
+        "trail",
+        "idleSway"
+      ],
+      "additionalProperties": false
+    },
+    "partyObjects": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "clusters": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "loose": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "setChance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "caughtChance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hanging": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "lightsPerArea": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lanternReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "arch": {
+          "type": "string"
+        },
+        "home": {
+          "type": "object",
+          "properties": {
+            "clusters": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "loose": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "weights": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "lights": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "clusters",
+            "loose",
+            "weights",
+            "gap",
+            "reach",
+            "lights"
+          ],
+          "additionalProperties": false
+        },
+        "exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "on",
+        "clusters",
+        "loose",
+        "setChance",
+        "caughtChance",
+        "hanging",
+        "lightsPerArea",
+        "lanternReach",
+        "arch",
+        "home",
+        "exclude"
+      ],
+      "additionalProperties": false
+    },
+    "partyWitches": {
+      "type": "object",
+      "properties": {
+        "max": {
+          "type": "number",
+          "minimum": 0
+        },
+        "idleAfter": {
+          "type": "number",
+          "minimum": 0
+        },
+        "idleReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "activityMin": {
+          "type": "number",
+          "minimum": 0
+        },
+        "activityMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "weights": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "arriveTime": {
+          "type": "number",
+          "minimum": 0
+        },
+        "flyFrom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "flyHeight": {
+          "type": "number",
+          "minimum": 0
+        },
+        "runSpeed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "walkSpeed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lapSpeed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pairRange": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pairGap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "limboPass": {
+          "type": "number",
+          "minimum": 0
+        },
+        "floorShare": {
+          "type": "number",
+          "minimum": 0
+        },
+        "debugExtra": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "max",
+        "idleAfter",
+        "idleReach",
+        "activityMin",
+        "activityMax",
+        "weights",
+        "arriveTime",
+        "flyFrom",
+        "flyHeight",
+        "runSpeed",
+        "walkSpeed",
+        "lapSpeed",
+        "pairRange",
+        "pairGap",
+        "limboPass",
+        "floorShare",
+        "debugExtra"
+      ],
+      "additionalProperties": false
+    },
+    "speakerLasers": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "tilt": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sweep": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sweepBeats": {
+          "type": "number",
+          "minimum": 0
+        },
+        "length": {
+          "type": "number",
+          "minimum": 0
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "tilt",
+        "sweep",
+        "sweepBeats",
+        "length",
+        "opacity"
+      ],
+      "additionalProperties": false
+    },
+    "lasers": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "maxCount": {
+          "type": "number",
+          "minimum": 0
+        },
+        "length": {
+          "type": "number",
+          "minimum": 0
+        },
+        "spread": {
+          "type": "number",
+          "minimum": 0
+        },
+        "maxTilt": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sweep": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sweepBeats": {
+          "type": "number",
+          "minimum": 0
+        },
+        "openBars": {
+          "type": "number",
+          "minimum": 0
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0
+        },
+        "duty": {
+          "type": "number",
+          "minimum": 0
+        },
+        "blockBars": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fadeIn": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fadeOut": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fadeNear": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fadeFar": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "maxCount",
+        "length",
+        "spread",
+        "maxTilt",
+        "sweep",
+        "sweepBeats",
+        "openBars",
+        "opacity",
+        "duty",
+        "blockBars",
+        "fadeIn",
+        "fadeOut",
+        "fadeNear",
+        "fadeFar"
+      ],
+      "additionalProperties": false
+    },
+    "borders": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "width": {
+          "type": "number",
+          "minimum": 0
+        },
+        "brightness": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sparkle": {
+          "type": "number",
+          "minimum": 0
+        },
+        "step": {
+          "type": "number",
+          "minimum": 0
+        },
+        "twinkle": {
+          "type": "number",
+          "minimum": 0
+        },
+        "swapRate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "swapBeat": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "width",
+        "brightness",
+        "sparkle",
+        "step",
+        "twinkle",
+        "swapRate",
+        "swapBeat"
+      ],
+      "additionalProperties": false
+    },
+    "lightSources": {
+      "type": "object",
+      "properties": {
+        "spacing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "campfire": {
+          "type": "number",
+          "minimum": 0
+        },
+        "magicStone": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pond": {
+          "type": "number",
+          "minimum": 0
+        },
+        "wetPond": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "spacing",
+        "campfire",
+        "magicStone",
+        "pond",
+        "wetPond"
+      ],
+      "additionalProperties": false
+    },
+    "haze": {
+      "type": "object",
+      "properties": {
+        "near": {
+          "type": "number",
+          "minimum": 0
+        },
+        "far": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "near",
+        "far"
+      ],
+      "additionalProperties": false
+    },
+    "scenery": {
+      "type": "object",
+      "properties": {
+        "adaptive": {
+          "type": "boolean"
+        },
+        "fps": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hysteresis": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sustain": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "shrink": {
+          "type": "number",
+          "minimum": 0
+        },
+        "grow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fade": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "adaptive",
+        "fps",
+        "hysteresis",
+        "sustain",
+        "minRadius",
+        "shrink",
+        "grow",
+        "fade"
+      ],
+      "additionalProperties": false
+    },
+    "shadows": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "strength": {
+          "type": "number",
+          "minimum": 0
+        },
+        "trees": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "on",
+        "strength",
+        "trees"
+      ],
+      "additionalProperties": false
+    },
+    "canopyShadow": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "strength": {
+          "type": "number",
+          "minimum": 0
+        },
+        "height": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cover": {
+          "type": "number",
+          "minimum": 0
+        },
+        "wind": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "strength",
+        "height",
+        "cover",
+        "wind"
+      ],
+      "additionalProperties": false
+    },
+    "mist": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "strength": {
+          "type": "number",
+          "minimum": 0
+        },
+        "height": {
+          "type": "number",
+          "minimum": 0
+        },
+        "wind": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "strength",
+        "height",
+        "wind"
+      ],
+      "additionalProperties": false
+    },
+    "fx": {
+      "type": "string",
+      "enum": [
+        "smooth",
+        "pixel"
+      ]
+    },
+    "moonbeams": {
+      "type": "number",
+      "minimum": 0
+    },
+    "treehouse": {
+      "type": "object",
+      "properties": {
+        "distance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "angle": {
+          "type": "number"
+        },
+        "clear": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lightReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lightStrength": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "distance",
+        "angle",
+        "clear",
+        "lightReach",
+        "lightStrength"
+      ],
+      "additionalProperties": false
+    },
+    "home": {
+      "type": "object",
+      "properties": {
+        "margin": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gap": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "margin",
+        "gap"
+      ],
+      "additionalProperties": false
+    },
+    "looks": {
+      "type": "object",
+      "properties": {
+        "enragedTint": {
+          "type": "object",
+          "properties": {
+            "colour": {
+              "type": "string"
+            },
+            "amount": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "colour",
+            "amount"
+          ],
+          "additionalProperties": false
+        },
+        "anger": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "size"
+          ],
+          "additionalProperties": false
+        },
+        "partyGlow": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "sparkles": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rate": {
+              "type": "number",
+              "minimum": 0
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "strength": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "sparkles",
+            "rate",
+            "size",
+            "strength"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "enragedTint",
+        "anger",
+        "partyGlow"
+      ],
+      "additionalProperties": false
+    },
+    "bubbles": {
+      "type": "object",
+      "properties": {
+        "emojiPixels": {
+          "type": "number",
+          "minimum": 0
+        },
+        "scale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "levelScale": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "required": [
+        "emojiPixels",
+        "scale",
+        "levelScale"
+      ],
+      "additionalProperties": false
+    },
+    "scenes": {
+      "type": "object",
+      "properties": {
+        "chance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "scale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pad": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "chance",
+        "scale",
+        "pad"
+      ],
+      "additionalProperties": false
+    },
+    "grounds": {
+      "type": "object",
+      "properties": {
+        "chance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "kinds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "radius": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "required": [
+        "chance",
+        "kinds",
+        "radius"
+      ],
+      "additionalProperties": false
+    },
+    "relics": {
+      "type": "object",
+      "properties": {
+        "spacing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "chance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "nearRoad": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minGap": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "spacing",
+        "chance",
+        "nearRoad",
+        "minGap"
+      ],
+      "additionalProperties": false
+    },
+    "walls": {
+      "type": "object",
+      "properties": {
+        "runs": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "runLength": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "gateChance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rings": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "ringStones": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "ringRadius": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "avenueChance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "loneChance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "clumps": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "clumpSize": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "clumpRadius": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "runs",
+        "runLength",
+        "gateChance",
+        "rings",
+        "ringStones",
+        "ringRadius",
+        "avenueChance",
+        "loneChance",
+        "clumps",
+        "clumpSize",
+        "clumpRadius"
+      ],
+      "additionalProperties": false
+    },
+    "runeMarkers": {
+      "type": "object",
+      "properties": {
+        "awakeStyle": {
+          "type": "string"
+        },
+        "laser": {
+          "type": "object",
+          "properties": {
+            "opacity": {
+              "type": "number",
+              "minimum": 0
+            },
+            "width": {
+              "type": "number",
+              "minimum": 0
+            },
+            "length": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "opacity",
+            "width",
+            "length"
+          ],
+          "additionalProperties": false
+        },
+        "scale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "beamHeight": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lightRange": {
+          "type": "number",
+          "minimum": 0
+        },
+        "dormant": {
+          "type": "object",
+          "properties": {
+            "glow": {
+              "type": "number",
+              "minimum": 0
+            },
+            "light": {
+              "type": "number",
+              "minimum": 0
+            },
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "beam": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "glow",
+            "light",
+            "reach",
+            "beam"
+          ],
+          "additionalProperties": false
+        },
+        "awake": {
+          "type": "object",
+          "properties": {
+            "glow": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "light": {
+              "type": "number",
+              "minimum": 0
+            },
+            "lightBuild": {
+              "type": "number",
+              "minimum": 0
+            },
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "beam": {
+              "type": "number",
+              "minimum": 0
+            },
+            "motes": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moteBuild": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "glow",
+            "light",
+            "lightBuild",
+            "reach",
+            "beam",
+            "motes",
+            "moteBuild"
+          ],
+          "additionalProperties": false
+        },
+        "flare": {
+          "type": "object",
+          "properties": {
+            "time": {
+              "type": "number",
+              "minimum": 0
+            },
+            "light": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "time",
+            "light"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "awakeStyle",
+        "laser",
+        "scale",
+        "beamHeight",
+        "lightRange",
+        "dormant",
+        "awake",
+        "flare"
+      ],
+      "additionalProperties": false
+    },
+    "pathFade": {
+      "type": "object",
+      "properties": {
+        "metres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "dither": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "metres",
+        "dither"
+      ],
+      "additionalProperties": false
+    },
+    "trunkFade": {
+      "type": "object",
+      "properties": {
+        "metres": {
+          "type": "number",
+          "minimum": 0
+        },
+        "share": {
+          "type": "number",
+          "minimum": 0
+        },
+        "dither": {
+          "type": "boolean"
+        },
+        "lightFloor": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rim": {
+          "type": "number",
+          "minimum": 0
+        },
+        "crownShare": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "metres",
+        "share",
+        "dither",
+        "lightFloor",
+        "rim",
+        "crownShare"
+      ],
+      "additionalProperties": false
+    },
+    "decor": {
+      "type": "object",
+      "properties": {
+        "spacing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ruins": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rocks": {
+          "type": "number",
+          "minimum": 0
+        },
+        "freak": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minGap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "clearing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pathGap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "footprint": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "spacing",
+        "ruins",
+        "rocks",
+        "freak",
+        "minGap",
+        "clearing",
+        "pathGap",
+        "footprint"
+      ],
+      "additionalProperties": false
+    },
+    "paths": {
+      "type": "object",
+      "properties": {
+        "rails": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "roads": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "linkChance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "deadEndChance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pathHalf": {
+          "type": "number",
+          "minimum": 0
+        },
+        "roadHalf": {
+          "type": "number",
+          "minimum": 0
+        },
+        "railHalf": {
+          "type": "number",
+          "minimum": 0
+        },
+        "railBroken": {
+          "type": "number",
+          "minimum": 0
+        },
+        "streams": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "streamHalf": {
+          "type": "number",
+          "minimum": 0
+        },
+        "landmarkSpacing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "landmarkChance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "vergeSpacing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pieceGap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treesOnBroken": {
+          "type": "number",
+          "minimum": 0
+        },
+        "edgeBushes": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bushBoost": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "rails",
+        "roads",
+        "linkChance",
+        "deadEndChance",
+        "pathHalf",
+        "roadHalf",
+        "railHalf",
+        "railBroken",
+        "streams",
+        "streamHalf",
+        "landmarkSpacing",
+        "landmarkChance",
+        "vergeSpacing",
+        "pieceGap",
+        "treesOnBroken",
+        "edgeBushes",
+        "bushBoost"
+      ],
+      "additionalProperties": false
+    },
+    "invites": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "burst": {
+          "type": "number",
+          "minimum": 0
+        },
+        "burstGap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cooldown": {
+          "type": "number",
+          "minimum": 0
+        },
+        "range": {
+          "type": "number",
+          "minimum": 0
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "homing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "homingCone": {
+          "type": "number",
+          "minimum": 0
+        },
+        "homingRange": {
+          "type": "number",
+          "minimum": 0
+        },
+        "multiShot": {
+          "type": "number",
+          "minimum": 0
+        },
+        "spread": {
+          "type": "number",
+          "minimum": 0
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "amount": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hits": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "drain": {
+          "type": "number",
+          "minimum": 0
+        },
+        "perAnimalHitGap": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "burst",
+        "burstGap",
+        "cooldown",
+        "range",
+        "speed",
+        "homing",
+        "homingCone",
+        "homingRange",
+        "multiShot",
+        "spread",
+        "radius",
+        "amount",
+        "hits",
+        "drain",
+        "perAnimalHitGap"
+      ],
+      "additionalProperties": false
+    },
+    "invite": {
+      "type": "object",
+      "properties": {
+        "talkRange": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cancelDistance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "snubTime": {
+          "type": "number",
+          "minimum": 0
+        },
+        "talkTime": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "turn": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "decayRate": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "talkRange",
+        "cancelDistance",
+        "snubTime",
+        "talkTime",
+        "turn",
+        "decayRate"
+      ],
+      "additionalProperties": false
+    },
+    "leash": {
+      "type": "object",
+      "properties": {
+        "length": {
+          "type": "number",
+          "minimum": 0
+        },
+        "runSpeed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pickRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "spacing": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "length",
+        "runSpeed",
+        "pickRadius",
+        "spacing"
+      ],
+      "additionalProperties": false
+    },
+    "bond": {
+      "type": "object",
+      "properties": {
+        "rim": {
+          "type": "boolean"
+        },
+        "sparks": {
+          "type": "boolean"
+        },
+        "thread": {
+          "type": "boolean"
+        },
+        "sparkEvery": {
+          "type": "number",
+          "minimum": 0
+        },
+        "threadArc": {
+          "type": "number",
+          "minimum": 0
+        },
+        "threadArcMax": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "rim",
+        "sparks",
+        "thread",
+        "sparkEvery",
+        "threadArc",
+        "threadArcMax"
+      ],
+      "additionalProperties": false
+    },
+    "sfx": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "volume": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hear": {
+          "type": "number",
+          "minimum": 0
+        },
+        "voice": {
+          "type": "object",
+          "properties": {
+            "witch": {
+              "type": "object",
+              "properties": {
+                "volume": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "pitch": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "range": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "pace": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "timbre": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "phraseGap": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "volume",
+                "pitch",
+                "range",
+                "pace",
+                "timbre",
+                "phraseGap"
+              ],
+              "additionalProperties": false
+            },
+            "animals": {
+              "type": "object",
+              "properties": {
+                "volume": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "pitch": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "maxVoices": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "duck": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "syllables": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "gap": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "reply": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "volume",
+                "pitch",
+                "maxVoices",
+                "duck",
+                "syllables",
+                "gap",
+                "reply"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "witch",
+            "animals"
+          ],
+          "additionalProperties": false
+        },
+        "hit": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "gap"
+          ],
+          "additionalProperties": false
+        },
+        "fill": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "octaves": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "octaves"
+          ],
+          "additionalProperties": false
+        },
+        "invited": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume"
+          ],
+          "additionalProperties": false
+        },
+        "enraged": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "gap"
+          ],
+          "additionalProperties": false
+        },
+        "happy": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "gap"
+          ],
+          "additionalProperties": false
+        },
+        "snore": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "range"
+          ],
+          "additionalProperties": false
+        },
+        "nightmare": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume"
+          ],
+          "additionalProperties": false
+        },
+        "windup": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "length": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "length"
+          ],
+          "additionalProperties": false
+        },
+        "lost": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume"
+          ],
+          "additionalProperties": false
+        },
+        "ouch": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "duck": {
+              "type": "number",
+              "minimum": 0
+            },
+            "duckTime": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "duck",
+            "duckTime"
+          ],
+          "additionalProperties": false
+        },
+        "knock": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "whoosh": {
+              "type": "number",
+              "minimum": 0
+            },
+            "twinkle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "twinkleEvery": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "whoosh",
+            "twinkle",
+            "twinkleEvery"
+          ],
+          "additionalProperties": false
+        },
+        "charge": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bellow": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hooves": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rumble": {
+              "type": "number",
+              "minimum": 0
+            },
+            "skid": {
+              "type": "number",
+              "minimum": 0
+            },
+            "trot": {
+              "type": "number",
+              "minimum": 0
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "bellow",
+            "hooves",
+            "rumble",
+            "skid",
+            "trot",
+            "range"
+          ],
+          "additionalProperties": false
+        },
+        "relic": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "spot": {
+              "type": "number",
+              "minimum": 0
+            },
+            "spotTreetop": {
+              "type": "number",
+              "minimum": 0
+            },
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "spot",
+            "spotTreetop",
+            "reach"
+          ],
+          "additionalProperties": false
+        },
+        "meadow": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "breeze": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bees": {
+              "type": "number",
+              "minimum": 0
+            },
+            "birds": {
+              "type": "number",
+              "minimum": 0
+            },
+            "birdEvery": {
+              "type": "number",
+              "minimum": 0
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "fade": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "breeze",
+            "bees",
+            "birds",
+            "birdEvery",
+            "radius",
+            "fade"
+          ],
+          "additionalProperties": false
+        },
+        "whale": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "depth": {
+              "type": "number",
+              "minimum": 0
+            },
+            "reverb": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sleepEvery": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "speed",
+            "depth",
+            "reverb",
+            "sleepEvery"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "on",
+        "volume",
+        "hear",
+        "voice",
+        "hit",
+        "fill",
+        "invited",
+        "enraged",
+        "happy",
+        "snore",
+        "nightmare",
+        "windup",
+        "lost",
+        "ouch",
+        "knock",
+        "charge",
+        "relic",
+        "meadow",
+        "whale"
+      ],
+      "additionalProperties": false
+    },
+    "music": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "volume": {
+          "type": "number",
+          "minimum": 0
+        },
+        "nearDist": {
+          "type": "number",
+          "minimum": 0
+        },
+        "farDist": {
+          "type": "number",
+          "minimum": 0
+        },
+        "floor": {
+          "type": "number",
+          "minimum": 0
+        },
+        "muffle": {
+          "type": "number",
+          "minimum": 0
+        },
+        "clear": {
+          "type": "number",
+          "minimum": 0
+        },
+        "distort": {
+          "type": "number",
+          "minimum": 0
+        },
+        "src": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "on",
+        "volume",
+        "nearDist",
+        "farDist",
+        "floor",
+        "muffle",
+        "clear",
+        "distort",
+        "src"
+      ],
+      "additionalProperties": false
+    },
+    "forecast": {
+      "type": "object",
+      "properties": {
+        "symbols": {
+          "type": "number",
+          "minimum": 0
+        },
+        "probable": {
+          "type": "number",
+          "minimum": 0
+        },
+        "probableMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "afterNext": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "size": {
+          "type": "number",
+          "minimum": 0
+        },
+        "flare": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "symbols",
+        "probable",
+        "probableMax",
+        "afterNext",
+        "radius",
+        "size",
+        "flare"
+      ],
+      "additionalProperties": false
+    },
+    "fight": {
+      "type": "object",
+      "properties": {
+        "scale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "momentum": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "scale",
+        "speed",
+        "momentum"
+      ],
+      "additionalProperties": false
+    },
+    "combat": {
+      "type": "object",
+      "properties": {
+        "aggro": {
+          "type": "number",
+          "minimum": 0
+        },
+        "witchLose": {
+          "type": "number",
+          "minimum": 0
+        },
+        "leaveArea": {
+          "type": "number",
+          "minimum": 0
+        },
+        "engage": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pursuit": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pursuitRun": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fightRun": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legendRun": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reaction": {
+          "type": "number",
+          "minimum": 0
+        },
+        "chaseMult": {
+          "type": "number",
+          "minimum": 0
+        },
+        "partyChaseMult": {
+          "type": "number",
+          "minimum": 0
+        },
+        "marchMult": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fleeMult": {
+          "type": "number",
+          "minimum": 0
+        },
+        "soundsystemHealth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "soundsystemRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "homeHealth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "homeRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "shake": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "aggro",
+        "witchLose",
+        "leaveArea",
+        "engage",
+        "pursuit",
+        "pursuitRun",
+        "fightRun",
+        "legendRun",
+        "reaction",
+        "chaseMult",
+        "partyChaseMult",
+        "marchMult",
+        "fleeMult",
+        "soundsystemHealth",
+        "soundsystemRadius",
+        "homeHealth",
+        "homeRadius",
+        "shake"
+      ],
+      "additionalProperties": false
+    },
+    "notice": {
+      "type": "object",
+      "properties": {
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "curious": {
+          "type": "number",
+          "minimum": 0
+        },
+        "skittish": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "radius",
+        "curious",
+        "skittish"
+      ],
+      "additionalProperties": false
+    },
+    "guard": {
+      "type": "object",
+      "properties": {
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "radius"
+      ],
+      "additionalProperties": false
+    },
+    "witchHealth": {
+      "type": "object",
+      "properties": {
+        "hits": {
+          "type": "number",
+          "minimum": 0
+        },
+        "repairTime": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "hits",
+        "repairTime"
+      ],
+      "additionalProperties": false
+    },
+    "knockout": {
+      "type": "object",
+      "properties": {
+        "releaseEach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "releaseMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "emptyBeat": {
+          "type": "number",
+          "minimum": 0
+        },
+        "teleport": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legendsLoyal": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "releaseEach",
+        "releaseMax",
+        "emptyBeat",
+        "teleport",
+        "legendsLoyal"
+      ],
+      "additionalProperties": false
+    },
+    "dash": {
+      "type": "object",
+      "properties": {
+        "distance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gone": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cooldown": {
+          "type": "number",
+          "minimum": 0
+        },
+        "clear": {
+          "type": "object",
+          "properties": {
+            "tree": {
+              "type": "number",
+              "minimum": 0
+            },
+            "decor": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sound": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speaker": {
+              "type": "number",
+              "minimum": 0
+            },
+            "treehouse": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "tree",
+            "decor",
+            "sound",
+            "speaker",
+            "treehouse"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "distance",
+        "gone",
+        "cooldown",
+        "clear"
+      ],
+      "additionalProperties": false
+    },
+    "spells": {
+      "type": "object",
+      "properties": {
+        "equipped": {
+          "type": "string"
+        },
+        "speed": {
+          "type": "object",
+          "properties": {
+            "mult": {
+              "type": "number",
+              "minimum": 0
+            },
+            "duration": {
+              "type": "number",
+              "minimum": 0
+            },
+            "cooldown": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "mult",
+            "duration",
+            "cooldown"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "equipped",
+        "speed"
+      ],
+      "additionalProperties": false
+    },
+    "boot": {
+      "type": "object",
+      "properties": {
+        "time": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "time"
+      ],
+      "additionalProperties": false
+    },
+    "party": {
+      "type": "object",
+      "properties": {
+        "motes": {
+          "type": "object",
+          "properties": {
+            "perPatch": {
+              "type": "number",
+              "minimum": 0
+            },
+            "from": {
+              "type": "number",
+              "minimum": 0
+            },
+            "to": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "perPatch",
+            "from",
+            "to",
+            "speed"
+          ],
+          "additionalProperties": false
+        },
+        "uplight": {
+          "type": "object",
+          "properties": {
+            "strength": {
+              "type": "number",
+              "minimum": 0
+            },
+            "pulse": {
+              "type": "number",
+              "minimum": 0
+            },
+            "edge": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "strength",
+            "pulse",
+            "edge"
+          ],
+          "additionalProperties": false
+        },
+        "interval": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lossPenalty": {
+          "type": "number",
+          "minimum": 0
+        },
+        "startDelay": {
+          "type": "number",
+          "minimum": 0
+        },
+        "areasPerWave": {
+          "type": "number",
+          "minimum": 0
+        },
+        "maxPerWave": {
+          "type": "number",
+          "minimum": 0
+        },
+        "picker": {
+          "type": "string"
+        },
+        "noisy": {
+          "type": "object",
+          "properties": {
+            "wobble": {
+              "type": "number",
+              "minimum": 0
+            },
+            "lobeSize": {
+              "type": "number",
+              "minimum": 0
+            },
+            "candidates": {
+              "type": "number",
+              "minimum": 0
+            },
+            "spreadFromLast": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "wobble",
+            "lobeSize",
+            "candidates",
+            "spreadFromLast"
+          ],
+          "additionalProperties": false
+        },
+        "transition": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lightReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lightStrength": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "motes",
+        "uplight",
+        "interval",
+        "lossPenalty",
+        "startDelay",
+        "areasPerWave",
+        "maxPerWave",
+        "picker",
+        "noisy",
+        "transition",
+        "lightReach",
+        "lightStrength"
+      ],
+      "additionalProperties": false
+    },
+    "stringLights": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "runsPerArea": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "spansPerRun": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "coneAngle": {
+          "type": "number",
+          "minimum": 0
+        },
+        "junctionChance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "spanMin": {
+          "type": "number",
+          "minimum": 0
+        },
+        "spanMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "spread": {
+          "type": "number",
+          "minimum": 0
+        },
+        "height": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sag": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bulbSpacing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "palette": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "twinkle": {
+          "type": "number",
+          "minimum": 0
+        },
+        "chaseSpeed": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "runsPerArea",
+        "spansPerRun",
+        "coneAngle",
+        "junctionChance",
+        "spanMin",
+        "spanMax",
+        "spread",
+        "height",
+        "sag",
+        "bulbSpacing",
+        "palette",
+        "twinkle",
+        "chaseSpeed"
+      ],
+      "additionalProperties": false
+    },
+    "waveNumbers": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "size": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lift": {
+          "type": "number",
+          "minimum": 0
+        },
+        "spent": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pinRange": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "size",
+        "lift",
+        "spent",
+        "pinRange"
+      ],
+      "additionalProperties": false
+    },
+    "dancefloor": {
+      "type": "object",
+      "properties": {
+        "motes": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "column": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "count",
+            "rise",
+            "speed",
+            "column"
+          ],
+          "additionalProperties": false
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "clearing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "speakers": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "number",
+              "minimum": 0
+            },
+            "start": {
+              "type": "number",
+              "minimum": 0
+            },
+            "radiusFactor": {
+              "type": "number",
+              "minimum": 0
+            },
+            "footprint": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "count",
+            "start",
+            "radiusFactor",
+            "footprint"
+          ],
+          "additionalProperties": false
+        },
+        "paving": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "beyond": {
+              "type": "number",
+              "minimum": 0
+            },
+            "course": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stone": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ragged": {
+              "type": "number",
+              "minimum": 0
+            },
+            "missing": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moss": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "beyond",
+            "course",
+            "stone",
+            "ragged",
+            "missing",
+            "moss"
+          ],
+          "additionalProperties": false
+        },
+        "levels": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "tiles": {
+          "type": "object",
+          "properties": {
+            "witchLift": {
+              "type": "number",
+              "minimum": 0
+            },
+            "witchColour": {
+              "type": "string"
+            },
+            "rippleTime": {
+              "type": "number",
+              "minimum": 0
+            },
+            "trailTime": {
+              "type": "number",
+              "minimum": 0
+            },
+            "eventTime": {
+              "type": "number",
+              "minimum": 0
+            },
+            "lowLevelShare": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "witchLift",
+            "witchColour",
+            "rippleTime",
+            "trailTime",
+            "eventTime",
+            "lowLevelShare"
+          ],
+          "additionalProperties": false
+        },
+        "circleHue": {
+          "type": "number",
+          "minimum": 0
+        },
+        "circleHue2": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pulse": {
+          "type": "number",
+          "minimum": 0
+        },
+        "runeSpeed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lightReach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lightStrength": {
+          "type": "number",
+          "minimum": 0
+        },
+        "discoHeight": {
+          "type": "number",
+          "minimum": 0
+        },
+        "discoSize": {
+          "type": "number",
+          "minimum": 0
+        },
+        "spin": {
+          "type": "number",
+          "minimum": 0
+        },
+        "specks": {
+          "type": "number",
+          "minimum": 0
+        },
+        "speckBrightness": {
+          "type": "number",
+          "minimum": 0
+        },
+        "speckReach": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "motes",
+        "radius",
+        "clearing",
+        "speakers",
+        "paving",
+        "levels",
+        "tiles",
+        "circleHue",
+        "circleHue2",
+        "pulse",
+        "runeSpeed",
+        "lightReach",
+        "lightStrength",
+        "discoHeight",
+        "discoSize",
+        "spin",
+        "specks",
+        "speckBrightness",
+        "speckReach"
+      ],
+      "additionalProperties": false
+    },
+    "canopyCutout": {
+      "type": "object",
+      "properties": {
+        "screenFraction": {
+          "type": "number",
+          "minimum": 0
+        },
+        "edge": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "screenFraction",
+        "edge"
+      ],
+      "additionalProperties": false
+    },
+    "find": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "eyeshine": {
+          "type": "object",
+          "properties": {
+            "range": {
+              "type": "number",
+              "minimum": 0
+            },
+            "strength": {
+              "type": "number",
+              "minimum": 0
+            },
+            "blink": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "range",
+            "strength",
+            "blink"
+          ],
+          "additionalProperties": false
+        },
+        "lightFloor": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rim": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ambient": {
+          "type": "number",
+          "minimum": 0
+        },
+        "moonHue": {
+          "type": "number",
+          "minimum": 0
+        },
+        "moonSat": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "eyeshine",
+        "lightFloor",
+        "rim",
+        "ambient",
+        "moonHue",
+        "moonSat"
+      ],
+      "additionalProperties": false
+    },
+    "tone": {
+      "type": "object",
+      "properties": {
+        "black": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gamma": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ambient": {
+          "type": "number",
+          "minimum": 0
+        },
+        "moon": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "black",
+        "gamma",
+        "ambient",
+        "moon"
+      ],
+      "additionalProperties": false
+    },
+    "bloom": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "strength": {
+          "type": "number",
+          "minimum": 0
+        },
+        "threshold": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "strength",
+        "threshold"
+      ],
+      "additionalProperties": false
+    },
+    "tiltShift": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "where": {
+          "type": "string",
+          "enum": [
+            "before",
+            "after"
+          ]
+        },
+        "strength": {
+          "type": "number",
+          "minimum": 0
+        },
+        "band": {
+          "type": "number",
+          "minimum": 0
+        },
+        "centre": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treetop": {
+          "type": "object",
+          "properties": {
+            "strength": {
+              "type": "number",
+              "minimum": 0
+            },
+            "band": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "strength",
+            "band"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "on",
+        "where",
+        "strength",
+        "band",
+        "centre",
+        "treetop"
+      ],
+      "additionalProperties": false
+    },
+    "population": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "object",
+          "properties": {
+            "babies": {
+              "type": "number",
+              "minimum": 0
+            },
+            "young": {
+              "type": "number",
+              "minimum": 0
+            },
+            "adults": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "babies",
+            "young",
+            "adults"
+          ],
+          "additionalProperties": false
+        },
+        "growth": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "perWave": {
+              "type": "number",
+              "minimum": 0
+            },
+            "weights": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "hide": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "perWave",
+            "weights",
+            "hide"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "start",
+        "growth"
+      ],
+      "additionalProperties": false
+    },
+    "dreams": {
+      "type": "object",
+      "properties": {
+        "range": {
+          "type": "number",
+          "minimum": 0
+        },
+        "nightmare": {
+          "type": "object",
+          "properties": {
+            "at": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "faces": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "at",
+            "faces"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "range",
+        "nightmare"
+      ],
+      "additionalProperties": false
+    },
+    "wildLegends": {
+      "type": "object",
+      "properties": {
+        "wake": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sink": {
+          "type": "number",
+          "minimum": 0
+        },
+        "moss": {
+          "type": "number",
+          "minimum": 0
+        },
+        "guard": {
+          "type": "number",
+          "minimum": 0
+        },
+        "heal": {
+          "type": "number",
+          "minimum": 0
+        },
+        "scale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "breathe": {
+          "type": "number",
+          "minimum": 0
+        },
+        "breathEvery": {
+          "type": "number",
+          "minimum": 0
+        },
+        "aura": {
+          "type": "number",
+          "minimum": 0
+        },
+        "glow": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "wake",
+        "sink",
+        "moss",
+        "guard",
+        "heal",
+        "scale",
+        "breathe",
+        "breathEvery",
+        "aura",
+        "glow"
+      ],
+      "additionalProperties": false
+    },
+    "creatureSimRadius": {
+      "type": "number",
+      "minimum": 0
+    },
+    "creatureSpeed": {
+      "type": "number",
+      "minimum": 0
+    },
+    "setPieceChance": {
+      "type": "number",
+      "minimum": 0
+    },
+    "setPieceScale": {
+      "type": "number",
+      "minimum": 0
+    },
+    "setPieceClear": {
+      "type": "number",
+      "minimum": 0
+    },
+    "setPieceFootprint": {
+      "type": "number",
+      "minimum": 0
+    },
+    "soundsystemFootprint": {
+      "type": "number",
+      "minimum": 0
+    },
+    "reserveMargin": {
+      "type": "number",
+      "minimum": 0
+    },
+    "treeMarginFromSoundsystem": {
+      "type": "number",
+      "minimum": 0
+    },
+    "legendSpeed": {
+      "type": "number",
+      "minimum": 0
+    },
+    "creatureSpeeds": {
+      "type": "object",
+      "properties": {
+        "fast": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "fastMult": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legend": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "fast",
+        "fastMult",
+        "legend"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "mapAreas",
+    "areaSize",
+    "areaScale",
+    "arena",
+    "areaSizeVariance",
+    "borderLayers",
+    "treeDensity",
+    "clearingSize",
+    "clearingFalloff",
+    "gladeAmount",
+    "gladeScale",
+    "areaEdgeBlend",
+    "groundBlend",
+    "ground",
+    "sky",
+    "wind",
+    "groundCover",
+    "density",
+    "bushDensity",
+    "bushClump",
+    "treeHeight",
+    "treeCap",
+    "crownWidth",
+    "treeSpacingX",
+    "treeSpacingZ",
+    "crownHalfWidth",
+    "crownHeight",
+    "bushSpacing",
+    "groundSpeed",
+    "treetopSpeed",
+    "acceleration",
+    "treetop",
+    "groundAcceleration",
+    "leanAt",
+    "facing",
+    "riseTime",
+    "descendTime",
+    "groundHeight",
+    "treetopHeight",
+    "camera",
+    "pixelSize",
+    "glowReach",
+    "glowFalloff",
+    "glowToCutout",
+    "glowHeight",
+    "spriteTilt",
+    "artPixelsPerMetre",
+    "viewMargin",
+    "lightBudget",
+    "lights",
+    "glowPower",
+    "beat",
+    "berries",
+    "leyLines",
+    "witch",
+    "sigilProjection",
+    "occlusion",
+    "stack",
+    "partyObjects",
+    "partyWitches",
+    "speakerLasers",
+    "lasers",
+    "borders",
+    "lightSources",
+    "haze",
+    "scenery",
+    "shadows",
+    "canopyShadow",
+    "mist",
+    "fx",
+    "moonbeams",
+    "treehouse",
+    "home",
+    "looks",
+    "bubbles",
+    "scenes",
+    "grounds",
+    "relics",
+    "walls",
+    "runeMarkers",
+    "pathFade",
+    "trunkFade",
+    "decor",
+    "paths",
+    "invites",
+    "invite",
+    "leash",
+    "bond",
+    "sfx",
+    "music",
+    "forecast",
+    "fight",
+    "combat",
+    "notice",
+    "guard",
+    "witchHealth",
+    "knockout",
+    "dash",
+    "spells",
+    "boot",
+    "party",
+    "stringLights",
+    "waveNumbers",
+    "dancefloor",
+    "canopyCutout",
+    "find",
+    "tone",
+    "bloom",
+    "tiltShift",
+    "population",
+    "dreams",
+    "wildLegends",
+    "creatureSimRadius",
+    "creatureSpeed",
+    "setPieceChance",
+    "setPieceScale",
+    "setPieceClear",
+    "setPieceFootprint",
+    "soundsystemFootprint",
+    "reserveMargin",
+    "treeMarginFromSoundsystem",
+    "legendSpeed",
+    "creatureSpeeds"
+  ],
+  "additionalProperties": false
+}
