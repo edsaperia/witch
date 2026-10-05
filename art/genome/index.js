@@ -5,6 +5,7 @@ import { M } from "../core.js";
 import { GENOMES } from "./species.js";
 import { TEMPLATES, TEMPLATE_IDS } from "./templates.js";
 import { faceProblems } from "./expressions.js";
+import { textureProblems } from "./texture.js";
 export { GENOMES, TEMPLATES, TEMPLATE_IDS };
 export const GENOME_BY_ID = Object.fromEntries(GENOMES.map(g => [g.id, g]));
 
@@ -20,13 +21,30 @@ export function speciesOf(g) {
     if (p.ears) { q.ear = p.ears.kind; if (p.ears.size !== undefined) q.earS = p.ears.size; }
     for (const [k, to] of [["tail", "tail"], ["feet", "paw"], ["horns", "horns"], ["antlers", "antlers"], ["tusks", "tusks"]]) if (p[k] !== undefined) q[to] = p[k];
     S.q = q;
-    // levels: { 0..3: { body, head, coat, parts, legend } } — what changes at a level beyond its size curves: its evolution
-    // (docs/art-guide/EVOLUTIONS.md). Each is merged over the species' own for that level only.
-    if (g.levels) S.levelQ = Object.fromEntries(Object.entries(g.levels).map(([lv, L]) => { const o = { ...(L.body || {}), ...(L.head || {}), ...(L.coat || {}) }, lp = L.parts || {}; if (lp.ears) { o.ear = lp.ears.kind; if (lp.ears.size !== undefined) o.earS = lp.ears.size; } for (const [k, to] of [["tail", "tail"], ["feet", "paw"], ["horns", "horns"], ["antlers", "antlers"], ["tusks", "tusks"]]) if (lp[k] !== undefined) o[to] = lp[k]; return [lv, o]; }));
   }
   S.sizes = { ...TEMPLATES[g.template].sizes, ...g.sizes };
   S.face = { ...TEMPLATES[g.template].face, ...g.face }; // its expressions' shapes (expressions.js)
+  S.texture = { ...TEMPLATES[g.template].texture, ...g.texture }; // its surface: fur, feathers, scales... (texture.js)
+  // its evolution (the evolution kit): each level's own proportions, parts and features, over its own
+  // levels: { 0..3: { body, head, coat, parts, features } } (or an array of four, any null) — what changes at a level beyond its
+  // size curves (docs/art-guide/EVOLUTIONS.md, #121's convention): merged over the species' own for that level only (S.levelQ),
+  // and its own parts (S.levelFeatures: evolve3d's manes, wisps...).
+  if (g.levels) {
+    const L = Object.entries(g.levels).filter(([, l]) => l);
+    S.levelQ = Object.fromEntries(L.map(([lv, l]) => [lv, levelQ(l)]));
+    S.levelFeatures = Object.fromEntries(L.map(([lv, l]) => [lv, (l.features || []).filter(f => typeof f === "object")]));
+  }
   return S;
+}
+
+// The evolution kit's features (creatures3d.js evolve3d).
+export const GENOME_FEATURE_KINDS = ["mane", "wisps", "eyeglint"];
+// A level's overrides, in the builders' bag (as speciesOf makes q).
+function levelQ(l) {
+  const q = { ...l.body, ...l.head, ...l.coat }, p = l.parts || {};
+  if (p.ears) { q.ear = p.ears.kind; if (p.ears.size !== undefined) q.earS = p.ears.size; }
+  for (const [k, to] of [["tail", "tail"], ["feet", "paw"], ["horns", "horns"], ["antlers", "antlers"], ["tusks", "tusks"]]) if (p[k] !== undefined) q[to] = p[k];
+  return q;
 }
 
 // The tags a record's parts carry ("ear.point", "tail.brush", "foot.hoof", "antler.palm"...).
@@ -49,8 +67,10 @@ export function genomeProblems(g) {
   if (!T) return [`${g.id}: no template ${g.template}`];
   if (!T.builders.includes(g.builder)) out.push(`${g.id}: ${g.template} has no builder ${g.builder}`);
   const allowed = Object.values(T.sockets).flat(), tags = genomeTags(g);
-  out.push(...faceProblems(g.id, { ...T.face, ...g.face }));
+  out.push(...faceProblems(g.id, { ...T.face, ...g.face }), ...textureProblems(g.id, { ...T.texture, ...g.texture }));
+  if (g.levels) { if (Object.keys(g.levels).some(k => !["0", "1", "2", "3"].includes(k))) out.push(`${g.id}: levels are 0 to 3 (baby, young, adult, legend)`); for (const l of Object.values(g.levels)) for (const f of l?.features || []) if (typeof f === "object" && !GENOME_FEATURE_KINDS.includes(f.kind)) out.push(`${g.id}: no evolution feature ${f.kind}`); }
   for (const t of tags) if (!allowed.includes(t)) out.push(`${g.id}: ${t} isn't one of ${g.template}'s parts`);
+  for (const [lv, l] of Object.entries(g.levels || {})) for (const t of l?.parts ? genomeTags({ parts: l.parts }) : []) if (!allowed.includes(t)) out.push(`${g.id}: level ${lv}'s ${t} isn't one of ${g.template}'s parts`);
   for (const [a, b] of T.exclude) if (tags.some(t => genomeTagMatch(a, t)) && tags.some(t => genomeTagMatch(b, t))) out.push(`${g.id}: ${a} and ${b} together`);
   for (const k of ["hue", "sat", "val"]) if (!(g.palette[k] >= 0 && g.palette[k] <= 1)) out.push(`${g.id}: palette ${k} ${g.palette[k]}`);
   return out;

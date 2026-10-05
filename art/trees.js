@@ -99,165 +99,16 @@ export function trim(sp, bx, crownY) {
     out.m[j] = sp.m[i]; out.g[j] = sp.g[i]; out.n[j * 3] = sp.n[i * 3]; out.n[j * 3 + 1] = sp.n[i * 3 + 1]; out.n[j * 3 + 2] = sp.n[i * 3 + 2];
     if (sp.blob) (out.blob || (out.blob = new Uint8Array(w * h)))[j] = sp.blob[i]; // the genome generator's blobs, for the pixel wind
   }
+  if (sp.stylised) out.stylised = sp.stylised;
   return { sp: out, crownY: crownY - ny0 };
 }
 export const spread = st => (st.crownWidth || 3) / 3;
 
-// Gnarled broadleaf: a twisting trunk forking low into heavy limbs, a wide crown of clumps
-// with the branches showing between them.
-export function broadTree(r, st, s, P = PLANT_GENOMES.broad.params) {
-  const k = spread(st), W = Math.round(P.w * s * k + P.wPad * s), H = Math.round(P.h * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
-  // options an area type may set: treeTrunks (several from one root), treeLean, treeThick,
-  // treeThin, treeBare (dead, no leaves), treeHollow (a dark hollow), treeWebs (hung with webs)
-  const n = st.treeTrunks || 1, tw = P.tw * s * (st.treeThick || 1) * (st.treeThin ? .55 : 1) / Math.sqrt(n), lean0 = (r() - .5) * P.leanGnarl * st.gnarl + (st.treeLean || 0);
-  const tips = [];
-  let crownY = H;
-  const grow = (p, ang, len, w, d) => {
-    const b = bough(sp, p, ang, len, w, w * .65, st, r, { group: 12 });
-    if (d === 0) { tips.push(b.end); return; }
-    const kids = r() < P.fork ? 3 : 2;
-    for (let i = 0; i < kids; i++) {
-      const da = (i - (kids - 1) / 2) * uni(r, ...P.splay) * (d === 3 ? P.splay3 : 1);
-      grow(b.end, b.ang + da + (r() - .5) * .25, len * uni(r, .6, .78), w * .62, d - 1);
-    }
-    if (d <= 2) tips.push(lerp2(p, b.end, .7));
-  };
-  for (let t = 0; t < n; t++) {
-    const lean = lean0 + (n > 1 ? (t / (n - 1) - .5) * .8 : 0), base = [bx + (t - (n - 1) / 2) * tw * .6, gy];
-    const trunk = bough(sp, base, -Math.PI / 2 + lean, H * P.trunk * (n > 1 ? uni(r, ...P.trunkVar) : 1), tw, tw * .72, st, r, { bend: P.trunkBend });
-    crownY = Math.min(crownY, trunk.end[1]);
-    // the first limbs spread wide: Ed asked for broad crowns
-    for (const side of [-1, 1]) grow(trunk.end, -Math.PI / 2 + lean * .5 + side * uni(r, ...P.limbSpread) * (.7 + .3 * k) * (n > 1 ? .6 : 1), H * P.limb * (.75 + .25 * k) * (n > 1 ? .7 : 1), tw * .7, n > 2 ? 2 : 3);
-    if (n === 1 && r() < P.leader) grow(trunk.end, -Math.PI / 2 + (r() - .5) * .3, H * P.leaderLen, tw * .55, 2);
-    if (t === 0 && st.treeHollow) { const h = lerp2(base, trunk.end, .38); sp.ellipse(h[0], h[1], tw * .28, tw * .5, M.NOSE, { round: .3 }); }
-  }
-  roots(sp, bx, gy, tw * Math.sqrt(n), st, r, s);
-  bark(sp, st);
-  if (st.treeWebs) for (let i = 0; i + 1 < tips.length; i += 2) { const a = tips[i], c = tips[i + 1], L = Math.hypot(c[0] - a[0], c[1] - a[1]); if (L < 40 * s) for (let j = 0; j <= L; j++) { const p = lerp2(a, c, j / L); sp.px(p[0], p[1] + Math.sin(j / L * Math.PI) * L * .15, M.WEB, 0, 0, 1); } }
-  if (st.treeBare) return trim(sp, bx, crownY + 4 * s);
-  // clumps at the tips: back ones darker first, then the front
-  tips.sort((a, b) => a[1] - b[1]);
-  for (const t of tips) clump(sp, add(t, [0, -3 * s]), uni(r, ...P.clumpR) * s, uni(r, ...P.clumpRy) * s, st, r, { mat: r() < P.darkBack ? M.LEAF3 : M.LEAF });
-  for (const t of tips) if (r() < P.extra) clump(sp, add(t, [uni(r, -9, 9) * s, uni(r, -12, -3) * s]), uni(r, ...P.extraR) * s, uni(r, ...P.extraRy) * s, st, r);
-  return trim(sp, bx, crownY + 4 * s);
-}
 
-// Tiered fir: a straight trunk and drooping skirts of branches, narrowing to a spire.
-export function firTree(r, st, s, P = PLANT_GENOMES.fir.params) {
-  const k = .8 + .2 * spread(st), W = Math.round(P.w * s * k), H = Math.round(P.h * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
-  sp.limb([[bx, gy, P.tw * s], [bx, gy - H * .5, P.tw1 * s], [bx, 6 * s, 1.5]], M.TRUNK, { group: 10, round: st.round });
-  roots(sp, bx, gy, P.tw * s, st, r, s * .6);
-  bark(sp, st);
-  const tiers = Math.round(uni(r, ...P.tiers));
-  for (let i = tiers - 1; i >= 0; i--) {
-    const f = i / (tiers - 1), y = 6 * s + f * H * P.reach, half = (P.half[0] + f * P.half[1]) * s * k * uni(r, .9, 1.1), droop = (P.droop[0] + f * P.droop[1]) * s;
-    const pts = [[bx, y - 4 * s], [bx + half * .5, y + droop * .3], [bx + half, y + droop], [bx + half * .7, y + droop * 1.15], [bx, y + droop * .7], [bx - half * .7, y + droop * 1.15], [bx - half, y + droop], [bx - half * .5, y + droop * .3]];
-    sp.shape(tufts(pts, 1, 7, Math.max(2, Math.round(half / (3 * s))), 2 * s, 1), M.LEAF, { group: 30 + i, line: false, round: st.round });
-    sp.mark([[bx - half, y + droop * .55], [bx + half, y + droop * .55], [bx + half, y + droop * 1.4], [bx - half, y + droop * 1.4]], M.LEAF3, [M.LEAF]);
-    sp.mark([[bx - half * .55, y - 2 * s], [bx + half * .1, y - 3 * s], [bx + half * .1, y + droop * .45], [bx - half * .7, y + droop * .7]], M.LEAF2, [M.LEAF]);
-  }
-  return trim(sp, bx, H * P.crownLine);
-}
 
-// Willow: a short, heavy trunk, limbs arching out, and a curtain of hanging strands.
-export function willowTree(r, st, s, P = PLANT_GENOMES.willow.params) {
-  const k = spread(st), W = Math.round(P.w * s * k + P.wPad * s), H = Math.round(P.h * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
-  const tw = P.tw * s;
-  const trunk = bough(sp, [bx, gy], -Math.PI / 2 + (r() - .5) * .3, H * P.trunk, tw, tw * .8, st, r, { bend: 1.6 });
-  const arcs = [];
-  for (let i = 0; i < P.limbs; i++) {
-    const side = i % 2 ? 1 : -1, a = -Math.PI / 2 + side * uni(r, ...P.limbSpread) * (.7 + .3 * k);
-    const b = bough(sp, trunk.end, a, H * uni(r, ...P.limbLen) * (.8 + .2 * k), tw * .55, tw * .3, st, r, { group: 12 });
-    arcs.push(b.end);
-  }
-  roots(sp, bx, gy, tw, st, r, s);
-  bark(sp, st);
-  // the crown's top: low domed clumps over the limbs
-  for (const p of arcs) clump(sp, add(p, [0, -2 * s]), uni(r, ...P.clumpR) * s, uni(r, ...P.clumpRy) * s, st, r);
-  clump(sp, add(trunk.end, [0, -8 * s]), 24 * s, 11 * s, st, r);
-  // strands: thin hanging lines, in two shades, swaying slightly
-  let x0 = W, x1 = 0; for (const p of arcs) { x0 = Math.min(x0, p[0] - 22 * s); x1 = Math.max(x1, p[0] + 22 * s); }
-  for (let x = x0; x < x1; x += uni(r, 1, 1.7)) {
-    let top = H; for (let y = 0; y < H; y++) if (sp.get(x, y) === M.LEAF || sp.get(x, y) === M.LEAF2 || sp.get(x, y) === M.LEAF3) { top = y; break; }
-    if (top >= H) continue;
-    const d = Math.abs(x - bx) / (W / 2), len = (gy - top) * uni(r, ...P.strand) * (1 - d * .3), mat = hash2(x | 0, 1, 9) < .4 ? M.LEAF2 : M.LEAF;
-    for (let y = top + 2; y < Math.min(gy - 2, top + len); y++) {
-      const sway = Math.round(Math.sin(y * .12 + x) * .7);
-      if (hash2(x | 0, y, 5) < .2 + st.density * .8) sp.px(x + sway, y, (y - top) / len > .8 ? M.LEAF3 : mat, sway * .3, .2, .95);
-    }
-  }
-  return trim(sp, bx, trunk.end[1] + 6 * s);
-}
 
-// Birch: a slender pale trunk banded with black, thin branches, light airy clumps.
-export function birchTree(r, st, s, P = PLANT_GENOMES.birch.params) {
-  const k = .7 + .3 * spread(st), W = Math.round(P.w * s * k), H = Math.round(P.h * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
-  const lean = (r() - .5) * .25 + (st.treeLean || 0);
-  const trunk = bough(sp, [bx, gy], -Math.PI / 2 + lean, H * P.trunk, P.tw * s, P.tw1 * s, st, r, { mat: M.BARK2, bend: .4 });
-  // black marks across the white bark
-  for (let i = 0; i < trunk.pts.length - 1; i++) for (let t = 0; t < 1; t += 1 / 8) {
-    const p = lerp2(trunk.pts[i], trunk.pts[i + 1], t + r() * .1);
-    if (r() < .55) for (let dx = -3; dx <= 3; dx++) if (sp.get(p[0] + dx, p[1]) === M.BARK2 && r() < .8) sp.recolour(p[0] + dx, p[1], M.BARKD);
-  }
-  const tips = [trunk.end];
-  for (let i = 0; i < P.branches; i++) {
-    const f = uni(r, ...P.branchAt), p = lerp2(trunk.pts[0], trunk.end, f), side = i % 2 ? 1 : -1;
-    const b = bough(sp, p, -Math.PI / 2 + side * uni(r, ...P.branchSpread), H * uni(r, ...P.branchLen) * k, 2 * s, 1, st, r, { mat: M.BARKD, group: 12 });
-    tips.push(b.end);
-  }
-  for (const t of tips) clump(sp, t, uni(r, ...P.clumpR) * s * k, uni(r, ...P.clumpRy) * s, st, r, { mat: M.LEAF2, ragged: 1.3 });
-  return trim(sp, bx, H * P.crownLine);
-}
 
-// Tree fern: a fibrous trunk and a crown of arching fronds, a fiddlehead curled at the top.
-export function palmTree(r, st, s, P = PLANT_GENOMES.palm.params) {
-  const k = .8 + .2 * spread(st), W = Math.round(P.w * s * k), H = Math.round(P.h * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
-  const bend = uni(r, -P.bend, P.bend) * s, top = [bx + bend, H * P.top];
-  const spine = []; for (let i = 0; i <= 6; i++) { const f = i / 6; spine.push([bx + bend * f * f, gy - (gy - top[1]) * f, (7 - f * 2) * s]); }
-  sp.limb(spine, M.TRUNK, { group: 10, round: st.round });
-  for (let y = Math.round(top[1]); y < gy; y += Math.max(2, Math.round(3 * s))) for (let x = 0; x < W; x++) if (sp.get(x, y) === M.TRUNK) sp.recolour(x, y, M.BARKD); // the old frond scars
-  const fronds = Math.round(uni(r, ...P.fronds));
-  for (let i = 0; i < fronds; i++) {
-    const a = -Math.PI / 2 + (i / (fronds - 1) - .5) * Math.PI * 1.35, len = uni(r, ...P.frondLen) * s * k;
-    let p = top.slice(), ang = a;
-    const back = i % 2 === 0;
-    for (let j = 0; j < len; j++) {
-      const f = j / len; ang = a + Math.sign(Math.cos(a)) * f * 1.3 * Math.abs(Math.cos(a)) + (Math.abs(Math.cos(a)) < .3 ? f * .8 * Math.sign(i - fronds / 2) : 0);
-      p = [p[0] + Math.cos(ang), p[1] + Math.sin(ang) + f * .9];
-      sp.px(p[0], p[1], back ? M.LEAF3 : M.LEAF, Math.cos(ang) * .3, -.3, .9);
-      const leaflet = (1 - f * .8) * P.leaflet * s;
-      if (j % 2) continue;
-      for (let q = 1; q < leaflet; q++) {
-        const nx = -Math.sin(ang), ny = Math.cos(ang);
-        sp.px(p[0] + nx * q, p[1] + ny * q * .8 + q * .35, back ? M.LEAF3 : q > leaflet * .6 ? M.LEAF2 : M.LEAF, nx * .5, .3, .8);
-        sp.px(p[0] - nx * q, p[1] - ny * q * .8 + q * .35, back ? M.LEAF3 : M.LEAF, -nx * .5, -.2, .85);
-      }
-    }
-  }
-  // the fiddlehead
-  for (let t = 0; t < 10; t += .25) { const rr = (10 - t) * .4 * s, p = add(top, [Math.cos(t) * rr, -6 * s + Math.sin(t) * rr]); sp.px(p[0], p[1], M.LEAF2, 0, -.5, .85); }
-  return trim(sp, bx, top[1] + 6 * s);
-}
 
-// Flat-crowned maple: a fork of spreading limbs under broad, flat layers of leaves.
-export function flatTree(r, st, s, P = PLANT_GENOMES.flat.params) {
-  const k = spread(st), W = Math.round(P.w * s * k + P.wPad * s), H = Math.round(P.h * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
-  const tw = P.tw * s;
-  const trunk = bough(sp, [bx, gy], -Math.PI / 2 + (r() - .5) * .4 * (st.gnarl + .3), H * P.trunk, tw, tw * .75, st, r, { bend: 1.2 });
-  const ends = [];
-  for (const side of [-1, 1, -1, 1]) {
-    const b = bough(sp, trunk.end, -Math.PI / 2 + side * uni(r, ...P.limbSpread) * (.7 + .3 * k), H * uni(r, ...P.limbLen) * (.7 + .3 * k), tw * .55, tw * .25, st, r, { group: 12 });
-    ends.push(b.end, lerp2(trunk.end, b.end, .55));
-  }
-  roots(sp, bx, gy, tw, st, r, s);
-  bark(sp, st);
-  const layers = Math.round(uni(r, ...P.layers)), y0 = Math.min(...ends.map(p => p[1]));
-  for (let i = 0; i < layers; i++) {
-    const y = y0 - 6 * s + i * 9 * s, w = (P.layerW - i * P.layerShrink) * s * (.65 + .35 * k);
-    for (let j = 0; j < 5; j++) clump(sp, [bx + (j - 2) * w * .36 + uni(r, -5, 5) * s, y + uni(r, -3, 3) * s], w * uni(r, .2, .26), 7 * s, st, r, { mat: i === layers - 1 ? M.LEAF : M.LEAF3 });
-  }
-  return trim(sp, bx, trunk.end[1] + 4 * s);
-}
 
 
 // ================= UK species =================
@@ -314,82 +165,6 @@ function broadleaf(r, st, s, P) {
   if (P.layers) for (const [c, rx, ry] of drawn) for (let yy = -ry; yy < ry; yy += Math.max(3, P.layers * s)) for (let xx = -rx; xx < rx; xx++) if (sp.get(c[0] + xx, c[1] + yy) === M.LEAF) sp.recolour(c[0] + xx, c[1] + yy, M.LEAF3); // dark lines between layers
   for (const [c, rx, ry] of drawn) leafTexture(sp, c, rx, ry, r, P.tex || {});
   return trim(sp, bx, crownY + 4 * s);
-}
-// Alder: narrow and dark, a straight stem with short side branches, small dark clumps up it, little cones.
-export function alderTree(r, st, s, P = PLANT_GENOMES.alder.params) {
-  const k = .7 + .3 * spread(st), W = Math.round(P.w * s * k), H = Math.round(P.h * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
-  const n = st.treeTrunks || 1, lean = (r() - .5) * .2 + (st.treeLean || 0), clumps = [];
-  for (let t = 0; t < n; t++) {
-    const trunk = bough(sp, [bx + (t - (n - 1) / 2) * 5 * s, gy], -Math.PI / 2 + lean + (n > 1 ? (t / (n - 1) - .5) * .3 : 0), H * P.trunk, P.tw * s / Math.sqrt(n), 1.5, st, r, { bend: .5 });
-    for (let i = 0; i < P.branches; i++) { const f = uni(r, ...P.branchAt), p = lerp2(trunk.pts[0], trunk.end, f), side = i % 2 ? 1 : -1, len = (1 - f * .6) * H * P.branchLen * k; const b = bough(sp, p, -Math.PI / 2 + side * uni(r, .7, 1.2), len, 2 * s, 1, st, r, { group: 12, mat: M.BARKD }); clumps.push([b.end, (8 + (1 - f) * 6) * s * k], [lerp2(p, b.end, .4), (7 + (1 - f) * 4) * s * k]); }
-    clumps.push([trunk.end, 7 * s]);
-  }
-  roots(sp, bx, gy, P.tw * s, st, r, s * .6); bark(sp, st);
-  for (const [c, rr] of clumps) clump(sp, c, rr, rr * .8, st, r, { mat: r() < .5 ? M.LEAF3 : M.LEAF });
-  for (const [c, rr] of clumps) leafTexture(sp, c, rr, rr * .8, r, { grain: 1.3, holes: .2, flecks: .1, dots: .03, dot: M.BARKD });
-  const topY = Math.min(...clumps.map(([c]) => c[1]));
-  return trim(sp, bx, topY + (gy - topY) * .45); // the crown line follows the leaves, wherever the stem leans
-}
-// Scots pine: a tall bare trunk, orange higher up, and flat-topped blue-green clumps on crooked limbs at the top.
-export function pineTree(r, st, s, P = PLANT_GENOMES.pine.params) {
-  const k = .8 + .2 * spread(st), W = Math.round(P.w * s * k), H = Math.round(P.h * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
-  const trunk = bough(sp, [bx, gy], -Math.PI / 2 + (r() - .5) * .25 + (st.treeLean || 0), H * P.trunk, P.tw * s, P.tw1 * s, st, r, { bend: .7 });
-  bark(sp, st); for (let y = 0; y < sp.h * P.orange; y++) for (let x = 0; x < W; x++) if (sp.get(x, y) === M.TRUNK || sp.get(x, y) === M.BARKD) sp.recolour(x, y, hash2(x, y, 3) < .15 ? M.BARKD : M.BELLY); // the upper trunk glows orange
-  roots(sp, bx, gy, P.tw * s, st, r, s * .7);
-  const pads = [];
-  for (let i = 0; i < P.pads; i++) { const f = uni(r, ...P.padAt), p = lerp2(trunk.pts[0], trunk.end, f), side = i % 2 ? 1 : -1; const b = bough(sp, p, -Math.PI / 2 + side * uni(r, .6, 1.3), H * uni(r, ...P.padLen) * k, 3 * s, 1.5, st, r, { group: 12, bend: 1.6, mat: M.BELLY }); pads.push(b.end); }
-  pads.push(trunk.end);
-  for (const p of pads) clump(sp, add(p, [0, -2 * s]), uni(r, ...P.padR) * s * k, uni(r, ...P.padRy) * s, st, r, { mat: M.LEAF, ragged: 1.3 }); // flat-topped plates of needles
-  for (const p of pads) leafTexture(sp, add(p, [0, -2 * s]), P.padR[1] * s * k, P.padRy[1] * s, r, { grain: 1, holes: .25, flecks: .14 });
-  return trim(sp, bx, Math.min(...pads.map(p => p[1])) + 8 * s);
-}
-// Yew: squat, dark and dense, a short fluted reddish trunk under a broad dark dome of tiny needles.
-export function yewTree(r, st, s, P = PLANT_GENOMES.yew.params) {
-  const k = spread(st), W = Math.round(P.w * s * k + P.wPad * s), H = Math.round(P.h * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
-  const n = st.treeTrunks || P.trunks, tw = P.tw * s * (st.treeThick || P.thick);
-  for (let t = 0; t < n; t++) bough(sp, [bx + (t - (n - 1) / 2) * tw * .5, gy], -Math.PI / 2 + (t - (n - 1) / 2) * .35 + (st.treeLean || 0), H * P.trunk, tw, tw * .6, st, r, { mat: M.BELLY, bend: 1.6 });
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (sp.get(x, y) === M.BELLY && (x + Math.round(y / 6)) % 4 === 0) sp.recolour(x, y, M.BARKD); // fluted
-  roots(sp, bx, gy, tw * 1.4, st, r, s);
-  const top = gy - H * P.trunk, cs = [];
-  for (let i = 0; i < P.ring; i++) { const a = Math.PI + (i / (P.ring - 1)) * Math.PI, rr = (40 + 20 * k) * s; cs.push([[bx + Math.cos(a) * rr, top + Math.sin(a) * rr * .55 + 10 * s], uni(r, ...P.ringR) * s]); }
-  for (let i = 0; i < P.fill; i++) cs.push([[bx + (i / (P.fill - 1) - .5) * (60 + 30 * k) * s, top - uni(r, 4, 22) * s], uni(r, ...P.fillR) * s]); // the dome filled in
-  cs.push([[bx, top - 24 * s], P.topR * s]);
-  for (const [c, rr] of cs) clump(sp, c, rr, rr * .7, st, r, { mat: M.LEAF3, ragged: .6 });
-  for (const [c, rr] of cs) leafTexture(sp, c, rr, rr * .7, r, { grain: .7, holes: 0, flecks: .08, mats: [M.LEAF, M.LEAF2, M.LEAF3] });
-  return trim(sp, bx, top + 4 * s);
-}
-// Holly: a dark, glossy cone of small tight clumps, bright glints on the leaves, red berries.
-export function hollyTree(r, st, s, P = PLANT_GENOMES.holly.params) {
-  const k = .8 + .2 * spread(st), W = Math.round(P.w * s * k), H = Math.round(P.h * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
-  sp.limb([[bx, gy, 5 * s], [bx, gy - H * .5, 3 * s], [bx, 10 * s, 1.5]], M.BARK2, { group: 10, round: st.round });
-  const cs = [];
-  for (let i = 0; i < P.tiers; i++) { const f = i / (P.tiers - 1), y = 10 * s + f * H * P.cone, half = (P.halfTop + f * P.halfBottom) * s * k, m = 1 + Math.round(f * 3); for (let j = 0; j < m; j++) cs.push([[bx + (m > 1 ? (j / (m - 1) - .5) * half * 1.3 : 0) + uni(r, -2, 2) * s, y + uni(r, -2, 2) * s], (6 + f * 5) * s]); } // tiers widening into a cone
-  for (const [c, rr] of cs) clump(sp, c, rr * 1.2, rr, st, r, { mat: M.LEAF3, ragged: .7 });
-  for (const [c, rr] of cs) leafTexture(sp, c, rr * 1.2, rr, r, { grain: 1.1, holes: 0, flecks: .2, dots: .035, mats: [M.LEAF, M.LEAF2, M.LEAF3] });
-  return trim(sp, bx, H * P.crownLine);
-}
-// Weeping birch: a white trunk, its fine twigs hanging in long pale-green curtains.
-export function weepingBirchTree(r, st, s, P = PLANT_GENOMES.weepingBirch.params) {
-  const t = birchTree(r, { ...st, treeLean: st.treeLean || 0 }, s), sp = t.sp;
-  for (let x = 0; x < sp.w; x++) {
-    let top = -1; for (let y = 0; y < sp.h; y++) if ([M.LEAF, M.LEAF2, M.LEAF3].includes(sp.get(x, y))) { top = y; break; }
-    if (top < 0 || hash2(x, 1, 7) < P.gaps) continue;
-    const len = (sp.h - top) * uni(r, ...P.curtain);
-    for (let y = top + 1; y < Math.min(sp.h - 3, top + len); y++) if (!sp.get(x, y) || sp.get(x, y) === M.LEAF3) sp.px(x + Math.round(Math.sin(y * .2 + x) * .6), y, hash2(x, y, 2) < .3 ? M.LEAF : M.LEAF2, 0, .2, .95);
-  }
-  return t;
-}
-// Larch: a soft cone of tufted, yellow-green tiers, lighter and gappier than a spruce.
-export function larchTree(r, st, s, P = PLANT_GENOMES.larch.params) {
-  const k = .8 + .2 * spread(st), W = Math.round(P.w * s * k), H = Math.round(P.h * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
-  sp.limb([[bx, gy, 6 * s], [bx, gy - H * .5, 3.5 * s], [bx, 6 * s, 1.2]], M.TRUNK, { group: 10, round: st.round });
-  roots(sp, bx, gy, 6 * s, st, r, s * .5); bark(sp, st);
-  const tiers = P.tiers;
-  for (let i = 0; i < tiers; i++) {
-    const f = i / (tiers - 1), y = 8 * s + f * H * P.cone, half = (P.halfTop + f * P.halfBottom) * s * k;
-    for (let j = 0; j < 4; j++) { const c = [bx + (j / 3 - .5) * half * 1.6, y + Math.abs(j / 3 - .5) * 6 * s]; clump(sp, c, half * .35 + 2 * s, 4 * s, st, r, { mat: M.LEAF2, ragged: 1.6 }); leafTexture(sp, c, half * .35 + 2 * s, 4 * s, r, { grain: 1, holes: .32, flecks: .1, mats: [M.LEAF, M.LEAF2] }); }
-  }
-  return trim(sp, bx, H * P.crownLine);
 }
 
 // Life on the trunk, below the crown: what the bottom half (ground mode) carries besides bare wood. Ivy
@@ -452,7 +227,7 @@ function lowLife(t, r, st, s, P) {
 // it bends, its life below the crown and its look: hue (added to the area's leaf hue), saturation and value of the
 // leaves, the trunk's colour, how it grows across the height classes (wide, narrow, small, willow, normal), and what
 // it is. The first six are the original kinds.
-const TREE_GENERATORS = { broadleaf, broad: broadTree, fir: firTree, willow: willowTree, birch: birchTree, palm: palmTree, flat: flatTree, alder: alderTree, pine: pineTree, yew: yewTree, holly: hollyTree, weepingBirch: weepingBirchTree, larch: larchTree, blob: blobTree };
+const TREE_GENERATORS = { broadleaf, blob: blobTree };
 const MAT_PARAMS = ["trunkMat", "limbMat"]; // material names in a genome, as M's numbers
 function genomeParams(P) { const out = { ...P }; for (const k of MAT_PARAMS) if (typeof P[k] === "string") out[k] = M[P[k]]; return out; }
 // A genome's tree, without its life below the crown. A bespoke generator's own record, with no style rules, is the
@@ -468,7 +243,7 @@ export const TREE_SPECIES = {};
 for (const [id, g] of Object.entries(PLANT_GENOMES)) {
   if (g.species === false) continue; // only a TREE_TYPES kind (the tree fern), never an area's species
   const bare = genomeTree(id, g);
-  TREE_SPECIES[id] = { fn: (r, st, s) => lowLife(bare(r, st, s), r, st, s, g.low || {}), bare, name: g.name, grow: g.grow, ...g.colour }; // every species' trees carry their life below the crown; bare draws without it
+  TREE_SPECIES[id] = { fn: (r, st, s) => lowLife(bare(r, st, s), r, st, s, g.low || {}), bare, name: g.name, grow: g.grow, blob: g.generator === "blob", ...g.colour }; // every species' trees carry their life below the crown; bare draws without it
 }
 // The species a flora preview names (the game's ?flora=, the lab): "new" the genome generator's species, "fantasy" its fantasy
 // ones, "all" every species, or a comma list of ids; unknown ids are left out.
@@ -480,6 +255,8 @@ export function floraPick(q) {
   if (q === "all") return ids;
   return q.split(",").map(x => x.trim()).filter(x => TREE_SPECIES[x]);
 }
+// the original six kinds by their old names (the style's tree-type knobs, the lab): grown from their genomes by the blob generator now
+export const broadTree = TREE_SPECIES.broad.bare, firTree = TREE_SPECIES.fir.bare, willowTree = TREE_SPECIES.willow.bare, birchTree = TREE_SPECIES.birch.bare, flatTree = TREE_SPECIES.flat.bare, palmTree = genomeTree("palm", PLANT_GENOMES.palm);
 export const oakTree = TREE_SPECIES.oak.bare, beechTree = TREE_SPECIES.beech.bare, ashTree = TREE_SPECIES.ash.bare, limeTree = TREE_SPECIES.lime.bare, sycamoreTree = TREE_SPECIES.sycamore.bare, chestnutTree = TREE_SPECIES.chestnut.bare, rowanTree = TREE_SPECIES.rowan.bare, hawthornTree = TREE_SPECIES.hawthorn.bare, hazelTree = TREE_SPECIES.hazel.bare;
 const SPECIES_BY_FN = new Map(Object.entries(TREE_SPECIES).flatMap(([id, S]) => [[S.fn, { id, ...S }], [S.bare, { id, ...S }]]));
 export const treeSpecies = type => TREE_SPECIES[type] || TREE_SPECIES.broad;
@@ -516,6 +293,14 @@ export function treeColours(r, st, type) {
     [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212],
     [M.LEAF]: hsv2rgb(h, Math.min(1, .62 * st.sat * sa), Math.min(1, .58 * va)), [M.LEAF2]: hsv2rgb(h - .05, Math.min(1, .55 * st.sat * sa), Math.min(1, .8 * va)), [M.LEAF3]: hsv2rgb(h + .03, Math.min(1, .66 * st.sat * sa), .38 * va), [M.WEB]: [225, 225, 232],
   };
+  if (st.artStyle && S?.blob) { // the pixel-art ramp (the blob generator's trees; bake's post-pass does the rest) (docs/ART-GUIDE.md section 0): 3 hue-shifted tones per material, the shadow deeper, more saturated and
+    // towards blue-violet, the light pale and towards cream; "ref" (Ed's reference, rung 6) keeps one tone family, "bold" (rung 3/4) shifts further
+    const ref = st.artStyle === "ref", ls = Math.min(1, .62 * st.sat * sa), lv = Math.min(1, .58 * va);
+    c[M.LEAF3] = hsv2rgb(h + (ref ? .035 : .07), Math.min(1, ls * 1.25), lv * .52);
+    c[M.LEAF2] = hsv2rgb(h - (ref ? .045 : .08), ls * (ref ? .5 : .62), Math.min(1, lv * 1.5));
+    c[M.BARKD] = hsv2rgb(st.trunkHue - (ref ? .02 : .04), Math.min(1, .6 * st.sat), .15); // bark's shadow towards red-brown
+    c[M.BARKL] = hsv2rgb(st.trunkHue + (ref ? .03 : .05), .26 * st.sat, .56);            // and its light towards cream
+  }
   if (S?.trunk) c[M.BARK2] = hsv2rgb(...S.trunk); // smooth grey or brown bark (beech, rowan, holly, hazel)
   if (S?.upper) c[M.BELLY] = hsv2rgb(...S.upper); // a pine's orange upper trunk, a yew's red
   if (S?.dot) c[M.FLOWER] = S.dot; // berries, candles
@@ -533,6 +318,7 @@ export function splitTree(t) { // bottom = wood below the crown line and the lif
     dst.put(x, y, m, sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]);
     if (sp.blob?.[i]) (dst.blob || (dst.blob = new Uint8Array(sp.w * sp.h)))[i] = sp.blob[i];
   }
+  if (sp.stylised) top.stylised = bot.stylised = sp.stylised; // drawn stylised already: bake leaves it be
   return { top, bot };
 }
 

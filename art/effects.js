@@ -94,6 +94,9 @@ export const ATTACK_EFFECTS = {
   // a lunging swipe that knocks back (the claws' melee), the big one harder
   swipe: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], hit: "hitSpark", status: ["knockback"] },
   bigswipe: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], hit: "hitSparkBig", status: ["knockback", "dust"] },
+  // a woken legend's ranged attacks: a great lob onto a target circle, a long sweeping beam
+  legendLob: { windup: "windupFlash", telegraph: ["targetCircle"], projectile: "lobSeed", shadow: "lobShadow", hit: "hitSparkBig" },
+  legendBeam: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], beam: ["beamLongStart", "beamLongLoop", "beamLongEnd"], hit: "hitSpark" },
   spit: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "spit", hit: "hitSpark" },
   longspit: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "feather", hit: "hitSpark" },
   barb: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "barb", hit: "hitSpark", status: ["slowRing", "slowMark"] },

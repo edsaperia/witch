@@ -1,5 +1,6 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { LEGEND_BUFFS } from "./rules/buffs";
+import { FrameStats } from "./platform/frameStats";
 import { Shake } from "./render/shake";
 import { Music } from "./platform/audio/music";
 import { Sfx } from "./platform/audio/sfx";
@@ -95,6 +96,9 @@ else if (blendParam) { const [w, f, b] = blendParam.split(",").map(Number); tuni
 const borderParam = params.get("border")?.split(",").map(Number);
 if (borderParam) { const [tw, sr, sb] = borderParam; tuning.borders = { ...tuning.borders, ...(tw >= 0 ? { twinkle: tw } : {}), ...(sr >= 0 ? { swapRate: sr } : {}), ...(sb >= 0 ? { swapBeat: sb } : {}) }; }
 // ?grass=0..2: how thick the ground cover is (0 none).
+// ?lights=<n>: how many of the nearest point lights shade each pixel (the light budget; 0 none), to compare frame costs.
+const lightsParam = params.get("lights");
+if (lightsParam !== null && !isNaN(Number(lightsParam))) tuning.lightBudget = Math.max(0, Number(lightsParam));
 const grassParam = params.get("grass");
 if (grassParam !== null && !isNaN(Number(grassParam))) tuning.groundCover = { ...tuning.groundCover, density: Number(grassParam) };
 // ?wind=<strength>: the wind's sway (0 still).
@@ -191,6 +195,7 @@ const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = loadStyle();
 { const artStyle = params.get("style"); if (artStyle === "bold" || artStyle === "ref") style.artStyle = artStyle; } // ?style=now|bold|ref: a pixel-art style (art/stylise.js) baked into every sprite, carried to the art worker in the style
+if (params.get("texture") === "0") style.texture = 0; // ?texture=0: creatures as before their fur, feathers and scales (art/genome/texture.js), to compare
 if (params.get("flora")) style.flora = params.get("flora"); // ?flora=new|fantasy|all|<ids>: every wooded area grows these tree species (art/flora), carried to the art worker in the style
 /** Load timings (ms since the page started): the view built (the page's own sprites drawn), ready to play. */
 const loadTimes = { viewStart: performance.now(), view: 0, ready: 0 };
@@ -443,21 +448,30 @@ shakeEl?.addEventListener("pointerdown", e => {
   showShakeOpt();
 });
 let shaken = false;
+// ?subpixel=0: the camera's old whole-art-pixel steps, to compare (on by default: Ed, 2026-10-05, "it feels low").
+const subpixelOn = params.get("subpixel") !== "0";
 function applyShake(): void {
   const W = game.witches[0];
   shake.watch(W.health, !!W.ko, tuning.witchHealth.hits, game.clock.time);
   const o = shake.offset(game.clock.time, tuning.pixelSize);
-  if (o.amount <= 0) { if (shaken) { canvas.style.transform = ""; shaken = false; } return; }
+  // The camera's sub-pixel glide (view.subpixel): the snap it took off, given back in whole screen pixels.
+  const p = tuning.pixelSize, gx = subpixelOn ? Math.round(view.subpixel.x * p) : 0, gy = subpixelOn ? Math.round(view.subpixel.y * p) : 0;
+  if (o.amount <= 0) {
+    if (gx || gy) { canvas.style.transform = `translate(${gx}px, ${gy}px)`; shaken = true; }
+    else if (shaken) { canvas.style.transform = ""; shaken = false; }
+    return;
+  }
   // Zoomed in just enough that no edge shows while it's off centre and turned.
   const w = window.innerWidth, h = window.innerHeight, turn = Math.abs((o.rot * Math.PI) / 180) * 0.5 * Math.hypot(w, h);
   const zoom = 1 + (2 * (Math.max(Math.abs(o.x), Math.abs(o.y)) + turn)) / Math.min(w, h);
-  canvas.style.transform = `translate(${o.x}px, ${o.y}px) rotate(${o.rot.toFixed(3)}deg) scale(${zoom.toFixed(4)})`;
+  canvas.style.transform = `translate(${o.x + gx}px, ${o.y + gy}px) rotate(${o.rot.toFixed(3)}deg) scale(${zoom.toFixed(4)})`;
   shaken = true;
 }
 document.addEventListener("visibilitychange", () => { if (document.hidden) last = 0; });
 
 let lastDraw = 0;
-let last = 0, fps = 60, frames = 0, fpsT = 0;
+let last = 0;
+const frameStats = new FrameStats(view.renderer.getContext());
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
 let manual = false;
@@ -469,8 +483,8 @@ function frame(now: number): void {
   if (manual) return;
   const dt = last ? (now - last) / 1000 : 0;
   last = now;
-  frames++; fpsT += dt;
-  if (fpsT >= 0.5) { fps = frames / fpsT; frames = 0; fpsT = 0; }
+  const work0 = performance.now();
+  frameStats.frame(dt * 1000);
   freeze.pollPad();
   const c = input.read();
   if (c.toggleAutoTalk) setAutoTalk(!autoTalk);
@@ -498,13 +512,16 @@ function frame(now: number): void {
   if (game.clock.paused && !freeze.frozen && now - lastDraw < 300) return;
   lastDraw = now;
   // Drawn between the last two fixed steps (game time: party transitions, sigils and waves are stamped in it).
+  frameStats.beginGpu();
   interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP)));
+  frameStats.endGpu();
+  frameStats.work(performance.now() - work0);
   applyShake();
   freeze.update();
   if (debugOn) {
     const w = game.witch, s = view.stats;
     debugEl.textContent = [
-      `fps    ${fps.toFixed(0)}`,
+      ...frameStats.lines(),
       `seed   ${seed}`,
       `area   ${areaUnderWitch(game)}`,
       `mode   ${w.mode}`,
