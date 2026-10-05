@@ -148,7 +148,7 @@ export class MusicEngine {
       this.tone.frequency.setValueAtTime(f0, t);
       if (f1 !== f0) this.tone.frequency.exponentialRampToValueAtTime(f1, t + 16 * sps);
     }
-    const events = notesAt(S, plan, next, step, { seed: this.seed, siege: cue.siege });
+    const events = notesAt(S, plan, next, step, { seed: this.seed, siege: cue.siege, party: cue.party });
     const swing = step % 2 === 1 ? S.swing * sps : 0;
     for (const e of events) this.play(e, t + swing + e.offset * sps, e.dur * sps, sps);
   }
