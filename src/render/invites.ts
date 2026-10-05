@@ -155,7 +155,7 @@ export class InviteView {
       place(im, L.x, groundLift(L.flown), L.z);
       // End over end: squashed by the spin's cosine, flipped on the far side (snapped to a few steps, pixel-like).
       const spin = Math.round(((time - L.at) * 3.2 + L.n * 0.37) * 8) / 8, cx = Math.cos(spin * Math.PI * 2);
-      im.style.transform = `scaleX(${Math.abs(cx) < 0.2 ? 0.2 * Math.sign(cx || 1) : cx.toFixed(2)})`;
+      im.style.transform = `scaleX(${(Math.sign(cx || 1) * Math.max(0.5, Math.abs(cx))).toFixed(2)})`; // (never thinner than half: it reads as a letter)
     });
 
     // The meters: a pill of hearts over each creature with some affection.

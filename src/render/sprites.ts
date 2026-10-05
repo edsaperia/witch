@@ -308,7 +308,7 @@ void main() {
   // Glowing white (a party animal evolving).
   if (vGlow > 0.0 && uSilhouette.a <= 0.0) gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0), vGlow);
   // Tinted (enraged creatures, red): toward the tint by the pixel's own lightness, so its shading and shape still read.
-  if (uTint.a > 0.0 && uSilhouette.a <= 0.0) { float l = dot(gl_FragColor.rgb, vec3(0.3, 0.55, 0.15)); gl_FragColor.rgb = mix(gl_FragColor.rgb, uTint.rgb * (0.3 + 1.4 * l), uTint.a); }
+  if (uTint.a > 0.0 && uSilhouette.a <= 0.0) { float l = dot(gl_FragColor.rgb, vec3(0.3, 0.55, 0.15)); gl_FragColor.rgb = mix(gl_FragColor.rgb, uTint.rgb * (0.55 + 1.1 * l), uTint.a); } // (a floor: red even in the dark, from the treetops)
   // A sleeping legend (glow -2 - moss): grown over, its colours gone toward moss and earth, so it
   // reads as a mound of the ground (no eyeshine: below -0.5).
   if (vGlow < -1.5) {

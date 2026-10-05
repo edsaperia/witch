@@ -36,7 +36,7 @@ export function lookOf(c: Creature): Look {
  *  one uniform shared by every enraged batch, set from tuning looks.enragedTint each frame (amount 0: off). */
 export const ENRAGED_TINT = { value: new THREE.Vector4(1, 0.16, 0.16, 0) };
 function setTint(t: Tuning): void {
-  const T = t.looks?.enragedTint ?? { colour: "#ff2a2a", amount: 0.55 }, h = T.colour.replace("#", "");
+  const T = t.looks?.enragedTint ?? { colour: "#ff2a2a", amount: 0.65 }, h = T.colour.replace("#", "");
   ENRAGED_TINT.value.set(parseInt(h.slice(0, 2), 16) / 255, parseInt(h.slice(2, 4), 16) / 255, parseInt(h.slice(4, 6), 16) / 255, T.amount);
 }
 
