@@ -13,7 +13,7 @@ const unknown = (names: Iterable<string>, known: Set<string>) => [...names].filt
 
 describe("the config files' schemas (config/schema/)", () => {
   for (const c of CONFIGS) it(`holds ${c.file}`, () => {
-    expect(validate(data[c.name], load(c.schema) as Schema, c.name)).toEqual([]);
+    expect(validate(data[c.name], load(c.schema) as Schema, c.name), `${c.file} and its schema differ: after adding, renaming or removing a key, run \`node tools/config/schema.mjs --add\` and commit ${c.schema} (a wrong type or range is the file's mistake, or set it in src/rules/configSchemas.ts)`).toEqual([]);
   });
 });
 

@@ -295,10 +295,20 @@ depart (Ed, 2026-10-05: "The start of the first leyline should go from the front
 
 ## `witch`
 
-The witch is lit by the world's lights like everything else (Ed: "I can go near a coloured light source and not change colour"), but not by her own glow: never darker than lightFloor times her old unlit look, so she reads in the dark; coloured lights (soundsystems, campfires, rune stones, the dancefloor) tint her by lightTint and rim the edge of her facing them by lightRim. Over the hills (Ed, v289: "when you're moving quickly, you jerk up and down with the roll of hills") she and the camera ride a smoothed height, not the ground under her: the ground averaged over heightLookAhead seconds of her flight behind and ahead of her (so the hills' bumps smooth out and she rises early for a crest), eased by heightSmooth seconds at full speed (a damped spring; less as she slows, none standing still; 0 off), and her feet always at least heightClearance metres over the ground under her and a stride ahead.
+The witch knocked back and staggered by a blow (Ed, 2026-10-05: "add a knockback and stun on the witch; make it large on chasing/ramming creatures"; rules/knock.ts): thrown straight away from the blow, base metres for any blow (bites, swipes, shots) plus scale times the attack's own knockback (combat.json; so a maul, quake or slam sits in between), at least charge metres when it rams her (a charge, or a leap landing on her), at most max; eased off at ease a second (like a creature's knockback), straight through scenery (Ed: "don't make it stop at scenery"), nudged to the nearest clear spot at the end if she'd rest inside a trunk, rock, speaker, soundsystem or the treehouse (the blink's clearances). Staggered (no moving, blinking or 💌s, a wobble and stars) stunBase seconds plus stunScale a metre thrown past base, at most stunMax; then not staggered again for immune seconds (the blows still count), so a pack can't stun-lock her. A blink dodges it all; the blow that knocks her out throws nothing. on false, or ?knock=0, turns it off.
 
 | knob | type | range |
 |---|---|---|
+| `witch.knock.on` | boolean |  |
+| `witch.knock.base` | number | 0 to … |
+| `witch.knock.scale` | number | 0 to … |
+| `witch.knock.charge` | number | 0 to … |
+| `witch.knock.max` | number | 0 to … |
+| `witch.knock.ease` | number | 0 to … |
+| `witch.knock.stunBase` | number | 0 to … |
+| `witch.knock.stunScale` | number | 0 to … |
+| `witch.knock.stunMax` | number | 0 to … |
+| `witch.knock.immune` | number | 0 to … |
 | `witch.lightFloor` | number | 0 to … |
 | `witch.lightTint` | number | 0 to … |
 | `witch.lightRim` | number | 0 to … |
