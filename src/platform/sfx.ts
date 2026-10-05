@@ -291,10 +291,55 @@ export class Sfx {
     this.osc("triangle", f, at + 0.06, 0.3, g2);
   }
 
+  /** The witch hurt (Ed, 2026-10-05: "witch saying 'ouch!'"): a quick cry in her own babble voice,
+   *  "ouch!" (a sharp rise, then a falling clipped "ch"), or now and then "oof!" or "eek!", over a
+   *  soft thump. `strain` 0-1: how near she is to being knocked down, higher, harsher and louder. */
+  ouch(strain = 0, pan = 0): void {
+    const V = this.T.voice.witch, O = this.T.ouch, c = this.ctx, at = c.currentTime + 0.005, out = this.voice(pan);
+    const p = V.pitch * (1.1 + 0.3 * strain) * (0.96 + 0.08 * Math.random()), vol = O.volume * (0.85 + 0.35 * strain), grit = 0.25 * strain;
+    const base = { formants: V.timbre * (1 + 0.08 * strain), wave: "sawtooth" as OscillatorType, grit, pan, consonant: false };
+    const pick = Math.random();
+    if (pick < 0.6) {
+      // "ow-ch": up sharply into the "ow", then down and clipped with a "ch" of breath
+      this.syllable(at, { ...base, pitch: p, end: p * 1.4, vowel: 0, dur: 0.08, gain: vol }, out);
+      this.syllable(at + 0.075, { ...base, pitch: p * 1.35, end: p * 0.85, vowel: 4, dur: 0.09, gain: vol * 0.85 }, out);
+      const hp = c.createBiquadFilter(), ng = c.createGain();
+      hp.type = "highpass"; hp.frequency.value = 3200; ng.connect(out); this.env(ng, at + 0.16, vol * 0.4, 0.003, 0.05);
+      hp.connect(ng); this.noiseBurst(at + 0.16, 0.06, hp, Math.random());
+    } else if (pick < 0.8) {
+      // "oof!": one falling breath of a syllable
+      this.syllable(at, { ...base, pitch: p * 0.85, end: p * 0.6, vowel: 4, dur: 0.14, gain: vol, noise: 0.35 }, out);
+    } else {
+      // "eek!": a high, squeezed rise
+      this.syllable(at, { ...base, pitch: p * 1.5, end: p * 1.9, vowel: 2, dur: 0.12, gain: vol * 0.9 }, out);
+    }
+    this.thump(at, O.volume * (0.6 + 0.4 * strain), pan);
+  }
+
+  /** Knocked down: a longer "whoa-oh" as she's sent home, falling away, over a heavier thump. */
+  knockdown(pan = 0): void {
+    const V = this.T.voice.witch, O = this.T.ouch, at = this.ctx.currentTime + 0.005, out = this.voice(pan), p = V.pitch * 1.2, vol = O.volume;
+    const base = { formants: V.timbre, wave: "sawtooth" as OscillatorType, grit: 0.15, pan, consonant: false, trill: [6, 35] };
+    this.syllable(at, { ...base, pitch: p, end: p * 1.45, vowel: 3, dur: 0.3, gain: vol }, out);
+    this.syllable(at + 0.28, { ...base, pitch: p * 1.4, end: p * 0.55, vowel: 3, dur: 0.6, gain: vol * 0.9 }, out);
+    this.thump(at, vol * 1.3, pan);
+  }
+
+  /** A soft body thump: a low sine falling, and a puff of low noise. */
+  private thump(at: number, vol: number, pan = 0): void {
+    const c = this.ctx, out = this.voice(pan), g = c.createGain();
+    g.connect(out); this.env(g, at, vol, 0.002, 0.14);
+    const o = this.osc("sine", 110, at, 0.16, g); o.frequency.exponentialRampToValueAtTime(42, at + 0.14);
+    const lp = c.createBiquadFilter(), ng = c.createGain();
+    lp.type = "lowpass"; lp.frequency.value = 500; ng.connect(out); this.env(ng, at, vol * 0.5, 0.002, 0.08);
+    lp.connect(ng); this.noiseBurst(at, 0.1, lp, 0.6);
+  }
+
   /** A soundsystem lost (the next wave coming sooner): a sad sting, a party gone quiet rather than
    *  a death. A record scratch, the party's chord running down like a tape stopping, then a little
-   *  clock ticking faster as the countdown jumps forward, and a soft chime. Heard anywhere. */
-  lost(): void {
+   *  clock ticking faster as the countdown jumps forward, and a soft chime. Heard anywhere.
+   *  `urgent` (the wave comes at once): the clock runs quicker and longer, the chime a step higher. */
+  lost(urgent = false): void {
     const c = this.ctx, at = c.currentTime + 0.01, vol = this.T.lost.volume, out = this.voice(0);
     // the scratch: band-passed noise swept fast down and up
     const bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 2.5;
@@ -312,14 +357,14 @@ export class Sfx {
     }
     // the clock: ticks quickening (tick, tock), then a soft chime as it lands
     let t = t0 + run + 0.15;
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0, n = urgent ? 10 : 7; i < n; i++) {
       const k = c.createBiquadFilter(), kg = c.createGain();
       k.type = "bandpass"; k.frequency.value = i % 2 ? 1500 : 2100; k.Q.value = 12;
       kg.connect(out); this.env(kg, t, vol * 0.9, 0.001, 0.035);
       k.connect(kg); this.noiseBurst(t, 0.04, k, i * 0.1);
-      t += 0.2 * Math.pow(0.82, i);
+      t += (urgent ? 0.13 : 0.2) * Math.pow(urgent ? 0.86 : 0.82, i);
     }
-    const f = mtof(degree(this.root + 24, 2));
+    const f = mtof(degree(this.root + 24, urgent ? 4 : 2));
     for (const [r, l] of [[1, 1], [2.76, 0.35]]) { const g = c.createGain(); g.connect(out); this.env(g, t + 0.05, vol * 0.4 * l, 0.003, 0.6); this.osc("sine", f * r, t + 0.05, 0.7, g); }
   }
 
@@ -417,6 +462,141 @@ export class Sfx {
       bp.type = "bandpass"; bp.frequency.value = 250 + Math.random() * 350; bp.Q.value = 3;
       cg.connect(out); cg.connect(this.space()); this.env(cg, t0, vol * 0.5, 0.001, 0.025);
       bp.connect(cg); this.noiseBurst(t0, 0.03, bp, Math.random());
+    }
+  }
+
+  // ——— the witch knocked back and stunned (#108) ———
+
+  /** Knocked back `metres` (a blow, a charge): a thump and a short airborne whoosh, both bigger the
+   *  further she's thrown. */
+  knock(metres: number, pan = 0): void {
+    const K = this.T.knock, c = this.ctx, at = c.currentTime + 0.005, m = Math.max(0.5, metres), k = Math.min(1, m / 8);
+    if (!this.ready("knock", 0.15)) return;
+    this.thump(at, K.volume * (0.6 + 0.6 * k), pan);
+    const out = this.voice(pan), bp = c.createBiquadFilter(), g = c.createGain(), dur = 0.18 + 0.05 * Math.min(10, m);
+    bp.type = "bandpass"; bp.Q.value = 1.2;
+    bp.frequency.setValueAtTime(2600, at); bp.frequency.exponentialRampToValueAtTime(380, at + dur);
+    g.connect(out); g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(K.volume * K.whoosh * (0.4 + 0.8 * k), at + dur * 0.3); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+    bp.connect(g); this.noiseBurst(at, dur + 0.02, bp, Math.random());
+  }
+
+  /** Stunned: one soft twinkle of the dizzy loop (the cue plays them round and round while it lasts). */
+  twinkle(i: number, pan = 0): void {
+    const K = this.T.knock, c = this.ctx, at = c.currentTime + 0.005, out = this.voice(pan + 0.4 * Math.sin(i * 1.3));
+    const f = mtof(degree(this.root + 48, [0, 2, 4, 2, 1, 3][i % 6]));
+    for (const [r, l] of [[1, 1], [2.76, 0.3]]) { const g = c.createGain(); g.connect(out); this.env(g, at, K.volume * K.twinkle * l, 0.002, 0.16); this.osc("sine", f * r, at, 0.2, g); }
+  }
+
+  // ——— a legend's long charge (the bug hunter's charge) ———
+
+  /** The charge's windup: a deep bellow, a low gritty roar swelling and sinking, breath behind it. */
+  bellow(pan = 0, near = 1): void {
+    const C = this.T.charge, c = this.ctx, at = c.currentTime + 0.01, out = this.voice(pan), vol = C.volume * C.bellow * near, dur = 1.1;
+    if (!this.ready("bellow", 0.5)) return;
+    const lp = c.createBiquadFilter(), g = c.createGain(), sh = c.createWaveShaper();
+    lp.type = "lowpass"; lp.Q.value = 5; lp.frequency.setValueAtTime(220, at); lp.frequency.exponentialRampToValueAtTime(650, at + dur * 0.35); lp.frequency.exponentialRampToValueAtTime(200, at + dur);
+    sh.curve = grit(); sh.connect(lp); lp.connect(g); g.connect(out); g.connect(this.space());
+    g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + 0.2); g.gain.setValueAtTime(vol, at + dur * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+    const f = 46;
+    for (const det of [-9, 0, 8]) { const o = this.osc("sawtooth", f, at, dur, sh); o.detune.value = det; o.frequency.setValueAtTime(f, at); o.frequency.exponentialRampToValueAtTime(f * 1.35, at + dur * 0.35); o.frequency.exponentialRampToValueAtTime(f * 0.8, at + dur); }
+    const nb = c.createBiquadFilter(), ng = c.createGain(); nb.type = "bandpass"; nb.frequency.value = 500; nb.Q.value = 0.8;
+    ng.connect(out); this.env(ng, at, vol * 0.4, 0.15, dur * 0.8); nb.connect(ng); this.noiseBurst(at, dur, nb, Math.random());
+  }
+
+  /** One heavy hoofbeat (or, `light`, a trot's): a low thud and a spray of dirt. */
+  hoof(pan = 0, near = 1, light = false): void {
+    const C = this.T.charge, c = this.ctx, at = c.currentTime + 0.005, out = this.voice(pan), vol = C.volume * (light ? C.trot : C.hooves) * near;
+    const g = c.createGain(); g.connect(out); this.env(g, at, vol, 0.002, light ? 0.09 : 0.16);
+    const o = this.osc("sine", light ? 120 : 80, at, 0.2, g); o.frequency.exponentialRampToValueAtTime(light ? 60 : 34, at + (light ? 0.08 : 0.14));
+    const lp = c.createBiquadFilter(), ng = c.createGain(); lp.type = "lowpass"; lp.frequency.value = light ? 1400 : 700;
+    ng.connect(out); this.env(ng, at, vol * 0.45, 0.002, light ? 0.05 : 0.09); lp.connect(ng); this.noiseBurst(at, 0.12, lp, Math.random());
+  }
+
+  private rumbleGain: GainNode | null = null;
+  private skidGain: GainNode | null = null;
+  private skidBand: BiquadFilterNode | null = null;
+  private chargePan: StereoPannerNode | null = null;
+  /** The charge's lasting sounds, each frame: the ground's rumble along its lane (0-1, by its speed
+   *  and nearness) and the skid of its braking arc (0-1). */
+  charge(rumble: number, skid: number, pan = 0): void {
+    const C = this.T.charge, c = this.ctx, now = c.currentTime;
+    if (!this.rumbleGain && rumble <= 0.001 && skid <= 0.001) return;
+    if (!this.rumbleGain) {
+      this.chargePan = c.createStereoPanner(); this.chargePan.connect(this.out);
+      const rs = c.createBufferSource(), rl = c.createBiquadFilter(); rs.buffer = this.noise; rs.loop = true; rl.type = "lowpass"; rl.frequency.value = 110; rl.Q.value = 0.7;
+      this.rumbleGain = c.createGain(); this.rumbleGain.gain.value = 0; rs.connect(rl); rl.connect(this.rumbleGain); this.rumbleGain.connect(this.chargePan); rs.start(now);
+      const ks = c.createBufferSource(); ks.buffer = this.noise; ks.loop = true; ks.playbackRate.value = 0.7;
+      this.skidBand = c.createBiquadFilter(); this.skidBand.type = "bandpass"; this.skidBand.Q.value = 1.5; this.skidBand.frequency.value = 900;
+      this.skidGain = c.createGain(); this.skidGain.gain.value = 0; ks.connect(this.skidBand); this.skidBand.connect(this.skidGain); this.skidGain.connect(this.chargePan); ks.start(now);
+    }
+    this.rumbleGain.gain.setTargetAtTime(C.volume * C.rumble * rumble * 3, now, 0.15);
+    this.skidGain!.gain.setTargetAtTime(C.volume * C.skid * skid, now, 0.06);
+    this.skidBand!.frequency.setTargetAtTime(350 + 900 * skid, now, 0.1);
+    this.chargePan!.pan.setTargetAtTime(Math.max(-1, Math.min(1, pan)), now, 0.1);
+  }
+
+  // ——— a relic bottle found ———
+
+  /** A relic bottle spotted (or reached): a rare, magical chime, glass partials rising through a
+   *  bright scale over a shimmer, in the legends' big space: a lucky find. */
+  relic(pan = 0): void {
+    const R = this.T.relic, c = this.ctx, at = c.currentTime + 0.01, out = this.voice(pan), vol = R.volume;
+    const notes = [0, 4, 7, 11, 14, 18]; // (a lydian sparkle over the key's relative major)
+    notes.forEach((m, i) => {
+      const t = at + i * 0.085, f = mtof(this.root + 39 + m);
+      for (const [r, l, d] of [[1, 1, 1.4], [2.32, 0.4, 0.8], [4.25, 0.22, 0.5], [6.63, 0.12, 0.3]]) {
+        const g = c.createGain(); g.connect(out); g.connect(this.space()); this.env(g, t, vol * l * (i === notes.length - 1 ? 1.2 : 0.8), 0.003, d);
+        this.osc("sine", f * r, t, d + 0.1, g);
+      }
+    });
+    const hp = c.createBiquadFilter(), ng = c.createGain(); hp.type = "highpass"; hp.frequency.value = 7000;
+    ng.connect(out); ng.connect(this.space()); ng.gain.setValueAtTime(0.0001, at); ng.gain.exponentialRampToValueAtTime(vol * 0.25, at + 0.4); ng.gain.exponentialRampToValueAtTime(0.0001, at + 1.4);
+    hp.connect(ng); this.noiseBurst(at, 1.5, hp, 0.2);
+  }
+
+  // ——— home's meadow ———
+
+  private breezeGain: GainNode | null = null;
+  private breezeLp: BiquadFilterNode | null = null;
+  private beeGain: GainNode | null = null;
+  private beePan: StereoPannerNode | null = null;
+  private nextBird = 0;
+  /** Home's meadow, each frame (`level` 0-1: in home's circle, fading out to its edge): a breeze
+   *  breathing in the grass, bees drifting past, and now and then a bird's little song. */
+  meadow(level: number): void {
+    const M = this.T.meadow, c = this.ctx, now = c.currentTime;
+    if (!this.breezeGain && level <= 0.001) return;
+    if (!this.breezeGain) {
+      const bs = c.createBufferSource(); bs.buffer = this.noise; bs.loop = true;
+      this.breezeLp = c.createBiquadFilter(); this.breezeLp.type = "lowpass"; this.breezeLp.frequency.value = 700;
+      this.breezeGain = c.createGain(); this.breezeGain.gain.value = 0; bs.connect(this.breezeLp); this.breezeLp.connect(this.breezeGain); this.breezeGain.connect(this.out); bs.start(now);
+      this.beePan = c.createStereoPanner(); this.beePan.connect(this.out);
+      this.beeGain = c.createGain(); this.beeGain.gain.value = 0; this.beeGain.connect(this.beePan);
+      const bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 600; bp.Q.value = 1.5; bp.connect(this.beeGain);
+      for (const [f, d] of [[196, 0], [203, 7]]) { const o = c.createOscillator(); o.type = "sawtooth"; o.frequency.value = f; o.detune.value = d; o.connect(bp); o.start(now); }
+    }
+    const L = Math.max(0, Math.min(1, level));
+    this.breezeGain.gain.setTargetAtTime(M.volume * M.breeze * L * (0.6 + 0.4 * Math.sin(now * 0.31) * Math.sin(now * 0.17 + 1)), now, 0.4);
+    this.breezeLp!.frequency.setTargetAtTime(500 + 400 * (0.5 + 0.5 * Math.sin(now * 0.23)), now, 0.5);
+    // a bee drifting by: louder as it passes, panning across
+    const pass = Math.max(0, Math.sin(now * 0.21) * Math.sin(now * 0.07 + 2));
+    this.beeGain!.gain.setTargetAtTime(M.volume * M.bees * L * pass * (0.8 + 0.2 * Math.sin(now * 23)), now, 0.08);
+    this.beePan!.pan.setTargetAtTime(Math.sin(now * 0.35), now, 0.2);
+    if (L > 0.05 && now >= this.nextBird) {
+      this.nextBird = now + M.birdEvery * (0.5 + Math.random());
+      this.bird(M.volume * M.birds * L, Math.random() * 1.6 - 0.8);
+    }
+  }
+
+  /** A little birdsong phrase: three to six quick whistled chirps gliding up or down. */
+  private bird(vol: number, pan: number): void {
+    const c = this.ctx, out = this.voice(pan), n = 3 + Math.floor(Math.random() * 4), base = 2600 + Math.random() * 1400, up = Math.random() < 0.5;
+    let t = c.currentTime + 0.01;
+    for (let i = 0; i < n; i++) {
+      const f = base * (1 + 0.08 * Math.sin(i * 2.1)), dur = 0.05 + Math.random() * 0.05, g = c.createGain();
+      g.connect(out); this.env(g, t, vol * (0.7 + 0.3 * Math.random()), 0.004, dur);
+      const o = this.osc("sine", f, t, dur + 0.02, g); o.frequency.exponentialRampToValueAtTime(f * (up ? 1.35 : 0.72), t + dur);
+      t += dur + 0.03 + Math.random() * 0.05;
     }
   }
 

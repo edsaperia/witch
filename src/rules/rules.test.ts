@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { hash2 as labHash2, SPECIES_BY_ID } from "../../art/generator.js";
 import { makePartition } from "./partition";
 import { hash2 } from "./random";
-import { AREA_TYPES, generateMap, parseSeed, sceneFootprint } from "./map";
+import { AREA_TYPES, HOME_LOOK, LOOKS, generateMap, parseSeed, sceneFootprint } from "./map";
 import { Forest, crownReach, treeChance } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
@@ -487,7 +487,7 @@ describe("creatures", () => {
     expect(new Set(AREA_TYPES.map(t => t.creature)).size).toBe(30);
   });
 
-  it("start the same in every area (Ed, 2026-10-04): none at home but its legend, one baby and two adults elsewhere (Ed, 2026-10-05), and one legend in each", () => {
+  it("start the same in every area (Ed, 2026-10-04): none at home but its legend, one young and one adult elsewhere (Ed, 2026-10-05), and one legend in each", () => {
     expect(inCell(mx, my).filter(c => !c.boss)).toEqual([]);
     const S = TUNING.population.start;
     for (let cy = 0; cy < map.n; cy += 3) for (let cx = 0; cx < map.n; cx += 3) {
@@ -773,7 +773,7 @@ describe("the game clock and a whole step", () => {
 });
 
 describe("inviting and leashing", () => {
-  // (Every level to talk to: areas start with a baby and two adults, so a young is added to each.)
+  // (Every level to talk to: a baby, a young and an adult in each area.)
   const creatures = spawnCreatures(generateMap(123, withTuning({ population: { ...TUNING.population, start: { babies: 1, young: 1, adults: 1 } } })));
   const fresh = () => creatures.map(c => ({ ...c, rand: (() => { let k = c.id * 7 + 1; return () => (k = (k * 16807) % 2147483647) / 2147483647; })() }));
   const none: LeashControls = { sigil: false };
@@ -1013,6 +1013,7 @@ describe("the density field", () => {
     for (let i = 0; i < 3000; i++) {
       const x = map.bounds.minX + hash2(i, 5, 9) * (map.bounds.maxX - map.bounds.minX), z = map.bounds.minZ + hash2(i, 6, 9) * (map.bounds.maxZ - map.bounds.minZ);
       if (map.hardClear(x, z) || map.paths.at(x, z) || map.paths.pieceAt(x, z) || map.arenaOpen(x, z) < 1) continue; // corridors, path pieces and arenas are kept clear (tested with them)
+      if (map.areaAt(x, z).look === HOME_LOOK) continue; // (home's a meadow, no trees: homeArea.test.ts)
       chances.push(treeChance(map, x, z, map.areaAt(x, z).type));
     }
     const share = (lo: number, hi: number) => chances.filter(c => c >= lo && c < hi).length / chances.length;
@@ -1289,7 +1290,7 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
     // More of them, further out: still outside.
     const T2 = withTuning({ dancefloor: { ...D, speakers: { ...S, count: 20, radiusFactor: 3 } } }), m = generateMap(1, T2);
     expect(Math.hypot(m.treehouse.x - m.dancefloor.x, m.treehouse.z - m.dancefloor.z) - T2.treehouse.clear).toBeGreaterThan(speakerRadius(T2) + S.footprint);
-  });
+  }, 30000); // (nine maps)
   it("are the dancefloor's only sound: no soundsystem stands in their ring or the floor's clearing, over seeds (Ed, v183)", () => {
     for (const seed of [1, 2, 3, 123]) {
       const m = generateMap(seed, TUNING), d = m.dancefloor;
@@ -1390,7 +1391,7 @@ describe("ground cover (Ed, v171)", () => {
       expect(map.paths.at(f.x, f.z)).toBeNull();
       expect(map.hardClear(f.x, f.z)).toBe(false);
       expect(Math.hypot(f.x - d.x, f.z - d.z)).toBeGreaterThan(floorClearing(TUNING));
-      expect(AREA_TYPES[f.type].groundCover.kinds).toContain(TUFT_KINDS[f.kind]);
+      expect(LOOKS[f.type].groundCover.kinds).toContain(TUFT_KINDS[f.kind]); // (its look: home's meadow has its own)
     }
   });
   it("is thick where the area says (grassland) and thin where it doesn't (cave mouth), and none at density 0", () => {
@@ -1629,7 +1630,7 @@ describe("the dash (Ed, 2026-10-04)", () => {
 
   it("never lands in a tree trunk", () => {
     const g = ready();
-    const trees = g.forest.treesNear(g.witch.x + 60, g.witch.z + 60, 40);
+    const out = g.map.homeRadius + 60, trees = g.forest.treesNear(g.witch.x + out, g.witch.z + out, 40); // (beyond home's meadow, where trees grow)
     expect(trees.length).toBeGreaterThan(0);
     let tried = 0;
     for (const tr of trees.slice(0, 12)) {

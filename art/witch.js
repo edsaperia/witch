@@ -10,12 +10,14 @@ import { Model, render, v3 } from "./model3d.js";
 // Her parts and the material each is drawn in. The last few are a party outfit's: its pattern and trim (sequins, a mesh,
 // a poncho's stripes), the flowers on a hat, a party cup, two glow-stick neons, sunglasses' lenses and frames.
 export const WITCH_PARTS = { hair: M.HAIR, hat: M.HAT, headphones: M.PHONES, top: M.TOP, jacket: M.JACKET, jeans: M.JEANS, sneakers: M.SHOES, broom: M.BROOM, bristles: M.STRAW, skin: M.SKIN,
-  pattern: M.HAT2, trim: M.HAT1, flower: M.FLOWER, flower2: M.POM, cup: M.ACCENT, glow: M.COLLAR, glow2: M.GLOW, shades: M.SHADES, frame: M.FRAME };
+  pattern: M.HAT2, trim: M.HAT1, flower: M.FLOWER, flower2: M.POM, cup: M.ACCENT, glow: M.COLLAR, glow2: M.GLOW, shades: M.SHADES, frame: M.FRAME,
+  cloak: M.CLOTH, scarf: M.BODY, satchel: M.WOOD }; // the witch generator's: a cloak, a scarf, a satchel (art/witchGenome.js)
 // The default outfit: a hue, saturation and value per part. Style knobs override the hues.
 export const DEFAULT_OUTFIT = {
   hair: [.01, .7, .85], hat: [.74, .45, .45], headphones: [.92, .55, .9], top: [.13, .15, .95], jacket: [.72, .45, .7],
   jeans: [.6, .5, .7], sneakers: [.0, .0, .95], broom: [.08, .55, .55], bristles: [.12, .55, .9], skin: [.07, .3, .94],
   pattern: [.13, .1, 1], trim: [.0, .6, .8], flower: [.95, .45, .98], flower2: [.15, .6, 1], cup: [.99, .75, .85], glow: [.88, .75, 1], glow2: [.33, .8, 1], shades: [.7, .4, .14], frame: [.13, .6, .9],
+  cloak: [.74, .5, .4], scarf: [.98, .6, .85], satchel: [.07, .55, .5],
 };
 // styleHues false: the outfit's own hues, whatever the style's (a party witch's colours are her own)
 export function witchColours(st, outfit = DEFAULT_OUTFIT, { styleHues = true } = {}) {
@@ -34,10 +36,35 @@ export function witchColours(st, outfit = DEFAULT_OUTFIT, { styleHues = true } =
 //   phones (her headphones), shades (sunglasses), glowsticks (glow-stick bracelets)
 // Every hat keeps the glowing hatband, so every look is still a witch.
 export const WITCH_LOOKS = { hat: ["classic", "crooked", "floppy", "small", "flowers", "bucket"], hair: ["long", "bob", "buns", "mohawk"], top: ["jacket", "sequins", "mesh", "poncho", "cape"] };
-export const DEFAULT_LOOK = { hat: "classic", hair: "long", top: "jacket", phones: true, shades: false, glowsticks: false };
+export const DEFAULT_LOOK = { hat: "classic", hair: "long", top: "jacket", phones: true, shades: false, glowsticks: false,
+  // the witch generator's axes (art/witchGenome.js), each as hers by default: the hat's crown height (times hers), brim (times
+  // hers), lean (radians, + back) and band (its glowing band's height, times hers); the broom's kind (classic, fan, twig, round), handle length (times hers) and bend (+ up),
+  // the bristles' length (times hers); a cloak (none, short, long, hooded); a scarf, a satchel, a pendant and earrings
+  hatHeight: 1, hatBrim: 1, hatTilt: 0, hatBand: 1, broom: "classic", broomLength: 1, broomBend: 0, bristles: 1, cloak: "none", scarf: false, satchel: false, pendant: false, earrings: false };
+// The hat's shape from the look: a crown point p scaled from the brim by hatHeight and leaned back by hatTilt; a brim's radii by hatBrim.
+const hatPt = (L, brim, p) => { const k = L.hatHeight ?? 1, a = L.hatTilt || 0; if (k === 1 && !a) return p; let d = v3.mul(v3.sub(p, brim), k); if (a) { const c = Math.cos(a), s = Math.sin(a); d = [d[0] * c - d[1] * s, d[0] * s + d[1] * c, d[2]]; } return v3.add(brim, d); };
+const brimR = (L, r) => (L.hatBrim ?? 1) === 1 ? r : [r[0] * L.hatBrim, r[1], r[2] * L.hatBrim];
+// The broom from the look: its handle from the binding a towards b (longer by broomLength, bowed up by broomBend), and its
+// bristles centred at c along o.dir (classic as hers; fan: wide and flat; twig: a long thin bundle with stray twigs; round: a puff),
+// longer by `bristles`, kept bound at the same point.
+function broomHandle(m, L, a, b, r1 = .022, r2 = .018) {
+  const k = L.broomLength ?? 1, bend = L.broomBend || 0;
+  if (k === 1 && !bend) return m.seg(a, b, r1, r2, M.BROOM, { group: 2 });
+  const e = v3.add(a, v3.mul(v3.sub(b, a), k)), mid = v3.add(v3.lerp(a, e, .55), [0, bend * .12, 0]);
+  return m.chain([[...a, r1], [...mid, (r1 + r2) / 2], [...e, r2]], M.BROOM, { group: 2 });
+}
+function broomBristles(m, L, c, r, o) {
+  const kind = L.broom || "classic", k = L.bristles ?? 1;
+  if (kind === "classic" && k === 1) return m.ell(c, r, M.STRAW, o);
+  const d = v3.norm(o.dir), R = kind === "fan" ? [r[0] * k, r[1] * 1.6, r[2] * .5] : kind === "twig" ? [r[0] * 1.4 * k, r[1] * .7, r[2] * .7] : kind === "round" ? [r[0] * .85 * k, r[1] * 1.35, r[2] * 1.35] : [r[0] * k, r[1], r[2]];
+  const cc = v3.sub(c, v3.mul(d, R[0] - r[0])); // still bound where hers is
+  m.ell(cc, R, M.STRAW, o);
+  if (kind === "twig") for (let i = 0; i < 5; i++) { const s = (i / 4 - .5) * 2, from = v3.sub(cc, v3.mul(d, R[0] * .4)), to = v3.add(v3.sub(cc, v3.mul(d, R[0] * (1.15 + .1 * (i % 2)))), [0, s * R[1] * 1.1, (i % 3 - 1) * R[2] * .9]); m.seg(from, to, .012, .006, M.STRAW, { group: 3, paint: o.paint }); }
+}
 // The hat: its brim at `brim` (tipped along dir), its crown through mid to tip (as hers would be). Returns the tip (the hatTip anchor).
 function drawHat(m, L, brim, dir, mid, tip) {
-  const band = p => p[1] < brim[1] + (L.hat === "classic" ? .045 : .065) ? M.MAGIC : undefined, from = (p, k, d = [0, 0, 0]) => v3.add(v3.add(brim, v3.mul(v3.sub(p, brim), k)), d);
+  mid = hatPt(L, brim, mid); tip = hatPt(L, brim, tip);
+  const band = p => p[1] < brim[1] + (L.hat === "classic" ? .045 : .065) * (L.hatBand ?? 1) ? M.MAGIC : undefined, from = (p, k, d = [0, 0, 0]) => v3.add(v3.add(brim, v3.mul(v3.sub(p, brim), k)), d);
   if (L.hat === "bucket") { // a soft bucket hat with cat ears, a glowing band round it
     const c = v3.add(brim, [-.01, .05, 0]);
     m.ell(brim, [.15, .016, .145], M.HAT, { dir, group: 11 });
@@ -52,21 +79,21 @@ function drawHat(m, L, brim, dir, mid, tip) {
     return t;
   }
   if (L.hat === "floppy") { // a wide brim drooping all round, a short crown
-    m.ell(brim, [.22, .016, .2], M.HAT, { dir, group: 11 });
-    m.chain([...Array(13).keys()].map(k => { const a = k / 12 * Math.PI * 2; return [...v3.add(brim, [Math.cos(a) * .2, -.02 - .015 * Math.cos(a), Math.sin(a) * .185]), .024]; }), M.HAT, { group: 11 });
+    m.ell(brim, brimR(L, [.22, .016, .2]), M.HAT, { dir, group: 11 });
+    const bk = L.hatBrim ?? 1; m.chain([...Array(13).keys()].map(k => { const a = k / 12 * Math.PI * 2; return [...v3.add(brim, [Math.cos(a) * .2 * bk, -.02 - .015 * Math.cos(a), Math.sin(a) * .185 * bk]), .024]; }), M.HAT, { group: 11 });
     const t = from(tip, .72, [-.02, -.01, 0]);
     m.chain([[...v3.add(brim, [0, .01, 0]), .095], [...from(mid, .8), .055], [...t, .015]], M.HAT, { group: 11, paint: band });
     return t;
   }
   if (L.hat === "crooked") { // tall and crooked: the crown kinked, its tip flopping over
     const k1 = from(mid, 1.3, [0, 0, .025]), k2 = from(tip, 1.45, [-.02, .03, .05]), t = v3.add(k2, [.1, -.06, .03]);
-    m.ell(brim, [.16, .014, .15], M.HAT, { dir, group: 11 });
+    m.ell(brim, brimR(L, [.16, .014, .15]), M.HAT, { dir, group: 11 });
     m.chain([[...v3.add(brim, [0, .01, 0]), .085], [...k1, .05], [...k2, .027], [...t, .012]], M.HAT, { group: 11, paint: band });
     return t;
   }
-  m.ell(brim, [.16, .014, .15], M.HAT, { dir, group: 11 }); // hers: a wide brim and a tall crown, its tip bent back
+  m.ell(brim, brimR(L, [.16, .014, .15]), M.HAT, { dir, group: 11 }); // hers: a wide brim and a tall crown, its tip bent back
   m.chain([[...v3.add(brim, [0, .01, 0]), .085], [...mid, .045], [...tip, .012]], M.HAT, { group: 11, paint: band }); // a glowing hatband
-  if (L.hat === "flowers") for (let k = 0; k < 7; k++) { const a = k / 7 * Math.PI * 2 + .3; m.ell(v3.add(brim, [Math.cos(a) * .135, .018, Math.sin(a) * .13]), [.032, .026, .032], k % 2 ? M.POM : M.FLOWER, { group: 11 }); }
+  if (L.hat === "flowers") for (let k = 0; k < 7; k++) { const a = k / 7 * Math.PI * 2 + .3, bk = L.hatBrim ?? 1; m.ell(v3.add(brim, [Math.cos(a) * .135 * bk, .018, Math.sin(a) * .13 * bk]), [.032, .026, .032], k % 2 ? M.POM : M.FLOWER, { group: 11 }); }
   return tip;
 }
 // Her hair: the long hair's tail through `tail` ([x, y, z, radius] points); the other styles round her head H.
@@ -78,6 +105,7 @@ function drawHair(m, L, H, tail) {
 }
 // Her eyes (or sunglasses), looking up by `look`, her head tilted by `tilt`; `shut` (laughing, hugging): closed.
 function drawEyes(m, L, H, look = 0, tilt = 0, shut = false) {
+  if (L.earrings) for (const s of [-1, 1]) m.ell(v3.add(H, [-.005, -.075, s * .1]), [.016, .022, .016], M.FRAME, { group: 10 }); // the witch generator's earrings
   const R = [.11, .115, .1], at = d => Model.surface(H, R, v3.norm(d));
   if (L.shades) {
     const p = [-1, 1].map(s => at([.85, .08 + look, s * .42 + tilt * .1])), mid = v3.add(at([1, .08 + look, tilt * .1]), [.01, 0, 0]);
@@ -116,6 +144,31 @@ function drawWrap(m, L, chest, fwd, spine, flying) {
     if (flying) m.ell(v3.add(chest, [-.24, -.02, 0]), [.3, .035, .16], M.JACKET, { dir: [1, -.2, 0], up: [0, 1, 0], group: 12 });
     else m.ell(v3.add(chest, v3.add(v3.mul(fwd, -.11), v3.mul(spine, -.12))), [.3, .035, .16], M.JACKET, { dir: v3.add(spine, v3.mul(fwd, .12)), up: fwd, group: 12 });
   }
+  drawExtras(m, L, chest, fwd, spine, flying);
+}
+// The witch generator's extras: a cloak from her shoulders (short, long, or long with a hood), streaming out behind in flight or
+// hanging down her back; a scarf round her neck, its end flying; a satchel on her near hip on a strap across her; a glowing pendant.
+function drawExtras(m, L, chest, fwd, spine, flying) {
+  const back = v3.mul(fwd, -1), side = [0, 0, 1], neck = v3.add(chest, v3.mul(spine, .14));
+  if (L.cloak && L.cloak !== "none") {
+    const len = L.cloak === "short" ? .22 : .42, sh = v3.add(chest, v3.add(v3.mul(spine, .1), v3.mul(back, .07)));
+    const dir = flying ? v3.norm(v3.add(back, v3.mul(spine, -.15))) : v3.norm(v3.add(v3.mul(spine, -1), v3.mul(back, .18)));
+    const mid = v3.add(sh, v3.mul(dir, len * .5)), end = v3.add(sh, v3.mul(dir, len));
+    m.ell(mid, [len * .55, .03, .15 + len * .12], M.CLOTH, { dir, up: flying ? [0, 1, 0] : back, group: 14 });
+    m.ell(end, [.05, .025, .17 + len * .15], M.CLOTH, { dir, up: flying ? [0, 1, 0] : back, group: 14 });
+    if (L.cloak === "hooded") m.ell(v3.add(neck, v3.add(v3.mul(back, .09), v3.mul(spine, .03))), [.08, .06, .1], M.CLOTH, { dir: back, up: spine, group: 14 });
+  }
+  if (L.scarf) {
+    m.ell(neck, [.085, .035, .09], M.BODY, { dir: fwd, up: spine, group: 15 });
+    const t0 = v3.add(neck, v3.mul(back, .06)), t1 = v3.add(t0, flying ? [-.14, .02, .04] : v3.add(v3.mul(spine, -.12), v3.mul(back, .05))), t2 = v3.add(t1, flying ? [-.12, -.03, .03] : v3.mul(spine, -.1));
+    m.chain([[...t0, .03], [...t1, .025], [...t2, .02]], M.BODY, { group: 15, paint: p => ((Math.floor((p[0] + p[1]) * 30) % 2) + 2) % 2 ? M.HAT1 : undefined });
+  }
+  if (L.satchel) {
+    const hip = v3.add(chest, v3.add(v3.mul(spine, -.17), v3.add(v3.mul(side, .12), v3.mul(back, .02))));
+    m.ell(hip, [.065, .058, .028], M.WOOD, { dir: fwd, up: spine, group: 16 }); // (an ellipsoid: the posed flight turns only ellipsoids and limbs)
+    m.chain([[...v3.add(chest, v3.add(v3.mul(spine, .12), v3.mul(side, -.08))), .012], [...v3.add(chest, v3.add(v3.mul(fwd, .1), [0, 0, .02])), .012], [...hip, .012]], M.WOOD, { group: 16 });
+  }
+  if (L.pendant) m.ell(v3.add(chest, v3.add(v3.mul(fwd, .105), v3.mul(spine, .05))), [.022, .028, .018], M.MAGIC, { group: 17 });
 }
 // Every part (those `only` picks), flat and anchor of m turned by angle a about the vertical ("y") or the side-to-side ("z") axis through P.
 function turnModel(m, axis, a, P, only = () => true) {
@@ -153,13 +206,13 @@ export const WITCH_POSES = { rise: .78, descend: -.66, brake: .44 }; // the broo
 // length with her body streaming out behind, nearly flat, one knee bent and one leg kicking;
 // her hat blown up off her head on its chin strap, hair straight back, jacket tail whipping;
 // eyes wide, teeth gritted; a few small speed streaks. Three frames flap her (frame 0..2).
-function fastModel(frame) {
+function fastModel(frame, L = DEFAULT_LOOK) {
   const m = new Model({ blend: .03 }), f = frame % 3, y = .5, dip = .05; // the broom's height; it dips a little at the nose
   const j = [[0, .02, -.01], [.02, -.01, .02], [-.01, .015, .01]][f]; // the frame's jiggle
   const bx = x => y - dip * (x / .62); // the handle's height along it
   // the broom, shooting forward; bristles flared out behind
-  m.seg([-.5, bx(-.5), 0], [.62, bx(.62), 0], .022, .018, M.BROOM, { group: 2 });
-  m.ell([-.64, bx(-.64) + .005, 0], [.2, .1, .11], M.STRAW, { dir: [1, dip * 1.6, 0], group: 3, paint: p => p[0] < -.76 ? M.MAGIC2 : p[0] > -.5 ? M.BROOM : undefined });
+  broomHandle(m, L, [-.5, bx(-.5), 0], [.62, bx(.62), 0]);
+  broomBristles(m, L, [-.64, bx(-.64) + .005, 0], [.2, .1, .11], { dir: [1, dip * 1.6, 0], group: 3, paint: p => p[0] < -.76 ? M.MAGIC2 : p[0] > -.5 ? M.BROOM : undefined });
   // her hands on the very front of the handle, arms straight back to her shoulders
   const hands = [-1, 1].map(side => [.5, bx(.5) + .03, side * .045]), sh = [-1, 1].map(side => [.2, y + .24 + j[1], side * .1]);
   for (const k of [0, 1]) { const side = k ? 1 : -1, g = side > 0 ? 7 : 5; m.seg(sh[k], hands[k], .04, .03, M.JACKET, { group: g }); m.ell(hands[k], [.035, .03, .035], M.SKIN, { group: g }); }
@@ -187,8 +240,8 @@ function fastModel(frame) {
   m.chain([[...v3.add(H, [-.005, .03, -.095]), .015], [...v3.add(H, [-.02, .12, 0]), .015], [...v3.add(H, [-.005, .03, .095]), .015]], M.PHONES, { group: 10 });
   // the hat, nearly blown off: lifted up and tipped back, held by its chin strap
   const brim = v3.add(H, [-.1 + j[0], .2 + j[1] * 2, 0]);
-  m.ell(brim, [.16, .014, .15], M.HAT, { dir: [1, .9, 0], group: 11 });
-  m.chain([[...v3.add(brim, [-.02, .02, 0]), .08], [...v3.add(brim, [-.14, .13, 0]), .04], [...v3.add(brim, [-.3, .14 + j[2] * 2, 0]), .012]], M.HAT, { group: 11, paint: p => Math.hypot(p[0] - brim[0], p[1] - brim[1]) < .06 ? M.MAGIC : undefined });
+  m.ell(brim, brimR(L, [.16, .014, .15]), M.HAT, { dir: [1, .9, 0], group: 11 });
+  m.chain([[...v3.add(brim, [-.02, .02, 0]), .08], [...hatPt(L, brim, v3.add(brim, [-.14, .13, 0])), .04], [...hatPt(L, brim, v3.add(brim, [-.3, .14 + j[2] * 2, 0])), .012]], M.HAT, { group: 11, paint: p => Math.hypot(p[0] - brim[0], p[1] - brim[1]) < .06 * (L.hatBand ?? 1) ? M.MAGIC : undefined });
   m.seg(v3.add(brim, [.08, -.02, .08]), v3.add(H, [.04, -.09, .08]), .008, .008, M.HAT, { group: 11 }); // the chin strap, pulled taut
   m.anchors.hand = hands[1]; m.anchors.hatTip = v3.add(brim, [-.3, .14 + j[2] * 2, 0]);
   // speed: a few small streaks trailing from the bristles and from her
@@ -371,8 +424,8 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
   const bdir = !B || astride ? [1, 0, 0] : v3.norm(B.dir), bind = astride ? [-.36, yb, 0] : !B ? null : B.held !== undefined ? v3.sub(K.far, v3.mul(bdir, B.held)) : B.binding;
   const along = t => v3.add(bind, v3.mul(bdir, t));
   if (B) {
-    m.seg(along(0), along(astride ? .98 : 1.1), .022, .018, M.BROOM, { group: 2 });
-    m.ell(along(-.13), [.17, .07, .08], M.STRAW, { dir: bdir, group: 3, paint: p => { const t = v3.dot(v3.sub(p, bind), bdir); return t < -.22 ? M.MAGIC2 : t > -.01 ? M.BROOM : undefined; } });
+    broomHandle(m, L, along(0), along(astride ? .98 : 1.1));
+    broomBristles(m, L, along(-.13), [.17, .07, .08], { dir: bdir, group: 3, paint: p => { const t = v3.dot(v3.sub(p, bind), bdir); return t < -.22 ? M.MAGIC2 : t > -.01 ? M.BROOM : undefined; } });
   }
   // legs: jeans to the knee, then down to sneakers; one swung up over the broom; on her toes pushing off; or each foot placed
   for (const side of [-1, 1]) {
@@ -450,7 +503,7 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
 export const WITCH_FLIGHT_POSES = { hover: { frames: 3, fps: 3 }, lean: { frames: 4, fps: 8 }, rise: { frames: 2, fps: 6 }, descend: { frames: 2, fps: 6 }, fast: { frames: 3, fps: 12 }, brake: { frames: 2, fps: 8 } };
 export function witchModel({ frame = 0, lean = false, pose, look = DEFAULT_LOOK } = {}) {
   const LK = { ...DEFAULT_LOOK, ...look };
-  if (pose === "fast") return fastModel(frame);
+  if (pose === "fast") return fastModel(frame, LK);
   if (WITCH_FOOT_POSES[pose]) return footModel(pose, frame, LK);
   const cyc = pose === "lean" ? frame % 4 : -1; if (cyc >= 0) { lean = true; pose = undefined; } // the lean cycle
   const rise = pose === "rise", desc = pose === "descend", brake = pose === "brake", posed = rise || desc || brake;
@@ -461,9 +514,9 @@ export function witchModel({ frame = 0, lean = false, pose, look = DEFAULT_LOOK 
   const Lh = Math.min(.1, Math.max(0, L)); // how far her hair and hat stream back with the lean (never more than the fast-flight lean)
   const sway = posed ? [.02, .06][frame % 2] : cyc >= 0 ? [.01, .04, .06, .03][cyc] : [0, .03, .05][frame % 3], flow = desc ? 1 : rise ? -.6 : 0; // hair and jacket: up when dropping, down when climbing (in the broom's frame)
   // the broom: a long handle, bristles bound at the back, glowing at their tips
-  m.seg([-.5, y - tilt * 2, 0], [.62, y + tilt * 3, 0], .022, .018, M.BROOM, { group: 2 });
-  if (brake) m.ell([-.56, y - .08, 0], [.17, .07, .09], M.STRAW, { dir: [.55, 1, 0], group: 3, paint: p => p[1] < y - .18 ? M.MAGIC2 : p[1] > y - .01 ? M.BROOM : undefined }); // skidding: the bristles swing forward and down under her, like reins hauled in
-  else { const fl = cyc >= 0 ? [0, .035, -.015, .05][cyc] : 0; m.ell([-.62, y - tilt * 2 - .01, 0], [.17, .07, .08], M.STRAW, { dir: [1, tilt, 0], group: 3, paint: p => p[0] < -.72 + fl ? M.MAGIC2 : cyc >= 0 && p[0] < -.66 + fl ? M.MAGIC : p[0] > -.5 ? M.BROOM : undefined }); } // leaning along, the bristles' glow flickers
+  broomHandle(m, LK, [-.5, y - tilt * 2, 0], [.62, y + tilt * 3, 0]);
+  if (brake) broomBristles(m, LK, [-.56, y - .08, 0], [.17, .07, .09], { dir: [.55, 1, 0], group: 3, paint: p => p[1] < y - .18 ? M.MAGIC2 : p[1] > y - .01 ? M.BROOM : undefined }); // skidding: the bristles swing forward and down under her, like reins hauled in
+  else { const fl = cyc >= 0 ? [0, .035, -.015, .05][cyc] : 0; broomBristles(m, LK, [-.62, y - tilt * 2 - .01, 0], [.17, .07, .08], { dir: [1, tilt, 0], group: 3, paint: p => p[0] < -.72 + fl ? M.MAGIC2 : cyc >= 0 && p[0] < -.66 + fl ? M.MAGIC : p[0] > -.5 ? M.BROOM : undefined }); } // leaning along, the bristles' glow flickers
   // legs astride: jeans to the knee, then down to sneakers (reaching down and forward to land)
   for (const side of [-1, 1]) {
     const kick = cyc >= 0 ? [[0, 0], [.07, .04], [.01, .015], [-.06, -.015]][(cyc + (side > 0 ? 0 : 2)) % 4] : [0, 0]; // leaning along, her legs kick in turn
@@ -632,10 +685,11 @@ const WITCH_HAIRS = [[.07, .4, .14], [.07, .6, .33], [.04, .7, .5], [.11, .45, .
 // A party witch: seed picks her outfit (or o.outfit, an id), jitters its colours, and picks her skin, her hair (unless the
 // outfit dyes it) and her glow sticks' neons. { id, seed, name, look, outfit, colours(st) }: draw her with
 // witchSprite(st, { look, pose, frame, ... }) and bake with colours(st).
+const GENOME_PARTS = new Set(["cloak", "scarf", "satchel"]); // the generator's parts: a party witch keeps their defaults (so her draws stay as they were)
 export function partyWitch(seed = 0, o = {}) {
   const r = rng((seed * 2654435761 + 97) >>> 0), P = o.outfit ? PARTY_OUTFIT_BY_ID[o.outfit] : PARTY_OUTFITS[Math.floor(r() * PARTY_OUTFITS.length)];
   const pick = a => a[Math.floor(r() * a.length)], j = ([h, s, v], k = .035) => [((h + (r() - .5) * 2 * k) % 1 + 1) % 1, Math.min(1, Math.max(0, s + (r() - .5) * .1)), Math.min(1, Math.max(0, v + (r() - .5) * .08))];
-  const outfit = { ...Object.fromEntries(Object.entries({ ...DEFAULT_OUTFIT, ...P.outfit }).map(([k, c]) => [k, k === "skin" || k === "broom" || k === "bristles" ? c : j(c)])) };
+  const outfit = { ...Object.fromEntries(Object.entries({ ...DEFAULT_OUTFIT, ...P.outfit }).map(([k, c]) => [k, k === "skin" || k === "broom" || k === "bristles" || GENOME_PARTS.has(k) ? c : j(c)])) };
   outfit.skin = pick(WITCH_SKINS); outfit.hair = P.hair ? j(P.hair, .02) : pick(WITCH_HAIRS);
   const g1 = Math.floor(r() * PARTY_NEONS.length); outfit.glow = PARTY_NEONS[g1]; outfit.glow2 = PARTY_NEONS[(g1 + 1 + Math.floor(r() * (PARTY_NEONS.length - 1))) % PARTY_NEONS.length];
   outfit.broom = j(DEFAULT_OUTFIT.broom, .02);

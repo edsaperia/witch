@@ -22,7 +22,13 @@ const SOUNDS: [string, number, Play][] = [
   ["legend-windup", 3, s => s.windup(0, 1, v("bear", 3))],
   ["howl", 1.4, s => s.howl(v("wolf", 2))],
   ["fight-crowd", 1.4, s => { const sp = ["wolf", "fox", "boar", "hare", "owl", "stoat", "badger", "toad"]; sp.forEach((x, i) => s.speak(v(x, (i % 3) as number), i % 2 ? "enraged" : "happy", (i % 5) / 2 - 1, 1 - i * 0.1)); }],
+  ["witch-ouch", 7, () => {}],
+  ["witch-knock", 6, () => {}],
+  ["legend-charge", 9, () => {}],
+  ["relic-found", 3, s => s.relic()],
+  ["home-meadow", 12, () => {}],
   ["soundsystem-lost", 3, s => s.lost()],
+  ["soundsystem-lost-urgent", 3, s => s.lost(true)],
   ["hit", 0.8, s => s.hit(0)],
   ["hit-spent", 0.5, s => s.hit(0, 1, true)],
   ["fill-0", 0.3, s => s.fill(0)],
@@ -46,6 +52,27 @@ async function render(name: string, seconds: number, play: Play) {
   if (name === "witch-chatter") {
     // her 💌 hose as #89 fires it: bursts of 3 letters 0.12 s apart, a burst every 0.6 s
     for (let b = 0; b < 4; b++) for (let i = 0; i < 3; i++) { const at = b * 0.6 + i * 0.12; void oc.suspend(Math.round(at * rate) / rate).then(() => { s.letter(0); return oc.resume(); }); }
+  } else if (name === "witch-knock") {
+    // a bite's small knock (1 m), a knockback attack's (4 m), a charge's big throw (9 m) with its stun's twinkle
+    const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
+    at(0, () => s.knock(1)); at(1.2, () => s.knock(4)); at(2.6, () => s.knock(9));
+    for (let i = 0; i < 14; i++) at(2.75 + i * 0.13, () => s.twinkle(i));
+  } else if (name === "legend-charge") {
+    // windup bellow; the run building to its speed, rumbling; the braking arc's skid; the trot home
+    const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
+    at(0, () => s.bellow());
+    let t = 1.2, speed = 2;
+    while (t < 4.2) { const sp = speed; at(t, () => { s.hoof(); s.charge(Math.min(1, sp / 12), 0); }); t += Math.max(0.16, Math.min(0.5, 2.4 / sp)); speed = Math.min(14, speed + 2.2); }
+    for (let k = 0; k <= 12; k++) { const sp = 14 * (1 - k / 12); at(4.2 + k * 0.1, () => s.charge(0, Math.min(1, sp / 10))); }
+    at(5.5, () => s.charge(0, 0));
+    for (let i = 0; i < 9; i++) at(5.7 + i * 0.34, () => s.hoof(0, 1, true));
+  } else if (name === "home-meadow") {
+    // walking in from home's edge to the dancefloor and out again: the meadow's level each 0.1 s
+    for (let k = 0; k <= 115; k++) { const sec = k * 0.1, L = Math.min(1, sec / 3, Math.max(0, (11.5 - sec) / 3)); void oc.suspend(Math.round(sec * rate) / rate).then(() => { s.meadow(L); return oc.resume(); }); }
+  } else if (name === "witch-ouch") {
+    // eight hits, the strain rising toward her last, then knocked down
+    for (let i = 0; i < 8; i++) void oc.suspend(Math.round(i * 0.6 * rate) / rate).then(() => { s.ouch(i / 7); return oc.resume(); });
+    void oc.suspend(Math.round(5.2 * rate) / rate).then(() => { s.knockdown(); return oc.resume(); });
   } else if (name === "species-calls") {
     // one line per family (and the owl's hoot, the raven's croak, the canids' howl), each a young one's grumble then a happy reply
     const lines: [string, number][] = [["owl", 1], ["raven", 1], ["wolf", 2], ["fox", 1], ["bear", 2], ["boar", 1], ["elk", 2], ["hare", 0], ["squirrel", 1], ["beetle", 1], ["moth", 1], ["snake", 1], ["toad", 1], ["bat", 1], ["otter", 1], ["lynx", 1]];

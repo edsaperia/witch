@@ -57,6 +57,7 @@ export const M = {
   SHOE: 48, SOLE: 49,          // fancy shoes
   WOKEN: 50,   // a woken creature's angry glowing eyes
   WEB: 51,     // pale silk and cotton: spider webs, cotton grass (lit, not glowing)
+  BROW: 52,    // a creature's expression's brows: dark ink on a light coat, pale on a dark one (genome/expressions.js)
 };
 // These glow: drawn at full colour by the lighting pass, whatever the light.
 // The rune glyphs: one carved-rune language for the magic stones and the soundsystem. Simple,

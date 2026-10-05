@@ -1,9 +1,9 @@
 // The creature states' looks (Ed, issue #87): wild as it is; happy in party clothes but NO glowing
-// collar; leashed in party clothes AND the glowing collar; enraged tinted red all over (looks.enragedTint) and red-eyed with angry brows over its
+// collar; leashed in party clothes AND the glowing collar; enraged tinted red all over (looks.enragedTint) and red-eyed with an angry face (the generator's, art/genome/expressions.js) and a 💢 by its
 // head; dazed with stars spinning round its head; legends never in party clothes. Happy animals in an
 // area with a soundsystem dance on the beat (the party bounce). The clothes are baked into the sprite
-// (assets: partyArt with or without the collar); the brows and stars are marks drawn over today's
-// sprites, so they work for every species now and the creature generator can adopt them later.
+// (assets: partyArt with or without the collar), and so are the faces (expression below); the 💢 and the daze
+// stars are marks drawn over the sprite.
 import * as THREE from "three";
 import type { Game } from "../rules/game";
 import type { Creature } from "../rules/creatures";
@@ -41,11 +41,12 @@ function setTint(t: Tuning): void {
 }
 
 /** A creature's expression (Ed, 2026-10-05: "the eyebrows should be with the creature generator"):
- *  the one hook the procedural creature generator is to take over, drawing it as part of the face.
- *  Until then, StateMarks draws "angry" as brows over the head and "dazed" as stars round it. */
+ *  drawn by the creature generator as part of its face (art/genome/expressions.js; the view picks the
+ *  bake, the live rig the head piece). Dazed while dazed or stunned; StateMarks adds the daze stars
+ *  (the stun's are leash.ts's). */
 export type Expression = "neutral" | "angry" | "happy" | "dazed";
 export function expression(c: Creature, time: number): Expression {
-  if (isDazed(c, time)) return "dazed";
+  if (isDazed(c, time) || (c.stunUntil ?? -Infinity) > time) return "dazed";
   const l = lookOf(c);
   return l === "enraged" ? "angry" : l === "happy" || l === "leashed" ? "happy" : "neutral";
 }
@@ -68,16 +69,6 @@ function pixels(w: number, h: number, draw: (x: CanvasRenderingContext2D) => voi
   return t;
 }
 
-/** Angry brows: two thick dark strokes slanting down to the middle, rimmed in red so they read on dark fur. */
-const BROWS = (): THREE.CanvasTexture => pixels(13, 6, x => {
-  const rim = "#ff3b3b", ink = "#1a0508";
-  const stroke = (pts: number[][], col: string) => { x.fillStyle = col; for (const [a, b] of pts) x.fillRect(a, b, 1, 1); };
-  // left brow: high at the outside, low in the middle; right mirrored
-  const left = [[0, 0], [1, 0], [1, 1], [2, 1], [3, 1], [3, 2], [4, 2], [5, 2], [5, 3]], right = left.map(([a, b]) => [12 - a, b]);
-  const grow = (pts: number[][]) => pts.flatMap(([a, b]) => [[a, b], [a, b + 1], [a - 1, b], [a + 1, b], [a, b + 2]]).filter(([a, b]) => a >= 0 && a < 13 && b >= 0 && b < 6);
-  stroke(grow(left), rim); stroke(grow(right), rim);
-  stroke(left.flatMap(([a, b]) => [[a, b], [a, b + 1]]), ink); stroke(right.flatMap(([a, b]) => [[a, b], [a, b + 1]]), ink);
-});
 /** A party sparkle: a tiny white-and-pink twinkle, three pixels across. */
 const SPARKLE = (): THREE.CanvasTexture => pixels(3, 3, x => {
   x.fillStyle = "#ffb3e6"; x.fillRect(1, 0, 1, 3); x.fillRect(0, 1, 3, 1);
@@ -103,7 +94,6 @@ function angerMark(n: number): THREE.CanvasTexture {
 }
 
 export class StateMarks {
-  private brows: THREE.SpriteMaterial;
   private star: THREE.SpriteMaterial;
   private anger: THREE.SpriteMaterial;
   private sparkle: THREE.SpriteMaterial;
@@ -114,7 +104,7 @@ export class StateMarks {
 
   constructor(scene: THREE.Scene, private mpp: number) {
     const mat = (map: THREE.Texture) => new THREE.SpriteMaterial({ map, transparent: true, depthTest: false, depthWrite: false });
-    this.brows = mat(BROWS()); this.star = mat(STAR()); this.anger = mat(angerMark(11));
+    this.star = mat(STAR()); this.anger = mat(angerMark(11));
     this.sparkle = new THREE.SpriteMaterial({ map: SPARKLE(), transparent: true, depthTest: true, depthWrite: false, blending: THREE.AdditiveBlending });
     this.group.renderOrder = 12;
     scene.add(this.group);
@@ -132,7 +122,7 @@ export class StateMarks {
     s.scale.set(wpx * this.mpp, hpx * this.mpp, 1);
   }
 
-  /** Brows over the enraged, stars round the dazed: those within `R` metres of her. `tops`: each creature's drawn height. */
+  /** The 💢 by the enraged, stars round the dazed, sparkles round party animals (their faces are the art's): those within `R` metres of her. `tops`: each creature's drawn height. */
   update(g: Game, time: number, tops: Map<number, number>, R = 70): void {
     this.used = 0;
     setTint(g.tuning);
@@ -154,15 +144,13 @@ export class StateMarks {
         }
       }
       if (ex === "angry" && !c.boss) {
-        const bob = Math.abs(Math.sin(time * 6 + c.id)) * 0.08;
-        this.put(this.brows, c.x, top + 0.35 + bob, c.z, 13 * px, 6 * px);
         // 💢 (Ed, 2026-10-05: "or a 💢"): beside its head on the side it faces, popping on a pulse, sized by level like its bubbles.
         if (A.on) {
           const pulse = (time * 1.6 + c.id * 0.31) % 1, pop = pulse < 0.15 ? 1 + 0.5 * (1 - pulse / 0.15) : 1, k = bubbleScale(g.tuning, c.level) * A.size * pop;
           this.put(this.anger, c.x + c.facing * (0.35 + top * 0.25), top + 0.1, c.z, 11 * px * k, 11 * px * k);
         }
       }
-      if (ex === "dazed") {
+      if (isDazed(c, time)) { // (a stun's stars are leash.ts's)
         for (let i = 0; i < 3; i++) {
           const a = time * 5 + (i / 3) * Math.PI * 2, r = 0.45 + top * 0.12;
           this.put(this.star, c.x + Math.cos(a) * r, top + 0.25 + Math.sin(a) * 0.12, c.z + Math.sin(a) * r * 0.5, 5 * px, 5 * px);

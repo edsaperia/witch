@@ -1,5 +1,5 @@
 // Creatures: each area's own kind, more of them and older the longer the area stays wild
-// (Ed, 2026-10-04): every area starts the same, a baby and two adults, and grows by a creature
+// (Ed, 2026-10-04): every area starts the same, a young and an adult (Ed, 2026-10-05), and grows by a creature
 // of a random level every wave while it stays wild (rules/growth.ts), so the areas the party
 // reaches late are the dangerous ones. The home area holds none. Wild legends are rare, late threats (Ed,
 // 2026-10-04): a few a map, only in remote areas, each a boss, asleep until the party reaches it. Idle creatures roam their whole area, never leaving it.
@@ -147,8 +147,8 @@ export type LegendState = "asleep" | "restless" | "angry" | "happy" | /** (older
 
 export interface AreaPopulation { babies: number; young: number; adults: number }
 
-/** How many of each level every area starts with (Ed, 2026-10-04: every area the same; one baby
- *  and two adults, Ed 2026-10-05). It grows by a creature a wave while it stays wild
+/** How many of each level every area starts with (Ed, 2026-10-04: every area the same; one young
+ *  and one adult, Ed 2026-10-05; it was a baby and two adults). It grows by a creature a wave while it stays wild
  *  (rules/growth.ts). (Each area also has its sleeping legend: spawnCreatures.) */
 export function population(map: ForestMap): AreaPopulation {
   const S = map.tuning.population.start;
