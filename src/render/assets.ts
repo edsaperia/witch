@@ -262,6 +262,12 @@ export class AssetLibrary {
     if (!a) this.ask({ kind: "woken", id: k, species, style: this.style });
     return a;
   }
+  /** A creature in an expression (art/genome/expressions.js: happy, dazed...), or undefined (and asked for). */
+  faceArt(species: string, face: string): CreatureArt | undefined {
+    const k = `face-${face}-${species}`, a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "face", id: k, species, face, style: this.style });
+    return a;
+  }
   /** An invited creature's party look (its gear seeded by its id), or undefined (and asked for). */
   partyArt(species: string, id: number, colour: number[]): CreatureArt | undefined {
     const k = `party-${id}`, a = this.creatures.get(k);

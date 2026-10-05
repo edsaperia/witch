@@ -1,8 +1,8 @@
 // Drawing the sprite sets with art/generator.js and packing them into atlas pixels. No Three.js
 // and no page needed, so it runs in a Web Worker (with OffscreenCanvas) as well as on the page.
 import * as Art from "../../art/generator.js";
-import { AREA_TYPES } from "../rules/map";
-import { AREAS, areaAssets } from "../../art/areas.js";
+import { LOOKS } from "../rules/map";
+import { AREA_BY_ID, areaAssets } from "../../art/areas.js";
 import { rng } from "../rules/random";
 import type { Style } from "./style";
 import { rigSprites, type RigMeta } from "./rig/rigBuild";
@@ -52,7 +52,7 @@ function areaTree(def: ArtDef, o: TreeOpts, st: Style, r: () => number, K: numbe
 /** Everything an area type needs, from art/areas.js: its big objects (trees in several
  *  variants, split into halves), small objects, wall objects, set piece, and floor tile. */
 export function typeSprites(st: Style, seed: number, t: number, K: number, mk: MakeCanvas): { sprites: Baked[]; layout: TypeLayout; floor: Baked } {
-  const id = AREA_TYPES[t].id, def = (AREAS as unknown as ArtDef[]).find(a => a.id === id)!;
+  const id = LOOKS[t].id, def = (AREA_BY_ID as unknown as Record<string, ArtDef>)[id]; // (LOOKS: the area types and home's meadow)
   const assets = areaAssets(id, st, { K, makeCanvas: mk }) as { floor: { sp: Baked }; walls: { sp: Baked }[]; small: { sp: Baked }[]; big: { sp: Baked }[]; setPiece: { sp: Baked; origin?: { x: number; y: number } } | null };
   const sprites: Baked[] = [], add = (b: Baked) => sprites.push(b) - 1;
   const layout: TypeLayout = { big: [], bigWeight: [], small: [], walls: [], set: null };
@@ -69,7 +69,7 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   // Each height class gets the area's own share of its trees (its layout's heightMix), split among
   // that class's variants; without one, the art's default weights.
   const variants = (Art.areaTreeVariants as (id: string, st: Style, o: object) => unknown)(id, st, { K, makeCanvas: mk, flora: (Art.floraPick as (q: unknown) => string[])(st.flora) }) as { top: Baked; bot: Baked; weight: number; heightClass: "sapling" | "mature" | "tall" | "giant"; sway?: { top: unknown; bot: unknown } }[]; // flora: ?flora= (main.ts), these species instead of the area's own
-  const mix = AREA_TYPES[t].layout.heightMix, perClass = (c: string) => variants.filter(v => v.heightClass === c).length || 1;
+  const mix = LOOKS[t].layout.heightMix, perClass = (c: string) => variants.filter(v => v.heightClass === c).length || 1;
   // Each carries its sway mask (#34), so only its leaves move in the wind.
   const withSway = (b: Baked, S?: unknown) => (S ? { ...b, S: S as Baked["A"] } : b);
   for (const v of variants) { layout.big.push({ bot: add(withSway(v.bot, v.sway?.bot)), top: add(withSway(v.top, v.sway?.top)) }); layout.bigWeight.push(mix ? mix[v.heightClass] / perClass(v.heightClass) : v.weight); }
@@ -94,7 +94,7 @@ export function creatureSprites(st: Style, species: string, mk: MakeCanvas, gear
   for (const facing of ["towards", "away"]) for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++) {
     const sp = Art.critter(species, level, f, st, facing, gear as null) as { m: ArrayLike<number> };
     const b = Art.bake(sp, Art.speciesColours(species, st, gear as null), st, st.cOutline, mk) as Baked;
-    if (!gear) b.eyes = eyeMask(sp.m);
+    if (!gear || Object.keys(gear).every(k => k === "face")) b.eyes = eyeMask(sp.m); // (an expression alone keeps the find-in-the-dark eyes)
     out.push(b);
   }
   return out;
@@ -149,6 +149,7 @@ export function packPixels(sprites: Baked[], width = 2048): AtlasPixels {
 export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: number } | { kind: "creature"; id: string; style: Style } | { kind: "rig"; id: string; species: string; level: number; style: Style }
   /** A creature enraged by a wave (Stage 4 playtest): angry glowing red eyes and a darker tint. */
   | { kind: "woken"; id: string; species: string; style: Style }
+  | { kind: "face"; id: string; species: string; face: string; style: Style }
   /** A party animal: an invited creature in its party gear (seeded by its id: collar in its sigil colour, maybe a hat, sunglasses, shoes). */
   | { kind: "party"; id: string; species: string; seed: number; /** the collar's colour; null: no collar (happy, issue #87) */ colour: number[] | null; style: Style }
   /** Every decoration (ruins in both conditions, rocks, freak trees), split as trees are. */
@@ -339,11 +340,13 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "scenes") { const { sprites, scenes } = sceneSprites(job.style, mk); return { px: packPixels(sprites, 2048), scenes }; }
   if (job.kind === "speakers") { const { sprites, speakers } = speakerSprites(job.style, mk); return { px: packPixels(sprites, 2048), speakers }; }
   if (job.kind === "decor") { const { sprites, decor } = decorSprites(job.style, mk); return { px: packPixels(sprites, 2048), decor }; }
-  if (job.kind === "woken") return { px: packPixels(creatureSprites(job.style, job.species, mk, { woken: true }), 2048) };
+  // (enraged: red eyes and the angry face; dressed up: the happy face; art/genome/expressions.js)
+  if (job.kind === "woken") return { px: packPixels(creatureSprites(job.style, job.species, mk, { woken: true, face: "angry" }), 2048) };
+  if (job.kind === "face") return { px: packPixels(creatureSprites(job.style, job.species, mk, { face: job.face }), 2048) };
   if (job.kind === "party") {
     // Leashed: its seeded gear and the glowing collar. Happy (no colour): the gear without the collar,
-    // always at least a hat so it reads as dressed up.
-    const gear = { ...Art.partyGear(job.seed), collar: job.colour ?? null };
+    // always at least a hat so it reads as dressed up. Both smiling.
+    const gear = { ...Art.partyGear(job.seed), collar: job.colour ?? null, face: "happy" };
     if (!job.colour && gear.hat === null) gear.hat = job.seed % 3;
     return { px: packPixels(creatureSprites(job.style, job.species, mk, gear), 2048) };
   }

@@ -1,9 +1,9 @@
-// Renders every sound effect (src/platform/sfx.ts) offline, for tools/sfx/check.mjs: each in its
+// Renders every sound effect (src/platform/audio/sfx.ts) offline, for tools/sfx/check.mjs: each in its
 // own OfflineAudioContext, measured (rms, peak, NaN) and returned as 16-bit mono samples.
-import { Sfx } from "../../src/platform/sfx";
+import { Sfx } from "../../src/platform/audio/sfx";
 import { TUNING } from "../../src/rules/tuning";
 import style from "../../config/music-style.json";
-import { voiceOf } from "../../src/platform/sfxCues";
+import { voiceOf } from "../../src/platform/audio/voices";
 import type { Creature } from "../../src/rules/creatures";
 
 const v = (species: string, level: number) => voiceOf({ species, level, boss: level === 3 } as unknown as Creature, TUNING);
@@ -19,10 +19,14 @@ const SOUNDS: [string, number, Play][] = [
   ["speak-swarm-enraged", 0.9, s => s.speak(v("woodlouse", 1), "enraged")],
   ["speak-legend-enraged", 5, s => s.speak(v("bear", 3), "enraged")],
   ["legend-happy", 4.5, s => s.speak(v("bear", 3), "happy")],
-  ["legend-windup", 3, s => s.windup(0, 1, v("bear", 3))],
+  ["legend-windup", 3, s => s.windup(0, 1)],
   ["howl", 1.4, s => s.howl(v("wolf", 2))],
   ["fight-crowd", 1.4, s => { const sp = ["wolf", "fox", "boar", "hare", "owl", "stoat", "badger", "toad"]; sp.forEach((x, i) => s.speak(v(x, (i % 3) as number), i % 2 ? "enraged" : "happy", (i % 5) / 2 - 1, 1 - i * 0.1)); }],
   ["witch-ouch", 7, () => {}],
+  ["witch-knock", 6, () => {}],
+  ["legend-charge", 9, () => {}],
+  ["relic-found", 3, s => s.relic()],
+  ["home-meadow", 12, () => {}],
   ["soundsystem-lost", 3, s => s.lost()],
   ["soundsystem-lost-urgent", 3, s => s.lost(true)],
   ["hit", 0.8, s => s.hit(0)],
@@ -36,7 +40,6 @@ const SOUNDS: [string, number, Play][] = [
   ["enraged", 0.8, s => s.enraged(0)],
   ["enraged-crowd", 0.8, s => s.enraged(0, 1, 6)],
   ["happy", 0.6, s => s.happy(0)],
-  ["windup", 1.6, s => s.windup(0)],
   ["legend-sleep", 5, s => s.legends(1, 1, 0)],
   ["legend-nightmare", 5, s => s.legends(1, 0.5, 1)],
 ];
@@ -48,6 +51,23 @@ async function render(name: string, seconds: number, play: Play) {
   if (name === "witch-chatter") {
     // her 💌 hose as #89 fires it: bursts of 3 letters 0.12 s apart, a burst every 0.6 s
     for (let b = 0; b < 4; b++) for (let i = 0; i < 3; i++) { const at = b * 0.6 + i * 0.12; void oc.suspend(Math.round(at * rate) / rate).then(() => { s.letter(0); return oc.resume(); }); }
+  } else if (name === "witch-knock") {
+    // a bite's small knock (1 m), a knockback attack's (4 m), a charge's big throw (9 m) with its stun's twinkle
+    const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
+    at(0, () => s.knock(1)); at(1.2, () => s.knock(4)); at(2.6, () => s.knock(9));
+    for (let i = 0; i < 14; i++) at(2.75 + i * 0.13, () => s.twinkle(i));
+  } else if (name === "legend-charge") {
+    // windup bellow; the run building to its speed, rumbling; the braking arc's skid; the trot home
+    const at = (sec: number, f: () => void) => void oc.suspend(Math.round(sec * rate) / rate).then(() => { f(); return oc.resume(); });
+    at(0, () => s.bellow());
+    let t = 1.2, speed = 2;
+    while (t < 4.2) { const sp = speed; at(t, () => { s.hoof(); s.charge(Math.min(1, sp / 12), 0); }); t += Math.max(0.16, Math.min(0.5, 2.4 / sp)); speed = Math.min(14, speed + 2.2); }
+    for (let k = 0; k <= 12; k++) { const sp = 14 * (1 - k / 12); at(4.2 + k * 0.1, () => s.charge(0, Math.min(1, sp / 10))); }
+    at(5.5, () => s.charge(0, 0));
+    for (let i = 0; i < 9; i++) at(5.7 + i * 0.34, () => s.hoof(0, 1, true));
+  } else if (name === "home-meadow") {
+    // walking in from home's edge to the dancefloor and out again: the meadow's level each 0.1 s
+    for (let k = 0; k <= 115; k++) { const sec = k * 0.1, L = Math.min(1, sec / 3, Math.max(0, (11.5 - sec) / 3)); void oc.suspend(Math.round(sec * rate) / rate).then(() => { s.meadow(L); return oc.resume(); }); }
   } else if (name === "witch-ouch") {
     // eight hits, the strain rising toward her last, then knocked down
     for (let i = 0; i < 8; i++) void oc.suspend(Math.round(i * 0.6 * rate) / rate).then(() => { s.ouch(i / 7); return oc.resume(); });

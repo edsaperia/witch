@@ -7,6 +7,7 @@ import { SpriteBatch, SPRITE_UNIFORMS, type SpriteInstance } from "../sprites";
 import type { AssetLibrary, RigArt } from "../assets";
 import { RigBody, RigOut, type RigDrive } from "./rig";
 import type { Creature } from "../../rules/creatures";
+import type { RigFace, RigMeta } from "./rigBuild";
 
 /** ?rig=1 turns the live rig on (Ed: desktop first; it costs more instances per creature). */
 export const rigOn = (): boolean => typeof location !== "undefined" && new URLSearchParams(location.search).get("rig") === "1";
@@ -14,7 +15,16 @@ export const rigOn = (): boolean => typeof location !== "undefined" && new URLSe
 /** Creatures drawn smaller than this (art pixels high) keep their baked frames: at that size the rig's
  *  motion can't be seen, and they're the many (#79: a baked cycle for swarms and tiny creatures). */
 export const RIG_MIN_PX = 40;
-export interface RigLook { /** extra height (a dance, a hop, sinking) in metres */ y: number; scale: number; glow: number; fresh: boolean; /** its ordinary frame's height in art pixels */ h: number }
+
+/** A meta with its head piece in an expression (made once per meta and face, so a frame allocates nothing). */
+const faceMetas = new WeakMap<RigMeta, Partial<Record<RigFace, RigMeta>>>();
+export function withFace(meta: RigMeta, face: RigFace | undefined): RigMeta {
+  const head = face && face !== "neutral" ? meta.faces?.[face] : undefined;
+  if (!head) return meta;
+  let by = faceMetas.get(meta); if (!by) faceMetas.set(meta, (by = {}));
+  return (by[face!] ??= { ...meta, head });
+}
+export interface RigLook { /** extra height (a dance, a hop, sinking) in metres */ y: number; scale: number; glow: number; fresh: boolean; /** its ordinary frame's height in art pixels */ h: number; /** its expression (render/looks.ts expression(c), #89): the head piece with that face */ face?: RigFace }
 
 export class RigView {
   private bodies = new Map<number, RigBody>();
@@ -49,8 +59,9 @@ export class RigView {
     body.update(c.x, c.z, this.dt, c.charge ? c.charge.dx * c.charge.speed : c.vx, c.charge ? c.charge.dz * c.charge.speed : c.vz);
     const drive = this.drive(c, this.time), u2m = this.mpp * art.meta.s * look.scale; // metres per model unit
     this.out.reset();
-    if (art.meta.template === "quadruped") body.quadruped(art.meta, u2m, this.dt, drive, this.out);
-    else body.serpent(art.meta, u2m, this.dt, drive, this.out);
+    const meta = withFace(art.meta, look.face);
+    if (meta.template === "quadruped") body.quadruped(meta, u2m, this.dt, drive, this.out);
+    else body.serpent(meta, u2m, this.dt, drive, this.out);
     this.place(c, art, look, u2m);
     this.stats.creatures++; this.stats.ms += performance.now() - t0;
     return true;

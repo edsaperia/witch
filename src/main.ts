@@ -1,8 +1,8 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { Shake } from "./render/shake";
-import { Music } from "./platform/music";
-import { Sfx } from "./platform/sfx";
-import { SfxCues } from "./platform/sfxCues";
+import { Music } from "./platform/audio/music";
+import { Sfx } from "./platform/audio/sfx";
+import { SfxCues } from "./platform/audio/sfxCues";
 import { musicMix } from "./rules/music";
 import { musicCue, type MusicCue } from "./rules/musicPlan";
 import type { MusicStyle } from "./rules/musicScore";
@@ -45,6 +45,9 @@ const tuning = {
   shadows: { ...TUNING.shadows }, canopyShadow: { ...TUNING.canopyShadow }, mist: { ...TUNING.mist },
   party: { ...TUNING.party }, fight: { ...TUNING.fight }, // (the fight's scale and speed change live: its own copy)
 };
+// ?px=3|4|5: the art pixel (screen pixels per art pixel; the tuning's pixelSize), per load, to compare the pixel-art
+// styles in play (docs/ART-GUIDE.md section 0: Ed picks between bold and ref at 4 or 5 in playtesting).
+{ const px = Number(params.get("px")); if ([2, 3, 4, 5, 6].includes(px)) tuning.pixelSize = px; }
 if (params.get("shadows") === "off") tuning.shadows.on = false;
 if (params.get("canopy") === "off") tuning.canopyShadow.on = false;
 if (params.get("mist") === "off") tuning.mist.on = false;
@@ -181,6 +184,7 @@ if (arenaParam) waveChoice = 0;
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = loadStyle();
+{ const artStyle = params.get("style"); if (artStyle === "bold" || artStyle === "ref") style.artStyle = artStyle; } // ?style=now|bold|ref: a pixel-art style (art/stylise.js) baked into every sprite, carried to the art worker in the style
 if (params.get("flora")) style.flora = params.get("flora"); // ?flora=new|fantasy|all|<ids>: every wooded area grows these tree species (art/flora), carried to the art worker in the style
 /** Load timings (ms since the page started): the view built (the page's own sprites drawn), ready to play. */
 const loadTimes = { viewStart: performance.now(), view: 0, ready: 0 };

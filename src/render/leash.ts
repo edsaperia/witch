@@ -35,6 +35,8 @@ import { blocked, leashPoint, talkTime, talkTurn } from "../rules/leash";
 import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
 import { FIGHT, profileOf } from "../rules/movement";
+import { huntsWitch } from "../rules/creatureStates";
+import { relicGlints } from "../rules/legends";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
@@ -281,9 +283,10 @@ export class LeashView {
       if (!c.boss || c.leashed || Math.abs(c.x - w.x) > near || Math.abs(c.z - w.z) > near) continue;
       // Asleep (or asleep for good), it's scenery: nothing marks it (Ed, 2026-10-04). Waking, a burst
       // of soil as it heaves up; happy, a few hearts' worth of rosy motes rising.
-      if (c.legendState === "asleep" || c.legendState === "slept") {
+      if (c.legendState === "asleep" || c.legendState === "restless" || c.legendState === "slept") {
         this.woke.delete(c.id);
-        if (c.legendState === "asleep" && c.quest && c.quest.done === undefined) this.dreams.push(c);
+        // Its dream shows while its quest can still be done (#87: rules/legends.ts sets c.questOpen); restless, it's a nightmare (the music builder's).
+        if (c.questOpen ?? (c.legendState === "asleep" && c.quest && c.quest.done === undefined)) this.dreams.push(c);
         continue;
       }
       if (c.legendState === "waking" && !this.woke.has(c.id)) { this.woke.add(c.id); for (let i = 0; i < 3; i++) this.fx.push({ kind: "puff", x: c.x + (i - 1) * 1.2, y: 0.4, z: c.z, at: time, life: 1.4, r: 0.5, g: 0.4, b: 0.28, seed: c.id * 13 + i }); }
@@ -495,7 +498,7 @@ export class LeashView {
     // Shots in flight: a bright core and a halo, red for the wild, the party's in their neon.
     for (const sh of g.combat.shots) {
       if (!close(sh.x, sh.z, 150)) continue;
-      const col = sh.side === "wild" ? { r: 1, g: 0.25, b: 0.35 } : neon(sh.species);
+      const col = huntsWitch(sh.side) ? { r: 1, g: 0.25, b: 0.35 } : neon(sh.species);
       if (sh.lob) {
         // A lob: high over everything, and a ring tightening where it'll land (get out of it).
         const L = sh.lob, k = Math.max(0, Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at))), y = 1 + Math.sin(k * Math.PI) * 5;
@@ -513,7 +516,7 @@ export class LeashView {
     for (const b of g.combat.beams) {
       const c = g.creatures[b.from];
       if (!c || !close(c.x, c.z, 150)) continue;
-      const col = b.side === "wild" ? { r: 1, g: 0.3, b: 0.3 } : neon(b.species), ex = Math.cos(b.angle), ez = Math.sin(b.angle), fl = 0.75 + 0.25 * Math.sin(time * 40 + b.id);
+      const col = huntsWitch(b.side) ? { r: 1, g: 0.3, b: 0.3 } : neon(b.species), ex = Math.cos(b.angle), ez = Math.sin(b.angle), fl = 0.75 + 0.25 * Math.sin(time * 40 + b.id);
       for (let s2 = 0.6; s2 < b.length; s2 += 0.45) {
         this.standing.add(c.x + ex * s2, 0.7, c.z + ez * s2, Math.max(0.5, b.width * 0.9), dot, col.r, col.g, col.b, 0.45 * fl);
         this.standing.add(c.x + ex * s2, 0.7, c.z + ez * s2, 0.3, dot, 1, 1, 1, 0.8 * fl);
@@ -522,7 +525,7 @@ export class LeashView {
     // A snail's slime: glistening patches on the ground, fading as they dry.
     for (const tr of g.combat.trails) {
       if (!close(tr.x, tr.z)) continue;
-      const left = Math.min(1, (tr.until - time) / 2), wild = tr.side === "wild";
+      const left = Math.min(1, (tr.until - time) / 2), wild = huntsWitch(tr.side);
       // A glossy patch (bigger and brighter: Ed, 2026-10-05), a rim round it, and glints that wink.
       const sd = Math.round(tr.until * 10), [sr, sg, sb] = wild ? [0.6, 1, 0.35] : [0.45, 1, 0.85];
       for (let i = 0; i < 7; i++) { const a = hash2(tr.from, sd + i, 31) * Math.PI * 2, q = hash2(tr.from, sd + i, 37) * tr.r * 0.6; this.flat.add(tr.x + Math.cos(a) * q, 0, tr.z + Math.sin(a) * q * 0.8, tr.r * 0.75, dot, sr, sg, sb, 0.45 * left); }
@@ -671,7 +674,7 @@ export class LeashView {
     this.drawCombat(time, camera, width, height, hatTop);
     for (const e of s.events) {
       if (e.kind === "fizzled") this.fizzles.push({ x: e.x, z: e.z, at: time });
-      if (e.kind === "invited") this.bursts.push({ x: e.x, z: e.z, at: time, seed: e.id });
+      if (e.kind === "invited" || e.kind === "befriended") this.bursts.push({ x: e.x, z: e.z, at: time, seed: e.id });
     }
     this.fizzles = this.fizzles.filter(f => time - f.at < 0.7);
     this.bursts = this.bursts.filter(b => time - b.at < 0.9);
@@ -758,6 +761,20 @@ export class LeashView {
       const k = 1 - (time - f.at) / 0.7;
       this.flat.add(f.x, 0, f.z, 3 * (1 + (1 - k) * 0.6), dot, 1, 0.15, 0.1, k);
     }
+
+    // Relics (#87; placeholder till the art builder's party relics are drawn): a gold mound where
+    // one lies, and its glint, only through a gap in the canopy from the treetops (Ed, 2026-10-05:
+    // "a rare find"), drawn among the scenery, never over the canopy; no markers. A gold glint
+    // over her hat for each she carries.
+    const aloft = w.lift > 0.5;
+    for (const r of g.relics) {
+      if (r.state !== "lying" || Math.abs(r.x - w.x) > 400 || Math.abs(r.z - w.z) > 400) continue;
+      if (!relicGlints(g.forest, g.map, r, aloft)) continue; // (under closed canopy, seen from above: nothing at all)
+      for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; this.standing.add(r.x + Math.cos(a) * 2.5, 0.4 + (i % 3) * 0.5, r.z + Math.sin(a) * 1.8, 1.2, dot, 1, 0.78, 0.3, 0.8); }
+      const tw = Math.max(0, Math.sin(time * 2.5 + r.id * 1.7)) ** 6;
+      this.standing.add(r.x, 3.5, r.z, 2 + tw * 4, dot, 1, 0.95, 0.7, 0.4 + 0.6 * tw);
+    }
+    s.relics.forEach((id, i) => { const tw = 0.6 + 0.4 * Math.sin(time * 4 + id); this.over.add(w.x + (i - (s.relics.length - 1) / 2) * 0.6, hatTop + 2.2, w.z, 0.5, dot, 1, 0.85, 0.4, tw); });
 
     // The bond.
     const leashed = [...s.stack, ...s.placed.map(p => p.id)];
