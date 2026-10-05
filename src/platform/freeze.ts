@@ -38,7 +38,8 @@ export class Freeze {
     // Before the game's own input (capture), so a press while frozen never starts or flies anything.
     window.addEventListener("keydown", e => {
       if (e.code === "Escape" && !e.repeat && this.started()) { e.preventDefault(); this.toggle(); }
-      else if (e.code === "Period" && this.frozen) { e.preventDefault(); this.step(e.shiftKey ? 10 : 1); }
+      // While frozen . steps (and isn't also the fight-momentum debug key); otherwise it's that key.
+      else if (e.code === "Period" && this.frozen) { e.preventDefault(); e.stopPropagation(); this.step(e.shiftKey ? 10 : 1); }
     }, { capture: true });
   }
 

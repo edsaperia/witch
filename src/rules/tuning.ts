@@ -40,8 +40,8 @@ export interface Tuning {
   /** Spells (Ed, 2026-10-04): the one equipped this run, and each spell's numbers. speed: her speed times mult for duration seconds, then cooldown seconds to recharge. */
   /** Combat (Stage 4; the attacks are data in config/combat.json): see config/tuning.json's _combat. */
   /** The fight's scale and speed (Ed's motion scale pass): lengths and speeds in a fight times these. */
-  fight: { scale: number; speed: number };
-  combat: { aggro: number; witchLose: number; engage: number; pursuit: number; pursuitRun: number; fightRun: number; legendRun: number; reaction: number; chaseMult: number; partyChaseMult: number; marchMult: number; fleeMult: number; soundsystemHealth: number; soundsystemRadius: number; homeHealth: number; homeRadius: number; shake: number };
+  fight: { scale: number; speed: number; momentum: number };
+  combat: { aggro: number; witchLose: number; leaveArea: number; engage: number; pursuit: number; pursuitRun: number; fightRun: number; legendRun: number; reaction: number; chaseMult: number; partyChaseMult: number; marchMult: number; fleeMult: number; soundsystemHealth: number; soundsystemRadius: number; homeHealth: number; homeRadius: number; shake: number };
   /** Parked party animals (at a sigil) guard within radius metres of it (Ed, 2026-10-04). */
   guard: { radius: number };
   /** Creatures noticing the witch on the ground (Ed's playtest): within radius metres resting ones look at her; curious babies come to about curious metres, skittish ones keep skittish off. */
@@ -167,7 +167,7 @@ export interface Tuning {
   /** Berries and evolving (rules/berries.ts): berries per area at the start [min, max], berry bushes
    *  per area, how far a party animal looks for one (m), how long it eats (s), berries to evolve
    *  (babies, young, adults), the berry's colour and glow. */
-  berries: { perArea: number[]; bushesPerArea: number; patch: { bushes: number[]; radius: number }; detour: number; seekRadius: number; eatTime: number; toEvolve: number[]; colour: string; glow: number };
+  berries: { perArea: number[]; bushesPerArea: number; patch: { bushes: number[]; radius: number }; detour: number; seekRadius: number; eatTime: number; /** Berries to evolve (Ed, 2026-10-05): the strength a level gains (by: "power", hp × dps, or "value", √ of it) over per, rounded, at least 1; scale, the legends' buff. */ cost: { by: "power" | "value"; per: number; scale?: number }; colour: string; glow: number };
   sigilProjection: { height: number; opacity: number; beam: number; size: number };
   occlusion: { on: boolean; fadeOpacity: number; edge: number; minHeight: number; silhouette: number };
   stack: { offset: number; scale: number; gap: number; stiffness: number; damping: number; trail: number; idleSway: number };

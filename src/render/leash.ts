@@ -15,7 +15,7 @@ import * as THREE from "three";
 import { drawSigil, sigilColour } from "../../art/generator.js";
 import { dormant, type Game } from "../rules/game";
 import type { Creature } from "../rules/creatures";
-import { attackNamed, attackOf, maxHp, traitsOf, type Trait } from "../rules/combat";
+import { attackNamed, attackOf, creatureMaxHp, traitsOf, type Trait } from "../rules/combat";
 
 /** Each trait's mark over a fighting creature (placeholders until the art lands): flier sky blue,
  *  armoured a steel square, swarm violet, heavy a brown square, nimble green, burrower earth. */
@@ -224,18 +224,19 @@ export class LeashView {
     // seconds after it eats.
     for (const c of g.creatures) {
       if (!c.leashed || B.evolving.has(c.id)) continue;
-      const need = toEvolve(c.level, t), ate = B.ateAt.get(c.id);
+      const need = toEvolve(c.level, t, c.species), ate = B.ateAt.get(c.id);
       if (!Number.isFinite(need)) continue;
       if (Math.hypot(c.x - w.x, c.z - w.z) > 20 && !(ate !== undefined && time - ate < 3)) continue;
       // One segment for each berry it needs (Ed, 2026-10-05: "segment the ring"), small gaps
       // between, clockwise from the top; each berry eaten lights one (the newest flashes).
-      const fed = B.fed.get(c.id) ?? 0, segs = Math.max(1, Math.ceil(need)), per = Math.max(2, Math.round(28 / segs)), gap = segs > 1 ? Math.min(0.35, 0.9 / segs) : 0;
+      const fed = B.fed.get(c.id) ?? 0, segs = Math.max(1, Math.ceil(need)), per = Math.max(2, Math.round(28 / segs)), gap = segs > 1 ? Math.min(0.4, 1.2 / segs) : 0;
       const flash = ate !== undefined && time - ate < 0.6 ? 1 - (time - ate) / 0.6 : 0;
       for (let s = 0; s < segs; s++) {
         const lit = s < fed, newest = lit && s === Math.ceil(fed) - 1;
         for (let i = 0; i < per; i++) {
           const f = (s + gap / 2 + (1 - gap) * (per > 1 ? i / (per - 1) : 0.5)) / segs, a = Math.PI / 2 - f * Math.PI * 2, b = newest ? flash : 0;
-          this.flat.add(c.x + Math.cos(a) * 1.5, 0, c.z + Math.sin(a) * 1.1, 0.35 + b * 0.2, dot, lit ? 1 : 0.9, lit ? 0.25 + b * 0.6 : 0.9, lit ? 0.3 + b * 0.5 : 1, lit ? 0.9 : 0.15);
+          // (the berries still to eat show as pale segments, so how many it needs reads at a glance)
+          this.flat.add(c.x + Math.cos(a) * 1.5, 0, c.z + Math.sin(a) * 1.1, 0.4 + b * 0.2, dot, lit ? 1 : 0.85, lit ? 0.25 + b * 0.6 : 0.85, lit ? 0.3 + b * 0.5 : 0.95, lit ? 0.95 : 0.55);
         }
       }
     }
@@ -461,7 +462,7 @@ export class LeashView {
       // About to charge (the boar lowering its head): the lane it will run down, brightening.
       if (c.charge?.from !== undefined && time < c.charge.from) { const ch = c.charge, k = 1 - Math.max(0, ch.from! - time) / 0.5, L = ch.speed * (ch.until - ch.from!), col = c.leashed ? neon(c.species) : { r: 1, g: 0.3, b: 0.3 }; for (let s2 = 1.5; s2 < L; s2 += 1.2) for (const side of [-1, 1]) this.flat.add(c.x + ch.dx * s2 - ch.dz * side * 1.6, 0, c.z + ch.dz * s2 + ch.dx * side * 1.6, 0.35, dot, col.r, col.g, col.b, 0.15 + 0.55 * k); }
       // Charging (the boar): dust kicked up behind it.
-      if (c.charge && time < c.charge.until && (c.charge.from === undefined || time >= c.charge.from)) for (let i = 0; i < 4; i++) { const q = hash2(c.id, Math.floor(time * 20) + i, 17); this.standing.add(c.x - c.charge.dx * (0.8 + i * 0.5), 0.3 + q * 0.4, c.z - c.charge.dz * (0.8 + i * 0.5), 0.5 + i * 0.15, dot, 0.75, 0.65, 0.5, 0.5 - i * 0.1); }
+      if (c.charge && (c.charge.from === undefined || time >= c.charge.from)) for (let i = 0; i < (c.charge.braking ? 6 : 4); i++) { const q = hash2(c.id, Math.floor(time * 20) + i, 17); this.standing.add(c.x - c.charge.dx * (0.8 + i * 0.5), 0.3 + q * 0.4, c.z - c.charge.dz * (0.8 + i * 0.5), 0.5 + i * 0.15, dot, 0.75, 0.65, 0.5, 0.5 - i * 0.1); }
       // Telegraphs: winding up, a ring tightens at its feet; a shot shows its line; the quake its reach.
       const f = c.fight, atk = f && f.windupUntil > 0 ? attackOf(c.species, c.level) : null;
       if (atk && f) {
@@ -502,7 +503,7 @@ export class LeashView {
       const healed = c.healedAt !== undefined && time - c.healedAt < 0.8;
       if (healed) for (let i = 0; i < 10; i++) { const k = (time - c.healedAt!) / 0.8, a = hash2(c.id, i, 11) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 0.9 * (0.4 + k), 0.4 + k * 2 + hash2(c.id, i, 13), c.z + Math.sin(a) * 0.6 * (0.4 + k), 0.3, dot, 0.4, 1, 0.5, 1 - k); }
       // Health bars, only when hurt: ten squares over its head.
-      const max = maxHp(c.level), hp = c.hp ?? max;
+      const max = creatureMaxHp(c), hp = c.hp ?? max;
       // Stunned (an armoured one knocked over): stars round its head.
       if (c.stunUntil !== undefined && time < c.stunUntil) { const y = (this.tops.get(c.id) ?? 1.4) + 0.2; for (let i = 0; i < 3; i++) { const a = time * 5 + (i / 3) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 0.6, y + Math.sin(a * 2) * 0.08, c.z + Math.sin(a) * 0.4, 0.22, dot, 1, 0.95, 0.5, 0.9); } }
       // Its traits' marks (Stage 5, readable counters), left of its health bar, while it fights or is hurt.

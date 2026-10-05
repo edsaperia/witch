@@ -10,10 +10,10 @@
 // doesn't matter here. An optional player grows at a steady rate of fighting value and fights
 // sieges by the square law (rules/power.ts). It runs in well under a second a run, where the full
 // game manages about 3.5 times real time. Read by tools/balance/sim.mjs and balance.test.ts.
-import { attackOf, COMBAT } from "./combat";
+import { attackOf, COMBAT, strengthOf } from "./combat";
 import { spawnCreatures, type Creature, type Level } from "./creatures";
-import { growthLevel } from "./growth";
-import type { ForestMap } from "./map";
+import { countScale, grownAt, growthLevel } from "./growth";
+import { AREA_TYPES, type ForestMap } from "./map";
 import { cellKey, newParty, soundsystemFor, spreadWave } from "./party";
 import { hash2 } from "./random";
 import { lanchester, levelValue } from "./power";
@@ -89,7 +89,7 @@ export interface SimResult {
   falls: { wave: number; after: number }[];
 }
 
-interface Fighter { id: number; level: Level; cell: string; x: number; z: number; x0: number; z0: number; speed: number; dps: number; reach: number; value: number; /** Health left (a happy legend wears it down). */ hp?: number; siege: string | null; gone: boolean; /** Stays in its own area: never marches on (an area's legend). */ stay?: boolean }
+interface Fighter { id: number; level: Level; cell: string; x: number; z: number; x0: number; z0: number; speed: number; dps: number; reach: number; value: number; /** Its species' strength (Ed, 2026-10-05): health and dps are its level's times this. */ m: number; /** Health left (a happy legend wears it down). */ hp?: number; siege: string | null; gone: boolean; /** Stays in its own area: never marches on (an area's legend). */ stay?: boolean }
 interface Sound { key: string; x: number; z: number; hp: number; radius: number; wave?: number; at?: number }
 
 /** A map's fighters (young and up), by area, worth working out once per map. */
@@ -105,7 +105,8 @@ export function fightersOf(map: ForestMap, creatures: Creature[] = spawnCreature
     if (c.boss) continue; // (the areas' own legends: the areaLegends option models them)
     const atk = attackOf(c.species, c.level, COMBAT)!, A = atk.attack, kites = A.delivery === "shot" && COMBAT.kite.species.includes(c.species);
     const reach = A.delivery === "shot" ? A.range * (kites ? COMBAT.kite.far : 0.8) : A.range + (A.lunge ?? 0) - 0.3;
-    const f: Fighter = { id: c.id, level: c.level, cell: cellKey(c.cell), x: c.x, z: c.z, x0: c.x, z0: c.z, speed: c.speed * C.marchMult, dps: COMBAT.levels.dps[c.level], reach, value: levelValue(c.level), siege: null, gone: false };
+    const m = strengthOf(c.species, c.level);
+    const f: Fighter = { id: c.id, level: c.level, cell: cellKey(c.cell), x: c.x, z: c.z, x0: c.x, z0: c.z, speed: c.speed * C.marchMult, dps: COMBAT.levels.dps[c.level] * m, reach, value: levelValue(c.level) * m, m, siege: null, gone: false };
     let l = by.get(f.cell);
     if (!l) by.set(f.cell, (l = []));
     l.push(f);
@@ -118,7 +119,7 @@ export function fightersOf(map: ForestMap, creatures: Creature[] = spawnCreature
 export function simulate(map: ForestMap, o: SimOptions): SimResult {
   const t = map.tuning, C = t.combat, dt = o.dt ?? 0.5, by = fightersOf(map);
   for (const [k, l] of by) by.set(k, l.filter(f => f.id >= 0)); // (a previous run's reinforcements)
-  for (const l of by.values()) for (const f of l) { f.gone = false; f.siege = null; f.x = f.x0; f.z = f.z0; f.hp = undefined; f.value = levelValue(f.level); }
+  for (const l of by.values()) for (const f of l) { f.gone = false; f.siege = null; f.x = f.x0; f.z = f.z0; f.hp = undefined; f.value = levelValue(f.level) * f.m; }
   const falls: SimResult["falls"] = [], live: Fighter[] = [], sounds = new Map<string, Sound>(), party = newParty(map), waves: WaveSample[] = [];
   const d = map.dancefloor;
   sounds.set("home", { key: "home", x: d.x, z: d.z, hp: C.homeHealth, radius: C.homeRadius });
@@ -151,13 +152,16 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
         const key = cellKey(a.cell), at = soundsystemFor(map, a.cell);
         sounds.set(key, { key, x: at.x, z: at.z, hp: C.soundsystemHealth, radius: C.soundsystemRadius, wave: party.wave, at: time });
         for (const f of by.get(key) ?? []) if (!f.gone && (!o.areaLegends || f.level < 3)) { f.siege = key; live.push(f); }
-        // What it grew while wild (rules/growth.ts): a creature a wave, waves 1 to this one, at the game's own levels.
-        const G = t.population.growth, site = map.siteOf(a.cell[0], a.cell[1]);
-        if (G.on) for (let w = 1; w <= party.wave; w++) for (let n = 0; n < G.perWave; n++) {
+        // What it grew while wild (rules/growth.ts): waves 1 to this one, as many as the game grows
+        // (its count scale: swarms more, loners fewer) at the game's own levels, at its strength.
+        const G = t.population.growth, site = map.siteOf(a.cell[0], a.cell[1]), species = AREA_TYPES[map.typeOf(a.cell[0], a.cell[1])].creature;
+        const m = strengthOf(species), k = countScale(species);
+        if (G.on) for (let w = 1; w <= party.wave; w++) for (let n = 0; n < grownAt(w, G.perWave, k); n++) {
           const level = growthLevel(map.seed, a.cell, w, n, G.weights);
           if (level === 0) continue; // babies never join a siege
           const f = reinforcement(-2e6 - live.length, key, site.x, site.z, map);
           if (level === 1) { const A = COMBAT.attacks[COMBAT.byLevel.melee[1]!]; Object.assign(f, { level: 1, dps: COMBAT.levels.dps[1], value: levelValue(1), reach: A.range + (A.lunge ?? 0) - 0.3 }); }
+          Object.assign(f, { m, dps: f.dps * m, value: f.value * m });
           f.siege = key; live.push(f);
         }
         const happy = o.areaLegends && (o.happyChance ?? 0) > 0 && hash2(a.cell[0], a.cell[1], map.seed + 991) < (o.happyChance ?? 0);
@@ -205,7 +209,7 @@ export function simulate(map: ForestMap, o: SimOptions): SimResult {
       g.hp -= dps * dt;
       for (const f of near) {
         held.add(f);
-        f.hp = (f.hp ?? COMBAT.levels.hp[f.level]) - LDPS * dt;
+        f.hp = (f.hp ?? COMBAT.levels.hp[f.level] * f.m) - LDPS * dt;
         if (f.hp <= 0) f.gone = true;
         f.value = Math.sqrt(Math.max(0, f.hp) * f.dps);
       }
@@ -239,5 +243,5 @@ const frac = (x: number) => x - Math.floor(x);
 /** A director's reinforcement: an adult at its area's centre, marching and hitting as one. */
 function reinforcement(id: number, cell: string, x: number, z: number, map: ForestMap): Fighter {
   const A = COMBAT.attacks[COMBAT.byLevel.melee[2]!];
-  return { id, level: 2, cell, x, z, x0: x, z0: z, speed: map.tuning.creatureSpeed * map.tuning.combat.marchMult, dps: COMBAT.levels.dps[2], reach: A.range + (A.lunge ?? 0) - 0.3, value: levelValue(2), siege: null, gone: false };
+  return { id, level: 2, cell, x, z, x0: x, z0: z, speed: map.tuning.creatureSpeed * map.tuning.combat.marchMult, dps: COMBAT.levels.dps[2], reach: A.range + (A.lunge ?? 0) - 0.3, value: levelValue(2), m: 1, siege: null, gone: false };
 }

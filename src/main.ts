@@ -19,7 +19,7 @@ import { groundHeight } from "./render/height";
 import { SPRITE_UNIFORMS } from "./render/sprites";
 import { loadStyle } from "./render/style";
 import { setupTouch } from "./ui/touch";
-import changelog from "../config/changelog.json";
+import { CHANGELOG } from "./changelog";
 import { PlaytestLog } from "./platform/playtestLog";
 import { powerReport } from "./rules/power";
 import { Freeze } from "./platform/freeze";
@@ -191,15 +191,15 @@ if (params.get("playtest") === "download") setTimeout(() => playtest.download(),
 // ?fightSpeed= set where they start. Every change goes in the playtest log.
 const FIGHT_DEFAULT = { ...TUNING.fight };
 const knobs = document.getElementById("fight-knobs")!;
-const setFight = (scale: number, speed: number, log = true) => {
+const setFight = (scale: number, speed: number, log = true, momentum = tuning.fight.momentum) => {
   const clamp = (x: number) => Math.round(Math.min(3, Math.max(0.25, x)) * 100) / 100;
-  tuning.fight.scale = clamp(scale); tuning.fight.speed = clamp(speed); // (shared with the buffed tuning: live mid-fight)
+  tuning.fight.scale = clamp(scale); tuning.fight.speed = clamp(speed); tuning.fight.momentum = clamp(momentum); // (shared with the buffed tuning: live mid-fight)
   try { localStorage.setItem("witch.fight", JSON.stringify(tuning.fight)); } catch { /* fine */ }
-  for (const [k, v] of [["scale", tuning.fight.scale], ["speed", tuning.fight.speed]] as const) {
+  for (const [k, v] of [["scale", tuning.fight.scale], ["speed", tuning.fight.speed], ["momentum", tuning.fight.momentum]] as const) {
     (knobs.querySelector(`input[name=${k}]`) as HTMLInputElement).value = String(v);
     knobs.querySelector(`.${k}`)!.textContent = v.toFixed(2);
   }
-  if (log) playtest.fight(tuning.fight.scale, tuning.fight.speed);
+  if (log) playtest.fight(tuning.fight.scale, tuning.fight.speed, tuning.fight.momentum);
 };
 {
   let start = { ...FIGHT_DEFAULT };
@@ -207,14 +207,16 @@ const setFight = (scale: number, speed: number, log = true) => {
   const fs = Number(params.get("fightScale")), fv = Number(params.get("fightSpeed"));
   if (fs > 0) start.scale = fs;
   if (fv > 0) start.speed = fv;
-  setFight(start.scale, start.speed, start.scale !== FIGHT_DEFAULT.scale || start.speed !== FIGHT_DEFAULT.speed);
+  const fm = Number(params.get("fightMomentum"));
+  if (fm > 0) start.momentum = fm;
+  setFight(start.scale, start.speed, start.scale !== FIGHT_DEFAULT.scale || start.speed !== FIGHT_DEFAULT.speed || start.momentum !== FIGHT_DEFAULT.momentum, start.momentum ?? FIGHT_DEFAULT.momentum);
 }
-knobs.addEventListener("input", e => { const el = e.target as HTMLInputElement; setFight(el.name === "scale" ? +el.value : tuning.fight.scale, el.name === "speed" ? +el.value : tuning.fight.speed); });
-knobs.querySelector("button")!.addEventListener("click", () => setFight(FIGHT_DEFAULT.scale, FIGHT_DEFAULT.speed));
+knobs.addEventListener("input", e => { const el = e.target as HTMLInputElement; setFight(el.name === "scale" ? +el.value : tuning.fight.scale, el.name === "speed" ? +el.value : tuning.fight.speed, true, el.name === "momentum" ? +el.value : tuning.fight.momentum); });
+knobs.querySelector("button")!.addEventListener("click", () => setFight(FIGHT_DEFAULT.scale, FIGHT_DEFAULT.speed, true, FIGHT_DEFAULT.momentum));
 for (const ev of ["pointerdown", "keydown"]) knobs.addEventListener(ev, e => e.stopPropagation()); // (its own presses don't fly her)
 window.addEventListener("keydown", e => {
-  const k = { BracketLeft: [1 / 1.1, 1], BracketRight: [1.1, 1], Semicolon: [1, 1 / 1.1], Quote: [1, 1.1] }[e.code];
-  if (k) setFight(tuning.fight.scale * k[0], tuning.fight.speed * k[1]);
+  const k = { BracketLeft: [1 / 1.1, 1, 1], BracketRight: [1.1, 1, 1], Semicolon: [1, 1 / 1.1, 1], Quote: [1, 1.1, 1], Comma: [1, 1, 1 / 1.1], Period: [1, 1, 1.1] }[e.code];
+  if (k) setFight(tuning.fight.scale * k[0], tuning.fight.speed * k[1], true, tuning.fight.momentum * k[2]);
 });
 
 // The action bar (1 2 3 4 Q W E R, its keys and recharge) replaces the old line of controls (Ed,
@@ -240,11 +242,11 @@ const setAutoTalk = (on: boolean) => {
 
 declare const __BUILD__: string;
 document.getElementById("version")!.textContent = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
-// What's new, on the start screen: the last three versions, newest first (config/changelog.json).
+// What's new, on the start screen: the last three versions, newest first (config/changelog/, collected by changelog.ts).
 const newsEl = document.getElementById("news")!;
 const buildName = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev";
 const esc = (s: string) => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!);
-newsEl.innerHTML = "<b>What's new</b>" + changelog.entries.filter(e => e.items.length).slice(0, 3).map(e =>
+newsEl.innerHTML = "<b>What's new</b>" + CHANGELOG.filter(e => e.items.length).slice(0, 3).map(e =>
   `<div>${e.version === null ? `${buildName} (this version)` : "v" + e.version}</div><ul>${e.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>`).join("");
 const seedEl = document.getElementById("seed")!;
 seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;

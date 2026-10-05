@@ -16,7 +16,12 @@ Pages must be switched on once in the repository's settings (Source: *Deploy fro
 
 ## What's new
 
-The start screen shows a **What's new** panel: the last three entries of `config/changelog.json`, newest first. Every push that changes something Ed can see adds its bullets to the top entry, in plain player-facing words ("Trees no longer pop in and out"), not commit-speak. The top entry's `version` is `null` until its build has a number (it shows as the build being played); on the next push, write in that number from the playable-link comment and start a new `null` entry above it.
+The start screen shows a **What's new** panel: the last three entries of the changelog, newest first. The changelog is **one small file per change** in `config/changelog/` (Ed, 2026-10-05: so builders working in parallel don't conflict), collected at build time by `src/changelog.ts`:
+
+- Every push that changes something Ed can see **adds a new fragment file**, `config/changelog/<yyyy-mm-dd>-<slug>.json` (e.g. `2026-10-05-bigger-areas.json`), holding `{ "version": null, "items": ["…"] }`: its bullets in plain player-facing words ("Trees no longer pop in and out"), not commit-speak. Several pushes of one piece of work may add to that same fragment.
+- Once its build has a number (the playable-link comment), **write that number into your own fragment's `version`** on your next push. Never edit anyone else's fragment.
+- `config/changelog/archive.json` holds everything up to round 9 and is frozen: never edit it. There is no shared list to edit.
+- Fragments with the same version make one entry (the newest file's items first); the current build's (`version: null`) shows as the build being played. `src/changelog.test.ts` checks every file's shape.
 
 ## Testing
 
@@ -103,6 +108,8 @@ Literal, stable names for the parts of the game, as Ed and the builders agree th
 - **Music Lab**: `tools/music-lab/`, one page that plays the engine through the game's own mix: a pretend run (boot, waves, jump to a wave), any section on a loop, distance and damage, the hooks, knobs for the style, and the style's JSON to copy out. `?music=<section>` and `?music=wave<N>` preview the same in the game.
 - **Fighting value (F)**: a side's strength by Lanchester's square law, Σ √(hp × dps) (`rules/power.ts`): young 15.5, adult 29, legend 76, babies 0.
 - **Population growth**: every area starts with `population.start` (a baby and two adults) and, while wild, gains `population.growth.perWave` creatures a wave at levels by `growth.weights` (`rules/growth.ts`): kept as counts (`game.growth.pending`) until a witch comes within the creature simulation radius or the area wakes, then made out of her sight. The debug overlay's `wild` line counts them.
+- **Strength class**: a species' multiplier on its health and damage (`combat.json` `strength`: swarm ⅓, normal 1, loner 2; `strengthOf` in `rules/combat.ts`), never a legend's; its areas hold 1 / that many (`countScale` in `rules/growth.ts`).
+- **Berry cost**: berries to evolve a level (`toEvolve(level, tuning, species)` in `rules/berries.ts`): the strength the level gains (`berries.cost.by`: "power", hp × dps, or "value", its square root) over `berries.cost.per`, rounded, at least 1: 1 for a baby and 3 for a young of normal strength.
 - **Pacing variants**: the balance simulator's ways of keeping pressure on without a cliff (Ed, 2026-10-04): **attrition** (only a share of a won siege's survivors march on) and the **director** (reinforcements for the areas the next wave wakes, by a budget growing with the wave and, by α, with the player's power). Simulator only so far.
 - **Power meter**: the debug overlay's two lines: the party's F (leashed + parked, by level, berries and invites) and the enemy's (every marcher, and each siege with its count and its soundsystem's health).
 - **Playtest log**: `src/platform/playtestLog.ts`: a sample every 10 s of play on this browser (localStorage `witch.playtest`, the last 8 runs); L or `?playtest=download` saves it as JSON.
