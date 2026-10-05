@@ -256,7 +256,7 @@ export class Creator {
     // (dark, full, pale) and grey; a few quick picks; and back to her classic colour.
     const col = group("Colours"), tabs = row(col, "");
     tabs.firstElementChild?.remove();
-    const pal = () => g.palette ?? classicPalette(this.style), cur = (part: string) => pal()[part] ?? [.07, .5, .45];
+    const pal = () => ({ ...classicPalette(this.style), ...g.palette }), cur = (part: string) => pal()[part] ?? [.07, .5, .45];
     const picker = document.createElement("div");
     col.append(picker);
     const strip = (kind: "hue" | "shade" | "grey") => {
@@ -321,9 +321,9 @@ export class Creator {
     this.hatless();
     // The buttons.
     const bar = document.createElement("div");
-    Object.assign(bar.style, { display: "flex", gap: "8px", marginTop: "10px", position: "sticky", bottom: "0", background: "rgba(14,11,28,.95)", padding: "6px 0" });
+    Object.assign(bar.style, { display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "10px", position: "sticky", bottom: "0", background: "rgba(14,11,28,.95)", padding: "6px 0" });
     bar.style.position = "sticky";
-    const btn = (text: string, f: () => void, main = false) => { const b = document.createElement("button"); b.type = "button"; b.textContent = text; Object.assign(b.style, { font: "inherit", fontSize: "14px", color: main ? "#1a0b14" : "inherit", background: main ? "#ff5fb4" : "rgba(255,255,255,.1)", border: "1px solid rgba(232,226,244,.4)", borderRadius: "6px", padding: "6px 12px", cursor: "pointer", flex: main ? "1" : "0 0 auto" }); b.addEventListener("click", f); bar.append(b); return b; };
+    const btn = (text: string, f: () => void, main = false) => { const b = document.createElement("button"); b.type = "button"; b.textContent = text; Object.assign(b.style, { font: "inherit", fontSize: "14px", color: main ? "#1a0b14" : "inherit", background: main ? "#ff5fb4" : "rgba(255,255,255,.1)", border: "1px solid rgba(232,226,244,.4)", borderRadius: "6px", padding: "6px 12px", cursor: "pointer", flex: main ? "1 1 100%" : "1 1 auto" }); b.addEventListener("click", f); bar.append(b); return b; };
     btn("🎲 Randomise", () => this.randomise());
     btn("🌀 Wild", () => this.wild());
     btn("Classic", () => this.classic());
