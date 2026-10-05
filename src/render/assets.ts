@@ -7,6 +7,7 @@ import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
 import { creatureFrame, runJob, type ArtJob, type ArtResult, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { ART_HASH, cacheGet, cachePut, hashText } from "./artCache";
+import type { RigMeta } from "./rig/rigBuild";
 
 export interface TypeArt {
   atlas: Atlas; layout: TypeLayout;
@@ -17,12 +18,17 @@ export interface TypeArt {
 export interface RelicSet { atlas: Atlas; byId: Record<string, RelicArt>; modern: RelicArt[]; layouts: RelicLayouts }
 export interface DecorArt { atlas: Atlas; pieces: DecorPiece[]; families: Record<string, DecorPiece[]> }
 export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number }
+/** A species' live-rig parts at one level (#79): its atlas page and what the rig needs. */
+export interface RigArt { atlas: Atlas; meta: RigMeta; used: number }
+/** How many rig pages (a species at a level each) are kept at once. */
+const RIG_PAGES = 48;
 
 type Reply = { job: ArtJob; result?: ArtResult; error?: string; ms?: number; cached?: boolean };
 
 export class AssetLibrary {
   private types = new Map<number, TypeArt>();
   private creatures = new Map<string, CreatureArt>();
+  private rigs = new Map<string, RigArt>();
   private partyWitches = new Map<string, PartyWitchArt & { atlas: Atlas }>();
   private party: (PartyArt & { atlas: Atlas }) | undefined;
   private decor: DecorArt | undefined;
@@ -183,6 +189,9 @@ export class AssetLibrary {
       const pieces = r.result.decor!, families: Record<string, DecorPiece[]> = {};
       for (const p of pieces) (families[p.family] ??= []).push(p);
       this.decor = { atlas, pieces, families };
+    } else if (r.job.kind === "rig") {
+      if (r.result.rig) this.rigs.set(r.job.id, { atlas, meta: r.result.rig, used: performance.now() });
+      this.evictRigs();
     } else if (r.job.kind === "type") {
       // Each tree's cut: where its crown's bulk ends (both halves share the frame's box): the row
       // above which trunkFade.crownShare of its top half's pixels lie. Not its lowest drawn pixel:
@@ -237,6 +246,31 @@ export class AssetLibrary {
     if (!this.pieces) this.ask({ kind: "pathPieces", id: "all", style: this.style });
     return this.pieces;
   }
+  /** A species' live-rig parts at a level (#79 stage 4: one atlas page each, keyed by its genome's
+   *  hash so a changed record bakes afresh), or undefined (and asked for). */
+  rigArt(species: string, level: number): RigArt | undefined {
+    const g = (Art.GENOME_BY_ID as Record<string, unknown>)[species];
+    if (!g) return undefined;
+    const k = `rig-${species}-${level}-${Art.genomeHash(g)}`, a = this.rigs.get(k);
+    if (a) { a.used = performance.now(); return a; }
+    this.ask({ kind: "rig", id: k, species, level, style: this.style }, true); // gameplay: ahead of the scenery
+    return undefined;
+  }
+  /** Least recently used rig pages are let go past RIG_PAGES, their textures freed. */
+  private evictRigs(): void {
+    while (this.rigs.size > RIG_PAGES) {
+      let old: string | undefined, t = Infinity;
+      for (const [k, v] of this.rigs) if (v.used < t) { t = v.used; old = k; }
+      if (old === undefined) break;
+      const v = this.rigs.get(old)!; v.atlas.albedo.dispose(); v.atlas.normal.dispose(); this.rigs.delete(old);
+    }
+  }
+  /** The rig pages held and their size in bytes (albedo and normal), for the debug overlay. */
+  rigStats(): { pages: number; bytes: number } {
+    let bytes = 0;
+    for (const v of this.rigs.values()) bytes += (v.atlas.albedo.image.width * v.atlas.albedo.image.height) * 8;
+    return { pages: this.rigs.size, bytes };
+  }
   creatureArt(species: string): CreatureArt | undefined {
     const a = this.creatures.get(species);
     if (!a) this.ask({ kind: "creature", id: species, style: this.style });
@@ -248,10 +282,22 @@ export class AssetLibrary {
     if (!a) this.ask({ kind: "woken", id: k, species, style: this.style });
     return a;
   }
+  /** A creature in an expression (art/genome/expressions.js: happy, dazed...), or undefined (and asked for). */
+  faceArt(species: string, face: string): CreatureArt | undefined {
+    const k = `face-${face}-${species}`, a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "face", id: k, species, face, style: this.style });
+    return a;
+  }
   /** An invited creature's party look (its gear seeded by its id), or undefined (and asked for). */
   partyArt(species: string, id: number, colour: number[]): CreatureArt | undefined {
     const k = `party-${id}`, a = this.creatures.get(k);
     if (!a) this.ask({ kind: "party", id: k, species, seed: id, colour, style: this.style });
+    return a;
+  }
+  /** A happy creature's look (issue #87): party clothes, no glowing collar; or undefined (and asked for). */
+  happyArt(species: string, id: number): CreatureArt | undefined {
+    const k = `happy-${id}`, a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "party", id: k, species, seed: id, colour: null, style: this.style });
     return a;
   }
   /** The party objects' art (#38), or undefined (and asked for). */

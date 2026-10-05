@@ -50,12 +50,31 @@ export interface Tuning {
   witchHealth: { hits: number; repairTime: number };
   /** Knocked out (Ed, 2026-10-04): her stack lets go one sigil every releaseEach seconds (releaseMax caps the whole release, 0 no cap), then she sparkles out and back in at the treehouse over teleport seconds; legendsLoyal keeps leashed legends with her. */
   knockout: { releaseEach: number; releaseMax: number; emptyBeat: number; teleport: number; legendsLoyal: boolean };
-  /** The dash (Ed, 2026-10-04): on the ground, distance metres over duration seconds, then cooldown seconds. */
-  dash: { distance: number; duration: number; cooldown: number };
+  /** The dash, a blink (Ed, 2026-10-05): on the ground, gone and distance metres on at once, not
+   *  drawn or hittable for gone seconds, then cooldown seconds; it lands clear of each obstacle by its `clear` metres. */
+  dash: { distance: number; gone: number; cooldown: number; clear: { tree: number; decor: number; sound: number; speaker: number; treehouse: number } };
   spells: { equipped: string; speed: { mult: number; duration: number; cooldown: number } };
   /** Forecasting (Ed, 2026-10-04): symbols round each stone (12 = next; the after-next stone fills afterNext[0]..[1] over the countdown; probable ones flicker 1..probableMax); probable: how many probable stones; radius (m), size (m) of each symbol, height above the canopy in treetop mode. */
   forecast: { symbols: number; probable: number; probableMax: number; afterNext: number[]; radius: number; size: number; flare: number };
   /** Music by proximity (Ed, 2026-10-04): full and clear within nearDist metres of a playing soundsystem, down to floor volume and a muffle Hz low-pass by farDist; clear: the cutoff when near; distort: how much a damaged one nearby is heard; volume: the master; src: an audio file to play, or empty for the built-in loop. */
+  /** The sound effects (platform/audio/sfx.ts, platform/audio/sfxCues.ts): their volumes and rates. */
+  sfx: {
+    on: boolean; volume: number; hear: number;
+    voice: {
+      witch: { volume: number; pitch: number; range: number; pace: number; timbre: number; phraseGap: number };
+      animals: { volume: number; pitch: number; maxVoices: number; duck: number; syllables: number[]; gap: number; reply: number };
+    };
+    hit: { volume: number; gap: number }; fill: { volume: number; octaves: number }; invited: { volume: number };
+    enraged: { volume: number; gap: number }; happy: { volume: number; gap: number };
+    snore: { volume: number; range: number }; nightmare: { volume: number }; windup: { volume: number; length: number };
+    lost: { volume: number };
+    ouch: { volume: number; knockdown: number; duck: number; duckTime: number };
+    knock: { volume: number; whoosh: number; twinkle: number; twinkleEvery: number };
+    charge: { volume: number; bellow: number; hooves: number; rumble: number; skid: number; trot: number; range: number };
+    relic: { volume: number; spot: number; spotTreetop: number; reach: number };
+    meadow: { volume: number; breeze: number; bees: number; birds: number; birdEvery: number; fade: number };
+    whale: { volume: number; speed: number; depth: number; reverb: number; sleepEvery: number };
+  };
   music: { on: boolean; volume: number; nearDist: number; farDist: number; floor: number; muffle: number; clear: number; distort: number; src: string };
   /** The home speaker ring's boot-up at the start (Ed, 2026-10-04): seconds before the first wave's countdown begins. */
   boot: { time: number };
@@ -92,7 +111,7 @@ export interface Tuning {
   descendTime: number;
   groundHeight: number;
   treetopHeight: number;
-  camera: { fov: number; ground: CameraModeTuning; treetop: CameraModeTuning; zoomSteps: number; startZoom: number; /** The world's bend (render/height.ts): curve per metre ahead of the focus, on the ground and over the treetops (eased in with lift). */ curve: { ground: number; treetop: number; /** Metres past the bent ground's horizon that scenery is still drawn (the distant treetops over it). */ beyond: number }; follow: number; lookAhead: number; lookAheadMax: number; lookAheadEase: number; zoomEase: number; liftEase: number; /** The opening shot: distance (metres) and angle (degrees) close in on her seat, and how many seconds it takes to ease out. */ intro: { distance: number; angle: number; ease: number }; /** The treetop camera zooms out as treetopSpeed rises past base (m/s), its distance times (treetopSpeed / base) to the power power, so the screen holds about as many seconds of flight (Ed, 2026-10-05); 0 off. */ speedZoom?: { base: number; power: number } };
+  camera: { fov: number; ground: CameraModeTuning; treetop: CameraModeTuning; zoomSteps: number; startZoom: number; /** The world's bend (render/height.ts): curve per metre ahead of the focus, on the ground and over the treetops (eased in with lift). */ curve: { ground: number; treetop: number; /** Metres past the bent ground's horizon that scenery is still drawn (the distant treetops over it). */ beyond: number }; /** Screen shake when the witch is hit (render/shake.ts). */ shake: { base: number; perMissingHit: number; knockdown: number; decay: number; maxOffsetPx: number; maxRotDeg: number; speed: number }; follow: number; lookAhead: number; lookAheadMax: number; lookAheadEase: number; zoomEase: number; liftEase: number; /** The opening shot: distance (metres) and angle (degrees) close in on her seat, and how many seconds it takes to ease out. */ intro: { distance: number; angle: number; ease: number }; /** The treetop camera zooms out as treetopSpeed rises past base (m/s), its distance times (treetopSpeed / base) to the power power, so the screen holds about as many seconds of flight (Ed, 2026-10-05); 0 off. */ speedZoom?: { base: number; power: number } };
   pixelSize: number;
   glowReach: number;
   glowFalloff: number;
@@ -103,7 +122,7 @@ export interface Tuning {
   glowHeight: number;
   /** The witch lit by the world's lights (not her own glow): never darker than lightFloor times her unlit look; coloured lights tint her (lightTint) and rim her edge facing them (lightRim). */
   /** The ley lines through the runestones in wave order (render/leylines.ts). */
-  leyLines: { on: boolean; links: number; advance: string; fade: number; brightness: number; width: number[]; height: number[]; valley: number; flow: number[] };
+  leyLines: { on: boolean; links: number; advance: string; fade: number; brightness: number; width: number[]; height: number[]; valley: number; flow: number[]; /** The first line's way out (Ed, 2026-10-05): due south from the treehouse's front straight across the dancefloor, on past metres beyond its ring of speakers (avoid metres outside it), then round to the first objective outside the ring. */ depart: { past: number; avoid: number } };
   witch: { lightFloor: number; lightTint: number; lightRim: number; /** Riding the hills smoothly (render/ride.ts): seconds to settle at full speed, seconds looked ahead, metres kept over the ground. */ heightSmooth: number; heightLookAhead: number; heightClearance: number };
   spriteTilt: number;
   artPixelsPerMetre: number;
@@ -116,7 +135,7 @@ export interface Tuning {
   stringLights: { on: boolean; runsPerArea: number[]; spansPerRun: number[]; coneAngle: number; junctionChance: number; spanMin: number; spanMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; twinkle: number; chaseSpeed: number };
   party: {
     motes: { perPatch: number; from: number; to: number; speed: number };
-    uplight: { strength: number; pulse: number; edge: number }; interval: number; startDelay: number; maxPerWave: number; /** areas each wave wakes: one per witch present (1 until multiplayer) */ areasPerWave: number; picker: string; noisy: { wobble: number; lobeSize: number; candidates: number; spreadFromLast: boolean }; transition: number; lightReach: number; lightStrength: number };
+    uplight: { strength: number; pulse: number; edge: number }; interval: number; /** seconds a destroyed soundsystem takes off the next wave's countdown (Ed, 2026-10-05) */ lossPenalty: number; startDelay: number; maxPerWave: number; /** areas each wave wakes: one per witch present (1 until multiplayer) */ areasPerWave: number; picker: string; noisy: { wobble: number; lobeSize: number; candidates: number; spreadFromLast: boolean }; transition: number; lightReach: number; lightStrength: number };
   dancefloor: {
     motes: { count: number; rise: number; speed: number; column: number };
     radius: number; clearing: number;
@@ -141,7 +160,7 @@ export interface Tuning {
   /** How mist, far haze and canopy dapple are drawn: smooth gradients, or dithered pixel steps. */
   fx: "smooth" | "pixel";
   moonbeams: number;
-  partyObjects: { on: boolean; clusters: number[]; loose: number[]; setChance: number; caughtChance: number; hanging: number[]; lightsPerArea: number; lanternReach: number; lane: string[]; lanePitch: number; laneWidth: number; arch: string; homeClusters: string[]; exclude: string[] };
+  partyObjects: { on: boolean; clusters: number[]; loose: number[]; setChance: number; caughtChance: number; hanging: number[]; lightsPerArea: number; lanternReach: number; arch: string; /** Home's meadow, strewn all over (rules/partyDressing.ts homeDressing). */ home: { clusters: number[]; loose: number[]; weights: Record<string, number>; gap: number; reach: number; lights: number }; exclude: string[] };
   partyWitches: { max: number; idleAfter: number; idleReach: number; activityMin: number; activityMax: number; weights: Record<string, number>; arriveTime: number; flyFrom: number; flyHeight: number; runSpeed: number; walkSpeed: number; lapSpeed: number; pairRange: number; pairGap: number; limboPass: number; floorShare: number; debugExtra: number };
   speakerLasers: { on: boolean; tilt: number; sweep: number; sweepBeats: number; length: number; opacity: number };
   find: { on: boolean; eyeshine: { range: number; strength: number; blink: number }; lightFloor: number; rim: number; ambient: number; moonHue: number; moonSat: number };
@@ -155,8 +174,12 @@ export interface Tuning {
   relics: { spacing: number; chance: number; nearRoad: number; minGap: number };
   treeCap: { from: number; keep: number };
   treetop: { boost: number; boostTime: number; boostAngle: number; turnRate: number; turnRateSlow: number; sharpTurnSpeed: number; brakeAt: number; glideTime: number; sharpTurnBleed: number; cameraPull: number };
-  bubbles: { emojiPixels: number; scale: number };
-  treehouse: { distance: number; angle: number; clear: number; lightReach: number; lightStrength: number };
+  /** The creature states' looks (render/looks.ts): enraged ones tinted toward colour by amount (0 none, 1 all). */
+  looks?: { enragedTint: { colour: string; amount: number }; /** the 💢 beside an enraged creature's head: on, and its size (times its level's bubble size) */ anger: { on: boolean; size: number }; /** party animals' twinkle: how many, how often (a second), how big, how bright */ partyGlow: { on: boolean; sparkles: number; rate: number; size: number; strength: number } };
+  bubbles: { emojiPixels: number; scale: number; /** a creature's bubble size by level (baby, young, adult, legend) */ levelScale: number[] };
+  /** Home's area, settled first: its circle reaches margin metres past the treehouse's footprint; other areas' centres stay gap (areas) beyond it. */
+  home: { margin: number; gap: number };
+  treehouse: { /** metres from the speaker ring's outer edge to its footprint's nearest edge */ gap: number; angle: number; clear: number; lightReach: number; lightStrength: number };
   decor: { spacing: number; ruins: number; rocks: number; freak: number; minGap: number; clearing: number; pathGap: number; /** A decoration's footprint radius (metres): kept clear of the gameplay (map.reserved). */ footprint: number };
   paths: { rails: number[]; roads: number[]; linkChance: number; deadEndChance: number; pathHalf: number; roadHalf: number; railHalf: number; railBroken: number; streams: number[]; streamHalf: number; landmarkSpacing: number; landmarkChance: number; vergeSpacing: number; pieceGap: number; treesOnBroken: number; edgeBushes: number; bushBoost: number };
   lights: { campfire: { reach: number; strength: number }; stone: { reach: number; strength: number } };
@@ -173,6 +196,8 @@ export interface Tuning {
   stack: { offset: number; scale: number; gap: number; stiffness: number; damping: number; trail: number; idleSway: number };
   lasers: { on: boolean; maxCount: number; length: number; spread: number; maxTilt: number; sweep: number; sweepBeats: number; openBars: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };
   borders: { on: boolean; width: number; brightness: number; sparkle: number; step: number; /** 0 a gentle breathing, 1 star-like flashes and dropouts */ twinkle: number; /** colour swaps a second */ swapRate: number; /** the share of sparks that swap on the beat */ swapBeat: number };
+  /** The 💌 invite (issue #87): rules/invites.ts. on: 💌s instead of the proximity chat. */
+  invites: { on: boolean; burst: number; burstGap: number; cooldown: number; range: number; speed: number; homing: number; homingCone: number; homingRange: number; multiShot: number; spread: number; radius: number; amount: number; hits: number[]; drain: number; perAnimalHitGap: number };
   invite: { talkRange: number; cancelDistance: number; snubTime: number; talkTime: number[]; turn: number[]; decayRate: number };
   /** pace: party animals following her move this much faster (a legend buff; 1 in the file). */
   leash: { length: number; runSpeed: number; pickRadius: number; spacing: number; pace?: number };

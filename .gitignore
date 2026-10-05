@@ -1,8 +1,12 @@
 node_modules/
+node_modules
 /dist/
 *.log
 tools/smoke/out/
 art/out/
 tools/music-lab/out/
+tools/rig/.out/
 upcoming.generated.json
 bench-out/
+node_modules
+previews/sfx/mix/*.wav

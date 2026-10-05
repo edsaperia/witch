@@ -3,10 +3,10 @@
 // (a waveshaper's crunch, a wobbling tremolo, crackle and drop-outs). The track is generative
 // (platform/musicEngine.ts, from config/music-style.json), its sections following the waves
 // (rules/musicPlan.ts), on the game's beat; a recorded track (music.src) can stand in for it.
-import type { MusicMix } from "../rules/music";
-import type { BeatClock } from "../rules/beat";
-import type { MusicCue } from "../rules/musicPlan";
-import type { MusicStyle } from "../rules/musicScore";
+import type { MusicMix } from "../../rules/music";
+import type { BeatClock } from "../../rules/beat";
+import type { MusicCue } from "../../rules/musicPlan";
+import type { MusicStyle } from "../../rules/musicScore";
 import { MusicEngine } from "./musicEngine";
 
 export class Music {
@@ -19,6 +19,8 @@ export class Music {
   private bus: GainNode;
   private noise: AudioBuffer;
   private dropUntil = 0;
+  private duckUntil = 0;
+  private duckBy = 0;
   /** The generative track (none with a recorded one). */
   readonly engine: MusicEngine | null = null;
 
@@ -49,7 +51,7 @@ export class Music {
     const c = this.ctx, now = c.currentTime, k = 0.08;
     // Drop-outs: with damage close by, now and then the sound cuts for a moment.
     if (mix.distort > 0.05 && now > this.dropUntil && Math.random() < mix.distort * 0.01) this.dropUntil = now + 0.08 + Math.random() * 0.3 * mix.distort;
-    const vol = on && now >= this.dropUntil ? mix.volume * this.volume : 0;
+    const vol = (on && now >= this.dropUntil ? mix.volume * this.volume : 0) * (now < this.duckUntil ? 1 - this.duckBy : 1);
     this.master.gain.setTargetAtTime(vol, now, k);
     this.filter.frequency.setTargetAtTime(mix.cutoff, now, k);
     this.wet.gain.setTargetAtTime(mix.distort * 0.8, now, k);
@@ -60,6 +62,9 @@ export class Music {
     if (on && mix.distort > 0.05 && Math.random() < mix.distort * 0.15) this.crackle(now + Math.random() * 0.05, mix.distort);
     this.engine?.update(cue, gameTime, clock, on);
   }
+
+  /** Dip the music by `by` (0-1) for `seconds`: her "ouch!" heard over it. */
+  duck(by: number, seconds: number): void { this.duckBy = Math.max(0, Math.min(1, by)); this.duckUntil = this.ctx.currentTime + seconds; }
 
   private crackle(at: number, amount: number): void {
     const c = this.ctx, s = c.createBufferSource(), g = c.createGain();

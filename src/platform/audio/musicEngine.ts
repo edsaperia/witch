@@ -10,11 +10,10 @@
 // to the kick and bass, and a place in the stereo field. Sound design after common practice: the
 // kick a pitched sine with a click; hats the 808's six square tones through band- and high-pass;
 // supersaws as unison voices detuned and spread wide; pads breathing with a slow filter LFO.
-import { beatAt, bpmAt, timeAt, type BeatClock } from "../rules/beat";
-import { Conductor, type MusicCue } from "../rules/musicPlan";
-import { notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../rules/musicScore";
-
-const mtof = (m: number) => 440 * Math.pow(2, (m - 69) / 12);
+import { beatAt, bpmAt, timeAt, type BeatClock } from "../../rules/beat";
+import { Conductor, type MusicCue } from "../../rules/musicPlan";
+import { mtof, noiseBuffer } from "./dsp";
+import { notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../../rules/musicScore";
 
 interface Channel { in: GainNode; lastFreq: number }
 
@@ -71,10 +70,7 @@ export class MusicEngine {
     this.reverbIn.connect(this.reverb); this.reverb.connect(reverbLow); reverbLow.connect(this.tone);
     this.delayIn.connect(this.delay); this.delay.connect(delayTone); delayTone.connect(this.feedback); this.feedback.connect(this.delay); delayTone.connect(this.tone);
     this.tone.connect(limit); limit.connect(this.out); this.out.connect(dest);
-    this.noise = c.createBuffer(1, 2 * c.sampleRate, c.sampleRate);
-    const d = this.noise.getChannelData(0);
-    let r = 22222;
-    for (let i = 0; i < d.length; i++) { r = (Math.imul(r, 1103515245) + 12345) >>> 0; d[i] = (r / 4294967296) * 2 - 1; }
+    this.noise = noiseBuffer(c, 2, 22222);
     this.metal = c.createBuffer(1, 2 * c.sampleRate, c.sampleRate);
     const m = this.metal.getChannelData(0), phase = METAL_RATIOS.map((_, i) => i * 0.37);
     for (let i = 0; i < m.length; i++) {
@@ -148,7 +144,7 @@ export class MusicEngine {
       this.tone.frequency.setValueAtTime(f0, t);
       if (f1 !== f0) this.tone.frequency.exponentialRampToValueAtTime(f1, t + 16 * sps);
     }
-    const events = notesAt(S, plan, next, step, { seed: this.seed, siege: cue.siege });
+    const events = notesAt(S, plan, next, step, { seed: this.seed, siege: cue.siege, party: cue.party });
     const swing = step % 2 === 1 ? S.swing * sps : 0;
     for (const e of events) this.play(e, t + swing + e.offset * sps, e.dur * sps, sps);
   }

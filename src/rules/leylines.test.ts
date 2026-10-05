@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { generateMap } from "./map";
 import { TUNING } from "./tuning";
 import { newParty, spreadWave, cellKey } from "./party";
-import { leyChain, leyKey, onAreaDone } from "./leylines";
+import { departureClear, departureRoute, leyChain, leyKey, onAreaDone } from "./leylines";
 
 const map = generateMap(123, TUNING);
 const keys = (c: { cell: readonly [number, number] }[]) => c.map(s => cellKey(s.cell));
@@ -14,7 +14,7 @@ describe("ley lines", () => {
   it("start at home, pointing to the next wave's stone, then the ones after in the order they will wake", () => {
     const p = newParty(map), one = leyChain(p, map, 2), chain = leyChain(p, map, 7);
     expect(keys(one)).toEqual([cellKey(map.centreCell), cellKey(p.next[0])]);
-    expect(one[0]).toMatchObject({ x: map.dancefloor.x, z: map.dancefloor.z, wave: 0 });
+    expect(one[0]).toMatchObject({ x: map.treehouseFront.x, z: map.treehouseFront.z, wave: 0, depart: true }); // (home's: the treehouse's front, Ed 2026-10-05)
     expect(keys(chain).slice(0, 3)).toEqual([map.centreCell, ...p.next, ...p.afterNext].map(cellKey).slice(0, 3));
     expect(new Set(keys(chain)).size).toBe(7); // no stone twice
   });
@@ -42,4 +42,49 @@ describe("ley lines", () => {
     expect(cellKey(woke[0].cell)).toBe(cellKey(next));
     expect(keys(leyChain(p, map, 2))).toEqual(keys(after));
   });
+});
+
+describe("the first ley line leaves the treehouse's front, due south (Ed, 2026-10-05)", () => {
+  const D = TUNING.leyLines.depart;
+  it("starts at the treehouse's front at the start of a run", () => {
+    const m = generateMap(123, TUNING), p = newParty(m), first = leyChain(p, m, 2)[0];
+    expect(first.depart).toBe(true);
+    expect([first.x, first.z]).toEqual([m.treehouseFront.x, m.treehouseFront.z]);
+    expect(m.treehouseFront.z).toBeGreaterThan(m.treehouse.z); // (south: towards the camera)
+  });
+  it("stands due north of the dancefloor, its footprint gap metres outside the ring of speakers (Ed, 2026-10-05)", () => {
+    for (const seed of [123, 293912, 31337]) {
+      const m = generateMap(seed, TUNING), d = m.dancefloor, th = m.treehouse, S = TUNING.dancefloor.speakers;
+      expect(th.x).toBeCloseTo(d.x, 6);
+      expect(th.z).toBeLessThan(d.z); // (north: up the screen)
+      const edge = Math.hypot(th.x - d.x, th.z - d.z) - TUNING.treehouse.clear, ring = TUNING.dancefloor.radius * S.radiusFactor + S.footprint;
+      expect(edge - ring).toBeCloseTo(TUNING.treehouse.gap, 6);
+    }
+  });
+  it("runs due south straight across the dancefloor, then curves smoothly to the first objective outside the ring, wherever that lies", () => {
+    let north = 0;
+    for (const seed of [123, 293912, 7, 1000, 42, 31337, 5, 99]) {
+      const m = generateMap(seed, TUNING), p = newParty(m), [a, b] = leyChain(p, m, 2), d = m.dancefloor;
+      if (b.z < a.z) north++;
+      const pts = departureRoute(m, b, D.past, D.avoid, 4), R = departureClear(m, D.avoid);
+      expect(pts[0]).toEqual([a.x, a.z]);
+      const last = pts[pts.length - 1];
+      expect(Math.hypot(last[0] - b.x, last[1] - b.z)).toBeLessThan(1);
+      // Due south first, straight across the floor (over its middle) and out past the ring.
+      let i = 1;
+      for (; i < pts.length && pts[i][0] === a.x && pts[i][1] > pts[i - 1][1]; i++);
+      const crossed = pts[i - 1];
+      expect(crossed[1]).toBeGreaterThanOrEqual(d.z + R + D.past - 1e-6);
+      expect(Math.abs(a.x - d.x)).toBeLessThan(1); // (through the middle of the floor)
+      // After the crossing, kept outside the ring.
+      for (const q of pts.slice(i)) expect(Math.hypot(q[0] - d.x, q[1] - d.z)).toBeGreaterThanOrEqual(R - 1e-6);
+      // Smooth: no sharp corners.
+      for (let i = 2; i < pts.length; i++) {
+        const u = [pts[i - 1][0] - pts[i - 2][0], pts[i - 1][1] - pts[i - 2][1]], v = [pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]];
+        const cos = (u[0] * v[0] + u[1] * v[1]) / ((Math.hypot(u[0], u[1]) * Math.hypot(v[0], v[1])) || 1);
+        expect(cos, `seed ${seed} at ${i}`).toBeGreaterThan(Math.cos((50 * Math.PI) / 180));
+      }
+    }
+    expect(north).toBeGreaterThan(0); // (some seeds' first objective lies north, behind the treehouse)
+  }, 60000);
 });

@@ -222,6 +222,15 @@ export function stepParty(p: PartyState, map: ForestMap, time: number, dt: numbe
   return spreadWave(p, map, time);
 }
 
+/** A soundsystem lost (Ed, 2026-10-05): the next wave comes `by` seconds sooner, at once if less
+ *  is left (the next step brings it); each loss takes its own `by` off, and the gap after the wave
+ *  is the interval as ever. Returns the seconds it took off. */
+export function hurryWave(p: PartyState, time: number, by: number): number {
+  const was = p.nextAt;
+  p.nextAt = Math.max(time, p.nextAt - Math.max(0, by));
+  return was - p.nextAt;
+}
+
 /** Seconds left until the next wave, and the share of the interval gone (0-1), for the bar; while
  *  the home speakers boot up (booting), how far the boot has got (0-1) and its seconds left. */
 export function waveCountdown(p: PartyState, map: ForestMap, time: number): { left: number; gone: number; booting: boolean; boot: number; bootLeft: number } {

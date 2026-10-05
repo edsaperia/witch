@@ -1,14 +1,16 @@
+import { stateOf } from "./creatureStates";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { hash2 as labHash2, SPECIES_BY_ID } from "../../art/generator.js";
 import { makePartition } from "./partition";
 import { hash2 } from "./random";
-import { AREA_TYPES, generateMap, parseSeed, sceneFootprint } from "./map";
+import { AREA_TYPES, HOME_LOOK, LOOKS, generateMap, parseSeed, sceneFootprint } from "./map";
 import { Forest, crownReach, treeChance } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
 import { population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
-import { dormant, newGame, simRadius, STEP, stepGame } from "./game";
+import { hitWitch, newGame, simRadius, STEP, stepGame } from "./game";
+import { dashing, newDash, startDash } from "./dash";
 import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, symbolCount, wavePlan } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
@@ -485,7 +487,7 @@ describe("creatures", () => {
     expect(new Set(AREA_TYPES.map(t => t.creature)).size).toBe(30);
   });
 
-  it("start the same in every area (Ed, 2026-10-04): none at home but its legend, one baby and two adults elsewhere (Ed, 2026-10-05), and one legend in each", () => {
+  it("start the same in every area (Ed, 2026-10-04): none at home but its legend, one young and one adult elsewhere (Ed, 2026-10-05), and one legend in each", () => {
     expect(inCell(mx, my).filter(c => !c.boss)).toEqual([]);
     const S = TUNING.population.start;
     for (let cy = 0; cy < map.n; cy += 3) for (let cx = 0; cx < map.n; cx += 3) {
@@ -499,38 +501,18 @@ describe("creatures", () => {
     expect(population(map)).toEqual(S);
   });
 
-  it("have one legend an area, each a boss: home's happy, the rest asleep, out of their clearings (Ed, 2026-10-04)", () => {
+  it("have one legend an area but home (Ed, 2026-10-05), each a boss, asleep, out of their clearings (Ed, 2026-10-04)", () => {
     for (let seed = 1; seed <= 4; seed++) {
       const m = generateMap(seed * 101, TUNING), legends = spawnCreatures(m).filter(c => c.level === 3), [hx, hy] = m.centreCell;
-      expect(legends.length, `seed ${seed * 101}`).toBe(m.n * m.n);
+      expect(legends.length, `seed ${seed * 101}`).toBe(m.n * m.n - 1);
+      expect(legends.some(c => c.cell[0] === hx && c.cell[1] === hy)).toBe(false);
       expect(new Set(legends.map(c => c.cell.join())).size).toBe(legends.length);
       for (const c of legends) {
         expect(c.boss).toBe(true);
-        expect(c.legendState).toBe(c.cell[0] === hx && c.cell[1] === hy ? "happy" : "asleep");
+        expect(c.legendState).toBe("asleep");
         expect(c.speed).toBeLessThanOrEqual(TUNING.legendSpeed * 1.3 + 1e-9);
       }
     }
-  }, 60000);
-
-  it("sleep until the party reaches their area, then heave up (untouchable a while) and lumber about it", () => {
-    const g = newGame(123, TUNING), boss = g.creatures.find(c => c.boss && c.legendState === "asleep")!;
-    g.clock.paused = false;
-    g.witch = { ...g.witch, seated: false, x: boss.x + 30, z: boss.z, mode: "treetop", lift: 1 }; // (on the ground in its area, it would go for her once awake)
-    const at = [boss.x, boss.z];
-    expect(dormant(g, boss)).toBe(true);
-    for (let i = 0; i < 100; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20);
-    expect([boss.x, boss.z]).toEqual(at);
-    g.party.areas.set(boss.cell.join(), { cell: boss.cell, wave: 1, at: 0, from: null, soundsystem: null });
-    stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20);
-    expect(boss.legendState).toBe("waking");
-    expect(dormant(g, boss)).toBe(true); // (untouchable while it heaves up)
-    for (let i = 0; i < (TUNING.wildLegends.wake + 0.2) * 20; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20);
-    expect(boss.legendState).toBe("awake");
-    expect(dormant(g, boss)).toBe(false);
-    let moved = 0;
-    for (let i = 0; i < 400; i++) { const x = boss.x, z = boss.z; stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 20); moved += Math.hypot(boss.x - x, boss.z - z); }
-    expect(moved).toBeGreaterThan(0.5);
-    expect(moved / 20).toBeLessThanOrEqual(TUNING.legendSpeed * 1.3 + 1e-6); // no faster than a legend
   }, 60000);
 
   it("roam their whole area, slowly, and never leave it", () => {
@@ -791,7 +773,7 @@ describe("the game clock and a whole step", () => {
 });
 
 describe("inviting and leashing", () => {
-  // (Every level to talk to: areas start with a baby and two adults, so a young is added to each.)
+  // (Every level to talk to: a baby, a young and an adult in each area.)
   const creatures = spawnCreatures(generateMap(123, withTuning({ population: { ...TUNING.population, start: { babies: 1, young: 1, adults: 1 } } })));
   const fresh = () => creatures.map(c => ({ ...c, rand: (() => { let k = c.id * 7 + 1; return () => (k = (k * 16807) % 2147483647) / 2147483647; })() }));
   const none: LeashControls = { sigil: false };
@@ -804,14 +786,17 @@ describe("inviting and leashing", () => {
     return { c, w, t };
   };
 
-  it("invites after talking for the creature's talk time (babies 3 s, young 6 s, adults 12 s), not before", () => {
+  it("invites after talking for the creature's talk time (babies 3 s, young 6 s, adults 12 s), not before: happy first, then (asked again) leashed (#87)", () => {
     for (const level of [0, 1, 2] as const) {
       const all = fresh(), s = newLeash(), c = all.find(k => k.level === level)!, w = { x: c.x + 1, z: c.z };
       const need = TUNING.invite.talkTime[level];
       let t = 0;
       for (; t < need - 0.25; t += 0.1) stepLeash(s, all, none, w, true, t, 0.1, TUNING);
-      expect(c.leashed).toBe(false);
+      expect(stateOf(c)).toBe("wild");
       for (let i = 0; i < 6; i++, t += 0.1) stepLeash(s, all, none, w, true, t, 0.1, TUNING);
+      expect(stateOf(c)).toBe("happy"); // happy, in its own area, not on her stack
+      expect(s.stack).toEqual([]);
+      for (let i = 0; i < Math.round(need / 0.1) + 6; i++, t += 0.1) stepLeash(s, all, none, w, true, t, 0.1, TUNING);
       expect(c.leashed).toBe(true);
       expect(s.stack).toEqual([c.id]);
     }
@@ -847,10 +832,10 @@ describe("inviting and leashing", () => {
     expect(left).toBeCloseTo(talked - 2 * TUNING.invite.decayRate, 5); // 2 s off drains 1 s
     // Resume: done after total - 1 s more.
     let n = 0;
-    while (!c.leashed && n < 400) { stepLeash(s, all, none, near, true, t, 0.1, TUNING); t += 0.1; n++; }
+    while (stateOf(c) === "wild" && n < 400) { stepLeash(s, all, none, near, true, t, 0.1, TUNING); t += 0.1; n++; }
     expect(Math.abs(n * 0.1 - (total - left))).toBeLessThanOrEqual(0.25);
     // Switching creatures: the first keeps draining while the second fills.
-    const s2 = newLeash(), d = all.filter(k => k.level === 1 && !k.leashed)[1], e = other;
+    const s2 = newLeash(), d = all.filter(k => k.level === 1 && stateOf(k) === "wild")[1], e = other;
     for (let i = 0; i < 20; i++) stepLeash(s2, all, none, { x: d.x + 1, z: d.z }, true, i * 0.1, 0.1, TUNING);
     const before = s2.progress.get(d.id)!;
     for (let i = 0; i < 10; i++) stepLeash(s2, all, none, { x: e.x + 1, z: e.z }, true, 2 + i * 0.1, 0.1, TUNING);
@@ -1028,6 +1013,7 @@ describe("the density field", () => {
     for (let i = 0; i < 3000; i++) {
       const x = map.bounds.minX + hash2(i, 5, 9) * (map.bounds.maxX - map.bounds.minX), z = map.bounds.minZ + hash2(i, 6, 9) * (map.bounds.maxZ - map.bounds.minZ);
       if (map.hardClear(x, z) || map.paths.at(x, z) || map.paths.pieceAt(x, z) || map.arenaOpen(x, z) < 1) continue; // corridors, path pieces and arenas are kept clear (tested with them)
+      if (map.areaAt(x, z).look === HOME_LOOK) continue; // (home's a meadow, no trees: homeArea.test.ts)
       chances.push(treeChance(map, x, z, map.areaAt(x, z).type));
     }
     const share = (lo: number, hi: number) => chances.filter(c => c >= lo && c < hi).length / chances.length;
@@ -1304,7 +1290,7 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
     // More of them, further out: still outside.
     const T2 = withTuning({ dancefloor: { ...D, speakers: { ...S, count: 20, radiusFactor: 3 } } }), m = generateMap(1, T2);
     expect(Math.hypot(m.treehouse.x - m.dancefloor.x, m.treehouse.z - m.dancefloor.z) - T2.treehouse.clear).toBeGreaterThan(speakerRadius(T2) + S.footprint);
-  });
+  }, 30000); // (nine maps)
   it("are the dancefloor's only sound: no soundsystem stands in their ring or the floor's clearing, over seeds (Ed, v183)", () => {
     for (const seed of [1, 2, 3, 123]) {
       const m = generateMap(seed, TUNING), d = m.dancefloor;
@@ -1405,7 +1391,7 @@ describe("ground cover (Ed, v171)", () => {
       expect(map.paths.at(f.x, f.z)).toBeNull();
       expect(map.hardClear(f.x, f.z)).toBe(false);
       expect(Math.hypot(f.x - d.x, f.z - d.z)).toBeGreaterThan(floorClearing(TUNING));
-      expect(AREA_TYPES[f.type].groundCover.kinds).toContain(TUFT_KINDS[f.kind]);
+      expect(LOOKS[f.type].groundCover.kinds).toContain(TUFT_KINDS[f.kind]); // (its look: home's meadow has its own)
     }
   });
   it("is thick where the area says (grassland) and thin where it doesn't (cave mouth), and none at density 0", () => {
@@ -1618,16 +1604,55 @@ describe("the dash (Ed, 2026-10-04)", () => {
   const ready = () => { const g = newGame(321, TUNING); g.clock.paused = false; g.witch = { ...g.witch, seated: false }; return g; };
   const run = (g: ReturnType<typeof newGame>, n: number, c: Partial<Parameters<typeof stepGame>[1]> = {}) => { for (let i = 0; i < n; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c }, STEP); };
 
-  it("bursts dash.distance metres the way she steers, on the ground, then waits out its cooldown", () => {
+  it("blinks dash.distance metres the way she steers in one step, gone for a moment, then waits out its cooldown", () => {
     const g = ready(), x0 = g.witch.x, z0 = g.witch.z;
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
-    run(g, Math.ceil(TUNING.dash.duration / STEP) + 1);
+    // One step: there already, no travel between.
     expect(z0 - g.witch.z).toBeGreaterThan(TUNING.dash.distance * 0.8);
     expect(Math.abs(g.witch.x - x0)).toBeLessThan(0.5);
+    expect(dashing(g.witches[0].dash, g.clock.time)).toBe(true); // gone: not drawn, not hit
+    run(g, Math.ceil(TUNING.dash.gone / STEP) + 1);
+    expect(dashing(g.witches[0].dash, g.clock.time)).toBe(false);
     const z1 = g.witch.z;
-    run(g, 1, { dash: true, moveX: 0, moveZ: -1 }); // still cooling down: no burst
+    run(g, 1, { dash: true, moveX: 0, moveZ: -1 }); // still cooling down: no blink
     run(g, 10);
     expect(z1 - g.witch.z).toBeLessThan(TUNING.dash.distance * 0.5);
+  });
+
+  it("goes the way she faces when she's still, and stops short of anything in the way", () => {
+    const w = { ...newWitch(0, 0), facing: -1 as const }, d = newDash(), B = { minX: -100, maxX: 100, minZ: -100, maxZ: 100 };
+    expect(startDash(d, w, 0, 0, 1, TUNING, B)).toBe(true);
+    expect(d.toX).toBeCloseTo(-TUNING.dash.distance); expect(d.toZ).toBeCloseTo(0);
+    const d2 = newDash();
+    startDash(d2, w, 1, 0, 1, TUNING, B, x => x < 6); // blocked from 6 m on
+    expect(d2.toX).toBeLessThan(6); expect(d2.toX).toBeGreaterThan(5);
+  });
+
+  it("never lands in a tree trunk", () => {
+    const g = ready();
+    const out = g.map.homeRadius + 60, trees = g.forest.treesNear(g.witch.x + out, g.witch.z + out, 40); // (beyond home's meadow, where trees grow)
+    expect(trees.length).toBeGreaterThan(0);
+    let tried = 0;
+    for (const tr of trees.slice(0, 12)) {
+      const W = g.witches[0];
+      W.dash = newDash();
+      g.witch = { ...g.witch, x: tr.x - TUNING.dash.distance, z: tr.z, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false };
+      run(g, 1, { dash: true, moveX: 1, moveZ: 0 });
+      for (const p of g.forest.treesNear(g.witch.x, g.witch.z, 3)) expect(Math.hypot(p.x - g.witch.x, p.z - g.witch.z)).toBeGreaterThanOrEqual(TUNING.dash.clear.tree - 1e-6);
+      tried++;
+    }
+    expect(tried).toBeGreaterThan(0);
+  });
+
+  it("can't be hit while she's gone", () => {
+    const g = ready(), W = g.witches[0], hp = () => JSON.stringify(W.health);
+    run(g, 1, { dash: true, moveX: 1, moveZ: 0 });
+    const before = hp();
+    hitWitch(g, 0, g.clock.time);
+    expect(hp()).toBe(before);
+    run(g, Math.ceil(TUNING.dash.gone / STEP) + 1);
+    hitWitch(g, 0, g.clock.time + 0.01); // back: hittable as ever
+    expect(hp()).not.toBe(before);
   });
 
   it("does nothing over the treetops or while she sits", () => {

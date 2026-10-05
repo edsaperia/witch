@@ -13,6 +13,7 @@ import { Model, render, masks, v3 } from "./model3d.js";
 import { sigilHit } from "./sigils.js";
 import { treeSpecies, treeColours, splitTree, bush } from "./trees.js";
 import { bakeSway } from "./sway.js";
+import { AREA_FLORA, floraSlots } from "./flora/areas.js";
 // the props that sway in the wind: they get a sway mask (sway.js) beside their albedo and normals
 export const SWAYING_PROPS = new Set(["tree", "shrub", "grass", "reeds", "fern", "flowers", "flowerbed", "bramble", "hedge"]);
 import { TALL_KINDS, tallPiece } from "./tall.js";
@@ -87,6 +88,13 @@ export const AREAS = [
 // Set pieces for the areas that had none (Ed: "Make set pieces for the other areas too"), built in 3D: setpieces.js
 for (const [id, [kind, text]] of Object.entries(NEW_SET_PIECES)) { const A = AREAS.find(x => x.id === id); if (A && !A.set) { A.set = P(kind, { three: true }); A.text = { ...A.text, set: text }; } }
 export const AREA_BY_ID = Object.fromEntries(AREAS.map(a => [a.id, a]));
+// Home's own look (Ed, 2026-10-05: "It should also have its own custom floor; a pleasant green meadow with flowers"; "It has party
+// decorations instead of trees"): not one of the creature area types (not in AREAS, so never rolled, no creature, no trees, no set
+// piece), only its fresh green floor and its wildflowers; the prototype scatters party decorations over it in place of trees.
+export const HOME_AREA = { id: "home", name: "Home meadow", creature: null, by: "Ed", leaf: .29, floor: ["flowers", .28, .55, .56],
+  text: { floor: "a pleasant green meadow with flowers", small: "wildflowers", big: "party decorations instead of trees" },
+  small: [P("flowers")], big: [], home: true };
+AREA_BY_ID.home = HOME_AREA;
 
 // ---------------- layout: how each area's vegetation is arranged (data only) ----------------
 // Ed (2026-10-03, via the coordinator): every forest should feel different; much of that comes
@@ -422,16 +430,26 @@ export const ART_PIXELS_PER_METRE = 16; // the prototype's (config/tuning.json, 
 // whole, top, bot (the crown and the trunk below it, for the cut-out), crownY (px from the top),
 // metres: { height, crownBase, crownHeight, crownRadius } }]. Empty when its big objects are not
 // trees (mounds, boulders). ppm: art pixels per metre, for the metres.
+// How tall a species grows as a mature tree (px at the style's tree size), measured once per species and tree size.
+const statureCache = new Map();
+function speciesStature(type, st) { const key = type + ":" + st.treeSize; if (!statureCache.has(key)) statureCache.set(key, treeSpecies(type).bare(rng(5), { ...st }, st.treeSize).sp.h); return statureCache.get(key); }
 export function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanvas, ppm = ART_PIXELS_PER_METRE, flora = null } = {}) {
   const def = AREA_BY_ID[id]; if (!def) throw new Error(`no area type "${id}"`);
   const recipes = (def.big || []).filter(([kind]) => kind === "tree").map(([, o]) => o);
   let mains = recipes.filter(o => !o.minor), minors = recipes.filter(o => o.minor);
   if (flora?.length && recipes.length) { mains = flora.map(type => ({ type })); minors = []; } // a flora preview (?flora=): these species instead of the area's own
+  // the area's flora (art/flora/areas.js): its species dealt into its tree slots by their shares, each with the area's own tree
+  // character (its main recipe's trunks, lean, thickness, gnarl, scale) and the recipe the area gives that species, if any
+  const total = TREE_HEIGHT_CLASSES.reduce((a, c) => a + c.count, 0), pal = AREA_FLORA[id]?.palette, main0 = AREA_FLORA[id]?.species[0][0];
+  // dealt by stature, so the classes still rise: each kind's height as a mature tree, the shortest kinds in the low classes, the tallest in the top ones
+  const stature = o => speciesStature(o.type, st) + (o.type === main0 ? .01 : 0);
+  const slots = flora?.length ? null : floraSlots(id, total)?.map((o, i) => [o, i]).sort((a, b) => stature(a[0]) - stature(b[0]) || a[1] - b[1]).map(([o]) => o);
+  const character = (({ type, minor, bare, dark, ...rest }) => rest)(mains[0] || {}), own = type => recipes.find(o => o.type === type);
   if (!recipes.length) return [];
   const seed = id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0, out = [];
   let n = 0;
   for (const cls of TREE_HEIGHT_CLASSES) for (let i = 0; i < cls.count; i++, n++) {
-    const o = minors.length && (n === 2 || n === 6) ? minors[(n === 6 ? 1 : 0) % minors.length] : mains[n % mains.length], /* a minor species: one sapling and one mature tree of the ten */ S = treeSpecies(o.type), f = S.fn, r = rng(seed * 7 + n * 131 + 3);
+    const o = slots ? { ...character, ...own(slots[n].type), ...slots[n], minor: undefined } : minors.length && (n === 2 || n === 6) ? minors[(n === 6 ? 1 : 0) % minors.length] : mains[n % mains.length], /* a minor species: one sapling and one mature tree of the ten */ S = treeSpecies(o.type), f = S.fn, r = rng(seed * 7 + n * 131 + 3);
     const h = cls.count > 1 ? cls.range[0] + (cls.range[1] - cls.range[0]) * i / (cls.count - 1) : (cls.range[0] + cls.range[1]) / 2;
     const sapling = cls.id === "sapling", big = cls.id === "tall" || cls.id === "giant";
     // its character (the species' grow): willows widen rather than grow; narrow kinds (firs, pines, birches, alders,
@@ -440,7 +458,7 @@ export function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas =
     const g = S.grow, willow = g === "willow", narrow = g === "narrow" || o.bare, wide = g === "wide", small = g === "small";
     const scale = willow ? 1 + (h - 1) * .45 : small ? 1 + (h - 1) * .5 : wide ? 1 + (h - 1) * .75 : h;
     const width = (sapling ? .78 : 1) * (willow ? 1 + Math.max(0, h - 1) * .55 : wide ? 1 + Math.max(0, h - 1) * .45 : narrow && big ? (o.bare ? .6 : .85) : big ? 1.06 : 1);
-    const ts = { ...st, crownWidth: (st.crownWidth || 3) * width, leafHue: def.leaf + (o.dark ? .05 : 0), gnarl: Math.min(1, (o.gnarl ?? st.gnarl) + (cls.id === "giant" ? .2 : 0)),
+    const ts = { ...st, crownWidth: (st.crownWidth || 3) * width, leafHue: def.leaf + (o.dark ? .05 : 0), sat: st.sat * (pal?.sat ?? 1), leafVal: pal?.val ?? 1, /* the area's palette */ gnarl: Math.min(1, (o.gnarl ?? st.gnarl) + (cls.id === "giant" ? .2 : 0)),
       treeBare: o.bare, treeTrunks: sapling ? 1 : o.trunks, treeLean: o.lean, treeThick: sapling ? undefined : big && o.thick ? o.thick * 1.1 : o.thick, treeThin: sapling || o.thin, treeHollow: big && o.hollow, treeWebs: o.webs };
     const t = f(r, ts, st.treeSize * K * (o.scale || 1) * scale * uni(r, .95, 1.05));
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }

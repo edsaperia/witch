@@ -1,6 +1,6 @@
 // The music's score (Ed, 2026-10-04: generative music, in code, like the art): what each part
 // plays on each sixteenth, from the style file (config/music-style.json) and the section the
-// conductor (rules/musicPlan.ts) has chosen. Numbers only, no sound: src/platform/musicEngine.ts
+// conductor (rules/musicPlan.ts) has chosen. Numbers only, no sound: src/platform/audio/musicEngine.ts
 // plays the notes. The same seed and section always give the same notes.
 import { hash2 } from "./random";
 
@@ -139,6 +139,9 @@ export interface MusicStyle {
   fill: { part: string; pattern: string; mute: string[] };
   /** Parts added while a soundsystem nearby is under siege (their level times the siege, 0-1). */
   siege: Record<string, PartUse>;
+  /** Parts added near a woken area that has joined the party: its soundsystem on, its happy animals
+   *  dancing (their level times how near, 0-1); a part the section already plays isn't doubled. */
+  party?: Record<string, PartUse>;
   arc: ArcStep[];
 }
 
@@ -267,6 +270,8 @@ export interface ScoreContext {
   seed: number;
   /** 0-1: how much a soundsystem nearby is under siege (adds the style's siege parts). */
   siege: number;
+  /** 0-1: how near a woken area that has joined the party is (adds the style's party parts). */
+  party?: number;
 }
 
 /** Every note starting on sixteenth `step` (absolute), in the block `plan`; `next` is the plan of
@@ -285,6 +290,7 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
   const muted = ending !== "none" && s >= 12 ? style.fill.mute : [];
   const parts: [string, PartUse, number][] = Object.entries(sec.parts).map(([k, u]) => [k, u, 1]);
   if (ctx.siege > 0.01) for (const [k, u] of Object.entries(style.siege)) parts.push([k, u, ctx.siege]);
+  if ((ctx.party ?? 0) > 0.01) for (const [k, u] of Object.entries(style.party ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx.party!]);
   if (fillBar) parts.push([style.fill.part, { p: "__fill" }, 1]);
   for (const [name, u0, scaleLevel] of parts) {
     const def = style.parts[name];
@@ -353,6 +359,7 @@ export function checkStyle(style: MusicStyle): string[] {
     } catch (e) { errs.push(String((e as Error).message)); }
   }
   for (const [pn, u] of Object.entries(style.siege)) checkUse("siege", pn, u);
+  for (const [pn, u] of Object.entries(style.party ?? {})) checkUse("party", pn, u);
   if (style.fill.pattern.length !== 16) errs.push("fill: not one bar");
   if (!style.parts[style.fill.part]) errs.push(`fill: no part "${style.fill.part}"`);
   for (const n of [style.intro, style.knockout]) if (!style.sections[n]) errs.push(`no section "${n}"`);

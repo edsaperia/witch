@@ -190,6 +190,14 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
+        <h2>Genomes</h2>
+        <p class="note">Every species is now a genome record: its template (body plan), palette, proportions and parts as data. Below, ten species' adults each baked once as a material mask and coloured on the GPU at draw time from a palette row; pick a coat to recolour them all without rebaking. Click a creature to see its record.</p>
+        <div id="genomeCoats" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        <div class="sheet-wrap"><canvas id="genomeSheet" width="420" height="160" style="image-rendering:pixelated"></canvas></div>
+        <pre id="genomeRecord" class="note" style="white-space:pre-wrap;max-height:220px;overflow:auto"></pre>
+      </section>
+
+      <section style="display:grid;gap:10px">
         <h2>Sleeping legends</h2>
         <p class="note">Every area's legend asleep, centuries deep: sunk half into its area's earth, head down and eyes shut, its glow gone to stone and old wood, mossed, lichened and grown over, so it passes for a boulder, a log or a mound. Each row: asleep (two frames of a slow breath), the legend awake as it is, then the witch for scale.</p>
         <div class="sheet-wrap"><canvas id="legendSheet" width="420" height="160"></canvas></div>
@@ -228,10 +236,23 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
       </section>
 
       <section style="display:grid;gap:10px">
+        <h2>Party relics</h2>
+        <p class="note">Giant bottles, legend-sized and half-buried in the forest floor, 3 or 4 to a map, for the witch to find and dig up (#87). Each is its own shape and glass: a tall wine bottle (amethyst), a round flask (ruby), a square decanter (emerald), a tapering hexagonal bottle (sapphire), a spiral-fluted bottle (amber) and a teardrop potion (rose). The glass is see-through (its rim, a highlight, and a half-clear dither the ground shows through), and the liquid inside glows in its own colour, motes rising from the neck; in the game each lights the ground round it. Each is lit at night with its glint (a four-point star that comes and goes, so it can be spotted from the treetops) at its glint point; then the glint's frames, at the ground and treetop zooms; then their one sigil (the flask's silhouette: they all do the same in the game), bare and in each level's frame.</p>
+        <div class="sheet-wrap"><canvas id="partyRelicSheet" width="420" height="160"></canvas></div>
+      </section>
+
+      <section style="display:grid;gap:10px">
         <div class="row" style="justify-content:space-between"><h2>Flora</h2><div class="row"><label class="note" for="floraShow">Show</label><select id="floraShow"><option value="new">the new species</option><option value="fantasy">fantasy only</option><option value="all">every species</option></select><label class="note" for="floraGenome">Genome</label><select id="floraGenome"></select></div></div>
         <p class="note">Trees grown from their plant genomes (art/flora/genomes.js). The new species come from the genome generator (art/flora/blob.js): levels of branches under a crown of 3 to 9 lit blobs filled with leaf stamps. They are wild cherry, crab apple, elder, aspen, whitebeam, field elm and cedar, and three fantasy trees: the glowcap (a mushroom tree with glowing gills), the crystal-leaf tree and the vinewood (hung with vines and glowing buds). Each row shows a sapling, young, mature and tall tree, lit at dusk; then its crown as the treetops show it, and its trunk as the ground shows it. Below is the chosen species' genome, to copy. In the game, ?flora=new (or fantasy, all, or a list of ids) grows them in every wooded area.</p>
         <div class="sheet-wrap"><canvas id="floraSheet" width="420" height="160"></canvas></div>
         <pre id="floraJson" class="note" style="white-space:pre-wrap;max-height:220px;overflow:auto"></pre>
+      </section>
+
+      <section style="display:grid;gap:10px">
+        <div class="row" style="justify-content:space-between"><h2>Witch generator</h2><div class="row"><button id="witchGenReroll">Reroll</button></div></div>
+        <p class="note">Witches grown from genome data (art/witchGenome.js): the hat (shape, crown height, brim, lean), hair, top, cloak (none, short, long, hooded), broom (classic, fan, twig or round bristles; the handle's length and bend; the bristles' length), accessories (headphones, sunglasses, glow sticks, a scarf, a satchel, a glowing pendant, earrings) and a palette from one base hue. The first is ours, drawn from her own genome exactly as she always is; the rest are generated (Reroll for others). Each hovers, leans and stands. Click one to see its genome, to copy.</p>
+        <div class="sheet-wrap"><canvas id="witchGenSheet" width="420" height="160"></canvas></div>
+        <pre id="witchGenJson" class="note" style="white-space:pre-wrap;max-height:220px;overflow:auto"></pre>
       </section>
 
       <section style="display:grid;gap:10px">
@@ -290,7 +311,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 </div>
 
 <script type="module">
-import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, bakeTufts, DISCO_GRID, DISCO_MASK, discoPatterns, DISCO_TRANSITIONS, discoCompose, discoPaint, DANCEFLOOR_SPEAKER_ANGLES, dancefloorSpeakerSprite, dancefloorSpeakerColours, soundsystemColours, witchSprite, witchColours, areaTreeVariants, TREE_SPECIES, splitTree, treeColours, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS, COUNTRY, countrySprite, countryColours, SCENES, scenePlacements, LANDMARKS, landmarkSprite, landmarkColours, WITCH_PAIRS, PARTY_OUTFITS, partyWitch, PARTY_OBJECTS, PARTY_CLASSES, PARTY_LIGHT_NEONS, partySprite, partyColours, partyPatch, scenePiece, LEGEND_IDS, LEGEND_STATES, LEGEND_FRAMES, legendForm, EFFECTS, EFFECT_BY_ID, effectSprite, effectColours, EFFECT_TREETOP_SHRINK, PLANT_GENOMES, floraPick } from "../../art/generator.js";
+import { Sprite, rng, uni, pick, gauss, hash2, vnoise, KNOBS, GROUPS, defaultStyle, mutate, hsv2rgb, M, SPECIES, SPECIES_BY_ID, speciesColours, critter, bake, buildAssets, FEATURE_NAMES, SOUNDSYSTEMS, soundsystemSprite, bakeTufts, DISCO_GRID, DISCO_MASK, discoPatterns, DISCO_TRANSITIONS, discoCompose, discoPaint, DANCEFLOOR_SPEAKER_ANGLES, dancefloorSpeakerSprite, dancefloorSpeakerColours, soundsystemColours, witchSprite, witchColours, areaTreeVariants, TREE_SPECIES, splitTree, treeColours, PATH_KINDS, PATH_IDS, pathTextures, sweepPath, PATH_PIECES, pathColours, pathPieceSprite, DECOR, decorSprite, decorColours, lakeKit, RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOffset, areaAssets, AREAS, AREA_BY_ID, WITCH_FOOT_POSES, treehouseSprite, treehouseColours, partyGear, GLASSES_STYLES, SHOE_STYLES, sigilColour, SIGIL_IDS, sigilSVG, drawSigil, sigilFrame, groundSigil, floatSigil, paintSigilField, SigilStack, liftOff, setDown, SIGIL_TRANSITION_TIME, GROUND_PITCH, SIGIL_LEVELS, COUNTRY, countrySprite, countryColours, SCENES, scenePlacements, LANDMARKS, landmarkSprite, landmarkColours, WITCH_PAIRS, PARTY_OUTFITS, partyWitch, PARTY_OBJECTS, PARTY_CLASSES, PARTY_LIGHT_NEONS, partySprite, partyColours, partyPatch, scenePiece, LEGEND_IDS, LEGEND_STATES, LEGEND_FRAMES, legendForm, EFFECTS, EFFECT_BY_ID, effectSprite, effectColours, EFFECT_TREETOP_SHRINK, PLANT_GENOMES, floraPick, PALETTE_SIZE, PALETTE_ROW, PALETTE_VARIANTS, PALETTE_GLSL, bakeMask, paletteRow, maskPixels, variantColours, GENOME_BY_ID, genomeHash , PARTY_RELIC_IDS, PARTY_RELIC_GLINT_FRAMES, partyRelicSprite, partyRelicColours, partyRelicGlint, partyRelicSigilId , WITCH_GENOME, witchGenome, genomeLook } from "../../art/generator.js";
 import { shade } from "../../art/lighting.js";
 // ================= fractal jittered Voronoi (Boris the Brave, 2026) =================
 // Layer 0 is a jittered grid of area sites (one per unit cell). Each finer layer halves the
@@ -686,6 +707,48 @@ function renderCountry() {
 }
 
 // ================= sleeping legends: asleep (2 breaths) beside the legend awake, a row per species =================
+// ================= genomes: ten species' masks coloured on the GPU from palette rows (#79 stage 2) =================
+let genomeTimer, genomeCoat = 0;
+const GENOME_DEMO = ["wolf", "fox", "badger", "boar", "stag", "hare", "owl", "toad", "snake", "beetle"];
+function renderGenome() {
+  clearTimeout(genomeTimer);
+  genomeTimer = setTimeout(() => {
+    const c = document.getElementById("genomeSheet"); if (!c) return;
+    const st = current, coats = ["own", ...Object.keys(PALETTE_VARIANTS)], gap = 6, S = 2;
+    const masks = GENOME_DEMO.map(id => bakeMask(critter(id, 2, 0, st), st.cOutline));
+    const W = masks.reduce((a, m) => a + m.w + gap, gap), H = Math.max(...masks.map(m => m.h)) + gap * 2;
+    c.width = W * S; c.height = H * S;
+    const gl = c.getContext("webgl", { premultipliedAlpha: false }); if (!gl) return;
+    const sh = (type, src) => { const o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o); return o; }, prog = gl.createProgram();
+    gl.attachShader(prog, sh(gl.VERTEX_SHADER, "attribute vec2 p; attribute vec2 t; varying vec2 vt; void main() { vt = t; gl_Position = vec4(p, 0., 1.); }"));
+    gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, "precision mediump float; varying vec2 vt;" + PALETTE_GLSL + " void main() { vec4 c = paletteColour(vt); if (c.a < .5) discard; gl_FragColor = vec4(c.rgb, 1.); }"));
+    gl.linkProgram(prog); gl.useProgram(prog);
+    // the palette texture: a row per species per coat
+    const rows = new Uint8Array(PALETTE_ROW * 4 * GENOME_DEMO.length * coats.length);
+    GENOME_DEMO.forEach((id, i) => coats.forEach((v, j) => rows.set(paletteRow(v === "own" ? speciesColours(id, st) : variantColours(id, st, v), st.cOutline), (i * coats.length + j) * PALETTE_ROW * 4)));
+    const tex = (unit, w, h, data) => { const t = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t); for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.NEAREST], [gl.TEXTURE_MAG_FILTER, gl.NEAREST], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, data); };
+    tex(1, PALETTE_ROW, GENOME_DEMO.length * coats.length, rows);
+    gl.uniform1i(gl.getUniformLocation(prog, "uMask"), 0); gl.uniform1i(gl.getUniformLocation(prog, "uPalette"), 1); gl.uniform1f(gl.getUniformLocation(prog, "uRows"), GENOME_DEMO.length * coats.length);
+    const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    const ap = gl.getAttribLocation(prog, "p"), at = gl.getAttribLocation(prog, "t");
+    gl.enableVertexAttribArray(ap); gl.enableVertexAttribArray(at); gl.vertexAttribPointer(ap, 2, gl.FLOAT, false, 16, 0); gl.vertexAttribPointer(at, 2, gl.FLOAT, false, 16, 8);
+    gl.viewport(0, 0, c.width, c.height); gl.clearColor(.2, .27, .16, 1); gl.clear(gl.COLOR_BUFFER_BIT);
+    const boxes = [];
+    let x = gap;
+    masks.forEach((m, i) => {
+      tex(0, m.w, m.h, new Uint8Array(maskPixels(m).buffer)); // the mask, baked once; only the palette row changes
+      gl.uniform1f(gl.getUniformLocation(prog, "uRow"), i * coats.length + genomeCoat);
+      const y = H - gap - m.h, X = v => v / W * 2 - 1, Y = v => 1 - v / H * 2;
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([X(x), Y(y), 0, 0, X(x + m.w), Y(y), 1, 0, X(x), Y(y + m.h), 0, 1, X(x + m.w), Y(y + m.h), 1, 1]), gl.STATIC_DRAW);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      boxes.push([x * S, (x + m.w) * S, GENOME_DEMO[i]]); x += m.w + gap;
+    });
+    const bar = document.getElementById("genomeCoats");
+    if (bar && !bar.children.length) coats.forEach((v, j) => { const b = document.createElement("button"); b.textContent = v === "own" ? "Own colours" : PALETTE_VARIANTS[v].name; b.addEventListener("click", () => { genomeCoat = j; renderGenome(); }); bar.appendChild(b); });
+    c.onclick = e => { const r = c.getBoundingClientRect(), px = (e.clientX - r.left) * c.width / r.width, hit = boxes.find(([a, b]) => px >= a && px <= b); if (hit) document.getElementById("genomeRecord").textContent = `${hit[2]} (hash ${genomeHash(GENOME_BY_ID[hit[2]])})\n` + JSON.stringify(GENOME_BY_ID[hit[2]], null, 1); };
+  }, 1300);
+}
+
 let legendTimer;
 function renderLegends() {
   clearTimeout(legendTimer);
@@ -839,6 +902,29 @@ function renderParty() {
   }, 650);
 }
 
+// ================= party relics: the six, lit at night with their glints; the glint's frames; their sigils =================
+let partyRelicTimer;
+function renderPartyRelics() {
+  clearTimeout(partyRelicTimer);
+  partyRelicTimer = setTimeout(() => {
+    const c = document.getElementById("partyRelicSheet"); if (!c) return;
+    const st = current, night = { ...st, ambient: .45, ambientHue: .65, moon: .8, moonHue: .6, shafts: 0 }, gap = 10;
+    const relics = PARTY_RELIC_IDS.map(id => { const R = partyRelicSprite(id, st); return { R, b: bake(R.sp, partyRelicColours(id, st), st, "none") }; });
+    const glints = [...Array(PARTY_RELIC_GLINT_FRAMES).keys()].flatMap(f => [bake(partyRelicGlint(f).sp, partyRelicColours("wine", st), st, "none")]).concat([...Array(PARTY_RELIC_GLINT_FRAMES).keys()].map(f => bake(partyRelicGlint(f, { zoom: "treetop" }).sp, partyRelicColours("wine", st), st, "none")));
+    const big = bake(partyRelicGlint(2).sp, partyRelicColours("wine", st), st, "none");
+    const h1 = Math.max(...relics.map(r => r.b.h)) + gap, w1 = relics.reduce((a, r) => a + r.b.w + gap, gap), h2 = Math.max(...glints.map(g => g.h)) + gap, w2 = glints.reduce((a, g) => a + g.w + gap, gap);
+    const w = Math.max(w1, w2), h = h1 + h2 + gap, tgt = makeTarget(w, h);
+    tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+    let x = gap; for (const { R, b } of relics) { const y = h1 - b.h; tgt.a.drawImage(b.A, x, y); tgt.n.drawImage(b.N, x, y); tgt.a.drawImage(big.A, Math.round(x + R.glint.x - big.w / 2), Math.round(y + R.glint.y - big.h / 2)); tgt.n.drawImage(big.N, Math.round(x + R.glint.x - big.w / 2), Math.round(y + R.glint.y - big.h / 2)); x += b.w + gap; }
+    x = gap; for (const g of glints) { const y = h1 + gap + (h2 - g.h) / 2; tgt.a.drawImage(g.A, x, y); tgt.n.drawImage(g.N, x, y); x += g.w + gap; }
+    const lit = document.createElement("canvas"); lit.width = w; lit.height = h; shade(tgt, lit, night, [], [0, 0, w, h]);
+    const S = 72, sh = S + 2 * gap;
+    c.width = w; c.height = h + sh; const g = c.getContext("2d"); g.fillStyle = "#0e0c14"; g.fillRect(0, 0, c.width, c.height); g.drawImage(lit, 0, 0);
+    let sx = gap, sy = h + gap; for (const level of [null, 0, 1, 2, 3]) { drawSigil(g, partyRelicSigilId(), { x: sx, y: sy, size: S, level }); sx += S + gap; }
+    c.style.width = w + "px"; c.style.maxWidth = "none";
+  }, 700);
+}
+
 // ================= flora: the plant genomes' trees at four sizes, lit, with their crowns and trunks =================
 let floraTimer;
 function renderFlora() {
@@ -863,6 +949,26 @@ function renderFlora() {
     rows.forEach((r, i) => { y += rh[i] - gap; g.fillText(r.label, 6, y); y += gap; });
     c.style.width = w * 2 + "px"; c.style.maxWidth = "none"; c.style.imageRendering = "pixelated";
   }, 650);
+}
+
+// ================= the witch generator: ours from her genome, then generated witches, each hovering, leaning and standing =================
+let witchGenTimer, witchGenBase = 0;
+function renderWitchGen() {
+  clearTimeout(witchGenTimer);
+  witchGenTimer = setTimeout(() => {
+    const c = document.getElementById("witchGenSheet"); if (!c) return;
+    document.getElementById("witchGenReroll").onclick = () => { witchGenBase += 15; renderWitchGen(); };
+    const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 6, per = 4;
+    const genomes = [WITCH_GENOME, ...[...Array(15).keys()].map(i => witchGenome(witchGenBase + i))];
+    const cells = genomes.map(g => { const { look, outfit } = genomeLook(g), col = outfit ? witchColours(st, outfit, { styleHues: false }) : witchColours(st), b = o => bake(witchSprite(st, { ...o, look }), col, st, st.cOutline); return { g, sp: [b({ frame: 0 }), b({ pose: "lean", frame: 1 }), b({ pose: "stand", frame: 0 })] }; });
+    const cw = Math.max(...cells.map(k => k.sp.reduce((a, b) => a + b.w + gap, 0))), ch = Math.max(...cells.flatMap(k => k.sp.map(b => b.h))) + gap;
+    const w = per * cw + gap, h = Math.ceil(cells.length / per) * ch + gap, tgt = makeTarget(w, h);
+    tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
+    cells.forEach((k, i) => { let x = gap + (i % per) * cw; const y = gap + Math.floor(i / per) * ch; for (const b of k.sp) { tgt.a.drawImage(b.A, x, y + ch - gap - b.h); tgt.n.drawImage(b.N, x, y + ch - gap - b.h); x += b.w + gap; } });
+    c.width = w; c.height = h; shade(tgt, c, studio, [], [0, 0, w, h]);
+    c.style.width = w * 2 + "px"; c.style.maxWidth = "none"; c.style.imageRendering = "pixelated";
+    c.onclick = e => { const r = c.getBoundingClientRect(), x = (e.clientX - r.left) / 2, y = (e.clientY - r.top) / 2, i = Math.floor((y - gap) / ch) * per + Math.floor((x - gap) / cw); if (genomes[i]) document.getElementById("witchGenJson").textContent = (i ? "seed " + (witchGenBase + i - 1) + "\n" : "ours\n") + JSON.stringify(genomes[i], null, 1); };
+  }, 750);
 }
 
 // ================= attack effects: every effect's frames, light and dark, ground and treetop =================
@@ -1072,7 +1178,7 @@ function setCurrent(st, { record = true } = {}) {
   if (record) { history.push(current); if (history.length > 40) history.shift(); store.set("witch-art-history-3", history); }
   assetsCurrent = buildAssets(current, world, { K }); layoutCurrent = layout(world, current);
   drawSheet(document.getElementById("sheet"), current, assetsCurrent);
-  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderCountry(); renderPartyObjects(); renderLegends(); renderRelics(); renderSets(); renderTall(); renderTufts(); renderWitch(); renderParty(); renderFlora(); renderEffects(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
+  syncKnobs(); renderHistory(); renderBestiary(); renderTrees(); renderPaths(); renderDecor(); renderCountry(); renderPartyObjects(); renderLegends(); renderGenome(); renderRelics(); renderSets(); renderTall(); renderTufts(); renderWitch(); renderParty(); renderFlora(); renderPartyRelics(); renderEffects(); renderHome(); renderSoundsystems(); renderMap(); setTimeout(buildSigils, 400); setTimeout(buildDisco, 500);
   document.getElementById("json").value = JSON.stringify({ style: current, kinds: world.kinds, forestSeed: world.forestSeed }, null, 1);
 }
 function choose(st) { varySeed++; setCurrent(st); makeVariants(); window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); }

@@ -6,7 +6,8 @@
 // every change lands on a phrase. Bars are the beat clock's (rules/beat.ts): bar 0 at game time 0,
 // the tempo rising wave by wave.
 // Hooks for later: knockedOut plays the knockout section (a breakdown under a filter); siege adds the
-// style's siege parts (rules/musicScore.ts). Numbers only: the platform plays them.
+// style's siege parts (rules/musicScore.ts); party, near a woken area that has joined the party,
+// its party parts. Numbers only: the platform plays them.
 import { beatAt, type BeatClock } from "./beat";
 import type { Game } from "./game";
 import { arcStep, type BlockPlan, type MusicStyle } from "./musicScore";
@@ -22,6 +23,8 @@ export interface MusicCue {
   /** Hooks: the witch is knocked out; how much a soundsystem nearby is under siege (0-1). */
   knockedOut: boolean;
   siege: number;
+  /** How near a woken area that has joined the party is (0-1): its soundsystem on, its happy animals dancing. */
+  party?: number;
   /** ?music= previews: always this section; or this wave's arc step whatever the wave. */
   forceSection?: string;
   forceWave?: number;
@@ -42,7 +45,7 @@ export function musicCue(g: Game, prev?: MusicCue): MusicCue {
   }
   return {
     waves, nextAt: g.tuning.party.interval >= 1e9 ? Infinity : bar(p.nextAt), bootUntil: bar(p.bootUntil),
-    knockedOut: !!g.witches[0]?.ko, siege: siegeNear(g, g.witch), forceSection: prev?.forceSection, forceWave: prev?.forceWave,
+    knockedOut: !!g.witches[0]?.ko, siege: siegeNear(g, g.witch), party: partyNear(g, g.witch), forceSection: prev?.forceSection, forceWave: prev?.forceWave,
   };
 }
 
@@ -60,6 +63,23 @@ export function siegeNear(g: Game, at: { x: number; z: number }): number {
       const c = g.creatures[id];
       if (!c.gone && !c.leashed && !c.fleeUntil && !c.wanderTo && Math.hypot(c.x - h.x, c.z - h.z) < h.radius + 15) { best = near; break; }
     }
+  }
+  return best;
+}
+
+/** How much a woken area that has joined the party is heard from `at` (0-1): the nearest standing
+ *  soundsystem (not home's: the track is home's) with happy animals dancing by it (its area's
+ *  guards or happy legend, or party animals placed there), by how near it is (nearDist to farDist). */
+export function partyNear(g: Game, at: { x: number; z: number }): number {
+  const M = g.tuning.music, S = g.combat;
+  if (!S) return 0;
+  let best = 0, happy: Set<string> | null = null;
+  for (const [key, h] of S.sounds) {
+    if (key === "home" || h.hp <= 0 || S.ruined.has(key)) continue;
+    const d = Math.hypot(h.x - at.x, h.z - at.z), near = 1 - Math.min(1, Math.max(0, (d - M.nearDist) / Math.max(1, M.farDist - M.nearDist)));
+    if (near <= best) continue;
+    if (!happy) { happy = new Set(); for (const c of g.creatures) if ((c.guard || (c.boss && c.legendState === "happy")) && !c.gone && !c.leashed) happy.add(`${c.cell[0]},${c.cell[1]}`); } // (one pass, only when one's in earshot)
+    if (happy.has(key) || g.leash.placed.some(p => Math.hypot(p.x - h.x, p.z - h.z) < h.radius + 30)) best = near;
   }
   return best;
 }

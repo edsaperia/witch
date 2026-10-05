@@ -1,5 +1,5 @@
 // Creatures: each area's own kind, more of them and older the longer the area stays wild
-// (Ed, 2026-10-04): every area starts the same, a baby and two adults, and grows by a creature
+// (Ed, 2026-10-04): every area starts the same, a young and an adult (Ed, 2026-10-05), and grows by a creature
 // of a random level every wave while it stays wild (rules/growth.ts), so the areas the party
 // reaches late are the dangerous ones. The home area holds none. Wild legends are rare, late threats (Ed,
 // 2026-10-04): a few a map, only in remote areas, each a boss, asleep until the party reaches it. Idle creatures roam their whole area, never leaving it.
@@ -81,6 +81,31 @@ export interface Creature {
   charge?: { dx: number; dz: number; speed: number; until: number; /** when it sets off (it lowers its head till then) */ from?: number; /** it has struck (once a charge), it's braking */ struck?: boolean; braking?: boolean; /** a legend's charge: whom it has trampled */ hit?: number[]; /** rolling curled up (a hedgehog, a woodlouse): the damage it takes times this */ curl?: number };
   /** Dug in (a badger) or braced behind its tail (a beaver) until then: rooted, taking less. */
   dug?: number;
+  /** A party animal travelling (rules/travel.ts: far from her on the ground or its sigil, quiet both
+   *  ways), its route along area borders, and until when it stays in her posse after a fight. */
+  travelling?: boolean;
+  /** Its state (rules/creatureStates.ts, issue #87): set when it's invited to happy, or enraged; read it with stateOf. */
+  state?: "wild" | "happy" | "leashed" | "enraged";
+  /** Knocked down while wild: dazed (nothing attacks it, it can still be invited) until then, then it runs off. */
+  dazed?: boolean;
+  /** Happy, in an area with a soundsystem: it keeps round it, dancing (rules/creatureStates.ts danceAt). */
+  dancing?: boolean;
+  /** A legend (rules/legends.ts): its restlessness 0..1 (no kin in its area: a nightmare), whether its
+   *  dream quest can still be done (its dream shows), and whether it gives its buff (for good). */
+  restlessness?: number;
+  questOpen?: boolean;
+  buffed?: boolean;
+  /** A legend winding up a volley: where each shot is aimed, and at whom. */
+  aims?: { x: number; z: number; target: import("./combat").Target }[];
+  dazedUntil?: number;
+  /** Its 💌 invite meter (0..1 at its last hit) and when that was (rules/affection.ts). */
+  affection?: number;
+  affectionAt?: number;
+  /** The invite button held on it (states.leash "hold"): for how long, till when. */
+  holdT?: number;
+  holdAt?: number;
+  route?: import("./travel").Route;
+  engagedUntil?: number;
   brace?: number;
   /** A wild legend's move set (Stage 5): where it is in its pattern, and its phase. */
   legend?: { step: number; phase: 1 | 2 };
@@ -118,12 +143,12 @@ export interface Creature {
   rand: () => number;
 }
 
-export type LegendState = "asleep" | "waking" | "awake" | "slept" | "happy";
+export type LegendState = "asleep" | "restless" | "angry" | "happy" | /** (older states, read as asleep) */ "waking" | "awake" | "slept";
 
 export interface AreaPopulation { babies: number; young: number; adults: number }
 
-/** How many of each level every area starts with (Ed, 2026-10-04: every area the same; one baby
- *  and two adults, Ed 2026-10-05). It grows by a creature a wave while it stays wild
+/** How many of each level every area starts with (Ed, 2026-10-04: every area the same; one young
+ *  and one adult, Ed 2026-10-05; it was a baby and two adults). It grows by a creature a wave while it stays wild
  *  (rules/growth.ts). (Each area also has its sleeping legend: spawnCreatures.) */
 export function population(map: ForestMap): AreaPopulation {
   const S = map.tuning.population.start;
@@ -198,22 +223,23 @@ export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" |
 
 export function spawnCreatures(map: ForestMap): Creature[] {
   const out: Creature[] = [], pop = population(map);
-  // The home area holds no ordinary creatures (Ed, 2026-10-03). Every area, home too, has its
-  // legend (Ed, 2026-10-04): sleeping, out of its clearing; home's is already happy, with the party.
+  // The home area holds no creatures (Ed, 2026-10-03) and no legend (Ed, 2026-10-05: "Home area
+  // shouldn't have a legend": so no buff at the start). Every other area has its legend, sleeping, out of its clearing.
   const [hx, hy] = map.centreCell;
   for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
     const home = cx === hx && cy === hy;
     const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), cell: [number, number] = [cx, cy], make = (level: Level) => out.push(makeCreature(map, cell, level, out.length, r));
-    if (!home) {
-      // Swarms come in larger numbers, loners fewer (Ed, 2026-10-05): 1 / their strength times as many.
+    if (home) continue;
+    {
+      // Weaker species come in larger numbers, stronger fewer (Ed, 2026-10-05): 1 / their strength times as many.
       const k = countScale(AREA_TYPES[map.typeOf(cx, cy)].creature);
       for (let i = 0; i < startCount(pop.babies, k); i++) make(0);
       for (let i = 0; i < startCount(pop.young, k); i++) make(1);
       for (let i = 0; i < startCount(pop.adults, k); i++) make(2);
     }
     const L = makeCreature(map, cell, LEGEND, out.length, r, legendSpot(map, cell, r));
-    L.legendState = home ? "happy" : "asleep"; L.stateAt = 0;
-    if (!home) L.quest = questFor(map, cell, L.species);
+    L.legendState = "asleep"; L.stateAt = 0;
+    L.quest = questFor(map, cell, L.species);
     out.push(L);
   }
   return out;

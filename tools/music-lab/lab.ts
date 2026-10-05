@@ -1,11 +1,11 @@
-// The Witch Music Lab: plays the game's music engine (src/platform/musicEngine.ts) through the
-// game's own mix (src/platform/music.ts) from a style (config/music-style.json), with a pretend run
+// The Witch Music Lab: plays the game's music engine (src/platform/audio/musicEngine.ts) through the
+// game's own mix (src/platform/audio/music.ts) from a style (config/music-style.json), with a pretend run
 // (the boot, waves every so often, jump to any wave), any one section on a loop, the proximity mix,
 // damage and the hooks (knocked out, siege), and knobs for the style. Built into one page by
 // tools/music-lab/build.mjs; window.musicLabCheck() renders every section offline (tools/music-lab/check.mjs).
 import styleJson from "../../config/music-style.json";
-import { Music } from "../../src/platform/music";
-import { MusicEngine } from "../../src/platform/musicEngine";
+import { Music } from "../../src/platform/audio/music";
+import { MusicEngine } from "../../src/platform/audio/musicEngine";
 import { mixAt, nearness } from "../../src/rules/music";
 import { beatAt, bpmAt, newBeatClock, rampTo, timeAt, waveArrived, waveTempo, type BeatClock } from "../../src/rules/beat";
 import { barAt, barSeconds, planBlock, type MusicCue } from "../../src/rules/musicPlan";
@@ -20,7 +20,7 @@ const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getEleme
 
 // ---- the pretend run ----
 const run = { time: 0, bootUntil: 30, waves: [] as number[], nextAt: 90, interval: 60, boot: 30, paused: false };
-const hooks = { knockedOut: false, siege: 0, distance: 0, damage: 0, volume: 0.6 };
+const hooks = { knockedOut: false, siege: 0, party: 0, distance: 0, damage: 0, volume: 0.6 };
 let force: { section?: string; wave?: number } = {};
 let seed = 1;
 let ctx: AudioContext | null = null, music: Music | null = null, playing = false, lastAudio = 0;
@@ -30,7 +30,7 @@ const beatTuning = () => ({ beat: { bpm: style.bpm, tempos: style.arc.map(a => a
 let clock: BeatClock = newBeatClock(style.bpm, waveTempo(beatTuning(), 0));
 const arrived = () => waveArrived(clock, beatTuning(), force.wave ?? run.waves.length, run.time);
 const bar = (time: number) => barAt(clock, time);
-const cue = (): MusicCue => ({ waves: run.waves.map(bar), nextAt: bar(run.nextAt), bootUntil: bar(run.bootUntil), knockedOut: hooks.knockedOut, siege: hooks.siege, forceSection: force.section, forceWave: force.wave });
+const cue = (): MusicCue => ({ waves: run.waves.map(bar), nextAt: bar(run.nextAt), bootUntil: bar(run.bootUntil), knockedOut: hooks.knockedOut, siege: hooks.siege, party: hooks.party, forceSection: force.section, forceWave: force.wave });
 
 function restart(): void {
   Object.assign(run, { time: 0, bootUntil: run.boot, waves: [], nextAt: run.boot + run.interval });
@@ -231,6 +231,13 @@ async function musicLabCheck(bars = 2): Promise<{ ok: boolean; errors: string[];
     measure("run: into wave 7, tempo rising, siege", await oc.startRendering());
   }
   {
+    // a woken area that has joined the party, close by: the style's party parts over a quiet section
+    const oc = new OfflineAudioContext(2, Math.ceil(rate * bars * spBar), rate);
+    const e = new MusicEngine(oc, oc.destination, style, 7);
+    e.renderAhead({ ...quiet, forceSection: "whisper", forceWave: 3, party: 1 }, 0, bars * spBar, steady);
+    measure("whisper, a party area nearby", await oc.startRendering());
+  }
+  {
     // the game's mix: far off and damaged (muffled, crunched, wobbling)
     const oc = new OfflineAudioContext(2, Math.ceil(rate * 2 * spBar), rate);
     const m = new Music(oc, 1, style, 7), M = TUNING.music;
@@ -290,6 +297,7 @@ const bindRange = (id: string, set: (v: number) => void, fmt: (v: number) => str
 bindRange("dist", v => (hooks.distance = v), v => `${v} m`);
 bindRange("damage", v => (hooks.damage = v), v => `${Math.round(v * 100)}%`);
 bindRange("siege", v => (hooks.siege = v), v => `${Math.round(v * 100)}%`);
+bindRange("party", v => (hooks.party = v), v => `${Math.round(v * 100)}%`);
 bindRange("volume", v => (hooks.volume = v), v => `${Math.round(v * 100)}%`);
 $<HTMLInputElement>("ko").addEventListener("change", e => (hooks.knockedOut = (e.target as HTMLInputElement).checked));
 $<HTMLSelectElement>("interval").addEventListener("change", e => { run.interval = +(e.target as HTMLSelectElement).value; run.nextAt = Math.max(run.bootUntil, run.time) + run.interval; });
