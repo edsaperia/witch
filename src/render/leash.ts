@@ -36,11 +36,14 @@ import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
 import { FIGHT, profileOf } from "../rules/movement";
 import { huntsWitch } from "../rules/creatureStates";
-import { relicGlints } from "../rules/legends";
+import { LEGENDS, relicGlints } from "../rules/legends";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, placed } from "./height";
+
+/** Seconds a legend's charge ruts take to fade. */
+const RUTS = 12;
 
 const SLOT = 32, SLOTS = 16; // the glyph atlas: 16 x 16 slots of 32 px; slot 0 is a soft dot
 const SQ = SLOTS * SLOTS - 1; // and the last a solid square
@@ -142,6 +145,8 @@ export class LeashView {
   private flat: Instances;
   /** Drawn over everything (no depth test): the berries' glints seen from the treetops. */
   private over: Instances;
+  /** Where charging legends have run (churned ground, fading over RUTS seconds). */
+  private ruts = new Map<number, { x: number; z: number; at: number }[]>();
   private evolved = new Map<number, number>();
   private berryRgb: [number, number, number];
   private fizzles: { x: number; z: number; at: number }[] = [];
@@ -561,6 +566,21 @@ export class LeashView {
       if ((c.friendly || c.guard) && !c.leashed && c.level > 0) { const top = (this.tops.get(c.id) ?? 1.2 + c.level * 0.6) + 0.35, ph = (time * 0.5 + c.id * 0.37) % 1, col = c.guard ? neon(c.species) : { r: 1, g: 0.5, b: 0.75 }; this.standing.add(c.x, top + (c.guard ? 0 : ph * 0.6), c.z, 0.28, dot, col.r, col.g, col.b, c.guard ? 0.85 : Math.sin(ph * Math.PI) * 0.9); }
       // About to charge (the boar lowering its head): the lane it will run down, brightening.
       if (c.charge?.from !== undefined && time < c.charge.from) { const ch = c.charge, k = 1 - Math.max(0, ch.from! - time) / 0.5, L = ch.speed * (ch.until - ch.from!), col = c.leashed ? neon(c.species) : { r: 1, g: 0.3, b: 0.3 }; for (let s2 = 1.5; s2 < L; s2 += 1.2) for (const side of [-1, 1]) this.flat.add(c.x + ch.dx * s2 - ch.dz * side * 1.6, 0, c.z + ch.dz * s2 + ch.dx * side * 1.6, 0.35, dot, col.r, col.g, col.b, 0.15 + 0.55 * k); }
+      // A legend's long charge (legends.json charge): head down, its first lane on the ground, brightening;
+      // then dust and churned ground behind it as it runs and brakes in its arc (the ruts fade slowly).
+      if (c.run) {
+        const run = c.run, K = LEGENDS.charge, col = c.legendState === "happy" ? neon(c.species) : { r: 1, g: 0.3, b: 0.3 };
+        if (run.phase === "windup") {
+          const k = Math.min(1, (time - run.at) / Math.max(0.05, K.windup)), ux = Math.cos(run.angle), uz = Math.sin(run.angle), half = (K.laneWidth * FIGHT.scale) / 2;
+          for (let s2 = 2; s2 < K.laneShown * FIGHT.scale; s2 += 1.4) for (const side of [-1, 1]) this.flat.add(c.x + ux * s2 - uz * side * half, 0, c.z + uz * s2 + ux * side * half, 0.45, dot, col.r, col.g, col.b, (0.15 + 0.6 * k) * (1 - s2 / (K.laneShown * FIGHT.scale * 1.1)));
+          for (let i = 0; i < 20; i++) { const a = (i / 20) * Math.PI * 2, R = 4 - 2 * k; this.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.5, dot, col.r, col.g, col.b, 0.3 + 0.6 * k); }
+        } else if (run.phase !== "home") {
+          let ruts = this.ruts.get(c.id);
+          if (!ruts) this.ruts.set(c.id, (ruts = []));
+          if (!ruts.length || Math.hypot(ruts[ruts.length - 1].x - c.x, ruts[ruts.length - 1].z - c.z) > 1.5) ruts.push({ x: c.x, z: c.z, at: time });
+          for (let i = 0; i < 6; i++) { const q = hash2(c.id, Math.floor(time * 20) + i, 17), ux = Math.cos(run.angle), uz = Math.sin(run.angle); this.standing.add(c.x - ux * (2 + i * 1.2), 0.4 + q * 0.8, c.z - uz * (2 + i * 1.2), 0.9 + i * 0.25, dot, 0.75, 0.65, 0.5, 0.55 - i * 0.08); }
+        }
+      }
       // Charging (the boar): dust kicked up behind it.
       if (c.charge && (c.charge.from === undefined || time >= c.charge.from)) for (let i = 0; i < (c.charge.braking ? 6 : 4); i++) { const q = hash2(c.id, Math.floor(time * 20) + i, 17); this.standing.add(c.x - c.charge.dx * (0.8 + i * 0.5), 0.3 + q * 0.4, c.z - c.charge.dz * (0.8 + i * 0.5), 0.5 + i * 0.15, dot, 0.75, 0.65, 0.5, 0.5 - i * 0.1); }
       // Telegraphs: winding up, a ring tightens at its feet; a shot shows its line; the quake its reach.
@@ -775,6 +795,13 @@ export class LeashView {
       this.standing.add(r.x, 3.5, r.z, 2 + tw * 4, dot, 1, 0.95, 0.7, 0.4 + 0.6 * tw);
     }
     s.relics.forEach((id, i) => { const tw = 0.6 + 0.4 * Math.sin(time * 4 + id); this.over.add(w.x + (i - (s.relics.length - 1) / 2) * 0.6, hatTop + 2.2, w.z, 0.5, dot, 1, 0.85, 0.4, tw); });
+
+    // The ruts of legends' long charges, fading.
+    for (const [id, ruts] of this.ruts) {
+      while (ruts.length && time - ruts[0].at > RUTS) ruts.shift();
+      if (!ruts.length) { this.ruts.delete(id); continue; }
+      for (const p of ruts) { const k = 1 - (time - p.at) / RUTS; this.flat.add(p.x, 0, p.z, 2.2, dot, 0.3, 0.22, 0.15, 0.55 * k); }
+    }
 
     // The bond.
     const leashed = [...s.stack, ...s.placed.map(p => p.id)];

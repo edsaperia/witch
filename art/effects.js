@@ -94,6 +94,9 @@ export const ATTACK_EFFECTS = {
   // a lunging swipe that knocks back (the claws' melee), the big one harder
   swipe: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], hit: "hitSpark", status: ["knockback"] },
   bigswipe: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], hit: "hitSparkBig", status: ["knockback", "dust"] },
+  // a woken legend's ranged attacks: a great lob onto a target circle, a long sweeping beam
+  legendLob: { windup: "windupFlash", telegraph: ["targetCircle"], projectile: "lobSeed", shadow: "lobShadow", hit: "hitSparkBig" },
+  legendBeam: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], beam: ["beamLongStart", "beamLongLoop", "beamLongEnd"], hit: "hitSpark" },
   spit: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "spit", hit: "hitSpark" },
   longspit: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "feather", hit: "hitSpark" },
   barb: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "barb", hit: "hitSpark", status: ["slowRing", "slowMark"] },
@@ -117,6 +120,10 @@ export const ATTACK_EFFECTS = {
   legendNova: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], projectile: "mote", hit: "hitSparkBig" },
   legendSpin: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], beam: ["beamLongStart", "beamLongLoop", "beamLongEnd"], hit: "hitSparkBig" },
   legendCharge: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], hit: "hitSparkBig", status: ["knockback", "dust"] },
+  // the legends' slow long-range attacks (#99): a stone lobbed high onto a tightening target circle, landing in a slam ring; a long beam
+  // down a telegraphed line, sweeping
+  legendLob: { windup: "windupFlash", telegraph: ["targetCircle"], projectile: "lobStone", shadow: "lobShadow", pulse: "slamRing", hit: "hitSparkBig", status: ["dust"] },
+  legendBeam: { windup: "windupFlash", telegraph: ["lineStart", "line", "lineEnd"], beam: ["beamLongStart", "beamLongLoop", "beamLongEnd"], hit: "hitSparkBig" },
 };
 // Effects for what creatures do and are, beyond their attacks (Stage 5): a burrower's moving mound, a charge's dust, a stunned creature's
 // stars, a strong hit ("!!", gold) and a resisted one ("tink", a grey glance), and each trait's mark (about 12 px, shown by the health bar).
