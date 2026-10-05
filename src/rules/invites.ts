@@ -5,7 +5,9 @@
 // `speed` m/s for `range` metres, turning toward the nearest invitable creature ahead at up to `homing`
 // degrees a second. All of it is data (tuning `invites`), so legend buffs can change it like the rest.
 // A letter that reaches an invitable (wild) creature is a hit on its affection; enraged creatures and
-// legends block letters; anything else (her own party, happy ones) lets them through. No drawing here.
+// legends block letters; anything else (her own party, happy ones) lets them through; scenery never
+// stops them (Ed). A creature takes affection from at most one letter every perAnimalHitGap seconds
+// (Ed: stacked multi-shot helps against crowds, not to win one creature faster). No drawing here.
 import { inviteCreature, invitable as canInvite, type LeashState } from "./leash";
 import { LEGEND, type Creature } from "./creatures";
 import { bodyRadius } from "./spacing";
@@ -24,7 +26,7 @@ export interface Letter {
 }
 
 export type InviteEventKind = "shot" | "hit" | "blocked" | "fizzled" | "happy";
-export interface InviteEvent { kind: InviteEventKind; x: number; z: number; at: number; /** the creature hit, blocked by or made happy */ id?: number; n?: number }
+export interface InviteEvent { kind: InviteEventKind; x: number; z: number; at: number; /** the creature hit, blocked by or made happy */ id?: number; n?: number; /** a hit inside the creature's gap: it lands (a small pop) but adds no affection */ spent?: boolean }
 
 export interface Invites {
   letters: Letter[];
@@ -41,11 +43,13 @@ export interface Invites {
   next: number;
   /** This frame's events, for the view (stepGame clears them each frame, like combat's). */
   events: InviteEvent[];
+  /** When each creature last took affection from a letter (perAnimalHitGap). */
+  lastLove: Map<number, number>;
   /** Affection per creature, 0 to 1 (the stand-in below; the state machine will own it). */
   meter: Map<number, number>;
 }
 
-export const newInvites = (): Invites => ({ letters: [], burstLeft: 0, nextVolley: 0, readyAt: 0, burstAt: -Infinity, ax: 1, az: 0, next: 0, events: [], meter: new Map() });
+export const newInvites = (): Invites => ({ letters: [], burstLeft: 0, nextVolley: 0, readyAt: 0, burstAt: -Infinity, ax: 1, az: 0, next: 0, events: [], lastLove: new Map(), meter: new Map() });
 
 /** The affection interface (issue #87), which the creature state machine provides. Until it lands,
  *  `standInAffection` does the job with today's leash: a full meter invites (leashes) the creature. */
@@ -145,13 +149,20 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
     }
     if (first) {
       if (A.blocksLetters(first)) s.events.push({ kind: "blocked", x: L.x, z: L.z, at: time, id: first.id, n: L.n });
-      else { s.events.push({ kind: "hit", x: L.x, z: L.z, at: time, id: first.id, n: L.n }); A.hit(first, I.amount, time); }
+      else {
+        // At most one letter's affection per creature every perAnimalHitGap seconds (Ed, 2026-10-05: so
+        // stacked multi-shot helps against crowds, not to win one creature faster); the rest land as pops.
+        const last = s.lastLove.get(first.id), spent = last !== undefined && time - last < I.perAnimalHitGap - 1e-9;
+        s.events.push({ kind: "hit", x: L.x, z: L.z, at: time, id: first.id, n: L.n, spent });
+        if (!spent) { s.lastLove.set(first.id, time); A.hit(first, I.amount, time); }
+      }
       return false;
     }
     if (L.flown >= I.range) { s.events.push({ kind: "fizzled", x: L.x, z: L.z, at: time, n: L.n }); return false; }
     return true;
   });
 
+  for (const [id, at] of s.lastLove) if (time - at >= I.perAnimalHitGap) s.lastLove.delete(id);
   // The stand-in's meters drain slowly when not being hit.
   for (const [id, v] of s.meter) {
     const left = v - I.drain * dt, k = creatures[id];

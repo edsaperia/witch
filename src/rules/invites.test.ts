@@ -42,7 +42,7 @@ describe("the 💌 invite (issue #87)", () => {
   it("lands on a wild creature in its path, and lets her own party through", () => {
     const wild = critter(1, 10, 0), mine = critter(2, 5, 0, { leashed: true }), A = counting();
     const { ev } = fly([wild, mine], A, [1, 0], 1);
-    expect(A.hits.get(1)).toBe(TUNING.invites.burst);
+    expect(A.hits.get(1)).toBe(1); // (a burst lands within perAnimalHitGap: one letter's affection)
     expect(A.hits.get(2)).toBeUndefined();
     expect(ev.filter(e => e === "hit").length).toBe(TUNING.invites.burst);
   });
@@ -116,5 +116,14 @@ describe("the 💌 invite (issue #87)", () => {
       Object.assign(c, { x: tree.x + 6, z: tree.z }); // (it stays put behind the tree)
     }
     expect(hits).toBeGreaterThan(0);
+  });
+
+  it("takes affection from at most one 💌 every perAnimalHitGap: 5 letters in 0.2 s give one letter's worth", () => {
+    const t = withTuning({ invites: { ...TUNING.invites, burst: 5, burstGap: 0.04, multiShot: 1, homing: 0, perAnimalHitGap: 0.5 } });
+    const c = critter(0, 8, 0), A = counting();
+    const { ev, s } = fly([c], A, [1, 0], 0.6, t);
+    expect(ev.filter(e => e === "hit").length).toBe(5); // all five land (and are used up)
+    expect(A.hits.get(0)).toBe(1); // but only one counts
+    expect(s.letters.length).toBe(0);
   });
 });

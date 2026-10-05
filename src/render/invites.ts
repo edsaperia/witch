@@ -48,6 +48,8 @@ export class InviteView {
   private hers: Bubble;
   private replies = new Map<number, Bubble>();
   private lastHers = -Infinity;
+  /** Little pops where letters land: { element, where, when }. */
+  private pops: { el: HTMLImageElement; x: number; y: number; z: number; at: number }[] = [];
   /** Events already shown (a frozen frame keeps its events: shown once). */
   private seen = new Set<string>();
   private v = new THREE.Vector3();
@@ -77,6 +79,15 @@ export class InviteView {
     b.el.classList.add("on");
   }
 
+  private pop(e: string, x: number, y: number, z: number, at: number): void {
+    const n = 7, k = this.game.tuning.pixelSize * this.game.tuning.bubbles.scale, el = document.createElement("img");
+    el.src = pixelEmoji(e, n);
+    Object.assign(el.style, { position: "absolute", imageRendering: "pixelated", width: `${n * k}px`, height: `${n * k}px`, marginLeft: `${(-n * k) / 2}px`, marginTop: `${(-n * k) / 2}px` });
+    this.root.append(el);
+    this.pops.push({ el, x, y, z, at });
+    if (this.pops.length > 40) this.pops.shift()!.el.remove();
+  }
+
   update(time: number, camera: THREE.Camera, width: number, height: number, tops: Map<number, number>): void {
     const g = this.game, W = g.witches[0], I = W.invites, t = g.tuning, w = g.witch;
     const place = (el: HTMLElement, x: number, y: number, z: number) => {
@@ -100,6 +111,9 @@ export class InviteView {
         this.lastHers = time;
         this.show(this.hers, pick(HERS, e.n ?? 0, 1), 0, 0, 0, time + 0.8);
       } else if ((e.kind === "hit" || e.kind === "blocked" || e.kind === "happy") && e.id !== undefined) {
+        // Every letter that lands pops; one inside the creature's gap (spent) adds nothing, and gets no reply.
+        if (e.kind !== "happy") this.pop(e.kind === "blocked" ? "💢" : e.spent ? "✨" : "💖", e.x, head(e.id) * 0.6, e.z, time);
+        if (e.spent) continue;
         let b = this.replies.get(e.id);
         if (!b) { b = this.bubble(e.id); this.replies.set(e.id, b); }
         if (e.kind !== "happy" && b.until > time + 0.4) continue; // (still showing its last)
@@ -109,6 +123,14 @@ export class InviteView {
       }
     }
     if (this.seen.size > 400) this.seen = new Set([...this.seen].slice(-200));
+    this.pops = this.pops.filter(p => {
+      const k = (time - p.at) / 0.35;
+      if (k >= 1 || k < 0) { p.el.remove(); return false; }
+      place(p.el, p.x, p.y + k * 0.5, p.z);
+      p.el.style.opacity = String(1 - k);
+      p.el.style.transform = `scale(${(0.6 + 0.6 * Math.sin(Math.min(1, k * 2) * Math.PI / 2)).toFixed(2)})`;
+      return true;
+    });
     // Hers follows her; theirs follow them.
     if (time < this.hers.until) place(this.hers.el, w.x - 1.2, witchHeight(w, t) + 2.2, w.z); else this.hers.el.classList.remove("on");
     for (const [id, b] of this.replies) {
