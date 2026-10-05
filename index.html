@@ -58,13 +58,12 @@
     #zoom-in, #zoom-out { width: 46px; height: 46px; font-size: 22px; right: 42px; }
     #zoom-in { bottom: 186px; }
     #zoom-out { bottom: 128px; }
-    #sigil, #spell, #cycle, #dash, #invite { width: 62px; height: 62px; font-size: 12px; }
+    #sigil, #spell, #dash, #invite { width: 62px; height: 62px; font-size: 12px; }
     #invite { right: 274px; bottom: 30px; font-size: 24px; }
     #dash { right: 126px; bottom: 104px; }
     .touch #actionbar { display: none !important; }
     #sigil { right: 126px; bottom: 30px; }
     #spell { right: 200px; bottom: 30px; }
-    #cycle { right: 200px; bottom: 104px; }
     #bubbles { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
     /* Pixel speech bubbles: an outline only (no fill), one game pixel thick (--px), its corners
        notched, a stepped tail; the emoji in it are pixel sprites (see src/render/leash.ts). */
@@ -100,7 +99,6 @@
     <div class="tbtn" id="zoom-out">−</div>
     <div class="tbtn" id="sigil">sigil</div>
     <div class="tbtn" id="spell">spell</div>
-    <div class="tbtn" id="cycle">cycle</div>
     <div class="tbtn" id="dash">dash</div>
     <div class="tbtn" id="invite">💌</div>
   </div>
@@ -114,9 +112,9 @@
       <div id="waves"></div>
       <div id="news"></div>
       <div class="keys">
-        <b>Keyboard</b> arrow keys fly · space rises or descends · Q spell (speed boost) · W dash (on the ground) · E puts down / picks up a sigil · R cycles the stack (the bottom sigil to the top) · on the ground, click (or hold 1) to throw 💌 invites at the cursor: enough of them win a creature over (enraged ones and legends block them) · 2–4 empty slots for now · Z/X or +/− zoom · H hides the action bar · Esc pauses everything (a still for screenshots, with a stamp of where you are; while paused . steps a frame, Shift+. ten; ❚❚ by the volume on touch) · ~ debug · N next wave · P pause waves · I invite nearest (debug) · [ ] fight scale, ; ' fight speed, , . fight momentum (debug: in the ~ panel too)<br>
-        <b>Gamepad</b> left stick flies · right stick aims and a trigger throws 💌s · A dash · B spell · X sigil · right stick click cycles · Y rises or descends · shoulder buttons zoom · Start pauses<br>
-        <b>Phone</b> drag on the left to fly · the round button rises or descends · go near a creature to talk · sigil puts down or picks up · cycle, spell and dash · three-finger tap for debug
+        <b>Keyboard</b> arrow keys fly · space rises or descends · Q spell (speed boost) · W dash (on the ground) · E on the ground puts down / picks up a sigil, in the treetops cycles the stack (the bottom sigil to the top) · on the ground, click (or hold 1) to throw 💌 invites at the cursor: enough of them win a creature over (enraged ones and legends block them) · 2–4 empty slots for now · Z/X or +/− zoom · H hides the action bar · Esc pauses everything (a still for screenshots, with a stamp of where you are; while paused . steps a frame, Shift+. ten; ❚❚ by the volume on touch) · ~ debug · N next wave · P pause waves · I invite nearest (debug) · [ ] fight scale, ; ' fight speed, , . fight momentum (debug: in the ~ panel too)<br>
+        <b>Gamepad</b> left stick flies · right stick aims and a trigger throws 💌s · A dash · B spell · X sigil (on the ground) or cycle (in the treetops) · Y rises or descends · shoulder buttons zoom · Start pauses<br>
+        <b>Phone</b> drag on the left to fly · the round button rises or descends · the 💌 button throws invites the way you're going · sigil puts down or picks up (on the ground) or cycles (in the treetops) · spell and dash · three-finger tap for debug
       </div>
     </div>
   </div>

@@ -47,7 +47,6 @@ export function setupTouch(root: HTMLElement, touch: TouchInput): void {
   button("#zoom-out", () => (touch.zoom += 1));
   button("#sigil", () => (touch.sigil = true));
   button("#spell", () => (touch.spell = true));
-  button("#cycle", () => (touch.cycle = true));
   button("#dash", () => (touch.dash = true));
   // The 💌 fires while it's held, the way she's going.
   const inv = root.querySelector<HTMLElement>("#invite");

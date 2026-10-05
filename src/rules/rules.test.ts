@@ -925,13 +925,14 @@ describe("inviting and leashing", () => {
     stepLeash(s, all, { sigil: true }, { x: 520 + gap, z: 500 }, true, 103, 0.1, TUNING);
     expect(s.events.map(e => e.kind)).toEqual(["fizzled"]);
     expect(s.stack).toEqual([a.c.id, c.c.id]);
-    // No placing from the treetops, and no picking up (Ed, 2026-10-05: "You have to land to place sigils"): the button does nothing there.
+    // No placing from the treetops, and no picking up (Ed, 2026-10-05: "You have to land to place sigils"): there the button cycles the stack instead.
     stepLeash(s, all, { sigil: true }, { x: 700, z: 700 }, false, 104, 0.1, TUNING);
-    expect(s.stack).toEqual([a.c.id, c.c.id]);
-    expect(s.events).toEqual([]);
+    expect(s.stack).toEqual([c.c.id, a.c.id]);
+    expect(s.events.map(e => e.kind)).toEqual(["cycled"]);
     stepLeash(s, all, { sigil: true }, { x: 520, z: 500 }, false, 105, 0.1, TUNING); // over b's placed sigil, in the air
     expect(s.placed.map(p => p.id)).toEqual([b.c.id]);
     expect(s.stack).toEqual([a.c.id, c.c.id]);
+    expect(s.events.map(e => e.kind)).toEqual(["cycled"]);
   });
 
   it("is elastic: a creature walks to its new leash point, never jumps, then stays within the leash", () => {
@@ -1473,16 +1474,27 @@ describe("creature speeds (Ed, 2026-10-04: she is much faster than almost all of
   });
 });
 
-describe("the cycle button (Ed, 2026-10-04)", () => {
-  it("sends the bottom sigil of the stack to the top", () => {
+describe("E cycles the sigils in the treetops (Ed, 2026-10-05)", () => {
+  it("in the air sends the bottom sigil of the stack to the top, and never places or lifts", () => {
     const s = newLeash(), none: LeashControls = { sigil: false }, cs = spawnCreatures(map);
     s.stack.push(1, 2, 3); // 3 is the bottom (next down)
     for (const id of s.stack) cs[id].leashed = true;
-    stepLeash(s, cs, { ...none, cycle: true }, { x: 0, z: 0 }, false, 1, 1 / 60, TUNING);
+    stepLeash(s, cs, { sigil: true }, { x: 0, z: 0 }, false, 1, 1 / 60, TUNING);
     expect(s.stack).toEqual([3, 1, 2]);
-    expect(s.events.some(e => e.kind === "cycled" && e.id === 3)).toBe(true);
+    expect(s.placed).toEqual([]);
+    expect(s.events.map(e => e.kind)).toEqual(["cycled"]);
+    expect(s.events[0].id).toBe(3);
     stepLeash(s, cs, none, { x: 0, z: 0 }, false, 1, 1 / 60, TUNING);
     expect(s.stack).toEqual([3, 1, 2]);
+  });
+  it("on the ground never cycles: it puts the bottom sigil down", () => {
+    const s = newLeash(), cs = spawnCreatures(map);
+    s.stack.push(1, 2, 3);
+    for (const id of s.stack) cs[id].leashed = true;
+    stepLeash(s, cs, { sigil: true }, { x: 0, z: 0 }, true, 1, 1 / 60, TUNING);
+    expect(s.events.some(e => e.kind === "cycled")).toBe(false);
+    expect(s.placed.map(p => p.id)).toEqual([3]);
+    expect(s.stack).toEqual([1, 2]);
   });
 });
 

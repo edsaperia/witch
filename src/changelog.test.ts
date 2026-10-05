@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { CHANGELOG, collectChangelog } from "./changelog";
+import { CHANGELOG, CHANGELOG_VERSIONS, collectChangelog, groupChangelog } from "./changelog";
 
 describe("the changelog (config/changelog/: a frozen archive and one fragment per change)", () => {
   it("collects the archive and the fragments, the current build's first, then newest version first", () => {
@@ -35,5 +35,23 @@ describe("the changelog (config/changelog/: a frozen archive and one fragment pe
       expect(f.version === null || Number.isInteger(f.version)).toBe(true);
       expect(Array.isArray(f.items) && f.items.length > 0 && f.items.every((i: unknown) => typeof i === "string")).toBe(true);
     }
+  });
+});
+
+describe("the changelog grouped for the start screen", () => {
+  it("groups each version's fragments as changes, titled by the fragment (or its name), dated by its name, newest first", () => {
+    const got = groupChangelog({
+      "x/archive.json": { entries: [{ version: 12, items: ["old twelve"] }] },
+      "x/2026-10-05-bigger-areas.json": { version: null, items: ["a"] },
+      "x/2026-10-06-the-freeze.json": { version: null, title: "Pause for screenshots", items: ["b"] },
+      "x/2026-10-03-d.json": { version: 12, items: ["d"] },
+    });
+    expect(got).toEqual([
+      { version: null, date: "2026-10-06", changes: [{ title: "Pause for screenshots", date: "2026-10-06", items: ["b"] }, { title: "Bigger areas", date: "2026-10-05", items: ["a"] }] },
+      { version: 12, date: "2026-10-03", changes: [{ title: "D", date: "2026-10-03", items: ["d"] }, { title: null, date: null, items: ["old twelve"] }] },
+    ]);
+  });
+  it("covers the same versions as the flat changelog", () => {
+    expect(CHANGELOG_VERSIONS.map(v => v.version)).toEqual(CHANGELOG.map(e => e.version));
   });
 });
