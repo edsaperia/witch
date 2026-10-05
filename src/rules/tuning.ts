@@ -106,7 +106,7 @@ export interface Tuning {
   descendTime: number;
   groundHeight: number;
   treetopHeight: number;
-  camera: { fov: number; ground: CameraModeTuning; treetop: CameraModeTuning; zoomSteps: number; startZoom: number; /** The world's bend (render/height.ts): curve per metre ahead of the focus, on the ground and over the treetops (eased in with lift). */ curve: { ground: number; treetop: number; /** Metres past the bent ground's horizon that scenery is still drawn (the distant treetops over it). */ beyond: number }; follow: number; lookAhead: number; lookAheadMax: number; lookAheadEase: number; zoomEase: number; liftEase: number; /** The opening shot: distance (metres) and angle (degrees) close in on her seat, and how many seconds it takes to ease out. */ intro: { distance: number; angle: number; ease: number }; /** The treetop camera zooms out as treetopSpeed rises past base (m/s), its distance times (treetopSpeed / base) to the power power, so the screen holds about as many seconds of flight (Ed, 2026-10-05); 0 off. */ speedZoom?: { base: number; power: number } };
+  camera: { fov: number; ground: CameraModeTuning; treetop: CameraModeTuning; zoomSteps: number; startZoom: number; /** The world's bend (render/height.ts): curve per metre ahead of the focus, on the ground and over the treetops (eased in with lift). */ curve: { ground: number; treetop: number; /** Metres past the bent ground's horizon that scenery is still drawn (the distant treetops over it). */ beyond: number }; /** Screen shake when the witch is hit (render/shake.ts). */ shake: { base: number; perMissingHit: number; knockdown: number; decay: number; maxOffsetPx: number; maxRotDeg: number; speed: number }; follow: number; lookAhead: number; lookAheadMax: number; lookAheadEase: number; zoomEase: number; liftEase: number; /** The opening shot: distance (metres) and angle (degrees) close in on her seat, and how many seconds it takes to ease out. */ intro: { distance: number; angle: number; ease: number }; /** The treetop camera zooms out as treetopSpeed rises past base (m/s), its distance times (treetopSpeed / base) to the power power, so the screen holds about as many seconds of flight (Ed, 2026-10-05); 0 off. */ speedZoom?: { base: number; power: number } };
   pixelSize: number;
   glowReach: number;
   glowFalloff: number;
@@ -169,7 +169,9 @@ export interface Tuning {
   relics: { spacing: number; chance: number; nearRoad: number; minGap: number };
   treeCap: { from: number; keep: number };
   treetop: { boost: number; boostTime: number; boostAngle: number; turnRate: number; turnRateSlow: number; sharpTurnSpeed: number; brakeAt: number; glideTime: number; sharpTurnBleed: number; cameraPull: number };
-  bubbles: { emojiPixels: number; scale: number };
+  /** The creature states' looks (render/looks.ts): enraged ones tinted toward colour by amount (0 none, 1 all). */
+  looks?: { enragedTint: { colour: string; amount: number }; /** the 💢 beside an enraged creature's head: on, and its size (times its level's bubble size) */ anger: { on: boolean; size: number }; /** party animals' twinkle: how many, how often (a second), how big, how bright */ partyGlow: { on: boolean; sparkles: number; rate: number; size: number; strength: number } };
+  bubbles: { emojiPixels: number; scale: number; /** a creature's bubble size by level (baby, young, adult, legend) */ levelScale: number[] };
   treehouse: { distance: number; angle: number; clear: number; lightReach: number; lightStrength: number };
   decor: { spacing: number; ruins: number; rocks: number; freak: number; minGap: number; clearing: number; pathGap: number; /** A decoration's footprint radius (metres): kept clear of the gameplay (map.reserved). */ footprint: number };
   paths: { rails: number[]; roads: number[]; linkChance: number; deadEndChance: number; pathHalf: number; roadHalf: number; railHalf: number; railBroken: number; streams: number[]; streamHalf: number; landmarkSpacing: number; landmarkChance: number; vergeSpacing: number; pieceGap: number; treesOnBroken: number; edgeBushes: number; bushBoost: number };
@@ -187,6 +189,8 @@ export interface Tuning {
   stack: { offset: number; scale: number; gap: number; stiffness: number; damping: number; trail: number; idleSway: number };
   lasers: { on: boolean; maxCount: number; length: number; spread: number; maxTilt: number; sweep: number; sweepBeats: number; openBars: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };
   borders: { on: boolean; width: number; brightness: number; sparkle: number; step: number; /** 0 a gentle breathing, 1 star-like flashes and dropouts */ twinkle: number; /** colour swaps a second */ swapRate: number; /** the share of sparks that swap on the beat */ swapBeat: number };
+  /** The 💌 invite (issue #87): rules/invites.ts. on: 💌s instead of the proximity chat. */
+  invites: { on: boolean; burst: number; burstGap: number; cooldown: number; range: number; speed: number; homing: number; homingCone: number; homingRange: number; multiShot: number; spread: number; radius: number; amount: number; hits: number[]; drain: number; perAnimalHitGap: number };
   invite: { talkRange: number; cancelDistance: number; snubTime: number; talkTime: number[]; turn: number[]; decayRate: number };
   /** pace: party animals following her move this much faster (a legend buff; 1 in the file). */
   leash: { length: number; runSpeed: number; pickRadius: number; spacing: number; pace?: number };

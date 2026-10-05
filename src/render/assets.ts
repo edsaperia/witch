@@ -294,6 +294,12 @@ export class AssetLibrary {
     if (!a) this.ask({ kind: "party", id: k, species, seed: id, colour, style: this.style });
     return a;
   }
+  /** A happy creature's look (issue #87): party clothes, no glowing collar; or undefined (and asked for). */
+  happyArt(species: string, id: number): CreatureArt | undefined {
+    const k = `happy-${id}`, a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "party", id: k, species, seed: id, colour: null, style: this.style });
+    return a;
+  }
   /** The party objects' art (#38), or undefined (and asked for). */
   partyObjectArt(): (PartyArt & { atlas: Atlas }) | undefined {
     if (!this.party) this.ask({ kind: "partyObjects", id: "party", style: this.style });

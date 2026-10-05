@@ -12,6 +12,8 @@ import { PLANT_GENOMES, BUSH_GENOMES } from "./flora/genomes.js";
 export { PLANT_GENOMES, BUSH_GENOMES };
 import { witchSprite, witchColours, witchModel, WITCH_PARTS, DEFAULT_OUTFIT, WITCH_POSES, WITCH_FOOT_POSES, WITCH_SEAT_HEIGHT, WITCH_HEADINGS, witchPixelsPerUnit , WITCH_FLIGHT_POSES, WITCH_PAIRS, WITCH_LOOKS, DEFAULT_LOOK, PARTY_OUTFITS, PARTY_OUTFIT_BY_ID, partyWitch, cleanFlecks, LIMBO_BAR } from "./witch.js";
 import { treehouseSprite, treehouseColours, TREEHOUSE_STOREYS } from "./treehouse.js";
+import { PARTY_RELICS, PARTY_RELIC_BY_ID, PARTY_RELIC_IDS, PARTY_RELIC_SIGIL, PARTY_RELIC_SIGIL_STROKES, PARTY_RELIC_GLINT_FRAMES, partyRelicSprite, partyRelicColours, partyRelicGlint, partyRelicSigilId, partyRelicLight, PARTY_RELIC_FRAMES } from "./partyRelics.js";
+export { PARTY_RELICS, PARTY_RELIC_BY_ID, PARTY_RELIC_IDS, PARTY_RELIC_SIGIL, PARTY_RELIC_SIGIL_STROKES, PARTY_RELIC_GLINT_FRAMES, partyRelicSprite, partyRelicColours, partyRelicGlint, partyRelicSigilId, partyRelicLight, PARTY_RELIC_FRAMES };
 import { swayMask, bakeSway, swayCode, swayRegions, windShift, SWAY_CELL } from "./sway.js";
 import { tuftSprites, bakeTufts } from "./tufts.js";
 export { swayMask, bakeSway, swayCode, swayRegions, windShift, SWAY_CELL, tuftSprites, bakeTufts };

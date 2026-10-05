@@ -1,4 +1,5 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
+import { Shake } from "./render/shake";
 import { Music } from "./platform/music";
 import { Sfx } from "./platform/sfx";
 import { SfxCues } from "./platform/sfxCues";
@@ -194,6 +195,7 @@ view.quick = params.get("quick") === "1";
 const sceneryAt = Number(params.get("scenery"));
 if (params.has("scenery") && sceneryAt > 0) view.sceneryFixed = sceneryAt;
 const input = new Input();
+input.aimFrom = (x, y) => view.aimAt(x, y);
 document.getElementById("next-wave")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.nextWave = true; });
 document.getElementById("pause-waves")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.pauseWaves = true; });
 setupTouch(document.body, input.touch);
@@ -396,6 +398,33 @@ wavesEl.addEventListener("pointerdown", e => {
   try { localStorage.setItem("witch.wave", String(sec)); } catch { /* fine */ }
 });
 setWaveInterval(waveChoice);
+// Screen shake when she's hit (Ed, 2026-10-05; render/shake.ts), laid on the canvas as a transform.
+// For comfort it can be turned off: ?shake=0, or the start screen's toggle (remembered here).
+let shakeOn = params.get("shake") !== "0";
+try { if (params.get("shake") === null && localStorage.getItem("witch.shake") === "0") shakeOn = false; } catch { /* fine */ }
+const shake = new Shake(tuning.camera.shake, shakeOn), shakeEl = document.getElementById("shake-opt");
+const showShakeOpt = () => { if (shakeEl) shakeEl.innerHTML = `screen shake <button type="button" data-v="1" class="${shake.on ? "on" : ""}">on</button><button type="button" data-v="0" class="${shake.on ? "" : "on"}">off</button>`; };
+showShakeOpt();
+shakeEl?.addEventListener("pointerdown", e => {
+  e.stopPropagation();
+  const b = (e.target as HTMLElement).closest("button");
+  if (!b) return;
+  shake.on = b.dataset.v === "1";
+  try { localStorage.setItem("witch.shake", shake.on ? "1" : "0"); } catch { /* fine */ }
+  showShakeOpt();
+});
+let shaken = false;
+function applyShake(): void {
+  const W = game.witches[0];
+  shake.watch(W.health, !!W.ko, tuning.witchHealth.hits, game.clock.time);
+  const o = shake.offset(game.clock.time, tuning.pixelSize);
+  if (o.amount <= 0) { if (shaken) { canvas.style.transform = ""; shaken = false; } return; }
+  // Zoomed in just enough that no edge shows while it's off centre and turned.
+  const w = window.innerWidth, h = window.innerHeight, turn = Math.abs((o.rot * Math.PI) / 180) * 0.5 * Math.hypot(w, h);
+  const zoom = 1 + (2 * (Math.max(Math.abs(o.x), Math.abs(o.y)) + turn)) / Math.min(w, h);
+  canvas.style.transform = `translate(${o.x}px, ${o.y}px) rotate(${o.rot.toFixed(3)}deg) scale(${zoom.toFixed(4)})`;
+  shaken = true;
+}
 document.addEventListener("visibilitychange", () => { if (document.hidden) last = 0; });
 
 let lastDraw = 0;
@@ -441,6 +470,7 @@ function frame(now: number): void {
   lastDraw = now;
   // Drawn between the last two fixed steps (game time: party transitions, sigils and waves are stamped in it).
   interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP)));
+  applyShake();
   freeze.update();
   if (debugOn) {
     const w = game.witch, s = view.stats;
@@ -476,4 +506,4 @@ function powerLines(): string[] {
   /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's ring), as if destroyed. */
   lose: (key = "home") => { const s = game.combat.sounds.get(key); if (s) s.hp = 0; loseSoundsystem(game, key, s?.x ?? 0, s?.z ?? 0); const e = game.waveEvents[game.waveEvents.length - 1]; if (e) showLoss(e); return e; },
   get manual() { return manual; }, set manual(on: boolean) { manual = on; },
-  frame: (c: Parameters<typeof stepGame>[1], dt: number, draw = true) => { const t0 = performance.now(); stepGame(game, c, dt); const t1 = performance.now(); view.render(game.clock.time, draw); return { step: t1 - t0, render: performance.now() - t1, ms: view.ms }; }, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, spriteUp: () => SPRITE_UNIFORMS.uUp.value, spriteRight: () => SPRITE_UNIFORMS.uRight.value, groundHeight, loadTimes, get ready() { return ready; } };
+  frame: (c: Parameters<typeof stepGame>[1], dt: number, draw = true) => { const t0 = performance.now(); stepGame(game, c, dt); const t1 = performance.now(); view.render(game.clock.time, draw); applyShake(); return { step: t1 - t0, render: performance.now() - t1, ms: view.ms }; }, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, spriteUp: () => SPRITE_UNIFORMS.uUp.value, spriteRight: () => SPRITE_UNIFORMS.uRight.value, groundHeight, loadTimes, get ready() { return ready; } };

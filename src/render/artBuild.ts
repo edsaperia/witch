@@ -151,7 +151,7 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   | { kind: "woken"; id: string; species: string; style: Style }
   | { kind: "face"; id: string; species: string; face: string; style: Style }
   /** A party animal: an invited creature in its party gear (seeded by its id: collar in its sigil colour, maybe a hat, sunglasses, shoes). */
-  | { kind: "party"; id: string; species: string; seed: number; colour: number[]; style: Style }
+  | { kind: "party"; id: string; species: string; seed: number; /** the collar's colour; null: no collar (happy, issue #87) */ colour: number[] | null; style: Style }
   /** Every decoration (ruins in both conditions, rocks, freak trees), split as trees are. */
   | { kind: "decor"; id: string; style: Style }
   /** The paths' 3D pieces: bridges, stairs, railway landmarks, signal and verge posts. */
@@ -331,10 +331,16 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "scenes") { const { sprites, scenes } = sceneSprites(job.style, mk); return { px: packPixels(sprites, 2048), scenes }; }
   if (job.kind === "speakers") { const { sprites, speakers } = speakerSprites(job.style, mk); return { px: packPixels(sprites, 2048), speakers }; }
   if (job.kind === "decor") { const { sprites, decor } = decorSprites(job.style, mk); return { px: packPixels(sprites, 2048), decor }; }
-  // (enraged: red eyes and the angry face; invited: party gear and the happy face; art/genome/expressions.js)
+  // (enraged: red eyes and the angry face; dressed up: the happy face; art/genome/expressions.js)
   if (job.kind === "woken") return { px: packPixels(creatureSprites(job.style, job.species, mk, { woken: true, face: "angry" }), 2048) };
   if (job.kind === "face") return { px: packPixels(creatureSprites(job.style, job.species, mk, { face: job.face }), 2048) };
-  if (job.kind === "party") return { px: packPixels(creatureSprites(job.style, job.species, mk, { ...Art.partyGear(job.seed), collar: job.colour, face: "happy" }), 2048) };
+  if (job.kind === "party") {
+    // Leashed: its seeded gear and the glowing collar. Happy (no colour): the gear without the collar,
+    // always at least a hat so it reads as dressed up. Both smiling.
+    const gear = { ...Art.partyGear(job.seed), collar: job.colour ?? null, face: "happy" };
+    if (!job.colour && gear.hat === null) gear.hat = job.seed % 3;
+    return { px: packPixels(creatureSprites(job.style, job.species, mk, gear), 2048) };
+  }
   const { sprites, layout, floor } = typeSprites(job.style, job.seed, job.id, job.K, mk);
   return { px: packPixels(sprites), layout, floor: { albedo: new Uint8Array(pixels(floor.A, floor.w, floor.h)), normal: new Uint8Array(pixels(floor.N, floor.w, floor.h)), w: floor.w, h: floor.h } };
 }
