@@ -170,6 +170,8 @@ export class View {
   private shadows: ShadowBatch;
   /** The live rig (#79 stage 5, ?rig=1): creatures put together from parts each frame. */
   readonly rig: RigView | null;
+  /** The camera's snap this frame, in the picture's pixels (x right, y down): what main.ts shifts the canvas by. */
+  readonly subpixel = { x: 0, y: 0 };
   private shadowList: ShadowInstance[] = [];
   private mist: Mist | null = null;
   private width = 1;
@@ -1216,9 +1218,13 @@ export class View {
       this.sky.update(k, pose.tx, pose.tz, far, 2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (this.width / this.height));
     }
     this.time("sky");
-    const u = target.dot(up), r = target.x;
-    target.addScaledVector(up, Math.round(u / wpp) * wpp - u);
-    target.x += Math.round(r / wpp) * wpp - r;
+    const u = target.dot(up), r = target.x, eu = Math.round(u / wpp) * wpp - u, er = Math.round(r / wpp) * wpp - r;
+    target.addScaledVector(up, eu);
+    target.x += er;
+    // What the snap took off (in the picture's pixels): main.ts moves the canvas back by it, in whole
+    // screen pixels, so the art stays on its grid but the view glides (Ed, 2026-10-05: whole art-pixel
+    // steps of the camera felt like a low framerate). Moved right, the picture moves left; up, down.
+    this.subpixel.x = er / wpp; this.subpixel.y = -eu / wpp;
     const back = new THREE.Vector3(0, Math.sin(a), Math.cos(a)).multiplyScalar(pose.distance);
     this.camera.position.copy(target).add(back);
     // Over tall hills a rise between the camera and her could hide her: lift the camera (eased)
