@@ -179,7 +179,7 @@ export class View {
   private now = 0;
   stats: ViewStats = { berries: 0, forestMs: 0, forestMissing: 0, sceneryRadius: 0, fps: 0, gameplay: 0, scenery: 0, dropped: 0, trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0, lights: 0 };
 
-  constructor(readonly canvas: HTMLCanvasElement, readonly game: Game, readonly style: Style) {
+  constructor(readonly canvas: HTMLCanvasElement, readonly game: Game, readonly style: Style, witchGenome: unknown = null) {
     const t = game.tuning;
     this.budget = newBudget(t);
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance", preserveDrawingBuffer: true });
@@ -201,7 +201,7 @@ export class View {
       LIGHT_UNIFORMS.uAmb.value.multiplyScalar(2);
       LIGHT_UNIFORMS.uGlowPower.value = 0;
     }
-    this.assets = new AssetLibrary(style, game.seed, t.pixelSize);
+    this.assets = new AssetLibrary(style, game.seed, t.pixelSize, witchGenome);
     this.assets.crownShare = t.trunkFade.crownShare;
     {
       // The steepest the hills may be: the camera's shallowest pitch at any zoom, ground or treetop (Ed, v289).
@@ -236,9 +236,7 @@ export class View {
     // The witch is depth-tested like everything else, drawn after it; where something still hides
     // her, a silhouette in her glow colour shows through, and tall things in front of her fade.
     const O = t.occlusion;
-    this.witchBatch = new SpriteBatch(this.assets.witch, this.mpp, { absolute: true, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: O.silhouette } });
-    this.witchBatch.mesh.renderOrder = 10;
-    this.scene.add(...this.witchBatch.meshes);
+    this.witchBatch = this.makeWitchBatch();
     SPRITE_UNIFORMS.uOcc.value.set(O.fadeOpacity, O.edge, O.minHeight, O.on ? 1 : 0);
     // The treehouse, home: its base and its crown (the crown only from the treetops), its trunk's
     // foot on its spot. It fades like other tall things when she's behind it.
@@ -1137,6 +1135,20 @@ export class View {
   /** Whether the hills' next strip was all worked out last frame. */
   private heightsReady = true;
   private time(part: string): void { const now = performance.now(); this.ms[part] = (this.ms[part] ?? 0) + now - this.lap; this.lap = now; }
+
+  /** Her sprite batch, from the assets' witch frames. */
+  private makeWitchBatch(): SpriteBatch {
+    const t = this.game.tuning, b = new SpriteBatch(this.assets.witch, this.mpp, { absolute: true, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: t.occlusion.silhouette } });
+    b.mesh.renderOrder = 10;
+    this.scene.add(...b.meshes);
+    return b;
+  }
+  /** The character creator changed her look (her genome, art/witchGenome.js): her frames re-baked and her batch swapped. */
+  setWitch(genome: unknown): void {
+    this.assets.rebakeWitch(genome);
+    this.scene.remove(...this.witchBatch.meshes);
+    this.witchBatch = this.makeWitchBatch();
+  }
 
   /** The 💌's aim (issue #87): the world direction from the witch to the ground under a point on the page. */
   aimAt(clientX: number, clientY: number): { x: number; z: number } | null {

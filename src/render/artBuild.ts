@@ -162,7 +162,7 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   /** Every scene's pieces (each drawn once) and each scene's layout, as authored and mirrored. */
   | { kind: "scenes"; id: string; style: Style }
   /** A party witch (#37): her look from partyWitch(seed) (or, seed null, our witch's own), in every party pose. */
-  | { kind: "partyWitch"; id: string; seed: number | null; style: Style }
+  | { kind: "partyWitch"; id: string; seed: number | null; style: Style; /** our witch's genome (art/witchGenome.js), for seed null; else the classic witch */ genome?: unknown }
   /** Every party object (#38) in each neon and balloon palette a placement can pick (campfires in their three frames), and the clusters' layouts. */
   | { kind: "partyObjects"; id: string; style: Style };
 
@@ -301,9 +301,18 @@ function partyObjectSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; part
   return { sprites, party };
 }
 
-function partyWitchSprites(st: Style, seed: number | null, mk: MakeCanvas): { sprites: Baked[]; witch: PartyWitchArt } {
-  const pw = seed === null ? null : (Art.partyWitch(seed) as { look: unknown; colours: (st: Style) => unknown });
-  const colours = pw ? pw.colours(st) : Art.witchColours(st), look = pw?.look;
+/** Our witch's look and colours from her genome (art/witchGenome.js; null: the classic witch, the style's hues on top). */
+export function witchLookOf(st: Style, genome: unknown): { look: object | undefined; colours: object } {
+  if (!genome) return { look: undefined, colours: Art.witchColours(st) };
+  const { look, outfit } = (Art.genomeLook as (g: unknown) => { look: object; outfit: object | null })(genome);
+  const colours = Art.witchColours as (st: Style, outfit?: object, o?: { styleHues?: boolean }) => object;
+  return { look, colours: outfit ? colours(st, outfit, { styleHues: false }) : colours(st) };
+}
+
+function partyWitchSprites(st: Style, seed: number | null, mk: MakeCanvas, genome: unknown = null): { sprites: Baked[]; witch: PartyWitchArt } {
+  const pw = seed === null ? null : (Art.partyWitch as (s: number) => { look: object; colours: (st: Style) => object })(seed);
+  const mine = seed === null ? witchLookOf(st, genome) : null;
+  const colours = pw ? pw.colours(st) : mine!.colours, look = pw ? pw.look : mine!.look;
   const sprites: Baked[] = [], witch: PartyWitchArt = { poses: {}, fps: {}, hover: { towards: [], away: [] }, anchors: [] };
   const draw = (o: object) => {
     const sp = (Art.witchSprite as (st: Style, o: object) => unknown)(st, { ...o, look }) as { anchors?: Record<string, [number, number]> };
@@ -322,7 +331,7 @@ function partyWitchSprites(st: Style, seed: number | null, mk: MakeCanvas): { sp
 
 export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "partyObjects") { const { sprites, party } = partyObjectSprites(job.style, mk); return { px: packPixels(sprites, 2048), party }; }
-  if (job.kind === "partyWitch") { const { sprites, witch } = partyWitchSprites(job.style, job.seed, mk); return { px: packPixels(sprites, 2048), witch }; }
+  if (job.kind === "partyWitch") { const { sprites, witch } = partyWitchSprites(job.style, job.seed, mk, job.genome ?? null); return { px: packPixels(sprites, 2048), witch }; }
   if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };
   if (job.kind === "rig") { const r = rigSprites(job.style, job.species, job.level, mk); return r ? { px: r.px, rig: r.meta } : { px: packPixels([], 16) }; }
   if (job.kind === "relics") { const { sprites, relics, layouts } = relicSprites(job.style, mk); return { px: packPixels(sprites, 2048), relics, layouts }; }
