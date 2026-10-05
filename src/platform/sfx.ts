@@ -291,6 +291,38 @@ export class Sfx {
     this.osc("triangle", f, at + 0.06, 0.3, g2);
   }
 
+  /** A soundsystem lost (the next wave coming sooner): a sad sting, a party gone quiet rather than
+   *  a death. A record scratch, the party's chord running down like a tape stopping, then a little
+   *  clock ticking faster as the countdown jumps forward, and a soft chime. Heard anywhere. */
+  lost(): void {
+    const c = this.ctx, at = c.currentTime + 0.01, vol = this.T.lost.volume, out = this.voice(0);
+    // the scratch: band-passed noise swept fast down and up
+    const bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 2.5;
+    bp.frequency.setValueAtTime(3200, at); bp.frequency.exponentialRampToValueAtTime(700, at + 0.09); bp.frequency.exponentialRampToValueAtTime(2200, at + 0.16);
+    const sg = c.createGain(); sg.connect(out); this.env(sg, at, vol * 0.7, 0.005, 0.17);
+    bp.connect(sg); this.noiseBurst(at, 0.2, bp, 0.4);
+    // the tape stop: the party's chord (the key's minor seventh) sagging an octave as the filter closes
+    const t0 = at + 0.12, run = 0.9, lp = c.createBiquadFilter(), cg = c.createGain();
+    lp.type = "lowpass"; lp.Q.value = 1; lp.frequency.setValueAtTime(5000, t0); lp.frequency.exponentialRampToValueAtTime(180, t0 + run);
+    cg.gain.setValueAtTime(vol * 0.5, t0); cg.gain.setValueAtTime(vol * 0.5, t0 + run * 0.5); cg.gain.exponentialRampToValueAtTime(0.0001, t0 + run);
+    lp.connect(cg); cg.connect(out);
+    for (const m of [0, 3, 7, 10]) {
+      const o = this.osc("sawtooth", mtof(this.root + 12 + m), t0, run, lp);
+      o.frequency.exponentialRampToValueAtTime(mtof(this.root + m), t0 + run);
+    }
+    // the clock: ticks quickening (tick, tock), then a soft chime as it lands
+    let t = t0 + run + 0.15;
+    for (let i = 0; i < 7; i++) {
+      const k = c.createBiquadFilter(), kg = c.createGain();
+      k.type = "bandpass"; k.frequency.value = i % 2 ? 1500 : 2100; k.Q.value = 12;
+      kg.connect(out); this.env(kg, t, vol * 0.9, 0.001, 0.035);
+      k.connect(kg); this.noiseBurst(t, 0.04, k, i * 0.1);
+      t += 0.2 * Math.pow(0.82, i);
+    }
+    const f = mtof(degree(this.root + 24, 2));
+    for (const [r, l] of [[1, 1], [2.76, 0.35]]) { const g = c.createGain(); g.connect(out); this.env(g, t + 0.05, vol * 0.4 * l, 0.003, 0.6); this.osc("sine", f * r, t + 0.05, 0.7, g); }
+  }
+
   // ——— legends ———
 
   /** A legend's slow attack winding up: a rising, quickening pulse and a swelling hum that land

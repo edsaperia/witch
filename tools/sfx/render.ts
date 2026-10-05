@@ -22,6 +22,7 @@ const SOUNDS: [string, number, Play][] = [
   ["legend-windup", 3, s => s.windup(0, 1, v("bear", 3))],
   ["howl", 1.4, s => s.howl(v("wolf", 2))],
   ["fight-crowd", 1.4, s => { const sp = ["wolf", "fox", "boar", "hare", "owl", "stoat", "badger", "toad"]; sp.forEach((x, i) => s.speak(v(x, (i % 3) as number), i % 2 ? "enraged" : "happy", (i % 5) / 2 - 1, 1 - i * 0.1)); }],
+  ["soundsystem-lost", 3, s => s.lost()],
   ["hit", 0.8, s => s.hit(0)],
   ["hit-spent", 0.5, s => s.hit(0, 1, true)],
   ["fill-0", 0.3, s => s.fill(0)],

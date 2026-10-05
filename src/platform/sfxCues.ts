@@ -117,20 +117,26 @@ export class SfxCues {
     const W = g.tuning.wildLegends;
     S.legends(sleep, best ? bossBreath(time, best.id, W.breathEvery * 1.5) : 0, best ? restlessness(best) * Math.min(1, sleep * 1.5) : 0, best ? pan(best.x) : 0);
     // attacks are speech (Ed, 2026-10-05): each attacker a burst of babble in its own voice, by its
-    // mood; a legend's slow long-range attack (#87's legendWindup) a deep, drawn-out spoken wind-up,
+    // mood; a legend winding up (its slow long-range lob or beam: #99's windup from a legend) one long
+    // building swell of its whale song,
     // heard twice as far: a warning
     for (const e of g.combat.events) {
       const c = e.id !== undefined ? g.creatures[e.id] : undefined;
       if (!c || !ATTACKS.has(e.kind)) continue;
-      if ((e.kind as string) === "legendWindup") { const k = Math.max(0, 1 - Math.hypot(e.x - w.x, e.z - w.z) / (2 * hear)); if (k > 0) S.windup(pan(e.x), Math.max(0.5, k), voiceOf(c, g.tuning)); continue; }
+      if ((e.kind as string) === "legendWindup" || (e.kind === "windup" && c.boss)) { const k = Math.max(0, 1 - Math.hypot(e.x - w.x, e.z - w.z) / (2 * hear)); if (k > 0) S.windup(pan(e.x), Math.max(0.5, k), voiceOf(c, g.tuning)); continue; }
       const k = near(e.x, e.z);
       if (k <= 0 || !this.ready(c.id, time, t.voice.animals.gap)) continue;
       S.speak(voiceOf(c, g.tuning), speechMood(c), pan(e.x), k, k + (c.boss ? 0.5 : 0));
     }
+    // a soundsystem lost (Ed, 2026-10-05: the next wave comes sooner): the party grinding to a halt,
+    // then the clock jumping on; heard anywhere (the prototype's soundsystemLost, else combat's
+    // soundDestroyed, home's aside: that's the run over)
+    for (const e of g.combat.events as { kind: string; key?: string }[]) if ((e.kind === "soundsystemLost" || e.kind === "soundDestroyed") && e.key !== "home" && this.lost !== time) { this.lost = time; S.lost(); }
     this.primed = true;
   }
 
   private spoke = new Map<number, number>();
+  private lost = -1;
   /** Whether creature `id` may speak again (at most once every `gap` seconds). */
   private ready(id: number, time: number, gap: number): boolean {
     if ((this.spoke.get(id) ?? -Infinity) > time - gap) return false;

@@ -4,7 +4,7 @@ import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { foes, stateOf, STATES, type State } from "./creatureStates";
 import { affection, blocksLetters, hit, hold, invitable } from "./affection";
-import { invite, newLeash } from "./leash";
+import { inviteCreature, newLeash } from "./leash";
 import { startSiege } from "./combat";
 import { cellKey } from "./party";
 
@@ -29,7 +29,7 @@ function place(g: Game, species: string, level: Level, dx: number, dz: number, s
   c.cell = g.map.cellSafe(x, z).cell as [number, number];
   if (state === "happy") c.state = "happy";
   if (state === "enraged") { c.enraged = true; c.state = "enraged"; }
-  if (state === "leashed") { invite(g.leash, c, x, z, g.clock.time); g.leash.stack = g.leash.stack.filter(i => i !== c.id); g.leash.placed.push({ id: c.id, x, z, at: g.clock.time }); }
+  if (state === "leashed") { inviteCreature(g.leash, c, x, z, g.clock.time); g.leash.stack = g.leash.stack.filter(i => i !== c.id); g.leash.placed.push({ id: c.id, x, z, at: g.clock.time }); }
   g.byArea = null;
   return c;
 }
@@ -90,7 +90,7 @@ describe("creature states (#87)", () => {
     run(g2, STATES.daze * 0.5, () => { expect(targets(l2, w2)).toBe(false); });
     expect(w2.hp).toBe(hp);
     expect(invitable(w2)).toBe(true);
-    const world = { time: g2.clock.time, leash: (c: Creature) => invite(g2.leash, c, c.x, c.z, g2.clock.time) };
+    const world = { time: g2.clock.time, leash: (c: Creature) => inviteCreature(g2.leash, c, c.x, c.z, g2.clock.time) };
     for (let i = 0; i < 20 && stateOf(w2) === "wild"; i++) hit(world, w2, 1, g2.clock.time + i);
     expect(stateOf(w2)).toBe("happy");
     run(g2, STATES.daze);
@@ -123,7 +123,7 @@ describe("creature states (#87)", () => {
   it("fills the 💌 meter: more hits at higher levels, one counted per creature every gap, draining slowly; full, it's happy, and full again (states.leash 'again') it's leashed", () => {
     const g = quiet(), leash = newLeash();
     for (const level of [0, 1, 2] as const) {
-      const c = place(g, "hare", level, level * 5, 0), world = { time: 0, leash: (k: Creature) => invite(leash, k, k.x, k.z, 0) };
+      const c = place(g, "hare", level, level * 5, 0), world = { time: 0, leash: (k: Creature) => inviteCreature(leash, k, k.x, k.z, 0) };
       const need = STATES.affection.hits[level];
       let t = 100;
       for (let i = 0; i < need - 1; i++, t += STATES.affection.gap) expect(hit(world, c, 1, t)).toBe(true);
@@ -140,7 +140,7 @@ describe("creature states (#87)", () => {
   });
 
   it("leashes a happy one held on for holdTime (states.leash 'hold'), starting over if let go", () => {
-    const g = quiet(), leash = newLeash(), c = place(g, "hare", 1, 0, 0, "happy"), saved = STATES.leash, world = { time: 0, leash: (k: Creature) => invite(leash, k, k.x, k.z, 0) };
+    const g = quiet(), leash = newLeash(), c = place(g, "hare", 1, 0, 0, "happy"), saved = STATES.leash, world = { time: 0, leash: (k: Creature) => inviteCreature(leash, k, k.x, k.z, 0) };
     STATES.leash = "hold";
     try {
       let t = 0;
