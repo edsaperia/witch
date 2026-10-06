@@ -68,6 +68,7 @@ if (process.env.VARIANTS) await b.page.addInitScript(() => { window.VARIANTS = t
 if (process.env.HALVES) await b.page.addInitScript(() => { window.HALVES = true; });
 if (process.env.MIRROR) await b.page.addInitScript(() => { window.MIRROR = true; });
 if (process.env.VARIANT) await b.page.addInitScript(n => { window.VARIANT = n; }, +process.env.VARIANT);
+if (process.env.GENOME) await b.page.addInitScript(g => { window.GENOME = g; }, JSON.parse(process.env.GENOME));
 if (process.env.LEVELS) await b.page.addInitScript(l => { window.LEVELS = l; }, process.env.LEVELS.split(",").map(Number));
 if (process.env.POSES) await b.page.addInitScript(l => { window.POSES = l; }, process.env.POSES.split(","));
 if (process.env.STUDIO) await b.page.addInitScript(() => { window.STUDIO = true; });
@@ -271,6 +272,10 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   } else if (what === "shoes") { // per species: barefoot, then in each party shoe style (creatures3d.js shoe3d), at its adult (or LEVELS), with its collar
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(",");
     for (const id of ids) for (const l of window.LEVELS || [2]) rows.push([null, ...Object.keys(G.SHOE_STYLES)].map(shoes => { const gear = { collar: G.sigilColour(id), shoes, face: "happy" }; return G.bake(G.critter(id, l, 0, st, "towards", gear), G.speciesColours(id, st, gear), st, st.cOutline); }));
+  } else if (what === "genome") { // a genome record not in the bestiary yet (GENOME='{...}', a species record as in art/genome/species.js): its legend, adult, young and baby, then each again angry and happy
+    const g = window.GENOME, S = G.speciesOf(g), problems = G.genomeProblems(g); if (problems.length) throw new Error(problems.join("; "));
+    rows.push((window.LEVELS || [3, 2, 1, 0]).map(l => G.bake(G.critter(S, l, 0, st), G.speciesColours(S, st), st, st.cOutline)));
+    rows.push((window.LEVELS || [3, 2, 1, 0]).flatMap(l => ["angry", "happy"].map(face => G.bake(G.critter(S, l, 0, st, "towards", { face }), G.speciesColours(S, st), st, st.cOutline))));
   } else if (what === "faces") { // per species: its four expressions (neutral, angry, happy, dazed) at adult, young and baby, then angry with the woken look's red eyes (enraged)
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(",");
     for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push([...(window.LEVELS || [2, 1, 0]).flatMap(l => G.EXPRESSIONS.map(face => G.bake(G.critter(id, l, 0, st, facing, { face }), G.speciesColours(id, st), st, st.cOutline))), G.bake(G.critter(id, 1, 0, st, facing, { face: "angry", woken: true }), G.speciesColours(id, st, { woken: true }), st, st.cOutline)]);
