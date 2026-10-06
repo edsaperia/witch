@@ -257,3 +257,37 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
     expect(cellKey(g.map.cellSafe(L.x, L.z).cell)).toBe(cellKey(L.cell));
   }, 120000);
 });
+
+describe("a wave on a legend's area (#87, found by the overnight playthrough)", () => {
+  it("enrages its wild creatures into a siege, but leaves its legend asleep, neither enraged nor besieging", () => {
+    const g = newGame(123, TUNING);
+    g.clock.paused = false;
+    const before = new Set(g.party.areas.keys());
+    run(g, 0.1, { ...idle, nextWave: true });
+    const woke = [...g.party.areas.keys()].filter(k => !before.has(k));
+    expect(woke.length).toBeGreaterThan(0);
+    let legends = 0, besiegers = 0;
+    for (const c of g.creatures) {
+      if (c.gone || !woke.includes(cellKey(c.cell))) continue;
+      if (c.boss) { legends++; expect(c.legendState).toBe("asleep"); expect(c.enraged).toBeFalsy(); expect(c.siege).toBeUndefined(); expect(stateOf(c)).not.toBe("enraged"); }
+      else if (c.siege) besiegers++;
+    }
+    expect(legends).toBeGreaterThan(0);
+    expect(besiegers).toBeGreaterThan(0);
+  });
+});
+
+
+describe("an awake legend with nothing in reach (balance, 2026-10-06)", () => {
+  it("looks again every attack.recheck seconds, not every step", async () => {
+    const { cheer } = await import("./legends");
+    const g = newGame(1000, TUNING);
+    g.clock.paused = false; g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
+    const L = g.creatures.find(c => c.boss)!;
+    cheer(L, 0); // (happy: it shoots the enraged, and there are none)
+    run(g, LEGENDS.attack.interval);
+    const at = L.fight!.readyAt;
+    expect(at).toBeGreaterThan(g.clock.time); // (its next look is ahead of it, not this step)
+    expect(at - g.clock.time).toBeLessThanOrEqual(LEGENDS.attack.recheck + 1e-9);
+  }, 30000);
+});
