@@ -3,6 +3,7 @@
 // spriteTilt), and is lit per pixel from its normal map. Tree tops carry a flag so the canopy
 // can dither in and out as the witch rises and descends.
 import * as THREE from "three";
+import { PIXEL_SNAP_GLSL, WIND_GUST_GLSL } from "./shaders";
 import type { Atlas, Frame } from "./atlas";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { WITCH_LIGHT_GLSL, witchLightUniform } from "./witchLight";
@@ -76,6 +77,7 @@ varying float vFront;
 varying vec2 vLocal;
 varying float vSizeY;
 ${HEIGHT_VERT_GLSL}
+${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}
 void main() {
   // Every sprite stands upright on the rolling ground (height.ts), at the lowest ground under its
   // foot (most of its width, up to 5 m either side of its base, at five points): on a slope its uphill side is planted in the
@@ -92,10 +94,7 @@ void main() {
   // base (a crown at its foot, a trunk barely), so the trunks stay put and the foliage moves.
   if (iFlags.w > 0.0 && uWind.x > 0.0) {
     vec2 q = iPos.xz / uWind.z - vec2(0.8, 0.35) * uWind.w * uWind.y / uWind.z;
-    vec2 i = floor(q), f = fract(q), e = f * f * (3.0 - 2.0 * f);
-    float h00 = fract(sin(dot(i, vec2(127.1, 311.7))) * 43758.5453), h10 = fract(sin(dot(i + vec2(1, 0), vec2(127.1, 311.7))) * 43758.5453);
-    float h01 = fract(sin(dot(i + vec2(0, 1), vec2(127.1, 311.7))) * 43758.5453), h11 = fract(sin(dot(i + vec2(1, 1), vec2(127.1, 311.7))) * 43758.5453);
-    float gust = mix(mix(h00, h10, e.x), mix(h01, h11, e.x), e.y);
+    float gust = windGust(q);
     float flutter = sin(uWind.w * 1.7 + dot(iPos.xz, vec2(0.31, 0.17))) * 0.35;
     w += uRight * (uWind.x * iFlags.w * uv.y * uv.y * (gust * 0.9 + flutter)) * min(1.0, iSize.y / 8.0);
   }
@@ -103,10 +102,7 @@ void main() {
   vSwayM = 0.0;
   if (iFlags.w < 0.0 && uWind.x > 0.0) {
     vec2 q = iPos.xz / uWind.z - vec2(0.8, 0.35) * uWind.w * uWind.y / uWind.z;
-    vec2 i = floor(q), f = fract(q), e = f * f * (3.0 - 2.0 * f);
-    float h00 = fract(sin(dot(i, vec2(127.1, 311.7))) * 43758.5453), h10 = fract(sin(dot(i + vec2(1, 0), vec2(127.1, 311.7))) * 43758.5453);
-    float h01 = fract(sin(dot(i + vec2(0, 1), vec2(127.1, 311.7))) * 43758.5453), h11 = fract(sin(dot(i + vec2(1, 1), vec2(127.1, 311.7))) * 43758.5453);
-    float gust = mix(mix(h00, h10, e.x), mix(h01, h11, e.x), e.y);
+    float gust = windGust(q);
     float flutter = sin(uWind.w * 1.7 + dot(iPos.xz, vec2(0.31, 0.17))) * 0.35;
     vSwayM = uWind.x * -iFlags.w * (gust * 0.9 + flutter) * min(1.0, iSize.y / 8.0);
   }
@@ -121,9 +117,7 @@ void main() {
   gl_Position = clipOf(w);
   // Snap the whole sprite by its base to the pixel grid, so it moves a whole pixel at a time and
   // its small bright details (flowers, eyes) don't shimmer in and out as the camera glides.
-  vec4 b = clipOf(base);
-  vec2 ndc = b.xy / b.w, snapped = (floor((ndc * 0.5 + 0.5) * uRes) + 0.5) / uRes * 2.0 - 1.0;
-  gl_Position.xy += (snapped - ndc) * gl_Position.w;
+  gl_Position.xy += pixelSnap(clipOf(base)) * gl_Position.w;
   // The hole cut in the canopy round her (Ed, round 7: "the crown-hiding circle still has a very
   // sharp edge"): each tree's crown (and its cut trunk with it) has its own radius for it, a little
   // nearer or further than the next, so no line runs across the canopy, and fades over a wide band.
@@ -410,7 +404,9 @@ export class SpriteBatch {
       F[i * 4] = it.flip ? 1 : 0; F[i * 4 + 1] = it.top ? 1 : it.cut ? -it.cut : 0; F[i * 4 + 2] = it.fresh ? 1 : 0; F[i * 4 + 3] = (it.frame.masked ? -1 : 1) * (it.sway ?? 0);
       G[i] = it.glow ?? 0;
     });
-    for (const a of [this.pos, this.size, this.uvs, this.flags, this.glow]) a.needsUpdate = true;
+    // Only the instances in use go to the GPU (the buffers keep their largest size, often twice
+    // what's drawn: a whole one every frame was much of the frame's uploading). Nothing set, nothing sent.
+    if (items.length) for (const a of [this.pos, this.size, this.uvs, this.flags, this.glow]) { a.clearUpdateRanges(); a.addUpdateRange(0, items.length * a.itemSize); a.needsUpdate = true; }
     this.count = items.length;
     this.geo.instanceCount = items.length;
     for (const m of this.meshes) m.visible = items.length > 0;

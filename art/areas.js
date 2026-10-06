@@ -216,7 +216,16 @@ export const SET_PIECE_CHANCE = .25;
 
 // ---------------- the floor: a tile of the area's ground ----------------
 // Grown from the area's ground genome (art/ground.js, #119): its floor kind's, with the area's own `ground` over it.
-function floorTile(def, st) { return groundTile(def, st, 0); }
+// The floor as a strip of FLOOR_VARIANTS tiles side by side, each its own seed; the ground shader picks one for each repeat of the
+// tile (src/render/ground.ts), so the floor doesn't visibly repeat. They share the base and keep their details inside, so any
+// variant sits next to any other without a seam.
+export const FLOOR_VARIANTS = 4;
+function floorTile(def, st) {
+  const tiles = Array.from({ length: FLOOR_VARIANTS }, (_, v) => groundTile(def, st, v)), w = tiles[0].sp.w, h = tiles[0].sp.h, sp = new Sprite(w * FLOOR_VARIANTS, h);
+  tiles.forEach((t, v) => { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x, j = y * sp.w + v * w + x; sp.m[j] = t.sp.m[i]; sp.n[j * 3] = t.sp.n[i * 3]; sp.n[j * 3 + 1] = t.sp.n[i * 3 + 1]; sp.n[j * 3 + 2] = t.sp.n[i * 3 + 2]; } });
+  if (tiles[0].sp.stylised) sp.stylised = tiles[0].sp.stylised;
+  return { sp, colours: tiles[0].colours };
+}
 
 // ---------------- the prop library ----------------
 const stoneCol = (moss) => ({ [M.ACCENT]: hsv2rgb(.1, .06, .6), [M.BODY2]: hsv2rgb(.62, .08, .4), [M.BELLY]: hsv2rgb(.1, .05, .78), [M.LEAF]: hsv2rgb(.27, .5, .45), [M.LEAF2]: hsv2rgb(.25, .45, .62), [M.NOSE]: [20, 16, 24], ...(moss ? {} : {}) });
@@ -302,7 +311,11 @@ function prop(kind, o, def, st, r, s) {
     colours = o.bog ? { [M.MAGIC]: [60, 70, 50], [M.MAGIC2]: [120, 130, 90] } : water;
     // water reflects rather than glows: bake marks MAGIC as glowing, so use plain materials
     for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.MAGIC) sp.m[i] = M.BODY; else if (sp.m[i] === M.MAGIC2) sp.m[i] = M.BELLY;
-    colours = { [M.BODY]: colours[M.MAGIC], [M.BELLY]: colours[M.MAGIC2] };
+    // never a black hole at night (the art director, round 1): a moonlit rim along its far shore (its top edge) and the sky's faint reflection in its far half
+    const top = new Int32Array(sp.w).fill(-1), bot = new Int32Array(sp.w).fill(-1);
+    for (let x = 0; x < sp.w; x++) for (let y = 0; y < sp.h; y++) if (sp.m[y * sp.w + x] === M.BODY || sp.m[y * sp.w + x] === M.BELLY) { if (top[x] < 0) top[x] = y; bot[x] = y; }
+    for (let x = 0; x < sp.w; x++) if (top[x] >= 0) { sp.recolour(x, top[x], M.WEB); const mid = Math.round((top[x] + bot[x]) / 2); for (let y = top[x] + 1; y < mid; y++) if (sp.m[y * sp.w + x] === M.BODY && ((y - top[x]) & 1 || x & 1)) sp.recolour(x, y, M.ACCENT); }
+    const w0 = colours[M.MAGIC]; colours = { [M.BODY]: w0, [M.BELLY]: colours[M.MAGIC2], [M.ACCENT]: w0.map((c, i) => Math.min(255, c * 1.25 + [12, 14, 22][i])), [M.WEB]: o.bog ? [160, 170, 140] : [170, 195, 215] };
   } else if (kind === "bramble" || kind === "hedge") {
     const w = 22 * s, h = (kind === "hedge" ? 18 : 12) * s;
     for (let k = 0; k < (kind === "hedge" ? 6 : 4); k++) { const x = cx + uni(r, -w * .8, w * .8), y = gy - h * uni(r, .4, .7); sp.ellipse(x, y, uni(r, 6, 9) * s, h * .45, kind === "hedge" ? M.LEAF3 : M.LEAF, { round: st.round, density: o.bare ? .5 : .95, noise: .5, seed: k }); }
