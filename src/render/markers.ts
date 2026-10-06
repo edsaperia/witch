@@ -165,8 +165,7 @@ export class MarkerFx {
     }
     const g = this.motes.geometry;
     g.setDrawRange(0, m);
-    (g.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
-    (g.getAttribute("color") as THREE.BufferAttribute).needsUpdate = true;
+    for (const k of ["position", "color"]) { const a = g.getAttribute(k) as THREE.BufferAttribute; a.clearUpdateRanges(); a.addUpdateRange(0, m * a.itemSize); a.needsUpdate = true; } // (only those in use)
   }
 }
 
@@ -239,7 +238,7 @@ export class SymbolRings {
       C.set([s.colour.x, s.colour.y, s.colour.z, s.alpha], i * 4);
     }
     this.geo.instanceCount = n;
-    this.ring.needsUpdate = true; this.col.needsUpdate = true;
+    for (const a of [this.ring, this.col]) { a.clearUpdateRanges(); a.addUpdateRange(0, n * 4); a.needsUpdate = true; } // (only those in use)
     this.mat.uniforms.uLift.value = lift;
   }
 }
