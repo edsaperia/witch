@@ -7,6 +7,8 @@ import type { Style } from "./style";
 
 /** The most point lights shaded at once (the light budget in the tuning file may be lower). */
 export const MAX_LIGHTS = 24;
+/** The sleeping legends' clearings lit at once, the nearest (render/glades.ts). */
+export const MAX_GLADES = 4;
 
 export const LIGHT_UNIFORMS = {
   uAmb: { value: new THREE.Vector3() },
@@ -38,6 +40,14 @@ export const LIGHT_UNIFORMS = {
   uLightPos: { value: Array.from({ length: MAX_LIGHTS }, () => new THREE.Vector4()) },
   uLightCol: { value: Array.from({ length: MAX_LIGHTS }, () => new THREE.Vector4()) },
   uLightCount: { value: 0 },
+  /** The legends' clearings (render/glades.ts): each one's centre x, z, radius and edge (0 to 1); how many; the twilight's
+   *  colour; its pool's and its edge ring's strength. */
+  uGlade: { value: Array.from({ length: MAX_GLADES }, () => new THREE.Vector4()) },
+  uGladeCount: { value: 0 },
+  uGladeRgb: { value: new THREE.Vector3() },
+  uGladeLight: { value: new THREE.Vector2() },
+  /** The forest's light outside a clearing while she's in one (1 as it is; the clearing's own twilight is never dimmed). */
+  uDim: { value: 1 },
   // The disco ball: position (w: 1 when present), and spin, speck density, brightness, reach.
   uDisco: { value: new THREE.Vector4() },
   uDiscoParams: { value: new THREE.Vector4() },
@@ -79,6 +89,11 @@ uniform float uBands, uDither, uShafts, uShaftScale, uGlowR, uGlowFalloff, uGlow
 uniform vec2 uHazeCentre, uHazeRange;
 uniform vec3 uHazeColour;
 uniform vec4 uLightPos[${MAX_LIGHTS}], uLightCol[${MAX_LIGHTS}];
+uniform vec4 uGlade[${MAX_GLADES}];
+uniform int uGladeCount;
+uniform vec3 uGladeRgb;
+uniform vec2 uGladeLight;
+uniform float uDim;
 uniform int uLightCount;
 uniform vec4 uDisco, uDiscoParams;
 uniform vec3 uDiscoColour;
@@ -93,10 +108,10 @@ float sceneryFade(vec3 P) {
 vec3 haze(vec3 c, vec3 P) {
   float h = smoothstep(uHazeRange.x, uHazeRange.y, length(P.xz - uHazeCentre));
   h *= h; // light through the middle distance, full only at the far edge
-  if (uSmooth > 0.5) return mix(c, uHazeColour, h);
+  if (uSmooth > 0.5) return mix(c, uHazeColour * uDim, h);
   float q = h * 4.0, fr = fract(q);
   q = floor(q) + (fr > (mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) > 0.5 ? 0.66 : 0.33) ? 1.0 : 0.0);
-  return mix(c, uHazeColour, q / 4.0);
+  return mix(c, uHazeColour * uDim, q / 4.0);
 }
 
 float lightStep(float f) {
@@ -105,6 +120,21 @@ float lightStep(float f) {
   float fr = fract(q);
   if (uDither > 0.0 && abs(fr - 0.5) < uDither * 0.5) q += mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) > 0.5 ? 0.5 : -0.5;
   return max(0.0, floor(q)) / uBands;
+}
+
+// A sleeping legend's clearing (render/glades.ts; Ed: "lit with an eerie twilight"): a cool pool filling the circle,
+// soft at its edge, and a ring at the edge that brightens with the clearing's edge (the witch inside, a sigil put down).
+vec3 gladeLight(vec3 P) {
+  vec3 l = vec3(0.0);
+  for (int i = 0; i < ${MAX_GLADES}; i++) {
+    if (i >= uGladeCount) break;
+    vec4 G = uGlade[i];
+    float d = length(P.xz - G.xy);
+    if (d > G.z * 1.2) continue;
+    float pool = 1.0 - smoothstep(G.z * 0.45, G.z, d), q = (d - G.z) / (G.z * 0.07), ring = exp(-q * q);
+    l += uGladeRgb * (pool * uGladeLight.x + ring * (0.25 + 0.75 * G.w) * uGladeLight.y);
+  }
+  return l;
 }
 
 // N: world normal; P: world position; moonK: how much moonlight gets through (a shadow lowers
@@ -143,6 +173,7 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
     float fall = 1.0 - ld / reach;
     l += uLightCol[i].rgb * min(1.0, ndl * fall * fall * uLightCol[i].w);
   }
+  l = l * uDim + gladeLight(P); // (inside a clearing the forest goes dark: Ed, 2026-10-06; render/glades.ts)
   if (uDisco.w > 0.5) {
     // The disco ball's specks: a grid of spots on a sphere round the ball, turning with it,
     // thrown onto whatever stands nearby.

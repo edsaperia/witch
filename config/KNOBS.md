@@ -397,12 +397,31 @@ Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bus
 | `berries.colour` | string |  |
 | `berries.glow` | number | 0 to … |
 
-## `leyLines`
+## `glades`, `leyLines`
 
-depart (Ed, 2026-10-05: "The start of the first leyline should go from the front of the treehouse"; "the treehouse should be 5m due north of the dance floor ... The ley line leads from it south across the dancefloor and then towards the first speaker"): until the first stone is reached the line starts at the treehouse's front and runs due south straight across the dancefloor and through its ring of speakers, on past metres beyond the ring (avoid metres outside it), then curves smoothly to the first objective's soundsystem, that stretch kept outside the ring. The ley lines (Ed, 2026-10-04; 2026-10-05: "you just follow them from objective to objective"): a glowing line from the last runestone reached to the next objective, the next area in the order the waves wake them, and on (Ed, 2026-10-05: "six sections long, showing the next three and the past three runestones"): ahead sections on from the last stone reached to the next ones, each fade times as bright as the one before, and behind sections back through the stones reached before it, the one just left behindBright times as bright as the next and each before it fade times that. brightness: how bright, a share of their first look (Ed, 2026-10-05: "about 30% as bright", 0.3), the glow through the crowns too. Each fades from the colour of the area it starts in to that of the area it ends in (the colour partified areas and soundsystems use). advance: "first" moves it on when the next area's quest is done or its wave arrives, whichever comes first; "wave" only when its wave arrives. The old line drains into the stone reached and the new one draws out from it. Each wanders along the low ground between its stones, straying up to valley of its length (80 m at most) to follow the hills' valleys, and a shimmer flows along it toward the next stone at flow[0] m/s, flow[1] m apart. It stays on the ground in both modes (Ed): width metres across on the ground and over the treetops (wider there, with a faint glow through the crowns), height metres over the ground in each. ?ley=0 turns them off.
+The sleeping legends' clearings (Ed, 2026-10-06: "Sleeping legends should be in a small circular clearing, where they sit near the top of the circle. This magical clearing should be lit with an eerie twilight with glowing motes rising in it."; render/glades.ts): art builder 1 places them (the map's glades); until then one round each sleeping legend, radius metres across with the legend top of the way toward its top. Only those within reach metres of the witch, the nearest 4, are lit. hue, sat: the twilight's colour (a cool violet dusk, against the party's amber); light: its pool, filling the circle and soft at its edge; edge: the ring at its edge at full (a quarter of it always marks the circle), which brightens with the witch inside it or a quest sigil or relic put down in it, easing at edgeEase a second. Inside one (Ed, 2026-10-06: "When you go into the legend clearing, the rest of the forest should get darker. Maybe switch off the witch's glow when she's in there."): the forest's light and haze outside the clearing's own twilight dim by dark (0 none, 1 black), her own glow goes by glowOff (1: off; her moonlit rim stays), both eased in and out over fade seconds. motes: per to a clearing, rising rise metres a second to height metres, size art pixels, in hue and sat at bright.
 
 | knob | type | range |
 |---|---|---|
+| `glades.on` | boolean |  |
+| `glades.radius` | number | 0 to … |
+| `glades.top` | number | 0 to … |
+| `glades.reach` | number | 0 to … |
+| `glades.hue` | number | 0 to … |
+| `glades.sat` | number | 0 to … |
+| `glades.light` | number | 0 to … |
+| `glades.edge` | number | 0 to … |
+| `glades.edgeEase` | number | 0 to … |
+| `glades.dark` | number | 0 to … |
+| `glades.glowOff` | number | 0 to … |
+| `glades.fade` | number | 0 to … |
+| `glades.motes.per` | number | 0 to … |
+| `glades.motes.rise` | number | 0 to … |
+| `glades.motes.height` | number | 0 to … |
+| `glades.motes.size` | number | 0 to … |
+| `glades.motes.hue` | number | 0 to … |
+| `glades.motes.sat` | number | 0 to … |
+| `glades.motes.bright` | number | 0 to … |
 | `leyLines.on` | boolean |  |
 | `leyLines.ahead` | number | 0 to … |
 | `leyLines.behind` | number | 0 to … |
