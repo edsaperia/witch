@@ -39,9 +39,12 @@ import { huntsWitch } from "../rules/creatureStates";
 import { LEGENDS, relicGlints } from "../rules/legends";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
+import { lobHeight } from "./invites";
 
 /** The join burst's colours (the art director, #188 and #200): the lanterns' amber, light and deep, with the creature's own
  *  neon; nothing white (white is a hit's). */
+/** Her magic's colours in the night (the art director's palette, #188 and round 2): the lanterns' amber and the 💌s' rose. */
+const AMBER = [0.91, 0.71, 0.42], ROSE = [0.85, 0.47, 0.62];
 const JOIN_PALETTE = [[0.91, 0.71, 0.42], [0.82, 0.52, 0.28], [0.91, 0.71, 0.42]];
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, placed } from "./height";
@@ -421,6 +424,43 @@ export class LeashView {
     return k < 0 || k > 1 ? 0 : this.shakeAmp * (1 - k) * (1 - k);
   }
 
+  /** The newest 💌 event already shown (a frame with no step keeps its step's events: shown once). */
+  private lettersSeen = -Infinity;
+  /** Her 💌s in the night (the coordinator's brief: "the witch's own magic in the night palette"): a faint warm trail
+   *  behind each letter in flight, amber and rose, so it reads in the dark; a soft rose puff and a little ring where one
+   *  lands on the ground; on a creature, a rose ring at its feet and a few amber sparks (nothing white: white is a hit's). */
+  private drawLetters(time: number): void {
+    const g = this.game, dot = this.uv(0), arc = g.tuning.invites.arc ?? 0, seen = this.lettersSeen;
+    let newest = seen;
+    for (const W of g.witches) {
+      for (const L of W.invites.letters) {
+        if (L.kind === "cache") continue;
+        const sp = Math.hypot(L.vx, L.vz);
+        if (sp < 1e-3) continue;
+        const ux = L.vx / sp, uz = L.vz / sp;
+        for (let j = 1; j <= 9; j++) {
+          const back = j * 0.4, f = L.flown - back;
+          if (f < 0) break;
+          const c = j % 2 ? AMBER : ROSE, y = L.kind === "orbit" ? 1.3 : lobHeight(f, L.range, arc);
+          this.standing.add(L.x - ux * back, y, L.z - uz * back, (L.small ? 0.5 : 0.8) * (1 - j * 0.07), dot, c[0], c[1], c[2], 0.9 * (1 - j / 10));
+        }
+      }
+      for (const e of W.invites.events) {
+        if (e.at <= seen) continue;
+        newest = Math.max(newest, e.at);
+        if (e.kind === "fizzled") {
+          this.fx.push({ kind: "puff", x: e.x, y: 0.25, z: e.z, at: time, life: 0.5, r: ROSE[0], g: ROSE[1], b: ROSE[2], seed: e.at * 23 + (e.n ?? 0), size: 0.5 });
+          this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.4, r: ROSE[0], g: ROSE[1], b: ROSE[2], seed: 0, size: 0.9, n: 12, dot: 0.3 });
+        } else if (e.kind === "hit" && e.id !== undefined) {
+          const c = g.creatures[e.id], top = (c && this.tops.get(c.id)) ?? 1.2;
+          this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.45, r: ROSE[0], g: ROSE[1], b: ROSE[2], seed: 0, size: e.spent ? 1 : 1.6, n: e.spent ? 12 : 18, dot: 0.4 });
+          if (!e.spent) this.fx.push({ kind: "spark", x: e.x, y: top * 0.6, z: e.z, at: time, life: 0.45, r: AMBER[0], g: AMBER[1], b: AMBER[2], seed: e.at * 61 + e.id, size: 0.9 });
+        }
+      }
+    }
+    this.lettersSeen = newest;
+  }
+
   /** Combat (rules/combat.ts) and knockouts (rules/knockout.ts): shots and their telegraphs, hits,
    *  health bars (only when hurt), puffs as beaten creatures flee, the knockout's splashing sigils
    *  and teleport, the marker on creatures walking home, and the witch's hit pips. */
@@ -693,6 +733,7 @@ export class LeashView {
     this.standing.begin(); this.flat.begin(); this.over.begin();
     this.drawBerries(time);
     this.drawBosses(time);
+    this.drawLetters(time);
     this.drawCombat(time, camera, width, height, hatTop);
     for (const e of s.events) {
       if (e.kind === "fizzled") this.fizzles.push({ x: e.x, z: e.z, at: time });
