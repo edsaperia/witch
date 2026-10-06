@@ -14,7 +14,7 @@ import { dreamStone, questOpen, restlessness } from "../rules/dream";
 import { moodOf } from "./mood";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
-import { drawSigil, sigilColour, speciesColours, defaultStyle, M } from "../../art/generator.js";
+import { drawSigil, sigilColour, speciesColours, defaultStyle, M, LEGEND_SCALE } from "../../art/generator.js";
 import { dormant, type Game } from "../rules/game";
 import type { Creature } from "../rules/creatures";
 import { attackNamed, attackOf, creatureMaxHp, traitsOf, type Trait } from "../rules/combat";
@@ -38,6 +38,7 @@ import { hash2 } from "../rules/random";
 import { emojiOr, sleepyFace } from "./sleepyFace";
 import { FIGHT, profileOf } from "../rules/movement";
 import { hasRune, huntsWitch, runeNear } from "../rules/creatureStates";
+import { LOAD_DEFAULT, newLoadView, type LoadView } from "./load";
 import { LEGENDS, relicGlints } from "../rules/legends";
 import { circleLines, circleShown, legendCircleNear } from "../rules/legendCircle";
 import { witchHeight } from "../rules/witch";
@@ -51,14 +52,23 @@ const AMBER = [0.91, 0.71, 0.42], ROSE = [0.85, 0.47, 0.62];
 const JOIN_PALETTE = [[0.91, 0.71, 0.42], [0.82, 0.52, 0.28], [0.91, 0.71, 0.42]];
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, placed } from "./height";
+import { tiltFilter } from "./overlayTilt";
 
+/** The party's over: 😴 bubbles over at most this many sleepers, within this many metres of her. */
+const SNORES = 6, SNORE_RANGE = 40;
 /** Seconds a legend's charge ruts take to fade. */
 const RUTS = 12;
 /** How far from her (m) happy creatures' runes are drawn. */
 const RUNE_VIEW = 70;
+/** The party legend's giant hat's stripes (the Easter egg): the party neons, in pairs of rows. */
+const PARTY_HAT = [[1, 0.35, 0.72], [0.35, 0.95, 1], [1, 0.85, 0.3], [0.7, 0.45, 1]];
 
 const SLOT = 32, SLOTS = 16; // the glyph atlas: 16 x 16 slots of 32 px; slot 0 is a soft dot
 const SQ = SLOTS * SLOTS - 1; // and the last a solid square
+const LEGEND_LEVEL = 3, LEGEND_ROW = 10; // legendary sigils' 2 × 2 blocks fill rows 10 to 13 (16 of them); the rest from slot 1 up
+/** Whether a creature's sigil in the stack, as a leash point and its ghost, is the legendary one (art/sigils.js `legendary`):
+ *  every legend's (in the stack only once she can carry one: a party legend, or a legend let go and invited). */
+export const legendarySigil = (c: Pick<Creature, "level">): boolean => c.level >= LEGEND_LEVEL;
 
 const VERT = /* glsl */ `
 uniform vec3 uRight, uUp;
@@ -167,6 +177,10 @@ export class LeashView {
   private canvas = document.createElement("canvas");
   private tex: THREE.CanvasTexture;
   private slots = new Map<string, number>();
+  /** The creatures whose sigils are projected over the treetops this frame (kept, not made anew each frame). */
+  private projected: { c: Creature; d: number }[] = [];
+  private nextSlot = 1; // the next free atlas slot
+  private legendSlots = 0; // legendary blocks taken
   private colours = new Map<string, THREE.Color>();
   private standing: Instances;
   private flat: Instances;
@@ -188,6 +202,9 @@ export class LeashView {
   private stackY = new Map<number, number>();
   private chain: { x: number; z: number; vx: number; vz: number }[] = [];
   private lastTime = 0;
+  /** The load she carries as the art reads it (render/load.ts; the view sets it each frame), and where her broom's bristles are. */
+  load: LoadView = newLoadView();
+  bristle = { x: 0, y: 0, z: 0, on: false };
   private bubbleWitch = document.getElementById("bubble-witch");
   private bubbleCreature = document.getElementById("bubble-creature");
   private v = new THREE.Vector3();
@@ -203,6 +220,8 @@ export class LeashView {
   private pips: HTMLElement | null = null;
   /** Each creature's height as drawn (the view sets it), so its health bar sits just over it. */
   readonly tops = new Map<number, number>();
+  /** When she last hit a party legend's edge (its boing played). */
+  private boingAt = -Infinity;
 
   constructor(scene: THREE.Scene, private game: Game) {
     this.canvas.width = this.canvas.height = SLOT * SLOTS;
@@ -230,17 +249,18 @@ export class LeashView {
 
   /** A species' sigil at a level (it grows more ornate with level), white in the atlas, tinted
    *  by its neon colour when drawn. */
-  private slotOf(species: string, level = 0): number {
-    const key = `${species}:${level}`;
+  private slotOf(species: string, level = 0, legendary = false): number {
+    const key = `${species}:${legendary ? "legendary" : level}`;
     let s = this.slots.get(key);
     if (s !== undefined) return s;
-    s = this.slots.size + 1;
+    // a legendary one: a block of 2 × 2 slots from LEGEND_ROW down (8 a row pair), its top left slot
+    s = legendary ? LEGEND_ROW * SLOTS + Math.floor(this.legendSlots / 8) * 2 * SLOTS + (this.legendSlots++ % 8) * 2 : this.nextSlot++;
     this.slots.set(key, s);
-    const g = this.canvas.getContext("2d")!, ox = (s % SLOTS) * SLOT, oy = Math.floor(s / SLOTS) * SLOT;
-    g.clearRect(ox, oy, SLOT, SLOT);
-    drawSigil(g, species, { x: ox + 1, y: oy + 1, size: SLOT - 2, level: level as unknown as null, colour: [255, 255, 255], glow: false });
+    const g = this.canvas.getContext("2d")!, ox = (s % SLOTS) * SLOT, oy = Math.floor(s / SLOTS) * SLOT, W = legendary ? SLOT * 2 : SLOT;
+    g.clearRect(ox, oy, W, W);
+    drawSigil(g, species, { x: ox + 1, y: oy + 1, size: (W - 2) / (legendary ? LEGEND_SCALE : 1), level: level as unknown as null, colour: [255, 255, 255], glow: false, legendary });
     // Crisp: no soft edges, so it reads as pixel art.
-    const img = g.getImageData(ox, oy, SLOT, SLOT);
+    const img = g.getImageData(ox, oy, W, W);
     for (let i = 3; i < img.data.length; i += 4) img.data[i] = img.data[i] > 90 ? 255 : 0;
     g.putImageData(img, ox, oy);
     const c = sigilColour(species);
@@ -357,11 +377,56 @@ export class LeashView {
   /** Sleeping legends dreaming this frame (the first quest), drawn as thought bubbles by drawDreams. */
   private dreams: Creature[] = [];
   private dreamEls: HTMLElement[] = [];
+  /** The party's over (render/partyOver.ts; the view sets it each frame): its ease, 0 to 1. */
+  partyOverEase = 0;
+  /** The sleepers' 😴 bubbles (pooled), and the nearest sleepers this frame (reused). */
+  private snoreEls: HTMLElement[] = [];
+  private snoreNear: { c: Creature; d: number }[] = [];
 
   /** A sleeping legend's dream (the first quest, Ed 2026-10-04): a bubble over it holding the
    *  sigil of the creature it wants, in its colour, drawn in that level's variant (Ed, 2026-10-05:
    *  the sigil's own level look, no pips). Only to a witch on the ground near it (dreams.range;
    *  Ed, 2026-10-05: never from the treetops). HTML, like the talk bubbles, so it reads at any zoom. */
+  /** The party's over (Ed, 2026-10-06: "all the animals go to sleep and make little 😴 speech bubbles"): over the nearest few
+   *  sleepers within SNORE_RANGE of her on the ground, a little dream bubble with a sleepy face (mostly 😴, now and then a yawn
+   *  or a sigh: sleepyFace), bobbing and drifting. A sleeper is one the rules have put to sleep (c.asleep: builder hotel's
+   *  party's-over rules, legends too), or, before those rules, any creature not hers once the party's well over. */
+  private drawSnores(camera: THREE.Camera, width: number, height: number): void {
+    const host = this.bubbleWitch?.parentElement, g = this.game, w = g.witch, near = this.snoreNear;
+    let used = 0;
+    near.length = 0;
+    if (host && this.partyOverEase > 0.3 && w.mode === "ground" && w.lift < 0.5) {
+      for (const c of g.creatures) {
+        if (c.gone || c.leashed) continue;
+        // (asleep: the rules' c.asleep, legends too; before builder hotel's party's-over rules, any creature not hers once it's well over)
+        const asleep = (c as { asleep?: boolean }).asleep, rules = "partyOver" in g, dx = c.x - w.x, dz = c.z - w.z;
+        if (!(asleep || (!rules && asleep === undefined && this.partyOverEase >= 0.6 && c.level !== 3 && !c.boss)) || Math.abs(dx) > SNORE_RANGE || Math.abs(dz) > SNORE_RANGE) continue;
+        const d = Math.hypot(dx, dz);
+        if (d > SNORE_RANGE) continue;
+        if (near.length < SNORES) near.push({ c, d });
+        else { let far = 0; for (let i = 1; i < near.length; i++) if (near[i].d > near[far].d) far = i; if (d < near[far].d) near[far] = { c, d }; }
+      }
+      const Z = g.tuning.dreams.sleepy, time = g.clock.time;
+      for (const { c } of near) {
+        const bob = Math.sin(time * 1.6 + c.id * 1.7) * 0.18, y = Math.min(this.tops.get(c.id) ?? 1.5, 4) + 0.35 + bob;
+        placed(this.v.set(c.x + Math.sin(time * 0.7 + c.id) * 0.15, y, c.z)).project(camera);
+        if (this.v.z > 1 || Math.abs(this.v.x) > 1.1 || Math.abs(this.v.y) > 1.1) continue;
+        let el = this.snoreEls[used];
+        if (!el) { el = document.createElement("div"); el.className = "bubble dream on snore"; host.append(el); this.snoreEls.push(el); }
+        el.style.display = "";
+        const face = Z ? emojiOr(sleepyFace(c.id, time, Z), Z.fallback) : "😴";
+        if (el.dataset.e !== face) { el.dataset.e = face; const f = this.pixelEmoji(face, 0.9, 18); f.classList.add("face"); el.replaceChildren(f); }
+        el.style.setProperty("--px", `${Math.max(1, bubblePx(c.level) * 0.8)}px`);
+        el.style.left = `${((this.v.x + 1) / 2) * width}px`;
+        el.style.top = `${((1 - this.v.y) / 2) * height}px`;
+        el.style.opacity = `${Math.min(1, (this.partyOverEase - 0.3) * 4).toFixed(2)}`;
+        el.style.transform = "translate(-50%, calc(-100% - var(--px) * 9))";
+        used++;
+      }
+    }
+    for (let i = used; i < this.snoreEls.length; i++) this.snoreEls[i].style.display = "none";
+  }
+
   private drawDreams(camera: THREE.Camera, width: number, height: number): void {
     const host = this.bubbleWitch?.parentElement, g = this.game, w = g.witch, range = g.tuning.dreams.range;
     if (!host) return;
@@ -411,6 +476,7 @@ export class LeashView {
       const bx = ((this.v.x + 1) / 2) * width, ly = ((1 - this.v.y) / 2) * height, by = Math.max(ly, el.offsetHeight + 56); // (kept on screen when she's close, below the top edge's cues)
       el.style.left = `${bx}px`;
       el.style.top = `${by}px`;
+      tiltFilter(el, by - el.offsetHeight * 0.5 - bubblePx(c.level) * 12.5); // (its middle, blurred as the world is there: render/overlayTilt.ts)
       const shake = faces ? ire * 2.5 * Math.sin(performance.now() * 0.05 + c.id) : 0; // (a nightmare shakes)
       el.style.transform = `translate(calc(-50% + ${shake.toFixed(1)}px), calc(-100% - var(--px) * 12.5))`; // (lifted by its puffs, the lowest just above the sleeper)
       // Its direction (rules/dream.ts): a soft glow on the side of the bubble facing the runestone
@@ -781,10 +847,17 @@ export class LeashView {
     el.style.top = `${((1 - this.v.y) / 2) * height}px`;
   }
 
-  private uv(slot: number): number[] {
+  private uv(slot: number, span = 1): number[] {
     const N = SLOT * SLOTS, x = (slot % SLOTS) * SLOT, y = Math.floor(slot / SLOTS) * SLOT;
     // u0, v0 (top), u1, v1 (bottom); the canvas texture is flipped in v.
-    return [x / N, 1 - y / N, (x + SLOT) / N, 1 - (y + SLOT) / N];
+    return [x / N, 1 - y / N, (x + SLOT * span) / N, 1 - (y + SLOT * span) / N];
+  }
+
+  /** A creature's sigil in the stack and on the ground: a legend's is its legendary sigil (Ed, 2026-10-06: "huge, twice as
+   *  wide and more detailed", a magic circle with the animal in the centre), LEGEND_SCALE times a legend's (`scale`). */
+  private sigilOf(c: Creature): { uv: number[]; scale: number } {
+    if (legendarySigil(c)) return { uv: this.uv(this.slotOf(c.species, LEGEND_LEVEL, true), 2), scale: LEGEND_SCALE };
+    return { uv: this.uv(this.slotOf(c.species, c.level)), scale: 1 };
   }
 
   /** hatTop: the height of the tip of her hat this frame (the stack floats above it). */
@@ -846,19 +919,22 @@ export class LeashView {
     // one below with lag, so the stack trails behind her flight in proportion to speed, overshoots
     // when she stops or turns, and settles into a gentle idle sway; higher ones swing more.
     const S = t.stack, dt = Math.min(0.1, Math.max(0, time - this.lastTime)), slotPos = new Map<number, THREE.Vector3>();
+    const LV = this.load, LT = t.load ?? LOAD_DEFAULT;
     this.lastTime = time;
     while (this.chain.length < s.stack.length) this.chain.push({ x: 0, z: 0, vx: 0, vz: 0 });
     let below = { x: 0, z: 0 }, y = hatTop;
     for (const id of [...this.stackY.keys()]) if (!s.stack.includes(id)) this.stackY.delete(id);
     for (let k = s.stack.length - 1; k >= 0; k--) {
       const id = s.stack[k], c = g.creatures[id], j = s.stack.length - 1 - k, link = this.chain[j]; // j: 0 at the bottom
-      const size = (2 + c.level * 0.4) * S.scale;
-      const idle = Math.sin(time * 1.7 + j * 0.9) * S.idleSway * (1 + j * 0.5);
-      const tx = below.x - w.vx * S.trail + idle, tz = below.z - w.vz * S.trail;
+      const sg = this.sigilOf(c), size = (2 + c.level * 0.4) * S.scale * sg.scale;
+      const idle = Math.sin(time * 1.7 + j * 0.9) * S.idleSway * (1 + j * 0.5) * (1 - 0.6 * LV.load);
+      // (under a load it leans toward the pull, each sigil a little further: render/load.ts)
+      const lean = LT.stackLean * LV.load;
+      const tx = below.x - w.vx * S.trail + idle + LV.dx * lean, tz = below.z - w.vz * S.trail + LV.dz * lean;
       link.vx += ((tx - link.x) * S.stiffness - link.vx * S.damping) * dt; link.vz += ((tz - link.z) * S.stiffness - link.vz * S.damping) * dt;
       link.x += link.vx * dt; link.z += link.vz * dt;
       below = link;
-      y += (j === 0 ? S.offset * size : S.gap * size) + size / 2;
+      y += ((j === 0 ? S.offset * size : S.gap * size) + size / 2) * (1 - LT.stackSag * LV.load); // (and sags, its gaps closing)
       // Each sigil eases to its height in the stack, so when the cycle button sends the bottom one
       // to the top (Ed, 2026-10-04) it rises past the others and they settle down a place.
       const rel = y - hatTop, had = this.stackY.get(id), sy = had === undefined ? rel : had + (rel - had) * (1 - Math.exp(-dt * 9));
@@ -869,7 +945,7 @@ export class LeashView {
       const col = (this.slotOf(c.species, c.level), this.colours.get(c.species)!);
       // Down to her last hit, the leash frays: the stack flickers (Ed, 2026-10-04).
       const fray = g.witches[0].health.hp === 1 && !g.witches[0].ko ? (Math.sin(time * 23 + j * 3.1) > 0.2 ? 1 : 0.25) : 1;
-      this.standing.add(pos.x, pos.y, pos.z, size, this.uv(this.slotOf(c.species, c.level)), col.r, col.g, col.b, fray);
+      this.standing.add(pos.x, pos.y, pos.z, size, sg.uv, col.r, col.g, col.b, fray);
       const cyc = this.cycledAt.get(id);
       if (cyc !== undefined) {
         const k = (time - cyc) / 0.45;
@@ -882,9 +958,9 @@ export class LeashView {
     // Placed sigils, written on the ground, a little brighter than they were so they read in the
     // grass (Ed, v233; the grass is trampled clear round them, grass.ts).
     for (const p of s.placed) {
-      const c = g.creatures[p.id], slot = this.slotOf(c.species, c.level), col = this.colours.get(c.species)!;
+      const c = g.creatures[p.id], sg = this.sigilOf(c), col = this.colours.get(c.species)!;
       const pulse = 1.05 + 0.25 * Math.sin(time * 2 + p.id);
-      this.flat.add(p.x, 0.02, p.z, 3 + c.level * 0.8, this.uv(slot), col.r * pulse, col.g * pulse, col.b * pulse, 1, Math.min(1, (time - p.at) / 0.8));
+      this.flat.add(p.x, 0.02, p.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, 1, Math.min(1, (time - p.at) / 0.8));
       this.flat.add(p.x, 0.01, p.z, 5.5, dot, col.r, col.g, col.b, 0.38);
     }
 
@@ -900,6 +976,27 @@ export class LeashView {
       if (ready) this.flat.add(c.x, 0.015, c.z, 4.2, dot, col.r, col.g, col.b, 0.18);
     }
 
+    // The party legend (Ed's Easter egg, rules/partyLegend.ts): a giant party hat on its head, striped in party neons, a
+    // pom-pom on top, bobbing on the beat. Pinned to one (she can't go past its reach), its leash goes ruler-straight and
+    // bright, and hitting the edge gives a comic boing (a ring bouncing out round her).
+    for (const c of g.creatures) {
+      if (!c.partyLegend || c.gone || Math.abs(c.x - w.x) > RUNE_VIEW * 2 || Math.abs(c.z - w.z) > RUNE_VIEW * 2) continue;
+      const top = this.tops.get(c.id) ?? 9, H = top * 0.5, R0 = top * 0.2, bob = 0.12 * top * Math.max(0, Math.sin(time * Math.PI * 2 * (t.beat.bpm / 60) * 0.5));
+      for (let i = 0; i < 12; i++) {
+        const k = i / 12, y = top * 0.92 + bob + k * H, r = R0 * (1 - k), col = PARTY_HAT[Math.floor(i / 2) % PARTY_HAT.length], n = Math.max(1, Math.round((r * 2) / 0.45));
+        for (let j = 0; j < n; j++) this.standing.add(c.x - r + (n > 1 ? (j / (n - 1)) * 2 * r : r), y, c.z + 0.3, 0.6, dot, col[0], col[1], col[2], 1);
+      }
+      this.standing.add(c.x, top * 0.92 + bob + H + 0.35, c.z + 0.3, 1.3, dot, 1, 0.92, 0.62, 1);
+    }
+    const pin = g.witches[0].pinned;
+    if (pin) {
+      // (drawn a metre toward the camera, so the legend's own great sprite doesn't hide it)
+      const col = null as { r: number; g: number; b: number } | null, from = { x: w.x, y: Math.max(0.6, hatTop * 0.5), z: w.z + 1 }, to = { x: pin.x, y: 1.2, z: pin.z + 1 };
+      const d = Math.hypot(to.x - from.x, to.z - from.z), n = Math.max(8, Math.round(d / 0.35)), flash = 0.8 + 0.2 * Math.sin(time * 18);
+      for (let i = 0; i <= n; i++) { const k = i / n; this.standing.add(from.x + (to.x - from.x) * k, from.y + (to.y - from.y) * k, from.z + (to.z - from.z) * k, 0.7, dot, col ? col.r : 1, col ? col.g : 0.82, col ? col.b : 0.45, flash); } // (the lanterns' amber, bright: ruler-straight and taut)
+      if (pin.since !== this.boingAt) { this.boingAt = pin.since; this.fx.push({ kind: "ring", x: w.x, y: 0, z: w.z, at: time, life: 0.45, r: AMBER[0], g: AMBER[1], b: AMBER[2], seed: 0, size: 2.2, n: 16, dot: 0.5 }); }
+    }
+
     // From the treetops, each placed sigil is projected up above the canopy over its spot, flat
     // and glowing, joined to its rune by a faint pulsing column of light (Ed, 2026-10-03). It
     // fades in as she rises; on the ground the real rune is enough.
@@ -907,15 +1004,35 @@ export class LeashView {
     if (up > 0.01) for (const p of s.placed) {
       const c = g.creatures[p.id], col = this.colours.get(c.species)!, top = t.treetopHeight - 4 + P.height;
       const pulse = 0.85 + 0.15 * Math.sin(time * 1.3 + p.id);
-      this.flat.add(p.x, top, p.z, (3 + c.level * 0.8) * P.size, this.uv(this.slotOf(c.species, c.level)), col.r, col.g, col.b, P.opacity * up * pulse);
+      const sg = this.sigilOf(c);
+      this.flat.add(p.x, top, p.z, (3 + c.level * 0.8) * P.size * sg.scale, sg.uv, col.r, col.g, col.b, P.opacity * up * pulse);
       for (let y = 1; y < top; y += 1.5) this.standing.add(p.x, y, p.z, 0.3, dot, col.r, col.g, col.b, P.beam * up * pulse * (0.6 + 0.4 * Math.sin(y * 0.8 - time * 3)));
+    }
+    // And over every leashed or happy creature near her, its own sigil at the same height, moving with it (Ed's playtest,
+    // 2026-10-06: "I should be able to see sigils of leashed creatures and happy creatures from treetop mode"): smaller and
+    // without a beam, the nearest few only, fading out toward the edge of their range; a happy one's dimmer, as on the ground.
+    if (up > 0.01) {
+      const C = P.creatures, near = this.projected; near.length = 0;
+      for (const c of g.creatures) {
+        if (c.gone || !(c.leashed || hasRune(c)) || s.stack.includes(c.id) || s.placed.some(p => p.id === c.id && Math.hypot(p.x - c.x, p.z - c.z) < 6)) continue;
+        const d = Math.hypot(c.x - w.x, c.z - w.z);
+        if (d <= C.range) near.push({ c, d });
+      }
+      near.sort((a, b) => a.d - b.d);
+      const top = t.treetopHeight - 4 + P.height;
+      for (let i = 0; i < Math.min(near.length, C.max); i++) {
+        const { c, d } = near[i], col = this.colours.get(c.species) ?? (this.slotOf(c.species, 0), this.colours.get(c.species)!), sg = this.sigilOf(c);
+        const edge = Math.min(1, Math.max(0, (C.range - d) / (C.range * C.fade))), a = C.opacity * up * edge * (c.leashed ? 1 : C.happy) * (0.88 + 0.12 * Math.sin(time * 1.3 + c.id));
+        if (a > 0.01) this.flat.add(c.x, top + 0.2 * Math.sin(time * 0.9 + c.id), c.z, (3 + c.level * 0.8) * C.size * sg.scale, sg.uv, col.r, col.g, col.b, a);
+      }
     }
 
     // The ghost: where the bottom sigil would land, red where it can't.
     if (w.mode === "ground" && s.stack.length && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !runeNear(g.creatures, w.x, w.z, L.pickRadius, time) && !g.relics.some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.pickRadius)) { // (on a relic's sigil the button picks the relic up)
       const c = g.creatures[s.stack[s.stack.length - 1]], col = this.colours.get(c.species)!;
       const no = blocked(s, w.x, w.z, t);
-      this.flat.add(w.x, 0, w.z, 3 + c.level * 0.8, this.uv(this.slotOf(c.species, c.level)), no ? 0.85 : col.r, no ? 0.38 : col.g, no ? 0.43 : col.b, 0.22); // (can't: the HUD's loss red, #188)
+      const sg = this.sigilOf(c);
+      this.flat.add(w.x, 0, w.z, (3 + c.level * 0.8) * sg.scale, sg.uv, no ? 0.85 : col.r, no ? 0.38 : col.g, no ? 0.43 : col.b, 0.22); // (can't: the HUD's loss red, #188)
     }
     for (const f of this.fizzles) {
       const k = 1 - (time - f.at) / 0.7;
@@ -986,8 +1103,10 @@ export class LeashView {
         continue;
       }
       const d = Math.hypot(c.x - lp.x, c.z - lp.z);
-      if (B.thread && d > L.length * 0.85) {
-        const strain = Math.min(1, (d - L.length * 0.85) / L.length), n = Math.min(60, Math.floor(d / 1.2));
+      // (under a load, carried leashes show sooner, taut and brighter: render/load.ts)
+      const ld = s.stack.includes(id) ? this.load.load : 0, LT2 = t.load ?? LOAD_DEFAULT, from0 = 0.85 - (0.85 - LT2.threadFrom) * ld;
+      if (B.thread && d > L.length * from0) {
+        const strain = Math.min(1, (d - L.length * from0) / L.length + ld * 0.5), n = Math.min(60, Math.floor(d / 1.2)), lit = 1 + LT2.threadBright * ld;
         // An upward bow (Ed: "arc upwards a little"), high while it's slack and flattening to a near-straight line as it
         // goes taut (Ed, 2026-10-06: "The curve on slack leashes should be higher than it is now"), and the dots march from
         // the creature to the leash point.
@@ -995,14 +1114,37 @@ export class LeashView {
         for (let i = 1; i < n; i++) {
           const k = (i + 1 - (time * 2) % 1) / n;
           if (k >= 1) continue;
-          this.standing.add(from.x + (c.x - from.x) * k, from.y + (0.5 - from.y) * k + Math.sin(k * Math.PI) * arc, from.z + (c.z - from.z) * k, 0.22, dot, col.r, col.g, col.b, 0.25 + 0.75 * strain);
+          this.standing.add(from.x + (c.x - from.x) * k, from.y + (0.5 - from.y) * k + Math.sin(k * Math.PI) * arc, from.z + (c.z - from.z) * k, 0.22 * (1 + 0.6 * ld), dot, Math.min(1, col.r * lit), Math.min(1, col.g * lit), Math.min(1, col.b * lit), Math.min(1, 0.25 + 0.75 * strain));
         }
       }
     }
+    this.drawStrain(time, dot);
     this.standing.end(); this.flat.end(); this.over.end(); this.solid.end();
     this.bubbles(time, camera, width, height);
     this.drawDreams(camera, width, height);
+    this.drawSnores(camera, width, height);
     this.drawCirclePanel(camera, width, height);
+  }
+
+  /** Her broom straining under a load (render/load.ts): sparks splaying back from its bristles, more the heavier; and over
+   *  the treetops, sinking, a few sparks falling away below her. Each a fixed loop by its index, so nothing is made per frame. */
+  private drawStrain(time: number, dot: number[]): void {
+    const LV = this.load, LT = this.game.tuning.load ?? LOAD_DEFAULT, b = this.bristle, w = this.game.witch;
+    if (!b.on || LV.load <= 0.02) return;
+    const sp = Math.hypot(w.vx, w.vz), bx = sp > 0.3 ? -w.vx / sp : -LV.dx, bz = sp > 0.3 ? -w.vz / sp : -LV.dz;
+    const n = Math.min(24, Math.round(LT.sparks * LV.load));
+    for (let i = 0; i < n; i++) {
+      const life = 0.35 + 0.25 * hash2(i, 1, 41), k = ((time / life) + hash2(i, 2, 41)) % 1, side = (hash2(i, 3, 41) - 0.5) * 2;
+      const r = 0.25 + k * (0.9 + 0.6 * LV.load), fan = side * (0.5 + 0.7 * LV.load);
+      this.standing.add(b.x + (bx - bz * fan) * r, b.y - 0.1 + side * 0.15 * k - 0.4 * k * k, b.z + (bz + bx * fan) * r, 0.16, dot, 1, 0.78, 0.42, (1 - k) * 0.9);
+    }
+    if (LV.sinking > 0.02) {
+      const m = Math.round(10 * LV.sinking);
+      for (let i = 0; i < m; i++) {
+        const k = ((time / 1.3) + hash2(i, 5, 43)) % 1, a = hash2(i, 6, 43) * Math.PI * 2, r = 0.4 + 0.8 * hash2(i, 7, 43);
+        this.over.add(w.x + Math.cos(a) * r, b.y - 0.3 - k * 3.5, w.z + Math.sin(a) * r, 0.22, dot, 1, 0.85, 0.55, (1 - k) * LV.sinking);
+      }
+    }
   }
 
   /** The legend circle's explainer (Ed, 2026-10-06: "when you go into a legend circle, text appears on the screen to the side of
@@ -1097,6 +1239,7 @@ export class LeashView {
       placed(this.v.set(x, y, z)).project(camera);
       el.style.left = `${((this.v.x + 1) / 2) * width}px`;
       el.style.top = `${((1 - this.v.y) / 2) * height}px`;
+      tiltFilter(el, ((1 - this.v.y) / 2) * height);
     };
     const line = bc.querySelector("span")!, bar = bc.querySelector(".bar") as HTMLElement;
     if (!talk) {

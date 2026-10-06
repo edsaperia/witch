@@ -57,6 +57,38 @@ describe("the music engine's scheduler", () => {
   });
 });
 
+describe("the music plays on through the frames' hitches (Ed's playtest, 2026-10-06: \"The music cuts in and out a lot\")", () => {
+  const cue: MusicCue = { waves: [], nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0 };
+  /** `seconds` of audio at 60 frames a second, a frame of `hitch` seconds every `every` s, the game clock losing what passes
+   *  the rules' MAX_STEP (0.1 s) as it does; the engine's continuity, and how far out of step it ends (s). */
+  function fly(seconds: number, hitch: number, every: number) {
+    const ctx = fakeContext(), e = new MusicEngine(ctx, (ctx as unknown as { destination: AudioNode }).destination, style, 7), clock = newBeatClock(style.bpm);
+    let game = 0;
+    for (let f = 0; f < seconds * 60; f++) {
+      const dt = f > 0 && f % (every * 60) === 0 ? hitch : 1 / 60;
+      ctx.currentTime += dt; game += Math.min(dt, 0.1);
+      e.update(cue, game, clock, true);
+    }
+    const E = e as unknown as { g0: number; a0: number; rate: number };
+    return { ...e.stats, behind: E.g0 + (ctx.currentTime - E.a0) * E.rate - game };
+  }
+
+  it("a hitch shorter than what's scheduled ahead leaves no gap, and the music eases back into step", () => {
+    for (const hitch of [0.15, 0.3, 0.5]) {
+      const s = fly(40, hitch, 8);
+      expect(s.gap, `${hitch} s hitches`).toBeLessThan(0.01);
+      expect(s.resyncs).toBe(0);
+      expect(Math.abs(s.behind), `${hitch} s hitches: back in step`).toBeLessThan(0.1);
+    }
+  });
+
+  it("a longer stall only holds the music for the stall, then it plays on from where it was", () => {
+    const s = fly(40, 1.2, 15);
+    expect(s.gap).toBeLessThan(2 * (1.2 - 0.6) + 0.05); // (two stalls, each past the 0.6 s scheduled ahead)
+    expect(s.resyncs).toBe(0);
+  });
+});
+
 describe("a sleeping legend's clearing in the music (Ed, 2026-10-06)", () => {
   it("eases the muffle and the legend's layer in over about a second as she enters, and out as she leaves", () => {
     const ctx = fakeContext(), M = TUNING.music, m = new Music(ctx, 0.4, style, 7), clock = newBeatClock(style.bpm), mix = mixAt(M, 1, 0, 10);

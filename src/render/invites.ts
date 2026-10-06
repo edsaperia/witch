@@ -8,7 +8,7 @@
 // drains and lie on the ground a moment. DOM, like the talk bubbles, drawn as pixel art.
 import * as THREE from "three";
 import type { Game } from "../rules/game";
-import { affectionOf } from "../rules/game";
+import { affectionOf, meterHits } from "../rules/game";
 import { witchHeight } from "../rules/witch";
 import { hash2 } from "../rules/random";
 import { placed } from "./height";
@@ -16,6 +16,8 @@ import { sizeBubble } from "./bubbles";
 import { bodyRadius } from "../rules/spacing";
 import type { Creature } from "../rules/creatures";
 import { RingModel, ringOf } from "./inviteRing";
+import { beachOf } from "../rules/mapShape";
+import { tiltFilter } from "./overlayTilt";
 
 const HERS = ["💌", "🎉", "🥳", "💃", "🎈", "😘", "🎶", "✨"];
 // Replies by how full its meter is: unsure, warming, nearly, won over; and stung (blocked).
@@ -24,7 +26,7 @@ const BLOCKED = ["😠", "🙅", "💢", "😤"];
 
 /** A pixel emoji: drawn n pixels across with hard edges, as a data URL (cached). */
 const pixelCache = new Map<string, string>();
-function pixelEmoji(e: string, n: number): string {
+export function pixelEmoji(e: string, n: number): string {
   const key = `${e}:${n}`;
   let url = pixelCache.get(key);
   if (url) return url;
@@ -63,7 +65,17 @@ export class InviteView {
   /** 💌s that met no one, resting where they came down (Ed's playtest, 2026-10-06: "invitations
    *  should sit on the ground for a little while before they fade away"): drawn only (the rules ended
    *  them; they're no hits), at most invites.lingerMax, their images pooled and reused. */
-  private resting: { x: number; z: number; at: number; tilt: number }[] = [];
+  private resting: { x: number; z: number; at: number; tilt: number; life: number; fade: number; sea: boolean }[] = [];
+  /** A 💌 that came down at (x, z) at `at` starts resting: on the beach's sand or sea (Ed, 2026-10-06: "if you shoot invitations
+   *  onto the beach or in the sea, they last longer and disappear more slowly (5 seconds)") for beach.letterLinger, fading over
+   *  beach.letterFade, bobbing on the water; elsewhere invites.linger, fading over invites.lingerFade. */
+  private rest(x: number, z: number, at: number, tilt: number): void {
+    const t = this.game.tuning, B = t.beach, beach = B?.letterLinger ? beachOf(this.game.map.bounds, t) : null;
+    const sand = !!beach && beach.intoSand(x, z) > 0, life = sand ? B!.letterLinger! : t.invites.linger ?? 0;
+    if (life <= 0) return;
+    this.resting.push({ x, z, at, tilt, life, fade: Math.max(0.01, Math.min(life, sand ? B!.letterFade ?? life : t.invites.lingerFade)), sea: sand && beach!.intoSea(x, z) > 0 });
+    if (this.resting.length > t.invites.lingerMax) this.resting.shift();
+  }
   /** Each flying letter's spin (degrees) when last drawn, by its number: where it stops when it lands. */
   private spins = new Map<number, number>();
   private fwd = new THREE.Vector3();
@@ -97,6 +109,9 @@ export class InviteView {
     b.el.classList.add("on");
   }
 
+  /** A 💌 gone out of a calm circle at (x, z): the view's sparkle (render/slowtime.ts). */
+  onVanished?: (x: number, z: number) => void;
+
   private pop(e: string, x: number, y: number, z: number, at: number): void {
     const n = 7, k = this.game.tuning.pixelSize * this.game.tuning.bubbles.scale, el = document.createElement("img");
     el.src = pixelEmoji(e, n);
@@ -111,9 +126,11 @@ export class InviteView {
     const place = (el: HTMLElement, x: number, y: number, z: number) => {
       placed(this.v.set(x, y, z)).project(camera);
       const vis = this.v.z < 1 && Math.abs(this.v.x) < 1.2 && Math.abs(this.v.y) < 1.2;
+      const sy = ((1 - this.v.y) / 2) * height;
       el.style.left = `${((this.v.x + 1) / 2) * width}px`;
-      el.style.top = `${((1 - this.v.y) / 2) * height}px`;
+      el.style.top = `${sy}px`;
       el.style.visibility = vis ? "visible" : "hidden";
+      if (vis) tiltFilter(el, sy); // (blurred as the world is there: render/overlayTilt.ts)
     };
     const head = (id: number) => (tops.get(id) ?? 1.2 + g.creatures[id].level * 0.8) + 0.3;
     const pick = (list: string[], a: number, b: number) => list[Math.floor(hash2(a, b, 17) * list.length) % list.length];
@@ -130,12 +147,10 @@ export class InviteView {
         this.show(this.hers, pick(HERS, e.n ?? 0, 1), 0, 0, 0, time + 0.8);
       } else if (e.kind === "vanished") {
         this.pop("✨", e.x, 1.2, e.z, time); // (out of a sleeping legend's circle: gone in a sparkle, rules/slowTime.ts)
+        this.onVanished?.(e.x, e.z); // (and a burst of pixel motes at the edge: render/view/home.ts)
       } else if (e.kind === "fizzled") {
         // (landed on the ground at its range: a soft rose puff, render/leash.ts drawLetters; and it rests there a while)
-        if ((t.invites.linger ?? 0) > 0) {
-          this.resting.push({ x: e.x, z: e.z, at: time, tilt: this.spins.get(e.n ?? -1) ?? (hash2(e.n ?? 0, 3, 29) - 0.5) * 50 });
-          if (this.resting.length > t.invites.lingerMax) this.resting.shift();
-        }
+        this.rest(e.x, e.z, time, this.spins.get(e.n ?? -1) ?? (hash2(e.n ?? 0, 3, 29) - 0.5) * 50);
       } else if ((e.kind === "hit" || e.kind === "blocked" || e.kind === "happy") && e.id !== undefined) {
         // A blocked letter pops 💢; one that lands joins its ring (below); won over, the ring goes to hearts.
         if (e.kind === "blocked") this.pop("💢", e.x, head(e.id) * 0.6, e.z, time);
@@ -171,8 +186,8 @@ export class InviteView {
     const flat = Math.max(0.3, Math.min(1, Math.abs(this.fwd.y)));
     // The resting ones: lying flat where they came down, still at the turn they landed at, fading out at the end.
     {
-      const life = t.invites.linger ?? 0, fade = Math.max(0.01, Math.min(life, t.invites.lingerFade)), n = Math.round(t.bubbles.emojiPixels * 0.8), k = t.pixelSize * t.bubbles.scale;
-      this.resting = this.resting.filter(r => time - r.at < life && time >= r.at);
+      const n = Math.round(t.bubbles.emojiPixels * 0.8), k = t.pixelSize * t.bubbles.scale;
+      this.resting = this.resting.filter(r => time - r.at < r.life && time >= r.at);
       while (this.restImgs.length < this.resting.length) {
         const im = document.createElement("img");
         Object.assign(im.style, { position: "absolute", imageRendering: "pixelated", width: `${n * k}px`, height: `${n * k}px`, marginLeft: `${(-n * k) / 2}px`, marginTop: `${(-n * k) / 2}px`, filter: "drop-shadow(0 1px 1px rgba(0,0,0,.6))" });
@@ -184,9 +199,10 @@ export class InviteView {
         const r = this.resting[i];
         if (!r) { if (im.style.display !== "none") im.style.display = "none"; return; }
         im.style.display = "block";
-        place(im, r.x, 0.08, r.z);
-        im.style.opacity = String(Math.min(0.9, Math.max(0, (life - (time - r.at)) / fade) * 0.9));
-        im.style.transform = `scale(0.9, ${(0.9 * flat).toFixed(2)}) rotate(${r.tilt.toFixed(0)}deg)`; // (turned, then laid flat)
+        const bob = r.sea ? Math.sin(time * 2.1 + r.tilt) : 0; // (floating on the sea, rocking gently)
+        place(im, r.x, 0.08 + bob * 0.07, r.z);
+        im.style.opacity = String(Math.min(0.9, Math.max(0, (r.life - (time - r.at)) / r.fade) * 0.9));
+        im.style.transform = `scale(0.9, ${(0.9 * flat).toFixed(2)}) rotate(${(r.tilt + bob * 8).toFixed(0)}deg)`; // (turned, then laid flat)
       });
     }
     // The letters in flight: a spinning pixel 💌 each.
@@ -231,7 +247,7 @@ export class InviteView {
     // The rings: one slot a hit each creature's meter needs (invites.hits by its level), the envelopes it holds
     // orbiting it, flat and spinning, the gaps faint marks; turning slowly round it at about its middle.
     const near = g.creatures.filter(c => !c.gone && Math.abs(c.x - w.x) < 60 && Math.abs(c.z - w.z) < 60 && (c.affection || this.ringModel.rings.has(c.id)));
-    const changes = this.ringModel.update(near, c => ringOf(c.level, A.affection(c), t.invites.hits), won);
+    const changes = this.ringModel.update(near, c => ringOf(c.level, A.affection(c), meterHits(t)), won);
     const ringAt = (c: Creature, slot: number, slots: number) => {
       const r = Math.max(bodyRadius(c) + 0.6, 1.1, (slots * 0.42) / (Math.PI * 2)), a = time * 0.7 + (slot / slots) * Math.PI * 2;
       return { x: c.x + Math.cos(a) * r, y: Math.max(0.5, head(c.id) * 0.55), z: c.z + Math.sin(a) * r };
@@ -288,7 +304,7 @@ export class InviteView {
       const u = (time - f.at) / 0.45;
       if (u >= 1 || u < 0) {
         f.el.remove();
-        if (u >= 1 && (t.invites.linger ?? 0) > 0) { this.resting.push({ x: f.x, z: f.z, at: time, tilt: f.tilt }); if (this.resting.length > t.invites.lingerMax) this.resting.shift(); }
+        if (u >= 1) this.rest(f.x, f.z, time, f.tilt);
         return false;
       }
       place(f.el, f.x, f.y * (1 - u * u), f.z);

@@ -49,6 +49,11 @@ export const LIGHT_UNIFORMS = {
   uGladeLight: { value: new THREE.Vector2() },
   /** The forest's light outside a clearing while she's in one (1 as it is; the clearing's own twilight is never dimmed). */
   uDim: { value: 1 },
+  /** Slowed time in a legend's circle (render/slowtime.ts): the circle's centre x, z, its radius, and how slowed the world
+   *  outside is (0 normal to 1 at its slowest): outside, the world greys and cools; the circle's edge shimmers. */
+  uSlow: { value: new THREE.Vector4() },
+  /** Real time (s), for what keeps its pace while the world slows (uTime slows with it: render/slowtime.ts). */
+  uRealTime: { value: 0 },
   // The disco ball: position (w: 1 when present), and spin, speck density, brightness, reach.
   uDisco: { value: new THREE.Vector4() },
   uDiscoParams: { value: new THREE.Vector4() },
@@ -56,6 +61,8 @@ export const LIGHT_UNIFORMS = {
   // The scenery budget (view.ts): scenery fades out between radius - fade and radius metres
   // from the haze centre (the witch). x: radius, y: fade.
   uScenery: { value: new THREE.Vector2(1e6, 1) },
+  /** The party's over (render/partyOver.ts): home x, z, the switch-off front's distance from it (0: playing) and its width. */
+  uPartyOver: { value: new THREE.Vector4(0, 0, 0, 30) },
 };
 
 export type LightUniforms = typeof LIGHT_UNIFORMS;
@@ -97,7 +104,12 @@ uniform int uGladeCount;
 uniform vec3 uGladeRgb;
 uniform vec2 uGladeLight;
 uniform float uDim;
+uniform vec4 uSlow;
+uniform float uRealTime;
 uniform int uLightCount;
+uniform vec4 uPartyOver;
+// The party's over: how far switched off a party light at P is (0 on, 1 off), the front rippling out from home.
+float partyOff(vec3 P) { if (uPartyOver.z <= 0.0) return 0.0; return smoothstep(0.0, 1.0, (uPartyOver.z - distance(P.xz, uPartyOver.xy)) / uPartyOver.w); }
 uniform vec4 uDisco, uDiscoParams;
 uniform vec3 uDiscoColour;
 uniform vec2 uScenery;
@@ -108,13 +120,21 @@ float sceneryFade(vec3 P) {
 }
 
 // Fade toward the twilight haze with distance, in a few dithered steps so it stays pixel art.
+// Time slowed outside a legend's circle (Ed, 2026-10-06; render/slowtime.ts): the world beyond its edge greys and cools,
+// as it eases to a crawl; inside, as it is.
+vec3 slowGrade(vec3 c, vec3 P) {
+  if (uSlow.w <= 0.0) return c;
+  float k = uSlow.w * smoothstep(uSlow.z - 0.5, uSlow.z + 1.5, length(P.xz - uSlow.xy));
+  float l = dot(c, vec3(0.299, 0.587, 0.114));
+  return mix(c, mix(c, vec3(l), 0.75) * vec3(0.86, 0.95, 1.12), k);
+}
 vec3 haze(vec3 c, vec3 P) {
   float h = smoothstep(uHazeRange.x, uHazeRange.y, length(P.xz - uHazeCentre));
   h *= h; // light through the middle distance, full only at the far edge
-  if (uSmooth > 0.5) return mix(c, uHazeColour * uDim, h);
+  if (uSmooth > 0.5) return slowGrade(mix(c, uHazeColour * uDim, h), P);
   float q = h * 4.0, fr = fract(q);
   q = floor(q) + (fr > (mod(floor(gl_FragCoord.x) + floor(gl_FragCoord.y), 2.0) > 0.5 ? 0.66 : 0.33) ? 1.0 : 0.0);
-  return mix(c, uHazeColour * uDim, q / 4.0);
+  return slowGrade(mix(c, uHazeColour * uDim, q / 4.0), P);
 }
 
 float lightStep(float f) {
@@ -136,6 +156,12 @@ vec3 gladeLight(vec3 P) {
     if (d > G.z * 1.2) continue;
     float pool = 1.0 - smoothstep(G.z * 0.45, G.z, d), q = (d - G.z) / (G.z * 0.07), ring = exp(-q * q);
     l += uGladeRgb * (pool * uGladeLight.x + ring * (0.25 + 0.75 * G.w) * uGladeLight.y);
+  }
+  // Slowed time: its circle's edge shimmers, so the boundary of the magic reads (a ring of light flickering round it).
+  if (uSlow.w > 0.0) {
+    vec2 v = P.xz - uSlow.xy;
+    float q = (length(v) - uSlow.z) / 0.6, a = atan(v.y, v.x);
+    l += uGladeRgb * uSlow.w * exp(-q * q) * (0.35 + 0.65 * (0.5 + 0.5 * sin(a * 23.0 + uRealTime * 5.0)) * (0.5 + 0.5 * sin(a * 7.0 - uRealTime * 3.1)));
   }
   return l;
 }

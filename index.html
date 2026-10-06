@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0b0a16">
-  <title>Witch — prototype</title>
+  <title>Coven Rush</title>
   <style>
     :root { --ink: #e8e2f4; --dim: #9a93b4; --panel: rgba(14, 11, 28, .82); --accent: #e8b46a; --accent-dim: rgba(232, 180, 106, .45); --love: #d9789e; --loss: #d8606e; } /* the HUD in the art's palette (art review round 1): one accent, lantern amber; love (💌, hearts) and loss muted */
     html, body { margin: 0; height: 100%; background: #0b0a16; overflow: hidden; color: var(--ink); font: 14px/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
@@ -29,13 +29,6 @@
     #clock.on { display: block; }
     #clock.paused { color: var(--dim); }
     #clock .label { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; color: var(--dim); font-size: 11px; letter-spacing: 0; text-shadow: 0 1px 0 #000; }
-    /* The party spell's button (Ed, 2026-10-06): large, centred, in the HUD's amber, until she casts it; Enter too. */
-    #cast { position: fixed; left: 50%; top: 62%; transform: translateX(-50%); display: none; z-index: 4; font: inherit; font-size: 20px; letter-spacing: .12em; color: #1d1408; background: var(--accent); border: 2px solid #f6d7a4; border-radius: 10px; padding: 14px 28px 10px; cursor: pointer; box-shadow: 0 0 22px rgba(232, 180, 106, .55), 0 3px 0 #7a5228; text-shadow: none; animation: cast-glow 2.4s ease-in-out infinite; }
-    #cast.on { display: block; }
-    #cast:hover { filter: brightness(1.08); }
-    #cast:active { transform: translateX(-50%) translateY(2px); box-shadow: 0 0 22px rgba(232, 180, 106, .55), 0 1px 0 #7a5228; }
-    #cast small { display: block; margin-top: 4px; font-size: 11px; letter-spacing: .04em; opacity: .7; }
-    @keyframes cast-glow { 0%, 100% { box-shadow: 0 0 14px rgba(232, 180, 106, .4), 0 3px 0 #7a5228; } 50% { box-shadow: 0 0 30px rgba(232, 180, 106, .75), 0 3px 0 #7a5228; } }
     #clock.lost { animation: clock-lost .9s ease-out; }
     @keyframes clock-lost { 0%, 30% { color: var(--loss); box-shadow: 0 0 8px var(--loss); } }
     #clock .loss-pop, #clock .boot-pop { position: absolute; left: 50%; top: 100%; margin-top: 18px; transform: translateX(-50%); white-space: nowrap; font-size: 12px; letter-spacing: 0; text-shadow: 0 1px 0 #000; }
@@ -43,8 +36,13 @@
     #clock .boot-pop { color: var(--accent); animation: boot-pop 4s ease-out forwards; }
     @keyframes boot-pop { 0% { opacity: 0; } 10%, 75% { opacity: 1; } 100% { opacity: 0; } }
     @keyframes loss-pop { 0% { opacity: 0; transform: translateX(-50%) scale(1.8); } 12% { opacity: 1; transform: translateX(-50%) scale(1); } 70% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, 60%); } }
-    #over { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(8, 6, 18, .78); z-index: 6; }
-    #over.on { display: flex; }
+    #over { position: fixed; left: 0; right: 0; top: 58px; display: none; justify-content: center; z-index: 6; pointer-events: none; }
+    #over.on { display: flex; animation: overIn 2.4s ease-out both; }
+    #over.on .card { pointer-events: auto; background: rgba(20, 16, 38, .55); padding: 8px 14px; font-size: 12px; max-width: 24em; position: relative; }
+    #over.on h1 { font-size: 15px; }
+    #over.on button { padding: 4px 10px; margin-top: 8px; }
+    #over.on #over-close { position: absolute; top: 2px; right: 4px; margin: 0; padding: 0 6px; border: none; background: none; }
+    @keyframes overIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
     #over button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid #3a2f5c; border-radius: 6px; padding: 8px 14px; margin-top: 14px; cursor: pointer; }
     #start { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(8, 6, 18, .78); cursor: pointer; z-index: 5; }
     #start .card, #over .card { max-width: 30em; margin: 16px; padding: 22px 24px; background: var(--panel); border: 1px solid #3a2f5c; border-radius: 10px; text-align: center; }
@@ -128,7 +126,6 @@
   <div id="fight-knobs"><span>fight scale [ ]</span><input type="range" name="scale" min="0.25" max="3" step="0.05"><span class="scale"></span><span>fight speed ; '</span><input type="range" name="speed" min="0.25" max="3" step="0.05"><span class="speed"></span><span>momentum , .</span><input type="range" name="momentum" min="0.25" max="3" step="0.05"><span class="momentum"></span><button type="button" class="fight-reset">reset fight scale, speed and momentum</button><span>treetop speed m/s</span><input type="range" name="treetop" min="16" max="160" step="2"><span class="treetop"></span><span>area (?areaSize=)</span><span class="area" style="grid-column: 2 / -1"></span><button type="button" class="world-reset">reset area size and treetop speed (new map)</button></div>
   <div id="debug-buttons"><button id="next-wave" type="button">next wave (N)</button><button id="pause-waves" type="button">pause waves (P)</button><button id="rulers" type="button">rulers (G)</button></div>
   <div id="clock"><span class="t">00:00</span><div class="label"></div></div>
-  <button id="cast" type="button">✨ CAST THE PARTY SPELL ✨<small>click · tap · Enter or R</small></button>
   <div id="bubbles"><div class="bubble" id="bubble-witch"></div><div class="bubble" id="bubble-creature"><span></span><div class="bar"><i></i></div></div></div>
   <div id="touch">
     <div id="stick-zone"></div>
@@ -141,13 +138,14 @@
     <div class="tbtn" id="dash">dash</div>
     <div class="tbtn" id="invite">💌</div>
   </div>
-  <div id="over"><div class="card"><h1>THE PARTY'S OVER</h1><div>Every soundsystem has fallen.</div><div id="over-stats"></div><button id="again">Play again</button> <button id="fresh">A new forest</button></div></div>
+  <div id="over"><div class="card"><button id="over-close" title="Hide">×</button><h1>THE PARTY'S OVER</h1><div>Everyone's gone home to sleep 😴. Wander as long as you like.</div><div id="over-stats"></div><button id="again">Play again</button> <button id="fresh">A new forest</button></div></div>
   <div id="start" class="loading">
     <div class="card">
       <h1>WITCH</h1>
       <div>a prototype: fly the witch round the forest at night</div>
       <div class="go">Tap, click or press any key to start</div>
       <button type="button" id="look-btn" style="font:inherit;margin:6px 0;padding:4px 10px;border-radius:6px;border:1px solid rgba(232,226,244,.45);background:rgba(255,95,180,.18);color:inherit;cursor:pointer">👗 Change her look</button>
+      <button type="button" id="bot-btn" title="watch the skilled bot play a run (?bot=skilled; Esc comes back here)" style="font:inherit;margin:6px 0 6px 6px;padding:4px 10px;border-radius:6px;border:1px solid rgba(255,190,110,.55);background:rgba(255,190,110,.16);color:inherit;cursor:pointer">🤖 Bot game</button>
       <div id="progress"><div class="fill"></div><span class="label"></span></div>
       <div id="waves"></div>
       <div id="shake-opt"></div>
@@ -155,7 +153,7 @@
       <div class="keys">
         <b>Keyboard and mouse</b> WASD (or the arrow keys) fly · the mouse aims (the ring at the cursor glows pink within a 💌's reach, and a blue arc fills round it while the dodge recharges) · on the ground, left click (or hold 1) throws 💌 invites at the cursor: every one that lands joins a ring orbiting the creature, the gaps the hits still needed; a full ring turns to ❤️s and wins it over, its sigil dropping as a rune at its feet: stand by it and press E to leash it; left alone, the envelopes fall out of orbit one by one (enraged ones and legends block them) · right click dodges toward the cursor: a 10 m blink on the ground, to the little diamond (pressed a moment early, it goes as soon as it can) · Space rises to the treetops or lands · E on the ground puts down / picks up a sigil (knocked out, she drops her hat: the 🎩 pointer leads back to it, and E on it puts it back on, before any sigil under it) · Q cycles the stack (the bottom sigil, the next put down, to the top) · R spell (speed boost) · 2–4 empty slots for now · the mouse wheel, Z/X or +/− zoom · H hides the action bar · Esc pauses everything (a still for screenshots, with a stamp of where you are; while paused . steps a frame, Shift+. ten; ❚❚ by the volume on touch) · ~ debug · N next wave · P pause waves · I invite nearest (debug) · [ ] fight scale, ; ' fight speed, , . fight momentum (debug: in the ~ panel too)<br>
         <b>Gamepad</b> left stick flies · right stick aims and a trigger throws 💌s · A dash · B spell · X sigil (on the ground) or cycle (in the treetops) · Y rises or descends · shoulder buttons zoom · Start pauses<br>
-        <b>On screen</b> at the start, CAST THE PARTY SPELL (or Enter, or R) to begin · once home's speakers are up, the 🎶 ring at the edge points along the ley line to the next wave, its circle filling as the wave comes · the clock at the top is the time played<br>
+        <b>On screen</b> at the start, CAST THE PARTY SPELL (or Enter, or R) to begin · 🤖 Bot game (or ?bot=skilled) watches the skilled bot play a run instead: 1, 2, 4 its speed, Esc back here · once home's speakers are up, the 🎶 ring at the edge points along the ley line to the next wave, its circle filling as the wave comes · the clock at the top is the time played<br>
         <b>Phone</b> drag on the left to fly · the round button rises or descends · the 💌 button throws invites the way you're going · sigil puts down or picks up (on the ground) or cycles (in the treetops) · spell and dash · three-finger tap for debug
       </div>
     </div>

@@ -137,6 +137,22 @@ const report = await b.page.evaluate(async () => {
       res.push({ what: `sleeping legend ${id} ${facing}: asleep x2 (sunk, no taller than awake, no glow, eyes shut, breathing; drawn, standing, origin on the sprite, coloured)`, good: !bad.length, info: bad.join(", ") || `asleep ${fs[0].sp.w}x${fs[0].sp.h}, awake ${aw.w}x${aw.h}` });
     }
   }
+  { // every creature asleep (art/naps.js; Ed, 2026-10-06: "we will need sleeping artwork for all the creatures"): every species at every level in 2
+    // breathing frames, each drawn and standing on its bottom row, its ground origin on the sprite, no taller than it stands awake, no pupils
+    // (eyes shut), every material coloured, its two breaths different
+    for (const S of G.SPECIES) {
+      const bad = [];
+      for (let level = 0; level < 4; level++) {
+        const aw = G.critter(S.id, level, 0, st), fs = [0, 1].map(f => G.critter(S.id, level, f, st, "towards", { nap: true })), colours = G.speciesColours(S.id, st);
+        fs.forEach((sp, i) => { const s = stats(sp), o = sp.origin, miss = [...new Set(sp.m)].filter(m => m && m !== G.M.LINE && !colours[m]);
+          if (!(s.n > 20 && s.bottom > 0 && o && o[0] >= 0 && o[0] <= sp.w && o[1] >= sp.h * .5 && o[1] <= sp.h + 2 && !sp.n.some(Number.isNaN) && !miss.length)) bad.push(`L${level} f${i} ${s.w}x${s.h}${o ? " origin " + o : " no origin"}${miss.length ? " uncoloured " + miss : ""}`);
+          if (sp.h > aw.h) bad.push(`L${level} f${i} ${sp.h} taller than awake ${aw.h}`);
+          if (sp.m.some(m => m === G.M.PUPIL || m === G.M.IRIS)) bad.push(`L${level} f${i} eyes open`); });
+        if (fs[0].m.length === fs[1].m.length && fs[0].m.every((m, i) => m === fs[1].m[i])) bad.push(`L${level} no breath`);
+      }
+      res.push({ what: `${S.id} asleep (${G.napPose(S.id).kind}): baby to legend x2 breaths (drawn, standing, origin on the sprite, no taller than awake, eyes shut, coloured)`, good: !bad.length, info: bad.slice(0, 4).join(", ") || "ok" });
+    }
+  }
   for (const [key, f] of G.TREE_TYPES) for (let v = 0; v < 3; v++) { const r = G.rng(v + 1), t = f(r, st, st.treeSize * G.uni(r, .9, 1.1)), s = stats(t.sp); res.push({ what: `tree ${key} ${v}`, good: s.n > 200 && s.bottom > 0 && t.crownY > 0 && t.crownY < s.h, info: `${s.w}x${s.h}` }); }
   for (let v = 0; v < 8; v++) { const s = stats(G.bush(G.rng(v), st).sp); res.push({ what: `bush ${v}`, good: s.n > 20, info: `${s.w}x${s.h}` }); }
   for (const facing of ["towards", "away"]) for (const frame of [0, 1, 2]) { const s = stats(G.witchSprite(st, { frame, facing })); res.push({ what: `witch ${facing} frame ${frame}`, good: s.n > 200 && s.bottom > 0, info: `${s.w}x${s.h}` }); }
@@ -352,6 +368,35 @@ const report = await b.page.evaluate(async () => {
     const dotted = ringInk(1), full = ringInk(2), ringsRead = dotted > 1 && dotted < full * .75;
     const fl = G.floatSigil(id, { level: 3 });
     res.push({ what: `sigil ${id}: vector, 12 px glyph, inside the box, ground draw-on, four levels grow (no ring, a dotted ring, a full ring, then a banded double ring with rays; the dotted and full rings tell apart at 14 px), floating form`, good: inside && /<(polyline|circle)/.test(svg) && ink > 40 && gn > 8 && done > 60 && early < done && grows && ringsRead && pixels(fl) > 20, info: `${strokes.length} strokes, ${ink} px at 48, ${gn} px at 12, ground ${gr.map(g => g.w + "x" + g.h).join(" < ")}` });
+  }
+  // legendary sigils (Ed, 2026-10-06: "huge, twice as wide and more detailed than the normal ones", then his reference, a magic
+  // circle with the animal in the centre): every species' has detail of its own (inside its unit box); its circle's lines all in
+  // the unit square, with three medallions, runes when full and none when small, its runes seeded (no two species' alike); its
+  // SVG, glyph, ground rune and floating form LEGEND_SCALE times a normal's or a legend's across and inkier; its carving mask
+  // whole, its outer ring touching the edge; the stack carries one
+  { const bad = [], runeKeys = new Set();
+    for (const S of G.SPECIES) {
+      const id = S.id, det = G.LEGEND_DETAIL[id] || [];
+      if (!det.length) bad.push(`${id}: no detail`);
+      if (det.some(k => (k.l || (k.d ? [k.d] : [])).some(([x, y]) => x < 0 || y < 0 || x > 1 || y > 1))) bad.push(`${id}: detail outside its box`);
+      const full = G.legendSigilStrokes(id, { tier: 2 }), small = G.legendSigilStrokes(id, { tier: 0 });
+      if (!full.every(k => k.pts.every(([x, y]) => x >= 0 && x <= 1 && y >= 0 && y <= 1))) bad.push(`${id}: outside its square`);
+      const runes = full.filter(k => k.kind === "rune").length;
+      if (runes < 60 || small.some(k => k.kind === "rune") || !small.some(k => k.kind === "animal") || small.length >= full.length) bad.push(`${id}: tiers (${runes} runes)`);
+      runeKeys.add(full.filter(k => k.kind === "rune").slice(0, 12).map(k => k.pts.map(p => p.map(v => v.toFixed(3)).join(",")).join(";")).join("|"));
+      if (!/width="128" height="128"/.test(G.sigilSVG(id, { size: 64, legendary: true }))) bad.push(`${id}: SVG not ×${G.LEGEND_SCALE}`);
+      const g = G.sigilGlyph(id, 32, { legendary: true }), animal = g.m.reduce((a, v, i) => a + (v && !g.frame[i] ? 1 : 0), 0), rim = g.frame.reduce((a, v) => a + v, 0);
+      if (g.w !== 64 || g.h !== 64 || animal < 30 || rim < 150) bad.push(`${id}: glyph ${g.w}x${g.h} ${animal}/${rim}`);
+      const r = G.groundSigil(id, { legendary: true }), r3 = G.groundSigil(id, { level: 3 }), f = G.floatSigil(id, { legendary: true }), f3 = G.floatSigil(id, { level: 3 });
+      if (r.w < r3.w * 1.8 || pixels(r) <= pixels(r3)) bad.push(`${id}: ground rune ${r.w}x${r.h} vs ${r3.w}x${r3.h}`);
+      if (f.w < f3.w * 1.7 || pixels(f) <= pixels(f3)) bad.push(`${id}: floating ${f.w}x${f.h}`);
+      const m = G.legendSigilMask(id, 128), edge = [64 * 128 + 1, 64 * 128 + 126, 128 + 64, 126 * 128 + 64].map(i => Math.max(m[i], m[i - 1], m[i + 1])), lit = m.reduce((a, v) => a + (v > .5 ? 1 : 0), 0);
+      if (edge.some(v => v < .3) || lit < 1200 || m.some(v => !(v >= 0 && v <= 1))) bad.push(`${id}: mask (edge ${edge.map(v => v.toFixed(1))}, ${lit} px)`);
+    }
+    if (runeKeys.size < G.SPECIES.length) bad.push(`runes alike: ${runeKeys.size} of ${G.SPECIES.length}`);
+    const st = new G.SigilStack(), it = st.push("wolf", 3, null, { legendary: true }); st.update(0, { head: [0, 0, 0] }); const lay = st.layout()[0];
+    if (!(lay.legendary && Math.abs(lay.width - lay.size) < 1e-9 && Math.abs(it.size - G.LEGEND_SCALE * G.floatSize(3)) < 1e-9)) bad.push("the stack's legendary sigil not twice a legend's");
+    res.push({ what: "legendary sigils: every species' magic circle with its own detail and runes, inside its square, full when big and simple when small, its SVG, glyph, ground rune and floating form twice a legend's and inkier, its carving mask whole; the stack carries one", good: !bad.length, info: bad.slice(0, 6).join(", ") || `${G.SPECIES.length} species` });
   }
   { // the leash stack: still, it stands over her head, newest at the bottom; flying right, it trails left, higher sigils further; stopped, it settles back
     const s = new G.SigilStack(); ["wolf", "owl", "stag"].forEach(id => s.push(id, 1));

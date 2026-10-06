@@ -5,6 +5,7 @@ import { TUNING } from "../../src/rules/tuning";
 import style from "../../config/music-style.json";
 import { voiceOf } from "../../src/platform/audio/voices";
 import type { Creature } from "../../src/rules/creatures";
+import type { NightKind } from "../../src/platform/audio/night";
 
 const v = (species: string, level: number) => voiceOf({ species, level, boss: level === 3 } as unknown as Creature, TUNING);
 
@@ -26,6 +27,10 @@ const SOUNDS: [string, number, Play][] = [
   ["witch-knock", 6, () => {}],
   ["legend-charge", 9, () => {}],
   ["relic-found", 3, s => s.relic()],
+  ["spell-hum", 3, s => s.spell("hum", 1)],
+  ["spell-rustle", 0.5, s => s.spell("rustle", 1)],
+  ["spell-crackle", 1.3, s => s.spell("crackle")],
+  ["spell-burst", 2, s => s.spell("burst")],
   ["home-meadow", 12, () => {}],
   ["soundsystem-lost", 3, s => s.lost()],
   ["soundsystem-lost-urgent", 3, s => s.lost(true)],
@@ -52,6 +57,9 @@ const SOUNDS: [string, number, Play][] = [
   ["shoes", 3, () => {}],
   ["pond", 12, () => {}],
   ["sea", 16, () => {}],
+  ...(["pine", "wood", "wet", "stream", "meadow", "open", "home"] as const).map(k => [`night-${k}`, 16, () => {}] as [string, number, Play]),
+  ["night-crossfade", 16, () => {}],
+  ["snores", 9, () => {}],
   ["picnic", 10, () => {}],
   ["creator-room", 12, () => {}],
   ["letter-land", 1.6, () => {}],
@@ -78,6 +86,13 @@ async function render(name: string, seconds: number, play: Play) {
   } else if (name === "shoes") {
     // four dancers' party shoes on the beat at 120 bpm
     for (let b = 0; b < 6; b++) void oc.suspend(Math.round(b * 0.5 * rate) / rate).then(() => { s.taps(4, 0, 1); return oc.resume(); });
+  } else if (name.startsWith("night-")) {
+    // the party's over: the night coming in over 3 s, then held (the crossfade: the woods, then into a bog at 8 s)
+    const kind = name.slice(6);
+    for (let k = 0; k * 0.1 < seconds - 0.2; k++) { const sec = k * 0.1, L = Math.min(1, sec / 3); void oc.suspend(Math.round(sec * rate) / rate).then(() => { s.night(kind === "crossfade" ? (sec < 8 ? "wood" : "wet") : kind as NightKind, L); return oc.resume(); }); }
+  } else if (name === "snores") {
+    // three sleeping animals near her: a baby, an adult, a legend, taking turns
+    for (let k = 0; k * 0.1 < seconds - 0.2; k++) { const sec = k * 0.1; void oc.suspend(Math.round(sec * rate) / rate).then(() => { s.snore([0, 0.66, 1][k % 3], (k % 3) - 1, 1); return oc.resume(); }); }
   } else if (name === "sea") {
     // walking down the beach to the water (two waves or so), then away up it until it's let go
     for (let k = 0; k * 0.1 < seconds - 0.2; k++) { const sec = k * 0.1, L = sec < 2 ? sec / 2 : sec < 11 ? 1 : Math.max(0, 1 - (sec - 11) / 2); void oc.suspend(Math.round(sec * rate) / rate).then(() => { s.sea(L, 0.3); return oc.resume(); }); }
@@ -131,8 +146,8 @@ async function render(name: string, seconds: number, play: Play) {
   return { name, rms: Math.sqrt(sum / L.length), peak, nan, rate, pcm: btoa(b) };
 }
 
-(window as unknown as { sfxRender: () => Promise<unknown> }).sfxRender = async () => {
+(window as unknown as { sfxRender: (only?: string[]) => Promise<unknown> }).sfxRender = async (only?: string[]) => {
   const out = [];
-  for (const [n, sec, p] of SOUNDS) out.push(await render(n, sec, p));
+  for (const [n, sec, p] of SOUNDS) if (!only?.length || only.includes(n)) out.push(await render(n, sec, p));
   return out;
 };

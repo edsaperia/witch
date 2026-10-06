@@ -17,6 +17,7 @@ import { AssetLibrary } from "./assets";
 import type { LightSource } from "../rules/forest";
 import { Ground } from "./ground";
 import { Sky } from "./sky";
+import { slowAmount, slowest } from "./slowtime";
 import { moonState, type MoonState } from "../rules/moon";
 import { Clouds } from "./clouds";
 import { Smoke } from "./smoke";
@@ -30,7 +31,9 @@ import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
 import { TRAIL_DEFAULT, WitchTrail } from "./trail";
+import { newPartyOverLook, partyOff, partyOverEase, updatePartyOver } from "./partyOver";
 import { SWOOP_TRAIL_DEFAULT, SwoopTrails } from "./swoopTrails";
+import { LOAD_DEFAULT, loadView } from "./load";
 import { InviteView } from "./invites";
 import { stunned } from "../rules/knock";
 import { StateMarks } from "./looks";
@@ -75,6 +78,7 @@ import { refresh } from "./view/scenery";
 import { drawBerries, drawCreatures } from "./view/creatures";
 import { drawMarkers, drawSpeakers, placeTreehouse } from "./view/home";
 import { setLights, updateSources } from "./view/lights";
+import { setOverlayTilt } from "./overlayTilt";
 
 /** Her shadow, lying on the rolling ground corner by corner. */
 const SHADOW_VERT = `varying vec2 vUv;
@@ -106,6 +110,9 @@ export class View {
   private heights: HeightField;
   /** The bend the view is easing to (the treetops' when she's rising or up there), for culling. */
   bendTo = 0;
+  /** How far the stargazing bend has eased in (0 to 1), and when it was last eased. */
+  private gaze = 0;
+  private gazeTime = NaN;
   /** How much each wave number shows over the bent horizon (eased), by its area, and when it was last eased. */
   numberSeen = new Map<string, number>();
   numbersAt = 0;
@@ -180,8 +187,14 @@ export class View {
   private gladeTime = 0;
   /** The ley line's colour by the mood (leyRgb), or null for each area's own. */
   private leyRgb: THREE.Vector3 | null;
+  /** The ley line's brightness (the decisions panel's), and the last scale given it (the party's over fades it). */
+  private leyBase = 1;
+  private leyScaled = -1;
   /** The party the ley line follows (without quests done when it moves on only by waves), its chain, and each stone's colour. */
   private leyParty: Game["party"] | null = null;
+  /** The party's over (render/partyOver.ts): its look this frame, and ?partyover=<s> (debug). */
+  readonly over = newPartyOverLook();
+  private overDebug: number | null = (() => { const v = new URLSearchParams(globalThis.location?.search ?? "").get("partyover"); return v === null ? null : Number(v) || 0; })();
   private readonly leyHome = new THREE.Vector3(0.8, 0.7, 1);
   private readonly leyChainNow = () => leyChain(this.leyParty ?? this.game.party, this.game.map);
   private readonly leyColour = (s: { cell: readonly [number, number] }) => {
@@ -357,7 +370,8 @@ export class View {
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // the live rig (#79): on unless ?rig=0
     this.lasers = new Lasers(this.scene, game);
     this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z), game.map);
-    this.ley.scale(M?.leyBright ?? 1);
+    this.leyBase = M?.leyBright ?? 1;
+    this.ley.scale(this.leyBase);
     this.leyRgb = M?.leyRgb ? new THREE.Vector3(...[1, 3, 5].map(i => parseInt(M.leyRgb!.slice(i, i + 2), 16) / 255)) : null;
     this.scene.add(...this.ley.meshes);
     this.glades = new Glades(t.glades);
@@ -368,6 +382,7 @@ export class View {
     this.swoopTrails = new SwoopTrails(game.tuning.swoopTrail ?? SWOOP_TRAIL_DEFAULT);
     this.scene.add(this.swoopTrails.mesh);
     this.inviteView = new InviteView(game);
+    this.inviteView.onVanished = (x, z) => this.edgeSparkle(x, z);
     this.stateMarks = new StateMarks(this.scene, this.mpp);
     this.borders = new BorderView(this.scene, game);
     this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp, { solid: true });
@@ -524,6 +539,11 @@ export class View {
   runeGreen = new THREE.Vector3(0.45, 1, 0.5);
   /** Sparks from campfires lighting up as the party arrives (drawn with the markers' motes, next frame). */
   fireSparks: Mote[] = [];
+  /** 💌s that left a slowed circle outward (Ed, 2026-10-06): where and when each vanished in a sparkle at its edge
+   *  (edgeSparkle; drawn as motes with the markers' in view/home.ts). */
+  edgeSparkles: { x: number; z: number; at: number }[] = [];
+  /** A 💌 vanishes at a slowed circle's edge: a small sparkle there (its `vanished` invite event calls this, render/invites.ts). */
+  edgeSparkle(x: number, z: number): void { if (this.edgeSparkles.length < 64) this.edgeSparkles.push({ x, z, at: LIGHT_UNIFORMS.uRealTime.value }); }
   /** The world's campfires showing this frame, for the party objects to draw. */
   worldFires: { x: number; z: number; scale: number; flip: boolean }[] = [];
   /** Each light source's area (a campfire's party), worked out once. */
@@ -690,9 +710,17 @@ export class View {
     // The world's bend: only over the treetops (Ed, 2026-10-04), eased in as she rises; from the
     // camera's focus, along its forward on the ground.
     {
-      const C = t.camera.curve, m = Math.min(1, Math.max(0, g.witch.lift)), k = C.ground + (C.treetop - C.ground) * m * m * (3 - 2 * m);
+      const C = t.camera.curve, m = Math.min(1, Math.max(0, g.witch.lift));
+      // Lying on the beach to stargaze (Ed, 2026-10-06: "the bend shader applies so that you can see the sky"): the bend eased up
+      // past the treetops' over beach.gazeEase seconds, the night sky opening over the sea, and back down as she gets up.
+      const B = t.beach, gdt = Number.isNaN(this.gazeTime) ? 0 : Math.min(0.25, Math.max(0, time - this.gazeTime)), gz = this.beachView.gazing ? 1 : 0;
+      this.gazeTime = time;
+      this.gaze += (gz - this.gaze) * (1 - Math.exp(-gdt * 3 / Math.max(0.05, B?.gazeEase ?? 1.5)));
+      if (Math.abs(gz - this.gaze) < 0.001) this.gaze = gz;
+      const gk = this.gaze * this.gaze * (3 - 2 * this.gaze) * C.treetop * (B?.stargazeCurve ?? 0);
+      const k = Math.max(C.ground + (C.treetop - C.ground) * m * m * (3 - 2 * m), gk);
       HEIGHT_UNIFORMS.uBend.value.set(Math.max(0, k), pose.tx, pose.tz, t.ground.hills.on ? t.ground.hills.amplitude : 0); // (w: the hills' amplitude, for the horizon test)
-      this.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground);
+      this.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground, this.beachView.gazing ? C.treetop * (B?.stargazeCurve ?? 0) : 0);
       HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); // the camera always looks north (toward -z)
       const far = t.haze.far;
       this.sky.update(k, pose.tx, pose.tz, far, 2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (this.width / this.height), this.updateMoon(g));
@@ -737,6 +765,7 @@ export class View {
     // (The edge stays its full softness as the hole closes: shrunk with it, a small hole's edge was crisp, Ed v289.)
     SPRITE_UNIFORMS.uCutout.value.set((ws.x * 0.5 + 0.5) * this.width, (ws.y * 0.5 + 0.5) * this.height, 0.5 * cut.screenFraction * this.width * (1 - lifted), Math.max(1, cut.edge * this.width));
     SPRITE_UNIFORMS.uCutWhole.value = cut.whole ?? 0;
+    SPRITE_UNIFORMS.uCutShape.value.set(cut.wobble ?? 0, cut.outer ?? 0.35);
     SPRITE_UNIFORMS.uTopFade.value = lifted;
     SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, this.mpp, t.trunkFade.share);
     SPRITE_UNIFORMS.uTrunkLook.value.set(t.trunkFade.lightFloor, t.trunkFade.rim);
@@ -776,7 +805,11 @@ export class View {
     updateSources(this, time);
     this.time("sources");
     // The party: soundsystems rising in partifying areas, their lights, the sweeping fronts.
+    // The party's over (render/partyOver.ts): its lights go out in a ripple from home.
+    const over = updatePartyOver(g, partyOverEase(g, this.overDebug), this.over), offAt = (x: number, z: number) => partyOff(over, x, z);
+    this.leashView.partyOverEase = over.ease;
     const party = this.partyView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), () => false);
+    if (over.front > 0) { for (const l of party.lights) l.strength *= 1 - offAt(l.x, l.z); party.playing = party.playing.filter(p => offAt(p.x, p.z) < 0.98); }
     this.soundBatch.set(party.items);
     this.ground.setSweeps(party.sweeps);
     this.ground.setLegendRings(this.legendRings(g, time), this.ringCount);
@@ -789,22 +822,26 @@ export class View {
       // (Nothing allocated a frame but on a change: the key's a number, the callbacks are the view's own.)
       this.leyParty = t.leyLines.advance === "wave" ? (this.leyParty?.areas === g.party.areas && this.leyParty.wave === g.party.wave ? this.leyParty : { ...g.party, leyDone: undefined }) : g.party;
       this.ley.update(leyKey(this.leyParty), this.leyChainNow, this.leyColour, time, canopyShown(w));
-      this.ley.pulse(shaderPulse(g.party, g.map, time)); // the wave's pulse along the current link, by the party's clock (as the HUD's pointer)
+      // The party's over (rules/partyOver.ts): the line fades to partyOver.leyFloor of itself, its pulse gone.
+      const po = g.partyOver?.ease ?? 0, leyK = this.leyBase * (1 - (1 - t.partyOver.leyFloor) * po);
+      if (leyK !== this.leyScaled) { this.leyScaled = leyK; this.ley.scale(leyK); }
+      this.ley.pulse(g.partyOver ? null : shaderPulse(g.party, g.map, time)); // the wave's pulse along the current link, by the party's clock (as the HUD's pointer)
       this.ley.grow(leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3)); // none while home boots, then out from the treehouse along the route (Ed)
       { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.
         const B = bootPath(g.map), share = bootShare(g.party, g.map, time), live = g.party.spellAt !== null && share < 1;
-        this.ley.ring(live ? bootPulseAt(g.party, g.map, time) / B.length : null, bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, g.party.spellAt === null ? 0 : live ? 1 : 0.35, this.leyRgb ?? undefined);
+        this.ley.ring(live ? bootPulseAt(g.party, g.map, time) / B.length : null, bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, (g.party.spellAt === null ? 0 : live ? 1 : 0.35) * (1 - (g.partyOver?.ease ?? 0)), this.leyRgb ?? undefined); // (the boot ring fades out too once the party's over)
       }
     }
     // The sleeping legends' clearings: their twilight and motes, the nearest few (render/glades.ts).
-    { const gdt = Math.min(0.1, Math.max(0, time - this.gladeTime)); this.gladeTime = time; this.glades.update(g, w.x, w.z, gdt, w.mode === "ground"); }
+    { const gdt = Math.min(0.1, Math.max(0, ht - this.gladeTime)); this.gladeTime = ht; // (eased on her clock, so the slowing doesn't slow its own look)
+      this.glades.update(g, w.x, w.z, gdt, w.mode === "ground", undefined, slowAmount(g.timeScale, slowest(t))); }
     this.time("party");
     // The canopy uplight over the nearest partified areas, fading in with each one's transition.
     {
       const U = SPRITE_UNIFORMS, P = t.party, list = [...g.party.areas.values()].map(a => ({ a, s: g.map.siteOf(a.cell[0], a.cell[1]) }))
         .sort((p, q) => Math.hypot(p.s.x - w.x, p.s.z - w.z) - Math.hypot(q.s.x - w.x, q.s.z - w.z)).slice(0, 16);
       list.forEach(({ a, s }, i) => {
-        const fade = a.wave === 0 ? 1 : Math.min(1, Math.max(0, (time - a.at) / Math.max(0.01, P.transition)));
+        const fade = (a.wave === 0 ? 1 : Math.min(1, Math.max(0, (time - a.at) / Math.max(0.01, P.transition)))) * (1 - offAt(s.x, s.z));
         U.uParty.value[i].set(s.x, s.z, g.map.areaSize * 0.85, fade);
         const c = sigilColour(AREA_TYPES[g.map.typeOf(a.cell[0], a.cell[1])].creature);
         U.uPartyCol.value[i].set(c[0] / 255, c[1] / 255, c[2] / 255);
@@ -834,6 +871,9 @@ export class View {
       const dt = this.trailAt < 0 ? 0 : Math.min(0.1, Math.max(0, ht - this.trailAt)); this.trailAt = ht;
       const back = sp > 0.1 ? 0.6 / sp : 0, D = g.witches[0].dash;
       this.trail.update(w.x - w.vx * back, witchHeight(w, t) + 0.25 + this.rideOff, w.z - w.vz * back, sp, top, lift, c, ht, dt, D.at);
+      // the load she carries (render/load.ts): read once a frame, for the stack, the threads, her lean and her broom
+      loadView(g, t.load ?? LOAD_DEFAULT, dt, this.leashView.load);
+      const Bp = this.leashView.bristle; Bp.x = w.x - w.vx * back; Bp.y = witchHeight(w, t) + 0.25 + this.rideOff; Bp.z = w.z - w.vz * back;
     }
     this.actionBar.update(g, ht);
     this.buffHud.update(g, time);
@@ -855,10 +895,12 @@ export class View {
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
     const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires, this.lastView);
-    this.updateSmoke(g, time);
-    if (t.bare) { this.dancefloor.update(time, this.ground, g); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...this.forestLights], w.x, w.z);
+    this.updateSmoke(g, time); // (time is the world's: what moves on its own slows with it, rules/slowTime.ts)
+    const floorOff = offAt(g.map.dancefloor.x, g.map.dancefloor.z);
+    if (over.front > 0) for (const L of [markerLights, speakerLights, partyObjectLights]) for (const l of L) l.strength *= 1 - offAt(l.x, l.z);
+    if (t.bare) { this.dancefloor.update(time, this.ground, g, floorOff); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g, floorOff), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...this.forestLights], w.x, w.z);
     this.time("grass+lights");
-    LIGHT_UNIFORMS.uTime.value = time;
+    LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht; // (the circle's motes and edge keep her clock)
     this.mist?.follow(pose.tx, pose.tz);
     const bob = Math.sin(ht * 2.4) * 0.12;
     // Her hover frames, turned away when flying up the screen, leaning when fast.
@@ -945,6 +987,7 @@ export class View {
     const wframe = (bare ? this.assets.witchBare() : this.assets.witch).frames[wf], hatTop = wyy + wframe.h * this.mpp;
     this.partyWitchView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4));
     this.swoopTrails.update(g.partyWitches.list, time);
+    setOverlayTilt(t.tiltShift, w.lift, this.canvas.clientHeight || window.innerHeight, this.height); // (the DOM overlays blurred as the world: render/overlayTilt.ts)
     this.partyWitchView.bubbles(g, time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
     const onBeach = this.beachView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
     this.stateMarks.update(g, time, this.leashView.tops);
@@ -952,6 +995,12 @@ export class View {
     // Idling into the party, she's drawn in her party pose there instead.
     const her = this.partyWitchView.herIdle || onBeach || hidden ? [] : [{ x: wx, y: wyy + groundHeight(wx, wz), z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }];
     const hatFrame = bare ? this.assets.witchBare().frames[this.assets.witchHatFrame] : undefined;
+    { // Under a load (render/load.ts), in flight: she leans forward flying away from the pull, her broom tilts nose-up and bows.
+      const LV = this.leashView.load, LT = t.load ?? LOAD_DEFAULT, flying = !w.seated && !KO && this.foot < 0.05 && !this.partyWitchView.herIdle;
+      const fwd = w.facing < 0 ? -1 : 1, k = flying ? LV.load : 0;
+      this.witchBatch.leanU.value.set(fwd * LT.witchLean * k * LV.away, fwd * LT.broomTilt * k, LT.broomBow * k, 0);
+      this.leashView.bristle.on = flying && !hidden;
+    }
     this.witchBatch.set(bare ? [] : her);
     this.bareBatch?.set(bare ? (hatFrame ? [...her, { x: Hat.down!.x + HAT_BESIDE, y: groundHeight(Hat.down!.x + HAT_BESIDE, Hat.down!.z), z: Hat.down!.z, frame: hatFrame, flip: false }] : her) : []);
     // The glide by her own snap: what the sprite shader's snap of her base takes off, given back by
@@ -998,7 +1047,7 @@ export class View {
     // in as the pulse sets off.
     {
       const cw = this.canvas.clientWidth || window.innerWidth, ch = this.canvas.clientHeight || window.innerHeight, cd = waveCountdown(g.party, g.map, time);
-      const shown = pointerShown(g.party, g.map, time);
+      const shown = pointerShown(g.party, g.map, time) * (1 - (g.partyOver?.ease ?? 0)); // (none once the party's over: rules/partyOver.ts)
       const cue = (list: StoneIndicator[], cells: readonly (readonly [number, number])[], make: () => StoneIndicator, fill: number, label?: string) => {
         while (list.length < cells.length) list.push(make());
         list.forEach((ind, i) => {
