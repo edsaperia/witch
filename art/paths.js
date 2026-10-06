@@ -158,7 +158,7 @@ export function pathColours(st = {}) {
 // One 3D piece at the game's view, cropped to what is drawn: { sp, origin, metres }.
 // "<bridge>~<k>": the bridge's generated variant k (art/props/bridges.js, under ?props=gen).
 export function pathPieceSprite(id, st = {}, ppm = 16) {
-  const [base, k] = id.split("~"), d = PATH_PIECE_BY_ID[base]; if (!d || (k !== undefined && !BRIDGE_GENOMES[base])) throw new Error(`no path piece "${id}"`);
+  const [base, k] = id.split("~"), d = PATH_PIECE_BY_ID[base]; if (k !== undefined ? !BRIDGE_GENOMES[base] : !d) throw new Error(`no path piece "${id}"`); // (the fingerpost has only generated variants)
   const m = new Model({ blend: .04 }); if (k !== undefined) buildBridge(m, base, +k); else d.build(m); m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 });
   const s = witchPixelsPerUnit(st) * 1.1, r = render(m, { scale: s }), full = r.sp;
   let x0 = full.w, x1 = -1, y0 = full.h; for (let y = 0; y < full.h; y++) for (let x = 0; x < full.w; x++) if (full.m[y * full.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }

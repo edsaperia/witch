@@ -15,8 +15,8 @@ import { treehouseSprite, treehouseColours, TREEHOUSE_STOREYS } from "./treehous
 import { PROP_GENOMES, PROP_KINDS } from "./props/genomes.js";
 import { propPiece, propVariant, propFor } from "./props/generator.js";
 export { PROP_GENOMES, PROP_KINDS, propPiece, propVariant, propFor };
-import { BRIDGE_GENOMES, BRIDGE_IDS, BRIDGE_VARIANTS, bridgeVariant } from "./props/bridges.js";
-export { BRIDGE_GENOMES, BRIDGE_IDS, BRIDGE_VARIANTS, bridgeVariant };
+import { BRIDGE_GENOMES, BRIDGE_IDS, BRIDGE_VARIANTS, PATH_GEN_IDS, bridgeVariant } from "./props/bridges.js";
+export { BRIDGE_GENOMES, BRIDGE_IDS, BRIDGE_VARIANTS, PATH_GEN_IDS, bridgeVariant };
 import { WITCH_GENOME, WITCH_AXES, WITCH_RANDOM, witchGenome, genomeLook, witchGenomeProblems, upgradeGenome } from "./witchGenome.js";
 import { bedroomSprite, bedroomColours, BEDROOM_PROPS, BANNER_FONT, ROOM } from "./bedroom.js";
 export { bedroomSprite, bedroomColours, BEDROOM_PROPS, BANNER_FONT, ROOM };

@@ -162,6 +162,7 @@ const world = { ...WORLD_DEFAULT };
   try { localStorage.setItem("witch.world", JSON.stringify(world)); } catch { /* fine */ }
 }
 
+if (params.get("props") === "gen") tuning.paths = { ...tuning.paths, fingerposts: true }; // ?props=gen: fingerposts where footpaths come into a clearing (placed with the map, so set before it is made)
 const game = newGame(seed, tuning);
 // ?buffs=fox,toad,stag (debug): these legends' buffs on from the start, whatever the legends do (a
 // species twice stacks it). ?buffs=all: every one.

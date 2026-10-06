@@ -497,7 +497,14 @@ const report = await b.page.evaluate(async () => {
         if (Array.from(sp.m).some(m => EM.has(m))) bad.push(`${id}~${k} glows`);
       }
     }
-    res.push({ what: "generated bridges: footbridges, rope bridges and root bridges, 8 variants each, standing, none alike, within a third of the hand-made piece's size, unlit", good: !bad.length, info: bad.slice(0, 6).join("; ") });
+    const posts = new Set(); // the fingerposts (only generated): standing, none alike, 1.4 to 3 m tall, unlit
+    for (let k = 0; k < 8; k++) {
+      const p = G.pathPieceSprite(`fingerpost~${k}`, st), sp = p.sp, key = sp.w + "x" + sp.h + ":" + Array.from(sp.m).join("");
+      let bottom = 0; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++;
+      if (!bottom || !Array.from(sp.n).every(Number.isFinite) || posts.has(key) || p.metres.height < 1.4 || p.metres.height > 3 || Array.from(sp.m).some(m => EM.has(m))) bad.push(`fingerpost~${k}: ${p.metres.height} m${bottom ? "" : ", floats"}${posts.has(key) ? ", repeats" : ""}`);
+      posts.add(key);
+    }
+    res.push({ what: "generated bridges: footbridges, rope bridges and root bridges, 8 variants each, standing, none alike, within a third of the hand-made piece's size, unlit; fingerposts 8 variants, standing, none alike, 1.4 to 3 m, unlit", good: !bad.length, info: bad.slice(0, 6).join("; ") });
   }
   { // something tall in every area (Ed: "each area should have at least some kind of taller thing"): each area's big pieces include one at least 4 m tall
     // (its trees across their heights, or for the open areas the tall pieces); the tall pieces (snag, cairn, standing stone, pillar, spire, stalagmite)

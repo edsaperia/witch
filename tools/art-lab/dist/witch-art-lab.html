@@ -3434,12 +3434,16 @@ function propFor(kind, o = {}) {
 //                a plank or two missing, moss on the old ones
 //   rope-bridge: planks hung between two pairs of posts, sagging, handropes (one pair or two), a few planks gone
 //   root-bridge: gnarled roots arching over the stream, twisted together, mossed, ferns at its ends, a crown at one end or both
+// And the fingerposts where a footpath comes into an area's clearing (rules/paths.ts, under ?props=gen: paths.fingerposts):
+//   fingerpost:  an old wooden post, 1 to 4 blank arms pointing different ways (pointed, swallowtailed or square-ended; no words),
+//                a cap, a ball or a plain top, leaning a little, an arm sometimes snapped or hanging, moss up its foot, ivy now and then
 
 
 const BRIDGE_VARIANTS = 3;
 const BRIDGE_GENOMES = {
   footbridge: { span: [1, 1.45], width: [.38, .58], arch: [.04, .28], deck: [.24, .38], rails: [["both", 3], ["one", 2], ["none", 1]], railStyle: [["rail", 3], ["posts", 1], ["cross", 2]], missing: [0, 2], moss: [.05, .3] },
   "rope-bridge": { span: [1.35, 1.8], width: [.32, .48], sag: [.18, .4], post: [.9, 1.3], ropes: [["one", 2], ["two", 1]], missing: [0, 3], step: [.17, .23] },
+  fingerpost: { height: [.85, 1.2], girth: [.035, .055], lean: [-.08, .08], arms: [1, 4], armLen: [.28, .42], arm: [["point", 3], ["swallow", 2], ["square", 1]], top: [["cap", 2], ["ball", 1], ["plain", 2]], broken: [0, 1], ivy: [0, 1], moss: [.1, .3] },
   "root-bridge": { span: [1.5, 2], width: [.28, .48], arch: [.32, .6], roots: [3, 6], twist: [.05, .2], moss: [.2, .55], crown: [["start", 2], ["both", 1], ["none", 1]], ferns: [2, 6] },
 };
 const brPick = (r, opts) => { const tot = opts.reduce((a, [, w]) => a + w, 0); let x = r() * tot; for (const [v, w] of opts) if ((x -= w) < 0) return v; return opts[0][0]; };
@@ -3490,8 +3494,26 @@ function brRoot(m, v) {
   for (const s of crowns) { const c = [s * (S + .05), .25 + r() * .1, -.35], R = [.3 + r() * .12, .2 + r() * .08, .25]; m.ell(c, R, M.LEAF, { group: 8 + s, rough: .04, paint: p => { const n = brCell(p, 10, 3); return p[1] < c[1] - .05 || n < .2 ? M.LEAF3 : n > .8 ? M.LEAF2 : undefined; } }); }
   for (let i = 0; i < v.ferns; i++) { const s = i % 2 ? 1 : -1, b = [s * (S - .1 + r() * .25), 0, (r() - .5) * W * 2.4]; for (let k = 0; k < 4; k++) { const a = k / 4 * 6.28 + r(); m.chain([[...b, .02], [...v3.add(b, [Math.cos(a) * .12, .14, Math.sin(a) * .1]), .015], [...v3.add(b, [Math.cos(a) * .24, .08, Math.sin(a) * .2]), .006]], k % 2 ? M.LEAF : M.LEAF2, { group: 12 + i }); } }
 }
-const BR_BUILD = { footbridge: brFoot, "rope-bridge": brRope, "root-bridge": brRoot };
-const BRIDGE_IDS = Object.keys(BR_BUILD);
+function brPost(m, v) {
+  const r = v.r, H = v.height, up = v3.norm([Math.sin(v.lean), 1, Math.sin(v.lean * .6)]), at = h => v3.mul(up, h);
+  m.seg([0, -.02, 0], at(H), v.girth, v.girth * .85, M.WOOD, { group: 1, paint: p => p[1] < H * v.moss ? M.MOSS : brCell(p, 18, 3) < .12 ? M.BARKD : undefined });
+  if (v.top === "cap") m.box(at(H + .015), [v.girth * 1.6, .015, v.girth * 1.6], M.BARKD, { group: 2, round: .006 });
+  if (v.top === "ball") m.ell(at(H + v.girth), [v.girth * 1.1, v.girth * 1.1, v.girth * 1.1], M.WOOD, { group: 2 });
+  const a0 = r() * 6.28, snap = v.broken > .6 ? Math.floor(r() * v.arms) : -1;
+  for (let i = 0; i < v.arms; i++) {
+    const a = (i % 2 ? Math.PI : 0) + (a0 > 3.14 ? Math.PI : 0) + (r() - .5) * 1.1, d = [Math.cos(a), 0, Math.sin(a) * .8], y = H * (.86 - i * .1), L = v.armLen * (.8 + r() * .3), hang = i === snap;
+    const dir = hang ? v3.norm([d[0] * .3, -1, d[2] * .3]) : v3.norm(d), base = v3.add(at(y), v3.mul(dir, v.girth)), c = v3.add(base, v3.mul(dir, L / 2)), lenK = hang ? .7 : 1;
+    m.box(c, [L / 2 * lenK, .05, .012], M.WOOD, { dir, up: hang ? [d[0], 0, d[2]] : [0, 1, 0], round: .004, group: 3 + i, paint: p => { const t = v3.dot(v3.sub(p, base), dir); return Math.abs(t - L * .45) < .01 ? M.BARKD : undefined; } }); // a blank board, a groove where words were
+    const tip = v3.add(base, v3.mul(dir, L * lenK));
+    if (v.arm === "point") m.box(tip, [.035, .035, .012], M.WOOD, { dir: v3.norm(v3.add(dir, hang ? [0, 0, 0] : [0, 1, 0])), up: [0, 1, 0], round: .003, group: 3 + i });
+    if (v.arm === "swallow") for (const k of [-1, 1]) m.seg(v3.sub(tip, v3.mul(dir, .01)), v3.add(tip, v3.add(v3.mul(dir, .04), [0, k * .035, 0])), .014, .006, M.WOOD, { group: 3 + i });
+  }
+  if (v.ivy > .55) m.chain([[v.girth, .02, v.girth * .4, .014], [v.girth * .8, H * .3, v.girth * .7, .013], [-v.girth * .5, H * .55, v.girth * .9, .01], [-v.girth, H * .7, v.girth * .2, .006]], M.LEAF, { group: 9, paint: p => brCell(p, 30, 5) < .4 ? M.LEAF2 : undefined });
+  for (let i = 0; i < 4; i++) { const a = r() * 6.28; m.seg([Math.cos(a) * .06, 0, Math.sin(a) * .05], [Math.cos(a) * .09, .07 + r() * .06, Math.sin(a) * .07], .012, .004, i % 2 ? M.LEAF : M.LEAF2, { group: 10 }); } // grass at its foot
+}
+const BR_BUILD = { footbridge: brFoot, "rope-bridge": brRope, "root-bridge": brRoot, fingerpost: brPost };
+const BRIDGE_IDS = ["footbridge", "rope-bridge", "root-bridge"];
+const PATH_GEN_IDS = Object.keys(BR_BUILD); // every path piece the generator draws variants of (the bridges, the fingerpost)
 // Fill a model with one bridge's variant (seed), as art/paths.js's pieces build theirs.
 function buildBridge(m, id, seed) { const v = bridgeVariant(id, seed); BR_BUILD[id](m, v); return v; }
 
@@ -9710,7 +9732,7 @@ function pathColours(st = {}) {
 // One 3D piece at the game's view, cropped to what is drawn: { sp, origin, metres }.
 // "<bridge>~<k>": the bridge's generated variant k (art/props/bridges.js, under ?props=gen).
 function pathPieceSprite(id, st = {}, ppm = 16) {
-  const [base, k] = id.split("~"), d = PATH_PIECE_BY_ID[base]; if (!d || (k !== undefined && !BRIDGE_GENOMES[base])) throw new Error(`no path piece "${id}"`);
+  const [base, k] = id.split("~"), d = PATH_PIECE_BY_ID[base]; if (k !== undefined ? !BRIDGE_GENOMES[base] : !d) throw new Error(`no path piece "${id}"`); // (the fingerpost has only generated variants)
   const m = new Model({ blend: .04 }); if (k !== undefined) buildBridge(m, base, +k); else d.build(m); m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 });
   const s = witchPixelsPerUnit(st) * 1.1, r = render(m, { scale: s }), full = r.sp;
   let x0 = full.w, x1 = -1, y0 = full.h; for (let y = 0; y < full.h; y++) for (let x = 0; x < full.w; x++) if (full.m[y * full.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
