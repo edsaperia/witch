@@ -894,9 +894,9 @@ export class LeashView {
     for (const c of g.creatures) {
       if (Math.abs(c.x - w.x) > RUNE_VIEW || Math.abs(c.z - w.z) > RUNE_VIEW || !hasRune(c)) continue;
       const since = time - (c.happyAt ?? -Infinity), k = Math.min(1, Math.max(0, since / 0.45)), ready = hasRune(c, time);
-      const col = this.colours.get(c.species)!, hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
+      const slot = this.slotOf(c.species, c.level), col = this.colours.get(c.species)!, hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
       const a = ready ? 0.62 + 0.12 * Math.sin(time * 2 + c.id) : 0.3;
-      this.flat.add(c.x, 0.03 + hop, c.z, (3 + c.level * 0.8) * 0.85 * grow, this.uv(this.slotOf(c.species, c.level)), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k);
+      this.flat.add(c.x, 0.03 + hop, c.z, (3 + c.level * 0.8) * 0.85 * grow, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k);
       if (ready) this.flat.add(c.x, 0.015, c.z, 4.2, dot, col.r, col.g, col.b, 0.18);
     }
 
