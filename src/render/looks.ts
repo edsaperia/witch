@@ -23,7 +23,7 @@ type WithState = Creature & { state?: "wild" | "happy" | "leashed" | "enraged"; 
 export function isHappy(c: Creature): boolean {
   const s = (c as WithState).state;
   if (s) return s === "happy";
-  return !c.leashed && (!!c.friendly || !!c.guard); // (today: a quest-done area's creatures)
+  return !c.leashed && !!c.friendly; // (today: a quest-done area's creatures)
 }
 
 export function lookOf(c: Creature): Look {

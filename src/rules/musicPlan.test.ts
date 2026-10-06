@@ -174,11 +174,11 @@ describe("music score", () => {
 
 describe("a woken area joining the party (partyNear)", () => {
   it("is heard near a standing soundsystem with happy animals by it, not near home's, a ruined one or one with none", () => {
-    const g = newGame(123, TUNING), c = g.creatures.find(c => !c.boss && c.cell.join(",") !== g.map.centreCell.join(","))!, key = c.cell.join(",");
+    const g = newGame(123, TUNING), c = g.creatures.find(c => c.boss && c.cell.join(",") !== g.map.centreCell.join(","))!, key = c.cell.join(",");
     g.combat.sounds.set(key, { hp: 100, max: 100, x: c.x, z: c.z, radius: 8 });
     g.witch.x = c.x + 10; g.witch.z = c.z;
     expect(partyNear(g, g.witch)).toBe(0); // nobody dancing yet
-    c.guard = true;
+    c.legendState = "happy"; // (its legend at peace)
     expect(partyNear(g, g.witch)).toBe(1);
     g.witch.x = c.x + (TUNING.music.nearDist + TUNING.music.farDist) / 2;
     expect(partyNear(g, g.witch)).toBeGreaterThan(0.2);
