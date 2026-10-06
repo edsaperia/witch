@@ -23,7 +23,8 @@ const BUILDS = {
   "worst, Fan and Echo twice": [...WORST, "fan", "echo"],
 };
 const LIMITS = {
-  "gap 0.5 s (as is)": {},
+  "no gap (as is, since 2026-10-06)": {},
+  "gap 0.5 s (before)": { gap: 0.5 },
   "gap 0.75 s": { gap: 0.75 },
   "gap 1 s": { gap: 1 },
   "each buff once (no stacking)": { stack: 1 },
@@ -34,7 +35,7 @@ const LIMITS = {
 // Crowds: a pack (an adult, a young, a baby) to the late game's 10.
 const CROWDS = { "1 adult": [12], "pack (adult, young, baby)": [12, 6, 3], "4 (2 adults, young, baby)": [12, 12, 6, 3], "6 adults": [12, 12, 12, 12, 12, 12], "10 mixed": [12, 12, 12, 12, 6, 6, 6, 3, 3, 3] };
 const base = throughput([]);
-say(`💌 throughput (the firing numbers of PR #89: bursts of ${INVITE_FIRE.burst} letters ${INVITE_FIRE.burstGap} s apart, ${INVITE_FIRE.cooldown} s cooldown; hits to fill: baby ${INVITE_FIRE.hits[0]}, young ${INVITE_FIRE.hits[1]}, adult ${INVITE_FIRE.hits[2]}; one letter's affection an animal every ${INVITE_FIRE.perAnimalHitGap} s). Guesses (rules/throughput.ts): 60% of plain letters land; each buff's effect from its one line on #87. Skill ×1 here.\n`);
+say(`💌 throughput (the firing numbers of PR #89: bursts of ${INVITE_FIRE.burst} letters ${INVITE_FIRE.burstGap} s apart, ${INVITE_FIRE.cooldown} s cooldown; hits to fill: baby ${INVITE_FIRE.hits[0]}, young ${INVITE_FIRE.hits[1]}, adult ${INVITE_FIRE.hits[2]}; every letter that lands counts). Guesses (rules/throughput.ts): 60% of plain letters land; each buff's effect from its one line on #87. Skill ×1 here.\n`);
 say("**Each build: letters a second, the share landing, animals reached at once, hits a second on 1 / 3 / 6 / 10 animals**\n");
 say("| build | letters/s | land | reach | hits/s on 1 | on 3 | on 6 | on 10 |");
 say("|---|---|---|---|---|---|---|---|");

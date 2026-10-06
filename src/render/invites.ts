@@ -1,10 +1,11 @@
 // The 💌 invite's look (issue #87; the rules are rules/invites.ts): each letter in flight a pixel 💌
 // lying flat and spinning like a frisbee (Ed, 2026-10-06), then resting flat where it comes down; a speech bubble from the witch when she
 // fires and an emoji reply from a creature a letter lands on (warming up with its meter), each
-// rate-limited and replacing its last so a burst isn't a blizzard; and over each creature being
-// invited, a small pink meter of hearts filling as letters land and draining slowly (distinct from
-// the berry ring round a party animal: that's on the ground, round leashed ones only). DOM, like
-// the talk bubbles, drawn as pixel art.
+// rate-limited and replacing its last so a burst isn't a blizzard; and round each creature being
+// invited, the 💌 ring (Ed, 2026-10-06; render/inviteRing.ts): every letter that lands joins an orbit
+// round it, one slot a hit its meter needs, the gaps the hits still to come; full, the envelopes
+// vanish and leave their ❤️s rising; left alone, they fall out of orbit one by one as the meter
+// drains and lie on the ground a moment. DOM, like the talk bubbles, drawn as pixel art.
 import * as THREE from "three";
 import type { Game } from "../rules/game";
 import { affectionOf } from "../rules/game";
@@ -12,6 +13,9 @@ import { witchHeight } from "../rules/witch";
 import { hash2 } from "../rules/random";
 import { placed } from "./height";
 import { sizeBubble } from "./bubbles";
+import { bodyRadius } from "../rules/spacing";
+import type { Creature } from "../rules/creatures";
+import { RingModel, ringOf } from "./inviteRing";
 
 const HERS = ["💌", "🎉", "🥳", "💃", "🎈", "😘", "🎶", "✨"];
 // Replies by how full its meter is: unsure, warming, nearly, won over; and stung (blocked).
@@ -45,7 +49,12 @@ export class InviteView {
   private root = document.createElement("div");
   private letters: HTMLImageElement[] = [];
   private lanterns: HTMLElement[] = [];
-  private meters = new Map<number, HTMLElement>();
+  /** The rings (render/inviteRing.ts): what each holds, and its envelopes and gap marks by creature. */
+  private ringModel = new RingModel();
+  private rings = new Map<number, { imgs: HTMLImageElement[]; dots: HTMLElement[]; joined: number[] }>();
+  /** Envelopes falling out of orbit (then resting), and hearts rising off a full ring. */
+  private falling: { x: number; y: number; z: number; at: number; tilt: number; el: HTMLImageElement }[] = [];
+  private hearts: { x: number; y: number; z: number; at: number; el: HTMLImageElement }[] = [];
   private hers: Bubble;
   private replies = new Map<number, Bubble>();
   private lastHers = -Infinity;
@@ -111,7 +120,7 @@ export class InviteView {
 
     // The bubbles: hers on a shot (at most one every bubbleEvery seconds, replacing the last); a
     // creature's reply on a hit or a block (one per creature, replacing its last).
-    const A = affectionOf(g);
+    const A = affectionOf(g), won: number[] = [];
     for (const e of I.events) {
       const key = `${e.kind}:${e.n ?? ""}:${e.id ?? ""}:${e.at}`;
       if (this.seen.has(key)) continue;
@@ -126,8 +135,9 @@ export class InviteView {
           if (this.resting.length > t.invites.lingerMax) this.resting.shift();
         }
       } else if ((e.kind === "hit" || e.kind === "blocked" || e.kind === "happy") && e.id !== undefined) {
-        // Every letter that lands pops; one inside the creature's gap (spent) adds nothing, and gets no reply.
-        if (e.kind === "blocked" || (e.kind === "hit" && !e.spent)) this.pop(e.kind === "blocked" ? "💢" : "💖", e.x, head(e.id) * 0.6, e.z, time); // (a spent one: only its ring, render/leash.ts; no white ✨)
+        // A blocked letter pops 💢; one that lands joins its ring (below); won over, the ring goes to hearts.
+        if (e.kind === "blocked") this.pop("💢", e.x, head(e.id) * 0.6, e.z, time);
+        if (e.kind === "happy") won.push(e.id);
         if (e.spent) continue;
         let b = this.replies.get(e.id);
         if (!b) { b = this.bubble(e.id); this.replies.set(e.id, b); }
@@ -216,33 +226,81 @@ export class InviteView {
       d.style.opacity = Math.max(0, Math.min(1, (p.until - time) / 0.3)).toFixed(2);
     });
 
-    // The meters: a pill of hearts over each creature with some affection.
-    const live = new Set<number>();
-    // (Each creature's own meter, rules/affection.ts since #96: draining when it isn't being hit.)
-    for (const c of g.creatures) {
-      if (c.gone || !c.affection || Math.abs(c.x - w.x) > 60 || Math.abs(c.z - w.z) > 60) continue;
-      const v = A.affection(c), id = c.id;
-      if (v === null) continue;
-      live.add(id);
-      let el = this.meters.get(id);
-      if (!el) {
-        el = document.createElement("div");
-        Object.assign(el.style, { position: "absolute", transform: "translate(-50%, -100%)", display: "flex", gap: "1px", padding: "2px", background: "rgba(14,11,28,.7)", border: "1px solid rgba(217,120,158,.6)", borderRadius: "3px", imageRendering: "pixelated" });
-        this.root.append(el);
-        this.meters.set(id, el);
+    // The rings: one slot a hit each creature's meter needs (invites.hits by its level), the envelopes it holds
+    // orbiting it, flat and spinning, the gaps faint marks; turning slowly round it at about its middle.
+    const near = g.creatures.filter(c => !c.gone && Math.abs(c.x - w.x) < 60 && Math.abs(c.z - w.z) < 60 && (c.affection || this.ringModel.rings.has(c.id)));
+    const changes = this.ringModel.update(near, c => ringOf(c.level, A.affection(c), t.invites.hits), won);
+    const ringAt = (c: Creature, slot: number, slots: number) => {
+      const r = Math.max(bodyRadius(c) + 0.6, (slots * 0.42) / (Math.PI * 2)), a = time * 0.7 + (slot / slots) * Math.PI * 2;
+      return { x: c.x + Math.cos(a) * r, y: Math.max(0.5, head(c.id) * 0.55), z: c.z + Math.sin(a) * r };
+    };
+    const envSize = (slots: number) => (slots > 12 ? 0.55 : slots > 6 ? 0.7 : 0.85); // (smaller as they crowd: 18 still distinct)
+    const img = (e: string, px: number) => {
+      const im = document.createElement("img");
+      Object.assign(im.style, { position: "absolute", imageRendering: "pixelated", width: `${px * k}px`, height: `${px * k}px`, marginLeft: `${(-px * k) / 2}px`, marginTop: `${(-px * k) / 2}px`, filter: "drop-shadow(0 0 2px rgba(232,180,106,.6))" });
+      im.src = pixelEmoji(e, px);
+      this.root.append(im);
+      return im;
+    };
+    for (const ch of changes) {
+      const c = g.creatures[ch.id], R = this.rings.get(ch.id);
+      if (ch.kind === "join") {
+        let r = R;
+        if (!r) { r = { imgs: [], dots: [], joined: [] }; this.rings.set(ch.id, r); }
+        r.joined[ch.slot] = time;
+      } else if (ch.kind === "drop" && c) {
+        // Out of orbit: it falls from where it was to the ground, then rests a moment there (no piling up).
+        const p = ringAt(c, ch.slot, ch.slots);
+        this.falling.push({ ...p, at: time, tilt: hash2(ch.id, ch.slot, 7) * 360, el: img("💌", n) });
+      } else if (ch.kind === "hearts" && c) {
+        // Full: the envelopes' paper vanishes, leaving each its ❤️, rising and fading.
+        for (let s = 0; s < ch.slots; s++) this.hearts.push({ ...ringAt(c, s, ch.slots), at: time, el: img("❤️", Math.max(5, Math.round(n * envSize(ch.slots)))) });
       }
-      const hearts = 5, full = v * hearts;
-      const key = Math.round(full * 2) / 2;
-      if (el.dataset.k !== String(key)) {
-        el.dataset.k = String(key);
-        el.innerHTML = Array.from({ length: hearts }, (_, i) => {
-          const f = Math.max(0, Math.min(1, full - i));
-          return `<i style="display:block;width:5px;height:5px;background:linear-gradient(90deg,#d9789e ${f * 100}%,rgba(217,120,158,.2) ${f * 100}%)"></i>`;
-        }).join("");
-      }
-      place(el, c.x, head(id) + 0.15, c.z);
     }
-    for (const [id, el] of this.meters) if (!live.has(id)) { el.remove(); this.meters.delete(id); }
+    for (const [id, r] of this.rings) {
+      const now = this.ringModel.rings.get(id), c = g.creatures[id];
+      if (!now || !c) { for (const el of [...r.imgs, ...r.dots]) el.remove(); this.rings.delete(id); continue; }
+      const sz = envSize(now.slots);
+      while (r.imgs.length < now.slots) { const im = img("💌", n); im.style.display = "none"; r.imgs.push(im); }
+      while (r.dots.length < now.slots) {
+        const d = document.createElement("div");
+        Object.assign(d.style, { position: "absolute", width: `${k}px`, height: `${k}px`, marginLeft: `${-k / 2}px`, marginTop: `${-k / 2}px`, background: "rgba(243,207,154,.55)", boxShadow: "0 0 2px rgba(217,120,158,.6)" });
+        this.root.append(d); r.dots.push(d);
+      }
+      for (let s = 0; s < r.imgs.length; s++) {
+        const im = r.imgs[s], d = r.dots[s], on = s < now.filled, there = s < now.slots;
+        im.style.display = on ? "block" : "none";
+        d.style.display = there && !on ? "block" : "none";
+        if (!there) continue;
+        const p = ringAt(c, s, now.slots);
+        if (on) {
+          place(im, p.x, p.y, p.z);
+          const pop = Math.min(1, (time - (r.joined[s] ?? -9)) / 0.25), grow = pop < 1 ? 1.4 - 0.4 * pop : 1; // (joining: a little pop)
+          const deg = ((Math.round((time * t.invites.spin * 0.5 + s * 0.13) * 16) / 16) % 1) * 360;
+          im.style.transform = `scale(${(sz * grow).toFixed(2)}, ${(sz * grow * flat).toFixed(2)}) rotate(${deg.toFixed(1)}deg)`;
+        } else place(d, p.x, p.y, p.z);
+      }
+    }
+    // Falling out of orbit (0.45 s), then resting where it came down with the other resting 💌s.
+    this.falling = this.falling.filter(f => {
+      const u = (time - f.at) / 0.45;
+      if (u >= 1 || u < 0) {
+        f.el.remove();
+        if (u >= 1 && (t.invites.linger ?? 0) > 0) { this.resting.push({ x: f.x, z: f.z, at: time, tilt: f.tilt }); if (this.resting.length > t.invites.lingerMax) this.resting.shift(); }
+        return false;
+      }
+      place(f.el, f.x, f.y * (1 - u * u), f.z);
+      f.el.style.transform = `scale(0.7, ${(0.7 * flat).toFixed(2)}) rotate(${(f.tilt + u * 200).toFixed(0)}deg)`;
+      return true;
+    });
+    // The hearts: rising a metre and a half over a second, fading.
+    this.hearts = this.hearts.filter(h => {
+      const u = (time - h.at) / 1.1;
+      if (u >= 1 || u < 0) { h.el.remove(); return false; }
+      place(h.el, h.x, h.y + 1.5 * u, h.z);
+      h.el.style.opacity = (u < 0.6 ? 1 : (1 - u) / 0.4).toFixed(2);
+      return true;
+    });
   }
 }
 

@@ -442,7 +442,7 @@ This replaces the legend rules in "Sleeping legends" and "The first quest" below
 - **What a buff touches:** only the witch's 💌 invites and her own movement, never animals. All 30 are different.
 - **Never a stronger 💌:** buffs give more 💌s, or make them behave differently, the way projectiles do in other games. 💌s are never stopped by scenery, with or without a buff.
 - **Stacking:** buffs stack (two of one kind count twice), each total held inside limits in `config/legend-buffs.json`.
-- **The hit gap:** each animal takes affection from at most one 💌 every `invites.perAnimalHitGap` seconds (0.5), so extra 💌s help against crowds but never invite one animal faster.
+- **Every hit counts** (Ed, 2026-10-06: "I think we should remove the 0.5s cooldown between counted hits per creature - better to control this through the witch firing speed instead of having hits not register"): every 💌 that lands on an invitable animal adds to its meter; how fast she invites is her firing rate, a tuning value, with nothing adaptive. (Until then each animal took affection from at most one 💌 every 0.5 s.)
 - **Balance** comes from the enemies in later fights, not from weaker buffs.
 - **One projectile model** (`rules/invites.ts`), its modifiers composing:
   - **Pattern:** Fan (beetle), Rear guard (woodlouse), Howl's ring every 5th burst (wolf), Echo (owl), Wind-up's charged volley (bear), Flutter's extra volley (moth).
