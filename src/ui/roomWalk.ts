@@ -9,6 +9,8 @@ export interface RoomFloor {
   /** Footprints she can't walk into: x0, z0, x1, z1 on the floor. */
   blocks: number[][];
   start: number[];
+  /** Where she stands to look at a thing of hers: a box's id and its place on the floor. */
+  spots?: Record<string, number[]>;
   /** Where a point of the room (x, y, z) lands on its sprite, in pixels. */
   project: (p: number[]) => number[];
 }
@@ -57,4 +59,13 @@ export function walk(w: Walker, f: RoomFloor, sx: number, sy: number, dt: number
 export function keysDir(held: Set<string>): [number, number] {
   const k = (...c: string[]) => c.some(x => held.has(x)) ? 1 : 0;
   return [k("KeyD", "ArrowRight") - k("KeyA", "ArrowLeft"), k("KeyS", "ArrowDown") - k("KeyW", "ArrowUp")];
+}
+
+/** How near (in the room's units) she must be to a thing of hers to look at it. */
+export const SPOT_NEAR = .42;
+/** The thing of hers she's by, if any (the nearest within SPOT_NEAR). */
+export function spotAt(f: RoomFloor, w: Walker): string {
+  let best = "", bd = SPOT_NEAR;
+  for (const [id, [x, z]] of Object.entries(f.spots ?? {})) { const d = Math.hypot(w.x - x, w.z - z); if (d < bd) { bd = d; best = id; } }
+  return best;
 }

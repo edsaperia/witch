@@ -17,6 +17,7 @@ import type { LightSource } from "../rules/forest";
 import { Ground } from "./ground";
 import { Sky } from "./sky";
 import { Clouds } from "./clouds";
+import { Smoke } from "./smoke";
 import { Ride } from "./ride";
 import { bendPoint, groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, placed, useHeightField } from "./height";
 import { PathView } from "./paths";
@@ -26,6 +27,7 @@ import { hsv2rgb } from "../../art/generator.js";
 import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
+import { TRAIL_DEFAULT, WitchTrail } from "./trail";
 import { InviteView } from "./invites";
 import { stunned } from "../rules/knock";
 import { StateMarks } from "./looks";
@@ -99,6 +101,11 @@ export class View {
   private sky: Sky;
   /** Real clouds over the bend, with lightning. */
   private clouds: Clouds;
+  /** Smoke rising from the fires (Ed, round 13). */
+  private smoke: Smoke;
+  /** The charcoal huts' smouldering mounds near her (looked up when she has moved far), for the smoke. */
+  private mounds: number[] = [];
+  private moundsAt = { x: Infinity, z: Infinity };
   readonly assets: AssetLibrary;
   typeBatches = new Map<number, SpriteBatch>();
   decorBatches = new Map<string, SpriteBatch>();
@@ -121,6 +128,10 @@ export class View {
   speakerBatch: SpriteBatch | null = null;
   readonly grass: GrassView;
   private spellFx = new SpellFx();
+  /** Her flight trail: a ribbon of glow in the colour of the area she's over (render/trail.ts). */
+  private trail: WitchTrail;
+  private trailAt = -1;
+  private trailRgb = new THREE.Vector3();
   readonly actionBar = new ActionBar(document.body);
   private buffHud = new BuffHud(document.body);
   private shadow: THREE.Mesh;
@@ -254,6 +265,8 @@ export class View {
     this.scene.add(this.sky.mesh);
     this.clouds = new Clouds(t.sky.clouds, t.sky.lightning, game.seed);
     this.scene.add(this.clouds.mesh, this.clouds.bolt);
+    this.smoke = new Smoke(t.smoke);
+    this.scene.add(this.smoke.mesh);
     this.assets.onFloor = (type, tile) => this.ground.setFloor(type, tile);
     this.assets.prefetchType(HOME_LOOK); // home's meadow floor (no trees ask for it)
     const cs = t.canopyShadow;
@@ -295,6 +308,8 @@ export class View {
     this.grass = new GrassView(game.map, t, this.mpp, style, game.forest, (this.ground.mesh.material as THREE.ShaderMaterial).uniforms);
     this.scene.add(this.grass.mesh);
     this.scene.add(this.spellFx.trail);
+    this.trail = new WitchTrail(game.tuning.trail ?? TRAIL_DEFAULT);
+    this.scene.add(this.trail.mesh);
     // The dancefloor's speakers: their batch comes with their art (drawSpeakers).
     this.assets.speakerArt();
     this.propBatch = new SpriteBatch(this.assets.props, this.mpp, { fade: true });
@@ -475,7 +490,7 @@ export class View {
   private hideForBare(): void {
     for (const b of [...this.typeBatches.values(), ...this.decorBatches.values(), ...this.creatureBatches.values(), this.treehouseBatch, this.propBatch, this.markerBatch])
       for (const m of b.meshes) m.visible = false;
-    for (const o of [this.grass.mesh, this.markerFx.group, this.borders.mesh, this.lasers.mesh, this.spellFx.trail]) o.visible = false;
+    for (const o of [this.grass.mesh, this.markerFx.group, this.borders.mesh, this.lasers.mesh, this.spellFx.trail, this.trail.mesh]) o.visible = false;
   }
 
   speakerFlare: (number | undefined)[] = [];
@@ -497,6 +512,21 @@ export class View {
   private frameStart = 0;
   /** Whether the hills' next strip was all worked out last frame. */
   private heightsReady = true;
+  /** The smoke (render/smoke.ts): the world's campfires burning now, the party's fires, and the charcoal huts' mounds, nearest first. */
+  private updateSmoke(g: Game, time: number): void {
+    const S = this.smoke, t = g.tuning, w = g.witch, R = t.smoke.range;
+    S.begin();
+    for (const f of this.worldFires) S.add(f.x, groundHeight(f.x, f.z), f.z, f.scale, w.x, w.z);
+    this.partyObjects.fires(g, time, w.x, w.z, R, (x, z, size) => S.add(x, groundHeight(x, z), z, size, w.x, w.z));
+    if (Math.hypot(w.x - this.moundsAt.x, w.z - this.moundsAt.z) > R * 0.25) { // the charcoal burner's mound smoulders by its hut (art/setpieces.js charcoal-hut: the mound to its right, a little nearer)
+      this.moundsAt = { x: w.x, z: w.z }; this.mounds = [];
+      const k = t.setPieceScale;
+      for (const p of g.forest.setPiecesNear(w.x, w.z, R * 1.3)) if (AREA_TYPES[p.type]?.id === "twiggy-forest") this.mounds.push(p.x + 2.3 * k, p.z + 1.0 * k);
+    }
+    for (let i = 0; i < this.mounds.length; i += 2) S.add(this.mounds[i], groundHeight(this.mounds[i], this.mounds[i + 1]), this.mounds[i + 1], 1.2, w.x, w.z);
+    S.end(time);
+  }
+
   private time(part: string): void { const now = performance.now(); this.ms[part] = (this.ms[part] ?? 0) + now - this.lap; this.lap = now; }
 
   /** Her sprite batch, from the assets' witch frames. */
@@ -685,6 +715,15 @@ export class View {
     const markerLights = drawMarkers(this, time);
     const speakerLights = drawSpeakers(this, time, pose.angle);
     this.spellFx.update(g, time, witchHeight(w, t) + 0.6 + this.rideOff);
+    {
+      // her trail: behind her broom, as long as she's fast, in the colour of the area under her (its creature's neon, as the
+      // ley lines and runestones; home's own lavender)
+      const lift = canopyShown(w), A = g.map.areaAt(w.x, w.z), sp = Math.hypot(w.vx, w.vz), top = t.groundSpeed + (t.treetopSpeed - t.groundSpeed) * lift;
+      const c = A.look === HOME_LOOK ? this.trailRgb.set(0.8, 0.7, 1) : this.trailRgb.copy(this.markerArt.colour.get(AREA_TYPES[A.type].creature) ?? this.trailRgb.set(0.8, 0.7, 1));
+      const dt = this.trailAt < 0 ? 0 : Math.min(0.1, Math.max(0, time - this.trailAt)); this.trailAt = time;
+      const back = sp > 0.1 ? 0.6 / sp : 0, D = g.witches[0].dash;
+      this.trail.update(w.x - w.vx * back, witchHeight(w, t) + 0.25 + this.rideOff, w.z - w.vz * back, sp, top, lift, c, time, dt, D.at);
+    }
     this.actionBar.update(g, time);
     this.buffHud.update(g, time);
     // Tufts part round her and the three nearest creatures.
@@ -702,6 +741,7 @@ export class View {
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
     const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires, this.lastView);
+    this.updateSmoke(g, time);
     if (t.bare) { this.dancefloor.update(time, this.ground, g); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...this.forestLights], w.x, w.z);
     this.time("grass+lights");
     LIGHT_UNIFORMS.uTime.value = time;

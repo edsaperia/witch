@@ -43,6 +43,10 @@ export class Sfx {
   }
 
   get volume(): number { return this.k.volume; }
+  /** What reaches the speakers (the audio watchdog taps it). */
+  get output(): AudioNode { return this.k.final; }
+  /** Silenced for good and let go (the watchdog building afresh). */
+  dispose(): void { try { this.k.final.disconnect(); } catch { /* gone */ } }
   setVolume(v: number): void { this.k.setVolume(v); }
 
   // ——— 💌 ———
