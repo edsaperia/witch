@@ -6192,11 +6192,16 @@
         "transform": {
           "type": "number",
           "minimum": 0
+        },
+        "firstAfter": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "time",
-        "transform"
+        "transform",
+        "firstAfter"
       ],
       "additionalProperties": false
     },
