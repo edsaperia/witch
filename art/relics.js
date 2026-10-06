@@ -75,14 +75,14 @@ const MODERN = {
   "cone-lantern": { desc: "a traffic cone lit from within like a lantern, a ring of mushrooms round it", glow: true, build(m) {
     rlCone(m, [0, 0, 0], 1, true); for (let i = 0; i < 9; i++) { const a = i / 9 * 6.283, c = [Math.cos(a) * .55, 0, Math.sin(a) * .45]; m.seg(c, v3.add(c, [0, .08, 0]), .02, .02, M.CLOTH, { group: 5 }); m.ell(v3.add(c, [0, .1, 0]), [.06, .035, .06], M.BODY2, { group: 6 }); }
   } },
-  "highway-slab": { desc: "a slab of tarmac tilted up out of the ground, faded lane markings, a crash-barrier stub", build(m) {
+  "highway-slab": { scatter: false, desc: "a slab of tarmac tilted up out of the ground, faded lane markings, a crash-barrier stub", build(m) {
     const n = m.parts.length;
     m.box([0, 0, 0], [2.2, .14, 1.3], M.STONE, { round: .03, group: 1, rough: .01, paint: p => { if (rlCell(p, 5, 1) < .06 || Math.abs(Math.sin(p[0] * 3 + p[2] * 5) * .3 + p[2] * .6 - .2) < .02) return M.STONED; if (p[1] > .1 && Math.abs(p[2]) < .05 && ((p[0] + 9) * .8) % 1 < .55) return rlCell(p, 12) < .3 ? M.STONE : M.CLOTH; if (p[1] > .1 && Math.abs(p[2] - 1.1) < .04) return M.BELLY; return p[1] > .1 && rlCell(p, 6, 4) < .12 ? M.MOSS : undefined; } });
     for (const x of [-1.6, -.4]) rlBar(m, [x, .1, 1.25], [x, .75, 1.25], 2, .04);
     m.box([-1.0, .62, 1.3], [.9, .1, .03], M.FRAME, { group: 3, paint: p => Math.abs(p[1] - .62) < .02 ? M.STONED : rlWorn(.5, .1)(p) }); // the barrier's rail
     rlPlace(m, n, { pitch: .38, roll: .08, at: [0, .7, 0] }); m.ell([-1.8, .1, 0], [.6, .2, 1.3], M.BARK2, { group: 5, rough: .04, paint: p => p[1] > .2 ? M.MOSS : undefined }); rlTufts(m, 16, 2.4, 6, 6);
   } },
-  "highway-line": { desc: "a section of cracked road, its white line broken, grass in the cracks", build(m) {
+  "highway-line": { scatter: false, desc: "a section of cracked road, its white line broken, grass in the cracks", build(m) {
     m.box([0, .02, 0], [2.0, .03, 1.0], M.STONE, { round: .02, group: 1, paint: p => { if (rlCell(p, 4, 9) < .08 || Math.abs(Math.sin(p[0] * 2.3) * .4 - p[2]) < .025) return rlCell(p, 20) < .4 ? M.LEAF2 : M.STONED; if (Math.abs(p[2] + .05) < .05 && ((p[0] + 9) * .7) % 1 < .6) return M.CLOTH; return rlCell(p, 6) < .08 ? M.MOSS : undefined; } });
     for (const [x, z] of [[-1.2, .3], [.4, -.2], [1.3, .5]]) rlTufts(m, 4, .2, 3, x * 10 + 7, x, z);
   } },
@@ -219,6 +219,8 @@ export function relicLayouts(st = {}, ppm = 16) {
 }
 
 // ---------------- the table ----------------
+// scatter: false keeps a piece out of the scattered modern finds (Ed, round 13: "take roads out of the decoration pool"): the bits of
+// highway, which read as clutter beside the real roads. They still draw (the lab, the check) for a scene or a road to use.
 export const RELICS = [
   ...Object.entries(MODERN).map(([id, d]) => ({ id, family: "modern", size: 1, split: null, ...d })),
   ...Object.entries(PLAYGROUND).map(([id, d]) => ({ id, family: "playground", size: 1.1, split: null, ...d })),
