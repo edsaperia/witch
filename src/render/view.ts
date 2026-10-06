@@ -140,6 +140,8 @@ export class View {
   private lasers: Lasers;
   /** The ley lines through the runestones in wave order (Ed, 2026-10-04). */
   private ley: LeyLines;
+  /** The ley line's colour by the mood (leyRgb), or null for each area's own. */
+  private leyRgb: THREE.Vector3 | null;
   /** The party witches on the dancefloor, and our witch when she idles into the party. */
   private partyWitchView: PartyWitchView;
   /** The 💌s, their bubbles and meters (render/invites.ts). */
@@ -206,6 +208,8 @@ export class View {
     // The characters' moonlight rim and her own glow on her (the art director's round 1), the mood's.
     { const rgb = new THREE.Vector3(); hsvInto(rgb, M?.rimHue ?? 0.66, M?.rimSat ?? 0.4, 1); SPRITE_UNIFORMS.uMoodRim.value.set(rgb.x, rgb.y, rgb.z, M?.rim ?? 0); }
     SPRITE_UNIFORMS.uWitchGlow.value = M?.witchGlow ?? 0;
+    SPRITE_UNIFORMS.uRimInset.value = (style as { artStyle?: string }).artStyle === "bold" || (style as { artStyle?: string }).artStyle === "ref" ? 1 : 0;
+    LIGHT_UNIFORMS.uMoonUp.value = M?.moonUp ?? 0; // the moon's fill on upward faces (the art director's round 2)
     if (M) LIGHT_UNIFORMS.uHazeColour.value.fromArray(hsv2rgb(M.hazeHue, M.hazeSat, 1).map((c: number) => (c / 255) * M.haze));
     LIGHT_UNIFORMS.uGlowPower.value = t.glowPower;
     LIGHT_UNIFORMS.uGlowNear.value = Math.max(0.05, Math.min(1, t.glowNear ?? 1));
@@ -285,6 +289,8 @@ export class View {
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // the live rig (#79): on unless ?rig=0
     this.lasers = new Lasers(this.scene, game);
     this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z), game.map);
+    this.ley.scale(M?.leyBright ?? 1);
+    this.leyRgb = M?.leyRgb ? new THREE.Vector3(...[1, 3, 5].map(i => parseInt(M.leyRgb!.slice(i, i + 2), 16) / 255)) : null;
     this.scene.add(...this.ley.meshes);
     this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
     this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
@@ -627,6 +633,7 @@ export class View {
       // (advance "wave": it moves on only when the next area's wave arrives, not when its quest is done)
       const P = t.leyLines.advance === "wave" ? { ...g.party, leyDone: undefined } : g.party, M = g.map, home = new THREE.Vector3(0.8, 0.7, 1);
       this.ley.update(leyKey(P), () => leyChain(P, M, t.leyLines.ahead, t.leyLines.behind), s => {
+        if (this.leyRgb) return this.leyRgb; // the mood's: a guide in the HUD's amber, not a light source (the art director's round 2)
         return this.markerArt.colour.get(AREA_TYPES[M.typeOf(s.cell[0], s.cell[1])].creature) ?? home;
       }, time, canopyShown(w));
     }
@@ -761,6 +768,11 @@ export class View {
       const base = px(wx, wyy, wz), top = px(wx, hatTop, wz), side = px(wx + wframe.w * this.mpp / 2, wyy, wz);
       SPRITE_UNIFORMS.uWitch.value.set((base[0] + top[0]) / 2, (base[1] + top[1]) / 2, Math.abs(side[0] - base[0]) + 1, Math.abs(top[1] - base[1]) / 2 + 1);
       SPRITE_UNIFORMS.uWitchDepth.value = -placed(this.v3.set(wx, this.seatK > 0 ? wyy : h + this.rideOff, wz)).applyMatrix4(this.camera.matrixWorldInverse).z;
+      // Her pool on screen, for the grade to spare (render/post.ts: on a dark floor her light sits among the tones the
+      // spooky grade drains to blue, and it vanished: the art director's round 3, the fern forest): its centre under her
+      // feet and its half-widths across and up the screen, out to half her light's reach.
+      const R = LIGHT_UNIFORMS.uGlowR.value * LIGHT_UNIFORMS.uGlowNear.value * 0.5, foot = px(wx, 0, wz), across = px(wx + R, 0, wz), down = px(wx, 0, wz + R);
+      this.post.pool.set(foot[0] / this.width, foot[1] / this.height, Math.max(1e-3, Math.abs(across[0] - foot[0]) / this.width), Math.max(1e-3, Math.abs(down[1] - foot[1]) / this.height));
     }
     this.clouds.update(time, this.camera, SPRITE_UNIFORMS.uWitch.value, this.width, this.height);
     this.shadow.position.set(wx, 0.08, wz);

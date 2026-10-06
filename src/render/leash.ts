@@ -11,6 +11,7 @@
 //   canvas), with a bar for how far the conversation has got.
 // The sigils are the art builder's (art/sigils.js), drawn per species and level into an atlas.
 import { dreamStone, questOpen, restlessness } from "../rules/dream";
+import { moodOf } from "./mood";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { drawSigil, sigilColour, speciesColours, defaultStyle, M } from "../../art/generator.js";
@@ -39,9 +40,12 @@ import { huntsWitch } from "../rules/creatureStates";
 import { LEGENDS, relicGlints } from "../rules/legends";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
+import { lobHeight } from "./invites";
 
 /** The join burst's colours (the art director, #188 and #200): the lanterns' amber, light and deep, with the creature's own
  *  neon; nothing white (white is a hit's). */
+/** Her magic's colours in the night (the art director's palette, #188 and round 2): the lanterns' amber and the 💌s' rose. */
+const AMBER = [0.91, 0.71, 0.42], ROSE = [0.85, 0.47, 0.62];
 const JOIN_PALETTE = [[0.91, 0.71, 0.42], [0.82, 0.52, 0.28], [0.91, 0.71, 0.42]];
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, placed } from "./height";
@@ -171,6 +175,8 @@ export class LeashView {
   private evolved = new Map<number, number>();
   private berryRgb: [number, number, number];
   private fizzles: { x: number; z: number; at: number }[] = [];
+  /** When each sigil came to the bottom of the stack by a cycle (E in the treetops): it flares a moment. */
+  private cycledAt = new Map<number, number>();
   private bursts: { x: number; z: number; at: number; seed: number; rgb: number[] }[] = [];
   /** When each creature joined the party (invited or befriended), for its little hop (render/view/creatures.ts). */
   readonly joined = new Map<number, number>();
@@ -246,6 +252,8 @@ export class LeashView {
   private drawBerries(time: number): void {
     const g = this.game, B = g.berries, t = g.tuning, w = g.witch, dot = this.uv(0), [r, gg, b] = this.berryRgb, glow = t.berries.glow;
     const treetops = w.lift > 0.5, near = treetops ? 260 : 90, beat = 60 / t.beat.bpm;
+    // The mood's halo (the art director's round 2: big soft red discs after bloom read as warning lights; a crisp berry with a small glow).
+    const M = moodOf(t), hs = M?.berryHalo ?? 1, hg = glow * (M?.berryGlow ?? 1);
     for (const e of B.events) if (e.kind === "evolved") this.evolved.set(e.id, time);
     for (const [id, at] of this.evolved) if (time - at > 1) this.evolved.delete(id);
     for (const berry of B.berries) {
@@ -254,8 +262,8 @@ export class LeashView {
       const tw = 0.85 + 0.15 * Math.sin(time * 2.3 + berry.id);
       if (treetops) this.over.add(p.x, 1, p.z + 0.25, 0.9, dot, r * 1.6 * tw, gg * 1.6, b * 1.6, 0.8 * glow);
       else {
-        this.standing.add(p.x, 0.8, p.z + 0.3, 2.8, dot, r * 1.5, gg * 1.5, b * 1.5, 0.95 * glow * tw); // the soft halo, easy to spot
-        this.standing.add(p.x, 0.8, p.z + 0.31, 1.1, dot, r * 1.8, gg * 1.4, b * 1.4, 0.8 * glow); // its warm core
+        this.standing.add(p.x, 0.8, p.z + 0.3, 2.8 * hs, dot, r * 1.5, gg * 1.5, b * 1.5, 0.95 * hg * tw); // the soft halo, easy to spot
+        this.standing.add(p.x, 0.8, p.z + 0.31, 1.1 * hs, dot, r * 1.8, gg * 1.4, b * 1.4, 0.8 * hg); // its warm core
         this.standing.add(p.x - 0.07, 0.86, p.z + 0.32, 0.3, dot, 1, 0.92, 0.92, 0.8 * tw); // the shine
       }
     }
@@ -439,6 +447,43 @@ export class LeashView {
     return k < 0 || k > 1 ? 0 : this.shakeAmp * (1 - k) * (1 - k);
   }
 
+  /** The newest 💌 event already shown (a frame with no step keeps its step's events: shown once). */
+  private lettersSeen = -Infinity;
+  /** Her 💌s in the night (the coordinator's brief: "the witch's own magic in the night palette"): a faint warm trail
+   *  behind each letter in flight, amber and rose, so it reads in the dark; a soft rose puff and a little ring where one
+   *  lands on the ground; on a creature, a rose ring at its feet and a few amber sparks (nothing white: white is a hit's). */
+  private drawLetters(time: number): void {
+    const g = this.game, dot = this.uv(0), arc = g.tuning.invites.arc ?? 0, seen = this.lettersSeen;
+    let newest = seen;
+    for (const W of g.witches) {
+      for (const L of W.invites.letters) {
+        if (L.kind === "cache") continue;
+        const sp = Math.hypot(L.vx, L.vz);
+        if (sp < 1e-3) continue;
+        const ux = L.vx / sp, uz = L.vz / sp;
+        for (let j = 1; j <= 9; j++) {
+          const back = j * 0.4, f = L.flown - back;
+          if (f < 0) break;
+          const c = j % 2 ? AMBER : ROSE, y = L.kind === "orbit" ? 1.3 : lobHeight(f, L.range, arc);
+          this.standing.add(L.x - ux * back, y, L.z - uz * back, (L.small ? 0.5 : 0.8) * (1 - j * 0.07), dot, c[0], c[1], c[2], 0.9 * (1 - j / 10));
+        }
+      }
+      for (const e of W.invites.events) {
+        if (e.at <= seen) continue;
+        newest = Math.max(newest, e.at);
+        if (e.kind === "fizzled") {
+          this.fx.push({ kind: "puff", x: e.x, y: 0.25, z: e.z, at: time, life: 0.5, r: ROSE[0], g: ROSE[1], b: ROSE[2], seed: e.at * 23 + (e.n ?? 0), size: 0.5 });
+          this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.4, r: ROSE[0], g: ROSE[1], b: ROSE[2], seed: 0, size: 0.9, n: 12, dot: 0.3 });
+        } else if (e.kind === "hit" && e.id !== undefined) {
+          const c = g.creatures[e.id], top = (c && this.tops.get(c.id)) ?? 1.2;
+          this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.45, r: ROSE[0], g: ROSE[1], b: ROSE[2], seed: 0, size: e.spent ? 1 : 1.6, n: e.spent ? 12 : 18, dot: 0.4 });
+          if (!e.spent) this.fx.push({ kind: "spark", x: e.x, y: top * 0.6, z: e.z, at: time, life: 0.45, r: AMBER[0], g: AMBER[1], b: AMBER[2], seed: e.at * 61 + e.id, size: 0.9 });
+        }
+      }
+    }
+    this.lettersSeen = newest;
+  }
+
   /** Combat (rules/combat.ts) and knockouts (rules/knockout.ts): shots and their telegraphs, hits,
    *  health bars (only when hurt), puffs as beaten creatures flee, the knockout's splashing sigils
    *  and teleport, the marker on creatures walking home, and the witch's hit pips. */
@@ -515,7 +560,7 @@ export class LeashView {
     }
     { let j = 0; for (const f of this.fx) if (time - f.at < f.life) this.fx[j++] = f; this.fx.length = j; } // (in place: no new array a frame)
     for (const f of this.fx) {
-      const k = (time - f.at) / f.life, n = f.kind === "flash" ? 13 : f.kind === "dust" ? 10 : f.kind === "bits" ? f.n ?? 8 : f.kind === "spark" ? 10 : f.kind === "splash" ? 22 : f.kind === "puff" ? 12 : f.kind === "teleport" ? 40 : f.kind === "ring" ? f.n ?? 36 : 14, sz = f.size ?? 1;
+      const k = (time - f.at) / f.life, n = f.kind === "flash" ? 13 : f.kind === "dust" ? 10 : f.kind === "bits" ? f.n ?? 8 : f.kind === "spark" ? 10 : f.kind === "splash" ? 22 : f.kind === "puff" ? 12 : f.kind === "teleport" ? 40 : f.kind === "ring" ? f.n ?? 36 : f.kind === "motes" ? 16 : 14, sz = f.size ?? 1;
       for (let i = 0; i < n; i++) {
         const a = hash2(f.seed, i, 3) * Math.PI * 2, r1 = hash2(f.seed, i, 5), r2 = hash2(f.seed, i, 7);
         if (f.kind === "spark") this.standing.add(f.x + Math.cos(a) * sz * k * (0.5 + r1), f.y + sz * k * r2, f.z + Math.sin(a) * sz * k * (0.5 + r1), 0.22 * Math.sqrt(sz), dot, f.r, f.g, f.b, 1 - k);
@@ -536,6 +581,7 @@ export class LeashView {
           const sp = (0.8 + r1 * 1.4) * sz, up = (2 + r2 * 2.5) * sz, px = artPx * (r1 > 0.6 ? 2 : 1);
           this.solid.add(f.x + Math.cos(a) * sp * k, Math.max(0.05, f.y + up * k - 6 * k * k), f.z + Math.sin(a) * sp * k, px, sq, f.r, f.g, f.b, 1 - k * k * k);
         }
+        else if (f.kind === "motes") { const R = sz * (0.3 + r1 * 0.7), h = (f.tx ?? 3) * (0.2 + 0.8 * r2) * Math.sqrt(k); this.standing.add(f.x + Math.cos(a) * R, f.y + h, f.z + Math.sin(a) * R * 0.8, 0.7 * (1 - k * 0.5), dot, f.r, f.g, f.b, Math.sin(Math.PI * Math.min(1, k * 1.4)) * 0.9); } // (a sigil's motes rising: tx their height)
         else if (f.kind === "ring") { const aa = (i / n) * Math.PI * 2, R = sz * (0.3 + 0.7 * k); this.flat.add(f.x + Math.cos(aa) * R, 0, f.z + Math.sin(aa) * R * 0.8, f.dot ?? 0.7, dot, f.r, f.g, f.b, 1 - k); }
       }
     }
@@ -730,8 +776,9 @@ export class LeashView {
     this.standing.begin(); this.flat.begin(); this.over.begin(); this.solid.begin();
     this.drawBerries(time);
     this.drawBosses(time);
+    this.drawLetters(time);
     this.drawCombat(time, camera, width, height, hatTop);
-    for (const e of s.events) {
+    for (const e of g.leashEvents) { // (the whole frame's, not only its last step's)
       if (e.kind === "fizzled") this.fizzles.push({ x: e.x, z: e.z, at: time });
       if (e.kind === "invited" || e.kind === "befriended") {
         // its own colour for the burst: its sigil's neon, calmed toward the night (as the HUD's, #188)
@@ -739,6 +786,16 @@ export class LeashView {
         this.bursts.push({ x: e.x, z: e.z, at: time, seed: e.id, rgb: sc.map((v: number) => (v * 0.6 + m * 0.4) / 255) });
         this.joined.set(e.id, time);
       }
+      // Sigils in the night palette (the coordinator's brief): put down, a rune written in with an amber ring opening on the
+      // ground and motes of its creature's neon rising; picked up, its motes rising back to her; cycled (E in the treetops),
+      // the new bottom sigil of the stack flares (drawn with the stack).
+      const sc = (e.kind === "placed" || e.kind === "picked") && e.id !== undefined ? g.creatures[e.id] : undefined;
+      if (sc) {
+        const col = (this.slotOf(sc.species, sc.level), this.colours.get(sc.species)!), R = 3 + sc.level * 0.8;
+        if (e.kind === "placed") this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.6, r: 0.62, g: 0.4, b: 0.2, seed: 0, size: R * 0.8, n: 20, dot: 0.8 }); // (a deep amber: its dots overlap and add up, and it mustn't reach white)
+        this.fx.push({ kind: "motes", x: e.x, y: 0.2, z: e.z, at: time, life: e.kind === "placed" ? 0.9 : 0.7, r: col.r, g: col.g, b: col.b, seed: e.at * 53 + e.id!, size: e.kind === "placed" ? R * 0.35 : R * 0.25, tx: e.kind === "placed" ? 3 : 4.5 });
+      }
+      if (e.kind === "cycled" && e.id !== undefined) this.cycledAt.set(e.id, time);
     }
     this.fizzles = this.fizzles.filter(f => time - f.at < 0.7);
     this.bursts = this.bursts.filter(b => time - b.at < 1.1);
@@ -796,6 +853,12 @@ export class LeashView {
       // Down to her last hit, the leash frays: the stack flickers (Ed, 2026-10-04).
       const fray = g.witches[0].health.hp === 1 && !g.witches[0].ko ? (Math.sin(time * 23 + j * 3.1) > 0.2 ? 1 : 0.25) : 1;
       this.standing.add(pos.x, pos.y, pos.z, size, this.uv(this.slotOf(c.species, c.level)), col.r, col.g, col.b, fray);
+      const cyc = this.cycledAt.get(id);
+      if (cyc !== undefined) {
+        const k = (time - cyc) / 0.45;
+        if (k >= 1 || k < 0) this.cycledAt.delete(id);
+        else this.standing.add(pos.x, pos.y, pos.z, size * (2 + k * 1.6), dot, col.r, col.g, col.b, 0.75 * (1 - k)); // (its flare: a halo of its neon, opening and fading)
+      }
     }
     this.lastSlots = slotPos;
 
@@ -823,11 +886,11 @@ export class LeashView {
     if (w.mode === "ground" && s.stack.length && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius)) {
       const c = g.creatures[s.stack[s.stack.length - 1]], col = this.colours.get(c.species)!;
       const no = blocked(s, w.x, w.z, t);
-      this.flat.add(w.x, 0, w.z, 3 + c.level * 0.8, this.uv(this.slotOf(c.species, c.level)), no ? 1 : col.r, no ? 0.1 : col.g, no ? 0.1 : col.b, 0.22);
+      this.flat.add(w.x, 0, w.z, 3 + c.level * 0.8, this.uv(this.slotOf(c.species, c.level)), no ? 0.85 : col.r, no ? 0.38 : col.g, no ? 0.43 : col.b, 0.22); // (can't: the HUD's loss red, #188)
     }
     for (const f of this.fizzles) {
       const k = 1 - (time - f.at) / 0.7;
-      this.flat.add(f.x, 0, f.z, 3 * (1 + (1 - k) * 0.6), dot, 1, 0.15, 0.1, k);
+      this.flat.add(f.x, 0, f.z, 3 * (1 + (1 - k) * 0.6), dot, 0.85, 0.38, 0.43, k); // (the HUD's loss red, #188)
     }
 
     // Relics (#87; placeholder till the art builder's party relics are drawn): a gold mound where

@@ -35,8 +35,11 @@ void main() {
 }`;
 
 // Scene (sampled as whole low-res pixels), the smooth effects layer (sampled smoothly) and bloom.
+/** How much of the grade her light's pool is spared at its centre (0 none, 1 all). */
+const POOL_SPARE = 0.8;
+
 const COMPOSITE = /* glsl */ `
-uniform sampler2D uScene, uBloom, uFx; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma, uFxOn; uniform vec4 uGrade; uniform vec3 uGradeTint; varying vec2 vUv;
+uniform sampler2D uScene, uBloom, uFx; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma, uFxOn; uniform vec4 uGrade, uPool; uniform vec3 uGradeTint; varying vec2 vUv;
 void main() {
   vec2 p = (floor(vUv * uLow) + 0.5) / uLow;
   vec3 c = texture2D(uScene, p).rgb;
@@ -49,7 +52,10 @@ void main() {
   // which nothing is graded.
   if (uGrade.x > 0.0) {
     float l = dot(c, vec3(0.3, 0.55, 0.15));
-    c = mix(c, mix(c, vec3(l), uGrade.y) * uGradeTint, uGrade.x * (1.0 - smoothstep(0.0, uGrade.z, l)));
+    // Her light's pool spared (uPool: its centre and half-widths on screen; render/view.ts), so her warm light still shows
+    // on a dark floor (the art director's round 3: in the fern forest "her light doesn't show").
+    float pool = uPool.z > 0.0 ? 1.0 - smoothstep(0.35, 1.0, length((vUv - uPool.xy) / uPool.zw)) : 0.0;
+    c = mix(c, mix(c, vec3(l), uGrade.y) * uGradeTint, uGrade.x * (1.0 - smoothstep(0.0, uGrade.z, l)) * (1.0 - ${POOL_SPARE.toFixed(2)} * pool));
   }
   c += texture2D(uBloom, vUv).rgb * uBloomStrength;
   gl_FragColor = vec4(min(c, vec3(1.0)), 1.0);
@@ -107,7 +113,7 @@ export class Post {
     this.mats = {
       bright: m(BRIGHT, { uScene: { value: null }, uThreshold: { value: 0.6 } }),
       blur: m(BLUR, { uSrc: { value: null }, uStep: { value: new THREE.Vector2() } }),
-      composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 }, uFx: { value: null }, uFxOn: { value: 0 }, uGrade: { value: new THREE.Vector4() }, uGradeTint: { value: new THREE.Vector3(1, 1, 1) } }),
+      composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 }, uFx: { value: null }, uFxOn: { value: 0 }, uGrade: { value: new THREE.Vector4() }, uPool: { value: new THREE.Vector4() }, uGradeTint: { value: new THREE.Vector3(1, 1, 1) } }),
       tilt: m(TILT, { uSrc: { value: null }, uDepth: { value: null }, uTexel: { value: new THREE.Vector2() }, uDir: { value: new THREE.Vector2() }, uStrength: { value: 0 }, uBand: { value: 0.4 }, uCentre: { value: 0.5 }, uSkySharp: { value: 0 } }),
     };
     this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mats.composite);
@@ -117,6 +123,8 @@ export class Post {
   /** Whether the canvas holds the full-resolution image (tilt-shift after the upscale). */
   /** How far the witch is risen (0 ground, 1 treetops): the tilt-shift blends from the ground's to the treetops'. */
   lift = 0;
+  /** Her light's pool on screen (0 to 1, y up): its centre and half-widths, spared from the grade (z 0: none). */
+  get pool(): THREE.Vector4 { return this.mats.composite.uniforms.uPool.value; }
   get fullResolution(): boolean { return this.tuning.tiltShift.on && this.tuning.tiltShift.where === "after"; }
 
   /** lowW x lowH: the scene; outW x outH: the canvas. */

@@ -77,7 +77,7 @@ export function tuftSprites(id, st = {}) {
   const A = AREA_BY_ID[id]; if (!A) throw new Error(`no area type "${id}"`);
   const mix = TF_MIX[A.floor[0]] || TF_MIX.grass, leaf = A.leaf, r = rng(id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 3) >>> 0);
   const flower = { heather: hsv2rgb(.85, .5, .7), bluebells: hsv2rgb(.68, .55, .8) }[A.floor[0]] || hsv2rgb([.95, .13, .55, .0, .8][Math.floor(leaf * 100) % 5], .55, .9);
-  const colours = { [M.LEAF]: hsv2rgb(leaf, .55, .5), [M.LEAF2]: hsv2rgb(leaf - .03, .5, .66), [M.LEAF3]: hsv2rgb(leaf + .03, .6, .32), [M.FLOWER]: flower, [M.TRUNK]: hsv2rgb(.07, .45, .36), [M.BARKL]: hsv2rgb(.08, .4, .55),
+  const colours = { [M.LEAF]: hsv2rgb(leaf, .42, .4), [M.LEAF2]: hsv2rgb(leaf - .03, .38, .52), [M.LEAF3]: hsv2rgb(leaf + .03, .5, .26), /* (the night palette: darker, quieter greens) */ [M.FLOWER]: flower, [M.TRUNK]: hsv2rgb(.07, .45, .36), [M.BARKL]: hsv2rgb(.08, .4, .55),
     [M.STONE]: hsv2rgb(.08, .4, .55), [M.STONED]: hsv2rgb(.62, .08, .4), [M.BELLY]: [226, 216, 196] };
   if (A.floor[0] === "slate" || A.floor[0] === "scree" || A.floor[0] === "stony" || A.floor[0] === "pebbles" || A.floor[0] === "stone" || A.floor[0] === "earth") colours[M.STONE] = hsv2rgb(.1, .06, .58); // stones are grey; elsewhere STONE is a mushroom's cap
   const sty = st.artStyle === "bold" || st.artStyle === "ref";
