@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0b0a16">
-  <title>Witch — prototype</title>
+  <title>Coven Rush</title>
   <style>
     :root { --ink: #e8e2f4; --dim: #9a93b4; --panel: rgba(14, 11, 28, .82); --accent: #e8b46a; --accent-dim: rgba(232, 180, 106, .45); --love: #d9789e; --loss: #d8606e; } /* the HUD in the art's palette (art review round 1): one accent, lantern amber; love (💌, hearts) and loss muted */
     html, body { margin: 0; height: 100%; background: #0b0a16; overflow: hidden; color: var(--ink); font: 14px/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
@@ -29,13 +29,6 @@
     #clock.on { display: block; }
     #clock.paused { color: var(--dim); }
     #clock .label { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; color: var(--dim); font-size: 11px; letter-spacing: 0; text-shadow: 0 1px 0 #000; }
-    /* The party spell's button (Ed, 2026-10-06): large, centred, in the HUD's amber, until she casts it; Enter too. */
-    #cast { position: fixed; left: 50%; top: 62%; transform: translateX(-50%); display: none; z-index: 4; font: inherit; font-size: 20px; letter-spacing: .12em; color: #1d1408; background: var(--accent); border: 2px solid #f6d7a4; border-radius: 10px; padding: 14px 28px 10px; cursor: pointer; box-shadow: 0 0 22px rgba(232, 180, 106, .55), 0 3px 0 #7a5228; text-shadow: none; animation: cast-glow 2.4s ease-in-out infinite; }
-    #cast.on { display: block; }
-    #cast:hover { filter: brightness(1.08); }
-    #cast:active { transform: translateX(-50%) translateY(2px); box-shadow: 0 0 22px rgba(232, 180, 106, .55), 0 1px 0 #7a5228; }
-    #cast small { display: block; margin-top: 4px; font-size: 11px; letter-spacing: .04em; opacity: .7; }
-    @keyframes cast-glow { 0%, 100% { box-shadow: 0 0 14px rgba(232, 180, 106, .4), 0 3px 0 #7a5228; } 50% { box-shadow: 0 0 30px rgba(232, 180, 106, .75), 0 3px 0 #7a5228; } }
     #clock.lost { animation: clock-lost .9s ease-out; }
     @keyframes clock-lost { 0%, 30% { color: var(--loss); box-shadow: 0 0 8px var(--loss); } }
     #clock .loss-pop, #clock .boot-pop { position: absolute; left: 50%; top: 100%; margin-top: 18px; transform: translateX(-50%); white-space: nowrap; font-size: 12px; letter-spacing: 0; text-shadow: 0 1px 0 #000; }
@@ -119,7 +112,7 @@
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
     .bubble .bar i { display: block; height: 100%; background: var(--love); }
   </style>
-  <script type="module" crossorigin src="./assets/index-BoCtVM0n.js"></script>
+  <script type="module" crossorigin src="./assets/index-BzUrtpHf.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-DnShPyXc.css">
 </head>
 <body>
@@ -130,7 +123,6 @@
   <div id="fight-knobs"><span>fight scale [ ]</span><input type="range" name="scale" min="0.25" max="3" step="0.05"><span class="scale"></span><span>fight speed ; '</span><input type="range" name="speed" min="0.25" max="3" step="0.05"><span class="speed"></span><span>momentum , .</span><input type="range" name="momentum" min="0.25" max="3" step="0.05"><span class="momentum"></span><button type="button" class="fight-reset">reset fight scale, speed and momentum</button><span>treetop speed m/s</span><input type="range" name="treetop" min="16" max="160" step="2"><span class="treetop"></span><span>area (?areaSize=)</span><span class="area" style="grid-column: 2 / -1"></span><button type="button" class="world-reset">reset area size and treetop speed (new map)</button></div>
   <div id="debug-buttons"><button id="next-wave" type="button">next wave (N)</button><button id="pause-waves" type="button">pause waves (P)</button><button id="rulers" type="button">rulers (G)</button></div>
   <div id="clock"><span class="t">00:00</span><div class="label"></div></div>
-  <button id="cast" type="button">✨ CAST THE PARTY SPELL ✨<small>click · tap · Enter or R</small></button>
   <div id="bubbles"><div class="bubble" id="bubble-witch"></div><div class="bubble" id="bubble-creature"><span></span><div class="bar"><i></i></div></div></div>
   <div id="touch">
     <div id="stick-zone"></div>
