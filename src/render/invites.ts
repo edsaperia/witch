@@ -51,6 +51,11 @@ export class InviteView {
   private lastHers = -Infinity;
   /** Little pops where letters land: { element, where, when }. */
   private pops: { el: HTMLImageElement; x: number; y: number; z: number; at: number }[] = [];
+  /** 💌s that met no one, resting where they came down (Ed's playtest, 2026-10-06: "invitations
+   *  should sit on the ground for a little while before they fade away"): drawn only (the rules ended
+   *  them; they're no hits), at most invites.lingerMax, their images pooled and reused. */
+  private resting: { x: number; z: number; at: number; tilt: number }[] = [];
+  private restImgs: HTMLImageElement[] = [];
   /** Events already shown (a frozen frame keeps its events: shown once). */
   private seen = new Set<string>();
   private v = new THREE.Vector3();
@@ -112,7 +117,11 @@ export class InviteView {
         this.lastHers = time;
         this.show(this.hers, pick(HERS, e.n ?? 0, 1), 0, 0, 0, time + 0.8);
       } else if (e.kind === "fizzled") {
-        // (landed on the ground at its range: a soft rose puff, render/leash.ts drawLetters)
+        // (landed on the ground at its range: a soft rose puff, render/leash.ts drawLetters; and it rests there a while)
+        if ((t.invites.linger ?? 0) > 0) {
+          this.resting.push({ x: e.x, z: e.z, at: time, tilt: (hash2(e.n ?? 0, 3, 29) - 0.5) * 50 });
+          if (this.resting.length > t.invites.lingerMax) this.resting.shift();
+        }
       } else if ((e.kind === "hit" || e.kind === "blocked" || e.kind === "happy") && e.id !== undefined) {
         // Every letter that lands pops; one inside the creature's gap (spent) adds nothing, and gets no reply.
         if (e.kind === "blocked" || (e.kind === "hit" && !e.spent)) this.pop(e.kind === "blocked" ? "💢" : "💖", e.x, head(e.id) * 0.6, e.z, time); // (a spent one: only its ring, render/leash.ts; no white ✨)
@@ -142,6 +151,26 @@ export class InviteView {
       place(b.el, c.x, head(id) + 0.9, c.z);
     }
 
+    // The resting ones: lying on the ground (squashed flat, turned a little), fading out at the end.
+    {
+      const life = t.invites.linger ?? 0, fade = Math.max(0.01, Math.min(life, t.invites.lingerFade)), n = Math.round(t.bubbles.emojiPixels * 0.8), k = t.pixelSize * t.bubbles.scale;
+      this.resting = this.resting.filter(r => time - r.at < life && time >= r.at);
+      while (this.restImgs.length < this.resting.length) {
+        const im = document.createElement("img");
+        Object.assign(im.style, { position: "absolute", imageRendering: "pixelated", width: `${n * k}px`, height: `${n * k}px`, marginLeft: `${(-n * k) / 2}px`, marginTop: `${(-n * k) / 2}px`, filter: "drop-shadow(0 1px 1px rgba(0,0,0,.6))" });
+        im.src = pixelEmoji("💌", n);
+        this.root.append(im);
+        this.restImgs.push(im);
+      }
+      this.restImgs.forEach((im, i) => {
+        const r = this.resting[i];
+        if (!r) { if (im.style.display !== "none") im.style.display = "none"; return; }
+        im.style.display = "block";
+        place(im, r.x, 0.08, r.z);
+        im.style.opacity = String(Math.min(0.9, Math.max(0, (life - (time - r.at)) / fade) * 0.9));
+        im.style.transform = `rotate(${r.tilt.toFixed(0)}deg) scale(0.85, 0.5)`;
+      });
+    }
     // The letters in flight: a spinning pixel 💌 each.
     const n = Math.round(t.bubbles.emojiPixels * 0.8), k = t.pixelSize * t.bubbles.scale, src = pixelEmoji("💌", n);
     while (this.letters.length < I.letters.length) {
