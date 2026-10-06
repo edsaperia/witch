@@ -182,7 +182,7 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     let pick = -1, pd = L.pickRadius;
     s.placed.forEach((p, i) => { const d = Math.hypot(p.x - witch.x, p.z - witch.z); if (d <= pd) { pd = d; pick = i; } });
     // (Her own placed sigil first, then a happy creature's rune: Ed, 2026-10-06, the nearest; her hat before both, rules/game.ts.)
-    const rune = pick < 0 ? c.rune?.(witch.x, witch.z, L.pickRadius) ?? null : null;
+    const rune = pick < 0 ? c.rune?.(witch.x, witch.z, L.runeRadius ?? L.pickRadius) ?? null : null; // (further than her own sigils: Ed's playtest, "difficult to pick up")
     if (pick >= 0) {
       const [p] = s.placed.splice(pick, 1);
       s.stack.push(p.id);
