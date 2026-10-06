@@ -859,7 +859,7 @@ const PLANT_GENOMES = {
   crabApple: { name: "crab apple", form: "tree", generator: "blob", grow: "small", crown: { envelope: "sphere", clumps: "3-5 round blobs, fruit" },
     params: { w: 160, h: 95, trunk: { w: 9, len: .38, taper: .65, bend: 2, lean: .9 }, levels: [{ n: [3, 4], at: [.6, 1], len: [.5, .7], angle: [.7, 1.1], up: .1, bend: 1.8, shape: "even" }, { n: [2, 2], at: [.5, 1], len: [.4, .55], angle: [.4, .7], bend: 1.6 }],
       crown: { blobs: [3, 5], r: [13, 17], flat: .8, stamp: "round", stampSize: 2.5, back: .25, holes: .05, dots: { mat: "FLOWER", share: .035, size: 2 } } },
-    low: { moss: .5, sprigs: .6, boughs: .4 }, colour: { hue: .02, val: .9, dot: [226, 182, 52] } },
+    low: { moss: .5, sprigs: .6, boughs: .4 }, colour: { hue: .05, val: .9, dot: [226, 182, 52] } },
   elder: { name: "elder", form: "shrub", generator: "blob", grow: "small", crown: { envelope: "umbrella", clumps: "flat blobs, flower plates" },
     params: { w: 150, h: 105, trunk: { w: 6, len: .55, taper: .55, bend: 1.4, stems: 4, fan: 1.1, top: true, roots: .5 }, levels: [{ n: [2, 3], at: [.6, 1], len: [.35, .5], angle: [.6, 1], up: .15 }],
       crown: { blobs: [5, 7], r: [16, 21], flat: .55, stamp: "leaf", stampSize: 3, back: .35, holes: .08, twigs: .5, dots: { mat: "FLOWER", share: .012, size: 3 } } },
@@ -1465,13 +1465,16 @@ function chooseType(r, st) {
   for (const [k, f] of TREE_TYPES) { x -= st[k]; if (x <= 0) return f; }
   return broadTree;
 }
+// The night palette (the art director, round 1, after Ed's "a spooky dark forest with a party in it": a dark blue-green and violet
+// forest, no lime): a green hue pulled toward blue-green, compressed into .34 to .44; golds, browns, blues and violets left alone.
+const nightGreen = h => (h >= .17 && h < .42 ? .34 + (h - .17) * .4 : h);
 function treeColours(r, st, type, blob = false) {
   const S = SPECIES_BY_FN.get(type), sa = S?.sat || 1, va = (S?.val || 1) * (st.leafVal ?? 1); // leafVal: an area's palette, brighter or darker leaves
   // a species shifts the area's leaf hue a little; towards yellow it shifts less where the area's leaves are already yellow, so no species turns an area autumnal
-  const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = (S?.hueAbs ?? st.leafHue) + (r() - .5) * st.leafVariety * .7 + sh; // hueAbs: a hue of its own, whatever the area's
+  const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = nightGreen((S?.hueAbs ?? st.leafHue) + (r() - .5) * st.leafVariety * .7 + sh); // hueAbs: a hue of its own, whatever the area's; never lime (nightGreen)
   const c = {
     [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212],
-    [M.LEAF]: hsv2rgb(h, Math.min(1, .62 * st.sat * sa), Math.min(1, .58 * va)), [M.LEAF2]: hsv2rgb(h - .05, Math.min(1, .55 * st.sat * sa), Math.min(1, .8 * va)), [M.LEAF3]: hsv2rgb(h + .03, Math.min(1, .66 * st.sat * sa), .38 * va), [M.WEB]: [225, 225, 232],
+    [M.LEAF]: hsv2rgb(h, Math.min(1, .62 * st.sat * sa), Math.min(1, .58 * va)), [M.LEAF2]: hsv2rgb(h - .05, Math.min(1, .46 * st.sat * sa), Math.min(1, .68 * va)), /* (the night palette: the lit tone quieter, so a lit crown never glows) */ [M.LEAF3]: hsv2rgb(h + .03, Math.min(1, .66 * st.sat * sa), .38 * va), [M.WEB]: [225, 225, 232],
   };
   if (st.artStyle && (S?.blob || blob)) { // the pixel-art ramp (the blob generator's trees; bake's post-pass does the rest) (docs/ART-GUIDE.md section 0): 3 hue-shifted tones per material, the shadow deeper, more saturated and
     // towards blue-violet, the light pale and towards cream; "ref" (Ed's reference, rung 6) keeps one tone family, "bold" (rung 3/4) shifts further
@@ -3160,7 +3163,7 @@ function groundColours(def, st) {
     [M.ACCENT]: kind === "needles" ? hsv2rgb(.07, .5, .5) : hsv2rgb(.1, .08, .62), [M.FLOWER]: flower,
     [M.LEAF]: hsv2rgb(def.leaf, .55 * st.sat, .45), [M.LEAF2]: hsv2rgb(def.leaf - .03 - .05 * sh, .5 * st.sat * (1 - .2 * sh), .62 + .06 * sh), [M.LEAF3]: hsv2rgb(def.leaf + .03 + .05 * sh, .6 * st.sat, .3),
     [M.MOSS]: hsv2rgb(def.leaf + .02, .5 * st.sat, .36), [M.TRUNK]: hsv2rgb(st.trunkHue, .4, .3), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .35, .48),
-    [M.STONE]: hsv2rgb(.1, .07, .6), [M.STONED]: hsv2rgb(.62 + .02 * sh, .1, .38), [M.WATER]: hsv2rgb(.58, .35, Math.max(.16, val * .55)), [M.WEB]: hsv2rgb(.56, .12, .78),
+    [M.STONE]: hsv2rgb(.58, .06, .54), /* cool grey, never brighter than the witch in her own light (art director, round 1) */ [M.STONED]: hsv2rgb(.62 + .02 * sh, .1, .38), [M.WATER]: hsv2rgb(.58, .35, Math.max(.16, val * .55)), [M.WEB]: hsv2rgb(.56, .12, .78),
   };
   return colours;
 }
@@ -6462,13 +6465,13 @@ const P = (kind, o = {}) => [kind, o];
 
 // floor: [texture, hue, saturation, value]; leaf: leaf hue for this area's plants.
 const AREAS = [
-  { id: "moor", name: "Moor", creature: "badger", by: "Ed", leaf: .24, floor: ["moss", .26, .45, .42], text: { floor: "moss", wall: "puddles, a lake", small: "long grass", big: "moss mounds" },
-    wall: [P("water", { w: 1.6 })], small: [P("grass", { h: 1.4 })], big: [P("mound", { moss: true }), P("cairn", { sparse: .12 }), P("standingstone", { sparse: .12 })] },
-  { id: "fern-forest", name: "Fern forest", creature: "boar", by: "Ed", leaf: .3, floor: ["needles", .08, .45, .32], text: { floor: "pine needles", small: "ferns", big: "pine trees" },
+  { id: "moor", name: "Moor", creature: "badger", by: "Ed", leaf: .24, floor: ["heather", .95, .28, .36], ground: { patches: [{ mat: "TRUNK", n: 3, r: [4, 7] }, { mat: "MOSS", n: 3, r: [3, 6] }], details: [{ stamp: "moss", n: 18, mats: ["LEAF3", "LEAF", "LEAF2"] }, { stamp: "sprig", n: 34, mats: ["LEAF3", "BODY", "FLOWER"] }] } /* violet-brown heather and moss (the art director, round 1) */, text: { floor: "moss", wall: "puddles, a lake", small: "long grass", big: "moss mounds" },
+    wall: [P("water", { w: 1.6 })], small: [P("grass", { h: 1.4, leafHue: .97, leafSat: .55 })], big: [P("mound", { moss: true }), P("cairn", { sparse: .12 }), P("standingstone", { sparse: .12 })] },
+  { id: "fern-forest", name: "Fern forest", creature: "boar", by: "Ed", leaf: .3, floor: ["needles", .3, .4, .3], text: { floor: "pine needles", small: "ferns", big: "pine trees" },
     small: [P("fern")], big: [tree("larch", { scale: 1.1 }), tree("fir", { minor: true })] },
   { id: "muddy-forest", name: "Muddy forest", creature: "snail", by: "Ed", leaf: .22, floor: ["mud", .07, .5, .28], text: { floor: "mud and leaves", small: "short trunks with broken branches", big: "trees with many trunks and branches" },
     small: [P("stump", { snag: true })], big: [tree("sycamore", { trunks: 3, gnarl: .9 }), tree("alder", { minor: true })] },
-  { id: "stone-shrine", name: "Stone shrine", creature: "fox", by: "Ed", leaf: .28, floor: ["stony", .25, .3, .45], text: { floor: "grassy, stony", wall: "mossy henges", small: "little stones", big: "big stones", set: "a shrine" },
+  { id: "stone-shrine", name: "Stone shrine", creature: "fox", by: "Ed", leaf: .28, floor: ["stony", .6, .07, .48], ground: { details: [{ stamp: "slab", n: 16, mats: ["STONED", "STONE", "BELLY"] }, { stamp: "pebble", n: 12, mats: ["STONED", "STONE", "BELLY"] }, { stamp: "tuft", n: 14, mats: ["LEAF3", "LEAF", "LEAF2"] }] }, text: { floor: "grassy, stony", wall: "mossy henges", small: "little stones", big: "big stones", set: "a shrine" },
     wall: [P("henge")], small: [P("stones")], big: [P("boulder"), P("pillar", { sparse: .1 }), P("pillar", { sparse: .08, broken: true, lean: .14 }), P("cairn", { sparse: .08, tall: true })], set: P("shrine") },
   { id: "tangly-forest", name: "Tangly forest", creature: "ram", by: "Ed", leaf: .27, floor: ["nettles", .28, .5, .3], text: { floor: "nettles and earth", small: "tangled branches", big: "fairly short tangly trees" },
     small: [P("bramble", { bare: true })], big: [tree("hawthorn", { scale: .9, gnarl: 1 })] },
@@ -6514,7 +6517,7 @@ const AREAS = [
     small: [P("shrub", { flower: [250, 205, 40], spiky: true })], big: [tree("birch", { lean: .45, scale: .75 }), tree("hawthorn", { minor: true, scale: .7, lean: .45 })] },
   { id: "old-pinewood", name: "Old pinewood", creature: "marten", by: "draft", leaf: .35, floor: ["needles", .07, .4, .3], text: { floor: "pine needles", small: "pine cones", big: "tall old pines with knotholes" },
     small: [P("cones")], big: [tree("pine", { scale: 1.35 }), tree("rowan", { minor: true, scale: .8 })] },
-  { id: "ravine", name: "Ravine", creature: "salamander", by: "draft", leaf: .3, floor: ["stone", .3, .3, .32], text: { floor: "wet moss and rock", wall: "rock walls", small: "ferns", big: "mossy boulders", set: "a waterfall" },
+  { id: "ravine", name: "Ravine", creature: "salamander", by: "draft", leaf: .3, floor: ["stone", .6, .1, .42], text: { floor: "wet moss and rock", wall: "rock walls", small: "ferns", big: "mossy boulders", set: "a waterfall" },
     wall: [P("rockwall", { moss: true })], small: [P("fern")], big: [P("boulder", { moss: true, big: true }), P("spire", { sparse: .1 }), P("spire", { sparse: .06, twin: true }), P("stalagmite", { sparse: .1 })], set: P("waterfall") },
   { id: "bluebell-glade", name: "Bluebell glade", creature: "glowworm", by: "draft", leaf: .26, floor: ["bluebells", .27, .45, .4], text: { floor: "bluebells", small: "ferns", big: "beeches" },
     small: [P("fern")], big: [tree("beech", { gnarl: .2, scale: 1.1 }), tree("holly", { minor: true, scale: .7 })] },
@@ -6532,6 +6535,9 @@ const AREA_BY_ID = Object.fromEntries(AREAS.map(a => [a.id, a]));
 const HOME_AREA = { id: "home", name: "Home meadow", creature: null, by: "Ed", leaf: .29, floor: ["flowers", .28, .55, .56],
   text: { floor: "a pleasant green meadow with flowers", small: "wildflowers", big: "party decorations instead of trees" },
   small: [P("flowers")], big: [], home: true };
+// The night palette (the art director, round 1): every area's green leaves and ground pulled toward blue-green (nightGreen, art/trees.js),
+// so the forest reads dark blue-green, with no lime, and each area keeps its own floor apart by value as well as hue.
+for (const A of [...AREAS, HOME_AREA]) { A.leaf = nightGreen(A.leaf); A.floor[1] = nightGreen(A.floor[1]); }
 AREA_BY_ID.home = HOME_AREA;
 
 // ---------------- layout: how each area's vegetation is arranged (data only) ----------------
@@ -6676,7 +6682,8 @@ function rock(sp, c, rx, ry, st, r, moss) { // a lumpy stone, lit above, mossy o
 function prop(kind, o, def, st, r, s) {
   if (st.propGen && o.gen) return propPiece(o.gen[0], { ...o.gen[1], seed: o.gen[2] }, def, st); // ?props=gen: the prop generator's variant (art/props/)
   if (TALL_KINDS.includes(kind)) return tallPiece(kind, o, def, st, r); // the tall pieces (tall.js): 3D, at the witch's scale
-  const leafCol = { [M.LEAF]: hsv2rgb(def.leaf, .6 * st.sat, .55), [M.LEAF2]: hsv2rgb(def.leaf - .05, .55 * st.sat, .78), [M.LEAF3]: hsv2rgb(def.leaf + .03, .66 * st.sat, .36) };
+  const lh = o.leafHue ?? def.leaf, ls = st.sat * (o.leafSat ?? 1); // (a prop's own leaf hue and saturation: the moor's dry violet-brown grass)
+  const leafCol = { [M.LEAF]: hsv2rgb(lh, .6 * ls, .55), [M.LEAF2]: hsv2rgb(lh - .05, .55 * ls, .78), [M.LEAF3]: hsv2rgb(lh + .03, .66 * ls, .36) };
   const wood = { [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BELLY]: hsv2rgb(st.trunkHue + .02, .3, .7) };
   const water = { [M.MAGIC]: [60, 110, 150], [M.MAGIC2]: [150, 200, 220], [M.BODY2]: [35, 70, 100] };
   if (kind === "tree") {
@@ -7043,7 +7050,7 @@ function tuftSprites(id, st = {}) {
   const A = AREA_BY_ID[id]; if (!A) throw new Error(`no area type "${id}"`);
   const mix = TF_MIX[A.floor[0]] || TF_MIX.grass, leaf = A.leaf, r = rng(id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 3) >>> 0);
   const flower = { heather: hsv2rgb(.85, .5, .7), bluebells: hsv2rgb(.68, .55, .8) }[A.floor[0]] || hsv2rgb([.95, .13, .55, .0, .8][Math.floor(leaf * 100) % 5], .55, .9);
-  const colours = { [M.LEAF]: hsv2rgb(leaf, .55, .5), [M.LEAF2]: hsv2rgb(leaf - .03, .5, .66), [M.LEAF3]: hsv2rgb(leaf + .03, .6, .32), [M.FLOWER]: flower, [M.TRUNK]: hsv2rgb(.07, .45, .36), [M.BARKL]: hsv2rgb(.08, .4, .55),
+  const colours = { [M.LEAF]: hsv2rgb(leaf, .42, .4), [M.LEAF2]: hsv2rgb(leaf - .03, .38, .52), [M.LEAF3]: hsv2rgb(leaf + .03, .5, .26), /* (the night palette: darker, quieter greens) */ [M.FLOWER]: flower, [M.TRUNK]: hsv2rgb(.07, .45, .36), [M.BARKL]: hsv2rgb(.08, .4, .55),
     [M.STONE]: hsv2rgb(.08, .4, .55), [M.STONED]: hsv2rgb(.62, .08, .4), [M.BELLY]: [226, 216, 196] };
   if (A.floor[0] === "slate" || A.floor[0] === "scree" || A.floor[0] === "stony" || A.floor[0] === "pebbles" || A.floor[0] === "stone" || A.floor[0] === "earth") colours[M.STONE] = hsv2rgb(.1, .06, .58); // stones are grey; elsewhere STONE is a mushroom's cap
   const sty = st.artStyle === "bold" || st.artStyle === "ref";
