@@ -120,10 +120,12 @@ export interface Shot {
   attack: string;
   /** A lob: from where to where, and when it was thrown and lands (it hits only where it lands). */
   lob?: { fx: number; fz: number; tx: number; tz: number; at: number; lands: number };
+  /** A legend's bombardment (legends.json attack.bombard): the soundsystem it was thrown at, and the damage it does that one if it lands on it. */
+  sound?: { key: string; damage: number };
 }
 
 /** A beam burning (Stage 5): from its creature toward an angle, sweeping toward its target. */
-export interface Beam { /** A legend's spin (radians a second), and when each thing it swept was last hit. */ spin?: number; last?: Record<string, number>; id: number; from: number; angle: number; length: number; width: number; until: number; nextTick: number; tick: number; damage: number; side: State; species: string; attack: string; target: Target }
+export interface Beam { /** A legend's bombardment: the soundsystem it burns, and the damage a tick. */ sound?: { key: string; damage: number }; /** A legend's spin (radians a second), and when each thing it swept was last hit. */ spin?: number; last?: Record<string, number>; id: number; from: number; angle: number; length: number; width: number; until: number; nextTick: number; tick: number; damage: number; side: State; species: string; attack: string; target: Target }
 
 export type CombatEventKind = "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "slept" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed" | "dug" | "braced" | "blocked" | "flash" | "dazed";
 /** A soundsystem's events carry its key; every other combat event its creature's id (witchHit: the witch's). */
@@ -209,7 +211,7 @@ export interface CombatWorld {
   creatures: Creature[];
   /** The creatures to step this time (near a witch, or busy with a siege). */
   active: Creature[];
-  witches: { id: number; x: number; z: number; onGround: boolean; down: boolean; /** her velocity (flankers go round to her back) */ vx?: number; vz?: number }[];
+  witches: { id: number; x: number; z: number; onGround: boolean; down: boolean; /** her velocity (flankers go round to her back) */ vx?: number; vz?: number; /** in a calm legend's circle (rules/slowTime.ts): that legend's id; nothing else attacks her there */ shelter?: number }[];
   /** Where a party animal's leash is fixed. */
   leashPoint: (id: number) => { x: number; z: number } | null;
   /** Whether a party animal is parked (at a sigil on the ground): it guards round it. */
@@ -278,13 +280,17 @@ function pastEdge(w: CombatWorld, c: Creature, x: number, z: number): boolean {
   return !w.inArea(c, x + (hx / hd) * L, z + (hz / hd) * L);
 }
 
+/** She's in a calm legend's circle and c isn't its legend (Ed, round 14: "I got attacked by a wild creature when in a legend
+ *  circle; I think they shouldn't attack you from outside when you're in there"): c can't go for her, and nothing of its lands. */
+const sheltered = (v: CombatWorld["witches"][number], c: Creature | null) => v.shelter !== undefined && c?.id !== v.shelter;
+
 /** The creature she's inviting (Ed, 2026-10-04): her party leaves it be while they chat. */
 const inviting = (w: CombatWorld, c: Creature, o: Creature) => !huntsWitch(sideOf(c)) && w.talkingTo(o.id) >= 0;
 
 /** Why a wild one lost its target, if it's a chase it gives up (not one she's inviting, a fall, a knockout):
  *  she's risen to the treetops, or it (her or a party animal) is past its band beyond its area's edge. */
 function gaveUp(w: CombatWorld, c: Creature, tg: Target): boolean {
-  if (tg.kind === "witch") { const v = w.witches[tg.id]; return !!v && !v.down && (!v.onGround || pastEdge(w, c, v.x, v.z)); }
+  if (tg.kind === "witch") { const v = w.witches[tg.id]; return !!v && !v.down && (!v.onGround || sheltered(v, c) || pastEdge(w, c, v.x, v.z)); }
   if (tg.kind === "creature") { const o = w.creatures[tg.id]; return !!o && !o.gone && pastEdge(w, c, o.x, o.z); }
   return false;
 }
@@ -301,7 +307,7 @@ function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): boolean
     // (Ed, 2026-10-06: 30 m); then it gives up and retreats into its area (c.retreat, stepCombat). A besieger keeps the old rule: out of its area, out of its
     // attack range and at least combat.witchLose away. (Only wild ones go for her at all.)
     const v = w.witches[tg.id];
-    if (!huntsWitch(sideOf(c)) || !v || !v.onGround || v.down || w.talkingTo(c.id) === tg.id) return false;
+    if (!huntsWitch(sideOf(c)) || !v || !v.onGround || v.down || w.talkingTo(c.id) === tg.id || sheltered(v, c)) return false;
     if (!c.siege) return !pastEdge(w, c, v.x, v.z);
     const d = Math.hypot(v.x - c.x, v.z - c.z), range = attackOf(c.species, c.level)?.attack.range ?? 0;
     return !(d > range && d >= w.t.combat.witchLose * FIGHT.scale && !w.inArea(c, v.x, v.z));
@@ -329,7 +335,7 @@ function acquire(w: CombatWorld, c: Creature, x: number, z: number, range: numbe
     if (d < bd) { bd = d; best = { kind: "creature", id: o.id }; }
   }
   if (huntsWitch(sideOf(c))) for (const v of w.witches) {
-    if (!v.onGround || v.down || w.talkingTo(c.id) === v.id) continue; // (the one she's inviting holds its fire on her)
+    if (!v.onGround || v.down || w.talkingTo(c.id) === v.id || sheltered(v, c)) continue; // (the one she's inviting holds its fire on her; in a legend's circle she's safe)
     const d = Math.hypot(v.x - c.x, v.z - c.z);
     if ((w.inArea(c, v.x, v.z) || (d < attackRange && (c.siege || !pastEdge(w, c, v.x, v.z)))) && (!best || d < bd)) { bd = d; best = { kind: "witch", id: v.id }; }
   }
@@ -388,7 +394,7 @@ function touch(w: CombatWorld, s: CombatState, c: Creature, damage: number, a: A
     land(w, s, c, { kind: "creature", id: o.id }, damage, a, c.x, c.z);
   }
   if (huntsWitch(sideOf(c))) for (const v of w.witches) {
-    if (!v.onGround || v.down || hit.includes(-1 - v.id) || w.talkingTo(c.id) === v.id || Math.hypot(v.x - c.x, v.z - c.z) > reach + me + 0.4) continue;
+    if (!v.onGround || v.down || sheltered(v, c) || hit.includes(-1 - v.id) || w.talkingTo(c.id) === v.id || Math.hypot(v.x - c.x, v.z - c.z) > reach + me + 0.4) continue;
     hit.push(-1 - v.id);
     land(w, s, c, { kind: "witch", id: v.id }, damage, a, c.x, c.z);
   }
@@ -397,6 +403,7 @@ function touch(w: CombatWorld, s: CombatState, c: Creature, damage: number, a: A
 function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target, damage: number, a: Attack, fx: number, fz: number): void {
   const time = w.time;
   if (tg.kind === "witch") {
+    if (sheltered(w.witches[tg.id], from)) return; // (in a legend's circle: a shot or blow already on its way doesn't land)
     // Thrown from the attacker (or where its shot or area hit landed); harder by the attack's
     // knockback, and hard if it rams her (charging, or landing a leap on her).
     const ox = from && a.delivery !== "shot" && a.delivery !== "lob" ? from.x : fx, oz = from && a.delivery !== "shot" && a.delivery !== "lob" ? from.z : fz;
@@ -473,6 +480,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       const from = w.creatures[sh.from] ?? null, a = attackNamed(sh.attack, data);
       s.events.push({ kind: "landed", x: L.tx, z: L.tz, at: time, id: sh.from });
       area(w, s, from, sh.side, sh.species, L.tx, L.tz, sh.radius, sh.damage, a, grid);
+      if (sh.sound) { const h = s.sounds.get(sh.sound.key); if (h && h.hp > 0 && Math.hypot(h.x - L.tx, h.z - L.tz) <= sh.radius + h.radius) land(w, s, from, { kind: "sound", key: sh.sound.key }, sh.sound.damage, a, L.tx, L.tz); }
       return false;
     }
     sh.x += sh.vx * dt; sh.z += sh.vz * dt;
@@ -524,6 +532,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         for (const v of w.witches) if (v.onGround && !v.down && hit(v.x, v.z, 0.3)) land(w, s, c, { kind: "witch", id: v.id }, b.damage, a, c.x, c.z);
         if (b.side === "enraged") for (const [key, h] of s.sounds) if (h.hp > 0 && hit(h.x, h.z, h.radius)) land(w, s, c, { kind: "sound", key }, b.damage, a, c.x, c.z);
       }
+      if (b.sound) { const h = s.sounds.get(b.sound.key); if (h && h.hp > 0 && hit(h.x, h.z, h.radius)) land(w, s, c, { kind: "sound", key: b.sound.key }, b.sound.damage, a, c.x, c.z); }
     }
     return true;
   });
@@ -533,7 +542,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     s.trails = s.trails.filter(tr => time < tr.until);
     for (const tr of s.trails) {
       for (const o of grid.near(tr.x, tr.z, tr.r + 1)) if (foes(sideOf(o), tr.side) && o.species !== "snail" && Math.hypot(o.x - tr.x, o.z - tr.z) <= tr.r) o.slowUntil = Math.max(o.slowUntil ?? 0, time + 0.25);
-      if (huntsWitch(tr.side)) for (const v of w.witches) if (v.onGround && !v.down && Math.hypot(v.x - tr.x, v.z - tr.z) <= tr.r) w.slowWitch?.(v.id, time + 0.25, tr.slow);
+      if (huntsWitch(tr.side)) for (const v of w.witches) if (v.onGround && !v.down && !sheltered(v, w.creatures[tr.from] ?? null) && Math.hypot(v.x - tr.x, v.z - tr.z) <= tr.r) w.slowWitch?.(v.id, time + 0.25, tr.slow);
     }
   }
   // Her party (for angry besiegers looking for the nearest of it or a soundsystem).
@@ -733,7 +742,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         // The glow-worm's flash: a pulse of light dazzling the other side round it (slowed a moment).
         const R = (P.move.radius ?? 10) * S, until = time + (P.move.time ?? 1.5), side = sideOf(c);
         for (const o of grid.near(c.x, c.z, R)) if (o !== c && targetable(o) && foes(sideOf(o), side) && !truce(c, o) && Math.hypot(o.x - c.x, o.z - c.z) <= R) o.slowUntil = Math.max(o.slowUntil ?? 0, until);
-        if (huntsWitch(side)) for (const v of w.witches) if (v.onGround && !v.down && Math.hypot(v.x - c.x, v.z - c.z) <= R) w.slowWitch?.(v.id, until, P.move.slow ?? 0.6);
+        if (huntsWitch(side)) for (const v of w.witches) if (v.onGround && !v.down && !sheltered(v, c) && Math.hypot(v.x - c.x, v.z - c.z) <= R) w.slowWitch?.(v.id, until, P.move.slow ?? 0.6);
         s.events.push({ kind: "flash", x: c.x, z: c.z, at: time, id: c.id });
         c.moveReadyAt = time + P.move.cooldown;
       }
@@ -804,7 +813,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
  *  lobFlight seconds) or beams (by its species), each hit attack.damage times its level's power for
  *  interval seconds. (Its shots are the wild's when angry, the happy's when happy: foes() does the rest.) */
 function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, _data: CombatData, grid: Grid): void {
-  const A = LEGENDS.attack, time = w.time, S = FIGHT.scale, R = A.range * S, angry = c.legendState !== "happy", side: State = angry ? "wild" : "happy";
+  const A = LEGENDS.attack, time = w.time, S = FIGHT.scale, angry = c.legendState !== "happy", R = (angry ? A.range : w.t.legends?.happyRange ?? A.range) * S, side: State = angry ? "wild" : "happy";
   const f = (c.fight ??= { target: null, readyAt: time + A.interval * 0.5, windupUntil: 0, aimX: 0, aimZ: 0 });
   if (c.lairX === undefined) { c.lairX = c.x; c.lairZ = c.z; }
   const charger = LEGENDS.charge.species.includes(c.species);
@@ -815,10 +824,10 @@ function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, _data: Co
     f.windupUntil = 0; f.readyAt = time + A.interval;
     const beam = A.beam.includes(c.species);
     for (const a of c.aims ?? []) {
+      const ticks = Math.max(1, Math.round(A.beamTime / 0.25)), sk = a.target.kind === "sound" ? a.target.key : null;
       if (beam) {
-        const ticks = Math.max(1, Math.round(A.beamTime / 0.25));
-        s.beams.push({ id: s.nextShot++, from: c.id, angle: Math.atan2(a.z - c.z, a.x - c.x), length: R, width: A.beamWidth * S, until: time + A.beamTime, nextTick: time, tick: 0.25, damage: A.damage / ticks, side, species: c.species, attack: "legendBeam", target: a.target });
-      } else s.shots.push({ id: s.nextShot++, x: c.x, z: c.z, vx: 0, vz: 0, until: time + A.lobFlight + 1, from: c.id, side, species: c.species, damage: A.damage, radius: A.lobRadius * S, attack: "legendLob", lob: { fx: c.x, fz: c.z, tx: a.x, tz: a.z, at: time, lands: time + A.lobFlight } });
+        s.beams.push({ id: s.nextShot++, from: c.id, angle: Math.atan2(a.z - c.z, a.x - c.x), length: Math.max(R, Math.hypot(a.x - c.x, a.z - c.z) + 4), width: A.beamWidth * S, until: time + A.beamTime, nextTick: time, tick: 0.25, damage: A.damage / ticks, side, species: c.species, attack: "legendBeam", target: a.target, ...(sk ? { sound: { key: sk, damage: (w.t.legends?.bombard?.damage ?? 0) / ticks } } : {}) });
+      } else s.shots.push({ id: s.nextShot++, x: c.x, z: c.z, vx: 0, vz: 0, until: time + A.lobFlight + 1, from: c.id, side, species: c.species, damage: A.damage, radius: A.lobRadius * S, attack: "legendLob", lob: { fx: c.x, fz: c.z, tx: a.x, tz: a.z, at: time, lands: time + A.lobFlight }, ...(sk ? { sound: { key: sk, damage: w.t.legends?.bombard?.damage ?? 0 } } : {}) });
     }
     if (c.aims?.length) s.events.push({ kind: beam ? "beam" : "shot", x: c.x, z: c.z, at: time, id: c.id });
     c.aims = undefined;
@@ -835,9 +844,18 @@ function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, _data: Co
     const d = Math.hypot(o.x - c.x, o.z - c.z);
     if (d <= R) found.push({ d, x: o.x, z: o.z, target: { kind: "creature", id: o.id } });
   }
-  if (!found.length) { f.target = null; f.readyAt = time + A.recheck; return; } // (nothing in reach: look again in a moment, not every step)
   found.sort((a, b) => a.d - b.d);
-  if (charger) {
+  // Bombarding (Ed, 2026-10-06: "Legend bombards, but prioritises you"): an angry one with no witch in
+  // its reach throws its first lob or beam at the nearest standing soundsystem within bombard.range.
+  const B = w.t.legends?.bombard;
+  let bombard = false;
+  if (angry && B?.on && !found.some(t => t.target.kind === "witch")) {
+    let key: string | null = null, bd = B.range * S, at = { x: 0, z: 0 };
+    for (const [k, h] of s.sounds) { if (h.hp <= 0) continue; const d = Math.hypot(h.x - c.x, h.z - c.z); if (d <= bd) { bd = d; key = k; at = h; } }
+    if (key) { found.unshift({ d: bd, x: at.x, z: at.z, target: { kind: "sound", key } }); bombard = true; }
+  }
+  if (!found.length) { f.target = null; f.readyAt = time + A.recheck; return; } // (nothing in reach: look again in a moment, not every step)
+  if (charger && !bombard) {
     // A charging legend: one long charge at the nearest, its head lowered windup seconds first.
     const t0 = found[0], a = Math.atan2(t0.z - c.z, t0.x - c.x);
     c.run = { phase: "windup", at: time, angle: a, speed: 0, turn: 1, target: t0.target, tx: t0.x, tz: t0.z, ran: 0, hit: [], fromX: c.x, fromZ: c.z };
@@ -902,7 +920,7 @@ function stepLongCharge(w: CombatWorld, s: CombatState, c: Creature, f: Fight, g
         o.kx = -Math.sin(run.angle) * side * kb * 6 + vx * 0.3 * share; o.kz = Math.cos(run.angle) * side * kb * 6 + vz * 0.3 * share;
       }
       if (angry) for (const v of w.witches) {
-        if (!v.onGround || v.down || run.hit.includes(-1 - v.id) || Math.hypot(v.x - c.x, v.z - c.z) > half + 0.4) continue;
+        if (!v.onGround || v.down || sheltered(v, c) || run.hit.includes(-1 - v.id) || Math.hypot(v.x - c.x, v.z - c.z) > half + 0.4) continue;
         run.hit.push(-1 - v.id);
         // Thrown aside and staggered (rules/knock.ts, #108: a ram throws her witch.knock.charge metres), away from its line.
         const side = Math.sign((v.x - c.x) * -Math.sin(run.angle) + (v.z - c.z) * Math.cos(run.angle)) || 1;

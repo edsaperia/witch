@@ -43,6 +43,7 @@ import { LEGENDS, relicGlints } from "../rules/legends";
 import { circleLines, circleShown, legendCircleNear } from "../rules/legendCircle";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
+import { PIXEL_SNAP_GLSL } from "./shaders";
 import { lobHeight } from "./invites";
 
 /** The join burst's colours (the art director, #188 and #200): the lanterns' amber, light and deep, with the creature's own
@@ -63,6 +64,8 @@ const RUNE_VIEW = 70;
 /** The party legend's giant hat's stripes (the Easter egg): the party neons, in pairs of rows. */
 const PARTY_HAT = [[1, 0.35, 0.72], [0.35, 0.95, 1], [1, 0.85, 0.3], [0.7, 0.45, 1]];
 
+/** A soft dot bigger than this (metres) is light (a halo, an aura, a glow) and stays smooth; smaller, an object in art pixels. */
+const PIXEL_DOT_MAX = 1.4;
 const SLOT = 32, SLOTS = 16; // the glyph atlas: 16 x 16 slots of 32 px; slot 0 is a soft dot
 const SQ = SLOTS * SLOTS - 1; // and the last a solid square
 const LEGEND_LEVEL = 3, LEGEND_ROW = 10; // legendary sigils' 2 × 2 blocks fill rows 10 to 13 (16 of them); the rest from slot 1 up
@@ -70,9 +73,15 @@ const LEGEND_LEVEL = 3, LEGEND_ROW = 10; // legendary sigils' 2 × 2 blocks fill
  *  every legend's (in the stack only once she can carry one: a party legend, or a legend let go and invited). */
 export const legendarySigil = (c: Pick<Creature, "level">): boolean => c.level >= LEGEND_LEVEL;
 
+// Ed, round 14: "Creature projectiles and the leyline and pulse are not pixelated. Lighting effects can be non-pixel but they
+// should be lighting objects that are pixels." The soft dot (slot 0) drawn as an object (a shot, a spark, a thread's bead, a
+// telegraph's ring) is a disc of the art's own pixels, a bright core and a dimmer rim, hard-edged, its middle on the screen's
+// pixel grid; drawn as light (a halo, an aura, a glow: bigger than PIXEL_DOT_MAX metres, or marked glow), it stays smooth.
 const VERT = /* glsl */ `
 uniform vec3 uRight, uUp;
 uniform float uFlat;
+uniform vec2 uRes;
+uniform float uMpp, uDotMax;
 attribute vec3 iPos;
 attribute float iSize;
 attribute vec4 iUv;
@@ -82,14 +91,20 @@ varying vec2 vUv, vP;
 varying vec4 vCol;
 varying float vDraw;
 varying vec3 vWorld;
+varying float vPix, vN;
 ${HEIGHT_VERT_GLSL}
+${PIXEL_SNAP_GLSL}
 void main() {
   vec2 p = position.xy;
   // On the rolling ground: a rune lying flat follows it corner by corner; the rest stand above it.
   vec3 w = uFlat > 0.5 ? onGround(iPos + vec3(p.x * iSize, 0.04, -p.y * iSize)) : onGround(iPos) + uRight * (p.x * iSize) + uUp * (p.y * iSize);
   vUv = vec2(mix(iUv.x, iUv.z, uv.x), mix(iUv.w, iUv.y, uv.y));
-  vP = p; vCol = iCol; vDraw = iDraw; vWorld = w;
+  bool glow = iDraw > 1.5;
+  vP = p; vCol = iCol; vDraw = glow ? iDraw - 2.0 : iDraw; vWorld = w;
+  vPix = !glow && iUv.z < 0.07 && iUv.y > 0.99 && iSize <= uDotMax ? 1.0 : 0.0; // (the soft dot, as an object)
+  vN = max(1.0, floor(iSize / uMpp + 0.5)); // its art pixels across
   gl_Position = clipOf(w);
+  if (vPix > 0.5) gl_Position.xy += pixelSnap(clipOf(onGround(iPos))) * gl_Position.w;
   if (overBend(onGround(iPos)) < 0.5) gl_Position = vec4(2.0, 2.0, 2.0, 1.0); // (the glows seen through the canopy: never through the earth)
 }`;
 
@@ -100,9 +115,17 @@ varying vec2 vUv, vP;
 varying vec4 vCol;
 varying float vDraw;
 varying vec3 vWorld;
+varying float vPix, vN;
 ${LIGHT_GLSL}
 void main() {
   float a = texture2D(uGlyphs, vUv).a * vCol.a;
+  if (vPix > 0.5) {
+    // A disc of art pixels: each fragment takes its art pixel's middle; a full core, a half rim, nothing past it (one or two
+    // pixels across: solid).
+    vec2 q = (floor((vP + 0.5) * vN) + 0.5) / vN - 0.5;
+    float r = length(q) * 2.0;
+    a = (vN < 2.5 ? 1.0 : r < 0.55 ? 1.0 : r < 0.95 ? 0.5 : 0.0) * vCol.a;
+  }
   // Written on: revealed clockwise from the top as vDraw goes 0 to 1.
   float ang = fract(atan(vP.x, vP.y) / 6.2831853 + 1.0);
   if (ang > vDraw || a < 0.02) discard;
@@ -137,10 +160,11 @@ class Instances {
   }
 
   begin(): void { this.n = 0; }
-  add(x: number, y: number, z: number, size: number, uv: number[], r: number, g: number, b: number, a: number, draw = 1): void {
+  /** glow: drawn as light, smooth (a soft dot otherwise draws as an object, in art pixels, up to PIXEL_DOT_MAX metres). */
+  add(x: number, y: number, z: number, size: number, uv: number[], r: number, g: number, b: number, a: number, draw = 1, glow = false): void {
     if (this.n >= this.cap) this.grow(this.cap * 2);
     const i = this.n++;
-    this.pos.set([x, y, z], i * 3); this.size[i] = size; this.uv.set(uv, i * 4); this.col.set([r, g, b, a], i * 4); this.draw[i] = draw;
+    this.pos.set([x, y, z], i * 3); this.size[i] = size; this.uv.set(uv, i * 4); this.col.set([r, g, b, a], i * 4); this.draw[i] = draw + (glow ? 2 : 0);
   }
   end(): void {
     this.geo.instanceCount = this.n;
@@ -235,7 +259,7 @@ export class LeashView {
     this.tex.magFilter = THREE.NearestFilter; this.tex.minFilter = THREE.NearestFilter; this.tex.generateMipmaps = false;
     const mat = (flat: number, depthTest = true, solid = false) => new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
-      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uFlat: { value: flat }, uGlyphs: { value: this.tex }, uSolid: { value: solid ? 1 : 0 } },
+      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uRes: SPRITE_UNIFORMS.uRes, uMpp: { value: 1 / (game.tuning.artPixelsPerMetre * (2 / game.tuning.pixelSize)) }, uDotMax: { value: PIXEL_DOT_MAX }, uFlat: { value: flat }, uGlyphs: { value: this.tex }, uSolid: { value: solid ? 1 : 0 } },
       transparent: true, depthWrite: false, depthTest, blending: solid ? THREE.NormalBlending : THREE.AdditiveBlending,
     });
     this.standing = new Instances(mat(0));
@@ -674,7 +698,7 @@ export class LeashView {
       }
       this.standing.add(sh.x, 1, sh.z, 0.55, dot, 1, 1, 1, 0.9);
       this.standing.add(sh.x, 1, sh.z, 1.6, dot, col.r, col.g, col.b, 0.7);
-      this.standing.add(sh.x - sh.vx * 0.05, 1, sh.z - sh.vz * 0.05, 1, dot, col.r, col.g, col.b, 0.3);
+      this.standing.add(sh.x - sh.vx * 0.05, 1, sh.z - sh.vz * 0.05, 1, dot, col.r, col.g, col.b, 0.3, 1, true); // (its trail: light)
     }
     // Beams: a burning line from the creature, as wide as it hurts.
     for (const b of g.combat.beams) {
@@ -682,7 +706,7 @@ export class LeashView {
       if (!c || !close(c.x, c.z, 150)) continue;
       const col = huntsWitch(b.side) ? { r: 1, g: 0.3, b: 0.3 } : neon(b.species), ex = Math.cos(b.angle), ez = Math.sin(b.angle), fl = 0.75 + 0.25 * Math.sin(time * 40 + b.id);
       for (let s2 = 0.6; s2 < b.length; s2 += 0.45) {
-        this.standing.add(c.x + ex * s2, 0.7, c.z + ez * s2, Math.max(0.5, b.width * 0.9), dot, col.r, col.g, col.b, 0.45 * fl);
+        this.standing.add(c.x + ex * s2, 0.7, c.z + ez * s2, Math.max(0.5, b.width * 0.9), dot, col.r, col.g, col.b, 0.45 * fl, 1, true); // (its glow: light)
         this.standing.add(c.x + ex * s2, 0.7, c.z + ez * s2, 0.3, dot, 1, 1, 1, 0.8 * fl);
       }
     }

@@ -12,6 +12,7 @@
 //   node art/preview.mjs partyobjects litter|small|furniture|set|all|<ids> art/previews/party-objects.png [scale]   (the party objects, neon ones cycling the neons; NIGHT=1 to see them glow)
 //   node art/preview.mjs partypatch 1 art/previews/party-patch.png [scale]   (a sample patch of party ground: clusters and loose objects, seeded; NIGHT=1)
 //   node art/preview.mjs lineup all|<species> art/previews/lineup.png [scale]   (each species' baby, young, adult and legend side by side, the witch for scale; PER=n species to a row)
+//   node art/preview.mjs naps all|<species> art/previews/naps.png [scale]   (each species asleep, art/naps.js: baby, young and adult awake, then each asleep in its 2 breathing frames, the witch for scale; LEVELS=[...] to choose)
 //   node art/preview.mjs legends all|<species> art/previews/legends.png [scale]   (each sleeping legend asleep, its 2 breathing frames, then the legend awake as it is, then the witch for scale; FACINGS=away for the other view)
 //   node art/preview.mjs genome wolf,fox,...|all art/previews/genome-palettes.png [scale]   (each species' sprite baked once as a material mask, then painted with its own palette and every curated variant: no rebake)
 //   node art/preview.mjs silhouettes young|adult art/previews/silhouettes.png [scale]   (every species' shape at game size, 24 px, as the silhouette check sees it, then its sprite; the closest pairs listed in the log)
@@ -257,6 +258,9 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), per = window.PER || 1, items = [];
     for (const id of ids) items.push(...[0, 1, 2, 3].map(l => G.bake(G.critter(id, l, 0, st), G.speciesColours(id, st), st, st.cOutline)));
     for (let i = 0; i < ids.length; i += per) rows.push([...items.slice(i * 4, (i + per) * 4), wit]);
+  } else if (what === "naps") { // per species (or listed): baby, young and adult awake, then each asleep (art/naps.js: 2 breathing frames), then the witch for scale; LEVELS to choose
+    const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), nap = { nap: true };
+    for (const id of ids) rows.push([...(window.LEVELS || [0, 1, 2]).map(l => G.bake(G.critter(id, l, 0, st), G.speciesColours(id, st), st, st.cOutline)), ...(window.LEVELS || [0, 1, 2]).flatMap(l => [0, 1].map(f => G.bake(G.critter(id, l, f, st, "towards", nap), G.speciesColours(id, st), st, st.cOutline))), wit]);
   } else if (what === "legends") { // per species: its sleeping legend asleep (2 breathing frames), the legend awake as it is, then the witch for scale
     const ids = list === "all" ? G.LEGEND_IDS : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
     for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push([...G.LEGEND_STATES.flatMap(state => [...Array(G.LEGEND_FRAMES[state]).keys()].map(frame => { const { sp, colours } = G.legendForm(id, st, { state, frame, facing }); return G.bake(sp, colours, st, st.cOutline); })), G.bake(G.critter(id, 3, 0, st, facing), G.speciesColours(id, st), st, st.cOutline), wit]);

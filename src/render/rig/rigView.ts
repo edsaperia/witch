@@ -87,26 +87,27 @@ export class RigView {
     return { crouch: Math.max(0, Math.min(1, crouch)), charging: charging || !!look.lunging, air, tap: look.tap ?? 0, sleep: look.sleep ?? 0, droop: look.droop ?? look.sleep ?? 0, twitch: look.twitch ?? 0 };
   }
 
-  /** Each item as an instance: the sprite placed so its pivot pixel lands on the item's world point. */
+  /** Each item as an instance: the sprite placed so its pivot pixel lands on the item's world point. The limbs' discs go in a batch of
+   *  their own with no moonlight rim (Ed's playtest, 2026-10-06: "Animal legs have outlines on them; they'd look better without"):
+   *  each disc rimmed alone, a leg strung of them read as a glowing wireframe. The torso, head and tail keep it. */
   private place(c: Creature, art: RigArt, look: RigLook, u2m: number): void {
-    const key = art.atlas.albedo.uuid;
-    let pool = this.pool.get(key);
-    if (!pool) { this.pool.set(key, (pool = [])); this.used.set(key, 0); }
-    let n = this.used.get(key)!;
-    if (!this.batches.has(key)) { const b = new SpriteBatch(art.atlas, this.mpp, { solid: true, rim: true, find: !look.gear, tint: look.gear?.woken ? ENRAGED_TINT : undefined }); this.batches.set(key, b); this.scene.add(...b.meshes); }
+    const key = art.atlas.albedo.uuid, dkey = key + "|discs", discs = discFrames(art.meta);
+    for (const k of [key, dkey]) if (!this.pool.has(k)) { this.pool.set(k, []); this.used.set(k, 0); }
+    if (!this.batches.has(key)) for (const [k, rim] of [[key, true], [dkey, false]] as const) { const b = new SpriteBatch(art.atlas, this.mpp, { solid: true, rim, find: !look.gear, tint: look.gear?.woken ? ENRAGED_TINT : undefined }); this.batches.set(k, b); this.scene.add(...b.meshes); }
+    const pools = [this.pool.get(key)!, this.pool.get(dkey)!], ns = [this.used.get(key)!, this.used.get(dkey)!];
     const m = this.mpp * look.scale, R = this.R, U = this.U, F = this.F, sx = look.sx ?? 1, sy = look.sy ?? 1;
     for (let k = 0; k < this.out.n; k++) {
       const it = this.out.items[k], f = art.atlas.frames[it.piece.frame];
       if (!f) continue;
       const px = it.flip ? f.w - it.piece.px : it.piece.px, dx = (px - f.w / 2) * m, dy = (f.h - it.piece.py) * m, b = it.bias * u2m;
+      const w = discs.has(it.piece.frame) ? 1 : 0, pool = pools[w], n = ns[w]++;
       let s = pool[n];
       if (!s) pool[n] = s = { x: 0, y: 0, z: 0, frame: f, flip: false };
       s.x = c.x + it.x - R.x * dx - U.x * dy + F.x * b; s.y = look.y + it.y - R.y * dx - U.y * dy + F.y * b; s.z = c.z + it.z - R.z * dx - U.z * dy + F.z * b;
       if (sx !== 1 || sy !== 1) { s.x = c.x + (s.x - c.x) * sx; s.z = c.z + (s.z - c.z) * sx; s.y = look.y + (s.y - look.y) * sy; } // squashed or stretched about its feet
       s.frame = f; s.flip = it.flip; s.fresh = look.fresh; s.glow = look.glow; s.scale = look.scale; s.sx = sx; s.sy = sy;
-      n++;
     }
-    this.used.set(key, n);
+    this.used.set(key, ns[0]); this.used.set(dkey, ns[1]);
     this.stats.instances += this.out.n;
   }
 
@@ -115,4 +116,12 @@ export class RigView {
     for (const [k, b] of this.batches) { const pool = this.pool.get(k) ?? [], n = this.used.get(k) ?? 0; if (pool.length > n) pool.length = n; b.set(pool); } // (trimmed to this frame's: the batch draws them all)
     for (const id of this.bodies.keys()) if (!this.seen.has(id)) this.bodies.delete(id);
   }
+}
+
+/** A four-legged rig page's disc frames (its limbs': a serpent's body discs keep their rim, wide enough to carry it), worked out once per page. */
+const discSets = new WeakMap<RigMeta, Set<number>>();
+function discFrames(m: RigMeta): Set<number> {
+  let d = discSets.get(m);
+  if (!d) { d = new Set(); if (m.template === "quadruped") for (const byR of Object.values(m.discs)) for (const p of Object.values(byR)) d.add(p.frame); discSets.set(m, d); }
+  return d;
 }
