@@ -1,9 +1,10 @@
 // Lying down to stargaze on the beach, the sky opening up (Ed, 2026-10-06: "when you land on the beach
 // to stargaze, the bend shader applies so that you can see the sky"):
 //   node tools/beach/gaze-gif.cjs [dist dir]
-// Loads the built game (seed 2), puts her on the sand by a beach witch, pushes her on out to sea until
-// she lies down, then draws a frame every 0.15 s of game time for 3 s while the bend eases in, and
-// back as she gets up; writes previews/beach-stargaze.gif (ffmpeg) and its first and last frames.
+// Loads the built game (seed 2) and puts her on the sand by a beach witch, keeping still: they chat,
+// hold hands and hug, then lie down to stargaze together. From there it draws a frame every 0.15 s of
+// game time while the bend eases in and the hearts start rising (after beach.hearts.after), and as she
+// gets up and it eases back; writes previews/beach-stargaze.gif (ffmpeg) and two of its frames.
 const http = require("http"), fs = require("fs"), path = require("path"), { execFileSync } = require("child_process");
 let playwright;
 try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -32,18 +33,17 @@ server.listen(0, "127.0.0.1", async () => {
   });
   const step = (n, o, draw) => page.evaluate(([n, o, draw]) => { const w = window.witch; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }, 1 / 60, draw && i === n - 1); return !!w.game.witch.stargazing; }, [n, o, draw]);
   let lying = false;
-  for (let i = 0; i < 40 && !lying; i++) lying = await step(15, { moveX: aim.nx, moveZ: aim.nz }, false);
+  for (let i = 0; i < 120 && !lying; i++) { await step(30, {}, false); lying = await page.evaluate(() => window.witch.game.beach[0].players[0]?.pose === "stargaze"); }
   await page.waitForFunction(() => window.witch.view.assets.partyWitchArt(null), null, { timeout: 120000, polling: 250 });
   const dir = fs.mkdtempSync(path.join(require("os").tmpdir(), "gaze-")), shots = [];
   const shot = async () => { const f = path.join(dir, `f${String(shots.length).padStart(3, "0")}.png`); await page.screenshot({ path: f }); shots.push(f); };
   // she's just lain down: the bend eases in over gazeEase, holds, then she gets up (inland) and it eases back
-  for (let i = 0; i < 20; i++) { await step(9, {}, true); await shot(); }
-  for (let i = 0; i < 6; i++) { await step(9, {}, true); await shot(); }
+  for (let i = 0; i < 46; i++) { await step(9, {}, true); await shot(); }
   for (let i = 0; i < 14; i++) { await step(9, { moveX: -aim.nx * 0.2, moveZ: -aim.nz * 0.2 }, true); await shot(); }
   fs.mkdirSync(out, { recursive: true });
-  fs.copyFileSync(shots[0], path.join(out, "beach-gaze-start.png")); fs.copyFileSync(shots[25], path.join(out, "beach-gaze-sky.png"));
+  fs.copyFileSync(shots[0], path.join(out, "beach-gaze-start.png")); fs.copyFileSync(shots[44], path.join(out, "beach-gaze-sky.png"));
   execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-framerate", "7", "-i", path.join(dir, "f%03d.png"), "-vf", "scale=640:-1:flags=neighbor,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse", path.join(out, "beach-stargaze.gif")]);
-  console.log(`${lying ? "ok  " : "FAIL"} she lay down to stargaze`);
+  console.log(`${lying ? "ok  " : "FAIL"} she lay down to stargaze with a beach witch`);
   console.log(`${errors.length ? "FAIL" : "ok  "} no page errors${errors.length ? ": " + errors.slice(0, 3).join(" | ") : ""}`);
   console.log(`wrote previews/beach-stargaze.gif (${shots.length} frames), beach-gaze-start.png, beach-gaze-sky.png`);
   await browser.close(); server.close();

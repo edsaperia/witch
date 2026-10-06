@@ -84,8 +84,9 @@ export function stepBeachWitches(s: BeachWitches, players: BeachPlayer[], time: 
     s.step++;
     I.facing = w.x >= p.x ? 1 : -1;
     const side = step.pose === "holdHands" || step.pose === "stargaze"; // (side by side, facing us)
-    Object.assign(I, { activity: step.activity, pose: step.pose, until: time + B.turn, partner: w.id });
-    Object.assign(w, { activity: step.activity, pose: step.pose, until: time + B.turn, partner: -1 - i, lead: false, facing: side ? I.facing : (I.facing === 1 ? -1 : 1), away: false });
+    const until = time + (step.pose === "stargaze" ? 1e6 : B.turn); // (lying together to stargaze, they stay so until she moves: the hearts come)
+    Object.assign(I, { activity: step.activity, pose: step.pose, until, partner: w.id });
+    Object.assign(w, { activity: step.activity, pose: step.pose, until, partner: -1 - i, lead: false, facing: side ? I.facing : (I.facing === 1 ? -1 : 1), away: false });
   });
   // Among themselves: resting, and now and then two chatting.
   for (const w of s.list) {

@@ -137,6 +137,10 @@ describe("witches on the beach", () => {
       if (I.pose && seen[seen.length - 1] !== I.pose) seen.push(I.pose);
     }
     expect(seen.slice(0, 4)).toEqual(SEQUENCE.map(q => q.pose));
+    // lying together to stargaze, they stay so while she keeps still (the hearts' time: render/beach.ts)
+    for (let k = 0; k < (t.beach!.turn * 3) / STEP; k++) stepBeachWitches(s, [me], (time += STEP), STEP, t);
+    expect(s.players[0].pose).toBe("stargaze");
+    expect(s.list.find(w => w.id === s.players[0].partner)!.pose).toBe("stargaze");
     const I = s.players[0], mate = s.list.find(w => w.id === I.partner)!;
     expect(mate.partner).toBe(-1);
     expect(Math.hypot(mate.x - me.x, mate.z - me.z)).toBeLessThan(3); // she came over

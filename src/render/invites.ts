@@ -24,7 +24,7 @@ const BLOCKED = ["😠", "🙅", "💢", "😤"];
 
 /** A pixel emoji: drawn n pixels across with hard edges, as a data URL (cached). */
 const pixelCache = new Map<string, string>();
-function pixelEmoji(e: string, n: number): string {
+export function pixelEmoji(e: string, n: number): string {
   const key = `${e}:${n}`;
   let url = pixelCache.get(key);
   if (url) return url;

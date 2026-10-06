@@ -99,13 +99,39 @@
           "type": "number",
           "minimum": 0
         },
-        "gazeBend": {
+        "stargazeCurve": {
           "type": "number",
           "minimum": 0
         },
         "gazeEase": {
           "type": "number",
           "minimum": 0
+        },
+        "hearts": {
+          "type": "object",
+          "properties": {
+            "after": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "life": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "after",
+            "every",
+            "life"
+          ],
+          "additionalProperties": false
         },
         "shown": {
           "type": "number",
@@ -154,8 +180,9 @@
         "sand",
         "sea",
         "restAfter",
-        "gazeBend",
+        "stargazeCurve",
         "gazeEase",
+        "hearts",
         "shown",
         "witchChance",
         "spots",
