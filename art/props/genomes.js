@@ -8,6 +8,8 @@
 //   brokenTrunk:   a short broken trunk, its snapped branch growing out of it (joined, never laid beside it), jagged pale wood at the breaks
 //   fallenLog:     a fallen trunk or bough lying on the ground, bowed, mossed along its top, its ends broken to splinters or sawn to rings
 //   mushroomRing:  a fairy ring of toadstools round darker grass (or an arc, or a clump), red, brown, ochre or glowing
+//   boulder:       a boulder of a few merged lumps, half sunk, cracked, mossy on top, lichened, pebbles round it (grey, granite or sandstone)
+//   mound:         a mound of moss or bare earth, lumpy, tufts on top, a stone or two half buried
 //   stoneCircle:   a ring of small standing stones round short grass, one or two leaning or fallen, sometimes a stone or slab in the middle
 export const PROP_GENOMES = {
   standingStone: {
@@ -58,6 +60,16 @@ export const PROP_GENOMES = {
     radius: [1.6, 2.8], count: [5, 9], height: [.8, 1.6], width: [.4, .7], // its radius (m); how many stones; their height and width (m)
     lean: [0, .25], fallen: [0, 2], centre: [["none", 3], ["stone", 1], ["slab", 1]], // how far they lean; how many lie fallen; what stands in the middle
     colour: { stone: [.61, .16, .64], dark: [.65, .18, .4], lichen: [[.2, .08, .78, 1]], moss: [.24, .45, .38], grass: [.26, .45, .38], spread: .07 },
+  },
+  boulder: { // a boulder of a few merged lumps, half sunk, a crack across it, moss on its top, lichen, pebbles round its foot
+    size: [.5, 1], lumps: [2, 4], flat: [.55, .85], sink: [.15, .35], // its radius (m), how many lumps, how flat (height over width), how far it sinks (a share)
+    crack: [0, 1], moss: [0, .35], lichen: [0, 3], pebbles: [2, 6], // a crack (a share), moss over its top (a share of its height), lichen patches, pebbles
+    rock: [["grey", 3], ["granite", 2], ["sandstone", 1]], // its stone
+    colour: { grey: [.61, .14, .58], granite: [.05, .08, .62], sandstone: [.09, .28, .62], dark: [.65, .16, .36], lichen: [[.2, .08, .78, 2], [.1, .35, .7, 1]], moss: [.24, .45, .38], spread: .06 },
+  },
+  mound: { // a mound of earth or moss, a few lumps, tufts on top, a stone or two half buried
+    radius: [.6, 1.3], height: [.3, .65], lumps: [2, 4], skin: [["moss", 1], ["earth", 1]], tufts: [3, 9], stones: [0, 2],
+    colour: { moss: [.24, .5, .4], moss2: [.27, .45, .55], earth: [.07, .45, .32], earth2: [.06, .4, .45], stone: [.61, .1, .55], spread: .05 },
   },
 };
 export const PROP_KINDS = Object.keys(PROP_GENOMES);
