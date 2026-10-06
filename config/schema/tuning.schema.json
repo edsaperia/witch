@@ -2388,6 +2388,13 @@
             "minimum": 0
           }
         },
+        "core": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
         "height": {
           "type": "array",
           "items": {
@@ -2429,6 +2436,7 @@
         "fade",
         "brightness",
         "width",
+        "core",
         "height",
         "valley",
         "flow",
@@ -7089,6 +7097,53 @@
           "type": "number",
           "minimum": 0
         },
+        "buffPower": {
+          "type": "number",
+          "minimum": 0
+        },
+        "happyRange": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bombard": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            },
+            "damage": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "range",
+            "damage"
+          ],
+          "additionalProperties": false
+        },
+        "stomp": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "angryAfter": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "angryAfter"
+          ],
+          "additionalProperties": false
+        },
         "partyEgg": {
           "type": "boolean"
         },
@@ -7107,6 +7162,10 @@
       },
       "required": [
         "share",
+        "buffPower",
+        "happyRange",
+        "bombard",
+        "stomp",
         "partyEgg",
         "partyHits",
         "partyDrain",
