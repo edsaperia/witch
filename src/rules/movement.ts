@@ -35,7 +35,12 @@ export const MOVEMENT = raw as unknown as MovementData;
  *  radii, knockback, pattern sizes, pursuit) times scale; every fight speed (running, charging,
  *  shots) times speed; momentum: how heavily creatures in a fight change speed and turn (their
  *  accelerations and turn rates divided by it). Set from the tuning at each combat step. */
-export const FIGHT = { scale: 1, speed: 1, momentum: 1 };
+/** The fight's scale and speed, and (Ed's round 13, 2026-10-06: "charging and jumping creatures should
+ *  charge or jump much further ... much more momentum, travelling in wide arcs") every species' charge
+ *  and leap scaled: tuning fight.charge (reach: its run's time and overshoot, turn: its turn rate,
+ *  brake: how hard it slows) and fight.leap (reach: how far off it leaps from, through: metres past
+ *  its target it lands; less than 0, short of it). Set from the tuning each step (rules/combat.ts). */
+export const FIGHT = { scale: 1, speed: 1, momentum: 1, charge: { reach: 1, turn: 1, brake: 1 }, leap: { reach: 1, through: -1.5 } };
 
 export const profileOf = (species: string, data: MovementData = MOVEMENT): Profile | null => data.profiles[species] ?? null;
 export const legendSetOf = (species: string, data: MovementData = MOVEMENT): LegendSet => data.legends.bySpecies[species] ?? data.legends;
@@ -204,7 +209,7 @@ export function steer(c: Creature, P: Profile, x: SteerContext): boolean {
  *  the step it reaches the target. */
 export function stepCharge(c: Creature, mv: Move, px: number, pz: number, reach: number, time: number, dt: number, run = 0): "none" | "charging" | "hit" {
   const ch = c.charge, M = FIGHT.momentum, V = FIGHT.speed;
-  const accel = ((mv.accel ?? 40) * V) / M, brake = ((mv.brake ?? 30) * V) / M, turn = (((mv.turn ?? 140) * Math.PI) / 180) * V / M;
+  const CH = FIGHT.charge, accel = ((mv.accel ?? 40) * V) / M, brake = ((mv.brake ?? 30) * V * CH.brake) / M, turn = ((((mv.turn ?? 140) * Math.PI) / 180) * V * CH.turn) / M;
   if (ch) {
     let vx = c.vx ?? 0, vz = c.vz ?? 0, v = Math.hypot(vx, vz);
     if (ch.from !== undefined && time < ch.from) {
@@ -221,7 +226,7 @@ export function stepCharge(c: Creature, mv: Move, px: number, pz: number, reach:
       return "charging";
     }
     const tx = px - c.x, tz = pz - c.z, along = tx * ch.dx + tz * ch.dz;
-    if (!ch.braking && (time >= ch.until || along < -(mv.overshoot ?? 8) * FIGHT.scale)) ch.braking = true;
+    if (!ch.braking && (time >= ch.until || along < -(mv.overshoot ?? 8) * CH.reach * FIGHT.scale)) ch.braking = true;
     if (!ch.braking) {
       // Building speed down its lane (its velocity swings onto the lane, no snapping).
       const nv = Math.min(ch.speed, Math.max(v, 0) + accel * dt);
@@ -249,7 +254,7 @@ export function stepCharge(c: Creature, mv: Move, px: number, pz: number, reach:
 /** Start a charge at (px, pz) now: its head goes down (its lane locked), then it runs. */
 export function startCharge(c: Creature, mv: Move, px: number, pz: number, time: number): void {
   const d = Math.hypot(px - c.x, pz - c.z) || 1e-6, s = (mv.speed ?? 28) * FIGHT.speed, wind = mv.windup ?? 0.5;
-  c.charge = { dx: (px - c.x) / d, dz: (pz - c.z) / d, speed: s, from: time + wind, until: time + wind + (mv.time ?? 1.6), ...(mv.curl ? { curl: mv.curl } : {}) };
+  c.charge = { dx: (px - c.x) / d, dz: (pz - c.z) / d, speed: s, from: time + wind, until: time + wind + (mv.time ?? 1.6) * FIGHT.charge.reach, ...(mv.curl ? { curl: mv.curl } : {}) };
   c.moveReadyAt = time + mv.cooldown;
 }
 
@@ -270,8 +275,8 @@ export function stepBurrow(c: Creature, mv: Move, px: number, pz: number, base: 
 }
 
 /** The leap (Stage 5: the toad): when its attack is ready and its target is between `from` and
- *  `to` metres off, it leaps in an arc to just short of it, `time` seconds in the air, landing
- *  where it aimed (step out of the ring). Returns "landed" on the step it comes down. */
+ *  `to` metres off (times FIGHT.leap.reach), it leaps in an arc to FIGHT.leap.through metres past
+ *  it (short of it if less than 0), `time` seconds in the air, landing where it aimed (step out of the ring). Returns "landed" on the step it comes down. */
 export function stepLeap(c: Creature, mv: Move, px: number, pz: number, ready: boolean, time: number): "none" | "leapt" | "air" | "landed" {
   const L = c.leap;
   if (L) {
@@ -281,9 +286,11 @@ export function stepLeap(c: Creature, mv: Move, px: number, pz: number, ready: b
     return "air";
   }
   const dx = px - c.x, dz = pz - c.z, d = Math.hypot(dx, dz);
-  if (ready && time >= (c.moveReadyAt ?? 0) && d >= (mv.from ?? 8) * FIGHT.scale && d <= (mv.to ?? 30) * FIGHT.scale) {
-    const stop = Math.min(d, 1.5 * FIGHT.scale);
-    c.leap = { fx: c.x, fz: c.z, tx: px - (dx / d) * stop, tz: pz - (dz / d) * stop, at: time, lands: time + (mv.time ?? 0.9) / FIGHT.speed, height: (mv.height ?? 6) * FIGHT.scale };
+  if (ready && time >= (c.moveReadyAt ?? 0) && d >= (mv.from ?? 8) * FIGHT.scale && d <= (mv.to ?? 30) * FIGHT.leap.reach * FIGHT.scale) {
+    // Where it comes down: a pounce (a strike) FIGHT.leap.through metres past its target, carrying on
+    // through (short of it if less than 0); a slam (the toad's) no further than onto it, its blow all round where it lands.
+    const past = Math.max(-d, (mv.strike ? FIGHT.leap.through : Math.min(0, FIGHT.leap.through)) * FIGHT.scale);
+    c.leap = { fx: c.x, fz: c.z, tx: px + (dx / d) * past, tz: pz + (dz / d) * past, at: time, lands: time + (mv.time ?? 0.9) / FIGHT.speed, height: (mv.height ?? 6) * FIGHT.scale };
     c.moveReadyAt = time + mv.cooldown; c.facing = dx >= 0 ? 1 : -1;
     return "leapt";
   }
