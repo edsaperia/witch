@@ -18,8 +18,8 @@ import type { Controls, Game } from "./game";
 import type { Creature } from "./creatures";
 import type { Cell } from "./partition";
 
-export type BotKind = "skilled" | "crude" | "idle" | "hover";
-export const BOT_KINDS: readonly BotKind[] = ["skilled", "crude", "idle", "hover"];
+export type BotKind = "skilled" | "crude" | "novice" | "idle" | "hover";
+export const BOT_KINDS: readonly BotKind[] = ["skilled", "crude", "novice", "idle", "hover"];
 
 export interface BotOptions {
   /** Parks up to this many at the next soundsystem (skilled)... */
@@ -45,7 +45,7 @@ export interface BotOptions {
  *  and leads her young to berries, as a good player would. The balance tool's runs keep each to its flag. */
 export const BOT_GAME: Record<BotKind, BotOptions> = {
   skilled: { quests: true, questMax: 3, relics: true, relicMax: 2, relicPolicy: "front", feed: true }, // (two relics: all six took her first ten minutes, and halved her army)
-  crude: {}, idle: {}, hover: {},
+  crude: {}, novice: {}, idle: {}, hover: {},
 };
 
 export interface Bot {
@@ -256,6 +256,9 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
         }
       }
     }
+    // The novice (Ed, 2026-10-06: "most human players are much worse than the skilled bot (or even the crude bot)"):
+    // the crude one's play, but firing only every other second, its aim wobbling a metre, and never blinking.
+    if (kind === "novice") { fire = fire && Math.floor(time) % 2 === 0; aimX += Math.sin(time * 2.3); aimZ += Math.cos(time * 1.7); dash = false; }
     return { moveX: mx, moveZ: mz, toggleMode: toggle, zoom: 0, fire, aimX, aimZ, dash, sigil, place, castParty: g.party.spellAt === null };
   }
 }
