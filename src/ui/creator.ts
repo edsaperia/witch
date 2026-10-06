@@ -213,6 +213,14 @@ export class Creator {
 
   show(): void { this.root.style.display = "block"; this.dirty = true; if (!this.room) this.room = buildRoom(this.st, this.roomS); this.walker ??= newWalker(this.room.walk); this.loop(); }
   hide(): void { this.root.style.display = "none"; cancelAnimationFrame(this.raf); this.held.clear(); }
+  /** Buttons the game adds to the panel's own (the bot game's): kept through every rebuild. */
+  private extra: { text: string; onClick: () => void; el?: HTMLButtonElement }[] = [];
+  /** A small button of the game's in the panel's row (e.g. the bot game's), kept through rebuilds; returns it. */
+  addButton(text: string, onClick: () => void): HTMLButtonElement | undefined {
+    const x: { text: string; onClick: () => void; el?: HTMLButtonElement } = { text, onClick };
+    this.extra.push(x); this.build();
+    return x.el;
+  }
   genome(): Genome { return clone(this.g); }
 
   /** Start: straight into play if the world is ready, else "getting ready" on this scene until it is. */
@@ -309,6 +317,7 @@ export class Creator {
     btn("🎲 Randomise", () => this.randomise());
     btn("🌀 Wild", () => this.wild());
     btn("Classic", () => this.classic());
+    for (const x of this.extra) x.el = btn(x.text, x.onClick);
     this.startBtn = btn("Start ▶", () => this.start(), true);
     this.startBtn.id = "creator-start";
     // The forest growing behind the scene: a thin bar under the buttons.
