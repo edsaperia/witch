@@ -8,7 +8,7 @@
 // drains and lie on the ground a moment. DOM, like the talk bubbles, drawn as pixel art.
 import * as THREE from "three";
 import type { Game } from "../rules/game";
-import { affectionOf } from "../rules/game";
+import { affectionOf, meterHits } from "../rules/game";
 import { witchHeight } from "../rules/witch";
 import { hash2 } from "../rules/random";
 import { placed } from "./height";
@@ -229,7 +229,7 @@ export class InviteView {
     // The rings: one slot a hit each creature's meter needs (invites.hits by its level), the envelopes it holds
     // orbiting it, flat and spinning, the gaps faint marks; turning slowly round it at about its middle.
     const near = g.creatures.filter(c => !c.gone && Math.abs(c.x - w.x) < 60 && Math.abs(c.z - w.z) < 60 && (c.affection || this.ringModel.rings.has(c.id)));
-    const changes = this.ringModel.update(near, c => ringOf(c.level, A.affection(c), t.invites.hits), won);
+    const changes = this.ringModel.update(near, c => ringOf(c.level, A.affection(c), meterHits(t)), won);
     const ringAt = (c: Creature, slot: number, slots: number) => {
       const r = Math.max(bodyRadius(c) + 0.6, 1.1, (slots * 0.42) / (Math.PI * 2)), a = time * 0.7 + (slot / slots) * Math.PI * 2;
       return { x: c.x + Math.cos(a) * r, y: Math.max(0.5, head(c.id) * 0.55), z: c.z + Math.sin(a) * r };

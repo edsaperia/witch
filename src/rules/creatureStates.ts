@@ -8,7 +8,7 @@ import raw from "../../config/states.json";
 import { LEGEND, type Creature } from "./creatures";
 
 export type State = "wild" | "happy" | "leashed" | "enraged";
-export interface StatesData { affection: { hits: number[]; drain: number; drainDelay: number; gap: number }; leash: "pickup" | "again" | "hold"; /** Seconds after the hearts before a happy one's rune can be picked up (leash "pickup"). */ pickupDelay: number; holdTime: number }
+export interface StatesData { affection: { hits: number[]; drain: number; drainDelay: number; gap: number; /** A legend's meter drains this share a second instead (the party-legend egg). */ legendDrain?: number }; /** The party-legend egg (tuning legends.partyEgg): a happy legend takes 💌s. */ partyEgg?: boolean; leash: "pickup" | "again" | "hold"; /** Seconds after the hearts before a happy one's rune can be picked up (leash "pickup"). */ pickupDelay: number; holdTime: number }
 export const STATES = raw as unknown as StatesData;
 
 /** A creature's state now. */
@@ -48,10 +48,23 @@ export function enrage(c: Creature): boolean {
 /** Whether it can be invited now: a wild one (dazed or not; not a legend), or a happy one for its
  *  second step (states.leash). Enraged ones, legends and leashed ones can't. */
 export function invitableNow(c: Creature, data: StatesData = STATES): boolean {
+  if (data.partyEgg && partyEggOpen(c)) return true; // (the Easter egg: a happy legend takes 💌s, 100 of them)
   if (c.gone || c.leashed || (c.fleeUntil && !c.dazedUntil) || c.level === LEGEND || c.boss) return false;
   const s = stateOf(c);
   if (s === "wild") return !c.wanderTo;
   return s === "happy" && !c.guard && c.legendState !== "happy" && data.leash === "again";
+}
+
+/** The party-legend egg (Ed, 2026-10-06: "Maybe you should be able to turn a happy legend into a party legend with an
+ *  absurd number of invites (100?) and then pick up its sigil but it's totally useless"): a happy legend (by a relic or its
+ *  quest) not yet a party legend, free. Asleep, restless and angry ones still block 💌s. */
+export const partyEggOpen = (c: Creature) => !!c.boss && c.legendState === "happy" && !c.partyLegend && !c.leashed && !c.gone;
+
+/** Its 100th 💌: a party legend. It keeps its buff (it was for good), dances where it stands and fights no one; its
+ *  legendary rune pops out at its feet. */
+export function makePartyLegend(c: Creature, time: number): void {
+  c.partyLegend = true; c.affection = undefined; c.affectionAt = undefined; c.happyAt = time;
+  c.fight = undefined; c.dancing = true; c.anchorX = c.x; c.anchorZ = c.z;
 }
 
 /** Its sigil rune (Ed, 2026-10-06; states.leash "pickup"): a happy one carries its sigil as a rune on the ground at its
@@ -60,7 +73,8 @@ export function invitableNow(c: Creature, data: StatesData = STATES): boolean {
  *  legend circle's baby, once happy, carries one like any other). `time` given: whether it's ready yet
  *  (pickupDelay after the hearts); without, whether it has one at all (the view draws it popping out). */
 export function hasRune(c: Creature, time?: number, data: StatesData = STATES): boolean {
-  if (data.leash !== "pickup" || c.gone || c.leashed || c.boss || c.level === LEGEND || c.legendState === "happy" || stateOf(c) !== "happy") return false;
+  if (c.partyLegend) { if (data.leash !== "pickup" || c.gone || c.leashed) return false; } // (a party legend's: the egg)
+  else if (data.leash !== "pickup" || c.gone || c.leashed || c.boss || c.level === LEGEND || c.legendState === "happy" || stateOf(c) !== "happy") return false;
   return time === undefined || time >= (c.happyAt ?? -Infinity) + (data.pickupDelay ?? 0);
 }
 
