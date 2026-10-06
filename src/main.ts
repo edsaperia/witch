@@ -5,6 +5,7 @@ import { Shake } from "./render/shake";
 import { Music } from "./platform/audio/music";
 import { Sfx } from "./platform/audio/sfx";
 import { SfxCues } from "./platform/audio/sfxCues";
+import { AudioWatchdog } from "./platform/audio/watchdog";
 import { musicMix } from "./rules/music";
 import { musicCue, type MusicCue } from "./rules/musicPlan";
 import type { MusicStyle } from "./rules/musicScore";
@@ -17,6 +18,7 @@ import { cellKey } from "./rules/party";
 import { areaUnderWitch, interpolated, joinParty, loseSoundsystem, newGame, STEP, stepGame, type WaveEvent } from "./rules/game";
 import { AREA_TYPES } from "./rules/map";
 import { waveCountdown } from "./rules/party";
+import { awaitingSpell, clockSeconds, clockText } from "./rules/leypulse";
 import { parseSeed } from "./rules/map";
 import { TUNING } from "./rules/tuning";
 import { Input } from "./platform/input";
@@ -32,6 +34,7 @@ import { setupStartScreen, startOnGesture } from "./ui/startScreen";
 import { AimHud } from "./render/aimhud";
 import { UPCOMING } from "./ui/upcoming";
 import { PlaytestLog } from "./platform/playtestLog";
+import { StallLog } from "./platform/stallLog";
 import { powerReport } from "./rules/power";
 import { Freeze } from "./platform/freeze";
 import { Creator, loadGenome } from "./ui/creator";
@@ -73,9 +76,9 @@ if (params.get("find") === "0") tuning.find = { ...tuning.find, on: false }; // 
 // ?rune=beam|column|both: how an awake rune stone shows above it.
 const runeParam = params.get("rune");
 if (runeParam && ["beam", "column", "both"].includes(runeParam)) tuning.runeMarkers = { ...tuning.runeMarkers, awakeStyle: runeParam };
-// ?picker=noisy|near3|near3touch|nearest: how the party picks the next area to wake.
+// ?picker=route|noisy|near3|near3touch|nearest: how the party picks the next area to wake (route, the default: the ley line's planned order; noisy the one before it).
 const pickerParam = params.get("picker");
-if (pickerParam && ["noisy", "near3", "near3touch", "nearest"].includes(pickerParam)) tuning.party.picker = pickerParam;
+if (pickerParam && ["route", "noisy", "near3", "near3touch", "nearest"].includes(pickerParam)) tuning.party.picker = pickerParam;
 // ?glow=<reach>,<falloff>,<near>: the witch's glow, to tune live (e.g. ?glow=50,2.5,0.7; 0 keeps a value).
 const glowParam = params.get("glow")?.split(",").map(Number);
 if (glowParam && glowParam[0] > 0) { tuning.glowReach = glowParam[0]; tuning.glowFixed = true; }
@@ -120,6 +123,7 @@ const hillsParam = params.get("hills");
 if (hillsParam !== null && !isNaN(Number(hillsParam))) tuning.ground = { ...tuning.ground, hills: { ...tuning.ground.hills, on: Number(hillsParam) > 0, amplitude: Number(hillsParam) > 0 ? Number(hillsParam) : tuning.ground.hills.amplitude } };
 // ?ley=0: no ley lines through the runestones.
 if (params.get("ley") === "0") tuning.leyLines = { ...tuning.leyLines, on: false };
+if (params.get("trail") === "0") tuning.trail = { ...tuning.trail, on: false };
 if (params.get("knock") === "0") tuning.witch = { ...tuning.witch, knock: { ...tuning.witch.knock, on: false } };
 // ?bare=1: the terrain on its own, to judge the hills, the bumps and the bend (Ed, 2026-10-04): no
 // trees, undergrowth, grass, decor, scenes, relics, path props, string lights, mist or shadows; no
@@ -173,6 +177,9 @@ const propsGen = params.get("props") !== "hand";
 if (propsGen) tuning.paths = { ...tuning.paths, fingerposts: true }; // ?props=gen: fingerposts where footpaths come into a clearing (placed with the map, so set before it is made)
 applyKnobParams(tuning, params); // (Ed's decisions panel: its knobs' choices kept in the URL as d_<id>)
 const game = newGame(seed, tuning);
+// The party spell (Ed, 2026-10-06): she stands behind her decks until it's cast (the button, or Enter). ?creator=0 (the
+// tools and smoke runs) starts at once, as before, unless ?spell=wait; ?spell=auto starts at once anywhere.
+if (params.get("spell") !== "auto" && !(params.get("creator") === "0" && params.get("spell") !== "wait")) game.party.spellAt = null;
 // ?buffs=fox,toad,stag (debug): these legends' buffs on from the start, whatever the legends do (a
 // species twice stacks it). ?buffs=all: every one.
 const buffsParam = params.get("buffs");
@@ -209,7 +216,7 @@ if (arenaParam) waveChoice = 0;
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = loadStyle();
-{ const artStyle = params.get("style"); if (artStyle === "bold" || artStyle === "ref") style.artStyle = artStyle; } // ?style=now|bold|ref: a pixel-art style (art/stylise.js) baked into every sprite, carried to the art worker in the style
+{ const artStyle = params.get("style") ?? "bold"; if (artStyle === "bold" || artStyle === "ref") style.artStyle = artStyle; } // bold by default (Ed, 2026-10-06: "I think I prefer bold style"); ?style=now|bold|ref: a pixel-art style (art/stylise.js) baked into every sprite, carried to the art worker in the style
 if (propsGen) { style.propGen = 1; tuning.partyObjects.generated = true; } // the prop generator (by default; ?props=hand turns it off): the prop generator (art/props/) stands in for the areas' stones, cairns, pools, stumps, logs, fungi and henges, several shapes of each, and the party's generated bunting, balloons and lanterns for the hand-made ones (carried to the art worker in the style, to the rules in the tuning)
 if (params.get("texture") === "0") style.texture = 0; // ?texture=0: creatures as before their fur, feathers and scales (art/genome/texture.js), to compare
 if (params.get("flora")) style.flora = params.get("flora"); // ?flora=new|fantasy|all|<ids>: every wooded area grows these tree species (art/flora), carried to the art worker in the style
@@ -231,6 +238,16 @@ if (params.has("scenery") && sceneryAt > 0) view.sceneryFixed = sceneryAt;
 const input = new Input();
 input.aimFrom = (x, y) => view.aimAt(x, y);
 const aimHud = new AimHud(canvas); // the reticle where the mouse aims: 💌 range and the dodge's recharge
+/** Where a dodge would put her now (toward the cursor, rules/dash.ts), in client pixels, for the reticle's mark. */
+const landV = new Vector3();
+function dashLanding(): { x: number; y: number } | null {
+  const a = input.lastAim, D = game.buffs.tuning.dash, W = game.witch;
+  if (!a || !D.toCursor || W.mode !== "ground") return null;
+  const l = Math.hypot(a.x, a.z), dx = l >= D.aimDead ? a.x / l : W.facing, dz = l >= D.aimDead ? a.z / l : 0;
+  placed(landV.set(W.x + dx * D.distance, 0, W.z + dz * D.distance)).project(view.camera);
+  const r = canvas.getBoundingClientRect();
+  return { x: r.left + (landV.x * 0.5 + 0.5) * r.width, y: r.top + (-landV.y * 0.5 + 0.5) * r.height };
+}
 document.getElementById("next-wave")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.nextWave = true; });
 document.getElementById("pause-waves")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.pauseWaves = true; });
 setupTouch(document.body, input.touch);
@@ -332,41 +349,52 @@ const seedEl = document.getElementById("seed")!;
 seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;
 const debugEl = document.getElementById("debug")!, startEl = document.getElementById("start")!;
 const debugButtons = document.getElementById("debug-buttons")!;
-const waveEl = document.getElementById("wave")!, waveFill = waveEl.querySelector<HTMLElement>(".fill")!, waveLabel = waveEl.querySelector<HTMLElement>(".label")!;
-/** The wave countdown bar: empties toward the next wave. */
+const clockEl = document.getElementById("clock")!, clockT = clockEl.querySelector<HTMLElement>(".t")!, clockLabel = clockEl.querySelector<HTMLElement>(".label")!;
+/** The party spell's button (Ed, 2026-10-06: "a button on the screen that says "CAST THE PARTY SPELL""): a click or a tap,
+ *  or Enter (once play has begun, so the start screen's Enter isn't it), casts it on the next step. */
+const castBtn = document.getElementById("cast")!;
+let castQueued = false;
+const queueCast = () => { if (awaitingSpell(game.party) && !game.clock.paused) castQueued = true; };
+for (const ev of ["pointerdown", "pointerup", "touchstart"]) castBtn.addEventListener(ev, e => e.stopPropagation()); // (not the game's input)
+castBtn.addEventListener("click", e => { e.stopPropagation(); queueCast(); });
+window.addEventListener("keydown", e => { if (e.code === "Enter" && game.clock.time > 0.3 && !creator.open) queueCast(); });
+/** The game clock, top centre (Ed, 2026-10-06): the time played, mm:ss from 0, held while paused; under it, in debug, the
+ *  wave's line. (The wave timer bar on the right is gone: the wave pointer's ring carries the countdown.) */
 function waveHud(): void {
   const cd = waveCountdown(game.party, game.map, game.clock.time);
-  waveFill.style.height = `${(1 - cd.gone) * 100}%`;
+  clockEl.classList.toggle("on", game.clock.time > 0 || !game.clock.paused);
+  const now = clockText(clockSeconds(game.party, game.clock.time));
+  if (clockT.textContent !== now) clockT.textContent = now;
+  // before the party spell (Ed, 2026-10-06: the game starts when she casts it), its button in the middle of the screen
+  const ask = awaitingSpell(game.party) && !game.clock.paused && !creator.open;
+  castBtn.classList.toggle("on", ask);
+  clockEl.classList.toggle("paused", game.clock.paused);
   const clock = (s: number) => { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; };
-  const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : cd.left >= 60 ? `${Math.floor(cd.left / 60)}:${String(Math.ceil(cd.left) % 60).padStart(2, "0")}` : `${Math.ceil(cd.left)} s`;
-  // (only in debug: the art review's round 1 found it sitting on the art; the next stone's ring carries the countdown)
-  waveLabel.textContent = debugOn ? `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}` : "";
-  waveEl.classList.toggle("paused", game.party.paused);
-  // The boot-up over (Ed, 2026-10-05: five quiet minutes from her first step): a quiet word by the bar.
+  const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : clock(cd.left);
+  clockLabel.textContent = debugOn ? `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}` : "";
+  // The boot-up over (Ed, 2026-10-05: five quiet minutes from her first step): a quiet word under the clock.
   if (!bootShown && !cd.booting && game.party.bootUntil > 0 && game.clock.time >= game.party.bootUntil && tuning.party.interval < 1e9) {
     bootShown = true;
     const pop = document.createElement("div");
     pop.className = "boot-pop";
     pop.textContent = `speakers up · wave 1 in ${clock(cd.left)}`;
-    waveEl.append(pop);
+    clockEl.append(pop);
     setTimeout(() => pop.remove(), 4000);
   }
 }
 let bootShown = false;
-// A soundsystem lost (Ed, 2026-10-05): the next wave comes sooner, and the countdown shows it: the
-// bar shrinks with a flash, and the seconds taken off pop out beside it ("−60 s", "wave now!").
+// A soundsystem lost (Ed, 2026-10-05): the next wave comes sooner; the clock flashes and the seconds taken off pop out
+// under it ("−60 s", "wave now!"), and the wave pointer's ring jumps on.
 let lossShown = -1;
 function showLoss(e: WaveEvent): void {
   lossShown = e.at;
-  waveEl.classList.remove("lost"); void waveEl.offsetWidth; waveEl.classList.add("lost"); // (restart the animation)
-  waveHud(); // (the bar eases down to its new countdown)
+  clockEl.classList.remove("lost"); void clockEl.offsetWidth; clockEl.classList.add("lost"); // (restart the animation)
   const pop = document.createElement("div");
   pop.className = "loss-pop";
   pop.textContent = e.left <= 0 ? "wave now!" : `\u2212${Math.round(e.cut)} s`;
-  pop.style.bottom = `${Math.min(100, (e.left / tuning.party.interval) * 100)}%`;
-  waveEl.append(pop);
+  clockEl.append(pop);
   setTimeout(() => pop.remove(), 1800);
-  setTimeout(() => { if (lossShown === e.at) waveEl.classList.remove("lost"); }, 900);
+  setTimeout(() => { if (lossShown === e.at) clockEl.classList.remove("lost"); }, 900);
 }
 let debugOn = params.has("debug");
 debugEl.classList.toggle("on", debugOn);
@@ -450,6 +478,24 @@ function start(): boolean {
   return true;
 }
 input.onAny = start;
+// The audio watchdog (Ed, round 13: "the music stops after about two minutes"): once a second,
+// a context suspended is resumed, and music gone silent (or anything non-finite in the music or the
+// sound effects) is rebuilt afresh; each mend goes in the playtest log (L). (Before the first home speaker
+// boots, the music is silent on purpose: not expected.)
+const watchdog = new AudioWatchdog(
+  () => ({ ctx: audio, music, sfx, wanted: !!audio && !game.clock.paused && !freeze.frozen && !document.hidden, musicExpected: !!music && level > 0 && music.audible && !game.clock.paused && !freeze.frozen && !document.hidden && game.speakerBoot.some(t => t !== null) }),
+  what => {
+    playtest.audio(what);
+    console.warn(`audio watchdog: ${what}`);
+    if (!audio) return;
+    if ((what === "music-silent" || what === "music-nonfinite") && music) { music.dispose(); music = new Music(audio, tuning.music.volume * level, musicStyle, seed!, tuning.music.src); }
+    if (what === "sfx-nonfinite" && sfx) { sfx.dispose(); sfx = null; sfxCues = null; ensureSfx(); }
+  },
+);
+setInterval(() => { try { watchdog.check(); } catch { /* never let the watchdog itself stop anything */ } }, 1000);
+let lastMix: ReturnType<typeof musicMix> | null = null;
+const r2 = (x: number) => Math.round(x * 100) / 100;
+playtest.audioState = () => ({ state: audio?.state ?? "none", volume: music ? r2((music.output as GainNode).gain.value) : 0, distort: r2(lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, lastMix?.distance ?? 9999)), mends: watchdog.mends.length });
 freeze.onToggle = on => { try { void (on ? audio?.suspend() : audio?.resume()); } catch { /* no sound */ } };
 startOnGesture(startEl, start); // a click or a tap starts; a touch that drags scrolls the text
 // The wave selector on the start screen: picking one doesn't start the game.
@@ -510,6 +556,9 @@ document.addEventListener("visibilitychange", () => { if (document.hidden) last 
 let lastDraw = 0;
 let last = 0;
 const frameStats = new FrameStats(view.renderer.getContext());
+// Frames of 100 ms or more, with what they spent it on (Ed, 2026-10-06: occasional half-second freezes): the overlay and the playtest log.
+const stallLog = new StallLog();
+playtest.stalls = () => stallLog.stalls;
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
 let manual = false;
@@ -525,11 +574,14 @@ function frame(now: number): void {
   frameStats.frame(dt * 1000);
   freeze.pollPad();
   const c = input.read();
+  if (castQueued) { c.castParty = true; castQueued = false; }
   if (c.toggleAutoTalk) setAutoTalk(!autoTalk);
   c.autoTalk = autoTalk;
   if (c.debug) { debugOn = !debugOn; debugEl.classList.toggle("on", debugOn); debugButtons.classList.toggle("on", debugOn); knobs.classList.toggle("on", debugOn); }
   view.debugReadouts = debugOn;
+  const step0 = performance.now();
   stepGame(game, c, dt);
+  const stepMs = performance.now() - step0;
   // The run is over when every soundsystem has fallen (Stage 4): the end screen, and a restart.
   if (game.over && !overShown) {
     overShown = true;
@@ -537,12 +589,16 @@ function frame(now: number): void {
     document.getElementById("over-stats")!.textContent = `You lasted ${Math.floor(game.clock.time / 60)} min ${Math.floor(game.clock.time % 60)} s and ${game.party.wave} waves.`;
     document.getElementById("over")!.classList.add("on");
   }
+  const log0 = performance.now();
   playtest.update();
+  const audio0 = performance.now();
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
   musicCueNow = musicCue(game, musicCueNow);
-  music?.update(musicMix(game, game.witch), musicCueNow, game.clock.time, game.beat, !game.clock.paused);
+  lastMix = musicMix(game, game.witch);
+  music?.update(lastMix, musicCueNow, game.clock.time, game.beat, !game.clock.paused, tuning.music);
   if (!game.clock.paused) sfxCues?.update(game, game.clock.time);
   sfx?.room(creator.open ? 1 : 0); // the creator's room in the treehouse
+  const outside = { playtest: audio0 - log0, audio: performance.now() - audio0 }; // (for the stall log: not the view's own parts)
   if (!ready) return;
   for (const e of game.waveEvents) if (e.at > lossShown) showLoss(e);
   waveHud();
@@ -554,8 +610,9 @@ function frame(now: number): void {
   frameStats.beginGpu();
   interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP)));
   frameStats.endGpu();
-  aimHud.update(game, game.clock.time, input.cursor, input.lastAim, startEl.style.display === "none" && !game.over);
+  aimHud.update(game, game.clock.time, input.cursor, input.lastAim, startEl.style.display === "none" && !game.over, dashLanding());
   frameStats.work(performance.now() - work0);
+  if (!game.clock.paused) stallLog.frame({ t: game.clock.time, gap: dt * 1000, work: performance.now() - work0, step: stepMs, parts: { ...view.ms, ...outside }, mode: game.witch.mode, x: game.witch.x, z: game.witch.z, wave: game.party.wave, creatures: game.creatures.length });
   applyShake();
   freeze.update();
   // The overlay, four times a second (a new text every frame was a page layout every frame), with
@@ -565,6 +622,7 @@ function frame(now: number): void {
     const w = game.witch, s = view.stats;
     debugEl.textContent = [
       ...frameStats.lines(),
+      stallLog.line(),
       `seed   ${seed}`,
       `area   ${areaUnderWitch(game)}`,
       `mode   ${w.mode}`,
@@ -600,6 +658,8 @@ function powerLines(): string[] {
   /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's ring), as if destroyed. */
   lose: (key = "home") => { const s = game.combat.sounds.get(key); if (s) s.hp = 0; loseSoundsystem(game, key, s?.x ?? 0, s?.z ?? 0); const e = game.waveEvents[game.waveEvents.length - 1]; if (e) showLoss(e); return e; },
   get manual() { return manual; }, set manual(on: boolean) { manual = on; },
+  /** A debug hook (tools/sfx/live.cjs): the audio context, the music and the sound effects. */
+  get audio() { return { ctx: audio, music, sfx, mends: watchdog.mends }; },
   /** A debug hook for frame feel (tools/feel/trace.cjs): one frame as the real loop runs it (the
    *  fixed steps, the render eased between the last two, the camera's sub-pixel glide), then where
    *  things landed on screen, in screen pixels as drawn (the art-pixel snap and the canvas's shift):

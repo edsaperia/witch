@@ -20,8 +20,9 @@ import { newLeash, stepLeash, type LeashControls } from "./leash";
 import { newClock, tick, MAX_STEP } from "./clock";
 import { TUNING, withTuning } from "./tuning";
 import { floorClearing, speakerRadius, nextSpeakerState } from "./speakers";
-import { composeFloor, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
-import { floorInputs } from "./game";
+import { composeFloor, moonTiles, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
+import { bootSpeaker, floorInputs, speakerBoot } from "./game";
+import { moonState } from "./moon";
 import { castSpell, newSpells, spellCharge, speedMultiplier } from "./spells";
 import { musicMix } from "./music";
 import { tuftsInCell, TUFT_KINDS } from "./groundcover";
@@ -582,8 +583,8 @@ describe("the party", () => {
     expect([...p.areas.keys()]).toEqual([key(map.centreCell)]);
     expect(p.areas.get(key(map.centreCell))!.soundsystem).toBeNull();
   });
-  it("wakes exactly one area a wave, the one chosen in advance, always bordering the party (no islands), spreading away from the last", () => {
-    const p = newParty(map);
+  it("wakes exactly one area a wave, the one chosen in advance, always bordering the party (no islands), spreading away from the last (the noisy picker)", () => {
+    const map = generateMap(123, { ...TUNING, party: { ...TUNING.party, picker: "noisy" } }), p = newParty(map);
     let besideLast = 0, couldAvoid = 0;
     for (let w = 1; w <= 25; w++) {
       expect(p.next.length).toBe(1);
@@ -930,6 +931,16 @@ describe("inviting and leashing", () => {
     expect(s.placed.map(p => p.id)).toEqual([b.c.id]);
     expect(s.stack).toEqual([a.c.id, c.c.id]);
     expect(s.events.map(e => e.kind)).toEqual(["cycled"]);
+    // The keyboard's own buttons (Ed, 2026-10-06: "E for place, Q for cycle"): Q cycles on the ground
+    // too, and E does nothing in the treetops.
+    stepLeash(s, all, { sigil: false, cycle: true }, { x: 700, z: 700 }, true, 106, 0.1, TUNING);
+    expect(s.stack).toEqual([c.c.id, a.c.id]);
+    expect(s.events.map(e => e.kind)).toEqual(["cycled"]);
+    stepLeash(s, all, { sigil: false, place: true }, { x: 700, z: 700 }, false, 107, 0.1, TUNING);
+    expect(s.stack).toEqual([c.c.id, a.c.id]);
+    expect(s.events).toEqual([]);
+    stepLeash(s, all, { sigil: false, place: true }, { x: 700, z: 700 }, true, 108, 0.1, TUNING);
+    expect(s.placed.map(p => p.id)).toEqual([b.c.id, a.c.id]);
   });
 
   it("is elastic: a creature walks to its new leash point, never jumps, then stays within the leash", () => {
@@ -1089,7 +1100,7 @@ describe("paths, roads and railways", () => {
     expect(trunk.length).toBeGreaterThanOrEqual(T.rails[0]);
     expect(of("rail").length).toBeLessThanOrEqual(T.rails[1] + 1); // plus a branch line
     for (const l of trunk) expect(new Set(l.pts.map(p => map.areaAt(p[0], p[1]).cell.join(","))).size).toBeGreaterThan(5);
-    expect(of("road").length).toBeGreaterThanOrEqual(T.roads[0]);
+    expect(of("road").length).toBe(0); // no roads cars could drive on (Ed, round 13: footpaths, railways and streams only)
     expect(of("path").length).toBeGreaterThan(20);
     expect(of("stream").filter(l => l.pts.length > 100).length).toBeGreaterThanOrEqual(T.streams[0]);
   });
@@ -1134,9 +1145,10 @@ describe("paths, roads and railways", () => {
     expect(edge / edgeN).toBeGreaterThan((open / openN) * 1.5);
     for (const w of forest.wallsNear(s.x, s.z, 600)) { const h = P.at(w.x, w.z); if (h) expect(h.kind === "rail" && P.railBroken(w.x, w.z)).toBe(true); }
   }, 60000); // (it builds the forest for 600 m round home)
-  it("carry 3D pieces: railway landmarks and signals, bridges over streams, verge posts; trees keep clear of them", () => {
+  it("carry 3D pieces: railway landmarks and signals, bridges over streams; trees keep clear of them", () => {
     const ids = new Set(P.pieces.map(p => p.id));
-    for (const id of ["signal-post", "verge-post"]) expect(ids.has(id)).toBe(true);
+    expect(ids.has("signal-post")).toBe(true);
+    for (const id of ["verge-post", "level-crossing"]) expect(ids.has(id)).toBe(false); // the roads' own pieces went with them (Ed, round 13)
     expect(P.pieces.some(p => ["goods-wagon", "carriage", "platform", "signal-gantry"].includes(p.id))).toBe(true);
     let bridges = 0;
     for (let seed = 1; seed <= 6; seed++) bridges += generateMap(seed, TUNING).paths.pieces.filter(p => p.id.includes("bridge")).length;
@@ -1336,23 +1348,71 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
   });
 });
 
+describe("the home speakers start as runestones (Ed, 2026-10-06)", () => {
+  it("turn into speakers one by one as the boot reaches them, each over boot.transform, all of them by its end", () => {
+    const g = newGame(3, TUNING), n = g.speakerBoot.length, T = TUNING.boot.transform;
+    g.clock.paused = false;
+    expect(n).toBe(12);
+    for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
+    expect(g.speakerBoot.every(b => b === null)).toBe(true); // seated: all stones
+    for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60);
+    const to = (time: number) => { while (g.clock.time < time) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60); };
+    to(g.party.bootUntil - TUNING.boot.time / 2);
+    const half = g.speakerBoot.filter(b => b !== null).length;
+    expect(half).toBeGreaterThan(3); expect(half).toBeLessThan(9);
+    const i = half - 1, at = g.speakerBoot[i]!; // the latest one, turning
+    expect(speakerBoot(g, i, at)).toBe(0); expect(speakerBoot(g, i, at + T / 2)).toBeCloseTo(0.5); expect(speakerBoot(g, i, at + T)).toBe(1);
+    expect(speakerBoot(g, half, g.clock.time)).toBe(0); // the next still a stone
+    for (let k = 1; k < half; k++) expect(g.speakerBoot[k]!).toBeGreaterThanOrEqual(g.speakerBoot[k - 1]!); // round the ring in order
+    to(g.party.bootUntil + T + 0.1);
+    expect(g.speakerBoot.every((_, k) => speakerBoot(g, k) === 1)).toBe(true);
+  });
+  it("can be booted by the pulse: bootSpeaker turns one now, once", () => {
+    const g = newGame(3, TUNING);
+    g.clock.time = 5;
+    bootSpeaker(g, 7);
+    expect(g.speakerBoot[7]).toBe(5);
+    g.clock.time = 9; bootSpeaker(g, 7);
+    expect(g.speakerBoot[7]).toBe(5);
+    expect(speakerBoot(g, 6)).toBe(0);
+  });
+});
+
 describe("the dancefloor's tile lights (Ed, v160)", () => {
   const beat = 60 / TUNING.beat.bpm, boot = 8 * beat; // the switch-on sequence is 8 beats
   const inputs = (time: number, o: Partial<FloorInputs> = {}): FloorInputs => ({ time, seed: 7, level: 2, partifiedAreas: new Set(), witch: { x: -50, y: -50, lift: 1, rgb: [255, 238, 70] }, dancers: [], ...o });
   const run = (f: ReturnType<typeof newFloor>, from: number, to: number, o: Partial<FloorInputs> = {}) => { for (let t = from; t <= to; t += 1 / 30) stepFloor(f, inputs(t, o), TUNING); };
-  const litCount = (rgbi: Uint8Array) => { let n = 0; for (let i = 3; i < rgbi.length; i += 4) if (rgbi[i]) n++; return n; };
-  it("is dark until it switches on, once, when the witch first leaves the terrace", () => {
-    const g = newGame(3, TUNING);
+  it("shows only the moon before the first wave, in its twilight palette, and switches on, once, when the first wave comes", () => {
+    const g = newGame(3, TUNING), P = TUNING.moon.floor.palette.map(c => c.join());
     g.clock.paused = false;
-    expect(litCount(composeFloor(g.floor, floorInputs(g), TUNING).rgbi)).toBe(0);
+    const colours = () => { const o = composeFloor(g.floor, floorInputs(g), TUNING).rgbi, seen = new Set<string>(); let max = 0; for (let i = 0; i < o.length; i += 4) if (o[i + 3]) { seen.add(`${o[i]},${o[i + 1]},${o[i + 2]}`); max = Math.max(max, o[i + 3]); } return { seen, max }; };
     for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
-    expect(g.floor.on).toBeNull(); // still seated
-    stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60);
+    for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, toggleMode: i === 5, zoom: 0 }, 1 / 60);
+    expect(g.party.wave).toBe(0);
+    expect(g.floor.on).toBeNull(); // off the decks, but no wave yet: the moon
+    const m = colours();
+    expect(m.seen.size).toBeGreaterThan(0);
+    expect([...m.seen].every(c => P.includes(c))).toBe(true); // no neon
+    expect(m.max).toBeLessThanOrEqual(2);
+    g.party.nextAt = g.clock.time; // the first wave, now
+    for (let i = 0; i < 3 && g.party.wave === 0; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
+    expect(g.party.wave).toBeGreaterThan(0);
     const on = g.floor.on;
     expect(on).not.toBeNull();
-    for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, toggleMode: i === 5, zoom: 0 }, 1 / 60);
+    expect(colours().max).toBe(3); // the full moon flaring out
+    for (let i = 0; i < 60 * (TUNING.moon.floor.flare + 1); i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
     expect(g.floor.on).toBe(on); // only once
-    expect(litCount(composeFloor(g.floor, floorInputs(g), TUNING).rgbi)).toBeGreaterThan(0); // booting
+    expect([...colours().seen].some(c => !P.includes(c))).toBe(true); // the party's neons
+  });
+  it("draws the moon's phases: none lit at new, the right half at first quarter, all at full, the left half at last quarter", () => {
+    const lit = (phase: number) => { const o = new Uint8Array(GRID * GRID * 4); moonTiles(o, phase, 0, TUNING); const S = TUNING.moon.floor.palette[2].join(), P1 = TUNING.moon.floor.palette[1].join(); let l = 0, r = 0; for (let n = 0; n < GRID * GRID; n++) { const c = `${o[n * 4]},${o[n * 4 + 1]},${o[n * 4 + 2]}`; if (o[n * 4 + 3] === 2 && (c === S || c === P1)) { if (n % GRID < GRID / 2) l++; else r++; } } return { l, r }; };
+    expect(lit(0)).toEqual({ l: 0, r: 0 });
+    const q1 = lit(0.25), full = lit(0.5), q3 = lit(0.75);
+    expect(q1.l).toBe(0); expect(q1.r).toBeGreaterThan(20);
+    expect(full.l).toBeGreaterThan(20); expect(Math.abs(full.l - full.r)).toBeLessThan(full.l * 0.2);
+    expect(q3.r).toBe(0); expect(q3.l).toBeGreaterThan(20);
+    const cres = lit(0.1), gib = lit(0.4);
+    expect(cres.r).toBeLessThan(q1.r); expect(gib.r + gib.l).toBeGreaterThan(q1.r);
   });
   it("plays patterns on the beat, changing on bar lines, never the same one twice running", () => {
     const f = newFloor(); switchOn(f, 0);
@@ -1656,6 +1716,22 @@ describe("the dash (Ed, 2026-10-04)", () => {
     expect(D.at).toBeGreaterThan(second);
   });
 
+  it("goes toward the cursor (Ed, 2026-10-06), the way she faces with the cursor on her, and the way she steers with none", () => {
+    const B = { minX: -100, maxX: 100, minZ: -100, maxZ: 100 }, w = { ...newWitch(0, 0), facing: -1 as const };
+    const d = newDash();
+    startDash(d, w, 1, 0, 1, TUNING, B, undefined, 1, 0, 0, 30); // steering east, the cursor 30 m south
+    expect(d.toX).toBeCloseTo(0); expect(d.toZ).toBeCloseTo(TUNING.dash.distance);
+    const d2 = newDash();
+    startDash(d2, w, 1, 0, 1, TUNING, B, undefined, 1, 0, 0.3, 0.2); // the cursor on her: the way she faces
+    expect(d2.toX).toBeCloseTo(-TUNING.dash.distance); expect(d2.toZ).toBeCloseTo(0);
+    const d3 = newDash();
+    startDash(d3, w, 0, 1, 1, TUNING, B); // no cursor (touch): the way she steers
+    expect(d3.toZ).toBeCloseTo(TUNING.dash.distance);
+    const d4 = newDash();
+    startDash(d4, w, 1, 0, 1, { ...TUNING, dash: { ...TUNING.dash, toCursor: false } }, B, undefined, 1, 0, 0, 30); // off: the way she steers
+    expect(d4.toX).toBeCloseTo(TUNING.dash.distance);
+  });
+
   it("goes the way she faces when she's still, and stops short of anything in the way", () => {
     const w = { ...newWitch(0, 0), facing: -1 as const }, d = newDash(), B = { minX: -100, maxX: 100, minZ: -100, maxZ: 100 };
     expect(startDash(d, w, 0, 0, 1, TUNING, B)).toBe(true);
@@ -1701,5 +1777,21 @@ describe("the dash (Ed, 2026-10-04)", () => {
     run(g, 1, { dash: true });
     expect(g.witches[0].dash.until).toBe(-Infinity);
     expect(Math.abs(g.witch.x - x0)).toBeLessThan(1);
+  });
+});
+
+describe("the moon (Ed, 2026-10-06)", () => {
+  it("goes through its phases, crosses the sky, and now and then turns red, blue or gold, the same for a seed", () => {
+    const M = TUNING.moon;
+    expect(moonState(0, 5, TUNING).phase).toBeCloseTo(M.phaseStart);
+    expect(moonState(M.phasePeriod / 2, 5, TUNING).phase).toBeCloseTo(M.phaseStart + 0.5);
+    const a = moonState(0, 5, TUNING), b = moonState(M.orbit * 0.3, 5, TUNING);
+    expect(b.x).toBeGreaterThan(a.x);
+    for (let t = 0; t < M.orbit; t += 7) { const m = moonState(t, 5, TUNING); expect(m.y).toBeGreaterThanOrEqual(M.low - 1e-9); expect(m.y).toBeLessThanOrEqual(M.high + 1e-9); expect(m.x).toBeGreaterThanOrEqual(M.left); expect(m.x).toBeLessThanOrEqual(M.right); }
+    expect(moonState(10, 5, TUNING).kind).toBe("plain"); // never in the first window
+    const kinds = new Set<string>();
+    for (let seed = 1; seed < 40; seed++) for (let t = M.colourEvery; t < M.colourEvery * 12; t += 10) { const m = moonState(t, seed, TUNING); if (m.colour > 0.99) kinds.add(m.kind); expect(m.rgb.every(Number.isFinite)).toBe(true); }
+    expect([...kinds].sort()).toEqual(["blue", "gold", "red"]);
+    expect(moonState(1234.5, 9, TUNING)).toEqual(moonState(1234.5, 9, TUNING));
   });
 });

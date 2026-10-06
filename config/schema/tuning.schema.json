@@ -201,6 +201,82 @@
       ],
       "additionalProperties": false
     },
+    "smoke": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "rate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "life": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rise": {
+          "type": "number",
+          "minimum": 0
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "size": {
+          "type": "number",
+          "minimum": 0
+        },
+        "grow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "drift": {
+          "type": "number",
+          "minimum": 0
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0
+        },
+        "warm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pixel": {
+          "type": "boolean"
+        },
+        "perFire": {
+          "type": "number",
+          "minimum": 0
+        },
+        "maxFires": {
+          "type": "number",
+          "minimum": 0
+        },
+        "range": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "rate",
+        "life",
+        "rise",
+        "speed",
+        "size",
+        "grow",
+        "drift",
+        "opacity",
+        "warm",
+        "pixel",
+        "perFire",
+        "maxFires",
+        "range"
+      ],
+      "additionalProperties": false
+    },
     "sky": {
       "type": "object",
       "properties": {
@@ -278,6 +354,157 @@
         "moon",
         "clouds",
         "lightning"
+      ],
+      "additionalProperties": false
+    },
+    "moon": {
+      "type": "object",
+      "properties": {
+        "phasePeriod": {
+          "type": "number",
+          "minimum": 0
+        },
+        "phaseStart": {
+          "type": "number",
+          "minimum": 0
+        },
+        "orbit": {
+          "type": "number",
+          "minimum": 0
+        },
+        "arcStart": {
+          "type": "number",
+          "minimum": 0
+        },
+        "left": {
+          "type": "number",
+          "minimum": 0
+        },
+        "right": {
+          "type": "number",
+          "minimum": 0
+        },
+        "low": {
+          "type": "number",
+          "minimum": 0
+        },
+        "high": {
+          "type": "number",
+          "minimum": 0
+        },
+        "colourEvery": {
+          "type": "number",
+          "minimum": 0
+        },
+        "colourChance": {
+          "type": "number",
+          "minimum": 0
+        },
+        "colourTime": {
+          "type": "number",
+          "minimum": 0
+        },
+        "colourFade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "colours": {
+          "type": "object",
+          "properties": {
+            "red": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "blue": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "gold": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          },
+          "required": [
+            "red",
+            "blue",
+            "gold"
+          ],
+          "additionalProperties": false
+        },
+        "tint": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bloodTint": {
+          "type": "number",
+          "minimum": 0
+        },
+        "disc": {
+          "type": "number",
+          "minimum": 0
+        },
+        "floor": {
+          "type": "object",
+          "properties": {
+            "palette": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stars": {
+              "type": "number",
+              "minimum": 0
+            },
+            "flare": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "palette",
+            "size",
+            "stars",
+            "flare"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "phasePeriod",
+        "phaseStart",
+        "orbit",
+        "arcStart",
+        "left",
+        "right",
+        "low",
+        "high",
+        "colourEvery",
+        "colourChance",
+        "colourTime",
+        "colourFade",
+        "colours",
+        "tint",
+        "bloodTint",
+        "disc",
+        "floor"
       ],
       "additionalProperties": false
     },
@@ -1818,13 +2045,12 @@
         "on": {
           "type": "boolean"
         },
-        "ahead": {
-          "type": "number",
-          "minimum": 0
-        },
-        "behind": {
-          "type": "number",
-          "minimum": 0
+        "far": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
         },
         "behindBright": {
           "type": "number",
@@ -1887,8 +2113,7 @@
       },
       "required": [
         "on",
-        "ahead",
-        "behind",
+        "far",
         "behindBright",
         "advance",
         "fade",
@@ -2738,11 +2963,31 @@
               "legend"
             ]
           }
+        },
+        "wakeSecs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "angryWake": {
+          "type": "number",
+          "minimum": 0
+        },
+        "settleSecs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sink": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "minPx",
-        "alwaysLevels"
+        "alwaysLevels",
+        "wakeSecs",
+        "angryWake",
+        "settleSecs",
+        "sink"
       ],
       "additionalProperties": false
     },
@@ -2897,6 +3142,37 @@
         "chance",
         "kinds",
         "radius"
+      ],
+      "additionalProperties": false
+    },
+    "legendClearing": {
+      "type": "object",
+      "properties": {
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "edge": {
+          "type": "number",
+          "minimum": 0
+        },
+        "top": {
+          "type": "number",
+          "minimum": 0
+        },
+        "species": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "required": [
+        "radius",
+        "edge",
+        "top",
+        "species"
       ],
       "additionalProperties": false
     },
@@ -3443,6 +3719,22 @@
           "type": "number",
           "minimum": 0,
           "maximum": 1
+        },
+        "linger": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lingerFade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lingerMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "spin": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -3463,7 +3755,11 @@
         "hits",
         "drain",
         "perAnimalHitGap",
-        "fireSlow"
+        "fireSlow",
+        "linger",
+        "lingerFade",
+        "lingerMax",
+        "spin"
       ],
       "additionalProperties": false
     },
@@ -3885,6 +4181,54 @@
           },
           "required": [
             "volume"
+          ],
+          "additionalProperties": false
+        },
+        "power": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "crackle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "whine": {
+              "type": "number",
+              "minimum": 0
+            },
+            "buzz": {
+              "type": "number",
+              "minimum": 0
+            },
+            "thump": {
+              "type": "number",
+              "minimum": 0
+            },
+            "tone": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "crackle",
+            "whine",
+            "buzz",
+            "thump",
+            "tone",
+            "gap",
+            "range"
           ],
           "additionalProperties": false
         },
@@ -4312,6 +4656,7 @@
         "ouch",
         "impact",
         "roar",
+        "power",
         "lament",
         "shoes",
         "pond",
@@ -4357,6 +4702,39 @@
           "type": "number",
           "minimum": 0
         },
+        "circle": {
+          "type": "object",
+          "properties": {
+            "muffle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "quiet": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ease": {
+              "type": "number",
+              "minimum": 0
+            },
+            "level": {
+              "type": "number",
+              "minimum": 0
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "muffle",
+            "quiet",
+            "ease",
+            "level",
+            "radius"
+          ],
+          "additionalProperties": false
+        },
         "clear": {
           "type": "number",
           "minimum": 0
@@ -4377,6 +4755,7 @@
         "floor",
         "muffle",
         "audible",
+        "circle",
         "clear",
         "distort",
         "src"
@@ -4443,12 +4822,62 @@
         "momentum": {
           "type": "number",
           "minimum": 0
+        },
+        "charge": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "turn": {
+              "type": "number",
+              "minimum": 0
+            },
+            "brake": {
+              "type": "number",
+              "minimum": 0
+            },
+            "contact": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "reach",
+            "turn",
+            "brake",
+            "contact"
+          ],
+          "additionalProperties": false
+        },
+        "leap": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "through": {
+              "type": "number"
+            },
+            "contact": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "reach",
+            "through",
+            "contact"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "scale",
         "speed",
-        "momentum"
+        "momentum",
+        "charge",
+        "leap"
       ],
       "additionalProperties": false
     },
@@ -4590,6 +5019,14 @@
         "shake": {
           "type": "number",
           "minimum": 0
+        },
+        "daze": {
+          "type": "number",
+          "minimum": 0
+        },
+        "retreatHome": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -4610,7 +5047,9 @@
         "soundsystemRadius",
         "homeHealth",
         "homeRadius",
-        "shake"
+        "shake",
+        "daze",
+        "retreatHome"
       ],
       "additionalProperties": false
     },
@@ -4724,6 +5163,13 @@
           "type": "number",
           "minimum": 0
         },
+        "toCursor": {
+          "type": "boolean"
+        },
+        "aimDead": {
+          "type": "number",
+          "minimum": 0
+        },
         "clear": {
           "type": "object",
           "properties": {
@@ -4763,6 +5209,8 @@
         "gone",
         "cooldown",
         "buffer",
+        "toCursor",
+        "aimDead",
         "clear"
       ],
       "additionalProperties": false
@@ -4803,16 +5251,90 @@
       ],
       "additionalProperties": false
     },
+    "trail": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "ground": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treetops": {
+          "type": "number",
+          "minimum": 0
+        },
+        "from": {
+          "type": "number",
+          "minimum": 0
+        },
+        "curve": {
+          "type": "number",
+          "minimum": 0
+        },
+        "width": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "bright": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "grow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "shrink": {
+          "type": "number",
+          "minimum": 0
+        },
+        "colourEase": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sparks": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "on",
+        "ground",
+        "treetops",
+        "from",
+        "curve",
+        "width",
+        "bright",
+        "fade",
+        "grow",
+        "shrink",
+        "colourEase",
+        "sparks"
+      ],
+      "additionalProperties": false
+    },
     "boot": {
       "type": "object",
       "properties": {
         "time": {
           "type": "number",
           "minimum": 0
+        },
+        "transform": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
-        "time"
+        "time",
+        "transform"
       ],
       "additionalProperties": false
     },
@@ -5802,7 +6324,9 @@
     "areaEdgeBlend",
     "groundBlend",
     "ground",
+    "smoke",
     "sky",
+    "moon",
     "wind",
     "groundCover",
     "density",
@@ -5868,6 +6392,7 @@
     "bubbles",
     "scenes",
     "grounds",
+    "legendClearing",
     "relics",
     "walls",
     "runeMarkers",
@@ -5891,6 +6416,7 @@
     "knockout",
     "dash",
     "spells",
+    "trail",
     "boot",
     "party",
     "stringLights",

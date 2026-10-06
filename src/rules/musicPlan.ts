@@ -10,6 +10,7 @@
 // its party parts. Numbers only: the platform plays them.
 import { beatAt, type BeatClock } from "./beat";
 import type { Game } from "./game";
+import type { Creature } from "./creatures";
 import { arcStep, type BlockPlan, type MusicStyle } from "./musicScore";
 
 /** Everything the conductor needs, in bars of the beat clock (bar 0 at game time 0). */
@@ -27,9 +28,25 @@ export interface MusicCue {
   party?: number;
   /** How near an angry legend is (0-1): charging, or shooting from afar. */
   legend?: number;
+  /** The home speakers' boot (Ed, 2026-10-06: "the music first starts when the first speaker appears,
+   *  sounding incomplete, and becomes gradually more complete until the last of the 12 appears"): the
+   *  bar each speaker turned on, of `speakers` in all. Absent: the music whole (previews, the lab). */
+  speakerBars?: number[];
+  speakers?: number;
+  /** In a sleeping legend's clearing on the ground (Ed, 2026-10-06): its species, the layer's level 0-1. */
+  circle?: { species: string; level: number };
   /** ?music= previews: always this section; or this wave's arc step whatever the wave. */
   forceSection?: string;
   forceWave?: number;
+}
+
+/** How much of the music has booted at bar `bar` (0 silent to 1 whole): the home speakers on, each
+ *  counted from the bar line after it turned (so its layer comes in on a bar, after its crackle). */
+export function bootLayers(cue: Pick<MusicCue, "speakerBars" | "speakers">, bar: number): number {
+  if (!cue.speakerBars || !cue.speakers) return 1;
+  let on = 0;
+  for (const b of cue.speakerBars) if (Math.ceil(b - 1e-6) <= bar) on++;
+  return Math.min(1, on / cue.speakers);
 }
 
 /** Bars gone by at game time `time` on the beat clock. */
@@ -48,7 +65,37 @@ export function musicCue(g: Game, prev?: MusicCue): MusicCue {
   return {
     waves, nextAt: g.tuning.party.interval >= 1e9 ? Infinity : bar(p.nextAt), bootUntil: bar(p.bootUntil),
     knockedOut: !!g.witches[0]?.ko, siege: siegeNear(g, g.witch), party: partyNear(g, g.witch), legend: legendNear(g, g.witch), forceSection: prev?.forceSection, forceWave: prev?.forceWave,
+    circle: circleCue(g, g.witch),
+    speakerBars: g.speakerBoot.filter((t): t is number => t !== null).map(bar).sort((a, b) => a - b), speakers: g.speakerBoot.length,
   };
+}
+
+/** The sleeping legend whose clearing `at` stands in, on the ground (Ed, 2026-10-06: "when you
+ *  go into a legend circle in ground mode"), or null: in the treetops, or outside every clearing.
+ *  A legend asleep or restless; its clearing the map's (`map.legendClearings`, the legend's circle)
+ *  where the map has them, else a circle of `music.circle.radius` metres round the legend. */
+export function legendCircleAt(g: Game, at: { x: number; z: number; mode?: string }): Creature | null {
+  if (at.mode !== "ground") return null;
+  const R = g.tuning.music.circle.radius, clearings = (g.map as { legendClearings?: readonly { x: number; z: number; r: number; legend: { x: number; z: number } }[] }).legendClearings;
+  let best: Creature | null = null, bd = Infinity;
+  for (const c of g.creatures) {
+    if (!c.boss || c.gone || c.leashed || (c.legendState !== "asleep" && c.legendState !== "restless")) continue;
+    let cx = c.x, cz = c.z, r = R;
+    if (clearings) {
+      let ring: { x: number; z: number; r: number } | null = null, rd = Infinity;
+      for (const k of clearings) { const d = Math.hypot(k.legend.x - c.x, k.legend.z - c.z); if (d < rd) { rd = d; ring = k; } }
+      if (ring && rd <= ring.r) { cx = ring.x; cz = ring.z; r = ring.r; }
+    }
+    const d = Math.hypot(at.x - cx, at.z - cz);
+    if (d <= r && d < bd) { bd = d; best = c; }
+  }
+  return best;
+}
+
+/** The music's cue for a legend's clearing she stands in: its species, at the style's level. */
+export function circleCue(g: Game, at: { x: number; z: number; mode?: string }): MusicCue["circle"] {
+  const c = legendCircleAt(g, at);
+  return c ? { species: c.species, level: g.tuning.music.circle.level } : undefined;
 }
 
 /** How much a soundsystem under siege is heard from `at` (0-1): the nearest standing one with wild

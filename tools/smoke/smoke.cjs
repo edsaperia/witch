@@ -24,7 +24,7 @@ function serve() {
   return new Promise(r => server.listen(0, "127.0.0.1", () => r(server)));
 }
 
-// Zoom keys (rise and descend are Q; E is the sigil button; right click or Space dashes).
+// Zoom keys (rise and descend are Space; E puts a sigil down, Q cycles; right click dashes).
 const ZOOM_IN = "KeyZ", ZOOM_OUT = "KeyX";
 const TRUNK_ROUND = 1.3; // across a trunk, its lit side over its shaded one (median): the bluebell glade's flat beeches measured 1.21, shaded ones 1.40
 
@@ -89,11 +89,11 @@ async function main() {
     check(groundSpeed > tuning.groundSpeed * 0.6 && groundSpeed <= tuning.groundSpeed * 1.01, `flies east on the ground (${groundSpeed.toFixed(1)} m/s)`);
     check(s.mode === "ground", "still in ground mode");
     await shot(page, "02-ground-flying.png");
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     // The rise takes riseTime of game time: wait for it to finish, however slow the frames here.
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 400000, polling: 50 }).catch(() => {});
     s = await state(page);
-    check(s.mode === "treetop", `Q rises to treetop mode (${s.mode})`);
+    check(s.mode === "treetop", `space rises to treetop mode (${s.mode})`);
     await shot(page, "03-treetop.png");
     [s0, s] = await hold(page, "ArrowUp", 2);
     const topSpeed = (s0.z - s.z) / (s.t - s0.t);
@@ -113,7 +113,7 @@ async function main() {
           await hold(page, keys[(z + 1) % 4], 0.6);
         }
         for (let i = 0; i < steps; i++) { await page.keyboard.press(ZOOM_IN); await hold(page, keys[i % 4], 0.3); }
-        await page.keyboard.press("KeyQ"); // change mode mid-path
+        await page.keyboard.press("Space"); // change mode mid-path
         await hold(page, "ArrowUp", 1.2);
       }
     };
@@ -145,14 +145,14 @@ async function main() {
     const popCount = await page.evaluate(() => window.witch.view.pops.length);
     check(popCount === 0, `nothing pops in or out in clear view, flying through every zoom level in both modes (${popCount})${popCount ? ": " + pops.join("; ") : ""}`);
     await page.waitForFunction(() => !["rising", "descending"].includes(window.witch.game.witch.mode), null, { timeout: 60000 });
-    if (await page.evaluate(() => window.witch.game.witch.mode) !== "treetop") { await page.keyboard.press("KeyQ"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 }); }
+    if (await page.evaluate(() => window.witch.game.witch.mode) !== "treetop") { await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 }); }
     await page.keyboard.press(ZOOM_OUT); await page.keyboard.press(ZOOM_OUT);
     await sleep(800);
     await shot(page, "05-treetop-zoomed-out.png");
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 60000 }).catch(() => {});
     s = await state(page);
-    check(s.mode === "ground", `Q descends to ground mode (${s.mode})`);
+    check(s.mode === "ground", `space descends to ground mode (${s.mode})`);
     await shot(page, "06-ground-zoomed-out.png");
     await page.keyboard.press(ZOOM_IN); await page.keyboard.press(ZOOM_IN); await page.keyboard.press(ZOOM_IN);
     await sleep(800);
@@ -188,7 +188,7 @@ async function main() {
     await run(`tilt-${tilt}`, { width: 1280, height: 720 }, async page => {
       await page.keyboard.press("Enter");
       await hold(page, "ArrowUp", 1);
-      await page.keyboard.press("KeyQ");
+      await page.keyboard.press("Space");
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
       await sleep(600);
       await shot(page, `2${["before", "after", "off"].indexOf(tilt)}-tilt-${tilt}.png`);
@@ -200,7 +200,7 @@ async function main() {
     await page.keyboard.press("Enter");
     await sleep(1500);
     await shot(page, "40-dancefloor-ground.png");
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.lift > 0.3, null, { timeout: 60000, polling: 20 });
     await page.screenshot({ path: path.join(out, "42-rising.png") }); // no settle: catch her mid-climb
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
@@ -218,7 +218,7 @@ async function main() {
     });
     check(nb.shownPast === 0 && nb.drawn > 0, `over the treetops, no wave number shows for a stone past the bent horizon (${nb.drawn} drawn, ${nb.hidden} past the horizon, ${nb.shownPast} still showing)`);
     // Behind the home soundsystem (up the screen from it), on the ground: she must still read.
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 60000 });
     await page.evaluate(() => { const g = window.witch.game, d = g.map.dancefloor, x = d.x + d.radius + 5, z = d.z + 3 - 2.5; g.witch = { ...g.witch, x, z, vx: 0, vz: 0 }; g.camera = { ...g.camera, tx: x, tz: z }; });
     await sleep(1500);
@@ -233,7 +233,7 @@ async function main() {
       await hold(page, "ArrowRight", 1.5);
       await sleep(300);
       await shot(page, `30-ground-${name}.png`);
-      await page.keyboard.press("KeyQ");
+      await page.keyboard.press("Space");
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
       await sleep(600);
       await shot(page, `31-treetop-${name}.png`);
@@ -244,7 +244,7 @@ async function main() {
   await run("party", { width: 1280, height: 720 }, async page => {
     await page.keyboard.press("Enter");
     await page.keyboard.press("KeyP"); // hold the timer: the waves come when asked
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
     await page.keyboard.press("KeyN");
     await page.waitForFunction(() => window.witch.game.party.wave >= 1, null, { timeout: 60000 });
@@ -262,11 +262,11 @@ async function main() {
       await page.waitForFunction(t => window.witch.game.clock.time >= t, at.t + dt, { timeout: 400000, polling: 50 });
       await shot(page, `5${i}-party-transition-${i}.png`);
     }
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 60000 });
     await sleep(800);
     await shot(page, "55-string-lights-ground.png");
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
     await sleep(800);
     await shot(page, "56-string-lights-treetop.png");
@@ -290,7 +290,7 @@ async function main() {
   await run("earth", { width: 960, height: 600 }, async page => {
     await page.keyboard.press("Enter");
     for (let i = 0; i < 2; i++) { await page.keyboard.press("KeyN"); await sleep(400); }
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 300000 });
     await sleep(1500);
     const r = await page.evaluate(() => {
@@ -313,18 +313,16 @@ async function main() {
     check(r.through.length === 0, `nothing drawn without a depth test shows through the bent earth${r.through.length ? ": " + r.through.join("; ") : ""}`);
   });
 
-  // The ley lines (Ed, 2026-10-04; 2026-10-05: "six sections long, showing the next three and the past three
-  // runestones"): from the last stone reached on through leyLines.ahead stones in wave order and back through up to
-  // leyLines.behind reached before it, drawn on the ground and over the treetops; a wave moves the chain on (its last
-  // reached is then a stone the old chain led to next), and the ones left behind stay drawn behind it. Only the next
-  // stone has a HUD indicator ("not the next two"). Shots of both.
+  // The ley lines (Ed, 2026-10-04; 2026-10-06: "I think the leylines should cover the entire set of waves the whole
+  // time, but ideally it shouldn't cross itself"): through every area's runestone in wave order, home first, drawn on
+  // the ground and over the treetops; a wave moves the last stone reached on along the same line. Only the next stone
+  // has a HUD indicator ("not the next two"). Shots of both.
   await run("ley", { width: 960, height: 600 }, async page => {
     await page.keyboard.press("Enter");
-    const drawn = () => page.evaluate(() => { const L = window.witch.view.ley, c = L.chain, k = L.current, at = i => c[i]?.cell.join(","); return { visible: L.meshes[0].visible, links: c.length - 1, current: k, tris: (L.meshes[0].geometry.index?.count ?? 0) / 3, here: at(k), next: at(k + 1), after: at(k + 2), stones: c.map(s => s.cell.join(",")), cues: window.witch.view.nextStones.length, after2: "afterNextStones" in window.witch.view, waking: window.witch.game.party.next.length }; });
-    await page.waitForFunction(() => window.witch.view.ley.chain.length > 1, null, { timeout: 120000, polling: 200 });
+    const drawn = () => page.evaluate(() => { const L = window.witch.view.ley, c = L.chain, k = L.current, at = i => c[i]?.cell.join(","); return { visible: L.meshes[0].visible, links: c.length - 1, areas: window.witch.game.map.n ** 2, current: k, tris: (L.meshes[0].geometry.index?.count ?? 0) / 3, here: at(k), next: at(k + 1), after: at(k + 2), stones: c.map(s => s.cell.join(",")), cues: window.witch.view.nextStones.length, after2: "afterNextStones" in window.witch.view, waking: window.witch.game.party.next.length }; });
+    await page.waitForFunction(() => window.witch.view.ley.chain.length > 1, null, { timeout: 300000, polling: 200 });
     const a = await drawn();
-    const L = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "../../config/tuning.json"), "utf8")).leyLines, AHEAD = L.ahead, BEHIND = L.behind;
-    check(a.visible && a.current === 0 && a.links === AHEAD && a.tris > 20 * AHEAD, `the ley lines are drawn from home on through the next ${AHEAD} stones, nothing behind yet: ${a.links} sections, the last reached at ${a.current} (${a.tris} triangles)`);
+    check(a.visible && a.current === 0 && a.links === a.areas - 1 && a.tris > 20 * a.links, `the ley line is drawn from home through every area (${a.links} sections for ${a.areas} areas), the last reached at ${a.current} (${a.tris} triangles)`);
     check(a.cues <= Math.max(1, a.waking) && !a.after2, `only the next stone has a HUD indicator (${a.cues} for the ${a.waking} waking next${a.after2 ? "; an after-next one is still there" : ""})`);
     await page.evaluate(() => { const g = window.witch.game; g.witch = { ...g.witch, seated: false }; });
     await sleep(2500);
@@ -332,11 +330,10 @@ async function main() {
     for (let i = 0; i < 2; i++) { await page.keyboard.press("KeyN"); await sleep(600); }
     await page.waitForFunction(k => { const L = window.witch.view.ley; return L.chain[L.current]?.cell.join(",") !== k; }, a.here, { timeout: 120000, polling: 200 }).catch(() => {});
     const b = await drawn();
-    // Two waves wake one or two stones each, so the last reached is now one the chain led to next, or after;
-    // the stones before it stay drawn behind (up to leyLines.behind), the next leyLines.ahead on ahead.
-    check(b.here !== a.here && (b.here === a.next || b.here === a.after) && b.current >= 1 && b.current <= BEHIND && b.links === b.current + AHEAD && b.stones.includes(a.here),
-      `two waves on, the chain has moved on and keeps the way it came (${a.here} → ${a.next} → ${a.after}, now ${b.stones.slice(0, b.current).join(" → ")} → [${b.here}] → ${b.next}: ${b.current} behind, ${b.links - b.current} ahead)`);
-    await page.keyboard.press("KeyQ");
+    // Two waves wake a stone each: the same line, the last reached moved on along it.
+    check(b.here !== a.here && b.current >= 1 && b.stones.join(";") === a.stones.join(";") && (b.here === a.next || b.here === a.after),
+      `two waves on, the same line, moved on along it (${a.here} → ${a.next} → ${a.after}, now at ${b.here}, ${b.current} behind, ${b.links - b.current} ahead)`);
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 300000 });
     await page.keyboard.press(ZOOM_OUT); await page.keyboard.press(ZOOM_OUT);
     await sleep(3000);
@@ -475,7 +472,7 @@ async function main() {
     await page.keyboard.press("Enter");
     let k = 0;
     for (const mode of ["ground", "treetop"]) {
-      if (mode === "treetop") { await page.keyboard.press("KeyQ"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 }); }
+      if (mode === "treetop") { await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 }); }
       for (const z of [ZOOM_OUT, ZOOM_OUT, ZOOM_IN, ZOOM_IN, ZOOM_IN]) {
         await page.keyboard.press(z);
         await page.keyboard.down("ArrowRight");
@@ -491,7 +488,7 @@ async function main() {
   // prefetch ahead of her), and the frames themselves.
   await run("speed", { width: 1280, height: 800 }, async page => {
     await page.keyboard.press("Enter");
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 300000 });
     await page.evaluate(() => {
       window.speedLog = { forest: [], frame: [], last: 0 };
@@ -703,7 +700,7 @@ async function main() {
       await page.evaluate(() => { const v = window.witch.view; v.pops = []; v.trackPops = true; window.maxDropped = 0; setInterval(() => { window.maxDropped = Math.max(window.maxDropped, v.stats.dropped); }, 50); });
       await hold(page, "ArrowRight", 4, 600000);
       await shot(page, `vanish-${w}x${h}-ground.png`);
-      await page.keyboard.press("KeyQ");
+      await page.keyboard.press("Space");
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 300000 });
       await hold(page, "ArrowRight", 5, 600000);
       await hold(page, "ArrowUp", 4, 600000);
@@ -724,7 +721,7 @@ async function main() {
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 120000 });
     await page.keyboard.press("Enter");
     await page.keyboard.down("ArrowRight"); await sleep(2500); await page.keyboard.up("ArrowRight");
-    await page.keyboard.press("KeyQ"); await sleep(800);
+    await page.keyboard.press("Space"); await sleep(800);
     await page.keyboard.down("ArrowUp"); await sleep(3500); await page.keyboard.up("ArrowUp");
     const video = page.video();
     await ctx.close();

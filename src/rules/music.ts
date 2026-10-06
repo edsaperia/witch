@@ -59,3 +59,13 @@ export function mixAt(M: Tuning["music"], level: number, damage: number, distanc
 
 /** How near `distance` metres is, 1 within nearDist to 0 at farDist. */
 export const nearness = (M: Tuning["music"], distance: number) => 1 - Math.min(1, Math.max(0, (distance - M.nearDist) / Math.max(1, M.farDist - M.nearDist)));
+
+/** The mix muffled in a sleeping legend's clearing (Ed, 2026-10-06: "the current music becomes
+ *  very muffled"), by `amount` (0 none to 1 fully in, eased by the platform): its low-pass closed
+ *  down to `circle.muffle` Hz and its volume down to `circle.quiet` of itself. */
+export function muffled(M: Tuning["music"], mix: MusicMix, amount: number): MusicMix {
+  const k = Math.max(0, Math.min(1, amount));
+  if (k <= 0) return mix;
+  const to = Math.min(mix.cutoff, M.circle.muffle);
+  return { ...mix, cutoff: mix.cutoff * Math.pow(to / mix.cutoff, k), volume: mix.volume * (1 - (1 - M.circle.quiet) * k) };
+}
