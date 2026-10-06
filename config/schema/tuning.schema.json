@@ -4270,6 +4270,29 @@
         "spin": {
           "type": "number",
           "minimum": 0
+        },
+        "orbit": {
+          "type": "object",
+          "properties": {
+            "scale": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "min": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "scale",
+            "gap",
+            "min"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -4293,7 +4316,8 @@
         "linger",
         "lingerFade",
         "lingerMax",
-        "spin"
+        "spin",
+        "orbit"
       ],
       "additionalProperties": false
     },
@@ -4424,6 +4448,33 @@
             "maxTension"
           ],
           "additionalProperties": false
+        },
+        "runeRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "runePull": {
+          "type": "object",
+          "properties": {
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stop": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "radius",
+            "speed",
+            "stop"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -4431,7 +4482,9 @@
         "runSpeed",
         "pickRadius",
         "spacing",
-        "weight"
+        "weight",
+        "runeRadius",
+        "runePull"
       ],
       "additionalProperties": false
     },

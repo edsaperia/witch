@@ -565,6 +565,16 @@ shakeEl?.addEventListener("pointerdown", e => {
   showShakeOpt();
 });
 let shaken = false;
+// No start card before her room (Ed, 2026-10-06: "There is something before the bedroom… can we skip it and go straight to
+// the bedroom?"): with the character creator the page opens straight into it, and the card's contents live in its tabs
+// (❔ Controls, also the ? key; 📜 What's new; ⚙ Options: the waves and the screen shake). The card itself shows only for a
+// run without the creator (?creator=0: the tools and smoke runs, "press any key") or a bot game while the forest grows.
+if (params.get("creator") !== "0" && !bot) {
+  const keys = startEl.querySelector<HTMLElement>(".keys"), news = startEl.querySelector<HTMLElement>(".ss-body");
+  if (keys) creator.addTab("controls", "❔ Controls", [keys]);
+  if (news) creator.addTab("news", "📜 What's new", [news]);
+  creator.addTab("options", "⚙ Options", [wavesEl, ...(shakeEl ? [shakeEl] : [])]);
+} else startEl.style.display = "";
 // ?subpixel=0: the camera's old whole-art-pixel steps, to compare (on by default: Ed, 2026-10-05, "it feels low").
 const subpixelOn = params.get("subpixel") !== "0";
 if (params.get("glide") === "camera") view.glide = "camera"; // (?glide=camera: the glide by the camera's snap, as before 2026-10-06)

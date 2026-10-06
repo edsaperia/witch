@@ -429,12 +429,12 @@ function fixedStep(g: Game, controls: Controls): void {
   // The sigil button by a lying relic picks it up; carrying one, by a sleeping legend, puts it down there (rules/legends.ts).
   let sigil = !!c.sigil && !W.ko, place = !!c.place && !W.ko;
   // Her hat first (rules/hat.ts): lying on a sigil or a relic's, the press picks up the hat, and the next the sigil.
-  if ((sigil || place) && g.witch.mode === "ground" && hatButton(W.hat, g.witch.x, g.witch.z, t.leash.pickRadius)) {
+  if ((sigil || place) && g.witch.mode === "ground" && hatButton(W.hat, g.witch.x, g.witch.z, t.leash.runeRadius)) {
     sigil = false; place = false;
     relicEvents.push({ kind: "hatPicked", id: W.id, x: g.witch.x, z: g.witch.z, at: ht }); // (after the leash's step, which starts its events afresh)
   }
   if ((sigil || place) && g.witch.mode === "ground") {
-    const r = relicButton(g.relics, g.leash.relics, g.creatures, legends, g.witch.x, g.witch.z, g.clock.time, t.leash.pickRadius, g.map);
+    const r = relicButton(g.relics, g.leash.relics, g.creatures, legends, g.witch.x, g.witch.z, g.clock.time, t.leash.runeRadius, g.map);
     if (r) {
       sigil = false; place = false;
       if ("picked" in r) relicEvents.push({ kind: "relicPicked", id: r.picked.id, x: r.picked.x, z: r.picked.z, at: ht });
@@ -444,6 +444,9 @@ function fixedStep(g: Game, controls: Controls): void {
   }
   stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time), inviteNearest: c.inviteNearest, talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
   g.leash.events.push(...relicEvents);
+  // A happy creature's rune near her on the ground comes to her (Ed's playtest, 2026-10-06: "Floor sigils of happy creatures ... are
+  // difficult to pick up"): its creature trots over (leash.runePull), so she needn't stop dead on it.
+  if (g.witch.mode === "ground" && !g.witch.seated && !W.ko) pullRune(g, t);
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
   stepInvites(W.invites, W.ko ? {} : c, { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g));
   // Frenzy (Stoat): an animal won over gives back a blink.
@@ -474,6 +477,18 @@ function fixedStep(g: Game, controls: Controls): void {
   stepSpacing(g, dt);
   // Enraged creatures stay out of a sleeping or restless legend's circle (Ed, 2026-10-06).
   if (g.tuning.legendCircle?.slow.on !== false) keepEnragedOut(g);
+}
+
+/** The nearest happy creature with its rune within leash.runePull.radius of her walks toward her, to leash.runePull.stop from her. */
+function pullRune(g: Game, t: Tuning): void {
+  const P = t.leash.runePull, w = g.witch, c = runeNear(g.creatures, w.x, w.z, P.radius, g.clock.time);
+  if (!c || c.fight?.target) return;
+  const dx = w.x - c.x, dz = w.z - c.z, d = Math.hypot(dx, dz);
+  if (d <= P.stop) return;
+  const step = Math.min(d - P.stop, P.speed * STEP * g.timeScale);
+  c.x += (dx / d) * step; c.z += (dz / d) * step; c.tx = c.x; c.tz = c.z;
+  if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
+  c.away = dz < -Math.abs(dx); c.moving = true;
 }
 
 /** Spacing (rules/spacing.ts) for the creatures within movement.json bodies.range of a witch (about the view on the ground): every kind of movement at
