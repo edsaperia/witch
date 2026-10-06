@@ -14,7 +14,7 @@ import { LIGHT_UNIFORMS, MAX_GLADES } from "./lighting";
 import { hsvInto } from "./mood";
 
 /** A clearing: its centre and radius (m) on the ground, and how bright its edge is (0 to 1: the witch inside, a sigil put down). */
-export interface Glade { x: number; z: number; radius: number; edge: number }
+export interface Glade { x: number; z: number; radius: number; edge: number; /** Its legend's spot (near its top). */ lx: number; lz: number }
 
 
 const VERT = /* glsl */ `
@@ -55,13 +55,13 @@ void main() {
  *  where there are any, else one round each sleeping legend, the legend near the top of its circle. */
 export function gladesOf(g: Game, T: GladeTuning, out: Glade[]): number {
   let n = 0;
-  const put = (x: number, z: number, radius: number, edge: number) => { const o = out[n] ?? (out[n] = { x: 0, z: 0, radius: 0, edge: 0 }); o.x = x; o.z = z; o.radius = radius; o.edge = edge; n++; };
+  const put = (x: number, z: number, radius: number, edge: number, lx = x, lz = z) => { const o = out[n] ?? (out[n] = { x: 0, z: 0, radius: 0, edge: 0, lx: 0, lz: 0 }); o.x = x; o.z = z; o.radius = radius; o.edge = edge; o.lx = lx; o.lz = lz; n++; };
   // Art builder 1's clearings (#235: map.legendClearings, each { x, z, r, ... }), where the map has them.
   const mapped = g.map.legendClearings;
-  if (mapped?.length) { for (const c of mapped) put(c.x, c.z, c.r, 0); return n; }
+  if (mapped?.length) { for (const c of mapped) put(c.x, c.z, c.r, 0, c.legend.x, c.legend.z); return n; }
   for (const id of g.legendIds ?? []) {
     const c = g.creatures[id];
-    if (c && !c.gone && dormant(g, c)) put(c.x, c.z + T.radius * T.top, T.radius, 0);
+    if (c && !c.gone && dormant(g, c)) put(c.x, c.z + T.radius * T.top, T.radius, 0, c.x, c.z);
   }
   return n;
 }
@@ -147,7 +147,7 @@ export class Glades {
     // Inside one (Ed, 2026-10-06: "the rest of the forest should get darker. Maybe switch off the witch's glow"): the
     // forest's light and haze dim by `dark` and her glow goes by `glowOff`, both eased in and out over `fade` seconds.
     let inCircle = false;
-    for (let i = 0; i < n; i++) if ((wx - near[i].x) ** 2 + (wz - near[i].z) ** 2 < near[i].radius * near[i].radius) { inCircle = true; U.uSlow.value.set(near[i].x, near[i].z, near[i].radius, U.uSlow.value.w); }
+    for (let i = 0; i < n; i++) if ((wx - near[i].x) ** 2 + (wz - near[i].z) ** 2 < near[i].radius * near[i].radius) { inCircle = true; U.uSlow.value.set(near[i].x, near[i].z, near[i].radius, U.uSlow.value.w); U.uSlowKeep.value.set(near[i].lx, near[i].lz, near[i].radius * 0.9, near[i].radius * 0.35); }
     // Slowed time (render/slowtime.ts): the circle she's in (or was, as it eases back out) greys the world outside it.
     U.uSlow.value.w = slow;
     this.inside = easeInside(this.inside, inCircle, ground, dt, T.fade);

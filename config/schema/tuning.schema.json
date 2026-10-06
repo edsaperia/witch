@@ -271,6 +271,8 @@
         "on",
         "width",
         "shore",
+        "vary",
+        "decor",
         "ease",
         "sand",
         "sea",
@@ -4471,6 +4473,33 @@
           "type": "number",
           "minimum": 0
         },
+        "runeRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "runePull": {
+          "type": "object",
+          "properties": {
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stop": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "radius",
+            "speed",
+            "stop"
+          ],
+          "additionalProperties": false
+        },
         "weight": {
           "type": "object",
           "properties": {
@@ -4535,33 +4564,6 @@
             "maxTension"
           ],
           "additionalProperties": false
-        },
-        "runeRadius": {
-          "type": "number",
-          "minimum": 0
-        },
-        "runePull": {
-          "type": "object",
-          "properties": {
-            "radius": {
-              "type": "number",
-              "minimum": 0
-            },
-            "speed": {
-              "type": "number",
-              "minimum": 0
-            },
-            "stop": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "radius",
-            "speed",
-            "stop"
-          ],
-          "additionalProperties": false
         }
       },
       "required": [
@@ -4569,9 +4571,9 @@
         "runSpeed",
         "pickRadius",
         "spacing",
-        "weight",
         "runeRadius",
-        "runePull"
+        "runePull",
+        "weight"
       ],
       "additionalProperties": false
     },
@@ -7341,6 +7343,29 @@
         "glow": {
           "type": "number",
           "minimum": 0
+        },
+        "seen": {
+          "type": "object",
+          "properties": {
+            "aura": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rim": {
+              "type": "number",
+              "minimum": 0
+            },
+            "floor": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "aura",
+            "rim",
+            "floor"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -7353,7 +7378,8 @@
         "breathe",
         "breathEvery",
         "aura",
-        "glow"
+        "glow",
+        "seen"
       ],
       "additionalProperties": false
     },

@@ -1006,6 +1006,10 @@ length: metres her creatures follow within; runSpeed: how fast one out of range 
 | `leash.runSpeed` | number | 0 to … |
 | `leash.pickRadius` | number | 0 to … |
 | `leash.spacing` | number | 0 to … |
+| `leash.runeRadius` | number | 0 to … |
+| `leash.runePull.radius` | number | 0 to … |
+| `leash.runePull.speed` | number | 0 to … |
+| `leash.runePull.stop` | number | 0 to … |
 | `leash.weight.free` | number | 0 to … |
 | `leash.weight.levels` | array of number |  |
 | `leash.weight.drag` | number | 0 to … |
@@ -1016,10 +1020,6 @@ length: metres her creatures follow within; runSpeed: how fast one out of range 
 | `leash.weight.floor` | number | 0 to 1 |
 | `leash.weight.extreme` | number | 0 to … |
 | `leash.weight.maxTension` | number | 0 to … |
-| `leash.runeRadius` | number | 0 to … |
-| `leash.runePull.radius` | number | 0 to … |
-| `leash.runePull.speed` | number | 0 to … |
-| `leash.runePull.stop` | number | 0 to … |
 
 ## `bond`
 
@@ -1591,6 +1591,9 @@ The party's over (Ed, 2026-10-06: "when the soundsystems and speakers are all de
 | `wildLegends.breathEvery` | number | 0 to … |
 | `wildLegends.aura` | number | 0 to … |
 | `wildLegends.glow` | number | 0 to … |
+| `wildLegends.seen.aura` | number | 0 to … |
+| `wildLegends.seen.rim` | number | 0 to … |
+| `wildLegends.seen.floor` | number | 0 to … |
 | `creatureSimRadius` | number | 0 to … |
 
 ## `simLod`, `creatureSpeed`
