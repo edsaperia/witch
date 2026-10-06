@@ -1,3 +1,4 @@
+import { partySpots } from "./partyGuests";
 import { describe, expect, it } from "vitest";
 import type { Creature, Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
@@ -161,11 +162,12 @@ describe("creature states (#87)", () => {
     expect(hit({ time: 0, leash: () => {} }, e, 5, 0)).toBe(false);
   });
 
-  it("has happy ones dance round their area's new soundsystem", () => {
+  it("has happy ones dance round their area's new soundsystem or at its party places (rules/partyGuests.ts)", () => {
     const g = quiet(), h = place(g, "fox", 2, 0, 0, "happy"), key = cellKey(h.cell), site = g.map.soundsystemSpot(h.cell[0], h.cell[1]);
     g.party.areas.set(key, { cell: h.cell, soundsystem: site, at: g.clock.time } as never);
     run(g, 0.2);
     expect(h.dancing).toBe(true);
-    expect(Math.hypot(h.anchorX - site.x, h.anchorZ - site.z)).toBeLessThan(0.01);
+    const places = [site, ...partySpots(g.map, h.cell, g.tuning)];
+    expect(Math.min(...places.map(p => Math.hypot(h.anchorX - p.x, h.anchorZ - p.z)))).toBeLessThan(0.01);
   }, 60000);
 });
