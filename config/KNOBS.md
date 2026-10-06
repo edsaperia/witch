@@ -542,7 +542,15 @@ Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters 
 | `partyObjects.home.lights` | number | 0 to … |
 | `partyObjects.exclude` | array of string |  |
 | `partyObjects.generated` | boolean |  |
-| `partyWitches.max` | number | 0 to … |
+| `partyWitches.roam` | number | 0 to … |
+| `partyWitches.centreBias` | number | 0 to … |
+| `partyWitches.swoopTime` | number | 0 to … |
+| `partyWitches.swoopHeight` | number | 0 to … |
+| `partyWitches.swoopMin` | number | 0 to … |
+| `partyWitches.swoopMax` | number | 0 to … |
+| `partyWitches.treetopBoost` | number | 0 to … |
+| `partyWitches.simRange` | number | 0 to … |
+| `partyWitches.simRangeTreetop` | number | 0 to … |
 | `partyWitches.idleAfter` | number | 0 to … |
 | `partyWitches.idleReach` | number | 0 to … |
 | `partyWitches.activityMin` | number | 0 to … |
@@ -843,7 +851,7 @@ Paths, roads and railways (Ed): rails [min,max] railway lines edge to edge in wi
 
 ## `invites`, `invite`, `leash`, `bond`
 
-The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when on: on the ground she shoots spinning 💌s, aimed with the cursor (click fires) or the right stick (a trigger fires), or 1 toward the cursor. A burst is burst volleys burstGap seconds apart, each multiShot letters fanned over spread degrees, then cooldown seconds before the next; letters fly at speed m/s for range metres, turning toward the nearest invitable creature within homingRange metres and homingCone degrees of straight ahead at up to homing degrees a second, and land on one whose body comes within radius metres. Each hit adds amount to its affection; hits: letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit. perAnimalHitGap (Ed, 2026-10-05): a creature takes affection from at most one letter every this many seconds; letters landing inside its gap still land (a small pop, used up) but add nothing, so stacked multi-shot buffs help against crowds, not to win one creature faster. Enraged creatures and legends block letters; scenery never stops them (Ed). fireSlow: her ground speed while firing, times this (Ram's Steady buff takes it away). linger (Ed's playtest, 2026-10-06: "invitations should sit on the ground for a little while before they fade away"): a 💌 that met no one rests where it came down this many seconds, fading over the last lingerFade, at most lingerMax at once (drawn only: it's no hit). spin (Ed, 2026-10-06: "the envelopes should spin like a frisbee"): a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat. Data, so legend buffs can change any of it (config/legend-buffs.json). Round 11 (Ed: "base invite should be one envelope at a time (rebalance hits accordingly), they should arc a little and disappear when they hit the ground, go 50% further, 20% faster, and they should rotate by pitching instead of yawing"): one 💌 a shot (burst 1, multiShot 1), cooldown 0.55 (just over the gap, so a held fire never wastes one), hits [4, 9, 18, 36] so a meter fills in about the time it did with bursts of three (they gave one hit each 0.84 s), range 33 (was 22) and speed 31.2 (was 26); arc: the height (m) its lob rises over the straight line from her hand to the ground at its range, where it lands, with a puff (drawn only: the rules fly it flat).
+The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when on: on the ground she shoots spinning 💌s, aimed with the cursor (click fires) or the right stick (a trigger fires), or 1 toward the cursor. A burst is burst volleys burstGap seconds apart, each multiShot letters fanned over spread degrees, then cooldown seconds before the next; letters fly at speed m/s for range metres, turning toward the nearest invitable creature within homingRange metres and homingCone degrees of straight ahead at up to homing degrees a second, and land on one whose body comes within radius metres. Each hit adds amount to its affection; hits: letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit. Every letter that lands on an invitable creature counts (Ed, 2026-10-06: "I think we should remove the 0.5s cooldown between counted hits per creature - better to control this through the witch firing speed instead of having hits not register"): how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed). fireSlow: her ground speed while firing, times this (Ram's Steady buff takes it away). linger (Ed's playtest, 2026-10-06: "invitations should sit on the ground for a little while before they fade away"): a 💌 that met no one rests where it came down this many seconds, fading over the last lingerFade, at most lingerMax at once (drawn only: it's no hit). spin (Ed, 2026-10-06: "the envelopes should spin like a frisbee"): a 💌 in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat. Data, so legend buffs can change any of it (config/legend-buffs.json). Round 11 (Ed: "base invite should be one envelope at a time (rebalance hits accordingly), they should arc a little and disappear when they hit the ground, go 50% further, 20% faster, and they should rotate by pitching instead of yawing"): one 💌 a shot (burst 1, multiShot 1), cooldown 0.55 (just over the old 0.5 s per-creature gap), hits [4, 9, 18, 36] so a meter fills in about the time it did with bursts of three (they gave one hit each 0.84 s), range 33 (was 22) and speed 31.2 (was 26); arc: the height (m) its lob rises over the straight line from her hand to the ground at its range, where it lands, with a puff (drawn only: the rules fly it flat).
 
 | knob | type | range |
 |---|---|---|
@@ -863,7 +871,6 @@ The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when o
 | `invites.amount` | number | 0 to … |
 | `invites.hits` | array of number |  |
 | `invites.drain` | number | 0 to … |
-| `invites.perAnimalHitGap` | number | 0 to … |
 | `invites.fireSlow` | number | 0 to 1 |
 | `invites.linger` | number | 0 to … |
 | `invites.lingerFade` | number | 0 to … |
@@ -1101,7 +1108,7 @@ The witch (Ed, 2026-10-04): she takes hits (one point each, whatever hits her) b
 
 ## `knockout`
 
-Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each creature turning neutral as its sigil goes and walking to the nearest area of its own kind, where it turns wild again; then she sparkles out and in at the treehouse over teleport seconds. Creatures at sigils on the ground stay hers. legendsLoyal: leashed legends stay with her (false: they go back to the wild too: 'they're too old for this').
+Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each creature turning neutral as its sigil goes and walking to the nearest area of its own kind, where it turns wild again; then she sparkles out and in at the treehouse over teleport seconds. Creatures at sigils on the ground stay hers. legendsLoyal: leashed legends stay with her (false: they go back to the wild too: 'they're too old for this'). dropHat (Ed, 2026-10-06: 'when you are killed, you drop your hat, and there's a direction marker for it, so you can go back and find it'): she drops her hat where she went down and wears none till she stands on it and presses the sigil button (E), which puts it straight back on (never into the stack; on top of a sigil, the hat comes first); a 🎩 pointer shows the way meanwhile. Knocked out again with it still down, nothing more drops. A witch with no hat (the character creator's none) has none of this.
 
 | knob | type | range |
 |---|---|---|
@@ -1110,6 +1117,7 @@ Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets g
 | `knockout.emptyBeat` | number | 0 to … |
 | `knockout.teleport` | number | 0 to … |
 | `knockout.legendsLoyal` | boolean |  |
+| `knockout.dropHat` | boolean |  |
 
 ## `dash`, `spells`
 
