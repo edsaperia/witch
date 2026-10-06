@@ -129,7 +129,7 @@ const NEW_HATS = {
     const h = .13 * (L.hatHeight ?? 1), bk = L.hatBrim ?? 1;
     m.ell(brim, [.2 * bk, .014, .17 * bk], M.HAT, { dir, group: 11 });
     for (const s2 of [-1, 1]) m.ell(v3.add(brim, [0, .03, s2 * .16 * bk]), [.13 * bk, .012, .04], M.HAT, { dir: [1, 0, 0], up: [0, 1, -s2 * .9], group: 11 });
-    m.ell(hatAt(brim, up, h * .55), [.095, h * .55, .085], M.HAT, { group: 11, paint: p => v3.dot(v3.sub(p, brim), up) < .03 * (L.hatBand ?? 1) ? M.MAGIC : Math.abs(p[2] - brim[2]) < .012 && v3.dot(v3.sub(p, brim), up) > h * .8 ? M.HAT2 : undefined });
+    m.ell(hatAt(brim, up, h * .55), [.095, h * .55, .085], M.HAT, { group: 11, paint: p => v3.dot(v3.sub(p, brim), up) < .05 * (L.hatBand ?? 1) * Math.max(1, 1 + (bk - 1) * .5) ? M.MAGIC : Math.abs(p[2] - brim[2]) < .012 && v3.dot(v3.sub(p, brim), up) > h * .8 ? M.HAT2 : undefined });
     return hatAt(brim, up, h * 1.1);
   },
   conical(m, L, brim, dir, up) { // the wide straw cone, a glowing bead at its point
@@ -137,7 +137,7 @@ const NEW_HATS = {
     const rib = p => Math.floor((Math.atan2(p[2] - brim[2], p[0] - brim[0]) + 4) * 4) % 2 ? M.HAT2 : undefined; // woven ribs
     m.ell(hatAt(brim, up, h * .25), [.21 * bk, h * .3, .2 * bk], M.HAT, { dir: [1, 0, 0], up, group: 11, paint: rib }); // a wide, shallow cone: a flat disc
     m.seg(hatAt(brim, up, h * .3), hatAt(brim, up, h), .1 * Math.min(1.3, bk), .012, M.HAT, { group: 11, paint: rib }); // rising to its point
-    const br = .016 * Math.sqrt(Math.max(1, L.hatHeight ?? 1, bk)); // (a bigger bead on a bigger hat, so it still shows)
+    const br = .03 * Math.sqrt(Math.max(1, L.hatHeight ?? 1, bk)); // (a bigger bead on a bigger hat, so it still shows; at least a pixel and a half across at her size)
     m.ell(hatAt(brim, up, h + .01), [br, br, br], M.MAGIC, { group: 11 });
     return hatAt(brim, up, h + .01 + br * .95);
   },
@@ -150,14 +150,15 @@ const NEW_HATS = {
   },
   party(m, L, brim, dir, up) { // a striped party cone with a pompom, a glowing band at its rim
     const h = .24 * (L.hatHeight ?? 1), bk = L.hatBrim ?? 1;
-    m.seg(hatAt(brim, up, 0), hatAt(brim, up, h), .075 * Math.min(1.4, bk), .008, M.HAT, { group: 11, paint: p => { const t = v3.dot(v3.sub(p, brim), up); return t < .02 * (L.hatBand ?? 1) ? M.MAGIC : Math.floor(t * 30) % 2 ? M.HAT2 : undefined; } });
+    m.seg(hatAt(brim, up, 0), hatAt(brim, up, h), .075 * Math.min(1.4, bk), .008, M.HAT, { group: 11, paint: p => { const t = v3.dot(v3.sub(p, brim), up); return t < .045 * (L.hatBand ?? 1) ? M.MAGIC : Math.floor(t * 30) % 2 ? M.HAT2 : undefined; } });
     m.ell(hatAt(brim, up, h + .015), [.03, .03, .03], M.POM, { group: 11 });
+    if (h < .1) m.ell(hatAt(brim, up, .012), [.045, .016, .045], M.MAGIC, { group: 11 }); // (a tiny one: its band a ring round the rim, so it still shows)
     return hatAt(brim, up, h + .045);
   },
   musketeer(m, L, brim, dir, up) { // a wide brim pinned up on one side, a round crown, a great curling plume
     const h = .11 * (L.hatHeight ?? 1), bk = L.hatBrim ?? 1;
     m.ell(brim, [.22 * bk, .014, .19 * bk], M.HAT, { dir: v3.add(dir, [0, .25, 0]), group: 11 });
-    m.ell(hatAt(brim, up, h * .5), [.1, h * .55, .095], M.HAT, { group: 11, paint: p => v3.dot(v3.sub(p, brim), up) < .03 * (L.hatBand ?? 1) * Math.max(1, 1 + (bk - 1) * .8) ? M.MAGIC : undefined });
+    m.ell(hatAt(brim, up, h * .5), [.1, h * .55, .095], M.HAT, { group: 11, paint: p => v3.dot(v3.sub(p, brim), up) < .05 * (L.hatBand ?? 1) * Math.max(1, 1 + (bk - 1) * .8) ? M.MAGIC : undefined });
     const p0 = hatAt(brim, up, h * .7, [.03, 0, .06]), pts = [];
     for (let k = 0; k <= 6; k++) { const t = k / 6, a = .6 + t * 2.2; pts.push([...v3.add(p0, [-Math.sin(a) * .2 * t - .02, Math.cos(a) * -.12 * t + .13 * t, .05 * t]), .035 * (1 - t * .6)]); }
     m.chain(pts, M.WEB, { group: 11 });
@@ -184,7 +185,7 @@ const NEW_HATS = {
   },
   mushroom(m, L, brim, dir, up) { // a spotted mushroom cap, its gills glowing underneath
     const h = .09 * (L.hatHeight ?? 1), bk = L.hatBrim ?? 1;
-    m.ell(hatAt(brim, up, h * .45), [.19 * bk, h, .18 * bk], M.HAT, { group: 11, paint: p => v3.dot(v3.sub(p, brim), up) < h * .15 ? M.MAGIC : spotPaint(p) ? M.HAT2 : undefined });
+    m.ell(hatAt(brim, up, h * .45), [.19 * bk, h, .18 * bk], M.HAT, { group: 11, paint: p => v3.dot(v3.sub(p, brim), up) < Math.max(.045, h * .15) ? M.MAGIC : spotPaint(p) ? M.HAT2 : undefined });
     return hatAt(brim, up, h * 1.5);
   },
   traffic(m, L, brim, dir, up) { // a traffic cone, its stripes glowing like reflectors
@@ -250,8 +251,8 @@ function drawWrap(m, L, chest, fwd, spine, flying) {
 // as at her shoulders at the top, flaring out down the train like a cape.
 const cloakWidth = d => .165 + Math.min(.6, d * .3);
 // A cloak past the old lengths (Ed, 2026-10-06: "allow a longer cloak"): a train of cloth from her shoulders, streaming out behind
-// her in flight and rippling with the frame, or hanging down her back to the ground and lying along it behind her. Past the first
-// stretch it's `extra`: her size and her lift off the ground don't count it.
+// her in flight and rippling with the frame, or hanging down her back to the ground and lying along it behind her. Past its top
+// it's `extra`: her size, her lift off the ground and her pixel grid don't count it.
 function longCloak(m, L, sh, dir, back, len, flying, patch) {
   const f = L.frame ?? 0, n = Math.ceil(len / .09), step = len / n, pts = [sh];
   let p = sh;
@@ -263,7 +264,7 @@ function longCloak(m, L, sh, dir, back, len, flying, patch) {
   }
   for (let i = 0; i < n; i++) {
     const a = pts[i], b = pts[i + 1], d = v3.norm(v3.sub(b, a)), t = (i + .5) / n, onGround = !flying && a[1] <= .031 && b[1] <= .031;
-    m.ell(v3.lerp(a, b, .5), [step * .75, .028, cloakWidth((i + .5) * step)], M.CLOTH, { dir: d, up: flying || onGround ? [0, 1, 0] : back, group: 14, extra: i * step > .7, ...(patch ? { paint: patch } : {}) });
+    m.ell(v3.lerp(a, b, .5), [step * .75, .028, cloakWidth((i + .5) * step)], M.CLOTH, { dir: d, up: flying || onGround ? [0, 1, 0] : back, group: 14, extra: i > 0, ...(patch ? { paint: patch } : {}) });
   }
   m.ell(pts[n], [.05, .025, cloakWidth(len) + .03], M.CLOTH, { dir: v3.norm(v3.sub(pts[n], pts[n - 1])), up: flying || pts[n][1] <= .031 ? [0, 1, 0] : back, group: 14, extra: true });
 }
@@ -782,7 +783,8 @@ export const WITCH_HEADINGS = { away: -Math.PI / 2, towards: Math.PI / 2 };
 // every sprite; on foot also pair (where a partner meets her, WITCH_PAIRS), back (the conga) and cup (drinking).
 export function witchSprite(st = {}, { frame = 0, lean = false, facing = "towards", pose, heading = "side", look } = {}) {
   const h = witchHeight(st), yaw = WITCH_HEADINGS[heading];
-  const model = witchModel({ frame, lean, pose, look }), { sp, project, s } = yaw !== undefined ? render(model, { scale: witchScale(h), yaw }) : pose ? render(model, { scale: witchScale(h), facing }) : look && look !== DEFAULT_LOOK ? render(model, { scale: ownScale(h, frame, lean, facing), facing }) : render(model, { height: h, facing }); // (another look at the scale she has in that pose, so a tall hat doesn't shrink her)
+  const model = witchModel({ frame, lean, pose, look }); model.phaseOnBody = true; // (her train and streaks never move her pixels)
+  const { sp, project, s } = yaw !== undefined ? render(model, { scale: witchScale(h), yaw }) : pose ? render(model, { scale: witchScale(h), facing }) : look && look !== DEFAULT_LOOK ? render(model, { scale: ownScale(h, frame, lean, facing), facing }) : render(model, { height: h, facing }); // (another look at the scale she has in that pose, so a tall hat doesn't shrink her)
   sp.scale = s; // pixels per model unit
   if (model.anchors.hand) sp.anchors = Object.fromEntries(Object.entries(model.anchors).filter(([k]) => k !== "feet").map(([k, p]) => [k, project(p)]));
   cleanFlecks(sp); // (Ed: "The witch has these little flecks … we should remove them")
