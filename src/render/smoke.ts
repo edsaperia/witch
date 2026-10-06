@@ -9,7 +9,7 @@
 // moves its puffs. Fires past `smoke.range` aren't drawn; those near its edge fade, so none pops. Knobs: the tuning's `smoke`.
 import * as THREE from "three";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
-import { LIGHT_UNIFORMS } from "./lighting";
+import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { SPRITE_UNIFORMS } from "./sprites";
 
 export interface SmokeTuning { on: boolean; rate: number; life: number; rise: number; speed: number; size: number; grow: number; drift: number; opacity: number; warm: number; pixel: boolean; perFire: number; maxFires: number; range: number }
@@ -23,6 +23,7 @@ attribute vec4 iFire; // the fire: x, ground y, z, strength (its size and the ra
 attribute float iK;   // which of its fire's puffs this is
 varying vec2 vUv;
 varying float vT, vA, vSeed;
+varying vec3 vP;
 float h1(float n) { return fract(sin(n) * 43758.5453); }
 ${HEIGHT_VERT_GLSL}
 void main() {
@@ -41,15 +42,18 @@ void main() {
   // in quickly, full a while, then thinning out to nothing; fainter as it rises
   vA = f > 0.0 ? smoothstep(0.0, 0.06, t) * (1.0 - smoothstep(0.45, 1.0, t)) * (1.0 - 0.35 * t) * min(1.0, f) : 0.0;
   vec3 w = c + uRight * (position.x * size) + uUp * (position.y * size);
+  vP = w;
   gl_Position = f > 0.0 ? clipOf(w) : vec4(2.0, 2.0, 2.0, 1.0);
 }`;
 
 const FRAG = /* glsl */ `
-uniform vec3 uMoon, uMoonDir, uFireCol;
+${LIGHT_GLSL}
+uniform vec3 uFireCol;
 uniform vec2 uSmoke3; // opacity, warmth (how much firelight the low puffs catch)
 uniform float uPixel; // stepped tones and a dithered edge (1) or smooth (0)
 varying vec2 vUv;
 varying float vT, vA, vSeed;
+varying vec3 vP;
 float ch(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
 float cn(vec2 p) { vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f); return mix(mix(ch(i), ch(i + vec2(1, 0)), u.x), mix(ch(i + vec2(0, 1)), ch(i + vec2(1, 1)), u.x), u.y); }
 void main() {
@@ -64,7 +68,12 @@ void main() {
   vec3 c = vec3(0.43, 0.44, 0.47) + uMoon * (0.4 + 0.5 * smoothstep(0.5, 0.95, side) * smoothstep(0.3, 0.9, vUv.y));
   // the lowest puffs catch the fire's amber underneath, cooling to grey by the treetops
   float warm = uSmoke3.y * (1.0 - smoothstep(0.02, 0.3, vT)) * smoothstep(0.2, 0.75, 1.0 - vUv.y);
-  c = mix(c, uFireCol * 0.75, clamp(warm, 0.0, 0.85));
+  c = mix(c, uFireCol * 0.6, clamp(warm, 0.0, 0.85));
+  // the party's lights and her glow on it (the shared night light: the rendering builder, #236), then the night haze with distance
+  c += nightLight(vec3(0.0, 1.0, 0.0), vP) * 0.25;
+  c = haze(c, vP);
+  float lum = dot(c, vec3(0.299, 0.587, 0.114));
+  if (lum > 0.48) c *= 0.48 / lum; // under the bloom's threshold: lit, never glowing
   a *= uSmoke3.x * (0.7 + 0.3 * n);
   if (uPixel > 0.5) { // drawn, not airbrushed: three stepped tones with an ordered dither at the edge, at the art pixel
     vec2 p = mod(floor(gl_FragCoord.xy), 4.0);
@@ -102,7 +111,7 @@ export class Smoke {
     const life = Math.max(1, T.life), power = Math.max(1, T.speed * life / Math.max(1, T.rise)); // its rise slows: starting at `speed`, reaching `rise` at the end of its life
     const wind = Math.hypot(1, 0.35);
     this.u = {
-      ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uMoon: LIGHT_UNIFORMS.uMoon, uMoonDir: LIGHT_UNIFORMS.uMoonDir,
+      ...HEIGHT_UNIFORMS, ...LIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp,
       uSmoke: { value: new THREE.Vector4(0, life, T.rise, power) },
       uSmoke2: { value: new THREE.Vector4(T.size, T.grow, T.drift / wind, -T.drift * 0.35 / wind) },
       uSmoke3: { value: new THREE.Vector2(T.opacity, T.warm) },
