@@ -88,12 +88,12 @@ export function drawCreatures(v: View, time = 0): void {
     // (Walking home to lie down, Ed 2026-10-06: awake till it gets there, then it settles: c.homing.)
     const sleeping = (st === "asleep" || st === "restless") && !c.homing;
     // Any other creature asleep (c.asleep: the party's over, Ed 2026-10-06): it lies down where it is, the same settling as a legend's,
-    // then its own sleeping form (art/naps.js), curled, tucked, coiled or flat; cleared, it gets up again. (Tracked only once it's slept.)
+    // then its own sleeping form (art/naps.js), curled, tucked, coiled or flat; cleared, it gets up again. (Tracked only once it's slept; first seen asleep, it's already lying down.)
     const napping = !st && !!c.asleep;
     let lying = 0, droop = 0;
     if (st || napping || v.legendSleeps.has(c.id)) {
       let tr = v.legendSleeps.get(c.id);
-      if (!tr) v.legendSleeps.set(c.id, (tr = newSleepTrack(st ? sleeping : false)));
+      if (!tr) v.legendSleeps.set(c.id, (tr = newSleepTrack(st ? sleeping : napping)));
       legendSleep(tr, st ? sleeping : napping, st === "angry", time, g.tuning.rig ?? {}, SLEEP); lying = SLEEP.sleep; droop = SLEEP.droop;
       if (!st && !napping && lying <= 0 && droop <= 0) v.legendSleeps.delete(c.id); // (up again: forgotten)
     }

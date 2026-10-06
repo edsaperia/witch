@@ -28,6 +28,12 @@ import { dances } from "../../render/looks";
 import { beatAt } from "../../rules/beat";
 import { cellKey } from "../../rules/party";
 import { dressingOf, partyDef, type Dressing } from "../../rules/partyDressing";
+import { partyOverEase } from "../../rules/music";
+
+/** ?partyover=<s>: the party over from that game time (debug; as the look's, render/view.ts). */
+export const OVER_DEBUG: number | null = (() => { const v = new URLSearchParams(globalThis.location?.search ?? "").get("partyover"); return v === null ? null : Number(v) || 0; })();
+import { nightKind } from "./night";
+import { AREA_TYPES } from "../../rules/map";
 
 /** The combat events that are a creature attacking (its id the attacker): each a burst of its speech. */
 const ATTACKS = new Set<CombatEventKind>(["windup", "shot", "beam", "pulse", "quake", "phase", "nova", "rush", "charged", "leapt", "slammed", "sprung", "flash"]);
@@ -89,6 +95,7 @@ export class SfxCues {
     this.pond(h);
     this.picnic(h);
     this.sea(h);
+    this.night(h);
     this.primed = true;
   }
 
@@ -325,6 +332,26 @@ export class SfxCues {
     let best = Infinity, bx = 0;
     for (const l of g.forest.lightsNear(w.x, w.z, P.range)) if (l.kind === "pond") { const d = Math.hypot(l.x - w.x, l.z - w.z); if (d < best) { best = d; bx = l.x; } }
     this.sfx.pond(Number.isFinite(best) ? Math.max(0, 1 - best / P.range) : 0, pan(bx));
+  }
+
+  /** The afterparty (Ed, 2026-10-06): once the party's over, the night of the area she's in (rules/music.ts partyOverEase,
+   *  coming in from sfx.night.from of it) and the sleeping animals snoring near her, the nearest few. */
+  private night({ g, pan }: Here): void {
+    const N = g.tuning.sfx.night, ease = partyOverEase(g, OVER_DEBUG);
+    if (!N) return;
+    const level = ease <= N.from ? 0 : Math.min(1, (ease - N.from) / Math.max(0.01, 1 - N.from));
+    const w = g.witch, a = g.map.areaAt(w.x, w.z), home = a.cell[0] === g.map.centreCell[0] && a.cell[1] === g.map.centreCell[1], T = AREA_TYPES[a.type];
+    this.sfx.night(level > 0 ? nightKind(home ? "home" : T.id, !!T.wet) : null, level);
+    if (level <= 0.05) return;
+    const R = N.snore.range, near: Creature[] = [];
+    for (const c of g.creatures) {
+      // (the sleepers the look draws 😴 over, render/leash.ts drawSnores: not hers, not a legend (it moans in its sleep: whale.ts), not one the rules keep awake)
+      if (c.gone || c.leashed || c.level === 3 || c.boss || (c as { asleep?: boolean }).asleep === false) continue;
+      if (Math.abs(c.x - w.x) < R && Math.abs(c.z - w.z) < R) near.push(c);
+    }
+    near.sort((p, q) => (p.x - w.x) ** 2 + (p.z - w.z) ** 2 - ((q.x - w.x) ** 2 + (q.z - w.z) ** 2));
+    const few = near.slice(0, N.snore.max), c = few[Math.floor(Math.random() * few.length)];
+    if (c) this.sfx.snore(Math.min(1, c.level / 3), pan(c.x), level * Math.max(0, 1 - Math.hypot(c.x - w.x, c.z - w.z) / R));
   }
 
   /** By the sea on the beach round the circular map: its waves, by how near the water (nothing at all further off). */

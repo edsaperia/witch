@@ -14,6 +14,7 @@
 //  - power.ts: a runestone crackling into life as a speaker or soundsystem.
 import { Charge, Meadow, impact, knock, roar, taps } from "./ambience";
 import { Picnic, Pond, Room, Sea } from "./places";
+import { Night, type NightKind } from "./night";
 import { powerUp } from "./power";
 import { Spell } from "./spell";
 import { Babble } from "./babble";
@@ -113,4 +114,11 @@ export class Sfx {
   sea(level: number, pan = 0): void { if (level > 0.001 || this.seaBed) (this.seaBed ??= new Sea(this.k)).update(level, pan); }
   /** Whether the sea's sounds are built (none in an ordinary run). */
   get seaBuilt(): boolean { return !!this.seaBed?.built; }
+  /** The party's over: the area's night (`kind`, at `level` 0-1), made the first time it's heard (most runs, never). */
+  night(kind: NightKind | null, level: number): void { if (level > 0.001 || this.nightBed) (this.nightBed ??= new Night(this.k)).update(kind, level); }
+  /** A sleeping animal's snore (`size` 0 a baby to 1 a legend). */
+  snore(size: number, pan = 0, near = 1): void { (this.nightBed ??= new Night(this.k)).snore(size, pan, near); }
+  /** Whether the night's sounds are built. */
+  get nightBuilt(): boolean { return !!this.nightBed?.built; }
+  private nightBed: Night | null = null;
 }
