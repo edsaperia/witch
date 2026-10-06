@@ -155,7 +155,15 @@ export class StoneIndicator {
   private lastFill = 0;
   private flashAt = -Infinity;
   /** `scale`, `opacity`: its size and strength (only the next stone has one: Ed, 2026-10-05). */
-  constructor(parent: HTMLElement, scale = SCALE, opacity = 1) { this.cue = new PixelCue(parent, scale, opacity); }
+  constructor(parent: HTMLElement, scale = SCALE, private opacity = 1) { this.cue = new PixelCue(parent, scale, opacity); }
+  private shown = -1;
+  /** How much it shows, 0 to 1, times its own strength (the wave pointer fading in as the boot ends). */
+  fade(a: number): void {
+    if (Math.abs(a - this.shown) < 0.01) return;
+    this.shown = a;
+    const o = `${(a * this.opacity).toFixed(2)}`;
+    this.cue.canvas.style.opacity = o; this.cue.label.style.opacity = o;
+  }
 
   /** Point at the next waking stone at (x, z), its area's creature `species` and neon (rgb 0-1);
    *  `fill`: how far the countdown to the next wave has run (0 just after one, 1 as it comes). null hides it. */
