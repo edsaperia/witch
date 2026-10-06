@@ -9,6 +9,8 @@ import { stringsFor, type StringLine } from "../rules/strings";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { SPRITE_UNIFORMS } from "./sprites";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
+import { areaNeons } from "../rules/partyDressing";
+import { NEON } from "../../art/sigils.js";
 
 const BULB_VERT = /* glsl */ `
 attribute vec3 aColour;
@@ -119,7 +121,7 @@ export class StringLightsView {
 
   /** The lines of one area, and when each bulb switches on (as the party's front passes it). */
   private build(lines: StringLine[], on: (x: number, z: number) => number, centre: { x: number; z: number }, seed: number, cell: readonly [number, number]): THREE.Group {
-    const L = this.game.tuning.stringLights, h = L.height, bulbs: number[] = [], cols: number[] = [], data: number[] = [], wire: number[] = [], sway: number[] = [];
+    const L = this.game.tuning.stringLights, h = L.height, own = L.areaNeon ? new THREE.Color(`rgb(${(NEON as Record<string, number[]>)[areaNeons(this.game.map, cell as [number, number])[0]].join(",")})`) : null, bulbs: number[] = [], cols: number[] = [], data: number[] = [], wire: number[] = [], sway: number[] = [];
     lines.forEach((l, li) => {
       const len = Math.hypot(l.bx - l.ax, l.bz - l.az), n = Math.max(2, Math.round(len / L.bulbSpacing));
       const at = (t: number): [number, number, number] => [l.ax + (l.bx - l.ax) * t, h - L.sag * 4 * t * (1 - t) * (len / 8), l.az + (l.bz - l.az) * t];
@@ -128,7 +130,7 @@ export class StringLightsView {
         if (i < 16) { wire.push(...p0, ...p1); sway.push(li + i / 16, li + (i + 1) / 16); }
       }
       for (let i = 1; i < n; i++) {
-        const t = i / n, p = at(t), c = this.palette[(l.seed + i) % this.palette.length];
+        const t = i / n, p = at(t), c = own ? ((l.seed + i) % 3 === 2 ? own : this.palette[0]) : this.palette[(l.seed + i) % this.palette.length];
         bulbs.push(...p); cols.push(c.r, c.g, c.b);
         data.push(((l.seed * 13 + i * 7) % 100) / 100, li * 40 + i, on(p[0], p[2]) + i * 0.03, 4 * t * (1 - t));
       }

@@ -3,6 +3,28 @@ import raw from "../../config/tuning.json";
 
 export interface CameraModeTuning { angleIn: number; angleOut: number; distanceIn: number; distanceOut: number }
 
+/** The lighting's spooky grade (render/mood.ts), drawing only. */
+export interface Mood {
+  /** The ambient (shadow) light's hue (0 to 1) and its brightness, times the tuning's. */
+  ambientHue: number; ambient: number;
+  /** The moonlight's hue, saturation and brightness (times the tuning's). */
+  moonHue: number; moonSat: number; moon: number;
+  /** The fog's colour (hue, saturation, brightness 0 to 1) and where it starts and is whole (m from the witch). */
+  hazeHue: number; hazeSat: number; haze: number; hazeNear: number; hazeFar: number;
+  /** The low ground mist's strength. */
+  mist: number;
+  /** The witch's glow's hue and saturation. */
+  glowHue: number; glowSat: number;
+  /** The grade over the finished picture (post.ts): its amount (0 off), the share of colour drained from the dark and middle tones, the brightness above which nothing is graded, and the tint's hue and saturation. */
+  grade: number; gradeDesat: number; gradePivot: number; gradeHue: number; gradeSat: number;
+  /** The party as the warm light in the wood: the soundsystems' light colours (rgb 0 to 1, one per variant, instead of their crystal colours), their reach and strength (times the tuning's); the party decor's lights, how many an area (instead of partyObjects.lightsPerArea), and their reach and strength (times their own). */
+  partyWarm: number[][]; partyReach: number; partyStrength: number; decorLights: number; decorReach: number; decorStrength: number;
+  /** Each area type's own fog, grade tint and mist (by area id; "home" for home), over the above; eased across at areaEase a second. */
+  /** The characters' moonlight rim (the witch, creatures): its hue, saturation and strength (0 off); and how much of her own glow lights the witch (0: none). */
+  rimHue?: number; rimSat?: number; rim?: number; witchGlow?: number;
+  areas?: Record<string, Partial<{ hazeHue: number; hazeSat: number; haze: number; gradeHue: number; gradeSat: number; mist: number }>>; areaEase?: number;
+}
+
 export interface Tuning {
   mapAreas: number;
   areaSize: number;
@@ -47,7 +69,7 @@ export interface Tuning {
   /** Creatures noticing the witch on the ground (Ed's playtest): within radius metres resting ones look at her; curious babies come to about curious metres, skittish ones keep skittish off. */
   notice: { radius: number; curious: number; skittish: number };
   /** The witch's health (Ed, 2026-10-04): hits she takes before she's knocked out; one comes back every repairTime seconds out of the fight. */
-  witchHealth: { hits: number; repairTime: number };
+  witchHealth: { hits: number; repairTime: number; /** seconds after a hit in which no other blow lands (0: none) */ grace: number };
   /** Knocked out (Ed, 2026-10-04): her stack lets go one sigil every releaseEach seconds (releaseMax caps the whole release, 0 no cap), then she sparkles out and back in at the treehouse over teleport seconds; legendsLoyal keeps leashed legends with her. */
   knockout: { releaseEach: number; releaseMax: number; emptyBeat: number; teleport: number; legendsLoyal: boolean };
   /** The dash, a blink (Ed, 2026-10-05): on the ground, gone and distance metres on at once, not
@@ -142,7 +164,7 @@ export interface Tuning {
   haze: { near: number; far: number };
   /** The scenery budget: scenery is drawn out to an adaptive radius round the witch (view.ts). */
   scenery: { adaptive: boolean; fps: number; hysteresis: number; sustain: number; minRadius: number; shrink: number; grow: number; fade: number };
-  stringLights: { on: boolean; runsPerArea: number[]; spansPerRun: number[]; coneAngle: number; junctionChance: number; spanMin: number; spanMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; twinkle: number; chaseSpeed: number };
+  stringLights: { on: boolean; runsPerArea: number[]; spansPerRun: number[]; coneAngle: number; junctionChance: number; spanMin: number; spanMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; areaNeon: boolean; twinkle: number; chaseSpeed: number };
   party: {
     motes: { perPatch: number; from: number; to: number; speed: number };
     uplight: { strength: number; pulse: number; edge: number }; interval: number; /** seconds a destroyed soundsystem takes off the next wave's countdown (Ed, 2026-10-05) */ lossPenalty: number; startDelay: number; maxPerWave: number; /** areas each wave wakes: one per witch present (1 until multiplayer) */ areasPerWave: number; picker: string; noisy: { wobble: number; lobeSize: number; candidates: number; spreadFromLast: boolean }; transition: number; lightReach: number; lightStrength: number };
@@ -170,7 +192,7 @@ export interface Tuning {
   /** How mist, far haze and canopy dapple are drawn: smooth gradients, or dithered pixel steps. */
   fx: "smooth" | "pixel";
   moonbeams: number;
-  partyObjects: { on: boolean; clusters: number[]; loose: number[]; setChance: number; caughtChance: number; hanging: number[]; lightsPerArea: number; lanternReach: number; arch: string; /** Home's meadow, strewn all over (rules/partyDressing.ts homeDressing). */ home: { clusters: number[]; loose: number[]; weights: Record<string, number>; gap: number; reach: number; lights: number }; exclude: string[] };
+  partyObjects: { on: boolean; clusters: number[]; loose: number[]; setChance: number; caughtChance: number; hanging: number[]; lightsPerArea: number; lanternReach: number; arch: string; /** Home's meadow, strewn all over (rules/partyDressing.ts homeDressing). */ home: { clusters: number[]; loose: number[]; weights: Record<string, number>; gap: number; reach: number; lights: number }; exclude: string[]; /** The prop generator's party pieces (art/party.js gen-*) in place of the hand-made ones they replace (?props=gen). */ generated: boolean };
   partyWitches: { max: number; idleAfter: number; idleReach: number; activityMin: number; activityMax: number; weights: Record<string, number>; arriveTime: number; flyFrom: number; flyHeight: number; runSpeed: number; walkSpeed: number; lapSpeed: number; pairRange: number; pairGap: number; limboPass: number; floorShare: number; debugExtra: number };
   speakerLasers: { on: boolean; tilt: number; sweep: number; sweepBeats: number; length: number; opacity: number };
   find: { on: boolean; eyeshine: { range: number; strength: number; blink: number }; lightFloor: number; rim: number; ambient: number; moonHue: number; moonSat: number };
@@ -193,9 +215,11 @@ export interface Tuning {
   home: { margin: number; gap: number };
   treehouse: { /** metres from the speaker ring's outer edge to its footprint's nearest edge */ gap: number; angle: number; clear: number; lightReach: number; lightStrength: number };
   decor: { spacing: number; ruins: number; rocks: number; freak: number; minGap: number; clearing: number; pathGap: number; /** A decoration's footprint radius (metres): kept clear of the gameplay (map.reserved). */ footprint: number };
-  paths: { rails: number[]; roads: number[]; linkChance: number; deadEndChance: number; pathHalf: number; roadHalf: number; railHalf: number; railBroken: number; streams: number[]; streamHalf: number; landmarkSpacing: number; landmarkChance: number; vergeSpacing: number; pieceGap: number; treesOnBroken: number; edgeBushes: number; bushBoost: number };
+  paths: { rails: number[]; roads: number[]; linkChance: number; deadEndChance: number; pathHalf: number; roadHalf: number; railHalf: number; railBroken: number; streams: number[]; streamHalf: number; landmarkSpacing: number; landmarkChance: number; vergeSpacing: number; pieceGap: number; fingerposts: boolean; treesOnBroken: number; edgeBushes: number; bushBoost: number };
   lights: { campfire: { reach: number; strength: number }; stone: { reach: number; strength: number } };
   glowPower: number;
+  /** The lighting's mood (render/mood.ts): spooky (the grade below) or plain (the light as it was). */
+  light?: { mood: "spooky" | "plain"; spooky: Mood };
   /** The beat clock (rules/beat.ts): the base tempo; each wave's tempo (from the music style's arc),
    *  eased over rampBars from the block line (blockBars) its music lands on. */
   beat: { bpm: number; tempos?: number[]; rampBars?: number; blockBars?: number };
@@ -226,6 +250,8 @@ export interface Tuning {
   dreams: { range: number; nightmare: { at: number[]; faces: string[] } };
   wildLegends: { wake: number; sink: number; moss: number; guard: number; heal: number; scale: number; breathe: number; breathEvery: number; aura: number; glow: number };
   creatureSimRadius: number;
+  /** The simulation's level of detail (rules/simLod.ts): creatures in full near her and the action, coarse beyond, frozen past creatureSimRadius. */
+  simLod: import("./simLod").SimLod;
   creatureSpeed: number;
   setPieceChance: number;
   legendSpeed: number;

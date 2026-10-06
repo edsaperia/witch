@@ -2,6 +2,9 @@
 // shadow every frame, and the berries growing back and nibbled.
 import type { CreatureArt } from "../assets";
 import { ENRAGED_TINT, dances, expression, lookOf } from "../looks";
+
+/** The party's dances (dealt by id): a bounce, a sway, a hop every other beat, a quick bob. */
+const DANCE_STYLES = ["bounce", "sway", "hop", "bob"] as const;
 import type { RigGear } from "../rig/rigBuild";
 import type { ShadowInstance } from "../shadows";
 import { SpriteBatch, type SpriteInstance } from "../sprites";
@@ -35,9 +38,10 @@ export function drawBerries(v: View, time: number): void {
     }
   }
   for (const [id, at] of v.evolvedAt) if (time - at > 1.2) v.evolvedAt.delete(id);
+  const V = v.lastView, VH = V ? V.half + 4 : Infinity; // (the scenery's square first: much cheaper than inView)
   for (const b of B.berries) {
     const p = B.bushes[b.bush];
-    if (Math.abs(p.x - w.x) > R || Math.abs(p.z - w.z) > R || !inView(v, p.x, p.z, 0.5, 1.2, 2)) continue;
+    if (Math.abs(p.x - w.x) > R || Math.abs(p.z - w.z) > R || (V && (Math.abs(p.x - V.x) > VH || Math.abs(p.z - V.z) > VH)) || !inView(v, p.x, p.z, 0.5, 1.2, 2)) continue;
     const at = v.regrewAt.get(b.id), grow = at === undefined ? 1 : Math.min(1, (time - at) / 0.5);
     if (grow <= 0.05) continue;
     items.push({ x: p.x, y: 0.75, z: p.z + 0.25, frame: f, flip: false, scale: grow });
@@ -81,7 +85,17 @@ export function drawCreatures(v: View, time = 0): void {
     // Party animals never stand still: a bounce and a sway on the beat when idle, a little
     // bounce as they go. (Wild ones roam, graze and pause.)
     const ph = (bt / beat + (c.id % 4) * 0.25) * Math.PI;
-    const party2 = dances(g, c), dance = party2 ? Math.abs(Math.sin(ph)) * (c.moving ? 0.15 : 0.4) : 0, sway = party2 && !c.moving ? Math.sin(ph * 0.5) * 0.12 : 0;
+    const party2 = dances(g, c), idle = party2 && !c.moving;
+    // Each guest its own dance, all up-and-down or side to side, never toward anyone, so a dance never
+    // reads as an attack: a bounce, a sway, a hop every other beat, a quick bob; and a foot tapping on the beat (the rig's).
+    let dance = party2 ? Math.abs(Math.sin(ph)) * (c.moving ? 0.15 : 0.4) : 0, sway = idle ? Math.sin(ph * 0.5) * 0.12 : 0, tap = 0;
+    if (idle) {
+      const style = DANCE_STYLES[c.id % DANCE_STYLES.length], b = bt / beat + (c.id % 4) * 0.25, k = b - Math.floor(b);
+      if (style === "sway") { dance = Math.abs(Math.sin(ph)) * 0.12; sway = Math.sin(ph * 0.5) * 0.22; }
+      else if (style === "hop") { dance = Math.floor(b) % 2 === 0 ? Math.sin(k * Math.PI) * 0.55 : 0; sway = 0; }
+      else if (style === "bob") { dance = Math.abs(Math.sin(ph * 2)) * 0.12; sway = Math.sin(ph * 0.25) * 0.06; }
+      if (style !== "hop") tap = (Math.floor(b) % 2 ? 1 : -1) * (k < 0.4 ? Math.sin((k / 0.4) * Math.PI) : 0); // left foot, right foot
+    }
     // Evolving: glowing white, pulsing on the beat, brighter toward the bar line; then the flash
     // as it becomes its next level, and a pop from 1.3 times its size back to its own.
     const ev = g.berries.evolving.get(c.id), done = v.evolvedAt.get(c.id);
@@ -99,12 +113,15 @@ export function drawCreatures(v: View, time = 0): void {
     // Hit: a white flash and a little pop (combat: medium hit feel).
     if (c.hurtAt !== undefined && time - c.hurtAt < 0.25) { const k = (time - c.hurtAt) / 0.25; glow = Math.max(glow, 1 - k); scale *= 1 + 0.15 * (1 - k); }
     // Leaping (Stage 5: the toad): up in an arc over its shadow.
-    const hop = c.leap ? Math.sin(Math.min(1, Math.max(0, (time - c.leap.at) / Math.max(0.01, c.leap.lands - c.leap.at))) * Math.PI) * c.leap.height : 0;
+    let hop = c.leap ? Math.sin(Math.min(1, Math.max(0, (time - c.leap.at) / Math.max(0.01, c.leap.lands - c.leap.at))) * Math.PI) * c.leap.height : 0;
+    // Just joined the party: two little hops of joy, the second smaller (straight up, nothing like a pounce).
+    const joined = v.leashView.joined.get(c.id);
+    if (joined !== undefined && time - joined < 0.7) { const k = (time - joined) / 0.7; hop += Math.abs(Math.sin(k * Math.PI * 2)) * 0.45 * (1 - k * 0.6); }
     const sink = sleeping ? W.sink : W.sink * (1 - rising), sunk = -sink * (frame.h - (frame.pad ?? 0)) * v.mpp * scale;
     if (sleeping) glow = -2 - W.moss; else if (rising < 1) glow = -2 - W.moss * (1 - rising);
     // Restless in its sleep (#87): it tosses in bursts, and turns over when it's bad.
     const toss = st === "asleep" ? restlessness(c) : 0, fit = toss ? toss * Math.max(0, Math.sin(time * 1.3 + c.id)) ** 2 : 0;
-    if (!(v.rig && !sleeping && rising >= 1 && v.rig.add(c, { y: dance + hop + sunk, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined }))) // the rig draws it, if it can
+    if (!(v.rig && !sleeping && rising >= 1 && v.rig.add(c, { y: dance + hop + sunk, tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined }))) // the rig draws it, if it can
       l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id), y: dance + hop + sunk, z: c.z, frame, flip: (c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1), fresh, glow, scale });
     v.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * v.mpp * scale + dance + hop + sunk); // its health bar goes over it
     creatureShadows.push({ x: c.x, z: c.z, w: frame.w * v.mpp * 0.7, d: frame.w * v.mpp * 0.25 });
@@ -113,7 +130,7 @@ export function drawCreatures(v: View, time = 0): void {
   v.rig?.end();
   for (const [s, b] of v.creatureBatches) if (!per.has(s)) b.set([]);
   for (const [s, list] of per) {
-    const b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, find: !s.startsWith("party-") && !s.startsWith("happy-") && !s.startsWith("woken-") && !s.startsWith("sleep-"), tint: s.startsWith("woken-") ? ENRAGED_TINT : undefined }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
+    const b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, rim: true, find: !s.startsWith("party-") && !s.startsWith("happy-") && !s.startsWith("woken-") && !s.startsWith("sleep-"), tint: s.startsWith("woken-") ? ENRAGED_TINT : undefined }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
     b?.set(list);
   }
   v.stats.creatures = n;

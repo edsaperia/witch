@@ -103,6 +103,8 @@ export const SIGILS = {
   marten: [stave(.32), L([.3, .2], [.5, .32], [.7, .2]), ...pair(A(.3, .14, .07, 90, -180)), A(.28, .56, .22, 0, 150), D(.28 + .22 * Math.cos(150 * Math.PI / 180), .56 + .22 * Math.sin(150 * Math.PI / 180)), FOOT],
   // a flame at the head, legs as bent ticks along the spine, spots
   salamander: [stave(.3), bow([.5, .3], [.5, .06], .35), bow([.5, .3], [.5, .06], -.35), ...pair(L([.5, .42], [.32, .38], [.26, .48]), L([.5, .64], [.32, .6], [.26, .7])), FOOT, ...pair(D(.38, .52))],
+  // the fen's newt: a crest waving along the spine, legs as bent ticks, spots on the belly
+  newt: [stave(.24), wave(.5, .3, .06, .07, 1.5), ...pair(L([.5, .42], [.32, .38], [.26, .48]), L([.5, .64], [.32, .6], [.26, .7])), FOOT, ...pair(D(.4, .56))],
   // a shining star at the tail end: a ring with rays
   glowworm: [stave(.4), A(.5, .27, .1, 90, 450), ...rays(.5, .27, .15, .25, [0, 60, 120, 180, 240, 300]), FOOT],
   // eight legs round a body, hanging from a thread
@@ -118,7 +120,7 @@ export const SIGILS = {
 export const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-export const SIGIL_NEON = { badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta" };
+export const SIGIL_NEON = { badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid" };
 export const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;
