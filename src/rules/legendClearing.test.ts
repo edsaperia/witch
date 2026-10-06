@@ -6,7 +6,6 @@ import { rng } from "./random";
 import { soundsystemFor } from "./party";
 import { TUNING } from "./tuning";
 import { joinParty, newGame, stepGame, STEP, type Controls, type Game } from "./game";
-import { befriend } from "./creatureStates";
 import { inviteCreature } from "./leash";
 
 // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
@@ -41,8 +40,9 @@ describe("legend clearings", () => {
     expect(S.elk).toBeGreaterThan(TUNING.legendClearing.radius);
     expect(S.bat ?? TUNING.legendClearing.radius).toBeLessThan(S.elk);
   });
-  // Ed (2026-10-06): "Legend circles should spawn with a wild baby in them, which tries to stay within the circle while it's wild."
-  it("each holds a wild baby of its legend's kind, which keeps to the circle while wild, comes back in if pushed out, and is free only while leashed", () => {
+  // Ed (2026-10-06): "Legend circles should spawn with a wild baby in them, which tries to stay within the circle while it's wild";
+  // then "Perhaps all legend babies should be happy from the start?"
+  it("each holds a happy baby of its legend's kind, which keeps to the circle, comes back in if pushed out, and is free only while leashed", () => {
     const map = generateMap(123, TUNING), creatures = spawnCreatures(map);
     for (const c of map.legendClearings) {
       const L = creatures.find(o => o.boss && o.cell[0] === c.cell[0] && o.cell[1] === c.cell[1])!;
@@ -50,6 +50,7 @@ describe("legend clearings", () => {
       expect(babies.length).toBe(1);
       const B = babies[0];
       expect(B.level).toBe(0);
+      expect(B.state).toBe("happy");
       expect(B.species).toBe(L.species);
       expect(Math.hypot(B.x - c.x, B.z - c.z)).toBeLessThan(c.r);
       expect(Math.hypot(B.x - L.x, B.z - L.z)).toBeGreaterThan(c.r * 0.3); // (off its legend's lair)
@@ -61,9 +62,6 @@ describe("legend clearings", () => {
     B.x = k.x + k.r + 6; B.z = k.z; B.tx = B.x; B.tz = B.z;
     for (let i = 0; i < 60 * 20; i++) stepCreature(B, 1 / 60, map);
     expect(Math.hypot(B.x - k.x, B.z - k.z)).toBeLessThan(k.r);
-    // invited (happy): still kept to it
-    B.state = "happy";
-    expect(keepsToCircle(B)).toBe(true);
     // leashed: no longer kept to it
     B.leashed = true;
     expect(keepsToCircle(B)).toBe(false);
@@ -73,16 +71,15 @@ describe("legend clearings", () => {
 
   // Ed (2026-10-06): "if it is invited and becomes happy, it continues to stay in the circle as before";
   // "happy creatures don't follow you - only leashed creatures do".
-  it("its baby, invited (happy), stays in the circle when she leaves and never goes off to a party; leashed it follows her, and let go it goes home to its circle", () => {
+  it("its baby, happy, stays in the circle when she leaves and never goes off to a party; leashed it follows her, and let go it goes home to its circle", () => {
     const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
     const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, idle, STEP); each?.(); } };
     const g = newGame(123, TUNING);
     g.clock.paused = false;
     g.witches[0].health.hp = 1e6;
     const B = g.creatures.find(o => o.circle)!, k = B.circle!, dist = () => Math.hypot(B.x - k.x, B.z - k.z);
-    // she lands by it and invites it: happy, not leashed
-    g.witch = { ...g.witch, seated: false, x: k.x + k.r + 4, z: k.z, mode: "ground", lift: 0 };
-    befriend(B, g.clock.time);
+    // happy from the start, not leashed
+    expect(B.state).toBe("happy");
     expect(B.leashed).toBe(false);
     // she flies off over the treetops, still near enough that it's stepped: it keeps to its circle
     g.witch = { ...g.witch, x: k.x + k.r + 30, z: k.z, mode: "treetop", lift: 1 };
@@ -101,5 +98,35 @@ describe("legend clearings", () => {
     B.leashed = false; B.state = "happy";
     run(g, 40);
     expect(dist()).toBeLessThan(k.r);
+  });
+
+  // Ed (2026-10-06): "legends get angry when their area has no animals from its species"; the circle's baby is happy, so a
+  // siege's enraged go for it, and knocked down it runs off: then the area has none of its kind.
+  it("a siege that knocks down the circle's baby, its area's only kin, leaves its legend restless, then angry", () => {
+    const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
+    const g = newGame(123, TUNING);
+    g.clock.paused = false;
+    g.witches[0].health.hp = 1e6;
+    const B = g.creatures.find(o => o.circle)!, same = (o: { cell: [number, number] }) => o.cell[0] === B.cell[0] && o.cell[1] === B.cell[1];
+    const L = g.creatures.find(o => o.boss && same(o))!;
+    // the baby its only kin: the rest of its kind gone from the area
+    for (const o of g.creatures) if (o !== B && !o.boss && o.species === L.species && (same(o) || Math.hypot(o.x - L.x, o.z - L.z) < 400)) o.gone = true;
+    // an enraged besieger (another kind) beside it, and the witch near enough that the fight is stepped (out of reach, over the treetops)
+    const E = g.creatures.find(o => !o.boss && !o.circle && !o.gone && o.species !== L.species && Math.hypot(o.x - B.x, o.z - B.z) > 300)!;
+    Object.assign(E, { level: 2, x: B.x + 2, z: B.z, tx: B.x + 2, tz: B.z, cell: [B.cell[0], B.cell[1]], homeX: B.x, homeZ: B.z, anchorX: B.x, anchorZ: B.z, enraged: true, state: "enraged", hp: undefined, rest: 0 });
+    g.witch = { ...g.witch, seated: false, x: B.x, z: B.z + 30, mode: "treetop", lift: 1 };
+    expect(L.legendState).toBe("asleep");
+    let downAt = -1, restlessAt = -1, angryAt = -1;
+    for (let i = 0; i < Math.round(150 / STEP) && angryAt < 0; i++) {
+      stepGame(g, idle, STEP);
+      // (no other of its kind wanders in meanwhile)
+      for (const o of g.creatures) if (o !== B && !o.boss && !o.gone && o.species === L.species && same(o)) o.gone = true;
+      if (downAt < 0 && (B.fleeUntil || B.gone)) downAt = g.clock.time;
+      if (restlessAt < 0 && L.legendState === "restless") restlessAt = g.clock.time;
+      if (angryAt < 0 && L.legendState === "angry") angryAt = g.clock.time;
+    }
+    expect(downAt).toBeGreaterThan(0); // the baby knocked down (it runs off: no longer kin)
+    expect(restlessAt).toBeGreaterThanOrEqual(downAt);
+    expect(angryAt).toBeGreaterThan(restlessAt);
   });
 });
