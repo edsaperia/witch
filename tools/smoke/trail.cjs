@@ -34,7 +34,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
       }
       const info = await page.evaluate(() => { const w = window.witch.game.witch; return { x: Math.round(w.x), z: Math.round(w.z), lift: +(w.lift ?? 0).toFixed(2), speed: +Math.hypot(w.vx, w.vz).toFixed(1) }; });
       console.log(name, n, "frames", JSON.stringify(info));
-      execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-framerate", "30", "-i", path.join(dir, "f%03d.png"), "-vf", "fps=15,scale=560:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle", path.join(outDir, `${name}.gif`)]);
+      execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-framerate", "30", "-i", path.join(dir, "f%03d.png"), "-vf", "fps=12,scale=480:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle", path.join(outDir, `${name}.gif`)]);
       return dir;
     };
     // on the ground: up to speed east, a long curve round to the south, then a stop

@@ -33,7 +33,7 @@ export interface TrailTuning {
   sparks: boolean;
 }
 
-export const TRAIL_DEFAULT: TrailTuning = { on: true, ground: 5, treetops: 20, from: 0.15, curve: 1, width: [1, 2.6], bright: 1, fade: 1.6, grow: 0.25, shrink: 0.6, colourEase: 0.6, sparks: true };
+export const TRAIL_DEFAULT: TrailTuning = { on: true, ground: 5, treetops: 20, from: 0.15, curve: 1, width: [1, 2.6], bright: 1, fade: 1, grow: 0.25, shrink: 0.6, colourEase: 0.6, sparks: true };
 
 const DYNAMIC = ["position", "aDir", "aT", "aS", "aCol"];
 /** Points of her path kept (enough for the longest trail at its spacing). */
@@ -176,7 +176,7 @@ export class WitchTrail {
     g.setDrawRange(0, this.n > 1 ? (this.n - 1) * 6 : 0);
     for (const k of DYNAMIC) (g.getAttribute(k) as THREE.BufferAttribute).needsUpdate = true;
     this.u.uTrailWidth.value = T.width[0] + (T.width[1] - T.width[0]) * lift;
-    this.u.uBright.value = T.bright * 3;
+    this.u.uBright.value = T.bright * 1.7;
     this.u.uFade.value = T.fade;
     void time;
   }
