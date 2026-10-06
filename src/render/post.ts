@@ -12,7 +12,7 @@ import { hsv2rgb } from "../../art/generator.js";
 export interface PostTuning { light?: import("../rules/tuning").Tuning["light"];
   bloom: { on: boolean; strength: number; threshold: number };
   tone: { black: number; gamma: number; ambient: number };
-  tiltShift: { on: boolean; where: "before" | "after"; /** Whether the sky over the bend is blurred too (Ed, round 12); false leaves it sharp. */ sky?: boolean; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
+  tiltShift: { on: boolean; where: "before" | "after"; /** Whether the sky over the bend is blurred too (Ed, round 12); false leaves it sharp. */ sky?: boolean; /** The share of the blur the sky takes (Ed, 2026-10-06: "lessen the tilt-shift effect until you can see the stars", "the stars don't have to be crisp, just perceptible"); 1 as the ground. */ skyBlur?: number; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
 }
 
 const VERT = "varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }";
@@ -63,14 +63,14 @@ void main() {
 
 // One direction of the tilt-shift: the blur grows with distance from the sharp band.
 const TILT = /* glsl */ `
-uniform sampler2D uSrc, uDepth; uniform vec2 uTexel, uDir; uniform float uStrength, uBand, uCentre, uSkySharp; varying vec2 vUv;
+uniform sampler2D uSrc, uDepth; uniform vec2 uTexel, uDir; uniform float uStrength, uBand, uCentre, uSkyBlur; varying vec2 vUv;
 void main() {
   // The sky over the bend (nothing drawn there: the far plane) is blurred with everything else, as
   // the last pass over the finished, bent image (Ed, round 12: "the tilt shift effect has to be applied
   // after the bend shader"); tiltShift.sky false leaves it sharp, as it was, its stars crisp pixels.
-  if (uSkySharp > 0.5 && texture2D(uDepth, vUv).r >= 0.99999) { gl_FragColor = texture2D(uSrc, vUv); return; }
   float d = max(0.0, abs(vUv.y - uCentre) - uBand * 0.5) / max(0.05, 0.5 - uBand * 0.5);
-  float r = uStrength * smoothstep(0.0, 1.0, d);
+  // The sky (nothing drawn there: the far plane) takes only uSkyBlur of it, so its stars stay perceptible, softly.
+  float r = uStrength * smoothstep(0.0, 1.0, d) * (texture2D(uDepth, vUv).r >= 0.99999 ? uSkyBlur : 1.0);
   if (r < 0.35) { gl_FragColor = texture2D(uSrc, vUv); return; }
   vec3 c = vec3(0.0); float w = 0.0;
   for (int i = -6; i <= 6; i++) {
@@ -114,7 +114,7 @@ export class Post {
       bright: m(BRIGHT, { uScene: { value: null }, uThreshold: { value: 0.6 } }),
       blur: m(BLUR, { uSrc: { value: null }, uStep: { value: new THREE.Vector2() } }),
       composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 }, uFx: { value: null }, uFxOn: { value: 0 }, uGrade: { value: new THREE.Vector4() }, uPool: { value: new THREE.Vector4() }, uGradeTint: { value: new THREE.Vector3(1, 1, 1) } }),
-      tilt: m(TILT, { uSrc: { value: null }, uDepth: { value: null }, uTexel: { value: new THREE.Vector2() }, uDir: { value: new THREE.Vector2() }, uStrength: { value: 0 }, uBand: { value: 0.4 }, uCentre: { value: 0.5 }, uSkySharp: { value: 0 } }),
+      tilt: m(TILT, { uSrc: { value: null }, uDepth: { value: null }, uTexel: { value: new THREE.Vector2() }, uDir: { value: new THREE.Vector2() }, uStrength: { value: 0 }, uBand: { value: 0.4 }, uCentre: { value: 0.5 }, uSkyBlur: { value: 1 } }),
     };
     this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mats.composite);
     this.quad.frustumCulled = false;
@@ -191,7 +191,7 @@ export class Post {
     const common = (u: Record<string, THREE.IUniform>) => {
       const T = t.tiltShift, k = Math.max(0, Math.min(1, this.lift)), k2 = k * k * (3 - 2 * k);
       u.uDepth.value = this.scene.depthTexture; u.uTexel.value.set(1 / w, 1 / h); u.uStrength.value = (T.strength + (T.treetop.strength - T.strength) * k2) * scale; u.uBand.value = T.band + (T.treetop.band - T.band) * k2; u.uCentre.value = 1 - T.centre;
-      u.uSkySharp.value = T.sky === false ? 1 : 0;
+      u.uSkyBlur.value = T.sky === false ? 0 : T.skyBlur ?? 1;
     };
     this.pass("tilt", this.b, u => { common(u); u.uSrc.value = this.a.texture; u.uDir.value.set(1, 0); });
     this.pass("tilt", null, u => { common(u); u.uSrc.value = this.b.texture; u.uDir.value.set(0, 1); });

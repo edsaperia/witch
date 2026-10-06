@@ -4,7 +4,7 @@
 // can be produced on its own, near the camera, in any order, and always comes out the same.
 import { hash2, smoothstep, vnoise } from "./random";
 import { wallFeatures, bedsInRows, type WallFeatures } from "./walls";
-import { AREA_TYPES, HOME_LOOK, type AreaLayout, type ForestMap } from "./map";
+import { AREA_TYPES, HOME_LOOK, type AreaLayout, type ForestMap, type LegendClearing } from "./map";
 import { DECOR } from "../../art/decor.js";
 import { floorClearing } from "./speakers";
 import { beachOf } from "./mapShape";
@@ -19,6 +19,8 @@ export interface Plant {
   /** Which of that type's drawn variants. */
   variant: number;
   flip: boolean;
+  /** How strongly a legend's grove grows here (legendGrove, jittered a tree): 0 to 1, the view's share of the tallest kinds and their size. */
+  grove?: number;
 }
 
 export const BUSH_VARIANTS = 4;
@@ -91,6 +93,72 @@ function patternMask(map: ForestMap, x: number, z: number, L: AreaLayout): numbe
   }
 }
 
+// The legends' groves (Ed, 2026-10-06: "an area of the tallest trees around each legend circle"; "It should blend back
+// smoothly into the rest of the forest around this area, so it doesn't stand out too much"): round each clearing's ragged
+// edge the forest swells, thicker and of its tallest kinds, easing out over legendClearing.grove.reach metres to the area's
+// own; open toward the camera (south) for the way in and the view of the sleeper. The clearings bucketed by 64 m squares,
+// once a map, for the lookup.
+const GROVE_CELL = 64, groveBuckets = new WeakMap<ForestMap, Map<number, LegendClearing[]>>();
+const groveKey = (i: number, j: number) => (i + 4096) * 8192 + (j + 4096); // (a number, not a string: it's asked for every tree spot)
+function grovesNear(map: ForestMap, x: number, z: number): LegendClearing[] | undefined {
+  let b = groveBuckets.get(map);
+  if (!b) {
+    b = new Map();
+    const reach = map.tuning.legendClearing.grove?.reach ?? 0;
+    for (const lc of map.legendClearings) {
+      const R = lc.r + 1.5 + reach;
+      for (let i = Math.floor((lc.x - R) / GROVE_CELL); i <= Math.floor((lc.x + R) / GROVE_CELL); i++)
+        for (let j = Math.floor((lc.z - R) / GROVE_CELL); j <= Math.floor((lc.z + R) / GROVE_CELL); j++) { const k = groveKey(i, j); let l = b.get(k); if (!l) b.set(k, (l = [])); l.push(lc); }
+    }
+    groveBuckets.set(map, b);
+  }
+  return b.get(groveKey(Math.floor(x / GROVE_CELL), Math.floor(z / GROVE_CELL)));
+}
+
+/** How strongly a legend's grove grows at (x, z), 0 to 1: 1 at its clearing's edge, easing out to 0 at reach metres
+ *  beyond (smoothstep), and to 0 across its open front. The strongest of any clearing near. */
+export function legendGrove(map: ForestMap, x: number, z: number): number {
+  const G = map.tuning.legendClearing.grove;
+  if (!G || G.reach <= 0) return 0;
+  const list = grovesNear(map, x, z);
+  if (!list) return 0;
+  let best = 0;
+  for (const lc of list) {
+    const dx = x - lc.x, dz = z - lc.z, d = Math.hypot(dx, dz), out = d - lc.r - 1.5; // (past the ragged edge's furthest wobble)
+    if (out < 0 || out > G.reach) continue;
+    const fromSouth = (Math.acos(Math.max(-1, Math.min(1, dz / d))) * 180) / Math.PI; // 0 due south (toward the camera)
+    const s = (1 - smoothstep(out / G.reach)) * smoothstep((fromSouth - G.gap) / Math.max(1e-6, G.soft));
+    if (s > best) best = s;
+  }
+  return best;
+}
+
+// The rim kit round each legend's clearing (art builder 3's #262: stones, cairns, boulders, toadstools,
+// stumps and posts, none over a metre, by its area): a piece every legendClearing.rim.spacing metres of
+// its edge (at its chance), on the ring just past its floor, leaving the way in (due south) and paths
+// clear; the variant the view's pick of its area's six. Worked out once a map.
+const rimPieces = new WeakMap<ForestMap, Plant[]>();
+function legendRim(map: ForestMap): Plant[] {
+  let out = rimPieces.get(map);
+  if (out) return out;
+  out = [];
+  const R = map.tuning.legendClearing.rim, s = map.seed;
+  if (R && R.spacing > 0) for (const lc of map.legendClearings) {
+    const n = Math.max(6, Math.round((2 * Math.PI * lc.r) / R.spacing)), type = map.typeOf(lc.cell[0], lc.cell[1]);
+    for (let k = 0; k < n; k++) {
+      const h = (salt: number) => hash2(Math.round(lc.x) * 31 + k, Math.round(lc.z), s + salt);
+      if (h(301) >= R.chance) continue;
+      const a = ((k + (h(302) - 0.5) * 0.6) / n) * Math.PI * 2, d = lc.r + R.out + h(303) * R.spread;
+      const x = lc.x + Math.sin(a) * d, z = lc.z + Math.cos(a) * d; // (a = 0: due south, toward the camera)
+      if (Math.abs(((a * 180) / Math.PI + 180) % 360 - 180) < R.gap) continue; // the way in
+      if (map.paths.at(x, z, 1.5)) continue;
+      out.push({ x, z, type, variant: Math.floor(h(304) * 1e6), flip: h(305) < 0.5 });
+    }
+  }
+  rimPieces.set(map, out);
+  return out;
+}
+
 function treesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
   const { treeSpacingX: sx, treeSpacingZ: sz } = map.tuning, s = map.seed;
   const out: Plant[] = [], lift = crownReach(map), half = map.tuning.crownHalfWidth;
@@ -102,11 +170,18 @@ function treesInChunk(map: ForestMap, ci: number, cj: number): Plant[] {
       const x = (i + shift + (hash2(i, j, s + 101) - 0.5) * 0.7) * sx;
       const z = (j + (hash2(i, j, s + 102) - 0.5) * 0.7) * sz;
       // A crown must not cover a clearing either, so the weight is checked where it reaches.
-      const type = plantType(map, x, z, i, j, s + 106), chance = treeChance(map, x, z, type);
+      const type = plantType(map, x, z, i, j, s + 106), G = map.tuning.legendClearing.grove, g0 = legendGrove(map, x, z);
+      // (in a legend's grove, thicker as it's stronger, whatever the area's own density, but never on a path, home's ground or a
+      // clearing; each tree's strength jittered, so no ring shows)
+      const grove = g0 > 0 ? Math.max(0, Math.min(1, g0 * (1 + G.jitter * (2 * hash2(i, j, s + 107) - 1)))) : 0;
+      const own = treeChance(map, x, z, type);
+      const chance = !grove ? own : map.hardClear(x, z) || homeGround(map, x, z, type) || map.paths.clearance(x, z).trees === 0 ? 0 : own + (Math.max(own, G.density) - own) * grove;
       if (hash2(i, j, s + 103) >= chance) continue;
       // Crowns don't hang over the dancefloor's or a set piece's clearing.
       if (map.hardClear(x, z - lift) || map.hardClear(x - half, z - lift) || map.hardClear(x + half, z - lift)) continue;
-      out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 104) * 1000003) /* the view picks a variant by weight */, flip: hash2(i, j, s + 105) < 0.5 });
+      // (nor a grove's, twice as tall and wider: their crowns frame the clearing from the treetops, never roof it over)
+      if (grove > 0.2 && [1.5, 2, 2.5].some(k => map.hardClear(x, z - lift * k) || map.hardClear(x - half * k, z - lift * k) || map.hardClear(x + half * k, z - lift * k))) continue;
+      out.push({ x, z, type, variant: Math.floor(hash2(i, j, s + 104) * 1000003) /* the view picks a variant by weight */, flip: hash2(i, j, s + 105) < 0.5, ...(grove > 0.02 ? { grove: Math.round(grove * 100) / 100 } : {}) });
     }
   }
   return out;
@@ -431,6 +506,10 @@ export class Forest {
   wallsNear(x: number, z: number, radius: number): Plant[] { return this.features(x, z, radius, f => f.walls); }
   /** A formal garden's flower beds, in rows along its walls. */
   bedsNear(x: number, z: number, radius: number): Plant[] { return this.features(x, z, radius, f => f.beds); }
+  /** The rim kit's pieces round the legends' clearings within a square of half-size `radius` round (x, z). */
+  rimNear(x: number, z: number, radius: number): Plant[] {
+    return legendRim(this.map).filter(p => Math.abs(p.x - x) <= radius && Math.abs(p.z - z) <= radius);
+  }
   /** Set pieces near a point: each stands in its area's clearing, a little north of the centre. */
   setPiecesNear(x: number, z: number, radius: number): Plant[] {
     const m = this.map, A = m.areaSize, out: Plant[] = [];

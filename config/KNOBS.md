@@ -481,13 +481,33 @@ Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bus
 | `berries.colour` | string |  |
 | `berries.glow` | number | 0 to … |
 
-## `leyLines`
+## `glades`, `leyLines`
 
-depart (Ed, 2026-10-05: "The start of the first leyline should go from the front of the treehouse"; "the treehouse should be 5m due north of the dance floor ... The ley line leads from it south across the dancefloor and then towards the first speaker"): until the first stone is reached the line starts at the treehouse's front and runs due south straight across the dancefloor and through its ring of speakers, on past metres beyond the ring (avoid metres outside it), then curves smoothly to the first objective's soundsystem, that stretch kept outside the ring. The ley lines (Ed, 2026-10-04; 2026-10-05: "you just follow them from objective to objective"; 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself, or try and minimise crossings"): a glowing line through every wave's runestone in the order the waves wake them, home first, the whole route the whole time (party.picker route keeps it from crossing itself): the sections ahead of the last stone reached each fade times as bright as the one before, the one just left behind behindBright times as bright as the next and each before it fade times that, none fainter than far[0] ahead or far[1] behind (as shares). brightness: how bright, a share of their first look (Ed, 2026-10-05: "about 30% as bright", 0.3), the glow through the crowns too. Each fades from the colour of the area it starts in to that of the area it ends in (the colour partified areas and soundsystems use). advance: "first" moves it on when the next area's quest is done or its wave arrives, whichever comes first; "wave" only when its wave arrives. Each wanders along the low ground between its stones, straying up to valley of its length (80 m at most) to follow the hills' valleys, and a shimmer flows along it toward the next stone at flow[0] m/s, flow[1] m apart. It stays on the ground in both modes (Ed): width metres across on the ground and over the treetops (wider there, with a faint glow through the crowns), height metres over the ground in each. ?ley=0 turns them off.
+The sleeping legends' clearings (Ed, 2026-10-06: "Sleeping legends should be in a small circular clearing, where they sit near the top of the circle. This magical clearing should be lit with an eerie twilight with glowing motes rising in it."; render/glades.ts): art builder 1 places them (the map's glades); until then one round each sleeping legend, radius metres across with the legend top of the way toward its top. Only those within reach metres of the witch, the nearest 4, are lit. hue, sat: the twilight's colour (a cool violet dusk, against the party's amber); light: its pool, filling the circle and soft at its edge; edge: the ring at its edge at full (a quarter of it always marks the circle), which brightens with the witch inside it or a quest sigil or relic put down in it, easing at edgeEase a second. Inside one (Ed, 2026-10-06: "When you go into the legend clearing, the rest of the forest should get darker. Maybe switch off the witch's glow when she's in there."): the forest's light and haze outside the clearing's own twilight dim by dark (0 none, 1 black), her own glow goes by glowOff (1: off; her moonlit rim stays), both eased in and out over fade seconds. motes: per to a clearing, rising rise metres a second to height metres, size art pixels, in hue and sat at bright.
 
 | knob | type | range |
 |---|---|---|
+| `glades.on` | boolean |  |
+| `glades.radius` | number | 0 to … |
+| `glades.top` | number | 0 to … |
+| `glades.reach` | number | 0 to … |
+| `glades.hue` | number | 0 to … |
+| `glades.sat` | number | 0 to … |
+| `glades.light` | number | 0 to … |
+| `glades.edge` | number | 0 to … |
+| `glades.edgeEase` | number | 0 to … |
+| `glades.dark` | number | 0 to … |
+| `glades.glowOff` | number | 0 to … |
+| `glades.fade` | number | 0 to … |
+| `glades.motes.per` | number | 0 to … |
+| `glades.motes.rise` | number | 0 to … |
+| `glades.motes.height` | number | 0 to … |
+| `glades.motes.size` | number | 0 to … |
+| `glades.motes.hue` | number | 0 to … |
+| `glades.motes.sat` | number | 0 to … |
+| `glades.motes.bright` | number | 0 to … |
 | `leyLines.on` | boolean |  |
+| `leyLines.reveal` | number | 0 to … |
 | `leyLines.far` | array of number |  |
 | `leyLines.behindBright` | number | 0 to … |
 | `leyLines.advance` | string |  |
@@ -763,6 +783,18 @@ Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bu
 | `legendClearing.radius` | number | 0 to … |
 | `legendClearing.edge` | number | 0 to … |
 | `legendClearing.top` | number | 0 to … |
+| `legendClearing.rim.spacing` | number | 0 to … |
+| `legendClearing.rim.chance` | number | 0 to … |
+| `legendClearing.rim.out` | number | 0 to … |
+| `legendClearing.rim.spread` | number | 0 to … |
+| `legendClearing.rim.gap` | number | 0 to … |
+| `legendClearing.grove.reach` | number | 0 to … |
+| `legendClearing.grove.density` | number | 0 to … |
+| `legendClearing.grove.tallest` | number | 0 to … |
+| `legendClearing.grove.scale` | number | 0 to … |
+| `legendClearing.grove.gap` | number | 0 to … |
+| `legendClearing.grove.soft` | number | 0 to … |
+| `legendClearing.grove.jitter` | number | 0 to … |
 | `legendClearing.species` | record |  |
 
 ## `relics`
@@ -1198,6 +1230,22 @@ Her flight trail (Ed, 2026-10-06: "more like a fading-out glow, similar to the l
 | `trail.colourEase` | number | 0 to … |
 | `trail.sparks` | boolean |  |
 
+## `swoopTrail`
+
+The party witches' swoop trails (Ed, 2026-10-06: "Party-witch swoops should get the same following glow that you have, but it should be bright and multicoloured."): while one swoops she leaves a ribbon in her trail's look, bright and in rainbow colours, each witch starting at her own hue, the colours running along it (hueSpread turns of the wheel a metre) and shifting over time (hueSpeed turns a second), so a crowd of swoops reads as fireworks over the canopy. width metres across (turned to face the camera, so a climb straight up shows), wider in step with its distance from the camera past near metres (so from the treetops it reads as a streak, not a thread), bright its brightness; it fades in as she lifts off over her first liftFade metres, and each stretch of it fades out life seconds after she passed, so it trails out as she lands. At most slots at once (only while the party is stepped: partyWitches.simRange).
+
+| knob | type | range |
+|---|---|---|
+| `swoopTrail.on` | boolean |  |
+| `swoopTrail.life` | number | 0 to … |
+| `swoopTrail.width` | number | 0 to … |
+| `swoopTrail.near` | number | 0 to … |
+| `swoopTrail.bright` | number | 0 to … |
+| `swoopTrail.hueSpeed` | number | 0 to … |
+| `swoopTrail.hueSpread` | number | 0 to … |
+| `swoopTrail.liftFade` | number | 0 to … |
+| `swoopTrail.slots` | number | 0 to … |
+
 ## `boot`
 
 At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power on one by one over time seconds, and only then does the first wave's countdown begin: extra time to find and invite your first creatures. Five minutes, counted from her first step off the decks (Ed, 2026-10-05: 'the game is hard! ... a boot up period of 5 minutes'): no wave and no growth till then. transform (Ed, 2026-10-06: the home ring starts as small runestones, and the boot pulse turns each into its speaker): the seconds each takes to turn, glowing and rising into the speaker.
@@ -1338,6 +1386,7 @@ Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest..
 | `tiltShift.on` | boolean |  |
 | `tiltShift.where` | string | "before" / "after" |
 | `tiltShift.sky` | boolean |  |
+| `tiltShift.skyBlur` | number | 0 to … |
 | `tiltShift.strength` | number | 0 to … |
 | `tiltShift.band` | number | 0 to … |
 | `tiltShift.centre` | number | 0 to … |

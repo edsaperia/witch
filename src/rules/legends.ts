@@ -2,13 +2,13 @@
 // (its quest: bring the creature it dreams of while it sleeps, soundsystem on or not (Ed, 2026-10-06), and you get its
 // buff; it sleeps on). With none of its kind left in its area it grows restless (a nightmare), and
 // after angryAfter seconds of that it's angry: it attacks the witch and her posse from afar. A
-// relic put down next to it while it sleeps makes it happy: you get its buff and it defends,
+// relic put down in its clearing while it sleeps makes it happy: you get its buff and it defends,
 // shooting the enraged from afar. Relics lie half buried about the map; she picks one up (a relic
-// sigil in her stack) and puts it down by the legend she chooses. Buffs once earned are kept.
+// sigil in her stack) and puts it down in the clearing of the legend she chooses (Ed, 2026-10-06). Buffs once earned are kept.
 // The legends' long, slow lobs and beams are combat's (stepLegendAttack). No drawing here.
 import raw from "../../config/legends.json";
 import type { Creature } from "./creatures";
-import type { ForestMap } from "./map";
+import { inLegendClearing, type ForestMap } from "./map";
 import { isInside } from "./mapShape";
 import { crownReach, type Plant } from "./forest";
 import { cellKey } from "./party";
@@ -16,6 +16,8 @@ import { hash2 } from "./random";
 
 export interface LegendsData {
   angryAfter: number; check: number; placeRadius: number;
+  /** Going back to sleep away from where it lay (Ed, 2026-10-06): it walks home at homeSpeed m/s first. */
+  homeSpeed: number;
   relics: { kinds: string[]; minRemoteness: number; minGap: number; spread: number; homeInset: number; clearOfTreehouse: number; candidates: number; sigilOffset: number };
   attack: { range: number; interval: number; windup: number; damage: number; targets: number; wornReach: number; /** seconds before a legend with nothing in reach looks again */ recheck: number; lobFlight: number; lobRadius: number; beamWidth: number; beamTime: number; beam: string[] };
   healTime: number;
@@ -134,35 +136,48 @@ export interface LegendWorld { creatures: Creature[]; map: ForestMap; time: numb
 
 /** One step of every legend's state. */
 export function stepLegendStates(w: LegendWorld, ids: number[], data: LegendsData = LEGENDS): void {
-  // Every check seconds: which of the legends' areas have one of the legend's kind in them.
-  const tick = Math.floor(w.time / data.check) !== Math.floor((w.time - w.dt) / data.check);
-  let kin: Set<string> | null = null;
-  if (tick) {
-    const want = new Map<string, string>(); // area key -> the legend's species
-    for (const id of ids) { const c = w.creatures[id]; if (!c.gone) want.set(cellKey(c.cell), c.species); }
-    kin = new Set();
-    for (const o of w.creatures) {
-      if (o.gone || o.fleeUntil || o.boss) continue;
-      const k = w.areaOf(o), sp = want.get(k);
-      if (sp === o.species) kin.add(k);
-    }
-  }
   for (const id of ids) {
     const c = w.creatures[id];
     if (c.gone || c.leashed) continue;
     const key = cellKey(c.cell), q = c.quest;
+    // Going back to sleep away from where it lay (Ed, 2026-10-06: "they should go back to their
+    // circle first and sleep in the spot where they spawned initially"): it walks home, then lies down.
+    if (c.homing) { walkHome(c, w.time, w.dt, data); continue; }
     c.questOpen = !!q && q.done === undefined && (c.legendState === "asleep" || c.legendState === "restless"); // (open while it sleeps, its soundsystem on or not: Ed, 2026-10-06)
     if (q?.done !== undefined) c.buffed = true; // (its quest done: its buff, for good)
-    if (c.legendState !== "asleep" && c.legendState !== "restless") continue;
-    if (kin) {
-      if (kin.has(key)) { c.legendState = "asleep"; c.restlessness = 0; }
-      else if (c.legendState === "asleep") { c.legendState = "restless"; c.stateAt = w.time; c.restlessness = c.restlessness ?? 0; }
+    // Every check seconds, each legend on its own beat (Ed, 2026-10-06: "the legends could check
+    // for own species in area once every five seconds without issue"; staggered by its id, so they
+    // don't all look on one frame): is one of its kind in its area?
+    const phase = ((c.id * 0.6180339887) % 1) * data.check;
+    if (Math.floor((w.time + phase) / data.check) !== Math.floor((w.time - w.dt + phase) / data.check)) {
+      const kin = hasKin(w, c, key);
+      if (c.legendState === "angry" && kin) lull(c, w.time); // (Ed, 2026-10-06: "Angry legends should go back to sleep once one of their own species is back in their area"; its buff, if earned, kept)
+      else if (c.legendState === "asleep" || c.legendState === "restless") {
+        if (kin) { c.legendState = "asleep"; c.restlessness = 0; }
+        else if (c.legendState === "asleep") { c.legendState = "restless"; c.stateAt = w.time; c.restlessness = c.restlessness ?? 0; }
+      }
     }
     if (c.legendState === "restless") {
       c.restlessness = Math.min(1, (c.restlessness ?? 0) + w.dt / Math.max(1e-6, data.angryAfter));
       if (c.restlessness >= 1) anger(c, w.time);
     }
   }
+}
+
+/** Whether one of a legend's kind is in its area (any state: wild, happy, leashed and parked there, babies). */
+function hasKin(w: LegendWorld, c: Creature, key: string): boolean {
+  // (A creature besieging another area's soundsystem doesn't count at home: art builder 1, #254, Ed: "After a siege, the angry adults move onto the next area, which will waken the legend".)
+  for (const o of w.creatures) if (o !== c && o.species === c.species && !o.gone && !o.fleeUntil && !o.boss && !(o.siege && o.siege !== key) && w.areaOf(o) === key) return true;
+  return false;
+}
+
+/** A step of a legend walking home to where it lay (c.lairX, lairZ: its spawn spot), then lying down there. */
+function walkHome(c: Creature, time: number, dt: number, data: LegendsData): void {
+  const hx = c.lairX ?? c.x, hz = c.lairZ ?? c.z, dx = hx - c.x, dz = hz - c.z, d = Math.hypot(dx, dz), step = data.homeSpeed * dt;
+  if (d <= step) { c.x = hx; c.z = hz; c.homing = undefined; c.moving = false; c.stateAt = time; return; } // (home: it settles and lies down)
+  c.x += (dx / d) * step; c.z += (dz / d) * step; c.moving = true;
+  if (Math.abs(dx) > 1e-6) c.facing = dx < 0 ? -1 : 1;
+  c.away = dz < 0; // (walking north, up the screen: its back to us)
 }
 
 /** Restlessness run its course: angry (hostile; its health whole). */
@@ -175,26 +190,38 @@ export function cheer(c: Creature, time: number): void {
   Object.assign(c, { legendState: "happy", stateAt: time, enraged: false, state: undefined, hp: undefined, fight: undefined, siege: undefined, restlessness: 0, questOpen: false, buffed: true, charge: undefined, legend: undefined });
 }
 
-/** Worn down (its health gone): back to sleep, its buff (if earned) kept. */
+/** Back to sleep (worn down, or calmed by one of its kind back in its area), its buff (if earned)
+ *  kept; away from where it lay, it walks home first (homing; Ed, 2026-10-06). */
 export function lull(c: Creature, time: number): void {
-  Object.assign(c, { legendState: "asleep", stateAt: time, enraged: false, state: undefined, hp: undefined, fight: undefined, siege: undefined, restlessness: 0, charge: undefined, run: undefined, legend: undefined, slowUntil: undefined, stunUntil: undefined, kx: 0, kz: 0 });
+  const away = c.lairX !== undefined && c.lairZ !== undefined && Math.hypot(c.x - c.lairX, c.z - c.lairZ) > 0.5;
+  Object.assign(c, { legendState: "asleep", stateAt: time, enraged: false, state: undefined, hp: undefined, fight: undefined, siege: undefined, restlessness: 0, charge: undefined, run: undefined, legend: undefined, slowUntil: undefined, stunUntil: undefined, kx: 0, kz: 0, homing: away || undefined, questOpen: false });
 }
 
 /** Whether a legend gives its buff: its quest done, or made happy by a relic (for good either way). */
 export const buffing = (c: Creature): boolean => !!c.buffed || c.legendState === "happy";
 
 /** The sigil button on the ground at (x, z): pick up a lying relic within pickRadius (returns it),
- *  else, carrying relics, put the newest down by a sleeping (or restless) legend within placeRadius
- *  (returns the legend made happy). Null if neither (the sigil button does as ever). */
-export function relicButton(relics: Relic[], carried: number[], creatures: Creature[], legendIds: number[], x: number, z: number, time: number, pickRadius: number, data: LegendsData = LEGENDS): { picked: Relic } | { placed: Relic; legend: Creature } | null {
+ *  else, carrying relics, put the newest down by a sleeping (or restless) legend she stands in the
+ *  clearing of (Ed, 2026-10-06: relics "need to be placed in the circle to have their effect"; where
+ *  an area has no clearing, within placeRadius of its legend), and return the legend made happy;
+ *  standing near one, but outside its circle, return it as outside (a gentle cue: the circle flashes),
+ *  putting nothing down. Null if none of these (the sigil button does as ever). */
+export function relicButton(relics: Relic[], carried: number[], creatures: Creature[], legendIds: number[], x: number, z: number, time: number, pickRadius: number, map: ForestMap, data: LegendsData = LEGENDS): { picked: Relic } | { placed: Relic; legend: Creature } | { outside: Creature } | null {
   // Standing on a relic's sigil (as on any placed sigil: within the leash's pickRadius of it) picks the relic up.
   let pick: Relic | null = null, pd = pickRadius;
   for (const r of relics) if (r.state === "lying") { const d = Math.hypot(r.sx - x, r.sz - z); if (d <= pd) { pd = d; pick = r; } }
   if (pick) { pick.state = "carried"; carried.push(pick.id); return { picked: pick }; }
   if (!carried.length) return null;
-  let best: Creature | null = null, bd = data.placeRadius;
-  for (const id of legendIds) { const c = creatures[id], d = Math.hypot(c.x - x, c.z - z); if (!c.gone && !c.leashed && (c.legendState === "asleep" || c.legendState === "restless") && d <= bd) { bd = d; best = c; } }
-  if (!best) return null;
+  let best: Creature | null = null, near: Creature | null = null, nd = Infinity;
+  for (const id of legendIds) {
+    const c = creatures[id];
+    if (c.gone || c.leashed || (c.legendState !== "asleep" && c.legendState !== "restless")) continue;
+    if (inLegendClearing(map, c.cell, x, z, c, data.placeRadius)) { best = c; break; }
+    // (near enough to have meant it: within its circle's reach and as far again, or twice placeRadius)
+    const lc = map.legendClearing(c.cell[0], c.cell[1]), d = lc ? Math.hypot(x - lc.x, z - lc.z) - lc.r : Math.hypot(x - c.x, z - c.z) - data.placeRadius;
+    if (d < Math.max(data.placeRadius, lc?.r ?? 0) && d < nd) { nd = d; near = c; }
+  }
+  if (!best) return near ? { outside: near } : null;
   const r = relics[carried.pop()!];
   Object.assign(r, { state: "used", legend: best.id, x: best.x + 4, z: best.z + 2 });
   cheer(best, time);

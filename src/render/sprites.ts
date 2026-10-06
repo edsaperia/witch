@@ -283,6 +283,9 @@ void shade() {
   vec3 N = normalize(uRight * nx - uUp * ny + uFacing * nz);
   if (uWitchLight.x > 0.5) { gl_FragColor = vec4(witchShade(a.rgb, N, uFacing, vWorld), alpha); return; }
   vec3 col = min(vec3(1.0), a.rgb * nightLight(N, vWorld) * 1.25);
+  // Scenery in her pool takes her light's own colour as the ground does (lighting.ts glowPool), so her light on green
+  // crowns from the treetops reads amber, not lime (the art director via golf, #237). Characters keep their colours.
+  if (uIsScenery > 0.5) col = glowPool(col, vWorld);
   // Trees' trunks (bottom halves cut from their crowns) stand in the canopy's shadow, where the
   // ambient and the moon barely reach: lit only by that they went black on black (Ed, v271: "We
   // have really lost our treetrunks"). Like wild creatures, they never drop below a share of
