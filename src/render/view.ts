@@ -106,6 +106,9 @@ export class View {
   private heights: HeightField;
   /** The bend the view is easing to (the treetops' when she's rising or up there), for culling. */
   bendTo = 0;
+  /** How far the stargazing bend has eased in (0 to 1), and when it was last eased. */
+  private gaze = 0;
+  private gazeTime = NaN;
   /** How much each wave number shows over the bent horizon (eased), by its area, and when it was last eased. */
   numberSeen = new Map<string, number>();
   numbersAt = 0;
@@ -687,9 +690,17 @@ export class View {
     // The world's bend: only over the treetops (Ed, 2026-10-04), eased in as she rises; from the
     // camera's focus, along its forward on the ground.
     {
-      const C = t.camera.curve, m = Math.min(1, Math.max(0, g.witch.lift)), k = C.ground + (C.treetop - C.ground) * m * m * (3 - 2 * m);
+      const C = t.camera.curve, m = Math.min(1, Math.max(0, g.witch.lift));
+      // Lying on the beach to stargaze (Ed, 2026-10-06: "the bend shader applies so that you can see the sky"): the bend eased up
+      // past the treetops' over beach.gazeEase seconds, the night sky opening over the sea, and back down as she gets up.
+      const B = t.beach, gdt = Number.isNaN(this.gazeTime) ? 0 : Math.min(0.25, Math.max(0, time - this.gazeTime)), gz = g.witch.stargazing ? 1 : 0;
+      this.gazeTime = time;
+      this.gaze += (gz - this.gaze) * (1 - Math.exp(-gdt * 3 / Math.max(0.05, B?.gazeEase ?? 1.5)));
+      if (Math.abs(gz - this.gaze) < 0.001) this.gaze = gz;
+      const gk = this.gaze * this.gaze * (3 - 2 * this.gaze) * C.treetop * (B?.gazeBend ?? 0);
+      const k = Math.max(C.ground + (C.treetop - C.ground) * m * m * (3 - 2 * m), gk);
       HEIGHT_UNIFORMS.uBend.value.set(Math.max(0, k), pose.tx, pose.tz, t.ground.hills.on ? t.ground.hills.amplitude : 0); // (w: the hills' amplitude, for the horizon test)
-      this.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground);
+      this.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground, g.witch.stargazing ? C.treetop * (B?.gazeBend ?? 0) : 0);
       HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); // the camera always looks north (toward -z)
       const far = t.haze.far;
       this.sky.update(k, pose.tx, pose.tz, far, 2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (this.width / this.height), this.updateMoon(g));

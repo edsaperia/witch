@@ -99,6 +99,14 @@
           "type": "number",
           "minimum": 0
         },
+        "gazeBend": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gazeEase": {
+          "type": "number",
+          "minimum": 0
+        },
         "shown": {
           "type": "number",
           "minimum": 0
@@ -146,6 +154,8 @@
         "sand",
         "sea",
         "restAfter",
+        "gazeBend",
+        "gazeEase",
         "shown",
         "witchChance",
         "spots",
