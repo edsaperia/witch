@@ -76,7 +76,7 @@ export interface Tuning {
    *  coloured moons (in windows of colourEvery seconds, a colourChance of one for colourTime, easing over colourFade; colours red, blue,
    *  gold as 0-1 rgb), tint (how much of its colour the moonlight takes, 0-1), and the dancefloor's moon before the first wave (floor). */
   moon: { phasePeriod: number; phaseStart: number; orbit: number; arcStart: number; left: number; right: number; low: number; high: number;
-    colourEvery: number; colourChance: number; colourTime: number; colourFade: number; colours: { red: number[]; blue: number[]; gold: number[] }; tint: number; /** The blood moon's own tint (it must read through the night grade's blue-violet pull: the rendering builder, #252). */ bloodTint: number;
+    colourEvery: number; colourChance: number; colourTime: number; colourFade: number; colours: { red: number[]; blue: number[]; gold: number[] }; tint: number; /** The blood moon's own tint (it must read through the night grade's blue-violet pull: the rendering builder, #252). */ bloodTint: number; /** The sky moon's size, times its old one. */ disc: number;
     /** The floor's moon: palette (dusky violet, slate blue, soft silver, 0-255 rgb), size (its radius, a share of the floor's), stars (a share of the
      *  sky around it twinkling), flare (seconds the full moon flares out into the party at the first wave). */
     floor: { palette: number[][]; size: number; stars: number; flare: number } };

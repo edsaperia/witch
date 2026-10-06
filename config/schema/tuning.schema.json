@@ -448,6 +448,10 @@
           "type": "number",
           "minimum": 0
         },
+        "disc": {
+          "type": "number",
+          "minimum": 0
+        },
         "floor": {
           "type": "object",
           "properties": {
@@ -499,6 +503,7 @@
         "colours",
         "tint",
         "bloodTint",
+        "disc",
         "floor"
       ],
       "additionalProperties": false

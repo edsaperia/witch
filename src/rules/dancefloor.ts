@@ -268,14 +268,16 @@ const SEAS: [number, number, number][] = [[-0.28, -0.3, 0.27], [0.18, -0.38, 0.1
  *  its lit side soft silver with slate seas, its dark side a faint dusky violet, and a few stars twinkling
  *  slowly round it. Waxing it fills from the right (as seen from the south), waning it empties from it. */
 export function moonTiles(rgbi: Uint8Array, phase: number, time: number, t: Tuning): void {
-  const F = t.moon.floor, P = F.palette, mr = R * F.size, xt = Math.cos(phase * Math.PI * 2), waxing = phase < 0.5;
+  const F = t.moon.floor, P = F.palette, mr = R * F.size, waxing = phase < 0.5, lit = 0.5 - 0.5 * Math.cos(phase * Math.PI * 2);
+  // the thinnest crescents at least two tiles at their widest, so they read from the ground camera (the art director, #252)
+  const xt = lit > 0.01 ? Math.min(Math.cos(phase * Math.PI * 2), 1 - 2 / mr) : Math.cos(phase * Math.PI * 2);
   const set = (n: number, c: number[], i: number) => { rgbi[n * 4] = c[0]; rgbi[n * 4 + 1] = c[1]; rgbi[n * 4 + 2] = c[2]; rgbi[n * 4 + 3] = i; };
   for (let n = 0; n < GRID * GRID; n++) {
     if (!MASK[n]) continue;
     const x = (n % GRID) + 0.5 - C, y = Math.floor(n / GRID) + 0.5 - C, d = Math.hypot(x, y);
     if (d < mr) {
-      const nx = x / mr, s = Math.sqrt(Math.max(0, 1 - (y / mr) ** 2)), lit = waxing ? nx > xt * s : nx < -xt * s;
-      if (lit) set(n, SEAS.some(([sx, sy, sr]) => Math.hypot(nx - sx, y / mr - sy) < sr * (0.85 + 0.3 * vnoise(x * 0.9, y * 0.9, 61))) ? P[1] : P[2], 2); // its seas in slate
+      const nx = x / mr, s = Math.sqrt(Math.max(0, 1 - (y / mr) ** 2)), on = waxing ? nx > xt * s : nx < -xt * s;
+      if (on) set(n, SEAS.some(([sx, sy, sr]) => Math.hypot(nx - sx, y / mr - sy) < sr * (0.85 + 0.3 * vnoise(x * 0.9, y * 0.9, 61))) ? P[1] : P[2], 2); // its seas in slate
       else if ((Math.floor(x + C) + Math.floor(y + C)) % 2 === 0) set(n, P[0], 1); // the dark side, faint (earthshine), in an even dither
     } else if (d > mr + 1.5) {
       // Stars, each with its own slow rate, coming and going.

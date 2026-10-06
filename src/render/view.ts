@@ -260,7 +260,7 @@ export class View {
     useHeightField(this.heights);
     this.heights.follow(game.witch.x, game.witch.z);
     this.ground = new Ground(game.map, game.forest, style, this.mpp);
-    this.sky = new Sky(t.sky);
+    this.sky = new Sky(t.sky, t.moon.disc);
     this.scene.add(this.sky.mesh);
     this.clouds = new Clouds(t.sky.clouds, t.sky.lightning, game.seed);
     this.scene.add(this.clouds.mesh, this.clouds.bolt);

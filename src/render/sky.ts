@@ -24,7 +24,7 @@ const FRAG = /* glsl */ `
 uniform vec2 uRes;
 uniform vec3 uHazeColour, uMoon, uMoonDir;
 uniform float uTime;
-uniform vec4 uSky;     // stars, moon
+uniform vec4 uSky;     // stars, moon, the moon's size (times the old)
 uniform vec4 uCam;     // the camera's focus x, z; how far ahead the top of the screen looks (m); width there (m)
 uniform float uShow;   // 0 to 1, with the bend
 uniform vec4 uMoonAt;  // the moon (rules/moon.ts): x, y on the screen (fractions), its phase (0 new, 0.5 full), how much of it is lit
@@ -54,7 +54,7 @@ void main() {
   // in its phase (waxing lit from the right, waning from the left; the dark side a faint earthshine)
   // and its colour. Below the far forest's line it is hidden behind it, so it rises and sets there.
   vec2 mc = uMoonAt.xy * uRes, md = px + 0.5 - mc;
-  float mr = max(4.0, uRes.y * 0.035), dm = length(md);
+  float mr = max(4.0, uRes.y * 0.035 * uSky.z), dm = length(md);
   if (uSky.y > 0.0) {
     col += uMoon * uMoonRgb * 0.27 * uSky.y * (0.25 + 0.75 * uMoonAt.w) * exp(-max(0.0, dm - mr) / (mr * 1.6)); // the halo, with how much is lit
     if (dm < mr) {
@@ -78,13 +78,13 @@ export class Sky {
 
   private on: boolean;
 
-  constructor(T: SkyTuning) {
+  constructor(T: SkyTuning, disc = 1) {
     this.on = T.on;
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3)); // one triangle over the screen
     this.u = {
       uRes: SPRITE_UNIFORMS.uRes, uHazeColour: LIGHT_UNIFORMS.uHazeColour, uMoon: LIGHT_UNIFORMS.uMoon, uMoonDir: LIGHT_UNIFORMS.uMoonDir, uTime: LIGHT_UNIFORMS.uTime,
-      uSky: { value: new THREE.Vector4(T.stars, T.moon, 0, 0) },
+      uSky: { value: new THREE.Vector4(T.stars, T.moon, disc, 0) },
       uCam: { value: new THREE.Vector4() }, uShow: { value: 0 },
       uMoonAt: { value: new THREE.Vector4(0.25, 0.86, 0.5, 1) }, uMoonRgb: { value: new THREE.Vector3(0.92, 0.94, 0.86) },
     };
