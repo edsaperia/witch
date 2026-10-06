@@ -64,7 +64,7 @@ function serve() {
     fs.mkdirSync(outDir, { recursive: true });
     await page.screenshot({ path: path.join(outDir, "ingame-ground.png") }); shrink(path.join(outDir, "ingame-ground.png"));
     log("ground shot");
-    await page.keyboard.press("Space");
+    await page.keyboard.press("KeyQ"); // (Q rises: Space is the dash now)
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 120000, polling: 100 }).catch(() => {});
     await wait(3); await page.waitForTimeout(5000);
     await page.screenshot({ path: path.join(outDir, "ingame-treetops.png") }); shrink(path.join(outDir, "ingame-treetops.png"));

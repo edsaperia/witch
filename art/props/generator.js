@@ -9,12 +9,13 @@ import { M, Sprite, hsv2rgb, hash2, rng } from "../core.js";
 import { Model, render, v3 } from "../model3d.js";
 import { witchPixelsPerUnit, cleanFlecks } from "../witch.js";
 import { PROP_GENOMES } from "./genomes.js";
+import { groundColours } from "../ground.js";
 
 const PR_U = 1 / 1.9; // model units a metre (the witch's model is about 1.9 m a unit)
 const prPick = (r, opts) => { const tot = opts.reduce((a, [, w]) => a + w, 0); let x = r() * tot; for (const [v, w] of opts) if ((x -= w) < 0) return v; return opts[0][0]; };
 // A variant: each range picked within (integers stay whole where both ends are), each list of options by weight; `over` fixes any.
-export function propVariant(kind, seed = 0, over = {}) {
-  const G = PROP_GENOMES[kind]; if (!G) throw new Error(`no prop kind "${kind}"`);
+export function propVariant(kind, seed = 0, over = {}, table = PROP_GENOMES) { // table: another set of genomes (the party's: PARTY_PROP_GENOMES)
+  const G = table[kind]; if (!G) throw new Error(`no prop kind "${kind}"`);
   const r = rng(((seed + 1) * 2654435761 + kind.length * 97) >>> 0), v = {};
   for (const [k, g] of Object.entries(G)) {
     if (k === "colour" || k === "bog") continue;
@@ -93,8 +94,10 @@ function prPool(m, v) {
   const mask = (s, t) => { // s across, t into the picture, both -1..1 over the prPool and its rim
     const a = Math.atan2(t, s), d = Math.hypot(s, t) / (1 + v.wobble + rimW), e = shore(a) / (1 + v.wobble + rimW);
     if (d > e + rimW / (1 + v.wobble + rimW)) return undefined;
-    if (d > e) return v.rimKind === "moss" ? M.MOSS : M.BARK2;
+    if (d > e) return v.rimKind === "moss" ? M.MOSS : d > e + rimW / (1 + v.wobble + rimW) * .5 ? M.BODY : M.BARK2; // mud: the ground's darker tone inside, its own tone outside
     if (glints.some(([gx, gy, gr]) => Math.abs(s - gx) < gr * 1.4 && Math.abs(t - gy) < gr * .5)) return M.GLINT; // glowing, so the stylisation leaves them be
+    if (t > -.1 && d > e - .07) return M.WEB; // a moonlit rim along the far shore (the art director, round 1: pools read as holes at night)
+    if (t > .12 && d < e * .93 && d > e * .3) return M.ACCENT; // a faint reflection of the sky in the far water
     return d < e * .55 ? M.BODY2 : M.WATER;
   };
   const S = R * (1 + v.wobble + rimW);
@@ -141,7 +144,69 @@ function prTrunk(m, v) {
   for (let i = 0; i < v.fungi; i++) { const a = -Math.PI / 2 + (r() - .5) * 2.4, y = H * (.2 + r() * .55), c = v3.add(axis(y), [Math.cos(a) * R0 * .85, 0, Math.sin(a) * R0 * .85]); m.ell(c, [R0 * .45, .025, R0 * .35], M.FLOWER, { dir: [Math.cos(a), 0, Math.sin(a)], group: 5 + i, paint: p => p[1] > c[1] + .012 ? M.BELLY : undefined }); }
   for (let k = 0; k < 4; k++) { const a = r() * Math.PI * 2, x = Math.cos(a) * R0 * 2, z = Math.sin(a) * R0 * 2; m.seg([x, 0, z], [x, .06 + r() * .1, z], .02, .005, k % 2 ? M.LEAF2 : M.LEAF, { group: 9 }); }
 }
-const PR_BUILD = { standingStone: prStanding, cairn: prCairn, pool: prPool, brokenTrunk: prTrunk };
+// ---- fallen log: a trunk or bough lying on the ground, sunk a little, bowed; bark grooves; moss along its top; its ends broken
+// to tapering splinters or sawn to rings; snapped stubs; bracket fungi on its near side ----
+function prLog(m, v) {
+  const r = v.r, L = v.length * PR_U, R = v.girth * PR_U, yaw = (r() - .5) * .7, cy = R * (1 - v.sink), bow = v.bend * L;
+  const ax = [Math.cos(yaw), 0, -Math.sin(yaw)], nz = [Math.sin(yaw), 0, Math.cos(yaw)], at = (t, up = 0, side = 0) => v3.add(v3.add(v3.mul(ax, (t - .5) * L), v3.mul(nz, side + bow * (1 - (2 * t - 1) ** 2))), [0, cy + up, 0]);
+  const grooves = p => { const d = v3.dot(p, nz), a = Math.atan2(p[1] - cy, d), k = Math.sin(a * 6 + v3.dot(p, ax) * 9); return p[1] > cy + R * (.55 - v.moss * .4) && gpPrCell(p, 9, 21) < .55 + v.moss * .4 ? M.MOSS : k > .82 ? M.BARKD : k < -.9 ? M.BARKL : undefined; };
+  const pts = [0, .25, .5, .75, 1].map(t => [...at(t), R * (1 - .12 * Math.abs(2 * t - 1))]);
+  m.chain(pts, M.TRUNK, { group: 1, rough: .006, paint: grooves });
+  const ends = v.ends === "mixed" ? ["broken", "sawn"] : [v.ends, v.ends];
+  for (const [t, sgn, kind] of [[0, -1, ends[0]], [1, 1, ends[1]]]) {
+    const c = at(t), dir = v3.mul(ax, sgn);
+    if (kind === "sawn") m.ell(v3.add(c, v3.mul(dir, .005)), [.012, R * .86, R * .86], M.BELLY, { dir, up: [0, 1, 0], group: 2, paint: p => (Math.floor(Math.hypot(...v3.sub(p, c)) / R * 4.5) & 1) ? M.ACCENT : undefined }); // its growth rings
+    else for (let i = 0; i < 3; i++) { const off = [(r() - .5) * R * .9, (r() - .3) * R * .8, (r() - .5) * R * .6], b = v3.add(c, off), len = R * (.9 + r() * 1.6) * (i ? .6 : 1); m.seg(b, v3.add(b, v3.mul(dir, len)), R * (.42 - i * .08), .004, M.BELLY, { group: 2, paint: p => v3.dot(v3.sub(p, b), dir) > len * .5 ? M.BARKL : undefined }); } // splinters, tapering
+  }
+  for (let i = 0; i < v.stubs; i++) { const t = .2 + r() * .6, a = (r() - .5) * 2.2, b = at(t, Math.cos(a) * R * .7, Math.sin(a) * R * .7), d = v3.norm([(r() - .5) * .6, Math.cos(a) * .8 + .3, Math.sin(a) * .8]), len = R * (1.2 + r() * 1.5); m.seg(b, v3.add(b, v3.mul(d, len)), R * .32, R * .08, M.TRUNK, { group: 1, paint: p => v3.dot(v3.sub(p, b), d) > len * .8 ? M.BELLY : grooves(p) }); }
+  for (let i = 0; i < v.fungi; i++) { const t = .2 + r() * .6, c = at(t, R * (r() - .2) * .6, R * .92); m.ell(c, [R * .5, .022, R * .38], M.FLOWER, { dir: nz, up: [0, 1, 0], group: 5 + i, paint: p => p[1] > c[1] + .01 ? M.BELLY : undefined }); }
+  for (let k = 0; k < 6; k++) { const t = r(), c = at(t, -cy, (r() < .5 ? 1 : -1) * R * (1.1 + r() * .5)); m.seg([c[0], 0, c[2]], [c[0], .06 + r() * .1, c[2]], .02, .005, k % 2 ? M.LEAF2 : M.LEAF, { group: 9 }); }
+}
+// ---- mushroom ring: toadstools round a ring of darker grass (or along an arc, or in a clump); red with white spots, brown, ochre, or pale with glowing gills ----
+function prMushrooms(m, v) {
+  const r = v.r, R = v.radius * PR_U, n = v.count, glow = v.cap === "glow";
+  if (v.form !== "clump") m.flat([0, .003, 0], [1, 0, 0], [0, 0, -1], R * 1.35, R * 1.35, (s, t) => { const d = Math.hypot(s, t) * 1.35; return d > .78 && d < 1.12 && hash2(Math.floor(s * 30 + 40), Math.floor(t * 30 + 40), 5) < .85 ? M.MOSS : undefined; }, { group: 1, bend: .05 }); // the darker ring of grass
+  for (let i = 0; i < n; i++) {
+    const a = v.form === "arc" ? -.3 + i / Math.max(1, n - 1) * 3.6 : i / n * Math.PI * 2 + (r() - .5) * .35, rr = v.form === "clump" ? R * .55 * Math.sqrt(r()) : R * (.92 + (r() - .5) * .2);
+    const x = Math.cos(a) * rr, z = Math.sin(a) * rr * .9, cs = v.size * PR_U * (1 + (r() - .5) * v.spread * .8), h = cs * (1 + r() * .7), lean = (r() - .5) * .3, top = [x + lean * h, h, z];
+    m.seg([x, 0, z], top, cs * .3, cs * .24, M.BELLY, { group: 10 + i });
+    const capC = v3.add(top, [0, cs * .15, 0]), spotted = r() < v.spots && !glow;
+    m.ell(capC, [cs, cs * (.5 + r() * .25), cs], M.FLOWER, { group: 10 + i, paint: p => p[1] < capC[1] - cs * .05 ? (glow ? M.MAGIC : M.BELLY) : spotted && gpPrCell(p, 1 / (cs * .55), i) < .22 ? M.WEB : undefined }); // its cap; gills under it (glowing on a glow cap)
+  }
+  for (let k = 0; k < 8; k++) { const a = r() * Math.PI * 2, x = Math.cos(a) * R * (.3 + r()), z = Math.sin(a) * R * (.3 + r()); m.seg([x, 0, z], [x, .05 + r() * .08, z], .018, .005, k % 2 ? M.LEAF2 : M.LEAF, { group: 40 }); }
+}
+// ---- stone circle: small standing stones round a ring, each turned along it, one or two leaning hard or fallen; a stone or slab in the middle ----
+function prCircle(m, v) {
+  const r = v.r, R = v.radius * PR_U, n = v.count, fallen = new Set([...Array(v.fallen).keys()].map(() => Math.floor(r() * n)));
+  m.flat([0, .003, 0], [1, 0, 0], [0, 0, -1], R * 1.15, R * 1.15 * .85, (s, t) => { const d = Math.hypot(s, t) * 1.15; return d < .92 + .08 * hash2(Math.floor(Math.atan2(t, s) * 4 + 20), 1, 9) ? M.LEAF3 : undefined; }, { group: 0, bend: .04 }); // the short, trodden grass inside it
+  const lichen = (p, g) => gpPrCell(p, 6, g) < .12 ? M.BELLY : p[1] < .05 + gpPrCell(p, 9, g + 3) * .05 ? M.MOSS : undefined;
+  for (let i = 0; i < n; i++) {
+    const a = i / n * Math.PI * 2 + (r() - .5) * .25, c = [Math.cos(a) * R, 0, Math.sin(a) * R * .85], h = v.height * PR_U * (.75 + r() * .5), w = v.width * PR_U * (.8 + r() * .4), d = w * (.4 + r() * .2), tan = [-Math.sin(a), 0, Math.cos(a)];
+    if (fallen.has(i)) { m.box(v3.add(c, [0, d * .8, 0]), [h * .5, d, w * .5], M.STONE, { dir: v3.norm(v3.add(tan, [Math.cos(a) * .4, 0, Math.sin(a) * .4])), up: [0, 1, 0], round: d * .5, group: 1 + i, paint: p => lichen(p, i) }); continue; }
+    const lean = (r() - .5) * 2 * v.lean, up = v3.norm([Math.cos(a) * lean, 1, Math.sin(a) * lean]);
+    m.box(v3.add(c, v3.mul(up, h * .5 - .02)), [h * .5, w * .5, d * .5], M.STONE, { dir: up, up: tan, round: Math.min(w, d) * .35, group: 1 + i, paint: p => lichen(p, i) });
+  }
+  if (v.centre === "stone") m.box([0, v.height * PR_U * .65, 0], [v.height * PR_U * .65, v.width * PR_U * .55, v.width * PR_U * .3], M.STONE, { dir: [0, 1, 0], up: [1, 0, .3], round: .04, group: 30, paint: p => lichen(p, 30) });
+  if (v.centre === "slab") m.box([0, .06, 0], [v.width * PR_U * 1.2, .05, v.width * PR_U * .7], M.STONE, { dir: [1, 0, .2], up: [0, 1, 0], round: .02, group: 30, paint: p => lichen(p, 31) });
+  for (let k = 0; k < 10; k++) { const a = r() * Math.PI * 2, rr = R * (.9 + r() * .3), x = Math.cos(a) * rr, z = Math.sin(a) * rr * .85; m.seg([x, 0, z], [x, .06 + r() * .12, z], .02, .005, k % 2 ? M.LEAF2 : M.LEAF, { group: 40 }); }
+}
+// ---- boulder: a few merged lumps, half sunk; a crack across it; moss over its top; big lichen patches; pebbles round its foot ----
+function prRock(m, v) {
+  const r = v.r, R = v.size * PR_U, H = R * v.flat, base = -R * v.sink, patches = [...Array(v.lichen).keys()].map(() => { const a = r() * Math.PI * 2; return [[Math.cos(a) * R * .8, base + H * (.6 + r() * .6), Math.sin(a) * R * .8 + R * .3], R * (.2 + r() * .15)]; });
+  const crackA = r() * Math.PI, cracked = r() < v.crack, mossH = base + H * 2 * (1 - v.moss);
+  const paint = p => p[1] > mossH + gpPrCell(p, 1 / (R * .25), 3) * R * .15 ? M.MOSS : cracked && Math.abs((p[0] * Math.cos(crackA) + p[2] * Math.sin(crackA)) + Math.sin(p[1] * 9) * R * .06) < R * .035 ? M.STONED : prInPatch(p, patches) ? M.BELLY : undefined;
+  for (let i = 0; i < v.lumps; i++) { const a = i / v.lumps * Math.PI * 2 + r(), off = i ? R * (.35 + r() * .3) : 0, k = i ? .55 + r() * .3 : 1; m.ell([Math.cos(a) * off, base + H * k, Math.sin(a) * off * .8], [R * k, H * k, R * k * (.75 + r() * .3)], M.STONE, { dir: [Math.cos(a * 2), (r() - .5) * .3, Math.sin(a * 2)], rough: .012, group: 1, paint }); }
+  for (let i = 0; i < v.pebbles; i++) { const a = r() * Math.PI * 2, d = R * (1.05 + r() * .5), s = R * (.08 + r() * .1); m.ell([Math.cos(a) * d, s * .4, Math.sin(a) * d * .85], [s, s * .6, s * .8], M.STONE, { rough: .01, group: 2 + i }); }
+  for (let k = 0; k < 6; k++) { const a = r() * Math.PI * 2, x = Math.cos(a) * R * 1.05, z = Math.sin(a) * R * .9; m.seg([x, 0, z], [x, .06 + r() * .1, z], .02, .005, k % 2 ? M.LEAF2 : M.LEAF, { group: 20 }); }
+}
+// ---- mound: a mound of moss or bare earth of a few lumps, tufts on top, a stone or two half buried ----
+function prHillock(m, v) {
+  const r = v.r, R = v.radius * PR_U, H = v.height * PR_U, moss = v.skin === "moss";
+  for (let i = 0; i < v.lumps; i++) { const a = i / v.lumps * Math.PI * 2 + r(), off = i ? R * (.3 + r() * .3) : 0, k = i ? .5 + r() * .3 : 1; m.ell([Math.cos(a) * off, -H * .25, Math.sin(a) * off * .8], [R * k, H * k * 1.25, R * k * .85], M.BODY, { dir: [Math.cos(a), 0, Math.sin(a)], rough: .01, group: 1, paint: p => gpPrCell(p, 1 / (R * .45), 5) < .25 ? M.BODY2 : undefined }); }
+  for (let i = 0; i < v.stones; i++) { const a = r() * Math.PI * 2, d = R * (.4 + r() * .4), s = R * (.12 + r() * .1); m.ell([Math.cos(a) * d, H * .35, Math.sin(a) * d * .8], [s, s * .6, s * .8], M.STONE, { group: 3 + i, rough: .01 }); }
+  for (let i = 0; i < v.tufts; i++) { const a = r() * Math.PI * 2, d = R * Math.sqrt(r()) * .8, x = Math.cos(a) * d, z = Math.sin(a) * d * .8, y = H * (1 - (d / R) ** 2) * .9; m.seg([x, y, z], [x + (r() - .5) * .04, y + .07 + r() * (moss ? .06 : .12), z], .02, .005, i % 2 ? M.LEAF2 : M.LEAF, { group: 10 }); }
+}
+const PR_BUILD = { standingStone: prStanding, cairn: prCairn, pool: prPool, brokenTrunk: prTrunk, fallenLog: prLog, mushroomRing: prMushrooms, stoneCircle: prCircle, boulder: prRock, mound: prHillock };
 
 function prCrop(sp) {
   let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
@@ -153,11 +218,19 @@ function prCrop(sp) {
 }
 // A colour from the genome: [h, s, v] jittered by the variant's spread (a list of [h, s, v, weight] picks one).
 function prTone(c, r, k) { if (Array.isArray(c[0])) c = prPick(r, c.map(x => [x, x[3] ?? 1])); return hsv2rgb(((c[0] + (r() - .5) * k * .5) % 1 + 1) % 1, Math.max(0, Math.min(1, c[1] + (r() - .5) * k)), Math.max(0, Math.min(1, c[2] + (r() - .5) * k * 1.5))); }
-function prColours(kind, v, def, o) {
+function prColours(kind, v, def, o, st = {}) {
   const G = PROP_GENOMES[kind], C = { ...G.colour, ...(o.bog && G.bog ? G.bog : {}) }, r = rng((v.seed * 7919 + 13) >>> 0), k = C.spread, leaf = def?.leaf ?? .26;
   const grass = { [M.LEAF]: hsv2rgb(leaf, .5, .45), [M.LEAF2]: hsv2rgb(leaf - .03, .45, .62), [M.LEAF3]: hsv2rgb(leaf + .02, .5, .4), [M.LINE]: [24, 22, 30] };
   if (kind === "standingStone" || kind === "cairn") { const dark = prTone(C.dark, r, k); return { ...grass, [M.STONE]: prTone(C.stone, r, k), [M.STONED]: dark, [M.BELLY]: prTone(C.lichen, r, k * .5), [M.MOSS]: prTone(C.moss, r, k), ...(kind === "cairn" ? { [M.LINE]: dark.map(c => c * .75) } : {}) }; } // a cairn's cracks in its stones' own dark
-  if (kind === "pool") return { ...grass, [M.WATER]: prTone(C.water, r, k), [M.BODY2]: prTone(C.deep, r, k), [M.GLINT]: prTone(C.glint, r, k * .5), [M.BARK2]: prTone(C.mud, r, k), [M.MOSS]: prTone(C.moss, r, k), [M.LEAF]: prTone(C.reed, r, k), [M.LEAF2]: prTone(C.reed2, r, k), [M.TRUNK]: prTone(C.cattail, r, k), [M.STONE]: prTone(C.stone, r, k), [M.LEAF3]: prTone(C.pad, r, k) };
+  if (kind === "pool") { // its shore in the area's own ground (art/ground.js: the mud its darker and own tones, the moss its moss), so it meets the floor tile
+    const g = def?.floor ? groundColours(def, st) : null;
+    return { ...grass, [M.WATER]: prTone(C.water, r, k), [M.BODY2]: prTone(C.deep, r, k), [M.ACCENT]: prTone(C.sky, r, k * .5), [M.WEB]: prTone(C.rim, r, k * .3), [M.GLINT]: prTone(C.glint, r, k * .5), [M.BARK2]: prTone(C.mud, r, k), [M.MOSS]: prTone(C.moss, r, k), [M.LEAF]: prTone(C.reed, r, k), [M.LEAF2]: prTone(C.reed2, r, k), [M.TRUNK]: prTone(C.cattail, r, k), [M.STONE]: prTone(C.stone, r, k), [M.LEAF3]: prTone(C.pad, r, k), ...(g ? { [M.BARK2]: g[M.BODY2], [M.BODY]: g[M.BODY], [M.MOSS]: g[M.MOSS] } : { [M.BODY]: prTone(C.mud, r, k).map(c => Math.min(255, c * 1.15)) }) };
+  }
+  if (kind === "boulder") { const dark = prTone(C.dark, r, k); return { ...grass, [M.STONE]: prTone(C[v.rock], r, k), [M.STONED]: dark, [M.BELLY]: prTone(C.lichen, r, k * .5), [M.MOSS]: prTone(C.moss, r, k), [M.LINE]: dark.map(c => c * .7) }; }
+  if (kind === "mound") { const g = def?.floor ? groundColours(def, st) : null, moss = v.skin === "moss"; return { ...grass, [M.BODY]: moss ? prTone(C.moss, r, k) : g ? g[M.BODY2] : prTone(C.earth, r, k), [M.BODY2]: moss ? prTone(C.moss2, r, k) : g ? g[M.BODY] : prTone(C.earth2, r, k), [M.STONE]: prTone(C.stone, r, k) }; } // bare earth in the floor's own tones
+  if (kind === "fallenLog") return { ...grass, [M.TRUNK]: prTone(C.wood, r, k), [M.BARKD]: prTone(C.dark, r, k), [M.BARKL]: prTone(C.light, r, k), [M.BELLY]: prTone(C.pale, r, k * .5), [M.ACCENT]: prTone(C.rings, r, k * .5), [M.MOSS]: prTone(C.moss, r, k), [M.FLOWER]: prTone(C.fungus, r, k) };
+  if (kind === "mushroomRing") { const g = def?.floor ? groundColours(def, st) : null; return { ...grass, [M.FLOWER]: prTone(C[v.cap], r, k), [M.BELLY]: prTone(C.stem, r, k * .5), [M.WEB]: prTone(C.spot, r, k * .3), [M.MAGIC]: prTone(C.gill, r, k * .3), [M.MOSS]: g ? g[M.BODY2] : prTone(C.ring, r, k) }; } // its ring in the floor's darker tone
+  if (kind === "stoneCircle") { const dark = prTone(C.dark, r, k), g = def?.floor ? groundColours(def, st) : null; return { ...grass, [M.LEAF3]: g ? g[M.BELLY] : prTone(C.grass, r, k), [M.STONE]: prTone(C.stone, r, k), [M.STONED]: dark, [M.BELLY]: prTone(C.lichen, r, k * .5), [M.MOSS]: prTone(C.moss, r, k), [M.LINE]: dark.map(c => c * .75) }; }
   return { ...grass, [M.TRUNK]: prTone(C.wood, r, k), [M.BARKD]: prTone(C.dark, r, k), [M.BARKL]: prTone(C.light, r, k), [M.BELLY]: prTone(C.pale, r, k * .5), [M.MOSS]: prTone(C.moss, r, k), [M.FLOWER]: prTone(C.fungus, r, k) };
 }
 // One generated prop. o: { seed, bog (a pool's), and any of its genome's numbers to fix }; def: the area (its leaf hue for grass).
@@ -166,19 +239,30 @@ export function propPiece(kind, o = {}, def = null, st = {}, ppm = 16) {
   if (kind === "standingStone") { v.lichenMat = M.BELLY; if (o.lead) { v.shape = "tall"; v.height = Math.max(v.height, 5.2); v.lean *= .5; if (v.top === "broken" || v.top === "notch") v.top = "flat"; } } // lead: an area's first stone stands tall and whole (the moor's something 4 m tall)
   const m = new Model({ blend: kind === "brokenTrunk" ? .06 : .035 });
   PR_BUILD[kind](m, v);
-  const sp = prCrop(render(m, { scale: witchPixelsPerUnit(st) }).sp);
+  let sp = prCrop(render(m, { scale: witchPixelsPerUnit(st) }).sp);
+  if (kind === "pool") { // its shore breaks into the floor: the outermost rim pixels (touching nothing) dropped in 2 x 1 clusters, by hash (agreed with art builder 1, #156)
+    const rim = new Set([M.BODY, M.BARK2, M.MOSS]), at = (x, y) => x < 0 || y < 0 || x >= sp.w || y >= sp.h ? 0 : sp.m[y * sp.w + x], drop = [];
+    for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const m0 = at(x, y); if (!rim.has(m0) || (at(x - 1, y) && at(x + 1, y) && at(x, y - 1) && at(x, y + 1))) continue; if (hash2(x >> 1, y, v.seed + 77) < .5) drop.push(y * sp.w + x, y * sp.w + (x ^ 1)); }
+    for (const i of drop) if (rim.has(sp.m[i])) sp.m[i] = 0;
+    sp = prCrop(sp); // (thinned, it may have lost its bottom row)
+  }
   cleanFlecks(sp); // no lone pixels or stray line dots (docs/ART-GUIDE.md: clusters, not noise)
   // a pool's water lit as a level surface at a grazing light, so every style gives it its base tone (the light tone's shift toward
   // yellow turned the teal moss-green in bold and ref: the art director, #142) and its value stays well apart from its rim
-  if (kind === "pool") { const wn = [.3, .2, .93], l = Math.hypot(...wn); for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.WATER || sp.m[i] === M.BODY2) sp.n.set(wn.map(c => c / l), i * 3); }
+  if (kind === "pool") { const wn = [.2, 0, .98], /* lit at about .4 of the light: the base tone in bold and ref, and never black in the plain style */ l = Math.hypot(...wn); for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.WATER || sp.m[i] === M.BODY2 || sp.m[i] === M.ACCENT || sp.m[i] === M.WEB) sp.n.set(wn.map(c => c / l), i * 3); }
   const { r, ...variant } = v;
-  return { sp, colours: prColours(kind, v, def, o), metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1) }, variant };
+  return { sp, colours: prColours(kind, v, def, o, st), metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1) }, variant };
 }
 // Which generated kind (and fixed numbers) stands in for one of the areas' hand-made props under ?props=gen, or null.
 export function propFor(kind, o = {}) {
   if (kind === "standingstone") return ["standingStone", o.lean ? { lean: o.lean } : {}];
-  if (kind === "cairn") return ["cairn", o.tall ? { height: 1.6, stones: 12, spread: 1.2 } : {}];
+  if (kind === "cairn") return ["cairn", o.tall ? { height: 2.6, stones: 15, spread: 1.5, size: .38 } : {}]; // the stone shrine's tall cairn stays a tall cone
   if (kind === "water" && !o.stream) return ["pool", { bog: !!o.bog, ...(o.w ? { radius: .6 * o.w } : {}) }];
+  if (kind === "boulder") return ["boulder", { ...(o.big ? { size: 1.3 } : {}), ...(o.moss ? { moss: .45 } : {}) }];
+  if (kind === "mound") return ["mound", { skin: o.moss ? "moss" : o.brown ? "earth" : "moss", ...(o.small ? { radius: .45, height: .28, lumps: 2 } : {}) }];
+  if (kind === "log") return ["fallenLog", o.giant ? { length: 6, girth: .62, moss: .8, fungi: 3, ends: "broken" } : o.branch ? { length: 1.5, girth: .1, stubs: 2, fungi: 0 } : o.rot ? { moss: .75, fungi: 3 } : {}];
+  if (kind === "fungi") return ["mushroomRing", {}];
+  if (kind === "henge") return ["stoneCircle", o.scale ? { radius: 2.2 * o.scale } : {}];
   if (kind === "stump" && !o.gnawed) return ["brokenTrunk", o.snag ? {} : { branch: "none" }];
   return null;
 }
