@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b0a16">
   <title>Witch — prototype</title>
   <style>
-    :root { --ink: #e8e2f4; --dim: #9a93b4; --panel: rgba(14, 11, 28, .82); --accent: #ff7fd0; }
+    :root { --ink: #e8e2f4; --dim: #9a93b4; --panel: rgba(14, 11, 28, .82); --accent: #e8b46a; --accent-dim: rgba(232, 180, 106, .45); --love: #d9789e; --loss: #d8606e; } /* the HUD in the art's palette (art review round 1): one accent, lantern amber; love (💌, hearts) and loss muted */
     html, body { margin: 0; height: 100%; background: #0b0a16; overflow: hidden; color: var(--ink); font: 14px/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
     #game { position: fixed; left: 0; top: 0; image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
     #seed { position: fixed; left: 10px; bottom: 8px; color: var(--dim); font-size: 12px; text-shadow: 0 1px 0 #000; pointer-events: auto; }
@@ -21,17 +21,17 @@
     #fight-knobs.on { display: grid; grid-template-columns: auto 120px 34px; gap: 4px 8px; align-items: center; }
     #fight-knobs button { grid-column: 1 / -1; font: inherit; color: var(--ink); background: transparent; border: 1px solid #3a2f5c; border-radius: 6px; padding: 3px 8px; }
     #debug-buttons button { font: inherit; font-size: 12px; color: var(--ink); background: var(--panel); border: 1px solid #3a2f5c; border-radius: 6px; padding: 6px 10px; }
-    #wave { position: fixed; right: 12px; top: 18%; height: 40%; width: 8px; border: 1px solid rgba(232, 226, 244, .35); border-radius: 4px; background: rgba(14, 11, 28, .45); pointer-events: none; }
-    #wave .fill { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(#ff7fd0, #6fe6ff); border-radius: 3px; }
+    #wave { position: fixed; right: 12px; top: 18%; height: 40%; width: 6px; border: 1px solid rgba(232, 226, 244, .22); border-radius: 4px; background: rgba(14, 11, 28, .45); pointer-events: none; }
+    #wave .fill { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(var(--accent), #a87a48); border-radius: 3px; opacity: .85; }
     #wave .label { position: absolute; right: 14px; bottom: 0; white-space: nowrap; color: var(--dim); font-size: 11px; text-align: right; text-shadow: 0 1px 0 #000; }
     #wave.paused .fill { opacity: .4; }
     /* A soundsystem lost: the bar shrinks to its new countdown with a red flash, and the seconds taken off pop out beside it. */
     #wave.lost { animation: wave-lost .9s ease-out; }
     #wave.lost .fill { transition: height .45s cubic-bezier(.3, 1.6, .5, 1); animation: wave-lost-fill .9s ease-out; }
-    @keyframes wave-lost { 0%, 30% { border-color: #ff4060; box-shadow: 0 0 14px #ff4060; } }
-    @keyframes wave-lost-fill { 0%, 30% { left: -4px; right: -4px; background: #ff4060; filter: brightness(1.8); } 100% { filter: none; } }
-    #wave .loss-pop { position: absolute; right: 16px; transform: translateY(50%); white-space: nowrap; color: #ff5a78; font-weight: bold; font-size: 15px; text-shadow: 0 0 6px #ff2050, 0 1px 0 #000; animation: loss-pop 1.8s ease-out forwards; }
-    #wave .boot-pop { position: absolute; right: 16px; top: 0; white-space: nowrap; color: #8ff0ff; font-size: 13px; text-shadow: 0 0 6px #2bc8ff, 0 1px 0 #000; animation: boot-pop 4s ease-out forwards; }
+    @keyframes wave-lost { 0%, 30% { border-color: var(--loss); box-shadow: 0 0 8px var(--loss); } }
+    @keyframes wave-lost-fill { 0%, 30% { left: -4px; right: -4px; background: var(--loss); filter: brightness(1.3); } 100% { filter: none; } }
+    #wave .loss-pop { position: absolute; right: 16px; transform: translateY(50%); white-space: nowrap; color: var(--loss); font-weight: bold; font-size: 13px; text-shadow: 0 1px 0 #000; animation: loss-pop 1.8s ease-out forwards; }
+    #wave .boot-pop { position: absolute; right: 16px; top: 0; white-space: nowrap; color: var(--accent); font-size: 12px; text-shadow: 0 1px 0 #000; animation: boot-pop 4s ease-out forwards; }
     @keyframes boot-pop { 0% { opacity: 0; } 10%, 75% { opacity: 1; } 100% { opacity: 0; } }
     @keyframes loss-pop { 0% { opacity: 0; transform: translateY(50%) scale(1.8); } 12% { opacity: 1; transform: translateY(50%) scale(1); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-120%); } }
     .touch #wave { top: 12%; height: 30%; }
@@ -65,7 +65,7 @@
     #stick.on { display: block; }
     #stick .knob { position: absolute; left: 32px; top: 32px; width: 48px; height: 48px; border-radius: 50%; background: rgba(232, 226, 244, .35); }
     .tbtn { position: absolute; pointer-events: auto; border-radius: 50%; border: 2px solid rgba(232, 226, 244, .45); background: rgba(14, 11, 28, .45); color: var(--ink); display: flex; align-items: center; justify-content: center; text-align: center; }
-    .tbtn.down { background: rgba(255, 127, 208, .45); }
+    .tbtn.down { background: var(--accent-dim); }
     #rise { right: 22px; bottom: 30px; width: 86px; height: 86px; font-size: 12px; }
     #zoom-in, #zoom-out { width: 46px; height: 46px; font-size: 22px; right: 42px; }
     #zoom-in { bottom: 186px; }
@@ -92,9 +92,9 @@
     .bubble.dream::before { background: rgba(14, 10, 30, .62); z-index: -1; }
     .bubble.dream.nightmare::before { background: rgba(40, 6, 12, .7); }
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
-    .bubble .bar i { display: block; height: 100%; background: #ff7fd0; }
+    .bubble .bar i { display: block; height: 100%; background: var(--love); }
   </style>
-  <script type="module" crossorigin src="./assets/index-CgNP0ohJ.js"></script>
+  <script type="module" crossorigin src="./assets/index-CFsIwkbA.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-jTHfrA97.css">
 </head>
 <body>
@@ -129,7 +129,7 @@
       <div id="shake-opt"></div>
       <div id="news"></div>
       <div class="keys">
-        <b>Keyboard and mouse</b> WASD (or the arrow keys) fly · the mouse aims · on the ground, left click (or hold 1) throws 💌 invites at the cursor: enough of them win a creature over (enraged ones and legends block them) · right click dodges: a 10 m blink on the ground (Space too) · Q rises to the treetops or lands · E on the ground puts down / picks up a sigil, in the treetops cycles the stack (the bottom sigil to the top) · R spell (speed boost) · 2–4 empty slots for now · Z/X or +/− zoom · H hides the action bar · Esc pauses everything (a still for screenshots, with a stamp of where you are; while paused . steps a frame, Shift+. ten; ❚❚ by the volume on touch) · ~ debug · N next wave · P pause waves · I invite nearest (debug) · [ ] fight scale, ; ' fight speed, , . fight momentum (debug: in the ~ panel too)<br>
+        <b>Keyboard and mouse</b> WASD (or the arrow keys) fly · the mouse aims (the ring at the cursor glows pink within a 💌's reach, and a blue arc fills round it while the dodge recharges) · on the ground, left click (or hold 1) throws 💌 invites at the cursor: enough of them win a creature over (enraged ones and legends block them) · right click dodges: a 10 m blink on the ground (Space too; pressed a moment early, it goes as soon as it can) · Q rises to the treetops or lands · E on the ground puts down / picks up a sigil, in the treetops cycles the stack (the bottom sigil to the top) · R spell (speed boost) · 2–4 empty slots for now · Z/X or +/− zoom · H hides the action bar · Esc pauses everything (a still for screenshots, with a stamp of where you are; while paused . steps a frame, Shift+. ten; ❚❚ by the volume on touch) · ~ debug · N next wave · P pause waves · I invite nearest (debug) · [ ] fight scale, ; ' fight speed, , . fight momentum (debug: in the ~ panel too)<br>
         <b>Gamepad</b> left stick flies · right stick aims and a trigger throws 💌s · A dash · B spell · X sigil (on the ground) or cycle (in the treetops) · Y rises or descends · shoulder buttons zoom · Start pauses<br>
         <b>Phone</b> drag on the left to fly · the round button rises or descends · the 💌 button throws invites the way you're going · sigil puts down or picks up (on the ground) or cycles (in the treetops) · spell and dash · three-finger tap for debug
       </div>
