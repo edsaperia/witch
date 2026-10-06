@@ -137,6 +137,10 @@ export interface ForestMap {
   hardClear(x: number, z: number): boolean;
   /** How far (x, z) is out of its area's fighting arena: 0 in its open middle, rising smoothly over its band to 1 (tuning arena); `cell` if known. */
   arenaOpen(x: number, z: number, cell?: Cell): number;
+  /** Each area's sleeping legend's clearing (not home's: it has no legend), or null where none fits. */
+  legendClearing(cx: number, cy: number): LegendClearing | null;
+  /** Every legend's clearing (for the drawing: its ground ring, and the rendering's twilight and motes). */
+  readonly legendClearings: readonly LegendClearing[];
   /** Pairs of areas that touch, as "cx,cy|cx,cy" keys, for tests and the debug view. */
   readonly neighbours: ReadonlyMap<string, ReadonlySet<string>>;
   /** Paths, roads and railways, with the corridors they keep clear. */
@@ -147,6 +151,9 @@ export interface ForestMap {
 export interface Ground { kind: string; x: number; z: number; r: number; flip: boolean }
 /** A scene (art/scenes.js) on the map: its id, middle, footprint radius, and whether it's mirrored. */
 export interface Scene { id: string; x: number; z: number; r: number; mirror: boolean }
+/** An area's sleeping legend's clearing (Ed, 2026-10-06): a small circle (x, z, radius r metres) where
+ *  nothing grows or stands, the legend lying near its far (north) side at legend; edge: its ring's width. */
+export interface LegendClearing { cell: Cell; x: number; z: number; r: number; edge: number; legend: { x: number; z: number } }
 
 type SceneDef = { id: string; size: string; suits?: string[]; pieces: [string, number, number, string?][] };
 const SCENES = SCENES_RAW as unknown as SceneDef[], SCENE_BY_ID = SCENE_BY_ID_RAW as unknown as Record<string, SceneDef>;
@@ -334,9 +341,10 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     pieceSpots.set(key, spot);
     return spot;
   };
-  const grounds: Ground[] = [], scenes: Scene[] = [];
+  const grounds: Ground[] = [], scenes: Scene[] = [], clearings = new Map<string, LegendClearing>();
   const reserved = (x: number, z: number, r: number) => {
     const gap = tuning.reserveMargin, cell = areaAt(x, z).cell;
+    for (const c of clearings.values()) if (Math.abs(x - c.x) < r + c.r + gap && Math.abs(z - c.z) < r + c.r + gap && Math.hypot(x - c.x, z - c.z) < r + c.r + gap) return true;
     if (Math.hypot(x - centre.x, z - centre.z) < r + floorClear + gap) return true;
     if (Math.hypot(x - treehouse.x, z - treehouse.z) < r + TH.clear + gap) return true;
     for (const g of grounds) if (Math.hypot(x - g.x, z - g.z) < r + g.r + gap) return true;
@@ -351,6 +359,8 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   };
   const hardCell = (x: number, z: number, cell: Cell) => {
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return true;
+    const lc = clearings.get(cellKey(cell[0], cell[1]));
+    if (lc && Math.hypot(x - lc.x, z - lc.z) < lc.r) return true; // a sleeping legend's clearing
     if (Math.hypot(x - treehouse.x, z - treehouse.z) < TH.clear) return true;
     for (const g of grounds) if (Math.abs(x - g.x) < g.r && Math.abs(z - g.z) < g.r && Math.hypot(x - g.x, z - g.z) < g.r) return true;
     for (const c of scenes) if (Math.abs(x - c.x) < c.r && Math.abs(z - c.z) < c.r && Math.hypot(x - c.x, z - c.z) < c.r * 0.85) return true; // a scene's ground is clear of trees
@@ -395,6 +405,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     bounds: { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad },
     extent: { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A },
     typeOf, areaAt, cellSafe, siteOf, treeWeight, arenaOpen, hardClear, neighbours, setPieceOf, soundsystemSpot, setPieceSpot, reserved, remoteness,
+    legendClearing: (cx: number, cy: number) => clearings.get(cellKey(cx, cy)) ?? null, legendClearings: [] as LegendClearing[],
     paths: null as unknown as PathNetwork,
   };
   // The paths first (their lines need only the areas), so soundsystems, set pieces and the
@@ -433,8 +444,58 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
       if (inCell(x, z, cx, cy) && !reserved(x, z, r) && !map.paths.at(x, z, r * 0.7)) { scenes.push({ id: sc.id, x, z, r, mirror: hash2(cx, cy, seed + 887) < 0.5 }); usedScenes.add(sc.id); break search; }
     }
   }
+  // Each area's sleeping legend's clearing (Ed, 2026-10-06: "Sleeping legends should be in a small
+  // circular clearing, where they sit near the top of the circle"): out from the area's middle
+  // (where the legend always lay), wholly inside its own area and the map, clear of everything
+  // placed before it and of the paths; sized to its legend. Placed after the scenes, before the
+  // paths' pieces, so those and all later scenery (trees, decor, berries) keep out of it.
+  const LC = tuning.legendClearing;
+  for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) {
+    if (cx === centreCell[0] && cy === centreCell[1]) continue;
+    const species = AREA_TYPES[typeOf(cx, cy)].creature, r0 = LC.species[species] ?? LC.radius;
+    let r = r0;
+    const site = siteOf(cx, cy), a0 = hash2(cx, cy, seed + 891) * Math.PI * 2;
+    const B = map.bounds, fits = (x: number, z: number) => {
+      if (x < B.minX + 15 || x > B.maxX - 15 || z < B.minZ + 15 || z > B.maxZ - 15 || !inCell(x, z, cx, cy)) return false; // (its middle where she can fly)
+      for (let k = 0; k < 16; k++) { const b = (k / 16) * Math.PI * 2; if (!inCell(x + Math.cos(b) * r, z + Math.sin(b) * r, cx, cy)) return false; }
+      return !reserved(x, z, r) && !map.paths.at(x, z, r * pathK);
+    };
+    // (the paths kept wholly out at first; failing that, one may graze its rim)
+    let pathK = 1;
+    search: for (pathK of [1, 0.6]) for (const f of [0.4, 0.3, 0.5, 0.22, 0.6, 0.15, 0.7, 0.08]) for (let k = 0; k < 16; k++) {
+      const b = a0 + (k / 16) * Math.PI * 2, x = site.x + Math.cos(b) * A * f, z = site.z + Math.sin(b) * A * f;
+      if (fits(x, z)) { clearings.set(cellKey(cx, cy), { cell: [cx, cy], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } }); break search; }
+    }
+    // Failing that (an area at the map's edge, or one whose ground lies off its middle): anywhere it fits in the area, nearest the usual distance first.
+    if (!clearings.has(cellKey(cx, cy))) {
+      // round a point surely in the area (its ground can lie well off its middle)
+      let ox = site.x, oz = site.z;
+      if (!inCell(ox, oz, cx, cy)) found: for (let d = 4; d < A * 1.6; d += 4) for (let k = 0; k < 24; k++) { const b = (k / 24) * Math.PI * 2, x = site.x + Math.cos(b) * d, z = site.z + Math.sin(b) * d; if (inCell(x, z, cx, cy)) { ox = x; oz = z; break found; } }
+      const grid: [number, number, number][] = [];
+      for (let i = -14; i <= 14; i++) for (let j = -14; j <= 14; j++) { const x = ox + i * A * 0.08, z = oz + j * A * 0.08; grid.push([x, z, Math.abs(Math.hypot(x - ox, z - oz) - A * 0.4)]); }
+      grid.sort((p, q) => p[2] - q[2]);
+      pathK = 0.6;
+      // (and in a tight area, a smaller circle: the legend fills it more)
+      sized: for (const k of [1, 0.8, 0.65]) { r = r0 * k; for (const [x, z] of grid) if (fits(x, z)) { clearings.set(cellKey(cx, cy), { cell: [cx, cy], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } }); break sized; } }
+    }
+  }
+  map.legendClearings = [...clearings.values()];
   map.paths.placePieces();
   return map;
+}
+
+/** The legends' clearings nearest (x, z), up to out's length or 6, nearest first, into out (reused, so no
+ *  garbage a frame); only those within 400 m. For the drawing (the ground's rings, the twilight) and the rules. */
+export function nearestClearings(all: readonly LegendClearing[], x: number, z: number, out: LegendClearing[], max = 6): LegendClearing[] {
+  out.length = 0;
+  for (const c of all) {
+    const d = Math.hypot(c.x - x, c.z - z);
+    if (d > 400) continue;
+    let i = out.length;
+    while (i > 0 && Math.hypot(out[i - 1].x - x, out[i - 1].z - z) > d) i--;
+    if (i < max) { out.splice(i, 0, c); if (out.length > max) out.length = max; }
+  }
+  return out;
 }
 
 /** A scene's footprint radius (metres), from its pieces' authored offsets: a little more than the

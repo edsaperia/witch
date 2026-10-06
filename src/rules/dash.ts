@@ -63,12 +63,18 @@ export function dashCharge(d: DashState, time: number): number {
 
 type Bounds = { minX: number; maxX: number; minZ: number; maxZ: number };
 
-/** The dash button: blink if she's on the ground, off her seat and it's ready. `clear(x, z)` says
- *  whether she can stand there. Returns whether she did. */
-export function startDash(d: DashState, w: WitchState, moveX: number, moveZ: number, time: number, t: Tuning, bounds: Bounds, clear: (x: number, z: number) => boolean = () => true, max = 1, chain = 0): boolean {
+/** The dash button: blink if she's on the ground, off her seat and it's ready, toward the cursor
+ *  (`aimX`, `aimZ`: the ground under it from her, metres; 0, 0 with none) or, with none, the way she
+ *  steers. `clear(x, z)` says whether she can stand there. Returns whether she did. */
+export function startDash(d: DashState, w: WitchState, moveX: number, moveZ: number, time: number, t: Tuning, bounds: Bounds, clear: (x: number, z: number) => boolean = () => true, max = 1, chain = 0, aimX = 0, aimZ = 0): boolean {
   rechargeDash(d, time, max, t.dash.cooldown);
   if (time < d.readyAt || d.charges < 1 || w.mode !== "ground" || w.seated) return false;
   let dx = moveX, dz = moveZ, len = Math.hypot(dx, dz);
+  const al = Math.hypot(aimX, aimZ);
+  // Toward the cursor (Ed's playtest, 2026-10-06: "dash should be in the direction of your cursor"):
+  // the ground under it from her (aimX, aimZ), or the way she faces when it's on her; with nothing
+  // to aim by (touch), the way she's steering, flying or facing, as before.
+  if (t.dash.toCursor && al > 0) { if (al >= t.dash.aimDead) { dx = aimX; dz = aimZ; len = al; } else { dx = w.facing; dz = 0; len = 1; } }
   if (len < 0.1) { dx = w.vx; dz = w.vz; len = Math.hypot(dx, dz); }
   if (len < 0.1) { dx = w.facing; dz = 0; len = 1; }
   const D = t.dash;
