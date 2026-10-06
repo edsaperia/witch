@@ -497,7 +497,7 @@ const report = await b.page.evaluate(async () => {
       }
       if (new Set(rim.map(b => b.sp.w + "x" + b.sp.h)).size < 3) bad.push(`${def.id}: rim pieces under 3 shapes`);
     }
-    for (const [id, want] of [["moor", true], ["ravine", true], ["rocky-slope", true], ["fern-forest", false], ["ancient", false], ["bluebell-glade", false]]) {
+    for (const [id, want] of [["moor", true], ["ravine", true], ["rocky-slope", true], ["fern-forest", false], ["hazel-forest", false], ["bluebell-glade", false]]) {
       const forms = [...Array(G.RIM_PIECES).keys()].map(k => G.rimForm(G.AREA_BY_ID[id], k)), share = forms.filter(f => stony.has(f)).length / forms.length;
       if (want ? share < .5 : share > .5) bad.push(`${id}'s rim ${forms.join(",")}`);
     }

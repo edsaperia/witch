@@ -285,9 +285,15 @@ const RIM_STONY_FLOORS = new Set(["stony", "scree", "stone", "gravel", "rock"]);
 const rimWooded = def => !!def?.big?.some(b => b[0] === "tree") && !RIM_STONY_FLOORS.has(def?.floor?.[0]) && !def?.layout?.terrain?.includes("rocky");
 const rimAreaSeed = def => [...(def?.id ?? "")].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 99991, 3);
 /** The form of an area's k-th rim piece (seeded by the area and k, weighted by RIM_GENOMES.forms). */
-export function rimForm(def, k) {
-  const w = rimWooded(def) ? 1 : 0, opts = Object.entries(RIM_GENOMES.forms).map(([f, ws]) => [f, ws[w]]);
-  return prPick(rng((rimAreaSeed(def) * 7 + k * 131 + 17) >>> 0), opts);
+export function rimForm(def, k, n = 6) { return rimForms(def, n)[k % n]; }
+/** An area's n rim forms: dealt by the forms' weights (largest remainder, ties by the area's seed), so its mix follows them, in a seeded order. */
+export function rimForms(def, n = 6) {
+  const w = rimWooded(def) ? 1 : 0, r = rng((rimAreaSeed(def) * 7 + 17) >>> 0), opts = Object.entries(RIM_GENOMES.forms).map(([f, ws]) => [f, ws[w]]), tot = opts.reduce((a, [, x]) => a + x, 0);
+  const share = opts.map(([f, x]) => ({ f, q: x / tot * n, j: r() * .01 })), out = [];
+  for (const o of share) for (let i = 0; i < Math.floor(o.q); i++) out.push(o.f);
+  for (const o of [...share].sort((a, b) => (b.q % 1 + b.j) - (a.q % 1 + a.j))) { if (out.length >= n) break; out.push(o.f); }
+  for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
+  return out;
 }
 /** An area's k-th rim piece's seed (its shape), its own in every area. */
 export const rimSeed = (def, k) => rimAreaSeed(def) * 13 + k * 17 + 5;
