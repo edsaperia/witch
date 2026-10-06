@@ -6955,6 +6955,30 @@
       ],
       "additionalProperties": false
     },
+    "partyOver": {
+      "type": "object",
+      "properties": {
+        "ease": {
+          "type": "number",
+          "minimum": 0
+        },
+        "leyFloor": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "walk": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "ease",
+        "leyFloor",
+        "walk"
+      ],
+      "additionalProperties": false
+    },
     "wildLegends": {
       "type": "object",
       "properties": {
@@ -7247,6 +7271,7 @@
     "population",
     "dreams",
     "legends",
+    "partyOver",
     "wildLegends",
     "creatureSimRadius",
     "simLod",

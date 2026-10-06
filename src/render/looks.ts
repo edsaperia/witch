@@ -57,6 +57,7 @@ export const isDazed = (c: Creature, time: number) => ((c as WithState).dazedUnt
 
 /** Whether it dances on the beat: party animals, and happy ones in an area with a soundsystem. */
 export function dances(g: Game, c: Creature): boolean {
+  if (c.asleep) return false; // (asleep: the party's over, rules/partyOver.ts)
   if (c.leashed || c.partyLegend) return true; // (a party legend dances where it stands: the Easter egg)
   return lookOf(c) === "happy" && g.party.areas.has(cellKey(c.cell)) && !g.combat.ruined.has(cellKey(c.cell)) && !c.fight;
 }
