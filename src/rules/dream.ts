@@ -23,7 +23,7 @@ export const questOpen = (_party: PartyState, c: Creature): boolean => {
  *  from (x, z); null if the map has none. */
 export function dreamStone(map: ForestMap, species: string, x: number, z: number): { cell: Cell; x: number; z: number } | null {
   let best: Cell | null = null, bd = Infinity;
-  for (let i = 0; i < map.n; i++) for (let j = 0; j < map.n; j++) {
+  for (const [i, j] of map.cells) {
     if (AREA_TYPES[map.typeOf(i, j)].creature !== species) continue;
     const s = map.siteOf(i, j), d = Math.hypot(s.x - x, s.z - z);
     if (d < bd) { bd = d; best = [i, j]; }

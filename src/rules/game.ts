@@ -17,6 +17,7 @@ import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
 import { castPartySpell, cellKey, heldBySpell, hurryWave, newParty, speakersOn, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
+import { exitPoint } from "./mapShape";
 import { nextSpeakerState, type SpeakerState } from "./speakers";
 import { moonState } from "./moon";
 import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
@@ -217,7 +218,7 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
 /** The affection rules the 💌s and the view use (issue #87): the state machine's meter
  *  (rules/affection.ts). A full meter makes a wild one happy; filled again (states.leash "again"),
  *  a happy one is leashed. How many letters fill it is the tuning's invites.hits (buffs change it);
- *  the per-animal hit gap is rules/invites.ts's (invites.perAnimalHitGap). */
+ *  every 💌 that lands counts (no per-animal gap since 2026-10-06: her firing rate sets the pace). */
 export const affectionOf = (g: Game): Affection => {
   const t = g.buffs?.tuning ?? g.tuning, s = g.witches[0].invites, data = { ...STATES, affection: { ...STATES.affection, hits: t.invites.hits, gap: 0 } };
   return {
@@ -565,9 +566,7 @@ function coarseMarchers(g: Game, active: Creature[], t: Tuning, dt: number): Set
  *  off the countdown, "all waves sooner is the wrong kind of penalty"). */
 /** Where something running off the map heads: just past its nearest edge. */
 function mapExit(map: ForestMap, x: number, z: number): { x: number; z: number } {
-  const b = map.bounds, edges = [[b.minX - 30, z, x - b.minX], [b.maxX + 30, z, b.maxX - x], [x, b.minZ - 30, z - b.minZ], [x, b.maxZ + 30, b.maxZ - z]];
-  const e = edges.reduce((m, q) => (q[2] < m[2] ? q : m));
-  return { x: e[0], z: e[1] };
+  return exitPoint(map.bounds, x, z, 30);
 }
 
 export function loseSoundsystem(g: Game, key: string, x: number, z: number, t: Tuning = g.tuning): void {
