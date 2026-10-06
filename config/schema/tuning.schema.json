@@ -5470,6 +5470,58 @@
       ],
       "additionalProperties": false
     },
+    "swoopTrail": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "life": {
+          "type": "number",
+          "minimum": 0
+        },
+        "width": {
+          "type": "number",
+          "minimum": 0
+        },
+        "near": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bright": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hueSpeed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hueSpread": {
+          "type": "number",
+          "minimum": 0
+        },
+        "liftFade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "slots": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "life",
+        "width",
+        "near",
+        "bright",
+        "hueSpeed",
+        "hueSpread",
+        "liftFade",
+        "slots"
+      ],
+      "additionalProperties": false
+    },
     "boot": {
       "type": "object",
       "properties": {
@@ -6576,6 +6628,7 @@
     "dash",
     "spells",
     "trail",
+    "swoopTrail",
     "boot",
     "party",
     "stringLights",
