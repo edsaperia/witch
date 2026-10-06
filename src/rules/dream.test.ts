@@ -23,10 +23,12 @@ describe("a dream's direction", () => {
     expect(restlessness({ restlessness: 3 } as unknown as Creature)).toBe(1);
   });
 
-  it("closes a legend's quest once its area's soundsystem is on, unless the rules say otherwise", () => {
+  it("keeps a legend's quest open while it sleeps, soundsystem on or not (Ed, 2026-10-06), unless the rules say otherwise", () => {
     const party = { areas: new Map([["5,6", {}]]) } as unknown as PartyState;
-    expect(questOpen(party, { cell: [4, 6] } as unknown as Creature)).toBe(true);
-    expect(questOpen(party, { cell: [5, 6] } as unknown as Creature)).toBe(false);
-    expect(questOpen(party, { cell: [5, 6], questOpen: true } as unknown as Creature)).toBe(true);
+    const q = { species: "wolf", level: 1 };
+    expect(questOpen(party, { cell: [4, 6], quest: q } as unknown as Creature)).toBe(true);
+    expect(questOpen(party, { cell: [5, 6], quest: q } as unknown as Creature)).toBe(true); // (its area partified: still open)
+    expect(questOpen(party, { cell: [5, 6], quest: { ...q, done: 3 } } as unknown as Creature)).toBe(false);
+    expect(questOpen(party, { cell: [5, 6], quest: q, questOpen: false } as unknown as Creature)).toBe(false); // (awake: the rules' flag)
   });
 });

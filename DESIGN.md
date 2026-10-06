@@ -359,10 +359,14 @@ Ed: "the animals don't move around enough when attacking and defending … I don
 
 This replaces the legend rules in "Sleeping legends" and "The first quest" below (kept for the record). `src/rules/legends.ts`, knobs in `config/legends.json`.
 
+**What legends are for** (Ed, 2026-10-06, his design intent; every builder working on legends reads this first): "The idea of legends is that they provide a different layer of tasks to the tasks to the game, that are mostly optional. If you are quick and can do the quests you can get buffs from them; if you are lucky and find a relic they can be very powerful allies; and if you are losing, their babies get hurt during sieges and they get enraged (ideally this helps the loss spiral happen faster and more dramatically). I think you should be able to get the buffs at any time the legend is sleeping, not just before the soundsystem is made."
+
+**Legends in half the areas** (Ed, 2026-10-06): "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." `legends.share` (tuning, default 0.5; a slider on the decisions panel, which reloads for a new map) is the share of areas, home never, with a sleeping legend, chosen per map from the seed and spread out (`chooseLegendCells` in `src/rules/map.ts`). An area without one has no legend's clearing, no quest, no restlessness or anger, and no legend music. DECISION FOR ED (balance, 2026-10-06): "no more than two neighbouring areas in a row" holds exactly only up to a share of about 0.35, since an area has about 5.4 neighbours. At 0.5 they're kept as thin as the map allows: no legend area borders more than two or three others (1.5 on average, against 2.7 at random), in winding chains rather than blobs.
+
 | State | How | Effect |
 |---|---|---|
 | **Asleep** | the default; soundsystems no longer wake them | it dreams of a creature (its quest) |
-| **Asleep + buff** | its quest done: that creature's sigil put down in its area while the quest is open (till the area's soundsystem switches on) | its buff is hers for good; it sleeps on; the creature stays hers, parked there |
+| **Asleep + buff** | its quest done: that creature's sigil put down in its area while the quest is open: for as long as the legend sleeps, its area's soundsystem on or not (Ed, 2026-10-06; it was "till the area's soundsystem switches on", 2026-10-05). Done before the area's wave, the area is friendly too and the ley line moves on; after it, the buff alone | its buff is hers for good; it sleeps on; the creature stays hers, parked there |
 | **Restless** | its area has none of its own kind (any state, leashed ones parked there and babies too) | its dream turns to a nightmare (`c.restlessness` 0 to 1 over `angryAfter`, 60 s); it calms back to sleep as soon as one of its kind is there again |
 | **Angry** | restlessness run its course | it shoots the witch and her posse from afar (never soundsystems, never happy creatures) |
 | **Happy** | a relic put down next to it (within `placeRadius`) while it sleeps or is restless | its buff is hers for good, and it shoots the enraged from afar |
