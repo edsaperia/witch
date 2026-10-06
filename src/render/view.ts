@@ -435,6 +435,8 @@ export class View {
   nibbles: { x: number; z: number; at: number }[] = [];
   /** When each party animal evolved (game time): the flash, the pop and the sparkles. */
   readonly evolvedAt = new Map<number, number>();
+  /** Each creature's distance walked as drawn, for its baked walk's frames (view/creatures.ts strideFrame). */
+  readonly strides = new Map<number, { x: number; z: number; d: number; at: number }>();
   /** A party animal's gear for its rig page (as its party bake wears it), kept per creature and look. */
   private rigGears = new Map<string, RigGear>();
   rigGear(c: Creature, leashed: boolean): RigGear {
