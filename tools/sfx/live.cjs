@@ -3,7 +3,7 @@
 // minutes (default 6) with its real AudioContext, the audio graph instrumented: the nodes made by
 // kind, the sources playing (started, not yet ended), the context's state and time, the output's
 // peak and rms (a tap on everything reaching the speakers), and any non-finite value set on a
-// param, sampled every second. The bot starts, flies about, throws 💌s, lands and rises, and
+// param, sampled every second. The bot starts, flies about, throws 💌s (1), lands and rises, and
 // brings a wave on every WAVE_EVERY seconds (N). Writes previews/sfx/live.json; fails on a page
 // error, a context not running, the output silent for 5 s or more while the music should play,
 // or the sources playing growing without bound.
@@ -85,7 +85,7 @@ async function main() {
   for (let s = 0; s < MINUTES * 60; s++) {
     // the bot: a new heading every 4 s, 💌s at the mouse, now and then up to the treetops and back
     if (s % 4 === 0) { await page.keyboard.up(keys[k % 4]).catch(() => {}); k++; await page.keyboard.down(keys[k % 4]); }
-    if (s % 2 === 0) await page.mouse.click(240 + 100 * Math.sin(s), 135 + 60 * Math.cos(s));
+    if (s % 2 === 0) await page.keyboard.press("Digit1"); // (a 💌; not the mouse: a click can land on the page's buttons, some of which reload it)
     if (s % 37 === 20 || s % 37 === 28) await page.keyboard.press("KeyQ");
     if (s >= nextWave) { await page.keyboard.press("KeyN"); nextWave += WAVE_EVERY; }
     await page.waitForTimeout(1000);
