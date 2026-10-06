@@ -39,7 +39,7 @@ export function loadOf(stack: readonly number[], creatures: readonly Creature[],
   let px = 0, pz = 0;
   for (const id of stack) {
     const c = creatures[id];
-    if (!c || c.gone) continue;
+    if (!c || c.gone || c.partyLegend) continue; // (a party legend doesn't drag: it pins her, rules/partyLegend.ts)
     const dx = c.x - at.x, dz = c.z - at.z, d = Math.hypot(dx, dz), s = leashStrain(d, t);
     if (s <= 0 || d < 1e-6) continue;
     const k = (s * creatureWeight(c, t)) / d;

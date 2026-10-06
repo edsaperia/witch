@@ -10,12 +10,14 @@ import * as THREE from "three";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { poseOf, STEP } from "../rules/game";
+import { FALLBACK_LOOK, floorLook, type FloorLook } from "./legendFloor";
 import { AREA_TYPES, HOME_LOOK, nearestClearings, type LegendClearing } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
 import { AssetLibrary } from "./assets";
 import type { LightSource } from "../rules/forest";
 import { Ground } from "./ground";
 import { Sky } from "./sky";
+import { slowAmount, slowest } from "./slowtime";
 import { moonState, type MoonState } from "../rules/moon";
 import { Clouds } from "./clouds";
 import { Smoke } from "./smoke";
@@ -44,6 +46,7 @@ import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
 import { Lasers, type RingSpeaker } from "./lasers";
 import { PartyWitchView } from "./partyWitches";
+import { BeachView } from "./beach";
 import { PartyObjectsView } from "./partyObjects";
 import { BorderView } from "./borders";
 import { HAT, StoneIndicator } from "./indicator";
@@ -188,6 +191,8 @@ export class View {
   };
   /** The party witches on the dancefloor, and our witch when she idles into the party. */
   private partyWitchView: PartyWitchView;
+  /** The beach round the circular map: nothing made until she's near it. */
+  private beachView: BeachView;
   /** The party witches' rainbow swoop trails (render/swoopTrails.ts). */
   private swoopTrails: SwoopTrails;
   /** The 💌s, their bubbles and rings (render/invites.ts). */
@@ -360,9 +365,11 @@ export class View {
     this.scene.add(this.glades.points);
     this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
     this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
+    this.beachView = new BeachView(this.scene, this.assets, this.ground, this.mpp, t.witch);
     this.swoopTrails = new SwoopTrails(game.tuning.swoopTrail ?? SWOOP_TRAIL_DEFAULT);
     this.scene.add(this.swoopTrails.mesh);
     this.inviteView = new InviteView(game);
+    this.inviteView.onVanished = (x, z) => this.edgeSparkle(x, z);
     this.stateMarks = new StateMarks(this.scene, this.mpp);
     this.borders = new BorderView(this.scene, game);
     this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp, { solid: true });
@@ -519,6 +526,11 @@ export class View {
   runeGreen = new THREE.Vector3(0.45, 1, 0.5);
   /** Sparks from campfires lighting up as the party arrives (drawn with the markers' motes, next frame). */
   fireSparks: Mote[] = [];
+  /** 💌s that left a slowed circle outward (Ed, 2026-10-06): where and when each vanished in a sparkle at its edge
+   *  (edgeSparkle; drawn as motes with the markers' in view/home.ts). */
+  edgeSparkles: { x: number; z: number; at: number }[] = [];
+  /** A 💌 vanishes at a slowed circle's edge: a small sparkle there (its `vanished` invite event calls this, render/invites.ts). */
+  edgeSparkle(x: number, z: number): void { if (this.edgeSparkles.length < 64) this.edgeSparkles.push({ x, z, at: LIGHT_UNIFORMS.uRealTime.value }); }
   /** The world's campfires showing this frame, for the party objects to draw. */
   worldFires: { x: number; z: number; scale: number; flip: boolean }[] = [];
   /** Each light source's area (a campfire's party), worked out once. */
@@ -633,13 +645,29 @@ export class View {
       Object.assign(out[i], { x: c.x, z: c.z, r: c.r, edge: c.edge, glow: Math.min(1, Math.max(s.k, flash)) });
     }
     this.ringCount = near.length;
+    // Their floors (render/ground.ts): each carving its legend's kind; its grooves' glint (the tuning's knob, 0 off) while it sleeps.
+    const glint = g.tuning.legendClearing.floor?.glint ?? 0;
+    for (let i = 0; i < near.length; i++) {
+      const c = near[i], f = this.floorItems[i];
+      const A = AREA_TYPES[g.map.typeOf(c.cell[0], c.cell[1])];
+      f.species = A.creature; f.look = floorLook(A.id);
+      let id = this.ringLegend.get(c);
+      if (id === undefined) { id = (g.legendIds ?? []).find(k => { const L = g.creatures[k]; return L && L.cell[0] === c.cell[0] && L.cell[1] === c.cell[1]; }) ?? -1; this.ringLegend.set(c, id); }
+      const L = id >= 0 ? g.creatures[id] : undefined;
+      f.glint = glint > 0 && L && !L.gone && (L.legendState === "asleep" || L.legendState === "restless") ? glint : 0;
+    }
     return out;
   }
+  private floorItems: { species: string; glint: number; look: FloorLook }[] = Array.from({ length: 6 }, () => ({ species: "", glint: 0, look: FALLBACK_LOOK }));
+  private ringLegend = new Map<LegendClearing, number>();
   private ringCount = 0;
 
   render(time: number, draw = true): void {
     this.ms = {}; this.lap = this.frameStart = performance.now();
     const g = this.game, t = g.tuning, pose = poseOf(g);
+    // Her clock (rules/slowTime.ts): she and everything of hers (her frames, blinks, trail, 💌s, sigils, the action bar) at full
+    // speed, while the world (time) may run slow in a sleeping legend's circle; eased between steps as the world's is.
+    const ht = Math.max(0, g.herTime - Math.max(0, g.clock.time - time) / Math.max(1e-3, g.timeScale));
     // The scenery budget follows the real frame rate (only frames that are drawn count).
     if (draw) {
       const now = performance.now();
@@ -759,6 +787,7 @@ export class View {
     this.soundBatch.set(party.items);
     this.ground.setSweeps(party.sweeps);
     this.ground.setLegendRings(this.legendRings(g, time), this.ringCount);
+    this.ground.setLegendFloors(this.floorItems, this.ringCount);
     this.lasers.update(time, party.playing, w.x, w.z, this.speakerTops, g.map.dancefloor);
     {
       // The ley lines: fading from the colour of the area each starts in to that of the area it ends
@@ -775,7 +804,8 @@ export class View {
       }
     }
     // The sleeping legends' clearings: their twilight and motes, the nearest few (render/glades.ts).
-    { const gdt = Math.min(0.1, Math.max(0, time - this.gladeTime)); this.gladeTime = time; this.glades.update(g, w.x, w.z, gdt, w.mode === "ground"); }
+    { const gdt = Math.min(0.1, Math.max(0, ht - this.gladeTime)); this.gladeTime = ht; // (eased on her clock, so the slowing doesn't slow its own look)
+      this.glades.update(g, w.x, w.z, gdt, w.mode === "ground", undefined, slowAmount(g.timeScale, slowest(t))); }
     this.time("party");
     // The canopy uplight over the nearest partified areas, fading in with each one's transition.
     {
@@ -803,17 +833,17 @@ export class View {
     }));
     const markerLights = drawMarkers(this, time);
     const speakerLights = drawSpeakers(this, time, pose.angle);
-    this.spellFx.update(g, time, witchHeight(w, t) + 0.6 + this.rideOff);
+    this.spellFx.update(g, ht, witchHeight(w, t) + 0.6 + this.rideOff);
     {
       // her trail: behind her broom, as long as she's fast, in the colour of the area under her (its creature's neon, as the
       // ley lines and runestones; home's own lavender)
       const lift = canopyShown(w), A = g.map.areaAt(w.x, w.z), sp = Math.hypot(w.vx, w.vz), top = t.groundSpeed + (t.treetopSpeed - t.groundSpeed) * lift;
       const c = A.look === HOME_LOOK ? this.trailRgb.set(0.8, 0.7, 1) : this.trailRgb.copy(this.markerArt.colour.get(AREA_TYPES[A.type].creature) ?? this.trailRgb.set(0.8, 0.7, 1));
-      const dt = this.trailAt < 0 ? 0 : Math.min(0.1, Math.max(0, time - this.trailAt)); this.trailAt = time;
+      const dt = this.trailAt < 0 ? 0 : Math.min(0.1, Math.max(0, ht - this.trailAt)); this.trailAt = ht;
       const back = sp > 0.1 ? 0.6 / sp : 0, D = g.witches[0].dash;
-      this.trail.update(w.x - w.vx * back, witchHeight(w, t) + 0.25 + this.rideOff, w.z - w.vz * back, sp, top, lift, c, time, dt, D.at);
+      this.trail.update(w.x - w.vx * back, witchHeight(w, t) + 0.25 + this.rideOff, w.z - w.vz * back, sp, top, lift, c, ht, dt, D.at);
     }
-    this.actionBar.update(g, time);
+    this.actionBar.update(g, ht);
     this.buffHud.update(g, time);
     // Tufts part round her and the three nearest creatures.
     // (only those within reach made into objects: mapping every creature, a thousand late in a run, every frame was much of the frame's garbage)
@@ -833,60 +863,60 @@ export class View {
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
     const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires, this.lastView);
-    this.updateSmoke(g, time);
+    this.updateSmoke(g, time); // (time is the world's: what moves on its own slows with it, rules/slowTime.ts)
     if (t.bare) { this.dancefloor.update(time, this.ground, g); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g), ...party.lights, ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...this.forestLights], w.x, w.z);
     this.time("grass+lights");
-    LIGHT_UNIFORMS.uTime.value = time;
+    LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht; // (the circle's motes and edge keep her clock)
     this.mist?.follow(pose.tx, pose.tz);
-    const bob = Math.sin(time * 2.4) * 0.12;
+    const bob = Math.sin(ht * 2.4) * 0.12;
     // Her hover frames, turned away when flying up the screen, leaning when fast.
     // Climbing to the treetops or dropping to the ground: the rise or descend pose, fluttering
     // between its two frames, until the move is about 90% done.
     const climbing = w.mode === "rising" && w.lift < 0.9, dropping = w.mode === "descending" && w.lift > 0.1;
     // Leaning, her four-frame lean cycle (#37) plays faster the faster she goes: 8 fps at her ordinary ground speed.
-    const ldt = Math.min(0.1, Math.max(0, time - this.leanTime));
-    this.leanTime = time;
+    const ldt = Math.min(0.1, Math.max(0, ht - this.leanTime));
+    this.leanTime = ht;
     this.leanPhase += ldt * 8 * Math.hypot(w.vx, w.vz) / Math.max(1, t.groundSpeed);
     const leanK = Math.floor(this.leanPhase) % 4, LC = this.assets.witchLean[w.away ? "away" : "towards"];
-    let wf = climbing || dropping ? (climbing ? 8 : 12) + (w.away ? 2 : 0) + (Math.floor(time * 7) % 2)
-      : w.lean ? LC[leanK] ?? 6 + (w.away ? 1 : 0) : (w.away ? 3 : 0) + (Math.floor(time * 4) % 3);
+    let wf = climbing || dropping ? (climbing ? 8 : 12) + (w.away ? 2 : 0) + (Math.floor(ht * 7) % 2)
+      : w.lean ? LC[leanK] ?? 6 + (w.away ? 1 : 0) : (w.away ? 3 : 0) + (Math.floor(ht * 4) % 3);
     // Treetop momentum: skidding to brake on a sharp turn, and the fast pose at boost.
     if (!climbing && !dropping) {
       const Fl = this.assets.witchFly, sideF = w.away ? "away" : "towards";
-      if (w.braking) wf = Fl.brake[sideF][Math.floor(time * Fl.brake.fps) % Fl.brake[sideF].length];
-      else if ((w.boost ?? 0) > 0.7) wf = Fl.fast[sideF][Math.floor(time * Fl.fast.fps) % Fl.fast[sideF].length];
+      if (w.braking) wf = Fl.brake[sideF][Math.floor(ht * Fl.brake.fps) % Fl.brake[sideF].length];
+      else if ((w.boost ?? 0) > 0.7) wf = Fl.fast[sideF][Math.floor(ht * Fl.fast.fps) % Fl.fast[sideF].length];
       // Straight up or down the screen (#27): her heading frames, from behind or coming at us.
       const Hd = w.heading && w.heading !== "side" ? this.assets.witchHeading[w.heading] : null;
-      if (Hd) wf = w.braking ? Hd.brake[Math.floor(time * Fl.brake.fps) % Hd.brake.length] : (w.boost ?? 0) > 0.7 ? Hd.fast[Math.floor(time * Fl.fast.fps) % Hd.fast.length] : w.lean ? Hd.leanCycle[leanK] ?? Hd.lean : Hd.hover[Math.floor(time * 4) % Hd.hover.length];
+      if (Hd) wf = w.braking ? Hd.brake[Math.floor(ht * Fl.brake.fps) % Hd.brake.length] : (w.boost ?? 0) > 0.7 ? Hd.fast[Math.floor(ht * Fl.fast.fps) % Hd.fast.length] : w.lean ? Hd.leanCycle[leanK] ?? Hd.lean : Hd.hover[Math.floor(ht * 4) % Hd.hover.length];
     }
     // Handling a sigil, she lands first (Ed, 2026-10-03): down to the ground, then the placeSigil or
     // liftSigil pose, and back up into the air when she's done. Talking (by herself, Ed v244), she
     // chats on the fly while moving and settles into the talk pose when she comes to rest.
     const L = g.leash, F = this.assets.witchFoot, side = w.away ? "away" : "towards";
-    for (const e of L.events) if (e.kind === "placed" || e.kind === "fizzled") this.footAct = { pose: "placeSigil", at: time }; else if (e.kind === "picked" || e.kind === "hatPicked") this.footAct = { pose: "liftSigil", at: time };
+    for (const e of L.events) if (e.kind === "placed" || e.kind === "fizzled") this.footAct = { pose: "placeSigil", at: ht }; else if (e.kind === "picked" || e.kind === "hatPicked") this.footAct = { pose: "liftSigil", at: ht };
     const actLen = this.footAct ? F[this.footAct.pose].towards.length / F[this.footAct.pose].fps : 0;
-    const acting = !!this.footAct && time - this.footAct.at < actLen + 0.3;
+    const acting = !!this.footAct && ht - this.footAct.at < actLen + 0.3;
     const still = Math.hypot(w.vx, w.vz) < 0.6;
-    const wantFoot = w.mode === "ground" && ((!!L.talk && still) || acting) ? 1 : 0;
-    const fdt = Math.min(0.1, Math.max(0, time - this.footTime)), prevFoot = this.foot;
-    this.footTime = time;
+    const wantFoot = w.mode === "ground" && ((!!L.talk && still) || acting || !!w.stargazing) ? 1 : 0;
+    const fdt = Math.min(0.1, Math.max(0, ht - this.footTime)), prevFoot = this.foot;
+    this.footTime = ht;
     this.foot += (wantFoot - this.foot) * Math.min(1, fdt * 8);
     if (Math.abs(wantFoot - this.foot) < 0.01) this.foot = wantFoot;
     const pick = (pose: string, k: number) => { const fr = F[pose][side]; return fr[Math.max(0, Math.min(fr.length - 1, k))]; };
     if (this.foot > 0.6) {
-      if (acting && this.footAct) wf = pick(this.footAct.pose, Math.floor((time - this.footAct.at) * F[this.footAct.pose].fps));
-      else if (L.talk) wf = pick("talk", Math.floor(time * F.talk.fps) % F.talk[side].length);
-      else wf = pick("stand", Math.floor(time * F.stand.fps) % F.stand[side].length);
+      if (acting && this.footAct) wf = pick(this.footAct.pose, Math.floor((ht - this.footAct.at) * F[this.footAct.pose].fps));
+      else if (L.talk) wf = pick("talk", Math.floor(ht * F.talk.fps) % F.talk[side].length);
+      else wf = pick("stand", Math.floor(ht * F.stand.fps) % F.stand[side].length);
     } else if (this.foot > 0.02) wf = this.foot >= prevFoot ? pick("land", Math.floor(this.foot * 3)) : pick("takeoff", Math.floor((1 - this.foot) * 3));
     const footEase = this.foot * this.foot * (3 - 2 * this.foot), wy = (h + bob - 0.4) * (1 - footEase);
     // At the start she sits on the treehouse terrace (the sit pose, swinging her legs), and eases
     // off it into the air when she first moves.
-    const sdt = Math.min(0.1, Math.max(0, time - this.seatTime));
-    this.seatTime = time;
+    const sdt = Math.min(0.1, Math.max(0, ht - this.seatTime));
+    this.seatTime = ht;
     this.seatK = w.seated ? 1 : Math.max(0, this.seatK - sdt / 1.0); // down from the studio (some 7 m up) over a second
     let wx = w.x, wz = w.z, wyy = wy;
     // Staggered by a blow (rules/knock.ts): a wobble side to side, fading as it wears off.
-    { const K = g.witches[0].knock; if (stunned(K, time)) { const left = (K!.stunUntil - time) / Math.max(0.1, K!.stunUntil - K!.at); wx += Math.sin(time * 34) * 0.18 * Math.min(1, left * 2); } }
+    { const K = g.witches[0].knock; if (stunned(K, ht)) { const left = (K!.stunUntil - ht) / Math.max(0.1, K!.stunUntil - K!.at); wx += Math.sin(ht * 34) * 0.18 * Math.min(1, left * 2); } }
     if (this.seatK > 0) {
       const seat = onTreehouse(T.seat.x, T.seat.y), k = this.seatK * this.seatK * (3 - 2 * this.seatK);
       const cam = onTreehouse(T.camera.x, T.camera.y);
@@ -908,26 +938,27 @@ export class View {
     const KO = g.witches[0].ko;
     // Mid-blink she's nowhere (from the step it starts, so she never slides between its two points).
     const D = g.witches[0].dash;
-    let hidden = time >= D.at - STEP && time < D.until;
+    let hidden = ht >= D.at - STEP && ht < D.until;
     if (KO) {
-      if (time < KO.teleportAt) { wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length]; wyy = 0; }
-      else hidden = time < KO.backAt - (KO.backAt - KO.teleportAt) * 0.25;
+      if (ht < KO.teleportAt) { wf = F.sit.towards[Math.floor(ht * F.sit.fps) % F.sit.towards.length]; wyy = 0; }
+      else hidden = ht < KO.backAt - (KO.backAt - KO.teleportAt) * 0.25;
     }
     // Over the ride's smoothed height (eased in off the treehouse seat).
     wyy += this.rideOff * (1 - this.seatK * this.seatK * (3 - 2 * this.seatK));
     // Her hat knocked off (rules/hat.ts): her frames without it, and the hat where it lies. Baked a moment after the game is up
     // (not at a knockout, mid-fight), if she has a hat to lose.
     const Hat = g.witches[0].hat;
-    if (!this.bareAsked && Hat.has && !g.clock.paused && time > 1) { this.bareAsked = true; setTimeout(() => { this.bareBatch ??= this.makeWitchBatch(true); }, 0); }
+    if (!this.bareAsked && Hat.has && !g.clock.paused && ht > 1) { this.bareAsked = true; setTimeout(() => { this.bareBatch ??= this.makeWitchBatch(true); }, 0); }
     const bare = Hat.has && !!Hat.down ? (this.bareBatch ??= this.makeWitchBatch(true)) : null;
     const wframe = (bare ? this.assets.witchBare() : this.assets.witch).frames[wf], hatTop = wyy + wframe.h * this.mpp;
     this.partyWitchView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4));
     this.swoopTrails.update(g.partyWitches.list, time);
     this.partyWitchView.bubbles(g, time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
+    const onBeach = this.beachView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
     this.stateMarks.update(g, time, this.leashView.tops);
-    this.inviteView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, this.leashView.tops);
+    this.inviteView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, this.leashView.tops);
     // Idling into the party, she's drawn in her party pose there instead.
-    const her = this.partyWitchView.herIdle || hidden ? [] : [{ x: wx, y: wyy + groundHeight(wx, wz), z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }];
+    const her = this.partyWitchView.herIdle || onBeach || hidden ? [] : [{ x: wx, y: wyy + groundHeight(wx, wz), z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }];
     const hatFrame = bare ? this.assets.witchBare().frames[this.assets.witchHatFrame] : undefined;
     this.witchBatch.set(bare ? [] : her);
     this.bareBatch?.set(bare ? (hatFrame ? [...her, { x: Hat.down!.x + HAT_BESIDE, y: groundHeight(Hat.down!.x + HAT_BESIDE, Hat.down!.z), z: Hat.down!.z, frame: hatFrame, flip: false }] : her) : []);
@@ -935,7 +966,7 @@ export class View {
     // the canvas's shift (main.ts) with the camera's own snap, so she lands where the unsnapped camera
     // would put her, to a screen pixel, every frame (the world then lands within half an art pixel).
     this.witchBase.x = wx; this.witchBase.y = wyy + groundHeight(wx, wz); this.witchBase.z = wz;
-    if (this.glide === "witch" && !hidden && !this.partyWitchView.herIdle) {
+    if (this.glide === "witch" && !hidden && !this.partyWitchView.herIdle && !onBeach) {
       const b = bendPoint(this.v3.set(wx, wyy + groundHeight(wx, wz), wz)).project(this.camera);
       const X = (b.x * 0.5 + 0.5) * this.width, Y = (b.y * 0.5 + 0.5) * this.height;
       // (Her place under the camera before its snap: what her own snap takes off, and what the camera's did.)
@@ -999,7 +1030,7 @@ export class View {
       }
     }
     this.time("hud");
-    this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
+    this.leashView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
     this.time("leash");
     // Work done ahead, a little each frame, out of what's left of the frame's budget (Ed, v256:
     // boosting over the treetops dropped frames when a rebuild, the hills' window moving and

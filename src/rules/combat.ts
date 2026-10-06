@@ -198,7 +198,7 @@ export const fighting = (c: Creature) => !c.gone && !c.fleeUntil && !c.wanderTo 
 
 /** Whether anything may attack it: fighting, and not a baby (Ed, 2026-10-04: "No animals should
  *  attack babies"; shots and quakes pass them by, and they can't be beaten in a fight). */
-export const targetable = (c: Creature) => fighting(c) && c.level > 0 && !c.burrow; // (a burrower underground can't be hit)
+export const targetable = (c: Creature) => fighting(c) && c.level > 0 && !c.burrow && !c.partyLegend; // (a party legend's out of it all: the Easter egg) // (a burrower underground can't be hit)
 
 /** Whose side: hers (on her leash, at a sigil, or a happy area legend: Ed, 2026-10-04) or the wild's. */
 const sideOf = (c: Creature): State => stateOf(c); // (its state: who fights whom is foes(), rules/creatureStates.ts)
@@ -565,6 +565,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     }
     // An angry or happy legend (#87): it stands in its area and shoots from afar (stepLegendAttack).
     // (Ed, 2026-10-05: "stick with the long range one for now": with legends.closeMoves off, a wild legend that isn't an area's uses it too.)
+    if (c.partyLegend) { c.fight = undefined; continue; } // (a party legend dances and fights no one: rules/partyLegend.ts)
     if (c.level === LEGEND && !c.leashed && (c.boss ? c.legendState === "angry" || c.legendState === "happy" : !LEGENDS.closeMoves) && fighting(c)) { stepLegendAttack(w, s, c, data, grid); continue; }
     if (!fighting(c) || w.asleep(c) || (c.leashed && w.busy(c.id))) { c.fight = undefined; continue; }
     // Stunned (an armoured one knocked over): it does nothing for a moment.
@@ -573,8 +574,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (!atk) { c.fight = undefined; continue; } // babies don't attack
     const f = (c.fight ??= { target: null, readyAt: time + atk.attack.cooldown * 0.5 * (c.rand() + 0.5), windupUntil: 0, aimX: 0, aimZ: 0 });
     // A happy area legend guards its area like a parked party animal with a far bigger reach, round its home (Ed, 2026-10-04).
-    const happy = !c.leashed && (c.legendState === "happy" || !!c.guard || c.state === "happy"); // (and a friendly area's guards, once partified: rules/quest.ts; and every happy creature, #87: it defends its own area)
-    // (a guard looks round where it stands, for anything in its own area: area-wide, as it roams it)
+    const happy = !c.leashed && (c.legendState === "happy" || c.state === "happy"); // (and every happy creature, #87: it defends its own area)
+    // (a happy one looks round where it stands, for anything in its own area: area-wide, as it roams it)
     const lp = c.leashed ? w.leashPoint(c.id) : happy ? { x: c.x, z: c.z } : null, guarding = (!!lp && w.parked(c.id)) || happy;
     // Party animals fight only near their leash point (a parked one within guard.radius of its
     // sigil); wild ones within aggro of where they are.

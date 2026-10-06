@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { Creature, Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
-import { TUNING, withTuning } from "./tuning";
+import { TUNING, withTuning, type Tuning } from "./tuning";
+// (she stands by the legends here: their own timers are under test, so the circle's slowed time (rules/slowTime.ts, its own tests) is off)
+const NO_SLOW = { ...TUNING, legendCircle: { slow: { ...TUNING.legendCircle!.slow, on: false } } };
 import { LEGEND_BUFFS } from "./buffs";
 import { LEGENDS, anger, canopyOver, lull, relicGlints, stepLegendStates } from "./legends";
 import { cellKey } from "./party";
@@ -13,8 +15,8 @@ import { stateOf } from "./creatureStates";
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, first: Controls = idle, each?: () => void) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, i === 0 ? first : idle, STEP); each?.(); } };
 /** The witch on the ground beside a sleeping legend (one with a buff), everything else round it gone but one of its kind. */
-function beside(kin = true): { g: Game; L: Creature; mate: Creature | null } {
-  const g = newGame(123, TUNING);
+function beside(kin = true, t: Tuning = NO_SLOW): { g: Game; L: Creature; mate: Creature | null } {
+  const g = newGame(123, t);
   g.clock.paused = false; g.party.paused = true;
   const L = g.creatures.find(c => c.boss && c.legendState === "asleep" && LEGEND_BUFFS.species[c.species] && !LEGENDS.charge.species.includes(c.species))!; // (one that lobs or beams: chargers below)
   const site = g.map.siteOf(L.cell[0], L.cell[1]), d = Math.hypot(site.x - L.x, site.z - L.z) || 1;
@@ -118,8 +120,7 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
   }), 60000);
 
   it("with the stomp on, a legend turning angry stamps on its own area's standing soundsystem, after the stomp's longer restless time (Ed, 2026-10-06)", () => {
-    const { g, L, mate } = beside();
-    (g as { tuning: unknown }).tuning = withTuning({ legends: { ...TUNING.legends, stomp: { on: true, angryAfter: 3 } } });
+    const { g, L, mate } = beside(true, { ...NO_SLOW, legends: { ...NO_SLOW.legends, stomp: { on: true, angryAfter: 3 } } });
     const key = cellKey(L.cell), at = { x: L.x + 30, z: L.z };
     g.party.areas.set(key, { cell: [L.cell[0], L.cell[1]], wave: 1, at: g.clock.time, soundsystem: at } as never);
     g.combat.sounds.set(key, { hp: 4000, max: 4000, x: at.x, z: at.z, radius: 2 });
@@ -206,7 +207,7 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
 
   it("take a quest sigil only inside their clearing: the right creature put down elsewhere in its area does nothing but cue", () => {
     for (const inside of [false, true]) {
-      const g = newGame(123, TUNING);
+      const g = newGame(123, NO_SLOW);
       g.clock.paused = false; g.party.paused = true;
       const L = setupQuestDemo(g, (x, z) => { g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false }; })!;
       g.witches[0].health.hp = 1e6;
@@ -248,7 +249,7 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
   }, 60000);
 
   it("has the dream quest give her its buff (it sleeps on, the creature stays hers), and stay open while it sleeps, soundsystem on or not (Ed, 2026-10-06)", () => {
-    const g = newGame(123, TUNING);
+    const g = newGame(123, NO_SLOW);
     g.clock.paused = false; g.party.paused = true;
     const L = setupQuestDemo(g, (x, z) => { g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false }; })!;
     g.witches[0].health.hp = 1e6;
@@ -388,7 +389,7 @@ describe("an awake legend with nothing in reach (balance, 2026-10-06)", () => {
 describe("legends going back to sleep (Ed, 2026-10-06)", () => {
   it("look for their kind every legends.check seconds (5), each on its own beat, not all on one frame", () => {
     expect(LEGENDS.check).toBe(5);
-    const g = newGame(123, TUNING), ids = g.creatures.filter(c => c.boss).map(c => c.id).slice(0, 40);
+    const g = newGame(123, NO_SLOW), ids = g.creatures.filter(c => c.boss).map(c => c.id).slice(0, 40);
     for (const c of g.creatures) if (!c.boss) c.gone = true; // (none of anyone's kind anywhere: each turns restless on its first look)
     const firstLook = new Map<number, number>();
     for (let i = 1; i <= Math.round(6 / STEP); i++) {
