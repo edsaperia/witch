@@ -104,8 +104,8 @@ void main() {
   // and a flash at the far stone as it arrives. vT runs by arc length, so it follows the route's curves.
   if (uPulse.y > 0.5 && abs(vLink - uCurrent) < 0.5) {
     float p = uPulse.x, behind = 1.0 - smoothstep(p - 0.01, p + 0.01, vT);
-    link *= mix(0.55, 1.15, behind) * (0.6 + 0.9 * p);
-    a += exp(-abs(vT - p) * 45.0) * (uGlowPass > 0.5 ? halo : core) * (1.2 + 2.0 * p);
+    link *= mix(0.35, 1.3, behind) * (0.45 + 1.2 * p);
+    a += exp(-abs(vT - p) * 25.0) * (uGlowPass > 0.5 ? halo : core) * (2.5 + 3.5 * p);
     a += smoothstep(0.96, 1.0, p) * exp(-(1.0 - vT) * 30.0) * (uGlowPass > 0.5 ? halo : core) * 3.0;
   }
   // Drawing out toward the next stone: a bright tip leads it.
