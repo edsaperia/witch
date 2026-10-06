@@ -33,6 +33,10 @@ const jobs = new WeakMap<View, { run: Generator<void, void, void>; frames: numbe
  *  once when another is already due (she has flown, turned or zoomed on past what it was listed
  *  for: slow frames, like the software renderer's, cover a lot of ground each) or after MAX_FRAMES,
  *  so what it lists is never older than an unsliced rebuild's would be by much. `force`: all of it now. */
+/** An area type's rim kit as whole pieces, made once a layout. */
+const rimCache = new WeakMap<TypeArt["layout"], Piece[]>();
+const rimPieces = (l: TypeArt["layout"]): Piece[] => { let r = rimCache.get(l); if (!r) rimCache.set(l, (r = (l.rim ?? []).map(k => ({ bot: k.frame, top: null })))); return r; };
+
 export function refresh(v: View, force = false): void {
   // Below SLICE_FPS a frame covers so much flight that a rebuild spread over frames would be
   // stale when handed over (pops): then it's done whole, as it always was.
@@ -93,10 +97,15 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
   for (const p of g.forest.treesNear(cx, cz, half)) {
     const art = v.assets.typeArt(p.type);
     if (!art || !art.layout.big.length) continue;
-    const f = art.atlas.frames, big = art.layout.big[pickWeighted(art.layout.bigWeight, p.variant)], whole = f[big.top ?? big.bot];
-    if (!inView(v, p.x, p.z, whole.w * mpp, whole.h * mpp, margin, reach)) continue;
-    // Squeeze the tallest variants so they never bury her flight (treeCap).
-    const tall = whole.h * mpp, C = t.treeCap, scale = tall > C.from ? (C.from + (tall - C.from) * C.keep) / tall : 1;
+    // (a legend's grove, rules/forest.ts legendGrove: as strong as it is here, a share of the area's two tallest kinds,
+    // drawn bigger, both easing out with it into the area's own forest)
+    const gv = art.layout.grove, gs = p.grove ?? 0, GT = t.legendClearing.grove, u = ((p.variant >> 3) % 101) / 100;
+    const G = gs > 0 && gv && u < GT.tallest * gs ? (u < GT.tallest * gs * 0.4 ? gv.giant : gv.tall) : undefined;
+    const f = art.atlas.frames, big = art.layout.big[G?.length ? G[p.variant % G.length] : pickWeighted(art.layout.bigWeight, p.variant)], whole = f[big.top ?? big.bot];
+    const boost = 1 + (GT.scale - 1) * gs * (0.75 + 0.5 * (((p.variant >> 5) % 97) / 96));
+    if (!inView(v, p.x, p.z, whole.w * mpp * boost, whole.h * mpp * boost, margin, reach)) continue;
+    // Squeeze the tallest variants so they never bury her flight (treeCap); a grove's a little beyond.
+    const tall = whole.h * mpp, C = t.treeCap, scale = (tall > C.from ? (C.from + (tall - C.from) * C.keep) / tall : 1) * boost;
     const fresh = mark(v, "tree", p.x, p.z, tall * scale);
     const at = stand(p.x, p.z, f[big.bot], mpp * scale);
     // A tree's two halves share one box and sway alike (from its foot), so crown and trunk stay together.
@@ -146,6 +155,8 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
   yield* scatter("berrybush", g.berries.bushes.filter(b => Math.abs(b.x - cx) <= half && Math.abs(b.z - cz) <= half), l => l.small);
   yield* scatter("wall", g.forest.wallsNear(cx, cz, half), l => l.walls.map(bot => ({ bot, top: null })));
   yield* scatter("setpiece", g.forest.setPiecesNear(cx, cz, half), l => (l.set === null ? [] : [l.set]));
+  // The rim kit round the legends' clearings (rules/forest.ts legendRim), drawn whole.
+  yield* scatter("rim", g.forest.rimNear(cx, cz, half), l => rimPieces(l));
   // Decorations: ruins, rocks and freak trees, as scenery (each family's pieces picked by its variant).
   const decor = v.assets.decorArt(), dl: SpriteInstance[] = [];
   if (decor) for (const d of g.forest.decorNear(cx, cz, half)) {

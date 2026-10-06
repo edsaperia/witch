@@ -1,6 +1,6 @@
-import { stateOf } from "./creatureStates";
+import { STATES, stateOf } from "./creatureStates";
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { hash2 as labHash2, SPECIES_BY_ID } from "../../art/generator.js";
 import { makePartition } from "./partition";
 import { hash2 } from "./random";
@@ -8,7 +8,7 @@ import { AREA_TYPES, HOME_LOOK, LOOKS, generateMap, parseSeed, sceneFootprint } 
 import { Forest, crownReach, treeChance } from "./forest";
 import { newWitch, stepWitch, witchHeight, NO_INTENT, canopyShown, facingAway, headingOf } from "./witch";
 import { newCamera, stepCamera, cameraPose } from "./camera";
-import { population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
+import { keepsToCircle, population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
 import { hitWitch, newGame, simRadius, STEP, stepGame } from "./game";
 import { dashing, newDash, startDash } from "./dash";
 import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, wavePlan } from "./party";
@@ -121,7 +121,7 @@ describe("the map", () => {
   it("is a circle of about mapAreas x mapAreas areas with every area type (Ed's 30 and any recipes)", () => {
     expect(Math.abs(map.cells.length - TUNING.mapAreas ** 2)).toBeLessThan(TUNING.mapAreas * 2);
     expect(AREA_TYPES.length).toBeGreaterThanOrEqual(30);
-    expect(map.bounds.maxX - map.bounds.minX).toBeCloseTo(2 * map.bounds.circle!.r);
+    expect(map.bounds.maxX - map.bounds.minX).toBeCloseTo(2 * map.bounds.circle!.r * (1 + TUNING.map!.coast!.amp)); // (the box round its furthest headland)
   });
 
   it("never gives two touching areas the same type", () => {
@@ -496,7 +496,7 @@ describe("creatures", () => {
     for (const [cx, cy] of map.cells.filter((_, i) => i % 9 === 0)) {
       if (cx === mx && cy === my) continue;
       const here = inCell(cx, cy);
-      expect(here.filter(c => c.level === 0).length).toBe(S.babies);
+      expect(here.filter(c => c.level === 0 && !c.circle).length).toBe(S.babies); // (and its legend's clearing's baby: below)
       expect(here.filter(c => c.level === 1).length).toBe(S.young);
       expect(here.filter(c => c.level === 2).length).toBe(S.adults);
       expect(here.filter(c => c.level === 3 && c.boss).length).toBe(map.hasLegend(cx, cy) ? 1 : 0);
@@ -520,7 +520,7 @@ describe("creatures", () => {
   }, 60000);
 
   it("roam their whole area, slowly, and never leave it", () => {
-    const sample = all.filter((_, i) => i % 97 === 0).slice(0, 5);
+    const sample = all.filter(c => !keepsToCircle(c)).filter((_, i) => i % 97 === 0).slice(0, 5); // (a legend's circle baby keeps to its circle)
     for (const c of sample) {
       const visited = new Set<string>(), start = [c.x, c.z];
       const k = map.areaSize / 112, minutes = 40 * k * k, sq = 8 * k; // forty minutes in an area 112 m across, longer in bigger ones by its area (they walk no faster)
@@ -765,6 +765,10 @@ describe("the game clock and a whole step", () => {
 });
 
 describe("inviting and leashing", () => {
+  // (The old proximity chat: a second talk leashes a happy one, as states.leash "again" does; the game picks up its rune now, pickup.test.ts.)
+  let savedLeash = STATES.leash;
+  beforeEach(() => { savedLeash = STATES.leash; STATES.leash = "again"; });
+  afterEach(() => { STATES.leash = savedLeash; });
   // (Every level to talk to: a baby, a young and an adult in each area.)
   const creatures = spawnCreatures(generateMap(123, withTuning({ population: { ...TUNING.population, start: { babies: 1, young: 1, adults: 1 } } })));
   const fresh = () => creatures.map(c => ({ ...c, rand: (() => { let k = c.id * 7 + 1; return () => (k = (k * 16807) % 2147483647) / 2147483647; })() }));
@@ -1446,7 +1450,8 @@ describe("ground cover (Ed, v171)", () => {
     expect(list.length).toBeGreaterThan(500);
     for (const f of list) {
       expect(map.paths.at(f.x, f.z)).toBeNull();
-      expect(map.hardClear(f.x, f.z)).toBe(false);
+      const lc = map.legendClearing(...map.areaAt(f.x, f.z).cell);
+      expect(map.hardClear(f.x, f.z) && !(lc && Math.hypot(f.x - lc.x, f.z - lc.z) < lc.r)).toBe(false); // (short and sparse on a legend's clearing's floor)
       expect(Math.hypot(f.x - d.x, f.z - d.z)).toBeGreaterThan(floorClearing(TUNING));
       expect(LOOKS[f.type].groundCover.kinds).toContain(TUFT_KINDS[f.kind]); // (its look: home's meadow has its own)
     }

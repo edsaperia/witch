@@ -795,6 +795,26 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
     if (sp.m.filter(Boolean).length < 200 || !inside(a.hatTip) || (hat !== "none" && !sp.m.some(v => v === M.MAGIC || v === M.MAGIC2 || v === M.COLLAR))) pbad.push(`hat ${hat} ${JSON.stringify(ex)} ${o.pose || "hover"}`);
   }
   ok(!missing.length && !famMissing.length && bigBrim >= 12 && longCloak >= 12 && !pbad.length, `witch variety (Ed): over 60 generated witches every accessory shows (${want.join(", ")}) and every familiar (${Gn.WITCH_AXES.familiar.slice(1).join(", ")}); ${bigBrim} brims over 1.5 times hers, ${longCloak} cloaks over 1.4 times; 12 party witches are generated witches, drawn in every party pose with their hand inside; every hat (${Gn.WITCH_AXES.hatShape.length}) draws flying and on foot at the sliders' ends, its tip inside, glowing but none, with the longest scarf, cloak, biggest bag and backpack${missing.length || famMissing.length || pbad.length ? " — " + [...missing.map(k => "no " + k), ...famMissing.map(k => "no " + k), ...pbad.slice(0, 4)].join("; ") : ""}`);
+  // Ed (2026-10-06): every broom kind (art/brooms.js) draws in every flight pose and frame, both facings, and on foot (standing, landing,
+  // taking off), nothing NaN, her hand and hat tip inside; only her own colours (every material one witchColours paints), something
+  // of the broom's own (its body or trim) showing; about her size: hovering 0.85 to 1.6 times as tall as on hers and no more than
+  // 2.4 times as wide
+  const col = W.witchColours(st), hers = W.witchSprite(st, { frame: 0 }), bbad = [];
+  for (const kind of Gn.WITCH_AXES.broom) {
+    const look = { ...Gn.genomeLook(Gn.WITCH_GENOME).look, broom: kind }, sprites = [];
+    for (const facing of ["towards", "away"]) {
+      for (const [pose, P] of Object.entries(W.WITCH_FLIGHT_POSES)) for (let frame = 0; frame < P.frames; frame++) sprites.push([`${pose} ${frame} ${facing}`, W.witchSprite(st, { look, pose: pose === "hover" ? undefined : pose, frame, facing })]);
+      for (const pose of ["stand", "land", "takeoff"]) sprites.push([`${pose} ${facing}`, W.witchSprite(st, { look, pose, frame: 1, facing })]);
+    }
+    for (const [what, sp] of sprites) {
+      const a = sp.anchors || {}, inside = q => q && q.every(Number.isFinite) && q[0] >= 0 && q[1] >= 0 && q[0] < sp.w && q[1] < sp.h, mats = new Set(sp.m.filter(Boolean));
+      const stray = [...mats].filter(v => v !== M.LINE && !col[v]);
+      if (mats.size < 4 || sp.m.filter(Boolean).length < 200 || !inside(a.hand) || !inside(a.hatTip) || stray.length || !(mats.has(M.BROOM) || mats.has(M.STRAW))) bbad.push(`${kind} ${what}${stray.length ? " (material " + stray.join(",") + ")" : ""}`);
+    }
+    const hov = sprites[0][1], kh = hov.h / hers.h, kw = hov.w / hers.w;
+    if (kh < .85 || kh > 1.6 || kw > 2.4) bbad.push(`${kind} ${kh.toFixed(2)}× as tall, ${kw.toFixed(2)}× as wide as hers`);
+  }
+  ok(!bbad.length, `broom kinds (Ed, 2026-10-06): every one of the ${Gn.WITCH_AXES.broom.length} (${Gn.WITCH_AXES.broom.join(", ")}) draws in every flight pose and frame, both facings, and on foot, her hand and hat tip inside, only her colours, its body or trim showing, about her size${bbad.length ? " — " + bbad.slice(0, 6).join("; ") : ""}`);
 }
 // area flora (art/flora/areas.js): every wooded area lists 3 to 6 real species, shares adding to 1, its main kind first (as its big
 // names it), a palette within reason (sat and val 0.6 to 1.3); the open areas list none; fantasy species are never an area's main kind

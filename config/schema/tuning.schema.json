@@ -34,6 +34,29 @@
         "edge": {
           "type": "number",
           "minimum": 0
+        },
+        "coast": {
+          "type": "object",
+          "properties": {
+            "amp": {
+              "type": "number",
+              "minimum": 0
+            },
+            "harmonics": {
+              "type": "number",
+              "minimum": 0
+            },
+            "detail": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "amp",
+            "harmonics",
+            "detail"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -42,7 +65,8 @@
         "buffer",
         "push",
         "drift",
-        "edge"
+        "edge",
+        "coast"
       ],
       "additionalProperties": false
     },
@@ -2197,6 +2221,10 @@
         "on": {
           "type": "boolean"
         },
+        "reveal": {
+          "type": "number",
+          "minimum": 0
+        },
         "far": {
           "type": "array",
           "items": {
@@ -2265,6 +2293,7 @@
       },
       "required": [
         "on",
+        "reveal",
         "far",
         "behindBright",
         "advance",
@@ -3352,6 +3381,82 @@
           "type": "number",
           "minimum": 0
         },
+        "rim": {
+          "type": "object",
+          "properties": {
+            "spacing": {
+              "type": "number",
+              "minimum": 0
+            },
+            "chance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "out": {
+              "type": "number",
+              "minimum": 0
+            },
+            "spread": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "spacing",
+            "chance",
+            "out",
+            "spread",
+            "gap"
+          ],
+          "additionalProperties": false
+        },
+        "grove": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "density": {
+              "type": "number",
+              "minimum": 0
+            },
+            "tallest": {
+              "type": "number",
+              "minimum": 0
+            },
+            "scale": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "soft": {
+              "type": "number",
+              "minimum": 0
+            },
+            "jitter": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "reach",
+            "density",
+            "tallest",
+            "scale",
+            "gap",
+            "soft",
+            "jitter"
+          ],
+          "additionalProperties": false
+        },
         "species": {
           "type": "object",
           "additionalProperties": {
@@ -3364,6 +3469,8 @@
         "radius",
         "edge",
         "top",
+        "rim",
+        "grove",
         "species"
       ],
       "additionalProperties": false
@@ -6024,11 +6131,16 @@
         "edge": {
           "type": "number",
           "minimum": 0
+        },
+        "whole": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "screenFraction",
-        "edge"
+        "edge",
+        "whole"
       ],
       "additionalProperties": false
     },
@@ -6159,6 +6271,10 @@
         "sky": {
           "type": "boolean"
         },
+        "skyBlur": {
+          "type": "number",
+          "minimum": 0
+        },
         "strength": {
           "type": "number",
           "minimum": 0
@@ -6194,6 +6310,7 @@
         "on",
         "where",
         "sky",
+        "skyBlur",
         "strength",
         "band",
         "centre",

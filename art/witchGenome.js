@@ -8,6 +8,7 @@
 // the hat and cloak in neighbouring hues, the jacket against them).
 import { rng } from "./core.js";
 import { DEFAULT_OUTFIT, DEFAULT_LOOK } from "./witch.js";
+import { NEW_BROOMS } from "./brooms.js";
 
 // Ours: every axis as she is.
 export const WITCH_GENOME = {
@@ -26,13 +27,14 @@ export const WITCH_AXES = {
   hatShape: ["none", "classic", "crooked", "floppy", "small", "flowers", "top", "cowboy", "conical", "boppers", "party", "musketeer", "wizard", "beanie", "crown", "mushroom", "traffic"],
   hatHeight: [.3, 3], hatBrim: [.3, 2.6], hatTilt: [-.9, 1], hatBand: [0, 4],
   hair: ["long", "bob", "buns", "mohawk"], top: ["jacket", "sequins", "mesh", "poncho", "cape"], cloak: ["none", "short", "long", "hooded"],
-  broom: ["classic", "fan", "twig", "round"], broomLength: [.4, 2.4], broomBend: [-1.2, 1.5], bristles: [.3, 3],
+  broom: ["classic", "fan", "twig", "round", ...NEW_BROOMS], broomLength: [.4, 2.4], broomBend: [-1.2, 1.5], bristles: [.3, 3],
   scarfLength: [0, 7], bagSize: [.4, 2.6], backpackSize: [0, 2.5],
   cloakLength: [.6, 6], familiar: ["none", "cat", "crow", "toad", "bat"], // (Ed, on #98: "Longer cloaks."; 2026-10-06: "allow a longer cloak and a longer scarf"; the familiar, an accessory with a choice: accessories.familiar)
 };
 // The generator's own limits (narrower: a new witch is a witch, a pointed hat with its glowing band; as before round 2, so a seed draws as it did).
 export const WITCH_RANDOM = {
   hatShape: ["classic", "crooked", "floppy", "small", "flowers"],
+  broom: ["classic", "fan", "twig", "round"], // (a broom: the other kinds, art/brooms.js, are the creator's)
   hatHeight: [.75, 1.6], hatBrim: [.75, 1.45], hatTilt: [-.25, .35], broomLength: [.85, 1.3], broomBend: [-.3, .6], bristles: [.8, 1.4],
 };
 const SKINS = [[.07, .25, .96], [.07, .32, .9], [.07, .42, .78], [.06, .5, .62], [.05, .55, .47], [.05, .5, .34]];
@@ -58,7 +60,7 @@ export function witchGenome(seed = 0, { party = false } = {}) {
   const WITCHY = WITCH_RANDOM.hatShape, OTHER = WITCH_AXES.hatShape.filter(h => !WITCHY.includes(h) && h !== "none"), hs = r();
   const shape = hs < .66 ? pick(WITCHY) : hs < .97 ? pick(OTHER) : "none", hat = { shape, height: uni([.75, shape === "wizard" ? 1.2 : 1.6]), brim: uni([.85, shape === "floppy" ? 1.5 : 1.9]), tilt: uni(WITCH_RANDOM.hatTilt), band: uni([1.7, 2.4]) }; // a broad band, so it always shows; brims up to nearly twice hers (a floppy one's to 1.5, so its point still shows)
   const hair = pick(WITCH_AXES.hair), top = pick(WITCH_AXES.top), ck = r(), cloak = ck < .15 ? "none" : ck < .35 ? "short" : ck < .7 ? "long" : "hooded"; // cloaks mostly long
-  const broom = { kind: pick(WITCH_AXES.broom), length: uni(WITCH_RANDOM.broomLength), bend: uni(WITCH_RANDOM.broomBend), bristles: uni(WITCH_RANDOM.bristles) };
+  const broom = { kind: pick(WITCH_RANDOM.broom), length: uni(WITCH_RANDOM.broomLength), bend: uni(WITCH_RANDOM.broomBend), bristles: uni(WITCH_RANDOM.bristles) };
   const k = party ? 1.6 : 1, fk = r(), familiar = fk < .5 ? "none" : WITCH_AXES.familiar[1 + Math.floor((fk - .5) / .5 * 4)];
   const accessories = { phones: chance(.55), shades: chance(.25 * k) ? (chance(.5) ? "round" : true) : false, glowsticks: chance(.2 * k), scarf: chance(.35), satchel: chance(.3), pendant: chance(.3), earrings: chance(.4),
     familiar, lantern: chance(.22), vial: chance(.3), book: chance(.2), patches: cloak !== "none" && chance(.35), bumbag: chance(.22 * k), wristband: chance(.3 * k), chunky: chance(.35) };
