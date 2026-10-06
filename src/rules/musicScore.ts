@@ -106,6 +106,9 @@ export interface ArcStep {
   /** The sections played as the wave arrives, then the ones looped till the next wave: [name, bars]. */
   arrive: [string, number][];
   loop: [string, number][];
+  /** Other loops taken in turn on later passes (overnight, 2026-10-06: a 30-minute run shouldn't
+   *  loop audibly): pass 0 plays `loop`, pass 1 `variants[0]`, and so on round. */
+  variants?: [string, number][][];
   /** The section leading into the next wave, and its bars. */
   build: string;
   buildBars?: number;
@@ -142,6 +145,8 @@ export interface MusicStyle {
   /** Parts added near a woken area that has joined the party: its soundsystem on, its happy animals
    *  dancing (their level times how near, 0-1); a part the section already plays isn't doubled. */
   party?: Record<string, PartUse>;
+  /** Parts added while an angry legend is near (charging, or shooting from afar: their level times how near, 0-1). */
+  legend?: Record<string, PartUse>;
   arc: ArcStep[];
 }
 
@@ -154,6 +159,9 @@ export interface BlockPlan {
   /** The wave the music is at, and its arc step's index. */
   wave: number;
   arc: number;
+  /** How many times the wave's loop has come round (0 the first time, and the arrival): each pass
+   *  its melodies are seeded anew, its chords start a step on and its "?" hits fall differently. */
+  pass?: number;
 }
 
 export interface NoteEvent {
@@ -272,6 +280,8 @@ export interface ScoreContext {
   siege: number;
   /** 0-1: how near a woken area that has joined the party is (adds the style's party parts). */
   party?: number;
+  /** 0-1: how near an angry legend is (adds the style's legend parts). */
+  legend?: number;
 }
 
 /** Every note starting on sixteenth `step` (absolute), in the block `plan`; `next` is the plan of
@@ -281,8 +291,11 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
   const sec = resolveSection(style, plan.section), a = arcStep(style, plan.arc);
   const scale = style.scales[a.scale ?? style.scale] ?? style.scales[style.scale];
   const transpose = a.transpose ?? 0;
-  const progress = (barIn + s / 16) / Math.max(1, plan.bars);
-  const chord = chordAt(style, sec, a, barIn);
+  const progress = (barIn + s / 16) / Math.max(1, plan.bars), pass = plan.pass ?? 0;
+  // each pass round the loop the chords start a step on (the same progression, a new turn of it)
+  const chord = chordAt(style, sec, a, barIn + pass * Math.max(1, sec.chordBars));
+  // a long block (the boot's intro, up to five minutes) turns a new phrase every 16 bars: new melodies, its ? hits falling anew
+  const phrase = pass + (plan.bars > 32 ? Math.floor(barIn / 16) : 0);
   const out: NoteEvent[] = [];
   // the last bar before a new section: a fill, and the last beat's mutes
   const ending = next !== null && (next.section !== plan.section || next.start !== plan.start) ? sec.ending ?? "fill" : "none";
@@ -291,6 +304,7 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
   const parts: [string, PartUse, number][] = Object.entries(sec.parts).map(([k, u]) => [k, u, 1]);
   if (ctx.siege > 0.01) for (const [k, u] of Object.entries(style.siege)) parts.push([k, u, ctx.siege]);
   if ((ctx.party ?? 0) > 0.01) for (const [k, u] of Object.entries(style.party ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx.party!]);
+  if ((ctx.legend ?? 0) > 0.01) for (const [k, u] of Object.entries(style.legend ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx.legend!]);
   if (fillBar) parts.push([style.fill.part, { p: "__fill" }, 1]);
   for (const [name, u0, scaleLevel] of parts) {
     const def = style.parts[name];
@@ -304,7 +318,7 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
     const i = (barIn * 16 + s) % pat.length;
     const { ch, dur } = hitAt(pat, i);
     if (ch === "." || ch === "-") continue;
-    const r = hash2(step, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), ctx.seed);
+    const r = hash2(step, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), ctx.seed + phrase * 7919);
     if (ch === "?" && r >= a.energy) continue;
     const level = u.level * scaleLevel * (0.94 + 0.06 * r);
     const base = { part: name, patch: def.patch, step, offset: 0, dur };
@@ -325,7 +339,7 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
       const n = chord.tones.length, t = chord.tones[k % n] + 7 * (Math.floor(k / n) % 2);
       out.push({ ...base, midi: degreeToMidi(style, scale, t, oct, transpose), vel: (VEL[ch] ?? accent) * level });
     } else {
-      const m = motifFor(ctx.seed, plan.arc, name), pos = ((barIn % 4) * 16 + s) % 32;
+      const m = motifFor(ctx.seed + phrase * 104729, plan.arc, name), pos = ((barIn % 4) * 16 + s) % 32; // (a new melody each pass or phrase)
       const vary = barIn % 4 === 3 && s >= 8 ? (hash2(bar, plan.arc, ctx.seed + 5) < 0.5 ? 2 : -1) : 0; // every fourth bar ends differently
       out.push({ ...base, midi: degreeToMidi(style, scale, chord.root + m[pos] + vary, oct, transpose), vel: (VEL[ch] ?? accent) * level });
     }
@@ -360,16 +374,17 @@ export function checkStyle(style: MusicStyle): string[] {
   }
   for (const [pn, u] of Object.entries(style.siege)) checkUse("siege", pn, u);
   for (const [pn, u] of Object.entries(style.party ?? {})) checkUse("party", pn, u);
+  for (const [pn, u] of Object.entries(style.legend ?? {})) checkUse("legend", pn, u);
   if (style.fill.pattern.length !== 16) errs.push("fill: not one bar");
   if (!style.parts[style.fill.part]) errs.push(`fill: no part "${style.fill.part}"`);
   for (const n of [style.intro, style.knockout]) if (!style.sections[n]) errs.push(`no section "${n}"`);
   if (!style.scales[style.scale]) errs.push(`no scale "${style.scale}"`);
   style.arc.forEach((a, i) => {
-    for (const [s, bars] of [...a.arrive, ...a.loop, [a.build, a.buildBars ?? style.buildBars] as [string, number]]) {
+    for (const [s, bars] of [...a.arrive, ...a.loop, ...(a.variants ?? []).flat(), [a.build, a.buildBars ?? style.buildBars] as [string, number]]) {
       if (!style.sections[s]) errs.push(`arc ${i} (${a.name}): no section "${s}"`);
       if (!(bars > 0) || bars % B !== 0) errs.push(`arc ${i} (${a.name}): ${s} is ${bars} bars, not a multiple of ${B}`);
     }
-    if (!a.loop.length) errs.push(`arc ${i} (${a.name}): nothing to loop`);
+    if (!a.loop.length || (a.variants ?? []).some(v => !v.length)) errs.push(`arc ${i} (${a.name}): nothing to loop`);
     if (a.scale && !style.scales[a.scale]) errs.push(`arc ${i} (${a.name}): no scale "${a.scale}"`);
     if (a.progression && !style.progressions[a.progression]) errs.push(`arc ${i} (${a.name}): no progression "${a.progression}"`);
   });
