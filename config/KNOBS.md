@@ -1006,6 +1006,10 @@ length: metres her creatures follow within; runSpeed: how fast one out of range 
 | `leash.runSpeed` | number | 0 to … |
 | `leash.pickRadius` | number | 0 to … |
 | `leash.spacing` | number | 0 to … |
+| `leash.runeRadius` | number | 0 to … |
+| `leash.runePull.radius` | number | 0 to … |
+| `leash.runePull.speed` | number | 0 to … |
+| `leash.runePull.stop` | number | 0 to … |
 | `leash.weight.free` | number | 0 to … |
 | `leash.weight.levels` | array of number |  |
 | `leash.weight.drag` | number | 0 to … |
@@ -1016,10 +1020,6 @@ length: metres her creatures follow within; runSpeed: how fast one out of range 
 | `leash.weight.floor` | number | 0 to 1 |
 | `leash.weight.extreme` | number | 0 to … |
 | `leash.weight.maxTension` | number | 0 to … |
-| `leash.runeRadius` | number | 0 to … |
-| `leash.runePull.radius` | number | 0 to … |
-| `leash.runePull.speed` | number | 0 to … |
-| `leash.runePull.stop` | number | 0 to … |
 
 ## `bond`
 
@@ -1482,7 +1482,7 @@ Off (Ed, 2026-10-06: "Remove the floating numbers above the runestones."); set o
 
 ## `canopyCutout`
 
-In ground mode the canopy stays drawn at the screen's edges, so she flies under the forest roof; a hole round her is cut out, screenFraction of the screen's width across, its edge edge of the width wide. Each tree has its own radius for it, up to a fifth nearer or further (Ed, round 7: "the crown-hiding circle still has a very sharp edge"), so no line runs across the canopy, and the edge fades over a wide band. Rising closes the hole. whole: how much the fade goes by each crown's middle rather than by each pixel (Ed, 2026-10-06: "I still see concentric circles while moving through dense forests in ground mode... If these had softer edges, it would be fine"): by pixel, every crown carried the same circular gradient and they lined up into rings; at 1 each crown fades as a whole. edge 0.2 -> 0.3 with it. Round 14 (Ed: "canopy cut-out circle is still very sharp"): by the crown's middle, a big crown near the camera (its middle far off) stood whole right up to her and its edge read as a hard ring, so whole 0.75 -> 0.25 (mostly by pixel again) and the rings are broken another way: wobble, how far the hole's line wanders (a share of edge) by a slow noise on the ground, so the fade's lines aren't circles; outer, how far past the radius the fade reaches (a share of edge; 0.35 before), with edge 0.3 -> 0.5, so the canopy thins over a band several crowns deep. A trunk cut from its crown now fades its top in alpha too (smooth effects; the dither stays with ?fx=pixel).
+In ground mode the canopy stays drawn at the screen's edges, so she flies under the forest roof; a hole round her is cut out, screenFraction of the screen's width across, its edge edge of the width wide. Each tree has its own radius for it, up to a fifth nearer or further (Ed, round 7: "the crown-hiding circle still has a very sharp edge"), so no line runs across the canopy, and the edge fades over a wide band. Rising closes the hole. whole: how much the fade goes by each crown's middle rather than by each pixel (Ed, 2026-10-06: "I still see concentric circles while moving through dense forests in ground mode... If these had softer edges, it would be fine"): by pixel, every crown carried the same circular gradient and they lined up into rings; at 1 each crown fades as a whole. edge 0.2 -> 0.3 with it. Round 14 (Ed: "canopy cut-out circle is still very sharp"): by the crown's middle, a big crown near the camera (its middle far off) stood whole right up to her and its edge read as a hard ring, so whole 0.75 -> 0.25 (mostly by pixel again) and the rings are broken another way: wobble, how far the hole's line wanders (a share of edge) by a slow noise on the ground, so the fade's lines aren't circles; outer, how far past the radius the fade reaches (a share of edge; 0.35 before), with edge 0.3 -> 0.5, so the canopy thins over a band several crowns deep. A trunk cut from its crown now fades its top in alpha too (smooth effects; the dither stays with ?fx=pixel). Ed, 2026-10-06 ("circle": it still read as a round window, crowns and trunks sliced along its arc): the slicing was the fade going by each pixel, every crown crossing the band cut along the same circle; so whole 0.25 -> 1, each crown (and its trunk) fading as one, by its middle less half its half-size (a big crown over her goes too); ragged: its outline's bays and points round her, a share of the radius, drifting slowly round; spread: each tree's own radius spread round the hole's, a share of it (0.2 before), so the edge is several crowns deep and ragged; lead: its middle leans that many seconds ahead of her the way she's going (eased), so the opening opens into her path. Each crown goes by its middle less half its half-size, so every crown counts a little nearer: the hole and its band came in to keep the roof at the screen's edges (screenFraction 1 -> 0.8, edge 0.5 -> 0.25, outer 0.8 -> 1: crowns fading from about 0.15 to 0.65 of the width out), and glowToCutout 1 -> 1.55 keeps her light's reach as it was.
 
 | knob | type | range |
 |---|---|---|
@@ -1491,6 +1491,9 @@ In ground mode the canopy stays drawn at the screen's edges, so she flies under 
 | `canopyCutout.whole` | number | 0 to … |
 | `canopyCutout.wobble` | number | 0 to … |
 | `canopyCutout.outer` | number | 0 to … |
+| `canopyCutout.ragged` | number | 0 to … |
+| `canopyCutout.spread` | number | 0 to … |
+| `canopyCutout.lead` | number | 0 to … |
 
 ## `find`, `tone`, `bloom`, `tiltShift`
 

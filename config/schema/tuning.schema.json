@@ -271,6 +271,8 @@
         "on",
         "width",
         "shore",
+        "vary",
+        "decor",
         "ease",
         "sand",
         "sea",
@@ -4471,6 +4473,33 @@
           "type": "number",
           "minimum": 0
         },
+        "runeRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "runePull": {
+          "type": "object",
+          "properties": {
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stop": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "radius",
+            "speed",
+            "stop"
+          ],
+          "additionalProperties": false
+        },
         "weight": {
           "type": "object",
           "properties": {
@@ -4535,33 +4564,6 @@
             "maxTension"
           ],
           "additionalProperties": false
-        },
-        "runeRadius": {
-          "type": "number",
-          "minimum": 0
-        },
-        "runePull": {
-          "type": "object",
-          "properties": {
-            "radius": {
-              "type": "number",
-              "minimum": 0
-            },
-            "speed": {
-              "type": "number",
-              "minimum": 0
-            },
-            "stop": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "radius",
-            "speed",
-            "stop"
-          ],
-          "additionalProperties": false
         }
       },
       "required": [
@@ -4569,9 +4571,9 @@
         "runSpeed",
         "pickRadius",
         "spacing",
-        "weight",
         "runeRadius",
-        "runePull"
+        "runePull",
+        "weight"
       ],
       "additionalProperties": false
     },
@@ -6873,6 +6875,18 @@
         "outer": {
           "type": "number",
           "minimum": 0
+        },
+        "ragged": {
+          "type": "number",
+          "minimum": 0
+        },
+        "spread": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lead": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -6880,7 +6894,10 @@
         "edge",
         "whole",
         "wobble",
-        "outer"
+        "outer",
+        "ragged",
+        "spread",
+        "lead"
       ],
       "additionalProperties": false
     },

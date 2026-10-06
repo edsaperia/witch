@@ -250,7 +250,7 @@ export interface Tuning {
   };
   /** Wave numbers over the rune stones (Ed, 2026-10-04, a design aid): on, a digit's height as a share of the screen's, metres above the stone (or the canopy), and how bright the reached areas' are (0-1). */
   waveNumbers: { on: boolean; size: number; lift: number; spent: number; pinRange: number };
-  canopyCutout: { screenFraction: number; edge: number; /** How much the fade goes by each crown's middle rather than each pixel (1: whole crowns fade; Ed, 2026-10-06: concentric circles). */ whole?: number; /** How far the hole's line wobbles, a share of its edge (Ed, round 14: still sharp). */ wobble?: number; /** How far past its radius the fade reaches, a share of the edge. */ outer?: number };
+  canopyCutout: { screenFraction: number; edge: number; /** How much the fade goes by each crown's middle rather than each pixel (1: whole crowns fade; Ed, 2026-10-06: concentric circles). */ whole?: number; /** How far the hole's line wobbles, a share of its edge (Ed, round 14: still sharp). */ wobble?: number; /** How far past its radius the fade reaches, a share of the edge. */ outer?: number; /** How ragged its outline is round her, a share of the radius (Ed, 2026-10-06: "circle"). */ ragged?: number; /** How far each tree's own radius for it spreads, a share of the radius. */ spread?: number; /** Seconds ahead of her, the way she's going, its middle leans. */ lead?: number };
   shadows: { on: boolean; strength: number; trees: boolean };
   canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };
   mist: { on: boolean; strength: number; height: number; wind: number };
