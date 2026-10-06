@@ -2119,6 +2119,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "generated": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -2132,7 +2135,8 @@
         "lanternReach",
         "arch",
         "home",
-        "exclude"
+        "exclude",
+        "generated"
       ],
       "additionalProperties": false
     },
@@ -4460,11 +4464,16 @@
         "repairTime": {
           "type": "number",
           "minimum": 0
+        },
+        "grace": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "hits",
-        "repairTime"
+        "repairTime",
+        "grace"
       ],
       "additionalProperties": false
     },
@@ -4802,6 +4811,9 @@
             "type": "string"
           }
         },
+        "areaNeon": {
+          "type": "boolean"
+        },
         "twinkle": {
           "type": "number",
           "minimum": 0
@@ -4824,6 +4836,7 @@
         "sag",
         "bulbSpacing",
         "palette",
+        "areaNeon",
         "twinkle",
         "chaseSpeed"
       ],
@@ -5435,6 +5448,48 @@
       "type": "number",
       "minimum": 0
     },
+    "simLod": {
+      "type": "object",
+      "properties": {
+        "full": {
+          "type": "object",
+          "properties": {
+            "ground": {
+              "type": "number",
+              "minimum": 0
+            },
+            "treetop": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "ground",
+            "treetop"
+          ],
+          "additionalProperties": false
+        },
+        "action": {
+          "type": "number",
+          "minimum": 0
+        },
+        "band": {
+          "type": "number",
+          "minimum": 0
+        },
+        "every": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "full",
+        "action",
+        "band",
+        "every"
+      ],
+      "additionalProperties": false
+    },
     "creatureSpeed": {
       "type": "number",
       "minimum": 0
@@ -5614,6 +5669,7 @@
     "dreams",
     "wildLegends",
     "creatureSimRadius",
+    "simLod",
     "creatureSpeed",
     "setPieceChance",
     "setPieceScale",
