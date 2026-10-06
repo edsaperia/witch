@@ -14,7 +14,7 @@ import type { ForestMap } from "./map";
 import type { PartyState } from "./party";
 
 type P2 = [number, number];
-type Floor = Pick<ForestMap, "dancefloor" | "treehouseFront"> & { tuning: { boot: { time: number } } };
+type Floor = Pick<ForestMap, "dancefloor" | "treehouseFront"> & { tuning: { boot: { time: number; firstAfter?: number } } };
 
 /** A stone's bearing from the floor's middle, clockwise from north (radians, 0 to 2π): east π/2 (the camera looks north). */
 const bearingOf = (d: Floor["dancefloor"], x: number, z: number) => { const b = Math.atan2(x - d.x, -(z - d.z)); return b < 0 ? b + Math.PI * 2 : b; };
@@ -47,20 +47,28 @@ export function bootPath(map: Floor): { path: P2[]; length: number; stoneAt: num
   return out;
 }
 
-/** How far the boot has run (0 to 1): 0 before the party spell, 1 once the last stone has turned. A build without the
- *  party spell (spellAt undefined) counts from the boot's start as before. */
-export function bootShare(p: PartyState, map: Floor, time: number): number {
-  const B = map.tuning.boot.time;
+/** Where the boot's pulse is along the path (m). Ed, 2026-10-06: "The time between the game start and the first mini-runestone
+ *  turning into a speaker should be about three seconds ... after you leave your decks ... You can start the boot time from
+ *  when the first speaker is activated." So: nothing before the party spell; cast, it waits at the treehouse until she
+ *  leaves her decks (`p.bootFrom`); then it runs down to the first stone in `boot.firstAfter` seconds, and on round the ring
+ *  from the first stone to the last over `boot.time`, the boot's minutes. */
+export function bootPulseAt(p: PartyState, map: Floor, time: number): number {
+  const B = map.tuning.boot.time, F = Math.max(0, map.tuning.boot.firstAfter ?? 0), P = bootPath(map);
   if (p.spellAt === null) return 0;
-  if (!(B > 0)) return 1;
-  const start = p.spellAt ?? p.bootUntil - B;
-  return Math.max(0, Math.min(1, (time - start) / B));
+  const first = P.order.length ? P.stoneAt[P.order[0]] : P.length, last = P.order.length ? P.stoneAt[P.order[P.order.length - 1]] : P.length;
+  if (!(B > 0) && !(F > 0)) return last;
+  if (p.bootFrom === undefined) return 0; // (cast, but still at her decks: it waits at the treehouse)
+  const t = time - p.bootFrom;
+  if (t <= 0) return 0;
+  if (t < F) return (t / F) * first;
+  return B > 0 ? first + Math.min(1, (t - F) / B) * (last - first) : last;
 }
 
-/** Where the boot's pulse is along the path (m): at the treehouse as the spell is cast, at the last stone as the boot ends. */
-export function bootPulseAt(p: PartyState, map: Floor, time: number): number {
+/** How far the boot has run (0 to 1): 0 before the party spell (and while she's still at her decks), 1 once the last stone
+ *  has turned: the pulse's share of the way to the last stone. */
+export function bootShare(p: PartyState, map: Floor, time: number): number {
   const P = bootPath(map), last = P.order.length ? P.stoneAt[P.order[P.order.length - 1]] : P.length;
-  return bootShare(p, map, time) * last;
+  return last > 0 ? Math.max(0, Math.min(1, bootPulseAt(p, map, time) / last)) : 1;
 }
 
 /** How far along the path the line is drawn (m): `reveal` times the pulse, the whole ring at most. */
@@ -69,8 +77,8 @@ export const bootLineAt = (p: PartyState, map: Floor, time: number, reveal: numb
 /** Whether stone `i` (an index into dancefloor.speakers) has turned into a speaker: the pulse has reached it. */
 export function stoneTurned(p: PartyState, map: Floor, time: number, i: number): boolean {
   if (p.spellAt === null) return false;
-  if (bootShare(p, map, time) >= 1) return true;
-  return bootPulseAt(p, map, time) >= bootPath(map).stoneAt[i];
+  const at = bootPulseAt(p, map, time);
+  return at > 0 && (at >= bootPath(map).stoneAt[i] || bootShare(p, map, time) >= 1);
 }
 
 /** How many stones have turned. */

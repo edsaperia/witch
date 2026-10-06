@@ -209,7 +209,7 @@ export interface CombatWorld {
   creatures: Creature[];
   /** The creatures to step this time (near a witch, or busy with a siege). */
   active: Creature[];
-  witches: { id: number; x: number; z: number; onGround: boolean; down: boolean; /** her velocity (flankers go round to her back) */ vx?: number; vz?: number }[];
+  witches: { id: number; x: number; z: number; onGround: boolean; down: boolean; /** her velocity (flankers go round to her back) */ vx?: number; vz?: number; /** in a calm legend's circle (rules/slowTime.ts): that legend's id; nothing else attacks her there */ shelter?: number }[];
   /** Where a party animal's leash is fixed. */
   leashPoint: (id: number) => { x: number; z: number } | null;
   /** Whether a party animal is parked (at a sigil on the ground): it guards round it. */
@@ -278,13 +278,17 @@ function pastEdge(w: CombatWorld, c: Creature, x: number, z: number): boolean {
   return !w.inArea(c, x + (hx / hd) * L, z + (hz / hd) * L);
 }
 
+/** She's in a calm legend's circle and c isn't its legend (Ed, round 14: "I got attacked by a wild creature when in a legend
+ *  circle; I think they shouldn't attack you from outside when you're in there"): c can't go for her, and nothing of its lands. */
+const sheltered = (v: CombatWorld["witches"][number], c: Creature | null) => v.shelter !== undefined && c?.id !== v.shelter;
+
 /** The creature she's inviting (Ed, 2026-10-04): her party leaves it be while they chat. */
 const inviting = (w: CombatWorld, c: Creature, o: Creature) => !huntsWitch(sideOf(c)) && w.talkingTo(o.id) >= 0;
 
 /** Why a wild one lost its target, if it's a chase it gives up (not one she's inviting, a fall, a knockout):
  *  she's risen to the treetops, or it (her or a party animal) is past its band beyond its area's edge. */
 function gaveUp(w: CombatWorld, c: Creature, tg: Target): boolean {
-  if (tg.kind === "witch") { const v = w.witches[tg.id]; return !!v && !v.down && (!v.onGround || pastEdge(w, c, v.x, v.z)); }
+  if (tg.kind === "witch") { const v = w.witches[tg.id]; return !!v && !v.down && (!v.onGround || sheltered(v, c) || pastEdge(w, c, v.x, v.z)); }
   if (tg.kind === "creature") { const o = w.creatures[tg.id]; return !!o && !o.gone && pastEdge(w, c, o.x, o.z); }
   return false;
 }
@@ -301,7 +305,7 @@ function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): boolean
     // (Ed, 2026-10-06: 30 m); then it gives up and retreats into its area (c.retreat, stepCombat). A besieger keeps the old rule: out of its area, out of its
     // attack range and at least combat.witchLose away. (Only wild ones go for her at all.)
     const v = w.witches[tg.id];
-    if (!huntsWitch(sideOf(c)) || !v || !v.onGround || v.down || w.talkingTo(c.id) === tg.id) return false;
+    if (!huntsWitch(sideOf(c)) || !v || !v.onGround || v.down || w.talkingTo(c.id) === tg.id || sheltered(v, c)) return false;
     if (!c.siege) return !pastEdge(w, c, v.x, v.z);
     const d = Math.hypot(v.x - c.x, v.z - c.z), range = attackOf(c.species, c.level)?.attack.range ?? 0;
     return !(d > range && d >= w.t.combat.witchLose * FIGHT.scale && !w.inArea(c, v.x, v.z));
@@ -329,7 +333,7 @@ function acquire(w: CombatWorld, c: Creature, x: number, z: number, range: numbe
     if (d < bd) { bd = d; best = { kind: "creature", id: o.id }; }
   }
   if (huntsWitch(sideOf(c))) for (const v of w.witches) {
-    if (!v.onGround || v.down || w.talkingTo(c.id) === v.id) continue; // (the one she's inviting holds its fire on her)
+    if (!v.onGround || v.down || w.talkingTo(c.id) === v.id || sheltered(v, c)) continue; // (the one she's inviting holds its fire on her; in a legend's circle she's safe)
     const d = Math.hypot(v.x - c.x, v.z - c.z);
     if ((w.inArea(c, v.x, v.z) || (d < attackRange && (c.siege || !pastEdge(w, c, v.x, v.z)))) && (!best || d < bd)) { bd = d; best = { kind: "witch", id: v.id }; }
   }
@@ -388,7 +392,7 @@ function touch(w: CombatWorld, s: CombatState, c: Creature, damage: number, a: A
     land(w, s, c, { kind: "creature", id: o.id }, damage, a, c.x, c.z);
   }
   if (huntsWitch(sideOf(c))) for (const v of w.witches) {
-    if (!v.onGround || v.down || hit.includes(-1 - v.id) || w.talkingTo(c.id) === v.id || Math.hypot(v.x - c.x, v.z - c.z) > reach + me + 0.4) continue;
+    if (!v.onGround || v.down || sheltered(v, c) || hit.includes(-1 - v.id) || w.talkingTo(c.id) === v.id || Math.hypot(v.x - c.x, v.z - c.z) > reach + me + 0.4) continue;
     hit.push(-1 - v.id);
     land(w, s, c, { kind: "witch", id: v.id }, damage, a, c.x, c.z);
   }
@@ -397,6 +401,7 @@ function touch(w: CombatWorld, s: CombatState, c: Creature, damage: number, a: A
 function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target, damage: number, a: Attack, fx: number, fz: number): void {
   const time = w.time;
   if (tg.kind === "witch") {
+    if (sheltered(w.witches[tg.id], from)) return; // (in a legend's circle: a shot or blow already on its way doesn't land)
     // Thrown from the attacker (or where its shot or area hit landed); harder by the attack's
     // knockback, and hard if it rams her (charging, or landing a leap on her).
     const ox = from && a.delivery !== "shot" && a.delivery !== "lob" ? from.x : fx, oz = from && a.delivery !== "shot" && a.delivery !== "lob" ? from.z : fz;
@@ -533,7 +538,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     s.trails = s.trails.filter(tr => time < tr.until);
     for (const tr of s.trails) {
       for (const o of grid.near(tr.x, tr.z, tr.r + 1)) if (foes(sideOf(o), tr.side) && o.species !== "snail" && Math.hypot(o.x - tr.x, o.z - tr.z) <= tr.r) o.slowUntil = Math.max(o.slowUntil ?? 0, time + 0.25);
-      if (huntsWitch(tr.side)) for (const v of w.witches) if (v.onGround && !v.down && Math.hypot(v.x - tr.x, v.z - tr.z) <= tr.r) w.slowWitch?.(v.id, time + 0.25, tr.slow);
+      if (huntsWitch(tr.side)) for (const v of w.witches) if (v.onGround && !v.down && !sheltered(v, w.creatures[tr.from] ?? null) && Math.hypot(v.x - tr.x, v.z - tr.z) <= tr.r) w.slowWitch?.(v.id, time + 0.25, tr.slow);
     }
   }
   // Her party (for angry besiegers looking for the nearest of it or a soundsystem).
@@ -733,7 +738,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         // The glow-worm's flash: a pulse of light dazzling the other side round it (slowed a moment).
         const R = (P.move.radius ?? 10) * S, until = time + (P.move.time ?? 1.5), side = sideOf(c);
         for (const o of grid.near(c.x, c.z, R)) if (o !== c && targetable(o) && foes(sideOf(o), side) && !truce(c, o) && Math.hypot(o.x - c.x, o.z - c.z) <= R) o.slowUntil = Math.max(o.slowUntil ?? 0, until);
-        if (huntsWitch(side)) for (const v of w.witches) if (v.onGround && !v.down && Math.hypot(v.x - c.x, v.z - c.z) <= R) w.slowWitch?.(v.id, until, P.move.slow ?? 0.6);
+        if (huntsWitch(side)) for (const v of w.witches) if (v.onGround && !v.down && !sheltered(v, c) && Math.hypot(v.x - c.x, v.z - c.z) <= R) w.slowWitch?.(v.id, until, P.move.slow ?? 0.6);
         s.events.push({ kind: "flash", x: c.x, z: c.z, at: time, id: c.id });
         c.moveReadyAt = time + P.move.cooldown;
       }
@@ -902,7 +907,7 @@ function stepLongCharge(w: CombatWorld, s: CombatState, c: Creature, f: Fight, g
         o.kx = -Math.sin(run.angle) * side * kb * 6 + vx * 0.3 * share; o.kz = Math.cos(run.angle) * side * kb * 6 + vz * 0.3 * share;
       }
       if (angry) for (const v of w.witches) {
-        if (!v.onGround || v.down || run.hit.includes(-1 - v.id) || Math.hypot(v.x - c.x, v.z - c.z) > half + 0.4) continue;
+        if (!v.onGround || v.down || sheltered(v, c) || run.hit.includes(-1 - v.id) || Math.hypot(v.x - c.x, v.z - c.z) > half + 0.4) continue;
         run.hit.push(-1 - v.id);
         // Thrown aside and staggered (rules/knock.ts, #108: a ram throws her witch.knock.charge metres), away from its line.
         const side = Math.sign((v.x - c.x) * -Math.sin(run.angle) + (v.z - c.z) * Math.cos(run.angle)) || 1;
