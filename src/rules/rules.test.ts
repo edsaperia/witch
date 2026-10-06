@@ -1,4 +1,5 @@
 import { stateOf } from "./creatureStates";
+import { ringOrder } from "./bootRing";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { hash2 as labHash2, SPECIES_BY_ID } from "../../art/generator.js";
@@ -21,7 +22,7 @@ import { newClock, tick, MAX_STEP } from "./clock";
 import { TUNING, withTuning } from "./tuning";
 import { floorClearing, speakerRadius, nextSpeakerState } from "./speakers";
 import { composeFloor, moonTiles, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
-import { floorInputs } from "./game";
+import { bootSpeaker, floorInputs, speakerBoot } from "./game";
 import { moonState } from "./moon";
 import { castSpell, newSpells, spellCharge, speedMultiplier } from "./spells";
 import { musicMix } from "./music";
@@ -1347,6 +1348,38 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
     expect(g.speakers.every(s => s === "playing")).toBe(true); // (works with the clock paused too)
     stepGame(g, { ...NO_INTENT, zoom: 0, cycleSpeakers: true }, 1 / 60);
     expect(g.speakers.every(s => s === "damaged")).toBe(true);
+  });
+});
+
+describe("the home speakers start as runestones (Ed, 2026-10-06)", () => {
+  it("turn into speakers one by one as the boot reaches them, each over boot.transform, all of them by its end", () => {
+    const g = newGame(3, TUNING), n = g.speakerBoot.length, T = TUNING.boot.transform;
+    g.clock.paused = false;
+    expect(n).toBe(12);
+    for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
+    expect(g.speakerBoot.every(b => b === null)).toBe(true); // seated: all stones
+    for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60);
+    expect(g.speakerBoot.every(b => b === null)).toBe(true); // waiting for the party spell: all stones
+    castPartySpell(g.party, g.map, g.clock.time); // (the party spell sets the boot's pulse off round the ring: rules/bootRing.ts)
+    const to = (time: number) => { while (g.clock.time < time) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60); };
+    to(g.party.bootUntil - TUNING.boot.time / 2);
+    const order = ringOrder(g.map), half = g.speakerBoot.filter(b => b !== null).length;
+    expect(half).toBeGreaterThan(3); expect(half).toBeLessThan(9);
+    const i = order[half - 1], at = g.speakerBoot[i]!; // the latest one, turning
+    expect(speakerBoot(g, i, at)).toBe(0); expect(speakerBoot(g, i, at + T / 2)).toBeCloseTo(0.5); expect(speakerBoot(g, i, at + T)).toBe(1);
+    expect(speakerBoot(g, order[half], g.clock.time)).toBe(0); // the next still a stone
+    for (let k = 1; k < half; k++) expect(g.speakerBoot[order[k]]!).toBeGreaterThanOrEqual(g.speakerBoot[order[k - 1]]!); // round the ring in order, clockwise from the top
+    to(g.party.bootUntil + T + 0.1);
+    expect(g.speakerBoot.every((_, k) => speakerBoot(g, k) === 1)).toBe(true);
+  });
+  it("can be booted by the pulse: bootSpeaker turns one now, once", () => {
+    const g = newGame(3, TUNING);
+    g.clock.time = 5;
+    bootSpeaker(g, 7);
+    expect(g.speakerBoot[7]).toBe(5);
+    g.clock.time = 9; bootSpeaker(g, 7);
+    expect(g.speakerBoot[7]).toBe(5);
+    expect(speakerBoot(g, 6)).toBe(0);
   });
 });
 

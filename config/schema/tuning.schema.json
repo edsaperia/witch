@@ -5287,11 +5287,16 @@
         },
         "spell": {
           "type": "boolean"
+        },
+        "transform": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "time",
-        "spell"
+        "spell",
+        "transform"
       ],
       "additionalProperties": false
     },

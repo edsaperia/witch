@@ -9,8 +9,8 @@ import type { WaveNumber } from "../waveNumbers";
 import { beatTime } from "../../rules/beat";
 import { canopyShown } from "../../rules/witch";
 import { cellKey, spawnMarkers, symbolCount, waveCountdown, wavePlan } from "../../rules/party";
-import { stoneTurned } from "../../rules/bootRing";
 import { hash2 } from "../../rules/random";
+import { speakerBoot } from "../../rules/game";
 import type { ForestLight, View } from "../view";
 import { inView, overBulge } from "./culling";
 import { mark } from "./pops";
@@ -139,11 +139,14 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
  *  Each shows its front to the camera, the far half facing in and the near half out, so its
  *  sprite is the drawn angle nearest its yaw, flipped for the other side; a playing speaker's
  *  cones pump on the beat. Anchored by its ground point, like a path piece. */
+/** A home speaker's runestone, times the speaker's size (Ed: "smaller runestones"); the share of its turn spent as the stone (glowing, stretching) before the speaker springs up. */
+const STONE = 0.55, TURN = 0.4;
 export function drawSpeakers(v: View, time: number, angle: number): ForestLight[] {
   const A = v.assets.speakerArt(), g = v.game, lights: ForestLight[] = [];
   if (!A) return lights;
-  // The boot-up (Ed, 2026-10-04): they power on one by one round the ring, each with a flare;
-  // the ones still off stand silent.
+  // The boot-up (Ed, 2026-10-06): each starts as a small runestone, and when the boot pulse reaches it (g.speakerBoot,
+  // rules/game.ts) it turns into its speaker: the stone glows white and stretches up, then the speaker springs up out of
+  // the ground with a flare, overshooting a little and settling, its glow fading.
   if (!v.speakerBatch) {
     v.speakerBatch = new SpriteBatch(A.atlas, v.mpp, { solid: true });
     v.scene.add(...v.speakerBatch.meshes);
@@ -153,7 +156,16 @@ export function drawSpeakers(v: View, time: number, angle: number): ForestLight[
   const beat = (beatTime(g.beat, time) * g.tuning.beat.bpm) / 60, ph = beat - Math.floor(beat);
   const list: SpriteInstance[] = [];
   g.map.dancefloor.speakers.forEach((sp, i) => {
-    const face = Art.dancefloorSpeakerFacing(sp.ring) as { angle: number; flip: boolean }, state = g.speakers[i] ?? "playing", powered = stoneTurned(g.party, g.map, time, i);
+    const face = Art.dancefloorSpeakerFacing(sp.ring) as { angle: number; flip: boolean }, state = g.speakers[i] ?? "playing", k = speakerBoot(g, i, time), powered = k >= TURN;
+    if (!powered && A.stone !== undefined) { // still its runestone (charging once the pulse has reached it)
+      const f = A.atlas.frames[A.stone], o = A.stoneOrigin!, c = k / TURN, d = (f.pad ?? 0) * mpp * STONE;
+      v.speakerTops[i] = { x: sp.x, y: o.y * mpp * STONE * (1 + 0.6 * c), z: sp.z, state, powered: false };
+      if (!inView(v, sp.x, sp.z, f.w * mpp, f.h * mpp, 6)) return;
+      if (c > 0) lights.push({ x: sp.x, y: 1.5, z: sp.z, reach: 8, rgb: new THREE.Vector3(0.3, 0.9, 1), strength: 1.5 * c });
+      list.push({ x: sp.x - U.x * d, y: -U.y * d, z: sp.z - U.z * d, frame: f, flip: face.flip, scale: STONE, sx: 1 - 0.2 * c, sy: 1 + 0.6 * c, glow: c, fresh: mark(v, "speaker", sp.x, sp.z, f.h * mpp) });
+      return;
+    }
+    const u = A.stone === undefined ? 1 : Math.min(1, (k - TURN) / (1 - TURN)), rise = u >= 1 ? 1 : 1 - Math.pow(1 - u, 3) * Math.cos(u * 4.2); // springs up, past full, settles
     if (powered && v.speakerFlare[i] === undefined) v.speakerFlare[i] = time;
     if (!powered) v.speakerFlare[i] = undefined;
     const flare = powered ? Math.max(0, 1 - (time - (v.speakerFlare[i] ?? time)) / 0.8) : 0;
@@ -167,7 +179,7 @@ export function drawSpeakers(v: View, time: number, angle: number): ForestLight[
     const dx = (ox - f.w / 2) * mpp, below = Math.max(0, f.h - (f.pad ?? 0) - o.y) * mpp, d = (f.pad ?? 0) * mpp;
     const x = sp.x - R.x * dx, z = sp.z - R.z * dx + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch));
     if (!inView(v, x, z, f.w * mpp, f.h * mpp, 6)) return;
-    list.push({ x: x - U.x * d, y: -U.y * d, z: z - U.z * d, frame: f, flip: face.flip, fresh: mark(v, "speaker", sp.x, sp.z, f.h * mpp) });
+    list.push({ x: x - U.x * d, y: -U.y * d, z: z - U.z * d, frame: f, flip: face.flip, fresh: mark(v, "speaker", sp.x, sp.z, f.h * mpp), ...(u < 1 ? { sy: Math.max(0.2, rise), sx: 1 + 0.15 * (1 - u), glow: 1 - u } : {}) });
   });
   v.speakerBatch.set(list);
   return lights;
