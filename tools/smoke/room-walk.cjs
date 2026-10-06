@@ -23,7 +23,8 @@ const query = process.argv[2] || "";
     const room = await page.$("#creator canvas[title]");
     await room.screenshot({ path: path.join(out, "room.png") });
     let n = 0;
-    const shoot = async () => room.screenshot({ path: path.join(frames, `f${String(n++).padStart(3, "0")}.png`) });
+    // a frame: the room's own canvas, 3 screen pixels to its art pixel (read in the page: a screenshot is too slow while the forest grows)
+    const shoot = async () => { const url = await page.evaluate(() => { const c = document.querySelector("#creator canvas[title]"), k = 3, z = document.createElement("canvas"); z.width = c.width * k; z.height = c.height * k; const x = z.getContext("2d"); x.imageSmoothingEnabled = false; x.fillStyle = "#14132c"; x.fillRect(0, 0, z.width, z.height); x.drawImage(c, 0, 0, z.width, z.height); return z.toDataURL(); }); fs.writeFileSync(path.join(frames, `f${String(n++).padStart(3, "0")}.png`), Buffer.from(url.split(",")[1], "base64")); };
     const where = () => page.evaluate(() => { const c = window.__creator; return c ? { x: +c.walker.x.toFixed(2), z: +c.walker.z.toFixed(2) } : null; });
     const start = await where();
     console.log("start", JSON.stringify(start));
@@ -42,7 +43,7 @@ const query = process.argv[2] || "";
     if (moved < 5) throw new Error(`she hardly moved: ${moved} legs`);
     await page.screenshot({ path: path.join(out, "after.png") });
     // the GIF: every frame, at 10 a second
-    execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-framerate", "10", "-i", path.join(frames, "f%03d.png"), "-vf", "scale=iw/2:-1:flags=neighbor,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=none", path.join(out, "walk.gif")]);
+    execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-framerate", "10", "-i", path.join(frames, "f%03d.png"), "-vf", "split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=none", path.join(out, "walk.gif")]);
     console.log("frames", n, "errors", errors.length);
     if (errors.length) throw new Error(errors.join("\n"));
   } finally { await browser.close(); server.kill(); }
