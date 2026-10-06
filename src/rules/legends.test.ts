@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Creature, Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
-import { TUNING } from "./tuning";
+import { TUNING, withTuning } from "./tuning";
 import { LEGEND_BUFFS } from "./buffs";
 import { LEGENDS, anger, canopyOver, relicGlints } from "./legends";
 import { cellKey } from "./party";
@@ -265,7 +265,7 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
 
 describe("a wave on a legend's area (#87, found by the overnight playthrough)", () => {
   it("enrages its wild creatures into a siege, but leaves its legend asleep, neither enraged nor besieging", () => {
-    const g = newGame(123, TUNING);
+    const g = newGame(123, withTuning({ legends: { share: 1 } })); // (a legend in the woken area: with legends.share 0.5 the first wave's may have none)
     g.clock.paused = false;
     const before = new Set(g.party.areas.keys());
     run(g, 0.1, { ...idle, nextWave: true });

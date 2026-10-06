@@ -359,6 +359,8 @@ This replaces the legend rules in "Sleeping legends" and "The first quest" below
 
 **What legends are for** (Ed, 2026-10-06, his design intent; every builder working on legends reads this first): "The idea of legends is that they provide a different layer of tasks to the tasks to the game, that are mostly optional. If you are quick and can do the quests you can get buffs from them; if you are lucky and find a relic they can be very powerful allies; and if you are losing, their babies get hurt during sieges and they get enraged (ideally this helps the loss spiral happen faster and more dramatically). I think you should be able to get the buffs at any time the legend is sleeping, not just before the soundsystem is made."
 
+**Legends in half the areas** (Ed, 2026-10-06): "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." `legends.share` (tuning, default 0.5; a slider on the decisions panel, which reloads for a new map) is the share of areas, home never, with a sleeping legend, chosen per map from the seed and spread out (`chooseLegendCells` in `src/rules/map.ts`). An area without one has no legend's clearing, no quest, no restlessness or anger, and no legend music. DECISION FOR ED (balance, 2026-10-06): "no more than two neighbouring areas in a row" holds exactly only up to a share of about 0.35, since an area has about 5.4 neighbours. At 0.5 they're kept as thin as the map allows: no legend area borders more than two or three others (1.5 on average, against 2.7 at random), in winding chains rather than blobs.
+
 | State | How | Effect |
 |---|---|---|
 | **Asleep** | the default; soundsystems no longer wake them | it dreams of a creature (its quest) |
