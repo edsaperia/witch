@@ -3,7 +3,9 @@
 // pandanus and palm-like plants, clumps spilling onto the sand; taller trees rise behind ... no noise gradient"): a scalloped
 // line of beach shrubs and round bushes in rows along the sand's edge (the ground shader's own scalloped line, render/ground.ts,
 // worked out the same way here), grass clumps at its foot, a palm now and then among them, and a few strays out on the sand.
-// The forest's own trees stand behind, up to the sand's line (rules/map.ts), so the canopy steps up from the bushes.
+// The forest's own trees stand behind, up to the sand's line (rules/map.ts), so the canopy steps up from the bushes. The line
+// follows the sand's own width round the coast (its bays and narrows: rules/mapShape.ts sandAt), scalloped less where it's
+// narrow, and nothing stands where the beach's decorations lie (rules/beachDecor.ts: `clear` in from the line and on) or in the sea.
 // Objects are pixels, light can be smooth (Ed): the bushes are the art's sprites (render/artBuild.ts beachEdge), their soft
 // shadows on the sand the ground shader's.
 //
@@ -29,8 +31,9 @@ export function vnoise(x: number, y: number): number {
   return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy;
 }
 
-/** How far (m) the sand's line stands out past the beach's plain one at this arc length round the coast (render/ground.ts). */
-export const scallop = (arc: number) => (vnoise(arc / 7, 3) - 0.5) * 7 + (vnoise(arc / 2.3, 11) - 0.5) * 2;
+/** How far (m) the sand's line stands out past the beach's plain one at this arc length round the coast, where the sand is
+ *  `width` metres wide (render/ground.ts: less where it's narrow, so the scallop never swallows it). */
+export const scallop = (arc: number, width = 24) => ((vnoise(arc / 7, 3) - 0.5) * 7 + (vnoise(arc / 2.3, 11) - 0.5) * 2) * Math.min(1, Math.max(0.3, width / 24));
 
 /** A placed plant: where, which sprite (a palm: its crown too), mirrored or not, how big. */
 export interface EdgePlant { x: number; z: number; kind: "shrub" | "grass" | "palm"; v: number; flip: boolean; scale: number }
@@ -40,12 +43,18 @@ const STEP = 1.6, REACH = 150;
 
 /** The plants along the edge within REACH of the coast point nearest (x, z): rows of shrubs in the scallop, the grass at its foot,
  *  palms among them, strays on the sand. Seeded by their place round the coast: the same plants wherever she comes from. */
-export function edgePlants(b: Beach, x: number, z: number, out: EdgePlant[] = []): EdgePlant[] {
+export function edgePlants(b: Beach, x: number, z: number, out: EdgePlant[] = [], clear = 16): EdgePlant[] {
   out.length = 0;
   const R0 = (b.edgeMin + b.edgeMax) / 2, da = STEP / R0, a0 = Math.atan2(z - b.z, x - b.x), k0 = Math.round(a0 / da), K = Math.ceil(REACH / STEP);
   // (each at its own place round: `d` metres past the sand's line there, + onto the sand)
-  const lineAt = (a: number) => { const an = Math.atan2(Math.sin(a), Math.cos(a)), e = b.edge(an); return e - b.width + scallop(an * e); };
-  const put = (a: number, d: number, kind: EdgePlant["kind"], v: number, flip: boolean, scale: number) => { const r = lineAt(a) + d; out.push({ x: b.x + Math.cos(a) * r, z: b.z + Math.sin(a) * r, kind, v, flip, scale }); };
+  // (out onto the sand, a plant stays short of the decorations' ground, `clear` in from the plain line, and of the water: on a
+  // narrow stretch only the front rows and the grass, pulled back to fit)
+  const lineAt = (a: number) => { const an = Math.atan2(Math.sin(a), Math.cos(a)), e = b.edge(an), w = b.sandAt(an); return { e, w, line: e - w + scallop(an * e, w) }; };
+  const put = (a: number, d: number, kind: EdgePlant["kind"], v: number, flip: boolean, scale: number) => {
+    const L = lineAt(a), most = Math.min(L.e - 2, L.e - L.w + Math.min(clear - 2.5, L.w * 0.6)) - L.line; // (the most past the line it may stand)
+    if (d > most) { if (d > 2.5) return; d = Math.max(Math.min(0, d), most); } // (a stray with no room isn't placed; the rest pulled back)
+    const r = L.line + d; out.push({ x: b.x + Math.cos(a) * r, z: b.z + Math.sin(a) * r, kind, v, flip, scale });
+  };
   for (let k = k0 - K; k <= k0 + K; k++) {
     const a = k * da, h = (salt: number) => hash(k * 0.137 + salt, salt * 0.71 + 3.3);
     // the bushes' reach onto the sand: more in some stretches than others
@@ -70,12 +79,12 @@ export class BeachEdgeView {
 
   constructor(private scene: THREE.Scene, private mpp: number) {}
 
-  update(b: Beach, art: (BeachEdgeArt & { atlas: Atlas }) | undefined, x: number, z: number): void {
+  update(b: Beach, art: (BeachEdgeArt & { atlas: Atlas }) | undefined, x: number, z: number, clear?: number): void {
     if (!art) return;
     if (this.atlas !== art.atlas) { this.dispose(); this.atlas = art.atlas; this.batch = new SpriteBatch(art.atlas, this.mpp, { scenery: true, fade: true }); this.scene.add(...this.batch.meshes); this.at.x = NaN; }
     if (Math.hypot(x - this.at.x, z - this.at.z) < 6) return; // (laid out again only when she's moved on a little)
     this.at.x = x; this.at.z = z;
-    edgePlants(b, x, z, this.plants);
+    edgePlants(b, x, z, this.plants, clear);
     const F = art.atlas.frames, items = this.items;
     items.length = 0;
     for (const p of this.plants) {

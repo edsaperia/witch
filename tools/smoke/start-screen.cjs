@@ -36,7 +36,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
       await page.screenshot({ path: path.join(outDir, `tab-${w}x${h}.png`) });
       await page.keyboard.press("Shift+Slash"); await page.waitForTimeout(500);
       await page.screenshot({ path: path.join(outDir, `controls-${w}x${h}.png`) });
-      await page.click('[data-tab="options"]'); await page.waitForTimeout(500);
+      await page.click('[data-page="options"]'); await page.waitForTimeout(500);
       await page.screenshot({ path: path.join(outDir, `options-${w}x${h}.png`) });
       await page.close();
     }

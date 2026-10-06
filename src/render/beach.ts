@@ -11,6 +11,8 @@ import type { Ground } from "./ground";
 import { PartyWitchView } from "./partyWitches";
 import { pixelEmoji } from "./invites";
 import { groundHeight, placed } from "./height";
+import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
+import { BeachDecor, type BeachItem } from "../rules/beachDecor";
 import { tiltFilter } from "./overlayTilt";
 import { BeachEdgeView } from "./beachEdge";
 
@@ -35,17 +37,25 @@ export class BeachView {
   private v = new THREE.Vector3();
   /** The woods' edge along the sand: shrubs, grass, palms (render/beachEdge.ts). */
   private edge: BeachEdgeView;
+  /** The beach's decorations (rules/beachDecor.ts, art/beach.js): where they lie, and their two batches (flat: prints, starfish,
+   *  seaweed; upright: shells, a conch, pebbles and rocks), made once she's first near and kept. */
+  private decor: BeachDecor | null = null;
+  private upright: SpriteBatch | null = null;
+  private flat: SpriteBatch | null = null;
+  private items: BeachItem[] = [];
+  private inst = { up: [] as SpriteInstance[], flat: [] as SpriteInstance[] };
 
   constructor(private scene: THREE.Scene, private assets: AssetLibrary, private ground: Ground, private mpp: number, private light: { lightFloor: number; lightTint: number; lightRim: number }) { this.edge = new BeachEdgeView(scene, mpp); }
 
   /** Each frame; true while she's drawn here (lying on the sand, or with a beach witch), so the view leaves her out. */
   update(g: Game, time: number, visible: (x: number, z: number, w: number, h: number) => boolean, camera: THREE.Camera, width: number, height: number): boolean {
-    if (this.at?.map !== g.map) { this.leave(); this.at = { map: g.map, beach: beachOf(g.map.bounds, g.tuning) }; }
+    if (this.at?.map !== g.map) { this.leave(); this.at = { map: g.map, beach: beachOf(g.map.bounds, g.tuning) }; this.decor = null; }
     const b = this.at.beach, w = g.witch;
     if (!b) return false;
     if (b.intoSand(w.x, w.z) < -(g.tuning.beach?.shown ?? 0)) { this.leave(); this.gazing = false; return false; }
     if (!this.on) { this.on = true; this.ground.setBeach(b); this.assets.partyWitchArt(null); } // (her lying-down art asked for ahead)
-    this.edge.update(b, this.assets.beachEdgeArt(), w.x, w.z);
+    this.edge.update(b, this.assets.beachEdgeArt(), w.x, w.z, g.tuning.beach?.decor?.clear);
+    this.drawDecor(g, b, visible, camera);
     // The spot she's nearest (they're kilometres apart round the coast, so only ever one in view).
     let spot = null as NonNullable<Game["beach"]>[number] | null, sd = Infinity;
     for (const s of g.beach ?? []) { const d = (s.x - w.x) ** 2 + (s.z - w.z) ** 2; if (d < sd) { sd = d; spot = s; } }
@@ -58,6 +68,33 @@ export class BeachView {
     v.update(g, time, visible, { list, her });
     v.bubbles(g, time, camera, width, height, list);
     return v.herIdle;
+  }
+
+  /** The beach's decorations near her (Ed, 2026-10-06: "shells, star fish, conch, footprints of people and creatures ... just nature"). */
+  private drawDecor(g: Game, b: Beach, visible: (x: number, z: number, w: number, h: number) => boolean, camera: THREE.Camera): void {
+    const K = g.tuning.beach?.decor, art = K?.on ? this.assets.beachArt() : undefined;
+    if (!K || !art) return;
+    if (!this.upright) {
+      this.upright = new SpriteBatch(art.atlas, this.mpp, { scenery: true, fade: true });
+      this.flat = new SpriteBatch(art.atlas, this.mpp, { scenery: true, flat: true });
+      for (const m of this.flat.meshes) { m.renderOrder = -0.5; (m.material as THREE.Material).depthWrite = false; } // (right after the ground, under everything standing)
+      this.scene.add(...this.upright.meshes, ...this.flat.meshes);
+    }
+    this.decor ??= new BeachDecor(b, g.seed, K, art.headings);
+    const w = g.witch, mpp = this.mpp, U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value, up = this.inst.up, flat = this.inst.flat;
+    const fwd = camera.getWorldDirection(this.v), cu = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion), rise = U.dot(cu) / Math.max(0.2, -fwd.y);
+    up.length = 0; flat.length = 0;
+    for (const it of this.decor.near(w.x, w.z, g.tuning.haze.far + 20, this.items)) {
+      const a = art.pieces[it.id];
+      if (!a) continue;
+      const frame = art.atlas.frames[a.frame], lies = it.print || it.id.startsWith("starfish") || it.id === "seaweed";
+      if (!visible(it.x, it.z, frame.w * mpp, frame.h * mpp)) continue;
+      if (lies) { flat.push({ x: it.x, y: 0, z: it.z, frame, flip: it.flip, scale: it.scale }); continue; }
+      const pad = frame.pad ?? 0, dx = (a.originX - frame.w / 2) * mpp * (it.flip ? -1 : 1), toward = Math.max(0, frame.h - pad - a.originY) * mpp * rise, d0 = pad * mpp;
+      const x = it.x - R.x * dx, z = it.z - R.z * dx + toward;
+      up.push({ x: x - U.x * d0, y: -U.y * d0, z: z - U.z * d0, frame, flip: it.flip, scale: it.scale });
+    }
+    this.upright.set(up); this.flat!.set(flat);
   }
 
   /** The hearts over the two of them stargazing together (`pair`: where each lies, or null while they don't): after
@@ -108,6 +145,7 @@ export class BeachView {
     this.hearts = []; this.spare = [];
     this.ground.setBeach(null);
     this.edge.dispose();
+    this.upright?.set([]); this.flat?.set([]);
     this.witches?.dispose();
     this.witches = null;
   }
