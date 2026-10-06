@@ -246,6 +246,24 @@ function drawWrap(m, L, chest, fwd, spine, flying) {
   }
   drawExtras(m, L, chest, fwd, spine, flying);
 }
+// A cloak past the old lengths (Ed, 2026-10-06: "allow a longer cloak"): a train of cloth from her shoulders, streaming out behind
+// her in flight and rippling with the frame, or hanging down her back to the ground and lying along it behind her. Past the first
+// stretch it's `extra`: her size and her lift off the ground don't count it.
+function longCloak(m, L, sh, dir, back, len, flying, patch) {
+  const f = L.frame ?? 0, n = Math.ceil(len / .09), step = len / n, pts = [sh];
+  let p = sh;
+  for (let i = 1; i <= n; i++) {
+    const t = i / n;
+    if (flying) p = v3.add(p, v3.mul(v3.norm(v3.add(dir, [0, Math.sin(i * .7 - f * 1.6) * .35 * t - .08 * t, Math.sin(i * .45 - f * 1.1) * .12 * t])), step));
+    else { const q = v3.add(p, v3.mul(dir, step)); p = q[1] > .03 ? q : [p[0] + back[0] * step, .03, p[2] + back[2] * step + Math.sin(i * .9) * .01]; } // down to the ground, then along it
+    pts.push(p);
+  }
+  for (let i = 0; i < n; i++) {
+    const a = pts[i], b = pts[i + 1], d = v3.norm(v3.sub(b, a)), t = (i + .5) / n, onGround = !flying && a[1] <= .031 && b[1] <= .031;
+    m.ell(v3.lerp(a, b, .5), [step * .75, .028, .2 + .06 * t], M.CLOTH, { dir: d, up: flying || onGround ? [0, 1, 0] : back, group: 14, extra: i * step > .7, ...(patch ? { paint: patch } : {}) });
+  }
+  m.ell(pts[n], [.05, .025, .27], M.CLOTH, { dir: v3.norm(v3.sub(pts[n], pts[n - 1])), up: flying || pts[n][1] <= .031 ? [0, 1, 0] : back, group: 14, extra: true });
+}
 // The witch generator's extras: a cloak from her shoulders (short, long, or long with a hood), streaming out behind in flight or
 // hanging down her back; a scarf round her neck, its end flying; a satchel on her near hip on a strap across her; a glowing pendant.
 function drawExtras(m, L, chest, fwd, spine, flying) {
@@ -255,8 +273,11 @@ function drawExtras(m, L, chest, fwd, spine, flying) {
     const dir = flying ? v3.norm(v3.add(back, v3.mul(spine, -.15))) : v3.norm(v3.add(v3.mul(spine, -1), v3.mul(back, .18)));
     const mid = v3.add(sh, v3.mul(dir, len * .5)), end = v3.add(sh, v3.mul(dir, len));
     const patch = L.patches ? p => hash2(Math.floor(p[0] * 11), Math.floor(p[1] * 11) + Math.floor(p[2] * 11) * 17, 23) < .14 ? M.HAT2 : undefined : undefined; // patched: squares of another cloth
-    m.ell(mid, [len * .55, .03, .15 + len * .12], M.CLOTH, { dir, up: flying ? [0, 1, 0] : back, group: 14, ...(patch ? { paint: patch } : {}) });
-    m.ell(end, [.05, .025, .17 + len * .15], M.CLOTH, { dir, up: flying ? [0, 1, 0] : back, group: 14 });
+    if (len > .8) longCloak(m, L, sh, dir, back, len, flying, patch); // (Ed, 2026-10-06: "allow a longer cloak")
+    else {
+      m.ell(mid, [len * .55, .03, .15 + len * .12], M.CLOTH, { dir, up: flying ? [0, 1, 0] : back, group: 14, ...(patch ? { paint: patch } : {}) });
+      m.ell(end, [.05, .025, .17 + len * .15], M.CLOTH, { dir, up: flying ? [0, 1, 0] : back, group: 14 });
+    }
     if (L.cloak === "hooded") m.ell(v3.add(neck, v3.add(v3.mul(back, .09), v3.mul(spine, .03))), [.08, .06, .1], M.CLOTH, { dir: back, up: spine, group: 14 });
   }
   const sl = L.scarfLength ?? 1;
@@ -266,8 +287,9 @@ function drawExtras(m, L, chest, fwd, spine, flying) {
     if (sl === 1) { const t1 = v3.add(t0, flying ? [-.14, .02, .04] : v3.add(v3.mul(spine, -.12), v3.mul(back, .05))), t2 = v3.add(t1, flying ? [-.12, -.03, .03] : v3.mul(spine, -.1)); m.chain([[...t0, .03], [...t1, .025], [...t2, .02]], M.BODY, stripes); }
     else { // longer or shorter: its tail streams out behind (flying) or hangs down her back to the ground (standing), waving
       const n = Math.max(2, Math.round(2 + sl * 2)), seg = .13 * sl / (n - 1) * 1.6, pts = [[...t0, .03]]; let p = t0;
-      for (let i = 1; i < n; i++) { const w = Math.sin(i * 1.3) * .02; p = v3.add(p, flying ? [-seg, -.012 + w, .02 + w * .5] : v3.add(v3.mul(spine, -seg), v3.mul(back, .02 + w))); if (!flying && p[1] < .02) p = [p[0] - seg * .8, .02, p[2]]; pts.push([...p, .03 - .01 * i / n]); }
-      m.chain(pts, M.BODY, stripes);
+      const ph = sl > 3 ? (L.frame ?? 0) * 1.6 : 0; // (a very long one flutters with the frame)
+      for (let i = 1; i < n; i++) { const w = Math.sin(i * 1.3 - ph) * .02 * (sl > 3 ? 1 + 1.5 * i / n : 1); p = v3.add(p, flying ? [-seg, -.012 + w, .02 + w * .5] : v3.add(v3.mul(spine, -seg), v3.mul(back, .02 + w))); if (!flying && p[1] < .02) p = [p[0] - seg * .8, .02, p[2]]; pts.push([...p, .03 - .01 * i / n]); }
+      m.chain(pts, M.BODY, sl > 3 ? { ...stripes, extra: true } : stripes); // (past the old length, her size and lift don't count it)
     }
   }
   if (L.satchel) {
@@ -654,7 +676,7 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
 // loops, so the game can play it faster with speed), rise, descend, fast and brake. (`lean: true` alone is the one lean frame.)
 export const WITCH_FLIGHT_POSES = { hover: { frames: 3, fps: 3 }, lean: { frames: 4, fps: 8 }, rise: { frames: 2, fps: 6 }, descend: { frames: 2, fps: 6 }, fast: { frames: 3, fps: 12 }, brake: { frames: 2, fps: 8 } };
 export function witchModel({ frame = 0, lean = false, pose, look = DEFAULT_LOOK } = {}) {
-  const LK = { ...DEFAULT_LOOK, ...look };
+  const LK = { ...DEFAULT_LOOK, ...look, frame }; // (what flutters or turns does so with the frame: a long cloak and scarf, the broom's moving bits)
   if (pose === "fast") return fastModel(frame, LK);
   if (WITCH_FOOT_POSES[pose]) return footModel(pose, frame, LK);
   const cyc = pose === "lean" ? frame % 4 : -1; if (cyc >= 0) { lean = true; pose = undefined; } // the lean cycle
@@ -727,7 +749,7 @@ export function witchModel({ frame = 0, lean = false, pose, look = DEFAULT_LOOK 
     for (const f of m.flats) { f.c = rot(f.c); f.u = dir(f.u); f.v = dir(f.v); }
     m.anchors.hand = rot(m.anchors.hand); m.anchors.hatTip = rot(m.anchors.hatTip);
     // lifted so her feet clear the ground as she tilts
-    const low = Math.min(...m.parts.map(q => q.type === "ell" ? q.c[1] - Math.max(...q.r) : Math.min(q.a[1] - q.r1, q.b[1] - q.r2)));
+    const low = Math.min(...m.parts.filter(q => !q.extra).map(q => q.type === "ell" ? q.c[1] - Math.max(...q.r) : Math.min(q.a[1] - q.r1, q.b[1] - q.r2)));
     if (low < .08) { for (const q of m.parts) { const d = .08 - low; if (q.type === "ell") q.c = [q.c[0], q.c[1] + d, q.c[2]]; else { q.a = [q.a[0], q.a[1] + d, q.a[2]]; q.b = [q.b[0], q.b[1] + d, q.b[2]]; } } for (const k of ["hand", "hatTip"]) m.anchors[k] = v3.add(m.anchors[k], [0, .08 - low, 0]); }
     // rising: sparks and a puff falling from the bristles
     // braking: a puff of dust and sparks kicked forward from the bristles
