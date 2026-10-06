@@ -192,11 +192,11 @@ export const maxHp = (level: Level, data: CombatData = COMBAT) => data.levels.hp
 export const creatureMaxHp = (c: { species: string; level: Level }, data: CombatData = COMBAT) => maxHp(c.level, data) * strengthOf(c.species, c.level, data);
 
 /** Whether a creature takes part in fights now: alive, not wandering home neutral, not asleep. */
-export const fighting = (c: Creature) => !c.gone && !c.fleeUntil && !c.wanderTo && !c.dazed && !(c.leashed && c.travelling); // (a dazed one lies still: rules/creatureStates.ts) // (a travelling party animal is quiet both ways: rules/travel.ts)
+export const fighting = (c: Creature) => !c.gone && !c.asleep && !c.bed && !c.fleeUntil && !c.wanderTo && !c.dazed && !(c.leashed && c.travelling); // (a dazed one lies still: rules/creatureStates.ts) // (a travelling party animal is quiet both ways: rules/travel.ts)
 
 /** Whether anything may attack it: fighting, and not a baby (Ed, 2026-10-04: "No animals should
  *  attack babies"; shots and quakes pass them by, and they can't be beaten in a fight). */
-export const targetable = (c: Creature) => fighting(c) && c.level > 0 && !c.burrow && !c.partyLegend; // (a party legend's out of it all: the Easter egg) // (a burrower underground can't be hit)
+export const targetable = (c: Creature) => fighting(c) && c.level > 0 && !c.burrow && !c.partyLegend && !c.asleep; // (a party legend's out of it all: the Easter egg) // (a burrower underground can't be hit)
 
 /** Whose side: hers (on her leash, at a sigil, or a happy area legend: Ed, 2026-10-04) or the wild's. */
 const sideOf = (c: Creature): State => stateOf(c); // (its state: who fights whom is foes(), rules/creatureStates.ts)
