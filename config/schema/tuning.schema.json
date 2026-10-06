@@ -3474,6 +3474,22 @@
           "type": "number",
           "minimum": 0,
           "maximum": 1
+        },
+        "linger": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lingerFade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lingerMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "spin": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -3494,7 +3510,11 @@
         "hits",
         "drain",
         "perAnimalHitGap",
-        "fireSlow"
+        "fireSlow",
+        "linger",
+        "lingerFade",
+        "lingerMax",
+        "spin"
       ],
       "additionalProperties": false
     },
@@ -3919,6 +3939,54 @@
           ],
           "additionalProperties": false
         },
+        "lament": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "pitch": {
+              "type": "number",
+              "minimum": 0
+            },
+            "slow": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "number",
+              "minimum": 0
+            },
+            "urgent": {
+              "type": "number",
+              "minimum": 0
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "pitch",
+            "slow",
+            "every",
+            "urgent",
+            "range",
+            "gap",
+            "max"
+          ],
+          "additionalProperties": false
+        },
         "shoes": {
           "type": "object",
           "properties": {
@@ -4295,6 +4363,7 @@
         "ouch",
         "impact",
         "roar",
+        "lament",
         "shoes",
         "pond",
         "picnic",
@@ -5556,11 +5625,45 @@
             "faces"
           ],
           "additionalProperties": false
+        },
+        "sleepy": {
+          "type": "object",
+          "properties": {
+            "face": {
+              "type": "string"
+            },
+            "weight": {
+              "type": "number",
+              "minimum": 0
+            },
+            "every": {
+              "type": "number",
+              "minimum": 0
+            },
+            "faces": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "fallback": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "face",
+            "weight",
+            "every",
+            "faces",
+            "fallback"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "range",
-        "nightmare"
+        "nightmare",
+        "sleepy"
       ],
       "additionalProperties": false
     },

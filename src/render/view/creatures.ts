@@ -21,6 +21,17 @@ import { attackFeel, newFeel } from "../attackFeel";
 
 const FEEL = newFeel(); // (filled per creature, never kept)
 
+/** The baked walk's frame (0 or 1) by how far it has gone as drawn (Ed's playtest: feet walking in place, or not walking while it
+ *  moves): a step every `step` metres, standing (frame 0) once it has stopped for a quarter of a second. One small record per creature. */
+function strideFrame(v: View, c: { id: number; x: number; z: number }, time: number, step: number): number {
+  let o = v.strides.get(c.id);
+  if (!o) v.strides.set(c.id, (o = { x: c.x, z: c.z, d: 0, at: -1 }));
+  const d = Math.hypot(c.x - o.x, c.z - o.z);
+  if (d > 1e-3 && d < 3) { o.d += d; o.at = time; } // (a jump of metres is a teleport, not a step)
+  o.x = c.x; o.z = c.z;
+  return time - o.at < 0.25 ? Math.floor(o.d / Math.max(0.05, step)) % 2 : 0;
+}
+
 const WOKEN_GEAR: RigGear = { woken: true };
 
 export function drawBerries(v: View, time: number): void {
@@ -79,7 +90,7 @@ export function drawCreatures(v: View, time = 0): void {
     const art = party ?? woken ?? slept ?? faced ?? v.assets.creatureArt(c.species), key = party ? `${look === "happy" ? "happy" : "party"}-${c.id}` : slept ? `sleep-${c.species}` : sleeping ? `sunk-${c.species}` : woken ? `woken-${c.species}` : faced ? `face-${face}-${c.species}` : c.species;
     if (!art) continue;
     arts.set(key, art);
-    const fi = slept ? Math.floor(time / 2.5 + c.id * 0.37) % 2 : art.frame(c.level, c.moving ? Math.floor(c.walk) % 2 : 0, c.away), frame = art.atlas.frames[fi]; // (asleep: a slow breath, in and out)
+    const fi = slept ? Math.floor(time / 2.5 + c.id * 0.37) % 2 : art.frame(c.level, strideFrame(v, c, time, art.atlas.frames[art.frame(c.level, 0, c.away)].w * v.mpp * 0.3), c.away), frame = art.atlas.frames[fi]; // (asleep: a slow breath, in and out)
     // A wild legend (Ed, 2026-10-04): bigger and imposing, swelling slowly as it breathes (slower asleep).
     const boss = c.boss && !c.leashed ? g.tuning.wildLegends : null;
     const bossScale = boss ? boss.scale * (1 + boss.breathe * bossBreath(time, c.id, boss.breathEvery * (dormant(g, c) ? 1.5 : 1))) : 1;

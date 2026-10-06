@@ -55,6 +55,8 @@ export class SfxCues {
   private nextHoof = 0;
   private relicsFound = new Set<number>();
   private angry = new Set<number>();
+  /** When each restless legend next calls out. */
+  private nextLament = new Map<number, number>();
   private lastBeat = -1;
   private dressings = new Map<string, { x: number; z: number }[]>();
 
@@ -76,6 +78,7 @@ export class SfxCues {
     this.relics(h);
     this.meadow(h);
     this.roars(h, hear);
+    this.laments(h);
     this.shoes(h);
     this.pond(h);
     this.picnic(h);
@@ -132,7 +135,7 @@ export class SfxCues {
   private legends({ g, time, pan }: Here): void {
     const w = g.witch;
     let best: Creature | null = null, bd = Infinity;
-    for (const c of g.creatures) if (c.boss && !c.leashed && c.legendState === "asleep") { const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c; } }
+    for (const c of g.creatures) if (c.boss && !c.leashed && (c.legendState === "asleep" || c.legendState === "restless")) { const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c; } }
     const sleep = best ? Math.max(0, 1 - bd / Math.max(1, g.tuning.sfx.snore.range)) : 0;
     const W = g.tuning.wildLegends;
     this.sfx.legends(sleep, best ? bossBreath(time, best.id, W.breathEvery * 1.5) : 0, best ? restlessness(best) * Math.min(1, sleep * 1.5) : 0, best ? pan(best.x) : 0);
@@ -242,6 +245,29 @@ export class SfxCues {
       if (this.primed && !this.angry.has(c.id)) { const k = Math.max(0, 1 - Math.hypot(c.x - w.x, c.z - w.z) / (2 * hear)); if (k > 0) this.sfx.roar(pan(c.x), k); }
     }
     this.angry = now;
+  }
+
+  /** Restless legends calling out sadly (Ed, 2026-10-06), heard from the way of their clearings
+   *  well beyond the usual hearing so they draw her there: each now and then, sooner and more
+   *  urgently as its restlessness runs out; only the nearest `max` call, at least `gap` seconds
+   *  apart, so several at once don't crowd the mix. Calm again (its kin back) or angry, it stops. */
+  private laments({ g, time, pan }: Here): void {
+    const L = g.tuning.sfx.lament, w = g.witch, near: [Creature, number][] = [];
+    for (const c of g.creatures) if (c.boss && !c.gone && !c.leashed && c.legendState === "restless") {
+      const k = Math.max(0, 1 - Math.hypot(c.x - w.x, c.z - w.z) / Math.max(1, L.range));
+      if (k > 0) near.push([c, k]);
+    }
+    for (const id of this.nextLament.keys()) if (g.creatures[id]?.legendState !== "restless") this.nextLament.delete(id);
+    near.sort((a, b) => b[1] - a[1]);
+    for (const [c, k] of near.slice(0, Math.max(1, L.max))) {
+      const u = restlessness(c), every = L.every + (L.urgent - L.every) * u;
+      const due = this.nextLament.get(c.id);
+      if (due === undefined) { this.nextLament.set(c.id, time + every * (0.15 + 0.35 * ((c.id * 0.618) % 1))); continue; } // (its first call soon after it turns restless)
+      if (time < due) continue;
+      if (!this.ready(-1, time, L.gap)) { this.nextLament.set(c.id, time + L.gap * 0.5); continue; }
+      this.sfx.lament(voiceOf(c, g.tuning), u, pan(c.x), Math.pow(k, 0.7));
+      this.nextLament.set(c.id, time + every * (0.8 + 0.4 * ((time * 7.31 + c.id) % 1)));
+    }
   }
 
   /** Dancers near her (party animals and happy ones dancing at a soundsystem), standing, tapping
