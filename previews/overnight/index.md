@@ -41,6 +41,8 @@ A debug arena (`?arena=wolf*2@1,boar*2@1,beetle*2@1`): wild young creatures at h
 
 ![](4-attacks.gif)
 
+**Worth a look:** two large, flat, dark-green spheres stand in the foreground of this arena shot. They weren't in the first set (at `1d0f98bb`), so something merged since then may be drawing them: a prop, a bush or an occluder.
+
 ## 5. The creator, which is also the loading screen
 - **Loading:** the game opens straight into the creator in her bedroom. The fairy lights fill as the forest loads (0%, 10%, 41%… one frame every 4 to 7 s on this slow machine), and she idles on the rug. It's in the HUD's amber (#209).
   ![](5-loading.gif)
