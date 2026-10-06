@@ -808,6 +808,10 @@
       "type": "number",
       "minimum": 0
     },
+    "glowNear": {
+      "type": "number",
+      "minimum": 0
+    },
     "glowToCutout": {
       "type": "number",
       "minimum": 0
@@ -2556,6 +2560,10 @@
           "type": "number",
           "minimum": 0
         },
+        "arc": {
+          "type": "number",
+          "minimum": 0
+        },
         "homing": {
           "type": "number",
           "minimum": 0
@@ -2612,6 +2620,7 @@
         "cooldown",
         "range",
         "speed",
+        "arc",
         "homing",
         "homingCone",
         "homingRange",
@@ -2621,7 +2630,8 @@
         "amount",
         "hits",
         "drain",
-        "perAnimalHitGap"
+        "perAnimalHitGap",
+        "fireSlow"
       ],
       "additionalProperties": false
     },
@@ -3312,6 +3322,10 @@
           "type": "number",
           "minimum": 0
         },
+        "audible": {
+          "type": "number",
+          "minimum": 0
+        },
         "clear": {
           "type": "number",
           "minimum": 0
@@ -3322,10 +3336,6 @@
         },
         "src": {
           "type": "string"
-        },
-        "audible": {
-          "type": "number",
-          "minimum": 0
         }
       },
       "required": [
@@ -4347,11 +4357,15 @@
             "band"
           ],
           "additionalProperties": false
+        },
+        "sky": {
+          "type": "boolean"
         }
       },
       "required": [
         "on",
         "where",
+        "sky",
         "strength",
         "band",
         "centre",
@@ -4627,6 +4641,7 @@
     "pixelSize",
     "glowReach",
     "glowFalloff",
+    "glowNear",
     "glowToCutout",
     "glowHeight",
     "spriteTilt",
