@@ -45,3 +45,11 @@ Ed's second direction, better creature attack visuals, is art builder 2's. Their
 - **The fern forest's lit crowns read lime and glowing.** Under her light, the birch and fern crowns go to a saturated yellow-green, the brightest patch in the frame (section 3 of the guide: saturated yellow-green reads as glowing). Their hue should go blue-green in the night palette (art builder 1's brief).
 - **She is invisible from the treetops.** There is no rim or marker; the moonlight rim (rendering's brief) is for here too.
 - **What works:** the moon, the starry sky over the bend, and the treehouse's warm windows with its string of amber lights. That is the "party as warm pools in a dark forest" Ed asked for, in one place. The rest of the party should look like that.
+
+## Correction (03:30 UTC)
+
+Art builder 1 found two bugs in the capture script that affect rounds 1 and 2:
+- the area search took cells off the map, which still answer a type;
+- her offset from the area's site could land in the neighbouring area.
+
+So this round's `*-moor-*` shots (and possibly others) may not show the area named. The script is fixed, and round 1's build (5766018) is being re-shot into `../round-01b/` for the comparison with later rounds.
