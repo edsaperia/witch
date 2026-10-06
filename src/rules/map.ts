@@ -1,6 +1,7 @@
-// The forest map: mapAreas x mapAreas areas cut by the fractal partition, each given an area
-// type that no neighbour shares, plus a margin of areas round the edge so the forest never
-// visibly ends. World units are metres: x runs east, z runs south, one area cell is areaSize.
+// The forest map: areas cut by the fractal partition, each given an area type that no neighbour
+// shares; the playable ones a circle of them round home (Ed, 2026-10-06; or, ?shape=square, the
+// old mapAreas x mapAreas square), then a buffer ring of forest she can fly over but where nothing
+// happens, then a margin of areas past it so the forest never visibly ends. World units are metres: x runs east, z runs south, one area cell is areaSize.
 import rawTypes from "../../config/area-types.json";
 import { AREAS, HOME_AREA } from "../../art/areas.js";
 import { SCENES as SCENES_RAW, SCENE_BY_ID as SCENE_BY_ID_RAW } from "../../art/scenes.js";
@@ -13,6 +14,7 @@ import { floorClearing, speakerRadius, speakerRing, type Speaker } from "./speak
  *  the dance floor, outside the speaker ring"): past the ring's outer edge by gap, plus its footprint. */
 export const treehouseDistance = (t: Tuning) => speakerRadius(t) + t.dancefloor.speakers.footprint + t.treehouse.gap + t.treehouse.clear;
 import { PathNetwork } from "./paths";
+import { isInside, type Bounds } from "./mapShape";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
  *  the game's own numbers. Only plain data is read here. */
@@ -84,10 +86,18 @@ export interface AreaSample {
 export interface ForestMap {
   readonly seed: number;
   readonly tuning: Tuning;
-  /** Areas across the playable map. */
+  /** Areas across the grid of cells: the playable square's (square map), or the whole flight circle's and a little more (circular). */
   readonly n: number;
-  /** Extra rings of areas outside the playable map. */
+  /** Extra rings of areas outside the grid. */
   readonly margin: number;
+  /** The map's shape: "circle" (Ed, 2026-10-06) or "square" (as before, ?shape=square). */
+  readonly shape: "circle" | "square";
+  /** Every playable area (home among them), row by row: those that get a runestone, a soundsystem, a legend and creatures, and wake in waves. */
+  readonly cells: readonly Cell[];
+  /** Is this area playable? (The circular map: its centre within map.radius areas of home's.) */
+  playable(cx: number, cy: number): boolean;
+  /** Is this area in the buffer ring: not playable, but where she can fly (scenery only)? */
+  inBuffer(cx: number, cy: number): boolean;
   readonly areaSize: number;
   readonly partition: Partition;
   /** The middle area, whose clearing holds the dancefloor. */
@@ -106,8 +116,8 @@ export interface ForestMap {
   readonly scenes: readonly Scene[];
   /** Where the witch starts: at the treehouse (sitting on its terrace). */
   readonly start: { x: number; z: number };
-  /** Where the witch may fly (metres). */
-  readonly bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
+  /** Where the witch may fly (metres): a box, and on the circular map the circle round home (see mapShape.ts). */
+  readonly bounds: Bounds;
   /** Everything the map covers, margin included (metres). */
   readonly extent: { minX: number; maxX: number; minZ: number; maxZ: number };
   /** The area type index of an area cell. */
@@ -127,7 +137,7 @@ export interface ForestMap {
   /** Whether a footprint r metres round (x, z) comes within reserveMargin of anything placed for
    *  gameplay (soundsystems, the dancefloor, the treehouse) or of a set piece: scenery keeps out. */
   reserved(x: number, z: number, r: number): boolean;
-  /** How far an area is from home: 0 at the middle area, 1 at the map's edge. */
+  /** How far an area is from home: 0 at the middle area, 1 at the playable map's edge. */
   remoteness(cx: number, cy: number): number;
   /** An area's centre (its layer-0 site), in metres. */
   siteOf(cx: number, cy: number): { x: number; z: number };
@@ -137,6 +147,10 @@ export interface ForestMap {
   hardClear(x: number, z: number): boolean;
   /** How far (x, z) is out of its area's fighting arena: 0 in its open middle, rising smoothly over its band to 1 (tuning arena); `cell` if known. */
   arenaOpen(x: number, z: number, cell?: Cell): number;
+  /** Whether an area has a sleeping legend (Ed, 2026-10-06: "only in about half of areas"): legends.share of them, seeded, spread out; never home. */
+  hasLegend(cx: number, cy: number): boolean;
+  /** The areas with a legend, as "cx,cy" keys. */
+  readonly legendCells: ReadonlySet<string>;
   /** Each area's sleeping legend's clearing (not home's: it has no legend), or null where none fits. */
   legendClearing(cx: number, cy: number): LegendClearing | null;
   /** Every legend's clearing (for the drawing: its ground ring, and the rendering's twilight and motes). */
@@ -196,7 +210,15 @@ function findNeighbours(p: Partition, lo: number, hi: number, perCell: number): 
 }
 
 export function generateMap(seed: number, tuning: Tuning): ForestMap {
-  const n = tuning.mapAreas, margin = 2, A = tuning.areaSize * tuning.areaScale, typeCount = AREA_TYPES.length;
+  const A = tuning.areaSize * tuning.areaScale, typeCount = AREA_TYPES.length;
+  // The circular map (Ed, 2026-10-06): playable areas those whose centres lie within radius areas of
+  // home's; past them a buffer ring buffer areas deep, then the edge of her flight (from the
+  // playable areas' outer edges, half an area past their centres). The grid of cells covers all of
+  // that and the warp's play; the forest goes on edge areas beyond, its last areas never seen.
+  const MS = tuning.map ?? { shape: "square" as const, radius: 0, buffer: 0, push: 0, drift: 0, edge: 2 };
+  const shape: "circle" | "square" = MS.shape === "circle" ? "circle" : "square", round = shape === "circle";
+  const R = MS.radius, flightR = (R + 0.5 + MS.buffer) * A, edgeK = MS.edge ?? 2;
+  const n = round ? 2 * Math.ceil(R + 0.5 + MS.buffer + 1) + 1 : tuning.mapAreas, margin = round ? Math.ceil(edgeK) : 2;
   // Areas vary in size: the world is warped smoothly before it is cut, so in some stretches of
   // the map the cells spread out (big areas) and in others they crowd (small ones). The warp
   // never folds (its slope stays under 1), so every area keeps its place and the map stays
@@ -230,7 +252,9 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     homeR = Math.max(homeR, Math.hypot(u - homeSite[0], v - homeSite[1]));
   }
   const partition = makePartition(seed, tuning.borderLayers, { cell: centreCell, radius: homeR * 1.03, gap: H.gap });
-  const lo = -margin, hi = n + margin;
+  // (circular: the extent a square round the flight circle, edge areas past it; the cells it covers, and one more for the warp)
+  const ext = round ? { minX: homeWorld[0] - flightR - edgeK * A, maxX: homeWorld[0] + flightR + edgeK * A, minZ: homeWorld[1] - flightR - edgeK * A, maxZ: homeWorld[1] + flightR + edgeK * A } : null;
+  const lo = ext ? Math.floor(Math.min(ext.minX, ext.minZ) / A) - 1 : -margin, hi = ext ? Math.ceil(Math.max(ext.maxX, ext.maxZ) / A) + 1 : n + margin;
   const neighbours = findNeighbours(partition, lo, hi, 6);
 
   // Area types: random, never the same as a touching area nor any area within two cells.
@@ -252,6 +276,12 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
 
   const siteOf = (cx: number, cy: number) => { const s = partition.site(cx, cy), w = toWorld(s[0], s[1]); return { x: w[0], z: w[1] }; };
   const centre = siteOf(centreCell[0], centreCell[1]);
+  // The playable areas and the buffer ring, by their centres' distance from home's.
+  const fromHome = (cx: number, cy: number) => { const s = siteOf(cx, cy); return Math.hypot(s.x - centre.x, s.z - centre.z); };
+  const playable = (cx: number, cy: number) => cx >= 0 && cy >= 0 && cx < n && cy < n && (!round || fromHome(cx, cy) <= R * A);
+  const inBuffer = (cx: number, cy: number) => round && !playable(cx, cy) && fromHome(cx, cy) <= flightR + A * 0.5;
+  const cells: Cell[] = [];
+  for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) if (playable(cx, cy)) cells.push([cx, cy]);
 
   // The warp's steepest slope (vnoise's gradient is at most 1.5 a component), so a step of d metres
   // moves a point at most d * stretch / A in partition units.
@@ -273,7 +303,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     if (!pieceHome) {
       pieceHome = new Map();
       const cand: [number, number, number][] = [];
-      for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (rollsSetPiece(x, y)) cand.push([x, y, Math.hypot(x - centreCell[0], y - centreCell[1]) + hash2(x, y, seed + 63) * 0.5]);
+      for (const [x, y] of cells) if (rollsSetPiece(x, y)) cand.push([x, y, Math.hypot(x - centreCell[0], y - centreCell[1]) + hash2(x, y, seed + 63) * 0.5]);
       cand.sort((a, b) => a[2] - b[2]);
       for (const [x, y] of cand) { const t = typeOf(x, y); if (!pieceHome.has(t) && pieceSpotOf(x, y)) pieceHome.set(t, cellKey(x, y)); }
     }
@@ -341,6 +371,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     pieceSpots.set(key, spot);
     return spot;
   };
+  const legendCells = chooseLegendCells(cells, centreCell, neighbours, tuning.legends?.share ?? 1, seed); // (the playable areas)
   const grounds: Ground[] = [], scenes: Scene[] = [], clearings = new Map<string, LegendClearing>();
   const reserved = (x: number, z: number, r: number) => {
     const gap = tuning.reserveMargin, cell = areaAt(x, z).cell;
@@ -395,16 +426,20 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     return smoothstep((partition.openness(u, v) - tuning.clearingSize) / Math.max(0.01, tuning.clearingFalloff)) * glade * arenaIn(x, z, cell);
   };
 
-  const remoteness = (cx: number, cy: number) => Math.min(1, Math.hypot(cx - centreCell[0], cy - centreCell[1]) / (n / 2));
+  const remoteness = (cx: number, cy: number) => Math.min(1, Math.hypot(cx - centreCell[0], cy - centreCell[1]) / (round ? R : n / 2));
   const pad = A * 0.5;
+  const bounds: Bounds = round
+    ? { minX: centre.x - flightR, maxX: centre.x + flightR, minZ: centre.z - flightR, maxZ: centre.z + flightR, circle: { x: centre.x, z: centre.z, r: flightR } }
+    : { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad };
   const map = {
-    seed, tuning, n, margin, areaSize: A, partition, centreCell, homeRadius,
+    seed, tuning, n, margin, shape, cells, playable, inBuffer, areaSize: A, partition, centreCell, homeRadius,
     dancefloor: { x: centre.x, z: centre.z, radius: floorR, speakers: speakerRing(centre, tuning) },
     treehouse, treehouseFront: { x: treehouse.x, z: treehouse.z + tuning.treehouse.clear }, grounds, scenes,
     start: { x: treehouse.x, z: treehouse.z + 1 },
-    bounds: { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad },
-    extent: { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A },
+    bounds,
+    extent: ext ?? { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A },
     typeOf, areaAt, cellSafe, siteOf, treeWeight, arenaOpen, hardClear, neighbours, setPieceOf, soundsystemSpot, setPieceSpot, reserved, remoteness,
+    hasLegend: (cx: number, cy: number) => legendCells.has(cellKey(cx, cy)), legendCells,
     legendClearing: (cx: number, cy: number) => clearings.get(cellKey(cx, cy)) ?? null, legendClearings: [] as LegendClearing[],
     paths: null as unknown as PathNetwork,
   };
@@ -415,7 +450,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   // clearing keeps clear of everything placed before it (soundsystems, the dancefloor, the
   // treehouse, set pieces, other grounds), turning round the centre to find room, or left out.
   const G = tuning.grounds, usedGrounds = new Set<string>();
-  for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) {
+  for (const [cx, cy] of cells) {
     if ((cx === centreCell[0] && cy === centreCell[1]) || hash2(cx, cy, seed + 871) >= G.chance) continue;
     // Each kind at most once per map (Ed, v160): the kind it rolled, or the next one not yet used.
     let ki = Math.floor(hash2(cx, cy, seed + 873) * G.kinds.length), tries = 0;
@@ -432,7 +467,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   // its whole footprint clear of everything placed before it and of the paths, mirrored at random.
   const SC = tuning.scenes, usedScenes = new Set<string>();
   const order: [number, number, number][] = [];
-  for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) if (!(cx === centreCell[0] && cy === centreCell[1])) order.push([cx, cy, hash2(cx, cy, seed + 881)]);
+  for (const [cx, cy] of cells) if (!(cx === centreCell[0] && cy === centreCell[1])) order.push([cx, cy, hash2(cx, cy, seed + 881)]);
   order.sort((a, b) => a[2] - b[2]);
   for (const [cx, cy, roll] of order) {
     if (roll >= SC.chance) continue;
@@ -450,13 +485,13 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   // placed before it and of the paths; sized to its legend. Placed after the scenes, before the
   // paths' pieces, so those and all later scenery (trees, decor, berries) keep out of it.
   const LC = tuning.legendClearing;
-  for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) {
-    if (cx === centreCell[0] && cy === centreCell[1]) continue;
+  for (const [cx, cy] of cells) {
+    if (!legendCells.has(cellKey(cx, cy))) continue; // (no legend, no clearing: home, and the areas legends.share leaves out)
     const species = AREA_TYPES[typeOf(cx, cy)].creature, r0 = LC.species[species] ?? LC.radius;
     let r = r0;
     const site = siteOf(cx, cy), a0 = hash2(cx, cy, seed + 891) * Math.PI * 2;
     const B = map.bounds, fits = (x: number, z: number) => {
-      if (x < B.minX + 15 || x > B.maxX - 15 || z < B.minZ + 15 || z > B.maxZ - 15 || !inCell(x, z, cx, cy)) return false; // (its middle where she can fly)
+      if (!isInside(B, x, z, 15) || !inCell(x, z, cx, cy)) return false; // (its middle where she can fly)
       for (let k = 0; k < 16; k++) { const b = (k / 16) * Math.PI * 2; if (!inCell(x + Math.cos(b) * r, z + Math.sin(b) * r, cx, cy)) return false; }
       return !reserved(x, z, r) && !map.paths.at(x, z, r * pathK);
     };
@@ -504,4 +539,32 @@ export function sceneFootprint(id: string, tuning: Tuning): number {
   const sc = SCENE_BY_ID[id];
   if (!sc) return 0;
   return Math.max(...sc.pieces.map(([, x, z]) => Math.hypot(x, z))) * tuning.scenes.scale + tuning.scenes.pad;
+}
+
+/** Which areas have a sleeping legend (Ed, 2026-10-06: "Legends should only appear in about half of
+ *  areas (we can test this ratio); every area makes them too common"): share of the areas but home,
+ *  rounded, in a seeded order, spread so they don't clump: first only areas that keep every run of
+ *  neighbouring legend areas to two at most; then (an area has about six neighbours, so half can't
+ *  all be kept that apart) ones that leave no legend area bordering more than two others; then
+ *  any left over, those with the fewest legend neighbours first. */
+export function chooseLegendCells(cells: readonly Cell[], home: Cell, neighbours: ReadonlyMap<string, ReadonlySet<string>>, share: number, seed: number): Set<string> {
+  const all: { key: string; h: number }[] = [];
+  for (const [cx, cy] of cells) if (cx !== home[0] || cy !== home[1]) all.push({ key: cellKey(cx, cy), h: hash2(cx, cy, seed + 901) });
+  const want = Math.max(0, Math.min(all.length, Math.round(Math.max(0, Math.min(1, share)) * all.length)));
+  const chosen = new Set<string>();
+  if (want >= all.length) { for (const a of all) chosen.add(a.key); return chosen; }
+  all.sort((a, b) => a.h - b.h);
+  const near = (k: string) => [...(neighbours.get(k) ?? [])].filter(x => chosen.has(x));
+  // (taking k keeps every clump at two or fewer: k has at most one chosen neighbour, and that one has no other)
+  const spread = (k: string) => { const c = near(k); return c.length === 0 || (c.length === 1 && near(c[0]).length === 0); };
+  for (const a of all) { if (chosen.size >= want) break; if (spread(a.key)) chosen.add(a.key); }
+  // (then: no legend area bordering more than two others)
+  const thin = (k: string) => { const c = near(k); return c.length <= 2 && c.every(x => near(x).length < 2); };
+  for (const a of all) { if (chosen.size >= want) break; if (!chosen.has(a.key) && thin(a.key)) chosen.add(a.key); }
+  while (chosen.size < want) {
+    let best: string | null = null, bn = Infinity;
+    for (const a of all) if (!chosen.has(a.key)) { const c = near(a.key).length; if (c < bn) { bn = c; best = a.key; } }
+    chosen.add(best!);
+  }
+  return chosen;
 }

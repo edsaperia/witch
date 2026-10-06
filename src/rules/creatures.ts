@@ -9,6 +9,7 @@ import { questFor, type Quest } from "./quest";
 import { rng } from "./random";
 import { countScale, startCount } from "./growth";
 import { AREA_TYPES, type ForestMap } from "./map";
+import { isInside } from "./mapShape";
 import { facingAway } from "./witch";
 import type { Tuning } from "./tuning";
 import type { Fight } from "./combat";
@@ -87,9 +88,11 @@ export interface Creature {
   /** A charging legend's long charge (rules/combat.ts, legends.json charge): winding up, running,
    *  braking in its arc, or walking home; its heading (radians), speed, target, whom it has hit. */
   run?: { phase: "windup" | "run" | "brake" | "home"; at: number; angle: number; speed: number; turn: 1 | -1; target: import("./combat").Target | null; tx: number; tz: number; ran: number; hit: number[]; fromX: number; fromZ: number; decel?: number };
-  /** Where a legend lies (it charges from here, and walks back here). */
+  /** Where a legend lies: where it spawned (it charges from here, and walks back here). */
   lairX?: number;
   lairZ?: number;
+  /** A legend gone back to sleep away from where it lay, walking home to lie down there (Ed, 2026-10-06; rules/legends.ts). */
+  homing?: boolean;
   charge?: { dx: number; dz: number; speed: number; until: number; /** when it sets off (it lowers its head till then) */ from?: number; /** it has struck (once a charge), it's braking */ struck?: boolean; braking?: boolean; /** a legend's charge: whom it has trampled */ hit?: number[]; /** rolling curled up (a hedgehog, a woodlouse): the damage it takes times this */ curl?: number };
   /** Dug in (a badger) or braced behind its tail (a beaver) until then: rooted, taking less. */
   dug?: number;
@@ -188,7 +191,7 @@ function legendSpot(map: ForestMap, cell: [number, number], r: () => number): [n
   if (lc) return [lc.legend.x, lc.legend.z];
   const site = map.siteOf(cell[0], cell[1]), range = wanderRange(map), [anchorX, anchorZ] = anchorOf(map, cell, site.x, site.z, range);
   const base = { cell, homeX: site.x, homeZ: site.z, range, anchorX, anchorZ }, B = map.bounds;
-  const inside = (px: number, pz: number) => px > B.minX + 15 && px < B.maxX - 15 && pz > B.minZ + 15 && pz < B.maxZ - 15;
+  const inside = (px: number, pz: number) => isInside(B, px, pz, 15);
   let best = -1, at: [number, number] = [anchorX, anchorZ];
   for (let i = 0; i < 9; i++) { const [px, pz] = pointInArea(map, base, r), dd = Math.hypot(px - site.x, pz - site.z); if (inside(px, pz) && dd > best) { best = dd; at = [px, pz]; } }
   return at;
@@ -235,9 +238,9 @@ export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" |
 export function spawnCreatures(map: ForestMap): Creature[] {
   const out: Creature[] = [], pop = population(map);
   // The home area holds no creatures (Ed, 2026-10-03) and no legend (Ed, 2026-10-05: "Home area
-  // shouldn't have a legend": so no buff at the start). Every other area has its legend, sleeping, out of its clearing.
+  // shouldn't have a legend": so no buff at the start). The areas map.hasLegend picks (legends.share of them, Ed 2026-10-06) have their legend, sleeping in its clearing.
   const [hx, hy] = map.centreCell;
-  for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
+  for (const [cx, cy] of map.cells) {
     const home = cx === hx && cy === hy;
     const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), cell: [number, number] = [cx, cy], make = (level: Level) => out.push(makeCreature(map, cell, level, out.length, r));
     if (home) continue;
@@ -248,8 +251,10 @@ export function spawnCreatures(map: ForestMap): Creature[] {
       for (let i = 0; i < startCount(pop.young, k); i++) make(1);
       for (let i = 0; i < startCount(pop.adults, k); i++) make(2);
     }
+    if (map.hasLegend && !map.hasLegend(cx, cy)) continue; // (legends in legends.share of the areas: Ed, 2026-10-06)
     const L = makeCreature(map, cell, LEGEND, out.length, r, legendSpot(map, cell, r));
     L.legendState = "asleep"; L.stateAt = 0;
+    L.lairX = L.x; L.lairZ = L.z; // (where it lies: home, which it goes back to before it sleeps again; Ed, 2026-10-06)
     L.quest = questFor(map, cell, L.species);
     out.push(L);
   }

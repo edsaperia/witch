@@ -65,7 +65,7 @@ async function main() {
   // To the area, a little south of its middle so the straight flight north crosses it.
   const where = await page.evaluate(id => {
     const g = window.witch.game, m = g.map;
-    for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+    for (const [x, y] of m.cells) {
       if (window.witch.areaTypeId(m.typeOf(x, y)) !== id) continue;
       // Flying from its middle toward the map's, so she never meets the map's edge.
       const s = m.siteOf(x, y), b = m.bounds, cx = (b.minX + b.maxX) / 2 - s.x, cz = (b.minZ + b.maxZ) / 2 - s.z, l = Math.hypot(cx, cz) || 1;

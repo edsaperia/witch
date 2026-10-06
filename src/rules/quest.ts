@@ -15,7 +15,7 @@ export interface Quest { species: string; level: Level; /** game time it was don
 
 /** A legend's quest: a species on the map that isn't its own, and a level (baby, young or adult), from the seed. */
 export function questFor(map: ForestMap, cell: [number, number], own: string): Quest | undefined {
-  const kinds = [...new Set(Array.from({ length: map.n * map.n }, (_, i) => AREA_TYPES[map.typeOf(i % map.n, Math.floor(i / map.n))].creature))].filter(s => s !== own).sort();
+  const kinds = [...new Set(map.cells.map(([cx, cy]) => AREA_TYPES[map.typeOf(cx, cy)].creature))].filter(s => s !== own).sort();
   if (!kinds.length) return undefined;
   const r = rng(map.seed * 6151 + cell[0] * 389 + cell[1] * 1031 + 17);
   return { species: kinds[Math.floor(r() * kinds.length)], level: Math.floor(r() * 3) as Level };
@@ -30,18 +30,20 @@ export const legendOf = (creatures: Creature[], ids: number[], key: string): Cre
 };
 
 /** A sigil was put down at (x, z): if its creature is what the legend of that area dreams of, and
- *  its quest is still open (its soundsystem not yet on: Ed, 2026-10-05), the quest is done: she
- *  gets the legend's buff, for good, and it sleeps on (#87). The creature stays hers, parked there.
- *  `done` (the set of areas whose quest is done) moves the ley lines on. Returns the legend, or null. */
+ *  its quest is still open (while the legend sleeps, Ed 2026-10-06: "you should be able to get the
+ *  buffs at any time the legend is sleeping, not just before the soundsystem is made"), the quest is
+ *  done: she gets the legend's buff, for good, and it sleeps on (#87). The creature stays hers, parked
+ *  there. Done while the area is still wild, `done` (the set of areas whose quest is done: friendly
+ *  while wild) gains it; once the party has reached the area it's the buff alone. Returns the legend, or null. */
 export function questPlaced(map: ForestMap, creatures: Creature[], legendIds: number[], done: Set<string>, partified: (key: string) => boolean, id: number, x: number, z: number, time: number): Creature | null {
   const c = creatures[id], cell = map.cellSafe(x, z).cell as [number, number], key = cellKey(cell);
-  if (!c || partified(key)) return null;
+  if (!c) return null;
   const L = legendOf(creatures, legendIds, key), q = L?.quest;
   if (!L || !q || q.done !== undefined || (L.legendState !== "asleep" && L.legendState !== "restless")) return null;
   if (c.species !== q.species || c.level !== q.level) return null;
   q.done = time;
   L.buffed = true; L.questOpen = false;
-  done.add(key);
+  if (!partified(key)) done.add(key); // (friendly while wild; after its wave, the buff alone)
   return L;
 }
 
