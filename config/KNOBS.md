@@ -388,7 +388,7 @@ The music's clock (beats per minute): the lasers sweep to it and party animals d
 
 ## `berries`
 
-Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start. Bushes grow in patches of patch.bushes [min, max] within patch.radius metres. Party animals (invited, not legends), following her or held at a sigil, take a berry on their way (Ed, v233): within detour metres of the line to where they're heading or of their sigil, never beyond their leash; they nip over, eat it (eatTime seconds) and carry on. seekRadius is kept for free-roaming animals' seek. the berry grows again at once on a free berry bush somewhere else on the map. A party animal evolves on the next bar line once it has eaten the berries its next level costs (Ed, 2026-10-05: "tie the cost to strength"): the fighting value it gains (cost.by "value": √(hp × dps), its species' strength included) at cost.per a berry, rounded, at least 1: so a berry buys the same fighting value for every species; one of normal strength costs 2 and 2 ("power" would count hp × dps instead). Bigger patches since (Ed, 2026-10-05: "we can make the berry clusters bigger"): perArea and patch.bushes up a quarter to a half, so the first evolve's extra berry (2, was 1) and weaker species' one-berry minimum come out a little faster to feed than before. Evolving stops at adult (Ed, 2026-10-04: legends are the areas' own, never grown). colour: the berry's (shiny dark cherry red); glow: its soft halo's strength. B (debug) feeds the nearest party animal one berry.
+Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start. Bushes grow in patches of patch.bushes [min, max] within patch.radius metres. Party animals (invited, not legends), following her or held at a sigil, take a berry on their way (Ed, v233): within detour metres of the line to where they're heading or of their sigil, never beyond their leash; they nip over, eat it (eatTime seconds) and carry on. seekRadius is kept for free-roaming animals' seek. the berry grows again at once on a free berry bush somewhere else on the map. A party animal evolves on the next bar line once it has eaten the berries its next level costs (Ed, 2026-10-05: "tie the cost to strength"): the fighting value it gains (cost.by "value": √(hp × dps), its species' strength included) at cost.per a berry, rounded, at least 1: so a berry buys the same fighting value for every species; one of normal strength costs 4 and 4 (Ed, 2026-10-06: "Double the amount of berries animals need to evolve": cost.per halved from 7.25) ("power" would count hp × dps instead). Bigger patches since (Ed, 2026-10-05: "we can make the berry clusters bigger"): perArea and patch.bushes up a quarter to a half, so the first evolve's extra berry (2, was 1) and weaker species' one-berry minimum come out a little faster to feed than before. Evolving stops at adult (Ed, 2026-10-04: legends are the areas' own, never grown). colour: the berry's (shiny dark cherry red); glow: its soft halo's strength. B (debug) feeds the nearest party animal one berry.
 
 | knob | type | range |
 |---|---|---|
@@ -1230,13 +1230,18 @@ Wild creatures (Ed, 2026-10-04): every area starts with the same population, pop
 
 ## `dreams`
 
-A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest runestone of the area type it dreams of (Ed, 2026-10-05): shown only while she's on the ground within range metres of the legend (about its area's clearing and a little more); never from the treetops. nightmare: a restless legend's one face (Ed, 2026-10-05), slightly sad to angry: faces[k] from restlessness at[k] on.
+A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest runestone of the area type it dreams of (Ed, 2026-10-05): shown only while she's on the ground within range metres of the legend (about its area's clearing and a little more); never from the treetops. nightmare: a restless legend's one face (Ed, 2026-10-05), slightly sad to angry: faces[k] from restlessness at[k] on. sleepy (Ed, 2026-10-06): while it sleeps giving its quest (its dream open, no nightmare), its face beside the sigil: mostly face (😴), and now and then, for one turn of every seconds, one of faces instead; each turn its own throw per legend (seeded by its id, so legends never change together), face with chance weight. A face the browser can't draw (🫠 and 😮‍💨 are new) shows as fallback.
 
 | knob | type | range |
 |---|---|---|
 | `dreams.range` | number | 0 to … |
 | `dreams.nightmare.at` | array of number |  |
 | `dreams.nightmare.faces` | array of string |  |
+| `dreams.sleepy.face` | string |  |
+| `dreams.sleepy.weight` | number | 0 to … |
+| `dreams.sleepy.every` | number | 0 to … |
+| `dreams.sleepy.faces` | array of string |  |
+| `dreams.sleepy.fallback` | string |  |
 
 ## `wildLegends`, `creatureSimRadius`
 
