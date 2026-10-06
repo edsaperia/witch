@@ -484,6 +484,14 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   return map;
 }
 
+/** Whether (x, z) is inside the legend's clearing of the area at cell (Ed, 2026-10-06: "Quest sigils and relics
+ *  need to be placed in the circle to have their effect"); where an area has no clearing (no room for one),
+ *  within fallback metres of its legend at legendAt. */
+export function inLegendClearing(map: ForestMap, cell: Cell, x: number, z: number, legendAt: { x: number; z: number }, fallback: number): boolean {
+  const c = map.legendClearing(cell[0], cell[1]);
+  return c ? Math.hypot(x - c.x, z - c.z) <= c.r : Math.hypot(x - legendAt.x, z - legendAt.z) <= fallback;
+}
+
 /** The legends' clearings nearest (x, z), up to out's length or 6, nearest first, into out (reused, so no
  *  garbage a frame); only those within 400 m. For the drawing (the ground's rings, the twilight) and the rules. */
 export function nearestClearings(all: readonly LegendClearing[], x: number, z: number, out: LegendClearing[], max = 6): LegendClearing[] {

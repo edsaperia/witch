@@ -2,7 +2,7 @@
 import { MOVEMENT } from "./movement";
 import { bodyRadius, spaceOut } from "./spacing";
 import { onAreaDone } from "./leylines";
-import { questPlaced, type QuestEvent } from "./quest";
+import { questOutside, questPlaced, type QuestEvent } from "./quest";
 import { beatAt, newBeatClock, waveArrived, waveTempo, type BeatClock } from "./beat";
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState } from "./camera";
 import { MAX_STEP, newClock, type Clock } from "./clock";
@@ -365,27 +365,32 @@ function fixedStep(g: Game, controls: Controls): void {
   stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map, c => dormant(g, c), { ...g.tuning.simLod, full: fullRadius(g.tuning, g.witch.mode) }, g.lod);
   if (stepWanderers([...g.combat.busy].map(id => g.creatures[id]), g.map, dt)) g.byArea = null; // (those walking home are among combat's busy)
   // (A party animal in a fight is moved by combat, not its leash.)
-  const placedBefore = g.leash.events.length;
+  // (the relic button's events: added after the leash's step, which starts its events afresh)
+  const relicEvents: LeashEvent[] = [];
   // Far from her on the ground, or from its sigil, a party animal travels (rules/travel.ts): quiet, along area borders.
   stepTravel(g.leash.stack, g.leash.placed, g.creatures, g.witch, g.map, dt, t, id => busy(id) || heldByCombat(g.creatures[id]), t.leash.pace ?? 1);
   // The sigil button by a lying relic picks it up; carrying one, by a sleeping legend, puts it down there (rules/legends.ts).
   let sigil = !!c.sigil && !W.ko;
   if (sigil && g.witch.mode === "ground") {
-    const r = relicButton(g.relics, g.leash.relics, g.creatures, legends, g.witch.x, g.witch.z, g.clock.time);
+    const r = relicButton(g.relics, g.leash.relics, g.creatures, legends, g.witch.x, g.witch.z, g.clock.time, g.map);
     if (r) {
       sigil = false;
-      if ("picked" in r) g.leash.events.push({ kind: "relicPicked", id: r.picked.id, x: r.picked.x, z: r.picked.z, at: g.clock.time });
-      else g.leash.events.push({ kind: "relicPlaced", id: r.placed.id, x: r.legend.x, z: r.legend.z, at: g.clock.time });
+      if ("picked" in r) relicEvents.push({ kind: "relicPicked", id: r.picked.id, x: r.picked.x, z: r.picked.z, at: g.clock.time });
+      else if ("placed" in r) relicEvents.push({ kind: "relicPlaced", id: r.placed.id, x: r.legend.x, z: r.legend.z, at: g.clock.time });
+      else relicEvents.push(outsideCircle(g, r.outside));
     }
   }
   stepLeash(g.leash, g.creatures, { sigil, inviteNearest: c.inviteNearest, talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, g.clock.time, dt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
+  g.leash.events.push(...relicEvents);
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
   stepInvites(W.invites, W.ko ? {} : c, { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), g.clock.time, dt, t, M);
   // Frenzy (Stoat): an animal won over gives back a blink.
   if (M.frenzy > 0) for (const e of W.invites.events) if (e.kind === "happy") refundDash(W.dash, g.clock.time, charges);
   // A sigil put down in a wild area whose legend dreams of that creature: the quest is done.
-  for (const e of g.leash.events.slice(placedBefore)) if (e.kind === "placed" && e.at === g.clock.time) {
-    const L = questPlaced(g.map, g.creatures, (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id)), g.friendly, k => g.party.areas.has(k), e.id, e.x, e.z, g.clock.time);
+  for (const e of g.leash.events.slice()) if (e.kind === "placed" && e.at === g.clock.time) {
+    const ids = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id)), L = questPlaced(g.map, g.creatures, ids, g.friendly, k => g.party.areas.has(k), e.id, e.x, e.z, g.clock.time);
+    // (the right creature, but outside its legend's clearing: a gentle cue, and nothing happens)
+    if (!L) { const O = questOutside(g.map, g.creatures, ids, k => g.party.areas.has(k), e.id, e.x, e.z); if (O) g.leash.events.push(outsideCircle(g, O)); }
     if (L) {
       g.questEvents.push({ kind: "done", id: L.id, joined: e.id, cell: [L.cell[0], L.cell[1]], key: cellKey(L.cell), x: L.x, z: L.z, at: g.clock.time });
       onAreaDone(g.party, L.cell, g.clock.time); // (the ley line moves on: its quest done before its wave)
@@ -591,6 +596,9 @@ function stepDancefloor(g: Game, waveBefore: number, wasSeated: boolean | undefi
 
 /** An area legend that isn't up and about (asleep, waking, or asleep for good): no roaming, no
  *  fighting, nothing to invite (DESIGN.md, "Sleeping legends"). */
+/** The cue for something put down by a sleeping legend but outside its clearing: at its clearing's middle (or the legend). */
+const outsideCircle = (g: Game, L: Creature) => { const c = g.map.legendClearing(L.cell[0], L.cell[1]); return { kind: "outsideCircle" as const, id: L.id, x: c?.x ?? L.x, z: c?.z ?? L.z, at: g.clock.time }; };
+
 export const dormant = (_g: Game, c: Creature): boolean => !!c.boss && !c.leashed && (c.legendState === "asleep" || c.legendState === "restless"); // (asleep or restless: scenery, untouchable)
 
 /** The legends' states (Ed, 2026-10-05, #87; rules/legends.ts): asleep, dreaming; restless while

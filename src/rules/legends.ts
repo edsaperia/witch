@@ -2,13 +2,13 @@
 // (its quest: bring the creature it dreams of while its area's soundsystem is off, and you get its
 // buff; it sleeps on). With none of its kind left in its area it grows restless (a nightmare), and
 // after angryAfter seconds of that it's angry: it attacks the witch and her posse from afar. A
-// relic put down next to it while it sleeps makes it happy: you get its buff and it defends,
+// relic put down in its clearing while it sleeps makes it happy: you get its buff and it defends,
 // shooting the enraged from afar. Relics lie half buried about the map; she picks one up (a relic
-// sigil in her stack) and puts it down by the legend she chooses. Buffs once earned are kept.
+// sigil in her stack) and puts it down in the clearing of the legend she chooses (Ed, 2026-10-06). Buffs once earned are kept.
 // The legends' long, slow lobs and beams are combat's (stepLegendAttack). No drawing here.
 import raw from "../../config/legends.json";
 import type { Creature } from "./creatures";
-import type { ForestMap } from "./map";
+import { inLegendClearing, type ForestMap } from "./map";
 import { crownReach, type Plant } from "./forest";
 import { cellKey } from "./party";
 import { hash2 } from "./random";
@@ -129,16 +129,26 @@ export function lull(c: Creature, time: number): void {
 export const buffing = (c: Creature): boolean => !!c.buffed || c.legendState === "happy";
 
 /** The sigil button on the ground at (x, z): pick up a lying relic within pickRadius (returns it),
- *  else, carrying relics, put the newest down by a sleeping (or restless) legend within placeRadius
- *  (returns the legend made happy). Null if neither (the sigil button does as ever). */
-export function relicButton(relics: Relic[], carried: number[], creatures: Creature[], legendIds: number[], x: number, z: number, time: number, data: LegendsData = LEGENDS): { picked: Relic } | { placed: Relic; legend: Creature } | null {
+ *  else, carrying relics, put the newest down by a sleeping (or restless) legend she stands in the
+ *  clearing of (Ed, 2026-10-06: relics "need to be placed in the circle to have their effect"; where
+ *  an area has no clearing, within placeRadius of its legend), and return the legend made happy;
+ *  standing near one, but outside its circle, return it as outside (a gentle cue: the circle flashes),
+ *  putting nothing down. Null if none of these (the sigil button does as ever). */
+export function relicButton(relics: Relic[], carried: number[], creatures: Creature[], legendIds: number[], x: number, z: number, time: number, map: ForestMap, data: LegendsData = LEGENDS): { picked: Relic } | { placed: Relic; legend: Creature } | { outside: Creature } | null {
   let pick: Relic | null = null, pd = data.relics.pickRadius;
   for (const r of relics) if (r.state === "lying") { const d = Math.hypot(r.x - x, r.z - z); if (d <= pd) { pd = d; pick = r; } }
   if (pick) { pick.state = "carried"; carried.push(pick.id); return { picked: pick }; }
   if (!carried.length) return null;
-  let best: Creature | null = null, bd = data.placeRadius;
-  for (const id of legendIds) { const c = creatures[id], d = Math.hypot(c.x - x, c.z - z); if (!c.gone && !c.leashed && (c.legendState === "asleep" || c.legendState === "restless") && d <= bd) { bd = d; best = c; } }
-  if (!best) return null;
+  let best: Creature | null = null, near: Creature | null = null, nd = Infinity;
+  for (const id of legendIds) {
+    const c = creatures[id];
+    if (c.gone || c.leashed || (c.legendState !== "asleep" && c.legendState !== "restless")) continue;
+    if (inLegendClearing(map, c.cell, x, z, c, data.placeRadius)) { best = c; break; }
+    // (near enough to have meant it: within its circle's reach and as far again, or twice placeRadius)
+    const lc = map.legendClearing(c.cell[0], c.cell[1]), d = lc ? Math.hypot(x - lc.x, z - lc.z) - lc.r : Math.hypot(x - c.x, z - c.z) - data.placeRadius;
+    if (d < Math.max(data.placeRadius, lc?.r ?? 0) && d < nd) { nd = d; near = c; }
+  }
+  if (!best) return near ? { outside: near } : null;
   const r = relics[carried.pop()!];
   Object.assign(r, { state: "used", legend: best.id, x: best.x + 4, z: best.z + 2 });
   cheer(best, time);

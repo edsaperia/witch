@@ -360,7 +360,7 @@ This replaces the legend rules in "Sleeping legends" and "The first quest" below
 | **Asleep + buff** | its quest done: that creature's sigil put down in its area while the quest is open (till the area's soundsystem switches on) | its buff is hers for good; it sleeps on; the creature stays hers, parked there |
 | **Restless** | its area has none of its own kind (any state, leashed ones parked there and babies too) | its dream turns to a nightmare (`c.restlessness` 0 to 1 over `angryAfter`, 60 s); it calms back to sleep as soon as one of its kind is there again |
 | **Angry** | restlessness run its course | it shoots the witch and her posse from afar (never soundsystems, never happy creatures) |
-| **Happy** | a relic put down next to it (within `placeRadius`) while it sleeps or is restless | its buff is hers for good, and it shoots the enraged from afar |
+| **Happy** | a relic put down in its clearing (Ed, 2026-10-06; within `placeRadius` where it has none) while it sleeps or is restless | its buff is hers for good, and it shoots the enraged from afar |
 
 - **Home has no legend** (Ed, 2026-10-05: "Home area shouldn't have a legend"; "no home starting buff"): every run starts with no buff.
 - **Relics:** `relics.count` (4) giant half-buried party bottles per map (the art builder's party relics), in areas at least `minRemoteness` from home and `spacing` areas apart, out in the woods, never in a clearing. **A rare find** (Ed, 2026-10-05: "bottle glint should only show through gaps"): from the treetops a relic's glint shows only where no tree crown hangs over it, every other one lying under a small gap and the rest under closed canopy (found only on the ground); no markers or hints. On the ground, the sigil button by one picks it up (it's a relic sigil in her stack, `leash.relics`); carrying one, the sigil button by a sleeping legend puts it down there.
@@ -410,7 +410,7 @@ This replaces the legend rules in "Sleeping legends" and "The first quest" below
 **Each sleeping legend dreams of a creature.** A thought bubble over it holds that creature's sigil, drawn in its level's variant (Ed, 2026-10-05: the sigil's own level look, no pips).
 - The creature is a species found on the map, never the legend's own, at a random level. It's chosen from the seed when the map is made.
 - The bubble reads on the ground. From the treetops a smaller one floats high over the legend.
-- **Fulfilling it:** put that sigil down anywhere in the legend's area while the area is still wild. That means a creature of that species and level from her stack, placed with the usual sigil action. Then:
+- **Fulfilling it:** put that sigil down in the legend's clearing (Ed, 2026-10-06: "Quest sigils and relics need to be placed in the circle to have their effect"; put down elsewhere, the circle flashes and nothing happens) while the area is still wild. That means a creature of that species and level from her stack, placed with the usual sigil action. Then:
   - the legend becomes **happy**: the bubble pops in sparkles, and the legend stirs and rises contentedly;
   - **all the area's creatures become friendly**: they don't attack her or her party, and her party leaves them be;
   - **the creature she placed joins the area**: it leaves her leash and stack and becomes one of the area's creatures.

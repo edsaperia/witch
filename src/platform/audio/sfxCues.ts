@@ -99,6 +99,7 @@ export class SfxCues {
       else if (e.kind === "fizzled") S.land(pan(e.x), k); // (thrown its full range: down on the ground)
     }
     for (const e of g.leashEvents) if (e.kind === "invited") this.flourish(g, e.id, time, Math.max(0.6, near(e.x, e.z)), pan(e.x));
+      else if (e.kind === "outsideCircle") S.land(pan(e.x), 0.5); // (put down outside a legend's circle: it does nothing; a soft thud, and the circle flashes)
   }
 
   /** Who turned enraged or happy since the last frame (the first frame only takes note): they say

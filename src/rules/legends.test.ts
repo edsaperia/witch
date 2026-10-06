@@ -6,6 +6,7 @@ import { LEGEND_BUFFS } from "./buffs";
 import { LEGENDS, canopyOver, relicGlints } from "./legends";
 import { cellKey } from "./party";
 import { setupQuestDemo } from "./quest";
+import { inLegendClearing } from "./map";
 import { stateOf } from "./creatureStates";
 
 // Legends, redesigned (Ed, 2026-10-05; issue #87).
@@ -137,6 +138,51 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(r.state).toBe("used");
     expect(g.leash.relics).toEqual([]);
     expect(g.buffs.active.map(b => b.id)).toContain(L.id);
+  }, 60000);
+
+  // Ed (2026-10-06): "Quest sigils and relics need to be placed in the circle to have their effect."
+  it("take a relic only inside their clearing: put down outside it, nothing happens but a cue (the circle flashes)", () => {
+    const { g, L } = beside(), lc = g.map.legendClearing(L.cell[0], L.cell[1])!;
+    expect(lc).not.toBeNull();
+    const r = g.relics[0];
+    g.witch = { ...g.witch, x: r.x + 1, z: r.z };
+    run(g, 0.2, { ...idle, sigil: true });
+    expect(g.leash.relics).toEqual([r.id]);
+    // just outside the ring, on its open (south) side
+    g.witch = { ...g.witch, x: lc.x, z: lc.z + lc.r + 3 };
+    let cued = false;
+    run(g, 0.2, { ...idle, sigil: true }, () => { cued ||= g.leashEvents.some(e => e.kind === "outsideCircle" && e.id === L.id); });
+    expect(L.legendState).not.toBe("happy");
+    expect(g.leash.relics).toEqual([r.id]);
+    expect(cued).toBe(true);
+    // inside it
+    g.witch = { ...g.witch, x: lc.x, z: lc.z + lc.r * 0.5 };
+    run(g, 0.2, { ...idle, sigil: true });
+    expect(L.legendState).toBe("happy");
+    expect(r.state).toBe("used");
+  }, 60000);
+
+  it("take a quest sigil only inside their clearing: the right creature put down elsewhere in its area does nothing but cue", () => {
+    for (const inside of [false, true]) {
+      const g = newGame(123, TUNING);
+      g.clock.paused = false; g.party.paused = true;
+      const L = setupQuestDemo(g, (x, z) => { g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false }; })!;
+      g.witches[0].health.hp = 1e6;
+      const lc = g.map.legendClearing(L.cell[0], L.cell[1])!;
+      if (!inside) {
+        // a spot in its area, out of its circle
+        let spot: [number, number] | null = null;
+        for (let d = lc.r + 4; d < lc.r + 60 && !spot; d += 4) for (let k = 0; k < 16 && !spot; k++) { const a = (k / 16) * Math.PI * 2, x = lc.x + Math.cos(a) * d, z = lc.z + Math.sin(a) * d, c = g.map.cellSafe(x, z).cell; if (c[0] === L.cell[0] && c[1] === L.cell[1]) spot = [x, z]; }
+        expect(spot).not.toBeNull();
+        g.witch = { ...g.witch, x: spot![0], z: spot![1] };
+        expect(inLegendClearing(g.map, L.cell, g.witch.x, g.witch.z, L, LEGENDS.placeRadius)).toBe(false);
+      } else expect(inLegendClearing(g.map, L.cell, g.witch.x, g.witch.z, L, LEGENDS.placeRadius)).toBe(true);
+      let cued = false;
+      run(g, 0.1);
+      run(g, 0.2, { ...idle, sigil: true }, () => { cued ||= g.leashEvents.some(e => e.kind === "outsideCircle" && e.id === L.id); });
+      expect(L.quest!.done !== undefined).toBe(inside);
+      expect(cued).toBe(!inside);
+    }
   }, 60000);
 
   it("when happy, shoot the enraged from afar; worn down by them, sleep again, her buff kept", () => {
