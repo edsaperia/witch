@@ -19,7 +19,7 @@ function demo(): { g: Game; L: Game["creatures"][number]; gift: Game["creatures"
 
 describe("the first quest (Ed, 2026-10-04)", () => {
   it("gives every sleeping legend a dream: a creature of the map, not its own kind, as a baby, young or adult, from the seed", () => {
-    const map = generateMap(123, TUNING), kinds = new Set(Array.from({ length: map.n * map.n }, (_, i) => AREA_TYPES[map.typeOf(i % map.n, Math.floor(i / map.n))].creature));
+    const map = generateMap(123, TUNING), kinds = new Set(map.cells.map(([x, y]) => AREA_TYPES[map.typeOf(x, y)].creature));
     const legends = spawnCreatures(map).filter(c => c.boss), again = spawnCreatures(generateMap(123, TUNING)).filter(c => c.boss);
     for (const L of legends) {
       if (L.legendState === "happy") { expect(L.quest).toBeUndefined(); continue; } // (home's)

@@ -25,7 +25,7 @@ describe("the ley line's route (Ed, 2026-10-06)", () => {
   const SEEDS = Array.from({ length: 30 }, (_, i) => i + 1);
   it("runs through every area once, home first, and the waves wake them in its order", () => {
     const map = generateMap(7, TUNING), r = routeOf(map), p = newParty(map);
-    expect(r.order.length).toBe(map.n * map.n - 1);
+    expect(r.order.length).toBe(map.cells.length - 1);
     expect(new Set(r.order).size).toBe(r.order.length);
     expect(r.order).not.toContain(cellKey(map.centreCell));
     expect([...wavePlan(p, map).keys()]).toEqual(r.order);
