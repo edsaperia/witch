@@ -97,25 +97,21 @@ describe("the first ley line leaves the treehouse's front, due south (Ed, 2026-1
       expect(edge - ring).toBeCloseTo(TUNING.treehouse.gap, 6);
     }
   });
-  it("runs due south straight across the dancefloor, then curves smoothly to the first objective outside the ring, wherever that lies", () => {
-    let north = 0;
-    // (The route picker's first objective is always south of home; the noisy picker's lies anywhere.)
-    const T = { ...TUNING, party: { ...TUNING.party, picker: "noisy" } };
-    for (const seed of [123, 293912, 7, 1000, 42, 31337, 5, 99]) {
+  it("never crosses the dancefloor: round the speakers from the treehouse on the objective's side, then off and round to it, smoothly (Ed, 2026-10-06)", () => {
+    let east = 0, west = 0;
+    // (The noisy picker's first objective lies anywhere round home; the route's on the side it leaves by.)
+    for (const T of [TUNING, { ...TUNING, party: { ...TUNING.party, picker: "noisy" } }]) for (const seed of [123, 293912, 7, 1000, 42, 31337, 5, 99]) {
       const m = generateMap(seed, T), p = newParty(m), [a, b] = ahead(p, m, 2), d = m.dancefloor;
-      if (b.z < a.z) north++;
-      const pts = departureRoute(m, b, D.past, D.avoid, 4), R = departureClear(m, D.avoid);
+      const pts = departureRoute(m, b, D.avoid, 4), R = departureClear(m, D.avoid);
       expect(pts[0]).toEqual([a.x, a.z]);
       const last = pts[pts.length - 1];
       expect(Math.hypot(last[0] - b.x, last[1] - b.z)).toBeLessThan(1);
-      // Due south first, straight across the floor (over its middle) and out past the ring.
-      let i = 1;
-      for (; i < pts.length && pts[i][0] === a.x && pts[i][1] > pts[i - 1][1]; i++);
-      const crossed = pts[i - 1];
-      expect(crossed[1]).toBeGreaterThanOrEqual(d.z + R + D.past - 1e-6);
-      expect(Math.abs(a.x - d.x)).toBeLessThan(1); // (through the middle of the floor)
-      // After the crossing, kept outside the ring.
-      for (const q of pts.slice(i)) expect(Math.hypot(q[0] - d.x, q[1] - d.z)).toBeGreaterThanOrEqual(R - 1e-6);
+      // Never over the dancefloor, nor inside its ring of speakers.
+      for (const q of pts) expect(Math.hypot(q[0] - d.x, q[1] - d.z), `seed ${seed}`).toBeGreaterThanOrEqual(R - 1e-6);
+      // Round the ring on the objective's side: clockwise on the screen (eastward first) for one east of home.
+      const k = Math.min(4, pts.length - 1), goesEast = pts[k][0] > pts[0][0];
+      expect(goesEast, `seed ${seed}`).toBe(b.x >= d.x);
+      if (goesEast) east++; else west++;
       // Smooth: no sharp corners.
       for (let i = 2; i < pts.length; i++) {
         const u = [pts[i - 1][0] - pts[i - 2][0], pts[i - 1][1] - pts[i - 2][1]], v = [pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]];
@@ -123,6 +119,7 @@ describe("the first ley line leaves the treehouse's front, due south (Ed, 2026-1
         expect(cos, `seed ${seed} at ${i}`).toBeGreaterThan(Math.cos((50 * Math.PI) / 180));
       }
     }
-    expect(north).toBeGreaterThan(0); // (some seeds' first objective lies north, behind the treehouse)
+    expect(east, "some leave to the east (off to the right)").toBeGreaterThan(0);
+    expect(west, "and some to the west").toBeGreaterThan(0);
   }, 60000);
 });

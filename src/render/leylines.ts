@@ -43,7 +43,7 @@ export interface LeyTuning {
   /** The faintest a section gets, ahead and behind, as a share of the next one's (Ed, 2026-10-06: the whole route always shows). */
   far: number[];
   /** The first line's way out from the treehouse (rules/leylines.ts departureRoute). */
-  depart: { past: number; avoid: number };
+  depart: { avoid: number };
 }
 
 const STEP = 8; // metres between route points
@@ -278,7 +278,7 @@ export class LeyLines {
    *  (`wander` of its usual way off the straight; 0 straight). */
   private route(a: LeyStone, b: LeyStone, k: number, wander = 1): [number, number][] {
     // From the treehouse at the start: due south out of its front, then round to the first objective.
-    if (a.depart && this.map) return departureRoute(this.map, b, this.T.depart.past, this.T.depart.avoid, STEP / 2);
+    if (a.depart && this.map) return departureRoute(this.map, b, this.T.depart.avoid, STEP / 2);
     const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, px = -uz, pz = ux;
     const n = Math.max(2, Math.ceil(L / STEP)), W = Math.min(80, L * this.T.valley) * wander, off = new Float64Array(n + 1);
     if (W > 0) for (let i = 1; i < n; i++) {

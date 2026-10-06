@@ -197,6 +197,8 @@ export class LeashView {
   private canvas = document.createElement("canvas");
   private tex: THREE.CanvasTexture;
   private slots = new Map<string, number>();
+  /** The creatures whose sigils are projected over the treetops this frame (kept, not made anew each frame). */
+  private projected: { c: Creature; d: number }[] = [];
   private nextSlot = 1; // the next free atlas slot
   private legendSlots = 0; // legendary blocks taken
   private colours = new Map<string, THREE.Color>();
@@ -973,6 +975,24 @@ export class LeashView {
       const sg = this.sigilOf(c);
       this.flat.add(p.x, top, p.z, (3 + c.level * 0.8) * P.size * sg.scale, sg.uv, col.r, col.g, col.b, P.opacity * up * pulse);
       for (let y = 1; y < top; y += 1.5) this.standing.add(p.x, y, p.z, 0.3, dot, col.r, col.g, col.b, P.beam * up * pulse * (0.6 + 0.4 * Math.sin(y * 0.8 - time * 3)));
+    }
+    // And over every leashed or happy creature near her, its own sigil at the same height, moving with it (Ed's playtest,
+    // 2026-10-06: "I should be able to see sigils of leashed creatures and happy creatures from treetop mode"): smaller and
+    // without a beam, the nearest few only, fading out toward the edge of their range; a happy one's dimmer, as on the ground.
+    if (up > 0.01) {
+      const C = P.creatures, near = this.projected; near.length = 0;
+      for (const c of g.creatures) {
+        if (c.gone || !(c.leashed || hasRune(c)) || s.stack.includes(c.id) || s.placed.some(p => p.id === c.id && Math.hypot(p.x - c.x, p.z - c.z) < 6)) continue;
+        const d = Math.hypot(c.x - w.x, c.z - w.z);
+        if (d <= C.range) near.push({ c, d });
+      }
+      near.sort((a, b) => a.d - b.d);
+      const top = t.treetopHeight - 4 + P.height;
+      for (let i = 0; i < Math.min(near.length, C.max); i++) {
+        const { c, d } = near[i], col = this.colours.get(c.species) ?? (this.slotOf(c.species, 0), this.colours.get(c.species)!), sg = this.sigilOf(c);
+        const edge = Math.min(1, Math.max(0, (C.range - d) / (C.range * C.fade))), a = C.opacity * up * edge * (c.leashed ? 1 : C.happy) * (0.88 + 0.12 * Math.sin(time * 1.3 + c.id));
+        if (a > 0.01) this.flat.add(c.x, top + 0.2 * Math.sin(time * 0.9 + c.id), c.z, (3 + c.level * 0.8) * C.size * sg.scale, sg.uv, col.r, col.g, col.b, a);
+      }
     }
 
     // The ghost: where the bottom sigil would land, red where it can't.

@@ -7,7 +7,7 @@ import { generateMap } from "./map";
 import { TUNING, type Tuning } from "./tuning";
 import { newParty, spreadWave, wavePlan, cellKey, routeOf } from "./party";
 import { polylinesMeet, segmentsMeet, crossings } from "./crossing";
-import { CROSSING_RULES, crossingPairs, meetPoint, routeShape, spiralOrder, withinCrossingRules } from "./leyroute";
+import { CROSSING_RULES, crossingPairs, meetPoint, overHome, routeShape, spiralOrder, withinCrossingRules } from "./leyroute";
 import { TIP_PACE } from "./leypulse";
 
 describe("lines meeting", () => {
@@ -40,7 +40,9 @@ describe("the ley line's route (Ed, 2026-10-06)", () => {
   it("keeps Ed's crossing rules on 40 seeds: at most 4 a map, none the pulse would pass over already drawn ahead of it, 350 m apart (Ed, 2026-10-06)", () => {
     const seen = new Set<number>();
     for (let seed = 1; seed <= 40; seed++) {
-      const links = routeOf(generateMap(seed, TUNING)).links, pairs = crossingPairs(links);
+      const map = generateMap(seed, TUNING), r = routeOf(map), links = r.links, pairs = crossingPairs(links);
+      // (and never over the dancefloor, Ed 2026-10-06: the line leaving home goes round it, rules/departure.ts; no link after it crosses home)
+      for (let i = 1; i < r.stones.length; i++) expect(overHome(map, r.stones[i - 1], r.stones[i]), `seed ${seed}: link ${i} over the dancefloor`).toBe(false);
       seen.add(pairs.length);
       expect(pairs.length, `seed ${seed}`).toBeLessThanOrEqual(CROSSING_RULES.max);
       for (const [i, j] of pairs) expect(j, `seed ${seed}: links ${i} and ${j}`).toBeGreaterThanOrEqual(CROSSING_RULES.pace * (i + 1) + CROSSING_RULES.margin);
