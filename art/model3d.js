@@ -124,7 +124,13 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
   const u0b = Math.min(...body.map(q => q.u0 + (q.uw ? 0 : k))), u1b = Math.max(...body.map(q => q.u1 - (q.uw ? 0 : k)));
   const s = scale ?? height / Math.max(1e-6, u1b - u0b);
   if (measure) return { s };
-  const X0 = Math.min(...all.map(q => q.x0)), X1 = Math.max(...all.map(q => q.x1)), U0 = Math.min(...all.map(q => q.u0)), U1 = Math.max(...all.map(q => q.u1));
+  let X0 = Math.min(...all.map(q => q.x0)), X1 = Math.max(...all.map(q => q.x1)), U0 = Math.min(...all.map(q => q.u0)), U1 = Math.max(...all.map(q => q.u1));
+  // model.phaseOnBody: its pixel grid set by its body alone, the extras (a long cloak's train) only widening the sprite by whole
+  // pixels, so a thin band on the body lands on the same pixels however far an extra reaches (the witch: art/witch.js)
+  if (model.phaseOnBody && body.length) {
+    const X0b = Math.min(...body.map(q => q.x0)), U1b = Math.max(...body.map(q => q.u1));
+    X0 = X0b - Math.ceil((X0b - X0) * s - 1e-9) / s; U1 = U1b + Math.ceil((U1 - U1b) * s - 1e-9) / s;
+  }
   const W = Math.ceil((X1 - X0) * s) + 4, H = Math.ceil((U1 - U0) * s) + 2, sp = new Sprite(W, H);
   const depth = new Float32Array(W * H).fill(Infinity), grp = new Int16Array(W * H).fill(-1);
   // which parts can touch each 8 x 8 tile of pixels

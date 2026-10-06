@@ -1,6 +1,6 @@
-import { stateOf } from "./creatureStates";
+import { STATES, stateOf } from "./creatureStates";
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { hash2 as labHash2, SPECIES_BY_ID } from "../../art/generator.js";
 import { makePartition } from "./partition";
 import { hash2 } from "./random";
@@ -118,15 +118,15 @@ describe("the map", () => {
     expect(checked).toBe(400 * 24);
     expect(safeSum / 400).toBeGreaterThan(0.3); // worth having: a creature asks about every so many metres
   });
-  it("is mapAreas x mapAreas areas with every area type (Ed's 30 and any recipes)", () => {
-    expect(map.n).toBe(TUNING.mapAreas);
+  it("is a circle of about mapAreas x mapAreas areas with every area type (Ed's 30 and any recipes)", () => {
+    expect(Math.abs(map.cells.length - TUNING.mapAreas ** 2)).toBeLessThan(TUNING.mapAreas * 2);
     expect(AREA_TYPES.length).toBeGreaterThanOrEqual(30);
-    expect(map.bounds.maxX - map.bounds.minX).toBeCloseTo((map.n - 1) * map.areaSize);
+    expect(map.bounds.maxX - map.bounds.minX).toBeCloseTo(2 * map.bounds.circle!.r);
   });
 
   it("never gives two touching areas the same type", () => {
     let pairs = 0;
-    const inMap = (x: number, y: number) => x >= -map.margin && y >= -map.margin && x < map.n + map.margin && y < map.n + map.margin;
+    const e = map.extent, inMap = (x: number, y: number) => { const s = map.siteOf(x, y); return s.x > e.minX && s.x < e.maxX && s.z > e.minZ && s.z < e.maxZ; };
     for (const [k, set] of map.neighbours) {
       const [ax, ay] = k.split(",").map(Number);
       if (!inMap(ax, ay)) continue;
@@ -296,7 +296,7 @@ describe("trees", () => {
 });
 
 describe("the witch", () => {
-  const b = map.bounds;
+  const b = { minX: 84, maxX: 2268, minZ: 84, maxZ: 2268 }; // (a square box, as the square map's: the circular map's edge is in mapShape.test.ts)
   const fly = (w = newWitch(200, 200), steps = 120, intent = { moveX: 1, moveZ: 0, toggleMode: false }) => {
     for (let i = 0; i < steps; i++) w = stepWitch(w, intent, 1 / 60, TUNING, b);
     return w;
@@ -493,10 +493,10 @@ describe("creatures", () => {
   it("start the same in every area (Ed, 2026-10-04): none at home but its legend, one young and one adult elsewhere (Ed, 2026-10-05), and one legend in each that has one (legends.share: Ed, 2026-10-06)", () => {
     expect(inCell(mx, my).filter(c => !c.boss)).toEqual([]);
     const S = TUNING.population.start;
-    for (let cy = 0; cy < map.n; cy += 3) for (let cx = 0; cx < map.n; cx += 3) {
+    for (const [cx, cy] of map.cells.filter((_, i) => i % 9 === 0)) {
       if (cx === mx && cy === my) continue;
       const here = inCell(cx, cy);
-      expect(here.filter(c => c.level === 0).length).toBe(S.babies);
+      expect(here.filter(c => c.level === 0 && !c.circle).length).toBe(S.babies); // (and its legend's clearing's baby: below)
       expect(here.filter(c => c.level === 1).length).toBe(S.young);
       expect(here.filter(c => c.level === 2).length).toBe(S.adults);
       expect(here.filter(c => c.level === 3 && c.boss).length).toBe(map.hasLegend(cx, cy) ? 1 : 0);
@@ -658,7 +658,7 @@ describe("the party", () => {
       const p = newParty(map);
       if (per > 1) { p.areasPerWave = per; p.next = pickSet(p, map, per); planAhead(p, map); }
       const plan = wavePlan(p, map);
-      expect(plan.size).toBe(map.n * map.n - 1); // all but home
+      expect(plan.size).toBe(map.cells.length - 1); // all but home
       for (let w = 1; w <= 12; w++) {
         for (const c of p.next) expect(plan.get(key(c))).toBe(w);
         spreadWave(p, map, w);
@@ -765,6 +765,10 @@ describe("the game clock and a whole step", () => {
 });
 
 describe("inviting and leashing", () => {
+  // (The old proximity chat: a second talk leashes a happy one, as states.leash "again" does; the game picks up its rune now, pickup.test.ts.)
+  let savedLeash = STATES.leash;
+  beforeEach(() => { savedLeash = STATES.leash; STATES.leash = "again"; });
+  afterEach(() => { STATES.leash = savedLeash; });
   // (Every level to talk to: a baby, a young and an adult in each area.)
   const creatures = spawnCreatures(generateMap(123, withTuning({ population: { ...TUNING.population, start: { babies: 1, young: 1, adults: 1 } } })));
   const fresh = () => creatures.map(c => ({ ...c, rand: (() => { let k = c.id * 7 + 1; return () => (k = (k * 16807) % 2147483647) / 2147483647; })() }));
@@ -1446,7 +1450,8 @@ describe("ground cover (Ed, v171)", () => {
     expect(list.length).toBeGreaterThan(500);
     for (const f of list) {
       expect(map.paths.at(f.x, f.z)).toBeNull();
-      expect(map.hardClear(f.x, f.z)).toBe(false);
+      const lc = map.legendClearing(...map.areaAt(f.x, f.z).cell);
+      expect(map.hardClear(f.x, f.z) && !(lc && Math.hypot(f.x - lc.x, f.z - lc.z) < lc.r)).toBe(false); // (short and sparse on a legend's clearing's floor)
       expect(Math.hypot(f.x - d.x, f.z - d.z)).toBeGreaterThan(floorClearing(TUNING));
       expect(LOOKS[f.type].groundCover.kinds).toContain(TUFT_KINDS[f.kind]); // (its look: home's meadow has its own)
     }

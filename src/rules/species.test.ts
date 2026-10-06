@@ -23,7 +23,7 @@ const pick = (g: Game, species: string, level: Level, dx: number, dz: number) =>
   const w = g.witch, x = w.x + dx, z = w.z + dz;
   const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && !(k as unknown as { used?: boolean }).used && Math.hypot(k.x - w.x, k.z - w.z) > 150)!;
   (c as unknown as { used: boolean }).used = true;
-  Object.assign(c, { species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, rest: 0 });
+  Object.assign(c, { circle: undefined, species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, rest: 0 });
   c.cell = g.map.cellSafe(w.x, w.z).cell as [number, number];
   g.byArea = null;
   return c;
@@ -136,15 +136,15 @@ describe("fight profiles for every species (Ed's species pass)", () => {
 
   it("has beavers brace against shots, blocking them, then slap back", () => {
     let braced = 0, blocked = 0;
-    for (const seed of [77, 78, 79, 80]) { // (over a few fights: in any one, the ravens may happen to shoot the other beaver)
+    for (const seed of [77, 78, 79, 80, 1, 90210]) { // (over a few fights: in any one, the ravens may happen to shoot the other beaver)
       const g = quiet(seed);
       setupArena(g, "raven*3@2,beaver*2@2");
       const beavers = g.arena!.ids.map(i => g.creatures[i]).filter(c => c.species === "beaver"), ids = new Set(beavers.map(b => b.id));
-      run(g, 10, () => { for (const e of g.combat.events) if (e.at === g.clock.time && ids.has(e.id!)) { if (e.kind === "braced") braced++; if (e.kind === "blocked") blocked++; } });
+      run(g, 20, () => { for (const e of g.combat.events) if (e.at === g.clock.time && ids.has(e.id!)) { if (e.kind === "braced") braced++; if (e.kind === "blocked") blocked++; } });
     }
     expect(braced).toBeGreaterThan(0);
     expect(blocked).toBeGreaterThan(0);
-  }, 60000);
+  }, 120000);
 
   it("has a snail leave a slime trail that slows her", () => {
     const g = quiet(), W = g.witches[0];

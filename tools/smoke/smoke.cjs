@@ -121,7 +121,7 @@ async function main() {
     // Again in a Heath (gorse: small bright details), where Ed saw bushes blink.
     const heath = await page.evaluate(() => {
       const g = window.witch.game, m = g.map;
-      for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+      for (const [x, y] of m.cells) {
         if (window.witch.areaTypeId(m.typeOf(x, y)) !== "heath") continue;
         const s = m.siteOf(x, y), px = s.x + 20, pz = s.z + 20;
         g.witch = { ...g.witch, x: px, z: pz, vx: 0, vz: 0 }; g.camera = { ...g.camera, tx: px, tz: pz };
@@ -319,7 +319,7 @@ async function main() {
   // has a HUD indicator ("not the next two"). Shots of both.
   await run("ley", { width: 960, height: 600 }, async page => {
     await page.keyboard.press("Enter");
-    const drawn = () => page.evaluate(() => { const L = window.witch.view.ley, c = L.chain, k = L.current, at = i => c[i]?.cell.join(","); return { visible: L.meshes[0].visible, links: c.length - 1, areas: window.witch.game.map.n ** 2, current: k, tris: (L.meshes[0].geometry.index?.count ?? 0) / 3, here: at(k), next: at(k + 1), after: at(k + 2), stones: c.map(s => s.cell.join(",")), cues: window.witch.view.nextStones.length, after2: "afterNextStones" in window.witch.view, waking: window.witch.game.party.next.length }; });
+    const drawn = () => page.evaluate(() => { const L = window.witch.view.ley, c = L.chain, k = L.current, at = i => c[i]?.cell.join(","); return { visible: L.meshes[0].visible, links: c.length - 1, areas: window.witch.game.map.cells.length, current: k, tris: (L.meshes[0].geometry.index?.count ?? 0) / 3, here: at(k), next: at(k + 1), after: at(k + 2), stones: c.map(s => s.cell.join(",")), cues: window.witch.view.nextStones.length, after2: "afterNextStones" in window.witch.view, waking: window.witch.game.party.next.length }; });
     await page.waitForFunction(() => window.witch.view.ley.chain.length > 1, null, { timeout: 300000, polling: 200 });
     const a = await drawn();
     check(a.visible && a.current === 0 && a.links === a.areas - 1 && a.tris > 20 * a.links, `the ley line is drawn from home through every area (${a.links} sections for ${a.areas} areas), the last reached at ${a.current} (${a.tris} triangles)`);
@@ -353,11 +353,11 @@ async function main() {
         let t = -1;
         for (let i = 0; i < 64 && t < 0; i++) { try { if (window.witch.areaTypeId(i) === id) t = i; } catch { break; } }
         let best = null, bn = -1;
-        for (let cy = 0; cy < m.n; cy++) for (let cx = 0; cx < m.n; cx++) if (m.typeOf(cx, cy) === t) {
+        for (const [cx, cy] of m.cells) if (m.typeOf(cx, cy) === t) {
           const s = m.siteOf(cx, cy);
           for (let k = 0; k < 60; k++) {
             const a = k * 0.7, d = m.areaSize * (0.1 + (k % 6) * 0.07), x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
-            if (x < B.minX + 30 || x > B.maxX - 30 || z < B.minZ + 30 || z > B.maxZ - 30) continue;
+            if (x < B.minX + 30 || x > B.maxX - 30 || z < B.minZ + 30 || z > B.maxZ - 30 || (B.circle && Math.hypot(x - B.circle.x, z - B.circle.z) > B.circle.r - 30)) continue;
             const q = m.areaAt(x, z);
             if (q.cell[0] !== cx || q.cell[1] !== cy || m.paths.at(x, z, 3)) continue;
             const n = g.forest.treesNear(x, z, 14).filter(p => Math.hypot(p.x - x, p.z - z) < 14).length;
@@ -435,10 +435,14 @@ async function main() {
     await page.keyboard.down("Digit1");
     await page.waitForFunction(t => window.witch.game.clock.time >= t, t0 + 0.5, { timeout: 400000, polling: 50 });
     await shot(page, "70-leash-talk.png");
-    // (#87: a full meter makes a wild one happy, and it would wander off to dance; a second fill leashes it: it's held in front of her.)
-    await page.waitForFunction(i => { const g = window.witch.game, c = g.creatures[i]; g.witch = { ...g.witch, facing: 1 }; Object.assign(c, { x: g.witch.x + 5, z: g.witch.z, tx: g.witch.x + 5, tz: g.witch.z, anchorX: g.witch.x + 5, anchorZ: g.witch.z, dancing: false }); return c.leashed; }, id, { timeout: 400000, polling: 100 });
+    // (#87: a full meter makes a wild one happy, and it would wander off to dance: it's held in front of her. Since 2026-10-06
+    // its sigil lies as a rune at its feet, and E beside it leashes it.)
+    await page.waitForFunction(i => { const g = window.witch.game, c = g.creatures[i]; g.witch = { ...g.witch, facing: 1 }; Object.assign(c, { x: g.witch.x + 5, z: g.witch.z, tx: g.witch.x + 5, tz: g.witch.z, anchorX: g.witch.x + 5, anchorZ: g.witch.z, dancing: false }); return c.state === "happy" || c.leashed; }, id, { timeout: 400000, polling: 100 });
     await page.keyboard.up("Digit1");
-    check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "her 💌s at a creature fill its meter and invite it onto her sigil stack");
+    await page.evaluate(i => { const g = window.witch.game, c = g.creatures[i]; Object.assign(c, { x: g.witch.x + 0.8, z: g.witch.z, tx: g.witch.x + 0.8, tz: g.witch.z, anchorX: g.witch.x + 0.8, anchorZ: g.witch.z }); }, id);
+    await page.keyboard.press("KeyE");
+    await page.waitForFunction(i => window.witch.game.creatures[i].leashed, id, { timeout: 60000, polling: 100 }).catch(() => {});
+    check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "her 💌s at a creature fill its meter, and E on its rune invites it onto her sigil stack");
     // One press a frame: wait for each invite to land before the next (the headless renderer is slow).
     for (let i = 0; i < 3; i++) {
       const before = await page.evaluate(() => window.witch.game.leash.stack.length);
@@ -623,7 +627,7 @@ async function main() {
     const cave = await page.evaluate(() => {
       const g = window.witch.game, m = g.map, d = m.dancefloor;
       let best = null;
-      for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+      for (const [x, y] of m.cells) {
         if (window.witch.areaTypeId(m.typeOf(x, y)) !== "cave-mouth") continue;
         const s = m.siteOf(x, y), k = Math.hypot(s.x - d.x, s.z - d.z);
         if (!best || k < best.k) best = { x, y, k, s };

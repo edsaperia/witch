@@ -12,6 +12,8 @@
 // One ribbon mesh for the whole line, rebuilt only when the route changes (its links routed a
 // couple of milliseconds' worth a frame; moving on along it only sets a uniform); two draws,
 // nothing allocated a frame.
+import type { PartyState } from "../rules/party";
+import { pulseProgress } from "../rules/leypulse";
 import * as THREE from "three";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { LIGHT_UNIFORMS } from "./lighting";
@@ -74,8 +76,10 @@ void main() {
 }`;
 
 const FRAG = /* glsl */ `
-uniform float uTime, uGlowPass, uBright, uFade, uBehind, uShift, uLift, uCurrent;
+uniform float uTime, uGlowPass, uBright, uFade, uBehind, uShift, uLift, uCurrent, uStrength;
 uniform vec2 uFar; // the faintest a section gets, ahead and behind (the whole route always shows)
+uniform vec2 uGrow; // the line drawn only this far (x, in links along the route from its start) while y is 1: Ed's reveal, growing out from the treehouse
+uniform vec2 uPulse; // the wave's pulse on the link from the last stone reached: x how far it's got (0-1, by arc length), y 1 when there's a wave clock
 uniform vec2 uFlow;
 varying float vSide, vS, vT, vLink, vSeen;
 varying vec3 vCol;
@@ -83,6 +87,8 @@ float lh(float p) { return fract(sin(p * 127.1) * 43758.5453); }
 float ln(float p) { float i = floor(p), f = fract(p); return mix(lh(i), lh(i + 1.0), f * f * (3.0 - 2.0 * f)); }
 void main() {
   if (vSeen < 0.5) discard;
+  float along = vLink + vT; // links along the route from its start
+  if (uGrow.y > 0.5 && along > uGrow.x) discard;
   float across = 1.0 - abs(vSide), core = across * across * across, halo = across * across;
   // The shimmer: bright heads travelling from the earlier stone to the later, each trailing off behind.
   float f = fract(vS / uFlow.y - uTime * uFlow.x / uFlow.y), pulse = pow(f, 7.0) * (1.0 - smoothstep(0.96, 1.0, f));
@@ -97,10 +103,44 @@ void main() {
   float link = uBright * rank * mix(1.0, 0.8, uLift);
   // From the treetops the line is on the ground under the crowns: a wide faint glow shows through them.
   float a = uGlowPass > 0.5 ? 0.4 * halo * wisp * uLift : (core * (0.6 + 1.6 * pulse) + halo * (0.18 + 0.5 * pulse)) * wisp;
-  gl_FragColor = vec4(vCol * a * link * ends, 1.0);
+  // The wave's pulse (Ed, 2026-10-06: "the leyline between the last and next wave soundsystem should grow in intensity
+  // in proportion to how much time is left before the next wave; so you can see the pulse travel along the leyline, and
+  // the next soundsystem appears when it arrives"): on the link from the last stone reached, the stretch it has
+  // travelled lit brighter than the stretch ahead, the whole link brightening toward the wave, a bright head at the pulse,
+  // and a flash at the far stone as it arrives. vT runs by arc length, so it follows the route's curves.
+  if (uPulse.y > 0.5 && abs(vLink - uCurrent) < 0.5) {
+    float p = uPulse.x, behind = 1.0 - smoothstep(p - 0.01, p + 0.01, vT);
+    link *= mix(0.35, 1.3, behind) * (0.45 + 1.2 * p);
+    a += exp(-abs(vT - p) * 25.0) * (uGlowPass > 0.5 ? halo : core) * (2.5 + 3.5 * p);
+    a += smoothstep(0.96, 1.0, p) * exp(-(1.0 - vT) * 30.0) * (uGlowPass > 0.5 ? halo : core) * 3.0;
+  }
+  // Growing out through the first wave (Ed): a soft glow leads its tip.
+  if (uGrow.y > 0.5) a += exp(-abs(along - uGrow.x) * 30.0) * (uGlowPass > 0.5 ? halo : core) * 2.0;
+  gl_FragColor = vec4(vCol * a * link * ends * uStrength, 1.0);
 }`;
 
 interface LeySet { geo: THREE.BufferGeometry; meshes: THREE.Mesh[]; current: { value: number } }
+
+/** The pulse's place along the current link for the shader (0-1), or null for none: the HUD's wave pointer's own
+ *  (rules/leypulse.ts pulseProgress, so the two agree), but none while home boots up (Ed, 2026-10-06: "during boot up
+ *  phase, there's no leyline") or with no wave clock (?wave=off: paused, or no interval). */
+export function shaderPulse(p: PartyState, map: ForestMap, time: number): number | null {
+  const iv = map.tuning.party.interval;
+  if (p.paused || !(iv > 0) || iv >= 1e8 || time < p.bootUntil) return null;
+  return pulseProgress(p, map, time);
+}
+
+/** How far the line is drawn, in links along the whole route from the treehouse, or null for all of it (Ed, 2026-10-06:
+ *  "before that, during boot up phase, there's no leyline ... Then the leyline appears, starting at the treehouse, moving
+ *  three times (adjustable) the speed on the pulse (so it reaches runestone 3 by the time the first wave finishes)"): none
+ *  until home has booted; then the tip runs at `reveal` links a wave, reaching the `reveal`th stone as the first wave
+ *  lands and going on at that pace (so no stone pops on at once), until it has drawn the whole route; with no wave
+ *  clock, all of it once booted. rules/leypulse.ts leyReachTimes says when it reaches each stone, at the same pace. */
+export function leyReveal(p: PartyState, map: ForestMap, time: number, reveal: number): number | null {
+  if (p.spellAt === null || time < p.bootUntil) return 0;
+  const k = shaderPulse(p, map, time);
+  return k === null ? null : reveal * (p.wave + k);
+}
 
 export class LeyLines {
   readonly meshes: THREE.Mesh[];
@@ -120,6 +160,7 @@ export class LeyLines {
       uLeyWidth: { value: new THREE.Vector2(T.width[0], T.width[1]) }, uLeyHeight: { value: new THREE.Vector2(T.height[0], T.height[1]) },
       uLift: { value: 0 }, uBright: { value: T.brightness * BRIGHT }, uFade: { value: T.fade }, uBehind: { value: T.behindBright },
       uShift: { value: 0 }, uFar: { value: new THREE.Vector2(T.far[0], T.far[1]) }, uFlow: { value: new THREE.Vector2(T.flow[0], T.flow[1]) },
+      uPulse: { value: new THREE.Vector2() }, uGrow: { value: new THREE.Vector2() },
     };
     this.cur = this.makeSet();
     this.meshes = [...this.cur.meshes];
@@ -134,11 +175,16 @@ export class LeyLines {
   /** The line's brightness times k (the mood's leyBright). */
   scale(k: number): void { this.u.uBright.value = this.T.brightness * BRIGHT * k; }
 
-  private makeSet(): LeySet {
+  /** The wave's pulse on the current link: how far it's got (0-1), or null for none (leyPulse). */
+  pulse(p: number | null): void { this.u.uPulse.value.set(p ?? 0, p === null ? 0 : 1); }
+  /** How far the line is drawn, in links along the route from its start (leyReveal), or null for all of it. */
+  grow(links: number | null): void { this.u.uGrow.value.set(links ?? 0, links === null ? 0 : 1); }
+
+  private makeSet(extra: Record<string, THREE.IUniform> = {}): LeySet {
     const geo = new THREE.BufferGeometry(), current = { value: 0 };
     const make = (glow: boolean, order: number) => {
       const m = new THREE.Mesh(geo, new THREE.ShaderMaterial({
-        vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...this.u, uGlowPass: { value: glow ? 1 : 0 }, uCurrent: current },
+        vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...this.u, uGlowPass: { value: glow ? 1 : 0 }, uCurrent: current, uStrength: { value: 1 }, ...extra },
         transparent: true, depthWrite: false, depthTest: !glow, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
       }));
       m.frustumCulled = false; m.renderOrder = order; m.visible = false;

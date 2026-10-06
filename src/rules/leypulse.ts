@@ -86,18 +86,17 @@ export function clockText(seconds: number): string {
 export const TIP_PACE = 3;
 /** When the drawn ley line's growing tip reaches each stone on the route (Ed, 2026-10-06: "The column of light above a
  *  runestone first appears when the leyline meets it"): stone key → game time; null before the party spell (the tip
- *  hasn't set off). The shared seam for the line's reveal (the rendering builder's) and the stones' beacons (render/view/home.ts).
- *  Provisional until the reveal lands: the tip leaves home at the spell and reaches the k-th stone after home along the
- *  route `party.interval / TIP_PACE` seconds after the one before; a stone its wave (or quest) has already reached counts
- *  as reached then, if sooner. */
+ *  hasn't set off). The shared seam for the line's reveal (render/leylines.ts leyReveal) and the stones' beacons
+ *  (render/view/home.ts). The tip leaves the treehouse as home's boot ends and runs at `leyLines.reveal` (TIP_PACE) links
+ *  a wave, so the k-th stone along the route is reached k × party.interval / reveal seconds after the boot (the third as
+ *  the first wave lands); a stone its wave (or quest) has already reached counts as reached then, if sooner. */
 export function leyReachTimes(p: PartyState, map: ForestMap): Map<string, number> | null {
-  const start = clockStart(p);
-  if (start === null) return null;
-  const { stones } = leyChain(p, map), step = map.tuning.party.interval / TIP_PACE, out = new Map<string, number>();
+  if (clockStart(p) === null) return null;
+  const pace = map.tuning.leyLines.reveal ?? TIP_PACE, { stones } = leyChain(p, map), step = map.tuning.party.interval / pace, out = new Map<string, number>();
   const done = p.leyDone ?? new Map<string, number>();
   stones.forEach((s, k) => {
     const key = cellKey(s.cell), a = p.areas.get(key), was = Math.min(a ? (key === cellKey(map.centreCell) ? -Infinity : a.at) : Infinity, done.get(key) ?? Infinity);
-    out.set(key, Math.min(start + k * step, was));
+    out.set(key, Math.min(p.bootUntil + k * step, was));
   });
   return out;
 }

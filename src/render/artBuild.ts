@@ -29,6 +29,9 @@ export interface TypeLayout {
   big: Piece[];
   /** Each big object's share of the area's big objects (tree variants by height class). */
   bigWeight: number[];
+  /** The big objects of its tallest tree kinds, by index (a legend's grove grows only these: rules/forest.ts legendGrove):
+   *  giant, its biggest class (or its tallest if it has none), and tall, the next (or giant again). */
+  grove: { giant: number[]; tall: number[] };
   small: Piece[];
   walls: number[];
   set: Piece | null;
@@ -58,7 +61,7 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   const id = LOOKS[t].id, def = (AREA_BY_ID as unknown as Record<string, ArtDef>)[id]; // (LOOKS: the area types and home's meadow)
   const assets = areaAssets(id, st, { K, makeCanvas: mk }) as { floor: { sp: Baked }; walls: { sp: Baked }[]; small: { sp: Baked }[]; big: { sp: Baked }[]; setPiece: { sp: Baked; origin?: { x: number; y: number } } | null; rim: { sp: Baked; kind: string; metres: { height: number } }[] };
   const sprites: Baked[] = [], add = (b: Baked) => sprites.push(b) - 1;
-  const layout: TypeLayout = { big: [], bigWeight: [], small: [], walls: [], set: null, rim: [] };
+  const layout: TypeLayout = { big: [], bigWeight: [], grove: { giant: [], tall: [] }, small: [], walls: [], set: null, rim: [] };
   const bk = (sp: unknown, col: unknown) => Art.bake(sp, col, st, "none", mk) as Baked;
   // Anything drawn as a tree (big objects, small trees, a tree set piece) is split into crown and
   // trunk, so its crown hides in ground mode; everything else is drawn whole.
@@ -76,6 +79,9 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   // Each carries its sway mask (#34), so only its leaves move in the wind.
   const withSway = (b: Baked, S?: unknown) => (S ? { ...b, S: S as Baked["A"] } : b);
   for (const v of variants) { layout.big.push({ bot: add(withSway(v.bot, v.sway?.bot)), top: add(withSway(v.top, v.sway?.top)) }); layout.bigWeight.push(mix ? mix[v.heightClass] / perClass(v.heightClass) : v.weight); }
+  // The grove's trees (a legend's ring of old giants, Ed 2026-10-06): the two tallest classes it has.
+  const ranks = ["sapling", "mature", "tall", "giant"], have = ranks.filter(c => variants.some(v => v.heightClass === c)), of = (c?: string) => variants.flatMap((v, i) => (v.heightClass === c ? [i] : []));
+  layout.grove.giant = of(have[have.length - 1]); layout.grove.tall = have.length > 1 ? of(have[have.length - 2]) : layout.grove.giant;
   def.big.forEach(([kind], i) => {
     if (kind === "tree" && variants.length) return;
     layout.big.push({ bot: add(withSway(assets.big[i].sp, (assets.big[i] as { sway?: unknown }).sway)), top: null });

@@ -90,7 +90,7 @@ export function berryCounts(map: ForestMap, t: Tuning): Tuning["berries"] {
 export function newBerries(map: ForestMap, t: Tuning): BerryState {
   const B = berryCounts(map, t), r = rng(map.seed * 6151 + 29), bushes: BerryBush[] = [], berries: Berry[] = [];
   const P = B.patch;
-  for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
+  for (const [cx, cy] of map.cells) {
     if (cx === map.centreCell[0] && cy === map.centreCell[1]) continue; // home: the dancefloor's clearing
     const s = map.siteOf(cx, cy), ar = rng(map.seed * 3571 + cx * 389 + cy * 7741 + 17), first = bushes.length;
     // In patches (Ed, v233): a few bushes clustered within patch.radius of a centre, so a sigil in
