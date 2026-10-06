@@ -86,7 +86,7 @@ function nearest(creatures: Creature[], x: number, z: number, within: number, le
   for (const c of creatures) {
     if (Math.abs(c.x - x) > bd || Math.abs(c.z - z) > bd) continue; // (cheap: thousands of creatures, every step)
     if (c.leashed || c.gone || c.fleeUntil || (!legends && !invitable(c)) || skip?.has(c.id)) continue;
-    if (c.legendState && c.legendState !== "awake") continue; // (a sleeping legend is scenery; a happy one's at peace)
+    if (c.legendState) continue; // (an area legend is never chatted to: asleep it's scenery, happy it's at peace, angry it's far off)
     const d = Math.hypot(c.x - x, c.z - z);
     if (d <= bd) { bd = d; best = c; }
   }

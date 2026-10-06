@@ -359,6 +359,19 @@ export class Forest {
    *  chunk if any is missing): so flying into new forest finds it already made, a little each
    *  frame, instead of all at once. Returns how many chunks in that square are still missing. */
   prefetch(x: number, z: number, radius: number, budgetMs: number): number {
+    // All made last time for this same window of chunks and areas, and nothing made or let go since: nothing to do
+    // (the check below makes thousands of keys: every frame of a flight over finished forest, for nothing).
+    const A0 = this.map.areaSize, win = `${Math.floor((x - radius) / CHUNK)},${Math.floor((z - radius) / CHUNK)},${Math.floor((x + radius) / CHUNK)},${Math.floor((z + radius) / CHUNK)},${Math.floor((x - radius) / A0)},${Math.floor((z - radius) / A0)},${Math.floor((x + radius) / A0)},${Math.floor((z + radius) / A0)}`;
+    const sizes = this.cacheSizes();
+    if (this.prefetched && this.prefetched.win === win && this.prefetched.sizes === sizes) return 0;
+    const left = this.prefetchWindow(x, z, radius, budgetMs);
+    this.prefetched = left === 0 ? { win, sizes: this.cacheSizes() } : null;
+    return left;
+  }
+  /** The last prefetch's window when it found everything made, and the caches' sizes then. */
+  private prefetched: { win: string; sizes: string } | null = null;
+  private cacheSizes(): string { return `${this.trees.size},${this.bushes.size},${this.decor.size},${this.relics.size},${this.lights.size},${this.wallFeatureCache.size}`; }
+  private prefetchWindow(x: number, z: number, radius: number, budgetMs: number): number {
     const t0 = performance.now(), kinds = this.kinds();
     const todo = this.chunks(x, z, radius).filter(([i, j]) => kinds.some(([c]) => !c.has(i + "," + j)));
     todo.sort((a, b) => ((a[0] + 0.5) * CHUNK - x) ** 2 + ((a[1] + 0.5) * CHUNK - z) ** 2 - (((b[0] + 0.5) * CHUNK - x) ** 2 + ((b[1] + 0.5) * CHUNK - z) ** 2));

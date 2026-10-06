@@ -16,7 +16,7 @@ import { hash2 } from "./random";
 export interface LegendsData {
   angryAfter: number; check: number; placeRadius: number;
   relics: { count: number; kinds: string[]; minRemoteness: number; spacing: number; pickRadius: number };
-  attack: { range: number; interval: number; windup: number; damage: number; targets: number; wornReach: number; lobFlight: number; lobRadius: number; beamWidth: number; beamTime: number; beam: string[] };
+  attack: { range: number; interval: number; windup: number; damage: number; targets: number; wornReach: number; /** seconds before a legend with nothing in reach looks again */ recheck: number; lobFlight: number; lobRadius: number; beamWidth: number; beamTime: number; beam: string[] };
   healTime: number;
   charge: { species: string[]; windup: number; laneShown: number; speed: number; accel: number; turn: number; brake: number; arc: number; laneWidth: number; damage: number; knockback: number; returnSpeed: number; rest: number };
   closeMoves: boolean;
@@ -98,7 +98,6 @@ export function stepLegendStates(w: LegendWorld, ids: number[], data: LegendsDat
     const key = cellKey(c.cell), q = c.quest;
     c.questOpen = !!q && q.done === undefined && !w.partified(key) && (c.legendState === "asleep" || c.legendState === "restless");
     if (q?.done !== undefined) c.buffed = true; // (its quest done: its buff, for good)
-    if (c.legendState === "slept" || c.legendState === "waking" || c.legendState === "awake") c.legendState = "asleep"; // (the old states)
     if (c.legendState !== "asleep" && c.legendState !== "restless") continue;
     if (kin) {
       if (kin.has(key)) { c.legendState = "asleep"; c.restlessness = 0; }

@@ -54,7 +54,7 @@ export class ActionBar {
     const W = g.witches[0];
     ACTION_BAR.forEach((s, i) => {
       const shade = this.shades[i], el = this.slots[i];
-      if (s.action === "autoTalk") { el.style.borderColor = this.autoTalk ? "rgba(111,230,255,.9)" : "rgba(232,226,244,.35)"; el.style.opacity = this.autoTalk ? "1" : "0.55"; el.title = `1 / T: auto-talk ${this.autoTalk ? "on" : "off (hold Shift to talk)"}`; return; }
+      if (s.action === "autoTalk") { el.style.borderColor = this.autoTalk ? "rgba(232,180,106,.9)" : "rgba(232,226,244,.35)"; el.style.opacity = this.autoTalk ? "1" : "0.55"; el.title = `1 / T: auto-talk ${this.autoTalk ? "on" : "off (hold Shift to talk)"}`; return; }
       // The sigil slot shows what E does now (Ed, 2026-10-05): cycle in the treetops, put down / pick up on the ground.
       if (s.action === "sigil") {
         const ground = W.body.mode === "ground", icon = el.firstElementChild as HTMLElement;
@@ -77,12 +77,12 @@ export class ActionBar {
       // Hare's Dash bursts: the blinks ready, a count in the corner; Bear's Wind-up: the 💌 slot glows pink as it charges.
       if (s.action === "dash") {
         let n = el.querySelector<HTMLElement>(".charges");
-        if (!n) { n = document.createElement("span"); n.className = "charges"; Object.assign(n.style, { position: "absolute", right: "3px", bottom: "1px", fontSize: "10px", color: "#6fe6ff", zIndex: "1" }); el.append(n); }
+        if (!n) { n = document.createElement("span"); n.className = "charges"; Object.assign(n.style, { position: "absolute", right: "3px", bottom: "1px", fontSize: "10px", color: "#e8b46a", zIndex: "1" }); el.append(n); }
         const text = g.buffs.mods.charges > 0 ? String(W.dash.charges) : "";
         if (n.textContent !== text) n.textContent = text;
       }
-      if (s.action === "invite") el.style.boxShadow = W.invites.charge > 0 ? `0 0 ${(3 + W.invites.charge * 12).toFixed(0)}px rgba(255,95,180,${(0.4 + 0.6 * W.invites.charge).toFixed(2)})` : "";
-      el.style.borderColor = on ? "#ffffff" : charge >= 1 && usable ? "rgba(111,230,255,.9)" : "rgba(232,226,244,.35)";
+      if (s.action === "invite") el.style.boxShadow = W.invites.charge > 0 ? `0 0 ${(3 + W.invites.charge * 12).toFixed(0)}px rgba(217,120,158,${(0.3 + 0.4 * W.invites.charge).toFixed(2)})` : "";
+      el.style.borderColor = on ? "#f3dcb2" : charge >= 1 && usable ? "rgba(232,180,106,.9)" : "rgba(232,226,244,.35)";
       el.style.opacity = usable ? "1" : "0.5";
     });
   }
