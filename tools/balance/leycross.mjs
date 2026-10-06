@@ -29,7 +29,7 @@ try {
     const t0 = performance.now(), route = mode === "route" || mode === "varied" ? routeOf(map) : mode === "was" ? leyRoute({ ...map }, noisy) : null, planMs = performance.now() - t0;
     const order = route ? route.order : noisy();
     const st = order.map(k => { const [x, y] = k.split(",").map(Number), s = map.soundsystemSpot(x, y); return [s.x, s.z]; });
-    const links = [departureRoute(map, { x: st[0][0], z: st[0][1] }, D.past, D.avoid, 4)];
+    const links = [departureRoute(map, { x: st[0][0], z: st[0][1] }, D.avoid, 4)];
     for (let i = 1; i < st.length; i++) links.push([st[i - 1], st[i]]);
     const pairs = mode === "before" ? [] : crossingPairs(links), steps = links.map(l => Math.hypot(l[l.length - 1][0] - l[0][0], l[l.length - 1][1] - l[0][1]));
     const home = `${map.centreCell[0]},${map.centreCell[1]}`, woke = new Set([home]);

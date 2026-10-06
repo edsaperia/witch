@@ -1,5 +1,6 @@
 // The lights (from render/view.ts, issue #122): campfires and magic stones lit each frame, and the
 // shader's light budget filled with the nearest.
+import { partyOff } from "../partyOver";
 import { LIGHT_UNIFORMS, MAX_LIGHTS } from "../lighting";
 import type { SpriteInstance } from "../sprites";
 import { cellKey } from "../../rules/party";
@@ -24,7 +25,9 @@ export function updateSources(v: View, time: number): void {
       if (!a) continue;
       const since = time - (a.at + g.tuning.party.transition * 0.7 + k * 1.5);
       if (since < 0) continue;
-      const grow = Math.min(1, since / 0.5), whoosh = Math.max(0, 1 - since / 1.2);
+      const out = partyOff(v.over, src.x, src.z); // (the party's over: it dies down as the lights go out)
+      if (out >= 0.999) continue;
+      const grow = Math.min(1, since / 0.5) * (1 - out), whoosh = Math.max(0, 1 - since / 1.2) * (1 - out);
       const flick = 0.8 + 0.12 * Math.sin(time * 11 + k * 40) + 0.08 * Math.sin(time * 23.7 + k * 13);
       lights.push({ x: src.x + Math.sin(time * 9 + k) * 0.08, y: 1.2, z: src.z, reach: g.tuning.lights.campfire.reach * src.size, rgb: v.fire, strength: g.tuning.lights.campfire.strength * (flick * grow + whoosh * 2) });
       if (whoosh > 0) for (let i = 0; i < 10; i++) {

@@ -37,6 +37,31 @@
       "default": 0.5, "apply": { "knob": "legends.share", "reload": true }
     },
     {
+      "id": "bombard", "label": "Legend bombardment", "note": "Damage an angry legend's lob or beam does a soundsystem (of 4000) when she's out of its reach (0: none). It always goes for her first.",
+      "control": { "type": "slider", "min": 0, "max": 1000, "step": 50 },
+      "default": 150, "apply": { "knob": "legends.bombard.damage" }
+    },
+    {
+      "id": "stomp", "label": "Legend stomp", "note": "A legend turning angry stamps on its own area's soundsystem at once (Ed's 'perhaps'): it only bites if you empty a partying area of the legend's kind.",
+      "control": { "type": "toggle" },
+      "default": false, "apply": { "knob": "legends.stomp.on" }
+    },
+    {
+      "id": "stompAngryAfter", "label": "Restless time with the stomp (s)", "note": "With the stomp on: seconds a legend with none of its kind about stays restless before it angers (the time to bring one back).",
+      "control": { "type": "slider", "min": 60, "max": 240, "step": 15 },
+      "default": 120, "apply": { "knob": "legends.stomp.angryAfter" }
+    },
+    {
+      "id": "buffPower", "label": "Legend buff strength", "note": "How strong every legend's buff is, from quests and relics (1: as written, 2: twice the effect, a Fan two fans).",
+      "control": { "type": "slider", "min": 1, "max": 4, "step": 0.25 },
+      "default": 1, "apply": { "knob": "legends.buffPower" }
+    },
+    {
+      "id": "happyRange", "label": "Happy legend reach (m)", "note": "How far a happy legend (a relic's ally) reaches from its lair to hit the enraged: about 2 areas at 420.",
+      "control": { "type": "slider", "min": 420, "max": 1500, "step": 60 },
+      "default": 420, "apply": { "knob": "legends.happyRange" }
+    },
+    {
       "id": "grace", "label": "Grace after a hit (s)", "note": "Seconds after the witch is hit in which no other blow lands, so a pack striking together costs one hit.",
       "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
       "default": 0.5, "apply": { "knob": "witchHealth.grace" }
@@ -50,6 +75,21 @@
       "id": "chargeReach", "label": "Charge length", "note": "How far charges run (their time and overshoot past her), times each species' own: 1 as before round 13, 2 now.",
       "control": { "type": "slider", "min": 1, "max": 3, "step": 0.25 },
       "default": 2, "apply": { "knob": "fight.charge.reach" }
+    },
+    {
+      "id": "chargeChase", "label": "Charge speed vs her walk", "note": "Charges run at least this many times her walking speed, on till they catch her walking straight away: only stepping out of the lane, a blink sideways or the treetops get her clear (0: as before).",
+      "control": { "type": "slider", "min": 0, "max": 2.5, "step": 0.1 },
+      "default": 1.6, "apply": { "knob": "fight.charge.chase" }
+    },
+    {
+      "id": "chargeMiss", "label": "Winded after a missed charge (s)", "note": "Seconds a charger stands winded after a charge that hit nothing (dodged by a blink or a sidestep): the time to land your 💌s.",
+      "control": { "type": "slider", "min": 0, "max": 3, "step": 0.1 },
+      "default": 1.2, "apply": { "knob": "fight.charge.miss" }
+    },
+    {
+      "id": "leapLead", "label": "Leaps lead her", "note": "How far a leap aims ahead of her, to where she'll be when it lands (1: all the way, 0: where she was).",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.1 },
+      "default": 1, "apply": { "knob": "fight.leap.lead" }
     },
     {
       "id": "chargeTurn", "label": "Charge turning", "note": "How fast a charger turns as it brakes, times each species' own: lower is wider arcs (1 as before, 0.4 now).",

@@ -50,7 +50,7 @@ describe("her dropped hat", () => {
     knockOutAndBack(g);
     const stack = [...W.leash.stack], placed = W.leash.placed.length;
     // A step off it (past the pick radius): nothing.
-    at(g, x + TUNING.leash.pickRadius + 1, z);
+    at(g, x + TUNING.leash.runeRadius + 1, z);
     press(g);
     expect(W.hat.down).not.toBeNull();
     at(g, x + 0.5, z);

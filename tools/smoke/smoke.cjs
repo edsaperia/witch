@@ -608,16 +608,20 @@ async function main() {
       const fell = sound.hp === 0, ended = !g.party.areas.has(key), marched = besiegers.filter(c => !c.gone && !c.boss).every(c => c.siege === "home"); // (the area's legend stays to guard its own area, by design)
       const home = g.combat.sounds.get("home"); home.hp = 0.001;
       for (const c of besiegers) if (!c.gone) { c.x = g.map.dancefloor.x + 6; c.z = g.map.dancefloor.z + 6; }
-      for (let i = 0; i < 60 * 60 && !g.over; i++) { w.frame(idle, dt, false); if (i % 120 === 0) await yieldNow(); }
+      for (let i = 0; i < 60 * 60 && !g.partyOver; i++) { w.frame(idle, dt, false); if (i % 120 === 0) await yieldNow(); }
+      // The afterparty (rules/partyOver.ts): 10 s on, nothing fights or besieges, and everyone's asleep or walking home to bed.
+      for (let i = 0; i < 10 * 60 && g.partyOver; i++) { w.frame(idle, dt, false); if (i % 120 === 0) await yieldNow(); }
+      const live = g.creatures.filter(c => !c.gone), fighting = live.filter(c => c.fight?.target || c.siege).length, awake = live.filter(c => !c.asleep && !c.bed).length;
       w.manual = false;
-      return { besiegers: besiegers.length, hit, fell, ended, marched, over: !!g.over };
+      return { besiegers: besiegers.length, hit, fell, ended, marched, over: !!g.partyOver, fighting, awake, asleep: live.filter(c => c.asleep).length };
     });
     if (r.error) { check(false, `a siege: ${r.error}`); return; }
     await page.waitForFunction(() => document.getElementById("over").classList.contains("on"), null, { timeout: 120000 }).catch(() => {});
     const screen = await page.evaluate(() => document.getElementById("over").classList.contains("on"));
     await shot(page, "80-siege-over.png");
     check(r.besiegers > 0 && r.hit && r.fell && r.ended && r.marched, `a woken area's creatures besiege its soundsystem, bring it down, end its party and march on to the dancefloor (${JSON.stringify(r)})`);
-    check(r.over && screen, `when every soundsystem has fallen the run is over and the end screen shows (${r.over}, ${screen})`);
+    check(r.over && screen, `when every soundsystem has fallen the party's over and its card shows (${r.over}, ${screen})`);
+    check(r.fighting === 0 && r.awake === 0 && r.asleep > 0, `the afterparty: nothing fights, everyone's asleep or walking home to bed (${JSON.stringify({ fighting: r.fighting, awake: r.awake, asleep: r.asleep })})`);
   });
 
   await run("boost", { width: 1900, height: 1240 }, async page => {

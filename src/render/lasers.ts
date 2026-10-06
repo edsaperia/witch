@@ -20,7 +20,8 @@ void main() { vCol = aCol; vU = aU; gl_Position = clipOf(onGround(position)); }`
 const FRAG = /* glsl */ `
 varying vec4 vCol;
 varying float vU;
-void main() { float a = vCol.a * pow(1.0 - vU, 0.6); gl_FragColor = vec4(vCol.rgb * a, 1.0); }`;
+// (Ed, round 14: objects in pixels, their light smooth: a beam is a line one pixel wide, its fade along it in flat steps.)
+void main() { float a = vCol.a * floor(pow(1.0 - vU, 0.6) * 5.0 + 0.5) / 5.0; gl_FragColor = vec4(vCol.rgb * a, 1.0); }`;
 
 // Cyan at the core, through blue, violet and magenta to green: the party palette for beams.
 const RAMP = [[0.3, 0.95, 1], [0.35, 0.55, 1], [0.7, 0.4, 1], [1, 0.3, 0.85], [0.45, 1, 0.55]];

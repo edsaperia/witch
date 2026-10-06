@@ -133,6 +133,10 @@ export interface Creature {
   sprung?: number;
   /** Enraged by a wave (it's besieging or marching on a soundsystem): it can't be invited (Ed's playtest). */
   enraged?: boolean;
+  /** When it lay down asleep (world clock; `asleep` below). */
+  asleepAt?: number;
+  /** The party's over and it's walking home to bed here (rules/partyOver.ts): then it lies down. */
+  bed?: { x: number; z: number };
   /** Gone for the run: a beaten creature that ran off the map. */
   gone?: boolean;
   /** Marching on a soundsystem (its area's key, "home" for the dancefloor): a siege. */
@@ -160,7 +164,7 @@ export interface Creature {
   friendly?: boolean;
   /** Asleep, lying where it is: an idle wild creature's nap (Ed, 2026-10-06: "animals in wild areas which are idling can
    *  sleep"), or any other sleep that sets it (the party's over). Its roam is skipped, it's out of every fight, and the
-   *  view lays it down. Not a legend's (legendState). */
+   *  view lays it down and draws it sleeping (art/naps.js: curled, tucked, coiled or flat by species). Not a legend's (legendState). */
   asleep?: boolean;
   /** An idle nap's end by itself (game time): set only for a nap, whose own wake rules (NapRules) apply while it is; a
    *  sleep without it stays down till whoever set it clears it. */
