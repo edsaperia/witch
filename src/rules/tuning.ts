@@ -39,6 +39,21 @@ export interface Mood {
   areas?: Record<string, Partial<{ hazeHue: number; hazeSat: number; haze: number; gradeHue: number; gradeSat: number; mist: number }>>; areaEase?: number;
 }
 
+/** The sleeping legends' clearings' light (render/glades.ts). */
+export interface GladeTuning {
+  on: boolean;
+  /** The clearing's radius (m) where the map gives none, and how far toward the top of the circle (-z, up the screen) its legend sits, as a share of it. */
+  radius: number; top: number;
+  /** Only clearings within this (m) of the witch are lit and drawn. */
+  reach: number;
+  /** The twilight: its hue and saturation, the pool's strength, the edge ring's at full edge, and how fast the edge eases (1/s). */
+  hue: number; sat: number; light: number; edge: number; edgeEase: number;
+  /** Inside one (Ed): how much the forest's light outside it dims (0 none, 1 all), how much of her glow goes (0 to 1), and over how many seconds both ease in and out. */
+  dark: number; glowOff: number; fade: number;
+  /** The motes: how many to a clearing, how fast they rise (m/s), how high they go (m), their size (art pixels), colour and brightness. */
+  motes: { per: number; rise: number; height: number; size: number; hue: number; sat: number; bright: number };
+}
+
 export interface Tuning {
   mapAreas: number;
   /** The map's shape (Ed, 2026-10-06: "circular rather than square, with a buffer zone with no runestones around the edge"): circle: the playable areas those within radius areas of home, a buffer ring buffer areas deep past them (forest she can fly over, nothing in it), her flight's edge soft over its last push metres (her outward speed easing to nothing, a drift of drift m/s back in), and the forest going on edge areas past it; square: mapAreas x mapAreas as before (?shape=square). */
@@ -109,6 +124,8 @@ export interface Tuning {
   dash: { distance: number; gone: number; cooldown: number; buffer: number; toCursor: boolean; aimDead: number; clear: { tree: number; decor: number; sound: number; speaker: number; treehouse: number } };
   spells: { equipped: string; speed: { mult: number; duration: number; cooldown: number } };
   trail: { on: boolean; ground: number; treetops: number; from: number; curve: number; width: number[]; bright: number; fade: number; grow: number; shrink: number; colourEase: number; sparks: boolean };
+  /** The party witches' rainbow swoop trails (render/swoopTrails.ts). */
+  swoopTrail?: { on: boolean; life: number; width: number; near: number; bright: number; hueSpeed: number; hueSpread: number; liftFade: number; slots: number };
   /** Music by proximity (Ed, 2026-10-04): full and clear within nearDist metres of a playing soundsystem, down to floor volume and a muffle Hz low-pass by farDist; clear: the cutoff when near; distort: how much a damaged one nearby is heard; volume: the master; src: an audio file to play, or empty for the built-in loop. */
   /** The sound effects (platform/audio/sfx.ts, platform/audio/sfxCues.ts): their volumes and rates. */
   sfx: {
@@ -187,6 +204,7 @@ export interface Tuning {
   glowHeight: number;
   /** The witch lit by the world's lights (not her own glow): never darker than lightFloor times her unlit look; coloured lights tint her (lightTint) and rim her edge facing them (lightRim). */
   /** The ley lines through the runestones in wave order (render/leylines.ts). */
+  glades: GladeTuning;
   leyLines: { on: boolean; /** The whole route always shows (Ed, 2026-10-06): the faintest a section gets, ahead and behind the last stone reached. */ far: number[]; /** The section just left behind, as bright as the next one ahead times this. */ behindBright: number; advance: string; fade: number; brightness: number; width: number[]; height: number[]; valley: number; flow: number[]; /** The first line's way out (Ed, 2026-10-05): due south from the treehouse's front straight across the dancefloor, on past metres beyond its ring of speakers (avoid metres outside it), then round to the first objective outside the ring. */ depart: { past: number; avoid: number } };
   witch: { /** Knocked back and staggered by a blow (rules/knock.ts): base metres for any blow, plus scale times the attack's knockback; at least charge metres for a charge or leap; at most max; eased off at ease a second; staggered stunBase plus stunScale a metre past base seconds, at most stunMax, then immune seconds before the next stagger. */ knock: { on: boolean; base: number; scale: number; charge: number; max: number; ease: number; stunBase: number; stunScale: number; stunMax: number; immune: number }; lightFloor: number; lightTint: number; lightRim: number; /** Riding the hills smoothly (render/ride.ts): seconds to settle at full speed, seconds looked ahead, metres kept over the ground. */ heightSmooth: number; heightLookAhead: number; heightClearance: number };
   spriteTilt: number;
