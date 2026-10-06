@@ -14,6 +14,7 @@
 // nothing allocated a frame.
 import type { PartyState } from "../rules/party";
 import { pulseProgress } from "../rules/leypulse";
+import { bootPath } from "../rules/bootRing";
 import * as THREE from "three";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { LIGHT_UNIFORMS } from "./lighting";
@@ -163,7 +164,9 @@ export class LeyLines {
       uPulse: { value: new THREE.Vector2() }, uGrow: { value: new THREE.Vector2() },
     };
     this.cur = this.makeSet();
-    this.meshes = [...this.cur.meshes];
+    this.ringSet = this.makeSet({ uPulse: { value: this.ringPulse }, uGrow: { value: this.ringGrow }, uStrength: this.ringStrength });
+    if (map) this.build(this.ringSet.geo, [new THREE.Vector3(1, 0.7, 0.42), new THREE.Vector3(1, 0.7, 0.42)], [bootPath(map).path]);
+    this.meshes = [...this.cur.meshes, ...this.ringSet.meshes];
   }
 
   /** The drawn route of the line's links (each from one stone to the next). */
@@ -179,6 +182,20 @@ export class LeyLines {
   pulse(p: number | null): void { this.u.uPulse.value.set(p ?? 0, p === null ? 0 : 1); }
   /** How far the line is drawn, in links along the route from its start (leyReveal), or null for all of it. */
   grow(links: number | null): void { this.u.uGrow.value.set(links ?? 0, links === null ? 0 : 1); }
+
+  /** The boot's ring (rules/bootRing.ts; Ed, 2026-10-06): one path from the treehouse's front round the home ring, its
+   *  own pulse and reveal (shares of the path), drawn while the boot runs and faint round the speakers after. */
+  private ringSet: LeySet;
+  private ringPulse = new THREE.Vector2();
+  private ringGrow = new THREE.Vector2();
+  /** The ring: its pulse (a share of the path, or null for none), how far it's drawn (a share), its strength (0 hides it). */
+  ring(pulse: number | null, line: number, strength: number, colour?: THREE.Vector3): void {
+    this.ringPulse.set(pulse ?? 0, pulse === null ? 0 : 1); this.ringGrow.set(line, 1); this.ringStrength.value = strength;
+    for (const m of this.ringSet.meshes) m.visible = this.T.on && strength > 0.001 && line > 0;
+    if (colour && !this.ringColoured) { this.ringColoured = true; const a = this.ringSet.geo.getAttribute("aCol") as THREE.BufferAttribute | undefined; if (a) { for (let i = 0; i < a.count; i++) a.setXYZ(i, colour.x, colour.y, colour.z); a.needsUpdate = true; } }
+  }
+  private ringColoured = false;
+  private ringStrength = { value: 1 };
 
   private makeSet(extra: Record<string, THREE.IUniform> = {}): LeySet {
     const geo = new THREE.BufferGeometry(), current = { value: 0 };
