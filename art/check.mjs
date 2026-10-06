@@ -483,6 +483,22 @@ const report = await b.page.evaluate(async () => {
     if (Math.abs(moor.big.filter(a => a.kind === "standingstone").reduce((t, a) => t + (a.sparse || 0), 0) - .12) > 1e-6) bad.push("the standing stones' sparse share changed");
     res.push({ what: "prop generator: standing stones, cairns, pools and broken trunks, 12 variants each, standing, none alike; stones grey, plain slabs; cairns low; pools mostly water; each broken trunk and fallen log one piece; logs, mushroom rings and stone circles too; ?props=gen gives the moor and the muddy forest 3 shapes of each", good: !bad.length, info: bad.slice(0, 6).join("; ") });
   }
+  { // generated bridges (art/props/bridges.js, under ?props=gen): each bridge's variants draw and stand, none alike, nothing NaN,
+    // the hand-made piece's size within a third either way (so a crossing's corridor still fits), nothing glowing
+    const bad = [], EM = new Set([...G.EMISSIVE]);
+    for (const id of G.BRIDGE_IDS) {
+      const base = G.pathPieceSprite(id, st), seen = new Set();
+      for (let k = 0; k < 8; k++) {
+        const p = G.pathPieceSprite(`${id}~${k}`, st), sp = p.sp, key = sp.w + "x" + sp.h + ":" + Array.from(sp.m).join("");
+        if (!Array.from(sp.n).every(Number.isFinite) || sp.m.filter(Boolean).length < 200) { bad.push(`${id}~${k} empty or NaN`); continue; }
+        let bottom = 0; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++; if (!bottom) bad.push(`${id}~${k} floats`);
+        if (seen.has(key)) bad.push(`${id}~${k} repeats another`); seen.add(key);
+        if (sp.w < base.sp.w * .67 || sp.w > base.sp.w * 1.33) bad.push(`${id}~${k} ${sp.w} px wide, the piece ${base.sp.w}`);
+        if (Array.from(sp.m).some(m => EM.has(m))) bad.push(`${id}~${k} glows`);
+      }
+    }
+    res.push({ what: "generated bridges: footbridges, rope bridges and root bridges, 8 variants each, standing, none alike, within a third of the hand-made piece's size, unlit", good: !bad.length, info: bad.slice(0, 6).join("; ") });
+  }
   { // the set-piece generator (art/props/sets.js): every kind's 12 seeded variants draw, stand on their bottom row, nothing NaN, none alike, landmark-sized
     // (6 to 12 m across or tall) with their origin on the sprite, one warm glowing touch at most (a lantern, embers), a punt's and a jetty's pool mostly water;
     // and an area naming one as its set piece gets it built (setPiece3d)
