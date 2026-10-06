@@ -10,4 +10,4 @@ upcoming.generated.json
 node_modules
 previews/sfx/mix/*.wav
 previews/sfx/run/*.wav
-previews/feel/frames-*.json
+previews/feel/
