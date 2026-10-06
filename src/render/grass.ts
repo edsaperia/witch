@@ -91,7 +91,7 @@ ${BAYER_GLSL}void main() {
   if (k < 0.999 && bayer4(gl_FragCoord.xy) > k) discard;
   vec4 n = texture2D(uTuftN, vUv);
   vec3 N = normalize(uRight * ((n.r * 255.0 - 128.0) / 127.0) - uUp * ((n.g * 255.0 - 128.0) / 127.0) + uFacing * n.b);
-  gl_FragColor = vec4(haze(min(vec3(1.0), m.rgb * nightLightShaded(N, vWorld, vMoonK) * 1.25), vWorld), 1.0);
+  gl_FragColor = vec4(haze(glowPool(min(vec3(1.0), m.rgb * nightLightShaded(N, vWorld, vMoonK) * 1.25), vWorld), vWorld), 1.0);
 }`;
 
 export class GrassView {
