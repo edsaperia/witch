@@ -438,17 +438,13 @@ This replaces the legend rules in "Sleeping legends" and "The first quest" below
   - the legend becomes **happy**: the bubble pops in sparkles, and the legend stirs and rises contentedly;
   - **all the area's creatures become friendly**: they don't attack her or her party, and her party leaves them be;
   - **the creature she placed joins the area**: it leaves her leash and stack and becomes one of the area's creatures.
-- **When a happy area's wave comes**, all its creatures (the legend, the one placed and the area's own) become **party animals that stay in the area and defend it**.
-  - They guard it like parked party animals with an area-wide radius: anything hostile in the area, within `wildLegends.guard` metres of where each one stands.
-  - They aren't on her leash or stack.
-  - The legend's buff is on, and it fights with its move set.
-  - No siege comes from that area.
+- **No guards** (Ed, 2026-10-06: "There are no more guards."). Once, when a happy area's wave came, all its creatures became party animals that stayed in the area to defend it (guards). Since the legends redesign a quest gives its legend's buff instead, and the guards' code is gone. Happy animals still fight enraged ones in their own area (Ed, 2026-10-06: "Happy animals in an area fight enraged ones; this should be the existing behaviour.").
 - **If the quest isn't done before the area's wave**, the area wakes **angry**.
   - Its creatures go for the **nearest party animal or soundsystem**, whichever is nearer.
   - Its legend wakes hostile but **stays in its area**: it guards it against her, her creatures and its soundsystem there. Beaten, it sleeps for good.
 - **Defaults, for Ed to overrule:**
   - A friendly area still grows each wave, and the newcomers are friendly too.
-  - Friendly creatures (and guards) can still be invited. Taking them weakens the area's future defence; that's the player's call.
+  - Friendly creatures can still be invited; that's the player's call.
   - The quest can't be done once the area's wave has come.
   - The debug key **O** stays (L is the playtest log's download): it makes the nearest legend happy, as if its quest were done.
   - The balance simulator's legend options stay debug-only.

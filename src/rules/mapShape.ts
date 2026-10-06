@@ -76,3 +76,55 @@ export function softEdge(b: Bounds, x: number, z: number, vx: number, vz: number
   if (out <= allowed) return { vx, vz };
   return { vx: vx - nx * (out - allowed), vz: vz - nz * (out - allowed) };
 }
+
+/** The edge of her flight at `angle` (radians, as atan2(z - centre z, x - centre x)): its radius
+ *  from the circle's middle, the round radius times the coast there (edgeRadius); the beach follows it. */
+export function edgeAt(b: Bounds, angle: number): number {
+  const c = b.circle;
+  return !c ? Infinity : c.coast ? c.r * c.coast(angle) : c.r;
+}
+
+/** How many samples of the edge round the beach keeps (the ground shader's uCoast). */
+export const COAST_SAMPLES = 128;
+
+/** The beach round the circular map (Ed, 2026-10-06; the tuning's `beach`): the sand from `width`
+ *  metres inside her flight's edge, the sea from `out` metres past it, following the edge round
+ *  (edgeAt, sampled COAST_SAMPLES times and eased between, as the ground shader has it). */
+export interface Beach {
+  x: number; z: number; width: number; out: number;
+  /** The edge's radius at each sample round (from angle -pi, every 2 pi / COAST_SAMPLES). */
+  coast: Float32Array;
+  /** The edge's least and greatest radius anywhere round. */
+  edgeMin: number; edgeMax: number;
+  /** The edge's radius at `angle`, between its samples. */
+  edge(angle: number): number;
+  /** How far (x, z) is past where the sand starts (negative inland; nearer the middle than edgeMin - width less exactly, only ever negative enough). */
+  intoSand(x: number, z: number): number;
+  /** How far (x, z) is past where the sea starts (negative on land, likewise). */
+  intoSea(x: number, z: number): number;
+}
+const beaches = new WeakMap<Bounds, { r: number; width: number; shore: number; coast?: (angle: number) => number; beach: Beach }>();
+/** The beach round these bounds (made once for them and their tuning, then remembered: the witch asks every step). */
+export function beachOf(b: Bounds, t: { beach?: { on: boolean; width: number; shore: number } }): Beach | null {
+  const c = b.circle, B = t.beach;
+  if (!c || !B?.on) return null;
+  const had = beaches.get(b);
+  if (had && had.r === c.r && had.width === B.width && had.shore === B.shore && had.coast === c.coast && had.beach.x === c.x && had.beach.z === c.z) return had.beach; // (nothing made a step)
+  const beach = makeBeach(b, c, B);
+  beaches.set(b, { r: c.r, width: B.width, shore: B.shore, coast: c.coast, beach });
+  return beach;
+}
+function makeBeach(b: Bounds, c: NonNullable<Bounds["circle"]>, B: { width: number; shore: number }): Beach {
+  const N = COAST_SAMPLES, coast = new Float32Array(N);
+  for (let k = 0; k < N; k++) coast[k] = edgeAt(b, -Math.PI + (k / N) * Math.PI * 2);
+  let edgeMin = Infinity, edgeMax = 0;
+  for (const r of coast) { edgeMin = Math.min(edgeMin, r); edgeMax = Math.max(edgeMax, r); }
+  const edge = (a: number) => { const u = ((a + Math.PI) / (Math.PI * 2)) * N, i = Math.floor(u), f = u - i, i0 = ((i % N) + N) % N; return coast[i0] + (coast[(i0 + 1) % N] - coast[i0]) * f; };
+  const past = (x: number, z: number, off: number) => {
+    const dx = x - c.x, dz = z - c.z, d2 = dx * dx + dz * dz, lo = edgeMin + off;
+    if (lo > 0 && d2 < lo * lo) return Math.sqrt(d2) - lo; // (quickly: well inside the nearest the edge comes)
+    return Math.sqrt(d2) - edge(Math.atan2(dz, dx)) - off;
+  };
+  return { x: c.x, z: c.z, width: B.width, out: B.shore, coast, edgeMin, edgeMax, edge,
+    intoSand: (x, z) => past(x, z, -B.width), intoSea: (x, z) => past(x, z, B.shore) };
+}

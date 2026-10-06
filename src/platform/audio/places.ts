@@ -2,7 +2,7 @@
 // turned up and down by how near she is, with its odd event now and then: a pond (water lapping at
 // its edge, a frog now and then, a drip), a picnic in a partified area (party-goers' murmur and
 // their cups clinking), and the creator's room in the treehouse (a record's crackle, the room's
-// low hum, the timber creaking in the wind).
+// low hum, the timber creaking in the wind), and the sea on the beach round the circular map.
 import type { SfxKit } from "./sfxKit";
 import { clink } from "./ambience";
 
@@ -145,5 +145,70 @@ export class Room {
     bp.connect(am); am.connect(g);
     const o = K.osc("sawtooth", f, at, dur, bp); o.frequency.linearRampToValueAtTime(f * (Math.random() < 0.5 ? 1.25 : 0.8), at + dur);
     lfo.start(at); lfo.stop(at + dur + 0.05);
+  }
+}
+
+/** The sea she's by on the beach (Ed, 2026-10-06: "You can hear the sound of the waves"; `level`
+ *  0-1 by how near the water, `pan` where): a low hush of the swell, and a calm wave now and then
+ *  rolling up the sand (a long swelling curl, its foam fizzing as it breaks, the wash running back).
+ *  Built only when she first comes near, and let go again a few seconds after she leaves: most runs
+ *  never hear it. */
+export class Sea {
+  private hush: { src: AudioBufferSourceNode; lp: BiquadFilterNode; gain: GainNode; pan: StereoPannerNode } | null = null;
+  private nextWave = 0;
+  private quietSince = -1;
+
+  constructor(private k: SfxKit) {}
+
+  /** Whether its nodes are built (the beach's own check: none in an ordinary run). */
+  get built(): boolean { return !!this.hush; }
+
+  update(level: number, pan = 0): void {
+    const K = this.k, P = K.T.waves, c = K.ctx, now = c.currentTime;
+    if (!P) return;
+    const L = Math.max(0, Math.min(1, level));
+    if (L <= 0.001) {
+      if (!this.hush) return;
+      // Gone quiet: let it go a few seconds on (its last wave's tail done).
+      if (this.quietSince < 0) { this.quietSince = now; this.hush.gain.gain.setTargetAtTime(0, now, 0.4); }
+      else if (now - this.quietSince > 6) { const h = this.hush; this.hush = null; try { h.src.stop(); } catch { /* stopped */ } h.pan.disconnect(); }
+      return;
+    }
+    this.quietSince = -1;
+    if (!this.hush) {
+      const pn = c.createStereoPanner(), src = c.createBufferSource(), lp = c.createBiquadFilter(), gain = c.createGain();
+      src.buffer = K.noise; src.loop = true; src.playbackRate.value = 0.5;
+      lp.type = "lowpass"; lp.frequency.value = 420; lp.Q.value = 0.3; gain.gain.value = 0;
+      src.connect(lp); lp.connect(gain); gain.connect(pn); pn.connect(K.out); src.start(now);
+      this.hush = { src, lp, gain, pan: pn };
+      this.nextWave = now + 0.5;
+    }
+    const h = this.hush, swell = 0.5 + 0.3 * Math.sin(now * 0.31) + 0.2 * Math.sin(now * 0.13 + 2);
+    h.gain.gain.setTargetAtTime(P.volume * P.wash * L * (0.3 + 0.4 * swell), now, 0.3);
+    h.lp.frequency.setTargetAtTime(300 + 260 * swell, now, 0.5);
+    h.pan.pan.setTargetAtTime(Math.max(-1, Math.min(1, pan * 0.7)), now, 0.4);
+    if (now >= this.nextWave) {
+      this.nextWave = now + P.every * (0.7 + 0.6 * Math.random());
+      this.wave(P.volume * L * (0.7 + 0.3 * Math.random()), pan + (Math.random() - 0.5) * 0.5);
+    }
+  }
+
+  /** One calm wave: the swell rising and curling over (a lowpass opening), breaking into foam (a soft
+   *  high fizz), then the wash running back down the sand (closing, fading). About 5 s. */
+  private wave(vol: number, pan: number): void {
+    const K = this.k, c = K.ctx, at = c.currentTime + 0.02, out = K.voice(pan * 0.7), r = Math.random();
+    const rise = 1.3 + r * 0.6, brk = at + rise, end = brk + 3.2 + r;
+    const loud = (len: number) => { const s = c.createBufferSource(); s.buffer = K.noise; s.loop = true; s.playbackRate.value = 0.7 + 0.3 * Math.random(); s.start(at, Math.random() * 0.9); s.stop(at + len); return s; };
+    // the body: the swell and its wash
+    const lp = c.createBiquadFilter(), g = c.createGain();
+    lp.type = "lowpass"; lp.Q.value = 0.6;
+    lp.frequency.setValueAtTime(220, at); lp.frequency.exponentialRampToValueAtTime(1500 + 600 * r, brk); lp.frequency.exponentialRampToValueAtTime(260, end);
+    g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol * 0.9, brk); g.gain.setTargetAtTime(vol * 0.35, brk, 0.5); g.gain.exponentialRampToValueAtTime(0.0001, end);
+    loud(end - at + 0.1).connect(lp); lp.connect(g); g.connect(out);
+    // the foam: a soft hiss as it breaks, fizzing out up the sand
+    const hp = c.createBiquadFilter(), fg = c.createGain();
+    hp.type = "bandpass"; hp.frequency.value = 3600 + 1200 * r; hp.Q.value = 0.5;
+    fg.gain.setValueAtTime(0.0001, at); fg.gain.setValueAtTime(0.0001, brk - 0.25); fg.gain.exponentialRampToValueAtTime(vol * 0.32, brk + 0.15); fg.gain.exponentialRampToValueAtTime(0.0001, brk + 2.4);
+    loud(end - at + 0.1).connect(hp); hp.connect(fg); fg.connect(out);
   }
 }

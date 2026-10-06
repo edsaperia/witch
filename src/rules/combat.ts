@@ -569,8 +569,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (!atk) { c.fight = undefined; continue; } // babies don't attack
     const f = (c.fight ??= { target: null, readyAt: time + atk.attack.cooldown * 0.5 * (c.rand() + 0.5), windupUntil: 0, aimX: 0, aimZ: 0 });
     // A happy area legend guards its area like a parked party animal with a far bigger reach, round its home (Ed, 2026-10-04).
-    const happy = !c.leashed && (c.legendState === "happy" || !!c.guard || c.state === "happy"); // (and a friendly area's guards, once partified: rules/quest.ts; and every happy creature, #87: it defends its own area)
-    // (a guard looks round where it stands, for anything in its own area: area-wide, as it roams it)
+    const happy = !c.leashed && (c.legendState === "happy" || c.state === "happy"); // (and every happy creature, #87: it defends its own area)
+    // (a happy one looks round where it stands, for anything in its own area: area-wide, as it roams it)
     const lp = c.leashed ? w.leashPoint(c.id) : happy ? { x: c.x, z: c.z } : null, guarding = (!!lp && w.parked(c.id)) || happy;
     // Party animals fight only near their leash point (a parked one within guard.radius of its
     // sigil); wild ones within aggro of where they are.
