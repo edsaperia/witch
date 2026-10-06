@@ -101,6 +101,8 @@ export interface Creature {
   travelling?: boolean;
   /** Its state (rules/creatureStates.ts, issue #87): set when it's invited to happy, or enraged; read it with stateOf. */
   state?: "wild" | "happy" | "leashed" | "enraged";
+  /** When it was made happy (its 💌 ring full): its sigil rune pops out then (creatureStates.ts hasRune). */
+  happyAt?: number;
   /** Knocked down while wild: dazed (nothing attacks it, it can still be invited) until then, then it runs off. */
   dazed?: boolean;
   /** Happy, in an area with a soundsystem: it keeps round it, dancing (rules/creatureStates.ts danceAt). */
