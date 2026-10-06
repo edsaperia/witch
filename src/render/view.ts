@@ -10,7 +10,7 @@ import * as THREE from "three";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { poseOf, STEP } from "../rules/game";
-import { AREA_TYPES, HOME_LOOK } from "../rules/map";
+import { AREA_TYPES, HOME_LOOK, nearestClearings, type LegendClearing } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
 import { AssetLibrary } from "./assets";
 import type { LightSource } from "../rules/forest";
@@ -558,6 +558,8 @@ export class View {
   /** The drawing's CPU time (ms), eased over the last frames: the work ahead leaves room for it. */
   private drawEst = 0;
 
+  /** The legends' clearings nearest her this frame (reused: no garbage a frame). */
+  private nearRings: LegendClearing[] = [];
   render(time: number, draw = true): void {
     this.ms = {}; this.lap = this.frameStart = performance.now();
     const g = this.game, t = g.tuning, pose = poseOf(g);
@@ -678,6 +680,7 @@ export class View {
     const party = this.partyView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), () => false);
     this.soundBatch.set(party.items);
     this.ground.setSweeps(party.sweeps);
+    this.ground.setLegendRings(nearestClearings(g.map.legendClearings, g.witch.x, g.witch.z, this.nearRings));
     this.lasers.update(time, party.playing, w.x, w.z, this.speakerTops, g.map.dancefloor);
     {
       // The ley lines: fading from the colour of the area each starts in to that of the area it ends

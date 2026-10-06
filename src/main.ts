@@ -33,6 +33,7 @@ import { setupStartScreen, startOnGesture } from "./ui/startScreen";
 import { AimHud } from "./render/aimhud";
 import { UPCOMING } from "./ui/upcoming";
 import { PlaytestLog } from "./platform/playtestLog";
+import { StallLog } from "./platform/stallLog";
 import { powerReport } from "./rules/power";
 import { Freeze } from "./platform/freeze";
 import { Creator, loadGenome } from "./ui/creator";
@@ -211,7 +212,7 @@ if (arenaParam) waveChoice = 0;
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = loadStyle();
-{ const artStyle = params.get("style"); if (artStyle === "bold" || artStyle === "ref") style.artStyle = artStyle; } // ?style=now|bold|ref: a pixel-art style (art/stylise.js) baked into every sprite, carried to the art worker in the style
+{ const artStyle = params.get("style") ?? "bold"; if (artStyle === "bold" || artStyle === "ref") style.artStyle = artStyle; } // bold by default (Ed, 2026-10-06: "I think I prefer bold style"); ?style=now|bold|ref: a pixel-art style (art/stylise.js) baked into every sprite, carried to the art worker in the style
 if (propsGen) { style.propGen = 1; tuning.partyObjects.generated = true; } // the prop generator (by default; ?props=hand turns it off): the prop generator (art/props/) stands in for the areas' stones, cairns, pools, stumps, logs, fungi and henges, several shapes of each, and the party's generated bunting, balloons and lanterns for the hand-made ones (carried to the art worker in the style, to the rules in the tuning)
 if (params.get("texture") === "0") style.texture = 0; // ?texture=0: creatures as before their fur, feathers and scales (art/genome/texture.js), to compare
 if (params.get("flora")) style.flora = params.get("flora"); // ?flora=new|fantasy|all|<ids>: every wooded area grows these tree species (art/flora), carried to the art worker in the style
@@ -233,6 +234,16 @@ if (params.has("scenery") && sceneryAt > 0) view.sceneryFixed = sceneryAt;
 const input = new Input();
 input.aimFrom = (x, y) => view.aimAt(x, y);
 const aimHud = new AimHud(canvas); // the reticle where the mouse aims: 💌 range and the dodge's recharge
+/** Where a dodge would put her now (toward the cursor, rules/dash.ts), in client pixels, for the reticle's mark. */
+const landV = new Vector3();
+function dashLanding(): { x: number; y: number } | null {
+  const a = input.lastAim, D = game.buffs.tuning.dash, W = game.witch;
+  if (!a || !D.toCursor || W.mode !== "ground") return null;
+  const l = Math.hypot(a.x, a.z), dx = l >= D.aimDead ? a.x / l : W.facing, dz = l >= D.aimDead ? a.z / l : 0;
+  placed(landV.set(W.x + dx * D.distance, 0, W.z + dz * D.distance)).project(view.camera);
+  const r = canvas.getBoundingClientRect();
+  return { x: r.left + (landV.x * 0.5 + 0.5) * r.width, y: r.top + (-landV.y * 0.5 + 0.5) * r.height };
+}
 document.getElementById("next-wave")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.nextWave = true; });
 document.getElementById("pause-waves")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.pauseWaves = true; });
 setupTouch(document.body, input.touch);
@@ -529,6 +540,9 @@ document.addEventListener("visibilitychange", () => { if (document.hidden) last 
 let lastDraw = 0;
 let last = 0;
 const frameStats = new FrameStats(view.renderer.getContext());
+// Frames of 100 ms or more, with what they spent it on (Ed, 2026-10-06: occasional half-second freezes): the overlay and the playtest log.
+const stallLog = new StallLog();
+playtest.stalls = () => stallLog.stalls;
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
 let manual = false;
@@ -548,7 +562,9 @@ function frame(now: number): void {
   c.autoTalk = autoTalk;
   if (c.debug) { debugOn = !debugOn; debugEl.classList.toggle("on", debugOn); debugButtons.classList.toggle("on", debugOn); knobs.classList.toggle("on", debugOn); }
   view.debugReadouts = debugOn;
+  const step0 = performance.now();
   stepGame(game, c, dt);
+  const stepMs = performance.now() - step0;
   // The run is over when every soundsystem has fallen (Stage 4): the end screen, and a restart.
   if (game.over && !overShown) {
     overShown = true;
@@ -556,13 +572,16 @@ function frame(now: number): void {
     document.getElementById("over-stats")!.textContent = `You lasted ${Math.floor(game.clock.time / 60)} min ${Math.floor(game.clock.time % 60)} s and ${game.party.wave} waves.`;
     document.getElementById("over")!.classList.add("on");
   }
+  const log0 = performance.now();
   playtest.update();
+  const audio0 = performance.now();
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
   musicCueNow = musicCue(game, musicCueNow);
   lastMix = musicMix(game, game.witch);
-  music?.update(lastMix, musicCueNow, game.clock.time, game.beat, !game.clock.paused);
+  music?.update(lastMix, musicCueNow, game.clock.time, game.beat, !game.clock.paused, tuning.music);
   if (!game.clock.paused) sfxCues?.update(game, game.clock.time);
   sfx?.room(creator.open ? 1 : 0); // the creator's room in the treehouse
+  const outside = { playtest: audio0 - log0, audio: performance.now() - audio0 }; // (for the stall log: not the view's own parts)
   if (!ready) return;
   for (const e of game.waveEvents) if (e.at > lossShown) showLoss(e);
   waveHud();
@@ -574,8 +593,9 @@ function frame(now: number): void {
   frameStats.beginGpu();
   interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP)));
   frameStats.endGpu();
-  aimHud.update(game, game.clock.time, input.cursor, input.lastAim, startEl.style.display === "none" && !game.over);
+  aimHud.update(game, game.clock.time, input.cursor, input.lastAim, startEl.style.display === "none" && !game.over, dashLanding());
   frameStats.work(performance.now() - work0);
+  if (!game.clock.paused) stallLog.frame({ t: game.clock.time, gap: dt * 1000, work: performance.now() - work0, step: stepMs, parts: { ...view.ms, ...outside }, mode: game.witch.mode, x: game.witch.x, z: game.witch.z, wave: game.party.wave, creatures: game.creatures.length });
   applyShake();
   freeze.update();
   // The overlay, four times a second (a new text every frame was a page layout every frame), with
@@ -585,6 +605,7 @@ function frame(now: number): void {
     const w = game.witch, s = view.stats;
     debugEl.textContent = [
       ...frameStats.lines(),
+      stallLog.line(),
       `seed   ${seed}`,
       `area   ${areaUnderWitch(game)}`,
       `mode   ${w.mode}`,

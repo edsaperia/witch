@@ -1667,6 +1667,22 @@ describe("the dash (Ed, 2026-10-04)", () => {
     expect(D.at).toBeGreaterThan(second);
   });
 
+  it("goes toward the cursor (Ed, 2026-10-06), the way she faces with the cursor on her, and the way she steers with none", () => {
+    const B = { minX: -100, maxX: 100, minZ: -100, maxZ: 100 }, w = { ...newWitch(0, 0), facing: -1 as const };
+    const d = newDash();
+    startDash(d, w, 1, 0, 1, TUNING, B, undefined, 1, 0, 0, 30); // steering east, the cursor 30 m south
+    expect(d.toX).toBeCloseTo(0); expect(d.toZ).toBeCloseTo(TUNING.dash.distance);
+    const d2 = newDash();
+    startDash(d2, w, 1, 0, 1, TUNING, B, undefined, 1, 0, 0.3, 0.2); // the cursor on her: the way she faces
+    expect(d2.toX).toBeCloseTo(-TUNING.dash.distance); expect(d2.toZ).toBeCloseTo(0);
+    const d3 = newDash();
+    startDash(d3, w, 0, 1, 1, TUNING, B); // no cursor (touch): the way she steers
+    expect(d3.toZ).toBeCloseTo(TUNING.dash.distance);
+    const d4 = newDash();
+    startDash(d4, w, 1, 0, 1, { ...TUNING, dash: { ...TUNING.dash, toCursor: false } }, B, undefined, 1, 0, 0, 30); // off: the way she steers
+    expect(d4.toX).toBeCloseTo(TUNING.dash.distance);
+  });
+
   it("goes the way she faces when she's still, and stops short of anything in the way", () => {
     const w = { ...newWitch(0, 0), facing: -1 as const }, d = newDash(), B = { minX: -100, maxX: 100, minZ: -100, maxZ: 100 };
     expect(startDash(d, w, 0, 0, 1, TUNING, B)).toBe(true);

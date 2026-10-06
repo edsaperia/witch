@@ -3,7 +3,8 @@
 // (a waveshaper's crunch, a wobbling tremolo, crackle and drop-outs). The track is generative
 // (platform/musicEngine.ts, from config/music-style.json), its sections following the waves
 // (rules/musicPlan.ts), on the game's beat; a recorded track (music.src) can stand in for it.
-import type { MusicMix } from "../../rules/music";
+import { muffled, type MusicMix } from "../../rules/music";
+import type { Tuning } from "../../rules/tuning";
 import type { BeatClock } from "../../rules/beat";
 import type { MusicCue } from "../../rules/musicPlan";
 import type { MusicStyle } from "../../rules/musicScore";
@@ -21,6 +22,13 @@ export class Music {
   private dropUntil = 0;
   private duckUntil = 0;
   private duckBy = 0;
+  /** A sleeping legend's clearing (Ed, 2026-10-06): its layer's gain, and how far in she is (eased). */
+  private circleGain: GainNode;
+  private circleAt = 0;
+  private circleSpecies = "";
+  private lastAt = -1;
+  /** How far into a legend's clearing the music is now, 0-1 (eased). */
+  get circle(): number { return this.circleAt; }
   /** The generative track (none with a recorded one). */
   readonly engine: MusicEngine | null = null;
 
@@ -35,6 +43,7 @@ export class Music {
     this.bus.connect(this.dry); this.bus.connect(this.shaper); this.shaper.connect(this.wet);
     this.dry.connect(this.filter); this.wet.connect(this.filter);
     this.filter.connect(this.wobble); this.wobble.connect(this.master); this.master.connect(ctx.destination);
+    this.circleGain = ctx.createGain(); this.circleGain.gain.value = 0; this.circleGain.connect(ctx.destination);
     this.noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const d = this.noise.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -43,12 +52,24 @@ export class Music {
       el.loop = true; el.crossOrigin = "anonymous";
       ctx.createMediaElementSource(el).connect(this.bus);
       void el.play().catch(() => { /* blocked until a press: the start screen is one */ });
-    } else this.engine = new MusicEngine(ctx, this.bus, style, seed);
+    } else this.engine = new MusicEngine(ctx, this.bus, style, seed, this.circleGain);
   }
 
   /** Each frame: the mix to hear, the music's cue (waves, boot), the game's time and beat. */
-  update(mix: MusicMix, cue: MusicCue, gameTime: number, clock: BeatClock, on: boolean): void {
+  update(mix0: MusicMix, cue: MusicCue, gameTime: number, clock: BeatClock, on: boolean, M?: Tuning["music"]): void {
     const c = this.ctx, now = c.currentTime, k = 0.08;
+    // In a sleeping legend's clearing: in and out eased over about a second, the music muffled under
+    // its layer (which plays while she's in, or still fading out)
+    const dt = this.lastAt < 0 ? 0 : Math.max(0, now - this.lastAt);
+    this.lastAt = now;
+    const want = cue.circle && M ? 1 : 0, ease = M?.circle.ease ?? 0.35;
+    this.circleAt += (want - this.circleAt) * (1 - Math.exp(-dt / Math.max(0.01, ease)));
+    if (this.circleAt < 0.01 && !want) this.circleAt = 0;
+    const mix = M ? muffled(M, mix0, this.circleAt) : mix0;
+    if (cue.circle) this.circleSpecies = cue.circle.species;
+    const layer = this.circleAt > 0 && this.circleSpecies ? { species: this.circleSpecies, level: 1 } : undefined; // (its level is the layer's gain, not its notes')
+    cue = { ...cue, circle: layer };
+    this.circleGain.gain.setTargetAtTime(on ? this.circleAt * this.volume * (M?.circle.level ?? 1) : 0, now, k);
     // Drop-outs: with damage close by, now and then the sound cuts for a moment.
     if (mix.distort > 0.05 && now > this.dropUntil && Math.random() < mix.distort * 0.01) this.dropUntil = now + 0.08 + Math.random() * 0.3 * mix.distort;
     const vol = (on && now >= this.dropUntil ? mix.volume * this.volume : 0) * (now < this.duckUntil ? 1 - this.duckBy : 1);
@@ -68,7 +89,7 @@ export class Music {
   /** Whether it should be heard now: its volume turned up. */
   get audible(): boolean { return this.master.gain.value > 0.02; }
   /** Silenced for good and let go (the watchdog building afresh). */
-  dispose(): void { try { this.master.disconnect(); } catch { /* gone */ } }
+  dispose(): void { try { this.master.disconnect(); this.circleGain.disconnect(); } catch { /* gone */ } }
 
   /** Dip the music by `by` (0-1) for `seconds`: her "ouch!" heard over it. */
   duck(by: number, seconds: number): void { this.duckBy = Math.max(0, Math.min(1, by)); this.duckUntil = this.ctx.currentTime + seconds; }

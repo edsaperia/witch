@@ -13,7 +13,7 @@ const SEEDS = +arg("seeds", 2), SIZES = list(arg("sizes", "2,4,8,12")).map(Numbe
 const TIME = +arg("time", 60), RADIUS = +arg("radius", 16), MOVES = list(arg("moves", "0,0.3,0.6")).map(Number);
 // Tuning overrides to try enemy-side knobs: --set "fight.speed=1.25;combat.reaction=0.15".
 const SETS = String(arg("set", "")).split(";").filter(Boolean).map(kv => { const [k, v] = kv.split("="); return [k.trim().split("."), Number(v)]; });
-const MIX = { wolf: ["wolf"], boar: ["boar"], raven: ["raven"], bat: ["bat"], fox: ["fox"], mixed: ["wolf", "boar", "raven", "fox"] };
+const MIX = { wolf: ["wolf"], boar: ["boar"], raven: ["raven"], bat: ["bat"], fox: ["fox"], elk: ["elk"], stag: ["stag"], ram: ["ram"], lynx: ["lynx"], toad: ["toad"], mixed: ["wolf", "boar", "raven", "fox"] };
 
 const { load, close } = await openRules();
 const { TUNING, withTuning } = await load("/src/rules/tuning.ts");
