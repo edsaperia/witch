@@ -11,6 +11,7 @@ import type { Ground } from "./ground";
 import { PartyWitchView } from "./partyWitches";
 import { pixelEmoji } from "./invites";
 import { groundHeight, placed } from "./height";
+import { tiltFilter } from "./overlayTilt";
 
 /** A heart rising off the two of them stargazing together: where it set off, when, its sway's phase; its image (pooled). */
 interface Heart { x: number; z: number; at: number; sway: number; el: HTMLImageElement }
@@ -78,6 +79,7 @@ export class BeachView {
       placed(this.v.set(h.x + sx, groundHeight(h.x, h.z) + 0.6 + 2.5 * u, h.z)).project(camera);
       h.el.style.left = `${((this.v.x + 1) / 2) * width}px`;
       h.el.style.top = `${((1 - this.v.y) / 2) * height}px`;
+      tiltFilter(h.el, ((1 - this.v.y) / 2) * height);
       h.el.style.visibility = this.v.z < 1 ? "visible" : "hidden";
       h.el.style.opacity = (u < 0.66 ? 1 : (1 - u) / 0.34).toFixed(2);
       return true;

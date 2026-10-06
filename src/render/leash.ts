@@ -52,6 +52,7 @@ const AMBER = [0.91, 0.71, 0.42], ROSE = [0.85, 0.47, 0.62];
 const JOIN_PALETTE = [[0.91, 0.71, 0.42], [0.82, 0.52, 0.28], [0.91, 0.71, 0.42]];
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, placed } from "./height";
+import { tiltFilter } from "./overlayTilt";
 
 /** Seconds a legend's charge ruts take to fade. */
 const RUTS = 12;
@@ -428,6 +429,7 @@ export class LeashView {
       const bx = ((this.v.x + 1) / 2) * width, ly = ((1 - this.v.y) / 2) * height, by = Math.max(ly, el.offsetHeight + 56); // (kept on screen when she's close, below the top edge's cues)
       el.style.left = `${bx}px`;
       el.style.top = `${by}px`;
+      tiltFilter(el, by - el.offsetHeight * 0.5 - bubblePx(c.level) * 12.5); // (its middle, blurred as the world is there: render/overlayTilt.ts)
       const shake = faces ? ire * 2.5 * Math.sin(performance.now() * 0.05 + c.id) : 0; // (a nightmare shakes)
       el.style.transform = `translate(calc(-50% + ${shake.toFixed(1)}px), calc(-100% - var(--px) * 12.5))`; // (lifted by its puffs, the lowest just above the sleeper)
       // Its direction (rules/dream.ts): a soft glow on the side of the bubble facing the runestone
@@ -1189,6 +1191,7 @@ export class LeashView {
       placed(this.v.set(x, y, z)).project(camera);
       el.style.left = `${((this.v.x + 1) / 2) * width}px`;
       el.style.top = `${((1 - this.v.y) / 2) * height}px`;
+      tiltFilter(el, ((1 - this.v.y) / 2) * height);
     };
     const line = bc.querySelector("span")!, bar = bc.querySelector(".bar") as HTMLElement;
     if (!talk) {
