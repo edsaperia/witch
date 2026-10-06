@@ -1005,9 +1005,10 @@ export class LeashView {
       const d = Math.hypot(c.x - lp.x, c.z - lp.z);
       if (B.thread && d > L.length * 0.85) {
         const strain = Math.min(1, (d - L.length * 0.85) / L.length), n = Math.min(60, Math.floor(d / 1.2));
-        // A gentle upward bow (Ed: "arc upwards a little"), and the dots march from the creature
-        // to the leash point.
-        const arc = Math.min(B.threadArcMax, B.threadArc * d);
+        // An upward bow (Ed: "arc upwards a little"), high while it's slack and flattening to a near-straight line as it
+        // goes taut (Ed, 2026-10-06: "The curve on slack leashes should be higher than it is now"), and the dots march from
+        // the creature to the leash point.
+        const arc = Math.min(B.threadArcMax, d * (B.threadArcTaut + (B.threadArcSlack - B.threadArcTaut) * (1 - strain)));
         for (let i = 1; i < n; i++) {
           const k = (i + 1 - (time * 2) % 1) / n;
           if (k >= 1) continue;

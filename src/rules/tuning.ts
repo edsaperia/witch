@@ -254,7 +254,7 @@ export interface Tuning {
   grounds: { chance: number; kinds: string[]; radius: Record<string, number> };
   /** Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06): radius metres (or its species' own,
    *  sized to the legend), a soft edge ring edge metres wide, the legend lying top of the radius toward its far (north) side. */
-  legendClearing: { radius: number; edge: number; top: number; minFromStone: number; rim: { spacing: number; chance: number; out: number; spread: number; gap: number }; grove: { reach: number; density: number; tallest: number; scale: number; gap: number; soft: number; jitter: number }; species: Record<string, number> };
+  legendClearing: { radius: number; edge: number; top: number; minFromStone: number; floor: { on: boolean; overgrowth: number; slab: number; glint: number }; rim: { spacing: number; chance: number; out: number; spread: number; gap: number }; grove: { reach: number; density: number; tallest: number; scale: number; gap: number; soft: number; jitter: number }; species: Record<string, number> };
   /** Scenes (art/scenes.js): the share of areas that get one (if an unused scene suits them); footprint = farthest piece's authored offset times scale, plus pad metres. */
   scenes: { chance: number; scale: number; pad: number };
   relics: { spacing: number; chance: number; nearRoad: number; minGap: number };
@@ -293,7 +293,7 @@ export interface Tuning {
   leash: { length: number; runSpeed: number; pickRadius: number; spacing: number; pace?: number;
     /** Sigil weight (rules/leashWeight.ts): free allowance, levels' weights, drag, drift, rise, sink, sinkMax, floor, extreme, maxTension. */
     weight: { free: number; levels: number[]; drag: number; drift: number; rise: number; sink: number; sinkMax: number; floor: number; extreme: number; maxTension: number } };
-  bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number; /** The thread's upward bow: metres per metre of length, up to threadArcMax. */ threadArc: number; threadArcMax: number };
+  bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number; /** The thread's upward bow: metres per metre of length, from threadArcSlack when slack to threadArcTaut at full strain, up to threadArcMax. */ threadArcSlack: number; threadArcTaut: number; threadArcMax: number };
   tone: { black: number; gamma: number; ambient: number; moon: number };
   bloom: { on: boolean; strength: number; threshold: number };
   tiltShift: { on: boolean; where: "before" | "after"; /** Whether the sky over the bend is blurred too (Ed, round 12); false leaves it sharp. */ sky?: boolean; /** The share of the blur the sky takes, so the stars stay perceptible (Ed, 2026-10-06); 1 as the ground. */ skyBlur?: number; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
