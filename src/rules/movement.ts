@@ -40,7 +40,7 @@ export const MOVEMENT = raw as unknown as MovementData;
  *  and leap scaled: tuning fight.charge (reach: its run's time and overshoot, turn: its turn rate,
  *  brake: how hard it slows) and fight.leap (reach: how far off it leaps from, through: metres past
  *  its target it lands; less than 0, short of it). Set from the tuning each step (rules/combat.ts). */
-export const FIGHT = { scale: 1, speed: 1, momentum: 1, charge: { reach: 1, turn: 1, brake: 1 }, leap: { reach: 1, through: -1.5 } };
+export const FIGHT: { scale: number; speed: number; momentum: number; charge: { reach: number; turn: number; brake: number; chase?: number; miss?: number }; leap: { reach: number; through: number; lead?: number }; walk: number } = { scale: 1, speed: 1, momentum: 1, charge: { reach: 1, turn: 1, brake: 1 }, leap: { reach: 1, through: -1.5 }, walk: 0 };
 
 export const profileOf = (species: string, data: MovementData = MOVEMENT): Profile | null => data.profiles[species] ?? null;
 export const legendSetOf = (species: string, data: MovementData = MOVEMENT): LegendSet => data.legends.bySpecies[species] ?? data.legends;
@@ -253,8 +253,14 @@ export function stepCharge(c: Creature, mv: Move, px: number, pz: number, reach:
 
 /** Start a charge at (px, pz) now: its head goes down (its lane locked), then it runs. */
 export function startCharge(c: Creature, mv: Move, px: number, pz: number, time: number): void {
-  const d = Math.hypot(px - c.x, pz - c.z) || 1e-6, s = (mv.speed ?? 28) * FIGHT.speed, wind = mv.windup ?? 0.5;
-  c.charge = { dx: (px - c.x) / d, dz: (pz - c.z) / d, speed: s, from: time + wind, until: time + wind + (mv.time ?? 1.6) * FIGHT.charge.reach, ...(mv.curl ? { curl: mv.curl } : {}) };
+  // Walking away is no escape (Ed, 2026-10-06: "Charging creatures can easily be evaded by just walking away from
+  // them. They should jump far enough or charge far enough that this doesn't work"): at least FIGHT.charge.chase
+  // times her walking speed, and it runs on until it has caught up with her walking straight down its lane (or
+  // its own time, if longer), so only stepping out of the lane (or a blink, or the treetops) gets her clear.
+  const d = Math.hypot(px - c.x, pz - c.z) || 1e-6, wind = mv.windup ?? 0.5, walk = FIGHT.walk * FIGHT.speed, chase = FIGHT.charge.chase ?? 0;
+  const s = Math.max((mv.speed ?? 28) * FIGHT.speed, chase * walk), accel = ((mv.accel ?? 40) * FIGHT.speed) / FIGHT.momentum;
+  const catchUp = chase > 0 && s > walk ? (d + walk * wind + (s * s) / (2 * accel)) / (s - walk) : 0; // (the gap she opens walking away during its windup and while it builds speed, closed at s - walk)
+  c.charge = { dx: (px - c.x) / d, dz: (pz - c.z) / d, speed: s, from: time + wind, until: time + wind + Math.max((mv.time ?? 1.6) * FIGHT.charge.reach, catchUp), ...(mv.curl ? { curl: mv.curl } : {}) };
   c.moveReadyAt = time + mv.cooldown;
 }
 
@@ -277,7 +283,7 @@ export function stepBurrow(c: Creature, mv: Move, px: number, pz: number, base: 
 /** The leap (Stage 5: the toad): when its attack is ready and its target is between `from` and
  *  `to` metres off (times FIGHT.leap.reach), it leaps in an arc to FIGHT.leap.through metres past
  *  it (short of it if less than 0), `time` seconds in the air, landing where it aimed (step out of the ring). Returns "landed" on the step it comes down. */
-export function stepLeap(c: Creature, mv: Move, px: number, pz: number, ready: boolean, time: number): "none" | "leapt" | "air" | "landed" {
+export function stepLeap(c: Creature, mv: Move, px: number, pz: number, ready: boolean, time: number, tvx = 0, tvz = 0): "none" | "leapt" | "air" | "landed" {
   const L = c.leap;
   if (L) {
     const k = Math.min(1, (time - L.at) / Math.max(0.01, L.lands - L.at));
@@ -290,7 +296,9 @@ export function stepLeap(c: Creature, mv: Move, px: number, pz: number, ready: b
     // Where it comes down: a pounce (a strike) FIGHT.leap.through metres past its target, carrying on
     // through (short of it if less than 0); a slam (the toad's) no further than onto it, its blow all round where it lands.
     const past = Math.max(-d, (mv.strike ? FIGHT.leap.through : Math.min(0, FIGHT.leap.through)) * FIGHT.scale);
-    c.leap = { fx: c.x, fz: c.z, tx: px + (dx / d) * past, tz: pz + (dz / d) * past, at: time, lands: time + (mv.time ?? 0.9) / FIGHT.speed, height: (mv.height ?? 6) * FIGHT.scale };
+    // Leading her (Ed, 2026-10-06, walking away is no escape): it comes down where she'll be when it lands, as she's going now (FIGHT.leap.lead of it).
+    const fly = (mv.time ?? 0.9) / FIGHT.speed, lead = FIGHT.leap.lead ?? 0, ax = px + tvx * fly * lead, az = pz + tvz * fly * lead;
+    c.leap = { fx: c.x, fz: c.z, tx: ax + (dx / d) * past, tz: az + (dz / d) * past, at: time, lands: time + fly, height: (mv.height ?? 6) * FIGHT.scale };
     c.moveReadyAt = time + mv.cooldown; c.facing = dx >= 0 ? 1 : -1;
     return "leapt";
   }

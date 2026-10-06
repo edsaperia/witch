@@ -469,6 +469,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   FIGHT.scale = t.fight.scale; FIGHT.speed = t.fight.speed; FIGHT.momentum = t.fight.momentum ?? 1;
   if (t.fight.charge) FIGHT.charge = t.fight.charge;
   if (t.fight.leap) FIGHT.leap = t.fight.leap;
+  FIGHT.walk = t.groundSpeed;
   // Shots fly; each hits the first enemy (not its own kind) it reaches, or fizzles at its range.
   const grid = new Grid(w.active.filter(c => fighting(c)));
   s.shots = s.shots.filter(sh => {
@@ -663,6 +664,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       const run = speed;
       if (P.move?.kind === "charge") {
         const was = c.charge, r = stepCharge(c, P.move, p.x, p.z, A.range + p.r + 0.3, time, dt, run);
+        // A charge that missed (Ed, 2026-10-06: "reward skilful use of blink and accurate invitation aiming"): it stands
+        // winded for fight.charge.miss seconds, stars round its head, an opening for her 💌s.
+        if (was && !c.charge && !was.struck && !was.hit?.length && (FIGHT.charge.miss ?? 0) > 0) { c.stunUntil = time + FIGHT.charge.miss!; c.vx = 0; c.vz = 0; s.events.push({ kind: "stunned", x: c.x, z: c.z, at: time, id: c.id }); }
         // A pair (the stags): its pack mates whose charge is ready set off with it, side by side.
         if (P.move.pair && !was && c.charge) for (const m of packs.get(c.id)?.members ?? []) if (m !== c && !m.charge && time >= (m.moveReadyAt ?? 0) && m.fight?.windupUntil === 0 && !m.fight.lunge) startCharge(m, P.move, p.x, p.z, time);
         const ram: Attack = { ...A, modifier: "knockback", knockback: 15 * S };
@@ -672,7 +676,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
           f.readyAt = time + A.cooldown; s.events.push({ kind: "charged", x: c.x, z: c.z, at: time, id: c.id }); continue;
         }
         // Contact (Ed, 2026-10-06: "damaging whenever they're touched while in attack mode"): its run hurts every foe it touches, once each.
-        if (r === "charging" && t.fight.charge?.contact && c.charge && !(c.charge.from !== undefined && time < c.charge.from)) touch(w, s, c, atk.damage, ram, grid, (c.charge.hit ??= []));
+        if (r === "charging" && t.fight.charge?.contact && c.charge && !c.charge.braking && !(c.charge.from !== undefined && time < c.charge.from)) touch(w, s, c, atk.damage, ram, grid, (c.charge.hit ??= []));
         if (r === "charging") continue;
       }
       if (P.move?.kind === "burrow") {
@@ -688,7 +692,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       }
       if (P.move?.kind === "leap") {
         // The toad: a leap in an arc at its target (a ring shows where it'll land), slamming down: its attack.
-        const r = stepLeap(c, P.move, p.x, p.z, time >= f.readyAt, time);
+        const tv = f.target.kind === "witch" ? w.witches[f.target.id] : f.target.kind === "creature" ? w.creatures[f.target.id] : null;
+        const r = stepLeap(c, P.move, p.x, p.z, time >= f.readyAt, time, tv?.vx ?? 0, tv?.vz ?? 0);
         if (r === "leapt") s.events.push({ kind: "leapt", x: c.x, z: c.z, at: time, id: c.id });
         // A low pounce (the lynx's, a strike) hurts every foe it touches in the air (fight.leap.contact); a high leap's slam is its landing.
         if (r === "air" && P.move.strike && t.fight.leap?.contact && c.leap) touch(w, s, c, atk.damage, A, grid, (c.leap.hit ??= []));

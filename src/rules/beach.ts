@@ -45,7 +45,7 @@ export function newBeachWitches(seed: number, bounds: Bounds, t: Tuning): BeachW
 
 /** One spot of beach witches at angle `a` round the coast. */
 function beachSpot(r: () => number, angle: number, beach: NonNullable<ReturnType<typeof beachOf>>, B: NonNullable<Tuning["beach"]>): BeachWitches {
-  const a = Math.atan2(Math.sin(angle), Math.cos(angle)), d = beach.edge(a) - Math.min(30, B.width * 0.4); // (in from where the edge holds her)
+  const a = Math.atan2(Math.sin(angle), Math.cos(angle)), d = beach.edge(a) - Math.min(30, beach.sandAt(a) * 0.4); // (in from where the edge holds her)
   const nx = Math.cos(a), nz = Math.sin(a), tx = -nz, tz = nx, x = beach.x + nx * d, z = beach.z + nz * d;
   const n = Math.max(1, Math.round(B.witches[0] + r() * (B.witches[1] - B.witches[0])));
   const list: PartyWitch[] = [];

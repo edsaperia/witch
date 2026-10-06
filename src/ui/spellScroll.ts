@@ -18,7 +18,9 @@
 /** The cues the scroll sounds (platform/audio/spell.ts makes them). */
 export type SpellCue = "hum" | "rustle" | "crackle" | "burst";
 
-const ART_W = 46, ART_H = 40; // the scroll's own pixels
+const ART_W = 64, ART_H = 56; // the scroll's own pixels (the room's art pixels: ui/creator.ts sizes it on the bedroom's grid)
+const PAD = 12; // art pixels of clear canvas round it, for its glow and its tremble
+const TOP = 8, BOT = 9; // the rows of its top roll and its bottom roll
 const GROW = .62, BURST = .95, CLEAR = 1.8; // seconds from the click: grown, burst, cleared
 const UNROLL = .9; // seconds to unroll once the world's ready
 const ease = (x: number) => x < .5 ? 2 * x * x : 1 - 2 * (1 - x) * (1 - x);
@@ -30,9 +32,9 @@ function paintScroll(): HTMLCanvasElement {
   const g = c.getContext("2d")!, px = (x: number, y: number, col: string) => { g.fillStyle = col; g.fillRect(x, y, 1, 1); };
   const rnd = (i: number) => { const s = Math.sin(i * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
   // the sheet: its sides a little wavy, darker toward its edges, flecked
-  const top = 6, bot = ART_H - 7;
+  const top = TOP, bot = ART_H - BOT - 1;
   for (let y = top; y <= bot; y++) {
-    const l = 5 + Math.round(Math.sin(y * .45) * .8), r = ART_W - 6 + Math.round(Math.sin(y * .37 + 2) * .8);
+    const l = 7 + Math.round(Math.sin(y * .45) * .8), r = ART_W - 8 + Math.round(Math.sin(y * .37 + 2) * .8);
     for (let x = l; x <= r; x++) {
       const e = Math.min(x - l, r - x, (y - top) * 1.6, (bot - y) * 1.6), n = rnd(x * 57 + y * 13);
       const col = e < 1 ? "#8a6334" : e < 2.5 ? "#c9a061" : n > .93 ? "#d8bb7f" : n < .05 ? "#f6e7bd" : "#ead6a0";
@@ -40,12 +42,29 @@ function paintScroll(): HTMLCanvasElement {
     }
   }
   // a faint ruled border inside it, like a spell's
-  g.fillStyle = "rgba(138,99,52,.35)"; g.fillRect(9, top + 4, ART_W - 18, 1); g.fillRect(9, bot - 4, ART_W - 18, 1);
+  g.fillStyle = "#d9bf86"; g.fillRect(13, top + 5, ART_W - 26, 1); g.fillRect(13, bot - 5, ART_W - 26, 1);
   // the rolls, top and bottom: a wooden cylinder, lit from above, with knobs at its ends
-  for (const ry of [3, ART_H - 5]) {
-    for (let x = 2; x < ART_W - 2; x++) for (let k = 0; k < 4; k++) px(x, ry - 1 + k, ["#e0b978", "#b88446", "#8e5f2c", "#5c3a19"][k]);
-    for (const kx of [0, ART_W - 3]) for (let k = 0; k < 6; k++) for (let j = 0; j < 3; j++) px(kx + j, ry - 2 + k, k === 0 || k === 5 ? "#3d2510" : j === 1 ? "#a8743a" : "#6b4420");
+  const wood = ["#f0cc8a", "#d9ab64", "#b88446", "#8e5f2c", "#5c3a19"];
+  for (const ry of [2, ART_H - 8]) {
+    for (let x = 3; x < ART_W - 3; x++) for (let k = 0; k < wood.length; k++) px(x, ry + k, wood[k]);
+    for (const kx of [0, ART_W - 4]) for (let k = 0; k < 7; k++) for (let j = 0; j < 4; j++) px(kx + j, ry - 1 + k, k === 0 || k === 6 || j === 0 || j === 3 ? "#3d2510" : k < 3 ? "#c48a48" : "#7a4c22");
   }
+  return c;
+}
+
+/** The 🎶 as pixel art on the sheet (a beamed pair of notes and a single one), in `col`, at the scroll's own pixels. */
+function paintNotes(col: string): HTMLCanvasElement {
+  const c = document.createElement("canvas"); c.width = ART_W; c.height = ART_H;
+  const g = c.getContext("2d")!; g.fillStyle = col;
+  const head = (cx: number, cy: number) => { for (const [dx, w] of [[-1, 4], [-2, 6], [-3, 6], [-3, 5]] as [number, number][]) { g.fillRect(cx + dx, cy, w, 1); cy++; } };
+  // the pair, beamed
+  g.fillRect(30, 18, 2, 16); g.fillRect(44, 15, 2, 16); // stems
+  for (let i = 0; i < 16; i++) g.fillRect(30 + i, 18 - Math.round(i * 3 / 15), 1, 3); // the beam, rising
+  for (let i = 0; i < 16; i++) g.fillRect(30 + i, 23 - Math.round(i * 3 / 15), 1, 2); // and a second
+  head(29, 33); head(43, 30);
+  // the single, smaller, to the left
+  g.fillRect(20, 22, 2, 12); g.fillRect(22, 22, 2, 1); g.fillRect(23, 23, 2, 1); g.fillRect(24, 24, 1, 3); g.fillRect(23, 27, 1, 1);
+  head(19, 33);
   return c;
 }
 
@@ -57,6 +76,13 @@ export class SpellScroll {
   /** The flash, the sparks and the burst, over everything (the game too, as it clears). */
   private fx = document.createElement("canvas");
   private art = paintScroll();
+  private ink = paintNotes("#4a3358");
+  private gold = paintNotes("#ffd27a");
+  /** The scroll's canvas in art pixels, its glow's margin and all: the creator sets it at a whole number of screen pixels to
+   *  each (place). */
+  static readonly SIZE: [number, number] = [ART_W + PAD * 2, ART_H + PAD * 2];
+  /** The scroll itself, in art pixels. */
+  static readonly ART: [number, number] = [ART_W, ART_H];
   private near = 0; private target = 0; private focused = false;
   /** When it began to unroll (its own clock), -1 while the forest still grows. */
   private openAt = -1;
@@ -82,7 +108,7 @@ export class SpellScroll {
     el.id = "creator-start"; // (the smoke scripts wait for it, as they did for the Start button)
     el.tabIndex = 0; el.setAttribute("role", "button"); el.setAttribute("aria-label", "Cast the party spell");
     el.title = "Cast the party spell";
-    Object.assign(el.style, { position: "absolute", right: "3%", bottom: "4%", width: "min(230px, 22vw)", aspectRatio: `${ART_W} / ${ART_H}`, cursor: "pointer", zIndex: "3", outline: "none", touchAction: "manipulation" });
+    Object.assign(el.style, { position: "absolute", right: "3%", bottom: "4%", width: `${SpellScroll.SIZE[0] * 3}px`, height: `${SpellScroll.SIZE[1] * 3}px`, cursor: "pointer", zIndex: "3", outline: "none", touchAction: "manipulation" });
     Object.assign(this.veil.style, { position: "absolute", inset: "0", background: "#05030c", opacity: "0", pointerEvents: "none", zIndex: "2" });
     Object.assign(this.fx.style, { position: "fixed", inset: "0", width: "100%", height: "100%", pointerEvents: "none", zIndex: "30", display: "none" });
     host.append(this.veil, el);
@@ -94,6 +120,9 @@ export class SpellScroll {
     host.addEventListener("pointermove", e => this.aim(e.clientX, e.clientY));
     host.addEventListener("pointerleave", () => { this.target = 0; });
   }
+
+  /** Puts it at (left, top), w × h (CSS lengths: the creator's, on its pixel grid). */
+  place(left: string, top: string, w: string, h: string): void { Object.assign(this.el.style, { left, top, width: w, height: h, right: "auto", bottom: "auto" }); }
 
   /** Whether it's unrolled and can be cast. */
   get awake(): boolean { return this.openAt >= 0; }
@@ -158,9 +187,10 @@ export class SpellScroll {
       if (target.width !== cw || target.height !== ch) { target.width = cw; target.height = ch; }
       g = target.getContext("2d")!; W = cw; H = ch; g.clearRect(0, 0, W, H);
     }
-    const pad = .1, sw = W * (1 - pad * 2), sh = H * (1 - pad * 2), k = sh / ART_H;
-    if (t - this.shakeAt > .045) { this.shakeAt = t; const a = (box ? 1 : p * p) * mo * k * (box ? 1.2 : .9); this.shake = [(Math.random() - .5) * 2 * a, (Math.random() - .5) * 2 * a]; }
-    const x0 = ox + W * pad + this.shake[0], y0 = oy + H * pad + this.shake[1];
+    // (its art pixel k: a whole number of device pixels on the bedroom's grid, the tremble and the ripple moving whole pixels)
+    const k = box ? W / SpellScroll.SIZE[0] : Math.max(1, Math.round(W / SpellScroll.SIZE[0])), sw = ART_W * k, sh = ART_H * k, snap = (v: number) => box ? v : Math.round(v / k) * k;
+    if (t - this.shakeAt > .045) { this.shakeAt = t; const a = (box ? 1 : p * p) * mo * k * (box ? 1.2 : .9); this.shake = [snap((Math.random() - .5) * 2 * a), snap((Math.random() - .5) * 2 * a)]; }
+    const x0 = ox + PAD * k + this.shake[0], y0 = oy + PAD * k + this.shake[1];
     g.save(); g.imageSmoothingEnabled = false;
     // its glow behind it, golden, by p (and flaring as it unrolls; none while it sleeps)
     const cx = x0 + sw / 2, cy = y0 + sh / 2, flare = open > 0 && open < 1 ? Math.sin(Math.PI * open) : 0;
@@ -172,21 +202,21 @@ export class SpellScroll {
     const amp = (.25 + 1.6 * p) * mo * k * .6 * open, sp = 7 + 5 * p, half = ART_H / 2, shut = 1 - open;
     if (open < 1) g.globalAlpha = .55 + .45 * open; // (asleep: dim)
     for (let y = 0; y < ART_H; y++) {
-      const top = y < 6, bottom = y >= ART_H - 7, roll = top || bottom, off = roll ? Math.sin(t * sp) * amp * .25 : Math.sin(y * .55 - t * sp) * amp;
-      if (!roll && Math.abs(y + .5 - half) > open * (half - 6)) continue;
-      const dy = top ? Math.round(shut * (half - 6)) : bottom ? -Math.round(shut * (ART_H - 7 - half)) : 0;
+      const top = y < TOP, bottom = y >= ART_H - BOT, roll = top || bottom, off = snap(roll ? Math.sin(t * sp) * amp * .25 : Math.sin(y * .55 - t * sp) * amp);
+      if (!roll && Math.abs(y + .5 - half) > open * (half - TOP)) continue;
+      const dy = top ? Math.round(shut * (half - TOP)) : bottom ? -Math.round(shut * (ART_H - BOT - half)) : 0;
       g.drawImage(this.art, 0, y, ART_W, 1, x0 + off, y0 + (y + dy) * k, sw, Math.ceil(k));
     }
     g.globalAlpha = 1;
     if (open < .5) { g.restore(); return; } // (the 🎶 shows as it opens)
-    // the 🎶: glowing up as she nears, riding the wave at its middle
-    const mid = Math.sin(ART_H * .5 * .55 - t * sp) * amp, glow = .35 + .65 * p, pulse = 1 + .06 * Math.sin(t * 6) * p;
-    g.font = `${Math.round(sh * .42 * pulse)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
-    g.textAlign = "center"; g.textBaseline = "middle";
+    // the 🎶 (pixel notes on the sheet): riding the wave at its middle, glowing gold as she nears (the glow smooth, the notes
+    // whole pixels), turning gold themselves at the nearest
+    const mid = snap(Math.sin(ART_H * .5 * .55 - t * sp) * amp), glow = (.35 + .65 * p) * (.9 + .1 * Math.sin(t * 6)), show = clamp((open - .5) * 2);
     g.shadowColor = `rgba(255,200,90,${glow.toFixed(3)})`; g.shadowBlur = (4 + 30 * p) * (sh / 160);
-    g.globalAlpha = (.75 + .25 * p) * clamp((open - .5) * 2);
-    g.fillText("🎶", cx + mid, cy + sh * .02);
-    if (p > .05 && open >= 1) { g.globalCompositeOperation = "lighter"; g.globalAlpha = p * .5; g.fillText("🎶", cx + mid, cy + sh * .02); }
+    g.globalAlpha = show * (.3 + .7 * p); g.drawImage(this.gold, x0 + mid, y0, sw, sh);
+    g.shadowBlur = 0;
+    g.globalAlpha = show * (1 - .75 * p); g.drawImage(this.ink, x0 + mid, y0, sw, sh);
+    if (p > .05 && open >= 1) { g.globalCompositeOperation = "lighter"; g.globalAlpha = p * .45; g.drawImage(this.gold, x0 + mid, y0, sw, sh); }
     g.restore();
   }
 
@@ -202,8 +232,8 @@ export class SpellScroll {
     g.fillStyle = `rgba(5,3,12,${dark.toFixed(3)})`; g.fillRect(0, 0, W, H);
     if (k < BURST) {
       // growing from where it sat to fill the screen (reduced motion: a swell where it is)
-      const e = ease(clamp(k / GROW)), full = Math.max(W, H * ART_W / ART_H) * 1.06;
-      const fw = from.width * dpr, fh = from.height * dpr, w = mo ? fw + (full - fw) * e : fw * (1 + .25 * e), h = w * fh / fw;
+      const e = ease(clamp(k / GROW)), [SW0, SH0] = SpellScroll.SIZE, full = Math.max(W, H * ART_W / ART_H) * 1.06 * SW0 / ART_W;
+      const fw = from.width * dpr, w = mo ? fw + (full - fw) * e : fw * (1 + .25 * e), h = w * SH0 / SW0;
       const fcx = (from.left + from.width / 2) * dpr, fcy = (from.top + from.height / 2) * dpr;
       const cx = mo ? fcx + (W / 2 - fcx) * e : fcx, cy = mo ? fcy + (H / 2 - fcy) * e : fcy;
       this.drawScroll(fx, t, 1, { x: cx - w / 2, y: cy - h / 2, w, h });
