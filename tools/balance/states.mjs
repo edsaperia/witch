@@ -1,23 +1,18 @@
 // The creature-state model's report (issue #87): src/rules/states.ts on the real maps.
 //   node tools/balance/states.mjs [--seeds 6] [--gap 60] [--skills 0.5,1,2,4] [--policies defend,third,leash,babies,relay] [--cap 40]
 //     [--health 4000] [--dazed 0] [--relics 3|4] [--relic-every 4] [--restless 60] [--legend-range 202] [--aoe 3] [--hazard 2] [--legend-shot 10] [--legend-every 15] [--legend 1] [--approach 3] [--leash 2] [--berries 12.5] [--dt 0.5] [--kin-fight] [--quick]
-import { createServer } from "vite";
+import { openRules, arg, list, mean, pct } from "./lib.mjs";
 
-const arg = (name, def) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : def; };
-const list = s => String(s).split(",");
 const QUICK = process.argv.includes("--quick");
 const SEEDS = +arg("seeds", QUICK ? 2 : 6), GAP = +arg("gap", 60), SKILLS = list(arg("skills", "0.5,1,2,4")).map(Number), POLICIES = list(arg("policies", "defend,third,leash,babies"));
 const CAP = +arg("cap", 40);
 const knobs = { soundHealth: arg("health") ? +arg("health") : undefined, dazedTime: +arg("dazed", 0), relics: arg("relics") !== undefined ? +arg("relics") : undefined, relicEvery: arg("relic-every") ? +arg("relic-every") : undefined, restlessTime: arg("restless") ? +arg("restless") : undefined, legendRange: arg("legend-range") ? +arg("legend-range") : undefined, legendAoe: arg("aoe") ? +arg("aoe") : undefined, angryHazard: arg("hazard") ? +arg("hazard") : undefined, legendShot: arg("legend-shot") ? +arg("legend-shot") : undefined, legendEvery: arg("legend-every") ? +arg("legend-every") : undefined, legendDefence: +arg("legend", 1), approach: +arg("approach", 3), leashTime: +arg("leash", 2), berriesPerArea: arg("berries") ? +arg("berries") : undefined, dt: arg("dt") ? +arg("dt") : undefined, ownKind: !process.argv.includes("--kin-fight") };
 
-const server = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: "custom", logLevel: "error", optimizeDeps: { noDiscovery: true, include: [] } });
-const load = p => server.ssrLoadModule(p);
+const { load, close } = await openRules();
 const { generateMap } = await load("/src/rules/map.ts");
 const { TUNING } = await load("/src/rules/tuning.ts");
 const { simulateStates } = await load("/src/rules/states.ts");
 
-const mean = a => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : NaN);
-const pct = x => (Number.isNaN(x) ? "–" : `${Math.round(x * 100)}%`);
 const seeds = Array.from({ length: SEEDS }, (_, i) => 1000 + i * 7919);
 const maps = seeds.map(s => generateMap(s, TUNING));
 const t0 = Date.now(), say = s => console.log(s);
@@ -72,4 +67,4 @@ table("Legends turned angry a run (their area emptied of its kind): mean, the sh
 table("Angry legends' cost: her minutes inviting in their reach a run, and her army lost to their shots; [happy legends worn down, back to sleep]", rs => `${(mean(rs.map(r => r.legends.hazardTime)) / 60).toFixed(1)} min, ${Math.round(mean(rs.map(r => r.legends.armyLost)))} lost [${mean(rs.map(r => r.legends.beaten)).toFixed(1)}]`);
 table("Siege targets: enraged whose nearest soundsystem was another area's (share); soundsystem damage by other areas' creatures in brackets", rs => { const o = mean(rs.map(r => r.targets.other / Math.max(1, r.targets.own + r.targets.other))), dmg = mean(rs.map(r => r.damage.other / Math.max(1, r.damage.own + r.damage.other))); return `${pct(o)} (${pct(dmg)})`; });
 say(`(${((Date.now() - t0) / 1000).toFixed(0)} s)`);
-await server.close();
+await close();

@@ -44,6 +44,7 @@ interface Bubble { el: HTMLElement; img: HTMLImageElement; until: number; x: num
 export class InviteView {
   private root = document.createElement("div");
   private letters: HTMLImageElement[] = [];
+  private lanterns: HTMLElement[] = [];
   private meters = new Map<number, HTMLElement>();
   private hers: Bubble;
   private replies = new Map<number, Bubble>();
@@ -110,6 +111,8 @@ export class InviteView {
       if (e.kind === "shot" && time - this.lastHers > 0.7) {
         this.lastHers = time;
         this.show(this.hers, pick(HERS, e.n ?? 0, 1), 0, 0, 0, time + 0.8);
+      } else if (e.kind === "fizzled") {
+        this.pop("💨", e.x, 0.15, e.z, time); // (landed on the ground at its range: a puff)
       } else if ((e.kind === "hit" || e.kind === "blocked" || e.kind === "happy") && e.id !== undefined) {
         // Every letter that lands pops; one inside the creature's gap (spent) adds nothing, and gets no reply.
         if (e.kind !== "happy") this.pop(e.kind === "blocked" ? "💢" : e.spent ? "✨" : "💖", e.x, head(e.id) * 0.6, e.z, time);
@@ -152,10 +155,27 @@ export class InviteView {
       const L = I.letters[i];
       if (!L) { im.style.display = "none"; return; }
       im.style.display = "block";
-      place(im, L.x, groundLift(L.flown), L.z);
-      // End over end: squashed by the spin's cosine, flipped on the far side (snapped to a few steps, pixel-like).
-      const spin = Math.round(((time - L.at) * 3.2 + L.n * 0.37) * 8) / 8, cx = Math.cos(spin * Math.PI * 2);
-      im.style.transform = `scaleX(${(Math.sign(cx || 1) * Math.max(0.5, Math.abs(cx))).toFixed(2)})`; // (never thinner than half: it reads as a letter)
+      // A cache waits on the ground, bobbing; an orbiting one circles at her hand; the rest fly.
+      const y = L.kind === "cache" ? 0.35 + 0.12 * Math.sin((time - L.at) * 4 + L.n) : L.kind === "orbit" ? 1.3 : lobHeight(L.flown, L.range ?? this.game.tuning.invites.range, this.game.tuning.invites.arc ?? 0);
+      place(im, L.x, y, L.z);
+      // End over end (Ed, round 11: "rotate by pitching instead of yawing"): squashed top to bottom by the
+      // spin's cosine, upside down on the far side (snapped to a few steps, pixel-like); a small one (Spawn) smaller; a cache still.
+      const spin = L.kind === "cache" ? 0 : Math.round(((time - L.at) * 3.2 + L.n * 0.37) * 8) / 8, cy = Math.cos(spin * Math.PI * 2), sz = L.small ? 0.6 : 1;
+      im.style.transform = `scale(${sz}, ${(Math.sign(cy || 1) * Math.max(0.35, Math.abs(cy)) * sz).toFixed(2)})`; // (never thinner than a third: it reads as a letter)
+    });
+    // Lanterns (Glow-worm): little glowing hearts where the letters flew, fading out.
+    while (this.lanterns.length < I.lanterns.length) {
+      const d = document.createElement("div");
+      Object.assign(d.style, { position: "absolute", width: `${k * 2}px`, height: `${k * 2}px`, marginLeft: `${-k}px`, marginTop: `${-k}px`, background: "#ffd2f0", boxShadow: "0 0 6px 2px rgba(255,110,200,.85)" });
+      this.root.append(d);
+      this.lanterns.push(d);
+    }
+    this.lanterns.forEach((d, i) => {
+      const p = I.lanterns[i];
+      if (!p) { d.style.display = "none"; return; }
+      d.style.display = "block";
+      place(d, p.x, 1.1, p.z);
+      d.style.opacity = Math.max(0, Math.min(1, (p.until - time) / 0.3)).toFixed(2);
     });
 
     // The meters: a pill of hearts over each creature with some affection.
@@ -186,5 +206,12 @@ export class InviteView {
   }
 }
 
-/** A letter's height (m): thrown up from her hand and falling a little as it flies. */
-const groundLift = (flown: number) => 1.3 + Math.min(0.4, flown * 0.08) - flown * 0.02;
+/** Her hand's height (m), where a 💌 leaves from. */
+const HAND = 1.3;
+/** A letter's height (m) `flown` metres out (Ed, round 11: "they should arc a little and disappear when
+ *  they hit the ground"): a gentle lob from her hand, rising `arc` over the straight line down to the
+ *  ground at `range`, where the rules end it (fizzled) and it lands with a puff. */
+export const lobHeight = (flown: number, range: number, arc: number) => {
+  const f = Math.max(0, Math.min(1, flown / Math.max(1e-3, range)));
+  return HAND * (1 - f) + 4 * arc * f * (1 - f);
+};

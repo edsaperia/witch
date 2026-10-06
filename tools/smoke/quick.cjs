@@ -55,9 +55,13 @@ async function main() {
     check(true, "a key press starts the game");
     let [a, b] = await hold("ArrowRight", 5);
     check(b.mode === "ground" && b.x - a.x > 20, `flies on the ground (${(b.x - a.x).toFixed(0)} m east in ${(b.t - a.t).toFixed(1)} s)`);
-    await page.keyboard.press("Space");
+    // Right click dodges: a blink on the ground.
+    await page.mouse.click(640, 300, { button: "right" });
+    await page.waitForFunction(() => Number.isFinite(window.witch.game.witches[0].dash.at), null, { timeout: 60000, polling: 100 }).catch(() => {});
+    check(await page.evaluate(() => Number.isFinite(window.witch.game.witches[0].dash.at)), "right click dodges (a blink on the ground)");
+    await page.keyboard.press("KeyQ");
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 120000, polling: 100 }).catch(() => {});
-    check((await state()).mode === "treetop", "space rises to the treetops");
+    check((await state()).mode === "treetop", "Q rises to the treetops");
     [a, b] = await hold("ArrowUp", 5);
     check(a.z - b.z > 40, `flies in the treetops (${(a.z - b.z).toFixed(0)} m north in ${(b.t - a.t).toFixed(1)} s)`);
     check(b.trees > 20, `the forest is drawn (${b.trees} trees)`);
@@ -73,9 +77,9 @@ async function main() {
     fs.mkdirSync(path.dirname(shotPath), { recursive: true });
     await page.screenshot({ path: shotPath });
     log(`screenshot ${shotPath}`);
-    await page.keyboard.press("Space");
+    await page.keyboard.press("KeyQ");
     await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 120000, polling: 100 }).catch(() => {});
-    check((await state()).mode === "ground", "space descends to the ground");
+    check((await state()).mode === "ground", "Q descends to the ground");
   } catch (e) {
     errors.push(`stopped: ${e.message}`);
     try { fs.mkdirSync(path.dirname(shotPath), { recursive: true }); await page.screenshot({ path: shotPath }); } catch { /* none */ }

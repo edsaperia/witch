@@ -1,4 +1,6 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
+import { LEGEND_BUFFS } from "./rules/buffs";
+import { FrameStats } from "./platform/frameStats";
 import { Shake } from "./render/shake";
 import { Music } from "./platform/audio/music";
 import { Sfx } from "./platform/audio/sfx";
@@ -53,6 +55,8 @@ if (params.get("canopy") === "off") tuning.canopyShadow.on = false;
 if (params.get("mist") === "off") tuning.mist.on = false;
 const tilt = params.get("tilt");
 if (tilt === "off") tuning.tiltShift.on = false;
+// ?tiltsky=0: the sky over the bend left sharp by the tilt-shift, as it was before round 12.
+if (params.get("tiltsky") === "0") tuning.tiltShift.sky = false;
 else if (tilt === "before" || tilt === "after") { tuning.tiltShift.on = true; tuning.tiltShift.where = tilt; }
 // ?tilt=<strength>,<band>: the treetops' tilt-shift, to try values live (e.g. ?tilt=6,0.28).
 else if (tilt && /^[\d.]+(,[\d.]+)?$/.test(tilt)) { const [st, bd] = tilt.split(",").map(Number); tuning.tiltShift.on = true; tuning.tiltShift.treetop.strength = st; if (bd > 0) tuning.tiltShift.treetop.band = bd; }
@@ -67,10 +71,11 @@ if (runeParam && ["beam", "column", "both"].includes(runeParam)) tuning.runeMark
 // ?picker=noisy|near3|near3touch|nearest: how the party picks the next area to wake.
 const pickerParam = params.get("picker");
 if (pickerParam && ["noisy", "near3", "near3touch", "nearest"].includes(pickerParam)) tuning.party.picker = pickerParam;
-// ?glow=<reach>,<falloff>: the witch's glow, to tune live (e.g. ?glow=50,2.5).
+// ?glow=<reach>,<falloff>,<near>: the witch's glow, to tune live (e.g. ?glow=50,2.5,0.7; 0 keeps a value).
 const glowParam = params.get("glow")?.split(",").map(Number);
 if (glowParam && glowParam[0] > 0) { tuning.glowReach = glowParam[0]; tuning.glowFixed = true; }
 if (glowParam && glowParam[1] > 0) tuning.glowFalloff = glowParam[1];
+if (glowParam && glowParam[2] > 0) tuning.glowNear = glowParam[2];
 // The music's style (config/music-style.json) sets the beat everything pulses to.
 const musicStyle = musicStyleJson as unknown as MusicStyle;
 // The beat's base tempo is the style's; each wave's tempo is its arc step's (Ed: 120 rising to about 140).
@@ -94,6 +99,9 @@ else if (blendParam) { const [w, f, b] = blendParam.split(",").map(Number); tuni
 const borderParam = params.get("border")?.split(",").map(Number);
 if (borderParam) { const [tw, sr, sb] = borderParam; tuning.borders = { ...tuning.borders, ...(tw >= 0 ? { twinkle: tw } : {}), ...(sr >= 0 ? { swapRate: sr } : {}), ...(sb >= 0 ? { swapBeat: sb } : {}) }; }
 // ?grass=0..2: how thick the ground cover is (0 none).
+// ?lights=<n>: how many of the nearest point lights shade each pixel (the light budget; 0 none), to compare frame costs.
+const lightsParam = params.get("lights");
+if (lightsParam !== null && !isNaN(Number(lightsParam))) tuning.lightBudget = Math.max(0, Number(lightsParam));
 const grassParam = params.get("grass");
 if (grassParam !== null && !isNaN(Number(grassParam))) tuning.groundCover = { ...tuning.groundCover, density: Number(grassParam) };
 // ?wind=<strength>: the wind's sway (0 still).
@@ -153,6 +161,10 @@ const world = { ...WORLD_DEFAULT };
 }
 
 const game = newGame(seed, tuning);
+// ?buffs=fox,toad,stag (debug): these legends' buffs on from the start, whatever the legends do (a
+// species twice stacks it). ?buffs=all: every one.
+const buffsParam = params.get("buffs");
+if (buffsParam) game.buffs.forced = buffsParam === "all" ? Object.keys(LEGEND_BUFFS.species) : buffsParam.split(",").map(s => s.trim().toLowerCase().replace(/[^a-z]/g, "")).filter(Boolean);
 // ?quest=1 (the first quest, a demo): beside the nearest sleeping legend, with the creature it
 // dreams of on her stack; put its sigil down there (E) to make it happy.
 if (params.get("quest")) setupQuestDemo(game, (x, z) => {
@@ -186,6 +198,8 @@ const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = loadStyle();
 { const artStyle = params.get("style"); if (artStyle === "bold" || artStyle === "ref") style.artStyle = artStyle; } // ?style=now|bold|ref: a pixel-art style (art/stylise.js) baked into every sprite, carried to the art worker in the style
+if (params.get("props") === "gen") style.propGen = 1; // ?props=gen: the prop generator (art/props/) stands in for the moor's stones, cairns and pools and the broken trunks, several shapes of each, carried to the art worker in the style
+if (params.get("texture") === "0") style.texture = 0; // ?texture=0: creatures as before their fur, feathers and scales (art/genome/texture.js), to compare
 if (params.get("flora")) style.flora = params.get("flora"); // ?flora=new|fantasy|all|<ids>: every wooded area grows these tree species (art/flora), carried to the art worker in the style
 /** Load timings (ms since the page started): the view built (the page's own sprites drawn), ready to play. */
 const loadTimes = { viewStart: performance.now(), view: 0, ready: 0 };
@@ -310,11 +324,21 @@ const waveEl = document.getElementById("wave")!, waveFill = waveEl.querySelector
 function waveHud(): void {
   const cd = waveCountdown(game.party, game.map, game.clock.time);
   waveFill.style.height = `${(1 - cd.gone) * 100}%`;
-  const clock = (s: number) => (s >= 60 ? `${Math.floor(s / 60)}:${String(Math.ceil(s) % 60).padStart(2, "0")}` : `${Math.ceil(s)} s`);
+  const clock = (s: number) => { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; };
   const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : cd.left >= 60 ? `${Math.floor(cd.left / 60)}:${String(Math.ceil(cd.left) % 60).padStart(2, "0")}` : `${Math.ceil(cd.left)} s`;
   waveLabel.textContent = `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}`;
   waveEl.classList.toggle("paused", game.party.paused);
+  // The boot-up over (Ed, 2026-10-05: five quiet minutes from her first step): a quiet word by the bar.
+  if (!bootShown && !cd.booting && game.party.bootUntil > 0 && game.clock.time >= game.party.bootUntil && tuning.party.interval < 1e9) {
+    bootShown = true;
+    const pop = document.createElement("div");
+    pop.className = "boot-pop";
+    pop.textContent = `speakers up · wave 1 in ${clock(cd.left)}`;
+    waveEl.append(pop);
+    setTimeout(() => pop.remove(), 4000);
+  }
 }
+let bootShown = false;
 // A soundsystem lost (Ed, 2026-10-05): the next wave comes sooner, and the countdown shows it: the
 // bar shrinks with a flash, and the seconds taken off pop out beside it ("−60 s", "wave now!").
 let lossShown = -1;
@@ -438,21 +462,30 @@ shakeEl?.addEventListener("pointerdown", e => {
   showShakeOpt();
 });
 let shaken = false;
+// ?subpixel=0: the camera's old whole-art-pixel steps, to compare (on by default: Ed, 2026-10-05, "it feels low").
+const subpixelOn = params.get("subpixel") !== "0";
 function applyShake(): void {
   const W = game.witches[0];
   shake.watch(W.health, !!W.ko, tuning.witchHealth.hits, game.clock.time);
   const o = shake.offset(game.clock.time, tuning.pixelSize);
-  if (o.amount <= 0) { if (shaken) { canvas.style.transform = ""; shaken = false; } return; }
+  // The camera's sub-pixel glide (view.subpixel): the snap it took off, given back in whole screen pixels.
+  const p = tuning.pixelSize, gx = subpixelOn ? Math.round(view.subpixel.x * p) : 0, gy = subpixelOn ? Math.round(view.subpixel.y * p) : 0;
+  if (o.amount <= 0) {
+    if (gx || gy) { canvas.style.transform = `translate(${gx}px, ${gy}px)`; shaken = true; }
+    else if (shaken) { canvas.style.transform = ""; shaken = false; }
+    return;
+  }
   // Zoomed in just enough that no edge shows while it's off centre and turned.
   const w = window.innerWidth, h = window.innerHeight, turn = Math.abs((o.rot * Math.PI) / 180) * 0.5 * Math.hypot(w, h);
   const zoom = 1 + (2 * (Math.max(Math.abs(o.x), Math.abs(o.y)) + turn)) / Math.min(w, h);
-  canvas.style.transform = `translate(${o.x}px, ${o.y}px) rotate(${o.rot.toFixed(3)}deg) scale(${zoom.toFixed(4)})`;
+  canvas.style.transform = `translate(${o.x + gx}px, ${o.y + gy}px) rotate(${o.rot.toFixed(3)}deg) scale(${zoom.toFixed(4)})`;
   shaken = true;
 }
 document.addEventListener("visibilitychange", () => { if (document.hidden) last = 0; });
 
 let lastDraw = 0;
-let last = 0, fps = 60, frames = 0, fpsT = 0;
+let last = 0;
+const frameStats = new FrameStats(view.renderer.getContext());
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
 let manual = false;
@@ -464,8 +497,8 @@ function frame(now: number): void {
   if (manual) return;
   const dt = last ? (now - last) / 1000 : 0;
   last = now;
-  frames++; fpsT += dt;
-  if (fpsT >= 0.5) { fps = frames / fpsT; frames = 0; fpsT = 0; }
+  const work0 = performance.now();
+  frameStats.frame(dt * 1000);
   freeze.pollPad();
   const c = input.read();
   if (c.toggleAutoTalk) setAutoTalk(!autoTalk);
@@ -493,13 +526,16 @@ function frame(now: number): void {
   if (game.clock.paused && !freeze.frozen && now - lastDraw < 300) return;
   lastDraw = now;
   // Drawn between the last two fixed steps (game time: party transitions, sigils and waves are stamped in it).
+  frameStats.beginGpu();
   interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP)));
+  frameStats.endGpu();
+  frameStats.work(performance.now() - work0);
   applyShake();
   freeze.update();
   if (debugOn) {
     const w = game.witch, s = view.stats;
     debugEl.textContent = [
-      `fps    ${fps.toFixed(0)}`,
+      ...frameStats.lines(),
       `seed   ${seed}`,
       `area   ${areaUnderWitch(game)}`,
       `mode   ${w.mode}`,

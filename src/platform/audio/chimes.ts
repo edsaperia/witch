@@ -1,7 +1,7 @@
 // The short tuned sounds, all in the music's key (the style's root, a minor pentatonic) so a hose
 // of 💌s or a run of chimes sits in the track rather than on it: a 💌's chime, the affection tick
 // and the invite flourish; a creature turning enraged or happy; the stings (a soundsystem lost, a
-// relic found); the dizzy twinkle of a stun.
+// relic found, the boot-up over); the dizzy twinkle of a stun; a 💌 landing on the ground.
 import type { SfxKit } from "./sfxKit";
 import { degree, grit, mtof } from "./dsp";
 
@@ -126,4 +126,39 @@ export function twinkle(K: SfxKit, i: number, pan = 0): void {
   const N = K.T.knock, c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan + 0.4 * Math.sin(i * 1.3));
   const f = mtof(degree(K.root + 48, [0, 2, 4, 2, 1, 3][i % 6]));
   for (const [r, l] of [[1, 1], [2.76, 0.3]]) { const g = c.createGain(); g.connect(out); K.env(g, at, N.volume * N.twinkle * l, 0.002, 0.16); K.osc("sine", f * r, at, 0.2, g); }
+}
+
+/** A 💌 that met no one coming down on the ground (invites' "fizzled": thrown its full range): a
+ *  soft papery puff, a flutter of air and the faintest pat. */
+export function land(K: SfxKit, pan = 0, near = 1): void {
+  const L = K.T.land;
+  if (!K.ready("land", L.gap)) return;
+  const c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan), vol = L.volume * near;
+  const bp = c.createBiquadFilter(), g = c.createGain(); bp.type = "bandpass"; bp.Q.value = 0.9;
+  bp.frequency.setValueAtTime(2400, at); bp.frequency.exponentialRampToValueAtTime(900, at + 0.09);
+  g.connect(out); K.env(g, at, vol, 0.006, 0.09);
+  bp.connect(g); K.noiseBurst(at, 0.12, bp, Math.random());
+  const p = c.createGain(); p.connect(out); K.env(p, at + 0.01, vol * 0.5, 0.002, 0.05);
+  const o = K.osc("sine", 240, at + 0.01, 0.07, p); o.frequency.exponentialRampToValueAtTime(140, at + 0.06);
+}
+
+/** The boot-up over (home's speakers all on, the first wave's countdown begun): things stirring. A
+ *  low drone breathing in under the music, the key's chord opening above it, and a few far bells
+ *  waking one by one, rising, in the legends' big space: the forest waking up, gently. */
+export function stir(K: SfxKit): void {
+  const S = K.T.stir, c = K.ctx, at = c.currentTime + 0.05, vol = S.volume, len = 4.5, out = K.voice(0);
+  // the drone and the chord: a low root swelling in, the chord's notes opening through a filter
+  const lp = c.createBiquadFilter(), g = c.createGain(); lp.type = "lowpass"; lp.Q.value = 2;
+  lp.frequency.setValueAtTime(250, at); lp.frequency.exponentialRampToValueAtTime(2600, at + len * 0.7); lp.frequency.exponentialRampToValueAtTime(600, at + len);
+  g.connect(out); g.connect(K.space());
+  g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol * 0.5, at + len * 0.6); g.gain.exponentialRampToValueAtTime(0.0001, at + len);
+  lp.connect(g);
+  for (const [m, det] of [[0, -6], [7, 5], [12, -4], [15, 7], [19, -3]]) { const o = K.osc("sawtooth", mtof(K.root + m), at, len, lp); o.detune.value = det; }
+  const sub = c.createGain(); sub.connect(out); sub.gain.setValueAtTime(0.0001, at); sub.gain.exponentialRampToValueAtTime(vol * 0.4, at + len * 0.5); sub.gain.exponentialRampToValueAtTime(0.0001, at + len);
+  K.osc("sine", mtof(K.root - 12), at, len, sub);
+  // the bells waking: up the pentatonic, slowing, each fainter and further off
+  [0, 2, 4, 5, 7].forEach((k, i) => {
+    const t = at + 0.9 + i * (0.35 + i * 0.08), f = mtof(degree(K.root + 24, k));
+    for (const [r, l, d] of [[1, 1, 1.6], [2.76, 0.3, 0.7]]) { const b = c.createGain(); b.connect(out); b.connect(K.space()); K.env(b, t, vol * 0.35 * l * (1 - i * 0.12), 0.004, d); K.osc("sine", f * r, t, d + 0.1, b); }
+  });
 }
