@@ -234,6 +234,16 @@ if (params.has("scenery") && sceneryAt > 0) view.sceneryFixed = sceneryAt;
 const input = new Input();
 input.aimFrom = (x, y) => view.aimAt(x, y);
 const aimHud = new AimHud(canvas); // the reticle where the mouse aims: 💌 range and the dodge's recharge
+/** Where a dodge would put her now (toward the cursor, rules/dash.ts), in client pixels, for the reticle's mark. */
+const landV = new Vector3();
+function dashLanding(): { x: number; y: number } | null {
+  const a = input.lastAim, D = game.buffs.tuning.dash, W = game.witch;
+  if (!a || !D.toCursor || W.mode !== "ground") return null;
+  const l = Math.hypot(a.x, a.z), dx = l >= D.aimDead ? a.x / l : W.facing, dz = l >= D.aimDead ? a.z / l : 0;
+  placed(landV.set(W.x + dx * D.distance, 0, W.z + dz * D.distance)).project(view.camera);
+  const r = canvas.getBoundingClientRect();
+  return { x: r.left + (landV.x * 0.5 + 0.5) * r.width, y: r.top + (-landV.y * 0.5 + 0.5) * r.height };
+}
 document.getElementById("next-wave")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.nextWave = true; });
 document.getElementById("pause-waves")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.pauseWaves = true; });
 setupTouch(document.body, input.touch);
@@ -583,7 +593,7 @@ function frame(now: number): void {
   frameStats.beginGpu();
   interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP)));
   frameStats.endGpu();
-  aimHud.update(game, game.clock.time, input.cursor, input.lastAim, startEl.style.display === "none" && !game.over);
+  aimHud.update(game, game.clock.time, input.cursor, input.lastAim, startEl.style.display === "none" && !game.over, dashLanding());
   frameStats.work(performance.now() - work0);
   if (!game.clock.paused) stallLog.frame({ t: game.clock.time, gap: dt * 1000, work: performance.now() - work0, step: stepMs, parts: { ...view.ms, ...outside }, mode: game.witch.mode, x: game.witch.x, z: game.witch.z, wave: game.party.wave, creatures: game.creatures.length });
   applyShake();

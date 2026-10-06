@@ -329,7 +329,7 @@ function fixedStep(g: Game, controls: Controls): void {
   // (A press is held for dash.buffer seconds until it can go: pressed a moment early still blinks.)
   if (c.dash) W.dash.bufferUntil = g.clock.time + t.dash.buffer;
   if (g.clock.time <= (W.dash.bufferUntil ?? -Infinity) && !W.ko && !stunned(W.knock, g.clock.time)
-    && startDash(W.dash, was, c.moveX, c.moveZ, g.clock.time, t, g.map.bounds, (x, z) => blinkClear(g, x, z), charges, H.charges.chain)) {
+    && startDash(W.dash, was, c.moveX, c.moveZ, g.clock.time, t, g.map.bounds, (x, z) => blinkClear(g, x, z), charges, H.charges.chain, c.aimX ?? 0, c.aimZ ?? 0)) {
     W.dash.bufferUntil = undefined;
     if (M.decoy > 0) dropCache(W.invites, was.x, was.z, g.clock.time, t, M);
   }
