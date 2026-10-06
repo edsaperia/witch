@@ -326,7 +326,8 @@ function waveHud(): void {
   waveFill.style.height = `${(1 - cd.gone) * 100}%`;
   const clock = (s: number) => { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; };
   const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : cd.left >= 60 ? `${Math.floor(cd.left / 60)}:${String(Math.ceil(cd.left) % 60).padStart(2, "0")}` : `${Math.ceil(cd.left)} s`;
-  waveLabel.textContent = `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}`;
+  // (only in debug: the art review's round 1 found it sitting on the art; the next stone's ring carries the countdown)
+  waveLabel.textContent = debugOn ? `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}` : "";
   waveEl.classList.toggle("paused", game.party.paused);
   // The boot-up over (Ed, 2026-10-05: five quiet minutes from her first step): a quiet word by the bar.
   if (!bootShown && !cd.booting && game.party.bootUntil > 0 && game.clock.time >= game.party.bootUntil && tuning.party.interval < 1e9) {
