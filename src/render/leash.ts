@@ -505,6 +505,7 @@ export class LeashView {
         // nobody hurt). A legend's blow, all bigger.
         const top = (c && this.tops.get(c.id)) ?? 1.6, big = e.big ? 2 : 1, bits = c ? hitBits(c.species, c.leashed || c.legendState === "happy") : HIT_BITS.fur, col = bits === HIT_BITS.confetti && c ? neon(c.species) : c ? coatOf(c.species, 0.75) : bits;
         this.fx.push({ kind: "flash", x: e.x, y: Math.min(3.5, top * 0.55), z: e.z, at: time, life: 0.16 * big, r: 1, g: 1, b: 0.95, seed: e.at * 53 + (e.id ?? 0), size: 0.9 * big });
+        if (e.big) this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.45, r: 1, g: 0.85, b: 0.6, seed: 0, size: 3.2, n: 28, dot: 0.8 }); // a legend's blow: a shockwave along the ground
         this.fx.push({ kind: "dust", x: e.x, y: 0.2, z: e.z, at: time, life: 0.5, r: 0.5, g: 0.45, b: 0.38, seed: e.at * 59 + (e.id ?? 0), size: 0.7 * big });
         this.fx.push({ kind: "bits", x: e.x, y: Math.min(3, top * 0.6), z: e.z, at: time, life: 0.8, r: col.r, g: col.g, b: col.b, seed: e.at * 61 + (e.id ?? 0), size: big, n: bits === HIT_BITS.confetti ? 12 : 8 });
       }
@@ -668,11 +669,21 @@ export class LeashView {
       }
       // Charging (the boar): dust kicked up behind it.
       if (c.charge && (c.charge.from === undefined || time >= c.charge.from)) for (let i = 0; i < (c.charge.braking ? 6 : 4); i++) { const q = hash2(c.id, Math.floor(time * 20) + i, 17); this.standing.add(c.x - c.charge.dx * (0.8 + i * 0.5), 0.3 + q * 0.4, c.z - c.charge.dz * (0.8 + i * 0.5), 0.5 + i * 0.15, dot, 0.75, 0.65, 0.5, 0.5 - i * 0.1); }
+      // The boar's charge throws up petals with its dust (Ed, 2026-10-06: dust and petals for the boar, a party).
+      if (c.charge && c.species === "boar" && (c.charge.from === undefined || time >= c.charge.from)) for (let i = 0; i < 4; i++) { const q = hash2(c.id, Math.floor(time * 12) + i, 29), age = (time * 12) % 1; this.solid.add(c.x - c.charge.dx * (1 + i * 0.7) + (q - 0.5) * 1.2, 0.5 + q * 1.2 + age * 0.5, c.z - c.charge.dz * (1 + i * 0.7) + (hash2(c.id, i, 31) - 0.5) * 1.2, artPx * 2, sq, 0.85, 0.45 + q * 0.25, 0.6, 0.9 - i * 0.15); } // (petals: art-pixel squares, not glowing)
+      // A lunge (the dash-strike): dust kicked up behind it and a streak of speed along its way.
+      const lg = c.fight?.lunge;
+      if (lg && lg.left > 0.05) for (let i = 0; i < 5; i++) { const q = hash2(c.id, Math.floor(time * 30) + i, 37); this.solid.add(c.x - lg.dx * (0.6 + i * 0.6), 0.25 + q * 0.3, c.z - lg.dz * (0.6 + i * 0.6), 0.45 + i * 0.12, dot, 0.5, 0.45, 0.38, 0.45 - i * 0.08); this.standing.add(c.x - lg.dx * (0.4 + i * 0.5), 0.9 + (q - 0.5) * 0.5, c.z - lg.dz * (0.4 + i * 0.5), 0.12, dot, 1, 1, 0.95, 0.7 - i * 0.13); }
+      // Slowed (a barb, a web): a cold drift of motes round its feet while it lasts.
+      if (c.slowUntil !== undefined && time < c.slowUntil) for (let i = 0; i < 6; i++) { const a = time * 1.5 + (i / 6) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 0.8, 0.15 + 0.15 * Math.sin(time * 3 + i), c.z + Math.sin(a) * 0.55, 0.18, dot, 0.55, 0.75, 1, 0.75); }
       // Telegraphs: winding up, a ring tightens at its feet; a shot shows its line; the quake its reach.
       const f = c.fight, atk = f && f.windupUntil > 0 ? attackOf(c.species, c.level) : null;
       if (atk && f) {
         const A = (f.move && attackNamed(f.move)) || atk.attack, k = Math.max(0, Math.min(1, 1 - (f.windupUntil - time) / Math.max(0.05, A.windup))), wild = !c.leashed && c.legendState !== "happy"; // (a happy legend fights for her, in her colours)
         const [r, gg, b] = wild ? [1, 0.3, 0.3] : [neon(c.species).r, neon(c.species).g, neon(c.species).b];
+        // The anticipation's cue: a glint over its head as it starts winding up (Ed, 2026-10-06: wind-ups that read).
+        if (k < 0.35) { const y = (this.tops.get(c.id) ?? 1.4) + 0.5, R = SPRITE_UNIFORMS.uRight.value, e = 1 - k / 0.35, L = 0.35 * (0.5 + 0.5 * Math.sin(k * 30)) + 0.2;
+          this.over.add(c.x, y, c.z, 0.32 * e + 0.1, dot, 1, 1, 0.85, e); for (const [ox, oy] of [[L, 0], [-L, 0], [0, L], [0, -L]]) this.over.add(c.x + R.x * ox, y + oy, c.z + R.z * ox, 0.12, dot, 1, 0.95, 0.7, e); }
         if (A.delivery === "quake" || A.delivery === "pulse") {
           const R = A.radius ?? 5;
           for (let i = 0; i < 40; i++) { const a = (i / 40) * Math.PI * 2; this.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.5, dot, r, gg * 0.6, b * 0.6, 0.25 + 0.6 * k); }
