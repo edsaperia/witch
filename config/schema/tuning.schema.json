@@ -6131,11 +6131,16 @@
         "edge": {
           "type": "number",
           "minimum": 0
+        },
+        "whole": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "screenFraction",
-        "edge"
+        "edge",
+        "whole"
       ],
       "additionalProperties": false
     },
