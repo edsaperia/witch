@@ -15,7 +15,8 @@ import { befriend, danceAt, invitableNow, runeNear, stateOf, STATES } from "./cr
 import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, SLOT_RANGE, SPOT_RANGE } from "./partyGuests";
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
-import { castPartySpell, cellKey, heldBySpell, hurryWave, newParty, speakersOn, spreadWave, stepParty, type PartyState } from "./party";
+import { castPartySpell, cellKey, heldBySpell, hurryWave, newParty, spreadWave, stepParty, type PartyState } from "./party";
+import { stoneTurned } from "./bootRing";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { exitPoint } from "./mapShape";
 import { nextSpeakerState, type SpeakerState } from "./speakers";
@@ -627,8 +628,9 @@ export function floorInputs(g: Game): FloorInputs {
 // Until the pulse drives it (the rendering builder's: bootSpeaker), they turn one by one round the ring over the boot, as
 // speakersOn always counted; a run that starts after the boot has them all speakers.
 function stepSpeakerBoot(g: Game): void {
-  const n = g.speakerBoot.length, on = speakersOn(g.party, g.map, g.clock.time, n);
-  for (let i = 0; i < on; i++) if (g.speakerBoot[i] === null) bootSpeaker(g, i);
+  // The boot's pulse round the ring (rules/bootRing.ts): each speaker turns as the pulse reaches its stone, clockwise
+  // from the top, from the party spell on.
+  for (let i = 0; i < g.speakerBoot.length; i++) if (g.speakerBoot[i] === null && stoneTurned(g.party, g.map, g.clock.time, i)) bootSpeaker(g, i);
 }
 /** The boot pulse reaches home speaker i now: it starts turning from a runestone into its speaker (once). */
 export function bootSpeaker(g: Game, i: number): void {

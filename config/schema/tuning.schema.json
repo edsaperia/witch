@@ -3381,6 +3381,10 @@
           "type": "number",
           "minimum": 0
         },
+        "minFromStone": {
+          "type": "number",
+          "minimum": 0
+        },
         "rim": {
           "type": "object",
           "properties": {
@@ -3469,6 +3473,7 @@
         "radius",
         "edge",
         "top",
+        "minFromStone",
         "rim",
         "grove",
         "species"
@@ -5095,6 +5100,28 @@
           ],
           "additionalProperties": false
         },
+        "slow": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "pitch": {
+              "type": "number",
+              "minimum": 0
+            },
+            "floor": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "pitch",
+            "floor"
+          ],
+          "additionalProperties": false
+        },
         "clear": {
           "type": "number",
           "minimum": 0
@@ -5116,6 +5143,7 @@
         "muffle",
         "audible",
         "circle",
+        "slow",
         "clear",
         "distort",
         "src"
