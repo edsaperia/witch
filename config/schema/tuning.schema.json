@@ -3357,6 +3357,10 @@
           "type": "number",
           "minimum": 0
         },
+        "minFromStone": {
+          "type": "number",
+          "minimum": 0
+        },
         "rim": {
           "type": "object",
           "properties": {
@@ -3445,6 +3449,7 @@
         "radius",
         "edge",
         "top",
+        "minFromStone",
         "rim",
         "grove",
         "species"
