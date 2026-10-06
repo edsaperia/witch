@@ -36,8 +36,13 @@
     #clock .boot-pop { color: var(--accent); animation: boot-pop 4s ease-out forwards; }
     @keyframes boot-pop { 0% { opacity: 0; } 10%, 75% { opacity: 1; } 100% { opacity: 0; } }
     @keyframes loss-pop { 0% { opacity: 0; transform: translateX(-50%) scale(1.8); } 12% { opacity: 1; transform: translateX(-50%) scale(1); } 70% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, 60%); } }
-    #over { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(8, 6, 18, .78); z-index: 6; }
-    #over.on { display: flex; }
+    #over { position: fixed; left: 0; right: 0; top: 58px; display: none; justify-content: center; z-index: 6; pointer-events: none; }
+    #over.on { display: flex; animation: overIn 2.4s ease-out both; }
+    #over.on .card { pointer-events: auto; background: rgba(20, 16, 38, .55); padding: 8px 14px; font-size: 12px; max-width: 24em; position: relative; }
+    #over.on h1 { font-size: 15px; }
+    #over.on button { padding: 4px 10px; margin-top: 8px; }
+    #over.on #over-close { position: absolute; top: 2px; right: 4px; margin: 0; padding: 0 6px; border: none; background: none; }
+    @keyframes overIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
     #over button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid #3a2f5c; border-radius: 6px; padding: 8px 14px; margin-top: 14px; cursor: pointer; }
     #start { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(8, 6, 18, .78); cursor: pointer; z-index: 5; }
     #start .card, #over .card { max-width: 30em; margin: 16px; padding: 22px 24px; background: var(--panel); border: 1px solid #3a2f5c; border-radius: 10px; text-align: center; }
@@ -112,7 +117,7 @@
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
     .bubble .bar i { display: block; height: 100%; background: var(--love); }
   </style>
-  <script type="module" crossorigin src="./assets/index-B1cadVKb.js"></script>
+  <script type="module" crossorigin src="./assets/index-UgMatA6R.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-DnShPyXc.css">
 </head>
 <body>
@@ -135,7 +140,7 @@
     <div class="tbtn" id="dash">dash</div>
     <div class="tbtn" id="invite">💌</div>
   </div>
-  <div id="over"><div class="card"><h1>THE PARTY'S OVER</h1><div>Every soundsystem has fallen.</div><div id="over-stats"></div><button id="again">Play again</button> <button id="fresh">A new forest</button></div></div>
+  <div id="over"><div class="card"><button id="over-close" title="Hide">×</button><h1>THE PARTY'S OVER</h1><div>Everyone's gone home to sleep 😴. Wander as long as you like.</div><div id="over-stats"></div><button id="again">Play again</button> <button id="fresh">A new forest</button></div></div>
   <div id="start" class="loading">
     <div class="card">
       <h1>WITCH</h1>
