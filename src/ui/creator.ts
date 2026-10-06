@@ -112,6 +112,18 @@ export class Creator {
   private panel = document.createElement("div");
   private g: Genome;
   private frames: { hover: HTMLCanvasElement[]; stand: HTMLCanvasElement[] } = { hover: [], stand: [] };
+  /** Her idle moments' frames (baked a moment after the last change, a pose a frame, so dragging a slider stays smooth). */
+  private idle = new Map<string, HTMLCanvasElement[]>();
+  private idleQueue: string[] = [];
+  private idleAt = 0;
+  private bakeFrame: ((o: object) => HTMLCanvasElement) | null = null;
+  /** What she's doing now, if not just standing: an idle moment, or showing off a change. */
+  private act: { pose: string; start: number; fps: number; loops: number; flip: boolean } | null = null;
+  private nextAct = 0;
+  private showOff = false;
+  private drawn = false;
+  /** When the forest was ready (the fairy lights' all-on blink). */
+  private readyAt = 0;
   private dirty = true;
   private raf = 0;
   /** The colour part being picked. */
@@ -365,6 +377,34 @@ export class Creator {
     };
     const stand = (Art.WITCH_FOOT_POSES as Record<string, { frames: number }>).stand?.frames ?? 1;
     this.frames = { hover: [0, 1, 2].map(frame => bake({ frame })), stand: Array.from({ length: stand }, (_, frame) => bake({ pose: "stand", frame })) };
+    // her idle moments, baked shortly (each pose in its own frame), and the one playing stopped: it was the old look
+    if (this.frames.stand.length && this.drawn) this.showOff = true; // (not the first drawing: a change to show off)
+    this.drawn = true;
+    this.bakeFrame = bake; this.idle.clear(); this.idleQueue = IDLES.map(i => i.pose).filter((p, i, a) => a.indexOf(p) === i && p !== "stand"); this.idleAt = performance.now() / 1000 + .35;
+    if (this.act && this.act.pose !== "stand") this.act = null;
+  }
+  /** Bakes one queued idle pose, once the look has been still a moment. */
+  private bakeIdle(t: number): void {
+    if (!this.idleQueue.length || t < this.idleAt || !this.bakeFrame) return;
+    const pose = this.idleQueue.shift()!, n = (Art.WITCH_FOOT_POSES as Record<string, { frames: number }>)[pose]?.frames ?? 0;
+    if (n) this.idle.set(pose, Array.from({ length: n }, (_, frame) => this.bakeFrame!({ pose, frame })));
+  }
+  /** Her idle life on the rug (the overnight brief: "small idle animations for the witch"): now and then a moment from
+   *  IDLES; after a change, a spin to show it off. Returns the frame to draw and whether it's turned round. */
+  private standing(t: number): { fr: HTMLCanvasElement | undefined; flip: boolean } {
+    if (this.showOff && this.idle.has("spin")) { this.showOff = false; this.act = { pose: "spin", start: t, fps: 8, loops: 1, flip: false }; }
+    if (!this.act && t > this.nextAct && this.nextAct) {
+      const ready = IDLES.filter(i => i.pose === "stand" || this.idle.has(i.pose)), pick = ready[Math.floor(Math.random() * ready.length)];
+      if (pick) this.act = { pose: pick.pose, start: t, fps: pick.fps, loops: pick.loops, flip: !!pick.flip };
+    }
+    if (!this.nextAct) this.nextAct = t + 3;
+    const a = this.act;
+    if (a) {
+      const frames = a.pose === "stand" ? this.frames.stand : this.idle.get(a.pose) ?? [], k = Math.floor((t - a.start) * a.fps), len = frames.length * a.loops;
+      if (frames.length && k < len) return { fr: frames[k % frames.length], flip: a.flip };
+      this.act = null; this.nextAct = t + 4 + Math.random() * 5;
+    }
+    return { fr: this.frames.stand[Math.floor(t * 2) % Math.max(1, this.frames.stand.length)], flip: false };
   }
 
   private loop = (): void => {
@@ -373,6 +413,7 @@ export class Creator {
     if (this.dirty) { this.dirty = false; this.redraw(); }
     // The world building behind: its progress on the bar and the Start button; once ready, a waiting Start goes.
     const pr = this.progress(), built = pr.total ? pr.done / pr.total : 1;
+    if (pr.ready && !this.readyAt) this.readyAt = performance.now() / 1000;
     if (this.bar) this.bar.style.width = `${Math.round((pr.ready ? 1 : Math.min(.97, built)) * 100)}%`;
     if (this.startBtn) {
       const want = this.waiting && !pr.ready ? `getting ready… ${Math.round(built * 100)}%` : pr.ready ? "Start ▶" : `Start ▶ · the forest ${Math.round(built * 100)}%`;
@@ -390,16 +431,18 @@ export class Creator {
     x.clearRect(0, 0, W, H);
     x.drawImage(room.lit, 0, 0);
     drawGlows(x, room, t);
+    fairyProgress(x, room, pr.ready ? 1 : Math.min(.97, built), this.readyAt ? t - this.readyAt : -1);
     x.drawImage(room.banner, 0, 0);
+    this.bakeIdle(t);
     // her: on the rug in a pool of light (the art director: "she's the brightest figure and the rug frames her"), standing,
     // or hovering over it, bobbing
-    const fr = this.flying ? this.frames.hover[Math.floor(t * 6) % 3] : this.frames.stand[Math.floor(t * 2) % Math.max(1, this.frames.stand.length)];
+    const now = this.flying ? { fr: this.frames.hover[Math.floor(t * 6) % 3], flip: false } : this.standing(t), fr = now.fr;
     if (!fr) return;
     const [sx, sy] = room.a.stand, bob = this.flying ? Math.round(Math.sin(t * 2) * 1.5) - 6 : 0;
     pool(x, sx, sy, fr.width);
     const fx = Math.round(sx - fr.width / 2), fy = Math.round(sy - fr.height + bob);
     if (this.flying) { x.fillStyle = "rgba(0,0,0,.35)"; x.fillRect(Math.round(sx - fr.width * .25), Math.round(sy) - 1, Math.round(fr.width * .5), 2); }
-    x.drawImage(fr, fx, fy);
+    if (now.flip) { x.save(); x.translate(fx + fr.width, fy); x.scale(-1, 1); x.drawImage(fr, 0, 0); x.restore(); } else x.drawImage(fr, fx, fy);
   };
 
   /** The room, as big as fits beside the panel at a whole number of screen pixels to its art pixel; the night behind. */
@@ -470,6 +513,31 @@ function buildRoom(st: Style): Room {
     return { mat, c };
   });
   return { lit, banner, glows, a, lights };
+}
+/** Her idle moments: a pose from the witch's on-foot poses, its speed, how many times through, turned round or not. */
+const IDLES: { pose: string; fps: number; loops: number; flip?: boolean }[] = [
+  { pose: "liftSigil", fps: 4, loops: 1 },          // reaching up to set her hat straight
+  { pose: "spin", fps: 8, loops: 1 },               // a twirl, to see the outfit
+  { pose: "bounce", fps: 5, loops: 3 },             // can't wait for the party
+  { pose: "laugh", fps: 6, loops: 2 },
+  { pose: "stargaze", fps: 1.5, loops: 2 },         // looking up, out of the window
+  { pose: "twoStep", fps: 6, loops: 2 },            // practising a step
+  { pose: "stand", fps: 2, loops: 4, flip: true },  // turning to look round the room
+];
+/** The fairy lights as the loading bar (the overnight brief: "a progress hint as the forest builds"): lit one by one along the
+ *  walls as the forest grows, the rest dark; once it's ready, every one flashes twice. */
+function fairyProgress(x: CanvasRenderingContext2D, room: Room, built: number, sinceReady: number): void {
+  const F = room.a.fairy, lit = Math.floor(built * F.length);
+  x.save();
+  x.globalCompositeOperation = "source-over";
+  F.forEach(([px, py], i) => {
+    const cx = Math.round(px), cy = Math.round(py);
+    if (i >= lit) { x.fillStyle = "#2b1d24"; x.fillRect(cx - 1, cy - 1, 2, 2); } // not yet: a dark bulb
+  });
+  x.globalCompositeOperation = "lighter";
+  if (sinceReady < 0 && lit > 0) halo(x, F[lit - 1], 3, [255, 120, 210], .3); // the newest one, brightest
+  if (sinceReady >= 0 && sinceReady < 1.2 && Math.floor(sinceReady * 5) % 2 === 0) F.forEach(p => halo(x, p, 3, [255, 200, 240], .25));
+  x.restore();
 }
 /** The pool of light on the rug where she stands: two hard-edged steps of warm light, an ellipse as the floor is seen. */
 function pool(x: CanvasRenderingContext2D, cx: number, cy: number, w: number): void {
