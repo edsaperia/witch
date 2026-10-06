@@ -15,9 +15,11 @@ import type { PartyWitch } from "../rules/partyWitches";
 
 export interface SwoopTrailTuning {
   on: boolean;
-  /** Seconds each stretch of it lasts after she passed; its width (m); its brightness. */
+  /** Seconds each stretch of it lasts after she passed; its width (m), wider by distance from the camera past near metres
+   *  (so from the treetops it reads as a streak, not a thread); its brightness. */
   life: number;
   width: number;
+  near: number;
   bright: number;
   /** Turns of the colour wheel a second, and per metre along it. */
   hueSpeed: number;
@@ -28,7 +30,7 @@ export interface SwoopTrailTuning {
   slots: number;
 }
 
-export const SWOOP_TRAIL_DEFAULT: SwoopTrailTuning = { on: true, life: 1.4, width: 1.8, bright: 2.2, hueSpeed: 0.3, hueSpread: 0.015, liftFade: 3, slots: 96 };
+export const SWOOP_TRAIL_DEFAULT: SwoopTrailTuning = { on: true, life: 1.4, width: 1.8, near: 50, bright: 2.2, hueSpeed: 0.3, hueSpread: 0.015, liftFade: 3, slots: 96 };
 
 /** Points of a path kept per trail. */
 const N = 40;
@@ -39,16 +41,17 @@ const DYNAMIC = ["position", "aDir", "aT", "aA", "aHue"];
 const VERT = /* glsl */ `
 attribute vec3 aDir;
 attribute float aSide, aT, aA, aHue;
-uniform float uWidth;
+uniform float uWidth, uNear;
 varying float vSide, vA, vHue, vS;
 ${HEIGHT_VERT_GLSL}
 void main() {
   vec3 p = onGround(position);
   // across the ribbon: square to its way and to the camera, so a climb straight up still shows its width
-  vec3 side = cross(aDir, normalize(cameraPosition - p));
+  vec3 toCam = cameraPosition - p;
+  vec3 side = cross(aDir, normalize(toCam));
   float l = length(side);
   side = l > 1e-4 ? side / l : vec3(1.0, 0.0, 0.0);
-  float w = uWidth * (0.25 + 0.75 * (1.0 - aT)) * (0.6 + 0.4 * smoothstep(0.0, 0.06, aT));
+  float w = uWidth * max(1.0, length(toCam) / uNear) * (0.25 + 0.75 * (1.0 - aT)) * (0.6 + 0.4 * smoothstep(0.0, 0.06, aT));
   p += side * aSide * w * 0.5;
   vSide = aSide; vA = aA; vHue = aHue; vS = aT;
   gl_Position = clipOf(p);
@@ -89,7 +92,7 @@ export class SwoopTrails {
   private hue: Float32Array;
   private idx: Uint16Array;
   private geo = new THREE.BufferGeometry();
-  private u = { uTime: LIGHT_UNIFORMS.uTime, uWidth: { value: 1.8 }, uBright: { value: 2.2 }, uHueSpeed: { value: 0.3 } };
+  private u = { uTime: LIGHT_UNIFORMS.uTime, uWidth: { value: 1.8 }, uNear: { value: 50 }, uBright: { value: 2.2 }, uHueSpeed: { value: 0.3 } };
   /** Trails drawn last frame (for the debug overlay and the perf check). */
   drawn = 0;
 
@@ -185,6 +188,6 @@ export class SwoopTrails {
     g.setDrawRange(0, ix);
     for (const k of DYNAMIC) (g.getAttribute(k) as THREE.BufferAttribute).needsUpdate = true;
     const I = g.getIndex()!; I.needsUpdate = true; I.clearUpdateRanges?.(); I.addUpdateRange?.(0, ix);
-    this.u.uWidth.value = T.width; this.u.uBright.value = T.bright; this.u.uHueSpeed.value = T.hueSpeed;
+    this.u.uWidth.value = T.width; this.u.uNear.value = Math.max(1, T.near ?? 50); this.u.uBright.value = T.bright; this.u.uHueSpeed.value = T.hueSpeed;
   }
 }

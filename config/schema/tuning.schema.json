@@ -5332,6 +5332,10 @@
           "type": "number",
           "minimum": 0
         },
+        "near": {
+          "type": "number",
+          "minimum": 0
+        },
         "bright": {
           "type": "number",
           "minimum": 0
@@ -5357,6 +5361,7 @@
         "on",
         "life",
         "width",
+        "near",
         "bright",
         "hueSpeed",
         "hueSpread",
