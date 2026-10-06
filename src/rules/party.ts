@@ -50,6 +50,10 @@ export interface PartyState {
    *  it (the game clock runs from the start of play); null while waiting for it (the clock at 00:00, a prompt to cast it);
    *  the game time she cast it. Set by the boot-up's own rules; read by the HUD (rules/leypulse.ts clockStart). */
   spellAt?: number | null;
+  /** When she left her decks (Ed, 2026-10-06), the spell cast (or in a build without it, her first step): the boot's pulse
+   *  sets off from the treehouse then, turns the first stone boot.firstAfter seconds later, and the boot's minutes run
+   *  from that first speaker (rules/bootRing.ts). Undefined until then. */
+  bootFrom?: number;
 }
 
 export const cellKey = (c: Cell) => `${c[0]},${c[1]}`;
@@ -60,19 +64,17 @@ export const cellKey = (c: Cell) => `${c[0]},${c[1]}`;
 export const PARTY_CAST = 1.2;
 /** Casts the party spell at `time`, if waiting for it: the game clock and the boot-up start (the boot's minutes from now).
  *  Returns whether it was cast. The renderer's hook: `party.spellAt` turning from null to a time. */
-export function castPartySpell(p: PartyState, map: ForestMap, time: number): boolean {
+export function castPartySpell(p: PartyState, _map: ForestMap, time: number): boolean {
   if (p.spellAt !== null) return false;
   p.spellAt = time;
-  const boot = map.tuning.boot.time, left = p.nextAt - p.bootUntil; // (the countdown after the boot, as it was set)
-  p.bootUntil = time + boot; p.nextAt = p.bootUntil + left;
-  return true;
+  return true; // (the boot sets off when she leaves her decks: stepParty)
 }
 /** Whether she's held still by the party spell: waiting for it, or still casting it. */
 export const heldBySpell = (p: PartyState, time: number): boolean => p.spellAt === null || (p.spellAt !== undefined && time < p.spellAt + PARTY_CAST);
 
 export function newParty(map: ForestMap): PartyState {
   const home: Partified = { cell: map.centreCell, wave: 0, at: 0, from: null, soundsystem: null };
-  const boot = map.tuning.boot.time;
+  const boot = map.tuning.boot.time + Math.max(0, map.tuning.boot.firstAfter ?? 0); // (from her leaving the decks: the first stone's seconds, then the boot)
   const p: PartyState = { areas: new Map([[cellKey(map.centreCell), home]]), wave: 0, nextAt: boot + map.tuning.party.startDelay + map.tuning.party.interval, paused: false, next: [], last: null, bootUntil: boot, afterNext: [], areasPerWave: Math.max(1, map.tuning.party.areasPerWave) };
   p.next = pickSet(p, map, p.areasPerWave);
   planAhead(p, map);
@@ -234,11 +236,16 @@ export function spreadWave(p: PartyState, map: ForestMap, time: number): Partifi
   return fresh;
 }
 
-/** Advance the party's clock: a wave whenever its time comes (unless paused). The boot-up waits for the party spell
- *  (Ed, 2026-10-06: the game starts when she casts it), so its minutes count from the cast; in a game without the spell
- *  (`spellAt` undefined: the tools and tests) it waits while she's `seated` behind the decks, as before. */
+/** Advance the party's clock: a wave whenever its time comes (unless paused). The boot-up waits for her to leave her decks
+ *  (Ed, 2026-10-06: "three seconds after you leave your decks" the first stone turns, and the boot's minutes run from it),
+ *  the party spell cast (or in a game without it, `spellAt` undefined: the tools and tests, as soon as she's off them):
+ *  then `bootFrom` is set and the boot's end and the first wave's countdown are reckoned from it. */
 export function stepParty(p: PartyState, map: ForestMap, time: number, dt: number, seated = false): Partified[] {
-  const waiting = p.spellAt === null || (p.spellAt === undefined && seated);
+  if (p.bootFrom === undefined && p.spellAt !== null && !seated) {
+    const left = p.nextAt - p.bootUntil; // (the countdown after the boot, as it was set)
+    p.bootFrom = time; p.bootUntil = time + Math.max(0, map.tuning.boot.firstAfter ?? 0) + map.tuning.boot.time; p.nextAt = p.bootUntil + left;
+  }
+  const waiting = p.bootFrom === undefined;
   if (p.paused || (waiting && time < p.bootUntil)) { p.nextAt += dt; if (time < p.bootUntil) p.bootUntil += dt; return []; }
   if (time < p.nextAt) return [];
   p.nextAt += map.tuning.party.interval;
