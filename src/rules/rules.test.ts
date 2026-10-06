@@ -929,6 +929,16 @@ describe("inviting and leashing", () => {
     expect(s.placed.map(p => p.id)).toEqual([b.c.id]);
     expect(s.stack).toEqual([a.c.id, c.c.id]);
     expect(s.events.map(e => e.kind)).toEqual(["cycled"]);
+    // The keyboard's own buttons (Ed, 2026-10-06: "E for place, Q for cycle"): Q cycles on the ground
+    // too, and E does nothing in the treetops.
+    stepLeash(s, all, { sigil: false, cycle: true }, { x: 700, z: 700 }, true, 106, 0.1, TUNING);
+    expect(s.stack).toEqual([c.c.id, a.c.id]);
+    expect(s.events.map(e => e.kind)).toEqual(["cycled"]);
+    stepLeash(s, all, { sigil: false, place: true }, { x: 700, z: 700 }, false, 107, 0.1, TUNING);
+    expect(s.stack).toEqual([c.c.id, a.c.id]);
+    expect(s.events).toEqual([]);
+    stepLeash(s, all, { sigil: false, place: true }, { x: 700, z: 700 }, true, 108, 0.1, TUNING);
+    expect(s.placed.map(p => p.id)).toEqual([b.c.id, a.c.id]);
   });
 
   it("is elastic: a creature walks to its new leash point, never jumps, then stays within the leash", () => {
