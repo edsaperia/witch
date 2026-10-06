@@ -13,7 +13,8 @@
 //   ground              its own ground genome over its floor kind's (art/ground.js)
 // The creature a recipe names must be a species the game has (art/genome/species.js and the configs keyed by species).
 import { FEN } from "./recipes/fen.js";
-export const AREA_RECIPES = [FEN];
+import { HERONRY } from "./recipes/heronry.js";
+export const AREA_RECIPES = [FEN, HERONRY];
 
 // What is missing from a recipe, if anything.
 export function recipeProblems(R) {
