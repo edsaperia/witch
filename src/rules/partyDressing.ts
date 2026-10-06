@@ -53,8 +53,9 @@ const WILD_CLUSTERS = PARTY_CLUSTERS.filter(c => !c.id.startsWith("home-"));
  *  which has no creature, violet with a cyan accent. */
 export function areaNeons(map: ForestMap, cell: Cell): string[] {
   const home = cell[0] === map.centreCell[0] && cell[1] === map.centreCell[1];
-  const own = home ? "violet" : (SIGIL_NEON as Record<string, string>)[(AREAS as { creature: string }[])[map.typeOf(cell[0], cell[1])]?.creature] ?? "violet";
-  const others = PARTY_LIGHT_NEONS.filter(n => n !== own), accent = home ? "cyan" : others[Math.floor(rng(map.seed * 31 + cell[0] * 977 + cell[1] * 131 + 5)() * others.length)];
+  if (home) return ["cyan", "cyan", "cyan", "cyan"]; // home: its speakers' and runes' cyan alone, with the warm light (the art director, round 2)
+  const own = (SIGIL_NEON as Record<string, string>)[(AREAS as { creature: string }[])[map.typeOf(cell[0], cell[1])]?.creature] ?? "violet";
+  const others = PARTY_LIGHT_NEONS.filter(n => n !== own), accent = others[Math.floor(rng(map.seed * 31 + cell[0] * 977 + cell[1] * 131 + 5)() * others.length)];
   return [own, own, own, accent];
 }
 /** A ref for a piece: its neon from the area's (neons, else any), its balloons' palette at random (Ed: random per placement). */
