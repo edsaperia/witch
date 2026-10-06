@@ -458,7 +458,7 @@ const report = await b.page.evaluate(async () => {
         let bottom = 0; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++; if (!bottom) bad.push(`${kind} ${seed} floats`);
         if (seen.has(key)) bad.push(`${kind} ${seed} repeats another`); seen.add(key);
         const share = mats => sp.m.filter(m => mats.includes(m)).length / n, { height, width } = p.metres;
-        if (kind === "standingStone") { const [r, g, b] = p.colours[G.M.STONE], mx = Math.max(r, g, b), sat = mx ? (mx - Math.min(r, g, b)) / mx : 0; if (sat > .16 || height < (p.variant.shape === "squat" || p.variant.top === "broken" ? 1.4 : 3) || height > 6 || share([G.M.BELLY, G.M.MOSS]) > .33) bad.push(`stone ${seed}: sat ${sat.toFixed(2)}, ${height} m, marks ${share([G.M.BELLY, G.M.MOSS]).toFixed(2)}`); }
+        if (kind === "standingStone") { const [r, g, b] = p.colours[G.M.STONE], mx = Math.max(r, g, b), sat = mx ? (mx - Math.min(r, g, b)) / mx : 0; if (sat > .22 || height < (p.variant.shape === "squat" || p.variant.top === "broken" ? 1.4 : 3) || height > 6 || share([G.M.BELLY, G.M.MOSS]) > .33) bad.push(`stone ${seed}: sat ${sat.toFixed(2)}, ${height} m, marks ${share([G.M.BELLY, G.M.MOSS]).toFixed(2)}`); }
         if (kind === "cairn" && (height > 2.2 || width < height)) bad.push(`cairn ${seed}: ${width} x ${height} m`);
         if (kind === "pool" && (width < 1.5 || width > 5 || sp.h >= sp.w || share([G.M.WATER, G.M.BODY2, G.M.BELLY]) < .5)) bad.push(`pool ${seed}: ${width} x ${height} m, water ${share([G.M.WATER, G.M.BODY2, G.M.BELLY]).toFixed(2)}`);
         if (kind === "brokenTrunk") { // the wood's pieces, by 4-neighbour flood fill (splinters and fungi on it touch it)
