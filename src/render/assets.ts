@@ -4,7 +4,7 @@
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
 import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
-import { creatureFrame, runJob, witchLookOf, type ArtJob, type ArtResult, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
+import { creatureFrame, runJob, witchLookOf, type ArtJob, type ArtResult, type BeachArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { ART_HASH, cacheGet, cachePut, hashText } from "./artCache";
 import { rigGearKey, type RigGear, type RigMeta } from "./rig/rigBuild";
@@ -36,6 +36,7 @@ export class AssetLibrary {
   private scenes: (SceneArt & { atlas: Atlas }) | undefined;
   private pieces: { atlas: Atlas; byId: Record<string, PathPieceArt> } | undefined;
   private relicSet: RelicSet | undefined;
+  private beach: (BeachArt & { atlas: Atlas }) | undefined;
   private queue: ArtJob[] = [];
   private inFlight = new Set<string>();
   private workers: { w: Worker; busy: boolean; job?: ArtJob }[] = [];
@@ -155,6 +156,8 @@ export class AssetLibrary {
     if (r.job.kind === "relics") {
       const list = r.result.relics!;
       this.relicSet = { atlas, byId: Object.fromEntries(list.map(p => [p.id, p])), modern: list.filter(p => p.family === "modern"), layouts: r.result.layouts! };
+    } else if (r.job.kind === "beach") {
+      this.beach = { atlas, ...r.result.beach! };
     } else if (r.job.kind === "scenes") {
       this.scenes = { atlas, ...r.result.scenes! };
     } else if (r.job.kind === "speakers") {
@@ -211,6 +214,11 @@ export class AssetLibrary {
   relicArt(): RelicSet | undefined {
     if (!this.relicSet) this.ask({ kind: "relics", id: "all", style: this.style });
     return this.relicSet;
+  }
+  /** The beach's decorations (art/beach.js), or undefined (and asked for): only once she's near the beach (render/beach.ts). */
+  beachArt(): (BeachArt & { atlas: Atlas }) | undefined {
+    if (!this.beach) this.ask({ kind: "beach", id: "all", style: this.style }, true); // (small, and asked for only once she's at the beach: ahead of the scenery queued)
+    return this.beach;
   }
   /** The scenes' pieces and layouts, or undefined (and asked for). */
   sceneArt(): (SceneArt & { atlas: Atlas }) | undefined {

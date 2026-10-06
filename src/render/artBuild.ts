@@ -177,7 +177,12 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   /** A party witch (#37): her look from partyWitch(seed) (or, seed null, our witch's own), in every party pose. */
   | { kind: "partyWitch"; id: string; seed: number | null; style: Style; /** our witch's genome (art/witchGenome.js), for seed null; else the classic witch */ genome?: unknown }
   /** Every party object (#38) in each neon and balloon palette a placement can pick (campfires in their three frames), and the clusters' layouts. */
-  | { kind: "partyObjects"; id: string; style: Style };
+  | { kind: "partyObjects"; id: string; style: Style }
+  /** The beach's decorations (art/beach.js): its finds, and each footprint at every heading. */
+  | { kind: "beach"; id: string; style: Style };
+
+/** The beach's pieces in their atlas, by id (a print by "<id>~<heading>"): frame and ground point. */
+export interface BeachArt { pieces: Record<string, { frame: number; originX: number; originY: number }>; finds: string[]; prints: string[]; headings: number }
 
 /** The party objects in their atlas, by ref ("party:<id>[@<neon>][~<palette>]"): frames (more than one: animated), ground point, decal; and each cluster's layout. */
 export interface PartyArt { pieces: Record<string, { frames: number[]; originX: number; originY: number; decal: boolean; /** Where it hangs from (hanging pieces): pixels from its top-left. */ hang?: { x: number; y: number } }>; layouts: Record<string, { plain: ScenePlace[]; mirror: ScenePlace[] }> }
@@ -206,7 +211,7 @@ export interface DecorPiece { id: string; family: string; bot: number; top: numb
 
 /** A floor tile's pixels: albedo and normal map, w x h. */
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
-export interface ArtResult { /** A sleeping legend's ground line in each frame: rows from its top (the art's origin). */ ground?: number[]; /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt }
+export interface ArtResult { /** A sleeping legend's ground line in each frame: rows from its top (the art's origin). */ ground?: number[]; /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; beach?: BeachArt; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt }
 
 function sceneSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; scenes: SceneArt } {
   const sprites: Baked[] = [], scenes: SceneArt = { pieces: {}, layouts: {} };
@@ -236,6 +241,18 @@ function speakerSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; speakers
   const stone = (Art.runeStone as unknown as (st: Style, o: { glow: string; makeCanvas: MakeCanvas }) => Baked)(st, { glow: "cyan", makeCanvas: mk });
   speakers.stone = sprites.push(stone) - 1; speakers.stoneOrigin = { x: stone.w / 2, y: stone.h };
   return { sprites, speakers };
+}
+
+function beachSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; beach: BeachArt } {
+  const sprites: Baked[] = [], colours = Art.beachColours(st), H = Art.PRINT_HEADINGS as number;
+  const beach: BeachArt = { pieces: {}, finds: [], prints: [], headings: H };
+  const put = (key: string, id: string, heading = 0) => {
+    const r = Art.beachSprite(id, st, { heading }) as { whole: unknown; origin: { x: number; y: number } };
+    beach.pieces[key] = { frame: sprites.push(Art.bake(r.whole, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y };
+  };
+  for (const d of Art.BEACH_FINDS as { id: string }[]) { put(d.id, d.id); beach.finds.push(d.id); }
+  for (const d of Art.BEACH_PRINTS as { id: string }[]) { for (let h = 0; h < H; h++) put(`${d.id}~${h}`, d.id, h); beach.prints.push(d.id); }
+  return { sprites, beach };
 }
 
 function relicSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; relics: RelicArt[]; layouts: RelicLayouts } {
@@ -364,6 +381,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "partyWitch") { const { sprites, witch } = partyWitchSprites(job.style, job.seed, mk, job.genome ?? null); return { px: packPixels(sprites, 2048), witch }; }
   if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };
   if (job.kind === "rig") { const r = rigSprites(job.style, job.species, job.level, mk, job.gear ?? null); return r ? { px: r.px, rig: r.meta } : { px: packPixels([], 16) }; }
+  if (job.kind === "beach") { const { sprites, beach } = beachSprites(job.style, mk); return { px: packPixels(sprites, 1024), beach }; }
   if (job.kind === "relics") { const { sprites, relics, layouts } = relicSprites(job.style, mk); return { px: packPixels(sprites, 2048), relics, layouts }; }
   if (job.kind === "pathPieces") { const { sprites, pieces } = pathPieceSprites(job.style, mk); return { px: packPixels(sprites, 2048), pieces }; }
   if (job.kind === "scenes") { const { sprites, scenes } = sceneSprites(job.style, mk); return { px: packPixels(sprites, 2048), scenes }; }
