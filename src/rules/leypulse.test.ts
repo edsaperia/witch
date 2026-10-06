@@ -1,10 +1,10 @@
 // The game clock's text and the wave pointer's target (rules/leypulse.ts; Ed, 2026-10-06): mm:ss from 0, minutes past 99
 // as needed; the ley line's pulse a share of the current link's length by arc length, from the last stone reached at a wave
-// to the next stone as the next wave comes.
+// to the next stone as the next wave comes; the wave pointer hidden while home boots up.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame } from "./game";
-import { clockText, leyPulse, pointAlong, pulseProgress, straightLink } from "./leypulse";
+import { awaitingSpell, clockSeconds, clockStart, clockText, leyPulse, pointAlong, POINTER_FADE, pointerShown, pulseProgress, straightLink } from "./leypulse";
 import { waveCountdown } from "./party";
 
 describe("the game clock", () => {
@@ -17,6 +17,18 @@ describe("the game clock", () => {
     expect(clockText(100 * 60)).toBe("100:00");
     expect(clockText(-3)).toBe("00:00");
     expect(clockText(NaN)).toBe("00:00");
+  });
+});
+
+describe("the game clock's start (Ed, 2026-10-06: at the party spell)", () => {
+  it("runs from the start of play in a build without the party spell", () => {
+    const g = newGame(123, TUNING), p = { ...g.party, spellAt: undefined };
+    expect(clockStart(p)).toBe(0); expect(clockSeconds(p, 75)).toBe(75); expect(awaitingSpell(p)).toBe(false);
+  });
+  it("stays at 00:00 and prompts while waiting for the spell, then counts from the cast", () => {
+    const g = newGame(123, TUNING), waiting = { ...g.party, spellAt: null }, cast = { ...g.party, spellAt: 40 };
+    expect(clockStart(waiting)).toBeNull(); expect(clockText(clockSeconds(waiting, 300))).toBe("00:00"); expect(awaitingSpell(waiting)).toBe(true);
+    expect(clockText(clockSeconds(cast, 101))).toBe("01:01"); expect(clockSeconds(cast, 10)).toBe(0); expect(awaitingSpell(cast)).toBe(false);
   });
 });
 
@@ -46,9 +58,18 @@ describe("the wave pointer's target, the ley line's pulse", () => {
     const drawn: (readonly [number, number])[] = [link![0], [link![0][0] + 50, link![0][1]], link![1]];
     expect(leyPulse(p, map, at(0.5), drawn)).toMatchObject(pointAlong(drawn, 0.5));
   });
-  it("fills with the boot while home boots up", () => {
+  it("hides while home boots up, then sets off from the link's start and fades in (Ed: \"first appears when bootup finishes\")", () => {
     const g = newGame(123, TUNING), p = g.party, map = g.map, B = map.tuning.boot.time;
-    if (B <= 0) return;
-    expect(pulseProgress(p, map, p.bootUntil - B / 2)).toBeCloseTo(0.5, 5);
+    expect(B, "a boot to test").toBeGreaterThan(0);
+    const mid = p.bootUntil - B / 2;
+    expect(pointerShown(p, map, mid)).toBe(0);
+    expect(leyPulse(p, map, mid)).toBeNull();
+    expect(pulseProgress(p, map, mid)).toBe(0);
+    expect(pointerShown(p, map, p.bootUntil)).toBe(0); // (just over: none yet...)
+    expect(pointerShown(p, map, p.bootUntil + POINTER_FADE / 2)).toBeCloseTo(0.5, 5); // (...fading in...)
+    expect(pointerShown(p, map, p.bootUntil + POINTER_FADE + 1)).toBe(1); // (...then fully)
+    const start = leyPulse(p, map, p.bootUntil + 0.01)!, link = straightLink(p, map)!;
+    expect(start.t).toBeLessThan(0.01);
+    expect(Math.hypot(start.x - link[0][0], start.z - link[0][1])).toBeLessThan(2);
   });
 });

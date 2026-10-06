@@ -74,6 +74,21 @@ export const PROP_GENOMES = {
 };
 export const PROP_KINDS = Object.keys(PROP_GENOMES);
 
+// The legend clearings' rim kit (#235, art builder 1's ask): small pieces, none over a metre, that ring a sleeping legend's clearing
+// (rules: map.legendClearings), built from the props above at a small size, and a short post. Each area gets 6 (areaAssets' `rim`),
+// weighted by what it is: stony, open areas towards stones, cairns and boulders; wooded ones towards toadstools and stumps.
+//   forms: each form's weight [open, wooded]; the numbers each form fixes on the prop it is built from (ranges picked from the seed)
+export const RIM_GENOMES = {
+  forms: { stone: [3, 1], cairn: [2, .5], boulder: [3, 1], toadstools: [1, 3], stump: [.5, 3], post: [.5, 1.5] },
+  stone: { kind: "standingStone", height: [.45, .8], width: [.28, .42], depth: [.14, .22], shape: "tall", lichen: [0, 1], lichenSize: [.05, .08], moss: [.15, .3] },
+  cairn: { kind: "cairn", stones: [5, 7], spread: [.5, .7], height: [.35, .55], size: [.11, .16], slab: "none", rubble: [1, 3] },
+  boulder: { kind: "boulder", size: [.22, .38], lumps: [1, 3], pebbles: [1, 3] },
+  toadstools: { kind: "mushroomRing", form: "clump", radius: [.22, .34], count: [4, 7], size: [.07, .12], cap: [["red", 3], ["brown", 3], ["ochre", 2]] },
+  stump: { kind: "brokenTrunk", height: [.25, .5], girth: [.12, .18], branch: "none", splinters: [2, 4], roots: [2, 4], fungi: [0, 1] },
+  post: { height: [.55, .95], girth: [.05, .08], lean: [-.14, .14], top: [["flat", 2], ["point", 1], ["split", 1]], moss: [0, .4],
+    colour: { wood: [.07, .3, .36], dark: [.06, .35, .2], light: [.08, .22, .52], pale: [.1, .14, .62], moss: [.24, .45, .36], fungus: [.08, .45, .62], spread: .05 } }, // weathered grey-brown wood
+};
+
 // The party's generated decorations (art/party.js "gen-*" pieces, behind ?props=gen): bunting, balloon bunches and paper lanterns,
 // each a few seeded variants, in the witch model's units like the other party pieces. Their colours are the party's (neon or
 // balloon palettes at bake), so the genomes hold shapes only.
