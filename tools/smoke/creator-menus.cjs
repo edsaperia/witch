@@ -43,7 +43,8 @@ const root = path.join(__dirname, "../.."), out = path.join(root, "previews/menu
     await page.screenshot({ path: path.join(out, "hat-picker.png") });
     // walking up to her things: each opens its box
     let n = 0;
-    const shoot = () => page.screenshot({ path: path.join(frames, `f${String(n++).padStart(3, "0")}.png`), scale: "css" });
+    // a frame: the room's own canvas (a screenshot of the page is too slow with the forest drawing behind)
+    const shoot = async () => { const url = await page.evaluate(() => { const c = document.querySelector("#creator canvas[title]"), k = 3, z = document.createElement("canvas"); z.width = c.width * k; z.height = c.height * k; const x = z.getContext("2d"); x.imageSmoothingEnabled = false; x.fillStyle = "#14132c"; x.fillRect(0, 0, z.width, z.height); x.drawImage(c, 0, 0, z.width, z.height); return z.toDataURL(); }); fs.writeFileSync(path.join(frames, `f${String(n++).padStart(3, "0")}.png`), Buffer.from(url.split(",")[1], "base64")); };
     const go = async (id) => {
       for (let i = 0; i < 80; i++) {
         const s = await page.evaluate(id => { const c = window.__creator, w = c.walker, f = c.room.walk, t = f.spots[id], a = f.project([w.x, 0, w.z]), b = f.project([t[0], 0, t[2] ?? t[1]]); return { dx: b[0] - a[0], dy: b[1] - a[1], near: c.near }; }, id);
@@ -64,12 +65,13 @@ const root = path.join(__dirname, "../.."), out = path.join(root, "previews/menu
       const reached = await go(id), o = await open();
       visits.push(`${id}: ${reached ? "reached" : "stuck"}, open ${o.join()}`);
       for (let k = 0; k < 4; k++) { await page.waitForTimeout(150); await shoot(); }
+      if (reached) await page.screenshot({ path: path.join(out, `by-${id}.png`), clip: { x: 1100, y: 0, width: 500, height: 900 } }); // (the box it opened)
       if (reached && o[0] !== id) throw new Error(`by the ${id}: open ${o.join()}`);
     }
     console.log(visits.join("\n"));
     if (visits.filter(v => v.includes("reached")).length < 4) throw new Error("she couldn't reach her things");
     await page.screenshot({ path: path.join(out, "walked.png") });
-    execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-framerate", "6", "-i", path.join(frames, "f%03d.png"), "-vf", "scale=800:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=160[p];[b][p]paletteuse=dither=none", path.join(out, "walk-to-things.gif")]);
+    execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-framerate", "6", "-i", path.join(frames, "f%03d.png"), "-vf", "scale=iw/2:-1:flags=neighbor,split[a][b];[a]palettegen=max_colors=160[p];[b][p]paletteuse=dither=none", path.join(out, "walk-to-things.gif")]);
     fs.rmSync(frames, { recursive: true, force: true });
     console.log("frames", n, "errors", errors.length);
     if (errors.length) throw new Error(errors.join("\n"));
