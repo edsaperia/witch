@@ -27,7 +27,7 @@ export interface LoadTuning {
   sparks: number;
 }
 
-export const LOAD_DEFAULT: LoadTuning = { on: true, full: 8, stackSag: 0.4, stackLean: 0.35, threadFrom: 0.45, threadBright: 1.2, witchLean: 0.16, broomTilt: 0.12, broomBow: 1.5, sparks: 14 };
+export const LOAD_DEFAULT: LoadTuning = { on: true, full: 6, stackSag: 0.4, stackLean: 0.35, threadFrom: 0.45, threadBright: 1.2, witchLean: 0.16, broomTilt: 0.12, broomBow: 1.5, sparks: 14 };
 
 /** What the art reads: the load (0 none, 1 full), the pull's direction on the ground (unit), how much she's flying away
  *  from it (0 to 1), and how fast she's sinking over the treetops (0 to 1). */
