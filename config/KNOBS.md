@@ -250,6 +250,32 @@ How far (reach, metres) and how strongly each kind of light lights its surroundi
 | `lights.stone.strength` | number | 0 to … |
 | `glowPower` | number | 0 to … |
 
+## `light`
+
+The lighting's mood (Ed, 2026-10-06: "make it a spooky dark forest with a party in it"; render/mood.ts): mood spooky lays this grade over the Art Lab's night light, plain is the light as it was (?light=plain or ?light=spooky to compare). spooky: ambientHue and ambient (times the tuning's ambient): the shadows' colour and brightness, a deep blue-green; moonHue, moonSat and moon (times tone.moon): a colder moon, a little stronger, so it rims what it lights; hazeHue, hazeSat and haze (its brightness, 0 to 1): the fog the forest fades into, violet; hazeNear and hazeFar: where the fog starts and is whole (metres from the witch; nearer than haze.near and haze.far, which still set how far scenery is drawn); mist: the low ground mist's strength (instead of mist.strength); glowHue and glowSat: the witch's glow, warmer, so the party's lights are the warm ones in the wood; grade, gradeDesat, gradePivot, gradeHue and gradeSat: a grade over the finished picture, draining the dark and middle tones' colour (gradeDesat of it) toward a cold tint (hue and saturation), by grade (0 off), fading out up to gradePivot brightness, so the bright warm lights keep their colour.
+
+| knob | type | range |
+|---|---|---|
+| `light.mood` | string |  |
+| `light.spooky.ambientHue` | number | 0 to … |
+| `light.spooky.ambient` | number | 0 to … |
+| `light.spooky.moonHue` | number | 0 to … |
+| `light.spooky.moonSat` | number | 0 to … |
+| `light.spooky.moon` | number | 0 to … |
+| `light.spooky.hazeHue` | number | 0 to … |
+| `light.spooky.hazeSat` | number | 0 to … |
+| `light.spooky.haze` | number | 0 to … |
+| `light.spooky.hazeNear` | number | 0 to … |
+| `light.spooky.hazeFar` | number | 0 to … |
+| `light.spooky.mist` | number | 0 to … |
+| `light.spooky.glowHue` | number | 0 to … |
+| `light.spooky.glowSat` | number | 0 to … |
+| `light.spooky.grade` | number | 0 to … |
+| `light.spooky.gradeDesat` | number | 0 to … |
+| `light.spooky.gradePivot` | number | 0 to … |
+| `light.spooky.gradeHue` | number | 0 to … |
+| `light.spooky.gradeSat` | number | 0 to … |
+
 ## `beat`
 
 The music's clock (beats per minute): the lasers sweep to it and party animals dance to it. Later the music itself drives it.
@@ -1034,12 +1060,12 @@ Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest..
 | `bloom.threshold` | number | 0 to … |
 | `tiltShift.on` | boolean |  |
 | `tiltShift.where` | string | "before" / "after" |
+| `tiltShift.sky` | boolean |  |
 | `tiltShift.strength` | number | 0 to … |
 | `tiltShift.band` | number | 0 to … |
 | `tiltShift.centre` | number | 0 to … |
 | `tiltShift.treetop.strength` | number | 0 to … |
 | `tiltShift.treetop.band` | number | 0 to … |
-| `tiltShift.sky` | boolean |  |
 
 ## `population`
 

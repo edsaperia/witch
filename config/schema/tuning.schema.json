@@ -886,6 +886,117 @@
       "type": "number",
       "minimum": 0
     },
+    "light": {
+      "type": "object",
+      "properties": {
+        "mood": {
+          "type": "string"
+        },
+        "spooky": {
+          "type": "object",
+          "properties": {
+            "ambientHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ambient": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moonHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moonSat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moon": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hazeHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hazeSat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "haze": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hazeNear": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hazeFar": {
+              "type": "number",
+              "minimum": 0
+            },
+            "mist": {
+              "type": "number",
+              "minimum": 0
+            },
+            "glowHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "glowSat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "grade": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gradeDesat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gradePivot": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gradeHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gradeSat": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "ambientHue",
+            "ambient",
+            "moonHue",
+            "moonSat",
+            "moon",
+            "hazeHue",
+            "hazeSat",
+            "haze",
+            "hazeNear",
+            "hazeFar",
+            "mist",
+            "glowHue",
+            "glowSat",
+            "grade",
+            "gradeDesat",
+            "gradePivot",
+            "gradeHue",
+            "gradeSat"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "mood",
+        "spooky"
+      ],
+      "additionalProperties": false
+    },
     "beat": {
       "type": "object",
       "properties": {
@@ -4328,6 +4439,9 @@
             "after"
           ]
         },
+        "sky": {
+          "type": "boolean"
+        },
         "strength": {
           "type": "number",
           "minimum": 0
@@ -4357,9 +4471,6 @@
             "band"
           ],
           "additionalProperties": false
-        },
-        "sky": {
-          "type": "boolean"
         }
       },
       "required": [
@@ -4650,6 +4761,7 @@
     "lightBudget",
     "lights",
     "glowPower",
+    "light",
     "beat",
     "berries",
     "leyLines",
