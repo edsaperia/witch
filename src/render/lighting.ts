@@ -53,7 +53,9 @@ export type LightUniforms = typeof LIGHT_UNIFORMS;
 /** Set the light colours from a style (the Art Lab's knobs). One set of uniforms is shared by
  *  every material, so this and the glow position update everything at once. */
 /** How far her pool's ground takes her light's own colour at its centre (0 none, 1 all): glowPool. */
-export const POOL_WARMTH = 0.65;
+export const POOL_WARMTH = 0.95;
+/** The most brightness her pool's ground takes from the floor (0 to 1): a bright floor (the party's lit grass) stays amber, not yellow-white (the art director's round 4). */
+export const POOL_CAP = 0.55;
 /** The least brightness of her pool's ground at its centre (0 to 1): a dark floor still shows her light. */
 export const POOL_LIFT = 0.16;
 
@@ -173,7 +175,7 @@ vec3 glowPool(vec3 col, vec3 P) {
   if (dg >= gr || uGlowPower <= 0.0) return col;
   vec3 Y = vec3(0.3, 0.55, 0.15);
   float fall = pow(1.0 - dg / gr, uGlowFalloff) * min(1.0, uGlowPower);
-  vec3 warm = max(dot(col, Y), ${POOL_LIFT.toFixed(3)} * fall) * uGlowRgb / max(1e-3, dot(uGlowRgb, Y));
+  vec3 warm = max(min(dot(col, Y), ${POOL_CAP.toFixed(3)}), ${POOL_LIFT.toFixed(3)} * fall) * uGlowRgb / max(1e-3, dot(uGlowRgb, Y));
   return mix(col, min(vec3(1.0), warm), ${POOL_WARMTH.toFixed(2)} * fall);
 }
 `;
