@@ -112,7 +112,10 @@ export function drawCreatures(v: View, time = 0): void {
     // Hit: a white flash and a little pop (combat: medium hit feel).
     if (c.hurtAt !== undefined && time - c.hurtAt < 0.25) { const k = (time - c.hurtAt) / 0.25; glow = Math.max(glow, 1 - k); scale *= 1 + 0.15 * (1 - k); }
     // Leaping (Stage 5: the toad): up in an arc over its shadow.
-    const hop = c.leap ? Math.sin(Math.min(1, Math.max(0, (time - c.leap.at) / Math.max(0.01, c.leap.lands - c.leap.at))) * Math.PI) * c.leap.height : 0;
+    let hop = c.leap ? Math.sin(Math.min(1, Math.max(0, (time - c.leap.at) / Math.max(0.01, c.leap.lands - c.leap.at))) * Math.PI) * c.leap.height : 0;
+    // Just joined the party: two little hops of joy, the second smaller (straight up, nothing like a pounce).
+    const joined = v.leashView.joined.get(c.id);
+    if (joined !== undefined && time - joined < 0.7) { const k = (time - joined) / 0.7; hop += Math.abs(Math.sin(k * Math.PI * 2)) * 0.45 * (1 - k * 0.6); }
     const sink = sleeping ? W.sink : W.sink * (1 - rising), sunk = -sink * (frame.h - (frame.pad ?? 0)) * v.mpp * scale;
     if (sleeping) glow = -2 - W.moss; else if (rising < 1) glow = -2 - W.moss * (1 - rising);
     // Restless in its sleep (#87): it tosses in bursts, and turns over when it's bad.
