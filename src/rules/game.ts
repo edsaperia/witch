@@ -289,7 +289,13 @@ function fixedStep(g: Game, controls: Controls): void {
   const was = W.body;
   rechargeDash(W.dash, g.clock.time, charges, t.dash.cooldown);
   // A blink (Decoy, Beaver: it leaves a waiting 💌 where she was).
-  if (c.dash && startDash(W.dash, was, c.moveX, c.moveZ, g.clock.time, t, g.map.bounds, (x, z) => blinkClear(g, x, z), charges, H.charges.chain) && M.decoy > 0) dropCache(W.invites, was.x, was.z, g.clock.time, t, M);
+  // (A press is held for dash.buffer seconds until it can go: pressed a moment early still blinks.)
+  if (c.dash) W.dash.bufferUntil = g.clock.time + t.dash.buffer;
+  if (g.clock.time <= (W.dash.bufferUntil ?? -Infinity) && !W.ko && !stunned(W.knock, g.clock.time)
+    && startDash(W.dash, was, c.moveX, c.moveZ, g.clock.time, t, g.map.bounds, (x, z) => blinkClear(g, x, z), charges, H.charges.chain)) {
+    W.dash.bufferUntil = undefined;
+    if (M.decoy > 0) dropCache(W.invites, was.x, was.z, g.clock.time, t, M);
+  }
   W.body = applyDash(W.dash, stepWitch(was, c, dt, boost === 1 ? t : { ...t, groundSpeed: t.groundSpeed * boost, treetopSpeed: t.treetopSpeed * boost }, g.map.bounds));
   if (W.knock) W.body = stepWitchKnock(W.knock, W.body, dt, t, g.map.bounds, (x, z) => blinkClear(g, x, z));
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, dt, g.tuning, !!g.witch.seated, g.introFocus);

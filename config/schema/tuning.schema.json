@@ -3610,6 +3610,10 @@
           "type": "number",
           "minimum": 0
         },
+        "buffer": {
+          "type": "number",
+          "minimum": 0
+        },
         "clear": {
           "type": "object",
           "properties": {
@@ -3648,6 +3652,7 @@
         "distance",
         "gone",
         "cooldown",
+        "buffer",
         "clear"
       ],
       "additionalProperties": false
