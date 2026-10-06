@@ -75,6 +75,10 @@ export function easeInside(prev: number, inCircle: boolean, ground: boolean, dt:
 }
 
 /** The forest's light outside the clearing's own twilight (1 as it is), and the share of her glow left, at `inside`. */
+/** How much of the clearings' own twilight shows (Ed, 2026-10-06: "The lighting changes for the legend circles should only
+ *  happen when you're in ground mode"): eased toward 1 while she's on the ground, toward 0 over the treetops, where the light
+ *  is as it is (the motes still rise). */
+export const easeTwilight = (prev: number, ground: boolean, dt: number, fade: number): number => easeInside(prev, true, ground, dt, fade);
 export const clearingDim = (T: Pick<GladeTuning, "dark">, inside: number): number => 1 - T.dark * inside * inside * (3 - 2 * inside);
 export const clearingGlow = (T: Pick<GladeTuning, "glowOff">, inside: number): number => 1 - T.glowOff * inside * inside * (3 - 2 * inside);
 
@@ -90,6 +94,8 @@ export class Glades {
   private edges = new Map<number, number>();
   /** How far she's into a clearing (0 out, 1 in), eased over fade seconds; her glow's own power, to fade it from. */
   private inside = 0;
+  /** How much of the clearings' twilight shows: 1 on the ground, 0 over the treetops (easeTwilight). */
+  private twilight = 1;
   private glowBase: number;
 
   constructor(private T: GladeTuning) {
@@ -143,6 +149,8 @@ export class Glades {
     let inCircle = false;
     for (let i = 0; i < n; i++) if ((wx - near[i].x) ** 2 + (wz - near[i].z) ** 2 < near[i].radius * near[i].radius) inCircle = true;
     this.inside = easeInside(this.inside, inCircle, ground, dt, T.fade);
+    this.twilight = easeTwilight(this.twilight, ground, dt, T.fade);
+    U.uGladeLight.value.set(T.light * this.twilight, T.edge * this.twilight);
     U.uDim.value = clearingDim(T, this.inside);
     U.uGlowPower.value = this.glowBase * clearingGlow(T, this.inside);
   }

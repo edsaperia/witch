@@ -33,7 +33,7 @@ export interface Knockout {
   moved: boolean;
 }
 
-export type KnockoutEventKind = "down" | "released" | "sparkleOut" | "sparkleIn" | "back";
+export type KnockoutEventKind = "down" | "released" | "sparkleOut" | "sparkleIn" | "back" | /** her hat fell off where she went down (rules/hat.ts) */ "hatDropped";
 export interface KnockoutEvent { kind: KnockoutEventKind; at: number; x: number; z: number; id?: number }
 
 export const newHealth = (t: Tuning): Health => ({ hp: t.witchHealth.hits, repairAt: Infinity, hurtAt: -Infinity });

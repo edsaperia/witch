@@ -11,7 +11,7 @@ import { newCamera, stepCamera, cameraPose } from "./camera";
 import { population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
 import { hitWitch, newGame, simRadius, STEP, stepGame } from "./game";
 import { dashing, newDash, startDash } from "./dash";
-import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, symbolCount, wavePlan } from "./party";
+import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, wavePlan } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
 import { laserShow } from "./lasers";
@@ -20,8 +20,9 @@ import { newLeash, stepLeash, type LeashControls } from "./leash";
 import { newClock, tick, MAX_STEP } from "./clock";
 import { TUNING, withTuning } from "./tuning";
 import { floorClearing, speakerRadius, nextSpeakerState } from "./speakers";
-import { composeFloor, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
-import { floorInputs } from "./game";
+import { composeFloor, moonTiles, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
+import { bootSpeaker, floorInputs, speakerBoot } from "./game";
+import { moonState } from "./moon";
 import { castSpell, newSpells, spellCharge, speedMultiplier } from "./spells";
 import { musicMix } from "./music";
 import { tuftsInCell, TUFT_KINDS } from "./groundcover";
@@ -489,7 +490,7 @@ describe("creatures", () => {
     expect(new Set(own.map(t => t.creature)).size).toBe(own.length);
   });
 
-  it("start the same in every area (Ed, 2026-10-04): none at home but its legend, one young and one adult elsewhere (Ed, 2026-10-05), and one legend in each", () => {
+  it("start the same in every area (Ed, 2026-10-04): none at home but its legend, one young and one adult elsewhere (Ed, 2026-10-05), and one legend in each that has one (legends.share: Ed, 2026-10-06)", () => {
     expect(inCell(mx, my).filter(c => !c.boss)).toEqual([]);
     const S = TUNING.population.start;
     for (let cy = 0; cy < map.n; cy += 3) for (let cx = 0; cx < map.n; cx += 3) {
@@ -498,15 +499,16 @@ describe("creatures", () => {
       expect(here.filter(c => c.level === 0).length).toBe(S.babies);
       expect(here.filter(c => c.level === 1).length).toBe(S.young);
       expect(here.filter(c => c.level === 2).length).toBe(S.adults);
-      expect(here.filter(c => c.level === 3 && c.boss).length).toBe(1);
+      expect(here.filter(c => c.level === 3 && c.boss).length).toBe(map.hasLegend(cx, cy) ? 1 : 0);
     }
     expect(population(map)).toEqual(S);
   });
 
-  it("have one legend an area but home (Ed, 2026-10-05), each a boss, asleep, out of their clearings (Ed, 2026-10-04)", () => {
+  it("have one legend in each area map.hasLegend picks, never home (Ed, 2026-10-05, 2026-10-06), each a boss, asleep, out of their clearings (Ed, 2026-10-04)", () => {
     for (let seed = 1; seed <= 4; seed++) {
       const m = generateMap(seed * 101, TUNING), legends = spawnCreatures(m).filter(c => c.level === 3), [hx, hy] = m.centreCell;
-      expect(legends.length, `seed ${seed * 101}`).toBe(m.n * m.n - 1);
+      expect(legends.length, `seed ${seed * 101}`).toBe(m.legendCells.size);
+      expect(legends.every(c => m.hasLegend(c.cell[0], c.cell[1]))).toBe(true);
       expect(legends.some(c => c.cell[0] === hx && c.cell[1] === hy)).toBe(false);
       expect(new Set(legends.map(c => c.cell.join())).size).toBe(legends.length);
       for (const c of legends) {
@@ -582,8 +584,8 @@ describe("the party", () => {
     expect([...p.areas.keys()]).toEqual([key(map.centreCell)]);
     expect(p.areas.get(key(map.centreCell))!.soundsystem).toBeNull();
   });
-  it("wakes exactly one area a wave, the one chosen in advance, always bordering the party (no islands), spreading away from the last", () => {
-    const p = newParty(map);
+  it("wakes exactly one area a wave, the one chosen in advance, always bordering the party (no islands), spreading away from the last (the noisy picker)", () => {
+    const map = generateMap(123, { ...TUNING, party: { ...TUNING.party, picker: "noisy" } }), p = newParty(map);
     let besideLast = 0, couldAvoid = 0;
     for (let w = 1; w <= 25; w++) {
       expect(p.next.length).toBe(1);
@@ -639,19 +641,17 @@ describe("the party", () => {
     stepParty(p, map, B + 41, 1, true); // (sitting again once it's done holds nothing)
     expect(p.nextAt).toBe(due + 40);
   });
-  it("forecasts two waves ahead, confirmed, and a probable set that holds the wave after (Ed, 2026-10-04)", () => {
+  it("forecasts two waves ahead, confirmed (Ed, 2026-10-04)", () => {
     const p = newParty(map);
     expect(p.next.length).toBe(1); expect(p.afterNext.length).toBe(1);
-    expect(p.probable.length).toBeGreaterThan(0); expect(p.probable.length).toBeLessThanOrEqual(TUNING.forecast.probable);
     for (let w = 0; w < 6; w++) {
-      const after = p.afterNext, probable = p.probable.map(key);
+      const after = p.afterNext;
       spreadWave(p, map, w + 1);
       expect(p.next).toEqual(after); // the confirmed after-next is next now
-      expect(probable).toContain(key(p.afterNext[0])); // and the new after-next was among the probable
     }
     const m = spawnMarkers(p, map), stage = (c: readonly [number, number]) => m.find(x => x.key === key(c as [number, number]))!.stage;
     expect(stage(p.next[0])).toBe("next"); expect(stage(p.afterNext[0])).toBe("afterNext");
-    for (const c of p.probable) expect(stage(c)).toBe("probable");
+    expect(m.filter(x => x.stage === "dormant").length).toBe(m.length - 2);
   });
   it("numbers every dormant area by the wave that will wake it, as the waves then do (Ed, 2026-10-04: numbers over the stones)", () => {
     for (const per of [1, 2]) {
@@ -665,17 +665,6 @@ describe("the party", () => {
       }
     }
   });
-  it("sees a wave further with a forecast buff (the owl's): the third wave's one area, confirmed", () => {
-    const p = newParty(map);
-    p.seeAhead = 1; planAhead(p, map);
-    for (let w = 0; w < 6; w++) {
-      expect(p.probable.length).toBe(1);
-      const third = p.probable;
-      spreadWave(p, map, w + 1);
-      expect(p.afterNext).toEqual(third);
-    }
-  });
-
   it("wakes one area per witch each wave (Ed, 2026-10-04): areasPerWave, all different, forecast as sets, and it can change between waves", () => {
     const p = newParty(map);
     p.areasPerWave = 3; p.next = pickSet(p, map, 3); planAhead(p, map);
@@ -695,15 +684,6 @@ describe("the party", () => {
     expect(p.next.length).toBe(2);
     expect(spreadWave(p, map, 10).length).toBe(2);
     expect(spawnMarkers(p, map).filter(m => m.stage === "next").length).toBe(2);
-  });
-  it("rings the stones with symbols: 12 on the next, the after-next filling through the middle, probable ones a few", () => {
-    const F = TUNING.forecast;
-    expect(symbolCount("next", 0, 0, TUNING)).toBe(F.symbols);
-    expect(symbolCount("afterNext", 0, 0, TUNING)).toBe(F.afterNext[0]);
-    expect(symbolCount("afterNext", 1, 0, TUNING)).toBe(F.afterNext[1]);
-    expect(symbolCount("afterNext", 1, 0, TUNING)).toBeLessThan(F.symbols); // only the next has all 12
-    for (const f of [0, 0.5, 0.99]) { const n = symbolCount("probable", 0, f, TUNING); expect(n).toBeGreaterThanOrEqual(1); expect(n).toBeLessThanOrEqual(F.probableMax); }
-    expect(symbolCount("dormant", 1, 1, TUNING)).toBe(0);
   });
   it("comes in waves every interval seconds, and pauses", () => {
     const p = newParty(map), I = TUNING.party.interval, start = TUNING.party.startDelay + TUNING.boot.time;
@@ -1347,23 +1327,71 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
   });
 });
 
+describe("the home speakers start as runestones (Ed, 2026-10-06)", () => {
+  it("turn into speakers one by one as the boot reaches them, each over boot.transform, all of them by its end", () => {
+    const g = newGame(3, TUNING), n = g.speakerBoot.length, T = TUNING.boot.transform;
+    g.clock.paused = false;
+    expect(n).toBe(12);
+    for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
+    expect(g.speakerBoot.every(b => b === null)).toBe(true); // seated: all stones
+    for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60);
+    const to = (time: number) => { while (g.clock.time < time) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60); };
+    to(g.party.bootUntil - TUNING.boot.time / 2);
+    const half = g.speakerBoot.filter(b => b !== null).length;
+    expect(half).toBeGreaterThan(3); expect(half).toBeLessThan(9);
+    const i = half - 1, at = g.speakerBoot[i]!; // the latest one, turning
+    expect(speakerBoot(g, i, at)).toBe(0); expect(speakerBoot(g, i, at + T / 2)).toBeCloseTo(0.5); expect(speakerBoot(g, i, at + T)).toBe(1);
+    expect(speakerBoot(g, half, g.clock.time)).toBe(0); // the next still a stone
+    for (let k = 1; k < half; k++) expect(g.speakerBoot[k]!).toBeGreaterThanOrEqual(g.speakerBoot[k - 1]!); // round the ring in order
+    to(g.party.bootUntil + T + 0.1);
+    expect(g.speakerBoot.every((_, k) => speakerBoot(g, k) === 1)).toBe(true);
+  });
+  it("can be booted by the pulse: bootSpeaker turns one now, once", () => {
+    const g = newGame(3, TUNING);
+    g.clock.time = 5;
+    bootSpeaker(g, 7);
+    expect(g.speakerBoot[7]).toBe(5);
+    g.clock.time = 9; bootSpeaker(g, 7);
+    expect(g.speakerBoot[7]).toBe(5);
+    expect(speakerBoot(g, 6)).toBe(0);
+  });
+});
+
 describe("the dancefloor's tile lights (Ed, v160)", () => {
   const beat = 60 / TUNING.beat.bpm, boot = 8 * beat; // the switch-on sequence is 8 beats
   const inputs = (time: number, o: Partial<FloorInputs> = {}): FloorInputs => ({ time, seed: 7, level: 2, partifiedAreas: new Set(), witch: { x: -50, y: -50, lift: 1, rgb: [255, 238, 70] }, dancers: [], ...o });
   const run = (f: ReturnType<typeof newFloor>, from: number, to: number, o: Partial<FloorInputs> = {}) => { for (let t = from; t <= to; t += 1 / 30) stepFloor(f, inputs(t, o), TUNING); };
-  const litCount = (rgbi: Uint8Array) => { let n = 0; for (let i = 3; i < rgbi.length; i += 4) if (rgbi[i]) n++; return n; };
-  it("is dark until it switches on, once, when the witch first leaves the terrace", () => {
-    const g = newGame(3, TUNING);
+  it("shows only the moon before the first wave, in its twilight palette, and switches on, once, when the first wave comes", () => {
+    const g = newGame(3, TUNING), P = TUNING.moon.floor.palette.map(c => c.join());
     g.clock.paused = false;
-    expect(litCount(composeFloor(g.floor, floorInputs(g), TUNING).rgbi)).toBe(0);
+    const colours = () => { const o = composeFloor(g.floor, floorInputs(g), TUNING).rgbi, seen = new Set<string>(); let max = 0; for (let i = 0; i < o.length; i += 4) if (o[i + 3]) { seen.add(`${o[i]},${o[i + 1]},${o[i + 2]}`); max = Math.max(max, o[i + 3]); } return { seen, max }; };
     for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
-    expect(g.floor.on).toBeNull(); // still seated
-    stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60);
+    for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, toggleMode: i === 5, zoom: 0 }, 1 / 60);
+    expect(g.party.wave).toBe(0);
+    expect(g.floor.on).toBeNull(); // off the decks, but no wave yet: the moon
+    const m = colours();
+    expect(m.seen.size).toBeGreaterThan(0);
+    expect([...m.seen].every(c => P.includes(c))).toBe(true); // no neon
+    expect(m.max).toBeLessThanOrEqual(2);
+    g.party.nextAt = g.clock.time; // the first wave, now
+    for (let i = 0; i < 3 && g.party.wave === 0; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
+    expect(g.party.wave).toBeGreaterThan(0);
     const on = g.floor.on;
     expect(on).not.toBeNull();
-    for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, toggleMode: i === 5, zoom: 0 }, 1 / 60);
+    expect(colours().max).toBe(3); // the full moon flaring out
+    for (let i = 0; i < 60 * (TUNING.moon.floor.flare + 1); i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
     expect(g.floor.on).toBe(on); // only once
-    expect(litCount(composeFloor(g.floor, floorInputs(g), TUNING).rgbi)).toBeGreaterThan(0); // booting
+    expect([...colours().seen].some(c => !P.includes(c))).toBe(true); // the party's neons
+  });
+  it("draws the moon's phases: none lit at new, the right half at first quarter, all at full, the left half at last quarter", () => {
+    const lit = (phase: number) => { const o = new Uint8Array(GRID * GRID * 4); moonTiles(o, phase, 0, TUNING); const S = TUNING.moon.floor.palette[2].join(), P1 = TUNING.moon.floor.palette[1].join(); let l = 0, r = 0; for (let n = 0; n < GRID * GRID; n++) { const c = `${o[n * 4]},${o[n * 4 + 1]},${o[n * 4 + 2]}`; if (o[n * 4 + 3] === 2 && (c === S || c === P1)) { if (n % GRID < GRID / 2) l++; else r++; } } return { l, r }; };
+    expect(lit(0)).toEqual({ l: 0, r: 0 });
+    const q1 = lit(0.25), full = lit(0.5), q3 = lit(0.75);
+    expect(q1.l).toBe(0); expect(q1.r).toBeGreaterThan(20);
+    expect(full.l).toBeGreaterThan(20); expect(Math.abs(full.l - full.r)).toBeLessThan(full.l * 0.2);
+    expect(q3.r).toBe(0); expect(q3.l).toBeGreaterThan(20);
+    const cres = lit(0.1), gib = lit(0.4);
+    expect(cres.r).toBeLessThan(q1.r); expect(gib.r + gib.l).toBeGreaterThan(q1.r);
   });
   it("plays patterns on the beat, changing on bar lines, never the same one twice running", () => {
     const f = newFloor(); switchOn(f, 0);
@@ -1728,5 +1756,21 @@ describe("the dash (Ed, 2026-10-04)", () => {
     run(g, 1, { dash: true });
     expect(g.witches[0].dash.until).toBe(-Infinity);
     expect(Math.abs(g.witch.x - x0)).toBeLessThan(1);
+  });
+});
+
+describe("the moon (Ed, 2026-10-06)", () => {
+  it("goes through its phases, crosses the sky, and now and then turns red, blue or gold, the same for a seed", () => {
+    const M = TUNING.moon;
+    expect(moonState(0, 5, TUNING).phase).toBeCloseTo(M.phaseStart);
+    expect(moonState(M.phasePeriod / 2, 5, TUNING).phase).toBeCloseTo(M.phaseStart + 0.5);
+    const a = moonState(0, 5, TUNING), b = moonState(M.orbit * 0.3, 5, TUNING);
+    expect(b.x).toBeGreaterThan(a.x);
+    for (let t = 0; t < M.orbit; t += 7) { const m = moonState(t, 5, TUNING); expect(m.y).toBeGreaterThanOrEqual(M.low - 1e-9); expect(m.y).toBeLessThanOrEqual(M.high + 1e-9); expect(m.x).toBeGreaterThanOrEqual(M.left); expect(m.x).toBeLessThanOrEqual(M.right); }
+    expect(moonState(10, 5, TUNING).kind).toBe("plain"); // never in the first window
+    const kinds = new Set<string>();
+    for (let seed = 1; seed < 40; seed++) for (let t = M.colourEvery; t < M.colourEvery * 12; t += 10) { const m = moonState(t, seed, TUNING); if (m.colour > 0.99) kinds.add(m.kind); expect(m.rgb.every(Number.isFinite)).toBe(true); }
+    expect([...kinds].sort()).toEqual(["blue", "gold", "red"]);
+    expect(moonState(1234.5, 9, TUNING)).toEqual(moonState(1234.5, 9, TUNING));
   });
 });

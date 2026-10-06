@@ -19,7 +19,7 @@
 // No drawing here: the view makes the tiles a texture and the floor's light from `average`.
 import { DISCO_GRID, DISCO_MASK, DISCO_RADIUS, DISCO_TRANSITIONS, discoPatterns, discoTransition } from "../../art/dancefloor.js";
 import { NEON } from "../../art/sigils.js";
-import { hash2 } from "./random";
+import { hash2, vnoise } from "./random";
 import type { Tuning } from "./tuning";
 
 export const GRID = DISCO_GRID as number;
@@ -119,6 +119,8 @@ export interface FloorInputs {
   witch: { x: number; y: number; lift: number; rgb: Rgb };
   /** Creatures dancing on the floor, on the grid, in their colours. */
   dancers: { x: number; y: number; rgb: Rgb }[];
+  /** The moon's phase (rules/moon.ts: 0 new, 0.5 full): before the first wave the floor shows only the moon (Ed, 2026-10-06). */
+  moon?: { phase: number };
 }
 
 /** Advance the sequence and the witch's marks to `time` (call every frame). */
@@ -169,7 +171,7 @@ export interface FloorTiles {
 export function composeFloor(f: FloorState, inp: FloorInputs, t: Tuning, out?: Uint8Array): FloorTiles {
   const D = t.dancefloor.tiles, rgbi = out ?? new Uint8Array(GRID * GRID * 4), level = inp.level, time = inp.time, beat = beatOf(time, t, inp);
   rgbi.fill(0);
-  if (f.on === null) return { rgbi, average: [0, 0, 0], lit: 0 };
+  if (f.on === null) { if (inp.moon) moonTiles(rgbi, inp.moon.phase, time, t); return summary(rgbi); }
   const set = (n: number, c: Rgb, i: number, add = false) => {
     if (!MASK[n] || i <= 0) return;
     const k = n * 4, cur = rgbi[k + 3];
@@ -231,7 +233,23 @@ export function composeFloor(f: FloorState, inp: FloorInputs, t: Tuning, out?: U
   }
   // 4. Intensity: at low levels only some of the lit tiles show, so the floor is sparse and calm.
   if (level <= 1) for (let n = 0; n < GRID * GRID; n++) if (rgbi[n * 4 + 3] && hash2(n, Math.floor(beat / 2), 53) > D.lowLevelShare) rgbi[n * 4 + 3] = 0;
-  // The lit tiles' average colour and how much of the floor is lit, for the floor's light.
+  // 5. The first wave: the full moon flares out over the switch-on and fades into the party.
+  const fl = t.moon.floor.flare, k = (time - f.on) / Math.max(0.01, fl);
+  if (inp.moon && k >= 0 && k < 1) {
+    const P = t.moon.floor.palette, front = R * t.moon.floor.size + (R + 3) * (1 - (1 - k) ** 3), i = Math.ceil(3 * (1 - k) ** 0.7);
+    for (let n = 0; n < GRID * GRID; n++) {
+      if (!MASK[n]) continue;
+      const d = Math.hypot((n % GRID) + 0.5 - C, Math.floor(n / GRID) + 0.5 - C);
+      if (d > front || rgbi[n * 4 + 3] > i) continue;
+      const c = d > front - 1.5 ? P[1] : P[2];
+      rgbi[n * 4] = c[0]; rgbi[n * 4 + 1] = c[1]; rgbi[n * 4 + 2] = c[2]; rgbi[n * 4 + 3] = i;
+    }
+  }
+  return summary(rgbi);
+}
+
+/** The lit tiles' average colour and how much of the floor is lit, for the floor's light. */
+function summary(rgbi: Uint8Array): FloorTiles {
   let sr = 0, sg = 0, sb = 0, si = 0, tiles = 0;
   for (let n = 0; n < GRID * GRID; n++) {
     if (!MASK[n]) continue;
@@ -241,4 +259,30 @@ export function composeFloor(f: FloorState, inp: FloorInputs, t: Tuning, out?: U
     sr += rgbi[n * 4] * i; sg += rgbi[n * 4 + 1] * i; sb += rgbi[n * 4 + 2] * i; si += i;
   }
   return { rgbi, average: si ? [sr / si / 255, sg / si / 255, sb / si / 255] : [0, 0, 0], lit: si / (tiles * 3) };
+}
+
+const SEAS: [number, number, number][] = [[-0.28, -0.3, 0.27], [0.18, -0.38, 0.17], [0.08, 0.05, 0.2], [-0.38, 0.22, 0.14], [0.3, 0.32, 0.1]]; // the moon's dark seas (x, y, radius in its radii), as we see them
+
+/** The floor before the first wave (Ed, 2026-10-06: "only phases of the moon (a new animation), in muted
+ *  twilight colours"): the moon at `phase` (0 new, 0.5 full; the sky's own, rules/moon.ts) in the middle,
+ *  its lit side soft silver with slate seas, its dark side a faint dusky violet, and a few stars twinkling
+ *  slowly round it. Waxing it fills from the right (as seen from the south), waning it empties from it. */
+export function moonTiles(rgbi: Uint8Array, phase: number, time: number, t: Tuning): void {
+  const F = t.moon.floor, P = F.palette, mr = R * F.size, waxing = phase < 0.5, lit = 0.5 - 0.5 * Math.cos(phase * Math.PI * 2);
+  // the thinnest crescents at least two tiles at their widest, so they read from the ground camera (the art director, #252)
+  const xt = lit > 0.01 ? Math.min(Math.cos(phase * Math.PI * 2), 1 - 2 / mr) : Math.cos(phase * Math.PI * 2);
+  const set = (n: number, c: number[], i: number) => { rgbi[n * 4] = c[0]; rgbi[n * 4 + 1] = c[1]; rgbi[n * 4 + 2] = c[2]; rgbi[n * 4 + 3] = i; };
+  for (let n = 0; n < GRID * GRID; n++) {
+    if (!MASK[n]) continue;
+    const x = (n % GRID) + 0.5 - C, y = Math.floor(n / GRID) + 0.5 - C, d = Math.hypot(x, y);
+    if (d < mr) {
+      const nx = x / mr, s = Math.sqrt(Math.max(0, 1 - (y / mr) ** 2)), on = waxing ? nx > xt * s : nx < -xt * s;
+      if (on) set(n, SEAS.some(([sx, sy, sr]) => Math.hypot(nx - sx, y / mr - sy) < sr * (0.85 + 0.3 * vnoise(x * 0.9, y * 0.9, 61))) ? P[1] : P[2], 2); // its seas in slate
+      else if ((Math.floor(x + C) + Math.floor(y + C)) % 2 === 0) set(n, P[0], 1); // the dark side, faint (earthshine), in an even dither
+    } else if (d > mr + 1.5) {
+      // Stars, each with its own slow rate, coming and going.
+      const h = hash2(n, 0, 71), on = hash2(n, Math.floor(time / (2.5 + 3 * h) + h * 9), 73) < F.stars;
+      if (on) set(n, h > 0.7 ? P[2] : P[0], 1);
+    }
+  }
 }

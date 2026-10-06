@@ -101,6 +101,35 @@ Smoke from every fire (Ed, round 13: puffs rising high into the sky before dissi
 | `sky.lightning.flashes` | number | 0 to … |
 | `sky.lightning.ground` | number | 0 to … |
 
+## `moon`
+
+The moon (Ed, 2026-10-06: "The moon should slowly change: occasionally becoming red, and blue, and yellow, and going through phases, and moving across the sky"): one moon, drawn in the sky, tinting the moonlight a little, and shown on the dancefloor before the first wave (the same phase). phasePeriod: seconds from new moon to new moon; phaseStart: its phase at the start (0 new, 0.25 first quarter, 0.5 full). orbit: seconds to cross the sky once (it rises at the left from behind the far forest and sets at the right), from arcStart (0-1 of the way); left, right: how far across the screen it goes; low, high: the height of its way up the sky band (fractions of the screen from the bottom: low is behind the far forest). Coloured moons: the run is cut into windows of colourEvery seconds, and in each but the first there's a colourChance of a red (blood), blue or gold (harvest) moon for colourTime seconds, easing in and out over colourFade; colours: theirs (0-1 rgb). tint: how much of its colour the moonlight on the world takes (0 none, 1 all); bloodTint: the same for a red (blood) moon, a little more so it reads through the night grade (the rendering builder, #252). disc: the sky moon's size, times its old one (1.5: a crescent survives the sky's tilt-shift blur, the art director, #252). floor: the dancefloor's moon before the first wave (Ed: "only phases of the moon, in muted twilight colours"): palette (dusky violet, slate blue, soft silver, 0-255), size (the moon's radius, a share of the floor's), stars (the share of the floor's sky twinkling round it), flare (seconds the full moon flares out into the party when the first wave comes).
+
+| knob | type | range |
+|---|---|---|
+| `moon.phasePeriod` | number | 0 to … |
+| `moon.phaseStart` | number | 0 to … |
+| `moon.orbit` | number | 0 to … |
+| `moon.arcStart` | number | 0 to … |
+| `moon.left` | number | 0 to … |
+| `moon.right` | number | 0 to … |
+| `moon.low` | number | 0 to … |
+| `moon.high` | number | 0 to … |
+| `moon.colourEvery` | number | 0 to … |
+| `moon.colourChance` | number | 0 to … |
+| `moon.colourTime` | number | 0 to … |
+| `moon.colourFade` | number | 0 to … |
+| `moon.colours.red` | array of number |  |
+| `moon.colours.blue` | array of number |  |
+| `moon.colours.gold` | array of number |  |
+| `moon.tint` | number | 0 to … |
+| `moon.bloodTint` | number | 0 to … |
+| `moon.disc` | number | 0 to … |
+| `moon.floor.palette` | array of array |  |
+| `moon.floor.size` | number | 0 to … |
+| `moon.floor.stars` | number | 0 to … |
+| `moon.floor.flare` | number | 0 to … |
+
 ## `wind`
 
 Wind sway on leafy things (Ed, v171): trees (both halves together, from the foot) and undergrowth lean with gusts that travel across the forest: strength metres at the top of a crown, gusts moving at speed m/s, gustScale metres across; treetop: the share of it seen over the treetops (gentler). Walls and set pieces stand still. ?wind=0 turns it off.
@@ -444,8 +473,7 @@ The sleeping legends' clearings (Ed, 2026-10-06: "Sleeping legends should be in 
 | `glades.motes.sat` | number | 0 to … |
 | `glades.motes.bright` | number | 0 to … |
 | `leyLines.on` | boolean |  |
-| `leyLines.ahead` | number | 0 to … |
-| `leyLines.behind` | number | 0 to … |
+| `leyLines.far` | array of number |  |
 | `leyLines.behindBright` | number | 0 to … |
 | `leyLines.advance` | string |  |
 | `leyLines.fade` | number | 0 to … |
@@ -533,7 +561,15 @@ Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters 
 | `partyObjects.home.lights` | number | 0 to … |
 | `partyObjects.exclude` | array of string |  |
 | `partyObjects.generated` | boolean |  |
-| `partyWitches.max` | number | 0 to … |
+| `partyWitches.roam` | number | 0 to … |
+| `partyWitches.centreBias` | number | 0 to … |
+| `partyWitches.swoopTime` | number | 0 to … |
+| `partyWitches.swoopHeight` | number | 0 to … |
+| `partyWitches.swoopMin` | number | 0 to … |
+| `partyWitches.swoopMax` | number | 0 to … |
+| `partyWitches.treetopBoost` | number | 0 to … |
+| `partyWitches.simRange` | number | 0 to … |
+| `partyWitches.simRangeTreetop` | number | 0 to … |
 | `partyWitches.idleAfter` | number | 0 to … |
 | `partyWitches.idleReach` | number | 0 to … |
 | `partyWitches.activityMin` | number | 0 to … |
@@ -667,12 +703,16 @@ Home's area (Ed, 2026-10-05: "Home area should be big enough that the whole circ
 
 ## `rig`, `looks`
 
-The live rig (Ed, 2026-10-05): on by default, ?rig=0 turns it off. Creatures keep their baked frames in the treetops, and on the ground when drawn smaller than minPx art pixels, except the levels in alwaysLevels: legends are always rigged.
+The live rig (Ed, 2026-10-05): on by default, ?rig=0 turns it off. Creatures keep their baked frames in the treetops, and on the ground when drawn smaller than minPx art pixels, except the levels in alwaysLevels: legends are always rigged. A sleeping area legend is rigged too: lying down, legs folded, head on the ground, eyes shut, breathing slowly, sunk sink of its height into the earth (the baked frames sink wildLegends.sink), its legs paddling and head jerking in a nightmare while restless. Woken (angry or happy) it gets up drowsily over wakeSecs seconds (an angry one angryWake times as long): its head comes up first, sags once, then it heaves itself up out of the ground; lulled back to sleep it settles down over settleSecs.
 
 | knob | type | range |
 |---|---|---|
 | `rig.minPx` | number | 0 to … |
 | `rig.alwaysLevels` | array of string |  |
+| `rig.wakeSecs` | number | 0 to … |
+| `rig.angryWake` | number | 0 to … |
+| `rig.settleSecs` | number | 0 to … |
+| `rig.sink` | number | 0 to … |
 | `looks.enragedTint.colour` | string |  |
 | `looks.enragedTint.amount` | number | 0 to … |
 | `looks.anger.on` | boolean |  |
@@ -875,7 +915,7 @@ The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when o
 
 ## `sfx`, `music`
 
-The sound effects, all synthesised in the music's key (2026-10-05): volume over the music's, hear metres (a sound fades to nothing that far from her). voice: the babble (Ed, 2026-10-05: 💌s are her speech, attacks the animals'). witch: each 💌 a syllable in her voice (pitch Hz, range: how far her phrases rise and fall, pace: a syllable's seconds, timbre: her formants over an adult's, phraseGap: a pause this long starts a new phrase); animals: an attack a burst of babble in the creature's own voice (pitch Hz for a normal-sized young, lower by level and size; maxVoices at once, the farthest giving way, duck: how much the others quieten; syllables per burst; gap: a creature speaks at most every gap seconds; reply: a 💌 hit's answering syllable, its volume share). hit: a 💌 landing (a spent one a faint tick); fill: the affection tick, climbing octaves as the meter fills; invited: the flourish (fuller by level); enraged: the growl when one turns (gap: at most one every gap seconds, a crowd turning at once one heavier growl); happy: the pop; snore: a sleeping legend within range metres moaning softly in its dreams (volume); nightmare: its moans when restless (volume); windup: a legend's attack winding up, its whale song swelling for length seconds before it fires; lost: a soundsystem lost, the sting heard anywhere (volume); land: a 💌 that met no one landing on the ground, a soft puff (at most one every gap seconds); stir: the boot-up over, the first wave's countdown begun, things stirring (volume); roar: a legend turning angry, its roar (heard twice as far); lament: a restless legend calling out sadly (Ed, 2026-10-06), its own call lowered (pitch) and slowed (slow) into the legends' space, heard within range metres from the way of its clearing and muffled with distance; a call about every every seconds, down to urgent as its restlessness runs out; at most max restless legends call, the nearest, at least gap seconds apart (volume); shoes: dancers within range metres tapping their party shoes on the beat, at most max at once; pond: by a pond within range metres, water lapping (lap), a frog every frogEvery seconds or so (frogs), a drip every dripEvery (drips); picnic: by a picnic in a partified area within range metres, its party-goers' murmur and cups clinking every clinkEvery seconds or so; room: the creator's room in the treehouse while it's open, its hum, a record's crackle, the timber creaking every creakEvery seconds or so; impact: a lobbed shot landing, a thud (small times volume) or a legend's boom (volume), heard from the lob's landing spot (a legend's twice as far); knock: the witch knocked back (#108), a thump and a whoosh by how far (volume, whoosh), and stunned, a soft dizzy twinkle every twinkleEvery seconds (twinkle); charge: a legend's long charge, its windup's bellow, heavy hoofbeats by its speed, the ground's rumble along its lane, the skid of its braking arc, a lighter trot home, heard within range metres; relic: a relic bottle found (a rare chime), spotted within spot metres on the ground or spotTreetop from the treetops, or reached within reach; meadow: home's ambience (breeze, bees, birds, a bird's song about every birdEvery seconds; its picnic's far murmur, its cups clinking about every clinkEvery seconds (clinks), its balloons squeaking about every squeakEvery (balloons)), in home's circle (the map's homeRadius round the dancefloor) fading out over its last fade metres; ouch: the witch hurt, her cry and a thump (volume; knocked down, her "whoa-oh" at knockdown times that), the music dipped by duck for duckTime seconds (twice that knocked down); whale: the legends' voice (Ed, 2026-10-05: "whale song; deep and slow"): volume, speed (1: moans of 2 to 3 s; 2: twice as fast), depth (Hz of its lowest moan), reverb (how big its space), sleepEvery (seconds between a sleeper's moans, sooner when restless).
+The sound effects, all synthesised in the music's key (2026-10-05): volume over the music's, hear metres (a sound fades to nothing that far from her). voice: the babble (Ed, 2026-10-05: 💌s are her speech, attacks the animals'). witch: each 💌 a syllable in her voice (pitch Hz, range: how far her phrases rise and fall, pace: a syllable's seconds, timbre: her formants over an adult's, phraseGap: a pause this long starts a new phrase); animals: an attack a burst of babble in the creature's own voice (pitch Hz for a normal-sized young, lower by level and size; maxVoices at once, the farthest giving way, duck: how much the others quieten; syllables per burst; gap: a creature speaks at most every gap seconds; reply: a 💌 hit's answering syllable, its volume share). hit: a 💌 landing (a spent one a faint tick); fill: the affection tick, climbing octaves as the meter fills; invited: the flourish (fuller by level); enraged: the growl when one turns (gap: at most one every gap seconds, a crowd turning at once one heavier growl); happy: the pop; snore: a sleeping legend within range metres moaning softly in its dreams (volume); nightmare: its moans when restless (volume); windup: a legend's attack winding up, its whale song swelling for length seconds before it fires; lost: a soundsystem lost, the sting heard anywhere (volume); land: a 💌 that met no one landing on the ground, a soft puff (at most one every gap seconds); stir: the boot-up over, the first wave's countdown begun, things stirring (volume); roar: a legend turning angry, its roar (heard twice as far); power: a runestone crackling into life as a speaker or soundsystem (Ed, 2026-10-06), heard within range metres: its static (crackle), a capacitor's whine, the mains buzz, the cone's thump and the clean tone it settles into, each the home ring's next step up the scale, the last a chord; at most one every gap seconds (volume); lament: a restless legend calling out sadly (Ed, 2026-10-06), its own call lowered (pitch) and slowed (slow) into the legends' space, heard within range metres from the way of its clearing and muffled with distance; a call about every every seconds, down to urgent as its restlessness runs out; at most max restless legends call, the nearest, at least gap seconds apart (volume); shoes: dancers within range metres tapping their party shoes on the beat, at most max at once; pond: by a pond within range metres, water lapping (lap), a frog every frogEvery seconds or so (frogs), a drip every dripEvery (drips); picnic: by a picnic in a partified area within range metres, its party-goers' murmur and cups clinking every clinkEvery seconds or so; room: the creator's room in the treehouse while it's open, its hum, a record's crackle, the timber creaking every creakEvery seconds or so; impact: a lobbed shot landing, a thud (small times volume) or a legend's boom (volume), heard from the lob's landing spot (a legend's twice as far); knock: the witch knocked back (#108), a thump and a whoosh by how far (volume, whoosh), and stunned, a soft dizzy twinkle every twinkleEvery seconds (twinkle); charge: a legend's long charge, its windup's bellow, heavy hoofbeats by its speed, the ground's rumble along its lane, the skid of its braking arc, a lighter trot home, heard within range metres; relic: a relic bottle found (a rare chime), spotted within spot metres on the ground or spotTreetop from the treetops, or reached within reach; meadow: home's ambience (breeze, bees, birds, a bird's song about every birdEvery seconds; its picnic's far murmur, its cups clinking about every clinkEvery seconds (clinks), its balloons squeaking about every squeakEvery (balloons)), in home's circle (the map's homeRadius round the dancefloor) fading out over its last fade metres; ouch: the witch hurt, her cry and a thump (volume; knocked down, her "whoa-oh" at knockdown times that), the music dipped by duck for duckTime seconds (twice that knocked down); whale: the legends' voice (Ed, 2026-10-05: "whale song; deep and slow"): volume, speed (1: moans of 2 to 3 s; 2: twice as fast), depth (Hz of its lowest moan), reverb (how big its space), sleepEvery (seconds between a sleeper's moans, sooner when restless).
 
 | knob | type | range |
 |---|---|---|
@@ -917,6 +957,14 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `sfx.impact.volume` | number | 0 to … |
 | `sfx.impact.small` | number | 0 to … |
 | `sfx.roar.volume` | number | 0 to … |
+| `sfx.power.volume` | number | 0 to … |
+| `sfx.power.crackle` | number | 0 to … |
+| `sfx.power.whine` | number | 0 to … |
+| `sfx.power.buzz` | number | 0 to … |
+| `sfx.power.thump` | number | 0 to … |
+| `sfx.power.tone` | number | 0 to … |
+| `sfx.power.gap` | number | 0 to … |
+| `sfx.power.range` | number | 0 to … |
 | `sfx.lament.volume` | number | 0 to … |
 | `sfx.lament.pitch` | number | 0 to … |
 | `sfx.lament.slow` | number | 0 to … |
@@ -986,33 +1034,31 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.floor` | number | 0 to … |
 | `music.muffle` | number | 0 to … |
 | `music.audible` | number | 0 to … |
+| `music.circle.muffle` | number | 0 to … |
+| `music.circle.quiet` | number | 0 to … |
+| `music.circle.ease` | number | 0 to … |
+| `music.circle.level` | number | 0 to … |
+| `music.circle.radius` | number | 0 to … |
 | `music.clear` | number | 0 to … |
 | `music.distort` | number | 0 to … |
 | `music.src` | string |  |
 
-## `forecast`
-
-Forecasting (Ed, 2026-10-04): the next two waves are confirmed and the one after has a few probable areas. Every such rune stone grows a circle of up to symbols magic symbols round it on the ground, in its area's neon: the next stone has all of them; the after-next stone fills from afterNext[0] to afterNext[1] as the countdown runs; probable stones (probable of them) flicker with 1 to probableMax. They stand radius metres out, each size metres across, appear with a flare (flare seconds) and pulse on the beat; from the treetops the circle shows above the canopy.
-
-| knob | type | range |
-|---|---|---|
-| `forecast.symbols` | number | 0 to … |
-| `forecast.probable` | number | 0 to … |
-| `forecast.probableMax` | number | 0 to … |
-| `forecast.afterNext` | array of number |  |
-| `forecast.radius` | number | 0 to … |
-| `forecast.size` | number | 0 to … |
-| `forecast.flare` | number | 0 to … |
-
 ## `fight`
 
-The fight's scale and speed (Ed's motion scale pass, 2026-10-04: "the animals don't move around enough when attacking and defending"): fights are drawn and played at the ground camera's scale, creatures running at about the witch's speed and their patterns about 50 m across. scale: every length in a fight times this (attack ranges, lunges, area radii, beam widths, knockback, the packs' patterns and spacing, pursuit and guard reach, aggro); speed: every fight speed times this (running, charging, lunging, shots). momentum (Ed, 2026-10-05: "they should have more momentum"): how heavily creatures in a fight change speed and turn: their accelerations, braking and turn rates divided by it (2: twice as heavy). Try ?fightScale= and ?fightSpeed=, or change them live in the debug overlay (~): [ and ] for scale, ; and ' for speed.
+The fight's scale and speed (Ed's motion scale pass, 2026-10-04: "the animals don't move around enough when attacking and defending"): fights are drawn and played at the ground camera's scale, creatures running at about the witch's speed and their patterns about 50 m across. scale: every length in a fight times this (attack ranges, lunges, area radii, beam widths, knockback, the packs' patterns and spacing, pursuit and guard reach, aggro); speed: every fight speed times this (running, charging, lunging, shots). momentum (Ed, 2026-10-05: "they should have more momentum"): how heavily creatures in a fight change speed and turn: their accelerations, braking and turn rates divided by it (2: twice as heavy). Try ?fightScale= and ?fightSpeed=, or change them live in the debug overlay (~): [ and ] for scale, ; and ' for speed. charge and leap (Ed, round 13, 2026-10-06: 'charging and jumping creatures should charge or jump much further ... damaging whenever they're touched while in attack mode ... much more momentum, travelling in wide arcs'): every species' charge (movement.json) scaled: reach its run's time and overshoot past its target, turn its turn rate (lower: wider arcs), brake how hard it slows (lower: more momentum); contact: it hurts every foe it touches on the way, once each (her grace making one charge one hit). Every leap: reach times how far off it leaps from, a pounce (the lynx's) landing through metres past its target (a slam, the toad's, still onto it); contact: a pounce hurts whoever it touches in the air.
 
 | knob | type | range |
 |---|---|---|
 | `fight.scale` | number | 0 to … |
 | `fight.speed` | number | 0 to … |
 | `fight.momentum` | number | 0 to … |
+| `fight.charge.reach` | number | 0 to … |
+| `fight.charge.turn` | number | 0 to … |
+| `fight.charge.brake` | number | 0 to … |
+| `fight.charge.contact` | boolean |  |
+| `fight.leap.reach` | number | 0 to … |
+| `fight.leap.through` | number |  |
+| `fight.leap.contact` | boolean |  |
 
 ## `attackFx`, `combat`
 
@@ -1049,6 +1095,8 @@ How attacks feel on screen (Ed, 2026-10-06: 'make creature attack visuals better
 | `combat.homeHealth` | number | 0 to … |
 | `combat.homeRadius` | number | 0 to … |
 | `combat.shake` | number | 0 to … |
+| `combat.daze` | number | 0 to … |
+| `combat.retreatHome` | number | 0 to … |
 
 ## `notice`
 
@@ -1080,7 +1128,7 @@ The witch (Ed, 2026-10-04): she takes hits (one point each, whatever hits her) b
 
 ## `knockout`
 
-Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each creature turning neutral as its sigil goes and walking to the nearest area of its own kind, where it turns wild again; then she sparkles out and in at the treehouse over teleport seconds. Creatures at sigils on the ground stay hers. legendsLoyal: leashed legends stay with her (false: they go back to the wild too: 'they're too old for this').
+Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets go from the bottom up, one every releaseEach seconds (releaseMax caps the whole release, 0 no cap; an empty stack waits emptyBeat seconds), each creature turning neutral as its sigil goes and walking to the nearest area of its own kind, where it turns wild again; then she sparkles out and in at the treehouse over teleport seconds. Creatures at sigils on the ground stay hers. legendsLoyal: leashed legends stay with her (false: they go back to the wild too: 'they're too old for this'). dropHat (Ed, 2026-10-06: 'when you are killed, you drop your hat, and there's a direction marker for it, so you can go back and find it'): she drops her hat where she went down and wears none till she stands on it and presses the sigil button (E), which puts it straight back on (never into the stack; on top of a sigil, the hat comes first); a 🎩 pointer shows the way meanwhile. Knocked out again with it still down, nothing more drops. A witch with no hat (the character creator's none) has none of this.
 
 | knob | type | range |
 |---|---|---|
@@ -1089,6 +1137,7 @@ Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets g
 | `knockout.emptyBeat` | number | 0 to … |
 | `knockout.teleport` | number | 0 to … |
 | `knockout.legendsLoyal` | boolean |  |
+| `knockout.dropHat` | boolean |  |
 
 ## `dash`, `spells`
 
@@ -1133,15 +1182,16 @@ Her flight trail (Ed, 2026-10-06: "more like a fading-out glow, similar to the l
 
 ## `boot`
 
-At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power on one by one over time seconds, and only then does the first wave's countdown begin: extra time to find and invite your first creatures. Five minutes, counted from her first step off the decks (Ed, 2026-10-05: 'the game is hard! ... a boot up period of 5 minutes'): no wave and no growth till then.
+At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power on one by one over time seconds, and only then does the first wave's countdown begin: extra time to find and invite your first creatures. Five minutes, counted from her first step off the decks (Ed, 2026-10-05: 'the game is hard! ... a boot up period of 5 minutes'): no wave and no growth till then. transform (Ed, 2026-10-06: the home ring starts as small runestones, and the boot pulse turns each into its speaker): the seconds each takes to turn, glowing and rising into the speaker.
 
 | knob | type | range |
 |---|---|---|
 | `boot.time` | number | 0 to … |
+| `boot.transform` | number | 0 to … |
 
 ## `party`
 
-lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that many seconds sooner (at once if less is left), each loss stacking; the gap after it is the interval as ever. motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, rising from from to to metres (under the crowns to above them) at about speed m/s. uplight: crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border). The party spreads: a wave every interval seconds (the first after startDelay more), partifying every area touching a partified one; maxPerWave caps a wave (0: no cap). transition: seconds an area takes to partify, 0 to skip the show. partyLight: the coloured light at each soundsystem (reach in metres, strength).
+lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that many seconds sooner (at once if less is left), each loss stacking; the gap after it is the interval as ever. motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, rising from from to to metres (under the crowns to above them) at about speed m/s. uplight: crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border). The party spreads: a wave every interval seconds (the first after startDelay more), partifying every area touching a partified one; maxPerWave caps a wave (0: no cap). picker: how the next area to wake is chosen: route (Ed, 2026-10-06: "I think the leylines should cover the entire set of waves the whole time, but ideally it shouldn't cross itself"; "I thought the idea was to have no crossings?"; "Long spirals are okay, but ideally it shouldn't be just spirals"; rules/leyroute.ts) wakes them in one order worked out per map so the ley line through them all never crosses itself: the noisy picker's order, untangled; noisy (?picker=noisy, the picker before it), near3, near3touch and nearest choose among the areas bordering the party as below. transition: seconds an area takes to partify, 0 to skip the show. partyLight: the coloured light at each soundsystem (reach in metres, strength).
 
 | knob | type | range |
 |---|---|---|
@@ -1190,7 +1240,7 @@ Colourful string lights in every partified area, as long garlands: runsPerArea r
 
 ## `waveNumbers`, `dancefloor`
 
-Wave numbers over the rune stones (Ed, 2026-10-04: "for design purposes, let's just put a big glowing number above the stones"): each stone shows the wave that will wake it, in its area's neon, over the canopy and clouds from the treetops and above the stone on the ground; on turns them off; size: a digit's height as a share of the screen's; lift: metres above the stone (or the treetops); spent: how bright the number stays once the party has reached the area (0 hides it). On the ground, a number whose stone is within pinRange metres is held inside the top of the screen when it would be above it.
+Off (Ed, 2026-10-06: "Remove the floating numbers above the runestones."); set on to true to bring them back. Wave numbers over the rune stones (Ed, 2026-10-04: "for design purposes, let's just put a big glowing number above the stones"): each stone shows the wave that will wake it, in its area's neon, over the canopy and clouds from the treetops and above the stone on the ground; on turns them off; size: a digit's height as a share of the screen's; lift: metres above the stone (or the treetops); spent: how bright the number stays once the party has reached the area (0 hides it). On the ground, a number whose stone is within pinRange metres is held inside the top of the screen when it would be above it.
 
 | knob | type | range |
 |---|---|---|
@@ -1305,12 +1355,13 @@ A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest 
 | `dreams.sleepy.faces` | array of string |  |
 | `dreams.sleepy.fallback` | string |  |
 
-## `wildLegends`, `creatureSimRadius`
+## `legends`, `wildLegends`, `creatureSimRadius`
 
-Area legends (Ed, 2026-10-04; DESIGN.md, "Sleeping legends"): every area has one legend of its kind, sleeping, sunk into the ground like scenery (no AI, no glow, no health bar; sink: the share of it under the ground, moss: how far its colours go toward moss). When its area's wave comes it wakes, angry: wake seconds of heaving out of the ground (untouchable), then a mini-boss guarding its own area with its move set (movement.json legends). Beaten, it sinks back to sleep for good. A happy legend (home's from the start; others by their quest, or the debug key O) guards its area for her like a parked party animal, anything in its area within guard metres of where it stands, with its move set, and heals heal hp a second while no enemy is near; beaten, it sleeps for good and its buff ends. Drawn scale times a legend's size, swelling by breathe as it breathes (once every breathEvery seconds); awake, an aura on the ground aura metres across and, from the treetops, a glow over the canopy (glow its strength) in a dark mix of its sigil's colour.
+Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." share: the fraction of the areas (home never) with a sleeping legend, seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows). The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads.
 
 | knob | type | range |
 |---|---|---|
+| `legends.share` | number | 0 to … |
 | `wildLegends.wake` | number | 0 to … |
 | `wildLegends.sink` | number | 0 to … |
 | `wildLegends.moss` | number | 0 to … |

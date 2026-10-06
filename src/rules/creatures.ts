@@ -71,10 +71,13 @@ export interface Creature {
   /** Burrowed (the mole, Stage 5): under the ground until, untouchable. */
   burrow?: { until: number };
   /** Leaping (the toad, Stage 5): from, to, when it took off and lands, how high. */
-  leap?: { fx: number; fz: number; tx: number; tz: number; at: number; lands: number; height: number };
+  leap?: { fx: number; fz: number; tx: number; tz: number; at: number; lands: number; height: number; /** whom a pounce has touched on the way (fight.leap.contact) */ hit?: number[] };
   fight?: Fight;
   /** Beaten in a fight: running for (fleeX, fleeZ), just off the map's edge (fleeUntil set), then gone. */
   fleeUntil?: number;
+  /** Gave up a chase past its band (Ed, 2026-10-06): heading back into its area, then roaming; since retreatFrom. */
+  retreat?: boolean;
+  retreatFrom?: number;
   fleeX?: number;
   fleeZ?: number;
   /** Stage 5 movement (rules/movement.ts): its velocity in a fight, a charge under way, when its
@@ -232,7 +235,7 @@ export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" |
 export function spawnCreatures(map: ForestMap): Creature[] {
   const out: Creature[] = [], pop = population(map);
   // The home area holds no creatures (Ed, 2026-10-03) and no legend (Ed, 2026-10-05: "Home area
-  // shouldn't have a legend": so no buff at the start). Every other area has its legend, sleeping, out of its clearing.
+  // shouldn't have a legend": so no buff at the start). The areas map.hasLegend picks (legends.share of them, Ed 2026-10-06) have their legend, sleeping in its clearing.
   const [hx, hy] = map.centreCell;
   for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
     const home = cx === hx && cy === hy;
@@ -245,6 +248,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
       for (let i = 0; i < startCount(pop.young, k); i++) make(1);
       for (let i = 0; i < startCount(pop.adults, k); i++) make(2);
     }
+    if (map.hasLegend && !map.hasLegend(cx, cy)) continue; // (legends in legends.share of the areas: Ed, 2026-10-06)
     const L = makeCreature(map, cell, LEGEND, out.length, r, legendSpot(map, cell, r));
     L.legendState = "asleep"; L.stateAt = 0;
     L.quest = questFor(map, cell, L.species);
@@ -283,7 +287,7 @@ export function stepCreature(c: Creature, dt: number, map: ForestMap): void {
 
 /** A creature moved by combat (rules/combat.ts) or a knockout (rules/knockout.ts) this step,
  *  not by its roam or its leash. */
-export const heldByCombat = (c: Creature) => !!(c.gone || c.fleeUntil || c.wanderTo || c.fight?.target || (c.siege && !c.leashed));
+export const heldByCombat = (c: Creature) => !!(c.gone || c.fleeUntil || c.wanderTo || c.fight?.target || c.retreat || (c.siege && !c.leashed));
 
 /** Step only the creatures within `radius` metres of (x, z). One coming back into range after a
  *  while is put where it would plausibly be by now (a point in its area chosen from its id and

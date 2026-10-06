@@ -16,6 +16,7 @@ import { AssetLibrary } from "./assets";
 import type { LightSource } from "../rules/forest";
 import { Ground } from "./ground";
 import { Sky } from "./sky";
+import { moonState, type MoonState } from "../rules/moon";
 import { Clouds } from "./clouds";
 import { Smoke } from "./smoke";
 import { Ride } from "./ride";
@@ -35,8 +36,8 @@ import { ActionBar } from "./actionbar";
 import { BuffHud } from "./buffhud";
 import { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
-import { MarkerArt, MarkerFx, SymbolRings, type Mote } from "./markers";
-import { waveCountdown, type SpawnMarker } from "../rules/party";
+import { MarkerArt, MarkerFx, type Mote } from "./markers";
+import { PARTY_CAST, waveCountdown, type SpawnMarker } from "../rules/party";
 import { WaveNumbers } from "./waveNumbers";
 import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
@@ -44,7 +45,9 @@ import { Lasers, type RingSpeaker } from "./lasers";
 import { PartyWitchView } from "./partyWitches";
 import { PartyObjectsView } from "./partyObjects";
 import { BorderView } from "./borders";
-import { MusicIndicator, StoneIndicator } from "./indicator";
+import { HAT, StoneIndicator } from "./indicator";
+import { hatMarker } from "../rules/hat";
+import { leyPulse, pointerShown } from "../rules/leypulse";
 import { Minimap } from "./minimap";
 import { Rulers } from "./rulers";
 import { Mist } from "./mist";
@@ -84,6 +87,11 @@ const FRAME_MS = 11;
 
 export interface ViewStats { berries: number; forestMs: number; forestMissing: number; sceneryRadius: number; fps: number; gameplay: number; scenery: number; dropped: number; trees: number; bushes: number; creatures: number; batches: number; drawCalls: number; pendingArt: number; pendingGround: number; lights: number; heightMoves?: number }
 
+/** Her dropped hat is drawn this far (m) to the side of where she went down, so it isn't under her as she sits slumped
+ *  (well inside the pick-up radius of the spot itself). */
+const HAT_BESIDE = 0.9;
+const HAT_INK = new THREE.Vector3(232 / 255, 180 / 255, 106 / 255); // (the HUD's one accent)
+
 export class View {
   readonly renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
@@ -100,6 +108,11 @@ export class View {
   private camLift = 0;
   /** The night sky that shows over the bend, in treetop mode. */
   private sky: Sky;
+  /** The moonlight as the style and mood set it, before the moon's colour tints it (rules/moon.ts). */
+  private moonBase = new THREE.Vector3();
+  private moonUpBase = new THREE.Vector3();
+  /** Seconds added to game time for the moon only (previews: a time-lapse of its phases, way and colours). */
+  moonShift = 0;
   /** Real clouds over the bend, with lightning. */
   private clouds: Clouds;
   /** Smoke rising from the fires (Ed, round 13). */
@@ -112,6 +125,9 @@ export class View {
   decorBatches = new Map<string, SpriteBatch>();
   creatureBatches = new Map<string, SpriteBatch>();
   private witchBatch: SpriteBatch;
+  /** Her with her hat knocked off, and the hat where it lies (rules/hat.ts): made once the game is up. */
+  private bareBatch: SpriteBatch | null = null;
+  private bareAsked = false;
   /** The smoothed heights she and the camera ride over the hills (ride.ts), and how far hers is
    *  over the ground under her this frame (everything drawn at her adds it). */
   private ride = new Ride();
@@ -129,6 +145,8 @@ export class View {
   speakerBatch: SpriteBatch | null = null;
   readonly grass: GrassView;
   private spellFx = new SpellFx();
+  /** The party spell's cast already burst into sparkles (its time). */
+  private castSeen: number | null | undefined = undefined;
   /** Her flight trail: a ribbon of glow in the colour of the area she's over (render/trail.ts). */
   private trail: WitchTrail;
   private trailAt = -1;
@@ -157,6 +175,14 @@ export class View {
   private gladeTime = 0;
   /** The ley line's colour by the mood (leyRgb), or null for each area's own. */
   private leyRgb: THREE.Vector3 | null;
+  /** The party the ley line follows (without quests done when it moves on only by waves), its chain, and each stone's colour. */
+  private leyParty: Game["party"] | null = null;
+  private readonly leyHome = new THREE.Vector3(0.8, 0.7, 1);
+  private readonly leyChainNow = () => leyChain(this.leyParty ?? this.game.party, this.game.map);
+  private readonly leyColour = (s: { cell: readonly [number, number] }) => {
+    if (this.leyRgb) return this.leyRgb; // the mood's: a guide in the HUD's amber, not a light source (the art director's round 2)
+    return this.markerArt.colour.get(AREA_TYPES[this.game.map.typeOf(s.cell[0], s.cell[1])].creature) ?? this.leyHome;
+  };
   /** The party witches on the dancefloor, and our witch when she idles into the party. */
   private partyWitchView: PartyWitchView;
   /** The 💌s, their bubbles and meters (render/invites.ts). */
@@ -168,8 +194,9 @@ export class View {
   /** The party objects strewn over partified areas (#38). */
   partyObjects: PartyObjectsView;
   private borders: BorderView;
-  private music = new MusicIndicator(document.body);
   private nextStones: StoneIndicator[] = [];
+  /** The pointer to her hat while it lies where she was knocked out (rules/hat.ts): 🎩 in a whole ring. */
+  private hatPointer: StoneIndicator | null = null;
   readonly minimap: Minimap;
   /** Metre rulers and a ground grid (G). */
   readonly rulers = new Rulers(document.body);
@@ -247,6 +274,7 @@ export class View {
       LIGHT_UNIFORMS.uAmb.value.multiplyScalar(2);
       LIGHT_UNIFORMS.uGlowPower.value = 0;
     }
+    this.moonBase.copy(LIGHT_UNIFORMS.uMoon.value); { const U = LIGHT_UNIFORMS.uMoonUp.value; this.moonUpBase.set(U.x, U.y, U.z); } // (the moonlight before the moon's own colour: updateMoon)
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize, witchGenome);
     this.assets.crownShare = t.trunkFade.crownShare;
     {
@@ -257,7 +285,7 @@ export class View {
     useHeightField(this.heights);
     this.heights.follow(game.witch.x, game.witch.z);
     this.ground = new Ground(game.map, game.forest, style, this.mpp);
-    this.sky = new Sky(t.sky);
+    this.sky = new Sky(t.sky, t.moon.disc);
     this.scene.add(this.sky.mesh);
     this.clouds = new Clouds(t.sky.clouds, t.sky.lightning, game.seed);
     this.scene.add(this.clouds.mesh, this.clouds.bolt);
@@ -299,7 +327,7 @@ export class View {
     this.minimap = new Minimap(document.body, game.map);
     this.markerArt = new MarkerArt(style, t);
     this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true });
-    this.scene.add(...this.markerBatch.meshes, this.markerFx.group, this.rings.mesh, this.waveNumbers.mesh);
+    this.scene.add(...this.markerBatch.meshes, this.markerFx.group, this.waveNumbers.mesh);
     // The ground cover: tufts round the witch, in ground mode.
     this.grass = new GrassView(game.map, t, this.mpp, style, game.forest, (this.ground.mesh.material as THREE.ShaderMaterial).uniforms);
     this.scene.add(this.grass.mesh);
@@ -425,6 +453,9 @@ export class View {
   // Everything drawn goes through this one test, so nothing is added or dropped on screen.
   frustum = new THREE.Frustum();
   frustumTo = new THREE.Frustum();
+  /** How far the camera moved since the last frame (m): the horizon cull judges things that much nearer (view/culling.ts inView). */
+  camStep = 0;
+  lastCamPos = new THREE.Vector3(NaN, NaN, NaN);
   cullCam = new THREE.PerspectiveCamera();
   box = new THREE.Box3();
   m4 = new THREE.Matrix4();
@@ -462,6 +493,8 @@ export class View {
   nibbles: { x: number; z: number; at: number }[] = [];
   /** When each party animal evolved (game time): the flash, the pop and the sparkles. */
   readonly evolvedAt = new Map<number, number>();
+  /** Each area legend's lying down and getting up, as the view has seen its state change (render/legendSleep.ts). */
+  readonly legendSleeps = new Map<number, import("./legendSleep").SleepTrack>();
   /** Each creature's distance walked as drawn, for its baked walk's frames (view/creatures.ts strideFrame). */
   readonly strides = new Map<number, { x: number; z: number; d: number; at: number }>();
   /** A party animal's gear for its rig page (as its party bake wears it), kept per creature and look. */
@@ -497,12 +530,11 @@ export class View {
   private leanTime = 0;
   /** Each ring speaker's top, state and power, for its laser (Ed: one each, none from the disco ball). */
   speakerTops: RingSpeaker[] = [];
-  rings = new SymbolRings();
   readonly waveNumbers = new WaveNumbers();
   /** Each dormant area's wave (wavePlan), worked out again when the party changes. */
   plan = { key: "", waves: new Map<string, number>() };
-  /** When each symbol round each stone appeared (for its flare), by marker. */
-  symbolSeen = new Map<string, number[]>();
+  /** When the ley line's tip reaches each stone (rules/leypulse.ts leyReachTimes), worked out again when the line changes. */
+  leyReach: { key: string; times: Map<string, number> | null } = { key: "", times: null };
   /** Draw a frame; with draw false, only bring the camera, batches and art requests up to date. */
   /** Milliseconds each part of the latest frame took (for the perf check: tools/smoke). */
   ms: Record<string, number> = {};
@@ -510,6 +542,16 @@ export class View {
   private frameStart = 0;
   /** Whether the hills' next strip was all worked out last frame. */
   private heightsReady = true;
+  /** The moon now (one moon: rules/moon.ts), and the moonlight tinted a little with its colour (moon.tint). */
+  private updateMoon(g: Game): MoonState {
+    const m = moonState(g.clock.time + this.moonShift, g.seed, g.tuning), k = m.kind === "red" ? g.tuning.moon.bloodTint : g.tuning.moon.tint, P = [0.92, 0.94, 0.86];
+    const r = 1 + (m.rgb[0] / P[0] - 1) * k, gr = 1 + (m.rgb[1] / P[1] - 1) * k, b = 1 + (m.rgb[2] / P[2] - 1) * k, n = 3 / (r + gr + b); // its hue, not its brightness
+    LIGHT_UNIFORMS.uMoon.value.set(this.moonBase.x * r * n, this.moonBase.y * gr * n, this.moonBase.z * b * n);
+    const U = LIGHT_UNIFORMS.uMoonUp.value;
+    U.set(this.moonUpBase.x * r * n, this.moonUpBase.y * gr * n, this.moonUpBase.z * b * n, U.w);
+    return m;
+  }
+
   /** The smoke (render/smoke.ts): the world's campfires burning now, the party's fires, and the charcoal huts' mounds, nearest first. */
   private updateSmoke(g: Game, time: number): void {
     const S = this.smoke, t = g.tuning, w = g.witch, R = t.smoke.range;
@@ -527,9 +569,9 @@ export class View {
 
   private time(part: string): void { const now = performance.now(); this.ms[part] = (this.ms[part] ?? 0) + now - this.lap; this.lap = now; }
 
-  /** Her sprite batch, from the assets' witch frames. */
-  private makeWitchBatch(): SpriteBatch {
-    const t = this.game.tuning, b = new SpriteBatch(this.assets.witch, this.mpp, { absolute: true, rim: true, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: t.occlusion.silhouette } });
+  /** Her sprite batch, from the assets' witch frames (bare: her hat knocked off, and the hat on the ground). */
+  private makeWitchBatch(bare = false): SpriteBatch {
+    const t = this.game.tuning, b = new SpriteBatch(bare ? this.assets.witchBare() : this.assets.witch, this.mpp, { absolute: true, rim: true, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: t.occlusion.silhouette } });
     b.mesh.renderOrder = 10;
     this.scene.add(...b.meshes);
     return b;
@@ -539,6 +581,7 @@ export class View {
     this.assets.rebakeWitch(genome);
     this.scene.remove(...this.witchBatch.meshes);
     this.witchBatch = this.makeWitchBatch();
+    if (this.bareBatch) { this.scene.remove(...this.bareBatch.meshes); this.bareBatch = null; this.bareAsked = false; }
   }
 
   /** How much of a thing shows over the bent horizon (culling.ts overBulge): the smoke check reads it. */
@@ -595,7 +638,7 @@ export class View {
       this.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground);
       HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); // the camera always looks north (toward -z)
       const far = t.haze.far;
-      this.sky.update(k, pose.tx, pose.tz, far, 2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (this.width / this.height));
+      this.sky.update(k, pose.tx, pose.tz, far, 2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (this.width / this.height), this.updateMoon(g));
     }
     this.time("sky");
     const u = target.dot(up), r = target.x, eu = Math.round(u / wpp) * wpp - u, er = Math.round(r / wpp) * wpp - r;
@@ -684,11 +727,9 @@ export class View {
       // The ley lines: fading from the colour of the area each starts in to that of the area it ends
       // in (Ed, 2026-10-05), the colour partified areas and soundsystems use: its creature's sigil's.
       // (advance "wave": it moves on only when the next area's wave arrives, not when its quest is done)
-      const P = t.leyLines.advance === "wave" ? { ...g.party, leyDone: undefined } : g.party, M = g.map, home = new THREE.Vector3(0.8, 0.7, 1);
-      this.ley.update(leyKey(P), () => leyChain(P, M, t.leyLines.ahead, t.leyLines.behind), s => {
-        if (this.leyRgb) return this.leyRgb; // the mood's: a guide in the HUD's amber, not a light source (the art director's round 2)
-        return this.markerArt.colour.get(AREA_TYPES[M.typeOf(s.cell[0], s.cell[1])].creature) ?? home;
-      }, time, canopyShown(w));
+      // (Nothing allocated a frame but on a change: the key's a number, the callbacks are the view's own.)
+      this.leyParty = t.leyLines.advance === "wave" ? (this.leyParty?.areas === g.party.areas && this.leyParty.wave === g.party.wave ? this.leyParty : { ...g.party, leyDone: undefined }) : g.party;
+      this.ley.update(leyKey(this.leyParty), this.leyChainNow, this.leyColour, time, canopyShown(w));
     }
     // The sleeping legends' clearings: their twilight and motes, the nearest few (render/glades.ts).
     { const gdt = Math.min(0.1, Math.max(0, time - this.gladeTime)); this.gladeTime = time; this.glades.update(g, w.x, w.z, gdt, w.mode === "ground"); }
@@ -743,6 +784,8 @@ export class View {
     const parts = [{ x: w.x, z: w.z, r: 1.6 * (1 - canopyShown(w)) }, ...near.sort((a, b) => a.d - b.d).slice(0, 3)];
     // No tufts over a placed sigil's rune (Ed, v233): trampled out to groundCover.sigilClear, or the rune's own size.
     const clear = g.leash.placed.map(p => ({ x: p.x, z: p.z, r: Math.max(t.groundCover.sigilClear, (3 + g.creatures[p.id].level * 0.8) * 0.45) }));
+    { const H = g.witches[0].hat.down; if (H && g.witches[0].hat.has) clear.push({ x: H.x + HAT_BESIDE, z: H.z, r: t.groundCover.sigilClear }); } // (her hat where it lies)
+    for (const r of g.relics) if (r.state === "lying" && Math.abs(r.sx - w.x) < GR && Math.abs(r.sz - w.z) < GR) clear.push({ x: r.sx, z: r.sz, r: Math.max(t.groundCover.sigilClear, 3.4 * 0.45) }); // (and a relic's sigil, south of it)
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
     const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires, this.lastView);
@@ -776,7 +819,7 @@ export class View {
     // liftSigil pose, and back up into the air when she's done. Talking (by herself, Ed v244), she
     // chats on the fly while moving and settles into the talk pose when she comes to rest.
     const L = g.leash, F = this.assets.witchFoot, side = w.away ? "away" : "towards";
-    for (const e of L.events) if (e.kind === "placed" || e.kind === "fizzled") this.footAct = { pose: "placeSigil", at: time }; else if (e.kind === "picked") this.footAct = { pose: "liftSigil", at: time };
+    for (const e of L.events) if (e.kind === "placed" || e.kind === "fizzled") this.footAct = { pose: "placeSigil", at: time }; else if (e.kind === "picked" || e.kind === "hatPicked") this.footAct = { pose: "liftSigil", at: time };
     const actLen = this.footAct ? F[this.footAct.pose].towards.length / F[this.footAct.pose].fps : 0;
     const acting = !!this.footAct && time - this.footAct.at < actLen + 0.3;
     const still = Math.hypot(w.vx, w.vz) < 0.6;
@@ -806,7 +849,15 @@ export class View {
       g.introFocus = { x: cam.x, y: cam.y, z: cam.z }; // the opening shot frames the studio (the art's camera anchor)
       const fwd = this.camera.getWorldDirection(this.v3);
       wx += (seat.x - fwd.x * 0.6 - wx) * k; wyy += (seat.y - fwd.y * 0.6 - wyy) * k; wz += (seat.z - fwd.z * 0.6 - wz) * k;
-      if (w.seated) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
+      if (w.seated) {
+        // Behind the decks (Ed, 2026-10-06): standing, waiting for the party spell; casting it, her arms up over her hat
+        // (the liftSigil pose, through once over the cast) in a burst of sparkles; in a game without the spell, sitting.
+        const sp = g.party.spellAt, casting = typeof sp === "number" && time >= sp && time < sp + PARTY_CAST;
+        if (casting) { const n = F.liftSigil.towards.length; wf = F.liftSigil.towards[Math.min(n - 1, Math.floor(((time - sp!) / PARTY_CAST) * n))]; }
+        else if (sp === undefined) wf = F.sit.towards[Math.floor(time * F.sit.fps) % F.sit.towards.length];
+        else wf = F.stand.towards[Math.floor(time * F.stand.fps) % F.stand.towards.length];
+        if (typeof sp === "number" && sp !== this.castSeen) { this.castSeen = sp; this.spellFx.partyBurst(wx, wyy, wz, sp); }
+      }
     }
     // Knocked out (Ed, 2026-10-04): she sits slumped on the ground while her stack lets go, then
     // vanishes in a sparkle and comes back in one at the treehouse.
@@ -820,13 +871,21 @@ export class View {
     }
     // Over the ride's smoothed height (eased in off the treehouse seat).
     wyy += this.rideOff * (1 - this.seatK * this.seatK * (3 - 2 * this.seatK));
-    const wframe = this.assets.witch.frames[wf], hatTop = wyy + wframe.h * this.mpp;
+    // Her hat knocked off (rules/hat.ts): her frames without it, and the hat where it lies. Baked a moment after the game is up
+    // (not at a knockout, mid-fight), if she has a hat to lose.
+    const Hat = g.witches[0].hat;
+    if (!this.bareAsked && Hat.has && !g.clock.paused && time > 1) { this.bareAsked = true; setTimeout(() => { this.bareBatch ??= this.makeWitchBatch(true); }, 0); }
+    const bare = Hat.has && !!Hat.down ? (this.bareBatch ??= this.makeWitchBatch(true)) : null;
+    const wframe = (bare ? this.assets.witchBare() : this.assets.witch).frames[wf], hatTop = wyy + wframe.h * this.mpp;
     this.partyWitchView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4));
     this.partyWitchView.bubbles(g, time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
     this.stateMarks.update(g, time, this.leashView.tops);
     this.inviteView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, this.leashView.tops);
     // Idling into the party, she's drawn in her party pose there instead.
-    this.witchBatch.set(this.partyWitchView.herIdle || hidden ? [] : [{ x: wx, y: wyy + groundHeight(wx, wz), z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
+    const her = this.partyWitchView.herIdle || hidden ? [] : [{ x: wx, y: wyy + groundHeight(wx, wz), z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }];
+    const hatFrame = bare ? this.assets.witchBare().frames[this.assets.witchHatFrame] : undefined;
+    this.witchBatch.set(bare ? [] : her);
+    this.bareBatch?.set(bare ? (hatFrame ? [...her, { x: Hat.down!.x + HAT_BESIDE, y: groundHeight(Hat.down!.x + HAT_BESIDE, Hat.down!.z), z: Hat.down!.z, frame: hatFrame, flip: false }] : her) : []);
     // The glide by her own snap: what the sprite shader's snap of her base takes off, given back by
     // the canvas's shift (main.ts) with the camera's own snap, so she lands where the unsnapped camera
     // would put her, to a screen pixel, every frame (the world then lands within half an art pixel).
@@ -862,24 +921,37 @@ export class View {
     checkPops(this, "moving");
     this.time("creatures");
     this.rulers.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, w.x, w.z);
-    const df = g.map.dancefloor;
-    this.music.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, df.x, df.z, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, this.debugReadouts);
+    // (no cue toward the dancefloor any more: Ed, 2026-10-06, "You can remove the UI icon that points towards the dancefloor")
     this.minimap.update(g.party, w.x, w.z);
-    // The next waking stones (one per witch each wave: Ed, 2026-10-04), when they're off screen; only
-    // those (Ed, 2026-10-05: "We only need the UI indicator for the next one, not the next two").
+    // The wave pointer (Ed, 2026-10-06): toward the ley line's pulse on its way to the next wave's stone (rules/leypulse.ts,
+    // along the link as drawn), 🎶 in its ring as the countdown fills; for a second witch's next stone, its rune as before
+    // (Ed, 2026-10-05: "We only need the UI indicator for the next one, not the next two"). None while home boots up (Ed,
+    // 2026-10-06: "The wave pointer first appears when bootup finishes"; the dancefloor's boot ring shows the boot), fading
+    // in as the pulse sets off.
     {
       const cw = this.canvas.clientWidth || window.innerWidth, ch = this.canvas.clientHeight || window.innerHeight, cd = waveCountdown(g.party, g.map, time);
+      const shown = pointerShown(g.party, g.map, time);
       const cue = (list: StoneIndicator[], cells: readonly (readonly [number, number])[], make: () => StoneIndicator, fill: number, label?: string) => {
         while (list.length < cells.length) list.push(make());
         list.forEach((ind, i) => {
           const c = cells[i];
-          if (!c) { ind.update(this.camera, cw, ch, null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 0); return; }
+          ind.fade(shown);
+          if (!c || shown <= 0) { ind.update(this.camera, cw, ch, null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 0); return; }
           const s = g.map.soundsystemSpot(c[0], c[1]), species = AREA_TYPES[g.map.typeOf(c[0], c[1])].creature;
-          ind.update(this.camera, cw, ch, { x: s.x, z: s.z, colour: this.markerArt.colour.get(species)!, species }, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, fill, label);
+          const pulse = i === 0 ? leyPulse(g.party, g.map, time, this.ley.currentLink()) : null, at = pulse ?? s;
+          ind.update(this.camera, cw, ch, { x: at.x, z: at.z, colour: this.markerArt.colour.get(species)!, species, notes: i === 0 }, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, fill, label);
         });
       };
-      // Pausing holds the countdown; while home boots up, the next ring fills with the boot.
-      cue(this.nextStones, g.party.next, () => new StoneIndicator(document.body, 3), cd.booting ? cd.boot : cd.gone, cd.booting ? `booting ${mmss(cd.bootLeft)}` : undefined);
+      // Pausing holds the countdown.
+      cue(this.nextStones, g.party.next, () => new StoneIndicator(document.body, 3), cd.gone);
+      // Her hat on the ground (Ed, 2026-10-06: "there's a direction marker for it, so you can go back and find it"): toward it
+      // off screen, over it on screen, while it lies there; in the HUD's amber.
+      const H = hatMarker(g.witches[0].hat);
+      if (H || this.hatPointer) {
+        const P = (this.hatPointer ??= new StoneIndicator(document.body, 3));
+        P.fade(H ? 1 : 0);
+        P.update(this.camera, cw, ch, H ? { x: H.x + HAT_BESIDE, z: H.z, colour: HAT_INK, species: "", glyph: HAT } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
+      }
     }
     this.time("hud");
     this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
@@ -928,5 +1000,3 @@ export class View {
   }
 }
 
-/** Seconds as "4:59" from a minute up, "42 s" under. */
-function mmss(s: number): string { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; }
