@@ -56,6 +56,8 @@ export const LIGHT_UNIFORMS = {
   // The scenery budget (view.ts): scenery fades out between radius - fade and radius metres
   // from the haze centre (the witch). x: radius, y: fade.
   uScenery: { value: new THREE.Vector2(1e6, 1) },
+  /** The party's over (render/partyOver.ts): home x, z, the switch-off front's distance from it (0: playing) and its width. */
+  uPartyOver: { value: new THREE.Vector4(0, 0, 0, 30) },
 };
 
 export type LightUniforms = typeof LIGHT_UNIFORMS;
@@ -98,6 +100,9 @@ uniform vec3 uGladeRgb;
 uniform vec2 uGladeLight;
 uniform float uDim;
 uniform int uLightCount;
+uniform vec4 uPartyOver;
+// The party's over: how far switched off a party light at P is (0 on, 1 off), the front rippling out from home.
+float partyOff(vec3 P) { if (uPartyOver.z <= 0.0) return 0.0; return smoothstep(0.0, 1.0, (uPartyOver.z - distance(P.xz, uPartyOver.xy)) / uPartyOver.w); }
 uniform vec4 uDisco, uDiscoParams;
 uniform vec3 uDiscoColour;
 uniform vec2 uScenery;

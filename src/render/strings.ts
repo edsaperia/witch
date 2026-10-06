@@ -49,6 +49,7 @@ varying vec2 vB;
 ${LIGHT_GLSL}
 void main() {
   if (vOn < 0.5 || sceneryFade(vWorld) < 0.5) discard; // scenery: gone past the scenery budget's edge
+  if (partyOff(vWorld) > fract(vB.x * 7.31 + vB.y * 0.37)) discard; // the party's over: bulb by bulb out as the front passes
   float b = 1.0 - uTwinkle * 0.5 * (1.0 + sin(uTime * (1.3 + vB.x) + vB.x * 40.0));
   if (fract((vB.y - uTime * uChase) / 60.0) < 0.06) b = 1.4;  // a chase running along now and then
   gl_FragColor = vec4(haze(vColour * b * 1.6, vWorld), 1.0); // bright enough to bloom
@@ -97,8 +98,9 @@ varying float vA;
 varying vec3 vWorld;
 ${LIGHT_GLSL}
 void main() {
-  if (vA < 0.3) discard;
-  gl_FragColor = vec4(haze(uMoteColour * (0.6 + 0.6 * vA), vWorld), 1.0);
+  float po = partyOff(vWorld); // (the party's over: they fade as the front passes)
+  if (vA < 0.3 || po > 0.95) discard;
+  gl_FragColor = vec4(haze(uMoteColour * (0.6 + 0.6 * vA) * (1.0 - po), vWorld), 1.0);
 }`;
 
 interface Built { lines: StringLine[]; group: THREE.Group; on: number }
