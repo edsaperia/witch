@@ -472,9 +472,10 @@ function start(): boolean {
 input.onAny = start;
 // The audio watchdog (Ed, round 13: "the music stops after about two minutes"): once a second,
 // a context suspended is resumed, and music gone silent (or anything non-finite in the music or the
-// sound effects) is rebuilt afresh; each mend goes in the playtest log (L).
+// sound effects) is rebuilt afresh; each mend goes in the playtest log (L). (Before the first home speaker
+// boots, the music is silent on purpose: not expected.)
 const watchdog = new AudioWatchdog(
-  () => ({ ctx: audio, music, sfx, wanted: !!audio && !game.clock.paused && !freeze.frozen && !document.hidden, musicExpected: !!music && level > 0 && music.audible && !game.clock.paused && !freeze.frozen && !document.hidden }),
+  () => ({ ctx: audio, music, sfx, wanted: !!audio && !game.clock.paused && !freeze.frozen && !document.hidden, musicExpected: !!music && level > 0 && music.audible && !game.clock.paused && !freeze.frozen && !document.hidden && game.speakerBoot.some(t => t !== null) }),
   what => {
     playtest.audio(what);
     console.warn(`audio watchdog: ${what}`);
