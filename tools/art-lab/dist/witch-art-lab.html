@@ -4312,6 +4312,8 @@ const GENOMES = [
   { id: "salamander", name: "Salamander", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .1, val: .22, belly: "yellow" }, body: { hgt: .42, len: .9, chest: .14, tuck: .14, neck: .12, neckAng: .05, neckW: .5, hr: .27, legW: 1 }, head: { snout: .55, snoutD: .55 }, parts: { ears: { kind: "none" }, tail: "otter", feet: "paw" }, coat: { spots: true, spotMat: "belly" }, legend: ["flames"] , texture: { kind: "smooth" } },
   // the fen's newt (an area recipe's, #119; art builder 2's record): a slimmer, lower salamander with a crest along its back
   { id: "newt", name: "Newt", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .55, val: .35, belly: "yellow" }, body: { hgt: .44, len: 1.1, chest: .11, tuck: .1, neck: .14, neckAng: .1, neckW: .45, hr: .32, legW: .7 }, head: { snout: .42, snoutD: .5 }, parts: { ears: { kind: "none" }, tail: "otter", feet: "paw" }, coat: { spots: true, spotMat: "belly", ridge: true }, legend: ["crystals"], texture: { kind: "smooth" } },
+  // the heronry's heron (an area recipe's, #119; art builder 2's heron builder): a tall grey wader, S-necked, dagger-billed
+  { id: "heron", name: "Heron", template: "avian", builder: "heron", palette: { hue: .6, sat: .08, val: .62 }, legend: ["wings"], texture: { kind: "feathers" } },
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
@@ -5622,6 +5624,8 @@ const SIGILS = {
   salamander: [stave(.3), bow([.5, .3], [.5, .06], .35), bow([.5, .3], [.5, .06], -.35), ...pair(L([.5, .42], [.32, .38], [.26, .48]), L([.5, .64], [.32, .6], [.26, .7])), FOOT, ...pair(D(.38, .52))],
   // the fen's newt: a crest waving along the spine, legs as bent ticks, spots on the belly
   newt: [stave(.24), wave(.5, .3, .06, .07, 1.5), ...pair(L([.5, .42], [.32, .38], [.26, .48]), L([.5, .64], [.32, .6], [.26, .7])), FOOT, ...pair(D(.4, .56))],
+  // the heronry's heron: the stave its long legs, a kinked S-neck, a dagger bill with an end dot, a plume, folded wings
+  heron: [stave(.34), L([.5, .34], [.64, .24], [.5, .12]), L([.5, .12], [.18, .17]), D(.18, .17), L([.52, .1], [.78, .05]), ...pair(L([.5, .46], [.3, .56], [.36, .66])), FOOT],
   // a shining star at the tail end: a ring with rays
   glowworm: [stave(.4), A(.5, .27, .1, 90, 450), ...rays(.5, .27, .15, .25, [0, 60, 120, 180, 240, 300]), FOOT],
   // eight legs round a body, hanging from a thread
@@ -5637,7 +5641,7 @@ const SIGILS = {
 const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-const SIGIL_NEON = { badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid" };
+const SIGIL_NEON = { heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid" };
 const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;
@@ -6626,7 +6630,28 @@ const FEN = {
 };
 
 
-const AREA_RECIPES = [FEN];
+// ---- inlined from art/recipes/heronry.js ----
+// The heronry (#119): the second area type written as a recipe (art/recipes.js says what each field is). Ed's columns as for the
+// 30: a still mere under tall elms where the herons nest, the heron its creature (art builder 2's heron builder, #181).
+const HERONRY = {
+  id: "heronry", name: "Heronry", creature: "heron", by: "recipe", leaf: .27, floor: ["tallgrass", .3, .35, .34],
+  text: { floor: "rough grass and reed litter", wall: "the mere's edge", small: "reeds and rushes", big: "tall elms with herons' nests", set: "an old jetty out over the mere" },
+  wall: [["water", { w: 1.8 }], ["reeds", { tall: true }]], small: [["reeds", {}], ["grass", { h: 1.5 }]],
+  big: [["tree", { type: "elm", scale: 1.2 }], ["tree", { type: "ash", minor: true, scale: 1.05 }]],
+  ponds: true, wet: true, pathKinds: ["boardwalk"],
+  setPiece: ["jetty", "an old jetty out over the mere", 1],
+  layout: {
+    pattern: "stands", density: .4, clump: .75, glades: { count: 1, size: [18, 26] },
+    heightMix: { sapling: .1, mature: .4, tall: .4, giant: .1 }, undergrowth: .5, lean: { dir: 0, amount: 0 },
+    terrain: ["pools"], decor: { rate: .2, ruins: .2, rocks: .1, freak: .1, lake: .5, modern: .1 },
+    feel: "A wide still mere ringed with reeds, tall elms standing round it in stands, their crowns heaped with herons' nests; open, grey and watchful.",
+  },
+  flora: { species: [["elm", .55], ["ash", .3], ["willow", .15]], palette: { sat: .8, val: .9 } },
+  settings: { treeDensity: .5, groundCover: { density: .7, kinds: ["reeds", "blades"] } },
+};
+
+
+const AREA_RECIPES = [FEN, HERONRY];
 
 // What is missing from a recipe, if anything.
 function recipeProblems(R) {
@@ -7729,14 +7754,14 @@ const MODERN = {
   "cone-lantern": { desc: "a traffic cone lit from within like a lantern, a ring of mushrooms round it", glow: true, build(m) {
     rlCone(m, [0, 0, 0], 1, true); for (let i = 0; i < 9; i++) { const a = i / 9 * 6.283, c = [Math.cos(a) * .55, 0, Math.sin(a) * .45]; m.seg(c, v3.add(c, [0, .08, 0]), .02, .02, M.CLOTH, { group: 5 }); m.ell(v3.add(c, [0, .1, 0]), [.06, .035, .06], M.BODY2, { group: 6 }); }
   } },
-  "highway-slab": { desc: "a slab of tarmac tilted up out of the ground, faded lane markings, a crash-barrier stub", build(m) {
+  "highway-slab": { scatter: false, desc: "a slab of tarmac tilted up out of the ground, faded lane markings, a crash-barrier stub", build(m) {
     const n = m.parts.length;
     m.box([0, 0, 0], [2.2, .14, 1.3], M.STONE, { round: .03, group: 1, rough: .01, paint: p => { if (rlCell(p, 5, 1) < .06 || Math.abs(Math.sin(p[0] * 3 + p[2] * 5) * .3 + p[2] * .6 - .2) < .02) return M.STONED; if (p[1] > .1 && Math.abs(p[2]) < .05 && ((p[0] + 9) * .8) % 1 < .55) return rlCell(p, 12) < .3 ? M.STONE : M.CLOTH; if (p[1] > .1 && Math.abs(p[2] - 1.1) < .04) return M.BELLY; return p[1] > .1 && rlCell(p, 6, 4) < .12 ? M.MOSS : undefined; } });
     for (const x of [-1.6, -.4]) rlBar(m, [x, .1, 1.25], [x, .75, 1.25], 2, .04);
     m.box([-1.0, .62, 1.3], [.9, .1, .03], M.FRAME, { group: 3, paint: p => Math.abs(p[1] - .62) < .02 ? M.STONED : rlWorn(.5, .1)(p) }); // the barrier's rail
     rlPlace(m, n, { pitch: .38, roll: .08, at: [0, .7, 0] }); m.ell([-1.8, .1, 0], [.6, .2, 1.3], M.BARK2, { group: 5, rough: .04, paint: p => p[1] > .2 ? M.MOSS : undefined }); rlTufts(m, 16, 2.4, 6, 6);
   } },
-  "highway-line": { desc: "a section of cracked road, its white line broken, grass in the cracks", build(m) {
+  "highway-line": { scatter: false, desc: "a section of cracked road, its white line broken, grass in the cracks", build(m) {
     m.box([0, .02, 0], [2.0, .03, 1.0], M.STONE, { round: .02, group: 1, paint: p => { if (rlCell(p, 4, 9) < .08 || Math.abs(Math.sin(p[0] * 2.3) * .4 - p[2]) < .025) return rlCell(p, 20) < .4 ? M.LEAF2 : M.STONED; if (Math.abs(p[2] + .05) < .05 && ((p[0] + 9) * .7) % 1 < .6) return M.CLOTH; return rlCell(p, 6) < .08 ? M.MOSS : undefined; } });
     for (const [x, z] of [[-1.2, .3], [.4, -.2], [1.3, .5]]) rlTufts(m, 4, .2, 3, x * 10 + 7, x, z);
   } },
@@ -7873,6 +7898,8 @@ function relicLayouts(st = {}, ppm = 16) {
 }
 
 // ---------------- the table ----------------
+// scatter: false keeps a piece out of the scattered modern finds (Ed, round 13: "take roads out of the decoration pool"): the bits of
+// highway, which read as clutter beside the real roads. They still draw (the lab, the check) for a scene or a road to use.
 const RELICS = [
   ...Object.entries(MODERN).map(([id, d]) => ({ id, family: "modern", size: 1, split: null, ...d })),
   ...Object.entries(PLAYGROUND).map(([id, d]) => ({ id, family: "playground", size: 1.1, split: null, ...d })),
@@ -9592,6 +9619,7 @@ const LEGEND_POSES = {
   squirrel: { sink: .45, droop: 1, drop: [], over: { moss: .3, lichen: .06, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 1, flowers: 6 } },
   dormouse: { sink: .45, droop: 1, drop: [], over: { moss: .4, lichen: .04, ferns: 1, grass: 3, mushrooms: 2, roots: 2, stones: 0, flowers: 5 } },
   newt: { sink: .6, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .08, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 2 } }, // the fen's newt (an area recipe's): sunk in peat, sedge over it
+  heron: { ground: .68, droop: .6, drop: [95, 96, 97, 98, 99, 100, 101], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 2, stones: 2, nest: true } }, // the heronry's heron (an area recipe's): folded down in the reeds, its neck laid along its back, a nest of sticks on it
   salamander: { sink: .55, droop: 1, drop: [60, 61], over: { moss: .35, lichen: .14, ferns: 2, grass: 1, mushrooms: 2, roots: 1, stones: 5 } },
   toad: { ground: .2, droop: .5, drop: [], over: { moss: .55, lichen: .06, ferns: 1, grass: 5, mushrooms: 2, roots: 1, stones: 3 } },
   raven: { ground: .42, droop: .6, drop: [40, 50, 95, 96, 97, 98, 99, 100], over: { moss: .35, lichen: .1, ferns: 1, grass: 2, mushrooms: 3, roots: 3, stones: 1, nest: true } },

@@ -69,6 +69,8 @@ export class Sfx {
   // ——— legends ———
   windup(pan = 0, near = 1): void { this.whales.windup(pan, near); }
   legends(sleep: number, breath: number, unease: number, pan = 0): void { this.whales.legends(sleep, breath, unease, pan); }
+  /** A restless legend calling out sadly in its own voice (`urgency` its restlessness). */
+  lament(v: CreatureVoice, urgency: number, pan = 0, near = 1): void { this.babble.lament(v, urgency, pan, near); }
   bellow(pan = 0, near = 1): void { this.charging.bellow(pan, near); }
   hoof(pan = 0, near = 1, light = false): void { this.charging.hoof(pan, near, light); }
   charge(rumble: number, skid: number, pan = 0): void { this.charging.update(rumble, skid, pan); }

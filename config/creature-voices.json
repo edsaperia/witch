@@ -38,6 +38,7 @@
     "snake": {"family": "snake"},
     "toad": {"family": "amphibian"},
     "salamander": {"family": "amphibian", "pitch": 1.6, "am": [48, 0.7]},
+    "heron": {"family": "bird", "pitch": 0.5, "pure": false, "wave": "sawtooth", "trill": [0, 0], "glide": 0.8, "vowel": 1, "volume": 0.9},
     "newt": {"family": "amphibian", "pitch": 1.9, "am": [56, 0.6]},
     "snail": {"family": "amphibian", "pitch": 1.2, "am": [8, 0.4], "noise": 0.3, "dur": 1.3},
     "bat": {"family": "bat"},
