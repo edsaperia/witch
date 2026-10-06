@@ -56,14 +56,27 @@ void main() {
 export function gladesOf(g: Game, T: GladeTuning, out: Glade[]): number {
   let n = 0;
   const put = (x: number, z: number, radius: number, edge: number) => { const o = out[n] ?? (out[n] = { x: 0, z: 0, radius: 0, edge: 0 }); o.x = x; o.z = z; o.radius = radius; o.edge = edge; n++; };
-  const mapped = (g.map as { glades?: { x: number; z: number; radius: number; edge?: number }[] }).glades;
-  if (mapped) { for (const c of mapped) put(c.x, c.z, c.radius, c.edge ?? 0); return n; }
+  // Art builder 1's clearings (#235: map.legendClearings, each { x, z, r, ... }), where the map has them.
+  const mapped = (g.map as { legendClearings?: { x: number; z: number; r: number }[] }).legendClearings;
+  if (mapped) { for (const c of mapped) put(c.x, c.z, c.r, 0); return n; }
   for (const id of g.legendIds ?? []) {
     const c = g.creatures[id];
     if (c && !c.gone && dormant(g, c)) put(c.x, c.z + T.radius * T.top, T.radius, 0);
   }
   return n;
 }
+
+/** How far into a clearing's light she is (0 to 1), eased linearly over `fade` seconds: toward 1 only while she's in a
+ *  circle on the ground (Ed, 2026-10-06: "The lighting changes for the legend circles should only happen when you're in
+ *  ground mode"), toward 0 otherwise, so landing in one or rising out of it eases both ways. */
+export function easeInside(prev: number, inCircle: boolean, ground: boolean, dt: number, fade: number): number {
+  const want = inCircle && ground ? 1 : 0;
+  return Math.max(0, Math.min(1, prev + Math.sign(want - prev) * dt / Math.max(0.05, fade)));
+}
+
+/** The forest's light outside the clearing's own twilight (1 as it is), and the share of her glow left, at `inside`. */
+export const clearingDim = (T: Pick<GladeTuning, "dark">, inside: number): number => 1 - T.dark * inside * inside * (3 - 2 * inside);
+export const clearingGlow = (T: Pick<GladeTuning, "glowOff">, inside: number): number => 1 - T.glowOff * inside * inside * (3 - 2 * inside);
 
 /** A clearing's key, by its place on the map (whole metres). */
 export const gladeKey = (x: number, z: number): number => Math.round(x) * 100003 + Math.round(z);
@@ -102,7 +115,7 @@ export class Glades {
   /** The nearest clearings to (wx, wz) into the light's uniforms. Its edge brightens, eased, with the witch inside it, with
    *  the map's own `edge` for it, or with `extraEdge` (art builder 1's hook: a quest sigil or relic put down in it, 0 to 1
    *  by gladeKey). No allocation: the list's objects are reused and the nearest kept by insertion. */
-  update(g: Game, wx: number, wz: number, dt: number, extraEdge?: (key: number) => number): void {
+  update(g: Game, wx: number, wz: number, dt: number, ground: boolean, extraEdge?: (key: number) => number): void {
     const T = this.T, U = LIGHT_UNIFORMS, near = this.near;
     if (!T.on) { U.uGladeCount.value = 0; U.uDim.value = 1; this.points.visible = false; return; }
     const total = gladesOf(g, T, this.list);
@@ -118,7 +131,7 @@ export class Glades {
     const k = 1 - Math.exp(-T.edgeEase * dt);
     for (let i = 0; i < n; i++) {
       const c = near[i], key = gladeKey(c.x, c.z), was = this.edges.get(key) ?? 0;
-      const want = Math.max((wx - c.x) ** 2 + (wz - c.z) ** 2 < c.radius * c.radius ? 1 : 0, extraEdge?.(key) ?? 0, c.edge);
+      const want = Math.max(ground && (wx - c.x) ** 2 + (wz - c.z) ** 2 < c.radius * c.radius ? 1 : 0, extraEdge?.(key) ?? 0, c.edge);
       const e = was + (want - was) * k;
       this.edges.set(key, e);
       U.uGlade.value[i].set(c.x, c.z, c.radius, e);
@@ -127,11 +140,10 @@ export class Glades {
     this.points.visible = n > 0;
     // Inside one (Ed, 2026-10-06: "the rest of the forest should get darker. Maybe switch off the witch's glow"): the
     // forest's light and haze dim by `dark` and her glow goes by `glowOff`, both eased in and out over `fade` seconds.
-    let inNow = 0;
-    for (let i = 0; i < n; i++) if ((wx - near[i].x) ** 2 + (wz - near[i].z) ** 2 < near[i].radius * near[i].radius) inNow = 1;
-    this.inside = Math.max(0, Math.min(1, this.inside + Math.sign(inNow - this.inside) * dt / Math.max(0.05, T.fade)));
-    const s = this.inside * this.inside * (3 - 2 * this.inside);
-    U.uDim.value = 1 - T.dark * s;
-    U.uGlowPower.value = this.glowBase * (1 - T.glowOff * s);
+    let inCircle = false;
+    for (let i = 0; i < n; i++) if ((wx - near[i].x) ** 2 + (wz - near[i].z) ** 2 < near[i].radius * near[i].radius) inCircle = true;
+    this.inside = easeInside(this.inside, inCircle, ground, dt, T.fade);
+    U.uDim.value = clearingDim(T, this.inside);
+    U.uGlowPower.value = this.glowBase * clearingGlow(T, this.inside);
   }
 }

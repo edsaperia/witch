@@ -658,7 +658,7 @@ export class View {
       }, time, canopyShown(w));
     }
     // The sleeping legends' clearings: their twilight and motes, the nearest few (render/glades.ts).
-    { const gdt = Math.min(0.1, Math.max(0, time - this.gladeTime)); this.gladeTime = time; this.glades.update(g, w.x, w.z, gdt); }
+    { const gdt = Math.min(0.1, Math.max(0, time - this.gladeTime)); this.gladeTime = time; this.glades.update(g, w.x, w.z, gdt, w.mode === "ground"); }
     this.time("party");
     // The canopy uplight over the nearest partified areas, fading in with each one's transition.
     {
