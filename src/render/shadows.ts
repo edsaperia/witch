@@ -81,6 +81,7 @@ export class ShadowBatch {
     if (items.length > this.capacity) this.grow(items.length);
     const a = this.attr.array as Float32Array;
     items.forEach((s, i) => { a[i * 4] = s.x; a[i * 4 + 1] = s.z; a[i * 4 + 2] = s.scenery ? -s.w : s.w; a[i * 4 + 3] = s.d; });
+    this.attr.clearUpdateRanges(); this.attr.addUpdateRange(0, items.length * 4); // (only those in use)
     this.attr.needsUpdate = true;
     this.geo.instanceCount = items.length;
     this.mesh.visible = items.length > 0;

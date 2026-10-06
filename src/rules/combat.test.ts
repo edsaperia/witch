@@ -107,8 +107,9 @@ describe("combat (Stage 4)", () => {
     run(g, 8);
     expect(g.witches[0].health.hp).toBe(TUNING.witchHealth.hits);
     g.witch = { ...g.witch, mode: "ground", lift: 0 };
+    const down = g.clock.time;
     run(g, 14); // (lobs land a second or two after they're thrown, and the first may miss)
-    expect(g.witches[0].health.hp).toBeLessThan(TUNING.witchHealth.hits);
+    expect(g.witches[0].health.hurtAt).toBeGreaterThan(down); // (hit: by the end she may have been knocked out and be back whole)
     expect(owl.gone).toBeFalsy();
   }, 60000);
 
@@ -298,7 +299,7 @@ describe("Ed's Stage 4 rulings", () => {
     const g = newGame(77, TUNING);
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
-    const next = g.party.next[0], here = g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1]);
+    const next = g.party.next[0], here = g.creatures.filter(c => c.cell[0] === next[0] && c.cell[1] === next[1] && !c.boss); // (its legend sleeps on: legends.test.ts)
     here.slice(1).forEach(c => { c.level = 1; });
     const baby = here[0]; baby.level = 0;
     stepGame(g, { ...idle, nextWave: true }, STEP);
@@ -491,4 +492,22 @@ describe("the motion scale pass (Ed, 2026-10-04)", () => {
     for (let i = 0; i < 15 / STEP; i++) stepGame(g, idle, STEP);
     expect(g.map.cellSafe(wolf.x, wolf.z).cell).toEqual(cell); // back home
   }, 60000);
+});
+
+describe("sieges far from her (found by the overnight playthrough)", () => {
+  it("march from the wave on, wherever she is: their besiegers are stepped, not only once she comes near", () => {
+    const g = newGame(7, TUNING);
+    g.clock.paused = false;
+    const B = g.map.bounds;
+    g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1, x: B.minX + 5, z: B.minZ + 5 }; // (far off, in a corner)
+    stepGame(g, { ...idle, nextWave: true }, STEP);
+    run(g, 1);
+    const sieging = g.creatures.filter(c => !c.gone && c.siege && !c.boss);
+    expect(sieging.length).toBeGreaterThan(0);
+    const at = new Map(sieging.map(c => [c.id, { x: c.x, z: c.z }]));
+    run(g, 20);
+    let moved = 0;
+    for (const c of sieging) { const p = at.get(c.id)!; if (c.gone || Math.hypot(c.x - p.x, c.z - p.z) > 2) moved++; }
+    expect(moved).toBe(sieging.length); // (every one on its way: none left standing where the wave found it)
+  });
 });
