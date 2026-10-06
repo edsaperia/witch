@@ -15,6 +15,7 @@ import { LOOKS, lookGenome, pleasingWitch } from "./looks";
 import { keysDir, newWalker, spotAt, walk, type RoomFloor, type Walker } from "./roomWalk";
 import { SpellScroll, type SpellCue } from "./spellScroll";
 import { KeyHint } from "./keyHint";
+import { installPixelUi, noEmoji, pixelIcon, pixelTitle, tapestry } from "./pixelUi";
 
 type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpackSize?: number; [k: string]: unknown };
 
@@ -195,30 +196,37 @@ export class Creator {
   readonly scroll: SpellScroll;
   /** A button of the rendering builder's or anyone's, under the panel's own (the bot game). */
   addButton(text: string, onClick: () => void): HTMLButtonElement {
-    const b = document.createElement("button"); b.type = "button"; b.textContent = text;
-    Object.assign(b.style, { font: "inherit", fontSize: "12px", color: "inherit", background: "rgba(255,255,255,.06)", border: "1px solid rgba(232,226,244,.3)", borderRadius: "6px", padding: "4px 10px", cursor: "pointer" });
+    const b = document.createElement("button"); b.type = "button"; b.textContent = noEmoji(text);
+    Object.assign(b.style, { font: "inherit", color: "inherit", cursor: "pointer" });
     b.addEventListener("click", e => { e.stopPropagation(); onClick(); });
     this.extras.append(b);
     return b;
   }
   private extras = document.createElement("div");
+  /** The tapestry's tabs and panel, between its title and its buttons. */
+  private body = document.createElement("div");
+  private title = document.createElement("canvas");
+  /** The layout last made (its viewport and scale), so place() lays it out only when that changes. */
+  private laid = "";
   /** The walking keys on the floor in front of her (ui/keyHint.ts). */
   private keyHint = new KeyHint();
   private unlocked = false;
   /** Tabs of anyone's, after her own (the controls and the options from the old start card): their nodes moved in whole. */
   private extraTabs: { id: string; name: string; nodes: HTMLElement[] }[] = [];
-  /** A tab of its own down the tapestry's edge holding `nodes` (moved in, listeners and all), after her boxes; kept through
-   *  every rebuild. `name` is its icon, a space, then its title (as the boxes' names). */
+  /** A page of its own holding `nodes` (moved in, listeners and all), after her boxes, opened by a button in the row under the
+   *  panel (with the bot game; its tabs are her things'); kept through every rebuild. `name` is its icon, a space, then its
+   *  title (as the boxes' names). */
   addTab(id: string, name: string, nodes: HTMLElement[]): void {
     this.extraTabs.push({ id, name, nodes });
     const box = this.makeBox(id, name);
     box.append(...nodes);
     this.boxes.get(id)?.();
+    const b = this.addButton(name, () => this.openBox(id)), words = noEmoji(name); b.dataset.page = id;
+    b.textContent = ""; b.append(pixelIcon(id)); b.title = words; b.setAttribute("aria-label", words); // (its icon alone: tidy; its name on hover)
   }
   /** The world building behind it (Ed: "the character creator also serves as a loading screen"):
    *  sets done of total, and whether play can start. */
   progress: () => { done: number; total: number; ready: boolean } = () => ({ done: 1, total: 1, ready: true });
-  private bar: HTMLElement | null = null;
   get open(): boolean { return this.root.style.display !== "none"; }
 
   constructor(private style: Style, start: Genome | null, pixel = 3) {
@@ -230,27 +238,23 @@ export class Creator {
     Object.assign(this.preview.style, { position: "absolute", imageRendering: "pixelated", cursor: "pointer" });
     this.preview.title = "click to fly or stand";
     this.preview.addEventListener("click", () => { this.flying = !this.flying; });
-    // the panel (Ed's sketch, 2026-10-06): a hanging tapestry down the left, its top and bottom edges scalloped, its boxes as tabs
-    // down its left edge (the strip) beside the open one (the panel's own content)
-    Object.assign(this.sheet.style, { position: "absolute", left: "2%", top: "3%", bottom: "5%", width: "min(440px, 38%)", display: "flex", zIndex: "1",
-      background: "linear-gradient(90deg, rgba(36,22,48,.96), rgba(28,17,40,.96) 60%, rgba(36,22,48,.96)), repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 2px, transparent 2px 4px)",
-      boxShadow: "inset 0 0 0 2px rgba(214,170,92,.55), inset 0 0 0 5px rgba(36,22,48,.96), inset 0 0 0 6px rgba(214,170,92,.3), 0 10px 30px rgba(0,0,0,.6)",
-      padding: "22px 0 22px 0", ...SCALLOPED });
-    Object.assign(this.tabs.style, { display: "flex", flexDirection: "column", gap: "4px", padding: "6px 0 6px 8px", flex: "0 0 auto" });
-    Object.assign(this.panel.style, { flex: "1 1 auto", overflowY: "auto", padding: "4px 14px 4px 10px", background: "rgba(14,9,22,.55)", borderLeft: "2px solid rgba(214,170,92,.55)", margin: "0 8px 0 0" });
-    this.sheet.append(this.tabs, this.panel);
+    // the panel (Ed's sketch, 2026-10-06): a hanging tapestry down the left, its top and bottom edges scalloped, the game's title
+    // at its head, its boxes as tabs down its left edge (the strip) beside the open one (the panel's own content), and a row of
+    // buttons along its foot (the bot game, the controls, what's new, the options); all on the room's pixel grid (ui/pixelUi.ts),
+    // laid out by place()
+    this.sheet.className = "px-sheet"; this.tabs.className = "px-tabs"; this.panel.className = "px-panel"; this.extras.className = "px-extras";
+    Object.assign(this.sheet.style, { position: "absolute", zIndex: "1" });
+    Object.assign(this.body.style, { position: "absolute", display: "flex" });
+    Object.assign(this.tabs.style, { display: "flex", flexDirection: "column", flex: "0 0 auto" });
+    Object.assign(this.panel.style, { flex: "1 1 auto", overflowY: "auto" });
+    this.body.append(this.tabs, this.panel);
+    // the game's title (Ed, 2026-10-06: its working title), drawn in pixels once its font has come
+    this.title.id = "creator-title";
+    Object.assign(this.extras.style, { position: "absolute", display: "flex", flexWrap: "wrap", zIndex: "3" });
+    this.sheet.append(this.title, this.body, this.extras);
     this.root.append(this.night, this.preview, this.sheet);
-    // the game's title, top right (Ed, 2026-10-06: its working title)
-    const title = document.createElement("div");
-    title.textContent = "Coven Rush"; title.id = "creator-title";
-    Object.assign(title.style, { position: "absolute", right: "3%", top: "3%", zIndex: "3", pointerEvents: "none", font: "italic 700 clamp(30px, 5.2vw, 72px) Luminari, 'Uncial Antiqua', 'Papyrus', 'Palatino Linotype', Palatino, Georgia, serif",
-      letterSpacing: ".04em", background: "linear-gradient(180deg, #fff3c8 10%, #f2c46a 55%, #b57a2c 90%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent",
-      filter: "drop-shadow(0 0 10px rgba(255,190,90,.45)) drop-shadow(0 3px 0 rgba(40,20,10,.9))", transform: "rotate(-3deg)" });
-    this.root.append(title);
     document.body.append(this.root);
-    // the party spell's scroll, bottom right, and a row for anyone's extra buttons under the panel (the bot game)
-    Object.assign(this.extras.style, { position: "absolute", left: "calc(2% + 14px)", bottom: "calc(5% - 30px)", display: "flex", gap: "6px", zIndex: "3" });
-    this.root.append(this.extras);
+    void installPixelUi().then(() => { const t = pixelTitle("Coven Rush"); this.title.width = t.width; this.title.height = t.height; this.title.getContext("2d")!.drawImage(t, 0, 0); this.title.className = t.className; this.laid = ""; this.dirty = true; });
     this.scroll = new SpellScroll(this.root);
     this.scroll.ready = () => this.progress().ready;
     this.scroll.progress = () => { const pr = this.progress(); return pr.ready ? 1 : pr.total ? Math.min(.97, pr.done / pr.total) : 0; };
@@ -305,14 +309,17 @@ export class Creator {
   private makeBox(id: string, name: string): HTMLElement {
     const fs = document.createElement("fieldset"), body = document.createElement("div"), lg = document.createElement("legend"), tab = document.createElement("button");
     const [icon, ...words] = name.split(" ");
-    fs.dataset.box = id; tab.dataset.tab = id; tab.type = "button"; tab.textContent = icon; tab.title = words.join(" "); tab.setAttribute("aria-label", words.join(" "));
+    fs.dataset.box = id; tab.dataset.tab = id; tab.type = "button"; tab.append(pixelIcon(id)); tab.title = words.join(" "); tab.setAttribute("aria-label", words.join(" "));
+    void icon; // (the box's emoji: drawn as its pixel icon, ui/pixelUi.ts)
+    if (this.extraTabs.some(T => T.id === id)) tab.style.display = "none"; // (an extra page's button is under the panel)
     Object.assign(fs.style, { border: "1px solid rgba(214,170,92,.45)", borderRadius: "6px", margin: "0 0 6px", padding: "2px 8px 6px" });
     Object.assign(lg.style, { padding: "0 4px", color: "#f2c46a", userSelect: "none" });
-    lg.textContent = name;
+    lg.append(pixelIcon(id), document.createTextNode(words.join(" ")));
     Object.assign(tab.style, { font: "inherit", fontSize: "18px", width: "38px", height: "34px", cursor: "pointer", border: "1px solid rgba(214,170,92,.45)", borderRight: "none", borderRadius: "8px 0 0 8px", padding: "0", position: "relative" });
     const paint = () => {
       const on = this.box === id;
       fs.style.display = on ? "block" : "none";
+      if (on) tab.dataset.on = ""; else delete tab.dataset.on;
       Object.assign(tab.style, on ? { background: "rgba(14,9,22,.55)", marginRight: "-2px", filter: "none", boxShadow: "inset 3px 0 0 #f2c46a", zIndex: "2" } : { background: "rgba(255,255,255,.04)", marginRight: "0", filter: "grayscale(.5) brightness(.8)", boxShadow: "none", zIndex: "0" });
     };
     tab.addEventListener("click", () => this.openBox(id));
@@ -327,9 +334,9 @@ export class Creator {
     P.innerHTML = ""; this.tabs.innerHTML = "";
     this.boxes.clear();
     const h = document.createElement("div");
-    h.innerHTML = `<div style="font-size:18px;margin-bottom:2px;color:#f2c46a">✨ Your witch</div><div style="opacity:.7;margin-bottom:8px">The party's tonight! Dress her up while the forest grows. Walk her round her room (WASD) to her things, or pick a tab (Q and E step through them). Once the forest has grown, the scroll unrolls: it's the party spell, so click it (or Enter) when she's ready. (R randomises; double-click a slider to put it back.)</div>`;
+    h.innerHTML = `<div class="px-head">Your witch</div><div class="px-intro">The party's tonight! Dress her up while the forest grows: walk her to her things (WASD) or pick a tab (Q, E). When the scroll unrolls, click it (or Enter) to cast the party spell. R randomises.</div>`;
     P.append(h);
-    const row = (parent: HTMLElement, name: string) => { const r = document.createElement("div"); Object.assign(r.style, { display: "flex", alignItems: "center", gap: "6px", margin: "4px 0", flexWrap: "wrap" }); r.innerHTML = `<span style="width:78px;opacity:.85">${name}</span>`; parent.append(r); return r; };
+    const row = (parent: HTMLElement, name: string) => { const r = document.createElement("div"); r.className = "px-row"; Object.assign(r.style, { display: "flex", alignItems: "center", gap: "6px", margin: "4px 0", flexWrap: "wrap" }); r.innerHTML = `<span style="width:78px;opacity:.85">${name}</span>`; parent.append(r); return r; };
     // The boxes, as tabs down the tapestry's left edge (Ed, 2026-10-06: "The different things you can change ... can be tabs
     // down the left side of the character creation pane"): its icon on the tab, its name as its tooltip and at the top of its
     // page; only the open one's page shows, its tab joined to the page like a bookmark. The open one is kept on this browser.
@@ -377,15 +384,10 @@ export class Creator {
     Object.assign(bar.style, { display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "10px", position: "sticky", bottom: "0", background: "rgba(22,14,32,.97)", padding: "6px 0" });
     bar.style.position = "sticky";
     const btn = (text: string, f: () => void, main = false) => { const b = document.createElement("button"); b.type = "button"; b.textContent = text; Object.assign(b.style, { font: "inherit", fontSize: "14px", color: main ? "#1d1408" : "inherit", background: main ? "var(--accent)" : "rgba(255,255,255,.1)", border: "1px solid rgba(232,226,244,.4)", borderRadius: "6px", padding: "6px 12px", cursor: "pointer", flex: main ? "1 1 100%" : "1 1 auto" }); b.addEventListener("click", f); bar.append(b); return b; };
-    btn("🎲 Randomise", () => this.randomise());
-    btn("🌀 Wild", () => this.wild());
+    btn("Randomise", () => this.randomise());
+    btn("Wild", () => this.wild());
     btn("Classic", () => this.classic());
-    // The forest growing behind the scene: a thin bar under the buttons.
-    const track = document.createElement("div");
-    Object.assign(track.style, { position: "absolute", left: "0", right: "0", bottom: "-2px", height: "3px", background: "rgba(255,255,255,.12)", borderRadius: "2px", overflow: "hidden" });
-    this.bar = document.createElement("div");
-    Object.assign(this.bar.style, { height: "100%", width: "0%", background: "linear-gradient(90deg,var(--accent-dim),var(--accent))" });
-    track.append(this.bar); bar.append(track);
+    // (the forest growing behind: the room's fairy lights are its loading bar, Ed: "I love the bedroom party lights as loading bar")
     P.append(bar);
   }
 
@@ -434,7 +436,7 @@ export class Creator {
     };
     const showPart = () => {
       const part = this.picking.get(id)!;
-      tabs.querySelectorAll<HTMLElement>("button").forEach(b => { b.style.outline = b.dataset.part === part && parts.length > 1 ? "2px solid #fff" : "none"; b.style.background = css(cur(b.dataset.part!)); });
+      tabs.querySelectorAll<HTMLElement>("button").forEach(b => { if (b.dataset.part === part && parts.length > 1) b.dataset.on = ""; else delete b.dataset.on; b.style.background = css(cur(b.dataset.part!)); });
       picker.innerHTML = "";
       const [hi, si, gi] = toPicker(cur(part)), at = { hue: hi, shade: si, grey: gi };
       const strips = { hue: strip("hue"), shade: strip("shade"), grey: strip("grey") };
@@ -546,7 +548,6 @@ export class Creator {
     // The world building behind: its progress on the bar.
     const pr = this.progress(), built = pr.total ? pr.done / pr.total : 1;
     if (pr.ready && !this.readyAt) this.readyAt = performance.now() / 1000;
-    if (this.bar) this.bar.style.width = `${Math.round((pr.ready ? 1 : Math.min(.97, built)) * 100)}%`;
     const room = this.room;
     if (!room) return;
     const ms = performance.now();
@@ -621,22 +622,49 @@ export class Creator {
     x.save(); x.globalCompositeOperation = op; x.drawImage(c, 0, 0, w, h, ox, oy, w, h); x.restore();
   }
 
-  /** The room, as big as fits right of the panel at a whole number of screen pixels to its art pixel; the night behind. */
+  /** The whole screen on one pixel grid (Ed, 2026-10-06: "everything should be pixellated to the same level (including the
+   *  menu) and be laid out in a balanced way"): the biggest whole number of device pixels to the room's art pixel `u` that fits
+   *  the tapestry (PANEL wide at most, PANEL_MIN at least) and the room side by side with margins (on a tall, narrow screen,
+   *  the room over the tapestry); then, in art pixels, the tapestry down the left (its title at its head, its buttons at its
+   *  foot), the room centred in the rest, and the scroll by the room's front corner, where the eye goes after dressing her.
+   *  `--u` on #creator is u in CSS pixels, which the panel's look is drawn in (ui/pixelUi.ts). The night behind at u too. */
   private place(W: number, H: number): void {
-    const dpr = window.devicePixelRatio || 1, vw = window.innerWidth, vh = window.innerHeight, sr = this.sheet.getBoundingClientRect().right, x0 = Math.max(0, sr - vw * .03); // (over the tapestry's edge a little, as Ed's sketch)
-    const room = Math.max(1, vw - x0), k = Math.max(1, Math.floor(Math.min(room * dpr / W, vh * .96 * dpr / H)));
-    const cw = W * k / dpr, ch = H * k / dpr, left = x0 + Math.max(0, (room - cw) / 2), top = Math.max(0, (vh - ch) / 2);
-    const css = { width: `${cw}px`, height: `${ch}px`, left: `${left}px`, top: `${top}px` };
-    if (this.preview.style.width !== css.width || this.preview.style.left !== css.left || this.preview.style.top !== css.top) {
-      Object.assign(this.preview.style, css);
-      paintNight(this.night, Math.ceil(vw * dpr / k), Math.ceil(vh * dpr / k));
-    }
+    const dpr = window.devicePixelRatio || 1, vw = window.innerWidth, vh = window.innerHeight, key = `${vw}x${vh}@${dpr}:${W}x${H}:${this.title.width}`;
+    if (key === this.laid) return;
+    this.laid = key;
+    const [bx0, by0, bx1, by1] = this.room?.box ?? [0, 0, W, H], RW = bx1 - bx0, RH = by1 - by0; // (what's drawn of the room)
+    const least = Math.max(PANEL_MIN, (this.title.width || 0) + 6); // (the title fits across it)
+    const fits = (u: number) => { const SW = Math.floor(vw * dpr / u), SH = Math.floor(vh * dpr / u); return { SW, SH, pw: Math.min(Math.max(PANEL, least), SW - 2 * MARGIN - GAP - RW), ok: SW - 2 * MARGIN - GAP - RW >= least && RH <= SH - 2 * MARGIN }; };
+    const tall = vh > vw * 1.15;
+    let u = 1;
+    if (tall) u = Math.max(1, Math.floor(Math.min((vw * dpr) / (RW + 2 * MARGIN), (vh * dpr * .46) / RH)));
+    else for (let k = 8; k >= 1; k--) if (fits(k).ok) { u = k; break; }
+    const { SW, SH } = fits(u), cu = u / dpr, px = (n: number) => `${n * cu}px`;
+    this.root.style.setProperty("--u", px(1));
+    // the tapestry
+    const pw = tall ? SW - 2 * MARGIN : Math.max(least, fits(u).pw), sx = MARGIN, sy = tall ? RH + 2 * MARGIN : MARGIN, sh = SH - sy - MARGIN;
+    Object.assign(this.sheet.style, { left: px(sx), top: px(sy), width: px(pw), height: px(sh), backgroundImage: `url(${tapestry(pw, sh)})` });
+    const tw = this.title.width || 0, th = this.title.height || 0, head = th ? th + 4 : 8, foot = 22;
+    Object.assign(this.title.style, { left: px(Math.floor((pw - tw) / 2)), top: px(4), width: px(tw), height: px(th) });
+    Object.assign(this.body.style, { left: "0", right: "0", top: px(head), bottom: px(foot) });
+    Object.assign(this.extras.style, { left: px(8), right: px(8), bottom: px(6) });
+    // the room
+    // (centred by what's drawn of it, its picture's own empty edges aside, kept on screen)
+    const left0 = tall ? 0 : sx + pw + GAP, right0 = tall ? SW : SW - MARGIN;
+    const rx = Math.max(left0 - bx0, Math.min(right0 - bx1, Math.floor((left0 + right0 - (bx0 + bx1)) / 2)));
+    const ry = tall ? MARGIN - by0 : Math.max(-by0, Math.min(SH - by1, Math.floor((SH - (by0 + by1)) / 2)));
+    Object.assign(this.preview.style, { width: px(W), height: px(H), left: px(rx), top: px(ry) });
+    paintNight(this.night, Math.ceil(vw * dpr / u), Math.ceil(vh * dpr / u));
+    // the scroll, by the room's front right corner (over the night past the floor's edge), in the corner of the screen at most
+    const [cw, ch] = SpellScroll.SIZE;
+    const pad = (cw - SpellScroll.ART[0]) / 2;
+    this.scroll.place(px(Math.min(SW - MARGIN + pad - cw, rx + bx1 - Math.round(cw * .55))), px(Math.min(SH - MARGIN + pad - ch, ry + by1 - Math.round(ch * .7))), px(cw), px(ch));
   }
 }
 
-/** The tapestry's scalloped top and bottom edges, as a mask. */
-const SCALLOP = "radial-gradient(11px at 50% 0, #0000 97%, #000) 50% 0 / 22px 51% repeat-x, radial-gradient(11px at 50% 100%, #0000 97%, #000) 50% 100% / 22px 51% repeat-x";
-const SCALLOPED = { WebkitMask: SCALLOP, mask: SCALLOP } as unknown as Partial<CSSStyleDeclaration>;
+/** The layout in art pixels: the tapestry's widest and narrowest, the margin round the screen, the gap to the room. */
+const PANEL = 196, PANEL_MIN = 184, MARGIN = 8, GAP = 10;
+
 /** A frame this slow after drawing the room (ms) means the machine is struggling; it's then drawn this seldom (ms) until ready
  *  (and this seldom while she walks). */
 const SLOW_FRAME = 120, SLOW_DRAW = 600, SLOW_WALK = 120;
@@ -663,7 +691,7 @@ const GLOWS: { mat: number; pulse: (t: number) => number }[] = [
 ];
 /** Bakes and lights the room once: its picture, a layer per glowing material, its anchors and its lights. */
 type Walkable = RoomFloor & { depth: Float32Array; depthOf: (p: number[]) => number; pitch: number; s: number };
-type Room = { lit: HTMLCanvasElement; banner: HTMLCanvasElement; glows: { mat: number; c: HTMLCanvasElement }[]; a: RoomAnchors; lights: Light[]; walk: Walkable };
+type Room = { lit: HTMLCanvasElement; banner: HTMLCanvasElement; glows: { mat: number; c: HTMLCanvasElement }[]; a: RoomAnchors; lights: Light[]; walk: Walkable; box: number[] };
 function buildRoom(st: Style, S?: number): Room {
   const sp = (Art.bedroomSprite as unknown as (st: Style, o: { S?: number }) => { w: number; h: number; m: Uint8Array; anchors: RoomAnchors; scale: number; walk: Omit<Walkable, "s"> })(st, { S });
   const colours = (Art.bedroomColours as (st: Style) => Record<number, number[]>)(st);
@@ -701,7 +729,11 @@ function buildRoom(st: Style, S?: number): Room {
     x.putImageData(img, 0, 0);
     return { mat, c };
   });
-  return { lit, banner, glows, a, lights, walk: { ...sp.walk, s: sp.scale } };
+  // what of the picture is the room (its opaque pixels' box), to centre on screen
+  let bx0 = b.w, by0 = b.h, bx1 = 0, by1 = 0;
+  const LA = l2.getImageData(0, 0, b.w, b.h).data;
+  for (let y = 0; y < b.h; y++) for (let x = 0; x < b.w; x++) if (LA[(y * b.w + x) * 4 + 3]) { bx0 = Math.min(bx0, x); by0 = Math.min(by0, y); bx1 = Math.max(bx1, x + 1); by1 = Math.max(by1, y + 1); }
+  return { lit, banner, glows, a, lights, walk: { ...sp.walk, s: sp.scale }, box: bx1 > bx0 ? [bx0, by0, bx1, by1] : [0, 0, b.w, b.h] };
 }
 /** Her idle moments: a pose from the witch's on-foot poses, its speed, how many times through, turned round or not. */
 const IDLES: { pose: string; fps: number; loops: number; flip?: boolean }[] = [
