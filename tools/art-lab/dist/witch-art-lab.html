@@ -2650,6 +2650,19 @@ function witchSprite(st = {}, { frame = 0, lean = false, facing = "towards", pos
   cleanFlecks(sp); // (Ed: "The witch has these little flecks … we should remove them")
   return sp;
 }
+// Her hat lying on the ground where she was knocked out (Ed, 2026-10-06: "when you are killed, you drop your hat"): her
+// own hat (the look's shape, sizes and colours) alone, at her ordinary scale, sitting on its brim, knocked a little askew.
+// Null for a look with no hat. Its brim's middle is the bottom of the sprite, where it lies.
+function witchHatSprite(st = {}, { look, facing = "towards" } = {}) {
+  const L = { ...DEFAULT_LOOK, ...look };
+  if (!L.hat || L.hat === "none") return null;
+  const m = new Model({ blend: .03 }), brim = [0, .02, 0];
+  drawHat(m, L, brim, [1, .12, .18], v3.add(brim, [.02, .17, .01]), v3.add(brim, [-.1, .28, .03]));
+  const { sp, s } = render(m, { scale: witchScale(witchHeight(st)), facing });
+  sp.scale = s;
+  cleanFlecks(sp);
+  return sp;
+}
 // The flecks: a pixel with none of its own material among its 8 neighbours (a stray interior-line dot, a lone speck of
 // hatband or hair) takes its neighbours' commonest material; alone, it goes; so does an interior line one or two pixels
 // long. Eyes (unless one pokes out past her face's edge), their glints and her mouth are kept.

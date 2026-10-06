@@ -490,7 +490,7 @@ describe("creatures", () => {
     expect(new Set(own.map(t => t.creature)).size).toBe(own.length);
   });
 
-  it("start the same in every area (Ed, 2026-10-04): none at home but its legend, one young and one adult elsewhere (Ed, 2026-10-05), and one legend in each", () => {
+  it("start the same in every area (Ed, 2026-10-04): none at home but its legend, one young and one adult elsewhere (Ed, 2026-10-05), and one legend in each that has one (legends.share: Ed, 2026-10-06)", () => {
     expect(inCell(mx, my).filter(c => !c.boss)).toEqual([]);
     const S = TUNING.population.start;
     for (let cy = 0; cy < map.n; cy += 3) for (let cx = 0; cx < map.n; cx += 3) {
@@ -499,15 +499,16 @@ describe("creatures", () => {
       expect(here.filter(c => c.level === 0).length).toBe(S.babies);
       expect(here.filter(c => c.level === 1).length).toBe(S.young);
       expect(here.filter(c => c.level === 2).length).toBe(S.adults);
-      expect(here.filter(c => c.level === 3 && c.boss).length).toBe(1);
+      expect(here.filter(c => c.level === 3 && c.boss).length).toBe(map.hasLegend(cx, cy) ? 1 : 0);
     }
     expect(population(map)).toEqual(S);
   });
 
-  it("have one legend an area but home (Ed, 2026-10-05), each a boss, asleep, out of their clearings (Ed, 2026-10-04)", () => {
+  it("have one legend in each area map.hasLegend picks, never home (Ed, 2026-10-05, 2026-10-06), each a boss, asleep, out of their clearings (Ed, 2026-10-04)", () => {
     for (let seed = 1; seed <= 4; seed++) {
       const m = generateMap(seed * 101, TUNING), legends = spawnCreatures(m).filter(c => c.level === 3), [hx, hy] = m.centreCell;
-      expect(legends.length, `seed ${seed * 101}`).toBe(m.n * m.n - 1);
+      expect(legends.length, `seed ${seed * 101}`).toBe(m.legendCells.size);
+      expect(legends.every(c => m.hasLegend(c.cell[0], c.cell[1]))).toBe(true);
       expect(legends.some(c => c.cell[0] === hx && c.cell[1] === hy)).toBe(false);
       expect(new Set(legends.map(c => c.cell.join())).size).toBe(legends.length);
       for (const c of legends) {
