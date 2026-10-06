@@ -23,6 +23,10 @@ import { bossBreath } from "../../render/leash";
 import type { CombatEventKind } from "../../rules/combat";
 import type { Sfx } from "./sfx";
 import { speechMood, voiceOf } from "./voices";
+import { dances } from "../../render/looks";
+import { beatAt } from "../../rules/beat";
+import { cellKey } from "../../rules/party";
+import { dressingOf, partyDef, type Dressing } from "../../rules/partyDressing";
 
 /** The combat events that are a creature attacking (its id the attacker): each a burst of its speech. */
 const ATTACKS = new Set<CombatEventKind>(["windup", "shot", "beam", "pulse", "quake", "phase", "nova", "rush", "charged", "leapt", "slammed", "sprung", "flash"]);
@@ -50,6 +54,9 @@ export class SfxCues {
   private chargePhase = new Map<number, string>();
   private nextHoof = 0;
   private relicsFound = new Set<number>();
+  private angry = new Set<number>();
+  private lastBeat = -1;
+  private dressings = new Map<string, { x: number; z: number }[]>();
 
   /** `duck`: dip the music (by, seconds) under her "ouch!". */
   constructor(private sfx: Sfx, private duck: (by: number, seconds: number) => void = () => {}) {}
@@ -68,6 +75,10 @@ export class SfxCues {
     this.charges(h);
     this.relics(h);
     this.meadow(h);
+    this.roars(h, hear);
+    this.shoes(h);
+    this.pond(h);
+    this.picnic(h);
     this.primed = true;
   }
 
@@ -220,6 +231,57 @@ export class SfxCues {
   private meadow({ g }: Here): void {
     const w = g.witch, home = g.map.dancefloor;
     this.sfx.meadow(Math.max(0, Math.min(1, (g.map.homeRadius - Math.hypot(w.x - home.x, w.z - home.z)) / Math.max(1, g.tuning.sfx.meadow.fade))));
+  }
+
+  /** A legend turning angry (its restlessness run out, #87): its roar, heard twice as far. */
+  private roars({ g, pan }: Here, hear: number): void {
+    const w = g.witch, now = new Set<number>();
+    for (const c of g.creatures) if (c.boss && !c.gone && c.legendState === "angry") {
+      now.add(c.id);
+      if (this.primed && !this.angry.has(c.id)) { const k = Math.max(0, 1 - Math.hypot(c.x - w.x, c.z - w.z) / (2 * hear)); if (k > 0) this.sfx.roar(pan(c.x), k); }
+    }
+    this.angry = now;
+  }
+
+  /** Dancers near her (party animals and happy ones dancing at a soundsystem), standing, tapping
+   *  their party shoes on each beat; legends wear none. */
+  private shoes({ g, time, pan }: Here): void {
+    const beat = Math.floor(beatAt(g.beat, time));
+    if (beat === this.lastBeat) return;
+    this.lastBeat = beat;
+    const S = g.tuning.sfx.shoes, w = g.witch;
+    let n = 0, sx = 0, near = 0;
+    for (const c of g.creatures) {
+      if (c.gone || c.boss || c.moving) continue;
+      const d = Math.hypot(c.x - w.x, c.z - w.z);
+      if (d > S.range || !dances(g, c)) continue;
+      n++; sx += c.x; near = Math.max(near, 1 - d / S.range);
+    }
+    if (n && this.primed) this.sfx.taps(n, pan(sx / n), near);
+  }
+
+  /** By a pond (the forest's ponds that mirror the moon): its water and frogs, by how near. */
+  private pond({ g, pan }: Here): void {
+    const P = g.tuning.sfx.pond, w = g.witch;
+    let best = Infinity, bx = 0;
+    for (const l of g.forest.lightsNear(w.x, w.z, P.range)) if (l.kind === "pond") { const d = Math.hypot(l.x - w.x, l.z - w.z); if (d < best) { best = d; bx = l.x; } }
+    this.sfx.pond(Number.isFinite(best) ? Math.max(0, 1 - best / P.range) : 0, pan(bx));
+  }
+
+  /** By a picnic in a partified area (not home's: its meadow has its own): its murmur and cups. */
+  private picnic({ g, pan }: Here): void {
+    const P = g.tuning.sfx.picnic, w = g.witch, cell = g.map.areaAt(w.x, w.z).cell, key = cellKey(cell);
+    let level = 0, px = 0;
+    if (g.party.areas.has(key) && key !== cellKey(g.map.centreCell) && !g.combat.ruined.has(key)) {
+      let spots = this.dressings.get(key);
+      if (!spots) {
+        const d: Dressing = dressingOf(g.map, cell, g.tuning);
+        spots = [...d.loose.filter(p => partyDef(p.ref)?.cls === "picnic"), ...d.clusters.filter(c => c.id.includes("picnic"))].map(p => ({ x: p.x, z: p.z }));
+        this.dressings.set(key, spots);
+      }
+      for (const s of spots) { const k = 1 - Math.hypot(s.x - w.x, s.z - w.z) / P.range; if (k > level) { level = k; px = s.x; } }
+    }
+    this.sfx.picnic(level, pan(px));
   }
 
   /** Whether creature `id` may speak again (at most once every `gap` seconds). */

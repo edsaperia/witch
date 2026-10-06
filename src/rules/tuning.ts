@@ -70,6 +70,11 @@ export interface Tuning {
     lost: { volume: number };
     ouch: { volume: number; knockdown: number; duck: number; duckTime: number };
     impact: { volume: number; small: number };
+    roar: { volume: number };
+    shoes: { volume: number; range: number; max: number };
+    pond: { volume: number; lap: number; frogs: number; frogEvery: number; drips: number; dripEvery: number; range: number };
+    picnic: { volume: number; murmur: number; clinks: number; clinkEvery: number; range: number };
+    room: { volume: number; hum: number; crackle: number; creak: number; creakEvery: number };
     land: { volume: number; gap: number };
     stir: { volume: number };
     knock: { volume: number; whoosh: number; twinkle: number; twinkleEvery: number };
