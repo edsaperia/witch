@@ -251,6 +251,8 @@ const view = new View(canvas, game, {
 }, savedLook);
 loadTimes.view = performance.now();
 view.debugCull = params.get("debug") === "cull";
+// ?debug=shadows: every shadow a flat magenta tint, to see each against what casts it (render/shadows.ts).
+if (params.get("debug") === "shadows") view.debugShadows();
 view.quick = params.get("quick") === "1";
 // ?scenery=<metres>: a fixed scenery radius instead of the adaptive budget.
 const sceneryAt = Number(params.get("scenery"));
