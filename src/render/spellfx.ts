@@ -52,7 +52,7 @@ export class SpellFx {
   /** The party spell (Ed, 2026-10-06): a burst of amber and rose sparkles round her as she casts it at the decks, rising
    *  and spreading out over the cast. x, y, z: her feet (y over the ground); at: the cast's time. */
   partyBurst(x: number, y: number, z: number, at: number): void {
-    const r = Math.random;
+    const r = this.rand;
     for (let k = 0; k < 64; k++) {
       const a = r() * Math.PI * 2, s = 1.5 + r() * 3.5, h = 1.4 + r() * 1.4, c = k % 3 ? AMBER : ROSE;
       this.mote(x + Math.cos(a) * 0.3, y + h, z + Math.sin(a) * 0.3, Math.cos(a) * s, 1.2 + r() * 2.4, Math.sin(a) * s, at + r() * 0.5, 0.8 + r() * 0.7, 0.55, c);
