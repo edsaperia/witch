@@ -250,6 +250,122 @@ How far (reach, metres) and how strongly each kind of light lights its surroundi
 | `lights.stone.strength` | number | 0 to … |
 | `glowPower` | number | 0 to … |
 
+## `light`
+
+The lighting's mood (Ed, 2026-10-06: "make it a spooky dark forest with a party in it"; render/mood.ts): mood spooky lays this grade over the Art Lab's night light, plain is the light as it was (?light=plain or ?light=spooky to compare). spooky: ambientHue and ambient (times the tuning's ambient): the shadows' colour and brightness, a deep blue-green; moonHue, moonSat and moon (times tone.moon): a colder moon, a little stronger, so it rims what it lights; hazeHue, hazeSat and haze (its brightness, 0 to 1): the fog the forest fades into, violet; hazeNear and hazeFar: where the fog starts and is whole (metres from the witch; nearer than haze.near and haze.far, which still set how far scenery is drawn); mist: the low ground mist's strength (instead of mist.strength); glowHue and glowSat: the witch's glow, warmer, so the party's lights are the warm ones in the wood; grade, gradeDesat, gradePivot, gradeHue and gradeSat: a grade over the finished picture, draining the dark and middle tones' colour (gradeDesat of it) toward a cold tint (hue and saturation), by grade (0 off), fading out up to gradePivot brightness, so the bright warm lights keep their colour; partyWarm, partyReach and partyStrength: the soundsystems' light, warm amber, pink and gold (one per variant, instead of their crystal cyan, violet and amber), wider and stronger; decorLights, decorReach and decorStrength: the party decor's lights (lanterns, campfires), how many an area lights (instead of partyObjects.lightsPerArea) and how far and strong, so each party is pools of warm light with dark between; areas: each area type's own fog (hazeHue, hazeSat, haze), grade tint (gradeHue, gradeSat) and mist over the above, by area id ("home" for home): misty teal over the bogs and water, violet-grey in the dead and ancient woods, blue-violet in the bluebells, pale mist on the open moor, darker in the rocky places, near-black green under the pines, rosy in the honeysuckle and gardens, home a little less cold; areaEase: how fast the mood eases from one area's to the next (a second); rimHue, rimSat and rim: a moonlight rim on the characters (the witch and every creature, baked or rigged), a light edge one art pixel wide on the side away from the moon in the night sky's blue-violet, at rim strength (0 off), so they read against the dark (the art director, round 1); witchGlow: how much of her own glow lights the witch herself (0: none, as before), so she stands in her pool of light.
+
+| knob | type | range |
+|---|---|---|
+| `light.mood` | string |  |
+| `light.spooky.ambientHue` | number | 0 to … |
+| `light.spooky.ambient` | number | 0 to … |
+| `light.spooky.moonHue` | number | 0 to … |
+| `light.spooky.moonSat` | number | 0 to … |
+| `light.spooky.moon` | number | 0 to … |
+| `light.spooky.hazeHue` | number | 0 to … |
+| `light.spooky.hazeSat` | number | 0 to … |
+| `light.spooky.haze` | number | 0 to … |
+| `light.spooky.hazeNear` | number | 0 to … |
+| `light.spooky.hazeFar` | number | 0 to … |
+| `light.spooky.mist` | number | 0 to … |
+| `light.spooky.glowHue` | number | 0 to … |
+| `light.spooky.glowSat` | number | 0 to … |
+| `light.spooky.grade` | number | 0 to … |
+| `light.spooky.gradeDesat` | number | 0 to … |
+| `light.spooky.gradePivot` | number | 0 to … |
+| `light.spooky.gradeHue` | number | 0 to … |
+| `light.spooky.gradeSat` | number | 0 to … |
+| `light.spooky.partyWarm` | array of array |  |
+| `light.spooky.partyReach` | number | 0 to … |
+| `light.spooky.partyStrength` | number | 0 to … |
+| `light.spooky.decorLights` | number | 0 to … |
+| `light.spooky.decorReach` | number | 0 to … |
+| `light.spooky.decorStrength` | number | 0 to … |
+| `light.spooky.rimHue` | number | 0 to … |
+| `light.spooky.rimSat` | number | 0 to … |
+| `light.spooky.rim` | number | 0 to … |
+| `light.spooky.witchGlow` | number | 0 to … |
+| `light.spooky.areaEase` | number | 0 to … |
+| `light.spooky.areas.bog.hazeHue` | number | 0 to … |
+| `light.spooky.areas.bog.hazeSat` | number | 0 to … |
+| `light.spooky.areas.bog.haze` | number | 0 to … |
+| `light.spooky.areas.bog.mist` | number | 0 to … |
+| `light.spooky.areas.bog.gradeHue` | number | 0 to … |
+| `light.spooky.areas.wetland.hazeHue` | number | 0 to … |
+| `light.spooky.areas.wetland.hazeSat` | number | 0 to … |
+| `light.spooky.areas.wetland.haze` | number | 0 to … |
+| `light.spooky.areas.wetland.mist` | number | 0 to … |
+| `light.spooky.areas.wetland.gradeHue` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.hazeHue` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.hazeSat` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.haze` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.mist` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.gradeHue` | number | 0 to … |
+| `light.spooky.areas.stream.hazeHue` | number | 0 to … |
+| `light.spooky.areas.stream.hazeSat` | number | 0 to … |
+| `light.spooky.areas.stream.haze` | number | 0 to … |
+| `light.spooky.areas.stream.mist` | number | 0 to … |
+| `light.spooky.areas.stream.gradeHue` | number | 0 to … |
+| `light.spooky.areas.deadwood.hazeHue` | number | 0 to … |
+| `light.spooky.areas.deadwood.hazeSat` | number | 0 to … |
+| `light.spooky.areas.deadwood.haze` | number | 0 to … |
+| `light.spooky.areas.deadwood.gradeHue` | number | 0 to … |
+| `light.spooky.areas.deadwood.gradeSat` | number | 0 to … |
+| `light.spooky.areas.ancient.hazeHue` | number | 0 to … |
+| `light.spooky.areas.ancient.hazeSat` | number | 0 to … |
+| `light.spooky.areas.ancient.haze` | number | 0 to … |
+| `light.spooky.areas.ancient.gradeHue` | number | 0 to … |
+| `light.spooky.areas.ancient.gradeSat` | number | 0 to … |
+| `light.spooky.areas.log-pile.hazeHue` | number | 0 to … |
+| `light.spooky.areas.log-pile.hazeSat` | number | 0 to … |
+| `light.spooky.areas.log-pile.haze` | number | 0 to … |
+| `light.spooky.areas.log-pile.gradeHue` | number | 0 to … |
+| `light.spooky.areas.log-pile.gradeSat` | number | 0 to … |
+| `light.spooky.areas.bluebell-glade.hazeHue` | number | 0 to … |
+| `light.spooky.areas.bluebell-glade.gradeHue` | number | 0 to … |
+| `light.spooky.areas.bluebell-glade.mist` | number | 0 to … |
+| `light.spooky.areas.wispy-forest.hazeHue` | number | 0 to … |
+| `light.spooky.areas.wispy-forest.gradeHue` | number | 0 to … |
+| `light.spooky.areas.wispy-forest.mist` | number | 0 to … |
+| `light.spooky.areas.moor.hazeHue` | number | 0 to … |
+| `light.spooky.areas.moor.hazeSat` | number | 0 to … |
+| `light.spooky.areas.moor.haze` | number | 0 to … |
+| `light.spooky.areas.moor.mist` | number | 0 to … |
+| `light.spooky.areas.heath.hazeHue` | number | 0 to … |
+| `light.spooky.areas.heath.hazeSat` | number | 0 to … |
+| `light.spooky.areas.heath.haze` | number | 0 to … |
+| `light.spooky.areas.heath.mist` | number | 0 to … |
+| `light.spooky.areas.grassland.hazeHue` | number | 0 to … |
+| `light.spooky.areas.grassland.hazeSat` | number | 0 to … |
+| `light.spooky.areas.grassland.haze` | number | 0 to … |
+| `light.spooky.areas.grassland.mist` | number | 0 to … |
+| `light.spooky.areas.cave-mouth.haze` | number | 0 to … |
+| `light.spooky.areas.cave-mouth.gradeHue` | number | 0 to … |
+| `light.spooky.areas.cave-mouth.gradeSat` | number | 0 to … |
+| `light.spooky.areas.ravine.haze` | number | 0 to … |
+| `light.spooky.areas.ravine.gradeHue` | number | 0 to … |
+| `light.spooky.areas.ravine.gradeSat` | number | 0 to … |
+| `light.spooky.areas.rocky-slope.haze` | number | 0 to … |
+| `light.spooky.areas.rocky-slope.gradeHue` | number | 0 to … |
+| `light.spooky.areas.rocky-slope.gradeSat` | number | 0 to … |
+| `light.spooky.areas.old-pinewood.hazeHue` | number | 0 to … |
+| `light.spooky.areas.old-pinewood.hazeSat` | number | 0 to … |
+| `light.spooky.areas.old-pinewood.haze` | number | 0 to … |
+| `light.spooky.areas.old-pinewood.gradeHue` | number | 0 to … |
+| `light.spooky.areas.norway.hazeHue` | number | 0 to … |
+| `light.spooky.areas.norway.hazeSat` | number | 0 to … |
+| `light.spooky.areas.norway.haze` | number | 0 to … |
+| `light.spooky.areas.norway.gradeHue` | number | 0 to … |
+| `light.spooky.areas.honeysuckle-tangle.hazeHue` | number | 0 to … |
+| `light.spooky.areas.honeysuckle-tangle.hazeSat` | number | 0 to … |
+| `light.spooky.areas.garden.hazeHue` | number | 0 to … |
+| `light.spooky.areas.garden.hazeSat` | number | 0 to … |
+| `light.spooky.areas.berry-thicket.hazeHue` | number | 0 to … |
+| `light.spooky.areas.berry-thicket.hazeSat` | number | 0 to … |
+| `light.spooky.areas.home.gradeHue` | number | 0 to … |
+| `light.spooky.areas.home.gradeSat` | number | 0 to … |
+| `light.spooky.areas.home.mist` | number | 0 to … |
+
 ## `beat`
 
 The music's clock (beats per minute): the lasers sweep to it and party animals dance to it. Later the music itself drives it.
@@ -1078,7 +1194,7 @@ Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest..
 
 ## `population`
 
-Wild creatures (Ed, 2026-10-04): every area starts with the same population, population.start (one baby and one young: Ed, 2026-10-05, 'actually, the game should start with one baby and one youth, otherwise you can't avoid enraging lots of legends', after 'the game is hard! we should start each area with just one baby'; before it, one young and one adult, and before that one baby and two adults), and while it stays wild it grows: every wave, each area the party hasn't reached gains growth.perWave more, each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.
+Wild creatures (Ed, 2026-10-04): every area starts with the same population, population.start (one baby and one young: Ed, 2026-10-05, 'actually, the game should start with one baby and one youth, otherwise you can't avoid enraging lots of legends', after 'the game is hard! we should start each area with just one baby'; before it, one young and one adult, and before that one baby and two adults), and while it stays wild it grows: every wave, each area the party hasn't reached gains growth.perWave more (a fraction carries over: 0.5 is one every other wave; balance, 2026-10-06, DECISION FOR ED: 0.5, from 1, so a player's defence can hold the early sieges and playing well matters), each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.
 
 | knob | type | range |
 |---|---|---|

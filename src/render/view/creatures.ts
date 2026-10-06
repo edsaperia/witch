@@ -136,7 +136,7 @@ export function drawCreatures(v: View, time = 0): void {
   v.rig?.end();
   for (const [s, b] of v.creatureBatches) if (!per.has(s)) b.set([]);
   for (const [s, list] of per) {
-    const b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, find: !s.startsWith("party-") && !s.startsWith("happy-") && !s.startsWith("woken-") && !s.startsWith("sleep-"), tint: s.startsWith("woken-") ? ENRAGED_TINT : undefined }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
+    const b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, rim: true, find: !s.startsWith("party-") && !s.startsWith("happy-") && !s.startsWith("woken-") && !s.startsWith("sleep-"), tint: s.startsWith("woken-") ? ENRAGED_TINT : undefined }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
     b?.set(list);
   }
   v.stats.creatures = n;
