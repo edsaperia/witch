@@ -577,6 +577,7 @@ playtest.stalls = () => stallLog.stalls;
 let manual = false;
 let overShown = false;
 document.getElementById("again")?.addEventListener("click", () => location.reload());
+document.getElementById("over-close")?.addEventListener("click", () => document.getElementById("over")!.classList.remove("on"));
 document.getElementById("fresh")?.addEventListener("click", () => { const u = new URL(location.href); u.searchParams.set("seed", String(Math.floor(Math.random() * 1e6))); location.href = u.toString(); });
 function frame(now: number): void {
   requestAnimationFrame(frame);
