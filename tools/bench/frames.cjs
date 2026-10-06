@@ -118,6 +118,8 @@ async function main() {
     await page.evaluate(() => { window.witch.manual = true; });
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 60000 });
+    // (the party spell cast long since, so she isn't held at the decks: every scene a run under way, the same each time)
+    await page.evaluate(() => { const p = window.witch.game.party; if (p.spellAt === null) p.spellAt = -100; });
     const times = await s.steps(page);
     const shot = await settle(page, path.join(out, `${s.name}.png`));
     const g = await page.evaluate(() => { const g = window.witch.game, w = g.witch; return { time: +g.clock.time.toFixed(4), x: +w.x.toFixed(3), z: +w.z.toFixed(3), mode: w.mode, wave: g.party.wave }; });
