@@ -35,3 +35,8 @@ The attack PRs (#193, #203) conflict with #208 in `src/render/rig/rigView.ts` an
 3. **Her light in the fern forest.** Check why her pool doesn't light the ground there; it may be the area's fog or tint eating it.
 4. **The lime glow at home** (above). Rendering or art builder 3: what is it? Home's light should be its cyan and the warm amber.
 5. **Checker dither as a screen door.** The ravine's rock spires and the dark crowns are a 50% checkerboard where light meets shade. At 1280×720 it reads as a mesh over them. Use an ordered pattern that clusters (2×2), or the smooth path for those bands.
+
+## Bold and ref (`bold-*`, `ref-*`)
+
+- **In the party's light the styles finally show.** In the fight at home (`bold-fight`, `ref-fight`), the boar in its party shoes and the wolves read in each style: bold's coloured outlines against ref's near-black ones. This is the place for Ed to choose between them.
+- **On the dark moor the witch disappears in both styles.** Her light pool is there, but she isn't visible in it (`bold-moor-ground`, `ref-moor-ground`). The rim in every style (#208) isn't enough for a dark witch on violet heather. Rendering should check the witch herself under the styles: she must be the brightest figure in her own pool in every style.
