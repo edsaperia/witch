@@ -53,6 +53,7 @@ const SCENES: Scene[] = [
       { at: 13, g: "invited (adult)", play: s => s.invited(2, 0.2) },
       ...series(9.8, 3, 0.35, "💌s landing on the ground", (s, i) => s.land(i - 1, 0.9)),
       { at: 14.5, g: "the boot-up over (stirring)", play: s => s.stir() },
+      { at: 16.5, g: "a home speaker powering on", play: s => s.power(3, 0.3, 1) },
     ],
     sounds: [
       { g: "home's meadow", kind: "ambience", at: 2, len: 12 },
@@ -65,6 +66,7 @@ const SCENES: Scene[] = [
       { g: "invited (adult)", kind: "sting", at: 13, len: 1 },
       { g: "💌s landing on the ground", kind: "feedback", at: 9.8, len: 1 },
       { g: "the boot-up over (stirring)", kind: "sting", at: 14.5, len: 1.5 },
+      { g: "a home speaker powering on", kind: "sting", at: 16.5, len: 1.4 },
     ],
   },
   {

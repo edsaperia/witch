@@ -15,10 +15,10 @@ import { newCamera } from "./rules/camera";
 import { setupQuestDemo } from "./rules/quest";
 import { witchHeight } from "./rules/witch";
 import { cellKey } from "./rules/party";
-import { areaUnderWitch, interpolated, joinParty, loseSoundsystem, newGame, STEP, stepGame, type WaveEvent } from "./rules/game";
+import { areaUnderWitch, hitWitch, interpolated, joinParty, loseSoundsystem, newGame, STEP, stepGame, type WaveEvent } from "./rules/game";
 import { AREA_TYPES } from "./rules/map";
 import { waveCountdown } from "./rules/party";
-import { clockText } from "./rules/leypulse";
+import { awaitingSpell, clockSeconds, clockText } from "./rules/leypulse";
 import { parseSeed } from "./rules/map";
 import { TUNING } from "./rules/tuning";
 import { Input } from "./platform/input";
@@ -71,14 +71,14 @@ else if (tilt && /^[\d.]+(,[\d.]+)?$/.test(tilt)) { const [st, bd] = tilt.split(
 if (params.get("bloom") === "off") tuning.bloom.on = false;
 if (params.get("moonbeams") === "on") tuning.moonbeams = 1;
 const witchesParam = Number(params.get("witches")); // debug: this many more party witches
-if (witchesParam > 0) tuning.partyWitches = { ...tuning.partyWitches, debugExtra: Math.min(48, Math.floor(witchesParam)) };
+if (witchesParam > 0) tuning.partyWitches = { ...tuning.partyWitches, debugExtra: Math.min(500, Math.floor(witchesParam)) };
 if (params.get("find") === "0") tuning.find = { ...tuning.find, on: false }; // Ed, v244: compare without the find-in-the-dark looks
 // ?rune=beam|column|both: how an awake rune stone shows above it.
 const runeParam = params.get("rune");
 if (runeParam && ["beam", "column", "both"].includes(runeParam)) tuning.runeMarkers = { ...tuning.runeMarkers, awakeStyle: runeParam };
-// ?picker=noisy|near3|near3touch|nearest: how the party picks the next area to wake.
+// ?picker=route|noisy|near3|near3touch|nearest: how the party picks the next area to wake (route, the default: the ley line's planned order; noisy the one before it).
 const pickerParam = params.get("picker");
-if (pickerParam && ["noisy", "near3", "near3touch", "nearest"].includes(pickerParam)) tuning.party.picker = pickerParam;
+if (pickerParam && ["route", "noisy", "near3", "near3touch", "nearest"].includes(pickerParam)) tuning.party.picker = pickerParam;
 // ?glow=<reach>,<falloff>,<near>: the witch's glow, to tune live (e.g. ?glow=50,2.5,0.7; 0 keeps a value).
 const glowParam = params.get("glow")?.split(",").map(Number);
 if (glowParam && glowParam[0] > 0) { tuning.glowReach = glowParam[0]; tuning.glowFixed = true; }
@@ -177,6 +177,9 @@ const propsGen = params.get("props") !== "hand";
 if (propsGen) tuning.paths = { ...tuning.paths, fingerposts: true }; // ?props=gen: fingerposts where footpaths come into a clearing (placed with the map, so set before it is made)
 applyKnobParams(tuning, params); // (Ed's decisions panel: its knobs' choices kept in the URL as d_<id>)
 const game = newGame(seed, tuning);
+// The party spell (Ed, 2026-10-06): she stands behind her decks until it's cast (the button, or Enter). ?creator=0 (the
+// tools and smoke runs) starts at once, as before, unless ?spell=wait; ?spell=auto starts at once anywhere.
+if (params.get("spell") !== "auto" && !(params.get("creator") === "0" && params.get("spell") !== "wait")) game.party.spellAt = null;
 // ?buffs=fox,toad,stag (debug): these legends' buffs on from the start, whatever the legends do (a
 // species twice stacks it). ?buffs=all: every one.
 const buffsParam = params.get("buffs");
@@ -221,6 +224,10 @@ if (params.get("flora")) style.flora = params.get("flora"); // ?flora=new|fantas
 const loadTimes = { viewStart: performance.now(), view: 0, ready: 0 };
 // Her look (the character creator's, kept on this browser; else the classic witch).
 const savedLook = loadGenome();
+/** Whether her look has a hat to lose on a knockout (rules/hat.ts; Ed, 2026-10-06: "If she chooses no hat in character creation, then she simply doesn't have this mechanic"). */
+const hasHat = (g: unknown) => (g as { hat?: { shape?: string } } | null)?.hat?.shape !== "none";
+const wearHat = (g: unknown) => { const H = game.witches[0].hat; H.has = hasHat(g); if (!H.has) H.down = null; };
+wearHat(savedLook);
 const view = new View(canvas, game, {
   ...style, pixel: tuning.pixelSize,
   // Trees taller by treeHeight; crowns wider by crownWidth in all (treeHeight widens them too).
@@ -347,13 +354,24 @@ seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;
 const debugEl = document.getElementById("debug")!, startEl = document.getElementById("start")!;
 const debugButtons = document.getElementById("debug-buttons")!;
 const clockEl = document.getElementById("clock")!, clockT = clockEl.querySelector<HTMLElement>(".t")!, clockLabel = clockEl.querySelector<HTMLElement>(".label")!;
+/** The party spell's button (Ed, 2026-10-06: "a button on the screen that says "CAST THE PARTY SPELL""): a click or a tap,
+ *  or Enter (once play has begun, so the start screen's Enter isn't it), casts it on the next step. */
+const castBtn = document.getElementById("cast")!;
+let castQueued = false;
+const queueCast = () => { if (awaitingSpell(game.party) && !game.clock.paused) castQueued = true; };
+for (const ev of ["pointerdown", "pointerup", "touchstart"]) castBtn.addEventListener(ev, e => e.stopPropagation()); // (not the game's input)
+castBtn.addEventListener("click", e => { e.stopPropagation(); queueCast(); });
+window.addEventListener("keydown", e => { if (e.code === "Enter" && game.clock.time > 0.3 && !creator.open) queueCast(); });
 /** The game clock, top centre (Ed, 2026-10-06): the time played, mm:ss from 0, held while paused; under it, in debug, the
  *  wave's line. (The wave timer bar on the right is gone: the wave pointer's ring carries the countdown.) */
 function waveHud(): void {
   const cd = waveCountdown(game.party, game.map, game.clock.time);
   clockEl.classList.toggle("on", game.clock.time > 0 || !game.clock.paused);
-  const now = clockText(game.clock.time);
+  const now = clockText(clockSeconds(game.party, game.clock.time));
   if (clockT.textContent !== now) clockT.textContent = now;
+  // before the party spell (Ed, 2026-10-06: the game starts when she casts it), its button in the middle of the screen
+  const ask = awaitingSpell(game.party) && !game.clock.paused && !creator.open;
+  castBtn.classList.toggle("on", ask);
   clockEl.classList.toggle("paused", game.clock.paused);
   const clock = (s: number) => { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; };
   const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : clock(cd.left);
@@ -447,7 +465,7 @@ creator.progress = () => { const a = view.assets; return { done: a.done, total: 
 function ensureSfx(): void { if (audio && !sfx && tuning.sfx.on) { sfx = new Sfx(audio, tuning.music.volume * level, tuning.sfx, musicStyle.root + 24); sfxCues = new SfxCues(sfx, (by, sec) => music?.duck(by, sec)); } }
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
 creator.onGesture = () => { try { audio ??= new AudioContext(); void audio.resume(); ensureSfx(); } catch { /* no sound yet */ } };
-creator.onStart = g => { if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); } start(); };
+creator.onStart = g => { if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); } start(); };
 if (params.get("creator") !== "0") creator.show();
 const lookBtn = document.getElementById("look-btn");
 if (lookBtn) {
@@ -466,9 +484,10 @@ function start(): boolean {
 input.onAny = start;
 // The audio watchdog (Ed, round 13: "the music stops after about two minutes"): once a second,
 // a context suspended is resumed, and music gone silent (or anything non-finite in the music or the
-// sound effects) is rebuilt afresh; each mend goes in the playtest log (L).
+// sound effects) is rebuilt afresh; each mend goes in the playtest log (L). (Before the first home speaker
+// boots, the music is silent on purpose: not expected.)
 const watchdog = new AudioWatchdog(
-  () => ({ ctx: audio, music, sfx, wanted: !!audio && !game.clock.paused && !freeze.frozen && !document.hidden, musicExpected: !!music && level > 0 && music.audible && !game.clock.paused && !freeze.frozen && !document.hidden }),
+  () => ({ ctx: audio, music, sfx, wanted: !!audio && !game.clock.paused && !freeze.frozen && !document.hidden, musicExpected: !!music && level > 0 && music.audible && !game.clock.paused && !freeze.frozen && !document.hidden && game.speakerBoot.some(t => t !== null) }),
   what => {
     playtest.audio(what);
     console.warn(`audio watchdog: ${what}`);
@@ -559,6 +578,7 @@ function frame(now: number): void {
   frameStats.frame(dt * 1000);
   freeze.pollPad();
   const c = input.read();
+  if (castQueued) { c.castParty = true; castQueued = false; }
   if (c.toggleAutoTalk) setAutoTalk(!autoTalk);
   c.autoTalk = autoTalk;
   if (c.debug) { debugOn = !debugOn; debugEl.classList.toggle("on", debugOn); debugButtons.classList.toggle("on", debugOn); knobs.classList.toggle("on", debugOn); }
@@ -641,6 +661,8 @@ function powerLines(): string[] {
   guest: (id: number) => { const c = game.creatures[id], a = game.party.areas.get(cellKey(c.cell)); if (!c || !a) return false; c.state = "happy"; c.enraged = false; c.siege = undefined; joinParty(game, c, a.soundsystem ?? game.map.dancefloor, a.cell); return true; },
   /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's ring), as if destroyed. */
   lose: (key = "home") => { const s = game.combat.sounds.get(key); if (s) s.hp = 0; loseSoundsystem(game, key, s?.x ?? 0, s?.z ?? 0); const e = game.waveEvents[game.waveEvents.length - 1]; if (e) showLoss(e); return e; },
+  /** A debug hook (the dropped hat's previews): a hit on her now, as a creature's would be (her last one knocks her out). */
+  hit: () => { hitWitch(game, 0, game.clock.time); return !!game.witches[0].ko; },
   get manual() { return manual; }, set manual(on: boolean) { manual = on; },
   /** A debug hook (tools/sfx/live.cjs): the audio context, the music and the sound effects. */
   get audio() { return { ctx: audio, music, sfx, mends: watchdog.mends }; },

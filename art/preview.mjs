@@ -386,6 +386,9 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     const one = g => { const { look, outfit } = G.genomeLook(g), col = outfit ? G.witchColours(st, outfit, { styleHues: false }) : G.witchColours(st), b = o => G.bake(G.witchSprite(st, { ...o, look }), col, st, st.cOutline); return [b({ frame: 0 }), b({ pose: "lean", frame: 1 }), b({ pose: "stand", frame: 0 })]; };
     const items = [one(G.WITCH_GENOME), ...seeds.map(s => one(G.witchGenome(s)))];
     for (let i = 0; i < items.length; i += per) rows.push(items.slice(i, i + per).flat());
+  } else if (what === "rim") { // the legend clearings' rim kit: each area (all, or listed) a row of its 6 rim pieces, the witch closing each row
+    const ids = list === "all" ? G.AREAS.map(a => a.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);
+    for (const id of ids) rows.push([...G.areaAssets(id, st).rim.map(b => b.sp), wit]);
   } else if (what === "props") { // the prop generator (art/props/): each kind (all, or listed), a row of variants (PER, default 8) from seeds 0.., the witch closing each row; AREA=moor for its grass
     const kinds = list === "all" ? G.PROP_KINDS : list.split(","), per = window.PER || 8, wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), def = G.AREA_BY_ID[window.AREA || "moor"];
     for (const kind of kinds) rows.push([...[...Array(per).keys()].map(seed => { const p = G.propPiece(kind, { seed, ...(window.BOG ? { bog: true } : {}) }, def, st); return G.bake(p.sp, p.colours, st, "none"); }), wit]);

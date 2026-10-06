@@ -7,6 +7,7 @@ import { TUNING } from "./tuning";
 import { generateMap } from "./map";
 import { Forest } from "./forest";
 import { LEGENDS, placeRelics } from "./legends";
+import { newGame, stepGame } from "./game";
 
 const SEEDS = [1, 2, 3, 7, 42, 123, 999, 4242, 31337, 165272, 922199, 2026];
 
@@ -25,16 +26,33 @@ describe("legend relics on the map", () => {
       const out = (k: number) => { const c = map.cellSafe(h.x + dx * k, h.z + dz * k).cell; return c[0] !== C[0] || c[1] !== C[1]; };
       expect(out(R.homeInset + 5), `seed ${seed}: near home's edge`).toBe(true);
       expect(d, `seed ${seed}: past home's circle`).toBeGreaterThan(map.homeRadius);
+      expect(Math.hypot(h.x - map.treehouse.x, h.z - map.treehouse.z), `seed ${seed}: clear of the treehouse`).toBeGreaterThanOrEqual(R.clearOfTreehouse);
       for (const r of relics) {
         expect(map.hardClear(r.x, r.z), `seed ${seed}: ${r.kind} not in a cleared place`).toBe(false);
         expect(r.x > map.bounds.minX && r.x < map.bounds.maxX && r.z > map.bounds.minZ && r.z < map.bounds.maxZ).toBe(true);
         if (r !== h) expect(map.remoteness(r.cell[0], r.cell[1])).toBeGreaterThanOrEqual(R.minRemoteness);
       }
-      for (let i = 0; i < relics.length; i++) for (let j = i + 1; j < relics.length; j++) {
-        expect(Math.hypot(relics[i].x - relics[j].x, relics[i].z - relics[j].z), `seed ${seed}: ${relics[i].kind}–${relics[j].kind}`).toBeGreaterThanOrEqual(R.minGap);
-      }
+      // Every pair minGap apart, the relics and their sigils (south of them) alike.
+      const spots = relics.flatMap(r => [{ r, x: r.x, z: r.z }, { r, x: r.sx, z: r.sz }]);
+      for (const a of spots) for (const c of spots) if (a.r !== c.r) expect(Math.hypot(a.x - c.x, a.z - c.z), `seed ${seed}: ${a.r.kind}–${c.r.kind}`).toBeGreaterThanOrEqual(R.minGap);
+      for (const r of relics) { expect(r.sx).toBe(r.x); expect(r.sz - r.z).toBeCloseTo(R.sigilOffset); }
     }
   }, 240000);
+
+  it("are picked up by standing on their sigil and pressing the button, like any sigil; not from beside the relic itself", () => {
+    const g = newGame(123, TUNING), r = g.relics[0], C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
+    g.clock.paused = false;
+    const at = (x: number, z: number) => { g.witch = { ...g.witch, x, z, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 }; };
+    // Beside the relic (on it, and a step off), but not on its sigil: nothing.
+    for (const [x, z] of [[r.x, r.z], [r.x + 1.5, r.z - 1]]) { at(x, z); stepGame(g, { ...C, place: true }, 1 / 60); stepGame(g, C, 1 / 60); }
+    expect(r.state).toBe("lying");
+    expect(g.leash.relics).toEqual([]);
+    // On its sigil: picked up, carried.
+    at(r.sx, r.sz);
+    stepGame(g, { ...C, place: true }, 1 / 60);
+    expect(r.state).toBe("carried");
+    expect(g.leash.relics).toEqual([r.id]);
+  }, 60000);
 
   it("are the same for the same seed", () => {
     const a = generateMap(123, TUNING), b = generateMap(123, TUNING);

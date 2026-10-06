@@ -21,9 +21,14 @@ describe("the ley line through the first wave", () => {
     expect(leyReveal(party(), map, 70 - 1 / 60, 3)!).toBeGreaterThan(3 - 3 * (1 / 60) / interval - 1e-9);
     expect(leyReveal(party(), map, 70, 3)).toBe(3);
   });
-  it("is drawn whole once the first wave has come, and with no wave clock once booted", () => {
-    expect(leyReveal(party(1), map, 80, 3)).toBeNull();
+  it("goes on growing at the same pace after the first wave (no stone pops on at once), and is whole with no wave clock", () => {
+    const second = { wave: 1, paused: false, bootUntil: 10, nextAt: 130 } as unknown as PartyState;
+    expect(leyReveal(second, map, 70, 3)).toBeCloseTo(3);
+    expect(leyReveal(second, map, 100, 3)).toBeCloseTo(4.5);
     expect(leyReveal(party(0, true), map, 20, 3)).toBeNull();
+  });
+  it("isn't drawn while waiting for the party spell", () => {
+    expect(leyReveal({ ...party(), spellAt: null } as unknown as PartyState, map, 40, 3)).toBe(0);
   });
 });
 
