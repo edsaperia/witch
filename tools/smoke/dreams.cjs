@@ -1,7 +1,7 @@
 // The sleeping legends' dream bubbles (render/leash.ts drawDreams, index.html .bubble.dream; the art director, #235: "a soft,
 // round thought bubble with a couple of small puffs leading up to it ... quieter than the art"): the built game (DIST, default
-// dist/) at 1280×720 on a seed; the witch set down on the ground beside the nearest dreaming legend, a still of its bubble; then
-// it made restless (its nightmare's face, the ink reddening) for another. Writes previews/dreams/.
+// dist/) at 1280×720 on a seed; the witch set down on the ground beside the nearest dreaming legend, a still of its bubble. Writes
+// previews/dreams/.
 //   npm run build && node tools/smoke/dreams.cjs [out dir] [seed]
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -40,10 +40,6 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
       await page.screenshot({ path: path.join(outDir, `${name}-screen.png`) });
     };
     await shoot("dream");
-    // restless: its nightmare (the face, the ink reddening)
-    await page.evaluate(id => { const c = window.witch.game.creatures[id]; c.restlessness = 0.6; }, legend.id);
-    await wait(1);
-    await shoot("nightmare");
   } finally { await browser.close(); server.close(); }
   if (errors.length) { console.error(errors.join("\n")); process.exit(1); }
 })().catch(e => { console.error(e); process.exit(1); });
