@@ -1492,6 +1492,10 @@ label.check input { accent-color: var(--accent); }
     get output() {
       return this.master;
     }
+    /** The legend circle's layer, which reaches the speakers on its own (the measured output taps it too). */
+    get circleOutput() {
+      return this.circleGain;
+    }
     /** Whether it should be heard now: its volume turned up. */
     get audible() {
       return this.master.gain.value > 0.02;
@@ -1783,7 +1787,7 @@ label.check input { accent-color: var(--accent); }
     legends: { share: 0.5, buffPower: 1, happyRange: 420, bombard: { on: true, range: 420, damage: 150 }, stomp: { on: false, angryAfter: 120 }, partyEgg: true, partyHits: 100, partyDrain: 0.01, partyReach: 6.8 },
     _partyOver: `The party's over (Ed, 2026-10-06: "when the soundsystems and speakers are all destroyed, the dance music stops, the dancefloor switches off, lights switch off, the upset animals that ran away go home, all the animals go to sleep and make little \u{1F634} speech bubbles, and you can walk the map safely"; rules/partyOver.ts): once every soundsystem and the home ring's speakers are down, the afterparty: the waves stop, nothing fights, and every creature walks home and sleeps. walk: their pace home, times their roaming speed (they walk, not run: a stroll home after the party). ease: seconds it eases in over (g.partyOver.ease, 0 to 1: the lights going out, the music winding down, the ley line fading to leyFloor of its brightness). ?partyover=1 starts it at once.`,
     partyOver: { ease: 6, leyFloor: 0.2, walk: 2 },
-    wildLegends: { wake: 3, sink: 0.45, moss: 0.7, guard: 70, heal: 6, scale: 1.35, breathe: 0.04, breathEvery: 4, aura: 6, glow: 1 },
+    wildLegends: { wake: 3, sink: 0.45, moss: 0.7, guard: 70, heal: 6, scale: 1.35, breathe: 0.04, breathEvery: 4, aura: 6, glow: 1, seen: { aura: 0.7, rim: 0.9, floor: 0.65 } },
     creatureSimRadius: 600,
     _simLod: "The simulation's level of detail (Ed, 2026-10-05: creatures far from the action frozen until she comes closer; rules/simLod.ts). Wild creatures roaming are simulated every step within full.ground metres of the witch on the ground, full.treetop over the treetops (each a little past the most the view shows from there at any zoom: 178 and 262 m in a 1900 by 1240 window); beyond, coarsely: once every `every` steps (60 a second), by that many steps' time at once, taking turns; past creatureSimRadius not at all. Besiegers marching on a soundsystem are simulated every step within full of her or within action metres of a soundsystem, a party animal or a happy legend's guard; elsewhere coarsely, marching `every` steps at a time. Going out, one stays in full until band metres past the line, so none flickers. The debug overlay's sim line counts them.",
     simLod: { full: { ground: 200, treetop: 300 }, action: 120, band: 30, every: 30 },
