@@ -18,7 +18,7 @@ import { Ground } from "./ground";
 import { Sky } from "./sky";
 import { Clouds } from "./clouds";
 import { Ride } from "./ride";
-import { groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, placed, useHeightField } from "./height";
+import { bendPoint, groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, placed, useHeightField } from "./height";
 import { PathView } from "./paths";
 import { applyStyleLight, LIGHT_UNIFORMS } from "./lighting";
 import { Post } from "./post";
@@ -163,6 +163,10 @@ export class View {
   readonly rig: RigView | null;
   /** The camera's snap this frame, in the picture's pixels (x right, y down): what main.ts shifts the canvas by. */
   readonly subpixel = { x: 0, y: 0 };
+  /** What the canvas's glide follows: "witch" (her own snap, so she holds still on screen while the
+   *  world glides: Ed's 2026-10-06 playtest, "it feels low") or "camera" (the camera's snap: the world
+   *  exact, her a pixel either way from frame to frame). ?glide= picks one. */
+  glide: "witch" | "camera" = "witch";
   shadowList: ShadowInstance[] = [];
   private mist: Mist | null = null;
   width = 1;
@@ -717,6 +721,13 @@ export class View {
     this.inviteView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, this.leashView.tops);
     // Idling into the party, she's drawn in her party pose there instead.
     this.witchBatch.set(this.partyWitchView.herIdle || hidden ? [] : [{ x: wx, y: wyy + groundHeight(wx, wz), z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
+    // The glide by her own snap: what the sprite shader's snap of her base takes off, given back by
+    // the canvas's shift (main.ts), so she lands where she truly is to a screen pixel every frame.
+    if (this.glide === "witch" && !hidden && !this.partyWitchView.herIdle) {
+      const b = bendPoint(this.v3.set(wx, wyy + groundHeight(wx, wz), wz)).project(this.camera);
+      const X = (b.x * 0.5 + 0.5) * this.width, Y = (b.y * 0.5 + 0.5) * this.height;
+      this.subpixel.x = X - (Math.floor(X) + 0.5); this.subpixel.y = -(Y - (Math.floor(Y) + 0.5));
+    }
     // Where she is on screen (low-res pixels) and how far from the camera, for the occluder fade.
     {
       const px = (x: number, y: number, z: number) => { const p = placed(this.v3.set(x, y, z)).project(this.camera); return [(p.x + 1) / 2 * this.width, (p.y + 1) / 2 * this.height]; };
