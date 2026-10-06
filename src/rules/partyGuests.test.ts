@@ -13,7 +13,7 @@ import { TUNING } from "./tuning";
 
 const map = generateMap(123, TUNING), t = TUNING;
 const cells: [number, number][] = [];
-for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++) if (x !== map.centreCell[0] || y !== map.centreCell[1]) cells.push([x, y]);
+for (const [x, y] of map.cells) if (x !== map.centreCell[0] || y !== map.centreCell[1]) cells.push([x, y]); // (the playable areas: the grid's corners are the sea)
 
 describe("guests at the party", () => {
   it("finds each area's party places among its own decorations, inside the area", () => {

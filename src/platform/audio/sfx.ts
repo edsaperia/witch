@@ -13,7 +13,7 @@
 //  - places.ts: a pond, a picnic in a partified area, the creator's room;
 //  - power.ts: a runestone crackling into life as a speaker or soundsystem.
 import { Charge, Meadow, impact, knock, roar, taps } from "./ambience";
-import { Picnic, Pond, Room } from "./places";
+import { Picnic, Pond, Room, Sea } from "./places";
 import { powerUp } from "./power";
 import { Spell } from "./spell";
 import { Babble } from "./babble";
@@ -34,6 +34,8 @@ export class Sfx {
   private picnicBed: Picnic;
   private roomBed: Room;
   private spellFx: Spell;
+  /** The sea on the beach: made the first time she comes near it (most runs never do). */
+  private seaBed: Sea | null = null;
 
   constructor(ctx: AudioContext | OfflineAudioContext, volume: number, T: SfxTuning, root = 57, dest?: AudioNode) {
     this.k = new SfxKit(ctx, volume, T, root, dest);
@@ -107,4 +109,8 @@ export class Sfx {
   spell(cue: "hum" | "rustle" | "crackle" | "burst", v = 1): void {
     if (cue === "hum") this.spellFx.hum(v); else if (cue === "rustle") this.spellFx.rustle(v); else if (cue === "crackle") this.spellFx.crackle(); else this.spellFx.burst();
   }
+  /** By the sea on the beach (0-1 by how near the water): nothing made until she first comes near. */
+  sea(level: number, pan = 0): void { if (level > 0.001 || this.seaBed) (this.seaBed ??= new Sea(this.k)).update(level, pan); }
+  /** Whether the sea's sounds are built (none in an ordinary run). */
+  get seaBuilt(): boolean { return !!this.seaBed?.built; }
 }

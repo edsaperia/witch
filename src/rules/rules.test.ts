@@ -19,6 +19,7 @@ import { laserShow } from "./lasers";
 import { borderOf } from "./borders";
 import { newLeash, stepLeash, type LeashControls } from "./leash";
 import { newClock, tick, MAX_STEP } from "./clock";
+import { isInside } from "./mapShape";
 import { TUNING, withTuning } from "./tuning";
 import { floorClearing, speakerRadius, nextSpeakerState } from "./speakers";
 import { composeFloor, moonTiles, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
@@ -185,6 +186,7 @@ describe("the map", () => {
     let dense = 0, open = 0, between = 0, n = 0;
     for (let i = 0; i < 4000; i++) {
       const x = map.bounds.minX + hash2(i, 1, 9) * (map.bounds.maxX - map.bounds.minX), z = map.bounds.minZ + hash2(i, 2, 9) * (map.bounds.maxZ - map.bounds.minZ);
+      if (!isInside(map.bounds, x, z, TUNING.beach?.on ? TUNING.beach.width : 0)) continue; // (the forest: not the beach round it, nor the sea)
       const w = map.treeWeight(x, z) / TUNING.treeDensity;
       n++;
       if (w > 0.95) dense++; else if (w < 0.05) open++; else between++;
@@ -1550,7 +1552,7 @@ describe("E cycles the sigils in the treetops (Ed, 2026-10-05)", () => {
 describe("wall objects as features", () => {
   const W = TUNING.walls;
   // Areas of a type that own ground (a cell whose site lies in another area has none).
-  const cellsOf = (id: string) => { const out: [number, number][] = []; for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++) { if (AREA_TYPES[map.typeOf(x, y)].id !== id) continue; const s = map.siteOf(x, y), c = map.areaAt(s.x, s.z).cell; if (c[0] === x && c[1] === y) out.push([x, y]); } return out; };
+  const cellsOf = (id: string) => { const out: [number, number][] = []; for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++) { if (AREA_TYPES[map.typeOf(x, y)].id !== id) continue; const s = map.siteOf(x, y), c = map.areaAt(s.x, s.z).cell; if (c[0] === x && c[1] === y && isInside(map.bounds, s.x, s.z, (TUNING.beach?.on ? TUNING.beach.width : 0) + map.areaSize * 0.6)) out.push([x, y]); } return out; }; // (not the areas the beach cuts into)
   it("lay garden walls as joined runs (no isolated stubs), with flower beds along them, a few runs per garden", () => {
     const cells = cellsOf("garden");
     expect(cells.length).toBeGreaterThan(0);
