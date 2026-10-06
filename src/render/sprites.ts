@@ -11,6 +11,10 @@ import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 
 /** Shared by every sprite batch: the camera's right and (tilted) up, and the canopy fade. */
 export const SPRITE_UNIFORMS = {
+  /** The mood's moonlight rim on characters (render/mood.ts): colour, strength (0 off). */
+  uMoodRim: { value: new THREE.Vector4() },
+  /** How much of her own glow lights the witch (render/mood.ts; 0 none, as she was). */
+  uWitchGlow: { value: 0 },
   uRight: { value: new THREE.Vector3(1, 0, 0) },
   uUp: { value: new THREE.Vector3(0, 1, 0) },
   uFacing: { value: new THREE.Vector3(0, 0, 1) },
@@ -160,6 +164,8 @@ varying float vHole, vOverHer;
 varying vec2 vLocal;
 varying float vSizeY;
 uniform float uFind; // this batch: 1 for wild creatures (eyeshine, light floor, rim)
+uniform float uRimOn; // this batch: 1 for characters (the witch, creatures): the mood's moonlight rim
+uniform vec4 uMoodRim; // the rim's colour and strength (0: none; render/mood.ts)
 uniform vec4 uTint; // this batch's tint: colour and how much (enraged creatures' red, Ed 2026-10-05)
 uniform vec4 uFindLook;
 uniform vec2 uTrunkLook;   // trunks: light floor, rim
@@ -298,6 +304,7 @@ void shade() {
   gl_FragColor = vec4(haze(min(vec3(1.0), col), vWorld), alpha);
 }
 void main() {
+  vec2 rdx = dFdx(vUv), rdy = dFdy(vUv); // (taken here, in uniform flow: one screen pixel, one art pixel, along the sprite)
   shade();
   // Glowing white (a party animal evolving).
   if (vGlow > 0.0 && uSilhouette.a <= 0.0) gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0), vGlow);
@@ -308,6 +315,16 @@ void main() {
   if (vGlow < -1.5) {
     float m = clamp(-(vGlow + 2.0), 0.0, 1.0), l = dot(gl_FragColor.rgb, vec3(0.3, 0.55, 0.15));
     gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.2, 0.26, 0.14) * (0.45 + 1.1 * l), m);
+  }
+  // The moonlight rim (render/mood.ts; the art director's round 1: "characters must read against the
+  // night"): a character's pixels whose neighbour on the side away from the moon is empty catch a light
+  // edge in the night sky's colour, one art pixel wide, so the witch and the creatures stand out of the dark.
+  if (uRimOn > 0.5 && uMoodRim.w > 0.0 && gl_FragColor.a > 0.5 && uSilhouette.a <= 0.0 && vGlow > -1.5) {
+    vec2 s = -vec2(dot(uMoonDir, uRight), dot(uMoonDir, uUp));
+    vec2 qx = vUv + rdx * sign(s.x), qy = vUv + rdy * sign(s.y);
+    float ox = qx.x < vFrame.x || qx.x > vFrame.z || qx.y < vFrame.y || qx.y > vFrame.w ? 0.0 : texture2D(uAlbedo, qx).a;
+    float oy = qy.x < vFrame.x || qy.x > vFrame.z || qy.y < vFrame.y || qy.y > vFrame.w ? 0.0 : texture2D(uAlbedo, qy).a;
+    if (min(ox, oy) < 0.5) gl_FragColor.rgb = min(vec3(1.0), gl_FragColor.rgb + uMoodRim.rgb * uMoodRim.w);
   }
   // Scenery past the budget's radius fades out smoothly (alpha), from the far edge inward.
   if (uIsScenery > 0.5) {
@@ -335,7 +352,7 @@ export class SpriteBatch {
   count = 0;
 
   /** metresPerPixel: world size of one art pixel. */
-  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; /** Gameplay (creatures, soundsystems, markers...): never faded or cut away round the witch (Ed, v149). */ solid?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number }; /** The witch: lit by the world's lights but not her own glow (witchLight.ts). */ witchLight?: { lightFloor: number; lightTint: number; lightRim: number }; /** Wild creatures: eyeshine, a light floor and a rim, so they can be found in the dark (Ed, v244). */ find?: boolean; /** Each instance's y is a world height, not a height over the ground (her: ride.ts). */ absolute?: boolean; /** Tint the whole batch: a uniform of r, g, b (0-1) and how much (enraged creatures; shared, so a knob changes it live). */ tint?: { value: THREE.Vector4 } } = {}) {
+  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; /** Gameplay (creatures, soundsystems, markers...): never faded or cut away round the witch (Ed, v149). */ solid?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number }; /** The witch: lit by the world's lights but not her own glow (witchLight.ts). */ witchLight?: { lightFloor: number; lightTint: number; lightRim: number }; /** Wild creatures: eyeshine, a light floor and a rim, so they can be found in the dark (Ed, v244). */ find?: boolean; /** Characters (the witch, creatures): the mood's moonlight rim. */ rim?: boolean; /** Each instance's y is a world height, not a height over the ground (her: ride.ts). */ absolute?: boolean; /** Tint the whole batch: a uniform of r, g, b (0-1) and how much (enraged creatures; shared, so a knob changes it live). */ tint?: { value: THREE.Vector4 } } = {}) {
     const quad = new THREE.PlaneGeometry(1, 1);
     quad.translate(0, 0.5, 0); // stand on the base
     this.geo = new THREE.InstancedBufferGeometry();
@@ -344,7 +361,7 @@ export class SpriteBatch {
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.pos = this.size = this.uvs = this.flags = this.glow = undefined as never;
     this.grow(64);
-    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uAbsolute: { value: opts.absolute ? 1 : 0 }, ...extra });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uAbsolute: { value: opts.absolute ? 1 : 0 }, ...extra });
     // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
     // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
     const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};
