@@ -7358,6 +7358,29 @@
         "glow": {
           "type": "number",
           "minimum": 0
+        },
+        "seen": {
+          "type": "object",
+          "properties": {
+            "aura": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rim": {
+              "type": "number",
+              "minimum": 0
+            },
+            "floor": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "aura",
+            "rim",
+            "floor"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -7370,7 +7393,8 @@
         "breathe",
         "breathEvery",
         "aura",
-        "glow"
+        "glow",
+        "seen"
       ],
       "additionalProperties": false
     },
