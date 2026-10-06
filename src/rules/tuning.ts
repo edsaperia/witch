@@ -254,7 +254,7 @@ export interface Tuning {
   grounds: { chance: number; kinds: string[]; radius: Record<string, number> };
   /** Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06): radius metres (or its species' own,
    *  sized to the legend), a soft edge ring edge metres wide, the legend lying top of the radius toward its far (north) side. */
-  legendClearing: { radius: number; edge: number; top: number; grove: { reach: number; density: number; tallest: number; scale: number; gap: number; soft: number; jitter: number }; species: Record<string, number> };
+  legendClearing: { radius: number; edge: number; top: number; rim: { spacing: number; chance: number; out: number; spread: number; gap: number }; grove: { reach: number; density: number; tallest: number; scale: number; gap: number; soft: number; jitter: number }; species: Record<string, number> };
   /** Scenes (art/scenes.js): the share of areas that get one (if an unused scene suits them); footprint = farthest piece's authored offset times scale, plus pad metres. */
   scenes: { chance: number; scale: number; pad: number };
   relics: { spacing: number; chance: number; nearRoad: number; minGap: number };

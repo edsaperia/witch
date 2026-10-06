@@ -33,6 +33,10 @@ const jobs = new WeakMap<View, { run: Generator<void, void, void>; frames: numbe
  *  once when another is already due (she has flown, turned or zoomed on past what it was listed
  *  for: slow frames, like the software renderer's, cover a lot of ground each) or after MAX_FRAMES,
  *  so what it lists is never older than an unsliced rebuild's would be by much. `force`: all of it now. */
+/** An area type's rim kit as whole pieces, made once a layout. */
+const rimCache = new WeakMap<TypeArt["layout"], Piece[]>();
+const rimPieces = (l: TypeArt["layout"]): Piece[] => { let r = rimCache.get(l); if (!r) rimCache.set(l, (r = (l.rim ?? []).map(k => ({ bot: k.frame, top: null })))); return r; };
+
 export function refresh(v: View, force = false): void {
   // Below SLICE_FPS a frame covers so much flight that a rebuild spread over frames would be
   // stale when handed over (pops): then it's done whole, as it always was.
@@ -151,6 +155,8 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach }: NonNullab
   yield* scatter("berrybush", g.berries.bushes.filter(b => Math.abs(b.x - cx) <= half && Math.abs(b.z - cz) <= half), l => l.small);
   yield* scatter("wall", g.forest.wallsNear(cx, cz, half), l => l.walls.map(bot => ({ bot, top: null })));
   yield* scatter("setpiece", g.forest.setPiecesNear(cx, cz, half), l => (l.set === null ? [] : [l.set]));
+  // The rim kit round the legends' clearings (rules/forest.ts legendRim), drawn whole.
+  yield* scatter("rim", g.forest.rimNear(cx, cz, half), l => rimPieces(l));
   // Decorations: ruins, rocks and freak trees, as scenery (each family's pieces picked by its variant).
   const decor = v.assets.decorArt(), dl: SpriteInstance[] = [];
   if (decor) for (const d of g.forest.decorNear(cx, cz, half)) {
