@@ -243,6 +243,9 @@
           "type": "number",
           "minimum": 0
         },
+        "pixel": {
+          "type": "boolean"
+        },
         "perFire": {
           "type": "number",
           "minimum": 0
@@ -267,6 +270,7 @@
         "drift",
         "opacity",
         "warm",
+        "pixel",
         "perFire",
         "maxFires",
         "range"

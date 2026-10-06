@@ -12,7 +12,7 @@ import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { LIGHT_UNIFORMS } from "./lighting";
 import { SPRITE_UNIFORMS } from "./sprites";
 
-export interface SmokeTuning { on: boolean; rate: number; life: number; rise: number; speed: number; size: number; grow: number; drift: number; opacity: number; warm: number; perFire: number; maxFires: number; range: number }
+export interface SmokeTuning { on: boolean; rate: number; life: number; rise: number; speed: number; size: number; grow: number; drift: number; opacity: number; warm: number; pixel: boolean; perFire: number; maxFires: number; range: number }
 
 const VERT = /* glsl */ `
 uniform vec3 uRight, uUp;
@@ -47,6 +47,7 @@ void main() {
 const FRAG = /* glsl */ `
 uniform vec3 uMoon, uMoonDir, uFireCol;
 uniform vec2 uSmoke3; // opacity, warmth (how much firelight the low puffs catch)
+uniform float uPixel; // stepped tones and a dithered edge (1) or smooth (0)
 varying vec2 vUv;
 varying float vT, vA, vSeed;
 float ch(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
@@ -59,9 +60,20 @@ void main() {
   if (a < 0.01) discard;
   // moonlit grey-blue, a lighter rim on the moon's side; the fire's warm light under the low ones
   float side = uMoonDir.x < 0.0 ? 1.0 - vUv.x : vUv.x;
-  vec3 c = vec3(0.44, 0.47, 0.57) + uMoon * (0.7 + 0.9 * smoothstep(0.5, 0.95, side) * smoothstep(0.3, 0.9, vUv.y));
-  c += uFireCol * uSmoke3.y * (1.0 - smoothstep(0.0, 0.22, vT)) * (1.0 - vUv.y);
-  gl_FragColor = vec4(c, a * uSmoke3.x * (0.7 + 0.3 * n));
+  // a cool grey, only a little blue: lit, never a light (kept under the moon and the party's amber: the art director, #236)
+  vec3 c = vec3(0.43, 0.44, 0.47) + uMoon * (0.4 + 0.5 * smoothstep(0.5, 0.95, side) * smoothstep(0.3, 0.9, vUv.y));
+  // the lowest puffs catch the fire's amber underneath, cooling to grey by the treetops
+  float warm = uSmoke3.y * (1.0 - smoothstep(0.02, 0.3, vT)) * smoothstep(0.2, 0.75, 1.0 - vUv.y);
+  c = mix(c, uFireCol * 0.75, clamp(warm, 0.0, 0.85));
+  a *= uSmoke3.x * (0.7 + 0.3 * n);
+  if (uPixel > 0.5) { // drawn, not airbrushed: three stepped tones with an ordered dither at the edge, at the art pixel
+    vec2 p = mod(floor(gl_FragCoord.xy), 4.0);
+    float b = mod(p.x + p.y * 2.0, 4.0) / 4.0 + mod(floor(p.x * 0.5) + floor(p.y * 0.5) * 2.0, 4.0) / 16.0; // a 4 x 4 Bayer-ish threshold
+    float k = floor(a * 3.0 / max(0.05, uSmoke3.x) + b) / 3.0;
+    if (k <= 0.0) discard;
+    a = min(k, 1.0) * uSmoke3.x;
+  }
+  gl_FragColor = vec4(c, a);
 }`;
 
 export class Smoke {
@@ -95,6 +107,7 @@ export class Smoke {
       uSmoke2: { value: new THREE.Vector4(T.size, T.grow, T.drift / wind, -T.drift * 0.35 / wind) },
       uSmoke3: { value: new THREE.Vector2(T.opacity, T.warm) },
       uPuffs: { value: this.perFire },
+      uPixel: { value: T.pixel ? 1 : 0 },
       uFireCol: { value: new THREE.Color(1.0, 0.55, 0.22) },
     };
     this.mesh = new THREE.Mesh(this.geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: this.u, transparent: true, depthWrite: false }));

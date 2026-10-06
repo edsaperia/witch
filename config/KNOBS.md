@@ -71,7 +71,7 @@ The ground's fake relief (Ed, v171: so the ground doesn't look flat): low rises 
 
 ## `smoke`, `sky`
 
-Smoke from every fire (Ed, round 13: puffs rising high into the sky before dissipating; render/smoke.ts): the world's campfires, the party's campfires, bonfires and tiki torches, the charcoal burner's mound. Each fire sends up about rate puffs a second (at most perFire at once), each living life seconds: rising at speed m/s at first and slowing, up to rise metres (well over the 24 m treetops), drifting with the wind at drift m/s, starting size metres across and growing to (1 + grow) times that, thinning out before the end; opacity its strength, warm how much firelight catches the low ones. The nearest maxFires fires within range metres smoke, those near the edge fading. on: false turns it off.
+Smoke from every fire (Ed, round 13: puffs rising high into the sky before dissipating; render/smoke.ts): the world's campfires, the party's campfires, bonfires and tiki torches, the charcoal burner's mound. Each fire sends up about rate puffs a second (at most perFire at once), each living life seconds: rising at speed m/s at first and slowing, up to rise metres (well over the 24 m treetops), drifting with the wind at drift m/s, starting size metres across and growing to (1 + grow) times that, thinning out before the end; opacity its strength (a cool grey, under the moon and the party's amber), warm how much of the fire's amber the lowest puffs catch underneath; pixel draws them in three stepped tones with a dithered edge at the art pixel (false: smooth). The nearest maxFires fires within range metres smoke, those near the edge fading. on: false turns it off.
 
 | knob | type | range |
 |---|---|---|
@@ -85,6 +85,7 @@ Smoke from every fire (Ed, round 13: puffs rising high into the sky before dissi
 | `smoke.drift` | number | 0 to … |
 | `smoke.opacity` | number | 0 to … |
 | `smoke.warm` | number | 0 to … |
+| `smoke.pixel` | boolean |  |
 | `smoke.perFire` | number | 0 to … |
 | `smoke.maxFires` | number | 0 to … |
 | `smoke.range` | number | 0 to … |
