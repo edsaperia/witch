@@ -13,13 +13,12 @@
 import type { ForestMap } from "./map";
 import type { PartyState } from "./party";
 import type { Tuning } from "./tuning";
-import { departureClear } from "./departure";
+import { departureClear, ringApproach } from "./departure";
 
 type P2 = [number, number];
 type Floor = Pick<ForestMap, "dancefloor" | "treehouseFront"> & { tuning: { boot: { time: number; firstAfter?: number } } };
 
 /** A stone's bearing from the floor's middle, clockwise from north (radians, 0 to 2π): east π/2 (the camera looks north). */
-const bearingOf = (d: Floor["dancefloor"], x: number, z: number) => { const b = Math.atan2(x - d.x, -(z - d.z)); return b < 0 ? b + Math.PI * 2 : b; };
 
 /** The ring's radius: the stones' mean distance from the floor's middle. */
 export const ringRadius = (map: Floor): number => {
@@ -33,10 +32,7 @@ export const ringRadius = (map: Floor): number => {
 };
 
 /** The stones in the order the pulse turns them: indices into dancefloor.speakers, the first clockwise from the top. */
-export function ringOrder(map: Floor): number[] {
-  const d = map.dancefloor;
-  return d.speakers.map((s, i) => ({ i, b: bearingOf(d, s.x, s.z) })).sort((a, b) => a.b - b.b).map(o => o.i);
-}
+export function ringOrder(map: Floor): number[] { return bootPath(map).order; }
 
 const cache = new WeakMap<object, { path: P2[]; length: number; stoneAt: number[]; order: number[] }>();
 /** The boot path (the treehouse's front, the ring's top, round clockwise to the top again), its length, and where along it
@@ -44,12 +40,14 @@ const cache = new WeakMap<object, { path: P2[]; length: number; stoneAt: number[
 export function bootPath(map: Floor): { path: P2[]; length: number; stoneAt: number[]; order: number[] } {
   const hit = cache.get(map.dancefloor);
   if (hit) return hit;
-  const d = map.dancefloor, f = map.treehouseFront, R = ringRadius(map), top: P2 = [d.x, d.z - R];
-  const path: P2[] = [[f.x, f.z], top], drop = Math.hypot(top[0] - f.x, top[1] - f.z);
-  for (let k = 1; k <= 72; k++) { const b = (k / 72) * Math.PI * 2; path.push([d.x + R * Math.sin(b), d.z - R * Math.cos(b)]); }
-  const order = ringOrder(map), stoneAt: number[] = [];
-  d.speakers.forEach((s, i) => { stoneAt[i] = drop + R * bearingOf(d, s.x, s.z); });
-  const out = { path, length: drop + R * Math.PI * 2, stoneAt, order };
+  const d = map.dancefloor, R = ringRadius(map), TAU = Math.PI * 2;
+  // On to the ring as the first line goes (rules/departure.ts ringApproach: meeting it along it, clockwise), then once round.
+  const ap = ringApproach(map, R, -1, 2), path: P2[] = ap.pts.slice(), a0 = ap.at; // (angles round home: 0 south, clockwise decreasing)
+  for (let k = 1; k <= 72; k++) { const a = a0 - (k / 72) * TAU; path.push([d.x + R * Math.sin(a), d.z + R * Math.cos(a)]); }
+  const stoneAt: number[] = [];
+  d.speakers.forEach((s, i) => { stoneAt[i] = ap.length + R * ((((a0 - Math.atan2(s.x - d.x, s.z - d.z)) % TAU) + TAU) % TAU); });
+  const order = d.speakers.map((_, i) => i).sort((a, b) => stoneAt[a] - stoneAt[b]);
+  const out = { path, length: ap.length + R * TAU, stoneAt, order };
   cache.set(map.dancefloor, out);
   return out;
 }

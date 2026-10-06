@@ -85,6 +85,17 @@ describe("the party spell", () => {
   void newParty;
 });
 
+/** The sharpest turn (degrees) between successive steps of a polyline (steps under half a metre skipped). */
+function maxTurn(pts: [number, number][]): number {
+  const steps = pts.slice(1).map((p, i) => [p[0] - pts[i][0], p[1] - pts[i][1]]).filter(v => Math.hypot(v[0], v[1]) > 0.5);
+  let most = 0;
+  for (let i = 1; i < steps.length; i++) {
+    const a = steps[i - 1], b = steps[i], c = (a[0] * b[0] + a[1] * b[1]) / (Math.hypot(a[0], a[1]) * Math.hypot(b[0], b[1]));
+    most = Math.max(most, (Math.acos(Math.max(-1, Math.min(1, c))) * 180) / Math.PI);
+  }
+  return most;
+}
+
 describe("the ring and the way out are one path (Ed, 2026-10-06: \"it doesn't connect with the leyline around the dancefloor\")", () => {
   it("the first line's way out runs on the boot ring's circle from the treehouse and leaves it from a point on it", async () => {
     const { newGame } = await import("./game");
@@ -99,6 +110,9 @@ describe("the ring and the way out are one path (Ed, 2026-10-06: \"it doesn't co
       const onRing = route.slice(1).findIndex(p => r(p) > R + 1.5);
       expect(onRing).toBeGreaterThan(2);
       for (const p of route.slice(1, onRing)) expect(Math.abs(r(p) - R)).toBeLessThan(1.5);
+      // No right angle (Ed's second shot): onto the ring, round it and off it, each step turns gently.
+      expect(maxTurn(route.slice(0, onRing + 12))).toBeLessThan(35);
     }
+    expect(maxTurn(P.path.slice(0, 30))).toBeLessThan(35); // (the boot ring's way on, the same curve)
   }, 30000);
 });
