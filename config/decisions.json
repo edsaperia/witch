@@ -29,7 +29,7 @@
     {
       "id": "bombard", "label": "Legend bombardment", "note": "Damage an angry legend's lob or beam does a soundsystem (of 4000) when she's out of its reach (0: none). It always goes for her first.",
       "control": { "type": "slider", "min": 0, "max": 1000, "step": 50 },
-      "default": 300, "apply": { "knob": "legends.bombard.damage" }
+      "default": 150, "apply": { "knob": "legends.bombard.damage" }
     },
     {
       "id": "stomp", "label": "Legend stomp", "note": "A legend turning angry stamps on its own area's soundsystem at once (Ed's 'perhaps'): it only bites if you empty a partying area of the legend's kind.",
