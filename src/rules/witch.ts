@@ -3,6 +3,7 @@
 // which takes riseTime or descendTime: `lift` runs from 0 (ground) to 1 (treetop).
 import { clamp, lerp, smoothstep } from "./random";
 import type { Tuning } from "./tuning";
+import { keepIn, softEdge, type Bounds } from "./mapShape";
 
 export type Mode = "ground" | "rising" | "treetop" | "descending";
 
@@ -69,7 +70,7 @@ export const witchHeight = (w: WitchState, t: Tuning) => lerp(t.groundHeight, t.
 /** How much of the canopy shows: 0 in ground mode, 1 in treetop mode. */
 export const canopyShown = (w: WitchState) => smoothstep(w.lift);
 
-export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, bounds: { minX: number; maxX: number; minZ: number; maxZ: number }): WitchState {
+export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, bounds: Bounds): WitchState {
   if (w.seated) {
     if (!intent.toggleMode && Math.hypot(intent.moveX, intent.moveZ) < 0.1) return w;
     w = { ...w, seated: false };
@@ -91,9 +92,13 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   // Rising and descending blend the two, keeping her speed.
   let vx = lerp(gx, top.vx, L), vz = lerp(gz, top.vz, L);
   const boost = top.boost * L, braking = top.braking && L > 0.5;
+  if (bounds.circle) ({ vx, vz } = softEdge(bounds, w.x, w.z, vx, vz, Math.max(max, Math.hypot(vx, vz)), t.map?.push ?? 0, t.map?.drift ?? 0)); // (the circular map's soft edge)
   let x = w.x + vx * dt, z = w.z + vz * dt;
-  if (x < bounds.minX || x > bounds.maxX) { x = clamp(x, bounds.minX, bounds.maxX); vx = 0; }
-  if (z < bounds.minZ || z > bounds.maxZ) { z = clamp(z, bounds.minZ, bounds.maxZ); vz = 0; }
+  if (bounds.circle) { const p = keepIn(bounds, x, z); if (p.x !== x || p.z !== z) { const c = bounds.circle, nx = (p.x - c.x) / c.r, nz = (p.z - c.z) / c.r, out = vx * nx + vz * nz; if (out > 0) { vx -= nx * out; vz -= nz * out; } x = p.x; z = p.z; } }
+  else {
+    if (x < bounds.minX || x > bounds.maxX) { x = clamp(x, bounds.minX, bounds.maxX); vx = 0; }
+    if (z < bounds.minZ || z > bounds.maxZ) { z = clamp(z, bounds.minZ, bounds.maxZ); vz = 0; }
+  }
   const facing: 1 | -1 = vx > 0.3 ? 1 : vx < -0.3 ? -1 : w.facing;
   const speed = Math.hypot(vx, vz), away = facingAway(vx, vz, w.away, Math.max(1, max * 0.15), t), heading = headingOf(vx, vz, w.heading, Math.max(1, max * 0.15), t);
   return { x, z, vx, vz, lift, mode, facing, away, heading, lean: speed > max * t.leanAt, boost, braking };

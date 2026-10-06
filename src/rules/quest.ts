@@ -16,7 +16,7 @@ export interface Quest { species: string; level: Level; /** game time it was don
 
 /** A legend's quest: a species on the map that isn't its own, and a level (baby, young or adult), from the seed. */
 export function questFor(map: ForestMap, cell: [number, number], own: string): Quest | undefined {
-  const kinds = [...new Set(Array.from({ length: map.n * map.n }, (_, i) => AREA_TYPES[map.typeOf(i % map.n, Math.floor(i / map.n))].creature))].filter(s => s !== own).sort();
+  const kinds = [...new Set(map.cells.map(([cx, cy]) => AREA_TYPES[map.typeOf(cx, cy)].creature))].filter(s => s !== own).sort();
   if (!kinds.length) return undefined;
   const r = rng(map.seed * 6151 + cell[0] * 389 + cell[1] * 1031 + 17);
   return { species: kinds[Math.floor(r() * kinds.length)], level: Math.floor(r() * 3) as Level };
