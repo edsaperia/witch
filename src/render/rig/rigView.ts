@@ -90,7 +90,7 @@ export class RigView {
     let pool = this.pool.get(key);
     if (!pool) { this.pool.set(key, (pool = [])); this.used.set(key, 0); }
     let n = this.used.get(key)!;
-    if (!this.batches.has(key)) { const b = new SpriteBatch(art.atlas, this.mpp, { solid: true, find: !look.gear, tint: look.gear?.woken ? ENRAGED_TINT : undefined }); this.batches.set(key, b); this.scene.add(...b.meshes); }
+    if (!this.batches.has(key)) { const b = new SpriteBatch(art.atlas, this.mpp, { solid: true, rim: true, find: !look.gear, tint: look.gear?.woken ? ENRAGED_TINT : undefined }); this.batches.set(key, b); this.scene.add(...b.meshes); }
     const m = this.mpp * look.scale, R = this.R, U = this.U, F = this.F;
     for (let k = 0; k < this.out.n; k++) {
       const it = this.out.items[k], f = art.atlas.frames[it.piece.frame];

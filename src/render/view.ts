@@ -21,7 +21,7 @@ import { Ride } from "./ride";
 import { groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, placed, useHeightField } from "./height";
 import { PathView } from "./paths";
 import { applyStyleLight, LIGHT_UNIFORMS } from "./lighting";
-import { AreaMoods, moodOf } from "./mood";
+import { AreaMoods, hsvInto, moodOf } from "./mood";
 import { hsv2rgb } from "../../art/generator.js";
 import { Post } from "./post";
 import { GrassView } from "./grass";
@@ -201,6 +201,9 @@ export class View {
     const M = moodOf(t), moodLook: Record<string, number> = M ? { ambientHue: M.ambientHue, moonHue: M.moonHue, moonSat: M.moonSat, glowHue: M.glowHue, glowSat: M.glowSat } : {};
     applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams, ...moonLook, ...moodLook }, t.glowReach, this.mpp, (t.find.on ? t.find.ambient : t.tone.ambient) * (M?.ambient ?? 1), t.glowFalloff, t.tone.moon * (M?.moon ?? 1));
     this.areaMoods = M ? new AreaMoods(M) : null;
+    // The characters' moonlight rim and her own glow on her (the art director's round 1), the mood's.
+    { const rgb = new THREE.Vector3(); hsvInto(rgb, M?.rimHue ?? 0.66, M?.rimSat ?? 0.4, 1); SPRITE_UNIFORMS.uMoodRim.value.set(rgb.x, rgb.y, rgb.z, M?.rim ?? 0); }
+    SPRITE_UNIFORMS.uWitchGlow.value = M?.witchGlow ?? 0;
     if (M) LIGHT_UNIFORMS.uHazeColour.value.fromArray(hsv2rgb(M.hazeHue, M.hazeSat, 1).map((c: number) => (c / 255) * M.haze));
     LIGHT_UNIFORMS.uGlowPower.value = t.glowPower;
     LIGHT_UNIFORMS.uGlowNear.value = Math.max(0.05, Math.min(1, t.glowNear ?? 1));
@@ -468,7 +471,7 @@ export class View {
 
   /** Her sprite batch, from the assets' witch frames. */
   private makeWitchBatch(): SpriteBatch {
-    const t = this.game.tuning, b = new SpriteBatch(this.assets.witch, this.mpp, { absolute: true, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: t.occlusion.silhouette } });
+    const t = this.game.tuning, b = new SpriteBatch(this.assets.witch, this.mpp, { absolute: true, rim: true, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: t.occlusion.silhouette } });
     b.mesh.renderOrder = 10;
     this.scene.add(...b.meshes);
     return b;

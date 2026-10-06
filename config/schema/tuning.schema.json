@@ -997,6 +997,22 @@
               "type": "number",
               "minimum": 0
             },
+            "rimHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rimSat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rim": {
+              "type": "number",
+              "minimum": 0
+            },
+            "witchGlow": {
+              "type": "number",
+              "minimum": 0
+            },
             "areaEase": {
               "type": "number",
               "minimum": 0
@@ -1619,6 +1635,10 @@
             "decorLights",
             "decorReach",
             "decorStrength",
+            "rimHue",
+            "rimSat",
+            "rim",
+            "witchGlow",
             "areaEase",
             "areas"
           ],
