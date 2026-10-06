@@ -51,7 +51,7 @@ async function session(browser, port, v, fight) {
   const wait = s => page.evaluate(s => new Promise(ok => { const t = window.witch.game.clock.time + s; const f = () => window.witch.game.clock.time >= t ? ok() : setTimeout(f, 100); f(); }), s);
   const nudge = async () => { await page.keyboard.down("ArrowUp"); await wait(.5); await page.keyboard.up("ArrowUp"); };
   const rise = async () => {
-    await page.keyboard.press("Space");
+    await page.keyboard.press("KeyQ");
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 120000, polling: 100 }).catch(() => {});
     await wait(3); await page.waitForTimeout(5000);
   };
