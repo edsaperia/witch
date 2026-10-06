@@ -63,6 +63,7 @@ export interface RigDrive {
   /** Crouching for a charge or a leap, 0..1. */ crouch: number;
   /** Charging: stretched out, at a run. */ charging: boolean;
   /** In the air (a leap), 0..1 of its arc's height: legs tucked. */ air: number;
+  /** Tapping a front foot on the beat while it stands (a party animal): -1..1, the far (−) or near (+) one lifted. */ tap?: number;
 }
 /** What the rig lays out: a piece or a disc of the atlas, its pivot's world position (metres from
  *  the creature's place on the ground) and a nudge toward the camera (model units) to settle which
@@ -137,7 +138,8 @@ export class RigBody {
     for (const L of m.legs) {
       const [fwd, lift] = footCycle(this.phase + (TROT[L.name] ?? 0), duty);
       const hipY = L.hip[1] + bodyY, tuck = drive.air * legLen * 0.45;
-      const fx = L.foot[0] + fwd * stride * go + (drive.charging && !L.fore ? -0.08 : 0), fy = L.foot[1] + lift * 0.14 * go + tuck;
+      const tapping = L.fore && drive.tap ? (drive.tap > 0) === (L.side > 0) ? Math.abs(drive.tap) * (1 - go) : 0 : 0; // its shoe tapping while it stands
+      const fx = L.foot[0] + fwd * stride * go + (drive.charging && !L.fore ? -0.08 : 0), fy = L.foot[1] + lift * 0.14 * go + tuck + tapping * 0.09;
       const l1 = Math.hypot(L.hip[0] - L.knee[0], L.hip[1] - L.knee[1]), l2 = Math.hypot(L.knee[0] - L.foot[0], L.knee[1] - L.foot[1]);
       const restBend = Math.sign((L.knee[0] - L.hip[0]) * (L.foot[1] - L.hip[1]) - (L.knee[1] - L.hip[1]) * (L.foot[0] - L.hip[0])) || (L.fore ? -1 : 1);
       const [kx, ky, ex, ey] = ik2(L.hip[0], hipY, fx, fy, l1, l2, -restBend);

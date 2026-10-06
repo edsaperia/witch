@@ -142,7 +142,7 @@ export interface Tuning {
   haze: { near: number; far: number };
   /** The scenery budget: scenery is drawn out to an adaptive radius round the witch (view.ts). */
   scenery: { adaptive: boolean; fps: number; hysteresis: number; sustain: number; minRadius: number; shrink: number; grow: number; fade: number };
-  stringLights: { on: boolean; runsPerArea: number[]; spansPerRun: number[]; coneAngle: number; junctionChance: number; spanMin: number; spanMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; twinkle: number; chaseSpeed: number };
+  stringLights: { on: boolean; runsPerArea: number[]; spansPerRun: number[]; coneAngle: number; junctionChance: number; spanMin: number; spanMax: number; spread: number; height: number; sag: number; bulbSpacing: number; palette: string[]; areaNeon: boolean; twinkle: number; chaseSpeed: number };
   party: {
     motes: { perPatch: number; from: number; to: number; speed: number };
     uplight: { strength: number; pulse: number; edge: number }; interval: number; /** seconds a destroyed soundsystem takes off the next wave's countdown (Ed, 2026-10-05) */ lossPenalty: number; startDelay: number; maxPerWave: number; /** areas each wave wakes: one per witch present (1 until multiplayer) */ areasPerWave: number; picker: string; noisy: { wobble: number; lobeSize: number; candidates: number; spreadFromLast: boolean }; transition: number; lightReach: number; lightStrength: number };
@@ -170,7 +170,7 @@ export interface Tuning {
   /** How mist, far haze and canopy dapple are drawn: smooth gradients, or dithered pixel steps. */
   fx: "smooth" | "pixel";
   moonbeams: number;
-  partyObjects: { on: boolean; clusters: number[]; loose: number[]; setChance: number; caughtChance: number; hanging: number[]; lightsPerArea: number; lanternReach: number; arch: string; /** Home's meadow, strewn all over (rules/partyDressing.ts homeDressing). */ home: { clusters: number[]; loose: number[]; weights: Record<string, number>; gap: number; reach: number; lights: number }; exclude: string[] };
+  partyObjects: { on: boolean; clusters: number[]; loose: number[]; setChance: number; caughtChance: number; hanging: number[]; lightsPerArea: number; lanternReach: number; arch: string; /** Home's meadow, strewn all over (rules/partyDressing.ts homeDressing). */ home: { clusters: number[]; loose: number[]; weights: Record<string, number>; gap: number; reach: number; lights: number }; exclude: string[]; /** The prop generator's party pieces (art/party.js gen-*) in place of the hand-made ones they replace (?props=gen). */ generated: boolean };
   partyWitches: { max: number; idleAfter: number; idleReach: number; activityMin: number; activityMax: number; weights: Record<string, number>; arriveTime: number; flyFrom: number; flyHeight: number; runSpeed: number; walkSpeed: number; lapSpeed: number; pairRange: number; pairGap: number; limboPass: number; floorShare: number; debugExtra: number };
   speakerLasers: { on: boolean; tilt: number; sweep: number; sweepBeats: number; length: number; opacity: number };
   find: { on: boolean; eyeshine: { range: number; strength: number; blink: number }; lightFloor: number; rim: number; ambient: number; moonHue: number; moonSat: number };
