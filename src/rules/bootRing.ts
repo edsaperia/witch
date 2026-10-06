@@ -12,6 +12,8 @@
 // by the same arc length).
 import type { ForestMap } from "./map";
 import type { PartyState } from "./party";
+import type { Tuning } from "./tuning";
+import { departureClear } from "./departure";
 
 type P2 = [number, number];
 type Floor = Pick<ForestMap, "dancefloor" | "treehouseFront"> & { tuning: { boot: { time: number; firstAfter?: number } } };
@@ -21,7 +23,12 @@ const bearingOf = (d: Floor["dancefloor"], x: number, z: number) => { const b = 
 
 /** The ring's radius: the stones' mean distance from the floor's middle. */
 export const ringRadius = (map: Floor): number => {
-  const d = map.dancefloor, s = d.speakers;
+  const d = map.dancefloor, s = d.speakers, T = map.tuning as Partial<Tuning>;
+  // On the first line's own circle round home (rules/departure.ts: out past the speakers' feet, or at the treehouse's front if
+  // that's further), so the line leaving home runs on the ring from the treehouse and leaves it at a point on it, one path
+  // (Ed, 2026-10-06: "it doesn't connect with the leyline around the dancefloor": the ring went through the speakers, the
+  // way out round outside them).
+  if (T.dancefloor && T.leyLines) return Math.max(departureClear(map as unknown as ForestMap, T.leyLines.depart.avoid), Math.hypot(map.treehouseFront.x - d.x, map.treehouseFront.z - d.z));
   return s.length ? s.reduce((a, p) => a + Math.hypot(p.x - d.x, p.z - d.z), 0) / s.length : d.radius;
 };
 

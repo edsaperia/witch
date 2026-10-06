@@ -122,6 +122,19 @@ float overBend(vec3 w) {
   float m = (H + uBend.x * dh * dh) / (dh + D);
   return (H - w.y + uBend.x * ahead * ahead) / (ahead + D) <= m + 0.02 ? 1.0 : 0.0;
 }
+// 1 if nothing of the bent, rolling ground stands between a (lifted, unbent) world point and the camera, 0 if it hides it:
+// the bend's horizon, and the hills on the way, marched in 16 steps along the line of sight, both bent as drawn (Ed, 2026-10-06:
+// "I shouldn't see anything on the ground that's obscured when it goes past the bend"). For what is drawn without a depth
+// test, or past one (the ley line through the trees, its pixel heads), so it hides where the earth would hide it.
+float groundSeen(vec3 w) {
+  if (overBend(w) < 0.5) return 0.0;
+  vec3 b = bendW(w);
+  for (int i = 1; i < 16; i++) {
+    vec3 q = mix(b, cameraPosition, float(i) / 16.0);
+    if (bendW(vec3(q.x, groundH(q.xz), q.z)).y > q.y + 0.3) return 0.0;
+  }
+  return 1.0;
+}
 `;
 
 /** Glowing points (rgba vertex colours, added on) given as height above the ground: motes, trails. */
