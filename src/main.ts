@@ -39,7 +39,7 @@ import { StallLog } from "./platform/stallLog";
 import { powerReport } from "./rules/power";
 import { Freeze } from "./platform/freeze";
 import { Creator, loadGenome } from "./ui/creator";
-import { BOT_KINDS, newBot, type Bot, type BotKind } from "./rules/bot";
+import { BOT_GAME, BOT_KINDS, newBot, type Bot, type BotKind } from "./rules/bot";
 import { BotTag } from "./ui/botGame";
 import { pleasingWitch } from "./ui/looks";
 import { applyKnobParams, DecidePanel } from "./ui/decide";
@@ -492,7 +492,7 @@ const botParam = params.get("bot") as BotKind | null;
 let bot: Bot | null = null, botTag: BotTag | null = null;
 function botGame(kind: BotKind): void {
   if (bot) return;
-  bot = newBot(kind);
+  bot = newBot(kind, BOT_GAME[kind]); // (the skilled one questing, bringing relics and feeding: rules/bot.ts BOT_GAME)
   const look = pleasingWitch(seed!);
   lookNow = JSON.stringify(look); view.setWitch(look); wearHat(look);
   botTag = new BotTag(kind, () => { const u = new URL(location.href); u.searchParams.delete("bot"); location.href = u.toString(); });
