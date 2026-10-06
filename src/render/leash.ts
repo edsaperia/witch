@@ -39,6 +39,7 @@ import { emojiOr, sleepyFace } from "./sleepyFace";
 import { FIGHT, profileOf } from "../rules/movement";
 import { huntsWitch } from "../rules/creatureStates";
 import { LEGENDS, relicGlints } from "../rules/legends";
+import { circleLines, circleShown, legendCircleNear } from "../rules/legendCircle";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
 import { lobHeight } from "./invites";
@@ -987,6 +988,66 @@ export class LeashView {
     this.standing.end(); this.flat.end(); this.over.end(); this.solid.end();
     this.bubbles(time, camera, width, height);
     this.drawDreams(camera, width, height);
+    this.drawCirclePanel(camera, width, height);
+  }
+
+  /** The legend circle's explainer (Ed, 2026-10-06: "when you go into a legend circle, text appears on the screen to the side of
+   *  the circle explaining mechanics to do with legends"; rules/legendCircle.ts): a soft dark panel beside the clearing she stands
+   *  in (on the ground), on its right on screen, or its left if that would run off; fading in and out (circleShown). Its icons:
+   *  the sigil the legend dreams of, at its level, and a relic sigil in gold. */
+  private circlePanel: HTMLElement | null = null;
+  private circleFade = 0;
+  private circleAt = 0;
+  private circleLast: { legend: Creature; x: number; z: number; r: number } | null = null;
+  private drawCirclePanel(camera: THREE.Camera, width: number, height: number): void {
+    const host = this.bubbleWitch?.parentElement, g = this.game;
+    if (!host) return;
+    const now = performance.now() / 1000, dt = this.circleAt ? Math.min(0.1, now - this.circleAt) : 0;
+    this.circleAt = now;
+    const near = legendCircleNear(g, g.witch.lift > 0.5 ? { ...g.witch, mode: "treetop" } : g.witch);
+    if (near) this.circleLast = near;
+    this.circleFade = circleShown(this.circleFade, !!near, dt);
+    let el = this.circlePanel;
+    if (!this.circleFade || !this.circleLast) { if (el) el.style.display = "none"; return; }
+    if (!el) { el = document.createElement("div"); el.className = "legend-panel"; host.append(el); this.circlePanel = el; }
+    const { legend: c, x, z, r } = this.circleLast, lines = circleLines(c);
+    const key = `${c.id}:${c.legendState}:${c.quest?.done !== undefined}:${c.quest?.species}:${c.quest?.level}`;
+    if (el.dataset.k !== key) {
+      el.dataset.k = key;
+      el.dataset.state = c.legendState ?? "asleep";
+      const icon = (id: string, level: number | null, colour: number[]) => {
+        const cv = document.createElement("canvas"), n = 40;
+        cv.width = cv.height = n; cv.className = "icon";
+        const x2 = cv.getContext("2d");
+        if (x2) drawSigil(x2, id, { x: 1, y: 1, size: n - 2, level: level as unknown as null, colour, glow: false });
+        return cv;
+      };
+      el.replaceChildren(...lines.map(l => {
+        const p = document.createElement("p");
+        if (l.done) p.className = "done";
+        l.text.split(/(\{sigil\}|\{relic\})/).forEach(part => {
+          if (part === "{sigil}" && c.quest) p.append(icon(c.quest.species, c.quest.level, sigilColour(c.quest.species)));
+          else if (part === "{relic}") p.append(icon("relic", null, [255, 205, 90]));
+          else if (part) p.append(document.createTextNode(part));
+        });
+        if (l.done) p.prepend(document.createTextNode("✓ "));
+        return p;
+      }));
+    }
+    // beside the circle on screen: its middle and its edge (at about head height), the panel off its right side, or its left
+    placed(this.v.set(x, 1.5, z)).project(camera);
+    const cx = ((this.v.x + 1) / 2) * width, cy = ((1 - this.v.y) / 2) * height, behind = this.v.z > 1;
+    placed(this.v.set(x + r, 1.5, z)).project(camera);
+    const rx = Math.abs(((this.v.x + 1) / 2) * width - cx);
+    el.style.display = behind ? "none" : "";
+    const w = el.offsetWidth, h = el.offsetHeight, gap = 16;
+    let left = cx + rx + gap;
+    if (left + w > width - 8) left = cx - rx - gap - w; // (off the right edge: the other side)
+    if (left < 8) left = width - w - 24; // (the circle wider than the screen: by its right edge)
+    left = Math.max(8, Math.min(width - w - 8, left));
+    const top = Math.max(56, Math.min(height - h - 70, Math.max(height * .3, Math.min(height * .6, cy)) - h / 2)); // (about level with the circle's middle, clear of the clock and the action bar)
+    el.style.left = `${Math.round(left)}px`; el.style.top = `${Math.round(top)}px`;
+    el.style.opacity = this.circleFade.toFixed(2);
   }
 
   /** Show an emoji in a bubble as a pixel sprite: drawn small (bubbles.emojiPixels across), its
