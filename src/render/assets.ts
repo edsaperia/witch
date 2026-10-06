@@ -332,7 +332,8 @@ export class AssetLibrary {
   partyWitchArt(seed: number | null): (PartyWitchArt & { atlas: Atlas }) | undefined {
     // (hers keyed by her genome, so a new look is drawn afresh, never a cached old one)
     const id = seed === null ? `her-${hashText(JSON.stringify(this.witchGenome))}` : `pw-${seed}`, a = this.partyWitches.get(id);
-    if (!a) this.ask({ kind: "partyWitch", id, seed, style: this.style, genome: seed === null ? this.witchGenome : undefined });
+    // (urgent: they dance at home, in view from the start, so not behind every area type's prefetch)
+    if (!a) this.ask({ kind: "partyWitch", id, seed, style: this.style, genome: seed === null ? this.witchGenome : undefined }, true);
     return a;
   }
   /** Ask for a set ahead of need, without using it. */
