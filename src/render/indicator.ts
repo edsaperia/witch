@@ -61,7 +61,7 @@ class PixelCue {
     this.canvas.width = this.canvas.height = N;
     Object.assign(this.canvas.style, { position: "fixed", width: `${N * scale}px`, height: `${N * scale}px`, imageRendering: "pixelated", pointerEvents: "none", zIndex: "2", display: "none", opacity: `${opacity}` });
     this.label.style.opacity = `${opacity}`;
-    Object.assign(this.label.style, { position: "fixed", pointerEvents: "none", zIndex: "2", display: "none", font: "bold 12px monospace", color: "#fff", textShadow: "0 1px 0 #000, 1px 0 0 #000", transform: "translate(-50%, 0)" });
+    Object.assign(this.label.style, { position: "fixed", pointerEvents: "none", zIndex: "2", display: "none", font: "11px monospace", color: "#e8e2f4", textShadow: "0 1px 0 #000, 1px 0 0 #000", opacity: ".85", transform: "translate(-50%, 0)" });
     parent.append(this.canvas, this.label);
     this.g = this.canvas.getContext("2d")!;
     this.img = this.g.createImageData(N, N);
@@ -86,7 +86,10 @@ class PixelCue {
   flush(): void { this.g.putImageData(this.img, 0, 0); }
 }
 
-const PARTY: number[][] = [[255, 111, 207], [95, 232, 255], [255, 226, 92]];
+/** An area's neon calmed for the HUD: a little less saturated and bright, so it sits on the dark forest. */
+export const calm = (c: number[]) => { const m = (c[0] + c[1] + c[2]) / 3; return c.map(v => (v * .7 + m * .3) * .82); };
+
+const PARTY: number[][] = [[232, 180, 106], [232, 180, 106], [232, 180, 106]]; // the HUD's one accent (art review round 1: the UI in the art's palette)
 
 export class MusicIndicator {
   private cue: PixelCue;
@@ -147,7 +150,8 @@ export class StoneIndicator {
     c.clear();
     const beat = (time * bpm) / 60, pulse = Math.pow(0.5 + 0.5 * Math.cos((beat % 1) * Math.PI * 2), 2);
     const flash = Math.max(0, 1 - (time - this.flashAt) / 0.5);
-    const neon = [at.colour.x * 255, at.colour.y * 255, at.colour.z * 255], bright = neon.map(v => Math.min(255, v * (0.8 + 0.4 * pulse) + 255 * flash * 0.6));
+    // in the area's colour, calmed toward the night (art review round 1: the UI's yellow and magenta shouted over the art)
+    const neon = calm([at.colour.x * 255, at.colour.y * 255, at.colour.z * 255]), bright = neon.map(v => Math.min(255, v * (0.75 + 0.2 * pulse) + 255 * flash * 0.4));
     // The ring: dim all round, bright neon clockwise from 12 o'clock as far as the countdown has run.
     const R = 13;
     for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
