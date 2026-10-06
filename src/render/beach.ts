@@ -15,6 +15,7 @@ import { groundHeight, placed } from "./height";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
 import { BeachDecor, type BeachItem } from "../rules/beachDecor";
 import { tiltFilter } from "./overlayTilt";
+import { BeachEdgeView } from "./beachEdge";
 
 /** A heart rising off the two of them stargazing together: where it set off, when, its sway's phase; its image (pooled). */
 interface Heart { x: number; z: number; at: number; sway: number; el: HTMLImageElement }
@@ -37,6 +38,8 @@ export class BeachView {
   private hearts: Heart[] = [];
   private spare: HTMLImageElement[] = [];
   private v = new THREE.Vector3();
+  /** The woods' edge along the sand: shrubs, grass, palms (render/beachEdge.ts). */
+  private edge: BeachEdgeView;
   /** The beach's decorations (rules/beachDecor.ts, art/beach.js): where they lie, and their two batches (flat: prints, starfish,
    *  seaweed; upright: shells, a conch, pebbles and rocks), made once she's first near and kept. */
   private decor: BeachDecor | null = null;
@@ -45,7 +48,7 @@ export class BeachView {
   private items: BeachItem[] = [];
   private inst = { up: [] as SpriteInstance[], flat: [] as SpriteInstance[] };
 
-  constructor(private scene: THREE.Scene, private assets: AssetLibrary, private ground: Ground, private mpp: number, private light: { lightFloor: number; lightTint: number; lightRim: number }) {}
+  constructor(private scene: THREE.Scene, private assets: AssetLibrary, private ground: Ground, private mpp: number, private light: { lightFloor: number; lightTint: number; lightRim: number }) { this.edge = new BeachEdgeView(scene, mpp); }
 
   /** Each frame; true while she's drawn here (lying on the sand, or with a beach witch), so the view leaves her out. */
   update(g: Game, time: number, visible: (x: number, z: number, w: number, h: number) => boolean, camera: THREE.Camera, width: number, height: number): boolean {
@@ -54,6 +57,7 @@ export class BeachView {
     if (!b) return false;
     if (b.intoSand(w.x, w.z) < -(g.tuning.beach?.shown ?? 0)) { this.leave(); this.gazing = false; return false; }
     if (!this.on) { this.on = true; this.ground.setBeach(b); this.assets.partyWitchArt(null); } // (her lying-down art asked for ahead)
+    this.edge.update(b, this.assets.beachEdgeArt(), w.x, w.z, g.tuning.beach?.decor?.clear);
     this.drawDecor(g, b, visible, camera);
     // The spot she's nearest (they're kilometres apart round the coast, so only ever one in view).
     let spot = null as NonNullable<Game["beach"]>[number] | null, sd = Infinity;
@@ -143,6 +147,7 @@ export class BeachView {
     for (const el of this.spare) el.remove();
     this.hearts = []; this.spare = [];
     this.ground.setBeach(null);
+    this.edge.dispose();
     this.upright?.set([]); this.flat?.set([]);
     this.witches?.dispose();
     this.witches = null;

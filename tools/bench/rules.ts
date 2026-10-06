@@ -34,7 +34,7 @@ function fingerprint(g: Game): Record<string, string> {
     partyWitches: g.partyWitches, friendly: g.friendly, tally: g.tally, over: g.over,
   };
   const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(parts)) out[k] = hash(plain(v));
+  for (const [k, v] of Object.entries(parts)) out[k] = hash(plain(v) ?? "undefined"); // (a part a later change took away, or not made yet)
   out.all = hash(Object.values(out).join(""));
   return out;
 }
