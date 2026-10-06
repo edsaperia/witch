@@ -27,6 +27,8 @@ export const SPRITE_UNIFORMS = {
   uCutout: { value: new THREE.Vector4(0, 0, 0, 1) },
   /** How much the hole goes by each crown's middle rather than each pixel (canopyCutout.whole): 1, whole crowns fade. */
   uCutWhole: { value: 0 },
+  /** The hole's edge (canopyCutout): how far its line wobbles (a share of the edge) and how far past its radius the fade reaches (a share of the edge). */
+  uCutShape: { value: new THREE.Vector2(0, 0.35) },
   // ?debug=cull: anything that has just appeared is tinted bright red.
   uDebugCull: { value: 0 },
   // The low-resolution picture's size in pixels: each sprite's base is snapped to its pixel grid.
@@ -173,6 +175,7 @@ varying vec4 vFrame;  // its frame in the atlas (u0, v0, u1, v1), to keep the sw
 varying float vFront;
 varying float vHole, vOverHer, vCrownD;
 uniform float uCutWhole;
+uniform vec2 uCutShape;
 varying vec2 vLocal;
 varying float vSizeY;
 uniform float uFind; // this batch: 1 for wild creatures (eyeshine, light floor, rim)
@@ -206,6 +209,9 @@ float cluster4(vec2 p) {
   int m[16] = int[16](12, 5, 6, 13, 4, 0, 1, 7, 11, 3, 2, 8, 15, 10, 9, 14);
   return (float(m[x + y * 4]) + 0.5) / 16.0;
 }
+// A slow value noise (0-1) for the hole's wobbly edge.
+float cutHash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float cutNoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(cutHash(i), cutHash(i + vec2(1.0, 0.0)), f.x), mix(cutHash(i + vec2(0.0, 1.0)), cutHash(i + 1.0), f.x), f.y); }
 void shade() {
   // Swaying by its mask (#34): each pixel samples from where the wind has pushed the leaves; a
   // second tap lets leaf edges move out over empty pixels. Trunks and rocks (mask 0) stay still.
@@ -255,7 +261,12 @@ void shade() {
   // Ed, 2026-10-06: "I still see concentric circles while moving through dense forests in ground mode": a fade by
   // each pixel's distance drew the same circular gradient across every crown, lining up into rings; by each crown's
   // middle (uCutWhole of the way), a crown fades much as a whole.
-  float hole = smoothstep(vHole - uCutout.w, vHole + uCutout.w * 0.35, mix(length(gl_FragCoord.xy - uCutout.xy), vCrownD, uCutWhole));
+  // Ed, round 14: "canopy cut-out circle is still very sharp": by the crown's middle, a big crown near the camera (its
+  // middle far off) stood whole right up to her and its edge read as a hard ring. So mostly by each pixel again, the
+  // line wobbled by a slow noise on the ground (world space: it doesn't crawl as she moves) so the fade's lines aren't
+  // circles, and fading over a wide band past the radius too (uCutShape: the wobble, and how far out the fade reaches).
+  float wob = (cutNoise(vWorld.xz * 0.11 + vWorld.y * 0.07) - 0.5) * uCutout.w * uCutShape.x;
+  float hole = smoothstep(vHole - uCutout.w, vHole + uCutout.w * uCutShape.y, mix(length(gl_FragCoord.xy - uCutout.xy) + wob, vCrownD, uCutWhole));
   float shown = 1.0;
   if (vFlags.y > 0.5) {
     shown = max(hole, uTopFade);
@@ -275,7 +286,10 @@ void shade() {
     float topY = 1.0 + vFlags.y, band = min(uTrunkFade.x / max(vSizeY, 0.01), topY * uTrunkFade.z);
     float t = clamp((topY - vLocal.y) / band, 0.0, 1.0);
     vec2 artPx = vec2(floor(vUv.x * float(textureSize(uAlbedo, 0).x)), floor(vLocal.y * vSizeY / uTrunkFade.y));
-    if (cluster4(artPx) >= max(t, crown)) discard;
+    // Smooth (Ed: no dithering), its top fades out in alpha; ?fx=pixel, in the clustered dither as before.
+    float keep = max(t, crown);
+    if (uSmooth > 0.5) { if (keep < 0.004) discard; alpha *= keep * keep * (3.0 - 2.0 * keep); }
+    else if (cluster4(artPx) >= keep) discard;
   }
   // Eye glints, flowers and magic glow: the generator marks them with alpha 254.
   if (uDebugCull > 0.5 && vFlags.z > 0.5) { gl_FragColor = vec4(1.0, 0.0, 0.0, alpha); return; }

@@ -11,6 +11,8 @@ import type { MusicStyle } from "../../rules/musicScore";
 import { MusicEngine } from "./musicEngine";
 
 /** The notes' pitch with the music running at `rate` (a tape slowing: rate^pitch, never under floor). */
+const smooth01 = (x: number) => { const t = Math.max(0, Math.min(1, x)); return t * t * (3 - 2 * t); };
+
 export function tapePitch(rate: number, S?: { on: boolean; pitch: number; floor: number }): number {
   return !S?.on || rate >= 1 ? 1 : Math.max(S.floor, Math.pow(Math.max(1e-3, rate), S.pitch));
 }
@@ -62,8 +64,12 @@ export class Music {
 
   /** Each frame: the mix to hear, the music's cue (waves, boot), the game's time and beat. */
   /** `rate`: the game's time scale (game seconds a second: about a tenth in a legend's circle, Ed 2026-10-06), which the music follows, slowing like a tape. */
-  update(mix0: MusicMix, cue: MusicCue, gameTime: number, clock: BeatClock, on: boolean, M?: Tuning["music"], rate = 1): void {
+  update(mix0: MusicMix, cue: MusicCue, gameTime: number, clock: BeatClock, on: boolean, M?: Tuning["music"], rate = 1, over = 0): void {
     const c = this.ctx, now = c.currentTime, k = 0.08;
+    // The party's over (Ed, 2026-10-06: "the dance music stops"): over the first `over.stop` of the ease the music winds down
+    // like a tape stopping, its tempo and pitch falling together to nothing; its sound goes over the last of that; then nothing.
+    const stop = over > 0 ? Math.min(1, over / Math.max(0.05, M?.over?.stop ?? 0.6)) : 0;
+    if (stop > 0) { rate *= Math.max(0.02, 1 - stop); cue = { ...cue, circle: undefined }; if (stop >= 1) on = false; }
     // In a sleeping legend's clearing: in and out eased over about a second, the music muffled under
     // its layer (which plays while she's in, or still fading out)
     const dt = this.lastAt < 0 ? 0 : Math.max(0, now - this.lastAt);
@@ -78,7 +84,7 @@ export class Music {
     this.circleGain.gain.setTargetAtTime(on ? this.circleAt * this.volume * (M?.circle.level ?? 1) : 0, now, k);
     // Drop-outs: with damage close by, now and then the sound cuts for a moment.
     if (mix.distort > 0.05 && now > this.dropUntil && Math.random() < mix.distort * 0.01) this.dropUntil = now + 0.08 + Math.random() * 0.3 * mix.distort;
-    const vol = (on && now >= this.dropUntil ? mix.volume * this.volume : 0) * (now < this.duckUntil ? 1 - this.duckBy : 1);
+    const vol = (on && now >= this.dropUntil ? mix.volume * this.volume : 0) * (now < this.duckUntil ? 1 - this.duckBy : 1) * (1 - smooth01((stop - 0.7) / 0.3));
     this.master.gain.setTargetAtTime(vol, now, k);
     this.filter.frequency.setTargetAtTime(mix.cutoff, now, k);
     this.wet.gain.setTargetAtTime(mix.distort * 0.8, now, k);
@@ -87,7 +93,7 @@ export class Music {
     this.wobble.gain.setTargetAtTime(1 - mix.distort * 0.45 * (0.5 + 0.5 * Math.sin(now * 7.3 + Math.sin(now * 2.1) * 2)), now, 0.02);
     // Crackle: little bursts of noise.
     if (on && mix.distort > 0.05 && Math.random() < mix.distort * 0.15) this.crackle(now + Math.random() * 0.05, mix.distort);
-    this.engine?.update(cue, gameTime, clock, on, 0.3, rate, tapePitch(rate, M?.slow));
+    this.engine?.update(cue, gameTime, clock, on, 0.3, rate, stop > 0 ? Math.max(M?.over?.floor ?? 0.15, rate) : tapePitch(rate, M?.slow)); // (stopping: the pitch falls all the way with it)
   }
 
   /** What reaches the speakers (the audio watchdog taps it). */

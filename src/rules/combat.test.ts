@@ -341,11 +341,11 @@ describe("sieges (Stage 4)", () => {
     expect(g.party.areas.has(key)).toBe(false);
     expect(g.combat.ruined.has(key)).toBe(true);
     expect(besiegers.filter(c => !c.gone).every(c => c.siege === "home")).toBe(true); // on to the next-nearest: the dancefloor
-    expect(g.over).toBeNull();
+    expect(g.partyOver).toBeNull();
     g.combat.sounds.get("home")!.hp = 0.0001;
     for (const c of besiegers) if (!c.gone) { c.x = g.map.dancefloor.x + 6; c.z = g.map.dancefloor.z + 6; }
-    for (let i = 0; i < 30 / STEP && !g.over; i++) stepGame(g, idle, STEP);
-    expect(g.over).not.toBeNull(); // every soundsystem down: the run is over
+    for (let i = 0; i < 30 / STEP && !g.partyOver; i++) stepGame(g, idle, STEP);
+    expect(g.partyOver).not.toBeNull(); // every soundsystem down: the party's over
   }, 180000);
 });
 
