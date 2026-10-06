@@ -5,8 +5,8 @@
 // (tilted nose-up, its shaft bowed, its bristles splaying sparks), and sinking in the treetops a few sparks fall from her.
 // Nothing at low load: the first few sigils are free.
 //
-// The load comes from the rules' leashLoad(g) once it lands (the hotel builder's); until then, `stubLoad` below stands in
-// for it from the leash as it is. Everything here writes into one object, so nothing is made per frame.
+// The load comes from the rules' leashLoad(g) once it lands (builder hotel's, claude/sigil-weight-rules); until then,
+// `stubLoad` below stands in for it, by the same rule and numbers. Everything here writes into one object, so nothing is made per frame.
 import type { Game } from "../rules/game";
 import { strengthOf } from "../rules/combat";
 
@@ -31,14 +31,14 @@ export interface LoadTuning {
   sinkFrom: number;
 }
 
-export const LOAD_DEFAULT: LoadTuning = { on: true, free: 3, full: 10, stackSag: 0.4, stackLean: 0.35, threadFrom: 0.45, threadBright: 1.2, witchLean: 0.16, broomTilt: 0.12, broomBow: 1.5, sparks: 14, sinkFrom: 0.6 };
+export const LOAD_DEFAULT: LoadTuning = { on: true, free: 2.5, full: 8, stackSag: 0.4, stackLean: 0.35, threadFrom: 0.45, threadBright: 1.2, witchLean: 0.16, broomTilt: 0.12, broomBow: 1.5, sparks: 14, sinkFrom: 0.6 };
 
 /** What the art reads: the load (0 none, 1 full), the pull's direction on the ground (unit), how much she's flying away
  *  from it (0 to 1), and how fast she's sinking over the treetops (0 to 1). */
 export interface LoadView { load: number; dx: number; dz: number; away: number; sinking: number }
 
 /** A creature's weight by level (baby, young, adult, legend), times its species' strength: the stub's, until the rules'. */
-const WEIGHT = [1, 2, 3.5, 6];
+const WEIGHT = [0.5, 1, 2, 3]; // (the rules' leash.weight.levels)
 
 /** The rules' leashLoad(g) as builder hotel settled it (2026-10-06): the summed pull's size (total, weight units), the part
  *  past the free allowance (over: 0, she feels nothing), its direction from her toward the creatures (x, z: unit, or 0, 0),
@@ -60,7 +60,7 @@ export function stubLoad(g: Game, T: LoadTuning, out: RulesLoad): RulesLoad {
   }
   const total = Math.hypot(px, pz);
   out.total = total; out.over = Math.max(0, total - T.free); out.x = total > 1e-6 ? px / total : 0; out.z = total > 1e-6 ? pz / total : 0;
-  out.extreme = out.over >= T.full * 1.5;
+  out.extreme = out.over >= T.full; // (the rules' leash.weight.extreme)
   return out;
 }
 

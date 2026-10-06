@@ -18,7 +18,7 @@ describe("sigil weight's look", () => {
   });
   it("grows with weight and tension, toward the army", () => {
     const L = TUNING.leash.length;
-    const mid = settle(game([2, 2, 1, 1], i => ({ x: L * 1.3, z: i - 1.5 }))).load;
+    const mid = settle(game([2, 2, 1, 1], i => ({ x: L * 1.6, z: i - 1.5 }))).load;
     const heavy = settle(game([2, 2, 2, 2, 2, 1], i => ({ x: L * 1.8, z: i - 2.5 })));
     expect(mid).toBeGreaterThan(0.05); expect(heavy.load).toBeGreaterThan(mid); expect(heavy.load).toBeLessThanOrEqual(1);
     expect(heavy.dx).toBeGreaterThan(0.95); // pulling east, where they are
