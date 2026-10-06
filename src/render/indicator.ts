@@ -164,7 +164,7 @@ export class StoneIndicator {
       if (Math.abs(r - R) > 0.7) continue; // a thin stroke (calm by line, not by dimming)
       const turn = ((Math.atan2(px, -py) / (Math.PI * 2)) + 1) % 1; // 0 at 12 o'clock, clockwise
       if (turn <= fill || flash > 0) c.dot(x, y, bright, 1);
-      else c.dot(x, y, neon.map(v => v * 0.35), 0.8);
+      else c.dot(x, y, neon.map(v => v * 0.55), 0.9); // the rest of the ring: dimmer, but still there on dark grass
     }
     // The rune in the middle: the area's creature's sigil, in its neon.
     let g = this.glyphs.get(at.species);
