@@ -35,6 +35,17 @@ server.listen(0, "127.0.0.1", async () => {
   let lying = false;
   for (let i = 0; i < 120 && !lying; i++) { await step(30, {}, false); lying = await page.evaluate(() => window.witch.game.beach[0].players[0]?.pose === "stargaze"); }
   await page.waitForFunction(() => window.witch.view.assets.partyWitchArt(null), null, { timeout: 120000, polling: 250 });
+  // CURVES=3,6,10: one screenshot lying there at each stargazeCurve (set on the running game), to pick one; then stop.
+  if (process.env.CURVES) {
+    fs.mkdirSync(out, { recursive: true });
+    for (const k of process.env.CURVES.split(",").map(Number)) {
+      await page.evaluate(k => { window.witch.game.tuning.beach.stargazeCurve = k; }, k);
+      await step(150, {}, true);
+      await page.screenshot({ path: path.join(out, `beach-gaze-curve-${k}.png`) });
+      console.log(`wrote previews/beach-gaze-curve-${k}.png`);
+    }
+    await browser.close(); server.close(); process.exit(0);
+  }
   const dir = fs.mkdtempSync(path.join(require("os").tmpdir(), "gaze-")), shots = [];
   const shot = async () => { const f = path.join(dir, `f${String(shots.length).padStart(3, "0")}.png`); await page.screenshot({ path: f }); shots.push(f); };
   // she's just lain down: the bend eases in over gazeEase, holds, then she gets up (inland) and it eases back
