@@ -1,6 +1,6 @@
 # Overnight showcase (2026-10-06)
 
-Everything here is shot on `claude/prototype` at `1d0f98bb`: seed 123, 1280×720, the game's normal camera, headless Chromium with software GL. Clips were stepped by hand at fixed steps, so they play smoother than the machine that recorded them. The capture scripts are in `tools/smoke/` (`showcase.cjs`, `party-life.cjs`, `party-join.cjs`, `magic-letters.cjs`, `magic-sigils.cjs`, `magic-dodge.cjs`). Rerun any of them after `npm run build`.
+Sections 1, 2 and 4 were re-shot at about 06:50 on `claude/prototype` at `08b67ba5`. Sections 3, 5 and 6 are from the first set, at `1d0f98bb`. Every shot uses seed 123, 1280×720, the game's normal camera, headless Chromium with software GL. Clips were stepped by hand at fixed steps, so they play smoother than the machine that recorded them. The capture scripts are in `tools/smoke/` (`showcase.cjs`, `party-life.cjs`, `party-join.cjs`, `magic-letters.cjs`, `magic-sigils.cjs`, `magic-dodge.cjs`). Rerun any of them after `npm run build`.
 
 ## 1. A spooky dark forest, with the party as warm pools
 Rendering's spooky light (#184, #189, #195, #199) gives each area its own fog and tint, a moonlit rim on every character and warm amber party light. Her own light pool is amber, not lime, and it shows on dark floors (#217).
@@ -11,10 +11,10 @@ Rendering's spooky light (#184, #189, #195, #199) gives each area its own fog an
 | The moor (cell 8,9) | ![](1-forest-moor-ground.jpg) | ![](1-forest-moor-treetops.jpg) |
 | The fern forest (cell 7,10) | ![](1-forest-fern-forest-ground.jpg) | ![](1-forest-fern-forest-treetops.jpg) |
 
-**Not in these shots**, because they aren't merged yet:
-- #208 (round 2's lighting fixes);
-- #205 (each area's floor at night);
-- #198 (the warm party decor).
+**Now in these shots:**
+- #205: each area's floor at night;
+- #208: round 2's lighting fixes, including the moon on the treetops, the berries' crisp glow and an amber ley line;
+- #198: the warm party decor, which came in through #201.
 
 ## 2. Party life (#200, #206)
 - **The guests:** happy creatures gather at the party's picnics, tables, balloons and lanterns, not only round the soundsystem. They stand in a row behind each place, the big ones at the back.
@@ -36,12 +36,10 @@ Rendering's spooky light (#184, #189, #195, #199) gives each area its own fog an
 - **The broom:** a few amber sparks as she flies.
   ![](3-magic-broom.gif)
 
-## 4. Creature attacks, as they are on prototype
-A debug arena (`?arena=wolf*2@1,boar*2@1,beetle*2@1`): wild young creatures at her by the dancefloor, at 1/20 s a frame.
+## 4. Creature attacks (#193, #203, now merged)
+A debug arena (`?arena=wolf*2@1,boar*2@1,beetle*2@1`): wild young creatures at her by the dancefloor, at 1/20 s a frame. It shows art builder 2's attack visuals, with telegraphs, hit sparks and trait marks.
 
 ![](4-attacks.gif)
-
-Art builder 2's attack visuals, **#193 and #203, aren't merged yet**, so this is the attack look from before tonight.
 
 ## 5. The creator, which is also the loading screen
 - **Loading:** the game opens straight into the creator in her bedroom. The fairy lights fill as the forest loads (0%, 10%, 41%… one frame every 4 to 7 s on this slow machine), and she idles on the rug. It's in the HUD's amber (#209).
