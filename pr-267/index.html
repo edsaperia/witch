@@ -21,20 +21,21 @@
     #fight-knobs.on { display: grid; grid-template-columns: auto 120px 34px; gap: 4px 8px; align-items: center; }
     #fight-knobs button { grid-column: 1 / -1; font: inherit; color: var(--ink); background: transparent; border: 1px solid #3a2f5c; border-radius: 6px; padding: 3px 8px; }
     #debug-buttons button { font: inherit; font-size: 12px; color: var(--ink); background: var(--panel); border: 1px solid #3a2f5c; border-radius: 6px; padding: 6px 10px; }
-    #wave { position: fixed; right: 12px; top: 18%; height: 40%; width: 6px; border: 1px solid rgba(232, 226, 244, .22); border-radius: 4px; background: rgba(14, 11, 28, .45); pointer-events: none; }
-    #wave .fill { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(var(--accent), #a87a48); border-radius: 3px; opacity: .85; }
-    #wave .label { position: absolute; right: 14px; bottom: 0; white-space: nowrap; color: var(--dim); font-size: 11px; text-align: right; text-shadow: 0 1px 0 #000; }
-    #wave.paused .fill { opacity: .4; }
-    /* A soundsystem lost: the bar shrinks to its new countdown with a red flash, and the seconds taken off pop out beside it. */
-    #wave.lost { animation: wave-lost .9s ease-out; }
-    #wave.lost .fill { transition: height .45s cubic-bezier(.3, 1.6, .5, 1); animation: wave-lost-fill .9s ease-out; }
-    @keyframes wave-lost { 0%, 30% { border-color: var(--loss); box-shadow: 0 0 8px var(--loss); } }
-    @keyframes wave-lost-fill { 0%, 30% { left: -4px; right: -4px; background: var(--loss); filter: brightness(1.3); } 100% { filter: none; } }
-    #wave .loss-pop { position: absolute; right: 16px; transform: translateY(50%); white-space: nowrap; color: var(--loss); font-weight: bold; font-size: 13px; text-shadow: 0 1px 0 #000; animation: loss-pop 1.8s ease-out forwards; }
-    #wave .boot-pop { position: absolute; right: 16px; top: 0; white-space: nowrap; color: var(--accent); font-size: 12px; text-shadow: 0 1px 0 #000; animation: boot-pop 4s ease-out forwards; }
+    /* The game clock (Ed, 2026-10-06: "Add a game clock at the top middle of the screen mm:ss counting up from 0"): the time
+       played, top centre, small; it stops while the game is paused. The wave timer bar that stood on the right is gone (Ed:
+       "remove the wave timer on the right of the screen"): the wave pointer's ring carries the countdown. A soundsystem lost
+       and the speakers coming up pop out under the clock. */
+    #clock { position: fixed; left: 50%; top: 8px; transform: translateX(-50%); padding: 1px 8px; border-radius: 4px; background: rgba(14, 11, 28, .45); color: var(--ink); font-size: 13px; letter-spacing: .06em; font-variant-numeric: tabular-nums; text-shadow: 0 1px 0 #000; pointer-events: none; z-index: 2; display: none; }
+    #clock.on { display: block; }
+    #clock.paused { color: var(--dim); }
+    #clock .label { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap; color: var(--dim); font-size: 11px; letter-spacing: 0; text-shadow: 0 1px 0 #000; }
+    #clock.lost { animation: clock-lost .9s ease-out; }
+    @keyframes clock-lost { 0%, 30% { color: var(--loss); box-shadow: 0 0 8px var(--loss); } }
+    #clock .loss-pop, #clock .boot-pop { position: absolute; left: 50%; top: 100%; margin-top: 18px; transform: translateX(-50%); white-space: nowrap; font-size: 12px; letter-spacing: 0; text-shadow: 0 1px 0 #000; }
+    #clock .loss-pop { color: var(--loss); font-weight: bold; font-size: 13px; animation: loss-pop 1.8s ease-out forwards; }
+    #clock .boot-pop { color: var(--accent); animation: boot-pop 4s ease-out forwards; }
     @keyframes boot-pop { 0% { opacity: 0; } 10%, 75% { opacity: 1; } 100% { opacity: 0; } }
-    @keyframes loss-pop { 0% { opacity: 0; transform: translateY(50%) scale(1.8); } 12% { opacity: 1; transform: translateY(50%) scale(1); } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-120%); } }
-    .touch #wave { top: 12%; height: 30%; }
+    @keyframes loss-pop { 0% { opacity: 0; transform: translateX(-50%) scale(1.8); } 12% { opacity: 1; transform: translateX(-50%) scale(1); } 70% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, 60%); } }
     #over { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(8, 6, 18, .78); z-index: 6; }
     #over.on { display: flex; }
     #over button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid #3a2f5c; border-radius: 6px; padding: 8px 14px; margin-top: 14px; cursor: pointer; }
@@ -101,7 +102,7 @@
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
     .bubble .bar i { display: block; height: 100%; background: var(--love); }
   </style>
-  <script type="module" crossorigin src="./assets/index-DoopfRFC.js"></script>
+  <script type="module" crossorigin src="./assets/index-CI73Rkhh.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-DnShPyXc.css">
 </head>
 <body>
@@ -111,7 +112,7 @@
   <div id="debug"></div>
   <div id="fight-knobs"><span>fight scale [ ]</span><input type="range" name="scale" min="0.25" max="3" step="0.05"><span class="scale"></span><span>fight speed ; '</span><input type="range" name="speed" min="0.25" max="3" step="0.05"><span class="speed"></span><span>momentum , .</span><input type="range" name="momentum" min="0.25" max="3" step="0.05"><span class="momentum"></span><button type="button" class="fight-reset">reset fight scale, speed and momentum</button><span>treetop speed m/s</span><input type="range" name="treetop" min="16" max="160" step="2"><span class="treetop"></span><span>area (?areaSize=)</span><span class="area" style="grid-column: 2 / -1"></span><button type="button" class="world-reset">reset area size and treetop speed (new map)</button></div>
   <div id="debug-buttons"><button id="next-wave" type="button">next wave (N)</button><button id="pause-waves" type="button">pause waves (P)</button><button id="rulers" type="button">rulers (G)</button></div>
-  <div id="wave"><div class="fill"></div><div class="label"></div></div>
+  <div id="clock"><span class="t">00:00</span><div class="label"></div></div>
   <div id="bubbles"><div class="bubble" id="bubble-witch"></div><div class="bubble" id="bubble-creature"><span></span><div class="bar"><i></i></div></div></div>
   <div id="touch">
     <div id="stick-zone"></div>
@@ -138,6 +139,7 @@
       <div class="keys">
         <b>Keyboard and mouse</b> WASD (or the arrow keys) fly · the mouse aims (the ring at the cursor glows pink within a 💌's reach, and a blue arc fills round it while the dodge recharges) · on the ground, left click (or hold 1) throws 💌 invites at the cursor: enough of them win a creature over (enraged ones and legends block them) · right click dodges toward the cursor: a 10 m blink on the ground, to the little diamond (pressed a moment early, it goes as soon as it can) · Space rises to the treetops or lands · E on the ground puts down / picks up a sigil · Q cycles the stack (the bottom sigil, the next put down, to the top) · R spell (speed boost) · 2–4 empty slots for now · the mouse wheel, Z/X or +/− zoom · H hides the action bar · Esc pauses everything (a still for screenshots, with a stamp of where you are; while paused . steps a frame, Shift+. ten; ❚❚ by the volume on touch) · ~ debug · N next wave · P pause waves · I invite nearest (debug) · [ ] fight scale, ; ' fight speed, , . fight momentum (debug: in the ~ panel too)<br>
         <b>Gamepad</b> left stick flies · right stick aims and a trigger throws 💌s · A dash · B spell · X sigil (on the ground) or cycle (in the treetops) · Y rises or descends · shoulder buttons zoom · Start pauses<br>
+        <b>On screen</b> the 🎶 ring at the edge points along the ley line to the next wave, its circle filling as the wave comes · the clock at the top is the time played<br>
         <b>Phone</b> drag on the left to fly · the round button rises or descends · the 💌 button throws invites the way you're going · sigil puts down or picks up (on the ground) or cycles (in the treetops) · spell and dash · three-finger tap for debug
       </div>
     </div>
