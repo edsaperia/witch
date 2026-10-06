@@ -987,13 +987,20 @@ Forecasting (Ed, 2026-10-04): the next two waves are confirmed and the one after
 
 ## `fight`
 
-The fight's scale and speed (Ed's motion scale pass, 2026-10-04: "the animals don't move around enough when attacking and defending"): fights are drawn and played at the ground camera's scale, creatures running at about the witch's speed and their patterns about 50 m across. scale: every length in a fight times this (attack ranges, lunges, area radii, beam widths, knockback, the packs' patterns and spacing, pursuit and guard reach, aggro); speed: every fight speed times this (running, charging, lunging, shots). momentum (Ed, 2026-10-05: "they should have more momentum"): how heavily creatures in a fight change speed and turn: their accelerations, braking and turn rates divided by it (2: twice as heavy). Try ?fightScale= and ?fightSpeed=, or change them live in the debug overlay (~): [ and ] for scale, ; and ' for speed.
+The fight's scale and speed (Ed's motion scale pass, 2026-10-04: "the animals don't move around enough when attacking and defending"): fights are drawn and played at the ground camera's scale, creatures running at about the witch's speed and their patterns about 50 m across. scale: every length in a fight times this (attack ranges, lunges, area radii, beam widths, knockback, the packs' patterns and spacing, pursuit and guard reach, aggro); speed: every fight speed times this (running, charging, lunging, shots). momentum (Ed, 2026-10-05: "they should have more momentum"): how heavily creatures in a fight change speed and turn: their accelerations, braking and turn rates divided by it (2: twice as heavy). Try ?fightScale= and ?fightSpeed=, or change them live in the debug overlay (~): [ and ] for scale, ; and ' for speed. charge and leap (Ed, round 13, 2026-10-06: 'charging and jumping creatures should charge or jump much further ... damaging whenever they're touched while in attack mode ... much more momentum, travelling in wide arcs'): every species' charge (movement.json) scaled: reach its run's time and overshoot past its target, turn its turn rate (lower: wider arcs), brake how hard it slows (lower: more momentum); contact: it hurts every foe it touches on the way, once each (her grace making one charge one hit). Every leap: reach times how far off it leaps from, a pounce (the lynx's) landing through metres past its target (a slam, the toad's, still onto it); contact: a pounce hurts whoever it touches in the air.
 
 | knob | type | range |
 |---|---|---|
 | `fight.scale` | number | 0 to … |
 | `fight.speed` | number | 0 to … |
 | `fight.momentum` | number | 0 to … |
+| `fight.charge.reach` | number | 0 to … |
+| `fight.charge.turn` | number | 0 to … |
+| `fight.charge.brake` | number | 0 to … |
+| `fight.charge.contact` | boolean |  |
+| `fight.leap.reach` | number | 0 to … |
+| `fight.leap.through` | number |  |
+| `fight.leap.contact` | boolean |  |
 
 ## `attackFx`, `combat`
 
@@ -1030,6 +1037,8 @@ How attacks feel on screen (Ed, 2026-10-06: 'make creature attack visuals better
 | `combat.homeHealth` | number | 0 to … |
 | `combat.homeRadius` | number | 0 to … |
 | `combat.shake` | number | 0 to … |
+| `combat.daze` | number | 0 to … |
+| `combat.retreatHome` | number | 0 to … |
 
 ## `notice`
 
