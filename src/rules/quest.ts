@@ -23,10 +23,6 @@ export function questFor(map: ForestMap, cell: [number, number], own: string): Q
 
 export interface QuestEvent { kind: "done"; id: number; joined: number; /** the area's cell and key */ cell: [number, number]; key: string; x: number; z: number; at: number }
 
-/** Whether an area is done (Ed, 2026-10-05: the ley lines move on to the next area when this
- *  one's quest is done or its wave comes, whichever is first): partified, or friendly. */
-export const areaDone = (g: { party: { areas: Map<string, unknown> }; friendly: Set<string> }, key: string): boolean => g.party.areas.has(key) || g.friendly.has(key);
-
 /** The legend of an area (by its key), if it has one. */
 export const legendOf = (creatures: Creature[], ids: number[], key: string): Creature | null => {
   for (const id of ids) { const c = creatures[id]; if (cellKey(c.cell) === key) return c; }
@@ -47,11 +43,6 @@ export function questPlaced(map: ForestMap, creatures: Creature[], legendIds: nu
   L.buffed = true; L.questOpen = false;
   done.add(key);
   return L;
-}
-
-/** A friendly area's wave has come: all its creatures are party animals guarding it. */
-export function guardArea(creatures: Creature[], cell: readonly [number, number]): void {
-  for (const o of creatures) if (!o.leashed && !o.gone && !o.boss && o.cell[0] === cell[0] && o.cell[1] === cell[1]) Object.assign(o, { guard: true, friendly: false, siege: undefined, enraged: false, fight: undefined });
 }
 
 /** Debug (?quest=1): beside the nearest sleeping legend with a quest, on its area's side, with the

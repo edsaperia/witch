@@ -11,6 +11,7 @@
 import * as Art from "../../art/generator.js";
 import type { Style } from "../render/style";
 import { shade } from "../../art/lighting.js";
+import { LOOKS, lookGenome, pleasingWitch } from "./looks";
 
 type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpackSize?: number; [k: string]: unknown };
 
@@ -81,6 +82,11 @@ function swatches(part: string): number[][] {
 }
 const css = ([h, s, v]: number[]) => { const [r, g, b] = (Art.hsv2rgb as (h: number, s: number, v: number) => number[])(h, s, v); return `rgb(${r | 0},${g | 0},${b | 0})`; };
 
+/** The creator's groups that are open, kept on this browser (localStorage witch.creator.open); at first, the looks, the hat and the colours. */
+const OPEN_KEY = "witch.creator.open";
+function openGroups(): Set<string> { try { const v = localStorage.getItem(OPEN_KEY); if (v) return new Set(JSON.parse(v) as string[]); } catch { /* storage blocked */ } return new Set(["Looks", "Hat", "Colours"]); }
+function saveOpenGroups(s: Set<string>): void { try { localStorage.setItem(OPEN_KEY, JSON.stringify([...s])); } catch { /* storage blocked: this run only */ } }
+
 /** The night round the treehouse, behind the room: deep blue in steps, stars, and the giant tree's leaves at the edges,
  *  painted small (one art pixel per pixel) and shown big. */
 function paintNight(c: HTMLCanvasElement, W: number, H: number): void {
@@ -106,6 +112,18 @@ export class Creator {
   private panel = document.createElement("div");
   private g: Genome;
   private frames: { hover: HTMLCanvasElement[]; stand: HTMLCanvasElement[] } = { hover: [], stand: [] };
+  /** Her idle moments' frames (baked a moment after the last change, a pose a frame, so dragging a slider stays smooth). */
+  private idle = new Map<string, HTMLCanvasElement[]>();
+  private idleQueue: string[] = [];
+  private idleAt = 0;
+  private bakeFrame: ((o: object) => HTMLCanvasElement) | null = null;
+  /** What she's doing now, if not just standing: an idle moment, or showing off a change. */
+  private act: { pose: string; start: number; fps: number; loops: number; flip: boolean } | null = null;
+  private nextAct = 0;
+  private showOff = false;
+  private drawn = false;
+  /** When the forest was ready (the fairy lights' all-on blink). */
+  private readyAt = 0;
   private dirty = true;
   private raf = 0;
   /** The colour part being picked. */
@@ -161,7 +179,8 @@ export class Creator {
     this.hide();
     this.onStart(this.genome());
   }
-  private randomise(): void { this.g = upgrade((Art.witchGenome as (s: number) => Genome)(Math.floor(Math.random() * 1e9))); this.build(); this.dirty = true; }
+  private randomise(): void { this.g = upgrade(pleasingWitch(Math.floor(Math.random() * 1e9))); this.build(); this.dirty = true; } // a witch in a palette that goes together (ui/looks.ts)
+  private look(id: string): void { this.g = upgrade(lookGenome(id)); this.build(); this.dirty = true; }
   /** Wild: every axis anywhere in its (wide) limits, every accessory a coin toss, every colour anywhere in the rainbows. */
   private wild(): void {
     const R = Math.random, g = upgrade(CLASSIC), any = <T>(a: T[]) => a[Math.floor(R() * a.length)];
@@ -182,15 +201,34 @@ export class Creator {
     const P = this.panel, g = this.g;
     P.innerHTML = "";
     const h = document.createElement("div");
-    h.innerHTML = `<div style="font-size:18px;margin-bottom:2px">✨ Your witch</div><div style="opacity:.7;margin-bottom:8px">The party's tonight! Dress her up while the forest grows, then fly. (Enter starts, R randomises.)</div>`;
+    h.innerHTML = `<div style="font-size:18px;margin-bottom:2px">✨ Your witch</div><div style="opacity:.7;margin-bottom:8px">The party's tonight! Dress her up while the forest grows, then fly. Start from a look, or 🎲. (Enter starts, R randomises; double-click a slider to put it back.)</div>`;
     P.append(h);
-    const groups = new Map<string, HTMLElement>();
+    const row = (parent: HTMLElement, name: string) => { const r = document.createElement("div"); Object.assign(r.style, { display: "flex", alignItems: "center", gap: "6px", margin: "4px 0", flexWrap: "wrap" }); r.innerHTML = `<span style="width:78px;opacity:.85">${name}</span>`; parent.append(r); return r; };
+    // Each group folds away (its legend toggles it), the open ones kept on this browser; a first-time player sees the looks,
+    // the hat and the colours open, the rest folded, so the panel isn't a wall of sliders.
+    const groups = new Map<string, HTMLElement>(), open = openGroups();
     const group = (name: string) => {
       let el = groups.get(name);
-      if (!el) { el = document.createElement("fieldset"); Object.assign(el.style, { border: "1px solid rgba(232,226,244,.2)", borderRadius: "6px", margin: "0 0 8px", padding: "4px 8px 8px" }); el.innerHTML = `<legend style="padding:0 4px;color:#ffb8e6">${name}</legend>`; groups.set(name, el); P.append(el); }
+      if (!el) {
+        const fs = document.createElement("fieldset"), body = document.createElement("div"), lg = document.createElement("legend");
+        Object.assign(fs.style, { border: "1px solid rgba(232,226,244,.2)", borderRadius: "6px", margin: "0 0 8px", padding: "4px 8px 6px" });
+        Object.assign(lg.style, { padding: "0 4px", color: "#ffb8e6", cursor: "pointer", userSelect: "none" });
+        const paint = () => { const on = open.has(name); lg.textContent = `${on ? "▾" : "▸"} ${name}`; body.style.display = on ? "block" : "none"; };
+        lg.addEventListener("click", () => { if (open.has(name)) open.delete(name); else open.add(name); saveOpenGroups(open); paint(); });
+        fs.append(lg, body); paint(); P.append(fs); groups.set(name, body); el = body;
+      }
       return el;
     };
-    const row = (parent: HTMLElement, name: string) => { const r = document.createElement("div"); Object.assign(r.style, { display: "flex", alignItems: "center", gap: "6px", margin: "4px 0", flexWrap: "wrap" }); r.innerHTML = `<span style="width:78px;opacity:.85">${name}</span>`; parent.append(r); return r; };
+    // Her looks to start from (ui/looks.ts)
+    const lk = row(group("Looks"), "");
+    lk.firstElementChild?.remove();
+    for (const L of LOOKS) {
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = L.name; b.title = L.note; b.dataset.look = L.id;
+      Object.assign(b.style, { font: "inherit", color: "inherit", border: "1px solid rgba(232,226,244,.3)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", background: "rgba(255,255,255,.08)" });
+      b.addEventListener("click", () => this.look(L.id));
+      lk.append(b);
+    }
     const get = (axis: string) => { const [part, key] = slot(axis); return part ? (g[part] as Record<string, unknown>)[key] : g[key]; };
     const set = (axis: string, v: unknown) => { const [part, key] = slot(axis); if (part) (g[part] as Record<string, unknown>)[key] = v; else g[key] = v; this.dirty = true; };
     for (const [axis, lim] of Object.entries(AXES)) {
@@ -208,13 +246,17 @@ export class Creator {
       } else {
         const [a, z] = lim as [number, number], s = document.createElement("input");
         s.type = "range"; s.min = String(a); s.max = String(z); s.step = String((z - a) / 200); s.value = String(get(axis) ?? a);
-        s.style.flex = "1"; s.dataset.axis = axis;
+        s.style.flex = "1"; s.style.accentColor = "#ff5fb4"; s.dataset.axis = axis;
         const wear = WEARS[axis];
         const out = document.createElement("span");
         Object.assign(out.style, { width: "38px", textAlign: "right", opacity: ".7" });
         const show = () => { const v = +s.value; out.textContent = NONE_AT_ZERO.has(axis) && v === 0 ? "none" : axis === "hatTilt" || axis === "broomBend" ? (v > 0 ? "+" : "") + v.toFixed(2) : "×" + v.toFixed(2); };
         show();
-        s.addEventListener("input", () => { show(); set(axis, +s.value); if (wear && !g.accessories[wear]) { g.accessories[wear] = true; const c = P.querySelector<HTMLInputElement>(`input[data-wear="${wear}"]`); if (c) c.checked = true; } });
+        // a light snap to her classic value (so it's easy to get back to), and a double-click resets the slider to it
+        const home = Number((() => { const [part, key] = slot(axis); return part ? (CLASSIC[part] as Record<string, unknown>)[key] : CLASSIC[key]; })() ?? a);
+        s.title = "double-click: back to hers";
+        s.addEventListener("dblclick", () => { s.value = String(home); s.dispatchEvent(new Event("input")); });
+        s.addEventListener("input", () => { if (Math.abs(+s.value - home) < (z - a) * .02) s.value = String(home); show(); set(axis, +s.value); if (wear && !g.accessories[wear]) { g.accessories[wear] = true; const c = P.querySelector<HTMLInputElement>(`input[data-wear="${wear}"]`); if (c) c.checked = true; } });
         r.append(s, out);
       }
     }
@@ -335,6 +377,34 @@ export class Creator {
     };
     const stand = (Art.WITCH_FOOT_POSES as Record<string, { frames: number }>).stand?.frames ?? 1;
     this.frames = { hover: [0, 1, 2].map(frame => bake({ frame })), stand: Array.from({ length: stand }, (_, frame) => bake({ pose: "stand", frame })) };
+    // her idle moments, baked shortly (each pose in its own frame), and the one playing stopped: it was the old look
+    if (this.frames.stand.length && this.drawn) this.showOff = true; // (not the first drawing: a change to show off)
+    this.drawn = true;
+    this.bakeFrame = bake; this.idle.clear(); this.idleQueue = IDLES.map(i => i.pose).filter((p, i, a) => a.indexOf(p) === i && p !== "stand"); this.idleAt = performance.now() / 1000 + .35;
+    if (this.act && this.act.pose !== "stand") this.act = null;
+  }
+  /** Bakes one queued idle pose, once the look has been still a moment. */
+  private bakeIdle(t: number): void {
+    if (!this.idleQueue.length || t < this.idleAt || !this.bakeFrame) return;
+    const pose = this.idleQueue.shift()!, n = (Art.WITCH_FOOT_POSES as Record<string, { frames: number }>)[pose]?.frames ?? 0;
+    if (n) this.idle.set(pose, Array.from({ length: n }, (_, frame) => this.bakeFrame!({ pose, frame })));
+  }
+  /** Her idle life on the rug (the overnight brief: "small idle animations for the witch"): now and then a moment from
+   *  IDLES; after a change, a spin to show it off. Returns the frame to draw and whether it's turned round. */
+  private standing(t: number): { fr: HTMLCanvasElement | undefined; flip: boolean } {
+    if (this.showOff && this.idle.has("spin")) { this.showOff = false; this.act = { pose: "spin", start: t, fps: 8, loops: 1, flip: false }; }
+    if (!this.act && t > this.nextAct && this.nextAct) {
+      const ready = IDLES.filter(i => i.pose === "stand" || this.idle.has(i.pose)), pick = ready[Math.floor(Math.random() * ready.length)];
+      if (pick) this.act = { pose: pick.pose, start: t, fps: pick.fps, loops: pick.loops, flip: !!pick.flip };
+    }
+    if (!this.nextAct) this.nextAct = t + 3;
+    const a = this.act;
+    if (a) {
+      const frames = a.pose === "stand" ? this.frames.stand : this.idle.get(a.pose) ?? [], k = Math.floor((t - a.start) * a.fps), len = frames.length * a.loops;
+      if (frames.length && k < len) return { fr: frames[k % frames.length], flip: a.flip };
+      this.act = null; this.nextAct = t + 4 + Math.random() * 5;
+    }
+    return { fr: this.frames.stand[Math.floor(t * 2) % Math.max(1, this.frames.stand.length)], flip: false };
   }
 
   private loop = (): void => {
@@ -343,6 +413,7 @@ export class Creator {
     if (this.dirty) { this.dirty = false; this.redraw(); }
     // The world building behind: its progress on the bar and the Start button; once ready, a waiting Start goes.
     const pr = this.progress(), built = pr.total ? pr.done / pr.total : 1;
+    if (pr.ready && !this.readyAt) this.readyAt = performance.now() / 1000;
     if (this.bar) this.bar.style.width = `${Math.round((pr.ready ? 1 : Math.min(.97, built)) * 100)}%`;
     if (this.startBtn) {
       const want = this.waiting && !pr.ready ? `getting ready… ${Math.round(built * 100)}%` : pr.ready ? "Start ▶" : `Start ▶ · the forest ${Math.round(built * 100)}%`;
@@ -360,16 +431,18 @@ export class Creator {
     x.clearRect(0, 0, W, H);
     x.drawImage(room.lit, 0, 0);
     drawGlows(x, room, t);
+    fairyProgress(x, room, pr.ready ? 1 : Math.min(.97, built), this.readyAt ? t - this.readyAt : -1);
     x.drawImage(room.banner, 0, 0);
+    this.bakeIdle(t);
     // her: on the rug in a pool of light (the art director: "she's the brightest figure and the rug frames her"), standing,
     // or hovering over it, bobbing
-    const fr = this.flying ? this.frames.hover[Math.floor(t * 6) % 3] : this.frames.stand[Math.floor(t * 2) % Math.max(1, this.frames.stand.length)];
+    const now = this.flying ? { fr: this.frames.hover[Math.floor(t * 6) % 3], flip: false } : this.standing(t), fr = now.fr;
     if (!fr) return;
     const [sx, sy] = room.a.stand, bob = this.flying ? Math.round(Math.sin(t * 2) * 1.5) - 6 : 0;
     pool(x, sx, sy, fr.width);
     const fx = Math.round(sx - fr.width / 2), fy = Math.round(sy - fr.height + bob);
     if (this.flying) { x.fillStyle = "rgba(0,0,0,.35)"; x.fillRect(Math.round(sx - fr.width * .25), Math.round(sy) - 1, Math.round(fr.width * .5), 2); }
-    x.drawImage(fr, fx, fy);
+    if (now.flip) { x.save(); x.translate(fx + fr.width, fy); x.scale(-1, 1); x.drawImage(fr, 0, 0); x.restore(); } else x.drawImage(fr, fx, fy);
   };
 
   /** The room, as big as fits beside the panel at a whole number of screen pixels to its art pixel; the night behind. */
@@ -407,7 +480,7 @@ function buildRoom(st: Style): Room {
   const colours = (Art.bedroomColours as (st: Style) => Record<number, number[]>)(st);
   const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown) => { A: HTMLCanvasElement; N: HTMLCanvasElement; w: number; h: number })(sp, colours, { ...st, styleInterior: false } as unknown as Style, (st as unknown as { cOutline: unknown }).cOutline); // (ref: its outline, not its interior lines, which turn the clutter to noise)
   const a = sp.anchors, warm = [255, 176, 92], light = (p: [number, number], R: number, rgb: number[], power: number, z = 10): Light => ({ x: p[0], y: p[1], z, R, rgb, power });
-  const lights: Light[] = [light(a.lantern, 70, warm, 1.1, 14), light(a.screen, 56, [150, 214, 255], 1.6, 12), light(a.decks, 30, [255, 110, 210], .9), light(a.potions, 34, [196, 120, 255], .9),
+  const lights: Light[] = [light(a.lantern, 56, warm, .75, 14), light(a.screen, 56, [150, 214, 255], 1.6, 12), light(a.decks, 30, [255, 110, 210], .9), light(a.potions, 34, [196, 120, 255], .9),
     ...a.flames.map(f => light(f, 26, warm, 1)), ...a.runes.map(r => light(r, 14, [110, 255, 196], .5, 6))];
   const lit = document.createElement("canvas");
   lit.width = b.w; lit.height = b.h;
@@ -441,6 +514,31 @@ function buildRoom(st: Style): Room {
   });
   return { lit, banner, glows, a, lights };
 }
+/** Her idle moments: a pose from the witch's on-foot poses, its speed, how many times through, turned round or not. */
+const IDLES: { pose: string; fps: number; loops: number; flip?: boolean }[] = [
+  { pose: "liftSigil", fps: 4, loops: 1 },          // reaching up to set her hat straight
+  { pose: "spin", fps: 8, loops: 1 },               // a twirl, to see the outfit
+  { pose: "bounce", fps: 5, loops: 3 },             // can't wait for the party
+  { pose: "laugh", fps: 6, loops: 2 },
+  { pose: "stargaze", fps: 1.5, loops: 2 },         // looking up, out of the window
+  { pose: "twoStep", fps: 6, loops: 2 },            // practising a step
+  { pose: "stand", fps: 2, loops: 4, flip: true },  // turning to look round the room
+];
+/** The fairy lights as the loading bar (the overnight brief: "a progress hint as the forest builds"): lit one by one along the
+ *  walls as the forest grows, the rest dark; once it's ready, every one flashes twice. */
+function fairyProgress(x: CanvasRenderingContext2D, room: Room, built: number, sinceReady: number): void {
+  const F = room.a.fairy, lit = Math.floor(built * F.length);
+  x.save();
+  x.globalCompositeOperation = "source-over";
+  F.forEach(([px, py], i) => {
+    const cx = Math.round(px), cy = Math.round(py);
+    if (i >= lit) { x.fillStyle = "#2b1d24"; x.fillRect(cx - 1, cy - 1, 2, 2); } // not yet: a dark bulb
+  });
+  x.globalCompositeOperation = "lighter";
+  if (sinceReady < 0 && lit > 0) halo(x, F[lit - 1], 3, [255, 120, 210], .3); // the newest one, brightest
+  if (sinceReady >= 0 && sinceReady < 1.2 && Math.floor(sinceReady * 5) % 2 === 0) F.forEach(p => halo(x, p, 3, [255, 200, 240], .25));
+  x.restore();
+}
 /** The pool of light on the rug where she stands: two hard-edged steps of warm light, an ellipse as the floor is seen. */
 function pool(x: CanvasRenderingContext2D, cx: number, cy: number, w: number): void {
   x.save();
@@ -469,7 +567,7 @@ function drawGlows(x: CanvasRenderingContext2D, room: Room, t: number): void {
   const a = room.a;
   a.runes.forEach((r, i) => halo(x, [r[0], r[1] - 1], 4, [110, 255, 196], .08 + .06 * Math.sin(t * 2.2 + i * 1.7)));
   a.flames.forEach((f, i) => halo(x, f, 4, [255, 190, 100], .12 + .06 * Math.sin(t * 9 + i * 2.1)));
-  halo(x, a.lantern, 9, [255, 176, 92], .1 + .03 * Math.sin(t * 5));
+  halo(x, a.lantern, 6, [255, 176, 92], .06 + .02 * Math.sin(t * 5));
   halo(x, a.screen, 10, [150, 214, 255], .16 + .04 * Math.sin(t * 3));
   halo(x, a.potions, 6, [196, 120, 255], .08 + .05 * Math.sin(t * 1.1));
   x.restore();

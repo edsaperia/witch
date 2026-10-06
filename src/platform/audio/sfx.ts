@@ -8,8 +8,11 @@
 //  - whale.ts: the legends' whale song (moods, sleep and nightmares, a wind-up's swell);
 //  - chimes.ts: the 💌 chime, tick, flourish and landing puff, the state turns, the stings (a
 //    soundsystem lost, a relic found, the boot-up over), a stun's twinkle;
-//  - ambience.ts: a knockback, a lob landing, a legend's charge, home's meadow (and its balloons and picnic).
-import { Charge, Meadow, impact, knock } from "./ambience";
+//  - ambience.ts: a knockback, a lob landing, a legend's charge and roar, dancers' shoes, home's
+//    meadow (and its balloons and picnic);
+//  - places.ts: a pond, a picnic in a partified area, the creator's room.
+import { Charge, Meadow, impact, knock, roar, taps } from "./ambience";
+import { Picnic, Pond, Room } from "./places";
 import { Babble } from "./babble";
 import * as chimes from "./chimes";
 import { SfxKit, type SfxTuning } from "./sfxKit";
@@ -24,6 +27,9 @@ export class Sfx {
   private whales: Whale;
   private charging: Charge;
   private home: Meadow;
+  private pondBed: Pond;
+  private picnicBed: Picnic;
+  private roomBed: Room;
 
   constructor(ctx: AudioContext | OfflineAudioContext, volume: number, T: SfxTuning, root = 57, dest?: AudioNode) {
     this.k = new SfxKit(ctx, volume, T, root, dest);
@@ -31,6 +37,9 @@ export class Sfx {
     this.babble = new Babble(this.k, (mood, pan, near) => this.whales.whale(mood, pan, near));
     this.charging = new Charge(this.k);
     this.home = new Meadow(this.k);
+    this.pondBed = new Pond(this.k);
+    this.picnicBed = new Picnic(this.k);
+    this.roomBed = new Room(this.k);
   }
 
   get volume(): number { return this.k.volume; }
@@ -72,4 +81,12 @@ export class Sfx {
   /** The boot-up over: things stirring. */
   stir(): void { chimes.stir(this.k); }
   meadow(level: number): void { this.home.update(level); }
+  /** A legend turning angry: its roar. */
+  roar(pan = 0, near = 1): void { roar(this.k, pan, near); }
+  /** Dancers' party shoes tapping on the beat. */
+  taps(n: number, pan = 0, near = 1): void { taps(this.k, n, pan, near); }
+  /** By a pond, a picnic in a partified area, in the creator's room: each frame, by how near (0-1). */
+  pond(level: number, pan = 0): void { this.pondBed.update(level, pan); }
+  picnic(level: number, pan = 0): void { this.picnicBed.update(level, pan); }
+  room(level: number): void { this.roomBed.update(level); }
 }

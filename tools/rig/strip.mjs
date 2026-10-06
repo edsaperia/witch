@@ -3,6 +3,7 @@
 // the screen, winding up, charging, leaping, landing), composed and lit like the game's sprites,
 // one frame every STEP seconds, in rows: previews/rig-strip-<species>.png.
 //   node tools/rig/strip.mjs wolf,snake [level] [scale]
+// SHOES=sneakers (or any party shoe style): as a party animal in those shoes, its collar on: previews/rig-strip-<species>-<style>.png.
 import { build } from "esbuild";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { openBrowser } from "../../art/headless.mjs";
@@ -13,16 +14,16 @@ await build({ entryPoints: ["src/render/rig/rig.ts"], bundle: true, format: "esm
 const b = await openBrowser();
 await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
 for (const id of list.split(",")) {
-  const url = await b.page.evaluate(async ({ id, level, scale, step }) => {
+  const url = await b.page.evaluate(async ({ id, level, scale, step, shoes, style }) => {
     const G = await import("/art/generator.js"), { shade } = await import("/art/lighting.js"), P = await import("/art/genome/parts.js"), R = await import("/tools/rig/.out/rig.js");
-    const st = G.defaultStyle(), studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, colours = G.speciesColours(id, st);
+    const st = { ...G.defaultStyle(), ...style }, gear = shoes ? { collar: G.sigilColour(id), shoes, face: "happy" } : null, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, colours = G.speciesColours(id, st, gear);
     // its parts baked, as rigBuild.ts does for the game
-    const parts = P.rigParts(id, level, st), baked = [];
+    const parts = P.rigParts(id, level, st, gear), baked = [];
     const add = (p, o = st.cOutline) => p ? { frame: baked.push(G.bake(p.sp, colours, st, o)) - 1, px: p.px, py: p.py } : null;
     const all = k => (parts.pieces[k] ?? [null, null, null, null, null]).map(p => add(p)), discs = {};
     for (const [mat, byR] of Object.entries(parts.discs)) { discs[mat] = {}; for (const [r, p] of Object.entries(byR)) { const d = add(p, "none"); if (d) discs[mat][r] = d; } }
     const J = parts.joints, head = J.head && !Array.isArray(J.head) ? J.head : null;
-    const meta = { template: parts.template, s: parts.s, torso: all("torso"), head: all("head"), tail: all("tail"), discs, legs: J.legs ?? [], neck: head ? head.nb : J.head, headAt: head ? head.H : J.head, tailAt: J.tail ?? [0, 0, 0], top: J.top ?? 0, len: J.len ?? 0, spine: J.spine ?? [] };
+    const meta = { template: parts.template, s: parts.s, shoe: parts.pieces.shoe ? all("shoe") : undefined, torso: all("torso"), head: all("head"), tail: all("tail"), discs, legs: J.legs ?? [], neck: head ? head.nb : J.head, headAt: head ? head.H : J.head, tailAt: J.tail ?? [0, 0, 0], top: J.top ?? 0, len: J.len ?? 0, spine: J.spine ?? [] };
     // the script: [seconds, label, vx, vz (body lengths a second), drive]
     const mpp = 1 / 16, u2m = mpp * meta.s, bl = Math.max(.6, (meta.len || .6) * 2) * u2m, dt = 1 / 60;
     const script = [[1.2, "walk", 1, 0], [1.0, "turn", 0, 1], [0.5, "wind-up", 0, 0, "crouch"], [0.6, "charge", 4, 0, "charge"], [0.5, "leap", 1.5, 0, "leap"], [0.4, "land", 0.3, 0]];
@@ -66,8 +67,9 @@ for (const id of list.split(",")) {
     const big = mk(A.width * scale, A.height * scale), g = big.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(under, 0, 0, big.width, big.height);
     g.fillStyle = "#fff"; g.font = `${9 * scale}px monospace`; for (const [t, x, y] of labels) g.fillText(t, x * scale, y * scale); // the labels after the lighting
     return big.toDataURL("image/png");
-  }, { id, level: +level, scale: +scale, step: +(process.env.STEP || 0.2) });
-  writeFileSync(`previews/rig-strip-${id}.png`, Buffer.from(url.split(",")[1], "base64"));
-  console.log("wrote", `previews/rig-strip-${id}.png`, b.errors.length ? b.errors : "");
+  }, { id, level: +level, scale: +scale, step: +(process.env.STEP || 0.2), shoes: process.env.SHOES || null, style: JSON.parse(process.env.STYLE || "{}") });
+  const out = `previews/rig-strip-${id}${process.env.SHOES ? "-" + process.env.SHOES : ""}.png`;
+  writeFileSync(out, Buffer.from(url.split(",")[1], "base64"));
+  console.log("wrote", out, b.errors.length ? b.errors : "");
 }
 await b.close();
