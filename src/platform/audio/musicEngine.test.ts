@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import styleJson from "../../../config/music-style.json";
 import { MusicEngine } from "./musicEngine";
+import { Music } from "./music";
+import { TUNING } from "../../rules/tuning";
+import { mixAt } from "../../rules/music";
 import { newBeatClock } from "../../rules/beat";
 import type { MusicCue } from "../../rules/musicPlan";
 import type { MusicStyle } from "../../rules/musicScore";
@@ -51,5 +54,24 @@ describe("the music engine's scheduler", () => {
       expect(new Set(steps).size, `at ${speed}x, a hitch every ${hitch} s`).toBe(steps.length);
       expect(steps.length).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("a sleeping legend's clearing in the music (Ed, 2026-10-06)", () => {
+  it("eases the muffle and the legend's layer in over about a second as she enters, and out as she leaves", () => {
+    const ctx = fakeContext(), M = TUNING.music, m = new Music(ctx, 0.4, style, 7), clock = newBeatClock(style.bpm), mix = mixAt(M, 1, 0, 10);
+    const cue: MusicCue = { waves: [], nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0 };
+    const run = (seconds: number, circle?: MusicCue["circle"]) => { for (let f = 0; f < seconds * 60; f++) { ctx.currentTime += 1 / 60; m.update(mix, { ...cue, circle }, ctx.currentTime, clock, true, M); } return m.circle; };
+    run(1);
+    expect(m.circle).toBe(0);
+    const elk = { species: "elk", level: 1 };
+    const quick = run(0.1, elk);
+    expect(quick).toBeGreaterThan(0.05);
+    expect(quick).toBeLessThan(0.5); // (eased, not cut)
+    expect(run(1, elk)).toBeGreaterThan(0.9);
+    const leaving = run(0.1);
+    expect(leaving).toBeLessThan(0.9);
+    expect(leaving).toBeGreaterThan(0.4);
+    expect(run(2)).toBe(0);
   });
 });
