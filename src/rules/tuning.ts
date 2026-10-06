@@ -47,12 +47,12 @@ export interface Tuning {
   /** Creatures noticing the witch on the ground (Ed's playtest): within radius metres resting ones look at her; curious babies come to about curious metres, skittish ones keep skittish off. */
   notice: { radius: number; curious: number; skittish: number };
   /** The witch's health (Ed, 2026-10-04): hits she takes before she's knocked out; one comes back every repairTime seconds out of the fight. */
-  witchHealth: { hits: number; repairTime: number };
+  witchHealth: { hits: number; repairTime: number; /** seconds after a hit in which no other blow lands (0: none) */ grace: number };
   /** Knocked out (Ed, 2026-10-04): her stack lets go one sigil every releaseEach seconds (releaseMax caps the whole release, 0 no cap), then she sparkles out and back in at the treehouse over teleport seconds; legendsLoyal keeps leashed legends with her. */
   knockout: { releaseEach: number; releaseMax: number; emptyBeat: number; teleport: number; legendsLoyal: boolean };
   /** The dash, a blink (Ed, 2026-10-05): on the ground, gone and distance metres on at once, not
    *  drawn or hittable for gone seconds, then cooldown seconds; it lands clear of each obstacle by its `clear` metres. */
-  dash: { distance: number; gone: number; cooldown: number; clear: { tree: number; decor: number; sound: number; speaker: number; treehouse: number } };
+  dash: { distance: number; gone: number; cooldown: number; buffer: number; clear: { tree: number; decor: number; sound: number; speaker: number; treehouse: number } };
   spells: { equipped: string; speed: { mult: number; duration: number; cooldown: number } };
   /** Forecasting (Ed, 2026-10-04): symbols round each stone (12 = next; the after-next stone fills afterNext[0]..[1] over the countdown; probable ones flicker 1..probableMax); probable: how many probable stones; radius (m), size (m) of each symbol, height above the canopy in treetop mode. */
   forecast: { symbols: number; probable: number; probableMax: number; afterNext: number[]; radius: number; size: number; flare: number };
@@ -226,6 +226,8 @@ export interface Tuning {
   dreams: { range: number; nightmare: { at: number[]; faces: string[] } };
   wildLegends: { wake: number; sink: number; moss: number; guard: number; heal: number; scale: number; breathe: number; breathEvery: number; aura: number; glow: number };
   creatureSimRadius: number;
+  /** The simulation's level of detail (rules/simLod.ts): creatures in full near her and the action, coarse beyond, frozen past creatureSimRadius. */
+  simLod: import("./simLod").SimLod;
   creatureSpeed: number;
   setPieceChance: number;
   legendSpeed: number;
