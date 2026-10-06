@@ -855,7 +855,7 @@ describe("inviting and leashing", () => {
 
   it("can't invite legends", () => {
     const all = fresh(), s = newLeash(), legend = all.find(k => k.level === 3 && k.legendState === "asleep")!;
-    legend.legendState = "awake"; // (asleep, it's scenery: not even a look)
+    legend.legendState = undefined; legend.boss = false; // (an arena's wild legend: an area's is never chatted to)
     for (const c of all) if (c !== legend) c.leashed = true; // only the legend is left near
     const w = { x: legend.x + 1, z: legend.z };
     stepLeash(s, all, none, w, true, 0, 0.1, TUNING);

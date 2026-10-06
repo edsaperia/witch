@@ -19,8 +19,8 @@
   "limits": {
     "invites.burst": [1, 8],
     "invites.cooldown": [0.15, 10],
-    "invites.speed": [5, 60],
-    "invites.range": [5, 50],
+    "invites.speed": [5, 72],
+    "invites.range": [5, 75],
     "invites.radius": [0.2, 2],
     "dash.distance": [2, 25],
     "dash.gone": [0, 0.8],

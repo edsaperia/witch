@@ -90,13 +90,14 @@ export function modsOf(defs: readonly BuffDef[], table: BuffTable = LEGEND_BUFFS
   return M;
 }
 
-const get = (o: unknown, path: string): number => path.split(".").reduce<any>((a, k) => a?.[k], o) as number;
+type Tree = { readonly [k: string]: unknown };
+/** The number at a dotted path ("invites.speed") in a tuning-shaped tree (NaN if it isn't one). */
+const get = (o: object, path: string): number => { const v = path.split(".").reduce<unknown>((a, k) => (a as Tree | undefined)?.[k], o); return typeof v === "number" ? v : NaN; };
 /** A copy of t with the number at `path` set to v (copying only the objects on its way). */
-function set<T>(o: T, path: string, v: number): T {
+function set<T extends object>(o: T, path: string, v: number): T {
   const [k, ...rest] = path.split(".");
-  const copy: any = { ...(o as any) };
-  copy[k] = rest.length ? set(copy[k], rest.join("."), v) : v;
-  return copy;
+  const at = (o as Tree)[k];
+  return { ...o, [k]: rest.length ? set(typeof at === "object" && at ? at : {}, rest.join("."), v) : v };
 }
 
 /** The tuning with these buffs' numbers applied: scales multiply and adds add (on the file's
