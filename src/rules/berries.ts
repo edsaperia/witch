@@ -6,7 +6,7 @@
 // Bushes grow in patches (berries.patch), so a sigil set in the middle of one is a feeding spot.
 // An eaten berry grows again at once on a free berry bush somewhere else on the map, so the number
 // of berries never changes. A party animal that has eaten enough evolves: the berries its next
-// level's strength costs (toEvolve: 2 and 2 for a species of normal strength); evolving stops at adult (Ed, 2026-10-04: legends are the areas'
+// level's strength costs (toEvolve: 4 and 4 for a species of normal strength); evolving stops at adult (Ed, 2026-10-04: legends are the areas'
 // own, never grown). It evolves on the next bar line of the music, so the view can make a show of it. No drawing here.
 import { COMBAT, creatureMaxHp, strengthOf } from "./combat";
 import { beatAt, timeAt, type BeatClock } from "./beat";
@@ -63,7 +63,7 @@ export function strengthGain(level: Level, species: string | undefined, t: Tunin
 
 /** Berries needed to go up from a level (Ed, 2026-10-05: "tie the cost to strength"): the strength
  *  it gains, at berries.cost.per a berry, rounded, at least one (times cost.scale, the legends'
- *  evolve-faster buff). By fighting value (cost.by "value") a species of normal strength pays 2 and 2. Adults and
+ *  evolve-faster buff). By fighting value (cost.by "value") a species of normal strength pays 4 and 4. Adults and
  *  legends don't evolve. */
 export const toEvolve = (level: Level, t: Tuning, species?: string): number => {
   if (level >= TOP_LEVEL) return Infinity;
