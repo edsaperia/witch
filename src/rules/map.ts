@@ -137,6 +137,10 @@ export interface ForestMap {
   hardClear(x: number, z: number): boolean;
   /** How far (x, z) is out of its area's fighting arena: 0 in its open middle, rising smoothly over its band to 1 (tuning arena); `cell` if known. */
   arenaOpen(x: number, z: number, cell?: Cell): number;
+  /** Whether an area has a sleeping legend (Ed, 2026-10-06: "only in about half of areas"): legends.share of them, seeded, spread out; never home. */
+  hasLegend(cx: number, cy: number): boolean;
+  /** The areas with a legend, as "cx,cy" keys. */
+  readonly legendCells: ReadonlySet<string>;
   /** Each area's sleeping legend's clearing (not home's: it has no legend), or null where none fits. */
   legendClearing(cx: number, cy: number): LegendClearing | null;
   /** Every legend's clearing (for the drawing: its ground ring, and the rendering's twilight and motes). */
@@ -341,6 +345,9 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     pieceSpots.set(key, spot);
     return spot;
   };
+  const squareCells: Cell[] = [];
+  for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) squareCells.push([cx, cy]);
+  const legendCells = chooseLegendCells(squareCells, centreCell, neighbours, tuning.legends?.share ?? 1, seed); // (the playable areas: with #281's circular map, its map.cells)
   const grounds: Ground[] = [], scenes: Scene[] = [], clearings = new Map<string, LegendClearing>();
   const reserved = (x: number, z: number, r: number) => {
     const gap = tuning.reserveMargin, cell = areaAt(x, z).cell;
@@ -405,6 +412,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     bounds: { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad },
     extent: { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A },
     typeOf, areaAt, cellSafe, siteOf, treeWeight, arenaOpen, hardClear, neighbours, setPieceOf, soundsystemSpot, setPieceSpot, reserved, remoteness,
+    hasLegend: (cx: number, cy: number) => legendCells.has(cellKey(cx, cy)), legendCells,
     legendClearing: (cx: number, cy: number) => clearings.get(cellKey(cx, cy)) ?? null, legendClearings: [] as LegendClearing[],
     paths: null as unknown as PathNetwork,
   };
@@ -451,7 +459,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   // paths' pieces, so those and all later scenery (trees, decor, berries) keep out of it.
   const LC = tuning.legendClearing;
   for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) {
-    if (cx === centreCell[0] && cy === centreCell[1]) continue;
+    if (!legendCells.has(cellKey(cx, cy))) continue; // (no legend, no clearing: home, and the areas legends.share leaves out)
     const species = AREA_TYPES[typeOf(cx, cy)].creature, r0 = LC.species[species] ?? LC.radius;
     let r = r0;
     const site = siteOf(cx, cy), a0 = hash2(cx, cy, seed + 891) * Math.PI * 2;
@@ -512,4 +520,32 @@ export function sceneFootprint(id: string, tuning: Tuning): number {
   const sc = SCENE_BY_ID[id];
   if (!sc) return 0;
   return Math.max(...sc.pieces.map(([, x, z]) => Math.hypot(x, z))) * tuning.scenes.scale + tuning.scenes.pad;
+}
+
+/** Which areas have a sleeping legend (Ed, 2026-10-06: "Legends should only appear in about half of
+ *  areas (we can test this ratio); every area makes them too common"): share of the areas but home,
+ *  rounded, in a seeded order, spread so they don't clump: first only areas that keep every run of
+ *  neighbouring legend areas to two at most; then (an area has about six neighbours, so half can't
+ *  all be kept that apart) ones that leave no legend area bordering more than two others; then
+ *  any left over, those with the fewest legend neighbours first. */
+export function chooseLegendCells(cells: readonly Cell[], home: Cell, neighbours: ReadonlyMap<string, ReadonlySet<string>>, share: number, seed: number): Set<string> {
+  const all: { key: string; h: number }[] = [];
+  for (const [cx, cy] of cells) if (cx !== home[0] || cy !== home[1]) all.push({ key: cellKey(cx, cy), h: hash2(cx, cy, seed + 901) });
+  const want = Math.max(0, Math.min(all.length, Math.round(Math.max(0, Math.min(1, share)) * all.length)));
+  const chosen = new Set<string>();
+  if (want >= all.length) { for (const a of all) chosen.add(a.key); return chosen; }
+  all.sort((a, b) => a.h - b.h);
+  const near = (k: string) => [...(neighbours.get(k) ?? [])].filter(x => chosen.has(x));
+  // (taking k keeps every clump at two or fewer: k has at most one chosen neighbour, and that one has no other)
+  const spread = (k: string) => { const c = near(k); return c.length === 0 || (c.length === 1 && near(c[0]).length === 0); };
+  for (const a of all) { if (chosen.size >= want) break; if (spread(a.key)) chosen.add(a.key); }
+  // (then: no legend area bordering more than two others)
+  const thin = (k: string) => { const c = near(k); return c.length <= 2 && c.every(x => near(x).length < 2); };
+  for (const a of all) { if (chosen.size >= want) break; if (!chosen.has(a.key) && thin(a.key)) chosen.add(a.key); }
+  while (chosen.size < want) {
+    let best: string | null = null, bn = Infinity;
+    for (const a of all) if (!chosen.has(a.key)) { const c = near(a.key).length; if (c < bn) { bn = c; best = a.key; } }
+    chosen.add(best!);
+  }
+  return chosen;
 }

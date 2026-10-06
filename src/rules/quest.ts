@@ -30,10 +30,12 @@ export const legendOf = (creatures: Creature[], ids: number[], key: string): Cre
   return null;
 };
 
-/** The legend whose open quest a sigil put down at (x, z) answers (its creature what it dreams of), in its area; or null. */
-function questFor_(map: ForestMap, creatures: Creature[], legendIds: number[], partified: (key: string) => boolean, id: number, x: number, z: number): Creature | null {
+/** The legend whose open quest a sigil put down at (x, z) answers (its creature what it dreams of), in its area; or null.
+ *  Open while the legend sleeps (Ed, 2026-10-06: "you should be able to get the buffs at any time the legend is sleeping,
+ *  not just before the soundsystem is made"). */
+function questFor_(map: ForestMap, creatures: Creature[], legendIds: number[], _partified: (key: string) => boolean, id: number, x: number, z: number): Creature | null {
   const c = creatures[id], cell = map.cellSafe(x, z).cell as [number, number], key = cellKey(cell);
-  if (!c || partified(key)) return null;
+  if (!c) return null;
   const L = legendOf(creatures, legendIds, key), q = L?.quest;
   if (!L || !q || q.done !== undefined || (L.legendState !== "asleep" && L.legendState !== "restless")) return null;
   return c.species === q.species && c.level === q.level ? L : null;
@@ -48,16 +50,17 @@ export function questOutside(map: ForestMap, creatures: Creature[], legendIds: n
 
 /** A sigil was put down at (x, z): if its creature is what the legend of that area dreams of, it
  *  lies in the legend's clearing (Ed, 2026-10-06: "Quest sigils and relics need to be placed in the
- *  circle to have their effect"), and its quest is still open (its soundsystem not yet on: Ed, 2026-10-05), the quest is done: she
- *  gets the legend's buff, for good, and it sleeps on (#87). The creature stays hers, parked there.
- *  `done` (the set of areas whose quest is done) moves the ley lines on. Returns the legend, or null. */
+ *  circle to have their effect"), and its quest is still open (while it sleeps), the quest is done: she gets the legend's
+ *  buff, for good, and it sleeps on (#87). The creature stays hers, parked there. Done while the area is still wild,
+ *  `done` (the set of areas whose quest is done: friendly while wild) gains it; once the party has reached the area it's
+ *  the buff alone. Returns the legend, or null. */
 export function questPlaced(map: ForestMap, creatures: Creature[], legendIds: number[], done: Set<string>, partified: (key: string) => boolean, id: number, x: number, z: number, time: number): Creature | null {
   const L = questFor_(map, creatures, legendIds, partified, id, x, z), q = L?.quest;
   if (!L || !q || !inLegendClearing(map, L.cell, x, z, L, LEGENDS.placeRadius)) return null;
   const key = cellKey(L.cell);
   q.done = time;
   L.buffed = true; L.questOpen = false;
-  done.add(key);
+  if (!partified(key)) done.add(key); // (friendly while wild; after its wave, the buff alone)
   return L;
 }
 
