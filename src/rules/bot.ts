@@ -48,6 +48,17 @@ export const BOT_GAME: Record<BotKind, BotOptions> = {
   crude: {}, novice: {}, idle: {}, hover: {},
 };
 
+/** The skilled bot's strategies (Ed, 2026-10-06: "good play [should] involve a good balance of inviting, evolving
+ *  animals with berries, doing quests, and placing sigils in strategic places"): the same skill, each leaning one way,
+ *  and the mix. The balance pass tunes the game so the mix beats every one of the others (runbot --strategy). */
+export const STRATEGIES: Record<"invite" | "feed" | "quest" | "sigil" | "mixed", BotOptions> = {
+  invite: { guards: 0, keep: 99 }, // (inviting only: everyone on her stack, nothing parked, no detours)
+  feed: { guards: 0, keep: 99, feed: true }, // (and leading her young to the berries)
+  quest: { guards: 0, keep: 99, quests: true }, // (and every quest she can)
+  sigil: { guards: 6, keep: 0 }, // (parking her posse at the next soundsystem before its wave)
+  mixed: { guards: 3, keep: 2, feed: true, quests: true, questMax: 3 },
+};
+
 export interface Bot {
   readonly kind: BotKind;
   /** This step's controls, from the game as it is now. Call once a fixed step (or once a frame), then step the game. */
