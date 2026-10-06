@@ -20,7 +20,7 @@ import { newLeash, stepLeash, type LeashControls } from "./leash";
 import { newClock, tick, MAX_STEP } from "./clock";
 import { TUNING, withTuning } from "./tuning";
 import { floorClearing, speakerRadius, nextSpeakerState } from "./speakers";
-import { composeFloor, moonTiles, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
+import { composeFloor, moonTiles, bootRing, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
 import { floorInputs } from "./game";
 import { moonState } from "./moon";
 import { castSpell, newSpells, spellCharge, speedMultiplier } from "./spells";
@@ -1373,6 +1373,27 @@ describe("the dancefloor's tile lights (Ed, v160)", () => {
     for (let i = 0; i < 60 * (TUNING.moon.floor.flare + 1); i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
     expect(g.floor.on).toBe(on); // only once
     expect([...colours().seen].some(c => !P.includes(c))).toBe(true); // the party's neons
+  });
+  it("rings its edge with the boot-up timer (Ed, 2026-10-06): filling as the home speakers boot, flashing when they're up, then gone", () => {
+    const g = newGame(3, TUNING), B = TUNING.boot.time, P = TUNING.moon.floor.palette.map(c => c.join());
+    g.clock.paused = false;
+    for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60); // off the decks: the boot counts
+    const ring = () => { const o = new Uint8Array(GRID * GRID * 4), inp = floorInputs(g); bootRing(o, inp.boot!.k, inp.boot!.since, TUNING); let filled = 0, any = 0; for (let n = 0; n < GRID * GRID; n++) if (o[n * 4 + 3]) { any++; const c = `${o[n * 4]},${o[n * 4 + 1]},${o[n * 4 + 2]}`; expect(P).toContain(c); if (c !== P[0]) filled++; } return { filled, any, k: inp.boot!.k }; };
+    const early = ring();
+    const to = (time: number) => { while (g.clock.time < time) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60); };
+    to(g.party.bootUntil - B / 2);
+    const half = ring();
+    expect(half.k).toBeCloseTo(0.5, 1);
+    expect(half.filled).toBeGreaterThan(early.filled);
+    to(g.party.bootUntil - 1);
+    const late = ring();
+    expect(late.filled).toBeGreaterThan(half.filled * 1.6);
+    to(g.party.bootUntil + 0.1);
+    expect(ring().any).toBeGreaterThan(late.filled * 0.9); // the flourish: the whole ring
+    expect(g.party.wave).toBe(0);
+    to(g.party.bootUntil + TUNING.moon.floor.ringFlourish + 0.1);
+    expect(ring().any).toBe(0); // gone
+    expect(composeFloor(g.floor, floorInputs(g), TUNING).lit).toBeGreaterThan(0); // the moon stays
   });
   it("draws the moon's phases: none lit at new, the right half at first quarter, all at full, the left half at last quarter", () => {
     const lit = (phase: number) => { const o = new Uint8Array(GRID * GRID * 4); moonTiles(o, phase, 0, TUNING); const S = TUNING.moon.floor.palette[2].join(), P1 = TUNING.moon.floor.palette[1].join(); let l = 0, r = 0; for (let n = 0; n < GRID * GRID; n++) { const c = `${o[n * 4]},${o[n * 4 + 1]},${o[n * 4 + 2]}`; if (o[n * 4 + 3] === 2 && (c === S || c === P1)) { if (n % GRID < GRID / 2) l++; else r++; } } return { l, r }; };

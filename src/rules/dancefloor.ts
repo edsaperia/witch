@@ -121,6 +121,8 @@ export interface FloorInputs {
   dancers: { x: number; y: number; rgb: Rgb }[];
   /** The moon's phase (rules/moon.ts: 0 new, 0.5 full): before the first wave the floor shows only the moon (Ed, 2026-10-06). */
   moon?: { phase: number };
+  /** The home speakers' boot-up (rules/party.ts waveCountdown): how far it has got (0-1), and the seconds since it ended (negative while booting). */
+  boot?: { k: number; since: number };
 }
 
 /** Advance the sequence and the witch's marks to `time` (call every frame). */
@@ -171,7 +173,7 @@ export interface FloorTiles {
 export function composeFloor(f: FloorState, inp: FloorInputs, t: Tuning, out?: Uint8Array): FloorTiles {
   const D = t.dancefloor.tiles, rgbi = out ?? new Uint8Array(GRID * GRID * 4), level = inp.level, time = inp.time, beat = beatOf(time, t, inp);
   rgbi.fill(0);
-  if (f.on === null) { if (inp.moon) moonTiles(rgbi, inp.moon.phase, time, t); return summary(rgbi); }
+  if (f.on === null) { if (inp.moon) moonTiles(rgbi, inp.moon.phase, time, t); if (inp.boot) bootRing(rgbi, inp.boot.k, inp.boot.since, t); return summary(rgbi); }
   const set = (n: number, c: Rgb, i: number, add = false) => {
     if (!MASK[n] || i <= 0) return;
     const k = n * 4, cur = rgbi[k + 3];
@@ -286,3 +288,22 @@ export function moonTiles(rgbi: Uint8Array, phase: number, time: number, t: Tuni
     }
   }
 }
+
+/** The boot-up timer (Ed, 2026-10-06: "the dancefloor shows the boot-up timer (a ring around the outside, in addition to the twilight
+ *  tiles"): the floor's outermost tiles fill clockwise from the far side as the home speakers boot (k, 0-1), in the twilight palette,
+ *  the faint track ahead of it dusky violet, its leading tile and the last stretch brightening to silver; when the boot ends (since
+ *  seconds ago) the whole ring flashes silver and fades over moon.floor.ringFlourish seconds, then it's gone. */
+export function bootRing(rgbi: Uint8Array, k: number, since: number, t: Tuning): void {
+  const P = t.moon.floor.palette, fl = t.moon.floor.ringFlourish, done = since >= 0;
+  if (done && since >= fl) return;
+  const set = (n: number, c: number[], i: number) => { rgbi[n * 4] = c[0]; rgbi[n * 4 + 1] = c[1]; rgbi[n * 4 + 2] = c[2]; rgbi[n * 4 + 3] = i; };
+  for (let n = 0; n < GRID * GRID; n++) {
+    if (!MASK[n] || !ringTile(n)) continue;
+    if (done) { const f = since / fl, a = ((Math.atan2((n % GRID) + 0.5 - C, -(Math.floor(n / GRID) + 0.5 - C)) / (Math.PI * 2)) + 1) % 1; if (f < 0.4 || a > (f - 0.4) / 0.6) set(n, f < 0.4 ? P[2] : P[1], f < 0.25 ? 3 : f < 0.6 ? 2 : 1); continue; } // a flash, then it fades away round the ring
+    const a = ((Math.atan2((n % GRID) + 0.5 - C, -(Math.floor(n / GRID) + 0.5 - C)) / (Math.PI * 2)) + 1) % 1; // 0 at the far side, clockwise as seen from the south
+    if (a < k) set(n, k - a < 0.025 || k > 0.92 ? P[2] : P[1], k - a < 0.025 ? 2 : 1); // filled, its head (and the last stretch) silver
+    else if ((n + Math.floor(a * 97)) % 3 === 0) set(n, P[0], 1); // the track ahead, faint
+  }
+}
+/** Whether a tile is on the floor's outer ring (its outermost tiles: a floor tile with a neighbour off the floor). */
+const ringTile = (n: number) => { const i = n % GRID, j = Math.floor(n / GRID); for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const x = i + di, y = j + dj; if (x < 0 || y < 0 || x >= GRID || y >= GRID || !MASK[y * GRID + x]) return true; } return false; };

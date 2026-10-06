@@ -79,7 +79,7 @@ export interface Tuning {
     colourEvery: number; colourChance: number; colourTime: number; colourFade: number; colours: { red: number[]; blue: number[]; gold: number[] }; tint: number; /** The blood moon's own tint (it must read through the night grade's blue-violet pull: the rendering builder, #252). */ bloodTint: number; /** The sky moon's size, times its old one. */ disc: number;
     /** The floor's moon: palette (dusky violet, slate blue, soft silver, 0-255 rgb), size (its radius, a share of the floor's), stars (a share of the
      *  sky around it twinkling), flare (seconds the full moon flares out into the party at the first wave). */
-    floor: { palette: number[][]; size: number; stars: number; flare: number } };
+    floor: { palette: number[][]; size: number; stars: number; flare: number; /** Seconds the boot-up ring round the floor's edge flashes and fades when the boot ends. */ ringFlourish: number } };
   /** Wind sway on leafy things: metres at the top of a crown, gusts' speed (m/s) and size (m), and a share for the treetop view. */
   wind: { on: boolean; strength: number; speed: number; gustScale: number; treetop: number };
   /** Tufts on the ground round the witch, in ground mode: overall density (times each area's), within radius metres, at most cap; one chance every spacing metres, worked out cell metres at a time within budgetMs a frame; sway (share of a tuft's height) and part (how far they part round her). */

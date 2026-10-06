@@ -15,7 +15,7 @@ import { danceAt, invitableNow, stateOf, STATES } from "./creatureStates";
 import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, SLOT_RANGE, SPOT_RANGE } from "./partyGuests";
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
-import { cellKey, hurryWave, newParty, spreadWave, stepParty, type PartyState } from "./party";
+import { cellKey, hurryWave, newParty, spreadWave, stepParty, waveCountdown, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { nextSpeakerState, type SpeakerState } from "./speakers";
 import { moonState } from "./moon";
@@ -572,6 +572,7 @@ export function floorInputs(g: Game): FloorInputs {
     time: g.clock.time, beatAt: tm => beatAt(g.beat, tm), seed: g.seed, level: floorLevel(g.party.areas.size, g.tuning), partifiedAreas: areas,
     witch: { x: w.x, y: w.y, lift: g.witch.lift, rgb: neonOf(g.tuning.dancefloor.tiles.witchColour) }, dancers,
     moon: { phase: moonState(g.clock.time, g.seed, g.tuning).phase },
+    boot: (w => ({ k: w.boot, since: g.clock.time - g.party.bootUntil }))(waveCountdown(g.party, g.map, g.clock.time)),
   };
 }
 
