@@ -475,6 +475,12 @@ export class SpriteBatch {
     return max === undefined || !this.mesh.visible ? 0 : Math.max(0, this.count - max);
   }
 
+  /** Let go of its own buffers and material, leaving its atlas (shared) alone. */
+  release(): void {
+    this.geo.dispose();
+    for (const m of this.meshes) (m.material as THREE.Material).dispose();
+  }
+
   dispose(): void {
     this.geo.dispose();
     (this.mesh.material as THREE.Material).dispose();

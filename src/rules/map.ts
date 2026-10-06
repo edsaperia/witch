@@ -14,7 +14,7 @@ import { floorClearing, speakerRadius, speakerRing, type Speaker } from "./speak
  *  the dance floor, outside the speaker ring"): past the ring's outer edge by gap, plus its footprint. */
 export const treehouseDistance = (t: Tuning) => speakerRadius(t) + t.dancefloor.speakers.footprint + t.treehouse.gap + t.treehouse.clear;
 import { PathNetwork } from "./paths";
-import { isInside, makeCoast, type Bounds } from "./mapShape";
+import { beachOf, isInside, makeCoast, type Bounds } from "./mapShape";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
  *  the game's own numbers. Only plain data is read here. */
@@ -397,7 +397,10 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     }
     return false;
   };
+  // The beach and the sea past it (the tuning's beach): nothing grows or stands there.
+  const beach = round ? beachOf({ minX: 0, maxX: 0, minZ: 0, maxZ: 0, circle: { x: centre.x, z: centre.z, r: flightR, coast } }, tuning) : null;
   const hardCell = (x: number, z: number, cell: Cell) => {
+    if (beach && beach.intoSand(x, z) > 0) return true;
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return true;
     const lc = clearings.get(cellKey(cell[0], cell[1]));
     if (lc && Math.hypot(x - lc.x, z - lc.z) < lc.r + (vnoise(x / 4, z / 4, seed + 93) - 0.5) * 3) return true; // a sleeping legend's clearing (its edge ragged by a metre and a half either way: the art director on #235)
@@ -493,14 +496,20 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   // (where the legend always lay), wholly inside its own area and the map, clear of everything
   // placed before it and of the paths; sized to its legend. Placed after the scenes, before the
   // paths' pieces, so those and all later scenery (trees, decor, berries) keep out of it.
-  const LC = tuning.legendClearing;
+  const LC = tuning.legendClearing, nearStone: string[] = [];
   for (const [cx, cy] of cells) {
     if (!legendCells.has(cellKey(cx, cy))) continue; // (no legend, no clearing: home, and the areas legends.share leaves out)
     const species = AREA_TYPES[typeOf(cx, cy)].creature, r0 = LC.species[species] ?? LC.radius;
     let r = r0;
     const site = siteOf(cx, cy), a0 = hash2(cx, cy, seed + 891) * Math.PI * 2;
+    // Away from its area's runestone (where its soundsystem comes; Ed, 2026-10-06: "The legend circle shouldn't spawn
+    // near its runestone"): its edge at least minFromStone metres off, so the circle, its grove and its rim kit stand
+    // clear of the stone's clearing and the party's dance space (and a siege gets no safe spot beside its soundsystem).
+    const stone = soundsystemSpot(cx, cy), fromStone = (x: number, z: number) => Math.hypot(x - stone.x, z - stone.z) - r;
+    let farEnough = (x: number, z: number) => fromStone(x, z) >= (LC.minFromStone ?? 0);
     const B = map.bounds, fits = (x: number, z: number) => {
       if (!isInside(B, x, z, 15) || !inCell(x, z, cx, cy)) return false; // (its middle where she can fly)
+      if (!farEnough(x, z)) return false;
       for (let k = 0; k < 16; k++) { const b = (k / 16) * Math.PI * 2; if (!inCell(x + Math.cos(b) * r, z + Math.sin(b) * r, cx, cy)) return false; }
       return !reserved(x, z, r) && !map.paths.at(x, z, r * pathK);
     };
@@ -521,8 +530,16 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
       pathK = 0.6;
       // (and in a tight area, a smaller circle: the legend fills it more)
       sized: for (const k of [1, 0.8, 0.65]) { r = r0 * k; for (const [x, z] of grid) if (fits(x, z)) { clearings.set(cellKey(cx, cy), { cell: [cx, cy], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } }); break sized; } }
+      // A small area with no spot far enough from its stone: the farthest that fits (logged).
+      if (!clearings.has(cellKey(cx, cy))) {
+        farEnough = () => true;
+        let best: [number, number, number, number] | null = null; // x, z, distance off the stone, radius
+        for (const k of [1, 0.8, 0.65]) { r = r0 * k; for (const [x, z] of grid) if (fits(x, z) && (!best || fromStone(x, z) > best[2] + 2)) best = [x, z, fromStone(x, z), r]; } // (a smaller circle only for a clearly better spot)
+        if (best) { const [x, z] = best; r = best[3]; clearings.set(cellKey(cx, cy), { cell: [cx, cy], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } }); nearStone.push(`${cx},${cy} ${best[2].toFixed(0)} m`); }
+      }
     }
   }
+  if (nearStone.length) console.info(`legend clearings: seed ${seed}: ${nearStone.length} closer than minFromStone (${LC.minFromStone} m) to their runestone, at the farthest spot they fit: ${nearStone.join(", ")}`);
   map.legendClearings = [...clearings.values()];
   map.paths.placePieces();
   return map;

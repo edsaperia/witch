@@ -6,11 +6,14 @@
 // camera (working the partition out for the whole map at once takes seconds on a phone).
 import * as THREE from "three";
 import { BAYER_GLSL, VALUE_NOISE_GLSL } from "./shaders";
+import { CARVING_SIZE, carvingMask } from "./legendCarving";
+import type { FloorLook } from "./legendFloor";
 import * as Art from "../../art/generator.js";
 import type { ForestMap } from "../rules/map";
 import type { Forest } from "../rules/forest";
 import { LOOKS } from "../rules/map";
 import { speakerRadius } from "../rules/speakers";
+import { COAST_SAMPLES, type Beach } from "../rules/mapShape";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import type { TilePixels } from "./artBuild";
@@ -50,12 +53,26 @@ uniform vec2 uTile, uFloorsSize;  // one tile's size and the atlas's, in art pix
 uniform float uSat;
 uniform vec3 uFloor; // dancefloor x, z, radius
 uniform vec4 uCircle;
+uniform vec4 uBeach; // the beach round the circular map: its centre x, z, how far in from the edge the sand starts, out past it the sea (metres); off while .z is 0
+uniform float uCoast[${COAST_SAMPLES}]; // the edge's radius round (rules/mapShape.ts beachOf: from angle -pi, eased between)
 uniform vec4 uSweeps[4]; // partifying areas: the front's origin x, z, its radius, strength
 // The sleeping legends' clearings near her (Ed, 2026-10-06; rules/map.ts legendClearings): middle x, z, radius, ring width;
 // uLegendGlow: each one's ring brightening (0 to 1), when she stands in it.
 uniform vec4 uLegendRings[6];
 uniform float uLegendGlow[6];
 uniform int uLegendRingCount;
+// Their floors (Ed, 2026-10-06: weathered, mossy stone with the legend's sigil carved into it, covered so you can't see it
+// clearly): uLegendCarve holds each nearby circle's carving mask, side by side (render/legendCarving.ts); uLegendFloor:
+// on, overgrowth (0.5 as drawn; more covers more), the flagstones' size (metres); uLegendGlint: each one's grooves
+// catching the light (0 off: the tuning's knob, only while its legend sleeps).
+uniform sampler2D uLegendCarve;
+uniform vec4 uLegendFloor;
+uniform float uLegendGlint[6];
+// Each one's character, by its area (render/legendFloor.ts): its stone (rgb; a: wet, puddles), its debris (rgb; a: shape,
+// 0 leaves, 1 needles, 2 pebbles, 3 flowers), and its growth (x: litter, y: cover, z: 1 lichen and dry grass, 0 moss).
+uniform vec4 uLegendStone[6];
+uniform vec4 uLegendDebris[6];
+uniform vec4 uLegendGrowth[6];
 uniform int uSweepCount; // magic circle: hue, second hue, brightness (pulsing), rune band's turn (radians)
 
 uniform vec4 uCanopy; // canopy shadow: strength (0 off), height, cover, wind speed
@@ -88,6 +105,54 @@ void main() {
   vec2 p = (px + 0.5) * uPixel;                   // its centre, in metres
   // Wobble the lookup a little so area borders read as ragged, not as the texture's grid.
   vec2 j = vec2(vnoise(px / 5.0) - 0.5, vnoise(px / 5.0 + 17.0) - 0.5) * 0.9;
+  // The beach and the sea (Ed, 2026-10-06; on only while she's near the edge: render/beach.ts).
+  if (uBeach.z > 0.0) {
+    vec2 bv = p - uBeach.xy;
+    float ang = atan(bv.y, bv.x), cu = (ang + 3.14159265) / 6.2831853 * ${COAST_SAMPLES}.0, cf = fract(cu);
+    int c0 = int(mod(floor(cu), ${COAST_SAMPLES}.0)), c1 = int(mod(floor(cu) + 1.0, ${COAST_SAMPLES}.0));
+    float edge = mix(uCoast[c0], uCoast[c1], cf), sand = edge - uBeach.z, shore = edge + uBeach.w;
+    float bd = length(bv), arc = ang * edge;
+    float into = (bd - sand - (vnoise(vec2(arc / 9.0, 3.0)) - 0.5) * 12.0) / 14.0; // (the woods' ragged edge, giving way to sand)
+    if (into > 0.0 && (into >= 1.0 || vnoise(px / 2.0) * 0.6 + bayer4(px) * 0.4 < into)) {
+      // The water's edge: a calm wave running up the sand and back, every seven seconds or so.
+      float lap = 0.5 + 0.5 * sin(uTime * 0.9 + vnoise(vec2(arc / 60.0, 7.0)) * 6.0);
+      float front = shore - 1.0 - 4.0 * lap;
+      vec3 col;
+      if (bd > front + uPixel * 1.5) {
+        // The sea: dark and calm, the night sky mirrored in it (its gradient, its stars, the moon's road), rippling.
+        vec3 V = normalize(cameraPosition - vec3(p.x, vWorld.y, p.y));
+        vec2 rip = vec2(vnoise(p * vec2(0.3, 1.1) + vec2(uTime * 0.35, 0.0)), vnoise(p * vec2(0.22, 0.8) + vec2(0.0, uTime * 0.27) + 19.0)) - 0.5;
+        vec3 R = reflect(-V, normalize(vec3(rip.x * 0.035, 1.0, rip.y * 0.08)));
+        float up = clamp(R.y, 0.0, 1.0);
+        col = mix(uHazeColour * 0.5, vec3(0.004, 0.006, 0.016), smoothstep(0.0, 0.3, up)) + vec3(0.004, 0.008, 0.014); // (calm: the sky's dark top over most of it, its glow low down)
+        vec2 sc = floor(R.xz / max(0.08, R.y) * 26.0);
+        float hs = fract(sin(dot(sc, vec2(12.9898, 78.233))) * 43758.5453);
+        if (hs > 0.9965) col += vec3(0.42, 0.46, 0.56) * (0.55 + 0.45 * sin(uTime * 2.3 + hs * 90.0)); // a star
+        vec3 moon = normalize(vec3(uMoonDir.x, uMoonDir.y, -abs(uMoonDir.z)));
+        float spec = dot(R, moon);
+        if (spec > 0.993) col = mix(col, uMoon + vec3(0.25), 0.8);
+        else if (spec > 0.975) col = mix(col, uMoon * 0.7, 0.3);
+        else if (mod(px.y, 6.0) < 1.0 && vnoise(px / vec2(9.0, 2.0) + vec2(uTime * 0.3, 0.0)) > 0.8) col += vec3(0.02, 0.026, 0.04); // a swell catching the light
+        if (bd < front + 1.0 + lap) col = mix(col, vec3(0.55, 0.6, 0.66), 0.25); // the shallows over the sand
+        gl_FragColor = vec4(haze(col, vWorld), 1.0);
+        return;
+      }
+      // The sand: pale in the moonlight, grains and drifts; dark where the waves have wet it, with the
+      // moon's sheen on it; a line of foam at the water's edge; shells and pebbles here and there.
+      float g = vnoise(px / vec2(8.0, 5.0)) * 0.6 + vnoise(px / 1.7) * 0.4;
+      col = vec3(0.95, 0.87, 0.68) * (g < 0.35 ? 0.93 : g > 0.68 ? 1.04 : 1.0);
+      if (mod(px.x + floor(vnoise(px / 9.0) * 6.0), 9.0) < 1.0 && vnoise(px / vec2(3.0, 14.0)) > 0.7) col *= 0.94; // ripples the wind left
+      float wet = shore - 6.0 + vnoise(vec2(arc / 20.0, 1.0)) * 1.5;
+      if (bd > wet) col = mix(col, vec3(0.42, 0.4, 0.36), smoothstep(wet, wet + 1.5, bd));
+      if (bd > front - uPixel * 1.5) col = vec3(0.8, 0.84, 0.88);
+      float sh = fract(sin(dot(floor(px / 2.0), vec2(41.3, 289.1))) * 43758.5453);
+      if (sh > 0.993) col = mix(vec3(0.82, 0.78, 0.72), vec3(0.45, 0.43, 0.42), fract(sh * 13.0));
+      vec3 lit = max(nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0), vec3(0.3, 0.31, 0.36)); // (pale sand: it holds what light there is)
+      if (bd > wet && bd < front && mod(px.x + px.y, 3.0) < 1.0) lit += uMoon * 0.12; // the wet sand's sheen
+      gl_FragColor = vec4(haze(glowPool(min(vec3(1.0), col * lit * 1.25), vWorld), vWorld), 1.0);
+      return;
+    }
+  }
   vec4 area = texture2D(uAreas, (p + j - uExtent.xy) / uExtent.zw);
   float open = area.a > 0.5 ? area.g : 1.0;
   int t = int(area.r * 255.0 + 0.5);
@@ -148,6 +213,56 @@ void main() {
     if (d > L.z + 1.0) continue;
     float wob = (vnoise(p / 3.0) - 0.5) * 0.6, band = 1.0 - smoothstep(0.0, L.w * 0.5, abs(d + wob - (L.z - L.w * 0.5)));
     if (d < L.z - L.w) c = mix(c, c * vec3(0.86, 0.95, 0.9), 0.6);
+    // Its floor: old flagstones, cracked, a few tilted or gone, the legend's sigil cut into them, and moss, grass and
+    // litter over much of it, so the carving shows only in pieces; the stone fading into the clearing's earth toward
+    // the rim. All seeded by where the circle lies.
+    if (uLegendFloor.x > 0.0 && d < L.z) {
+      vec2 q = p - L.xy, s0 = fract(L.xy * 0.0173) * 97.0;
+      float rr = d / L.z;
+      vec2 g = q / uLegendFloor.z, gi = floor(g), gf = fract(g);
+      float d1 = 9.0, d2 = 9.0; vec2 id = vec2(0.0), at = vec2(0.0);
+      for (int y = -1; y <= 1; y++) for (int x = -1; x <= 1; x++) {
+        vec2 o = vec2(float(x), float(y)), cell = gi + o;
+        vec2 jp = o + vec2(hash(cell + s0), hash(cell + s0 + 19.7)) * 0.8 + 0.1 - gf;
+        float dd = length(jp);
+        if (dd < d1) { d2 = d1; d1 = dd; id = cell; at = jp; } else if (dd < d2) d2 = dd;
+      }
+      float hs = hash(id + s0 + 3.1), joint = 1.0 - smoothstep(0.02, 0.1, d2 - d1);
+      vec4 ST = uLegendStone[i], DB = uLegendDebris[i], GR = uLegendGrowth[i];
+      vec3 stone = ST.rgb * (0.82 + 0.3 * hs) * (0.86 + 0.28 * vnoise(px * 0.9 + s0));
+      stone = mix(stone, c * 1.25, 0.3); // (the area's own floor in it, so it sits in its palette)
+      vec2 tilt = vec2(hash(id + s0 + 7.3), hash(id + s0 + 11.1)) - 0.5;
+      stone *= 1.0 - dot(at, tilt) * 0.55 * step(0.62, hs); // tilted slabs: one side lit, one in shade
+      float groove = 0.0, lip = 0.0;
+      vec2 uv = q / (L.z * 0.9) * 0.5 + 0.5;
+      if (uv.x > 0.0 && uv.x < 1.0 && uv.y > 0.0 && uv.y < 1.0) {
+        vec2 cu = vec2((float(i) + uv.x) / 6.0, uv.y), sh = normalize(uMoonDir.xz + vec2(1e-4)) * 0.01;
+        groove = texture2D(uLegendCarve, cu).r;
+        lip = max(0.0, texture2D(uLegendCarve, cu - vec2(sh.x / 6.0, sh.y)).r - groove); // (the groove's lit far edge)
+      }
+      stone *= (1.0 - 0.65 * groove) * (1.0 + 0.4 * lip) * (1.0 - 0.55 * joint);
+      // its area's debris strewn over the stone: leaves in small blobs, needles and reeds in streaks, pebbles in
+      // clumps, flowers in bright specks
+      float sz = DB.a < 0.5 ? 2.0 : DB.a < 1.5 ? 1.0 : DB.a < 2.5 ? 2.0 : 1.0;
+      vec2 dc = floor(px / sz);
+      float dh = hash(dc + s0 + 5.7), streak = DB.a > 0.5 && DB.a < 1.5 ? step(0.5, fract((px.x + px.y * (hash(dc + 2.0) > 0.5 ? 1.0 : -1.0)) * 0.5)) : 1.0;
+      float lit = step(1.0 - GR.x * (DB.a > 2.5 ? 0.12 : 0.3), dh) * streak * (0.6 + 0.4 * vnoise(q / 1.5 + s0 + 9.0) * 1.6);
+      stone = mix(stone, DB.rgb * (0.75 + 0.5 * hash(dc + 1.3)), clamp(lit, 0.0, 1.0));
+      float m = vnoise(q / 2.6 + s0) * 0.65 + vnoise(q / 0.9 + s0 * 2.0) * 0.35;
+      m += smoothstep(0.5, 1.0, rr) * 0.3 + joint * (GR.z > 0.5 ? 0.12 : 0.3) + (uLegendFloor.y - 0.5) + (GR.y - 0.5);
+      float moss = smoothstep(0.42, 0.58, m);
+      // moss in damp places (green, deep); lichen and dry grass in open ones (pale, patchy)
+      vec3 growth = GR.z > 0.5
+        ? mix(c * vec3(1.1, 1.05, 0.72), vec3(0.62, 0.64, 0.5), 0.25 * step(0.6, vnoise(px * 0.8 + s0)))
+        : c * mix(vec3(0.78, 1.12, 0.74), vec3(0.95, 0.9, 0.72), step(0.7, vnoise(px * 0.6 + s0)));
+      growth *= 0.85 + 0.3 * vnoise(px * 1.3);
+      vec3 fl = mix(stone, growth, moss);
+      // puddles in wet areas: in the missing slabs and the low places, dark with a little sky
+      if (ST.a > 0.5) { float pud = smoothstep(0.7, 0.76, vnoise(q / 2.2 + s0 + 31.0)) * (1.0 - moss * 0.6); fl = mix(fl, vec3(0.07, 0.09, 0.12) + 0.05 * vnoise(px * 0.5 + s0), pud); }
+      if (uLegendGlint[i] > 0.0) fl += vec3(0.3, 0.5, 0.55) * groove * (1.0 - moss) * uLegendGlint[i] * 0.3;
+      float show = (1.0 - smoothstep(0.6, 0.95, rr + (vnoise(q / 1.7 + s0) - 0.5) * 0.25)) * (ST.a > 0.5 ? 1.0 : step(0.1, hs));
+      c = mix(c, fl, show);
+    }
     c *= 1.0 - 0.38 * band;
     vec2 sc = floor(px / 2.0);
     float h = fract(sin(dot(sc, vec2(12.9898, 78.233))) * 43758.5453);
@@ -298,6 +413,9 @@ export class Ground {
   private floors: THREE.DataTexture;
   private discoTiles = (t => { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; return t; })(new THREE.DataTexture(new Uint8Array(32 * 32 * 4), 32, 32));
   private pendingFloors: [number, TilePixels][] = [];
+  /** The nearby legend circles' carving masks, side by side (one slot a ring), and which species each slot holds. */
+  private carve = (t => { t.magFilter = t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; return t; })(new THREE.DataTexture(new Uint8Array(CARVING_SIZE * 6 * CARVING_SIZE * 4), CARVING_SIZE * 6, CARVING_SIZE));
+  private carveSlots: (string | null)[] = new Array(6).fill(null);
 
   constructor(private map: ForestMap, private forest: Forest, st: Style, metresPerPixel: number) {
     const e = map.extent, w = e.maxX - e.minX, d = e.maxZ - e.minZ;
@@ -326,11 +444,19 @@ export class Ground {
         uFloor: { value: new THREE.Vector3(map.dancefloor.x, map.dancefloor.z, map.dancefloor.radius) },
         uCanopy: { value: new THREE.Vector4() },
         uCircle: { value: new THREE.Vector4() },
+        uBeach: { value: new THREE.Vector4() },
+        uCoast: { value: new Array(COAST_SAMPLES).fill(0) },
         uSweeps: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) },
         uSweepCount: { value: 0 },
         uLegendRings: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
         uLegendGlow: { value: new Array(6).fill(0) },
         uLegendRingCount: { value: 0 },
+        uLegendCarve: { value: this.carve },
+        uLegendFloor: { value: new THREE.Vector4(map.tuning.legendClearing.floor?.on ? 1 : 0, map.tuning.legendClearing.floor?.overgrowth ?? 0.5, map.tuning.legendClearing.floor?.slab ?? 1.3, 0) },
+        uLegendGlint: { value: new Array(6).fill(0) },
+        uLegendStone: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
+        uLegendDebris: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
+        uLegendGrowth: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
         uClearing: { value: new THREE.Vector2(map.tuning.clearingSize, map.tuning.clearingFalloff) },
         uDiscoBase: { value: disco.base }, uDiscoLit: { value: disco.lit }, uDiscoTiles: { value: this.discoTiles },
         uDiscoGeom: { value: new THREE.Vector4(disco.tileM, disco.pitch, disco.size, disco.gridOrigin) }, uDiscoRim: { value: disco.rimOuter },
@@ -376,7 +502,32 @@ export class Ground {
     u.uLegendRingCount.value = n;
   }
 
+  /** Each nearby legend circle's floor: its carving's species (its mask copied into its slot only when that changes:
+   *  lazily, for the nearest few) and its grooves' glint (0 off). */
+  setLegendFloors(floors: readonly { species: string; glint: number; look: FloorLook }[], count = floors.length): void {
+    const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, glint = u.uLegendGlint.value as number[], data = this.carve.image.data as Uint8Array, W = CARVING_SIZE * 6;
+    const stone = u.uLegendStone.value as THREE.Vector4[], debris = u.uLegendDebris.value as THREE.Vector4[], growth = u.uLegendGrowth.value as THREE.Vector4[];
+    for (let i = 0; i < Math.min(6, count); i++) {
+      const f = floors[i], L = f.look;
+      glint[i] = f.glint;
+      stone[i].set(L.stone[0], L.stone[1], L.stone[2], L.wet ? 1 : 0);
+      debris[i].set(L.debris[0], L.debris[1], L.debris[2], L.shape);
+      growth[i].set(L.litter, L.cover, L.growth === "lichen" ? 1 : 0, 0);
+      if (this.carveSlots[i] === f.species) continue;
+      this.carveSlots[i] = f.species;
+      const m = carvingMask(f.species);
+      for (let y = 0; y < CARVING_SIZE; y++) for (let x = 0; x < CARVING_SIZE; x++) { const v = m[y * CARVING_SIZE + x], o = (y * W + i * CARVING_SIZE + x) * 4; data[o] = data[o + 1] = data[o + 2] = v; data[o + 3] = 255; }
+      this.carve.needsUpdate = true;
+    }
+  }
+
   /** The magic circle: its two hues, brightness now, and the rune band's turn. */
+  /** The beach and the sea (render/beach.ts): drawn only while given one (she's near the edge). */
+  setBeach(b: Beach | null): void {
+    const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, v = u.uBeach.value as THREE.Vector4;
+    if (b) { v.set(b.x, b.z, b.width, b.out); u.uCoast.value = Array.from(b.coast); } else v.set(0, 0, 0, 0);
+  }
+
   setCircle(hue: number, hue2: number, brightness: number, turn: number): void {
     ((this.mesh.material as THREE.ShaderMaterial).uniforms.uCircle.value as THREE.Vector4).set(hue, hue2, brightness, turn);
   }

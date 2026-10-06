@@ -22,6 +22,7 @@ import { restlessness } from "../../rules/dream";
 import { bossBreath } from "../../render/leash";
 import type { CombatEventKind } from "../../rules/combat";
 import type { Sfx } from "./sfx";
+import { beachOf, type Beach } from "../../rules/mapShape";
 import { speechMood, voiceOf } from "./voices";
 import { dances } from "../../render/looks";
 import { beatAt } from "../../rules/beat";
@@ -87,6 +88,7 @@ export class SfxCues {
     this.shoes(h);
     this.pond(h);
     this.picnic(h);
+    this.sea(h);
     this.primed = true;
   }
 
@@ -324,6 +326,18 @@ export class SfxCues {
     for (const l of g.forest.lightsNear(w.x, w.z, P.range)) if (l.kind === "pond") { const d = Math.hypot(l.x - w.x, l.z - w.z); if (d < best) { best = d; bx = l.x; } }
     this.sfx.pond(Number.isFinite(best) ? Math.max(0, 1 - best / P.range) : 0, pan(bx));
   }
+
+  /** By the sea on the beach round the circular map: its waves, by how near the water (nothing at all further off). */
+  private sea({ g }: Here): void {
+    if (this.beach?.map !== g.map) this.beach = { map: g.map, at: beachOf(g.map.bounds, g.tuning) };
+    const P = g.tuning.sfx.waves, B = this.beach.at;
+    if (!P || !B) return;
+    const w = g.witch, off = -B.intoSea(w.x, w.z); // (metres from the water)
+    if (off >= P.range) { this.sfx.sea(0); return; } // (Sfx.sea: nothing unless already made)
+    const d = Math.hypot(w.x - B.x, w.z - B.z) || 1;
+    this.sfx.sea(Math.max(0, 1 - off / P.range), ((w.x - B.x) / d) * 0.8);
+  }
+  private beach: { map: Game["map"]; at: Beach | null } | null = null;
 
   /** By a picnic in a partified area (not home's: its meadow has its own): its murmur and cups. */
   private picnic({ g, pan }: Here): void {

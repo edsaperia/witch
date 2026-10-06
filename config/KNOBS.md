@@ -10,7 +10,7 @@ The forest: mapAreas x mapAreas areas cut by the fractal partition. An area is a
 |---|---|---|
 | `mapAreas` | number | 0 to … |
 
-## `map`, `areaSize`, `areaScale`, `arena`, `areaSizeVariance`, `borderLayers`
+## `map`
 
 The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather than square, with a buffer zone with no runestones around the edge"). shape circle: the playable areas are those whose centres lie within radius areas of home's (7.9: about 196, as many as the old 14 x 14), and only they get runestones, soundsystems, legends, relics and creatures and wake in waves; past them a buffer ring buffer areas deep (1 to 1.5), forest she can fly over where nothing happens; her flight's edge is a circle, soft over its last push metres (her speed outward easing to nothing at the edge, and a drift of up to drift m/s taking her back in); the forest goes on edge areas past it, into the fog. coast (Ed, 2026-10-06: "The island shouldn't be a totally perfect circle; make the coast slightly irregular"): every edge round home (the playable areas', the buffer's, her flight's) wobbles by the same seeded coast, up to amp of its radius in or out (0 for a perfect circle): harmonics gentle bays and headlands (from two round the island up), plus detail (a share) of finer wobble. shape square: mapAreas x mapAreas as before (?shape=square to compare). ?mapAreas=<n> on the circular map sets the radius for about n x n areas.
 
@@ -25,6 +25,27 @@ The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather t
 | `map.coast.amp` | number | 0 to … |
 | `map.coast.harmonics` | number | 0 to … |
 | `map.coast.detail` | number | 0 to … |
+
+## `beach`, `areaSize`, `areaScale`, `arena`, `areaSizeVariance`, `borderLayers`
+
+The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A beach surrounds the island, and the calm dark water reflects the sky. You can hear the sound of the waves. If you try and fly past the beach, you land and stargaze (the party lying down pose). Other witches can be found on the beach occasionally; if you land near them, you chat, hold hands, and hug. Try and do this in a way that doesn't cost performance - most games won't ever go to the beach, it's just an Easter egg for adventurers."): sand over the last width metres inside her flight's edge (nothing grows or stands on it), the sea from shore metres past the edge, the hills eased over ease metres down to sand metres high where the sand starts and to sea metres at the water. Flying on out over the sand for restAfter seconds she lands (from the treetops too) and lies down to stargaze; any other way gets her up. witchChance of runs have witches[0] to witches[1] witches together somewhere on the beach; landing within meet metres of them and keeping still for idleAfter seconds, one chats, holds hands, hugs and stargazes with her, turn seconds each. None of it is drawn or heard unless she's within shown metres of the sand, nor the witches stepped beyond simRange. on false: forest to the edge, as before.
+
+| knob | type | range |
+|---|---|---|
+| `beach.on` | boolean |  |
+| `beach.width` | number | 0 to … |
+| `beach.shore` | number | 0 to … |
+| `beach.ease` | number | 0 to … |
+| `beach.sand` | number | 0 to … |
+| `beach.sea` | number |  |
+| `beach.restAfter` | number | 0 to … |
+| `beach.shown` | number | 0 to … |
+| `beach.witchChance` | number | 0 to … |
+| `beach.witches` | array of number |  |
+| `beach.meet` | number | 0 to … |
+| `beach.idleAfter` | number | 0 to … |
+| `beach.turn` | number | 0 to … |
+| `beach.simRange` | number | 0 to … |
 | `areaSize` | number | 0 to … |
 | `areaScale` | number | 0 to … |
 | `arena.radius` | number | 0 to … |
@@ -765,6 +786,11 @@ Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bu
 | `legendClearing.radius` | number | 0 to … |
 | `legendClearing.edge` | number | 0 to … |
 | `legendClearing.top` | number | 0 to … |
+| `legendClearing.minFromStone` | number | 0 to … |
+| `legendClearing.floor.on` | boolean |  |
+| `legendClearing.floor.overgrowth` | number | 0 to … |
+| `legendClearing.floor.slab` | number | 0 to … |
+| `legendClearing.floor.glint` | number | 0 to … |
 | `legendClearing.rim.spacing` | number | 0 to … |
 | `legendClearing.rim.chance` | number | 0 to … |
 | `legendClearing.rim.out` | number | 0 to … |
@@ -1080,6 +1106,10 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `sfx.whale.depth` | number | 0 to … |
 | `sfx.whale.reverb` | number | 0 to … |
 | `sfx.whale.sleepEvery` | number | 0 to … |
+| `sfx.waves.volume` | number | 0 to … |
+| `sfx.waves.every` | number | 0 to … |
+| `sfx.waves.wash` | number | 0 to … |
+| `sfx.waves.range` | number | 0 to … |
 | `music.on` | boolean |  |
 | `music.volume` | number | 0 to … |
 | `music.nearDist` | number | 0 to … |
@@ -1092,6 +1122,9 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.circle.ease` | number | 0 to … |
 | `music.circle.level` | number | 0 to … |
 | `music.circle.radius` | number | 0 to … |
+| `music.slow.on` | boolean |  |
+| `music.slow.pitch` | number | 0 to … |
+| `music.slow.floor` | number | 0 to … |
 | `music.clear` | number | 0 to … |
 | `music.distort` | number | 0 to … |
 | `music.src` | string |  |
@@ -1268,7 +1301,7 @@ The party witches' swoop trails (Ed, 2026-10-06: "Party-witch swoops should get 
 
 ## `boot`
 
-At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power on one by one over time seconds, and only then does the first wave's countdown begin: extra time to find and invite your first creatures. Five minutes, counted from her first step off the decks (Ed, 2026-10-05: 'the game is hard! ... a boot up period of 5 minutes'): no wave and no growth till then. transform (Ed, 2026-10-06: the home ring starts as small runestones, and the boot pulse turns each into its speaker): the seconds each takes to turn, glowing and rising into the speaker.
+At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power on one by one over time seconds, and only then does the first wave's countdown begin: extra time to find and invite your first creatures. Five minutes, counted from her first step off the decks (Ed, 2026-10-05: 'the game is hard! ... a boot up period of 5 minutes'): no wave and no growth till then. transform (Ed, 2026-10-06: the home ring starts as small runestones, and the boot pulse turns each into its speaker): the seconds each takes to turn, glowing and rising into the speaker. The boot runs from the party spell (golf: rules/party.ts castPartySpell; Ed, 2026-10-06): its pulse goes from the treehouse round the home ring clockwise from the top (rules/bootRing.ts), each stone turning into a speaker as it passes, the last as the boot's time is up; the ley line runs ahead of it at leyLines.reveal times its pace.
 
 | knob | type | range |
 |---|---|---|
