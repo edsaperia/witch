@@ -5,6 +5,9 @@ import { keepsToCircle, pointInArea, spawnCreatures, stepCreature } from "./crea
 import { rng } from "./random";
 import { soundsystemFor } from "./party";
 import { TUNING } from "./tuning";
+import { joinParty, newGame, stepGame, STEP, type Controls, type Game } from "./game";
+import { befriend } from "./creatureStates";
+import { inviteCreature } from "./leash";
 
 // Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), near its top.
 describe("legend clearings", () => {
@@ -39,7 +42,7 @@ describe("legend clearings", () => {
     expect(S.bat ?? TUNING.legendClearing.radius).toBeLessThan(S.elk);
   });
   // Ed (2026-10-06): "Legend circles should spawn with a wild baby in them, which tries to stay within the circle while it's wild."
-  it("each holds a wild baby of its legend's kind, which keeps to the circle while wild, comes back in if pushed out, and is free once hers", () => {
+  it("each holds a wild baby of its legend's kind, which keeps to the circle while wild, comes back in if pushed out, and is free only while leashed", () => {
     const map = generateMap(123, TUNING), creatures = spawnCreatures(map);
     for (const c of map.legendClearings) {
       const L = creatures.find(o => o.boss && o.cell[0] === c.cell[0] && o.cell[1] === c.cell[1])!;
@@ -58,10 +61,45 @@ describe("legend clearings", () => {
     B.x = k.x + k.r + 6; B.z = k.z; B.tx = B.x; B.tz = B.z;
     for (let i = 0; i < 60 * 20; i++) stepCreature(B, 1 / 60, map);
     expect(Math.hypot(B.x - k.x, B.z - k.z)).toBeLessThan(k.r);
-    // hers (leashed, or happy): no longer kept to it
+    // invited (happy): still kept to it
+    B.state = "happy";
+    expect(keepsToCircle(B)).toBe(true);
+    // leashed: no longer kept to it
     B.leashed = true;
     expect(keepsToCircle(B)).toBe(false);
     const r = rng(5), far = Array.from({ length: 40 }, () => pointInArea(map, B, r)).some(([x, z]) => Math.hypot(x - k.x, z - k.z) > k.r);
     expect(far).toBe(true);
+  });
+
+  // Ed (2026-10-06): "if it is invited and becomes happy, it continues to stay in the circle as before";
+  // "happy creatures don't follow you - only leashed creatures do".
+  it("its baby, invited (happy), stays in the circle when she leaves and never goes off to a party; leashed it follows her, and let go it goes home to its circle", () => {
+    const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
+    const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, idle, STEP); each?.(); } };
+    const g = newGame(123, TUNING);
+    g.clock.paused = false;
+    g.witches[0].health.hp = 1e6;
+    const B = g.creatures.find(o => o.circle)!, k = B.circle!, dist = () => Math.hypot(B.x - k.x, B.z - k.z);
+    // she lands by it and invites it: happy, not leashed
+    g.witch = { ...g.witch, seated: false, x: k.x + k.r + 4, z: k.z, mode: "ground", lift: 0 };
+    befriend(B, g.clock.time);
+    expect(B.leashed).toBe(false);
+    // she flies off over the treetops, still near enough that it's stepped: it keeps to its circle
+    g.witch = { ...g.witch, x: k.x + k.r + 30, z: k.z, mode: "treetop", lift: 1 };
+    run(g, 60, () => expect(dist()).toBeLessThan(k.r + 0.5));
+    // a party in its area doesn't draw it off to dance
+    joinParty(g, B, { x: k.x + 60, z: k.z }, B.cell);
+    expect(B.dancing).toBeFalsy();
+    run(g, 10, () => expect(dist()).toBeLessThan(k.r + 0.5));
+    // leashed, it follows her out of its circle
+    inviteCreature(g.leash, B, B.x, B.z, g.clock.time);
+    g.witch = { ...g.witch, x: k.x + k.r + 40, z: k.z, mode: "ground", lift: 0 };
+    run(g, 25);
+    expect(dist()).toBeGreaterThan(k.r + 10);
+    // let go (DECISION FOR ED: the game has no unleash yet; this is the rule if one comes), it goes home to its circle
+    g.leash.stack = g.leash.stack.filter(id => id !== B.id); g.leash.placed = g.leash.placed.filter(p => p.id !== B.id);
+    B.leashed = false; B.state = "happy";
+    run(g, 40);
+    expect(dist()).toBeLessThan(k.r);
   });
 });

@@ -628,7 +628,7 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
 /** A happy creature joins its area's party: it goes to its spot (by the soundsystem, or one of the area's party places) and
  *  dances there, at a party place in the first free slot round it (guestSlot, guestGap: by the guests already there). */
 export function joinParty(g: Game, c: Creature, soundsystem: { x: number; z: number }, cell: Cell): void {
-  c.circle = undefined; // (a legend's clearing's baby at the party: it keeps to its circle no more)
+  if (c.circle) return; // (a legend's clearing's baby, happy, stays in its circle: Ed, 2026-10-06)
   const spot = guestSpot(c, soundsystem, partySpots(g.map, cell, g.tuning));
   if (spot.kind === "soundsystem") { danceAt(c, spot, spot.r); return; }
   // the guests already dancing in this area, and their slots (any place's: two places' rows can meet)

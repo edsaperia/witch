@@ -130,7 +130,8 @@ export interface Creature {
    *  own kind, where it becomes an ordinary wild creature of that area. */
   wanderTo?: { x: number; z: number; cell: [number, number] };
   /** The legend's clearing it was born in (Ed, 2026-10-06: "Legend circles should spawn with a wild baby in them, which
-   *  tries to stay within the circle while it's wild"): while wild it roams the circle's open floor and walks back in if it's out. */
+   *  tries to stay within the circle while it's wild"): wild or happy, it roams the circle's open floor and walks back in
+   *  if it's out; leashed, it follows her, and back off the leash it goes home to its circle (keepsToCircle). */
   circle?: { x: number; z: number; r: number; legendX: number; legendZ: number };
   /** When it was last healed to full (a berry, or being invited): the view's heal pop. */
   healedAt?: number;
@@ -223,7 +224,10 @@ export function anchorOf(map: ForestMap, cell: [number, number], hx: number, hz:
 
 /** Somewhere inside the creature's own area, chosen by `r` (round its home, or round its party spot while it dances); its anchor if none is found. */
 /** Whether a creature keeps to the legend's clearing it was born in: while it's wild (not leashed, not happy, not enraged, not dancing). */
-export const keepsToCircle = (c: Partial<Pick<Creature, "circle" | "leashed" | "state" | "enraged">> & { dancing?: boolean }) => !!c.circle && !c.leashed && !c.enraged && !c.dancing && (c.state === undefined || c.state === "wild");
+/** Whether it keeps to its legend's clearing: the circle's baby, wild or invited (happy), but not
+ *  while leashed (Ed, 2026-10-06: "if it is invited and becomes happy, it continues to stay in the
+ *  circle as before"; "happy creatures don't follow you - only leashed creatures do"). */
+export const keepsToCircle = (c: Partial<Pick<Creature, "circle" | "leashed" | "enraged">>) => !!c.circle && !c.leashed && !c.enraged;
 
 /** A spot on a clearing's open floor: its front (south) part, clear of the legend's lair at its top. */
 export function pointInCircle(k: NonNullable<Creature["circle"]>, r: () => number): [number, number] {
@@ -235,7 +239,7 @@ export function pointInCircle(k: NonNullable<Creature["circle"]>, r: () => numbe
 }
 
 export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ"> & Partial<Pick<Creature, "circle" | "leashed" | "state" | "enraged">> & { dancing?: boolean }, r: () => number): [number, number] {
-  if (keepsToCircle(c)) return pointInCircle(c.circle!, r); // (the circle's baby, while wild)
+  if (keepsToCircle(c)) return pointInCircle(c.circle!, r); // (the circle's baby, wild or happy)
   // (a dancing one keeps round its party spot, its anchor: rules/partyGuests.ts)
   const cx = c.dancing ? c.anchorX : c.homeX, cz = c.dancing ? c.anchorZ : c.homeZ;
   for (let i = 0; i < 12; i++) {
@@ -287,7 +291,7 @@ export function stepCreature(c: Creature, dt: number, map: ForestMap): void {
     c.moving = true; c.walk += dt * 4;
     return;
   }
-  // The circle's baby, wild and out of its circle (pushed, knocked, back from fleeing): it walks back in.
+  // The circle's baby, out of its circle (pushed, knocked, back from fleeing or a fight, off the leash): it walks back in.
   if (keepsToCircle(c) && Math.hypot(c.x - c.circle!.x, c.z - c.circle!.z) > c.circle!.r) {
     const k = c.circle!, dx = k.x - c.x, dz = k.z + k.r * 0.3 - c.z, d = Math.hypot(dx, dz) || 1, step = Math.min(d, c.speed * dt);
     c.x += (dx / d) * step; c.z += (dz / d) * step; c.tx = k.x; c.tz = k.z + k.r * 0.3; c.rest = 0;
