@@ -1013,6 +1013,25 @@
               "type": "number",
               "minimum": 0
             },
+            "moonUp": {
+              "type": "number",
+              "minimum": 0
+            },
+            "leyRgb": {
+              "type": "string"
+            },
+            "leyBright": {
+              "type": "number",
+              "minimum": 0
+            },
+            "berryHalo": {
+              "type": "number",
+              "minimum": 0
+            },
+            "berryGlow": {
+              "type": "number",
+              "minimum": 0
+            },
             "areaEase": {
               "type": "number",
               "minimum": 0
@@ -1639,6 +1658,11 @@
             "rimSat",
             "rim",
             "witchGlow",
+            "moonUp",
+            "leyRgb",
+            "leyBright",
+            "berryHalo",
+            "berryGlow",
             "areaEase",
             "areas"
           ],
@@ -4344,6 +4368,70 @@
       ],
       "additionalProperties": false
     },
+    "attackFx": {
+      "type": "object",
+      "properties": {
+        "windupSquash": {
+          "type": "number",
+          "minimum": 0
+        },
+        "windupMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lungeStretch": {
+          "type": "number",
+          "minimum": 0
+        },
+        "squash": {
+          "type": "number",
+          "minimum": 0
+        },
+        "squashSecs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tumbleKnock": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tumbleHeight": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tumbleSecs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "turnFrom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "turnTo": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legendFlash": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "windupSquash",
+        "windupMax",
+        "lungeStretch",
+        "squash",
+        "squashSecs",
+        "tumbleKnock",
+        "tumbleHeight",
+        "tumbleSecs",
+        "turnFrom",
+        "turnTo",
+        "legendFlash"
+      ],
+      "additionalProperties": false
+    },
     "combat": {
       "type": "object",
       "properties": {
@@ -5672,6 +5760,7 @@
     "music",
     "forecast",
     "fight",
+    "attackFx",
     "combat",
     "notice",
     "guard",

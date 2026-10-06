@@ -254,6 +254,8 @@ function remember(g: Game): void {
 /** Run `draw` with the witches, creatures and camera eased between the last two steps by alpha
  *  (so motion is smooth whatever the display's rate), then put the simulated state back. */
 let held = new Float64Array(0); // (the simulated positions while drawing: one array kept, not one a frame)
+const carried: { x: number; z: number; flown?: number }[] = []; // (the 💌s and shots carried back, and where they were)
+let carriedAt = new Float64Array(64);
 export function interpolated<T>(g: Game, draw: () => T): T {
   const k = g.alpha, pw = g.prev.witches, pc = g.prev.creatures, C = g.creatures;
   if (k >= 1 || !pw.length || pc.length !== C.length * 2) return draw();
@@ -263,6 +265,30 @@ export function interpolated<T>(g: Game, draw: () => T): T {
   g.witches.forEach((w, i) => { const p = pw[i]; if (p) w.body = { ...w.body, x: mix(p.x, w.body.x), z: mix(p.z, w.body.z), lift: mix(p.lift, w.body.lift) }; });
   // (a jump further than a charge covers in a slow frame is a teleport: not blended)
   for (let i = 0; i < C.length; i++) { cx[2 * i] = C[i].x; cx[2 * i + 1] = C[i].z; const ex = pc[2 * i] - C[i].x, ez = pc[2 * i + 1] - C[i].z; if (ex * ex + ez * ez < 400) { C[i].x = mix(pc[2 * i], C[i].x); C[i].z = mix(pc[2 * i + 1], C[i].z); } }
+  // 💌s and shots in flight: carried back along their velocity to the moment drawn (not stored a
+  // step back: they come and go every step), so on a display faster than the steps they glide
+  // rather than holding every other frame (Ed's playtest, 2026-10-06: "it feels low"). Kept in
+  // arrays reused frame to frame (no garbage a frame).
+  const back = (1 - k) * STEP;
+  carried.length = 0; let nv = 0;
+  const keep = (o: { x: number; z: number; flown?: number }) => {
+    if (carriedAt.length < nv + 3) { const a = new Float64Array(Math.max(64, carriedAt.length * 2)); a.set(carriedAt); carriedAt = a; }
+    carried.push(o); carriedAt[nv++] = o.x; carriedAt[nv++] = o.z; carriedAt[nv++] = o.flown ?? NaN;
+  };
+  if (back > 0) {
+    for (const w of g.witches) for (const L of w.invites.letters) {
+      if (L.kind) continue;
+      keep(L);
+      L.x -= L.vx * back; L.z -= L.vz * back; L.flown = Math.max(0, L.flown - Math.hypot(L.vx, L.vz) * back);
+    }
+    for (const sh of g.combat.shots) {
+      keep(sh);
+      if (!sh.lob) { sh.x -= sh.vx * back; sh.z -= sh.vz * back; continue; }
+      // (A lob is where its arc puts it at the moment drawn.)
+      const L = sh.lob, q = Math.max(0, Math.min(1, (g.clock.time - back - L.at) / Math.max(0.01, L.lands - L.at)));
+      sh.x = L.fx + (L.tx - L.fx) * q; sh.z = L.fz + (L.tz - L.fz) * q;
+    }
+  }
   const pcam = g.prev.camera;
   if (pcam) g.camera = { ...camera, tx: mix(pcam.tx, camera.tx), ty: mix(pcam.ty, camera.ty), tz: mix(pcam.tz, camera.tz), lift: mix(pcam.lift, camera.lift), zoom: mix(pcam.zoom, camera.zoom), ax: mix(pcam.ax, camera.ax), az: mix(pcam.az, camera.az), pull: pcam.pull === undefined || camera.pull === undefined ? camera.pull : mix(pcam.pull, camera.pull), intro: pcam.intro === undefined || camera.intro === undefined ? camera.intro : mix(pcam.intro, camera.intro) };
   try { return draw(); }
@@ -270,6 +296,7 @@ export function interpolated<T>(g: Game, draw: () => T): T {
     g.witches.forEach((w, i) => { w.body = bodies[i]; });
     for (let i = 0; i < C.length; i++) { C[i].x = cx[2 * i]; C[i].z = cx[2 * i + 1]; }
     g.camera = camera;
+    for (let j = 0; j < carried.length; j++) { const o = carried[j]; o.x = carriedAt[3 * j]; o.z = carriedAt[3 * j + 1]; if (!Number.isNaN(carriedAt[3 * j + 2])) o.flown = carriedAt[3 * j + 2]; }
   }
 }
 
