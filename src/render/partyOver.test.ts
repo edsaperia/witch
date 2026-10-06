@@ -30,8 +30,9 @@ describe("the party's over: the lights going out", () => {
     expect(partyOff(o, 500, 200)).toBe(1);
     expect(partyOff(o, 100 + 520, 200)).toBe(1); // (past the farthest one too)
   });
-  it("eases in from the rules' start time when they give one, or ?partyover=", () => {
-    expect(partyOverEase(game({ at: 10 }, 16), null, 12)).toBeCloseTo(0.5);
+  it("eases in from the rules' start time (g.partyOver.at) at its own pace, else their ease, else ?partyover=", () => {
+    expect(partyOverEase(game({ at: 10, ease: 1 }, 16), null, 12)).toBeCloseTo(0.5); // (its own pace, not the rules' 6 s ease)
+    expect(partyOverEase(game({ ease: 0.25 }, 16), 4, 12)).toBe(0.25); // (the rules' state wins over the debug start)
     expect(partyOverEase(game(undefined, 16), 4, 12)).toBe(1);
     expect(partyOverEase(game(undefined, 16), null)).toBe(0);
   });

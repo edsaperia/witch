@@ -371,17 +371,18 @@ export class LeashView {
    *  Ed, 2026-10-05: never from the treetops). HTML, like the talk bubbles, so it reads at any zoom. */
   /** The party's over (Ed, 2026-10-06: "all the animals go to sleep and make little 😴 speech bubbles"): over the nearest few
    *  sleepers within SNORE_RANGE of her on the ground, a little dream bubble with a sleepy face (mostly 😴, now and then a yawn
-   *  or a sigh: sleepyFace), bobbing and drifting. A sleeper is one the rules have put to sleep (c.asleep), or, until they do,
-   *  any creature not hers once the party's well over. Legends keep their own dreams. */
+   *  or a sigh: sleepyFace), bobbing and drifting. A sleeper is one the rules have put to sleep (c.asleep: builder hotel's
+   *  party's-over rules, legends too), or, before those rules, any creature not hers once the party's well over. */
   private drawSnores(camera: THREE.Camera, width: number, height: number): void {
     const host = this.bubbleWitch?.parentElement, g = this.game, w = g.witch, near = this.snoreNear;
     let used = 0;
     near.length = 0;
     if (host && this.partyOverEase > 0.3 && w.mode === "ground" && w.lift < 0.5) {
       for (const c of g.creatures) {
-        if (c.gone || c.leashed || c.level === 3 || c.boss) continue;
-        const asleep = (c as { asleep?: boolean }).asleep, dx = c.x - w.x, dz = c.z - w.z;
-        if (asleep === false || (asleep === undefined && this.partyOverEase < 0.6) || Math.abs(dx) > SNORE_RANGE || Math.abs(dz) > SNORE_RANGE) continue;
+        if (c.gone || c.leashed) continue;
+        // (asleep: the rules' c.asleep, legends too; before builder hotel's party's-over rules, any creature not hers once it's well over)
+        const asleep = (c as { asleep?: boolean }).asleep, rules = "partyOver" in g, dx = c.x - w.x, dz = c.z - w.z;
+        if (!(asleep || (!rules && asleep === undefined && this.partyOverEase >= 0.6 && c.level !== 3 && !c.boss)) || Math.abs(dx) > SNORE_RANGE || Math.abs(dz) > SNORE_RANGE) continue;
         const d = Math.hypot(dx, dz);
         if (d > SNORE_RANGE) continue;
         if (near.length < SNORES) near.push({ c, d });

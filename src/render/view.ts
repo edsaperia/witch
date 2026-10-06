@@ -183,9 +183,8 @@ export class View {
   private leyRgb: THREE.Vector3 | null;
   /** The party the ley line follows (without quests done when it moves on only by waves), its chain, and each stone's colour. */
   private leyParty: Game["party"] | null = null;
-  /** The party's over (render/partyOver.ts): its look this frame, the ley lines' own brightness, and ?partyover=<s> (debug). */
+  /** The party's over (render/partyOver.ts): its look this frame, and ?partyover=<s> (debug). */
   readonly over = newPartyOverLook();
-  private leyBright = 1;
   private overDebug: number | null = (() => { const v = new URLSearchParams(globalThis.location?.search ?? "").get("partyover"); return v === null ? null : Number(v) || 0; })();
   private readonly leyHome = new THREE.Vector3(0.8, 0.7, 1);
   private readonly leyChainNow = () => leyChain(this.leyParty ?? this.game.party, this.game.map);
@@ -362,8 +361,7 @@ export class View {
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // the live rig (#79): on unless ?rig=0
     this.lasers = new Lasers(this.scene, game);
     this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z), game.map);
-    this.leyBright = M?.leyBright ?? 1;
-    this.ley.scale(this.leyBright);
+    this.ley.scale(M?.leyBright ?? 1);
     this.leyRgb = M?.leyRgb ? new THREE.Vector3(...[1, 3, 5].map(i => parseInt(M.leyRgb!.slice(i, i + 2), 16) / 255)) : null;
     this.scene.add(...this.ley.meshes);
     this.glades = new Glades(t.glades);
@@ -799,7 +797,6 @@ export class View {
       // (Nothing allocated a frame but on a change: the key's a number, the callbacks are the view's own.)
       this.leyParty = t.leyLines.advance === "wave" ? (this.leyParty?.areas === g.party.areas && this.leyParty.wave === g.party.wave ? this.leyParty : { ...g.party, leyDone: undefined }) : g.party;
       this.ley.update(leyKey(this.leyParty), this.leyChainNow, this.leyColour, time, canopyShown(w));
-      this.ley.scale(this.leyBright * (1 - 0.8 * over.ease)); // (faint once the party's over)
       this.ley.pulse(shaderPulse(g.party, g.map, time)); // the wave's pulse along the current link, by the party's clock (as the HUD's pointer)
       this.ley.grow(leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3)); // none while home boots, then out from the treehouse along the route (Ed)
       { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.

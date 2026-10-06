@@ -6,8 +6,8 @@
 // LIGHT_UNIFORMS.uPartyOver, in the shaders (LIGHT_GLSL's partyOff). The forest's own moonlight and grade are all that's
 // left; her own glow and trail stay (she's still magic).
 //
-// The state is the rules' g.partyOver (the prototype builder's); until it lands, nothing here switches anything off, and
-// ?partyover=<seconds> (debug) eases it in on its own from that game time.
+// The state is the rules' g.partyOver (builder hotel's: { at, ease } or null; ?partyover=1 starts it); before those rules,
+// ?partyover=<seconds> (debug) eases it in on its own from that game time. The ley line's fade is the rules' own.
 import type { Game } from "../rules/game";
 import { LIGHT_UNIFORMS } from "./lighting";
 
@@ -28,13 +28,13 @@ export interface PartyOverLook {
 
 export const newPartyOverLook = (): PartyOverLook => ({ ease: 0, front: 0, width: WIDTH, hx: 0, hz: 0, reach: 0 });
 
-/** The rules' ease (0 to 1) if the party's over, else 0: g.partyOver's own `ease` (or, with only a start time, eased in here
- *  over `secs`), or the debug start from ?partyover=. */
+/** How far the switch-off has gone (0 to 1) if the party's over: from the rules' g.partyOver.at (the moment the last soundsystem
+ *  fell; builder hotel's rules/partyOver.ts) over `secs` (the ripple its own pace, slower than the rules' 6 s ease so it can be
+ *  seen crossing the map), or their ease if there's no start time, or the debug start from ?partyover=. */
 export function partyOverEase(g: Game, debugAt: number | null = null, secs = 12): number {
   const P = (g as { partyOver?: { ease?: number; at?: number } | null }).partyOver;
-  if (P && typeof P.ease === "number") return Math.max(0, Math.min(1, P.ease));
-  const at = P && typeof P.at === "number" ? P.at : debugAt;
-  if (at === null || at === undefined) return 0;
+  const at = P && typeof P.at === "number" ? P.at : P ? null : debugAt;
+  if (at === null || at === undefined) return P && typeof P.ease === "number" ? Math.max(0, Math.min(1, P.ease)) : 0;
   return Math.max(0, Math.min(1, (g.clock.time - at) / secs));
 }
 
