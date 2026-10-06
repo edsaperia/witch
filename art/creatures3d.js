@@ -119,7 +119,8 @@ function gearUp(m) {
 //   tails: { count, length, spread, tip, replace }: brush tails rooted along its rump, sweeping up and back together like flames, of
 //     different lengths, their tips pale (BELLY) or in fox-fire (tip: "MAGIC2"); replace: instead of its own tail.
 //   ruff: { size, count, mat }: a ruff of fur round its neck and cheeks, locks swept back.
-export const EVOLVE_KINDS = ["mane", "wisps", "eyeglint", "stones", "claws", "moss", "tails", "ruff"];
+//   brambles: { count, berries }: bramble vines winding over its body, thorny, leafed, with berries (its palette's flower colour).
+export const EVOLVE_KINDS = ["mane", "wisps", "eyeglint", "stones", "claws", "moss", "tails", "ruff", "brambles"];
 function evolve3d(m, feats, c) {
   for (const f of feats) {
     if (f.kind === "mane") {
@@ -179,6 +180,24 @@ function evolve3d(m, feats, c) {
         const a = i / n * Math.PI * 2, out = v3.norm(v3.add(v3.mul(u, Math.cos(a)), v3.mul(w, Math.sin(a)))), b = v3.add(N.c, v3.mul(out, N.r * .85)), k = sz * (.75 + .5 * Math.abs(Math.sin(i * 2.3)));
         const tip = v3.add(b, v3.add(v3.mul(out, k * .8), v3.mul(d, -k * .6)));
         m.chain([[...b, k * .32], [...v3.lerp(b, tip, .55), k * .2], [...tip, k * .04]], i % 3 ? mat : M.BODY, { group: 76, extra: true });
+      }
+    }
+    if (f.kind === "brambles") { // vines wandering over its body's surface, round and along it
+      m.part = "body";
+      const n = f.count ?? 4, cy = (c.top + c.chest) / 2;
+      for (let v = 0; v < n; v++) {
+        const pts = []; let th = .4 + v * 1.3;
+        for (let i = 0; i <= 10; i++) {
+          const x = -c.len * .85 + (c.len * 1.5) * (i / 10), dir = [0, Math.cos(th), Math.sin(th)]; let p = [x, cy, 0];
+          for (let j = 0; j < 100 && m.field(p) < 0; j++) p = v3.add(p, v3.mul(dir, .01));
+          if (Math.cos(th) > -.2) pts.push([...p, .018]);
+          th += Math.sin(i * 1.7 + v * 2.3) * .55;
+        }
+        if (pts.length > 1) m.chain(pts, M.TRUNK, { group: 160 + v, extra: true });
+        pts.forEach((p, i) => { const q2 = p.slice(0, 3);
+          if (i % 2) m.seg(q2, v3.add(q2, [.02, .035, .015]), .008, .002, M.TRUNK, { group: 160 + v, extra: true }); // a thorn
+          if (i % 3 === 1) m.ell(v3.add(q2, [0, .02, 0]), [.035, .015, .025], M.LEAF3, { group: 165, extra: true }); // a leaf
+          if (i % 4 === 2 && (f.berries ?? true)) for (const d of [[0, .03, .02], [.025, .02, -.01]]) m.ell(v3.add(q2, d), [.022, .022, .022], M.FLOWER, { group: 166, extra: true }); }); // berries
       }
     }
     if (f.kind === "moss") { // moss and heather along its flanks, low, on both sides
@@ -328,16 +347,18 @@ export function quad3d(S, level, frame, st, facing = "towards") {
 // A twisted horn (the parts kit's "horn that sweeps and curls"; genome parts horns: "twist", its shape in head.horn): from
 // `base` it rises up and out, then sweeps back by `curl` (half turns), two strands spiralling round each other `twist` times
 // along it (so it reads as twisted at game size), ridged every `ridges`th step (the second strand in `mat2`, if given, so the twist shows as a spiral band), tapering to a fine point; `tip` (a material
-// name) glows its last fifth. length and r in model units. Returns its tip.
-export function horn3d(m, base, side, { length = .5, r = .08, curl = .6, twist = 2, ridges = 3, segs = 18, out = .45, tip, mat = "ACCENT", mat2, group = 14 } = {}) {
+// name) glows its last fifth. ease: how late the sweep comes (1 even, a ram's curl); tighten: its steps shortening toward the tip
+// (0 to 1: a spiral winding in); thorns: spikes off every ridge (the ram legend's). length and r in model units. Returns its tip.
+export function horn3d(m, base, side, { length = .5, r = .08, curl = .6, twist = 2, ridges = 3, segs = 18, out = .45, tip, mat = "ACCENT", mat2, group = 14, ease = 1.5, tighten = 0, thorns = 0 } = {}) {
   const n = Math.max(4, segs), ds = length / n, A = [[], []];
   let p = base;
   for (let i = 0; i <= n; i++) {
-    const t = i / n, a = -.15 + Math.pow(t, 1.5) * curl * Math.PI, o = out * (1 - t * .7); // straight up first, then sweeping back
+    const t = i / n, a = -.15 + Math.pow(t, ease) * curl * Math.PI, o = out * (1 - t * .7); // straight up first, then sweeping back
     const dir = v3.norm([-Math.sin(a), Math.cos(a), side * o]), u = v3.norm(v3.cross(dir, [0, 0, 1])), w = v3.norm(v3.cross(u, dir));
     const rr = r * (1 - t * .88) * (ridges && i % ridges === 0 && i < n ? 1.14 : 1), ph = t * twist * Math.PI * 2 * side;
     for (const k of [0, 1]) { const f = ph + k * Math.PI, off = v3.add(v3.mul(u, Math.cos(f) * rr * .5), v3.mul(w, Math.sin(f) * rr * .5)); A[k].push([...v3.add(p, off), rr * .58]); }
-    if (i < n) p = v3.add(p, v3.mul(dir, ds));
+    if (thorns && ridges && i % ridges === 0 && i > 1 && i < n - 1 && (i / ridges) % Math.max(1, Math.round(n / ridges / thorns)) === 0) { const sp = v3.norm(v3.add(u, v3.mul(dir, -.3))); m.seg(v3.add(p, v3.mul(sp, rr * .5)), v3.add(p, v3.mul(sp, rr * 2.1)), rr * .22, rr * .03, M.BODY3, { group: group + 2, extra: true }); } // a thorn off the ridge
+    if (i < n) p = v3.add(p, v3.mul(dir, ds * (1 - tighten * t) / (1 - tighten / 2)));
   }
   const cut = Math.round(n * .8);
   for (const [k, s] of A.entries()) { m.chain(s.slice(0, tip ? cut + 1 : n + 1), M[k && mat2 ? mat2 : mat] ?? M.ACCENT, { group, extra: true }); if (tip) m.chain(s.slice(cut), M[tip] ?? M.MAGIC2, { group: group + 1, extra: true }); }
