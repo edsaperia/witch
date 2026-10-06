@@ -124,8 +124,9 @@ describe("creature states (#87)", () => {
   });
 
   it("fills the 💌 meter: more hits at higher levels, one counted per creature every gap, draining slowly; full, it's happy, and full again (states.leash 'again') it's leashed", () => {
-    const g = quiet(), leash = newLeash();
-    for (const level of [0, 1, 2] as const) {
+    const g = quiet(), leash = newLeash(), saved = STATES.leash;
+    STATES.leash = "again"; // (the old second meter, kept behind the flag: the game picks up a rune now, pickup.test.ts)
+    try { for (const level of [0, 1, 2] as const) {
       const c = place(g, "hare", level, level * 5, 0), world = { time: 0, leash: (k: Creature) => inviteCreature(leash, k, k.x, k.z, 0) };
       const need = STATES.affection.hits[level];
       let t = 100;
@@ -139,7 +140,7 @@ describe("creature states (#87)", () => {
       for (let i = 0; i < need; i++) hit(world, c, 1, t + 1 + i * STATES.affection.gap);
       expect(c.leashed).toBe(true);
       expect(leash.stack).toContain(c.id);
-    }
+    } } finally { STATES.leash = saved; }
   });
 
   it("leashes a happy one held on for holdTime (states.leash 'hold'), starting over if let go", () => {
