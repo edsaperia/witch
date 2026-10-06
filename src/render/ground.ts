@@ -19,6 +19,7 @@ import type { Style } from "./style";
 const TEXELS_PER_METRE = 2;
 const TILE = 32; // texels
 const FLOOR_COLS = 8;
+const FLOOR_VARIANTS = 4; // each type's floor: this many tiles side by side (art/areas.js FLOOR_VARIANTS), one picked per repeat of the tile
 
 // The ground's grid: GRID metres a square, out to REACH metres round the witch (past the haze's
 // far edge), its outermost ring stretched out to SKIRT metres; it follows her, snapped to its squares.
@@ -104,9 +105,12 @@ void main() {
   vec3 c;
   if (area.a > 0.5 && uFloorReady[t] > 0.5) {
     // The area's floor tile, repeated on the art's pixel grid.
-    vec2 cell = vec2(mod(float(t), ${FLOOR_COLS}.0), floor(float(t) / ${FLOOR_COLS}.0));
+    // Which of its variants: a hash of which repeat of the tile this is, so the floor doesn't visibly repeat.
+    vec2 cell = vec2(mod(float(t), ${FLOOR_COLS}.0), floor(float(t) / ${FLOOR_COLS}.0)), rep = floor(px / uTile), q = fract(rep * vec2(0.1031, 0.1030));
+    q += dot(q, q.yx + 33.33);
+    float variant = floor(fract((q.x + q.y) * q.x) * ${FLOOR_VARIANTS}.0);
     vec2 tp = mod(px, uTile);
-    c = texture2D(uFloors, (cell * uTile + tp + 0.5) / uFloorsSize).rgb;
+    c = texture2D(uFloors, (cell * vec2(uTile.x * ${FLOOR_VARIANTS}.0, uTile.y) + vec2(variant * uTile.x, 0.0) + tp + 0.5) / uFloorsSize).rgb;
   } else {
     vec3 f = area.a > 0.5 ? uTypeFloor[t] : vec3(0.25, 0.45, 0.4);
     float v = vnoise(px / vec2(9.0, 6.0)) * 0.7 + vnoise(px / vec2(2.5, 2.0)) * 0.3;
@@ -264,7 +268,7 @@ export class Ground {
     const nearest = (t: THREE.DataTexture) => { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true; return t; };
     this.texture = nearest(new THREE.DataTexture(new Uint8Array(W * H * 4), W, H));
     nearest(this.tile);
-    this.floors = nearest(new THREE.DataTexture(new Uint8Array(64 * FLOOR_COLS * 48 * 4 * 4), 64 * FLOOR_COLS, 48 * 4));
+    this.floors = nearest(new THREE.DataTexture(new Uint8Array(64 * FLOOR_VARIANTS * FLOOR_COLS * 48 * 4 * 4), 64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * 4));
     const floors = Array.from({ length: 32 }, (_, i) => new THREE.Vector3(...(LOOKS[i]?.floor ?? [0.25, 0.45, 0.4])));
     const disco = discoLooks(st, map.dancefloor.radius);
     const mat = new THREE.ShaderMaterial({
@@ -279,7 +283,7 @@ export class Ground {
         uTerrain: { value: Array.from({ length: 32 }, (_, i) => { const tr = LOOKS[i]?.layout.terrain ?? []; return new THREE.Vector3(+tr.includes("mounds"), +tr.includes("hollows"), +tr.includes("ridges")); }) },
         uFloors: { value: this.floors },
         uTile: { value: new THREE.Vector2(64, 48) },
-        uFloorsSize: { value: new THREE.Vector2(64 * FLOOR_COLS, 48 * 4) },
+        uFloorsSize: { value: new THREE.Vector2(64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * 4) },
         uSat: { value: st.sat },
         uFloor: { value: new THREE.Vector3(map.dancefloor.x, map.dancefloor.z, map.dancefloor.radius) },
         uCanopy: { value: new THREE.Vector4() },
@@ -340,10 +344,11 @@ export class Ground {
   private placeFloors(renderer: THREE.WebGLRenderer): void {
     for (const [type, tile] of this.pendingFloors) {
       const u = this.mesh.material as THREE.ShaderMaterial, size = u.uniforms.uTile.value as THREE.Vector2;
-      if (tile.w !== size.x || tile.h !== size.y) continue; // a tile of another size: keep the flat colour
+      const n = tile.w / size.x; // a strip of FLOOR_VARIANTS tiles, or a single tile (put in every variant's place)
+      if ((n !== FLOOR_VARIANTS && n !== 1) || tile.h !== size.y) continue; // a tile of another size: keep the flat colour
       const t = new THREE.DataTexture(tile.albedo, tile.w, tile.h);
       t.needsUpdate = true;
-      renderer.copyTextureToTexture(t, this.floors, null, new THREE.Vector2((type % FLOOR_COLS) * tile.w, Math.floor(type / FLOOR_COLS) * tile.h));
+      for (let v = 0; v < FLOOR_VARIANTS; v += n) renderer.copyTextureToTexture(t, this.floors, null, new THREE.Vector2((type % FLOOR_COLS) * size.x * FLOOR_VARIANTS + v * size.x, Math.floor(type / FLOOR_COLS) * size.y));
       t.dispose();
       this.floorReady[type] = 1;
     }

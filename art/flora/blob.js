@@ -108,10 +108,15 @@ export function stampBlobs(sp, r, st, s, list, C) {
     }
     pts.sort((a, b) => a[4] - b[4]); // the rim first, the middle over it
     for (const [jx, jy, u, v, nz] of pts) {
-      const nrm = unit([u * .9, v * .9, nz + .15]), lit = nrm[0] * BLOB_LIGHT[0] + nrm[1] * BLOB_LIGHT[1] + nrm[2] * BLOB_LIGHT[2];
+      let nrm = unit([u * .9, v * .9, nz + .15]), top = true;
+      if (C.env) { // lit as one crown (C.env: the crown's envelope { c, rx, ry, mix }): the envelope's normal there, mixed with the blob's own; the light tone only on the crown's lit top-left third
+        const E = C.env, eu0 = (c[0] + jx - E.c[0]) / E.rx, ev0 = (c[1] + jy - E.c[1]) / E.ry, el = Math.max(1, Math.hypot(eu0, ev0) / .97), eu = eu0 / el, ev = ev0 / el, /* (a clump past the envelope takes its edge's light, not the dark beyond) */ en = unit([eu * .9, ev * .9, Math.sqrt(Math.max(0, 1 - eu * eu - ev * ev)) + .15]), k = E.mix ?? .7;
+        nrm = unit([en[0] * k + nrm[0] * (1 - k), en[1] * k + nrm[1] * (1 - k), en[2] * k + nrm[2] * (1 - k)]); top = eu + ev < -.45;
+      }
+      const lit = nrm[0] * BLOB_LIGHT[0] + nrm[1] * BLOB_LIGHT[1] + nrm[2] * BLOB_LIGHT[2];
       const base = lit + (sty ? 0 : (r() - .5) * (C.jitter ?? .16)) - (back ? (C.backDark ?? .32) : 0) - Math.max(0, v) * (C.under ?? .12), /* under: how dark a blob's underside goes (a fir's tiers each a dark lower edge) */ sx = Math.round(c[0] + jx), sy = Math.round(c[1] + jy), sd = seed + ((sx * 7 + sy * 13) & 7);
       for (const [dx, dy, sh] of stampPixels(kind, ss, sd)) {
-        const t = base + sh * (sty ? .08 : (C.stampShade ?? .28)), mat = t > t2 ? mats[2] : t > t1 ? mats[1] : mats[0];
+        const t = base + sh * (sty ? .08 : (C.stampShade ?? .28)), mat = t > t2 && top ? mats[2] : t > t1 ? mats[1] : mats[0];
         put(sx + dx, sy + dy, mat, nrm[0] + dx / ss * .25, nrm[1] + dy / ss * .25, nrm[2], id0 + bi + 1);
       }
     }
