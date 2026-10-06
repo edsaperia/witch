@@ -477,7 +477,12 @@ creator.progress = () => { const a = view.assets; return { done: a.done, total: 
 function ensureSfx(): void { if (audio && !sfx && tuning.sfx.on) { sfx = new Sfx(audio, tuning.music.volume * level, tuning.sfx, musicStyle.root + 24); sfxCues = new SfxCues(sfx, (by, sec) => music?.duck(by, sec)); } }
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
 creator.onGesture = () => { try { audio ??= new AudioContext(); void audio.resume(); ensureSfx(); } catch { /* no sound yet */ } };
-creator.onStart = g => { if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); } if (start()) queueCast(); }; // (the scroll's burst: play, and the spell cast)
+creator.onStart = g => {
+  const who = playerPick?.value ?? "human"; // (the dev "Player:" pick: a bot plays the run instead of her)
+  if (who !== "human" && BOT_KINDS.includes(who as BotKind)) { botGame(who as BotKind); start(); return; }
+  if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); }
+  if (start()) queueCast();
+}; // (the scroll's burst: play, and the spell cast)
 creator.spellSound = (cue, v) => sfx?.spell(cue, v);
 // The bot game (Ed, 2026-10-06: "start the game and watch the skilled bot play"; ?bot=skilled|crude, or the start
 // screen's Bot game): rules/bot.ts plays in place of her controls, a seeded witch, no character creation.
@@ -498,8 +503,22 @@ if (lookBtn) {
   for (const ev of ["pointerdown", "pointerup", "click", "touchstart"]) lookBtn.addEventListener(ev, e => e.stopPropagation()); // (not a start)
   lookBtn.addEventListener("click", () => { if (ready && game.clock.paused) creator.show(); });
 }
-// (and in the character creator's panel, which opens first at every load: golf's creator.addButton)
-creator.addButton("🤖 Bot game", () => { if (!game.clock.paused) return; botGame("skilled"); if (ready) start(); }); // (before the forest is ready, it starts as soon as it is)
+// (the bedroom has the dev "Player:" pick above in place of a Bot game button)
+// The dev "Player:" pick (Ed, 2026-10-06: "add the bot game selector ... a dropdown with e.g. human / crude / skilled / champion
+// ... it won't be in the final game so don't worry about making it look nice"): human, then every bot in BOT_KINDS (a new one
+// shows up by itself); casting the scroll with a bot picked starts that bot's game, as ?bot=<kind>. Kept for the session
+// (sessionStorage witch.player); ?dev=0 hides it. Plain and unstyled, in the bedroom's top right corner.
+const playerPick: HTMLSelectElement | null = params.get("dev") === "0" ? null : (() => {
+  const box = document.createElement("label"), sel = document.createElement("select");
+  box.id = "player-pick"; box.textContent = "Player: ";
+  Object.assign(box.style, { position: "absolute", right: "8px", top: "8px", zIndex: "5", font: "12px sans-serif", color: "#ccc" });
+  for (const k of ["human", ...BOT_KINDS]) { const o = document.createElement("option"); o.value = o.textContent = k; sel.append(o); }
+  try { const v = sessionStorage.getItem("witch.player"); if (v && [...sel.options].some(o => o.value === v)) sel.value = v; } catch { /* storage blocked */ }
+  sel.addEventListener("change", () => { try { sessionStorage.setItem("witch.player", sel.value); } catch { /* this load only */ } });
+  for (const ev of ["pointerdown", "click", "keydown"]) sel.addEventListener(ev, e => e.stopPropagation()); // (its own keys, not the room's)
+  box.append(sel); creator.root.append(box);
+  return sel;
+})();
 const botBtn = document.getElementById("bot-btn");
 if (botBtn) {
   for (const ev of ["pointerdown", "pointerup", "click", "touchstart"]) botBtn.addEventListener(ev, e => e.stopPropagation()); // (not a start of her own)
