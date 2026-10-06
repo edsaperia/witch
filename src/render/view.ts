@@ -51,7 +51,9 @@ import { PartyWitchView } from "./partyWitches";
 import { BeachView } from "./beach";
 import { PartyObjectsView } from "./partyObjects";
 import { BorderView } from "./borders";
-import { HAT, StoneIndicator } from "./indicator";
+import { edgeLayout, HAT, StoneIndicator } from "./indicator";
+import { AlarmIndicators } from "./alarm";
+import { ALARM_DEFAULTS, newAlarms, shownAlarms, stepAlarms } from "../rules/alarms";
 import { hatMarker } from "../rules/hat";
 import { hasRune } from "../rules/creatureStates";
 import { leyPulse, pointerShown } from "../rules/leypulse";
@@ -219,6 +221,9 @@ export class View {
   private nextStones: StoneIndicator[] = [];
   /** The pointer to her hat while it lies where she was knocked out (rules/hat.ts): 🎩 in a whole ring. */
   private hatPointer: StoneIndicator | null = null;
+  /** The soundsystem alarm (render/alarm.ts): a 🔇 at the edge toward each soundsystem under attack off screen. */
+  private alarms = newAlarms();
+  private alarmCues: AlarmIndicators | null = null;
   readonly minimap: Minimap;
   /** Metre rulers and a ground grid (G). */
   readonly rulers = new Rulers(document.body);
@@ -1070,6 +1075,7 @@ export class View {
     {
       const cw = this.canvas.clientWidth || window.innerWidth, ch = this.canvas.clientHeight || window.innerHeight, cd = waveCountdown(g.party, g.map, time);
       const shown = pointerShown(g.party, g.map, time) * (1 - (g.partyOver?.ease ?? 0)); // (none once the party's over: rules/partyOver.ts)
+      edgeLayout.reset(); // (no two edge cues on one another: render/indicator.ts)
       const cue = (list: StoneIndicator[], cells: readonly (readonly [number, number])[], make: () => StoneIndicator, fill: number, label?: string) => {
         while (list.length < cells.length) list.push(make());
         list.forEach((ind, i) => {
@@ -1091,6 +1097,10 @@ export class View {
         P.fade(H ? 1 : 0);
         P.update(this.camera, cw, ch, H ? { x: H.x + HAT_BESIDE, z: H.z, colour: HAT_INK, species: "", glyph: HAT } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
       }
+      // A soundsystem (or the home ring's speakers) under attack off screen (Ed, 2026-10-06): 🔇 at the edge toward it.
+      const AT = t.alarms ?? ALARM_DEFAULTS;
+      stepAlarms(this.alarms, g.combat.sounds, g.combat.events, time, AT);
+      if (this.alarms.byKey.size || this.alarmCues) (this.alarmCues ??= new AlarmIndicators(document.body)).update(this.camera, cw, ch, shownAlarms(this.alarms, AT), w.x, w.z, time, AT);
     }
     this.time("hud");
     this.leashView.update(ht, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);

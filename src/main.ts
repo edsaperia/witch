@@ -43,6 +43,8 @@ import { BOT_GAME, BOT_KINDS, newBot, type Bot, type BotKind } from "./rules/bot
 import { BotTag } from "./ui/botGame";
 import { pleasingWitch } from "./ui/looks";
 import { applyKnobParams, DecidePanel } from "./ui/decide";
+import { installPixelUi } from "./ui/pixelUi";
+import { debugBlows } from "./rules/alarms";
 
 const params = new URLSearchParams(location.search);
 let seed = parseSeed(params.get("seed"));
@@ -251,6 +253,9 @@ const view = new View(canvas, game, {
 }, savedLook);
 loadTimes.view = performance.now();
 view.debugCull = params.get("debug") === "cull";
+void installPixelUi(); // (the pixel font, for the HUD's edge cues' labels too: render/indicator.ts)
+const ATTACK_DEBUG = params.get("debug") === "attack";
+let attackTick = -1;
 // ?debug=shadows: every shadow a flat magenta tint, to see each against what casts it (render/shadows.ts).
 if (params.get("debug") === "shadows") view.debugShadows();
 view.quick = params.get("quick") === "1";
@@ -653,6 +658,9 @@ function frame(now: number): void {
   view.debugReadouts = debugOn;
   const step0 = performance.now();
   stepGame(game, c, dt * (botTag?.speed ?? 1));
+  // ?debug=attack: every 10 s, a few seconds of blows on the two soundsystems farthest from her (never felling one), so the
+  // 🔇 alarm (render/alarm.ts) shows whenever she's away from them.
+  if (ATTACK_DEBUG && !game.clock.paused) { const tt = game.clock.time, ph = tt % 10; if (ph < 4 && Math.floor(tt * 2) !== attackTick) { attackTick = Math.floor(tt * 2); debugBlows(game.combat.sounds, game.combat.events, game.witch.x, game.witch.z, tt); } }
   const stepMs = performance.now() - step0;
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty. Once it has eased
   // in, a small card under the clock says so, with the time she lasted, and a way to play again.

@@ -271,6 +271,8 @@
         "on",
         "width",
         "shore",
+        "vary",
+        "decor",
         "ease",
         "sand",
         "sea",
@@ -4471,6 +4473,33 @@
           "type": "number",
           "minimum": 0
         },
+        "runeRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "runePull": {
+          "type": "object",
+          "properties": {
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stop": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "radius",
+            "speed",
+            "stop"
+          ],
+          "additionalProperties": false
+        },
         "weight": {
           "type": "object",
           "properties": {
@@ -4535,33 +4564,6 @@
             "maxTension"
           ],
           "additionalProperties": false
-        },
-        "runeRadius": {
-          "type": "number",
-          "minimum": 0
-        },
-        "runePull": {
-          "type": "object",
-          "properties": {
-            "radius": {
-              "type": "number",
-              "minimum": 0
-            },
-            "speed": {
-              "type": "number",
-              "minimum": 0
-            },
-            "stop": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "radius",
-            "speed",
-            "stop"
-          ],
-          "additionalProperties": false
         }
       },
       "required": [
@@ -4569,9 +4571,9 @@
         "runSpeed",
         "pickRadius",
         "spacing",
-        "weight",
         "runeRadius",
-        "runePull"
+        "runePull",
+        "weight"
       ],
       "additionalProperties": false
     },
@@ -5985,6 +5987,29 @@
         "chance",
         "length",
         "wake"
+      ],
+      "additionalProperties": false
+    },
+    "alarms": {
+      "type": "object",
+      "properties": {
+        "linger": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fall": {
+          "type": "number",
+          "minimum": 0
+        },
+        "most": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "linger",
+        "fall",
+        "most"
       ],
       "additionalProperties": false
     },
@@ -7571,6 +7596,7 @@
     "combat",
     "notice",
     "naps",
+    "alarms",
     "guard",
     "witchHealth",
     "knockout",
