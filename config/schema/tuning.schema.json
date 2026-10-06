@@ -2550,13 +2550,52 @@
         "size": {
           "type": "number",
           "minimum": 0
+        },
+        "creatures": {
+          "type": "object",
+          "properties": {
+            "range": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "opacity": {
+              "type": "number",
+              "minimum": 0
+            },
+            "happy": {
+              "type": "number",
+              "minimum": 0
+            },
+            "fade": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "range",
+            "max",
+            "size",
+            "opacity",
+            "happy",
+            "fade"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "height",
         "opacity",
         "beam",
-        "size"
+        "size",
+        "creatures"
       ],
       "additionalProperties": false
     },
