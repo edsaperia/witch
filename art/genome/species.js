@@ -24,7 +24,7 @@ export const GENOMES = [
       { body: { len: .86, bw: .42, chest: .16, tuck: .18, legW: 1.6 }, head: { blaze: 1.45 }, features: [{ kind: "mane", from: .1, to: .85, height: .12, count: 16, lean: .95 }, { kind: "claws", size: .14 }] },
       { body: { len: .95, bw: .5, chest: .14, tuck: .16, legW: 1.8, neckAng: -.05 }, head: { blaze: 1.5, blazeGlow: true }, features: [
         { kind: "mane", from: .05, to: .9, height: .12, count: 20, lean: 1 },
-        { kind: "stones", from: .15, to: .8, count: 5, height: .42 },
+        { kind: "stones", from: .15, to: .8, count: 5, height: .62 },
         { kind: "claws", size: .26, mat: "STONE" },
         { kind: "moss", count: 9, size: .1 },
       ] },
