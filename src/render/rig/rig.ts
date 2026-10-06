@@ -166,8 +166,15 @@ export class RigBody {
       const near = L.side > 0, discs = discLut(m, L.mat);
       const bias = near ? 0.02 : -0.02;
       const kz = (z + fz) / 2; // (the knee halfway across to a foot planted off the hip's line)
-      this.bone(discs, L.hip[0], hipY, kx, ky, z, L.r[0] * 0.8, L.r[1], a, flip, u2m, m.s, bias, out, kz);
-      this.bone(discs, kx, ky, ex, ey, kz, L.r[1], L.r[2], a, flip, u2m, m.s, bias, out, fz);
+      // thigh into shin into foot: the thigh full at the hip (blending into the body) tapering to the knee; a hind leg bends
+      // again at the hock, back from the line knee-to-foot, its cannon bone slim and upright down to the foot
+      this.bone(discs, L.hip[0], hipY, kx, ky, z, L.r[0] * 1.1, L.r[1], a, flip, u2m, m.s, bias, out, kz);
+      if (!L.fore) {
+        const dx = ex - kx, dy = ey - ky, l = Math.hypot(dx, dy) || 1, back = 0.16 * l * (1 - 0.5 * drive.air);
+        const hx = kx + dx * 0.55 - Math.abs(dy / l) * back, hy = ky + dy * 0.55 + Math.abs(dx / l) * back * 0.3, hz = kz + (fz - kz) * 0.55;
+        this.bone(discs, kx, ky, hx, hy, kz, L.r[1], (L.r[1] + L.r[2]) / 2, a, flip, u2m, m.s, bias, out, hz);
+        this.bone(discs, hx, hy, ex, ey, hz, (L.r[1] + L.r[2]) / 2 * 0.9, L.r[2], a, flip, u2m, m.s, bias, out, fz);
+      } else this.bone(discs, kx, ky, ex, ey, kz, L.r[1], L.r[2], a, flip, u2m, m.s, bias, out, fz);
       const fp = m.shoe?.[i] ?? pickDisc(L.hoof && m.discs[HOOF] ? discLut(m, HOOF) : discs, L.fl * 0.9 * m.s); // a party animal's shoe, else its hoof or paw
       if (fp) { this.world(ex + L.fl * 0.5, ey, fz, a, flip, u2m); out.push(fp, this.wx, this.wy, this.wz, flip, bias + (m.shoe ? 0.01 : 0)); }
     }
@@ -175,7 +182,9 @@ export class RigBody {
 
   /** A bone from (x0, y0) to (x1, y1) at side z, as discs from radius r0 to r1 (model units). */
   private bone(discs: (RigPiece | undefined)[], x0: number, y0: number, x1: number, y1: number, z: number, r0: number, r1: number, a: number, flip: boolean, u2m: number, s: number, bias: number, out: RigOut, z1 = z): void {
-    const len = Math.hypot(x1 - x0, y1 - y0), n = Math.max(2, Math.min(5, Math.ceil((len * s) / Math.max(2, Math.min(r0, r1) * s * 1.1)))); // close enough (in pixels) to read as one limb, no closer, five at most
+    // discs every 0.7 of a radius (in pixels; eight at most): overlapping that closely their edges run straight, one smooth tapering limb,
+    // not a string of beads (Ed's playtest, 2026-10-06: "creature legs look like a string of balls")
+    const len = Math.hypot(x1 - x0, y1 - y0), n = Math.max(2, Math.min(8, Math.ceil((len * s) / Math.max(1, Math.min(r0, r1) * s * 0.7))));
     for (let k = 0; k <= n; k++) {
       const t = k / n, r = r0 + (r1 - r0) * t, d = pickDisc(discs, r * s);
       if (!d) continue;
