@@ -177,9 +177,11 @@ export class InviteView {
 
     // The meters: a pill of hearts over each creature with some affection.
     const live = new Set<number>();
-    for (const [id, v] of I.meter) {
-      const c = g.creatures[id];
-      if (!c || c.gone || Math.abs(c.x - w.x) > 60 || Math.abs(c.z - w.z) > 60) continue;
+    // (Each creature's own meter, rules/affection.ts since #96: draining when it isn't being hit.)
+    for (const c of g.creatures) {
+      if (c.gone || !c.affection || Math.abs(c.x - w.x) > 60 || Math.abs(c.z - w.z) > 60) continue;
+      const v = A.affection(c), id = c.id;
+      if (v === null) continue;
       live.add(id);
       let el = this.meters.get(id);
       if (!el) {
