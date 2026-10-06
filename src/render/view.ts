@@ -167,6 +167,8 @@ export class View {
    *  world glides: Ed's 2026-10-06 playtest, "it feels low") or "camera" (the camera's snap: the world
    *  exact, her a pixel either way from frame to frame). ?glide= picks one. */
   glide: "witch" | "camera" = "witch";
+  /** Her sprite's base this frame (world, before the bend), for the frame-feel trace. */
+  readonly witchBase = { x: 0, y: 0, z: 0 };
   shadowList: ShadowInstance[] = [];
   private mist: Mist | null = null;
   width = 1;
@@ -723,6 +725,7 @@ export class View {
     this.witchBatch.set(this.partyWitchView.herIdle || hidden ? [] : [{ x: wx, y: wyy + groundHeight(wx, wz), z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
     // The glide by her own snap: what the sprite shader's snap of her base takes off, given back by
     // the canvas's shift (main.ts), so she lands where she truly is to a screen pixel every frame.
+    this.witchBase.x = wx; this.witchBase.y = wyy + groundHeight(wx, wz); this.witchBase.z = wz;
     if (this.glide === "witch" && !hidden && !this.partyWitchView.herIdle) {
       const b = bendPoint(this.v3.set(wx, wyy + groundHeight(wx, wz), wz)).project(this.camera);
       const X = (b.x * 0.5 + 0.5) * this.width, Y = (b.y * 0.5 + 0.5) * this.height;

@@ -20,7 +20,7 @@ import { parseSeed } from "./rules/map";
 import { TUNING } from "./rules/tuning";
 import { Input } from "./platform/input";
 import { View } from "./render/view";
-import { groundHeight, placed } from "./render/height";
+import { bendPoint, groundHeight, placed } from "./render/height";
 import { Vector3 } from "three";
 import { SPRITE_UNIFORMS } from "./render/sprites";
 import { loadStyle } from "./render/style";
@@ -589,8 +589,9 @@ function powerLines(): string[] {
     let at: { witch: number[]; probes: number[][]; creatures: (number[] | null)[]; witchWorld: number[] } = { witch: [], probes: [], creatures: [], witchWorld: [] };
     interpolated(game, () => {
       view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP));
-      const W = game.witch, off = (view as unknown as { rideOff: number }).rideOff;
-      at = { witch: snap(ndc(W.x, witchHeight(W, tuning) * 0.5 + off, W.z)), witchWorld: [W.x, W.z], probes: probes.map(p => snap(ndc(p.x, 0, p.z))), creatures: ids.map(id => { const k = game.creatures[id]; return k ? snap(ndc(k.x, 0, k.z)) : null; }) };
+      const W = game.witch, B = view.witchBase;
+      bendPoint(v.set(B.x, B.y, B.z)).project(view.camera);
+      at = { witch: snap(v), witchWorld: [W.x, W.z], probes: probes.map(p => snap(ndc(p.x, 0, p.z))), creatures: ids.map(id => { const k = game.creatures[id]; return k ? snap(ndc(k.x, 0, k.z)) : null; }) };
     });
     applyShake();
     const P2 = tuning.pixelSize, gx = subpixelOn ? Math.round(view.subpixel.x * P2) : 0, gy = subpixelOn ? Math.round(view.subpixel.y * P2) : 0;
