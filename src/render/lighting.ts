@@ -13,8 +13,11 @@ export const LIGHT_UNIFORMS = {
   uMoon: { value: new THREE.Vector3() },
   uMoonDir: { value: new THREE.Vector3(-0.45, 0.75, 0.5).normalize() },
   uMoonBeam: { value: new THREE.Vector3() },
-  /** The moon's fill on upward faces, a share of uMoon (the mood's moonUp; 0 none). */
-  uMoonUp: { value: 0 },
+  /** The moon's fill on upward faces: its colour times its strength (the mood's moonUp, moonUpHue, moonUpSat; 0 none). */
+  uMoonUp: { value: new THREE.Vector3() },
+  /** Her pool on the floor (the mood's glowScatter, glowFloor): x, its own colour added over any floor; y, how much the
+   *  floor's colour gives way to grey under it, so the pool reads as her light's colour on green grass or a dark path. */
+  uGlowSurface: { value: new THREE.Vector2() },
   uBands: { value: 4 },
   uDither: { value: 0.35 },
   uShafts: { value: 0.3 },
@@ -69,7 +72,8 @@ export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel:
 
 export const LIGHT_GLSL = /* glsl */ `
 uniform vec3 uAmb, uMoon, uMoonDir, uMoonBeam, uGlowPos, uGlowRgb;
-uniform float uMoonUp;
+uniform vec3 uMoonUp;
+uniform vec2 uGlowSurface;
 uniform float uBands, uDither, uShafts, uShaftScale, uGlowR, uGlowFalloff, uGlowNear, uGlowPower, uTime, uSmooth;
 uniform vec2 uHazeCentre, uHazeRange;
 uniform vec3 uHazeColour;
@@ -108,7 +112,7 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
   vec3 l = uAmb * mix(1.0, moonK, 0.5) + uMoon * moonK * lightStep(max(0.0, dot(N, uMoonDir)));
   // The moon's fill from the open sky on whatever faces up (the art director's round 2: "dark should
   // still be legible"): canopy tops and open ground catch it, the undersides and the shade don't.
-  l += uMoon * (uMoonUp * moonK * max(0.0, N.y));
+  l += uMoonUp * (moonK * max(0.0, N.y));
   if (uShafts > 0.0 && moonK > 0.99) {
     // Moonbeams: diagonal bands across the world, as the lab draws them across the screen.
     float s = mod(P.x / uShaftScale + P.z * 0.9 / uShaftScale, 150.0);
@@ -156,4 +160,10 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
   return l;
 }
 vec3 nightLight(vec3 N, vec3 P) { return nightLightShaded(N, P, 1.0); }
+// Her pool on the floor (the art director's round 3: lime on home's grass, lost on the fern forest's dark path): how
+// much of her glow falls at P (as in nightLightShaded), the floor's colour giving way to grey under it, and her
+// light's own colour added over it, so the pool reads as her warm light whatever the floor.
+float glowFall(vec3 P) { float dg = length(uGlowPos.xz - P.xz), gr = uGlowR * uGlowNear; return dg < gr ? pow(1.0 - dg / gr, uGlowFalloff) : 0.0; }
+vec3 glowFloor(vec3 c, vec3 P) { return uGlowSurface.y > 0.0 ? mix(c, vec3(dot(c, vec3(0.3, 0.55, 0.15))), uGlowSurface.y * glowFall(P)) : c; }
+vec3 glowScatter(vec3 P) { return uGlowSurface.x > 0.0 ? uGlowRgb * (uGlowSurface.x * glowFall(P)) : vec3(0.0); }
 `;

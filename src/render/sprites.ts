@@ -17,6 +17,8 @@ export const SPRITE_UNIFORMS = {
   uRimInset: { value: 0 },
   /** How much of her own glow lights the witch (render/mood.ts; 0 none, as she was). */
   uWitchGlow: { value: 0 },
+  /** Her pool's light thrown up onto her, added (the mood's witchLift, or styledLift with ?style=bold|ref). */
+  uWitchLift: { value: 0 },
   uRight: { value: new THREE.Vector3(1, 0, 0) },
   uUp: { value: new THREE.Vector3(0, 1, 0) },
   uFacing: { value: new THREE.Vector3(0, 0, 1) },
@@ -188,6 +190,14 @@ float bayer(vec2 p) {
   int m[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
   return (float(m[i]) + 0.5) / 16.0;
 }
+// 4x4 clustered-dot ordered dither: as it fills, its pixels gather into dots round each cell's middle instead of
+// spreading out, so a half-faded trunk reads as clusters, not a one-pixel checker (the art director's round 3:
+// "a screen door at 1280x720").
+float cluster4(vec2 p) {
+  int x = int(mod(p.x, 4.0)), y = int(mod(p.y, 4.0));
+  int m[16] = int[16](12, 5, 6, 13, 4, 0, 1, 7, 11, 3, 2, 8, 15, 10, 9, 14);
+  return (float(m[x + y * 4]) + 0.5) / 16.0;
+}
 void shade() {
   // Swaying by its mask (#34): each pixel samples from where the wind has pushed the leaves; a
   // second tap lets leaf edges move out over empty pixels. Trunks and rocks (mask 0) stay still.
@@ -241,7 +251,7 @@ void shade() {
   float alpha = (uFadePass > 0.5 ? mix(1.0, uOcc.x, occl) : 1.0) * shown;
   if (vFlags.y < -0.001 && uTrunkFade.x > 0.0) {
     // A trunk cut from its crown (Ed, v149: "fade out instead of just stop"): where the crowns are
-    // hidden, its top fades out over uTrunkFade.x metres in an ordered dither on the art's own
+    // hidden, its top fades out over uTrunkFade.x metres in a clustered ordered dither on the art's own
     // pixel grid; where the crowns show, it stays whole under them. The fade covers at most
     // uTrunkFade.z of the trunk's visible height (Ed, v233: short tangly trees kept no trunk at
     // all), so every trunk keeps a solid base.
@@ -249,7 +259,7 @@ void shade() {
     float topY = 1.0 + vFlags.y, band = min(uTrunkFade.x / max(vSizeY, 0.01), topY * uTrunkFade.z);
     float t = clamp((topY - vLocal.y) / band, 0.0, 1.0);
     vec2 artPx = vec2(floor(vUv.x * float(textureSize(uAlbedo, 0).x)), floor(vLocal.y * vSizeY / uTrunkFade.y));
-    if (bayer(artPx) >= max(t, crown)) discard;
+    if (cluster4(artPx) >= max(t, crown)) discard;
   }
   // Eye glints, flowers and magic glow: the generator marks them with alpha 254.
   if (uDebugCull > 0.5 && vFlags.z > 0.5) { gl_FragColor = vec4(1.0, 0.0, 0.0, alpha); return; }

@@ -1017,6 +1017,34 @@
               "type": "number",
               "minimum": 0
             },
+            "moonUpHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moonUpSat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "glowScatter": {
+              "type": "number",
+              "minimum": 0
+            },
+            "glowFloor": {
+              "type": "number",
+              "minimum": 0
+            },
+            "styledRim": {
+              "type": "number",
+              "minimum": 0
+            },
+            "styledGlow": {
+              "type": "number",
+              "minimum": 0
+            },
+            "styledLift": {
+              "type": "number",
+              "minimum": 0
+            },
             "leyRgb": {
               "type": "string"
             },
@@ -1659,6 +1687,13 @@
             "rim",
             "witchGlow",
             "moonUp",
+            "moonUpHue",
+            "moonUpSat",
+            "glowScatter",
+            "glowFloor",
+            "styledRim",
+            "styledGlow",
+            "styledLift",
             "leyRgb",
             "leyBright",
             "berryHalo",
