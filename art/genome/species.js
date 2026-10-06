@@ -91,7 +91,7 @@ export const GENOMES = [
       { body: { len: .5, hr: .29 }, parts: { ears: { kind: "small", size: 1.25 }, horns: false }, coat: { legMat: "BODY3" } },
       { parts: { horns: "twist" }, head: { horn: { length: 1.1, r: .38, curl: .7, twist: 0, ridges: 2, segs: 8, out: .55, ease: 1, mat: "BODY3" } } },
       { body: { bw: .36, legW: 1.1 }, coat: { legMat: "BODY3" }, parts: { horns: "twist" }, head: { horn: { length: 3.4, r: .62, curl: 1.75, twist: 0, ridges: 1, segs: 26, out: .7, ease: 1, tighten: .6, mat: "BODY3" } }, features: [{ kind: "ruff", size: .2, count: 14, mat: "BODY" }] },
-      { body: { bw: .4, legW: 1.2 }, coat: { legMat: "BODY3" }, parts: { horns: "twist" }, head: { horn: { length: 6, r: .7, curl: 3.3, twist: 0, ridges: 1, segs: 44, out: .8, ease: 1, tighten: .72, mat: "WOOD", thorns: 9 } }, features: [
+      { body: { bw: .4, legW: 1.2 }, coat: { legMat: "BODY3" }, parts: { horns: "twist" }, head: { horn: { length: 6, r: .7, curl: 3.3, twist: 0, ridges: 1, segs: 44, out: .8, ease: 1, tighten: .72, mat: "WOOD", thorns: 9, back: .4, wide: .15 } }, features: [
         { kind: "ruff", size: .28, count: 18, mat: "BODY" },
         { kind: "mane", belly: true, from: .1, to: .95, height: .2, count: 14, lean: .2, mat: "BODY" },
         { kind: "brambles", count: 4 },
