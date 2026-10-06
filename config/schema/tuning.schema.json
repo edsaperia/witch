@@ -4445,6 +4445,11 @@
         "turnTo": {
           "type": "number",
           "minimum": 0
+        },
+        "legendFlash": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
         }
       },
       "required": [
@@ -4457,7 +4462,8 @@
         "tumbleHeight",
         "tumbleSecs",
         "turnFrom",
-        "turnTo"
+        "turnTo",
+        "legendFlash"
       ],
       "additionalProperties": false
     },

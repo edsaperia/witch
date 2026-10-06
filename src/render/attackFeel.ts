@@ -18,7 +18,7 @@ export interface Feel {
 export const newFeel = (): Feel => ({ sx: 1, sy: 1, hop: 0, flip: false, crouch: 0, lunging: false });
 
 export type AttackFx = Tuning["attackFx"];
-export const ATTACK_FX_DEFAULT: AttackFx = { windupSquash: 0.12, windupMax: 0.6, lungeStretch: 0.14, squash: 0.24, squashSecs: 0.34, tumbleKnock: 20, tumbleHeight: 0.9, tumbleSecs: 0.5, turnFrom: 0.3, turnTo: 0.7 };
+export const ATTACK_FX_DEFAULT: AttackFx = { windupSquash: 0.12, windupMax: 0.6, lungeStretch: 0.14, squash: 0.24, squashSecs: 0.34, tumbleKnock: 20, tumbleHeight: 0.9, tumbleSecs: 0.5, turnFrom: 0.3, turnTo: 0.7, legendFlash: 0.5 };
 
 const windups = new WeakMap<object, { until: number; from: number }>();
 

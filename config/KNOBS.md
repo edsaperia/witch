@@ -967,7 +967,7 @@ The fight's scale and speed (Ed's motion scale pass, 2026-10-04: "the animals do
 
 ## `attackFx`, `combat`
 
-How attacks feel on screen (Ed, 2026-10-06: 'make creature attack visuals better'; render/attackFeel.ts), a party not a fight: windupSquash, how low and wide an attacker crouches as its wind-up nears the blow (at most windupMax seconds of it shown); lungeStretch, how far it stretches out in its lunge; squash, how flat a hit squashes the one it hits, springing back past its shape over squashSecs seconds; a knock-back thrown faster than tumbleKnock m/s tumbles: up tumbleHeight metres (at most 1.5 times that for the hardest) for tumbleSecs, over on its back from turnFrom to turnTo of the way (one slow beat, never a strobe), landing with a squash. Squash and stretch go in whole art pixels.
+How attacks feel on screen (Ed, 2026-10-06: 'make creature attack visuals better'; render/attackFeel.ts), a party not a fight: windupSquash, how low and wide an attacker crouches as its wind-up nears the blow (at most windupMax seconds of it shown); lungeStretch, how far it stretches out in its lunge; squash, how flat a hit squashes the one it hits, springing back past its shape over squashSecs seconds; a knock-back thrown faster than tumbleKnock m/s tumbles: up tumbleHeight metres (at most 1.5 times that for the hardest) for tumbleSecs, over on its back from turnFrom to turnTo of the way (one slow beat, never a strobe), landing with a squash. Squash and stretch go in whole art pixels. legendFlash: how much bigger and longer a legend's blow flashes than anyone's (its flash 1 + 2 × legendFlash times; 0.5, twice: Ed's decisions panel, config/decisions.json).
 
 | knob | type | range |
 |---|---|---|
@@ -981,6 +981,7 @@ How attacks feel on screen (Ed, 2026-10-06: 'make creature attack visuals better
 | `attackFx.tumbleSecs` | number | 0 to … |
 | `attackFx.turnFrom` | number | 0 to … |
 | `attackFx.turnTo` | number | 0 to … |
+| `attackFx.legendFlash` | number | 0 to 1 |
 | `combat.aggro` | number | 0 to … |
 | `combat.witchLose` | number | 0 to … |
 | `combat.leaveArea` | number | 0 to … |
