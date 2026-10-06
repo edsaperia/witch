@@ -10,11 +10,11 @@ await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
 const url = await b.page.evaluate(async () => {
   const G = await import("/art/generator.js"), st = G.defaultStyle(), base = G.genomeLook(G.WITCH_GENOME).look, A = G.WITCH_AXES;
   const col = G.witchColours(st, { ...G.DEFAULT_OUTFIT, cloak: [.78, .55, .45], scarf: [.98, .6, .9] });
-  const rows = [["old ends (cloak ×2.4, scarf ×3)", { cloakLength: 2.4, scarfLength: 3 }], [`new ends (cloak ×${A.cloakLength[1]}, scarf ×${A.scarfLength[1]})`, { cloakLength: A.cloakLength[1], scarfLength: A.scarfLength[1] }]];
+  const rows = [["as a generated witch's (cloak ×1.4, scarf ×1.5)", { cloakLength: 1.4, scarfLength: 1.5 }], ["old ends (cloak ×2.4, scarf ×3)", { cloakLength: 2.4, scarfLength: 3 }], [`new ends (cloak ×${A.cloakLength[1]}, scarf ×${A.scarfLength[1]})`, { cloakLength: A.cloakLength[1], scarfLength: A.scarfLength[1] }]];
   const poses = [[{ frame: 0 }, "hover"], [{ frame: 0, facing: "away" }, "away"], [{ pose: "lean", frame: 0 }, "lean 0"], [{ pose: "lean", frame: 1 }, "lean 1"], [{ pose: "lean", frame: 2 }, "lean 2"], [{ pose: "rise", frame: 0 }, "rise"], [{ pose: "descend", frame: 0 }, "descend"], [{ pose: "brake", frame: 0 }, "brake"],
     [{ pose: "stand", frame: 0 }, "stand"], [{ pose: "sit", frame: 0 }, "sit"], [{ pose: "twoStep", frame: 1 }, "dance"], [{ pose: "spin", frame: 1 }, "spin"], [{ pose: "sitGround", frame: 0 }, "on the ground"]];
   const sheets = rows.map(([name, ex]) => ({ name, sp: poses.map(([o, label]) => ({ label, s: G.bake(G.witchSprite(st, { ...o, look: { ...base, cloak: "long", scarf: true, ...ex } }), col, st, st.cOutline) })) }));
-  const cellW = 150, W = poses.length * cellW + 20, rowH = 360, H = rows.length * rowH;
+  const cellW = 200, W = poses.length * cellW + 20, rowH = 360, H = rows.length * rowH;
   const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d"); g.imageSmoothingEnabled = false; g.fillStyle = "#24304a"; g.fillRect(0, 0, W, H);
   sheets.forEach((r, i) => {
     const y0 = i * rowH; g.fillStyle = "#f4ecd8"; g.font = "18px monospace"; g.fillText(r.name, 10, y0 + 22);

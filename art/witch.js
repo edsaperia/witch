@@ -246,6 +246,9 @@ function drawWrap(m, L, chest, fwd, spine, flying) {
   }
   drawExtras(m, L, chest, fwd, spine, flying);
 }
+// A cloak's half-width a distance down it (Ed, 2026-10-06: "Cloaks should be a little wider, and get wider as they get longer"):
+// as at her shoulders at the top, flaring out down the train like a cape.
+const cloakWidth = d => .165 + Math.min(.6, d * .3);
 // A cloak past the old lengths (Ed, 2026-10-06: "allow a longer cloak"): a train of cloth from her shoulders, streaming out behind
 // her in flight and rippling with the frame, or hanging down her back to the ground and lying along it behind her. Past the first
 // stretch it's `extra`: her size and her lift off the ground don't count it.
@@ -260,9 +263,9 @@ function longCloak(m, L, sh, dir, back, len, flying, patch) {
   }
   for (let i = 0; i < n; i++) {
     const a = pts[i], b = pts[i + 1], d = v3.norm(v3.sub(b, a)), t = (i + .5) / n, onGround = !flying && a[1] <= .031 && b[1] <= .031;
-    m.ell(v3.lerp(a, b, .5), [step * .75, .028, .2 + .06 * t], M.CLOTH, { dir: d, up: flying || onGround ? [0, 1, 0] : back, group: 14, extra: i * step > .7, ...(patch ? { paint: patch } : {}) });
+    m.ell(v3.lerp(a, b, .5), [step * .75, .028, cloakWidth((i + .5) * step)], M.CLOTH, { dir: d, up: flying || onGround ? [0, 1, 0] : back, group: 14, extra: i * step > .7, ...(patch ? { paint: patch } : {}) });
   }
-  m.ell(pts[n], [.05, .025, .27], M.CLOTH, { dir: v3.norm(v3.sub(pts[n], pts[n - 1])), up: flying || pts[n][1] <= .031 ? [0, 1, 0] : back, group: 14, extra: true });
+  m.ell(pts[n], [.05, .025, cloakWidth(len) + .03], M.CLOTH, { dir: v3.norm(v3.sub(pts[n], pts[n - 1])), up: flying || pts[n][1] <= .031 ? [0, 1, 0] : back, group: 14, extra: true });
 }
 // The witch generator's extras: a cloak from her shoulders (short, long, or long with a hood), streaming out behind in flight or
 // hanging down her back; a scarf round her neck, its end flying; a satchel on her near hip on a strap across her; a glowing pendant.
@@ -275,8 +278,8 @@ function drawExtras(m, L, chest, fwd, spine, flying) {
     const patch = L.patches ? p => hash2(Math.floor(p[0] * 11), Math.floor(p[1] * 11) + Math.floor(p[2] * 11) * 17, 23) < .14 ? M.HAT2 : undefined : undefined; // patched: squares of another cloth
     if (len > .8) longCloak(m, L, sh, dir, back, len, flying, patch); // (Ed, 2026-10-06: "allow a longer cloak")
     else {
-      m.ell(mid, [len * .55, .03, .15 + len * .12], M.CLOTH, { dir, up: flying ? [0, 1, 0] : back, group: 14, ...(patch ? { paint: patch } : {}) });
-      m.ell(end, [.05, .025, .17 + len * .15], M.CLOTH, { dir, up: flying ? [0, 1, 0] : back, group: 14 });
+      m.ell(mid, [len * .55, .03, .165 + len * .18], M.CLOTH, { dir, up: flying ? [0, 1, 0] : back, group: 14, ...(patch ? { paint: patch } : {}) });
+      m.ell(end, [.05, .025, .19 + len * .3], M.CLOTH, { dir, up: flying ? [0, 1, 0] : back, group: 14 });
     }
     if (L.cloak === "hooded") m.ell(v3.add(neck, v3.add(v3.mul(back, .09), v3.mul(spine, .03))), [.08, .06, .1], M.CLOTH, { dir: back, up: spine, group: 14 });
   }
