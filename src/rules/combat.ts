@@ -767,7 +767,7 @@ function stepLegendAttack(w: CombatWorld, s: CombatState, c: Creature, _data: Co
     const d = Math.hypot(o.x - c.x, o.z - c.z);
     if (d <= R) found.push({ d, x: o.x, z: o.z, target: { kind: "creature", id: o.id } });
   }
-  if (!found.length) { f.target = null; return; }
+  if (!found.length) { f.target = null; f.readyAt = time + A.recheck; return; } // (nothing in reach: look again in a moment, not every step)
   found.sort((a, b) => a.d - b.d);
   if (charger) {
     // A charging legend: one long charge at the nearest, its head lowered windup seconds first.
