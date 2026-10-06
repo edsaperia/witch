@@ -153,7 +153,7 @@ function* rebuild(v: View, force: boolean): Generator<void, void, void> {
     const pl: SpriteInstance[] = [], R = SPRITE_UNIFORMS.uRight.value;
     for (const p of g.map.paths.pieces) {
       if (Math.abs(p.x - cx) > half || Math.abs(p.z - cz) > half) continue;
-      const a = pa.byId[p.id];
+      const a = pa.byId[`${p.id}~${Math.floor(hash2(Math.round(p.x), Math.round(p.z), 61) * 3)}`] ?? pa.byId[p.id]; // a bridge's generated variant by its place (baked only under ?props=gen)
       if (!a) continue;
       // Anchored by its origin like a set piece: the part drawn below its middle lies on the
       // ground nearer the camera, its lowest drawn pixel on the ground.

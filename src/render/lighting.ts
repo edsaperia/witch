@@ -13,6 +13,8 @@ export const LIGHT_UNIFORMS = {
   uMoon: { value: new THREE.Vector3() },
   uMoonDir: { value: new THREE.Vector3(-0.45, 0.75, 0.5).normalize() },
   uMoonBeam: { value: new THREE.Vector3() },
+  /** The moon's fill on upward faces, a share of uMoon (the mood's moonUp; 0 none). */
+  uMoonUp: { value: 0 },
   uBands: { value: 4 },
   uDither: { value: 0.35 },
   uShafts: { value: 0.3 },
@@ -49,6 +51,11 @@ export type LightUniforms = typeof LIGHT_UNIFORMS;
 
 /** Set the light colours from a style (the Art Lab's knobs). One set of uniforms is shared by
  *  every material, so this and the glow position update everything at once. */
+/** How far her pool's ground takes her light's own colour at its centre (0 none, 1 all): glowPool. */
+export const POOL_WARMTH = 0.65;
+/** The least brightness of her pool's ground at its centre (0 to 1): a dark floor still shows her light. */
+export const POOL_LIFT = 0.16;
+
 export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel: number, ambientScale = 1, glowFalloff = 2.5, moonScale = 1): void {
   const v = (rgb: number[], k: number) => new THREE.Vector3(rgb[0] / 255 * k, rgb[1] / 255 * k, rgb[2] / 255 * k);
   LIGHT_UNIFORMS.uAmb.value.copy(v(hsv2rgb(st.ambientHue, 0.55, 1), st.ambient * ambientScale));
@@ -67,6 +74,7 @@ export function applyStyleLight(st: Style, glowReach: number, metresPerArtPixel:
 
 export const LIGHT_GLSL = /* glsl */ `
 uniform vec3 uAmb, uMoon, uMoonDir, uMoonBeam, uGlowPos, uGlowRgb;
+uniform float uMoonUp;
 uniform float uBands, uDither, uShafts, uShaftScale, uGlowR, uGlowFalloff, uGlowNear, uGlowPower, uTime, uSmooth;
 uniform vec2 uHazeCentre, uHazeRange;
 uniform vec3 uHazeColour;
@@ -103,6 +111,9 @@ float lightStep(float f) {
 // it; the witch's own glow is never shadowed). Returns the light falling on that pixel.
 vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
   vec3 l = uAmb * mix(1.0, moonK, 0.5) + uMoon * moonK * lightStep(max(0.0, dot(N, uMoonDir)));
+  // The moon's fill from the open sky on whatever faces up (the art director's round 2: "dark should
+  // still be legible"): canopy tops and open ground catch it, the undersides and the shade don't.
+  l += uMoon * (uMoonUp * moonK * max(0.0, N.y));
   if (uShafts > 0.0 && moonK > 0.99) {
     // Moonbeams: diagonal bands across the world, as the lab draws them across the screen.
     float s = mod(P.x / uShaftScale + P.z * 0.9 / uShaftScale, 150.0);
@@ -150,4 +161,17 @@ vec3 nightLightShaded(vec3 N, vec3 P, float moonK) {
   return l;
 }
 vec3 nightLight(vec3 N, vec3 P) { return nightLightShaded(N, P, 1.0); }
+// Her pool in her light's own colour (the art director, round 3: "a lime glow sits on the ground at the front of home's
+// dancefloor"): her warm light times green grass came out lime, the brightest thing at home and off its palette. Within her
+// pool, the lit ground's colour (col) is pulled toward her light's hue at the same brightness, most at its centre. And on a
+// dark floor (the fern forest's litter: "her light doesn't show") it's never darker than POOL_LIFT there, so her pool reads.
+vec3 glowPool(vec3 col, vec3 P) {
+  vec3 v = uGlowPos - P;
+  float dg = length(v.xz), gr = uGlowR * uGlowNear;
+  if (dg >= gr || uGlowPower <= 0.0) return col;
+  vec3 Y = vec3(0.3, 0.55, 0.15);
+  float fall = pow(1.0 - dg / gr, uGlowFalloff) * min(1.0, uGlowPower);
+  vec3 warm = max(dot(col, Y), ${POOL_LIFT.toFixed(3)} * fall) * uGlowRgb / max(1e-3, dot(uGlowRgb, Y));
+  return mix(col, min(vec3(1.0), warm), ${POOL_WARMTH.toFixed(2)} * fall);
+}
 `;

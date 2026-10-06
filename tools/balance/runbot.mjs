@@ -7,11 +7,12 @@
 //     next wave's soundsystem before it lands and parks some of her posse there as guards, kites
 //     fighters, and rises to the treetops to heal at her last hit;
 //   idle: stands at home all run (the sieges alone, for comparing rules changes seed by seed);
+//   hover: idle, but over the treetops (nothing can go for her);
 //   crude: invites everything in the nearest wild area, area after area, and never parks, defends
 //     or heals.
 // The bot flies between areas over the treetops and fights on the ground, as a player does.
 // WHO=1 in the environment logs every hit she takes: who was close and coming for her, and the angry legends.
-//   node tools/balance/runbot.mjs [--seeds 3 (seeds 0 to N-1; --skip K starts at K)] [--bots skilled,crude] [--time 1800] [--happy N (the N legends nearest home happy from the start)] [--set path=value;...] [--json out.json] | --report a.json,b.json
+//   node tools/balance/runbot.mjs [--seeds 3 (seeds 0 to N-1; --skip K starts at K)] [--bots skilled,crude] [--time 1800] [--happy N (the N legends nearest home happy from the start)] [--feed (the skilled bot leads her babies and young to berry patches)] [--guards 3 --keep 2 (the skilled bot parks up to G at the next soundsystem, keeping K)] [--set path=value;...] [--json out.json] | --report a.json,b.json
 import { readFileSync, writeFileSync } from "node:fs";
 import { arg, list, mean, median, openRules } from "./lib.mjs";
 
@@ -19,7 +20,7 @@ const say = s => console.log(s);
 let rows;
 if (arg("report")) rows = list(arg("report")).flatMap(f => JSON.parse(readFileSync(f, "utf8")));
 else {
-  const SEEDS = +arg("seeds", 3), SKIP = +arg("skip", 0), HAPPY = +arg("happy", 0), BOTS = list(arg("bots", "skilled,crude")), TIME = +arg("time", 1800);
+  const SEEDS = +arg("seeds", 3), SKIP = +arg("skip", 0), HAPPY = +arg("happy", 0), GUARDS = +arg("guards", 3), KEEP = +arg("keep", 2), FEED = process.argv.includes("--feed"), BOTS = list(arg("bots", "skilled,crude")), TIME = +arg("time", 1800);
   const SETS = String(arg("set", "")).split(";").filter(Boolean).map(kv => { const [k, v] = kv.split("="); return [k.trim().split("."), JSON.parse(v)]; });
   const { load, close } = await openRules();
   const { TUNING, withTuning } = await load("/src/rules/tuning.ts");
@@ -27,6 +28,7 @@ else {
   const { AREA_TYPES } = await load("/src/rules/map.ts");
   const { cellKey } = await load("/src/rules/party.ts");
   const { cheer } = await load("/src/rules/legends.ts");
+  const { powerReport } = await load("/src/rules/power.ts");
 
   function over() {
     const o = {};
@@ -46,7 +48,7 @@ else {
     const legendOf = new Map(g.creatures.filter(c => c.boss).map(c => [cellKey(c.cell), c.id]));
     const origin = new Map(); // invited id -> the key of the area it came from
     const waves = [], parkedAt = new Set();
-    let firstKo = null, kos = 0, wasKo = false, healing = false, target = null, pickAt = -1, landWave = -1, lastWave = 0;
+    let feeding = null, feedAgain = 0, firstKo = null, kos = 0, wasKo = false, healing = false, target = null, pickAt = -1, landWave = -1, lastWave = 0;
     const T0 = Date.now();
 
     /** Where to recruit next: a wild area with someone she may invite (careful: never its last one of the area's kind). */
@@ -87,6 +89,7 @@ else {
       };
       if (w.ko) wasKo = true;
       else if (bot === "idle") { /* (stands at home all run: the sieges alone) */ }
+      else if (bot === "hover") { if (b.mode === "ground") toggle = true; } // (over the treetops at home all run: out of every fight)
       else if (careful && (healing || w.health.hp <= 1)) {
         // To the treetops to heal, then back to work.
         healing = w.health.hp < H;
@@ -104,9 +107,26 @@ else {
             const qi = q && g.creatures[L].questOpen ? st.findIndex(id => g.creatures[id].species === q.species && g.creatures[id].level === q.level) : -1;
             if (qi >= 0 && qi !== st.length - 1) { st.push(st.splice(qi, 1)[0]); } // (cycling the stack, as the sigil button does in the treetops)
             if (qi >= 0) sigil = true;
-            else if (!parkedAt.has(key) && st.length > 2) { sigil = true; if (w.leash.placed.filter(p => Math.hypot(p.x - s.x, p.z - s.z) < 40).length >= Math.min(3, st.length - 2)) parkedAt.add(key); }
+            else if (!parkedAt.has(key) && st.length > KEEP) { sigil = true; if (w.leash.placed.filter(p => Math.hypot(p.x - s.x, p.z - s.z) < 40).length >= Math.min(GUARDS, st.length - KEEP)) parkedAt.add(key); }
             // Then hold the spot, kiting anything that comes for her.
             for (const c of g.creatures) if (c.enraged && !c.gone && Math.hypot(c.x - b.x, c.z - b.z) < 9) { const d = Math.hypot(c.x - b.x, c.z - b.z) || 1; mx = (b.x - c.x) / d; mz = (b.z - c.z) / d; dash = d < 5; break; }
+          }
+        } else if (FEED && careful && (feeding || (time >= feedAgain && w.leash.stack.filter(id => g.creatures[id].level < 2).length >= 3))) {
+          // Feeding (skilled, --feed): her young ones to the nearest patch of ripe berries, and wait there while they eat.
+          if (!feeding) {
+            const B = g.berries, ripe = B.berries.filter(r => r.claimedBy === null).map(r => B.bushes[r.bush]);
+            let best = null, bs = -Infinity;
+            for (const p of ripe) {
+              const d = Math.hypot(p.x - b.x, p.z - b.z); if (d > 500) continue;
+              const n = ripe.filter(q => Math.hypot(q.x - p.x, q.z - p.z) < 10).length, sc = n * 60 - d;
+              if (n >= 3 && sc > bs) { bs = sc; best = p; }
+            }
+            feeding = best ? { x: best.x, z: best.z, until: Infinity } : null;
+            if (!feeding) feedAgain = time + 30;
+          }
+          if (feeding && goTo(feeding.x, feeding.z, true)) {
+            if (feeding.until === Infinity) feeding.until = time + 20; // (20 s among the bushes)
+            if (time >= feeding.until) { feeding = null; feedAgain = time + 60; }
           }
         } else {
           if (!target || time >= pickAt) { target = pickRecruit(); pickAt = time + 3; }
@@ -143,7 +163,8 @@ else {
         for (const [key, a] of g.party.areas) if (a.wave === g.party.wave) {
           const wild = g.creatures.filter(c => !c.gone && !c.boss && !c.leashed && cellKey(c.cell) === key).length;
           const got = [...origin.values()].filter(k => k === key).length, L = legendOf.get(key);
-          waves.push({ wave: g.party.wave, at: g.clock.time, cell: a.cell, key, wild, got, share: wild + got ? got / (wild + got) : NaN, friendly: g.friendly.has(key), legend: L !== undefined ? g.creatures[L].legendState : null });
+          const P = powerReport(g.creatures, g.witches, g.combat.sounds);
+          waves.push({ wave: g.party.wave, at: g.clock.time, cell: a.cell, key, wild, got, partyF: P.leashed + P.parked, siegeF: P.sieges.reduce((x, y) => x + y.value, 0), marching: P.marching, share: wild + got ? got / (wild + got) : NaN, friendly: g.friendly.has(key), legend: L !== undefined ? g.creatures[L].legendState : null });
         }
       }
       if (g.over) break;
@@ -151,10 +172,10 @@ else {
     const L = [...legendOf.values()].map(id => g.creatures[id]);
     const standing = [...g.combat.sounds.values()].filter(h => h.hp > 0).length;
     return {
-      seed, bot, set: [...SETS.map(([k, v]) => `${k.join(".")}=${JSON.stringify(v)}`), ...(HAPPY ? [`happy=${HAPPY}`] : [])].join(";"), end: g.clock.time, over: g.over?.at ?? null, wave: g.party.wave,
+      seed, bot, set: [...SETS.map(([k, v]) => `${k.join(".")}=${JSON.stringify(v)}`), ...(HAPPY ? [`happy=${HAPPY}`] : []), ...(GUARDS !== 3 || KEEP !== 2 ? [`guards=${GUARDS},keep=${KEEP}`] : []), ...(FEED ? ["feed"] : [])].join(";"), end: g.clock.time, over: g.over?.at ?? null, wave: g.party.wave,
       firstKo, kos, invited: origin.size, posse: w.leash.stack.length, parked: w.leash.placed.length,
       angry: L.filter(c => c.legendState === "angry").length, happy: L.filter(c => c.legendState === "happy").length, quests: g.friendly.size,
-      standing, ruined: g.party.ruined?.size ?? 0, waves, secs: (Date.now() - T0) / 1000,
+      standing, ruined: g.party.ruined?.size ?? 0, waves, tally: { ...g.tally }, levels: [0, 1, 2, 3].map(l => [...w.leash.stack, ...w.leash.placed.map(p => p.id)].filter(id => !g.creatures[id].gone && g.creatures[id].level === l).length), secs: (Date.now() - T0) / 1000,
     };
   }
 
@@ -162,7 +183,7 @@ else {
   for (const bot of BOTS) for (let i = SKIP; i < SEEDS; i++) {
     const r = run(1000 + i * 7919, bot);
     rows.push(r);
-    process.stderr.write(`${bot} ${r.seed}${r.set ? ` [${r.set}]` : ""}: ${r.over !== null ? `over at ${(r.over / 60).toFixed(1)} min` : `standing ${r.standing}`}, wave ${r.wave}, first KO ${r.firstKo === null ? "none" : `${(r.firstKo / 60).toFixed(1)} min`}, ${r.kos} KOs, invited ${r.invited}, angry ${r.angry}, quests ${r.quests}, ruined ${r.ruined} (${r.secs.toFixed(0)} s)\n`);
+    process.stderr.write(`${bot} ${r.seed}${r.set ? ` [${r.set}]` : ""}: ${r.over !== null ? `over at ${(r.over / 60).toFixed(1)} min` : `standing ${r.standing}`}, wave ${r.wave}, first KO ${r.firstKo === null ? "none" : `${(r.firstKo / 60).toFixed(1)} min`}, ${r.kos} KOs, invited ${r.invited} (levels ${r.levels.join('/')}, evolved ${r.tally.evolved}, berries ${r.tally.berries}), angry ${r.angry}, quests ${r.quests}, ruined ${r.ruined} (${r.secs.toFixed(0)} s)\n`);
   }
   await close();
   if (arg("json")) { writeFileSync(arg("json"), JSON.stringify(rows)); process.exit(0); }

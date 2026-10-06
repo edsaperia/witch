@@ -1,6 +1,6 @@
 // The whole game state, and one step of it. No drawing here: the Three.js layer reads this.
 import { MOVEMENT } from "./movement";
-import { spaceOut } from "./spacing";
+import { bodyRadius, spaceOut } from "./spacing";
 import { onAreaDone } from "./leylines";
 import { questPlaced, type QuestEvent } from "./quest";
 import { beatAt, newBeatClock, waveArrived, waveTempo, type BeatClock } from "./beat";
@@ -8,10 +8,12 @@ import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState } 
 import { MAX_STEP, newClock, type Clock } from "./clock";
 import { heldByCombat, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature } from "./creatures";
 import { Forest } from "./forest";
-import { inviteCreature, leashPoint, newLeash, stepLeash, type LeashControls, type LeashState } from "./leash";
+import { inviteCreature, leashPoint, newLeash, stepLeash, type LeashControls, type LeashEvent, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
 import { buffing, cheer, LEGENDS, placeRelics, relicButton, stepLegendStates, type Relic } from "./legends";
 import { danceAt, invitableNow, stateOf, STATES } from "./creatureStates";
+import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, SLOT_RANGE, SPOT_RANGE } from "./partyGuests";
+import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
 import { cellKey, hurryWave, newParty, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
@@ -92,6 +94,8 @@ export interface Game {
   /** This frame's wave events (several steps' worth, or none): a soundsystem lost brings the next
    *  wave sooner (Ed, 2026-10-05), with the countdown it leaves, for the HUD and the music. */
   waveEvents: WaveEvent[];
+  /** This frame's leash events (several steps' worth, or none), for the view: `leash.events` holds only the last step's. */
+  leashEvents: LeashEvent[];
   /** The creatures by home area (rebuilt when one settles somewhere new). */
   byArea?: Map<string, Creature[]> | null;
   /** The areas' legends, by id (rules/creatures.ts: one an area), found once. */
@@ -164,7 +168,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
     beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)),
     floor: newFloor(), buffs: newBuffs(tuning), partyWitches: newPartyWitches(seed),
-    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), questEvents: [] as QuestEvent[], waveEvents: [] as WaveEvent[], relics: placeRelics(map, forest), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), over: null as { at: number } | null,
+    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), questEvents: [] as QuestEvent[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], relics: placeRelics(map, forest), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), over: null as { at: number } | null,
     acc: 0, alpha: 1, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
   };
   const d = map.dancefloor, C = tuning.combat;
@@ -185,7 +189,7 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   if (c.zoom) P.zoom = c.zoom;
   if (g.clock.paused || !(realDt > 0)) return;
   // This frame's combat and knockout events (several steps' worth, or none), for the view.
-  g.combat.events = []; g.koEvents = []; g.questEvents = []; g.waveEvents = [];
+  g.combat.events = []; g.koEvents = []; g.questEvents = []; g.waveEvents = []; g.leashEvents = [];
   for (const w of g.witches) w.invites.events = [];
   g.acc = Math.min(g.acc + Math.min(realDt, MAX_STEP), MAX_STEP + STEP);
   while (g.acc >= STEP - 1e-9) {
@@ -250,6 +254,8 @@ function remember(g: Game): void {
 /** Run `draw` with the witches, creatures and camera eased between the last two steps by alpha
  *  (so motion is smooth whatever the display's rate), then put the simulated state back. */
 let held = new Float64Array(0); // (the simulated positions while drawing: one array kept, not one a frame)
+const carried: { x: number; z: number; flown?: number }[] = []; // (the 💌s and shots carried back, and where they were)
+let carriedAt = new Float64Array(64);
 export function interpolated<T>(g: Game, draw: () => T): T {
   const k = g.alpha, pw = g.prev.witches, pc = g.prev.creatures, C = g.creatures;
   if (k >= 1 || !pw.length || pc.length !== C.length * 2) return draw();
@@ -259,6 +265,30 @@ export function interpolated<T>(g: Game, draw: () => T): T {
   g.witches.forEach((w, i) => { const p = pw[i]; if (p) w.body = { ...w.body, x: mix(p.x, w.body.x), z: mix(p.z, w.body.z), lift: mix(p.lift, w.body.lift) }; });
   // (a jump further than a charge covers in a slow frame is a teleport: not blended)
   for (let i = 0; i < C.length; i++) { cx[2 * i] = C[i].x; cx[2 * i + 1] = C[i].z; const ex = pc[2 * i] - C[i].x, ez = pc[2 * i + 1] - C[i].z; if (ex * ex + ez * ez < 400) { C[i].x = mix(pc[2 * i], C[i].x); C[i].z = mix(pc[2 * i + 1], C[i].z); } }
+  // 💌s and shots in flight: carried back along their velocity to the moment drawn (not stored a
+  // step back: they come and go every step), so on a display faster than the steps they glide
+  // rather than holding every other frame (Ed's playtest, 2026-10-06: "it feels low"). Kept in
+  // arrays reused frame to frame (no garbage a frame).
+  const back = (1 - k) * STEP;
+  carried.length = 0; let nv = 0;
+  const keep = (o: { x: number; z: number; flown?: number }) => {
+    if (carriedAt.length < nv + 3) { const a = new Float64Array(Math.max(64, carriedAt.length * 2)); a.set(carriedAt); carriedAt = a; }
+    carried.push(o); carriedAt[nv++] = o.x; carriedAt[nv++] = o.z; carriedAt[nv++] = o.flown ?? NaN;
+  };
+  if (back > 0) {
+    for (const w of g.witches) for (const L of w.invites.letters) {
+      if (L.kind) continue;
+      keep(L);
+      L.x -= L.vx * back; L.z -= L.vz * back; L.flown = Math.max(0, L.flown - Math.hypot(L.vx, L.vz) * back);
+    }
+    for (const sh of g.combat.shots) {
+      keep(sh);
+      if (!sh.lob) { sh.x -= sh.vx * back; sh.z -= sh.vz * back; continue; }
+      // (A lob is where its arc puts it at the moment drawn.)
+      const L = sh.lob, q = Math.max(0, Math.min(1, (g.clock.time - back - L.at) / Math.max(0.01, L.lands - L.at)));
+      sh.x = L.fx + (L.tx - L.fx) * q; sh.z = L.fz + (L.tz - L.fz) * q;
+    }
+  }
   const pcam = g.prev.camera;
   if (pcam) g.camera = { ...camera, tx: mix(pcam.tx, camera.tx), ty: mix(pcam.ty, camera.ty), tz: mix(pcam.tz, camera.tz), lift: mix(pcam.lift, camera.lift), zoom: mix(pcam.zoom, camera.zoom), ax: mix(pcam.ax, camera.ax), az: mix(pcam.az, camera.az), pull: pcam.pull === undefined || camera.pull === undefined ? camera.pull : mix(pcam.pull, camera.pull), intro: pcam.intro === undefined || camera.intro === undefined ? camera.intro : mix(pcam.intro, camera.intro) };
   try { return draw(); }
@@ -266,6 +296,7 @@ export function interpolated<T>(g: Game, draw: () => T): T {
     g.witches.forEach((w, i) => { w.body = bodies[i]; });
     for (let i = 0; i < C.length; i++) { C[i].x = cx[2 * i]; C[i].z = cx[2 * i + 1]; }
     g.camera = camera;
+    for (let j = 0; j < carried.length; j++) { const o = carried[j]; o.x = carriedAt[3 * j]; o.z = carriedAt[3 * j + 1]; if (!Number.isNaN(carriedAt[3 * j + 2])) o.flown = carriedAt[3 * j + 2]; }
   }
 }
 
@@ -365,7 +396,8 @@ function fixedStep(g: Game, controls: Controls): void {
   stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, t, g.beat);
   for (const e of g.leash.events) if (e.kind === "invited" || e.kind === "befriended") g.tally.invites++;
   // Made happy in an area that already has its soundsystem: it joins the dancing there (#87).
-  for (const e of g.leash.events) if (e.kind === "befriended") { const c = g.creatures[e.id], a = g.party.areas.get(cellKey(c.cell)); if (a?.soundsystem && g.combat.sounds.has(cellKey(c.cell))) danceAt(c, a.soundsystem); }
+  for (const e of g.leash.events) if (e.kind === "befriended") { const c = g.creatures[e.id], a = g.party.areas.get(cellKey(c.cell)); if (a?.soundsystem && g.combat.sounds.has(cellKey(c.cell))) joinParty(g, c, a.soundsystem, a.cell); }
+  g.leashEvents.push(...g.leash.events);
   for (const e of B.events) if (e.kind === "ate") g.tally.berries++; else if (e.kind === "evolved") g.tally.evolved++;
   stepDancefloor(g, wave, seated);
   stepWitchParty(g, c, dt);
@@ -413,8 +445,8 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     startSiege(S, key, a.soundsystem, a.cell, g.creatures, t);
     // Its besiegers march wherever she is (stepped from now on as busy, not only once she comes near).
     for (const c of g.creatures) if (c.siege === key && !c.gone) S.busy.add(c.id);
-    // Its happy ones (#87) come and dance round it.
-    for (const c of g.creatures) if (!c.gone && !c.leashed && c.state === "happy" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) danceAt(c, a.soundsystem);
+    // Its happy ones (#87) come and dance: round it, or at the area's party places (rules/partyGuests.ts).
+    for (const c of g.creatures) if (!c.gone && !c.leashed && c.state === "happy" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) joinParty(g, c, a.soundsystem, a.cell);
   }
   // Only creatures with something to fight near them take part: wild ones in or next to the area
   // of a witch or a party animal (wild never fights wild, and only besiegers go for soundsystems;
@@ -585,6 +617,24 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
 /** How far from the witch creatures are simulated (by their home): at least far enough that one
  *  resuming anywhere in its area does so beyond the draw distance (the haze), so none ever jumps
  *  in view. */
+/** A happy creature joins its area's party: it goes to its spot (by the soundsystem, or one of the area's party places) and
+ *  dances there, at a party place in the first free slot round it (guestSlot, guestGap: by the guests already there). */
+export function joinParty(g: Game, c: Creature, soundsystem: { x: number; z: number }, cell: Cell): void {
+  const spot = guestSpot(c, soundsystem, partySpots(g.map, cell, g.tuning));
+  if (spot.kind === "soundsystem") { danceAt(c, spot, spot.r); return; }
+  // the guests already round this place, and their slots
+  const taken: Creature[] = [], body = bodyRadius(c);
+  for (const o of g.creatures) if (o !== c && o.dancing && !o.gone && o.range <= SLOT_RANGE && o.cell[0] === cell[0] && o.cell[1] === cell[1] && Math.hypot(o.anchorX - spot.x, o.anchorZ - spot.z) < spot.r + 12) taken.push(o);
+  // the first free slot in its area (the far row's, a second row, then the near row's, for a place by its area's edge);
+  // else (the place full) by the soundsystem, never piled up
+  const free = (p: { x: number; z: number }) => { const cl = g.map.cellSafe(p.x, p.z).cell; return cl[0] === cell[0] && cl[1] === cell[1] && taken.every(o => Math.abs(o.anchorX - p.x) > guestGap(bodyRadius(o), body) || Math.abs(o.anchorZ - p.z) > GUEST_DEPTH); };
+  for (const front of [false, true]) for (let row = 0; row < 2; row++) for (const u of ROW_OFFSETS) {
+    const at = guestSlot(spot, u, body, row, front);
+    if (free(at)) { danceAt(c, at, at.r); return; }
+  }
+  danceAt(c, soundsystem, SPOT_RANGE.soundsystem);
+}
+
 export const simRadius = (g: Game) => Math.max(g.tuning.creatureSimRadius, g.tuning.haze.far + 20 + wanderRange(g.map) * 2.5);
 
 export const poseOf = (g: Game): CameraPose => cameraPose(g.camera, g.camera.lift, g.tuning);

@@ -18,9 +18,11 @@ import { Ground } from "./ground";
 import { Sky } from "./sky";
 import { Clouds } from "./clouds";
 import { Ride } from "./ride";
-import { groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, placed, useHeightField } from "./height";
+import { bendPoint, groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, placed, useHeightField } from "./height";
 import { PathView } from "./paths";
 import { applyStyleLight, LIGHT_UNIFORMS } from "./lighting";
+import { AreaMoods, hsvInto, moodOf } from "./mood";
+import { hsv2rgb } from "../../art/generator.js";
 import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
@@ -138,6 +140,8 @@ export class View {
   private lasers: Lasers;
   /** The ley lines through the runestones in wave order (Ed, 2026-10-04). */
   private ley: LeyLines;
+  /** The ley line's colour by the mood (leyRgb), or null for each area's own. */
+  private leyRgb: THREE.Vector3 | null;
   /** The party witches on the dancefloor, and our witch when she idles into the party. */
   private partyWitchView: PartyWitchView;
   /** The 💌s, their bubbles and meters (render/invites.ts). */
@@ -165,6 +169,12 @@ export class View {
   readonly rig: RigView | null;
   /** The camera's snap this frame, in the picture's pixels (x right, y down): what main.ts shifts the canvas by. */
   readonly subpixel = { x: 0, y: 0 };
+  /** What the canvas's glide follows: "witch" (her own snap, so she holds still on screen while the
+   *  world glides: Ed's 2026-10-06 playtest, "it feels low") or "camera" (the camera's snap: the world
+   *  exact, her a pixel either way from frame to frame). ?glide= picks one. */
+  glide: "witch" | "camera" = "witch";
+  /** Her sprite's base this frame (world, before the bend), for the frame-feel trace. */
+  readonly witchBase = { x: 0, y: 0, z: 0 };
   shadowList: ShadowInstance[] = [];
   private mist: Mist | null = null;
   width = 1;
@@ -177,6 +187,11 @@ export class View {
   ghosts: { x: number; z: number; h: number; until: number }[] = [];
   ghostLines: THREE.LineSegments | null = null;
   now = 0;
+  /** The area moods (render/mood.ts), if the mood is spooky; the area she's in, when it's next looked up, and when they were last eased. */
+  private areaMoods: AreaMoods | null = null;
+  private moodArea = "";
+  private moodAt = -Infinity;
+  private moodTime = NaN;
   stats: ViewStats = { berries: 0, forestMs: 0, forestMissing: 0, sceneryRadius: 0, fps: 0, gameplay: 0, scenery: 0, dropped: 0, trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0, lights: 0 };
 
   constructor(readonly canvas: HTMLCanvasElement, readonly game: Game, readonly style: Style, witchGenome: unknown = null) {
@@ -192,7 +207,16 @@ export class View {
     this.scene.background = new THREE.Color(0x0b0a16);
     // With find on (Ed, v244), a touch more ambient and a cooler, more coloured moonlight.
     const moonLook: Record<string, number> = t.find.on ? { moonHue: t.find.moonHue, moonSat: t.find.moonSat } : {};
-    applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams, ...moonLook }, t.glowReach, this.mpp, t.find.on ? t.find.ambient : t.tone.ambient, t.glowFalloff, t.tone.moon);
+    // The mood (render/mood.ts): the spooky grade over the style's light, or the plain light.
+    const M = moodOf(t), moodLook: Record<string, number> = M ? { ambientHue: M.ambientHue, moonHue: M.moonHue, moonSat: M.moonSat, glowHue: M.glowHue, glowSat: M.glowSat } : {};
+    applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams, ...moonLook, ...moodLook }, t.glowReach, this.mpp, (t.find.on ? t.find.ambient : t.tone.ambient) * (M?.ambient ?? 1), t.glowFalloff, t.tone.moon * (M?.moon ?? 1));
+    this.areaMoods = M ? new AreaMoods(M) : null;
+    // The characters' moonlight rim and her own glow on her (the art director's round 1), the mood's.
+    { const rgb = new THREE.Vector3(); hsvInto(rgb, M?.rimHue ?? 0.66, M?.rimSat ?? 0.4, 1); SPRITE_UNIFORMS.uMoodRim.value.set(rgb.x, rgb.y, rgb.z, M?.rim ?? 0); }
+    SPRITE_UNIFORMS.uWitchGlow.value = M?.witchGlow ?? 0;
+    SPRITE_UNIFORMS.uRimInset.value = (style as { artStyle?: string }).artStyle === "bold" || (style as { artStyle?: string }).artStyle === "ref" ? 1 : 0;
+    LIGHT_UNIFORMS.uMoonUp.value = M?.moonUp ?? 0; // the moon's fill on upward faces (the art director's round 2)
+    if (M) LIGHT_UNIFORMS.uHazeColour.value.fromArray(hsv2rgb(M.hazeHue, M.hazeSat, 1).map((c: number) => (c / 255) * M.haze));
     LIGHT_UNIFORMS.uGlowPower.value = t.glowPower;
     LIGHT_UNIFORMS.uGlowNear.value = Math.max(0.05, Math.min(1, t.glowNear ?? 1));
     if (t.bare) {
@@ -226,11 +250,12 @@ export class View {
     const smooth = t.fx === "smooth";
     LIGHT_UNIFORMS.uSmooth.value = smooth ? 1 : 0;
     if (t.mist.on && t.mist.strength > 0) {
-      this.mist = new Mist(t.mist.strength, t.mist.height, t.mist.wind, this.mpp, smooth, this.post.scene.depthTexture, this.post.lowSize);
+      this.mist = new Mist(M?.mist ?? t.mist.strength, t.mist.height, t.mist.wind, this.mpp, smooth, this.post.scene.depthTexture, this.post.lowSize);
       if (smooth) { this.post.fxScene = new THREE.Scene(); this.post.fxScene.add(this.mist.mesh); }
       else this.scene.add(this.mist.mesh);
     }
-    LIGHT_UNIFORMS.uHazeRange.value.set(t.bare ? 1e5 : t.haze.near, t.bare ? 2e5 : t.haze.far); // (no haze in the bare view)
+    // (no haze in the bare view; the mood's fog comes nearer than the culling's far edge, which stays t.haze.far)
+    LIGHT_UNIFORMS.uHazeRange.value.set(t.bare ? 1e5 : M?.hazeNear ?? t.haze.near, t.bare ? 2e5 : M?.hazeFar ?? t.haze.far);
     this.ground.mesh.renderOrder = -1; // first: the grounds' decals go on it before anything stands on it
     this.scene.add(this.ground.mesh);
     this.scene.add(new PathView(game.map, style, this.mpp, t.pathFade.metres).group);
@@ -270,6 +295,8 @@ export class View {
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // the live rig (#79): on unless ?rig=0
     this.lasers = new Lasers(this.scene, game);
     this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z), game.map);
+    this.ley.scale(M?.leyBright ?? 1);
+    this.leyRgb = M?.leyRgb ? new THREE.Vector3(...[1, 3, 5].map(i => parseInt(M.leyRgb!.slice(i, i + 2), 16) / 255)) : null;
     this.scene.add(...this.ley.meshes);
     this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
     this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
@@ -458,7 +485,7 @@ export class View {
 
   /** Her sprite batch, from the assets' witch frames. */
   private makeWitchBatch(): SpriteBatch {
-    const t = this.game.tuning, b = new SpriteBatch(this.assets.witch, this.mpp, { absolute: true, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: t.occlusion.silhouette } });
+    const t = this.game.tuning, b = new SpriteBatch(this.assets.witch, this.mpp, { absolute: true, rim: true, witchLight: t.witch, silhouette: { colour: LIGHT_UNIFORMS.uGlowRgb.value.clone(), opacity: t.occlusion.silhouette } });
     b.mesh.renderOrder = 10;
     this.scene.add(...b.meshes);
     return b;
@@ -587,6 +614,17 @@ export class View {
     const w = g.witch, h = witchHeight(w, t);
     LIGHT_UNIFORMS.uGlowPos.value.set(w.x, groundHeight(w.x, w.z) + this.rideOff + h + t.glowHeight, w.z);
     LIGHT_UNIFORMS.uHazeCentre.value.set(w.x, w.z);
+    // The mood where she is (render/mood.ts): each area's own fog, grade tint and mist, eased across;
+    // which area, looked up four times a second.
+    if (this.areaMoods) {
+      if (!(time < this.moodAt) || time < this.moodAt - 1) {
+        this.moodAt = time + 0.25;
+        const d = g.map.dancefloor;
+        this.moodArea = Math.hypot(w.x - d.x, w.z - d.z) < g.map.homeRadius ? "home" : AREA_TYPES[g.map.typeOf(...g.map.cellSafe(w.x, w.z).cell)]?.id ?? "";
+      }
+      this.areaMoods.update(this.moodArea, Number.isNaN(this.moodTime) ? 0 : time - this.moodTime, LIGHT_UNIFORMS.uHazeColour.value, this.post.gradeTint, this.mist);
+      this.moodTime = time;
+    }
     this.time("uniforms");
     updateSources(this, time);
     this.time("sources");
@@ -601,6 +639,7 @@ export class View {
       // (advance "wave": it moves on only when the next area's wave arrives, not when its quest is done)
       const P = t.leyLines.advance === "wave" ? { ...g.party, leyDone: undefined } : g.party, M = g.map, home = new THREE.Vector3(0.8, 0.7, 1);
       this.ley.update(leyKey(P), () => leyChain(P, M, t.leyLines.ahead, t.leyLines.behind), s => {
+        if (this.leyRgb) return this.leyRgb; // the mood's: a guide in the HUD's amber, not a light source (the art director's round 2)
         return this.markerArt.colour.get(AREA_TYPES[M.typeOf(s.cell[0], s.cell[1])].creature) ?? home;
       }, time, canopyShown(w));
     }
@@ -729,12 +768,27 @@ export class View {
     this.inviteView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, this.leashView.tops);
     // Idling into the party, she's drawn in her party pose there instead.
     this.witchBatch.set(this.partyWitchView.herIdle || hidden ? [] : [{ x: wx, y: wyy + groundHeight(wx, wz), z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
+    // The glide by her own snap: what the sprite shader's snap of her base takes off, given back by
+    // the canvas's shift (main.ts) with the camera's own snap, so she lands where the unsnapped camera
+    // would put her, to a screen pixel, every frame (the world then lands within half an art pixel).
+    this.witchBase.x = wx; this.witchBase.y = wyy + groundHeight(wx, wz); this.witchBase.z = wz;
+    if (this.glide === "witch" && !hidden && !this.partyWitchView.herIdle) {
+      const b = bendPoint(this.v3.set(wx, wyy + groundHeight(wx, wz), wz)).project(this.camera);
+      const X = (b.x * 0.5 + 0.5) * this.width, Y = (b.y * 0.5 + 0.5) * this.height;
+      // (Her place under the camera before its snap: what her own snap takes off, and what the camera's did.)
+      this.subpixel.x += X - (Math.floor(X) + 0.5); this.subpixel.y += -(Y - (Math.floor(Y) + 0.5));
+    }
     // Where she is on screen (low-res pixels) and how far from the camera, for the occluder fade.
     {
       const px = (x: number, y: number, z: number) => { const p = placed(this.v3.set(x, y, z)).project(this.camera); return [(p.x + 1) / 2 * this.width, (p.y + 1) / 2 * this.height]; };
       const base = px(wx, wyy, wz), top = px(wx, hatTop, wz), side = px(wx + wframe.w * this.mpp / 2, wyy, wz);
       SPRITE_UNIFORMS.uWitch.value.set((base[0] + top[0]) / 2, (base[1] + top[1]) / 2, Math.abs(side[0] - base[0]) + 1, Math.abs(top[1] - base[1]) / 2 + 1);
       SPRITE_UNIFORMS.uWitchDepth.value = -placed(this.v3.set(wx, this.seatK > 0 ? wyy : h + this.rideOff, wz)).applyMatrix4(this.camera.matrixWorldInverse).z;
+      // Her pool on screen, for the grade to spare (render/post.ts: on a dark floor her light sits among the tones the
+      // spooky grade drains to blue, and it vanished: the art director's round 3, the fern forest): its centre under her
+      // feet and its half-widths across and up the screen, out to half her light's reach.
+      const R = LIGHT_UNIFORMS.uGlowR.value * LIGHT_UNIFORMS.uGlowNear.value * 0.5, foot = px(wx, 0, wz), across = px(wx + R, 0, wz), down = px(wx, 0, wz + R);
+      this.post.pool.set(foot[0] / this.width, foot[1] / this.height, Math.max(1e-3, Math.abs(across[0] - foot[0]) / this.width), Math.max(1e-3, Math.abs(down[1] - foot[1]) / this.height));
     }
     this.clouds.update(time, this.camera, SPRITE_UNIFORMS.uWitch.value, this.width, this.height);
     this.shadow.position.set(wx, 0.08, wz);

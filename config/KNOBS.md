@@ -250,6 +250,127 @@ How far (reach, metres) and how strongly each kind of light lights its surroundi
 | `lights.stone.strength` | number | 0 to … |
 | `glowPower` | number | 0 to … |
 
+## `light`
+
+The lighting's mood (Ed, 2026-10-06: "make it a spooky dark forest with a party in it"; render/mood.ts): mood spooky lays this grade over the Art Lab's night light, plain is the light as it was (?light=plain or ?light=spooky to compare). spooky: ambientHue and ambient (times the tuning's ambient): the shadows' colour and brightness, a deep blue-green; moonHue, moonSat and moon (times tone.moon): a colder moon, a little stronger, so it rims what it lights; hazeHue, hazeSat and haze (its brightness, 0 to 1): the fog the forest fades into, violet; hazeNear and hazeFar: where the fog starts and is whole (metres from the witch; nearer than haze.near and haze.far, which still set how far scenery is drawn); mist: the low ground mist's strength (instead of mist.strength); glowHue and glowSat: the witch's glow, warmer, so the party's lights are the warm ones in the wood; grade, gradeDesat, gradePivot, gradeHue and gradeSat: a grade over the finished picture, draining the dark and middle tones' colour (gradeDesat of it) toward a cold tint (hue and saturation), by grade (0 off), fading out up to gradePivot brightness, so the bright warm lights keep their colour; partyWarm, partyReach and partyStrength: the soundsystems' light, warm amber, pink and gold (one per variant, instead of their crystal cyan, violet and amber), wider and stronger; decorLights, decorReach and decorStrength: the party decor's lights (lanterns, campfires), how many an area lights (instead of partyObjects.lightsPerArea) and how far and strong, so each party is pools of warm light with dark between; areas: each area type's own fog (hazeHue, hazeSat, haze), grade tint (gradeHue, gradeSat) and mist over the above, by area id ("home" for home): misty teal over the bogs and water, violet-grey in the dead and ancient woods, blue-violet in the bluebells, pale mist on the open moor, darker in the rocky places, near-black green under the pines, rosy in the honeysuckle and gardens, home a little less cold; areaEase: how fast the mood eases from one area's to the next (a second); rimHue, rimSat and rim: a moonlight rim on the characters (the witch and every creature, baked or rigged), a light edge one art pixel wide on the side away from the moon in the night sky's blue-violet, at rim strength (0 off), so they read against the dark (the art director, round 1); witchGlow: how much of her own glow lights the witch herself (0: none, as before), so she stands in her pool of light. Round 2 (the art director): moonUp, the moon's fill on whatever faces up (canopy tops, open ground) as a share of the moon, so the dark middle distance still reads (0 none); leyRgb and leyBright, the ley line in the HUD's amber at half its brightness, a guide rather than a light (leave leyRgb out for each area's own colour); berryHalo and berryGlow, a berry's halo's size and strength as shares of the old 2.8 m soft disc, so a berry reads as a crisp dot with a small glow.
+
+| knob | type | range |
+|---|---|---|
+| `light.mood` | string |  |
+| `light.spooky.ambientHue` | number | 0 to … |
+| `light.spooky.ambient` | number | 0 to … |
+| `light.spooky.moonHue` | number | 0 to … |
+| `light.spooky.moonSat` | number | 0 to … |
+| `light.spooky.moon` | number | 0 to … |
+| `light.spooky.hazeHue` | number | 0 to … |
+| `light.spooky.hazeSat` | number | 0 to … |
+| `light.spooky.haze` | number | 0 to … |
+| `light.spooky.hazeNear` | number | 0 to … |
+| `light.spooky.hazeFar` | number | 0 to … |
+| `light.spooky.mist` | number | 0 to … |
+| `light.spooky.glowHue` | number | 0 to … |
+| `light.spooky.glowSat` | number | 0 to … |
+| `light.spooky.grade` | number | 0 to … |
+| `light.spooky.gradeDesat` | number | 0 to … |
+| `light.spooky.gradePivot` | number | 0 to … |
+| `light.spooky.gradeHue` | number | 0 to … |
+| `light.spooky.gradeSat` | number | 0 to … |
+| `light.spooky.partyWarm` | array of array |  |
+| `light.spooky.partyReach` | number | 0 to … |
+| `light.spooky.partyStrength` | number | 0 to … |
+| `light.spooky.decorLights` | number | 0 to … |
+| `light.spooky.decorReach` | number | 0 to … |
+| `light.spooky.decorStrength` | number | 0 to … |
+| `light.spooky.rimHue` | number | 0 to … |
+| `light.spooky.rimSat` | number | 0 to … |
+| `light.spooky.rim` | number | 0 to … |
+| `light.spooky.witchGlow` | number | 0 to … |
+| `light.spooky.moonUp` | number | 0 to … |
+| `light.spooky.leyRgb` | string |  |
+| `light.spooky.leyBright` | number | 0 to … |
+| `light.spooky.berryHalo` | number | 0 to … |
+| `light.spooky.berryGlow` | number | 0 to … |
+| `light.spooky.areaEase` | number | 0 to … |
+| `light.spooky.areas.bog.hazeHue` | number | 0 to … |
+| `light.spooky.areas.bog.hazeSat` | number | 0 to … |
+| `light.spooky.areas.bog.haze` | number | 0 to … |
+| `light.spooky.areas.bog.mist` | number | 0 to … |
+| `light.spooky.areas.bog.gradeHue` | number | 0 to … |
+| `light.spooky.areas.wetland.hazeHue` | number | 0 to … |
+| `light.spooky.areas.wetland.hazeSat` | number | 0 to … |
+| `light.spooky.areas.wetland.haze` | number | 0 to … |
+| `light.spooky.areas.wetland.mist` | number | 0 to … |
+| `light.spooky.areas.wetland.gradeHue` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.hazeHue` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.hazeSat` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.haze` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.mist` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.gradeHue` | number | 0 to … |
+| `light.spooky.areas.stream.hazeHue` | number | 0 to … |
+| `light.spooky.areas.stream.hazeSat` | number | 0 to … |
+| `light.spooky.areas.stream.haze` | number | 0 to … |
+| `light.spooky.areas.stream.mist` | number | 0 to … |
+| `light.spooky.areas.stream.gradeHue` | number | 0 to … |
+| `light.spooky.areas.deadwood.hazeHue` | number | 0 to … |
+| `light.spooky.areas.deadwood.hazeSat` | number | 0 to … |
+| `light.spooky.areas.deadwood.haze` | number | 0 to … |
+| `light.spooky.areas.deadwood.gradeHue` | number | 0 to … |
+| `light.spooky.areas.deadwood.gradeSat` | number | 0 to … |
+| `light.spooky.areas.ancient.hazeHue` | number | 0 to … |
+| `light.spooky.areas.ancient.hazeSat` | number | 0 to … |
+| `light.spooky.areas.ancient.haze` | number | 0 to … |
+| `light.spooky.areas.ancient.gradeHue` | number | 0 to … |
+| `light.spooky.areas.ancient.gradeSat` | number | 0 to … |
+| `light.spooky.areas.log-pile.hazeHue` | number | 0 to … |
+| `light.spooky.areas.log-pile.hazeSat` | number | 0 to … |
+| `light.spooky.areas.log-pile.haze` | number | 0 to … |
+| `light.spooky.areas.log-pile.gradeHue` | number | 0 to … |
+| `light.spooky.areas.log-pile.gradeSat` | number | 0 to … |
+| `light.spooky.areas.bluebell-glade.hazeHue` | number | 0 to … |
+| `light.spooky.areas.bluebell-glade.gradeHue` | number | 0 to … |
+| `light.spooky.areas.bluebell-glade.mist` | number | 0 to … |
+| `light.spooky.areas.wispy-forest.hazeHue` | number | 0 to … |
+| `light.spooky.areas.wispy-forest.gradeHue` | number | 0 to … |
+| `light.spooky.areas.wispy-forest.mist` | number | 0 to … |
+| `light.spooky.areas.moor.hazeHue` | number | 0 to … |
+| `light.spooky.areas.moor.hazeSat` | number | 0 to … |
+| `light.spooky.areas.moor.haze` | number | 0 to … |
+| `light.spooky.areas.moor.mist` | number | 0 to … |
+| `light.spooky.areas.heath.hazeHue` | number | 0 to … |
+| `light.spooky.areas.heath.hazeSat` | number | 0 to … |
+| `light.spooky.areas.heath.haze` | number | 0 to … |
+| `light.spooky.areas.heath.mist` | number | 0 to … |
+| `light.spooky.areas.grassland.hazeHue` | number | 0 to … |
+| `light.spooky.areas.grassland.hazeSat` | number | 0 to … |
+| `light.spooky.areas.grassland.haze` | number | 0 to … |
+| `light.spooky.areas.grassland.mist` | number | 0 to … |
+| `light.spooky.areas.cave-mouth.haze` | number | 0 to … |
+| `light.spooky.areas.cave-mouth.gradeHue` | number | 0 to … |
+| `light.spooky.areas.cave-mouth.gradeSat` | number | 0 to … |
+| `light.spooky.areas.ravine.haze` | number | 0 to … |
+| `light.spooky.areas.ravine.gradeHue` | number | 0 to … |
+| `light.spooky.areas.ravine.gradeSat` | number | 0 to … |
+| `light.spooky.areas.rocky-slope.haze` | number | 0 to … |
+| `light.spooky.areas.rocky-slope.gradeHue` | number | 0 to … |
+| `light.spooky.areas.rocky-slope.gradeSat` | number | 0 to … |
+| `light.spooky.areas.old-pinewood.hazeHue` | number | 0 to … |
+| `light.spooky.areas.old-pinewood.hazeSat` | number | 0 to … |
+| `light.spooky.areas.old-pinewood.haze` | number | 0 to … |
+| `light.spooky.areas.old-pinewood.gradeHue` | number | 0 to … |
+| `light.spooky.areas.norway.hazeHue` | number | 0 to … |
+| `light.spooky.areas.norway.hazeSat` | number | 0 to … |
+| `light.spooky.areas.norway.haze` | number | 0 to … |
+| `light.spooky.areas.norway.gradeHue` | number | 0 to … |
+| `light.spooky.areas.honeysuckle-tangle.hazeHue` | number | 0 to … |
+| `light.spooky.areas.honeysuckle-tangle.hazeSat` | number | 0 to … |
+| `light.spooky.areas.garden.hazeHue` | number | 0 to … |
+| `light.spooky.areas.garden.hazeSat` | number | 0 to … |
+| `light.spooky.areas.berry-thicket.hazeHue` | number | 0 to … |
+| `light.spooky.areas.berry-thicket.hazeSat` | number | 0 to … |
+| `light.spooky.areas.home.gradeHue` | number | 0 to … |
+| `light.spooky.areas.home.gradeSat` | number | 0 to … |
+| `light.spooky.areas.home.mist` | number | 0 to … |
+
 ## `beat`
 
 The music's clock (beats per minute): the lasers sweep to it and party animals dance to it. Later the music itself drives it.
@@ -351,7 +472,7 @@ The sigil stack above the witch's hat: scale (of the sigils' size), offset (the 
 
 ## `partyObjects`, `partyWitches`, `speakerLasers`, `lasers`
 
-Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters [min, max] of the art's clusters, loose [min, max] loose pieces (litter, small lights, balloons; neon and balloon colours random per placement), set dressing at setChance, and at caughtChance an escaped balloon caught in a tree; hanging [min, max] lanterns, jars, fairy lights or mirror balls hung from branches in nearby crowns. They appear as the party arrives. Real point lights only from campfires and lanterns (lanternReach metres, warm), at most lightsPerArea an area; everything else glows without lighting. Home (Ed, 2026-10-05: "It has party decorations instead of trees; ... scattered around the whole home area, excluding the dancefloor"): its meadow strewn all over with home.loose [min, max] pieces picked by class (home.weights: the home set, small lights, balloons, litter, furniture, set dressing; nothing that hangs, as home has no trees) at least home.gap metres apart, and home.clusters [min, max] clusters (the home ones, home-path and home-corner, among the rest), out to home.reach of an area past its circle, off the dancefloor's clearing, the paths, the treehouse and her seat; an arch piece over each path where it leaves the floor's clearing; at most home.lights real lights. exclude: pieces never placed, loose or in clusters (Ed, v271: the glowing LED cube looked too much like a game object).
+Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters [min, max] of the art's clusters, loose [min, max] loose pieces (litter, small lights, balloons; neon and balloon colours random per placement), set dressing at setChance, and at caughtChance an escaped balloon caught in a tree; hanging [min, max] lanterns, jars, fairy lights or mirror balls hung from branches in nearby crowns. They appear as the party arrives. Real point lights only from campfires and lanterns (lanternReach metres, warm), at most lightsPerArea an area; everything else glows without lighting. Home (Ed, 2026-10-05: "It has party decorations instead of trees; ... scattered around the whole home area, excluding the dancefloor"): its meadow strewn all over with home.loose [min, max] pieces picked by class (home.weights: the home set, small lights, balloons, litter, furniture, set dressing; nothing that hangs, as home has no trees) at least home.gap metres apart, and home.clusters [min, max] clusters (the home ones, home-path and home-corner, among the rest), out to home.reach of an area past its circle, off the dancefloor's clearing, the paths, the treehouse and her seat; an arch piece over each path where it leaves the floor's clearing; at most home.lights real lights. exclude: pieces never placed, loose or in clusters (Ed, v271: the glowing LED cube looked too much like a game object). generated: the prop generator's seeded bunting, balloon bunches and paper lanterns (art/party.js gen-*) in place of the hand-made ones they replace (?props=gen turns it on).
 
 | knob | type | range |
 |---|---|---|
@@ -371,6 +492,7 @@ Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters 
 | `partyObjects.home.reach` | number | 0 to … |
 | `partyObjects.home.lights` | number | 0 to … |
 | `partyObjects.exclude` | array of string |  |
+| `partyObjects.generated` | boolean |  |
 | `partyWitches.max` | number | 0 to … |
 | `partyWitches.idleAfter` | number | 0 to … |
 | `partyWitches.idleReach` | number | 0 to … |
@@ -639,7 +761,7 @@ Decorations scattered as discoveries: one chance per spacing-metre cell, of a ru
 
 ## `paths`
 
-Paths, roads and railways (Ed): rails [min,max] railway lines edge to edge in wide curves (one with a branch); roads [min,max] broad sweeping old roads; linkChance: the share of neighbouring areas joined by a meandering path; deadEndChance: the share of areas with a path out to nothing; pathHalf, roadHalf, railHalf: half each corridor's width (metres), kept clear of trees, with bushes thick along the edges for edgeBushes metres (bushBoost times as many); streams [min,max] long streams winding across the map (and short ones join wet areas that touch), streamHalf metres half-wide; along a railway, every landmarkSpacing metres, a landmarkChance of a landmark (a wagon, a carriage, a platform, a gantry) and otherwise sometimes a signal post; verge posts along roads every vergeSpacing metres; every 3D piece at least pieceGap metres from the next; the two flights of stairs are finds, each at most once per map, by the clearing of a ravine, rocky slope, cave mouth or stone shrine; railBroken: the share of the railway that's broken, where trees grow between the sleepers (treesOnBroken times the usual chance).
+Paths, roads and railways (Ed): rails [min,max] railway lines edge to edge in wide curves (one with a branch); roads [min,max] broad sweeping old roads; linkChance: the share of neighbouring areas joined by a meandering path; deadEndChance: the share of areas with a path out to nothing; pathHalf, roadHalf, railHalf: half each corridor's width (metres), kept clear of trees, with bushes thick along the edges for edgeBushes metres (bushBoost times as many); streams [min,max] long streams winding across the map (and short ones join wet areas that touch), streamHalf metres half-wide; along a railway, every landmarkSpacing metres, a landmarkChance of a landmark (a wagon, a carriage, a platform, a gantry) and otherwise sometimes a signal post; verge posts along roads every vergeSpacing metres; every 3D piece at least pieceGap metres from the next; fingerposts: a fingerpost by each footpath where it comes into a clearing (the prop generator's; ?props=gen turns it on); the two flights of stairs are finds, each at most once per map, by the clearing of a ravine, rocky slope, cave mouth or stone shrine; railBroken: the share of the railway that's broken, where trees grow between the sleepers (treesOnBroken times the usual chance).
 
 | knob | type | range |
 |---|---|---|
@@ -657,6 +779,7 @@ Paths, roads and railways (Ed): rails [min,max] railway lines edge to edge in wi
 | `paths.landmarkChance` | number | 0 to … |
 | `paths.vergeSpacing` | number | 0 to … |
 | `paths.pieceGap` | number | 0 to … |
+| `paths.fingerposts` | boolean |  |
 | `paths.treesOnBroken` | number | 0 to … |
 | `paths.edgeBushes` | number | 0 to … |
 | `paths.bushBoost` | number | 0 to … |
@@ -835,12 +958,22 @@ The fight's scale and speed (Ed's motion scale pass, 2026-10-04: "the animals do
 | `fight.speed` | number | 0 to … |
 | `fight.momentum` | number | 0 to … |
 
-## `combat`
+## `attackFx`, `combat`
 
-Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight). fightRun: how fast a creature runs in a fight (m/s), when its movement profile doesn't say (movement.json speed); legendRun: a legend's; reaction: seconds before a creature that has just noticed something goes for it; pursuitRun: how fast it closes in while over 30 m off (so an area's creatures are onto her in a few seconds when she lands in it); pursuit: how far from her (or its sigil, guarding) a party animal chases a foe before giving up; aggro: wild creatures go for party animals within this, and for the witch anywhere in their area. leaveArea (Ed, 2026-10-05): a wild one chasing the witch gives up once she's this far past its area's edge, and turns back home (besiegers keep witchLose: they give up once she's out of their area, out of range and this far off). Wild creatures attack party animals of other kinds within aggro metres. They go for the witch on the ground as soon as she's in their area or within their attack's range (Ed's playtest, 2026-10-04), and let her go when she rises to the treetops, or once she's out of their area, out of their range and at least witchLose metres away; then they walk back to their spot. The one she's inviting holds its fire on her (its friends don't). Party animals following her take on what attacks her or her party, within engage metres beyond their leash (leash.length); parked ones (at a sigil) guard within guard.radius of it. Babies are never attacked, by either side. In a fight wild ones move at chaseMult times their own speed, party animals at partyChaseMult; marching on a soundsystem, marchMult. A beaten creature, wild or party, runs off the map at fleeMult times its speed and is gone for good (Ed, 2026-10-04); a party animal is lost for the run. A soundsystem has soundsystemHealth (the dancefloor at home homeHealth), passive, and is hit within soundsystemRadius (homeRadius) metres: sieges should outlast the wave gap. shake: how hard a legend's quake shakes the screen (0 none).
+How attacks feel on screen (Ed, 2026-10-06: 'make creature attack visuals better'; render/attackFeel.ts), a party not a fight: windupSquash, how low and wide an attacker crouches as its wind-up nears the blow (at most windupMax seconds of it shown); lungeStretch, how far it stretches out in its lunge; squash, how flat a hit squashes the one it hits, springing back past its shape over squashSecs seconds; a knock-back thrown faster than tumbleKnock m/s tumbles: up tumbleHeight metres (at most 1.5 times that for the hardest) for tumbleSecs, over on its back from turnFrom to turnTo of the way (one slow beat, never a strobe), landing with a squash. Squash and stretch go in whole art pixels.
 
 | knob | type | range |
 |---|---|---|
+| `attackFx.windupSquash` | number | 0 to … |
+| `attackFx.windupMax` | number | 0 to … |
+| `attackFx.lungeStretch` | number | 0 to … |
+| `attackFx.squash` | number | 0 to … |
+| `attackFx.squashSecs` | number | 0 to … |
+| `attackFx.tumbleKnock` | number | 0 to … |
+| `attackFx.tumbleHeight` | number | 0 to … |
+| `attackFx.tumbleSecs` | number | 0 to … |
+| `attackFx.turnFrom` | number | 0 to … |
+| `attackFx.turnTo` | number | 0 to … |
 | `combat.aggro` | number | 0 to … |
 | `combat.witchLose` | number | 0 to … |
 | `combat.leaveArea` | number | 0 to … |
@@ -957,7 +1090,7 @@ lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that 
 
 ## `stringLights`
 
-Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart. Each span is spanMin to spanMax metres. No span crosses another and each tree holds at most two ends, except junction trees (junctionChance per tree on a run) where a branch leaves, so three meet. At height metres, sagging sag metres per 8 m of span, a bulb every bulbSpacing metres in the palette's colours, twinkling (twinkle 0-1), a chase running along now and then at chaseSpeed bulbs per second. The bulbs only glow (bloom); they cast no light.
+Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart. Each span is spanMin to spanMax metres. No span crosses another and each tree holds at most two ends, except junction trees (junctionChance per tree on a run) where a branch leaves, so three meet. At height metres, sagging sag metres per 8 m of span, a bulb every bulbSpacing metres in the palette's colours (areaNeon: warm white, the palette's first, two bulbs in three and the area's own neon the third, home's cyan; the art director, round 2: one neon an area plus the warm light), twinkling (twinkle 0-1), a chase running along now and then at chaseSpeed bulbs per second. The bulbs only glow (bloom); they cast no light.
 
 | knob | type | range |
 |---|---|---|
@@ -973,6 +1106,7 @@ Colourful string lights in every partified area, as long garlands: runsPerArea r
 | `stringLights.sag` | number | 0 to … |
 | `stringLights.bulbSpacing` | number | 0 to … |
 | `stringLights.palette` | array of string |  |
+| `stringLights.areaNeon` | boolean |  |
 | `stringLights.twinkle` | number | 0 to … |
 | `stringLights.chaseSpeed` | number | 0 to … |
 
@@ -1066,7 +1200,7 @@ Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest..
 
 ## `population`
 
-Wild creatures (Ed, 2026-10-04): every area starts with the same population, population.start (one baby and one young: Ed, 2026-10-05, 'actually, the game should start with one baby and one youth, otherwise you can't avoid enraging lots of legends', after 'the game is hard! we should start each area with just one baby'; before it, one young and one adult, and before that one baby and two adults), and while it stays wild it grows: every wave, each area the party hasn't reached gains growth.perWave more, each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.
+Wild creatures (Ed, 2026-10-04): every area starts with the same population, population.start (one baby and one young: Ed, 2026-10-05, 'actually, the game should start with one baby and one youth, otherwise you can't avoid enraging lots of legends', after 'the game is hard! we should start each area with just one baby'; before it, one young and one adult, and before that one baby and two adults), and while it stays wild it grows: every wave, each area the party hasn't reached gains growth.perWave more (a fraction carries over: 0.5 is one every other wave; balance, 2026-10-06, DECISION FOR ED: 0.5, from 1, so a player's defence can hold the early sieges and playing well matters), each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.
 
 | knob | type | range |
 |---|---|---|

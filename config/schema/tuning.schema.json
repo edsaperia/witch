@@ -886,6 +886,795 @@
       "type": "number",
       "minimum": 0
     },
+    "light": {
+      "type": "object",
+      "properties": {
+        "mood": {
+          "type": "string"
+        },
+        "spooky": {
+          "type": "object",
+          "properties": {
+            "ambientHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ambient": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moonHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moonSat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moon": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hazeHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hazeSat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "haze": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hazeNear": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hazeFar": {
+              "type": "number",
+              "minimum": 0
+            },
+            "mist": {
+              "type": "number",
+              "minimum": 0
+            },
+            "glowHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "glowSat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "grade": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gradeDesat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gradePivot": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gradeHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gradeSat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "partyWarm": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            "partyReach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "partyStrength": {
+              "type": "number",
+              "minimum": 0
+            },
+            "decorLights": {
+              "type": "number",
+              "minimum": 0
+            },
+            "decorReach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "decorStrength": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rimHue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rimSat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rim": {
+              "type": "number",
+              "minimum": 0
+            },
+            "witchGlow": {
+              "type": "number",
+              "minimum": 0
+            },
+            "moonUp": {
+              "type": "number",
+              "minimum": 0
+            },
+            "leyRgb": {
+              "type": "string"
+            },
+            "leyBright": {
+              "type": "number",
+              "minimum": 0
+            },
+            "berryHalo": {
+              "type": "number",
+              "minimum": 0
+            },
+            "berryGlow": {
+              "type": "number",
+              "minimum": 0
+            },
+            "areaEase": {
+              "type": "number",
+              "minimum": 0
+            },
+            "areas": {
+              "type": "object",
+              "properties": {
+                "bog": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist",
+                    "gradeHue"
+                  ],
+                  "additionalProperties": false
+                },
+                "wetland": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist",
+                    "gradeHue"
+                  ],
+                  "additionalProperties": false
+                },
+                "beaver-pond": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist",
+                    "gradeHue"
+                  ],
+                  "additionalProperties": false
+                },
+                "stream": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist",
+                    "gradeHue"
+                  ],
+                  "additionalProperties": false
+                },
+                "deadwood": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "gradeHue",
+                    "gradeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "ancient": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "gradeHue",
+                    "gradeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "log-pile": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "gradeHue",
+                    "gradeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "bluebell-glade": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "gradeHue",
+                    "mist"
+                  ],
+                  "additionalProperties": false
+                },
+                "wispy-forest": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "gradeHue",
+                    "mist"
+                  ],
+                  "additionalProperties": false
+                },
+                "moor": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist"
+                  ],
+                  "additionalProperties": false
+                },
+                "heath": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist"
+                  ],
+                  "additionalProperties": false
+                },
+                "grassland": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "mist"
+                  ],
+                  "additionalProperties": false
+                },
+                "cave-mouth": {
+                  "type": "object",
+                  "properties": {
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "haze",
+                    "gradeHue",
+                    "gradeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "ravine": {
+                  "type": "object",
+                  "properties": {
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "haze",
+                    "gradeHue",
+                    "gradeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "rocky-slope": {
+                  "type": "object",
+                  "properties": {
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "haze",
+                    "gradeHue",
+                    "gradeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "old-pinewood": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "gradeHue"
+                  ],
+                  "additionalProperties": false
+                },
+                "norway": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "haze": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat",
+                    "haze",
+                    "gradeHue"
+                  ],
+                  "additionalProperties": false
+                },
+                "honeysuckle-tangle": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "garden": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "berry-thicket": {
+                  "type": "object",
+                  "properties": {
+                    "hazeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "hazeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "hazeHue",
+                    "hazeSat"
+                  ],
+                  "additionalProperties": false
+                },
+                "home": {
+                  "type": "object",
+                  "properties": {
+                    "gradeHue": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "gradeSat": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "mist": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "gradeHue",
+                    "gradeSat",
+                    "mist"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "bog",
+                "wetland",
+                "beaver-pond",
+                "stream",
+                "deadwood",
+                "ancient",
+                "log-pile",
+                "bluebell-glade",
+                "wispy-forest",
+                "moor",
+                "heath",
+                "grassland",
+                "cave-mouth",
+                "ravine",
+                "rocky-slope",
+                "old-pinewood",
+                "norway",
+                "honeysuckle-tangle",
+                "garden",
+                "berry-thicket",
+                "home"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "ambientHue",
+            "ambient",
+            "moonHue",
+            "moonSat",
+            "moon",
+            "hazeHue",
+            "hazeSat",
+            "haze",
+            "hazeNear",
+            "hazeFar",
+            "mist",
+            "glowHue",
+            "glowSat",
+            "grade",
+            "gradeDesat",
+            "gradePivot",
+            "gradeHue",
+            "gradeSat",
+            "partyWarm",
+            "partyReach",
+            "partyStrength",
+            "decorLights",
+            "decorReach",
+            "decorStrength",
+            "rimHue",
+            "rimSat",
+            "rim",
+            "witchGlow",
+            "moonUp",
+            "leyRgb",
+            "leyBright",
+            "berryHalo",
+            "berryGlow",
+            "areaEase",
+            "areas"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "mood",
+        "spooky"
+      ],
+      "additionalProperties": false
+    },
     "beat": {
       "type": "object",
       "properties": {
@@ -1374,6 +2163,9 @@
           "items": {
             "type": "string"
           }
+        },
+        "generated": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -1387,7 +2179,8 @@
         "lanternReach",
         "arch",
         "home",
-        "exclude"
+        "exclude",
+        "generated"
       ],
       "additionalProperties": false
     },
@@ -2500,6 +3293,9 @@
           "type": "number",
           "minimum": 0
         },
+        "fingerposts": {
+          "type": "boolean"
+        },
         "treesOnBroken": {
           "type": "number",
           "minimum": 0
@@ -2528,6 +3324,7 @@
         "landmarkChance",
         "vergeSpacing",
         "pieceGap",
+        "fingerposts",
         "treesOnBroken",
         "edgeBushes",
         "bushBoost"
@@ -3571,6 +4368,64 @@
       ],
       "additionalProperties": false
     },
+    "attackFx": {
+      "type": "object",
+      "properties": {
+        "windupSquash": {
+          "type": "number",
+          "minimum": 0
+        },
+        "windupMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lungeStretch": {
+          "type": "number",
+          "minimum": 0
+        },
+        "squash": {
+          "type": "number",
+          "minimum": 0
+        },
+        "squashSecs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tumbleKnock": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tumbleHeight": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tumbleSecs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "turnFrom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "turnTo": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "windupSquash",
+        "windupMax",
+        "lungeStretch",
+        "squash",
+        "squashSecs",
+        "tumbleKnock",
+        "tumbleHeight",
+        "tumbleSecs",
+        "turnFrom",
+        "turnTo"
+      ],
+      "additionalProperties": false
+    },
     "combat": {
       "type": "object",
       "properties": {
@@ -4062,6 +4917,9 @@
             "type": "string"
           }
         },
+        "areaNeon": {
+          "type": "boolean"
+        },
         "twinkle": {
           "type": "number",
           "minimum": 0
@@ -4084,6 +4942,7 @@
         "sag",
         "bulbSpacing",
         "palette",
+        "areaNeon",
         "twinkle",
         "chaseSpeed"
       ],
@@ -4852,6 +5711,7 @@
     "lightBudget",
     "lights",
     "glowPower",
+    "light",
     "beat",
     "berries",
     "leyLines",
@@ -4894,6 +5754,7 @@
     "music",
     "forecast",
     "fight",
+    "attackFx",
     "combat",
     "notice",
     "guard",
