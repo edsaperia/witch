@@ -14,6 +14,7 @@ import { shade } from "../../art/lighting.js";
 import { LOOKS, lookGenome, pleasingWitch } from "./looks";
 import { keysDir, newWalker, spotAt, walk, type RoomFloor, type Walker } from "./roomWalk";
 import { SpellScroll, type SpellCue } from "./spellScroll";
+import { KeyHint } from "./keyHint";
 
 type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpackSize?: number; [k: string]: unknown };
 
@@ -198,6 +199,8 @@ export class Creator {
     return b;
   }
   private extras = document.createElement("div");
+  /** The walking keys on the floor in front of her (ui/keyHint.ts). */
+  private keyHint = new KeyHint();
   private unlocked = false;
   /** Tabs of anyone's, after her own (the controls and the options from the old start card): their nodes moved in whole. */
   private extraTabs: { id: string; name: string; nodes: HTMLElement[] }[] = [];
@@ -255,7 +258,7 @@ export class Creator {
     window.addEventListener("keydown", e => {
       if (!this.open) return;
       e.stopPropagation();
-      if (WALK_KEYS.has(e.code)) { e.preventDefault(); this.held.add(e.code); (document.activeElement as HTMLElement | null)?.blur?.(); return; } // (a slider keeps no arrow keys: they walk her)
+      if (WALK_KEYS.has(e.code)) { e.preventDefault(); this.held.add(e.code); this.keyHint.pressed(e.code); (document.activeElement as HTMLElement | null)?.blur?.(); return; } // (a slider keeps no arrow keys: they walk her)
       if ((e.target as HTMLElement)?.tagName === "INPUT" && e.code !== "Enter") return;
       if (e.code === "Enter") { e.preventDefault(); this.scroll.cast(); } else if (e.code === "KeyR") this.randomise();
       else if (e.key === "?" && this.boxes.has("controls")) { e.preventDefault(); this.openBox("controls"); }
@@ -316,7 +319,7 @@ export class Creator {
     P.innerHTML = ""; this.tabs.innerHTML = "";
     this.boxes.clear();
     const h = document.createElement("div");
-    h.innerHTML = `<div style="font-size:18px;margin-bottom:2px;color:#f2c46a">✨ Your witch</div><div style="opacity:.7;margin-bottom:8px">The party's tonight! Dress her up while the forest grows. Walk her round her room (WASD) to her things, or pick a tab (Q and E step through them). When she's ready, the scroll is the party spell: click it, or Enter. (R randomises; double-click a slider to put it back.)</div>`;
+    h.innerHTML = `<div style="font-size:18px;margin-bottom:2px;color:#f2c46a">✨ Your witch</div><div style="opacity:.7;margin-bottom:8px">The party's tonight! Dress her up while the forest grows. Walk her round her room (WASD) to her things, or pick a tab (Q and E step through them). Once the forest has grown, the scroll unrolls: it's the party spell, so click it (or Enter) when she's ready. (R randomises; double-click a slider to put it back.)</div>`;
     P.append(h);
     const row = (parent: HTMLElement, name: string) => { const r = document.createElement("div"); Object.assign(r.style, { display: "flex", alignItems: "center", gap: "6px", margin: "4px 0", flexWrap: "wrap" }); r.innerHTML = `<span style="width:78px;opacity:.85">${name}</span>`; parent.append(r); return r; };
     // The boxes, as tabs down the tapestry's left edge (Ed, 2026-10-06: "The different things you can change ... can be tabs
@@ -532,7 +535,7 @@ export class Creator {
     this.raf = requestAnimationFrame(this.loop);
     const changed = this.dirty;
     if (this.dirty) { this.dirty = false; this.redraw(); }
-    // The world building behind: its progress on the bar (and the scroll's caption: ui/spellScroll.ts).
+    // The world building behind: its progress on the bar.
     const pr = this.progress(), built = pr.total ? pr.done / pr.total : 1;
     if (pr.ready && !this.readyAt) this.readyAt = performance.now() / 1000;
     if (this.bar) this.bar.style.width = `${Math.round((pr.ready ? 1 : Math.min(.97, built)) * 100)}%`;
@@ -543,6 +546,7 @@ export class Creator {
     const w = this.walker ??= newWalker(room.walk), dt = this.lastT ? Math.min(.1, ms / 1000 - this.lastT) : 0, [kx, ky] = keysDir(this.held);
     this.lastT = ms / 1000;
     walk(w, room.walk, kx, ky, dt);
+    this.keyHint.step(dt, w.moving);
     if (w.moving) {
       this.act = null; this.nextAct = ms / 1000 + 3;
       // walking up to a thing of hers opens its box (the hats, the rail, the mirror, the broom...)
@@ -577,6 +581,8 @@ export class Creator {
     const pw = this.frames.stand[0]?.width ?? fr.width; // (her pool as wide as she stands, whatever she's doing)
     this.behind(x, room, Math.round(sx - pw * 1.2), Math.round(sy) - Math.ceil(pw * .6), Math.ceil(pw * 2.4), Math.ceil(pw * 1.2), sy, feetT, true, c => pool(c, pw * 1.2, pw * .6, pw), "lighter");
     const fx = Math.round(sx - fr.width / 2), fy = Math.round(sy - fr.height + bob);
+    // the walking keys, on the floor in front of where she starts (under her, should she walk over them)
+    const st0 = room.a.stand; this.keyHint.draw(x, Math.round(st0[0] - KeyHint.W / 2), Math.round(st0[1] + 6), this.held);
     if (this.flying) { x.fillStyle = "rgba(0,0,0,.35)"; x.fillRect(Math.round(sx - fr.width * .25), Math.round(sy) - 1, Math.round(fr.width * .5), 2); }
     this.behind(x, room, fx, fy, fr.width, fr.height, sy, feetT, false, c => { if (now.flip) { c.translate(fr.width, 0); c.scale(-1, 1); } c.drawImage(fr, 0, 0); });
   };

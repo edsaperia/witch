@@ -25,6 +25,13 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
       await page.waitForSelector("#creator-start", { timeout: 120000 });
       await page.waitForTimeout(6000);
       await page.screenshot({ path: path.join(outDir, `start-${w}x${h}.png`) });
+      // the scroll sleeps, rolled shut, until the forest's grown (Enter casts nothing yet), then unrolls
+      const early = await page.evaluate(() => ({ ready: window.__creator.progress().ready, awake: document.getElementById("creator-start").hasAttribute("data-awake") }));
+      if (!early.ready && early.awake) throw new Error("the scroll is awake before the forest is ready");
+      if (!early.ready) { await page.keyboard.press("Enter"); await page.waitForTimeout(200); if (await page.evaluate(() => window.__creator.scroll.casting)) throw new Error("the scroll cast before the forest was ready"); }
+      await page.waitForSelector("#creator-start[data-awake]", { timeout: 900000 });
+      await page.waitForTimeout(600);
+      await page.screenshot({ path: path.join(outDir, `ready-${w}x${h}.png`) });
       await page.keyboard.press("KeyE"); await page.waitForTimeout(800);
       await page.screenshot({ path: path.join(outDir, `tab-${w}x${h}.png`) });
       await page.keyboard.press("Shift+Slash"); await page.waitForTimeout(500);
