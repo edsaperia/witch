@@ -495,7 +495,7 @@ describe("creatures", () => {
     for (let cy = 0; cy < map.n; cy += 3) for (let cx = 0; cx < map.n; cx += 3) {
       if (cx === mx && cy === my) continue;
       const here = inCell(cx, cy);
-      expect(here.filter(c => c.level === 0).length).toBe(S.babies);
+      expect(here.filter(c => c.level === 0 && !c.circle).length).toBe(S.babies); // (and its legend's clearing's baby: below)
       expect(here.filter(c => c.level === 1).length).toBe(S.young);
       expect(here.filter(c => c.level === 2).length).toBe(S.adults);
       expect(here.filter(c => c.level === 3 && c.boss).length).toBe(1);
@@ -1407,7 +1407,8 @@ describe("ground cover (Ed, v171)", () => {
     expect(list.length).toBeGreaterThan(500);
     for (const f of list) {
       expect(map.paths.at(f.x, f.z)).toBeNull();
-      expect(map.hardClear(f.x, f.z)).toBe(false);
+      const lc = map.legendClearing(...map.areaAt(f.x, f.z).cell);
+      expect(map.hardClear(f.x, f.z) && !(lc && Math.hypot(f.x - lc.x, f.z - lc.z) < lc.r)).toBe(false); // (short and sparse on a legend's clearing's floor)
       expect(Math.hypot(f.x - d.x, f.z - d.z)).toBeGreaterThan(floorClearing(TUNING));
       expect(LOOKS[f.type].groundCover.kinds).toContain(TUFT_KINDS[f.kind]); // (its look: home's meadow has its own)
     }

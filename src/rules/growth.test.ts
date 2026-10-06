@@ -73,7 +73,7 @@ describe("wild areas grow (Ed, 2026-10-04: a creature a wave while wild)", () =>
     expect(g.growth.grown).toBeGreaterThan((g.map.n * g.map.n - 10) * 3); // (every wild area, a creature a wave)
     expect(g.creatures.length - start).toBeLessThan(g.growth.grown); // most still counts
     const mine = g.creatures.filter(c => cellKey(c.cell) === woke);
-    expect(mine.length).toBe(T1.population.start.babies + T1.population.start.young + T1.population.start.adults + 3 + (mine.some(c => c.boss) ? 1 : 0));
+    expect(mine.length).toBe(T1.population.start.babies + T1.population.start.young + T1.population.start.adults + 3 + (mine.some(c => c.boss) ? 1 : 0) + (mine.some(c => c.circle) ? 1 : 0)); // (and its legend and its clearing's baby)
     for (const c of mine) if (c.level > 0 && !c.boss) expect(c.siege).toBe(woke); // they march on its new soundsystem (its legend sleeps on)
     expect(g.growth.pending.has(woke!)).toBe(false);
     expect(simRadius(g)).toBeGreaterThan(T1.haze.far);

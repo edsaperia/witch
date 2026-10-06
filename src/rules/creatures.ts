@@ -129,6 +129,9 @@ export interface Creature {
   /** Let go when its witch was knocked out (Ed, 2026-10-04): neutral, walking to this area of its
    *  own kind, where it becomes an ordinary wild creature of that area. */
   wanderTo?: { x: number; z: number; cell: [number, number] };
+  /** The legend's clearing it was born in (Ed, 2026-10-06: "Legend circles should spawn with a wild baby in them, which
+   *  tries to stay within the circle while it's wild"): while wild it roams the circle's open floor and walks back in if it's out. */
+  circle?: { x: number; z: number; r: number; legendX: number; legendZ: number };
   /** When it was last healed to full (a berry, or being invited): the view's heal pop. */
   healedAt?: number;
   /** An area's legend (Ed, 2026-10-04: every area has one, sleeping): a mini-boss once awake. */
@@ -219,7 +222,20 @@ export function anchorOf(map: ForestMap, cell: [number, number], hx: number, hz:
 }
 
 /** Somewhere inside the creature's own area, chosen by `r` (round its home, or round its party spot while it dances); its anchor if none is found. */
-export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ"> & { dancing?: boolean }, r: () => number): [number, number] {
+/** Whether a creature keeps to the legend's clearing it was born in: while it's wild (not leashed, not happy, not enraged, not dancing). */
+export const keepsToCircle = (c: Partial<Pick<Creature, "circle" | "leashed" | "state" | "enraged">> & { dancing?: boolean }) => !!c.circle && !c.leashed && !c.enraged && !c.dancing && (c.state === undefined || c.state === "wild");
+
+/** A spot on a clearing's open floor: its front (south) part, clear of the legend's lair at its top. */
+export function pointInCircle(k: NonNullable<Creature["circle"]>, r: () => number): [number, number] {
+  for (let i = 0; i < 8; i++) {
+    const a = r() * Math.PI * 2, d = Math.sqrt(r()) * k.r * 0.75, x = k.x + Math.cos(a) * d, z = k.z + Math.sin(a) * d;
+    if (z > k.z - k.r * 0.15 && Math.hypot(x - k.legendX, z - k.legendZ) > k.r * 0.35) return [x, z];
+  }
+  return [k.x, k.z + k.r * 0.3];
+}
+
+export function pointInArea(map: ForestMap, c: Pick<Creature, "cell" | "homeX" | "homeZ" | "range" | "anchorX" | "anchorZ"> & Partial<Pick<Creature, "circle" | "leashed" | "state" | "enraged">> & { dancing?: boolean }, r: () => number): [number, number] {
+  if (keepsToCircle(c)) return pointInCircle(c.circle!, r); // (the circle's baby, while wild)
   // (a dancing one keeps round its party spot, its anchor: rules/partyGuests.ts)
   const cx = c.dancing ? c.anchorX : c.homeX, cz = c.dancing ? c.anchorZ : c.homeZ;
   for (let i = 0; i < 12; i++) {
@@ -249,6 +265,13 @@ export function spawnCreatures(map: ForestMap): Creature[] {
     L.legendState = "asleep"; L.stateAt = 0;
     L.quest = questFor(map, cell, L.species);
     out.push(L);
+    // A wild baby of its own kind in its clearing (Ed, 2026-10-06), keeping to it while wild: so the legend starts with kin.
+    const lc = map.legendClearing(cx, cy);
+    if (lc) {
+      const circle = { x: lc.x, z: lc.z, r: lc.r, legendX: lc.legend.x, legendZ: lc.legend.z }, B = makeCreature(map, cell, 0, out.length, r, pointInCircle(circle, r));
+      B.circle = circle; B.tx = B.x; B.tz = B.z;
+      out.push(B);
+    }
   }
   return out;
 }
@@ -260,6 +283,14 @@ export function stepCreature(c: Creature, dt: number, map: ForestMap): void {
   if (!inOwnArea(map, c, c.x, c.z)) {
     const dx = c.anchorX - c.x, dz = c.anchorZ - c.z, d = Math.hypot(dx, dz) || 1, step = Math.min(d, c.speed * 2 * dt);
     c.x += (dx / d) * step; c.z += (dz / d) * step; c.tx = c.anchorX; c.tz = c.anchorZ; c.rest = 0;
+    if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
+    c.moving = true; c.walk += dt * 4;
+    return;
+  }
+  // The circle's baby, wild and out of its circle (pushed, knocked, back from fleeing): it walks back in.
+  if (keepsToCircle(c) && Math.hypot(c.x - c.circle!.x, c.z - c.circle!.z) > c.circle!.r) {
+    const k = c.circle!, dx = k.x - c.x, dz = k.z + k.r * 0.3 - c.z, d = Math.hypot(dx, dz) || 1, step = Math.min(d, c.speed * dt);
+    c.x += (dx / d) * step; c.z += (dz / d) * step; c.tx = k.x; c.tz = k.z + k.r * 0.3; c.rest = 0;
     if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
     c.moving = true; c.walk += dt * 4;
     return;

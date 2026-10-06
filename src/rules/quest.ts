@@ -72,7 +72,7 @@ export function setupQuestDemo(g: { creatures: Creature[]; map: ForestMap; witch
   const x = lc ? lc.x : L.x + ((site.x - L.x) / d) * 8, z = lc ? lc.z + lc.r * 0.35 : L.z + ((site.z - L.z) / d) * 8;
   const spare = g.creatures.filter(c => !c.gone && !c.leashed && !c.boss && Math.hypot(c.x - x, c.z - z) > 250).sort((a, b) => b.id - a.id)[0];
   if (!spare) return null;
-  Object.assign(spare, { species: L.quest!.species, level: L.quest!.level, x: x - 1.5, z: z + 1, tx: x - 1.5, tz: z + 1, leashed: true, hp: undefined, siege: undefined, enraged: false, fight: undefined, fleeUntil: undefined, wanderTo: undefined });
+  Object.assign(spare, { circle: undefined, species: L.quest!.species, level: L.quest!.level, x: x - 1.5, z: z + 1, tx: x - 1.5, tz: z + 1, leashed: true, hp: undefined, siege: undefined, enraged: false, fight: undefined, fleeUntil: undefined, wanderTo: undefined });
   g.leash.stack.push(spare.id);
   g.byArea = null;
   place(x, z);
