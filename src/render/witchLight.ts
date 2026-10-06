@@ -15,9 +15,13 @@ export function witchLightUniform(w?: { lightFloor: number; lightTint: number; l
 export const WITCH_LIGHT_GLSL = /* glsl */ `
 uniform vec4 uWitchLight; // on, floor, tint, rim
 uniform float uWitchGlow; // how much of her own glow lights her (the mood's: render/mood.ts)
+uniform float uWitchLift; // her pool's light thrown up onto her, added (stylised art: its tones are baked dark)
 vec3 witchShade(vec3 base, vec3 N, vec3 F, vec3 P) {
   vec3 env = uAmb + uMoon * lightStep(max(0.0, dot(N, uMoonDir)));
   vec3 col = base * max(vec3(uWitchLight.y), env * 1.25 + uGlowRgb * uGlowPower * uWitchGlow);
+  // Her pool's light thrown back up onto her (the art director's round 3: in a stylised style she vanished in her own
+  // pool): added, so even the style's near-black tones and outline lift, warm, and she's the brightest thing in it.
+  col += (base + 0.1) * uGlowRgb * uWitchLift;
   vec3 tint = vec3(0.0), rim = vec3(0.0);
   float edge = 1.0 - clamp(dot(N, F), 0.0, 1.0); // her outline's pixels face sideways
   for (int i = 0; i < ${MAX_LIGHTS}; i++) {
