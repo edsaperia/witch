@@ -257,3 +257,23 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
     expect(cellKey(g.map.cellSafe(L.x, L.z).cell)).toBe(cellKey(L.cell));
   }, 120000);
 });
+
+describe("a wave on a legend's area (#87, found by the overnight playthrough)", () => {
+  it("enrages its wild creatures into a siege, but leaves its legend asleep, neither enraged nor besieging", () => {
+    const g = newGame(123, TUNING);
+    g.clock.paused = false;
+    const before = new Set(g.party.areas.keys());
+    run(g, 0.1, { ...idle, nextWave: true });
+    const woke = [...g.party.areas.keys()].filter(k => !before.has(k));
+    expect(woke.length).toBeGreaterThan(0);
+    let legends = 0, besiegers = 0;
+    for (const c of g.creatures) {
+      if (c.gone || !woke.includes(cellKey(c.cell))) continue;
+      if (c.boss) { legends++; expect(c.legendState).toBe("asleep"); expect(c.enraged).toBeFalsy(); expect(c.siege).toBeUndefined(); expect(stateOf(c)).not.toBe("enraged"); }
+      else if (c.siege) besiegers++;
+    }
+    expect(legends).toBeGreaterThan(0);
+    expect(besiegers).toBeGreaterThan(0);
+  });
+});
+

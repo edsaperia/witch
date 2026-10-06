@@ -1025,10 +1025,15 @@ function stampBlobs(sp, r, st, s, list, C) {
     }
     pts.sort((a, b) => a[4] - b[4]); // the rim first, the middle over it
     for (const [jx, jy, u, v, nz] of pts) {
-      const nrm = unit([u * .9, v * .9, nz + .15]), lit = nrm[0] * BLOB_LIGHT[0] + nrm[1] * BLOB_LIGHT[1] + nrm[2] * BLOB_LIGHT[2];
+      let nrm = unit([u * .9, v * .9, nz + .15]), top = true;
+      if (C.env) { // lit as one crown (C.env: the crown's envelope { c, rx, ry, mix }): the envelope's normal there, mixed with the blob's own; the light tone only on the crown's lit top-left third
+        const E = C.env, eu0 = (c[0] + jx - E.c[0]) / E.rx, ev0 = (c[1] + jy - E.c[1]) / E.ry, el = Math.max(1, Math.hypot(eu0, ev0) / .97), eu = eu0 / el, ev = ev0 / el, /* (a clump past the envelope takes its edge's light, not the dark beyond) */ en = unit([eu * .9, ev * .9, Math.sqrt(Math.max(0, 1 - eu * eu - ev * ev)) + .15]), k = E.mix ?? .7;
+        nrm = unit([en[0] * k + nrm[0] * (1 - k), en[1] * k + nrm[1] * (1 - k), en[2] * k + nrm[2] * (1 - k)]); top = eu + ev < -.45;
+      }
+      const lit = nrm[0] * BLOB_LIGHT[0] + nrm[1] * BLOB_LIGHT[1] + nrm[2] * BLOB_LIGHT[2];
       const base = lit + (sty ? 0 : (r() - .5) * (C.jitter ?? .16)) - (back ? (C.backDark ?? .32) : 0) - Math.max(0, v) * (C.under ?? .12), /* under: how dark a blob's underside goes (a fir's tiers each a dark lower edge) */ sx = Math.round(c[0] + jx), sy = Math.round(c[1] + jy), sd = seed + ((sx * 7 + sy * 13) & 7);
       for (const [dx, dy, sh] of stampPixels(kind, ss, sd)) {
-        const t = base + sh * (sty ? .08 : (C.stampShade ?? .28)), mat = t > t2 ? mats[2] : t > t1 ? mats[1] : mats[0];
+        const t = base + sh * (sty ? .08 : (C.stampShade ?? .28)), mat = t > t2 && top ? mats[2] : t > t1 ? mats[1] : mats[0];
         put(sx + dx, sy + dy, mat, nrm[0] + dx / ss * .25, nrm[1] + dy / ss * .25, nrm[2], id0 + bi + 1);
       }
     }
@@ -1192,11 +1197,11 @@ const WOOD = new Set([M.TRUNK, M.BARK2, M.BARKD, M.BARKL, M.BELLY]); // BELLY: a
 // A clump of leaves (#119): one blob filled with the blob generator's leaf stamps (stampBlobs), lit from the upper left as one
 // shape, dark beneath, in the tree's three leaf tones; mat LEAF3 a clump in shadow (behind). Each clump is its own region of the
 // pixel wind (sp.blob), numbered after any the sprite has. The caller clusters the tones once, after all its clumps (stylised).
-function clump(sp, c, rx, ry, st, r, { mat = M.LEAF, ragged = 1 } = {}) {
+function clump(sp, c, rx, ry, st, r, { mat = M.LEAF, ragged = 1, env = null } = {}) {
   if (sp.clumpId === undefined) { let top = 0; if (sp.blob) for (const b of sp.blob) if (b > top && b < 230) top = b; sp.clumpId = top; }
   sp.clumpId = sp.clumpId % 228 + 1;
   const S = sp.stylised ? st : { ...st, artStyle: undefined }; // drawn stylised only onto a sprite its generator stylised (the blob trees); broadleaf takes bake's post-pass
-  stampBlobs(sp, r, S, 1, [{ c, rx, ry, back: mat === M.LEAF3 }], { stampSize: Math.max(1.5, Math.min(3, Math.min(rx, ry) / 3.2)), tones: [.2, .7], jitter: .16 * ragged, under: .22, backDark: .3, holes: .02 * st.density, blobBase: sp.clumpId - 1, cluster: false });
+  stampBlobs(sp, r, S, 1, [{ c, rx, ry, back: mat === M.LEAF3 }], { stampSize: Math.max(1.5, Math.min(3, Math.min(rx, ry) / 3.2)), tones: [.2, .7], jitter: .16 * ragged, under: env ? .12 : .22, backDark: env ? .18 : .3, env, holes: .02 * st.density, blobBase: sp.clumpId - 1, cluster: false });
 }
 // After the life below a stylised crown (a blob tree's, under st.artStyle bold or ref): its tones in clusters too.
 function clusterClumps(sp) { if (sp.stylised) clusterLeaves(sp); }
@@ -1325,12 +1330,18 @@ function broadleaf(r, st, s, P) {
   if (st.treeBare) return trim(sp, bx, crownY + 4 * s);
   tips.sort((a, b) => a[1] - b[1]);
   const [ra, rb] = P.clumpR || [12, 18], flat = P.flat || .7, drawn = [];
-  const put = (c, rx, ry, mat) => { clump(sp, c, rx, ry, st, r, { mat, ragged: P.ragged || 1 }); drawn.push([c, rx, ry]); };
+  // stylised (st.artStyle bold or ref; the art director on #155): every clump lit as part of the one crown (its envelope round
+  // the branch tips), a clump at most a tone darker beneath, the light tone only on the crown's lit top-left third, then clustered
+  const sty = st.artStyle === "bold" || st.artStyle === "ref", xs = tips.map(t => t[0]), ys = tips.map(t => t[1]);
+  const env = sty && tips.length ? { c: [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2 - 3 * s], rx: (Math.max(...xs) - Math.min(...xs)) / 2 + rb * s, ry: (Math.max(...ys) - Math.min(...ys)) / 2 + rb * s * flat + 6 * s, mix: .7 } : null;
+  if (sty) sp.stylised = st.artStyle;
+  const put = (c, rx, ry, mat) => { clump(sp, c, rx, ry, st, r, { mat, ragged: P.ragged || 1, env }); drawn.push([c, rx, ry]); };
   for (const t of tips) put(add(t, [0, -3 * s]), uni(r, ra, rb) * s, uni(r, ra, rb) * s * flat, r() < (P.darkBack ?? .35) ? M.LEAF3 : M.LEAF);
   for (const t of tips) if (r() < (P.extra ?? .7)) put(add(t, [uni(r, -9, 9) * s, uni(r, -12, -3) * s]), uni(r, ra, rb) * s * .7, uni(r, ra, rb) * s * flat * .7, M.LEAF);
   if (P.dome) { const top = Math.min(...tips.map(t => t[1])), xs = tips.map(t => t[0]), mid = (Math.min(...xs) + Math.max(...xs)) / 2, w = (Math.max(...xs) - Math.min(...xs)) / 2; for (let i = 0; i < P.dome; i++) { const f = i / Math.max(1, P.dome - 1) - .5; put([mid + f * w * 1.1, top - (1 - 4 * f * f) * 14 * s - uni(r, 2, 6) * s], uni(r, ra, rb) * s * 1.1, uni(r, ra, rb) * s * flat, M.LEAF); } } // an arched dome over the top
   if (P.layers) for (const [c, rx, ry] of drawn) for (let yy = -ry; yy < ry; yy += Math.max(3, P.layers * s)) for (let xx = -rx; xx < rx; xx++) if (sp.get(c[0] + xx, c[1] + yy) === M.LEAF) sp.recolour(c[0] + xx, c[1] + yy, M.LEAF3); // dark lines between layers
-  for (const [c, rx, ry] of drawn) leafTexture(sp, c, rx, ry, r, P.tex || {});
+  for (const [c, rx, ry] of drawn) leafTexture(sp, c, rx, ry, r, sty ? { ...P.tex, flecks: 0 } : P.tex || {}); // (stylised: no pale flecks across the crown; its dots stay)
+  if (sty) clusterLeaves(sp);
   return trim(sp, bx, crownY + 4 * s);
 }
 
@@ -1412,7 +1423,7 @@ const TREE_SPECIES = {};
 for (const [id, g] of Object.entries(PLANT_GENOMES)) {
   if (g.species === false) continue; // only a TREE_TYPES kind (the tree fern), never an area's species
   const bare = genomeTree(id, g);
-  TREE_SPECIES[id] = { fn: (r, st, s) => lowLife(bare(r, st, s), r, st, s, g.low || {}), bare, name: g.name, grow: g.grow, blob: g.generator === "blob", ...g.colour }; // every species' trees carry their life below the crown; bare draws without it
+  TREE_SPECIES[id] = { fn: (r, st, s) => lowLife(bare(r, st, s), r, st, s, g.low || {}), bare, name: g.name, grow: g.grow, blob: true, ...g.colour }; // blob: drawn in leaf stamps, every species now (broadleaf's clumps too), so the pixel-art ramp applies // every species' trees carry their life below the crown; bare draws without it
 }
 // The species a flora preview names (the game's ?flora=, the lab): "new" the genome generator's species, "fantasy" its fantasy
 // ones, "all" every species, or a comma list of ids; unknown ids are left out.
@@ -3165,8 +3176,8 @@ function propFor(kind, o = {}) {
 //     the biggest thing, the laptop open on it its screen the brightest glow, headphones by it; the DJ decks on their desk
 //     under a shelf of potions, crystals and candles; the instruments in one corner (a guitar against the wall, a drum,
 //     a synth on its stand) under a lantern; clothes and her other hats (a top hat, a cowboy hat, a party hat, a pointed
-//     witch's hat) heaped at the bed's foot and over a chair; books stacked by the bed, one open with glowing runes, and
-//     one more by the window; the rug in the clear middle, where she stands.
+//     witch's hat) heaped at the bed's foot and over a chair; books stacked in the corner by the bed's head, one open
+//     with glowing runes, and one more on the floor by them; the rug in the clear middle, where she stands.
 // BEDROOM_PROPS are the pieces, each `(m, at, o)` adding its parts to a model at a point on the floor (x, z; y up),
 // to reuse anywhere. bedroomModel builds the room; bedroomSprite renders it and returns its anchors in pixels: the
 // spot where the witch stands and the glowing things (for the light and the animated glows). A mirror and a broom are
@@ -3441,26 +3452,26 @@ function bedroomModel() {
         m.anchors.letters.push([ch, [c[0] + nrm[0] * .03, c[1], c[2] + nrm[2] * .03], dir]); });
     m.chain([[start[0], H - .16, start[2], .006], ...Array.from({ length: 9 }, (_, k) => { const t = (k + 1) / 9, sag = Math.sin(t * Math.PI) * .06; return [start[0] + dir[0] * along * t, H - .16 - sag, start[2] + dir[2] * along * t, .006]; })], M.STRAW, { group: 13 }); };
   flags("PARTY", [.06, 0, 2.15], [0, 0, -1], 1.95, 5);
-  flags("TONIGHT", [.45, 0, .06], bX, 2.5, 7);
+  flags("TONIGHT", [.2, 0, .06], bX, 2.75, 7);
 
   // the heroes (art director: "fewer, bigger, grouped"): the bed, the biggest thing in the room, its laptop the brightest glow;
   // the DJ decks on their desk; the guitar against the wall; the banner. Then the mess in piles, with clear floor between:
   // clothes heaped at the bed's foot and over a chair, books stacked by the bed (one open, glowing), the instruments in one
   // corner. A ring of floor round where she stands is kept clear, the rug under her.
-  B.bed(m, [.62, 1.02], { W: .52, L: .82 });
-  B.laptop(m, [.66, .34, 1.0], { turn: .3 });
-  B.headphones(m, [.3, .34, 1.15], { turn: .6 });
+  B.bed(m, [.62, 1.62], { W: .52, L: .82 });
+  B.laptop(m, [.66, .34, 1.6], { turn: .3 });
+  B.headphones(m, [.3, .34, 1.75], { turn: .6 });
   // books by the bed's head: a tall stack, one open on it glowing, a shut one leaning
-  const pileTop = B.bookPile(m, [1.3, .3], { n: 6, k: 1 }); B.openBook(m, [1.3, pileTop + .005, .3], { turn: .3, k: 2, cover: M.BODY3 });
-  B.bookPile(m, [1.42, .62], { n: 2, k: 4 });
+  const pileTop = B.bookPile(m, [.3, .3], { n: 6, k: 1 }); B.openBook(m, [.3, pileTop + .005, .3], { turn: .3, k: 2, cover: M.BODY3 });
+  B.bookPile(m, [.6, .35], { n: 2, k: 4 });
   // clothes heaped at the bed's foot and spilling off a chair
-  B.chair(m, [1.35, 2.25], { turn: -.5 });
-  B.clothes(m, [1.35, .36, 2.25], { kind: "jacket", turn: 2.4, k: 1, mat: M.JACKET });
-  B.clothes(m, [1.15, 2.6], { kind: "scarf", turn: 1.0, k: 5 });
-  B.clothes(m, [.55, 2.15], { kind: "jeans", turn: .4, k: 2 }); B.clothes(m, [.75, .03, 2.25], { kind: "top", turn: -.6, k: 3, mat: M.TOP });
-  B.clothes(m, [.4, .05, 2.35], { kind: "jacket", turn: 1.7, k: 4, mat: M.EYE }); B.clothes(m, [.95, 2.05], { kind: "sock", turn: .5, k: 6, mat: M.POM });
-  B.hat(m, [.55, .07, 2.3], { kind: "witch", turn: -.8, k: 1 }); B.hat(m, [.9, 2.5], { kind: "party", k: 2 }); B.hat(m, [.3, 2.65], { kind: "top", k: 3 }); B.hat(m, [.75, .06, 2.0], { kind: "cowboy", turn: .5, k: 4 });
-  B.sneaker(m, [.95, 2.75], { turn: .5, k: 1 }); B.sneaker(m, [1.1, 2.85], { turn: 1.8, k: 2 });
+  B.chair(m, [1.4, 2.95], { turn: -.5 });
+  B.clothes(m, [1.4, .36, 2.95], { kind: "jacket", turn: 2.4, k: 1, mat: M.JACKET });
+  B.clothes(m, [1.05, 3.25], { kind: "scarf", turn: 1.0, k: 5 });
+  B.clothes(m, [.55, 2.75], { kind: "jeans", turn: .4, k: 2 }); B.clothes(m, [.8, .03, 2.85], { kind: "top", turn: -.6, k: 3, mat: M.TOP });
+  B.clothes(m, [.35, .05, 2.95], { kind: "jacket", turn: 1.7, k: 4, mat: M.EYE }); B.clothes(m, [1.0, 2.65], { kind: "sock", turn: .5, k: 6, mat: M.POM });
+  B.hat(m, [.55, .07, 2.9], { kind: "witch", turn: -.8, k: 1 }); B.hat(m, [.95, 3.05], { kind: "party", k: 2 }); B.hat(m, [.25, 3.2], { kind: "top", k: 3 }); B.hat(m, [.75, .06, 2.62], { kind: "cowboy", turn: .5, k: 4 });
+  B.sneaker(m, [1.75, 3.2], { turn: .5, k: 1 }); B.sneaker(m, [1.9, 3.05], { turn: 1.8, k: 2 });
   // the decks on their desk against the right wall, the potion shelf and candles over them
   B.decks(m, [2.05, .3]);
   B.potionShelf(m, [2.1, .1], { y: .92 });
@@ -3471,9 +3482,9 @@ function bedroomModel() {
   B.synth(m, [2.95, 1.05], { turn: Math.PI / 2 });
   B.lantern(m, [2.85, .1], { y: 1.1 });
   // a second open book, glowing, by the window's candles; the rug under her
-  B.openBook(m, [.25, .03, 1.95], { turn: 1.2, k: 7, cover: M.IRIS });
-  B.rug(m, [2.55, 2.1], { r: .8 });
-  m.anchors.stand = [2.55 * K, 0, 2.1 * K];
+  B.openBook(m, [1.0, .03, .35], { turn: 1.2, k: 7, cover: M.IRIS });
+  B.rug(m, [2.8, 1.95], { r: .78 });
+  m.anchors.stand = [2.8 * K, 0, 1.95 * K];
   return m;
 }
 
@@ -4033,6 +4044,28 @@ let FORM = null;
 function withForm(form, f) { const was = FORM; FORM = form; try { return f(); } finally { FORM = was; } }
 const drawForm = (m, o, S, level) => FORM ? FORM(m, o, S, level) : render(m, o).sp, formMotes = () => !FORM || FORM.motes;
 function withGear(gear, f) { const was = GEAR; GEAR = gear; try { return f(); } finally { GEAR = was; } }
+// A little party shoe (Ed, 2026-10-05: "yes, little party shoes"): on a foot { c, r, group, fit } in a style
+// (SHOE_STYLES: sneakers, glitter, platform, heels, boots, lightup), fitted to the foot: "hoof" (narrow and
+// upright, a cuff over the hoof), "paw" (round, the toes filling its front) or "claw" (an open toe, the talons
+// poking out). The shoe is SHOE, its sole SOLE (a light-up sole glows in the animal's neon: COLLAR). The live
+// rig bakes the same shoe as a piece at each heading (genome/parts.js), so it steps and lifts with the leg.
+const SHOE_FITS = ["hoof", "paw", "claw"];
+function shoe3d(m, f, style, o = {}) {
+  const r = f.r, fit = f.fit || "paw", group = f.group, ex = { group, extra: true, ...o };
+  const hoof = fit === "hoof", claw = fit === "claw", plat = style === "platform", heels = style === "heels";
+  const soleH = r * (plat ? .55 : heels ? .2 : .28), lift = (heels ? r * .35 : 0) + (plat ? soleH * .5 : 0);
+  const c = v3.add(f.c, [r * .25, r * .15 + lift, 0]), L = r * (hoof ? 1.2 : claw ? 1.5 : 1.45), W = r * (hoof ? .95 : 1.15), H = r * (hoof ? 1 : .85);
+  const solePaint = p => style === "lightup" ? M.COLLAR : M.SOLE;
+  // the upper: tipped toe-down on heels, a glitter fleck here and there, a white flash on trainers
+  m.ell(c, [L, H, W], M.SHOE, { ...ex, dir: heels ? [1, -.35, 0] : [1, 0, 0], paint: p => p[1] < c[1] - H * .45 ? solePaint(p) : style === "glitter" && spotty(p, 60, .28) ? M.GLINT : style === "sneakers" && Math.abs(p[0] - c[0] - L * .1) < r * .12 && p[1] > c[1] ? M.SOLE : undefined });
+  // the sole: a slab under it (thick on platforms)
+  m.ell(v3.add(c, [0, -H * .55 - (plat ? soleH * .3 : 0), 0]), [L * 1.02, soleH, W * 1.02], style === "lightup" ? M.COLLAR : M.SOLE, ex);
+  if (heels) m.seg(v3.add(c, [-L * .7, -H * .2, 0]), v3.add(f.c, [-L * .45, -r * .05, 0]), r * .14, r * .1, M.SOLE, ex); // the heel: a thin post at the back
+  if (style === "boots") m.seg(v3.add(c, [-r * .2, H * .2, 0]), v3.add(c, [-r * .3, H + r * 1.3, 0]), W * .85, W * .8, M.SHOE, { ...ex, paint: p => p[1] > c[1] + H + r * 1.05 ? M.SOLE : undefined }); // a cuff up the leg, its top trimmed
+  if (hoof) m.ell(v3.add(c, [-r * .15, H * .75, 0]), [L * .7, r * .25, W * .9], M.SOLE, ex); // the cuff's trim round the pastern
+  if (claw) for (const dz of [-.45, 0, .45]) m.seg(v3.add(c, [L * .75, -H * .2, dz * W]), v3.add(c, [L * 1.25, -H * .45, dz * W * 1.2]), r * .14, r * .05, M.ACCENT, ex); // talons out of the open toe
+}
+
 const star = (s, t) => { const a = Math.atan2(t, s), r = Math.hypot(s, t); return r < .55 + .4 * Math.pow(Math.abs(Math.cos(a * 2.5 + Math.PI / 2)), 3); };
 const heart = (s, t) => { const x = s * 1.2, y = -t * 1.2 + .25; return Math.pow(x * x + y * y - .6, 3) - x * x * y * y * y < 0; };
 function gearUp(m) {
@@ -4076,11 +4109,8 @@ function gearUp(m) {
     }
   }
   m.part = was;
-  // fancy shoes on each foot (or, for the snake, one tiny shoe on its tail tip)
-  if (g.shoes) for (const f of A.feet) {
-    const plat = g.shoes === "platform", r = f.r, c = v3.add(f.c, [r * .25, r * (plat ? .35 : .15), 0]);
-    m.ell(c, [r * 1.45, r * (plat ? 1.2 : .85), r * 1.15], M.SHOE, { group: f.group, extra: true, paint: p => p[1] < c[1] - r * (plat ? .45 : .4) ? M.SOLE : g.shoes === "glitter" && spotty(p, 60, .28) ? M.GLINT : undefined });
-  }
+  // little party shoes on each foot (or, for the snake, one tiny shoe on its tail tip)
+  if (g.shoes) for (const f of A.feet) shoe3d(m, f, g.shoes);
 }
 
 // ================= the evolution kit =================
@@ -4168,7 +4198,7 @@ function quad3d(S, level, frame, st, facing = "towards") {
     m.chain(pts, mat, { group: side > 0 ? 6 + (fore ? 1 : 0) : 2, paint: q.socks ? p => p[1] < q.socks ? M.BODY3 : undefined : undefined });
     const fl = (q.paw === "hoof" ? .07 : .09) * (q.legW ** .5) * (!fore ? (q.hindFoot || 1) : 1);
     m.ell(v3.add(foot, [fl * .5, -.01, 0]), [fl, lw * .9, lw * 1.1], q.paw === "hoof" ? M.NOSE : mat, { group: side > 0 ? 6 + (fore ? 1 : 0) : 2 });
-    m.anchors.feet.push({ c: v3.add(foot, [fl * .5, -.01, 0]), r: Math.max(fl, lw * 1.1), group: side > 0 ? 6 + (fore ? 1 : 0) : 2 });
+    m.anchors.feet.push({ c: v3.add(foot, [fl * .5, -.01, 0]), r: Math.max(fl, lw * 1.1), group: side > 0 ? 6 + (fore ? 1 : 0) : 2, fit: q.paw === "hoof" ? "hoof" : "paw" });
     m.rig.legs.push({ name: m.part, fore, side, hip: hipTop, knee: fore ? knee : v3.add(knee, [-.12, .06, 0]), foot, r: [pts[0][3], pts[1][3], lw * .9], fl, mat, hoof: q.paw === "hoof" });
     m.part = "body";
   };
@@ -4300,7 +4330,7 @@ function owl3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, young = false, baby = level === 0, has = f => legend && S.legend.includes(f), m = new Model();
   const bob = frame ? .03 : 0, hr = S.sizes.head[level], hy = S.sizes.headY[level] + bob; // its template's size curves (art/genome/templates.js)
   // feet and a short tail
-  for (const side of [-1, 1]) { const f = frame && side > 0 ? .04 : 0; m.seg([.05, .2, side * .14], [.08, .05 + f, side * .15], .07, .06, M.BODY2, { group: 2 }); for (const dz of [-.04, 0, .04]) m.ell([.16, .03 + f, side * .15 + dz], [.06, .025, .02], M.ACCENT, { group: 2 }); m.anchors.feet.push({ c: [.13, .04 + f, side * .15], r: .08, group: side > 0 ? 6 : 2 }); }
+  for (const side of [-1, 1]) { const f = frame && side > 0 ? .04 : 0; m.seg([.05, .2, side * .14], [.08, .05 + f, side * .15], .07, .06, M.BODY2, { group: 2 }); for (const dz of [-.04, 0, .04]) m.ell([.16, .03 + f, side * .15 + dz], [.06, .025, .02], M.ACCENT, { group: 2 }); m.anchors.feet.push({ c: [.13, .04 + f, side * .15], r: .08, group: side > 0 ? 6 : 2, fit: "claw" }); }
   m.ell([-.32, .32, 0], [.22, .06, .14], M.BODY2, { dir: [-1, -.6, 0], group: 3 });
   // body: an upright egg, pale breast streaked
   m.ell([0, .55 + bob, 0], [.36, .52, .36], M.BODY, { paint: p => p[0] > .12 && p[1] < hy - hr * .5 ? ((Math.floor(p[1] * 18) % 3 === 0 && spotty(p, 16, .5)) ? M.BODY2 : M.BELLY) : undefined });
@@ -4558,7 +4588,8 @@ const FEATURE_NAMES = { wings: "spirit wings", mane: "a glowing mane", tails: "m
 
 // Party gear's colourways (gear in critter).
 const HAT_COLOURWAYS = [[[255, 70, 170], [255, 245, 250], [255, 230, 70]], [[40, 220, 255], [255, 236, 60], [255, 80, 180]], [[150, 80, 255], [175, 255, 60], [255, 255, 255]]];
-const SHOE_STYLES = { sneakers: [[255, 70, 90], [250, 250, 245]], glitter: [[215, 215, 235], [190, 190, 210]], platform: [[160, 60, 230], [40, 30, 52]] };
+// shoe, sole: trainers, glitter, platforms, heels, go-go boots and light-up trainers (their soles glow in the animal's neon)
+const SHOE_STYLES = { sneakers: [[255, 70, 90], [250, 250, 245]], glitter: [[215, 215, 235], [190, 190, 210]], platform: [[160, 60, 230], [40, 30, 52]], heels: [[255, 40, 150], [34, 22, 44]], boots: [[70, 210, 255], [250, 250, 245]], lightup: [[245, 245, 250], [250, 250, 245]] };
 const GLASSES_STYLES = ["bar", "star", "heart"];
 // A seeded mix of party gear for an invited creature (the prototype gives each its own seed):
 // always the collar in its sigil colour; often a hat, sunglasses or shoes; sometimes all three.
@@ -4568,7 +4599,7 @@ function partyGear(seed, collarColour = true) {
     collar: collarColour,
     hat: all || r() < .45 ? Math.floor(r() * HAT_COLOURWAYS.length) : null,
     glasses: all || r() < .4 ? GLASSES_STYLES[r() < .6 ? 0 : r() < .5 ? 1 : 2] : null,
-    shoes: all || r() < .4 ? Object.keys(SHOE_STYLES)[Math.floor(r() * 3)] : null,
+    shoes: all || r() < .4 ? Object.keys(SHOE_STYLES)[Math.floor(r() * 6)] : null,
   };
 }
 // sp: a species id, or a species object (a palette variant's: art/genome/palette.js).
@@ -4578,7 +4609,7 @@ function speciesColours(sp, st, gear = null) {
   if (gear.collar) c[M.COLLAR] = Array.isArray(gear.collar) ? gear.collar : c[M.MAGIC];
   if (gear.hat != null) { const [a, b, pom] = HAT_COLOURWAYS[gear.hat % HAT_COLOURWAYS.length]; c[M.HAT1] = a; c[M.HAT2] = b; c[M.POM] = pom; }
   if (gear.glasses) { c[M.SHADES] = [22, 18, 32]; c[M.FRAME] = gear.glasses === "heart" ? [255, 60, 110] : [255, 90, 210]; }
-  if (gear.shoes) { const [shoe, sole] = SHOE_STYLES[gear.shoes] || SHOE_STYLES.sneakers; c[M.SHOE] = shoe; c[M.SOLE] = sole; }
+  if (gear.shoes) { const [shoe, sole] = SHOE_STYLES[gear.shoes] || SHOE_STYLES.sneakers; c[M.SHOE] = shoe; c[M.SOLE] = sole; if (gear.shoes === "lightup" && !gear.collar) c[M.COLLAR] = c[M.MAGIC]; } // (light-up soles glow in its neon, its collar's or its magic's)
   if (gear.woken) { c[M.WOKEN] = [255, 40, 36]; for (const k of [M.BODY, M.BODYL, M.BODY2, M.BODY3, M.BELLY, M.ACCENT, M.EAR]) if (c[k]) c[k] = c[k].map((v, j) => Math.round(v * .72 + [30, 8, 12][j] * .1)); } // darker, a little redder
   return c;
 }
@@ -8495,7 +8526,7 @@ function rigProject(p, h, s) {
 
 // The model the builder makes for a species at a level (not drawn), and the scale it would be drawn at.
 // face: an expression (genome/expressions.js), put on its face at that scale; gear: party gear
-// (collar, hat, glasses: they ride on the head piece; shoes aren't drawn, the legs being discs), or
+// (collar, hat, glasses: they ride on the head piece; shoes are their own piece, rigShoe), or
 // { woken: true }, the enraged look's red eyes.
 function rigCapture(id, level, st, face = null, gear = null) {
   const S = SPECIES_BY_ID[id]; let got = null;
@@ -8507,6 +8538,13 @@ function rigCapture(id, level, st, face = null, gear = null) {
   if (f) { got.m.atScale = null; f(s); }
   if (gear?.woken) for (const q of got.m.parts) if (q.mat === M.EYE || q.mat === M.IRIS || q.mat === M.PUPIL) q.mat = M.WOKEN; // enraged: angry glowing eyes (as critter's woken look)
   return { m: got.m, s };
+}
+// A party animal's shoe (creatures3d.js shoe3d, fitted to its hoof or paw) as a piece at each heading, pivoted on the
+// foot's centre, so the rig puts it on each foot in place of the foot's disc and it steps and lifts with the leg.
+function rigShoe(leg, style, s, st) {
+  const m = new Model(), lw = leg.r[2] / .9;
+  shoe3d(m, { c: [0, 0, 0], r: Math.max(leg.fl, lw * 1.1), group: 2, fit: leg.hoof ? "hoof" : "paw" }, style, { extra: false });
+  return RIG_HEADINGS.map(h => { const r = render(m, { scale: s, yaw: h }), [px, py] = r.project([0, 0, 0]); return rigCropped(r.sp, px, py); });
 }
 // Its head piece in each expression but neutral (the head piece itself): { angry, happy, dazed }.
 function rigFaces(id, level, st, pivot, s, gear) {
@@ -8551,7 +8589,7 @@ function rigDisc(r, mat, s, paint, rod = false) {
 // pieces: { torso, head, tail: [per heading] }, faces: { angry, happy, dazed: its head piece in each }, discs: { material: [by radius in pixels] }, joints }.
 // joints are in model units: legs [{ name, fore, side, hip, knee, foot, r: [hip, knee, foot] }],
 // head { nb, H }, tail (its base) for the four-legged; spine [[x, y, z, r]...] and head for a serpent.
-// gear (optional): a party animal's (art/creatures.js partyGear: collar, hat, glasses), baked on.
+// gear (optional): a party animal's (art/creatures.js partyGear: collar, hat, glasses, shoes), baked on (shoes as pieces.shoe).
 function rigParts(id, level, st, gear = null) {
   const S = SPECIES_BY_ID[id], tpl = S.q ? "quadruped" : S.plan === "snake" ? "serpent" : null;
   if (!tpl) return null;
@@ -8563,7 +8601,7 @@ function rigParts(id, level, st, gear = null) {
     for (const l of R.legs) discSet(l.mat, legR);
     const hoof = R.legs.find(l => l.hoof); if (hoof) discSet(M.NOSE, radii(R.legs.map(l => l.fl * .9)));
     else discSet(R.legs[0].mat, radii(R.legs.map(l => l.fl * .9)));
-    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { torso: rigPiece(m, ["body"], [0, 0, 0], s, { S: SPECIES_BY_ID[id], level, st }), head: rigPiece(m, ["head"], R.head.nb, s, { S: SPECIES_BY_ID[id], level, st }), tail: rigPiece(m, ["tail"], R.tail, s, { S: SPECIES_BY_ID[id], level, st }) }, faces: rigFaces(id, level, st, R.head.nb, s, gear) };
+    return { id, level, template: tpl, s, joints: { legs: R.legs, head: R.head, tail: R.tail, top: R.top, len: R.len, bw: R.bw }, discs, pieces: { shoe: gear?.shoes && !gear.woken ? rigShoe(R.legs[0], gear.shoes, s, st) : null, torso: rigPiece(m, ["body"], [0, 0, 0], s, { S: SPECIES_BY_ID[id], level, st }), head: rigPiece(m, ["head"], R.head.nb, s, { S: SPECIES_BY_ID[id], level, st }), tail: rigPiece(m, ["tail"], R.tail, s, { S: SPECIES_BY_ID[id], level, st }) }, faces: rigFaces(id, level, st, R.head.nb, s, gear) };
   }
   // a serpent: its head baked, its body discs (speckled like its coat) by the spine's radii
   discSet(M.BODY, radii(R.spine.map(p => p[3])), p => spotty([p[0] * 1.5, p[1], p[2]], 14, .3) ? M.BODY3 : undefined);

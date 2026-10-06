@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import styleJson from "../../config/music-style.json";
-import { Conductor, barSeconds, partyNear, planBlock, type MusicCue } from "./musicPlan";
+import { Conductor, barSeconds, legendNear, partyNear, planBlock, type MusicCue } from "./musicPlan";
 import { newGame } from "./game";
 import { TUNING } from "./tuning";
 import { checkStyle, notesAt, type BlockPlan, type MusicStyle } from "./musicScore";
@@ -185,5 +185,53 @@ describe("a woken area joining the party (partyNear)", () => {
     expect(partyNear(g, g.witch)).toBeLessThan(0.8);
     g.combat.ruined.add(key);
     expect(partyNear(g, g.witch)).toBe(0);
+  });
+});
+
+describe("variety over a long run (overnight, 2026-10-06: a 30-minute run shouldn't loop audibly)", () => {
+  // the notes of a block, as a fingerprint
+  const block = (p: BlockPlan) => Array.from({ length: 16 * p.bars }, (_, i) => notesAt(style, p, null, p.start * 16 + i, { seed: 7, siege: 0 }).map(e => `${i}:${e.part}:${e.midi}`).join(",")).join("|");
+
+  it("takes an arc step's variants in turn on later passes round its loop", () => {
+    const plans = run(2 * 60 / spBar + 300 / spBar, t => cueAt(t, 0, 1e6)); // the first wave's music held for many passes
+    const passes = new Set(plans.map(p => p.pass ?? 0)), sections = new Set(plans.map(p => p.section));
+    expect(passes.size).toBeGreaterThan(2);
+    for (const v of style.arc[0].variants ?? []) for (const [s] of v) expect(sections.has(s)).toBe(true);
+  });
+
+  it("never plays a pass's block note for note again on the next pass", () => {
+    for (const arc of [0, 3, 7]) {
+      const a = style.arc[arc], loops = [a.loop, ...(a.variants ?? [])];
+      for (let pass = 0; pass < 4; pass++) {
+        // the same section's first block on two passes in a row, wherever it falls in each
+        const [section, bars] = loops[pass % loops.length][0], next = loops[(pass + 1) % loops.length].find(([s]) => s === section);
+        if (!next) continue;
+        const p0: BlockPlan = { section, start: 0, bars, wave: arc, arc, pass }, p1: BlockPlan = { ...p0, pass: pass + 1 };
+        expect(block(p1), `${a.name} ${section} pass ${pass}`).not.toBe(block(p0));
+      }
+    }
+  });
+
+  it("keeps the first pass as it was (pass 0 is the music before variants)", () => {
+    const p: BlockPlan = { section: "deep", start: 0, bars: 16, wave: 1, arc: 1 };
+    expect(block({ ...p, pass: 0 })).toBe(block(p));
+  });
+});
+
+describe("an angry legend near (legendNear and the style's legend parts)", () => {
+  it("darkens the music near an angry or charging legend, by how near, and not near a sleeping or happy one", () => {
+    const g = newGame(123, TUNING), L = g.creatures.find(c => c.boss)!;
+    g.witch.x = L.x + 10; g.witch.z = L.z;
+    expect(legendNear(g, g.witch)).toBe(0); // asleep
+    L.legendState = "angry";
+    expect(legendNear(g, g.witch)).toBe(1);
+    g.witch.x = L.x + (TUNING.music.nearDist + TUNING.music.farDist) / 2;
+    expect(legendNear(g, g.witch)).toBeGreaterThan(0.2);
+    expect(legendNear(g, g.witch)).toBeLessThan(0.8);
+    L.legendState = "happy";
+    expect(legendNear(g, g.witch)).toBe(0);
+    const plan: BlockPlan = { section: "deep", start: 0, bars: 16, wave: 1, arc: 1 };
+    const parts = (legend: number) => new Set(Array.from({ length: 32 }, (_, s) => notesAt(style, plan, null, s, { seed: 1, siege: 0, legend })).flat().map(e => e.part));
+    for (const p of Object.keys(style.legend ?? {})) { expect(parts(0).has(p)).toBe(false); expect(parts(1).has(p)).toBe(true); }
   });
 });
