@@ -499,6 +499,27 @@ const report = await b.page.evaluate(async () => {
     }
     res.push({ what: "generated bridges: footbridges, rope bridges and root bridges, 8 variants each, standing, none alike, within a third of the hand-made piece's size, unlit", good: !bad.length, info: bad.slice(0, 6).join("; ") });
   }
+  { // the set-piece generator (art/props/sets.js): every kind's 12 seeded variants draw, stand on their bottom row, nothing NaN, none alike, landmark-sized
+    // (6 to 12 m across or tall) with their origin on the sprite, one warm glowing touch at most (a lantern, embers), a punt's and a jetty's pool mostly water;
+    // and an area naming one as its set piece gets it built (setPiece3d)
+    const bad = [], EM = new Set([...G.EMISSIVE]), water = [G.M.WATER, G.M.BODY2, G.M.ACCENT, G.M.WEB, G.M.GLINT];
+    for (const kind of G.SET_PROP_KINDS) {
+      const seen = new Set();
+      for (let seed = 0; seed < 12; seed++) {
+        const p = G.genSetPiece(kind, { seed }, G.AREA_BY_ID["muddy-forest"], st), sp = p.sp, n = sp.m.filter(Boolean).length, key = sp.w + "x" + sp.h + ":" + Array.from(sp.m).join("");
+        if (n < 400 || !Array.from(sp.n).every(Number.isFinite)) { bad.push(`${kind} ${seed}: ${n} px`); continue; }
+        let bottom = 0; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++; if (!bottom) bad.push(`${kind} ${seed} floats`);
+        if (seen.has(key)) bad.push(`${kind} ${seed} repeats another`); seen.add(key);
+        const big = Math.max(p.metres.width, p.metres.height), o = p.origin; if (big < 6 || big > 12) bad.push(`${kind} ${seed}: ${p.metres.width} x ${p.metres.height} m`);
+        if (!(o.x >= 0 && o.x <= sp.w && o.y >= 0 && o.y <= sp.h)) bad.push(`${kind} ${seed}: origin off it`);
+        const lit = new Set(Array.from(sp.m).filter(m => EM.has(m) && m !== G.M.GLINT)); if (lit.size > 1 || [...lit].some(m => m !== G.M.GLOW)) bad.push(`${kind} ${seed} glows in ${[...lit].join(",")}`);
+        if ((kind === "punt" || kind === "jetty") && sp.m.filter(m => water.includes(m)).length / n < .3) bad.push(`${kind} ${seed}: little water`);
+      }
+    }
+    const fake = { ...G.AREA_BY_ID["muddy-forest"], id: "test-area" }, a = G.setPiece3d("jetty", fake, st), b = G.setPiece3d("jetty", { ...fake, id: "another-area" }, st);
+    if (!a.sp || !a.origin || a.sp.w * a.sp.h === b.sp.w * b.sp.h && a.sp.w === b.sp.w) bad.push("setPiece3d: a generated kind isn't built, or two areas get the same one");
+    res.push({ what: "set-piece generator: punts, jetties, rings and heaps, 12 variants each, standing, none alike, 6 to 12 m, origin on it, one warm glow at most, punts and jetties in their pools; an area naming one gets its own", good: !bad.length, info: bad.slice(0, 6).join("; ") });
+  }
   { // something tall in every area (Ed: "each area should have at least some kind of taller thing"): each area's big pieces include one at least 4 m tall
     // (its trees across their heights, or for the open areas the tall pieces); the tall pieces (snag, cairn, standing stone, pillar, spire, stalagmite)
     // stand on the ground, 4.5 to 12 m tall, and are flagged sparse (a small share of the area's big objects)

@@ -11,6 +11,7 @@ import { hash2 } from "../rules/random";
 import type { AssetLibrary } from "./assets";
 import type { ForestLight } from "./view";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
+import { moodOf, type Mood } from "./mood";
 
 export class PartyObjectsView {
   private upright: SpriteBatch | null = null;
@@ -34,7 +35,7 @@ export class PartyObjectsView {
    *  dressing lies wholly outside it only lights its lights (Ed, 2026-10-05: late in a run every
    *  piece of every partified area in reach was looked at every frame). */
   update(g: Game, time: number, camera: THREE.Camera, visible: (x: number, z: number, w: number, h: number) => boolean, fires: { x: number; z: number; scale: number; flip: boolean }[] = [], view: { x: number; z: number; half: number } | null = null): ForestLight[] {
-    const lights: ForestLight[] = [], t = g.tuning;
+    const lights: ForestLight[] = [], t = g.tuning, M = moodOf(t); // (spooky: more of the decor's lights, wider and stronger: render/mood.ts)
     this.count = 0;
     if (!t.partyObjects.on) { this.upright?.set([]); this.flat?.set([]); return lights; }
     const art = this.assets.partyObjectArt();
@@ -66,8 +67,8 @@ export class PartyObjectsView {
       const b = this.bounds.get(key)!, PAD = 20;
       if (view && (b[0] > view.x + view.half + PAD || b[2] < view.x - view.half - PAD || b[1] > view.z + view.half + PAD || b[3] < view.z - view.half - PAD)) {
         // Out of view: its lights only (they reach onto the ground in view), as below.
-        for (const c of d.clusters) { const lay = art.layouts[c.id]; if (lay) for (const p of c.mirror ? lay.mirror : lay.plain) if (lit < t.partyObjects.lightsPerArea && isLit(p.ref)) { lit++; lights.push(light(c.x + p.dx, c.z + p.dz, lightOf(p.ref, t)!, time, since(time, from))); } }
-        for (const p of d.lights) lights.push(light(p.x, p.z, lightOf(p.ref, t)!, time, since(time, from)));
+        for (const c of d.clusters) { const lay = art.layouts[c.id]; if (lay) for (const p of c.mirror ? lay.mirror : lay.plain) if (lit < (M?.decorLights ?? t.partyObjects.lightsPerArea) && isLit(p.ref)) { lit++; lights.push(light(c.x + p.dx, c.z + p.dz, lightOf(p.ref, t)!, time, since(time, from), M)); } }
+        for (const p of d.lights) lights.push(light(p.x, p.z, lightOf(p.ref, t)!, time, since(time, from), M));
         continue;
       }
       const put = (ref: string, gx: number, gz: number, flip: boolean, i: number, hang = 0) => {
@@ -95,11 +96,11 @@ export class PartyObjectsView {
           const ref = d!.neons?.length && p.ref.includes("@") ? p.ref.replace(/@[a-z]+/, "@" + d!.neons[(ci * 7 + pi * 3) % d!.neons.length]) : p.ref;
           put(ref, c.x + p.dx, c.z + p.dz, p.left, ci * 16 + pi);
           // The clusters' campfires and lanterns light up too, while the area has lights to spare.
-          if (lit < t.partyObjects.lightsPerArea && isLit(ref)) { lit++; const L = lightOf(ref, t)!; lights.push(light(c.x + p.dx, c.z + p.dz, L, time, since(time, from))); }
+          if (lit < (M?.decorLights ?? t.partyObjects.lightsPerArea) && isLit(ref)) { lit++; const L = lightOf(ref, t)!; lights.push(light(c.x + p.dx, c.z + p.dz, L, time, since(time, from), M)); }
         });
       });
       d.loose.forEach((p, i) => put(p.ref, p.x, p.z, p.flip, 200 + i));
-      for (const p of d.lights) lights.push(light(p.x, p.z, lightOf(p.ref, t)!, time, since(time, from)));
+      for (const p of d.lights) lights.push(light(p.x, p.z, lightOf(p.ref, t)!, time, since(time, from), M));
       // Hanging things, and the caught balloon: from a branch point in the nearest tree's crown, their
       // hang (or tie) anchor at that height, a little out from the trunk towards us; none if no tree is near.
       [...d.hanging, ...(d.caught ? [d.caught] : [])].forEach((p, i) => {
@@ -132,7 +133,7 @@ function boundsOf(d: Dressing): [number, number, number, number] {
 }
 
 /** A real light: campfires flicker; everything fades up as it appears. */
-function light(x: number, z: number, L: { rgb: number[]; radius: number; height: number }, time: number, age: number): ForestLight {
+function light(x: number, z: number, L: { rgb: number[]; radius: number; height: number }, time: number, age: number, M: Mood | null): ForestLight {
   const flick = 0.85 + 0.1 * Math.sin(time * 11 + x) + 0.05 * Math.sin(time * 23 + z);
-  return { x, y: L.height + 0.4, z, reach: L.radius, rgb: new THREE.Vector3(L.rgb[0] / 255, L.rgb[1] / 255, L.rgb[2] / 255), strength: 1.6 * flick * Math.min(1, Math.max(0, age) / 1.5) };
+  return { x, y: L.height + 0.4, z, reach: L.radius * (M?.decorReach ?? 1), rgb: new THREE.Vector3(L.rgb[0] / 255, L.rgb[1] / 255, L.rgb[2] / 255), strength: 1.6 * (M?.decorStrength ?? 1) * flick * Math.min(1, Math.max(0, age) / 1.5) };
 }
