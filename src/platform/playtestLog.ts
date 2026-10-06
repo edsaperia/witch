@@ -5,6 +5,7 @@
 // does opening the game with ?playtest=download. Browser-side, outside the rules.
 import { powerReport } from "../rules/power";
 import type { Game } from "../rules/game";
+import type { Stall } from "./stallLog";
 
 export interface PlaytestSample {
   /** Game time (s), the wave, and the soundsystems standing (home included). */
@@ -25,7 +26,7 @@ export interface PlaytestSample {
   hits: number;
 }
 
-export interface PlaytestRun { seed: number; build: string; started: string; interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[] }
+export interface PlaytestRun { seed: number; build: string; started: string; interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[]; /** The last frames of 100 ms or more (platform/stallLog.ts), with what they spent it on. */ stalls?: Stall[] }
 
 const KEY = "witch.playtest", KEEP = 8, EVERY = 10;
 const round = (x: number) => Math.round(x * 10) / 10;
@@ -56,7 +57,10 @@ export class PlaytestLog {
     });
     this.save();
   }
+  /** The stall log's stalls, kept with the run (main.ts sets it). */
+  stalls: (() => Stall[]) | null = null;
   private save(): void {
+    if (this.stalls) this.run.stalls = this.stalls().slice();
     try {
       const runs = readRuns().filter(r => r.started !== this.run.started);
       runs.push(this.run);
