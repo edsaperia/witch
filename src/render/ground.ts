@@ -273,7 +273,8 @@ void main() {
 export class Ground {
   readonly mesh: THREE.Mesh;
   private texture: THREE.DataTexture;
-  private tile = new THREE.DataTexture(new Uint8Array(TILE * TILE * 4), TILE, TILE);
+  /** One tile's texels, filled on the CPU and copied into the texture. */
+  private tile = new Uint8Array(TILE * TILE * 4);
   private filled: Uint8Array;
   private tilesX: number;
   private tilesZ: number;
@@ -290,7 +291,6 @@ export class Ground {
     this.filled = new Uint8Array(this.tilesX * this.tilesZ);
     const nearest = (t: THREE.DataTexture) => { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true; return t; };
     this.texture = nearest(new THREE.DataTexture(new Uint8Array(W * H * 4), W, H));
-    nearest(this.tile);
     this.floors = nearest(new THREE.DataTexture(new Uint8Array(64 * FLOOR_VARIANTS * FLOOR_COLS * 48 * FLOOR_ROWS * 4), 64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * FLOOR_ROWS));
     const floors = Array.from({ length: TYPE_SLOTS }, (_, i) => new THREE.Vector3(...(LOOKS[i]?.floor ?? [0.25, 0.45, 0.4])));
     const disco = discoLooks(st, map.dancefloor.radius);
@@ -411,7 +411,7 @@ export class Ground {
   }
 
   private fillTile(renderer: THREE.WebGLRenderer, i: number, j: number): void {
-    const e = this.map.extent, data = this.tile.image.data as Uint8Array, tm = TILE / TEXELS_PER_METRE;
+    const e = this.map.extent, data = this.tile, tm = TILE / TEXELS_PER_METRE;
     const x0 = e.minX + i * tm, z0 = e.minZ + j * tm;
     // Ponds are part of the ground: every one is marked in the tile, so none can pop.
     const ponds = this.forest.lightsNear(x0 + tm / 2, z0 + tm / 2, tm / 2 + 6).filter(l => l.kind === "pond");
@@ -422,12 +422,14 @@ export class Ground {
       for (const p of ponds) if (Math.hypot(wx - p.x, wz - p.z) < 3 * p.size) pond = 255;
       data[o] = a.look; data[o + 1] = Math.round(a.openness * 255); data[o + 2] = pond; data[o + 3] = 255;
     }
-    this.tile.needsUpdate = true;
-    renderer.copyTextureToTexture(this.tile, this.texture, null, new THREE.Vector2(i * TILE, j * TILE));
+    // Copied from a texture three.js has never seen, so it's a plain texSubImage2D from these bytes:
+    // one it had uploaded went through framebuffers (copyTexSubImage2D), which waits on the GPU's
+    // queued work, up to hundreds of ms a tile (Ed, 2026-10-06: occasional half-second freezes).
+    renderer.copyTextureToTexture(new THREE.DataTexture(this.tile, TILE, TILE), this.texture, null, new THREE.Vector2(i * TILE, j * TILE));
     this.filled[j * this.tilesX + i] = 1;
   }
 
-  dispose(): void { this.texture.dispose(); this.tile.dispose(); this.mesh.geometry.dispose(); (this.mesh.material as THREE.Material).dispose(); }
+  dispose(): void { this.texture.dispose(); this.mesh.geometry.dispose(); (this.mesh.material as THREE.Material).dispose(); }
 }
 
 /** The plaza round the floor (tuning dancefloor.paving), in the rim's stone (art/dancefloor.js DISCO_LOOK). */
