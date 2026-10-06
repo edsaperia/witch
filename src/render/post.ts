@@ -175,12 +175,7 @@ export class Post {
       u.uScene.value = this.scene.texture; u.uBloom.value = this.bright.texture; u.uLow.value.copy(this.low); u.uBloomStrength.value = bloomOn ? t.bloom.strength : 0;
       u.uBlack.value = t.tone.black; u.uGamma.value = t.tone.gamma;
       u.uFx.value = this.fx.texture; u.uFxOn.value = fxOn ? 1 : 0;
-      const M = moodOf(t);
-      if (M?.grade) {
-        // The tint, at the brightness it leaves: a colour of luma 1, so the grade shifts hue, not level.
-        const [r, g, b] = hsv2rgb(M.gradeHue, M.gradeSat, 1).map((x: number) => x / 255), l = 0.3 * r + 0.55 * g + 0.15 * b;
-        u.uGrade.value.set(M.grade, M.gradeDesat, M.gradePivot, 0); u.uGradeTint.value.set(r / l, g / l, b / l);
-      } else u.uGrade.value.set(0, 0, 1, 0);
+      this.setGrade(u);
     });
     if (!tilt) return;
     // The blur radius is given in low-res pixels; after the upscale it covers the same ground.
@@ -192,5 +187,18 @@ export class Post {
     };
     this.pass("tilt", this.b, u => { common(u); u.uSrc.value = this.a.texture; u.uDir.value.set(1, 0); });
     this.pass("tilt", null, u => { common(u); u.uSrc.value = this.b.texture; u.uDir.value.set(0, 1); });
+  }
+
+  /** The mood's grade (render/mood.ts) into the composite's uniforms; its tint worked out when the mood changes, not every frame. */
+  private gradeOf: object | null | undefined;
+  private setGrade(u: Record<string, THREE.IUniform>): void {
+    const M = moodOf(this.tuning);
+    if (M === this.gradeOf) return;
+    this.gradeOf = M;
+    if (M?.grade) {
+      // The tint, at the brightness it leaves: a colour of luma 1, so the grade shifts hue, not level.
+      const [r, g, b] = hsv2rgb(M.gradeHue, M.gradeSat, 1).map((x: number) => x / 255), l = 0.3 * r + 0.55 * g + 0.15 * b;
+      u.uGrade.value.set(M.grade, M.gradeDesat, M.gradePivot, 0); u.uGradeTint.value.set(r / l, g / l, b / l);
+    } else u.uGrade.value.set(0, 0, 1, 0);
   }
 }
