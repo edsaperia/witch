@@ -724,12 +724,14 @@ export class View {
     // Idling into the party, she's drawn in her party pose there instead.
     this.witchBatch.set(this.partyWitchView.herIdle || hidden ? [] : [{ x: wx, y: wyy + groundHeight(wx, wz), z: wz, frame: wframe, flip: w.seated ? false : w.facing < 0 }]);
     // The glide by her own snap: what the sprite shader's snap of her base takes off, given back by
-    // the canvas's shift (main.ts), so she lands where she truly is to a screen pixel every frame.
+    // the canvas's shift (main.ts) with the camera's own snap, so she lands where the unsnapped camera
+    // would put her, to a screen pixel, every frame (the world then lands within half an art pixel).
     this.witchBase.x = wx; this.witchBase.y = wyy + groundHeight(wx, wz); this.witchBase.z = wz;
     if (this.glide === "witch" && !hidden && !this.partyWitchView.herIdle) {
       const b = bendPoint(this.v3.set(wx, wyy + groundHeight(wx, wz), wz)).project(this.camera);
       const X = (b.x * 0.5 + 0.5) * this.width, Y = (b.y * 0.5 + 0.5) * this.height;
-      this.subpixel.x = X - (Math.floor(X) + 0.5); this.subpixel.y = -(Y - (Math.floor(Y) + 0.5));
+      // (Her place under the camera before its snap: what her own snap takes off, and what the camera's did.)
+      this.subpixel.x += X - (Math.floor(X) + 0.5); this.subpixel.y += -(Y - (Math.floor(Y) + 0.5));
     }
     // Where she is on screen (low-res pixels) and how far from the camera, for the occluder fade.
     {
