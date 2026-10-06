@@ -27,8 +27,8 @@ export const WITCH_AXES = {
   hatHeight: [.3, 3], hatBrim: [.3, 2.6], hatTilt: [-.9, 1], hatBand: [0, 4],
   hair: ["long", "bob", "buns", "mohawk"], top: ["jacket", "sequins", "mesh", "poncho", "cape"], cloak: ["none", "short", "long", "hooded"],
   broom: ["classic", "fan", "twig", "round"], broomLength: [.4, 2.4], broomBend: [-1.2, 1.5], bristles: [.3, 3],
-  scarfLength: [0, 3], bagSize: [.4, 2.6], backpackSize: [0, 2.5],
-  cloakLength: [.6, 2.4], familiar: ["none", "cat", "crow", "toad", "bat"], // (Ed, on #98: "Longer cloaks."; the familiar, an accessory with a choice: accessories.familiar)
+  scarfLength: [0, 7], bagSize: [.4, 2.6], backpackSize: [0, 2.5],
+  cloakLength: [.6, 6], familiar: ["none", "cat", "crow", "toad", "bat"], // (Ed, on #98: "Longer cloaks."; 2026-10-06: "allow a longer cloak and a longer scarf"; the familiar, an accessory with a choice: accessories.familiar)
 };
 // The generator's own limits (narrower: a new witch is a witch, a pointed hat with its glowing band; as before round 2, so a seed draws as it did).
 export const WITCH_RANDOM = {
