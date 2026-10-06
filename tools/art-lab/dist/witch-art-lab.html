@@ -7998,8 +7998,24 @@ const STONE_GLOW = { cyan: [[70, 230, 255], [200, 250, 255]], violet: [[190, 100
 // cracked and weathered, with moss and grass at its foot and one bold glowing rune carved into
 // its face (the same glyphs as the soundsystem's runes), and a few motes drifting round it.
 // sigil: a creature's id, to carve its sigil (sigils.js) instead of a generic rune.
+// The face's sigil (Ed, 2026-10-06: "the sigils as they are written on the runestones are hard to make out"): not sampled in 3D
+// but stamped on as a crisp pixel glyph like the bubble's, its strokes 1 to 2 px, about 60% of the face across with a margin round
+// it: a bright neon inlay (glowing, recoloured to the sigil's neon) in a dark carved groove (its shadow side, down and right, the
+// moon being up and left), so it reads by day as a cut line and by night as a lit one; the faint glow is the inlay's own bloom.
+const FACE = M.GLINT; // a stand-in for the face's pixels while the stone renders
+function carveSigil(sp, sigil) {
+  let x0 = sp.w, y0 = sp.h, x1 = -1, y1 = -1;
+  for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.get(x, y) === FACE) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); sp.recolour(x, y, M.STONE); }
+  if (x1 < 0) return;
+  const n = Math.max(9, Math.round(Math.min(x1 - x0 + 1, y1 - y0 + 1) * .62)), g = sigilGlyph(sigil, n), ox = Math.round((x0 + x1 + 1 - n) / 2), oy = Math.round((y0 + y1 + 1 - n) / 2);
+  const ink = (x, y) => x >= 0 && y >= 0 && x < n && y < n && g.m[y * n + x];
+  for (let y = -1; y <= n; y++) for (let x = -1; x <= n; x++) {
+    if (ink(x, y)) sp.recolour(ox + x, oy + y, M.RUNE);
+    else if (ink(x - 1, y) || ink(x, y - 1) || ink(x - 1, y - 1)) sp.recolour(ox + x, oy + y, M.LINE); // the groove's shadow side
+  }
+}
 function magicStone(variant, sigil) {
-  const m = new Model({ blend: .04 }), k = Object.keys(STONE_GLOW).indexOf(variant), fz = .08, A = .4; // A: turned so its face is nearly square to the viewer
+  const m = new Model({ blend: .04 }), k = Math.max(0, Object.keys(STONE_GLOW).indexOf(variant)), glow = Array.isArray(variant) ? [variant, variant.map(c => Math.round(c + (255 - c) * .7))] : STONE_GLOW[variant], fz = .08, A = .4; // A: turned so its face is nearly square to the viewer
   // its own axes: across, up (leaning back a little, so the face catches the moon), out of the face
   const ax = [Math.cos(A), 0, -Math.sin(A)], az = v3.norm([Math.sin(A), .22, Math.cos(A)]), ay = v3.norm(v3.cross(az, ax)), C = [0, .46, 0];
   // two jagged cracks: one down from the worn top, one up from the foot
@@ -8011,7 +8027,7 @@ function magicStone(variant, sigil) {
     const d = v3.sub(q, C), p = [v3.dot(d, ax), v3.dot(d, ay) + .46, v3.dot(d, az)]; // in the slab's own axes
     if (p[2] > fz - .02) { // the rune, carved into the face
       const u = (p[0] + .17) / .34, v = (.8 - p[1]) / .5;
-      if (sigil) { const su = (p[0] + .27) / .54, sv = (.8 - p[1]) / .58; if (su >= 0 && su <= 1 && sv >= 0 && sv <= 1 && sigilHit(sigil, su, sv, .055)) return M.RUNE; }
+      if (sigil) { const su = (p[0] + .27) / .54, sv = (.8 - p[1]) / .58; if (su >= 0 && su <= 1 && sv >= 0 && sv <= 1 && !crack(p[0], p[1])) return FACE; } // (the sigil is stamped on after, as pixels)
       else if (u >= 0 && u <= 1 && v >= 0 && v <= 1 && runeGlyph(u, v, k + 1, .1)) return M.RUNE;
     }
     if (crack(p[0], p[1])) return M.STONED; // cracks
@@ -8025,8 +8041,9 @@ function magicStone(variant, sigil) {
   // moss and grass at its foot
   for (const [x, z, r] of [[-.24, .14, .08], [.2, .02, .07], [.0, .12, .07]]) m.ell([x, .015, z], [r, r * .4, r], M.MOSS, { group: 2 });
   for (let i = 0; i < 9; i++) { const x = -.3 + i * .07, z = .12 + (i % 3) * .025 - i * .02, h = .07 + (i * 37 % 5) / 60; m.seg([x, 0, z], [x + (i % 3 - 1) * .02, h, z + .01], .012, .004, i % 3 ? M.LEAF : M.LEAF2, { group: 10 + i }); }
-  const col = { [M.STONE]: [132, 134, 142], [M.STONED]: [70, 70, 80], [M.MOSS]: [86, 120, 62], [M.LEAF]: [80, 125, 60], [M.LEAF2]: [130, 160, 80], [M.RUNE]: STONE_GLOW[variant][0], [M.MAGIC2]: STONE_GLOW[variant][1], [M.LINE]: [40, 40, 50] };
+  const col = { [M.STONE]: [132, 134, 142], [M.STONED]: [70, 70, 80], [M.MOSS]: [86, 120, 62], [M.LEAF]: [80, 125, 60], [M.LEAF2]: [130, 160, 80], [M.RUNE]: glow[0], [M.MAGIC2]: glow[1], [M.LINE]: [40, 40, 50] };
   const sp = render(m, { height: 44 }).sp;
+  if (sigil) carveSigil(sp, sigil);
   // a few motes drifting round it
   let n = 0;
   for (let i = 0; i < 600 && n < 5; i++) {
@@ -8046,7 +8063,7 @@ function pond() {
 }
 // Bakes the light sources: { campfire: [3 frames], stones: { cyan, violet, green }, pond: { sp, mask } }.
 // The pond's mask is a canvas, white where its pixels are water.
-// A rune stone in one glow ("cyan", "violet" or "green"), carved with a creature's sigil (an
+// A rune stone in one glow ("cyan", "violet" or "green", or an [r, g, b] neon), carved with a creature's sigil (an
 // area's stones can carry the area creature's sigil) or, without one, a generic rune. Baked.
 function runeStone(st, { glow = "cyan", sigil, makeCanvas = defaultCanvas } = {}) { const s = magicStone(glow, sigil); return bake(s.sp, s.colours, st, "none", makeCanvas); }
 function lightProps(st, { makeCanvas = defaultCanvas } = {}) {
