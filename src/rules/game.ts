@@ -15,7 +15,7 @@ import { danceAt, invitableNow, stateOf, STATES } from "./creatureStates";
 import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, SLOT_RANGE, SPOT_RANGE } from "./partyGuests";
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
-import { cellKey, hurryWave, newParty, speakersOn, spreadWave, stepParty, type PartyState } from "./party";
+import { castPartySpell, cellKey, heldBySpell, hurryWave, newParty, speakersOn, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { nextSpeakerState, type SpeakerState } from "./speakers";
 import { moonState } from "./moon";
@@ -24,6 +24,7 @@ import { SIGIL_NEON } from "../../art/sigils.js";
 import { LEGEND_BUFFS, newBuffs, stepBuffs, type BuffState } from "./buffs";
 import { COMBAT, marchOn, maxHp, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
 import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./simLod";
+import { dropHat, hatButton, newHat, type HatState } from "./hat";
 import { hurt, knockOut, newHealth, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
 import { dropCache, newInvites, stepInvites, type Affection, type InviteControls, type Invites } from "./invites";
 import { affection, blocksLetters, hit as hitAffection } from "./affection";
@@ -50,6 +51,8 @@ export interface Witch {
   /** Her hits left and repair (rules/knockout.ts), and her knockout while it plays out. */
   health: Health;
   ko: Knockout | null;
+  /** Her hat (rules/hat.ts): on her head, or lying where she was knocked out. */
+  hat: HatState;
   /** Slowed (a snail's slime, a glow-worm's flash) until then: her speeds times slowMult. */
   slowUntil?: number;
   slowMult?: number;
@@ -137,6 +140,8 @@ export interface WaveEvent { kind: "soundsystemLost"; key: string; x: number; z:
 export interface Controls extends Intent, Partial<LeashControls>, InviteControls {
   /** Debug (O): the nearest area legend turns happy (as if its quest were done). */
   happyNearest?: boolean;
+  /** The party spell's button (or its key) pressed: the game starts (rules/party.ts castPartySpell). */
+  castParty?: boolean;
   /** Auto-talk (the player's setting, on unless turned off), and Talk held (how she talks with it off). */
   autoTalk?: boolean;
   talkHeld?: boolean;
@@ -156,7 +161,7 @@ export interface Controls extends Intent, Partial<LeashControls>, InviteControls
 }
 
 export function newWitchPlayer(id: number, x: number, z: number, t: Tuning): Witch {
-  return { id, body: { ...newWitch(x, z), seated: true }, leash: newLeash(), spells: newSpells(t), dash: newDash(), invites: newInvites(), health: newHealth(t), ko: null };
+  return { id, body: { ...newWitch(x, z), seated: true }, leash: newLeash(), spells: newSpells(t), dash: newDash(), invites: newInvites(), health: newHealth(t), ko: null, hat: newHat() };
 }
 
 export function newGame(seed: number, tuning: Tuning, players = 1): Game {
@@ -232,7 +237,11 @@ export function hitWitch(g: Game, id: number, at: number, t: Tuning = g.tuning, 
   const w = g.witches[id];
   if (!w || w.ko || dashing(w.dash, at)) return;
   if (at < w.health.hurtAt + t.witchHealth.grace) return; // (just hit: a moment's grace, so a pack can't take all her hits at once)
-  if (hurt(w.health, at, t)) { w.ko = knockOut(w.leash, g.creatures, at, t); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z }); return; }
+  if (hurt(w.health, at, t)) {
+    w.ko = knockOut(w.leash, g.creatures, at, t); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z });
+    if (dropHat(w.hat, w.body.x, w.body.z, at, t.knockout.dropHat)) g.koEvents.push({ kind: "hatDropped", at, x: w.body.x, z: w.body.z });
+    return;
+  }
   // Thrown and staggered by it (rules/knock.ts); not by the blow that knocks her out.
   if (blow) knockWitch((w.knock ??= newKnock()), w.body, blow, at, t);
 }
@@ -315,6 +324,11 @@ function fixedStep(g: Game, controls: Controls): void {
   const legends = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id));
   stepBuffs(g.buffs, g.creatures, [...g.leash.stack, ...g.leash.placed.map(p => p.id), ...legends.filter(id => buffing(g.creatures[id]))], g.tuning);
   const t = g.buffs.tuning;
+  // The party spell (Ed, 2026-10-06): until it's cast, and while she casts it, she stands behind the decks: no moving,
+  // rising, blinking, spells or 💌s (the camera's zoom still works). Its button, Enter, or her spell key (R, gamepad B, touch
+  // "spell") while the game waits casts it, rather than the boost (the hold drops that spell press).
+  if (c.castParty || c.spell) castPartySpell(g.party, g.map, g.clock.time);
+  if (heldBySpell(g.party, g.clock.time)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   if (c.spell) castSpell(g.spells, g.clock.time, t);
   // The speed boost: her speeds times its multiplier while it's on.
   const W = g.witches[0];
@@ -375,8 +389,13 @@ function fixedStep(g: Game, controls: Controls): void {
   stepTravel(g.leash.stack, g.leash.placed, g.creatures, g.witch, g.map, dt, t, id => busy(id) || heldByCombat(g.creatures[id]), t.leash.pace ?? 1);
   // The sigil button by a lying relic picks it up; carrying one, by a sleeping legend, puts it down there (rules/legends.ts).
   let sigil = !!c.sigil && !W.ko, place = !!c.place && !W.ko;
+  // Her hat first (rules/hat.ts): lying on a sigil or a relic's, the press picks up the hat, and the next the sigil.
+  if ((sigil || place) && g.witch.mode === "ground" && hatButton(W.hat, g.witch.x, g.witch.z, t.leash.pickRadius)) {
+    sigil = false; place = false;
+    g.leash.events.push({ kind: "hatPicked", id: W.id, x: g.witch.x, z: g.witch.z, at: g.clock.time });
+  }
   if ((sigil || place) && g.witch.mode === "ground") {
-    const r = relicButton(g.relics, g.leash.relics, g.creatures, legends, g.witch.x, g.witch.z, g.clock.time);
+    const r = relicButton(g.relics, g.leash.relics, g.creatures, legends, g.witch.x, g.witch.z, g.clock.time, t.leash.pickRadius);
     if (r) {
       sigil = false; place = false;
       if ("picked" in r) g.leash.events.push({ kind: "relicPicked", id: r.picked.id, x: r.picked.x, z: r.picked.z, at: g.clock.time });
@@ -393,7 +412,7 @@ function fixedStep(g: Game, controls: Controls): void {
     const L = questPlaced(g.map, g.creatures, (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id)), g.friendly, k => g.party.areas.has(k), e.id, e.x, e.z, g.clock.time);
     if (L) {
       g.questEvents.push({ kind: "done", id: L.id, joined: e.id, cell: [L.cell[0], L.cell[1]], key: cellKey(L.cell), x: L.x, z: L.z, at: g.clock.time });
-      onAreaDone(g.party, L.cell, g.clock.time); // (the ley line moves on: its quest done before its wave)
+      if (!g.party.areas.has(cellKey(L.cell))) onAreaDone(g.party, L.cell, g.clock.time); // (the ley line moves on: its quest done before its wave; after it, the line has moved on already)
       g.byArea = null;
     }
   }
@@ -558,7 +577,9 @@ function stepWitchParty(g: Game, c: Controls, dt: number): void {
   // Debug (?witches=N): N more, as if from soundsystems round the floor.
   for (let i = 0; i < t.partyWitches.debugExtra; i++) areas.push({ key: `debug-${i}`, x: d.x + Math.cos(i * 2.4) * 100, z: d.z + Math.sin(i * 2.4) * 100, at: 0 });
   const w = g.witch, moving = Math.hypot(c.moveX, c.moveZ) > 0.05 || Math.hypot(w.vx, w.vz) > 0.3 || !!(c.toggleMode || c.sigil || c.place || c.cycle || c.spell);
-  stepPartyWitches(g.partyWitches, areas, { x: d.x, z: d.z, radius: d.radius }, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated, moving }], g.clock.time, dt, t);
+  // Round the floor they keep clear of trees, rocks, the speakers and the treehouse and its clearing (Ed, 2026-10-06).
+  const th = g.map.treehouse, clear = (x: number, z: number) => blinkClear(g, x, z) && Math.hypot(x - th.x, z - th.z) > t.treehouse.clear;
+  stepPartyWitches(g.partyWitches, areas, { x: d.x, z: d.z, radius: d.radius, clear }, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated, moving, treetop: w.mode === "treetop" }], g.clock.time, dt, t);
 }
 
 const neonOf = neon;

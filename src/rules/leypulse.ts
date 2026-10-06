@@ -7,6 +7,7 @@ import type { ForestMap } from "./map";
 import type { PartyState } from "./party";
 import { waveCountdown } from "./party";
 import { leyChain } from "./leylines";
+import { cellKey } from "./party";
 
 export type P2 = readonly [number, number];
 
@@ -79,4 +80,33 @@ export const awaitingSpell = (p: PartyState): boolean => p.spellAt === null;
 export function clockText(seconds: number): string {
   const s = Math.max(0, Math.floor(Number.isFinite(seconds) ? seconds : 0));
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+}
+
+/** How many times the pulse's pace the drawn line's tip grows (Ed, 2026-10-06: "The leyline can still travel three times faster than the pulse"). */
+export const TIP_PACE = 3;
+/** When the drawn ley line's growing tip reaches each stone on the route (Ed, 2026-10-06: "The column of light above a
+ *  runestone first appears when the leyline meets it"): stone key → game time; null before the party spell (the tip
+ *  hasn't set off). The shared seam for the line's reveal (the rendering builder's) and the stones' beacons (render/view/home.ts).
+ *  Provisional until the reveal lands: the tip leaves home at the spell and reaches the k-th stone after home along the
+ *  route `party.interval / TIP_PACE` seconds after the one before; a stone its wave (or quest) has already reached counts
+ *  as reached then, if sooner. */
+export function leyReachTimes(p: PartyState, map: ForestMap): Map<string, number> | null {
+  const start = clockStart(p);
+  if (start === null) return null;
+  const { stones } = leyChain(p, map), step = map.tuning.party.interval / TIP_PACE, out = new Map<string, number>();
+  const done = p.leyDone ?? new Map<string, number>();
+  stones.forEach((s, k) => {
+    const key = cellKey(s.cell), a = p.areas.get(key), was = Math.min(a ? (key === cellKey(map.centreCell) ? -Infinity : a.at) : Infinity, done.get(key) ?? Infinity);
+    out.set(key, Math.min(start + k * step, was));
+  });
+  return out;
+}
+
+/** A runestone's column of light at `time`, given when the line's tip reached it (leyReachTimes; undefined: not on the
+ *  line): null before the tip reaches it (no column); after, how far it has shot up (0-1, over the first `flare` × 0.35
+ *  seconds) and its flare-up as the line meets it (1 fading to 0 over `flare` seconds), then up for good. */
+export function columnShown(reachedAt: number | undefined, time: number, flare: number): { up: number; flare: number } | null {
+  if (reachedAt === undefined || time < reachedAt) return null;
+  const since = time - reachedAt;
+  return { up: Math.min(1, since / Math.max(1e-3, flare * 0.35)), flare: Math.max(0, 1 - since / Math.max(1e-3, flare)) };
 }

@@ -2045,13 +2045,12 @@
         "on": {
           "type": "boolean"
         },
-        "ahead": {
-          "type": "number",
-          "minimum": 0
-        },
-        "behind": {
-          "type": "number",
-          "minimum": 0
+        "far": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
         },
         "behindBright": {
           "type": "number",
@@ -2114,8 +2113,7 @@
       },
       "required": [
         "on",
-        "ahead",
-        "behind",
+        "far",
         "behindBright",
         "advance",
         "fade",
@@ -2449,7 +2447,39 @@
     "partyWitches": {
       "type": "object",
       "properties": {
-        "max": {
+        "roam": {
+          "type": "number",
+          "minimum": 0
+        },
+        "centreBias": {
+          "type": "number",
+          "minimum": 0
+        },
+        "swoopTime": {
+          "type": "number",
+          "minimum": 0
+        },
+        "swoopHeight": {
+          "type": "number",
+          "minimum": 0
+        },
+        "swoopMin": {
+          "type": "number",
+          "minimum": 0
+        },
+        "swoopMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treetopBoost": {
+          "type": "number",
+          "minimum": 0
+        },
+        "simRange": {
+          "type": "number",
+          "minimum": 0
+        },
+        "simRangeTreetop": {
           "type": "number",
           "minimum": 0
         },
@@ -2522,7 +2552,15 @@
         }
       },
       "required": [
-        "max",
+        "roam",
+        "centreBias",
+        "swoopTime",
+        "swoopHeight",
+        "swoopMin",
+        "swoopMax",
+        "treetopBoost",
+        "simRange",
+        "simRangeTreetop",
         "idleAfter",
         "idleReach",
         "activityMin",
@@ -4764,52 +4802,6 @@
       ],
       "additionalProperties": false
     },
-    "forecast": {
-      "type": "object",
-      "properties": {
-        "symbols": {
-          "type": "number",
-          "minimum": 0
-        },
-        "probable": {
-          "type": "number",
-          "minimum": 0
-        },
-        "probableMax": {
-          "type": "number",
-          "minimum": 0
-        },
-        "afterNext": {
-          "type": "array",
-          "items": {
-            "type": "number",
-            "minimum": 0
-          }
-        },
-        "radius": {
-          "type": "number",
-          "minimum": 0
-        },
-        "size": {
-          "type": "number",
-          "minimum": 0
-        },
-        "flare": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "symbols",
-        "probable",
-        "probableMax",
-        "afterNext",
-        "radius",
-        "size",
-        "flare"
-      ],
-      "additionalProperties": false
-    },
     "fight": {
       "type": "object",
       "properties": {
@@ -5135,6 +5127,9 @@
         },
         "legendsLoyal": {
           "type": "boolean"
+        },
+        "dropHat": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -5142,7 +5137,8 @@
         "releaseMax",
         "emptyBeat",
         "teleport",
-        "legendsLoyal"
+        "legendsLoyal",
+        "dropHat"
       ],
       "additionalProperties": false
     },
@@ -6140,6 +6136,19 @@
       ],
       "additionalProperties": false
     },
+    "legends": {
+      "type": "object",
+      "properties": {
+        "share": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "share"
+      ],
+      "additionalProperties": false
+    },
     "wildLegends": {
       "type": "object",
       "properties": {
@@ -6403,7 +6412,6 @@
     "bond",
     "sfx",
     "music",
-    "forecast",
     "fight",
     "attackFx",
     "combat",
@@ -6426,6 +6434,7 @@
     "tiltShift",
     "population",
     "dreams",
+    "legends",
     "wildLegends",
     "creatureSimRadius",
     "simLod",

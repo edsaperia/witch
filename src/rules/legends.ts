@@ -1,5 +1,5 @@
 // Legends, redesigned (Ed, 2026-10-05; issue #87; config/legends.json). A legend sleeps, dreaming
-// (its quest: bring the creature it dreams of while its area's soundsystem is off, and you get its
+// (its quest: bring the creature it dreams of while it sleeps, soundsystem on or not (Ed, 2026-10-06), and you get its
 // buff; it sleeps on). With none of its kind left in its area it grows restless (a nightmare), and
 // after angryAfter seconds of that it's angry: it attacks the witch and her posse from afar. A
 // relic put down next to it while it sleeps makes it happy: you get its buff and it defends,
@@ -17,7 +17,7 @@ export interface LegendsData {
   angryAfter: number; check: number; placeRadius: number;
   /** Going back to sleep away from where it lay (Ed, 2026-10-06): it walks home at homeSpeed m/s first. */
   homeSpeed: number;
-  relics: { kinds: string[]; minRemoteness: number; minGap: number; spread: number; homeInset: number; candidates: number; pickRadius: number };
+  relics: { kinds: string[]; minRemoteness: number; minGap: number; spread: number; homeInset: number; clearOfTreehouse: number; candidates: number; sigilOffset: number };
   attack: { range: number; interval: number; windup: number; damage: number; targets: number; wornReach: number; /** seconds before a legend with nothing in reach looks again */ recheck: number; lobFlight: number; lobRadius: number; beamWidth: number; beamTime: number; beam: string[] };
   healTime: number;
   charge: { species: string[]; windup: number; laneShown: number; speed: number; accel: number; turn: number; brake: number; arc: number; laneWidth: number; damage: number; knockback: number; returnSpeed: number; rest: number };
@@ -27,7 +27,9 @@ export const LEGENDS = raw as unknown as LegendsData;
 
 /** A relic: a giant half-buried party object (its kind: the art's party relic id), lying at (x, z)
  *  until she picks it up; then carried (in her leash's relics), then put down by a legend. */
-export interface Relic { id: number; kind: string; x: number; z: number; cell: [number, number]; state: "lying" | "carried" | "used"; legend?: number }
+export interface Relic { id: number; kind: string; x: number; z: number; cell: [number, number]; state: "lying" | "carried" | "used"; legend?: number;
+  /** Its relic sigil on the ground, sigilOffset metres south of it (Ed, 2026-10-06): she picks the relic up by standing on this, like any sigil. */
+  sx: number; sz: number }
 
 /** Whether a tree's crown hangs over ground point (x, z), seen from the treetops (a crown is drawn
  *  crownReach metres north of its trunk, crownHalfWidth either side). */
@@ -58,7 +60,7 @@ export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: nu
   const gapTo = (x: number, z: number) => out.reduce((m, r) => Math.min(m, Math.hypot(r.x - x, r.z - z)), Infinity);
   // The kinds in a seeded order: the first for home's, the rest for the map.
   const kinds = [...R.kinds].sort((a, k) => hash2(a.length, a.charCodeAt(0) + a.charCodeAt(a.length - 1) * 7, map.seed + 7731) - hash2(k.length, k.charCodeAt(0) + k.charCodeAt(k.length - 1) * 7, map.seed + 7731));
-  const put = (kind: string, x: number, z: number) => { const c = map.cellSafe(x, z).cell; out.push({ id: out.length, kind, x, z, cell: [c[0], c[1]], state: "lying" }); };
+  const put = (kind: string, x: number, z: number) => { const c = map.cellSafe(x, z).cell; out.push({ id: out.length, kind, x, z, cell: [c[0], c[1]], state: "lying", sx: x, sz: Math.min(b.maxZ - 1, z + R.sigilOffset) }); };
 
   // Home's: round from a seeded bearing, out along each ray to where the home area ends, then back
   // in a little: the first such spot that's clear, in bounds and past home's circle (else out past the edge).
@@ -73,7 +75,7 @@ export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: nu
         for (let r = map.homeRadius; r < 600; r += 4) if (!inHome(home.x + dx * r, home.z + dz * r)) { edge = r; break; }
         if (edge < 0) continue;
         const r = edge + side * R.homeInset, x = home.x + dx * r, z = home.z + dz * r;
-        if (r > map.homeRadius + 5 && inside(x, z) && !map.hardClear(x, z) && inHome(x, z) === (side < 0)) spot = { x, z };
+        if (r > map.homeRadius + 5 && Math.hypot(x - map.treehouse.x, z - map.treehouse.z) >= R.clearOfTreehouse && inside(x, z) && !map.hardClear(x, z) && inHome(x, z) === (side < 0)) spot = { x, z };
       }
       if (spot) break;
     }
@@ -140,7 +142,7 @@ export function stepLegendStates(w: LegendWorld, ids: number[], data: LegendsDat
     // Going back to sleep away from where it lay (Ed, 2026-10-06: "they should go back to their
     // circle first and sleep in the spot where they spawned initially"): it walks home, then lies down.
     if (c.homing) { walkHome(c, w.time, w.dt, data); continue; }
-    c.questOpen = !!q && q.done === undefined && !w.partified(key) && (c.legendState === "asleep" || c.legendState === "restless");
+    c.questOpen = !!q && q.done === undefined && (c.legendState === "asleep" || c.legendState === "restless"); // (open while it sleeps, its soundsystem on or not: Ed, 2026-10-06)
     if (q?.done !== undefined) c.buffed = true; // (its quest done: its buff, for good)
     // Every check seconds, each legend on its own beat (Ed, 2026-10-06: "the legends could check
     // for own species in area once every five seconds without issue"; staggered by its id, so they
@@ -200,9 +202,10 @@ export const buffing = (c: Creature): boolean => !!c.buffed || c.legendState ===
 /** The sigil button on the ground at (x, z): pick up a lying relic within pickRadius (returns it),
  *  else, carrying relics, put the newest down by a sleeping (or restless) legend within placeRadius
  *  (returns the legend made happy). Null if neither (the sigil button does as ever). */
-export function relicButton(relics: Relic[], carried: number[], creatures: Creature[], legendIds: number[], x: number, z: number, time: number, data: LegendsData = LEGENDS): { picked: Relic } | { placed: Relic; legend: Creature } | null {
-  let pick: Relic | null = null, pd = data.relics.pickRadius;
-  for (const r of relics) if (r.state === "lying") { const d = Math.hypot(r.x - x, r.z - z); if (d <= pd) { pd = d; pick = r; } }
+export function relicButton(relics: Relic[], carried: number[], creatures: Creature[], legendIds: number[], x: number, z: number, time: number, pickRadius: number, data: LegendsData = LEGENDS): { picked: Relic } | { placed: Relic; legend: Creature } | null {
+  // Standing on a relic's sigil (as on any placed sigil: within the leash's pickRadius of it) picks the relic up.
+  let pick: Relic | null = null, pd = pickRadius;
+  for (const r of relics) if (r.state === "lying") { const d = Math.hypot(r.sx - x, r.sz - z); if (d <= pd) { pd = d; pick = r; } }
   if (pick) { pick.state = "carried"; carried.push(pick.id); return { picked: pick }; }
   if (!carried.length) return null;
   let best: Creature | null = null, bd = data.placeRadius;
