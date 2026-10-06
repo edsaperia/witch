@@ -18,10 +18,10 @@ import { cellKey } from "./rules/party";
 import { areaUnderWitch, interpolated, joinParty, loseSoundsystem, newGame, STEP, stepGame, type WaveEvent } from "./rules/game";
 import { AREA_TYPES } from "./rules/map";
 import { waveCountdown } from "./rules/party";
-import { clockText } from "./rules/leypulse";
+import { awaitingSpell, clockSeconds, clockText } from "./rules/leypulse";
 import { parseSeed } from "./rules/map";
 import { TUNING } from "./rules/tuning";
-import { Input } from "./platform/input";
+import { ACTION_BAR, Input } from "./platform/input";
 import { View } from "./render/view";
 import { bendPoint, groundHeight, placed } from "./render/height";
 import { Vector3 } from "three";
@@ -346,14 +346,20 @@ const seedEl = document.getElementById("seed")!;
 seedEl.innerHTML = `seed <a href="?seed=${seed}">${seed}</a>`;
 const debugEl = document.getElementById("debug")!, startEl = document.getElementById("start")!;
 const debugButtons = document.getElementById("debug-buttons")!;
-const clockEl = document.getElementById("clock")!, clockT = clockEl.querySelector<HTMLElement>(".t")!, clockLabel = clockEl.querySelector<HTMLElement>(".label")!;
+const clockEl = document.getElementById("clock")!, clockT = clockEl.querySelector<HTMLElement>(".t")!, clockLabel = clockEl.querySelector<HTMLElement>(".label")!, clockAsk = clockEl.querySelector<HTMLElement>(".ask")!;
+/** The prompt to cast the party spell, with its key on this device (the spell's binding: R, gamepad B, the touch spell button). */
+const spellPrompt = () => document.body.classList.contains("touch") ? "tap spell to cast the party spell and start" : `press ${ACTION_BAR.find(s => s.action === "spell")?.key ?? "R"} to cast the party spell and start`;
 /** The game clock, top centre (Ed, 2026-10-06): the time played, mm:ss from 0, held while paused; under it, in debug, the
  *  wave's line. (The wave timer bar on the right is gone: the wave pointer's ring carries the countdown.) */
 function waveHud(): void {
   const cd = waveCountdown(game.party, game.map, game.clock.time);
   clockEl.classList.toggle("on", game.clock.time > 0 || !game.clock.paused);
-  const now = clockText(game.clock.time);
+  const now = clockText(clockSeconds(game.party, game.clock.time));
   if (clockT.textContent !== now) clockT.textContent = now;
+  // before the party spell (Ed, 2026-10-06: the game starts when she casts it), a prompt to cast it, with its key
+  const ask = awaitingSpell(game.party) && !game.clock.paused;
+  clockEl.classList.toggle("waiting", ask);
+  if (ask && clockAsk.textContent !== spellPrompt()) clockAsk.textContent = spellPrompt();
   clockEl.classList.toggle("paused", game.clock.paused);
   const clock = (s: number) => { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; };
   const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : clock(cd.left);

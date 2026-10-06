@@ -1,7 +1,7 @@
 // The HUD's top and edges (Ed, 2026-10-06: the wave pointer toward the ley line's pulse with 🎶, the game clock top centre,
 // no dancefloor cue, no wave bar): the built game (DIST, default dist/) at 1600×900 on a seed, out of the boot with the next
 // wave half way to coming, the witch a little way from home; the whole screen, then the same with the decisions panel open
-// (F2) and the debug overlay (~) to check nothing at the top collides. Writes <out dir>/hud.png, hud-decide.png, hud-debug.png.
+// (F2) and the debug overlay (~) to check nothing at the top collides. BOOT=1 leaves home booting (no wave pointer yet) and waiting for the party spell (its prompt). Writes <out dir>/hud.png, hud-decide.png, hud-debug.png.
 //   npm run build && node tools/smoke/hud.cjs [out dir] [seed]
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -22,11 +22,12 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => window.witch.game.clock.time > 2, null, { timeout: 600000, polling: 500 });
     // out of the boot, the next wave half way; the witch away from home, facing the way the line goes
-    await page.evaluate(() => {
+    await page.evaluate(boot => {
       const g = window.witch.game, t = g.clock.time, I = g.tuning.party.interval, D = g.map.dancefloor;
-      g.party.bootUntil = t; g.party.nextAt = t + I * 0.5;
+      if (!boot) { g.party.bootUntil = t; g.party.nextAt = t + I * 0.5; } // (BOOT=1: left booting, the wave pointer hidden)
+      if (boot) g.party.spellAt = null; // (and waiting for the party spell: the clock at 00:00 and the prompt to cast it)
       g.witch = { ...g.witch, x: D.x + 60, z: D.z + 40, seated: false, mode: "ground", lift: 0 };
-    });
+    }, !!process.env.BOOT);
     const wait = async s => page.waitForFunction(t => window.witch.game.clock.time > t, (await page.evaluate(() => window.witch.game.clock.time)) + s, { timeout: 600000, polling: 500 });
     await wait(6);
     const info = await page.evaluate(() => ({ time: Math.round(window.witch.game.clock.time), clock: document.querySelector("#clock")?.textContent ?? null, wave: !!document.querySelector("#wave") }));
