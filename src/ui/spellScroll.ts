@@ -151,7 +151,7 @@ export class SpellScroll {
   }
 
   private frame(): void {
-    const now = performance.now(), slow = (window as unknown as { __spellSlow?: number }).__spellSlow ?? 1, dt = Math.min(.1, (now - this.last) / 1000 * slow); this.last = now;
+    const now = performance.now(), slow = (window as unknown as { __spellSlow?: number }).__spellSlow ?? 1, dt = Math.max(0, Math.min(.1, (now - this.last) / 1000 * slow)); this.last = now; // (never backwards: a clock set back)
     const t = this.vt += dt, ready = this.ready();
     if (ready && this.openAt < 0) { this.openAt = t; this.sound("rustle", 1); }
     const open = this.openAt < 0 ? 0 : ease(clamp((t - this.openAt) / UNROLL)), alive = open >= 1;
