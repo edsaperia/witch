@@ -11,7 +11,7 @@ import { newCamera, stepCamera, cameraPose } from "./camera";
 import { population, spawnCreatures, stepCreature, stepCreaturesNear, speedFactor } from "./creatures";
 import { hitWitch, newGame, simRadius, STEP, stepGame } from "./game";
 import { dashing, newDash, startDash } from "./dash";
-import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, symbolCount, wavePlan } from "./party";
+import { newParty, spreadWave, stepParty, spawnMarkers, nextWave, pickNext, pickSet, planAhead, speakersOn, waveCountdown, wavePlan } from "./party";
 import { segmentsCross, stringsFor } from "./strings";
 import { wallFeatures } from "./walls";
 import { laserShow } from "./lasers";
@@ -640,19 +640,17 @@ describe("the party", () => {
     stepParty(p, map, B + 41, 1, true); // (sitting again once it's done holds nothing)
     expect(p.nextAt).toBe(due + 40);
   });
-  it("forecasts two waves ahead, confirmed, and a probable set that holds the wave after (Ed, 2026-10-04)", () => {
+  it("forecasts two waves ahead, confirmed (Ed, 2026-10-04)", () => {
     const p = newParty(map);
     expect(p.next.length).toBe(1); expect(p.afterNext.length).toBe(1);
-    expect(p.probable.length).toBeGreaterThan(0); expect(p.probable.length).toBeLessThanOrEqual(TUNING.forecast.probable);
     for (let w = 0; w < 6; w++) {
-      const after = p.afterNext, probable = p.probable.map(key);
+      const after = p.afterNext;
       spreadWave(p, map, w + 1);
       expect(p.next).toEqual(after); // the confirmed after-next is next now
-      expect(probable).toContain(key(p.afterNext[0])); // and the new after-next was among the probable
     }
     const m = spawnMarkers(p, map), stage = (c: readonly [number, number]) => m.find(x => x.key === key(c as [number, number]))!.stage;
     expect(stage(p.next[0])).toBe("next"); expect(stage(p.afterNext[0])).toBe("afterNext");
-    for (const c of p.probable) expect(stage(c)).toBe("probable");
+    expect(m.filter(x => x.stage === "dormant").length).toBe(m.length - 2);
   });
   it("numbers every dormant area by the wave that will wake it, as the waves then do (Ed, 2026-10-04: numbers over the stones)", () => {
     for (const per of [1, 2]) {
@@ -666,17 +664,6 @@ describe("the party", () => {
       }
     }
   });
-  it("sees a wave further with a forecast buff (the owl's): the third wave's one area, confirmed", () => {
-    const p = newParty(map);
-    p.seeAhead = 1; planAhead(p, map);
-    for (let w = 0; w < 6; w++) {
-      expect(p.probable.length).toBe(1);
-      const third = p.probable;
-      spreadWave(p, map, w + 1);
-      expect(p.afterNext).toEqual(third);
-    }
-  });
-
   it("wakes one area per witch each wave (Ed, 2026-10-04): areasPerWave, all different, forecast as sets, and it can change between waves", () => {
     const p = newParty(map);
     p.areasPerWave = 3; p.next = pickSet(p, map, 3); planAhead(p, map);
@@ -696,15 +683,6 @@ describe("the party", () => {
     expect(p.next.length).toBe(2);
     expect(spreadWave(p, map, 10).length).toBe(2);
     expect(spawnMarkers(p, map).filter(m => m.stage === "next").length).toBe(2);
-  });
-  it("rings the stones with symbols: 12 on the next, the after-next filling through the middle, probable ones a few", () => {
-    const F = TUNING.forecast;
-    expect(symbolCount("next", 0, 0, TUNING)).toBe(F.symbols);
-    expect(symbolCount("afterNext", 0, 0, TUNING)).toBe(F.afterNext[0]);
-    expect(symbolCount("afterNext", 1, 0, TUNING)).toBe(F.afterNext[1]);
-    expect(symbolCount("afterNext", 1, 0, TUNING)).toBeLessThan(F.symbols); // only the next has all 12
-    for (const f of [0, 0.5, 0.99]) { const n = symbolCount("probable", 0, f, TUNING); expect(n).toBeGreaterThanOrEqual(1); expect(n).toBeLessThanOrEqual(F.probableMax); }
-    expect(symbolCount("dormant", 1, 1, TUNING)).toBe(0);
   });
   it("comes in waves every interval seconds, and pauses", () => {
     const p = newParty(map), I = TUNING.party.interval, start = TUNING.party.startDelay + TUNING.boot.time;
