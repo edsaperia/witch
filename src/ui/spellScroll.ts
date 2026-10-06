@@ -9,6 +9,9 @@
 // parchment, and as that clears the game is running: `onBurst` starts play and casts the spell (the witch's cast, the pulse
 // round the dancefloor's ring). About 1.8 s from the click when the world's ready. prefers-reduced-motion keeps the glow and
 // the veil, the ripple and the tremble faint, and the grow a short swell and fade.
+// While the forest grows it lies rolled shut, dim and asleep (Ed, 2026-10-06: "The 🎶 spell scroll can transition in or open or
+// become active only once the loading is done"): no glow, no click; the bedroom's fairy lights are the loading bar. Once the
+// world's ready it unrolls (its rolls parting, a flare of its glow, a rustle) and comes alive.
 // Sounds by `sound(cue, value)`: "hum" (its level, 0..1, every frame), "rustle" (the ripple's strength, when it stirs), "crackle"
 // (the grow), "burst" (the burst): platform/audio/spell.ts.
 
@@ -17,6 +20,7 @@ export type SpellCue = "hum" | "rustle" | "crackle" | "burst";
 
 const ART_W = 46, ART_H = 40; // the scroll's own pixels
 const GROW = .62, BURST = .95, CLEAR = 1.8; // seconds from the click: grown, burst, cleared
+const UNROLL = .9; // seconds to unroll once the world's ready
 const ease = (x: number) => x < .5 ? 2 * x * x : 1 - 2 * (1 - x) * (1 - x);
 const clamp = (x: number, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 
@@ -52,9 +56,10 @@ export class SpellScroll {
   readonly veil = document.createElement("div");
   /** The flash, the sparks and the burst, over everything (the game too, as it clears). */
   private fx = document.createElement("canvas");
-  private caption = document.createElement("div");
   private art = paintScroll();
   private near = 0; private target = 0; private focused = false;
+  /** When it began to unroll (its own clock), -1 while the forest still grows. */
+  private openAt = -1;
   private castAt = -1; private burstAt = -1; private raf = 0; private last = 0;
   /** Its own clock (seconds): real time, or slowed for filming (window.__spellSlow, e.g. 0.1). */
   private vt = 0;
@@ -63,7 +68,7 @@ export class SpellScroll {
   private reduced = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
   /** Whether play can begin (the forest grown): the scroll holds, grown and crackling, until it can. */
   ready: () => boolean = () => true;
-  /** How much of the forest has grown, 0..1 (its caption while it isn't ready). */
+  /** How much of the forest has grown, 0..1 (shown on the burst's dark should it ever wait). */
   progress: () => number = () => 1;
   /** The click itself (a gesture: sound may start; her look saved). */
   onCast: () => void = () => {};
@@ -79,9 +84,8 @@ export class SpellScroll {
     el.title = "Cast the party spell";
     Object.assign(el.style, { position: "absolute", right: "3%", bottom: "4%", width: "min(230px, 22vw)", aspectRatio: `${ART_W} / ${ART_H}`, cursor: "pointer", zIndex: "3", outline: "none", touchAction: "manipulation" });
     Object.assign(this.veil.style, { position: "absolute", inset: "0", background: "#05030c", opacity: "0", pointerEvents: "none", zIndex: "2" });
-    Object.assign(this.caption.style, { position: "absolute", right: "3%", bottom: "1%", width: "min(230px, 22vw)", textAlign: "center", fontSize: "12px", letterSpacing: ".06em", color: "#f2dfb0", textShadow: "0 0 6px #000", zIndex: "3", pointerEvents: "none" });
     Object.assign(this.fx.style, { position: "fixed", inset: "0", width: "100%", height: "100%", pointerEvents: "none", zIndex: "30", display: "none" });
-    host.append(this.veil, el, this.caption);
+    host.append(this.veil, el);
     document.body.append(this.fx);
     el.addEventListener("click", e => { e.stopPropagation(); this.cast(); });
     el.addEventListener("keydown", e => { if (e.code === "Enter" || e.code === "Space") { e.preventDefault(); e.stopPropagation(); this.cast(); } });
@@ -91,6 +95,8 @@ export class SpellScroll {
     host.addEventListener("pointerleave", () => { this.target = 0; });
   }
 
+  /** Whether it's unrolled and can be cast. */
+  get awake(): boolean { return this.openAt >= 0; }
   /** True from the click until the effects have cleared. */
   get casting(): boolean { return this.castAt >= 0; }
 
@@ -106,29 +112,32 @@ export class SpellScroll {
 
   /** Cast it: grow, crackle, burst (the burst waits for the world to be ready). */
   cast(): void {
-    if (this.casting) return;
+    if (this.casting || !this.awake) return;
     this.castAt = this.vt; this.burstAt = -1;
     this.onCast();
     this.sound("crackle", 1);
     this.fx.style.display = "block";
-    this.el.style.visibility = "hidden"; this.caption.style.visibility = "hidden";
+    this.el.style.visibility = "hidden";
     if (!this.raf) this.start();
   }
 
   private frame(): void {
     const now = performance.now(), slow = (window as unknown as { __spellSlow?: number }).__spellSlow ?? 1, dt = Math.min(.1, (now - this.last) / 1000 * slow); this.last = now;
-    const t = this.vt += dt;
-    const want = this.casting ? 1 : Math.max(this.target, this.focused ? 1 : 0);
+    const t = this.vt += dt, ready = this.ready();
+    if (ready && this.openAt < 0) { this.openAt = t; this.sound("rustle", 1); }
+    const open = this.openAt < 0 ? 0 : ease(clamp((t - this.openAt) / UNROLL)), alive = open >= 1;
+    this.el.style.cursor = alive ? "pointer" : "default"; this.el.tabIndex = alive ? 0 : -1;
+    this.el.setAttribute("aria-disabled", alive ? "false" : "true"); if (alive) this.el.dataset.awake = ""; else delete this.el.dataset.awake;
+    const want = this.casting ? 1 : alive ? Math.max(this.target, this.focused ? 1 : 0) : 0;
     this.near += (want - this.near) * (1 - Math.exp(-dt / .14));
-    const p = this.near, ready = this.ready();
+    const p = this.near;
     this.sound("hum", this.casting ? 0 : p);
     // the rustle: whenever the ripple stirs up a step
     if (!this.casting && p > this.stirred + .2) { this.stirred = p; this.sound("rustle", p); } else if (p < this.stirred - .25) this.stirred = p;
     const pr = this.progress();
-    this.caption.textContent = ready ? "" : `the forest is growing… ${Math.round(pr * 100)}%`;
     if (!this.casting) {
       this.veil.style.opacity = (.62 * p).toFixed(3);
-      this.drawScroll(this.el, t, p, null);
+      this.drawScroll(this.el, t, p, null, open);
       return;
     }
     // casting
@@ -140,7 +149,7 @@ export class SpellScroll {
   }
 
   /** The scroll: its paper rippling (a wave running down the sheet, rows shifted sideways) and trembling, by p. */
-  private drawScroll(target: HTMLCanvasElement, t: number, p: number, box: { x: number; y: number; w: number; h: number } | null): void {
+  private drawScroll(target: HTMLCanvasElement, t: number, p: number, box: { x: number; y: number; w: number; h: number } | null, open = 1): void {
     const dpr = window.devicePixelRatio || 1, mo = this.reduced ? .2 : 1;
     let g: CanvasRenderingContext2D, W: number, H: number, ox = 0, oy = 0;
     if (box) { g = this.fx.getContext("2d")!; W = box.w; H = box.h; ox = box.x; oy = box.y; }
@@ -153,25 +162,31 @@ export class SpellScroll {
     if (t - this.shakeAt > .045) { this.shakeAt = t; const a = (box ? 1 : p * p) * mo * k * (box ? 1.2 : .9); this.shake = [(Math.random() - .5) * 2 * a, (Math.random() - .5) * 2 * a]; }
     const x0 = ox + W * pad + this.shake[0], y0 = oy + H * pad + this.shake[1];
     g.save(); g.imageSmoothingEnabled = false;
-    // its glow behind it, golden, by p
-    const cx = x0 + sw / 2, cy = y0 + sh / 2;
+    // its glow behind it, golden, by p (and flaring as it unrolls; none while it sleeps)
+    const cx = x0 + sw / 2, cy = y0 + sh / 2, flare = open > 0 && open < 1 ? Math.sin(Math.PI * open) : 0;
     const hr = box ? Math.max(sw, sh) * .75 : Math.min(W, H) * .5, halo = g.createRadialGradient(cx, cy, 0, cx, cy, hr); // (on its own canvas: inside it, so no edge shows)
-    halo.addColorStop(0, `rgba(255,214,140,${(.12 + .4 * p).toFixed(3)})`); halo.addColorStop(1, "rgba(255,214,140,0)");
+    halo.addColorStop(0, `rgba(255,214,140,${((.12 + .4 * Math.max(p, flare)) * Math.min(1, open * 2)).toFixed(3)})`); halo.addColorStop(1, "rgba(255,214,140,0)");
     g.fillStyle = halo; g.fillRect(cx - hr, cy - hr, hr * 2, hr * 2);
     // the paper, a row of its pixels at a time, each shifted by the wave
-    const amp = (.25 + 1.6 * p) * mo * k * .6, sp = 7 + 5 * p;
+    // rolled up (open 0) its two rolls meet in the middle and the sheet between them is hidden; unrolling, they part
+    const amp = (.25 + 1.6 * p) * mo * k * .6 * open, sp = 7 + 5 * p, half = ART_H / 2, shut = 1 - open;
+    if (open < 1) g.globalAlpha = .55 + .45 * open; // (asleep: dim)
     for (let y = 0; y < ART_H; y++) {
-      const roll = y < 6 || y >= ART_H - 7, off = roll ? Math.sin(t * sp) * amp * .25 : Math.sin(y * .55 - t * sp) * amp;
-      g.drawImage(this.art, 0, y, ART_W, 1, x0 + off, y0 + y * k, sw, Math.ceil(k));
+      const top = y < 6, bottom = y >= ART_H - 7, roll = top || bottom, off = roll ? Math.sin(t * sp) * amp * .25 : Math.sin(y * .55 - t * sp) * amp;
+      if (!roll && Math.abs(y + .5 - half) > open * (half - 6)) continue;
+      const dy = top ? Math.round(shut * (half - 6)) : bottom ? -Math.round(shut * (ART_H - 7 - half)) : 0;
+      g.drawImage(this.art, 0, y, ART_W, 1, x0 + off, y0 + (y + dy) * k, sw, Math.ceil(k));
     }
+    g.globalAlpha = 1;
+    if (open < .5) { g.restore(); return; } // (the 🎶 shows as it opens)
     // the 🎶: glowing up as she nears, riding the wave at its middle
     const mid = Math.sin(ART_H * .5 * .55 - t * sp) * amp, glow = .35 + .65 * p, pulse = 1 + .06 * Math.sin(t * 6) * p;
     g.font = `${Math.round(sh * .42 * pulse)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
     g.textAlign = "center"; g.textBaseline = "middle";
     g.shadowColor = `rgba(255,200,90,${glow.toFixed(3)})`; g.shadowBlur = (4 + 30 * p) * (sh / 160);
-    g.globalAlpha = .75 + .25 * p;
+    g.globalAlpha = (.75 + .25 * p) * clamp((open - .5) * 2);
     g.fillText("🎶", cx + mid, cy + sh * .02);
-    if (p > .05) { g.globalCompositeOperation = "lighter"; g.globalAlpha = p * .5; g.fillText("🎶", cx + mid, cy + sh * .02); }
+    if (p > .05 && open >= 1) { g.globalCompositeOperation = "lighter"; g.globalAlpha = p * .5; g.fillText("🎶", cx + mid, cy + sh * .02); }
     g.restore();
   }
 
@@ -242,6 +257,6 @@ export class SpellScroll {
     cancelAnimationFrame(this.raf); this.raf = 0;
     this.castAt = -1; this.burstAt = -1; this.sparks = []; this.near = 0; this.target = 0; this.stirred = 0;
     this.fx.style.display = "none";
-    this.el.style.visibility = ""; this.caption.style.visibility = "";
+    this.el.style.visibility = "";
   }
 }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { Creature, Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
-import { TUNING, withTuning } from "./tuning";
+import { TUNING, withTuning, type Tuning } from "./tuning";
 // (she stands by the legends here: their own timers are under test, so the circle's slowed time (rules/slowTime.ts, its own tests) is off)
 const NO_SLOW = { ...TUNING, legendCircle: { slow: { ...TUNING.legendCircle!.slow, on: false } } };
 import { LEGEND_BUFFS } from "./buffs";
@@ -15,8 +15,8 @@ import { stateOf } from "./creatureStates";
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, first: Controls = idle, each?: () => void) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, i === 0 ? first : idle, STEP); each?.(); } };
 /** The witch on the ground beside a sleeping legend (one with a buff), everything else round it gone but one of its kind. */
-function beside(kin = true): { g: Game; L: Creature; mate: Creature | null } {
-  const g = newGame(123, NO_SLOW);
+function beside(kin = true, t: Tuning = NO_SLOW): { g: Game; L: Creature; mate: Creature | null } {
+  const g = newGame(123, t);
   g.clock.paused = false; g.party.paused = true;
   const L = g.creatures.find(c => c.boss && c.legendState === "asleep" && LEGEND_BUFFS.species[c.species] && !LEGENDS.charge.species.includes(c.species))!; // (one that lobs or beams: chargers below)
   const site = g.map.siteOf(L.cell[0], L.cell[1]), d = Math.hypot(site.x - L.x, site.z - L.z) || 1;
@@ -95,6 +95,47 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(happy.hp).toBeUndefined();
     expect(cellKey(g.map.cellSafe(L.x, L.z).cell)).toBe(cellKey(L.cell));
   }), 60000);
+
+  it("when angry with her out of reach, bombard the nearest standing soundsystem within bombard.range (Ed, 2026-10-06: \"Legend bombards, but prioritises you\")", () => withAngryAfter(0.5, () => {
+    const { g, L, mate } = beside();
+    mate!.gone = true;
+    run(g, 1.2);
+    expect(L.legendState).toBe("angry");
+    const B = TUNING.legends.bombard;
+    expect(B.on).toBe(true);
+    for (const k of [...g.combat.sounds.keys()]) g.combat.sounds.delete(k); // (only the one to bombard, and one past its range)
+    g.combat.sounds.set("near", { hp: 4000, max: 4000, x: L.x + 120, z: L.z, radius: 2 });
+    g.combat.sounds.set("far", { hp: 4000, max: 4000, x: L.x + B.range + 60, z: L.z, radius: 2 });
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // (out of its reach: not on the ground)
+    run(g, LEGENDS.attack.interval * 2 + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 1);
+    const near = g.combat.sounds.get("near")!;
+    expect(near.hp).toBeLessThan(4000);
+    expect(4000 - near.hp).toBeGreaterThanOrEqual(B.damage * 0.99); // (a whole lob, or a beam's whole burn)
+    expect(g.combat.sounds.get("far")!.hp).toBe(4000);
+    // with her on the ground in reach, she comes first: the soundsystem is spared
+    const hp1 = near.hp;
+    g.witch = { ...g.witch, mode: "ground", lift: 0, x: L.x + 30, z: L.z };
+    run(g, LEGENDS.attack.interval * 2 + LEGENDS.attack.windup + LEGENDS.attack.lobFlight + 1);
+    expect(near.hp).toBe(hp1);
+  }), 60000);
+
+  it("with the stomp on, a legend turning angry stamps on its own area's standing soundsystem, after the stomp's longer restless time (Ed, 2026-10-06)", () => {
+    const { g, L, mate } = beside(true, { ...NO_SLOW, legends: { ...NO_SLOW.legends, stomp: { on: true, angryAfter: 3 } } });
+    const key = cellKey(L.cell), at = { x: L.x + 30, z: L.z };
+    g.party.areas.set(key, { cell: [L.cell[0], L.cell[1]], wave: 1, at: g.clock.time, soundsystem: at } as never);
+    g.combat.sounds.set(key, { hp: 4000, max: 4000, x: at.x, z: at.z, radius: 2 });
+    mate!.gone = true; // (none of its kind left: restless, at its next look, within legends.json check seconds)
+    let restlessAt = -1;
+    run(g, LEGENDS.check + 1, idle, () => { if (restlessAt < 0 && L.legendState === "restless") restlessAt = g.clock.time; });
+    expect(restlessAt).toBeGreaterThan(0);
+    run(g, 2.5 - (g.clock.time - restlessAt));
+    expect(L.legendState).toBe("restless"); // (the stomp's 3 s, not legends.json's)
+    run(g, 1);
+    expect(L.legendState).toBe("angry");
+    expect(g.combat.sounds.get(key)!.hp).toBe(0);
+    expect(g.party.areas.has(key)).toBe(false); // (ruined, as any fallen one)
+    expect(g.tally.stomps).toBe(1);
+  }, 60000);
 
   it("fire each volley at up to attack.targets of the nearest (balance builder's values: 10 a hit, every 15 s)", () => withAngryAfter(0.5, () => {
     const { g, L, mate } = beside();
@@ -304,7 +345,7 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
     expect(maxAway).toBeGreaterThan(70); // (on past its target, braking)
     expect(bentBy).toBeGreaterThan(0.1); // (it curved, then turned in its arc)
     // Home again: in its own area, where it lay.
-    run(g, 40);
+    for (let i = 0; i < 60 / STEP && !(L.run === undefined || L.run.phase === "windup"); i++) stepGame(g, idle, STEP); // (its walk home takes as long as its charge ran it out: up to a minute)
     expect(L.run === undefined || L.run.phase === "windup").toBe(true);
     expect(Math.hypot(L.x - L.lairX!, L.z - L.lairZ!)).toBeLessThan(3);
     expect(cellKey(g.map.cellSafe(L.x, L.z).cell)).toBe(cellKey(L.cell));

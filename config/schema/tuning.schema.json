@@ -2388,6 +2388,13 @@
             "minimum": 0
           }
         },
+        "core": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
         "height": {
           "type": "array",
           "items": {
@@ -2429,6 +2436,7 @@
         "fade",
         "brightness",
         "width",
+        "core",
         "height",
         "valley",
         "flow",
@@ -4262,6 +4270,29 @@
         "spin": {
           "type": "number",
           "minimum": 0
+        },
+        "orbit": {
+          "type": "object",
+          "properties": {
+            "scale": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "min": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "scale",
+            "gap",
+            "min"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -4285,7 +4316,8 @@
         "linger",
         "lingerFade",
         "lingerMax",
-        "spin"
+        "spin",
+        "orbit"
       ],
       "additionalProperties": false
     },
@@ -4416,6 +4448,33 @@
             "maxTension"
           ],
           "additionalProperties": false
+        },
+        "runeRadius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "runePull": {
+          "type": "object",
+          "properties": {
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0
+            },
+            "stop": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "radius",
+            "speed",
+            "stop"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -4423,7 +4482,9 @@
         "runSpeed",
         "pickRadius",
         "spacing",
-        "weight"
+        "weight",
+        "runeRadius",
+        "runePull"
       ],
       "additionalProperties": false
     },
@@ -7036,6 +7097,53 @@
           "type": "number",
           "minimum": 0
         },
+        "buffPower": {
+          "type": "number",
+          "minimum": 0
+        },
+        "happyRange": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bombard": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "range": {
+              "type": "number",
+              "minimum": 0
+            },
+            "damage": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "range",
+            "damage"
+          ],
+          "additionalProperties": false
+        },
+        "stomp": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "angryAfter": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "angryAfter"
+          ],
+          "additionalProperties": false
+        },
         "partyEgg": {
           "type": "boolean"
         },
@@ -7054,6 +7162,10 @@
       },
       "required": [
         "share",
+        "buffPower",
+        "happyRange",
+        "bombard",
+        "stomp",
         "partyEgg",
         "partyHits",
         "partyDrain",

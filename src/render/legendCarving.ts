@@ -3,20 +3,34 @@
 // it clearly"): a square single-channel mask of the carving's grooves, 1 in a groove, 0 on the stone, the outer
 // ring touching the edge. The ground shader cuts it into the floor's flagstones (render/ground.ts).
 //
-// A stand-in until golf's legendary sigils land (a magic circle: rune bands, three medallions, an inscribed
-// triangle, the animal in the middle): the same parts, the middle a few strokes seeded by the species, so each
-// kind's carving differs. No drawing library: plain distance fields, so it works anywhere (and in tests).
+// The legend's own legendary sigil (golf's, art/sigils.js legendSigilMask: a double outer ring and a band of runes,
+// a cell track, an inner rune band broken by three medallions, a great triangle, the animal in an octagon at the
+// middle; runes and medallions seeded by species), drawn whole (tier 2) with its grooves at least CARVE_PX wide so
+// they read cut into the stone. A species without one falls back to the stand-in below (the same parts, plainer).
+import { legendSigilMask } from "../../art/generator.js";
 
-/** The mask's side, pixels. */
-export const CARVING_SIZE = 128;
+/** The mask's side, pixels (the whole design, runes and cells, needs 150 or more). */
+export const CARVING_SIZE = 256;
+/** The thinnest groove, pixels. */
+const CARVE_PX = 1.5;
 
 const cache = new Map<string, Uint8Array>();
 
 /** Each species' carving mask, CARVING_SIZE square, 0..255 a pixel (made once a species). */
 export function carvingMask(species: string): Uint8Array {
   let m = cache.get(species);
-  if (!m) cache.set(species, (m = drawCarving(species, CARVING_SIZE)));
+  if (!m) cache.set(species, (m = drawSigil(species, CARVING_SIZE) ?? drawCarving(species, CARVING_SIZE)));
   return m;
+}
+
+/** The legend's legendary sigil as grooves, or null if it has none. */
+function drawSigil(species: string, n: number): Uint8Array | null {
+  let f: Float32Array;
+  try { f = (legendSigilMask as (id: string, size: number, o: { tier: number; minPx: number }) => Float32Array)(species, n, { tier: 2, minPx: CARVE_PX }); } catch { return null; }
+  const out = new Uint8Array(n * n);
+  let any = false;
+  for (let i = 0; i < out.length; i++) { out[i] = Math.round(Math.max(0, Math.min(1, f[i])) * 255); if (out[i]) any = true; }
+  return any ? out : null;
 }
 
 function seeded(s: string): () => number {
@@ -31,6 +45,7 @@ function segDist(px: number, py: number, ax: number, ay: number, bx: number, by:
   return Math.hypot(px - ax - vx * t, py - ay - vy * t);
 }
 
+/** The stand-in (before the legendary sigils): rings, a rune band, three medallions on a triangle, seeded strokes in the middle. */
 function drawCarving(species: string, n: number): Uint8Array {
   const r = seeded(species), out = new Uint8Array(n * n), w = 0.016; // (a groove about 2 px wide at 128)
   // the triangle's corners (the medallions' middles), turned by the species a little

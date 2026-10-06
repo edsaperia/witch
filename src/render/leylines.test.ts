@@ -43,3 +43,38 @@ describe("the wave's pulse in the shader", () => {
     expect(shaderPulse(party(), { tuning: { party: { interval: 1e9 }, boot: { time: 10 } } } as unknown as ForestMap, 30)).toBeNull();
   });
 });
+
+describe("the whole line, from home to its tip (Ed, 2026-10-06: \"The leyline should always go from the treehouse to 3x the progress of the pulse, and I should be able to see it along its entire length\")", () => {
+  it("is drawn from the treehouse's front, unbroken (every 2 m at most), to TIP_PACE times the pulse's progress, and as bright all along", async () => {
+    const THREE = await import("three");
+    const { newGame } = await import("../rules/game");
+    const { TUNING } = await import("../rules/tuning");
+    const { leyChain } = await import("../rules/leylines");
+    const { TIP_PACE } = await import("../rules/leypulse");
+    const { LeyLines } = await import("./leylines");
+    const g = newGame(123, TUNING), T = TUNING.leyLines;
+    const ley = new LeyLines(T, () => 0, g.map);
+    const chain = leyChain(g.party, g.map);
+    for (let i = 0; i < 2000 && !ley.currentLink(); i++) ley.update(1, () => chain, () => new THREE.Vector3(1, 1, 1), 0, 0);
+    const geo = (ley as unknown as { cur: { geo: InstanceType<typeof THREE.BufferGeometry> } }).cur.geo;
+    const at = (k: string) => geo.getAttribute(k) as InstanceType<typeof THREE.BufferAttribute>, P = at("position"), L = at("aLink"), A = at("aT");
+    // From the treehouse's front (home's stone), link after link with no gap, to the last stone.
+    expect(Math.hypot(P.getX(0) - chain.stones[0].x, P.getZ(0) - chain.stones[0].z)).toBeLessThan(0.01); // (float32)
+    let last = 0;
+    for (let i = 2; i < P.count; i += 2) {
+      const along = L.getX(i) + A.getX(i), was = L.getX(i - 2) + A.getX(i - 2);
+      expect(along).toBeGreaterThanOrEqual(was - 1e-6);
+      if (L.getX(i) === L.getX(i - 2)) expect(Math.hypot(P.getX(i) - P.getX(i - 2), P.getZ(i) - P.getZ(i - 2))).toBeLessThanOrEqual(2.001); // (float32)
+      last = along;
+    }
+    expect(last).toBeCloseTo(chain.stones.length - 1);
+    // Every section as bright as the next (the shader's rank: fade^r ahead, behindBright then fade behind, none under far).
+    expect([T.fade, T.behindBright, ...T.far]).toEqual([1, 1, 1, 1]);
+    // Its tip at TIP_PACE times the pulse's progress (in links from the treehouse) through the first waves.
+    const m = { tuning: { party: { interval: 60 }, boot: { time: 10 } } } as unknown as ForestMap;
+    for (const [wave, t] of [[0, 25], [0, 69], [1, 75], [2, 160]] as const) {
+      const p = { wave, paused: false, bootUntil: 10, nextAt: 70 + 60 * wave } as unknown as PartyState;
+      expect(leyReveal(p, m, t, TIP_PACE)).toBeCloseTo(TIP_PACE * (wave + shaderPulse(p, m, t)!));
+    }
+  });
+});

@@ -81,7 +81,7 @@ void main() {
 }`;
 
 function target(w: number, h: number, filter: THREE.MagnificationTextureFilter, depth = false): THREE.WebGLRenderTarget {
-  const t = new THREE.WebGLRenderTarget(Math.max(1, w), Math.max(1, h), { minFilter: filter, magFilter: filter, depthBuffer: depth, generateMipmaps: false });
+  const t = new THREE.WebGLRenderTarget(Math.max(1, w), Math.max(1, h), { minFilter: filter, magFilter: filter, depthBuffer: depth, stencilBuffer: depth, generateMipmaps: false });
   t.texture.colorSpace = THREE.NoColorSpace;
   return t;
 }
@@ -107,7 +107,9 @@ export class Post {
   constructor(private renderer: THREE.WebGLRenderer, readonly tuning: PostTuning) {
     this.scene = target(1, 1, THREE.LinearFilter, true);
     // The scene's depth, so the effects layer hides behind what stands in front of it.
-    this.scene.depthTexture = new THREE.DepthTexture(1, 1);
+    // (With a stencil: scenery marks its pixels in it, so the ley line shows through the trees: leylines.ts.)
+    this.scene.depthTexture = new THREE.DepthTexture(1, 1, THREE.UnsignedInt248Type);
+    this.scene.depthTexture.format = THREE.DepthStencilFormat;
     this.fx.texture.format = THREE.RGBAFormat;
     const m = (frag: string, uniforms: Record<string, THREE.IUniform>) => new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: frag, uniforms, depthTest: false, depthWrite: false });
     this.mats = {

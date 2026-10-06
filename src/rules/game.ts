@@ -147,7 +147,7 @@ export interface Game {
   /** The spots of witches round the beach (rules/beach.ts), or null (no beach). */
   beach: BeachWitches[] | null;
   /** Running totals for the playtest log (src/platform/playtestLog.ts): berries eaten, creatures invited, evolutions. */
-  tally: { berries: number; invites: number; evolved: number };
+  tally: { berries: number; invites: number; evolved: number; /** soundsystems a legend stamped on as it turned angry (legends.stomp) */ stomps?: number };
   /** Where the opening shot looks: her seat on the treehouse as drawn (the view sets it; the art knows where it is). */
   introFocus?: { x: number; y: number; z: number };
 }
@@ -429,12 +429,12 @@ function fixedStep(g: Game, controls: Controls): void {
   // The sigil button by a lying relic picks it up; carrying one, by a sleeping legend, puts it down there (rules/legends.ts).
   let sigil = !!c.sigil && !W.ko, place = !!c.place && !W.ko;
   // Her hat first (rules/hat.ts): lying on a sigil or a relic's, the press picks up the hat, and the next the sigil.
-  if ((sigil || place) && g.witch.mode === "ground" && hatButton(W.hat, g.witch.x, g.witch.z, t.leash.pickRadius)) {
+  if ((sigil || place) && g.witch.mode === "ground" && hatButton(W.hat, g.witch.x, g.witch.z, t.leash.runeRadius)) {
     sigil = false; place = false;
     relicEvents.push({ kind: "hatPicked", id: W.id, x: g.witch.x, z: g.witch.z, at: ht }); // (after the leash's step, which starts its events afresh)
   }
   if ((sigil || place) && g.witch.mode === "ground") {
-    const r = relicButton(g.relics, g.leash.relics, g.creatures, legends, g.witch.x, g.witch.z, g.clock.time, t.leash.pickRadius, g.map);
+    const r = relicButton(g.relics, g.leash.relics, g.creatures, legends, g.witch.x, g.witch.z, g.clock.time, t.leash.runeRadius, g.map);
     if (r) {
       sigil = false; place = false;
       if ("picked" in r) relicEvents.push({ kind: "relicPicked", id: r.picked.id, x: r.picked.x, z: r.picked.z, at: ht });
@@ -444,6 +444,9 @@ function fixedStep(g: Game, controls: Controls): void {
   }
   stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time), inviteNearest: c.inviteNearest, talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
   g.leash.events.push(...relicEvents);
+  // A happy creature's rune near her on the ground comes to her (Ed's playtest, 2026-10-06: "Floor sigils of happy creatures ... are
+  // difficult to pick up"): its creature trots over (leash.runePull), so she needn't stop dead on it.
+  if (g.witch.mode === "ground" && !g.witch.seated && !W.ko) pullRune(g, t);
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
   stepInvites(W.invites, W.ko ? {} : c, { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g));
   // Frenzy (Stoat): an animal won over gives back a blink.
@@ -474,6 +477,18 @@ function fixedStep(g: Game, controls: Controls): void {
   stepSpacing(g, dt);
   // Enraged creatures stay out of a sleeping or restless legend's circle (Ed, 2026-10-06).
   if (g.tuning.legendCircle?.slow.on !== false) keepEnragedOut(g);
+}
+
+/** The nearest happy creature with its rune within leash.runePull.radius of her walks toward her, to leash.runePull.stop from her. */
+function pullRune(g: Game, t: Tuning): void {
+  const P = t.leash.runePull, w = g.witch, c = runeNear(g.creatures, w.x, w.z, P.radius, g.clock.time);
+  if (!c || c.fight?.target) return;
+  const dx = w.x - c.x, dz = w.z - c.z, d = Math.hypot(dx, dz);
+  if (d <= P.stop) return;
+  const step = Math.min(d - P.stop, P.speed * STEP * g.timeScale);
+  c.x += (dx / d) * step; c.z += (dz / d) * step; c.tx = c.x; c.tz = c.z;
+  if (Math.abs(dx) > 0.02) c.facing = dx > 0 ? 1 : -1;
+  c.away = dz < -Math.abs(dx); c.moving = true;
 }
 
 /** Spacing (rules/spacing.ts) for the creatures within movement.json bodies.range of a witch (about the view on the ground): every kind of movement at
@@ -722,10 +737,23 @@ export const dormant = (_g: Game, c: Creature): boolean => !!c.boss && !c.leashe
 function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
   const time = g.clock.time;
   // Asleep, restless (no kin in its area), angry; happy by a relic (rules/legends.ts, #87).
+  const stomp = g.tuning.legends?.stomp, was = stomp?.on ? ids.map(id => g.creatures[id].legendState) : null;
   stepLegendStates({
-    creatures: g.creatures, map: g.map, time, dt: STEP, partified: k => g.party.areas.has(k),
+    creatures: g.creatures, map: g.map, time, dt: STEP, partified: k => g.party.areas.has(k), angryAfter: stomp?.on ? stomp.angryAfter : undefined,
     areaOf: c => { if (c.leashed) { const p = g.leash.placed.find(q => q.id === c.id); return p ? cellKey(g.map.cellSafe(p.x, p.z).cell) : ""; } return cellKey(c.cell); },
   }, ids);
+  // The stomp (Ed, 2026-10-06: "perhaps an angry legend simply stamps on the soundsystem in its area,
+  // destroying immediately. The angry legend waking timer may have to be longer"): a legend turning
+  // angry with its own area's soundsystem standing destroys it at once (lost as any fallen one is).
+  if (was) ids.forEach((id, i) => {
+    const c = g.creatures[id];
+    if (was[i] === "angry" || c.legendState !== "angry") return;
+    const key = cellKey(c.cell), h = g.combat.sounds.get(key);
+    if (!g.party.areas.has(key) || !h || h.hp <= 0) return;
+    h.hp = 0;
+    g.combat.events.push({ kind: "soundDestroyed", x: h.x, z: h.z, at: time, key }); // (lost with the rest this step: stepGame's fallen soundsystems)
+    g.tally.stomps = (g.tally.stomps ?? 0) + 1;
+  });
   // A happy legend heals to whole over legends.healTime while no enemy is near (balance builder, #80).
   for (const id of ids) { const c = g.creatures[id]; if (c.legendState === "happy" && c.hp !== undefined && !c.fight?.target) { c.hp += (maxHp(c.level) / LEGENDS.healTime) * STEP; if (c.hp >= maxHp(c.level)) c.hp = undefined; } }
   if (happyNearest) {

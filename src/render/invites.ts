@@ -25,24 +25,79 @@ const REPLIES = [["😳", "🤨", "😶", "🫣"], ["😮", "🤭", "😊", "�
 const BLOCKED = ["😠", "🙅", "💢", "😤"];
 
 /** A pixel emoji: drawn n pixels across with hard edges, as a data URL (cached). */
-const pixelCache = new Map<string, string>();
+const pixelCache = new Map<string, string>(), pixelData = new Map<string, ImageData | null>();
+function emojiPixels(e: string, n: number): { canvas: HTMLCanvasElement; data: ImageData | null } {
+  const c = document.createElement("canvas");
+  c.width = c.height = n;
+  const x = c.getContext("2d");
+  let d: ImageData | null = null;
+  if (x) {
+    x.font = `${n - 1}px sans-serif`; x.textAlign = "center"; x.textBaseline = "middle";
+    x.fillText(e, n / 2, n / 2 + 0.5);
+    d = x.getImageData(0, 0, n, n);
+    for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] < 110 ? 0 : 255;
+    x.putImageData(d, 0, 0);
+  }
+  pixelData.set(`${e}:${n}`, d);
+  return { canvas: c, data: d };
+}
 export function pixelEmoji(e: string, n: number): string {
   const key = `${e}:${n}`;
   let url = pixelCache.get(key);
   if (url) return url;
-  const c = document.createElement("canvas");
-  c.width = c.height = n;
-  const x = c.getContext("2d");
-  if (x) {
-    x.font = `${n - 1}px sans-serif`; x.textAlign = "center"; x.textBaseline = "middle";
-    x.fillText(e, n / 2, n / 2 + 0.5);
-    const d = x.getImageData(0, 0, n, n);
-    for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] < 110 ? 0 : 255;
-    x.putImageData(d, 0, 0);
-  }
-  url = c.toDataURL();
+  url = emojiPixels(e, n).canvas.toDataURL();
   pixelCache.set(key, url);
   return url;
+}
+
+/** Where pixel (i, j) of a W x H picture of an n-pixel sprite turned by (cos c, sin s) and scaled (sx, sy) comes from in
+ *  the sprite: [x, y], or null outside it (nearest pixel: a CSS rotate, or a scale that isn't whole, would tilt and smear
+ *  the art's pixels off the screen's). The turn as CSS's rotate (clockwise on the screen), then the scale. */
+export function turnedFrom(i: number, j: number, W: number, H: number, n: number, c: number, s: number, sx: number, sy: number): [number, number] | null {
+  const ux = (i + 0.5 - W / 2) / sx, uy = (j + 0.5 - H / 2) / sy;
+  const x = Math.floor(c * ux + s * uy + n / 2), y = Math.floor(-s * ux + c * uy + n / 2);
+  return x >= 0 && y >= 0 && x < n && y < n ? [x, y] : null;
+}
+
+/** A pixel emoji turned `deg` (in sixteenths of a turn) and scaled sx by sy (in tenths), drawn again in art pixels (Ed, round 14:
+ *  "Invitations should be pixellated"): the 💌 spinning like a frisbee and lying flat for the camera, on the pixel grid. Cached. */
+const turnedCache = new Map<string, { url: string; w: number; h: number }>();
+export function pixelTurned(e: string, n: number, sx: number, sy: number, deg: number): { url: string; w: number; h: number; key: string } {
+  const q = (v: number) => Math.max(0.1, Math.round(v * 10) / 10), a = ((Math.round(deg / 22.5) % 16) + 16) % 16;
+  sx = q(sx); sy = q(sy);
+  const key = `${e}:${n}:${sx}:${sy}:${a}`;
+  let got = turnedCache.get(key);
+  if (!got) {
+    const th = (a * Math.PI) / 8, c = Math.cos(th), s = Math.sin(th);
+    const W = Math.max(1, Math.round(sx * (Math.abs(c) + Math.abs(s)) * n)), H = Math.max(1, Math.round(sy * (Math.abs(c) + Math.abs(s)) * n));
+    if (!pixelData.has(`${e}:${n}`)) emojiPixels(e, n);
+    const src = pixelData.get(`${e}:${n}`), cv = document.createElement("canvas");
+    cv.width = W; cv.height = H;
+    const x = cv.getContext("2d");
+    if (x && src) {
+      const out = x.createImageData(W, H);
+      for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+        const p = turnedFrom(i, j, W, H, n, c, s, sx, sy);
+        if (!p) continue;
+        const from = (p[1] * n + p[0]) * 4, to = (j * W + i) * 4;
+        for (let k = 0; k < 4; k++) out.data[to + k] = src.data[from + k];
+      }
+      x.putImageData(out, 0, 0);
+    }
+    got = { url: cv.toDataURL(), w: W, h: H };
+    if (turnedCache.size > 4000) turnedCache.clear();
+    turnedCache.set(key, got);
+  }
+  return { ...got, key };
+}
+
+/** Show pixel emoji `e` on image `im` turned and scaled (pixelTurned), each art pixel k CSS pixels: no CSS transform. */
+function showTurned(im: HTMLImageElement, e: string, n: number, sx: number, sy: number, deg: number, k: number): void {
+  const p = pixelTurned(e, n, sx, sy, deg);
+  if (im.dataset.px === p.key) return;
+  im.dataset.px = p.key;
+  im.src = p.url;
+  Object.assign(im.style, { transform: "", width: `${p.w * k}px`, height: `${p.h * k}px`, marginLeft: `${-Math.floor(p.w / 2) * k}px`, marginTop: `${-Math.floor(p.h / 2) * k}px` });
 }
 
 interface Bubble { el: HTMLElement; img: HTMLImageElement; until: number; x: number; y: number; z: number; id: number }
@@ -61,7 +116,7 @@ export class InviteView {
   private replies = new Map<number, Bubble>();
   private lastHers = -Infinity;
   /** Little pops where letters land: { element, where, when }. */
-  private pops: { el: HTMLImageElement; x: number; y: number; z: number; at: number }[] = [];
+  private pops: { el: HTMLImageElement; e: string; x: number; y: number; z: number; at: number }[] = [];
   /** 💌s that met no one, resting where they came down (Ed's playtest, 2026-10-06: "invitations
    *  should sit on the ground for a little while before they fade away"): drawn only (the rules ended
    *  them; they're no hits), at most invites.lingerMax, their images pooled and reused. */
@@ -117,17 +172,20 @@ export class InviteView {
     el.src = pixelEmoji(e, n);
     Object.assign(el.style, { position: "absolute", imageRendering: "pixelated", width: `${n * k}px`, height: `${n * k}px`, marginLeft: `${(-n * k) / 2}px`, marginTop: `${(-n * k) / 2}px` });
     this.root.append(el);
-    this.pops.push({ el, x, y, z, at });
+    this.pops.push({ el, e, x, y, z, at });
     if (this.pops.length > 40) this.pops.shift()!.el.remove();
   }
 
   update(time: number, camera: THREE.Camera, width: number, height: number, tops: Map<number, number>): void {
     const g = this.game, W = g.witches[0], I = W.invites, t = g.tuning, w = g.witch;
-    const place = (el: HTMLElement, x: number, y: number, z: number) => {
+    // (Pixel art (the 💌s, hearts and pops) on whole art pixels, each k CSS pixels: on the grid as it moves.)
+    const kp = t.pixelSize * t.bubbles.scale;
+    const place = (el: HTMLElement, x: number, y: number, z: number, grid = el.tagName === "IMG") => {
       placed(this.v.set(x, y, z)).project(camera);
       const vis = this.v.z < 1 && Math.abs(this.v.x) < 1.2 && Math.abs(this.v.y) < 1.2;
-      const sy = ((1 - this.v.y) / 2) * height;
-      el.style.left = `${((this.v.x + 1) / 2) * width}px`;
+      let sx = ((this.v.x + 1) / 2) * width, sy = ((1 - this.v.y) / 2) * height;
+      if (grid) { sx = Math.round(sx / kp) * kp; sy = Math.round(sy / kp) * kp; }
+      el.style.left = `${sx}px`;
       el.style.top = `${sy}px`;
       el.style.visibility = vis ? "visible" : "hidden";
       if (vis) tiltFilter(el, sy); // (blurred as the world is there: render/overlayTilt.ts)
@@ -170,7 +228,8 @@ export class InviteView {
       if (k >= 1 || k < 0) { p.el.remove(); return false; }
       place(p.el, p.x, p.y + k * 0.5, p.z);
       p.el.style.opacity = String(1 - k);
-      p.el.style.transform = `scale(${(0.6 + 0.6 * Math.sin(Math.min(1, k * 2) * Math.PI / 2)).toFixed(2)})`;
+      const sc = 0.6 + 0.6 * Math.sin((Math.min(1, k * 2) * Math.PI) / 2);
+      showTurned(p.el, p.e, 7, sc, sc, 0, kp);
       return true;
     });
     // Hers follows her; theirs follow them.
@@ -202,7 +261,7 @@ export class InviteView {
         const bob = r.sea ? Math.sin(time * 2.1 + r.tilt) : 0; // (floating on the sea, rocking gently)
         place(im, r.x, 0.08 + bob * 0.07, r.z);
         im.style.opacity = String(Math.min(0.9, Math.max(0, (r.life - (time - r.at)) / r.fade) * 0.9));
-        im.style.transform = `scale(0.9, ${(0.9 * flat).toFixed(2)}) rotate(${(r.tilt + bob * 8).toFixed(0)}deg)`; // (turned, then laid flat)
+        showTurned(im, "💌", n, 0.9, 0.9 * flat, r.tilt + bob * 8, k); // (turned, then laid flat, in art pixels)
       });
     }
     // The letters in flight: a spinning pixel 💌 each.
@@ -226,7 +285,7 @@ export class InviteView {
       // for the camera; a small one (Spawn) smaller; a cache still.
       const turns = L.kind === "cache" ? 0 : Math.round(((time - L.at) * t.invites.spin + L.n * 0.37) * 16) / 16, deg = (turns % 1) * 360, sz = L.small ? 0.6 : 1;
       if (!L.kind) this.spins.set(L.n, deg);
-      im.style.transform = `scale(${sz}, ${(sz * flat).toFixed(2)}) rotate(${deg.toFixed(1)}deg)`;
+      showTurned(im, "💌", n, sz, sz * flat, deg, k); // (in art pixels, on the grid: Ed, round 14)
     });
     if (this.spins.size > 64) { const live = new Set(I.letters.map(L => L.n)); for (const n of this.spins.keys()) if (!live.has(n)) this.spins.delete(n); }
     // Lanterns (Glow-worm): little glowing hearts where the letters flew, fading out.
@@ -248,8 +307,9 @@ export class InviteView {
     // orbiting it, flat and spinning, the gaps faint marks; turning slowly round it at about its middle.
     const near = g.creatures.filter(c => !c.gone && Math.abs(c.x - w.x) < 60 && Math.abs(c.z - w.z) < 60 && (c.affection || this.ringModel.rings.has(c.id)));
     const changes = this.ringModel.update(near, c => ringOf(c.level, A.affection(c), meterHits(t)), won);
+    // (clear of it, by its size: Ed's playtest, 2026-10-06, "Invitation orbits are too tight around the creature"; invites.orbit)
     const ringAt = (c: Creature, slot: number, slots: number) => {
-      const r = Math.max(bodyRadius(c) + 0.6, 1.1, (slots * 0.42) / (Math.PI * 2)), a = time * 0.7 + (slot / slots) * Math.PI * 2;
+      const O = t.invites.orbit, r = Math.max(bodyRadius(c) * O.scale + O.gap, O.min, (slots * 0.42) / (Math.PI * 2)), a = time * 0.7 + (slot / slots) * Math.PI * 2;
       return { x: c.x + Math.cos(a) * r, y: Math.max(0.5, head(c.id) * 0.55), z: c.z + Math.sin(a) * r };
     };
     const envSize = (slots: number) => (slots > 12 ? 0.55 : slots > 6 ? 0.7 : 0.85); // (smaller as they crowd: 18 still distinct)
@@ -295,7 +355,7 @@ export class InviteView {
           place(im, p.x, p.y, p.z);
           const pop = Math.min(1, (time - (r.joined[s] ?? -9)) / 0.25), grow = pop < 1 ? 1.4 - 0.4 * pop : 1; // (joining: a little pop)
           const deg = ((Math.round((time * t.invites.spin * 0.5 + s * 0.13) * 16) / 16) % 1) * 360;
-          im.style.transform = `scale(${(sz * grow).toFixed(2)}, ${(sz * grow * flat).toFixed(2)}) rotate(${deg.toFixed(1)}deg)`;
+          showTurned(im, "💌", n, sz * grow, sz * grow * flat, deg, k);
         } else place(d, p.x, p.y, p.z);
       }
     }
@@ -308,7 +368,7 @@ export class InviteView {
         return false;
       }
       place(f.el, f.x, f.y * (1 - u * u), f.z);
-      f.el.style.transform = `scale(0.7, ${(0.7 * flat).toFixed(2)}) rotate(${(f.tilt + u * 200).toFixed(0)}deg)`;
+      showTurned(f.el, "💌", n, 0.7, 0.7 * flat, f.tilt + u * 200, k);
       return true;
     });
     // The hearts: rising a metre and a half over a second, fading.
