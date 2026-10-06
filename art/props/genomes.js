@@ -6,6 +6,9 @@
 //   cairn:         a low heap of irregular grey stones, sometimes a slab leaning on it
 //   pool:          a pool with an irregular shore (a few overlapping waves round its rim), a mud or moss rim, reeds and stones
 //   brokenTrunk:   a short broken trunk, its snapped branch growing out of it (joined, never laid beside it), jagged pale wood at the breaks
+//   fallenLog:     a fallen trunk or bough lying on the ground, bowed, mossed along its top, its ends broken to splinters or sawn to rings
+//   mushroomRing:  a fairy ring of toadstools round darker grass (or an arc, or a clump), red, brown, ochre or glowing
+//   stoneCircle:   a ring of small standing stones round short grass, one or two leaning or fallen, sometimes a stone or slab in the middle
 export const PROP_GENOMES = {
   standingStone: {
     height: [3.4, 5], width: [.9, 1.4], depth: [.35, .55], taper: [.55, .85], // its top's width, times its foot's
@@ -38,6 +41,23 @@ export const PROP_GENOMES = {
     branchAt: [.45, .8], branchLen: [.8, 1.6], branchSide: [-1, 1], // where up the trunk (a share), how long (m), which way (sign)
     splinters: [4, 7], roots: [3, 5], moss: [0, .5], fungi: [0, 3], // jagged pale wood at the break; root flares; moss up its shady side; bracket fungi
     colour: { wood: [.07, .4, .32], dark: [.06, .45, .17], light: [.08, .3, .48], pale: [.1, .18, .68], moss: [.24, .45, .36], fungus: [.08, .45, .62], spread: .04 },
+  },
+  fallenLog: { // a fallen trunk or bough lying on the ground (the areas' logs): a gentle bend, bark grooves, its ends broken to splinters or sawn to rings
+    length: [1.8, 3.6], girth: [.18, .34], bend: [-.15, .15], sink: [.15, .35], // its length (m), radius (m), how it bows, how far it sinks into the ground (a share of its radius)
+    ends: [["broken", 3], ["sawn", 1], ["mixed", 2]], stubs: [0, 3], // its two ends; snapped branch stubs along it
+    moss: [.2, .7], fungi: [0, 3], // moss along its top; bracket fungi on its sides
+    colour: { wood: [.07, .38, .3], dark: [.06, .45, .16], light: [.08, .28, .46], pale: [.1, .18, .68], rings: [.09, .3, .55], moss: [.24, .45, .36], fungus: [.08, .45, .62], spread: .04 },
+  },
+  mushroomRing: { // a fairy ring: toadstools round a circle of darker grass, a few out of line, or a clump
+    form: [["ring", 3], ["arc", 2], ["clump", 1]], radius: [.5, 1.2], count: [7, 14], // its shape; its radius (m); how many
+    size: [.12, .26], spread: [.6, 1.4], // a cap's radius (m; bigger than life, so a ring reads at game size), and how much they vary
+    cap: [["red", 3], ["brown", 3], ["ochre", 2], ["glow", 1]], spots: [0, .9], // their caps' kind (glow: pale caps with glowing gills, only some areas); white spots (a share)
+    colour: { red: [.0, .7, .7], brown: [.07, .5, .45], ochre: [.11, .55, .7], glow: [.5, .15, .85], stem: [.12, .12, .86], spot: [.1, .05, .96], gill: [.48, .5, 1], ring: [.26, .5, .3], spread: .04 },
+  },
+  stoneCircle: { // a ring of small standing stones round a patch of short grass, one or two leaning or fallen
+    radius: [1.6, 2.8], count: [5, 9], height: [.8, 1.6], width: [.4, .7], // its radius (m); how many stones; their height and width (m)
+    lean: [0, .25], fallen: [0, 2], centre: [["none", 3], ["stone", 1], ["slab", 1]], // how far they lean; how many lie fallen; what stands in the middle
+    colour: { stone: [.61, .16, .64], dark: [.65, .18, .4], lichen: [[.2, .08, .78, 1]], moss: [.24, .45, .38], grass: [.26, .45, .38], spread: .07 },
   },
 };
 export const PROP_KINDS = Object.keys(PROP_GENOMES);
