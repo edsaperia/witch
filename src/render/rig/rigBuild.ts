@@ -7,7 +7,7 @@ import { packPixels, type AtlasPixels, type Baked, type MakeCanvas } from "../ar
 import type { Style } from "../style";
 
 /** A creature's expression (art/genome/expressions.js; the view's expression(c), render/looks.ts in #89). */
-export type RigFace = "neutral" | "angry" | "happy" | "dazed";
+export type RigFace = "neutral" | "angry" | "happy" | "dazed" | "asleep";
 /** A baked piece: its atlas frame and the pixel (from its top left) its joint lands on. */
 export interface RigPiece { frame: number; px: number; py: number }
 type V3 = [number, number, number];
