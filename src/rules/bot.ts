@@ -38,6 +38,14 @@ export interface BotOptions {
   questMax?: number;
 }
 
+/** The bot game's choices (Ed, 2026-10-06, watching it: "It's notable that it doesn't seem to get any legend buffs or
+ *  feed creatures any berries"): the skilled one does a few quests, brings relics to the legends by the coming waves,
+ *  and leads her young to berries, as a good player would. The balance tool's runs keep each to its flag. */
+export const BOT_GAME: Record<BotKind, BotOptions> = {
+  skilled: { quests: true, questMax: 3, relics: true, relicPolicy: "front", feed: true },
+  crude: {}, idle: {}, hover: {},
+};
+
 export interface Bot {
   readonly kind: BotKind;
   /** This step's controls, from the game as it is now. Call once a fixed step (or once a frame), then step the game. */
