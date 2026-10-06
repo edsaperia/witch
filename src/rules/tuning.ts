@@ -119,6 +119,8 @@ export interface Tuning {
   guard: { radius: number };
   /** Creatures noticing the witch on the ground (Ed's playtest): within radius metres resting ones look at her; curious babies come to about curious metres, skittish ones keep skittish off. */
   notice: { radius: number; curious: number; skittish: number };
+  /** Wild idlers' naps (rules/creatures.ts NapRules). */
+  naps?: { on: boolean; chance: number; length: number[]; wake: number };
   /** The witch's health (Ed, 2026-10-04): hits she takes before she's knocked out; one comes back every repairTime seconds out of the fight. */
   witchHealth: { hits: number; repairTime: number; /** seconds after a hit in which no other blow lands (0: none) */ grace: number };
   /** Knocked out (Ed, 2026-10-04): her stack lets go one sigil every releaseEach seconds (releaseMax caps the whole release, 0 no cap), then she sparkles out and back in at the treehouse over teleport seconds; legendsLoyal keeps leashed legends with her. */
@@ -246,7 +248,7 @@ export interface Tuning {
   };
   /** Wave numbers over the rune stones (Ed, 2026-10-04, a design aid): on, a digit's height as a share of the screen's, metres above the stone (or the canopy), and how bright the reached areas' are (0-1). */
   waveNumbers: { on: boolean; size: number; lift: number; spent: number; pinRange: number };
-  canopyCutout: { screenFraction: number; edge: number; /** How much the fade goes by each crown's middle rather than each pixel (1: whole crowns fade; Ed, 2026-10-06: concentric circles). */ whole?: number };
+  canopyCutout: { screenFraction: number; edge: number; /** How much the fade goes by each crown's middle rather than each pixel (1: whole crowns fade; Ed, 2026-10-06: concentric circles). */ whole?: number; /** How far the hole's line wobbles, a share of its edge (Ed, round 14: still sharp). */ wobble?: number; /** How far past its radius the fade reaches, a share of the edge. */ outer?: number };
   shadows: { on: boolean; strength: number; trees: boolean };
   canopyShadow: { on: boolean; strength: number; height: number; cover: number; wind: number };
   mist: { on: boolean; strength: number; height: number; wind: number };
@@ -316,6 +318,8 @@ export interface Tuning {
   dreams: { range: number; nightmare: { at: number[]; faces: string[] }; /** a sleeping legend's face while its dream is open: mostly face, now and then one of faces for a turn of every seconds */ sleepy?: { face: string; weight: number; every: number; faces: string[]; fallback: string } };
   /** Which areas have a legend (Ed, 2026-10-06: "only in about half of areas (we can test this ratio)"): share of them, seeded per map and spread out (rules/map.ts chooseLegendCells); the map's, so a change needs a new map. */
   legends: { share: number; /** The party-legend Easter egg (rules/partyLegend.ts): on, 💌s to fill a happy legend's meter, its drain (share a second), how far (m) she can go from it leashed. */ partyEgg: boolean; partyHits: number; partyDrain: number; partyReach: number };
+  /** The party's over (rules/partyOver.ts): seconds it eases in over, the ley line's brightness at its end, the creatures' pace home (times their roaming speed). */
+  partyOver: { ease: number; leyFloor: number; walk: number };
   wildLegends: { wake: number; sink: number; moss: number; guard: number; heal: number; scale: number; breathe: number; breathEvery: number; aura: number; glow: number };
   creatureSimRadius: number;
   /** The simulation's level of detail (rules/simLod.ts): creatures in full near her and the action, coarse beyond, frozen past creatureSimRadius. */
