@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dressingOf, isLit, leftOut, partyDef } from "./partyDressing";
+import { areaNeons, dressingOf, isLit, leftOut, partyDef } from "./partyDressing";
 import { generateMap } from "./map";
 import { floorClearing } from "./speakers";
 import { TUNING } from "./tuning";
@@ -69,5 +69,15 @@ describe("party objects (Ed, 2026-10-04)", () => {
     expect(gen.some(r => r.includes(":gen-"))).toBe(true);
     for (const id of ["bunting-run", "balloons-stake", "lantern-string", "lanterns-hanging"]) { expect(leftOut(id, on), id).toBe(true); expect(leftOut(id, t), id).toBe(false); }
     expect(gen.some(r => /:(bunting-run|balloons-stake|lantern-string|lanterns-hanging)[@~]?/.test(r))).toBe(false);
+  });
+  it("an area's party neons are its own colour plus one accent (the art director, round 1), its balloons mostly by its lights", () => {
+    let near = 0, balloons = 0;
+    for (let cx = 0; cx < 12; cx++) for (let cy = 0; cy < 12; cy++) {
+      const d = dressingOf(map, [cx, cy], t), neons = new Set(areaNeons(map, [cx, cy]));
+      expect(neons.size).toBeLessThanOrEqual(2);
+      for (const p of [...d.loose, ...d.hanging]) { const n = p.ref.split("@")[1]?.split("~")[0]; if (n) expect(neons.has(n), p.ref).toBe(true); }
+      for (const p of d.loose) if (partyDef(p.ref)?.cls === "balloon" && d.lights.length) { balloons++; if (d.lights.some(L => Math.hypot(L.x - p.x, L.z - p.z) < 3.5)) near++; }
+    }
+    if (balloons) expect(near / balloons).toBeGreaterThan(0.4);
   });
 });

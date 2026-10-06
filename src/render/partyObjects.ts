@@ -79,9 +79,11 @@ export class PartyObjectsView {
         const lay = art.layouts[c.id];
         if (!lay) return;
         (c.mirror ? lay.mirror : lay.plain).forEach((p, pi) => {
-          put(p.ref, c.x + p.dx, c.z + p.dz, p.left, ci * 16 + pi);
+          // a cluster's neon pieces in the area's neons (its own colour, one accent: rules/partyDressing.ts areaNeons)
+          const ref = d!.neons?.length && p.ref.includes("@") ? p.ref.replace(/@[a-z]+/, "@" + d!.neons[(ci * 7 + pi * 3) % d!.neons.length]) : p.ref;
+          put(ref, c.x + p.dx, c.z + p.dz, p.left, ci * 16 + pi);
           // The clusters' campfires and lanterns light up too, while the area has lights to spare.
-          if (lit < t.partyObjects.lightsPerArea && isLit(p.ref)) { lit++; const L = lightOf(p.ref, t)!; lights.push(light(c.x + p.dx, c.z + p.dz, L, time, since(time, from))); }
+          if (lit < t.partyObjects.lightsPerArea && isLit(ref)) { lit++; const L = lightOf(ref, t)!; lights.push(light(c.x + p.dx, c.z + p.dz, L, time, since(time, from))); }
         });
       });
       d.loose.forEach((p, i) => put(p.ref, p.x, p.z, p.flip, 200 + i));

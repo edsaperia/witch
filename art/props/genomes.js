@@ -32,8 +32,8 @@ export const PROP_GENOMES = {
     rim: [.12, .3], rimKind: [["mud", 2], ["moss", 2]], // its shore's band (m) and what it is
     reeds: [0, 3], reedsPer: [3, 7], reedHeight: [.45, .95], cattails: [0, 1], // reed clumps on its shore, cattail heads (a share)
     stones: [0, 4], pads: [0, 0], // shore stones; lily pads
-    colour: { water: [.6, .45, .38], deep: [.62, .55, .16], glint: [.55, .2, .95], mud: [.08, .35, .3], moss: [.24, .4, .52], reed: [.22, .45, .45], reed2: [.18, .4, .62], cattail: [.06, .55, .3], stone: [.6, .05, .55], pad: [.3, .5, .45], spread: .04 },
-    bog: { water: [.17, .35, .26], deep: [.2, .4, .18], glint: [.18, .25, .5] }, // a bog's brown-green water
+    colour: { water: [.6, .45, .38], deep: [.62, .55, .16], glint: [.55, .2, .95], sky: [.62, .35, .5], rim: [.58, .14, .8], mud: [.08, .35, .3], moss: [.24, .4, .52], reed: [.22, .45, .45], reed2: [.18, .4, .62], cattail: [.06, .55, .3], stone: [.6, .05, .55], pad: [.3, .5, .45], spread: .04 }, // sky: the far water's reflection of the sky; rim: the moonlit far shore
+    bog: { water: [.17, .35, .26], deep: [.2, .4, .18], glint: [.18, .25, .5], sky: [.3, .25, .36], rim: [.2, .14, .66] }, // a bog's brown-green water
   },
   brokenTrunk: {
     height: [.8, 2.1], girth: [.32, .5], // its height (m) and radius at the foot (m)
