@@ -1,5 +1,5 @@
 // The 💌 invite's look (issue #87; the rules are rules/invites.ts): each letter in flight a pixel 💌
-// spinning end over end (squashed and flipped as it turns); a speech bubble from the witch when she
+// lying flat and spinning like a frisbee (Ed, 2026-10-06), then resting flat where it comes down; a speech bubble from the witch when she
 // fires and an emoji reply from a creature a letter lands on (warming up with its meter), each
 // rate-limited and replacing its last so a burst isn't a blizzard; and over each creature being
 // invited, a small pink meter of hearts filling as letters land and draining slowly (distinct from
@@ -55,6 +55,9 @@ export class InviteView {
    *  should sit on the ground for a little while before they fade away"): drawn only (the rules ended
    *  them; they're no hits), at most invites.lingerMax, their images pooled and reused. */
   private resting: { x: number; z: number; at: number; tilt: number }[] = [];
+  /** Each flying letter's spin (degrees) when last drawn, by its number: where it stops when it lands. */
+  private spins = new Map<number, number>();
+  private fwd = new THREE.Vector3();
   private restImgs: HTMLImageElement[] = [];
   /** Events already shown (a frozen frame keeps its events: shown once). */
   private seen = new Set<string>();
@@ -119,7 +122,7 @@ export class InviteView {
       } else if (e.kind === "fizzled") {
         // (landed on the ground at its range: a soft rose puff, render/leash.ts drawLetters; and it rests there a while)
         if ((t.invites.linger ?? 0) > 0) {
-          this.resting.push({ x: e.x, z: e.z, at: time, tilt: (hash2(e.n ?? 0, 3, 29) - 0.5) * 50 });
+          this.resting.push({ x: e.x, z: e.z, at: time, tilt: this.spins.get(e.n ?? -1) ?? (hash2(e.n ?? 0, 3, 29) - 0.5) * 50 });
           if (this.resting.length > t.invites.lingerMax) this.resting.shift();
         }
       } else if ((e.kind === "hit" || e.kind === "blocked" || e.kind === "happy") && e.id !== undefined) {
@@ -151,7 +154,10 @@ export class InviteView {
       place(b.el, c.x, head(id) + 0.9, c.z);
     }
 
-    // The resting ones: lying on the ground (squashed flat, turned a little), fading out at the end.
+    // Flat on the ground, seen from the camera: squashed top to bottom by how steeply it looks down.
+    (camera as THREE.Camera).getWorldDirection(this.fwd);
+    const flat = Math.max(0.3, Math.min(1, Math.abs(this.fwd.y)));
+    // The resting ones: lying flat where they came down, still at the turn they landed at, fading out at the end.
     {
       const life = t.invites.linger ?? 0, fade = Math.max(0.01, Math.min(life, t.invites.lingerFade)), n = Math.round(t.bubbles.emojiPixels * 0.8), k = t.pixelSize * t.bubbles.scale;
       this.resting = this.resting.filter(r => time - r.at < life && time >= r.at);
@@ -168,7 +174,7 @@ export class InviteView {
         im.style.display = "block";
         place(im, r.x, 0.08, r.z);
         im.style.opacity = String(Math.min(0.9, Math.max(0, (life - (time - r.at)) / fade) * 0.9));
-        im.style.transform = `rotate(${r.tilt.toFixed(0)}deg) scale(0.85, 0.5)`;
+        im.style.transform = `scale(0.9, ${(0.9 * flat).toFixed(2)}) rotate(${r.tilt.toFixed(0)}deg)`; // (turned, then laid flat)
       });
     }
     // The letters in flight: a spinning pixel 💌 each.
@@ -187,11 +193,14 @@ export class InviteView {
       // A cache waits on the ground, bobbing; an orbiting one circles at her hand; the rest fly.
       const y = L.kind === "cache" ? 0.35 + 0.12 * Math.sin((time - L.at) * 4 + L.n) : L.kind === "orbit" ? 1.3 : lobHeight(L.flown, L.range ?? this.game.tuning.invites.range, this.game.tuning.invites.arc ?? 0);
       place(im, L.x, y, L.z);
-      // End over end (Ed, round 11: "rotate by pitching instead of yawing"): squashed top to bottom by the
-      // spin's cosine, upside down on the far side (snapped to a few steps, pixel-like); a small one (Spawn) smaller; a cache still.
-      const spin = L.kind === "cache" ? 0 : Math.round(((time - L.at) * 3.2 + L.n * 0.37) * 8) / 8, cy = Math.cos(spin * Math.PI * 2), sz = L.small ? 0.6 : 1;
-      im.style.transform = `scale(${sz}, ${(Math.sign(cy || 1) * Math.max(0.35, Math.abs(cy)) * sz).toFixed(2)})`; // (never thinner than a third: it reads as a letter)
+      // Like a frisbee (Ed, 2026-10-06: "the envelopes should spin like a frisbee"): lying flat, turning
+      // about the upright at invites.spin turns a second (snapped to sixteenths, pixel-like), laid flat
+      // for the camera; a small one (Spawn) smaller; a cache still.
+      const turns = L.kind === "cache" ? 0 : Math.round(((time - L.at) * t.invites.spin + L.n * 0.37) * 16) / 16, deg = (turns % 1) * 360, sz = L.small ? 0.6 : 1;
+      if (!L.kind) this.spins.set(L.n, deg);
+      im.style.transform = `scale(${sz}, ${(sz * flat).toFixed(2)}) rotate(${deg.toFixed(1)}deg)`;
     });
+    if (this.spins.size > 64) { const live = new Set(I.letters.map(L => L.n)); for (const n of this.spins.keys()) if (!live.has(n)) this.spins.delete(n); }
     // Lanterns (Glow-worm): little glowing hearts where the letters flew, fading out.
     while (this.lanterns.length < I.lanterns.length) {
       const d = document.createElement("div");

@@ -3420,6 +3420,10 @@
         "lingerMax": {
           "type": "number",
           "minimum": 0
+        },
+        "spin": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -3443,7 +3447,8 @@
         "fireSlow",
         "linger",
         "lingerFade",
-        "lingerMax"
+        "lingerMax",
+        "spin"
       ],
       "additionalProperties": false
     },
