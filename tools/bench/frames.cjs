@@ -6,6 +6,7 @@
 // part). Writes <out>/frames.json and <out>/<scene>.png; tools/bench/compare.cjs compares two outs.
 // Run `npm run build` first. Playwright comes from the machine's global install.
 //   node tools/bench/frames.cjs [out dir] (default bench-out/)   SEED=123 ONLY=ground,treetop
+//   (an ONLY run matches only an ONLY run of the same scenes: the scenes before warm the art caches)
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
