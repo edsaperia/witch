@@ -48,24 +48,24 @@ describe("species strength (Ed, 2026-10-05: weaker ones more of them, stronger o
     const map = generateMap(123, TUNING), cell = (cx: number, cy: number) => `${cx},${cy}`;
     const plain = spawnCreatures(map), [hx, hy] = map.centreCell;
     const [cx, cy] = hx > 2 ? [hx - 2, hy] : [hx + 2, hy], species = AREA_TYPES[map.typeOf(cx, cy)].creature;
-    const before = plain.filter(c => cell(...c.cell) === cell(cx, cy) && !c.boss);
+    const before = plain.filter(c => cell(...c.cell) === cell(cx, cy) && !c.boss && !c.circle); // (not its legend's clearing's baby: one, whatever its strength)
     const value = (l: typeof before) => l.reduce((a, c) => a + levelValue(c.level, COMBAT, c.species), 0), was = value(before);
     giving(species, 1 / 3);
-    const after = spawnCreatures(map).filter(c => cell(...c.cell) === cell(cx, cy) && !c.boss);
+    const after = spawnCreatures(map).filter(c => cell(...c.cell) === cell(cx, cy) && !c.boss && !c.circle);
     expect(after.length).toBe(before.length * 3);
     expect(value(after)).toBeCloseTo(was, 0);
   }, 30000);
 });
 
 describe("berries to evolve, tied to strength (Ed, 2026-10-05: \"tie the cost to strength\")", () => {
-  it("costs 2 and 2 for a species of normal strength (the same 4 baby to adult), nothing past adult", () => {
-    expect([0, 1, 2].map(l => toEvolve(l as 0 | 1 | 2, TUNING))).toEqual([2, 2, Infinity]);
-    expect(toEvolve(1, TUNING, "wolf")).toBe(2);
+  it("costs 4 and 4 for a species of normal strength (the same 8 baby to adult; doubled, Ed 2026-10-06), nothing past adult", () => {
+    expect([0, 1, 2].map(l => toEvolve(l as 0 | 1 | 2, TUNING))).toEqual([4, 4, Infinity]);
+    expect(toEvolve(1, TUNING, "wolf")).toBe(4);
   });
 
   it("buys the same fighting value a berry for every species (at least one berry)", () => {
     giving("bear", 2); giving("bat", 0.3);
-    expect(toEvolve(0, TUNING, "bear") + toEvolve(1, TUNING, "bear")).toBe(8); // twice the value, twice the berries
+    expect(toEvolve(0, TUNING, "bear") + toEvolve(1, TUNING, "bear")).toBe(16); // twice the value, twice the berries
     expect(toEvolve(0, TUNING, "bat")).toBe(1);
     expect(toEvolve(1, TUNING, "bat")).toBe(1);
   });

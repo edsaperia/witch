@@ -7,8 +7,8 @@
 //    thrown its full range: a puff as it lands on the ground); the
 //    talk's invites (with 💌s off) still flourish.
 //  - States: a creature turning enraged (a growl and the nearest's angry speech; a crowd turning at
-//    once, one heavier growl) or happy (a pop and its happy speech): its area's guards, a friendly
-//    area's creatures, a legend at peace.
+//    once, one heavier growl) or happy (a pop and its happy speech): a friendly area's creatures,
+//    a legend at peace.
 //  - Legends: the nearest sleeping one moans now and then as it dreams; restless (#87), nightmares.
 //  - Attacks are speech (Ed, 2026-10-05): an attacker's burst of babble in its own voice, by mood;
 //    a legend winding up, one long building swell of its whale song; a lob landing, a thud (a legend's, a boom).
@@ -22,6 +22,7 @@ import { restlessness } from "../../rules/dream";
 import { bossBreath } from "../../render/leash";
 import type { CombatEventKind } from "../../rules/combat";
 import type { Sfx } from "./sfx";
+import { beachOf, type Beach } from "../../rules/mapShape";
 import { speechMood, voiceOf } from "./voices";
 import { dances } from "../../render/looks";
 import { beatAt } from "../../rules/beat";
@@ -31,7 +32,7 @@ import { dressingOf, partyDef, type Dressing } from "../../rules/partyDressing";
 /** The combat events that are a creature attacking (its id the attacker): each a burst of its speech. */
 const ATTACKS = new Set<CombatEventKind>(["windup", "shot", "beam", "pulse", "quake", "phase", "nova", "rush", "charged", "leapt", "slammed", "sprung", "flash"]);
 
-const happyNow = (c: Creature) => !c.leashed && !c.gone && (!!c.guard || !!c.friendly || (!!c.boss && c.legendState === "happy"));
+const happyNow = (c: Creature) => !c.leashed && !c.gone && (!!c.friendly || (!!c.boss && c.legendState === "happy"));
 
 /** What a cue step needs: the game, its time, how near a point is to her (0-1) and its pan. */
 interface Here { g: Game; time: number; near: (x: number, z: number) => number; pan: (x: number) => number }
@@ -45,6 +46,10 @@ export class SfxCues {
   private spoke = new Map<number, number>();
   private lost = -1;
   private boot = false;
+  /** The home speakers on, and the areas with a soundsystem, last frame (each new one powers up). */
+  private speakersOn = -1;
+  private stonesOn = new Set<number>();
+  private soundsystemsUp = new Set<string>();
   /** Her hits left last frame (a drop is a hit that landed), and whether she was down. */
   private hp = -1;
   private down = false;
@@ -55,6 +60,8 @@ export class SfxCues {
   private nextHoof = 0;
   private relicsFound = new Set<number>();
   private angry = new Set<number>();
+  /** When each restless legend next calls out. */
+  private nextLament = new Map<number, number>();
   private lastBeat = -1;
   private dressings = new Map<string, { x: number; z: number }[]>();
 
@@ -70,15 +77,18 @@ export class SfxCues {
     this.attacks(h, hear);
     this.soundsystems(h);
     this.booted(h);
+    this.powered(h);
     this.hurt(h);
     this.knocked(h);
     this.charges(h);
     this.relics(h);
     this.meadow(h);
     this.roars(h, hear);
+    this.laments(h);
     this.shoes(h);
     this.pond(h);
     this.picnic(h);
+    this.sea(h);
     this.primed = true;
   }
 
@@ -99,6 +109,7 @@ export class SfxCues {
       else if (e.kind === "fizzled") S.land(pan(e.x), k); // (thrown its full range: down on the ground)
     }
     for (const e of g.leashEvents) if (e.kind === "invited") this.flourish(g, e.id, time, Math.max(0.6, near(e.x, e.z)), pan(e.x));
+      else if (e.kind === "outsideCircle") S.land(pan(e.x), 0.5); // (put down outside a legend's circle: it does nothing; a soft thud, and the circle flashes)
   }
 
   /** Who turned enraged or happy since the last frame (the first frame only takes note): they say
@@ -131,7 +142,7 @@ export class SfxCues {
   private legends({ g, time, pan }: Here): void {
     const w = g.witch;
     let best: Creature | null = null, bd = Infinity;
-    for (const c of g.creatures) if (c.boss && !c.leashed && c.legendState === "asleep") { const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c; } }
+    for (const c of g.creatures) if (c.boss && !c.leashed && (c.legendState === "asleep" || c.legendState === "restless")) { const d = Math.hypot(c.x - w.x, c.z - w.z); if (d < bd) { bd = d; best = c; } }
     const sleep = best ? Math.max(0, 1 - bd / Math.max(1, g.tuning.sfx.snore.range)) : 0;
     const W = g.tuning.wildLegends;
     this.sfx.legends(sleep, best ? bossBreath(time, best.id, W.breathEvery * 1.5) : 0, best ? restlessness(best) * Math.min(1, sleep * 1.5) : 0, best ? pan(best.x) : 0);
@@ -170,6 +181,31 @@ export class SfxCues {
     if (over) this.boot = true;
   }
 
+  /** Runestones crackling into life (Ed, 2026-10-06): each home speaker as the boot pulse turns it, a
+   *  step up the scale round the ring, the last a chord; and each wave's soundsystem as it appears.
+   *  Heard from where it stands, within power.range metres. */
+  private powered({ g, pan }: Here): void {
+    const P = g.tuning.sfx.power, w = g.witch, ring = g.map.dancefloor.speakers, n = ring.length;
+    const near = (x: number, z: number) => Math.max(0, 1 - Math.hypot(x - w.x, z - w.z) / Math.max(1, P.range));
+    // each stone the boot pulse has reached (g.speakerBoot: its game time), in the order they turn: a step up the scale each
+    const booted = g.speakerBoot.filter(t => t !== null).length;
+    if (this.primed && this.speakersOn >= 0) for (let i = 0; i < n; i++) {
+      if (g.speakerBoot[i] === null || this.stonesOn.has(i)) continue;
+      const step = this.stonesOn.size, s = ring[i] ?? g.map.dancefloor, k = near(s.x, s.z);
+      if (k > 0) this.sfx.power(step, pan(s.x), Math.max(0.35, k), step === n - 1);
+      this.stonesOn.add(i);
+    }
+    else for (let i = 0; i < n; i++) if (g.speakerBoot[i] !== null) this.stonesOn.add(i); // (on the first frame: already speakers)
+    this.speakersOn = booted;
+    for (const [key, a] of g.party.areas) {
+      if (!a.soundsystem || this.soundsystemsUp.has(key)) continue;
+      this.soundsystemsUp.add(key);
+      if (!this.primed) continue;
+      const k = near(a.soundsystem.x, a.soundsystem.z);
+      if (k > 0) this.sfx.power(5 + (a.wave % 5), pan(a.soundsystem.x), k, true);
+    }
+  }
+
   /** Hurt (Ed, 2026-10-05: "ouch!"): her hits dropping (a hit on her mid-blink costs nothing);
    *  knocked down (knockout's "down"): "whoa-oh". The music dips under either. */
   private hurt({ g }: Here): void {
@@ -184,14 +220,14 @@ export class SfxCues {
   /** Knocked back and stunned (#108): her knock as it begins (a thump and a whoosh by how far it
    *  throws her), then a soft dizzy twinkle round and round while she's staggered; read loosely
    *  until #108 lands (knock: kx, kz m/s easing off at witch.knock.ease; at; stunUntil). */
-  private knocked({ g, time }: Here): void {
+  private knocked({ g }: Here): void {
     const kn = (g.witches[0] as unknown as { knock?: { kx: number; kz: number; at: number; stunUntil: number } } | undefined)?.knock;
     if (kn && Number.isFinite(kn.at) && kn.at !== this.knockAt) {
       this.knockAt = kn.at;
       const ease = (g.tuning as unknown as { witch?: { knock?: { ease?: number } } }).witch?.knock?.ease ?? 6;
       if (this.primed) this.sfx.knock(Math.hypot(kn.kx, kn.kz) / Math.max(0.1, ease));
     }
-    if (kn && time < kn.stunUntil && time >= this.nextTwinkle) { this.nextTwinkle = time + g.tuning.sfx.knock.twinkleEvery; this.sfx.twinkle(this.twinkles++); }
+    if (kn && g.herTime < kn.stunUntil && g.herTime >= this.nextTwinkle) { this.nextTwinkle = g.herTime + g.tuning.sfx.knock.twinkleEvery; this.sfx.twinkle(this.twinkles++); } // (her stun: her clock, rules/slowTime.ts)
   }
 
   /** A legend's long charge (#114: c.run's phase windup, run, brake, home): the nearest charger
@@ -243,6 +279,29 @@ export class SfxCues {
     this.angry = now;
   }
 
+  /** Restless legends calling out sadly (Ed, 2026-10-06), heard from the way of their clearings
+   *  well beyond the usual hearing so they draw her there: each now and then, sooner and more
+   *  urgently as its restlessness runs out; only the nearest `max` call, at least `gap` seconds
+   *  apart, so several at once don't crowd the mix. Calm again (its kin back) or angry, it stops. */
+  private laments({ g, time, pan }: Here): void {
+    const L = g.tuning.sfx.lament, w = g.witch, near: [Creature, number][] = [];
+    for (const c of g.creatures) if (c.boss && !c.gone && !c.leashed && c.legendState === "restless") {
+      const k = Math.max(0, 1 - Math.hypot(c.x - w.x, c.z - w.z) / Math.max(1, L.range));
+      if (k > 0) near.push([c, k]);
+    }
+    for (const id of this.nextLament.keys()) if (g.creatures[id]?.legendState !== "restless") this.nextLament.delete(id);
+    near.sort((a, b) => b[1] - a[1]);
+    for (const [c, k] of near.slice(0, Math.max(1, L.max))) {
+      const u = restlessness(c), every = L.every + (L.urgent - L.every) * u;
+      const due = this.nextLament.get(c.id);
+      if (due === undefined) { this.nextLament.set(c.id, time + every * (0.15 + 0.35 * ((c.id * 0.618) % 1))); continue; } // (its first call soon after it turns restless)
+      if (time < due) continue;
+      if (!this.ready(-1, time, L.gap)) { this.nextLament.set(c.id, time + L.gap * 0.5); continue; }
+      this.sfx.lament(voiceOf(c, g.tuning), u, pan(c.x), Math.pow(k, 0.7));
+      this.nextLament.set(c.id, time + every * (0.8 + 0.4 * ((time * 7.31 + c.id) % 1)));
+    }
+  }
+
   /** Dancers near her (party animals and happy ones dancing at a soundsystem), standing, tapping
    *  their party shoes on each beat; legends wear none. */
   private shoes({ g, time, pan }: Here): void {
@@ -267,6 +326,18 @@ export class SfxCues {
     for (const l of g.forest.lightsNear(w.x, w.z, P.range)) if (l.kind === "pond") { const d = Math.hypot(l.x - w.x, l.z - w.z); if (d < best) { best = d; bx = l.x; } }
     this.sfx.pond(Number.isFinite(best) ? Math.max(0, 1 - best / P.range) : 0, pan(bx));
   }
+
+  /** By the sea on the beach round the circular map: its waves, by how near the water (nothing at all further off). */
+  private sea({ g }: Here): void {
+    if (this.beach?.map !== g.map) this.beach = { map: g.map, at: beachOf(g.map.bounds, g.tuning) };
+    const P = g.tuning.sfx.waves, B = this.beach.at;
+    if (!P || !B) return;
+    const w = g.witch, off = -B.intoSea(w.x, w.z); // (metres from the water)
+    if (off >= P.range) { this.sfx.sea(0); return; } // (Sfx.sea: nothing unless already made)
+    const d = Math.hypot(w.x - B.x, w.z - B.z) || 1;
+    this.sfx.sea(Math.max(0, 1 - off / P.range), ((w.x - B.x) / d) * 0.8);
+  }
+  private beach: { map: Game["map"]; at: Beach | null } | null = null;
 
   /** By a picnic in a partified area (not home's: its meadow has its own): its murmur and cups. */
   private picnic({ g, pan }: Here): void {

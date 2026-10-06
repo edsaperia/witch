@@ -9,7 +9,7 @@
 // legendForm(id, st, { frame, facing }) -> { sp, colours }; legendSprites bakes the lot.
 import { M, rng, uni, vnoise, hsv2rgb, bake, defaultCanvas, Sprite } from "./core.js";
 import { render, v3, spotty } from "./model3d.js";
-import { withForm } from "./creatures3d.js";
+import { withForm, backTree3d } from "./creatures3d.js";
 import { SPECIES_BY_ID, speciesColours, buildCreature } from "./creatures.js";
 import { AREAS } from "./areas.js";
 import { decorColours, rockTint } from "./decor.js";
@@ -49,6 +49,7 @@ export const LEGEND_POSES = {
   squirrel: { sink: .45, droop: 1, drop: [], over: { moss: .3, lichen: .06, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 1, flowers: 6 } },
   dormouse: { sink: .45, droop: 1, drop: [], over: { moss: .4, lichen: .04, ferns: 1, grass: 3, mushrooms: 2, roots: 2, stones: 0, flowers: 5 } },
   newt: { sink: .6, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .08, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 2 } }, // the fen's newt (an area recipe's): sunk in peat, sedge over it
+  heron: { ground: .68, droop: 0, fold: 1, drop: [95, 96, 97, 98, 99, 100, 101], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 2, stones: 2, nest: true } }, // the heronry's heron (an area recipe's): folded down in the reeds, its neck laid along its back, a nest of sticks on it
   salamander: { sink: .55, droop: 1, drop: [60, 61], over: { moss: .35, lichen: .14, ferns: 2, grass: 1, mushrooms: 2, roots: 1, stones: 5 } },
   toad: { ground: .2, droop: .5, drop: [], over: { moss: .55, lichen: .06, ferns: 1, grass: 5, mushrooms: 2, roots: 1, stones: 3 } },
   raven: { ground: .42, droop: .6, drop: [40, 50, 95, 96, 97, 98, 99, 100], over: { moss: .35, lichen: .1, ferns: 1, grass: 2, mushrooms: 3, roots: 3, stones: 1, nest: true } },
@@ -108,11 +109,9 @@ function lgAddRoot(m, p, out, G, size, r) { // a root over its flank and into th
   m.chain([[...p, size * .09], [...mid, size * .08], [...end, size * .06]], r() < .5 ? M.TRUNK : M.BARKD, { group: g, extra: true });
 }
 function lgAddStone(m, p, size, r) { m.ell(p, [size * uni(r, .8, 1.2), size * uni(r, .5, .8), size * uni(r, .7, 1)], M.STONE, { group: lgNext(), extra: true, rough: size * .08, dir: [Math.cos(r() * 6), uni(r, -.2, .2), Math.sin(r() * 6)], up: [0, 1, 0], paint: p2 => spotty(p2, 16, .25) ? M.MOSS : spotty(p2, 30, .1) ? M.STONED : undefined }); }
-function lgAddSapling(m, p, size, kind, r) {
-  const g = lgNext(), h = size, top = v3.add(p, [uni(r, -.1, .1) * h, h, uni(r, -.1, .1) * h]);
-  m.seg(v3.add(p, [0, -h * .1, 0]), top, h * .045, h * .02, M.TRUNK, { group: g, extra: true });
-  if (kind === "pine") for (let i = 0; i < 4; i++) { const y = .35 + i * .19, w = h * (.3 - i * .06); m.ell(v3.lerp(p, top, y), [w, h * .1, w], i % 2 ? M.LEAF3 : M.LEAF, { group: g + 1000, extra: true, rough: h * .02 }); }
-  else for (let i = 0; i < 3; i++) m.ell(v3.add(top, [Math.cos(i * 2.1) * h * .14, -h * .08 + i * h * .07, Math.sin(i * 2.1) * h * .14]), [h * .2, h * .16, h * .2], [M.LEAF, M.LEAF2, M.LEAF3][i], { group: g + 1000, extra: true, rough: h * .03 });
+function lgAddSapling(m, p, size, kind, r) { // a young tree grown by the same generator as the awake legends' back trees (creatures3d.js backTree3d)
+  const g = lgNext(); lgNext(); lgNext(); lgNext(); // (its four groups)
+  backTree3d(m, p, size * 1.3, Math.floor(r() * 1e9), kind === "pine" ? "pine" : "broad", g);
 }
 function lgAddNest(m, c, rad, size, r) {
   const g = lgNext();
@@ -209,6 +208,7 @@ function lgForm(S, { breath }) {
     return res.sp;
   };
   form.motes = false;
+  form.fold = pose.fold ?? 0; // (a builder that can fold itself up asleep reads it: the heron's neck laid back onto its shoulders)
   return form;
 }
 

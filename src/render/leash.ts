@@ -35,9 +35,11 @@ const TRAIT_MARKS: Record<Trait, { r: number; g: number; b: number; size: number
 import { blocked, leashPoint, talkTime, talkTurn } from "../rules/leash";
 import { toEvolve } from "../rules/berries";
 import { hash2 } from "../rules/random";
+import { emojiOr, sleepyFace } from "./sleepyFace";
 import { FIGHT, profileOf } from "../rules/movement";
-import { huntsWitch } from "../rules/creatureStates";
+import { hasRune, huntsWitch, runeNear } from "../rules/creatureStates";
 import { LEGENDS, relicGlints } from "../rules/legends";
+import { circleLines, circleShown, legendCircleNear } from "../rules/legendCircle";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
 import { lobHeight } from "./invites";
@@ -52,6 +54,10 @@ import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, placed } from "./height";
 
 /** Seconds a legend's charge ruts take to fade. */
 const RUTS = 12;
+/** How far from her (m) happy creatures' runes are drawn. */
+const RUNE_VIEW = 70;
+/** The party legend's giant hat's stripes (the Easter egg): the party neons, in pairs of rows. */
+const PARTY_HAT = [[1, 0.35, 0.72], [0.35, 0.95, 1], [1, 0.85, 0.3], [0.7, 0.45, 1]];
 
 const SLOT = 32, SLOTS = 16; // the glyph atlas: 16 x 16 slots of 32 px; slot 0 is a soft dot
 const SQ = SLOTS * SLOTS - 1; // and the last a solid square
@@ -199,6 +205,8 @@ export class LeashView {
   private pips: HTMLElement | null = null;
   /** Each creature's height as drawn (the view sets it), so its health bar sits just over it. */
   readonly tops = new Map<number, number>();
+  /** When she last hit a party legend's edge (its boing played). */
+  private boingAt = -Infinity;
 
   constructor(scene: THREE.Scene, private game: Game) {
     this.canvas.width = this.canvas.height = SLOT * SLOTS;
@@ -364,7 +372,7 @@ export class LeashView {
     const list = w.mode !== "ground" || w.lift > 0.5 ? [] : this.dreams.map(c => ({ c, d: Math.hypot(c.x - w.x, c.z - w.z) })).filter(p => p.d <= range).sort((p, q) => p.d - q.d).slice(0, 4);
     let used = 0;
     for (const { c } of list) {
-      const y = Math.min(this.tops.get(c.id) ?? 2, 4.5) + 1.2;
+      const y = Math.min(this.tops.get(c.id) ?? 2, 4.5) + 0.5; // (low over it, so its puffs rise from just above the sleeper's head: the art director, #238)
       placed(this.v.set(c.x, y, c.z)).project(camera);
       if (this.v.z > 1 || Math.abs(this.v.x) > 1.1 || Math.abs(this.v.y) > 1.1) continue;
       // Restless (#87: its area has none of its kind), the dream turns to a nightmare (Ed, 2026-10-05):
@@ -376,10 +384,12 @@ export class LeashView {
       for (let k = 0; k < N.at.length; k++) if (r >= N.at[k]) step = k;
       const faces = step >= 0 ? 1 : 0, ire = r * r; // (the reddening and the shake gentle while it's only sad)
       if (!open && !faces) continue;
+      // Asleep giving its quest (Ed, 2026-10-06): a sleepy face by the sigil, mostly 😴, now and then a yawn or a sigh for a turn.
+      const Z = g.tuning.dreams.sleepy, zzz = !faces && open && Z ? sleepyFace(c.id, g.clock.time, Z) : null;
       let el = this.dreamEls[used];
       if (!el) { el = document.createElement("div"); el.className = "bubble dream on"; host.append(el); this.dreamEls.push(el); }
       el.style.display = "";
-      const key = `${q.species}:${q.level}:${step}:${open}`;
+      const key = `${q.species}:${q.level}:${step}:${open}:${zzz ?? ""}`;
       if (el.dataset.e !== key) {
         el.dataset.e = key;
         const cv = document.createElement("canvas"), n = 44;
@@ -393,20 +403,20 @@ export class LeashView {
           x.putImageData(d, 0, 0);
         }
         // (its face in finer pixels than a chat face: its brows must read)
-        const face = step >= 0 ? this.pixelEmoji(N.faces[step] ?? "😠", 0.9, 18) : null;
+        const face = step >= 0 ? this.pixelEmoji(N.faces[step] ?? "😠", 0.9, 18) : zzz ? this.pixelEmoji(emojiOr(zzz, Z!.fallback), 0.9, 18) : null;
         face?.classList.add("face");
         el.replaceChildren(...(open ? [cv] : []), ...(face ? [face] : []));
         el.classList.toggle("nightmare", faces > 0);
       }
       el.style.setProperty("--px", `${bubblePx(c.level)}px`);
       (el.querySelector("canvas:not(.face)") as HTMLElement | null)?.style.setProperty("opacity", `${1 - 0.75 * r}`);
-      if (faces) el.style.setProperty("--ink", `rgba(${Math.round(225 + 30 * ire)}, ${Math.round(215 - 160 * ire)}, ${Math.round(255 - 190 * ire)}, ${(0.85 + 0.15 * ire).toFixed(2)})`);
+      if (faces) el.style.setProperty("--ink", `rgba(${Math.round(232 - 42 * ire)}, ${Math.round(180 - 130 * ire)}, ${Math.round(106 - 76 * ire)}, ${(0.55 + 0.35 * ire).toFixed(2)})`); // (from the dream's amber to a deep ember: never the enraged eyes' bright red, the art director #238)
       else el.style.removeProperty("--ink");
       const bx = ((this.v.x + 1) / 2) * width, ly = ((1 - this.v.y) / 2) * height, by = Math.max(ly, el.offsetHeight + 56); // (kept on screen when she's close, below the top edge's cues)
       el.style.left = `${bx}px`;
       el.style.top = `${by}px`;
       const shake = faces ? ire * 2.5 * Math.sin(performance.now() * 0.05 + c.id) : 0; // (a nightmare shakes)
-      el.style.transform = `translate(calc(-50% + ${shake.toFixed(1)}px), -100%)`;
+      el.style.transform = `translate(calc(-50% + ${shake.toFixed(1)}px), calc(-100% - var(--px) * 12.5))`; // (lifted by its puffs, the lowest just above the sleeper)
       // Its direction (rules/dream.ts): a soft glow on the side of the bubble facing the runestone
       // of the nearest area of the kind it dreams of, explored or not.
       if (!this.dreamStones.has(c.id)) this.dreamStones.set(c.id, dreamStone(g.map, q.species, c.x, c.z));
@@ -504,7 +514,8 @@ export class LeashView {
         // thrown up: feathers off a bird, tufts off fur, chips off a shell, confetti in its neon off a party animal (a party,
         // nobody hurt). A legend's blow, all bigger.
         const top = (c && this.tops.get(c.id)) ?? 1.6, big = e.big ? 2 : 1, bits = c ? hitBits(c.species, c.leashed || c.legendState === "happy") : HIT_BITS.fur, col = bits === HIT_BITS.confetti && c ? neon(c.species) : c ? coatOf(c.species, 0.75) : bits;
-        this.fx.push({ kind: "flash", x: e.x, y: Math.min(3.5, top * 0.55), z: e.z, at: time, life: 0.16 * big, r: 1, g: 1, b: 0.95, seed: e.at * 53 + (e.id ?? 0), size: 0.9 * big });
+        const lf = e.big ? 1 + 2 * t.attackFx.legendFlash : 1; // (a legend's flash: attackFx.legendFlash, 0.5 twice anyone's)
+        this.fx.push({ kind: "flash", x: e.x, y: Math.min(3.5, top * 0.55), z: e.z, at: time, life: 0.16 * lf, r: 1, g: 1, b: 0.95, seed: e.at * 53 + (e.id ?? 0), size: 0.9 * lf });
         if (e.big) this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.45, r: 1, g: 0.85, b: 0.6, seed: 0, size: 3.2, n: 28, dot: 0.8 }); // a legend's blow: a shockwave along the ground
         this.fx.push({ kind: "dust", x: e.x, y: 0.2, z: e.z, at: time, life: 0.5, r: 0.5, g: 0.45, b: 0.38, seed: e.at * 59 + (e.id ?? 0), size: 0.7 * big });
         this.fx.push({ kind: "bits", x: e.x, y: Math.min(3, top * 0.6), z: e.z, at: time, life: 0.8, r: col.r, g: col.g, b: col.b, seed: e.at * 61 + (e.id ?? 0), size: big, n: bits === HIT_BITS.confetti ? 12 : 8 });
@@ -647,9 +658,8 @@ export class LeashView {
       // A wild legend in its second phase: a red aura pulsing round its feet.
       if (c.legend?.phase === 2 && !c.leashed) { const pk = 0.5 + 0.5 * Math.sin(time * 6 + c.id); for (let i = 0; i < 28; i++) { const a = (i / 28) * Math.PI * 2 + time * 0.5, R = 2.6 + pk * 0.4; this.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.45, dot, 1, 0.2, 0.25, 0.3 + 0.4 * pk); } }
       if (legendCharging(c, time)) for (let i = 0; i < 3; i++) this.standing.add(c.x + (hash2(c.id, Math.floor(time * 15) + i, 23) - 0.5) * 2, 0.4, c.z + (hash2(c.id, Math.floor(time * 15) + i, 29) - 0.5) * 1.2, 0.8, dot, 0.7, 0.6, 0.5, 0.4);
-      // A friendly area's creature (its legend's quest done): a rosy heart-mote over it now and then;
-      // a guard (that area partified): a steady mote in its sigil's colour.
-      if ((c.friendly || c.guard) && !c.leashed && c.level > 0) { const top = (this.tops.get(c.id) ?? 1.2 + c.level * 0.6) + 0.35, ph = (time * 0.5 + c.id * 0.37) % 1, col = c.guard ? neon(c.species) : { r: 1, g: 0.5, b: 0.75 }; this.standing.add(c.x, top + (c.guard ? 0 : ph * 0.6), c.z, 0.28, dot, col.r, col.g, col.b, c.guard ? 0.85 : Math.sin(ph * Math.PI) * 0.9); }
+      // A friendly area's creature (its legend's quest done): a rosy heart-mote over it now and then.
+      if (c.friendly && !c.leashed && c.level > 0) { const top = (this.tops.get(c.id) ?? 1.2 + c.level * 0.6) + 0.35, ph = (time * 0.5 + c.id * 0.37) % 1; this.standing.add(c.x, top + ph * 0.6, c.z, 0.28, dot, 1, 0.5, 0.75, Math.sin(ph * Math.PI) * 0.9); }
       // About to charge (the boar lowering its head): the lane it will run down, brightening.
       if (c.charge?.from !== undefined && time < c.charge.from) { const ch = c.charge, k = 1 - Math.max(0, ch.from! - time) / 0.5, L = ch.speed * (ch.until - ch.from!), col = c.leashed ? neon(c.species) : { r: 1, g: 0.3, b: 0.3 }; for (let s2 = 1.5; s2 < L; s2 += 1.2) for (const side of [-1, 1]) this.flat.add(c.x + ch.dx * s2 - ch.dz * side * 1.6, 0, c.z + ch.dz * s2 + ch.dx * side * 1.6, 0.35, dot, col.r, col.g, col.b, 0.15 + 0.55 * k); }
       // A legend's long charge (legends.json charge): head down, its first lane on the ground, brightening;
@@ -882,6 +892,39 @@ export class LeashView {
       this.flat.add(p.x, 0.01, p.z, 5.5, dot, col.r, col.g, col.b, 0.38);
     }
 
+    // Happy creatures' runes (Ed, 2026-10-06; states.leash "pickup"): each carries its sigil as a dim rune at its feet,
+    // moving with it; it pops out with its hearts (up off it and down, growing, written in) and settles. Ready to pick up
+    // (pickupDelay after), a little brighter. Only near her (RUNE_VIEW m), with the placed sigils' instances.
+    for (const c of g.creatures) {
+      if (Math.abs(c.x - w.x) > RUNE_VIEW || Math.abs(c.z - w.z) > RUNE_VIEW || !hasRune(c)) continue;
+      const since = time - (c.happyAt ?? -Infinity), k = Math.min(1, Math.max(0, since / 0.45)), ready = hasRune(c, time);
+      const slot = this.slotOf(c.species, c.level), col = this.colours.get(c.species)!, hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
+      const a = ready ? 0.62 + 0.12 * Math.sin(time * 2 + c.id) : 0.3;
+      this.flat.add(c.x, 0.03 + hop, c.z, (3 + c.level * 0.8) * 0.85 * grow, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k);
+      if (ready) this.flat.add(c.x, 0.015, c.z, 4.2, dot, col.r, col.g, col.b, 0.18);
+    }
+
+    // The party legend (Ed's Easter egg, rules/partyLegend.ts): a giant party hat on its head, striped in party neons, a
+    // pom-pom on top, bobbing on the beat. Pinned to one (she can't go past its reach), its leash goes ruler-straight and
+    // bright, and hitting the edge gives a comic boing (a ring bouncing out round her).
+    for (const c of g.creatures) {
+      if (!c.partyLegend || c.gone || Math.abs(c.x - w.x) > RUNE_VIEW * 2 || Math.abs(c.z - w.z) > RUNE_VIEW * 2) continue;
+      const top = this.tops.get(c.id) ?? 9, H = top * 0.5, R0 = top * 0.2, bob = 0.12 * top * Math.max(0, Math.sin(time * Math.PI * 2 * (t.beat.bpm / 60) * 0.5));
+      for (let i = 0; i < 12; i++) {
+        const k = i / 12, y = top * 0.92 + bob + k * H, r = R0 * (1 - k), col = PARTY_HAT[Math.floor(i / 2) % PARTY_HAT.length], n = Math.max(1, Math.round((r * 2) / 0.45));
+        for (let j = 0; j < n; j++) this.standing.add(c.x - r + (n > 1 ? (j / (n - 1)) * 2 * r : r), y, c.z + 0.3, 0.6, dot, col[0], col[1], col[2], 1);
+      }
+      this.standing.add(c.x, top * 0.92 + bob + H + 0.35, c.z + 0.3, 1.3, dot, 1, 0.92, 0.62, 1);
+    }
+    const pin = g.witches[0].pinned;
+    if (pin) {
+      // (drawn a metre toward the camera, so the legend's own great sprite doesn't hide it)
+      const col = null as { r: number; g: number; b: number } | null, from = { x: w.x, y: Math.max(0.6, hatTop * 0.5), z: w.z + 1 }, to = { x: pin.x, y: 1.2, z: pin.z + 1 };
+      const d = Math.hypot(to.x - from.x, to.z - from.z), n = Math.max(8, Math.round(d / 0.35)), flash = 0.8 + 0.2 * Math.sin(time * 18);
+      for (let i = 0; i <= n; i++) { const k = i / n; this.standing.add(from.x + (to.x - from.x) * k, from.y + (to.y - from.y) * k, from.z + (to.z - from.z) * k, 0.7, dot, col ? col.r : 1, col ? col.g : 0.82, col ? col.b : 0.45, flash); } // (the lanterns' amber, bright: ruler-straight and taut)
+      if (pin.since !== this.boingAt) { this.boingAt = pin.since; this.fx.push({ kind: "ring", x: w.x, y: 0, z: w.z, at: time, life: 0.45, r: AMBER[0], g: AMBER[1], b: AMBER[2], seed: 0, size: 2.2, n: 16, dot: 0.5 }); }
+    }
+
     // From the treetops, each placed sigil is projected up above the canopy over its spot, flat
     // and glowing, joined to its rune by a faint pulsing column of light (Ed, 2026-10-03). It
     // fades in as she rises; on the ground the real rune is enough.
@@ -894,7 +937,7 @@ export class LeashView {
     }
 
     // The ghost: where the bottom sigil would land, red where it can't.
-    if (w.mode === "ground" && s.stack.length && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius)) {
+    if (w.mode === "ground" && s.stack.length && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !runeNear(g.creatures, w.x, w.z, L.pickRadius, time) && !g.relics.some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.pickRadius)) { // (on a relic's sigil the button picks the relic up)
       const c = g.creatures[s.stack[s.stack.length - 1]], col = this.colours.get(c.species)!;
       const no = blocked(s, w.x, w.z, t);
       this.flat.add(w.x, 0, w.z, 3 + c.level * 0.8, this.uv(this.slotOf(c.species, c.level)), no ? 0.85 : col.r, no ? 0.38 : col.g, no ? 0.43 : col.b, 0.22); // (can't: the HUD's loss red, #188)
@@ -911,6 +954,13 @@ export class LeashView {
     const aloft = w.lift > 0.5;
     for (const r of g.relics) {
       if (r.state !== "lying" || Math.abs(r.x - w.x) > 400 || Math.abs(r.z - w.z) > 400) continue;
+      // Its relic sigil on the ground south of it, written like any placed sigil (Ed, 2026-10-06:
+      // stand on it and press the sigil button to pick the relic up), gold.
+      {
+        const col = (this.slotOf("relic", 0), this.colours.get("relic")!), pulse = 1.05 + 0.25 * Math.sin(time * 2 + r.id);
+        this.flat.add(r.sx, 0.02, r.sz, 3.4, this.uv(this.slotOf("relic", 0)), col.r * pulse, col.g * pulse, col.b * pulse, 1);
+        this.flat.add(r.sx, 0.01, r.sz, 5.5, dot, col.r, col.g, col.b, 0.38);
+      }
       if (!relicGlints(g.forest, g.map, r, aloft)) continue; // (under closed canopy, seen from above: nothing at all)
       for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; this.standing.add(r.x + Math.cos(a) * 2.5, 0.4 + (i % 3) * 0.5, r.z + Math.sin(a) * 1.8, 1.2, dot, 1, 0.78, 0.3, 0.8); }
       const tw = Math.max(0, Math.sin(time * 2.5 + r.id * 1.7)) ** 6;
@@ -963,9 +1013,10 @@ export class LeashView {
       const d = Math.hypot(c.x - lp.x, c.z - lp.z);
       if (B.thread && d > L.length * 0.85) {
         const strain = Math.min(1, (d - L.length * 0.85) / L.length), n = Math.min(60, Math.floor(d / 1.2));
-        // A gentle upward bow (Ed: "arc upwards a little"), and the dots march from the creature
-        // to the leash point.
-        const arc = Math.min(B.threadArcMax, B.threadArc * d);
+        // An upward bow (Ed: "arc upwards a little"), high while it's slack and flattening to a near-straight line as it
+        // goes taut (Ed, 2026-10-06: "The curve on slack leashes should be higher than it is now"), and the dots march from
+        // the creature to the leash point.
+        const arc = Math.min(B.threadArcMax, d * (B.threadArcTaut + (B.threadArcSlack - B.threadArcTaut) * (1 - strain)));
         for (let i = 1; i < n; i++) {
           const k = (i + 1 - (time * 2) % 1) / n;
           if (k >= 1) continue;
@@ -976,6 +1027,66 @@ export class LeashView {
     this.standing.end(); this.flat.end(); this.over.end(); this.solid.end();
     this.bubbles(time, camera, width, height);
     this.drawDreams(camera, width, height);
+    this.drawCirclePanel(camera, width, height);
+  }
+
+  /** The legend circle's explainer (Ed, 2026-10-06: "when you go into a legend circle, text appears on the screen to the side of
+   *  the circle explaining mechanics to do with legends"; rules/legendCircle.ts): a soft dark panel beside the clearing she stands
+   *  in (on the ground), on its right on screen, or its left if that would run off; fading in and out (circleShown). Its icons:
+   *  the sigil the legend dreams of, at its level, and a relic sigil in gold. */
+  private circlePanel: HTMLElement | null = null;
+  private circleFade = 0;
+  private circleAt = 0;
+  private circleLast: { legend: Creature; x: number; z: number; r: number } | null = null;
+  private drawCirclePanel(camera: THREE.Camera, width: number, height: number): void {
+    const host = this.bubbleWitch?.parentElement, g = this.game;
+    if (!host) return;
+    const now = performance.now() / 1000, dt = this.circleAt ? Math.min(0.1, now - this.circleAt) : 0;
+    this.circleAt = now;
+    const near = legendCircleNear(g, g.witch.lift > 0.5 ? { ...g.witch, mode: "treetop" } : g.witch);
+    if (near) this.circleLast = near;
+    this.circleFade = circleShown(this.circleFade, !!near, dt);
+    let el = this.circlePanel;
+    if (!this.circleFade || !this.circleLast) { if (el) el.style.display = "none"; return; }
+    if (!el) { el = document.createElement("div"); el.className = "legend-panel"; host.append(el); this.circlePanel = el; }
+    const { legend: c, x, z, r } = this.circleLast, lines = circleLines(c);
+    const key = `${c.id}:${c.legendState}:${c.quest?.done !== undefined}:${c.quest?.species}:${c.quest?.level}`;
+    if (el.dataset.k !== key) {
+      el.dataset.k = key;
+      el.dataset.state = c.legendState ?? "asleep";
+      const icon = (id: string, level: number | null, colour: number[]) => {
+        const cv = document.createElement("canvas"), n = 40;
+        cv.width = cv.height = n; cv.className = "icon";
+        const x2 = cv.getContext("2d");
+        if (x2) drawSigil(x2, id, { x: 1, y: 1, size: n - 2, level: level as unknown as null, colour, glow: false });
+        return cv;
+      };
+      el.replaceChildren(...lines.map(l => {
+        const p = document.createElement("p");
+        if (l.done) p.className = "done";
+        l.text.split(/(\{sigil\}|\{relic\})/).forEach(part => {
+          if (part === "{sigil}" && c.quest) p.append(icon(c.quest.species, c.quest.level, sigilColour(c.quest.species)));
+          else if (part === "{relic}") p.append(icon("relic", null, [255, 205, 90]));
+          else if (part) p.append(document.createTextNode(part));
+        });
+        if (l.done) p.prepend(document.createTextNode("✓ "));
+        return p;
+      }));
+    }
+    // beside the circle on screen: its middle and its edge (at about head height), the panel off its right side, or its left
+    placed(this.v.set(x, 1.5, z)).project(camera);
+    const cx = ((this.v.x + 1) / 2) * width, cy = ((1 - this.v.y) / 2) * height, behind = this.v.z > 1;
+    placed(this.v.set(x + r, 1.5, z)).project(camera);
+    const rx = Math.abs(((this.v.x + 1) / 2) * width - cx);
+    el.style.display = behind ? "none" : "";
+    const w = el.offsetWidth, h = el.offsetHeight, gap = 16;
+    let left = cx + rx + gap;
+    if (left + w > width - 8) left = cx - rx - gap - w; // (off the right edge: the other side)
+    if (left < 8) left = width - w - 24; // (the circle wider than the screen: by its right edge)
+    left = Math.max(8, Math.min(width - w - 8, left));
+    const top = Math.max(56, Math.min(height - h - 70, Math.max(height * .3, Math.min(height * .6, cy)) - h / 2)); // (about level with the circle's middle, clear of the clock and the action bar)
+    el.style.left = `${Math.round(left)}px`; el.style.top = `${Math.round(top)}px`;
+    el.style.opacity = this.circleFade.toFixed(2);
   }
 
   /** Show an emoji in a bubble as a pixel sprite: drawn small (bubbles.emojiPixels across), its
@@ -1051,3 +1162,4 @@ export class LeashView {
 
 /** A wild legend's slow breath, 0 out to 1 in, once every `every` seconds (offset by its id). */
 export const bossBreath = (time: number, id: number, every: number) => 0.5 - 0.5 * Math.cos((time / Math.max(0.1, every) + (id % 7) / 7) * Math.PI * 2);
+

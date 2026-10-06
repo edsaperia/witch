@@ -3,6 +3,8 @@
 // which takes riseTime or descendTime: `lift` runs from 0 (ground) to 1 (treetop).
 import { clamp, lerp, smoothstep } from "./random";
 import type { Tuning } from "./tuning";
+import { beachOf, keepIn, softEdge, type Bounds } from "./mapShape";
+import { NO_LOAD, type LeashLoad } from "./leashWeight";
 
 export type Mode = "ground" | "rising" | "treetop" | "descending";
 
@@ -29,6 +31,10 @@ export interface WitchState {
   braking?: boolean;
   /** Sitting on the treehouse terrace (the start), until the first move or rise. */
   seated?: boolean;
+  /** Lying on the beach looking at the stars (the tuning's beach): she flew on out over the sand, so landed; any other way gets her up. */
+  stargazing?: boolean;
+  /** How long she's been pushing on out over the sand (seconds). */
+  beachPush?: number;
 }
 
 /** What the player asks for this frame: a direction (length up to 1) and button presses. */
@@ -69,15 +75,33 @@ export const witchHeight = (w: WitchState, t: Tuning) => lerp(t.groundHeight, t.
 /** How much of the canopy shows: 0 in ground mode, 1 in treetop mode. */
 export const canopyShown = (w: WitchState) => smoothstep(w.lift);
 
-export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, bounds: { minX: number; maxX: number; minZ: number; maxZ: number }): WitchState {
+/** `load`: the pull of the sigils she carries (rules/leashWeight.ts): slower away from it, a little drift toward it, a
+ *  slower rise, and over the treetops a slow sink (to leash.weight.floor while she flies on; all the way, and down to
+ *  the ground, if she stops or the load is extreme). */
+export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, bounds: Bounds, load: LeashLoad = NO_LOAD): WitchState {
   if (w.seated) {
     if (!intent.toggleMode && Math.hypot(intent.moveX, intent.moveZ) < 0.1) return w;
     w = { ...w, seated: false };
   }
+  if (w.stargazing) {
+    // Lying on the sand she stays, still pushing out to sea or not at all; any other way (or a rise) gets her up.
+    if (!intent.toggleMode && seaward(w, intent, bounds) !== false) return w.vx || w.vz ? { ...w, vx: 0, vz: 0 } : w;
+    w = { ...w, stargazing: false, beachPush: 0 };
+  }
   let { mode, lift } = w;
   if (intent.toggleMode) mode = mode === "ground" || mode === "descending" ? "rising" : "descending";
-  if (mode === "rising") { lift += dt / Math.max(1e-3, t.riseTime); if (lift >= 1) { lift = 1; mode = "treetop"; } }
+  const Wt = t.leash.weight, over = load.over, steering = Math.hypot(intent.moveX, intent.moveZ) > 0.1;
+  if (mode === "rising") { lift += dt / Math.max(1e-3, t.riseTime * (1 + Wt.rise * over)); if (lift >= 1) { lift = 1; mode = "treetop"; } }
   else if (mode === "descending") { lift -= dt / Math.max(1e-3, t.descendTime); if (lift <= 0) { lift = 0; mode = "ground"; } }
+  else if (mode === "treetop") {
+    // Loaded, she's slowly pulled down: to the floor while she flies on (never dropped into a fight she didn't choose),
+    // all the way if she stops or the load is extreme, landing; unloaded, she floats back up.
+    if (over > 0) {
+      const floor = steering && !load.extreme ? Wt.floor : 0;
+      if (lift > floor) lift = Math.max(floor, lift - Math.min(Wt.sinkMax, Wt.sink * over) * dt);
+      if (lift <= 0) { lift = 0; mode = "ground"; }
+    } else if (lift < 1) lift = Math.min(1, lift + dt / Math.max(1e-3, t.riseTime));
+  }
 
   let mx = intent.moveX, mz = intent.moveZ;
   const len = Math.hypot(mx, mz);
@@ -91,12 +115,45 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   // Rising and descending blend the two, keeping her speed.
   let vx = lerp(gx, top.vx, L), vz = lerp(gz, top.vz, L);
   const boost = top.boost * L, braking = top.braking && L > 0.5;
-  let x = w.x + vx * dt, z = w.z + vz * dt;
-  if (x < bounds.minX || x > bounds.maxX) { x = clamp(x, bounds.minX, bounds.maxX); vx = 0; }
-  if (z < bounds.minZ || z > bounds.maxZ) { z = clamp(z, bounds.minZ, bounds.maxZ); vz = 0; }
+  // Her sigils' pull (rules/leashWeight.ts): moving away from it, that part of her speed is cut (her input still steers);
+  // and she drifts a little toward it (to driftShare of her top speed at an extreme load).
+  let driftX = 0, driftZ = 0;
+  if (over > 0) {
+    const away = -(vx * load.x + vz * load.z);
+    if (away > 0) { const cut = away * (1 - 1 / (1 + Wt.drag * over)); vx += load.x * cut; vz += load.z * cut; }
+    const drift = Wt.drift * max * Math.min(1, over / Math.max(1e-6, Wt.extreme));
+    driftX = load.x * drift; driftZ = load.z * drift;
+  }
+  if (bounds.circle) ({ vx, vz } = softEdge(bounds, w.x, w.z, vx, vz, Math.max(max, Math.hypot(vx, vz)), t.map?.push ?? 0, t.map?.drift ?? 0)); // (the circular map's soft edge)
+  let x = w.x + (vx + driftX) * dt, z = w.z + (vz + driftZ) * dt;
+  if (bounds.circle) { const p = keepIn(bounds, x, z); if (p.x !== x || p.z !== z) { const c = bounds.circle, l = Math.hypot(p.x - c.x, p.z - c.z) || 1, nx = (p.x - c.x) / l, nz = (p.z - c.z) / l, out = vx * nx + vz * nz; if (out > 0) { vx -= nx * out; vz -= nz * out; } x = p.x; z = p.z; } }
+  else {
+    if (x < bounds.minX || x > bounds.maxX) { x = clamp(x, bounds.minX, bounds.maxX); vx = 0; }
+    if (z < bounds.minZ || z > bounds.maxZ) { z = clamp(z, bounds.minZ, bounds.maxZ); vz = 0; }
+  }
   const facing: 1 | -1 = vx > 0.3 ? 1 : vx < -0.3 ? -1 : w.facing;
   const speed = Math.hypot(vx, vz), away = facingAway(vx, vz, w.away, Math.max(1, max * 0.15), t), heading = headingOf(vx, vz, w.heading, Math.max(1, max * 0.15), t);
-  return { x, z, vx, vz, lift, mode, facing, away, heading, lean: speed > max * t.leanAt, boost, braking };
+  const next: WitchState = { x, z, vx, vz, lift, mode, facing, away, heading, lean: speed > max * t.leanAt, boost, braking };
+  // Flying on out over the beach (Ed, 2026-10-06: "If you try and fly past the beach, you land and stargaze"): pushing seaward
+  // against the edge's soft hold, on the sand, for restAfter seconds, she comes down (from the treetops too) and, landed, lies down.
+  const B = t.beach, beach = B?.on ? beachOf(bounds, t) : null;
+  const held = beach && beach.intoSand(x, z) > 0 && Math.hypot(x - beach.x, z - beach.z) > beach.edge(Math.atan2(z - beach.z, x - beach.x)) - (t.map?.push ?? 0) * 0.6; // (on the sand, where the edge is holding her back)
+  if (held && seaward(next, intent, bounds)) {
+    next.beachPush = (w.beachPush ?? 0) + dt;
+    if (next.beachPush >= B!.restAfter) {
+      if (mode === "treetop" || mode === "rising") next.mode = "descending";
+      else if (mode === "ground") Object.assign(next, { stargazing: true, vx: 0, vz: 0, lean: false, boost: 0, braking: false, away: false, heading: "side" });
+    }
+  } else if (w.beachPush) next.beachPush = 0;
+  return next;
+}
+
+/** Is she being steered on out to sea (within 60 degrees of straight out from the circle's middle)? undefined: not steered at all. */
+function seaward(w: { x: number; z: number }, intent: Intent, bounds: Bounds): boolean | undefined {
+  const c = bounds.circle, m = Math.hypot(intent.moveX, intent.moveZ);
+  if (!c || m < 0.1) return undefined;
+  const d = Math.hypot(w.x - c.x, w.z - c.z) || 1;
+  return (intent.moveX * (w.x - c.x) + intent.moveZ * (w.z - c.z)) / (d * m) > 0.5;
 }
 
 /** Treetop flight with momentum: pressing a direction reaches cruise (treetopSpeed) quickly;

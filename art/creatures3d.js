@@ -40,7 +40,8 @@ const drawHeight = (level, st, k = 1) => level === 0 ? Math.round(Math.max(12, M
   : level === 3 ? Math.round(Math.max(height3d(3, st) * k, height3d(2, st, k) * LEGEND_OVER_ADULT)) // a legend: far above its adult
   : height3d(level, st) * k;
 // An adult's heavier build for the body plans without their own: every part thicker across (x and z), not taller.
-const beef = (m, k) => { for (const q of m.parts) { if (q.type === "ell") q.r = [q.r[0] * k, q.r[1], q.r[2] * k]; else if (q.type === "box") q.h = [q.h[0] * k, q.h[1], q.h[2] * k]; else { q.r1 *= k; q.r2 *= k; } } };
+const beef = (m, k) => { for (const q of m.parts) { if (q.lean) continue; // (stilts, toes and the like keep their slenderness)
+    if (q.type === "ell") q.r = [q.r[0] * k, q.r[1], q.r[2] * k]; else if (q.type === "box") q.h = [q.h[0] * k, q.h[1], q.h[2] * k]; else { q.r1 *= k; q.r2 *= k; } } };
 
 // ================= party gear =================
 // Party animals (creatures the witch has invited) wear a glowing collar, and some a party hat,
@@ -354,7 +355,11 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   if (has("crystals")) [.15, .3, .45, .6, .75].forEach((t, i) => { const b = backAt(t), h = [.3, .5, .4, .6, .35][i]; m.ell(v3.add(b, [0, h * .45, (i % 2 - .5) * .1]), [h * .55, .08, .08], M.MAGIC, { dir: [(i - 2) * .12, 1, 0], group: 80 + i % 2, extra: true, paint: p => p[2] > 0 ? M.MAGIC2 : undefined }); });
   if (has("moss")) {
     for (let i = 0; i < 6; i++) m.ell(backAt(.08 + i * .15), [len * .22, .07, bw * .85], M.LEAF, { group: 85, extra: true });
-    for (const [t, h] of [[.25, .55], [.5, .8], [.75, .45]]) { const b = backAt(t); m.seg(b, v3.add(b, [0, h * .7, 0]), .04, .025, M.TRUNK, { group: 86, extra: true }); m.ell(v3.add(b, [0, h * .8, 0]), [h * .28, h * .26, h * .28], M.LEAF2, { group: 87, extra: true, paint: p => p[1] < b[1] + h * .72 ? M.LEAF3 : undefined }); }
+    // a little wood growing on its back (Ed, 2026-10-06: bigger generated trees, not the lollipops that read as flat "mint domes"
+    // from the game's camera, the art director's round 2): two or three, grown by backTree3d
+    // in the species' own kind (BACK_TREES), each from its own seed, the tallest in the middle
+    const kind = BACK_TREES[S.id] ?? "broad", seed = [...S.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 7) >>> 0, r = rng(seed);
+    for (const [i, t, h] of [[0, .22, .95], [1, .5, 1.35], [2, .78, .8]]) backTree3d(m, backAt(t + uni(r, -.04, .04)), h * len * uni(r, .9, 1.1), seed + i * 977, kind, 86);
     for (const t of [.12, .4, .65, .9]) { const b = backAt(t); m.ell(v3.add(b, [0, .12, bw * .3]), [.07, .035, .07], M.MAGIC, { group: 89, extra: true }); }
   }
   if (has("ribbons")) for (let i = 0; i < 3; i++) { const pts = []; for (let k = 0; k < 9; k++) { const t = k / 8; pts.push([len * (.5 - t * 2.2), top + .05 + i * .1 + t * (.25 + i * .12) + Math.sin(t * 6 + frame + i) * .07, (i - 1) * .18, .04 * (1 - t * .6)]); } m.chain(pts, i % 2 ? M.MAGIC2 : M.MAGIC, { group: 90 + i, extra: true }); }
@@ -362,6 +367,42 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   const sp = drawForm(m, { height: drawHeight(level, st, q.hgt), facing }, S, level);
   if (formMotes() && sz("motes")) glowMotes(sp, S.id.length * 7919, sz("motes"));
   return sp;
+}
+
+// Trees growing on a legend's back (its legend feature "moss"; and the sleeping legends' sapling, art/legends.js): a little
+// tree grown from a seed rather than drawn by hand, Weber–Penn style in miniature. A trunk h tall that leans and bends a
+// little, flared at its foot with a root or two; then its kind's crown:
+//   broad: three to five boughs forking up and out from the top third, each ending in one or two leaf blobs, and one on top;
+//   pine: a spire of tiers, widest at the bottom, each a ragged disc of needles, with stubs of branch;
+//   willow: a broad crown whose blobs hang in long drooping curtains.
+// The blobs are ragged (rough) and lit in three tones, their tops the light leaf and their undersides the dark, so the crown
+// reads as a crown at night and from the treetops, not a flat dome. group: the first of the four groups it uses.
+export const BACK_TREES = { elk: "pine", beaver: "willow", bear: "broad" };
+export function backTree3d(m, base, h, seed, kind = "broad", group = 86) {
+  const r = rng(seed), o = { group, extra: true }, lean = [uni(r, -.18, .18), 0, uni(r, -.12, .12)], bend = uni(r, -.08, .08);
+  const at = t => v3.add(base, [lean[0] * h * t * t + Math.sin(t * Math.PI) * bend * h, h * t, lean[2] * h * t * t]);
+  const R0 = h * (kind === "pine" ? .06 : .075);
+  const trunk = []; for (let k = 0; k <= 4; k++) { const t = k / 4 * (kind === "pine" ? 1 : .78); trunk.push([...at(t), R0 * (1 - t * .7) + (k ? 0 : R0 * .4)]); }
+  m.chain(trunk, M.TRUNK, o);
+  for (let k = 0; k < 2; k++) { const a = uni(r, 0, 6.28); m.seg(at(.04), v3.add(base, [Math.cos(a) * h * .16, -h * .05, Math.sin(a) * h * .16]), R0 * .7, R0 * .25, M.TRUNK, o); } // roots
+  const leaf = (c, rad, tall = 1) => m.ell(c, [rad, rad * .82 * tall, rad], M.LEAF, { group: group + 1, extra: true, rough: rad * .12, paint: p => p[1] > c[1] + rad * .3 * tall ? M.LEAF2 : p[1] < c[1] - rad * .25 * tall ? M.LEAF3 : undefined });
+  if (kind === "pine") {
+    const n = 5;
+    for (let i = 0; i < n; i++) { const t = .3 + i * .15, w = h * (.3 - i * .05) * uni(r, .9, 1.1), c = at(t); m.ell(c, [w, h * .07, w], i % 2 ? M.LEAF : M.LEAF3, { group: group + 1 + (i % 2), extra: true, rough: h * .025, paint: p => p[1] > c[1] + h * .03 ? M.LEAF2 : undefined }); }
+    m.ell(at(1.02), [h * .05, h * .1, h * .05], M.LEAF, { group: group + 1, extra: true });
+    return;
+  }
+  const top = at(.78), n = 3 + Math.floor(r() * 3), a0 = uni(r, 0, 6.28), willow = kind === "willow";
+  for (let i = 0; i < n; i++) {
+    const a = a0 + i * 6.28 / n + uni(r, -.4, .4), from = at(uni(r, .5, .72)), len = h * uni(r, .32, .45), up = willow ? uni(r, .35, .6) : uni(r, .6, .95);
+    const dir = v3.norm([Math.cos(a), up, Math.sin(a) * .8]), mid = v3.add(from, v3.mul(dir, len * .55)), end = v3.add(from, v3.mul(dir, len));
+    m.chain([[...from, R0 * .55], [...mid, R0 * .38], [...end, R0 * .22]], M.TRUNK, { group: group + 3, extra: true });
+    const rad = h * uni(r, .16, .22);
+    leaf(v3.add(end, [0, rad * .3, 0]), rad);
+    if (r() < .5) leaf(v3.add(mid, [Math.cos(a + 1.2) * rad * .6, rad * .5, Math.sin(a + 1.2) * rad * .4]), rad * .7);
+    if (willow) for (let k = 0; k < 2; k++) { const d = v3.add(end, [uni(r, -.5, .5) * rad, -rad * (.7 + k * .5), uni(r, -.4, .4) * rad]); m.ell(d, [rad * .32, rad * .75, rad * .32], k ? M.LEAF3 : M.LEAF, { group: group + 2, extra: true, rough: rad * .1 }); }
+  }
+  leaf(v3.add(top, [0, h * .16, 0]), h * uni(r, .19, .24));
 }
 
 // A twisted horn (the parts kit's "horn that sweeps and curls"; genome parts horns: "twist", its shape in head.horn): from
@@ -530,24 +571,28 @@ export function heron3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, m = new Model(), q = { ...(S.levelQ?.[level] || {}) }, bob = frame ? .02 : 0, lk = q.legs ?? 1, nk = q.neck ?? 1.45, bk = q.beak ?? 1;
   const hip = .52 * lk + .25, by = hip + .18 + bob;
   // legs: hip, knee (bending back), foot; long thin toes splayed forward
+  const legs0 = m.parts.length;
   for (const side of [-1, 1]) {
     const f = frame && side > 0 ? .05 : 0, z = side * .07, knee = [-.06, hip * .5 + f, z], foot = [.02 + f * .6, .03 + f * .4, z];
     m.chain([[.0, hip, z, .024], [...knee, .015], [...foot, .013]], M.ACCENT, { group: side > 0 ? 7 : 2 });
-    for (const [dx, dz] of [[.13, -.04], [.15, 0], [.13, .04], [-.07, 0]]) m.seg(foot, v3.add(foot, [dx, -.01, dz]), .007, .003, M.ACCENT, { group: side > 0 ? 7 : 2 });
+    [[.13, -.045], [.15, 0], [.13, .045], [-.07, 0]].forEach(([dx, dz], t) => m.seg(foot, v3.add(foot, [dx, -.01, dz]), .007, .003, M.ACCENT, { group: 20 + (side > 0 ? 4 : 0) + t })); // each toe its own group: not blended into a slab
     m.anchors.feet.push({ c: v3.add(foot, [.04, 0, 0]), r: .05, group: side > 0 ? 7 : 2, fit: "claw" });
   }
+  for (let i = legs0; i < m.parts.length; i++) m.parts[i].lean = true; // stilts: never beefed up with the adult's and legend's build
   // body: a slim tilted egg, grey, the wings folded along it with a dark shoulder; a short tail
   m.ell([0, by, 0], [.3, .13, .12], M.BODY, { dir: [1, .3, 0] });
   for (const side of [-1, 1]) m.ell([-.06, by + .02, side * .1], [.32, .11, .035], M.BODY2, { dir: [-1, -.2, 0], group: side > 0 ? 4 : 2, paint: p => p[0] > .12 ? M.BODY3 : undefined });
   m.ell([-.36, by - .04, 0], [.14, .03, .08], M.BODY2, { dir: [-1, -.3, 0], group: 3 });
   // the neck in an S, pale with a dark streak down its front
-  const n0 = [.22, by + .06, 0], n1 = [.34, by + .22 * nk, 0], n2 = [.24, by + .42 * nk, 0], hc = [.32, by + .58 * nk, 0];
+  // asleep (a sleeping form's fold, art/legends.js), the neck folds down and back, the head laid on its shoulders, bill along its breast
+  const fd = FORM?.fold ?? 0, mix = (u, v) => u.map((x, i) => x + (v[i] - x) * fd);
+  const n0 = [.22, by + .06, 0], n1 = mix([.34, by + .22 * nk, 0], [.3, by + .14, 0]), n2 = mix([.24, by + .42 * nk, 0], [.14, by + .2, 0]), hc = mix([.32, by + .58 * nk, 0], [.08, by + .2, 0]);
   m.chain([[...n0, .055], [...n1, .038], [...n2, .034], [...hc, .036]], M.BELLY, { paint: p => p[0] > (p[1] < n1[1] ? n0[0] + (p[1] - n0[1]) / (n1[1] - n0[1]) * (n1[0] - n0[0]) : n2[0]) + .03 && spotty(p, 30, .6) ? M.BODY3 : undefined });
   // head, a black plume off its back, a dagger beak
   const hr = .075;
   m.ell(hc, [hr * 1.15, hr * .9, hr * .85], M.BELLY, { paint: p => p[1] > hc[1] + hr * .3 && p[0] < hc[0] + hr * .3 ? M.BODY3 : undefined });
   const ck = q.crest ?? 1; if (ck) m.chain([[hc[0] - hr * .6, hc[1] + hr * .4, 0, .016], [hc[0] - hr * 2.2 * ck, hc[1] + hr * .7, 0, .01], [hc[0] - hr * 3.6 * ck, hc[1] + hr * .2, 0, .004]], M.BODY3, { group: 5, extra: true });
-  m.seg(v3.add(hc, [hr * .8, -hr * .15, 0]), v3.add(hc, [hr * (.8 + 3.6 * bk), -hr * .6, 0]), hr * .3, hr * .05, M.ACCENT, { group: 1 });
+  m.seg(v3.add(hc, [hr * .8, -hr * .15, 0]), v3.add(hc, [hr * (.8 + 3.6 * bk), -hr * (.6 + 1.6 * fd), 0]), hr * .3, hr * .05, M.ACCENT, { group: 1 });
   eyesOn(m, hc, [hr * 1.15, hr * .9, hr * .85], [[.5, .3, .7], [.5, .3, -.7]], hr * .2, legend ? M.MAGIC2 : M.EYE);
   m.anchors.neck = { c: v3.lerp(n0, n1, .5), r: .06, dir: v3.norm(v3.sub(n1, n0)) };
   return finish(m, S, level, st, 1.25, facing);

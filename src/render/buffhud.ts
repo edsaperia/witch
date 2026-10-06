@@ -1,4 +1,4 @@
-// The legend buffs on now (rules/buffs.ts), at the top of the screen: a small row of icons, each
+// The legend buffs on now (rules/buffs.ts), at the top of the screen under the game clock: a small row of icons, each
 // the legend's sigil glyph in its neon, its line as a tooltip. When a buff is gained or lost its
 // icon flashes and a short line shows under the row for a few seconds.
 import type { Game } from "../rules/game";
@@ -15,8 +15,8 @@ export class BuffHud {
   private lineUntil = 0;
 
   constructor(parent: HTMLElement) {
-    Object.assign(this.row.style, { position: "fixed", left: "50%", top: "10px", transform: "translateX(-50%)", display: "flex", gap: "6px", pointerEvents: "auto", zIndex: "2" });
-    Object.assign(this.line.style, { position: "fixed", left: "50%", top: `${G * SCALE + 18}px`, transform: "translateX(-50%)", font: "13px system-ui, sans-serif", whiteSpace: "nowrap", textShadow: "0 1px 0 #000, 0 0 6px #000", pointerEvents: "none", zIndex: "2", transition: "opacity .4s", opacity: "0" });
+    Object.assign(this.row.style, { position: "fixed", left: "50%", top: "36px", transform: "translateX(-50%)", display: "flex", gap: "6px", pointerEvents: "auto", zIndex: "2" });
+    Object.assign(this.line.style, { position: "fixed", left: "50%", top: `${G * SCALE + 44}px`, transform: "translateX(-50%)", font: "13px system-ui, sans-serif", whiteSpace: "nowrap", textShadow: "0 1px 0 #000, 0 0 6px #000", pointerEvents: "none", zIndex: "2", transition: "opacity .4s", opacity: "0" });
     this.row.id = "buffs";
     parent.append(this.row, this.line);
   }

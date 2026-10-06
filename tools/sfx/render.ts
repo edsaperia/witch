@@ -26,6 +26,10 @@ const SOUNDS: [string, number, Play][] = [
   ["witch-knock", 6, () => {}],
   ["legend-charge", 9, () => {}],
   ["relic-found", 3, s => s.relic()],
+  ["spell-hum", 3, s => s.spell("hum", 1)],
+  ["spell-rustle", 0.5, s => s.spell("rustle", 1)],
+  ["spell-crackle", 1.3, s => s.spell("crackle")],
+  ["spell-burst", 2, s => s.spell("burst")],
   ["home-meadow", 12, () => {}],
   ["soundsystem-lost", 3, s => s.lost()],
   ["soundsystem-lost-urgent", 3, s => s.lost(true)],
@@ -42,8 +46,16 @@ const SOUNDS: [string, number, Play][] = [
   ["happy", 0.6, s => s.happy(0)],
   ["lob-landing", 2.8, () => {}],
   ["legend-roar", 2.8, s => s.roar()],
+  ["stone-power", 2, s => s.power(4, 0, 1)],
+  ["stone-power-soundsystem", 3, s => s.power(7, 0, 1, true)],
+  ["stone-boot-12", 9.5, () => {}],
+  ["legend-lament-elk", 8, s => s.lament(v("elk", 3), 0.15)],
+  ["legend-lament-owl", 8, s => s.lament(v("owl", 3), 0.55)],
+  ["legend-lament-wolf-urgent", 8, s => s.lament(v("wolf", 3), 1)],
+  ["legend-lament-far", 8, s => s.lament(v("elk", 3), 0.5, 0.6, 0.25)],
   ["shoes", 3, () => {}],
   ["pond", 12, () => {}],
+  ["sea", 16, () => {}],
   ["picnic", 10, () => {}],
   ["creator-room", 12, () => {}],
   ["letter-land", 1.6, () => {}],
@@ -70,6 +82,9 @@ async function render(name: string, seconds: number, play: Play) {
   } else if (name === "shoes") {
     // four dancers' party shoes on the beat at 120 bpm
     for (let b = 0; b < 6; b++) void oc.suspend(Math.round(b * 0.5 * rate) / rate).then(() => { s.taps(4, 0, 1); return oc.resume(); });
+  } else if (name === "sea") {
+    // walking down the beach to the water (two waves or so), then away up it until it's let go
+    for (let k = 0; k * 0.1 < seconds - 0.2; k++) { const sec = k * 0.1, L = sec < 2 ? sec / 2 : sec < 11 ? 1 : Math.max(0, 1 - (sec - 11) / 2); void oc.suspend(Math.round(sec * rate) / rate).then(() => { s.sea(L, 0.3); return oc.resume(); }); }
   } else if (name === "pond" || name === "picnic" || name === "creator-room") {
     // walking up to it and standing by it: its level each 0.1 s
     for (let k = 0; k * 0.1 < seconds - 0.2; k++) { const sec = k * 0.1, L = Math.min(1, sec / 2); void oc.suspend(Math.round(sec * rate) / rate).then(() => { if (name === "pond") s.pond(L, -0.2); else if (name === "picnic") s.picnic(L, 0.2); else s.room(L); return oc.resume(); }); }
@@ -86,6 +101,9 @@ async function render(name: string, seconds: number, play: Play) {
     for (let k = 0; k <= 12; k++) { const sp = 14 * (1 - k / 12); at(4.2 + k * 0.1, () => s.charge(0, Math.min(1, sp / 10))); }
     at(5.5, () => s.charge(0, 0));
     for (let i = 0; i < 9; i++) at(5.7 + i * 0.34, () => s.hoof(0, 1, true));
+  } else if (name === "stone-boot-12") {
+    // the home ring's 12 runestones powering on round the ring, sped up (0.6 s apart), the last a chord
+    for (let i = 0; i < 12; i++) void oc.suspend(Math.round(i * 0.6 * rate) / rate).then(() => { s.power(i, Math.sin((i / 12) * Math.PI * 2) * 0.8, 1, i === 11); return oc.resume(); });
   } else if (name === "home-meadow") {
     // walking in from home's edge to the dancefloor and out again: the meadow's level each 0.1 s
     for (let k = 0; k <= 115; k++) { const sec = k * 0.1, L = Math.min(1, sec / 3, Math.max(0, (11.5 - sec) / 3)); void oc.suspend(Math.round(sec * rate) / rate).then(() => { s.meadow(L); return oc.resume(); }); }

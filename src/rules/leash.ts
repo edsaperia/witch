@@ -24,7 +24,7 @@ export interface Talk {
   total: number;
 }
 
-export type LeashEventKind = "invited" | "befriended" | "placed" | "picked" | "fizzled" | "cancelled" | "cycled" | /** a relic picked up, or put down by a legend (id: the relic) */ "relicPicked" | "relicPlaced";
+export type LeashEventKind = "invited" | "befriended" | "placed" | "picked" | "fizzled" | "cancelled" | "cycled" | /** a relic picked up, or put down by a legend (id: the relic) */ "relicPicked" | "relicPlaced" | /** her hat picked up and back on (rules/hat.ts; id: the witch) */ "hatPicked" | /** a quest sigil or a relic put down near a sleeping legend but outside its clearing, where it does nothing (id: the legend; x, z: its clearing's middle) */ "outsideCircle";
 export interface LeashEvent { kind: LeashEventKind; id: number; x: number; z: number; at: number }
 
 export interface LeashState {
@@ -48,8 +48,15 @@ export interface LeashState {
 
 export interface LeashControls {
   /** The sigil button was pressed this frame: on the ground, place the bottom sigil or pick one up;
-   *  in the treetops, cycle the stack (Ed, 2026-10-05: no cycle button of its own). */
+   *  in the treetops, cycle the stack (the gamepad's and touch's one button). */
   sigil: boolean;
+  /** Place (E, Ed 2026-10-06: "E for place, Q for cycle"): on the ground, place the bottom sigil or
+   *  pick one up; nothing in the treetops. */
+  place?: boolean;
+  /** Cycle (Q): the bottom sigil to the top, on the ground or in the treetops. */
+  cycle?: boolean;
+  /** The happy creature whose sigil rune is ready within r of (x, z), nearest first (states.leash "pickup"), or null. */
+  rune?: (x: number, z: number, r: number) => Creature | null;
   /** Debug: invite the nearest invitable creature, however far. */
   inviteNearest?: boolean;
   /** Whether she may talk this frame: always with auto-talk on (the default); with it off, only
@@ -94,15 +101,20 @@ function nearest(creatures: Creature[], x: number, z: number, within: number, le
 }
 
 /** Invite it: leashed to her, for good (#87), its sigil on the bottom of the stack (the 💌's second step: rules/invites.ts). */
-export function inviteCreature(s: LeashState, c: Creature, x: number, z: number, time: number): void {
+export function inviteCreature(s: LeashState, c: Creature, x: number, z: number, time: number, kind: "invited" | "picked" = "invited"): void {
   c.leashed = true; c.state = "leashed"; c.affection = undefined; c.dazed = false; c.dazedUntil = undefined;
   c.rest = 0;
   c.wanderTo = undefined; c.siege = undefined; c.fight = undefined;
-  c.friendly = undefined; c.guard = undefined; // (taking one from a friendly or guarded area weakens it: Ed's call)
+  c.friendly = undefined; // (taking one from a friendly area weakens it: Ed's call)
   // Invited, it's whole again (Ed, 2026-10-04), with a heal pop if it was hurt.
   if (c.hp !== undefined) { c.hp = undefined; c.healedAt = time; }
   s.stack.push(c.id);
-  s.events.push({ kind: "invited", id: c.id, x, z, at: time });
+  s.events.push({ kind, id: c.id, x, z, at: time });
+}
+
+/** A party legend let off her leash (its sigil put down, or her knocked out): happy again where it stands, dancing, its rune at its feet. */
+export function letPartyLegendGo(c: Creature): void {
+  c.leashed = false; c.state = undefined; c.dancing = true; c.anchorX = c.x; c.anchorZ = c.z; c.fight = undefined;
 }
 
 /** One step: talking, placing and picking up, and the leashed creatures moving. `onGround` is
@@ -160,21 +172,29 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   // can't cycle in ground mode"): in the treetops it cycles the stack, the bottom sigil (the one it
   // puts down next) to the top; on the ground it picks up a placed sigil she's over, else puts the
   // bottom one down. Sigils go down and come up only on the ground.
-  if (c.sigil && !onGround && s.stack.length > 1) {
+  // (Since 2026-10-06 the keyboard has a button for each: E places, Q cycles anywhere.)
+  if (((c.sigil && !onGround) || c.cycle) && s.stack.length > 1) {
     const id = s.stack.pop()!;
     s.stack.unshift(id);
     s.events.push({ kind: "cycled", id, x: witch.x, z: witch.z, at: time });
   }
-  if (c.sigil && onGround) {
+  if ((c.sigil || c.place) && onGround) {
     let pick = -1, pd = L.pickRadius;
     s.placed.forEach((p, i) => { const d = Math.hypot(p.x - witch.x, p.z - witch.z); if (d <= pd) { pd = d; pick = i; } });
+    // (Her own placed sigil first, then a happy creature's rune: Ed, 2026-10-06, the nearest; her hat before both, rules/game.ts.)
+    const rune = pick < 0 ? c.rune?.(witch.x, witch.z, L.pickRadius) ?? null : null;
     if (pick >= 0) {
       const [p] = s.placed.splice(pick, 1);
       s.stack.push(p.id);
       s.events.push({ kind: "picked", id: p.id, x: p.x, z: p.z, at: time });
+    } else if (rune) {
+      // A happy creature's rune (states.leash "pickup"): picked up like a placed sigil, it's leashed, at the bottom of her stack.
+      inviteCreature(s, rune, rune.x, rune.z, time, "picked");
     } else if (s.stack.length) {
       const id = s.stack[s.stack.length - 1];
-      if (blocked(s, witch.x, witch.z, t)) s.events.push({ kind: "fizzled", id, x: witch.x, z: witch.z, at: time });
+      // A party legend's (the Easter egg): put down, it's let go where it stands, dancing (its rune at its feet), and she's free.
+      if (byId(id).partyLegend) { s.stack.pop(); letPartyLegendGo(byId(id)); s.events.push({ kind: "placed", id, x: byId(id).x, z: byId(id).z, at: time }); }
+      else if (blocked(s, witch.x, witch.z, t)) s.events.push({ kind: "fizzled", id, x: witch.x, z: witch.z, at: time });
       else {
         s.stack.pop();
         s.placed.push({ id, x: witch.x, z: witch.z, at: time });
@@ -184,7 +204,7 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   }
 
   // (A party animal busy with a berry, or evolving, is moved by rules/berries.ts instead.)
-  for (const id of s.stack) if (!busy(id)) stepLeashed(byId(id), witch.x, witch.z, dt, t, t.leash.pace ?? 1);
+  for (const id of s.stack) if (!busy(id) && !byId(id).partyLegend) stepLeashed(byId(id), witch.x, witch.z, dt, t, t.leash.pace ?? 1); // (a party legend never comes to her: rules/partyLegend.ts)
   for (const p of s.placed) if (!busy(p.id)) stepLeashed(byId(p.id), p.x, p.z, dt, t);
 }
 

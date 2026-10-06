@@ -11,6 +11,7 @@
 import * as THREE from "three";
 import { LIGHT_UNIFORMS } from "./lighting";
 import { SPRITE_UNIFORMS } from "./sprites";
+import type { MoonState } from "../rules/moon";
 
 export interface SkyTuning { on: boolean; stars: number; moon: number }
 
@@ -23,9 +24,11 @@ const FRAG = /* glsl */ `
 uniform vec2 uRes;
 uniform vec3 uHazeColour, uMoon, uMoonDir;
 uniform float uTime;
-uniform vec4 uSky;     // stars, moon
+uniform vec4 uSky;     // stars, moon, the moon's size (times the old)
 uniform vec4 uCam;     // the camera's focus x, z; how far ahead the top of the screen looks (m); width there (m)
 uniform float uShow;   // 0 to 1, with the bend
+uniform vec4 uMoonAt;  // the moon (rules/moon.ts): x, y on the screen (fractions), its phase (0 new, 0.5 full), how much of it is lit
+uniform vec3 uMoonRgb; // its colour (plain, or a red, blue or gold moon)
 varying vec2 vNdc;
 float h21(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
 float vn(vec2 p) {
@@ -47,16 +50,27 @@ void main() {
   float star = (r > 1.0 - 0.004 * uSky.x ? 1.0 : 0.0) + (big > 1.0 - 0.0008 * uSky.x && mod(px.x, 2.0) + mod(px.y, 2.0) < 1.5 ? 0.8 : 0.0);
   vec3 tint = h21(sp + 13.0) > 0.85 ? vec3(1.0, 0.75, 0.6) : h21(sp + 29.0) > 0.85 ? vec3(0.65, 0.8, 1.0) : vec3(1.0);
   col += tint * star * tw * (0.35 + 0.65 * t) * 0.9;
-  // The moon, on the moonlight's side, high in the band: a pixel disc with dark seas and a halo.
-  vec2 mc = vec2(0.5 + uMoonDir.x * 0.55, 0.86) * uRes, md = px + 0.5 - mc;
-  float mr = max(4.0, uRes.y * 0.035), dm = length(md);
+  // The moon (rules/moon.ts), on its way across the sky band: a pixel disc with dark seas and a halo,
+  // in its phase (waxing lit from the right, waning from the left; the dark side a faint earthshine)
+  // and its colour. Below the far forest's line it is hidden behind it, so it rises and sets there.
+  vec2 mc = uMoonAt.xy * uRes, md = px + 0.5 - mc;
+  float mr = max(4.0, uRes.y * 0.035 * uSky.z), dm = length(md);
   if (uSky.y > 0.0) {
-    col += uMoon * 0.25 * uSky.y * exp(-max(0.0, dm - mr) / (mr * 1.6)); // the halo
+    col += uMoon * uMoonRgb * 0.27 * uSky.y * (0.25 + 0.75 * uMoonAt.w) * exp(-max(0.0, dm - mr) / (mr * 1.6)); // the halo, with how much is lit
     if (dm < mr) {
-      vec2 q = floor(md / max(1.0, mr / 7.0));
+      float cell = max(1.0, mr / 7.0);
+      vec2 q = floor(md / cell), n = (q + 0.5) * cell / mr; // the face in whole pixels of the moon's art
       float sea = vn(q * 0.6 + 3.0) > 0.62 ? 0.72 : 1.0;
-      float lit = 0.75 + 0.25 * clamp(dot(normalize(md + 1e-4), normalize(vec2(-uMoonDir.x, 0.6))), 0.0, 1.0);
-      col = mix(col, vec3(0.92, 0.94, 0.86) * sea * lit * uSky.y, 1.0);
+      float shade = 0.75 + 0.25 * clamp(dot(normalize(md + 1e-4), normalize(vec2(-uMoonDir.x, 0.6))), 0.0, 1.0);
+      float xt = cos(uMoonAt.z * 6.2832) * sqrt(max(0.0, 1.0 - n.y * n.y));
+      float lit = uMoonAt.z < 0.5 ? step(xt, n.x) : step(n.x, -xt);
+      // A thin crescent narrower than one of the art's pixels would break into dots: past new moon, the
+      // limb's outermost pixel in each row stays lit, so it reads as an unbroken sliver (Ed: the moon reads through the blur).
+      float rim = sqrt(max(0.0, 1.0 - n.y * n.y)), step1 = cell / mr;
+      float limb = uMoonAt.z < 0.5 ? step(rim, n.x + step1) : step(n.x - step1, -rim);
+      lit = max(lit, limb * step(abs(n.y), 0.92) * step(0.02, min(uMoonAt.z, 1.0 - uMoonAt.z)));
+      vec3 face = uMoonRgb * sea * shade * uSky.y;
+      col = mix(col * 0.4 + face * 0.07, face, lit); // the dark side: the sky dimmed behind it, a little earthshine
     }
   }
   gl_FragColor = vec4(col, 1.0);
@@ -69,14 +83,15 @@ export class Sky {
 
   private on: boolean;
 
-  constructor(T: SkyTuning) {
+  constructor(T: SkyTuning, disc = 1) {
     this.on = T.on;
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3)); // one triangle over the screen
     this.u = {
       uRes: SPRITE_UNIFORMS.uRes, uHazeColour: LIGHT_UNIFORMS.uHazeColour, uMoon: LIGHT_UNIFORMS.uMoon, uMoonDir: LIGHT_UNIFORMS.uMoonDir, uTime: LIGHT_UNIFORMS.uTime,
-      uSky: { value: new THREE.Vector4(T.stars, T.moon, 0, 0) },
+      uSky: { value: new THREE.Vector4(T.stars, T.moon, disc, 0) },
       uCam: { value: new THREE.Vector4() }, uShow: { value: 0 },
+      uMoonAt: { value: new THREE.Vector4(0.25, 0.86, 0.5, 1) }, uMoonRgb: { value: new THREE.Vector3(0.92, 0.94, 0.86) },
     };
     this.mesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: this.u, depthTest: true, depthFunc: THREE.LessEqualDepth, depthWrite: false }));
     this.mesh.frustumCulled = false;
@@ -86,8 +101,10 @@ export class Sky {
 
   /** bend: the world's bend now (none: no sky drawn); the camera's focus, how far ahead the top of
    *  the screen looks and how wide the view is there (metres), for the clouds' party glow. */
-  update(bend: number, x: number, z: number, ahead: number, width: number): void {
+  update(bend: number, x: number, z: number, ahead: number, width: number, moon: MoonState): void {
     this.mesh.visible = this.on && bend > 1e-6;
     (this.u.uCam.value as THREE.Vector4).set(x, z, ahead, width);
+    (this.u.uMoonAt.value as THREE.Vector4).set(moon.x, moon.y, moon.phase, moon.lit);
+    (this.u.uMoonRgb.value as THREE.Vector3).set(...moon.rgb);
   }
 }

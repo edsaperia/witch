@@ -17,12 +17,16 @@ export const SPRITE_UNIFORMS = {
   uRimInset: { value: 0 },
   /** How much of her own glow lights the witch (render/mood.ts; 0 none, as she was). */
   uWitchGlow: { value: 0 },
+  /** Her pool's light thrown up onto her, added (the mood's witchLift, or styledLift with ?style=bold|ref). */
+  uWitchLift: { value: 0 },
   uRight: { value: new THREE.Vector3(1, 0, 0) },
   uUp: { value: new THREE.Vector3(0, 1, 0) },
   uFacing: { value: new THREE.Vector3(0, 0, 1) },
   uTopFade: { value: 0 },
   // The hole in the canopy round the witch: her place on screen (pixels), radius and edge (pixels).
   uCutout: { value: new THREE.Vector4(0, 0, 0, 1) },
+  /** How much the hole goes by each crown's middle rather than each pixel (canopyCutout.whole): 1, whole crowns fade. */
+  uCutWhole: { value: 0 },
   // ?debug=cull: anything that has just appeared is tinted bright red.
   uDebugCull: { value: 0 },
   // The low-resolution picture's size in pixels: each sprite's base is snapped to its pixel grid.
@@ -66,6 +70,7 @@ uniform vec4 uOcc;
 uniform float uAbsolute; // its y is a world height, not a height over the ground
 uniform vec4 uCutout, uWitch;
 varying float vHole;   // crowns and cut trunks: the radius of the hole round her (pixels) for this tree
+varying float vCrownD; // and how far its crown's middle is from her on screen (pixels)
 varying float vOverHer; // over her on screen and nearer the camera: it could hide her
 attribute vec3 iPos;
 attribute vec2 iSize;
@@ -127,13 +132,14 @@ void main() {
   // The hole cut in the canopy round her (Ed, round 7: "the crown-hiding circle still has a very
   // sharp edge"): each tree's crown (and its cut trunk with it) has its own radius for it, a little
   // nearer or further than the next, so no line runs across the canopy, and fades over a wide band.
-  vHole = 1.0; vOverHer = 0.0;
+  vHole = 1.0; vOverHer = 0.0; vCrownD = 0.0;
   if (abs(iFlags.y) > 0.001) {
     vec4 c0 = clipOf(base), c1 = clipOf(base + uUp * iSize.y);
     vec2 s0 = (c0.xy / c0.w * 0.5 + 0.5) * uRes, s1 = (c1.xy / c1.w * 0.5 + 0.5) * uRes;
     // Its own radius for the hole (vHole here: in pixels), each tree a little nearer or further.
     float j = fract(sin(dot(floor(iPos.xz * 2.0), vec2(12.9898, 78.233))) * 43758.5453);
     vHole = uCutout.z * (0.8 + 0.4 * j);
+    vCrownD = length((s0 + s1) * 0.5 - uCutout.xy);
     // Whether it could hide her: over her sprite on screen and nearer the camera than her.
     float hh = abs(s1.y - s0.y) * 0.5 + 1.0, hw = hh * iSize.x / max(iSize.y, 0.01);
     vec2 cc = (s0 + s1) * 0.5;
@@ -162,7 +168,8 @@ varying float vGlow;
 varying float vSwayM; // metres its leafiest pixels move this frame (masked sprites)
 varying vec4 vFrame;  // its frame in the atlas (u0, v0, u1, v1), to keep the sway inside it
 varying float vFront;
-varying float vHole, vOverHer;
+varying float vHole, vOverHer, vCrownD;
+uniform float uCutWhole;
 varying vec2 vLocal;
 varying float vSizeY;
 uniform float uFind; // this batch: 1 for wild creatures (eyeshine, light floor, rim)
@@ -187,6 +194,14 @@ float bayer(vec2 p) {
   int i = x + y * 4;
   int m[16] = int[16](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
   return (float(m[i]) + 0.5) / 16.0;
+}
+// 4x4 clustered-dot ordered dither: as it fills, its pixels gather into dots round each cell's middle instead of
+// spreading out, so a half-faded trunk reads as clusters, not a one-pixel checker (the art director's round 3:
+// "a screen door at 1280x720").
+float cluster4(vec2 p) {
+  int x = int(mod(p.x, 4.0)), y = int(mod(p.y, 4.0));
+  int m[16] = int[16](12, 5, 6, 13, 4, 0, 1, 7, 11, 3, 2, 8, 15, 10, 9, 14);
+  return (float(m[x + y * 4]) + 0.5) / 16.0;
 }
 void shade() {
   // Swaying by its mask (#34): each pixel samples from where the wind has pushed the leaves; a
@@ -229,7 +244,10 @@ void shade() {
   // is drawn see-through in the second pass where it's over her, after her, like whatever stands
   // in front of her: in the opaque pass it hid her (Ed, v289: she showed only as her silhouette inside a crisp disc).
   // The hole: a wide soft band at this tree's own radius (vHole); the pass by the whole crown (vOverHer).
-  float hole = smoothstep(vHole - uCutout.w, vHole + uCutout.w * 0.35, length(gl_FragCoord.xy - uCutout.xy));
+  // Ed, 2026-10-06: "I still see concentric circles while moving through dense forests in ground mode": a fade by
+  // each pixel's distance drew the same circular gradient across every crown, lining up into rings; by each crown's
+  // middle (uCutWhole of the way), a crown fades much as a whole.
+  float hole = smoothstep(vHole - uCutout.w, vHole + uCutout.w * 0.35, mix(length(gl_FragCoord.xy - uCutout.xy), vCrownD, uCutWhole));
   float shown = 1.0;
   if (vFlags.y > 0.5) {
     shown = max(hole, uTopFade);
@@ -241,7 +259,7 @@ void shade() {
   float alpha = (uFadePass > 0.5 ? mix(1.0, uOcc.x, occl) : 1.0) * shown;
   if (vFlags.y < -0.001 && uTrunkFade.x > 0.0) {
     // A trunk cut from its crown (Ed, v149: "fade out instead of just stop"): where the crowns are
-    // hidden, its top fades out over uTrunkFade.x metres in an ordered dither on the art's own
+    // hidden, its top fades out over uTrunkFade.x metres in a clustered ordered dither on the art's own
     // pixel grid; where the crowns show, it stays whole under them. The fade covers at most
     // uTrunkFade.z of the trunk's visible height (Ed, v233: short tangly trees kept no trunk at
     // all), so every trunk keeps a solid base.
@@ -249,7 +267,7 @@ void shade() {
     float topY = 1.0 + vFlags.y, band = min(uTrunkFade.x / max(vSizeY, 0.01), topY * uTrunkFade.z);
     float t = clamp((topY - vLocal.y) / band, 0.0, 1.0);
     vec2 artPx = vec2(floor(vUv.x * float(textureSize(uAlbedo, 0).x)), floor(vLocal.y * vSizeY / uTrunkFade.y));
-    if (bayer(artPx) >= max(t, crown)) discard;
+    if (cluster4(artPx) >= max(t, crown)) discard;
   }
   // Eye glints, flowers and magic glow: the generator marks them with alpha 254.
   if (uDebugCull > 0.5 && vFlags.z > 0.5) { gl_FragColor = vec4(1.0, 0.0, 0.0, alpha); return; }
@@ -273,6 +291,9 @@ void shade() {
   vec3 N = normalize(uRight * nx - uUp * ny + uFacing * nz);
   if (uWitchLight.x > 0.5) { gl_FragColor = vec4(witchShade(a.rgb, N, uFacing, vWorld), alpha); return; }
   vec3 col = min(vec3(1.0), a.rgb * nightLight(N, vWorld) * 1.25);
+  // Scenery in her pool takes her light's own colour as the ground does (lighting.ts glowPool), so her light on green
+  // crowns from the treetops reads amber, not lime (the art director via golf, #237). Characters keep their colours.
+  if (uIsScenery > 0.5) col = glowPool(col, vWorld);
   // Trees' trunks (bottom halves cut from their crowns) stand in the canopy's shadow, where the
   // ambient and the moon barely reach: lit only by that they went black on black (Ed, v271: "We
   // have really lost our treetrunks"). Like wild creatures, they never drop below a share of
@@ -441,6 +462,12 @@ export class SpriteBatch {
   get dropped(): number {
     const max = (this.geo as unknown as { _maxInstanceCount?: number })._maxInstanceCount;
     return max === undefined || !this.mesh.visible ? 0 : Math.max(0, this.count - max);
+  }
+
+  /** Let go of its own buffers and material, leaving its atlas (shared) alone. */
+  release(): void {
+    this.geo.dispose();
+    for (const m of this.meshes) (m.material as THREE.Material).dispose();
   }
 
   dispose(): void {

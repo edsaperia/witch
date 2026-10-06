@@ -21,6 +21,8 @@ export class PartyObjectsView {
   private bounds = new Map<string, [number, number, number, number]>();
   /** The tree each hanging piece hangs in (by area and piece), found once. */
   private trees = new Map<string, { x: number; z: number } | null>();
+  /** Each area's fires (its campfires, bonfires and tiki torches, in its clusters and loose), for the smoke: x, z, size, ... */
+  private fireSpots = new Map<string, number[]>();
   /** Instances drawn this frame (for the debug overlay). */
   count = 0;
 
@@ -28,6 +30,31 @@ export class PartyObjectsView {
 
   /** Whether the art is in (the world's campfires are drawn here then, with the party campfire's frames). */
   get ready(): boolean { return !!this.assets.partyObjectArt(); }
+
+  /** The party's fires burning now (each partified area's campfires, bonfires and torches, once it has arrived), within `reach`
+   *  of (x, z), handed to `add` (x, z, size): found once per area from its dressing, so nothing is allocated a frame. */
+  fires(g: Game, time: number, x: number, z: number, reach: number, add: (x: number, z: number, size: number) => void): void {
+    const t = g.tuning;
+    if (!t.partyObjects.on) return;
+    const art = this.assets.partyObjectArt();
+    if (!art) return;
+    for (const [key, area] of g.party.areas) {
+      const site = g.map.siteOf(area.cell[0], area.cell[1]);
+      if (Math.abs(site.x - x) > reach + g.map.areaSize || Math.abs(site.z - z) > reach + g.map.areaSize) continue;
+      const from = area.at + t.party.transition * 0.7;
+      if (time < from + 1) continue;
+      let f = this.fireSpots.get(key);
+      if (!f) {
+        let d = this.dressings.get(key);
+        if (!d) { this.dressings.set(key, (d = dressingOf(g.map, area.cell, t))); this.bounds.set(key, boundsOf(d)); }
+        const out: number[] = [], id = (ref: string) => ref.replace(/^party:/, "").split(/[@~]/)[0];
+        for (const c of d.clusters) { const lay = art.layouts[c.id]; if (lay) for (const p of c.mirror ? lay.mirror : lay.plain) { const k = FIRE_SMOKE[id(p.ref)]; if (k && !excluded(p.ref, t)) out.push(c.x + p.dx, c.z + p.dz, k); } }
+        for (const p of d.loose) { const k = FIRE_SMOKE[id(p.ref)]; if (k && !excluded(p.ref, t)) out.push(p.x, p.z, k); }
+        this.fireSpots.set(key, (f = out));
+      }
+      for (let i = 0; i < f.length; i += 3) add(f[i], f[i + 1], f[i + 2]);
+    }
+  }
 
   /** `fires`: the world's campfires showing now (view.ts lights them): drawn as the party's small
    *  campfire, whose frames share one box and one scale (the old ones changed scale every frame).
@@ -120,6 +147,9 @@ export class PartyObjectsView {
   }
 }
 
+// How big each burning piece's smoke is (render/smoke.ts): a small campfire 1, a bonfire about 2, a tiki torch a wisp.
+const FIRE_SMOKE: Record<string, number> = { "campfire-small": 0.8, "campfire-logs": 1, "campfire-kettle": 1, bonfire: 2.2, "tiki-torch": 0.3 };
+
 const since = (time: number, from: number) => time - from;
 
 /** A dressing's bounds: its clusters (with room for their layouts) and pieces, and its hanging pieces' trees. */
@@ -132,8 +162,14 @@ function boundsOf(d: Dressing): [number, number, number, number] {
   return b;
 }
 
-/** A real light: campfires flicker; everything fades up as it appears. */
+const WARM = new THREE.Vector3();
+
+/** A real light: campfires flicker; everything fades up as it appears. In the spooky mood its colour goes decorWarm of the
+ *  way to the party's amber (the art director's round 4: an area's neon pieces lit its ground lime; the neon stays on the
+ *  bulbs, the pool on the ground stays warm). */
 function light(x: number, z: number, L: { rgb: number[]; radius: number; height: number }, time: number, age: number, M: Mood | null): ForestLight {
   const flick = 0.85 + 0.1 * Math.sin(time * 11 + x) + 0.05 * Math.sin(time * 23 + z);
-  return { x, y: L.height + 0.4, z, reach: L.radius * (M?.decorReach ?? 1), rgb: new THREE.Vector3(L.rgb[0] / 255, L.rgb[1] / 255, L.rgb[2] / 255), strength: 1.6 * (M?.decorStrength ?? 1) * flick * Math.min(1, Math.max(0, age) / 1.5) };
+  const rgb = new THREE.Vector3(L.rgb[0] / 255, L.rgb[1] / 255, L.rgb[2] / 255), w = M?.partyWarm?.[0];
+  if (M?.decorWarm && w) rgb.lerp(WARM.set(w[0], w[1], w[2]), M.decorWarm);
+  return { x, y: L.height + 0.4, z, reach: L.radius * (M?.decorReach ?? 1), rgb, strength: 1.6 * (M?.decorStrength ?? 1) * flick * Math.min(1, Math.max(0, age) / 1.5) };
 }

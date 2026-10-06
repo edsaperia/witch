@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import styleJson from "../../config/music-style.json";
-import { Conductor, barSeconds, legendNear, partyNear, planBlock, type MusicCue } from "./musicPlan";
+import { Conductor, barSeconds, bootLayers, legendNear, musicCue, partyNear, planBlock, type MusicCue } from "./musicPlan";
 import { newGame } from "./game";
 import { TUNING } from "./tuning";
 import { checkStyle, notesAt, type BlockPlan, type MusicStyle } from "./musicScore";
@@ -174,11 +174,11 @@ describe("music score", () => {
 
 describe("a woken area joining the party (partyNear)", () => {
   it("is heard near a standing soundsystem with happy animals by it, not near home's, a ruined one or one with none", () => {
-    const g = newGame(123, TUNING), c = g.creatures.find(c => !c.boss && c.cell.join(",") !== g.map.centreCell.join(","))!, key = c.cell.join(",");
+    const g = newGame(123, TUNING), c = g.creatures.find(c => c.boss && c.cell.join(",") !== g.map.centreCell.join(","))!, key = c.cell.join(",");
     g.combat.sounds.set(key, { hp: 100, max: 100, x: c.x, z: c.z, radius: 8 });
     g.witch.x = c.x + 10; g.witch.z = c.z;
     expect(partyNear(g, g.witch)).toBe(0); // nobody dancing yet
-    c.guard = true;
+    c.legendState = "happy"; // (its legend at peace)
     expect(partyNear(g, g.witch)).toBe(1);
     g.witch.x = c.x + (TUNING.music.nearDist + TUNING.music.farDist) / 2;
     expect(partyNear(g, g.witch)).toBeGreaterThan(0.2);
@@ -248,5 +248,51 @@ describe("an angry legend near (legendNear and the style's legend parts)", () =>
     const plan: BlockPlan = { section: "deep", start: 0, bars: 16, wave: 1, arc: 1 };
     const parts = (legend: number) => new Set(Array.from({ length: 32 }, (_, s) => notesAt(style, plan, null, s, { seed: 1, siege: 0, legend })).flat().map(e => e.part));
     for (const p of Object.keys(style.legend ?? {})) { expect(parts(0).has(p)).toBe(false); expect(parts(1).has(p)).toBe(true); }
+  });
+});
+
+describe("the music building with the home speakers' boot (Ed, 2026-10-06)", () => {
+  const intro: BlockPlan = { section: style.intro, start: 0, bars: 64, wave: 0, arc: 0 };
+  /** The parts heard over 4 bars of the intro with `k` of 12 speakers booted. */
+  const heard = (k: number) => {
+    const parts = new Set<string>();
+    for (let s = 0; s < 64; s++) for (const e of notesAt(style, intro, null, 16 * 8 + s, { seed: 7, siege: 0, build: k / 12 })) parts.add(e.part);
+    return parts;
+  };
+
+  it("is silent before the first speaker, then adds a layer a speaker until the twelfth makes it whole", () => {
+    expect(heard(0).size).toBe(0);
+    let last = 0;
+    for (let k = 1; k <= 12; k++) {
+      const n = heard(k).size;
+      expect(n, `${k} speakers`).toBe(k);
+      expect(n).toBeGreaterThan(last);
+      last = n;
+    }
+    // the whole intro, as it plays with no boot to follow
+    const whole = new Set<string>();
+    for (let s = 0; s < 64; s++) for (const e of notesAt(style, intro, null, 16 * 60 + s, { seed: 7, siege: 0 })) whole.add(e.part);
+    expect([...heard(12)].sort()).toEqual([...whole].sort());
+  });
+
+  it("brings each speaker's layer in on the bar line after it turns, and is whole without a boot to follow", () => {
+    expect(bootLayers({}, 3)).toBe(1);
+    const cue = { speakerBars: [2.4, 3, 5.9], speakers: 12 };
+    expect(bootLayers(cue, 2)).toBe(0);
+    expect(bootLayers(cue, 3)).toBeCloseTo(2 / 12); // (2.4 from bar 3; 3 on its own bar line)
+    expect(bootLayers(cue, 5)).toBeCloseTo(2 / 12);
+    expect(bootLayers(cue, 6)).toBeCloseTo(3 / 12);
+  });
+
+  it("follows the game's speakers: none booted, silent; each the pulse reaches, a layer", () => {
+    const g = newGame(123, TUNING);
+    g.speakerBoot = g.speakerBoot.map(() => null);
+    const cue0 = musicCue(g);
+    expect(bootLayers(cue0, 100)).toBe(0);
+    g.speakerBoot[0] = 0; g.speakerBoot[1] = 0.5;
+    const cue2 = musicCue(g);
+    expect(bootLayers(cue2, 100)).toBeCloseTo(2 / g.speakerBoot.length);
+    g.speakerBoot = g.speakerBoot.map(() => 0);
+    expect(bootLayers(musicCue(g), 100)).toBe(1);
   });
 });

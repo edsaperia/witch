@@ -3,7 +3,7 @@
 // to change her outfit!"). She stands in her treehouse room, big, hovering and standing, redrawn live
 // as you change her genome (art/witchGenome.js): a picker or a slider for every axis in WITCH_AXES,
 // grouped (hat, hair, outfit, broom, scarf and bags, and anything new the art builders add), a toggle per
-// accessory, and a rainbow picker per colour part. Randomise, the classic witch, Start. Her look is kept on
+// accessory, and a rainbow picker per colour part. Randomise, the classic witch, and the party spell's scroll to start (ui/spellScroll.ts). Her look is kept on
 // this browser (localStorage witch.genome) for next time. Round 2 (Ed, 2026-10-05: "the sliders ... should
 // go further, and the colours should have 256 rainbow colour pickers. scarf length, bag size, backpack ...
 // no hat, and some different hats"): the axes are wide, a hat picker with no hat first, and each colour a
@@ -12,6 +12,8 @@ import * as Art from "../../art/generator.js";
 import type { Style } from "../render/style";
 import { shade } from "../../art/lighting.js";
 import { LOOKS, lookGenome, pleasingWitch } from "./looks";
+import { keysDir, newWalker, spotAt, walk, type RoomFloor, type Walker } from "./roomWalk";
+import { SpellScroll, type SpellCue } from "./spellScroll";
 
 type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpackSize?: number; [k: string]: unknown };
 
@@ -43,11 +45,34 @@ export function slot(axis: string): [string | null, string] {
   for (const part of ["hat", "broom"]) if (axis.startsWith(part) && axis.length > part.length) return [part, axis[part.length].toLowerCase() + axis.slice(part.length + 1)];
   return [null, axis];
 }
-const groupOf = (axis: string) => axis.startsWith("hat") ? "Hat" : axis === "hair" ? "Hair" : axis === "top" || axis === "cloak" ? "Outfit" : axis.startsWith("broom") || axis === "bristles" ? "Broom" : axis === "scarfLength" || axis === "bagSize" || axis === "backpackSize" ? "Scarf and bags" : "More";
+/** The creator's boxes (Ed, 2026-10-06: "Each item in character creation should have its own menu box with its own colour
+ *  picker; only one menu box should be open at a time"): each item of hers with its sliders and pickers (`axes`), its
+ *  toggles (`wear`), and the colour parts its own picker colours (`parts`). An axis, accessory or colour part no box names
+ *  goes in the last ("Magic and more"), so a new one the art builders add shows up by itself. */
+export const BOXES: { id: string; name: string; axes: string[]; wear: string[]; parts: string[] }[] = [
+  { id: "hat", name: "🎩 Hat", axes: ["hatShape", "hatHeight", "hatBrim", "hatTilt", "hatBand"], wear: [], parts: ["hat", "plume"] },
+  { id: "hair", name: "💇 Hair", axes: ["hair"], wear: ["earrings"], parts: ["hair"] },
+  { id: "face", name: "🙂 Face", axes: [], wear: ["shades"], parts: ["skin"] },
+  { id: "outfit", name: "🧥 Outfit", axes: ["top", "cloak", "cloakLength"], wear: ["patches", "pendant"], parts: ["jacket", "cloak", "top", "jeans"] },
+  { id: "shoes", name: "👟 Shoes", axes: [], wear: ["chunky"], parts: ["sneakers"] },
+  { id: "broom", name: "🧹 Broom", axes: ["broom", "broomLength", "broomBend", "bristles"], wear: [], parts: ["broom", "bristles"] },
+  { id: "scarf", name: "🧣 Scarf", axes: ["scarfLength"], wear: ["scarf"], parts: ["scarf"] },
+  { id: "bag", name: "👜 Bag", axes: ["bagSize"], wear: ["satchel", "bumbag"], parts: ["satchel"] },
+  { id: "backpack", name: "🎒 Backpack", axes: ["backpackSize"], wear: [], parts: ["backpack"] },
+  { id: "phones", name: "🎧 Headphones", axes: [], wear: ["phones"], parts: ["headphones"] },
+  { id: "more", name: "✨ Magic and more", axes: ["familiar"], wear: ["lantern", "vial", "book", "glowsticks", "wristband"], parts: [] },
+];
+/** The box an axis, an accessory or a colour part is in (the last box for one none names). */
+export const boxOf = (kind: "axes" | "wear" | "parts", k: string): string => (BOXES.find(b => b[kind].includes(k)) ?? BOXES[BOXES.length - 1]).id;
 const label = (s: string) => s.replace(/([A-Z])/g, " $1").replace(/^hat |^broom /i, "").toLowerCase();
 /** What a choice is called on its button (its genome name otherwise). */
 const NAMES: Record<string, string> = { conical: "farmer's", boppers: "deely boppers", top: "top hat", party: "party hat", traffic: "traffic cone" };
-const optName = (axis: string, opt: string) => axis === "hatShape" ? (opt === "none" ? "no hat" : NAMES[opt] ?? opt) : opt;
+/** The broom kinds' names on their buttons (art/brooms.js). */
+const BROOM_NAMES: Record<string, string> = { curl: "curled tip", hobbyhorse: "hobby horse", jetbike: "jet bike", speeder: "speeder bike", drone: "quad drone" };
+const optName = (axis: string, opt: string) => axis === "hatShape" ? (opt === "none" ? "no hat" : NAMES[opt] ?? opt) : axis === "broom" ? BROOM_NAMES[opt] ?? opt : opt;
+/** What a toggle or a colour part is called in its box (its genome name otherwise). */
+const WEAR_NAMES: Record<string, string> = { phones: "wearing them", shades: "sunglasses", scarf: "wearing it", satchel: "satchel", bumbag: "bum bag", chunky: "chunky trainers", glowsticks: "glow sticks", vial: "potion vial", book: "spellbook", patches: "cloak patches" };
+const PART_NAMES: Record<string, string> = { jacket: "jacket", cloak: "cloak", top: "top", jeans: "jeans", hat: "hat", plume: "plume", broom: "handle / body", bristles: "bristles / trim" };
 /** The accessory a slider belongs to: moving it puts that on. */
 const WEARS: Record<string, string> = { scarfLength: "scarf", bagSize: "satchel" };
 /** A slider's labels at its ends, where 0 means none. */
@@ -82,10 +107,10 @@ function swatches(part: string): number[][] {
 }
 const css = ([h, s, v]: number[]) => { const [r, g, b] = (Art.hsv2rgb as (h: number, s: number, v: number) => number[])(h, s, v); return `rgb(${r | 0},${g | 0},${b | 0})`; };
 
-/** The creator's groups that are open, kept on this browser (localStorage witch.creator.open); at first, the looks, the hat and the colours. */
-const OPEN_KEY = "witch.creator.open";
-function openGroups(): Set<string> { try { const v = localStorage.getItem(OPEN_KEY); if (v) return new Set(JSON.parse(v) as string[]); } catch { /* storage blocked */ } return new Set(["Looks", "Hat", "Colours"]); }
-function saveOpenGroups(s: Set<string>): void { try { localStorage.setItem(OPEN_KEY, JSON.stringify([...s])); } catch { /* storage blocked: this run only */ } }
+/** The open box, kept on this browser (localStorage witch.creator.box); at first, the hat. "" for none. */
+const BOX_KEY = "witch.creator.box";
+function openBox(): string { try { const v = localStorage.getItem(BOX_KEY); if (v !== null) return v; } catch { /* storage blocked */ } return "hat"; }
+function saveOpenBox(id: string): void { try { localStorage.setItem(BOX_KEY, id); } catch { /* storage blocked: this run only */ } }
 
 /** The night round the treehouse, behind the room: deep blue in steps, stars, and the giant tree's leaves at the edges,
  *  painted small (one art pixel per pixel) and shown big. */
@@ -109,9 +134,23 @@ export class Creator {
   private room: Room | null = null;
   /** Her pose in the room: standing on the rug, or hovering over it on her broom. */
   private flying = false;
+  /** Walking about the room (Ed, 2026-10-06): the keys held, her place on the floor, the last frame's time. */
+  private held = new Set<string>();
+  private walker: Walker | null = null;
+  private lastT = 0;
+  /** A scratch canvas to hide her behind nearer things. */
+  private scratch = document.createElement("canvas");
+  /** The room's size (`?room=`: its floor across, in its units; art/bedroom.js ROOM.S otherwise). */
+  private roomS = Number(new URLSearchParams(location.search).get("room")) || undefined;
   private panel = document.createElement("div");
+  /** The tapestry holding the tabs and the panel. */
+  private sheet = document.createElement("div");
+  /** The tabs down its left edge, one per box. */
+  private tabs = document.createElement("div");
   private g: Genome;
   private frames: { hover: HTMLCanvasElement[]; stand: HTMLCanvasElement[] } = { hover: [], stand: [] };
+  /** Her walking frames, towards us and away (baked first of her idle poses). */
+  private runs: { towards: HTMLCanvasElement[]; away: HTMLCanvasElement[] } = { towards: [], away: [] };
   /** Her idle moments' frames (baked a moment after the last change, a pose a frame, so dragging a slider stays smooth). */
   private idle = new Map<string, HTMLCanvasElement[]>();
   private idleQueue: string[] = [];
@@ -132,17 +171,36 @@ export class Creator {
   private drawnAt = 0;
   private afterDraw = false;
   private drawGap = 0;
-  /** The colour part being picked. */
-  private part = "hat";
-  /** Called with her look when Start is pressed and the world is ready. */
+  /** The open box (one at a time), and each box's colour part being picked. */
+  private box = openBox();
+  private picking = new Map<string, string>();
+  /** The thing of hers she's standing by in the room ("" for none). */
+  private near = "";
+  /** Opens a box (closing the rest); "" closes them all. */
+  private boxes = new Map<string, () => void>();
+  openBox(id: string): void { if (!id || !this.boxes.has(id)) return; this.box = id; saveOpenBox(id); for (const f of this.boxes.values()) f(); this.panel.scrollTop = 0; }
+  /** The next tab down (1) or up (-1), round. */
+  stepTab(by: number): void { const ids = [...this.boxes.keys()], i = ids.indexOf(this.box); this.openBox(ids[((i < 0 ? 0 : i + by) % ids.length + ids.length) % ids.length]); }
+  /** Called with her look when the party spell bursts (the scroll cast and the world ready): play starts, the spell cast. */
   onStart: (g: Genome) => void = () => {};
-  /** Called on the Start click itself (a gesture: the sound can start). */
+  /** Called on the scroll's click itself (a gesture: the sound can start). */
   onGesture: () => void = () => {};
+  /** The party spell's scroll's sound cues (platform/audio/spell.ts). */
+  spellSound: (cue: SpellCue, v: number) => void = () => {};
+  /** The party spell (Ed, 2026-10-06): the scroll, bottom right; casting it starts the game (ui/spellScroll.ts). */
+  readonly scroll: SpellScroll;
+  /** A button of the rendering builder's or anyone's, under the panel's own (the bot game). */
+  addButton(text: string, onClick: () => void): HTMLButtonElement {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = text;
+    Object.assign(b.style, { font: "inherit", fontSize: "12px", color: "inherit", background: "rgba(255,255,255,.06)", border: "1px solid rgba(232,226,244,.3)", borderRadius: "6px", padding: "4px 10px", cursor: "pointer" });
+    b.addEventListener("click", e => { e.stopPropagation(); onClick(); });
+    this.extras.append(b);
+    return b;
+  }
+  private extras = document.createElement("div");
   /** The world building behind it (Ed: "the character creator also serves as a loading screen"):
    *  sets done of total, and whether play can start. */
   progress: () => { done: number; total: number; ready: boolean } = () => ({ done: 1, total: 1, ready: true });
-  private waiting = false;
-  private startBtn: HTMLButtonElement | null = null;
   private bar: HTMLElement | null = null;
   get open(): boolean { return this.root.style.display !== "none"; }
 
@@ -155,36 +213,51 @@ export class Creator {
     Object.assign(this.preview.style, { position: "absolute", imageRendering: "pixelated", cursor: "pointer" });
     this.preview.title = "click to fly or stand";
     this.preview.addEventListener("click", () => { this.flying = !this.flying; });
-    Object.assign(this.panel.style, { position: "absolute", right: "2%", top: "4%", bottom: "4%", width: "min(400px, 40%)", overflowY: "auto", background: "rgba(14,11,28,.82)", border: "1px solid rgba(232,226,244,.3)", borderRadius: "8px", padding: "10px 12px" });
-    this.root.append(this.night, this.preview, this.panel);
+    // the panel (Ed's sketch, 2026-10-06): a hanging tapestry down the left, its top and bottom edges scalloped, its boxes as tabs
+    // down its left edge (the strip) beside the open one (the panel's own content)
+    Object.assign(this.sheet.style, { position: "absolute", left: "2%", top: "3%", bottom: "5%", width: "min(440px, 38%)", display: "flex", zIndex: "1",
+      background: "linear-gradient(90deg, rgba(36,22,48,.96), rgba(28,17,40,.96) 60%, rgba(36,22,48,.96)), repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 2px, transparent 2px 4px)",
+      boxShadow: "inset 0 0 0 2px rgba(214,170,92,.55), inset 0 0 0 5px rgba(36,22,48,.96), inset 0 0 0 6px rgba(214,170,92,.3), 0 10px 30px rgba(0,0,0,.6)",
+      padding: "22px 0 22px 0", ...SCALLOPED });
+    Object.assign(this.tabs.style, { display: "flex", flexDirection: "column", gap: "4px", padding: "6px 0 6px 8px", flex: "0 0 auto" });
+    Object.assign(this.panel.style, { flex: "1 1 auto", overflowY: "auto", padding: "4px 14px 4px 10px", background: "rgba(14,9,22,.55)", borderLeft: "2px solid rgba(214,170,92,.55)", margin: "0 8px 0 0" });
+    this.sheet.append(this.tabs, this.panel);
+    this.root.append(this.night, this.preview, this.sheet);
+    // the game's title, top right (Ed, 2026-10-06: its working title)
+    const title = document.createElement("div");
+    title.textContent = "Coven Rush"; title.id = "creator-title";
+    Object.assign(title.style, { position: "absolute", right: "3%", top: "3%", zIndex: "3", pointerEvents: "none", font: "italic 700 clamp(30px, 5.2vw, 72px) Luminari, 'Uncial Antiqua', 'Papyrus', 'Palatino Linotype', Palatino, Georgia, serif",
+      letterSpacing: ".04em", background: "linear-gradient(180deg, #fff3c8 10%, #f2c46a 55%, #b57a2c 90%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent",
+      filter: "drop-shadow(0 0 10px rgba(255,190,90,.45)) drop-shadow(0 3px 0 rgba(40,20,10,.9))", transform: "rotate(-3deg)" });
+    this.root.append(title);
     document.body.append(this.root);
-    // While it's open, its keys are its own (Enter starts, R randomises); nothing reaches the game.
+    // the party spell's scroll, bottom right, and a row for anyone's extra buttons under the panel (the bot game)
+    Object.assign(this.extras.style, { position: "absolute", left: "calc(2% + 14px)", bottom: "calc(5% - 30px)", display: "flex", gap: "6px", zIndex: "3" });
+    this.root.append(this.extras);
+    this.scroll = new SpellScroll(this.root);
+    this.scroll.ready = () => this.progress().ready;
+    this.scroll.progress = () => { const pr = this.progress(); return pr.ready ? 1 : pr.total ? Math.min(.97, pr.done / pr.total) : 0; };
+    this.scroll.onCast = () => { saveGenome(this.g); this.onGesture(); };
+    this.scroll.onBurst = () => { this.hide(); this.onStart(this.genome()); };
+    this.scroll.sound = (cue, v) => this.spellSound(cue, v);
+    // While it's open, its keys are its own (Enter casts the party spell, R randomises, WASD or the arrows walk her about); nothing reaches the game.
     window.addEventListener("keydown", e => {
       if (!this.open) return;
       e.stopPropagation();
+      if (WALK_KEYS.has(e.code)) { e.preventDefault(); this.held.add(e.code); (document.activeElement as HTMLElement | null)?.blur?.(); return; } // (a slider keeps no arrow keys: they walk her)
       if ((e.target as HTMLElement)?.tagName === "INPUT" && e.code !== "Enter") return;
-      if (e.code === "Enter") { e.preventDefault(); this.start(); } else if (e.code === "KeyR") this.randomise();
+      if (e.code === "Enter") { e.preventDefault(); this.scroll.cast(); } else if (e.code === "KeyR") this.randomise();
+      else if (e.code === "KeyQ" || e.code === "PageUp") { e.preventDefault(); this.stepTab(-1); } else if (e.code === "KeyE" || e.code === "PageDown") { e.preventDefault(); this.stepTab(1); }
     }, { capture: true });
+    window.addEventListener("keyup", e => { if (!this.open) return; this.held.delete(e.code); if (WALK_KEYS.has(e.code)) e.stopPropagation(); }, { capture: true });
+    window.addEventListener("blur", () => this.held.clear());
     this.build();
   }
 
-  show(): void { this.root.style.display = "block"; this.dirty = true; if (!this.room) this.room = buildRoom(this.st); this.loop(); }
-  hide(): void { this.root.style.display = "none"; cancelAnimationFrame(this.raf); }
+  show(): void { this.root.style.display = "block"; this.dirty = true; if (!this.room) this.room = buildRoom(this.st, this.roomS); this.walker ??= newWalker(this.room.walk); this.loop(); this.scroll.start(); }
+  hide(): void { this.root.style.display = "none"; cancelAnimationFrame(this.raf); this.held.clear(); this.scroll.stop(); this.spellSound("hum", 0); }
   genome(): Genome { return clone(this.g); }
 
-  /** Start: straight into play if the world is ready, else "getting ready" on this scene until it is. */
-  private start(): void {
-    saveGenome(this.g);
-    this.onGesture();
-    this.waiting = true;
-    this.tryStart();
-  }
-  private tryStart(): void {
-    if (!this.waiting || !this.progress().ready) return;
-    this.waiting = false;
-    this.hide();
-    this.onStart(this.genome());
-  }
   private randomise(): void { this.g = upgrade(pleasingWitch(Math.floor(Math.random() * 1e9))); this.build(); this.dirty = true; } // a witch in a palette that goes together (ui/looks.ts)
   private look(id: string): void { this.g = upgrade(lookGenome(id)); this.build(); this.dirty = true; }
   /** Wild: every axis anywhere in its (wide) limits, every accessory a coin toss, every colour anywhere in the rainbows. */
@@ -202,31 +275,39 @@ export class Creator {
   }
   private classic(): void { this.g = upgrade(CLASSIC); this.build(); this.dirty = true; }
 
-  /** The controls, from the generator's axes (so a new axis shows up here by itself). */
+  /** The controls: a box for each item of hers (BOXES), one open at a time, each with its sliders and pickers (from the
+   *  generator's axes, so a new axis shows up by itself), its toggles and its own colour picker. */
   private build(): void {
     const P = this.panel, g = this.g;
-    P.innerHTML = "";
+    P.innerHTML = ""; this.tabs.innerHTML = "";
+    this.boxes.clear();
     const h = document.createElement("div");
-    h.innerHTML = `<div style="font-size:18px;margin-bottom:2px">✨ Your witch</div><div style="opacity:.7;margin-bottom:8px">The party's tonight! Dress her up while the forest grows, then fly. Start from a look, or 🎲. (Enter starts, R randomises; double-click a slider to put it back.)</div>`;
+    h.innerHTML = `<div style="font-size:18px;margin-bottom:2px;color:#f2c46a">✨ Your witch</div><div style="opacity:.7;margin-bottom:8px">The party's tonight! Dress her up while the forest grows. Walk her round her room (WASD) to her things, or pick a tab (Q and E step through them). When she's ready, the scroll is the party spell: click it, or Enter. (R randomises; double-click a slider to put it back.)</div>`;
     P.append(h);
     const row = (parent: HTMLElement, name: string) => { const r = document.createElement("div"); Object.assign(r.style, { display: "flex", alignItems: "center", gap: "6px", margin: "4px 0", flexWrap: "wrap" }); r.innerHTML = `<span style="width:78px;opacity:.85">${name}</span>`; parent.append(r); return r; };
-    // Each group folds away (its legend toggles it), the open ones kept on this browser; a first-time player sees the looks,
-    // the hat and the colours open, the rest folded, so the panel isn't a wall of sliders.
-    const groups = new Map<string, HTMLElement>(), open = openGroups();
-    const group = (name: string) => {
-      let el = groups.get(name);
-      if (!el) {
-        const fs = document.createElement("fieldset"), body = document.createElement("div"), lg = document.createElement("legend");
-        Object.assign(fs.style, { border: "1px solid rgba(232,226,244,.2)", borderRadius: "6px", margin: "0 0 8px", padding: "4px 8px 6px" });
-        Object.assign(lg.style, { padding: "0 4px", color: "var(--accent)", cursor: "pointer", userSelect: "none" });
-        const paint = () => { const on = open.has(name); lg.textContent = `${on ? "▾" : "▸"} ${name}`; body.style.display = on ? "block" : "none"; };
-        lg.addEventListener("click", () => { if (open.has(name)) open.delete(name); else open.add(name); saveOpenGroups(open); paint(); });
-        fs.append(lg, body); paint(); P.append(fs); groups.set(name, body); el = body;
-      }
-      return el;
+    // The boxes, as tabs down the tapestry's left edge (Ed, 2026-10-06: "The different things you can change ... can be tabs
+    // down the left side of the character creation pane"): its icon on the tab, its name as its tooltip and at the top of its
+    // page; only the open one's page shows, its tab joined to the page like a bookmark. The open one is kept on this browser.
+    const box = (id: string, name: string) => {
+      const fs = document.createElement("fieldset"), body = document.createElement("div"), lg = document.createElement("legend"), tab = document.createElement("button");
+      const [icon, ...words] = name.split(" ");
+      fs.dataset.box = id; tab.dataset.tab = id; tab.type = "button"; tab.textContent = icon; tab.title = words.join(" "); tab.setAttribute("aria-label", words.join(" "));
+      Object.assign(fs.style, { border: "1px solid rgba(214,170,92,.45)", borderRadius: "6px", margin: "0 0 6px", padding: "2px 8px 6px" });
+      Object.assign(lg.style, { padding: "0 4px", color: "#f2c46a", userSelect: "none" });
+      lg.textContent = name;
+      Object.assign(tab.style, { font: "inherit", fontSize: "18px", width: "38px", height: "34px", cursor: "pointer", border: "1px solid rgba(214,170,92,.45)", borderRight: "none", borderRadius: "8px 0 0 8px", padding: "0", position: "relative" });
+      const paint = () => {
+        const on = this.box === id;
+        fs.style.display = on ? "block" : "none";
+        Object.assign(tab.style, on ? { background: "rgba(14,9,22,.55)", marginRight: "-2px", filter: "none", boxShadow: "inset 3px 0 0 #f2c46a", zIndex: "2" } : { background: "rgba(255,255,255,.04)", marginRight: "0", filter: "grayscale(.5) brightness(.8)", boxShadow: "none", zIndex: "0" });
+      };
+      tab.addEventListener("click", () => this.openBox(id));
+      this.tabs.append(tab);
+      fs.append(lg, body); P.append(fs); this.boxes.set(id, paint); paint();
+      return body;
     };
     // Her looks to start from (ui/looks.ts)
-    const lk = row(group("Looks"), "");
+    const lk = row(box("looks", "👗 Looks"), "");
     lk.firstElementChild?.remove();
     for (const L of LOOKS) {
       const b = document.createElement("button");
@@ -237,54 +318,84 @@ export class Creator {
     }
     const get = (axis: string) => { const [part, key] = slot(axis); return part ? (g[part] as Record<string, unknown>)[key] : g[key]; };
     const set = (axis: string, v: unknown) => { const [part, key] = slot(axis); if (part) (g[part] as Record<string, unknown>)[key] = v; else g[key] = v; this.dirty = true; };
-    for (const [axis, lim] of Object.entries(AXES)) {
-      const r = row(group(groupOf(axis)), label(axis));
-      if (typeof lim[0] === "string") {
-        for (const opt of lim as string[]) {
-          const b = document.createElement("button");
-          b.type = "button"; b.textContent = optName(axis, opt);
-          const on = () => { const chosen = get(axis) === opt; b.style.background = chosen ? "var(--accent)" : "rgba(255,255,255,.08)"; b.style.color = chosen ? "#1d1408" : "inherit"; }; // (the HUD's one accent, lantern amber: #188, art review round 2)
-          Object.assign(b.style, { font: "inherit", color: "inherit", border: "1px solid rgba(232,226,244,.3)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" });
-          if (axis === "hatShape") b.dataset.hat = opt;
-          b.addEventListener("click", () => { set(axis, opt); if (axis === "hatShape") this.hatless(); r.querySelectorAll("button").forEach(x => { (x as HTMLElement).style.background = "rgba(255,255,255,.08)"; (x as HTMLElement).style.color = "inherit"; }); on(); });
-          on(); r.append(b);
-        }
-      } else {
-        const [a, z] = lim as [number, number], s = document.createElement("input");
-        s.type = "range"; s.min = String(a); s.max = String(z); s.step = String((z - a) / 200); s.value = String(get(axis) ?? a);
-        s.style.flex = "1"; s.style.accentColor = "var(--accent)"; s.dataset.axis = axis;
-        const wear = WEARS[axis];
-        const out = document.createElement("span");
-        Object.assign(out.style, { width: "38px", textAlign: "right", opacity: ".7" });
-        const show = () => { const v = +s.value; out.textContent = NONE_AT_ZERO.has(axis) && v === 0 ? "none" : axis === "hatTilt" || axis === "broomBend" ? (v > 0 ? "+" : "") + v.toFixed(2) : "×" + v.toFixed(2); };
-        show();
-        // a light snap to her classic value (so it's easy to get back to), and a double-click resets the slider to it
-        const home = Number((() => { const [part, key] = slot(axis); return part ? (CLASSIC[part] as Record<string, unknown>)[key] : CLASSIC[key]; })() ?? a);
-        s.title = "double-click: back to hers";
-        s.addEventListener("dblclick", () => { s.value = String(home); s.dispatchEvent(new Event("input")); });
-        s.addEventListener("input", () => { if (Math.abs(+s.value - home) < (z - a) * .02) s.value = String(home); show(); set(axis, +s.value); if (wear && !g.accessories[wear]) { g.accessories[wear] = true; const c = P.querySelector<HTMLInputElement>(`input[data-wear="${wear}"]`); if (c) c.checked = true; } });
-        r.append(s, out);
-      }
-    }
-    // Accessories: a toggle each.
-    const acc = group("Accessories"), ar = row(acc, "");
-    ar.firstElementChild?.remove();
-    for (const k of Object.keys({ ...CLASSIC.accessories, ...g.accessories })) {
-      if (k in AXES) continue; // a choice, not a toggle: its row is above
-      const l = document.createElement("label"), c = document.createElement("input");
-      c.type = "checkbox"; c.checked = !!g.accessories[k]; c.dataset.wear = k;
-      c.addEventListener("change", () => { g.accessories[k] = c.checked; this.dirty = true; });
-      Object.assign(l.style, { display: "inline-flex", alignItems: "center", gap: "3px", marginRight: "8px", cursor: "pointer" });
-      l.append(c, document.createTextNode(label(k)));
-      ar.append(l);
-    }
-    // Colours: a swatch per part (the one being picked ringed), then that part's 256-step strips: the rainbow, the shade
-    // (dark, full, pale) and grey; a few quick picks; and back to her classic colour.
-    const col = group("Colours"), tabs = row(col, "");
-    tabs.firstElementChild?.remove();
+    const accs = Object.keys({ ...CLASSIC.accessories, ...g.accessories }).filter(k => !(k in AXES)); // (a choice, like the familiar, is an axis)
     const pal = () => ({ ...classicPalette(this.style), ...g.palette }), cur = (part: string) => pal()[part] ?? [.07, .5, .45];
-    const picker = document.createElement("div");
-    col.append(picker);
+    for (const B of BOXES) {
+      const axes = Object.keys(AXES).filter(a => boxOf("axes", a) === B.id), wear = accs.filter(k => boxOf("wear", k) === B.id), parts = PARTS.filter(k => boxOf("parts", k) === B.id);
+      if (!axes.length && !wear.length && !parts.length) continue;
+      const body = box(B.id, B.name);
+      // its toggles first (what it is, worn or not), then its sliders and pickers
+      if (wear.length) {
+        const ar = row(body, "");
+        ar.firstElementChild?.remove();
+        for (const k of wear) {
+          const l = document.createElement("label"), c = document.createElement("input");
+          c.type = "checkbox"; c.checked = !!g.accessories[k]; c.dataset.wear = k;
+          c.addEventListener("change", () => { g.accessories[k] = c.checked; this.dirty = true; });
+          Object.assign(l.style, { display: "inline-flex", alignItems: "center", gap: "3px", marginRight: "8px", cursor: "pointer" });
+          l.append(c, document.createTextNode(WEAR_NAMES[k] ?? label(k)));
+          ar.append(l);
+        }
+      }
+      for (const axis of axes) this.axisRow(body, axis, row, get, set);
+      if (parts.length) this.picker(body, B.id, parts, row, pal, cur);
+    }
+    this.hatless();
+    if (!this.boxes.has(this.box)) this.openBox(this.boxes.keys().next().value ?? "");
+    // The buttons.
+    const bar = document.createElement("div");
+    Object.assign(bar.style, { display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "10px", position: "sticky", bottom: "0", background: "rgba(22,14,32,.97)", padding: "6px 0" });
+    bar.style.position = "sticky";
+    const btn = (text: string, f: () => void, main = false) => { const b = document.createElement("button"); b.type = "button"; b.textContent = text; Object.assign(b.style, { font: "inherit", fontSize: "14px", color: main ? "#1d1408" : "inherit", background: main ? "var(--accent)" : "rgba(255,255,255,.1)", border: "1px solid rgba(232,226,244,.4)", borderRadius: "6px", padding: "6px 12px", cursor: "pointer", flex: main ? "1 1 100%" : "1 1 auto" }); b.addEventListener("click", f); bar.append(b); return b; };
+    btn("🎲 Randomise", () => this.randomise());
+    btn("🌀 Wild", () => this.wild());
+    btn("Classic", () => this.classic());
+    // The forest growing behind the scene: a thin bar under the buttons.
+    const track = document.createElement("div");
+    Object.assign(track.style, { position: "absolute", left: "0", right: "0", bottom: "-2px", height: "3px", background: "rgba(255,255,255,.12)", borderRadius: "2px", overflow: "hidden" });
+    this.bar = document.createElement("div");
+    Object.assign(this.bar.style, { height: "100%", width: "0%", background: "linear-gradient(90deg,var(--accent-dim),var(--accent))" });
+    track.append(this.bar); bar.append(track);
+    P.append(bar);
+  }
+
+  /** An axis's row in its box: a button per choice, or a slider. */
+  private axisRow(body: HTMLElement, axis: string, row: (p: HTMLElement, n: string) => HTMLElement, get: (a: string) => unknown, set: (a: string, v: unknown) => void): void {
+    const g = this.g, lim = AXES[axis], r = row(body, label(axis));
+    if (typeof lim[0] === "string") {
+      for (const opt of lim as string[]) {
+        const b = document.createElement("button");
+        b.type = "button"; b.textContent = optName(axis, opt);
+        const on = () => { const chosen = get(axis) === opt; b.style.background = chosen ? "var(--accent)" : "rgba(255,255,255,.08)"; b.style.color = chosen ? "#1d1408" : "inherit"; }; // (the HUD's one accent, lantern amber: #188, art review round 2)
+        Object.assign(b.style, { font: "inherit", color: "inherit", border: "1px solid rgba(232,226,244,.3)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" });
+        if (axis === "hatShape") b.dataset.hat = opt;
+        b.addEventListener("click", () => { set(axis, opt); if (axis === "hatShape") this.hatless(); r.querySelectorAll("button").forEach(x => { (x as HTMLElement).style.background = "rgba(255,255,255,.08)"; (x as HTMLElement).style.color = "inherit"; }); on(); });
+        on(); r.append(b);
+      }
+      return;
+    }
+    const [a, z] = lim as [number, number], s = document.createElement("input");
+    s.type = "range"; s.min = String(a); s.max = String(z); s.step = String((z - a) / 200); s.value = String(get(axis) ?? a);
+    s.style.flex = "1"; s.style.accentColor = "var(--accent)"; s.dataset.axis = axis;
+    const wear = WEARS[axis], out = document.createElement("span");
+    Object.assign(out.style, { width: "38px", textAlign: "right", opacity: ".7" });
+    const show = () => { const v = +s.value; out.textContent = NONE_AT_ZERO.has(axis) && v === 0 ? "none" : axis === "hatTilt" || axis === "broomBend" ? (v > 0 ? "+" : "") + v.toFixed(2) : "×" + v.toFixed(2); };
+    show();
+    // a light snap to her classic value (so it's easy to get back to), and a double-click resets the slider to it
+    const home = Number((() => { const [part, key] = slot(axis); return part ? (CLASSIC[part] as Record<string, unknown>)[key] : CLASSIC[key]; })() ?? a);
+    s.title = "double-click: back to hers";
+    s.addEventListener("dblclick", () => { s.value = String(home); s.dispatchEvent(new Event("input")); });
+    s.addEventListener("input", () => { if (Math.abs(+s.value - home) < (z - a) * .02) s.value = String(home); show(); set(axis, +s.value); if (wear && !g.accessories[wear]) { g.accessories[wear] = true; const c = this.panel.querySelector<HTMLInputElement>(`input[data-wear="${wear}"]`); if (c) c.checked = true; } });
+    r.append(s, out);
+  }
+
+  /** A box's own colour picker: a swatch per part it colours (the one being picked ringed; one part, no swatches), then that
+   *  part's 256-step strips (the rainbow, the shade: dark, full, pale; and grey), a few quick picks, and back to her classic. */
+  private picker(body: HTMLElement, id: string, parts: string[], row: (p: HTMLElement, n: string) => HTMLElement, pal: () => Record<string, number[]>, cur: (part: string) => number[]): void {
+    const g = this.g, tabs = row(body, "colour"), picker = document.createElement("div");
+    picker.dataset.picker = id;
+    if (!parts.includes(this.picking.get(id) ?? "")) this.picking.set(id, parts[0]);
+    body.append(picker);
     const strip = (kind: "hue" | "shade" | "grey") => {
       const c = document.createElement("canvas");
       c.width = STEPS; c.height = 1; c.dataset.strip = kind;
@@ -292,12 +403,9 @@ export class Creator {
       return c;
     };
     const showPart = () => {
-      const part = this.part;
-      tabs.querySelectorAll<HTMLElement>("button").forEach(b => { b.style.outline = b.dataset.part === part ? "2px solid #fff" : "none"; b.style.background = css(cur(b.dataset.part!)); });
+      const part = this.picking.get(id)!;
+      tabs.querySelectorAll<HTMLElement>("button").forEach(b => { b.style.outline = b.dataset.part === part && parts.length > 1 ? "2px solid #fff" : "none"; b.style.background = css(cur(b.dataset.part!)); });
       picker.innerHTML = "";
-      const title = document.createElement("div");
-      title.style.margin = "2px 0"; title.textContent = label(part);
-      picker.append(title);
       const [hi, si, gi] = toPicker(cur(part)), at = { hue: hi, shade: si, grey: gi };
       const strips = { hue: strip("hue"), shade: strip("shade"), grey: strip("grey") };
       const paint = () => {
@@ -336,32 +444,16 @@ export class Creator {
       for (const sw of swatches(part)) quick(sw);
       quick([], "classic");
     };
-    for (const part of PARTS) {
+    for (const part of parts) {
       const b = document.createElement("button");
       b.type = "button"; b.title = label(part); b.dataset.part = part;
-      Object.assign(b.style, { width: "20px", height: "20px", padding: "0", border: "1px solid rgba(0,0,0,.6)", borderRadius: "4px", cursor: "pointer" });
-      b.addEventListener("click", () => { this.part = part; showPart(); });
+      Object.assign(b.style, { height: "20px", padding: "0 6px", font: "inherit", fontSize: "11px", color: "#fff", textShadow: "0 0 2px #000, 0 0 2px #000", border: "1px solid rgba(0,0,0,.6)", borderRadius: "4px", cursor: "pointer" });
+      b.textContent = parts.length > 1 ? PART_NAMES[part] ?? label(part) : "";
+      if (parts.length === 1) b.style.width = "20px";
+      b.addEventListener("click", () => { this.picking.set(id, part); showPart(); });
       tabs.append(b);
     }
     showPart();
-    this.hatless();
-    // The buttons.
-    const bar = document.createElement("div");
-    Object.assign(bar.style, { display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "10px", position: "sticky", bottom: "0", background: "rgba(14,11,28,.95)", padding: "6px 0" });
-    bar.style.position = "sticky";
-    const btn = (text: string, f: () => void, main = false) => { const b = document.createElement("button"); b.type = "button"; b.textContent = text; Object.assign(b.style, { font: "inherit", fontSize: "14px", color: main ? "#1d1408" : "inherit", background: main ? "var(--accent)" : "rgba(255,255,255,.1)", border: "1px solid rgba(232,226,244,.4)", borderRadius: "6px", padding: "6px 12px", cursor: "pointer", flex: main ? "1 1 100%" : "1 1 auto" }); b.addEventListener("click", f); bar.append(b); return b; };
-    btn("🎲 Randomise", () => this.randomise());
-    btn("🌀 Wild", () => this.wild());
-    btn("Classic", () => this.classic());
-    this.startBtn = btn("Start ▶", () => this.start(), true);
-    this.startBtn.id = "creator-start";
-    // The forest growing behind the scene: a thin bar under the buttons.
-    const track = document.createElement("div");
-    Object.assign(track.style, { position: "absolute", left: "0", right: "0", bottom: "-2px", height: "3px", background: "rgba(255,255,255,.12)", borderRadius: "2px", overflow: "hidden" });
-    this.bar = document.createElement("div");
-    Object.assign(this.bar.style, { height: "100%", width: "0%", background: "linear-gradient(90deg,var(--accent-dim),var(--accent))" });
-    track.append(this.bar); bar.append(track);
-    P.append(bar);
   }
 
   /** Her frames in the current look, lit by the room's lights where she stands: hovering (3) and standing (on foot). */
@@ -386,14 +478,17 @@ export class Creator {
     // her idle moments, baked shortly (each pose in its own frame), and the one playing stopped: it was the old look
     if (this.frames.stand.length && this.drawn) this.showOff = true; // (not the first drawing: a change to show off)
     this.drawn = true;
-    this.bakeFrame = bake; this.idle.clear(); this.idleQueue = IDLES.map(i => i.pose).filter((p, i, a) => a.indexOf(p) === i && p !== "stand"); this.idleAt = performance.now() / 1000 + .35;
+    this.bakeFrame = bake; this.idle.clear(); this.runs = { towards: [], away: [] };
+    this.idleQueue = ["run:towards", "run:away", ...IDLES.map(i => i.pose).filter((p, i, a) => a.indexOf(p) === i && p !== "stand")]; this.idleAt = performance.now() / 1000 + .35;
     if (this.act && this.act.pose !== "stand") this.act = null;
   }
   /** Bakes one queued idle pose, once the look has been still a moment. */
   private bakeIdle(t: number): void {
     if (!this.idleQueue.length || t < this.idleAt || !this.bakeFrame) return;
-    const pose = this.idleQueue.shift()!, n = (Art.WITCH_FOOT_POSES as Record<string, { frames: number }>)[pose]?.frames ?? 0;
-    if (n) this.idle.set(pose, Array.from({ length: n }, (_, frame) => this.bakeFrame!({ pose, frame })));
+    const [pose, facing] = this.idleQueue.shift()!.split(":"), n = (Art.WITCH_FOOT_POSES as Record<string, { frames: number }>)[pose]?.frames ?? 0;
+    if (!n) return;
+    if (facing) this.runs[facing as "towards" | "away"] = Array.from({ length: n }, (_, frame) => this.bakeFrame!({ pose, frame, facing }));
+    else this.idle.set(pose, Array.from({ length: n }, (_, frame) => this.bakeFrame!({ pose, frame })));
   }
   /** Her idle life on the rug (the overnight brief: "small idle animations for the witch"): now and then a moment from
    *  IDLES; after a change, a spin to show it off. Returns the frame to draw and whether it's turned round. */
@@ -418,20 +513,25 @@ export class Creator {
     this.raf = requestAnimationFrame(this.loop);
     const changed = this.dirty;
     if (this.dirty) { this.dirty = false; this.redraw(); }
-    // The world building behind: its progress on the bar and the Start button; once ready, a waiting Start goes.
+    // The world building behind: its progress on the bar (and the scroll's caption: ui/spellScroll.ts).
     const pr = this.progress(), built = pr.total ? pr.done / pr.total : 1;
     if (pr.ready && !this.readyAt) this.readyAt = performance.now() / 1000;
     if (this.bar) this.bar.style.width = `${Math.round((pr.ready ? 1 : Math.min(.97, built)) * 100)}%`;
-    if (this.startBtn) {
-      const want = this.waiting && !pr.ready ? `getting ready… ${Math.round(built * 100)}%` : pr.ready ? "Start ▶" : `Start ▶ · the forest ${Math.round(built * 100)}%`;
-      if (this.startBtn.textContent !== want) this.startBtn.textContent = want;
-    }
-    this.tryStart();
     const room = this.room;
     if (!room) return;
     const ms = performance.now();
+    // walking: moved by the time since the last frame (so a slow machine's seldom drawing still walks her at her speed)
+    const w = this.walker ??= newWalker(room.walk), dt = this.lastT ? Math.min(.1, ms / 1000 - this.lastT) : 0, [kx, ky] = keysDir(this.held);
+    this.lastT = ms / 1000;
+    walk(w, room.walk, kx, ky, dt);
+    if (w.moving) {
+      this.act = null; this.nextAct = ms / 1000 + 3;
+      // walking up to a thing of hers opens its box (the hats, the rail, the mirror, the broom...)
+      const at = spotAt(room.walk, w);
+      if (at !== this.near) { this.near = at; if (at && at !== this.box) this.openBox(at); }
+    }
     if (this.afterDraw) { this.drawGap = this.drawGap ? this.drawGap * .7 + (ms - this.drawnAt) * .3 : ms - this.drawnAt; this.afterDraw = false; }
-    if (!pr.ready && !changed && this.drawGap > SLOW_FRAME && ms - this.drawnAt < SLOW_DRAW) return;
+    if (!pr.ready && !changed && this.drawGap > SLOW_FRAME && ms - this.drawnAt < (w.moving ? SLOW_WALK : SLOW_DRAW)) return;
     this.drawnAt = ms; this.afterDraw = !changed; // (a redraw's own frame is slow anywhere: not counted)
     const t = ms / 1000, c = this.preview, W = room.lit.width, H = room.lit.height;
     this.place(W, H);
@@ -447,22 +547,52 @@ export class Creator {
     const queued = this.idleQueue.length;
     this.bakeIdle(t);
     if (this.idleQueue.length !== queued) this.afterDraw = false; // (nor a pose's bake)
-    // her: on the rug in a pool of light (the art director: "she's the brightest figure and the rug frames her"), standing,
-    // or hovering over it, bobbing
-    const now = this.flying ? { fr: this.frames.hover[Math.floor(t * 6) % 3], flip: false } : this.standing(t), fr = now.fr;
+    // her: in a pool of light (the art director: "she's the brightest figure and the rug frames her"), standing, walking about
+    // the room, or hovering on her broom, bobbing; hidden behind whatever in the room stands nearer the view
+    const run = this.runs[w.away ? "away" : "towards"];
+    const now = this.flying ? { fr: this.frames.hover[Math.floor(t * 6) % 3], flip: w.flip }
+      : w.moving && run.length ? { fr: run[Math.floor(t * 10) % run.length], flip: w.flip }
+      : (() => { const s = this.standing(t); return { fr: s.fr, flip: s.flip !== w.flip }; })(), fr = now.fr;
     if (!fr) return;
-    const [sx, sy] = room.a.stand, bob = this.flying ? Math.round(Math.sin(t * 2) * 1.5) - 6 : 0;
-    pool(x, sx, sy, fr.width);
+    const feet = [w.x, 0, w.z], [sx, sy] = room.walk.project(feet), feetT = room.walk.depthOf(feet), bob = this.flying ? Math.round(Math.sin(t * 2) * 1.5) - 6 : 0;
+    const pw = this.frames.stand[0]?.width ?? fr.width; // (her pool as wide as she stands, whatever she's doing)
+    this.behind(x, room, Math.round(sx - pw * 1.2), Math.round(sy) - Math.ceil(pw * .6), Math.ceil(pw * 2.4), Math.ceil(pw * 1.2), sy, feetT, true, c => pool(c, pw * 1.2, pw * .6, pw), "lighter");
     const fx = Math.round(sx - fr.width / 2), fy = Math.round(sy - fr.height + bob);
     if (this.flying) { x.fillStyle = "rgba(0,0,0,.35)"; x.fillRect(Math.round(sx - fr.width * .25), Math.round(sy) - 1, Math.round(fr.width * .5), 2); }
-    if (now.flip) { x.save(); x.translate(fx + fr.width, fy); x.scale(-1, 1); x.drawImage(fr, 0, 0); x.restore(); } else x.drawImage(fr, fx, fy);
+    this.behind(x, room, fx, fy, fr.width, fr.height, sy, feetT, false, c => { if (now.flip) { c.translate(fr.width, 0); c.scale(-1, 1); } c.drawImage(fr, 0, 0); });
   };
 
-  /** The room, as big as fits beside the panel at a whole number of screen pixels to its art pixel; the night behind. */
+  /** Draws something of hers (by `paint`, into a w × h box at ox, oy on the room) with every pixel the room has nearer the view
+   *  taken out: she's an upright card at her feet (feetY on the room's picture, feetT their depth), each row of her that much
+   *  higher and nearer; `flat`, it lies on the floor at her feet (her pool of light). */
+  private behind(x: CanvasRenderingContext2D, room: Room, ox: number, oy: number, w: number, h: number, feetY: number, feetT: number, flat: boolean, paint: (c: CanvasRenderingContext2D) => void, op: GlobalCompositeOperation = "source-over"): void {
+    const c = this.scratch;
+    if (c.width < w || c.height < h) { c.width = Math.max(c.width, w); c.height = Math.max(c.height, h); }
+    const k = c.getContext("2d", { willReadFrequently: true })!;
+    k.setTransform(1, 0, 0, 1, 0, 0); k.clearRect(0, 0, c.width, c.height); k.imageSmoothingEnabled = false;
+    k.save(); paint(k); k.restore();
+    const img = k.getImageData(0, 0, w, h), d = img.data, D = room.walk.depth, RW = room.lit.width, RH = room.lit.height;
+    const up = Math.sin(room.walk.pitch) / (room.walk.s * Math.cos(room.walk.pitch)); // (a pixel higher on her: this much nearer)
+    for (let j = 0; j < h; j++) {
+      const ry = oy + j, me = flat ? feetT : feetT - Math.max(0, feetY - ry) * up;
+      for (let i = 0; i < w; i++) {
+        const a = (j * w + i) * 4 + 3;
+        if (!d[a]) continue;
+        const rx = ox + i;
+        if (rx < 0 || ry < 0 || rx >= RW || ry >= RH) continue;
+        const z = D[ry * RW + rx];
+        if (z < me - OCCLUDE || (flat && z === Infinity)) d[a] = 0; // (her light only on the room, never on the night past its edge)
+      }
+    }
+    k.putImageData(img, 0, 0);
+    x.save(); x.globalCompositeOperation = op; x.drawImage(c, 0, 0, w, h, ox, oy, w, h); x.restore();
+  }
+
+  /** The room, as big as fits right of the panel at a whole number of screen pixels to its art pixel; the night behind. */
   private place(W: number, H: number): void {
-    const dpr = window.devicePixelRatio || 1, vw = window.innerWidth, vh = window.innerHeight, pw = this.panel.getBoundingClientRect().width;
-    const room = Math.max(1, vw - pw - vw * .04), k = Math.max(1, Math.floor(Math.min(room * dpr / W, vh * .96 * dpr / H)));
-    const cw = W * k / dpr, ch = H * k / dpr, left = Math.max(0, (room - cw) / 2), top = Math.max(0, (vh - ch) / 2);
+    const dpr = window.devicePixelRatio || 1, vw = window.innerWidth, vh = window.innerHeight, sr = this.sheet.getBoundingClientRect().right, x0 = Math.max(0, sr - vw * .03); // (over the tapestry's edge a little, as Ed's sketch)
+    const room = Math.max(1, vw - x0), k = Math.max(1, Math.floor(Math.min(room * dpr / W, vh * .96 * dpr / H)));
+    const cw = W * k / dpr, ch = H * k / dpr, left = x0 + Math.max(0, (room - cw) / 2), top = Math.max(0, (vh - ch) / 2);
     const css = { width: `${cw}px`, height: `${ch}px`, left: `${left}px`, top: `${top}px` };
     if (this.preview.style.width !== css.width || this.preview.style.left !== css.left || this.preview.style.top !== css.top) {
       Object.assign(this.preview.style, css);
@@ -471,8 +601,17 @@ export class Creator {
   }
 }
 
-/** A frame this slow after drawing the room (ms) means the machine is struggling; it's then drawn this seldom (ms) until ready. */
-const SLOW_FRAME = 120, SLOW_DRAW = 600;
+/** The tapestry's scalloped top and bottom edges, as a mask. */
+const SCALLOP = "radial-gradient(11px at 50% 0, #0000 97%, #000) 50% 0 / 22px 51% repeat-x, radial-gradient(11px at 50% 100%, #0000 97%, #000) 50% 100% / 22px 51% repeat-x";
+const SCALLOPED = { WebkitMask: SCALLOP, mask: SCALLOP } as unknown as Partial<CSSStyleDeclaration>;
+/** A frame this slow after drawing the room (ms) means the machine is struggling; it's then drawn this seldom (ms) until ready
+ *  (and this seldom while she walks). */
+const SLOW_FRAME = 120, SLOW_DRAW = 600, SLOW_WALK = 120;
+/** The keys that walk her about the room (the game's own). */
+const WALK_KEYS = new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
+/** How much nearer (in the room's units along the view) a pixel of the room must be to hide her: the floor's clutter, a rug or
+ *  a dropped top, never does. */
+const OCCLUDE = .09;
 
 type RoomAnchors = { letters: [string, [number, number], number][]; stand: [number, number]; runes: [number, number][]; flames: [number, number][]; fairy: [number, number][]; screen: [number, number]; lantern: [number, number]; potions: [number, number]; decks: [number, number] };
 type Light = { x: number; y: number; z: number; R: number; rgb: number[]; power: number };
@@ -490,9 +629,10 @@ const GLOWS: { mat: number; pulse: (t: number) => number }[] = [
   { mat: Art.M.MAGIC2, pulse: t => Math.sin(t * 4) > 0 ? .1 : .4 },                                      // and their other half
 ];
 /** Bakes and lights the room once: its picture, a layer per glowing material, its anchors and its lights. */
-type Room = { lit: HTMLCanvasElement; banner: HTMLCanvasElement; glows: { mat: number; c: HTMLCanvasElement }[]; a: RoomAnchors; lights: Light[] };
-function buildRoom(st: Style): Room {
-  const sp = (Art.bedroomSprite as unknown as (st: Style) => { w: number; h: number; m: Uint8Array; anchors: RoomAnchors })(st);
+type Walkable = RoomFloor & { depth: Float32Array; depthOf: (p: number[]) => number; pitch: number; s: number };
+type Room = { lit: HTMLCanvasElement; banner: HTMLCanvasElement; glows: { mat: number; c: HTMLCanvasElement }[]; a: RoomAnchors; lights: Light[]; walk: Walkable };
+function buildRoom(st: Style, S?: number): Room {
+  const sp = (Art.bedroomSprite as unknown as (st: Style, o: { S?: number }) => { w: number; h: number; m: Uint8Array; anchors: RoomAnchors; scale: number; walk: Omit<Walkable, "s"> })(st, { S });
   const colours = (Art.bedroomColours as (st: Style) => Record<number, number[]>)(st);
   const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown) => { A: HTMLCanvasElement; N: HTMLCanvasElement; w: number; h: number })(sp, colours, { ...st, styleInterior: false } as unknown as Style, (st as unknown as { cOutline: unknown }).cOutline); // (ref: its outline, not its interior lines, which turn the clutter to noise)
   const a = sp.anchors, warm = [255, 176, 92], light = (p: [number, number], R: number, rgb: number[], power: number, z = 10): Light => ({ x: p[0], y: p[1], z, R, rgb, power });
@@ -528,7 +668,7 @@ function buildRoom(st: Style): Room {
     x.putImageData(img, 0, 0);
     return { mat, c };
   });
-  return { lit, banner, glows, a, lights };
+  return { lit, banner, glows, a, lights, walk: { ...sp.walk, s: sp.scale } };
 }
 /** Her idle moments: a pose from the witch's on-foot poses, its speed, how many times through, turned round or not. */
 const IDLES: { pose: string; fps: number; loops: number; flip?: boolean }[] = [

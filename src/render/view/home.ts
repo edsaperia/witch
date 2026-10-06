@@ -2,20 +2,26 @@
 // numbers, the dancefloor's ring of speakers, and the treehouse stood on its spot.
 import * as Art from "../../../art/generator.js";
 import * as THREE from "three";
+import { LIGHT_UNIFORMS } from "../lighting";
 import { AREA_TYPES } from "../../rules/map";
-import { type Beacon, type Laser, MARKER_LEVELS, type Mote, type RingSymbol } from "../markers";
+import { type Beacon, type Laser, MARKER_LEVELS, type Mote } from "../markers";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
 import type { WaveNumber } from "../waveNumbers";
 import { beatTime } from "../../rules/beat";
 import { canopyShown } from "../../rules/witch";
-import { cellKey, spawnMarkers, speakersOn, symbolCount, waveCountdown, wavePlan } from "../../rules/party";
-import { hash2 } from "../../rules/random";
+import { cellKey, spawnMarkers, waveCountdown, wavePlan } from "../../rules/party";
+import { leyKey } from "../../rules/leylines";
+import { columnShown, leyReachTimes } from "../../rules/leypulse";
+import { speakerBoot } from "../../rules/game";
 import type { ForestLight, View } from "../view";
 import { inView, overBulge } from "./culling";
 import { mark } from "./pops";
 
 /** The wave numbers' colour over areas the party has reached (spent). */
 const SPENT = new THREE.Vector3(0.7, 0.7, 0.8);
+
+/** A 💌's sparkle as it vanishes at a slowed circle's edge: pink-white. */
+const SPARKLE_RGB = new THREE.Vector3(1, 0.75, 0.9);
 
 /** The spawn markers (rune stones where soundsystems will come): their sprites, beacons and
  *  motes; returns the lights of the nearest. */
@@ -24,7 +30,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   if (mc.wave !== g.party.wave || mc.n !== g.party.areas.size) { mc.wave = g.party.wave; mc.n = g.party.areas.size; mc.list = spawnMarkers(g.party, g.map); }
   const cd = waveCountdown(g.party, g.map, time), build = g.party.paused ? 0 : cd.gone;
   const phase = (beatTime(g.beat, time) * t.beat.bpm) / 60, beat = Math.pow(0.5 + 0.5 * Math.cos(phase * Math.PI * 2), 2); // 1 on the beat
-  const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes: Mote[] = [], lasers: Laser[] = [], symbols: RingSymbol[] = [];
+  const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes: Mote[] = [], lasers: Laser[] = [];
   const style = R.awakeStyle, column = style !== "beam", laser = style !== "column";
   const scale = R.scale;
   const stone = (x: number, z: number, species: string, level: number, y = 0) => {
@@ -34,6 +40,11 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     return true;
   };
   const near: { d: number; l: ForestLight }[] = [];
+  // Ed (2026-10-06): "The column of light above a runestone first appears when the leyline meets it": when the line's
+  // tip reaches each stone (rules/leypulse.ts, the line's own reveal), worked out again when the line changes.
+  const rk = `${leyKey(g.party)}:${g.party.spellAt ?? "-"}`;
+  if (v.leyReach.key !== rk) v.leyReach = { key: rk, times: leyReachTimes(g.party, g.map) };
+  const FLARE = R.flare.time;
   for (const m of mc.list) {
     const d = Math.hypot(m.x - w.x, m.z - w.z);
     if (d > range) continue;
@@ -51,23 +62,14 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     // countdown to the stone's wake runs (Ed, 2026-10-04): the next stone's from half to full,
     // the after-next's up to half.
     const grow = m.stage === "next" ? 0.5 + 0.5 * build : m.stage === "afterNext" ? 0.15 + 0.35 * build : 1;
-    if (!m.awake || column) beacons.push({ x: m.x, z: m.z, colour: col, strength: m.awake ? A.beam * (0.6 + 0.4 * beat) * (1 + build) : m.stage === "afterNext" ? A.beam * 0.6 : D.beam, base: top, height: R.beamHeight * grow });
-    if (m.awake && laser) lasers.push({ x: m.x, z: m.z, colour: col, strength: R.laser.opacity * (0.55 + 0.45 * beat) * (0.7 + 0.6 * build), width: R.laser.width, height: R.laser.length * grow, base: top });
-    // The forecast's ring of symbols round it: all 12 on the next stone, the after-next filling
-    // through the middle as the countdown runs, a flickering few on the probable ones. Each
-    // appears with a flare and pulses on the beat.
-    const flick = hash2(m.cell[0] * 7 + Math.floor(time * 1.3), m.cell[1], 991), count = symbolCount(m.stage, build, flick, t);
-    if (count > 0) {
-      const F = t.forecast, seen = v.symbolSeen.get(m.key) ?? [];
-      for (let k = 0; k < count; k++) {
-        if (seen[k] === undefined) seen[k] = time;
-        const a = (k / F.symbols) * Math.PI * 2 - Math.PI / 2, fl = Math.max(0, 1 - (time - seen[k]) / F.flare);
-        const alpha = (m.stage === "probable" ? 0.45 : m.stage === "afterNext" ? 0.75 : 1) * (0.7 + 0.3 * beat) + fl * 1.2;
-        symbols.push({ x: m.x + Math.cos(a) * F.radius, z: m.z + Math.sin(a) * F.radius, size: F.size * (1 + fl * 0.6), glyph: k, colour: col, alpha });
-      }
-      seen.length = count;
-      v.symbolSeen.set(m.key, seen);
-    } else v.symbolSeen.delete(m.key);
+    // Not reached by the line yet: no column, no laser (its dim rune glow above is all, findable up close, not from the
+    // treetops). Reached: the column shoots up with a flare-up as the line meets it, and stays.
+    const shown = columnShown(v.leyReach.times?.get(m.key), time, FLARE);
+    if (!shown) continue;
+    const { up, flare } = shown;
+    if (flare > 0) near.push({ d: d - 1e3, l: { x: m.x, y: 3, z: m.z, reach: R.awake.reach * 1.5, rgb: col, strength: R.flare.light * flare } });
+    if (!m.awake || column) beacons.push({ x: m.x, z: m.z, colour: col, strength: (m.awake ? A.beam * (0.6 + 0.4 * beat) * (1 + build) : m.stage === "afterNext" ? A.beam * 0.6 : D.beam) * (1 + 2 * flare), base: top, height: R.beamHeight * grow * up });
+    if (m.awake && laser) lasers.push({ x: m.x, z: m.z, colour: col, strength: R.laser.opacity * (0.55 + 0.45 * beat) * (0.7 + 0.6 * build), width: R.laser.width, height: R.laser.length * grow * up, base: top });
     if (m.awake) {
       const n = Math.round(A.motes + A.moteBuild * build);
       for (let i = 0; i < n; i++) {
@@ -88,9 +90,16 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   near.sort((p, q) => p.d - q.d);
   for (const n of near.slice(0, 8)) lights.push(n.l);
   v.markerBatch.set(inst);
+  // A 💌 that left a slowed circle outward vanishes in a small sparkle at its edge (render/slowtime.ts): 8 motes bursting
+  // out and fading over SPARKLE seconds of real time.
+  const now = LIGHT_UNIFORMS.uRealTime.value, SPARKLE = 0.45;
+  v.edgeSparkles = v.edgeSparkles.filter(s => now - s.at < SPARKLE);
+  for (const s of v.edgeSparkles) {
+    const k = (now - s.at) / SPARKLE;
+    for (let i = 0; i < 8; i++) { const a = i * 0.785 + s.at * 3, r = 0.2 + k * 1.1; motes.push({ x: s.x + Math.cos(a) * r, y: 1 + Math.sin(a * 2) * 0.4 * k + k * 0.6, z: s.z + Math.sin(a) * r, colour: SPARKLE_RGB, alpha: (1 - k) * (i % 2 ? 1 : 0.6) }); }
+  }
   v.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes.concat(v.fireSparks), lasers);
   const up = canopyShown(w);
-  v.rings.update(symbols, up * (t.treetopHeight - 2)); // above the canopy from the treetops
   // Wave numbers over the stones (Ed, 2026-10-04, a design aid): above the stone on the ground,
   // above the canopy from the treetops; the reached areas' dimmed.
   const WN = t.waveNumbers, nums: WaveNumber[] = [];
@@ -138,12 +147,14 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
  *  Each shows its front to the camera, the far half facing in and the near half out, so its
  *  sprite is the drawn angle nearest its yaw, flipped for the other side; a playing speaker's
  *  cones pump on the beat. Anchored by its ground point, like a path piece. */
+/** A home speaker's runestone, times the speaker's size (Ed: "smaller runestones"); the share of its turn spent as the stone (glowing, stretching) before the speaker springs up. */
+const STONE = 0.55, TURN = 0.4;
 export function drawSpeakers(v: View, time: number, angle: number): ForestLight[] {
   const A = v.assets.speakerArt(), g = v.game, lights: ForestLight[] = [];
   if (!A) return lights;
-  // The boot-up (Ed, 2026-10-04): they power on one by one round the ring, each with a flare;
-  // the ones still off stand silent.
-  const on = speakersOn(g.party, g.map, time, g.map.dancefloor.speakers.length);
+  // The boot-up (Ed, 2026-10-06): each starts as a small runestone, and when the boot pulse reaches it (g.speakerBoot,
+  // rules/game.ts) it turns into its speaker: the stone glows white and stretches up, then the speaker springs up out of
+  // the ground with a flare, overshooting a little and settling, its glow fading.
   if (!v.speakerBatch) {
     v.speakerBatch = new SpriteBatch(A.atlas, v.mpp, { solid: true });
     v.scene.add(...v.speakerBatch.meshes);
@@ -153,7 +164,16 @@ export function drawSpeakers(v: View, time: number, angle: number): ForestLight[
   const beat = (beatTime(g.beat, time) * g.tuning.beat.bpm) / 60, ph = beat - Math.floor(beat);
   const list: SpriteInstance[] = [];
   g.map.dancefloor.speakers.forEach((sp, i) => {
-    const face = Art.dancefloorSpeakerFacing(sp.ring) as { angle: number; flip: boolean }, state = g.speakers[i] ?? "playing", powered = i < on;
+    const face = Art.dancefloorSpeakerFacing(sp.ring) as { angle: number; flip: boolean }, state = g.speakers[i] ?? "playing", k = speakerBoot(g, i, time), powered = k >= TURN;
+    if (!powered && A.stone !== undefined) { // still its runestone (charging once the pulse has reached it)
+      const f = A.atlas.frames[A.stone], o = A.stoneOrigin!, c = k / TURN, d = (f.pad ?? 0) * mpp * STONE;
+      v.speakerTops[i] = { x: sp.x, y: o.y * mpp * STONE * (1 + 0.6 * c), z: sp.z, state, powered: false };
+      if (!inView(v, sp.x, sp.z, f.w * mpp, f.h * mpp, 6)) return;
+      if (c > 0) lights.push({ x: sp.x, y: 1.5, z: sp.z, reach: 8, rgb: new THREE.Vector3(0.3, 0.9, 1), strength: 1.5 * c });
+      list.push({ x: sp.x - U.x * d, y: -U.y * d, z: sp.z - U.z * d, frame: f, flip: face.flip, scale: STONE, sx: 1 - 0.2 * c, sy: 1 + 0.6 * c, glow: c, fresh: mark(v, "speaker", sp.x, sp.z, f.h * mpp) });
+      return;
+    }
+    const u = A.stone === undefined ? 1 : Math.min(1, (k - TURN) / (1 - TURN)), rise = u >= 1 ? 1 : 1 - Math.pow(1 - u, 3) * Math.cos(u * 4.2); // springs up, past full, settles
     if (powered && v.speakerFlare[i] === undefined) v.speakerFlare[i] = time;
     if (!powered) v.speakerFlare[i] = undefined;
     const flare = powered ? Math.max(0, 1 - (time - (v.speakerFlare[i] ?? time)) / 0.8) : 0;
@@ -167,7 +187,7 @@ export function drawSpeakers(v: View, time: number, angle: number): ForestLight[
     const dx = (ox - f.w / 2) * mpp, below = Math.max(0, f.h - (f.pad ?? 0) - o.y) * mpp, d = (f.pad ?? 0) * mpp;
     const x = sp.x - R.x * dx, z = sp.z - R.z * dx + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch));
     if (!inView(v, x, z, f.w * mpp, f.h * mpp, 6)) return;
-    list.push({ x: x - U.x * d, y: -U.y * d, z: z - U.z * d, frame: f, flip: face.flip, fresh: mark(v, "speaker", sp.x, sp.z, f.h * mpp) });
+    list.push({ x: x - U.x * d, y: -U.y * d, z: z - U.z * d, frame: f, flip: face.flip, fresh: mark(v, "speaker", sp.x, sp.z, f.h * mpp), ...(u < 1 ? { sy: Math.max(0.2, rise), sx: 1 + 0.15 * (1 - u), glow: 1 - u } : {}) });
   });
   v.speakerBatch.set(list);
   return lights;

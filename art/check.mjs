@@ -62,7 +62,7 @@ const report = await b.page.evaluate(async () => {
     for (const S of G.SPECIES) { const own = JSON.stringify(G.speciesColours(S.id, st)); for (const v of Object.keys(G.PALETTE_VARIANTS)) { const c = G.variantColours(S.id, st, v), row = G.paletteRow(c), m = G.bakeMask(G.critter(S.id, 1, 0, st), st.cOutline); if (JSON.stringify(c) === own) vb.push(`${S.id} ${v} same`); for (let i = 0; i < m.mat.length; i++) if (m.kind[i] === 1 && row[m.mat[i] * 4] === 255 && row[m.mat[i] * 4 + 1] === 0 && row[m.mat[i] * 4 + 2] === 255) { vb.push(`${S.id} ${v} magenta`); break; } } }
     res.push({ what: `palette variants: all ${Object.keys(G.PALETTE_VARIANTS).length} curated coats colour every species, no material uncoloured, each its own`, good: !vb.length, info: vb.slice(0, 5).join(", ") || "ok" });
   }
-  { // expressions (Ed, 2026-10-05: "the eyebrows should be with the creature generator"): every species at every level, angry, happy and dazed
+  { // expressions (Ed, 2026-10-05: "the eyebrows should be with the creature generator"): every species at every level, angry, happy, dazed and asleep
     // drawn as part of its face: each different from its neutral face, its brows showing (and standing out from its coat), no bigger than
     // neutral by more than 2 px, nothing NaN; and the away view drawn
     const bad = [], lum = c => c[0] * .3 + c[1] * .55 + c[2] * .15;
@@ -82,7 +82,7 @@ const report = await b.page.evaluate(async () => {
         if (!brow) bad.push(`${id} no brows`);
       }
     }
-    res.push({ what: `expressions: every species at every level angry, happy and dazed as part of its face (different from neutral, its brows showing and standing out from its coat, no bigger than 3 px or 1%, nothing NaN; from behind, its plain face)`, good: !bad.length, info: bad.slice(0, 8).join(", ") || "ok" });
+    res.push({ what: `expressions: every species at every level angry, happy, dazed and asleep as part of its face (different from neutral, its brows showing and standing out from its coat, no bigger than 3 px or 1%, nothing NaN; from behind, its plain face)`, good: !bad.length, info: bad.slice(0, 8).join(", ") || "ok" });
   }
   { // surface texture (Ed, 2026-10-05, #119): every species at every level in its fur, feathers, scales, plates, shell or bristles: textured
     // (its coat broken into tones along its stamps), its detail (tone edges a coat pixel) growing with age (a baby's softest), the same size
@@ -91,7 +91,7 @@ const report = await b.page.evaluate(async () => {
     const detail = sp => { let e = 0, n = 0; for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const v = sp.m[y * sp.w + x]; if (!coat.has(v)) continue; n++; const r = sp.get(x + 1, y), b = sp.get(x, y + 1); if (coat.has(r) && r !== v) e++; if (coat.has(b) && b !== v) e++; } return n ? e / n : 0; };
     for (const S of G.SPECIES) {
       const col = G.speciesColours(S.id, st), dv = [0, 1, 2, 3].map(level => {
-        const a = G.critter(S.id, level, 0, st), b = G.critter(S.id, level, 0, off), id = `${S.id} ${level}`, tol = Math.max(2, b.h * .01);
+        const a = G.critter(S.id, level, 0, st), b = G.critter(S.id, level, 0, off), id = `${S.id} ${level}`, tol = Math.max(2, Math.ceil(b.h * .01));
         if (Math.abs(a.w - b.w) > tol || Math.abs(a.h - b.h) > tol) bad.push(`${id} ${a.w}x${a.h} vs ${b.w}x${b.h}`);
         if (![...a.n].every(Number.isFinite)) bad.push(`${id} NaN`);
         for (const v of new Set(a.m)) if (v && v !== G.M.LINE && !col[v]) bad.push(`${id} material ${v} uncoloured`);
@@ -119,7 +119,7 @@ const report = await b.page.evaluate(async () => {
       if (P.template === "quadruped" && (P.joints.legs.length !== 4 || P.joints.legs.some(l => !l.hip || !l.knee || !l.foot))) bad.push(`${S.id} ${level} legs`);
       if (!Object.values(P.discs).some(d => Object.keys(d).length)) bad.push(`${S.id} ${level} no discs`);
       if (level === 1) for (const [name, gear] of [["party", { collar: [255, 60, 200], hat: 0, glasses: "bar" }], ["woken", { woken: true }]]) { const G2 = G.rigParts(S.id, level, st, gear), h = G2?.pieces.head?.[2], h0 = P.pieces.head[2]; if (!h || (h0 && h.sp.m.join() === h0.sp.m.join())) bad.push(`${S.id} ${level} ${name} head as plain`); } // party gear and the woken eyes baked on its head
-      for (const face of ["angry", "happy", "dazed"]) { const f = P.faces?.[face]; if (!f || f.length !== 5 || f.some(p => !p)) bad.push(`${S.id} ${level} no ${face} head`); else if (P.pieces.head[2] && f[2].sp.m.join() === P.pieces.head[2].sp.m.join()) bad.push(`${S.id} ${level} ${face} head as neutral`); } // its head in each expression
+      for (const face of ["angry", "happy", "dazed", ...(level === 3 ? ["asleep"] : [])]) { const f = P.faces?.[face]; if (!f || f.length !== 5 || f.some(p => !p)) bad.push(`${S.id} ${level} no ${face} head`); else if (P.pieces.head[2] && f[2].sp.m.join() === P.pieces.head[2].sp.m.join()) bad.push(`${S.id} ${level} ${face} head as neutral`); } // its head in each expression
     }
     res.push({ what: "rig parts: every four-legged species and the snake, at every level, baked as torso and head pieces (the snake its head) at the five headings with their pivots near them, four two-bone legs, discs to string bones and bodies, and the head in every expression, in party gear and woken", good: !bad.length, info: bad.slice(0, 6).join(", ") || "ok" });
   }
@@ -483,6 +483,26 @@ const report = await b.page.evaluate(async () => {
     if (Math.abs(moor.big.filter(a => a.kind === "standingstone").reduce((t, a) => t + (a.sparse || 0), 0) - .12) > 1e-6) bad.push("the standing stones' sparse share changed");
     res.push({ what: "prop generator: standing stones, cairns, pools and broken trunks, 12 variants each, standing, none alike; stones grey, plain slabs; cairns low; pools mostly water; each broken trunk and fallen log one piece; logs, mushroom rings and stone circles too; ?props=gen gives the moor and the muddy forest 3 shapes of each", good: !bad.length, info: bad.slice(0, 6).join("; ") });
   }
+  { // the legend clearings' rim kit (#235; art/props/generator.js rimPiece, areaAssets' rim): every area has RIM_PIECES pieces, each drawn, standing
+    // on its bottom row, nothing NaN, none over a metre, none glowing, at least 3 shapes of them; open and stony areas mostly stones, cairns and
+    // boulders, wooded ones mostly toadstools, stumps and posts
+    const bad = [], EM = new Set([...G.EMISSIVE]), stony = new Set(["stone", "cairn", "boulder"]);
+    for (const def of G.AREAS) {
+      const a = G.areaAssets(def.id, st), rim = a.rim || [];
+      if (rim.length !== G.RIM_PIECES) { bad.push(`${def.id}: ${rim.length} rim pieces`); continue; }
+      for (const [k, b] of rim.entries()) {
+        const p = G.rimPiece({ k, seed: G.rimSeed(def, k) }, def, st), sp = p.sp, n = sp.m.filter(Boolean).length;
+        let bottom = 0; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++;
+        if (n < 25 || !bottom || !Array.from(sp.n).every(Number.isFinite) || b.metres.height > 1 || Array.from(sp.m).some(m => EM.has(m)) || b.kind !== p.form) bad.push(`${def.id} rim ${k} (${p.form}): ${n} px, ${b.metres.height} m${bottom ? "" : ", floats"}`);
+      }
+      if (new Set(rim.map(b => b.sp.w + "x" + b.sp.h)).size < 3) bad.push(`${def.id}: rim pieces under 3 shapes`);
+    }
+    for (const [id, want] of [["moor", true], ["ravine", true], ["rocky-slope", true], ["fern-forest", false], ["hazel-forest", false], ["bluebell-glade", false]]) {
+      const forms = [...Array(G.RIM_PIECES).keys()].map(k => G.rimForm(G.AREA_BY_ID[id], k)), share = forms.filter(f => stony.has(f)).length / forms.length;
+      if (want ? share < .5 : share > .5) bad.push(`${id}'s rim ${forms.join(",")}`);
+    }
+    res.push({ what: "legend clearings' rim kit: every area 6 small pieces (stones, cairns, boulders, toadstools, stumps, posts), each drawn and standing, under a metre, unlit, 3+ shapes; stony areas mostly stone, wooded ones mostly wood and toadstools", good: !bad.length, info: bad.slice(0, 6).join("; ") });
+  }
   { // generated bridges (art/props/bridges.js, under ?props=gen): each bridge's variants draw and stand, none alike, nothing NaN,
     // the hand-made piece's size within a third either way (so a crossing's corridor still fits), nothing glowing
     const bad = [], EM = new Set([...G.EMISSIVE]);
@@ -775,6 +795,26 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
     if (sp.m.filter(Boolean).length < 200 || !inside(a.hatTip) || (hat !== "none" && !sp.m.some(v => v === M.MAGIC || v === M.MAGIC2 || v === M.COLLAR))) pbad.push(`hat ${hat} ${JSON.stringify(ex)} ${o.pose || "hover"}`);
   }
   ok(!missing.length && !famMissing.length && bigBrim >= 12 && longCloak >= 12 && !pbad.length, `witch variety (Ed): over 60 generated witches every accessory shows (${want.join(", ")}) and every familiar (${Gn.WITCH_AXES.familiar.slice(1).join(", ")}); ${bigBrim} brims over 1.5 times hers, ${longCloak} cloaks over 1.4 times; 12 party witches are generated witches, drawn in every party pose with their hand inside; every hat (${Gn.WITCH_AXES.hatShape.length}) draws flying and on foot at the sliders' ends, its tip inside, glowing but none, with the longest scarf, cloak, biggest bag and backpack${missing.length || famMissing.length || pbad.length ? " — " + [...missing.map(k => "no " + k), ...famMissing.map(k => "no " + k), ...pbad.slice(0, 4)].join("; ") : ""}`);
+  // Ed (2026-10-06): every broom kind (art/brooms.js) draws in every flight pose and frame, both facings, and on foot (standing, landing,
+  // taking off), nothing NaN, her hand and hat tip inside; only her own colours (every material one witchColours paints), something
+  // of the broom's own (its body or trim) showing; about her size: hovering 0.85 to 1.6 times as tall as on hers and no more than
+  // 2.4 times as wide
+  const col = W.witchColours(st), hers = W.witchSprite(st, { frame: 0 }), bbad = [];
+  for (const kind of Gn.WITCH_AXES.broom) {
+    const look = { ...Gn.genomeLook(Gn.WITCH_GENOME).look, broom: kind }, sprites = [];
+    for (const facing of ["towards", "away"]) {
+      for (const [pose, P] of Object.entries(W.WITCH_FLIGHT_POSES)) for (let frame = 0; frame < P.frames; frame++) sprites.push([`${pose} ${frame} ${facing}`, W.witchSprite(st, { look, pose: pose === "hover" ? undefined : pose, frame, facing })]);
+      for (const pose of ["stand", "land", "takeoff"]) sprites.push([`${pose} ${facing}`, W.witchSprite(st, { look, pose, frame: 1, facing })]);
+    }
+    for (const [what, sp] of sprites) {
+      const a = sp.anchors || {}, inside = q => q && q.every(Number.isFinite) && q[0] >= 0 && q[1] >= 0 && q[0] < sp.w && q[1] < sp.h, mats = new Set(sp.m.filter(Boolean));
+      const stray = [...mats].filter(v => v !== M.LINE && !col[v]);
+      if (mats.size < 4 || sp.m.filter(Boolean).length < 200 || !inside(a.hand) || !inside(a.hatTip) || stray.length || !(mats.has(M.BROOM) || mats.has(M.STRAW))) bbad.push(`${kind} ${what}${stray.length ? " (material " + stray.join(",") + ")" : ""}`);
+    }
+    const hov = sprites[0][1], kh = hov.h / hers.h, kw = hov.w / hers.w;
+    if (kh < .85 || kh > 1.6 || kw > 2.4) bbad.push(`${kind} ${kh.toFixed(2)}× as tall, ${kw.toFixed(2)}× as wide as hers`);
+  }
+  ok(!bbad.length, `broom kinds (Ed, 2026-10-06): every one of the ${Gn.WITCH_AXES.broom.length} (${Gn.WITCH_AXES.broom.join(", ")}) draws in every flight pose and frame, both facings, and on foot, her hand and hat tip inside, only her colours, its body or trim showing, about her size${bbad.length ? " — " + bbad.slice(0, 6).join("; ") : ""}`);
 }
 // area flora (art/flora/areas.js): every wooded area lists 3 to 6 real species, shares adding to 1, its main kind first (as its big
 // names it), a palette within reason (sat and val 0.6 to 1.3); the open areas list none; fantasy species are never an area's main kind

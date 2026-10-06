@@ -1,27 +1,29 @@
 // The ley lines (Ed, 2026-10-04; 2026-10-05: "they essentially make a 2d game into a 1d game; you
-// just follow them from objective to objective"): a glowing line from the last runestone reached
-// on to the next objectives (rules/leylines.ts; leyLines.ahead, 3), each section fainter than the
-// one before, and back through the stones reached before it (leyLines.behind, 3), dimmer again
-// (Ed, 2026-10-05: "six sections long, showing the next three and the past three runestones"). Wispy and magical, never ruler-straight: each link wanders
+// just follow them from objective to objective"): a glowing line through every wave's runestone,
+// the whole route the whole time (Ed, 2026-10-06; rules/leylines.ts, rules/leyroute.ts), brightest
+// on from the last stone reached, each section ahead fainter than the one before and the ones
+// behind dimmer again, down to leyLines.far. Wispy and magical, never ruler-straight: each link wanders
 // along the low ground between its stones (the hills' valleys), and a shimmer flows along it toward
 // the next stone, so the way reads at a glance. It stays on the ground in both modes (Ed: grounded):
 // from the treetops it shows between the crowns, and a wide faint glow shows through them (never
-// through the bent earth). When the next stone is reached the old line drains into it and the new
-// one draws out from it toward the stone after.
+// through the bent earth). When the next stone is reached the sections brighten and dim to their
+// new places.
 //
-// One ribbon mesh for the line, rebuilt only when it changes (a link routed a frame, so no frame
-// does them all), and the old one while it drains; two draws each.
+// One ribbon mesh for the whole line, rebuilt only when the route changes (its links routed a
+// couple of milliseconds' worth a frame; moving on along it only sets a uniform); two draws,
+// nothing allocated a frame.
+import type { PartyState } from "../rules/party";
+import { pulseProgress } from "../rules/leypulse";
+import { bootPath } from "../rules/bootRing";
 import * as THREE from "three";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { LIGHT_UNIFORMS } from "./lighting";
 import { departureRoute, type LeyStone } from "../rules/leylines";
+import { polylinesMeet } from "../rules/crossing";
 import type { ForestMap } from "../rules/map";
 
 export interface LeyTuning {
   on: boolean;
-  /** Sections on from the last stone reached, and back through the ones reached before it. */
-  ahead: number;
-  behind: number;
   /** The section just left behind's brightness as a share of the next one's (each before it fade times that). */
   behindBright: number;
   /** Each section's brightness as a share of the one before (nearer the last stone reached). */
@@ -36,11 +38,17 @@ export interface LeyTuning {
   valley: number;
   /** The shimmer's speed (m/s) and spacing (m) along the line. */
   flow: number[];
+  /** The faintest a section gets, ahead and behind, as a share of the next one's (Ed, 2026-10-06: the whole route always shows). */
+  far: number[];
   /** The first line's way out from the treehouse (rules/leylines.ts departureRoute). */
   depart: { past: number; avoid: number };
 }
 
 const STEP = 8; // metres between route points
+/** Milliseconds a frame spent routing a new line's links (the whole route: about two hundred). */
+const ROUTE_MS = 2;
+/** How tame a link is drawn when its wander would meet another's (a share of its usual wander; 0 its own way). */
+const TAME = [1, 0.5, 0.2, 0];
 /** leyLines.brightness 1: the first look (v395); Ed, 2026-10-05: "about 30% as bright" (0.3). */
 const BRIGHT = 4;
 
@@ -69,19 +77,19 @@ void main() {
 }`;
 
 const FRAG = /* glsl */ `
-uniform float uTime, uGlowPass, uBright, uFade, uBehind, uShift, uLift, uCurrent, uOnlyFirst;
+uniform float uTime, uGlowPass, uBright, uFade, uBehind, uShift, uLift, uCurrent, uStrength;
+uniform vec2 uFar; // the faintest a section gets, ahead and behind (the whole route always shows)
+uniform vec2 uGrow; // the line drawn only this far (x, in links along the route from its start) while y is 1: Ed's reveal, growing out from the treehouse
+uniform vec2 uPulse; // the wave's pulse on the link from the last stone reached: x how far it's got (0-1, by arc length), y 1 when there's a wave clock
 uniform vec2 uFlow;
-uniform vec4 uReveal; // x: the first link gone before this far along (draining into its stone); y: link z shown only this far (drawing out); w: the whole line's strength
 varying float vSide, vS, vT, vLink, vSeen;
 varying vec3 vCol;
 float lh(float p) { return fract(sin(p * 127.1) * 43758.5453); }
 float ln(float p) { float i = floor(p), f = fract(p); return mix(lh(i), lh(i + 1.0), f * f * (3.0 - 2.0 * f)); }
 void main() {
   if (vSeen < 0.5) discard;
-  if (uOnlyFirst > 0.5 && vLink > 0.5) discard;
-  if (vLink < 0.5 && vT < uReveal.x) discard;
-  bool drawing = abs(vLink - uReveal.z) < 0.5 && uReveal.y < 1.0;
-  if (drawing && vT > uReveal.y) discard;
+  float along = vLink + vT; // links along the route from its start
+  if (uGrow.y > 0.5 && along > uGrow.x) discard;
   float across = 1.0 - abs(vSide), core = across * across * across, halo = across * across;
   // The shimmer: bright heads travelling from the earlier stone to the later, each trailing off behind.
   float f = fract(vS / uFlow.y - uTime * uFlow.x / uFlow.y), pulse = pow(f, 7.0) * (1.0 - smoothstep(0.96, 1.0, f));
@@ -92,107 +100,170 @@ void main() {
   // Its rank: 0 the section on from the last stone reached, 1 the one after, -1 the one just left
   // behind (easing to its new rank as she moves on).
   float r = vLink - uCurrent + uShift;
-  float rank = r >= 0.0 ? pow(uFade, r) : mix(1.0, uBehind, min(1.0, -r)) * pow(uFade, max(0.0, -r - 1.0));
+  float rank = r >= 0.0 ? max(pow(uFade, r), uFar.x) : max(mix(1.0, uBehind, min(1.0, -r)) * pow(uFade, max(0.0, -r - 1.0)), uFar.y);
   float link = uBright * rank * mix(1.0, 0.8, uLift);
   // From the treetops the line is on the ground under the crowns: a wide faint glow shows through them.
   float a = uGlowPass > 0.5 ? 0.4 * halo * wisp * uLift : (core * (0.6 + 1.6 * pulse) + halo * (0.18 + 0.5 * pulse)) * wisp;
-  // Drawing out toward the next stone: a bright tip leads it.
-  if (drawing) a += exp(-abs(vT - uReveal.y) * 60.0) * (uGlowPass > 0.5 ? halo : core) * 2.5;
-  gl_FragColor = vec4(vCol * a * link * ends * uReveal.w, 1.0);
+  // The wave's pulse (Ed, 2026-10-06: "the leyline between the last and next wave soundsystem should grow in intensity
+  // in proportion to how much time is left before the next wave; so you can see the pulse travel along the leyline, and
+  // the next soundsystem appears when it arrives"): on the link from the last stone reached, the stretch it has
+  // travelled lit brighter than the stretch ahead, the whole link brightening toward the wave, a bright head at the pulse,
+  // and a flash at the far stone as it arrives. vT runs by arc length, so it follows the route's curves.
+  if (uPulse.y > 0.5 && abs(vLink - uCurrent) < 0.5) {
+    float p = uPulse.x, behind = 1.0 - smoothstep(p - 0.01, p + 0.01, vT);
+    link *= mix(0.35, 1.3, behind) * (0.45 + 1.2 * p);
+    a += exp(-abs(vT - p) * 25.0) * (uGlowPass > 0.5 ? halo : core) * (2.5 + 3.5 * p);
+    a += smoothstep(0.96, 1.0, p) * exp(-(1.0 - vT) * 30.0) * (uGlowPass > 0.5 ? halo : core) * 3.0;
+  }
+  // Growing out through the first wave (Ed): a soft glow leads its tip.
+  if (uGrow.y > 0.5) a += exp(-abs(along - uGrow.x) * 30.0) * (uGlowPass > 0.5 ? halo : core) * 2.0;
+  gl_FragColor = vec4(vCol * a * link * ends * uStrength, 1.0);
 }`;
 
-interface LeySet { geo: THREE.BufferGeometry; meshes: THREE.Mesh[]; reveal: THREE.Vector4; current: { value: number }; onlyFirst: { value: number } }
+interface LeySet { geo: THREE.BufferGeometry; meshes: THREE.Mesh[]; current: { value: number } }
+
+/** The pulse's place along the current link for the shader (0-1), or null for none: the HUD's wave pointer's own
+ *  (rules/leypulse.ts pulseProgress, so the two agree), but none while home boots up (Ed, 2026-10-06: "during boot up
+ *  phase, there's no leyline") or with no wave clock (?wave=off: paused, or no interval). */
+export function shaderPulse(p: PartyState, map: ForestMap, time: number): number | null {
+  const iv = map.tuning.party.interval;
+  if (p.paused || !(iv > 0) || iv >= 1e8 || time < p.bootUntil) return null;
+  return pulseProgress(p, map, time);
+}
+
+/** How far the line is drawn, in links along the whole route from the treehouse, or null for all of it (Ed, 2026-10-06:
+ *  "before that, during boot up phase, there's no leyline ... Then the leyline appears, starting at the treehouse, moving
+ *  three times (adjustable) the speed on the pulse (so it reaches runestone 3 by the time the first wave finishes)"): none
+ *  until home has booted; then the tip runs at `reveal` links a wave, reaching the `reveal`th stone as the first wave
+ *  lands and going on at that pace (so no stone pops on at once), until it has drawn the whole route; with no wave
+ *  clock, all of it once booted. rules/leypulse.ts leyReachTimes says when it reaches each stone, at the same pace. */
+export function leyReveal(p: PartyState, map: ForestMap, time: number, reveal: number): number | null {
+  if (p.spellAt === null || time < p.bootUntil) return 0;
+  const k = shaderPulse(p, map, time);
+  return k === null ? null : reveal * (p.wave + k);
+}
 
 export class LeyLines {
   readonly meshes: THREE.Mesh[];
   private u: Record<string, THREE.IUniform>;
-  /** The line now, and the one before it while it drains away. */
+  /** The line now. */
   private cur: LeySet;
-  private old: LeySet;
-  private key = "";
+  private key = NaN;
   private chain: LeyStone[] = [];
   private current = 0;
   /** The routes being worked out for a new chain (a link a frame), then swapped in whole. */
-  private pending: { key: string; chain: LeyStone[]; current: number; colours: THREE.Vector3[]; routes: [number, number][][] } | null = null;
+  private pending: { key: number; chain: LeyStone[]; current: number; colours: THREE.Vector3[]; routes: [number, number][][] } | null = null;
   private shiftFrom = -Infinity;
-  private advancedAt = -Infinity;
-  /** On the last move on, whether the old line's oldest section dropped off the back (and so drains away). */
-  private dropped = false;
 
   constructor(private T: LeyTuning, private ground: (x: number, z: number) => number, private map?: ForestMap) {
     this.u = {
       ...HEIGHT_UNIFORMS, uTime: LIGHT_UNIFORMS.uTime,
       uLeyWidth: { value: new THREE.Vector2(T.width[0], T.width[1]) }, uLeyHeight: { value: new THREE.Vector2(T.height[0], T.height[1]) },
       uLift: { value: 0 }, uBright: { value: T.brightness * BRIGHT }, uFade: { value: T.fade }, uBehind: { value: T.behindBright },
-      uShift: { value: 0 }, uFlow: { value: new THREE.Vector2(T.flow[0], T.flow[1]) },
+      uShift: { value: 0 }, uFar: { value: new THREE.Vector2(T.far[0], T.far[1]) }, uFlow: { value: new THREE.Vector2(T.flow[0], T.flow[1]) },
+      uPulse: { value: new THREE.Vector2() }, uGrow: { value: new THREE.Vector2() },
     };
-    this.cur = this.makeSet(); this.old = this.makeSet();
-    this.meshes = [...this.cur.meshes, ...this.old.meshes];
+    this.cur = this.makeSet();
+    this.ringSet = this.makeSet({ uPulse: { value: this.ringPulse }, uGrow: { value: this.ringGrow }, uStrength: this.ringStrength });
+    if (map) this.build(this.ringSet.geo, [new THREE.Vector3(1, 0.7, 0.42), new THREE.Vector3(1, 0.7, 0.42)], [bootPath(map).path]);
+    this.meshes = [...this.cur.meshes, ...this.ringSet.meshes];
   }
+
+  /** The drawn route of the line's links (each from one stone to the next). */
+  private routes: [number, number][][] = [];
+  /** The link from the last stone reached on to the next, as drawn (the wave pointer follows its pulse along it:
+   *  rules/leypulse.ts); null before the line is routed. */
+  currentLink(): readonly (readonly [number, number])[] | null { return this.T.on ? this.routes[this.current] ?? null : null; }
 
   /** The line's brightness times k (the mood's leyBright). */
   scale(k: number): void { this.u.uBright.value = this.T.brightness * BRIGHT * k; }
 
-  private makeSet(): LeySet {
-    const geo = new THREE.BufferGeometry(), reveal = new THREE.Vector4(0, 1, -1, 1), current = { value: 0 }, onlyFirst = { value: 0 };
+  /** The wave's pulse on the current link: how far it's got (0-1), or null for none (leyPulse). */
+  pulse(p: number | null): void { this.u.uPulse.value.set(p ?? 0, p === null ? 0 : 1); }
+  /** How far the line is drawn, in links along the route from its start (leyReveal), or null for all of it. */
+  grow(links: number | null): void { this.u.uGrow.value.set(links ?? 0, links === null ? 0 : 1); }
+
+  /** The boot's ring (rules/bootRing.ts; Ed, 2026-10-06): one path from the treehouse's front round the home ring, its
+   *  own pulse and reveal (shares of the path), drawn while the boot runs and faint round the speakers after. */
+  private ringSet: LeySet;
+  private ringPulse = new THREE.Vector2();
+  private ringGrow = new THREE.Vector2();
+  /** The ring: its pulse (a share of the path, or null for none), how far it's drawn (a share), its strength (0 hides it). */
+  ring(pulse: number | null, line: number, strength: number, colour?: THREE.Vector3): void {
+    this.ringPulse.set(pulse ?? 0, pulse === null ? 0 : 1); this.ringGrow.set(line, 1); this.ringStrength.value = strength;
+    for (const m of this.ringSet.meshes) m.visible = this.T.on && strength > 0.001 && line > 0;
+    if (colour && !this.ringColoured) { this.ringColoured = true; const a = this.ringSet.geo.getAttribute("aCol") as THREE.BufferAttribute | undefined; if (a) { for (let i = 0; i < a.count; i++) a.setXYZ(i, colour.x, colour.y, colour.z); a.needsUpdate = true; } }
+  }
+  private ringColoured = false;
+  private ringStrength = { value: 1 };
+
+  private makeSet(extra: Record<string, THREE.IUniform> = {}): LeySet {
+    const geo = new THREE.BufferGeometry(), current = { value: 0 };
     const make = (glow: boolean, order: number) => {
       const m = new THREE.Mesh(geo, new THREE.ShaderMaterial({
-        vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...this.u, uGlowPass: { value: glow ? 1 : 0 }, uReveal: { value: reveal }, uCurrent: current, uOnlyFirst: onlyFirst },
+        vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...this.u, uGlowPass: { value: glow ? 1 : 0 }, uCurrent: current, uStrength: { value: 1 }, ...extra },
         transparent: true, depthWrite: false, depthTest: !glow, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
       }));
       m.frustumCulled = false; m.renderOrder = order; m.visible = false;
       return m;
     };
-    return { geo, meshes: [make(false, 13), make(true, 14)], reveal, current, onlyFirst };
+    return { geo, meshes: [make(false, 13), make(true, 14)], current };
   }
 
   /** chain: the stones in wave order and which is the last reached (rules/leylines.ts leyChain);
    *  key: changes when it does; colourOf: a stone's glow colour; lift: 0 on the ground to 1 over the treetops. */
-  update(key: string, chain: () => { stones: LeyStone[]; current: number }, colourOf: (s: LeyStone) => THREE.Vector3, time: number, lift: number): void {
+  update(key: number, chain: () => { stones: LeyStone[]; current: number }, colourOf: (s: LeyStone) => THREE.Vector3, time: number, lift: number): void {
     if (this.T.on && key !== this.key && this.pending?.key !== key) {
-      const c = chain();
-      this.pending = { key, chain: c.stones, current: c.current, colours: c.stones.map(colourOf), routes: [] };
+      const c = chain(), was = this.chain;
+      // The same line (the route's, Ed 2026-10-06: it covers every wave the whole time), only moved
+      // on along it: no new routes, the sections just brighten and dim to their new places.
+      if (!this.pending && was.length === c.stones.length && c.stones.every((s, i) => s.cell[0] === was[i].cell[0] && s.cell[1] === was[i].cell[1])) {
+        if (c.current !== this.current) this.shiftFrom = time;
+        this.key = key; this.current = c.current; this.cur.current.value = c.current;
+      } else this.pending = { key, chain: c.stones, current: c.current, colours: c.stones.map(colourOf), routes: [] };
     }
-    // Route one link a frame; when all are, swap the new line in.
+    // Route links for up to ROUTE_MS a frame (each kept from meeting those before it); when all are, swap the new line in.
     if (this.pending) {
-      const P = this.pending;
-      if (P.routes.length < P.chain.length - 1) { const k = P.routes.length; P.routes.push(this.route(P.chain[k], P.chain[k + 1], k)); }
+      const P = this.pending, t0 = performance.now();
+      while (P.routes.length < P.chain.length - 1 && performance.now() - t0 < ROUTE_MS) { const k = P.routes.length; P.routes.push(this.routeTame(P.chain, P.routes, k)); }
       if (P.routes.length >= P.chain.length - 1) {
-        // Moved on (the last stone reached now the one the old line led to next): the new line's
-        // newest section draws out toward its far stone, and the old line's oldest section, if it
-        // has dropped off the back, drains into the stone after it; anything else (a new plan) just swaps.
-        const key0 = (s: LeyStone) => s.cell.join(), was = this.chain[this.current + 1];
-        const advanced = !!was && P.chain.length > 1 && key0(P.chain[P.current]) === key0(was);
-        if (advanced) {
-          const t = this.old; this.old = this.cur; this.cur = t; this.advancedAt = this.shiftFrom = time;
-          this.old.onlyFirst.value = 1;
-          this.dropped = this.chain.length > 1 && !P.chain.some(s => key0(s) === key0(this.chain[0]));
-        } else this.advancedAt = -Infinity;
+        const was = this.chain[this.current + 1];
+        if (was && P.chain[P.current] && P.chain[P.current].cell.join() === was.cell.join()) this.shiftFrom = time; // (moved on)
         this.build(this.cur.geo, P.colours, P.routes);
-        this.cur.current.value = P.current; this.cur.onlyFirst.value = 0;
+        this.routes = P.routes;
+        this.cur.current.value = P.current;
         this.key = P.key; this.chain = P.chain; this.current = P.current; this.pending = null;
       }
     }
-    // The move on: the old line drains into its stone over a second; the new one draws out from
-    // it toward the next stone, starting a moment later.
-    const k = time - this.advancedAt, ease = (x: number) => { const c = Math.min(1, Math.max(0, x)); return c * c * (3 - 2 * c); };
-    const draining = k < 1.6 && this.dropped, links = Math.max(0, this.chain.length - 2), ahead = this.chain.length - 1 > this.current;
-    this.old.reveal.set(ease(k / 1.1), 1, -1, 1 - ease((k - 0.9) / 0.7));
-    this.cur.reveal.set(0, k < 0 || !Number.isFinite(k) || !ahead ? 1 : ease((k - 0.35) / 1.3), links, 1);
     const on = this.T.on && this.chain.length > 1;
     for (const m of this.cur.meshes) m.visible = on;
-    for (const m of this.old.meshes) m.visible = on && draining;
     this.u.uLift.value = lift;
     this.u.uShift.value = Math.max(0, 1 - (time - this.shiftFrom) / 1.5);
   }
 
-  /** A link's route from stone a to b: a gently wandering line along the low ground between them. */
-  private route(a: LeyStone, b: LeyStone, k: number): [number, number][] {
+
+  /** Link k's route, as wandering as it can be without meeting the links routed before it (Ed,
+   *  2026-10-06: the line never crosses itself; rules/leyroute.ts keeps the stones' own straight
+   *  ways apart, so where wanders would meet, the link is drawn tamer, down to straight, and if it
+   *  still meets one, that one is drawn straight too). */
+  private routeTame(chain: LeyStone[], routes: [number, number][][], k: number): [number, number][] {
+    let r: [number, number][] = [];
+    for (const wander of TAME) {
+      r = this.route(chain[k], chain[k + 1], k, wander);
+      if (!routes.some(q => polylinesMeet(q, r))) return r;
+    }
+    routes.forEach((q, j) => { if (!chain[j].depart && polylinesMeet(q, r)) routes[j] = this.route(chain[j], chain[j + 1], j, 0); });
+    return r;
+  }
+
+  /** A link's route from stone a to b: a gently wandering line along the low ground between them
+   *  (`wander` of its usual way off the straight; 0 straight). */
+  private route(a: LeyStone, b: LeyStone, k: number, wander = 1): [number, number][] {
     // From the treehouse at the start: due south out of its front, then round to the first objective.
     if (a.depart && this.map) return departureRoute(this.map, b, this.T.depart.past, this.T.depart.avoid, STEP / 2);
     const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, px = -uz, pz = ux;
-    const n = Math.max(2, Math.ceil(L / STEP)), W = Math.min(80, L * this.T.valley), off = new Float64Array(n + 1);
-    for (let i = 1; i < n; i++) {
+    const n = Math.max(2, Math.ceil(L / STEP)), W = Math.min(80, L * this.T.valley) * wander, off = new Float64Array(n + 1);
+    if (W > 0) for (let i = 1; i < n; i++) {
       const t = i / n, bx = a.x + dx * t, bz = a.z + dz * t;
       let best = 0, bh = Infinity;
       for (let o = -W; o <= W + 1e-6; o += W / 6) {
@@ -206,7 +277,7 @@ export class LeyLines {
     const pts: [number, number][] = [];
     for (let i = 0; i <= n; i++) {
       const t = i / n, env = Math.sin(Math.PI * t), o = off[i] * env + Math.sin(t * Math.PI * 2.3 + k * 1.9 + a.x * 0.01) * W * 0.12 * env;
-      pts.push([a.x + dx * t + px * o, a.z + dz * t + pz * o]);
+      pts.push(i === n ? [b.x, b.z] : [a.x + dx * t + px * o, a.z + dz * t + pz * o]);
     }
     return pts;
   }

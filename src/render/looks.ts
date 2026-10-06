@@ -23,7 +23,7 @@ type WithState = Creature & { state?: "wild" | "happy" | "leashed" | "enraged"; 
 export function isHappy(c: Creature): boolean {
   const s = (c as WithState).state;
   if (s) return s === "happy";
-  return !c.leashed && (!!c.friendly || !!c.guard); // (today: a quest-done area's creatures)
+  return !c.leashed && !!c.friendly; // (today: a quest-done area's creatures)
 }
 
 export function lookOf(c: Creature): Look {
@@ -57,7 +57,7 @@ export const isDazed = (c: Creature, time: number) => ((c as WithState).dazedUnt
 
 /** Whether it dances on the beat: party animals, and happy ones in an area with a soundsystem. */
 export function dances(g: Game, c: Creature): boolean {
-  if (c.leashed) return true;
+  if (c.leashed || c.partyLegend) return true; // (a party legend dances where it stands: the Easter egg)
   return lookOf(c) === "happy" && g.party.areas.has(cellKey(c.cell)) && !g.combat.ruined.has(cellKey(c.cell)) && !c.fight;
 }
 
@@ -161,9 +161,9 @@ export class StateMarks {
       }
     }
     // Her too, staggered by a blow (rules/knock.ts): the daze stars round her hat.
-    if (stunned(g.witches[0].knock, time)) {
+    if (stunned(g.witches[0].knock, g.herTime)) { // (her clock: rules/slowTime.ts)
       const top = witchHeight(w, g.tuning) + 2.1;
-      for (let i = 0; i < 3; i++) { const a = time * 6 + (i / 3) * Math.PI * 2; this.put(this.star, w.x + Math.cos(a) * 0.6, top + Math.sin(a) * 0.12, w.z + Math.sin(a) * 0.3, 5 * px, 5 * px); }
+      for (let i = 0; i < 3; i++) { const a = g.herTime * 6 + (i / 3) * Math.PI * 2; this.put(this.star, w.x + Math.cos(a) * 0.6, top + Math.sin(a) * 0.12, w.z + Math.sin(a) * 0.3, 5 * px, 5 * px); }
     }
     for (let i = this.used; i < this.pool.length; i++) this.pool[i].visible = false;
   }

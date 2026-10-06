@@ -6,6 +6,7 @@
 import { clamp, hash2, rng, vnoise } from "./random";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { floorClearing } from "./speakers";
+import { beachOf } from "./mapShape";
 
 export type PathKind = "path" | "road" | "rail" | "stream";
 export const PATH_KINDS: PathKind[] = ["path", "road", "rail", "stream"];
@@ -126,7 +127,8 @@ export class PathNetwork {
         if (seen.has(pair)) continue;
         seen.add(pair);
         const [bx, by] = nk.split(",").map(Number);
-        if (bx < 0 || by < 0 || bx >= map.n || by >= map.n) continue;
+        if (!map.playable(bx, by) && !map.inBuffer(bx, by)) continue; // (where she can fly)
+        if (map.shape === "circle" && !map.playable(ax, ay) && !map.inBuffer(ax, ay)) continue;
         if (hash2(ax * 31 + bx, ay * 31 + by, map.seed + 811) > t.linkChance) continue;
         const [a, c] = this.trim(map.siteOf(ax, ay), map.siteOf(bx, by), this.clearOf(ax, ay), this.clearOf(bx, by));
         if (a) this.lines.push({ kind: "path", pts: this.meander(a, c, r), half: t.pathHalf });
@@ -137,6 +139,7 @@ export class PathNetwork {
         this.lines.push({ kind: "path", pts: this.meander(from, { x: from.x + Math.cos(a) * d, z: from.z + Math.sin(a) * d }, r), half: t.pathHalf, deadEnd: true });
       }
     }
+    this.clipToBeach();
     this.lines.forEach((l, li) => {
       const a0 = map.areaAt(l.pts[0][0], l.pts[0][1]);
       l.area = { cell: [a0.cell[0], a0.cell[1]], type: a0.type };
@@ -151,6 +154,31 @@ export class PathNetwork {
           }
       }
     });
+  }
+
+  /** Cut every line short of the beach (the circular map's, beachOf): a line running on past the sand
+   *  stops a little before it, in as many pieces as it crosses in and out (a junction kept on its piece). */
+  private clipToBeach(): void {
+    const B = beachOf(this.map.bounds, this.map.tuning);
+    if (!B) return;
+    const out: PathLine[] = [], remap = new Map<number, number[]>();
+    let cut = false;
+    this.lines.forEach((l, li) => {
+      const keep = l.half + 8, ids: number[] = [];
+      let run: [number, number][] = [];
+      const flush = () => { if (run.length >= 2) { ids.push(out.length); out.push({ ...l, pts: run }); } run = []; };
+      for (const p of l.pts) { if (B.intoSand(p[0], p[1]) <= -keep) run.push(p); else { cut = true; flush(); } }
+      flush();
+      remap.set(li, ids);
+    });
+    if (!cut) return; // (nothing reached it)
+    const js = this.junctions.splice(0);
+    for (const j of js) {
+      const ids = remap.get(j.line) ?? [];
+      const at = ids.find(i => out[i].pts.some(p => p[0] === j.x && p[1] === j.z));
+      if (at !== undefined) this.junctions.push({ ...j, line: at });
+    }
+    this.lines.splice(0, this.lines.length, ...out);
   }
 
   /** The 3D pieces: seeded, from the lines alone; placed once the map has put its gameplay spots
@@ -198,7 +226,7 @@ export class PathNetwork {
     // its own at the edge of the clearing of a ravine, rocky slope, cave mouth or stone shrine
     // (seeded which), clear of the paths and everything placed for gameplay.
     const homes: [number, number, number][] = []; // the steep area types (art/areas.js flags)
-    for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) if (AREA_TYPES[m.typeOf(x, y)].steep) homes.push([x, y, hash2(x, y, s + 849)]);
+    for (const [x, y] of m.cells) if (AREA_TYPES[m.typeOf(x, y)].steep) homes.push([x, y, hash2(x, y, s + 849)]);
     homes.sort((a, b) => a[2] - b[2]);
     let flight = 0;
     const flights = ["stairs", "stairs-turn"];

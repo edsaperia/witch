@@ -28,7 +28,7 @@ export function withFace(meta: RigMeta, face: RigFace | undefined): RigMeta {
   let by = faceMetas.get(meta); if (!by) faceMetas.set(meta, (by = {}));
   return (by[face!] ??= { ...meta, head });
 }
-export interface RigLook { /** extra height (a dance, a hop, sinking) in metres */ y: number; /** a party animal tapping its feet on the beat while it stands: -1..1, a front foot (far or near) lifted */ tap?: number; scale: number; glow: number; fresh: boolean; /** its ordinary frame's height in art pixels */ h: number; /** its expression (render/looks.ts expression(c), #89): the head piece with that face */ face?: RigFace; /** a party animal's gear (render/artBuild.ts partyGearOf): its rig page wears it */ gear?: RigGear; /** an attack's feel (render/attackFeel.ts): squash and stretch about its feet, its wind-up's crouch, mid-lunge */ sx?: number; sy?: number; crouch?: number; lunging?: boolean }
+export interface RigLook { /** extra height (a dance, a hop, sinking) in metres */ y: number; /** a party animal tapping its feet on the beat while it stands: -1..1, a front foot (far or near) lifted */ tap?: number; scale: number; glow: number; fresh: boolean; /** its ordinary frame's height in art pixels */ h: number; /** its expression (render/looks.ts expression(c), #89): the head piece with that face */ face?: RigFace; /** a party animal's gear (render/artBuild.ts partyGearOf): its rig page wears it */ gear?: RigGear; /** an attack's feel (render/attackFeel.ts): squash and stretch about its feet, its wind-up's crouch, mid-lunge */ sx?: number; sy?: number; crouch?: number; lunging?: boolean; /** a sleeping legend (render/legendSleep.ts): lying asleep, its head down, a nightmare's fits, each 0..1 */ sleep?: number; droop?: number; twitch?: number }
 
 export class RigView {
   private bodies = new Map<number, RigBody>();
@@ -63,7 +63,9 @@ export class RigView {
     let body = this.bodies.get(c.id);
     if (!body) this.bodies.set(c.id, (body = new RigBody()));
     this.seen.add(c.id);
-    body.update(c.x, c.z, this.dt, c.charge ? c.charge.dx * c.charge.speed : c.vx, c.charge ? c.charge.dz * c.charge.speed : c.vz);
+    // how it moves, as drawn (eased between the rules' steps): its velocity only in a charge (c.vx is a fight's, and stale out of one,
+    // so a creature wandering with an old vx of 0 would glide with its legs still)
+    body.update(c.x, c.z, this.dt, c.charge ? c.charge.dx * c.charge.speed : undefined, c.charge ? c.charge.dz * c.charge.speed : undefined);
     const drive = this.drive(c, this.time, look), u2m = this.mpp * art.meta.s * look.scale; // metres per model unit
     this.out.reset();
     const meta = withFace(art.meta, look.face);
@@ -82,7 +84,7 @@ export class RigView {
     let air = 0, crouch = winding;
     if (lp) { const k = (time - lp.at) / Math.max(0.01, lp.lands - lp.at); if (k < 0) crouch = Math.max(crouch, 1 + k * 3); else if (k <= 1) air = Math.sin(k * Math.PI); else crouch = Math.max(crouch, Math.max(0, 1 - (k - 1) * 4)); }
     crouch = Math.max(crouch, (look.crouch ?? 0) * 0.8); // an attack's wind-up crouches it too (render/attackFeel.ts)
-    return { crouch: Math.max(0, Math.min(1, crouch)), charging: charging || !!look.lunging, air, tap: look.tap ?? 0 };
+    return { crouch: Math.max(0, Math.min(1, crouch)), charging: charging || !!look.lunging, air, tap: look.tap ?? 0, sleep: look.sleep ?? 0, droop: look.droop ?? look.sleep ?? 0, twitch: look.twitch ?? 0 };
   }
 
   /** Each item as an instance: the sprite placed so its pivot pixel lands on the item's world point. */

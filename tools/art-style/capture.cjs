@@ -34,7 +34,7 @@ function serve() {
     const [style, px] = combo.split("/"), tag = `${style}-${px}`, page = await browser.newPage({ viewport: { width: 1280, height: 720 } }), errors = [];
     page.on("pageerror", e => errors.push(e.message));
     try {
-      await page.goto(`http://127.0.0.1:${port}/?seed=${seed}&wave=off&style=${style}&px=${px}`);
+      await page.goto(`http://127.0.0.1:${port}/?seed=${seed}&spell=auto&wave=off&style=${style}&px=${px}`);
       await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 400000, polling: 500 });
       await page.keyboard.press("Enter");
       await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 30000 });
@@ -45,7 +45,7 @@ function serve() {
       await page.keyboard.down("ArrowDown"); await page.keyboard.down("ArrowRight");
       for (let i = 0; i < 4; i++) { await wait(1.6); await page.waitForTimeout(1500); await shot(`ground${i}`); }
       await page.keyboard.up("ArrowDown"); await page.keyboard.up("ArrowRight");
-      await page.keyboard.press("KeyQ");
+      await page.keyboard.press("Space");
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 120000, polling: 100 }).catch(() => {});
       await page.keyboard.down("ArrowRight");
       for (let i = 0; i < 2; i++) { await wait(1.5); await page.waitForTimeout(2500); await shot(`treetops${i}`); }

@@ -17,7 +17,7 @@ export interface TypeArt {
 }
 export interface RelicSet { atlas: Atlas; byId: Record<string, RelicArt>; modern: RelicArt[]; layouts: RelicLayouts }
 export interface DecorArt { atlas: Atlas; pieces: DecorPiece[]; families: Record<string, DecorPiece[]> }
-export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number }
+export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number; /** A sleeping legend's ground line in each frame (rows from its top): drawn with that row on the ground. */ ground?: number[] }
 /** A species' live-rig parts at one level (#79): its atlas page and what the rig needs. */
 export interface RigArt { atlas: Atlas; meta: RigMeta; used: number }
 /** How many rig pages (a species at a level each) are kept at once. */
@@ -190,7 +190,8 @@ export class AssetLibrary {
       }
       this.types.set(r.job.id, { atlas, layout: r.result.layout!, cut });
       if (r.result.floor) this.onFloor(r.job.id, r.result.floor);
-    } else this.creatures.set(r.job.id, { atlas, frame: creatureFrame });
+    } else if (r.job.kind === "sleep") this.creatures.set(r.job.id, { atlas, frame: (_level, f) => f % 2, ground: r.result.ground });
+    else this.creatures.set(r.job.id, { atlas, frame: creatureFrame });
     this.inFlight.delete(this.key(r.job));
     this.version++;
   }
@@ -256,6 +257,12 @@ export class AssetLibrary {
     if (!a) this.ask({ kind: "creature", id: species, style: this.style });
     return a;
   }
+  /** An area legend asleep (art/legends.js: sunk in its area's earth, mossed over, eyes shut; 2 breathing frames), or undefined (and asked for). */
+  sleepArt(species: string): CreatureArt | undefined {
+    const k = `sleep-${species}`, a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "sleep", id: k, species, style: this.style });
+    return a;
+  }
   /** A creature's enraged look (a wave woke its area: red eyes), or undefined (and asked for). */
   wokenArt(species: string): CreatureArt | undefined {
     const k = `woken-${species}`, a = this.creatures.get(k);
@@ -287,13 +294,17 @@ export class AssetLibrary {
   }
   /** Her frames from her genome (null: the classic witch): flight, on foot, headings. Called again by
    *  rebakeWitch when the character creator changes her look. */
-  private bakeWitch(genome: unknown): Atlas {
+  private bakeWitch(genome: unknown, bare = false): Atlas {
     // The witch: hover frames 0-2 towards, 3-5 away, then leaning towards (6) and away (7); then
     // rising (8-9 towards, 10-11 away) and descending (12-13 towards, 14-15 away), two frames each.
-    const style = this.style, mine = witchLookOf(style, genome), wc = mine.colours, wb = (o: object) => Art.bake((Art.witchSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite>)(style, { ...o, look: mine.look }), wc, style, style.cOutline) as Baked;
-    for (const k of Object.keys(this.witchFoot)) delete this.witchFoot[k];
-    for (const k of Object.keys(this.witchFly)) delete this.witchFly[k];
-    this.witchLean.towards.length = 0; this.witchLean.away.length = 0;
+    // Bare (her hat knocked off: rules/hat.ts): the same frames, at the same places, with no hat; then the hat on the ground.
+    const style = this.style, mine = witchLookOf(style, genome), wc = mine.colours, look = bare ? { ...(mine.look ?? {}), hat: "none" } : mine.look;
+    const wb = (o: object) => Art.bake((Art.witchSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite>)(style, { ...o, look }), wc, style, style.cOutline) as Baked;
+    const witchFoot = bare ? {} as typeof this.witchFoot : this.witchFoot, witchFly = bare ? {} as typeof this.witchFly : this.witchFly;
+    const witchLean = bare ? { towards: [] as number[], away: [] as number[] } : this.witchLean, witchHeading = bare ? {} as typeof this.witchHeading : this.witchHeading;
+    for (const k of Object.keys(witchFoot)) delete witchFoot[k];
+    for (const k of Object.keys(witchFly)) delete witchFly[k];
+    witchLean.towards.length = 0; witchLean.away.length = 0;
     const sprites = [0, 1, 2].map(frame => wb({ frame })).concat([0, 1, 2].map(frame => wb({ frame, facing: "away" })), [wb({ lean: true }), wb({ lean: true, facing: "away" })],
       ...["rise", "descend"].flatMap(pose => ["towards", "away"].flatMap(facing => [0, 1].map(frame => wb({ pose, frame, facing })))));
     // On foot, from 16: standing, landing, taking off, talking, putting a sigil down, lifting one.
@@ -301,31 +312,41 @@ export class AssetLibrary {
     for (const pose of ["stand", "land", "takeoff", "talk", "placeSigil", "liftSigil", "sit"]) {
       const n = FOOT[pose].frames, entry = { towards: [] as number[], away: [] as number[], fps: FOOT[pose].fps };
       for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < n; frame++) { entry[facing].push(sprites.length); sprites.push(wb({ pose, frame, facing })); }
-      this.witchFoot[pose] = entry;
+      witchFoot[pose] = entry;
     }
     // Treetop flight: fast (at boost: three frames) and brake (a skid: two frames), towards and away.
     for (const [pose, n] of [["fast", 3], ["brake", 2]] as const) {
       const entry = { towards: [] as number[], away: [] as number[], fps: pose === "fast" ? 10 : 8 };
       for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < n; frame++) { entry[facing].push(sprites.length); sprites.push(wb({ pose, frame, facing })); }
-      this.witchFly[pose] = entry;
+      witchFly[pose] = entry;
     }
-    for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < 4; frame++) { this.witchLean[facing].push(sprites.length); sprites.push(wb({ pose: "lean", frame, facing })); }
+    for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < 4; frame++) { witchLean[facing].push(sprites.length); sprites.push(wb({ pose: "lean", frame, facing })); }
     for (const [h, heading] of [["up", "away"], ["down", "towards"]] as const) {
       const at = (o: object) => sprites.push(wb({ ...o, heading })) - 1;
-      this.witchHeading[h] = { hover: [0, 1, 2].map(frame => at({ frame })), lean: at({ lean: true }), leanCycle: [0, 1, 2, 3].map(frame => at({ pose: "lean", frame })), fast: [0, 1, 2].map(frame => at({ pose: "fast", frame })), brake: [0, 1].map(frame => at({ pose: "brake", frame })) };
+      witchHeading[h] = { hover: [0, 1, 2].map(frame => at({ frame })), lean: at({ lean: true }), leanCycle: [0, 1, 2, 3].map(frame => at({ pose: "lean", frame })), fast: [0, 1, 2].map(frame => at({ pose: "fast", frame })), brake: [0, 1].map(frame => at({ pose: "brake", frame })) };
     }
-    this.witchGenome = genome;
+    if (bare) {
+      const hat = (Art.witchHatSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite> | null)(style, { look: mine.look });
+      this.witchHatFrame = hat ? sprites.push(Art.bake(hat, wc, style, style.cOutline) as Baked) - 1 : -1;
+    } else this.witchGenome = genome;
     return packAtlas(sprites, 2048);
   }
   /** The character creator changed her look: her frames again (the view swaps its batch). */
-  rebakeWitch(genome: unknown): void { this.witch = this.bakeWitch(genome); this.version++; }
+  rebakeWitch(genome: unknown): void { this.witch = this.bakeWitch(genome); this.bare = null; this.version++; }
+  /** Her frames with her hat knocked off (rules/hat.ts), at the same places as `witch`'s, and her hat lying on the
+   *  ground (`witchHatFrame`): baked the first time they're asked for (the view asks once the game is up). */
+  witchBare(): Atlas { return (this.bare ??= this.bakeWitch(this.witchGenome, true)); }
+  private bare: Atlas | null = null;
+  /** The hat on the ground in witchBare()'s atlas (-1: she has none). */
+  witchHatFrame = -1;
 
   /** A party witch's art (#37: her look from partyWitch(seed), or seed null for our witch's own),
    *  or undefined (and asked for). Looks repeat after a few, so there are only so many to draw. */
   partyWitchArt(seed: number | null): (PartyWitchArt & { atlas: Atlas }) | undefined {
     // (hers keyed by her genome, so a new look is drawn afresh, never a cached old one)
     const id = seed === null ? `her-${hashText(JSON.stringify(this.witchGenome))}` : `pw-${seed}`, a = this.partyWitches.get(id);
-    if (!a) this.ask({ kind: "partyWitch", id, seed, style: this.style, genome: seed === null ? this.witchGenome : undefined });
+    // (urgent: they dance at home, in view from the start, so not behind every area type's prefetch)
+    if (!a) this.ask({ kind: "partyWitch", id, seed, style: this.style, genome: seed === null ? this.witchGenome : undefined }, true);
     return a;
   }
   /** Ask for a set ahead of need, without using it. */

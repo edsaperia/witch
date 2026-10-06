@@ -18,8 +18,21 @@ import type { View } from "../view";
 import { inView } from "./culling";
 import { mark } from "./pops";
 import { attackFeel, newFeel } from "../attackFeel";
+import { legendSleep, newSleepTrack, type SleepPose } from "../legendSleep";
 
 const FEEL = newFeel(); // (filled per creature, never kept)
+const SLEEP: SleepPose = { sleep: 0, droop: 0 }; // (likewise)
+
+/** The baked walk's frame (0 or 1) by how far it has gone as drawn (Ed's playtest: feet walking in place, or not walking while it
+ *  moves): a step every `step` metres, standing (frame 0) once it has stopped for a quarter of a second. One small record per creature. */
+function strideFrame(v: View, c: { id: number; x: number; z: number }, time: number, step: number): number {
+  let o = v.strides.get(c.id);
+  if (!o) v.strides.set(c.id, (o = { x: c.x, z: c.z, d: 0, at: -1 }));
+  const d = Math.hypot(c.x - o.x, c.z - o.z);
+  if (d > 1e-3 && d < 3) { o.d += d; o.at = time; } // (a jump of metres is a teleport, not a step)
+  o.x = c.x; o.z = c.z;
+  return time - o.at < 0.25 ? Math.floor(o.d / Math.max(0.05, step)) % 2 : 0;
+}
 
 const WOKEN_GEAR: RigGear = { woken: true };
 
@@ -69,15 +82,25 @@ export function drawCreatures(v: View, time = 0): void {
     const woken = !party && c.enraged ? v.assets.wokenArt(c.species) : undefined;
     // A sleeping area legend (Ed, 2026-10-04: "ancient creatures, half sunken into the ground,
     // they could almost be mistaken for scenery"): sunk and mossed over, in a batch of its own
-    // with no find-in-the-dark look. Waking, it heaves up out of the ground.
+    // with no find-in-the-dark look. Woken, it gets up drowsily and heaves itself out of the ground;
+    // lulled, it settles back down (render/legendSleep.ts: how far asleep it is, 0..1, as `lying`).
     const W = g.tuning.wildLegends, st = c.boss && !c.leashed ? c.legendState : undefined;
-    const sleeping = st === "asleep" || st === "restless", rising = st === "happy" && (c.stateAt ?? 0) > 0 ? Math.min(1, (time - (c.stateAt ?? 0)) / Math.max(0.1, W.wake * 0.5)) : 1; // (made happy, it stirs and rises contentedly)
+    // (Walking home to lie down, Ed 2026-10-06: awake till it gets there, then it settles: c.homing.)
+    const sleeping = (st === "asleep" || st === "restless") && !c.homing;
+    let lying = 0, droop = 0;
+    if (st) {
+      let tr = v.legendSleeps.get(c.id);
+      if (!tr) v.legendSleeps.set(c.id, (tr = newSleepTrack(sleeping)));
+      legendSleep(tr, sleeping, st === "angry", time, g.tuning.rig ?? {}, SLEEP); lying = SLEEP.sleep; droop = SLEEP.droop;
+    }
     // Its expression, part of its face (art/genome/expressions.js; render/looks.ts expression): the party looks are happy and the woken one angry already.
     const face = sleeping ? "neutral" : expression(c, time), faced = !party && !woken && face !== "neutral" ? v.assets.faceArt(c.species, face) : undefined;
-    const art = party ?? woken ?? faced ?? v.assets.creatureArt(c.species), key = party ? `${look === "happy" ? "happy" : "party"}-${c.id}` : sleeping ? `sleep-${c.species}` : woken ? `woken-${c.species}` : faced ? `face-${face}-${c.species}` : c.species;
+    // Asleep, its own sleeping form (art/legends.js), drawn once it's baked; until then the awake one sunk, as before.
+    const slept = sleeping ? v.assets.sleepArt(c.species) : undefined;
+    const art = party ?? woken ?? slept ?? faced ?? v.assets.creatureArt(c.species), key = party ? `${look === "happy" ? "happy" : "party"}-${c.id}` : slept ? `sleep-${c.species}` : sleeping ? `sunk-${c.species}` : woken ? `woken-${c.species}` : faced ? `face-${face}-${c.species}` : c.species;
     if (!art) continue;
     arts.set(key, art);
-    const frame = art.atlas.frames[art.frame(c.level, c.moving ? Math.floor(c.walk) % 2 : 0, c.away)];
+    const fi = slept ? Math.floor(time / 2.5 + c.id * 0.37) % 2 : art.frame(c.level, strideFrame(v, c, time, art.atlas.frames[art.frame(c.level, 0, c.away)].w * v.mpp * 0.3), c.away), frame = art.atlas.frames[fi]; // (asleep: a slow breath, in and out)
     // A wild legend (Ed, 2026-10-04): bigger and imposing, swelling slowly as it breathes (slower asleep).
     const boss = c.boss && !c.leashed ? g.tuning.wildLegends : null;
     const bossScale = boss ? boss.scale * (1 + boss.breathe * bossBreath(time, c.id, boss.breathEvery * (dormant(g, c) ? 1.5 : 1))) : 1;
@@ -123,11 +146,15 @@ export function drawCreatures(v: View, time = 0): void {
     // Just joined the party: two little hops of joy, the second smaller (straight up, nothing like a pounce).
     const joined = v.leashView.joined.get(c.id);
     if (joined !== undefined && time - joined < 0.7) { const k = (time - joined) / 0.7; hop += Math.abs(Math.sin(k * Math.PI * 2)) * 0.45 * (1 - k * 0.6); }
-    const sink = sleeping ? W.sink : W.sink * (1 - rising), sunk = -sink * (frame.h - (frame.pad ?? 0)) * v.mpp * scale;
-    if (sleeping) glow = -2 - W.moss; else if (rising < 1) glow = -2 - W.moss * (1 - rising);
-    // Restless in its sleep (#87): it tosses in bursts, and turns over when it's bad.
-    const toss = st === "asleep" ? restlessness(c) : 0, fit = toss ? toss * Math.max(0, Math.sin(time * 1.3 + c.id)) ** 2 : 0;
-    if (!(v.rig && !sleeping && rising >= 1 && v.rig.add(c, { y: dance + hop + sunk, tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face, sx: feel.sx, sy: feel.sy, crouch: feel.crouch, lunging: feel.lunging, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined }))) // the rig draws it, if it can
+    // Fully asleep with its own sleeping form baked (#224, art/legends.js): that, dressed and grown over, its ground line on the
+    // ground and no moss tint over its own. Getting up or lying down (render/legendSleep.ts) the rig draws it, sunk a little and
+    // mossed by how far asleep it is; so does the baked frame, sunk, until the rig's parts are ready.
+    const form = !!slept && lying >= 0.999, fh = (frame.h - (frame.pad ?? 0)) * v.mpp * scale;
+    const sunk = form ? -(frame.h - (frame.pad ?? 0) - (slept!.ground?.[fi] ?? frame.h)) * v.mpp * scale : -W.sink * lying * fh, rigSunk = -(g.tuning.rig?.sink ?? 0.1) * lying * fh;
+    if (form) glow = -2; else if (lying > 0) glow = -2 - W.moss * lying;
+    // Restless in its sleep (#87, a nightmare): it tosses in bursts, and turns over when it's bad (on the rig, its legs paddle and its head jerks).
+    const toss = sleeping ? restlessness(c) : 0, fit = toss ? toss * Math.max(0, Math.sin(time * 1.3 + c.id)) ** 2 : 0;
+    if (!(v.rig && !form && v.rig.add(c, { y: dance + hop + (st ? rigSunk : sunk), tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face: lying > 0.5 ? "asleep" : face, sleep: lying, droop, twitch: toss, sx: feel.sx, sy: feel.sy, crouch: feel.crouch, lunging: feel.lunging, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined }))) // the rig draws it, if it can
       l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id), y: dance + hop + sunk, z: c.z, frame, flip: ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip, fresh, glow, scale, sx: feel.sx, sy: feel.sy });
     v.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * v.mpp * scale + dance + hop + sunk); // its health bar goes over it
     creatureShadows.push({ x: c.x, z: c.z, w: frame.w * v.mpp * 0.7, d: frame.w * v.mpp * 0.25 });

@@ -9,7 +9,7 @@
 import raw from "../../config/combat.json";
 import { LEGEND, type Creature, type Level } from "./creatures";
 import type { Cell } from "./partition";
-import { enrage, foes, huntsWitch, stateOf, STATES, type State } from "./creatureStates";
+import { enrage, foes, huntsWitch, stateOf, type State } from "./creatureStates";
 import { LEGENDS, lull } from "./legends";
 import { bodyRadius } from "./spacing";
 import { FIGHT, legendSetOf, packsOf, profileOf, startCharge, steer, stepBurrow, stepCharge, stepLeap, type LegendSet } from "./movement";
@@ -196,7 +196,7 @@ export const fighting = (c: Creature) => !c.gone && !c.fleeUntil && !c.wanderTo 
 
 /** Whether anything may attack it: fighting, and not a baby (Ed, 2026-10-04: "No animals should
  *  attack babies"; shots and quakes pass them by, and they can't be beaten in a fight). */
-export const targetable = (c: Creature) => fighting(c) && c.level > 0 && !c.burrow; // (a burrower underground can't be hit)
+export const targetable = (c: Creature) => fighting(c) && c.level > 0 && !c.burrow && !c.partyLegend; // (a party legend's out of it all: the Easter egg) // (a burrower underground can't be hit)
 
 /** Whose side: hers (on her leash, at a sigil, or a happy area legend: Ed, 2026-10-04) or the wild's. */
 const sideOf = (c: Creature): State => stateOf(c); // (its state: who fights whom is foes(), rules/creatureStates.ts)
@@ -281,15 +281,24 @@ function pastEdge(w: CombatWorld, c: Creature, x: number, z: number): boolean {
 /** The creature she's inviting (Ed, 2026-10-04): her party leaves it be while they chat. */
 const inviting = (w: CombatWorld, c: Creature, o: Creature) => !huntsWitch(sideOf(c)) && w.talkingTo(o.id) >= 0;
 
+/** Why a wild one lost its target, if it's a chase it gives up (not one she's inviting, a fall, a knockout):
+ *  she's risen to the treetops, or it (her or a party animal) is past its band beyond its area's edge. */
+function gaveUp(w: CombatWorld, c: Creature, tg: Target): boolean {
+  if (tg.kind === "witch") { const v = w.witches[tg.id]; return !!v && !v.down && (!v.onGround || pastEdge(w, c, v.x, v.z)); }
+  if (tg.kind === "creature") { const o = w.creatures[tg.id]; return !!o && !o.gone && pastEdge(w, c, o.x, o.z); }
+  return false;
+}
+
 function valid(w: CombatWorld, s: CombatState, c: Creature, tg: Target): boolean {
   if (tg.kind === "creature") {
     const o = w.creatures[tg.id];
+    if (o && sideOf(c) === "wild" && !c.siege && !c.leashed && pastEdge(w, c, o.x, o.z)) return false; // (her party past the band too: it gives up, Ed 2026-10-06)
     return !!o && targetable(o) && foes(sideOf(o), sideOf(c)) && !truce(c, o) && !w.asleep(o) && !inviting(w, c, o);
   }
   if (tg.kind === "witch") {
     // A wild one loses her when she rises, or (Ed, 2026-10-05: "wild creatures shouldn't pursue you
-    // very far outside of their area") once she's combat.leaveArea metres past its area's edge;
-    // then it turns back and walks home. A besieger keeps the old rule: out of its area, out of its
+    // very far outside of their area") once she's combat.leaveArea metres past its area's edge
+    // (Ed, 2026-10-06: 30 m); then it gives up and retreats into its area (c.retreat, stepCombat). A besieger keeps the old rule: out of its area, out of its
     // attack range and at least combat.witchLose away. (Only wild ones go for her at all.)
     const v = w.witches[tg.id];
     if (!huntsWitch(sideOf(c)) || !v || !v.onGround || v.down || w.talkingTo(c.id) === tg.id) return false;
@@ -359,6 +368,32 @@ function moveToward(c: Creature, x: number, z: number, stopAt: number, speed: nu
 
 /** A blow lands on a target: damage, knockback and slow for creatures; one point for a witch; the
  *  soundsystem's health for a siege. */
+/** Whether a charge's or pounce's touches (`hit`: creatures by id, witches as -1 - id) already took
+ *  in this target; `drop` takes the one just pushed for it off the end first (the charge's own strike). */
+function contacted(tg: Target, hit: number[], drop: boolean): boolean {
+  const key = tg.kind === "witch" ? -1 - tg.id : tg.kind === "creature" ? tg.id : NaN;
+  const seen = drop ? hit.slice(0, -1) : hit;
+  return seen.includes(key);
+}
+
+/** A charging or pouncing creature's touch: every foe it's in contact with (its blow's reach plus their
+ *  bodies) takes the blow, once each (`hit` keeps who), the witch too when its side goes for her, her
+ *  grace after a hit making a charge one hit (#197). */
+function touch(w: CombatWorld, s: CombatState, c: Creature, damage: number, a: Attack, grid: Grid, hit: number[]): void {
+  const reach = Math.min(a.range, 2.5 * FIGHT.scale), me = bodyRadius(c);
+  for (const o of grid.near(c.x, c.z, reach + me + 4)) {
+    if (o === c || hit.includes(o.id) || !targetable(o) || !foes(sideOf(o), sideOf(c)) || truce(c, o) || w.asleep(o) || inviting(w, c, o)) continue;
+    if (Math.hypot(o.x - c.x, o.z - c.z) > reach + me + bodyRadius(o)) continue;
+    hit.push(o.id);
+    land(w, s, c, { kind: "creature", id: o.id }, damage, a, c.x, c.z);
+  }
+  if (huntsWitch(sideOf(c))) for (const v of w.witches) {
+    if (!v.onGround || v.down || hit.includes(-1 - v.id) || w.talkingTo(c.id) === v.id || Math.hypot(v.x - c.x, v.z - c.z) > reach + me + 0.4) continue;
+    hit.push(-1 - v.id);
+    land(w, s, c, { kind: "witch", id: v.id }, damage, a, c.x, c.z);
+  }
+}
+
 function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target, damage: number, a: Attack, fx: number, fz: number): void {
   const time = w.time;
   if (tg.kind === "witch") {
@@ -403,7 +438,7 @@ function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target,
   if (o.hp <= 0 && stateOf(o) === "wild" && !o.dazed) {
     // Knocked down while wild (Ed, 2026-10-05, #87): dazed a while (nothing attacks it, and she
     // can still invite it), then it runs off (stepCombat).
-    o.dazed = true; o.dazedUntil = time + STATES.daze; o.fight = undefined; o.moving = false; o.vx = 0; o.vz = 0;
+    o.dazed = true; o.dazedUntil = time + w.t.combat.daze; o.fight = undefined; o.moving = false; o.vx = 0; o.vz = 0;
     s.events.push({ kind: "dazed", x: o.x, z: o.z, at: time, id: o.id });
     return;
   }
@@ -425,6 +460,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   const { time, dt, t } = w, C = t.combat;
   D = data;
   FIGHT.scale = t.fight.scale; FIGHT.speed = t.fight.speed; FIGHT.momentum = t.fight.momentum ?? 1;
+  if (t.fight.charge) FIGHT.charge = t.fight.charge;
+  if (t.fight.leap) FIGHT.leap = t.fight.leap;
   // Shots fly; each hits the first enemy (not its own kind) it reaches, or fizzles at its range.
   const grid = new Grid(w.active.filter(c => fighting(c)));
   s.shots = s.shots.filter(sh => {
@@ -524,6 +561,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     }
     // An angry or happy legend (#87): it stands in its area and shoots from afar (stepLegendAttack).
     // (Ed, 2026-10-05: "stick with the long range one for now": with legends.closeMoves off, a wild legend that isn't an area's uses it too.)
+    if (c.partyLegend) { c.fight = undefined; continue; } // (a party legend dances and fights no one: rules/partyLegend.ts)
     if (c.level === LEGEND && !c.leashed && (c.boss ? c.legendState === "angry" || c.legendState === "happy" : !LEGENDS.closeMoves) && fighting(c)) { stepLegendAttack(w, s, c, data, grid); continue; }
     if (!fighting(c) || w.asleep(c) || (c.leashed && w.busy(c.id))) { c.fight = undefined; continue; }
     // Stunned (an armoured one knocked over): it does nothing for a moment.
@@ -532,18 +570,25 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (!atk) { c.fight = undefined; continue; } // babies don't attack
     const f = (c.fight ??= { target: null, readyAt: time + atk.attack.cooldown * 0.5 * (c.rand() + 0.5), windupUntil: 0, aimX: 0, aimZ: 0 });
     // A happy area legend guards its area like a parked party animal with a far bigger reach, round its home (Ed, 2026-10-04).
-    const happy = !c.leashed && (c.legendState === "happy" || !!c.guard || c.state === "happy"); // (and a friendly area's guards, once partified: rules/quest.ts; and every happy creature, #87: it defends its own area)
-    // (a guard looks round where it stands, for anything in its own area: area-wide, as it roams it)
+    const happy = !c.leashed && (c.legendState === "happy" || c.state === "happy"); // (and every happy creature, #87: it defends its own area)
+    // (a happy one looks round where it stands, for anything in its own area: area-wide, as it roams it)
     const lp = c.leashed ? w.leashPoint(c.id) : happy ? { x: c.x, z: c.z } : null, guarding = (!!lp && w.parked(c.id)) || happy;
     // Party animals fight only near their leash point (a parked one within guard.radius of its
     // sigil); wild ones within aggro of where they are.
     // (Ed's motion scale pass: party animals chase about 40 m from her or their sigil before giving up)
     const S = FIGHT.scale, reachX = lp ? lp.x : c.x, reachZ = lp ? lp.z : c.z, reach = (lp ? (happy ? t.wildLegends.guard : guarding ? t.guard.radius : C.pursuit) : C.aggro) * S;
-    if (f.target && !valid(w, s, c, f.target)) f.target = null;
+    if (f.target && !valid(w, s, c, f.target)) {
+      // Lost her (or her party) past its band, or she rose (Ed, 2026-10-06: "instead they should retreat
+      // and go back to idling"): a wild one that isn't besieging gives up and heads home.
+      if (sideOf(c) === "wild" && !c.siege && !c.leashed && gaveUp(w, c, f.target)) c.retreat = true;
+      f.target = null;
+    }
     const had = !!f.target;
     if (f.target && lp) { const p = targetPos(w, s, f.target); if (!p || Math.hypot(p.x - lp.x, p.z - lp.z) > reach + atk.attack.range || (happy && !w.inArea(c, p.x, p.z))) f.target = null; }
     if (!f.target || f.windupUntil === 0) {
-      const near = acquire(w, c, reachX, reachZ, reach, atk.attack.range, grid, guarding, happy ? o => w.inArea(c, o.x, o.z) : undefined);
+      let near = acquire(w, c, reachX, reachZ, reach, atk.attack.range, grid, guarding, happy ? o => w.inArea(c, o.x, o.z) : undefined);
+      // Retreating, it takes up a fight again only with someone back in its own area (no flip-flopping at the band's edge).
+      if (near && c.retreat) { const q = targetPos(w, s, near); if (q && w.inArea(c, q.x, q.z)) c.retreat = undefined; else near = null; }
       if (near) f.target = near;
       else if (!f.target && c.siege && !c.leashed) {
         // An angry area's creatures (its quest undone, Ed 2026-10-04) go for the nearest party animal or
@@ -561,6 +606,16 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (!f.target) {
       if (f.windupUntil) f.windupUntil = 0;
       f.lunge = undefined;
+      if (c.retreat) {
+        // Retreating: back into its area at its own pace (a charge's run given up), then roaming again
+        // once it's in and within combat.retreatHome metres of home (or its run has taken long enough).
+        c.charge = undefined; c.vx = 0; c.vz = 0;
+        if (c.retreatFrom === undefined) c.retreatFrom = time;
+        const sp = (profileOf(c.species)?.speed ?? C.fightRun) * FIGHT.speed;
+        const left = moveToward(c, c.anchorX, c.anchorZ, 1, sp, dt);
+        if ((w.inArea(c, c.x, c.z) && left <= C.retreatHome * FIGHT.scale) || time - c.retreatFrom > 30) { c.retreat = undefined; c.retreatFrom = undefined; c.tx = c.x; c.tz = c.z; c.fight = undefined; }
+        continue;
+      }
       c.sprung = undefined; // (an ambusher lies in wait again)
       if (c.burrow) c.burrow = undefined; // (a burrower comes up)
       if (c.leap) { c.x = c.leap.tx; c.z = c.leap.tz; c.leap = undefined; } // (a leaper comes down)
@@ -601,7 +656,14 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         const was = c.charge, r = stepCharge(c, P.move, p.x, p.z, A.range + p.r + 0.3, time, dt, run);
         // A pair (the stags): its pack mates whose charge is ready set off with it, side by side.
         if (P.move.pair && !was && c.charge) for (const m of packs.get(c.id)?.members ?? []) if (m !== c && !m.charge && time >= (m.moveReadyAt ?? 0) && m.fight?.windupUntil === 0 && !m.fight.lunge) startCharge(m, P.move, p.x, p.z, time);
-        if (r === "hit") { land(w, s, c, f.target, atk.damage, { ...A, modifier: "knockback", knockback: 15 * S }, c.x, c.z); f.readyAt = time + A.cooldown; s.events.push({ kind: "charged", x: c.x, z: c.z, at: time, id: c.id }); continue; }
+        const ram: Attack = { ...A, modifier: "knockback", knockback: 15 * S };
+        if (r === "hit") {
+          if (c.charge) (c.charge.hit ??= []).push(f.target.kind === "witch" ? -1 - f.target.id : f.target.kind === "creature" ? f.target.id : -1e9);
+          if (!(t.fight.charge?.contact && c.charge?.hit && contacted(f.target, c.charge.hit, true))) land(w, s, c, f.target, atk.damage, ram, c.x, c.z);
+          f.readyAt = time + A.cooldown; s.events.push({ kind: "charged", x: c.x, z: c.z, at: time, id: c.id }); continue;
+        }
+        // Contact (Ed, 2026-10-06: "damaging whenever they're touched while in attack mode"): its run hurts every foe it touches, once each.
+        if (r === "charging" && t.fight.charge?.contact && c.charge && !(c.charge.from !== undefined && time < c.charge.from)) touch(w, s, c, atk.damage, ram, grid, (c.charge.hit ??= []));
         if (r === "charging") continue;
       }
       if (P.move?.kind === "burrow") {
@@ -619,11 +681,14 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         // The toad: a leap in an arc at its target (a ring shows where it'll land), slamming down: its attack.
         const r = stepLeap(c, P.move, p.x, p.z, time >= f.readyAt, time);
         if (r === "leapt") s.events.push({ kind: "leapt", x: c.x, z: c.z, at: time, id: c.id });
+        // A low pounce (the lynx's, a strike) hurts every foe it touches in the air (fight.leap.contact); a high leap's slam is its landing.
+        if (r === "air" && P.move.strike && t.fight.leap?.contact && c.leap) touch(w, s, c, atk.damage, A, grid, (c.leap.hit ??= []));
+        const pounced = c.leap?.hit;
         if (r === "landed") {
           f.readyAt = time + A.cooldown;
           s.events.push({ kind: "slammed", x: c.x, z: c.z, at: time, id: c.id });
           // A pounce (the lynx) lands its blow on its target, if it's still there; a slam (the toad) hits all round.
-          if (P.move.strike) { if (Math.hypot(p.x - c.x, p.z - c.z) <= A.range + p.r + 1 * S) land(w, s, c, f.target, atk.damage, A, c.x, c.z); }
+          if (P.move.strike) { if (!(pounced && contacted(f.target, pounced, false)) && Math.hypot(p.x - c.x, p.z - c.z) <= A.range + p.r + 1 * S) land(w, s, c, f.target, atk.damage, A, c.x, c.z); }
           else area(w, s, c, sideOf(c), c.species, c.x, c.z, A.radius ?? 2.4, atk.damage, A, grid);
           continue;
         }

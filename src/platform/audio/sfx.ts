@@ -10,9 +10,12 @@
 //    soundsystem lost, a relic found, the boot-up over), a stun's twinkle;
 //  - ambience.ts: a knockback, a lob landing, a legend's charge and roar, dancers' shoes, home's
 //    meadow (and its balloons and picnic);
-//  - places.ts: a pond, a picnic in a partified area, the creator's room.
+//  - places.ts: a pond, a picnic in a partified area, the creator's room;
+//  - power.ts: a runestone crackling into life as a speaker or soundsystem.
 import { Charge, Meadow, impact, knock, roar, taps } from "./ambience";
-import { Picnic, Pond, Room } from "./places";
+import { Picnic, Pond, Room, Sea } from "./places";
+import { powerUp } from "./power";
+import { Spell } from "./spell";
 import { Babble } from "./babble";
 import * as chimes from "./chimes";
 import { SfxKit, type SfxTuning } from "./sfxKit";
@@ -30,6 +33,9 @@ export class Sfx {
   private pondBed: Pond;
   private picnicBed: Picnic;
   private roomBed: Room;
+  private spellFx: Spell;
+  /** The sea on the beach: made the first time she comes near it (most runs never do). */
+  private seaBed: Sea | null = null;
 
   constructor(ctx: AudioContext | OfflineAudioContext, volume: number, T: SfxTuning, root = 57, dest?: AudioNode) {
     this.k = new SfxKit(ctx, volume, T, root, dest);
@@ -40,9 +46,14 @@ export class Sfx {
     this.pondBed = new Pond(this.k);
     this.picnicBed = new Picnic(this.k);
     this.roomBed = new Room(this.k);
+    this.spellFx = new Spell(this.k);
   }
 
   get volume(): number { return this.k.volume; }
+  /** What reaches the speakers (the audio watchdog taps it). */
+  get output(): AudioNode { return this.k.final; }
+  /** Silenced for good and let go (the watchdog building afresh). */
+  dispose(): void { try { this.k.final.disconnect(); } catch { /* gone */ } }
   setVolume(v: number): void { this.k.setVolume(v); }
 
   // ——— 💌 ———
@@ -69,6 +80,8 @@ export class Sfx {
   // ——— legends ———
   windup(pan = 0, near = 1): void { this.whales.windup(pan, near); }
   legends(sleep: number, breath: number, unease: number, pan = 0): void { this.whales.legends(sleep, breath, unease, pan); }
+  /** A restless legend calling out sadly in its own voice (`urgency` its restlessness). */
+  lament(v: CreatureVoice, urgency: number, pan = 0, near = 1): void { this.babble.lament(v, urgency, pan, near); }
   bellow(pan = 0, near = 1): void { this.charging.bellow(pan, near); }
   hoof(pan = 0, near = 1, light = false): void { this.charging.hoof(pan, near, light); }
   charge(rumble: number, skid: number, pan = 0): void { this.charging.update(rumble, skid, pan); }
@@ -78,6 +91,8 @@ export class Sfx {
   // ——— stings and places ———
   lost(urgent = false): void { chimes.lost(this.k, urgent); }
   relic(pan = 0): void { chimes.relic(this.k, pan); }
+  /** A runestone crackling into life as a speaker (the home ring's `step`, 0 to 11) or a wave's soundsystem; `full` the last of the ring. */
+  power(step: number, pan = 0, near = 1, full = false): void { powerUp(this.k, step, pan, near, full); }
   /** The boot-up over: things stirring. */
   stir(): void { chimes.stir(this.k); }
   meadow(level: number): void { this.home.update(level); }
@@ -89,4 +104,13 @@ export class Sfx {
   pond(level: number, pan = 0): void { this.pondBed.update(level, pan); }
   picnic(level: number, pan = 0): void { this.picnicBed.update(level, pan); }
   room(level: number): void { this.roomBed.update(level); }
+  /** The party spell's scroll (ui/spellScroll.ts): "hum" its level every frame, "rustle" the ripple stirring, "crackle" the
+   *  grow, "burst" the burst. */
+  spell(cue: "hum" | "rustle" | "crackle" | "burst", v = 1): void {
+    if (cue === "hum") this.spellFx.hum(v); else if (cue === "rustle") this.spellFx.rustle(v); else if (cue === "crackle") this.spellFx.crackle(); else this.spellFx.burst();
+  }
+  /** By the sea on the beach (0-1 by how near the water): nothing made until she first comes near. */
+  sea(level: number, pan = 0): void { if (level > 0.001 || this.seaBed) (this.seaBed ??= new Sea(this.k)).update(level, pan); }
+  /** Whether the sea's sounds are built (none in an ordinary run). */
+  get seaBuilt(): boolean { return !!this.seaBed?.built; }
 }

@@ -2,8 +2,9 @@
 // (rules/musicScore.ts) from the conductor's sections (rules/musicPlan.ts) with Web Audio, every
 // sound synthesised (no samples). Each frame it schedules the sixteenths of the next fraction of a
 // second on the audio clock, on the game's beat clock (rules/beat.ts: step 0 is game time 0, the
-// tempo rising wave by wave). One output: Music
-// (platform/music.ts) puts it through the proximity mix; the Music Lab plays it straight.
+// tempo rising wave by wave). Two outputs: the music, which Music (platform/music.ts) puts through
+// the proximity mix (the Music Lab plays it straight); and a sleeping legend's clearing layer
+// (Ed, 2026-10-06), its own reverb and limiter, which Music plays over the muffle.
 // The parts share a reverb (a generated impulse, pre-delayed, its tail darkening), a dotted delay
 // and the kick's duck (the pump), then the section's low-pass (sweeps in builds, half shut in
 // breakdowns) and a gentle limiter. Each part has its own channel: a high-pass to keep the low end
@@ -11,7 +12,7 @@
 // kick a pitched sine with a click; hats the 808's six square tones through band- and high-pass;
 // supersaws as unison voices detuned and spread wide; pads breathing with a slow filter LFO.
 import { beatAt, bpmAt, timeAt, type BeatClock } from "../../rules/beat";
-import { Conductor, type MusicCue } from "../../rules/musicPlan";
+import { Conductor, bootLayers, type MusicCue } from "../../rules/musicPlan";
 import { mtof, noiseBuffer } from "./dsp";
 import { notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../../rules/musicScore";
 
@@ -47,12 +48,32 @@ export class MusicEngine {
   private noise: AudioBuffer;
   private metal: AudioBuffer;
   private channels = new Map<string, Channel>();
+  /** A legend's clearing layer: its parts' channels feed this, with its own reverb, to `circleDest`. */
+  private circleIn: GainNode;
+  private circleVerbIn: GainNode;
+  private circleVerb: ConvolverNode;
   private curves = new Map<number, Float32Array<ArrayBuffer>>();
   private nextStep = -1;
-  private anchor = NaN; // audio time of game time 0
+  /** The last step scheduled: a re-anchoring never schedules it again (round 13: the game running
+   *  slower than the audio, every frame re-anchored, had each note scheduled several times over). */
+  private lastStep = -Infinity;
+  /** Game time as the music hears it (Ed, 2026-10-06: inside a legend's circle the world, the
+   *  music and the countdown slow to about a tenth): game time g0 at audio time a0, running at
+   *  `rate` game seconds an audio second (the game's time scale). */
+  private g0 = NaN;
+  private a0 = 0;
+  private rate = 1;
+  /** Notes' pitch now (the tape slowing with the music: 1 at full speed). */
+  private pitch = 1;
+  /** The note being played's pitch (the circle's layer never slowed). */
+  private notePitch = 1;
+  /** A legend's circle's layer, at full speed whatever the music's rate: its next step and that
+   *  step's audio time (-1: not playing; it starts in step with the music). */
+  private cNext = -1;
+  private cAt = 0;
   private reverbTime = 0;
 
-  constructor(private ctx: BaseAudioContext, dest: AudioNode, public style: MusicStyle, public seed = 0) {
+  constructor(private ctx: BaseAudioContext, dest: AudioNode, public style: MusicStyle, public seed = 0, circleDest: AudioNode = dest) {
     this.conductor = new Conductor(style);
     const c = ctx;
     this.out = c.createGain();
@@ -70,6 +91,12 @@ export class MusicEngine {
     this.reverbIn.connect(this.reverb); this.reverb.connect(reverbLow); reverbLow.connect(this.tone);
     this.delayIn.connect(this.delay); this.delay.connect(delayTone); delayTone.connect(this.feedback); this.feedback.connect(this.delay); delayTone.connect(this.tone);
     this.tone.connect(limit); limit.connect(this.out); this.out.connect(dest);
+    // the legend's clearing layer: not through the section's low-pass, its own reverb and a limiter
+    this.circleIn = c.createGain(); this.circleVerbIn = c.createGain(); this.circleVerb = c.createConvolver();
+    const circleLimit = c.createDynamicsCompressor();
+    circleLimit.threshold.value = -10; circleLimit.knee.value = 6; circleLimit.ratio.value = 8; circleLimit.attack.value = 0.005; circleLimit.release.value = 0.3;
+    this.circleVerbIn.connect(this.circleVerb); this.circleVerb.connect(this.circleIn);
+    this.circleIn.connect(circleLimit); circleLimit.connect(circleDest);
     this.noise = noiseBuffer(c, 2, 22222);
     this.metal = c.createBuffer(1, 2 * c.sampleRate, c.sampleRate);
     const m = this.metal.getChannelData(0), phase = METAL_RATIOS.map((_, i) => i * 0.37);
@@ -94,26 +121,49 @@ export class MusicEngine {
     this.reverbIn.gain.value = m.reverb;
     this.delayIn.gain.value = m.delay;
     this.feedback.gain.value = Math.min(0.85, m.feedback);
-    if (m.reverbTime !== this.reverbTime) { this.reverbTime = m.reverbTime; this.reverb.buffer = this.impulse(m.reverbTime); }
+    if (m.reverbTime !== this.reverbTime) { this.reverbTime = m.reverbTime; this.reverb.buffer = this.impulse(m.reverbTime); this.circleVerb.buffer = this.impulse(m.reverbTime * 1.6); }
     this.channels.clear();
   }
 
   /** Each frame: schedule what's due in the next `ahead` seconds of audio time, at game time
    *  `gameTime` (seconds) on the beat clock `clock`. `playing` false: nothing new is scheduled. */
-  update(cue: MusicCue, gameTime: number, clock: BeatClock, playing: boolean, ahead = 0.3): void {
+  update(cue: MusicCue, gameTime: number, clock: BeatClock, playing: boolean, ahead = 0.3, rate = 1, pitch = 1): void {
     const now = this.ctx.currentTime, stepNow = beatAt(clock, gameTime) * 4;
-    if (!playing) { this.nextStep = -1; return; }
-    // the audio time of game time 0, smoothed so the frames' jitter doesn't reach the notes; a jump
-    // (a hitch, a pause, a jump in game time) resets it
-    const raw = now - gameTime;
-    if (!(Math.abs(raw - this.anchor) < 0.06)) { this.anchor = raw; this.nextStep = -1; } else this.anchor += (raw - this.anchor) * 0.05;
-    if (this.nextStep < 0 || this.nextStep < stepNow - 1 || this.nextStep > stepNow + 64) this.nextStep = Math.ceil(stepNow);
-    this.delay.delayTime.setTargetAtTime(Math.min(4, (this.style.mix.delayBeats * 60) / bpmAt(clock, gameTime)), now, 0.05);
+    if (!playing) { this.nextStep = -1; this.cNext = -1; return; }
+    // Game time as heard: running on from where it was at the old rate, then at the new one (the
+    // world slowing in a legend's circle); smoothed so the frames' jitter doesn't reach the notes,
+    // and a jump (a hitch, a pause, a jump in game time) starts it afresh.
+    rate = Math.max(0.01, rate);
+    if (rate !== this.rate) { if (Number.isFinite(this.g0)) { this.g0 += (now - this.a0) * this.rate; this.a0 = now; } this.rate = rate; }
+    this.pitch = pitch;
+    const err = gameTime - (this.g0 + (now - this.a0) * rate);
+    if (!(Math.abs(err) < 0.06 * rate)) { this.g0 = gameTime; this.a0 = now; this.nextStep = -1; } else this.g0 += err * 0.05;
+    const audioAt = (g: number) => this.a0 + (g - this.g0) / rate;
+    if (this.nextStep < 0 || this.nextStep < stepNow - 1 || this.nextStep > stepNow + 64) {
+      this.nextStep = Math.ceil(stepNow);
+      // (not what's already scheduled, unless time went back: a new run, a jump)
+      if (this.lastStep < stepNow + 64 && this.lastStep >= stepNow - 64) this.nextStep = Math.max(this.nextStep, this.lastStep + 1);
+    }
+    this.delay.delayTime.setTargetAtTime(Math.min(4, (this.style.mix.delayBeats * 60) / bpmAt(clock, gameTime) / rate), now, 0.05);
     for (;;) {
-      const g = timeAt(clock, this.nextStep / 4), t = this.anchor + g;
+      const g = timeAt(clock, this.nextStep / 4), t = audioAt(g);
       if (t >= now + ahead) break;
-      if (t >= now) this.step(cue, this.nextStep, t, 60 / bpmAt(clock, g) / 4);
+      if (t >= now) { this.step(cue, this.nextStep, t, 60 / bpmAt(clock, g) / 4 / rate); this.lastStep = this.nextStep; }
       this.nextStep++;
+    }
+    // A legend's circle's layer: its own time, at the music's tempo as if never slowed (the circle's
+    // own time, over the slowed world), starting in step with the music, its chords the music's.
+    if (!cue.circle) { this.cNext = -1; return; }
+    const sps = 60 / bpmAt(clock, gameTime) / 4;
+    if (this.cNext < 0 || this.cAt < now - 1 || this.cAt > now + 2) { this.cNext = this.nextStep; this.cAt = Math.max(now, audioAt(timeAt(clock, this.nextStep / 4))); }
+    while (this.cAt < now + ahead) {
+      if (this.cAt >= now) {
+        const main = Math.floor(beatAt(clock, this.g0 + (this.cAt - this.a0) * rate) * 4), plan = this.conductor.plan(cue, Math.floor(main / 16));
+        const events = notesAt(this.style, plan, null, main, { seed: this.seed, siege: 0, circle: cue.circle, only: "circle", circleStep: this.cNext });
+        const swing = this.cNext % 2 === 1 ? this.style.swing * sps : 0;
+        for (const e of events) this.play(e, this.cAt + swing + e.offset * sps, e.dur * sps, sps);
+      }
+      this.cNext++; this.cAt += sps;
     }
   }
 
@@ -128,7 +178,7 @@ export class MusicEngine {
   }
 
   /** Stop scheduling and forget the plans (a jump in the timeline). */
-  reset(): void { this.nextStep = -1; this.conductor.reset(); }
+  reset(): void { this.nextStep = -1; this.lastStep = -Infinity; this.conductor.reset(); }
 
   /** One sixteenth: `t` its audio time, `sps` seconds a sixteenth lasts now. */
   private step(cue: MusicCue, step: number, t: number, sps: number): void {
@@ -140,26 +190,31 @@ export class MusicEngine {
     if (s === 0) {
       // the section's low-pass over this bar
       const sec = resolveSection(S, plan.section), barIn = bar - plan.start;
-      const f0 = sectionCutoff(sec, barIn / plan.bars), f1 = sectionCutoff(sec, (barIn + 1) / plan.bars);
+      // (while the speakers boot, the low-pass opens with them rather than over the block)
+      const b0 = bootLayers(cue, bar), b1 = bootLayers(cue, bar + 1);
+      const boot = cue.speakerBars !== undefined && plan.section === S.intro;
+      const f0 = sectionCutoff(sec, boot ? b0 : barIn / plan.bars), f1 = sectionCutoff(sec, boot ? b1 : (barIn + 1) / plan.bars);
       this.tone.frequency.setValueAtTime(f0, t);
       if (f1 !== f0) this.tone.frequency.exponentialRampToValueAtTime(f1, t + 16 * sps);
     }
-    const events = notesAt(S, plan, next, step, { seed: this.seed, siege: cue.siege, party: cue.party, legend: cue.legend });
+    const events = notesAt(S, plan, next, step, { seed: this.seed, siege: cue.siege, party: cue.party, legend: cue.legend, only: "main", build: cue.speakerBars !== undefined ? bootLayers(cue, bar) : undefined });
     const swing = step % 2 === 1 ? S.swing * sps : 0;
     for (const e of events) this.play(e, t + swing + e.offset * sps, e.dur * sps, sps);
   }
 
-  private channel(part: string, p: Patch): Channel {
-    let ch = this.channels.get(part);
+  private channel(part: string, p: Patch, circle = false): Channel {
+    const key = circle ? `circle:${part}` : part;
+    let ch = this.channels.get(key);
     if (!ch) {
       const c = this.ctx, g = c.createGain();
       let out: AudioNode = g;
       if (p.hp) { const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = p.hp; f.Q.value = 0.7; out.connect(f); out = f; }
       if (p.pan) { const s = c.createStereoPanner(); s.pan.value = p.pan; out.connect(s); out = s; }
-      out.connect(p.duck ? this.duckBus : this.dryBus);
-      if (p.reverb) { const r = c.createGain(); r.gain.value = p.reverb; out.connect(r); r.connect(this.reverbIn); }
-      if (p.delay) { const d = c.createGain(); d.gain.value = p.delay; out.connect(d); d.connect(this.delayIn); }
-      this.channels.set(part, ch = { in: g, lastFreq: 0 });
+      // (a legend's clearing layer into its own bus and reverb, over the muffle; the rest into the mix)
+      out.connect(circle ? this.circleIn : p.duck ? this.duckBus : this.dryBus);
+      if (p.reverb) { const r = c.createGain(); r.gain.value = p.reverb; out.connect(r); r.connect(circle ? this.circleVerbIn : this.reverbIn); }
+      if (p.delay && !circle) { const d = c.createGain(); d.gain.value = p.delay; out.connect(d); d.connect(this.delayIn); }
+      this.channels.set(key, ch = { in: g, lastFreq: 0 });
     }
     return ch;
   }
@@ -167,14 +222,15 @@ export class MusicEngine {
   private play(e: NoteEvent, t: number, dur: number, sps: number): void {
     const p = this.style.patches[e.patch];
     if (!p || (this.solo && !this.solo.has(e.part))) return;
-    const ch = this.channel(e.part, p), peak = p.gain * e.vel;
+    const ch = this.channel(e.part, p, e.layer === "circle"), peak = p.gain * e.vel;
+    const pf = (this.notePitch = e.layer === "circle" ? 1 : this.pitch); // (the tape slowing: the circle's own layer never)
     switch (p.kind) {
-      case "kick": this.kick(t, p, peak, ch.in); this.duck(t, e.vel, sps); break;
+      case "kick": this.kick(t, pf === 1 ? p : { ...p, pitch: (p.pitch ?? 150) * pf, pitchEnd: (p.pitchEnd ?? 45) * pf }, peak, ch.in); this.duck(t, e.vel, sps); break;
       case "noise": this.noiseHit(t, p, peak, ch.in); break;
       case "snare": this.snare(t, p, peak, ch.in); break;
-      case "bell": this.bell(t, p, peak, mtof(e.midi ?? 69), ch.in); break;
-      case "synth": this.synth(t, p, peak, mtof(e.midi ?? 45), dur, ch); break;
-      case "voice": this.voice(t, p, peak, mtof(e.midi ?? 57), dur, e.step, ch.in); break;
+      case "bell": this.bell(t, p, peak, mtof(e.midi ?? 69) * pf, ch.in); break;
+      case "synth": this.synth(t, p, peak, mtof(e.midi ?? 45) * pf, dur, ch); break;
+      case "voice": this.voice(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch.in); break;
       case "riser": this.riser(t, p, dur, e.from ?? 0, e.to ?? 1, ch.in); break;
       case "impact": this.impact(t, p, peak, ch.in); break;
     }
@@ -234,6 +290,7 @@ export class MusicEngine {
     const s = this.ctx.createBufferSource();
     s.buffer = metal ? this.metal : this.noise;
     s.loop = length > 1.5;
+    if (this.notePitch !== 1) s.playbackRate.value = this.notePitch; // (the tape slowing: hats and snares drop too)
     s.start(t, ((t * 7.31) % 1) * 0.5);
     s.stop(t + length);
     return s;

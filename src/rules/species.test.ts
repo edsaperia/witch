@@ -10,8 +10,8 @@ import type { Creature } from "./creatures";
 // Ed's species pass (2026-10-05): a fight profile for every species, and the new signature moves.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 /** A quiet game, the witch on the ground away from everything, too tough to knock out. */
-function quiet(): Game {
-  const g = newGame(77, TUNING);
+function quiet(seed = 77): Game {
+  const g = newGame(seed, TUNING);
   g.clock.paused = false;
   const d = g.map.dancefloor;
   g.witch = { ...g.witch, seated: false, x: d.x, z: d.z + 20, mode: "ground", lift: 0 };
@@ -23,7 +23,7 @@ const pick = (g: Game, species: string, level: Level, dx: number, dz: number) =>
   const w = g.witch, x = w.x + dx, z = w.z + dz;
   const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && !(k as unknown as { used?: boolean }).used && Math.hypot(k.x - w.x, k.z - w.z) > 150)!;
   (c as unknown as { used: boolean }).used = true;
-  Object.assign(c, { species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, rest: 0 });
+  Object.assign(c, { circle: undefined, species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, rest: 0 });
   c.cell = g.map.cellSafe(w.x, w.z).cell as [number, number];
   g.byArea = null;
   return c;
@@ -135,14 +135,16 @@ describe("fight profiles for every species (Ed's species pass)", () => {
   }, 60000);
 
   it("has beavers brace against shots, blocking them, then slap back", () => {
-    const g = quiet();
-    setupArena(g, "raven*3@2,beaver*2@2");
-    const beavers = g.arena!.ids.map(i => g.creatures[i]).filter(c => c.species === "beaver"), ids = new Set(beavers.map(b => b.id));
     let braced = 0, blocked = 0;
-    run(g, 10, () => { for (const e of g.combat.events) if (e.at === g.clock.time && ids.has(e.id!)) { if (e.kind === "braced") braced++; if (e.kind === "blocked") blocked++; } });
+    for (const seed of [77, 78, 79, 80, 1, 90210]) { // (over a few fights: in any one, the ravens may happen to shoot the other beaver)
+      const g = quiet(seed);
+      setupArena(g, "raven*3@2,beaver*2@2");
+      const beavers = g.arena!.ids.map(i => g.creatures[i]).filter(c => c.species === "beaver"), ids = new Set(beavers.map(b => b.id));
+      run(g, 20, () => { for (const e of g.combat.events) if (e.at === g.clock.time && ids.has(e.id!)) { if (e.kind === "braced") braced++; if (e.kind === "blocked") blocked++; } });
+    }
     expect(braced).toBeGreaterThan(0);
     expect(blocked).toBeGreaterThan(0);
-  }, 60000);
+  }, 120000);
 
   it("has a snail leave a slime trail that slows her", () => {
     const g = quiet(), W = g.witches[0];

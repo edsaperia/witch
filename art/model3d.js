@@ -101,7 +101,7 @@ export const PITCH = .52;                       // the camera looks down about 3
 // Renders a model to a Sprite `height` art pixels tall (measured over the parts not marked extra).
 // With `scale` (pixels per model unit) instead, several models share one scale.
 // With `measure`, it only works out the scale (pixels per unit) `height` would give: { s }.
-export function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false } = {}) {
+export function render(model, { height, scale, facing = "towards", yaw = YAW[facing] ?? YAW.towards, pitch = PITCH, lineGap = .12, measure = false, keepDepth = false } = {}) {
   const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), spp = Math.sin(pitch);
   // model.atScale(pxPerUnit): parts that must be sized in pixels (an expression's face: genome/expressions.js), added once the scale is known
   if (model.atScale && !measure) { const f = model.atScale; model.atScale = null; f(scale ?? render(model, { height, facing, yaw, pitch, lineGap, measure: true }).s); }
@@ -124,7 +124,13 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
   const u0b = Math.min(...body.map(q => q.u0 + (q.uw ? 0 : k))), u1b = Math.max(...body.map(q => q.u1 - (q.uw ? 0 : k)));
   const s = scale ?? height / Math.max(1e-6, u1b - u0b);
   if (measure) return { s };
-  const X0 = Math.min(...all.map(q => q.x0)), X1 = Math.max(...all.map(q => q.x1)), U0 = Math.min(...all.map(q => q.u0)), U1 = Math.max(...all.map(q => q.u1));
+  let X0 = Math.min(...all.map(q => q.x0)), X1 = Math.max(...all.map(q => q.x1)), U0 = Math.min(...all.map(q => q.u0)), U1 = Math.max(...all.map(q => q.u1));
+  // model.phaseOnBody: its pixel grid set by its body alone, the extras (a long cloak's train) only widening the sprite by whole
+  // pixels, so a thin band on the body lands on the same pixels however far an extra reaches (the witch: art/witch.js)
+  if (model.phaseOnBody && body.length) {
+    const X0b = Math.min(...body.map(q => q.x0)), U1b = Math.max(...body.map(q => q.u1));
+    X0 = X0b - Math.ceil((X0b - X0) * s - 1e-9) / s; U1 = U1b + Math.ceil((U1 - U1b) * s - 1e-9) / s;
+  }
   const W = Math.ceil((X1 - X0) * s) + 4, H = Math.ceil((U1 - U0) * s) + 2, sp = new Sprite(W, H);
   const depth = new Float32Array(W * H).fill(Infinity), grp = new Int16Array(W * H).fill(-1);
   // which parts can touch each 8 x 8 tile of pixels
@@ -212,7 +218,13 @@ export function render(model, { height, scale, facing = "towards", yaw = YAW[fac
   sp.bodyH = Math.round((u1b - u0b) * s); // the body's height, without parts marked extra (antlers, wings)
   // where a point of the model lands on the sprite, in pixels from its top-left (for anchors: a hand, a hat tip)
   const project = p => { const w = toWorld(p); return [+(((w[0] - X0) * s + 1).toFixed(1)), +(((U1 - dot(w, U)) * s + drop).toFixed(1))]; };
-  return { sp, s, project };
+  if (!keepDepth) return { sp, s, project };
+  // keepDepth (the bedroom, for whatever walks in it): each pixel's distance along the view (moved down with the rows, Infinity
+  // where empty), and depthOf, the same distance for a point of the model, to compare with it
+  const zbuf = new Float32Array(W * H).fill(Infinity);
+  for (let y = H - 1; y >= drop; y--) zbuf.set(depth.subarray((y - drop) * W, (y - drop + 1) * W), y * W);
+  const depthOf = p => 50 - dot(toWorld(p), B);
+  return { sp, s, project, depth: zbuf, depthOf };
 }
 
 // Paint helpers: a pattern from model coordinates.

@@ -24,11 +24,24 @@ function serve() {
   return new Promise(r => server.listen(0, "127.0.0.1", () => r(server)));
 }
 
-// Zoom keys (rise and descend are Q; E is the sigil button; right click or Space dashes).
+// Zoom keys (rise and descend are Space; E puts a sigil down, Q cycles; right click dashes).
 const ZOOM_IN = "KeyZ", ZOOM_OUT = "KeyX";
 const TRUNK_ROUND = 1.3; // across a trunk, its lit side over its shaded one (median): the bluebell glade's flat beeches measured 1.21, shaded ones 1.40
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// Known failures (the coordinator, 2026-10-06: "make the list small and honest, so a red full smoke
+// means something new"): checks that fail on claude/prototype itself for a reason we know and have an
+// issue for. A known check that fails is reported apart ("known: N") and doesn't fail the run; one that
+// passes says so, so it can come off the list. Every entry: the check's key, its issue, and why.
+const KNOWN = {
+  "speed-build": { issue: 310, why: "absolute CPU budget on the cloud's shared, slower CPU" },
+  "boost-p99": { issue: 310, why: "absolute CPU budget on the cloud's shared, slower CPU" },
+  "boost-worst": { issue: 310, why: "absolute CPU budget on the cloud's shared, slower CPU" },
+  "pops": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
+  "vanish-1900x1240": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
+  "vanish-2000x1076": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
+};
 
 async function main() {
   fs.mkdirSync(out, { recursive: true });
@@ -39,7 +52,13 @@ async function main() {
   });
   const errors = [];
   const results = [];
-  const check = (ok, what) => { results.push(`${ok ? "ok  " : "FAIL"} ${what}`); if (!ok) errors.push(what); };
+  const known = [], fixed = [];
+  const check = (ok, what, key) => {
+    const k = key && KNOWN[key];
+    if (k && !ok) { results.push(`KNOWN ${what} (#${k.issue}: ${k.why})`); known.push(`${what} (#${k.issue})`); return; }
+    if (k && ok) fixed.push(`${key} (#${k.issue})`);
+    results.push(`${ok ? "ok  " : "FAIL"} ${what}`); if (!ok) errors.push(what);
+  };
 
   let shared = null;
   async function run(name, viewport, steps, query) {
@@ -89,11 +108,11 @@ async function main() {
     check(groundSpeed > tuning.groundSpeed * 0.6 && groundSpeed <= tuning.groundSpeed * 1.01, `flies east on the ground (${groundSpeed.toFixed(1)} m/s)`);
     check(s.mode === "ground", "still in ground mode");
     await shot(page, "02-ground-flying.png");
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     // The rise takes riseTime of game time: wait for it to finish, however slow the frames here.
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 400000, polling: 50 }).catch(() => {});
     s = await state(page);
-    check(s.mode === "treetop", `Q rises to treetop mode (${s.mode})`);
+    check(s.mode === "treetop", `space rises to treetop mode (${s.mode})`);
     await shot(page, "03-treetop.png");
     [s0, s] = await hold(page, "ArrowUp", 2);
     const topSpeed = (s0.z - s.z) / (s.t - s0.t);
@@ -113,7 +132,7 @@ async function main() {
           await hold(page, keys[(z + 1) % 4], 0.6);
         }
         for (let i = 0; i < steps; i++) { await page.keyboard.press(ZOOM_IN); await hold(page, keys[i % 4], 0.3); }
-        await page.keyboard.press("KeyQ"); // change mode mid-path
+        await page.keyboard.press("Space"); // change mode mid-path
         await hold(page, "ArrowUp", 1.2);
       }
     };
@@ -121,7 +140,7 @@ async function main() {
     // Again in a Heath (gorse: small bright details), where Ed saw bushes blink.
     const heath = await page.evaluate(() => {
       const g = window.witch.game, m = g.map;
-      for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+      for (const [x, y] of m.cells) {
         if (window.witch.areaTypeId(m.typeOf(x, y)) !== "heath") continue;
         const s = m.siteOf(x, y), px = s.x + 20, pz = s.z + 20;
         g.witch = { ...g.witch, x: px, z: pz, vx: 0, vz: 0 }; g.camera = { ...g.camera, tx: px, tz: pz };
@@ -143,16 +162,16 @@ async function main() {
     check(!!heath, `the pop check also flies a Heath (${heath})`);
     const pops = await page.evaluate(() => window.witch.view.pops.slice(0, 12));
     const popCount = await page.evaluate(() => window.witch.view.pops.length);
-    check(popCount === 0, `nothing pops in or out in clear view, flying through every zoom level in both modes (${popCount})${popCount ? ": " + pops.join("; ") : ""}`);
+    check(popCount === 0, `nothing pops in or out in clear view, flying through every zoom level in both modes (${popCount})${popCount ? ": " + pops.join("; ") : ""}`, "pops");
     await page.waitForFunction(() => !["rising", "descending"].includes(window.witch.game.witch.mode), null, { timeout: 60000 });
-    if (await page.evaluate(() => window.witch.game.witch.mode) !== "treetop") { await page.keyboard.press("KeyQ"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 }); }
+    if (await page.evaluate(() => window.witch.game.witch.mode) !== "treetop") { await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 }); }
     await page.keyboard.press(ZOOM_OUT); await page.keyboard.press(ZOOM_OUT);
     await sleep(800);
     await shot(page, "05-treetop-zoomed-out.png");
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 60000 }).catch(() => {});
     s = await state(page);
-    check(s.mode === "ground", `Q descends to ground mode (${s.mode})`);
+    check(s.mode === "ground", `space descends to ground mode (${s.mode})`);
     await shot(page, "06-ground-zoomed-out.png");
     await page.keyboard.press(ZOOM_IN); await page.keyboard.press(ZOOM_IN); await page.keyboard.press(ZOOM_IN);
     await sleep(800);
@@ -188,7 +207,7 @@ async function main() {
     await run(`tilt-${tilt}`, { width: 1280, height: 720 }, async page => {
       await page.keyboard.press("Enter");
       await hold(page, "ArrowUp", 1);
-      await page.keyboard.press("KeyQ");
+      await page.keyboard.press("Space");
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
       await sleep(600);
       await shot(page, `2${["before", "after", "off"].indexOf(tilt)}-tilt-${tilt}.png`);
@@ -200,7 +219,7 @@ async function main() {
     await page.keyboard.press("Enter");
     await sleep(1500);
     await shot(page, "40-dancefloor-ground.png");
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.lift > 0.3, null, { timeout: 60000, polling: 20 });
     await page.screenshot({ path: path.join(out, "42-rising.png") }); // no settle: catch her mid-climb
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
@@ -208,17 +227,19 @@ async function main() {
     await shot(page, "41-dancefloor-treetop.png");
     // The wave numbers follow the bend (Ed, 2026-10-05: "the glowing numbers can be seen past the
     // bend"): over the treetops, none shows for a stone hidden behind the bent horizon.
-    const t0 = await page.evaluate(() => window.witch.game.clock.time);
+    // (they're a design aid, off in the tuning since #188's round: on for this check, off again after)
+    const t0 = await page.evaluate(() => { const g = window.witch.game; g.tuning.waveNumbers.on = true; return g.clock.time; });
     await page.waitForFunction(t => window.witch.game.clock.time - t >= 1.5, t0, { timeout: 240000, polling: 50 }); // (their fade settles)
     const nb = await page.evaluate(() => {
       const v = window.witch.view, list = v.waveNumbers.last;
       let hidden = 0, shownPast = 0;
       for (const n of list) { const k = v.overBulge(n.x, n.z, n.top ?? 0); if (k === 0) { hidden++; if ((n.show ?? 1) > 0.1) shownPast++; } }
+      window.witch.game.tuning.waveNumbers.on = false;
       return { drawn: list.length, hidden, shownPast };
     });
     check(nb.shownPast === 0 && nb.drawn > 0, `over the treetops, no wave number shows for a stone past the bent horizon (${nb.drawn} drawn, ${nb.hidden} past the horizon, ${nb.shownPast} still showing)`);
     // Behind the home soundsystem (up the screen from it), on the ground: she must still read.
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 60000 });
     await page.evaluate(() => { const g = window.witch.game, d = g.map.dancefloor, x = d.x + d.radius + 5, z = d.z + 3 - 2.5; g.witch = { ...g.witch, x, z, vx: 0, vz: 0 }; g.camera = { ...g.camera, tx: x, tz: z }; });
     await sleep(1500);
@@ -233,7 +254,7 @@ async function main() {
       await hold(page, "ArrowRight", 1.5);
       await sleep(300);
       await shot(page, `30-ground-${name}.png`);
-      await page.keyboard.press("KeyQ");
+      await page.keyboard.press("Space");
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
       await sleep(600);
       await shot(page, `31-treetop-${name}.png`);
@@ -244,7 +265,7 @@ async function main() {
   await run("party", { width: 1280, height: 720 }, async page => {
     await page.keyboard.press("Enter");
     await page.keyboard.press("KeyP"); // hold the timer: the waves come when asked
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
     await page.keyboard.press("KeyN");
     await page.waitForFunction(() => window.witch.game.party.wave >= 1, null, { timeout: 60000 });
@@ -262,11 +283,11 @@ async function main() {
       await page.waitForFunction(t => window.witch.game.clock.time >= t, at.t + dt, { timeout: 400000, polling: 50 });
       await shot(page, `5${i}-party-transition-${i}.png`);
     }
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 60000 });
     await sleep(800);
     await shot(page, "55-string-lights-ground.png");
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
     await sleep(800);
     await shot(page, "56-string-lights-treetop.png");
@@ -290,7 +311,7 @@ async function main() {
   await run("earth", { width: 960, height: 600 }, async page => {
     await page.keyboard.press("Enter");
     for (let i = 0; i < 2; i++) { await page.keyboard.press("KeyN"); await sleep(400); }
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 300000 });
     await sleep(1500);
     const r = await page.evaluate(() => {
@@ -313,18 +334,16 @@ async function main() {
     check(r.through.length === 0, `nothing drawn without a depth test shows through the bent earth${r.through.length ? ": " + r.through.join("; ") : ""}`);
   });
 
-  // The ley lines (Ed, 2026-10-04; 2026-10-05: "six sections long, showing the next three and the past three
-  // runestones"): from the last stone reached on through leyLines.ahead stones in wave order and back through up to
-  // leyLines.behind reached before it, drawn on the ground and over the treetops; a wave moves the chain on (its last
-  // reached is then a stone the old chain led to next), and the ones left behind stay drawn behind it. Only the next
-  // stone has a HUD indicator ("not the next two"). Shots of both.
+  // The ley lines (Ed, 2026-10-04; 2026-10-06: "I think the leylines should cover the entire set of waves the whole
+  // time, but ideally it shouldn't cross itself"): through every area's runestone in wave order, home first, drawn on
+  // the ground and over the treetops; a wave moves the last stone reached on along the same line. Only the next stone
+  // has a HUD indicator ("not the next two"). Shots of both.
   await run("ley", { width: 960, height: 600 }, async page => {
     await page.keyboard.press("Enter");
-    const drawn = () => page.evaluate(() => { const L = window.witch.view.ley, c = L.chain, k = L.current, at = i => c[i]?.cell.join(","); return { visible: L.meshes[0].visible, links: c.length - 1, current: k, tris: (L.meshes[0].geometry.index?.count ?? 0) / 3, here: at(k), next: at(k + 1), after: at(k + 2), stones: c.map(s => s.cell.join(",")), cues: window.witch.view.nextStones.length, after2: "afterNextStones" in window.witch.view, waking: window.witch.game.party.next.length }; });
-    await page.waitForFunction(() => window.witch.view.ley.chain.length > 1, null, { timeout: 120000, polling: 200 });
+    const drawn = () => page.evaluate(() => { const L = window.witch.view.ley, c = L.chain, k = L.current, at = i => c[i]?.cell.join(","); return { visible: L.meshes[0].visible, links: c.length - 1, areas: window.witch.game.map.cells.length, current: k, tris: (L.meshes[0].geometry.index?.count ?? 0) / 3, here: at(k), next: at(k + 1), after: at(k + 2), stones: c.map(s => s.cell.join(",")), cues: window.witch.view.nextStones.length, after2: "afterNextStones" in window.witch.view, waking: window.witch.game.party.next.length }; });
+    await page.waitForFunction(() => window.witch.view.ley.chain.length > 1, null, { timeout: 300000, polling: 200 });
     const a = await drawn();
-    const L = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "../../config/tuning.json"), "utf8")).leyLines, AHEAD = L.ahead, BEHIND = L.behind;
-    check(a.visible && a.current === 0 && a.links === AHEAD && a.tris > 20 * AHEAD, `the ley lines are drawn from home on through the next ${AHEAD} stones, nothing behind yet: ${a.links} sections, the last reached at ${a.current} (${a.tris} triangles)`);
+    check(a.visible && a.current === 0 && a.links === a.areas - 1 && a.tris > 20 * a.links, `the ley line is drawn from home through every area (${a.links} sections for ${a.areas} areas), the last reached at ${a.current} (${a.tris} triangles)`);
     check(a.cues <= Math.max(1, a.waking) && !a.after2, `only the next stone has a HUD indicator (${a.cues} for the ${a.waking} waking next${a.after2 ? "; an after-next one is still there" : ""})`);
     await page.evaluate(() => { const g = window.witch.game; g.witch = { ...g.witch, seated: false }; });
     await sleep(2500);
@@ -332,11 +351,10 @@ async function main() {
     for (let i = 0; i < 2; i++) { await page.keyboard.press("KeyN"); await sleep(600); }
     await page.waitForFunction(k => { const L = window.witch.view.ley; return L.chain[L.current]?.cell.join(",") !== k; }, a.here, { timeout: 120000, polling: 200 }).catch(() => {});
     const b = await drawn();
-    // Two waves wake one or two stones each, so the last reached is now one the chain led to next, or after;
-    // the stones before it stay drawn behind (up to leyLines.behind), the next leyLines.ahead on ahead.
-    check(b.here !== a.here && (b.here === a.next || b.here === a.after) && b.current >= 1 && b.current <= BEHIND && b.links === b.current + AHEAD && b.stones.includes(a.here),
-      `two waves on, the chain has moved on and keeps the way it came (${a.here} → ${a.next} → ${a.after}, now ${b.stones.slice(0, b.current).join(" → ")} → [${b.here}] → ${b.next}: ${b.current} behind, ${b.links - b.current} ahead)`);
-    await page.keyboard.press("KeyQ");
+    // Two waves wake a stone each: the same line, the last reached moved on along it.
+    check(b.here !== a.here && b.current >= 1 && b.stones.join(";") === a.stones.join(";") && (b.here === a.next || b.here === a.after),
+      `two waves on, the same line, moved on along it (${a.here} → ${a.next} → ${a.after}, now at ${b.here}, ${b.current} behind, ${b.links - b.current} ahead)`);
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 300000 });
     await page.keyboard.press(ZOOM_OUT); await page.keyboard.press(ZOOM_OUT);
     await sleep(3000);
@@ -356,11 +374,11 @@ async function main() {
         let t = -1;
         for (let i = 0; i < 64 && t < 0; i++) { try { if (window.witch.areaTypeId(i) === id) t = i; } catch { break; } }
         let best = null, bn = -1;
-        for (let cy = 0; cy < m.n; cy++) for (let cx = 0; cx < m.n; cx++) if (m.typeOf(cx, cy) === t) {
+        for (const [cx, cy] of m.cells) if (m.typeOf(cx, cy) === t) {
           const s = m.siteOf(cx, cy);
           for (let k = 0; k < 60; k++) {
             const a = k * 0.7, d = m.areaSize * (0.1 + (k % 6) * 0.07), x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
-            if (x < B.minX + 30 || x > B.maxX - 30 || z < B.minZ + 30 || z > B.maxZ - 30) continue;
+            if (x < B.minX + 30 || x > B.maxX - 30 || z < B.minZ + 30 || z > B.maxZ - 30 || (B.circle && Math.hypot(x - B.circle.x, z - B.circle.z) > B.circle.r - 30)) continue;
             const q = m.areaAt(x, z);
             if (q.cell[0] !== cx || q.cell[1] !== cy || m.paths.at(x, z, 3)) continue;
             const n = g.forest.treesNear(x, z, 14).filter(p => Math.hypot(p.x - x, p.z - z) < 14).length;
@@ -438,10 +456,14 @@ async function main() {
     await page.keyboard.down("Digit1");
     await page.waitForFunction(t => window.witch.game.clock.time >= t, t0 + 0.5, { timeout: 400000, polling: 50 });
     await shot(page, "70-leash-talk.png");
-    // (#87: a full meter makes a wild one happy, and it would wander off to dance; a second fill leashes it: it's held in front of her.)
-    await page.waitForFunction(i => { const g = window.witch.game, c = g.creatures[i]; g.witch = { ...g.witch, facing: 1 }; Object.assign(c, { x: g.witch.x + 5, z: g.witch.z, tx: g.witch.x + 5, tz: g.witch.z, anchorX: g.witch.x + 5, anchorZ: g.witch.z, dancing: false }); return c.leashed; }, id, { timeout: 400000, polling: 100 });
+    // (#87: a full meter makes a wild one happy, and it would wander off to dance: it's held in front of her. Since 2026-10-06
+    // its sigil lies as a rune at its feet, and E beside it leashes it.)
+    await page.waitForFunction(i => { const g = window.witch.game, c = g.creatures[i]; g.witch = { ...g.witch, facing: 1 }; Object.assign(c, { x: g.witch.x + 5, z: g.witch.z, tx: g.witch.x + 5, tz: g.witch.z, anchorX: g.witch.x + 5, anchorZ: g.witch.z, dancing: false }); return c.state === "happy" || c.leashed; }, id, { timeout: 400000, polling: 100 });
     await page.keyboard.up("Digit1");
-    check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "her 💌s at a creature fill its meter and invite it onto her sigil stack");
+    await page.evaluate(i => { const g = window.witch.game, c = g.creatures[i]; Object.assign(c, { x: g.witch.x + 0.8, z: g.witch.z, tx: g.witch.x + 0.8, tz: g.witch.z, anchorX: g.witch.x + 0.8, anchorZ: g.witch.z }); }, id);
+    await page.keyboard.press("KeyE");
+    await page.waitForFunction(i => window.witch.game.creatures[i].leashed, id, { timeout: 60000, polling: 100 }).catch(() => {});
+    check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "her 💌s at a creature fill its meter, and E on its rune invites it onto her sigil stack");
     // One press a frame: wait for each invite to land before the next (the headless renderer is slow).
     for (let i = 0; i < 3; i++) {
       const before = await page.evaluate(() => window.witch.game.leash.stack.length);
@@ -475,7 +497,7 @@ async function main() {
     await page.keyboard.press("Enter");
     let k = 0;
     for (const mode of ["ground", "treetop"]) {
-      if (mode === "treetop") { await page.keyboard.press("KeyQ"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 }); }
+      if (mode === "treetop") { await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 }); }
       for (const z of [ZOOM_OUT, ZOOM_OUT, ZOOM_IN, ZOOM_IN, ZOOM_IN]) {
         await page.keyboard.press(z);
         await page.keyboard.down("ArrowRight");
@@ -491,7 +513,7 @@ async function main() {
   // prefetch ahead of her), and the frames themselves.
   await run("speed", { width: 1280, height: 800 }, async page => {
     await page.keyboard.press("Enter");
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 300000 });
     await page.evaluate(() => {
       window.speedLog = { forest: [], frame: [], last: 0 };
@@ -502,7 +524,8 @@ async function main() {
     const r = await page.evaluate(() => { const L = window.speedLog; L.stop = true; const q = (a, k) => { const b = [...a].sort((x, y) => x - y); return b.length ? b[Math.min(b.length - 1, Math.floor(k * (b.length - 1)))] : 0; }; return { n: L.forest.length, worst: q(L.forest, 1), p99: q(L.forest, 0.99), median: q(L.forest, 0.5), frameMedian: q(L.frame, 0.5), frameWorst: q(L.frame, 1), missing: window.witch.view.stats.forestMissing }; });
     const dist = Math.hypot(s1.x - s0.x, s1.z - s0.z), speed = dist / (s1.t - s0.t);
     results.push(`info speed: ${dist.toFixed(0)} m of fresh forest at ${speed.toFixed(1)} m/s; forest building per frame: median ${r.median.toFixed(1)} ms, p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms over ${r.n} frames; frames here (software renderer): median ${r.frameMedian.toFixed(0)} ms, worst ${r.frameWorst.toFixed(0)} ms`);
-    check(dist > 150 && r.p99 <= 16, `flying into new forest at full boost, building it costs at most 16 ms in 99% of frames (p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms)`);
+    check(dist > 150, `flying into new forest at full boost covers fresh ground (${dist.toFixed(0)} m)`);
+    check(r.p99 <= 16, `flying into new forest at full boost, building it costs at most 16 ms in 99% of frames (p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms)`, "speed-build");
   });
 
   // The hills at their default (Ed, v289): from the steepest spot near home (its shot, to catch
@@ -614,8 +637,9 @@ async function main() {
       return { hover: q(hover, 0.5), median: q(boost, 0.5), p99: q(boost, 0.99), worst: q(boost, 1), top, dist: Math.hypot(w.game.witch.x - x0, w.game.witch.z - z0) };
     });
     results.push(`info boost: ${r.dist.toFixed(0)} m north in 10 s at up to ${r.top.toFixed(0)} m/s; frame work hovering ${r.hover.toFixed(1)} ms (median), boosting median ${r.median.toFixed(1)} ms, p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms`);
-    check(r.top > 100 && r.p99 <= 22, `boosting over the treetops at over 100 m/s, 99% of frames' own work is within 22 ms (p99 ${r.p99.toFixed(1)} ms)`);
-    check(r.worst <= 40, `boosting over the treetops, no frame's own work takes over 40 ms (worst ${r.worst.toFixed(1)} ms)`);
+    check(r.top > 100, `boosting over the treetops goes over 100 m/s (${r.top.toFixed(0)} m/s)`);
+    check(r.p99 <= 22, `boosting over the treetops, 99% of frames' own work is within 22 ms (p99 ${r.p99.toFixed(1)} ms)`, "boost-p99");
+    check(r.worst <= 40, `boosting over the treetops, no frame's own work takes over 40 ms (worst ${r.worst.toFixed(1)} ms)`, "boost-worst");
   });
 
   // Nothing floats (Ed, v108: rocks in the cave mouth hovered over their shadows): every placed
@@ -626,7 +650,7 @@ async function main() {
     const cave = await page.evaluate(() => {
       const g = window.witch.game, m = g.map, d = m.dancefloor;
       let best = null;
-      for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+      for (const [x, y] of m.cells) {
         if (window.witch.areaTypeId(m.typeOf(x, y)) !== "cave-mouth") continue;
         const s = m.siteOf(x, y), k = Math.hypot(s.x - d.x, s.z - d.z);
         if (!best || k < best.k) best = { x, y, k, s };
@@ -686,7 +710,8 @@ async function main() {
           const err = Math.max(0, ...[-half, half].map(s => base - h(cx + R.x * s, cz + R.z * s))) / b.metresPerPixel;
           out.n++; if (Math.abs(base) > 0.3) out.hilly++;
           if (err > out.worst) out.worst = err;
-          if (err > 1 && out.bad.length < 6) out.bad.push(`${typeof type === "number" ? window.witch.areaTypeId(type) : type} ${err.toFixed(1)} px`);
+          // (feet snap to whole art pixels, so one exactly a pixel off reads a hair over 1 from the height's rounding: 0.05 px of slack)
+          if (err > 1.05 && out.bad.length < 6) out.bad.push(`${typeof type === "number" ? window.witch.areaTypeId(type) : type} ${err.toFixed(2)} px`);
         }
       }
       return out;
@@ -703,7 +728,7 @@ async function main() {
       await page.evaluate(() => { const v = window.witch.view; v.pops = []; v.trackPops = true; window.maxDropped = 0; setInterval(() => { window.maxDropped = Math.max(window.maxDropped, v.stats.dropped); }, 50); });
       await hold(page, "ArrowRight", 4, 600000);
       await shot(page, `vanish-${w}x${h}-ground.png`);
-      await page.keyboard.press("KeyQ");
+      await page.keyboard.press("Space");
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 300000 });
       await hold(page, "ArrowRight", 5, 600000);
       await hold(page, "ArrowUp", 4, 600000);
@@ -713,7 +738,7 @@ async function main() {
       await shot(page, `vanish-${w}x${h}-treetop-out.png`);
       const r = await page.evaluate(() => ({ dropped: window.maxDropped, pops: window.witch.view.pops.slice(0, 12), n: window.witch.view.pops.length, trees: window.witch.view.stats.trees, radius: window.witch.view.stats.sceneryRadius, fps: window.witch.view.stats.fps }));
       check(r.dropped === 0, `${w}x${h} at DPR ${dpr}: every tree, bush and creature set is drawn (most dropped in a frame: ${r.dropped}; ${r.trees} trees now; scenery radius ${(r.radius ?? 0).toFixed(0)} m at ${(r.fps ?? 0).toFixed(1)} fps)`);
-      check(r.n === 0, `${w}x${h} at DPR ${dpr}: nothing appears or vanishes on screen in full-speed flight (${r.n})${r.n ? ": " + r.pops.join("; ") : ""}`);
+      check(r.n === 0, `${w}x${h} at DPR ${dpr}: nothing appears or vanishes on screen in full-speed flight (${r.n})${r.n ? ": " + r.pops.join("; ") : ""}`, `vanish-${w}x${h}`);
     }, "&debug=cull");
   }
 
@@ -724,7 +749,7 @@ async function main() {
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 120000 });
     await page.keyboard.press("Enter");
     await page.keyboard.down("ArrowRight"); await sleep(2500); await page.keyboard.up("ArrowRight");
-    await page.keyboard.press("KeyQ"); await sleep(800);
+    await page.keyboard.press("Space"); await sleep(800);
     await page.keyboard.down("ArrowUp"); await sleep(3500); await page.keyboard.up("ArrowUp");
     const video = page.video();
     await ctx.close();
@@ -734,6 +759,8 @@ async function main() {
   await browser.close();
   server.close();
   console.log(results.join("\n"));
+  if (known.length) console.log(`\nknown: ${known.length} (failing for a known reason, not counted: tools/smoke/smoke.cjs KNOWN)\n` + known.map(k => "- " + k).join("\n"));
+  if (fixed.length) console.log(`\nknown checks now passing (take them off KNOWN if they keep passing): ${fixed.join(", ")}`);
   if (errors.length) { console.error("\nFAILED:\n" + errors.join("\n")); process.exit(1); }
   console.log("\nsmoke test passed");
 }

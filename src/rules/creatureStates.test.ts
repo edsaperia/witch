@@ -26,7 +26,7 @@ function place(g: Game, species: string, level: Level, dx: number, dz: number, s
   const w = g.witch, x = w.x + dx, z = w.z + dz;
   const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && !(k as unknown as { used?: boolean }).used && Math.hypot(k.x - w.x, k.z - w.z) > 200)!;
   (c as unknown as { used: boolean }).used = true;
-  Object.assign(c, { species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, rest: 0, fight: undefined, enraged: false, state: undefined });
+  Object.assign(c, { circle: undefined, species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, rest: 0, fight: undefined, enraged: false, state: undefined });
   c.cell = g.map.cellSafe(x, z).cell as [number, number];
   if (state === "happy") c.state = "happy";
   if (state === "enraged") { c.enraged = true; c.state = "enraged"; }
@@ -79,7 +79,7 @@ describe("creature states (#87)", () => {
     const g = quiet(), w = place(g, "boar", 1, 4, 0), l = place(g, "wolf", 2, 0, 0, "leashed");
     w.hp = 0.5;
     let dazedAt = -1;
-    run(g, 20, () => { if (dazedAt < 0 && w.dazed) dazedAt = g.clock.time; });
+    run(g, TUNING.combat.daze + 12, () => { if (dazedAt < 0 && w.dazed) dazedAt = g.clock.time; });
     expect(dazedAt).toBeGreaterThan(0);
     expect(w.fleeUntil).toBeTruthy(); // ran off once its daze was over
     // While dazed: untouched, and invitable.
@@ -87,14 +87,16 @@ describe("creature states (#87)", () => {
     w2.hp = 0.5;
     for (let i = 0; i < 20 / STEP && !w2.dazed; i++) stepGame(g2, idle, STEP);
     expect(w2.dazed).toBe(true);
+    expect(TUNING.combat.daze).toBe(20); // (Ed, 2026-10-06)
+    expect(w2.dazedUntil! - g2.clock.time).toBeGreaterThan(TUNING.combat.daze - 1); // (down the full stun)
     const hp = w2.hp;
-    run(g2, STATES.daze * 0.5, () => { expect(targets(l2, w2)).toBe(false); });
+    run(g2, TUNING.combat.daze * 0.5, () => { expect(targets(l2, w2)).toBe(false); });
     expect(w2.hp).toBe(hp);
     expect(invitable(w2)).toBe(true);
     const world = { time: g2.clock.time, leash: (c: Creature) => inviteCreature(g2.leash, c, c.x, c.z, g2.clock.time) };
     for (let i = 0; i < 20 && stateOf(w2) === "wild"; i++) hit(world, w2, 1, g2.clock.time + i);
     expect(stateOf(w2)).toBe("happy");
-    run(g2, STATES.daze);
+    run(g2, TUNING.combat.daze);
     expect(w2.fleeUntil).toBeFalsy(); // happy now: it doesn't run off
     void l; void l2;
   }, 60000);
@@ -122,8 +124,9 @@ describe("creature states (#87)", () => {
   });
 
   it("fills the 💌 meter: more hits at higher levels, one counted per creature every gap, draining slowly; full, it's happy, and full again (states.leash 'again') it's leashed", () => {
-    const g = quiet(), leash = newLeash();
-    for (const level of [0, 1, 2] as const) {
+    const g = quiet(), leash = newLeash(), saved = STATES.leash;
+    STATES.leash = "again"; // (the old second meter, kept behind the flag: the game picks up a rune now, pickup.test.ts)
+    try { for (const level of [0, 1, 2] as const) {
       const c = place(g, "hare", level, level * 5, 0), world = { time: 0, leash: (k: Creature) => inviteCreature(leash, k, k.x, k.z, 0) };
       const need = STATES.affection.hits[level];
       let t = 100;
@@ -137,7 +140,7 @@ describe("creature states (#87)", () => {
       for (let i = 0; i < need; i++) hit(world, c, 1, t + 1 + i * STATES.affection.gap);
       expect(c.leashed).toBe(true);
       expect(leash.stack).toContain(c.id);
-    }
+    } } finally { STATES.leash = saved; }
   });
 
   it("leashes a happy one held on for holdTime (states.leash 'hold'), starting over if let go", () => {
@@ -170,5 +173,39 @@ describe("creature states (#87)", () => {
     // by the soundsystem, or at one of the party places, in a slot round it (partyGuests.ts guestSlot)
     const places = [site, ...partySpots(g.map, h.cell, g.tuning)];
     expect(Math.min(...places.map(p => Math.hypot(h.anchorX - p.x, h.anchorZ - p.z)))).toBeLessThan(h.range < 1 ? 7 : 0.01);
+  }, 60000);
+});
+
+describe("happy animals defend their own area (no guards now; the happy still fight the enraged)", () => {
+  const sameCell = (g: Game, a: Creature, x: number, z: number) => { const k = g.map.cellSafe(x, z).cell; return k[0] === a.cell[0] && k[1] === a.cell[1]; };
+
+  it("has a happy young or adult take on an enraged one in its own area, and leave a wild one there be", () => {
+    for (const level of [1, 2] as Level[]) {
+      const g = quiet(), h = place(g, "boar", level, 0, 0, "happy"), e = place(g, "wolf", 2, 5, 0, "enraged"), w = place(g, "hare", 2, -4, 0);
+      expect(sameCell(g, h, e.x, e.z) && sameCell(g, h, w.x, w.z), "all three in one area").toBe(true);
+      let fought = false, wild = false;
+      run(g, 8, () => { if (targets(h, e)) fought = true; if (targets(h, w)) wild = true; });
+      expect(fought, `level ${level}`).toBe(true);
+      expect(wild, `level ${level}`).toBe(false);
+    }
+  }, 60000);
+
+  it("never has a happy one go for an enraged one outside its area", () => {
+    const g = quiet(), at = (x: number) => g.map.cellSafe(g.witch.x + x, g.witch.z).cell.join(",");
+    let dx = 1;
+    while (dx < 400 && at(dx) === at(0)) dx++; // (the area's edge, east of her)
+    const h = place(g, "boar", 2, dx - 5, 0, "happy"), e = place(g, "wolf", 2, dx + 5, 0, "enraged"); // (10 m apart, either side of it)
+    expect(sameCell(g, h, e.x, e.z)).toBe(false);
+    let outside = false;
+    let was = true; // (outside a whole step and still targeted: not a hit that knocked it back out this step)
+    run(g, 6, () => { const o = !sameCell(g, h, e.x, e.z); if (targets(h, e) && o && was) outside = true; was = o; });
+    expect(outside).toBe(false);
+  }, 60000);
+
+  it("has a happy baby fight nobody", () => {
+    const g = quiet(), h = place(g, "boar", 0, 0, 0, "happy"), e = place(g, "wolf", 2, 4, 0, "enraged");
+    let fought = false;
+    run(g, 6, () => { if (targets(h, e)) fought = true; });
+    expect(fought).toBe(false);
   }, 60000);
 });

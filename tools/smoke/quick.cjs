@@ -59,9 +59,9 @@ async function main() {
     await page.mouse.click(640, 300, { button: "right" });
     await page.waitForFunction(() => Number.isFinite(window.witch.game.witches[0].dash.at), null, { timeout: 60000, polling: 100 }).catch(() => {});
     check(await page.evaluate(() => Number.isFinite(window.witch.game.witches[0].dash.at)), "right click dodges (a blink on the ground)");
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 120000, polling: 100 }).catch(() => {});
-    check((await state()).mode === "treetop", "Q rises to the treetops");
+    check((await state()).mode === "treetop", "space rises to the treetops");
     [a, b] = await hold("ArrowUp", 5);
     check(a.z - b.z > 40, `flies in the treetops (${(a.z - b.z).toFixed(0)} m north in ${(b.t - a.t).toFixed(1)} s)`);
     check(b.trees > 20, `the forest is drawn (${b.trees} trees)`);
@@ -77,9 +77,16 @@ async function main() {
     fs.mkdirSync(path.dirname(shotPath), { recursive: true });
     await page.screenshot({ path: shotPath });
     log(`screenshot ${shotPath}`);
-    await page.keyboard.press("KeyQ");
+    await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 120000, polling: 100 }).catch(() => {});
-    check((await state()).mode === "ground", "Q descends to the ground");
+    check((await state()).mode === "ground", "space descends to the ground");
+    // The mouse wheel zooms (Ed, 2026-10-06), and the page doesn't scroll.
+    const z0 = await page.evaluate(() => window.witch.game.camera.zoom);
+    await page.mouse.move(640, 300);
+    for (let i = 0; i < 3; i++) { await page.mouse.wheel(0, 120); await page.waitForTimeout(300); }
+    await page.waitForFunction(z => Math.abs(window.witch.game.camera.zoom - z) > 0.01, z0, { timeout: 60000, polling: 100 }).catch(() => {});
+    const z1 = await page.evaluate(() => window.witch.game.camera.zoom), scrolled = await page.evaluate(() => window.scrollY);
+    check(Math.abs(z1 - z0) > 0.01 && scrolled === 0, `the mouse wheel zooms (${z0.toFixed(2)} → ${z1.toFixed(2)}), the page unscrolled`);
   } catch (e) {
     errors.push(`stopped: ${e.message}`);
     try { fs.mkdirSync(path.dirname(shotPath), { recursive: true }); await page.screenshot({ path: shotPath }); } catch { /* none */ }
