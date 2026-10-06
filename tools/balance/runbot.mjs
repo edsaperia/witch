@@ -12,7 +12,7 @@
 //     or heals.
 // The bot flies between areas over the treetops and fights on the ground, as a player does.
 // WHO=1 in the environment logs every hit she takes: who was close and coming for her, and the angry legends.
-//   node tools/balance/runbot.mjs [--seeds 3 (seeds 0 to N-1; --skip K starts at K)] [--bots skilled,crude] [--time 1800] [--happy N (the N legends nearest home happy from the start)] [--calm (no legend ever turns angry)] [--quests (the skilled bot fetches what sleeping legends dream of)] [--relics (and picks up relics for them)] [--relic-policy nearest|home|front|far (which sleeping legend gets each relic)] [--feed (the skilled bot leads her babies and young to berry patches)] [--guards 3 --keep 2 (the skilled bot parks up to G at the next soundsystem, keeping K)] [--set path=value;...] [--json out.json] | --report a.json,b.json
+//   node tools/balance/runbot.mjs [--seeds 3 (seeds 0 to N-1; --skip K starts at K)] [--bots skilled,crude] [--time 1800] [--happy N (the N legends nearest home happy from the start)] [--calm (no legend ever turns angry)] [--quests (the skilled bot fetches what sleeping legends dream of)] [--quest-max N (at most N quests, then she plays on as usual)] [--relics (and picks up relics for them)] [--relic-policy nearest|home|front|far (which sleeping legend gets each relic)] [--feed (the skilled bot leads her babies and young to berry patches)] [--guards 3 --keep 2 (the skilled bot parks up to G at the next soundsystem, keeping K)] [--set path=value;...] [--json out.json] | --report a.json,b.json
 import { readFileSync, writeFileSync } from "node:fs";
 import { arg, list, mean, median, openRules } from "./lib.mjs";
 
@@ -20,7 +20,7 @@ const say = s => console.log(s);
 let rows;
 if (arg("report")) rows = list(arg("report")).flatMap(f => JSON.parse(readFileSync(f, "utf8")));
 else {
-  const SEEDS = +arg("seeds", 3), SKIP = +arg("skip", 0), HAPPY = +arg("happy", 0), GUARDS = +arg("guards", 3), KEEP = +arg("keep", 2), FEED = process.argv.includes("--feed"), QUESTS = process.argv.includes("--quests"), RELICS = process.argv.includes("--relics"), RELIC_POLICY = String(arg("relic-policy", "nearest")), BOTS = list(arg("bots", "skilled,crude")), TIME = +arg("time", 1800);
+  const SEEDS = +arg("seeds", 3), SKIP = +arg("skip", 0), HAPPY = +arg("happy", 0), GUARDS = +arg("guards", 3), KEEP = +arg("keep", 2), FEED = process.argv.includes("--feed"), QUESTS = process.argv.includes("--quests"), RELICS = process.argv.includes("--relics"), RELIC_POLICY = String(arg("relic-policy", "nearest")), QUEST_MAX = +arg("quest-max", Infinity), BOTS = list(arg("bots", "skilled,crude")), TIME = +arg("time", 1800);
   const SETS = String(arg("set", "")).split(";").filter(Boolean).map(kv => { const [k, v] = kv.split("="); return [k.trim().split("."), JSON.parse(v)]; });
   const { load, close } = await openRules();
   const { TUNING, withTuning } = await load("/src/rules/tuning.ts");
@@ -123,7 +123,7 @@ else {
             if (w.leash.relics.length) rjob = { phase: "place", since: time, n: w.leash.relics.length };
             else { const r = g.relics.filter(r => r.state === "lying").sort((a, b) => Math.hypot(a.x - b.x, a.z - b.z) - Math.hypot(b.x - b.x, b.z - b.z) || Math.hypot(a.x - w.body.x, a.z - w.body.z) - Math.hypot(b.x - w.body.x, b.z - w.body.z))[0]; rjob = r ? { phase: "pick", r, since: time } : null; if (!rjob) relicAgain = time + 60; }
           }
-          if (rjob?.phase === "pick") { if (goTo(rjob.r.x, rjob.r.z, true, 4)) { sigil = true; if (w.leash.relics.length) rjob = { phase: "place", since: time, n: w.leash.relics.length }; } if (time - rjob.since > 120) { rjob = null; relicAgain = time + 60; } }
+          if (rjob?.phase === "pick") { if (goTo(rjob.r.sx ?? rjob.r.x, rjob.r.sz ?? rjob.r.z, true, 2)) { /* (standing on its sigil, a little south of it: #279) */ sigil = true; if (w.leash.relics.length) rjob = { phase: "place", since: time, n: w.leash.relics.length }; } if (time - rjob.since > 120) { rjob = null; relicAgain = time + 60; } }
           else if (rjob?.phase === "place") {
             // Which legend gets it (Ed, 2026-10-06: "you get to choose where relic allies are"): --relic-policy
             // nearest (to her: the naive one), home (nearest the dancefloor), front (in an area the next wave
@@ -135,7 +135,7 @@ else {
             else if (goTo(...spotBy(L), true, 4)) { if (w.leash.relics.length < rjob.n) { relicsPlaced.push({ at: time, id: L.id }); rjob = null; relicAgain = time + 30; } else sigil = true; }
             if (rjob && time - (rjob.since ?? time) > 150) { rjob = null; relicAgain = time + 60; }
           }
-        } else if (QUESTS && careful && (qjob || time >= questAgain)) {
+        } else if (QUESTS && careful && (qjob || (time >= questAgain && questsDone.length < QUEST_MAX))) {
           // A quick player (--quests): the nearest sleeping legend with an open quest whose dream she can fetch (a
           // creature of that kind and level, wild, nearby), invite it, and bring its sigil to the legend's area.
           if (!qjob) {
@@ -236,7 +236,7 @@ else {
     const L = [...legendOf.values()].map(id => g.creatures[id]);
     const standing = [...g.combat.sounds.values()].filter(h => h.hp > 0).length;
     return {
-      seed, bot, set: [...SETS.map(([k, v]) => `${k.join(".")}=${JSON.stringify(v)}`), ...(HAPPY ? [`happy=${HAPPY}`] : []), ...(GUARDS !== 3 || KEEP !== 2 ? [`guards=${GUARDS},keep=${KEEP}`] : []), ...(FEED ? ["feed"] : []), ...(process.argv.includes("--calm") ? ["calm"] : []), ...(QUESTS ? ["quests"] : []), ...(RELICS ? [`relics:${RELIC_POLICY}`] : [])].join(";"), end: g.clock.time, over: g.over?.at ?? null, wave: g.party.wave,
+      seed, bot, set: [...SETS.map(([k, v]) => `${k.join(".")}=${JSON.stringify(v)}`), ...(HAPPY ? [`happy=${HAPPY}`] : []), ...(GUARDS !== 3 || KEEP !== 2 ? [`guards=${GUARDS},keep=${KEEP}`] : []), ...(FEED ? ["feed"] : []), ...(process.argv.includes("--calm") ? ["calm"] : []), ...(QUESTS ? [QUEST_MAX < Infinity ? `quests<=${QUEST_MAX}` : "quests"] : []), ...(RELICS ? [`relics:${RELIC_POLICY}`] : [])].join(";"), end: g.clock.time, over: g.over?.at ?? null, wave: g.party.wave,
       firstKo, kos, invited: origin.size, posse: w.leash.stack.length, parked: w.leash.placed.length,
       angry: L.filter(c => c.legendState === "angry").length, happy: L.filter(c => c.legendState === "happy").length, quests: g.friendly.size,
       standing, ruined: g.party.ruined?.size ?? 0, angryAt, restlessAt, ruinedAt: [...ruinedAt].map(([key, at]) => ({ key, at, legend: legendOf.has(key) })), legends: legendOf.size, babyHits, babiesDown, questsDone, relicsPlaced, buffsAt: [...questsDone, ...relicsPlaced].map(x => x.at).sort((a, b) => a - b), waves, tally: { ...g.tally }, levels: [0, 1, 2, 3].map(l => [...w.leash.stack, ...w.leash.placed.map(p => p.id)].filter(id => !g.creatures[id].gone && g.creatures[id].level === l).length), secs: (Date.now() - T0) / 1000,
