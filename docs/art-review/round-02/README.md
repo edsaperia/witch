@@ -32,6 +32,7 @@ The calm HUD (#188) and the bedroom (#143) are already on prototype.
 ## Briefs (round 2)
 
 - **Rendering (spooky stack):**
+  - the rim from the silhouette, not the normals, so it shows on bold and ref;
   - moonlight on upward faces, so the dark mid-distance reads (1);
   - crisp eyeshine (2);
   - the ley line at half brightness in amber (3).
@@ -43,3 +44,9 @@ The calm HUD (#188) and the bedroom (#143) are already on prototype.
   - the amber accent in the creator panel (6);
   - with the creator open, the game never finishes loading in headless software GL (the capture now shoots it in a load of its own); worth a check on a slow machine.
 - **Art builder 2:** the attack feel (#193 notes: whole-pixel squash, no strobing flip, crisp star, coat-coloured bits).
+
+## Bold and ref (`bold-*`, `ref-*`)
+
+Under the spooky lighting, the styles fare worse than the default:
+- **The moonlit rim barely shows on stylised sprites.** The styles bake the light into the albedo and flatten the normals (`art/stylise.js`), so a rim taken from the normals has nothing to catch. In `bold-moor-ground` and `ref-moor-ground` the witch is a dark knot in her light pool, less clear than in the default. The rim should come from the sprite's silhouette (its alpha edge on the side away from the key), not from its normals, so it works on every style. That's rendering's to fix before Ed compares styles.
+- **The rest is as in round 1:** in the dark, the styles' tone bands are hard to tell apart. Compare them in a party pool.
