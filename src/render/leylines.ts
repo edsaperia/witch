@@ -154,12 +154,13 @@ void main() {
   // colour, with no glow. The pulse (its pixel head: render/leyHead.ts) lights it as it passes.
   float pAlong = uSketch.y > 0.5 ? -1.0 : uPulse.y > 0.5 ? uCurrent + uPulse.x : 1e6;
   if (along > pAlong) {
-    if (uGlowPass > 0.5) discard;
-    float dash = mod(floor(vS / uMpp), 4.0) < 2.0 ? 1.0 : 0.0, thin = off < 1.0 ? 1.0 : 0.0;
     float grey = dot(vCol, vec3(0.3, 0.59, 0.11));
     vec3 cool = mix(vec3(grey), vec3(0.55, 0.68, 1.0) * grey * 1.3, 0.55);
+    // (From the treetops, a faint cool glow along it, so it still reads there.)
+    if (uGlowPass > 0.5) { gl_FragColor = vec4(cool * 0.12 * halo * uLift * uStrength, 1.0); return; }
+    float dash = mod(floor(vS / uMpp), 4.0) < 3.0 ? 1.0 : 0.0, thin = off < max(1.0, floor(coreN * 0.5)) ? 1.0 : 0.0;
     if (dash * thin < 0.5) discard;
-    gl_FragColor = vec4(min(cool * 0.4 * uBright * uStrength, vec3(0.6)), 1.0);
+    gl_FragColor = vec4(min(cool * 0.75 * uBright * uStrength, vec3(0.7)), 1.0);
     return;
   }
   float litD = pAlong > 1e5 ? 1e6 : (pAlong - along) * vLen; // metres behind the pulse (on its own link)

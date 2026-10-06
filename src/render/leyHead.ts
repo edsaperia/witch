@@ -37,7 +37,7 @@ void main() {
   vec3 right = vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]);
   vec4 c1 = clipOf(p + right * uMpp);
   float ppa = length((c1.xy / c1.w - c0.xy / c0.w) * 0.5 * uRes);
-  vCell = max(1.0, floor(ppa + 0.5));
+  vCell = max(2.0, floor(ppa + 0.5)); // (at least two screen pixels an art pixel: a clear point from the treetops)
   gl_PointSize = vN * vCell;
   gl_Position = c0;
   gl_Position.xy += pixelSnap(c0) * c0.w; // on the pixel grid
