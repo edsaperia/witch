@@ -3,13 +3,14 @@
 import * as Art from "../../../art/generator.js";
 import * as THREE from "three";
 import { AREA_TYPES } from "../../rules/map";
-import { type Beacon, type Laser, MARKER_LEVELS, type Mote, type RingSymbol } from "../markers";
+import { type Beacon, type Laser, MARKER_LEVELS, type Mote } from "../markers";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
 import type { WaveNumber } from "../waveNumbers";
 import { beatTime } from "../../rules/beat";
 import { canopyShown } from "../../rules/witch";
-import { cellKey, spawnMarkers, symbolCount, waveCountdown, wavePlan } from "../../rules/party";
-import { hash2 } from "../../rules/random";
+import { cellKey, spawnMarkers, waveCountdown, wavePlan } from "../../rules/party";
+import { leyKey } from "../../rules/leylines";
+import { columnShown, leyReachTimes } from "../../rules/leypulse";
 import { speakerBoot } from "../../rules/game";
 import type { ForestLight, View } from "../view";
 import { inView, overBulge } from "./culling";
@@ -25,7 +26,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   if (mc.wave !== g.party.wave || mc.n !== g.party.areas.size) { mc.wave = g.party.wave; mc.n = g.party.areas.size; mc.list = spawnMarkers(g.party, g.map); }
   const cd = waveCountdown(g.party, g.map, time), build = g.party.paused ? 0 : cd.gone;
   const phase = (beatTime(g.beat, time) * t.beat.bpm) / 60, beat = Math.pow(0.5 + 0.5 * Math.cos(phase * Math.PI * 2), 2); // 1 on the beat
-  const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes: Mote[] = [], lasers: Laser[] = [], symbols: RingSymbol[] = [];
+  const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes: Mote[] = [], lasers: Laser[] = [];
   const style = R.awakeStyle, column = style !== "beam", laser = style !== "column";
   const scale = R.scale;
   const stone = (x: number, z: number, species: string, level: number, y = 0) => {
@@ -35,6 +36,11 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     return true;
   };
   const near: { d: number; l: ForestLight }[] = [];
+  // Ed (2026-10-06): "The column of light above a runestone first appears when the leyline meets it": when the line's
+  // tip reaches each stone (rules/leypulse.ts, the line's own reveal), worked out again when the line changes.
+  const rk = `${leyKey(g.party)}:${g.party.spellAt ?? "-"}`;
+  if (v.leyReach.key !== rk) v.leyReach = { key: rk, times: leyReachTimes(g.party, g.map) };
+  const FLARE = R.flare.time;
   for (const m of mc.list) {
     const d = Math.hypot(m.x - w.x, m.z - w.z);
     if (d > range) continue;
@@ -52,23 +58,14 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     // countdown to the stone's wake runs (Ed, 2026-10-04): the next stone's from half to full,
     // the after-next's up to half.
     const grow = m.stage === "next" ? 0.5 + 0.5 * build : m.stage === "afterNext" ? 0.15 + 0.35 * build : 1;
-    if (!m.awake || column) beacons.push({ x: m.x, z: m.z, colour: col, strength: m.awake ? A.beam * (0.6 + 0.4 * beat) * (1 + build) : m.stage === "afterNext" ? A.beam * 0.6 : D.beam, base: top, height: R.beamHeight * grow });
-    if (m.awake && laser) lasers.push({ x: m.x, z: m.z, colour: col, strength: R.laser.opacity * (0.55 + 0.45 * beat) * (0.7 + 0.6 * build), width: R.laser.width, height: R.laser.length * grow, base: top });
-    // The forecast's ring of symbols round it: all 12 on the next stone, the after-next filling
-    // through the middle as the countdown runs, a flickering few on the probable ones. Each
-    // appears with a flare and pulses on the beat.
-    const flick = hash2(m.cell[0] * 7 + Math.floor(time * 1.3), m.cell[1], 991), count = symbolCount(m.stage, build, flick, t);
-    if (count > 0) {
-      const F = t.forecast, seen = v.symbolSeen.get(m.key) ?? [];
-      for (let k = 0; k < count; k++) {
-        if (seen[k] === undefined) seen[k] = time;
-        const a = (k / F.symbols) * Math.PI * 2 - Math.PI / 2, fl = Math.max(0, 1 - (time - seen[k]) / F.flare);
-        const alpha = (m.stage === "probable" ? 0.45 : m.stage === "afterNext" ? 0.75 : 1) * (0.7 + 0.3 * beat) + fl * 1.2;
-        symbols.push({ x: m.x + Math.cos(a) * F.radius, z: m.z + Math.sin(a) * F.radius, size: F.size * (1 + fl * 0.6), glyph: k, colour: col, alpha });
-      }
-      seen.length = count;
-      v.symbolSeen.set(m.key, seen);
-    } else v.symbolSeen.delete(m.key);
+    // Not reached by the line yet: no column, no laser (its dim rune glow above is all, findable up close, not from the
+    // treetops). Reached: the column shoots up with a flare-up as the line meets it, and stays.
+    const shown = columnShown(v.leyReach.times?.get(m.key), time, FLARE);
+    if (!shown) continue;
+    const { up, flare } = shown;
+    if (flare > 0) near.push({ d: d - 1e3, l: { x: m.x, y: 3, z: m.z, reach: R.awake.reach * 1.5, rgb: col, strength: R.flare.light * flare } });
+    if (!m.awake || column) beacons.push({ x: m.x, z: m.z, colour: col, strength: (m.awake ? A.beam * (0.6 + 0.4 * beat) * (1 + build) : m.stage === "afterNext" ? A.beam * 0.6 : D.beam) * (1 + 2 * flare), base: top, height: R.beamHeight * grow * up });
+    if (m.awake && laser) lasers.push({ x: m.x, z: m.z, colour: col, strength: R.laser.opacity * (0.55 + 0.45 * beat) * (0.7 + 0.6 * build), width: R.laser.width, height: R.laser.length * grow * up, base: top });
     if (m.awake) {
       const n = Math.round(A.motes + A.moteBuild * build);
       for (let i = 0; i < n; i++) {
@@ -91,7 +88,6 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   v.markerBatch.set(inst);
   v.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes.concat(v.fireSparks), lasers);
   const up = canopyShown(w);
-  v.rings.update(symbols, up * (t.treetopHeight - 2)); // above the canopy from the treetops
   // Wave numbers over the stones (Ed, 2026-10-04, a design aid): above the stone on the ground,
   // above the canopy from the treetops; the reached areas' dimmed.
   const WN = t.waveNumbers, nums: WaveNumber[] = [];

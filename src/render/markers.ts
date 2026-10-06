@@ -8,7 +8,6 @@
 import * as THREE from "three";
 import { groundPoints, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import * as Art from "../../art/generator.js";
-import { runeGlyph } from "../../art/core.js";
 import { AREA_TYPES } from "../rules/map";
 import type { Tuning } from "../rules/tuning";
 import { packAtlas, type Atlas, type Baked } from "./atlas";
@@ -166,79 +165,5 @@ export class MarkerFx {
     const g = this.motes.geometry;
     g.setDrawRange(0, m);
     for (const k of ["position", "color"]) { const a = g.getAttribute(k) as THREE.BufferAttribute; a.clearUpdateRanges(); a.addUpdateRange(0, m * a.itemSize); a.needsUpdate = true; } // (only those in use)
-  }
-}
-
-// The forecast's rings (Ed, 2026-10-04): up to 12 magic symbols round a rune stone on the ground,
-// in its area's neon, one per rune glyph; the count shows how close the stone is to waking. Drawn
-// as flat quads in one instanced draw; from the treetops the ring is lifted above the canopy.
-const GLYPHS = 12, GPX = 16;
-const RING_VERT = /* glsl */ `
-attribute vec4 iRing; // x, z, size, glyph
-attribute vec4 iCol;  // rgb, alpha
-uniform float uLift;
-varying vec2 vUv;
-varying vec4 vCol;
-${HEIGHT_VERT_GLSL}
-void main() {
-  vUv = vec2((iRing.w + uv.x) / ${GLYPHS}.0, uv.y);
-  vCol = iCol;
-  vec3 p = vec3(iRing.x + position.x * iRing.z, 0.08 + uLift, iRing.y - position.y * iRing.z);
-  p.y += groundH(p.xz); // lying on the rolling ground, corner by corner
-  gl_Position = clipOf(p);
-}`;
-const RING_FRAG = /* glsl */ `
-uniform sampler2D uGlyphs;
-varying vec2 vUv;
-varying vec4 vCol;
-void main() {
-  if (texture2D(uGlyphs, vUv).a < 0.5 || vCol.a < 0.02) discard;
-  gl_FragColor = vec4(vCol.rgb * vCol.a, 1.0);
-}`;
-
-export interface RingSymbol { x: number; z: number; size: number; glyph: number; colour: THREE.Vector3; alpha: number }
-
-export class SymbolRings {
-  readonly mesh: THREE.Mesh;
-  private geo: THREE.InstancedBufferGeometry;
-  private ring: THREE.InstancedBufferAttribute;
-  private col: THREE.InstancedBufferAttribute;
-  private mat: THREE.ShaderMaterial;
-
-  constructor(private readonly max = 400) {
-    // The glyph atlas: 12 rune glyphs side by side, white on clear.
-    const data = new Uint8Array(GLYPHS * GPX * GPX * 4);
-    for (let k = 0; k < GLYPHS; k++) for (let y = 0; y < GPX; y++) for (let x = 0; x < GPX; x++) {
-      const u = (x + 0.5) / GPX, v = (y + 0.5) / GPX;
-      if (!runeGlyph(u, v, 5 + k * 11, 0.09)) continue;
-      const i = ((GPX - 1 - y) * GLYPHS * GPX + k * GPX + x) * 4;
-      data[i] = data[i + 1] = data[i + 2] = data[i + 3] = 255;
-    }
-    const tex = new THREE.DataTexture(data, GLYPHS * GPX, GPX);
-    tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.needsUpdate = true;
-    this.geo = new THREE.InstancedBufferGeometry();
-    const quad = new THREE.PlaneGeometry(1, 1);
-    this.geo.index = quad.index; this.geo.setAttribute("position", quad.getAttribute("position")); this.geo.setAttribute("uv", quad.getAttribute("uv"));
-    this.ring = new THREE.InstancedBufferAttribute(new Float32Array(max * 4), 4); this.ring.setUsage(THREE.DynamicDrawUsage);
-    this.col = new THREE.InstancedBufferAttribute(new Float32Array(max * 4), 4); this.col.setUsage(THREE.DynamicDrawUsage);
-    this.geo.setAttribute("iRing", this.ring); this.geo.setAttribute("iCol", this.col);
-    this.geo.instanceCount = 0;
-    this.mat = new THREE.ShaderMaterial({ vertexShader: RING_VERT, fragmentShader: RING_FRAG, uniforms: { ...HEIGHT_UNIFORMS, uGlyphs: { value: tex }, uLift: { value: 0 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
-    this.mesh = new THREE.Mesh(this.geo, this.mat);
-    this.mesh.frustumCulled = false;
-    this.mesh.renderOrder = 8;
-  }
-
-  /** `lift`: metres to raise the rings (above the canopy in treetop mode). */
-  update(symbols: RingSymbol[], lift: number): void {
-    const n = Math.min(this.max, symbols.length), R = this.ring.array as Float32Array, C = this.col.array as Float32Array;
-    for (let i = 0; i < n; i++) {
-      const s = symbols[i];
-      R.set([s.x, s.z, s.size, s.glyph % GLYPHS], i * 4);
-      C.set([s.colour.x, s.colour.y, s.colour.z, s.alpha], i * 4);
-    }
-    this.geo.instanceCount = n;
-    for (const a of [this.ring, this.col]) { a.clearUpdateRanges(); a.addUpdateRange(0, n * 4); a.needsUpdate = true; } // (only those in use)
-    this.mat.uniforms.uLift.value = lift;
   }
 }

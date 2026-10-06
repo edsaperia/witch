@@ -171,6 +171,7 @@ export class DecidePanel {
     if (d.apply.knob) {
       setKnob(this.host.tuning, d.apply.knob, v);
       if (isDefault) url.searchParams.delete(knobParam(d.id)); else url.searchParams.set(knobParam(d.id), String(v));
+      if (d.apply.reload) { if (!url.searchParams.has("decide")) url.searchParams.set("decide", ""); location.replace(url); return; } // (a knob the game reads only as it starts: the map's)
       history.replaceState(null, "", url);
       return;
     }
