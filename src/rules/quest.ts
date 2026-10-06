@@ -2,10 +2,9 @@
 // creature (a thought bubble over it): a species found on the map, not its own, at a level (baby,
 // young or adult), chosen from the seed. Put that creature's sigil down anywhere in the legend's
 // area while the area is still wild, and the legend is happy, its area friendly (its creatures
-// leave her and her party be), and the creature placed joins the area. When a friendly area's wave
-// comes, all its creatures become party animals guarding it (not on her leash or stack). An area
-// whose wave comes first wakes angry: its creatures go for the nearest party animal or soundsystem,
-// and its legend guards it against her. No drawing here.
+// leave her and her party be), and the creature placed joins the area. Since the legends redesign
+// (DESIGN.md, "Legends, redesigned") a quest gives its legend's buff; no area's creatures become
+// guards. No drawing here.
 import { AREA_TYPES, type ForestMap } from "./map";
 import type { Creature, Level } from "./creatures";
 import { cellKey } from "./party";

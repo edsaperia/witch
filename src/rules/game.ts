@@ -90,7 +90,7 @@ export interface Game {
   combat: CombatState;
   /** What knockouts did in this frame's steps (for the view). */
   koEvents: KnockoutEvent[];
-  /** Areas whose legend's quest is done (rules/quest.ts): friendly while wild, guarded once partified. */
+  /** Areas whose legend's quest is done (rules/quest.ts): friendly while wild. */
   friendly: Set<string>;
   /** Quests done in this frame's steps (for the view). */
   questEvents: QuestEvent[];

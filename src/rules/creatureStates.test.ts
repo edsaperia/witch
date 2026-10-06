@@ -174,3 +174,37 @@ describe("creature states (#87)", () => {
     expect(Math.min(...places.map(p => Math.hypot(h.anchorX - p.x, h.anchorZ - p.z)))).toBeLessThan(h.range < 1 ? 7 : 0.01);
   }, 60000);
 });
+
+describe("happy animals defend their own area (no guards now; the happy still fight the enraged)", () => {
+  const sameCell = (g: Game, a: Creature, x: number, z: number) => { const k = g.map.cellSafe(x, z).cell; return k[0] === a.cell[0] && k[1] === a.cell[1]; };
+
+  it("has a happy young or adult take on an enraged one in its own area, and leave a wild one there be", () => {
+    for (const level of [1, 2] as Level[]) {
+      const g = quiet(), h = place(g, "boar", level, 0, 0, "happy"), e = place(g, "wolf", 2, 5, 0, "enraged"), w = place(g, "hare", 2, -4, 0);
+      expect(sameCell(g, h, e.x, e.z) && sameCell(g, h, w.x, w.z), "all three in one area").toBe(true);
+      let fought = false, wild = false;
+      run(g, 8, () => { if (targets(h, e)) fought = true; if (targets(h, w)) wild = true; });
+      expect(fought, `level ${level}`).toBe(true);
+      expect(wild, `level ${level}`).toBe(false);
+    }
+  }, 60000);
+
+  it("never has a happy one go for an enraged one outside its area", () => {
+    const g = quiet(), at = (x: number) => g.map.cellSafe(g.witch.x + x, g.witch.z).cell.join(",");
+    let dx = 1;
+    while (dx < 400 && at(dx) === at(0)) dx++; // (the area's edge, east of her)
+    const h = place(g, "boar", 2, dx - 5, 0, "happy"), e = place(g, "wolf", 2, dx + 5, 0, "enraged"); // (10 m apart, either side of it)
+    expect(sameCell(g, h, e.x, e.z)).toBe(false);
+    let outside = false;
+    let was = true; // (outside a whole step and still targeted: not a hit that knocked it back out this step)
+    run(g, 6, () => { const o = !sameCell(g, h, e.x, e.z); if (targets(h, e) && o && was) outside = true; was = o; });
+    expect(outside).toBe(false);
+  }, 60000);
+
+  it("has a happy baby fight nobody", () => {
+    const g = quiet(), h = place(g, "boar", 0, 0, 0, "happy"), e = place(g, "wolf", 2, 4, 0, "enraged");
+    let fought = false;
+    run(g, 6, () => { if (targets(h, e)) fought = true; });
+    expect(fought).toBe(false);
+  }, 60000);
+});
