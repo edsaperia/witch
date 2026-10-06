@@ -8,6 +8,8 @@ export type SfxTuning = Tuning["sfx"];
 
 export class SfxKit {
   readonly out: GainNode;
+  /** The last node before the speakers (its limiter): the watchdog taps it. */
+  readonly final: DynamicsCompressorNode;
   readonly noise: AudioBuffer;
   private lastAt = new Map<string, number>();
   /** The legends' big space (a long generated reverb), built when one first sings. */
@@ -18,7 +20,7 @@ export class SfxKit {
     this.out = c.createGain(); this.out.gain.value = volume * T.volume;
     const limit = c.createDynamicsCompressor();
     limit.threshold.value = -10; limit.knee.value = 6; limit.ratio.value = 8; limit.attack.value = 0.003; limit.release.value = 0.12;
-    this.out.connect(limit); limit.connect(dest ?? c.destination);
+    this.out.connect(limit); limit.connect(dest ?? c.destination); this.final = limit;
     this.noise = noiseBuffer(c, 1, 777);
   }
 

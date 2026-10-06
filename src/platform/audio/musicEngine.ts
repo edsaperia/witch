@@ -2,8 +2,9 @@
 // (rules/musicScore.ts) from the conductor's sections (rules/musicPlan.ts) with Web Audio, every
 // sound synthesised (no samples). Each frame it schedules the sixteenths of the next fraction of a
 // second on the audio clock, on the game's beat clock (rules/beat.ts: step 0 is game time 0, the
-// tempo rising wave by wave). One output: Music
-// (platform/music.ts) puts it through the proximity mix; the Music Lab plays it straight.
+// tempo rising wave by wave). Two outputs: the music, which Music (platform/music.ts) puts through
+// the proximity mix (the Music Lab plays it straight); and a sleeping legend's clearing layer
+// (Ed, 2026-10-06), its own reverb and limiter, which Music plays over the muffle.
 // The parts share a reverb (a generated impulse, pre-delayed, its tail darkening), a dotted delay
 // and the kick's duck (the pump), then the section's low-pass (sweeps in builds, half shut in
 // breakdowns) and a gentle limiter. Each part has its own channel: a high-pass to keep the low end
@@ -11,7 +12,7 @@
 // kick a pitched sine with a click; hats the 808's six square tones through band- and high-pass;
 // supersaws as unison voices detuned and spread wide; pads breathing with a slow filter LFO.
 import { beatAt, bpmAt, timeAt, type BeatClock } from "../../rules/beat";
-import { Conductor, type MusicCue } from "../../rules/musicPlan";
+import { Conductor, bootLayers, type MusicCue } from "../../rules/musicPlan";
 import { mtof, noiseBuffer } from "./dsp";
 import { notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../../rules/musicScore";
 
@@ -47,12 +48,19 @@ export class MusicEngine {
   private noise: AudioBuffer;
   private metal: AudioBuffer;
   private channels = new Map<string, Channel>();
+  /** A legend's clearing layer: its parts' channels feed this, with its own reverb, to `circleDest`. */
+  private circleIn: GainNode;
+  private circleVerbIn: GainNode;
+  private circleVerb: ConvolverNode;
   private curves = new Map<number, Float32Array<ArrayBuffer>>();
   private nextStep = -1;
+  /** The last step scheduled: a re-anchoring never schedules it again (round 13: the game running
+   *  slower than the audio, every frame re-anchored, had each note scheduled several times over). */
+  private lastStep = -Infinity;
   private anchor = NaN; // audio time of game time 0
   private reverbTime = 0;
 
-  constructor(private ctx: BaseAudioContext, dest: AudioNode, public style: MusicStyle, public seed = 0) {
+  constructor(private ctx: BaseAudioContext, dest: AudioNode, public style: MusicStyle, public seed = 0, circleDest: AudioNode = dest) {
     this.conductor = new Conductor(style);
     const c = ctx;
     this.out = c.createGain();
@@ -70,6 +78,12 @@ export class MusicEngine {
     this.reverbIn.connect(this.reverb); this.reverb.connect(reverbLow); reverbLow.connect(this.tone);
     this.delayIn.connect(this.delay); this.delay.connect(delayTone); delayTone.connect(this.feedback); this.feedback.connect(this.delay); delayTone.connect(this.tone);
     this.tone.connect(limit); limit.connect(this.out); this.out.connect(dest);
+    // the legend's clearing layer: not through the section's low-pass, its own reverb and a limiter
+    this.circleIn = c.createGain(); this.circleVerbIn = c.createGain(); this.circleVerb = c.createConvolver();
+    const circleLimit = c.createDynamicsCompressor();
+    circleLimit.threshold.value = -10; circleLimit.knee.value = 6; circleLimit.ratio.value = 8; circleLimit.attack.value = 0.005; circleLimit.release.value = 0.3;
+    this.circleVerbIn.connect(this.circleVerb); this.circleVerb.connect(this.circleIn);
+    this.circleIn.connect(circleLimit); circleLimit.connect(circleDest);
     this.noise = noiseBuffer(c, 2, 22222);
     this.metal = c.createBuffer(1, 2 * c.sampleRate, c.sampleRate);
     const m = this.metal.getChannelData(0), phase = METAL_RATIOS.map((_, i) => i * 0.37);
@@ -94,7 +108,7 @@ export class MusicEngine {
     this.reverbIn.gain.value = m.reverb;
     this.delayIn.gain.value = m.delay;
     this.feedback.gain.value = Math.min(0.85, m.feedback);
-    if (m.reverbTime !== this.reverbTime) { this.reverbTime = m.reverbTime; this.reverb.buffer = this.impulse(m.reverbTime); }
+    if (m.reverbTime !== this.reverbTime) { this.reverbTime = m.reverbTime; this.reverb.buffer = this.impulse(m.reverbTime); this.circleVerb.buffer = this.impulse(m.reverbTime * 1.6); }
     this.channels.clear();
   }
 
@@ -107,12 +121,16 @@ export class MusicEngine {
     // (a hitch, a pause, a jump in game time) resets it
     const raw = now - gameTime;
     if (!(Math.abs(raw - this.anchor) < 0.06)) { this.anchor = raw; this.nextStep = -1; } else this.anchor += (raw - this.anchor) * 0.05;
-    if (this.nextStep < 0 || this.nextStep < stepNow - 1 || this.nextStep > stepNow + 64) this.nextStep = Math.ceil(stepNow);
+    if (this.nextStep < 0 || this.nextStep < stepNow - 1 || this.nextStep > stepNow + 64) {
+      this.nextStep = Math.ceil(stepNow);
+      // (not what's already scheduled, unless time went back: a new run, a jump)
+      if (this.lastStep < stepNow + 64 && this.lastStep >= stepNow - 64) this.nextStep = Math.max(this.nextStep, this.lastStep + 1);
+    }
     this.delay.delayTime.setTargetAtTime(Math.min(4, (this.style.mix.delayBeats * 60) / bpmAt(clock, gameTime)), now, 0.05);
     for (;;) {
       const g = timeAt(clock, this.nextStep / 4), t = this.anchor + g;
       if (t >= now + ahead) break;
-      if (t >= now) this.step(cue, this.nextStep, t, 60 / bpmAt(clock, g) / 4);
+      if (t >= now) { this.step(cue, this.nextStep, t, 60 / bpmAt(clock, g) / 4); this.lastStep = this.nextStep; }
       this.nextStep++;
     }
   }
@@ -128,7 +146,7 @@ export class MusicEngine {
   }
 
   /** Stop scheduling and forget the plans (a jump in the timeline). */
-  reset(): void { this.nextStep = -1; this.conductor.reset(); }
+  reset(): void { this.nextStep = -1; this.lastStep = -Infinity; this.conductor.reset(); }
 
   /** One sixteenth: `t` its audio time, `sps` seconds a sixteenth lasts now. */
   private step(cue: MusicCue, step: number, t: number, sps: number): void {
@@ -140,26 +158,31 @@ export class MusicEngine {
     if (s === 0) {
       // the section's low-pass over this bar
       const sec = resolveSection(S, plan.section), barIn = bar - plan.start;
-      const f0 = sectionCutoff(sec, barIn / plan.bars), f1 = sectionCutoff(sec, (barIn + 1) / plan.bars);
+      // (while the speakers boot, the low-pass opens with them rather than over the block)
+      const b0 = bootLayers(cue, bar), b1 = bootLayers(cue, bar + 1);
+      const boot = cue.speakerBars !== undefined && plan.section === S.intro;
+      const f0 = sectionCutoff(sec, boot ? b0 : barIn / plan.bars), f1 = sectionCutoff(sec, boot ? b1 : (barIn + 1) / plan.bars);
       this.tone.frequency.setValueAtTime(f0, t);
       if (f1 !== f0) this.tone.frequency.exponentialRampToValueAtTime(f1, t + 16 * sps);
     }
-    const events = notesAt(S, plan, next, step, { seed: this.seed, siege: cue.siege, party: cue.party, legend: cue.legend });
+    const events = notesAt(S, plan, next, step, { seed: this.seed, siege: cue.siege, party: cue.party, legend: cue.legend, circle: cue.circle, build: cue.speakerBars !== undefined ? bootLayers(cue, bar) : undefined });
     const swing = step % 2 === 1 ? S.swing * sps : 0;
     for (const e of events) this.play(e, t + swing + e.offset * sps, e.dur * sps, sps);
   }
 
-  private channel(part: string, p: Patch): Channel {
-    let ch = this.channels.get(part);
+  private channel(part: string, p: Patch, circle = false): Channel {
+    const key = circle ? `circle:${part}` : part;
+    let ch = this.channels.get(key);
     if (!ch) {
       const c = this.ctx, g = c.createGain();
       let out: AudioNode = g;
       if (p.hp) { const f = c.createBiquadFilter(); f.type = "highpass"; f.frequency.value = p.hp; f.Q.value = 0.7; out.connect(f); out = f; }
       if (p.pan) { const s = c.createStereoPanner(); s.pan.value = p.pan; out.connect(s); out = s; }
-      out.connect(p.duck ? this.duckBus : this.dryBus);
-      if (p.reverb) { const r = c.createGain(); r.gain.value = p.reverb; out.connect(r); r.connect(this.reverbIn); }
-      if (p.delay) { const d = c.createGain(); d.gain.value = p.delay; out.connect(d); d.connect(this.delayIn); }
-      this.channels.set(part, ch = { in: g, lastFreq: 0 });
+      // (a legend's clearing layer into its own bus and reverb, over the muffle; the rest into the mix)
+      out.connect(circle ? this.circleIn : p.duck ? this.duckBus : this.dryBus);
+      if (p.reverb) { const r = c.createGain(); r.gain.value = p.reverb; out.connect(r); r.connect(circle ? this.circleVerbIn : this.reverbIn); }
+      if (p.delay && !circle) { const d = c.createGain(); d.gain.value = p.delay; out.connect(d); d.connect(this.delayIn); }
+      this.channels.set(key, ch = { in: g, lastFreq: 0 });
     }
     return ch;
   }
@@ -167,7 +190,7 @@ export class MusicEngine {
   private play(e: NoteEvent, t: number, dur: number, sps: number): void {
     const p = this.style.patches[e.patch];
     if (!p || (this.solo && !this.solo.has(e.part))) return;
-    const ch = this.channel(e.part, p), peak = p.gain * e.vel;
+    const ch = this.channel(e.part, p, e.layer === "circle"), peak = p.gain * e.vel;
     switch (p.kind) {
       case "kick": this.kick(t, p, peak, ch.in); this.duck(t, e.vel, sps); break;
       case "noise": this.noiseHit(t, p, peak, ch.in); break;
