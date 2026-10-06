@@ -483,6 +483,26 @@ const report = await b.page.evaluate(async () => {
     if (Math.abs(moor.big.filter(a => a.kind === "standingstone").reduce((t, a) => t + (a.sparse || 0), 0) - .12) > 1e-6) bad.push("the standing stones' sparse share changed");
     res.push({ what: "prop generator: standing stones, cairns, pools and broken trunks, 12 variants each, standing, none alike; stones grey, plain slabs; cairns low; pools mostly water; each broken trunk and fallen log one piece; logs, mushroom rings and stone circles too; ?props=gen gives the moor and the muddy forest 3 shapes of each", good: !bad.length, info: bad.slice(0, 6).join("; ") });
   }
+  { // the legend clearings' rim kit (#235; art/props/generator.js rimPiece, areaAssets' rim): every area has RIM_PIECES pieces, each drawn, standing
+    // on its bottom row, nothing NaN, none over a metre, none glowing, at least 3 shapes of them; open and stony areas mostly stones, cairns and
+    // boulders, wooded ones mostly toadstools, stumps and posts
+    const bad = [], EM = new Set([...G.EMISSIVE]), stony = new Set(["stone", "cairn", "boulder"]);
+    for (const def of G.AREAS) {
+      const a = G.areaAssets(def.id, st), rim = a.rim || [];
+      if (rim.length !== G.RIM_PIECES) { bad.push(`${def.id}: ${rim.length} rim pieces`); continue; }
+      for (const [k, b] of rim.entries()) {
+        const p = G.rimPiece({ k, seed: G.rimSeed(def, k) }, def, st), sp = p.sp, n = sp.m.filter(Boolean).length;
+        let bottom = 0; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++;
+        if (n < 25 || !bottom || !Array.from(sp.n).every(Number.isFinite) || b.metres.height > 1 || Array.from(sp.m).some(m => EM.has(m)) || b.kind !== p.form) bad.push(`${def.id} rim ${k} (${p.form}): ${n} px, ${b.metres.height} m${bottom ? "" : ", floats"}`);
+      }
+      if (new Set(rim.map(b => b.sp.w + "x" + b.sp.h)).size < 3) bad.push(`${def.id}: rim pieces under 3 shapes`);
+    }
+    for (const [id, want] of [["moor", true], ["ravine", true], ["rocky-slope", true], ["fern-forest", false], ["hazel-forest", false], ["bluebell-glade", false]]) {
+      const forms = [...Array(G.RIM_PIECES).keys()].map(k => G.rimForm(G.AREA_BY_ID[id], k)), share = forms.filter(f => stony.has(f)).length / forms.length;
+      if (want ? share < .5 : share > .5) bad.push(`${id}'s rim ${forms.join(",")}`);
+    }
+    res.push({ what: "legend clearings' rim kit: every area 6 small pieces (stones, cairns, boulders, toadstools, stumps, posts), each drawn and standing, under a metre, unlit, 3+ shapes; stony areas mostly stone, wooded ones mostly wood and toadstools", good: !bad.length, info: bad.slice(0, 6).join("; ") });
+  }
   { // generated bridges (art/props/bridges.js, under ?props=gen): each bridge's variants draw and stand, none alike, nothing NaN,
     // the hand-made piece's size within a third either way (so a crossing's corridor still fits), nothing glowing
     const bad = [], EM = new Set([...G.EMISSIVE]);
