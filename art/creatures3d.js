@@ -131,7 +131,7 @@ function gearUp(m) {
 // parts are tapered and curved, so a row of them reads as a mane or a crest, never a hand of fingers.
 //   mane: { from, to (along the back, 0 rump to 1 head), height, count, lean, mat, belly (along the underside instead) }
 //   eyeglint: { size }: its eyes' glint brought out to the surface, where its body hides its face.
-//   wisps: { at: "tusks" | "horns" | "mane", size, mat, (mane: count, from, to) }: flames off its tusks' or horns' tips, or rising along its spine (glowing).
+//   wisps: { at: "tusks" | "horns" | "mane", size, mat, (mane: count, from, to, lift: above a mane) }: flames off its tusks' or horns' tips, or rising along its spine (glowing).
 //   stones: { from, to, count, height, mat }: standing stones growing out of its back, each with a moonlit rune on its face (RUNE).
 //   claws: { size, mat, fore (default true), hind }: long claws curving down and forward from its feet.
 //   moss: { count, size }: moss and heather clumps along its flanks, low.
@@ -234,7 +234,7 @@ function evolve3d(m, feats, c) {
       m.part = "body";
       const n = f.count ?? 5, s = f.size ?? .22;
       for (let i = 0; i < n; i++) { const t = (f.from ?? .35) + ((f.to ?? .85) - (f.from ?? .35)) * (i + .5) / n, b = c.backAt(t), up = v3.norm([-.35 - (c.frame ? .1 : 0), 1, 0]), k = s * (.75 + .5 * Math.abs(Math.sin(i * 2.1 + .7)));
-        m.flat(v3.add([b[0], b[1] + s * .4, b[2]], v3.mul(up, k * .55)), [1, 0, 0], up, k * .3, k * .6, masks.flame(M[f.mat || "MAGIC2"], M.MAGIC), { group: 110 + i, extra: true }); }
+        m.flat(v3.add([b[0], b[1] + s * .4 + (f.lift ?? 0), b[2]], v3.mul(up, k * .55)), [1, 0, 0], up, k * .3, k * .6, masks.flame(M[f.mat || "MAGIC2"], M.MAGIC), { group: 110 + i, extra: true }); }
     }
     if (f.kind === "wisps" && (f.at === "tusks" || f.at === "horns")) {
       m.part = "head";
@@ -298,6 +298,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   const headPaint = p => {
     if (q.face === "badger") return Math.abs(p[2]) < hr * .22 * (q.blaze ?? 1) + (p[0] - H[0]) * .1 || p[1] < H[1] - hr * .1 ? (q.blazeGlow && Math.abs(p[2]) < hr * .22 * (q.blaze ?? 1) && p[1] > H[1] - hr * .1 ? M.RUNE : M.BELLY) : M.BODY3; // blaze: the stripe's width; blazeGlow: it glows in moonlight
     if (q.face === "dark") return M.BODY2;
+    if (q.frost && p[0] > H[0] + hr * .7 && spotty(p, 26, .45)) return M.WEB; // frost on its muzzle
     if (q.mask && p[0] > H[0] + hr * .15 && p[1] > H[1] - hr * .4 && p[1] < H[1] + hr * .45) return M.BELLY; // a white mask over its eyes and muzzle
     if ((q.belly || q.muzzle) && p[1] < H[1] - hr * .35) return M.BELLY;
     return undefined;
