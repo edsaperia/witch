@@ -2,10 +2,11 @@
 // `interval` seconds a wave comes and wakes one area (Ed, v149), chosen as soon as the previous one
 // woke (see pickNext), which gets a soundsystem and is partified. Seeded and deterministic; no
 // drawing here.
+import { stonesTurned } from "./bootRing";
 import { hash2, rng, vnoise } from "./random";
 import type { ForestMap } from "./map";
 import type { Cell } from "./partition";
-import { leyRoute, variedOrder, type LeyRoute } from "./leyroute";
+import { addCrossings, leyRoute, spiralOrder, variedOrder, type LeyRoute } from "./leyroute";
 
 export interface Soundsystem { x: number; z: number; variant: number }
 
@@ -261,14 +262,12 @@ export function waveCountdown(p: PartyState, map: ForestMap, time: number): { le
   return { left, gone: 1 - Math.min(1, left / interval), booting: bootLeft > 0, boot: B > 0 ? 1 - Math.min(1, bootLeft / B) : 1, bootLeft };
 }
 
-/** How many of the home ring's `count` speakers have powered on by `time`: one by one round the
- *  ring over the boot (Ed, 2026-10-04), all of them once it's done. */
+/** How many of the home ring's `count` speakers have turned on by `time`: each as the boot's pulse reaches its stone,
+ *  round the ring clockwise from the top (rules/bootRing.ts; Ed, 2026-10-06), all of them once the boot is done. */
 export function speakersOn(p: PartyState, map: ForestMap, time: number, count: number): number {
-  const B = map.tuning.boot.time;
-  if (B <= 0 || time >= p.bootUntil) return count;
-  const k = 1 - (p.bootUntil - time) / B;
-  return Math.max(0, Math.min(count, Math.floor(k * (count + 1))));
+  return Math.min(count, stonesTurned(p, map, time));
 }
+
 
 /** A spawn marker (Ed, v147): a rune stone on the spot where an area's soundsystem will stand,
  *  until the party reaches it; awake when the next wave will take its area, dormant otherwise. */
@@ -287,12 +286,14 @@ export function spawnMarkers(p: PartyState, map: ForestMap): SpawnMarker[] {
   return out;
 }
 
-/** The ley line's route for this map (rules/leyroute.ts): a varied order (petals round home, then
- *  sweeps, lobes or combs: variedOrder), untangled so the line through it all never crosses itself
- *  (or only as Ed's crossing rules allow; else the noisy picker's order, untangled). Worked out once a map. */
+/** The ley line's route for this map (rules/leyroute.ts), by party.route (?route=): "spiral" (the
+ *  default; Ed, 2026-10-06: spiralOrder, untangled, then a few crossings added within his rules) or
+ *  "varied" (the order before it: petals round home, then sweeps, lobes or combs, untangled). Past
+ *  the crossing rules, the noisy picker's order, untangled. Worked out once a map. */
 export function routeOf(map: ForestMap): LeyRoute {
-  return leyRoute(map, () => variedOrder(map), () => {
+  const varied = map.tuning.party.route === "varied";
+  return leyRoute(map, () => (varied ? variedOrder(map) : spiralOrder(map)), () => {
     const m: ForestMap = { ...map, tuning: { ...map.tuning, party: { ...map.tuning.party, picker: "noisy" } } };
     return [...wavePlan(newParty(m), m).keys()];
-  });
+  }, varied ? undefined : r => addCrossings(map, r));
 }
