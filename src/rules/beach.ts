@@ -1,8 +1,8 @@
 // Witches on the beach (Ed, 2026-10-06: "Other witches can be found on the beach occasionally; if you
 // land near them, you chat, hold hands, and hug"; then "I think there should always be beach witches,
 // but there are only a handful spread around it"): a handful of spots (beach.spots) spread round the
-// coast, evenly but for a seeded jitter, each with a few witches lying about together on the sand,
-// resting and chatting (in witchChance of runs: every run, now). Landing
+// coast, evenly but for a seeded jitter, each a witch lying about on the sand alone (Ed: "Beach
+// witches appear solo"; beach.witches), resting (in witchChance of runs: every run, now). Landing
 // within meet metres of them and keeping still (lying stargazing counts) for idleAfter seconds, the
 // nearest comes over and they chat, hold hands, hug and stargaze side by side, turn seconds each,
 // round again until she moves. They're party witches in all but where they are: the same looks,
