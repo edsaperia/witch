@@ -95,7 +95,7 @@ export function stampBlobs(sp, r, st, s, list, C) {
   const W = sp.w, H = sp.h;
   // stylised (st.artStyle bold or ref, the game's ?style=; docs/ART-GUIDE.md section 0): bigger, fewer stamps, each one tone, lit as one big shape with no jitter, then clustered
   const sty = st.artStyle === "bold" || st.artStyle === "ref", ss = Math.max(sty ? 2.5 : 1.5, (C.stampSize || 3) * s * (sty ? 1.5 : 1)), kind = sty && C.stamp === "needle" ? "leaf" : C.stamp || "leaf", [t1, t2] = C.tones || [.12, .55], mats = (C.mats || ["LEAF3", "LEAF", "LEAF2"]).map(matOf);
-  const seed = (r() * 1e4) | 0, cap = !!C.cap, blobOf = sp.blob = new Uint8Array(W * H); // which blob each pixel is part of (the pixel wind moves each whole)
+  const seed = (r() * 1e4) | 0, cap = !!C.cap, blobOf = sp.blob || (sp.blob = new Uint8Array(W * H)), id0 = C.blobBase || 0; // which blob each pixel is part of (the pixel wind moves each whole)
   const put = (x, y, mat, nx, ny, nz, b) => { x = Math.floor(x); y = Math.floor(y); if (!sp.inb(x, y)) return; sp.px(x, y, mat, nx, ny, nz); blobOf[y * W + x] = b; };
   for (const [bi, B] of list.entries()) {
     const { c, rx, ry, back } = B, step = ss * (C.packing || 1.15) * (sty ? 1.2 : 1), pts = [];
@@ -112,19 +112,19 @@ export function stampBlobs(sp, r, st, s, list, C) {
       const base = lit + (sty ? 0 : (r() - .5) * (C.jitter ?? .16)) - (back ? (C.backDark ?? .32) : 0) - Math.max(0, v) * (C.under ?? .12), /* under: how dark a blob's underside goes (a fir's tiers each a dark lower edge) */ sx = Math.round(c[0] + jx), sy = Math.round(c[1] + jy), sd = seed + ((sx * 7 + sy * 13) & 7);
       for (const [dx, dy, sh] of stampPixels(kind, ss, sd)) {
         const t = base + sh * (sty ? .08 : (C.stampShade ?? .28)), mat = t > t2 ? mats[2] : t > t1 ? mats[1] : mats[0];
-        put(sx + dx, sy + dy, mat, nrm[0] + dx / ss * .25, nrm[1] + dy / ss * .25, nrm[2], bi + 1);
+        put(sx + dx, sy + dy, mat, nrm[0] + dx / ss * .25, nrm[1] + dy / ss * .25, nrm[2], id0 + bi + 1);
       }
     }
     if (cap) { // the underside: gills fanning from the stem, glowing between dark ribs, and a lit rim
       const y0 = Math.round(c[1] + ry * .2), gm = matOf(C.cap.gill || "GLOW"), rib = matOf(C.cap.rib || "LEAF3");
       for (let x = Math.round(c[0] - rx); x <= Math.round(c[0] + rx); x++) {
         const u = (x - c[0]) / rx, depth = Math.max(1, Math.round(ry * (C.cap.depth ?? .35) * Math.sqrt(Math.max(0, 1 - u * u))));
-        for (let y = y0; y < y0 + depth; y++) put(x, y, (Math.round(x - c[0] + (y - y0) * u * 1.5) % 3 === 0) ? rib : gm, u * .3, .8, .5, bi + 1);
-        put(x, y0 - 1, mats[1], 0, .2, .9, bi + 1);
+        for (let y = y0; y < y0 + depth; y++) put(x, y, (Math.round(x - c[0] + (y - y0) * u * 1.5) % 3 === 0) ? rib : gm, u * .3, .8, .5, id0 + bi + 1);
+        put(x, y0 - 1, mats[1], 0, .2, .9, id0 + bi + 1);
       }
     }
   }
-  if (sty) { clusterLeaves(sp); sp.stylised = st.artStyle; } // no lone leaf pixels: each tone in clusters; bake leaves its tones be
+  if (sty && C.cluster !== false) { clusterLeaves(sp); sp.stylised = st.artStyle; } // no lone leaf pixels: each tone in clusters; bake leaves its tones be (cluster false: the caller does it once, after all its blobs)
   // dots (blossom, fruit, glowing spots) on the leaves, the lit side more; glints on the lit leaves
   let cx0 = W, cx1 = 0, cy0 = H, cy1 = 0;
   for (const { c, rx, ry } of list) { cx0 = Math.min(cx0, c[0] - rx - ss); cx1 = Math.max(cx1, c[0] + rx + ss); cy0 = Math.min(cy0, c[1] - ry - ss); cy1 = Math.max(cy1, c[1] + ry + ss); }
