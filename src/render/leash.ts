@@ -11,9 +11,10 @@
 //   canvas), with a bar for how far the conversation has got.
 // The sigils are the art builder's (art/sigils.js), drawn per species and level into an atlas.
 import { dreamStone, questOpen, restlessness } from "../rules/dream";
+import { moodOf } from "./mood";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
-import { drawSigil, sigilColour } from "../../art/generator.js";
+import { drawSigil, sigilColour, speciesColours, defaultStyle, M } from "../../art/generator.js";
 import { dormant, type Game } from "../rules/game";
 import type { Creature } from "../rules/creatures";
 import { attackNamed, attackOf, creatureMaxHp, traitsOf, type Trait } from "../rules/combat";
@@ -80,6 +81,7 @@ void main() {
 
 const FRAG = /* glsl */ `
 uniform sampler2D uGlyphs;
+uniform float uSolid;
 varying vec2 vUv, vP;
 varying vec4 vCol;
 varying float vDraw;
@@ -90,7 +92,7 @@ void main() {
   // Written on: revealed clockwise from the top as vDraw goes 0 to 1.
   float ang = fract(atan(vP.x, vP.y) / 6.2831853 + 1.0);
   if (ang > vDraw || a < 0.02) discard;
-  gl_FragColor = vec4(haze(vCol.rgb * a, vWorld), 1.0);
+  gl_FragColor = uSolid > 0.5 ? vec4(haze(vCol.rgb, vWorld), a) : vec4(haze(vCol.rgb * a, vWorld), 1.0); // (solid: dust and bits, blended, not glowing)
 }`;
 
 class Instances {
@@ -143,6 +145,20 @@ const PARTY = ["🎉", "🎈", "💃", "🎊", "🥳", "😛", "🍉", "🍒", "
 // at the last, and the conversation warms them up toward delighted.
 const MOODS = [["😴", "🫩", "🥱", "💼"], ["😐", "😐", "🥱"], ["😮", "🤭", "🫢", "😛"], ["🙂", "🍷", "🍺", "😁"], ["🥳", "🎉", "🎈", "😆", "🥂", "💃"]];
 
+/** What a hit throws off a creature (render: the contact's bits): feathers off birds, chips off a shell or plates, tufts of fur
+ *  off the rest; confetti (in its neon) off a party animal. */
+const HIT_BITS = { feather: { r: 0.95, g: 0.95, b: 0.9 }, chip: { r: 0.72, g: 0.78, b: 0.86 }, fur: { r: 0.85, g: 0.7, b: 0.52 }, confetti: { r: 1, g: 1, b: 1 } };
+const FEATHERED = new Set(["owl", "raven", "heron"]), SHELLED = new Set(["beetle", "spider", "woodlouse", "snail", "glowworm", "moth", "hedgehog"]);
+const hitBits = (species: string, party: boolean) => party ? HIT_BITS.confetti : FEATHERED.has(species) ? HIT_BITS.feather : SHELLED.has(species) ? HIT_BITS.chip : HIT_BITS.fur;
+/** A species' coat, for the bits a hit throws off it (the art director, #193: a wolf throws grey, a fox rust): its lit coat
+ *  material (BODYL) from its palette row, toned down toward the night floor; worked out once per species. */
+const coats = new Map<string, { r: number; g: number; b: number }>();
+function coatOf(species: string, tone: number): { r: number; g: number; b: number } {
+  let c = coats.get(species);
+  if (!c) { const pal = speciesColours(species, defaultStyle()) as Record<number, number[]>, rgb = pal[M.BODYL] ?? pal[M.BODY] ?? [200, 180, 150]; coats.set(species, (c = { r: (rgb[0] / 255) * tone, g: (rgb[1] / 255) * tone, b: (rgb[2] / 255) * tone })); }
+  return c;
+}
+
 export class LeashView {
   private canvas = document.createElement("canvas");
   private tex: THREE.CanvasTexture;
@@ -152,6 +168,8 @@ export class LeashView {
   private flat: Instances;
   /** Drawn over everything (no depth test): the berries' glints seen from the treetops. */
   private over: Instances;
+  /** Not glowing (Ed's art director, #193): an attack's dust and the bits it throws, blended over the ground like the creatures. */
+  private solid: Instances;
   /** Where charging legends have run (churned ground, fading over RUTS seconds). */
   private ruts = new Map<number, { x: number; z: number; at: number }[]>();
   private evolved = new Map<number, number>();
@@ -192,15 +210,16 @@ export class LeashView {
     g.fillStyle = "#ffffff"; g.fillRect((SQ % SLOTS) * SLOT + 4, Math.floor(SQ / SLOTS) * SLOT + 4, SLOT - 8, SLOT - 8);
     this.tex = new THREE.CanvasTexture(this.canvas);
     this.tex.magFilter = THREE.NearestFilter; this.tex.minFilter = THREE.NearestFilter; this.tex.generateMipmaps = false;
-    const mat = (flat: number, depthTest = true) => new THREE.ShaderMaterial({
+    const mat = (flat: number, depthTest = true, solid = false) => new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
-      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uFlat: { value: flat }, uGlyphs: { value: this.tex } },
-      transparent: true, depthWrite: false, depthTest, blending: THREE.AdditiveBlending,
+      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uFlat: { value: flat }, uGlyphs: { value: this.tex }, uSolid: { value: solid ? 1 : 0 } },
+      transparent: true, depthWrite: false, depthTest, blending: solid ? THREE.NormalBlending : THREE.AdditiveBlending,
     });
     this.standing = new Instances(mat(0));
     this.flat = new Instances(mat(1));
     this.over = new Instances(mat(0, false));
-    scene.add(this.standing.mesh, this.flat.mesh, this.over.mesh);
+    this.solid = new Instances(mat(0, true, true));
+    scene.add(this.standing.mesh, this.flat.mesh, this.over.mesh, this.solid.mesh);
     const hex = game.tuning.berries.colour.replace("#", "");
     this.berryRgb = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
   }
@@ -233,6 +252,8 @@ export class LeashView {
   private drawBerries(time: number): void {
     const g = this.game, B = g.berries, t = g.tuning, w = g.witch, dot = this.uv(0), [r, gg, b] = this.berryRgb, glow = t.berries.glow;
     const treetops = w.lift > 0.5, near = treetops ? 260 : 90, beat = 60 / t.beat.bpm;
+    // The mood's halo (the art director's round 2: big soft red discs after bloom read as warning lights; a crisp berry with a small glow).
+    const M = moodOf(t), hs = M?.berryHalo ?? 1, hg = glow * (M?.berryGlow ?? 1);
     for (const e of B.events) if (e.kind === "evolved") this.evolved.set(e.id, time);
     for (const [id, at] of this.evolved) if (time - at > 1) this.evolved.delete(id);
     for (const berry of B.berries) {
@@ -241,8 +262,8 @@ export class LeashView {
       const tw = 0.85 + 0.15 * Math.sin(time * 2.3 + berry.id);
       if (treetops) this.over.add(p.x, 1, p.z + 0.25, 0.9, dot, r * 1.6 * tw, gg * 1.6, b * 1.6, 0.8 * glow);
       else {
-        this.standing.add(p.x, 0.8, p.z + 0.3, 2.8, dot, r * 1.5, gg * 1.5, b * 1.5, 0.95 * glow * tw); // the soft halo, easy to spot
-        this.standing.add(p.x, 0.8, p.z + 0.31, 1.1, dot, r * 1.8, gg * 1.4, b * 1.4, 0.8 * glow); // its warm core
+        this.standing.add(p.x, 0.8, p.z + 0.3, 2.8 * hs, dot, r * 1.5, gg * 1.5, b * 1.5, 0.95 * hg * tw); // the soft halo, easy to spot
+        this.standing.add(p.x, 0.8, p.z + 0.31, 1.1 * hs, dot, r * 1.8, gg * 1.4, b * 1.4, 0.8 * hg); // its warm core
         this.standing.add(p.x - 0.07, 0.86, p.z + 0.32, 0.3, dot, 1, 0.92, 0.92, 0.8 * tw); // the shine
       }
     }
@@ -468,6 +489,7 @@ export class LeashView {
    *  and teleport, the marker on creatures walking home, and the witch's hit pips. */
   private drawCombat(time: number, camera: THREE.Camera, width: number, height: number, hatTop: number): void {
     const g = this.game, w = g.witch, W = g.witches[0], dot = this.uv(0), sq = this.uv(SQ), near = 90, t = g.tuning;
+    const artPx = 1 / (t.artPixelsPerMetre * (2 / t.pixelSize)); // one art pixel, in metres (the pixel star and bits sit on it)
     const close = (x: number, z: number, r = near) => Math.abs(x - w.x) < r && Math.abs(z - w.z) < r;
     const neon = (sp: string) => this.colours.get(sp) ?? (this.slotOf(sp, 0), this.colours.get(sp)!);
     // New happenings become effects.
@@ -478,8 +500,16 @@ export class LeashView {
         if (e.counter === 1) { const top = (c && this.tops.get(c.id)) ?? 1.8; this.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 0.5, r: 1, g: 0.8, b: 0.2, seed: e.at * 97 + (e.id ?? 0), size: 1.8 }); this.fx.push({ kind: "bang", x: e.x, y: top + 0.4, z: e.z, at: time, life: 0.8, r: 1, g: 0.85, b: 0.25, seed: 0 }); }
         else if (e.counter === -1) this.fx.push({ kind: "tink", x: e.x, y: 1, z: e.z, at: time, life: 0.35, r: 0.7, g: 0.72, b: 0.78, seed: e.at * 97 + (e.id ?? 0), size: 0.7 });
         else this.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 0.35, r: 1, g: 0.95, b: 0.7, seed: e.at * 97 + (e.id ?? 0) });
+        // The contact (Ed, 2026-10-06: attacks that read): a white star at its chest, a puff of dust at its feet, and bits of it
+        // thrown up: feathers off a bird, tufts off fur, chips off a shell, confetti in its neon off a party animal (a party,
+        // nobody hurt). A legend's blow, all bigger.
+        const top = (c && this.tops.get(c.id)) ?? 1.6, big = e.big ? 2 : 1, bits = c ? hitBits(c.species, c.leashed || c.legendState === "happy") : HIT_BITS.fur, col = bits === HIT_BITS.confetti && c ? neon(c.species) : c ? coatOf(c.species, 0.75) : bits;
+        this.fx.push({ kind: "flash", x: e.x, y: Math.min(3.5, top * 0.55), z: e.z, at: time, life: 0.16 * big, r: 1, g: 1, b: 0.95, seed: e.at * 53 + (e.id ?? 0), size: 0.9 * big });
+        if (e.big) this.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.45, r: 1, g: 0.85, b: 0.6, seed: 0, size: 3.2, n: 28, dot: 0.8 }); // a legend's blow: a shockwave along the ground
+        this.fx.push({ kind: "dust", x: e.x, y: 0.2, z: e.z, at: time, life: 0.5, r: 0.5, g: 0.45, b: 0.38, seed: e.at * 59 + (e.id ?? 0), size: 0.7 * big });
+        this.fx.push({ kind: "bits", x: e.x, y: Math.min(3, top * 0.6), z: e.z, at: time, life: 0.8, r: col.r, g: col.g, b: col.b, seed: e.at * 61 + (e.id ?? 0), size: big, n: bits === HIT_BITS.confetti ? 12 : 8 });
       }
-      if (e.kind === "witchHit") this.fx.push({ kind: "spark", x: e.x, y: 1.4, z: e.z, at: time, life: 0.5, r: 1, g: 0.25, b: 0.35, seed: e.at * 31, size: 1.6 });
+      if (e.kind === "witchHit") { this.fx.push({ kind: "spark", x: e.x, y: 1.4, z: e.z, at: time, life: 0.5, r: 1, g: 0.25, b: 0.35, seed: e.at * 31, size: 1.6 }); this.fx.push({ kind: "flash", x: e.x, y: 1.3, z: e.z, at: time, life: 0.18, r: 1, g: 0.9, b: 0.92, seed: e.at * 67, size: 1.1 }); }
       if (e.kind === "fled" && close(e.x, e.z)) this.fx.push({ kind: "puff", x: e.x, y: 0.5, z: e.z, at: time, life: 0.8, r: 0.8, g: 0.75, b: 0.7, seed: e.at * 13 });
       if (e.kind === "lost" && c) { const col = neon(c.species); this.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 1.2, r: col.r, g: col.g, b: col.b, seed: e.at * 7, size: 2.5 }); }
       if ((e.kind === "quake" || e.kind === "phase") && close(e.x, e.z, 150)) {
@@ -529,18 +559,29 @@ export class LeashView {
       }
       if (e.kind === "sparkleOut" || e.kind === "sparkleIn") this.fx.push({ kind: "teleport", x: e.x, y: 0, z: e.z, at: time, life: t.knockout.teleport * 0.6, r: 0.75, g: 0.6, b: 1, seed: e.at });
     }
-    this.fx = this.fx.filter(f => time - f.at < f.life);
+    { let j = 0; for (const f of this.fx) if (time - f.at < f.life) this.fx[j++] = f; this.fx.length = j; } // (in place: no new array a frame)
     for (const f of this.fx) {
-      const k = (time - f.at) / f.life, n = f.kind === "spark" ? 10 : f.kind === "splash" ? 22 : f.kind === "puff" ? 12 : f.kind === "teleport" ? 40 : f.kind === "ring" ? f.n ?? 36 : f.kind === "motes" ? 16 : 14, sz = f.size ?? 1;
+      const k = (time - f.at) / f.life, n = f.kind === "flash" ? 13 : f.kind === "dust" ? 10 : f.kind === "bits" ? f.n ?? 8 : f.kind === "spark" ? 10 : f.kind === "splash" ? 22 : f.kind === "puff" ? 12 : f.kind === "teleport" ? 40 : f.kind === "ring" ? f.n ?? 36 : f.kind === "motes" ? 16 : 14, sz = f.size ?? 1;
       for (let i = 0; i < n; i++) {
         const a = hash2(f.seed, i, 3) * Math.PI * 2, r1 = hash2(f.seed, i, 5), r2 = hash2(f.seed, i, 7);
         if (f.kind === "spark") this.standing.add(f.x + Math.cos(a) * sz * k * (0.5 + r1), f.y + sz * k * r2, f.z + Math.sin(a) * sz * k * (0.5 + r1), 0.22 * Math.sqrt(sz), dot, f.r, f.g, f.b, 1 - k);
+        else if (f.kind === "dust") this.solid.add(f.x + Math.cos(a) * k * 1.1 * sz, f.y + k * r2 * 0.8 * sz, f.z + Math.sin(a) * k * 1.1 * sz, (0.45 + k * 0.8) * sz, dot, f.r, f.g, f.b, 0.55 * (1 - k)); // a hit's dust, toned to the floor, not glowing
         else if (f.kind === "puff") this.standing.add(f.x + Math.cos(a) * k * 1.2 * sz, f.y + k * r2 * 1.2 * sz, f.z + Math.sin(a) * k * 1.2 * sz, (0.5 + k) * sz, dot, f.r * 0.5, f.g * 0.5, f.b * 0.5, 0.6 * (1 - k));
         else if (f.kind === "splash") this.standing.add(f.x + Math.cos(a) * (0.5 + r1 * 2) * k, f.y + (1 + r2 * 2) * k - 5 * k * k, f.z + Math.sin(a) * (0.5 + r1 * 2) * k, 0.3, dot, f.r * 1.4, f.g * 1.4, f.b * 1.4, 1 - k * k);
         else if (f.kind === "snap") { const q = (i + 0.5) / n, cut = q > k; if (cut) this.standing.add(f.x + (f.tx! - f.x) * q, f.y + (0.6 - f.y) * q + Math.sin(q * Math.PI) * 1.2 - k * 2 * q, f.z + (f.tz! - f.z) * q, 0.24, dot, f.r, f.g, f.b, (1 - k) * 0.9); }
         else if (f.kind === "teleport") this.standing.add(f.x + Math.cos(a + k * 6) * (0.4 + r1), r2 * 3 + k * 2, f.z + Math.sin(a + k * 6) * (0.4 + r1), 0.25, dot, f.r * 1.3, f.g * 1.3, f.b * 1.3, Math.sin(k * Math.PI));
         else if (f.kind === "bang") { if (i < 8) { const col = i < 4 ? -1 : 1, row = i % 4, R = SPRITE_UNIFORMS.uRight.value; if (row !== 2) this.over.add(f.x + R.x * col * 0.22, f.y + k * 0.6 + (3 - row) * 0.17, f.z + R.z * col * 0.22, 0.2, sq, f.r, f.g, f.b, 1 - k * k); } }
         else if (f.kind === "tink") { const aa = (i / n) * Math.PI * 2, R = sz * (0.4 + 0.6 * k); this.standing.add(f.x + Math.cos(aa) * R, f.y + Math.sin(aa) * R * 0.6, f.z, 0.16, dot, f.r, f.g, f.b, 1 - k); }
+        else if (f.kind === "flash") { // a pixel star (the art director, #193): a cross of art-pixel squares, its arms growing 1 to 3 pixels, a pale ring of 8 in its last frame
+          const R = SPRITE_UNIFORMS.uRight.value, px = artPx * Math.max(1, Math.round(sz)), arm = Math.min(3, 1 + Math.floor(k * 3));
+          if (i === 0) this.over.add(f.x, f.y, f.z, px, sq, f.r, f.g, f.b, 1);
+          else if (i <= 12) { const ray = (i - 1) % 4, step = Math.floor((i - 1) / 4) + 1; if (step <= arm) { const ox = ray === 0 ? step : ray === 2 ? -step : 0, oy = ray === 1 ? step : ray === 3 ? -step : 0; this.over.add(f.x + R.x * ox * px, f.y + oy * px, f.z + R.z * ox * px, px, sq, f.r, f.g, f.b, 1 - k * 0.5); } }
+          if (i === 0 && k > 0.6) for (let j = 0; j < 8; j++) { const aa = (j / 8) * Math.PI * 2, ox = Math.round(Math.cos(aa) * 4), oy = Math.round(Math.sin(aa) * 4); this.over.add(f.x + R.x * ox * px, f.y + oy * px, f.z + R.z * ox * px, px, sq, 0.85, 0.9, 1, 0.6); }
+        }
+        else if (f.kind === "bits") { // thrown up and out and falling, art-pixel squares in its coat, not glowing
+          const sp = (0.8 + r1 * 1.4) * sz, up = (2 + r2 * 2.5) * sz, px = artPx * (r1 > 0.6 ? 2 : 1);
+          this.solid.add(f.x + Math.cos(a) * sp * k, Math.max(0.05, f.y + up * k - 6 * k * k), f.z + Math.sin(a) * sp * k, px, sq, f.r, f.g, f.b, 1 - k * k * k);
+        }
         else if (f.kind === "motes") { const R = sz * (0.3 + r1 * 0.7), h = (f.tx ?? 3) * (0.2 + 0.8 * r2) * Math.sqrt(k); this.standing.add(f.x + Math.cos(a) * R, f.y + h, f.z + Math.sin(a) * R * 0.8, 0.7 * (1 - k * 0.5), dot, f.r, f.g, f.b, Math.sin(Math.PI * Math.min(1, k * 1.4)) * 0.9); } // (a sigil's motes rising: tx their height)
         else if (f.kind === "ring") { const aa = (i / n) * Math.PI * 2, R = sz * (0.3 + 0.7 * k); this.flat.add(f.x + Math.cos(aa) * R, 0, f.z + Math.sin(aa) * R * 0.8, f.dot ?? 0.7, dot, f.r, f.g, f.b, 1 - k); }
       }
@@ -628,11 +669,21 @@ export class LeashView {
       }
       // Charging (the boar): dust kicked up behind it.
       if (c.charge && (c.charge.from === undefined || time >= c.charge.from)) for (let i = 0; i < (c.charge.braking ? 6 : 4); i++) { const q = hash2(c.id, Math.floor(time * 20) + i, 17); this.standing.add(c.x - c.charge.dx * (0.8 + i * 0.5), 0.3 + q * 0.4, c.z - c.charge.dz * (0.8 + i * 0.5), 0.5 + i * 0.15, dot, 0.75, 0.65, 0.5, 0.5 - i * 0.1); }
+      // The boar's charge throws up petals with its dust (Ed, 2026-10-06: dust and petals for the boar, a party).
+      if (c.charge && c.species === "boar" && (c.charge.from === undefined || time >= c.charge.from)) for (let i = 0; i < 4; i++) { const q = hash2(c.id, Math.floor(time * 12) + i, 29), age = (time * 12) % 1; this.solid.add(c.x - c.charge.dx * (1 + i * 0.7) + (q - 0.5) * 1.2, 0.5 + q * 1.2 + age * 0.5, c.z - c.charge.dz * (1 + i * 0.7) + (hash2(c.id, i, 31) - 0.5) * 1.2, artPx * 2, sq, 0.85, 0.45 + q * 0.25, 0.6, 0.9 - i * 0.15); } // (petals: art-pixel squares, not glowing)
+      // A lunge (the dash-strike): dust kicked up behind it and a streak of speed along its way.
+      const lg = c.fight?.lunge;
+      if (lg && lg.left > 0.05) for (let i = 0; i < 5; i++) { const q = hash2(c.id, Math.floor(time * 30) + i, 37); this.solid.add(c.x - lg.dx * (0.6 + i * 0.6), 0.25 + q * 0.3, c.z - lg.dz * (0.6 + i * 0.6), 0.45 + i * 0.12, dot, 0.5, 0.45, 0.38, 0.45 - i * 0.08); this.standing.add(c.x - lg.dx * (0.4 + i * 0.5), 0.9 + (q - 0.5) * 0.5, c.z - lg.dz * (0.4 + i * 0.5), 0.12, dot, 1, 1, 0.95, 0.7 - i * 0.13); }
+      // Slowed (a barb, a web): a cold drift of motes round its feet while it lasts.
+      if (c.slowUntil !== undefined && time < c.slowUntil) for (let i = 0; i < 6; i++) { const a = time * 1.5 + (i / 6) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 0.8, 0.15 + 0.15 * Math.sin(time * 3 + i), c.z + Math.sin(a) * 0.55, 0.18, dot, 0.55, 0.75, 1, 0.75); }
       // Telegraphs: winding up, a ring tightens at its feet; a shot shows its line; the quake its reach.
       const f = c.fight, atk = f && f.windupUntil > 0 ? attackOf(c.species, c.level) : null;
       if (atk && f) {
         const A = (f.move && attackNamed(f.move)) || atk.attack, k = Math.max(0, Math.min(1, 1 - (f.windupUntil - time) / Math.max(0.05, A.windup))), wild = !c.leashed && c.legendState !== "happy"; // (a happy legend fights for her, in her colours)
         const [r, gg, b] = wild ? [1, 0.3, 0.3] : [neon(c.species).r, neon(c.species).g, neon(c.species).b];
+        // The anticipation's cue: a glint over its head as it starts winding up (Ed, 2026-10-06: wind-ups that read).
+        if (k < 0.35) { const y = (this.tops.get(c.id) ?? 1.4) + 0.5, R = SPRITE_UNIFORMS.uRight.value, e = 1 - k / 0.35, L = 0.35 * (0.5 + 0.5 * Math.sin(k * 30)) + 0.2;
+          this.over.add(c.x, y, c.z, 0.32 * e + 0.1, dot, 1, 1, 0.85, e); for (const [ox, oy] of [[L, 0], [-L, 0], [0, L], [0, -L]]) this.over.add(c.x + R.x * ox, y + oy, c.z + R.z * ox, 0.12, dot, 1, 0.95, 0.7, e); }
         if (A.delivery === "quake" || A.delivery === "pulse") {
           const R = A.radius ?? 5;
           for (let i = 0; i < 40; i++) { const a = (i / 40) * Math.PI * 2; this.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.5, dot, r, gg * 0.6, b * 0.6, 0.25 + 0.6 * k); }
@@ -733,7 +784,7 @@ export class LeashView {
   /** hatTop: the height of the tip of her hat this frame (the stack floats above it). */
   update(time: number, camera: THREE.Camera, width: number, height: number, hatTop: number): void {
     const g = this.game, s = g.leash, t = g.tuning, w = g.witch, B = t.bond, L = t.leash, dot = this.uv(0);
-    this.standing.begin(); this.flat.begin(); this.over.begin();
+    this.standing.begin(); this.flat.begin(); this.over.begin(); this.solid.begin();
     this.drawBerries(time);
     this.drawBosses(time);
     this.drawLetters(time);
@@ -922,7 +973,7 @@ export class LeashView {
         }
       }
     }
-    this.standing.end(); this.flat.end(); this.over.end();
+    this.standing.end(); this.flat.end(); this.over.end(); this.solid.end();
     this.bubbles(time, camera, width, height);
     this.drawDreams(camera, width, height);
   }

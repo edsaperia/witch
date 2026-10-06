@@ -17,6 +17,9 @@ import { sigilColour } from "../../../art/generator.js";
 import type { View } from "../view";
 import { inView } from "./culling";
 import { mark } from "./pops";
+import { attackFeel, newFeel } from "../attackFeel";
+
+const FEEL = newFeel(); // (filled per creature, never kept)
 
 const WOKEN_GEAR: RigGear = { woken: true };
 
@@ -110,10 +113,13 @@ export function drawCreatures(v: View, time = 0): void {
     }
     // Wild creatures blink now and then: their eyeshine goes out about find.eyeshine.blink of the time (Ed, v244).
     if (!c.leashed) { const ph = time * 0.7 + c.id * 0.37; if (hash2(c.id, Math.floor(ph), 41) < g.tuning.find.eyeshine.blink * 6 && ph % 1 < 1 / 6) glow = -1; }
-    // Hit: a white flash and a little pop (combat: medium hit feel).
-    if (c.hurtAt !== undefined && time - c.hurtAt < 0.25) { const k = (time - c.hurtAt) / 0.25; glow = Math.max(glow, 1 - k); scale *= 1 + 0.15 * (1 - k); }
+    // Hit: a white flash; the blow's feel (render/attackFeel.ts): crouching in its wind-up, stretched in its lunge, squashed
+    // and springing back when hit, tumbling when knocked back.
+    if (c.hurtAt !== undefined && time - c.hurtAt < 0.25) glow = Math.max(glow, (1 - (time - c.hurtAt) / 0.25) * (c.level === 3 ? 0.5 : 1)); // (a legend's at half: whole, it whites out the screen; the contact star marks the blow)
+    const feel = attackFeel(c, time, g.tuning.attackFx, FEEL);
     // Leaping (Stage 5: the toad): up in an arc over its shadow.
     let hop = c.leap ? Math.sin(Math.min(1, Math.max(0, (time - c.leap.at) / Math.max(0.01, c.leap.lands - c.leap.at))) * Math.PI) * c.leap.height : 0;
+    hop += feel.hop; // (a tumble's arc: render/attackFeel.ts)
     // Just joined the party: two little hops of joy, the second smaller (straight up, nothing like a pounce).
     const joined = v.leashView.joined.get(c.id);
     if (joined !== undefined && time - joined < 0.7) { const k = (time - joined) / 0.7; hop += Math.abs(Math.sin(k * Math.PI * 2)) * 0.45 * (1 - k * 0.6); }
@@ -121,8 +127,8 @@ export function drawCreatures(v: View, time = 0): void {
     if (sleeping) glow = -2 - W.moss; else if (rising < 1) glow = -2 - W.moss * (1 - rising);
     // Restless in its sleep (#87): it tosses in bursts, and turns over when it's bad.
     const toss = st === "asleep" ? restlessness(c) : 0, fit = toss ? toss * Math.max(0, Math.sin(time * 1.3 + c.id)) ** 2 : 0;
-    if (!(v.rig && !sleeping && rising >= 1 && v.rig.add(c, { y: dance + hop + sunk, tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined }))) // the rig draws it, if it can
-      l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id), y: dance + hop + sunk, z: c.z, frame, flip: (c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1), fresh, glow, scale });
+    if (!(v.rig && !sleeping && rising >= 1 && v.rig.add(c, { y: dance + hop + sunk, tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face, sx: feel.sx, sy: feel.sy, crouch: feel.crouch, lunging: feel.lunging, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined }))) // the rig draws it, if it can
+      l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id), y: dance + hop + sunk, z: c.z, frame, flip: ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip, fresh, glow, scale, sx: feel.sx, sy: feel.sy });
     v.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * v.mpp * scale + dance + hop + sunk); // its health bar goes over it
     creatureShadows.push({ x: c.x, z: c.z, w: frame.w * v.mpp * 0.7, d: frame.w * v.mpp * 0.25 });
     n++;

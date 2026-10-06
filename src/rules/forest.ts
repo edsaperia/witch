@@ -287,7 +287,6 @@ function uniques(map: ForestMap): Uniques {
 // edges, and ponds that mirror the moon, more of them in the wet area types.
 export type LightKind = "campfire" | "stone" | "pond";
 export interface LightSource { x: number; z: number; kind: LightKind; size: number }
-const WET = new Set(["wetland", "stream", "bog", "beaver-pond", "moor"]);
 
 function lightsInChunk(map: ForestMap, ci: number, cj: number): LightSource[] {
   const L = map.tuning.lightSources, sp = L.spacing, s = map.seed, out: LightSource[] = [];
@@ -298,7 +297,7 @@ function lightsInChunk(map: ForestMap, ci: number, cj: number): LightSource[] {
     if (Math.hypot(x - map.dancefloor.x, z - map.dancefloor.z) < floorClearing(map.tuning) + 4) continue;
     const a = map.areaAt(x, z), where = a.openness < 0.35 || a.openness > 0.8 ? 1 : 0.25, roll = hash2(i, j, s + 403);
     if (homeGround(map, x, z, a.look)) continue; // (home's lights are its party decorations)
-    const wet = WET.has(AREA_TYPES[a.type].id) || !!AREA_TYPES[a.type].layout.terrain?.includes("pools");
+    const wet = AREA_TYPES[a.type].ponds || !!AREA_TYPES[a.type].layout.terrain?.includes("pools");
     const pond = (wet ? L.wetPond : L.pond) * where, fire = L.campfire * where, stone = L.magicStone * where;
     const kind: LightKind | null = roll < pond ? "pond" : roll < pond + fire ? "campfire" : roll < pond + fire + stone ? "stone" : null;
     if (kind) out.push({ x, z, kind, size: 0.75 + hash2(i, j, s + 404) * 0.5 });

@@ -19,6 +19,8 @@ import type { Style } from "./style";
 const TEXELS_PER_METRE = 2;
 const TILE = 32; // texels
 const FLOOR_COLS = 8;
+const TYPE_SLOTS = Math.max(32, LOOKS.length); // a slot per area type and home's look (area recipes can add types)
+const FLOOR_ROWS = Math.ceil(TYPE_SLOTS / FLOOR_COLS);
 const FLOOR_VARIANTS = 4; // each type's floor: this many tiles side by side (art/areas.js FLOOR_VARIANTS), one picked per repeat of the tile
 
 // The ground's grid: GRID metres a square, out to REACH metres round the witch (past the haze's
@@ -40,9 +42,9 @@ const FRAG = /* glsl */ `
 uniform sampler2D uAreas;
 uniform vec4 uExtent; // minX, minZ, width, depth (metres)
 uniform float uPixel; // metres per art pixel
-uniform vec3 uTypeFloor[32];      // each type's floor colour (hsv), until its tile is drawn
-uniform float uFloorReady[32];
-uniform vec3 uTerrain[32];        // each type's ground features: mounds, hollows, ridges (0 or 1)
+uniform vec3 uTypeFloor[${TYPE_SLOTS}];      // each type's floor colour (hsv), until its tile is drawn
+uniform float uFloorReady[${TYPE_SLOTS}];
+uniform vec3 uTerrain[${TYPE_SLOTS}];        // each type's ground features: mounds, hollows, ridges (0 or 1)
 uniform sampler2D uFloors;        // every type's floor tile, FLOOR_COLS to a row
 uniform vec2 uTile, uFloorsSize;  // one tile's size and the atlas's, in art pixels
 uniform float uSat;
@@ -255,7 +257,7 @@ export class Ground {
   private tilesX: number;
   private tilesZ: number;
   private initialised = false;
-  private floorReady = new Array(32).fill(0);
+  private floorReady = new Array(TYPE_SLOTS).fill(0);
   private floors: THREE.DataTexture;
   private discoTiles = (t => { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; return t; })(new THREE.DataTexture(new Uint8Array(32 * 32 * 4), 32, 32));
   private pendingFloors: [number, TilePixels][] = [];
@@ -268,8 +270,8 @@ export class Ground {
     const nearest = (t: THREE.DataTexture) => { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true; return t; };
     this.texture = nearest(new THREE.DataTexture(new Uint8Array(W * H * 4), W, H));
     nearest(this.tile);
-    this.floors = nearest(new THREE.DataTexture(new Uint8Array(64 * FLOOR_VARIANTS * FLOOR_COLS * 48 * 4 * 4), 64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * 4));
-    const floors = Array.from({ length: 32 }, (_, i) => new THREE.Vector3(...(LOOKS[i]?.floor ?? [0.25, 0.45, 0.4])));
+    this.floors = nearest(new THREE.DataTexture(new Uint8Array(64 * FLOOR_VARIANTS * FLOOR_COLS * 48 * FLOOR_ROWS * 4), 64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * FLOOR_ROWS));
+    const floors = Array.from({ length: TYPE_SLOTS }, (_, i) => new THREE.Vector3(...(LOOKS[i]?.floor ?? [0.25, 0.45, 0.4])));
     const disco = discoLooks(st, map.dancefloor.radius);
     const mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
@@ -280,10 +282,10 @@ export class Ground {
         uPixel: { value: metresPerPixel },
         uTypeFloor: { value: floors },
         uFloorReady: { value: this.floorReady },
-        uTerrain: { value: Array.from({ length: 32 }, (_, i) => { const tr = LOOKS[i]?.layout.terrain ?? []; return new THREE.Vector3(+tr.includes("mounds"), +tr.includes("hollows"), +tr.includes("ridges")); }) },
+        uTerrain: { value: Array.from({ length: TYPE_SLOTS }, (_, i) => { const tr = LOOKS[i]?.layout.terrain ?? []; return new THREE.Vector3(+tr.includes("mounds"), +tr.includes("hollows"), +tr.includes("ridges")); }) },
         uFloors: { value: this.floors },
         uTile: { value: new THREE.Vector2(64, 48) },
-        uFloorsSize: { value: new THREE.Vector2(64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * 4) },
+        uFloorsSize: { value: new THREE.Vector2(64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * FLOOR_ROWS) },
         uSat: { value: st.sat },
         uFloor: { value: new THREE.Vector3(map.dancefloor.x, map.dancefloor.z, map.dancefloor.radius) },
         uCanopy: { value: new THREE.Vector4() },
