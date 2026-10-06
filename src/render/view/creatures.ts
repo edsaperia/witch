@@ -167,7 +167,10 @@ export function drawCreatures(v: View, time = 0): void {
       l.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id) + R.x * k, y: dance + hop + sunk, z: c.z + R.z * k, frame, flip, fresh, glow, scale, sx: feel.sx, sy: feel.sy });
     }
     v.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * v.mpp * scale + dance + hop + sunk); // its health bar goes over it
-    creatureShadows.push({ x: c.x, z: c.z, w: frame.w * v.mpp * 0.7, d: frame.w * v.mpp * 0.25 });
+    // Its shadow under it as drawn (its sway and a nightmare's tossing too), as big as it's drawn (a legend's size, an evolving
+    // pop); off the ground (a hop, a leap, a tumble) still on the ground under it, smaller the higher it goes.
+    const air = Math.max(0, dance + hop), sk = scale / (1 + air * 0.35);
+    creatureShadows.push({ x: c.x + sway + fit * 0.35 * Math.sin(time * 11 + c.id), z: c.z, w: frame.w * v.mpp * 0.7 * sk, d: frame.w * v.mpp * 0.25 * sk });
     n++;
   }
   v.rig?.end();
@@ -177,5 +180,5 @@ export function drawCreatures(v: View, time = 0): void {
     b?.set(list);
   }
   v.stats.creatures = n;
-  if (v.game.tuning.shadows.on) v.shadows.set(v.shadowList.concat(creatureShadows));
+  if (v.game.tuning.shadows.on) v.shadows.set(v.shadowList.concat(creatureShadows, v.witchShadows));
 }

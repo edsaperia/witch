@@ -3,7 +3,7 @@
 // Sets are asked for as the witch nears them and drawn by a few Web Workers in the background;
 // where workers or OffscreenCanvas are missing, they are drawn on the page, one per frame.
 import * as Art from "../../art/generator.js";
-import { atlasFromPixels, packAtlas, type Atlas, type Baked } from "./atlas";
+import { atlasFromPixels, packAtlas, type Atlas, type Baked, type FrameGround, groundOf } from "./atlas";
 import { creatureFrame, runJob, witchLookOf, type ArtJob, type ArtResult, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { ART_HASH, cacheGet, cachePut, hashText } from "./artCache";
@@ -309,7 +309,12 @@ export class AssetLibrary {
     // rising (8-9 towards, 10-11 away) and descending (12-13 towards, 14-15 away), two frames each.
     // Bare (her hat knocked off: rules/hat.ts): the same frames, at the same places, with no hat; then the hat on the ground.
     const style = this.style, mine = witchLookOf(style, genome), wc = mine.colours, look = bare ? { ...(mine.look ?? {}), hat: "none" } : mine.look;
-    const wb = (o: object) => Art.bake((Art.witchSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite>)(style, { ...o, look }), wc, style, style.cOutline) as Baked;
+    const grounds: (FrameGround | null)[] = []; // (each frame's ground, in the order they're made: every one is kept, in order)
+    const wb = (o: object) => {
+      const sp = (Art.witchSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite>)(style, { ...o, look }) as { anchors?: Record<string, number[]> };
+      grounds.push(groundOf(sp.anchors));
+      return Art.bake(sp as ReturnType<typeof Art.witchSprite>, wc, style, style.cOutline) as Baked;
+    };
     const witchFoot = bare ? {} as typeof this.witchFoot : this.witchFoot, witchFly = bare ? {} as typeof this.witchFly : this.witchFly;
     const witchLean = bare ? { towards: [] as number[], away: [] as number[] } : this.witchLean, witchHeading = bare ? {} as typeof this.witchHeading : this.witchHeading;
     for (const k of Object.keys(witchFoot)) delete witchFoot[k];
@@ -338,8 +343,9 @@ export class AssetLibrary {
     if (bare) {
       const hat = (Art.witchHatSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite> | null)(style, { look: mine.look });
       this.witchHatFrame = hat ? sprites.push(Art.bake(hat, wc, style, style.cOutline) as Baked) - 1 : -1;
+      if (hat) grounds.push(null);
     } else this.witchGenome = genome;
-    return packAtlas(sprites, 2048);
+    return { ...packAtlas(sprites, 2048), grounds };
   }
   /** The character creator changed her look: her frames again (the view swaps its batch). */
   rebakeWitch(genome: unknown): void { this.witch = this.bakeWitch(genome); this.bare = null; this.version++; }
