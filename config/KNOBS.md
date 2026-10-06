@@ -2,13 +2,26 @@
 
 Generated from `config/tuning.json` and its schema by `node tools/config/schema.mjs --docs`; don't edit by hand. A test fails if it's out of date.
 
-## `mapAreas`, `areaSize`, `areaScale`, `arena`, `areaSizeVariance`, `borderLayers`
+## `mapAreas`
 
 The forest: mapAreas x mapAreas areas cut by the fractal partition. An area is areaSize x areaScale metres across on average (areaScale 4 makes them four times as wide as the first 28 m areas; push it for bigger). areaSizeVariance (0-1) makes areas vary in size, some small, some large. borderLayers sets how wiggly borders are. Ed (2026-10-05: "make areas larger; each is effectively a fighting arena"): 14 x 14 areas of 168 m (areaScale 6), about the same world as 20 x 112 m. arena: every area is mostly open within radius metres of its centre and its soundsystem, for fights (they range 15 to 45 m), and (Ed: softer edges; then, at v473, a smaller clearing and a long soft gradient from the area's edge to near its runestone) the woods thicken over a band band metres wide beyond it, across most of the area, along curve (linear: thinning in from right past the open middle; smooth: a slow start), lone trees and bushes thinning out into the clearing, its edge wobbled by noise (a share of the band) so it's no ring; both times fight.scale. bushes and tufts: the share of the undergrowth and the ground cover left in its open middle.
 
 | knob | type | range |
 |---|---|---|
 | `mapAreas` | number | 0 to … |
+
+## `map`, `areaSize`, `areaScale`, `arena`, `areaSizeVariance`, `borderLayers`
+
+The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather than square, with a buffer zone with no runestones around the edge"). shape circle: the playable areas are those whose centres lie within radius areas of home's (7.9: about 196, as many as the old 14 x 14), and only they get runestones, soundsystems, legends, relics and creatures and wake in waves; past them a buffer ring buffer areas deep (1 to 1.5), forest she can fly over where nothing happens; her flight's edge is a circle, soft over its last push metres (her speed outward easing to nothing at the edge, and a drift of up to drift m/s taking her back in); the forest goes on edge areas past it, into the fog. shape square: mapAreas x mapAreas as before (?shape=square to compare). ?mapAreas=<n> on the circular map sets the radius for about n x n areas.
+
+| knob | type | range |
+|---|---|---|
+| `map.shape` | string | "circle" / "square" |
+| `map.radius` | number | 0 to … |
+| `map.buffer` | number | 0 to … |
+| `map.push` | number | 0 to … |
+| `map.drift` | number | 0 to … |
+| `map.edge` | number | 0 to … |
 | `areaSize` | number | 0 to … |
 | `areaScale` | number | 0 to … |
 | `arena.radius` | number | 0 to … |

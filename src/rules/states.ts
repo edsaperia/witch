@@ -345,7 +345,7 @@ export function simulateStates(map: ForestMap, o: StatesOptions): StatesResult {
       const wave = party.wave + 1;
       if (wave % relicEvery === 0 && relicsFound < relicCount) { relicsFound++; relicsHeld++; } // (she finds one on her travels)
       // What grows while wild (never in an area with a soundsystem).
-      for (let cy = 0; cy < t.mapAreas; cy++) for (let cx = 0; cx < t.mapAreas; cx++) {
+      for (const [cx, cy] of map.cells) {
         const k = cellKey([cx, cy]);
         if (k !== homeKey && !sounds.has(k) && !ruined.has(k) && byCell.has(k)) grow(k, [cx, cy], wave);
       }

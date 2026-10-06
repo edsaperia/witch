@@ -87,7 +87,7 @@ function cellsOf(map: ForestMap) {
   if (out) return out;
   const d = map.dancefloor, N = map.tuning.party.noisy, L = N.lobeSize, s0 = map.seed + 911;
   out = [];
-  for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
+  for (const [cx, cy] of map.cells) {
     const s = map.soundsystemSpot(cx, cy), site = map.siteOf(cx, cy), dist = Math.hypot(s.x - d.x, s.z - d.z);
     const n = 0.65 * vnoise(site.x / L, site.z / L, s0) + 0.35 * vnoise(site.x / (L / 2.3), site.z / (L / 2.3), s0 + 1);
     out.push({ key: `${cx},${cy}`, cell: [cx, cy], dist, cost: dist * (1 + N.wobble * (n - 0.5) * 2) });
@@ -277,7 +277,7 @@ export interface SpawnMarker { key: string; cell: Cell; x: number; z: number; aw
 export function spawnMarkers(p: PartyState, map: ForestMap): SpawnMarker[] {
   const next = new Set(nextWave(p, map).map(c => c.key)), out: SpawnMarker[] = [];
   const after = new Set(p.afterNext.map(cellKey));
-  for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
+  for (const [cx, cy] of map.cells) {
     const key = `${cx},${cy}`;
     if (p.areas.has(key)) continue;
     const s = map.soundsystemSpot(cx, cy), awake = next.has(key);
