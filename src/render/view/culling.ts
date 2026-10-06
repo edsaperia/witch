@@ -17,6 +17,9 @@ export function poseCamera(cam: THREE.PerspectiveCamera, pose: { angle: number; 
 export function updateFrustum(v: View): void {
   const g = v.game, t = g.tuning, cam = v.camera;
   cam.updateMatrixWorld();
+  const step = cam.position.distanceTo(v.lastCamPos);
+  v.camStep = Number.isFinite(step) ? Math.min(step, 100) : 0;
+  v.lastCamPos.copy(cam.position);
   v.m4.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
   v.frustum.setFromProjectionMatrix(v.m4);
   // Where the camera is heading: the chosen zoom step, and the height she is rising or descending to.
@@ -63,11 +66,21 @@ export function inView(v: View, x: number, z: number, w: number, h: number, marg
   const d1 = B.x * ahead * ahead, d2 = v.bendTo * ahead * ahead;
   // Past the bent ground's horizon, only what stands tall enough to show over the bulge is seen:
   // everything else there is hidden behind the forest in front (and was the bend's cost).
-  if (ahead > 0 && !overHorizon(v, ahead, g + h + 2, B.x) && !overHorizon(v, ahead, g + h + 2, v.bendTo)) return false; // (its own top, 2 m slack: not the view margin)
+  // (Its own top, 2 m slack: not the view margin. And as if the camera were already a step or so
+  // further on, so what the next frame's horizon shows is drawn already, behind the bulge till it
+  // rises over it: judged where it stands, a long frame, the camera moving metres, let creatures
+  // pop in at the horizon. #222's map: a baby wolf and a young fox 258 m ahead over the treetops.)
+  const near = Math.max(0, ahead - horizonLead(v.camStep));
+  if (ahead > 0 && !overHorizon(v, near, g + h + 2, B.x) && !overHorizon(v, near, g + h + 2, v.bendTo)) return false;
   v.box.min.set(x - w / 2 - margin, g - Math.max(d1, d2) - margin, z - h - margin);
   v.box.max.set(x + w / 2 + margin, g - Math.min(d1, d2) + h + margin, z + margin);
   return v.frustum.intersectsBox(v.box) || v.frustumTo.intersectsBox(v.box);
 }
+
+/** How much nearer (m) the horizon cull judges a thing than it stands, for a camera that moved
+ *  `camStep` metres last frame: a step and a half and a metre, so the next frame (if as long) can't
+ *  bring anything over the horizon that this one left undrawn. */
+export const horizonLead = (camStep: number): number => 1 + 1.5 * camStep;
 
 /** How much of a thing standing at (x, z), `top` metres tall, shows over the bent ground's
  *  horizon, 0 to 1: its whole height (1) down to none of it, its top hidden (0); by the same
