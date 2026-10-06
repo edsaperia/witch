@@ -1176,12 +1176,13 @@ Wave numbers over the rune stones (Ed, 2026-10-04: "for design purposes, let's j
 
 ## `canopyCutout`
 
-In ground mode the canopy stays drawn at the screen's edges, so she flies under the forest roof; a hole round her is cut out, screenFraction of the screen's width across, its edge edge of the width wide. Each tree has its own radius for it, up to a fifth nearer or further (Ed, round 7: "the crown-hiding circle still has a very sharp edge"), so no line runs across the canopy, and the edge fades over a wide band. Rising closes the hole.
+In ground mode the canopy stays drawn at the screen's edges, so she flies under the forest roof; a hole round her is cut out, screenFraction of the screen's width across, its edge edge of the width wide. Each tree has its own radius for it, up to a fifth nearer or further (Ed, round 7: "the crown-hiding circle still has a very sharp edge"), so no line runs across the canopy, and the edge fades over a wide band. Rising closes the hole. whole: how much the fade goes by each crown's middle rather than by each pixel (Ed, 2026-10-06: "I still see concentric circles while moving through dense forests in ground mode... If these had softer edges, it would be fine"): by pixel, every crown carried the same circular gradient and they lined up into rings; at 1 each crown fades as a whole. edge 0.2 -> 0.3 with it.
 
 | knob | type | range |
 |---|---|---|
 | `canopyCutout.screenFraction` | number | 0 to … |
 | `canopyCutout.edge` | number | 0 to … |
+| `canopyCutout.whole` | number | 0 to … |
 
 ## `find`, `tone`, `bloom`, `tiltShift`
 
