@@ -54,7 +54,7 @@ import { ShadowBatch, type ShadowInstance } from "./shadows";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
 import { berrySprite } from "./berries";
-import { LeyLines, leyPulse } from "./leylines";
+import { LeyLines, leyReveal, shaderPulse } from "./leylines";
 import { leyChain, leyKey } from "../rules/leylines";
 import { SPRITE_UNIFORMS, SpriteBatch } from "./sprites";
 import type { Style } from "./style";
@@ -702,7 +702,8 @@ export class View {
         if (this.leyRgb) return this.leyRgb; // the mood's: a guide in the HUD's amber, not a light source (the art director's round 2)
         return this.markerArt.colour.get(AREA_TYPES[M.typeOf(s.cell[0], s.cell[1])].creature) ?? home;
       }, time, canopyShown(w));
-      this.ley.pulse(leyPulse(g.party.nextAt - time, t.party.interval, g.party.paused)); // the wave's pulse along the current link, by the party's clock
+      this.ley.pulse(shaderPulse(g.party, g.map, time)); // the wave's pulse along the current link, by the party's clock (as the HUD's pointer)
+      this.ley.grow(leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3)); // none while home boots, then out from the treehouse through the first wave (Ed)
     }
     this.time("party");
     // The canopy uplight over the nearest partified areas, fading in with each one's transition.

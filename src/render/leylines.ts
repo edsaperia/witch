@@ -11,6 +11,8 @@
 //
 // One ribbon mesh for the line, rebuilt only when it changes (a link routed a frame, so no frame
 // does them all), and the old one while it drains; two draws each.
+import type { PartyState } from "../rules/party";
+import { pulseProgress } from "../rules/leypulse";
 import * as THREE from "three";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { LIGHT_UNIFORMS } from "./lighting";
@@ -70,6 +72,7 @@ void main() {
 
 const FRAG = /* glsl */ `
 uniform float uTime, uGlowPass, uBright, uFade, uBehind, uShift, uLift, uCurrent, uOnlyFirst;
+uniform vec2 uGrow; // the line drawn only this far (x, in links from the last stone reached) while y is 1: Ed's reveal through the first wave
 uniform vec2 uPulse; // the wave's pulse on the link from the last stone reached: x how far it's got (0-1, by arc length), y 1 when there's a wave clock
 uniform vec2 uFlow;
 uniform vec4 uReveal; // x: the first link gone before this far along (draining into its stone); y: link z shown only this far (drawing out); w: the whole line's strength
@@ -79,6 +82,8 @@ float lh(float p) { return fract(sin(p * 127.1) * 43758.5453); }
 float ln(float p) { float i = floor(p), f = fract(p); return mix(lh(i), lh(i + 1.0), f * f * (3.0 - 2.0 * f)); }
 void main() {
   if (vSeen < 0.5) discard;
+  float along = vLink - uCurrent + vT; // links on from the last stone reached
+  if (uGrow.y > 0.5 && along > uGrow.x) discard;
   if (uOnlyFirst > 0.5 && vLink > 0.5) discard;
   if (vLink < 0.5 && vT < uReveal.x) discard;
   bool drawing = abs(vLink - uReveal.z) < 0.5 && uReveal.y < 1.0;
@@ -108,6 +113,8 @@ void main() {
     a += exp(-abs(vT - p) * 25.0) * (uGlowPass > 0.5 ? halo : core) * (2.5 + 3.5 * p);
     a += smoothstep(0.96, 1.0, p) * exp(-(1.0 - vT) * 30.0) * (uGlowPass > 0.5 ? halo : core) * 3.0;
   }
+  // Growing out through the first wave (Ed): a soft glow leads its tip.
+  if (uGrow.y > 0.5) a += exp(-abs(along - uGrow.x) * 30.0) * (uGlowPass > 0.5 ? halo : core) * 2.0;
   // Drawing out toward the next stone: a bright tip leads it.
   if (drawing) a += exp(-abs(vT - uReveal.y) * 60.0) * (uGlowPass > 0.5 ? halo : core) * 2.5;
   gl_FragColor = vec4(vCol * a * link * ends * uReveal.w, 1.0);
@@ -115,24 +122,25 @@ void main() {
 
 interface LeySet { geo: THREE.BufferGeometry; meshes: THREE.Mesh[]; reveal: THREE.Vector4; current: { value: number }; onlyFirst: { value: number } }
 
-/** How far the wave's pulse has got along the current link (0 at the last wave, 1 as the next arrives), from the party's
- *  own clock; null with no wave clock (waves off: paused, or no interval). */
-export function leyPulse(left: number, interval: number, paused: boolean): number | null {
-  if (paused || !(interval > 0) || interval >= 1e8) return null;
-  return 1 - Math.min(1, Math.max(0, left) / interval);
+/** The pulse's place along the current link for the shader (0-1), or null for none: the HUD's wave pointer's own
+ *  (rules/leypulse.ts pulseProgress, so the two agree), but none while home boots up (Ed, 2026-10-06: "during boot up
+ *  phase, there's no leyline") or with no wave clock (?wave=off: paused, or no interval). */
+export function shaderPulse(p: PartyState, map: ForestMap, time: number): number | null {
+  const iv = map.tuning.party.interval;
+  if (p.paused || !(iv > 0) || iv >= 1e8 || time < p.bootUntil) return null;
+  return pulseProgress(p, map, time);
 }
 
-/** The point a share t (0-1) of the way along a route by arc length: where the shader's vT = t lies (build's aT). */
-export function arcPoint(pts: [number, number][], t: number): [number, number] {
-  let total = 0;
-  for (let i = 1; i < pts.length; i++) total += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
-  let want = Math.max(0, Math.min(1, t)) * total;
-  for (let i = 1; i < pts.length; i++) {
-    const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
-    if (want <= l || i === pts.length - 1) { const k = l > 0 ? Math.min(1, want / l) : 0; return [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * k, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * k]; }
-    want -= l;
-  }
-  return pts[0];
+/** How far the line is drawn, in links from the last stone reached, or null for all of it (Ed, 2026-10-06: "before
+ *  that, during boot up phase, there's no leyline ... Then the leyline appears, starting at the treehouse, moving three
+ *  times (adjustable) the speed on the pulse (so it reaches runestone 3 by the time the first wave finishes)"): none
+ *  while home boots up; through the first wave's countdown, `reveal` times the pulse's progress, so it reaches the
+ *  `reveal`th stone as the first wave lands; then all of it (and with no wave clock, all of it once booted). */
+export function leyReveal(p: PartyState, map: ForestMap, time: number, reveal: number): number | null {
+  if (time < p.bootUntil) return 0;
+  if (p.wave > 0) return null;
+  const k = shaderPulse(p, map, time);
+  return k === null ? null : reveal * k;
 }
 
 export class LeyLines {
@@ -156,7 +164,7 @@ export class LeyLines {
       ...HEIGHT_UNIFORMS, uTime: LIGHT_UNIFORMS.uTime,
       uLeyWidth: { value: new THREE.Vector2(T.width[0], T.width[1]) }, uLeyHeight: { value: new THREE.Vector2(T.height[0], T.height[1]) },
       uLift: { value: 0 }, uBright: { value: T.brightness * BRIGHT }, uFade: { value: T.fade }, uBehind: { value: T.behindBright },
-      uShift: { value: 0 }, uFlow: { value: new THREE.Vector2(T.flow[0], T.flow[1]) }, uPulse: { value: new THREE.Vector2() },
+      uShift: { value: 0 }, uFlow: { value: new THREE.Vector2(T.flow[0], T.flow[1]) }, uPulse: { value: new THREE.Vector2() }, uGrow: { value: new THREE.Vector2() },
     };
     this.cur = this.makeSet(); this.old = this.makeSet();
     this.meshes = [...this.cur.meshes, ...this.old.meshes];
@@ -173,6 +181,8 @@ export class LeyLines {
 
   /** The wave's pulse on the current link: how far it's got (0-1), or null for none (leyPulse). */
   pulse(p: number | null): void { this.u.uPulse.value.set(p ?? 0, p === null ? 0 : 1); }
+  /** How far the line is drawn, in links from the last stone reached (leyReveal), or null for all of it. */
+  grow(links: number | null): void { this.u.uGrow.value.set(links ?? 0, links === null ? 0 : 1); }
 
   private makeSet(): LeySet {
     const geo = new THREE.BufferGeometry(), reveal = new THREE.Vector4(0, 1, -1, 1), current = { value: 0 }, onlyFirst = { value: 0 };

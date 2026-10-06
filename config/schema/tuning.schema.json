@@ -2045,6 +2045,10 @@
         "on": {
           "type": "boolean"
         },
+        "reveal": {
+          "type": "number",
+          "minimum": 0
+        },
         "ahead": {
           "type": "number",
           "minimum": 0
@@ -2114,6 +2118,7 @@
       },
       "required": [
         "on",
+        "reveal",
         "ahead",
         "behind",
         "behindBright",
