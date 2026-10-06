@@ -293,7 +293,7 @@ export interface Tuning {
    *  per area, how far a party animal looks for one (m), how long it eats (s), berries to evolve
    *  (babies, young, adults), the berry's colour and glow. */
   berries: { perArea: number[]; bushesPerArea: number; patch: { bushes: number[]; radius: number }; detour: number; seekRadius: number; eatTime: number; /** Berries to evolve (Ed, 2026-10-05): the strength a level gains (by: "power", hp × dps, or "value", √ of it) over per, rounded, at least 1; scale, the legends' buff. */ cost: { by: "power" | "value"; per: number; scale?: number }; colour: string; glow: number };
-  sigilProjection: { height: number; opacity: number; beam: number; size: number };
+  sigilProjection: { height: number; opacity: number; beam: number; size: number; /** Leashed and happy creatures' sigils over them from the treetops (Ed's playtest, 2026-10-06): the nearest `max` within `range` metres, `size` times their ground rune, `opacity` (happy ones dimmer by `happy`), fading out over the last `fade` of the range. */ creatures: { range: number; max: number; size: number; opacity: number; happy: number; fade: number } };
   occlusion: { on: boolean; fadeOpacity: number; edge: number; minHeight: number; silhouette: number };
   stack: { offset: number; scale: number; gap: number; stiffness: number; damping: number; trail: number; idleSway: number };
   lasers: { on: boolean; maxCount: number; length: number; spread: number; maxTilt: number; sweep: number; sweepBeats: number; openBars: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };

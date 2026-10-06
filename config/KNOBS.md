@@ -556,7 +556,7 @@ The witch knocked back and staggered by a blow (Ed, 2026-10-05: "add a knockback
 
 ## `sigilProjection`, `occlusion`
 
-From the treetops, each placed sigil shows above the canopy over its spot: height metres above the crowns, opacity, size (times the ground rune), and a faint column of light (beam opacity) from the rune up to it. Fades in as she rises.
+From the treetops, each placed sigil shows above the canopy over its spot: height metres above the crowns, opacity, size (times the ground rune), and a faint column of light (beam opacity) from the rune up to it. Fades in as she rises. creatures (Ed's playtest, 2026-10-06: "I should be able to see sigils of leashed creatures and happy creatures from treetop mode"): each leashed or happy creature's sigil hangs over it at the same height, moving with it, no beam: only the nearest max within range metres, size times its ground rune, at opacity (a happy one's times happy, as its rune is dimmer on the ground), fading out over the last fade (a share) of the range. Not for one in her stack (its sigil's already over her) or one standing at its placed sigil (that one's projected already).
 
 | knob | type | range |
 |---|---|---|
@@ -564,6 +564,12 @@ From the treetops, each placed sigil shows above the canopy over its spot: heigh
 | `sigilProjection.opacity` | number | 0 to … |
 | `sigilProjection.beam` | number | 0 to … |
 | `sigilProjection.size` | number | 0 to … |
+| `sigilProjection.creatures.range` | number | 0 to … |
+| `sigilProjection.creatures.max` | number | 0 to … |
+| `sigilProjection.creatures.size` | number | 0 to … |
+| `sigilProjection.creatures.opacity` | number | 0 to … |
+| `sigilProjection.creatures.happy` | number | 0 to … |
+| `sigilProjection.creatures.fade` | number | 0 to … |
 | `occlusion.on` | boolean |  |
 | `occlusion.fadeOpacity` | number | 0 to … |
 | `occlusion.edge` | number | 0 to … |
