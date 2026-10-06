@@ -113,6 +113,7 @@ export interface Tuning {
     ouch: { volume: number; knockdown: number; duck: number; duckTime: number };
     impact: { volume: number; small: number };
     roar: { volume: number };
+    lament: { volume: number; pitch: number; slow: number; every: number; urgent: number; range: number; gap: number; max: number };
     shoes: { volume: number; range: number; max: number };
     pond: { volume: number; lap: number; frogs: number; frogEvery: number; drips: number; dripEvery: number; range: number };
     picnic: { volume: number; murmur: number; clinks: number; clinkEvery: number; range: number };
