@@ -231,7 +231,7 @@ export class InviteView {
     const near = g.creatures.filter(c => !c.gone && Math.abs(c.x - w.x) < 60 && Math.abs(c.z - w.z) < 60 && (c.affection || this.ringModel.rings.has(c.id)));
     const changes = this.ringModel.update(near, c => ringOf(c.level, A.affection(c), t.invites.hits), won);
     const ringAt = (c: Creature, slot: number, slots: number) => {
-      const r = Math.max(bodyRadius(c) + 0.6, (slots * 0.42) / (Math.PI * 2)), a = time * 0.7 + (slot / slots) * Math.PI * 2;
+      const r = Math.max(bodyRadius(c) + 0.6, 1.1, (slots * 0.42) / (Math.PI * 2)), a = time * 0.7 + (slot / slots) * Math.PI * 2;
       return { x: c.x + Math.cos(a) * r, y: Math.max(0.5, head(c.id) * 0.55), z: c.z + Math.sin(a) * r };
     };
     const envSize = (slots: number) => (slots > 12 ? 0.55 : slots > 6 ? 0.7 : 0.85); // (smaller as they crowd: 18 still distinct)
@@ -254,7 +254,7 @@ export class InviteView {
         this.falling.push({ ...p, at: time, tilt: hash2(ch.id, ch.slot, 7) * 360, el: img("💌", n) });
       } else if (ch.kind === "hearts" && c) {
         // Full: the envelopes' paper vanishes, leaving each its ❤️, rising and fading.
-        for (let s = 0; s < ch.slots; s++) this.hearts.push({ ...ringAt(c, s, ch.slots), at: time, el: img("❤️", Math.max(5, Math.round(n * envSize(ch.slots)))) });
+        for (let s = 0; s < ch.slots; s++) this.hearts.push({ ...ringAt(c, s, ch.slots), at: time, el: img("❤️", Math.max(5, Math.round(n * envSize(ch.slots) * 0.75))) });
       }
     }
     for (const [id, r] of this.rings) {
