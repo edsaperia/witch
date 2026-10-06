@@ -1064,7 +1064,7 @@ At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power
 
 ## `party`
 
-lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that many seconds sooner (at once if less is left), each loss stacking; the gap after it is the interval as ever. motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, rising from from to to metres (under the crowns to above them) at about speed m/s. uplight: crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border). The party spreads: a wave every interval seconds (the first after startDelay more), partifying every area touching a partified one; maxPerWave caps a wave (0: no cap). transition: seconds an area takes to partify, 0 to skip the show. partyLight: the coloured light at each soundsystem (reach in metres, strength).
+lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that many seconds sooner (at once if less is left), each loss stacking; the gap after it is the interval as ever. motes: sparse glowing motes over every partified area, perPatch per 20 x 20 m, rising from from to to metres (under the crowns to above them) at about speed m/s. uplight: crowns in partified areas catch a faint glow from below in the area's colour (strength at its brightest, pulse on the beat, fading over edge metres toward the border). The party spreads: a wave every interval seconds (the first after startDelay more), partifying every area touching a partified one; maxPerWave caps a wave (0: no cap). uncrossed (Ed, 2026-10-06: "Is it possible for the leylines to never have to cross? even if it means the route they describe is much longer"; rules/leyroute.ts): the line through the runestones in wave order never meets itself where it shows (the links ever shown together, leyLines.ahead + behind): the picker only chooses an area whose link from the one woken before it meets none of the links it will be shown with, and from which the line can go on the same way; when no bordering area can, any that can; when none can straight, its link bends round them (false: the picker as before). transition: seconds an area takes to partify, 0 to skip the show. partyLight: the coloured light at each soundsystem (reach in metres, strength).
 
 | knob | type | range |
 |---|---|---|
@@ -1081,6 +1081,7 @@ lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that 
 | `party.areasPerWave` | number | 0 to … |
 | `party.maxPerWave` | number | 0 to … |
 | `party.picker` | string |  |
+| `party.uncrossed` | boolean |  |
 | `party.noisy.wobble` | number | 0 to … |
 | `party.noisy.lobeSize` | number | 0 to … |
 | `party.noisy.candidates` | number | 0 to … |

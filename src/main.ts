@@ -120,6 +120,8 @@ const hillsParam = params.get("hills");
 if (hillsParam !== null && !isNaN(Number(hillsParam))) tuning.ground = { ...tuning.ground, hills: { ...tuning.ground.hills, on: Number(hillsParam) > 0, amplitude: Number(hillsParam) > 0 ? Number(hillsParam) : tuning.ground.hills.amplitude } };
 // ?ley=0: no ley lines through the runestones.
 if (params.get("ley") === "0") tuning.leyLines = { ...tuning.leyLines, on: false };
+// ?uncrossed=0: the wave picker as it was, its ley line free to cross itself (party.uncrossed; Ed, 2026-10-06), to compare.
+if (params.get("uncrossed") === "0") tuning.party = { ...tuning.party, uncrossed: false };
 if (params.get("knock") === "0") tuning.witch = { ...tuning.witch, knock: { ...tuning.witch.knock, on: false } };
 // ?bare=1: the terrain on its own, to judge the hills, the bumps and the bend (Ed, 2026-10-04): no
 // trees, undergrowth, grass, decor, scenes, relics, path props, string lights, mist or shadows; no

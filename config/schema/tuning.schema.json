@@ -4809,6 +4809,9 @@
         "picker": {
           "type": "string"
         },
+        "uncrossed": {
+          "type": "boolean"
+        },
         "noisy": {
           "type": "object",
           "properties": {
@@ -4858,6 +4861,7 @@
         "areasPerWave",
         "maxPerWave",
         "picker",
+        "uncrossed",
         "noisy",
         "transition",
         "lightReach",

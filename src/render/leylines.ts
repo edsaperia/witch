@@ -15,6 +15,7 @@ import * as THREE from "three";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { LIGHT_UNIFORMS } from "./lighting";
 import { departureRoute, type LeyStone } from "../rules/leylines";
+import { polylinesMeet } from "../rules/crossing";
 import type { ForestMap } from "../rules/map";
 
 export interface LeyTuning {
@@ -41,6 +42,8 @@ export interface LeyTuning {
 }
 
 const STEP = 8; // metres between route points
+/** How tame a link is drawn when its wander would meet another's (a share of its usual wander; 0 its own way). */
+const TAME = [1, 0.5, 0.2, 0];
 /** leyLines.brightness 1: the first look (v395); Ed, 2026-10-05: "about 30% as bright" (0.3). */
 const BRIGHT = 4;
 
@@ -158,6 +161,7 @@ export class LeyLines {
       const P = this.pending;
       if (P.routes.length < P.chain.length - 1) { const k = P.routes.length; P.routes.push(this.route(P.chain[k], P.chain[k + 1], k)); }
       if (P.routes.length >= P.chain.length - 1) {
+        this.uncross(P.chain, P.routes);
         // Moved on (the last stone reached now the one the old line led to next): the new line's
         // newest section draws out toward its far stone, and the old line's oldest section, if it
         // has dropped off the back, drains into the stone after it; anything else (a new plan) just swaps.
@@ -186,13 +190,41 @@ export class LeyLines {
     this.u.uShift.value = Math.max(0, 1 - (time - this.shiftFrom) / 1.5);
   }
 
-  /** A link's route from stone a to b: a gently wandering line along the low ground between them. */
-  private route(a: LeyStone, b: LeyStone, k: number): [number, number][] {
+  /** The line never meets itself (Ed, 2026-10-06): the rules keep the links' own ways apart
+   *  (rules/leyroute.ts), so where two links' wanders meet, each is drawn tamer, down to its own way
+   *  (straight, or along its bends), until none do. */
+  private uncross(chain: LeyStone[], routes: [number, number][][]): void {
+    const tame = routes.map(() => 0);
+    for (let pass = 0; pass < TAME.length; pass++) {
+      let again = false;
+      for (let i = 0; i < routes.length; i++) for (let j = i + 1; j < routes.length; j++) {
+        if (!polylinesMeet(routes[i], routes[j])) continue;
+        for (const k of [i, j]) if (!chain[k].depart && tame[k] < TAME.length - 1) { tame[k]++; routes[k] = this.route(chain[k], chain[k + 1], k, TAME[tame[k]]); again = true; }
+      }
+      if (!again) return;
+    }
+  }
+
+  /** A link's route from stone a to b: a gently wandering line along the low ground between them
+   *  (`wander` of its usual way off the straight; 0 straight), or along its bends when it has them. */
+  private route(a: LeyStone, b: LeyStone, k: number, wander = 1): [number, number][] {
     // From the treehouse at the start: due south out of its front, then round to the first objective.
     if (a.depart && this.map) return departureRoute(this.map, b, this.T.depart.past, this.T.depart.avoid, STEP / 2);
+    // Bent round the links it's shown with (rules/leyroute.ts): along its bends, the corners a little
+    // rounded (wander 1) or not.
+    if (b.via?.length) {
+      const corners: [number, number][] = [[a.x, a.z], ...b.via, [b.x, b.z]], pts: [number, number][] = [];
+      for (let i = 0; i + 1 < corners.length; i++) {
+        const [x0, z0] = corners[i], [x1, z1] = corners[i + 1], n = Math.max(1, Math.ceil(Math.hypot(x1 - x0, z1 - z0) / STEP));
+        for (let s = 0; s < n; s++) pts.push([x0 + ((x1 - x0) * s) / n, z0 + ((z1 - z0) * s) / n]);
+      }
+      pts.push([b.x, b.z]);
+      for (let pass = 0; pass < Math.round(wander * 2); pass++) for (let i = 1; i < pts.length - 1; i++) pts[i] = [(pts[i - 1][0] + 2 * pts[i][0] + pts[i + 1][0]) / 4, (pts[i - 1][1] + 2 * pts[i][1] + pts[i + 1][1]) / 4];
+      return pts;
+    }
     const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz) || 1, ux = dx / L, uz = dz / L, px = -uz, pz = ux;
-    const n = Math.max(2, Math.ceil(L / STEP)), W = Math.min(80, L * this.T.valley), off = new Float64Array(n + 1);
-    for (let i = 1; i < n; i++) {
+    const n = Math.max(2, Math.ceil(L / STEP)), W = Math.min(80, L * this.T.valley) * wander, off = new Float64Array(n + 1);
+    if (W > 0) for (let i = 1; i < n; i++) {
       const t = i / n, bx = a.x + dx * t, bz = a.z + dz * t;
       let best = 0, bh = Infinity;
       for (let o = -W; o <= W + 1e-6; o += W / 6) {
@@ -206,7 +238,7 @@ export class LeyLines {
     const pts: [number, number][] = [];
     for (let i = 0; i <= n; i++) {
       const t = i / n, env = Math.sin(Math.PI * t), o = off[i] * env + Math.sin(t * Math.PI * 2.3 + k * 1.9 + a.x * 0.01) * W * 0.12 * env;
-      pts.push([a.x + dx * t + px * o, a.z + dz * t + pz * o]);
+      pts.push(i === n ? [b.x, b.z] : [a.x + dx * t + px * o, a.z + dz * t + pz * o]);
     }
     return pts;
   }
