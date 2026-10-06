@@ -323,6 +323,22 @@ export class LeashView {
     }
   }
 
+  /** A legend in its circle, read at a glance (Ed's round 14 playtest: "Legends in the circle are not very distinct"): asleep,
+   *  restless or happy, a soft glow on the ground under it in its sigil's neon, breathing with it, and a few motes of it
+   *  drifting up (an angry one has its own red aura); the sleeping form's neon outline is the sprite's (render/sprites.ts). */
+  private legendSeen(c: Creature, time: number, k: number): void {
+    const S = this.game.tuning.wildLegends.seen;
+    if (!S || S.aura <= 0) return;
+    const dot = this.uv(0), [r, gg, b] = legendNeon(c.species), br = bossBreath(time, c.id, this.game.tuning.wildLegends.breathEvery * 1.5), a = S.aura * k * (0.75 + 0.25 * br);
+    const R = Math.min(7, (this.tops.get(c.id) ?? 4) * 0.7 + 1.5); // (about its own breadth: under it, not over the whole circle)
+    this.flat.add(c.x, 0, c.z, R * 1.5, dot, r * 0.45, gg * 0.45, b * 0.45, a * 0.5); // (added light: soft, so the circle's own twilight still shows)
+    this.flat.add(c.x, 0, c.z, R * 0.8, dot, r * 0.6, gg * 0.6, b * 0.6, a * 0.55);
+    for (let i = 0; i < 6; i++) { // motes rising slowly off it, its dream's breath
+      const ph = (time * 0.12 + hash2(c.id, i, 51)) % 1, ang = hash2(c.id, i, 53) * Math.PI * 2 + time * 0.05, d = R * 0.6 * (0.3 + 0.7 * hash2(c.id, i, 57));
+      this.standing.add(c.x + Math.cos(ang) * d, 0.5 + ph * 5, c.z + Math.sin(ang) * d * 0.7, 0.3, dot, r * 1.3, gg * 1.3, b * 1.3, 0.9 * k * Math.sin(ph * Math.PI));
+    }
+  }
+
   /** Wild legends (Ed, 2026-10-04): a slow, breathing aura on the ground round each, in a dark
    *  mix of its sigil's colour and blood red, with motes drifting up; from the treetops a glow
    *  over the canopy, so they read as special from above. Dimmer while they sleep. */
@@ -336,9 +352,11 @@ export class LeashView {
       if (c.legendState === "asleep" || c.legendState === "restless") {
         // Its dream shows while its quest can still be done (#87: rules/legends.ts sets c.questOpen); restless, it's a nightmare (the music builder's).
         if (c.questOpen ?? (c.legendState === "asleep" && c.quest && c.quest.done === undefined)) this.dreams.push(c);
+        if (!treetops) this.legendSeen(c, time, 0.8);
         continue;
       }
       if (c.legendState === "happy") {
+        if (!treetops) this.legendSeen(c, time, 1);
         for (let i = 0; i < 5; i++) { const ph = (time * 0.3 + hash2(c.id, i, 31)) % 1, a = hash2(c.id, i, 37) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 1.4, 0.8 + ph * 4, c.z + Math.sin(a) * 1, 0.3, dot, 1, 0.55, 0.75, 0.8 * Math.sin(ph * Math.PI)); }
         continue;
       }
@@ -1177,5 +1195,11 @@ export class LeashView {
 }
 
 /** A wild legend's slow breath, 0 out to 1 in, once every `every` seconds (offset by its id). */
+/** A legend's neon (0-1): its sigil's colour at full brightness, a little toward white. */
+export function legendNeon(species: string): [number, number, number] {
+  const c = sigilColour(species) as number[], m = Math.max(1, c[0], c[1], c[2]);
+  return [0, 1, 2].map(i => 0.82 * (c[i] / m) + 0.18) as [number, number, number];
+}
+
 export const bossBreath = (time: number, id: number, every: number) => 0.5 - 0.5 * Math.cos((time / Math.max(0.1, every) + (id % 7) / 7) * Math.PI * 2);
 

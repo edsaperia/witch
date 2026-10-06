@@ -1526,6 +1526,9 @@ Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test 
 | `wildLegends.breathEvery` | number | 0 to … |
 | `wildLegends.aura` | number | 0 to … |
 | `wildLegends.glow` | number | 0 to … |
+| `wildLegends.seen.aura` | number | 0 to … |
+| `wildLegends.seen.rim` | number | 0 to … |
+| `wildLegends.seen.floor` | number | 0 to … |
 | `creatureSimRadius` | number | 0 to … |
 
 ## `simLod`, `creatureSpeed`
