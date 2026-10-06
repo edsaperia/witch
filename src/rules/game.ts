@@ -506,7 +506,7 @@ function stepDancefloor(g: Game, waveBefore: number, wasSeated: boolean | undefi
 
 /** An area legend that isn't up and about (asleep, waking, or asleep for good): no roaming, no
  *  fighting, nothing to invite (DESIGN.md, "Sleeping legends"). */
-export const dormant = (_g: Game, c: Creature): boolean => !!c.boss && !c.leashed && (c.legendState === "asleep" || c.legendState === "restless" || c.legendState === "waking" || c.legendState === "slept"); // (asleep or restless: scenery, untouchable)
+export const dormant = (_g: Game, c: Creature): boolean => !!c.boss && !c.leashed && (c.legendState === "asleep" || c.legendState === "restless"); // (asleep or restless: scenery, untouchable)
 
 /** The legends' states (Ed, 2026-10-05, #87; rules/legends.ts): asleep, dreaming; restless while
  *  its area has none of its kind, angry once that's run its course; happy by a relic. Angry and
