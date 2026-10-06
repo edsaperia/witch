@@ -1023,6 +1023,7 @@ export class View {
       this.leashView.bristle.on = flying && !hidden;
     }
     this.witchBatch.set(bare ? [] : her);
+    this.witchBatch.silhouette = djUpper < 0; if (this.bareBatch) this.bareBatch.silhouette = djUpper < 0;
     this.bareBatch?.set(bare ? (hatFrame ? [...her, { x: Hat.down!.x + HAT_BESIDE, y: groundHeight(Hat.down!.x + HAT_BESIDE, Hat.down!.z), z: Hat.down!.z, frame: hatFrame, flip: false }] : her) : []);
     // The party's and the beach's witches' shadows, and a small one under her hat where it lies.
     this.witchShadows = [...this.partyWitchView.shadows, ...this.beachView.shadows];
