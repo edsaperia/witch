@@ -52,7 +52,7 @@ varying vec3 vColour;
 varying vec3 vWorld;
 varying float vB;
 ${LIGHT_GLSL}
-void main() { gl_FragColor = vec4(haze(vColour * vB * uBright, vWorld), 1.0); }`;
+void main() { float po = partyOff(vWorld); if (po > 0.98) discard; gl_FragColor = vec4(haze(vColour * vB * uBright * (1.0 - po), vWorld), 1.0); } // (the party's over: out as the front passes)`;
 
 interface AreaBorder { points: BorderPoint[]; colour: THREE.Color; on: (x: number, z: number) => number; done: boolean }
 

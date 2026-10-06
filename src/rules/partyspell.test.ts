@@ -30,8 +30,7 @@ describe("the party spell", () => {
     run(g, STEP, { castParty: true });
     const at = g.party.spellAt!;
     expect(typeof at).toBe("number");
-    expect(g.party.bootUntil).toBeCloseTo(at + TUNING.boot.time, 5);
-    expect(g.party.nextAt - g.party.bootUntil).toBeCloseTo(TUNING.party.startDelay + TUNING.party.interval, 5);
+    expect(g.party.bootFrom).toBeUndefined(); // (the boot sets off when she leaves her decks: Ed, 2026-10-06)
     // casting: still at the decks
     run(g, PARTY_CAST * 0.8, { moveX: 1 });
     expect(g.witch.x).toBeCloseTo(x0, 6);
@@ -41,7 +40,11 @@ describe("the party spell", () => {
     expect(g.witch.x).toBeGreaterThan(x0 + 1);
     expect(g.witch.seated).toBeFalsy();
     expect(clockSeconds(g.party, g.clock.time)).toBeGreaterThan(PARTY_CAST + 0.9);
-    expect(g.party.bootUntil).toBeCloseTo(at + TUNING.boot.time, 5);
+    // off her decks: the first stone turns boot.firstAfter later, the boot's minutes from it
+    const from = g.party.bootFrom!;
+    expect(from).toBeGreaterThanOrEqual(at + PARTY_CAST - 2 * STEP); expect(from).toBeLessThan(at + PARTY_CAST + 0.1);
+    expect(g.party.bootUntil).toBeCloseTo(from + TUNING.boot.firstAfter + TUNING.boot.time, 5);
+    expect(g.party.nextAt - g.party.bootUntil).toBeCloseTo(TUNING.party.startDelay + TUNING.party.interval, 5);
     // a second press does nothing
     run(g, STEP, { castParty: true });
     expect(g.party.spellAt).toBe(at);

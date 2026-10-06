@@ -13,9 +13,12 @@ import type { PartyWitch, PlayerIdle } from "../rules/partyWitches";
 /** Who to draw: the party witches and how our witch idles in (the dancefloor's, or the beach's). */
 export interface WitchGroup { list: PartyWitch[]; her?: Pick<PlayerIdle, "activity" | "pose" | "facing"> | null }
 import type { AssetLibrary } from "./assets";
-import type { Atlas } from "./atlas";
+import { groundOf, type Atlas } from "./atlas";
 import type { PartyWitchArt } from "./artBuild";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
+import type { ShadowInstance } from "./shadows";
+import { placed } from "./height";
+import { tiltFilter } from "./overlayTilt";
 
 /** How many different looks are drawn: party witches beyond that share them (each look is a set of sprites to draw). */
 export const LOOKS = 12;
@@ -32,6 +35,9 @@ export class PartyWitchView {
   private v = new THREE.Vector3();
   /** Whether our witch is drawn here this frame (idling in a party pose), so the view leaves her out. */
   herIdle = false;
+  /** Their shadows this frame (hers too while she's drawn here), for the view's shadow batch: under each one's feet on the
+   *  ground, as wide as her pose; up in the air, still on the ground under her, smaller the higher she flies. */
+  shadows: ShadowInstance[] = [];
 
   constructor(private scene: THREE.Scene, private assets: AssetLibrary, private mpp: number, private light: { lightFloor: number; lightTint: number; lightRim: number }) {}
 
@@ -70,8 +76,10 @@ export class PartyWitchView {
         el.style.cssText = "position:absolute;transform:translate(-50%,-100%);font-size:13px;padding:1px 4px;border-radius:8px;background:rgba(255,255,255,.55);pointer-events:none;z-index:4";
         document.body.appendChild(el); this.bubblePool.push(el);
       }
-      this.v.set(w.x, 2.4, w.z).project(camera);
-      el.style.left = `${((this.v.x + 1) / 2) * width}px`; el.style.top = `${((1 - this.v.y) / 2) * height}px`;
+      placed(this.v.set(w.x, 2.4, w.z)).project(camera); // (on the bent, rolling ground, as they are)
+      const y = ((1 - this.v.y) / 2) * height;
+      el.style.left = `${((this.v.x + 1) / 2) * width}px`; el.style.top = `${y}px`;
+      tiltFilter(el, y);
       const e = CHAT[(turn * 7 + w.id * 3) % CHAT.length];
       if (el.textContent !== e) el.textContent = e;
       el.style.display = this.v.z < 1 ? "" : "none";
@@ -84,6 +92,15 @@ export class PartyWitchView {
     const per = new Map<string, { art: WitchArt; list: SpriteInstance[] }>(), bpm = g.tuning.beat.bpm, bt = beatTime(g.beat, time), R = SPRITE_UNIFORMS.uRight.value;
     const placed = new Map<number, { x: number; z: number; frame: number; art: WitchArt; flip: boolean; pose: string }>();
     const put = (key: string, art: WitchArt, inst: SpriteInstance) => { let e = per.get(key); if (!e) per.set(key, (e = { art, list: [] })); e.list.push(inst); };
+    // Each stood by her frame's ground (art/witch.js liftShadow: the point under her on the model's ground on the ground, not
+    // the bottom of her box), her shadow laid there.
+    const U = SPRITE_UNIFORMS.uUp.value, shadows: ShadowInstance[] = (this.shadows = []);
+    const stand = (art: WitchArt, fi: number, x: number, y: number, z: number, flip: boolean): SpriteInstance => {
+      const f = art.atlas.frames[fi], gr = groundOf(art.anchors[fi]), sink = gr ? (f.h - gr.y) * this.mpp : 0, side = gr ? (gr.x - f.w / 2) * this.mpp * (flip ? -1 : 1) : 0;
+      const ref = groundOf(art.anchors[art.hover.towards[0]]), wide = gr && ref && ref.w > 0 ? Math.max(0.6, Math.min(3, gr.w / ref.w)) : 1, k = Math.max(0.35, 1 - Math.max(0, y) / 12);
+      shadows.push({ x: x + R.x * side, z: z + R.z * side, w: 1.4 * wide * k, d: 0.7 * k });
+      return { x: x - U.x * sink, y: y - U.y * sink, z: z - U.z * sink, frame: f, flip };
+    };
     const lookOf = (w: PartyWitch) => this.assets.partyWitchArt(w.seed % LOOKS);
     // Leads first, so a partner can line up with her.
     const list = [...group.list].sort((a, b) => Number(b.lead) - Number(a.lead));
@@ -113,7 +130,7 @@ export class PartyWitchView {
       const f = art.atlas.frames[fi];
       placed.set(w.id, { x, z, frame: fi, art, flip, pose: w.pose });
       if (!visible(x, z, f.w * this.mpp, f.h * this.mpp)) continue;
-      put(`pw-${w.seed % LOOKS}`, art, { x, y: w.y, z, frame: f, flip });
+      put(`pw-${w.seed % LOOKS}`, art, stand(art, fi, x, w.y, z, flip));
     }
     // Our witch, idling into the party (any input stops it: rules/partyWitches.ts).
     const I = group.her, wt = g.witch;
@@ -121,8 +138,8 @@ export class PartyWitchView {
     if (I?.activity && I.pose && wt.mode === "ground" && !wt.seated) {
       const art = this.assets.partyWitchArt(null);
       if (art) {
-        const fi = this.frameOf(art, I.pose, time, bpm, 0, bt), f = art.atlas.frames[fi];
-        put("her", art, { x: wt.x, y: 0, z: wt.z, frame: f, flip: I.facing < 0 });
+        const fi = this.frameOf(art, I.pose, time, bpm, 0, bt);
+        put("her", art, stand(art, fi, wt.x, 0, wt.z, I.facing < 0));
         this.herIdle = true;
       }
     }

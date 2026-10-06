@@ -39,7 +39,7 @@ import { StallLog } from "./platform/stallLog";
 import { powerReport } from "./rules/power";
 import { Freeze } from "./platform/freeze";
 import { Creator, loadGenome } from "./ui/creator";
-import { BOT_KINDS, newBot, type Bot, type BotKind } from "./rules/bot";
+import { BOT_GAME, BOT_KINDS, newBot, type Bot, type BotKind } from "./rules/bot";
 import { BotTag } from "./ui/botGame";
 import { pleasingWitch } from "./ui/looks";
 import { applyKnobParams, DecidePanel } from "./ui/decide";
@@ -251,6 +251,8 @@ const view = new View(canvas, game, {
 }, savedLook);
 loadTimes.view = performance.now();
 view.debugCull = params.get("debug") === "cull";
+// ?debug=shadows: every shadow a flat magenta tint, to see each against what casts it (render/shadows.ts).
+if (params.get("debug") === "shadows") view.debugShadows();
 view.quick = params.get("quick") === "1";
 // ?scenery=<metres>: a fixed scenery radius instead of the adaptive budget.
 const sceneryAt = Number(params.get("scenery"));
@@ -477,7 +479,12 @@ creator.progress = () => { const a = view.assets; return { done: a.done, total: 
 function ensureSfx(): void { if (audio && !sfx && tuning.sfx.on) { sfx = new Sfx(audio, tuning.music.volume * level, tuning.sfx, musicStyle.root + 24); sfxCues = new SfxCues(sfx, (by, sec) => music?.duck(by, sec)); } }
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
 creator.onGesture = () => { try { audio ??= new AudioContext(); void audio.resume(); ensureSfx(); } catch { /* no sound yet */ } };
-creator.onStart = g => { if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); } if (start()) queueCast(); }; // (the scroll's burst: play, and the spell cast)
+creator.onStart = g => {
+  const who = playerPick?.value ?? "human"; // (the dev "Player:" pick: a bot plays the run instead of her)
+  if (who !== "human" && BOT_KINDS.includes(who as BotKind)) { botGame(who as BotKind); start(); return; }
+  if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); }
+  if (start()) queueCast();
+}; // (the scroll's burst: play, and the spell cast)
 creator.spellSound = (cue, v) => sfx?.spell(cue, v);
 // The bot game (Ed, 2026-10-06: "start the game and watch the skilled bot play"; ?bot=skilled|crude, or the start
 // screen's Bot game): rules/bot.ts plays in place of her controls, a seeded witch, no character creation.
@@ -485,7 +492,7 @@ const botParam = params.get("bot") as BotKind | null;
 let bot: Bot | null = null, botTag: BotTag | null = null;
 function botGame(kind: BotKind): void {
   if (bot) return;
-  bot = newBot(kind);
+  bot = newBot(kind, BOT_GAME[kind]); // (the skilled one questing, bringing relics and feeding: rules/bot.ts BOT_GAME)
   const look = pleasingWitch(seed!);
   lookNow = JSON.stringify(look); view.setWitch(look); wearHat(look);
   botTag = new BotTag(kind, () => { const u = new URL(location.href); u.searchParams.delete("bot"); location.href = u.toString(); });
@@ -498,8 +505,22 @@ if (lookBtn) {
   for (const ev of ["pointerdown", "pointerup", "click", "touchstart"]) lookBtn.addEventListener(ev, e => e.stopPropagation()); // (not a start)
   lookBtn.addEventListener("click", () => { if (ready && game.clock.paused) creator.show(); });
 }
-// (and in the character creator's panel, which opens first at every load: golf's creator.addButton)
-creator.addButton("🤖 Bot game", () => { if (!game.clock.paused) return; botGame("skilled"); if (ready) start(); }); // (before the forest is ready, it starts as soon as it is)
+// (the bedroom has the dev "Player:" pick above in place of a Bot game button)
+// The dev "Player:" pick (Ed, 2026-10-06: "add the bot game selector ... a dropdown with e.g. human / crude / skilled / champion
+// ... it won't be in the final game so don't worry about making it look nice"): human, then every bot in BOT_KINDS (a new one
+// shows up by itself); casting the scroll with a bot picked starts that bot's game, as ?bot=<kind>. Kept for the session
+// (sessionStorage witch.player); ?dev=0 hides it. Plain and unstyled, in the bedroom's top right corner.
+const playerPick: HTMLSelectElement | null = params.get("dev") === "0" ? null : (() => {
+  const box = document.createElement("label"), sel = document.createElement("select");
+  box.id = "player-pick"; box.textContent = "Player: ";
+  Object.assign(box.style, { position: "absolute", right: "8px", top: "8px", zIndex: "5", font: "12px sans-serif", color: "#ccc" });
+  for (const k of ["human", ...BOT_KINDS]) { const o = document.createElement("option"); o.value = o.textContent = k; sel.append(o); }
+  try { const v = sessionStorage.getItem("witch.player"); if (v && [...sel.options].some(o => o.value === v)) sel.value = v; } catch { /* storage blocked */ }
+  sel.addEventListener("change", () => { try { sessionStorage.setItem("witch.player", sel.value); } catch { /* this load only */ } });
+  for (const ev of ["pointerdown", "click", "keydown"]) sel.addEventListener(ev, e => e.stopPropagation()); // (its own keys, not the room's)
+  box.append(sel); creator.root.append(box);
+  return sel;
+})();
 const botBtn = document.getElementById("bot-btn");
 if (botBtn) {
   for (const ev of ["pointerdown", "pointerup", "click", "touchstart"]) botBtn.addEventListener(ev, e => e.stopPropagation()); // (not a start of her own)
@@ -563,6 +584,16 @@ shakeEl?.addEventListener("pointerdown", e => {
   showShakeOpt();
 });
 let shaken = false;
+// No start card before her room (Ed, 2026-10-06: "There is something before the bedroom… can we skip it and go straight to
+// the bedroom?"): with the character creator the page opens straight into it, and the card's contents live in its tabs
+// (❔ Controls, also the ? key; 📜 What's new; ⚙ Options: the waves and the screen shake). The card itself shows only for a
+// run without the creator (?creator=0: the tools and smoke runs, "press any key") or a bot game while the forest grows.
+if (params.get("creator") !== "0" && !bot) {
+  const keys = startEl.querySelector<HTMLElement>(".keys"), news = startEl.querySelector<HTMLElement>(".ss-body");
+  if (keys) creator.addTab("controls", "❔ Controls", [keys]);
+  if (news) creator.addTab("news", "📜 What's new", [news]);
+  creator.addTab("options", "⚙ Options", [wavesEl, ...(shakeEl ? [shakeEl] : [])]);
+} else startEl.style.display = "";
 // ?subpixel=0: the camera's old whole-art-pixel steps, to compare (on by default: Ed, 2026-10-05, "it feels low").
 const subpixelOn = params.get("subpixel") !== "0";
 if (params.get("glide") === "camera") view.glide = "camera"; // (?glide=camera: the glide by the camera's snap, as before 2026-10-06)
