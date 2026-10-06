@@ -30,6 +30,8 @@ export interface Mood {
   styledRim?: number; styledGlow?: number;
   /** Her pool's light thrown up onto her, added (witchLift; styledLift with a stylised art style). */
   witchLift?: number; styledLift?: number;
+  /** How far the party decor's lights go from their neon to the party's amber (partyWarm's first), 0 to 1. */
+  decorWarm?: number;
   /** The ley line's colour ("#rrggbb"; left out, each area's own) and its brightness times this. */
   leyRgb?: string; leyBright?: number;
   /** A berry's halo: its size (m) and strength times this (left out: 2.8 m, 1). */

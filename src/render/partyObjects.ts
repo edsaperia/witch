@@ -132,8 +132,14 @@ function boundsOf(d: Dressing): [number, number, number, number] {
   return b;
 }
 
-/** A real light: campfires flicker; everything fades up as it appears. */
+const WARM = new THREE.Vector3();
+
+/** A real light: campfires flicker; everything fades up as it appears. In the spooky mood its colour goes decorWarm of the
+ *  way to the party's amber (the art director's round 4: an area's neon pieces lit its ground lime; the neon stays on the
+ *  bulbs, the pool on the ground stays warm). */
 function light(x: number, z: number, L: { rgb: number[]; radius: number; height: number }, time: number, age: number, M: Mood | null): ForestLight {
   const flick = 0.85 + 0.1 * Math.sin(time * 11 + x) + 0.05 * Math.sin(time * 23 + z);
-  return { x, y: L.height + 0.4, z, reach: L.radius * (M?.decorReach ?? 1), rgb: new THREE.Vector3(L.rgb[0] / 255, L.rgb[1] / 255, L.rgb[2] / 255), strength: 1.6 * (M?.decorStrength ?? 1) * flick * Math.min(1, Math.max(0, age) / 1.5) };
+  const rgb = new THREE.Vector3(L.rgb[0] / 255, L.rgb[1] / 255, L.rgb[2] / 255), w = M?.partyWarm?.[0];
+  if (M?.decorWarm && w) rgb.lerp(WARM.set(w[0], w[1], w[2]), M.decorWarm);
+  return { x, y: L.height + 0.4, z, reach: L.radius * (M?.decorReach ?? 1), rgb, strength: 1.6 * (M?.decorStrength ?? 1) * flick * Math.min(1, Math.max(0, age) / 1.5) };
 }

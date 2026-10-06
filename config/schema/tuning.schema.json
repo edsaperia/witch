@@ -997,6 +997,10 @@
               "type": "number",
               "minimum": 0
             },
+            "decorWarm": {
+              "type": "number",
+              "minimum": 0
+            },
             "rimHue": {
               "type": "number",
               "minimum": 0
@@ -1678,6 +1682,7 @@
             "decorLights",
             "decorReach",
             "decorStrength",
+            "decorWarm",
             "rimHue",
             "rimSat",
             "rim",
