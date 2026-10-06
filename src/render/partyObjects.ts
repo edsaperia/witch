@@ -16,6 +16,8 @@ export class PartyObjectsView {
   private upright: SpriteBatch | null = null;
   private flat: SpriteBatch | null = null;
   private dressings = new Map<string, Dressing>();
+  /** Each area's dressing's bounds (min x, min z, max x, max z, with room for its clusters and its hanging pieces' trees). */
+  private bounds = new Map<string, [number, number, number, number]>();
   /** The tree each hanging piece hangs in (by area and piece), found once. */
   private trees = new Map<string, { x: number; z: number } | null>();
   /** Instances drawn this frame (for the debug overlay). */
@@ -27,8 +29,11 @@ export class PartyObjectsView {
   get ready(): boolean { return !!this.assets.partyObjectArt(); }
 
   /** `fires`: the world's campfires showing now (view.ts lights them): drawn as the party's small
-   *  campfire, whose frames share one box and one scale (the old ones changed scale every frame). */
-  update(g: Game, time: number, camera: THREE.Camera, visible: (x: number, z: number, w: number, h: number) => boolean, fires: { x: number; z: number; scale: number; flip: boolean }[] = []): ForestLight[] {
+   *  campfire, whose frames share one box and one scale (the old ones changed scale every frame).
+   *  `view`: the square the scenery is listed in (its middle and half-size): an area whose
+   *  dressing lies wholly outside it only lights its lights (Ed, 2026-10-05: late in a run every
+   *  piece of every partified area in reach was looked at every frame). */
+  update(g: Game, time: number, camera: THREE.Camera, visible: (x: number, z: number, w: number, h: number) => boolean, fires: { x: number; z: number; scale: number; flip: boolean }[] = [], view: { x: number; z: number; half: number } | null = null): ForestLight[] {
     const lights: ForestLight[] = [], t = g.tuning;
     this.count = 0;
     if (!t.partyObjects.on) { this.upright?.set([]); this.flat?.set([]); return lights; }
@@ -54,10 +59,17 @@ export class PartyObjectsView {
       const site = g.map.siteOf(area.cell[0], area.cell[1]);
       if (Math.abs(site.x - w.x) > reach || Math.abs(site.z - w.z) > reach) continue;
       let d = this.dressings.get(key);
-      if (!d) this.dressings.set(key, (d = dressingOf(g.map, area.cell, t)));
+      if (!d) { this.dressings.set(key, (d = dressingOf(g.map, area.cell, t))); this.bounds.set(key, boundsOf(d)); }
       const from = area.at + t.party.transition * 0.7;
       if (time < from) continue;
       let lit = d.lights.length;
+      const b = this.bounds.get(key)!, PAD = 20;
+      if (view && (b[0] > view.x + view.half + PAD || b[2] < view.x - view.half - PAD || b[1] > view.z + view.half + PAD || b[3] < view.z - view.half - PAD)) {
+        // Out of view: its lights only (they reach onto the ground in view), as below.
+        for (const c of d.clusters) { const lay = art.layouts[c.id]; if (lay) for (const p of c.mirror ? lay.mirror : lay.plain) if (lit < t.partyObjects.lightsPerArea && isLit(p.ref)) { lit++; lights.push(light(c.x + p.dx, c.z + p.dz, lightOf(p.ref, t)!, time, since(time, from))); } }
+        for (const p of d.lights) lights.push(light(p.x, p.z, lightOf(p.ref, t)!, time, since(time, from)));
+        continue;
+      }
       const put = (ref: string, gx: number, gz: number, flip: boolean, i: number, hang = 0) => {
         const a = art.pieces[ref], def = partyDef(ref);
         if (!a || !def || excluded(ref, t)) return; // (left out of the clusters too)
@@ -108,6 +120,16 @@ export class PartyObjectsView {
 }
 
 const since = (time: number, from: number) => time - from;
+
+/** A dressing's bounds: its clusters (with room for their layouts) and pieces, and its hanging pieces' trees. */
+function boundsOf(d: Dressing): [number, number, number, number] {
+  const b: [number, number, number, number] = [Infinity, Infinity, -Infinity, -Infinity];
+  const add = (x: number, z: number, r: number) => { b[0] = Math.min(b[0], x - r); b[1] = Math.min(b[1], z - r); b[2] = Math.max(b[2], x + r); b[3] = Math.max(b[3], z + r); };
+  for (const c of d.clusters) add(c.x, c.z, 8);
+  for (const p of d.loose) add(p.x, p.z, 1);
+  for (const p of [...d.hanging, ...d.lights, ...(d.caught ? [d.caught] : [])]) add(p.x, p.z, 12);
+  return b;
+}
 
 /** A real light: campfires flicker; everything fades up as it appears. */
 function light(x: number, z: number, L: { rgb: number[]; radius: number; height: number }, time: number, age: number): ForestLight {

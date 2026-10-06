@@ -212,6 +212,21 @@ describe("variety over a long run (overnight, 2026-10-06: a 30-minute run should
     }
   });
 
+  it("turns a new phrase every 16 bars through the boot's long intro, and leaves a wave's short blocks be", () => {
+    const bars = 128, intro: BlockPlan = { section: style.intro, start: 0, bars, wave: 0, arc: 0 };
+    // the melodies (motif parts) of 16 bars from bar `from`
+    const melody = (p: BlockPlan, from: number) => Array.from({ length: 16 * 16 }, (_, i) => notesAt(style, p, null, (p.start + from) * 16 + i, { seed: 7, siege: 0 })
+      .filter(e => style.parts[e.part].role === "motif").map(e => `${i}:${e.part}:${e.midi}`)).flat();
+    // late in the boot, with the pluck in: each 16 bars' melody mostly new (it was almost all the same before)
+    for (let k = 4; k < bars / 16 - 1; k++) {
+      const was = new Set(melody(intro, k * 16)), now = melody(intro, (k + 1) * 16);
+      expect(now.length).toBeGreaterThan(0);
+      expect(now.filter(x => was.has(x)).length / now.length, `phrase ${k + 1}`).toBeLessThan(0.5);
+    }
+    const short: BlockPlan = { section: "deep", start: 0, bars: 32, wave: 1, arc: 1 };
+    expect(melody(short, 16)).toEqual(melody({ ...short, start: 16, bars: 16 }, 0));
+  });
+
   it("keeps the first pass as it was (pass 0 is the music before variants)", () => {
     const p: BlockPlan = { section: "deep", start: 0, bars: 16, wave: 1, arc: 1 };
     expect(block({ ...p, pass: 0 })).toBe(block(p));
