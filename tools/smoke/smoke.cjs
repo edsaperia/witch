@@ -121,7 +121,7 @@ async function main() {
     // Again in a Heath (gorse: small bright details), where Ed saw bushes blink.
     const heath = await page.evaluate(() => {
       const g = window.witch.game, m = g.map;
-      for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+      for (const [x, y] of m.cells) {
         if (window.witch.areaTypeId(m.typeOf(x, y)) !== "heath") continue;
         const s = m.siteOf(x, y), px = s.x + 20, pz = s.z + 20;
         g.witch = { ...g.witch, x: px, z: pz, vx: 0, vz: 0 }; g.camera = { ...g.camera, tx: px, tz: pz };
@@ -356,11 +356,11 @@ async function main() {
         let t = -1;
         for (let i = 0; i < 64 && t < 0; i++) { try { if (window.witch.areaTypeId(i) === id) t = i; } catch { break; } }
         let best = null, bn = -1;
-        for (let cy = 0; cy < m.n; cy++) for (let cx = 0; cx < m.n; cx++) if (m.typeOf(cx, cy) === t) {
+        for (const [cx, cy] of m.cells) if (m.typeOf(cx, cy) === t) {
           const s = m.siteOf(cx, cy);
           for (let k = 0; k < 60; k++) {
             const a = k * 0.7, d = m.areaSize * (0.1 + (k % 6) * 0.07), x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
-            if (x < B.minX + 30 || x > B.maxX - 30 || z < B.minZ + 30 || z > B.maxZ - 30) continue;
+            if (x < B.minX + 30 || x > B.maxX - 30 || z < B.minZ + 30 || z > B.maxZ - 30 || (B.circle && Math.hypot(x - B.circle.x, z - B.circle.z) > B.circle.r - 30)) continue;
             const q = m.areaAt(x, z);
             if (q.cell[0] !== cx || q.cell[1] !== cy || m.paths.at(x, z, 3)) continue;
             const n = g.forest.treesNear(x, z, 14).filter(p => Math.hypot(p.x - x, p.z - z) < 14).length;
@@ -626,7 +626,7 @@ async function main() {
     const cave = await page.evaluate(() => {
       const g = window.witch.game, m = g.map, d = m.dancefloor;
       let best = null;
-      for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) {
+      for (const [x, y] of m.cells) {
         if (window.witch.areaTypeId(m.typeOf(x, y)) !== "cave-mouth") continue;
         const s = m.siteOf(x, y), k = Math.hypot(s.x - d.x, s.z - d.z);
         if (!best || k < best.k) best = { x, y, k, s };

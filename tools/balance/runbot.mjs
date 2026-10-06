@@ -66,7 +66,7 @@ else {
     }
     function pickRecruit() {
       let best = null, bs = Infinity;
-      for (let i = 0; i < map.n; i++) for (let j = 0; j < map.n; j++) {
+      for (const [i, j] of map.cells) {
         const cell = [i, j], key = cellKey(cell);
         if (g.party.areas.has(key) || g.party.ruined?.has(key)) continue;
         const L = legendOf.get(key); if (L !== undefined && g.creatures[L].legendState === "angry") continue; // (keep out of an angry legend's area)

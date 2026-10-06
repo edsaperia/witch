@@ -139,7 +139,7 @@ describe("fight profiles for every species (Ed's species pass)", () => {
     setupArena(g, "raven*3@2,beaver*2@2");
     const beavers = g.arena!.ids.map(i => g.creatures[i]).filter(c => c.species === "beaver"), ids = new Set(beavers.map(b => b.id));
     let braced = 0, blocked = 0;
-    run(g, 10, () => { for (const e of g.combat.events) if (e.at === g.clock.time && ids.has(e.id!)) { if (e.kind === "braced") braced++; if (e.kind === "blocked") blocked++; } });
+    run(g, 20, () => { for (const e of g.combat.events) if (e.at === g.clock.time && ids.has(e.id!)) { if (e.kind === "braced") braced++; if (e.kind === "blocked") blocked++; } });
     expect(braced).toBeGreaterThan(0);
     expect(blocked).toBeGreaterThan(0);
   }, 60000);

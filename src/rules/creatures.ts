@@ -9,6 +9,7 @@ import { questFor, type Quest } from "./quest";
 import { rng } from "./random";
 import { countScale, startCount } from "./growth";
 import { AREA_TYPES, type ForestMap } from "./map";
+import { isInside } from "./mapShape";
 import { facingAway } from "./witch";
 import type { Tuning } from "./tuning";
 import type { Fight } from "./combat";
@@ -188,7 +189,7 @@ function legendSpot(map: ForestMap, cell: [number, number], r: () => number): [n
   if (lc) return [lc.legend.x, lc.legend.z];
   const site = map.siteOf(cell[0], cell[1]), range = wanderRange(map), [anchorX, anchorZ] = anchorOf(map, cell, site.x, site.z, range);
   const base = { cell, homeX: site.x, homeZ: site.z, range, anchorX, anchorZ }, B = map.bounds;
-  const inside = (px: number, pz: number) => px > B.minX + 15 && px < B.maxX - 15 && pz > B.minZ + 15 && pz < B.maxZ - 15;
+  const inside = (px: number, pz: number) => isInside(B, px, pz, 15);
   let best = -1, at: [number, number] = [anchorX, anchorZ];
   for (let i = 0; i < 9; i++) { const [px, pz] = pointInArea(map, base, r), dd = Math.hypot(px - site.x, pz - site.z); if (inside(px, pz) && dd > best) { best = dd; at = [px, pz]; } }
   return at;
@@ -237,7 +238,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
   // The home area holds no creatures (Ed, 2026-10-03) and no legend (Ed, 2026-10-05: "Home area
   // shouldn't have a legend": so no buff at the start). Every other area has its legend, sleeping, out of its clearing.
   const [hx, hy] = map.centreCell;
-  for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) {
+  for (const [cx, cy] of map.cells) {
     const home = cx === hx && cy === hy;
     const r = rng(map.seed * 7919 + cx * 131 + cy * 977 + 3), cell: [number, number] = [cx, cy], make = (level: Level) => out.push(makeCreature(map, cell, level, out.length, r));
     if (home) continue;
