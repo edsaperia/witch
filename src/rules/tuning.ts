@@ -22,8 +22,16 @@ export interface Mood {
   /** Each area type's own fog, grade tint and mist (by area id; "home" for home), over the above; eased across at areaEase a second. */
   /** The characters' moonlight rim (the witch, creatures): its hue, saturation and strength (0 off); and how much of her own glow lights the witch (0: none). */
   rimHue?: number; rimSat?: number; rim?: number; witchGlow?: number;
-  /** The moon's fill on upward faces (canopy tops, open ground), a share of the moon. */
-  moonUp?: number;
+  /** The moon's fill on upward faces (canopy tops, open ground), a share of the moon, in its own hue and saturation (left out: the moon's). */
+  moonUp?: number; moonUpHue?: number; moonUpSat?: number;
+  /** The share of the moon's fill every face gets whatever its normal (0: by its normal alone, 1: all alike). */
+  moonUpWrap?: number;
+  /** With a stylised art style (bold, ref): the rim's strength and her own glow on her, in place of rim and witchGlow. */
+  styledRim?: number; styledGlow?: number;
+  /** Her pool's light thrown up onto her, added (witchLift; styledLift with a stylised art style). */
+  witchLift?: number; styledLift?: number;
+  /** How far the party decor's lights go from their neon to the party's amber (partyWarm's first), 0 to 1. */
+  decorWarm?: number;
   /** The ley line's colour ("#rrggbb"; left out, each area's own) and its brightness times this. */
   leyRgb?: string; leyBright?: number;
   /** A berry's halo: its size (m) and strength times this (left out: 2.8 m, 1). */

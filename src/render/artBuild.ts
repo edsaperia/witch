@@ -227,9 +227,9 @@ function speakerSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; speakers
 
 function relicSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; relics: RelicArt[]; layouts: RelicLayouts } {
   const sprites: Baked[] = [], relics: RelicArt[] = [], colours = Art.relicColours(st);
-  for (const d of Art.RELICS as { id: string; family: string; decal?: boolean }[]) {
+  for (const d of Art.RELICS as { id: string; family: string; decal?: boolean; scatter?: boolean }[]) {
     const r = Art.relicSprite(d.id, st) as { whole: unknown; origin: { x: number; y: number } };
-    relics.push({ id: d.id, family: d.family, decal: !!d.decal, frame: sprites.push(Art.bake(r.whole, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
+    relics.push({ id: d.id, family: d.family === "modern" && d.scatter === false ? "unscattered" : d.family, decal: !!d.decal, frame: sprites.push(Art.bake(r.whole, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y }); // the bits of highway kept out of the modern finds the rules scatter (Ed, round 13)
   }
   // The countryside and street pieces that stand alone (Ed, 2026-10-04) join the modern finds, after the relics' own (the rules count them in this order).
   const cc = Art.countryColours(st);

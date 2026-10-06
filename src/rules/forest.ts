@@ -249,8 +249,8 @@ const UNIQUES = new WeakMap<ForestMap, Uniques>();
 const ruinStarts: number[] = [], freakCount = DECOR.filter(d => d.family === "freak").length;
 for (let k = 0, n = 0; k < DECOR.length; k++) if (DECOR[k].family === "ruins") { ruinStarts.push(n); n += DECOR[k].variants; }
 const ruinVariants = DECOR.filter(d => d.family === "ruins").map(d => d.variants);
-// The modern finds: the relics' own, then the countryside and street pieces that stand alone (art/country.js; the scene-only ones are left to scenes).
-const modernCount = RELICS.filter(d => d.family === "modern").length + COUNTRY.filter(d => d.family === "farm" || d.family === "street").length;
+// The modern finds: the relics' own (but those kept out of the scatter: roads, Ed round 13), then the countryside and street pieces that stand alone (art/country.js; the scene-only ones are left to scenes).
+const modernCount = RELICS.filter(d => d.family === "modern" && (d as { scatter?: boolean }).scatter !== false).length + COUNTRY.filter(d => d.family === "farm" || d.family === "street").length;
 
 function uniques(map: ForestMap): Uniques {
   let u = UNIQUES.get(map);

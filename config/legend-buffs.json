@@ -57,6 +57,7 @@
     "wolf":       { "name": "Howl",           "kind": "shot", "mods": { "ring": 1 },                "label": "Wolf's Howl: every 5th burst a ring of 💌s round you" },
     "bear":       { "name": "Wind-up",        "kind": "shot", "mods": { "charge": 1 },              "label": "Bear's Wind-up: hold to charge, let go for a big volley" },
     "owl":        { "name": "Echo",           "kind": "shot", "mods": { "echo": 1 },                "label": "Owl's Echo: each burst fires again half a second later" },
+    "heron":      { "name": "Stride",         "kind": "move", "scale": { "groundSpeed": 1.1, "dash.distance": 1.25 }, "label": "Heron's Stride: a little quicker on foot, and a longer blink" },
     "newt":       { "name": "Wriggle",        "kind": "shot", "scale": { "invites.speed": 1.2, "invites.range": 1.2 }, "label": "Newt's Wriggle: 💌s fly a little faster and further" },
     "salamander": { "name": "Quick fire",     "kind": "shot", "scale": { "invites.cooldown": 0.6 }, "label": "Salamander's Quick fire: less wait between bursts" },
     "snake":      { "name": "Strike",         "kind": "shot", "scale": { "invites.speed": 1.4 },    "label": "Snake's Strike: 💌s fly faster" },
