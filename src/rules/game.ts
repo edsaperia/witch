@@ -253,6 +253,25 @@ export function interpolated<T>(g: Game, draw: () => T): T {
   g.witches.forEach((w, i) => { const p = pw[i]; if (p) w.body = { ...w.body, x: mix(p.x, w.body.x), z: mix(p.z, w.body.z), lift: mix(p.lift, w.body.lift) }; });
   // (a jump further than a charge covers in a slow frame is a teleport: not blended)
   for (let i = 0; i < C.length; i++) { cx[2 * i] = C[i].x; cx[2 * i + 1] = C[i].z; if (Math.hypot(pc[2 * i] - C[i].x, pc[2 * i + 1] - C[i].z) < 20) { C[i].x = mix(pc[2 * i], C[i].x); C[i].z = mix(pc[2 * i + 1], C[i].z); } }
+  // 💌s and shots in flight: carried back along their velocity to the moment drawn (not stored a
+  // step back: they come and go every step), so on a display faster than the steps they glide
+  // rather than holding every other frame (Ed's playtest, 2026-10-06: "it feels low").
+  const back = (1 - k) * STEP, moved: { o: { x: number; z: number; flown?: number }; x: number; z: number; flown?: number }[] = [];
+  const carry = (o: { x: number; z: number; vx: number; vz: number; flown?: number }) => {
+    moved.push({ o, x: o.x, z: o.z, flown: o.flown });
+    o.x -= o.vx * back; o.z -= o.vz * back;
+    if (o.flown !== undefined) o.flown = Math.max(0, o.flown - Math.hypot(o.vx, o.vz) * back);
+  };
+  if (back > 0) {
+    for (const w of g.witches) for (const L of w.invites.letters) if (!L.kind) carry(L);
+    for (const sh of g.combat.shots) {
+      if (!sh.lob) { carry(sh); continue; }
+      // (A lob is where its arc puts it at the moment drawn.)
+      const L = sh.lob, q = Math.max(0, Math.min(1, (g.clock.time - back - L.at) / Math.max(0.01, L.lands - L.at)));
+      moved.push({ o: sh, x: sh.x, z: sh.z });
+      sh.x = L.fx + (L.tx - L.fx) * q; sh.z = L.fz + (L.tz - L.fz) * q;
+    }
+  }
   const pcam = g.prev.camera;
   if (pcam) g.camera = { ...camera, tx: mix(pcam.tx, camera.tx), ty: mix(pcam.ty, camera.ty), tz: mix(pcam.tz, camera.tz), lift: mix(pcam.lift, camera.lift), zoom: mix(pcam.zoom, camera.zoom), ax: mix(pcam.ax, camera.ax), az: mix(pcam.az, camera.az), pull: pcam.pull === undefined || camera.pull === undefined ? camera.pull : mix(pcam.pull, camera.pull), intro: pcam.intro === undefined || camera.intro === undefined ? camera.intro : mix(pcam.intro, camera.intro) };
   try { return draw(); }
@@ -260,6 +279,7 @@ export function interpolated<T>(g: Game, draw: () => T): T {
     g.witches.forEach((w, i) => { w.body = bodies[i]; });
     for (let i = 0; i < C.length; i++) { C[i].x = cx[2 * i]; C[i].z = cx[2 * i + 1]; }
     g.camera = camera;
+    for (const m of moved) { m.o.x = m.x; m.o.z = m.z; if (m.flown !== undefined) m.o.flown = m.flown; }
   }
 }
 
