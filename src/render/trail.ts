@@ -33,7 +33,7 @@ export interface TrailTuning {
   sparks: boolean;
 }
 
-export const TRAIL_DEFAULT: TrailTuning = { on: true, ground: 5, treetops: 20, from: 0.15, curve: 1, width: [0.5, 1.4], bright: 1, fade: 1.6, grow: 0.25, shrink: 0.6, colourEase: 0.6, sparks: true };
+export const TRAIL_DEFAULT: TrailTuning = { on: true, ground: 5, treetops: 20, from: 0.15, curve: 1, width: [1, 2.6], bright: 1, fade: 1.6, grow: 0.25, shrink: 0.6, colourEase: 0.6, sparks: true };
 
 const DYNAMIC = ["position", "aDir", "aT", "aS", "aCol"];
 /** Points of her path kept (enough for the longest trail at its spacing). */
@@ -65,7 +65,7 @@ float ln(float p) { float i = floor(p), f = fract(p); return mix(lh(i), lh(i + 1
 void main() {
   float across = 1.0 - abs(vSide), core = across * across * across, halo = across * across;
   // wisps: the glow thinning and thickening along it, drifting back from her (as the ley lines' do)
-  float wisp = 0.45 + 0.55 * ln(vS * 0.7 + uTime * 2.2) * ln(vS * 0.23 - uTime * 0.9 + vSide * 0.6);
+  float wisp = 0.72 + 0.28 * ln(vS * 0.3 + uTime * 1.6) * ln(vS * 0.11 - uTime * 0.7 + vSide * 0.6);
   float fade = pow(max(0.0, 1.0 - vT), uFade);
   float a = (core * 0.9 + halo * 0.35) * wisp * fade;
   gl_FragColor = vec4(vCol * a * uBright, 1.0);
@@ -176,7 +176,7 @@ export class WitchTrail {
     g.setDrawRange(0, this.n > 1 ? (this.n - 1) * 6 : 0);
     for (const k of DYNAMIC) (g.getAttribute(k) as THREE.BufferAttribute).needsUpdate = true;
     this.u.uTrailWidth.value = T.width[0] + (T.width[1] - T.width[0]) * lift;
-    this.u.uBright.value = T.bright * 2.2;
+    this.u.uBright.value = T.bright * 3;
     this.u.uFade.value = T.fade;
     void time;
   }
