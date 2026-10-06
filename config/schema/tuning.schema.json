@@ -2409,17 +2409,12 @@
         "depart": {
           "type": "object",
           "properties": {
-            "past": {
-              "type": "number",
-              "minimum": 0
-            },
             "avoid": {
               "type": "number",
               "minimum": 0
             }
           },
           "required": [
-            "past",
             "avoid"
           ],
           "additionalProperties": false
