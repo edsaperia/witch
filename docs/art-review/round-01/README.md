@@ -38,3 +38,10 @@ The treetop shots come from the second capture, after a fix to the script (risin
 | 5 | **UI in the art's palette:** one accent colour; the countdowns smaller and in the area's colour; status text out of the art when waves are off, if it is debug. | Coordinator (UI) | UI colours |
 
 Ed's second direction, better creature attack visuals, is art builder 2's. Their strips are reviewed when they come.
+
+## From the treetops (the second capture)
+
+- **The numbers over the runestones are the loudest thing in the sky.** There are eight or more large pixel numerals (14, 19, 9, 149, 168, 128, 172, 181) in cyan, magenta and yellow, bigger than the moon and the treehouse's lit windows, floating over the forest. They belong to the UI's brief (item 5 above): smaller, in one colour or the area's own, and only for the next stone or two.
+- **The fern forest's lit crowns read lime and glowing.** Under her light, the birch and fern crowns go to a saturated yellow-green, the brightest patch in the frame (section 3 of the guide: saturated yellow-green reads as glowing). Their hue should go blue-green in the night palette (art builder 1's brief).
+- **She is invisible from the treetops.** There is no rim or marker; the moonlight rim (rendering's brief) is for here too.
+- **What works:** the moon, the starry sky over the bend, and the treehouse's warm windows with its string of amber lights. That is the "party as warm pools in a dark forest" Ed asked for, in one place. The rest of the party should look like that.
