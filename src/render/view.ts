@@ -162,6 +162,14 @@ export class View {
   private ley: LeyLines;
   /** The ley line's colour by the mood (leyRgb), or null for each area's own. */
   private leyRgb: THREE.Vector3 | null;
+  /** The party the ley line follows (without quests done when it moves on only by waves), its chain, and each stone's colour. */
+  private leyParty: Game["party"] | null = null;
+  private readonly leyHome = new THREE.Vector3(0.8, 0.7, 1);
+  private readonly leyChainNow = () => leyChain(this.leyParty ?? this.game.party, this.game.map);
+  private readonly leyColour = (s: { cell: readonly [number, number] }) => {
+    if (this.leyRgb) return this.leyRgb; // the mood's: a guide in the HUD's amber, not a light source (the art director's round 2)
+    return this.markerArt.colour.get(AREA_TYPES[this.game.map.typeOf(s.cell[0], s.cell[1])].creature) ?? this.leyHome;
+  };
   /** The party witches on the dancefloor, and our witch when she idles into the party. */
   private partyWitchView: PartyWitchView;
   /** The 💌s, their bubbles and meters (render/invites.ts). */
@@ -702,11 +710,9 @@ export class View {
       // The ley lines: fading from the colour of the area each starts in to that of the area it ends
       // in (Ed, 2026-10-05), the colour partified areas and soundsystems use: its creature's sigil's.
       // (advance "wave": it moves on only when the next area's wave arrives, not when its quest is done)
-      const P = t.leyLines.advance === "wave" ? { ...g.party, leyDone: undefined } : g.party, M = g.map, home = new THREE.Vector3(0.8, 0.7, 1);
-      this.ley.update(leyKey(P), () => leyChain(P, M, t.leyLines.ahead, t.leyLines.behind), s => {
-        if (this.leyRgb) return this.leyRgb; // the mood's: a guide in the HUD's amber, not a light source (the art director's round 2)
-        return this.markerArt.colour.get(AREA_TYPES[M.typeOf(s.cell[0], s.cell[1])].creature) ?? home;
-      }, time, canopyShown(w));
+      // (Nothing allocated a frame but on a change: the key's a number, the callbacks are the view's own.)
+      this.leyParty = t.leyLines.advance === "wave" ? (this.leyParty?.areas === g.party.areas && this.leyParty.wave === g.party.wave ? this.leyParty : { ...g.party, leyDone: undefined }) : g.party;
+      this.ley.update(leyKey(this.leyParty), this.leyChainNow, this.leyColour, time, canopyShown(w));
     }
     this.time("party");
     // The canopy uplight over the nearest partified areas, fading in with each one's transition.

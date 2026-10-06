@@ -2086,13 +2086,12 @@
         "on": {
           "type": "boolean"
         },
-        "ahead": {
-          "type": "number",
-          "minimum": 0
-        },
-        "behind": {
-          "type": "number",
-          "minimum": 0
+        "far": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
         },
         "behindBright": {
           "type": "number",
@@ -2155,8 +2154,7 @@
       },
       "required": [
         "on",
-        "ahead",
-        "behind",
+        "far",
         "behindBright",
         "advance",
         "fade",
