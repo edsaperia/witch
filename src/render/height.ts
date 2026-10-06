@@ -211,6 +211,9 @@ export class HeightField {
     add(th.x, th.z, T.treehouse.clear + 2);
     for (const g of m.grounds) add(g.x, g.z, g.r + 2);
     for (const s of m.scenes ?? []) add(s.x, s.z, s.r + 2); // the scenes: each on its own terrace
+    // The sleeping legends' circles (Ed, 2026-10-06: "the legend circle ought to be mostly flat"): each on its own terrace,
+    // its floor, rim kit, legend and baby level, eased into the hills round it like the rest.
+    for (const c of m.legendClearings ?? []) add(c.x, c.z, c.r + 2);
     for (const [cx, cy] of m.cells) {
       const s = m.soundsystemSpot(cx, cy);
       if (cx !== m.centreCell[0] || cy !== m.centreCell[1]) add(s.x, s.z, T.soundsystemFootprint + 2); // (home's has none)

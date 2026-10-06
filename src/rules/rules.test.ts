@@ -1,4 +1,5 @@
 import { STATES, stateOf } from "./creatureStates";
+import { ringOrder } from "./bootRing";
 import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { hash2 as labHash2, SPECIES_BY_ID } from "../../art/generator.js";
@@ -25,7 +26,7 @@ import { bootSpeaker, floorInputs, speakerBoot } from "./game";
 import { moonState } from "./moon";
 import { castSpell, newSpells, spellCharge, speedMultiplier } from "./spells";
 import { musicMix } from "./music";
-import { tuftsInCell, TUFT_KINDS } from "./groundcover";
+import { tuftSpan, tuftsInCell, TUFT_KINDS } from "./groundcover";
 import { DECOR } from "../../art/decor.js";
 import { RELICS } from "../../art/relics.js";
 import { SCENES, sceneLayout } from "../../art/scenes.js";
@@ -1341,12 +1342,12 @@ describe("the home speakers start as runestones (Ed, 2026-10-06)", () => {
     for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60);
     const to = (time: number) => { while (g.clock.time < time) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60); };
     to(g.party.bootUntil - TUNING.boot.time / 2);
-    const half = g.speakerBoot.filter(b => b !== null).length;
+    const order = ringOrder(g.map), half = g.speakerBoot.filter(b => b !== null).length; // (rules/bootRing.ts: clockwise from the top)
     expect(half).toBeGreaterThan(3); expect(half).toBeLessThan(9);
-    const i = half - 1, at = g.speakerBoot[i]!; // the latest one, turning
+    const i = order[half - 1], at = g.speakerBoot[i]!; // the latest one, turning
     expect(speakerBoot(g, i, at)).toBe(0); expect(speakerBoot(g, i, at + T / 2)).toBeCloseTo(0.5); expect(speakerBoot(g, i, at + T)).toBe(1);
-    expect(speakerBoot(g, half, g.clock.time)).toBe(0); // the next still a stone
-    for (let k = 1; k < half; k++) expect(g.speakerBoot[k]!).toBeGreaterThanOrEqual(g.speakerBoot[k - 1]!); // round the ring in order
+    expect(speakerBoot(g, order[half], g.clock.time)).toBe(0); // the next still a stone
+    for (let k = 1; k < half; k++) expect(g.speakerBoot[order[k]]!).toBeGreaterThanOrEqual(g.speakerBoot[order[k - 1]]!); // round the ring in order
     to(g.party.bootUntil + T + 0.1);
     expect(g.speakerBoot.every((_, k) => speakerBoot(g, k) === 1)).toBe(true);
   });
@@ -1441,7 +1442,7 @@ describe("the dancefloor's tile lights (Ed, v160)", () => {
 
 describe("ground cover (Ed, v171)", () => {
   const G = TUNING.groundCover, d = map.dancefloor;
-  const around = (x: number, z: number, r: number) => { const out = []; for (let cj = Math.floor((z - r) / G.cell); cj <= Math.floor((z + r) / G.cell); cj++) for (let ci = Math.floor((x - r) / G.cell); ci <= Math.floor((x + r) / G.cell); ci++) out.push(...tuftsInCell(map, ci, cj, G.cell, G.spacing, G.density)); return out; };
+  const around = (x: number, z: number, r: number) => { const out = [], C = tuftSpan(G.cell, G.spacing); for (let cj = Math.floor((z - r) / C); cj <= Math.floor((z + r) / C); cj++) for (let ci = Math.floor((x - r) / C); ci <= Math.floor((x + r) / C); ci++) out.push(...tuftsInCell(map, ci, cj, G.cell, G.spacing, G.density)); return out; };
   it("is seeded per cell: the same patch every time", () => {
     expect(tuftsInCell(map, 140, 150, G.cell, G.spacing, 1)).toEqual(tuftsInCell(map, 140, 150, G.cell, G.spacing, 1));
   });
