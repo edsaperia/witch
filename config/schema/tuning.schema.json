@@ -4357,11 +4357,15 @@
             "band"
           ],
           "additionalProperties": false
+        },
+        "sky": {
+          "type": "boolean"
         }
       },
       "required": [
         "on",
         "where",
+        "sky",
         "strength",
         "band",
         "centre",
