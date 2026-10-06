@@ -18,6 +18,8 @@ export interface Schema {
   properties?: Record<string, Schema>;
   required?: readonly string[];
   additionalProperties?: boolean | Schema;
+  /** null allowed too (an array's empty slots, say). */
+  nullable?: boolean;
   /** For the docs. */
   unit?: string;
   description?: string;
@@ -29,6 +31,7 @@ const kind = (v: unknown) => (Array.isArray(v) ? "array" : v === null ? "null" :
 export function validate(value: unknown, schema: Schema, path = "(root)"): string[] {
   const out: string[] = [];
   const t = kind(value);
+  if (value === null && schema.nullable) return [];
   if (schema.type && t !== schema.type) return [`${path}: ${t}, should be ${schema.type}`];
   if (schema.enum && !schema.enum.includes(value)) out.push(`${path}: ${JSON.stringify(value)}, should be one of ${schema.enum.map(e => JSON.stringify(e)).join(", ")}`);
   if (t === "number") {
@@ -56,20 +59,51 @@ export function validate(value: unknown, schema: Schema, path = "(root)"): strin
   return out;
 }
 
+/** One schema covering several: an array's items, or a record's entries (keys every one has are
+ *  required, the rest optional; numbers at least 0 unless one is negative; null makes it nullable). */
+export function mergeSchemas(list: Schema[]): Schema {
+  const real = list.filter(x => x.type !== undefined), nullable = real.length < list.length || list.some(x => x.nullable);
+  if (!real.length) return nullable ? { nullable: true } : {};
+  const types = new Set(real.map(x => x.type));
+  if (types.size > 1) return { ...(nullable ? { nullable: true } : {}) }; // (mixed kinds: anything)
+  const [type] = [...types];
+  let m: Schema = { type };
+  if (type === "number") m = { type, ...(real.every(x => x.minimum !== undefined) ? { minimum: Math.min(...real.map(x => x.minimum!)) } : {}) };
+  if (type === "array") { const items = real.filter(x => x.items).map(x => x.items!); m = { type, ...(items.length ? { items: mergeSchemas(items) } : {}) }; }
+  if (type === "object") {
+    if (real.some(x => x.additionalProperties && typeof x.additionalProperties === "object")) m = { type, additionalProperties: mergeSchemas(real.map(x => (typeof x.additionalProperties === "object" ? x.additionalProperties : {}))) };
+    else {
+      const keys = [...new Set(real.flatMap(x => Object.keys(x.properties ?? {})))], props: Record<string, Schema> = {};
+      for (const k of keys) props[k] = mergeSchemas(real.filter(x => x.properties?.[k]).map(x => x.properties![k]));
+      m = { type, properties: props, required: keys.filter(k => real.every(x => x.required?.includes(k))), additionalProperties: false };
+    }
+  }
+  const enums = real.map(x => x.enum).filter(Boolean);
+  if (enums.length === real.length && enums.length) m.enum = [...new Set(enums.flat())];
+  return nullable ? { ...m, nullable: true } : m;
+}
+
 /** A schema for `value` as it stands: its structure, every key required and no others; numbers at
- *  least 0 unless negative now; arrays of their first item's kind. `over` (by dotted path, "[]" for
- *  an array's items) replaces or adds to what's inferred: enums, ranges, open-keyed records. */
-export function inferSchema(value: unknown, over: Record<string, Partial<Schema>> = {}, path = ""): Schema {
+ *  least 0 unless negative now; arrays' items merged from every item. `over` (by dotted path, "[]"
+ *  for an array's items, "*" for a record's entries) replaces or adds to what's inferred: enums,
+ *  ranges; and `records` paths are maps keyed by name (species, attacks...), their entries merged
+ *  into one schema for any key. */
+export function inferSchema(value: unknown, over: Record<string, Partial<Schema>> = {}, path = "", records: ReadonlySet<string> = new Set()): Schema {
   const t = kind(value), o = over[path] ?? {};
   let s: Schema;
   if (t === "number") s = { type: "number", ...((value as number) >= 0 ? { minimum: 0 } : {}) };
   else if (t === "boolean") s = { type: "boolean" };
   else if (t === "string") s = { type: "string" };
-  else if (t === "array") { const a = value as unknown[]; s = { type: "array", ...(a.length ? { items: inferSchema(a[0], over, `${path}[]`) } : {}) }; }
+  else if (t === "null") s = { nullable: true };
+  else if (t === "array") { const a = value as unknown[]; s = { type: "array", ...(a.length ? { items: mergeSchemas(a.map(v => inferSchema(v, over, `${path}[]`, records))) } : {}) }; }
   else if (t === "object") {
-    const props: Record<string, Schema> = {}, keys = Object.keys(value as object).filter(k => !k.startsWith("_"));
-    for (const k of keys) props[k] = inferSchema((value as Record<string, unknown>)[k], over, path ? `${path}.${k}` : k);
-    s = { type: "object", properties: props, required: keys, additionalProperties: false };
+    const keys = Object.keys(value as object).filter(k => !k.startsWith("_")), sub = (k: string) => (path ? `${path}.${k}` : k);
+    if (records.has(path)) s = { type: "object", additionalProperties: keys.length ? mergeSchemas(keys.map(k => inferSchema((value as Record<string, unknown>)[k], over, `${path}.*`, records))) : {} };
+    else {
+      const props: Record<string, Schema> = {};
+      for (const k of keys) props[k] = inferSchema((value as Record<string, unknown>)[k], over, sub(k), records);
+      s = { type: "object", properties: props, required: keys, additionalProperties: false };
+    }
   } else s = {};
   if (o.additionalProperties && typeof o.additionalProperties === "object") { delete s.properties; delete s.required; }
   return { ...s, ...o };

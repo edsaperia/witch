@@ -169,6 +169,8 @@ export class View {
   private shadows: ShadowBatch;
   /** The live rig (#79 stage 5, ?rig=1): creatures put together from parts each frame. */
   readonly rig: RigView | null;
+  /** The camera's snap this frame, in the picture's pixels (x right, y down): what main.ts shifts the canvas by. */
+  readonly subpixel = { x: 0, y: 0 };
   private shadowList: ShadowInstance[] = [];
   private mist: Mist | null = null;
   private width = 1;
@@ -1215,9 +1217,13 @@ export class View {
       this.sky.update(k, pose.tx, pose.tz, far, 2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (this.width / this.height));
     }
     this.time("sky");
-    const u = target.dot(up), r = target.x;
-    target.addScaledVector(up, Math.round(u / wpp) * wpp - u);
-    target.x += Math.round(r / wpp) * wpp - r;
+    const u = target.dot(up), r = target.x, eu = Math.round(u / wpp) * wpp - u, er = Math.round(r / wpp) * wpp - r;
+    target.addScaledVector(up, eu);
+    target.x += er;
+    // What the snap took off (in the picture's pixels): main.ts moves the canvas back by it, in whole
+    // screen pixels, so the art stays on its grid but the view glides (Ed, 2026-10-05: whole art-pixel
+    // steps of the camera felt like a low framerate). Moved right, the picture moves left; up, down.
+    this.subpixel.x = er / wpp; this.subpixel.y = -eu / wpp;
     const back = new THREE.Vector3(0, Math.sin(a), Math.cos(a)).multiplyScalar(pose.distance);
     this.camera.position.copy(target).add(back);
     // Over tall hills a rise between the camera and her could hide her: lift the camera (eased)
@@ -1266,7 +1272,7 @@ export class View {
       const wx = g.witch.x, wz = g.witch.z, R = SPRITE_UNIFORMS.uRight.value;
       const a = placed(this.v3.set(wx, 0, wz)).project(this.camera).x, b = placed(this.v3.set(wx + R.x * 10, 0, wz + R.z * 10)).project(this.camera).x;
       const pxPerM = Math.max(1e-3, (Math.abs(b - a) * 0.5 * this.width) / 10);
-      LIGHT_UNIFORMS.uGlowR.value = ((0.5 * cut.screenFraction + cut.edge) * this.width / pxPerM) * t.glowToCutout * g.buffs.totals.glowReach; // a glow-reach legend buff widens it
+      LIGHT_UNIFORMS.uGlowR.value = ((0.5 * cut.screenFraction + cut.edge) * this.width / pxPerM) * t.glowToCutout;
     }
     SPRITE_UNIFORMS.uDebugCull.value = this.debugCull ? 1 : 0;
 
@@ -1444,7 +1450,7 @@ export class View {
         });
       };
       // Pausing holds the countdown; while home boots up, the next ring fills with the boot.
-      cue(this.nextStones, g.party.next, () => new StoneIndicator(document.body), cd.booting ? cd.boot : cd.gone, cd.booting ? `booting ${Math.ceil(cd.bootLeft)} s` : undefined);
+      cue(this.nextStones, g.party.next, () => new StoneIndicator(document.body), cd.booting ? cd.boot : cd.gone, cd.booting ? `booting ${mmss(cd.bootLeft)}` : undefined);
     }
     this.time("hud");
     this.leashView.update(time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, hatTop);
@@ -1491,3 +1497,6 @@ export class View {
     this.stats.gameplay = this.stats.creatures + this.propBatch.count + this.soundBatch.count;
   }
 }
+
+/** Seconds as "4:59" from a minute up, "42 s" under. */
+function mmss(s: number): string { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; }

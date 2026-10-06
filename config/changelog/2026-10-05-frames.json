@@ -1,0 +1,7 @@
+{
+  "version": null,
+  "items": [
+    "The view glides instead of stepping a whole art pixel at a time when you move (add ?subpixel=0 to the link to compare with before)",
+    "The debug panel (~) shows what the frames really are: the frame time's spread, the slowest frames, and how long the game's own work and the GPU take each frame (where the browser can time it)"
+  ]
+}

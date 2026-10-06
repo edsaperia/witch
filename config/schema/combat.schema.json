@@ -1,0 +1,300 @@
+{
+  "type": "object",
+  "properties": {
+    "levels": {
+      "type": "object",
+      "properties": {
+        "hp": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "dps": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "required": [
+        "hp",
+        "dps"
+      ],
+      "additionalProperties": false
+    },
+    "strength": {
+      "type": "object",
+      "properties": {
+        "species": {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      },
+      "required": [
+        "species"
+      ],
+      "additionalProperties": false
+    },
+    "attacks": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "delivery": {
+            "type": "string",
+            "enum": [
+              "melee",
+              "shot",
+              "quake",
+              "lob",
+              "beam",
+              "pulse"
+            ]
+          },
+          "range": {
+            "type": "number",
+            "minimum": 0
+          },
+          "windup": {
+            "type": "number",
+            "minimum": 0
+          },
+          "cooldown": {
+            "type": "number",
+            "minimum": 0
+          },
+          "modifier": {
+            "type": "string",
+            "enum": [
+              "none",
+              "knockback",
+              "slow"
+            ]
+          },
+          "lunge": {
+            "type": "number",
+            "minimum": 0
+          },
+          "knockback": {
+            "type": "number",
+            "minimum": 0
+          },
+          "speed": {
+            "type": "number",
+            "minimum": 0
+          },
+          "radius": {
+            "type": "number",
+            "minimum": 0
+          },
+          "slowMult": {
+            "type": "number",
+            "minimum": 0
+          },
+          "slowTime": {
+            "type": "number",
+            "minimum": 0
+          },
+          "flight": {
+            "type": "number",
+            "minimum": 0
+          },
+          "factor": {
+            "type": "number",
+            "minimum": 0
+          },
+          "width": {
+            "type": "number",
+            "minimum": 0
+          },
+          "duration": {
+            "type": "number",
+            "minimum": 0
+          },
+          "tick": {
+            "type": "number",
+            "minimum": 0
+          },
+          "sweep": {
+            "type": "number",
+            "minimum": 0
+          },
+          "shots": {
+            "type": "number",
+            "minimum": 0
+          },
+          "spin": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "delivery",
+          "range",
+          "windup",
+          "cooldown",
+          "modifier"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "byLevel": {
+      "type": "object",
+      "properties": {
+        "melee": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "ranged": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "required": [
+        "melee",
+        "ranged"
+      ],
+      "additionalProperties": false
+    },
+    "ranged": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "bySpecies": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "nullable": true
+        }
+      }
+    },
+    "kite": {
+      "type": "object",
+      "properties": {
+        "species": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "near": {
+          "type": "number",
+          "minimum": 0
+        },
+        "far": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "species",
+        "near",
+        "far"
+      ],
+      "additionalProperties": false
+    },
+    "temperament": {
+      "type": "object",
+      "properties": {
+        "curious": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "skittish": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "curious",
+        "skittish"
+      ],
+      "additionalProperties": false
+    },
+    "traits": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "counters": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "melee": {
+            "type": "number",
+            "minimum": 0
+          },
+          "shot": {
+            "type": "number",
+            "minimum": 0
+          },
+          "lob": {
+            "type": "number",
+            "minimum": 0
+          },
+          "beam": {
+            "type": "number",
+            "minimum": 0
+          },
+          "knockback": {
+            "type": "number",
+            "minimum": 0
+          },
+          "stun": {
+            "type": "number",
+            "minimum": 0
+          },
+          "quake": {
+            "type": "number",
+            "minimum": 0
+          },
+          "pulse": {
+            "type": "number",
+            "minimum": 0
+          },
+          "slow": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "levels",
+    "strength",
+    "attacks",
+    "byLevel",
+    "ranged",
+    "bySpecies",
+    "kite",
+    "temperament",
+    "traits",
+    "counters"
+  ],
+  "additionalProperties": false
+}

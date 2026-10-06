@@ -282,6 +282,9 @@ depart (Ed, 2026-10-05: "The start of the first leyline should go from the front
 | knob | type | range |
 |---|---|---|
 | `leyLines.on` | boolean |  |
+| `leyLines.ahead` | number | 0 to … |
+| `leyLines.behind` | number | 0 to … |
+| `leyLines.behindBright` | number | 0 to … |
 | `leyLines.advance` | string |  |
 | `leyLines.fade` | number | 0 to … |
 | `leyLines.brightness` | number | 0 to … |
@@ -289,11 +292,8 @@ depart (Ed, 2026-10-05: "The start of the first leyline should go from the front
 | `leyLines.height` | array of number |  |
 | `leyLines.valley` | number | 0 to … |
 | `leyLines.flow` | array of number |  |
-| `leyLines.depart.avoid` | number | 0 to … |
 | `leyLines.depart.past` | number | 0 to … |
-| `leyLines.ahead` | number | 0 to … |
-| `leyLines.behind` | number | 0 to … |
-| `leyLines.behindBright` | number | 0 to … |
+| `leyLines.depart.avoid` | number | 0 to … |
 
 ## `witch`
 
@@ -301,12 +301,6 @@ The witch knocked back and staggered by a blow (Ed, 2026-10-05: "add a knockback
 
 | knob | type | range |
 |---|---|---|
-| `witch.lightFloor` | number | 0 to … |
-| `witch.lightTint` | number | 0 to … |
-| `witch.lightRim` | number | 0 to … |
-| `witch.heightSmooth` | number | 0 to … |
-| `witch.heightLookAhead` | number | 0 to … |
-| `witch.heightClearance` | number | 0 to … |
 | `witch.knock.on` | boolean |  |
 | `witch.knock.base` | number | 0 to … |
 | `witch.knock.scale` | number | 0 to … |
@@ -317,6 +311,12 @@ The witch knocked back and staggered by a blow (Ed, 2026-10-05: "add a knockback
 | `witch.knock.stunScale` | number | 0 to … |
 | `witch.knock.stunMax` | number | 0 to … |
 | `witch.knock.immune` | number | 0 to … |
+| `witch.lightFloor` | number | 0 to … |
+| `witch.lightTint` | number | 0 to … |
+| `witch.lightRim` | number | 0 to … |
+| `witch.heightSmooth` | number | 0 to … |
+| `witch.heightLookAhead` | number | 0 to … |
+| `witch.heightClearance` | number | 0 to … |
 
 ## `sigilProjection`, `occlusion`
 
@@ -487,11 +487,11 @@ The witch's treehouse, home (Ed, 2026-10-05: "The treehouse should be 5m due nor
 
 | knob | type | range |
 |---|---|---|
+| `treehouse.gap` | number | 0 to … |
 | `treehouse.angle` | number |  |
 | `treehouse.clear` | number | 0 to … |
 | `treehouse.lightReach` | number | 0 to … |
 | `treehouse.lightStrength` | number | 0 to … |
-| `treehouse.gap` | number | 0 to … |
 
 ## `home`
 
@@ -662,7 +662,7 @@ Paths, roads and railways (Ed): rails [min,max] railway lines edge to edge in wi
 
 ## `invites`, `invite`, `leash`, `bond`
 
-The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when on: on the ground she shoots spinning 💌s, aimed with the cursor (click fires) or the right stick (a trigger fires), or 1 toward the cursor. A burst is burst volleys burstGap seconds apart, each multiShot letters fanned over spread degrees, then cooldown seconds before the next; letters fly at speed m/s for range metres, turning toward the nearest invitable creature within homingRange metres and homingCone degrees of straight ahead at up to homing degrees a second, and land on one whose body comes within radius metres. Each hit adds amount to its affection; hits: letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit. perAnimalHitGap (Ed, 2026-10-05): a creature takes affection from at most one letter every this many seconds; letters landing inside its gap still land (a small pop, used up) but add nothing, so stacked multi-shot buffs help against crowds, not to win one creature faster. Enraged creatures and legends block letters; scenery never stops them (Ed). Data, so legend buffs can change any of it.
+The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when on: on the ground she shoots spinning 💌s, aimed with the cursor (click fires) or the right stick (a trigger fires), or 1 toward the cursor. A burst is burst volleys burstGap seconds apart, each multiShot letters fanned over spread degrees, then cooldown seconds before the next; letters fly at speed m/s for range metres, turning toward the nearest invitable creature within homingRange metres and homingCone degrees of straight ahead at up to homing degrees a second, and land on one whose body comes within radius metres. Each hit adds amount to its affection; hits: letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit. perAnimalHitGap (Ed, 2026-10-05): a creature takes affection from at most one letter every this many seconds; letters landing inside its gap still land (a small pop, used up) but add nothing, so stacked multi-shot buffs help against crowds, not to win one creature faster. Enraged creatures and legends block letters; scenery never stops them (Ed). fireSlow: her ground speed while firing, times this (Ram's Steady buff takes it away). Data, so legend buffs can change any of it (config/legend-buffs.json).
 
 | knob | type | range |
 |---|---|---|
@@ -682,6 +682,7 @@ The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when o
 | `invites.hits` | array of number |  |
 | `invites.drain` | number | 0 to … |
 | `invites.perAnimalHitGap` | number | 0 to … |
+| `invites.fireSlow` | number | 0 to 1 |
 | `invite.talkRange` | number | 0 to … |
 | `invite.cancelDistance` | number | 0 to … |
 | `invite.snubTime` | number | 0 to … |
@@ -737,9 +738,14 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `sfx.windup.length` | number | 0 to … |
 | `sfx.lost.volume` | number | 0 to … |
 | `sfx.ouch.volume` | number | 0 to … |
+| `sfx.ouch.knockdown` | number | 0 to … |
 | `sfx.ouch.duck` | number | 0 to … |
 | `sfx.ouch.duckTime` | number | 0 to … |
-| `sfx.ouch.knockdown` | number | 0 to … |
+| `sfx.impact.volume` | number | 0 to … |
+| `sfx.impact.small` | number | 0 to … |
+| `sfx.land.volume` | number | 0 to … |
+| `sfx.land.gap` | number | 0 to … |
+| `sfx.stir.volume` | number | 0 to … |
 | `sfx.knock.volume` | number | 0 to … |
 | `sfx.knock.whoosh` | number | 0 to … |
 | `sfx.knock.twinkle` | number | 0 to … |
@@ -771,11 +777,6 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `sfx.whale.depth` | number | 0 to … |
 | `sfx.whale.reverb` | number | 0 to … |
 | `sfx.whale.sleepEvery` | number | 0 to … |
-| `sfx.impact.volume` | number | 0 to … |
-| `sfx.impact.small` | number | 0 to … |
-| `sfx.land.volume` | number | 0 to … |
-| `sfx.land.gap` | number | 0 to … |
-| `sfx.stir.volume` | number | 0 to … |
 | `music.on` | boolean |  |
 | `music.volume` | number | 0 to … |
 | `music.nearDist` | number | 0 to … |
@@ -785,6 +786,7 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.clear` | number | 0 to … |
 | `music.distort` | number | 0 to … |
 | `music.src` | string |  |
+| `music.audible` | number | 0 to … |
 
 ## `forecast`
 
@@ -895,7 +897,7 @@ The dash, a blink (Ed, 2026-10-04, 2026-10-05; W, gamepad A, touch 'dash'): on t
 
 ## `boot`
 
-At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power on one by one over time seconds, and only then does the first wave's countdown begin: extra time to find and invite your first creatures.
+At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power on one by one over time seconds, and only then does the first wave's countdown begin: extra time to find and invite your first creatures. Five minutes, counted from her first step off the decks (Ed, 2026-10-05: 'the game is hard! ... a boot up period of 5 minutes'): no wave and no growth till then.
 
 | knob | type | range |
 |---|---|---|
@@ -1038,7 +1040,7 @@ Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest..
 
 ## `population`
 
-Wild creatures (Ed, 2026-10-04): every area starts with the same population, population.start (one young and one adult: Ed, 2026-10-05, '1 youth instead of 1 baby and 1 adult' after the fight bot found the first fights too hard; it was one baby and two adults), and while it stays wild it grows: every wave, each area the party hasn't reached gains growth.perWave more, each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.
+Wild creatures (Ed, 2026-10-04): every area starts with the same population, population.start (one baby and one young: Ed, 2026-10-05, 'actually, the game should start with one baby and one youth, otherwise you can't avoid enraging lots of legends', after 'the game is hard! we should start each area with just one baby'; before it, one young and one adult, and before that one baby and two adults), and while it stays wild it grows: every wave, each area the party hasn't reached gains growth.perWave more, each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.
 
 | knob | type | range |
 |---|---|---|
