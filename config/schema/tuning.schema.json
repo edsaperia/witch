@@ -6308,6 +6308,10 @@
         "sky": {
           "type": "boolean"
         },
+        "skyBlur": {
+          "type": "number",
+          "minimum": 0
+        },
         "strength": {
           "type": "number",
           "minimum": 0
@@ -6343,6 +6347,7 @@
         "on",
         "where",
         "sky",
+        "skyBlur",
         "strength",
         "band",
         "centre",

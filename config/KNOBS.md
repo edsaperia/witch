@@ -1378,6 +1378,7 @@ Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest..
 | `tiltShift.on` | boolean |  |
 | `tiltShift.where` | string | "before" / "after" |
 | `tiltShift.sky` | boolean |  |
+| `tiltShift.skyBlur` | number | 0 to … |
 | `tiltShift.strength` | number | 0 to … |
 | `tiltShift.band` | number | 0 to … |
 | `tiltShift.centre` | number | 0 to … |
