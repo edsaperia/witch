@@ -101,6 +101,11 @@
     .legend-panel[data-state="happy"] p:first-child { color: rgb(150, 230, 170); }
     .legend-panel p.done { opacity: .55; }
     .legend-panel .icon { width: 22px; height: 22px; vertical-align: -6px; margin: 0 2px; image-rendering: pixelated; }
+    /* A dream's pointer (Ed, 2026-10-06): a pixel arrow on the bubble's edge toward the nearest runestone of the area its quest
+       animal lives in, and that way in words under the sigil (src/render/compass.ts; rules/dream.ts dreamWay). */
+    .dream-way { position: absolute; transform: translate(-50%, 0); display: flex; align-items: center; gap: calc(var(--px) / 2); padding: calc(var(--px) / 3) var(--px); background: rgba(14, 11, 28, .7); box-shadow: 0 0 0 1px rgba(232, 180, 106, .35); pointer-events: none; z-index: 2;
+      font: calc(var(--px) * 8 / 3) / 1 "Tiny5", ui-monospace, monospace; -webkit-font-smoothing: none; color: rgb(244, 226, 190); white-space: nowrap; }
+    .dream-way .dream-dir { width: calc(var(--px) * 11 / 3); height: calc(var(--px) * 11 / 3); image-rendering: pixelated; }
     /* A sleeping legend's dream (the first quest): a thought bubble, a legend's size (--px by level: bubblePx in
        src/render/leash.ts), holding the sigil it wants in its level's variant. Soft and round, in the HUD's amber, with two
        small puffs rising to it from the sleeper, quieter than the art (the art director, #235: "a soft, round thought
@@ -117,7 +122,7 @@
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
     .bubble .bar i { display: block; height: 100%; background: var(--love); }
   </style>
-  <script type="module" crossorigin src="./assets/index-B3D2e1Wt.js"></script>
+  <script type="module" crossorigin src="./assets/index-DUpt_69Z.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-DnShPyXc.css">
 </head>
 <body>
