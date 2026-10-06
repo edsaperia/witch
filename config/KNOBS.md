@@ -765,6 +765,7 @@ Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bu
 | `legendClearing.radius` | number | 0 to … |
 | `legendClearing.edge` | number | 0 to … |
 | `legendClearing.top` | number | 0 to … |
+| `legendClearing.minFromStone` | number | 0 to … |
 | `legendClearing.rim.spacing` | number | 0 to … |
 | `legendClearing.rim.chance` | number | 0 to … |
 | `legendClearing.rim.out` | number | 0 to … |
@@ -1243,7 +1244,7 @@ The party witches' swoop trails (Ed, 2026-10-06: "Party-witch swoops should get 
 
 ## `boot`
 
-At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power on one by one over time seconds, and only then does the first wave's countdown begin: extra time to find and invite your first creatures. Five minutes, counted from her first step off the decks (Ed, 2026-10-05: 'the game is hard! ... a boot up period of 5 minutes'): no wave and no growth till then. transform (Ed, 2026-10-06: the home ring starts as small runestones, and the boot pulse turns each into its speaker): the seconds each takes to turn, glowing and rising into the speaker.
+At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power on one by one over time seconds, and only then does the first wave's countdown begin: extra time to find and invite your first creatures. Five minutes, counted from her first step off the decks (Ed, 2026-10-05: 'the game is hard! ... a boot up period of 5 minutes'): no wave and no growth till then. transform (Ed, 2026-10-06: the home ring starts as small runestones, and the boot pulse turns each into its speaker): the seconds each takes to turn, glowing and rising into the speaker. The boot runs from the party spell (golf: rules/party.ts castPartySpell; Ed, 2026-10-06): its pulse goes from the treehouse round the home ring clockwise from the top (rules/bootRing.ts), each stone turning into a speaker as it passes, the last as the boot's time is up; the ley line runs ahead of it at leyLines.reveal times its pace.
 
 | knob | type | range |
 |---|---|---|

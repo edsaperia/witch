@@ -191,4 +191,20 @@ describe("legend clearings", () => {
     }
     expect(edged).toBeGreaterThan(map.legendClearings.length * 0.8);
   });
+
+  // Ed (2026-10-06): "The legend circle shouldn't spawn near its runestone."
+  it("each keeps its edge minFromStone metres from its area's runestone, but in a sliver of an area too small to (the farthest it fits)", () => {
+    const D = TUNING.legendClearing.minFromStone;
+    let n = 0, near = 0;
+    for (const seed of [1, 42, 123, 2024, 90210]) {
+      const map = generateMap(seed, TUNING);
+      for (const c of map.legendClearings) {
+        const s = map.soundsystemSpot(c.cell[0], c.cell[1]), d = Math.hypot(c.x - s.x, c.z - s.z) - c.r;
+        n++;
+        if (d < D - 1e-6) near++;
+        expect(d).toBeGreaterThan(10); // (never on the stone's own clearing)
+      }
+    }
+    expect(near / n).toBeLessThan(0.01);
+  });
 });
