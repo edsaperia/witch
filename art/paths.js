@@ -166,5 +166,6 @@ export function pathPieceSprite(id, st = {}, ppm = 16) {
   const [ox, oy] = r.project([0, 0, 0]);
   return { sp, origin: { x: +(ox - x0).toFixed(1), y: +(oy - y0).toFixed(1) }, metres: { width: +(sp.w / ppm).toFixed(1), height: +(sp.h / ppm).toFixed(1) } };
 }
-// The areas each path kind suits, turned round: { areaId: [kinds] }, for an area's layout to name its preferred paths.
-export function areaPathKinds() { const out = {}; for (const [k, K] of Object.entries(PATH_KINDS)) for (const a of K.moods) (out[a] = out[a] || []).push(k); out["ravine"] = [...(out["ravine"] || []), "stairs"]; out["rocky-slope"] = [...(out["rocky-slope"] || []), "stairs"]; out["cave-mouth"] = [...(out["cave-mouth"] || []), "stairs"]; out["stream"] = [...(out["stream"] || []), "bridges"]; return out; }
+// The areas each path kind suits, turned round: { areaId: [kinds] }, for an area's layout to name its preferred paths; with each
+// area's own extra kinds (areas: art/areas.js AREAS, an area's `pathKinds`: stairs on the steep ones, bridges over the stream).
+export function pathKindsByArea(areas = []) { const out = {}; for (const [k, K] of Object.entries(PATH_KINDS)) for (const a of K.moods) (out[a] = out[a] || []).push(k); for (const A of areas) for (const k of A.pathKinds || []) (out[A.id] = out[A.id] || []).push(k); return out; }

@@ -116,9 +116,9 @@ describe("the map", () => {
     expect(checked).toBe(400 * 24);
     expect(safeSum / 400).toBeGreaterThan(0.3); // worth having: a creature asks about every so many metres
   });
-  it("is mapAreas x mapAreas areas with 30 area types", () => {
+  it("is mapAreas x mapAreas areas with every area type (Ed's 30 and any recipes)", () => {
     expect(map.n).toBe(TUNING.mapAreas);
-    expect(AREA_TYPES.length).toBe(30);
+    expect(AREA_TYPES.length).toBeGreaterThanOrEqual(30);
     expect(map.bounds.maxX - map.bounds.minX).toBeCloseTo((map.n - 1) * map.areaSize);
   });
 
@@ -484,7 +484,8 @@ describe("creatures", () => {
   it("are each area's own kind, all 30 drawn by the art module", () => {
     for (const c of all.slice(0, 300)) expect(c.species).toBe(AREA_TYPES[map.typeOf(c.cell[0], c.cell[1])].creature);
     for (const t of AREA_TYPES) expect(SPECIES_BY_ID[t.creature], t.creature).toBeDefined();
-    expect(new Set(AREA_TYPES.map(t => t.creature)).size).toBe(30);
+    const own = AREA_TYPES.filter(t => !t.sharesCreature); // a creature of its own for every area (but a recipe's that says it shares)
+    expect(new Set(own.map(t => t.creature)).size).toBe(own.length);
   });
 
   it("start the same in every area (Ed, 2026-10-04): none at home but its legend, one young and one adult elsewhere (Ed, 2026-10-05), and one legend in each", () => {

@@ -46,7 +46,6 @@ export function spline(ctrl: [number, number][], step: number): [number, number]
   return out;
 }
 
-const WET = new Set(["stream", "wetland", "bog", "beaver-pond"]);
 
 export class PathNetwork {
   readonly lines: PathLine[] = [];
@@ -106,7 +105,7 @@ export class PathNetwork {
       const s = Math.floor(r() * 4), e = (s + 2) % 4;
       this.lines.push({ kind: "stream", pts: crossing(edgePoint(s, 0.1 + r() * 0.8), edgePoint(e, 0.1 + r() * 0.8), 90, 70), half: t.streamHalf });
     }
-    const wet = (cx: number, cy: number) => WET.has(AREA_TYPES[map.typeOf(cx, cy)].id);
+    const wet = (cx: number, cy: number) => AREA_TYPES[map.typeOf(cx, cy)].wet; // (the area's flag: art/areas.js)
     for (const [k, nbrs] of map.neighbours) {
       const [ax, ay] = k.split(",").map(Number);
       if (!wet(ax, ay)) continue;
@@ -198,8 +197,8 @@ export class PathNetwork {
     // Stairs (Ed, v160): a find, not a path fitting: each flight at most once per map, standing on
     // its own at the edge of the clearing of a ravine, rocky slope, cave mouth or stone shrine
     // (seeded which), clear of the paths and everything placed for gameplay.
-    const steep = new Set(["ravine", "rocky-slope", "cave-mouth", "stone-shrine"]), homes: [number, number, number][] = [];
-    for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) if (steep.has(AREA_TYPES[m.typeOf(x, y)].id)) homes.push([x, y, hash2(x, y, s + 849)]);
+    const homes: [number, number, number][] = []; // the steep area types (art/areas.js flags)
+    for (let y = 0; y < m.n; y++) for (let x = 0; x < m.n; x++) if (AREA_TYPES[m.typeOf(x, y)].steep) homes.push([x, y, hash2(x, y, s + 849)]);
     homes.sort((a, b) => a[2] - b[2]);
     let flight = 0;
     const flights = ["stairs", "stairs-turn"];
