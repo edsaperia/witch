@@ -136,6 +136,14 @@ At ground level a young creature is about 45 px tall and the witch about 50 px. 
 - **Whites must be white.** A blaze, a fleece or a rump patch in the cream belly colour reads as yellow at game size (#112 badger, ram v1). Use `palette.over` to set near-white.
 - **Saturated yellow-green crowns read as glowing.** An autumn or dry-leaf area wants old gold at moderate saturation, not lime (#112 v2 wispy forest limes).
 - **Natural colours come from the real animal, but saturation stays moderate.** For example: a red deer's coat, a natterjack's green with its pale stripe, a garden spider's chestnut with a cream cross. Fully saturated oranges and yellows read as toys (#97 "before" stag; #112 ram).
+- **Judge the whole frame at night, as the game is.** The overnight review's round 1 (`docs/art-review/round-01/`) found several problems in the dark that the sheets never show:
+  - the witch and the wolves at the floor's value, so they vanish;
+  - four areas reading as the same dark green;
+  - six party hues at full strength at once;
+  - pools as black holes.
+
+  Every batch should be checked in the review set (`node tools/art-review/capture.cjs`) as well as on its lit sheet.
+- **A style is judged where there is light.** At the night's light level, `?style=bold`, `ref` and `now` look almost the same (round 1). Compare styles in a party pool or under the witch's light, not in the dark moor.
 - **Colour per material, not one ramp.** A species' whole ramp derives from one hue. Use `palette.over` for parts that differ in nature: membranes, dark legs, horns, caps and the glow.
 
 ## 4. Silhouette rules
