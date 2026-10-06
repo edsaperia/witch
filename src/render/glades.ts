@@ -107,7 +107,7 @@ export class Glades {
     geo.setAttribute("aGlade", new THREE.BufferAttribute(which, 1));
     const rgb = new THREE.Vector3(); hsvInto(rgb, T.motes.hue, T.motes.sat, 1, T.motes.bright);
     this.u = {
-      ...HEIGHT_UNIFORMS, uTime: LIGHT_UNIFORMS.uTime, uGlade: LIGHT_UNIFORMS.uGlade, uGladeCount: LIGHT_UNIFORMS.uGladeCount,
+      ...HEIGHT_UNIFORMS, uTime: LIGHT_UNIFORMS.uRealTime, uGlade: LIGHT_UNIFORMS.uGlade, uGladeCount: LIGHT_UNIFORMS.uGladeCount,
       uMoteRise: { value: T.motes.rise }, uMoteTop: { value: T.motes.height }, uMoteSize: { value: Math.max(1, T.motes.size) },
       uMoteRgb: { value: rgb },
     };
@@ -121,9 +121,9 @@ export class Glades {
   /** The nearest clearings to (wx, wz) into the light's uniforms. Its edge brightens, eased, with the witch inside it, with
    *  the map's own `edge` for it, or with `extraEdge` (art builder 1's hook: a quest sigil or relic put down in it, 0 to 1
    *  by gladeKey). No allocation: the list's objects are reused and the nearest kept by insertion. */
-  update(g: Game, wx: number, wz: number, dt: number, ground: boolean, extraEdge?: (key: number) => number): void {
+  update(g: Game, wx: number, wz: number, dt: number, ground: boolean, extraEdge?: (key: number) => number, slow = 0): void {
     const T = this.T, U = LIGHT_UNIFORMS, near = this.near;
-    if (!T.on) { U.uGladeCount.value = 0; U.uDim.value = 1; this.points.visible = false; return; }
+    if (!T.on) { U.uGladeCount.value = 0; U.uDim.value = 1; U.uSlow.value.w = 0; this.points.visible = false; return; }
     const total = gladesOf(g, T, this.list);
     let n = 0;
     for (let j = 0; j < total; j++) {
@@ -147,7 +147,9 @@ export class Glades {
     // Inside one (Ed, 2026-10-06: "the rest of the forest should get darker. Maybe switch off the witch's glow"): the
     // forest's light and haze dim by `dark` and her glow goes by `glowOff`, both eased in and out over `fade` seconds.
     let inCircle = false;
-    for (let i = 0; i < n; i++) if ((wx - near[i].x) ** 2 + (wz - near[i].z) ** 2 < near[i].radius * near[i].radius) inCircle = true;
+    for (let i = 0; i < n; i++) if ((wx - near[i].x) ** 2 + (wz - near[i].z) ** 2 < near[i].radius * near[i].radius) { inCircle = true; U.uSlow.value.set(near[i].x, near[i].z, near[i].radius, U.uSlow.value.w); }
+    // Slowed time (render/slowtime.ts): the circle she's in (or was, as it eases back out) greys the world outside it.
+    U.uSlow.value.w = slow;
     this.inside = easeInside(this.inside, inCircle, ground, dt, T.fade);
     this.twilight = easeTwilight(this.twilight, ground, dt, T.fade);
     U.uGladeLight.value.set(T.light * this.twilight, T.edge * this.twilight);
