@@ -20,19 +20,16 @@
 // own legend (Ed, 2026-10-04) and keeps the map's wild legends as today; --happy compares, in place
 // of the pacing variants, legends happy with each chance p (guarding their areas against sieges).
 // It loads the game's own rules modules through Vite (no build needed).
-import { createServer } from "vite";
+import { openRules, arg, nums as list } from "./lib.mjs";
 import { writeFileSync } from "node:fs";
 
-const arg = (name, def) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : def; };
 const flag = name => process.argv.includes(`--${name}`);
-const list = s => String(s).split(",").map(Number);
 const SEEDS = +arg("seeds", 12), GAPS = list(arg("gaps", "60,300")), GROWTH = list(arg("growth", "30,50,70")), SKILLS = list(arg("skills", "10,30,50,70,100"));
 const WAVES = +arg("waves", 30), CAP = +arg("cap", 60), IDLE_CAP = +arg("idle-cap", 80), FIGHT = +arg("fight", 30), STARTS = list(arg("starts", "0,3,6,9,12,15,20"));
 const ATTRITION = +arg("attrition", 0.5), [DBASE, DPER, DPOW = 1] = list(arg("director", "0,4,1.5")), EXPECTED = +arg("expected", 50), ALPHAS = list(arg("alphas", "0,0.3,0.6"));
 const SPREAD = arg("spread", null), AREAS = arg("areas", null), AREA_SCALE = arg("area-scale", null), START = arg("start", null), OUT = arg("json", null), HEALTH = arg("health", null), HOME = arg("home", null), WEIGHTS = arg("weights", null), PER_WAVE = arg("per-wave", null);
 
-const server = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: "custom", logLevel: "error", optimizeDeps: { noDiscovery: true, include: [] } });
-const load = p => server.ssrLoadModule(p);
+const { load, close } = await openRules();
 const { generateMap } = await load("/src/rules/map.ts");
 const { TUNING } = await load("/src/rules/tuning.ts");
 const { simulate } = await load("/src/rules/balance.ts");
@@ -137,4 +134,4 @@ for (const gap of GAPS) {
 }
 say(`(${((Date.now() - t0) / 1000).toFixed(0)} s)`);
 if (OUT) writeFileSync(OUT, JSON.stringify(out, null, 1));
-await server.close();
+await close();

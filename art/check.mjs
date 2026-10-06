@@ -374,10 +374,17 @@ const report = await b.page.evaluate(async () => {
       if (!((hidden || (count(sp, G.M.COLLAR) > 0 && hats > 0)) && stats(sp).bottom > 0 && Math.abs(sp.bodyH - plain.bodyH) <= 1)) bad.push(`${S.id} ${level} ${facing}`);
       if (S.q && level > 0 && facing === "towards" && count(sp, G.M.SHOE) === 0) bad.push(`${S.id} ${level} shoes`);
     }
+    // every party shoe style on each fitting (a hoof, a paw, a claw) shows, the body no bigger; on the rig, a shoe piece at every heading
+    for (const [id, fit] of [["boar", "hoof"], ["fox", "paw"], ["owl", "claw"]]) for (const shoes of Object.keys(G.SHOE_STYLES)) {
+      const gear = { collar: G.sigilColour(id), shoes }, sp = G.critter(id, 2, 0, st, "towards", gear), plain = G.critter(id, 2, 0, st, "towards");
+      if (count(sp, G.M.SHOE) === 0 || (shoes === "lightup" && count(sp, G.M.COLLAR) <= count(G.critter(id, 2, 0, st, "towards", { collar: gear.collar }), G.M.COLLAR)) || Math.abs(sp.bodyH - plain.bodyH) > 1) bad.push(`${id} ${shoes} (${fit})`);
+      if (fit !== "claw") { const R = G.rigParts(id, 2, st, gear); if (!R?.pieces.shoe || R.pieces.shoe.some(p => !p)) bad.push(`${id} ${shoes} rig shoe`); }
+    }
+    if (G.rigParts("fox", 2, st, { collar: [1, 2, 3] })?.pieces.shoe) bad.push("fox barefoot rig has a shoe");
     const woke = G.SPECIES.filter(S => count(G.critter(S.id, 1, 0, st, "towards", { woken: true }), G.M.WOKEN) === 0).map(S => S.id);
     const mixes = Array.from({ length: 40 }, (_, i) => JSON.stringify(G.partyGear(i, [1, 2, 3]))), same = JSON.stringify(G.partyGear(5, [1, 2, 3])) === mixes[5];
     const varied = new Set(mixes).size > 10 && mixes.some(m => m.includes('"hat":null')) && mixes.some(m => !m.includes("null"));
-    res.push({ what: "party gear on all 30 at three levels, both views (collar, hat; shoes on four-legged feet; same body size); woken eyes; partyGear seeded and varied", good: !bad.length && !woke.length && same && varied, info: [...bad, ...woke.map(w => w + " not woken")].slice(0, 60).join(", ") || "ok" });
+    res.push({ what: "party gear on all 30 at three levels, both views (collar, hat; shoes on four-legged feet; same body size); every party shoe style on a hoof, a paw and a claw, and on the rig; woken eyes; partyGear seeded and varied", good: !bad.length && !woke.length && same && varied, info: [...bad, ...woke.map(w => w + " not woken")].slice(0, 60).join(", ") || "ok" });
   }
   { // only magical things glow (Ed's playtest: glowing gorse flowers floated over the night's dark bushes)
     const magic = new Set([G.M.GLINT, G.M.MAGIC, G.M.MAGIC2, G.M.RUNE, G.M.GLOW, G.M.COLLAR, G.M.WOKEN]), extra = [...G.EMISSIVE].filter(m => !magic.has(m));
@@ -443,6 +450,38 @@ const report = await b.page.evaluate(async () => {
     { const rock = G.areaAssets("ravine", st).big[0]; if (rock.sway) bad.push("a boulder sways"); }
     for (const id of ["meadow", "moor", "heath"]) for (const b of [...G.areaAssets(id, st).small, ...G.areaAssets(id, st).big]) if (G.SWAYING_PROPS.has(b.kind) && !(b.sway && b.sway.width === b.sp.w && b.sway.height === b.sp.h)) bad.push(`${id} ${b.kind} has no sway mask`);
     res.push({ what: "ground cover and wind: every area has 3+ tufts (8 to 13 px), weights adding to 1; trees' feet still and leaves swaying (tops most), rocks still, leafy props masked", good: !bad.length, info: bad.slice(0, 6).join("; ") || `${G.AREAS.reduce((a, A) => a + G.tuftSprites(A.id, st).length, 0)} tufts over ${G.AREAS.length} areas` });
+  }
+  { // the prop generator (art/props/, #119): every kind's 12 seeded variants draw, stand on their bottom row, nothing NaN, no two alike;
+    // standing stones grey slabs 3 to 6 m tall (squat and broken ones from 1.4 m), plain (lichen and moss under a third of them) and wider than deep in the picture;
+    // cairns low (under 2.2 m) and wider than tall; pools wider than tall, mostly water, 1.5 to 5 m across (at the tall pieces' 16 px a metre); a broken trunk's wood all
+    // one piece (its branch joined to it, never a stick laid beside it); and under ?props=gen the moor and the muddy forest get
+    // 3 shapes of each stood-in prop
+    const bad = [], wood = new Set([G.M.TRUNK, G.M.BARKD, G.M.BARKL, G.M.BELLY]);
+    for (const kind of G.PROP_KINDS) {
+      const seen = new Set();
+      for (let seed = 0; seed < 12; seed++) {
+        const p = G.propPiece(kind, { seed }, G.AREA_BY_ID.moor, st), sp = p.sp, n = sp.m.filter(Boolean).length, key = sp.w + "x" + sp.h + ":" + Array.from(sp.m).join("");
+        if (n < 60 || !Array.from(sp.n).every(Number.isFinite)) { bad.push(`${kind} ${seed}: ${n} px`); continue; }
+        let bottom = 0; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++; if (!bottom) bad.push(`${kind} ${seed} floats`);
+        if (seen.has(key)) bad.push(`${kind} ${seed} repeats another`); seen.add(key);
+        const share = mats => sp.m.filter(m => mats.includes(m)).length / n, { height, width } = p.metres;
+        if (kind === "standingStone") { const [r, g, b] = p.colours[G.M.STONE], mx = Math.max(r, g, b), sat = mx ? (mx - Math.min(r, g, b)) / mx : 0; if (sat > .16 || height < (p.variant.shape === "squat" || p.variant.top === "broken" ? 1.4 : 3) || height > 6 || share([G.M.BELLY, G.M.MOSS]) > .33) bad.push(`stone ${seed}: sat ${sat.toFixed(2)}, ${height} m, marks ${share([G.M.BELLY, G.M.MOSS]).toFixed(2)}`); }
+        if (kind === "cairn" && (height > 2.2 || width < height)) bad.push(`cairn ${seed}: ${width} x ${height} m`);
+        if (kind === "pool" && (width < 1.5 || width > 5 || sp.h >= sp.w || share([G.M.WATER, G.M.BODY2, G.M.BELLY]) < .5)) bad.push(`pool ${seed}: ${width} x ${height} m, water ${share([G.M.WATER, G.M.BODY2, G.M.BELLY]).toFixed(2)}`);
+        if (kind === "brokenTrunk") { // the wood's pieces, by 4-neighbour flood fill (splinters and fungi on it touch it)
+          const lab = new Int32Array(sp.m.length).fill(-1); let parts = 0, big = 0;
+          for (let i = 0; i < sp.m.length; i++) { if (lab[i] >= 0 || !wood.has(sp.m[i])) continue; let size = 0; const q = [i]; lab[i] = parts; while (q.length) { const j = q.pop(); size++; const x = j % sp.w, y = (j / sp.w) | 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const xx = x + dx, yy = y + dy, k = yy * sp.w + xx; if (xx >= 0 && yy >= 0 && xx < sp.w && yy < sp.h && lab[k] < 0 && (wood.has(sp.m[k]) || sp.m[k] === G.M.MOSS || sp.m[k] === G.M.FLOWER)) { lab[k] = parts; q.push(k); } } } parts++; if (size > 12) big++; }
+          if (big !== 1) bad.push(`broken trunk ${seed} (${p.variant.branch}): its wood in ${big} pieces`);
+        }
+      }
+    }
+    const gst = { ...st, propGen: 1 }, moor = G.areaAssets("moor", gst), muddy = G.areaAssets("muddy-forest", gst), sizes = l => new Set(l.map(a => a.sp.w + "x" + a.sp.h)).size;
+    if (moor.walls.length < 3 || sizes(moor.walls) < 3) bad.push(`moor pools ${moor.walls.length}, ${sizes(moor.walls)} shapes`);
+    if (sizes(moor.big.filter(a => a.kind === "standingstone")) < 3 || sizes(moor.big.filter(a => a.kind === "cairn")) < 3) bad.push("moor stones and cairns not 3 shapes each");
+    if (sizes(muddy.small.filter(a => a.kind === "stump")) < 3) bad.push("muddy forest's broken trunks not 3 shapes");
+    if (Math.max(...moor.big.map(a => a.metres?.height || 0)) < 4) bad.push("the moor has nothing 4 m tall under ?props=gen");
+    if (Math.abs(moor.big.filter(a => a.kind === "standingstone").reduce((t, a) => t + (a.sparse || 0), 0) - .12) > 1e-6) bad.push("the standing stones' sparse share changed");
+    res.push({ what: "prop generator: standing stones, cairns, pools and broken trunks, 12 variants each, standing, none alike; stones grey, plain slabs; cairns low; pools mostly water; each broken trunk one piece; ?props=gen gives the moor and the muddy forest 3 shapes of each", good: !bad.length, info: bad.slice(0, 6).join("; ") });
   }
   { // something tall in every area (Ed: "each area should have at least some kind of taller thing"): each area's big pieces include one at least 4 m tall
     // (its trees across their heights, or for the open areas the tall pieces); the tall pieces (snag, cairn, standing stone, pillar, spire, stalagmite)

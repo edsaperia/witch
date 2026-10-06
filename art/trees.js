@@ -7,32 +7,21 @@
 // ground mode), everything else its top half (the canopy seen from the treetops).
 import { M, Sprite, uni, pick, hash2, vnoise, hsv2rgb, tufts, rot, lerp2, add } from "./core.js";
 import { PLANT_GENOMES, BUSH_KINDS, BUSH_GENOMES, genomeStyle } from "./flora/genomes.js";
-import { blobTree } from "./flora/blob.js";
+import { blobTree, blobBush, stampBlobs, clusterLeaves } from "./flora/blob.js";
 
 const WOOD = new Set([M.TRUNK, M.BARK2, M.BARKD, M.BARKL, M.BELLY]); // BELLY: a pine's orange or a yew's red trunk
 
-// A clump of leaves: a ragged blob, lit on top, dark beneath, speckled with single leaves.
-function clump(sp, c, rx, ry, st, r, { mat = M.LEAF, group = 30, ragged = 1 } = {}) {
-  const n = 9, pts = [];
-  for (let i = 0; i < n; i++) {
-    const a = i / n * Math.PI * 2, k = 1 + (r() - .5) * .35 * (st.clump + .3);
-    pts.push([c[0] + Math.cos(a) * rx * k, c[1] + Math.sin(a) * ry * k * (Math.sin(a) > 0 ? .8 : 1)]);
-  }
-  const bumps = Math.max(1, Math.round(Math.min(rx, ry) / 3.5));
-  sp.shape(tufts(pts, 0, n, bumps, Math.max(1.2, Math.min(rx, ry) * .14) * ragged, 1), mat, { group, line: false, round: st.round });
-  // shading: a dark underside, a lit crown
-  sp.mark([add(c, [-rx * 1.1, ry * .15]), add(c, [rx * 1.1, ry * .1]), add(c, [rx * 1.1, ry * 1.2]), add(c, [-rx * 1.1, ry * 1.2])], M.LEAF3, [mat]);
-  sp.mark([add(c, [-rx * .75, -ry * .55]), add(c, [rx * .25, -ry * .95]), add(c, [rx * .55, -ry * .35]), add(c, [-rx * .2, -ry * .05])], M.LEAF2, [mat]);
-  // single leaves: a speckle of light and dark, denser with the style's foliage density
-  const x0 = Math.floor(c[0] - rx * 1.2), x1 = Math.ceil(c[0] + rx * 1.2), y0 = Math.floor(c[1] - ry * 1.2), y1 = Math.ceil(c[1] + ry * 1.2), seed = (r() * 1e4) | 0;
-  for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
-    const m = sp.get(x, y); if (m !== mat && m !== M.LEAF2 && m !== M.LEAF3) continue;
-    const h = hash2(x, y, seed);
-    const v = vnoise(x / 2, y / 2, seed) * .5 + h * .5; // leaves come in little bunches, not noise
-    if (v < .16 * st.density) sp.recolour(x, y, m === M.LEAF2 ? mat : M.LEAF2);
-    else if (v > 1 - .16 * st.density) sp.recolour(x, y, m === M.LEAF3 ? mat : M.LEAF3);
-  }
+// A clump of leaves (#119): one blob filled with the blob generator's leaf stamps (stampBlobs), lit from the upper left as one
+// shape, dark beneath, in the tree's three leaf tones; mat LEAF3 a clump in shadow (behind). Each clump is its own region of the
+// pixel wind (sp.blob), numbered after any the sprite has. The caller clusters the tones once, after all its clumps (stylised).
+function clump(sp, c, rx, ry, st, r, { mat = M.LEAF, ragged = 1, env = null } = {}) {
+  if (sp.clumpId === undefined) { let top = 0; if (sp.blob) for (const b of sp.blob) if (b > top && b < 230) top = b; sp.clumpId = top; }
+  sp.clumpId = sp.clumpId % 228 + 1;
+  const S = sp.stylised ? st : { ...st, artStyle: undefined }; // drawn stylised only onto a sprite its generator stylised (the blob trees); broadleaf takes bake's post-pass
+  stampBlobs(sp, r, S, 1, [{ c, rx, ry, back: mat === M.LEAF3 }], { stampSize: Math.max(1.5, Math.min(3, Math.min(rx, ry) / 3.2)), tones: [.2, .7], jitter: .16 * ragged, under: env ? .12 : .22, backDark: env ? .18 : .3, env, holes: .02 * st.density, blobBase: sp.clumpId - 1, cluster: false });
 }
+// After the life below a stylised crown (a blob tree's, under st.artStyle bold or ref): its tones in clusters too.
+function clusterClumps(sp) { if (sp.stylised) clusterLeaves(sp); }
 
 // A wooden limb along a wobbling path from p, heading `ang` (0 = right, -PI/2 = up).
 export function bough(sp, p, ang, len, w0, w1, st, r, { mat = M.TRUNK, bend = 1, group = 10, line = false } = {}) {
@@ -158,12 +147,18 @@ function broadleaf(r, st, s, P) {
   if (st.treeBare) return trim(sp, bx, crownY + 4 * s);
   tips.sort((a, b) => a[1] - b[1]);
   const [ra, rb] = P.clumpR || [12, 18], flat = P.flat || .7, drawn = [];
-  const put = (c, rx, ry, mat) => { clump(sp, c, rx, ry, st, r, { mat, ragged: P.ragged || 1 }); drawn.push([c, rx, ry]); };
+  // stylised (st.artStyle bold or ref; the art director on #155): every clump lit as part of the one crown (its envelope round
+  // the branch tips), a clump at most a tone darker beneath, the light tone only on the crown's lit top-left third, then clustered
+  const sty = st.artStyle === "bold" || st.artStyle === "ref", xs = tips.map(t => t[0]), ys = tips.map(t => t[1]);
+  const env = sty && tips.length ? { c: [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2 - 3 * s], rx: (Math.max(...xs) - Math.min(...xs)) / 2 + rb * s, ry: (Math.max(...ys) - Math.min(...ys)) / 2 + rb * s * flat + 6 * s, mix: .7 } : null;
+  if (sty) sp.stylised = st.artStyle;
+  const put = (c, rx, ry, mat) => { clump(sp, c, rx, ry, st, r, { mat, ragged: P.ragged || 1, env }); drawn.push([c, rx, ry]); };
   for (const t of tips) put(add(t, [0, -3 * s]), uni(r, ra, rb) * s, uni(r, ra, rb) * s * flat, r() < (P.darkBack ?? .35) ? M.LEAF3 : M.LEAF);
   for (const t of tips) if (r() < (P.extra ?? .7)) put(add(t, [uni(r, -9, 9) * s, uni(r, -12, -3) * s]), uni(r, ra, rb) * s * .7, uni(r, ra, rb) * s * flat * .7, M.LEAF);
   if (P.dome) { const top = Math.min(...tips.map(t => t[1])), xs = tips.map(t => t[0]), mid = (Math.min(...xs) + Math.max(...xs)) / 2, w = (Math.max(...xs) - Math.min(...xs)) / 2; for (let i = 0; i < P.dome; i++) { const f = i / Math.max(1, P.dome - 1) - .5; put([mid + f * w * 1.1, top - (1 - 4 * f * f) * 14 * s - uni(r, 2, 6) * s], uni(r, ra, rb) * s * 1.1, uni(r, ra, rb) * s * flat, M.LEAF); } } // an arched dome over the top
   if (P.layers) for (const [c, rx, ry] of drawn) for (let yy = -ry; yy < ry; yy += Math.max(3, P.layers * s)) for (let xx = -rx; xx < rx; xx++) if (sp.get(c[0] + xx, c[1] + yy) === M.LEAF) sp.recolour(c[0] + xx, c[1] + yy, M.LEAF3); // dark lines between layers
-  for (const [c, rx, ry] of drawn) leafTexture(sp, c, rx, ry, r, P.tex || {});
+  for (const [c, rx, ry] of drawn) leafTexture(sp, c, rx, ry, r, sty ? { ...P.tex, flecks: 0 } : P.tex || {}); // (stylised: no pale flecks across the crown; its dots stay)
+  if (sty) clusterLeaves(sp);
   return trim(sp, bx, crownY + 4 * s);
 }
 
@@ -182,7 +177,8 @@ function lowLife(t, r, st, s, P) {
   const near = (rs, x) => rs.reduce((b, q) => !b || Math.abs((q[0] + q[1]) / 2 - x) < Math.abs((b[0] + b[1]) / 2 - x) ? q : b, null);
   // draws f, then keeps only what landed on empty or wooden pixels below the margin, and lists it
   const draw = f => {
-    const m0 = sp.m.slice(), n0 = sp.n.slice(); f();
+    const m0 = sp.m.slice(), n0 = sp.n.slice(), b0 = sp.blob?.slice(); f();
+    if (sp.blob) { if (b0) sp.blob.set(b0); else sp.blob.fill(0); } // the life below sways by the wind's cells, its foot still, not as the crown's whole blobs
     for (let i = 0; i < m0.length; i++) if (sp.m[i] !== m0[i]) {
       const y = (i / W) | 0;
       if (y < y0 || (m0[i] && !WOOD.has(m0[i]) && !low[i])) { sp.m[i] = m0[i]; sp.n[i * 3] = n0[i * 3]; sp.n[i * 3 + 1] = n0[i * 3 + 1]; sp.n[i * 3 + 2] = n0[i * 3 + 2]; }
@@ -221,6 +217,7 @@ function lowLife(t, r, st, s, P) {
       clump(sp, lerp2([x, y], b.end, .6), L * .5, 3.5 * s, st, r, { mat: r() < .5 ? M.LEAF3 : M.LEAF, ragged: 1.2 });
     });
   }
+  clusterClumps(sp);
   return t;
 }
 // Every tree kind an area can name, grown from its genome (art/flora/genomes.js): its generator and params, the style
@@ -243,7 +240,7 @@ export const TREE_SPECIES = {};
 for (const [id, g] of Object.entries(PLANT_GENOMES)) {
   if (g.species === false) continue; // only a TREE_TYPES kind (the tree fern), never an area's species
   const bare = genomeTree(id, g);
-  TREE_SPECIES[id] = { fn: (r, st, s) => lowLife(bare(r, st, s), r, st, s, g.low || {}), bare, name: g.name, grow: g.grow, blob: g.generator === "blob", ...g.colour }; // every species' trees carry their life below the crown; bare draws without it
+  TREE_SPECIES[id] = { fn: (r, st, s) => lowLife(bare(r, st, s), r, st, s, g.low || {}), bare, name: g.name, grow: g.grow, blob: true, ...g.colour }; // blob: drawn in leaf stamps, every species now (broadleaf's clumps too), so the pixel-art ramp applies // every species' trees carry their life below the crown; bare draws without it
 }
 // The species a flora preview names (the game's ?flora=, the lab): "new" the genome generator's species, "fantasy" its fantasy
 // ones, "all" every species, or a comma list of ids; unknown ids are left out.
@@ -285,7 +282,7 @@ export function chooseType(r, st) {
   for (const [k, f] of TREE_TYPES) { x -= st[k]; if (x <= 0) return f; }
   return broadTree;
 }
-export function treeColours(r, st, type) {
+export function treeColours(r, st, type, blob = false) {
   const S = SPECIES_BY_FN.get(type), sa = S?.sat || 1, va = (S?.val || 1) * (st.leafVal ?? 1); // leafVal: an area's palette, brighter or darker leaves
   // a species shifts the area's leaf hue a little; towards yellow it shifts less where the area's leaves are already yellow, so no species turns an area autumnal
   const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = (S?.hueAbs ?? st.leafHue) + (r() - .5) * st.leafVariety * .7 + sh; // hueAbs: a hue of its own, whatever the area's
@@ -293,7 +290,7 @@ export function treeColours(r, st, type) {
     [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212],
     [M.LEAF]: hsv2rgb(h, Math.min(1, .62 * st.sat * sa), Math.min(1, .58 * va)), [M.LEAF2]: hsv2rgb(h - .05, Math.min(1, .55 * st.sat * sa), Math.min(1, .8 * va)), [M.LEAF3]: hsv2rgb(h + .03, Math.min(1, .66 * st.sat * sa), .38 * va), [M.WEB]: [225, 225, 232],
   };
-  if (st.artStyle && S?.blob) { // the pixel-art ramp (the blob generator's trees; bake's post-pass does the rest) (docs/ART-GUIDE.md section 0): 3 hue-shifted tones per material, the shadow deeper, more saturated and
+  if (st.artStyle && (S?.blob || blob)) { // the pixel-art ramp (the blob generator's trees; bake's post-pass does the rest) (docs/ART-GUIDE.md section 0): 3 hue-shifted tones per material, the shadow deeper, more saturated and
     // towards blue-violet, the light pale and towards cream; "ref" (Ed's reference, rung 6) keeps one tone family, "bold" (rung 3/4) shifts further
     const ref = st.artStyle === "ref", ls = Math.min(1, .62 * st.sat * sa), lv = Math.min(1, .58 * va);
     c[M.LEAF3] = hsv2rgb(h + (ref ? .035 : .07), Math.min(1, ls * 1.25), lv * .52);
@@ -324,20 +321,8 @@ export function splitTree(t) { // bottom = wood below the crown line and the lif
 
 // ================= undergrowth =================
 // Bushes: round leafy mounds (some flowering), ferns, grass tufts and shrubs, grown from their genomes (BUSH_GENOMES).
-export function bush(r, st) {
-  const s = st.bushSize, kind = pick(r, BUSH_KINDS), g = BUSH_GENOMES[kind], P = g.params;
-  const W = Math.round(P.w * s), H = Math.round(P.h * s), sp = new Sprite(W, H);
-  if (g.generator === "mound") {
-    for (let i = 0; i < P.clumps; i++) clump(sp, [W / 2 + uni(r, -9, 9) * s, H - 8 * s + uni(r, -4, 2) * s], uni(r, 7, 10) * s, uni(r, 5, 8) * s, st, r);
-    if (P.flowering || r() < st.flowers) for (let i = 0; i < 18 * st.flowers + 3; i++) { const x = W / 2 + uni(r, -12, 12) * s, y = H - uni(r, 5, 17) * s; if (sp.get(x, y)) sp.recolour(x, y, M.FLOWER); }
-  } else if (g.generator === "fern") {
-    for (let k = 0; k < P.fronds; k++) {
-      const a = -Math.PI / 2 + (k / (P.fronds - 1) - .5) * 2.4; let x = W / 2, y = H - 1;
-      for (let j = 0; j < P.len * s; j++) { x += Math.cos(a) * .9; y += Math.sin(a) * .9 + j * .06; sp.put(x, y, k % 2 ? M.LEAF3 : M.LEAF, Math.cos(a) * .4, -.2, .9); if (j % 2) { sp.put(x, y - 1, M.LEAF2, 0, -.5, .85); sp.put(x + Math.sign(Math.cos(a)), y + 1, M.LEAF, 0, .3, .9); } }
-    }
-  } else {
-    for (let k = 0; k < P.blades * s; k++) { const x0 = W / 2 + uni(r, -13, 13) * s, h = uni(r, 5, 15) * s, lean = uni(r, -3, 3); for (let j = 0; j < h; j++) sp.put(x0 + lean * j / h * (j / h), H - 1 - j, j > h * .65 ? M.LEAF2 : j < h * .3 ? M.LEAF3 : M.LEAF, lean * .1, -.3, .9); }
-  }
-  const c = treeColours(r, st, null); c[M.FLOWER] = hsv2rgb(r(), .55, .95);
+export function bush(r, st, kind = pick(r, BUSH_KINDS)) { // (kind: one of BUSH_GENOMES, for the sheets)
+  const s = st.bushSize, g = BUSH_GENOMES[kind];
+  const sp = blobBush(r, st, s, g.params), c = treeColours(r, st, null, true); c[M.FLOWER] = hsv2rgb(r(), .55, .95);
   return { sp, colours: c };
 }
