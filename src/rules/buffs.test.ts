@@ -38,7 +38,7 @@ function shoot(sp: string[], creatures: Creature[], seconds: number, o: { aim?: 
 describe("legend buffs, redesigned (Ed, 2026-10-05; #87)", () => {
   it("every species has a buff, all different, each only 💌s or her movement, inside the limits", () => {
     const species = new Set(AREA_TYPES.map(a => a.creature));
-    expect(species.size).toBe(AREA_TYPES.length);
+    expect(species.size).toBe(AREA_TYPES.filter(t => !t.sharesCreature).length);
     const seen = new Set<string>();
     for (const s of species) {
       const d = B.species[s];

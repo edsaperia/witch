@@ -5458,7 +5458,8 @@ function groundColours(def, st) {
 //   the area itself     id, name, creature (a species id), by, leaf (its plants' hue), floor ([kind, hue, sat, val]; the kind
 //                       picks its ground genome, art/ground.js, and its tuft mix, art/tufts.js), text ({ floor, wall, small, big,
 //                       set }: Ed's columns), wall, small, big (props, as art/areas.js P() and tree() write them), set (a set piece)
-//   flags               ponds (more moonlit ponds), wet (its paths run as streams and boardwalks), steep (a flight of stairs may
+//   flags               sharesCreature (its creature may be another area's: Ed's rule is a creature of its own for every
+//                       area, so a recipe says so if it breaks it), ponds (more moonlit ponds), wet (its paths run as streams and boardwalks), steep (a flight of stairs may
 //                       stand at its clearing's edge), pathKinds (path kinds it suits besides those whose moods name it)
 //   layout              how its trees and undergrowth stand (art/areas.js AREA_LAYOUTS: pattern, density, clump, glades, ...)
 //   flora               its tree species and palette (art/flora/areas.js AREA_FLORA)
