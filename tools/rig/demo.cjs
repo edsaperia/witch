@@ -3,11 +3,11 @@
 // or leap), starts it, and saves screenshots every STEP seconds of game time for SECS seconds to
 // previews/rig-<name>-<n>.png, then a strip of them side by side (previews/rig-<name>.png). With
 // COUNT=n it instead fills the arena with n creatures and reports the frame times.
-// Run `npm run build` first.
+// Run `npm run build` first. DIST=<dir> serves another build instead (a before, for comparison).
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright;
 try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
-const root = path.resolve(__dirname, "../../dist"), out = path.resolve(__dirname, "../../previews");
+const root = path.resolve(process.env.DIST || path.resolve(__dirname, "../../dist")), out = path.resolve(__dirname, "../../previews"); // DIST: another build (a before, for comparison)
 const ARENA = process.env.ARENA || "wolf*4@2,snake*5@2", NAME = process.env.NAME || "demo", SECS = +(process.env.SECS || 6), STEP = +(process.env.STEP || 0.5), RIG = process.env.RIG ?? "1";
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png" };
 function serve() {
@@ -26,7 +26,7 @@ function serve() {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } }), errors = [];
   page.on("pageerror", e => errors.push(e.message));
   page.on("console", m => { if (m.type() === "error") errors.push(m.text()); });
-  await page.goto(`http://127.0.0.1:${port}/?seed=123&debug&rig=${RIG}&arena=${encodeURIComponent(ARENA)}`);
+  await page.goto(`http://127.0.0.1:${port}/?creator=0&seed=123&debug&rig=${RIG}&arena=${encodeURIComponent(ARENA)}`); // (creator=0: straight to the start, past the witch creator)
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000, polling: 500 });
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 30000 });

@@ -116,9 +116,9 @@ describe("the map", () => {
     expect(checked).toBe(400 * 24);
     expect(safeSum / 400).toBeGreaterThan(0.3); // worth having: a creature asks about every so many metres
   });
-  it("is mapAreas x mapAreas areas with 30 area types", () => {
+  it("is mapAreas x mapAreas areas with every area type (Ed's 30 and any recipes)", () => {
     expect(map.n).toBe(TUNING.mapAreas);
-    expect(AREA_TYPES.length).toBe(30);
+    expect(AREA_TYPES.length).toBeGreaterThanOrEqual(30);
     expect(map.bounds.maxX - map.bounds.minX).toBeCloseTo((map.n - 1) * map.areaSize);
   });
 
@@ -484,7 +484,8 @@ describe("creatures", () => {
   it("are each area's own kind, all 30 drawn by the art module", () => {
     for (const c of all.slice(0, 300)) expect(c.species).toBe(AREA_TYPES[map.typeOf(c.cell[0], c.cell[1])].creature);
     for (const t of AREA_TYPES) expect(SPECIES_BY_ID[t.creature], t.creature).toBeDefined();
-    expect(new Set(AREA_TYPES.map(t => t.creature)).size).toBe(30);
+    const own = AREA_TYPES.filter(t => !t.sharesCreature); // a creature of its own for every area (but a recipe's that says it shares)
+    expect(new Set(own.map(t => t.creature)).size).toBe(own.length);
   });
 
   it("start the same in every area (Ed, 2026-10-04): none at home but its legend, one young and one adult elsewhere (Ed, 2026-10-05), and one legend in each", () => {
@@ -855,7 +856,7 @@ describe("inviting and leashing", () => {
 
   it("can't invite legends", () => {
     const all = fresh(), s = newLeash(), legend = all.find(k => k.level === 3 && k.legendState === "asleep")!;
-    legend.legendState = "awake"; // (asleep, it's scenery: not even a look)
+    legend.legendState = undefined; legend.boss = false; // (an arena's wild legend: an area's is never chatted to)
     for (const c of all) if (c !== legend) c.leashed = true; // only the legend is left near
     const w = { x: legend.x + 1, z: legend.z };
     stepLeash(s, all, none, w, true, 0, 0.1, TUNING);
@@ -1139,6 +1140,10 @@ describe("paths, roads and railways", () => {
     let bridges = 0;
     for (let seed = 1; seed <= 6; seed++) bridges += generateMap(seed, TUNING).paths.pieces.filter(p => p.id.includes("bridge")).length;
     expect(bridges).toBeGreaterThan(0);
+    expect(P.pieces.some(p => p.id === "fingerpost")).toBe(false); // fingerposts only with paths.fingerposts (?props=gen)
+    const withPosts = generateMap(123, { ...TUNING, paths: { ...TUNING.paths, fingerposts: true } }).paths.pieces;
+    expect(withPosts.filter(p => p.id === "fingerpost").length).toBeGreaterThan(3);
+    expect(withPosts.filter(p => p.id !== "fingerpost")).toEqual(P.pieces); // placed last: every other piece where it was
     for (const b of P.pieces.filter(p => p.id.includes("bridge"))) expect(P.at(b.x, b.z)?.kind).toBeDefined();
     for (const a of P.pieces) for (const b of P.pieces) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(TUNING.paths.pieceGap); // never a row of them
     for (const p of P.pieces) expect(map.reserved(p.x, p.z, p.r)).toBe(false); // clear of soundsystems, set pieces, grounds
@@ -1627,6 +1632,25 @@ describe("the dash (Ed, 2026-10-04)", () => {
     run(g, 1, { dash: true, moveX: 0, moveZ: -1 }); // still cooling down: no blink
     run(g, 10);
     expect(z1 - g.witch.z).toBeLessThan(TUNING.dash.distance * 0.5);
+  });
+
+  it("holds a press made just before it's ready (dash.buffer), and lets go of one made too early", () => {
+    const g = ready(), D = g.witches[0].dash;
+    run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
+    const first = D.at;
+    // Too early: pressed well over dash.buffer before it's ready, it's forgotten.
+    while (g.clock.time < D.readyAt - g.buffs.tuning.dash.buffer - 0.2) run(g, 1);
+    run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
+    while (g.clock.time < D.readyAt + 0.1) run(g, 1);
+    expect(D.at).toBe(first);
+    // Just early: pressed inside dash.buffer, it blinks the moment it's ready.
+    run(g, 1, { dash: true, moveX: 0, moveZ: -1 }); // (ready now: this one goes at once)
+    const second = D.at;
+    expect(second).toBeGreaterThan(first);
+    while (g.clock.time < D.readyAt - g.buffs.tuning.dash.buffer / 2) run(g, 1);
+    run(g, 1, { dash: true, moveX: 0, moveZ: -1 });
+    while (g.clock.time < D.readyAt + 2 * STEP) run(g, 1);
+    expect(D.at).toBeGreaterThan(second);
   });
 
   it("goes the way she faces when she's still, and stops short of anything in the way", () => {

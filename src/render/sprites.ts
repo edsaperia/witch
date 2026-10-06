@@ -3,6 +3,7 @@
 // spriteTilt), and is lit per pixel from its normal map. Tree tops carry a flag so the canopy
 // can dither in and out as the witch rises and descends.
 import * as THREE from "three";
+import { PIXEL_SNAP_GLSL, WIND_GUST_GLSL } from "./shaders";
 import type { Atlas, Frame } from "./atlas";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { WITCH_LIGHT_GLSL, witchLightUniform } from "./witchLight";
@@ -10,6 +11,12 @@ import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 
 /** Shared by every sprite batch: the camera's right and (tilted) up, and the canopy fade. */
 export const SPRITE_UNIFORMS = {
+  /** The mood's moonlight rim on characters (render/mood.ts): colour, strength (0 off). */
+  uMoodRim: { value: new THREE.Vector4() },
+  /** 1 when the sprites are stylised (?style=bold|ref): their outermost pixel is the style's dark outline, so the rim goes just inside it. */
+  uRimInset: { value: 0 },
+  /** How much of her own glow lights the witch (render/mood.ts; 0 none, as she was). */
+  uWitchGlow: { value: 0 },
   uRight: { value: new THREE.Vector3(1, 0, 0) },
   uUp: { value: new THREE.Vector3(0, 1, 0) },
   uFacing: { value: new THREE.Vector3(0, 0, 1) },
@@ -76,6 +83,7 @@ varying float vFront;
 varying vec2 vLocal;
 varying float vSizeY;
 ${HEIGHT_VERT_GLSL}
+${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}
 void main() {
   // Every sprite stands upright on the rolling ground (height.ts), at the lowest ground under its
   // foot (most of its width, up to 5 m either side of its base, at five points): on a slope its uphill side is planted in the
@@ -92,10 +100,7 @@ void main() {
   // base (a crown at its foot, a trunk barely), so the trunks stay put and the foliage moves.
   if (iFlags.w > 0.0 && uWind.x > 0.0) {
     vec2 q = iPos.xz / uWind.z - vec2(0.8, 0.35) * uWind.w * uWind.y / uWind.z;
-    vec2 i = floor(q), f = fract(q), e = f * f * (3.0 - 2.0 * f);
-    float h00 = fract(sin(dot(i, vec2(127.1, 311.7))) * 43758.5453), h10 = fract(sin(dot(i + vec2(1, 0), vec2(127.1, 311.7))) * 43758.5453);
-    float h01 = fract(sin(dot(i + vec2(0, 1), vec2(127.1, 311.7))) * 43758.5453), h11 = fract(sin(dot(i + vec2(1, 1), vec2(127.1, 311.7))) * 43758.5453);
-    float gust = mix(mix(h00, h10, e.x), mix(h01, h11, e.x), e.y);
+    float gust = windGust(q);
     float flutter = sin(uWind.w * 1.7 + dot(iPos.xz, vec2(0.31, 0.17))) * 0.35;
     w += uRight * (uWind.x * iFlags.w * uv.y * uv.y * (gust * 0.9 + flutter)) * min(1.0, iSize.y / 8.0);
   }
@@ -103,10 +108,7 @@ void main() {
   vSwayM = 0.0;
   if (iFlags.w < 0.0 && uWind.x > 0.0) {
     vec2 q = iPos.xz / uWind.z - vec2(0.8, 0.35) * uWind.w * uWind.y / uWind.z;
-    vec2 i = floor(q), f = fract(q), e = f * f * (3.0 - 2.0 * f);
-    float h00 = fract(sin(dot(i, vec2(127.1, 311.7))) * 43758.5453), h10 = fract(sin(dot(i + vec2(1, 0), vec2(127.1, 311.7))) * 43758.5453);
-    float h01 = fract(sin(dot(i + vec2(0, 1), vec2(127.1, 311.7))) * 43758.5453), h11 = fract(sin(dot(i + vec2(1, 1), vec2(127.1, 311.7))) * 43758.5453);
-    float gust = mix(mix(h00, h10, e.x), mix(h01, h11, e.x), e.y);
+    float gust = windGust(q);
     float flutter = sin(uWind.w * 1.7 + dot(iPos.xz, vec2(0.31, 0.17))) * 0.35;
     vSwayM = uWind.x * -iFlags.w * (gust * 0.9 + flutter) * min(1.0, iSize.y / 8.0);
   }
@@ -121,9 +123,7 @@ void main() {
   gl_Position = clipOf(w);
   // Snap the whole sprite by its base to the pixel grid, so it moves a whole pixel at a time and
   // its small bright details (flowers, eyes) don't shimmer in and out as the camera glides.
-  vec4 b = clipOf(base);
-  vec2 ndc = b.xy / b.w, snapped = (floor((ndc * 0.5 + 0.5) * uRes) + 0.5) / uRes * 2.0 - 1.0;
-  gl_Position.xy += (snapped - ndc) * gl_Position.w;
+  gl_Position.xy += pixelSnap(clipOf(base)) * gl_Position.w;
   // The hole cut in the canopy round her (Ed, round 7: "the crown-hiding circle still has a very
   // sharp edge"): each tree's crown (and its cut trunk with it) has its own radius for it, a little
   // nearer or further than the next, so no line runs across the canopy, and fades over a wide band.
@@ -166,6 +166,10 @@ varying float vHole, vOverHer;
 varying vec2 vLocal;
 varying float vSizeY;
 uniform float uFind; // this batch: 1 for wild creatures (eyeshine, light floor, rim)
+uniform float uRimOn; // this batch: 1 for characters (the witch, creatures): the mood's moonlight rim
+uniform vec4 uMoodRim; // the rim's colour and strength (0: none; render/mood.ts)
+uniform float uRimInset; // 1: stylised sprites, the rim one pixel in from the edge (inside the style's outline)
+float rimAlpha(vec2 q) { return q.x < vFrame.x || q.x > vFrame.z || q.y < vFrame.y || q.y > vFrame.w ? 0.0 : texture2D(uAlbedo, q).a; }
 uniform vec4 uTint; // this batch's tint: colour and how much (enraged creatures' red, Ed 2026-10-05)
 uniform vec4 uFindLook;
 uniform vec2 uTrunkLook;   // trunks: light floor, rim
@@ -304,6 +308,7 @@ void shade() {
   gl_FragColor = vec4(haze(min(vec3(1.0), col), vWorld), alpha);
 }
 void main() {
+  vec2 rdx = dFdx(vUv), rdy = dFdy(vUv); // (taken here, in uniform flow: one screen pixel, one art pixel, along the sprite)
   shade();
   // Glowing white (a party animal evolving).
   if (vGlow > 0.0 && uSilhouette.a <= 0.0) gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0), vGlow);
@@ -315,6 +320,19 @@ void main() {
     float m = clamp(-(vGlow + 2.0), 0.0, 1.0), l = dot(gl_FragColor.rgb, vec3(0.3, 0.55, 0.15));
     gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.2, 0.26, 0.14) * (0.45 + 1.1 * l), m);
   }
+  // The moonlight rim (render/mood.ts; the art director's round 1: "characters must read against the
+  // night"): a character's pixels whose neighbour on the side away from the moon is empty catch a light
+  // edge in the night sky's colour, one art pixel wide, so the witch and the creatures stand out of the dark.
+  if (uRimOn > 0.5 && uMoodRim.w > 0.0 && gl_FragColor.a > 0.5 && uSilhouette.a <= 0.0 && vGlow > -1.5) {
+    vec2 s = -vec2(dot(uMoonDir, uRight), dot(uMoonDir, uUp));
+    // Taken from the silhouette (its alpha), never the normals, so it shows in every style; on a
+    // stylised sprite (art/stylise.js) the edge pixel is the style's own dark outline, so the rim
+    // lights the pixel just inside it instead (the art director's round 2).
+    vec2 dx = rdx * sign(s.x), dy = rdy * sign(s.y);
+    float ox = rimAlpha(vUv + dx * (1.0 + uRimInset)), oy = rimAlpha(vUv + dy * (1.0 + uRimInset));
+    float ix = uRimInset > 0.5 ? rimAlpha(vUv + dx) : 1.0, iy = uRimInset > 0.5 ? rimAlpha(vUv + dy) : 1.0;
+    if ((ox < 0.5 && ix > 0.5) || (oy < 0.5 && iy > 0.5)) gl_FragColor.rgb = min(vec3(1.0), gl_FragColor.rgb + uMoodRim.rgb * uMoodRim.w);
+  }
   // Scenery past the budget's radius fades out smoothly (alpha), from the far edge inward.
   if (uIsScenery > 0.5) {
     float k = sceneryFade(vWorld) * uAppear; // and a set just drawn fades in
@@ -324,7 +342,7 @@ void main() {
 }
 `;
 
-export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number; /** How much it sways in the wind (0 still, 1 a crown): leafy things only. */ sway?: number; /** Glowing white, 0 to 1 (an evolving party animal); -1, a wild creature blinking (its eyeshine off); -2 - m, a sleeping legend gone m of the way to moss. */ glow?: number; /** Part of another sprite drawn over it (the treehouse's DJ table), not standing on the ground itself (the smoke's floating checks skip it). */ overlay?: boolean }
+export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number; /** Squashed or stretched: its width and height times these, about its feet, rounded to whole art pixels (an attack's feel: render/attackFeel.ts). */ sx?: number; sy?: number; /** How much it sways in the wind (0 still, 1 a crown): leafy things only. */ sway?: number; /** Glowing white, 0 to 1 (an evolving party animal); -1, a wild creature blinking (its eyeshine off); -2 - m, a sleeping legend gone m of the way to moss. */ glow?: number; /** Part of another sprite drawn over it (the treehouse's DJ table), not standing on the ground itself (the smoke's floating checks skip it). */ overlay?: boolean }
 
 export class SpriteBatch {
   readonly mesh: THREE.Mesh;
@@ -341,7 +359,7 @@ export class SpriteBatch {
   count = 0;
 
   /** metresPerPixel: world size of one art pixel. */
-  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; /** Gameplay (creatures, soundsystems, markers...): never faded or cut away round the witch (Ed, v149). */ solid?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number }; /** The witch: lit by the world's lights but not her own glow (witchLight.ts). */ witchLight?: { lightFloor: number; lightTint: number; lightRim: number }; /** Wild creatures: eyeshine, a light floor and a rim, so they can be found in the dark (Ed, v244). */ find?: boolean; /** Each instance's y is a world height, not a height over the ground (her: ride.ts). */ absolute?: boolean; /** Tint the whole batch: a uniform of r, g, b (0-1) and how much (enraged creatures; shared, so a knob changes it live). */ tint?: { value: THREE.Vector4 } } = {}) {
+  constructor(readonly atlas: Atlas, readonly metresPerPixel: number, opts: { unlit?: boolean; onTop?: boolean; scenery?: boolean; fade?: boolean; flat?: boolean; /** Gameplay (creatures, soundsystems, markers...): never faded or cut away round the witch (Ed, v149). */ solid?: boolean; silhouette?: { colour: THREE.Vector3; opacity: number }; /** The witch: lit by the world's lights but not her own glow (witchLight.ts). */ witchLight?: { lightFloor: number; lightTint: number; lightRim: number }; /** Wild creatures: eyeshine, a light floor and a rim, so they can be found in the dark (Ed, v244). */ find?: boolean; /** Characters (the witch, creatures): the mood's moonlight rim. */ rim?: boolean; /** Each instance's y is a world height, not a height over the ground (her: ride.ts). */ absolute?: boolean; /** Tint the whole batch: a uniform of r, g, b (0-1) and how much (enraged creatures; shared, so a knob changes it live). */ tint?: { value: THREE.Vector4 } } = {}) {
     const quad = new THREE.PlaneGeometry(1, 1);
     quad.translate(0, 0.5, 0); // stand on the base
     this.geo = new THREE.InstancedBufferGeometry();
@@ -350,7 +368,7 @@ export class SpriteBatch {
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.pos = this.size = this.uvs = this.flags = this.glow = undefined as never;
     this.grow(64);
-    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uAbsolute: { value: opts.absolute ? 1 : 0 }, ...extra });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uAbsolute: { value: opts.absolute ? 1 : 0 }, ...extra });
     // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
     // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
     const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};
@@ -405,12 +423,14 @@ export class SpriteBatch {
     items.forEach((it, i) => {
       P[i * 3] = it.x; P[i * 3 + 1] = it.y; P[i * 3 + 2] = it.z;
       const k = it.scale ?? 1;
-      S[i * 2] = it.frame.w * this.metresPerPixel * k; S[i * 2 + 1] = it.frame.h * this.metresPerPixel * k;
+      S[i * 2] = (it.sx === undefined ? it.frame.w : Math.max(1, Math.round(it.frame.w * it.sx))) * this.metresPerPixel * k; S[i * 2 + 1] = (it.sy === undefined ? it.frame.h : Math.max(1, Math.round(it.frame.h * it.sy))) * this.metresPerPixel * k; // (a squash in whole art pixels: one pixel scale on screen)
       U.set(it.frame.uv, i * 4);
       F[i * 4] = it.flip ? 1 : 0; F[i * 4 + 1] = it.top ? 1 : it.cut ? -it.cut : 0; F[i * 4 + 2] = it.fresh ? 1 : 0; F[i * 4 + 3] = (it.frame.masked ? -1 : 1) * (it.sway ?? 0);
       G[i] = it.glow ?? 0;
     });
-    for (const a of [this.pos, this.size, this.uvs, this.flags, this.glow]) a.needsUpdate = true;
+    // Only the instances in use go to the GPU (the buffers keep their largest size, often twice
+    // what's drawn: a whole one every frame was much of the frame's uploading). Nothing set, nothing sent.
+    if (items.length) for (const a of [this.pos, this.size, this.uvs, this.flags, this.glow]) { a.clearUpdateRanges(); a.addUpdateRange(0, items.length * a.itemSize); a.needsUpdate = true; }
     this.count = items.length;
     this.geo.instanceCount = items.length;
     for (const m of this.meshes) m.visible = items.length > 0;

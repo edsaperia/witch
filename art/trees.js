@@ -14,11 +14,11 @@ const WOOD = new Set([M.TRUNK, M.BARK2, M.BARKD, M.BARKL, M.BELLY]); // BELLY: a
 // A clump of leaves (#119): one blob filled with the blob generator's leaf stamps (stampBlobs), lit from the upper left as one
 // shape, dark beneath, in the tree's three leaf tones; mat LEAF3 a clump in shadow (behind). Each clump is its own region of the
 // pixel wind (sp.blob), numbered after any the sprite has. The caller clusters the tones once, after all its clumps (stylised).
-function clump(sp, c, rx, ry, st, r, { mat = M.LEAF, ragged = 1 } = {}) {
+function clump(sp, c, rx, ry, st, r, { mat = M.LEAF, ragged = 1, env = null } = {}) {
   if (sp.clumpId === undefined) { let top = 0; if (sp.blob) for (const b of sp.blob) if (b > top && b < 230) top = b; sp.clumpId = top; }
   sp.clumpId = sp.clumpId % 228 + 1;
   const S = sp.stylised ? st : { ...st, artStyle: undefined }; // drawn stylised only onto a sprite its generator stylised (the blob trees); broadleaf takes bake's post-pass
-  stampBlobs(sp, r, S, 1, [{ c, rx, ry, back: mat === M.LEAF3 }], { stampSize: Math.max(1.5, Math.min(3, Math.min(rx, ry) / 3.2)), tones: [.2, .7], jitter: .16 * ragged, under: .22, backDark: .3, holes: .02 * st.density, blobBase: sp.clumpId - 1, cluster: false });
+  stampBlobs(sp, r, S, 1, [{ c, rx, ry, back: mat === M.LEAF3 }], { stampSize: Math.max(1.5, Math.min(3, Math.min(rx, ry) / 3.2)), tones: [.2, .7], jitter: .16 * ragged, under: env ? .12 : .22, backDark: env ? .18 : .3, env, holes: .02 * st.density, blobBase: sp.clumpId - 1, cluster: false });
 }
 // After the life below a stylised crown (a blob tree's, under st.artStyle bold or ref): its tones in clusters too.
 function clusterClumps(sp) { if (sp.stylised) clusterLeaves(sp); }
@@ -147,12 +147,18 @@ function broadleaf(r, st, s, P) {
   if (st.treeBare) return trim(sp, bx, crownY + 4 * s);
   tips.sort((a, b) => a[1] - b[1]);
   const [ra, rb] = P.clumpR || [12, 18], flat = P.flat || .7, drawn = [];
-  const put = (c, rx, ry, mat) => { clump(sp, c, rx, ry, st, r, { mat, ragged: P.ragged || 1 }); drawn.push([c, rx, ry]); };
+  // stylised (st.artStyle bold or ref; the art director on #155): every clump lit as part of the one crown (its envelope round
+  // the branch tips), a clump at most a tone darker beneath, the light tone only on the crown's lit top-left third, then clustered
+  const sty = st.artStyle === "bold" || st.artStyle === "ref", xs = tips.map(t => t[0]), ys = tips.map(t => t[1]);
+  const env = sty && tips.length ? { c: [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2 - 3 * s], rx: (Math.max(...xs) - Math.min(...xs)) / 2 + rb * s, ry: (Math.max(...ys) - Math.min(...ys)) / 2 + rb * s * flat + 6 * s, mix: .7 } : null;
+  if (sty) sp.stylised = st.artStyle;
+  const put = (c, rx, ry, mat) => { clump(sp, c, rx, ry, st, r, { mat, ragged: P.ragged || 1, env }); drawn.push([c, rx, ry]); };
   for (const t of tips) put(add(t, [0, -3 * s]), uni(r, ra, rb) * s, uni(r, ra, rb) * s * flat, r() < (P.darkBack ?? .35) ? M.LEAF3 : M.LEAF);
   for (const t of tips) if (r() < (P.extra ?? .7)) put(add(t, [uni(r, -9, 9) * s, uni(r, -12, -3) * s]), uni(r, ra, rb) * s * .7, uni(r, ra, rb) * s * flat * .7, M.LEAF);
   if (P.dome) { const top = Math.min(...tips.map(t => t[1])), xs = tips.map(t => t[0]), mid = (Math.min(...xs) + Math.max(...xs)) / 2, w = (Math.max(...xs) - Math.min(...xs)) / 2; for (let i = 0; i < P.dome; i++) { const f = i / Math.max(1, P.dome - 1) - .5; put([mid + f * w * 1.1, top - (1 - 4 * f * f) * 14 * s - uni(r, 2, 6) * s], uni(r, ra, rb) * s * 1.1, uni(r, ra, rb) * s * flat, M.LEAF); } } // an arched dome over the top
   if (P.layers) for (const [c, rx, ry] of drawn) for (let yy = -ry; yy < ry; yy += Math.max(3, P.layers * s)) for (let xx = -rx; xx < rx; xx++) if (sp.get(c[0] + xx, c[1] + yy) === M.LEAF) sp.recolour(c[0] + xx, c[1] + yy, M.LEAF3); // dark lines between layers
-  for (const [c, rx, ry] of drawn) leafTexture(sp, c, rx, ry, r, P.tex || {});
+  for (const [c, rx, ry] of drawn) leafTexture(sp, c, rx, ry, r, sty ? { ...P.tex, flecks: 0 } : P.tex || {}); // (stylised: no pale flecks across the crown; its dots stay)
+  if (sty) clusterLeaves(sp);
   return trim(sp, bx, crownY + 4 * s);
 }
 
@@ -234,7 +240,7 @@ export const TREE_SPECIES = {};
 for (const [id, g] of Object.entries(PLANT_GENOMES)) {
   if (g.species === false) continue; // only a TREE_TYPES kind (the tree fern), never an area's species
   const bare = genomeTree(id, g);
-  TREE_SPECIES[id] = { fn: (r, st, s) => lowLife(bare(r, st, s), r, st, s, g.low || {}), bare, name: g.name, grow: g.grow, blob: g.generator === "blob", ...g.colour }; // every species' trees carry their life below the crown; bare draws without it
+  TREE_SPECIES[id] = { fn: (r, st, s) => lowLife(bare(r, st, s), r, st, s, g.low || {}), bare, name: g.name, grow: g.grow, blob: true, ...g.colour }; // blob: drawn in leaf stamps, every species now (broadleaf's clumps too), so the pixel-art ramp applies // every species' trees carry their life below the crown; bare draws without it
 }
 // The species a flora preview names (the game's ?flora=, the lab): "new" the genome generator's species, "fantasy" its fantasy
 // ones, "all" every species, or a comma list of ids; unknown ids are left out.
@@ -276,13 +282,16 @@ export function chooseType(r, st) {
   for (const [k, f] of TREE_TYPES) { x -= st[k]; if (x <= 0) return f; }
   return broadTree;
 }
+// The night palette (the art director, round 1, after Ed's "a spooky dark forest with a party in it": a dark blue-green and violet
+// forest, no lime): a green hue pulled toward blue-green, compressed into .34 to .44; golds, browns, blues and violets left alone.
+export const nightGreen = h => (h >= .17 && h < .42 ? .34 + (h - .17) * .4 : h);
 export function treeColours(r, st, type, blob = false) {
   const S = SPECIES_BY_FN.get(type), sa = S?.sat || 1, va = (S?.val || 1) * (st.leafVal ?? 1); // leafVal: an area's palette, brighter or darker leaves
   // a species shifts the area's leaf hue a little; towards yellow it shifts less where the area's leaves are already yellow, so no species turns an area autumnal
-  const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = (S?.hueAbs ?? st.leafHue) + (r() - .5) * st.leafVariety * .7 + sh; // hueAbs: a hue of its own, whatever the area's
+  const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = nightGreen((S?.hueAbs ?? st.leafHue) + (r() - .5) * st.leafVariety * .7 + sh); // hueAbs: a hue of its own, whatever the area's; never lime (nightGreen)
   const c = {
     [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212],
-    [M.LEAF]: hsv2rgb(h, Math.min(1, .62 * st.sat * sa), Math.min(1, .58 * va)), [M.LEAF2]: hsv2rgb(h - .05, Math.min(1, .55 * st.sat * sa), Math.min(1, .8 * va)), [M.LEAF3]: hsv2rgb(h + .03, Math.min(1, .66 * st.sat * sa), .38 * va), [M.WEB]: [225, 225, 232],
+    [M.LEAF]: hsv2rgb(h, Math.min(1, .62 * st.sat * sa), Math.min(1, .58 * va)), [M.LEAF2]: hsv2rgb(h - .05, Math.min(1, .46 * st.sat * sa), Math.min(1, .68 * va)), /* (the night palette: the lit tone quieter, so a lit crown never glows) */ [M.LEAF3]: hsv2rgb(h + .03, Math.min(1, .66 * st.sat * sa), .38 * va), [M.WEB]: [225, 225, 232],
   };
   if (st.artStyle && (S?.blob || blob)) { // the pixel-art ramp (the blob generator's trees; bake's post-pass does the rest) (docs/ART-GUIDE.md section 0): 3 hue-shifted tones per material, the shadow deeper, more saturated and
     // towards blue-violet, the light pale and towards cream; "ref" (Ed's reference, rung 6) keeps one tone family, "bold" (rung 3/4) shifts further

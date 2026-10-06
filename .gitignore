@@ -9,3 +9,5 @@ tools/rig/.out/
 upcoming.generated.json
 node_modules
 previews/sfx/mix/*.wav
+previews/sfx/run/*.wav
+previews/feel/

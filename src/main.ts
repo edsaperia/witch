@@ -13,19 +13,23 @@ import { setupArena } from "./rules/arena";
 import { newCamera } from "./rules/camera";
 import { setupQuestDemo } from "./rules/quest";
 import { witchHeight } from "./rules/witch";
-import { areaUnderWitch, interpolated, loseSoundsystem, newGame, STEP, stepGame, type WaveEvent } from "./rules/game";
+import { cellKey } from "./rules/party";
+import { areaUnderWitch, interpolated, joinParty, loseSoundsystem, newGame, STEP, stepGame, type WaveEvent } from "./rules/game";
 import { AREA_TYPES } from "./rules/map";
 import { waveCountdown } from "./rules/party";
 import { parseSeed } from "./rules/map";
 import { TUNING } from "./rules/tuning";
 import { Input } from "./platform/input";
 import { View } from "./render/view";
-import { groundHeight } from "./render/height";
+import { bendPoint, groundHeight, placed } from "./render/height";
+import { Vector3 } from "three";
 import { SPRITE_UNIFORMS } from "./render/sprites";
+import { LIGHT_UNIFORMS } from "./render/lighting";
 import { loadStyle } from "./render/style";
 import { setupTouch } from "./ui/touch";
 import { CHANGELOG_VERSIONS } from "./changelog";
 import { setupStartScreen, startOnGesture } from "./ui/startScreen";
+import { AimHud } from "./render/aimhud";
 import { UPCOMING } from "./ui/upcoming";
 import { PlaytestLog } from "./platform/playtestLog";
 import { powerReport } from "./rules/power";
@@ -137,6 +141,9 @@ if (params.get("sky") === "off") tuning.sky = { ...tuning.sky, on: false };
 // ?curve=<treetop>: the world's bend over the treetops (0 off), to try values live.
 const curveParam = params.get("curve");
 if (curveParam !== null && !isNaN(Number(curveParam))) tuning.camera = { ...tuning.camera, curve: { ...tuning.camera.curve, treetop: Number(curveParam) } };
+// ?light=spooky|plain: the lighting's mood (render/mood.ts), to compare.
+const lightParam = params.get("light");
+if ((lightParam === "spooky" || lightParam === "plain") && tuning.light) tuning.light = { ...tuning.light, mood: lightParam };
 const fx = params.get("fx");
 if (fx === "pixel" || fx === "smooth") tuning.fx = fx;
 
@@ -160,6 +167,9 @@ const world = { ...WORLD_DEFAULT };
   try { localStorage.setItem("witch.world", JSON.stringify(world)); } catch { /* fine */ }
 }
 
+// The prop generator is the default (DECISION FOR ED, previews/props-default/ on claude/prop-shots); ?props=hand brings back the hand-made props.
+const propsGen = params.get("props") !== "hand";
+if (propsGen) tuning.paths = { ...tuning.paths, fingerposts: true }; // ?props=gen: fingerposts where footpaths come into a clearing (placed with the map, so set before it is made)
 const game = newGame(seed, tuning);
 // ?buffs=fox,toad,stag (debug): these legends' buffs on from the start, whatever the legends do (a
 // species twice stacks it). ?buffs=all: every one.
@@ -198,7 +208,7 @@ const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = loadStyle();
 { const artStyle = params.get("style"); if (artStyle === "bold" || artStyle === "ref") style.artStyle = artStyle; } // ?style=now|bold|ref: a pixel-art style (art/stylise.js) baked into every sprite, carried to the art worker in the style
-if (params.get("props") === "gen") style.propGen = 1; // ?props=gen: the prop generator (art/props/) stands in for the moor's stones, cairns and pools and the broken trunks, several shapes of each, carried to the art worker in the style
+if (propsGen) { style.propGen = 1; tuning.partyObjects.generated = true; } // the prop generator (by default; ?props=hand turns it off): the prop generator (art/props/) stands in for the areas' stones, cairns, pools, stumps, logs, fungi and henges, several shapes of each, and the party's generated bunting, balloons and lanterns for the hand-made ones (carried to the art worker in the style, to the rules in the tuning)
 if (params.get("texture") === "0") style.texture = 0; // ?texture=0: creatures as before their fur, feathers and scales (art/genome/texture.js), to compare
 if (params.get("flora")) style.flora = params.get("flora"); // ?flora=new|fantasy|all|<ids>: every wooded area grows these tree species (art/flora), carried to the art worker in the style
 /** Load timings (ms since the page started): the view built (the page's own sprites drawn), ready to play. */
@@ -218,6 +228,7 @@ const sceneryAt = Number(params.get("scenery"));
 if (params.has("scenery") && sceneryAt > 0) view.sceneryFixed = sceneryAt;
 const input = new Input();
 input.aimFrom = (x, y) => view.aimAt(x, y);
+const aimHud = new AimHud(canvas); // the reticle where the mouse aims: 💌 range and the dodge's recharge
 document.getElementById("next-wave")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.nextWave = true; });
 document.getElementById("pause-waves")!.addEventListener("pointerdown", e => { e.preventDefault(); input.touch.pauseWaves = true; });
 setupTouch(document.body, input.touch);
@@ -326,7 +337,8 @@ function waveHud(): void {
   waveFill.style.height = `${(1 - cd.gone) * 100}%`;
   const clock = (s: number) => { const n = Math.ceil(s); return n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, "0")}` : `${n} s`; };
   const left = tuning.party.interval >= 1e9 ? "waves off" : cd.booting ? `booting · ${clock(cd.bootLeft)}` : cd.left >= 60 ? `${Math.floor(cd.left / 60)}:${String(Math.ceil(cd.left) % 60).padStart(2, "0")}` : `${Math.ceil(cd.left)} s`;
-  waveLabel.textContent = `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}`;
+  // (only in debug: the art review's round 1 found it sitting on the art; the next stone's ring carries the countdown)
+  waveLabel.textContent = debugOn ? `wave ${game.party.wave} · ${game.party.areas.size} areas · ${left}` : "";
   waveEl.classList.toggle("paused", game.party.paused);
   // The boot-up over (Ed, 2026-10-05: five quiet minutes from her first step): a quiet word by the bar.
   if (!bootShown && !cd.booting && game.party.bootUntil > 0 && game.clock.time >= game.party.bootUntil && tuning.party.interval < 1e9) {
@@ -411,10 +423,13 @@ let audio: AudioContext | null = null, music: Music | null = null, sfx: Sfx | nu
 // ?creator=0 skips it (tests, the smoke run), and loading is the start screen's as before.
 // It's also the loading screen (Ed, 2026-10-05): it opens at once and the forest grows behind it;
 // Start waits ("getting ready") until play can begin.
-const creator = new Creator(style, savedLook);
+const creator = new Creator(style, savedLook, tuning.pixelSize);
 let lookNow = JSON.stringify(savedLook);
 creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready }; };
-creator.onGesture = () => { try { audio ??= new AudioContext(); void audio.resume(); } catch { /* no sound yet */ } };
+/** The sound effects, once there's an AudioContext (the creator's first click, or the start). */
+function ensureSfx(): void { if (audio && !sfx && tuning.sfx.on) { sfx = new Sfx(audio, tuning.music.volume * level, tuning.sfx, musicStyle.root + 24); sfxCues = new SfxCues(sfx, (by, sec) => music?.duck(by, sec)); } }
+// (its room's ambience plays while it's open: overnight, 2026-10-06)
+creator.onGesture = () => { try { audio ??= new AudioContext(); void audio.resume(); ensureSfx(); } catch { /* no sound yet */ } };
 creator.onStart = g => { if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); } start(); };
 if (params.get("creator") !== "0") creator.show();
 const lookBtn = document.getElementById("look-btn");
@@ -425,7 +440,7 @@ if (lookBtn) {
 function start(): boolean {
   if (!ready || !game.clock.paused || freeze.frozen) return false;
   if (creator.open) return true;
-  try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume * level, musicStyle, seed!, tuning.music.src); if (!sfx && tuning.sfx.on) { sfx = new Sfx(audio, tuning.music.volume * level, tuning.sfx, musicStyle.root + 24); sfxCues = new SfxCues(sfx, (by, sec) => music?.duck(by, sec)); } } catch { /* no sound yet anyway */ }
+  try { audio ??= new AudioContext(); void audio.resume(); if (!music && tuning.music.on) music = new Music(audio, tuning.music.volume * level, musicStyle, seed!, tuning.music.src); ensureSfx(); } catch { /* no sound yet anyway */ }
   game.clock.paused = false;
   startEl.style.display = "none";
   input.clearPresses();
@@ -464,6 +479,7 @@ shakeEl?.addEventListener("pointerdown", e => {
 let shaken = false;
 // ?subpixel=0: the camera's old whole-art-pixel steps, to compare (on by default: Ed, 2026-10-05, "it feels low").
 const subpixelOn = params.get("subpixel") !== "0";
+if (params.get("glide") === "camera") view.glide = "camera"; // (?glide=camera: the glide by the camera's snap, as before 2026-10-06)
 function applyShake(): void {
   const W = game.witches[0];
   shake.watch(W.health, !!W.ko, tuning.witchHealth.hits, game.clock.time);
@@ -518,6 +534,7 @@ function frame(now: number): void {
   musicCueNow = musicCue(game, musicCueNow);
   music?.update(musicMix(game, game.witch), musicCueNow, game.clock.time, game.beat, !game.clock.paused);
   if (!game.clock.paused) sfxCues?.update(game, game.clock.time);
+  sfx?.room(creator.open ? 1 : 0); // the creator's room in the treehouse
   if (!ready) return;
   for (const e of game.waveEvents) if (e.at > lossShown) showLoss(e);
   waveHud();
@@ -529,10 +546,14 @@ function frame(now: number): void {
   frameStats.beginGpu();
   interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP)));
   frameStats.endGpu();
+  aimHud.update(game, game.clock.time, input.cursor, input.lastAim, startEl.style.display === "none" && !game.over);
   frameStats.work(performance.now() - work0);
   applyShake();
   freeze.update();
-  if (debugOn) {
+  // The overlay, four times a second (a new text every frame was a page layout every frame), with
+  // its buttons kept just below it however many lines it has.
+  if (debugOn && now - lastDebug > 250) {
+    lastDebug = now;
     const w = game.witch, s = view.stats;
     debugEl.textContent = [
       ...frameStats.lines(),
@@ -543,10 +564,13 @@ function frame(now: number): void {
       `trees  ${s.trees}  bushes ${s.bushes}  creatures ${s.creatures}`,
       `budget scenery to ${s.sceneryRadius.toFixed(0)} m (${s.scenery})  gameplay ${s.gameplay}  dropped ${s.dropped}`,
       `draws  ${s.drawCalls}  art queued ${s.pendingArt}  ground tiles ${s.pendingGround}`,
+      ...(game.lod ? [`sim    full ${game.lod.full}  coarse ${game.lod.coarse}  frozen ${game.lod.frozen}   marching full ${game.lod.marchFull}  coarse ${game.lod.marchCoarse}`] : []),
       ...powerLines(),
     ].join("\n");
+    debugButtons.style.top = `${debugEl.offsetTop + debugEl.offsetHeight + 6}px`;
   }
 }
+let lastDebug = -Infinity;
 requestAnimationFrame(frame);
 
 /** The power meter (Ed, 2026-10-04): fighting value, Σ √(hp × dps) (rules/power.ts), of the party
@@ -563,7 +587,31 @@ function powerLines(): string[] {
 
 // For the smoke test and for poking at in the console.
 (window as unknown as { witch: unknown }).witch = { game, view, arena: (spec: string) => setupArena(game, spec), // (a debug hook: another arena without reloading)
+  /** A debug hook (screenshots of the party's life): creature `id` joins its area's party, happy, at its spot (rules/partyGuests.ts); home's round the dancefloor. */
+  guest: (id: number) => { const c = game.creatures[id], a = game.party.areas.get(cellKey(c.cell)); if (!c || !a) return false; c.state = "happy"; c.enraged = false; c.siege = undefined; joinParty(game, c, a.soundsystem ?? game.map.dancefloor, a.cell); return true; },
   /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's ring), as if destroyed. */
   lose: (key = "home") => { const s = game.combat.sounds.get(key); if (s) s.hp = 0; loseSoundsystem(game, key, s?.x ?? 0, s?.z ?? 0); const e = game.waveEvents[game.waveEvents.length - 1]; if (e) showLoss(e); return e; },
   get manual() { return manual; }, set manual(on: boolean) { manual = on; },
-  frame: (c: Parameters<typeof stepGame>[1], dt: number, draw = true) => { const t0 = performance.now(); stepGame(game, c, dt); const t1 = performance.now(); view.render(game.clock.time, draw); applyShake(); return { step: t1 - t0, render: performance.now() - t1, ms: view.ms }; }, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, spriteUp: () => SPRITE_UNIFORMS.uUp.value, spriteRight: () => SPRITE_UNIFORMS.uRight.value, groundHeight, loadTimes, get ready() { return ready; } };
+  /** A debug hook for frame feel (tools/feel/trace.cjs): one frame as the real loop runs it (the
+   *  fixed steps, the render eased between the last two, the camera's sub-pixel glide), then where
+   *  things landed on screen, in screen pixels as drawn (the art-pixel snap and the canvas's shift):
+   *  the witch, ground points (probes, metres) and creatures (ids). */
+  frameLive: (c: Parameters<typeof stepGame>[1], dt: number, probes: { x: number; z: number }[] = [], ids: number[] = []) => {
+    const t0 = game.clock.time;
+    stepGame(game, c, dt);
+    const steps = Math.round((game.clock.time - t0) / STEP), alpha = game.alpha, P = tuning.pixelSize;
+    const v = new Vector3(), ndc = (x: number, y: number, z: number) => { placed(v.set(x, y, z)).project(view.camera); return v; };
+    const snap = (n: Vector3) => [(Math.floor((n.x * 0.5 + 0.5) * view.width) + 0.5) * P, (Math.floor((-n.y * 0.5 + 0.5) * view.height) + 0.5) * P];
+    let at: { witch: number[]; probes: number[][]; creatures: (number[] | null)[]; witchWorld: number[] } = { witch: [], probes: [], creatures: [], witchWorld: [] };
+    interpolated(game, () => {
+      view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP));
+      const W = game.witch, B = view.witchBase;
+      bendPoint(v.set(B.x, B.y, B.z)).project(view.camera);
+      at = { witch: snap(v), witchWorld: [W.x, W.z], probes: probes.map(p => snap(ndc(p.x, 0, p.z))), creatures: ids.map(id => { const k = game.creatures[id]; return k ? snap(ndc(k.x, 0, k.z)) : null; }) };
+    });
+    applyShake();
+    const P2 = tuning.pixelSize, gx = subpixelOn ? Math.round(view.subpixel.x * P2) : 0, gy = subpixelOn ? Math.round(view.subpixel.y * P2) : 0;
+    const add = (q: number[] | null) => (q ? [q[0] + gx, q[1] + gy] : null);
+    return { steps, alpha, gx, gy, time: game.clock.time, witch: add(at.witch), witchWorld: at.witchWorld, probes: at.probes.map(add), creatures: at.creatures.map(add) };
+  },
+  frame: (c: Parameters<typeof stepGame>[1], dt: number, draw = true) => { const t0 = performance.now(); stepGame(game, c, dt); const t1 = performance.now(); view.render(game.clock.time, draw); applyShake(); return { step: t1 - t0, render: performance.now() - t1, ms: view.ms }; }, areaUnderWitch: () => areaUnderWitch(game), areaTypeId: (i: number) => AREA_TYPES[i].id, lightUniforms: LIGHT_UNIFORMS, spriteUp: () => SPRITE_UNIFORMS.uUp.value, spriteRight: () => SPRITE_UNIFORMS.uRight.value, groundHeight, loadTimes, get ready() { return ready; } };
