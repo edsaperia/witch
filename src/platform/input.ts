@@ -139,7 +139,7 @@ export class Input {
       if (any(PAD.dash)) dash = true;
       // Twin-stick: the right stick aims (screen right is east, down is south), a trigger fires.
       const rx = pad.axes[2] ?? 0, ry = pad.axes[3] ?? 0;
-      if (Math.hypot(rx, ry) > 0.3) { aimX = rx; aimZ = ry; }
+      if (Math.hypot(rx, ry) > 0.3) { aimX = rx * 20; aimZ = ry * 20; } // (as a point 20 m out that way: the dash reads a cursor's ground point)
       if (PAD.invite.some(btn)) fire = true;
       this.padPrev = pad.buttons.map(b => b.pressed);
       break;

@@ -4640,6 +4640,13 @@
           "type": "number",
           "minimum": 0
         },
+        "toCursor": {
+          "type": "boolean"
+        },
+        "aimDead": {
+          "type": "number",
+          "minimum": 0
+        },
         "clear": {
           "type": "object",
           "properties": {
@@ -4679,6 +4686,8 @@
         "gone",
         "cooldown",
         "buffer",
+        "toCursor",
+        "aimDead",
         "clear"
       ],
       "additionalProperties": false
