@@ -71,7 +71,7 @@ const INSTRUMENT = () => {
 async function main() {
   const server = await serve(), port = server.address().port;
   const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--autoplay-policy=no-user-gesture-required"] });
-  const page = await browser.newPage({ viewport: { width: 480, height: 270 } }), errors = [];
+  const page = await browser.newPage({ viewport: { width: +(process.env.W || 320), height: +(process.env.H || 180) } }), errors = [];
   page.on("pageerror", e => errors.push(`page error: ${e.message}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console error: ${m.text()}`); });
   await page.addInitScript(INSTRUMENT);
@@ -93,7 +93,10 @@ async function main() {
       const A = window.__audio, g = window.witch.game, rms = A.n ? Math.sqrt(A.sq / A.n) : 0, peak = A.peak;
       A.peak = 0; A.sq = 0; A.n = 0;
       const made = Object.values(A.made).reduce((a, b) => a + b, 0);
-      return { state: A.ctx.state, at: +A.ctx.currentTime.toFixed(1), game: +g.clock.time.toFixed(1), wave: g.party.wave, made, started: A.started, ended: A.ended, playing: A.started - A.ended, peak: +peak.toFixed(3), rms: +rms.toFixed(4), bad: A.bad.length, creatures: g.creatures.filter(c => !c.gone).length };
+      const M = window.witch.audio?.music, E = M?.engine, mix = M && window.witch.lastMix;
+      const music = M ? { gain: +M.master.gain.value.toFixed(3), section: E?.current?.plan.section, bar: E?.current?.bar, next: E?.nextStep, anchor: E ? +E.anchor.toFixed(2) : undefined } : null;
+      const home = g.combat?.sounds.get("home");
+      return { music, hurtSpeakers: g.speakers.filter(x => x !== "playing").length, home: home ? +(home.hp / home.max).toFixed(2) : null, paused: g.clock.paused, ko: !!g.witches[0]?.ko, state: A.ctx.state, at: +A.ctx.currentTime.toFixed(1), game: +g.clock.time.toFixed(1), wave: g.party.wave, made, started: A.started, ended: A.ended, playing: A.started - A.ended, peak: +peak.toFixed(3), rms: +rms.toFixed(4), bad: A.bad.length, creatures: g.creatures.filter(c => !c.gone).length };
     });
     samples.push({ s, ...x, newSources: x.started - last.started });
     last = x;

@@ -600,6 +600,8 @@ function powerLines(): string[] {
   /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's ring), as if destroyed. */
   lose: (key = "home") => { const s = game.combat.sounds.get(key); if (s) s.hp = 0; loseSoundsystem(game, key, s?.x ?? 0, s?.z ?? 0); const e = game.waveEvents[game.waveEvents.length - 1]; if (e) showLoss(e); return e; },
   get manual() { return manual; }, set manual(on: boolean) { manual = on; },
+  /** A debug hook (tools/sfx/live.cjs): the audio context, the music and the sound effects. */
+  get audio() { return { ctx: audio, music, sfx }; },
   /** A debug hook for frame feel (tools/feel/trace.cjs): one frame as the real loop runs it (the
    *  fixed steps, the render eased between the last two, the camera's sub-pixel glide), then where
    *  things landed on screen, in screen pixels as drawn (the art-pixel snap and the canvas's shift):
