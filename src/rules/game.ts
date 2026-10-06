@@ -218,7 +218,7 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
 /** The affection rules the 💌s and the view use (issue #87): the state machine's meter
  *  (rules/affection.ts). A full meter makes a wild one happy; filled again (states.leash "again"),
  *  a happy one is leashed. How many letters fill it is the tuning's invites.hits (buffs change it);
- *  the per-animal hit gap is rules/invites.ts's (invites.perAnimalHitGap). */
+ *  every 💌 that lands counts (no per-animal gap since 2026-10-06: her firing rate sets the pace). */
 export const affectionOf = (g: Game): Affection => {
   const t = g.buffs?.tuning ?? g.tuning, s = g.witches[0].invites, data = { ...STATES, affection: { ...STATES.affection, hits: t.invites.hits, gap: 0 } };
   return {

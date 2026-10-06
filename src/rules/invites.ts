@@ -6,8 +6,9 @@
 // degrees a second. All of it is data (tuning `invites`), so legend buffs can change it like the rest.
 // A letter that reaches an invitable (wild) creature is a hit on its affection; enraged creatures and
 // legends block letters; anything else (her own party, happy ones) lets them through; scenery never
-// stops them (Ed). A creature takes affection from at most one letter every perAnimalHitGap seconds
-// (Ed: stacked multi-shot helps against crowds, not to win one creature faster). No drawing here.
+// stops them (Ed). Every letter that lands on an invitable creature counts (Ed, 2026-10-06: "I think we should
+// remove the 0.5s cooldown between counted hits per creature - better to control this through the witch firing
+// speed instead of having hits not register"): how fast she invites is her firing rate, a tuning value. No drawing here.
 import { LEGEND, type Creature } from "./creatures";
 import { bodyRadius } from "./spacing";
 import type { Tuning } from "./tuning";
@@ -51,10 +52,10 @@ export interface Letter {
 }
 
 /** A lantern on the ground (Glow-worm): any animal it touches before it goes out is a hit. */
-export interface Lantern { x: number; z: number; until: number; n: number }
+export interface Lantern { x: number; z: number; until: number; n: number; /** The animals it has landed on (once each). */ hit?: number[] }
 
-/** What a 💌 did this frame: thrown or fizzled (its number n); landed on a creature (id; spent: inside the
- *  creature's gap, a small pop that adds no affection) or stopped by one; or a creature won over (happy). */
+/** What a 💌 did this frame: thrown or fizzled (its number n); landed on a creature (id; spent: always false
+ *  since the per-creature gap went, 2026-10-06: every hit counts) or stopped by one; or a creature won over (happy). */
 interface InviteEventAt { x: number; z: number; at: number }
 export type InviteEvent =
   | (InviteEventAt & { kind: "shot" | "fizzled"; n: number; id?: undefined; spent?: undefined })
@@ -91,11 +92,9 @@ export interface Invites {
   lanterns: Lantern[];
   /** This frame's events, for the view (stepGame clears them each frame, like combat's). */
   events: InviteEvent[];
-  /** When each creature last took affection from a letter (perAnimalHitGap). */
-  lastLove: Map<number, number>;
 }
 
-export const newInvites = (): Invites => ({ letters: [], queue: [], bursts: 0, chargeFrom: null, charge: 0, cacheAt: 0, orbitAt: [], lanterns: [], burstLeft: 0, nextVolley: 0, readyAt: 0, burstAt: -Infinity, ax: 1, az: 0, next: 0, events: [], lastLove: new Map() });
+export const newInvites = (): Invites => ({ letters: [], queue: [], bursts: 0, chargeFrom: null, charge: 0, cacheAt: 0, orbitAt: [], lanterns: [], burstLeft: 0, nextVolley: 0, readyAt: 0, burstAt: -Infinity, ax: 1, az: 0, next: 0, events: [] });
 
 /** The affection interface (issue #87): rules/affection.ts behind it (game.ts affectionOf). */
 export interface Affection {
@@ -204,12 +203,10 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
     return best;
   };
   const aimAt = (L: Letter, k: Creature) => { const sp = Math.hypot(L.vx, L.vz) || I.speed, d = Math.hypot(k.x - L.x, k.z - L.z) || 1; L.vx = ((k.x - L.x) / d) * sp; L.vz = ((k.z - L.z) / d) * sp; };
-  /** Love landing on k: at most one letter's worth every perAnimalHitGap (Ed, 2026-10-05: so
-   *  stacked multi-shot buffs help against crowds, not to win one creature faster); the rest pop. */
+  /** Love landing on k: every letter counts (no gap since 2026-10-06: her firing rate sets the pace). */
   const love = (k: Creature, x: number, z: number, n: number) => {
-    const last = s.lastLove.get(k.id), spent = last !== undefined && time - last < I.perAnimalHitGap - 1e-9;
-    s.events.push({ kind: "hit", x, z, at: time, id: k.id, n, spent });
-    if (!spent) { s.lastLove.set(k.id, time); A.hit(k, I.amount, time); }
+    s.events.push({ kind: "hit", x, z, at: time, id: k.id, n, spent: false });
+    A.hit(k, I.amount, time);
   };
   /** Stops it dead: an enraged animal (unless it slips past: Elk) or a legend. */
   const blocks = (L: Letter, k: Creature) => A.blocksLetters(k) && !(L.slip && !k.boss && k.level !== LEGEND);
@@ -296,14 +293,13 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
     return true;
   });
   s.letters.push(...born);
-  // Lanterns land on any invitable animal they touch (once per animal per lantern's letter, the gap as ever).
+  // Lanterns land on any invitable animal they touch, once each.
   s.lanterns = s.lanterns.filter(p => {
     if (time >= p.until) return false;
-    for (const k of near) if (A.invitable(k) && Math.hypot(k.x - p.x, k.z - p.z) <= H.trail.radius + bodyRadius(k)) love(k, p.x, p.z, p.n);
+    for (const k of near) if (A.invitable(k) && !p.hit?.includes(k.id) && Math.hypot(k.x - p.x, k.z - p.z) <= H.trail.radius + bodyRadius(k)) { (p.hit ??= []).push(k.id); love(k, p.x, p.z, p.n); }
     return true;
   });
 
-  for (const [id, at] of s.lastLove) if (time - at >= I.perAnimalHitGap) s.lastLove.delete(id);
 }
 
 /** How far the next burst has recharged: 0 just fired, 1 ready (for the action bar). */
