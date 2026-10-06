@@ -89,6 +89,7 @@ export function stepLegendStates(w: LegendWorld, ids: number[], data: LegendsDat
     for (const o of w.creatures) {
       if (o.gone || o.fleeUntil || o.boss) continue;
       const k = w.areaOf(o), sp = want.get(k);
+      if (o.siege && o.siege !== k) continue; // (marched on to another area's soundsystem: Ed, 2026-10-06, "after a siege, the angry adults move onto the next area, which will waken the legend")
       if (sp === o.species) kin.add(k);
     }
   }

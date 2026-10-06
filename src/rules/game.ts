@@ -11,7 +11,7 @@ import { Forest } from "./forest";
 import { inviteCreature, leashPoint, newLeash, stepLeash, type LeashControls, type LeashEvent, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
 import { buffing, cheer, LEGENDS, placeRelics, relicButton, stepLegendStates, type Relic } from "./legends";
-import { danceAt, invitableNow, stateOf, STATES } from "./creatureStates";
+import { befriend, danceAt, invitableNow, stateOf, STATES } from "./creatureStates";
 import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, SLOT_RANGE, SPOT_RANGE } from "./partyGuests";
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
@@ -450,7 +450,9 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     startSiege(S, key, a.soundsystem, a.cell, g.creatures, t);
     // Its besiegers march wherever she is (stepped from now on as busy, not only once she comes near).
     for (const c of g.creatures) if (c.siege === key && !c.gone) S.busy.add(c.id);
-    // Its happy ones (#87) come and dance: round it, or at the area's party places (rules/partyGuests.ts).
+    // Its wild babies turn happy at once (Ed, 2026-10-06), its legend's circle's too; then its happy ones (#87) come and
+    // dance: round it, or at the area's party places (rules/partyGuests.ts).
+    for (const c of g.creatures) if (!c.gone && !c.leashed && c.level === 0 && !c.fleeUntil && stateOf(c) === "wild" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) befriend(c, time);
     for (const c of g.creatures) if (!c.gone && !c.leashed && c.state === "happy" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) joinParty(g, c, a.soundsystem, a.cell);
   }
   // Only creatures with something to fight near them take part: wild ones in or next to the area
@@ -478,11 +480,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     asleep: c => dormant(g, c) || (!!c.friendly && !c.leashed), // (a friendly area's creatures leave her party be, and are left be)
     parked: id => g.witches.some(w => w.leash.placed.some(p => p.id === id)),
     talkingTo: id => g.witches.findIndex(w => !!w.leash.talk && w.leash.talk.id === id && !w.leash.talk.refused),
-    exit: (x, z) => {
-      const b = g.map.bounds, edges = [[b.minX - 30, z, x - b.minX], [b.maxX + 30, z, b.maxX - x], [x, b.minZ - 30, z - b.minZ], [x, b.maxZ + 30, b.maxZ - z]];
-      const e = edges.reduce((m, q) => (q[2] < m[2] ? q : m));
-      return { x: e[0], z: e[1] };
-    },
+    exit: (x, z) => mapExit(g.map, x, z),
     unseen: (x, z) => g.witches.every(w => Math.hypot(w.body.x - x, w.body.z - z) > t.haze.far + 60),
     inArea: (c, x, z) => { const k = g.map.cellSafe(x, z).cell; return k[0] === c.cell[0] && k[1] === c.cell[1]; },
     slowWitch: (id, until, mult) => { const w = g.witches[id]; if (w) { w.slowUntil = Math.max(w.slowUntil ?? 0, until); w.slowMult = Math.min(mult, w.slowUntil > until ? w.slowMult ?? 1 : 1); } },
@@ -540,10 +538,25 @@ function coarseMarchers(g: Game, active: Creature[], t: Tuning, dt: number): Set
 /** A soundsystem destroyed: its party over (the home ring's speakers all destroyed), its besiegers
  *  marching on, and the next wave sooner (Ed, 2026-10-05: a loss takes party.lossPenalty seconds
  *  off the countdown, "all waves sooner is the wrong kind of penalty"). */
+/** Where something running off the map heads: just past its nearest edge. */
+function mapExit(map: ForestMap, x: number, z: number): { x: number; z: number } {
+  const b = map.bounds, edges = [[b.minX - 30, z, x - b.minX], [b.maxX + 30, z, b.maxX - x], [x, b.minZ - 30, z - b.minZ], [x, b.maxZ + 30, b.maxZ - z]];
+  const e = edges.reduce((m, q) => (q[2] < m[2] ? q : m));
+  return { x: e[0], z: e[1] };
+}
+
 export function loseSoundsystem(g: Game, key: string, x: number, z: number, t: Tuning = g.tuning): void {
   const S = g.combat, time = g.clock.time;
   if (key === "home") g.speakers = g.speakers.map(() => "destroyed" as SpeakerState);
-  else { g.party.areas.delete(key); S.ruined.add(key); (g.party.ruined ??= new Set()).add(key); }
+  else {
+    g.party.areas.delete(key); S.ruined.add(key); (g.party.ruined ??= new Set()).add(key);
+    // Its happy babies run off home, for good (Ed, 2026-10-06); leashed ones (and parked ones) stay hers.
+    for (const c of g.creatures) if (!c.gone && !c.leashed && c.level === 0 && c.state === "happy" && !c.fleeUntil && cellKey(c.cell) === key) {
+      const out = mapExit(g.map, c.x, c.z);
+      Object.assign(c, { fleeUntil: Infinity, fleeX: out.x, fleeZ: out.z, dancing: false, fight: undefined });
+      S.events.push({ kind: "fled", x: c.x, z: c.z, at: time, id: c.id }); S.busy.add(c.id);
+    }
+  }
   marchOn(S, key, g.creatures);
   const cut = hurryWave(g.party, time, t.party.lossPenalty ?? 0);
   g.waveEvents.push({ kind: "soundsystemLost", key, x, z, at: time, cut, left: Math.max(0, g.party.nextAt - time) });
@@ -628,7 +641,6 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
 /** A happy creature joins its area's party: it goes to its spot (by the soundsystem, or one of the area's party places) and
  *  dances there, at a party place in the first free slot round it (guestSlot, guestGap: by the guests already there). */
 export function joinParty(g: Game, c: Creature, soundsystem: { x: number; z: number }, cell: Cell): void {
-  if (c.circle) return; // (a legend's clearing's baby, happy, stays in its circle: Ed, 2026-10-06)
   const spot = guestSpot(c, soundsystem, partySpots(g.map, cell, g.tuning));
   if (spot.kind === "soundsystem") { danceAt(c, spot, spot.r); return; }
   // the guests already round this place, and their slots

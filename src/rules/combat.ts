@@ -196,9 +196,7 @@ export const fighting = (c: Creature) => !c.gone && !c.fleeUntil && !c.wanderTo 
 
 /** Whether anything may attack it: fighting, and not a baby (Ed, 2026-10-04: "No animals should
  *  attack babies"; shots and quakes pass them by, and they can't be beaten in a fight). */
-export const targetable = (c: Creature) => fighting(c) && (c.level > 0 || !!c.circle) && !c.burrow; // (a burrower underground can't be hit)
-// (but a legend's circle's baby, happy, can: Ed 2026-10-06, a siege that knocks it down leaves its legend without kin, restless,
-// then angry. DECISION FOR ED: the one exception to "no animals should attack babies")
+export const targetable = (c: Creature) => fighting(c) && c.level > 0 && !c.burrow; // (a burrower underground can't be hit)
 
 /** Whose side: hers (on her leash, at a sigil, or a happy area legend: Ed, 2026-10-04) or the wild's. */
 const sideOf = (c: Creature): State => stateOf(c); // (its state: who fights whom is foes(), rules/creatureStates.ts)
@@ -414,7 +412,7 @@ function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: Target,
     return;
   }
   const o = w.creatures[tg.id];
-  if (!o || o.gone || (o.level === 0 && !o.circle)) return; // babies can't be hurt (but a legend circle's: targetable)
+  if (!o || o.gone || o.level === 0) return; // babies can't be hurt
   if (from && inviting(w, from, o)) return; // (her party's shots and area hits pass the one she's inviting by)
   // Its traits against this kind of blow (Stage 5): shown as strong or resisted.
   const k = counterOf(o.species, a.delivery, D), gd = guardOf(o, a.delivery, time), mult = k.damage * gd.damage;
