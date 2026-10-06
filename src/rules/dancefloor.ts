@@ -261,6 +261,8 @@ function summary(rgbi: Uint8Array): FloorTiles {
   return { rgbi, average: si ? [sr / si / 255, sg / si / 255, sb / si / 255] : [0, 0, 0], lit: si / (tiles * 3) };
 }
 
+const SEAS: [number, number, number][] = [[-0.28, -0.3, 0.27], [0.18, -0.38, 0.17], [0.08, 0.05, 0.2], [-0.38, 0.22, 0.14], [0.3, 0.32, 0.1]]; // the moon's dark seas (x, y, radius in its radii), as we see them
+
 /** The floor before the first wave (Ed, 2026-10-06: "only phases of the moon (a new animation), in muted
  *  twilight colours"): the moon at `phase` (0 new, 0.5 full; the sky's own, rules/moon.ts) in the middle,
  *  its lit side soft silver with slate seas, its dark side a faint dusky violet, and a few stars twinkling
@@ -273,8 +275,8 @@ export function moonTiles(rgbi: Uint8Array, phase: number, time: number, t: Tuni
     const x = (n % GRID) + 0.5 - C, y = Math.floor(n / GRID) + 0.5 - C, d = Math.hypot(x, y);
     if (d < mr) {
       const nx = x / mr, s = Math.sqrt(Math.max(0, 1 - (y / mr) ** 2)), lit = waxing ? nx > xt * s : nx < -xt * s;
-      if (lit) set(n, vnoise(x * 0.32 + 7, y * 0.32 + 3, 61) > 0.62 ? P[1] : P[2], 2); // its seas in slate
-      else if (hash2(n, 0, 67) < 0.55) set(n, P[0], 1); // the dark side, faint (earthshine)
+      if (lit) set(n, SEAS.some(([sx, sy, sr]) => Math.hypot(nx - sx, y / mr - sy) < sr * (0.85 + 0.3 * vnoise(x * 0.9, y * 0.9, 61))) ? P[1] : P[2], 2); // its seas in slate
+      else if ((Math.floor(x + C) + Math.floor(y + C)) % 2 === 0) set(n, P[0], 1); // the dark side, faint (earthshine), in an even dither
     } else if (d > mr + 1.5) {
       // Stars, each with its own slow rate, coming and going.
       const h = hash2(n, 0, 71), on = hash2(n, Math.floor(time / (2.5 + 3 * h) + h * 9), 73) < F.stars;
