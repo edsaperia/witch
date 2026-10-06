@@ -126,6 +126,12 @@ export class Creator {
   private readyAt = 0;
   private dirty = true;
   private raf = 0;
+  /** The room's drawing, eased off while the forest grows on a struggling machine (art review round 2: with the creator
+   *  open, a software-GL machine never got ready): when the frame after a draw comes slowly (`SLOW_FRAME` ms, eased),
+   *  the room is drawn at most every `SLOW_DRAW` ms until the forest is ready, so the art workers get the machine. */
+  private drawnAt = 0;
+  private afterDraw = false;
+  private drawGap = 0;
   /** The colour part being picked. */
   private part = "hat";
   /** Called with her look when Start is pressed and the world is ready. */
@@ -212,7 +218,7 @@ export class Creator {
       if (!el) {
         const fs = document.createElement("fieldset"), body = document.createElement("div"), lg = document.createElement("legend");
         Object.assign(fs.style, { border: "1px solid rgba(232,226,244,.2)", borderRadius: "6px", margin: "0 0 8px", padding: "4px 8px 6px" });
-        Object.assign(lg.style, { padding: "0 4px", color: "#ffb8e6", cursor: "pointer", userSelect: "none" });
+        Object.assign(lg.style, { padding: "0 4px", color: "var(--accent)", cursor: "pointer", userSelect: "none" });
         const paint = () => { const on = open.has(name); lg.textContent = `${on ? "▾" : "▸"} ${name}`; body.style.display = on ? "block" : "none"; };
         lg.addEventListener("click", () => { if (open.has(name)) open.delete(name); else open.add(name); saveOpenGroups(open); paint(); });
         fs.append(lg, body); paint(); P.append(fs); groups.set(name, body); el = body;
@@ -237,16 +243,16 @@ export class Creator {
         for (const opt of lim as string[]) {
           const b = document.createElement("button");
           b.type = "button"; b.textContent = optName(axis, opt);
-          const on = () => { b.style.background = get(axis) === opt ? "#ff5fb4" : "rgba(255,255,255,.08)"; };
+          const on = () => { const chosen = get(axis) === opt; b.style.background = chosen ? "var(--accent)" : "rgba(255,255,255,.08)"; b.style.color = chosen ? "#1d1408" : "inherit"; }; // (the HUD's one accent, lantern amber: #188, art review round 2)
           Object.assign(b.style, { font: "inherit", color: "inherit", border: "1px solid rgba(232,226,244,.3)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer" });
           if (axis === "hatShape") b.dataset.hat = opt;
-          b.addEventListener("click", () => { set(axis, opt); if (axis === "hatShape") this.hatless(); r.querySelectorAll("button").forEach(x => (x as HTMLElement).style.background = "rgba(255,255,255,.08)"); on(); });
+          b.addEventListener("click", () => { set(axis, opt); if (axis === "hatShape") this.hatless(); r.querySelectorAll("button").forEach(x => { (x as HTMLElement).style.background = "rgba(255,255,255,.08)"; (x as HTMLElement).style.color = "inherit"; }); on(); });
           on(); r.append(b);
         }
       } else {
         const [a, z] = lim as [number, number], s = document.createElement("input");
         s.type = "range"; s.min = String(a); s.max = String(z); s.step = String((z - a) / 200); s.value = String(get(axis) ?? a);
-        s.style.flex = "1"; s.style.accentColor = "#ff5fb4"; s.dataset.axis = axis;
+        s.style.flex = "1"; s.style.accentColor = "var(--accent)"; s.dataset.axis = axis;
         const wear = WEARS[axis];
         const out = document.createElement("span");
         Object.assign(out.style, { width: "38px", textAlign: "right", opacity: ".7" });
@@ -343,7 +349,7 @@ export class Creator {
     const bar = document.createElement("div");
     Object.assign(bar.style, { display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "10px", position: "sticky", bottom: "0", background: "rgba(14,11,28,.95)", padding: "6px 0" });
     bar.style.position = "sticky";
-    const btn = (text: string, f: () => void, main = false) => { const b = document.createElement("button"); b.type = "button"; b.textContent = text; Object.assign(b.style, { font: "inherit", fontSize: "14px", color: main ? "#1a0b14" : "inherit", background: main ? "#ff5fb4" : "rgba(255,255,255,.1)", border: "1px solid rgba(232,226,244,.4)", borderRadius: "6px", padding: "6px 12px", cursor: "pointer", flex: main ? "1 1 100%" : "1 1 auto" }); b.addEventListener("click", f); bar.append(b); return b; };
+    const btn = (text: string, f: () => void, main = false) => { const b = document.createElement("button"); b.type = "button"; b.textContent = text; Object.assign(b.style, { font: "inherit", fontSize: "14px", color: main ? "#1d1408" : "inherit", background: main ? "var(--accent)" : "rgba(255,255,255,.1)", border: "1px solid rgba(232,226,244,.4)", borderRadius: "6px", padding: "6px 12px", cursor: "pointer", flex: main ? "1 1 100%" : "1 1 auto" }); b.addEventListener("click", f); bar.append(b); return b; };
     btn("🎲 Randomise", () => this.randomise());
     btn("🌀 Wild", () => this.wild());
     btn("Classic", () => this.classic());
@@ -353,7 +359,7 @@ export class Creator {
     const track = document.createElement("div");
     Object.assign(track.style, { position: "absolute", left: "0", right: "0", bottom: "-2px", height: "3px", background: "rgba(255,255,255,.12)", borderRadius: "2px", overflow: "hidden" });
     this.bar = document.createElement("div");
-    Object.assign(this.bar.style, { height: "100%", width: "0%", background: "linear-gradient(90deg,#ff5fb4,#4ff0ff)" });
+    Object.assign(this.bar.style, { height: "100%", width: "0%", background: "linear-gradient(90deg,var(--accent-dim),var(--accent))" });
     track.append(this.bar); bar.append(track);
     P.append(bar);
   }
@@ -410,6 +416,7 @@ export class Creator {
   private loop = (): void => {
     if (!this.open) return;
     this.raf = requestAnimationFrame(this.loop);
+    const changed = this.dirty;
     if (this.dirty) { this.dirty = false; this.redraw(); }
     // The world building behind: its progress on the bar and the Start button; once ready, a waiting Start goes.
     const pr = this.progress(), built = pr.total ? pr.done / pr.total : 1;
@@ -422,7 +429,11 @@ export class Creator {
     this.tryStart();
     const room = this.room;
     if (!room) return;
-    const t = performance.now() / 1000, c = this.preview, W = room.lit.width, H = room.lit.height;
+    const ms = performance.now();
+    if (this.afterDraw) { this.drawGap = this.drawGap ? this.drawGap * .7 + (ms - this.drawnAt) * .3 : ms - this.drawnAt; this.afterDraw = false; }
+    if (!pr.ready && !changed && this.drawGap > SLOW_FRAME && ms - this.drawnAt < SLOW_DRAW) return;
+    this.drawnAt = ms; this.afterDraw = !changed; // (a redraw's own frame is slow anywhere: not counted)
+    const t = ms / 1000, c = this.preview, W = room.lit.width, H = room.lit.height;
     this.place(W, H);
     if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
     const x = c.getContext("2d")!;
@@ -433,7 +444,9 @@ export class Creator {
     drawGlows(x, room, t);
     fairyProgress(x, room, pr.ready ? 1 : Math.min(.97, built), this.readyAt ? t - this.readyAt : -1);
     x.drawImage(room.banner, 0, 0);
+    const queued = this.idleQueue.length;
     this.bakeIdle(t);
+    if (this.idleQueue.length !== queued) this.afterDraw = false; // (nor a pose's bake)
     // her: on the rug in a pool of light (the art director: "she's the brightest figure and the rug frames her"), standing,
     // or hovering over it, bobbing
     const now = this.flying ? { fr: this.frames.hover[Math.floor(t * 6) % 3], flip: false } : this.standing(t), fr = now.fr;
@@ -457,6 +470,9 @@ export class Creator {
     }
   }
 }
+
+/** A frame this slow after drawing the room (ms) means the machine is struggling; it's then drawn this seldom (ms) until ready. */
+const SLOW_FRAME = 120, SLOW_DRAW = 600;
 
 type RoomAnchors = { letters: [string, [number, number], number][]; stand: [number, number]; runes: [number, number][]; flames: [number, number][]; fairy: [number, number][]; screen: [number, number]; lantern: [number, number]; potions: [number, number]; decks: [number, number] };
 type Light = { x: number; y: number; z: number; R: number; rgb: number[]; power: number };

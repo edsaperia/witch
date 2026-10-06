@@ -14,9 +14,10 @@ export function witchLightUniform(w?: { lightFloor: number; lightTint: number; l
 /** GLSL, after LIGHT_GLSL: base is her unlit colour, N her world normal, F the sprite's facing. */
 export const WITCH_LIGHT_GLSL = /* glsl */ `
 uniform vec4 uWitchLight; // on, floor, tint, rim
+uniform float uWitchGlow; // how much of her own glow lights her (the mood's: render/mood.ts)
 vec3 witchShade(vec3 base, vec3 N, vec3 F, vec3 P) {
   vec3 env = uAmb + uMoon * lightStep(max(0.0, dot(N, uMoonDir)));
-  vec3 col = base * max(vec3(uWitchLight.y), env * 1.25);
+  vec3 col = base * max(vec3(uWitchLight.y), env * 1.25 + uGlowRgb * uGlowPower * uWitchGlow);
   vec3 tint = vec3(0.0), rim = vec3(0.0);
   float edge = 1.0 - clamp(dot(N, F), 0.0, 1.0); // her outline's pixels face sideways
   for (int i = 0; i < ${MAX_LIGHTS}; i++) {
