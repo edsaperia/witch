@@ -9,6 +9,7 @@ import { beachOf, type Beach } from "../rules/mapShape";
 import type { AssetLibrary } from "./assets";
 import type { Ground } from "./ground";
 import { PartyWitchView } from "./partyWitches";
+import type { ShadowInstance } from "./shadows";
 import { pixelEmoji } from "./invites";
 import { groundHeight, placed } from "./height";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
@@ -21,6 +22,8 @@ interface Heart { x: number; z: number; at: number; sway: number; el: HTMLImageE
 export class BeachView {
   private at: { map: Game["map"]; beach: Beach | null } | null = null;
   private witches: PartyWitchView | null = null;
+  /** The beach witches' shadows (hers too while she's drawn here), for the view's shadow batch. */
+  get shadows(): ShadowInstance[] { return this.witches?.shadows ?? []; }
   /** Whether the beach is showing (she's near). */
   on = false;
   /** Whether she's lying down stargazing now (alone or with a beach witch): the view bends the world for the sky. */
