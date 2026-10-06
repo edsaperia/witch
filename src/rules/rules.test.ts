@@ -29,7 +29,8 @@ import { DECOR } from "../../art/decor.js";
 import { RELICS } from "../../art/relics.js";
 import { SCENES, sceneLayout } from "../../art/scenes.js";
 import { COUNTRY } from "../../art/country.js";
-const MODERN = RELICS.filter(r => r.family === "modern").length + (COUNTRY as { family: string }[]).filter(d => d.family === "farm" || d.family === "street").length;
+const MODERN_POOL = [...RELICS.filter(r => r.family === "modern" && (r as { scatter?: boolean }).scatter !== false), ...(COUNTRY as { id: string; family: string }[]).filter(d => d.family === "farm" || d.family === "street")].map(d => d.id); // the scattered modern finds, in the view's order (the bits of highway left out: Ed, round 13)
+const MODERN = MODERN_POOL.length;
 
 const map = generateMap(123, TUNING);
 
@@ -1206,6 +1207,8 @@ describe("relics and grounds", () => {
     expect(list.length).toBeGreaterThan(3);
     expect(list.length).toBeLessThanOrEqual(MODERN); // each at most once (relics and the standalone country pieces)
     for (const r of list) { expect(map.paths.at(r.x, r.z)).toBeNull(); expect(map.hardClear(r.x, r.z)).toBe(false); }
+    for (const r of list) expect(MODERN_POOL[r.variant % MODERN]).not.toMatch(/highway|tarmac/); // no bits of road as clutter (a fallen road sign is a sign, not a road) (Ed, round 13)
+    expect(MODERN_POOL.some(id => /highway/.test(id))).toBe(false);
     for (const a of list) for (const b of list) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThanOrEqual(TUNING.relics.minGap);
     const byRoad = list.filter(r => { const h = map.paths.at(r.x, r.z, 20); return h && (h.kind === "road" || h.kind === "rail"); }).length;
     expect(byRoad).toBeGreaterThan(0);
