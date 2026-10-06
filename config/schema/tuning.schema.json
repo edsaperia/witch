@@ -2197,6 +2197,10 @@
         "on": {
           "type": "boolean"
         },
+        "reveal": {
+          "type": "number",
+          "minimum": 0
+        },
         "far": {
           "type": "array",
           "items": {
@@ -2265,6 +2269,7 @@
       },
       "required": [
         "on",
+        "reveal",
         "far",
         "behindBright",
         "advance",
@@ -3352,6 +3357,82 @@
           "type": "number",
           "minimum": 0
         },
+        "rim": {
+          "type": "object",
+          "properties": {
+            "spacing": {
+              "type": "number",
+              "minimum": 0
+            },
+            "chance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "out": {
+              "type": "number",
+              "minimum": 0
+            },
+            "spread": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "spacing",
+            "chance",
+            "out",
+            "spread",
+            "gap"
+          ],
+          "additionalProperties": false
+        },
+        "grove": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "density": {
+              "type": "number",
+              "minimum": 0
+            },
+            "tallest": {
+              "type": "number",
+              "minimum": 0
+            },
+            "scale": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            },
+            "soft": {
+              "type": "number",
+              "minimum": 0
+            },
+            "jitter": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "reach",
+            "density",
+            "tallest",
+            "scale",
+            "gap",
+            "soft",
+            "jitter"
+          ],
+          "additionalProperties": false
+        },
         "species": {
           "type": "object",
           "additionalProperties": {
@@ -3364,6 +3445,8 @@
         "radius",
         "edge",
         "top",
+        "rim",
+        "grove",
         "species"
       ],
       "additionalProperties": false
