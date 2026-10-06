@@ -46,6 +46,8 @@ else {
     const map = g.map, home = map.centreCell, homeKey = cellKey(home);
     const spot = c => (cellKey(c) === homeKey ? map.dancefloor : map.soundsystemSpot(c[0], c[1]));
     const species = c => AREA_TYPES[map.typeOf(c[0], c[1])].creature;
+    // Where to put a quest's sigil or a relic down: in the legend's clearing (#244: only there counts), in front of it; else beside it.
+    const spotBy = L => { const lc = map.legendClearing?.(L.cell[0], L.cell[1]); return lc ? [lc.x, lc.z] : [L.x + 4, L.z + 4]; };
     const legendOf = new Map(g.creatures.filter(c => c.boss).map(c => [cellKey(c.cell), c.id]));
     const origin = new Map(); // invited id -> the key of the area it came from
     const waves = [], parkedAt = new Set();
@@ -82,12 +84,12 @@ else {
     for (let step = 0; step * dt < TIME; step++) {
       const b = w.body, time = g.clock.time;
       let mx = 0, mz = 0, toggle = false, fire = false, aimX = 0, aimZ = 0, dash = false, sigil = false;
-      const goTo = (x, z, land) => {
+      const goTo = (x, z, land, within = 45) => {
         const dx = x - b.x, dz = z - b.z, d = Math.hypot(dx, dz) || 1;
         if (d > 45) { if (b.mode === "ground") toggle = true; mx = dx / d; mz = dz / d; return false; }
         if (land && b.mode === "treetop") { toggle = true; return false; }
-        if (b.mode === "ground" && d > 6) { mx = dx / d; mz = dz / d; }
-        return b.mode === "ground";
+        if (b.mode === "ground" && d > Math.min(6, within * 0.6)) { mx = dx / d; mz = dz / d; }
+        return b.mode === "ground" && d <= within; // (within: how near counts as there; a clearing's sigil, a few metres)
       };
       if (w.ko) wasKo = true;
       else if (bot === "idle") { /* (stands at home all run: the sieges alone) */ }
@@ -117,14 +119,14 @@ else {
           // A lucky find (--relics): to the nearest lying relic, pick it up (the sigil button by it), then to the
           // nearest sleeping legend and put it down beside it: a powerful ally.
           if (!rjob) {
-            if (w.leash.relics.length) rjob = { phase: "place" };
+            if (w.leash.relics.length) rjob = { phase: "place", since: time, n: w.leash.relics.length };
             else { const r = g.relics.filter(r => r.state === "lying").sort((a, b) => Math.hypot(a.x - b.x, a.z - b.z) - Math.hypot(b.x - b.x, b.z - b.z) || Math.hypot(a.x - w.body.x, a.z - w.body.z) - Math.hypot(b.x - w.body.x, b.z - w.body.z))[0]; rjob = r ? { phase: "pick", r, since: time } : null; if (!rjob) relicAgain = time + 60; }
           }
-          if (rjob?.phase === "pick") { if (goTo(rjob.r.x, rjob.r.z, true)) { sigil = true; if (w.leash.relics.length) rjob = { phase: "place", since: time }; } if (time - rjob.since > 120) { rjob = null; relicAgain = time + 60; } }
+          if (rjob?.phase === "pick") { if (goTo(rjob.r.x, rjob.r.z, true, 4)) { sigil = true; if (w.leash.relics.length) rjob = { phase: "place", since: time, n: w.leash.relics.length }; } if (time - rjob.since > 120) { rjob = null; relicAgain = time + 60; } }
           else if (rjob?.phase === "place") {
             const L = [...legendOf.values()].map(id => g.creatures[id]).filter(c => !c.gone && (c.legendState === "asleep" || c.legendState === "restless")).sort((a, b) => Math.hypot(a.x - w.body.x, a.z - w.body.z) - Math.hypot(b.x - w.body.x, b.z - w.body.z))[0];
             if (!L) rjob = null;
-            else if (goTo(L.x + 4, L.z + 4, true)) { sigil = true; if (!w.leash.relics.length) { relicsPlaced.push({ at: time, id: L.id }); rjob = null; relicAgain = time + 30; } }
+            else if (goTo(...spotBy(L), true, 4)) { if (w.leash.relics.length < rjob.n) { relicsPlaced.push({ at: time, id: L.id }); rjob = null; relicAgain = time + 30; } else sigil = true; }
             if (rjob && time - (rjob.since ?? time) > 150) { rjob = null; relicAgain = time + 60; }
           }
         } else if (QUESTS && careful && (qjob || time >= questAgain)) {
@@ -150,7 +152,7 @@ else {
             else if (qjob.phase === "fetch") {
               if (want.leashed) qjob.phase = "deliver";
               else if (goTo(want.x, want.z, true)) { const td = Math.hypot(want.x - b.x, want.z - b.z); aimX = want.x - b.x; aimZ = want.z - b.z; fire = td < R * 0.95; mx = 0; mz = 0; if (td > R * 0.8) { mx = aimX / td; mz = aimZ / td; } }
-            } else if (goTo(L.x + 5, L.z + 5, true)) {
+            } else if (goTo(...spotBy(L), true, 4)) {
               const st = w.leash.stack, qi = st.indexOf(want.id);
               if (qi < 0) { qjob = null; questAgain = time + 10; }
               else { if (qi !== st.length - 1) st.push(st.splice(qi, 1)[0]); sigil = true; } // (cycling it to the bottom, as the sigil button does in the treetops)
@@ -191,6 +193,7 @@ else {
           }
         }
       }
+      if (process.env.QDBG && step % 600 === 0) { const sb = spotBy; process.stderr.write(`t${(time/60).toFixed(1)} q:${qjob ? qjob.phase + " " + qjob.L.species + qjob.L.cell + " want " + qjob.want.species + qjob.want.level + (qjob.want.leashed ? "L" : "") + " d" + Math.round(Math.hypot(...sb(qjob.L).map((v, i) => v - [w.body.x, w.body.z][i]))) + " open " + qjob.L.questOpen : "-"} r:${rjob ? rjob.phase + " d" + (rjob.r ? Math.round(Math.hypot(rjob.r.x - w.body.x, rjob.r.z - w.body.z)) : "") : "-"} relics ${w.leash.relics.length} stack ${w.leash.stack.length} placed ${w.leash.placed.length} mode ${w.body.mode}\n`); }
       const before = g.party.wave, hp0 = w.health.hp;
       stepGame(g, { moveX: mx, moveZ: mz, toggleMode: toggle, zoom: 0, fire, aimX, aimZ, dash, sigil }, dt);
       for (const e of w.invites.events) if (e.kind === "happy" && !origin.has(e.id)) origin.set(e.id, cellKey(g.creatures[e.id].cell));
