@@ -85,12 +85,19 @@
     .bubble::after { content: ""; position: absolute; left: 50%; top: 100%; width: var(--px); height: var(--px); background: var(--ink); box-shadow: 0 var(--px) 0 var(--ink), calc(var(--px) * -1) calc(var(--px) * 2) 0 var(--ink); }
     .bubble canvas { display: block; image-rendering: pixelated; }
     .bubble.on { display: block; }
-    /* A sleeping legend's dream (the first quest): the same pixel bubble, a legend's size (--px by level:
-       bubblePx in src/render/leash.ts), darkly filled, holding the sigil it wants in its level's variant.
-       A nightmare (restless: #87) shows its one face (sad to angry) below the sigil, its ink reddening. */
-    .bubble.dream { --ink: rgba(225, 215, 255, .85); transform-origin: 50% 100%; display: flex; flex-direction: column; align-items: center; gap: var(--px); }
-    .bubble.dream::before { background: rgba(14, 10, 30, .62); z-index: -1; }
-    .bubble.dream.nightmare::before { background: rgba(40, 6, 12, .7); }
+    /* A sleeping legend's dream (the first quest): a thought bubble, a legend's size (--px by level: bubblePx in
+       src/render/leash.ts), holding the sigil it wants in its level's variant. Soft and round, in the HUD's amber, with two
+       small puffs rising to it from the sleeper, quieter than the art (the art director, #235: "a soft, round thought
+       bubble ... quieter than the art"). A nightmare (restless: #87) shows its one face (sad to angry) below the sigil, its
+       ink reddening. */
+    .bubble.dream { --ink: rgba(232, 180, 106, .5); transform-origin: 50% 100%; display: flex; flex-direction: column; align-items: center; gap: var(--px); padding: calc(var(--px) * 3) calc(var(--px) * 4); }
+    .bubble.dream::before { border: max(1px, calc(var(--px) * .5)) solid var(--ink); border-radius: 50%; clip-path: none; z-index: -1;
+      background: radial-gradient(ellipse at 50% 42%, rgba(26, 18, 34, .5), rgba(14, 10, 30, .32) 72%, rgba(14, 10, 30, .18));
+      box-shadow: 0 0 calc(var(--px) * 3) rgba(232, 180, 106, .14), inset 0 0 calc(var(--px) * 2) rgba(232, 180, 106, .1); }
+    .bubble.dream::after { left: 36%; top: calc(100% + var(--px) * .5); width: calc(var(--px) * 6); height: calc(var(--px) * 12); background:
+      radial-gradient(circle at 72% 14%, var(--ink) 0 calc(var(--px) * 1.3), transparent calc(var(--px) * 1.4)),
+      radial-gradient(circle at 30% 88%, var(--ink) 0 calc(var(--px) * .8), transparent calc(var(--px) * .9)); box-shadow: none; }
+    .bubble.dream.nightmare::before { background: radial-gradient(ellipse at 50% 42%, rgba(48, 8, 14, .6), rgba(40, 6, 12, .35) 72%, rgba(40, 6, 12, .2)); }
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
     .bubble .bar i { display: block; height: 100%; background: var(--love); }
   </style>
@@ -127,7 +134,7 @@
       <div id="shake-opt"></div>
       <div id="news"></div>
       <div class="keys">
-        <b>Keyboard and mouse</b> WASD (or the arrow keys) fly · the mouse aims (the ring at the cursor glows pink within a 💌's reach, and a blue arc fills round it while the dodge recharges) · on the ground, left click (or hold 1) throws 💌 invites at the cursor: enough of them win a creature over (enraged ones and legends block them) · right click dodges: a 10 m blink on the ground (Space too; pressed a moment early, it goes as soon as it can) · Q rises to the treetops or lands · E on the ground puts down / picks up a sigil, in the treetops cycles the stack (the bottom sigil to the top) · R spell (speed boost) · 2–4 empty slots for now · Z/X or +/− zoom · H hides the action bar · Esc pauses everything (a still for screenshots, with a stamp of where you are; while paused . steps a frame, Shift+. ten; ❚❚ by the volume on touch) · ~ debug · N next wave · P pause waves · I invite nearest (debug) · [ ] fight scale, ; ' fight speed, , . fight momentum (debug: in the ~ panel too)<br>
+        <b>Keyboard and mouse</b> WASD (or the arrow keys) fly · the mouse aims (the ring at the cursor glows pink within a 💌's reach, and a blue arc fills round it while the dodge recharges) · on the ground, left click (or hold 1) throws 💌 invites at the cursor: enough of them win a creature over (enraged ones and legends block them) · right click dodges toward the cursor: a 10 m blink on the ground, to the little diamond (pressed a moment early, it goes as soon as it can) · Space rises to the treetops or lands · E on the ground puts down / picks up a sigil · Q cycles the stack (the bottom sigil, the next put down, to the top) · R spell (speed boost) · 2–4 empty slots for now · the mouse wheel, Z/X or +/− zoom · H hides the action bar · Esc pauses everything (a still for screenshots, with a stamp of where you are; while paused . steps a frame, Shift+. ten; ❚❚ by the volume on touch) · ~ debug · N next wave · P pause waves · I invite nearest (debug) · [ ] fight scale, ; ' fight speed, , . fight momentum (debug: in the ~ panel too)<br>
         <b>Gamepad</b> left stick flies · right stick aims and a trigger throws 💌s · A dash · B spell · X sigil (on the ground) or cycle (in the treetops) · Y rises or descends · shoulder buttons zoom · Start pauses<br>
         <b>Phone</b> drag on the left to fly · the round button rises or descends · the 💌 button throws invites the way you're going · sigil puts down or picks up (on the ground) or cycles (in the treetops) · spell and dash · three-finger tap for debug
       </div>

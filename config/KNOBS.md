@@ -69,12 +69,26 @@ The ground's fake relief (Ed, v171: so the ground doesn't look flat): low rises 
 | `ground.hills.octaves` | number | 0 to … |
 | `ground.hills.shade` | number | 0 to … |
 
-## `sky`
+## `smoke`, `sky`
 
-The night sky that shows over the bend in treetop mode (on; ?sky=off leaves the plain dark background there, which costs nothing): stars (how many, 0-1), moon (brightness). clouds (Ed, 2026-10-04: real ones, seen only from underneath, over the bend): count (roughly how many to a screenful of sky), altitude (metres over the ground: above the treetop camera, so never between her and it), speed (m/s they drift), opacity (translucent: stars show through), partyGlow (how strongly what's beneath them lights their undersides: the partified areas' colours, pulsing on the beat; campfires faintly; over dormant forest they stay moonlit grey). lightning: about every so many seconds a cloud in view flickers (flashes per strike), sometimes with a forked bolt toward the horizon; ground: the faint flash on the forest (0 none).
+Smoke from every fire (Ed, round 13: puffs rising high into the sky before dissipating; render/smoke.ts): the world's campfires, the party's campfires, bonfires and tiki torches, the charcoal burner's mound. Each fire sends up about rate puffs a second (at most perFire at once), each living life seconds: rising at speed m/s at first and slowing, up to rise metres (well over the 24 m treetops), drifting with the wind at drift m/s, starting size metres across and growing to (1 + grow) times that, thinning out before the end; opacity its strength (a cool grey, under the moon and the party's amber), warm how much of the fire's amber the lowest puffs catch underneath; pixel draws them in three stepped tones with a dithered edge at the art pixel (false: smooth). The nearest maxFires fires within range metres smoke, those near the edge fading. on: false turns it off.
 
 | knob | type | range |
 |---|---|---|
+| `smoke.on` | boolean |  |
+| `smoke.rate` | number | 0 to … |
+| `smoke.life` | number | 0 to … |
+| `smoke.rise` | number | 0 to … |
+| `smoke.speed` | number | 0 to … |
+| `smoke.size` | number | 0 to … |
+| `smoke.grow` | number | 0 to … |
+| `smoke.drift` | number | 0 to … |
+| `smoke.opacity` | number | 0 to … |
+| `smoke.warm` | number | 0 to … |
+| `smoke.pixel` | boolean |  |
+| `smoke.perFire` | number | 0 to … |
+| `smoke.maxFires` | number | 0 to … |
+| `smoke.range` | number | 0 to … |
 | `sky.on` | boolean |  |
 | `sky.stars` | number | 0 to … |
 | `sky.moon` | number | 0 to … |
@@ -660,7 +674,7 @@ The talk's speech bubbles (Ed): an outline only, no fill. The emoji in them are 
 | `bubbles.scale` | number | 0 to … |
 | `bubbles.levelScale` | array of number |  |
 
-## `scenes`, `grounds`
+## `scenes`, `grounds`, `legendClearing`
 
 Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bus stop, a picnic gone wild...) and large landmarks (a cemetery, a car park, ruined churches and temples, castle ruins...), each a few pieces counting as one, each at most once per map. An area gets one with chance, if a scene that suits it (its suits) is still unused; it stands off to the side of the area's centre, its footprint clear of the paths, gameplay and other features, trees kept off it, mirrored at random. footprint: the farthest piece's authored offset times scale, plus pad metres (a test checks it covers the art's own).
 
@@ -672,6 +686,10 @@ Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bu
 | `grounds.chance` | number | 0 to … |
 | `grounds.kinds` | array of string |  |
 | `grounds.radius` | record |  |
+| `legendClearing.radius` | number | 0 to … |
+| `legendClearing.edge` | number | 0 to … |
+| `legendClearing.top` | number | 0 to … |
+| `legendClearing.species` | record |  |
 
 ## `relics`
 
@@ -768,7 +786,7 @@ Decorations scattered as discoveries: one chance per spacing-metre cell, of a ru
 
 ## `paths`
 
-Paths, roads and railways (Ed): rails [min,max] railway lines edge to edge in wide curves (one with a branch); roads [min,max] broad sweeping old roads; linkChance: the share of neighbouring areas joined by a meandering path; deadEndChance: the share of areas with a path out to nothing; pathHalf, roadHalf, railHalf: half each corridor's width (metres), kept clear of trees, with bushes thick along the edges for edgeBushes metres (bushBoost times as many); streams [min,max] long streams winding across the map (and short ones join wet areas that touch), streamHalf metres half-wide; along a railway, every landmarkSpacing metres, a landmarkChance of a landmark (a wagon, a carriage, a platform, a gantry) and otherwise sometimes a signal post; verge posts along roads every vergeSpacing metres; every 3D piece at least pieceGap metres from the next; fingerposts: a fingerpost by each footpath where it comes into a clearing (the prop generator's; ?props=gen turns it on); the two flights of stairs are finds, each at most once per map, by the clearing of a ravine, rocky slope, cave mouth or stone shrine; railBroken: the share of the railway that's broken, where trees grow between the sleepers (treesOnBroken times the usual chance).
+Paths, roads and railways (Ed): rails [min,max] railway lines edge to edge in wide curves (one with a branch); roads [min,max] broad sweeping old roads (0: Ed, round 13, "remove the paths that are roads: only the kind that cars might drive on"; footpaths, railways and streams stay); linkChance: the share of neighbouring areas joined by a meandering path; deadEndChance: the share of areas with a path out to nothing; pathHalf, roadHalf, railHalf: half each corridor's width (metres), kept clear of trees, with bushes thick along the edges for edgeBushes metres (bushBoost times as many); streams [min,max] long streams winding across the map (and short ones join wet areas that touch), streamHalf metres half-wide; along a railway, every landmarkSpacing metres, a landmarkChance of a landmark (a wagon, a carriage, a platform, a gantry) and otherwise sometimes a signal post; verge posts along roads every vergeSpacing metres; every 3D piece at least pieceGap metres from the next; fingerposts: a fingerpost by each footpath where it comes into a clearing (the prop generator's; ?props=gen turns it on); the two flights of stairs are finds, each at most once per map, by the clearing of a ravine, rocky slope, cave mouth or stone shrine; railBroken: the share of the railway that's broken, where trees grow between the sleepers (treesOnBroken times the usual chance).
 
 | knob | type | range |
 |---|---|---|
@@ -949,6 +967,11 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.floor` | number | 0 to … |
 | `music.muffle` | number | 0 to … |
 | `music.audible` | number | 0 to … |
+| `music.circle.muffle` | number | 0 to … |
+| `music.circle.quiet` | number | 0 to … |
+| `music.circle.ease` | number | 0 to … |
+| `music.circle.level` | number | 0 to … |
+| `music.circle.radius` | number | 0 to … |
 | `music.clear` | number | 0 to … |
 | `music.distort` | number | 0 to … |
 | `music.src` | string |  |
@@ -969,13 +992,20 @@ Forecasting (Ed, 2026-10-04): the next two waves are confirmed and the one after
 
 ## `fight`
 
-The fight's scale and speed (Ed's motion scale pass, 2026-10-04: "the animals don't move around enough when attacking and defending"): fights are drawn and played at the ground camera's scale, creatures running at about the witch's speed and their patterns about 50 m across. scale: every length in a fight times this (attack ranges, lunges, area radii, beam widths, knockback, the packs' patterns and spacing, pursuit and guard reach, aggro); speed: every fight speed times this (running, charging, lunging, shots). momentum (Ed, 2026-10-05: "they should have more momentum"): how heavily creatures in a fight change speed and turn: their accelerations, braking and turn rates divided by it (2: twice as heavy). Try ?fightScale= and ?fightSpeed=, or change them live in the debug overlay (~): [ and ] for scale, ; and ' for speed.
+The fight's scale and speed (Ed's motion scale pass, 2026-10-04: "the animals don't move around enough when attacking and defending"): fights are drawn and played at the ground camera's scale, creatures running at about the witch's speed and their patterns about 50 m across. scale: every length in a fight times this (attack ranges, lunges, area radii, beam widths, knockback, the packs' patterns and spacing, pursuit and guard reach, aggro); speed: every fight speed times this (running, charging, lunging, shots). momentum (Ed, 2026-10-05: "they should have more momentum"): how heavily creatures in a fight change speed and turn: their accelerations, braking and turn rates divided by it (2: twice as heavy). Try ?fightScale= and ?fightSpeed=, or change them live in the debug overlay (~): [ and ] for scale, ; and ' for speed. charge and leap (Ed, round 13, 2026-10-06: 'charging and jumping creatures should charge or jump much further ... damaging whenever they're touched while in attack mode ... much more momentum, travelling in wide arcs'): every species' charge (movement.json) scaled: reach its run's time and overshoot past its target, turn its turn rate (lower: wider arcs), brake how hard it slows (lower: more momentum); contact: it hurts every foe it touches on the way, once each (her grace making one charge one hit). Every leap: reach times how far off it leaps from, a pounce (the lynx's) landing through metres past its target (a slam, the toad's, still onto it); contact: a pounce hurts whoever it touches in the air.
 
 | knob | type | range |
 |---|---|---|
 | `fight.scale` | number | 0 to … |
 | `fight.speed` | number | 0 to … |
 | `fight.momentum` | number | 0 to … |
+| `fight.charge.reach` | number | 0 to … |
+| `fight.charge.turn` | number | 0 to … |
+| `fight.charge.brake` | number | 0 to … |
+| `fight.charge.contact` | boolean |  |
+| `fight.leap.reach` | number | 0 to … |
+| `fight.leap.through` | number |  |
+| `fight.leap.contact` | boolean |  |
 
 ## `attackFx`, `combat`
 
@@ -1012,6 +1042,8 @@ How attacks feel on screen (Ed, 2026-10-06: 'make creature attack visuals better
 | `combat.homeHealth` | number | 0 to … |
 | `combat.homeRadius` | number | 0 to … |
 | `combat.shake` | number | 0 to … |
+| `combat.daze` | number | 0 to … |
+| `combat.retreatHome` | number | 0 to … |
 
 ## `notice`
 
@@ -1055,7 +1087,7 @@ Knocked out (Ed, 2026-10-04): she collapses where she is; her sigil stack lets g
 
 ## `dash`, `spells`
 
-The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click or Space, gamepad A, touch 'dash'): on the ground only, she vanishes and reappears distance metres the way she's steering (or flying, or facing) in one step, then cooldown seconds before the next. buffer: a press up to this many seconds before she can blink (still recharging, landing, staggered) waits and blinks the moment she can. For gone seconds (a few frames) she isn't drawn and can't be hit; otherwise she's as hittable as ever: it's for slipping out of a shot's path. She lands clear of trees, rocks and ruins, soundsystems, the dancefloor's speakers and the treehouse by clear's metres each, the blink shortened to the furthest clear spot.
+The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click, gamepad A, touch 'dash'): on the ground only, she vanishes and reappears distance metres the way she's steering (or flying, or facing) in one step, then cooldown seconds before the next. toCursor (Ed's playtest, 2026-10-06): she blinks toward the ground under the cursor (or the way the right stick points), the way she faces when the cursor is within aimDead metres of her, and with nothing to aim by (touch) the way she's steering; off, always the way she's steering. buffer: a press up to this many seconds before she can blink (still recharging, landing, staggered) waits and blinks the moment she can. For gone seconds (a few frames) she isn't drawn and can't be hit; otherwise she's as hittable as ever: it's for slipping out of a shot's path. She lands clear of trees, rocks and ruins, soundsystems, the dancefloor's speakers and the treehouse by clear's metres each, the blink shortened to the furthest clear spot.
 
 | knob | type | range |
 |---|---|---|
@@ -1063,6 +1095,8 @@ The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click or Space, gamepad A, 
 | `dash.gone` | number | 0 to … |
 | `dash.cooldown` | number | 0 to … |
 | `dash.buffer` | number | 0 to … |
+| `dash.toCursor` | boolean |  |
+| `dash.aimDead` | number | 0 to … |
 | `dash.clear.tree` | number | 0 to … |
 | `dash.clear.decor` | number | 0 to … |
 | `dash.clear.sound` | number | 0 to … |
@@ -1072,6 +1106,25 @@ The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click or Space, gamepad A, 
 | `spells.speed.mult` | number | 0 to … |
 | `spells.speed.duration` | number | 0 to … |
 | `spells.speed.cooldown` | number | 0 to … |
+
+## `trail`
+
+Her flight trail (Ed, 2026-10-06: "more like a fading-out glow, similar to the leylines. Its length relates to her speed: 5 m on the ground and 20 m on the treetops. The glow should be the same as the current area colour"): a ribbon of glow along her path, fading to nothing at its tail, in the colour of the area she's over (eased over colourEase seconds as she crosses into the next). Its length: ground metres at full speed on the ground, treetops metres over the treetops, from none below from (a share of her top speed) to full at top speed along curve (1 straight), growing to a new speed's over grow seconds and shrinking over shrink. width: metres across on the ground and over the treetops; bright: its brightness; fade: how it fades along its length (eased out: bright for its first stretch, then thinning to nothing; higher keeps it bright longer), its width tapering with it. sparks: the broom's little amber sparks as well. ?trail=0 hides it.
+
+| knob | type | range |
+|---|---|---|
+| `trail.on` | boolean |  |
+| `trail.ground` | number | 0 to … |
+| `trail.treetops` | number | 0 to … |
+| `trail.from` | number | 0 to … |
+| `trail.curve` | number | 0 to … |
+| `trail.width` | array of number |  |
+| `trail.bright` | number | 0 to … |
+| `trail.fade` | number | 0 to … |
+| `trail.grow` | number | 0 to … |
+| `trail.shrink` | number | 0 to … |
+| `trail.colourEase` | number | 0 to … |
+| `trail.sparks` | boolean |  |
 
 ## `boot`
 

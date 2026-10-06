@@ -201,6 +201,82 @@
       ],
       "additionalProperties": false
     },
+    "smoke": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "rate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "life": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rise": {
+          "type": "number",
+          "minimum": 0
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "size": {
+          "type": "number",
+          "minimum": 0
+        },
+        "grow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "drift": {
+          "type": "number",
+          "minimum": 0
+        },
+        "opacity": {
+          "type": "number",
+          "minimum": 0
+        },
+        "warm": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pixel": {
+          "type": "boolean"
+        },
+        "perFire": {
+          "type": "number",
+          "minimum": 0
+        },
+        "maxFires": {
+          "type": "number",
+          "minimum": 0
+        },
+        "range": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "rate",
+        "life",
+        "rise",
+        "speed",
+        "size",
+        "grow",
+        "drift",
+        "opacity",
+        "warm",
+        "pixel",
+        "perFire",
+        "maxFires",
+        "range"
+      ],
+      "additionalProperties": false
+    },
     "sky": {
       "type": "object",
       "properties": {
@@ -2900,6 +2976,37 @@
       ],
       "additionalProperties": false
     },
+    "legendClearing": {
+      "type": "object",
+      "properties": {
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "edge": {
+          "type": "number",
+          "minimum": 0
+        },
+        "top": {
+          "type": "number",
+          "minimum": 0
+        },
+        "species": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "required": [
+        "radius",
+        "edge",
+        "top",
+        "species"
+      ],
+      "additionalProperties": false
+    },
     "relics": {
       "type": "object",
       "properties": {
@@ -4377,6 +4484,39 @@
           "type": "number",
           "minimum": 0
         },
+        "circle": {
+          "type": "object",
+          "properties": {
+            "muffle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "quiet": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ease": {
+              "type": "number",
+              "minimum": 0
+            },
+            "level": {
+              "type": "number",
+              "minimum": 0
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "muffle",
+            "quiet",
+            "ease",
+            "level",
+            "radius"
+          ],
+          "additionalProperties": false
+        },
         "clear": {
           "type": "number",
           "minimum": 0
@@ -4397,6 +4537,7 @@
         "floor",
         "muffle",
         "audible",
+        "circle",
         "clear",
         "distort",
         "src"
@@ -4463,12 +4604,62 @@
         "momentum": {
           "type": "number",
           "minimum": 0
+        },
+        "charge": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "turn": {
+              "type": "number",
+              "minimum": 0
+            },
+            "brake": {
+              "type": "number",
+              "minimum": 0
+            },
+            "contact": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "reach",
+            "turn",
+            "brake",
+            "contact"
+          ],
+          "additionalProperties": false
+        },
+        "leap": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "through": {
+              "type": "number"
+            },
+            "contact": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "reach",
+            "through",
+            "contact"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
         "scale",
         "speed",
-        "momentum"
+        "momentum",
+        "charge",
+        "leap"
       ],
       "additionalProperties": false
     },
@@ -4610,6 +4801,14 @@
         "shake": {
           "type": "number",
           "minimum": 0
+        },
+        "daze": {
+          "type": "number",
+          "minimum": 0
+        },
+        "retreatHome": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -4630,7 +4829,9 @@
         "soundsystemRadius",
         "homeHealth",
         "homeRadius",
-        "shake"
+        "shake",
+        "daze",
+        "retreatHome"
       ],
       "additionalProperties": false
     },
@@ -4744,6 +4945,13 @@
           "type": "number",
           "minimum": 0
         },
+        "toCursor": {
+          "type": "boolean"
+        },
+        "aimDead": {
+          "type": "number",
+          "minimum": 0
+        },
         "clear": {
           "type": "object",
           "properties": {
@@ -4783,6 +4991,8 @@
         "gone",
         "cooldown",
         "buffer",
+        "toCursor",
+        "aimDead",
         "clear"
       ],
       "additionalProperties": false
@@ -4820,6 +5030,75 @@
       "required": [
         "equipped",
         "speed"
+      ],
+      "additionalProperties": false
+    },
+    "trail": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "ground": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treetops": {
+          "type": "number",
+          "minimum": 0
+        },
+        "from": {
+          "type": "number",
+          "minimum": 0
+        },
+        "curve": {
+          "type": "number",
+          "minimum": 0
+        },
+        "width": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "bright": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "grow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "shrink": {
+          "type": "number",
+          "minimum": 0
+        },
+        "colourEase": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sparks": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "on",
+        "ground",
+        "treetops",
+        "from",
+        "curve",
+        "width",
+        "bright",
+        "fade",
+        "grow",
+        "shrink",
+        "colourEase",
+        "sparks"
       ],
       "additionalProperties": false
     },
@@ -5817,6 +6096,7 @@
     "areaEdgeBlend",
     "groundBlend",
     "ground",
+    "smoke",
     "sky",
     "wind",
     "groundCover",
@@ -5883,6 +6163,7 @@
     "bubbles",
     "scenes",
     "grounds",
+    "legendClearing",
     "relics",
     "walls",
     "runeMarkers",
@@ -5906,6 +6187,7 @@
     "knockout",
     "dash",
     "spells",
+    "trail",
     "boot",
     "party",
     "stringLights",
