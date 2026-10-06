@@ -66,7 +66,7 @@ describe("the first quest (Ed, 2026-10-04)", () => {
   }, 60000);
 });
 
-describe("dream creatures from near and safe (balance, 2026-10-06: a far or dangerous one could eat a run)", () => {
+describe("legends.questNear: dream creatures from near, when it's on (off by default: Ed, 2026-10-06, quests are a gamble)", () => {
   /** Each legend's distance (m) to the nearest area of the kind it dreams of. */
   const dists = (questNear: number) => {
     const map = generateMap(8919, withTuning({ legends: { ...TUNING.legends, questNear } })), out: number[] = [];
@@ -77,8 +77,8 @@ describe("dream creatures from near and safe (balance, 2026-10-06: a far or dang
     return out.sort((a, b) => a - b);
   };
   it("dreams of one of the few kinds nearest it, never its own", () => {
-    expect(TUNING.legends.questNear).toBeGreaterThan(0);
-    const near = dists(TUNING.legends.questNear), any = dists(0);
+    expect(TUNING.legends.questNear).toBe(0); // (the gamble kept)
+    const near = dists(4), any = dists(0);
     expect(near[near.length - 1]).toBeLessThan(3 * TUNING.areaSize * TUNING.areaScale); // (the farthest within about three areas)
     expect(near[near.length >> 1]).toBeLessThan(any[any.length >> 1] * 0.6);
     for (const L of spawnCreatures(generateMap(8919, TUNING)).filter(c => c.boss && c.quest)) expect(L.quest!.species).not.toBe(L.species);
