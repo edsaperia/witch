@@ -4,14 +4,15 @@
 //   neutral: as it is (nothing added; the sprite is the plain one, pixel for pixel);
 //   angry:   brows down to the middle over narrowed eyes (with the woken look's red eyes, enraged);
 //   happy:   eyes closed up into smiling arcs, brows lifted;
-//   dazed:   crossed-out or odd eyes, brows up in a worried tilt.
+//   dazed:   crossed-out or odd eyes, brows up in a worried tilt;
+//   asleep:  eyes shut in heavy downturned lids, brows low and slack (a sleeping legend, on the rig).
 // The shapes vary by family: each template has a face style (templates.js: brow, happy, dazed) a
 // species' genome can override (its `face`). Everything is built from the anchors every builder
 // records (the head and the eyes), so a new species gets its expressions for nothing.
 import { M } from "../core.js";
 import { v3 } from "../model3d.js";
 
-export const EXPRESSIONS = ["neutral", "angry", "happy", "dazed"];
+export const EXPRESSIONS = ["neutral", "angry", "happy", "dazed", "asleep"];
 // brow: a thick straight bar; a feather tuft, thin at the middle and flaring out; a wide arched
 // ridge (a snake's or a beetle's brow scales). happy: smiling arcs ("arc") or squeezed shut ("squint").
 // dazed: crossed out ("x") or one eye big and one small ("wobble").
@@ -56,6 +57,7 @@ function faceDraw(m, face, st, u) { // u: one pixel, in model units
       if (st.happy === "squint") m.seg(at(-1, .25), at(1, -.25), line, line, mat, o); // squeezed shut
       else m.chain([[...at(-1.1, -.45), line], [...at(0, .45), line], [...at(1.1, -.45), line]], mat, o); // an upturned arc
     }
+    if (face === "asleep") { drop(e); m.chain([[...at(-1.1, .1), line], [...at(0, -.35), line], [...at(1.1, .1), line]], mat, o); } // shut: a heavy lid, sagging
     if (face === "dazed") {
       if (st.dazed === "wobble") { const k = e === eyes.pts[0] ? 1.5 : .65; for (const q of m.parts) if (near(q, e)) q.r = q.r.map(v => v * k); }
       else { drop(e); m.seg(at(-.9, .9), at(.9, -.9), line, line, mat, o); m.seg(at(-.9, -.9), at(.9, .9), line, line, mat, o); } // crossed out
@@ -63,7 +65,7 @@ function faceDraw(m, face, st, u) { // u: one pixel, in model units
     // ---- the brows: down to the middle when angry, up in the middle when dazed, lifted when happy ----
     // (sunk in to most of their thickness, so the far eye's brow never pokes out past the head's outline)
     const lift = st.brow === "ridge" ? .65 : 1; // (a ridge hugs the eye, as a snake's brow scales do)
-    const [inY, outY] = (face === "angry" ? [.75, 1.85] : face === "dazed" ? [2, 1.2] : [1.75, 1.75]).map(y => y * lift);
+    const [inY, outY] = (face === "angry" ? [.75, 1.85] : face === "dazed" ? [2, 1.2] : face === "asleep" ? [1.2, 1.05] : [1.75, 1.75]).map(y => y * lift);
     const w = st.brow === "ridge" ? 1.5 : 1.2, bm = M.BROW, b = Math.max(line, E * .36), bt = (x, y, r) => [...at(x, y, r * .75), r];
     if (st.brow === "ridge") m.chain([bt(-w, inY, b), bt(0, (inY + outY) / 2 + .2, b * 1.15), bt(w, outY, b)], bm, o);
     else if (st.brow === "tuft") m.chain([bt(-w * .8, inY, line), bt(w * 1.2, outY + .4, b * 1.4)], bm, o);
