@@ -859,7 +859,7 @@ const PLANT_GENOMES = {
   crabApple: { name: "crab apple", form: "tree", generator: "blob", grow: "small", crown: { envelope: "sphere", clumps: "3-5 round blobs, fruit" },
     params: { w: 160, h: 95, trunk: { w: 9, len: .38, taper: .65, bend: 2, lean: .9 }, levels: [{ n: [3, 4], at: [.6, 1], len: [.5, .7], angle: [.7, 1.1], up: .1, bend: 1.8, shape: "even" }, { n: [2, 2], at: [.5, 1], len: [.4, .55], angle: [.4, .7], bend: 1.6 }],
       crown: { blobs: [3, 5], r: [13, 17], flat: .8, stamp: "round", stampSize: 2.5, back: .25, holes: .05, dots: { mat: "FLOWER", share: .035, size: 2 } } },
-    low: { moss: .5, sprigs: .6, boughs: .4 }, colour: { hue: .02, val: .9, dot: [226, 182, 52] } },
+    low: { moss: .5, sprigs: .6, boughs: .4 }, colour: { hue: .05, val: .9, dot: [226, 182, 52] } },
   elder: { name: "elder", form: "shrub", generator: "blob", grow: "small", crown: { envelope: "umbrella", clumps: "flat blobs, flower plates" },
     params: { w: 150, h: 105, trunk: { w: 6, len: .55, taper: .55, bend: 1.4, stems: 4, fan: 1.1, top: true, roots: .5 }, levels: [{ n: [2, 3], at: [.6, 1], len: [.35, .5], angle: [.6, 1], up: .15 }],
       crown: { blobs: [5, 7], r: [16, 21], flat: .55, stamp: "leaf", stampSize: 3, back: .35, holes: .08, twigs: .5, dots: { mat: "FLOWER", share: .012, size: 3 } } },
@@ -1465,13 +1465,16 @@ function chooseType(r, st) {
   for (const [k, f] of TREE_TYPES) { x -= st[k]; if (x <= 0) return f; }
   return broadTree;
 }
+// The night palette (the art director, round 1, after Ed's "a spooky dark forest with a party in it": a dark blue-green and violet
+// forest, no lime): a green hue pulled toward blue-green, compressed into .34 to .44; golds, browns, blues and violets left alone.
+const nightGreen = h => (h >= .17 && h < .42 ? .34 + (h - .17) * .4 : h);
 function treeColours(r, st, type, blob = false) {
   const S = SPECIES_BY_FN.get(type), sa = S?.sat || 1, va = (S?.val || 1) * (st.leafVal ?? 1); // leafVal: an area's palette, brighter or darker leaves
   // a species shifts the area's leaf hue a little; towards yellow it shifts less where the area's leaves are already yellow, so no species turns an area autumnal
-  const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = (S?.hueAbs ?? st.leafHue) + (r() - .5) * st.leafVariety * .7 + sh; // hueAbs: a hue of its own, whatever the area's
+  const sh0 = S?.hue || 0, sh = sh0 < 0 ? sh0 * Math.max(0, Math.min(1, (st.leafHue - .17) / .09)) : sh0, h = nightGreen((S?.hueAbs ?? st.leafHue) + (r() - .5) * st.leafVariety * .7 + sh); // hueAbs: a hue of its own, whatever the area's; never lime (nightGreen)
   const c = {
     [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BARK2]: [222, 220, 212],
-    [M.LEAF]: hsv2rgb(h, Math.min(1, .62 * st.sat * sa), Math.min(1, .58 * va)), [M.LEAF2]: hsv2rgb(h - .05, Math.min(1, .55 * st.sat * sa), Math.min(1, .8 * va)), [M.LEAF3]: hsv2rgb(h + .03, Math.min(1, .66 * st.sat * sa), .38 * va), [M.WEB]: [225, 225, 232],
+    [M.LEAF]: hsv2rgb(h, Math.min(1, .62 * st.sat * sa), Math.min(1, .58 * va)), [M.LEAF2]: hsv2rgb(h - .05, Math.min(1, .46 * st.sat * sa), Math.min(1, .68 * va)), /* (the night palette: the lit tone quieter, so a lit crown never glows) */ [M.LEAF3]: hsv2rgb(h + .03, Math.min(1, .66 * st.sat * sa), .38 * va), [M.WEB]: [225, 225, 232],
   };
   if (st.artStyle && (S?.blob || blob)) { // the pixel-art ramp (the blob generator's trees; bake's post-pass does the rest) (docs/ART-GUIDE.md section 0): 3 hue-shifted tones per material, the shadow deeper, more saturated and
     // towards blue-violet, the light pale and towards cream; "ref" (Ed's reference, rung 6) keeps one tone family, "bold" (rung 3/4) shifts further
@@ -3160,7 +3163,7 @@ function groundColours(def, st) {
     [M.ACCENT]: kind === "needles" ? hsv2rgb(.07, .5, .5) : hsv2rgb(.1, .08, .62), [M.FLOWER]: flower,
     [M.LEAF]: hsv2rgb(def.leaf, .55 * st.sat, .45), [M.LEAF2]: hsv2rgb(def.leaf - .03 - .05 * sh, .5 * st.sat * (1 - .2 * sh), .62 + .06 * sh), [M.LEAF3]: hsv2rgb(def.leaf + .03 + .05 * sh, .6 * st.sat, .3),
     [M.MOSS]: hsv2rgb(def.leaf + .02, .5 * st.sat, .36), [M.TRUNK]: hsv2rgb(st.trunkHue, .4, .3), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .35, .48),
-    [M.STONE]: hsv2rgb(.1, .07, .6), [M.STONED]: hsv2rgb(.62 + .02 * sh, .1, .38), [M.WATER]: hsv2rgb(.58, .35, Math.max(.16, val * .55)), [M.WEB]: hsv2rgb(.56, .12, .78),
+    [M.STONE]: hsv2rgb(.58, .06, .54), /* cool grey, never brighter than the witch in her own light (art director, round 1) */ [M.STONED]: hsv2rgb(.62 + .02 * sh, .1, .38), [M.WATER]: hsv2rgb(.58, .35, Math.max(.16, val * .55)), [M.WEB]: hsv2rgb(.56, .12, .78),
   };
   return colours;
 }
@@ -3421,6 +3424,101 @@ function propFor(kind, o = {}) {
   if (kind === "stump" && !o.gnawed) return ["brokenTrunk", o.snag ? {} : { branch: "none" }];
   return null;
 }
+
+
+
+// ---- inlined from art/props/bridges.js ----
+// Bridges from genomes (the coordinator's overnight list for the prop generator, #119: "signposts, bridges"): the path network's
+// crossings (art/paths.js footbridge, rope-bridge and root-bridge, where a path crosses a stream) as seeded variants, so the
+// crossings along a stream differ instead of repeating one sprite. Built like the path pieces (model units, spanning along x, a
+// stream's water under the middle), drawn in the path pieces' colours (pathColours), so a variant changes shape only. Under
+// ?props=gen (style.propGen) the art build bakes BRIDGE_VARIANTS of each as "<id>~<k>", and the view picks one by the crossing's place.
+//   footbridge:  planks over a low arch on two stringers, rails on both sides, one or none (rails, posts only, or X-braced),
+//                a plank or two missing, moss on the old ones
+//   rope-bridge: planks hung between two pairs of posts, sagging, handropes (one pair or two), a few planks gone
+//   root-bridge: gnarled roots arching over the stream, twisted together, mossed, ferns at its ends, a crown at one end or both
+// And the fingerposts where a footpath comes into an area's clearing (rules/paths.ts, under ?props=gen: paths.fingerposts):
+//   fingerpost:  an old wooden post, 1 to 4 blank arms pointing different ways (pointed, swallowtailed or square-ended; no words),
+//                a cap, a ball or a plain top, leaning a little, an arm sometimes snapped or hanging, moss up its foot, ivy now and then
+
+
+const BRIDGE_VARIANTS = 3;
+const BRIDGE_GENOMES = {
+  footbridge: { span: [1, 1.45], width: [.38, .58], arch: [.04, .28], deck: [.24, .38], rails: [["both", 3], ["one", 2], ["none", 1]], railStyle: [["rail", 3], ["posts", 1], ["cross", 2]], missing: [0, 2], moss: [.05, .3] },
+  "rope-bridge": { span: [1.35, 1.8], width: [.32, .48], sag: [.18, .4], post: [.9, 1.3], ropes: [["one", 2], ["two", 1]], missing: [0, 3], step: [.17, .23] },
+  fingerpost: { height: [.85, 1.2], girth: [.035, .055], lean: [-.08, .08], arms: [1, 4], armLen: [.28, .42], arm: [["point", 3], ["swallow", 2], ["square", 1]], top: [["cap", 2], ["ball", 1], ["plain", 2]], broken: [0, 1], ivy: [0, 1], moss: [.1, .3] },
+  "root-bridge": { span: [1.5, 2], width: [.28, .48], arch: [.32, .6], roots: [3, 6], twist: [.05, .2], moss: [.2, .55], crown: [["start", 2], ["both", 1], ["none", 1]], ferns: [2, 6] },
+};
+const brPick = (r, opts) => { const tot = opts.reduce((a, [, w]) => a + w, 0); let x = r() * tot; for (const [v, w] of opts) if ((x -= w) < 0) return v; return opts[0][0]; };
+function bridgeVariant(id, seed = 0) {
+  const G = BRIDGE_GENOMES[id]; if (!G) throw new Error(`no bridge "${id}"`);
+  const r = rng(((seed + 5) * 2654435761 + id.length * 61) >>> 0), v = { seed, r };
+  for (const [k, g] of Object.entries(G)) { if (Array.isArray(g[0])) v[k] = brPick(r, g); else { const x = g[0] + (g[1] - g[0]) * r(); v[k] = Number.isInteger(g[0]) && Number.isInteger(g[1]) ? Math.round(x) : x; } }
+  return v;
+}
+const brCell = (p, k, s) => { const x = Math.sin(Math.floor(p[0] * k) * 127.1 + Math.floor(p[1] * k) * 311.7 + Math.floor(p[2] * k) * 74.7 + s * 19.3) * 43758.5453; return x - Math.floor(x); };
+const brWater = (m, span) => m.ell([0, .01, 0], [span * .78, .015, .72], M.WATER, { group: 1 });
+const brGone = (r, n, lo, hi) => new Set([...Array(n).keys()].map(() => lo + Math.floor(r() * (hi - lo))));
+
+function brFoot(m, v) {
+  const r = v.r, S = v.span, W = v.width, y = x => v.deck + v.arch * (1 - (x / S) ** 2); // its deck's height along it
+  brWater(m, S);
+  const n = Math.round(S * 2 / .2), gone = brGone(r, v.missing, 2, n - 2);
+  for (let k = 0; k <= n; k++) { if (gone.has(k)) continue; const x = -S + k * (2 * S / n), j = (r() - .5) * .04; m.box([x, y(x), j], [.085, .028, W + (r() - .5) * .05], M.WOOD, { round: .01, group: 2 + (k & 1), paint: p => brCell(p, 9, k) < v.moss ? M.MOSS : undefined }); }
+  for (const z of [-W * .7, W * .7]) { const pts = []; for (let k = 0; k <= 6; k++) { const x = -S + k * S / 3; pts.push([x, y(x) - .045, z, .03]); } m.chain(pts, M.BARKD, { group: 4 }); } // the stringers
+  const sides = v.rails === "both" ? [-1, 1] : v.rails === "one" ? [r() < .5 ? -1 : 1] : [];
+  for (const s of sides) {
+    const z = s * W * .95, xs = [-S * .95, -S * .32, S * .32, S * .95], h = .48;
+    for (const x of xs) m.seg([x, y(x) - .02, z], [x, y(x) + h, z], .026, .024, M.WOOD, { group: 5 });
+    if (v.railStyle !== "posts") m.chain(xs.map(x => [x, y(x) + h, z, .02]), M.WOOD, { group: 5 });
+    if (v.railStyle === "cross") for (let i = 0; i + 1 < xs.length; i++) { const a = xs[i], b = xs[i + 1]; m.seg([a, y(a) + .02, z], [b, y(b) + h - .03, z], .012, .012, M.WOOD, { group: 6 }); m.seg([a, y(a) + h - .03, z], [b, y(b) + .02, z], .012, .012, M.WOOD, { group: 6 }); }
+  }
+  for (const x of [-S * 1.02, S * 1.02]) for (const z of [-W * .7, W * .7]) m.seg([x, 0, z], [x, y(x), z], .04, .04, M.TRUNK, { group: 7 }); // its feet on the banks
+}
+function brRope(m, v) {
+  const r = v.r, S = v.span, W = v.width, low = .55, y = x => low - (1 - (x / S) ** 2) * v.sag * .9 + .08;
+  brWater(m, S);
+  for (const x of [-S, S]) for (const z of [-W - .05, W + .05]) m.seg([x, 0, z], [x, v.post, z], .05, .045, M.WOOD, { group: 2, paint: p => p[1] < .12 ? M.MOSS : undefined });
+  const n = Math.round(S * 2 / v.step), gone = brGone(r, v.missing, 2, n - 2);
+  for (let k = 0; k <= n; k++) { if (gone.has(k)) continue; const x = -S + k * (2 * S / n), tw = (r() - .5) * .3; m.box([x, y(x), 0], [.07, .018, W * (.85 + r() * .15)], M.WOOD, { round: .01, group: 3 + (k & 1), dir: [1, 0, tw * .2] }); }
+  const top = x => v.post - .05 - (1 - (x / S) ** 2) * v.sag * .8, lines = [top, x => y(x) + .03, ...(v.ropes === "two" ? [x => (top(x) + y(x)) / 2 + .04] : [])]; // handropes, foot ropes, and a middle pair
+  for (const z of [-W - .05, W + .05]) for (const f of lines) m.chain([...Array(9).keys()].map(k => { const x = -S + k * S / 4; return [x, f(x), z, .014]; }), M.STRAW, { group: 5 });
+  for (let k = 1; k < 8; k += 2) for (const z of [-W - .05, W + .05]) { const x = -S + k * S / 4; m.seg([x, y(x), z], [x, top(x), z], .008, .008, M.STRAW, { group: 6 }); } // the hangers
+}
+function brRoot(m, v) {
+  const r = v.r, S = v.span, W = v.width;
+  brWater(m, S * .85);
+  for (let i = 0; i < v.roots; i++) {
+    const z0 = (i / Math.max(1, v.roots - 1) - .5) * W * 2, ph = r() * 6.28, pts = [];
+    for (let k = 0; k <= 6; k++) { const t = k / 6, x = -S + t * 2 * S, z = z0 * (1 - .4 * Math.sin(t * Math.PI)) + Math.sin(t * 9 + ph) * v.twist * .5, yy = Math.sin(t * Math.PI) * v.arch + .02, rad = .1 + .06 * Math.abs(t - .5) * 2 - i * .006; pts.push([x, yy, z, Math.max(.05, rad)]); }
+    m.chain(pts, M.TRUNK, { group: 2 + (i % 3), rough: .015, paint: p => brCell(p, 12, i) < .12 ? M.BARKD : p[1] > v.arch * .75 && brCell(p, 5, i) < v.moss ? M.MOSS : undefined });
+  }
+  const crowns = v.crown === "both" ? [-1, 1] : v.crown === "start" ? [r() < .5 ? -1 : 1] : [];
+  for (const s of crowns) { const c = [s * (S + .05), .25 + r() * .1, -.35], R = [.3 + r() * .12, .2 + r() * .08, .25]; m.ell(c, R, M.LEAF, { group: 8 + s, rough: .04, paint: p => { const n = brCell(p, 10, 3); return p[1] < c[1] - .05 || n < .2 ? M.LEAF3 : n > .8 ? M.LEAF2 : undefined; } }); }
+  for (let i = 0; i < v.ferns; i++) { const s = i % 2 ? 1 : -1, b = [s * (S - .1 + r() * .25), 0, (r() - .5) * W * 2.4]; for (let k = 0; k < 4; k++) { const a = k / 4 * 6.28 + r(); m.chain([[...b, .02], [...v3.add(b, [Math.cos(a) * .12, .14, Math.sin(a) * .1]), .015], [...v3.add(b, [Math.cos(a) * .24, .08, Math.sin(a) * .2]), .006]], k % 2 ? M.LEAF : M.LEAF2, { group: 12 + i }); } }
+}
+function brPost(m, v) {
+  const r = v.r, H = v.height, up = v3.norm([Math.sin(v.lean), 1, Math.sin(v.lean * .6)]), at = h => v3.mul(up, h);
+  m.seg([0, -.02, 0], at(H), v.girth, v.girth * .85, M.WOOD, { group: 1, paint: p => p[1] < H * v.moss ? M.MOSS : brCell(p, 18, 3) < .12 ? M.BARKD : undefined });
+  if (v.top === "cap") m.box(at(H + .015), [v.girth * 1.6, .015, v.girth * 1.6], M.BARKD, { group: 2, round: .006 });
+  if (v.top === "ball") m.ell(at(H + v.girth), [v.girth * 1.1, v.girth * 1.1, v.girth * 1.1], M.WOOD, { group: 2 });
+  const a0 = r() * 6.28, snap = v.broken > .6 ? Math.floor(r() * v.arms) : -1;
+  for (let i = 0; i < v.arms; i++) {
+    const a = (i % 2 ? Math.PI : 0) + (a0 > 3.14 ? Math.PI : 0) + (r() - .5) * 1.1, d = [Math.cos(a), 0, Math.sin(a) * .8], y = H * (.86 - i * .1), L = v.armLen * (.8 + r() * .3), hang = i === snap;
+    const dir = hang ? v3.norm([d[0] * .3, -1, d[2] * .3]) : v3.norm(d), base = v3.add(at(y), v3.mul(dir, v.girth)), c = v3.add(base, v3.mul(dir, L / 2)), lenK = hang ? .7 : 1;
+    m.box(c, [L / 2 * lenK, .05, .012], M.WOOD, { dir, up: hang ? [d[0], 0, d[2]] : [0, 1, 0], round: .004, group: 3 + i, paint: p => { const t = v3.dot(v3.sub(p, base), dir); return Math.abs(t - L * .45) < .01 ? M.BARKD : undefined; } }); // a blank board, a groove where words were
+    const tip = v3.add(base, v3.mul(dir, L * lenK));
+    if (v.arm === "point") m.box(tip, [.035, .035, .012], M.WOOD, { dir: v3.norm(v3.add(dir, hang ? [0, 0, 0] : [0, 1, 0])), up: [0, 1, 0], round: .003, group: 3 + i });
+    if (v.arm === "swallow") for (const k of [-1, 1]) m.seg(v3.sub(tip, v3.mul(dir, .01)), v3.add(tip, v3.add(v3.mul(dir, .04), [0, k * .035, 0])), .014, .006, M.WOOD, { group: 3 + i });
+  }
+  if (v.ivy > .55) m.chain([[v.girth, .02, v.girth * .4, .014], [v.girth * .8, H * .3, v.girth * .7, .013], [-v.girth * .5, H * .55, v.girth * .9, .01], [-v.girth, H * .7, v.girth * .2, .006]], M.LEAF, { group: 9, paint: p => brCell(p, 30, 5) < .4 ? M.LEAF2 : undefined });
+  for (let i = 0; i < 4; i++) { const a = r() * 6.28; m.seg([Math.cos(a) * .06, 0, Math.sin(a) * .05], [Math.cos(a) * .09, .07 + r() * .06, Math.sin(a) * .07], .012, .004, i % 2 ? M.LEAF : M.LEAF2, { group: 10 }); } // grass at its foot
+}
+const BR_BUILD = { footbridge: brFoot, "rope-bridge": brRope, "root-bridge": brRoot, fingerpost: brPost };
+const BRIDGE_IDS = ["footbridge", "rope-bridge", "root-bridge"];
+const PATH_GEN_IDS = Object.keys(BR_BUILD); // every path piece the generator draws variants of (the bridges, the fingerpost)
+// Fill a model with one bridge's variant (seed), as art/paths.js's pieces build theirs.
+function buildBridge(m, id, seed) { const v = bridgeVariant(id, seed); BR_BUILD[id](m, v); return v; }
 
 
 
@@ -4212,6 +4310,8 @@ const GENOMES = [
   { id: "moth", name: "Moth", template: "flyer", builder: "moth", palette: { hue: .1, sat: .3, val: .7 }, legend: ["wingsBig"] , texture: { kind: "fur", size: 3, stretch: 1.6 } },
   { id: "marten", name: "Pine marten", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .6, val: .45 }, body: { hgt: .55, len: .78, chest: .35, tuck: .38, neck: .3, neckAng: .55, neckW: .35, hr: .25, legW: .85, back: "arch" }, head: { snout: .65, snoutD: .6 }, parts: { ears: { kind: "round", size: .9 }, tail: "bushy", feet: "paw" }, coat: { belly: true }, legend: ["mane"] },
   { id: "salamander", name: "Salamander", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .1, val: .22, belly: "yellow" }, body: { hgt: .42, len: .9, chest: .14, tuck: .14, neck: .12, neckAng: .05, neckW: .5, hr: .27, legW: 1 }, head: { snout: .55, snoutD: .55 }, parts: { ears: { kind: "none" }, tail: "otter", feet: "paw" }, coat: { spots: true, spotMat: "belly" }, legend: ["flames"] , texture: { kind: "smooth" } },
+  // the fen's newt (an area recipe's, #119; art builder 2's record): a slimmer, lower salamander with a crest along its back
+  { id: "newt", name: "Newt", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .55, val: .35, belly: "yellow" }, body: { hgt: .44, len: 1.1, chest: .11, tuck: .1, neck: .14, neckAng: .1, neckW: .45, hr: .32, legW: .7 }, head: { snout: .42, snoutD: .5 }, parts: { ears: { kind: "none" }, tail: "otter", feet: "paw" }, coat: { spots: true, spotMat: "belly", ridge: true }, legend: ["crystals"], texture: { kind: "smooth" } },
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
@@ -5489,6 +5589,8 @@ const SIGILS = {
   marten: [stave(.32), L([.3, .2], [.5, .32], [.7, .2]), ...pair(A(.3, .14, .07, 90, -180)), A(.28, .56, .22, 0, 150), D(.28 + .22 * Math.cos(150 * Math.PI / 180), .56 + .22 * Math.sin(150 * Math.PI / 180)), FOOT],
   // a flame at the head, legs as bent ticks along the spine, spots
   salamander: [stave(.3), bow([.5, .3], [.5, .06], .35), bow([.5, .3], [.5, .06], -.35), ...pair(L([.5, .42], [.32, .38], [.26, .48]), L([.5, .64], [.32, .6], [.26, .7])), FOOT, ...pair(D(.38, .52))],
+  // the fen's newt: a crest waving along the spine, legs as bent ticks, spots on the belly
+  newt: [stave(.24), wave(.5, .3, .06, .07, 1.5), ...pair(L([.5, .42], [.32, .38], [.26, .48]), L([.5, .64], [.32, .6], [.26, .7])), FOOT, ...pair(D(.4, .56))],
   // a shining star at the tail end: a ring with rays
   glowworm: [stave(.4), A(.5, .27, .1, 90, 450), ...rays(.5, .27, .15, .25, [0, 60, 120, 180, 240, 300]), FOOT],
   // eight legs round a body, hanging from a thread
@@ -5504,7 +5606,7 @@ const SIGILS = {
 const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-const SIGIL_NEON = { badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta" };
+const SIGIL_NEON = { badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid" };
 const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;
@@ -6457,6 +6559,56 @@ function tallPiece(kind, o, def, st, r, ppm = 16) {
 
 
 
+// ---- inlined from art/recipes.js ----
+// Area recipes (#119): an area type as data alone, one object each, so a new area type is a recipe and some tuning, no code.
+// art/areas.js folds every recipe into the registries the game and the art read, as if it had been written there:
+//   the area itself     id, name, creature (a species id), by, leaf (its plants' hue), floor ([kind, hue, sat, val]; the kind
+//                       picks its ground genome, art/ground.js, and its tuft mix, art/tufts.js), text ({ floor, wall, small, big,
+//                       set }: Ed's columns), wall, small, big (props, as art/areas.js P() and tree() write them), set (a set piece)
+//   flags               sharesCreature (its creature may be another area's: Ed's rule is a creature of its own for every
+//                       area, so a recipe says so if it breaks it), ponds (more moonlit ponds), wet (its paths run as streams and boardwalks), steep (a flight of stairs may
+//                       stand at its clearing's edge), pathKinds (path kinds it suits besides those whose moods name it)
+//   layout              how its trees and undergrowth stand (art/areas.js AREA_LAYOUTS: pattern, density, clump, glades, ...)
+//   flora               its tree species and palette (art/flora/areas.js AREA_FLORA)
+//   setPiece            [kind, text, size] for art/setpieces.js NEW_SET_PIECES, when it has no `set` of its own
+//   settings            { treeDensity, groundCover } (config/area-types.json's numbers, which win when it names the area)
+//   ground              its own ground genome over its floor kind's (art/ground.js)
+// The creature a recipe names must be a species the game has (art/genome/species.js and the configs keyed by species).
+// ---- inlined from art/recipes/fen.js ----
+// The fen (#119): the first area type written as a recipe, data alone (art/recipes.js says what each field is). Ed's columns as
+// for the 30: open peaty water and sedge under alder and willow carr, the newt its creature.
+const FEN = {
+  id: "fen", name: "Fen", creature: "newt", by: "recipe", leaf: .23, floor: ["moss", .2, .5, .32],
+  text: { floor: "peat moss and sedge", wall: "black pools", small: "sedge and reeds", big: "aspen and alder carr", set: "a punt sunk among the sedge" },
+  wall: [["water", { w: 1.4 }], ["reeds", { tall: true }]], small: [["reeds", {}], ["grass", { h: 1.2 }]],
+  big: [["tree", { type: "aspen", scale: .9 }], ["tree", { type: "alder", minor: true, scale: .85, gnarl: .6 }]],
+  ponds: true, wet: true, pathKinds: ["stepping"],
+  setPiece: ["punt", "a punt sunk among the sedge", 1],
+  layout: {
+    pattern: "edgeOnly", density: .45, clump: .6, glades: { count: 2, size: [12, 18] },
+    heightMix: { sapling: .3, mature: .55, tall: .15, giant: 0 }, undergrowth: .85, lean: { dir: 0, amount: 0 },
+    terrain: ["pools", "hollows"], decor: { rate: .25, ruins: .2, rocks: .1, freak: .1, lake: .5, modern: .1 },
+    feel: "Black peaty pools between tussocks of sedge, alder and willow carr round the rim; still, low and full of small lives.",
+  },
+  flora: { species: [["aspen", .45], ["alder", .35], ["willow", .2]], palette: { sat: .85, val: .9 } },
+  settings: { treeDensity: .55, groundCover: { density: .8, kinds: ["moss", "blades"] } },
+};
+
+
+const AREA_RECIPES = [FEN];
+
+// What is missing from a recipe, if anything.
+function recipeProblems(R) {
+  const out = [];
+  for (const k of ["id", "name", "creature", "floor", "text", "layout"]) if (R[k] == null) out.push(k);
+  if (R.floor && (!Array.isArray(R.floor) || R.floor.length !== 4)) out.push("floor");
+  if (!R.set && !R.setPiece) out.push("set or setPiece");
+  if (!(R.big?.length)) out.push("big");
+  return out;
+}
+
+
+const RECIPE_LAYOUTS = {};
 
 // [kind, params] shorthands for the prop library below
 const tree = (type, o = {}) => ["tree", { type, ...o }];
@@ -6464,13 +6616,13 @@ const P = (kind, o = {}) => [kind, o];
 
 // floor: [texture, hue, saturation, value]; leaf: leaf hue for this area's plants.
 const AREAS = [
-  { id: "moor", name: "Moor", creature: "badger", by: "Ed", leaf: .24, floor: ["moss", .26, .45, .42], text: { floor: "moss", wall: "puddles, a lake", small: "long grass", big: "moss mounds" },
-    wall: [P("water", { w: 1.6 })], small: [P("grass", { h: 1.4 })], big: [P("mound", { moss: true }), P("cairn", { sparse: .12 }), P("standingstone", { sparse: .12 })] },
-  { id: "fern-forest", name: "Fern forest", creature: "boar", by: "Ed", leaf: .3, floor: ["needles", .08, .45, .32], text: { floor: "pine needles", small: "ferns", big: "pine trees" },
+  { id: "moor", name: "Moor", creature: "badger", by: "Ed", leaf: .24, floor: ["heather", .95, .28, .36], ground: { patches: [{ mat: "TRUNK", n: 3, r: [4, 7] }, { mat: "MOSS", n: 3, r: [3, 6] }], details: [{ stamp: "moss", n: 18, mats: ["LEAF3", "LEAF", "LEAF2"] }, { stamp: "sprig", n: 34, mats: ["LEAF3", "BODY", "FLOWER"] }] } /* violet-brown heather and moss (the art director, round 1) */, text: { floor: "moss", wall: "puddles, a lake", small: "long grass", big: "moss mounds" },
+    wall: [P("water", { w: 1.6 })], small: [P("grass", { h: 1.4, leafHue: .97, leafSat: .55 })], big: [P("mound", { moss: true }), P("cairn", { sparse: .12 }), P("standingstone", { sparse: .12 })] },
+  { id: "fern-forest", name: "Fern forest", creature: "boar", by: "Ed", leaf: .3, floor: ["needles", .3, .4, .3], text: { floor: "pine needles", small: "ferns", big: "pine trees" },
     small: [P("fern")], big: [tree("larch", { scale: 1.1 }), tree("fir", { minor: true })] },
   { id: "muddy-forest", name: "Muddy forest", creature: "snail", by: "Ed", leaf: .22, floor: ["mud", .07, .5, .28], text: { floor: "mud and leaves", small: "short trunks with broken branches", big: "trees with many trunks and branches" },
     small: [P("stump", { snag: true })], big: [tree("sycamore", { trunks: 3, gnarl: .9 }), tree("alder", { minor: true })] },
-  { id: "stone-shrine", name: "Stone shrine", creature: "fox", by: "Ed", leaf: .28, floor: ["stony", .25, .3, .45], text: { floor: "grassy, stony", wall: "mossy henges", small: "little stones", big: "big stones", set: "a shrine" },
+  { id: "stone-shrine", name: "Stone shrine", creature: "fox", by: "Ed", leaf: .28, floor: ["stony", .6, .07, .48], ground: { details: [{ stamp: "slab", n: 16, mats: ["STONED", "STONE", "BELLY"] }, { stamp: "pebble", n: 12, mats: ["STONED", "STONE", "BELLY"] }, { stamp: "tuft", n: 14, mats: ["LEAF3", "LEAF", "LEAF2"] }] }, text: { floor: "grassy, stony", wall: "mossy henges", small: "little stones", big: "big stones", set: "a shrine" },
     wall: [P("henge")], small: [P("stones")], big: [P("boulder"), P("pillar", { sparse: .1 }), P("pillar", { sparse: .08, broken: true, lean: .14 }), P("cairn", { sparse: .08, tall: true })], set: P("shrine") },
   { id: "tangly-forest", name: "Tangly forest", creature: "ram", by: "Ed", leaf: .27, floor: ["nettles", .28, .5, .3], text: { floor: "nettles and earth", small: "tangled branches", big: "fairly short tangly trees" },
     small: [P("bramble", { bare: true })], big: [tree("hawthorn", { scale: .9, gnarl: 1 })] },
@@ -6516,7 +6668,7 @@ const AREAS = [
     small: [P("shrub", { flower: [250, 205, 40], spiky: true })], big: [tree("birch", { lean: .45, scale: .75 }), tree("hawthorn", { minor: true, scale: .7, lean: .45 })] },
   { id: "old-pinewood", name: "Old pinewood", creature: "marten", by: "draft", leaf: .35, floor: ["needles", .07, .4, .3], text: { floor: "pine needles", small: "pine cones", big: "tall old pines with knotholes" },
     small: [P("cones")], big: [tree("pine", { scale: 1.35 }), tree("rowan", { minor: true, scale: .8 })] },
-  { id: "ravine", name: "Ravine", creature: "salamander", by: "draft", leaf: .3, floor: ["stone", .3, .3, .32], text: { floor: "wet moss and rock", wall: "rock walls", small: "ferns", big: "mossy boulders", set: "a waterfall" },
+  { id: "ravine", name: "Ravine", creature: "salamander", by: "draft", leaf: .3, floor: ["stone", .6, .1, .42], text: { floor: "wet moss and rock", wall: "rock walls", small: "ferns", big: "mossy boulders", set: "a waterfall" },
     wall: [P("rockwall", { moss: true })], small: [P("fern")], big: [P("boulder", { moss: true, big: true }), P("spire", { sparse: .1 }), P("spire", { sparse: .06, twin: true }), P("stalagmite", { sparse: .1 })], set: P("waterfall") },
   { id: "bluebell-glade", name: "Bluebell glade", creature: "glowworm", by: "draft", leaf: .26, floor: ["bluebells", .27, .45, .4], text: { floor: "bluebells", small: "ferns", big: "beeches" },
     small: [P("fern")], big: [tree("beech", { gnarl: .2, scale: 1.1 }), tree("holly", { minor: true, scale: .7 })] },
@@ -6525,6 +6677,19 @@ const AREAS = [
   { id: "honeysuckle-tangle", name: "Honeysuckle tangle", creature: "dormouse", by: "draft", leaf: .25, floor: ["clover", .27, .45, .45], text: { floor: "grass and clover", wall: "bramble", small: "honeysuckle", big: "hazel coppice" },
     wall: [P("bramble")], small: [P("shrub", { flower: [250, 230, 170] })], big: [tree("hazel", { trunks: 5, scale: .9, thin: true }), tree("rowan", { minor: true, scale: .8 })] }, // a taller coppice, so the area has something tall
 ];
+// Each area's flags, as data the rules read (src/rules/map.ts AreaType): ponds (more moonlit ponds), wet (its paths run as streams
+// and boardwalks), steep (a flight of stairs may stand at its clearing's edge), pathKinds (path kinds besides those whose moods name it).
+const AREA_FLAGS = { moor: { ponds: true }, wetland: { ponds: true, wet: true }, stream: { ponds: true, wet: true, pathKinds: ["bridges"] }, bog: { ponds: true, wet: true }, "beaver-pond": { ponds: true, wet: true },
+  ravine: { steep: true, pathKinds: ["stairs"] }, "rocky-slope": { steep: true, pathKinds: ["stairs"] }, "cave-mouth": { steep: true, pathKinds: ["stairs"] }, "stone-shrine": { steep: true } };
+for (const [id, f] of Object.entries(AREA_FLAGS)) Object.assign(AREAS.find(a => a.id === id), f);
+// The area recipes (art/recipes.js): area types written as data alone, folded in here as if written above.
+for (const R of AREA_RECIPES) {
+  const bad = recipeProblems(R); if (bad.length) throw new Error(`area recipe ${R.id}: missing ${bad.join(", ")}`);
+  const { layout, flora, setPiece, ...area } = R;
+  AREAS.push(area); RECIPE_LAYOUTS[R.id] = layout;
+  if (flora) AREA_FLORA[R.id] = flora;
+  if (setPiece && !R.set) NEW_SET_PIECES[R.id] = setPiece;
+}
 // Set pieces for the areas that had none (Ed: "Make set pieces for the other areas too"), built in 3D: setpieces.js
 for (const [id, [kind, text]] of Object.entries(NEW_SET_PIECES)) { const A = AREAS.find(x => x.id === id); if (A && !A.set) { A.set = P(kind, { three: true }); A.text = { ...A.text, set: text }; } }
 const AREA_BY_ID = Object.fromEntries(AREAS.map(a => [a.id, a]));
@@ -6534,6 +6699,9 @@ const AREA_BY_ID = Object.fromEntries(AREAS.map(a => [a.id, a]));
 const HOME_AREA = { id: "home", name: "Home meadow", creature: null, by: "Ed", leaf: .29, floor: ["flowers", .28, .55, .56],
   text: { floor: "a pleasant green meadow with flowers", small: "wildflowers", big: "party decorations instead of trees" },
   small: [P("flowers")], big: [], home: true };
+// The night palette (the art director, round 1): every area's green leaves and ground pulled toward blue-green (nightGreen, art/trees.js),
+// so the forest reads dark blue-green, with no lime, and each area keeps its own floor apart by value as well as hue.
+for (const A of [...AREAS, HOME_AREA]) { A.leaf = nightGreen(A.leaf); A.floor[1] = nightGreen(A.floor[1]); }
 AREA_BY_ID.home = HOME_AREA;
 
 // ---------------- layout: how each area's vegetation is arranged (data only) ----------------
@@ -6627,6 +6795,7 @@ const AREA_LAYOUTS = {
   "honeysuckle-tangle": LAY("stands", .6, .7, [2, [5, 8]], [.45, .5, .05, 0], .8, NO_LEAN, ["paths", "mounds"], [.3, [.3, 0, .3, 0, .4]],
     "Hazel coppice stools in clumps, honeysuckle and bramble between, clover paths winding through."),
 };
+Object.assign(AREA_LAYOUTS, RECIPE_LAYOUTS); // the recipes' own
 for (const a of AREAS) a.layout = AREA_LAYOUTS[a.id];
 // Checks a layout's shape; returns a list of problems (empty when it's sound).
 function layoutProblems(a) {
@@ -6678,7 +6847,8 @@ function rock(sp, c, rx, ry, st, r, moss) { // a lumpy stone, lit above, mossy o
 function prop(kind, o, def, st, r, s) {
   if (st.propGen && o.gen) return propPiece(o.gen[0], { ...o.gen[1], seed: o.gen[2] }, def, st); // ?props=gen: the prop generator's variant (art/props/)
   if (TALL_KINDS.includes(kind)) return tallPiece(kind, o, def, st, r); // the tall pieces (tall.js): 3D, at the witch's scale
-  const leafCol = { [M.LEAF]: hsv2rgb(def.leaf, .6 * st.sat, .55), [M.LEAF2]: hsv2rgb(def.leaf - .05, .55 * st.sat, .78), [M.LEAF3]: hsv2rgb(def.leaf + .03, .66 * st.sat, .36) };
+  const lh = o.leafHue ?? def.leaf, ls = st.sat * (o.leafSat ?? 1); // (a prop's own leaf hue and saturation: the moor's dry violet-brown grass)
+  const leafCol = { [M.LEAF]: hsv2rgb(lh, .6 * ls, .55), [M.LEAF2]: hsv2rgb(lh - .05, .55 * ls, .78), [M.LEAF3]: hsv2rgb(lh + .03, .66 * ls, .36) };
   const wood = { [M.TRUNK]: hsv2rgb(st.trunkHue, .45 * st.sat, .34), [M.BARKD]: hsv2rgb(st.trunkHue + .03, .5 * st.sat, .17), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .38 * st.sat, .5), [M.BELLY]: hsv2rgb(st.trunkHue + .02, .3, .7) };
   const water = { [M.MAGIC]: [60, 110, 150], [M.MAGIC2]: [150, 200, 220], [M.BODY2]: [35, 70, 100] };
   if (kind === "tree") {
@@ -7045,7 +7215,7 @@ function tuftSprites(id, st = {}) {
   const A = AREA_BY_ID[id]; if (!A) throw new Error(`no area type "${id}"`);
   const mix = TF_MIX[A.floor[0]] || TF_MIX.grass, leaf = A.leaf, r = rng(id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 3) >>> 0);
   const flower = { heather: hsv2rgb(.85, .5, .7), bluebells: hsv2rgb(.68, .55, .8) }[A.floor[0]] || hsv2rgb([.95, .13, .55, .0, .8][Math.floor(leaf * 100) % 5], .55, .9);
-  const colours = { [M.LEAF]: hsv2rgb(leaf, .55, .5), [M.LEAF2]: hsv2rgb(leaf - .03, .5, .66), [M.LEAF3]: hsv2rgb(leaf + .03, .6, .32), [M.FLOWER]: flower, [M.TRUNK]: hsv2rgb(.07, .45, .36), [M.BARKL]: hsv2rgb(.08, .4, .55),
+  const colours = { [M.LEAF]: hsv2rgb(leaf, .42, .4), [M.LEAF2]: hsv2rgb(leaf - .03, .38, .52), [M.LEAF3]: hsv2rgb(leaf + .03, .5, .26), /* (the night palette: darker, quieter greens) */ [M.FLOWER]: flower, [M.TRUNK]: hsv2rgb(.07, .45, .36), [M.BARKL]: hsv2rgb(.08, .4, .55),
     [M.STONE]: hsv2rgb(.08, .4, .55), [M.STONED]: hsv2rgb(.62, .08, .4), [M.BELLY]: [226, 216, 196] };
   if (A.floor[0] === "slate" || A.floor[0] === "scree" || A.floor[0] === "stony" || A.floor[0] === "pebbles" || A.floor[0] === "stone" || A.floor[0] === "earth") colours[M.STONE] = hsv2rgb(.1, .06, .58); // stones are grey; elsewhere STONE is a mushroom's cap
   const sty = st.artStyle === "bold" || st.artStyle === "ref";
@@ -9390,6 +9560,7 @@ const LEGEND_POSES = {
   ram: { sink: .42, droop: .9, drop: [], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 4, stones: 2, flowers: 0 } },
   squirrel: { sink: .45, droop: 1, drop: [], over: { moss: .3, lichen: .06, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 1, flowers: 6 } },
   dormouse: { sink: .45, droop: 1, drop: [], over: { moss: .4, lichen: .04, ferns: 1, grass: 3, mushrooms: 2, roots: 2, stones: 0, flowers: 5 } },
+  newt: { sink: .6, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .08, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 2 } }, // the fen's newt (an area recipe's): sunk in peat, sedge over it
   salamander: { sink: .55, droop: 1, drop: [60, 61], over: { moss: .35, lichen: .14, ferns: 2, grass: 1, mushrooms: 2, roots: 1, stones: 5 } },
   toad: { ground: .2, droop: .5, drop: [], over: { moss: .55, lichen: .06, ferns: 1, grass: 5, mushrooms: 2, roots: 1, stones: 3 } },
   raven: { ground: .42, droop: .6, drop: [40, 50, 95, 96, 97, 98, 99, 100], over: { moss: .35, lichen: .1, ferns: 1, grass: 2, mushrooms: 3, roots: 3, stones: 1, nest: true } },
@@ -9754,6 +9925,7 @@ function scenePlacements(id, st = {}, { mirror = false, ppm = 16 } = {}) {
 
 
 
+
 const PATH_PPM = 16; // ground pixels per metre
 const pkHash = (a, b = 0) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
 const UP = [0, -.42, .9]; // a ground pixel's normal (as the floor's)
@@ -9892,17 +10064,19 @@ function pathColours(st = {}) {
   };
 }
 // One 3D piece at the game's view, cropped to what is drawn: { sp, origin, metres }.
+// "<bridge>~<k>": the bridge's generated variant k (art/props/bridges.js, under ?props=gen).
 function pathPieceSprite(id, st = {}, ppm = 16) {
-  const d = PATH_PIECE_BY_ID[id]; if (!d) throw new Error(`no path piece "${id}"`);
-  const m = new Model({ blend: .04 }); d.build(m); m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 });
+  const [base, k] = id.split("~"), d = PATH_PIECE_BY_ID[base]; if (k !== undefined ? !BRIDGE_GENOMES[base] : !d) throw new Error(`no path piece "${id}"`); // (the fingerpost has only generated variants)
+  const m = new Model({ blend: .04 }); if (k !== undefined) buildBridge(m, base, +k); else d.build(m); m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 });
   const s = witchPixelsPerUnit(st) * 1.1, r = render(m, { scale: s }), full = r.sp;
   let x0 = full.w, x1 = -1, y0 = full.h; for (let y = 0; y < full.h; y++) for (let x = 0; x < full.w; x++) if (full.m[y * full.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
   const sp = new Sprite(x1 - x0 + 1, full.h - y0); for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const i = (y + y0) * full.w + x + x0; if (full.m[i]) sp.put(x, y, full.m[i], full.n[i * 3], full.n[i * 3 + 1], full.n[i * 3 + 2]); }
   const [ox, oy] = r.project([0, 0, 0]);
   return { sp, origin: { x: +(ox - x0).toFixed(1), y: +(oy - y0).toFixed(1) }, metres: { width: +(sp.w / ppm).toFixed(1), height: +(sp.h / ppm).toFixed(1) } };
 }
-// The areas each path kind suits, turned round: { areaId: [kinds] }, for an area's layout to name its preferred paths.
-function areaPathKinds() { const out = {}; for (const [k, K] of Object.entries(PATH_KINDS)) for (const a of K.moods) (out[a] = out[a] || []).push(k); out["ravine"] = [...(out["ravine"] || []), "stairs"]; out["rocky-slope"] = [...(out["rocky-slope"] || []), "stairs"]; out["cave-mouth"] = [...(out["cave-mouth"] || []), "stairs"]; out["stream"] = [...(out["stream"] || []), "bridges"]; return out; }
+// The areas each path kind suits, turned round: { areaId: [kinds] }, for an area's layout to name its preferred paths; with each
+// area's own extra kinds (areas: art/areas.js AREAS, an area's `pathKinds`: stairs on the steep ones, bridges over the stream).
+function pathKindsByArea(areas = []) { const out = {}; for (const [k, K] of Object.entries(PATH_KINDS)) for (const a of K.moods) (out[a] = out[a] || []).push(k); for (const A of areas) for (const k of A.pathKinds || []) (out[A.id] = out[A.id] || []).push(k); return out; }
 
 
 
@@ -9917,6 +10091,8 @@ function areaPathKinds() { const out = {}; for (const [k, K] of Object.entries(P
 
 
 
+// The path kinds each area suits, its own extra kinds (stairs, bridges) included.
+function areaPathKinds() { return pathKindsByArea(AREAS); }
 
 
 // ---- inlined from art/dancefloor.js ----
@@ -10615,7 +10791,7 @@ const KNOBS = [
   { k: "clearing", g: "Trees", label: "Clearing size", min: 0, max: 1, step: 0.05, v: 0.55 },
   { k: "depth", g: "Map", label: "Border detail (fractal layers)", min: 0, max: 6, step: 1, v: 4 },
   { k: "areaScale", g: "Map", label: "Area size (screens)", min: 0.6, max: 2, step: 0.05, v: 1 },
-  { k: "areaTypes", g: "Map", label: "Area types", min: 4, max: 30, step: 1, v: 30 },
+  { k: "areaTypes", g: "Map", label: "Area types", min: 4, max: AREAS.length, step: 1, v: AREAS.length }, // (every one, recipes too)
   { k: "density", g: "Trees", label: "Foliage density", min: 0.2, max: 1, step: 0.05, v: 0.55 },
   { k: "clump", g: "Trees", label: "Clumpiness", min: 0, max: 1, step: 0.05, v: 0.6 },
   { k: "gnarl", g: "Trees", label: "Gnarliness", min: 0, max: 1, step: 0.05, v: 0.5 },

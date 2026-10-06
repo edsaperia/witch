@@ -245,6 +245,11 @@ function pathPieceSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; pieces
     const r = Art.pathPieceSprite(d.id, st) as { sp: unknown; origin: { x: number; y: number } };
     pieces.push({ id: d.id, frame: sprites.push(Art.bake(r.sp, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
   }
+  // Under ?props=gen, each bridge's and the fingerpost's generated variants too ("footbridge~0"...), which the view picks among by place.
+  if ((st as { propGen?: number }).propGen) for (const id of Art.PATH_GEN_IDS as string[]) for (let k = 0; k < (Art.BRIDGE_VARIANTS as number); k++) {
+    const r = Art.pathPieceSprite(`${id}~${k}`, st) as { sp: unknown; origin: { x: number; y: number } };
+    pieces.push({ id: `${id}~${k}`, frame: sprites.push(Art.bake(r.sp, colours, st, "none", mk) as Baked) - 1, originX: r.origin.x, originY: r.origin.y });
+  }
   return { sprites, pieces };
 }
 
