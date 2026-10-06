@@ -5785,6 +5785,9 @@
         "picker": {
           "type": "string"
         },
+        "route": {
+          "type": "string"
+        },
         "noisy": {
           "type": "object",
           "properties": {
@@ -5834,6 +5837,7 @@
         "areasPerWave",
         "maxPerWave",
         "picker",
+        "route",
         "noisy",
         "transition",
         "lightReach",
