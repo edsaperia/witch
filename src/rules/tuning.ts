@@ -57,6 +57,7 @@ export interface Tuning {
   /** The night sky over the bend (treetop mode): stars, the moon, and clouds (count, speed m/s, how much the party lights their undersides). */
   /** ?bare=1 or 2 (not in the file): the terrain on its own (render/view.ts). */
   bare?: number;
+  smoke: { on: boolean; rate: number; life: number; rise: number; speed: number; size: number; grow: number; drift: number; opacity: number; warm: number; perFire: number; maxFires: number; range: number };
   sky: { on: boolean; stars: number; moon: number;
     /** Real clouds over the forest (render/clouds.ts): how many (about, per screenful of sky), altitude (m over the ground), speed (m/s drift), opacity, partyGlow (their undersides in the party's colours). */
     clouds: { count: number; altitude: number; speed: number; opacity: number; partyGlow: number };
