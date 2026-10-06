@@ -3464,9 +3464,15 @@ const RIM_STONY_FLOORS = new Set(["stony", "scree", "stone", "gravel", "rock"]);
 const rimWooded = def => !!def?.big?.some(b => b[0] === "tree") && !RIM_STONY_FLOORS.has(def?.floor?.[0]) && !def?.layout?.terrain?.includes("rocky");
 const rimAreaSeed = def => [...(def?.id ?? "")].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 99991, 3);
 /** The form of an area's k-th rim piece (seeded by the area and k, weighted by RIM_GENOMES.forms). */
-function rimForm(def, k) {
-  const w = rimWooded(def) ? 1 : 0, opts = Object.entries(RIM_GENOMES.forms).map(([f, ws]) => [f, ws[w]]);
-  return prPick(rng((rimAreaSeed(def) * 7 + k * 131 + 17) >>> 0), opts);
+function rimForm(def, k, n = 6) { return rimForms(def, n)[k % n]; }
+/** An area's n rim forms: dealt by the forms' weights (largest remainder, ties by the area's seed), so its mix follows them, in a seeded order. */
+function rimForms(def, n = 6) {
+  const w = rimWooded(def) ? 1 : 0, r = rng((rimAreaSeed(def) * 7 + 17) >>> 0), opts = Object.entries(RIM_GENOMES.forms).map(([f, ws]) => [f, ws[w]]), tot = opts.reduce((a, [, x]) => a + x, 0);
+  const share = opts.map(([f, x]) => ({ f, q: x / tot * n, j: r() * .01 })), out = [];
+  for (const o of share) for (let i = 0; i < Math.floor(o.q); i++) out.push(o.f);
+  for (const o of [...share].sort((a, b) => (b.q % 1 + b.j) - (a.q % 1 + a.j))) { if (out.length >= n) break; out.push(o.f); }
+  for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
+  return out;
 }
 /** An area's k-th rim piece's seed (its shape), its own in every area. */
 const rimSeed = (def, k) => rimAreaSeed(def) * 13 + k * 17 + 5;
@@ -4529,13 +4535,14 @@ const TEMPLATE_IDS = Object.keys(TEMPLATES);
 //   neutral: as it is (nothing added; the sprite is the plain one, pixel for pixel);
 //   angry:   brows down to the middle over narrowed eyes (with the woken look's red eyes, enraged);
 //   happy:   eyes closed up into smiling arcs, brows lifted;
-//   dazed:   crossed-out or odd eyes, brows up in a worried tilt.
+//   dazed:   crossed-out or odd eyes, brows up in a worried tilt;
+//   asleep:  eyes shut in heavy downturned lids, brows low and slack (a sleeping legend, on the rig).
 // The shapes vary by family: each template has a face style (templates.js: brow, happy, dazed) a
 // species' genome can override (its `face`). Everything is built from the anchors every builder
 // records (the head and the eyes), so a new species gets its expressions for nothing.
 
 
-const EXPRESSIONS = ["neutral", "angry", "happy", "dazed"];
+const EXPRESSIONS = ["neutral", "angry", "happy", "dazed", "asleep"];
 // brow: a thick straight bar; a feather tuft, thin at the middle and flaring out; a wide arched
 // ridge (a snake's or a beetle's brow scales). happy: smiling arcs ("arc") or squeezed shut ("squint").
 // dazed: crossed out ("x") or one eye big and one small ("wobble").
@@ -4580,6 +4587,7 @@ function faceDraw(m, face, st, u) { // u: one pixel, in model units
       if (st.happy === "squint") m.seg(at(-1, .25), at(1, -.25), line, line, mat, o); // squeezed shut
       else m.chain([[...at(-1.1, -.45), line], [...at(0, .45), line], [...at(1.1, -.45), line]], mat, o); // an upturned arc
     }
+    if (face === "asleep") { drop(e); m.chain([[...at(-1.1, .1), line], [...at(0, -.35), line], [...at(1.1, .1), line]], mat, o); } // shut: a heavy lid, sagging
     if (face === "dazed") {
       if (st.dazed === "wobble") { const k = e === eyes.pts[0] ? 1.5 : .65; for (const q of m.parts) if (near(q, e)) q.r = q.r.map(v => v * k); }
       else { drop(e); m.seg(at(-.9, .9), at(.9, -.9), line, line, mat, o); m.seg(at(-.9, -.9), at(.9, .9), line, line, mat, o); } // crossed out
@@ -4587,7 +4595,7 @@ function faceDraw(m, face, st, u) { // u: one pixel, in model units
     // ---- the brows: down to the middle when angry, up in the middle when dazed, lifted when happy ----
     // (sunk in to most of their thickness, so the far eye's brow never pokes out past the head's outline)
     const lift = st.brow === "ridge" ? .65 : 1; // (a ridge hugs the eye, as a snake's brow scales do)
-    const [inY, outY] = (face === "angry" ? [.75, 1.85] : face === "dazed" ? [2, 1.2] : [1.75, 1.75]).map(y => y * lift);
+    const [inY, outY] = (face === "angry" ? [.75, 1.85] : face === "dazed" ? [2, 1.2] : face === "asleep" ? [1.2, 1.05] : [1.75, 1.75]).map(y => y * lift);
     const w = st.brow === "ridge" ? 1.5 : 1.2, bm = M.BROW, b = Math.max(line, E * .36), bt = (x, y, r) => [...at(x, y, r * .75), r];
     if (st.brow === "ridge") m.chain([bt(-w, inY, b), bt(0, (inY + outY) / 2 + .2, b * 1.15), bt(w, outY, b)], bm, o);
     else if (st.brow === "tuft") m.chain([bt(-w * .8, inY, line), bt(w * 1.2, outY + .4, b * 1.4)], bm, o);
@@ -5188,9 +5196,11 @@ function quad3d(S, level, frame, st, facing = "towards") {
   if (has("crystals")) [.15, .3, .45, .6, .75].forEach((t, i) => { const b = backAt(t), h = [.3, .5, .4, .6, .35][i]; m.ell(v3.add(b, [0, h * .45, (i % 2 - .5) * .1]), [h * .55, .08, .08], M.MAGIC, { dir: [(i - 2) * .12, 1, 0], group: 80 + i % 2, extra: true, paint: p => p[2] > 0 ? M.MAGIC2 : undefined }); });
   if (has("moss")) {
     for (let i = 0; i < 6; i++) m.ell(backAt(.08 + i * .15), [len * .22, .07, bw * .85], M.LEAF, { group: 85, extra: true });
-    // its forest (a legendary feature, DESIGN.md): little spruces of stacked tiers, not round lollipop crowns, which read as
-    // flat domes from the game's camera (the art director's round 2: "mint domes"; golf's find); the same height as before
-    for (const [t, h] of [[.25, .55], [.5, .8], [.75, .45]]) { const b = backAt(t); m.seg(b, v3.add(b, [0, h * .5, 0]), .04, .025, M.TRUNK, { group: 86, extra: true }); for (let k = 0; k < 3; k++) { const y = h * (.22 + k * .24); m.seg(v3.add(b, [0, y, 0]), v3.add(b, [0, y + h * .38, 0]), h * .26 * (1 - k * .24), .012, k % 2 ? M.LEAF2 : M.LEAF3, { group: 87, extra: true }); } }
+    // a little wood growing on its back (Ed, 2026-10-06: bigger generated trees, not the lollipops that read as flat "mint domes"
+    // from the game's camera, the art director's round 2): two or three, grown by backTree3d
+    // in the species' own kind (BACK_TREES), each from its own seed, the tallest in the middle
+    const kind = BACK_TREES[S.id] ?? "broad", seed = [...S.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 7) >>> 0, r = rng(seed);
+    for (const [i, t, h] of [[0, .22, .95], [1, .5, 1.35], [2, .78, .8]]) backTree3d(m, backAt(t + uni(r, -.04, .04)), h * len * uni(r, .9, 1.1), seed + i * 977, kind, 86);
     for (const t of [.12, .4, .65, .9]) { const b = backAt(t); m.ell(v3.add(b, [0, .12, bw * .3]), [.07, .035, .07], M.MAGIC, { group: 89, extra: true }); }
   }
   if (has("ribbons")) for (let i = 0; i < 3; i++) { const pts = []; for (let k = 0; k < 9; k++) { const t = k / 8; pts.push([len * (.5 - t * 2.2), top + .05 + i * .1 + t * (.25 + i * .12) + Math.sin(t * 6 + frame + i) * .07, (i - 1) * .18, .04 * (1 - t * .6)]); } m.chain(pts, i % 2 ? M.MAGIC2 : M.MAGIC, { group: 90 + i, extra: true }); }
@@ -5198,6 +5208,42 @@ function quad3d(S, level, frame, st, facing = "towards") {
   const sp = drawForm(m, { height: drawHeight(level, st, q.hgt), facing }, S, level);
   if (formMotes() && sz("motes")) glowMotes(sp, S.id.length * 7919, sz("motes"));
   return sp;
+}
+
+// Trees growing on a legend's back (its legend feature "moss"; and the sleeping legends' sapling, art/legends.js): a little
+// tree grown from a seed rather than drawn by hand, Weber–Penn style in miniature. A trunk h tall that leans and bends a
+// little, flared at its foot with a root or two; then its kind's crown:
+//   broad: three to five boughs forking up and out from the top third, each ending in one or two leaf blobs, and one on top;
+//   pine: a spire of tiers, widest at the bottom, each a ragged disc of needles, with stubs of branch;
+//   willow: a broad crown whose blobs hang in long drooping curtains.
+// The blobs are ragged (rough) and lit in three tones, their tops the light leaf and their undersides the dark, so the crown
+// reads as a crown at night and from the treetops, not a flat dome. group: the first of the four groups it uses.
+const BACK_TREES = { elk: "pine", beaver: "willow", bear: "broad" };
+function backTree3d(m, base, h, seed, kind = "broad", group = 86) {
+  const r = rng(seed), o = { group, extra: true }, lean = [uni(r, -.18, .18), 0, uni(r, -.12, .12)], bend = uni(r, -.08, .08);
+  const at = t => v3.add(base, [lean[0] * h * t * t + Math.sin(t * Math.PI) * bend * h, h * t, lean[2] * h * t * t]);
+  const R0 = h * (kind === "pine" ? .06 : .075);
+  const trunk = []; for (let k = 0; k <= 4; k++) { const t = k / 4 * (kind === "pine" ? 1 : .78); trunk.push([...at(t), R0 * (1 - t * .7) + (k ? 0 : R0 * .4)]); }
+  m.chain(trunk, M.TRUNK, o);
+  for (let k = 0; k < 2; k++) { const a = uni(r, 0, 6.28); m.seg(at(.04), v3.add(base, [Math.cos(a) * h * .16, -h * .05, Math.sin(a) * h * .16]), R0 * .7, R0 * .25, M.TRUNK, o); } // roots
+  const leaf = (c, rad, tall = 1) => m.ell(c, [rad, rad * .82 * tall, rad], M.LEAF, { group: group + 1, extra: true, rough: rad * .12, paint: p => p[1] > c[1] + rad * .3 * tall ? M.LEAF2 : p[1] < c[1] - rad * .25 * tall ? M.LEAF3 : undefined });
+  if (kind === "pine") {
+    const n = 5;
+    for (let i = 0; i < n; i++) { const t = .3 + i * .15, w = h * (.3 - i * .05) * uni(r, .9, 1.1), c = at(t); m.ell(c, [w, h * .07, w], i % 2 ? M.LEAF : M.LEAF3, { group: group + 1 + (i % 2), extra: true, rough: h * .025, paint: p => p[1] > c[1] + h * .03 ? M.LEAF2 : undefined }); }
+    m.ell(at(1.02), [h * .05, h * .1, h * .05], M.LEAF, { group: group + 1, extra: true });
+    return;
+  }
+  const top = at(.78), n = 3 + Math.floor(r() * 3), a0 = uni(r, 0, 6.28), willow = kind === "willow";
+  for (let i = 0; i < n; i++) {
+    const a = a0 + i * 6.28 / n + uni(r, -.4, .4), from = at(uni(r, .5, .72)), len = h * uni(r, .32, .45), up = willow ? uni(r, .35, .6) : uni(r, .6, .95);
+    const dir = v3.norm([Math.cos(a), up, Math.sin(a) * .8]), mid = v3.add(from, v3.mul(dir, len * .55)), end = v3.add(from, v3.mul(dir, len));
+    m.chain([[...from, R0 * .55], [...mid, R0 * .38], [...end, R0 * .22]], M.TRUNK, { group: group + 3, extra: true });
+    const rad = h * uni(r, .16, .22);
+    leaf(v3.add(end, [0, rad * .3, 0]), rad);
+    if (r() < .5) leaf(v3.add(mid, [Math.cos(a + 1.2) * rad * .6, rad * .5, Math.sin(a + 1.2) * rad * .4]), rad * .7);
+    if (willow) for (let k = 0; k < 2; k++) { const d = v3.add(end, [uni(r, -.5, .5) * rad, -rad * (.7 + k * .5), uni(r, -.4, .4) * rad]); m.ell(d, [rad * .32, rad * .75, rad * .32], k ? M.LEAF3 : M.LEAF, { group: group + 2, extra: true, rough: rad * .1 }); }
+  }
+  leaf(v3.add(top, [0, h * .16, 0]), h * uni(r, .19, .24));
 }
 
 // A twisted horn (the parts kit's "horn that sweeps and curls"; genome parts horns: "twist", its shape in head.horn): from
@@ -9607,10 +9653,10 @@ function rigShoe(leg, style, s, st) {
   shoe3d(m, { c: [0, 0, 0], r: Math.max(leg.fl, lw * 1.1), group: 2, fit: leg.hoof ? "hoof" : "paw" }, style, { extra: false });
   return RIG_HEADINGS.map(h => { const r = render(m, { scale: s, yaw: h }), [px, py] = r.project([0, 0, 0]); return rigCropped(r.sp, px, py); });
 }
-// Its head piece in each expression but neutral (the head piece itself): { angry, happy, dazed }.
+// Its head piece in each expression but neutral (the head piece itself): { angry, happy, dazed }, and a legend's asleep.
 function rigFaces(id, level, st, pivot, s, gear) {
   const out = {};
-  for (const face of EXPRESSIONS) if (face !== "neutral") out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S: SPECIES_BY_ID[id], level, st });
+  for (const face of EXPRESSIONS) if (face !== "neutral" && (face !== "asleep" || level === 3)) out[face] = rigPiece(rigCapture(id, level, st, face, gear).m, ["head"], pivot, s, { S: SPECIES_BY_ID[id], level, st });
   return out;
 }
 // A model of only the primitives labelled with one of `labels`.
@@ -9830,11 +9876,9 @@ function lgAddRoot(m, p, out, G, size, r) { // a root over its flank and into th
   m.chain([[...p, size * .09], [...mid, size * .08], [...end, size * .06]], r() < .5 ? M.TRUNK : M.BARKD, { group: g, extra: true });
 }
 function lgAddStone(m, p, size, r) { m.ell(p, [size * uni(r, .8, 1.2), size * uni(r, .5, .8), size * uni(r, .7, 1)], M.STONE, { group: lgNext(), extra: true, rough: size * .08, dir: [Math.cos(r() * 6), uni(r, -.2, .2), Math.sin(r() * 6)], up: [0, 1, 0], paint: p2 => spotty(p2, 16, .25) ? M.MOSS : spotty(p2, 30, .1) ? M.STONED : undefined }); }
-function lgAddSapling(m, p, size, kind, r) {
-  const g = lgNext(), h = size, top = v3.add(p, [uni(r, -.1, .1) * h, h, uni(r, -.1, .1) * h]);
-  m.seg(v3.add(p, [0, -h * .1, 0]), top, h * .045, h * .02, M.TRUNK, { group: g, extra: true });
-  if (kind === "pine") for (let i = 0; i < 4; i++) { const y = .35 + i * .19, w = h * (.3 - i * .06); m.ell(v3.lerp(p, top, y), [w, h * .1, w], i % 2 ? M.LEAF3 : M.LEAF, { group: g + 1000, extra: true, rough: h * .02 }); }
-  else for (let i = 0; i < 3; i++) m.ell(v3.add(top, [Math.cos(i * 2.1) * h * .14, -h * .08 + i * h * .07, Math.sin(i * 2.1) * h * .14]), [h * .2, h * .16, h * .2], [M.LEAF, M.LEAF2, M.LEAF3][i], { group: g + 1000, extra: true, rough: h * .03 });
+function lgAddSapling(m, p, size, kind, r) { // a young tree grown by the same generator as the awake legends' back trees (creatures3d.js backTree3d)
+  const g = lgNext(); lgNext(); lgNext(); lgNext(); // (its four groups)
+  backTree3d(m, p, size * 1.3, Math.floor(r() * 1e9), kind === "pine" ? "pine" : "broad", g);
 }
 function lgAddNest(m, c, rad, size, r) {
   const g = lgNext();
