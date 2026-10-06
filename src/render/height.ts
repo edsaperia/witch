@@ -233,7 +233,7 @@ export class HeightField {
     const into = b.b.intoSand(x, z);
     if (into < -b.ease) return h;
     if (into < 0) return h + (b.hSand - h) * smoothstep((into + b.ease) / b.ease);
-    return b.hSand + (b.hSea - b.hSand) * smoothstep(Math.min(1, into / Math.max(1, b.b.width + b.b.out)));
+    return b.hSand + (b.hSea - b.hSand) * smoothstep(Math.min(1, into / Math.max(1, b.b.sandAt(Math.atan2(z - b.b.z, x - b.b.x)) + b.b.out)));
   }
   /** The beach's levels, on the circular map with it on. */
   private beach: { b: Beach; ease: number; hSand: number; hSea: number } | null = null;

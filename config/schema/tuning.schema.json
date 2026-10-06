@@ -84,6 +84,93 @@
           "type": "number",
           "minimum": 0
         },
+        "vary": {
+          "type": "object",
+          "properties": {
+            "amp": {
+              "type": "number",
+              "minimum": 0
+            },
+            "harmonics": {
+              "type": "number",
+              "minimum": 1
+            },
+            "rocky": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "rockyWidth": {
+              "type": "number",
+              "minimum": 0
+            },
+            "min": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "amp",
+            "harmonics",
+            "rocky",
+            "rockyWidth",
+            "min"
+          ],
+          "additionalProperties": false
+        },
+        "decor": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "finds": {
+              "type": "number",
+              "minimum": 0
+            },
+            "trails": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "prints": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "clear": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sectors": {
+              "type": "number",
+              "minimum": 8
+            },
+            "kinds": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "minItems": 4,
+              "maxItems": 4
+            }
+          },
+          "required": [
+            "on",
+            "finds",
+            "trails",
+            "prints",
+            "clear",
+            "sectors",
+            "kinds"
+          ],
+          "additionalProperties": false
+        },
         "ease": {
           "type": "number",
           "minimum": 0
