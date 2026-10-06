@@ -34,7 +34,7 @@ function serve() {
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
   try {
-    await page.goto(`http://127.0.0.1:${port}/?seed=${seed}&wave=off${query ? "&" + query : ""}`);
+    await page.goto(`http://127.0.0.1:${port}/?seed=${seed}&spell=auto&wave=off${query ? "&" + query : ""}`);
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000, polling: 500 });
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 30000 });

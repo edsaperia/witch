@@ -20,7 +20,7 @@ import { TALL_KINDS, tallPiece } from "./tall.js";
 import { groundTile } from "./ground.js";
 import { AREA_RECIPES, recipeProblems } from "./recipes.js";
 const RECIPE_LAYOUTS = {};
-import { propPiece, propFor } from "./props/generator.js";
+import { propPiece, propFor, rimPiece, rimSeed } from "./props/generator.js";
 
 // [kind, params] shorthands for the prop library below
 const tree = (type, o = {}) => ["tree", { type, ...o }];
@@ -407,6 +407,8 @@ function setPiece(kind, o, def, st, r, s) {
   return { sp, colours };
 }
 
+/** How many rim pieces each area type has (areaAssets' `rim`). */
+export const RIM_PIECES = 6;
 // Bakes everything one area type needs, at the style's pixel size.
 export function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanvas } = {}) {
   const def = AREA_BY_ID[id]; if (!def) throw new Error(`no area type "${id}"`);
@@ -417,9 +419,11 @@ export function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defau
   // share split among them), each its own shape from its own seed, so a pool or a stone isn't one sprite placed again and again
   const gen = list => !st.propGen ? list : (list || []).flatMap(([kind, o], i) => { const g = propFor(kind, o); if (!g) return [[kind, o]]; const n = o.variants || 3; return [...Array(n).keys()].map(k => [kind, { ...o, ...(o.sparse ? { sparse: o.sparse / n } : {}), gen: [g[0], { ...g[1], lead: k === 0 }, (r() * 1e6 | 0) + i * 7 + k] }]); });
   const col = list => (gen(list) || []).map(([kind, o]) => { const p = prop(kind, o, def, st, r, K), b = bk(p, kind, ""); if (SWAYING_PROPS.has(kind)) b.sway = bakeSway(p.sp, makeCanvas); if (p.metres) b.metres = p.metres; if (o.sparse) b.sparse = o.sparse; return b; }); // leafy props carry their sway mask; tall pieces their size and how sparse they stand
-  const out = { def, floor: { sp: bake(ft.sp, ft.colours, st, "none", makeCanvas), kind: def.floor[0], text: def.text.floor }, walls: col(def.wall), small: col(def.small), big: col(def.big), setPiece: null };
+  const out = { def, floor: { sp: bake(ft.sp, ft.colours, st, "none", makeCanvas), kind: def.floor[0], text: def.text.floor }, walls: col(def.wall), small: col(def.small), big: col(def.big), setPiece: null, rim: [] };
   out.walls.forEach(a => a.text = def.text.wall); out.small.forEach(a => a.text = def.text.small); out.big.forEach(a => a.text = def.text.big);
   if (def.set) { const sp0 = setPiece(def.set[0], def.set[1], def, st, r, K); out.setPiece = { ...bk(sp0, def.set[0], def.text.set), metres: sp0.metres, origin: sp0.origin }; } // the new 3D ones: their size, and where their middle on the ground lands
+  // the rim kit round a sleeping legend's clearing (#235): 6 small pieces (art/props/generator.js rimPiece), in the area's own colours, by what it is
+  out.rim = [...Array(RIM_PIECES).keys()].map(k => { const p = rimPiece({ k, seed: rimSeed(def, k) }, def, st); return { ...bk(p, p.form, "rim"), metres: p.metres }; });
   return out;
 }
 

@@ -1,0 +1,6 @@
+{
+  "version": null,
+  "items": [
+    "Fewer hitches flying over new ground: each new patch of ground is copied straight in, instead of through the graphics card's framebuffers"
+  ]
+}

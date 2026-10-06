@@ -15,9 +15,10 @@ import { danceAt, invitableNow, stateOf, STATES } from "./creatureStates";
 import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, SLOT_RANGE, SPOT_RANGE } from "./partyGuests";
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
-import { cellKey, hurryWave, newParty, spreadWave, stepParty, type PartyState } from "./party";
+import { castPartySpell, cellKey, heldBySpell, hurryWave, newParty, speakersOn, spreadWave, stepParty, type PartyState } from "./party";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
 import { nextSpeakerState, type SpeakerState } from "./speakers";
+import { moonState } from "./moon";
 import { floorEvent, floorLevel, neon, newFloor, stepFloor, switchOn, tileOf, type FloorInputs, type FloorState } from "./dancefloor";
 import { SIGIL_NEON } from "../../art/sigils.js";
 import { LEGEND_BUFFS, newBuffs, stepBuffs, type BuffState } from "./buffs";
@@ -112,6 +113,9 @@ export interface Game {
   prev: { witches: { x: number; z: number; lift: number }[]; creatures: Float64Array; camera: CameraState | null };
   /** Each dancefloor speaker's state, in map.dancefloor.speakers' order. */
   speakers: SpeakerState[];
+  /** When each home speaker was booted (Ed, 2026-10-06: they start as small runestones and the boot pulse turns them into
+   *  speakers): the game time the pulse reached it, or null while it's still a stone. See bootSpeaker and speakerBoot. */
+  speakerBoot: (number | null)[];
   /** The beat clock: beats by game time, its tempo rising wave by wave (rules/beat.ts). */
   beat: BeatClock;
   /** The dancefloor's tile lights (rules/dancefloor.ts). */
@@ -133,6 +137,8 @@ export interface WaveEvent { kind: "soundsystemLost"; key: string; x: number; z:
 export interface Controls extends Intent, Partial<LeashControls>, InviteControls {
   /** Debug (O): the nearest area legend turns happy (as if its quest were done). */
   happyNearest?: boolean;
+  /** The party spell's button (or its key) pressed: the game starts (rules/party.ts castPartySpell). */
+  castParty?: boolean;
   /** Auto-talk (the player's setting, on unless turned off), and Talk held (how she talks with it off). */
   autoTalk?: boolean;
   talkHeld?: boolean;
@@ -166,6 +172,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
     get spells() { return this.witches[0].spells; }, set spells(s: SpellState) { this.witches[0].spells = s; },
     camera: newCamera(tuning, body.x, witchHeight(body, tuning), body.z), party: newParty(map), berries: newBerries(map, tuning),
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
+    speakerBoot: map.dancefloor.speakers.map(() => null),
     beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)),
     floor: newFloor(), buffs: newBuffs(tuning), partyWitches: newPartyWitches(seed),
     combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), questEvents: [] as QuestEvent[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], relics: placeRelics(map, forest), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), over: null as { at: number } | null,
@@ -305,11 +312,16 @@ function fixedStep(g: Game, controls: Controls): void {
   let c = controls;
   const dt = STEP;
   g.clock.time += dt;
-  const wave = g.party.wave, seated = g.witch.seated;
+  const wave = g.party.wave;
   // Legend buffs: the happy legends (and any party legend) change the numbers the rest of the step plays by.
   const legends = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id));
   stepBuffs(g.buffs, g.creatures, [...g.leash.stack, ...g.leash.placed.map(p => p.id), ...legends.filter(id => buffing(g.creatures[id]))], g.tuning);
   const t = g.buffs.tuning;
+  // The party spell (Ed, 2026-10-06): until it's cast, and while she casts it, she stands behind the decks: no moving,
+  // rising, blinking, spells or 💌s (the camera's zoom still works). Its button, Enter, or her spell key (R, gamepad B, touch
+  // "spell") while the game waits casts it, rather than the boost (the hold drops that spell press).
+  if (c.castParty || c.spell) castPartySpell(g.party, g.map, g.clock.time);
+  if (heldBySpell(g.party, g.clock.time)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   if (c.spell) castSpell(g.spells, g.clock.time, t);
   // The speed boost: her speeds times its multiplier while it's on.
   const W = g.witches[0];
@@ -371,7 +383,7 @@ function fixedStep(g: Game, controls: Controls): void {
   // The sigil button by a lying relic picks it up; carrying one, by a sleeping legend, puts it down there (rules/legends.ts).
   let sigil = !!c.sigil && !W.ko, place = !!c.place && !W.ko;
   if ((sigil || place) && g.witch.mode === "ground") {
-    const r = relicButton(g.relics, g.leash.relics, g.creatures, legends, g.witch.x, g.witch.z, g.clock.time);
+    const r = relicButton(g.relics, g.leash.relics, g.creatures, legends, g.witch.x, g.witch.z, g.clock.time, t.leash.pickRadius);
     if (r) {
       sigil = false; place = false;
       if ("picked" in r) g.leash.events.push({ kind: "relicPicked", id: r.picked.id, x: r.picked.x, z: r.picked.z, at: g.clock.time });
@@ -399,7 +411,8 @@ function fixedStep(g: Game, controls: Controls): void {
   for (const e of g.leash.events) if (e.kind === "befriended") { const c = g.creatures[e.id], a = g.party.areas.get(cellKey(c.cell)); if (a?.soundsystem && g.combat.sounds.has(cellKey(c.cell))) joinParty(g, c, a.soundsystem, a.cell); }
   g.leashEvents.push(...g.leash.events);
   for (const e of B.events) if (e.kind === "ate") g.tally.berries++; else if (e.kind === "evolved") g.tally.evolved++;
-  stepDancefloor(g, wave, seated);
+  stepSpeakerBoot(g);
+  stepDancefloor(g, wave);
   stepWitchParty(g, c, dt);
   // Last, everyone in view eases apart from anyone closer than their sizes like (Ed, 2026-10-05).
   stepSpacing(g, dt);
@@ -570,14 +583,34 @@ export function floorInputs(g: Game): FloorInputs {
   return {
     time: g.clock.time, beatAt: tm => beatAt(g.beat, tm), seed: g.seed, level: floorLevel(g.party.areas.size, g.tuning), partifiedAreas: areas,
     witch: { x: w.x, y: w.y, lift: g.witch.lift, rgb: neonOf(g.tuning.dancefloor.tiles.witchColour) }, dancers,
+    moon: { phase: moonState(g.clock.time, g.seed, g.tuning).phase },
   };
 }
 
-// The floor switches on when the witch first leaves the terrace; a wave sends a pulse towards the
-// area it reached; a sigil placed flashes out from the centre.
-function stepDancefloor(g: Game, waveBefore: number, wasSeated: boolean | undefined): void {
+// The home speakers' boot (Ed, 2026-10-06): each starts as a small runestone, and the boot pulse turns it into its speaker.
+// Until the pulse drives it (the rendering builder's: bootSpeaker), they turn one by one round the ring over the boot, as
+// speakersOn always counted; a run that starts after the boot has them all speakers.
+function stepSpeakerBoot(g: Game): void {
+  const n = g.speakerBoot.length, on = speakersOn(g.party, g.map, g.clock.time, n);
+  for (let i = 0; i < on; i++) if (g.speakerBoot[i] === null) bootSpeaker(g, i);
+}
+/** The boot pulse reaches home speaker i now: it starts turning from a runestone into its speaker (once). */
+export function bootSpeaker(g: Game, i: number): void {
+  if (g.speakerBoot[i] === null) g.speakerBoot[i] = g.clock.time;
+}
+/** How far home speaker i has turned from a runestone into its speaker at `time`: 0 a stone, 1 a speaker (over boot.transform seconds). */
+export function speakerBoot(g: Game, i: number, time = g.clock.time): number {
+  const at = g.speakerBoot[i];
+  if (at === null || at === undefined) return 0;
+  return Math.max(0, Math.min(1, (time - at) / Math.max(1e-3, g.tuning.boot.transform)));
+}
+
+// Before the first wave the floor shows only the moon (Ed, 2026-10-06); it switches on, the full moon
+// flaring into the party, when the first wave comes (or at once, off the decks, in a run started later);
+// a wave sends a pulse towards the area it reached; a sigil placed flashes out from the centre.
+function stepDancefloor(g: Game, waveBefore: number): void {
   const f = g.floor, time = g.clock.time, d = g.map.dancefloor;
-  if (wasSeated !== false && !g.witch.seated) switchOn(f, time);
+  if (!g.witch.seated && g.party.wave > 0) switchOn(f, time);
   if (g.party.wave > waveBefore) for (const a of g.party.areas.values()) {
     if (a.wave !== g.party.wave) continue; // a pulse towards each area this wave woke
     const s = g.map.soundsystemSpot(a.cell[0], a.cell[1]), sp = AREA_TYPES[g.map.typeOf(a.cell[0], a.cell[1])].creature;
