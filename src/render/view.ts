@@ -21,7 +21,7 @@ import { Ride } from "./ride";
 import { groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, placed, useHeightField } from "./height";
 import { PathView } from "./paths";
 import { applyStyleLight, LIGHT_UNIFORMS } from "./lighting";
-import { moodOf } from "./mood";
+import { AreaMoods, moodOf } from "./mood";
 import { hsv2rgb } from "../../art/generator.js";
 import { Post } from "./post";
 import { GrassView } from "./grass";
@@ -177,6 +177,11 @@ export class View {
   ghosts: { x: number; z: number; h: number; until: number }[] = [];
   ghostLines: THREE.LineSegments | null = null;
   now = 0;
+  /** The area moods (render/mood.ts), if the mood is spooky; the area she's in, when it's next looked up, and when they were last eased. */
+  private areaMoods: AreaMoods | null = null;
+  private moodArea = "";
+  private moodAt = -Infinity;
+  private moodTime = NaN;
   stats: ViewStats = { berries: 0, forestMs: 0, forestMissing: 0, sceneryRadius: 0, fps: 0, gameplay: 0, scenery: 0, dropped: 0, trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0, lights: 0 };
 
   constructor(readonly canvas: HTMLCanvasElement, readonly game: Game, readonly style: Style, witchGenome: unknown = null) {
@@ -195,6 +200,7 @@ export class View {
     // The mood (render/mood.ts): the spooky grade over the style's light, or the plain light.
     const M = moodOf(t), moodLook: Record<string, number> = M ? { ambientHue: M.ambientHue, moonHue: M.moonHue, moonSat: M.moonSat, glowHue: M.glowHue, glowSat: M.glowSat } : {};
     applyStyleLight({ ...style, shafts: style.shafts * t.moonbeams, ...moonLook, ...moodLook }, t.glowReach, this.mpp, (t.find.on ? t.find.ambient : t.tone.ambient) * (M?.ambient ?? 1), t.glowFalloff, t.tone.moon * (M?.moon ?? 1));
+    this.areaMoods = M ? new AreaMoods(M) : null;
     if (M) LIGHT_UNIFORMS.uHazeColour.value.fromArray(hsv2rgb(M.hazeHue, M.hazeSat, 1).map((c: number) => (c / 255) * M.haze));
     LIGHT_UNIFORMS.uGlowPower.value = t.glowPower;
     LIGHT_UNIFORMS.uGlowNear.value = Math.max(0.05, Math.min(1, t.glowNear ?? 1));
@@ -589,6 +595,17 @@ export class View {
     const w = g.witch, h = witchHeight(w, t);
     LIGHT_UNIFORMS.uGlowPos.value.set(w.x, groundHeight(w.x, w.z) + this.rideOff + h + t.glowHeight, w.z);
     LIGHT_UNIFORMS.uHazeCentre.value.set(w.x, w.z);
+    // The mood where she is (render/mood.ts): each area's own fog, grade tint and mist, eased across;
+    // which area, looked up four times a second.
+    if (this.areaMoods) {
+      if (!(time < this.moodAt) || time < this.moodAt - 1) {
+        this.moodAt = time + 0.25;
+        const d = g.map.dancefloor;
+        this.moodArea = Math.hypot(w.x - d.x, w.z - d.z) < g.map.homeRadius ? "home" : AREA_TYPES[g.map.typeOf(...g.map.cellSafe(w.x, w.z).cell)]?.id ?? "";
+      }
+      this.areaMoods.update(this.moodArea, Number.isNaN(this.moodTime) ? 0 : time - this.moodTime, LIGHT_UNIFORMS.uHazeColour.value, this.post.gradeTint, this.mist);
+      this.moodTime = time;
+    }
     this.time("uniforms");
     updateSources(this, time);
     this.time("sources");

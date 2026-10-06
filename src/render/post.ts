@@ -189,6 +189,9 @@ export class Post {
     this.pass("tilt", null, u => { common(u); u.uSrc.value = this.b.texture; u.uDir.value.set(0, 1); });
   }
 
+  /** The grade's tint (a colour of luma 1), for the area moods to ease (render/mood.ts AreaMoods). */
+  get gradeTint(): THREE.Vector3 { return this.mats.composite.uniforms.uGradeTint.value; }
+
   /** The mood's grade (render/mood.ts) into the composite's uniforms; its tint worked out when the mood changes, not every frame. */
   private gradeOf: object | null | undefined;
   private setGrade(u: Record<string, THREE.IUniform>): void {
