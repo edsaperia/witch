@@ -55,7 +55,7 @@ async function open(browser, port, seed) {
       for (let i = 0; i < 90; i++) w.frame(C(), dt, false); // (down)
       await fly(600, out.ground, { moveX: 1 });
       const u = v.ground?.mesh?.material?.uniforms?.uBeach?.value;
-      return { ...out, beachOn: u ? u.w > 0 : null, beach: !!w.game.beach };
+      return { ...out, beachOn: u ? u.z > 0 : null, beach: !!w.game.beach };
     });
     const row = (k, a) => console.log(`${k.padEnd(8)} frame work median ${pct(a, 0.5).toFixed(2)} ms  p99 ${pct(a, 0.99).toFixed(2)} ms  worst ${Math.max(...a).toFixed(2)} ms`);
     console.log(`\n${root}: an ordinary run (seed 123)`);
