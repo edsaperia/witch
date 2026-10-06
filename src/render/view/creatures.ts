@@ -82,7 +82,7 @@ export function drawCreatures(v: View, time = 0): void {
     // they could almost be mistaken for scenery"): sunk and mossed over, in a batch of its own
     // with no find-in-the-dark look. Waking, it heaves up out of the ground.
     const W = g.tuning.wildLegends, st = c.boss && !c.leashed ? c.legendState : undefined;
-    const sleeping = st === "asleep" || st === "restless", rising = st === "happy" && (c.stateAt ?? 0) > 0 ? Math.min(1, (time - (c.stateAt ?? 0)) / Math.max(0.1, W.wake * 0.5)) : 1; // (made happy, it stirs and rises contentedly)
+    const sleeping = (st === "asleep" || st === "restless") && !c.homing, rising = st === "happy" && (c.stateAt ?? 0) > 0 ? Math.min(1, (time - (c.stateAt ?? 0)) / Math.max(0.1, W.wake * 0.5)) : 1; // (made happy, it stirs and rises contentedly)
     // Its expression, part of its face (art/genome/expressions.js; render/looks.ts expression): the party looks are happy and the woken one angry already.
     const face = sleeping ? "neutral" : expression(c, time), faced = !party && !woken && face !== "neutral" ? v.assets.faceArt(c.species, face) : undefined;
     // Asleep, its own sleeping form (art/legends.js), drawn once it's baked; until then the awake one sunk, as before.

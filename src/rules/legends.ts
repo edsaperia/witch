@@ -15,6 +15,8 @@ import { hash2 } from "./random";
 
 export interface LegendsData {
   angryAfter: number; check: number; placeRadius: number;
+  /** Going back to sleep away from where it lay (Ed, 2026-10-06): it walks home at homeSpeed m/s first. */
+  homeSpeed: number;
   relics: { count: number; kinds: string[]; minRemoteness: number; spacing: number; pickRadius: number };
   attack: { range: number; interval: number; windup: number; damage: number; targets: number; wornReach: number; /** seconds before a legend with nothing in reach looks again */ recheck: number; lobFlight: number; lobRadius: number; beamWidth: number; beamTime: number; beam: string[] };
   healTime: number;
@@ -79,35 +81,48 @@ export interface LegendWorld { creatures: Creature[]; map: ForestMap; time: numb
 
 /** One step of every legend's state. */
 export function stepLegendStates(w: LegendWorld, ids: number[], data: LegendsData = LEGENDS): void {
-  // Every check seconds: which of the legends' areas have one of the legend's kind in them.
-  const tick = Math.floor(w.time / data.check) !== Math.floor((w.time - w.dt) / data.check);
-  let kin: Set<string> | null = null;
-  if (tick) {
-    const want = new Map<string, string>(); // area key -> the legend's species
-    for (const id of ids) { const c = w.creatures[id]; if (!c.gone) want.set(cellKey(c.cell), c.species); }
-    kin = new Set();
-    for (const o of w.creatures) {
-      if (o.gone || o.fleeUntil || o.boss) continue;
-      const k = w.areaOf(o), sp = want.get(k);
-      if (sp === o.species) kin.add(k);
-    }
-  }
   for (const id of ids) {
     const c = w.creatures[id];
     if (c.gone || c.leashed) continue;
     const key = cellKey(c.cell), q = c.quest;
+    // Going back to sleep away from where it lay (Ed, 2026-10-06: "they should go back to their
+    // circle first and sleep in the spot where they spawned initially"): it walks home, then lies down.
+    if (c.homing) { walkHome(c, w.time, w.dt, data); continue; }
     c.questOpen = !!q && q.done === undefined && !w.partified(key) && (c.legendState === "asleep" || c.legendState === "restless");
     if (q?.done !== undefined) c.buffed = true; // (its quest done: its buff, for good)
-    if (c.legendState !== "asleep" && c.legendState !== "restless") continue;
-    if (kin) {
-      if (kin.has(key)) { c.legendState = "asleep"; c.restlessness = 0; }
-      else if (c.legendState === "asleep") { c.legendState = "restless"; c.stateAt = w.time; c.restlessness = c.restlessness ?? 0; }
+    // Every check seconds, each legend on its own beat (Ed, 2026-10-06: "the legends could check
+    // for own species in area once every five seconds without issue"; staggered by its id, so they
+    // don't all look on one frame): is one of its kind in its area?
+    const phase = ((c.id * 0.6180339887) % 1) * data.check;
+    if (Math.floor((w.time + phase) / data.check) !== Math.floor((w.time - w.dt + phase) / data.check)) {
+      const kin = hasKin(w, c, key);
+      if (c.legendState === "angry" && kin) lull(c, w.time); // (Ed, 2026-10-06: "Angry legends should go back to sleep once one of their own species is back in their area"; its buff, if earned, kept)
+      else if (c.legendState === "asleep" || c.legendState === "restless") {
+        if (kin) { c.legendState = "asleep"; c.restlessness = 0; }
+        else if (c.legendState === "asleep") { c.legendState = "restless"; c.stateAt = w.time; c.restlessness = c.restlessness ?? 0; }
+      }
     }
     if (c.legendState === "restless") {
       c.restlessness = Math.min(1, (c.restlessness ?? 0) + w.dt / Math.max(1e-6, data.angryAfter));
       if (c.restlessness >= 1) anger(c, w.time);
     }
   }
+}
+
+/** Whether one of a legend's kind is in its area (any state: wild, happy, leashed and parked there, babies). */
+function hasKin(w: LegendWorld, c: Creature, key: string): boolean {
+  // (A creature besieging another area's soundsystem doesn't count at home: art builder 1, #254, Ed: "After a siege, the angry adults move onto the next area, which will waken the legend".)
+  for (const o of w.creatures) if (o !== c && o.species === c.species && !o.gone && !o.fleeUntil && !o.boss && !(o.siege && o.siege !== key) && w.areaOf(o) === key) return true;
+  return false;
+}
+
+/** A step of a legend walking home to where it lay (c.lairX, lairZ: its spawn spot), then lying down there. */
+function walkHome(c: Creature, time: number, dt: number, data: LegendsData): void {
+  const hx = c.lairX ?? c.x, hz = c.lairZ ?? c.z, dx = hx - c.x, dz = hz - c.z, d = Math.hypot(dx, dz), step = data.homeSpeed * dt;
+  if (d <= step) { c.x = hx; c.z = hz; c.homing = undefined; c.moving = false; c.stateAt = time; return; } // (home: it settles and lies down)
+  c.x += (dx / d) * step; c.z += (dz / d) * step; c.moving = true;
+  if (Math.abs(dx) > 1e-6) c.facing = dx < 0 ? -1 : 1;
+  c.away = dz < 0; // (walking north, up the screen: its back to us)
 }
 
 /** Restlessness run its course: angry (hostile; its health whole). */
@@ -120,9 +135,11 @@ export function cheer(c: Creature, time: number): void {
   Object.assign(c, { legendState: "happy", stateAt: time, enraged: false, state: undefined, hp: undefined, fight: undefined, siege: undefined, restlessness: 0, questOpen: false, buffed: true, charge: undefined, legend: undefined });
 }
 
-/** Worn down (its health gone): back to sleep, its buff (if earned) kept. */
+/** Back to sleep (worn down, or calmed by one of its kind back in its area), its buff (if earned)
+ *  kept; away from where it lay, it walks home first (homing; Ed, 2026-10-06). */
 export function lull(c: Creature, time: number): void {
-  Object.assign(c, { legendState: "asleep", stateAt: time, enraged: false, state: undefined, hp: undefined, fight: undefined, siege: undefined, restlessness: 0, charge: undefined, run: undefined, legend: undefined, slowUntil: undefined, stunUntil: undefined, kx: 0, kz: 0 });
+  const away = c.lairX !== undefined && c.lairZ !== undefined && Math.hypot(c.x - c.lairX, c.z - c.lairZ) > 0.5;
+  Object.assign(c, { legendState: "asleep", stateAt: time, enraged: false, state: undefined, hp: undefined, fight: undefined, siege: undefined, restlessness: 0, charge: undefined, run: undefined, legend: undefined, slowUntil: undefined, stunUntil: undefined, kx: 0, kz: 0, homing: away || undefined, questOpen: false });
 }
 
 /** Whether a legend gives its buff: its quest done, or made happy by a relic (for good either way). */
