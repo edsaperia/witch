@@ -61,7 +61,7 @@ void main() {
   vec4 d = texture2D(uDigits, vUv);
   if (vCol.a < 0.02 || vShow < 0.02 || d.r + d.g < 0.5) discard;
   // The digit glows (over 1, so the bloom takes it); the outline keeps it readable on anything.
-  gl_FragColor = d.r > 0.5 ? vec4(vCol.rgb * (0.4 + 0.65 * vCol.a), vShow) : vec4(vec3(0.02, 0.01, 0.04), vShow);
+  gl_FragColor = d.r > 0.5 ? vec4(vCol.rgb * (0.25 + 0.85 * vCol.a), vShow) : vec4(vec3(0.02, 0.01, 0.04), vShow);
 }`;
 
 export interface WaveNumber { x: number; z: number; /** metres above the ground */ y: number; wave: number; colour: THREE.Vector3; alpha: number; /** how much it shows (0-1): it fades past the bent horizon */ show?: number; /** its stone's height (metres), for the checks */ top?: number; /** held inside the top of the screen (near stones, on the ground) */ pin?: boolean }
