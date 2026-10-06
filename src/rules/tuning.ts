@@ -226,6 +226,8 @@ export interface Tuning {
   dreams: { range: number; nightmare: { at: number[]; faces: string[] } };
   wildLegends: { wake: number; sink: number; moss: number; guard: number; heal: number; scale: number; breathe: number; breathEvery: number; aura: number; glow: number };
   creatureSimRadius: number;
+  /** The simulation's level of detail (rules/simLod.ts): creatures in full near her and the action, coarse beyond, frozen past creatureSimRadius. */
+  simLod: import("./simLod").SimLod;
   creatureSpeed: number;
   setPieceChance: number;
   legendSpeed: number;

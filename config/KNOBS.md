@@ -1088,7 +1088,7 @@ A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest 
 | `dreams.nightmare.at` | array of number |  |
 | `dreams.nightmare.faces` | array of string |  |
 
-## `wildLegends`, `creatureSimRadius`, `creatureSpeed`
+## `wildLegends`, `creatureSimRadius`
 
 Area legends (Ed, 2026-10-04; DESIGN.md, "Sleeping legends"): every area has one legend of its kind, sleeping, sunk into the ground like scenery (no AI, no glow, no health bar; sink: the share of it under the ground, moss: how far its colours go toward moss). When its area's wave comes it wakes, angry: wake seconds of heaving out of the ground (untouchable), then a mini-boss guarding its own area with its move set (movement.json legends). Beaten, it sinks back to sleep for good. A happy legend (home's from the start; others by their quest, or the debug key O) guards its area for her like a parked party animal, anything in its area within guard metres of where it stands, with its move set, and heals heal hp a second while no enemy is near; beaten, it sleeps for good and its buff ends. Drawn scale times a legend's size, swelling by breathe as it breathes (once every breathEvery seconds); awake, an aura on the ground aura metres across and, from the treetops, a glow over the canopy (glow its strength) in a dark mix of its sigil's colour.
 
@@ -1105,6 +1105,18 @@ Area legends (Ed, 2026-10-04; DESIGN.md, "Sleeping legends"): every area has one
 | `wildLegends.aura` | number | 0 to … |
 | `wildLegends.glow` | number | 0 to … |
 | `creatureSimRadius` | number | 0 to … |
+
+## `simLod`, `creatureSpeed`
+
+The simulation's level of detail (Ed, 2026-10-05: creatures far from the action frozen until she comes closer; rules/simLod.ts). Wild creatures roaming are simulated every step within full.ground metres of the witch on the ground, full.treetop over the treetops (each a little past the most the view shows from there at any zoom: 178 and 262 m in a 1900 by 1240 window); beyond, coarsely: once every `every` steps (60 a second), by that many steps' time at once, taking turns; past creatureSimRadius not at all. Besiegers marching on a soundsystem are simulated every step within full of her or within action metres of a soundsystem, a party animal or a happy legend's guard; elsewhere coarsely, marching `every` steps at a time. Going out, one stays in full until band metres past the line, so none flickers. The debug overlay's sim line counts them.
+
+| knob | type | range |
+|---|---|---|
+| `simLod.full.ground` | number | 0 to … |
+| `simLod.full.treetop` | number | 0 to … |
+| `simLod.action` | number | 0 to … |
+| `simLod.band` | number | 0 to … |
+| `simLod.every` | number | 0 to … |
 | `creatureSpeed` | number | 0 to … |
 
 ## `setPieceChance`, `setPieceScale`, `setPieceClear`
