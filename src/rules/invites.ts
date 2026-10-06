@@ -53,8 +53,15 @@ export interface Letter {
 /** A lantern on the ground (Glow-worm): any animal it touches before it goes out is a hit. */
 export interface Lantern { x: number; z: number; until: number; n: number }
 
-export type InviteEventKind = "shot" | "hit" | "blocked" | "fizzled" | "happy";
-export interface InviteEvent { kind: InviteEventKind; x: number; z: number; at: number; /** the creature hit, blocked by or made happy */ id?: number; n?: number; /** a hit inside the creature's gap: it lands (a small pop) but adds no affection */ spent?: boolean }
+/** What a 💌 did this frame: thrown or fizzled (its number n); landed on a creature (id; spent: inside the
+ *  creature's gap, a small pop that adds no affection) or stopped by one; or a creature won over (happy). */
+interface InviteEventAt { x: number; z: number; at: number }
+export type InviteEvent =
+  | (InviteEventAt & { kind: "shot" | "fizzled"; n: number; id?: undefined; spent?: undefined })
+  | (InviteEventAt & { kind: "hit"; id: number; n: number; spent: boolean })
+  | (InviteEventAt & { kind: "blocked"; id: number; n: number; spent?: undefined })
+  | (InviteEventAt & { kind: "happy"; id: number; n?: undefined; spent?: undefined });
+export type InviteEventKind = InviteEvent["kind"];
 
 export interface Invites {
   letters: Letter[];
