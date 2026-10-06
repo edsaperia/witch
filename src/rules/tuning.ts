@@ -70,6 +70,15 @@ export interface Tuning {
     clouds: { count: number; altitude: number; speed: number; opacity: number; partyGlow: number };
     /** Lightning in them: about every so many seconds, flashes per strike, ground (the faint flash on the forest, 0 none). */
     lightning: { every: number; flashes: number; ground: number } };
+  /** The moon (rules/moon.ts; Ed, 2026-10-06): its phases (phasePeriod seconds new to new, starting at phaseStart: 0 new, 0.5 full), its way
+   *  across the sky (orbit seconds, from arcStart; between left and right and up from low to high, fractions of the screen), its rare
+   *  coloured moons (in windows of colourEvery seconds, a colourChance of one for colourTime, easing over colourFade; colours red, blue,
+   *  gold as 0-1 rgb), tint (how much of its colour the moonlight takes, 0-1), and the dancefloor's moon before the first wave (floor). */
+  moon: { phasePeriod: number; phaseStart: number; orbit: number; arcStart: number; left: number; right: number; low: number; high: number;
+    colourEvery: number; colourChance: number; colourTime: number; colourFade: number; colours: { red: number[]; blue: number[]; gold: number[] }; tint: number;
+    /** The floor's moon: palette (dusky violet, slate blue, soft silver, 0-255 rgb), size (its radius, a share of the floor's), stars (a share of the
+     *  sky around it twinkling), flare (seconds the full moon flares out into the party at the first wave). */
+    floor: { palette: number[][]; size: number; stars: number; flare: number } };
   /** Wind sway on leafy things: metres at the top of a crown, gusts' speed (m/s) and size (m), and a share for the treetop view. */
   wind: { on: boolean; strength: number; speed: number; gustScale: number; treetop: number };
   /** Tufts on the ground round the witch, in ground mode: overall density (times each area's), within radius metres, at most cap; one chance every spacing metres, worked out cell metres at a time within budgetMs a frame; sway (share of a tuft's height) and part (how far they part round her). */

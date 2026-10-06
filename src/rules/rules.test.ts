@@ -20,8 +20,9 @@ import { newLeash, stepLeash, type LeashControls } from "./leash";
 import { newClock, tick, MAX_STEP } from "./clock";
 import { TUNING, withTuning } from "./tuning";
 import { floorClearing, speakerRadius, nextSpeakerState } from "./speakers";
-import { composeFloor, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
+import { composeFloor, moonTiles, floorLevel, floorPatterns, newFloor, pickPattern, stepFloor, switchOn, floorEvent, GRID, type FloorInputs } from "./dancefloor";
 import { floorInputs } from "./game";
+import { moonState } from "./moon";
 import { castSpell, newSpells, spellCharge, speedMultiplier } from "./spells";
 import { musicMix } from "./music";
 import { tuftsInCell, TUFT_KINDS } from "./groundcover";
@@ -1340,19 +1341,37 @@ describe("the dancefloor's tile lights (Ed, v160)", () => {
   const beat = 60 / TUNING.beat.bpm, boot = 8 * beat; // the switch-on sequence is 8 beats
   const inputs = (time: number, o: Partial<FloorInputs> = {}): FloorInputs => ({ time, seed: 7, level: 2, partifiedAreas: new Set(), witch: { x: -50, y: -50, lift: 1, rgb: [255, 238, 70] }, dancers: [], ...o });
   const run = (f: ReturnType<typeof newFloor>, from: number, to: number, o: Partial<FloorInputs> = {}) => { for (let t = from; t <= to; t += 1 / 30) stepFloor(f, inputs(t, o), TUNING); };
-  const litCount = (rgbi: Uint8Array) => { let n = 0; for (let i = 3; i < rgbi.length; i += 4) if (rgbi[i]) n++; return n; };
-  it("is dark until it switches on, once, when the witch first leaves the terrace", () => {
-    const g = newGame(3, TUNING);
+  it("shows only the moon before the first wave, in its twilight palette, and switches on, once, when the first wave comes", () => {
+    const g = newGame(3, TUNING), P = TUNING.moon.floor.palette.map(c => c.join());
     g.clock.paused = false;
-    expect(litCount(composeFloor(g.floor, floorInputs(g), TUNING).rgbi)).toBe(0);
+    const colours = () => { const o = composeFloor(g.floor, floorInputs(g), TUNING).rgbi, seen = new Set<string>(); let max = 0; for (let i = 0; i < o.length; i += 4) if (o[i + 3]) { seen.add(`${o[i]},${o[i + 1]},${o[i + 2]}`); max = Math.max(max, o[i + 3]); } return { seen, max }; };
     for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
-    expect(g.floor.on).toBeNull(); // still seated
-    stepGame(g, { ...NO_INTENT, moveX: 1, zoom: 0 }, 1 / 60);
+    for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, toggleMode: i === 5, zoom: 0 }, 1 / 60);
+    expect(g.party.wave).toBe(0);
+    expect(g.floor.on).toBeNull(); // off the decks, but no wave yet: the moon
+    const m = colours();
+    expect(m.seen.size).toBeGreaterThan(0);
+    expect([...m.seen].every(c => P.includes(c))).toBe(true); // no neon
+    expect(m.max).toBeLessThanOrEqual(2);
+    g.party.nextAt = g.clock.time; // the first wave, now
+    for (let i = 0; i < 3 && g.party.wave === 0; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
+    expect(g.party.wave).toBeGreaterThan(0);
     const on = g.floor.on;
     expect(on).not.toBeNull();
-    for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, toggleMode: i === 5, zoom: 0 }, 1 / 60);
+    expect(colours().max).toBe(3); // the full moon flaring out
+    for (let i = 0; i < 60 * (TUNING.moon.floor.flare + 1); i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
     expect(g.floor.on).toBe(on); // only once
-    expect(litCount(composeFloor(g.floor, floorInputs(g), TUNING).rgbi)).toBeGreaterThan(0); // booting
+    expect([...colours().seen].some(c => !P.includes(c))).toBe(true); // the party's neons
+  });
+  it("draws the moon's phases: none lit at new, the right half at first quarter, all at full, the left half at last quarter", () => {
+    const lit = (phase: number) => { const o = new Uint8Array(GRID * GRID * 4); moonTiles(o, phase, 0, TUNING); const S = TUNING.moon.floor.palette[2].join(), P1 = TUNING.moon.floor.palette[1].join(); let l = 0, r = 0; for (let n = 0; n < GRID * GRID; n++) { const c = `${o[n * 4]},${o[n * 4 + 1]},${o[n * 4 + 2]}`; if (o[n * 4 + 3] === 2 && (c === S || c === P1)) { if (n % GRID < GRID / 2) l++; else r++; } } return { l, r }; };
+    expect(lit(0)).toEqual({ l: 0, r: 0 });
+    const q1 = lit(0.25), full = lit(0.5), q3 = lit(0.75);
+    expect(q1.l).toBe(0); expect(q1.r).toBeGreaterThan(20);
+    expect(full.l).toBeGreaterThan(20); expect(Math.abs(full.l - full.r)).toBeLessThan(full.l * 0.2);
+    expect(q3.r).toBe(0); expect(q3.l).toBeGreaterThan(20);
+    const cres = lit(0.1), gib = lit(0.4);
+    expect(cres.r).toBeLessThan(q1.r); expect(gib.r + gib.l).toBeGreaterThan(q1.r);
   });
   it("plays patterns on the beat, changing on bar lines, never the same one twice running", () => {
     const f = newFloor(); switchOn(f, 0);
@@ -1701,5 +1720,21 @@ describe("the dash (Ed, 2026-10-04)", () => {
     run(g, 1, { dash: true });
     expect(g.witches[0].dash.until).toBe(-Infinity);
     expect(Math.abs(g.witch.x - x0)).toBeLessThan(1);
+  });
+});
+
+describe("the moon (Ed, 2026-10-06)", () => {
+  it("goes through its phases, crosses the sky, and now and then turns red, blue or gold, the same for a seed", () => {
+    const M = TUNING.moon;
+    expect(moonState(0, 5, TUNING).phase).toBeCloseTo(M.phaseStart);
+    expect(moonState(M.phasePeriod / 2, 5, TUNING).phase).toBeCloseTo(M.phaseStart + 0.5);
+    const a = moonState(0, 5, TUNING), b = moonState(M.orbit * 0.3, 5, TUNING);
+    expect(b.x).toBeGreaterThan(a.x);
+    for (let t = 0; t < M.orbit; t += 7) { const m = moonState(t, 5, TUNING); expect(m.y).toBeGreaterThanOrEqual(M.low - 1e-9); expect(m.y).toBeLessThanOrEqual(M.high + 1e-9); expect(m.x).toBeGreaterThanOrEqual(M.left); expect(m.x).toBeLessThanOrEqual(M.right); }
+    expect(moonState(10, 5, TUNING).kind).toBe("plain"); // never in the first window
+    const kinds = new Set<string>();
+    for (let seed = 1; seed < 40; seed++) for (let t = M.colourEvery; t < M.colourEvery * 12; t += 10) { const m = moonState(t, seed, TUNING); if (m.colour > 0.99) kinds.add(m.kind); expect(m.rgb.every(Number.isFinite)).toBe(true); }
+    expect([...kinds].sort()).toEqual(["blue", "gold", "red"]);
+    expect(moonState(1234.5, 9, TUNING)).toEqual(moonState(1234.5, 9, TUNING));
   });
 });

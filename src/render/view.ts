@@ -16,6 +16,7 @@ import { AssetLibrary } from "./assets";
 import type { LightSource } from "../rules/forest";
 import { Ground } from "./ground";
 import { Sky } from "./sky";
+import { moonState, type MoonState } from "../rules/moon";
 import { Clouds } from "./clouds";
 import { Ride } from "./ride";
 import { bendPoint, groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, placed, useHeightField } from "./height";
@@ -98,6 +99,11 @@ export class View {
   private camLift = 0;
   /** The night sky that shows over the bend, in treetop mode. */
   private sky: Sky;
+  /** The moonlight as the style and mood set it, before the moon's colour tints it (rules/moon.ts). */
+  private moonBase = new THREE.Vector3();
+  private moonUpBase = new THREE.Vector3();
+  /** Seconds added to game time for the moon only (previews: a time-lapse of its phases, way and colours). */
+  moonShift = 0;
   /** Real clouds over the bend, with lightning. */
   private clouds: Clouds;
   readonly assets: AssetLibrary;
@@ -237,6 +243,7 @@ export class View {
       LIGHT_UNIFORMS.uAmb.value.multiplyScalar(2);
       LIGHT_UNIFORMS.uGlowPower.value = 0;
     }
+    this.moonBase.copy(LIGHT_UNIFORMS.uMoon.value); { const U = LIGHT_UNIFORMS.uMoonUp.value; this.moonUpBase.set(U.x, U.y, U.z); } // (the moonlight before the moon's own colour: updateMoon)
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize, witchGenome);
     this.assets.crownShare = t.trunkFade.crownShare;
     {
@@ -496,6 +503,16 @@ export class View {
   private frameStart = 0;
   /** Whether the hills' next strip was all worked out last frame. */
   private heightsReady = true;
+  /** The moon now (one moon: rules/moon.ts), and the moonlight tinted a little with its colour (moon.tint). */
+  private updateMoon(g: Game): MoonState {
+    const m = moonState(g.clock.time + this.moonShift, g.seed, g.tuning), k = g.tuning.moon.tint, P = [0.92, 0.94, 0.86];
+    const r = 1 + (m.rgb[0] / P[0] - 1) * k, gr = 1 + (m.rgb[1] / P[1] - 1) * k, b = 1 + (m.rgb[2] / P[2] - 1) * k, n = 3 / (r + gr + b); // its hue, not its brightness
+    LIGHT_UNIFORMS.uMoon.value.set(this.moonBase.x * r * n, this.moonBase.y * gr * n, this.moonBase.z * b * n);
+    const U = LIGHT_UNIFORMS.uMoonUp.value;
+    U.set(this.moonUpBase.x * r * n, this.moonUpBase.y * gr * n, this.moonUpBase.z * b * n, U.w);
+    return m;
+  }
+
   private time(part: string): void { const now = performance.now(); this.ms[part] = (this.ms[part] ?? 0) + now - this.lap; this.lap = now; }
 
   /** Her sprite batch, from the assets' witch frames. */
@@ -564,7 +581,7 @@ export class View {
       this.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground);
       HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); // the camera always looks north (toward -z)
       const far = t.haze.far;
-      this.sky.update(k, pose.tx, pose.tz, far, 2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (this.width / this.height));
+      this.sky.update(k, pose.tx, pose.tz, far, 2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (this.width / this.height), this.updateMoon(g));
     }
     this.time("sky");
     const u = target.dot(up), r = target.x, eu = Math.round(u / wpp) * wpp - u, er = Math.round(r / wpp) * wpp - r;
