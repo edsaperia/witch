@@ -132,7 +132,10 @@ function gearUp(m) {
 //   mane: { from, to (along the back, 0 rump to 1 head), height, count, lean, mat, belly (along the underside instead) }
 //   eyeglint: { size }: its eyes' glint brought out to the surface, where its body hides its face.
 //   wisps: { at: "tusks" | "horns" | "mane", size, mat, (mane: count, from, to) }: flames off its tusks' or horns' tips, or rising along its spine (glowing).
-export const EVOLVE_KINDS = ["mane", "wisps", "eyeglint"];
+//   stones: { from, to, count, height, mat }: standing stones growing out of its back, each with a moonlit rune on its face (RUNE).
+//   claws: { size, mat, fore (default true), hind }: long claws curving down and forward from its feet.
+//   moss: { count, size }: moss and heather clumps along its flanks, low.
+export const EVOLVE_KINDS = ["mane", "wisps", "eyeglint", "stones", "claws", "moss"];
 function evolve3d(m, feats, c) {
   for (const f of feats) {
     if (f.kind === "mane") {
@@ -155,6 +158,36 @@ function evolve3d(m, feats, c) {
         for (let k = 1; k <= 300; k++) { const q = v3.add(e, v3.mul(d, k * .01)), now = m.field(q) < 0; if (inside && !now) last = q; inside = now; }
         m.ell(last, [r, r * .8, r], M.MAGIC2, { group: 120, extra: true }); m.ell(v3.add(last, v3.mul(d, r * .6)), [r * .55, r * .45, r * .55], M.MAGIC, { group: 121, extra: true }); } // a bright core in its glowing rim
     }
+    if (f.kind === "stones") { // standing stones out of its back, tallest at the middle, leaning a little apart, each with a rune facing us
+      m.part = "body";
+      const n = f.count ?? 5, H0 = f.height ?? .32, mat = M[f.mat || "STONE"];
+      for (let i = 0; i < n; i++) {
+        const t = (f.from ?? .2) + ((f.to ?? .85) - (f.from ?? .2)) * (n > 1 ? i / (n - 1) : .5), b = c.backAt(t), k = (.7 + .3 * Math.sin(Math.PI * (i + .5) / n)) * (.85 + .3 * Math.abs(Math.sin(i * 3.7 + 1.1)));
+        const h = H0 * k, w = h * .42, z = ((i % 2) * 2 - 1) * c.bw * .12, up = v3.norm([(i - (n - 1) / 2) * -.08, 1, z * 1.5]), base = [b[0], b[1] - h * .15, z], mid = v3.add(base, v3.mul(up, h * .5));
+        m.box(mid, [h * .5, w * .5, w * .38], mat, { group: 130 + i, extra: true, dir: up, up: [1, 0, 0], round: w * .12, rough: w * .06, paint: p => spotty(p, 22, .22) ? M.MOSS : spotty(p, 34, .12) ? M.STONED : undefined });
+        // its rune: a glowing mark on the face towards us (a vertical stroke with two branches)
+        const face = v3.add(mid, [0, 0, w * .4]), R = (a, b2) => v3.add(face, v3.add(v3.mul(up, b2 * h), [a * w, 0, 0]));
+        m.seg(R(0, -.24), R(0, .24), w * .11, w * .11, M.RUNE, { group: 140 + i, extra: true });
+        m.seg(R(0, .05), R(.24, .22), w * .09, w * .09, M.RUNE, { group: 140 + i, extra: true });
+        m.seg(R(0, -.08), R(-.24, .09), w * .09, w * .09, M.RUNE, { group: 140 + i, extra: true });
+      }
+    }
+    if (f.kind === "claws" && m.rig?.legs) { // long claws off its feet, curving down and forward (a digger's, or stone blades)
+      const s2 = f.size ?? .12, mat = M[f.mat || "ACCENT"];
+      for (const L of m.rig.legs) { if (L.fore ? f.fore === false : !f.hind) continue; m.part = L.name;
+        for (const dz of [-1, 0, 1]) { const b = v3.add(L.foot, [L.fl * .9, .02, dz * L.fl * .45]); m.chain([[...b, s2 * .2], [...v3.add(b, [s2 * .55, -.01, dz * s2 * .1]), s2 * .13], [...v3.add(b, [s2, -.05, dz * s2 * .15]), s2 * .03]], mat, { group: L.side > 0 ? 6 + (L.fore ? 1 : 0) : 2, extra: true }); } }
+    }
+    if (f.kind === "moss") { // moss and heather along its flanks, low, on both sides
+      m.part = "body";
+      const n = f.count ?? 8, s2 = f.size ?? .1;
+      for (let i = 0; i < n; i++) for (const side of [-1, 1]) {
+        const t = (i + .5) / n, x = -c.len * .8 + t * c.len * 1.5, y = c.chest + (c.top - c.chest) * (.3 + .25 * Math.abs(Math.sin(i * 2.3 + side))), k = s2 * (.7 + .5 * Math.abs(Math.sin(i * 1.7 + side)));
+        let p = [x, y, 0]; for (let j = 0; j < 120 && m.field(p) < -k * .2; j++) p = [x, y, p[2] + side * .01]; // out to its flank's surface
+        if (m.field(p) > k) continue; // nothing there
+        m.ell(p, [k * 1.2, k * .55, k * .7], M.MOSS, { group: 150 + (side > 0 ? 0 : 1), extra: true, rough: k * .15 });
+        if (i % 2) m.ell(v3.add(p, [0, k * .45, side * k * .2]), [k * .35, k * .3, k * .35], M.FLOWER, { group: 152, extra: true }); // a sprig of heather
+      }
+    }
     if (f.kind === "wisps" && f.at === "mane") { // flames rising off the spine, over the hump
       m.part = "body";
       const n = f.count ?? 5, s = f.size ?? .22;
@@ -173,7 +206,7 @@ function evolve3d(m, feats, c) {
 // ================= four-legged animals =================
 export function quad3d(S, level, frame, st, facing = "towards") {
   // its evolution at this level (genome levels: its own proportions and parts, not a rescale; q.features: legend features it grows early)
-  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q, ...(S.levelQ?.[level] || {}) }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => (legend && S.legend.includes(f)) || (q.features || []).includes(f);
+  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q, ...(S.levelQ?.[level] || {}) }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => (legend && !S.levelFeatures?.[3] && S.legend.includes(f)) || (q.features || []).includes(f); // (an evolved legend, its genome levels[3], replaces its old legend feature)
   const feats = S.levelFeatures?.[level];
   const sz = k => S.sizes[k][level]; // its template's size curves (art/genome/templates.js): baby, young, adult, legend
   const m = new Model();
@@ -221,7 +254,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   const nb = [len * .82, top - .12, 0], H = [nb[0] + Math.cos(q.neckAng) * q.neck * .9, nb[1] + Math.sin(q.neckAng) * q.neck * .9 + sz("headLift"), 0];
   m.seg(nb, H, q.neckW * .55 * sz("neckBase"), q.neckW * .42 * sz("neckTop"), M.BODY, { paint: p => q.belly && p[1] < (nb[1] + H[1]) / 2 - .05 ? M.BELLY : q.face === "dark" ? M.BODY2 : undefined });
   const headPaint = p => {
-    if (q.face === "badger") return Math.abs(p[2]) < hr * .22 + (p[0] - H[0]) * .1 || p[1] < H[1] - hr * .1 ? M.BELLY : M.BODY3;
+    if (q.face === "badger") return Math.abs(p[2]) < hr * .22 * (q.blaze ?? 1) + (p[0] - H[0]) * .1 || p[1] < H[1] - hr * .1 ? (q.blazeGlow && Math.abs(p[2]) < hr * .22 * (q.blaze ?? 1) && p[1] > H[1] - hr * .1 ? M.RUNE : M.BELLY) : M.BODY3; // blaze: the stripe's width; blazeGlow: it glows in moonlight
     if (q.face === "dark") return M.BODY2;
     if ((q.belly || q.muzzle) && p[1] < H[1] - hr * .35) return M.BELLY;
     return undefined;
@@ -497,16 +530,50 @@ export function beetle3d(S, level, frame, st, facing = "towards") {
   return finish(m, S, level, st, .5, facing);
 }
 
+// The snail: its foot, eye stalks and shell. Its genome levels shape it (each level its own design: docs/art-guide/EVOLUTIONS.md):
+// body.shell { turns, cone (0 a flat spiral seen side on, 1+ raised into a tower), r (its mouth's whorl radius), ridge (a ridge on
+// each whorl), bands (stripes per turn, amber and umber), pale (a baby's near-clear shell), glow (its mouth glowing amber),
+// buttress (props down to the ground), mud (caked at its base), trees (tiny trees and fungi on its whorls) }, body.stalks (eye stalk
+// length), body.mantle (a frill round its foot), body.sheen (a slime highlight). Without levels, as it was.
 export function snail3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 3, m = new Model(), g = frame ? .04 : 0;
-  m.ell([0, .07, 0], [.6 + g, .07, .17], M.SKIN, { group: 1 });
-  m.chain([[.45 + g, .08, 0, .1], [.6 + g, .25, 0, .09], [.68 + g, .28, 0, .08]], M.SKIN, { group: 1 });
-  for (const side of [-1, 1]) { m.seg([.7 + g, .32, side * .04], [.78 + g, .55, side * .1], .018, .014, M.SKIN, { group: 5 }); m.ell([.78 + g, .57, side * .1], [.03, .03, .03], legend ? M.MAGIC2 : M.EYE, { group: 5 }); }
+  const legend = level === 3, m = new Model(), g = frame ? .04 : 0, q = { ...S.q, ...(S.levelQ?.[level] || {}) }, sh = q.shell;
+  const skin = sh ? (sh.pale ? M.SKIN : M.BELLY) : M.SKIN, stalk = q.stalks ?? 1;
+  m.ell([0, .07, 0], [.6 + g, .07, .17], skin, { group: 1 });
+  m.chain([[.45 + g, .08, 0, .1], [.6 + g, .25, 0, .09], [.68 + g, .28, 0, .08]], skin, { group: 1 });
+  const tipOf = side => [.7 + g + .08 * stalk, .32 + .23 * stalk, side * (.04 + .06 * stalk)];
+  for (const side of [-1, 1]) { const t = tipOf(side); m.seg([.7 + g, .32, side * .04], t, .018 * Math.max(1, stalk * .8), .014 * Math.max(1, stalk * .7), skin, { group: 5 }); m.ell(t, [.03, .03, .03].map(v => v * Math.max(1, stalk * .75)), legend || q.eyeGlow ? M.MAGIC2 : M.EYE, { group: 5 }); }
   m.anchors.head = { c: [.68 + g, .3, 0], r: [.09, .08, .09], top: [.66 + g, .38, 0] };
-  m.anchors.eyes = { pts: [-1, 1].map(side => [.78 + g, .57, side * .1]), size: .03 };
+  m.anchors.eyes = { pts: [-1, 1].map(tipOf), size: .03 * Math.max(1, stalk * .75) };
   m.anchors.neck = { c: [.55 + g, .17, 0], r: .1, dir: [1, 1.2, 0] };
-  const c = [-.12, .4, 0], shell = legend ? M.MAGIC : M.BODY;
-  m.ell(c, [.32, .32, .22], shell, { group: 3, paint: p => { const a = Math.atan2(p[1] - c[1], p[0] - c[0]), rr = Math.hypot(p[0] - c[0], p[1] - c[1]) / .32, k = ((rr - a / (Math.PI * 2) * .3) % .3 + .3) % .3; return k < .06 ? (legend ? M.MAGIC2 : M.BODY3) : undefined; } });
+  if (q.mantle) for (let i = 0; i < 9; i++) { const x = -.45 + i * .11, w = Math.sin(i * 1.9) * .015; for (const side of [-1, 1]) m.ell([x + g * (i / 9), .06 + w, side * .19], [.07, .025, .05], M.BELLY, { group: 1, dir: [1, 0, side * .3] }); } // a broad frill
+  if (q.sheen) m.seg([-.45, .13, .1], [.55 + g, .14, .1], .012, .01, M.WEB, { group: 2, extra: true }); // the slime's one pale highlight
+  if (!sh) { // its old shell
+    const c = [-.12, .4, 0], shell = legend ? M.MAGIC : M.BODY;
+    m.ell(c, [.32, .32, .22], shell, { group: 3, paint: p => { const a = Math.atan2(p[1] - c[1], p[0] - c[0]), rr = Math.hypot(p[0] - c[0], p[1] - c[1]) / .32, k = ((rr - a / (Math.PI * 2) * .3) % .3 + .3) % .3; return k < .06 ? (legend ? M.MAGIC2 : M.BODY3) : undefined; } });
+    return finish(m, S, level, st, .45, facing);
+  }
+  // the shell: a tube winding inward round its axis, from its mouth (low, at the front) to its apex; the axis lies across (a flat
+  // spiral, seen side on) or tilts up into a tower by `cone`
+  const turns = sh.turns ?? 2, cone = sh.cone ?? 0, R0 = sh.r ?? .3, n = Math.round(turns * 14), base = [-.1, .08 + R0 * .9, 0];
+  const ax = v3.norm([-.15 * cone, cone, 1 - Math.min(1, cone) * .85]), e1 = v3.norm(v3.cross(ax, [0, 0, 1]).some(v => Math.abs(v) > 1e-3) ? v3.cross(ax, [0, 0, 1]) : [1, 0, 0]), e2 = v3.cross(ax, e1);
+  const bandMat = k => sh.pale ? M.SKIN : sh.bands && Math.floor(k * sh.bands) % 2 ? M.BODY3 : M.BODY;
+  const pts = [];
+  for (let i = 0; i <= n; i++) {
+    const u = i / n, a = -Math.PI * .6 + u * turns * Math.PI * 2, R = R0 * Math.pow(1 - u * .82, 1.1), h = cone * R0 * 2.4 * u;
+    const p = v3.add(v3.add(base, v3.mul(ax, h)), v3.add(v3.mul(e1, Math.cos(a) * R * .55), v3.mul(e2, Math.sin(a) * R * .55)));
+    pts.push([...p, R * .5 + .015, u, v3.add(base, v3.mul(ax, h))]); // (and its axis point there)
+  }
+  for (let i = 0; i < n; i++) m.seg(pts[i].slice(0, 3), pts[i + 1].slice(0, 3), pts[i][3], pts[i + 1][3], bandMat(pts[i][4] * turns), { group: 3 });
+  if (sh.ridge) for (let w = 1; w < turns; w++) { const i = Math.round(w / turns * n), p = pts[i]; m.ell(p.slice(0, 3), [p[3] * 1.12, p[3] * 1.12, p[3] * 1.12], M.BODY3, { group: 3 }); } // a ridge on each whorl
+  const mouth = pts[0].slice(0, 3);
+  if (sh.glow) m.ell(v3.add(mouth, [.04, -.02, pts[0][3] * .75]), [pts[0][3] * .75, pts[0][3] * .85, pts[0][3] * .4], M.GLOW, { group: 4, extra: true }); // amber light from its mouth
+  if (sh.buttress) for (const [k, side] of [[.25, 1], [.5, -1], [.7, 1], [.4, -1]]) { const p = pts[Math.round(k * n)]; m.seg(p.slice(0, 3), [p[0] - .15 + k * .2, .02, side * (.22 + k * .1)], p[3] * .45, p[3] * .7, M.BODY3, { group: 3, paint: p2 => p2[1] < .12 ? M.MOSS : undefined }); } // stone-like props down to the ground
+  if (sh.mud) m.ell([base[0], .08, 0], [R0 * 1.25, .09, R0 * .9], M.BODY3, { group: 6, extra: true, rough: .02, paint: p => spotty(p, 18, .3) ? M.MOSS : spotty(p, 25, .15) ? M.TRUNK : undefined }); // mud and roots caked at its base
+  if (sh.trees) for (let t = 0; t < sh.trees; t++) { // tiny trees and fungi on its whorls
+    const p = pts[Math.round((.25 + .65 * t / Math.max(1, sh.trees - 1)) * n * .95)], out = v3.norm(v3.add(v3.norm(v3.sub(p.slice(0, 3), p[5])), [0, .6, .5])), top = v3.add(p.slice(0, 3), v3.mul(out, p[3] * .85)); // on the whorl's outer face, up and towards us
+    if (t % 3 === 2) { m.seg(top, v3.add(top, [0, .07, 0]), .016, .016, M.WEB, { group: 7, extra: true }); m.ell(v3.add(top, [0, .08, 0]), [.055, .028, .055], M.SKIN, { group: 7, extra: true }); continue; } // a fungus
+    const h = .16 + .06 * (t % 2); m.seg(top, v3.add(top, [0, h, 0]), .016, .01, M.TRUNK, { group: 8, extra: true }); m.ell(v3.add(top, [0, h + .05, 0]), [.075, .09, .075], t % 2 ? M.LEAF : M.LEAF2, { group: 8, extra: true, rough: .008 });
+  }
   return finish(m, S, level, st, .45, facing);
 }
 
