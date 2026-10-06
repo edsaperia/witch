@@ -436,6 +436,7 @@ let audio: AudioContext | null = null, music: Music | null = null, sfx: Sfx | nu
 // It's also the loading screen (Ed, 2026-10-05): it opens at once and the forest grows behind it;
 // Start waits ("getting ready") until play can begin.
 const creator = new Creator(style, savedLook, tuning.pixelSize);
+(window as unknown as { __creator: Creator }).__creator = creator; // (the creator's smoke scripts read her place in the room)
 let lookNow = JSON.stringify(savedLook);
 creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready }; };
 /** The sound effects, once there's an AudioContext (the creator's first click, or the start). */
