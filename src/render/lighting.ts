@@ -52,6 +52,8 @@ export const LIGHT_UNIFORMS = {
   /** Slowed time in a legend's circle (render/slowtime.ts): the circle's centre x, z, its radius, and how slowed the world
    *  outside is (0 normal to 1 at its slowest): outside, the world greys and cools; the circle's edge shimmers. */
   uSlow: { value: new THREE.Vector4() },
+  /** The circle's legend, kept out of the slowed grey (Ed's round 14 playtest: legends must read in their circles): its spot and the half-widths of an ellipse round it, wide across and shallow in depth, so the ground past the circle's edge still greys. */
+  uSlowKeep: { value: new THREE.Vector4() },
   /** Real time (s), for what keeps its pace while the world slows (uTime slows with it: render/slowtime.ts). */
   uRealTime: { value: 0 },
   // The disco ball: position (w: 1 when present), and spin, speck density, brightness, reach.
@@ -104,7 +106,7 @@ uniform int uGladeCount;
 uniform vec3 uGladeRgb;
 uniform vec2 uGladeLight;
 uniform float uDim;
-uniform vec4 uSlow;
+uniform vec4 uSlow, uSlowKeep;
 uniform float uRealTime;
 uniform int uLightCount;
 uniform vec4 uPartyOver;
@@ -125,6 +127,7 @@ float sceneryFade(vec3 P) {
 vec3 slowGrade(vec3 c, vec3 P) {
   if (uSlow.w <= 0.0) return c;
   float k = uSlow.w * smoothstep(uSlow.z - 0.5, uSlow.z + 1.5, length(P.xz - uSlow.xy));
+  if (uSlowKeep.z > 0.0) k *= smoothstep(0.85, 1.1, length((P.xz - uSlowKeep.xy) / uSlowKeep.zw)); // (its legend, standing up out of the circle, as it is)
   float l = dot(c, vec3(0.299, 0.587, 0.114));
   return mix(c, mix(c, vec3(l), 0.75) * vec3(0.86, 0.95, 1.12), k);
 }
