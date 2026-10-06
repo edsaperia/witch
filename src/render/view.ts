@@ -26,6 +26,7 @@ import { hsv2rgb } from "../../art/generator.js";
 import { Post } from "./post";
 import { GrassView } from "./grass";
 import { SpellFx } from "./spellfx";
+import { TRAIL_DEFAULT, WitchTrail } from "./trail";
 import { InviteView } from "./invites";
 import { stunned } from "../rules/knock";
 import { StateMarks } from "./looks";
@@ -121,6 +122,10 @@ export class View {
   speakerBatch: SpriteBatch | null = null;
   readonly grass: GrassView;
   private spellFx = new SpellFx();
+  /** Her flight trail: a ribbon of glow in the colour of the area she's over (render/trail.ts). */
+  private trail: WitchTrail;
+  private trailAt = -1;
+  private trailRgb = new THREE.Vector3();
   readonly actionBar = new ActionBar(document.body);
   private buffHud = new BuffHud(document.body);
   private shadow: THREE.Mesh;
@@ -281,6 +286,8 @@ export class View {
     this.grass = new GrassView(game.map, t, this.mpp, style, game.forest, (this.ground.mesh.material as THREE.ShaderMaterial).uniforms);
     this.scene.add(this.grass.mesh);
     this.scene.add(this.spellFx.trail);
+    this.trail = new WitchTrail(game.tuning.trail ?? TRAIL_DEFAULT);
+    this.scene.add(this.trail.mesh);
     // The dancefloor's speakers: their batch comes with their art (drawSpeakers).
     this.assets.speakerArt();
     this.propBatch = new SpriteBatch(this.assets.props, this.mpp, { fade: true });
@@ -459,7 +466,7 @@ export class View {
   private hideForBare(): void {
     for (const b of [...this.typeBatches.values(), ...this.decorBatches.values(), ...this.creatureBatches.values(), this.treehouseBatch, this.propBatch, this.markerBatch])
       for (const m of b.meshes) m.visible = false;
-    for (const o of [this.grass.mesh, this.markerFx.group, this.borders.mesh, this.lasers.mesh, this.spellFx.trail]) o.visible = false;
+    for (const o of [this.grass.mesh, this.markerFx.group, this.borders.mesh, this.lasers.mesh, this.spellFx.trail, this.trail.mesh]) o.visible = false;
   }
 
   speakerFlare: (number | undefined)[] = [];
@@ -671,6 +678,15 @@ export class View {
     const markerLights = drawMarkers(this, time);
     const speakerLights = drawSpeakers(this, time, pose.angle);
     this.spellFx.update(g, time, witchHeight(w, t) + 0.6 + this.rideOff);
+    {
+      // her trail: behind her broom, as long as she's fast, in the colour of the area under her (its creature's neon, as the
+      // ley lines and runestones; home's own lavender)
+      const lift = canopyShown(w), A = g.map.areaAt(w.x, w.z), sp = Math.hypot(w.vx, w.vz), top = t.groundSpeed + (t.treetopSpeed - t.groundSpeed) * lift;
+      const c = A.look === HOME_LOOK ? this.trailRgb.set(0.8, 0.7, 1) : this.trailRgb.copy(this.markerArt.colour.get(AREA_TYPES[A.type].creature) ?? this.trailRgb.set(0.8, 0.7, 1));
+      const dt = this.trailAt < 0 ? 0 : Math.min(0.1, Math.max(0, time - this.trailAt)); this.trailAt = time;
+      const back = sp > 0.1 ? 0.6 / sp : 0, D = g.witches[0].dash;
+      this.trail.update(w.x - w.vx * back, witchHeight(w, t) + 0.25 + this.rideOff, w.z - w.vz * back, sp, top, lift, c, time, dt, D.at);
+    }
     this.actionBar.update(g, time);
     this.buffHud.update(g, time);
     // Tufts part round her and the three nearest creatures.

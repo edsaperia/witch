@@ -1,6 +1,7 @@
 // The spell's, the blink's and the broom's look (rules/spells.ts, rules/dash.ts), in the night palette (the coordinator's
 // brief: "the witch's own magic in the night palette"; the art director's colours, #188 and round 2):
-//   - while the speed boost is on, a trail of warm motes, amber and rose, streams behind the witch;
+//   - (the speed boost's trail of motes is gone: her flight trail, a ribbon of glow as long as she's fast, render/trail.ts, Ed
+//     2026-10-06: "more like a fading-out glow, similar to the leylines");
 //   - a blink (the dash) leaves her afterimage where she stood, a column of moonlit blue-violet motes her height, fading;
 //     smears of them along the blink's line at her feet, body and hat; a loose ring falling in where she was; and a
 //     burst flying out where she lands (the moonlight's colour: the rim on every character, #199);
@@ -8,7 +9,6 @@
 // Every mote is in one fixed pool (typed arrays, a ring of MAX): nothing is made per frame. (Their recharge shows on the
 // action bar: render/actionbar.ts.)
 import * as THREE from "three";
-import { spellActive } from "../rules/spells";
 import type { Game } from "../rules/game";
 import { groundPoints } from "./height";
 
@@ -16,8 +16,8 @@ const MAX = 384;
 /** A mote's fields in the pool: where it starts (3), its drift in m/s (3), when it was made, how long it lasts, its
  *  strength, its colour (3). */
 const F = 12;
-/** The palette: the speed trail's amber and rose, the moonlight's blue-violet (the blink), the broom's amber. */
-const AMBER = [0.91, 0.71, 0.42], ROSE = [0.85, 0.47, 0.62], MOON = [0.4, 0.4, 0.85]; // (deep: the motes bloom and overlap, and must never reach white)
+/** The palette: the moonlight's blue-violet (the blink), the broom's amber. */
+const AMBER = [0.91, 0.71, 0.42], MOON = [0.4, 0.4, 0.85]; // (deep: the motes bloom and overlap, and must never reach white)
 
 export class SpellFx {
   readonly trail: THREE.Points;
@@ -25,7 +25,6 @@ export class SpellFx {
   private col = new Float32Array(MAX * 4);
   private pool = new Float32Array(MAX * F);
   private next = 0;
-  private lastDrop = 0;
   private lastSpark = 0;
   private lastBlink = -Infinity;
 
@@ -48,15 +47,10 @@ export class SpellFx {
 
   /** `y`: her height (metres) where the trail streams from. */
   update(g: Game, time: number, y: number): void {
-    const s = g.spells, w = g.witch, active = spellActive(s, time), r = Math.random;
-    // The speed trail: motes dropped every 1/60 s while it's on, each fading over 0.8 s.
-    if (active && time - this.lastDrop > 1 / 60) {
-      this.lastDrop = time;
-      for (let k = 0; k < 3; k++) this.mote(w.x + (r() - 0.5) * 0.8, y + (r() - 0.5) * 0.8, w.z + (r() - 0.5) * 0.8, 0, 0, 0, time, 0.8, 1, k % 2 ? ROSE : AMBER);
-    }
-    // The broom: flying, a small amber spark from its bristles (behind her) now and then, more the faster she goes.
+    const w = g.witch, r = Math.random;
+    // The broom: flying, a small amber spark from its bristles (behind her) now and then, more the faster she goes (trail.sparks).
     const speed = Math.hypot(w.vx, w.vz), D = g.witches[0].dash;
-    if (speed > 2 && !(time >= D.at && time < D.until) && time - this.lastSpark > 1 / Math.min(12, speed)) {
+    if (g.tuning.trail?.sparks !== false && speed > 2 && !(time >= D.at && time < D.until) && time - this.lastSpark > 1 / Math.min(12, speed)) {
       this.lastSpark = time;
       const ux = w.vx / speed, uz = w.vz / speed;
       this.mote(w.x - ux * 0.9 + (r() - 0.5) * 0.2, y - 0.35 + (r() - 0.5) * 0.2, w.z - uz * 0.9, -ux * 0.4, -0.5 - r() * 0.4, -uz * 0.4, time, 0.4 + r() * 0.3, 0.5, AMBER);
