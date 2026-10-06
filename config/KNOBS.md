@@ -1228,6 +1228,17 @@ Creatures notice the witch on the ground within radius metres (Ed's playtest: a 
 | `notice.curious` | number | 0 to … |
 | `notice.skittish` | number | 0 to … |
 
+## `naps`
+
+Wild idlers nap (Ed, 2026-10-06: "I think animals in wild areas which are idling can sleep. They awake when you are there in ground mode, but stay asleep if you're in treetop mode, or not in their area (e.g. you see them from an adjacent area)"; "They don't all sleep - but it's one of the things they can do while idling"): a wild creature roaming its own still-wild area (not besieging, fleeing, dazed, marching, fighting, happy or a legend), at each pause, lies down instead with chance, for length seconds (a range: min, max), then gets up. It gets up at once when a witch is on the ground in its area (none starts a nap then), and when its area is partified or it's enraged or taken; getting up takes wake seconds (a stretch, a yawn), out of fights till then, so landing isn't an instant pounce. Asleep it stays down with her in the treetops or on the ground in another area, however near. Sleepers skip their roam and every fight. on: false turns naps off.
+
+| knob | type | range |
+|---|---|---|
+| `naps.on` | boolean |  |
+| `naps.chance` | number | 0 to … |
+| `naps.length` | array of number |  |
+| `naps.wake` | number | 0 to … |
+
 ## `guard`
 
 Parked party animals (at a sigil on the ground) guard it (Ed, 2026-10-04): they take on any wild creature of another kind within radius metres of the sigil, and come back to it.

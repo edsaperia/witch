@@ -37,7 +37,7 @@ function unseen(g: Game, x: number, z: number): boolean {
 
 /** Asleep for good, here, now. */
 function sleep(c: Creature, time: number): void {
-  c.asleep = true; c.asleepAt = time; // (no napUntil: asleep for good)
+  c.asleep = true; c.asleepAt = time; c.napUntil = undefined; c.wakeUntil = undefined; // (no napUntil: asleep for good, the naps' wake rules leave it be)
   c.bed = undefined; c.moving = false; c.vx = 0; c.vz = 0;
   if (c.boss) { c.legendState = "asleep"; c.homing = undefined; c.stateAt = time; c.restlessness = 0; c.questOpen = false; }
 }
@@ -80,7 +80,7 @@ export function startPartyOver(g: Game, time: number): void {
     w.health.hp = g.tuning.witchHealth.hits; w.knock = undefined; w.slowUntil = undefined;
   }
   for (const c of g.creatures) {
-    if (c.asleep) continue;
+    if (c.asleep) { calm(c); sleep(c, time); continue; } // (a napper too: asleep for good now, its nap's end gone)
     if (c.gone) {
       // Ran off earlier: back home, already asleep (the record was kept: its species, level and area).
       c.gone = false; calm(c);
@@ -107,7 +107,8 @@ export function stepPartyOver(g: Game, dt: number): void {
   const time = g.clock.time;
   P.ease = partyOverEase(P.at, time, g.tuning.partyOver.ease);
   for (const c of g.creatures) {
-    if (c.asleep || c.gone) continue;
+    if (c.gone) continue;
+    if (c.asleep) { if (c.napUntil !== undefined) sleep(c, time); continue; }
     if (!c.bed) { calm(c); if (c.leashed) c.leashed = false; const b = bedOf(g, c); c.bed = b; }
     const b = c.bed!, dx = b.x - c.x, dz = b.z - c.z, d = Math.hypot(dx, dz), step = c.speed * g.tuning.partyOver.walk * dt;
     if (d <= Math.max(step, 0.05) || unseen(g, c.x, c.z)) { c.x = c.tx = b.x; c.z = c.tz = b.z; sleep(c, time); continue; }

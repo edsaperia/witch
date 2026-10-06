@@ -96,6 +96,18 @@ describe("the party's over", () => {
     expect(g.creatures.filter(c => !c.gone && !c.asleep && Math.hypot(c.x - g.witch.x, c.z - g.witch.z) > TUNING.haze.far + 60).length).toBe(0);
   }, 120000);
 
+  it("a creature napping when the party ends stays asleep for good, even with her landing in its area", () => {
+    const g = game(), w = g.witch;
+    const c = g.creatures.find(k => !k.boss && !k.gone)!;
+    Object.assign(c, { x: w.x + 3, z: w.z + 3, asleep: true, napUntil: g.clock.time + 1 });
+    endParty(g);
+    expect(c.asleep).toBe(true);
+    expect(c.napUntil).toBeUndefined();
+    g.witch = { ...g.witch, x: c.homeX, z: c.homeZ, mode: "ground" };
+    run(g, 5);
+    expect(c.asleep).toBe(true);
+  }, 60000);
+
   it("legends sleep too, and nobody fights, attacks her or takes 💌s", () => {
     const g = game(), W = g.witches[0];
     const L = g.creatures.find(c => c.boss)!;

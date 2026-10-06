@@ -133,10 +133,7 @@ export interface Creature {
   sprung?: number;
   /** Enraged by a wave (it's besieging or marching on a soundsystem): it can't be invited (Ed's playtest). */
   enraged?: boolean;
-  /** Asleep (the one shared sleep, with the bug hunter's naps and art builder 1's sleeping art): still, out of every fight,
-   *  no rune, no 💌s, till whoever set it clears it (a nap has napUntil too; the party's over, rules/partyOver.ts, doesn't). */
-  asleep?: boolean;
-  /** When it lay down (world clock). */
+  /** When it lay down asleep (world clock; `asleep` below). */
   asleepAt?: number;
   /** The party's over and it's walking home to bed here (rules/partyOver.ts): then it lies down. */
   bed?: { x: number; z: number };
@@ -165,6 +162,15 @@ export interface Creature {
   quest?: Quest;
   /** Of an area whose legend's quest is done, still wild: it leaves her and her party be. */
   friendly?: boolean;
+  /** Asleep, lying where it is: an idle wild creature's nap (Ed, 2026-10-06: "animals in wild areas which are idling can
+   *  sleep"), or any other sleep that sets it (the party's over). Its roam is skipped, it's out of every fight, and the
+   *  view lays it down. Not a legend's (legendState). */
+  asleep?: boolean;
+  /** An idle nap's end by itself (game time): set only for a nap, whose own wake rules (NapRules) apply while it is; a
+   *  sleep without it stays down till whoever set it clears it. */
+  napUntil?: number;
+  /** Getting up (a stretch, a yawn) till this game time: still out of fights, its roam not yet resumed. */
+  wakeUntil?: number;
   /** A disc (centre, radius in metres) found to lie wholly in its own area: see inOwnArea. */
   safeX?: number;
   safeZ?: number;
@@ -339,16 +345,34 @@ export function stepCreature(c: Creature, dt: number, map: ForestMap): void {
  *  not by its roam or its leash. */
 export const heldByCombat = (c: Creature) => !!(c.gone || c.fleeUntil || c.wanderTo || c.fight?.target || c.retreat || (c.siege && !c.leashed));
 
+/** Wild idlers' naps (Ed, 2026-10-06: "I think animals in wild areas which are idling can sleep. They awake when you are
+ *  there in ground mode, but stay asleep if you're in treetop mode, or not in their area"; "They don't all sleep - but it's
+ *  one of the things they can do while idling"): at each pause in its roam, an idler (napper) may lie down instead, with
+ *  `chance`, for `length` seconds (a range); it gets up when that's over, when a witch is on the ground in its area
+ *  (`roused`; none start a nap then either), or when it no longer may (its area partified, it enraged, taken, fleeing...),
+ *  over `wake` seconds (a stretch, so landing isn't an instant pounce). Tuning: naps. */
+export interface NapRules { chance: number; length: readonly number[]; wake: number; /** its area still wild (no soundsystem yet) */ wild: (c: Creature) => boolean; /** a witch on the ground in its area */ roused: (c: Creature) => boolean }
+/** May nap at all: a wild idler, not a legend, besieging, fleeing, dazed, marching, fighting or happy. */
+export const napper = (c: Creature): boolean => !c.leashed && !c.gone && !c.boss && !c.enraged && c.state !== "happy" && !c.siege && !c.fleeUntil && !c.dazedUntil && !c.wanderTo && !c.fight?.target && !c.retreat;
+/** Asleep or still getting up: out of fights. */
+export const napping = (c: Creature, time: number): boolean => !!c.asleep || (c.wakeUntil !== undefined && time < c.wakeUntil);
+/** Up from a nap, slowly: `wake` seconds getting up. */
+export function wakeUp(c: Creature, time: number, wake: number): void {
+  c.asleep = false; c.napUntil = undefined; c.wakeUntil = time + wake; c.rest = 0;
+}
+
 /** Step only the creatures within `radius` metres of (x, z). One coming back into range after a
  *  while is put where it would plausibly be by now (a point in its area chosen from its id and
  *  the time), rather than where it was left. A `dormant` one (a wild legend still asleep) stays
  *  where it lies. */
-export function stepCreaturesNear(all: Creature[], x: number, z: number, radius: number, dt: number, time: number, map: ForestMap, dormant: (c: Creature) => boolean = () => false, lod: { full: number; band: number; every: number } = { full: Infinity, band: 0, every: 1 }, counts?: LodCounts): void {
+export function stepCreaturesNear(all: Creature[], x: number, z: number, radius: number, dt: number, time: number, map: ForestMap, dormant: (c: Creature) => boolean = () => false, lod: { full: number; band: number; every: number } = { full: Infinity, band: 0, every: 1 }, counts?: LodCounts, naps?: NapRules): void {
   // In full within lod.full of her (what the view can show); beyond, coarsely (rules/simLod.ts):
   // once every lod.every steps, by that many steps at once, taking turns by id; past `radius`
   // (by its home) not at all.
   const tick = Math.round(time / dt);
   for (const c of all) {
+    // A napper up when it's time, when she's on the ground in its area, or when it may nap no longer (wherever it is).
+    if (c.napUntil !== undefined && (!naps || time >= c.napUntil || !napper(c) || !naps.wild(c) || naps.roused(c))) wakeUp(c, time, naps?.wake ?? 0);
     if (c.leashed || c.gone) continue;
     const ax = Math.abs(c.homeX - x), az = Math.abs(c.homeZ - z);
     if (ax > radius || az > radius) { if (counts) counts.frozen++; continue; }
@@ -357,6 +381,9 @@ export function stepCreaturesNear(all: Creature[], x: number, z: number, radius:
     if (counts) { if (full) counts.full++; else counts.coarse++; }
     if (!full && !coarseTurn(tick, c.id, lod.every) && time - c.seen <= 3) continue; // (its turn comes well within 3 s: `seen` is kept fresh by it)
     if (dormant(c)) { c.seen = time; c.moving = false; c.away = false; continue; }
+    // Asleep or getting up: lying where it is, no roam (and no AI: combat leaves it out too).
+    if (napping(c, time)) { c.seen = time; c.moving = false; c.away = false; continue; }
+    c.wakeUntil = undefined;
     if (time - c.seen > 3) {
       const r = rng(c.id * 7919 + Math.floor(time / 20) * 131 + 5);
       [c.x, c.z] = pointInArea(map, c, r);
@@ -364,7 +391,12 @@ export function stepCreaturesNear(all: Creature[], x: number, z: number, radius:
       c.rest = r() * 2;
     }
     c.seen = time;
+    const paused = c.rest > 0;
     stepCreature(c, full ? dt : dt * lod.every, map);
+    // Just paused: now and then it lies down for a nap instead (never with her on the ground in its area).
+    if (naps && !paused && c.rest > 0 && napper(c) && naps.wild(c) && !naps.roused(c) && c.rand() < naps.chance) {
+      c.asleep = true; c.napUntil = time + naps.length[0] + c.rand() * (naps.length[1] - naps.length[0]); c.rest = 0;
+    }
   }
 }
 
@@ -375,7 +407,7 @@ export function stepCreaturesNear(all: Creature[], x: number, z: number, radius:
 export function stepNotice(list: Iterable<Creature>, witches: { x: number; z: number; onGround: boolean }[], temper: (species: string) => "curious" | "skittish" | null, t: Tuning): void {
   const N = t.notice;
   for (const c of list) {
-    if (c.leashed || c.gone || heldByCombat(c)) continue;
+    if (c.leashed || c.gone || heldByCombat(c) || c.asleep || c.wakeUntil !== undefined) continue;
     let w: { x: number; z: number } | null = null, d = N.radius;
     for (const v of witches) { if (!v.onGround) continue; const k = Math.hypot(v.x - c.x, v.z - c.z); if (k < d) { d = k; w = v; } }
     if (!w) continue;

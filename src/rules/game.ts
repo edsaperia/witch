@@ -6,7 +6,7 @@ import { questOutside, questPlaced, type QuestEvent } from "./quest";
 import { beatAt, newBeatClock, waveArrived, waveTempo, type BeatClock } from "./beat";
 import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState } from "./camera";
 import { MAX_STEP, newClock, type Clock } from "./clock";
-import { heldByCombat, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature } from "./creatures";
+import { heldByCombat, napping, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature, type NapRules } from "./creatures";
 import { Forest } from "./forest";
 import { inviteCreature, leashPoint, newLeash, stepLeash, type LeashControls, type LeashEvent, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
@@ -241,7 +241,7 @@ export const affectionOf = (g: Game): Affection => {
   const t = g.buffs?.tuning ?? g.tuning, s = g.witches[0].invites, E = t.legends;
   const data = { ...STATES, partyEgg: E.partyEgg, affection: { ...STATES.affection, hits: meterHits(t), gap: 0, legendDrain: E.partyDrain } };
   return {
-    invitable: c => invitableNow(c, data),
+    invitable: c => !c.asleep && invitableNow(c, data), // (a sleeper isn't to be invited: she wakes it by landing in its area)
     blocksLetters: c => !c.partyLegend && !c.asleep && !invitableNow(c, data) && blocksLetters(c), // (the egg: a happy legend takes them; a party legend lets them by)
     hit(c, amount, at) {
       // (the creature's meter on the world's clock; her letters' events on hers: rules/slowTime.ts)
@@ -419,7 +419,7 @@ function fixedStep(g: Game, controls: Controls): void {
     const T = COMBAT.temperament;
     stepNotice(near, g.witches.map(w => ({ x: w.body.x, z: w.body.z, onGround: w.body.mode === "ground" && !w.body.seated && !w.ko })), sp => (T.curious.includes(sp) ? "curious" : T.skittish.includes(sp) ? "skittish" : null), t);
   }
-  stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map, c => !!c.partyLegend || !!c.asleep || !!c.bed || dormant(g, c), { ...g.tuning.simLod, full: fullRadius(g.tuning, g.witch.mode) }, g.lod);
+  stepCreaturesNear(g.creatures, g.witch.x, g.witch.z, simRadius(g), dt, g.clock.time, g.map, c => !!c.partyLegend || !!c.bed || dormant(g, c), { ...g.tuning.simLod, full: fullRadius(g.tuning, g.witch.mode) }, g.lod, napRules(g));
   if (stepWanderers([...g.combat.busy].map(id => g.creatures[id]), g.map, dt)) g.byArea = null; // (those walking home are among combat's busy)
   // (A party animal in a fight is moved by combat, not its leash.)
   // (the relic button's events: added after the leash's step, which starts its events afresh)
@@ -484,7 +484,17 @@ function stepSpacing(g: Game, dt: number): void {
     if (c.gone || c.burrow || c.leap) continue;
     for (const w of ws) if (Math.abs(c.x - w.x) < R && Math.abs(c.z - w.z) < R) { list.push(c); break; }
   }
-  spaceOut(list, dt, c => !!c.partyLegend || !!c.asleep || dormant(g, c) || (c.stunUntil !== undefined && g.clock.time < c.stunUntil));
+  spaceOut(list, dt, c => !!c.partyLegend || dormant(g, c) || !!c.asleep || (c.stunUntil !== undefined && g.clock.time < c.stunUntil));
+}
+
+/** The naps' rules this step (rules/creatures.ts NapRules; tuning naps): an area is rousing while a witch is on the ground
+ *  in it (not on the decks, not knocked out); undefined with naps off. */
+function napRules(g: Game): NapRules | undefined {
+  const N = g.tuning.naps;
+  if (!N?.on) return undefined;
+  const roused = new Set<string>();
+  for (const w of g.witches) if (w.body.mode === "ground" && !w.body.seated && !w.ko) roused.add(cellKey(g.map.cellSafe(w.body.x, w.body.z).cell));
+  return { chance: N.chance, length: N.length, wake: N.wake, wild: c => !g.party.areas.has(cellKey(c.cell)), roused: c => roused.size > 0 && roused.has(cellKey(c.cell)) };
 }
 
 /** Wild areas grow (Ed, 2026-10-04): every wave each area still wild (and each one this wave
@@ -543,7 +553,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     creatures: g.creatures, active: stepped, time, dt, t, busy,
     witches: g.witches.map((w, i) => ({ id: i, x: w.body.x, z: w.body.z, onGround: w.body.mode === "ground" && !w.body.seated, down: !!w.ko, vx: w.body.vx, vz: w.body.vz })),
     leashPoint: id => { for (const w of g.witches) { const p = leashPoint(w.leash, id, w.body.x, w.body.z); if (p) return p; } return null; },
-    asleep: c => !!c.partyLegend || !!c.asleep || dormant(g, c) || (!!c.friendly && !c.leashed), // (a friendly area's creatures leave her party be, and are left be)
+    asleep: c => !!c.partyLegend || dormant(g, c) || napping(c, time) || (!!c.friendly && !c.leashed), // (a friendly area's creatures leave her party be, and are left be; a sleeper, or one getting up, is out of it)
     parked: id => g.witches.some(w => w.leash.placed.some(p => p.id === id)),
     talkingTo: id => g.witches.findIndex(w => !!w.leash.talk && w.leash.talk.id === id && !w.leash.talk.refused),
     exit: (x, z) => mapExit(g.map, x, z),

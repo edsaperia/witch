@@ -39,6 +39,9 @@ import { StallLog } from "./platform/stallLog";
 import { powerReport } from "./rules/power";
 import { Freeze } from "./platform/freeze";
 import { Creator, loadGenome } from "./ui/creator";
+import { BOT_KINDS, newBot, type Bot, type BotKind } from "./rules/bot";
+import { BotTag } from "./ui/botGame";
+import { pleasingWitch } from "./ui/looks";
 import { applyKnobParams, DecidePanel } from "./ui/decide";
 
 const params = new URLSearchParams(location.search);
@@ -432,6 +435,7 @@ requestAnimationFrame(() => setTimeout(async () => {
   ready = true;
   loadTimes.ready = performance.now();
   startEl.classList.remove("loading");
+  if (bot) start(); // (a bot game starts itself as soon as it can)
 }, 0));
 
 // The volume (Ed's playtest, 2026-10-04): a slider in the corner, 0 mutes; remembered on this browser.
@@ -475,11 +479,31 @@ function ensureSfx(): void { if (audio && !sfx && tuning.sfx.on) { sfx = new Sfx
 creator.onGesture = () => { try { audio ??= new AudioContext(); void audio.resume(); ensureSfx(); } catch { /* no sound yet */ } };
 creator.onStart = g => { if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); } if (start()) queueCast(); }; // (the scroll's burst: play, and the spell cast)
 creator.spellSound = (cue, v) => sfx?.spell(cue, v);
-if (params.get("creator") !== "0") creator.show();
+// The bot game (Ed, 2026-10-06: "start the game and watch the skilled bot play"; ?bot=skilled|crude, or the start
+// screen's Bot game): rules/bot.ts plays in place of her controls, a seeded witch, no character creation.
+const botParam = params.get("bot") as BotKind | null;
+let bot: Bot | null = null, botTag: BotTag | null = null;
+function botGame(kind: BotKind): void {
+  if (bot) return;
+  bot = newBot(kind);
+  const look = pleasingWitch(seed!);
+  lookNow = JSON.stringify(look); view.setWitch(look); wearHat(look);
+  botTag = new BotTag(kind, () => { const u = new URL(location.href); u.searchParams.delete("bot"); location.href = u.toString(); });
+  if (creator.open) creator.hide();
+}
+if (botParam && BOT_KINDS.includes(botParam)) botGame(botParam);
+else if (params.get("creator") !== "0") creator.show();
 const lookBtn = document.getElementById("look-btn");
 if (lookBtn) {
   for (const ev of ["pointerdown", "pointerup", "click", "touchstart"]) lookBtn.addEventListener(ev, e => e.stopPropagation()); // (not a start)
   lookBtn.addEventListener("click", () => { if (ready && game.clock.paused) creator.show(); });
+}
+// (and in the character creator's panel, which opens first at every load: golf's creator.addButton)
+creator.addButton("🤖 Bot game", () => { if (!game.clock.paused) return; botGame("skilled"); if (ready) start(); }); // (before the forest is ready, it starts as soon as it is)
+const botBtn = document.getElementById("bot-btn");
+if (botBtn) {
+  for (const ev of ["pointerdown", "pointerup", "click", "touchstart"]) botBtn.addEventListener(ev, e => e.stopPropagation()); // (not a start of her own)
+  botBtn.addEventListener("click", () => { if (!game.clock.paused) return; botGame("skilled"); if (ready) start(); }); // (before the forest's ready, it starts as soon as it is)
 }
 function start(): boolean {
   if (!ready || !game.clock.paused || freeze.frozen) return false;
@@ -587,14 +611,17 @@ function frame(now: number): void {
   const work0 = performance.now();
   frameStats.frame(dt * 1000);
   freeze.pollPad();
-  const c = input.read();
-  if (castQueued) { c.castParty = true; castQueued = false; }
+  const human = input.read();
+  // A bot game: the bot's controls, not hers (the camera's zoom and the debug key still hers).
+  const c: typeof human = bot ? { ...bot.decide(game), zoom: human.zoom, debug: human.debug, toggleAutoTalk: false } : human;
+  if (bot) botTag?.update(bot.doing);
+  if (castQueued) { c.castParty = !bot; castQueued = false; }
   if (c.toggleAutoTalk) setAutoTalk(!autoTalk);
   c.autoTalk = autoTalk;
   if (c.debug) { debugOn = !debugOn; debugEl.classList.toggle("on", debugOn); debugButtons.classList.toggle("on", debugOn); knobs.classList.toggle("on", debugOn); }
   view.debugReadouts = debugOn;
   const step0 = performance.now();
-  stepGame(game, c, dt);
+  stepGame(game, c, dt * (botTag?.speed ?? 1));
   const stepMs = performance.now() - step0;
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty. Once it has eased
   // in, a small card under the clock says so, with the time she lasted, and a way to play again.
@@ -624,7 +651,7 @@ function frame(now: number): void {
   frameStats.beginGpu();
   interpolated(game, () => view.render(Math.max(0, game.clock.time - (1 - game.alpha) * STEP * game.timeScale))); // (the world's step is STEP x timeScale: rules/slowTime.ts)
   frameStats.endGpu();
-  aimHud.update(game, game.herTime, input.cursor, input.lastAim, startEl.style.display === "none", dashLanding());
+  aimHud.update(game, game.herTime, input.cursor, input.lastAim, startEl.style.display === "none" && !bot, dashLanding());
   frameStats.work(performance.now() - work0);
   if (!game.clock.paused) stallLog.frame({ t: game.clock.time, gap: dt * 1000, work: performance.now() - work0, step: stepMs, parts: { ...view.ms, ...outside }, mode: game.witch.mode, x: game.witch.x, z: game.witch.z, wave: game.party.wave, creatures: game.creatures.length });
   applyShake();
@@ -675,6 +702,8 @@ function powerLines(): string[] {
   /** A debug hook (the dropped hat's previews): a hit on her now, as a creature's would be (her last one knocks her out). */
   hit: () => { hitWitch(game, 0, game.clock.time); return !!game.witches[0].ko; },
   get manual() { return manual; }, set manual(on: boolean) { manual = on; },
+  /** The bot game's bot and its tag (rules/bot.ts, ui/botGame.ts), null in a game of her own: tools drive it a frame at a time. */
+  get bot() { return bot; }, get botTag() { return botTag; },
   /** A debug hook (tools/sfx/live.cjs): the audio context, the music and the sound effects. */
   get audio() { return { ctx: audio, music, sfx, mends: watchdog.mends }; },
   /** A debug hook for frame feel (tools/feel/trace.cjs): one frame as the real loop runs it (the
