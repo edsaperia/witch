@@ -1087,6 +1087,25 @@ The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click or Space, gamepad A, 
 | `spells.speed.duration` | number | 0 to … |
 | `spells.speed.cooldown` | number | 0 to … |
 
+## `trail`
+
+Her flight trail (Ed, 2026-10-06: "more like a fading-out glow, similar to the leylines. Its length relates to her speed: 5 m on the ground and 20 m on the treetops. The glow should be the same as the current area colour"): a ribbon of glow along her path, fading to nothing at its tail, in the colour of the area she's over (eased over colourEase seconds as she crosses into the next). Its length: ground metres at full speed on the ground, treetops metres over the treetops, from none below from (a share of her top speed) to full at top speed along curve (1 straight), growing to a new speed's over grow seconds and shrinking over shrink. width: metres across on the ground and over the treetops; bright: its brightness; fade: how it fades along its length (eased out: bright for its first stretch, then thinning to nothing; higher keeps it bright longer), its width tapering with it. sparks: the broom's little amber sparks as well. ?trail=0 hides it.
+
+| knob | type | range |
+|---|---|---|
+| `trail.on` | boolean |  |
+| `trail.ground` | number | 0 to … |
+| `trail.treetops` | number | 0 to … |
+| `trail.from` | number | 0 to … |
+| `trail.curve` | number | 0 to … |
+| `trail.width` | array of number |  |
+| `trail.bright` | number | 0 to … |
+| `trail.fade` | number | 0 to … |
+| `trail.grow` | number | 0 to … |
+| `trail.shrink` | number | 0 to … |
+| `trail.colourEase` | number | 0 to … |
+| `trail.sparks` | boolean |  |
+
 ## `boot`
 
 At the start the home speaker ring boots up (Ed, 2026-10-04): its speakers power on one by one over time seconds, and only then does the first wave's countdown begin: extra time to find and invite your first creatures. Five minutes, counted from her first step off the decks (Ed, 2026-10-05: 'the game is hard! ... a boot up period of 5 minutes'): no wave and no growth till then.

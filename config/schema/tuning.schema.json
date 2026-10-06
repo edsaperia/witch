@@ -4899,6 +4899,75 @@
       ],
       "additionalProperties": false
     },
+    "trail": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "ground": {
+          "type": "number",
+          "minimum": 0
+        },
+        "treetops": {
+          "type": "number",
+          "minimum": 0
+        },
+        "from": {
+          "type": "number",
+          "minimum": 0
+        },
+        "curve": {
+          "type": "number",
+          "minimum": 0
+        },
+        "width": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "bright": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "grow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "shrink": {
+          "type": "number",
+          "minimum": 0
+        },
+        "colourEase": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sparks": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "on",
+        "ground",
+        "treetops",
+        "from",
+        "curve",
+        "width",
+        "bright",
+        "fade",
+        "grow",
+        "shrink",
+        "colourEase",
+        "sparks"
+      ],
+      "additionalProperties": false
+    },
     "boot": {
       "type": "object",
       "properties": {
@@ -5983,6 +6052,7 @@
     "knockout",
     "dash",
     "spells",
+    "trail",
     "boot",
     "party",
     "stringLights",
