@@ -4,11 +4,12 @@ import { TUNING } from "../../rules/tuning";
 import type { Sfx } from "./sfx";
 import { SfxCues } from "./sfxCues";
 
-/** A stand-in for the sound effects: every call does nothing, the laments are counted. */
+/** A stand-in for the sound effects: every call does nothing, the laments and power-ups are counted. */
 function fakeSfx() {
-  const laments: { urgency: number; pan: number; near: number }[] = [];
-  const sfx = new Proxy({}, { get: (_, k) => k === "lament" ? (_v: unknown, urgency: number, pan: number, near: number) => laments.push({ urgency, pan, near }) : () => {} }) as unknown as Sfx;
-  return { sfx, laments };
+  const laments: { urgency: number; pan: number; near: number }[] = [], powers: { step: number; pan: number; near: number; full: boolean }[] = [];
+  const sfx = new Proxy({}, { get: (_, k) => k === "lament" ? (_v: unknown, urgency: number, pan: number, near: number) => laments.push({ urgency, pan, near })
+    : k === "power" ? (step: number, pan: number, near: number, full: boolean) => powers.push({ step, pan, near, full }) : () => {} }) as unknown as Sfx;
+  return { sfx, laments, powers };
 }
 
 describe("restless legends calling out sadly (Ed, 2026-10-06)", () => {
@@ -51,5 +52,34 @@ describe("restless legends calling out sadly (Ed, 2026-10-06)", () => {
     laments.length = 0;
     for (let t = 60; t < 120; t += 0.1) cues.update(g, t);
     expect(laments.length).toBe(0);
+  });
+});
+
+describe("runestones crackling into life (Ed, 2026-10-06)", () => {
+  it("powers up each home speaker as the boot turns it on, a step up the scale round the ring, the last a chord", () => {
+    const g = newGame(123, TUNING), n = g.map.dancefloor.speakers.length;
+    g.party.bootUntil = g.tuning.boot.time; // (the boot running from her first step at 0)
+    const { sfx, powers } = fakeSfx(), cues = new SfxCues(sfx);
+    for (let t = 0; t <= g.tuning.boot.time + 1; t += 0.25) { g.clock.time = t; cues.update(g, t); }
+    expect(powers.map(p => p.step)).toEqual(Array.from({ length: n }, (_, i) => i));
+    expect(powers.map(p => p.full)).toEqual(Array.from({ length: n }, (_, i) => i === n - 1));
+    expect(Math.min(...powers.map(p => p.near))).toBeGreaterThan(0);
+    expect(new Set(powers.map(p => p.pan.toFixed(2))).size).toBeGreaterThan(3); // (from round the ring)
+  });
+
+  it("powers up a wave's soundsystem as it appears, once, from where it stands", () => {
+    const g = newGame(123, TUNING), w = g.witch;
+    const { sfx, powers } = fakeSfx(), cues = new SfxCues(sfx);
+    cues.update(g, 0);
+    const key = "soundsystem-test", ss = { x: w.x + 30, z: w.z };
+    g.party.areas.set(key, { cell: [0, 0], wave: 1, at: 1, from: null, soundsystem: ss } as never);
+    cues.update(g, 1); cues.update(g, 1.1);
+    const mine = powers.filter(p => p.full && p.pan > 0);
+    expect(mine.length).toBe(1);
+    // too far off: not heard
+    g.party.areas.set("far", { cell: [0, 0], wave: 2, at: 2, from: null, soundsystem: { x: w.x + g.tuning.sfx.power.range + 50, z: w.z } } as never);
+    const before = powers.length;
+    cues.update(g, 2);
+    expect(powers.length).toBe(before);
   });
 });

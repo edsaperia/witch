@@ -25,7 +25,7 @@ import type { Sfx } from "./sfx";
 import { speechMood, voiceOf } from "./voices";
 import { dances } from "../../render/looks";
 import { beatAt } from "../../rules/beat";
-import { cellKey } from "../../rules/party";
+import { cellKey, speakersOn } from "../../rules/party";
 import { dressingOf, partyDef, type Dressing } from "../../rules/partyDressing";
 
 /** The combat events that are a creature attacking (its id the attacker): each a burst of its speech. */
@@ -45,6 +45,9 @@ export class SfxCues {
   private spoke = new Map<number, number>();
   private lost = -1;
   private boot = false;
+  /** The home speakers on, and the areas with a soundsystem, last frame (each new one powers up). */
+  private speakersOn = -1;
+  private soundsystemsUp = new Set<string>();
   /** Her hits left last frame (a drop is a hit that landed), and whether she was down. */
   private hp = -1;
   private down = false;
@@ -72,6 +75,7 @@ export class SfxCues {
     this.attacks(h, hear);
     this.soundsystems(h);
     this.booted(h);
+    this.powered(h);
     this.hurt(h);
     this.knocked(h);
     this.charges(h);
@@ -171,6 +175,27 @@ export class SfxCues {
     const over = g.party.bootUntil > 0 && g.clock.time >= g.party.bootUntil;
     if (over && this.primed && g.tuning.party.interval < 1e9) this.sfx.stir();
     if (over) this.boot = true;
+  }
+
+  /** Runestones crackling into life (Ed, 2026-10-06): each home speaker as the boot turns it on, a
+   *  step up the scale round the ring, the last a chord; and each wave's soundsystem as it appears.
+   *  Heard from where it stands, within power.range metres. */
+  private powered({ g, pan }: Here): void {
+    const P = g.tuning.sfx.power, w = g.witch, ring = g.map.dancefloor.speakers, n = ring.length;
+    const near = (x: number, z: number) => Math.max(0, 1 - Math.hypot(x - w.x, z - w.z) / Math.max(1, P.range));
+    const on = speakersOn(g.party, g.map, g.clock.time, n);
+    if (this.primed && this.speakersOn >= 0 && on > this.speakersOn) {
+      const i = on - 1, s = ring[i] ?? g.map.dancefloor, k = near(s.x, s.z); // (the newest: frames are far shorter than the gaps between them)
+      if (k > 0) this.sfx.power(i, pan(s.x), Math.max(0.35, k), i === n - 1);
+    }
+    this.speakersOn = on;
+    for (const [key, a] of g.party.areas) {
+      if (!a.soundsystem || this.soundsystemsUp.has(key)) continue;
+      this.soundsystemsUp.add(key);
+      if (!this.primed) continue;
+      const k = near(a.soundsystem.x, a.soundsystem.z);
+      if (k > 0) this.sfx.power(5 + (a.wave % 5), pan(a.soundsystem.x), k, true);
+    }
   }
 
   /** Hurt (Ed, 2026-10-05: "ouch!"): her hits dropping (a hit on her mid-blink costs nothing);
