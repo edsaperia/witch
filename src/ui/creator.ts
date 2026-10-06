@@ -3,7 +3,7 @@
 // to change her outfit!"). She stands in her treehouse room, big, hovering and standing, redrawn live
 // as you change her genome (art/witchGenome.js): a picker or a slider for every axis in WITCH_AXES,
 // grouped (hat, hair, outfit, broom, scarf and bags, and anything new the art builders add), a toggle per
-// accessory, and a rainbow picker per colour part. Randomise, the classic witch, Start. Her look is kept on
+// accessory, and a rainbow picker per colour part. Randomise, the classic witch, and the party spell's scroll to start (ui/spellScroll.ts). Her look is kept on
 // this browser (localStorage witch.genome) for next time. Round 2 (Ed, 2026-10-05: "the sliders ... should
 // go further, and the colours should have 256 rainbow colour pickers. scarf length, bag size, backpack ...
 // no hat, and some different hats"): the axes are wide, a hat picker with no hat first, and each colour a
@@ -13,6 +13,7 @@ import type { Style } from "../render/style";
 import { shade } from "../../art/lighting.js";
 import { LOOKS, lookGenome, pleasingWitch } from "./looks";
 import { keysDir, newWalker, spotAt, walk, type RoomFloor, type Walker } from "./roomWalk";
+import { SpellScroll, type SpellCue } from "./spellScroll";
 
 type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpackSize?: number; [k: string]: unknown };
 
@@ -142,6 +143,10 @@ export class Creator {
   /** The room's size (`?room=`: its floor across, in its units; art/bedroom.js ROOM.S otherwise). */
   private roomS = Number(new URLSearchParams(location.search).get("room")) || undefined;
   private panel = document.createElement("div");
+  /** The tapestry holding the tabs and the panel. */
+  private sheet = document.createElement("div");
+  /** The tabs down its left edge, one per box. */
+  private tabs = document.createElement("div");
   private g: Genome;
   private frames: { hover: HTMLCanvasElement[]; stand: HTMLCanvasElement[] } = { hover: [], stand: [] };
   /** Her walking frames, towards us and away (baked first of her idle poses). */
@@ -173,16 +178,29 @@ export class Creator {
   private near = "";
   /** Opens a box (closing the rest); "" closes them all. */
   private boxes = new Map<string, () => void>();
-  openBox(id: string): void { this.box = id; saveOpenBox(id); for (const f of this.boxes.values()) f(); this.panel.querySelector<HTMLElement>(`fieldset[data-box="${id}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
-  /** Called with her look when Start is pressed and the world is ready. */
+  openBox(id: string): void { if (!id || !this.boxes.has(id)) return; this.box = id; saveOpenBox(id); for (const f of this.boxes.values()) f(); this.panel.scrollTop = 0; }
+  /** The next tab down (1) or up (-1), round. */
+  stepTab(by: number): void { const ids = [...this.boxes.keys()], i = ids.indexOf(this.box); this.openBox(ids[((i < 0 ? 0 : i + by) % ids.length + ids.length) % ids.length]); }
+  /** Called with her look when the party spell bursts (the scroll cast and the world ready): play starts, the spell cast. */
   onStart: (g: Genome) => void = () => {};
-  /** Called on the Start click itself (a gesture: the sound can start). */
+  /** Called on the scroll's click itself (a gesture: the sound can start). */
   onGesture: () => void = () => {};
+  /** The party spell's scroll's sound cues (platform/audio/spell.ts). */
+  spellSound: (cue: SpellCue, v: number) => void = () => {};
+  /** The party spell (Ed, 2026-10-06): the scroll, bottom right; casting it starts the game (ui/spellScroll.ts). */
+  readonly scroll: SpellScroll;
+  /** A button of the rendering builder's or anyone's, under the panel's own (the bot game). */
+  addButton(text: string, onClick: () => void): HTMLButtonElement {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = text;
+    Object.assign(b.style, { font: "inherit", fontSize: "12px", color: "inherit", background: "rgba(255,255,255,.06)", border: "1px solid rgba(232,226,244,.3)", borderRadius: "6px", padding: "4px 10px", cursor: "pointer" });
+    b.addEventListener("click", e => { e.stopPropagation(); onClick(); });
+    this.extras.append(b);
+    return b;
+  }
+  private extras = document.createElement("div");
   /** The world building behind it (Ed: "the character creator also serves as a loading screen"):
    *  sets done of total, and whether play can start. */
   progress: () => { done: number; total: number; ready: boolean } = () => ({ done: 1, total: 1, ready: true });
-  private waiting = false;
-  private startBtn: HTMLButtonElement | null = null;
   private bar: HTMLElement | null = null;
   get open(): boolean { return this.root.style.display !== "none"; }
 
@@ -195,47 +213,51 @@ export class Creator {
     Object.assign(this.preview.style, { position: "absolute", imageRendering: "pixelated", cursor: "pointer" });
     this.preview.title = "click to fly or stand";
     this.preview.addEventListener("click", () => { this.flying = !this.flying; });
-    Object.assign(this.panel.style, { position: "absolute", right: "2%", top: "4%", bottom: "4%", width: "min(400px, 40%)", overflowY: "auto", background: "rgba(14,11,28,.82)", border: "1px solid rgba(232,226,244,.3)", borderRadius: "8px", padding: "10px 12px" });
-    this.root.append(this.night, this.preview, this.panel);
+    // the panel (Ed's sketch, 2026-10-06): a hanging tapestry down the left, its top and bottom edges scalloped, its boxes as tabs
+    // down its left edge (the strip) beside the open one (the panel's own content)
+    Object.assign(this.sheet.style, { position: "absolute", left: "2%", top: "3%", bottom: "5%", width: "min(440px, 38%)", display: "flex", zIndex: "1",
+      background: "linear-gradient(90deg, rgba(36,22,48,.96), rgba(28,17,40,.96) 60%, rgba(36,22,48,.96)), repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 2px, transparent 2px 4px)",
+      boxShadow: "inset 0 0 0 2px rgba(214,170,92,.55), inset 0 0 0 5px rgba(36,22,48,.96), inset 0 0 0 6px rgba(214,170,92,.3), 0 10px 30px rgba(0,0,0,.6)",
+      padding: "22px 0 22px 0", ...SCALLOPED });
+    Object.assign(this.tabs.style, { display: "flex", flexDirection: "column", gap: "4px", padding: "6px 0 6px 8px", flex: "0 0 auto" });
+    Object.assign(this.panel.style, { flex: "1 1 auto", overflowY: "auto", padding: "4px 14px 4px 10px", background: "rgba(14,9,22,.55)", borderLeft: "2px solid rgba(214,170,92,.55)", margin: "0 8px 0 0" });
+    this.sheet.append(this.tabs, this.panel);
+    this.root.append(this.night, this.preview, this.sheet);
+    // the game's title, top right (Ed, 2026-10-06: its working title)
+    const title = document.createElement("div");
+    title.textContent = "Coven Rush"; title.id = "creator-title";
+    Object.assign(title.style, { position: "absolute", right: "3%", top: "3%", zIndex: "3", pointerEvents: "none", font: "italic 700 clamp(30px, 5.2vw, 72px) Luminari, 'Uncial Antiqua', 'Papyrus', 'Palatino Linotype', Palatino, Georgia, serif",
+      letterSpacing: ".04em", background: "linear-gradient(180deg, #fff3c8 10%, #f2c46a 55%, #b57a2c 90%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent",
+      filter: "drop-shadow(0 0 10px rgba(255,190,90,.45)) drop-shadow(0 3px 0 rgba(40,20,10,.9))", transform: "rotate(-3deg)" });
+    this.root.append(title);
     document.body.append(this.root);
-    // While it's open, its keys are its own (Enter starts, R randomises, WASD or the arrows walk her about); nothing reaches the game.
+    // the party spell's scroll, bottom right, and a row for anyone's extra buttons under the panel (the bot game)
+    Object.assign(this.extras.style, { position: "absolute", left: "calc(2% + 14px)", bottom: "calc(5% - 30px)", display: "flex", gap: "6px", zIndex: "3" });
+    this.root.append(this.extras);
+    this.scroll = new SpellScroll(this.root);
+    this.scroll.ready = () => this.progress().ready;
+    this.scroll.progress = () => { const pr = this.progress(); return pr.ready ? 1 : pr.total ? Math.min(.97, pr.done / pr.total) : 0; };
+    this.scroll.onCast = () => { saveGenome(this.g); this.onGesture(); };
+    this.scroll.onBurst = () => { this.hide(); this.onStart(this.genome()); };
+    this.scroll.sound = (cue, v) => this.spellSound(cue, v);
+    // While it's open, its keys are its own (Enter casts the party spell, R randomises, WASD or the arrows walk her about); nothing reaches the game.
     window.addEventListener("keydown", e => {
       if (!this.open) return;
       e.stopPropagation();
       if (WALK_KEYS.has(e.code)) { e.preventDefault(); this.held.add(e.code); (document.activeElement as HTMLElement | null)?.blur?.(); return; } // (a slider keeps no arrow keys: they walk her)
       if ((e.target as HTMLElement)?.tagName === "INPUT" && e.code !== "Enter") return;
-      if (e.code === "Enter") { e.preventDefault(); this.start(); } else if (e.code === "KeyR") this.randomise();
+      if (e.code === "Enter") { e.preventDefault(); this.scroll.cast(); } else if (e.code === "KeyR") this.randomise();
+      else if (e.code === "KeyQ" || e.code === "PageUp") { e.preventDefault(); this.stepTab(-1); } else if (e.code === "KeyE" || e.code === "PageDown") { e.preventDefault(); this.stepTab(1); }
     }, { capture: true });
     window.addEventListener("keyup", e => { if (!this.open) return; this.held.delete(e.code); if (WALK_KEYS.has(e.code)) e.stopPropagation(); }, { capture: true });
     window.addEventListener("blur", () => this.held.clear());
     this.build();
   }
 
-  show(): void { this.root.style.display = "block"; this.dirty = true; if (!this.room) this.room = buildRoom(this.st, this.roomS); this.walker ??= newWalker(this.room.walk); this.loop(); }
-  hide(): void { this.root.style.display = "none"; cancelAnimationFrame(this.raf); this.held.clear(); }
-  /** Buttons the game adds to the panel's own (the bot game's): kept through every rebuild. */
-  private extra: { text: string; onClick: () => void; el?: HTMLButtonElement }[] = [];
-  /** A small button of the game's in the panel's row (e.g. the bot game's), kept through rebuilds; returns it. */
-  addButton(text: string, onClick: () => void): HTMLButtonElement | undefined {
-    const x: { text: string; onClick: () => void; el?: HTMLButtonElement } = { text, onClick };
-    this.extra.push(x); this.build();
-    return x.el;
-  }
+  show(): void { this.root.style.display = "block"; this.dirty = true; if (!this.room) this.room = buildRoom(this.st, this.roomS); this.walker ??= newWalker(this.room.walk); this.loop(); this.scroll.start(); }
+  hide(): void { this.root.style.display = "none"; cancelAnimationFrame(this.raf); this.held.clear(); this.scroll.stop(); this.spellSound("hum", 0); }
   genome(): Genome { return clone(this.g); }
 
-  /** Start: straight into play if the world is ready, else "getting ready" on this scene until it is. */
-  private start(): void {
-    saveGenome(this.g);
-    this.onGesture();
-    this.waiting = true;
-    this.tryStart();
-  }
-  private tryStart(): void {
-    if (!this.waiting || !this.progress().ready) return;
-    this.waiting = false;
-    this.hide();
-    this.onStart(this.genome());
-  }
   private randomise(): void { this.g = upgrade(pleasingWitch(Math.floor(Math.random() * 1e9))); this.build(); this.dirty = true; } // a witch in a palette that goes together (ui/looks.ts)
   private look(id: string): void { this.g = upgrade(lookGenome(id)); this.build(); this.dirty = true; }
   /** Wild: every axis anywhere in its (wide) limits, every accessory a coin toss, every colour anywhere in the rainbows. */
@@ -257,20 +279,30 @@ export class Creator {
    *  generator's axes, so a new axis shows up by itself), its toggles and its own colour picker. */
   private build(): void {
     const P = this.panel, g = this.g;
-    P.innerHTML = "";
+    P.innerHTML = ""; this.tabs.innerHTML = "";
     this.boxes.clear();
     const h = document.createElement("div");
-    h.innerHTML = `<div style="font-size:18px;margin-bottom:2px">✨ Your witch</div><div style="opacity:.7;margin-bottom:8px">The party's tonight! Dress her up while the forest grows, then fly. Walk her round her room (WASD) to her things, or open a box below. (Enter starts, R randomises; double-click a slider to put it back.)</div>`;
+    h.innerHTML = `<div style="font-size:18px;margin-bottom:2px;color:#f2c46a">✨ Your witch</div><div style="opacity:.7;margin-bottom:8px">The party's tonight! Dress her up while the forest grows. Walk her round her room (WASD) to her things, or pick a tab (Q and E step through them). When she's ready, the scroll is the party spell: click it, or Enter. (R randomises; double-click a slider to put it back.)</div>`;
     P.append(h);
     const row = (parent: HTMLElement, name: string) => { const r = document.createElement("div"); Object.assign(r.style, { display: "flex", alignItems: "center", gap: "6px", margin: "4px 0", flexWrap: "wrap" }); r.innerHTML = `<span style="width:78px;opacity:.85">${name}</span>`; parent.append(r); return r; };
-    // The boxes: each folds away, and opening one closes the others (an accordion); the open one is kept on this browser.
+    // The boxes, as tabs down the tapestry's left edge (Ed, 2026-10-06: "The different things you can change ... can be tabs
+    // down the left side of the character creation pane"): its icon on the tab, its name as its tooltip and at the top of its
+    // page; only the open one's page shows, its tab joined to the page like a bookmark. The open one is kept on this browser.
     const box = (id: string, name: string) => {
-      const fs = document.createElement("fieldset"), body = document.createElement("div"), lg = document.createElement("legend");
-      fs.dataset.box = id;
-      Object.assign(fs.style, { border: "1px solid rgba(232,226,244,.2)", borderRadius: "6px", margin: "0 0 6px", padding: "2px 8px 4px" });
-      Object.assign(lg.style, { padding: "0 4px", color: "var(--accent)", cursor: "pointer", userSelect: "none" });
-      const paint = () => { const on = this.box === id; lg.textContent = `${on ? "▾" : "▸"} ${name}`; body.style.display = on ? "block" : "none"; fs.style.borderColor = on ? "rgba(232,180,106,.55)" : "rgba(232,226,244,.2)"; fs.style.background = on ? "rgba(232,180,106,.05)" : "transparent"; };
-      lg.addEventListener("click", () => this.openBox(this.box === id ? "" : id));
+      const fs = document.createElement("fieldset"), body = document.createElement("div"), lg = document.createElement("legend"), tab = document.createElement("button");
+      const [icon, ...words] = name.split(" ");
+      fs.dataset.box = id; tab.dataset.tab = id; tab.type = "button"; tab.textContent = icon; tab.title = words.join(" "); tab.setAttribute("aria-label", words.join(" "));
+      Object.assign(fs.style, { border: "1px solid rgba(214,170,92,.45)", borderRadius: "6px", margin: "0 0 6px", padding: "2px 8px 6px" });
+      Object.assign(lg.style, { padding: "0 4px", color: "#f2c46a", userSelect: "none" });
+      lg.textContent = name;
+      Object.assign(tab.style, { font: "inherit", fontSize: "18px", width: "38px", height: "34px", cursor: "pointer", border: "1px solid rgba(214,170,92,.45)", borderRight: "none", borderRadius: "8px 0 0 8px", padding: "0", position: "relative" });
+      const paint = () => {
+        const on = this.box === id;
+        fs.style.display = on ? "block" : "none";
+        Object.assign(tab.style, on ? { background: "rgba(14,9,22,.55)", marginRight: "-2px", filter: "none", boxShadow: "inset 3px 0 0 #f2c46a", zIndex: "2" } : { background: "rgba(255,255,255,.04)", marginRight: "0", filter: "grayscale(.5) brightness(.8)", boxShadow: "none", zIndex: "0" });
+      };
+      tab.addEventListener("click", () => this.openBox(id));
+      this.tabs.append(tab);
       fs.append(lg, body); P.append(fs); this.boxes.set(id, paint); paint();
       return body;
     };
@@ -309,17 +341,15 @@ export class Creator {
       if (parts.length) this.picker(body, B.id, parts, row, pal, cur);
     }
     this.hatless();
+    if (!this.boxes.has(this.box)) this.openBox(this.boxes.keys().next().value ?? "");
     // The buttons.
     const bar = document.createElement("div");
-    Object.assign(bar.style, { display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "10px", position: "sticky", bottom: "0", background: "rgba(14,11,28,.95)", padding: "6px 0" });
+    Object.assign(bar.style, { display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "10px", position: "sticky", bottom: "0", background: "rgba(22,14,32,.97)", padding: "6px 0" });
     bar.style.position = "sticky";
     const btn = (text: string, f: () => void, main = false) => { const b = document.createElement("button"); b.type = "button"; b.textContent = text; Object.assign(b.style, { font: "inherit", fontSize: "14px", color: main ? "#1d1408" : "inherit", background: main ? "var(--accent)" : "rgba(255,255,255,.1)", border: "1px solid rgba(232,226,244,.4)", borderRadius: "6px", padding: "6px 12px", cursor: "pointer", flex: main ? "1 1 100%" : "1 1 auto" }); b.addEventListener("click", f); bar.append(b); return b; };
     btn("🎲 Randomise", () => this.randomise());
     btn("🌀 Wild", () => this.wild());
     btn("Classic", () => this.classic());
-    for (const x of this.extra) x.el = btn(x.text, x.onClick);
-    this.startBtn = btn("Start ▶", () => this.start(), true);
-    this.startBtn.id = "creator-start";
     // The forest growing behind the scene: a thin bar under the buttons.
     const track = document.createElement("div");
     Object.assign(track.style, { position: "absolute", left: "0", right: "0", bottom: "-2px", height: "3px", background: "rgba(255,255,255,.12)", borderRadius: "2px", overflow: "hidden" });
@@ -483,15 +513,10 @@ export class Creator {
     this.raf = requestAnimationFrame(this.loop);
     const changed = this.dirty;
     if (this.dirty) { this.dirty = false; this.redraw(); }
-    // The world building behind: its progress on the bar and the Start button; once ready, a waiting Start goes.
+    // The world building behind: its progress on the bar (and the scroll's caption: ui/spellScroll.ts).
     const pr = this.progress(), built = pr.total ? pr.done / pr.total : 1;
     if (pr.ready && !this.readyAt) this.readyAt = performance.now() / 1000;
     if (this.bar) this.bar.style.width = `${Math.round((pr.ready ? 1 : Math.min(.97, built)) * 100)}%`;
-    if (this.startBtn) {
-      const want = this.waiting && !pr.ready ? `getting ready… ${Math.round(built * 100)}%` : pr.ready ? "Start ▶" : `Start ▶ · the forest ${Math.round(built * 100)}%`;
-      if (this.startBtn.textContent !== want) this.startBtn.textContent = want;
-    }
-    this.tryStart();
     const room = this.room;
     if (!room) return;
     const ms = performance.now();
@@ -563,11 +588,11 @@ export class Creator {
     x.save(); x.globalCompositeOperation = op; x.drawImage(c, 0, 0, w, h, ox, oy, w, h); x.restore();
   }
 
-  /** The room, as big as fits beside the panel at a whole number of screen pixels to its art pixel; the night behind. */
+  /** The room, as big as fits right of the panel at a whole number of screen pixels to its art pixel; the night behind. */
   private place(W: number, H: number): void {
-    const dpr = window.devicePixelRatio || 1, vw = window.innerWidth, vh = window.innerHeight, pw = this.panel.getBoundingClientRect().width;
-    const room = Math.max(1, vw - pw - vw * .04), k = Math.max(1, Math.floor(Math.min(room * dpr / W, vh * .96 * dpr / H)));
-    const cw = W * k / dpr, ch = H * k / dpr, left = Math.max(0, (room - cw) / 2), top = Math.max(0, (vh - ch) / 2);
+    const dpr = window.devicePixelRatio || 1, vw = window.innerWidth, vh = window.innerHeight, sr = this.sheet.getBoundingClientRect().right, x0 = Math.max(0, sr - vw * .03); // (over the tapestry's edge a little, as Ed's sketch)
+    const room = Math.max(1, vw - x0), k = Math.max(1, Math.floor(Math.min(room * dpr / W, vh * .96 * dpr / H)));
+    const cw = W * k / dpr, ch = H * k / dpr, left = x0 + Math.max(0, (room - cw) / 2), top = Math.max(0, (vh - ch) / 2);
     const css = { width: `${cw}px`, height: `${ch}px`, left: `${left}px`, top: `${top}px` };
     if (this.preview.style.width !== css.width || this.preview.style.left !== css.left || this.preview.style.top !== css.top) {
       Object.assign(this.preview.style, css);
@@ -576,6 +601,9 @@ export class Creator {
   }
 }
 
+/** The tapestry's scalloped top and bottom edges, as a mask. */
+const SCALLOP = "radial-gradient(11px at 50% 0, #0000 97%, #000) 50% 0 / 22px 51% repeat-x, radial-gradient(11px at 50% 100%, #0000 97%, #000) 50% 100% / 22px 51% repeat-x";
+const SCALLOPED = { WebkitMask: SCALLOP, mask: SCALLOP } as unknown as Partial<CSSStyleDeclaration>;
 /** A frame this slow after drawing the room (ms) means the machine is struggling; it's then drawn this seldom (ms) until ready
  *  (and this seldom while she walks). */
 const SLOW_FRAME = 120, SLOW_DRAW = 600, SLOW_WALK = 120;
