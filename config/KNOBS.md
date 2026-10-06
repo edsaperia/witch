@@ -1601,6 +1601,9 @@ The party's over (Ed, 2026-10-06: "when the soundsystems and speakers are all de
 | `wildLegends.breathEvery` | number | 0 to … |
 | `wildLegends.aura` | number | 0 to … |
 | `wildLegends.glow` | number | 0 to … |
+| `wildLegends.seen.aura` | number | 0 to … |
+| `wildLegends.seen.rim` | number | 0 to … |
+| `wildLegends.seen.floor` | number | 0 to … |
 | `creatureSimRadius` | number | 0 to … |
 
 ## `simLod`, `creatureSpeed`
