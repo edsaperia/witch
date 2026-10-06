@@ -5328,10 +5328,15 @@
         "time": {
           "type": "number",
           "minimum": 0
+        },
+        "transform": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
-        "time"
+        "time",
+        "transform"
       ],
       "additionalProperties": false
     },
