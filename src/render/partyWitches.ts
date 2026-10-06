@@ -16,6 +16,8 @@ import type { AssetLibrary } from "./assets";
 import type { Atlas } from "./atlas";
 import type { PartyWitchArt } from "./artBuild";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "./sprites";
+import { placed } from "./height";
+import { tiltFilter } from "./overlayTilt";
 
 /** How many different looks are drawn: party witches beyond that share them (each look is a set of sprites to draw). */
 export const LOOKS = 12;
@@ -70,8 +72,10 @@ export class PartyWitchView {
         el.style.cssText = "position:absolute;transform:translate(-50%,-100%);font-size:13px;padding:1px 4px;border-radius:8px;background:rgba(255,255,255,.55);pointer-events:none;z-index:4";
         document.body.appendChild(el); this.bubblePool.push(el);
       }
-      this.v.set(w.x, 2.4, w.z).project(camera);
-      el.style.left = `${((this.v.x + 1) / 2) * width}px`; el.style.top = `${((1 - this.v.y) / 2) * height}px`;
+      placed(this.v.set(w.x, 2.4, w.z)).project(camera); // (on the bent, rolling ground, as they are)
+      const y = ((1 - this.v.y) / 2) * height;
+      el.style.left = `${((this.v.x + 1) / 2) * width}px`; el.style.top = `${y}px`;
+      tiltFilter(el, y);
       const e = CHAT[(turn * 7 + w.id * 3) % CHAT.length];
       if (el.textContent !== e) el.textContent = e;
       el.style.display = this.v.z < 1 ? "" : "none";

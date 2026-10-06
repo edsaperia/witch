@@ -76,6 +76,7 @@ import { refresh } from "./view/scenery";
 import { drawBerries, drawCreatures } from "./view/creatures";
 import { drawMarkers, drawSpeakers, placeTreehouse } from "./view/home";
 import { setLights, updateSources } from "./view/lights";
+import { setOverlayTilt } from "./overlayTilt";
 
 /** Her shadow, lying on the rolling ground corner by corner. */
 const SHADOW_VERT = `varying vec2 vUv;
@@ -964,6 +965,7 @@ export class View {
     const wframe = (bare ? this.assets.witchBare() : this.assets.witch).frames[wf], hatTop = wyy + wframe.h * this.mpp;
     this.partyWitchView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4));
     this.swoopTrails.update(g.partyWitches.list, time);
+    setOverlayTilt(t.tiltShift, w.lift, this.canvas.clientHeight || window.innerHeight, this.height); // (the DOM overlays blurred as the world: render/overlayTilt.ts)
     this.partyWitchView.bubbles(g, time, this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
     const onBeach = this.beachView.update(g, time, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight);
     this.stateMarks.update(g, time, this.leashView.tops);
