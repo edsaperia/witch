@@ -12,6 +12,7 @@ import { PartyWitchView } from "./partyWitches";
 import { pixelEmoji } from "./invites";
 import { groundHeight, placed } from "./height";
 import { tiltFilter } from "./overlayTilt";
+import { BeachEdgeView } from "./beachEdge";
 
 /** A heart rising off the two of them stargazing together: where it set off, when, its sway's phase; its image (pooled). */
 interface Heart { x: number; z: number; at: number; sway: number; el: HTMLImageElement }
@@ -32,8 +33,10 @@ export class BeachView {
   private hearts: Heart[] = [];
   private spare: HTMLImageElement[] = [];
   private v = new THREE.Vector3();
+  /** The woods' edge along the sand: shrubs, grass, palms (render/beachEdge.ts). */
+  private edge: BeachEdgeView;
 
-  constructor(private scene: THREE.Scene, private assets: AssetLibrary, private ground: Ground, private mpp: number, private light: { lightFloor: number; lightTint: number; lightRim: number }) {}
+  constructor(private scene: THREE.Scene, private assets: AssetLibrary, private ground: Ground, private mpp: number, private light: { lightFloor: number; lightTint: number; lightRim: number }) { this.edge = new BeachEdgeView(scene, mpp); }
 
   /** Each frame; true while she's drawn here (lying on the sand, or with a beach witch), so the view leaves her out. */
   update(g: Game, time: number, visible: (x: number, z: number, w: number, h: number) => boolean, camera: THREE.Camera, width: number, height: number): boolean {
@@ -42,6 +45,7 @@ export class BeachView {
     if (!b) return false;
     if (b.intoSand(w.x, w.z) < -(g.tuning.beach?.shown ?? 0)) { this.leave(); this.gazing = false; return false; }
     if (!this.on) { this.on = true; this.ground.setBeach(b); this.assets.partyWitchArt(null); } // (her lying-down art asked for ahead)
+    this.edge.update(b, this.assets.beachEdgeArt(), w.x, w.z);
     // The spot she's nearest (they're kilometres apart round the coast, so only ever one in view).
     let spot = null as NonNullable<Game["beach"]>[number] | null, sd = Infinity;
     for (const s of g.beach ?? []) { const d = (s.x - w.x) ** 2 + (s.z - w.z) ** 2; if (d < sd) { sd = d; spot = s; } }
@@ -103,6 +107,7 @@ export class BeachView {
     for (const el of this.spare) el.remove();
     this.hearts = []; this.spare = [];
     this.ground.setBeach(null);
+    this.edge.dispose();
     this.witches?.dispose();
     this.witches = null;
   }
