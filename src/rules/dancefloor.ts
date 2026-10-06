@@ -299,11 +299,11 @@ export function bootRing(rgbi: Uint8Array, k: number, since: number, t: Tuning):
   const set = (n: number, c: number[], i: number) => { rgbi[n * 4] = c[0]; rgbi[n * 4 + 1] = c[1]; rgbi[n * 4 + 2] = c[2]; rgbi[n * 4 + 3] = i; };
   for (let n = 0; n < GRID * GRID; n++) {
     if (!MASK[n] || !ringTile(n)) continue;
-    if (done) { const f = since / fl, a = ((Math.atan2((n % GRID) + 0.5 - C, -(Math.floor(n / GRID) + 0.5 - C)) / (Math.PI * 2)) + 1) % 1; if (f < 0.4 || a > (f - 0.4) / 0.6) set(n, f < 0.4 ? P[2] : P[1], f < 0.25 ? 3 : f < 0.6 ? 2 : 1); continue; } // a flash, then it fades away round the ring
+    if (done) { const f = since / fl, a = ((Math.atan2((n % GRID) + 0.5 - C, -(Math.floor(n / GRID) + 0.5 - C)) / (Math.PI * 2)) + 1) % 1; if (f < 0.4 || a > (f - 0.4) / 0.6) set(n, f < 0.4 ? P[2] : P[1], f < 0.4 ? 3 : 2); continue; } // a flash, then it fades away round the ring
     const a = ((Math.atan2((n % GRID) + 0.5 - C, -(Math.floor(n / GRID) + 0.5 - C)) / (Math.PI * 2)) + 1) % 1; // 0 at the far side, clockwise as seen from the south
-    if (a < k) set(n, k - a < 0.025 || k > 0.92 ? P[2] : P[1], k - a < 0.025 ? 2 : 1); // filled, its head (and the last stretch) silver
+    if (a < k) set(n, k - a < 0.03 || k > 0.92 ? P[2] : P[1], k - a < 0.03 ? 3 : 2); // filled, its head (and the last stretch) silver
     else if ((n + Math.floor(a * 97)) % 3 === 0) set(n, P[0], 1); // the track ahead, faint
   }
 }
-/** Whether a tile is on the floor's outer ring (its outermost tiles: a floor tile with a neighbour off the floor). */
-const ringTile = (n: number) => { const i = n % GRID, j = Math.floor(n / GRID); for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const x = i + di, y = j + dj; if (x < 0 || y < 0 || x >= GRID || y >= GRID || !MASK[y * GRID + x]) return true; } return false; };
+/** Whether a tile is on the floor's outer ring (its outermost two tiles: a floor tile within two steps of one off the floor). */
+const ringTile = (n: number) => { const i = n % GRID, j = Math.floor(n / GRID); for (let dj = -2; dj <= 2; dj++) for (let di = -2; di <= 2; di++) { if (Math.abs(di) + Math.abs(dj) > 2) continue; const x = i + di, y = j + dj; if (x < 0 || y < 0 || x >= GRID || y >= GRID || !MASK[y * GRID + x]) return true; } return false; };
