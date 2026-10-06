@@ -319,7 +319,14 @@ export interface Tuning {
   /** A sleeping legend's dream bubble (Ed, 2026-10-05): shown only to a witch on the ground within range metres of it. */
   dreams: { range: number; nightmare: { at: number[]; faces: string[] }; /** a sleeping legend's face while its dream is open: mostly face, now and then one of faces for a turn of every seconds */ sleepy?: { face: string; weight: number; every: number; faces: string[]; fallback: string } };
   /** Which areas have a legend (Ed, 2026-10-06: "only in about half of areas (we can test this ratio)"): share of them, seeded per map and spread out (rules/map.ts chooseLegendCells); the map's, so a change needs a new map. */
-  legends: { share: number; /** The party-legend Easter egg (rules/partyLegend.ts): on, 💌s to fill a happy legend's meter, its drain (share a second), how far (m) she can go from it leashed. */ partyEgg: boolean; partyHits: number; partyDrain: number; partyReach: number };
+  legends: { share: number; /** How strong every legend's buff is (Ed, 2026-10-06, on quests: "Bigger buffs"): a scale of v becomes 1 + (v - 1) × buffPower, an add v × buffPower, a behaviour's count rounded × buffPower (never fewer); 1 as each is written. Its limits still hold. */ buffPower: number;
+    /** A happy legend's reach, metres (Ed, 2026-10-06, on relic allies: "They stay home, but if they're not useful enough right now, make their range longer"); an angry one's is legends.json attack.range. */
+    happyRange: number;
+    /** An angry legend bombarding soundsystems (Ed, 2026-10-06: "Legend bombards, but prioritises you"): with no witch in its reach, the first lob or beam of its volley goes at the nearest standing soundsystem within range metres, doing damage to it (of combat.soundsystemHealth). */
+    bombard: { on: boolean; range: number; damage: number };
+    /** The stomp (Ed, 2026-10-06, a "perhaps"): a legend turning angry with its own area's soundsystem standing destroys it at once; with it on, legends stay restless angryAfter seconds (not legends.json's) before they anger. */
+    stomp: { on: boolean; angryAfter: number };
+    /** The party-legend Easter egg (rules/partyLegend.ts): on, 💌s to fill a happy legend's meter, its drain (share a second), how far (m) she can go from it leashed. */ partyEgg: boolean; partyHits: number; partyDrain: number; partyReach: number };
   /** The party's over (rules/partyOver.ts): seconds it eases in over, the ley line's brightness at its end, the creatures' pace home (times their roaming speed). */
   partyOver: { ease: number; leyFloor: number; walk: number };
   wildLegends: { wake: number; sink: number; moss: number; guard: number; heal: number; scale: number; breathe: number; breathEvery: number; aura: number; glow: number };
