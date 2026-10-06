@@ -12,6 +12,7 @@ import * as Art from "../../art/generator.js";
 import type { Style } from "../render/style";
 import { shade } from "../../art/lighting.js";
 import { LOOKS, lookGenome, pleasingWitch } from "./looks";
+import { keysDir, newWalker, walk, type RoomFloor, type Walker } from "./roomWalk";
 
 type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpackSize?: number; [k: string]: unknown };
 
@@ -109,9 +110,19 @@ export class Creator {
   private room: Room | null = null;
   /** Her pose in the room: standing on the rug, or hovering over it on her broom. */
   private flying = false;
+  /** Walking about the room (Ed, 2026-10-06): the keys held, her place on the floor, the last frame's time. */
+  private held = new Set<string>();
+  private walker: Walker | null = null;
+  private lastT = 0;
+  /** A scratch canvas to hide her behind nearer things. */
+  private scratch = document.createElement("canvas");
+  /** The room's size (`?room=`: its floor across, in its units; art/bedroom.js ROOM.S otherwise). */
+  private roomS = Number(new URLSearchParams(location.search).get("room")) || undefined;
   private panel = document.createElement("div");
   private g: Genome;
   private frames: { hover: HTMLCanvasElement[]; stand: HTMLCanvasElement[] } = { hover: [], stand: [] };
+  /** Her walking frames, towards us and away (baked first of her idle poses). */
+  private runs: { towards: HTMLCanvasElement[]; away: HTMLCanvasElement[] } = { towards: [], away: [] };
   /** Her idle moments' frames (baked a moment after the last change, a pose a frame, so dragging a slider stays smooth). */
   private idle = new Map<string, HTMLCanvasElement[]>();
   private idleQueue: string[] = [];
@@ -158,18 +169,21 @@ export class Creator {
     Object.assign(this.panel.style, { position: "absolute", right: "2%", top: "4%", bottom: "4%", width: "min(400px, 40%)", overflowY: "auto", background: "rgba(14,11,28,.82)", border: "1px solid rgba(232,226,244,.3)", borderRadius: "8px", padding: "10px 12px" });
     this.root.append(this.night, this.preview, this.panel);
     document.body.append(this.root);
-    // While it's open, its keys are its own (Enter starts, R randomises); nothing reaches the game.
+    // While it's open, its keys are its own (Enter starts, R randomises, WASD or the arrows walk her about); nothing reaches the game.
     window.addEventListener("keydown", e => {
       if (!this.open) return;
       e.stopPropagation();
+      if (WALK_KEYS.has(e.code)) { e.preventDefault(); this.held.add(e.code); (document.activeElement as HTMLElement | null)?.blur?.(); return; } // (a slider keeps no arrow keys: they walk her)
       if ((e.target as HTMLElement)?.tagName === "INPUT" && e.code !== "Enter") return;
       if (e.code === "Enter") { e.preventDefault(); this.start(); } else if (e.code === "KeyR") this.randomise();
     }, { capture: true });
+    window.addEventListener("keyup", e => { if (!this.open) return; this.held.delete(e.code); if (WALK_KEYS.has(e.code)) e.stopPropagation(); }, { capture: true });
+    window.addEventListener("blur", () => this.held.clear());
     this.build();
   }
 
-  show(): void { this.root.style.display = "block"; this.dirty = true; if (!this.room) this.room = buildRoom(this.st); this.loop(); }
-  hide(): void { this.root.style.display = "none"; cancelAnimationFrame(this.raf); }
+  show(): void { this.root.style.display = "block"; this.dirty = true; if (!this.room) this.room = buildRoom(this.st, this.roomS); this.walker ??= newWalker(this.room.walk); this.loop(); }
+  hide(): void { this.root.style.display = "none"; cancelAnimationFrame(this.raf); this.held.clear(); }
   genome(): Genome { return clone(this.g); }
 
   /** Start: straight into play if the world is ready, else "getting ready" on this scene until it is. */
@@ -386,14 +400,17 @@ export class Creator {
     // her idle moments, baked shortly (each pose in its own frame), and the one playing stopped: it was the old look
     if (this.frames.stand.length && this.drawn) this.showOff = true; // (not the first drawing: a change to show off)
     this.drawn = true;
-    this.bakeFrame = bake; this.idle.clear(); this.idleQueue = IDLES.map(i => i.pose).filter((p, i, a) => a.indexOf(p) === i && p !== "stand"); this.idleAt = performance.now() / 1000 + .35;
+    this.bakeFrame = bake; this.idle.clear(); this.runs = { towards: [], away: [] };
+    this.idleQueue = ["run:towards", "run:away", ...IDLES.map(i => i.pose).filter((p, i, a) => a.indexOf(p) === i && p !== "stand")]; this.idleAt = performance.now() / 1000 + .35;
     if (this.act && this.act.pose !== "stand") this.act = null;
   }
   /** Bakes one queued idle pose, once the look has been still a moment. */
   private bakeIdle(t: number): void {
     if (!this.idleQueue.length || t < this.idleAt || !this.bakeFrame) return;
-    const pose = this.idleQueue.shift()!, n = (Art.WITCH_FOOT_POSES as Record<string, { frames: number }>)[pose]?.frames ?? 0;
-    if (n) this.idle.set(pose, Array.from({ length: n }, (_, frame) => this.bakeFrame!({ pose, frame })));
+    const [pose, facing] = this.idleQueue.shift()!.split(":"), n = (Art.WITCH_FOOT_POSES as Record<string, { frames: number }>)[pose]?.frames ?? 0;
+    if (!n) return;
+    if (facing) this.runs[facing as "towards" | "away"] = Array.from({ length: n }, (_, frame) => this.bakeFrame!({ pose, frame, facing }));
+    else this.idle.set(pose, Array.from({ length: n }, (_, frame) => this.bakeFrame!({ pose, frame })));
   }
   /** Her idle life on the rug (the overnight brief: "small idle animations for the witch"): now and then a moment from
    *  IDLES; after a change, a spin to show it off. Returns the frame to draw and whether it's turned round. */
@@ -430,8 +447,13 @@ export class Creator {
     const room = this.room;
     if (!room) return;
     const ms = performance.now();
+    // walking: moved by the time since the last frame (so a slow machine's seldom drawing still walks her at her speed)
+    const w = this.walker ??= newWalker(room.walk), dt = this.lastT ? Math.min(.1, ms / 1000 - this.lastT) : 0, [kx, ky] = keysDir(this.held);
+    this.lastT = ms / 1000;
+    walk(w, room.walk, kx, ky, dt);
+    if (w.moving) { this.act = null; this.nextAct = ms / 1000 + 3; }
     if (this.afterDraw) { this.drawGap = this.drawGap ? this.drawGap * .7 + (ms - this.drawnAt) * .3 : ms - this.drawnAt; this.afterDraw = false; }
-    if (!pr.ready && !changed && this.drawGap > SLOW_FRAME && ms - this.drawnAt < SLOW_DRAW) return;
+    if (!pr.ready && !changed && this.drawGap > SLOW_FRAME && ms - this.drawnAt < (w.moving ? SLOW_WALK : SLOW_DRAW)) return;
     this.drawnAt = ms; this.afterDraw = !changed; // (a redraw's own frame is slow anywhere: not counted)
     const t = ms / 1000, c = this.preview, W = room.lit.width, H = room.lit.height;
     this.place(W, H);
@@ -447,16 +469,44 @@ export class Creator {
     const queued = this.idleQueue.length;
     this.bakeIdle(t);
     if (this.idleQueue.length !== queued) this.afterDraw = false; // (nor a pose's bake)
-    // her: on the rug in a pool of light (the art director: "she's the brightest figure and the rug frames her"), standing,
-    // or hovering over it, bobbing
-    const now = this.flying ? { fr: this.frames.hover[Math.floor(t * 6) % 3], flip: false } : this.standing(t), fr = now.fr;
+    // her: in a pool of light (the art director: "she's the brightest figure and the rug frames her"), standing, walking about
+    // the room, or hovering on her broom, bobbing; hidden behind whatever in the room stands nearer the view
+    const run = this.runs[w.away ? "away" : "towards"];
+    const now = this.flying ? { fr: this.frames.hover[Math.floor(t * 6) % 3], flip: w.flip }
+      : w.moving && run.length ? { fr: run[Math.floor(t * 10) % run.length], flip: w.flip }
+      : (() => { const s = this.standing(t); return { fr: s.fr, flip: s.flip !== w.flip }; })(), fr = now.fr;
     if (!fr) return;
-    const [sx, sy] = room.a.stand, bob = this.flying ? Math.round(Math.sin(t * 2) * 1.5) - 6 : 0;
-    pool(x, sx, sy, fr.width);
+    const feet = [w.x, 0, w.z], [sx, sy] = room.walk.project(feet), feetT = room.walk.depthOf(feet), bob = this.flying ? Math.round(Math.sin(t * 2) * 1.5) - 6 : 0;
+    this.behind(x, room, Math.round(sx - fr.width * 1.2), Math.round(sy) - Math.ceil(fr.width * .6), Math.ceil(fr.width * 2.4), Math.ceil(fr.width * 1.2), sy, feetT, true, c => pool(c, fr.width * 1.2, fr.width * .6, fr.width), "lighter");
     const fx = Math.round(sx - fr.width / 2), fy = Math.round(sy - fr.height + bob);
     if (this.flying) { x.fillStyle = "rgba(0,0,0,.35)"; x.fillRect(Math.round(sx - fr.width * .25), Math.round(sy) - 1, Math.round(fr.width * .5), 2); }
-    if (now.flip) { x.save(); x.translate(fx + fr.width, fy); x.scale(-1, 1); x.drawImage(fr, 0, 0); x.restore(); } else x.drawImage(fr, fx, fy);
+    this.behind(x, room, fx, fy, fr.width, fr.height, sy, feetT, false, c => { if (now.flip) { c.translate(fr.width, 0); c.scale(-1, 1); } c.drawImage(fr, 0, 0); });
   };
+
+  /** Draws something of hers (by `paint`, into a w × h box at ox, oy on the room) with every pixel the room has nearer the view
+   *  taken out: she's an upright card at her feet (feetY on the room's picture, feetT their depth), each row of her that much
+   *  higher and nearer; `flat`, it lies on the floor at her feet (her pool of light). */
+  private behind(x: CanvasRenderingContext2D, room: Room, ox: number, oy: number, w: number, h: number, feetY: number, feetT: number, flat: boolean, paint: (c: CanvasRenderingContext2D) => void, op: GlobalCompositeOperation = "source-over"): void {
+    const c = this.scratch;
+    if (c.width < w || c.height < h) { c.width = Math.max(c.width, w); c.height = Math.max(c.height, h); }
+    const k = c.getContext("2d", { willReadFrequently: true })!;
+    k.setTransform(1, 0, 0, 1, 0, 0); k.clearRect(0, 0, c.width, c.height); k.imageSmoothingEnabled = false;
+    k.save(); paint(k); k.restore();
+    const img = k.getImageData(0, 0, w, h), d = img.data, D = room.walk.depth, RW = room.lit.width, RH = room.lit.height;
+    const up = Math.sin(room.walk.pitch) / (room.walk.s * Math.cos(room.walk.pitch)); // (a pixel higher on her: this much nearer)
+    for (let j = 0; j < h; j++) {
+      const ry = oy + j, me = flat ? feetT : feetT - Math.max(0, feetY - ry) * up;
+      for (let i = 0; i < w; i++) {
+        const a = (j * w + i) * 4 + 3;
+        if (!d[a]) continue;
+        const rx = ox + i;
+        if (rx < 0 || ry < 0 || rx >= RW || ry >= RH) continue;
+        if (D[ry * RW + rx] < me - OCCLUDE) d[a] = 0;
+      }
+    }
+    k.putImageData(img, 0, 0);
+    x.save(); x.globalCompositeOperation = op; x.drawImage(c, 0, 0, w, h, ox, oy, w, h); x.restore();
+  }
 
   /** The room, as big as fits beside the panel at a whole number of screen pixels to its art pixel; the night behind. */
   private place(W: number, H: number): void {
@@ -471,8 +521,14 @@ export class Creator {
   }
 }
 
-/** A frame this slow after drawing the room (ms) means the machine is struggling; it's then drawn this seldom (ms) until ready. */
-const SLOW_FRAME = 120, SLOW_DRAW = 600;
+/** A frame this slow after drawing the room (ms) means the machine is struggling; it's then drawn this seldom (ms) until ready
+ *  (and this seldom while she walks). */
+const SLOW_FRAME = 120, SLOW_DRAW = 600, SLOW_WALK = 120;
+/** The keys that walk her about the room (the game's own). */
+const WALK_KEYS = new Set(["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
+/** How much nearer (in the room's units along the view) a pixel of the room must be to hide her: the floor's clutter, a rug or
+ *  a dropped top, never does. */
+const OCCLUDE = .09;
 
 type RoomAnchors = { letters: [string, [number, number], number][]; stand: [number, number]; runes: [number, number][]; flames: [number, number][]; fairy: [number, number][]; screen: [number, number]; lantern: [number, number]; potions: [number, number]; decks: [number, number] };
 type Light = { x: number; y: number; z: number; R: number; rgb: number[]; power: number };
@@ -490,9 +546,10 @@ const GLOWS: { mat: number; pulse: (t: number) => number }[] = [
   { mat: Art.M.MAGIC2, pulse: t => Math.sin(t * 4) > 0 ? .1 : .4 },                                      // and their other half
 ];
 /** Bakes and lights the room once: its picture, a layer per glowing material, its anchors and its lights. */
-type Room = { lit: HTMLCanvasElement; banner: HTMLCanvasElement; glows: { mat: number; c: HTMLCanvasElement }[]; a: RoomAnchors; lights: Light[] };
-function buildRoom(st: Style): Room {
-  const sp = (Art.bedroomSprite as unknown as (st: Style) => { w: number; h: number; m: Uint8Array; anchors: RoomAnchors })(st);
+type Walkable = RoomFloor & { depth: Float32Array; depthOf: (p: number[]) => number; pitch: number; s: number };
+type Room = { lit: HTMLCanvasElement; banner: HTMLCanvasElement; glows: { mat: number; c: HTMLCanvasElement }[]; a: RoomAnchors; lights: Light[]; walk: Walkable };
+function buildRoom(st: Style, S?: number): Room {
+  const sp = (Art.bedroomSprite as unknown as (st: Style, o: { S?: number }) => { w: number; h: number; m: Uint8Array; anchors: RoomAnchors; scale: number; walk: Omit<Walkable, "s"> })(st, { S });
   const colours = (Art.bedroomColours as (st: Style) => Record<number, number[]>)(st);
   const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown) => { A: HTMLCanvasElement; N: HTMLCanvasElement; w: number; h: number })(sp, colours, { ...st, styleInterior: false } as unknown as Style, (st as unknown as { cOutline: unknown }).cOutline); // (ref: its outline, not its interior lines, which turn the clutter to noise)
   const a = sp.anchors, warm = [255, 176, 92], light = (p: [number, number], R: number, rgb: number[], power: number, z = 10): Light => ({ x: p[0], y: p[1], z, R, rgb, power });
@@ -528,7 +585,7 @@ function buildRoom(st: Style): Room {
     x.putImageData(img, 0, 0);
     return { mat, c };
   });
-  return { lit, banner, glows, a, lights };
+  return { lit, banner, glows, a, lights, walk: { ...sp.walk, s: sp.scale } };
 }
 /** Her idle moments: a pose from the witch's on-foot poses, its speed, how many times through, turned round or not. */
 const IDLES: { pose: string; fps: number; loops: number; flip?: boolean }[] = [
