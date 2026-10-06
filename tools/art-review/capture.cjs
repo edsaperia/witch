@@ -69,20 +69,25 @@ async function session(browser, port, v, fight) {
     }
     for (const area of v.areas) {
       const spot = await page.evaluate(area => {
-        const W = window.witch, g = W.game, m = g.map;
+        // only the map's own cells (off the map, typeOf still answers), the nearest to the middle; her spot a little off its
+        // site, kept only if it is still in that area (art builder 1, #205)
+        const W = window.witch, g = W.game, m = g.map, n = m.n;
         let best = null;
-        for (let cy = -14; cy <= 14; cy++) for (let cx = -14; cx <= 14; cx++) {
-          let t; try { t = m.typeOf(cx, cy); } catch { continue; }
-          if (t === undefined || W.areaTypeId(t) !== area) continue;
-          const s = m.siteOf(cx, cy), d = Math.hypot(s.x, s.z);
-          if (!best || d < best.d) best = { ...s, d };
+        for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) {
+          const t = m.typeOf(cx, cy);
+          if (W.areaTypeId(t) !== area) continue;
+          const s = m.siteOf(cx, cy), d = Math.hypot(s.x - g.witch.x, s.z - g.witch.z);
+          if (!best || d < best.d) best = { ...s, d, cx, cy };
         }
         if (!best) return null;
-        g.witch = { ...g.witch, x: best.x - 26, z: best.z + 30, mode: "ground", lift: 0, seated: false, vx: 0, vz: 0 };
+        const at = (x, z) => { const c = m.areaAt(x, z).cell; return c[0] === best.cx && c[1] === best.cy; };
+        const off = [[-26, 30], [-13, 15], [0, 12], [0, 0]].find(([dx, dz]) => at(best.x + dx, best.z + dz));
+        g.witch = { ...g.witch, x: best.x + off[0], z: best.z + off[1], mode: "ground", lift: 0, seated: false, vx: 0, vz: 0 };
         g.introFocus = undefined;
-        return best;
+        return { ...best, off };
       }, area);
       if (!spot) { log("no", area); continue; }
+      log(area, "cell", spot.cx, spot.cy, "offset", spot.off);
       await nudge(); await wait(6); await page.waitForTimeout(8000);
       await shot(`${area}-ground`);
       await rise(); await shot(`${area}-treetops`);
