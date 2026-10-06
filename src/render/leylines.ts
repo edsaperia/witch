@@ -70,6 +70,7 @@ void main() {
 
 const FRAG = /* glsl */ `
 uniform float uTime, uGlowPass, uBright, uFade, uBehind, uShift, uLift, uCurrent, uOnlyFirst;
+uniform vec2 uPulse; // the wave's pulse on the link from the last stone reached: x how far it's got (0-1, by arc length), y 1 when there's a wave clock
 uniform vec2 uFlow;
 uniform vec4 uReveal; // x: the first link gone before this far along (draining into its stone); y: link z shown only this far (drawing out); w: the whole line's strength
 varying float vSide, vS, vT, vLink, vSeen;
@@ -96,12 +97,43 @@ void main() {
   float link = uBright * rank * mix(1.0, 0.8, uLift);
   // From the treetops the line is on the ground under the crowns: a wide faint glow shows through them.
   float a = uGlowPass > 0.5 ? 0.4 * halo * wisp * uLift : (core * (0.6 + 1.6 * pulse) + halo * (0.18 + 0.5 * pulse)) * wisp;
+  // The wave's pulse (Ed, 2026-10-06: "the leyline between the last and next wave soundsystem should grow in intensity
+  // in proportion to how much time is left before the next wave; so you can see the pulse travel along the leyline, and
+  // the next soundsystem appears when it arrives"): on the link from the last stone reached, the stretch it has
+  // travelled lit brighter than the stretch ahead, the whole link brightening toward the wave, a bright head at the pulse,
+  // and a flash at the far stone as it arrives. vT runs by arc length, so it follows the route's curves.
+  if (uPulse.y > 0.5 && abs(vLink - uCurrent) < 0.5) {
+    float p = uPulse.x, behind = 1.0 - smoothstep(p - 0.01, p + 0.01, vT);
+    link *= mix(0.55, 1.15, behind) * (0.6 + 0.9 * p);
+    a += exp(-abs(vT - p) * 45.0) * (uGlowPass > 0.5 ? halo : core) * (1.2 + 2.0 * p);
+    a += smoothstep(0.96, 1.0, p) * exp(-(1.0 - vT) * 30.0) * (uGlowPass > 0.5 ? halo : core) * 3.0;
+  }
   // Drawing out toward the next stone: a bright tip leads it.
   if (drawing) a += exp(-abs(vT - uReveal.y) * 60.0) * (uGlowPass > 0.5 ? halo : core) * 2.5;
   gl_FragColor = vec4(vCol * a * link * ends * uReveal.w, 1.0);
 }`;
 
 interface LeySet { geo: THREE.BufferGeometry; meshes: THREE.Mesh[]; reveal: THREE.Vector4; current: { value: number }; onlyFirst: { value: number } }
+
+/** How far the wave's pulse has got along the current link (0 at the last wave, 1 as the next arrives), from the party's
+ *  own clock; null with no wave clock (waves off: paused, or no interval). */
+export function leyPulse(left: number, interval: number, paused: boolean): number | null {
+  if (paused || !(interval > 0) || interval >= 1e8) return null;
+  return 1 - Math.min(1, Math.max(0, left) / interval);
+}
+
+/** The point a share t (0-1) of the way along a route by arc length: where the shader's vT = t lies (build's aT). */
+export function arcPoint(pts: [number, number][], t: number): [number, number] {
+  let total = 0;
+  for (let i = 1; i < pts.length; i++) total += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+  let want = Math.max(0, Math.min(1, t)) * total;
+  for (let i = 1; i < pts.length; i++) {
+    const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    if (want <= l || i === pts.length - 1) { const k = l > 0 ? Math.min(1, want / l) : 0; return [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * k, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * k]; }
+    want -= l;
+  }
+  return pts[0];
+}
 
 export class LeyLines {
   readonly meshes: THREE.Mesh[];
@@ -124,7 +156,7 @@ export class LeyLines {
       ...HEIGHT_UNIFORMS, uTime: LIGHT_UNIFORMS.uTime,
       uLeyWidth: { value: new THREE.Vector2(T.width[0], T.width[1]) }, uLeyHeight: { value: new THREE.Vector2(T.height[0], T.height[1]) },
       uLift: { value: 0 }, uBright: { value: T.brightness * BRIGHT }, uFade: { value: T.fade }, uBehind: { value: T.behindBright },
-      uShift: { value: 0 }, uFlow: { value: new THREE.Vector2(T.flow[0], T.flow[1]) },
+      uShift: { value: 0 }, uFlow: { value: new THREE.Vector2(T.flow[0], T.flow[1]) }, uPulse: { value: new THREE.Vector2() },
     };
     this.cur = this.makeSet(); this.old = this.makeSet();
     this.meshes = [...this.cur.meshes, ...this.old.meshes];
@@ -132,6 +164,9 @@ export class LeyLines {
 
   /** The line's brightness times k (the mood's leyBright). */
   scale(k: number): void { this.u.uBright.value = this.T.brightness * BRIGHT * k; }
+
+  /** The wave's pulse on the current link: how far it's got (0-1), or null for none (leyPulse). */
+  pulse(p: number | null): void { this.u.uPulse.value.set(p ?? 0, p === null ? 0 : 1); }
 
   private makeSet(): LeySet {
     const geo = new THREE.BufferGeometry(), reveal = new THREE.Vector4(0, 1, -1, 1), current = { value: 0 }, onlyFirst = { value: 0 };
