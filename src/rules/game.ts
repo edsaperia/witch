@@ -398,6 +398,8 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
   // A new soundsystem: its area's wild creatures are enraged and march on it (#87: its quest done or not).
   for (const [key, a] of g.party.areas) if (a.soundsystem && !S.sounds.has(key) && !S.ruined.has(key)) {
     startSiege(S, key, a.soundsystem, a.cell, g.creatures, t);
+    // Its besiegers march wherever she is (stepped from now on as busy, not only once she comes near).
+    for (const c of g.creatures) if (c.siege === key && !c.gone) S.busy.add(c.id);
     // Its happy ones (#87) come and dance round it.
     for (const c of g.creatures) if (!c.gone && !c.leashed && c.state === "happy" && c.cell[0] === a.cell[0] && c.cell[1] === a.cell[1]) danceAt(c, a.soundsystem);
   }
