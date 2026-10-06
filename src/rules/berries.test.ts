@@ -30,7 +30,7 @@ describe("berries and evolving", () => {
     const per = new Map<string, number>();
     for (const b of s.berries) { const c = map.areaAt(s.bushes[b.bush].x, s.bushes[b.bush].z).cell.join(","); per.set(c, (per.get(c) ?? 0) + 1); }
     const counts = [...per.values()];
-    expect(counts.length).toBeGreaterThan(map.n * map.n * 0.9);
+    expect(counts.length).toBeGreaterThan(map.cells.length * 0.9);
     expect(counts.every(n => n >= Math.min(lo, 1) && n <= hi)).toBe(true);
     expect(counts.filter(n => n >= lo).length / counts.length).toBeGreaterThan(0.9);
     const again = newBerries(map, t);

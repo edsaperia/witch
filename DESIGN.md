@@ -368,7 +368,7 @@ This replaces the legend rules in "Sleeping legends" and "The first quest" below
 | **Asleep** | the default; soundsystems no longer wake them | it dreams of a creature (its quest) |
 | **Asleep + buff** | its quest done: that creature's sigil put down in its area while the quest is open: for as long as the legend sleeps, its area's soundsystem on or not (Ed, 2026-10-06; it was "till the area's soundsystem switches on", 2026-10-05). Done before the area's wave, the area is friendly too and the ley line moves on; after it, the buff alone | its buff is hers for good; it sleeps on; the creature stays hers, parked there |
 | **Restless** | its area has none of its own kind (any state, leashed ones parked there and babies too) | its dream turns to a nightmare (`c.restlessness` 0 to 1 over `angryAfter`, 60 s); it calms back to sleep as soon as one of its kind is there again |
-| **Angry** | restlessness run its course | it shoots the witch and her posse from afar (never soundsystems, never happy creatures) |
+| **Angry** | restlessness run its course | it shoots the witch and her posse from afar (never soundsystems, never happy creatures); it calms back to sleep, restlessness 0, as soon as one of its kind is back in its area (Ed, 2026-10-06: "Angry legends should go back to sleep once one of their own species is back in their area"), a buff once earned kept |
 | **Happy** | a relic put down next to it (within `placeRadius`) while it sleeps or is restless | its buff is hers for good, and it shoots the enraged from afar |
 
 - **Home has no legend** (Ed, 2026-10-05: "Home area shouldn't have a legend"; "no home starting buff"): every run starts with no buff.
@@ -384,7 +384,9 @@ This replaces the legend rules in "Sleeping legends" and "The first quest" below
   - Ruts of churned ground show where it ran, fading over 12 s.
 - **Long range only** (Ed, 2026-10-05: "close up move set - stick with the long range one for now, we can see in playtesting"): legends fight only with their long-range attack (or the long charge), near or far, on its normal timing. The close-up move sets (slam, nova, charge; spin in phase 2) stay in the code and data, off by `closeMoves: false`.
 - **Worn down** (its health gone, angry or happy): it goes back to sleep; a buff she has from it is kept ("losing buffs feels bad": buffs once earned are never taken away). Enraged animals within `attack.wornReach` (40 m) go for a happy legend.
-- **For the view:** `c.legendState` (asleep, restless, angry, happy), `c.restlessness`, `c.questOpen` (its dream shows while true), `c.buffed`, `g.relics` (`state`: lying, carried, used; `kind`: the art's party relic id), `g.leash.relics`; leash events `relicPicked` and `relicPlaced`.
+- **Looking for its kind every 5 s** (Ed, 2026-10-06: "the legends could check for own species in area once every five seconds without issue"): `check` 5 s (from 0.5), each legend on its own beat (staggered by its id), so they never all look on one frame.
+- **Home to sleep** (Ed, 2026-10-06: "When legends go back to sleep, they should go back to their circle first and sleep in the spot where they spawned initially"): going back to sleep (worn down, or calmed) away from where it lay, a legend walks home at `homeSpeed` (6 m/s) and lies down where it spawned (its lair: `c.lairX`, `c.lairZ`, set at spawn; with the legend clearings, the spot near the top of its circle). On the way it's awake to look at (`c.homing`), with no dream showing.
+- **For the view:** `c.legendState` (asleep, restless, angry, happy), `c.homing` (walking home to lie down; settled when it clears, at `c.stateAt`), `c.restlessness`, `c.questOpen` (its dream shows while true), `c.buffed`, `g.relics` (`state`: lying, carried, used; `kind`: the art's party relic id), `g.leash.relics`; leash events `relicPicked` and `relicPlaced`.
 
 ### Sleeping legends (Ed, 2026-10-04; superseded by "Legends, redesigned" above)
 
