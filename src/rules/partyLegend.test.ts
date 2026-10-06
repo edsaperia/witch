@@ -92,6 +92,7 @@ describe("the party legend (Easter egg)", () => {
     expect(g.leash.placed.some(p => p.id === L.id)).toBe(false);
     run(g, 4, { moveX: 1 });
     expect(Math.hypot(g.witch.x - L.x, g.witch.z - L.z)).toBeGreaterThan(E.partyReach + 5);
+    run(g, 5); // (and it stays put, long after: not moved on as if it had been out of sight)
     expect(Math.hypot(L.x - at.x, L.z - at.z)).toBeLessThan(1.5); // (jostled by the crowd at most)
     expect(hasRune(L, g.clock.time)).toBe(true); // (to be picked up again)
   });

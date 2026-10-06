@@ -919,9 +919,10 @@ export class LeashView {
     }
     const pin = g.witches[0].pinned;
     if (pin) {
-      const c = g.creatures[pin.id], col = c ? this.colours.get(c.species) ?? null : null, from = { x: w.x, y: Math.max(0.6, hatTop * 0.55), z: w.z }, to = { x: pin.x, y: Math.max(1, (this.tops.get(pin.id) ?? 6) * 0.45), z: pin.z };
-      const d = Math.hypot(to.x - from.x, to.z - from.z), n = Math.max(8, Math.round(d / 0.45)), flash = 0.75 + 0.25 * Math.sin(time * 18);
-      for (let i = 0; i <= n; i++) { const k = i / n; this.standing.add(from.x + (to.x - from.x) * k, from.y + (to.y - from.y) * k, from.z + (to.z - from.z) * k, 0.32, dot, col ? Math.min(1, col.r * 1.3) : 1, col ? Math.min(1, col.g * 1.3) : 0.85, col ? Math.min(1, col.b * 1.3) : 0.55, flash); }
+      // (drawn a metre toward the camera, so the legend's own great sprite doesn't hide it)
+      const col = null as { r: number; g: number; b: number } | null, from = { x: w.x, y: Math.max(0.6, hatTop * 0.5), z: w.z + 1 }, to = { x: pin.x, y: 1.2, z: pin.z + 1 };
+      const d = Math.hypot(to.x - from.x, to.z - from.z), n = Math.max(8, Math.round(d / 0.35)), flash = 0.8 + 0.2 * Math.sin(time * 18);
+      for (let i = 0; i <= n; i++) { const k = i / n; this.standing.add(from.x + (to.x - from.x) * k, from.y + (to.y - from.y) * k, from.z + (to.z - from.z) * k, 0.7, dot, col ? col.r : 1, col ? col.g : 0.82, col ? col.b : 0.45, flash); } // (the lanterns' amber, bright: ruler-straight and taut)
       if (pin.since !== this.boingAt) { this.boingAt = pin.since; this.fx.push({ kind: "ring", x: w.x, y: 0, z: w.z, at: time, life: 0.45, r: AMBER[0], g: AMBER[1], b: AMBER[2], seed: 0, size: 2.2, n: 16, dot: 0.5 }); }
     }
 
