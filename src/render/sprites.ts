@@ -12,6 +12,8 @@ import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 export const SPRITE_UNIFORMS = {
   /** The mood's moonlight rim on characters (render/mood.ts): colour, strength (0 off). */
   uMoodRim: { value: new THREE.Vector4() },
+  /** 1 when the sprites are stylised (?style=bold|ref): their outermost pixel is the style's dark outline, so the rim goes just inside it. */
+  uRimInset: { value: 0 },
   /** How much of her own glow lights the witch (render/mood.ts; 0 none, as she was). */
   uWitchGlow: { value: 0 },
   uRight: { value: new THREE.Vector3(1, 0, 0) },
@@ -172,6 +174,8 @@ varying float vSizeY;
 uniform float uFind; // this batch: 1 for wild creatures (eyeshine, light floor, rim)
 uniform float uRimOn; // this batch: 1 for characters (the witch, creatures): the mood's moonlight rim
 uniform vec4 uMoodRim; // the rim's colour and strength (0: none; render/mood.ts)
+uniform float uRimInset; // 1: stylised sprites, the rim one pixel in from the edge (inside the style's outline)
+float rimAlpha(vec2 q) { return q.x < vFrame.x || q.x > vFrame.z || q.y < vFrame.y || q.y > vFrame.w ? 0.0 : texture2D(uAlbedo, q).a; }
 uniform vec4 uTint; // this batch's tint: colour and how much (enraged creatures' red, Ed 2026-10-05)
 uniform vec4 uFindLook;
 uniform vec2 uTrunkLook;   // trunks: light floor, rim
@@ -327,10 +331,13 @@ void main() {
   // edge in the night sky's colour, one art pixel wide, so the witch and the creatures stand out of the dark.
   if (uRimOn > 0.5 && uMoodRim.w > 0.0 && gl_FragColor.a > 0.5 && uSilhouette.a <= 0.0 && vGlow > -1.5) {
     vec2 s = -vec2(dot(uMoonDir, uRight), dot(uMoonDir, uUp));
-    vec2 qx = vUv + rdx * sign(s.x), qy = vUv + rdy * sign(s.y);
-    float ox = qx.x < vFrame.x || qx.x > vFrame.z || qx.y < vFrame.y || qx.y > vFrame.w ? 0.0 : texture2D(uAlbedo, qx).a;
-    float oy = qy.x < vFrame.x || qy.x > vFrame.z || qy.y < vFrame.y || qy.y > vFrame.w ? 0.0 : texture2D(uAlbedo, qy).a;
-    if (min(ox, oy) < 0.5) gl_FragColor.rgb = min(vec3(1.0), gl_FragColor.rgb + uMoodRim.rgb * uMoodRim.w);
+    // Taken from the silhouette (its alpha), never the normals, so it shows in every style; on a
+    // stylised sprite (art/stylise.js) the edge pixel is the style's own dark outline, so the rim
+    // lights the pixel just inside it instead (the art director's round 2).
+    vec2 dx = rdx * sign(s.x), dy = rdy * sign(s.y);
+    float ox = rimAlpha(vUv + dx * (1.0 + uRimInset)), oy = rimAlpha(vUv + dy * (1.0 + uRimInset));
+    float ix = uRimInset > 0.5 ? rimAlpha(vUv + dx) : 1.0, iy = uRimInset > 0.5 ? rimAlpha(vUv + dy) : 1.0;
+    if ((ox < 0.5 && ix > 0.5) || (oy < 0.5 && iy > 0.5)) gl_FragColor.rgb = min(vec3(1.0), gl_FragColor.rgb + uMoodRim.rgb * uMoodRim.w);
   }
   // Scenery past the budget's radius fades out smoothly (alpha), from the far edge inward.
   if (uIsScenery > 0.5) {

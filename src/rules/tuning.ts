@@ -22,6 +22,12 @@ export interface Mood {
   /** Each area type's own fog, grade tint and mist (by area id; "home" for home), over the above; eased across at areaEase a second. */
   /** The characters' moonlight rim (the witch, creatures): its hue, saturation and strength (0 off); and how much of her own glow lights the witch (0: none). */
   rimHue?: number; rimSat?: number; rim?: number; witchGlow?: number;
+  /** The moon's fill on upward faces (canopy tops, open ground), a share of the moon. */
+  moonUp?: number;
+  /** The ley line's colour ("#rrggbb"; left out, each area's own) and its brightness times this. */
+  leyRgb?: string; leyBright?: number;
+  /** A berry's halo: its size (m) and strength times this (left out: 2.8 m, 1). */
+  berryHalo?: number; berryGlow?: number;
   areas?: Record<string, Partial<{ hazeHue: number; hazeSat: number; haze: number; gradeHue: number; gradeSat: number; mist: number }>>; areaEase?: number;
 }
 

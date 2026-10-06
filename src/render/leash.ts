@@ -11,6 +11,7 @@
 //   canvas), with a bar for how far the conversation has got.
 // The sigils are the art builder's (art/sigils.js), drawn per species and level into an atlas.
 import { dreamStone, questOpen, restlessness } from "../rules/dream";
+import { moodOf } from "./mood";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { drawSigil, sigilColour } from "../../art/generator.js";
@@ -222,6 +223,8 @@ export class LeashView {
   private drawBerries(time: number): void {
     const g = this.game, B = g.berries, t = g.tuning, w = g.witch, dot = this.uv(0), [r, gg, b] = this.berryRgb, glow = t.berries.glow;
     const treetops = w.lift > 0.5, near = treetops ? 260 : 90, beat = 60 / t.beat.bpm;
+    // The mood's halo (the art director's round 2: big soft red discs after bloom read as warning lights; a crisp berry with a small glow).
+    const M = moodOf(t), hs = M?.berryHalo ?? 1, hg = glow * (M?.berryGlow ?? 1);
     for (const e of B.events) if (e.kind === "evolved") this.evolved.set(e.id, time);
     for (const [id, at] of this.evolved) if (time - at > 1) this.evolved.delete(id);
     for (const berry of B.berries) {
@@ -230,8 +233,8 @@ export class LeashView {
       const tw = 0.85 + 0.15 * Math.sin(time * 2.3 + berry.id);
       if (treetops) this.over.add(p.x, 1, p.z + 0.25, 0.9, dot, r * 1.6 * tw, gg * 1.6, b * 1.6, 0.8 * glow);
       else {
-        this.standing.add(p.x, 0.8, p.z + 0.3, 2.8, dot, r * 1.5, gg * 1.5, b * 1.5, 0.95 * glow * tw); // the soft halo, easy to spot
-        this.standing.add(p.x, 0.8, p.z + 0.31, 1.1, dot, r * 1.8, gg * 1.4, b * 1.4, 0.8 * glow); // its warm core
+        this.standing.add(p.x, 0.8, p.z + 0.3, 2.8 * hs, dot, r * 1.5, gg * 1.5, b * 1.5, 0.95 * hg * tw); // the soft halo, easy to spot
+        this.standing.add(p.x, 0.8, p.z + 0.31, 1.1 * hs, dot, r * 1.8, gg * 1.4, b * 1.4, 0.8 * hg); // its warm core
         this.standing.add(p.x - 0.07, 0.86, p.z + 0.32, 0.3, dot, 1, 0.92, 0.92, 0.8 * tw); // the shine
       }
     }

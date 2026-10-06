@@ -1013,6 +1013,25 @@
               "type": "number",
               "minimum": 0
             },
+            "moonUp": {
+              "type": "number",
+              "minimum": 0
+            },
+            "leyRgb": {
+              "type": "string"
+            },
+            "leyBright": {
+              "type": "number",
+              "minimum": 0
+            },
+            "berryHalo": {
+              "type": "number",
+              "minimum": 0
+            },
+            "berryGlow": {
+              "type": "number",
+              "minimum": 0
+            },
             "areaEase": {
               "type": "number",
               "minimum": 0
@@ -1639,6 +1658,11 @@
             "rimSat",
             "rim",
             "witchGlow",
+            "moonUp",
+            "leyRgb",
+            "leyBright",
+            "berryHalo",
+            "berryGlow",
             "areaEase",
             "areas"
           ],
