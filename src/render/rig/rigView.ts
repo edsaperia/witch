@@ -63,7 +63,9 @@ export class RigView {
     let body = this.bodies.get(c.id);
     if (!body) this.bodies.set(c.id, (body = new RigBody()));
     this.seen.add(c.id);
-    body.update(c.x, c.z, this.dt, c.charge ? c.charge.dx * c.charge.speed : c.vx, c.charge ? c.charge.dz * c.charge.speed : c.vz);
+    // how it moves, as drawn (eased between the rules' steps): its velocity only in a charge (c.vx is a fight's, and stale out of one,
+    // so a creature wandering with an old vx of 0 would glide with its legs still)
+    body.update(c.x, c.z, this.dt, c.charge ? c.charge.dx * c.charge.speed : undefined, c.charge ? c.charge.dz * c.charge.speed : undefined);
     const drive = this.drive(c, this.time, look), u2m = this.mpp * art.meta.s * look.scale; // metres per model unit
     this.out.reset();
     const meta = withFace(art.meta, look.face);
