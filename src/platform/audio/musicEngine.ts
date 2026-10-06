@@ -57,7 +57,20 @@ export class MusicEngine {
   /** The last step scheduled: a re-anchoring never schedules it again (round 13: the game running
    *  slower than the audio, every frame re-anchored, had each note scheduled several times over). */
   private lastStep = -Infinity;
-  private anchor = NaN; // audio time of game time 0
+  /** Game time as the music hears it (Ed, 2026-10-06: inside a legend's circle the world, the
+   *  music and the countdown slow to about a tenth): game time g0 at audio time a0, running at
+   *  `rate` game seconds an audio second (the game's time scale). */
+  private g0 = NaN;
+  private a0 = 0;
+  private rate = 1;
+  /** Notes' pitch now (the tape slowing with the music: 1 at full speed). */
+  private pitch = 1;
+  /** The note being played's pitch (the circle's layer never slowed). */
+  private notePitch = 1;
+  /** A legend's circle's layer, at full speed whatever the music's rate: its next step and that
+   *  step's audio time (-1: not playing; it starts in step with the music). */
+  private cNext = -1;
+  private cAt = 0;
   private reverbTime = 0;
 
   constructor(private ctx: BaseAudioContext, dest: AudioNode, public style: MusicStyle, public seed = 0, circleDest: AudioNode = dest) {
@@ -114,24 +127,43 @@ export class MusicEngine {
 
   /** Each frame: schedule what's due in the next `ahead` seconds of audio time, at game time
    *  `gameTime` (seconds) on the beat clock `clock`. `playing` false: nothing new is scheduled. */
-  update(cue: MusicCue, gameTime: number, clock: BeatClock, playing: boolean, ahead = 0.3): void {
+  update(cue: MusicCue, gameTime: number, clock: BeatClock, playing: boolean, ahead = 0.3, rate = 1, pitch = 1): void {
     const now = this.ctx.currentTime, stepNow = beatAt(clock, gameTime) * 4;
-    if (!playing) { this.nextStep = -1; return; }
-    // the audio time of game time 0, smoothed so the frames' jitter doesn't reach the notes; a jump
-    // (a hitch, a pause, a jump in game time) resets it
-    const raw = now - gameTime;
-    if (!(Math.abs(raw - this.anchor) < 0.06)) { this.anchor = raw; this.nextStep = -1; } else this.anchor += (raw - this.anchor) * 0.05;
+    if (!playing) { this.nextStep = -1; this.cNext = -1; return; }
+    // Game time as heard: running on from where it was at the old rate, then at the new one (the
+    // world slowing in a legend's circle); smoothed so the frames' jitter doesn't reach the notes,
+    // and a jump (a hitch, a pause, a jump in game time) starts it afresh.
+    rate = Math.max(0.01, rate);
+    if (rate !== this.rate) { if (Number.isFinite(this.g0)) { this.g0 += (now - this.a0) * this.rate; this.a0 = now; } this.rate = rate; }
+    this.pitch = pitch;
+    const err = gameTime - (this.g0 + (now - this.a0) * rate);
+    if (!(Math.abs(err) < 0.06 * rate)) { this.g0 = gameTime; this.a0 = now; this.nextStep = -1; } else this.g0 += err * 0.05;
+    const audioAt = (g: number) => this.a0 + (g - this.g0) / rate;
     if (this.nextStep < 0 || this.nextStep < stepNow - 1 || this.nextStep > stepNow + 64) {
       this.nextStep = Math.ceil(stepNow);
       // (not what's already scheduled, unless time went back: a new run, a jump)
       if (this.lastStep < stepNow + 64 && this.lastStep >= stepNow - 64) this.nextStep = Math.max(this.nextStep, this.lastStep + 1);
     }
-    this.delay.delayTime.setTargetAtTime(Math.min(4, (this.style.mix.delayBeats * 60) / bpmAt(clock, gameTime)), now, 0.05);
+    this.delay.delayTime.setTargetAtTime(Math.min(4, (this.style.mix.delayBeats * 60) / bpmAt(clock, gameTime) / rate), now, 0.05);
     for (;;) {
-      const g = timeAt(clock, this.nextStep / 4), t = this.anchor + g;
+      const g = timeAt(clock, this.nextStep / 4), t = audioAt(g);
       if (t >= now + ahead) break;
-      if (t >= now) { this.step(cue, this.nextStep, t, 60 / bpmAt(clock, g) / 4); this.lastStep = this.nextStep; }
+      if (t >= now) { this.step(cue, this.nextStep, t, 60 / bpmAt(clock, g) / 4 / rate); this.lastStep = this.nextStep; }
       this.nextStep++;
+    }
+    // A legend's circle's layer: its own time, at the music's tempo as if never slowed (the circle's
+    // own time, over the slowed world), starting in step with the music, its chords the music's.
+    if (!cue.circle) { this.cNext = -1; return; }
+    const sps = 60 / bpmAt(clock, gameTime) / 4;
+    if (this.cNext < 0 || this.cAt < now - 1 || this.cAt > now + 2) { this.cNext = this.nextStep; this.cAt = Math.max(now, audioAt(timeAt(clock, this.nextStep / 4))); }
+    while (this.cAt < now + ahead) {
+      if (this.cAt >= now) {
+        const main = Math.floor(beatAt(clock, this.g0 + (this.cAt - this.a0) * rate) * 4), plan = this.conductor.plan(cue, Math.floor(main / 16));
+        const events = notesAt(this.style, plan, null, main, { seed: this.seed, siege: 0, circle: cue.circle, only: "circle", circleStep: this.cNext });
+        const swing = this.cNext % 2 === 1 ? this.style.swing * sps : 0;
+        for (const e of events) this.play(e, this.cAt + swing + e.offset * sps, e.dur * sps, sps);
+      }
+      this.cNext++; this.cAt += sps;
     }
   }
 
@@ -165,7 +197,7 @@ export class MusicEngine {
       this.tone.frequency.setValueAtTime(f0, t);
       if (f1 !== f0) this.tone.frequency.exponentialRampToValueAtTime(f1, t + 16 * sps);
     }
-    const events = notesAt(S, plan, next, step, { seed: this.seed, siege: cue.siege, party: cue.party, legend: cue.legend, circle: cue.circle, build: cue.speakerBars !== undefined ? bootLayers(cue, bar) : undefined });
+    const events = notesAt(S, plan, next, step, { seed: this.seed, siege: cue.siege, party: cue.party, legend: cue.legend, only: "main", build: cue.speakerBars !== undefined ? bootLayers(cue, bar) : undefined });
     const swing = step % 2 === 1 ? S.swing * sps : 0;
     for (const e of events) this.play(e, t + swing + e.offset * sps, e.dur * sps, sps);
   }
@@ -191,13 +223,14 @@ export class MusicEngine {
     const p = this.style.patches[e.patch];
     if (!p || (this.solo && !this.solo.has(e.part))) return;
     const ch = this.channel(e.part, p, e.layer === "circle"), peak = p.gain * e.vel;
+    const pf = (this.notePitch = e.layer === "circle" ? 1 : this.pitch); // (the tape slowing: the circle's own layer never)
     switch (p.kind) {
-      case "kick": this.kick(t, p, peak, ch.in); this.duck(t, e.vel, sps); break;
+      case "kick": this.kick(t, pf === 1 ? p : { ...p, pitch: (p.pitch ?? 150) * pf, pitchEnd: (p.pitchEnd ?? 45) * pf }, peak, ch.in); this.duck(t, e.vel, sps); break;
       case "noise": this.noiseHit(t, p, peak, ch.in); break;
       case "snare": this.snare(t, p, peak, ch.in); break;
-      case "bell": this.bell(t, p, peak, mtof(e.midi ?? 69), ch.in); break;
-      case "synth": this.synth(t, p, peak, mtof(e.midi ?? 45), dur, ch); break;
-      case "voice": this.voice(t, p, peak, mtof(e.midi ?? 57), dur, e.step, ch.in); break;
+      case "bell": this.bell(t, p, peak, mtof(e.midi ?? 69) * pf, ch.in); break;
+      case "synth": this.synth(t, p, peak, mtof(e.midi ?? 45) * pf, dur, ch); break;
+      case "voice": this.voice(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch.in); break;
       case "riser": this.riser(t, p, dur, e.from ?? 0, e.to ?? 1, ch.in); break;
       case "impact": this.impact(t, p, peak, ch.in); break;
     }
@@ -257,6 +290,7 @@ export class MusicEngine {
     const s = this.ctx.createBufferSource();
     s.buffer = metal ? this.metal : this.noise;
     s.loop = length > 1.5;
+    if (this.notePitch !== 1) s.playbackRate.value = this.notePitch; // (the tape slowing: hats and snares drop too)
     s.start(t, ((t * 7.31) % 1) * 0.5);
     s.stop(t + length);
     return s;

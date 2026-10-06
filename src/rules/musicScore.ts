@@ -297,6 +297,11 @@ export interface ScoreContext {
   /** The home speakers' boot (rules/musicPlan.ts bootLayers): how much has booted, 0 silent to 1 whole;
    *  in the intro, a part plays once the boot is past its `from` (its layers, one a speaker). */
   build?: number;
+  /** Only the music ("main": no legend's layer) or only a legend's circle's layer ("circle"), which
+   *  plays on its own clock (the music slowed in the circle, its layer not): `circleStep` its
+   *  sixteenths, the music's `step` giving only the chords. Left out: both, on the music's steps. */
+  only?: "main" | "circle";
+  circleStep?: number;
 }
 
 const VOICE_FAMILIES = (voices as unknown as { species: Record<string, { family?: string }> }).species;
@@ -333,15 +338,16 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
   const ending = next !== null && (next.section !== plan.section || next.start !== plan.start) ? sec.ending ?? "fill" : "none";
   const fillBar = ending === "fill";
   const muted = ending !== "none" && s >= 12 ? style.fill.mute : [];
-  const parts: [string, PartUse, number][] = Object.entries(sec.parts).map(([k, u]) => [k, u, 1]);
-  if (ctx.siege > 0.01) for (const [k, u] of Object.entries(style.siege)) parts.push([k, u, ctx.siege]);
+  const onlyCircle = ctx.only === "circle";
+  const parts: [string, PartUse, number][] = onlyCircle ? [] : Object.entries(sec.parts).map(([k, u]) => [k, u, 1]);
+  if (onlyCircle) { /* (the layer alone) */ } else if (ctx.siege > 0.01) for (const [k, u] of Object.entries(style.siege)) parts.push([k, u, ctx.siege]);
   if ((ctx.party ?? 0) > 0.01) for (const [k, u] of Object.entries(style.party ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx.party!]);
   if ((ctx.legend ?? 0) > 0.01) for (const [k, u] of Object.entries(style.legend ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx.legend!]);
   // the boot's intro: nothing before the first speaker, then a layer a speaker (other sections build as they always did)
   const build = ctx.build ?? 1, building = ctx.build !== undefined && plan.section === style.intro;
-  const circle = ctx.circle && ctx.circle.level > 0.01 ? ctx.circle : null, layer = new Set<string>();
+  const circle = ctx.circle && ctx.circle.level > 0.01 && ctx.only !== "main" ? ctx.circle : null, layer = new Set<string>();
   if (circle) for (const [k, u] of circleParts(style, circle.species)) if (!sec.parts[k]) { parts.push([k, u, circle.level]); layer.add(k); }
-  if (fillBar) parts.push([style.fill.part, { p: "__fill" }, 1]);
+  if (fillBar && !onlyCircle) parts.push([style.fill.part, { p: "__fill" }, 1]);
   for (const [name, u0, scaleLevel] of parts) {
     const def = style.parts[name];
     if (!def) continue;
@@ -356,14 +362,15 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
     // a legend's layer, its species' own: its rhythm placed its own way, its melody from its own
     // chord tone and in its own octave (still the music's chords, so it sits in with them)
     const sh = own ? nameHash(circle!.species) : 0, phase = own ? (sh % 8) * 2 : 0;
-    const i = (barIn * 16 + s + phase) % pat.length;
+    const at = own && ctx.circleStep !== undefined ? ctx.circleStep : barIn * 16 + s; // (the layer on its own clock, or the music's)
+    const i = (at + phase) % pat.length;
     const { ch, dur } = hitAt(pat, i);
     if (ch === "." || ch === "-") continue;
     const seed = own ? ctx.seed + nameHash(circle!.species) : ctx.seed; // (a legend's layer its species' own melody)
-    const r = hash2(step, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), seed + phrase * 7919);
+    const r = hash2(own && ctx.circleStep !== undefined ? ctx.circleStep : step, plan.arc * 131 + name.length * 17 + name.charCodeAt(0), seed + phrase * 7919);
     if (ch === "?" && r >= a.energy) continue;
     const level = u.level * scaleLevel * (0.94 + 0.06 * r) * (building && !own ? 0.45 + 0.55 * build : 1); // (the boot's few speakers quieter, filling out to the twelfth)
-    const base = { part: name, patch: def.patch, step, offset: 0, dur, ...(own ? { layer: "circle" as const } : {}) };
+    const base = { part: name, patch: def.patch, step: own && ctx.circleStep !== undefined ? ctx.circleStep : step, offset: 0, dur, ...(own ? { layer: "circle" as const } : {}) };
     if (def.role === "drum") {
       if (ch === "r") { out.push({ ...base, dur: 0.5, midi: null, vel: 0.6 * level }, { ...base, offset: 0.5, dur: 0.5, midi: null, vel: 0.75 * level }); continue; }
       out.push({ ...base, midi: null, vel: (VEL[ch] ?? 0.8) * level });
@@ -377,17 +384,19 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
       for (const t of chord.tones) out.push({ ...base, midi: degreeToMidi(style, scale, t, oct, transpose), vel: (VEL[ch] ?? accent) * level });
     } else if (def.role === "arp") {
       let k = 0; // the hits so far this bar
-      for (let j = 0; j < s; j++) { const c = pat[(barIn * 16 + j) % pat.length]; if (c !== "." && c !== "-") k++; }
+      const b0 = at - (at % 16);
+      for (let j = b0; j < at; j++) { const c = pat[(j + (own ? phase : 0)) % pat.length]; if (c !== "." && c !== "-") k++; }
       const n = chord.tones.length, t = chord.tones[k % n] + 7 * (Math.floor(k / n) % 2);
       out.push({ ...base, midi: degreeToMidi(style, scale, t, oct, transpose), vel: (VEL[ch] ?? accent) * level });
     } else {
-      const m = motifFor(seed + phrase * 104729, plan.arc, name), pos = ((barIn % 4) * 16 + s + (own ? sh % 29 : 0)) % 32; // (a new melody each pass or phrase)
+      const m = motifFor(seed + phrase * 104729, plan.arc, name), pos = ((at % 64) + (own ? sh % 29 : 0)) % 32; // (a new melody each pass or phrase)
       const vary = barIn % 4 === 3 && s >= 8 ? (hash2(bar, plan.arc, ctx.seed + 5) < 0.5 ? 2 : -1) : 0; // every fourth bar ends differently
       const lift = own ? [0, 2, 4][(sh >>> 3) % 3] : 0, octOwn = own ? oct + ((sh >>> 5) % 2) - (oct > 2 ? 1 : 0) : oct;
       out.push({ ...base, midi: degreeToMidi(style, scale, chord.root + m[pos] + vary + lift, octOwn, transpose), vel: (VEL[ch] ?? accent) * level });
     }
   }
   // the section's own events: a crash on its first beat, a riser over a build (one note a bar)
+  if (onlyCircle) return out;
   if (s === 0 && barIn === 0 && sec.impact && style.patches.impact) out.push({ part: "impact", patch: "impact", step, offset: 0, dur: 16, midi: null, vel: 1 });
   if (s === 0 && sec.riser && style.patches.riser) out.push({ part: "riser", patch: "riser", step, offset: 0, dur: 16, midi: null, vel: 1, from: barIn / plan.bars, to: (barIn + 1) / plan.bars });
   return out;

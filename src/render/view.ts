@@ -10,6 +10,7 @@ import * as THREE from "three";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { poseOf, STEP } from "../rules/game";
+import { FALLBACK_LOOK, floorLook, type FloorLook } from "./legendFloor";
 import { AREA_TYPES, HOME_LOOK, nearestClearings, type LegendClearing } from "../rules/map";
 import { canopyShown, witchHeight } from "../rules/witch";
 import { AssetLibrary } from "./assets";
@@ -59,6 +60,7 @@ import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
 import { berrySprite } from "./berries";
 import { LeyLines, leyReveal, shaderPulse } from "./leylines";
+import { bootLineAt, bootPath, bootPulseAt, bootShare } from "../rules/bootRing";
 import { Glades } from "./glades";
 import { leyChain, leyKey } from "../rules/leylines";
 import { SPRITE_UNIFORMS, SpriteBatch } from "./sprites";
@@ -636,8 +638,21 @@ export class View {
       Object.assign(out[i], { x: c.x, z: c.z, r: c.r, edge: c.edge, glow: Math.min(1, Math.max(s.k, flash)) });
     }
     this.ringCount = near.length;
+    // Their floors (render/ground.ts): each carving its legend's kind; its grooves' glint (the tuning's knob, 0 off) while it sleeps.
+    const glint = g.tuning.legendClearing.floor?.glint ?? 0;
+    for (let i = 0; i < near.length; i++) {
+      const c = near[i], f = this.floorItems[i];
+      const A = AREA_TYPES[g.map.typeOf(c.cell[0], c.cell[1])];
+      f.species = A.creature; f.look = floorLook(A.id);
+      let id = this.ringLegend.get(c);
+      if (id === undefined) { id = (g.legendIds ?? []).find(k => { const L = g.creatures[k]; return L && L.cell[0] === c.cell[0] && L.cell[1] === c.cell[1]; }) ?? -1; this.ringLegend.set(c, id); }
+      const L = id >= 0 ? g.creatures[id] : undefined;
+      f.glint = glint > 0 && L && !L.gone && (L.legendState === "asleep" || L.legendState === "restless") ? glint : 0;
+    }
     return out;
   }
+  private floorItems: { species: string; glint: number; look: FloorLook }[] = Array.from({ length: 6 }, () => ({ species: "", glint: 0, look: FALLBACK_LOOK }));
+  private ringLegend = new Map<LegendClearing, number>();
   private ringCount = 0;
 
   render(time: number, draw = true): void {
@@ -762,6 +777,7 @@ export class View {
     this.soundBatch.set(party.items);
     this.ground.setSweeps(party.sweeps);
     this.ground.setLegendRings(this.legendRings(g, time), this.ringCount);
+    this.ground.setLegendFloors(this.floorItems, this.ringCount);
     this.lasers.update(time, party.playing, w.x, w.z, this.speakerTops, g.map.dancefloor);
     {
       // The ley lines: fading from the colour of the area each starts in to that of the area it ends
@@ -772,6 +788,10 @@ export class View {
       this.ley.update(leyKey(this.leyParty), this.leyChainNow, this.leyColour, time, canopyShown(w));
       this.ley.pulse(shaderPulse(g.party, g.map, time)); // the wave's pulse along the current link, by the party's clock (as the HUD's pointer)
       this.ley.grow(leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3)); // none while home boots, then out from the treehouse along the route (Ed)
+      { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.
+        const B = bootPath(g.map), share = bootShare(g.party, g.map, time), live = g.party.spellAt !== null && share < 1;
+        this.ley.ring(live ? bootPulseAt(g.party, g.map, time) / B.length : null, bootLineAt(g.party, g.map, time, t.leyLines.reveal ?? 3) / B.length, g.party.spellAt === null ? 0 : live ? 1 : 0.35, this.leyRgb ?? undefined);
+      }
     }
     // The sleeping legends' clearings: their twilight and motes, the nearest few (render/glades.ts).
     { const gdt = Math.min(0.1, Math.max(0, time - this.gladeTime)); this.gladeTime = time; this.glades.update(g, w.x, w.z, gdt, w.mode === "ground"); }

@@ -374,6 +374,8 @@ function lightsInChunk(map: ForestMap, ci: number, cj: number): LightSource[] {
     if (B && B.intoSand(x, z) > -6) continue; // (none on the beach or in the sea)
     const a = map.areaAt(x, z), where = a.openness < 0.35 || a.openness > 0.8 ? 1 : 0.25, roll = hash2(i, j, s + 403);
     if (homeGround(map, x, z, a.look)) continue; // (home's lights are its party decorations)
+    const lc = map.legendClearing(a.cell[0], a.cell[1]); // (none in a legend's circle: its floor is carved stone, and level)
+    if (lc && Math.hypot(x - lc.x, z - lc.z) < lc.r + 6) continue;
     const wet = AREA_TYPES[a.type].ponds || !!AREA_TYPES[a.type].layout.terrain?.includes("pools");
     const pond = (wet ? L.wetPond : L.pond) * where, fire = L.campfire * where, stone = L.magicStone * where;
     const kind: LightKind | null = roll < pond ? "pond" : roll < pond + fire ? "campfire" : roll < pond + fire + stone ? "stone" : null;
