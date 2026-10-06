@@ -36,6 +36,7 @@ import { knockWitch, newKnock, stepWitchKnock, stunned, type Blow, type Knock } 
 import { applyDash, dashing, newDash, rechargeDash, refundDash, startDash, type DashState } from "./dash";
 import { castSpell, newSpells, speedMultiplier, type SpellState } from "./spells";
 import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWitches";
+import { newBeachWitches, stepBeachWitches, type BeachWitches } from "./beach";
 import { growWave, materialize, newGrowth, type GrowthState } from "./growth";
 import type { Tuning } from "./tuning";
 import { newWitch, stepWitch, witchHeight, type Intent, type WitchState } from "./witch";
@@ -100,7 +101,7 @@ export interface Game {
   combat: CombatState;
   /** What knockouts did in this frame's steps (for the view). */
   koEvents: KnockoutEvent[];
-  /** Areas whose legend's quest is done (rules/quest.ts): friendly while wild, guarded once partified. */
+  /** Areas whose legend's quest is done (rules/quest.ts): friendly while wild. */
   friendly: Set<string>;
   /** Quests done in this frame's steps (for the view). */
   questEvents: QuestEvent[];
@@ -138,6 +139,8 @@ export interface Game {
   buffs: BuffState;
   /** The party witches on the dancefloor, and the players idling into the party (rules/partyWitches.ts). */
   partyWitches: PartyWitches;
+  /** Witches on the beach (rules/beach.ts): in a few runs only, else null. */
+  beach: BeachWitches | null;
   /** Running totals for the playtest log (src/platform/playtestLog.ts): berries eaten, creatures invited, evolutions. */
   tally: { berries: number; invites: number; evolved: number };
   /** Where the opening shot looks: her seat on the treehouse as drawn (the view sets it; the art knows where it is). */
@@ -188,7 +191,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
     speakers: map.dancefloor.speakers.map(() => "playing" as SpeakerState),
     speakerBoot: map.dancefloor.speakers.map(() => null),
     beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)),
-    floor: newFloor(), buffs: newBuffs(tuning), partyWitches: newPartyWitches(seed),
+    floor: newFloor(), buffs: newBuffs(tuning), partyWitches: newPartyWitches(seed), beach: newBeachWitches(seed, map.bounds, tuning),
     combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), questEvents: [] as QuestEvent[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], relics: placeRelics(map, forest), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), over: null as { at: number } | null,
     acc: 0, alpha: 1, timeScale: 1, herTime: 0, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
   };
@@ -452,6 +455,7 @@ function fixedStep(g: Game, controls: Controls): void {
   stepSpeakerBoot(g);
   stepDancefloor(g, wave);
   stepWitchParty(g, c, dt);
+  if (g.beach) { const w = g.witch; stepBeachWitches(g.beach, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated, moving: !w.stargazing && (Math.hypot(c.moveX, c.moveZ) > 0.05 || Math.hypot(w.vx, w.vz) > 0.3) || !!c.toggleMode }], g.clock.time, dt, g.tuning); }
   // Last, everyone in view eases apart from anyone closer than their sizes like (Ed, 2026-10-05).
   stepSpacing(g, dt);
   // Enraged creatures stay out of a sleeping or restless legend's circle (Ed, 2026-10-06).
