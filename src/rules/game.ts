@@ -4,7 +4,7 @@ import { bodyRadius, spaceOut } from "./spacing";
 import { onAreaDone } from "./leylines";
 import { questOutside, questPlaced, type QuestEvent } from "./quest";
 import { beatAt, newBeatClock, waveArrived, waveTempo, type BeatClock } from "./beat";
-import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState } from "./camera";
+import { cameraPose, newCamera, stepCamera, type CameraPose, type CameraState, type CoastView } from "./camera";
 import { MAX_STEP, newClock, type Clock } from "./clock";
 import { heldByCombat, napping, spawnCreatures, stepCreaturesNear, stepNotice, wanderRange, type Creature, type NapRules } from "./creatures";
 import { Forest } from "./forest";
@@ -18,7 +18,7 @@ import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries
 import { castPartySpell, cellKey, heldBySpell, hurryWave, newParty, spreadWave, stepParty, type PartyState } from "./party";
 import { stoneTurned } from "./bootRing";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
-import { exitPoint } from "./mapShape";
+import { beachOf, exitPoint } from "./mapShape";
 import { calmRingAt, keepEnragedOut, leavesCalmRing, stepTimeScale } from "./slowTime";
 import { nextSpeakerState, type SpeakerState } from "./speakers";
 import { moonState } from "./moon";
@@ -389,7 +389,7 @@ function fixedStep(g: Game, controls: Controls): void {
   if (W.knock) W.body = stepWitchKnock(W.knock, W.body, hdt, t, g.map.bounds, (x, z) => blinkClear(g, x, z));
   // A party legend on her leash (the Easter egg): not a step past legends.partyReach of it, blinking, flying or thrown (rules/partyLegend.ts).
   if (t.legends.partyEgg) { const P = pinWitch(W.body, W.leash.stack, g.creatures, t.legends.partyReach, g.clock.time, W.pinned ?? null); W.body = P.body; W.pinned = P.pinned; }
-  g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus);
+  g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g));
   // The afterparty (rules/partyOver.ts): the waves have stopped for good.
   const over = !!g.partyOver;
   if (c.pauseWaves && !over) g.party.paused = !g.party.paused;
@@ -776,6 +776,18 @@ export function joinParty(g: Game, c: Creature, soundsystem: { x: number; z: num
 export const simRadius = (g: Game) => Math.max(g.tuning.creatureSimRadius, g.tuning.haze.far + 20 + wanderRange(g.map) * 2.5);
 
 export const poseOf = (g: Game): CameraPose => cameraPose(g.camera, g.camera.lift, g.tuning);
+/** How near the sea she is for the camera (Ed, 2026-10-06: lower and more bent "over 200m until you're at stargazing at the edge
+ *  of the sea"): 0 from beach.camera.approach metres off the water's edge, 1 at it; and whether she's lying stargazing (alone, or
+ *  with a beach witch). Null on a map without a beach. */
+export function coastOf(g: Game): CoastView | null {
+  const BC = g.tuning.beach?.camera, b = BC ? beachOf(g.map.bounds, g.tuning) : null, w = g.witch;
+  if (!BC || !b) return null;
+  // (metres from where the edge's soft hold starts, where she lies down at the water's edge (rules/witch.ts `held`); exactly, by
+  // the coast's edge her way: intoSea's quick path is only right about which side of the water a point is on, well inland)
+  const dx = w.x - b.x, dz = w.z - b.z, off = b.edge(Math.atan2(dz, dx)) - (g.tuning.map?.push ?? 0) * 0.6 - Math.hypot(dx, dz);
+  const gazing = w.mode === "ground" && (!!w.stargazing || !!g.beach?.some(s => s.players[0]?.pose === "stargaze"));
+  return { near: Math.max(0, Math.min(1, 1 - off / Math.max(1, BC.approach))), gazing };
+}
 
 /** The area type under the witch, by name (and its set piece, if it shows one), for the debug overlay. */
 export function areaUnderWitch(g: Game): string {

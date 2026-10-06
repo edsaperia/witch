@@ -107,6 +107,44 @@
           "type": "number",
           "minimum": 0
         },
+        "camera": {
+          "type": "object",
+          "properties": {
+            "approach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "angle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "curve": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gazeAngle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gazeDistance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gazeLook": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "approach",
+            "angle",
+            "curve",
+            "gazeAngle",
+            "gazeDistance",
+            "gazeLook"
+          ],
+          "additionalProperties": false
+        },
         "letterLinger": {
           "type": "number",
           "minimum": 0
@@ -190,6 +228,7 @@
         "restAfter",
         "stargazeCurve",
         "gazeEase",
+        "camera",
         "letterLinger",
         "letterFade",
         "hearts",

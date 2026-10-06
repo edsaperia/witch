@@ -41,6 +41,12 @@ The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A bea
 | `beach.restAfter` | number | 0 to … |
 | `beach.stargazeCurve` | number | 0 to … |
 | `beach.gazeEase` | number | 0 to … |
+| `beach.camera.approach` | number | 0 to … |
+| `beach.camera.angle` | number | 0 to … |
+| `beach.camera.curve` | number | 0 to … |
+| `beach.camera.gazeAngle` | number | 0 to … |
+| `beach.camera.gazeDistance` | number | 0 to … |
+| `beach.camera.gazeLook` | number | 0 to … |
 | `beach.letterLinger` | number | 0 to … |
 | `beach.letterFade` | number | 0 to … |
 | `beach.hearts.after` | number | 0 to … |
