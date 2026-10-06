@@ -198,6 +198,17 @@ export class Creator {
     return b;
   }
   private extras = document.createElement("div");
+  private unlocked = false;
+  /** Tabs of anyone's, after her own (the controls and the options from the old start card): their nodes moved in whole. */
+  private extraTabs: { id: string; name: string; nodes: HTMLElement[] }[] = [];
+  /** A tab of its own down the tapestry's edge holding `nodes` (moved in, listeners and all), after her boxes; kept through
+   *  every rebuild. `name` is its icon, a space, then its title (as the boxes' names). */
+  addTab(id: string, name: string, nodes: HTMLElement[]): void {
+    this.extraTabs.push({ id, name, nodes });
+    const box = this.makeBox(id, name);
+    box.append(...nodes);
+    this.boxes.get(id)?.();
+  }
   /** The world building behind it (Ed: "the character creator also serves as a loading screen"):
    *  sets done of total, and whether play can start. */
   progress: () => { done: number; total: number; ready: boolean } = () => ({ done: 1, total: 1, ready: true });
@@ -247,8 +258,12 @@ export class Creator {
       if (WALK_KEYS.has(e.code)) { e.preventDefault(); this.held.add(e.code); (document.activeElement as HTMLElement | null)?.blur?.(); return; } // (a slider keeps no arrow keys: they walk her)
       if ((e.target as HTMLElement)?.tagName === "INPUT" && e.code !== "Enter") return;
       if (e.code === "Enter") { e.preventDefault(); this.scroll.cast(); } else if (e.code === "KeyR") this.randomise();
+      else if (e.key === "?" && this.boxes.has("controls")) { e.preventDefault(); this.openBox("controls"); }
       else if (e.code === "KeyQ" || e.code === "PageUp") { e.preventDefault(); this.stepTab(-1); } else if (e.code === "KeyE" || e.code === "PageDown") { e.preventDefault(); this.stepTab(1); }
     }, { capture: true });
+    // the first press anywhere in her room unlocks the sound, silently (browsers want a gesture first; Ed, 2026-10-06: no start card)
+    const unlock = () => { if (this.open && !this.unlocked) { this.unlocked = true; this.onGesture(); } };
+    this.root.addEventListener("pointerdown", unlock, { capture: true }); window.addEventListener("keydown", unlock, { capture: true });
     window.addEventListener("keyup", e => { if (!this.open) return; this.held.delete(e.code); if (WALK_KEYS.has(e.code)) e.stopPropagation(); }, { capture: true });
     window.addEventListener("blur", () => this.held.clear());
     this.build();
@@ -275,6 +290,25 @@ export class Creator {
   }
   private classic(): void { this.g = upgrade(CLASSIC); this.build(); this.dirty = true; }
 
+  /** A box's page and its tab (see build): its body, to fill. */
+  private makeBox(id: string, name: string): HTMLElement {
+    const fs = document.createElement("fieldset"), body = document.createElement("div"), lg = document.createElement("legend"), tab = document.createElement("button");
+    const [icon, ...words] = name.split(" ");
+    fs.dataset.box = id; tab.dataset.tab = id; tab.type = "button"; tab.textContent = icon; tab.title = words.join(" "); tab.setAttribute("aria-label", words.join(" "));
+    Object.assign(fs.style, { border: "1px solid rgba(214,170,92,.45)", borderRadius: "6px", margin: "0 0 6px", padding: "2px 8px 6px" });
+    Object.assign(lg.style, { padding: "0 4px", color: "#f2c46a", userSelect: "none" });
+    lg.textContent = name;
+    Object.assign(tab.style, { font: "inherit", fontSize: "18px", width: "38px", height: "34px", cursor: "pointer", border: "1px solid rgba(214,170,92,.45)", borderRight: "none", borderRadius: "8px 0 0 8px", padding: "0", position: "relative" });
+    const paint = () => {
+      const on = this.box === id;
+      fs.style.display = on ? "block" : "none";
+      Object.assign(tab.style, on ? { background: "rgba(14,9,22,.55)", marginRight: "-2px", filter: "none", boxShadow: "inset 3px 0 0 #f2c46a", zIndex: "2" } : { background: "rgba(255,255,255,.04)", marginRight: "0", filter: "grayscale(.5) brightness(.8)", boxShadow: "none", zIndex: "0" });
+    };
+    tab.addEventListener("click", () => this.openBox(id));
+    this.tabs.append(tab);
+    fs.append(lg, body); const bar = this.panel.querySelector("[data-bar]"); if (bar) this.panel.insertBefore(fs, bar); else this.panel.append(fs); this.boxes.set(id, paint); paint();
+    return body;
+  }
   /** The controls: a box for each item of hers (BOXES), one open at a time, each with its sliders and pickers (from the
    *  generator's axes, so a new axis shows up by itself), its toggles and its own colour picker. */
   private build(): void {
@@ -288,24 +322,7 @@ export class Creator {
     // The boxes, as tabs down the tapestry's left edge (Ed, 2026-10-06: "The different things you can change ... can be tabs
     // down the left side of the character creation pane"): its icon on the tab, its name as its tooltip and at the top of its
     // page; only the open one's page shows, its tab joined to the page like a bookmark. The open one is kept on this browser.
-    const box = (id: string, name: string) => {
-      const fs = document.createElement("fieldset"), body = document.createElement("div"), lg = document.createElement("legend"), tab = document.createElement("button");
-      const [icon, ...words] = name.split(" ");
-      fs.dataset.box = id; tab.dataset.tab = id; tab.type = "button"; tab.textContent = icon; tab.title = words.join(" "); tab.setAttribute("aria-label", words.join(" "));
-      Object.assign(fs.style, { border: "1px solid rgba(214,170,92,.45)", borderRadius: "6px", margin: "0 0 6px", padding: "2px 8px 6px" });
-      Object.assign(lg.style, { padding: "0 4px", color: "#f2c46a", userSelect: "none" });
-      lg.textContent = name;
-      Object.assign(tab.style, { font: "inherit", fontSize: "18px", width: "38px", height: "34px", cursor: "pointer", border: "1px solid rgba(214,170,92,.45)", borderRight: "none", borderRadius: "8px 0 0 8px", padding: "0", position: "relative" });
-      const paint = () => {
-        const on = this.box === id;
-        fs.style.display = on ? "block" : "none";
-        Object.assign(tab.style, on ? { background: "rgba(14,9,22,.55)", marginRight: "-2px", filter: "none", boxShadow: "inset 3px 0 0 #f2c46a", zIndex: "2" } : { background: "rgba(255,255,255,.04)", marginRight: "0", filter: "grayscale(.5) brightness(.8)", boxShadow: "none", zIndex: "0" });
-      };
-      tab.addEventListener("click", () => this.openBox(id));
-      this.tabs.append(tab);
-      fs.append(lg, body); P.append(fs); this.boxes.set(id, paint); paint();
-      return body;
-    };
+    const box = (id: string, name: string) => this.makeBox(id, name);
     // Her looks to start from (ui/looks.ts)
     const lk = row(box("looks", "👗 Looks"), "");
     lk.firstElementChild?.remove();
@@ -340,10 +357,12 @@ export class Creator {
       for (const axis of axes) this.axisRow(body, axis, row, get, set);
       if (parts.length) this.picker(body, B.id, parts, row, pal, cur);
     }
+    for (const T of this.extraTabs) box(T.id, T.name).append(...T.nodes); // (the controls, the options: theirs, moved in whole)
     this.hatless();
     if (!this.boxes.has(this.box)) this.openBox(this.boxes.keys().next().value ?? "");
     // The buttons.
     const bar = document.createElement("div");
+    bar.dataset.bar = "";
     Object.assign(bar.style, { display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "10px", position: "sticky", bottom: "0", background: "rgba(22,14,32,.97)", padding: "6px 0" });
     bar.style.position = "sticky";
     const btn = (text: string, f: () => void, main = false) => { const b = document.createElement("button"); b.type = "button"; b.textContent = text; Object.assign(b.style, { font: "inherit", fontSize: "14px", color: main ? "#1d1408" : "inherit", background: main ? "var(--accent)" : "rgba(255,255,255,.1)", border: "1px solid rgba(232,226,244,.4)", borderRadius: "6px", padding: "6px 12px", cursor: "pointer", flex: main ? "1 1 100%" : "1 1 auto" }); b.addEventListener("click", f); bar.append(b); return b; };
