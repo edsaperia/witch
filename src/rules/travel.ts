@@ -25,13 +25,13 @@ export interface Anchor { x: number; z: number; /** a placed sigil (else her) */
  *  placed sigil for it. Travellers not busy (evolving) walk their routes; the posse is left to the
  *  leash and combat as ever. */
 export function stepTravel(stack: number[], placed: { id: number; x: number; z: number }[], creatures: Creature[], witch: { x: number; z: number }, map: ForestMap, dt: number, t: Tuning, busy: (id: number) => boolean, pace = 1, data: TravelData = TRAVEL): void {
-  for (const id of stack) { const c = creatures[id]; if (c.travelling && !busy(id)) stepTraveller(c, witch.x, witch.z, map, dt, t, pace, data); }
+  for (const id of stack) { const c = creatures[id]; if (c.travelling && !busy(id) && !c.partyLegend) stepTraveller(c, witch.x, witch.z, map, dt, t, pace, data); }
   for (const p of placed) { const c = creatures[p.id]; if (c.travelling && !busy(p.id)) stepTraveller(c, p.x, p.z, map, dt, t, 1, data); }
 }
 
 /** Every party animal's mode for this step (before the fights, so a traveller is quiet from its first step). */
 export function updateModes(stack: number[], placed: { id: number; x: number; z: number }[], creatures: Creature[], witch: { x: number; z: number }, ground: boolean, map: ForestMap, time: number, data: TravelData = TRAVEL): void {
-  for (const id of stack) updateMode(creatures[id], { x: witch.x, z: witch.z, sigil: false, ground }, map, time, data);
+  for (const id of stack) { const c = creatures[id]; if (c.partyLegend) { c.travelling = false; continue; } updateMode(c, { x: witch.x, z: witch.z, sigil: false, ground }, map, time, data); } // (a party legend stays put: rules/partyLegend.ts)
   for (const p of placed) updateMode(creatures[p.id], { x: p.x, z: p.z, sigil: true, ground }, map, time, data);
 }
 

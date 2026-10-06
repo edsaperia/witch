@@ -4,7 +4,7 @@
 // once hits stop it drains slowly. Full, a wild one becomes happy; a happy one (states.leash
 // "again") is leashed to her. Enraged ones and legends stop 💌s dead. No drawing here.
 import { LEGEND, type Creature } from "./creatures";
-import { befriend, invitableNow, stateOf, STATES, type StatesData } from "./creatureStates";
+import { befriend, invitableNow, makePartyLegend, stateOf, STATES, type StatesData } from "./creatureStates";
 
 /** What the meter needs of the game: the time, and leashing a happy creature to her. */
 export interface AffectionWorld { time: number; leash: (c: Creature) => void }
@@ -18,6 +18,7 @@ export function hit(g: AffectionWorld, c: Creature, amount: number, time: number
   c.affection = Math.min(1, now + amount / Math.max(1, A.hits[Math.min(c.level, A.hits.length - 1)]));
   c.affectionAt = time;
   if (c.affection >= 1 - 1e-9) {
+    if (c.boss) { makePartyLegend(c, time); return true; } // (the Easter egg's 100th 💌)
     if (stateOf(c) === "happy") { c.affection = undefined; g.leash(c); }
     else befriend(c, time);
     return true;
@@ -53,5 +54,5 @@ export function affection(g: { time: number } | { clock: { time: number } }, c: 
 function drained(c: Creature, time: number, data: StatesData): number {
   if (!c.affection || c.affectionAt === undefined) return 0;
   const idle = time - c.affectionAt - data.affection.drainDelay;
-  return Math.max(0, c.affection - Math.max(0, idle) * data.affection.drain);
+  return Math.max(0, c.affection - Math.max(0, idle) * (c.boss && data.affection.legendDrain !== undefined ? data.affection.legendDrain : data.affection.drain));
 }
