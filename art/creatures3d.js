@@ -144,7 +144,7 @@ function evolve3d(m, feats, c) {
       const n = f.count ?? 5, H0 = f.height ?? .32, mat = M[f.mat || "STONE"];
       for (let i = 0; i < n; i++) {
         const t = (f.from ?? .2) + ((f.to ?? .85) - (f.from ?? .2)) * (n > 1 ? i / (n - 1) : .5), b = c.backAt(t), k = (.7 + .3 * Math.sin(Math.PI * (i + .5) / n)) * (.85 + .3 * Math.abs(Math.sin(i * 3.7 + 1.1)));
-        const h = H0 * k, w = h * .32, z = ((i % 2) * 2 - 1) * c.bw * .12, up = v3.norm([(i - (n - 1) / 2) * -.08, 1, z * 1.5]), base = [b[0], b[1] - h * .15, z], mid = v3.add(base, v3.mul(up, h * .5));
+        const h = H0 * k, w = h * .42, z = ((i % 2) * 2 - 1) * c.bw * .12, up = v3.norm([(i - (n - 1) / 2) * -.08, 1, z * 1.5]), base = [b[0], b[1] - h * .15, z], mid = v3.add(base, v3.mul(up, h * .5));
         m.box(mid, [h * .5, w * .5, w * .38], mat, { group: 130 + i, extra: true, dir: up, up: [1, 0, 0], round: w * .12, rough: w * .06, paint: p => spotty(p, 22, .22) ? M.MOSS : spotty(p, 34, .12) ? M.STONED : undefined });
         // its rune: a glowing mark on the face towards us (a vertical stroke with two branches)
         const face = v3.add(mid, [0, 0, w * .4]), R = (a, b2) => v3.add(face, v3.add(v3.mul(up, b2 * h), [a * w, 0, 0]));
@@ -187,7 +187,7 @@ function evolve3d(m, feats, c) {
 // ================= four-legged animals =================
 export function quad3d(S, level, frame, st, facing = "towards") {
   // its evolution at this level (genome levels: its own proportions and parts, not a rescale; q.features: legend features it grows early)
-  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q, ...(S.levelQ?.[level] || {}) }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => (legend && S.legend.includes(f)) || (q.features || []).includes(f);
+  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q, ...(S.levelQ?.[level] || {}) }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => (legend && !S.levelFeatures?.[3] && S.legend.includes(f)) || (q.features || []).includes(f); // (an evolved legend, its genome levels[3], replaces its old legend feature)
   const feats = S.levelFeatures?.[level];
   const sz = k => S.sizes[k][level]; // its template's size curves (art/genome/templates.js): baby, young, adult, legend
   const m = new Model();
