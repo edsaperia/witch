@@ -60,7 +60,7 @@ export function edgePlants(b: Beach, x: number, z: number, out: EdgePlant[] = []
   return out;
 }
 
-/** The edge's sprites, laid out round her and drawn in one batch (palms' crowns flagged as tops, so they show from the treetops). */
+/** The edge's sprites, laid out round her and drawn in one batch (palms whole in both modes: thin, at the open edge, never a bare pole on the sand). */
 export class BeachEdgeView {
   private batch: SpriteBatch | null = null;
   private atlas: Atlas | null = null;
@@ -79,7 +79,7 @@ export class BeachEdgeView {
     const F = art.atlas.frames, items = this.items;
     items.length = 0;
     for (const p of this.plants) {
-      if (p.kind === "palm") { const P = art.palms[p.v % art.palms.length]; items.push({ x: p.x, y: 0, z: p.z, frame: F[P.bot], flip: p.flip, scale: p.scale, sway: 1 }, { x: p.x, y: 0, z: p.z, frame: F[P.top], flip: p.flip, scale: p.scale, sway: 1, top: true }); }
+      if (p.kind === "palm") { const P = art.palms[p.v % art.palms.length]; items.push({ x: p.x, y: 0, z: p.z, frame: F[P.bot], flip: p.flip, scale: p.scale, sway: 1 }, { x: p.x, y: 0, z: p.z, frame: F[P.top], flip: p.flip, scale: p.scale, sway: 1 }); }
       else { const list = p.kind === "grass" ? art.grass : art.shrubs; items.push({ x: p.x, y: 0, z: p.z, frame: F[list[p.v % list.length]], flip: p.flip, scale: p.scale, sway: 1 }); }
     }
     this.batch!.set(items);
