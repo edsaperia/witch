@@ -2080,6 +2080,117 @@
       ],
       "additionalProperties": false
     },
+    "glades": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0
+        },
+        "top": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hue": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sat": {
+          "type": "number",
+          "minimum": 0
+        },
+        "light": {
+          "type": "number",
+          "minimum": 0
+        },
+        "edge": {
+          "type": "number",
+          "minimum": 0
+        },
+        "edgeEase": {
+          "type": "number",
+          "minimum": 0
+        },
+        "dark": {
+          "type": "number",
+          "minimum": 0
+        },
+        "glowOff": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "motes": {
+          "type": "object",
+          "properties": {
+            "per": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "hue": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bright": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "per",
+            "rise",
+            "height",
+            "size",
+            "hue",
+            "sat",
+            "bright"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "on",
+        "radius",
+        "top",
+        "reach",
+        "hue",
+        "sat",
+        "light",
+        "edge",
+        "edgeEase",
+        "dark",
+        "glowOff",
+        "fade",
+        "motes"
+      ],
+      "additionalProperties": false
+    },
     "leyLines": {
       "type": "object",
       "properties": {
@@ -6410,6 +6521,7 @@
     "light",
     "beat",
     "berries",
+    "glades",
     "leyLines",
     "witch",
     "sigilProjection",
