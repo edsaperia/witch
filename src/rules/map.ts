@@ -391,7 +391,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const hardCell = (x: number, z: number, cell: Cell) => {
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return true;
     const lc = clearings.get(cellKey(cell[0], cell[1]));
-    if (lc && Math.hypot(x - lc.x, z - lc.z) < lc.r) return true; // a sleeping legend's clearing
+    if (lc && Math.hypot(x - lc.x, z - lc.z) < lc.r + (vnoise(x / 4, z / 4, seed + 93) - 0.5) * 3) return true; // a sleeping legend's clearing (its edge ragged by a metre and a half either way: the art director on #235)
     if (Math.hypot(x - treehouse.x, z - treehouse.z) < TH.clear) return true;
     for (const g of grounds) if (Math.abs(x - g.x) < g.r && Math.abs(z - g.z) < g.r && Math.hypot(x - g.x, z - g.z) < g.r) return true;
     for (const c of scenes) if (Math.abs(x - c.x) < c.r && Math.abs(z - c.z) < c.r && Math.hypot(x - c.x, z - c.z) < c.r * 0.85) return true; // a scene's ground is clear of trees

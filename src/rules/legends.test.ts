@@ -32,7 +32,7 @@ const used = new Set<number>();
 function put(g: Game, species: string, level: Level, x: number, z: number, cell = g.map.cellSafe(x, z).cell as [number, number]): Creature {
   const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && !used.has(k.id) && Math.hypot(k.x - x, k.z - z) > 300)!;
   used.add(c.id);
-  Object.assign(c, { species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, cell: [cell[0], cell[1]], safeR: undefined, seen: g.clock.time, hp: undefined, siege: undefined, enraged: false, state: undefined, fight: undefined, rest: 0 });
+  Object.assign(c, { circle: undefined, species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, cell: [cell[0], cell[1]], safeR: undefined, seen: g.clock.time, hp: undefined, siege: undefined, enraged: false, state: undefined, fight: undefined, rest: 0 });
   g.byArea = null;
   return c;
 }
@@ -272,7 +272,7 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
       if (L.run?.phase === "home" && !done) { done = true; witchHits = L.run.hit.filter(h => h === -1).length; } // (its first charge over; her as -1 in whom it hit)
       for (const [c, x] of pins) if (!hits.has(c.id)) Object.assign(c, { x, z: c.anchorZ, fight: undefined }); // (they stand in its lane, not fighting it, till they're hit)
       if (!done) for (const e of g.combat.events) if (e.at === g.clock.time) {
-        if (e.kind === "hit" && e.id !== undefined) hits.set(e.id, (hits.get(e.id) ?? 0) + 1);
+        if (e.kind === "hit" && e.id !== undefined && (e.id !== target.id || e.big)) hits.set(e.id, (hits.get(e.id) ?? 0) + 1); // (its target: only the legend's own hits; the trampled wild may go for it after)
         if (e.kind === "witchHit" && L.run?.hit.includes(-1) && !x0) { x0 = g.witch.x; z0 = g.witch.z; }
       }
       if (L.run?.phase === "run") ran = true;
