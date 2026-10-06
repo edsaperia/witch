@@ -44,14 +44,31 @@ jobs:
         env:
           WITCH_VERSION: ${{ github.run_number }}
           WITCH_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      # Several deploys can push to gh-pages in the same seconds (a merge up a PR stack starts many).
+      # A concurrency group would not queue them all: GitHub keeps one run pending per group and
+      # cancels the rest. So each deploy writes only its own folder (main the root, a PR its pr-N),
+      # and if its push is beaten it fetches the newer gh-pages, writes its folder again, and retries.
       - name: Publish to gh-pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          destination_dir: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || '' }}
-          keep_files: true
-          commit_message: "Deploy ${{ github.event_name == 'pull_request' && format('PR #{0}', github.event.number) || 'main' }} at ${{ github.sha }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEST: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.number) || '.' }}
+          MESSAGE: "Deploy ${{ github.event_name == 'pull_request' && format('PR #{0}', github.event.number) || 'main' }} at ${{ github.sha }}"
+        run: |
+          git init -q site && cd site
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          for try in 1 2 3 4 5 6 7 8 9 10; do
+            git fetch -q --depth 1 origin gh-pages && git checkout -q -B gh-pages FETCH_HEAD
+            mkdir -p "$DEST" && cp -a ../dist/. "$DEST/" && touch "$DEST/.nojekyll"
+            git add -A
+            git diff --cached --quiet && exit 0
+            git commit -qm "$MESSAGE"
+            git push -q origin HEAD:gh-pages && exit 0
+            echo "gh-pages moved on (try $try); fetching and trying again"
+            sleep $((try * 2 + RANDOM % 5))
+          done
+          exit 1
       - name: Comment the playable link on the PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
@@ -75,10 +92,15 @@ jobs:
       - name: Remove this PR's build
         run: |
           dir="pr-${{ github.event.number }}"
-          if [ -d "$dir" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for try in 1 2 3 4 5 6 7 8 9 10; do
+            [ -d "$dir" ] || exit 0
             git rm -rq "$dir"
-            git commit -m "Remove $dir: PR closed"
-            git push
-          fi
+            git commit -qm "Remove $dir: PR closed"
+            git push -q origin HEAD:gh-pages && exit 0
+            echo "gh-pages moved on (try $try); fetching and trying again"
+            sleep $((try * 2 + RANDOM % 5))
+            git fetch -q origin gh-pages && git reset -q --hard FETCH_HEAD
+          done
+          exit 1

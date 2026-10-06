@@ -6,8 +6,10 @@
 // runs either "before" the pixels are scaled up (blurring whole art pixels, at low resolution)
 // or "after" (on the scaled-up image, at full resolution, so the pixel edges themselves blur).
 import * as THREE from "three";
+import { moodOf } from "./mood";
+import { hsv2rgb } from "../../art/generator.js";
 
-export interface PostTuning {
+export interface PostTuning { light?: import("../rules/tuning").Tuning["light"];
   bloom: { on: boolean; strength: number; threshold: number };
   tone: { black: number; gamma: number; ambient: number };
   tiltShift: { on: boolean; where: "before" | "after"; /** Whether the sky over the bend is blurred too (Ed, round 12); false leaves it sharp. */ sky?: boolean; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
@@ -34,13 +36,21 @@ void main() {
 
 // Scene (sampled as whole low-res pixels), the smooth effects layer (sampled smoothly) and bloom.
 const COMPOSITE = /* glsl */ `
-uniform sampler2D uScene, uBloom, uFx; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma, uFxOn; varying vec2 vUv;
+uniform sampler2D uScene, uBloom, uFx; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma, uFxOn; uniform vec4 uGrade; uniform vec3 uGradeTint; varying vec2 vUv;
 void main() {
   vec2 p = (floor(vUv * uLow) + 0.5) / uLow;
   vec3 c = texture2D(uScene, p).rgb;
   if (uFxOn > 0.5) { vec4 f = texture2D(uFx, vUv); c = c * (1.0 - f.a) + f.rgb; }
   // Levels: a black point and a gamma, so the shade goes near-black and the lit stays bright.
   c = pow(clamp((c - uBlack) / (1.0 - uBlack), 0.0, 1.0), vec3(uGamma));
+  // The mood's grade (render/mood.ts; spooky): the dark and middle tones drained of colour toward
+  // the grade's tint (deep blue-green, violet), the bright left as they are, so the party's lights and
+  // her glow stay warm in a cold wood. x: amount, y: how much colour goes, z: the brightness above
+  // which nothing is graded.
+  if (uGrade.x > 0.0) {
+    float l = dot(c, vec3(0.3, 0.55, 0.15));
+    c = mix(c, mix(c, vec3(l), uGrade.y) * uGradeTint, uGrade.x * (1.0 - smoothstep(0.0, uGrade.z, l)));
+  }
   c += texture2D(uBloom, vUv).rgb * uBloomStrength;
   gl_FragColor = vec4(min(c, vec3(1.0)), 1.0);
 }`;
@@ -97,7 +107,7 @@ export class Post {
     this.mats = {
       bright: m(BRIGHT, { uScene: { value: null }, uThreshold: { value: 0.6 } }),
       blur: m(BLUR, { uSrc: { value: null }, uStep: { value: new THREE.Vector2() } }),
-      composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 }, uFx: { value: null }, uFxOn: { value: 0 } }),
+      composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 }, uFx: { value: null }, uFxOn: { value: 0 }, uGrade: { value: new THREE.Vector4() }, uGradeTint: { value: new THREE.Vector3(1, 1, 1) } }),
       tilt: m(TILT, { uSrc: { value: null }, uDepth: { value: null }, uTexel: { value: new THREE.Vector2() }, uDir: { value: new THREE.Vector2() }, uStrength: { value: 0 }, uBand: { value: 0.4 }, uCentre: { value: 0.5 }, uSkySharp: { value: 0 } }),
     };
     this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mats.composite);
@@ -165,6 +175,7 @@ export class Post {
       u.uScene.value = this.scene.texture; u.uBloom.value = this.bright.texture; u.uLow.value.copy(this.low); u.uBloomStrength.value = bloomOn ? t.bloom.strength : 0;
       u.uBlack.value = t.tone.black; u.uGamma.value = t.tone.gamma;
       u.uFx.value = this.fx.texture; u.uFxOn.value = fxOn ? 1 : 0;
+      this.setGrade(u);
     });
     if (!tilt) return;
     // The blur radius is given in low-res pixels; after the upscale it covers the same ground.
@@ -176,5 +187,21 @@ export class Post {
     };
     this.pass("tilt", this.b, u => { common(u); u.uSrc.value = this.a.texture; u.uDir.value.set(1, 0); });
     this.pass("tilt", null, u => { common(u); u.uSrc.value = this.b.texture; u.uDir.value.set(0, 1); });
+  }
+
+  /** The grade's tint (a colour of luma 1), for the area moods to ease (render/mood.ts AreaMoods). */
+  get gradeTint(): THREE.Vector3 { return this.mats.composite.uniforms.uGradeTint.value; }
+
+  /** The mood's grade (render/mood.ts) into the composite's uniforms; its tint worked out when the mood changes, not every frame. */
+  private gradeOf: object | null | undefined;
+  private setGrade(u: Record<string, THREE.IUniform>): void {
+    const M = moodOf(this.tuning);
+    if (M === this.gradeOf) return;
+    this.gradeOf = M;
+    if (M?.grade) {
+      // The tint, at the brightness it leaves: a colour of luma 1, so the grade shifts hue, not level.
+      const [r, g, b] = hsv2rgb(M.gradeHue, M.gradeSat, 1).map((x: number) => x / 255), l = 0.3 * r + 0.55 * g + 0.15 * b;
+      u.uGrade.value.set(M.grade, M.gradeDesat, M.gradePivot, 0); u.uGradeTint.value.set(r / l, g / l, b / l);
+    } else u.uGrade.value.set(0, 0, 1, 0);
   }
 }

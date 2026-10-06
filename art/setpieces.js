@@ -6,6 +6,7 @@
 import { M, Sprite, hsv2rgb } from "./core.js";
 import { Model, render, v3 } from "./model3d.js";
 import { witchPixelsPerUnit } from "./witch.js";
+import { SET_PROP_GENOMES, genSetPiece } from "./props/sets.js";
 
 const spHash = (a, b = 0) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
 const spBark = p => { const n = spHash(Math.floor(p[0] * 14) + Math.floor(p[2] * 14) * 13, Math.floor(p[1] * 6)); return n < .14 ? M.BARKD : n > .88 ? M.BARKL : undefined; };
@@ -219,7 +220,8 @@ const spSETS = {
     m.box([0, .4, -.35], [.6, .04, .15], M.WOOD, { round: .02, group: 5 }); for (const x of [-.5, .5]) m.seg([x, 0, -.35], [x, .38, -.35], .03, .03, M.WOOD, { group: 5 }); // a bench
   },
 };
-// The area each new set piece belongs to, its name, and how big it is drawn (a factor on the witch's scale).
+// The area each new set piece belongs to, its name, and how big it is drawn (a factor on the witch's scale); a generated kind
+// (art/props/sets.js) may add a fourth item, its seed and any numbers to fix.
 export const NEW_SET_PIECES = {
   "moor": ["sleeping-giant", "the sleeping giant, a moss mound like a figure lying on its back", 1],
   "fern-forest": ["fern-grotto", "a ring of giant tree ferns round a stone basin", 1],
@@ -264,7 +266,10 @@ export function setPieceColours(def, st) {
   };
 }
 // One area's new set piece: { sp, colours, metres: { width, height } }, drawn at the witch's scale.
+// A kind from the set-piece generator (art/props/sets.js: punt, jetty, ring, heap) is built from its genome, seeded by the area
+// unless its entry's fourth item ({ seed, ...numbers }) says otherwise.
 export function setPiece3d(kind, def, st, ppm = 16) {
+  if (SET_PROP_GENOMES[kind]) { const [, , size = 1, o = {}] = NEW_SET_PIECES[def?.id] || []; return genSetPiece(kind, { seed: [...(def?.id ?? "")].reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 9973, 7), ...o }, def, st, size, ppm); }
   const m = new Model({ blend: .05 }); spSETS[kind](m);
   m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // so every piece stands on the same ground line
   const size = (Object.values(NEW_SET_PIECES).find(([k]) => k === kind) || [, , 1])[2];

@@ -250,6 +250,122 @@ How far (reach, metres) and how strongly each kind of light lights its surroundi
 | `lights.stone.strength` | number | 0 to … |
 | `glowPower` | number | 0 to … |
 
+## `light`
+
+The lighting's mood (Ed, 2026-10-06: "make it a spooky dark forest with a party in it"; render/mood.ts): mood spooky lays this grade over the Art Lab's night light, plain is the light as it was (?light=plain or ?light=spooky to compare). spooky: ambientHue and ambient (times the tuning's ambient): the shadows' colour and brightness, a deep blue-green; moonHue, moonSat and moon (times tone.moon): a colder moon, a little stronger, so it rims what it lights; hazeHue, hazeSat and haze (its brightness, 0 to 1): the fog the forest fades into, violet; hazeNear and hazeFar: where the fog starts and is whole (metres from the witch; nearer than haze.near and haze.far, which still set how far scenery is drawn); mist: the low ground mist's strength (instead of mist.strength); glowHue and glowSat: the witch's glow, warmer, so the party's lights are the warm ones in the wood; grade, gradeDesat, gradePivot, gradeHue and gradeSat: a grade over the finished picture, draining the dark and middle tones' colour (gradeDesat of it) toward a cold tint (hue and saturation), by grade (0 off), fading out up to gradePivot brightness, so the bright warm lights keep their colour; partyWarm, partyReach and partyStrength: the soundsystems' light, warm amber, pink and gold (one per variant, instead of their crystal cyan, violet and amber), wider and stronger; decorLights, decorReach and decorStrength: the party decor's lights (lanterns, campfires), how many an area lights (instead of partyObjects.lightsPerArea) and how far and strong, so each party is pools of warm light with dark between; areas: each area type's own fog (hazeHue, hazeSat, haze), grade tint (gradeHue, gradeSat) and mist over the above, by area id ("home" for home): misty teal over the bogs and water, violet-grey in the dead and ancient woods, blue-violet in the bluebells, pale mist on the open moor, darker in the rocky places, near-black green under the pines, rosy in the honeysuckle and gardens, home a little less cold; areaEase: how fast the mood eases from one area's to the next (a second); rimHue, rimSat and rim: a moonlight rim on the characters (the witch and every creature, baked or rigged), a light edge one art pixel wide on the side away from the moon in the night sky's blue-violet, at rim strength (0 off), so they read against the dark (the art director, round 1); witchGlow: how much of her own glow lights the witch herself (0: none, as before), so she stands in her pool of light.
+
+| knob | type | range |
+|---|---|---|
+| `light.mood` | string |  |
+| `light.spooky.ambientHue` | number | 0 to … |
+| `light.spooky.ambient` | number | 0 to … |
+| `light.spooky.moonHue` | number | 0 to … |
+| `light.spooky.moonSat` | number | 0 to … |
+| `light.spooky.moon` | number | 0 to … |
+| `light.spooky.hazeHue` | number | 0 to … |
+| `light.spooky.hazeSat` | number | 0 to … |
+| `light.spooky.haze` | number | 0 to … |
+| `light.spooky.hazeNear` | number | 0 to … |
+| `light.spooky.hazeFar` | number | 0 to … |
+| `light.spooky.mist` | number | 0 to … |
+| `light.spooky.glowHue` | number | 0 to … |
+| `light.spooky.glowSat` | number | 0 to … |
+| `light.spooky.grade` | number | 0 to … |
+| `light.spooky.gradeDesat` | number | 0 to … |
+| `light.spooky.gradePivot` | number | 0 to … |
+| `light.spooky.gradeHue` | number | 0 to … |
+| `light.spooky.gradeSat` | number | 0 to … |
+| `light.spooky.partyWarm` | array of array |  |
+| `light.spooky.partyReach` | number | 0 to … |
+| `light.spooky.partyStrength` | number | 0 to … |
+| `light.spooky.decorLights` | number | 0 to … |
+| `light.spooky.decorReach` | number | 0 to … |
+| `light.spooky.decorStrength` | number | 0 to … |
+| `light.spooky.rimHue` | number | 0 to … |
+| `light.spooky.rimSat` | number | 0 to … |
+| `light.spooky.rim` | number | 0 to … |
+| `light.spooky.witchGlow` | number | 0 to … |
+| `light.spooky.areaEase` | number | 0 to … |
+| `light.spooky.areas.bog.hazeHue` | number | 0 to … |
+| `light.spooky.areas.bog.hazeSat` | number | 0 to … |
+| `light.spooky.areas.bog.haze` | number | 0 to … |
+| `light.spooky.areas.bog.mist` | number | 0 to … |
+| `light.spooky.areas.bog.gradeHue` | number | 0 to … |
+| `light.spooky.areas.wetland.hazeHue` | number | 0 to … |
+| `light.spooky.areas.wetland.hazeSat` | number | 0 to … |
+| `light.spooky.areas.wetland.haze` | number | 0 to … |
+| `light.spooky.areas.wetland.mist` | number | 0 to … |
+| `light.spooky.areas.wetland.gradeHue` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.hazeHue` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.hazeSat` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.haze` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.mist` | number | 0 to … |
+| `light.spooky.areas.beaver-pond.gradeHue` | number | 0 to … |
+| `light.spooky.areas.stream.hazeHue` | number | 0 to … |
+| `light.spooky.areas.stream.hazeSat` | number | 0 to … |
+| `light.spooky.areas.stream.haze` | number | 0 to … |
+| `light.spooky.areas.stream.mist` | number | 0 to … |
+| `light.spooky.areas.stream.gradeHue` | number | 0 to … |
+| `light.spooky.areas.deadwood.hazeHue` | number | 0 to … |
+| `light.spooky.areas.deadwood.hazeSat` | number | 0 to … |
+| `light.spooky.areas.deadwood.haze` | number | 0 to … |
+| `light.spooky.areas.deadwood.gradeHue` | number | 0 to … |
+| `light.spooky.areas.deadwood.gradeSat` | number | 0 to … |
+| `light.spooky.areas.ancient.hazeHue` | number | 0 to … |
+| `light.spooky.areas.ancient.hazeSat` | number | 0 to … |
+| `light.spooky.areas.ancient.haze` | number | 0 to … |
+| `light.spooky.areas.ancient.gradeHue` | number | 0 to … |
+| `light.spooky.areas.ancient.gradeSat` | number | 0 to … |
+| `light.spooky.areas.log-pile.hazeHue` | number | 0 to … |
+| `light.spooky.areas.log-pile.hazeSat` | number | 0 to … |
+| `light.spooky.areas.log-pile.haze` | number | 0 to … |
+| `light.spooky.areas.log-pile.gradeHue` | number | 0 to … |
+| `light.spooky.areas.log-pile.gradeSat` | number | 0 to … |
+| `light.spooky.areas.bluebell-glade.hazeHue` | number | 0 to … |
+| `light.spooky.areas.bluebell-glade.gradeHue` | number | 0 to … |
+| `light.spooky.areas.bluebell-glade.mist` | number | 0 to … |
+| `light.spooky.areas.wispy-forest.hazeHue` | number | 0 to … |
+| `light.spooky.areas.wispy-forest.gradeHue` | number | 0 to … |
+| `light.spooky.areas.wispy-forest.mist` | number | 0 to … |
+| `light.spooky.areas.moor.hazeHue` | number | 0 to … |
+| `light.spooky.areas.moor.hazeSat` | number | 0 to … |
+| `light.spooky.areas.moor.haze` | number | 0 to … |
+| `light.spooky.areas.moor.mist` | number | 0 to … |
+| `light.spooky.areas.heath.hazeHue` | number | 0 to … |
+| `light.spooky.areas.heath.hazeSat` | number | 0 to … |
+| `light.spooky.areas.heath.haze` | number | 0 to … |
+| `light.spooky.areas.heath.mist` | number | 0 to … |
+| `light.spooky.areas.grassland.hazeHue` | number | 0 to … |
+| `light.spooky.areas.grassland.hazeSat` | number | 0 to … |
+| `light.spooky.areas.grassland.haze` | number | 0 to … |
+| `light.spooky.areas.grassland.mist` | number | 0 to … |
+| `light.spooky.areas.cave-mouth.haze` | number | 0 to … |
+| `light.spooky.areas.cave-mouth.gradeHue` | number | 0 to … |
+| `light.spooky.areas.cave-mouth.gradeSat` | number | 0 to … |
+| `light.spooky.areas.ravine.haze` | number | 0 to … |
+| `light.spooky.areas.ravine.gradeHue` | number | 0 to … |
+| `light.spooky.areas.ravine.gradeSat` | number | 0 to … |
+| `light.spooky.areas.rocky-slope.haze` | number | 0 to … |
+| `light.spooky.areas.rocky-slope.gradeHue` | number | 0 to … |
+| `light.spooky.areas.rocky-slope.gradeSat` | number | 0 to … |
+| `light.spooky.areas.old-pinewood.hazeHue` | number | 0 to … |
+| `light.spooky.areas.old-pinewood.hazeSat` | number | 0 to … |
+| `light.spooky.areas.old-pinewood.haze` | number | 0 to … |
+| `light.spooky.areas.old-pinewood.gradeHue` | number | 0 to … |
+| `light.spooky.areas.norway.hazeHue` | number | 0 to … |
+| `light.spooky.areas.norway.hazeSat` | number | 0 to … |
+| `light.spooky.areas.norway.haze` | number | 0 to … |
+| `light.spooky.areas.norway.gradeHue` | number | 0 to … |
+| `light.spooky.areas.honeysuckle-tangle.hazeHue` | number | 0 to … |
+| `light.spooky.areas.honeysuckle-tangle.hazeSat` | number | 0 to … |
+| `light.spooky.areas.garden.hazeHue` | number | 0 to … |
+| `light.spooky.areas.garden.hazeSat` | number | 0 to … |
+| `light.spooky.areas.berry-thicket.hazeHue` | number | 0 to … |
+| `light.spooky.areas.berry-thicket.hazeSat` | number | 0 to … |
+| `light.spooky.areas.home.gradeHue` | number | 0 to … |
+| `light.spooky.areas.home.gradeSat` | number | 0 to … |
+| `light.spooky.areas.home.mist` | number | 0 to … |
+
 ## `beat`
 
 The music's clock (beats per minute): the lasers sweep to it and party animals dance to it. Later the music itself drives it.
@@ -351,7 +467,7 @@ The sigil stack above the witch's hat: scale (of the sigils' size), offset (the 
 
 ## `partyObjects`, `partyWitches`, `speakerLasers`, `lasers`
 
-Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters [min, max] of the art's clusters, loose [min, max] loose pieces (litter, small lights, balloons; neon and balloon colours random per placement), set dressing at setChance, and at caughtChance an escaped balloon caught in a tree; hanging [min, max] lanterns, jars, fairy lights or mirror balls hung from branches in nearby crowns. They appear as the party arrives. Real point lights only from campfires and lanterns (lanternReach metres, warm), at most lightsPerArea an area; everything else glows without lighting. Home (Ed, 2026-10-05: "It has party decorations instead of trees; ... scattered around the whole home area, excluding the dancefloor"): its meadow strewn all over with home.loose [min, max] pieces picked by class (home.weights: the home set, small lights, balloons, litter, furniture, set dressing; nothing that hangs, as home has no trees) at least home.gap metres apart, and home.clusters [min, max] clusters (the home ones, home-path and home-corner, among the rest), out to home.reach of an area past its circle, off the dancefloor's clearing, the paths, the treehouse and her seat; an arch piece over each path where it leaves the floor's clearing; at most home.lights real lights. exclude: pieces never placed, loose or in clusters (Ed, v271: the glowing LED cube looked too much like a game object).
+Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters [min, max] of the art's clusters, loose [min, max] loose pieces (litter, small lights, balloons; neon and balloon colours random per placement), set dressing at setChance, and at caughtChance an escaped balloon caught in a tree; hanging [min, max] lanterns, jars, fairy lights or mirror balls hung from branches in nearby crowns. They appear as the party arrives. Real point lights only from campfires and lanterns (lanternReach metres, warm), at most lightsPerArea an area; everything else glows without lighting. Home (Ed, 2026-10-05: "It has party decorations instead of trees; ... scattered around the whole home area, excluding the dancefloor"): its meadow strewn all over with home.loose [min, max] pieces picked by class (home.weights: the home set, small lights, balloons, litter, furniture, set dressing; nothing that hangs, as home has no trees) at least home.gap metres apart, and home.clusters [min, max] clusters (the home ones, home-path and home-corner, among the rest), out to home.reach of an area past its circle, off the dancefloor's clearing, the paths, the treehouse and her seat; an arch piece over each path where it leaves the floor's clearing; at most home.lights real lights. exclude: pieces never placed, loose or in clusters (Ed, v271: the glowing LED cube looked too much like a game object). generated: the prop generator's seeded bunting, balloon bunches and paper lanterns (art/party.js gen-*) in place of the hand-made ones they replace (?props=gen turns it on).
 
 | knob | type | range |
 |---|---|---|
@@ -371,6 +487,7 @@ Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters 
 | `partyObjects.home.reach` | number | 0 to … |
 | `partyObjects.home.lights` | number | 0 to … |
 | `partyObjects.exclude` | array of string |  |
+| `partyObjects.generated` | boolean |  |
 | `partyWitches.max` | number | 0 to … |
 | `partyWitches.idleAfter` | number | 0 to … |
 | `partyWitches.idleReach` | number | 0 to … |
@@ -957,7 +1074,7 @@ lossPenalty (Ed, 2026-10-05): a soundsystem destroyed brings the next wave that 
 
 ## `stringLights`
 
-Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart. Each span is spanMin to spanMax metres. No span crosses another and each tree holds at most two ends, except junction trees (junctionChance per tree on a run) where a branch leaves, so three meet. At height metres, sagging sag metres per 8 m of span, a bulb every bulbSpacing metres in the palette's colours, twinkling (twinkle 0-1), a chase running along now and then at chaseSpeed bulbs per second. The bulbs only glow (bloom); they cast no light.
+Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart. Each span is spanMin to spanMax metres. No span crosses another and each tree holds at most two ends, except junction trees (junctionChance per tree on a run) where a branch leaves, so three meet. At height metres, sagging sag metres per 8 m of span, a bulb every bulbSpacing metres in the palette's colours (areaNeon: warm white, the palette's first, two bulbs in three and the area's own neon the third, home's cyan; the art director, round 2: one neon an area plus the warm light), twinkling (twinkle 0-1), a chase running along now and then at chaseSpeed bulbs per second. The bulbs only glow (bloom); they cast no light.
 
 | knob | type | range |
 |---|---|---|
@@ -973,6 +1090,7 @@ Colourful string lights in every partified area, as long garlands: runsPerArea r
 | `stringLights.sag` | number | 0 to … |
 | `stringLights.bulbSpacing` | number | 0 to … |
 | `stringLights.palette` | array of string |  |
+| `stringLights.areaNeon` | boolean |  |
 | `stringLights.twinkle` | number | 0 to … |
 | `stringLights.chaseSpeed` | number | 0 to … |
 

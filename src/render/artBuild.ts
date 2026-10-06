@@ -267,6 +267,7 @@ function partyObjectSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; part
   type Def = { id: string; cls: string; light: string | null; frames: number; hang?: boolean };
   const refs = new Set<string>(), palettes = ["neon", "pastel", "metallic", "mixed"];
   for (const d of Art.PARTY_OBJECTS as Def[]) {
+    if (d.id.startsWith("gen-") && !st.propGen) continue; // the prop generator's party pieces only under ?props=gen
     const neons = d.light === "neon" ? (Art.PARTY_LIGHT_NEONS as string[]).map(n => "@" + n) : [""];
     for (const n of neons) for (const p of d.cls === "balloon" ? palettes.map(q => "~" + q) : [""]) refs.add(`party:${d.id}${n}${p}`);
   }
