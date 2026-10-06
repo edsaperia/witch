@@ -123,10 +123,13 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     const key = cellKey(L.cell), at = { x: L.x + 30, z: L.z };
     g.party.areas.set(key, { cell: [L.cell[0], L.cell[1]], wave: 1, at: g.clock.time, soundsystem: at } as never);
     g.combat.sounds.set(key, { hp: 4000, max: 4000, x: at.x, z: at.z, radius: 2 });
-    mate!.gone = true; // (none of its kind left: restless)
-    run(g, 2);
+    mate!.gone = true; // (none of its kind left: restless, at its next look, within legends.json check seconds)
+    let restlessAt = -1;
+    run(g, LEGENDS.check + 1, idle, () => { if (restlessAt < 0 && L.legendState === "restless") restlessAt = g.clock.time; });
+    expect(restlessAt).toBeGreaterThan(0);
+    run(g, 2.5 - (g.clock.time - restlessAt));
     expect(L.legendState).toBe("restless"); // (the stomp's 3 s, not legends.json's)
-    run(g, 2);
+    run(g, 1);
     expect(L.legendState).toBe("angry");
     expect(g.combat.sounds.get(key)!.hp).toBe(0);
     expect(g.party.areas.has(key)).toBe(false); // (ruined, as any fallen one)
@@ -341,7 +344,7 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
     expect(maxAway).toBeGreaterThan(70); // (on past its target, braking)
     expect(bentBy).toBeGreaterThan(0.1); // (it curved, then turned in its arc)
     // Home again: in its own area, where it lay.
-    run(g, 40);
+    for (let i = 0; i < 60 / STEP && !(L.run === undefined || L.run.phase === "windup"); i++) stepGame(g, idle, STEP); // (its walk home takes as long as its charge ran it out: up to a minute)
     expect(L.run === undefined || L.run.phase === "windup").toBe(true);
     expect(Math.hypot(L.x - L.lairX!, L.z - L.lairZ!)).toBeLessThan(3);
     expect(cellKey(g.map.cellSafe(L.x, L.z).cell)).toBe(cellKey(L.cell));
