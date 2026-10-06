@@ -527,11 +527,10 @@ export class View {
   /** Sparks from campfires lighting up as the party arrives (drawn with the markers' motes, next frame). */
   fireSparks: Mote[] = [];
   /** 💌s that left a slowed circle outward (Ed, 2026-10-06): where and when each vanished in a sparkle at its edge
-   *  (edgeSparkle, the rules' hook; drawn as motes with the markers' in view/home.ts). */
+   *  (edgeSparkle; drawn as motes with the markers' in view/home.ts). */
   edgeSparkles: { x: number; z: number; at: number }[] = [];
-  /** A 💌 vanishes at a slowed circle's edge: a small sparkle there (the prototype builder's event calls this). */
+  /** A 💌 vanishes at a slowed circle's edge: a small sparkle there (its `vanished` invite event calls this, render/invites.ts). */
   edgeSparkle(x: number, z: number): void { if (this.edgeSparkles.length < 64) this.edgeSparkles.push({ x, z, at: LIGHT_UNIFORMS.uRealTime.value }); }
-  /** The world's own clock: it slows in a legend's circle (render/slowtime.ts). */
   /** The world's campfires showing this frame, for the party objects to draw. */
   worldFires: { x: number; z: number; scale: number; flip: boolean }[] = [];
   /** Each light source's area (a campfire's party), worked out once. */
