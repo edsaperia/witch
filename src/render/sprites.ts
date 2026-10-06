@@ -66,6 +66,7 @@ uniform vec2 uRes;
 uniform float uWitchDepth;
 uniform vec4 uOcc;
 uniform float uAbsolute; // its y is a world height, not a height over the ground
+uniform vec4 uLean; // the witch under a load (render/load.ts): sheared forward (m per m up), tilted nose-up (m per m across), her broom bowed (art pixels)
 uniform vec4 uCutout, uWitch;
 varying float vHole;   // crowns and cut trunks: the radius of the hole round her (pixels) for this tree
 varying float vOverHer; // over her on screen and nearer the camera: it could hide her
@@ -98,6 +99,7 @@ void main() {
   // Eased over a few metres of depth and of height, so nothing snaps into the fade as she moves.
   vFront = smoothstep(0.0, 3.0, uWitchDepth - 0.5 + (viewMatrix * vec4(base, 1.0)).z) * smoothstep(uOcc.z * 0.7, uOcc.z * 1.3, iSize.y);
   vec3 w = base + uRight * (position.x * iSize.x) + uUp * (position.y * iSize.y);
+  w += uRight * (uLean.x * position.y * iSize.y) + uUp * (uLean.y * position.x * iSize.x);
   // Wind (Ed, v171): leafy things lean with gusts travelling across the forest, anchored at their
   // base (a crown at its foot, a trunk barely), so the trunks stay put and the foliage moves.
   if (iFlags.w > 0.0 && uWind.x > 0.0) {
@@ -150,6 +152,7 @@ uniform vec3 uRight, uUp, uFacing;
 uniform float uTopFade, uUnlit;
 uniform vec4 uCutout;
 uniform float uDebugCull, uIsScenery, uAppear;
+uniform vec4 uLean;
 uniform vec4 uWitch, uOcc, uSilhouette;
 uniform float uFadePass;
 uniform float uFlat; // lies flat on the ground (a court's decal), or gameplay that stays solid: never cut away round her
@@ -205,6 +208,11 @@ void shade() {
   // (low 5 bits, of 31). Pixel wind: each region moves whole, a whole art pixel at a time, out of step with the others; a pixel
   // shows whichever region's shift lands on it (moving ones first), or nothing where its own region has moved away.
   vec2 uvS = vUv;
+  // Her broom bowing under a load (render/load.ts): the band it rides in sags in the middle, in whole art pixels.
+  if (uLean.z > 0.0) {
+    float bx = 2.0 * vLocal.x - 1.0, band = smoothstep(0.06, 0.16, vLocal.y) * (1.0 - smoothstep(0.42, 0.52, vLocal.y));
+    uvS.y = clamp(uvS.y + floor(uLean.z * (1.0 - bx * bx) * band + 0.5) / float(textureSize(uAlbedo, 0).y), vFrame.y, vFrame.w);
+  }
   if (vSwayM != 0.0) {
     float tw = float(textureSize(uAlbedo, 0).x), dir = vFlags.x > 0.5 ? -1.0 : 1.0, px = vSwayM / uTrunkFade.y;
     if (uPixelWind > 0.5) {
@@ -381,7 +389,7 @@ export class SpriteBatch {
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.pos = this.size = this.uvs = this.flags = this.glow = undefined as never;
     this.grow(64);
-    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uAbsolute: { value: opts.absolute ? 1 : 0 }, ...extra });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uAbsolute: { value: opts.absolute ? 1 : 0 }, uLean: this.leanU, ...extra });
     // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
     // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
     const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};
@@ -422,6 +430,9 @@ export class SpriteBatch {
     this.geo.setAttribute("iUv", this.uvs); this.geo.setAttribute("iFlags", this.flags); this.geo.setAttribute("iGlow", this.glow);
     this.capacity = cap;
   }
+
+  /** The witch under a load (render/load.ts): shear, tilt, bow; zero for everything else. */
+  readonly leanU = { value: new THREE.Vector4() };
 
   /** Replace every instance. */
   /** Scenery batches: how far a set just drawn has faded in (0 to 1; the view eases it). */

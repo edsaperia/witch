@@ -5470,6 +5470,73 @@
       ],
       "additionalProperties": false
     },
+    "load": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "free": {
+          "type": "number",
+          "minimum": 0
+        },
+        "full": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stackSag": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stackLean": {
+          "type": "number",
+          "minimum": 0
+        },
+        "threadFrom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "threadBright": {
+          "type": "number",
+          "minimum": 0
+        },
+        "witchLean": {
+          "type": "number",
+          "minimum": 0
+        },
+        "broomTilt": {
+          "type": "number",
+          "minimum": 0
+        },
+        "broomBow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sparks": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sinkFrom": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "free",
+        "full",
+        "stackSag",
+        "stackLean",
+        "threadFrom",
+        "threadBright",
+        "witchLean",
+        "broomTilt",
+        "broomBow",
+        "sparks",
+        "sinkFrom"
+      ],
+      "additionalProperties": false
+    },
     "swoopTrail": {
       "type": "object",
       "properties": {
@@ -6628,6 +6695,7 @@
     "dash",
     "spells",
     "trail",
+    "load",
     "swoopTrail",
     "boot",
     "party",
