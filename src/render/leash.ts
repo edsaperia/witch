@@ -10,6 +10,7 @@
 // - the talk: emoji speech bubbles taking turns over the witch and the creature (HTML, over the
 //   canvas), with a bar for how far the conversation has got.
 // The sigils are the art builder's (art/sigils.js), drawn per species and level into an atlas.
+import { easeRoute, ROUTE_SAMPLES, type RouteShape } from "./routeEase";
 import { dreamStone, dreamWay, questOpen, restlessness } from "../rules/dream";
 import { compassArrow } from "./compass";
 import { moodOf } from "./mood";
@@ -55,6 +56,8 @@ const JOIN_PALETTE = [[0.91, 0.71, 0.42], [0.82, 0.52, 0.28], [0.91, 0.71, 0.42]
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, placed } from "./height";
 import { tiltFilter } from "./overlayTilt";
+/** Seconds a travelling animal's drawn route takes to settle onto a re-plan (render/routeEase.ts). */
+const ROUTE_EASE = 0.3;
 
 /** The party's over: 😴 bubbles over at most this many sleepers, within this many metres of her. */
 const SNORES = 6, SNORE_RANGE = 40;
@@ -240,6 +243,9 @@ export class LeashView {
   /** Short-lived effects: hit sparks, puffs, splashes, released leashes, teleport sparkles, quake rings. */
   /** Whether each party animal was travelling last frame (to pop as it joins her posse again). */
   private travelling = new Map<number, boolean>();
+  /** Each traveller's drawn route, eased between the rules' re-plans (render/routeEase.ts). */
+  private routes = new Map<number, RouteShape>();
+  private routeScratch = new Float32Array((ROUTE_SAMPLES + 1) * 2);
   private fx: { kind: string; x: number; y: number; z: number; at: number; life: number; r: number; g: number; b: number; seed: number; tx?: number; tz?: number; size?: number; /** a ring's dots (else 36) and their size (else 0.7) */ n?: number; dot?: number }[] = [];
   /** The screen shake (a legend's quake): when it started and how hard. */
   private shakeAt = -Infinity;
@@ -1111,10 +1117,14 @@ export class LeashView {
       const was = this.travelling.get(id) ?? false;
       if (was && !c.travelling) { this.fx.push({ kind: "ring", x: c.x, y: 0, z: c.z, at: time, life: 0.5, r: col.r, g: col.g, b: col.b, seed: 0, size: 2.4, n: 18, dot: 0.6 }); this.fx.push({ kind: "spark", x: c.x, y: 1, z: c.z, at: time, life: 0.5, r: col.r, g: col.g, b: col.b, seed: id * 7 + time, size: 2 }); }
       this.travelling.set(id, !!c.travelling);
+      if (!c.travelling || !c.route) this.routes.delete(id);
       if (c.travelling && c.route) {
         // (bigger from the treetops, where the camera is far off and the routes run far)
         const up = w.mode === "treetop", rd = up ? 1.8 : 0.45, gap = up ? 5 : 2.2, hi = up ? 0.35 : 0; // (and lighter, to show over dark crowns)
-        const R = c.route, way = [{ x: c.x, z: c.z }, ...R.points.slice(Math.min(R.next, R.points.length - 1), -1), { x: lp.x, z: lp.z }], flow = (time * 3) % gap;
+        const R = c.route, plan = [{ x: c.x, z: c.z }, ...R.points.slice(Math.min(R.next, R.points.length - 1), -1), { x: lp.x, z: lp.z }], flow = (time * 3) % gap;
+        // (eased: a re-plan's new bend glides in over ROUTE_EASE seconds rather than jumping; Ed, 2026-10-06)
+        const eased = easeRoute(this.routes.get(id), plan, time, ROUTE_EASE, this.routeScratch), way = eased.line;
+        this.routes.set(id, eased.shape);
         let carry = gap - flow;
         for (let i = 1; i < way.length; i++) {
           const a = way[i - 1], b = way[i], seg = Math.hypot(b.x - a.x, b.z - a.z);
