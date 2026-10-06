@@ -6,7 +6,7 @@ import { stonesTurned } from "./bootRing";
 import { hash2, rng, vnoise } from "./random";
 import type { ForestMap } from "./map";
 import type { Cell } from "./partition";
-import { leyRoute, variedOrder, type LeyRoute } from "./leyroute";
+import { addCrossings, leyRoute, spiralOrder, variedOrder, type LeyRoute } from "./leyroute";
 
 export interface Soundsystem { x: number; z: number; variant: number }
 
@@ -286,12 +286,14 @@ export function spawnMarkers(p: PartyState, map: ForestMap): SpawnMarker[] {
   return out;
 }
 
-/** The ley line's route for this map (rules/leyroute.ts): a varied order (petals round home, then
- *  sweeps, lobes or combs: variedOrder), untangled so the line through it all never crosses itself
- *  (or only as Ed's crossing rules allow; else the noisy picker's order, untangled). Worked out once a map. */
+/** The ley line's route for this map (rules/leyroute.ts), by party.route (?route=): "spiral" (the
+ *  default; Ed, 2026-10-06: spiralOrder, untangled, then a few crossings added within his rules) or
+ *  "varied" (the order before it: petals round home, then sweeps, lobes or combs, untangled). Past
+ *  the crossing rules, the noisy picker's order, untangled. Worked out once a map. */
 export function routeOf(map: ForestMap): LeyRoute {
-  return leyRoute(map, () => variedOrder(map), () => {
+  const varied = map.tuning.party.route === "varied";
+  return leyRoute(map, () => (varied ? variedOrder(map) : spiralOrder(map)), () => {
     const m: ForestMap = { ...map, tuning: { ...map.tuning, party: { ...map.tuning.party, picker: "noisy" } } };
     return [...wavePlan(newParty(m), m).keys()];
-  });
+  }, varied ? undefined : r => addCrossings(map, r));
 }
