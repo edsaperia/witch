@@ -45,7 +45,8 @@ import { Lasers, type RingSpeaker } from "./lasers";
 import { PartyWitchView } from "./partyWitches";
 import { PartyObjectsView } from "./partyObjects";
 import { BorderView } from "./borders";
-import { MusicIndicator, StoneIndicator } from "./indicator";
+import { StoneIndicator } from "./indicator";
+import { leyPulse } from "../rules/leypulse";
 import { Minimap } from "./minimap";
 import { Rulers } from "./rulers";
 import { Mist } from "./mist";
@@ -170,7 +171,6 @@ export class View {
   /** The party objects strewn over partified areas (#38). */
   partyObjects: PartyObjectsView;
   private borders: BorderView;
-  private music = new MusicIndicator(document.body);
   private nextStones: StoneIndicator[] = [];
   readonly minimap: Minimap;
   /** Metre rulers and a ground grid (G). */
@@ -873,11 +873,11 @@ export class View {
     checkPops(this, "moving");
     this.time("creatures");
     this.rulers.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, w.x, w.z);
-    const df = g.map.dancefloor;
-    this.music.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, df.x, df.z, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, this.debugReadouts);
+    // (no cue toward the dancefloor any more: Ed, 2026-10-06, "You can remove the UI icon that points towards the dancefloor")
     this.minimap.update(g.party, w.x, w.z);
-    // The next waking stones (one per witch each wave: Ed, 2026-10-04), when they're off screen; only
-    // those (Ed, 2026-10-05: "We only need the UI indicator for the next one, not the next two").
+    // The wave pointer (Ed, 2026-10-06): toward the ley line's pulse on its way to the next wave's stone (rules/leypulse.ts,
+    // along the link as drawn), 🎶 in its ring as the countdown fills; for a second witch's next stone, its rune as before
+    // (Ed, 2026-10-05: "We only need the UI indicator for the next one, not the next two").
     {
       const cw = this.canvas.clientWidth || window.innerWidth, ch = this.canvas.clientHeight || window.innerHeight, cd = waveCountdown(g.party, g.map, time);
       const cue = (list: StoneIndicator[], cells: readonly (readonly [number, number])[], make: () => StoneIndicator, fill: number, label?: string) => {
@@ -886,7 +886,8 @@ export class View {
           const c = cells[i];
           if (!c) { ind.update(this.camera, cw, ch, null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 0); return; }
           const s = g.map.soundsystemSpot(c[0], c[1]), species = AREA_TYPES[g.map.typeOf(c[0], c[1])].creature;
-          ind.update(this.camera, cw, ch, { x: s.x, z: s.z, colour: this.markerArt.colour.get(species)!, species }, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, fill, label);
+          const pulse = i === 0 ? leyPulse(g.party, g.map, time, this.ley.currentLink()) : null, at = pulse ?? s;
+          ind.update(this.camera, cw, ch, { x: at.x, z: at.z, colour: this.markerArt.colour.get(species)!, species, notes: i === 0 }, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, fill, label);
         });
       };
       // Pausing holds the countdown; while home boots up, the next ring fills with the boot.
