@@ -3443,6 +3443,22 @@
           "type": "number",
           "minimum": 0,
           "maximum": 1
+        },
+        "linger": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lingerFade": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lingerMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "spin": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -3463,7 +3479,11 @@
         "hits",
         "drain",
         "perAnimalHitGap",
-        "fireSlow"
+        "fireSlow",
+        "linger",
+        "lingerFade",
+        "lingerMax",
+        "spin"
       ],
       "additionalProperties": false
     },
