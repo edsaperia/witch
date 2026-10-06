@@ -2935,22 +2935,27 @@ function treehouseSprite(st = {}, { facing = "towards", ppm = 16 } = {}) {
 //   cairn:         a low heap of irregular grey stones, sometimes a slab leaning on it
 //   pool:          a pool with an irregular shore (a few overlapping waves round its rim), a mud or moss rim, reeds and stones
 //   brokenTrunk:   a short broken trunk, its snapped branch growing out of it (joined, never laid beside it), jagged pale wood at the breaks
+//   fallenLog:     a fallen trunk or bough lying on the ground, bowed, mossed along its top, its ends broken to splinters or sawn to rings
+//   mushroomRing:  a fairy ring of toadstools round darker grass (or an arc, or a clump), red, brown, ochre or glowing
+//   boulder:       a boulder of a few merged lumps, half sunk, cracked, mossy on top, lichened, pebbles round it (grey, granite or sandstone)
+//   mound:         a mound of moss or bare earth, lumpy, tufts on top, a stone or two half buried
+//   stoneCircle:   a ring of small standing stones round short grass, one or two leaning or fallen, sometimes a stone or slab in the middle
 const PROP_GENOMES = {
   standingStone: {
     height: [3.4, 5], width: [.9, 1.4], depth: [.35, .55], taper: [.55, .85], // its top's width, times its foot's
     lean: [-.2, .2], tilt: [-.08, .08], // radians: sideways (in the picture) and towards us
     top: [["slant", 3], ["round", 1], ["notch", 2], ["flat", 2], ["broken", 2]], // its top: cut on a slant (a third of its width or more), rounded, a deep V notch, flat (a square slab), or snapped off (a piece lying beside it)
     shape: [["tall", 3], ["squat", 1]], // a squat slab: about .7 as tall, 1.45 times as wide (up to about 1.8 m wide at 3 m tall), so a ring of them has rhythm
-    lichen: [0, 3], lichenSize: [.1, .2], moss: [.06, .16], // big lichen patches, not speckle; moss up its foot (a share of its height)
+    lichen: [0, 2], lichenSize: [.1, .18], moss: [.06, .16], // big lichen patches, not speckle; moss up its foot (a share of its height)
     rough: 0, // smooth faces: Ed's notes said "much less textured"
-    colour: { stone: [.6, .12, .66], dark: [.65, .14, .4], lichen: [[.22, .14, .76, 4], [.1, .4, .7, 1]], moss: [.24, .45, .38], spread: .06 },
+    colour: { stone: [.61, .16, .66], dark: [.65, .18, .4], lichen: [[.2, .08, .78, 4], [.1, .35, .7, 1]], moss: [.24, .45, .38], spread: .06 }, // a touch of blue against the warm key light (the art director, #142)
   },
   cairn: {
     stones: [7, 11], spread: [1.2, 1.7], height: [.85, 1.3], size: [.3, .44], flat: [.5, .7], // stacked as a cone (spread under twice its height); stone radius (m), how flat each is
     slab: [["none", 2], ["one", 3], ["two", 1]], // leaning slabs against it
     rubble: [3, 7], moss: [.15, .4], // loose stones round its foot; the share of stones mossed on top
     rough: .03,
-    colour: { stone: [.6, .12, .64], dark: [.65, .14, .4], lichen: [[.22, .14, .76, 1]], moss: [.24, .45, .38], spread: .07 },
+    colour: { stone: [.61, .16, .64], dark: [.65, .18, .4], lichen: [[.2, .08, .78, 1]], moss: [.24, .45, .38], spread: .07 },
   },
   pool: {
     radius: [.7, 1.35], aspect: [.5, .85], // across (m); how deep it reaches into the picture, times across
@@ -2958,8 +2963,8 @@ const PROP_GENOMES = {
     rim: [.12, .3], rimKind: [["mud", 2], ["moss", 2]], // its shore's band (m) and what it is
     reeds: [0, 3], reedsPer: [3, 7], reedHeight: [.45, .95], cattails: [0, 1], // reed clumps on its shore, cattail heads (a share)
     stones: [0, 4], pads: [0, 0], // shore stones; lily pads
-    colour: { water: [.6, .45, .38], deep: [.62, .55, .16], glint: [.55, .2, .95], mud: [.08, .35, .3], moss: [.24, .4, .52], reed: [.22, .45, .45], reed2: [.18, .4, .62], cattail: [.06, .55, .3], stone: [.6, .05, .55], pad: [.3, .5, .45], spread: .04 },
-    bog: { water: [.17, .35, .26], deep: [.2, .4, .18], glint: [.18, .25, .5] }, // a bog's brown-green water
+    colour: { water: [.6, .45, .38], deep: [.62, .55, .16], glint: [.55, .2, .95], sky: [.62, .35, .5], rim: [.58, .14, .8], mud: [.08, .35, .3], moss: [.24, .4, .52], reed: [.22, .45, .45], reed2: [.18, .4, .62], cattail: [.06, .55, .3], stone: [.6, .05, .55], pad: [.3, .5, .45], spread: .04 }, // sky: the far water's reflection of the sky; rim: the moonlit far shore
+    bog: { water: [.17, .35, .26], deep: [.2, .4, .18], glint: [.18, .25, .5], sky: [.3, .25, .36], rim: [.2, .14, .66] }, // a bog's brown-green water
   },
   brokenTrunk: {
     height: [.8, 2.1], girth: [.32, .5], // its height (m) and radius at the foot (m)
@@ -2968,8 +2973,54 @@ const PROP_GENOMES = {
     splinters: [4, 7], roots: [3, 5], moss: [0, .5], fungi: [0, 3], // jagged pale wood at the break; root flares; moss up its shady side; bracket fungi
     colour: { wood: [.07, .4, .32], dark: [.06, .45, .17], light: [.08, .3, .48], pale: [.1, .18, .68], moss: [.24, .45, .36], fungus: [.08, .45, .62], spread: .04 },
   },
+  fallenLog: { // a fallen trunk or bough lying on the ground (the areas' logs): a gentle bend, bark grooves, its ends broken to splinters or sawn to rings
+    length: [1.8, 3.6], girth: [.18, .34], bend: [-.15, .15], sink: [.15, .35], // its length (m), radius (m), how it bows, how far it sinks into the ground (a share of its radius)
+    ends: [["broken", 3], ["sawn", 1], ["mixed", 2]], stubs: [0, 3], // its two ends; snapped branch stubs along it
+    moss: [.2, .7], fungi: [0, 3], // moss along its top; bracket fungi on its sides
+    colour: { wood: [.07, .38, .3], dark: [.06, .45, .16], light: [.08, .28, .46], pale: [.1, .18, .68], rings: [.09, .3, .55], moss: [.24, .45, .36], fungus: [.08, .45, .62], spread: .04 },
+  },
+  mushroomRing: { // a fairy ring: toadstools round a circle of darker grass, a few out of line, or a clump
+    form: [["ring", 3], ["arc", 2], ["clump", 1]], radius: [.5, 1.2], count: [7, 14], // its shape; its radius (m); how many
+    size: [.12, .26], spread: [.6, 1.4], // a cap's radius (m; bigger than life, so a ring reads at game size), and how much they vary
+    cap: [["red", 3], ["brown", 3], ["ochre", 2], ["glow", 1]], spots: [0, .9], // their caps' kind (glow: pale caps with glowing gills, only some areas); white spots (a share)
+    colour: { red: [.0, .7, .7], brown: [.07, .5, .45], ochre: [.11, .55, .7], glow: [.5, .15, .85], stem: [.12, .12, .86], spot: [.1, .05, .96], gill: [.48, .5, 1], ring: [.26, .5, .3], spread: .04 },
+  },
+  stoneCircle: { // a ring of small standing stones round a patch of short grass, one or two leaning or fallen
+    radius: [1.6, 2.8], count: [5, 9], height: [.8, 1.6], width: [.4, .7], // its radius (m); how many stones; their height and width (m)
+    lean: [0, .25], fallen: [0, 2], centre: [["none", 3], ["stone", 1], ["slab", 1]], // how far they lean; how many lie fallen; what stands in the middle
+    colour: { stone: [.61, .16, .64], dark: [.65, .18, .4], lichen: [[.2, .08, .78, 1]], moss: [.24, .45, .38], grass: [.26, .45, .38], spread: .07 },
+  },
+  boulder: { // a boulder of a few merged lumps, half sunk, a crack across it, moss on its top, lichen, pebbles round its foot
+    size: [.5, 1], lumps: [2, 4], flat: [.55, .85], sink: [.15, .35], // its radius (m), how many lumps, how flat (height over width), how far it sinks (a share)
+    crack: [0, 1], moss: [0, .35], lichen: [0, 3], pebbles: [2, 6], // a crack (a share), moss over its top (a share of its height), lichen patches, pebbles
+    rock: [["grey", 3], ["granite", 2], ["sandstone", 1]], // its stone
+    colour: { grey: [.61, .14, .58], granite: [.05, .08, .62], sandstone: [.09, .28, .62], dark: [.65, .16, .36], lichen: [[.2, .08, .78, 2], [.1, .35, .7, 1]], moss: [.24, .45, .38], spread: .06 },
+  },
+  mound: { // a mound of earth or moss, a few lumps, tufts on top, a stone or two half buried
+    radius: [.6, 1.3], height: [.3, .65], lumps: [2, 4], skin: [["moss", 1], ["earth", 1]], tufts: [3, 9], stones: [0, 2],
+    colour: { moss: [.24, .5, .4], moss2: [.27, .45, .55], earth: [.07, .45, .32], earth2: [.06, .4, .45], stone: [.61, .1, .55], spread: .05 },
+  },
 };
 const PROP_KINDS = Object.keys(PROP_GENOMES);
+
+// The party's generated decorations (art/party.js "gen-*" pieces, behind ?props=gen): bunting, balloon bunches and paper lanterns,
+// each a few seeded variants, in the witch model's units like the other party pieces. Their colours are the party's (neon or
+// balloon palettes at bake), so the genomes hold shapes only.
+const PARTY_PROP_GENOMES = {
+  buntingRun: { // flags along a sagging line between two poles, a string of warm bulbs along it
+    span: [1.8, 3], height: [1.3, 1.9], sag: [.12, .4], flags: [7, 15], strands: [1, 2], size: [.08, .13],
+    shape: [["triangle", 4], ["square", 1], ["round", 1], ["pennant", 2]], colours: [2, 5], offset: [0, 4], bulbs: [3, 9],
+  },
+  balloonBunch: { // a bunch tied to a stake or a weight: how many, how high, how spread, its colours' first slot, each balloon's size
+    count: [2, 9], lift: [.7, 1.4], spread: [0, .5], from: [0, 6], size: [.11, .16], anchor: [["stake", 3], ["weight", 1]],
+  },
+  lanternString: { // paper lanterns sagging between two poles, round or tall, in the neon
+    span: [1.3, 1.9], height: [1.15, 1.5], sag: [.12, .32], count: [3, 6], size: [.07, .12], shape: [["round", 3], ["tall", 2], ["mixed", 2]],
+  },
+  lanternsHanging: { // one to four paper lanterns hanging on cords of different lengths from a branch
+    count: [1, 4], drop: [.3, .8], size: [.08, .14], shape: [["round", 3], ["tall", 2]],
+  },
+};
 
 
 // ---- inlined from art/props/generator.js ----
@@ -2984,11 +3035,142 @@ const PROP_KINDS = Object.keys(PROP_GENOMES);
 
 
 
+// ---- inlined from art/ground.js ----
+// The ground generator (#119): each area's floor tile grown from a genome, in the stamp language the plants use. The prototype
+// repeats a tile across the area (src/render/ground.ts) and reads only its albedo, so all the lighting is in the tones: every
+// stamp is lit from the upper left in its three tones (dark, mid, light), and nothing is a lone pixel.
+//
+// A genome (GROUND_GENOMES, by the area's floor kind; an area's own `ground` merges over it):
+//   base     the ground itself: wrapping noise in three tones (BODY2 dark, BODY, BELLY light); scale: the noise's size in
+//            pixels [x, y]; cuts: where dark gives way to mid and mid to light
+//   patches  blotches of another ground lying on it ({ mat, n, r: [min, max] }): moss on stone, bare earth in grass
+//   puddles  little pools ({ n, r: [min, max] }): WATER, a dark rim on their near side and a glint
+//   details  the scatter: [{ stamp, n, mats: [dark, mid, light] }], stamps from GR_STAMPS below
+// groundTile(def, st, variant): the tile. The base noise wraps at the edges and is the same in every variant, and every
+// patch, puddle and detail stays inside the tile, so any variant sits next to any other without a seam.
+
+// Stamps: [dx, dy, tone] (0 dark, 1 mid, 2 light) round their anchor, lit from the upper left. size: from the detail's
+// size (1 default), r: a random stream for their own variety.
+const grLine = (pts, tone) => pts.map(([x, y], i) => [x, y, typeof tone === "function" ? tone(i, pts.length) : tone]);
+const GR_STAMPS = {
+  blade: (r, k = 1) => { const h = Math.max(1, Math.round((1 + r() * 2) * k)); return grLine(Array.from({ length: h }, (_, i) => [0, -i]), (i, n) => (i === n - 1 && n > 1 ? 2 : i === 0 ? 0 : 1)); },
+  tuft: r => [[-1, 0, 0], [-1, -1, 1], [0, 0, 0], [0, -1, 1], [0, -2, 2], [1, 0, 0], [1, -1, 2]].filter(() => r() < .9),
+  tall: r => { const h = 3 + Math.floor(r() * 3), lean = r() < .5 ? -1 : 1; return Array.from({ length: h }, (_, i) => [i > h * .6 ? lean : 0, -i, i === 0 ? 0 : i > h - 2 ? 2 : 1]); },
+  needle: r => { const d = r() < .5 ? 1 : -1; return [[0, 0, 1], [d, 0, 1], [2 * d, 1, 0]]; },
+  twig: r => { const L = 4 + Math.floor(r() * 3), d = r() < .5 ? 1 : -1; return Array.from({ length: L }, (_, i) => [i * d, Math.floor(i / 3), i % 3 === 0 ? 2 : 1]); },
+  root: r => { const L = 6 + Math.floor(r() * 4), d = r() < .5 ? 1 : -1; return Array.from({ length: L }, (_, i) => [[i * d, Math.round(Math.sin(i * .7)), 1], [i * d, Math.round(Math.sin(i * .7)) + 1, 0]]).flat(); },
+  pebble: r => (r() < .5 ? [[0, 0, 2], [1, 0, 1], [0, 1, 1], [1, 1, 0]] : [[0, 0, 2], [1, 0, 2], [2, 0, 1], [0, 1, 1], [1, 1, 1], [2, 1, 0]]),
+  slab: r => { const w = 4 + Math.floor(r() * 2), out = []; for (let x = 0; x < w; x++) { out.push([x, 0, 2], [x, 1, x < w - 1 ? 1 : 0], [x, 2, 0]); } return out; },
+  clod: r => { const w = 3 + Math.floor(r() * 2), out = []; for (let x = 0; x < w; x++) { out.push([x, 0, x === 0 ? 2 : 1], [x, 1, 0]); } return out; },
+  leaf: r => (r() < .5 ? [[0, 0, 2], [1, 0, 1], [1, 1, 0]] : [[0, 0, 1], [1, 0, 2], [0, 1, 0]]),
+  moss: r => [[0, -1, 2], [1, -1, 1], [-1, 0, 1], [0, 0, 1], [1, 0, 1], [2, 0, 0], [0, 1, 0], [1, 1, 0]].filter((_, i) => i !== 5 || r() < .5),
+  flower: () => [[0, 0, 0], [0, -1, 1], [0, -2, 2], [1, -2, 2]],
+  clover: () => [[0, -1, 2], [-1, 0, 1], [1, 0, 1], [0, 0, 1], [0, 1, 0]],
+  sprig: () => [[0, 0, 0], [0, -1, 0], [-1, -1, 1], [1, -2, 1], [0, -2, 2], [0, -3, 2]],
+};
+// Each floor kind's genome. mats: material names; "FLOWER" takes the area's flower colour.
+const grG = (base, details, more = {}) => ({ base: { scale: [7, 5], cuts: [.38, .64], ...base }, details, patches: [], puddles: null, ...more });
+const grD = (stamp, n, mats, size) => ({ stamp, n, mats, ...(size ? { size } : {}) });
+const GR_GRASS = ["LEAF3", "LEAF", "LEAF2"], GR_STONES = ["STONED", "STONE", "BELLY"], GR_EARTH = ["BODY2", "BODY", "BELLY"];
+const GROUND_GENOMES = {
+  moss: grG({ scale: [9, 6] }, [grD("moss", 26, GR_GRASS), grD("blade", 18, GR_GRASS)], { patches: [{ mat: "MOSS", n: 4, r: [4, 8] }] }),
+  needles: grG({}, [grD("needle", 90, ["BODY2", "ACCENT", "ACCENT"]), grD("twig", 4, ["BODY2", "TRUNK", "BARKL"]), grD("pebble", 4, GR_STONES)]),
+  mud: grG({ cuts: [.42, .7] }, [grD("clod", 24, GR_EARTH), grD("leaf", 10, ["BODY2", "FLOWER", "FLOWER"])], { puddles: { n: 2, r: [3, 6] } }),
+  stony: grG({}, [grD("pebble", 28, GR_STONES), grD("tuft", 22, GR_GRASS)], { patches: [{ mat: "MOSS", n: 3, r: [3, 6] }] }),
+  nettles: grG({}, [grD("tuft", 40, GR_GRASS), grD("leaf", 16, GR_GRASS)]),
+  leaves: grG({}, [grD("leaf", 90, ["BODY2", "FLOWER", "FLOWER"]), grD("twig", 5, ["BODY2", "TRUNK", "BARKL"])]),
+  grass: grG({}, [grD("tuft", 50, GR_GRASS), grD("blade", 30, GR_GRASS), grD("flower", 4, ["LEAF3", "LEAF", "FLOWER"])]),
+  lawn: grG({ cuts: [.36, .66] }, [grD("blade", 60, GR_GRASS, .6)]),
+  plants: grG({}, [grD("tuft", 36, GR_GRASS), grD("clover", 26, GR_GRASS)]),
+  roots: grG({}, [grD("root", 6, ["BODY2", "TRUNK", "BARKL"]), grD("pebble", 10, GR_STONES), grD("moss", 8, GR_GRASS)], { patches: [{ mat: "MOSS", n: 3, r: [3, 6] }] }),
+  slate: grG({ scale: [10, 4] }, [grD("slab", 9, GR_STONES), grD("pebble", 18, GR_STONES)]),
+  tallgrass: grG({}, [grD("tall", 60, GR_GRASS), grD("tuft", 20, GR_GRASS)]),
+  flowers: grG({}, [grD("tuft", 36, GR_GRASS), grD("flower", 40, ["LEAF3", "LEAF", "FLOWER"])]),
+  pebbles: grG({}, [grD("pebble", 65, GR_STONES), grD("blade", 10, GR_GRASS)]),
+  scree: grG({ scale: [6, 4] }, [grD("pebble", 50, GR_STONES), grD("slab", 8, GR_STONES)]),
+  earth: grG({ cuts: [.42, .68] }, [grD("clod", 18, GR_EARTH), grD("pebble", 14, GR_STONES)]),
+  stone: grG({ scale: [10, 7] }, [grD("slab", 8, GR_STONES), grD("pebble", 12, GR_STONES), grD("moss", 6, GR_GRASS)], { patches: [{ mat: "MOSS", n: 4, r: [4, 7] }] }),
+  heather: grG({}, [grD("sprig", 60, ["LEAF3", "LEAF", "FLOWER"]), grD("blade", 16, GR_GRASS)]),
+  bluebells: grG({}, [grD("flower", 60, ["LEAF3", "LEAF", "FLOWER"]), grD("tuft", 20, GR_GRASS)]),
+  clover: grG({}, [grD("clover", 46, GR_GRASS), grD("flower", 8, ["LEAF3", "LEAF", "FLOWER"])]),
+};
+const GR_MAT = name => (typeof name === "number" ? name : M[name]);
+
+// The genome an area's floor grows from: its floor kind's, with the area's own `ground` over it.
+function groundGenome(def) {
+  const g = GROUND_GENOMES[def.floor[0]] || GROUND_GENOMES.grass, o = def.ground || {};
+  return { ...g, ...o, base: { ...g.base, ...(o.base || {}) } };
+}
+
+// Each tone in clusters (as the plants' clusterLeaves): a pixel of one of the three takes the one most of its 3 x 3 has.
+function grCluster(sp, mats) {
+  const { w, h } = sp;
+  for (let pass = 0; pass < 2; pass++) {
+    const src = sp.m.slice();
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x, own = mats.indexOf(src[i]); if (own < 0) continue;
+      const cnt = [0, 0, 0];
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const k = mats.indexOf(src[((y + dy + h) % h) * w + ((x + dx + w) % w)]); if (k >= 0) cnt[k]++; }
+      const best = cnt.indexOf(Math.max(...cnt)); if (cnt[best] > cnt[own]) sp.m[i] = mats[best];
+    }
+  }
+}
+
+function groundTile(def, st, variant = 0, W = 64, H = 48) {
+  const [kind, hue, sat, val] = def.floor, g = groundGenome(def), sp = new Sprite(W, H), seed = def.id.length * 131, B = g.base;
+  const sty = st.artStyle === "bold" || st.artStyle === "ref", up = [0, -.42, .91];
+  // the base: noise that wraps at the tile's edges, so tiles repeat without a seam
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const f = (a, b) => vnoise(a / B.scale[0], b / B.scale[1], seed);
+    let n = (f(x, y) * (W - x) * (H - y) + f(x - W, y) * x * (H - y) + f(x, y - H) * (W - x) * y + f(x - W, y - H) * x * y) / (W * H);
+    if (variant) { // a variant's own blotches in the middle, fading to the shared base at the edges, so every variant meets every other
+      const e = Math.min(x, W - 1 - x, y, H - 1 - y) / 8, k = e >= 1 ? 1 : e * e * (3 - 2 * e);
+      n += (vnoise(x / B.scale[0], y / B.scale[1], seed + variant * 977) - vnoise(x / B.scale[0], y / B.scale[1], seed + 3301)) * k;
+    }
+    sp.px(x, y, n < B.cuts[0] ? M.BODY2 : n > B.cuts[1] ? M.BELLY : M.BODY, ...up);
+  }
+  if (sty) grCluster(sp, [M.BODY2, M.BODY, M.BELLY]);
+  const r = rng(seed * 7 + variant * 7919 + 1), inside = (x, y) => x >= 1 && y >= 1 && x < W - 1 && y < H - 1, set = (x, y, m) => { if (inside(x, y)) sp.px(x, y, m, ...up); };
+  // patches and puddles: soft-edged blobs of another ground, kept inside the tile
+  const blob = (rx, ry, f) => { const cx = rx + 1 + r() * (W - 2 * rx - 2), cy = ry + 1 + r() * (H - 2 * ry - 2), ph = r() * 9; for (let y = Math.floor(cy - ry); y <= cy + ry; y++) for (let x = Math.floor(cx - rx); x <= cx + rx; x++) { const u = (x + .5 - cx) / rx, v = (y + .5 - cy) / ry, d = u * u + v * v + (vnoise(x / 2, y / 2, ph) - .5) * .5; if (d < 1) f(x, y, u, v, d); } };
+  for (const P of g.patches || []) for (let i = 0; i < P.n; i++) { const rx = P.r[0] + r() * (P.r[1] - P.r[0]); blob(rx, rx * .7, (x, y, u, v, d) => set(x, y, d > .7 && v > 0 ? M.BODY2 : u + v < -.6 ? M.LEAF2 : GR_MAT(P.mat))); }
+  if (g.puddles) for (let i = 0; i < g.puddles.n; i++) { const rx = g.puddles.r[0] + r() * (g.puddles.r[1] - g.puddles.r[0]); blob(rx, rx * .55, (x, y, u, v, d) => set(x, y, d > .72 && v < 0 ? M.BODY2 : d > .72 ? M.BELLY : u < -.3 && v < -.2 && d < .3 ? M.WEB : M.WATER)); }
+  // the scatter: each detail's stamp at random spots inside the tile, its tones lit from the upper left
+  for (const Dt of g.details) {
+    const mats = Dt.mats.map(GR_MAT), fn = GR_STAMPS[Dt.stamp];
+    for (let i = 0; i < Dt.n; i++) {
+      const px = fn(r, Dt.size || 1), x0 = Math.floor(r() * W), y0 = Math.floor(r() * H);
+      if (!px.every(([dx, dy]) => inside(x0 + dx, y0 + dy))) continue; // inside the tile only, so variants meet without a seam
+      if (sp.get(x0, y0) === M.WATER) continue; // nothing in the puddles
+      for (const [dx, dy, t] of px) set(x0 + dx, y0 + dy, mats[t]);
+    }
+  }
+  if (sty) sp.stylised = st.artStyle;
+  return { sp, colours: groundColours(def, st), genome: g };
+}
+
+// The area's ground palette by material (the floor tile's, and for anything that should sit into it: a pool's rim takes
+// its mud from BODY2/BODY and its moss from MOSS). Stylised (st.artStyle bold or ref): the ramp hue-shifted, as the plants'.
+function groundColours(def, st) {
+  const [kind, hue, sat, val] = def.floor, sty = st.artStyle === "bold" || st.artStyle === "ref";
+  const ref = st.artStyle === "ref", sh = sty ? (ref ? .5 : 1) : 0;
+  const flower = { flowers: hsv2rgb(.13, .6, .95), bluebells: [90, 110, 230], heather: [180, 90, 170], clover: [240, 235, 240], leaves: hsv2rgb(hue + .02, .65, .6) }[kind] || hsv2rgb(hue, .3, .6);
+  const colours = {
+    [M.BODY]: hsv2rgb(hue, sat * st.sat, val), [M.BODY2]: hsv2rgb(hue + .02 + .05 * sh, Math.min(1, sat * st.sat * (1.1 + .15 * sh)), val * (.78 - .06 * sh)), [M.BELLY]: hsv2rgb(hue - .02 - .04 * sh, sat * st.sat * (.9 - .2 * sh), Math.min(1, val * (1.15 + .1 * sh))),
+    [M.ACCENT]: kind === "needles" ? hsv2rgb(.07, .5, .5) : hsv2rgb(.1, .08, .62), [M.FLOWER]: flower,
+    [M.LEAF]: hsv2rgb(def.leaf, .55 * st.sat, .45), [M.LEAF2]: hsv2rgb(def.leaf - .03 - .05 * sh, .5 * st.sat * (1 - .2 * sh), .62 + .06 * sh), [M.LEAF3]: hsv2rgb(def.leaf + .03 + .05 * sh, .6 * st.sat, .3),
+    [M.MOSS]: hsv2rgb(def.leaf + .02, .5 * st.sat, .36), [M.TRUNK]: hsv2rgb(st.trunkHue, .4, .3), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .35, .48),
+    [M.STONE]: hsv2rgb(.1, .07, .6), [M.STONED]: hsv2rgb(.62 + .02 * sh, .1, .38), [M.WATER]: hsv2rgb(.58, .35, Math.max(.16, val * .55)), [M.WEB]: hsv2rgb(.56, .12, .78),
+  };
+  return colours;
+}
+
+
 const PR_U = 1 / 1.9; // model units a metre (the witch's model is about 1.9 m a unit)
 const prPick = (r, opts) => { const tot = opts.reduce((a, [, w]) => a + w, 0); let x = r() * tot; for (const [v, w] of opts) if ((x -= w) < 0) return v; return opts[0][0]; };
 // A variant: each range picked within (integers stay whole where both ends are), each list of options by weight; `over` fixes any.
-function propVariant(kind, seed = 0, over = {}) {
-  const G = PROP_GENOMES[kind]; if (!G) throw new Error(`no prop kind "${kind}"`);
+function propVariant(kind, seed = 0, over = {}, table = PROP_GENOMES) { // table: another set of genomes (the party's: PARTY_PROP_GENOMES)
+  const G = table[kind]; if (!G) throw new Error(`no prop kind "${kind}"`);
   const r = rng(((seed + 1) * 2654435761 + kind.length * 97) >>> 0), v = {};
   for (const [k, g] of Object.entries(G)) {
     if (k === "colour" || k === "bog") continue;
@@ -3067,8 +3249,10 @@ function prPool(m, v) {
   const mask = (s, t) => { // s across, t into the picture, both -1..1 over the prPool and its rim
     const a = Math.atan2(t, s), d = Math.hypot(s, t) / (1 + v.wobble + rimW), e = shore(a) / (1 + v.wobble + rimW);
     if (d > e + rimW / (1 + v.wobble + rimW)) return undefined;
-    if (d > e) return v.rimKind === "moss" ? M.MOSS : M.BARK2;
+    if (d > e) return v.rimKind === "moss" ? M.MOSS : d > e + rimW / (1 + v.wobble + rimW) * .5 ? M.BODY : M.BARK2; // mud: the ground's darker tone inside, its own tone outside
     if (glints.some(([gx, gy, gr]) => Math.abs(s - gx) < gr * 1.4 && Math.abs(t - gy) < gr * .5)) return M.GLINT; // glowing, so the stylisation leaves them be
+    if (t > -.1 && d > e - .07) return M.WEB; // a moonlit rim along the far shore (the art director, round 1: pools read as holes at night)
+    if (t > .12 && d < e * .93 && d > e * .3) return M.ACCENT; // a faint reflection of the sky in the far water
     return d < e * .55 ? M.BODY2 : M.WATER;
   };
   const S = R * (1 + v.wobble + rimW);
@@ -3115,7 +3299,69 @@ function prTrunk(m, v) {
   for (let i = 0; i < v.fungi; i++) { const a = -Math.PI / 2 + (r() - .5) * 2.4, y = H * (.2 + r() * .55), c = v3.add(axis(y), [Math.cos(a) * R0 * .85, 0, Math.sin(a) * R0 * .85]); m.ell(c, [R0 * .45, .025, R0 * .35], M.FLOWER, { dir: [Math.cos(a), 0, Math.sin(a)], group: 5 + i, paint: p => p[1] > c[1] + .012 ? M.BELLY : undefined }); }
   for (let k = 0; k < 4; k++) { const a = r() * Math.PI * 2, x = Math.cos(a) * R0 * 2, z = Math.sin(a) * R0 * 2; m.seg([x, 0, z], [x, .06 + r() * .1, z], .02, .005, k % 2 ? M.LEAF2 : M.LEAF, { group: 9 }); }
 }
-const PR_BUILD = { standingStone: prStanding, cairn: prCairn, pool: prPool, brokenTrunk: prTrunk };
+// ---- fallen log: a trunk or bough lying on the ground, sunk a little, bowed; bark grooves; moss along its top; its ends broken
+// to tapering splinters or sawn to rings; snapped stubs; bracket fungi on its near side ----
+function prLog(m, v) {
+  const r = v.r, L = v.length * PR_U, R = v.girth * PR_U, yaw = (r() - .5) * .7, cy = R * (1 - v.sink), bow = v.bend * L;
+  const ax = [Math.cos(yaw), 0, -Math.sin(yaw)], nz = [Math.sin(yaw), 0, Math.cos(yaw)], at = (t, up = 0, side = 0) => v3.add(v3.add(v3.mul(ax, (t - .5) * L), v3.mul(nz, side + bow * (1 - (2 * t - 1) ** 2))), [0, cy + up, 0]);
+  const grooves = p => { const d = v3.dot(p, nz), a = Math.atan2(p[1] - cy, d), k = Math.sin(a * 6 + v3.dot(p, ax) * 9); return p[1] > cy + R * (.55 - v.moss * .4) && gpPrCell(p, 9, 21) < .55 + v.moss * .4 ? M.MOSS : k > .82 ? M.BARKD : k < -.9 ? M.BARKL : undefined; };
+  const pts = [0, .25, .5, .75, 1].map(t => [...at(t), R * (1 - .12 * Math.abs(2 * t - 1))]);
+  m.chain(pts, M.TRUNK, { group: 1, rough: .006, paint: grooves });
+  const ends = v.ends === "mixed" ? ["broken", "sawn"] : [v.ends, v.ends];
+  for (const [t, sgn, kind] of [[0, -1, ends[0]], [1, 1, ends[1]]]) {
+    const c = at(t), dir = v3.mul(ax, sgn);
+    if (kind === "sawn") m.ell(v3.add(c, v3.mul(dir, .005)), [.012, R * .86, R * .86], M.BELLY, { dir, up: [0, 1, 0], group: 2, paint: p => (Math.floor(Math.hypot(...v3.sub(p, c)) / R * 4.5) & 1) ? M.ACCENT : undefined }); // its growth rings
+    else for (let i = 0; i < 3; i++) { const off = [(r() - .5) * R * .9, (r() - .3) * R * .8, (r() - .5) * R * .6], b = v3.add(c, off), len = R * (.9 + r() * 1.6) * (i ? .6 : 1); m.seg(b, v3.add(b, v3.mul(dir, len)), R * (.42 - i * .08), .004, M.BELLY, { group: 2, paint: p => v3.dot(v3.sub(p, b), dir) > len * .5 ? M.BARKL : undefined }); } // splinters, tapering
+  }
+  for (let i = 0; i < v.stubs; i++) { const t = .2 + r() * .6, a = (r() - .5) * 2.2, b = at(t, Math.cos(a) * R * .7, Math.sin(a) * R * .7), d = v3.norm([(r() - .5) * .6, Math.cos(a) * .8 + .3, Math.sin(a) * .8]), len = R * (1.2 + r() * 1.5); m.seg(b, v3.add(b, v3.mul(d, len)), R * .32, R * .08, M.TRUNK, { group: 1, paint: p => v3.dot(v3.sub(p, b), d) > len * .8 ? M.BELLY : grooves(p) }); }
+  for (let i = 0; i < v.fungi; i++) { const t = .2 + r() * .6, c = at(t, R * (r() - .2) * .6, R * .92); m.ell(c, [R * .5, .022, R * .38], M.FLOWER, { dir: nz, up: [0, 1, 0], group: 5 + i, paint: p => p[1] > c[1] + .01 ? M.BELLY : undefined }); }
+  for (let k = 0; k < 6; k++) { const t = r(), c = at(t, -cy, (r() < .5 ? 1 : -1) * R * (1.1 + r() * .5)); m.seg([c[0], 0, c[2]], [c[0], .06 + r() * .1, c[2]], .02, .005, k % 2 ? M.LEAF2 : M.LEAF, { group: 9 }); }
+}
+// ---- mushroom ring: toadstools round a ring of darker grass (or along an arc, or in a clump); red with white spots, brown, ochre, or pale with glowing gills ----
+function prMushrooms(m, v) {
+  const r = v.r, R = v.radius * PR_U, n = v.count, glow = v.cap === "glow";
+  if (v.form !== "clump") m.flat([0, .003, 0], [1, 0, 0], [0, 0, -1], R * 1.35, R * 1.35, (s, t) => { const d = Math.hypot(s, t) * 1.35; return d > .78 && d < 1.12 && hash2(Math.floor(s * 30 + 40), Math.floor(t * 30 + 40), 5) < .85 ? M.MOSS : undefined; }, { group: 1, bend: .05 }); // the darker ring of grass
+  for (let i = 0; i < n; i++) {
+    const a = v.form === "arc" ? -.3 + i / Math.max(1, n - 1) * 3.6 : i / n * Math.PI * 2 + (r() - .5) * .35, rr = v.form === "clump" ? R * .55 * Math.sqrt(r()) : R * (.92 + (r() - .5) * .2);
+    const x = Math.cos(a) * rr, z = Math.sin(a) * rr * .9, cs = v.size * PR_U * (1 + (r() - .5) * v.spread * .8), h = cs * (1 + r() * .7), lean = (r() - .5) * .3, top = [x + lean * h, h, z];
+    m.seg([x, 0, z], top, cs * .3, cs * .24, M.BELLY, { group: 10 + i });
+    const capC = v3.add(top, [0, cs * .15, 0]), spotted = r() < v.spots && !glow;
+    m.ell(capC, [cs, cs * (.5 + r() * .25), cs], M.FLOWER, { group: 10 + i, paint: p => p[1] < capC[1] - cs * .05 ? (glow ? M.MAGIC : M.BELLY) : spotted && gpPrCell(p, 1 / (cs * .55), i) < .22 ? M.WEB : undefined }); // its cap; gills under it (glowing on a glow cap)
+  }
+  for (let k = 0; k < 8; k++) { const a = r() * Math.PI * 2, x = Math.cos(a) * R * (.3 + r()), z = Math.sin(a) * R * (.3 + r()); m.seg([x, 0, z], [x, .05 + r() * .08, z], .018, .005, k % 2 ? M.LEAF2 : M.LEAF, { group: 40 }); }
+}
+// ---- stone circle: small standing stones round a ring, each turned along it, one or two leaning hard or fallen; a stone or slab in the middle ----
+function prCircle(m, v) {
+  const r = v.r, R = v.radius * PR_U, n = v.count, fallen = new Set([...Array(v.fallen).keys()].map(() => Math.floor(r() * n)));
+  m.flat([0, .003, 0], [1, 0, 0], [0, 0, -1], R * 1.15, R * 1.15 * .85, (s, t) => { const d = Math.hypot(s, t) * 1.15; return d < .92 + .08 * hash2(Math.floor(Math.atan2(t, s) * 4 + 20), 1, 9) ? M.LEAF3 : undefined; }, { group: 0, bend: .04 }); // the short, trodden grass inside it
+  const lichen = (p, g) => gpPrCell(p, 6, g) < .12 ? M.BELLY : p[1] < .05 + gpPrCell(p, 9, g + 3) * .05 ? M.MOSS : undefined;
+  for (let i = 0; i < n; i++) {
+    const a = i / n * Math.PI * 2 + (r() - .5) * .25, c = [Math.cos(a) * R, 0, Math.sin(a) * R * .85], h = v.height * PR_U * (.75 + r() * .5), w = v.width * PR_U * (.8 + r() * .4), d = w * (.4 + r() * .2), tan = [-Math.sin(a), 0, Math.cos(a)];
+    if (fallen.has(i)) { m.box(v3.add(c, [0, d * .8, 0]), [h * .5, d, w * .5], M.STONE, { dir: v3.norm(v3.add(tan, [Math.cos(a) * .4, 0, Math.sin(a) * .4])), up: [0, 1, 0], round: d * .5, group: 1 + i, paint: p => lichen(p, i) }); continue; }
+    const lean = (r() - .5) * 2 * v.lean, up = v3.norm([Math.cos(a) * lean, 1, Math.sin(a) * lean]);
+    m.box(v3.add(c, v3.mul(up, h * .5 - .02)), [h * .5, w * .5, d * .5], M.STONE, { dir: up, up: tan, round: Math.min(w, d) * .35, group: 1 + i, paint: p => lichen(p, i) });
+  }
+  if (v.centre === "stone") m.box([0, v.height * PR_U * .65, 0], [v.height * PR_U * .65, v.width * PR_U * .55, v.width * PR_U * .3], M.STONE, { dir: [0, 1, 0], up: [1, 0, .3], round: .04, group: 30, paint: p => lichen(p, 30) });
+  if (v.centre === "slab") m.box([0, .06, 0], [v.width * PR_U * 1.2, .05, v.width * PR_U * .7], M.STONE, { dir: [1, 0, .2], up: [0, 1, 0], round: .02, group: 30, paint: p => lichen(p, 31) });
+  for (let k = 0; k < 10; k++) { const a = r() * Math.PI * 2, rr = R * (.9 + r() * .3), x = Math.cos(a) * rr, z = Math.sin(a) * rr * .85; m.seg([x, 0, z], [x, .06 + r() * .12, z], .02, .005, k % 2 ? M.LEAF2 : M.LEAF, { group: 40 }); }
+}
+// ---- boulder: a few merged lumps, half sunk; a crack across it; moss over its top; big lichen patches; pebbles round its foot ----
+function prRock(m, v) {
+  const r = v.r, R = v.size * PR_U, H = R * v.flat, base = -R * v.sink, patches = [...Array(v.lichen).keys()].map(() => { const a = r() * Math.PI * 2; return [[Math.cos(a) * R * .8, base + H * (.6 + r() * .6), Math.sin(a) * R * .8 + R * .3], R * (.2 + r() * .15)]; });
+  const crackA = r() * Math.PI, cracked = r() < v.crack, mossH = base + H * 2 * (1 - v.moss);
+  const paint = p => p[1] > mossH + gpPrCell(p, 1 / (R * .25), 3) * R * .15 ? M.MOSS : cracked && Math.abs((p[0] * Math.cos(crackA) + p[2] * Math.sin(crackA)) + Math.sin(p[1] * 9) * R * .06) < R * .035 ? M.STONED : prInPatch(p, patches) ? M.BELLY : undefined;
+  for (let i = 0; i < v.lumps; i++) { const a = i / v.lumps * Math.PI * 2 + r(), off = i ? R * (.35 + r() * .3) : 0, k = i ? .55 + r() * .3 : 1; m.ell([Math.cos(a) * off, base + H * k, Math.sin(a) * off * .8], [R * k, H * k, R * k * (.75 + r() * .3)], M.STONE, { dir: [Math.cos(a * 2), (r() - .5) * .3, Math.sin(a * 2)], rough: .012, group: 1, paint }); }
+  for (let i = 0; i < v.pebbles; i++) { const a = r() * Math.PI * 2, d = R * (1.05 + r() * .5), s = R * (.08 + r() * .1); m.ell([Math.cos(a) * d, s * .4, Math.sin(a) * d * .85], [s, s * .6, s * .8], M.STONE, { rough: .01, group: 2 + i }); }
+  for (let k = 0; k < 6; k++) { const a = r() * Math.PI * 2, x = Math.cos(a) * R * 1.05, z = Math.sin(a) * R * .9; m.seg([x, 0, z], [x, .06 + r() * .1, z], .02, .005, k % 2 ? M.LEAF2 : M.LEAF, { group: 20 }); }
+}
+// ---- mound: a mound of moss or bare earth of a few lumps, tufts on top, a stone or two half buried ----
+function prHillock(m, v) {
+  const r = v.r, R = v.radius * PR_U, H = v.height * PR_U, moss = v.skin === "moss";
+  for (let i = 0; i < v.lumps; i++) { const a = i / v.lumps * Math.PI * 2 + r(), off = i ? R * (.3 + r() * .3) : 0, k = i ? .5 + r() * .3 : 1; m.ell([Math.cos(a) * off, -H * .25, Math.sin(a) * off * .8], [R * k, H * k * 1.25, R * k * .85], M.BODY, { dir: [Math.cos(a), 0, Math.sin(a)], rough: .01, group: 1, paint: p => gpPrCell(p, 1 / (R * .45), 5) < .25 ? M.BODY2 : undefined }); }
+  for (let i = 0; i < v.stones; i++) { const a = r() * Math.PI * 2, d = R * (.4 + r() * .4), s = R * (.12 + r() * .1); m.ell([Math.cos(a) * d, H * .35, Math.sin(a) * d * .8], [s, s * .6, s * .8], M.STONE, { group: 3 + i, rough: .01 }); }
+  for (let i = 0; i < v.tufts; i++) { const a = r() * Math.PI * 2, d = R * Math.sqrt(r()) * .8, x = Math.cos(a) * d, z = Math.sin(a) * d * .8, y = H * (1 - (d / R) ** 2) * .9; m.seg([x, y, z], [x + (r() - .5) * .04, y + .07 + r() * (moss ? .06 : .12), z], .02, .005, i % 2 ? M.LEAF2 : M.LEAF, { group: 10 }); }
+}
+const PR_BUILD = { standingStone: prStanding, cairn: prCairn, pool: prPool, brokenTrunk: prTrunk, fallenLog: prLog, mushroomRing: prMushrooms, stoneCircle: prCircle, boulder: prRock, mound: prHillock };
 
 function prCrop(sp) {
   let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
@@ -3127,11 +3373,19 @@ function prCrop(sp) {
 }
 // A colour from the genome: [h, s, v] jittered by the variant's spread (a list of [h, s, v, weight] picks one).
 function prTone(c, r, k) { if (Array.isArray(c[0])) c = prPick(r, c.map(x => [x, x[3] ?? 1])); return hsv2rgb(((c[0] + (r() - .5) * k * .5) % 1 + 1) % 1, Math.max(0, Math.min(1, c[1] + (r() - .5) * k)), Math.max(0, Math.min(1, c[2] + (r() - .5) * k * 1.5))); }
-function prColours(kind, v, def, o) {
+function prColours(kind, v, def, o, st = {}) {
   const G = PROP_GENOMES[kind], C = { ...G.colour, ...(o.bog && G.bog ? G.bog : {}) }, r = rng((v.seed * 7919 + 13) >>> 0), k = C.spread, leaf = def?.leaf ?? .26;
   const grass = { [M.LEAF]: hsv2rgb(leaf, .5, .45), [M.LEAF2]: hsv2rgb(leaf - .03, .45, .62), [M.LEAF3]: hsv2rgb(leaf + .02, .5, .4), [M.LINE]: [24, 22, 30] };
   if (kind === "standingStone" || kind === "cairn") { const dark = prTone(C.dark, r, k); return { ...grass, [M.STONE]: prTone(C.stone, r, k), [M.STONED]: dark, [M.BELLY]: prTone(C.lichen, r, k * .5), [M.MOSS]: prTone(C.moss, r, k), ...(kind === "cairn" ? { [M.LINE]: dark.map(c => c * .75) } : {}) }; } // a cairn's cracks in its stones' own dark
-  if (kind === "pool") return { ...grass, [M.WATER]: prTone(C.water, r, k), [M.BODY2]: prTone(C.deep, r, k), [M.GLINT]: prTone(C.glint, r, k * .5), [M.BARK2]: prTone(C.mud, r, k), [M.MOSS]: prTone(C.moss, r, k), [M.LEAF]: prTone(C.reed, r, k), [M.LEAF2]: prTone(C.reed2, r, k), [M.TRUNK]: prTone(C.cattail, r, k), [M.STONE]: prTone(C.stone, r, k), [M.LEAF3]: prTone(C.pad, r, k) };
+  if (kind === "pool") { // its shore in the area's own ground (art/ground.js: the mud its darker and own tones, the moss its moss), so it meets the floor tile
+    const g = def?.floor ? groundColours(def, st) : null;
+    return { ...grass, [M.WATER]: prTone(C.water, r, k), [M.BODY2]: prTone(C.deep, r, k), [M.ACCENT]: prTone(C.sky, r, k * .5), [M.WEB]: prTone(C.rim, r, k * .3), [M.GLINT]: prTone(C.glint, r, k * .5), [M.BARK2]: prTone(C.mud, r, k), [M.MOSS]: prTone(C.moss, r, k), [M.LEAF]: prTone(C.reed, r, k), [M.LEAF2]: prTone(C.reed2, r, k), [M.TRUNK]: prTone(C.cattail, r, k), [M.STONE]: prTone(C.stone, r, k), [M.LEAF3]: prTone(C.pad, r, k), ...(g ? { [M.BARK2]: g[M.BODY2], [M.BODY]: g[M.BODY], [M.MOSS]: g[M.MOSS] } : { [M.BODY]: prTone(C.mud, r, k).map(c => Math.min(255, c * 1.15)) }) };
+  }
+  if (kind === "boulder") { const dark = prTone(C.dark, r, k); return { ...grass, [M.STONE]: prTone(C[v.rock], r, k), [M.STONED]: dark, [M.BELLY]: prTone(C.lichen, r, k * .5), [M.MOSS]: prTone(C.moss, r, k), [M.LINE]: dark.map(c => c * .7) }; }
+  if (kind === "mound") { const g = def?.floor ? groundColours(def, st) : null, moss = v.skin === "moss"; return { ...grass, [M.BODY]: moss ? prTone(C.moss, r, k) : g ? g[M.BODY2] : prTone(C.earth, r, k), [M.BODY2]: moss ? prTone(C.moss2, r, k) : g ? g[M.BODY] : prTone(C.earth2, r, k), [M.STONE]: prTone(C.stone, r, k) }; } // bare earth in the floor's own tones
+  if (kind === "fallenLog") return { ...grass, [M.TRUNK]: prTone(C.wood, r, k), [M.BARKD]: prTone(C.dark, r, k), [M.BARKL]: prTone(C.light, r, k), [M.BELLY]: prTone(C.pale, r, k * .5), [M.ACCENT]: prTone(C.rings, r, k * .5), [M.MOSS]: prTone(C.moss, r, k), [M.FLOWER]: prTone(C.fungus, r, k) };
+  if (kind === "mushroomRing") { const g = def?.floor ? groundColours(def, st) : null; return { ...grass, [M.FLOWER]: prTone(C[v.cap], r, k), [M.BELLY]: prTone(C.stem, r, k * .5), [M.WEB]: prTone(C.spot, r, k * .3), [M.MAGIC]: prTone(C.gill, r, k * .3), [M.MOSS]: g ? g[M.BODY2] : prTone(C.ring, r, k) }; } // its ring in the floor's darker tone
+  if (kind === "stoneCircle") { const dark = prTone(C.dark, r, k), g = def?.floor ? groundColours(def, st) : null; return { ...grass, [M.LEAF3]: g ? g[M.BELLY] : prTone(C.grass, r, k), [M.STONE]: prTone(C.stone, r, k), [M.STONED]: dark, [M.BELLY]: prTone(C.lichen, r, k * .5), [M.MOSS]: prTone(C.moss, r, k), [M.LINE]: dark.map(c => c * .75) }; }
   return { ...grass, [M.TRUNK]: prTone(C.wood, r, k), [M.BARKD]: prTone(C.dark, r, k), [M.BARKL]: prTone(C.light, r, k), [M.BELLY]: prTone(C.pale, r, k * .5), [M.MOSS]: prTone(C.moss, r, k), [M.FLOWER]: prTone(C.fungus, r, k) };
 }
 // One generated prop. o: { seed, bog (a pool's), and any of its genome's numbers to fix }; def: the area (its leaf hue for grass).
@@ -3140,19 +3394,30 @@ function propPiece(kind, o = {}, def = null, st = {}, ppm = 16) {
   if (kind === "standingStone") { v.lichenMat = M.BELLY; if (o.lead) { v.shape = "tall"; v.height = Math.max(v.height, 5.2); v.lean *= .5; if (v.top === "broken" || v.top === "notch") v.top = "flat"; } } // lead: an area's first stone stands tall and whole (the moor's something 4 m tall)
   const m = new Model({ blend: kind === "brokenTrunk" ? .06 : .035 });
   PR_BUILD[kind](m, v);
-  const sp = prCrop(render(m, { scale: witchPixelsPerUnit(st) }).sp);
+  let sp = prCrop(render(m, { scale: witchPixelsPerUnit(st) }).sp);
+  if (kind === "pool") { // its shore breaks into the floor: the outermost rim pixels (touching nothing) dropped in 2 x 1 clusters, by hash (agreed with art builder 1, #156)
+    const rim = new Set([M.BODY, M.BARK2, M.MOSS]), at = (x, y) => x < 0 || y < 0 || x >= sp.w || y >= sp.h ? 0 : sp.m[y * sp.w + x], drop = [];
+    for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const m0 = at(x, y); if (!rim.has(m0) || (at(x - 1, y) && at(x + 1, y) && at(x, y - 1) && at(x, y + 1))) continue; if (hash2(x >> 1, y, v.seed + 77) < .5) drop.push(y * sp.w + x, y * sp.w + (x ^ 1)); }
+    for (const i of drop) if (rim.has(sp.m[i])) sp.m[i] = 0;
+    sp = prCrop(sp); // (thinned, it may have lost its bottom row)
+  }
   cleanFlecks(sp); // no lone pixels or stray line dots (docs/ART-GUIDE.md: clusters, not noise)
   // a pool's water lit as a level surface at a grazing light, so every style gives it its base tone (the light tone's shift toward
   // yellow turned the teal moss-green in bold and ref: the art director, #142) and its value stays well apart from its rim
-  if (kind === "pool") { const wn = [.3, .2, .93], l = Math.hypot(...wn); for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.WATER || sp.m[i] === M.BODY2) sp.n.set(wn.map(c => c / l), i * 3); }
+  if (kind === "pool") { const wn = [.2, 0, .98], /* lit at about .4 of the light: the base tone in bold and ref, and never black in the plain style */ l = Math.hypot(...wn); for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.WATER || sp.m[i] === M.BODY2 || sp.m[i] === M.ACCENT || sp.m[i] === M.WEB) sp.n.set(wn.map(c => c / l), i * 3); }
   const { r, ...variant } = v;
-  return { sp, colours: prColours(kind, v, def, o), metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1) }, variant };
+  return { sp, colours: prColours(kind, v, def, o, st), metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1) }, variant };
 }
 // Which generated kind (and fixed numbers) stands in for one of the areas' hand-made props under ?props=gen, or null.
 function propFor(kind, o = {}) {
   if (kind === "standingstone") return ["standingStone", o.lean ? { lean: o.lean } : {}];
-  if (kind === "cairn") return ["cairn", o.tall ? { height: 1.6, stones: 12, spread: 1.2 } : {}];
+  if (kind === "cairn") return ["cairn", o.tall ? { height: 2.6, stones: 15, spread: 1.5, size: .38 } : {}]; // the stone shrine's tall cairn stays a tall cone
   if (kind === "water" && !o.stream) return ["pool", { bog: !!o.bog, ...(o.w ? { radius: .6 * o.w } : {}) }];
+  if (kind === "boulder") return ["boulder", { ...(o.big ? { size: 1.3 } : {}), ...(o.moss ? { moss: .45 } : {}) }];
+  if (kind === "mound") return ["mound", { skin: o.moss ? "moss" : o.brown ? "earth" : "moss", ...(o.small ? { radius: .45, height: .28, lumps: 2 } : {}) }];
+  if (kind === "log") return ["fallenLog", o.giant ? { length: 6, girth: .62, moss: .8, fungi: 3, ends: "broken" } : o.branch ? { length: 1.5, girth: .1, stubs: 2, fungi: 0 } : o.rot ? { moss: .75, fungi: 3 } : {}];
+  if (kind === "fungi") return ["mushroomRing", {}];
+  if (kind === "henge") return ["stoneCircle", o.scale ? { radius: 2.2 * o.scale } : {}];
   if (kind === "stump" && !o.gnawed) return ["brokenTrunk", o.snag ? {} : { branch: "none" }];
   return null;
 }
@@ -5702,132 +5967,6 @@ function tallPiece(kind, o, def, st, r, ppm = 16) {
 }
 
 
-// ---- inlined from art/ground.js ----
-// The ground generator (#119): each area's floor tile grown from a genome, in the stamp language the plants use. The prototype
-// repeats a tile across the area (src/render/ground.ts) and reads only its albedo, so all the lighting is in the tones: every
-// stamp is lit from the upper left in its three tones (dark, mid, light), and nothing is a lone pixel.
-//
-// A genome (GROUND_GENOMES, by the area's floor kind; an area's own `ground` merges over it):
-//   base     the ground itself: wrapping noise in three tones (BODY2 dark, BODY, BELLY light); scale: the noise's size in
-//            pixels [x, y]; cuts: where dark gives way to mid and mid to light
-//   patches  blotches of another ground lying on it ({ mat, n, r: [min, max] }): moss on stone, bare earth in grass
-//   puddles  little pools ({ n, r: [min, max] }): WATER, a dark rim on their near side and a glint
-//   details  the scatter: [{ stamp, n, mats: [dark, mid, light] }], stamps from GR_STAMPS below
-// groundTile(def, st, variant): the tile. The base noise wraps at the edges and is the same in every variant, and every
-// patch, puddle and detail stays inside the tile, so any variant sits next to any other without a seam.
-
-// Stamps: [dx, dy, tone] (0 dark, 1 mid, 2 light) round their anchor, lit from the upper left. size: from the detail's
-// size (1 default), r: a random stream for their own variety.
-const grLine = (pts, tone) => pts.map(([x, y], i) => [x, y, typeof tone === "function" ? tone(i, pts.length) : tone]);
-const GR_STAMPS = {
-  blade: (r, k = 1) => { const h = Math.max(1, Math.round((1 + r() * 2) * k)); return grLine(Array.from({ length: h }, (_, i) => [0, -i]), (i, n) => (i === n - 1 && n > 1 ? 2 : i === 0 ? 0 : 1)); },
-  tuft: r => [[-1, 0, 0], [-1, -1, 1], [0, 0, 0], [0, -1, 1], [0, -2, 2], [1, 0, 0], [1, -1, 2]].filter(() => r() < .9),
-  tall: r => { const h = 3 + Math.floor(r() * 3), lean = r() < .5 ? -1 : 1; return Array.from({ length: h }, (_, i) => [i > h * .6 ? lean : 0, -i, i === 0 ? 0 : i > h - 2 ? 2 : 1]); },
-  needle: r => { const d = r() < .5 ? 1 : -1; return [[0, 0, 1], [d, 0, 1], [2 * d, 1, 0]]; },
-  twig: r => { const L = 4 + Math.floor(r() * 3), d = r() < .5 ? 1 : -1; return Array.from({ length: L }, (_, i) => [i * d, Math.floor(i / 3), i % 3 === 0 ? 2 : 1]); },
-  root: r => { const L = 6 + Math.floor(r() * 4), d = r() < .5 ? 1 : -1; return Array.from({ length: L }, (_, i) => [[i * d, Math.round(Math.sin(i * .7)), 1], [i * d, Math.round(Math.sin(i * .7)) + 1, 0]]).flat(); },
-  pebble: r => (r() < .5 ? [[0, 0, 2], [1, 0, 1], [0, 1, 1], [1, 1, 0]] : [[0, 0, 2], [1, 0, 2], [2, 0, 1], [0, 1, 1], [1, 1, 1], [2, 1, 0]]),
-  slab: r => { const w = 4 + Math.floor(r() * 2), out = []; for (let x = 0; x < w; x++) { out.push([x, 0, 2], [x, 1, x < w - 1 ? 1 : 0], [x, 2, 0]); } return out; },
-  clod: r => { const w = 3 + Math.floor(r() * 2), out = []; for (let x = 0; x < w; x++) { out.push([x, 0, x === 0 ? 2 : 1], [x, 1, 0]); } return out; },
-  leaf: r => (r() < .5 ? [[0, 0, 2], [1, 0, 1], [1, 1, 0]] : [[0, 0, 1], [1, 0, 2], [0, 1, 0]]),
-  moss: r => [[0, -1, 2], [1, -1, 1], [-1, 0, 1], [0, 0, 1], [1, 0, 1], [2, 0, 0], [0, 1, 0], [1, 1, 0]].filter((_, i) => i !== 5 || r() < .5),
-  flower: () => [[0, 0, 0], [0, -1, 1], [0, -2, 2], [1, -2, 2]],
-  clover: () => [[0, -1, 2], [-1, 0, 1], [1, 0, 1], [0, 0, 1], [0, 1, 0]],
-  sprig: () => [[0, 0, 0], [0, -1, 0], [-1, -1, 1], [1, -2, 1], [0, -2, 2], [0, -3, 2]],
-};
-// Each floor kind's genome. mats: material names; "FLOWER" takes the area's flower colour.
-const grG = (base, details, more = {}) => ({ base: { scale: [7, 5], cuts: [.38, .64], ...base }, details, patches: [], puddles: null, ...more });
-const grD = (stamp, n, mats, size) => ({ stamp, n, mats, ...(size ? { size } : {}) });
-const GR_GRASS = ["LEAF3", "LEAF", "LEAF2"], GR_STONES = ["STONED", "STONE", "BELLY"], GR_EARTH = ["BODY2", "BODY", "BELLY"];
-const GROUND_GENOMES = {
-  moss: grG({ scale: [9, 6] }, [grD("moss", 26, GR_GRASS), grD("blade", 18, GR_GRASS)], { patches: [{ mat: "MOSS", n: 4, r: [4, 8] }] }),
-  needles: grG({}, [grD("needle", 90, ["BODY2", "ACCENT", "ACCENT"]), grD("twig", 4, ["BODY2", "TRUNK", "BARKL"]), grD("pebble", 4, GR_STONES)]),
-  mud: grG({ cuts: [.42, .7] }, [grD("clod", 24, GR_EARTH), grD("leaf", 10, ["BODY2", "FLOWER", "FLOWER"])], { puddles: { n: 2, r: [3, 6] } }),
-  stony: grG({}, [grD("pebble", 28, GR_STONES), grD("tuft", 22, GR_GRASS)], { patches: [{ mat: "MOSS", n: 3, r: [3, 6] }] }),
-  nettles: grG({}, [grD("tuft", 40, GR_GRASS), grD("leaf", 16, GR_GRASS)]),
-  leaves: grG({}, [grD("leaf", 90, ["BODY2", "FLOWER", "FLOWER"]), grD("twig", 5, ["BODY2", "TRUNK", "BARKL"])]),
-  grass: grG({}, [grD("tuft", 50, GR_GRASS), grD("blade", 30, GR_GRASS), grD("flower", 4, ["LEAF3", "LEAF", "FLOWER"])]),
-  lawn: grG({ cuts: [.36, .66] }, [grD("blade", 60, GR_GRASS, .6)]),
-  plants: grG({}, [grD("tuft", 36, GR_GRASS), grD("clover", 26, GR_GRASS)]),
-  roots: grG({}, [grD("root", 6, ["BODY2", "TRUNK", "BARKL"]), grD("pebble", 10, GR_STONES), grD("moss", 8, GR_GRASS)], { patches: [{ mat: "MOSS", n: 3, r: [3, 6] }] }),
-  slate: grG({ scale: [10, 4] }, [grD("slab", 9, GR_STONES), grD("pebble", 18, GR_STONES)]),
-  tallgrass: grG({}, [grD("tall", 60, GR_GRASS), grD("tuft", 20, GR_GRASS)]),
-  flowers: grG({}, [grD("tuft", 36, GR_GRASS), grD("flower", 40, ["LEAF3", "LEAF", "FLOWER"])]),
-  pebbles: grG({}, [grD("pebble", 65, GR_STONES), grD("blade", 10, GR_GRASS)]),
-  scree: grG({ scale: [6, 4] }, [grD("pebble", 50, GR_STONES), grD("slab", 8, GR_STONES)]),
-  earth: grG({ cuts: [.42, .68] }, [grD("clod", 18, GR_EARTH), grD("pebble", 14, GR_STONES)]),
-  stone: grG({ scale: [10, 7] }, [grD("slab", 8, GR_STONES), grD("pebble", 12, GR_STONES), grD("moss", 6, GR_GRASS)], { patches: [{ mat: "MOSS", n: 4, r: [4, 7] }] }),
-  heather: grG({}, [grD("sprig", 60, ["LEAF3", "LEAF", "FLOWER"]), grD("blade", 16, GR_GRASS)]),
-  bluebells: grG({}, [grD("flower", 60, ["LEAF3", "LEAF", "FLOWER"]), grD("tuft", 20, GR_GRASS)]),
-  clover: grG({}, [grD("clover", 46, GR_GRASS), grD("flower", 8, ["LEAF3", "LEAF", "FLOWER"])]),
-};
-const GR_MAT = name => (typeof name === "number" ? name : M[name]);
-
-// The genome an area's floor grows from: its floor kind's, with the area's own `ground` over it.
-function groundGenome(def) {
-  const g = GROUND_GENOMES[def.floor[0]] || GROUND_GENOMES.grass, o = def.ground || {};
-  return { ...g, ...o, base: { ...g.base, ...(o.base || {}) } };
-}
-
-// Each tone in clusters (as the plants' clusterLeaves): a pixel of one of the three takes the one most of its 3 x 3 has.
-function grCluster(sp, mats) {
-  const { w, h } = sp;
-  for (let pass = 0; pass < 2; pass++) {
-    const src = sp.m.slice();
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      const i = y * w + x, own = mats.indexOf(src[i]); if (own < 0) continue;
-      const cnt = [0, 0, 0];
-      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const k = mats.indexOf(src[((y + dy + h) % h) * w + ((x + dx + w) % w)]); if (k >= 0) cnt[k]++; }
-      const best = cnt.indexOf(Math.max(...cnt)); if (cnt[best] > cnt[own]) sp.m[i] = mats[best];
-    }
-  }
-}
-
-function groundTile(def, st, variant = 0, W = 64, H = 48) {
-  const [kind, hue, sat, val] = def.floor, g = groundGenome(def), sp = new Sprite(W, H), seed = def.id.length * 131, B = g.base;
-  const sty = st.artStyle === "bold" || st.artStyle === "ref", up = [0, -.42, .91];
-  // the base: noise that wraps at the tile's edges, so tiles repeat without a seam
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const f = (a, b) => vnoise(a / B.scale[0], b / B.scale[1], seed);
-    const n = (f(x, y) * (W - x) * (H - y) + f(x - W, y) * x * (H - y) + f(x, y - H) * (W - x) * y + f(x - W, y - H) * x * y) / (W * H);
-    sp.px(x, y, n < B.cuts[0] ? M.BODY2 : n > B.cuts[1] ? M.BELLY : M.BODY, ...up);
-  }
-  if (sty) grCluster(sp, [M.BODY2, M.BODY, M.BELLY]);
-  const r = rng(seed * 7 + variant * 7919 + 1), inside = (x, y) => x >= 1 && y >= 1 && x < W - 1 && y < H - 1, set = (x, y, m) => { if (inside(x, y)) sp.px(x, y, m, ...up); };
-  // patches and puddles: soft-edged blobs of another ground, kept inside the tile
-  const blob = (rx, ry, f) => { const cx = rx + 1 + r() * (W - 2 * rx - 2), cy = ry + 1 + r() * (H - 2 * ry - 2), ph = r() * 9; for (let y = Math.floor(cy - ry); y <= cy + ry; y++) for (let x = Math.floor(cx - rx); x <= cx + rx; x++) { const u = (x + .5 - cx) / rx, v = (y + .5 - cy) / ry, d = u * u + v * v + (vnoise(x / 2, y / 2, ph) - .5) * .5; if (d < 1) f(x, y, u, v, d); } };
-  for (const P of g.patches || []) for (let i = 0; i < P.n; i++) { const rx = P.r[0] + r() * (P.r[1] - P.r[0]); blob(rx, rx * .7, (x, y, u, v, d) => set(x, y, d > .7 && v > 0 ? M.BODY2 : u + v < -.6 ? M.LEAF2 : GR_MAT(P.mat))); }
-  if (g.puddles) for (let i = 0; i < g.puddles.n; i++) { const rx = g.puddles.r[0] + r() * (g.puddles.r[1] - g.puddles.r[0]); blob(rx, rx * .55, (x, y, u, v, d) => set(x, y, d > .72 && v < 0 ? M.BODY2 : d > .72 ? M.BELLY : u < -.3 && v < -.2 && d < .3 ? M.WEB : M.WATER)); }
-  // the scatter: each detail's stamp at random spots inside the tile, its tones lit from the upper left
-  for (const Dt of g.details) {
-    const mats = Dt.mats.map(GR_MAT), fn = GR_STAMPS[Dt.stamp];
-    for (let i = 0; i < Dt.n; i++) {
-      const px = fn(r, Dt.size || 1), x0 = Math.floor(r() * W), y0 = Math.floor(r() * H);
-      if (!px.every(([dx, dy]) => inside(x0 + dx, y0 + dy))) continue; // inside the tile only, so variants meet without a seam
-      if (sp.get(x0, y0) === M.WATER) continue; // nothing in the puddles
-      for (const [dx, dy, t] of px) set(x0 + dx, y0 + dy, mats[t]);
-    }
-  }
-  if (sty) sp.stylised = st.artStyle;
-  return { sp, colours: groundColours(def, st), genome: g };
-}
-
-// The area's ground palette by material (the floor tile's, and for anything that should sit into it: a pool's rim takes
-// its mud from BODY2/BODY and its moss from MOSS). Stylised (st.artStyle bold or ref): the ramp hue-shifted, as the plants'.
-function groundColours(def, st) {
-  const [kind, hue, sat, val] = def.floor, sty = st.artStyle === "bold" || st.artStyle === "ref";
-  const ref = st.artStyle === "ref", sh = sty ? (ref ? .5 : 1) : 0;
-  const flower = { flowers: hsv2rgb(.13, .6, .95), bluebells: [90, 110, 230], heather: [180, 90, 170], clover: [240, 235, 240], leaves: hsv2rgb(hue + .02, .65, .6) }[kind] || hsv2rgb(hue, .3, .6);
-  const colours = {
-    [M.BODY]: hsv2rgb(hue, sat * st.sat, val), [M.BODY2]: hsv2rgb(hue + .02 + .05 * sh, Math.min(1, sat * st.sat * (1.1 + .15 * sh)), val * (.78 - .06 * sh)), [M.BELLY]: hsv2rgb(hue - .02 - .04 * sh, sat * st.sat * (.9 - .2 * sh), Math.min(1, val * (1.15 + .1 * sh))),
-    [M.ACCENT]: kind === "needles" ? hsv2rgb(.07, .5, .5) : hsv2rgb(.1, .08, .62), [M.FLOWER]: flower,
-    [M.LEAF]: hsv2rgb(def.leaf, .55 * st.sat, .45), [M.LEAF2]: hsv2rgb(def.leaf - .03 - .05 * sh, .5 * st.sat * (1 - .2 * sh), .62 + .06 * sh), [M.LEAF3]: hsv2rgb(def.leaf + .03 + .05 * sh, .6 * st.sat, .3),
-    [M.MOSS]: hsv2rgb(def.leaf + .02, .5 * st.sat, .36), [M.TRUNK]: hsv2rgb(st.trunkHue, .4, .3), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .35, .48),
-    [M.STONE]: hsv2rgb(.1, .07, .6), [M.STONED]: hsv2rgb(.62 + .02 * sh, .1, .38), [M.WATER]: hsv2rgb(.58, .35, Math.max(.16, val * .55)), [M.WEB]: hsv2rgb(.56, .12, .78),
-  };
-  return colours;
-}
-
 
 
 // [kind, params] shorthands for the prop library below
@@ -6026,7 +6165,16 @@ const SET_PIECE_CHANCE = .25;
 
 // ---------------- the floor: a tile of the area's ground ----------------
 // Grown from the area's ground genome (art/ground.js, #119): its floor kind's, with the area's own `ground` over it.
-function floorTile(def, st) { return groundTile(def, st, 0); }
+// The floor as a strip of FLOOR_VARIANTS tiles side by side, each its own seed; the ground shader picks one for each repeat of the
+// tile (src/render/ground.ts), so the floor doesn't visibly repeat. They share the base and keep their details inside, so any
+// variant sits next to any other without a seam.
+const FLOOR_VARIANTS = 4;
+function floorTile(def, st) {
+  const tiles = Array.from({ length: FLOOR_VARIANTS }, (_, v) => groundTile(def, st, v)), w = tiles[0].sp.w, h = tiles[0].sp.h, sp = new Sprite(w * FLOOR_VARIANTS, h);
+  tiles.forEach((t, v) => { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const i = y * w + x, j = y * sp.w + v * w + x; sp.m[j] = t.sp.m[i]; sp.n[j * 3] = t.sp.n[i * 3]; sp.n[j * 3 + 1] = t.sp.n[i * 3 + 1]; sp.n[j * 3 + 2] = t.sp.n[i * 3 + 2]; } });
+  if (tiles[0].sp.stylised) sp.stylised = tiles[0].sp.stylised;
+  return { sp, colours: tiles[0].colours };
+}
 
 // ---------------- the prop library ----------------
 const stoneCol = (moss) => ({ [M.ACCENT]: hsv2rgb(.1, .06, .6), [M.BODY2]: hsv2rgb(.62, .08, .4), [M.BELLY]: hsv2rgb(.1, .05, .78), [M.LEAF]: hsv2rgb(.27, .5, .45), [M.LEAF2]: hsv2rgb(.25, .45, .62), [M.NOSE]: [20, 16, 24], ...(moss ? {} : {}) });
@@ -6112,7 +6260,11 @@ function prop(kind, o, def, st, r, s) {
     colours = o.bog ? { [M.MAGIC]: [60, 70, 50], [M.MAGIC2]: [120, 130, 90] } : water;
     // water reflects rather than glows: bake marks MAGIC as glowing, so use plain materials
     for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.MAGIC) sp.m[i] = M.BODY; else if (sp.m[i] === M.MAGIC2) sp.m[i] = M.BELLY;
-    colours = { [M.BODY]: colours[M.MAGIC], [M.BELLY]: colours[M.MAGIC2] };
+    // never a black hole at night (the art director, round 1): a moonlit rim along its far shore (its top edge) and the sky's faint reflection in its far half
+    const top = new Int32Array(sp.w).fill(-1), bot = new Int32Array(sp.w).fill(-1);
+    for (let x = 0; x < sp.w; x++) for (let y = 0; y < sp.h; y++) if (sp.m[y * sp.w + x] === M.BODY || sp.m[y * sp.w + x] === M.BELLY) { if (top[x] < 0) top[x] = y; bot[x] = y; }
+    for (let x = 0; x < sp.w; x++) if (top[x] >= 0) { sp.recolour(x, top[x], M.WEB); const mid = Math.round((top[x] + bot[x]) / 2); for (let y = top[x] + 1; y < mid; y++) if (sp.m[y * sp.w + x] === M.BODY && ((y - top[x]) & 1 || x & 1)) sp.recolour(x, y, M.ACCENT); }
+    const w0 = colours[M.MAGIC]; colours = { [M.BODY]: w0, [M.BELLY]: colours[M.MAGIC2], [M.ACCENT]: w0.map((c, i) => Math.min(255, c * 1.25 + [12, 14, 22][i])), [M.WEB]: o.bog ? [160, 170, 140] : [170, 195, 215] };
   } else if (kind === "bramble" || kind === "hedge") {
     const w = 22 * s, h = (kind === "hedge" ? 18 : 12) * s;
     for (let k = 0; k < (kind === "hedge" ? 6 : 4); k++) { const x = cx + uni(r, -w * .8, w * .8), y = gy - h * uni(r, .4, .7); sp.ellipse(x, y, uni(r, 6, 9) * s, h * .45, kind === "hedge" ? M.LEAF3 : M.LEAF, { round: st.round, density: o.bare ? .5 : .95, noise: .5, seed: k }); }
@@ -8116,6 +8268,8 @@ function landmarkSprite(id, st = {}, { ppm = 16 } = {}) { return pieceSprite(lan
 
 
 
+
+
 // ---------------- building blocks ----------------
 const pCup = (m, c, g, mat = M.ACCENT, tip = 0) => { const n = mark(m); m.seg([0, 0, 0], [0, .13, 0], .045, .06, mat, { group: g, paint: p => p[1] > .11 ? M.BELLY : undefined }); m.seg([0, .02, 0], [0, .15, 0], .035, .05, M.NOSE, { group: g, cut: true }); place(m, n, { roll: tip, at: c }); };
 const pCan = (m, c, g, mat = M.FRAME, o = {}) => { const n = mark(m); ctCyl(m, [0, 0, 0], [0, o.crushed ? .07 : .15, 0], .045, mat, g, { paint: p => Math.abs(p[1] - .06) < .03 && !o.crushed ? M.HAT1 : undefined, end: M.FRAME }); place(m, n, { roll: o.roll ?? 0, yaw: o.yaw ?? 0, at: c }); };
@@ -8156,8 +8310,8 @@ const PARTY = {
   "tea-lights": { cls: "small", desc: "a little cluster of tea lights flickering on a flat stone", glow: true, light: "warm", build(m) { m.ell([0, .03, 0], [.25, .035, .2], M.STONE, { group: 1, rough: .006 }); for (let i = 0; i < 5; i++) { const a = i * 1.26, c = [Math.cos(a) * .13, .06, Math.sin(a) * .09]; ctCyl(m, c, v3.add(c, [0, .025, 0]), .035, M.FRAME, 2 + i, { end: M.BELLY }); m.ell(v3.add(c, [0, .06, 0]), [.022, .04, .022], M.GLOW, { group: 10 + i, paint: p => p[1] < c[1] + .055 ? M.RUNE : undefined }); } } },
   "candles": { cls: "small", desc: "a cluster of pillar candles of different heights, wax pooled round them", glow: true, light: "warm", build(m) { m.ell([0, .01, 0], [.2, .012, .16], M.BELLY, { group: 1 }); [[0, 0, .3, .05], [.09, .04, .2, .04], [-.08, .05, .15, .04], [.03, -.07, .1, .035]].forEach(([x, z, h, r], i) => pCandle(m, [x, .01, z], h, r, 2 + i * 2)); } },
   "jam-jar-lantern": { cls: "small", desc: "a jam-jar lantern, a candle glowing inside", glow: true, light: "warm", pointLight: { rgb: [255, 186, 96], radius: 2.5, height: .2 }, build(m) { ctCyl(m, [0, 0, 0], [0, .18, 0], .07, M.SHADES, 1, { paint: p => p[2] > .04 && p[1] > .03 && p[1] < .15 ? M.GLOW : undefined, end: M.FRAME }); m.ell([0, .08, 0], [.03, .05, .03], M.RUNE, { group: 2, extra: true }); m.chain([[-.07, .18, 0, .005], [0, .28, 0, .005], [.07, .18, 0, .005]], M.FRAME, { group: 3 }); } },
-  "lantern-pole": { cls: "small", desc: "a paper lantern hanging from a shepherd's-crook pole, glowing in a neon", glow: true, light: "neon", bob: [.04, 2.8], pointLight: { rgb: "neon", radius: 3.5, height: 1.3 }, build(m) { m.chain([[0, 0, 0, .018], [0, 1.4, 0, .015], [.1, 1.55, 0, .012], [.25, 1.5, 0, .012]], M.FRAME, { group: 1 }); m.seg([.25, 1.5, 0], [.25, 1.38, 0], .004, .004, M.NOSE, { group: 2 }); m.ell([.25, 1.24, 0], [.14, .15, .14], M.MAGIC, { group: 3, paint: p => Math.abs(Math.sin(p[1] * 60)) > .85 ? M.MAGIC2 : undefined }); } },
-  "lantern-string": { cls: "small", desc: "a string of round paper lanterns sagging between two poles", glow: true, light: "neon", bob: [.05, 3.2], pointLight: { rgb: "neon", radius: 4.5, height: 1.2 }, build(m) { for (const x of [-.9, .9]) ctBar(m, [x, 0, 0], [x, 1.45, 0], 1, .02, M.WOOD, undefined); const pts = pSag([-.9, 1.42, 0], [.9, 1.42, 0], .25); m.chain(pts.map(p => [...p, .005]), M.NOSE, { group: 2 }); [2, 4, 6, 8].forEach((i, k) => m.ell(v3.add(pts[i], [0, -.12, 0]), [.09, .1, .09], k % 2 ? M.MAGIC2 : M.MAGIC, { group: 3 + k })); } },
+  "lantern-pole": { cls: "small", desc: "a paper lantern hanging from a shepherd's-crook pole, glowing warm amber", glow: true, light: "warm", bob: [.04, 2.8], pointLight: { rgb: [255, 186, 96], radius: 3.5, height: 1.3 }, build(m) { m.chain([[0, 0, 0, .018], [0, 1.4, 0, .015], [.1, 1.55, 0, .012], [.25, 1.5, 0, .012]], M.FRAME, { group: 1 }); m.seg([.25, 1.5, 0], [.25, 1.38, 0], .004, .004, M.NOSE, { group: 2 }); m.ell([.25, 1.24, 0], [.14, .15, .14], M.GLOW, { group: 3, paint: p => Math.abs(Math.sin(p[1] * 60)) > .85 ? M.RUNE : undefined }); } },
+  "lantern-string": { cls: "small", desc: "a string of round paper lanterns sagging between two poles", glow: true, light: "warm", bob: [.05, 3.2], pointLight: { rgb: [255, 186, 96], radius: 4.5, height: 1.2 }, build(m) { for (const x of [-.9, .9]) ctBar(m, [x, 0, 0], [x, 1.45, 0], 1, .02, M.WOOD, undefined); const pts = pSag([-.9, 1.42, 0], [.9, 1.42, 0], .25); m.chain(pts.map(p => [...p, .005]), M.NOSE, { group: 2 }); [2, 4, 6, 8].forEach((i, k) => m.ell(v3.add(pts[i], [0, -.12, 0]), [.09, .1, .09], k % 2 ? M.RUNE : M.GLOW, { group: 3 + k })); } },
   "fairy-bush": { cls: "small", desc: "a bush draped in warm fairy lights, a few bulbs in neon", glow: true, light: "warm", bob: [.015, 3.6], build(m) { for (const [x, y, z, r] of [[0, .3, 0, .38], [-.25, .22, .1, .25], [.25, .24, -.05, .26]]) m.ell([x, y, z], [r, r * .85, r], M.LEAF, { group: 1, rough: .03, paint: p => ctCell(p, 10, 2) < .3 ? M.LEAF3 : undefined }); const pts = []; for (let i = 0; i <= 16; i++) { const a = i / 16 * Math.PI * 2.4 - 1, y = .12 + i * .032; pts.push([Math.cos(a) * .5, y, Math.sin(a) * .42]); } pString(m, pts, 12, 3); } },
   "fairy-branch": { cls: "small", desc: "a fallen bough propped up, wound with fairy lights", glow: true, light: "warm", bob: [.02, 3.4], build(m) { m.chain([[-.7, 0, 0, .06], [-.3, .45, 0, .05], [.2, .6, .05, .04], [.6, .4, .05, .03]], M.TRUNK, { group: 1, rough: .01 }); m.seg([-.3, .45, 0], [-.4, 0, .1], .03, .03, M.TRUNK, { group: 1 }); const pts = []; for (let i = 0; i <= 18; i++) { const t = i / 18, b = t < .33 ? v3.lerp([-.7, 0, 0], [-.3, .45, 0], t * 3) : t < .66 ? v3.lerp([-.3, .45, 0], [.2, .6, .05], (t - .33) * 3) : v3.lerp([.2, .6, .05], [.6, .4, .05], (t - .66) * 3); pts.push(v3.add(b, [0, Math.sin(i * 1.7) * .06, Math.cos(i * 1.7) * .06])); } pString(m, pts, 10, 2); } },
   "tiki-torch": { cls: "small", desc: "a bamboo tiki torch, its flame burning", glow: true, light: "warm", build(m) { m.seg([0, 0, 0], [0, 1.25, 0], .025, .03, M.STRAW, { group: 1, paint: p => (p[1] * 6) % 1 < .08 ? M.WOOD : undefined }); m.seg([0, 1.2, 0], [0, 1.38, 0], .06, .05, M.STRAW, { group: 2, paint: p => ctCell(p, 30) < .3 ? M.WOOD : undefined }); m.flat([0, 1.52, .01], [1, 0, .3], [0, 1, 0], .1, .17, (s, t) => { const u = (t + 1) / 2, half = Math.sin(Math.PI * Math.min(1, u * 1.1)) * (1 - u) * 1.4; return Math.abs(s) > half ? null : Math.abs(s) < half * .45 && u < .6 ? M.RUNE : M.GLOW; }, { group: 3, bend: .2 }); } },
@@ -8169,8 +8323,8 @@ const PARTY = {
 
   // ---- hanging from real branches (Ed: hang them from real branch points; the pole versions stay for open ground). Each hangs from its
   // `hang` anchor (the top attach point, pixels from the sprite's top-left), which the prototype puts on a branch point; `bob` swings it ----
-  "lantern-hanging": { cls: "small", desc: "a paper lantern hanging on its cord from a branch, glowing in a neon", glow: true, light: "neon", hang: true, anchors: { hang: [0, 1.6, 0] }, bob: [.05, 2.8], pointLight: { rgb: "neon", radius: 3.5, height: 1.2 }, build(m) { m.seg([0, 1.6, 0], [0, 1.4, 0], .004, .004, M.NOSE, { group: 1 }); m.ell([0, 1.26, 0], [.14, .15, .14], M.MAGIC, { group: 2, paint: p => Math.abs(Math.sin(p[1] * 60)) > .85 ? M.MAGIC2 : undefined }); m.seg([0, 1.1, 0], [0, 1.06, 0], .03, .02, M.BODY3, { group: 3 }); } },
-  "lanterns-hanging": { cls: "small", desc: "three paper lanterns hanging at different heights from one branch", glow: true, light: "neon", hang: true, anchors: { hang: [0, 1.7, 0] }, bob: [.06, 3.1], pointLight: { rgb: "neon", radius: 4, height: 1.2 }, build(m) { [[-.2, 1.25, .02, .11], [.05, 1.0, -.05, .14], [.25, 1.3, .04, .1]].forEach(([x, y, z, r], i) => { m.chain([[0, 1.7, 0, .004], [x, y + r + .02, z, .004]], M.NOSE, { group: 1 }); m.ell([x, y, z], [r, r * 1.08, r], i === 1 ? M.MAGIC2 : M.MAGIC, { group: 2 + i, paint: p => Math.abs(Math.sin(p[1] * 70)) > .85 ? M.MAGIC2 : undefined }); }); } },
+  "lantern-hanging": { cls: "small", desc: "a paper lantern hanging on its cord from a branch, glowing warm amber", glow: true, light: "warm", hang: true, anchors: { hang: [0, 1.6, 0] }, bob: [.05, 2.8], pointLight: { rgb: [255, 186, 96], radius: 3.5, height: 1.2 }, build(m) { m.seg([0, 1.6, 0], [0, 1.4, 0], .004, .004, M.NOSE, { group: 1 }); m.ell([0, 1.26, 0], [.14, .15, .14], M.GLOW, { group: 2, paint: p => Math.abs(Math.sin(p[1] * 60)) > .85 ? M.RUNE : undefined }); m.seg([0, 1.1, 0], [0, 1.06, 0], .03, .02, M.BODY3, { group: 3 }); } },
+  "lanterns-hanging": { cls: "small", desc: "three paper lanterns hanging at different heights from one branch", glow: true, light: "warm", hang: true, anchors: { hang: [0, 1.7, 0] }, bob: [.06, 3.1], pointLight: { rgb: [255, 186, 96], radius: 4, height: 1.2 }, build(m) { [[-.2, 1.25, .02, .11], [.05, 1.0, -.05, .14], [.25, 1.3, .04, .1]].forEach(([x, y, z, r], i) => { m.chain([[0, 1.7, 0, .004], [x, y + r + .02, z, .004]], M.NOSE, { group: 1 }); m.ell([x, y, z], [r, r * 1.08, r], i === 1 ? M.RUNE : M.GLOW, { group: 2 + i, paint: p => Math.abs(Math.sin(p[1] * 70)) > .85 ? M.RUNE : undefined }); }); } },
   "jar-hanging": { cls: "small", desc: "a jam-jar lantern hanging on a wire from a branch, its candle lit", glow: true, light: "warm", hang: true, anchors: { hang: [0, 1.3, 0] }, bob: [.04, 2.6], pointLight: { rgb: [255, 186, 96], radius: 2.5, height: 1.0 }, build(m) { m.chain([[0, 1.3, 0, .005], [0, 1.15, 0, .005]], M.FRAME, { group: 1 }); m.chain([[-.07, 1.1, 0, .005], [0, 1.15, 0, .005], [.07, 1.1, 0, .005]], M.FRAME, { group: 1 }); ctCyl(m, [0, .92, 0], [0, 1.1, 0], .07, M.SHADES, 2, { paint: p => p[2] > .04 && p[1] > .95 && p[1] < 1.07 ? M.GLOW : undefined, end: M.FRAME }); m.ell([0, 1.0, 0], [.03, .05, .03], M.RUNE, { group: 3, extra: true }); } },
   "fairy-lights-hanging": { cls: "small", desc: "a strand of warm fairy lights hanging in loops from a branch", glow: true, light: "warm", hang: true, anchors: { hang: [0, 1.6, 0] }, bob: [.02, 3.3], build(m) { const pts = []; for (let i = 0; i <= 20; i++) { const t = i / 20; pts.push([Math.sin(t * Math.PI * 3) * .3, 1.6 - Math.sin(t * Math.PI) * .9 - t * .2, Math.cos(t * Math.PI * 3) * .08]); } pString(m, pts, 12, 1); } },
   "mirror-ball-hanging": { cls: "small", desc: "a little mirror ball hanging on a cord from a branch, throwing sparkles", glow: true, light: "neon", hang: true, anchors: { hang: [0, 1.5, 0] }, bob: [.03, 4.0], build(m) { m.seg([0, 1.5, 0], [0, 1.2, 0], .004, .004, M.NOSE, { group: 1 }); m.ell([0, 1.08, 0], [.12, .12, .12], M.FRAME, { group: 2, paint: p => { const a = Math.atan2(p[2], p[0]), b = p[1]; return (Math.floor(a * 5) + Math.floor(b * 30)) % 2 ? M.SHADES : ctCell(p, 30) < .25 ? M.MAGIC2 : undefined; } }); for (let i = 0; i < 4; i++) ctGlow(m, [Math.cos(i * 1.6) * .35, .6 + ctHash(i) * .5, Math.sin(i * 1.6) * .3], .018, 3 + i, M.MAGIC2); } },
@@ -8323,9 +8477,48 @@ const PICNIC = Object.fromEntries([
 
 // ---------------- the table ----------------
 const SIZE = { litter: 1.5, balloon: 1.2, small: 1.2, furniture: 1, set: 1, home: 1, picnic: 1 }; // litter a touch larger than life, to read at all
+// ---------------- generated (the prop generator, #119; behind ?props=gen): a few seeded variants each of the bunting, the balloon bunches
+// and the paper lanterns, so they vary in shape (their genomes: PARTY_PROP_GENOMES, art/props/genomes.js). Each variant is a piece of
+// its own ("gen-<kind>-<n>") that `replaces` the hand-made ones: the game swaps them in with partyObjects.generated (?props=gen). ----------------
+const pgVar = (kind, k) => propVariant(kind, k * 7 + 3, {}, PARTY_PROP_GENOMES);
+const PG_FLAG = { triangle: (s, t) => Math.abs(s) < (t + 1) / 2, square: (s, t) => t > -.8, round: (s, t) => s * s + (t - .2) ** 2 < .7, pennant: (s, t) => t > -1 + Math.abs(s) * 1.6 && (t < .6 || Math.abs(s) < .9) };
+function pgBunting(m, v) {
+  const L = v.span / 2, h = v.height, cols = [M.BODY, M.HAT1, M.POM, M.TOP, M.HAT2];
+  for (const x of [-L, L]) ctBar(m, [x, 0, 0], [x * 1.01, h, 0], 1, .025, M.WOOD, undefined);
+  for (let s = 0; s < v.strands; s++) {
+    const y = h - .05 - s * .24, pts = pSag([-L, y, 0], [L, y, 0], v.sag * (1 + s * .35), v.flags + 1);
+    m.chain(pts.map(p => [...p, .006]), M.CLOTH, { group: 2 + s * 3 });
+    for (let i = 1; i < pts.length - 1; i++) { const mat = cols[(i + v.offset + s) % v.colours], sz = v.size * (1 - s * .15), f = PG_FLAG[v.shape]; m.flat(v3.add(pts[i], [0, -sz, 0]), [1, 0, 0], [0, 1, 0], sz * .75, sz, (a, b) => f(a, b) ? mat : null, { group: 3 + s * 3, bend: .1 }); }
+    for (let i = 0; i < v.bulbs; i++) { const p = pts[Math.min(pts.length - 1, 1 + Math.floor((i + .5) / v.bulbs * (pts.length - 2)))]; m.ell(v3.add(p, [.03, -.02, .01]), [.018, .022, .018], M.GLOW, { group: 4 + s * 3 }); } // warm bulbs along it
+  }
+}
+function pgBalloons(m, v) {
+  const tie = v.anchor === "stake" ? [0, .3, 0] : [0, .06, 0];
+  if (v.anchor === "stake") pStake(m, tie, 1); else m.ell([0, .04, 0], [.06, .05, .06], M.BODY3, { group: 1 }); // a stake, or a little weight on the ground
+  pBunch(m, tie, v.count, 2, { lift: v.lift, spread: v.spread, from: v.from, seed: v.seed + 11, r: v.size });
+}
+function pgLanternShape(m, c, r, shape, i, g) { const tall = shape === "tall" || (shape === "mixed" && i % 2); m.ell(c, tall ? [r * .8, r * 1.5, r * .8] : [r, r * 1.05, r], i % 2 ? M.RUNE : M.GLOW, { group: g, paint: p => Math.abs(Math.sin((p[1] - c[1]) / r * 6)) > .88 ? M.RUNE : undefined }); return tall ? r * 1.5 : r * 1.05; } // warm amber paper (the art director, round 1: the party as warm pools of light)
+function pgLanternString(m, v) {
+  const L = v.span / 2, h = v.height;
+  for (const x of [-L, L]) ctBar(m, [x, 0, 0], [x, h, 0], 1, .02, M.WOOD, undefined);
+  const pts = pSag([-L, h - .03, 0], [L, h - .03, 0], v.sag, 12); m.chain(pts.map(p => [...p, .005]), M.NOSE, { group: 2 });
+  for (let i = 0; i < v.count; i++) { const p = pts[1 + Math.round((i + .5) / v.count * 10)], r = v.size * (.8 + ((i * 37) % 5) / 10), drop = .04 + r; m.seg(p, v3.add(p, [0, -drop + r, 0]), .004, .004, M.NOSE, { group: 2 }); pgLanternShape(m, v3.add(p, [0, -drop, 0]), r, v.shape, i, 3 + i); }
+}
+function pgLanternsHanging(m, v, top) {
+  for (let i = 0; i < v.count; i++) { const a = i / Math.max(1, v.count) * 2.4 - 1.2, x = Math.sin(a) * .38 * (v.count > 1), z = Math.cos(a) * .05, r = v.size * (.8 + ((i * 53) % 5) / 10), y = top[1] - v.drop * (.55 + ((i * 29) % 7) / 10); m.chain([[...top, .004], [x, y + r * 1.4, z, .004]], M.NOSE, { group: 1 }); pgLanternShape(m, [x, y, z], r, v.shape, i, 2 + i); }
+}
+const PARTY_GEN = {};
+for (let k = 0; k < 4; k++) {
+  const b = pgVar("buntingRun", k), bl = pgVar("balloonBunch", k), ls = pgVar("lanternString", k), lh = pgVar("lanternsHanging", k), top = [0, .45 + lh.drop * 1.6, 0];
+  PARTY_GEN[`gen-bunting-${k}`] = { cls: "set", replaces: ["bunting-run"], desc: `bunting: ${b.strands} ${b.shape} strand${b.strands > 1 ? "s" : ""} of ${b.flags} flags, warm bulbs along it`, glow: true, light: "warm", bob: [.02, 3.4], build(m) { pgBunting(m, pgVar("buntingRun", k)); } };
+  PARTY_GEN[`gen-balloons-${k}`] = { cls: "balloon", replaces: ["balloons-stake", "balloon-single"], desc: `a bunch of ${bl.count} balloons tied to a ${bl.anchor}`, bob: [.1, 3.6], anchors: { tie: bl.anchor === "stake" ? [0, .3, 0] : [0, .06, 0] }, build(m) { pgBalloons(m, pgVar("balloonBunch", k)); } };
+  PARTY_GEN[`gen-lanterns-${k}`] = { cls: "small", replaces: ["lantern-string"], desc: `${ls.count} ${ls.shape} paper lanterns sagging between two poles, glowing warm amber`, glow: true, light: "warm", bob: [.05, 3.2], pointLight: { rgb: [255, 186, 96], radius: 4.5, height: 1.2 }, build(m) { pgLanternString(m, pgVar("lanternString", k)); } };
+  PARTY_GEN[`gen-lanterns-hanging-${k}`] = { cls: "small", replaces: ["lanterns-hanging", "lantern-hanging"], desc: `${lh.count} ${lh.shape} paper lantern${lh.count > 1 ? "s" : ""} hanging from a branch, glowing warm amber`, glow: true, light: "warm", hang: true, anchors: { hang: top }, bob: [.06, 3.1], pointLight: { rgb: [255, 186, 96], radius: 4, height: 1.2 }, build(m) { pgLanternsHanging(m, pgVar("lanternsHanging", k), top); } };
+}
+
 const PARTY_CLASSES = ["litter", "balloon", "small", "furniture", "set", "home", "picnic"];
 const bobOf = (id, b) => b && { amplitude: b[0], period: b[1], phase: +((id.length * .137 + id.charCodeAt(id.length - 1) * .071) % 1).toFixed(2) };
-const PARTY_OBJECTS = [...Object.entries(PARTY), ...Object.entries(BALLOONS).map(([id, d]) => [id, { cls: "balloon", ...d }]), ...Object.entries(CAMPFIRES), ...Object.entries(HOME).map(([id, d]) => [id, { cls: "home", ...d }]), ...Object.entries(PICNIC).map(([id, d]) => [id, { cls: "picnic", ...d }])].map(([id, d]) => ({ id, size: SIZE[d.cls], split: null, glow: false, decal: false, light: null, frames: 1, ...d, bob: bobOf(id, d.bob) }));
+const PARTY_OBJECTS = [...Object.entries(PARTY), ...Object.entries(BALLOONS).map(([id, d]) => [id, { cls: "balloon", ...d }]), ...Object.entries(CAMPFIRES), ...Object.entries(HOME).map(([id, d]) => [id, { cls: "home", ...d }]), ...Object.entries(PICNIC).map(([id, d]) => [id, { cls: "picnic", ...d }]), ...Object.entries(PARTY_GEN)].map(([id, d]) => ({ id, size: SIZE[d.cls], split: null, glow: false, decal: false, light: null, frames: 1, ...d, bob: bobOf(id, d.bob) }));
 const PARTY_BY_ID = Object.fromEntries(PARTY_OBJECTS.map(d => [d.id, d]));
 // The party neons (the sigils' neon palette) a neon piece can be baked in; warm light is candle gold.
 const PARTY_LIGHT_NEONS = Object.keys(NEON);
@@ -8372,7 +8565,7 @@ const CLUSTERS = {
   "fireside": { desc: "a campfire with log seats, camping chairs, cups, a rug, and balloons tied nearby", pieces: [["campfire-logs", 0, 0], ["camping-chair", 1.5, .9, "left"], ["picnic-rug", -1.4, .9], ["cups", .4, 1.4], ["balloons-post", -1.6, -1.1], ["balloon-half", .9, 1.6]] },
   "bonfire-night": { desc: "a bonfire with hay seats round it, cans, glowsticks and a bunch of balloons on a post", pieces: [["bonfire", 0, 0], ["hay-seat", -1.6, .6], ["hay-seat", 1.5, .8, "left"], ["cans", .3, 1.4], ["glowsticks-strewn", -.6, 1.5, undefined, "acid"], ["balloons-post", 2.0, -.9, "left"]] },
 };
-const PARTY_CLUSTERS = Object.entries(CLUSTERS).map(([id, d]) => ({ id, size: "party", ...d, pieces: d.pieces.map(([p, x, z, f, neon]) => [`party:${p}${neon ? "@" + neon : ""}`, x, z, f]) }));
+const PARTY_CLUSTERS = Object.entries(CLUSTERS).map(([id, d]) => ({ id, size: "party", ...d, pieces: d.pieces.map(([p, x, z, f, neon]) => [`party:${p}${neon && PARTY_BY_ID[p]?.light === "neon" ? "@" + neon : ""}`, x, z, f]) })); // (a warm piece carries no neon)
 const PARTY_CLUSTER_BY_ID = Object.fromEntries(PARTY_CLUSTERS.map(d => [d.id, d]));
 
 // A sample patch of party ground, for the lab and previews: clusters and loose litter and lights scattered over a w × h

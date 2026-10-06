@@ -118,7 +118,8 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
       if (wave === undefined || Math.hypot(m.x - w.x, m.z - w.z) > range) continue;
       const species = AREA_TYPES[g.map.typeOf(m.cell[0], m.cell[1])].creature, top = (v.markerArt.height.get(species) ?? 0) * v.mpp * scale;
       const k = shown(m.key, m.x, m.z, top);
-      if (k > 0.02) nums.push({ x: m.x, z: m.z, y: lift(top), wave, colour: v.markerArt.colour.get(species)!, alpha: 1, show: k, top, pin: pin(m.x, m.z) });
+      // the next stone's number as bright as its ring; the rest dimmer (the art director, #188)
+      if (k > 0.02) nums.push({ x: m.x, z: m.z, y: lift(top), wave, colour: v.markerArt.colour.get(species)!, alpha: m.stage === "next" ? 1 : 0.5, show: k, top, pin: pin(m.x, m.z) });
     }
     for (const a of g.party.areas.values()) {
       if (!a.wave) continue;

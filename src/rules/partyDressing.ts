@@ -5,7 +5,8 @@
 // mirror ball stand on their poles); point lights from campfires and lanterns only, a few per area.
 // Everything is seeded from the area's cell, so it's the same each time. No drawing here.
 import { PARTY_BY_ID, PARTY_CLUSTERS, PARTY_LIGHT_NEONS, PARTY_OBJECTS } from "../../art/party.js";
-import { NEON } from "../../art/sigils.js";
+import { NEON, SIGIL_NEON } from "../../art/sigils.js";
+import { AREAS } from "../../art/areas.js";
 import type { ForestMap } from "./map";
 
 import type { Cell } from "./partition";
@@ -36,6 +37,8 @@ export interface Dressing {
   hanging: Placed[];
   /** The pieces whose light is real (campfires and lanterns: at most partyObjects.lightsPerArea), by their ref and place. */
   lights: Placed[];
+  /** The area's party neons (areaNeons): the view recolours its clusters' neon pieces from them. */
+  neons: string[];
 }
 
 /** Each piece that can be a loose one. */
@@ -45,27 +48,41 @@ const SETS = DEFS.filter(d => d.cls === "set");
 /** The clusters any party area can have: all but home's own (#53). */
 const WILD_CLUSTERS = PARTY_CLUSTERS.filter(c => !c.id.startsWith("home-"));
 
-/** A ref for a piece, its neon and balloons picked at random (Ed: random per placement). */
-export function refFor(d: PartyDef, r: () => number): string {
-  const neon = d.light === "neon" ? "@" + PARTY_LIGHT_NEONS[Math.floor(r() * PARTY_LIGHT_NEONS.length)] : "";
+/** An area's party neons (the art director, round 1: "neons limited to the area's own colour plus one accent", so the party reads
+ *  as warm pools, not six hues at once): its creature's sigil colour three times in four, one accent picked for the area; home,
+ *  which has no creature, violet with a cyan accent. */
+export function areaNeons(map: ForestMap, cell: Cell): string[] {
+  const home = cell[0] === map.centreCell[0] && cell[1] === map.centreCell[1];
+  if (home) return ["cyan", "cyan", "cyan", "cyan"]; // home: its speakers' and runes' cyan alone, with the warm light (the art director, round 2)
+  const own = (SIGIL_NEON as Record<string, string>)[(AREAS as { creature: string }[])[map.typeOf(cell[0], cell[1])]?.creature] ?? "violet";
+  const others = PARTY_LIGHT_NEONS.filter(n => n !== own), accent = others[Math.floor(rng(map.seed * 31 + cell[0] * 977 + cell[1] * 131 + 5)() * others.length)];
+  return [own, own, own, accent];
+}
+/** A ref for a piece: its neon from the area's (neons, else any), its balloons' palette at random (Ed: random per placement). */
+export function refFor(d: PartyDef, r: () => number, neons: string[] = PARTY_LIGHT_NEONS): string {
+  const neon = d.light === "neon" ? "@" + neons[Math.floor(r() * neons.length)] : "";
   const pal = d.cls === "balloon" ? "~" + PALETTES[Math.floor(r() * PALETTES.length)] : "";
   return `party:${d.id}${neon}${pal}`;
 }
 
-/** Whether a piece is left out (partyObjects.exclude; Ed, v271: "the glowing party cubes look too much like game objects"). */
-export const excluded = (ref: string, t: Tuning) => t.partyObjects.exclude.includes(pieceId(ref));
+/** The hand-made pieces the prop generator's variants replace (art/party.js PARTY_GEN, "gen-*", each with its `replaces`). */
+const REPLACED = new Set(DEFS.flatMap(d => (d as PartyDef & { replaces?: string[] }).replaces ?? []));
+/** Whether a piece is left out: partyObjects.exclude (Ed, v271: "the glowing party cubes look too much like game objects"); the
+ *  generated variants unless partyObjects.generated (?props=gen), and the hand-made ones they replace when it is. */
+export const leftOut = (id: string, t: Tuning) => t.partyObjects.exclude.includes(id) || (id.startsWith("gen-") ? !t.partyObjects.generated : t.partyObjects.generated && REPLACED.has(id));
+export const excluded = (ref: string, t: Tuning) => leftOut(pieceId(ref), t);
 
 /** The party objects of a partified area (seeded by its cell). */
 export function dressingOf(map: ForestMap, cell: Cell, t: Tuning): Dressing {
-  const pool = POOL.filter(d => !t.partyObjects.exclude.includes(d.id)), sets = SETS.filter(d => !t.partyObjects.exclude.includes(d.id));
+  const pool = POOL.filter(d => !leftOut(d.id, t)), sets = SETS.filter(d => !leftOut(d.id, t));
   const P = t.partyObjects, r = rng(map.seed * 4517 + cell[0] * 7349 + cell[1] * 2903 + 11), site = map.siteOf(cell[0], cell[1]);
   const d = map.dancefloor, clear = floorClearing(t) + 3, ss = map.soundsystemSpot(cell[0], cell[1]);
   const taken: { x: number; z: number; r: number }[] = [];
   // A free spot in the area: out from its clearing's middle, not on a path, kept ground, the
   // dancefloor's clearing, its soundsystem or anything already placed.
-  const spotFor = (gap: number, from = 0.08, to = 0.45): { x: number; z: number } | null => {
+  const spotFor = (gap: number, from = 0.08, to = 0.45, round?: { x: number; z: number; near: number; far: number }): { x: number; z: number } | null => {
     for (let k = 0; k < 40; k++) {
-      const a = r() * Math.PI * 2, dist = map.areaSize * (from + r() * (to - from)), x = site.x + Math.cos(a) * dist, z = site.z + Math.sin(a) * dist;
+      const a = r() * Math.PI * 2, dist = round ? round.near + r() * (round.far - round.near) : map.areaSize * (from + r() * (to - from)), x = (round ?? site).x + Math.cos(a) * dist, z = (round ?? site).z + Math.sin(a) * dist;
       const at = map.areaAt(x, z);
       if (at.cell[0] !== cell[0] || at.cell[1] !== cell[1] || map.paths.at(x, z, 1) || map.hardClear(x, z)) continue;
       // Never on the dancefloor, its rim or its ring of speakers (Ed: home is a party area too, but
@@ -79,7 +96,8 @@ export function dressingOf(map: ForestMap, cell: Cell, t: Tuning): Dressing {
     return null;
   };
   const between = ([lo, hi]: number[]) => lo + Math.floor(r() * (hi - lo + 1));
-  const out: Dressing = { clusters: [], loose: [], caught: null, hanging: [], lights: [] };
+  const neons = areaNeons(map, cell), ref = (d: PartyDef, rr: () => number) => refFor(d, rr, neons);
+  const out: Dressing = { clusters: [], loose: [], caught: null, hanging: [], lights: [], neons };
   // Home (Ed, 2026-10-05: "It has party decorations instead of trees; ... they can be scattered
   // around the whole home area, excluding the dancefloor"): its meadow strewn all over with the party
   // pieces, by class (partyObjects.home.weights: the home set, small lights, balloons, litter,
@@ -87,28 +105,35 @@ export function dressingOf(map: ForestMap, cell: Cell, t: Tuning): Dressing {
   // clearing, the paths, the treehouse and her seat; an arch over each path where it leaves the
   // floor's clearing. No hanging things: home has no trees.
   const home = cell[0] === map.centreCell[0] && cell[1] === map.centreCell[1];
-  if (home) return homeDressing(map, t, r, out, refFor);
+  if (home) return homeDressing(map, t, r, out, ref);
   for (let i = 0, n = between(P.clusters); i < n; i++) {
     const s = spotFor(4);
     if (s) out.clusters.push({ id: WILD_CLUSTERS[Math.floor(r() * WILD_CLUSTERS.length)].id, ...s, mirror: r() < 0.5 });
   }
-  if (r() < P.setChance && sets.length) { const s = spotFor(3); if (s) out.loose.push({ ref: refFor(sets[Math.floor(r() * sets.length)], r), ...s, flip: r() < 0.5 }); }
+  if (r() < P.setChance && sets.length) { const s = spotFor(3); if (s) out.loose.push({ ref: ref(sets[Math.floor(r() * sets.length)], r), ...s, flip: r() < 0.5 }); }
   for (let i = 0, n = between(P.loose); i < n; i++) {
     const s = spotFor(0.6, 0.05, 0.5);
-    if (s) out.loose.push({ ref: refFor(pool[Math.floor(r() * pool.length)], r), ...s, flip: r() < 0.5 });
+    if (s) out.loose.push({ ref: ref(pool[Math.floor(r() * pool.length)], r), ...s, flip: r() < 0.5 });
   }
-  const hangs = HANGING.filter(d => !t.partyObjects.exclude.includes(d.id));
-  for (let i = 0, n = hangs.length ? between(P.hanging) : 0; i < n; i++) { const s = spotFor(2, 0.1, 0.5); if (s) out.hanging.push({ ref: refFor(hangs[Math.floor(r() * hangs.length)], r), ...s, flip: r() < 0.5 }); }
+  const hangs = HANGING.filter(d => !leftOut(d.id, t));
+  for (let i = 0, n = hangs.length ? between(P.hanging) : 0; i < n; i++) { const s = spotFor(2, 0.1, 0.5); if (s) out.hanging.push({ ref: ref(hangs[Math.floor(r() * hangs.length)], r), ...s, flip: r() < 0.5 }); }
   if (r() < P.caughtChance) { const s = spotFor(1, 0.2, 0.55); if (s) out.caught = { ref: `party:balloon-caught~${PALETTES[Math.floor(r() * PALETTES.length)]}`, ...s, flip: r() < 0.5 }; }
   // Real lights: the loose campfires and lanterns first (the clusters' own are added by the view, which knows their layout), at most lightsPerArea.
   for (const p of [...out.loose, ...out.hanging]) { const def = partyDef(p.ref); if (def && (def.pointLight || LANTERNS.has(def.id)) && !def.cold && out.lights.length < P.lightsPerArea) out.lights.push(p); }
+  // Balloons by the lights (the art director, round 1: "balloons lit by the warm light, not glowing"): most of the loose balloons
+  // stand within a few metres of one of the area's real lights, so its warm light catches their shine.
+  if (out.lights.length) for (const p of out.loose) {
+    if (partyDef(p.ref)?.cls !== "balloon" || r() >= 0.7) continue;
+    const L = out.lights[Math.floor(r() * out.lights.length)], s = spotFor(0.6, 0, 0, { x: L.x, z: L.z, near: 1.2, far: 2.8 });
+    if (s) { p.x = s.x; p.z = s.z; }
+  }
   return out;
 }
 
 /** Home's dressing: party pieces scattered over its whole meadow (see dressingOf). */
 function homeDressing(map: ForestMap, t: Tuning, r: () => number, out: Dressing, ref: (d: PartyDef, r: () => number) => string): Dressing {
   const P = t.partyObjects, H = P.home, d = map.dancefloor, th = map.treehouse, clear = floorClearing(t);
-  const ok = (id: string) => !P.exclude.includes(id);
+  const ok = (id: string) => !leftOut(id, t);
   const byClass = new Map<string, PartyDef[]>();
   for (const def of DEFS) if (!def.hang && ok(def.id) && def.id !== P.arch && H.weights[def.cls] !== undefined) byClass.set(def.cls, [...(byClass.get(def.cls) ?? []), def]);
   const classes = [...byClass.keys()], total = classes.reduce((a, c) => a + H.weights[c], 0);

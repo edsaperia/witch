@@ -5,6 +5,7 @@
 // it is drawn into its own buffer as smooth alpha (hidden behind whatever the scene drew in front,
 // by the scene's depth), blurred a little and laid over the scaled-up picture (post.ts).
 import * as THREE from "three";
+import { VALUE_NOISE_GLSL } from "./shaders";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 
@@ -22,12 +23,7 @@ uniform float uStrength, uWind, uPixel;
 uniform sampler2D uDepth; uniform vec2 uLow;
 varying vec3 vWorld;
 ${LIGHT_GLSL}
-float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
-float vnoise(vec2 p) {
-  vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f);
-  float a = hash(i), b = hash(i + vec2(1, 0)), c = hash(i + vec2(0, 1)), d = hash(i + vec2(1, 1));
-  return a + (b - a) * u.x + (c - a) * u.y + (a - b - c + d) * u.x * u.y;
-}
+${VALUE_NOISE_GLSL}
 void main() {
   vec2 p = uSmooth > 0.5 ? vWorld.xz : (floor(vWorld.xz / uPixel) + 0.5) * uPixel; // pixel: on the art's grid
   vec2 drift = vec2(1.0, 0.35) * uWind * uTime;

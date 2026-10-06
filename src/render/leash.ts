@@ -39,6 +39,10 @@ import { huntsWitch } from "../rules/creatureStates";
 import { LEGENDS, relicGlints } from "../rules/legends";
 import { witchHeight } from "../rules/witch";
 import { SPRITE_UNIFORMS } from "./sprites";
+
+/** The join burst's colours (the art director, #188 and #200): the lanterns' amber, light and deep, with the creature's own
+ *  neon; nothing white (white is a hit's). */
+const JOIN_PALETTE = [[0.91, 0.71, 0.42], [0.82, 0.52, 0.28], [0.91, 0.71, 0.42]];
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, placed } from "./height";
 
@@ -167,7 +171,9 @@ export class LeashView {
   private evolved = new Map<number, number>();
   private berryRgb: [number, number, number];
   private fizzles: { x: number; z: number; at: number }[] = [];
-  private bursts: { x: number; z: number; at: number; seed: number }[] = [];
+  private bursts: { x: number; z: number; at: number; seed: number; rgb: number[] }[] = [];
+  /** When each creature joined the party (invited or befriended), for its little hop (render/view/creatures.ts). */
+  readonly joined = new Map<number, number>();
   /** Each stacked sigil's eased height above her hat, by creature. */
   private stackY = new Map<number, number>();
   private chain: { x: number; z: number; vx: number; vz: number }[] = [];
@@ -178,8 +184,6 @@ export class LeashView {
   /** Where each stacked sigil was last frame (a knockout's release splashes from there). */
   private lastSlots = new Map<number, THREE.Vector3>();
   /** Short-lived effects: hit sparks, puffs, splashes, released leashes, teleport sparkles, quake rings. */
-  /** Legends seen waking (their burst of soil shown once). */
-  private woke = new Set<number>();
   /** Whether each party animal was travelling last frame (to pop as it joins her posse again). */
   private travelling = new Map<number, boolean>();
   private fx: { kind: string; x: number; y: number; z: number; at: number; life: number; r: number; g: number; b: number; seed: number; tx?: number; tz?: number; size?: number; /** a ring's dots (else 36) and their size (else 0.7) */ n?: number; dot?: number }[] = [];
@@ -306,13 +310,11 @@ export class LeashView {
       if (!c.boss || c.leashed || Math.abs(c.x - w.x) > near || Math.abs(c.z - w.z) > near) continue;
       // Asleep (or asleep for good), it's scenery: nothing marks it (Ed, 2026-10-04). Waking, a burst
       // of soil as it heaves up; happy, a few hearts' worth of rosy motes rising.
-      if (c.legendState === "asleep" || c.legendState === "restless" || c.legendState === "slept") {
-        this.woke.delete(c.id);
+      if (c.legendState === "asleep" || c.legendState === "restless") {
         // Its dream shows while its quest can still be done (#87: rules/legends.ts sets c.questOpen); restless, it's a nightmare (the music builder's).
         if (c.questOpen ?? (c.legendState === "asleep" && c.quest && c.quest.done === undefined)) this.dreams.push(c);
         continue;
       }
-      if (c.legendState === "waking" && !this.woke.has(c.id)) { this.woke.add(c.id); for (let i = 0; i < 3; i++) this.fx.push({ kind: "puff", x: c.x + (i - 1) * 1.2, y: 0.4, z: c.z, at: time, life: 1.4, r: 0.5, g: 0.4, b: 0.28, seed: c.id * 13 + i }); }
       if (c.legendState === "happy") {
         for (let i = 0; i < 5; i++) { const ph = (time * 0.3 + hash2(c.id, i, 31)) % 1, a = hash2(c.id, i, 37) * Math.PI * 2; this.standing.add(c.x + Math.cos(a) * 1.4, 0.8 + ph * 4, c.z + Math.sin(a) * 1, 0.3, dot, 1, 0.55, 0.75, 0.8 * Math.sin(ph * Math.PI)); }
         continue;
@@ -731,17 +733,26 @@ export class LeashView {
     this.drawCombat(time, camera, width, height, hatTop);
     for (const e of s.events) {
       if (e.kind === "fizzled") this.fizzles.push({ x: e.x, z: e.z, at: time });
-      if (e.kind === "invited" || e.kind === "befriended") this.bursts.push({ x: e.x, z: e.z, at: time, seed: e.id });
+      if (e.kind === "invited" || e.kind === "befriended") {
+        // its own colour for the burst: its sigil's neon, calmed toward the night (as the HUD's, #188)
+        const sc = sigilColour(g.creatures[e.id]?.species ?? "fox"), m = (sc[0] + sc[1] + sc[2]) / 3;
+        this.bursts.push({ x: e.x, z: e.z, at: time, seed: e.id, rgb: sc.map((v: number) => (v * 0.6 + m * 0.4) / 255) });
+        this.joined.set(e.id, time);
+      }
     }
     this.fizzles = this.fizzles.filter(f => time - f.at < 0.7);
-    this.bursts = this.bursts.filter(b => time - b.at < 0.9);
-    // An invite: a little burst of sparkles and confetti as the party gear appears.
+    this.bursts = this.bursts.filter(b => time - b.at < 1.1);
+    for (const [id, at] of this.joined) if (time - at > 1) this.joined.delete(id);
+    // Joining the party (an invite, or made happy): a short burst in the night's party palette (the art director's: the
+    // lanterns' amber and the creature's own neon): confetti thrown up and falling, a few sparkles drifting up.
+    // (Thrown from just in front of it, toward the camera, so its own body doesn't hide the burst.)
     for (const b of this.bursts) {
-      const k = (time - b.at) / 0.9;
+      const k = (time - b.at) / 1.1;
       for (let i = 0; i < 28; i++) {
-        const a = hash2(b.seed, i, 3) * Math.PI * 2, sp = 2 + hash2(b.seed, i, 5) * 3, up = 2 + hash2(b.seed, i, 7) * 3;
-        const c = [[1, 0.4, 0.8], [0.3, 0.95, 1], [1, 0.9, 0.3], [0.6, 1, 0.4], [1, 1, 1]][i % 5];
-        this.standing.add(b.x + Math.cos(a) * sp * k, 0.6 + up * k - 4 * k * k, b.z + Math.sin(a) * sp * k, 0.3, dot, c[0], c[1], c[2], 1 - k);
+        const a = hash2(b.seed, i, 3) * Math.PI * 2, sp = 2 + hash2(b.seed, i, 5) * 2.4, up = 2.2 + hash2(b.seed, i, 7) * 2.6;
+        const c = i % 3 === 2 ? b.rgb : JOIN_PALETTE[i % 3], spark = i % 5 === 0;
+        const y = spark ? 0.9 + k * 2.6 : 0.7 + up * k - 4 * k * k, r = spark ? sp * 0.3 : sp;
+        this.standing.add(b.x + Math.cos(a) * r * k, y, b.z + 1.2 + Math.sin(a) * r * k * 0.7, spark ? 0.5 : 0.62, dot, c[0], c[1], c[2], 0.85 * (spark ? 1 - k * k : Math.min(1, 1.6 * (1 - k)))); // (under 1: overlapping, they add up toward amber, not white)
       }
     }
     // Talking: a faint ring round the creature she's talking to, filling as the chat goes on; a

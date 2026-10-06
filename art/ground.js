@@ -85,7 +85,11 @@ export function groundTile(def, st, variant = 0, W = 64, H = 48) {
   // the base: noise that wraps at the tile's edges, so tiles repeat without a seam
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const f = (a, b) => vnoise(a / B.scale[0], b / B.scale[1], seed);
-    const n = (f(x, y) * (W - x) * (H - y) + f(x - W, y) * x * (H - y) + f(x, y - H) * (W - x) * y + f(x - W, y - H) * x * y) / (W * H);
+    let n = (f(x, y) * (W - x) * (H - y) + f(x - W, y) * x * (H - y) + f(x, y - H) * (W - x) * y + f(x - W, y - H) * x * y) / (W * H);
+    if (variant) { // a variant's own blotches in the middle, fading to the shared base at the edges, so every variant meets every other
+      const e = Math.min(x, W - 1 - x, y, H - 1 - y) / 8, k = e >= 1 ? 1 : e * e * (3 - 2 * e);
+      n += (vnoise(x / B.scale[0], y / B.scale[1], seed + variant * 977) - vnoise(x / B.scale[0], y / B.scale[1], seed + 3301)) * k;
+    }
     sp.px(x, y, n < B.cuts[0] ? M.BODY2 : n > B.cuts[1] ? M.BELLY : M.BODY, ...up);
   }
   if (sty) grCluster(sp, [M.BODY2, M.BODY, M.BELLY]);
