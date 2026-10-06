@@ -398,7 +398,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
     return false;
   };
   // The beach and the sea past it (the tuning's beach): nothing grows or stands there.
-  const beach = round ? beachOf({ minX: 0, maxX: 0, minZ: 0, maxZ: 0, circle: { x: centre.x, z: centre.z, r: flightR, coast } }, tuning) : null;
+  const beach = round ? beachOf({ minX: 0, maxX: 0, minZ: 0, maxZ: 0, circle: { x: centre.x, z: centre.z, r: flightR, coast, seed } }, tuning) : null;
   const hardCell = (x: number, z: number, cell: Cell) => {
     if (beach && beach.intoSand(x, z) > 0) return true;
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return true;
@@ -441,7 +441,7 @@ export function generateMap(seed: number, tuning: Tuning): ForestMap {
   const remoteness = (cx: number, cy: number) => Math.min(1, Math.hypot(cx - centreCell[0], cy - centreCell[1]) / (round ? R : n / 2));
   const pad = A * 0.5;
   const bounds: Bounds = round
-    ? { minX: centre.x - flightR * most, maxX: centre.x + flightR * most, minZ: centre.z - flightR * most, maxZ: centre.z + flightR * most, circle: { x: centre.x, z: centre.z, r: flightR, coast } }
+    ? { minX: centre.x - flightR * most, maxX: centre.x + flightR * most, minZ: centre.z - flightR * most, maxZ: centre.z + flightR * most, circle: { x: centre.x, z: centre.z, r: flightR, coast, seed } }
     : { minX: pad, maxX: n * A - pad, minZ: pad, maxZ: n * A - pad };
   const map = {
     seed, tuning, n, margin, shape, cells, playable, inBuffer, coast, areaSize: A, partition, centreCell, homeRadius,

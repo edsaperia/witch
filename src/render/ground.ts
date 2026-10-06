@@ -55,6 +55,7 @@ uniform vec3 uFloor; // dancefloor x, z, radius
 uniform vec4 uCircle;
 uniform vec4 uBeach; // the beach round the circular map: its centre x, z, how far in from the edge the sand starts, out past it the sea (metres); off while .z is 0
 uniform float uCoast[${COAST_SAMPLES}]; // the edge's radius round (rules/mapShape.ts beachOf: from angle -pi, eased between)
+uniform float uSand[${COAST_SAMPLES}]; // the sand's width round, likewise (its bays and narrows)
 uniform vec4 uSweeps[4]; // partifying areas: the front's origin x, z, its radius, strength
 // The sleeping legends' clearings near her (Ed, 2026-10-06; rules/map.ts legendClearings): middle x, z, radius, ring width;
 // uLegendGlow: each one's ring brightening (0 to 1), when she stands in it.
@@ -110,7 +111,7 @@ void main() {
     vec2 bv = p - uBeach.xy;
     float ang = atan(bv.y, bv.x), cu = (ang + 3.14159265) / 6.2831853 * ${COAST_SAMPLES}.0, cf = fract(cu);
     int c0 = int(mod(floor(cu), ${COAST_SAMPLES}.0)), c1 = int(mod(floor(cu) + 1.0, ${COAST_SAMPLES}.0));
-    float edge = mix(uCoast[c0], uCoast[c1], cf), sand = edge - uBeach.z, shore = edge + uBeach.w;
+    float edge = mix(uCoast[c0], uCoast[c1], cf), sand = edge - mix(uSand[c0], uSand[c1], cf), shore = edge + uBeach.w;
     float bd = length(bv), arc = ang * edge;
     float into = (bd - sand - (vnoise(vec2(arc / 9.0, 3.0)) - 0.5) * 12.0) / 14.0; // (the woods' ragged edge, giving way to sand)
     if (into > 0.0 && (into >= 1.0 || vnoise(px / 2.0) * 0.6 + bayer4(px) * 0.4 < into)) {
@@ -448,6 +449,7 @@ export class Ground {
         uCircle: { value: new THREE.Vector4() },
         uBeach: { value: new THREE.Vector4() },
         uCoast: { value: new Array(COAST_SAMPLES).fill(0) },
+        uSand: { value: new Array(COAST_SAMPLES).fill(0) },
         uSweeps: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) },
         uSweepCount: { value: 0 },
         uLegendRings: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
@@ -527,7 +529,7 @@ export class Ground {
   /** The beach and the sea (render/beach.ts): drawn only while given one (she's near the edge). */
   setBeach(b: Beach | null): void {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, v = u.uBeach.value as THREE.Vector4;
-    if (b) { v.set(b.x, b.z, b.width, b.out); u.uCoast.value = Array.from(b.coast); } else v.set(0, 0, 0, 0);
+    if (b) { v.set(b.x, b.z, b.width, b.out); u.uCoast.value = Array.from(b.coast); u.uSand.value = Array.from(b.sand); } else v.set(0, 0, 0, 0);
   }
 
   setCircle(hue: number, hue2: number, brightness: number, turn: number): void {

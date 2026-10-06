@@ -84,6 +84,40 @@
           "type": "number",
           "minimum": 0
         },
+        "vary": {
+          "type": "object",
+          "properties": {
+            "amp": {
+              "type": "number",
+              "minimum": 0
+            },
+            "harmonics": {
+              "type": "number",
+              "minimum": 1
+            },
+            "rocky": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "rockyWidth": {
+              "type": "number",
+              "minimum": 0
+            },
+            "min": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "amp",
+            "harmonics",
+            "rocky",
+            "rockyWidth",
+            "min"
+          ],
+          "additionalProperties": false
+        },
         "ease": {
           "type": "number",
           "minimum": 0
