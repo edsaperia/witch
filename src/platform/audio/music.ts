@@ -63,6 +63,13 @@ export class Music {
     this.engine?.update(cue, gameTime, clock, on);
   }
 
+  /** What reaches the speakers (the audio watchdog taps it). */
+  get output(): AudioNode { return this.master; }
+  /** Whether it should be heard now: its volume turned up. */
+  get audible(): boolean { return this.master.gain.value > 0.02; }
+  /** Silenced for good and let go (the watchdog building afresh). */
+  dispose(): void { try { this.master.disconnect(); } catch { /* gone */ } }
+
   /** Dip the music by `by` (0-1) for `seconds`: her "ouch!" heard over it. */
   duck(by: number, seconds: number): void { this.duckBy = Math.max(0, Math.min(1, by)); this.duckUntil = this.ctx.currentTime + seconds; }
 
