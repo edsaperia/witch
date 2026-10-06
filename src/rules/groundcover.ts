@@ -13,9 +13,13 @@ import type { Forest } from "./forest";
 export const TUFT_KINDS = ["blades", "fern", "heather", "reeds", "moss", "clover"] as const;
 export interface Tuft { x: number; z: number; /** how open the ground is there (0 at an area's centre): the canopy's shade */ open: number; /** index in TUFT_KINDS */ kind: number; /** size factor */ size: number; /** area type */ type: number; flip: boolean }
 
-/** The tufts in grid cell (ci, cj), cell metres square, one chance every `spacing` metres, scaled by `density`. */
+/** A ground-cover cell's true size: `cell` metres rounded to whole tufts across (`spacing` apart).
+ *  Index cells by this, not by `cell`: tuftsInCell(ci, cj) covers [ci, ci + 1) of these. */
+export const tuftSpan = (cell: number, spacing: number): number => Math.max(1, Math.round(cell / spacing)) * spacing;
+
+/** The tufts in grid cell (ci, cj), about cell metres square (tuftSpan exactly), one chance every `spacing` metres, scaled by `density`. */
 export function tuftsInCell(map: ForestMap, ci: number, cj: number, cell: number, spacing: number, density: number, forest?: Forest): Tuft[] {
-  const out: Tuft[] = [], s = map.seed, n = Math.max(1, Math.round(cell / spacing)), d = map.dancefloor, R = floorClearing(map.tuning);
+  const out: Tuft[] = [], s = map.seed, n = Math.round(tuftSpan(cell, spacing) / spacing), d = map.dancefloor, R = floorClearing(map.tuning);
   // What tufts gather round (Ed, 2026-10-04: "extra grass touches"): trunks and rocks (not right
   // against them), and ponds, ringed with reeds; none in the water.
   const span = n * spacing, mx = (ci + 0.5) * span, mz = (cj + 0.5) * span, REEDS = TUFT_KINDS.indexOf("reeds"); // (the cell's true size: whole tufts across)
