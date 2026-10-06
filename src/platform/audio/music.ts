@@ -100,6 +100,8 @@ export class Music {
 
   /** What reaches the speakers (the audio watchdog taps it). */
   get output(): AudioNode { return this.master; }
+  /** The legend circle's layer, which reaches the speakers on its own (the measured output taps it too). */
+  get circleOutput(): AudioNode { return this.circleGain; }
   /** Whether it should be heard now: its volume turned up. */
   get audible(): boolean { return this.master.gain.value > 0.02; }
   /** Silenced for good and let go (the watchdog building afresh). */

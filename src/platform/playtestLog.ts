@@ -7,6 +7,12 @@ import { powerReport } from "../rules/power";
 import type { Game } from "../rules/game";
 import type { Stall } from "./stallLog";
 
+/** A measured silence (outputMeter.ts): game time, how long (s), where she was, the mix's intended volume and the master's
+ *  gain, the context's state and clock, the level it came back at (dBFS), and the nearest stall (its page time's distance, s, and its length, ms). */
+export interface OutputSilence { t: number; dur: number; x: number; z: number; area: string; mode: string; mix: number; gain: number; state: string; clock: number; back: number; stall?: { off: number; ms: number } }
+/** A mic check episode: its kind, game time, length (s), the output and mic levels (dBFS), the lag (ms), the nearest stall. */
+export interface MicLogged { kind: string; t: number; dur: number; outDb: number; micDb: number; lag: number; stall?: { off: number; ms: number } }
+
 export interface PlaytestSample {
   /** Game time (s), the wave, and the soundsystems standing (home included). */
   t: number;
@@ -28,7 +34,7 @@ export interface PlaytestSample {
   audio?: { state: string; volume: number; distort: number; distance: number; mends: number; /** The music's continuity so far (musicEngine.stats; Ed, round 16: "Music is still starting and stopping"): seconds left unscheduled, re-anchorings, sixteenths held for a stall, and how far ahead it schedules now. */ gap?: number; resyncs?: number; late?: number; ahead?: number };
 }
 
-export interface PlaytestRun { seed: number; build: string; started: string; interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[]; /** The audio watchdog's mends (round 13: the music stopping): what, at what game time. */ audio?: { t: number; what: string }[]; /** The last frames of 100 ms or more (platform/stallLog.ts), with what they spent it on. */ stalls?: Stall[] }
+export interface PlaytestRun { seed: number; build: string; started: string; interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[]; /** The audio watchdog's mends (round 13: the music stopping): what, at what game time. */ audio?: { t: number; what: string }[]; /** The last frames of 100 ms or more (platform/stallLog.ts), with what they spent it on. */ stalls?: Stall[]; /** The measured output silent while the music should be heard (platform/audio/outputMeter.ts), over 0.3 s each. */ silences?: OutputSilence[]; /** The mic check's episodes (?micCheck=1): dropouts after the game, and the mic hearing what the output didn't send. */ mic?: MicLogged[] }
 
 const KEY = "witch.playtest", KEEP = 8, EVERY = 10;
 const round = (x: number) => Math.round(x * 10) / 10;
@@ -86,6 +92,18 @@ export class PlaytestLog {
   audio(what: string): void {
     const a = (this.run.audio ??= []);
     if (a.length < 200) a.push({ t: Math.round(this.game.clock.time * 10) / 10, what });
+    this.save();
+  }
+  /** A measured silence while the music should be heard (main.ts fills it in). */
+  silence(e: OutputSilence): void {
+    const a = (this.run.silences ??= []);
+    if (a.length < 300) a.push(e);
+    this.save();
+  }
+  /** A mic check episode. */
+  mic(e: MicLogged): void {
+    const a = (this.run.mic ??= []);
+    if (a.length < 300) a.push(e);
     this.save();
   }
   /** Every run kept on this browser (this one included), as a JSON file to save. */
