@@ -1,0 +1,2207 @@
+[
+ {
+  "slider": "hatHeight",
+  "option": "hat none",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBrim",
+  "option": "hat none",
+  "min": 0.3,
+  "max": 2.6,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatTilt",
+  "option": "hat none",
+  "min": -0.9,
+  "max": 1,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBand",
+  "option": "hat none",
+  "min": 0,
+  "max": 4,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatHeight",
+  "option": "hat classic",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBrim",
+  "option": "hat classic",
+  "min": 0.3,
+  "max": 2.6,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatTilt",
+  "option": "hat classic",
+  "min": -0.9,
+  "max": 1,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBand",
+  "option": "hat classic",
+  "min": 0,
+  "max": 4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatHeight",
+  "option": "hat crooked",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBrim",
+  "option": "hat crooked",
+  "min": 0.3,
+  "max": 2.6,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatTilt",
+  "option": "hat crooked",
+  "min": -0.9,
+  "max": 1,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBand",
+  "option": "hat crooked",
+  "min": 0,
+  "max": 4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatHeight",
+  "option": "hat floppy",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBrim",
+  "option": "hat floppy",
+  "min": 0.3,
+  "max": 2.6,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatTilt",
+  "option": "hat floppy",
+  "min": -0.9,
+  "max": 1,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBand",
+  "option": "hat floppy",
+  "min": 0,
+  "max": 4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatHeight",
+  "option": "hat small",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBrim",
+  "option": "hat small",
+  "min": 0.3,
+  "max": 2.6,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatTilt",
+  "option": "hat small",
+  "min": -0.9,
+  "max": 1,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBand",
+  "option": "hat small",
+  "min": 0,
+  "max": 4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatHeight",
+  "option": "hat flowers",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBrim",
+  "option": "hat flowers",
+  "min": 0.3,
+  "max": 2.6,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatTilt",
+  "option": "hat flowers",
+  "min": -0.9,
+  "max": 1,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBand",
+  "option": "hat flowers",
+  "min": 0,
+  "max": 4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatHeight",
+  "option": "hat top",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBrim",
+  "option": "hat top",
+  "min": 0.3,
+  "max": 2.6,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatTilt",
+  "option": "hat top",
+  "min": -0.9,
+  "max": 1,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBand",
+  "option": "hat top",
+  "min": 0,
+  "max": 4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatHeight",
+  "option": "hat cowboy",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBrim",
+  "option": "hat cowboy",
+  "min": 0.3,
+  "max": 2.6,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatTilt",
+  "option": "hat cowboy",
+  "min": -0.9,
+  "max": 1,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBand",
+  "option": "hat cowboy",
+  "min": 0,
+  "max": 4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatHeight",
+  "option": "hat conical",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBrim",
+  "option": "hat conical",
+  "min": 0.3,
+  "max": 2.6,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatTilt",
+  "option": "hat conical",
+  "min": -0.9,
+  "max": 1,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBand",
+  "option": "hat conical",
+  "min": 0,
+  "max": 4,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatHeight",
+  "option": "hat boppers",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBrim",
+  "option": "hat boppers",
+  "min": 0.3,
+  "max": 2.6,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatTilt",
+  "option": "hat boppers",
+  "min": -0.9,
+  "max": 1,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBand",
+  "option": "hat boppers",
+  "min": 0,
+  "max": 4,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatHeight",
+  "option": "hat party",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBrim",
+  "option": "hat party",
+  "min": 0.3,
+  "max": 2.6,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatTilt",
+  "option": "hat party",
+  "min": -0.9,
+  "max": 1,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBand",
+  "option": "hat party",
+  "min": 0,
+  "max": 4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatHeight",
+  "option": "hat musketeer",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBrim",
+  "option": "hat musketeer",
+  "min": 0.3,
+  "max": 2.6,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatTilt",
+  "option": "hat musketeer",
+  "min": -0.9,
+  "max": 1,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBand",
+  "option": "hat musketeer",
+  "min": 0,
+  "max": 4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatHeight",
+  "option": "hat wizard",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBrim",
+  "option": "hat wizard",
+  "min": 0.3,
+  "max": 2.6,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatTilt",
+  "option": "hat wizard",
+  "min": -0.9,
+  "max": 1,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBand",
+  "option": "hat wizard",
+  "min": 0,
+  "max": 4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatHeight",
+  "option": "hat beanie",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBrim",
+  "option": "hat beanie",
+  "min": 0.3,
+  "max": 2.6,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatTilt",
+  "option": "hat beanie",
+  "min": -0.9,
+  "max": 1,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBand",
+  "option": "hat beanie",
+  "min": 0,
+  "max": 4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatHeight",
+  "option": "hat crown",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBrim",
+  "option": "hat crown",
+  "min": 0.3,
+  "max": 2.6,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatTilt",
+  "option": "hat crown",
+  "min": -0.9,
+  "max": 1,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBand",
+  "option": "hat crown",
+  "min": 0,
+  "max": 4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatHeight",
+  "option": "hat mushroom",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBrim",
+  "option": "hat mushroom",
+  "min": 0.3,
+  "max": 2.6,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatTilt",
+  "option": "hat mushroom",
+  "min": -0.9,
+  "max": 1,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBand",
+  "option": "hat mushroom",
+  "min": 0,
+  "max": 4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatHeight",
+  "option": "hat traffic",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBrim",
+  "option": "hat traffic",
+  "min": 0.3,
+  "max": 2.6,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatTilt",
+  "option": "hat traffic",
+  "min": -0.9,
+  "max": 1,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "hatBand",
+  "option": "hat traffic",
+  "min": 0,
+  "max": 4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomLength",
+  "option": "broom classic",
+  "min": 0.4,
+  "max": 2.4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomBend",
+  "option": "broom classic",
+  "min": -1.2,
+  "max": 1.5,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "bristles",
+  "option": "broom classic",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomThickness",
+  "option": "broom classic",
+  "min": 0.5,
+  "max": 2.2,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomLength",
+  "option": "broom fan",
+  "min": 0.4,
+  "max": 2.4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomBend",
+  "option": "broom fan",
+  "min": -1.2,
+  "max": 1.5,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "bristles",
+  "option": "broom fan",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomThickness",
+  "option": "broom fan",
+  "min": 0.5,
+  "max": 2.2,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomLength",
+  "option": "broom twig",
+  "min": 0.4,
+  "max": 2.4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomBend",
+  "option": "broom twig",
+  "min": -1.2,
+  "max": 1.5,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "bristles",
+  "option": "broom twig",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomThickness",
+  "option": "broom twig",
+  "min": 0.5,
+  "max": 2.2,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomLength",
+  "option": "broom round",
+  "min": 0.4,
+  "max": 2.4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomBend",
+  "option": "broom round",
+  "min": -1.2,
+  "max": 1.5,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "bristles",
+  "option": "broom round",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomThickness",
+  "option": "broom round",
+  "min": 0.5,
+  "max": 2.2,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomLength",
+  "option": "broom missile",
+  "min": 0.4,
+  "max": 2.4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomBend",
+  "option": "broom missile",
+  "min": -1.2,
+  "max": 1.5,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "bristles",
+  "option": "broom missile",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomThickness",
+  "option": "broom missile",
+  "min": 0.5,
+  "max": 2.2,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomLength",
+  "option": "broom curl",
+  "min": 0.4,
+  "max": 2.4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomBend",
+  "option": "broom curl",
+  "min": -1.2,
+  "max": 1.5,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "bristles",
+  "option": "broom curl",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomThickness",
+  "option": "broom curl",
+  "min": 0.5,
+  "max": 2.2,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomLength",
+  "option": "broom handlebars",
+  "min": 0.4,
+  "max": 2.4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomBend",
+  "option": "broom handlebars",
+  "min": -1.2,
+  "max": 1.5,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "bristles",
+  "option": "broom handlebars",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomThickness",
+  "option": "broom handlebars",
+  "min": 0.5,
+  "max": 2.2,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomLength",
+  "option": "broom hobbyhorse",
+  "min": 0.4,
+  "max": 2.4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomBend",
+  "option": "broom hobbyhorse",
+  "min": -1.2,
+  "max": 1.5,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "bristles",
+  "option": "broom hobbyhorse",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomThickness",
+  "option": "broom hobbyhorse",
+  "min": 0.5,
+  "max": 2.2,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomLength",
+  "option": "broom jetbike",
+  "min": 0.4,
+  "max": 2.4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomBend",
+  "option": "broom jetbike",
+  "min": -1.2,
+  "max": 1.5,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "bristles",
+  "option": "broom jetbike",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomThickness",
+  "option": "broom jetbike",
+  "min": 0.5,
+  "max": 2.2,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomLength",
+  "option": "broom oar",
+  "min": 0.4,
+  "max": 2.4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomBend",
+  "option": "broom oar",
+  "min": -1.2,
+  "max": 1.5,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "bristles",
+  "option": "broom oar",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomThickness",
+  "option": "broom oar",
+  "min": 0.5,
+  "max": 2.2,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomLength",
+  "option": "broom mop",
+  "min": 0.4,
+  "max": 2.4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomBend",
+  "option": "broom mop",
+  "min": -1.2,
+  "max": 1.5,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "bristles",
+  "option": "broom mop",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomThickness",
+  "option": "broom mop",
+  "min": 0.5,
+  "max": 2.2,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomLength",
+  "option": "broom pitchfork",
+  "min": 0.4,
+  "max": 2.4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomBend",
+  "option": "broom pitchfork",
+  "min": -1.2,
+  "max": 1.5,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "bristles",
+  "option": "broom pitchfork",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomThickness",
+  "option": "broom pitchfork",
+  "min": 0.5,
+  "max": 2.2,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomLength",
+  "option": "broom canoe",
+  "min": 0.4,
+  "max": 2.4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomBend",
+  "option": "broom canoe",
+  "min": -1.2,
+  "max": 1.5,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "bristles",
+  "option": "broom canoe",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomThickness",
+  "option": "broom canoe",
+  "min": 0.5,
+  "max": 2.2,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomLength",
+  "option": "broom ladder",
+  "min": 0.4,
+  "max": 2.4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomBend",
+  "option": "broom ladder",
+  "min": -1.2,
+  "max": 1.5,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "bristles",
+  "option": "broom ladder",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomThickness",
+  "option": "broom ladder",
+  "min": 0.5,
+  "max": 2.2,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomLength",
+  "option": "broom speeder",
+  "min": 0.4,
+  "max": 2.4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomBend",
+  "option": "broom speeder",
+  "min": -1.2,
+  "max": 1.5,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "bristles",
+  "option": "broom speeder",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomThickness",
+  "option": "broom speeder",
+  "min": 0.5,
+  "max": 2.2,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomLength",
+  "option": "broom bicycle",
+  "min": 0.4,
+  "max": 2.4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomBend",
+  "option": "broom bicycle",
+  "min": -1.2,
+  "max": 1.5,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "bristles",
+  "option": "broom bicycle",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomThickness",
+  "option": "broom bicycle",
+  "min": 0.5,
+  "max": 2.2,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomLength",
+  "option": "broom drone",
+  "min": 0.4,
+  "max": 2.4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomBend",
+  "option": "broom drone",
+  "min": -1.2,
+  "max": 1.5,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "bristles",
+  "option": "broom drone",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomThickness",
+  "option": "broom drone",
+  "min": 0.5,
+  "max": 2.2,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomLength",
+  "option": "broom gyrocopter",
+  "min": 0.4,
+  "max": 2.4,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomBend",
+  "option": "broom gyrocopter",
+  "min": -1.2,
+  "max": 1.5,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "bristles",
+  "option": "broom gyrocopter",
+  "min": 0.3,
+  "max": 3,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "broomThickness",
+  "option": "broom gyrocopter",
+  "min": 0.5,
+  "max": 2.2,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "cloakLength",
+  "option": "cloak none",
+  "min": 0.6,
+  "max": 6,
+  "poses": [
+   false,
+   false,
+   false,
+   false
+  ],
+  "greyed": true,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "cloakLength",
+  "option": "cloak short",
+  "min": 0.6,
+  "max": 6,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "cloakLength",
+  "option": "cloak long",
+  "min": 0.6,
+  "max": 6,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "cloakLength",
+  "option": "cloak hooded",
+  "min": 0.6,
+  "max": 6,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "scarfLength",
+  "option": "scarf",
+  "min": 0,
+  "max": 7,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "bagSize",
+  "option": "satchel",
+  "min": 0.4,
+  "max": 2.6,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ },
+ {
+  "slider": "backpackSize",
+  "option": "backpack",
+  "min": 0,
+  "max": 2.5,
+  "poses": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "greyed": false,
+  "dead": false,
+  "stale": false
+ }
+]

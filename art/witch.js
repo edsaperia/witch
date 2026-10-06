@@ -44,9 +44,9 @@ export function witchColours(st, outfit = DEFAULT_OUTFIT, { styleHues = true } =
 export const WITCH_LOOKS = { hat: ["classic", "crooked", "floppy", "small", "flowers", "bucket", "none", "top", "cowboy", "conical", "boppers", "party", "musketeer", "wizard", "beanie", "crown", "mushroom", "traffic"], hair: ["long", "bob", "buns", "mohawk"], top: ["jacket", "sequins", "mesh", "poncho", "cape"] };
 export const DEFAULT_LOOK = { hat: "classic", hair: "long", top: "jacket", phones: true, shades: false, glowsticks: false,
   // the witch generator's axes (art/witchGenome.js), each as hers by default: the hat's crown height (times hers), brim (times
-  // hers), lean (radians, + back) and band (its glowing band's height, times hers); the broom's kind (classic, fan, twig, round), handle length (times hers) and bend (+ up),
+  // hers), lean (radians, + back) and band (its glowing band's height, times hers); the broom's kind (classic, fan, twig, round), handle length (times hers), thickness (times hers) and bend (+ up),
   // the bristles' length (times hers); a cloak (none, short, long, hooded); a scarf, a satchel, a pendant and earrings
-  hatHeight: 1, hatBrim: 1, hatTilt: 0, hatBand: 1, broom: "classic", broomLength: 1, broomBend: 0, bristles: 1, cloak: "none", scarf: false, satchel: false, pendant: false, earrings: false,
+  hatHeight: 1, hatBrim: 1, hatTilt: 0, hatBand: 1, broom: "classic", broomLength: 1, broomBend: 0, bristles: 1, broomThickness: 1, cloak: "none", scarf: false, satchel: false, pendant: false, earrings: false,
   // its accessories (Ed: "both witchy and modern"): the cloak's length (times its kind's), patches on it; a familiar on her shoulder
   // (cat, crow, toad, bat, or none), a lantern at her hip, a potion vial and a spellbook at her belt; a bum bag, a festival
   // wristband, chunky trainers, round sunglasses (shades "round")
@@ -61,7 +61,16 @@ const brimR = (L, r) => (L.hatBrim ?? 1) === 1 ? r : [r[0] * L.hatBrim, r[1], r[
 // bristles centred at c along o.dir (classic as hers; fan: wide and flat; twig: a long thin bundle with stray twigs; round: a puff),
 // longer by `bristles`, kept bound at the same point.
 // The other kinds (art/brooms.js: a missile, a canoe, a quad drone...) draw their own body and back end in the same places.
+// The handle's thickness (broomThickness, times hers; Ed, 2026-10-06): every kind's body drawn through thicker(), so a missile's
+// fuselage, a ladder's rails and a bicycle's tubes all fatten or slim with it; the bristles and back ends keep their own knob.
+function thicker(m, t) {
+  if (t === 1) return m;
+  const across = (r, o) => o.dir || o.axes ? [r[0], r[1] * t, r[2] * t] : r.map(v => v * t); // (with a direction, r[0] runs along it)
+  return { ...m, seg: (a, b, r1, r2, mat, o = {}) => (m.seg(a, b, r1 * t, r2 * t, mat, o), m), chain: (pts, mat, o = {}) => (m.chain(pts.map(p => [p[0], p[1], p[2], p[3] * t]), mat, o), m),
+    ell: (c, r, mat, o = {}) => (m.ell(c, across(r, o), mat, o), m), box: (c, h, mat, o = {}) => (m.box(c, across(h, o), mat, o), m), flat: (...x) => (m.flat(...x), m) };
+}
 function broomHandle(m, L, a, b, r1 = .022, r2 = .018) {
+  m = thicker(m, L.broomThickness ?? 1);
   const K = BROOM_KINDS[L.broom]; if (K) return K.body(m, L, a, b, r1, r2);
   const k = L.broomLength ?? 1, bend = L.broomBend || 0;
   if (k === 1 && !bend) return m.seg(a, b, r1, r2, M.BROOM, { group: 2 });
@@ -77,11 +86,23 @@ function broomBristles(m, L, c, r, o) {
   m.ell(cc, R, M.STRAW, o);
   if (kind === "twig") for (let i = 0; i < 5; i++) { const s = (i / 4 - .5) * 2, from = v3.sub(cc, v3.mul(d, R[0] * .4)), to = v3.add(v3.sub(cc, v3.mul(d, R[0] * (1.15 + .1 * (i % 2)))), [0, s * R[1] * 1.1, (i % 3 - 1) * R[2] * .9]); m.seg(from, to, .012, .006, M.STRAW, { group: 3, paint: o.paint }); }
 }
+// The hat's lean (hatTilt, radians, + back) for the hats that don't lean their crown through hatPt: the whole hat drawn turned about
+// her brim, its paint asked about the point as it was before the turn.
+function tilted(m, brim, a) {
+  if (!a) return m;
+  const c = Math.cos(a), s = Math.sin(a), R = d => [d[0] * c - d[1] * s, d[0] * s + d[1] * c, d[2]], Ri = d => [d[0] * c + d[1] * s, -d[0] * s + d[1] * c, d[2]];
+  const P = p => v3.add(brim, R(v3.sub(p, brim))), O = o => ({ ...o, ...(o.dir ? { dir: R(o.dir), up: R(o.up ?? [0, 1, 0]) } : o.axes ? { axes: o.axes.map(R) } : { axes: [R([1, 0, 0]), R([0, 1, 0]), [0, 0, 1]] }),
+    ...(o.paint ? { paint: p => o.paint(v3.add(brim, Ri(v3.sub(p, brim)))) } : {}) });
+  const M2 = { ...m, seg: (p, q, r1, r2, mat, o = {}) => (m.seg(P(p), P(q), r1, r2, mat, { ...o, ...(o.paint ? { paint: O(o).paint } : {}) }), M2),
+    chain: (pts, mat, o = {}) => { for (let i = 0; i + 1 < pts.length; i++) M2.seg(pts[i].slice(0, 3), pts[i + 1].slice(0, 3), pts[i][3], pts[i + 1][3], mat, o); return M2; },
+    ell: (q, r, mat, o = {}) => (m.ell(P(q), r, mat, O(o)), M2), box: (q, h, mat, o = {}) => (m.box(P(q), h, mat, O(o)), M2), turn: P };
+  return M2;
+}
 // The hat: its brim at `brim` (tipped along dir), its crown through mid to tip (as hers would be). Returns the tip (the hatTip anchor).
 function drawHat(m, L, brim, dir, mid, tip) {
   const up = v3.norm(v3.sub(mid, brim)); // the crown's axis (it tips with her head)
   mid = hatPt(L, brim, mid); tip = hatPt(L, brim, tip);
-  if (NEW_HATS[L.hat]) return NEW_HATS[L.hat](m, L, brim, dir, up);
+  if (NEW_HATS[L.hat]) { const T = tilted(m, brim, L.hatTilt || 0); return T.turn ? T.turn(NEW_HATS[L.hat](T, L, brim, dir, up)) : NEW_HATS[L.hat](m, L, brim, dir, up); }
   const bandK = (L.hatBand ?? 1) * Math.max(1, 1 + ((L.hatBrim ?? 1) - 1) * .8); // (a broad brim would hide a narrow band from above: the band deepens with it)
   const band = p => p[1] < brim[1] + (L.hat === "classic" ? .045 : .065) * bandK ? M.MAGIC : undefined, from = (p, k, d = [0, 0, 0]) => v3.add(v3.add(brim, v3.mul(v3.sub(p, brim), k)), d);
   if (L.hat === "bucket") { // a soft bucket hat with cat ears, a glowing band round it
@@ -91,11 +112,11 @@ function drawHat(m, L, brim, dir, mid, tip) {
     for (const s of [-1, 1]) m.seg(v3.add(c, [-.01, .04, s * .065]), v3.add(c, [-.02, .15, s * .085]), .04, .012, M.HAT, { group: 11 });
     return v3.add(c, [-.02, .16, 0]);
   }
-  if (L.hat === "small") { // a little hat, tipped over to the near side
-    const b = v3.add(brim, [.01, .015, .065]), t = v3.add(b, [-.07, .17, .07]);
-    m.ell(b, [.1, .013, .095], M.HAT, { dir: [1, .25, .45], group: 11 });
-    m.chain([[...v3.add(b, [0, .01, .005]), .055], [...v3.add(b, [-.03, .09, .035]), .032], [...t, .011]], M.HAT, { group: 11, paint: p => p[1] < b[1] + .055 ? M.MAGIC : undefined });
-    return t;
+  if (L.hat === "small") { // a little hat, tipped over to the near side (its crown by hatHeight, its brim by hatBrim, leaning by hatTilt)
+    const T = tilted(m, brim, L.hatTilt || 0), k = L.hatHeight ?? 1, b = v3.add(brim, [.01, .015, .065]), t = v3.add(b, v3.mul([-.07, .17, .07], k));
+    T.ell(b, brimR(L, [.1, .013, .095]), M.HAT, { dir: [1, .25, .45], group: 11 });
+    T.chain([[...v3.add(b, [0, .01, .005]), .055], [...v3.add(b, v3.mul([-.03, .09, .035], k)), .032], [...t, .011]], M.HAT, { group: 11, paint: p => p[1] < b[1] + Math.min(.055 * (L.hatBand ?? 1), .1 * k) ? M.MAGIC : undefined });
+    return T.turn ? T.turn(t) : t;
   }
   if (L.hat === "floppy") { // a wide brim drooping all round, a short crown
     m.ell(brim, brimR(L, [.22, .016, .2]), M.HAT, { dir, group: 11 });
@@ -183,19 +204,19 @@ const NEW_HATS = {
   },
   crown(m, L, brim, dir, up) { // a golden crown, its points tipped with glowing jewels
     const h = .07 * (L.hatHeight ?? 1), bk = Math.min(1.3, L.hatBrim ?? 1);
-    m.seg(hatAt(brim, up, 0), hatAt(brim, up, h), .085 * bk, .09 * bk, M.BARKL, { group: 11, paint: p => Math.abs(v3.dot(v3.sub(p, brim), up) - h * .5) < .008 ? M.MAGIC : undefined });
+    m.seg(hatAt(brim, up, 0), hatAt(brim, up, h), .085 * bk, .09 * bk, M.BARKL, { group: 11, paint: p => Math.abs(v3.dot(v3.sub(p, brim), up) - h * .5) < .008 * Math.min(2.5, L.hatBand ?? 1) ? M.MAGIC : undefined });
     for (let k = 0; k < 5; k++) { const a2 = k / 5 * Math.PI * 2, o = [Math.cos(a2) * .085 * bk, 0, Math.sin(a2) * .085 * bk], b = hatAt(v3.add(brim, o), up, h), t = hatAt(v3.add(brim, o), up, h + .05); m.seg(b, t, .022, .006, M.BARKL, { group: 11 }); m.ell(t, [.012, .012, .012], M.MAGIC, { group: 11 }); }
     return hatAt(brim, up, h + .07);
   },
   mushroom(m, L, brim, dir, up) { // a spotted mushroom cap, its gills glowing underneath
     const h = .09 * (L.hatHeight ?? 1), bk = L.hatBrim ?? 1;
-    m.ell(hatAt(brim, up, h * .45), [.19 * bk, h, .18 * bk], M.HAT, { group: 11, paint: p => v3.dot(v3.sub(p, brim), up) < Math.max(.045, h * .15) ? M.MAGIC : spotPaint(p) ? M.HAT2 : undefined });
+    m.ell(hatAt(brim, up, h * .45), [.19 * bk, h, .18 * bk], M.HAT, { group: 11, paint: p => v3.dot(v3.sub(p, brim), up) < Math.max(.045, h * .15) * Math.min(2, L.hatBand ?? 1) ? M.MAGIC : spotPaint(p) ? M.HAT2 : undefined });
     return hatAt(brim, up, h * 1.5);
   },
   traffic(m, L, brim, dir, up) { // a traffic cone, its stripes glowing like reflectors
-    const h = .26 * (L.hatHeight ?? 1);
-    m.ell(brim, [.12, .014, .12], M.HAT, { dir, group: 11 });
-    m.seg(hatAt(brim, up, .01), hatAt(brim, up, h), .085, .015, M.HAT, { group: 11, paint: p => { const t = v3.dot(v3.sub(p, brim), up) / h; return (t > .35 && t < .48) || (t > .62 && t < .72) ? M.MAGIC2 : undefined; } });
+    const h = .26 * (L.hatHeight ?? 1), bk = Math.max(.6, L.hatBrim ?? 1), w = Math.min(2.2, L.hatBand ?? 1); // (its base by hatBrim, but never so small a stubby cone sinks into her hair; its stripes' width by hatBand)
+    m.ell(brim, [.12 * bk, .014, .12 * bk], M.HAT, { dir, group: 11 });
+    m.seg(hatAt(brim, up, .01), hatAt(brim, up, h), .085, .015, M.HAT, { group: 11, paint: p => { const t = v3.dot(v3.sub(p, brim), up) / h; return Math.abs(t - .415) < .065 * w || Math.abs(t - .67) < .05 * w ? M.MAGIC2 : undefined; } });
     return hatAt(brim, up, h + .01);
   },
 };

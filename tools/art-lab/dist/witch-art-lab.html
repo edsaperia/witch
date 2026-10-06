@@ -250,7 +250,7 @@ textarea { width: 100%; min-height: 90px; background: var(--bg); color: var(--fg
 
       <section style="display:grid;gap:10px">
         <div class="row" style="justify-content:space-between"><h2>Witch generator</h2><div class="row"><button id="witchGenReroll">Reroll</button></div></div>
-        <p class="note">Witches grown from genome data (art/witchGenome.js): the hat (shape, crown height, brim, lean), hair, top, cloak (none, short, long, hooded), broom (classic, fan, twig or round bristles; the handle's length and bend; the bristles' length), accessories (headphones, sunglasses, glow sticks, a scarf, a satchel, a glowing pendant, earrings) and a palette from one base hue. The first is ours, drawn from her own genome exactly as she always is; the rest are generated (Reroll for others). Each hovers, leans and stands. Click one to see its genome, to copy.</p>
+        <p class="note">Witches grown from genome data (art/witchGenome.js): the hat (shape, crown height, brim, lean), hair, top, cloak (none, short, long, hooded), broom (classic, fan, twig or round bristles; the handle's length, bend and thickness; the bristles' length), accessories (headphones, sunglasses, glow sticks, a scarf, a satchel, a glowing pendant, earrings) and a palette from one base hue. The first is ours, drawn from her own genome exactly as she always is; the rest are generated (Reroll for others). Each hovers, leans and stands. Click one to see its genome, to copy.</p>
         <div class="sheet-wrap"><canvas id="witchGenSheet" width="420" height="160"></canvas></div>
         <pre id="witchGenJson" class="note" style="white-space:pre-wrap;max-height:220px;overflow:auto"></pre>
       </section>
@@ -1784,8 +1784,8 @@ const masks = {
 
 // ---- inlined from art/witchGenome.js ----
 // The witch generator (Ed, logged on #79: "different hat sizes, broom, cloak and accessories"): a witch as genome data, like the
-// creatures and the plants. A genome names her hat (shape, crown height, brim, lean), hair, top, cloak, broom (kind, handle length
-// and bend, bristles' length), accessories (headphones, sunglasses, glow sticks, a scarf, a satchel, a pendant, earrings) and her
+// creatures and the plants. A genome names her hat (shape, crown height, brim, lean), hair, top, cloak, broom (kind, handle length,
+// bend and thickness, bristles' length), accessories (headphones, sunglasses, glow sticks, a scarf, a satchel, a pendant, earrings) and her
 // palette (a hue, saturation and value per part, the parts in WITCH_PARTS). genomeLook turns one into the look and outfit witch.js
 // draws (her parts baked, her motion animated as ever, her colours a palette over the parts' materials). WITCH_GENOME is our witch,
 // and draws exactly as she always has; witchGenome(seed) is a new one, every axis varied within limits that keep her a witch: a
@@ -2009,7 +2009,7 @@ const BROOM_KINDS = {
 const WITCH_GENOME = {
   hat: { shape: "classic", height: 1, brim: 1, tilt: 0, band: 1 },
   hair: "long", top: "jacket", cloak: "none",
-  broom: { kind: "classic", length: 1, bend: 0, bristles: 1 },
+  broom: { kind: "classic", length: 1, bend: 0, bristles: 1, thickness: 1 },
   accessories: { phones: true, shades: false, glowsticks: false, scarf: false, satchel: false, pendant: false, earrings: false,
     familiar: "none", lantern: false, vial: false, book: false, patches: false, bumbag: false, wristband: false, chunky: false },
   cloakLength: 1, scarfLength: 1, bagSize: 1, backpackSize: 0,
@@ -2022,15 +2022,30 @@ const WITCH_AXES = {
   hatShape: ["none", "classic", "crooked", "floppy", "small", "flowers", "top", "cowboy", "conical", "boppers", "party", "musketeer", "wizard", "beanie", "crown", "mushroom", "traffic"],
   hatHeight: [.3, 3], hatBrim: [.3, 2.6], hatTilt: [-.9, 1], hatBand: [0, 4],
   hair: ["long", "bob", "buns", "mohawk"], top: ["jacket", "sequins", "mesh", "poncho", "cape"], cloak: ["none", "short", "long", "hooded"],
-  broom: ["classic", "fan", "twig", "round", ...NEW_BROOMS], broomLength: [.4, 2.4], broomBend: [-1.2, 1.5], bristles: [.3, 3],
+  broom: ["classic", "fan", "twig", "round", ...NEW_BROOMS], broomLength: [.4, 2.4], broomThickness: [.5, 2.2], broomBend: [-1.2, 1.5], bristles: [.3, 3],
   scarfLength: [0, 7], bagSize: [.4, 2.6], backpackSize: [0, 2.5],
   cloakLength: [.6, 6], familiar: ["none", "cat", "crow", "toad", "bat"], // (Ed, on #98: "Longer cloaks."; 2026-10-06: "allow a longer cloak and a longer scarf"; the familiar, an accessory with a choice: accessories.familiar)
 };
+// Which of the sliders draw nothing on which of the options (Ed, 2026-10-06: "make sure that all the sliders do something for all
+// of the options"): the creator greys these out while that option is chosen, and tools/witch/slider-audit.mjs checks that every
+// other slider changes her at every option (and these indeed don't). No hat has no hat to shape; the brimless hats have no brim,
+// the plain cones no band; the brooms that aren't on a stick don't bend, and those with no back end have no bristles to grow;
+// no cloak has no length. (The scarf's and the satchel's sliders put them on.)
+const RIGID_BROOMS = ["missile", "jetbike", "canoe", "ladder", "speeder", "bicycle", "drone", "gyrocopter"], TAILLESS = ["hobbyhorse", "canoe", "ladder", "bicycle", "drone", "gyrocopter"];
+const WITCH_INERT = {
+  hatHeight: { hat: ["none"] }, hatTilt: { hat: ["none"] }, hatBrim: { hat: ["none", "boppers", "beanie"] }, hatBand: { hat: ["none", "conical", "boppers"] },
+  broomBend: { broom: RIGID_BROOMS }, bristles: { broom: TAILLESS }, cloakLength: { cloak: ["none"] },
+};
+/** Whether a slider (a WITCH_AXES number) draws anything on a look (genomeLook's): false where WITCH_INERT says it can't. */
+function sliderApplies(axis, look) {
+  const I = WITCH_INERT[axis]; if (!I) return true;
+  return Object.entries(I).every(([field, kinds]) => !kinds.includes(look[field]));
+}
 // The generator's own limits (narrower: a new witch is a witch, a pointed hat with its glowing band; as before round 2, so a seed draws as it did).
 const WITCH_RANDOM = {
   hatShape: ["classic", "crooked", "floppy", "small", "flowers"],
   broom: ["classic", "fan", "twig", "round"], // (a broom: the other kinds, art/brooms.js, are the creator's)
-  hatHeight: [.75, 1.6], hatBrim: [.75, 1.45], hatTilt: [-.25, .35], broomLength: [.85, 1.3], broomBend: [-.3, .6], bristles: [.8, 1.4],
+  hatHeight: [.75, 1.6], hatBrim: [.75, 1.45], hatTilt: [-.25, .35], broomLength: [.85, 1.3], broomBend: [-.3, .6], bristles: [.8, 1.4], broomThickness: [.85, 1.3],
 };
 const SKINS = [[.07, .25, .96], [.07, .32, .9], [.07, .42, .78], [.06, .5, .62], [.05, .55, .47], [.05, .5, .34]];
 const HAIRS = [[.07, .4, .14], [.07, .6, .33], [.04, .7, .5], [.11, .45, .88], [.02, .75, .7], [.6, .04, .86], [.85, .5, .8], [.5, .5, .7]]; // black, brown, auburn, blonde, red, silver, pink, teal
@@ -2063,6 +2078,7 @@ function witchGenome(seed = 0, { party = false } = {}) {
   const scarfLength = accessories.scarf ? uni([.6, 2.2]) : 1, bagSize = uni([.8, 1.5]), backpackSize = chance(.18) ? uni([.75, 1.3]) : 0;
   if (familiar !== "none") { const [a, b] = pick(FAMILIAR_COLOURS[familiar]); palette.familiar = a; palette.familiar2 = b; }
   palette.backpack = [r(), uni([.35, .7]), uni([.4, .75])]; palette.plume = [r(), uni([0, .5]), uni([.85, 1])]; palette.gold = [uni([.1, .14]), uni([.6, .8]), uni([.85, 1])];
+  broom.thickness = uni(WITCH_RANDOM.broomThickness); // (drawn last, so every other draw of a seed is as it was)
   return { hat, hair, top, cloak, cloakLength, scarfLength, bagSize, backpackSize, broom, accessories, palette };
 }
 // A genome saved before round 2 (or missing anything since): every field it lacks taken from hers, so old saves still load.
@@ -2073,14 +2089,14 @@ function upgradeGenome(g) {
 // The look and outfit witch.js draws a genome with.
 function genomeLook(g = WITCH_GENOME) {
   const look = { ...DEFAULT_LOOK, hat: g.hat.shape, hatHeight: g.hat.height, hatBrim: g.hat.brim, hatTilt: g.hat.tilt, hatBand: g.hat.band ?? 1, hair: g.hair, top: g.top, cloak: g.cloak,
-    broom: g.broom.kind, broomLength: g.broom.length, broomBend: g.broom.bend, bristles: g.broom.bristles, cloakLength: g.cloakLength ?? 1, scarfLength: g.scarfLength ?? 1, bagSize: g.bagSize ?? 1, backpackSize: g.backpackSize ?? 0, ...g.accessories };
+    broom: g.broom.kind, broomLength: g.broom.length, broomBend: g.broom.bend, bristles: g.broom.bristles, broomThickness: g.broom.thickness ?? 1, cloakLength: g.cloakLength ?? 1, scarfLength: g.scarfLength ?? 1, bagSize: g.bagSize ?? 1, backpackSize: g.backpackSize ?? 0, ...g.accessories };
   return { look, outfit: g.palette ? { ...DEFAULT_OUTFIT, ...g.palette } : null };
 }
 // What is wrong with a genome, if anything: an unknown kind, or a number outside its limits (hers always passes).
 function witchGenomeProblems(g) {
   const out = [], A = WITCH_AXES, inR = (v, [a, b]) => v >= a - 1e-9 && v <= b + 1e-9;
   if (!A.hatShape.includes(g.hat.shape)) out.push("hat " + g.hat.shape);
-  for (const [k, v, lim] of [["hatHeight", g.hat.height, A.hatHeight], ["hatBrim", g.hat.brim, A.hatBrim], ["hatTilt", g.hat.tilt, A.hatTilt], ["hatBand", g.hat.band ?? 1, A.hatBand], ["broomLength", g.broom.length, A.broomLength], ["broomBend", g.broom.bend, A.broomBend], ["bristles", g.broom.bristles, A.bristles], ["cloakLength", g.cloakLength ?? 1, A.cloakLength], ["scarfLength", g.scarfLength ?? 1, A.scarfLength], ["bagSize", g.bagSize ?? 1, A.bagSize], ["backpackSize", g.backpackSize ?? 0, A.backpackSize]]) if (!inR(v, lim)) out.push(`${k} ${v}`);
+  for (const [k, v, lim] of [["hatHeight", g.hat.height, A.hatHeight], ["hatBrim", g.hat.brim, A.hatBrim], ["hatTilt", g.hat.tilt, A.hatTilt], ["hatBand", g.hat.band ?? 1, A.hatBand], ["broomLength", g.broom.length, A.broomLength], ["broomBend", g.broom.bend, A.broomBend], ["bristles", g.broom.bristles, A.bristles], ["broomThickness", g.broom.thickness ?? 1, A.broomThickness], ["cloakLength", g.cloakLength ?? 1, A.cloakLength], ["scarfLength", g.scarfLength ?? 1, A.scarfLength], ["bagSize", g.bagSize ?? 1, A.bagSize], ["backpackSize", g.backpackSize ?? 0, A.backpackSize]]) if (!inR(v, lim)) out.push(`${k} ${v}`);
   if (g.accessories && !A.familiar.includes(g.accessories.familiar ?? "none")) out.push("familiar " + g.accessories.familiar);
   if (g.accessories && ![false, true, "round"].includes(g.accessories.shades ?? false)) out.push("shades " + g.accessories.shades); // sunglasses: none, plain or round
   if (!A.hair.includes(g.hair)) out.push("hair " + g.hair); if (!A.top.includes(g.top)) out.push("top " + g.top); if (!A.cloak.includes(g.cloak)) out.push("cloak " + g.cloak); if (!A.broom.includes(g.broom.kind)) out.push("broom " + g.broom.kind);
@@ -2125,9 +2141,9 @@ function witchColours(st, outfit = DEFAULT_OUTFIT, { styleHues = true } = {}) {
 const WITCH_LOOKS = { hat: ["classic", "crooked", "floppy", "small", "flowers", "bucket", "none", "top", "cowboy", "conical", "boppers", "party", "musketeer", "wizard", "beanie", "crown", "mushroom", "traffic"], hair: ["long", "bob", "buns", "mohawk"], top: ["jacket", "sequins", "mesh", "poncho", "cape"] };
 const DEFAULT_LOOK = { hat: "classic", hair: "long", top: "jacket", phones: true, shades: false, glowsticks: false,
   // the witch generator's axes (art/witchGenome.js), each as hers by default: the hat's crown height (times hers), brim (times
-  // hers), lean (radians, + back) and band (its glowing band's height, times hers); the broom's kind (classic, fan, twig, round), handle length (times hers) and bend (+ up),
+  // hers), lean (radians, + back) and band (its glowing band's height, times hers); the broom's kind (classic, fan, twig, round), handle length (times hers), thickness (times hers) and bend (+ up),
   // the bristles' length (times hers); a cloak (none, short, long, hooded); a scarf, a satchel, a pendant and earrings
-  hatHeight: 1, hatBrim: 1, hatTilt: 0, hatBand: 1, broom: "classic", broomLength: 1, broomBend: 0, bristles: 1, cloak: "none", scarf: false, satchel: false, pendant: false, earrings: false,
+  hatHeight: 1, hatBrim: 1, hatTilt: 0, hatBand: 1, broom: "classic", broomLength: 1, broomBend: 0, bristles: 1, broomThickness: 1, cloak: "none", scarf: false, satchel: false, pendant: false, earrings: false,
   // its accessories (Ed: "both witchy and modern"): the cloak's length (times its kind's), patches on it; a familiar on her shoulder
   // (cat, crow, toad, bat, or none), a lantern at her hip, a potion vial and a spellbook at her belt; a bum bag, a festival
   // wristband, chunky trainers, round sunglasses (shades "round")
@@ -2142,7 +2158,16 @@ const brimR = (L, r) => (L.hatBrim ?? 1) === 1 ? r : [r[0] * L.hatBrim, r[1], r[
 // bristles centred at c along o.dir (classic as hers; fan: wide and flat; twig: a long thin bundle with stray twigs; round: a puff),
 // longer by `bristles`, kept bound at the same point.
 // The other kinds (art/brooms.js: a missile, a canoe, a quad drone...) draw their own body and back end in the same places.
+// The handle's thickness (broomThickness, times hers; Ed, 2026-10-06): every kind's body drawn through thicker(), so a missile's
+// fuselage, a ladder's rails and a bicycle's tubes all fatten or slim with it; the bristles and back ends keep their own knob.
+function thicker(m, t) {
+  if (t === 1) return m;
+  const across = (r, o) => o.dir || o.axes ? [r[0], r[1] * t, r[2] * t] : r.map(v => v * t); // (with a direction, r[0] runs along it)
+  return { ...m, seg: (a, b, r1, r2, mat, o = {}) => (m.seg(a, b, r1 * t, r2 * t, mat, o), m), chain: (pts, mat, o = {}) => (m.chain(pts.map(p => [p[0], p[1], p[2], p[3] * t]), mat, o), m),
+    ell: (c, r, mat, o = {}) => (m.ell(c, across(r, o), mat, o), m), box: (c, h, mat, o = {}) => (m.box(c, across(h, o), mat, o), m), flat: (...x) => (m.flat(...x), m) };
+}
 function broomHandle(m, L, a, b, r1 = .022, r2 = .018) {
+  m = thicker(m, L.broomThickness ?? 1);
   const K = BROOM_KINDS[L.broom]; if (K) return K.body(m, L, a, b, r1, r2);
   const k = L.broomLength ?? 1, bend = L.broomBend || 0;
   if (k === 1 && !bend) return m.seg(a, b, r1, r2, M.BROOM, { group: 2 });
@@ -2158,11 +2183,23 @@ function broomBristles(m, L, c, r, o) {
   m.ell(cc, R, M.STRAW, o);
   if (kind === "twig") for (let i = 0; i < 5; i++) { const s = (i / 4 - .5) * 2, from = v3.sub(cc, v3.mul(d, R[0] * .4)), to = v3.add(v3.sub(cc, v3.mul(d, R[0] * (1.15 + .1 * (i % 2)))), [0, s * R[1] * 1.1, (i % 3 - 1) * R[2] * .9]); m.seg(from, to, .012, .006, M.STRAW, { group: 3, paint: o.paint }); }
 }
+// The hat's lean (hatTilt, radians, + back) for the hats that don't lean their crown through hatPt: the whole hat drawn turned about
+// her brim, its paint asked about the point as it was before the turn.
+function tilted(m, brim, a) {
+  if (!a) return m;
+  const c = Math.cos(a), s = Math.sin(a), R = d => [d[0] * c - d[1] * s, d[0] * s + d[1] * c, d[2]], Ri = d => [d[0] * c + d[1] * s, -d[0] * s + d[1] * c, d[2]];
+  const P = p => v3.add(brim, R(v3.sub(p, brim))), O = o => ({ ...o, ...(o.dir ? { dir: R(o.dir), up: R(o.up ?? [0, 1, 0]) } : o.axes ? { axes: o.axes.map(R) } : { axes: [R([1, 0, 0]), R([0, 1, 0]), [0, 0, 1]] }),
+    ...(o.paint ? { paint: p => o.paint(v3.add(brim, Ri(v3.sub(p, brim)))) } : {}) });
+  const M2 = { ...m, seg: (p, q, r1, r2, mat, o = {}) => (m.seg(P(p), P(q), r1, r2, mat, { ...o, ...(o.paint ? { paint: O(o).paint } : {}) }), M2),
+    chain: (pts, mat, o = {}) => { for (let i = 0; i + 1 < pts.length; i++) M2.seg(pts[i].slice(0, 3), pts[i + 1].slice(0, 3), pts[i][3], pts[i + 1][3], mat, o); return M2; },
+    ell: (q, r, mat, o = {}) => (m.ell(P(q), r, mat, O(o)), M2), box: (q, h, mat, o = {}) => (m.box(P(q), h, mat, O(o)), M2), turn: P };
+  return M2;
+}
 // The hat: its brim at `brim` (tipped along dir), its crown through mid to tip (as hers would be). Returns the tip (the hatTip anchor).
 function drawHat(m, L, brim, dir, mid, tip) {
   const up = v3.norm(v3.sub(mid, brim)); // the crown's axis (it tips with her head)
   mid = hatPt(L, brim, mid); tip = hatPt(L, brim, tip);
-  if (NEW_HATS[L.hat]) return NEW_HATS[L.hat](m, L, brim, dir, up);
+  if (NEW_HATS[L.hat]) { const T = tilted(m, brim, L.hatTilt || 0); return T.turn ? T.turn(NEW_HATS[L.hat](T, L, brim, dir, up)) : NEW_HATS[L.hat](m, L, brim, dir, up); }
   const bandK = (L.hatBand ?? 1) * Math.max(1, 1 + ((L.hatBrim ?? 1) - 1) * .8); // (a broad brim would hide a narrow band from above: the band deepens with it)
   const band = p => p[1] < brim[1] + (L.hat === "classic" ? .045 : .065) * bandK ? M.MAGIC : undefined, from = (p, k, d = [0, 0, 0]) => v3.add(v3.add(brim, v3.mul(v3.sub(p, brim), k)), d);
   if (L.hat === "bucket") { // a soft bucket hat with cat ears, a glowing band round it
@@ -2172,11 +2209,11 @@ function drawHat(m, L, brim, dir, mid, tip) {
     for (const s of [-1, 1]) m.seg(v3.add(c, [-.01, .04, s * .065]), v3.add(c, [-.02, .15, s * .085]), .04, .012, M.HAT, { group: 11 });
     return v3.add(c, [-.02, .16, 0]);
   }
-  if (L.hat === "small") { // a little hat, tipped over to the near side
-    const b = v3.add(brim, [.01, .015, .065]), t = v3.add(b, [-.07, .17, .07]);
-    m.ell(b, [.1, .013, .095], M.HAT, { dir: [1, .25, .45], group: 11 });
-    m.chain([[...v3.add(b, [0, .01, .005]), .055], [...v3.add(b, [-.03, .09, .035]), .032], [...t, .011]], M.HAT, { group: 11, paint: p => p[1] < b[1] + .055 ? M.MAGIC : undefined });
-    return t;
+  if (L.hat === "small") { // a little hat, tipped over to the near side (its crown by hatHeight, its brim by hatBrim, leaning by hatTilt)
+    const T = tilted(m, brim, L.hatTilt || 0), k = L.hatHeight ?? 1, b = v3.add(brim, [.01, .015, .065]), t = v3.add(b, v3.mul([-.07, .17, .07], k));
+    T.ell(b, brimR(L, [.1, .013, .095]), M.HAT, { dir: [1, .25, .45], group: 11 });
+    T.chain([[...v3.add(b, [0, .01, .005]), .055], [...v3.add(b, v3.mul([-.03, .09, .035], k)), .032], [...t, .011]], M.HAT, { group: 11, paint: p => p[1] < b[1] + Math.min(.055 * (L.hatBand ?? 1), .1 * k) ? M.MAGIC : undefined });
+    return T.turn ? T.turn(t) : t;
   }
   if (L.hat === "floppy") { // a wide brim drooping all round, a short crown
     m.ell(brim, brimR(L, [.22, .016, .2]), M.HAT, { dir, group: 11 });
@@ -2264,19 +2301,19 @@ const NEW_HATS = {
   },
   crown(m, L, brim, dir, up) { // a golden crown, its points tipped with glowing jewels
     const h = .07 * (L.hatHeight ?? 1), bk = Math.min(1.3, L.hatBrim ?? 1);
-    m.seg(hatAt(brim, up, 0), hatAt(brim, up, h), .085 * bk, .09 * bk, M.BARKL, { group: 11, paint: p => Math.abs(v3.dot(v3.sub(p, brim), up) - h * .5) < .008 ? M.MAGIC : undefined });
+    m.seg(hatAt(brim, up, 0), hatAt(brim, up, h), .085 * bk, .09 * bk, M.BARKL, { group: 11, paint: p => Math.abs(v3.dot(v3.sub(p, brim), up) - h * .5) < .008 * Math.min(2.5, L.hatBand ?? 1) ? M.MAGIC : undefined });
     for (let k = 0; k < 5; k++) { const a2 = k / 5 * Math.PI * 2, o = [Math.cos(a2) * .085 * bk, 0, Math.sin(a2) * .085 * bk], b = hatAt(v3.add(brim, o), up, h), t = hatAt(v3.add(brim, o), up, h + .05); m.seg(b, t, .022, .006, M.BARKL, { group: 11 }); m.ell(t, [.012, .012, .012], M.MAGIC, { group: 11 }); }
     return hatAt(brim, up, h + .07);
   },
   mushroom(m, L, brim, dir, up) { // a spotted mushroom cap, its gills glowing underneath
     const h = .09 * (L.hatHeight ?? 1), bk = L.hatBrim ?? 1;
-    m.ell(hatAt(brim, up, h * .45), [.19 * bk, h, .18 * bk], M.HAT, { group: 11, paint: p => v3.dot(v3.sub(p, brim), up) < Math.max(.045, h * .15) ? M.MAGIC : spotPaint(p) ? M.HAT2 : undefined });
+    m.ell(hatAt(brim, up, h * .45), [.19 * bk, h, .18 * bk], M.HAT, { group: 11, paint: p => v3.dot(v3.sub(p, brim), up) < Math.max(.045, h * .15) * Math.min(2, L.hatBand ?? 1) ? M.MAGIC : spotPaint(p) ? M.HAT2 : undefined });
     return hatAt(brim, up, h * 1.5);
   },
   traffic(m, L, brim, dir, up) { // a traffic cone, its stripes glowing like reflectors
-    const h = .26 * (L.hatHeight ?? 1);
-    m.ell(brim, [.12, .014, .12], M.HAT, { dir, group: 11 });
-    m.seg(hatAt(brim, up, .01), hatAt(brim, up, h), .085, .015, M.HAT, { group: 11, paint: p => { const t = v3.dot(v3.sub(p, brim), up) / h; return (t > .35 && t < .48) || (t > .62 && t < .72) ? M.MAGIC2 : undefined; } });
+    const h = .26 * (L.hatHeight ?? 1), bk = Math.max(.6, L.hatBrim ?? 1), w = Math.min(2.2, L.hatBand ?? 1); // (its base by hatBrim, but never so small a stubby cone sinks into her hair; its stripes' width by hatBand)
+    m.ell(brim, [.12 * bk, .014, .12 * bk], M.HAT, { dir, group: 11 });
+    m.seg(hatAt(brim, up, .01), hatAt(brim, up, h), .085, .015, M.HAT, { group: 11, paint: p => { const t = v3.dot(v3.sub(p, brim), up) / h; return Math.abs(t - .415) < .065 * w || Math.abs(t - .67) < .05 * w ? M.MAGIC2 : undefined; } });
     return hatAt(brim, up, h + .01);
   },
 };
