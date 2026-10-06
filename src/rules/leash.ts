@@ -112,6 +112,11 @@ export function inviteCreature(s: LeashState, c: Creature, x: number, z: number,
   s.events.push({ kind, id: c.id, x, z, at: time });
 }
 
+/** A party legend let off her leash (its sigil put down, or her knocked out): happy again where it stands, dancing, its rune at its feet. */
+export function letPartyLegendGo(c: Creature): void {
+  c.leashed = false; c.state = undefined; c.dancing = true; c.anchorX = c.x; c.anchorZ = c.z; c.fight = undefined;
+}
+
 /** One step: talking, placing and picking up, and the leashed creatures moving. `onGround` is
  *  true only in ground mode (no inviting, placing or picking up from the treetops). */
 export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls, witch: { x: number; z: number }, onGround: boolean, time: number, dt: number, t: Tuning, busy: (id: number) => boolean = () => false): void {
@@ -187,7 +192,9 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
       inviteCreature(s, rune, rune.x, rune.z, time, "picked");
     } else if (s.stack.length) {
       const id = s.stack[s.stack.length - 1];
-      if (blocked(s, witch.x, witch.z, t)) s.events.push({ kind: "fizzled", id, x: witch.x, z: witch.z, at: time });
+      // A party legend's (the Easter egg): put down, it's let go where it stands, dancing (its rune at its feet), and she's free.
+      if (byId(id).partyLegend) { s.stack.pop(); letPartyLegendGo(byId(id)); s.events.push({ kind: "placed", id, x: byId(id).x, z: byId(id).z, at: time }); }
+      else if (blocked(s, witch.x, witch.z, t)) s.events.push({ kind: "fizzled", id, x: witch.x, z: witch.z, at: time });
       else {
         s.stack.pop();
         s.placed.push({ id, x: witch.x, z: witch.z, at: time });
@@ -197,7 +204,7 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   }
 
   // (A party animal busy with a berry, or evolving, is moved by rules/berries.ts instead.)
-  for (const id of s.stack) if (!busy(id)) stepLeashed(byId(id), witch.x, witch.z, dt, t, t.leash.pace ?? 1);
+  for (const id of s.stack) if (!busy(id) && !byId(id).partyLegend) stepLeashed(byId(id), witch.x, witch.z, dt, t, t.leash.pace ?? 1); // (a party legend never comes to her: rules/partyLegend.ts)
   for (const p of s.placed) if (!busy(p.id)) stepLeashed(byId(p.id), p.x, p.z, dt, t);
 }
 

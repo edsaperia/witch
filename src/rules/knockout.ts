@@ -6,7 +6,7 @@
 // group); then she sparkles out and back in at the treehouse. No drawing here.
 import type { ForestMap } from "./map";
 import { anchorOf, LEGEND, wanderRange, type Creature } from "./creatures";
-import type { LeashState } from "./leash";
+import { letPartyLegendGo, type LeashState } from "./leash";
 import type { Tuning } from "./tuning";
 import type { WitchState } from "./witch";
 
@@ -53,7 +53,7 @@ export function repair(h: Health, time: number, t: Tuning): void {
 
 /** She goes down: plan the release of her stack, bottom first (legends kept if they're loyal). */
 export function knockOut(leash: LeashState, creatures: Creature[], time: number, t: Tuning): Knockout {
-  const K = t.knockout, order = [...leash.stack].reverse().filter(id => !(K.legendsLoyal && creatures[id].level === LEGEND));
+  const K = t.knockout, order = [...leash.stack].reverse().filter(id => !(K.legendsLoyal && creatures[id].level === LEGEND && !creatures[id].partyLegend)); // (a party legend is always let go: it doesn't move)
   const each = K.releaseMax > 0 && order.length * K.releaseEach > K.releaseMax ? K.releaseMax / order.length : K.releaseEach;
   const times = order.map((_, i) => time + (i + 1) * each);
   const teleportAt = order.length ? times[times.length - 1] + each * 0.5 : time + K.emptyBeat;
@@ -73,7 +73,8 @@ export function stepKnockout(k: Knockout, body: WitchState, leash: LeashState, c
   while (k.released < k.order.length && time >= k.times[k.released]) {
     const c = creatures[k.order[k.released++]];
     // (#87: leashed is for good; each carried sigil is put down where its animal stands, so they stay a parked group)
-    if (c && c.leashed && leash.stack.includes(c.id)) { parkWhere(c, leash, time); events.push({ kind: "released", at: time, x: c.x, z: c.z, id: c.id }); }
+    if (c?.partyLegend && leash.stack.includes(c.id)) { leash.stack = leash.stack.filter(id => id !== c.id); letPartyLegendGo(c); events.push({ kind: "released", at: time, x: c.x, z: c.z, id: c.id }); }
+    else if (c && c.leashed && leash.stack.includes(c.id)) { parkWhere(c, leash, time); events.push({ kind: "released", at: time, x: c.x, z: c.z, id: c.id }); }
   }
   if (time >= k.teleportAt && !k.out) { k.out = true; events.push({ kind: "sparkleOut", at: time, x: body.x, z: body.z }); }
   const mid = (k.teleportAt + k.backAt) / 2;

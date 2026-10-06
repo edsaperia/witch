@@ -6758,10 +6758,29 @@
         "share": {
           "type": "number",
           "minimum": 0
+        },
+        "partyEgg": {
+          "type": "boolean"
+        },
+        "partyHits": {
+          "type": "number",
+          "minimum": 1
+        },
+        "partyDrain": {
+          "type": "number",
+          "minimum": 0
+        },
+        "partyReach": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
-        "share"
+        "share",
+        "partyEgg",
+        "partyHits",
+        "partyDrain",
+        "partyReach"
       ],
       "additionalProperties": false
     },
