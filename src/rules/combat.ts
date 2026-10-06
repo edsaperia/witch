@@ -126,7 +126,12 @@ export interface Shot {
 export interface Beam { /** A legend's spin (radians a second), and when each thing it swept was last hit. */ spin?: number; last?: Record<string, number>; id: number; from: number; angle: number; length: number; width: number; until: number; nextTick: number; tick: number; damage: number; side: State; species: string; attack: string; target: Target }
 
 export type CombatEventKind = "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "slept" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed" | "dug" | "braced" | "blocked" | "flash" | "dazed";
-export interface CombatEvent { kind: CombatEventKind; x: number; z: number; at: number; id?: number; key?: string; big?: boolean; /** A hit: strong against its target's traits (1), resisted (-1). */ counter?: number }
+/** A soundsystem's events carry its key; every other combat event its creature's id (witchHit: the witch's). */
+type SoundEventKind = "soundHit" | "soundDestroyed";
+interface CombatEventAt { x: number; z: number; at: number; big?: boolean; /** A hit: strong against its target's traits (1), resisted (-1). */ counter?: number }
+export type CombatEvent =
+  | (CombatEventAt & { kind: Exclude<CombatEventKind, SoundEventKind>; id: number; key?: undefined })
+  | (CombatEventAt & { kind: SoundEventKind; key: string; id?: undefined });
 
 /** A soundsystem's health (home: the dancefloor's ring). */
 export interface SoundHealth { hp: number; max: number; x: number; z: number; radius: number }
@@ -818,7 +823,7 @@ function stepLongCharge(w: CombatWorld, s: CombatState, c: Creature, f: Fight, g
     c.moving = true; c.walk += dt * (2 + run.speed * 0.4); c.facing = vx >= 0 ? 1 : -1;
     // Its lane: everything within laneWidth / 2 of it but its own side and kind, once each.
     const share = run.speed / Math.max(1e-6, K.speed * FIGHT.speed), half = (K.laneWidth * S) / 2, kb = K.knockback * S * share;
-    const blow = { name: "legendCharge", delivery: "melee", modifier: "knockback", knockback: kb / 6, cooldown: 0, windup: 0, range: half } as unknown as Attack;
+    const blow: Attack = { delivery: "melee", modifier: "knockback", knockback: kb / 6, cooldown: 0, windup: 0, range: half };
     if (run.speed > 0.5) {
       for (const o of grid.near(c.x, c.z, half + 4)) {
         if (o === c || run.hit.includes(o.id) || !targetable(o) || truce(c, o) || o.boss || w.asleep(o)) continue;

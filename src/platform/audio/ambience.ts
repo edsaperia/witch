@@ -139,14 +139,8 @@ export class Meadow {
     }
   }
 
-  /** Two cups touching at the picnic: glass partials, the second a hair later and a little lower. */
-  private clink(vol: number, pan: number): void {
-    const K = this.k, c = K.ctx, out = K.voice(pan), at = c.currentTime + 0.01, f = 2200 + Math.random() * 900;
-    for (const [dt, k] of [[0, 1], [0.045 + Math.random() * 0.03, 0.93]]) for (const [r, l, d] of [[1, 1, 0.25], [2.4, 0.45, 0.12], [4.1, 0.2, 0.06]]) {
-      const g = c.createGain(); g.connect(out); K.env(g, at + dt, vol * l * (dt ? 0.7 : 1), 0.001, d);
-      K.osc("sine", f * k * r, at + dt, d + 0.05, g);
-    }
-  }
+  /** Two cups touching at the picnic. */
+  private clink(vol: number, pan: number): void { clink(this.k, vol, pan); }
 
   /** A balloon squeaking as it rubs on another: a rubbery tone wobbling up and down, quick and thin. */
   private squeak(vol: number, pan: number): void {
@@ -170,5 +164,42 @@ export class Meadow {
       const o = K.osc("sine", f, t, dur + 0.02, g); o.frequency.exponentialRampToValueAtTime(f * (up ? 1.35 : 0.72), t + dur);
       t += dur + 0.03 + Math.random() * 0.05;
     }
+  }
+}
+
+/** Two cups touching (a picnic's): glass partials, the second a hair later and a little lower. */
+export function clink(K: SfxKit, vol: number, pan: number): void {
+  const c = K.ctx, out = K.voice(pan), at = c.currentTime + 0.01, f = 2200 + Math.random() * 900;
+  for (const [dt, k] of [[0, 1], [0.045 + Math.random() * 0.03, 0.93]]) for (const [r, l, d] of [[1, 1, 0.25], [2.4, 0.45, 0.12], [4.1, 0.2, 0.06]]) {
+    const g = c.createGain(); g.connect(out); K.env(g, at + dt, vol * l * (dt ? 0.7 : 1), 0.001, d);
+    K.osc("sine", f * k * r, at + dt, d + 0.05, g);
+  }
+}
+
+/** A legend turning angry (its restlessness run out): a roar, a deep gritty bellow rising and
+ *  breaking, the ground's rumble under it, in the legends' big space. Heard from far off. */
+export function roar(K: SfxKit, pan = 0, near = 1): void {
+  const R = K.T.roar, c = K.ctx, at = c.currentTime + 0.01, out = K.voice(pan), vol = R.volume * near, dur = 2.2;
+  if (!K.ready("roar", 1)) return;
+  const lp = c.createBiquadFilter(), g = c.createGain(), sh = c.createWaveShaper();
+  lp.type = "lowpass"; lp.Q.value = 6; lp.frequency.setValueAtTime(300, at); lp.frequency.exponentialRampToValueAtTime(1400, at + dur * 0.3); lp.frequency.exponentialRampToValueAtTime(260, at + dur);
+  sh.curve = grit(); sh.connect(lp); lp.connect(g); g.connect(out); g.connect(K.space());
+  g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(vol, at + 0.25); g.gain.setValueAtTime(vol, at + dur * 0.5); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+  const f = 58;
+  for (const det of [-12, -4, 5, 13]) { const o = K.osc("sawtooth", f, at, dur, sh); o.detune.value = det; o.frequency.exponentialRampToValueAtTime(f * 1.6, at + dur * 0.3); o.frequency.exponentialRampToValueAtTime(f * 0.7, at + dur); }
+  const nb = c.createBiquadFilter(), ng = c.createGain(); nb.type = "bandpass"; nb.frequency.value = 700; nb.Q.value = 0.7;
+  ng.connect(out); ng.connect(K.space()); K.env(ng, at, vol * 0.5, 0.2, dur * 0.8); nb.connect(ng); K.noiseBurst(at, dur, nb, Math.random());
+  const sub = c.createGain(); sub.connect(out); K.env(sub, at, vol * 0.7, 0.15, dur); const o = K.osc("sine", 41, at, dur, sub); o.frequency.exponentialRampToValueAtTime(30, at + dur);
+}
+
+/** Dancers' party shoes on the beat: `n` little heel taps, a hair apart, by how near (0-1). */
+export function taps(K: SfxKit, n: number, pan = 0, near = 1): void {
+  const S = K.T.shoes, c = K.ctx, at = c.currentTime + 0.005, vol = S.volume * near;
+  for (let i = 0; i < Math.min(n, S.max); i++) {
+    const t = at + i * 0.018 + Math.random() * 0.012, out = K.voice(pan + (i - n / 2) * 0.12);
+    const hp = c.createBiquadFilter(), g = c.createGain(); hp.type = "bandpass"; hp.frequency.value = 2800 + Math.random() * 1600; hp.Q.value = 3;
+    g.connect(out); K.env(g, t, vol * (0.7 + 0.3 * Math.random()), 0.001, 0.025);
+    hp.connect(g); K.noiseBurst(t, 0.035, hp, Math.random());
+    const k = c.createGain(); k.connect(out); K.env(k, t, vol * 0.4, 0.001, 0.03); K.osc("sine", 900 + Math.random() * 300, t, 0.04, k);
   }
 }

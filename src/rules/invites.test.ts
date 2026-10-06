@@ -1,8 +1,7 @@
 // The 💌 invite (issue #87): bursts and cooldowns from data, letters that fly, home, land, and are
-// blocked by enraged creatures and legends, and the stand-in affection that invites at full.
+// blocked by enraged creatures and legends. (The meter itself: rules/affection.ts, creatureStates.test.ts.)
 import { describe, expect, it } from "vitest";
-import { hitsNeeded, newInvites, standInAffection, stepInvites, type Affection } from "./invites";
-import { newLeash } from "./leash";
+import { newInvites, stepInvites, type Affection } from "./invites";
 import { TUNING, withTuning } from "./tuning";
 import { STEP, newGame, stepGame } from "./game";
 import type { Creature } from "./creatures";
@@ -66,22 +65,6 @@ describe("the 💌 invite (issue #87)", () => {
     expect(ev).toContain("fizzled");
   });
 
-  it("fills a stand-in meter by level, drains it slowly, and invites at full", () => {
-    const s = newInvites(), leash = newLeash(), A = standInAffection(s, leash, TUNING), c = critter(0, 0, 0, { level: 0 });
-    const need = hitsNeeded(c, TUNING);
-    for (let i = 0; i < need - 1; i++) A.hit(c, 1, 0);
-    expect(A.affection(c)).toBeCloseTo((need - 1) / need);
-    expect(c.leashed).toBe(false);
-    A.hit(c, 1, 0);
-    expect(c.leashed).toBe(true);
-    expect(leash.stack).toContain(0);
-    const d = critter(1, 0, 0);
-    A.hit(d, 1, 0);
-    const before = A.affection(d)!;
-    stepInvites(s, {}, her, true, [c, d], A, 1, 1, TUNING);
-    expect(A.affection(d)!).toBeCloseTo(before - TUNING.invites.drain);
-  });
-
   it("in the game: only on the ground and off her seat, and no proximity chat when on", () => {
     const g = newGame(77, TUNING);
     g.clock.paused = false;
@@ -125,5 +108,25 @@ describe("the 💌 invite (issue #87)", () => {
     expect(ev.filter(e => e === "hit").length).toBe(5); // all five land (and are used up)
     expect(A.hits.get(0)).toBe(1); // but only one counts
     expect(s.letters.length).toBe(0);
+  });
+  it("one 💌 a shot (round 11) fills each level's meter in about the time bursts of three did", () => {
+    const old = withTuning({ invites: { ...TUNING.invites, burst: 3, cooldown: 0.6, range: 22, speed: 26, hits: [3, 6, 12, 24] } });
+    expect(TUNING.invites.burst).toBe(1);
+    expect(TUNING.invites.multiShot).toBe(1);
+    // Fire held at a creature 8 m off: when its nth hit that counts lands.
+    const fill = (t: typeof TUNING, n: number) => {
+      const s = newInvites(), c = critter(0, 8, 0), A = counting();
+      for (let i = 0, time = 0; i < 60 / STEP; i++, time += STEP) {
+        s.events = [];
+        stepInvites(s, { fire: true, aimX: 1, aimZ: 0 }, her, true, [c], A, time, STEP, t);
+        if ((A.hits.get(0) ?? 0) >= n) return time;
+      }
+      return Infinity;
+    };
+    for (let lv = 0; lv < 4; lv++) {
+      const before = fill(old, old.invites.hits[lv]), now = fill(TUNING, TUNING.invites.hits[lv]);
+      expect(now / before, `level ${lv}: ${now.toFixed(2)} s, was ${before.toFixed(2)} s`).toBeGreaterThan(0.85);
+      expect(now / before, `level ${lv}: ${now.toFixed(2)} s, was ${before.toFixed(2)} s`).toBeLessThan(1.2);
+    }
   });
 });

@@ -10,16 +10,14 @@
 //   careful: leaves one of the area's kind in each area (never empties one);
 //   park: invites them all, then puts the last one's sigil back down in its own area (kin there again).
 //   node tools/balance/opening.mjs [--seeds 3] [--starts 1,0,0;1,1,0;0,1,1] [--policies all,careful,park] [--time 600] [--areas 12]
-import { createServer } from "vite";
+import { arg, list, mean, openRules } from "./lib.mjs";
 
-const arg = (name, def) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : def; };
 const SEEDS = +arg("seeds", 3), TIME = +arg("time", 600), AREAS = +arg("areas", 12);
 const STARTS = String(arg("starts", "1,0,0;1,1,0;0,1,1")).split(";").map(s => s.split(",").map(Number));
-const POLICIES = String(arg("policies", "all,careful,park")).split(",");
+const POLICIES = list(arg("policies", "all,careful,park"));
 const say = s => console.log(s), t0 = Date.now();
 
-const server = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: "custom", logLevel: "error", optimizeDeps: { noDiscovery: true, include: [] } });
-const load = p => server.ssrLoadModule(p);
+const { load, close } = await openRules();
 const { TUNING, withTuning } = await load("/src/rules/tuning.ts");
 const { newGame, stepGame } = await load("/src/rules/game.ts");
 const { AREA_TYPES } = await load("/src/rules/map.ts");
@@ -86,7 +84,6 @@ for (const st of STARTS) for (const p of POLICIES) for (let i = 0; i < SEEDS; i+
   rows.push(r);
   process.stderr.write(`${r.start} ${p} ${r.seed}: ${r.areas} areas, ${r.angry} angry, ${r.restless} restless, posse ${r.posse}, ${r.kos} KOs, ${r.time.toFixed(0)} s\n`);
 }
-const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
 const NAME = { "1,0,0": "1 baby", "1,1,0": "1 baby + 1 young (Ed's pick)", "0,1,1": "1 young + 1 adult (before)" };
 say(`The opening (the real rules, headless): from her first step to the first wave (${TIME} s: the 5-minute boot and the 5-minute countdown), a bot flying to the ${AREAS} areas nearest home in turn and inviting with 💌s; ${SEEDS} seeds. Each cell: legends angry at the end (restless besides) / posse on her stack / knockouts / areas visited.\n`);
 say("| start \\ policy | " + POLICIES.join(" | ") + " |");
@@ -96,4 +93,4 @@ for (const st of STARTS) {
   say(`| ${NAME[k] ?? k} | ` + POLICIES.map(p => { const rs = rows.filter(r => r.start === k && r.policy === p); return `${mean(rs.map(r => r.angry)).toFixed(1)} (+${mean(rs.map(r => r.restless)).toFixed(1)}) / ${mean(rs.map(r => r.posse)).toFixed(1)} / ${mean(rs.map(r => r.kos)).toFixed(1)} / ${mean(rs.map(r => r.areas)).toFixed(1)}`; }).join(" | ") + " |");
 }
 say(`\n(${((Date.now() - t0) / 1000).toFixed(0)} s)`);
-await server.close();
+await close();
