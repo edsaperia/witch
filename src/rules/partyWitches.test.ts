@@ -121,4 +121,29 @@ describe("party witches (Ed, 2026-10-04)", () => {
     expect(up.starts).toBeGreaterThan(ground.starts * 2.5);
     expect(up.top).toBeGreaterThan(24); // over the 24 m treetops
   });
+  it("swoops to random heights, lower hops and soaring well over the treetops", () => {
+    const s = newPartyWitches(29), peaks: number[] = [];
+    run(s, areas(30), 400, 0, [{ x: floor.x, z: floor.z + 60, onFoot: false, moving: true, treetop: true }], () => { for (const w of s.list) if (w.activity === "swoop" && w.peak !== undefined && !peaks.includes(w.peak)) peaks.push(w.peak); });
+    expect(peaks.length).toBeGreaterThan(10);
+    for (const p of peaks) { expect(p).toBeGreaterThanOrEqual(P.swoopHeight * P.swoopMin - 1e-9); expect(p).toBeLessThanOrEqual(P.swoopHeight * P.swoopMax + 1e-9); }
+    expect(Math.min(...peaks)).toBeLessThan(P.swoopHeight * 0.85); expect(Math.max(...peaks)).toBeGreaterThan(P.swoopHeight * 1.4);
+  });
+  it("is left alone while no player is near enough to see it, and lively again at once when one comes back", () => {
+    const s = newPartyWitches(31), far: PlayerView = { x: floor.x + P.simRange + 50, z: floor.z, onFoot: true, moving: true }, near = { ...far, x: floor.x + 20 };
+    let time = run(s, areas(10), 20, 0, [near]);
+    const before = s.list.map(w => [w.x, w.z, w.activity].join());
+    time = run(s, areas(10), 20, time, [far]);
+    expect(s.list.map(w => [w.x, w.z, w.activity].join())).toEqual(before); // nothing moved or changed
+    expect(s.idle).toBe(true);
+    // a new soundsystem's witch still arrives (who's here is kept)
+    time = run(s, areas(11), 1, time, [far]);
+    expect(s.list.length).toBe(11);
+    // from the treetops further off it's still stepped (swoops are seen from afar)
+    run(s, areas(11), 1, time, [{ ...far, treetop: true }]);
+    expect(s.idle).toBe(false);
+    // back in range: everyone picks something new straight away
+    const s2 = newPartyWitches(33); let t2 = run(s2, areas(10), 20, 0, [near]); t2 = run(s2, areas(10), 5, t2, [far]);
+    run(s2, areas(10), 0.05, t2, [near]);
+    expect(s2.list.filter(w => w.state === "floor").every(w => w.until > t2)).toBe(true);
+  });
 });

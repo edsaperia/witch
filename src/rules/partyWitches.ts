@@ -72,8 +72,8 @@ export interface PartyWitch {
   tx: number; tz: number;
   /** Running off the floor to do this there (drink, rest): she starts it when she arrives. */
   next?: Activity;
-  /** A swoop: where it began (she drifts from there to tx, tz over it). */
-  sx?: number; sz?: number;
+  /** A swoop: where it began (she drifts from there to tx, tz over it), and how high it goes. */
+  sx?: number; sz?: number; peak?: number;
 }
 
 /** What the partner does in a pair whose lead does this (art/witch.js WITCH_PAIRS partnerPose). */
@@ -84,6 +84,8 @@ export interface PlayerIdle { still: number; activity: Activity | null; pose: st
 
 export interface PartyWitches {
   list: PartyWitch[];
+  /** Left alone while no player is near enough to see the party (Ed, 2026-10-06: "only visual"): its last step's answer. */
+  idle?: boolean;
   nextId: number;
   players: PlayerIdle[];
   rand: () => number;
@@ -174,6 +176,8 @@ function begin(s: PartyWitches, w: PartyWitch, time: number, floor: Floor, t: Tu
   }
   w.activity = a; w.pose = pick(r, POSES[a]); w.until = time + duration(r, t, a); w.partner = null; w.lead = false;
   if (a === "run" || a === "fly" || a === "swoop") { const tgt = spot(r, floor, t); w.tx = tgt.x; w.tz = tgt.z; w.sx = w.x; w.sz = w.z; w.since = time; }
+  // a swoop's own height (Ed, 2026-10-06: "random heights, taller and shorter than normal treetop")
+  if (a === "swoop") w.peak = P.swoopHeight * (P.swoopMin + r() * (P.swoopMax - P.swoopMin));
 }
 
 /** Let go of a pair (both pick something new when it's their turn). */
@@ -221,6 +225,12 @@ export function stepPartyWitches(s: PartyWitches, areas: { key: string; x: numbe
     if (k >= 1 && w.state === "arriving") { w.state = "floor"; w.y = 0; begin(s, w, time, floor, t, treetop); }
   }
   s.list = s.list.filter(w => !(w.state === "leaving" && time - w.since >= P.arriveTime));
+  // Only visual (Ed, 2026-10-06: "it only needs to be animated when you are near it"): with no player within simRange of the
+  // floor (simRangeTreetop over the treetops, where the swoops are meant to be seen from afar), nobody on it moves or picks
+  // anything new; who's here is still kept. Coming back in range, they all pick something new at once, so it's lively.
+  const near = !players.length || players.some(p => Math.hypot(p.x - floor.x, p.z - floor.z) <= (p.treetop ? P.simRangeTreetop : P.simRange));
+  if (!near) { s.idle = true; players.forEach((_, i) => { s.players[i] = { still: 0, activity: null, pose: null, partner: null, until: 0, facing: s.players[i]?.facing ?? 1 }; }); return; } // (a player far off isn't idling into it)
+  if (s.idle) { s.idle = false; for (const w of s.list) if (w.state === "floor") { release(s, w, time); w.until = time; } }
   // On the floor: each activity, and a new one when it's done.
   for (const w of s.list) {
     if (w.state !== "floor") continue;
@@ -242,7 +252,7 @@ export function stepPartyWitches(s: PartyWitches, areas: { key: string; x: numbe
       const T = P.swoopTime ?? 4, k = Math.min(1, Math.max(0, (time - w.since) / T)), e = k * k * (3 - 2 * k);
       const up = k < 0.35 ? Math.sin((k / 0.35) * Math.PI / 2) : k < 0.6 ? 1 : Math.cos(((k - 0.6) / 0.4) * Math.PI / 2);
       w.x = (w.sx ?? w.x) + (w.tx - (w.sx ?? w.x)) * e; w.z = (w.sz ?? w.z) + (w.tz - (w.sz ?? w.z)) * e;
-      w.y = (P.swoopHeight ?? 28) * Math.max(0, up); w.facing = w.tx >= (w.sx ?? w.x) ? 1 : -1; w.away = false;
+      w.y = (w.peak ?? P.swoopHeight) * Math.max(0, up); w.facing = w.tx >= (w.sx ?? w.x) ? 1 : -1; w.away = false;
     } else if (w.third && w.partner !== null) {
       // The limbo dancer shuffles along under the bar, from the holder's end to the helper's and round again.
       const o = byId.get(w.partner);
