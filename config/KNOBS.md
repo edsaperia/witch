@@ -28,7 +28,7 @@ The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather t
 
 ## `beach`, `areaSize`, `areaScale`, `arena`, `areaSizeVariance`, `borderLayers`
 
-The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A beach surrounds the island, and the calm dark water reflects the sky. You can hear the sound of the waves. If you try and fly past the beach, you land and stargaze (the party lying down pose). Other witches can be found on the beach occasionally; if you land near them, you chat, hold hands, and hug. Try and do this in a way that doesn't cost performance - most games won't ever go to the beach, it's just an Easter egg for adventurers."): sand over the last width metres inside her flight's edge (nothing grows or stands on it), the sea from shore metres past the edge, the hills eased over ease metres down to sand metres high where the sand starts and to sea metres at the water. Flying on out over the sand for restAfter seconds she lands (from the treetops too) and lies down to stargaze; any other way gets her up. witchChance of runs have witches[0] to witches[1] witches together somewhere on the beach; landing within meet metres of them and keeping still for idleAfter seconds, one chats, holds hands, hugs and stargazes with her, turn seconds each. None of it is drawn or heard unless she's within shown metres of the sand, nor the witches stepped beyond simRange. on false: forest to the edge, as before.
+The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A beach surrounds the island, and the calm dark water reflects the sky. You can hear the sound of the waves. If you try and fly past the beach, you land and stargaze (the party lying down pose). Other witches can be found on the beach occasionally; if you land near them, you chat, hold hands, and hug. Try and do this in a way that doesn't cost performance - most games won't ever go to the beach, it's just an Easter egg for adventurers."): sand over the last width metres inside her flight's edge (nothing grows or stands on it), the sea from shore metres past the edge, the hills eased over ease metres down to sand metres high where the sand starts and to sea metres at the water. Flying on out over the sand for restAfter seconds she lands (from the treetops too) and lies down to stargaze; any other way gets her up. Lying there (Ed, 2026-10-06: "the bend shader applies so that you can see the sky") the world bends stargazeCurve times the treetops' curve (Ed: "it's stronger than usual, so the sky takes up more of the screen"), eased in and out over about gazeEase seconds, so the night sky opens up over the sea. Lying there with a beach witch (Ed: "If you land near another witch, and you stargaze together, and you wait a few seconds, little hearts will start appearing near you both, floating upwards and disappearing"): after hearts.after seconds a ❤️ rises off one or the other every hearts.every[0] to [1] seconds, for hearts.life seconds each, until either gets up; the two stay lying together until she moves. A 💌 come down on the sand or the sea (Ed: "they last longer and disappear more slowly (5 seconds)") rests letterLinger seconds, fading over the last letterFade, bobbing gently on the water. witchChance of runs (Ed, 2026-10-06: "I think there should always be beach witches, but there are only a handful spread around it": every run) have spots[0] to spots[1] spots spread round the coast (evenly, each nudged by up to a third of the gap), each with witches[0] to witches[1] witches (Ed, 2026-10-06: "Beach witches appear solo": one); landing within meet metres of them and keeping still for idleAfter seconds, one chats, holds hands, hugs and stargazes with her, turn seconds each. None of it is drawn or heard unless she's within shown metres of the sand, nor the witches stepped beyond simRange. on false: forest to the edge, as before.
 
 | knob | type | range |
 |---|---|---|
@@ -39,8 +39,16 @@ The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A bea
 | `beach.sand` | number | 0 to … |
 | `beach.sea` | number |  |
 | `beach.restAfter` | number | 0 to … |
+| `beach.stargazeCurve` | number | 0 to … |
+| `beach.gazeEase` | number | 0 to … |
+| `beach.letterLinger` | number | 0 to … |
+| `beach.letterFade` | number | 0 to … |
+| `beach.hearts.after` | number | 0 to … |
+| `beach.hearts.every` | array of number |  |
+| `beach.hearts.life` | number | 0 to … |
 | `beach.shown` | number | 0 to … |
 | `beach.witchChance` | number | 0 to … |
+| `beach.spots` | array of number |  |
 | `beach.witches` | array of number |  |
 | `beach.meet` | number | 0 to … |
 | `beach.idleAfter` | number | 0 to … |
@@ -1125,6 +1133,15 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `sfx.waves.every` | number | 0 to … |
 | `sfx.waves.wash` | number | 0 to … |
 | `sfx.waves.range` | number | 0 to … |
+| `sfx.night.volume` | number | 0 to … |
+| `sfx.night.bed` | number | 0 to … |
+| `sfx.night.noise` | number | 0 to … |
+| `sfx.night.sounds` | number | 0 to … |
+| `sfx.night.from` | number | 0 to … |
+| `sfx.night.snore.volume` | number | 0 to … |
+| `sfx.night.snore.gap` | number | 0 to … |
+| `sfx.night.snore.range` | number | 0 to … |
+| `sfx.night.snore.max` | number | 0 to … |
 | `music.on` | boolean |  |
 | `music.volume` | number | 0 to … |
 | `music.nearDist` | number | 0 to … |
@@ -1143,6 +1160,8 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.clear` | number | 0 to … |
 | `music.distort` | number | 0 to … |
 | `music.src` | string |  |
+| `music.over.stop` | number | 0 to … |
+| `music.over.floor` | number | 0 to … |
 
 ## `fight`
 
@@ -1208,6 +1227,17 @@ Creatures notice the witch on the ground within radius metres (Ed's playtest: a 
 | `notice.radius` | number | 0 to … |
 | `notice.curious` | number | 0 to … |
 | `notice.skittish` | number | 0 to … |
+
+## `naps`
+
+Wild idlers nap (Ed, 2026-10-06: "I think animals in wild areas which are idling can sleep. They awake when you are there in ground mode, but stay asleep if you're in treetop mode, or not in their area (e.g. you see them from an adjacent area)"; "They don't all sleep - but it's one of the things they can do while idling"): a wild creature roaming its own still-wild area (not besieging, fleeing, dazed, marching, fighting, happy or a legend), at each pause, lies down instead with chance, for length seconds (a range: min, max), then gets up. It gets up at once when a witch is on the ground in its area (none starts a nap then), and when its area is partified or it's enraged or taken; getting up takes wake seconds (a stretch, a yawn), out of fights till then, so landing isn't an instant pounce. Asleep it stays down with her in the treetops or on the ground in another area, however near. Sleepers skip their roam and every fight. on: false turns naps off.
+
+| knob | type | range |
+|---|---|---|
+| `naps.on` | boolean |  |
+| `naps.chance` | number | 0 to … |
+| `naps.length` | array of number |  |
+| `naps.wake` | number | 0 to … |
 
 ## `guard`
 
